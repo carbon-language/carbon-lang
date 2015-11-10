@@ -13,8 +13,8 @@ else()
         ccc-analyzer
         c++-analyzer)
   if (APPLE)
-    set(BinFiles ${BinFiles}
-         set-xcode-analyzer)
+    list(APPEND BinFiles
+           set-xcode-analyzer)
   endif()
 endif()
 
@@ -27,7 +27,6 @@ set(ResourceFiles
 
 
 if(CLANG_INSTALL_SCANBUILD)
-  set(Depends )
   foreach(BinFile ${BinFiles})
     add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/${BinFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -36,7 +35,7 @@ if(CLANG_INSTALL_SCANBUILD)
                          ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile}
                          ${CMAKE_BINARY_DIR}/bin/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile})
-    set(Depends ${Depends}  ${CMAKE_BINARY_DIR}/bin/${BinFile})
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
     install(PROGRAMS ${BinFile} DESTINATION bin)
   endforeach()
 
@@ -48,7 +47,7 @@ if(CLANG_INSTALL_SCANBUILD)
                          ${CMAKE_CURRENT_SOURCE_DIR}/${LibexecFile}
                          ${CMAKE_BINARY_DIR}/libexec/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${LibexecFile})
-    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/libexec/${LibexecFile})
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/libexec/${LibexecFile})
     install(PROGRAMS ${LibexecFile} DESTINATION libexec)
   endforeach()
 
@@ -60,7 +59,7 @@ if(CLANG_INSTALL_SCANBUILD)
                          ${CMAKE_CURRENT_SOURCE_DIR}/${ManPage}
                          ${CMAKE_BINARY_DIR}/share/man/man1/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ManPage})
-    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/share/man/man1/${ManPage})
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/share/man/man1/${ManPage})
     install(PROGRAMS ${ManPage} DESTINATION share/man/man1)
   endforeach()
 
@@ -72,7 +71,7 @@ if(CLANG_INSTALL_SCANBUILD)
                          ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile}
                          ${CMAKE_BINARY_DIR}/bin/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile})
-    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/bin/${ResourceFile})
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${ResourceFile})
     install(FILES ${ResourceFile} DESTINATION bin)
   endforeach()
 

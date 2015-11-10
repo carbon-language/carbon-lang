@@ -12,7 +12,6 @@ set(ResourceFiles
       bugcatcher.ico)
 
 if(CLANG_INSTALL_SCANVIEW)
-  set(Depends )
   foreach(BinFile ${BinFiles})
     add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/${BinFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -21,7 +20,7 @@ if(CLANG_INSTALL_SCANVIEW)
                          ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile}
                          ${CMAKE_BINARY_DIR}/bin/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile})
-    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/bin/${BinFile})
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
     install(PROGRAMS ${BinFile} DESTINATION bin)
   endforeach()
 
@@ -33,7 +32,7 @@ if(CLANG_INSTALL_SCANVIEW)
                          ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ResourceFile}
                          ${CMAKE_BINARY_DIR}/share/scan-view/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ResourceFile})
-    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/share/scan-view/${ResourceFile})
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/share/scan-view/${ResourceFile})
     install(FILES ${ResourceFile} DESTINATION share/scan-view)
   endforeach()
 
