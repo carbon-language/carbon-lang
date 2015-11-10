@@ -4074,7 +4074,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   if (Node->getOpcode() == ISD::UINT_TO_FP ||
       Node->getOpcode() == ISD::SINT_TO_FP ||
       Node->getOpcode() == ISD::SETCC ||
-      Node->getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+      Node->getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
+      Node->getOpcode() == ISD::INSERT_VECTOR_ELT) {
     OVT = Node->getOperand(0).getSimpleValueType();
   }
   if (Node->getOpcode() == ISD::BR_CC)
@@ -4385,6 +4386,56 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
     SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, SL, MidVT, NewOps);
 
     Results.push_back(DAG.getNode(ISD::BITCAST, SL, EltVT, NewVec));
+    break;
+  }
+  case ISD::INSERT_VECTOR_ELT: {
+    MVT EltVT = OVT.getVectorElementType();
+    MVT NewEltVT = NVT.getVectorElementType();
+
+    // Handle bitcasts to a different vector type with the same total bit size
+    //
+    // e.g. v2i64 = insert_vector_elt x:v2i64, y:i64, z:i32
+    //  =>
+    //  v4i32:castx = bitcast x:v2i64
+    //  v2i32:casty = bitcast y:i64
+    //
+    // v2i64 = bitcast
+    //   (v4i32 insert_vector_elt
+    //       (v4i32 insert_vector_elt v4i32:castx,
+    //                                (extract_vector_elt casty, 0), 2 * z),
+    //        (extract_vector_elt casty, 1), (2 * z + 1))
+
+    assert(NVT.isVector() && OVT.getSizeInBits() == NVT.getSizeInBits() &&
+           "Invalid promote type for insert_vector_elt");
+    assert(NewEltVT.bitsLT(EltVT) && "not handled");
+
+    MVT MidVT = getPromotedVectorElementType(TLI, EltVT, NewEltVT);
+    unsigned NewEltsPerOldElt = MidVT.getVectorNumElements();
+
+    SDValue Val = Node->getOperand(1);
+    SDValue Idx = Node->getOperand(2);
+    EVT IdxVT = Idx.getValueType();
+    SDLoc SL(Node);
+
+    SDValue Factor = DAG.getConstant(NewEltsPerOldElt, SDLoc(), IdxVT);
+    SDValue NewBaseIdx = DAG.getNode(ISD::MUL, SL, IdxVT, Idx, Factor);
+
+    SDValue CastVec = DAG.getNode(ISD::BITCAST, SL, NVT, Node->getOperand(0));
+    SDValue CastVal = DAG.getNode(ISD::BITCAST, SL, MidVT, Val);
+
+    SDValue NewVec = CastVec;
+    for (unsigned I = 0; I < NewEltsPerOldElt; ++I) {
+      SDValue IdxOffset = DAG.getConstant(I, SL, IdxVT);
+      SDValue InEltIdx = DAG.getNode(ISD::ADD, SL, IdxVT, NewBaseIdx, IdxOffset);
+
+      SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, NewEltVT,
+                                CastVal, IdxOffset);
+
+      NewVec = DAG.getNode(ISD::INSERT_VECTOR_ELT, SL, NVT,
+                           NewVec, Elt, InEltIdx);
+    }
+
+    Results.push_back(DAG.getNode(ISD::BITCAST, SL, OVT, NewVec));
     break;
   }
   }
