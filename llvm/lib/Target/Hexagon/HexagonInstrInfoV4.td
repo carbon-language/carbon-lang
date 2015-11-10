@@ -3631,9 +3631,9 @@ let AddedComplexity = 100 in {
 //===----------------------------------------------------------------------===//
 let isPredicable = 1, hasSideEffects = 0 in
 class T_LoadAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
-                   bits<3> MajOp, Operand AddrOp, bit isAbs>
-  : LDInst <(outs RC:$dst), (ins AddrOp:$addr),
-  "$dst = "#mnemonic# !if(isAbs, "(##", "(#")#"$addr)",
+                   bits<3> MajOp>
+  : LDInst <(outs RC:$dst), (ins ImmOp:$addr),
+  "$dst = "#mnemonic# "(#$addr)",
   [], "", V2LDST_tc_ld_SLOT01> {
     bits<5> dst;
     bits<19> addr;
@@ -3658,7 +3658,7 @@ class T_LoadAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
 
 class T_LoadAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
                  bits<3> MajOp>
-  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, u32Imm, 1>, AddrModeRel {
+  : T_LoadAbsGP <mnemonic, RC, u32MustExt, MajOp>, AddrModeRel {
 
     string ImmOpStr = !cast<string>(ImmOp);
     let opExtentBits = !if (!eq(ImmOpStr, "u16_3Imm"), 19,
@@ -3676,10 +3676,11 @@ class T_LoadAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
 // Template class for predicated load instructions with
 // absolute addressing mode.
 //===----------------------------------------------------------------------===//
-let isPredicated = 1, opExtentBits = 6, opExtendable = 2 in
+let isPredicated = 1, hasSideEffects = 0, hasNewValue = 1, opExtentBits = 6,
+    opExtendable = 2 in
 class T_LoadAbs_Pred <string mnemonic, RegisterClass RC, bits<3> MajOp,
                       bit isPredNot, bit isPredNew>
-  : LDInst <(outs RC:$dst), (ins PredRegs:$src1, u6Ext:$absaddr),
+  : LDInst <(outs RC:$dst), (ins PredRegs:$src1, u32MustExt:$absaddr),
   !if(isPredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
   ") ")#"$dst = "#mnemonic#"(#$absaddr)">, AddrModeRel {
     bits<5> dst;
@@ -3753,7 +3754,7 @@ defm loadrd  : LD_Abs<"memd",  "LDrid", DoubleRegs, u16_3Imm, 0b110>;
 let isAsmParserOnly = 1 in
 class T_LoadGP <string mnemonic, string BaseOp, RegisterClass RC, Operand ImmOp,
                 bits<3> MajOp>
-  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0>, PredNewRel {
+  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp>, PredNewRel {
     let BaseOpcode = BaseOp#_abs;
   }
 
