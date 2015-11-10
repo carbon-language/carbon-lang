@@ -1,5 +1,3 @@
-add_custom_target(scan-view ALL)
-
 option(CLANG_INSTALL_SCANVIEW "Install the scan-view tool" ON)
 
 set(BinFiles
@@ -9,30 +7,35 @@ set(BinFiles
       startfile.py)
 
 set(ResourceFiles
-      Resources/FileRadar.scpt
-      Resources/GetRadarVersion.scpt
-      Resources/bugcatcher.ico)
+      FileRadar.scpt
+      GetRadarVersion.scpt
+      bugcatcher.ico)
 
 if(CLANG_INSTALL_SCANVIEW)
+  set(Depends )
   foreach(BinFile ${BinFiles})
-    add_custom_command(TARGET scan-view PRE_BUILD
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/${BinFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/bin
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile}
                          ${CMAKE_BINARY_DIR}/bin/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile})
+    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/bin/${BinFile})
     install(PROGRAMS ${BinFile} DESTINATION bin)
   endforeach()
 
   foreach(ResourceFile ${ResourceFiles})
-    add_custom_command(TARGET scan-view PRE_BUILD
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/share/scan-view/${ResourceFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/share/scan-view
                        COMMAND ${CMAKE_COMMAND} -E copy
-                         ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile}
+                         ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ResourceFile}
                          ${CMAKE_BINARY_DIR}/share/scan-view/
-                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile})
+                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ResourceFile})
+    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/share/scan-view/${ResourceFile})
     install(FILES ${ResourceFile} DESTINATION share/scan-view)
   endforeach()
+
+  add_custom_target(scan-view ALL DEPENDS ${Depends})
 endif()

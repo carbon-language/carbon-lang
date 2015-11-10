@@ -1,5 +1,3 @@
-add_custom_target(scan-build ALL)
-
 option(CLANG_INSTALL_SCANBUILD "Install the scan-build tool" ON)
 
 if (WIN32 AND NOT CYGWIN)
@@ -29,47 +27,55 @@ set(ResourceFiles
 
 
 if(CLANG_INSTALL_SCANBUILD)
+  set(Depends )
   foreach(BinFile ${BinFiles})
-    add_custom_command(TARGET scan-build PRE_BUILD
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/${BinFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/bin
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile}
                          ${CMAKE_BINARY_DIR}/bin/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile})
+    set(Depends ${Depends}  ${CMAKE_BINARY_DIR}/bin/${BinFile})
     install(PROGRAMS ${BinFile} DESTINATION bin)
   endforeach()
 
   foreach(LibexecFile ${LibexecFiles})
-    add_custom_command(TARGET scan-build PRE_BUILD
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/libexec/${LibexecFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/libexec
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/${LibexecFile}
                          ${CMAKE_BINARY_DIR}/libexec/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${LibexecFile})
+    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/libexec/${LibexecFile})
     install(PROGRAMS ${LibexecFile} DESTINATION libexec)
   endforeach()
 
   foreach(ManPage ${ManPages})
-    add_custom_command(TARGET scan-build PRE_BUILD
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/share/man/man1/${ManPage}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/share/man/man1
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/${ManPage}
                          ${CMAKE_BINARY_DIR}/share/man/man1/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ManPage})
+    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/share/man/man1/${ManPage})
     install(PROGRAMS ${ManPage} DESTINATION share/man/man1)
   endforeach()
 
   foreach(ResourceFile ${ResourceFiles})
-    add_custom_command(TARGET scan-build PRE_BUILD
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/${ResourceFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/bin
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile}
                          ${CMAKE_BINARY_DIR}/bin/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile})
+    set(Depends ${Depends} ${CMAKE_BINARY_DIR}/bin/${ResourceFile})
     install(FILES ${ResourceFile} DESTINATION bin)
   endforeach()
+
+  add_custom_target(scan-build ALL DEPENDS ${Depends})
 endif()
+
