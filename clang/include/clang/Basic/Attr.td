@@ -2132,3 +2132,9 @@ def OMPThreadPrivateDecl : InheritableAttr {
   let SemaHandler = 0;
   let Documentation = [Undocumented];
 }
+
+def InternalLinkage : InheritableAttr {
+  let Spellings = [GNU<"internal_linkage">, CXX11<"clang", "internal_linkage">];
+  let Subjects = SubjectList<[Var, Function, CXXRecord]>;
+  let Documentation = [InternalLinkageDocs];
+}
