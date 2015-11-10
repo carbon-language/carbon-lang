@@ -217,13 +217,16 @@ void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
   OS.indent(8) << *getElementType() << " " << getName();
   if (getNumberOfDimensions() > 0)
     OS << "[*]";
-  for (unsigned u = 0; u + 1 < getNumberOfDimensions(); u++) {
+  for (unsigned u = 1; u < getNumberOfDimensions(); u++) {
     OS << "[";
 
-    if (SizeAsPwAff)
-      OS << " " << DimensionSizesPw[u] << " ";
-    else
-      OS << *DimensionSizes[u];
+    if (SizeAsPwAff) {
+      auto Size = getDimensionSizePw(u);
+      OS << " " << Size << " ";
+      isl_pw_aff_free(Size);
+    } else {
+      OS << *getDimensionSize(u);
+    }
 
     OS << "]";
   }

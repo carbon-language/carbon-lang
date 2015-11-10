@@ -127,15 +127,25 @@ public:
   unsigned getNumberOfDimensions() const { return DimensionSizes.size(); }
 
   /// @brief Return the size of dimension @p dim as SCEV*.
-  const SCEV *getDimensionSize(unsigned dim) const {
-    assert(dim < getNumberOfDimensions() && "Invalid dimension");
-    return DimensionSizes[dim];
+  //
+  //  Scalars do not have array dimensions and the first dimension of
+  //  a (possibly multi-dimensional) array also does not carry any size
+  //  information.
+  const SCEV *getDimensionSize(unsigned Dim) const {
+    assert(Dim > 0 && "Only dimensions larger than zero are sized.");
+    assert(Dim < getNumberOfDimensions() && "Invalid dimension");
+    return DimensionSizes[Dim - 1];
   }
 
   /// @brief Return the size of dimension @p dim as isl_pw_aff.
-  __isl_give isl_pw_aff *getDimensionSizePw(unsigned dim) const {
-    assert(dim < getNumberOfDimensions() && "Invalid dimension");
-    return isl_pw_aff_copy(DimensionSizesPw[dim - 1]);
+  //
+  //  Scalars do not have array dimensions and the first dimension of
+  //  a (possibly multi-dimensional) array also does not carry any size
+  //  information.
+  __isl_give isl_pw_aff *getDimensionSizePw(unsigned Dim) const {
+    assert(Dim > 0 && "Only dimensions larger than zero are sized.");
+    assert(Dim < getNumberOfDimensions() && "Invalid dimension");
+    return isl_pw_aff_copy(DimensionSizesPw[Dim - 1]);
   }
 
   /// @brief Get the type of the elements stored in this array.
