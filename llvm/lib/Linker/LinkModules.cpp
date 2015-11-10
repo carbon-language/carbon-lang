@@ -509,6 +509,8 @@ private:
       ComdatsChosen;
   bool getComdatResult(const Comdat *SrcC, Comdat::SelectionKind &SK,
                        bool &LinkFromSrc);
+  // Keep track of the global value members of each comdat in source.
+  DenseMap<const Comdat *, std::vector<GlobalValue *>> ComdatMembers;
 
   /// Given a global in the source module, return the global in the
   /// destination module that is being linked to, if any.
@@ -1386,6 +1388,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
     C = DstM->getOrInsertComdat(SC->getName());
     C->setSelectionKind(SK);
+    ComdatMembers[SC].push_back(SGV);
   } else if (DGV) {
     if (shouldLinkFromSource(LinkFromSrc, *DGV, *SGV))
       return true;
@@ -1589,6 +1592,19 @@ void ModuleLinker::linkAliasBody(GlobalAlias &Dst, GlobalAlias &Src) {
 bool ModuleLinker::linkGlobalValueBody(GlobalValue &Src) {
   Value *Dst = ValueMap[&Src];
   assert(Dst);
+  if (const Comdat *SC = Src.getComdat()) {
+    // To ensure that we don't generate an incomplete comdat group,
+    // we must materialize and map in any other members that are not
+    // yet materialized in Dst, which also ensures their definitions
+    // are linked in. Otherwise, linkonce and other lazy linked GVs will
+    // not be materialized if they aren't referenced.
+    for (auto *SGV : ComdatMembers[SC]) {
+      if (ValueMap[SGV])
+        continue;
+      Value *NewV = ValMaterializer.materializeValueFor(SGV);
+      ValueMap[SGV] = NewV;
+    }
+  }
   if (shouldInternalizeLinkedSymbols())
     if (auto *DGV = dyn_cast<GlobalValue>(Dst))
       DGV->setLinkage(GlobalValue::InternalLinkage);
