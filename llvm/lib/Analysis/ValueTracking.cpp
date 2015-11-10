@@ -4103,6 +4103,7 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
                             const DataLayout &DL, unsigned Depth,
                             AssumptionCache *AC, const Instruction *CxtI,
                             const DominatorTree *DT) {
+  assert(!LHS->getType()->isVectorTy() && "TODO: extend to handle vectors!");
   if (ICmpInst::isTrueWhenEqual(Pred) && LHS == RHS)
     return true;
 
@@ -4112,27 +4113,27 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
 
   case CmpInst::ICMP_SLT:
   case CmpInst::ICMP_SLE: {
-    ConstantInt *CI;
+    const APInt *C;
 
     // LHS s<  LHS +_{nsw} C   if C > 0
     // LHS s<= LHS +_{nsw} C   if C >= 0
-    if (match(RHS, m_NSWAdd(m_Specific(LHS), m_ConstantInt(CI)))) {
+    if (match(RHS, m_NSWAdd(m_Specific(LHS), m_APInt(C)))) {
       if (Pred == CmpInst::ICMP_SLT)
-        return CI->getValue().isStrictlyPositive();
-      return !CI->isNegative();
+        return C->isStrictlyPositive();
+      return !C->isNegative();
     }
     return false;
   }
 
   case CmpInst::ICMP_ULT:
   case CmpInst::ICMP_ULE: {
-    ConstantInt *CI;
+    const APInt *C;
 
     // LHS u<  LHS +_{nuw} C   if C != 0
     // LHS u<= LHS +_{nuw} C
-    if (match(RHS, m_NUWAdd(m_Specific(LHS), m_ConstantInt(CI)))) {
+    if (match(RHS, m_NUWAdd(m_Specific(LHS), m_APInt(C)))) {
       if (Pred == CmpInst::ICMP_ULT)
-        return !CI->isZero();
+        return C->isMinValue();
       return true;
     }
     return false;
