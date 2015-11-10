@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
     StaticExt = "a";
     SharedDir = ActiveBinDir;
     StaticDir = ActiveLibDir;
-    StaticPrefix = SharedPrefix = "";
+    StaticPrefix = SharedPrefix = "lib";
   } else if (HostTriple.isOSDarwin()) {
     SharedExt = "dylib";
     SharedVersionedExt = PACKAGE_VERSION ".dylib";
