@@ -5,88 +5,12 @@ target triple = "x86_64-unknown-linux-gnu"
 
 %struct.hoge = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [8 x [2 x i32]], [8 x [2 x i32]], [4 x [4 x i32]], i32, i32, i32, i32, [256 x i8], [256 x i8], [256 x i8], [256 x i8], [256 x i8], i32, i32, i32, i32, i32, i32, [500 x i8], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [256 x i8], [256 x i8], [256 x i8], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [1024 x i8], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, double, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [256 x i8], [256 x i8], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [256 x i8], i32, i32, i32*, i32*, i8*, i32*, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, double, double, double, [5 x double], i32, [8 x i32], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [6 x double], [6 x double], [256 x i8], i32, i32, i32, i32, [2 x [5 x i32]], [2 x [5 x i32]], i32, i32, i32, i32, i32, i32, i32, i32, i32, [3 x i32], i32 }
 
-; The assumed context of this test case is still very large and should be
-; reduced.
+; The assumed context of this test case has at some point become very complex.
+; This test case verifies that we bail out and generate an infeasible
+; assumed context. It should be updated after having made the assumed context
+; construction more efficient.
 
-; CHECK: Assumed Context:
-; CHECK-NEXT: [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { : }
-
-; This test case contains a long sequence of branch instructions together with
-; function calls that are considered 'error blocks'. We verify that the
-; iteration spaces are not overly complicated.
-
-; CHECK: Statements {
-; CHECK:   Stmt_bb15
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb15[] };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb15[] -> [0] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb15[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb19
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb19[] : tmp17 <= -1 or tmp17 >= 1 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb19[] -> [1] : tmp17 <= -1 or tmp17 >= 1 };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb19[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb24
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb24[] };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb24[] -> [2] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb24[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb29
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb29[] : tmp27 = 3 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb29[] -> [3] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb29[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb34
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb34[] };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb34[] -> [4] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb34[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb39
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb39[] : tmp37 <= -1 or tmp37 >= 1 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb39[] -> [5] : tmp37 <= -1 or tmp37 >= 1 };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb39[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb43
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb43[] : (tmp37 <= -1 and tmp41 <= -1) or (tmp37 <= -1 and tmp41 >= 1) or (tmp37 >= 1 and tmp41 <= -1) or (tmp37 >= 1 and tmp41 >= 1) };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb43[] -> [6] : (tmp37 <= -1 and tmp41 <= -1) or (tmp37 <= -1 and tmp41 >= 1) or (tmp37 >= 1 and tmp41 <= -1) or (tmp37 >= 1 and tmp41 >= 1) };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb43[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb49
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb49[] };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb49[] -> [7] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb49[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb54
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb54[] : tmp52 <= -1 or tmp52 >= 1 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb54[] -> [8] : tmp52 <= -1 or tmp52 >= 1 };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb54[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb59
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb59[] : tmp52 <= -1 or tmp52 >= 0 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb59[] -> [9] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb59[] -> MemRef_A[0] };
-
+; CHECK-NOT: Assumed Context:
 
 
 @global = external global [300 x i8], align 16

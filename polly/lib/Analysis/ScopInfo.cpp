@@ -2882,7 +2882,7 @@ void Scop::addAssumption(__isl_take isl_set *Set) {
   if (NSets >= MaxDisjunctsAssumed) {
     isl_space *Space = isl_set_get_space(AssumedContext);
     isl_set_free(AssumedContext);
-    AssumedContext = isl_set_universe(Space);
+    AssumedContext = isl_set_empty(Space);
   }
 
   AssumedContext = isl_set_coalesce(AssumedContext);
