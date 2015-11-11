@@ -647,7 +647,7 @@ _mm_add_epi32(__m128i __a, __m128i __b)
 static __inline__ __m64 __DEFAULT_FN_ATTRS
 _mm_add_si64(__m64 __a, __m64 __b)
 {
-  return __a + __b;
+  return (__m64)__builtin_ia32_paddq(__a, __b);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
@@ -779,7 +779,7 @@ _mm_sub_epi32(__m128i __a, __m128i __b)
 static __inline__ __m64 __DEFAULT_FN_ATTRS
 _mm_sub_si64(__m64 __a, __m64 __b)
 {
-  return __a - __b;
+  return (__m64)__builtin_ia32_psubq(__a, __b);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
