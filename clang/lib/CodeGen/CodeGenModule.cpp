@@ -2315,12 +2315,17 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::GlobalValue::LinkageTypes Linkage =
       getLLVMLinkageVarDefinition(D, GV->isConstant());
 
-  // On Darwin, the backing variable for a C++11 thread_local variable always
-  // has internal linkage; all accesses should just be calls to the
+  // On Darwin, if the normal linkage of a C++ thread_local variable is
+  // LinkOnce or Weak, we keep the normal linkage to prevent multiple
+  // copies within a linkage unit; otherwise, the backing variable has
+  // internal linkage and all accesses should just be calls to the
   // Itanium-specified entry point, which has the normal linkage of the
-  // variable.
+  // variable. This is to preserve the ability to change the implementation
+  // behind the scenes.
   if (!D->isStaticLocal() && D->getTLSKind() == VarDecl::TLS_Dynamic &&
-      Context.getTargetInfo().getTriple().isMacOSX())
+      Context.getTargetInfo().getTriple().isMacOSX() &&
+      !llvm::GlobalVariable::isLinkOnceLinkage(Linkage) &&
+      !llvm::GlobalVariable::isWeakLinkage(Linkage))
     Linkage = llvm::GlobalValue::InternalLinkage;
 
   GV->setLinkage(Linkage);
