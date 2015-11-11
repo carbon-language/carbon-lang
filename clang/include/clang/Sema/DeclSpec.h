@@ -301,6 +301,7 @@ public:
   static const TST TST_decltype_auto = clang::TST_decltype_auto;
   static const TST TST_underlyingType = clang::TST_underlyingType;
   static const TST TST_auto = clang::TST_auto;
+  static const TST TST_auto_type = clang::TST_auto_type;
   static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
   static const TST TST_atomic = clang::TST_atomic;
   static const TST TST_error = clang::TST_error;
@@ -512,7 +513,8 @@ public:
   void setTypeofParensRange(SourceRange range) { TypeofParensRange = range; }
 
   bool containsPlaceholderType() const {
-    return TypeSpecType == TST_auto || TypeSpecType == TST_decltype_auto;
+    return (TypeSpecType == TST_auto || TypeSpecType == TST_auto_type ||
+            TypeSpecType == TST_decltype_auto);
   }
 
   bool hasTagDefinition() const;

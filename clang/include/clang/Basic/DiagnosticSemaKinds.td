@@ -1664,18 +1664,22 @@ def warn_cxx98_compat_auto_type_specifier : Warning<
   "'auto' type specifier is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_auto_variable_cannot_appear_in_own_initializer : Error<
-  "variable %0 declared with 'auto' type cannot appear in its own initializer">;
+  "variable %0 declared with %select{'auto'|'decltype(auto)'|'__auto_type'}1 "
+  "type cannot appear in its own initializer">;
 def err_illegal_decl_array_of_auto : Error<
   "'%0' declared as array of %1">;
 def err_new_array_of_auto : Error<
   "cannot allocate array of 'auto'">;
 def err_auto_not_allowed : Error<
-  "%select{'auto'|'decltype(auto)'}0 not allowed %select{in function prototype"
-  "|in non-static struct member"
-  "|in non-static union member|in non-static class member|in interface member"
+  "%select{'auto'|'decltype(auto)'|'__auto_type'}0 not allowed "
+  "%select{in function prototype"
+  "|in non-static struct member|in struct member"
+  "|in non-static union member|in union member"
+  "|in non-static class member|in interface member"
   "|in exception declaration|in template parameter|in block literal"
   "|in template argument|in typedef|in type alias|in function return type"
-  "|in conversion function type|here|in lambda parameter}1">;
+  "|in conversion function type|here|in lambda parameter"
+  "|in type allocated by 'new'|in K&R-style function parameter}1">;
 def err_auto_not_allowed_var_inst : Error<
   "'auto' variable template instantiation is not allowed">;
 def err_auto_var_requires_init : Error<
@@ -1709,8 +1713,8 @@ def err_auto_var_deduction_failure_from_init_list : Error<
 def err_auto_new_deduction_failure : Error<
   "new expression for type %0 has incompatible constructor argument of type %1">;
 def err_auto_different_deductions : Error<
-  "'%select{auto|decltype(auto)}0' deduced as %1 in declaration of %2 and "
-  "deduced as %3 in declaration of %4">;
+  "'%select{auto|decltype(auto)|__auto_type}0' deduced as %1 in declaration "
+  "of %2 and deduced as %3 in declaration of %4">;
 def err_implied_std_initializer_list_not_found : Error<
   "cannot deduce type of initializer list because std::initializer_list was "
   "not found; include <initializer_list>">;
@@ -1720,6 +1724,10 @@ def warn_dangling_std_initializer_list : Warning<
   "array backing the initializer list will be destroyed at the end of "
   "%select{the full-expression|the constructor}0">,
   InGroup<DiagGroup<"dangling-initializer-list">>;
+def err_auto_init_list_from_c : Error<
+  "cannot use __auto_type with initializer list in C">;
+def err_auto_bitfield : Error<
+  "cannot pass bit-field as __auto_type initializer in C">;
 
 // C++1y decltype(auto) type
 def err_decltype_auto_cannot_be_combined : Error<
@@ -4812,8 +4820,8 @@ def err_sizeof_alignof_function_type : Error<
   "function type">;
 def err_openmp_default_simd_align_expr : Error<
   "invalid application of '__builtin_omp_required_simd_align' to an expression, only type is allowed">;
-def err_sizeof_alignof_bitfield : Error<
-  "invalid application of '%select{sizeof|alignof}0' to bit-field">;
+def err_sizeof_alignof_typeof_bitfield : Error<
+  "invalid application of '%select{sizeof|alignof|typeof}0' to bit-field">;
 def err_alignof_member_of_incomplete_type : Error<
   "invalid application of 'alignof' to a field of a class still being defined">;
 def err_vecstep_non_scalar_vector_type : Error<

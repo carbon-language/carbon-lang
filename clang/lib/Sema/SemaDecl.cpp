@@ -111,6 +111,7 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
   case tok::kw_wchar_t:
   case tok::kw_bool:
   case tok::kw___underlying_type:
+  case tok::kw___auto_type:
     return true;
 
   case tok::annot_typename:
@@ -5765,7 +5766,10 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     NewVD = VarDecl::Create(Context, DC, D.getLocStart(),
                             D.getIdentifierLoc(), II,
                             R, TInfo, SC);
-  
+
+    if (D.getDeclSpec().containsPlaceholderType() && R->getContainedAutoType())
+      ParsingInitForAutoVars.insert(NewVD);
+
     if (D.isInvalidType())
       NewVD->setInvalidDecl();
   } else {
@@ -10243,7 +10247,7 @@ Sema::BuildDeclaratorGroup(MutableArrayRef<Decl *> Group,
           } else if (DeducedCanon != UCanon) {
             Diag(D->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),
                  diag::err_auto_different_deductions)
-              << (AT->isDecltypeAuto() ? 1 : 0)
+              << (unsigned)AT->getKeyword()
               << Deduced << DeducedDecl->getDeclName()
               << U << D->getDeclName()
               << DeducedDecl->getInit()->getSourceRange()

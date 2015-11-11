@@ -299,6 +299,9 @@ def ext_decltype_auto_type_specifier : ExtWarn<
 def warn_cxx11_compat_decltype_auto_type_specifier : Warning<
   "'decltype(auto)' type specifier is incompatible with C++ standards before "
   "C++14">, InGroup<CXXPre14Compat>, DefaultIgnore;
+def ext_auto_type : Extension<
+  "'__auto_type' is a GNU extension">,
+  InGroup<GNUAutoType>;
 def ext_for_range : ExtWarn<
   "range-based for loop is a C++11 extension">, InGroup<CXX11>;
 def warn_cxx98_compat_for_range : Warning<
