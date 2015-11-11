@@ -24,35 +24,27 @@ namespace symbolize {
 static const char kDILineInfoBadString[] = "<invalid>";
 static const char kBadString[] = "??";
 
-void DIPrinter::printName(const DILineInfo &Info, bool Inlined) {
+DIPrinter &DIPrinter::operator<<(const DILineInfo &Info) {
   if (PrintFunctionNames) {
     std::string FunctionName = Info.FunctionName;
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kBadString;
-
-    StringRef Delimiter = (PrintPretty == true) ? " at " : "\n";
-    StringRef Prefix = (PrintPretty && Inlined) ? " (inlined by) " : "";
-    OS << Prefix << FunctionName << Delimiter;
+    OS << FunctionName << "\n";
   }
   std::string Filename = Info.FileName;
   if (Filename == kDILineInfoBadString)
     Filename = kBadString;
   OS << Filename << ":" << Info.Line << ":" << Info.Column << "\n";
-}
-
-DIPrinter &DIPrinter::operator<<(const DILineInfo &Info) {
-  printName(Info, false);
   return *this;
 }
 
 DIPrinter &DIPrinter::operator<<(const DIInliningInfo &Info) {
   uint32_t FramesNum = Info.getNumberOfFrames();
-  if (FramesNum == 0) {
-    printName(DILineInfo(), false);
-    return *this;
+  if (FramesNum == 0)
+    return (*this << DILineInfo());
+  for (uint32_t i = 0; i < FramesNum; i++) {
+    *this << Info.getFrame(i);
   }
-  for (uint32_t i = 0; i < FramesNum; i++)
-    printName(Info.getFrame(i), i > 0);
   return *this;
 }
 
