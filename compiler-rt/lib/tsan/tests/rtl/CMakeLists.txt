@@ -8,7 +8,7 @@ set(TSAN_RTL_TEST_SOURCES
   tsan_thread.cc)
 
 if(UNIX)
-  list(APPEND TSAN_RTL_TEST_SOURCES tsan_test_util_linux.cc)
+  list(APPEND TSAN_RTL_TEST_SOURCES tsan_test_util_posix.cc)
 endif()
 
 set(TSAN_RTL_TEST_HEADERS
