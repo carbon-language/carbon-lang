@@ -3235,20 +3235,18 @@ mapToDimension(__isl_take isl_union_set *Domain, int N) {
   return isl_multi_union_pw_aff_from_union_pw_multi_aff(Data.Res);
 }
 
-ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R) {
-  ScopStmt *Stmt;
+void Scop::addScopStmt(BasicBlock *BB, Region *R) {
   if (BB) {
     Stmts.emplace_back(*this, *BB);
-    Stmt = &Stmts.back();
+    auto Stmt = &Stmts.back();
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either basic block or a region expected.");
     Stmts.emplace_back(*this, *R);
-    Stmt = &Stmts.back();
+    auto Stmt = &Stmts.back();
     for (BasicBlock *BB : R->blocks())
       StmtMap[BB] = Stmt;
   }
-  return Stmt;
 }
 
 void Scop::buildSchedule(
