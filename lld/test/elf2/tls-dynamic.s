@@ -18,9 +18,7 @@
   .align 4
 a:
 	.long	0
-  
-  .global	b
-  .hidden b
+
 	.section	.tbss,"awT",@nobits
   .align 4
 b:

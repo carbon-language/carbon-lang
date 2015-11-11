@@ -719,11 +719,16 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
   if (!Sym)
     error("Unsupported relocation without symbol");
 
+  InputSectionBase<ELFT> *Section = File.getSection(*Sym);
+
+  if (Sym->getType() == STT_TLS)
+    return (Section->OutSec->getVA() + Section->getOffset(*Sym) + Addend) -
+           Out<ELF64LE>::TlsPhdr->p_vaddr;
+
   // According to the ELF spec reference to a local symbol from outside
   // the group are not allowed. Unfortunately .eh_frame breaks that rule
   // and must be treated specially. For now we just replace the symbol with
   // 0.
-  InputSectionBase<ELFT> *Section = File.getSection(*Sym);
   if (Section == &InputSection<ELFT>::Discarded || !Section->isLive())
     return Addend;
 
