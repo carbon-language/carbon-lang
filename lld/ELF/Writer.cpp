@@ -489,8 +489,12 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       // mapping from input to output.
       auto *IS = dyn_cast<InputSection<ELFT>>(C);
       uintX_t EntSize = IS ? 0 : H->sh_entsize;
+      uint32_t OutType = H->sh_type;
+      if (OutType == SHT_PROGBITS && C->getSectionName() == ".eh_frame" &&
+          Config->EMachine == EM_X86_64)
+        OutType = SHT_X86_64_UNWIND;
       SectionKey<ELFT::Is64Bits> Key{getOutputName(C->getSectionName()),
-                                     H->sh_type, OutFlags, EntSize};
+                                     OutType, OutFlags, EntSize};
       OutputSectionBase<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         if (IS)
