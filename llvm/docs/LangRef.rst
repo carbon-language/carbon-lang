@@ -1488,6 +1488,27 @@ operand bundle to not miscompile programs containing it.
   of the called function.  Inter-procedural optimizations work as
   usual as long as they take into account the first two properties.
 
+More specific types of operand bundles are described below.
+
+Deoptimization Operand Bundles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deoptimization operand bundles are characterized by the ``"deopt``
+operand bundle tag.  These operand bundles represent an alternate
+"safe" continuation for the call site they're attached to, and can be
+used by a suitable runtime to deoptimize the compiled frame at the
+specified call site.  Exact details of deoptimization is out of scope
+for the language reference, but it usually involves rewriting a
+compiled frame into a set of interpreted frames.
+
+From the compiler's perspective, deoptimization operand bundles make
+the call sites they're attached to at least ``readonly``.  They read
+through all of their pointer typed operands (even if they're not
+otherwise escaped) and the entire visible heap.  Deoptimization
+operand bundles do not capture their operands except during
+deoptimization, in which case control will not be returned to the
+compiled frame.
+
 .. _moduleasm:
 
 Module-Level Inline Assembly
