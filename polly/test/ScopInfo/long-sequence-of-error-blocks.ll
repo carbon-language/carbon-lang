@@ -9,7 +9,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; reduced.
 
 ; CHECK: Assumed Context:
-; CHECK: {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}} or
+; CHECK: {{.*}} or {{.*}} or {{.*}} or {{.*}} or {{.*}}
 
 ; This test case contains a long sequence of branch instructions together with
 ; function calls that are considered 'error blocks'. We verify that the
@@ -18,75 +18,32 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: Statements {
 ; CHECK:   Stmt_bb15
 ; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb15[] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb15[] };
 ; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb15[] -> [0] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb15[] -> [0] };
 ; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb15[] -> MemRef_A[0] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb15[] -> MemRef_A[0] };
 ; CHECK:   Stmt_bb19
 ; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb19[] : tmp17 <= -1 or tmp17 >= 1 };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb19[] : tmp17 <= -1 or tmp17 >= 1 };
 ; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb19[] -> [1] : tmp17 <= -1 or tmp17 >= 1 };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb19[] -> [1] : tmp17 <= -1 or tmp17 >= 1 };
 ; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb19[] -> MemRef_A[0] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb19[] -> MemRef_A[0] };
 ; CHECK:   Stmt_bb24
 ; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb24[] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb24[] };
 ; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb24[] -> [2] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb24[] -> [2] };
 ; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb24[] -> MemRef_A[0] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb24[] -> MemRef_A[0] };
 ; CHECK:   Stmt_bb29
 ; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb29[] : tmp27 = 3 };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb29[] : tmp27 = 3 };
 ; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb29[] -> [3] };
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb29[] -> [3] };
 ; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb29[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb34
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb34[] };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb34[] -> [4] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb34[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb39
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb39[] : tmp37 <= -1 or tmp37 >= 1 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb39[] -> [5] : tmp37 <= -1 or tmp37 >= 1 };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb39[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb43
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb43[] : (tmp37 <= -1 and tmp41 <= -1) or (tmp37 <= -1 and tmp41 >= 1) or (tmp37 >= 1 and tmp41 <= -1) or (tmp37 >= 1 and tmp41 >= 1) };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb43[] -> [6] : (tmp37 <= -1 and tmp41 <= -1) or (tmp37 <= -1 and tmp41 >= 1) or (tmp37 >= 1 and tmp41 <= -1) or (tmp37 >= 1 and tmp41 >= 1) };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb43[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb49
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb49[] };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb49[] -> [7] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb49[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb54
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb54[] : tmp52 <= -1 or tmp52 >= 1 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb54[] -> [8] : tmp52 <= -1 or tmp52 >= 1 };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb54[] -> MemRef_A[0] };
-; CHECK:   Stmt_bb59
-; CHECK:         Domain :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb59[] : tmp52 <= -1 or tmp52 >= 0 };
-; CHECK:         Schedule :=
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb59[] -> [9] };
-; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:             [tmp17, tmp21, tmp27, tmp31, tmp37, tmp41, tmp46, tmp52, tmp56, tmp62] -> { Stmt_bb59[] -> MemRef_A[0] };
-
+; CHECK:             [tmp17, tmp21, tmp27, tmp31] -> { Stmt_bb29[] -> MemRef_A[0] };
 
 
 @global = external global [300 x i8], align 16
@@ -143,63 +100,6 @@ bb33:                                             ; preds = %bb29
   br label %bb34
 
 bb34:                                             ; preds = %bb33, %bb29, %bb24
-  %tmp35 = load %struct.hoge*, %struct.hoge** @global1, align 8, !tbaa !1
-  store float 1.0, float* %A
-  %tmp36 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp35, i64 0, i32 40
-  %tmp37 = load i32, i32* %tmp36, align 8, !tbaa !12
-  %tmp38 = icmp eq i32 %tmp37, 0
-  br i1 %tmp38, label %bb49, label %bb39
-
-bb39:                                             ; preds = %bb34
-  %tmp40 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp35, i64 0, i32 46
-  store float 1.0, float* %A
-  %tmp41 = load i32, i32* %tmp40, align 8, !tbaa !13
-  %tmp42 = icmp eq i32 %tmp41, 0
-  br i1 %tmp42, label %bb49, label %bb43
-
-bb43:                                             ; preds = %bb39
-  %tmp44 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp35, i64 0, i32 7
-  store float 1.0, float* %A
-  %tmp45 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp35, i64 0, i32 48
-  %tmp46 = load i32, i32* %tmp45, align 8, !tbaa !14
-  %tmp47 = icmp slt i32 0, %tmp46
-  br i1 %tmp47, label %bb48, label %bb49
-
-bb48:                                             ; preds = %bb43
-  call void @widget() #3
-  br label %bb49
-
-bb49:                                             ; preds = %bb48, %bb43, %bb39, %bb34
-  store float 1.0, float* %A
-  %tmp50 = load %struct.hoge*, %struct.hoge** @global1, align 8, !tbaa !1
-  %tmp51 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp50, i64 0, i32 198
-  %tmp52 = load i32, i32* %tmp51, align 8, !tbaa !15
-  %tmp53 = icmp eq i32 %tmp52, 0
-  br i1 %tmp53, label %bb59, label %bb54
-
-bb54:                                             ; preds = %bb49
-  store float 1.0, float* %A
-  %tmp55 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp50, i64 0, i32 16
-  %tmp56 = load i32, i32* %tmp55, align 8, !tbaa !10
-  %tmp57 = icmp eq i32 %tmp56, 0
-  br i1 %tmp57, label %bb58, label %bb59
-
-bb58:                                             ; preds = %bb54
-  call void (i8*, i64, i8*, ...) @quux(i8* getelementptr inbounds ([300 x i8], [300 x i8]* @global, i64 0, i64 0), i64 300, i8* getelementptr inbounds ([57 x i8], [57 x i8]* @global3, i64 0, i64 0)) #3
-  br label %bb59
-
-bb59:                                             ; preds = %bb58, %bb54, %bb49
-  store float 1.0, float* %A
-  %tmp60 = load %struct.hoge*, %struct.hoge** @global1, align 8, !tbaa !1
-  %tmp61 = getelementptr inbounds %struct.hoge, %struct.hoge* %tmp60, i64 0, i32 31
-  %tmp62 = load i32, i32* %tmp61, align 4, !tbaa !16
-  %tmp63 = icmp eq i32 %tmp62, 0
-  br i1 %tmp63, label %bb65, label %bb64
-
-bb64:                                             ; preds = %bb59
-  br label %bb65
-
-bb65:                                             ; preds = %bb64, %bb59
   ret void
 }
 
