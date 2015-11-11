@@ -323,6 +323,7 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   case R_X86_64_PC8:
   case R_X86_64_PLT32:
   case R_X86_64_DTPOFF32:
+  case R_X86_64_DTPOFF64:
     return true;
   }
 }
@@ -337,6 +338,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     write32le(Loc, SA - P);
     break;
   case R_X86_64_64:
+  case R_X86_64_DTPOFF64:
     write64le(Loc, SA);
     break;
   case R_X86_64_32:

@@ -10,6 +10,7 @@
   callq __tls_get_addr@PLT
   leaq  a@dtpoff(%rax), %rcx
   leaq  b@dtpoff(%rax), %rcx
+  .long	b@dtpoff, 0
 
   .global	a
   .hidden a
@@ -54,3 +55,7 @@ b:
 // DIS-NEXT:     1013: {{.+}} callq
 // DIS-NEXT:     1018: {{.+}} leaq    (%rax), %rcx
 // DIS-NEXT:     101f: {{.+}} leaq    4(%rax), %rcx
+// DIS-NEXT:     1026: 04 00
+// DIS-NEXT:     1028: 00 00
+// DIS-NEXT:     102a: 00 00
+// DIS-NEXT:     102c: 00 00
