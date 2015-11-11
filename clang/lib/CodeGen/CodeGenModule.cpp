@@ -2323,7 +2323,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // variable. This is to preserve the ability to change the implementation
   // behind the scenes.
   if (!D->isStaticLocal() && D->getTLSKind() == VarDecl::TLS_Dynamic &&
-      Context.getTargetInfo().getTriple().isMacOSX() &&
+      Context.getTargetInfo().getTriple().isOSDarwin() &&
       !llvm::GlobalVariable::isLinkOnceLinkage(Linkage) &&
       !llvm::GlobalVariable::isWeakLinkage(Linkage))
     Linkage = llvm::GlobalValue::InternalLinkage;
