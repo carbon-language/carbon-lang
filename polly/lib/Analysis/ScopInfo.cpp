@@ -1597,8 +1597,10 @@ void Scop::buildBoundaryContext() {
 
   BoundaryContext = isl_set_complement(BoundaryContext);
 
-  if (isl_ctx_last_error(getIslCtx()) == isl_error_quota)
+  if (isl_ctx_last_error(getIslCtx()) == isl_error_quota) {
+    isl_set_free(BoundaryContext);
     BoundaryContext = isl_set_empty(getParamSpace());
+  }
 
   isl_options_set_on_error(getIslCtx(), ISL_ON_ERROR_ABORT);
   isl_ctx_reset_operations(getIslCtx());
