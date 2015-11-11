@@ -75,7 +75,7 @@ struct AsanInterceptorContext {
       }                                                                 \
       if (!suppressed) {                                                \
         GET_CURRENT_PC_BP_SP;                                           \
-        __asan_report_error(pc, bp, sp, __bad, isWrite, __size, 0);     \
+        ReportGenericError(pc, bp, sp, __bad, isWrite, __size, 0, false);\
       }                                                                 \
     }                                                                   \
   } while (0)

@@ -134,3 +134,6 @@ ASAN_FLAG(int, detect_odr_violation, 2,
 ASAN_FLAG(bool, dump_instruction_bytes, false,
           "If true, dump 16 bytes starting at the instruction that caused SEGV")
 ASAN_FLAG(const char *, suppressions, "", "Suppressions file name.")
+ASAN_FLAG(bool, halt_on_error, true,
+          "Crash the program after printing the first error report "
+          "(WARNING: USE AT YOUR OWN RISK!)")
