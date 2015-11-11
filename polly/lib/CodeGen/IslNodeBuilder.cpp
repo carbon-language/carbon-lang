@@ -819,6 +819,7 @@ bool IslNodeBuilder::materializeValue(isl_id *Id) {
   // If the Id is already mapped, skip it.
   if (!IDToValue.count(Id)) {
     auto *ParamSCEV = (const SCEV *)isl_id_get_user(Id);
+    Value *V = nullptr;
 
     // Parameters could refere to invariant loads that need to be
     // preloaded before we can generate code for the parameter. Thus,
@@ -827,13 +828,22 @@ bool IslNodeBuilder::materializeValue(isl_id *Id) {
     SetVector<Value *> Values;
     findValues(ParamSCEV, Values);
     for (auto *Val : Values)
-      if (const auto *IAClass = S.lookupInvariantEquivClass(Val))
+      if (const auto *IAClass = S.lookupInvariantEquivClass(Val)) {
+
+        // Check if this invariant access class is empty, hence if we never
+        // actually added a loads instruction to it. In that case it has no
+        // (meaningful) users and we should not try to code generate it.
+        if (std::get<1>(*IAClass).empty())
+          V = UndefValue::get(ParamSCEV->getType());
+
         if (!preloadInvariantEquivClass(*IAClass)) {
           isl_id_free(Id);
           return false;
         }
+      }
 
-    auto *V = generateSCEV(ParamSCEV);
+    if (!V)
+      V = generateSCEV(ParamSCEV);
     IDToValue[Id] = V;
   }
 
@@ -947,7 +957,9 @@ bool IslNodeBuilder::preloadInvariantEquivClass(
   // elements of the class to the one preloaded load as they are referenced
   // during the code generation and therefor need to be mapped.
   const MemoryAccessList &MAs = std::get<1>(IAClass);
-  assert(!MAs.empty());
+  if (MAs.empty())
+    return true;
+
   MemoryAccess *MA = MAs.front();
   assert(MA->isExplicit() && MA->isRead());
 
