@@ -71,6 +71,8 @@ PythonObject::GetObjectType() const
         return PyObjectType::Module;
     if (PythonList::Check(m_py_obj))
         return PyObjectType::List;
+    if (PythonTuple::Check(m_py_obj))
+        return PyObjectType::Tuple;
     if (PythonDictionary::Check(m_py_obj))
         return PyObjectType::Dictionary;
     if (PythonString::Check(m_py_obj))
@@ -79,6 +81,8 @@ PythonObject::GetObjectType() const
         return PyObjectType::Integer;
     if (PythonFile::Check(m_py_obj))
         return PyObjectType::File;
+    if (PythonCallable::Check(m_py_obj))
+        return PyObjectType::Callable;
     return PyObjectType::Unknown;
 }
 
@@ -105,9 +109,20 @@ PythonObject::Str() const
 }
 
 PythonObject
-PythonObject::ResolveNameGlobal(llvm::StringRef name)
+PythonObject::ResolveNameWithDictionary(llvm::StringRef name, PythonDictionary dict)
 {
-    return PythonModule::MainModule().ResolveName(name);
+    size_t dot_pos = name.find_first_of('.');
+    llvm::StringRef piece = name.substr(0, dot_pos);
+    PythonObject result = dict.GetItemForKey(PythonString(piece));
+    if (dot_pos == llvm::StringRef::npos)
+    {
+        // There was no dot, we're done.
+        return result;
+    }
+
+    // There was a dot.  The remaining portion of the name should be looked up in
+    // the context of the object that was found in the dictionary.
+    return result.ResolveName(name.substr(dot_pos + 1));
 }
 
 PythonObject
@@ -128,7 +143,7 @@ PythonObject::ResolveName(llvm::StringRef name) const
     if (dot_pos == llvm::StringRef::npos)
     {
         // No dots in the name, we should be able to find the value immediately
-        // as an attribute of `use_object`.
+        // as an attribute of `m_py_obj`.
         return GetAttributeValue(name);
     }
 
@@ -545,6 +560,132 @@ PythonList::CreateStructuredArray() const
 }
 
 //----------------------------------------------------------------------
+// PythonTuple
+//----------------------------------------------------------------------
+
+PythonTuple::PythonTuple(PyInitialValue value)
+    : PythonObject()
+{
+    if (value == PyInitialValue::Empty)
+        Reset(PyRefType::Owned, PyTuple_New(0));
+}
+
+PythonTuple::PythonTuple(int tuple_size)
+    : PythonObject()
+{
+    Reset(PyRefType::Owned, PyTuple_New(tuple_size));
+}
+
+PythonTuple::PythonTuple(PyRefType type, PyObject *py_obj)
+    : PythonObject()
+{
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a tuple
+}
+
+PythonTuple::PythonTuple(const PythonTuple &tuple)
+    : PythonObject(tuple)
+{
+}
+
+PythonTuple::PythonTuple(std::initializer_list<PythonObject> objects)
+{
+    m_py_obj = PyTuple_New(objects.size());
+
+    uint32_t idx = 0;
+    for (auto object : objects)
+    {
+        if (object.IsValid())
+            SetItemAtIndex(idx, object);
+        idx++;
+    }
+}
+
+PythonTuple::PythonTuple(std::initializer_list<PyObject*> objects)
+{
+    m_py_obj = PyTuple_New(objects.size());
+
+    uint32_t idx = 0;
+    for (auto py_object : objects)
+    {
+        PythonObject object(PyRefType::Borrowed, py_object);
+        if (object.IsValid())
+            SetItemAtIndex(idx, object);
+        idx++;
+    }
+}
+
+PythonTuple::~PythonTuple()
+{
+}
+
+bool
+PythonTuple::Check(PyObject *py_obj)
+{
+    if (!py_obj)
+        return false;
+    return PyTuple_Check(py_obj);
+}
+
+void
+PythonTuple::Reset(PyRefType type, PyObject *py_obj)
+{
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
+    if (!PythonTuple::Check(py_obj))
+    {
+        PythonObject::Reset();
+        return;
+    }
+
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
+}
+
+uint32_t
+PythonTuple::GetSize() const
+{
+    if (IsValid())
+        return PyTuple_GET_SIZE(m_py_obj);
+    return 0;
+}
+
+PythonObject
+PythonTuple::GetItemAtIndex(uint32_t index) const
+{
+    if (IsValid())
+        return PythonObject(PyRefType::Borrowed, PyTuple_GetItem(m_py_obj, index));
+    return PythonObject();
+}
+
+void
+PythonTuple::SetItemAtIndex(uint32_t index, const PythonObject &object)
+{
+    if (IsAllocated() && object.IsValid())
+    {
+        // PyTuple_SetItem is documented to "steal" a reference, so we need to
+        // convert it to an owned reference by incrementing it.
+        Py_INCREF(object.get());
+        PyTuple_SetItem(m_py_obj, index, object.get());
+    }
+}
+
+StructuredData::ArraySP
+PythonTuple::CreateStructuredArray() const
+{
+    StructuredData::ArraySP result(new StructuredData::Array);
+    uint32_t count = GetSize();
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        PythonObject obj = GetItemAtIndex(i);
+        result->AddItem(obj.CreateStructuredObject());
+    }
+    return result;
+}
+
+//----------------------------------------------------------------------
 // PythonDictionary
 //----------------------------------------------------------------------
 
@@ -662,9 +803,26 @@ PythonModule::~PythonModule()
 }
 
 PythonModule
+PythonModule::BuiltinsModule()
+{
+#if PY_MAJOR_VERSION >= 3
+    return AddModule("builtins");
+#else
+    return AddModule("__builtin__");
+#endif
+}
+
+PythonModule
 PythonModule::MainModule()
 {
-    return PythonModule(PyRefType::Borrowed, PyImport_AddModule("__main__"));
+    return AddModule("__main__");
+}
+
+PythonModule
+PythonModule::AddModule(llvm::StringRef module)
+{
+    std::string str = module.str();
+    return PythonModule(PyRefType::Borrowed, PyImport_AddModule(str.c_str()));
 }
 
 bool
@@ -698,6 +856,95 @@ PythonDictionary
 PythonModule::GetDictionary() const
 {
     return PythonDictionary(PyRefType::Borrowed, PyModule_GetDict(m_py_obj));
+}
+
+PythonCallable::PythonCallable() : PythonObject()
+{
+}
+
+PythonCallable::PythonCallable(PyRefType type, PyObject *py_obj)
+{
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a callable
+}
+
+PythonCallable::PythonCallable(const PythonCallable &callable)
+    : PythonObject(callable)
+{
+}
+
+PythonCallable::~PythonCallable()
+{
+}
+
+bool
+PythonCallable::Check(PyObject *py_obj)
+{
+    if (!py_obj)
+        return false;
+
+    return PyCallable_Check(py_obj);
+}
+
+void
+PythonCallable::Reset(PyRefType type, PyObject *py_obj)
+{
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
+    if (!PythonCallable::Check(py_obj))
+    {
+        PythonObject::Reset();
+        return;
+    }
+
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
+}
+
+
+void
+PythonCallable::GetNumArguments(size_t &num_args, bool &has_varargs, bool &has_kwargs) const
+{
+    num_args = 0;
+    has_varargs = false;
+    has_kwargs = false;
+    if (!IsValid())
+        return;
+
+    PyObject *py_func_obj = m_py_obj;
+    if (PyMethod_Check(py_func_obj))
+        py_func_obj = PyMethod_GET_FUNCTION(py_func_obj);
+
+    if (!py_func_obj)
+        return;
+
+    PyCodeObject* code = (PyCodeObject*)PyFunction_GET_CODE(py_func_obj);
+    if (!code)
+        return;
+
+    num_args = code->co_argcount;
+    if (code->co_flags & CO_VARARGS)
+        has_varargs = true;
+    if (code->co_flags & CO_VARKEYWORDS)
+        has_kwargs = true;
+}
+
+PythonObject
+PythonCallable::operator ()(std::initializer_list<PyObject*> args)
+{
+    PythonTuple arg_tuple(args);
+    return PythonObject(PyRefType::Owned,
+        PyObject_CallObject(m_py_obj, arg_tuple.get()));
+}
+
+PythonObject
+PythonCallable::operator ()(std::initializer_list<PythonObject> args)
+{
+    PythonTuple arg_tuple(args);
+    return PythonObject(PyRefType::Owned,
+        PyObject_CallObject(m_py_obj, arg_tuple.get()));
 }
 
 PythonFile::PythonFile()
