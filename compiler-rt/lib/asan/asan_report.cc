@@ -1002,13 +1002,8 @@ void ReportMacCfReallocUnknown(uptr addr, uptr zone_ptr, const char *zone_name,
   DescribeHeapAddress(addr, 1);
 }
 
-} // namespace __asan
-
-// --------------------------- Interface --------------------- {{{1
-using namespace __asan;  // NOLINT
-
-void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
-                         uptr access_size, u32 exp) {
+void ReportGenericError(uptr pc, uptr bp, uptr sp, uptr addr, bool is_write,
+                        uptr access_size, u32 exp, bool fatal) {
   ENABLE_FRAME_POINTER;
 
   // Optimization experiments.
