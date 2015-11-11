@@ -42,9 +42,9 @@ private:
   void copyLocalSymbols();
   void createSections();
   template <bool isRela>
-  void scanRelocs(const InputSection<ELFT> &C,
+  void scanRelocs(InputSection<ELFT> &C,
                   iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
-  void scanRelocs(const InputSection<ELFT> &C);
+  void scanRelocs(InputSection<ELFT> &C);
   void assignAddresses();
   void openFile(StringRef OutputPath);
   void writeHeader();
@@ -181,7 +181,7 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 template <class ELFT>
 template <bool isRela>
 void Writer<ELFT>::scanRelocs(
-    const InputSection<ELFT> &C,
+    InputSection<ELFT> &C,
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   const ObjectFile<ELFT> &File = *C.getFile();
@@ -254,8 +254,7 @@ void Writer<ELFT>::scanRelocs(
   }
 }
 
-template <class ELFT>
-void Writer<ELFT>::scanRelocs(const InputSection<ELFT> &C) {
+template <class ELFT> void Writer<ELFT>::scanRelocs(InputSection<ELFT> &C) {
   ObjectFile<ELFT> *File = C.getFile();
   ELFFile<ELFT> &EObj = File->getObj();
 
