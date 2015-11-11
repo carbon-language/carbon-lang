@@ -19,12 +19,6 @@
 
 namespace __tsan {
 
-#if SANITIZER_MAC
-static const char *const kInterposedFunctionPrefix = "wrap_";
-#else
-static const char *const kInterposedFunctionPrefix = "__interceptor_";
-#endif
-
 ReportStack::ReportStack() : frames(nullptr), suppressable(false) {}
 
 ReportStack *ReportStack::New() {
@@ -116,6 +110,12 @@ static const char *ReportTypeString(ReportType typ) {
     return "lock-order-inversion (potential deadlock)";
   return "";
 }
+
+#if SANITIZER_MAC
+static const char *const kInterposedFunctionPrefix = "wrap_";
+#else
+static const char *const kInterposedFunctionPrefix = "__interceptor_";
+#endif
 
 void PrintStack(const ReportStack *ent) {
   if (ent == 0 || ent->frames == 0) {
