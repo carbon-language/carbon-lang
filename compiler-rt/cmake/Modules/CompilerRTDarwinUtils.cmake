@@ -258,9 +258,10 @@ endfunction()
 macro(darwin_add_builtin_libraries)
   set(DARWIN_EXCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Darwin-excludes)
 
-  set(CMAKE_C_FLAGS "-O3 -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
-  set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
-  set(CMAKE_ASM_FLAGS ${CMAKE_C_FLAGS})
+  set(CFLAGS "-O3 -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
+  set(CMAKE_C_FLAGS "")
+  set(CMAKE_CXX_FLAGS "")
+  set(CMAKE_ASM_FLAGS "")
 
   set(PROFILE_SOURCES ../profile/InstrProfiling 
                       ../profile/InstrProfilingBuffer
@@ -281,7 +282,7 @@ macro(darwin_add_builtin_libraries)
                               OS ${os}
                               ARCH ${arch}
                               SOURCES ${filtered_sources}
-                              CFLAGS -arch ${arch}
+                              CFLAGS ${CFLAGS} -arch ${arch}
                               PARENT_TARGET builtins)
     endforeach()
 
@@ -304,7 +305,7 @@ macro(darwin_add_builtin_libraries)
                                 OS ${os}
                                 ARCH ${arch}
                                 SOURCES ${filtered_sources} ${PROFILE_SOURCES}
-                                CFLAGS -arch ${arch} -mkernel
+                                CFLAGS ${CFLAGS} -arch ${arch} -mkernel
                                 DEFS KERNEL_USE
                                 PARENT_TARGET builtins)
       endforeach()
@@ -358,9 +359,10 @@ macro(darwin_add_embedded_builtin_libraries)
 
   set(MACHO_SYM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/macho_embedded)
 
-  set(CMAKE_C_FLAGS "-Oz -Wall -fomit-frame-pointer -ffreestanding")
-  set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
-  set(CMAKE_ASM_FLAGS ${CMAKE_C_FLAGS})
+  set(CFLAGS "-Oz -Wall -fomit-frame-pointer -ffreestanding")
+  set(CMAKE_C_FLAGS "")
+  set(CMAKE_CXX_FLAGS "")
+  set(CMAKE_ASM_FLAGS "")
 
   set(SOFT_FLOAT_FLAG -mfloat-abi=soft)
   set(HARD_FLOAT_FLAG -mfloat-abi=hard)
@@ -421,7 +423,7 @@ macro(darwin_add_embedded_builtin_libraries)
                               OS macho_embedded
                               ARCH ${arch}
                               SOURCES ${${arch}_filtered_sources}
-                              CFLAGS -arch ${arch} ${${type}_FLAG} ${float_flag} ${CFLAGS_${arch}}
+                              CFLAGS ${CFLAGS} -arch ${arch} ${${type}_FLAG} ${float_flag} ${CFLAGS_${arch}}
                               PARENT_TARGET builtins)
       endforeach()
       foreach(lib ${macho_embedded_${lib_suffix}_libs})
