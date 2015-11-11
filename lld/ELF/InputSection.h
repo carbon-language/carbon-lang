@@ -64,6 +64,11 @@ public:
   }
 
   uintX_t getOffset(const Elf_Sym &Sym);
+
+  // Translate an offset in the input section to an offset in the output
+  // section.
+  uintX_t getOffset(uintX_t Offset);
+
   ArrayRef<uint8_t> getSectionData() const;
 
   // Returns a section that Rel is pointing to. Used by the garbage collector.

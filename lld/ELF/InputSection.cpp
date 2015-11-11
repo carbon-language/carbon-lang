@@ -43,10 +43,19 @@ ArrayRef<uint8_t> InputSectionBase<ELFT>::getSectionData() const {
 
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
+InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
+  switch (SectionKind) {
+  case Regular:
+    return cast<InputSection<ELFT>>(this)->OutSecOff + Offset;
+  case Merge:
+    return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
+  }
+}
+
+template <class ELFT>
+typename ELFFile<ELFT>::uintX_t
 InputSectionBase<ELFT>::getOffset(const Elf_Sym &Sym) {
-  if (auto *S = dyn_cast<InputSection<ELFT>>(this))
-    return S->OutSecOff + Sym.st_value;
-  return cast<MergeInputSection<ELFT>>(this)->getOffset(Sym.st_value);
+  return getOffset(Sym.st_value);
 }
 
 // Returns a section that Rel relocation is pointing to.
