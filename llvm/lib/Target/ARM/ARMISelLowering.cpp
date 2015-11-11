@@ -9141,7 +9141,9 @@ static SDValue PerformBFICombine(SDNode *N,
     SDValue From1 = ParseBFI(N, ToMask1, FromMask1);
 
     APInt ToMask2, FromMask2;
-    assert(From1 == ParseBFI(CombineBFI.getNode(), ToMask2, FromMask2));
+    SDValue From2 = ParseBFI(CombineBFI.getNode(), ToMask2, FromMask2);
+    assert(From1 == From2);
+    (void)From2;
   
     // First, unlink CombineBFI.
     DCI.DAG.ReplaceAllUsesWith(CombineBFI, CombineBFI.getOperand(0));
