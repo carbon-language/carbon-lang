@@ -1689,12 +1689,8 @@ def err_auto_var_init_no_expression : Error<
 def err_auto_var_init_multiple_expressions : Error<
   "initializer for variable %0 with type %1 contains multiple expressions">;
 def err_auto_var_init_paren_braces : Error<
-  "cannot deduce type for variable %0 with type %1 from "
-  "parenthesized initializer list">;
-def warn_auto_var_direct_list_init : Warning<
-  "direct list initialization of a variable with a deduced type will change "
-  "meaning in a future version of Clang; insert an '=' to avoid a change in "
-  "behavior">, InGroup<FutureCompat>;
+  "cannot deduce type for variable %1 with type %2 from "
+  "%select{parenthesized|nested}0 initializer list">;
 def err_auto_new_ctor_multiple_expressions : Error<
   "new expression for type %0 contains multiple constructor arguments">;
 def err_auto_missing_trailing_return : Error<
@@ -5819,8 +5815,8 @@ let CategoryName = "Lambda Issue" in {
   def err_init_capture_multiple_expressions : Error<
     "initializer for lambda capture %0 contains multiple expressions">;
   def err_init_capture_paren_braces : Error<
-    "cannot deduce type for lambda capture %0 from "
-    "parenthesized initializer list">;
+    "cannot deduce type for lambda capture %1 from "
+    "%select{parenthesized|nested}0 initializer list">;
   def err_init_capture_deduction_failure : Error<
     "cannot deduce type for lambda capture %0 from initializer of type %2">;
   def err_init_capture_deduction_failure_from_init_list : Error<

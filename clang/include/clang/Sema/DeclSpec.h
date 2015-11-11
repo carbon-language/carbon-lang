@@ -2265,6 +2265,13 @@ private:
   SourceLocation LastLocation;
 };
 
+enum class LambdaCaptureInitKind {
+  NoInit,     //!< [a]
+  CopyInit,   //!< [a = b], [a = {b}]
+  DirectInit, //!< [a(b)]
+  ListInit    //!< [a{b}]
+};
+
 /// \brief Represents a complete lambda introducer.
 struct LambdaIntroducer {
   /// \brief An individual capture in a lambda introducer.
@@ -2273,13 +2280,15 @@ struct LambdaIntroducer {
     SourceLocation Loc;
     IdentifierInfo *Id;
     SourceLocation EllipsisLoc;
+    LambdaCaptureInitKind InitKind;
     ExprResult Init;
     ParsedType InitCaptureType;
     LambdaCapture(LambdaCaptureKind Kind, SourceLocation Loc,
                   IdentifierInfo *Id, SourceLocation EllipsisLoc,
-                  ExprResult Init, ParsedType InitCaptureType)
-        : Kind(Kind), Loc(Loc), Id(Id), EllipsisLoc(EllipsisLoc), Init(Init),
-          InitCaptureType(InitCaptureType) {}
+                  LambdaCaptureInitKind InitKind, ExprResult Init,
+                  ParsedType InitCaptureType)
+        : Kind(Kind), Loc(Loc), Id(Id), EllipsisLoc(EllipsisLoc),
+          InitKind(InitKind), Init(Init), InitCaptureType(InitCaptureType) {}
   };
 
   SourceRange Range;
@@ -2295,10 +2304,11 @@ struct LambdaIntroducer {
                   SourceLocation Loc,
                   IdentifierInfo* Id,
                   SourceLocation EllipsisLoc,
+                  LambdaCaptureInitKind InitKind,
                   ExprResult Init, 
                   ParsedType InitCaptureType) {
-    Captures.push_back(LambdaCapture(Kind, Loc, Id, EllipsisLoc, Init, 
-        InitCaptureType));
+    Captures.push_back(LambdaCapture(Kind, Loc, Id, EllipsisLoc, InitKind, Init,
+                                     InitCaptureType));
   }
 };
 

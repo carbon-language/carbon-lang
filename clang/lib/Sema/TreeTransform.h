@@ -9623,9 +9623,10 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
 
     VarDecl *OldVD = C->getCapturedVar();
     QualType NewInitCaptureType =
-        getSema().performLambdaInitCaptureInitialization(C->getLocation(),
-            OldVD->getType()->isReferenceType(), OldVD->getIdentifier(),
-            NewExprInit);
+        getSema().buildLambdaInitCaptureInitialization(
+            C->getLocation(), OldVD->getType()->isReferenceType(),
+            OldVD->getIdentifier(),
+            C->getCapturedVar()->getInitStyle() != VarDecl::CInit, NewExprInit);
     NewExprInitResult = NewExprInit;
     InitCaptureExprsAndTypes[C - E->capture_begin()] =
         std::make_pair(NewExprInitResult, NewInitCaptureType);
@@ -9732,8 +9733,8 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
       }
       VarDecl *OldVD = C->getCapturedVar();
       VarDecl *NewVD = getSema().createLambdaInitCaptureVarDecl(
-          OldVD->getLocation(), InitExprTypePair.second, 
-          OldVD->getIdentifier(), Init.get());
+          OldVD->getLocation(), InitExprTypePair.second, OldVD->getIdentifier(),
+          OldVD->getInitStyle(), Init.get());
       if (!NewVD)
         Invalid = true;
       else {
