@@ -297,7 +297,7 @@ ValueProfData::getValueProfData(const unsigned char *D,
     if (VR->Kind > IPVK_Last)
       return instrprof_error::malformed;
     VR = VR->getNext();
-    if ((char *)VR - (char *)VPD.get() > TotalSize)
+    if ((char *)VR - (char *)VPD.get() > (ptrdiff_t)TotalSize)
       return instrprof_error::malformed;
   }
 
