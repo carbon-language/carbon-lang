@@ -558,7 +558,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     for (InputSectionBase<ELFT> *B : F->getSections())
       if (auto *S = dyn_cast_or_null<InputSection<ELFT>>(B))
         if (S != &InputSection<ELFT>::Discarded && S->isLive())
-            scanRelocs(*S);
+          scanRelocs(*S);
 
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   std::vector<SharedSymbol<ELFT> *> SharedCopySymbols;
