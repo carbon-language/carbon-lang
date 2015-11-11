@@ -91,6 +91,12 @@ static cl::opt<bool> DetectReductions("polly-detect-reductions",
                                       cl::Hidden, cl::ZeroOrMore,
                                       cl::init(true), cl::cat(PollyCategory));
 
+static cl::opt<int> MaxDisjunctsAssumed(
+    "polly-max-disjuncts-assumed",
+    cl::desc("The maximal number of disjuncts we allow in the assumption "
+             "context (this bounds compile time)"),
+    cl::Hidden, cl::ZeroOrMore, cl::init(150), cl::cat(PollyCategory));
+
 //===----------------------------------------------------------------------===//
 
 // Create a sequence of two schedules. Either argument may be null and is
@@ -2851,6 +2857,16 @@ bool Scop::hasFeasibleRuntimeContext() const {
 
 void Scop::addAssumption(__isl_take isl_set *Set) {
   AssumedContext = isl_set_intersect(AssumedContext, Set);
+  isl_basic_set_list *List = isl_set_get_basic_set_list(AssumedContext);
+  int NSets = isl_basic_set_list_n_basic_set(List);
+  isl_basic_set_list_free(List);
+
+  if (NSets >= MaxDisjunctsAssumed) {
+    isl_space *Space = isl_set_get_space(AssumedContext);
+    isl_set_free(AssumedContext);
+    AssumedContext = isl_set_universe(Space);
+  }
+
   AssumedContext = isl_set_coalesce(AssumedContext);
 }
 
