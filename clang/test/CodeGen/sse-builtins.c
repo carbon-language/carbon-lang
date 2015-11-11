@@ -513,3 +513,9 @@ __m64 test_mm_mul_su32(__m64 __a, __m64 __b) {
   // CHECK @llvm.x86.mmx.pmulu.dq(x86_mmx %{{.*}}, x86_mmx %{{.*}})
   return _mm_mul_su32(__a, __b);
 }
+
+void test_mm_pause() {
+  // CHECK-LABEL: @test_mm_pause
+  // CHECK @llvm.x86.sse2.pause()
+  return _mm_pause();
+}

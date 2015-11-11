@@ -1481,7 +1481,7 @@ _mm_castsi128_pd(__m128i __a)
 static __inline__ void __DEFAULT_FN_ATTRS
 _mm_pause(void)
 {
-  __asm__ volatile ("pause");
+  __builtin_ia32_pause();
 }
 
 #undef __DEFAULT_FN_ATTRS
