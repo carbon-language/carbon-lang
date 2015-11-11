@@ -654,10 +654,6 @@ def MMX_MASKMOVQ64: MMXI64<0xF7, MRMSrcReg, (outs), (ins VR64:$src, VR64:$mask),
 
 // 64-bit bit convert.
 let Predicates = [HasSSE2] in {
-def : Pat<(x86mmx (bitconvert (i64 GR64:$src))),
-          (MMX_MOVD64to64rr GR64:$src)>;
-def : Pat<(i64 (bitconvert (x86mmx VR64:$src))),
-          (MMX_MOVD64from64rr VR64:$src)>;
 def : Pat<(f64 (bitconvert (x86mmx VR64:$src))),
           (MMX_MOVQ2FR64rr VR64:$src)>;
 def : Pat<(x86mmx (bitconvert (f64 FR64:$src))),
