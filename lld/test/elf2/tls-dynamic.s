@@ -8,14 +8,18 @@
   callq __tls_get_addr@PLT
   leaq  b@tlsld(%rip), %rdi
   callq __tls_get_addr@PLT
+  leaq  a@dtpoff(%rax), %rcx
+  leaq  b@dtpoff(%rax), %rcx
 
   .global	a
+  .hidden a
 	.section	.tbss,"awT",@nobits
   .align 4
 a:
 	.long	0
   
   .global	b
+  .hidden b
 	.section	.tbss,"awT",@nobits
   .align 4
 b:
@@ -40,9 +44,13 @@ b:
 // CHECK-NEXT:   }
 
 // 4297 = (0x20D0 + -4) - (0x1000 + 3) // PC relative offset to got entry.
+// 4285 = (0x20D0 + -4) - (0x100c + 3) // PC relative offset to got entry.
 
 // DIS:      Disassembly of section .text:
 // DIS-NEXT: .text:
 // DIS-NEXT:     1000: {{.+}} leaq    4297(%rip), %rdi
 // DIS-NEXT:     1007: {{.+}} callq
 // DIS-NEXT:     100c: {{.+}} leaq    4285(%rip), %rdi
+// DIS-NEXT:     1013: {{.+}} callq
+// DIS-NEXT:     1018: {{.+}} leaq    (%rax), %rcx
+// DIS-NEXT:     101f: {{.+}} leaq    4(%rax), %rcx
