@@ -116,7 +116,7 @@ class CoverageData {
       return make_error_code(errc::illegal_byte_sequence);
     }
 
-    auto Addrs = make_unique<std::vector<uint64_t>>();
+    auto Addrs = llvm::make_unique<std::vector<uint64_t>>();
 
     switch (Header->Bitness) {
     case Bitness64:
@@ -143,7 +143,7 @@ class CoverageData {
     for (const auto &Cov : Covs)
       Addrs.insert(Cov->Addrs->begin(), Cov->Addrs->end());
 
-    auto AddrsVector = make_unique<std::vector<uint64_t>>(
+    auto AddrsVector = llvm::make_unique<std::vector<uint64_t>>(
         Addrs.begin(), Addrs.end());
     return std::unique_ptr<CoverageData>(
         new CoverageData(std::move(AddrsVector)));
