@@ -2638,6 +2638,8 @@ public:
   RValue EmitCallExpr(const CallExpr *E,
                       ReturnValueSlot ReturnValue = ReturnValueSlot());
 
+  void getFunctionFeatureMap(llvm::StringMap<bool> &FeatureMap,
+                             const FunctionDecl *FD);
   bool checkBuiltinTargetFeatures(const FunctionDecl *TargetDecl);
 
   llvm::CallInst *EmitRuntimeCall(llvm::Value *callee,

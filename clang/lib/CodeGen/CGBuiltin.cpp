@@ -353,7 +353,8 @@ bool CodeGenFunction::checkBuiltinTargetFeatures(
   // Get the current enclosing function if it exists. If it doesn't
   // we can't check the target features anyhow.
   const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl);
-  if (!FD) return true;
+  if (!FD)
+    return true;
 
   unsigned BuiltinID = TargetDecl->getBuiltinID();
   const char *FeatureList =
@@ -362,32 +363,8 @@ bool CodeGenFunction::checkBuiltinTargetFeatures(
   if (!FeatureList || StringRef(FeatureList) == "")
     return true;
 
-  StringRef TargetCPU = Target.getTargetOpts().CPU;
   llvm::StringMap<bool> FeatureMap;
-
-  if (const auto *TD = FD->getAttr<TargetAttr>()) {
-    // If we have a TargetAttr build up the feature map based on that.
-    TargetAttr::ParsedTargetAttr ParsedAttr = TD->parse();
-
-    // Make a copy of the features as passed on the command line into the
-    // beginning of the additional features from the function to override.
-    ParsedAttr.first.insert(ParsedAttr.first.begin(),
-                            Target.getTargetOpts().FeaturesAsWritten.begin(),
-                            Target.getTargetOpts().FeaturesAsWritten.end());
-
-    if (ParsedAttr.second != "")
-      TargetCPU = ParsedAttr.second;
-
-    // Now populate the feature map, first with the TargetCPU which is either
-    // the default or a new one from the target attribute string. Then we'll use
-    // the passed in features (FeaturesAsWritten) along with the new ones from
-    // the attribute.
-    Target.initFeatureMap(FeatureMap, CGM.getDiags(), TargetCPU,
-                          ParsedAttr.first);
-  } else {
-    Target.initFeatureMap(FeatureMap, CGM.getDiags(), TargetCPU,
-                          Target.getTargetOpts().Features);
-  }
+  CGM.getFunctionFeatureMap(FeatureMap, FD);
 
   // If we have at least one of the features in the feature list return
   // true, otherwise return false.
