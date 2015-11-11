@@ -169,11 +169,11 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
 
   // Find the element this offset points to.
   auto I = std::upper_bound(
-      this->Offsets.begin(), this->Offsets.end(), Offset,
+      Offsets.begin(), Offsets.end(), Offset,
       [](const uintX_t &A, const std::pair<uintX_t, size_t> &B) {
         return A < B.first;
       });
-  size_t End = I == this->Offsets.end() ? Data.size() : I->first;
+  size_t End = I == Offsets.end() ? Data.size() : I->first;
   --I;
   uintX_t Start = I->first;
 
