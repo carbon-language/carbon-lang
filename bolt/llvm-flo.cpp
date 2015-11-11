@@ -608,8 +608,11 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       continue;
 
     // Fill in CFI information for this function
-    if (EHFrame.ParseError.empty() && Function.isSimple())
+    if (EHFrame.ParseError.empty() && Function.isSimple()) {
       CFIRdWrt.fillCFIInfoFor(Function);
+      if (Function.getLSDAAddress() != 0)
+        Function.setSimple(false);
+    }
 
     // Parse LSDA.
     if (Function.getLSDAAddress() != 0)
