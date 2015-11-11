@@ -173,9 +173,9 @@ void set_anon_i() {
 // CHECK: define {{.*}}@__tls_init()
 // CHECK: load i8, i8* @__tls_guard
 // CHECK: %[[NEED_TLS_INIT:.*]] = icmp eq i8 %{{.*}}, 0
-// CHECK: store i8 1, i8* @__tls_guard
 // CHECK: br i1 %[[NEED_TLS_INIT]],
 // init:
+// CHECK: store i8 1, i8* @__tls_guard
 // CHECK: call void @[[A_INIT]]()
 // CHECK: call void @[[D_INIT]]()
 // CHECK: call void @[[U_M_INIT]]()
