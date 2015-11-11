@@ -90,7 +90,7 @@ template <class ELFT> class MergeInputSection : public InputSectionBase<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
 public:
-  std::vector<std::pair<uintX_t, size_t>> Offsets;
+  std::vector<std::pair<uintX_t, uintX_t>> Offsets;
   MergeInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
   static bool classof(const InputSectionBase<ELFT> *S);
   // Translate an offset in the input section to an offset in the output

@@ -173,13 +173,13 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
       [](const uintX_t &A, const std::pair<uintX_t, size_t> &B) {
         return A < B.first;
       });
-  size_t End = I == Offsets.end() ? Data.size() : I->first;
+  uintX_t End = I == Offsets.end() ? Data.size() : I->first;
   --I;
   uintX_t Start = I->first;
 
   // Compute the Addend and if the Base is cached, return.
   uintX_t Addend = Offset - Start;
-  size_t &Base = I->second;
+  uintX_t &Base = I->second;
   if (Base != size_t(-1))
     return Base + Addend;
 
