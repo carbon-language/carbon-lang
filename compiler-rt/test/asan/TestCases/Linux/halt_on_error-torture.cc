@@ -1,6 +1,6 @@
 // Stress test recovery mode with many threads.
 //
-// RUN: %clangxx_asan -fsanitize-recover=address %s -o %t
+// RUN: %clangxx_asan -fsanitize-recover=address -pthread %s -o %t
 //
 // RUN: env ASAN_OPTIONS=halt_on_error=false:max_errors=1000 %run %t 1 10 >1.txt 2>&1
 // RUN: FileCheck %s < 1.txt
@@ -14,6 +14,8 @@
 // RUN: FileCheck --check-prefix=CHECK-COLLISION %s < 1.txt || FileCheck --check-prefix=CHECK-NO-COLLISION %s < 1.txt
 //
 // REQUIRES: stable-runtime
+
+#define _POSIX_C_SOURCE 200112  // rand_r
 
 #include <stdio.h>
 #include <stdlib.h>

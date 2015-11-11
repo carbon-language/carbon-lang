@@ -1,6 +1,6 @@
 // Test interaction of Asan recovery mode with asynch signals.
 //
-// RUN: %clang_asan -fsanitize-recover=address %s -o %t
+// RUN: %clang_asan -fsanitize-recover=address -pthread %s -o %t
 //
 // RUN: rm -f %t.log
 // RUN: env ASAN_OPTIONS=halt_on_error=false %run %t 1000 >%t.log 2>&1 || true
@@ -9,6 +9,9 @@
 // RUN: FileCheck --check-prefix=CHECK-COLLISION %s < %t.log || FileCheck --check-prefix=CHECK-NO-COLLISION %s < %t.log
 //
 // REQUIRES: stable-runtime
+
+#define _POSIX_C_SOURCE 200112  // rand_r
+#define _SVID_SOURCE 1  // SA_NODEFER
 
 #include <stdio.h>
 #include <stdlib.h>
