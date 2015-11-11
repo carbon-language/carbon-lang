@@ -3651,6 +3651,12 @@ void ScopInfo::buildStmts(Region &SR) {
 void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
                                     Region *NonAffineSubRegion,
                                     bool IsExitBlock) {
+  // We do not build access functions for error blocks, as they may contain
+  // instructions we can not model.
+  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  if (isErrorBlock(BB, R, *LI, DT) && !IsExitBlock)
+    return;
+
   Loop *L = LI->getLoopFor(&BB);
 
   // The set of loops contained in non-affine subregions that are part of R.
