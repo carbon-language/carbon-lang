@@ -125,6 +125,7 @@ enum DIDumpType {
   DIDT_AppleNamespaces,
   DIDT_AppleObjC,
   DIDT_CUIndex,
+  DIDT_TUIndex,
 };
 
 class DIContext {

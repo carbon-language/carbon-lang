@@ -165,6 +165,15 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     CUIndex.dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_TUIndex) {
+    OS << "\n.debug_tu_index contents:\n";
+    DataExtractor TUIndexData(getTUIndexSection(), isLittleEndian(),
+                              savedAddressByteSize);
+    DWARFUnitIndex TUIndex;
+    TUIndex.parse(TUIndexData);
+    TUIndex.dump(OS);
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_LineDwo) {
     OS << "\n.debug_line.dwo contents:\n";
     unsigned stmtOffset = 0;
@@ -619,6 +628,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
             .Case("apple_namespac", &AppleNamespacesSection.Data)
             .Case("apple_objc", &AppleObjCSection.Data)
             .Case("debug_cu_index", &CUIndexSection)
+            .Case("debug_tu_index", &TUIndexSection)
             // Any more debug info sections go here.
             .Default(nullptr);
     if (SectionData) {

@@ -9,11 +9,18 @@ RUN: llvm-dwarfdump %p/Inputs/dwarfdump-dwp.x86_64.o | FileCheck %s
 ;   foo b;
 
 ; CHECK: .debug_cu_index contents:
-; CHECK: version: 2
-; CHECK: columns: 4
-; CHECK:   units: 2
-; CHECK: buckets: 16
+; CHECK-NEXT: Index header:
+; CHECK-NEXT: version: 2
+; CHECK-NEXT: columns: 4
+; CHECK-NEXT:   units: 2
+; CHECK-NEXT: buckets: 16
 
-; TODO: debug_tu_index
+; CHECK: .debug_tu_index contents:
+; CHECK-NEXT: Index header:
+; CHECK-NEXT: version: 2
+; CHECK-NEXT: columns: 4
+; CHECK-NEXT:   units: 1
+; CHECK-NEXT: buckets: 16
+
 ; TODO: dump the index contents
 ; TODO: use the index section offset info to correctly dump debug_info
