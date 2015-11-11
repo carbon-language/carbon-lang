@@ -554,8 +554,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles())
     for (InputSectionBase<ELFT> *B : F->getSections())
       if (auto *S = dyn_cast_or_null<InputSection<ELFT>>(B))
-        if (S != &InputSection<ELFT>::Discarded)
-          if (S->isLive())
+        if (S != &InputSection<ELFT>::Discarded && S->isLive())
             scanRelocs(*S);
 
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
