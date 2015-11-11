@@ -156,3 +156,6 @@ add_compiler_rt_object_libraries(RTSanitizerCommonLibc
 if(COMPILER_RT_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
+
+add_llvm_tool(sancov sancov.cc)
+target_link_libraries(sancov LLVMSupport LLVMSymbolize LLVMObject LLVMDebugInfoDWARF LLVMDebugInfoPDB)
