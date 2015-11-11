@@ -67,6 +67,8 @@ PythonObject::GetObjectType() const
     if (!IsAllocated())
         return PyObjectType::None;
 
+    if (PythonModule::Check(m_py_obj))
+        return PyObjectType::Module;
     if (PythonList::Check(m_py_obj))
         return PyObjectType::List;
     if (PythonDictionary::Check(m_py_obj))
@@ -81,7 +83,7 @@ PythonObject::GetObjectType() const
 }
 
 PythonString
-PythonObject::Repr()
+PythonObject::Repr() const
 {
     if (!m_py_obj)
         return PythonString();
@@ -92,7 +94,7 @@ PythonObject::Repr()
 }
 
 PythonString
-PythonObject::Str()
+PythonObject::Str() const
 {
     if (!m_py_obj)
         return PythonString();
@@ -100,6 +102,43 @@ PythonObject::Str()
     if (!str)
         return PythonString();
     return PythonString(PyRefType::Owned, str);
+}
+
+PythonObject
+PythonObject::ResolveNameGlobal(llvm::StringRef name)
+{
+    return PythonModule::MainModule().ResolveName(name);
+}
+
+PythonObject
+PythonObject::ResolveName(llvm::StringRef name) const
+{
+    // Resolve the name in the context of the specified object.  If,
+    // for example, `this` refers to a PyModule, then this will look for
+    // `name` in this module.  If `this` refers to a PyType, then it will
+    // resolve `name` as an attribute of that type.  If `this` refers to
+    // an instance of an object, then it will resolve `name` as the value
+    // of the specified field.
+    //
+    // This function handles dotted names so that, for example, if `m_py_obj`
+    // refers to the `sys` module, and `name` == "path.append", then it
+    // will find the function `sys.path.append`.
+
+    size_t dot_pos = name.find_first_of('.');
+    if (dot_pos == llvm::StringRef::npos)
+    {
+        // No dots in the name, we should be able to find the value immediately
+        // as an attribute of `use_object`.
+        return GetAttributeValue(name);
+    }
+
+    // Look up the first piece of the name, and resolve the rest as a child of that.
+    PythonObject parent = ResolveName(name.substr(0, dot_pos));
+    if (!parent.IsAllocated())
+        return PythonObject();
+
+    // Tail recursion.. should be optimized by the compiler
+    return parent.ResolveName(name.substr(dot_pos + 1));
 }
 
 bool
@@ -603,6 +642,62 @@ PythonDictionary::CreateStructuredDictionary() const
         result->AddItem(key.Str().GetString(), structured_value);
     }
     return result;
+}
+
+PythonModule::PythonModule() : PythonObject()
+{
+}
+
+PythonModule::PythonModule(PyRefType type, PyObject *py_obj)
+{
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a module
+}
+
+PythonModule::PythonModule(const PythonModule &dict) : PythonObject(dict)
+{
+}
+
+PythonModule::~PythonModule()
+{
+}
+
+PythonModule
+PythonModule::MainModule()
+{
+    return PythonModule(PyRefType::Borrowed, PyImport_AddModule("__main__"));
+}
+
+bool
+PythonModule::Check(PyObject *py_obj)
+{
+    if (!py_obj)
+        return false;
+
+    return PyModule_Check(py_obj);
+}
+
+void
+PythonModule::Reset(PyRefType type, PyObject *py_obj)
+{
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
+    if (!PythonModule::Check(py_obj))
+    {
+        PythonObject::Reset();
+        return;
+    }
+
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
+}
+
+PythonDictionary
+PythonModule::GetDictionary() const
+{
+    return PythonDictionary(PyRefType::Borrowed, PyModule_GetDict(m_py_obj));
 }
 
 PythonFile::PythonFile()

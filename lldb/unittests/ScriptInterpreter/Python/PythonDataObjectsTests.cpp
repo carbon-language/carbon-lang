@@ -96,6 +96,66 @@ TEST_F(PythonDataObjectsTest, TestBorrowedReferences)
     EXPECT_EQ(original_refcnt + 1, borrowed_long.get()->ob_refcnt);
 }
 
+TEST_F(PythonDataObjectsTest, TestGlobalNameResolutionNoDot)
+{
+    PythonObject sys_module = PythonObject::ResolveNameGlobal("sys");
+    EXPECT_TRUE(sys_module.IsAllocated());
+    EXPECT_TRUE(PythonModule::Check(sys_module.get()));
+}
+
+TEST_F(PythonDataObjectsTest, TestModuleNameResolutionNoDot)
+{
+    PythonObject sys_module = PythonObject::ResolveNameGlobal("sys");
+    PythonObject sys_path = sys_module.ResolveName("path");
+    PythonObject sys_version_info = sys_module.ResolveName("version_info");
+    EXPECT_TRUE(sys_path.IsAllocated());
+    EXPECT_TRUE(sys_version_info.IsAllocated());
+
+    EXPECT_TRUE(PythonList::Check(sys_path.get()));
+}
+
+TEST_F(PythonDataObjectsTest, TestTypeNameResolutionNoDot)
+{
+    PythonObject sys_module = PythonObject::ResolveNameGlobal("sys");
+    PythonObject sys_version_info = sys_module.ResolveName("version_info");
+
+    PythonObject version_info_type(PyRefType::Owned, PyObject_Type(sys_version_info.get()));
+    EXPECT_TRUE(version_info_type.IsAllocated());
+    PythonObject major_version_field = version_info_type.ResolveName("major");
+    EXPECT_TRUE(major_version_field.IsAllocated());
+}
+
+TEST_F(PythonDataObjectsTest, TestInstanceNameResolutionNoDot)
+{
+    PythonObject sys_module = PythonObject::ResolveNameGlobal("sys");
+    PythonObject sys_version_info = sys_module.ResolveName("version_info");
+    PythonObject major_version_field = sys_version_info.ResolveName("major");
+    PythonObject minor_version_field = sys_version_info.ResolveName("minor");
+
+    EXPECT_TRUE(major_version_field.IsAllocated());
+    EXPECT_TRUE(minor_version_field.IsAllocated());
+
+    PythonInteger major_version_value = major_version_field.AsType<PythonInteger>();
+    PythonInteger minor_version_value = minor_version_field.AsType<PythonInteger>();
+
+    EXPECT_EQ(PY_MAJOR_VERSION, major_version_value.GetInteger());
+    EXPECT_EQ(PY_MINOR_VERSION, minor_version_value.GetInteger());
+}
+
+TEST_F(PythonDataObjectsTest, TestGlobalNameResolutionWithDot)
+{
+    PythonObject sys_path = PythonObject::ResolveNameGlobal("sys.path");
+    EXPECT_TRUE(sys_path.IsAllocated());
+    EXPECT_TRUE(PythonList::Check(sys_path.get()));
+
+    PythonInteger version_major = PythonObject::ResolveNameGlobal("sys.version_info.major").AsType<PythonInteger>();
+    PythonInteger version_minor = PythonObject::ResolveNameGlobal("sys.version_info.minor").AsType<PythonInteger>();
+    EXPECT_TRUE(version_major.IsAllocated());
+    EXPECT_TRUE(version_minor.IsAllocated());
+    EXPECT_EQ(PY_MAJOR_VERSION, version_major.GetInteger());
+    EXPECT_EQ(PY_MINOR_VERSION, version_minor.GetInteger());
+}
+
 TEST_F(PythonDataObjectsTest, TestPythonInteger)
 {
 // Test that integers behave correctly when wrapped by a PythonInteger.

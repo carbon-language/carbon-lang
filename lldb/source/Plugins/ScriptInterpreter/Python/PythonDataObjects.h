@@ -69,6 +69,7 @@ enum class PyObjectType
     Dictionary,
     List,
     String,
+    Module,
     File
 };
 
@@ -185,21 +186,27 @@ public:
         return result;
     }
 
-    PyObjectType
-    GetObjectType() const;
-
-    PythonString
-    Repr ();
-        
-    PythonString
-    Str ();
-
     PythonObject &
     operator=(const PythonObject &other)
     {
         Reset(PyRefType::Borrowed, other.get());
         return *this;
     }
+
+    PyObjectType
+    GetObjectType() const;
+
+    PythonString
+    Repr() const;
+
+    PythonString
+    Str() const;
+
+    static PythonObject
+    ResolveNameGlobal(llvm::StringRef name);
+
+    PythonObject
+    ResolveName(llvm::StringRef name) const;
 
     bool
     HasAttribute(llvm::StringRef attribute) const;
@@ -224,7 +231,8 @@ public:
         return T(PyRefType::Borrowed, m_py_obj);
     }
 
-    StructuredData::ObjectSP CreateStructuredObject() const;
+    StructuredData::ObjectSP
+    CreateStructuredObject() const;
 
 protected:
     PyObject* m_py_obj;
@@ -336,6 +344,27 @@ public:
     void SetItemForKey(const PythonObject &key, const PythonObject &value);
 
     StructuredData::DictionarySP CreateStructuredDictionary() const;
+};
+
+class PythonModule : public PythonObject
+{
+  public:
+    PythonModule();
+    PythonModule(PyRefType type, PyObject *o);
+    PythonModule(const PythonModule &dict);
+
+    ~PythonModule() override;
+
+    static bool Check(PyObject *py_obj);
+
+    static PythonModule MainModule();
+
+    // Bring in the no-argument base class version
+    using PythonObject::Reset;
+
+    void Reset(PyRefType type, PyObject *py_obj) override;
+
+    PythonDictionary GetDictionary() const;
 };
 
 class PythonFile : public PythonObject
