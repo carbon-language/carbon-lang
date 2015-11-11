@@ -368,6 +368,9 @@ bool polly::isErrorBlock(BasicBlock &BB, const Region &R, LoopInfo &LI,
 
   for (Instruction &Inst : BB)
     if (CallInst *CI = dyn_cast<CallInst>(&Inst)) {
+      if (isIgnoredIntrinsic(CI))
+        return false;
+
       if (!CI->doesNotAccessMemory())
         return true;
       if (CI->doesNotReturn())

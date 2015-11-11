@@ -729,6 +729,16 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
 bool ScopDetection::isValidInstruction(Instruction &Inst,
                                        DetectionContext &Context) const {
+  for (auto &Op : Inst.operands()) {
+    auto *OpInst = dyn_cast<Instruction>(&Op);
+
+    if (!OpInst)
+      continue;
+
+    if (isErrorBlock(*OpInst->getParent(), Context.CurRegion, *LI, *DT))
+      return false;
+  }
+
   // We only check the call instruction but not invoke instruction.
   if (CallInst *CI = dyn_cast<CallInst>(&Inst)) {
     if (isValidCallInst(*CI))
