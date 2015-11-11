@@ -1584,7 +1584,25 @@ isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
 
 void Scop::buildBoundaryContext() {
   BoundaryContext = Affinator.getWrappingContext();
+
+  // The isl_set_complement operation used to create the boundary context
+  // can possibly become very expensive. We bound the compile time of
+  // this operation by setting a compute out.
+  //
+  // TODO: We can probably get around using isl_set_complement and directly
+  // AST generate BoundaryContext.
+  long MaxOpsOld = isl_ctx_get_max_operations(getIslCtx());
+  isl_ctx_set_max_operations(getIslCtx(), 300000);
+  isl_options_set_on_error(getIslCtx(), ISL_ON_ERROR_CONTINUE);
+
   BoundaryContext = isl_set_complement(BoundaryContext);
+
+  if (isl_ctx_last_error(getIslCtx()) == isl_error_quota)
+    BoundaryContext = isl_set_empty(getParamSpace());
+
+  isl_options_set_on_error(getIslCtx(), ISL_ON_ERROR_ABORT);
+  isl_ctx_reset_operations(getIslCtx());
+  isl_ctx_set_max_operations(getIslCtx(), MaxOpsOld);
   BoundaryContext = isl_set_gist_params(BoundaryContext, getContext());
 }
 
