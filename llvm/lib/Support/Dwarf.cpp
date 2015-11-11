@@ -201,6 +201,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_GNU_addr_base:              return "DW_AT_GNU_addr_base";
   case DW_AT_GNU_pubnames:               return "DW_AT_GNU_pubnames";
   case DW_AT_GNU_pubtypes:               return "DW_AT_GNU_pubtypes";
+  case DW_AT_GNU_discriminator:          return "DW_AT_GNU_discriminator";
   }
   return nullptr;
 }

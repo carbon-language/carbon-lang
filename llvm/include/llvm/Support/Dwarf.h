@@ -238,6 +238,7 @@ enum Attribute : uint16_t {
   DW_AT_GNU_addr_base = 0x2133,
   DW_AT_GNU_pubnames = 0x2134,
   DW_AT_GNU_pubtypes = 0x2135,
+  DW_AT_GNU_discriminator = 0x2136,
 
   // LLVM project extensions.
   DW_AT_LLVM_include_path = 0x3e00,
