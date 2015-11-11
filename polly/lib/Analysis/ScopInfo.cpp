@@ -1940,22 +1940,14 @@ void Scop::buildDomainsWithBranchConstraints(Region *R) {
       }
     }
 
-    // Error blocks are assumed not to be executed. Therefor they are not
-    // checked properly in the ScopDetection. Any attempt to generate control
-    // conditions from them might result in a crash. However, this is only true
-    // for the first step of the domain generation (this function) where we
-    // push the control conditions of a block to the successors. In the second
-    // step (propagateDomainConstraints) we only receive domain constraints from
-    // the predecessors and can therefor look at the domain of a error block.
-    // That allows us to generate the assumptions needed for them not to be
-    // executed at runtime.
-    if (containsErrorBlock(RN, getRegion(), LI, DT)) {
+    if (containsErrorBlock(RN, getRegion(), LI, DT))
       HasErrorBlock = true;
-      continue;
-    }
 
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
     TerminatorInst *TI = BB->getTerminator();
+
+    if (isa<UnreachableInst>(TI))
+      continue;
 
     isl_set *Domain = DomainMap.lookup(BB);
     if (!Domain) {
