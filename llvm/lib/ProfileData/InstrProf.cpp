@@ -244,12 +244,17 @@ void ValueProfData::deserializeTo(InstrProfRecord &Record,
   }
 }
 
+static ValueProfData *AllocValueProfData(uint32_t TotalSize) {
+  void *RawMem = ::operator new(TotalSize);
+  ValueProfData *VPDMem = new (RawMem) ValueProfData();
+  return VPDMem;
+}
+
 std::unique_ptr<ValueProfData>
 ValueProfData::serializeFrom(const InstrProfRecord &Record) {
   uint32_t TotalSize = getSize(Record);
-  void *RawMem = ::operator new(TotalSize);
-  ValueProfData *VPDMem = new (RawMem) ValueProfData();
-  std::unique_ptr<ValueProfData> VPD(VPDMem);
+
+  std::unique_ptr<ValueProfData> VPD(AllocValueProfData(TotalSize));
 
   VPD->TotalSize = TotalSize;
   VPD->NumValueKinds = Record.getNumValueKinds();
@@ -285,8 +290,8 @@ ValueProfData::getValueProfData(const unsigned char *D,
   if (TotalSize % sizeof(uint64_t))
     return instrprof_error::malformed;
 
-  std::unique_ptr<ValueProfData> VPD(
-      reinterpret_cast<ValueProfData *>(new char[TotalSize]));
+  std::unique_ptr<ValueProfData> VPD(AllocValueProfData(TotalSize));
+
   memcpy(VPD.get(), D, TotalSize);
   // Byte swap.
   VPD->swapBytesToHost(Endianness);
