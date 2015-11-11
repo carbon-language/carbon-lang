@@ -4111,31 +4111,21 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
   default:
     return false;
 
-  case CmpInst::ICMP_SLT:
   case CmpInst::ICMP_SLE: {
     const APInt *C;
 
-    // LHS s<  LHS +_{nsw} C   if C > 0
     // LHS s<= LHS +_{nsw} C   if C >= 0
-    if (match(RHS, m_NSWAdd(m_Specific(LHS), m_APInt(C)))) {
-      if (Pred == CmpInst::ICMP_SLT)
-        return C->isStrictlyPositive();
+    if (match(RHS, m_NSWAdd(m_Specific(LHS), m_APInt(C))))
       return !C->isNegative();
-    }
     return false;
   }
 
-  case CmpInst::ICMP_ULT:
   case CmpInst::ICMP_ULE: {
     const APInt *C;
 
-    // LHS u<  LHS +_{nuw} C   if C != 0
-    // LHS u<= LHS +_{nuw} C
-    if (match(RHS, m_NUWAdd(m_Specific(LHS), m_APInt(C)))) {
-      if (Pred == CmpInst::ICMP_ULT)
-        return C->isMinValue();
+    // LHS u<= LHS +_{nuw} C   for any C
+    if (match(RHS, m_NUWAdd(m_Specific(LHS), m_APInt(C))))
       return true;
-    }
 
     // Match A to (X +_{nuw} CA) and B to (X +_{nuw} CB)
     auto MatchNUWAddsToSameValue = [&](Value *A, Value *B, Value *&X,
@@ -4160,11 +4150,8 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
 
     Value *X;
     const APInt *CLHS, *CRHS;
-    if (MatchNUWAddsToSameValue(LHS, RHS, X, CLHS, CRHS)) {
-      if (Pred == CmpInst::ICMP_ULE)
-        return CLHS->ule(*CRHS);
-      return CLHS->ult(*CRHS);
-    }
+    if (MatchNUWAddsToSameValue(LHS, RHS, X, CLHS, CRHS))
+      return CLHS->ule(*CRHS);
 
     return false;
   }
