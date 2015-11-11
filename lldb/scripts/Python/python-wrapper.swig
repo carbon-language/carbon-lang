@@ -26,77 +26,11 @@ private:
     bool m_print;
 };
 
-// TODO(zturner): This should be part of a `PythonModule` class in
-// PythonDataObjects.hm and it should return a `PythonObject`
 static PyObject*
-ResolvePythonName(const char* name,
-                  PyObject* pmodule)
+FindSessionDictionary(const char *dict_name)
 {
     using namespace lldb_private;
-    if (!name)
-        return pmodule;
-
-    PyErr_Cleaner pyerr_cleanup(true);  // show Python errors
-
-    PythonDictionary main_dict(PyInitialValue::Invalid);
-
-    if (!pmodule)
-    {
-        pmodule = PyImport_AddModule ("__main__");
-        if (!pmodule)
-            return nullptr;
-    }
-
-    if (PyType_Check(pmodule))
-        main_dict.Reset(PyRefType::Borrowed, ((PyTypeObject*)pmodule)->tp_dict);
-    else if (PythonDictionary::Check(pmodule))
-        main_dict.Reset(PyRefType::Borrowed, pmodule);
-    else
-        main_dict.Reset(PyRefType::Borrowed, PyModule_GetDict (pmodule));
-    if (!main_dict.IsValid())
-        return nullptr;
-
-    const char* dot_pos = ::strchr(name, '.');
-
-    PythonObject dest_object;
-    Py_ssize_t pos = 0;
-
-    if (!dot_pos)
-    {
-        PyObject *py_key;
-        PyObject *py_value;
-        // TODO(zturner): This should be conveniently wrapped by `PythonDictionary`.
-        while (PyDict_Next(main_dict.get(), &pos, &py_key, &py_value))
-        {
-            PythonObject key(PyRefType::Borrowed, py_key);
-            auto key_string = key.AsType<PythonString>();
-            if (!key_string.IsAllocated())
-                continue;
-
-            std::string str(key_string.GetString().str());
-            if (strcmp(str.c_str(), name) == 0)
-            {
-                dest_object.Reset(PyRefType::Borrowed, py_value);
-                break;
-            }
-        }
-        return dest_object.release();
-    }
-    else
-    {
-        size_t len = dot_pos - name;
-        std::string piece(name,len);
-        PyObject *resolved_object = ResolvePythonName(piece.c_str(), main_dict.get());
-        if (!resolved_object || resolved_object == Py_None)
-            return nullptr;
-        return ResolvePythonName(dot_pos+1,resolved_object); // tail recursion.. should be optimized by the compiler
-    }
-}
-
-static PyObject*
-FindSessionDictionary(const char *session_dictionary_name)
-{
-    return ResolvePythonName(session_dictionary_name, NULL);
+    return PythonModule::MainModule().ResolveName(dict_name).release();
 }
 
 // TODO(zturner): This entire class should be moved to PythonDataObjects.h
@@ -191,18 +125,25 @@ public:
             return PyCallable();
         if ( (python_function_name[0] == 0) || (session_dictionary_name[0] == 0) )
             return PyCallable();
-        return FindWithFunctionName(python_function_name,FindSessionDictionary (session_dictionary_name));
+
+        using namespace lldb_private;
+        auto dict = PythonModule::MainModule().ResolveName(session_dictionary_name).AsType<PythonDictionary>();
+        return FindWithFunctionName(python_function_name, dict.get());
     }
 
     static PyCallable
     FindWithFunctionName (const char *python_function_name,
-                          PyObject *session_dict)
+                          PyObject *py_session_dict)
     {
-        if (!python_function_name || !session_dict)
+        if (!python_function_name || !py_session_dict)
             return PyCallable();
         if ( (python_function_name[0] == 0))
             return PyCallable();
-        return PyCallable(ResolvePythonName (python_function_name, session_dict));
+
+        using namespace lldb_private;
+        PythonDictionary session_dict(PyRefType::Borrowed, py_session_dict);
+        PythonCallable result = PythonObject::ResolveNameWithDictionary(python_function_name, session_dict).AsType<PythonCallable>();
+        return PyCallable(result.release());
     }
 
     static PyCallable
@@ -213,6 +154,7 @@ public:
             return PyCallable();
         if (!python_function_name || (python_function_name[0] == 0))
             return PyCallable();
+
         return PyCallable(PyObject_GetAttrString(self, python_function_name));
     }
 
@@ -355,6 +297,7 @@ LLDBSwigPythonCallTypeScript
     std::string& retval
 )
 {
+    using namespace lldb_private;
     lldb::SBValue sb_value (valobj_sp);
     lldb::SBTypeSummaryOptions sb_options(options_sp.get());
 
@@ -363,7 +306,7 @@ LLDBSwigPythonCallTypeScript
     if (!python_function_name || !session_dictionary)
         return false;
 
-    PyObject *session_dict = (PyObject*)session_dictionary, *pfunc_impl = NULL, *pvalue = NULL;
+    PyObject *pfunc_impl = NULL, *pvalue = NULL;
 
     if (pyfunct_wrapper && *pyfunct_wrapper && PyFunction_Check (*pyfunct_wrapper))
     {
@@ -375,40 +318,41 @@ LLDBSwigPythonCallTypeScript
         }
     }
 
-    if (PyDict_Check(session_dict))
+    PyObject *py_dict = (PyObject*)session_dictionary;
+    if (!PythonDictionary::Check(py_dict))
+        return true;
+
+    PythonDictionary dict(PyRefType::Borrowed, py_dict);
+
+    PyErr_Cleaner pyerr_cleanup(true);  // show Python errors
+
+    if (!pfunc_impl)
     {
-        PyErr_Cleaner pyerr_cleanup(true);  // show Python errors
-
-        if (!pfunc_impl)
-        {
-            pfunc_impl = ResolvePythonName (python_function_name, session_dict);
-            if (!pfunc_impl || !PyCallable_Check (pfunc_impl))
-                return false;
-            else
-            {
-                if (pyfunct_wrapper)
-                    *pyfunct_wrapper = pfunc_impl;
-            }
-        }
-
-        PyCallable pfunc = PyCallable::FindWithPythonObject(pfunc_impl);
-
-        if (!pfunc)
+        pfunc_impl = PythonObject::ResolveNameWithDictionary(python_function_name, dict).release();
+        if (!pfunc_impl || !PyCallable_Check (pfunc_impl))
             return false;
-
-        // if the third argument is supported, or varargs are allowed
-        PyCallable::argc argc = pfunc.GetNumArguments();
-        if (argc.num_args == 3 || argc.varargs == true)
-            pvalue = pfunc(sb_value,session_dict,sb_options);
         else
-            pvalue = pfunc(sb_value,session_dict);
-
-        Py_INCREF (session_dict);
-
-        PyObjectToString(pvalue,retval);
-
-        Py_XDECREF (pvalue);
+        {
+            if (pyfunct_wrapper)
+                *pyfunct_wrapper = pfunc_impl;
+        }
     }
+
+    PyCallable pfunc = PyCallable::FindWithPythonObject(pfunc_impl);
+
+    if (!pfunc)
+        return false;
+
+    // if the third argument is supported, or varargs are allowed
+    PyCallable::argc argc = pfunc.GetNumArguments();
+    if (argc.num_args == 3 || argc.varargs == true)
+        pvalue = pfunc(sb_value,dict.get(),sb_options);
+    else
+        pvalue = pfunc(sb_value,dict.get());
+
+    PyObjectToString(pvalue,retval);
+
+    Py_XDECREF (pvalue);
     return true;
 }
 
