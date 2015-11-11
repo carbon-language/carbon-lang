@@ -68,6 +68,7 @@ DumpType("debug-dump", cl::init(DIDT_All),
         clEnumValN(DIDT_Str, "str", ".debug_str"),
         clEnumValN(DIDT_StrDwo, "str.dwo", ".debug_str.dwo"),
         clEnumValN(DIDT_StrOffsetsDwo, "str_offsets.dwo", ".debug_str_offsets.dwo"),
+        clEnumValN(DIDT_CUIndex, "cu_index", ".debug_cu_index"),
         clEnumValEnd));
 
 static void error(StringRef Filename, std::error_code EC) {

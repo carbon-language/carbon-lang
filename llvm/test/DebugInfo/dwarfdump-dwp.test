@@ -1,0 +1,19 @@
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-dwp.x86_64.o | FileCheck %s
+
+; Testing the following simple dwp file:
+; a.cpp:
+;   struct foo { };
+;   foo a;
+; b.cpp:
+;   struct foo { };
+;   foo b;
+
+; CHECK: .debug_cu_index contents:
+; CHECK: version: 2
+; CHECK: columns: 4
+; CHECK:   units: 2
+; CHECK: buckets: 16
+
+; TODO: debug_tu_index
+; TODO: dump the index contents
+; TODO: use the index section offset info to correctly dump debug_info

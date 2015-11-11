@@ -203,6 +203,7 @@ public:
   virtual const DWARFSection& getAppleTypesSection() = 0;
   virtual const DWARFSection& getAppleNamespacesSection() = 0;
   virtual const DWARFSection& getAppleObjCSection() = 0;
+  virtual StringRef getCUIndexSection() = 0;
 
   static bool isSupportedVersion(unsigned version) {
     return version == 2 || version == 3 || version == 4;
@@ -251,6 +252,7 @@ class DWARFContextInMemory : public DWARFContext {
   DWARFSection AppleTypesSection;
   DWARFSection AppleNamespacesSection;
   DWARFSection AppleObjCSection;
+  StringRef CUIndexSection;
 
   SmallVector<SmallString<32>, 4> UncompressedSections;
 
@@ -293,6 +295,7 @@ public:
   StringRef getAddrSection() override {
     return AddrSection;
   }
+  StringRef getCUIndexSection() override { return CUIndexSection; }
 };
 
 }

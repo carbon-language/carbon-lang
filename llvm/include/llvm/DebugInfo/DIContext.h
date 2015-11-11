@@ -123,7 +123,8 @@ enum DIDumpType {
   DIDT_AppleNames,
   DIDT_AppleTypes,
   DIDT_AppleNamespaces,
-  DIDT_AppleObjC
+  DIDT_AppleObjC,
+  DIDT_CUIndex,
 };
 
 class DIContext {
