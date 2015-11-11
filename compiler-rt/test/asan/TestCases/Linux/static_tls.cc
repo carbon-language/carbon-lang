@@ -9,7 +9,7 @@
 // CHECK: __tls_get_addr: static tls
 // CHECK: after
 
-// XFAIL: powerpc64, aarch64
+// XFAIL: aarch64
 
 #ifndef SHARED
 #include <stdio.h>
