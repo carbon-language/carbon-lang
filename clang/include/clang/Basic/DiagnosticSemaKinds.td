@@ -1994,6 +1994,8 @@ def err_function_concept_exception_spec : Error<
 def err_concept_decl_invalid_specifiers : Error<
   "%select{variable|function}0 concept cannot be declared "
   "'%select{thread_local|inline|friend|constexpr}1'">;
+def err_function_concept_with_params : Error<
+  "function concept cannot have any parameters">;
 
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<
