@@ -19,6 +19,12 @@
 
 namespace __tsan {
 
+#if SANITIZER_MAC
+static const char *const kInterposedFunctionPrefix = "wrap_";
+#else
+static const char *const kInterposedFunctionPrefix = "__interceptor_";
+#endif
+
 ReportStack::ReportStack() : frames(nullptr), suppressable(false) {}
 
 ReportStack *ReportStack::New() {
@@ -121,7 +127,7 @@ void PrintStack(const ReportStack *ent) {
     InternalScopedString res(2 * GetPageSizeCached());
     RenderFrame(&res, common_flags()->stack_trace_format, i, frame->info,
                 common_flags()->symbolize_vs_style,
-                common_flags()->strip_path_prefix, "__interceptor_");
+                common_flags()->strip_path_prefix, kInterposedFunctionPrefix);
     Printf("%s\n", res.data());
   }
   Printf("\n");
