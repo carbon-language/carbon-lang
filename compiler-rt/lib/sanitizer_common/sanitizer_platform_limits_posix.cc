@@ -333,21 +333,24 @@ unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
   int ptrace_peektext = PTRACE_PEEKTEXT;
   int ptrace_peekdata = PTRACE_PEEKDATA;
   int ptrace_peekuser = PTRACE_PEEKUSER;
-#if defined(PT_GETREGS) && defined(PT_SETREGS)
+#if (defined(PTRACE_GETREGS) && defined(PTRACE_SETREGS)) || \
+    (defined(PT_GETREGS) && defined(PT_SETREGS))
   int ptrace_getregs = PTRACE_GETREGS;
   int ptrace_setregs = PTRACE_SETREGS;
 #else
   int ptrace_getregs = -1;
   int ptrace_setregs = -1;
 #endif
-#if defined(PT_GETFPREGS) && defined(PT_SETFPREGS)
+#if (defined(PTRACE_GETFPREGS) && defined(PTRACE_SETFPREGS)) || \
+    (defined(PT_GETFPREGS) && defined(PT_SETFPREGS))
   int ptrace_getfpregs = PTRACE_GETFPREGS;
   int ptrace_setfpregs = PTRACE_SETFPREGS;
 #else
   int ptrace_getfpregs = -1;
   int ptrace_setfpregs = -1;
 #endif
-#if defined(PT_GETFPXREGS) && defined(PT_SETFPXREGS)
+#if (defined(PTRACE_GETFPXREGS) && defined(PTRACE_SETFPXREGS)) || \
+    (defined(PT_GETFPXREGS) && defined(PT_SETFPXREGS))
   int ptrace_getfpxregs = PTRACE_GETFPXREGS;
   int ptrace_setfpxregs = PTRACE_SETFPXREGS;
 #else
