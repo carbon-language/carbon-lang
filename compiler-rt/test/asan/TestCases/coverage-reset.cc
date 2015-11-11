@@ -42,6 +42,7 @@ int main() {
   assert(IS_POWER_OF_TWO(bar_bit));
 
   __sanitizer_reset_coverage();
+  assert(__sanitizer_get_total_unique_coverage() == 0);
   GET_AND_PRINT_COVERAGE();
   assert(bitset == 0);
 
