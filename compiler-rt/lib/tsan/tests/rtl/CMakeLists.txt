@@ -7,7 +7,7 @@ set(TSAN_RTL_TEST_SOURCES
   tsan_test.cc
   tsan_thread.cc)
 
-if(UNIX AND NOT APPLE)
+if(UNIX)
   list(APPEND TSAN_RTL_TEST_SOURCES tsan_test_util_linux.cc)
 endif()
 

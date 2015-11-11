@@ -24,19 +24,6 @@ function(translate_msvc_cflags out_flags msvc_flags)
   set(${out_flags} "${clang_flags}" PARENT_SCOPE)
 endfunction()
 
-if (APPLE)
-  # On Darwin if /usr/include doesn't exist, the user probably has Xcode but not
-  # the command line tools. If this is the case, we need to find the OS X
-  # sysroot to pass to clang.
-  if(NOT EXISTS /usr/include)
-    execute_process(COMMAND xcodebuild -version -sdk macosx Path
-       OUTPUT_VARIABLE OSX_SYSROOT
-       ERROR_QUIET
-       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(OSX_SYSROOT_FLAG "-isysroot${OSX_SYSROOT}")
-  endif()
-endif()
-
 # Compile a source into an object file with COMPILER_RT_TEST_COMPILER using
 # a provided compile flags and dependenices.
 # clang_compile(<object> <source>

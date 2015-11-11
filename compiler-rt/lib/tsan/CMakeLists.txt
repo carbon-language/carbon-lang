@@ -87,6 +87,12 @@ set(TSAN_HEADERS
 set(TSAN_RUNTIME_LIBRARIES)
 add_custom_target(tsan)
 
+add_compiler_rt_object_libraries(RTTsan_dynamic 
+  OS ${TSAN_SUPPORTED_OS}
+  ARCHS ${TSAN_SUPPORTED_ARCH}
+  SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES}
+  CFLAGS ${TSAN_RTL_CFLAGS})
+
 if(APPLE)
   add_compiler_rt_runtime(clang_rt.tsan
     SHARED
