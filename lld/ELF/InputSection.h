@@ -69,6 +69,12 @@ public:
   // Returns a section that Rel is pointing to. Used by the garbage collector.
   InputSectionBase<ELFT> *getRelocTarget(const Elf_Rel &Rel);
   InputSectionBase<ELFT> *getRelocTarget(const Elf_Rela &Rel);
+
+  template <bool isRela>
+  void relocate(uint8_t *Buf, uint8_t *BufEnd,
+                llvm::iterator_range<
+                    const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
+                const ObjectFile<ELFT> &File, uintX_t BaseAddr);
 };
 
 template <class ELFT>
@@ -116,13 +122,6 @@ public:
   uint64_t OutSecOff = 0;
 
   static bool classof(const InputSectionBase<ELFT> *S);
-
-private:
-  template <bool isRela>
-  void relocate(uint8_t *Buf, uint8_t *BufEnd,
-                llvm::iterator_range<
-                    const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
-                const ObjectFile<ELFT> &File, uintX_t BaseAddr);
 };
 
 } // namespace elf2

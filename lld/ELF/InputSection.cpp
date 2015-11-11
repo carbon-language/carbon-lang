@@ -82,7 +82,7 @@ bool InputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 template <bool isRela>
-void InputSection<ELFT>::relocate(
+void InputSectionBase<ELFT>::relocate(
     uint8_t *Buf, uint8_t *BufEnd,
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
     const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
@@ -143,11 +143,11 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      relocate(Base, Base + Data.size(), EObj.relas(RelSec), *this->File,
-               BaseAddr);
+      this->relocate(Base, Base + Data.size(), EObj.relas(RelSec), *this->File,
+                     BaseAddr);
     else
-      relocate(Base, Base + Data.size(), EObj.rels(RelSec), *this->File,
-               BaseAddr);
+      this->relocate(Base, Base + Data.size(), EObj.rels(RelSec), *this->File,
+                     BaseAddr);
   }
 }
 
