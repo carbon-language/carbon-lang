@@ -74,7 +74,7 @@ public:
   void relocate(uint8_t *Buf, uint8_t *BufEnd,
                 llvm::iterator_range<
                     const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
-                const ObjectFile<ELFT> &File, uintX_t BaseAddr);
+                uintX_t BaseAddr);
 };
 
 template <class ELFT>

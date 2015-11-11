@@ -84,8 +84,7 @@ template <class ELFT>
 template <bool isRela>
 void InputSectionBase<ELFT>::relocate(
     uint8_t *Buf, uint8_t *BufEnd,
-    iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
-    const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
+    iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels, uintX_t BaseAddr) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
@@ -103,14 +102,14 @@ void InputSectionBase<ELFT>::relocate(
 
     // Handle relocations for local symbols -- they never get
     // resolved so we don't allocate a SymbolBody.
-    const Elf_Shdr *SymTab = File.getSymbolTable();
+    const Elf_Shdr *SymTab = File->getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
-      uintX_t SymVA = getLocalRelTarget(File, RI);
+      uintX_t SymVA = getLocalRelTarget(*File, RI);
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA);
       continue;
     }
 
-    SymbolBody &Body = *File.getSymbolBody(SymIndex)->repl();
+    SymbolBody &Body = *File->getSymbolBody(SymIndex)->repl();
     uintX_t SymVA = getSymVA<ELFT>(Body);
     if (Target->relocNeedsPlt(Type, Body)) {
       SymVA = Out<ELFT>::Plt->getEntryAddr(Body);
@@ -143,11 +142,9 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      this->relocate(Base, Base + Data.size(), EObj.relas(RelSec), *this->File,
-                     BaseAddr);
+      this->relocate(Base, Base + Data.size(), EObj.relas(RelSec), BaseAddr);
     else
-      this->relocate(Base, Base + Data.size(), EObj.rels(RelSec), *this->File,
-                     BaseAddr);
+      this->relocate(Base, Base + Data.size(), EObj.rels(RelSec), BaseAddr);
   }
 }
 
