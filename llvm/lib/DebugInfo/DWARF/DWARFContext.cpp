@@ -158,7 +158,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
 
   if (DumpType == DIDT_All || DumpType == DIDT_CUIndex) {
     OS << "\n.debug_cu_index contents:\n";
-    DataExtractor CUIndexData(getCUIndexSection(), isLittleEndian(), savedAddressByteSize);
+    DataExtractor CUIndexData(getCUIndexSection(), isLittleEndian(),
+                              savedAddressByteSize);
     DWARFUnitIndex CUIndex;
     CUIndex.parse(CUIndexData);
     CUIndex.dump(OS);

@@ -35,7 +35,6 @@ public:
   bool parse(DataExtractor IndexData);
   void dump(raw_ostream &OS) const;
 };
-
 }
 
 #endif

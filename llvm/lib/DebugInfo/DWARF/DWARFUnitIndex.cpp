@@ -11,7 +11,8 @@
 
 namespace llvm {
 
-bool DWARFUnitIndex::Header::parse(DataExtractor IndexData, uint32_t *OffsetPtr) {
+bool DWARFUnitIndex::Header::parse(DataExtractor IndexData,
+                                   uint32_t *OffsetPtr) {
   Version = IndexData.getU32(OffsetPtr);
   NumColumns = IndexData.getU32(OffsetPtr);
   NumUnits = IndexData.getU32(OffsetPtr);
@@ -34,8 +35,5 @@ bool DWARFUnitIndex::parse(DataExtractor IndexData) {
   return true;
 }
 
-void DWARFUnitIndex::dump(raw_ostream &OS) const {
-  Header.dump(OS);
-}
-
+void DWARFUnitIndex::dump(raw_ostream &OS) const { Header.dump(OS); }
 }
