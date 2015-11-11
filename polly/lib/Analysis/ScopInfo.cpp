@@ -2877,10 +2877,8 @@ bool Scop::hasFeasibleRuntimeContext() const {
 
 void Scop::addAssumption(__isl_take isl_set *Set) {
   AssumedContext = isl_set_intersect(AssumedContext, Set);
-  isl_basic_set_list *List = isl_set_get_basic_set_list(AssumedContext);
-  int NSets = isl_basic_set_list_n_basic_set(List);
-  isl_basic_set_list_free(List);
 
+  int NSets = isl_set_n_basic_set(AssumedContext);
   if (NSets >= MaxDisjunctsAssumed) {
     isl_space *Space = isl_set_get_space(AssumedContext);
     isl_set_free(AssumedContext);
