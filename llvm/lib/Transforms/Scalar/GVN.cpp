@@ -638,15 +638,6 @@ namespace {
     DominatorTree &getDominatorTree() const { return *DT; }
     AliasAnalysis *getAliasAnalysis() const { return VN.getAliasAnalysis(); }
     MemoryDependenceAnalysis &getMemDep() const { return *MD; }
-
-    // Assign VNs for instructions newly created during GVN optimization.
-    void addNewInstruction(Value *Val) {
-      if (Instruction *I = dyn_cast<Instruction>(Val)) {
-        unsigned Num = VN.lookup_or_add(I);
-        addToLeaderTable(Num, I, I->getParent());
-      }
-    }
-
   private:
     /// Push a new Value to the LeaderTable onto the list for its value number.
     void addToLeaderTable(uint32_t N, Value *V, const BasicBlock *BB) {
@@ -1135,8 +1126,7 @@ static int AnalyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
 /// before we give up.
 static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
                                    Type *LoadTy,
-                                   Instruction *InsertPt, const DataLayout &DL,
-                                   GVN &gvn){
+                                   Instruction *InsertPt, const DataLayout &DL){
   LLVMContext &Ctx = SrcVal->getType()->getContext();
 
   uint64_t StoreSize = (DL.getTypeSizeInBits(SrcVal->getType()) + 7) / 8;
@@ -1146,15 +1136,11 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
 
   // Compute which bits of the stored value are being used by the load.  Convert
   // to an integer type to start with.
-  if (SrcVal->getType()->getScalarType()->isPointerTy()) {
+  if (SrcVal->getType()->getScalarType()->isPointerTy())
     SrcVal = Builder.CreatePtrToInt(SrcVal,
         DL.getIntPtrType(SrcVal->getType()));
-    gvn.addNewInstruction(SrcVal);
-  }
-  if (!SrcVal->getType()->isIntegerTy()) {
+  if (!SrcVal->getType()->isIntegerTy())
     SrcVal = Builder.CreateBitCast(SrcVal, IntegerType::get(Ctx, StoreSize*8));
-    gvn.addNewInstruction(SrcVal);
-  }
 
   // Shift the bits to the least significant depending on endianness.
   unsigned ShiftAmt;
@@ -1163,15 +1149,11 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   else
     ShiftAmt = (StoreSize-LoadSize-Offset)*8;
 
-  if (ShiftAmt) {
+  if (ShiftAmt)
     SrcVal = Builder.CreateLShr(SrcVal, ShiftAmt);
-    gvn.addNewInstruction(SrcVal);
-  }
 
-  if (LoadSize != StoreSize) {
+  if (LoadSize != StoreSize)
     SrcVal = Builder.CreateTrunc(SrcVal, IntegerType::get(Ctx, LoadSize*8));
-    gvn.addNewInstruction(SrcVal);
-  }
 
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, Builder, DL);
 }
@@ -1210,7 +1192,6 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
                                PtrVal->getType()->getPointerAddressSpace());
     Builder.SetCurrentDebugLocation(SrcVal->getDebugLoc());
     PtrVal = Builder.CreateBitCast(PtrVal, DestPTy);
-    gvn.addNewInstruction(PtrVal);
     LoadInst *NewLoad = Builder.CreateLoad(PtrVal);
     NewLoad->takeName(SrcVal);
     NewLoad->setAlignment(SrcVal->getAlignment());
@@ -1221,13 +1202,10 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
     // Replace uses of the original load with the wider load.  On a big endian
     // system, we need to shift down to get the relevant bits.
     Value *RV = NewLoad;
-    if (DL.isBigEndian()) {
+    if (DL.isBigEndian())
       RV = Builder.CreateLShr(RV,
                     NewLoadSize*8-SrcVal->getType()->getPrimitiveSizeInBits());
-      gvn.addNewInstruction(RV);
-    }
     RV = Builder.CreateTrunc(RV, SrcVal->getType());
-    gvn.addNewInstruction(RV);
     SrcVal->replaceAllUsesWith(RV);
 
     // We would like to use gvn.markInstructionForDeletion here, but we can't
@@ -1239,7 +1217,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
     SrcVal = NewLoad;
   }
 
-  return GetStoreValueForLoad(SrcVal, Offset, LoadTy, InsertPt, DL, gvn);
+  return GetStoreValueForLoad(SrcVal, Offset, LoadTy, InsertPt, DL);
 }
 
 
@@ -1247,7 +1225,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
 /// memdep query of a load that ends up being a clobbering mem intrinsic.
 static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
                                      Type *LoadTy, Instruction *InsertPt,
-                                     const DataLayout &DL, GVN &gvn){
+                                     const DataLayout &DL){
   LLVMContext &Ctx = LoadTy->getContext();
   uint64_t LoadSize = DL.getTypeSizeInBits(LoadTy)/8;
 
@@ -1259,10 +1237,8 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
     // memset(P, 'x', 1234) -> splat('x'), even if x is a variable, and
     // independently of what the offset is.
     Value *Val = MSI->getValue();
-    if (LoadSize != 1) {
+    if (LoadSize != 1)
       Val = Builder.CreateZExt(Val, IntegerType::get(Ctx, LoadSize*8));
-      gvn.addNewInstruction(Val);
-    }
 
     Value *OneElt = Val;
 
@@ -1271,18 +1247,14 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
       // If we can double the number of bytes set, do it.
       if (NumBytesSet*2 <= LoadSize) {
         Value *ShVal = Builder.CreateShl(Val, NumBytesSet*8);
-        gvn.addNewInstruction(ShVal);
         Val = Builder.CreateOr(Val, ShVal);
-        gvn.addNewInstruction(Val);
         NumBytesSet <<= 1;
         continue;
       }
 
       // Otherwise insert one byte at a time.
       Value *ShVal = Builder.CreateShl(Val, 1*8);
-      gvn.addNewInstruction(ShVal);
       Val = Builder.CreateOr(OneElt, ShVal);
-      gvn.addNewInstruction(Val);
       ++NumBytesSet;
     }
 
@@ -1349,7 +1321,7 @@ Value *AvailableValueInBlock::MaterializeAdjustedValue(LoadInst *LI,
   if (isSimpleValue()) {
     Res = getSimpleValue();
     if (Res->getType() != LoadTy) {
-      Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(), DL, gvn);
+      Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(), DL);
 
       DEBUG(dbgs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
                    << *getSimpleValue() << '\n'
@@ -1369,7 +1341,7 @@ Value *AvailableValueInBlock::MaterializeAdjustedValue(LoadInst *LI,
     }
   } else if (isMemIntrinValue()) {
     Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset, LoadTy,
-                                 BB->getTerminator(), DL, gvn);
+                                 BB->getTerminator(), DL);
     DEBUG(dbgs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
                  << "  " << *getMemIntrinValue() << '\n'
                  << *Res << '\n' << "\n\n\n");
@@ -1927,7 +1899,7 @@ bool GVN::processLoad(LoadInst *L) {
           L->getType(), L->getPointerOperand(), DepSI);
       if (Offset != -1)
         AvailVal = GetStoreValueForLoad(DepSI->getValueOperand(), Offset,
-                                        L->getType(), L, DL, *this);
+                                        L->getType(), L, DL);
     }
 
     // Check to see if we have something like this:
@@ -1952,7 +1924,7 @@ bool GVN::processLoad(LoadInst *L) {
       int Offset = AnalyzeLoadFromClobberingMemInst(
           L->getType(), L->getPointerOperand(), DepMI, DL);
       if (Offset != -1)
-        AvailVal = GetMemInstValueForLoad(DepMI, Offset, L->getType(), L, DL, *this);
+        AvailVal = GetMemInstValueForLoad(DepMI, Offset, L->getType(), L, DL);
     }
 
     if (AvailVal) {
