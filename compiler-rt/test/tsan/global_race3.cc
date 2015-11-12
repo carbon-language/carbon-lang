@@ -28,4 +28,4 @@ int main() {
 
 // CHECK: addr3=[[ADDR3:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK: Location is global 'XXX::YYY::ZZZ' of size 40 at [[ADDR3]] ({{.*}}+0x{{[0-9,a-f]+}})
+// CHECK: Location is global 'XXX::YYY::ZZZ' {{(of size 40 )?}}at [[ADDR3]] ({{.*}}+0x{{[0-9,a-f]+}})

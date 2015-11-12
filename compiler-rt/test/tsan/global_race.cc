@@ -23,5 +23,5 @@ int main() {
 
 // CHECK: addr=[[ADDR:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK: Location is global 'GlobalData' of size 40 at [[ADDR]] (global_race.cc.exe+0x{{[0-9,a-f]+}})
+// CHECK: Location is global 'GlobalData' {{(of size 40 )?}}at [[ADDR]] (global_race.cc.exe+0x{{[0-9,a-f]+}})
 

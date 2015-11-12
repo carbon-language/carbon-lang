@@ -171,9 +171,14 @@ static void PrintLocation(const ReportLocation *loc) {
   Printf("%s", d.Location());
   if (loc->type == ReportLocationGlobal) {
     const DataInfo &global = loc->global;
-    Printf("  Location is global '%s' of size %zu at %p (%s+%p)\n\n",
-           global.name, global.size, global.start,
-           StripModuleName(global.module), global.module_offset);
+    if (global.size != 0)
+      Printf("  Location is global '%s' of size %zu at %p (%s+%p)\n\n",
+             global.name, global.size, global.start,
+             StripModuleName(global.module), global.module_offset);
+    else
+      Printf("  Location is global '%s' at %p (%s+%p)\n\n", global.name,
+             global.start, StripModuleName(global.module),
+             global.module_offset);
   } else if (loc->type == ReportLocationHeap) {
     char thrbuf[kThreadBufSize];
     Printf("  Location is heap block of size %zu at %p allocated by %s:\n",
