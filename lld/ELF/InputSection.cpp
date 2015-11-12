@@ -52,6 +52,7 @@ InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
   case Merge:
     return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
   }
+  llvm_unreachable("Invalid section kind");
 }
 
 template <class ELFT>
