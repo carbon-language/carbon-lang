@@ -61,7 +61,11 @@ void InitializeFlags(Flags *f, const char *env) {
     CommonFlags cf;
     cf.CopyFrom(*common_flags());
     cf.allow_addr2line = true;
-#ifndef SANITIZER_GO
+#ifdef SANITIZER_GO
+    // Does not work as expected for Go: runtime handles SIGABRT and crashes.
+    cf.abort_on_error = false;
+    // Go does not have mutexes.
+#else
     cf.detect_deadlocks = true;
 #endif
     cf.print_suppressions = false;
