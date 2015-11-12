@@ -336,7 +336,7 @@ namespace ISD {
     SHL, SRA, SRL, ROTL, ROTR,
 
     /// Byte Swap and Counting operators.
-    BSWAP, CTTZ, CTLZ, CTPOP,
+    BSWAP, CTTZ, CTLZ, CTPOP, BITREVERSE,
 
     /// [SU]ABSDIFF - Signed/Unsigned absolute difference of two input integer
     /// vector. These nodes are generated from llvm.*absdiff* intrinsics.
