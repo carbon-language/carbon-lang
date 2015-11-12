@@ -1332,6 +1332,15 @@ private:
       Region *R,
       DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
 
+  /// @brief Collect all memory access relations of a given type.
+  ///
+  /// @param Predicate A predicate function that returns true if an access is
+  ///                  of a given type.
+  ///
+  /// @returns The set of memory accesses in the scop that match the predicate.
+  __isl_give isl_union_map *
+  getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate);
+
   /// @name Helper function for printing the Scop.
   ///
   ///{
