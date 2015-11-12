@@ -29,8 +29,6 @@
 // Similar code is used in Google Perftools,
 // http://code.google.com/p/google-perftools.
 
-// TODO(glider): do we need both zones?
-static malloc_zone_t *system_malloc_zone = 0;
 static malloc_zone_t sanitizer_zone;
 
 INTERCEPTOR(malloc_zone_t *, malloc_create_zone,
@@ -155,10 +153,7 @@ size_t __sanitizer_mz_size(malloc_zone_t* zone, const void* ptr) {
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void *__sanitizer_mz_malloc(malloc_zone_t *zone, uptr size) {
-  if (UNLIKELY(!COMMON_MALLOC_SANITIZER_INITIALIZED)) {
-    CHECK(system_malloc_zone);
-    return malloc_zone_malloc(system_malloc_zone, size);
-  }
+  COMMON_MALLOC_ENTER();
   COMMON_MALLOC_MALLOC(size);
   return p;
 }
@@ -184,10 +179,7 @@ void *__sanitizer_mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void *__sanitizer_mz_valloc(malloc_zone_t *zone, size_t size) {
-  if (UNLIKELY(!COMMON_MALLOC_SANITIZER_INITIALIZED)) {
-    CHECK(system_malloc_zone);
-    return malloc_zone_valloc(system_malloc_zone, size);
-  }
+  COMMON_MALLOC_ENTER();
   COMMON_MALLOC_VALLOC(size);
   return p;
 }
@@ -246,10 +238,7 @@ void __sanitizer_mz_destroy(malloc_zone_t* zone) {
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void *__sanitizer_mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
-  if (UNLIKELY(!COMMON_MALLOC_SANITIZER_INITIALIZED)) {
-    CHECK(system_malloc_zone);
-    return malloc_zone_memalign(system_malloc_zone, align, size);
-  }
+  COMMON_MALLOC_ENTER();
   COMMON_MALLOC_MEMALIGN(align, size);
   return p;
 }
