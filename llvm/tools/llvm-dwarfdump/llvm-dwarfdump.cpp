@@ -69,7 +69,8 @@ static cl::opt<DIDumpType> DumpType(
         clEnumValN(DIDT_StrDwo, "str.dwo", ".debug_str.dwo"),
         clEnumValN(DIDT_StrOffsetsDwo, "str_offsets.dwo",
                    ".debug_str_offsets.dwo"),
-        clEnumValN(DIDT_CUIndex, "cu_index", ".debug_cu_index"), clEnumValEnd));
+        clEnumValN(DIDT_CUIndex, "cu_index", ".debug_cu_index"),
+        clEnumValN(DIDT_CUIndex, "tu_index", ".debug_tu_index"), clEnumValEnd));
 
 static void error(StringRef Filename, std::error_code EC) {
   if (!EC)
