@@ -108,9 +108,23 @@ void Fuzzer::AlarmCallback() {
 }
 
 void Fuzzer::PrintStats(const char *Where, const char *End) {
-  if (!Options.Verbosity) return;
   size_t Seconds = secondsSinceProcessStartUp();
   size_t ExecPerSec = (Seconds ? TotalNumberOfRuns / Seconds : 0);
+
+  if (Options.OutputCSV) {
+    static bool csvHeaderPrinted = false;
+    if (!csvHeaderPrinted) {
+      csvHeaderPrinted = true;
+      Printf("runs,block_cov,bits,cc_cov,corpus,execs_per_sec,tbms,reason\n");
+    }
+    Printf("%zd,%zd,%zd,%zd,%zd,%zd,%zd,%s\n", TotalNumberOfRuns,
+           LastRecordedBlockCoverage, TotalBits(),
+           LastRecordedCallerCalleeCoverage, Corpus.size(), ExecPerSec,
+           TotalNumberOfExecutedTraceBasedMutations, Where);
+  }
+
+  if (!Options.Verbosity)
+    return;
   Printf("#%zd\t%s", TotalNumberOfRuns, Where);
   if (LastRecordedBlockCoverage)
     Printf(" cov: %zd", LastRecordedBlockCoverage);
@@ -144,8 +158,7 @@ void Fuzzer::RereadOutputCorpus() {
       CurrentUnit.insert(CurrentUnit.begin(), X.begin(), X.end());
       if (RunOne(CurrentUnit)) {
         Corpus.push_back(X);
-        if (Options.Verbosity >= 1)
-          PrintStats("RELOAD");
+        PrintStats("RELOAD");
       }
     }
   }
@@ -198,9 +211,8 @@ bool Fuzzer::RunOne(const Unit &U) {
   auto UnitStopTime = system_clock::now();
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
-  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1))
-      && secondsSinceProcessStartUp() >= 2
-      && Options.Verbosity)
+  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) &&
+      secondsSinceProcessStartUp() >= 2)
     PrintStats("pulse ");
   if (TimeOfUnit > TimeOfLongestUnitInSeconds &&
       TimeOfUnit >= Options.ReportSlowUnits) {
@@ -452,11 +464,11 @@ void Fuzzer::Loop() {
     SyncCorpus();
     RereadOutputCorpus();
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
-      return;
+      break;
     if (Options.MaxTotalTimeSec > 0 &&
         secondsSinceProcessStartUp() >
         static_cast<size_t>(Options.MaxTotalTimeSec))
-      return;
+      break;
     CurrentUnit = Corpus[J1];
     // Optionally, cross with another unit.
     if (Options.DoCrossOver && USF.GetRand().RandBool()) {
@@ -476,6 +488,8 @@ void Fuzzer::Loop() {
     // Perform several mutations and runs.
     MutateAndTestOne(&CurrentUnit);
   }
+
+  PrintStats("DONE  ", "\n");
 }
 
 void Fuzzer::SyncCorpus() {

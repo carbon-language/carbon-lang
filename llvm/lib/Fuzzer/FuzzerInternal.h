@@ -96,6 +96,7 @@ class Fuzzer {
     std::string ArtifactPrefix = "./";
     bool SaveArtifacts = true;
     bool PrintNEW = true;  // Print a status line when new units are found;
+    bool OutputCSV = false;
   };
   Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }

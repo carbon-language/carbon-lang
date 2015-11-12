@@ -69,3 +69,4 @@ FUZZER_FLAG_STRING(artifact_prefix, "Write fuzzing artifacts (crash, "
                                     "$(artifact_prefix)file")
 FUZZER_FLAG_INT(drill, 0, "Experimental: fuzz using a single unit as the seed "
                           "corpus, then merge with the initial corpus")
+FUZZER_FLAG_INT(output_csv, 0, "Enable pulse output in CSV format.")
