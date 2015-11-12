@@ -14,6 +14,7 @@
 // RUN: FileCheck --check-prefix=CHECK-COLLISION %s < 1.txt || FileCheck --check-prefix=CHECK-NO-COLLISION %s < 1.txt
 //
 // REQUIRES: stable-runtime
+// UNSUPPORTED: android
 
 #define _POSIX_C_SOURCE 200112  // rand_r
 
