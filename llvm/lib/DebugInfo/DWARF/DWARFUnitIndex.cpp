@@ -16,6 +16,8 @@ namespace llvm {
 
 bool DWARFUnitIndex::Header::parse(DataExtractor IndexData,
                                    uint32_t *OffsetPtr) {
+  if (!IndexData.isValidOffsetForDataOfSize(*OffsetPtr, 16))
+    return false;
   Version = IndexData.getU32(OffsetPtr);
   NumColumns = IndexData.getU32(OffsetPtr);
   NumUnits = IndexData.getU32(OffsetPtr);
@@ -30,6 +32,11 @@ void DWARFUnitIndex::Header::dump(raw_ostream &OS) const {
 bool DWARFUnitIndex::parse(DataExtractor IndexData) {
   uint32_t Offset = 0;
   if (!Header.parse(IndexData, &Offset))
+    return false;
+
+  if (!IndexData.isValidOffsetForDataOfSize(
+          Offset, Header.NumBuckets * (8 + 4) +
+                      (2 * Header.NumUnits + 1) * 4 * Header.NumColumns))
     return false;
 
   Rows = llvm::make_unique<HashRow[]>(Header.NumBuckets);
