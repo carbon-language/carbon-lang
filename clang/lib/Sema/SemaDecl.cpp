@@ -4822,7 +4822,6 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   // If we're hiding internal-linkage symbols in modules from redeclaration
   // lookup, let name lookup know.
   if ((getLangOpts().Modules || getLangOpts().ModulesLocalVisibility) &&
-      getLangOpts().ModulesHideInternalLinkage &&
       D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
     Previous.setAllowHiddenInternal(false);
 

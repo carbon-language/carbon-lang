@@ -3,7 +3,7 @@
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL -DEARLY_INDIRECT_INCLUDE -fno-modules-hide-internal-linkage
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL -DEARLY_INDIRECT_INCLUDE
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -fmodule-feature use_defs_twice -DIMPORT_USE_2
 
 // Trigger import of definitions, but don't make them visible.
@@ -111,4 +111,9 @@ MergeFunctionTemplateSpecializations::X<int>::Q<char> xiqc;
 #ifdef TEXTUAL
 #include "use-defs.h"
 void use_static_inline() { StaticInline::g({}); }
+#ifdef EARLY_INDIRECT_INCLUDE
+// expected-warning@-2 {{ambiguous use of internal linkage declaration 'g' defined in multiple modules}}
+// expected-note@defs.h:71 {{declared here in module 'redef'}}
+// expected-note@defs.h:71 {{declared here in module 'stuff.use'}}
+#endif
 #endif
