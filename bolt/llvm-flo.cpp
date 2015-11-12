@@ -410,6 +410,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       unsigned LocalCount = 1;
       std::string LocalName = (*Name).str() + "/" + FileSymbolName + "/";
 
+      if ((*Name).startswith(BC->AsmInfo->getPrivateGlobalPrefix())) {
+        LocalName = "PG." + LocalName;
+      }
+
       while (BC->GlobalSymbols.find(LocalName + std::to_string(LocalCount)) !=
              BC->GlobalSymbols.end()) {
         ++LocalCount;
