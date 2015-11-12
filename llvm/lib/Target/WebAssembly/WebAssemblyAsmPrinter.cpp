@@ -172,8 +172,7 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
 void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   DEBUG(dbgs() << "EmitInstruction: " << *MI << '\n');
 
-  unsigned NumDefs = MI->getDesc().getNumDefs();
-  assert(NumDefs <= 1 &&
+  assert(MI->getDesc().getNumDefs() <= 1 &&
          "Instructions with multiple result values not implemented");
 
   switch (MI->getOpcode()) {
