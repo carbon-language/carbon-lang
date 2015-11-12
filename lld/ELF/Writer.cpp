@@ -632,8 +632,23 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSections.push_back(Out<ELFT>::RelaDyn);
     if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs())
       OutputSections.push_back(Out<ELFT>::RelaPlt);
+    // This is a MIPS specific section to hold a space within the data segment
+    // of executable file which is pointed to by the DT_MIPS_RLD_MAP entry.
+    // See "Dynamic section" in Chapter 5 in the following document:
+    // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+    if (Config->EMachine == EM_MIPS && !Config->Shared) {
+      Out<ELFT>::MipsRldMap = new (SecAlloc.Allocate())
+          OutputSection<ELFT>(".rld_map", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE);
+      Out<ELFT>::MipsRldMap->setSize(ELFT::Is64Bits ? 8 : 4);
+      Out<ELFT>::MipsRldMap->updateAlign(ELFT::Is64Bits ? 8 : 4);
+      OutputSections.push_back(Out<ELFT>::MipsRldMap);
+    }
   }
-  if (!Out<ELFT>::Got->empty())
+
+  // We add the .got section to the result for dynamic MIPS target because
+  // its address and properties are mentioned in the .dynamic section.
+  if (!Out<ELFT>::Got->empty() ||
+      (isOutputDynamic() && Config->EMachine == EM_MIPS))
     OutputSections.push_back(Out<ELFT>::Got);
   if (Out<ELFT>::GotPlt && !Out<ELFT>::GotPlt->empty())
     OutputSections.push_back(Out<ELFT>::GotPlt);
