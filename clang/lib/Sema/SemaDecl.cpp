@@ -4819,12 +4819,6 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
 
-  // If we're hiding internal-linkage symbols in modules from redeclaration
-  // lookup, let name lookup know.
-  if ((getLangOpts().Modules || getLangOpts().ModulesLocalVisibility) &&
-      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
-    Previous.setAllowHiddenInternal(false);
-
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet()) {
     bool IsLinkageLookup = false;
