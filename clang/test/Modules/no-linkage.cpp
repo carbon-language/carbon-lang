@@ -28,7 +28,7 @@ void use_things() {
 
 void use_things_again() {
   use(Typedef().n); // expected-error {{ambiguous}}
-  use(NS::n); // expected-error {{ambiguous}} expected-error{{'NS' is not a class, namespace, or enumeration}}
+  use(NS::n); // expected-error {{ambiguous}}
   use(AliasDecl); // expected-error {{ambiguous}}
   use(Enumerator); // expected-error {{ambiguous}}
   use(UsingDecl); // expected-error {{ambiguous}}
