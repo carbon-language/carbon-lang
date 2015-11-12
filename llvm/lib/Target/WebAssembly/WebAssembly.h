@@ -27,7 +27,6 @@ FunctionPass *createWebAssemblyISelDag(WebAssemblyTargetMachine &TM,
                                        CodeGenOpt::Level OptLevel);
 
 FunctionPass *createWebAssemblyCFGStackify();
-FunctionPass *createWebAssemblyRegNumbering();
 
 FunctionPass *createWebAssemblyRelooper();
 
