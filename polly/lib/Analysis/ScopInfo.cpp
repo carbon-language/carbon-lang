@@ -34,6 +34,7 @@
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/Support/Debug.h"
 #include "isl/aff.h"
 #include "isl/constraint.h"
@@ -3837,20 +3838,28 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   TD = &F->getParent()->getDataLayout();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
+  DebugLoc Beg, End;
+  getDebugLocations(R, Beg, End);
+  std::string Msg = "SCoP begins here.";
+  emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F, Beg, Msg);
+
   buildScop(*R, DT);
 
   DEBUG(scop->print(dbgs()));
 
   if (scop->isEmpty() || !scop->hasFeasibleRuntimeContext()) {
+    Msg = "SCoP ends here but was dismissed.";
     delete scop;
     scop = nullptr;
-    return false;
+  } else {
+    Msg = "SCoP ends here.";
+    ++ScopFound;
+    if (scop->getMaxLoopDepth() > 0)
+      ++RichScopFound;
   }
 
-  // Statistics.
-  ++ScopFound;
-  if (scop->getMaxLoopDepth() > 0)
-    ++RichScopFound;
+  emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F, End, Msg);
+
   return false;
 }
 
