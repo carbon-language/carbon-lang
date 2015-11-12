@@ -228,7 +228,7 @@ void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
 #endif
 }
 
-#if SANITIZER_ANDROID
+#if SANITIZER_ANDROID || SANITIZER_GO
 int GetNamedMappingFd(const char *name, uptr size) {
   return -1;
 }
