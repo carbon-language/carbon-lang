@@ -66,6 +66,17 @@ class ScopInfo;
 
 //===---------------------------------------------------------------------===//
 
+/// @brief Enumeration of assumptions Polly can take.
+enum AssumptionKind {
+  ALIASING,
+  INBOUNDS,
+  WRAPPING,
+  ERRORBLOCK,
+  INFINITELOOP,
+  INVARIANTLOAD,
+  DELINEARIZATION,
+};
+
 /// Maps from a loop to the affine function expressing its backedge taken count.
 /// The backedge taken count already enough to express iteration domain as we
 /// only allow loops with canonical induction variable.
@@ -1453,6 +1464,17 @@ public:
   /// @returns True if the optimized SCoP can be executed.
   bool hasFeasibleRuntimeContext() const;
 
+  /// @brief Track and report an assumption.
+  ///
+  /// Use 'clang -Rpass-analysis=polly-scops' or 'opt -pass-remarks=polly-scops'
+  /// to output the assumptions.
+  ///
+  /// @param Kind The assumption kind describing the underlying cause.
+  /// @param Set  The relations between parameters that are assumed to hold.
+  /// @param Loc  The location in the source that caused this assumption.
+  void trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
+                       DebugLoc Loc);
+
   /// @brief Add assumptions to assumed context.
   ///
   /// The assumptions added will be assumed to hold during the execution of the
@@ -1464,9 +1486,11 @@ public:
   ///          that assumptions do not change the set of statement instances
   ///          executed.
   ///
-  /// @param Set A set describing relations between parameters that are assumed
-  ///            to hold.
-  void addAssumption(__isl_take isl_set *Set);
+  /// @param Kind The assumption kind describing the underlying cause.
+  /// @param Set  The relations between parameters that are assumed to hold.
+  /// @param Loc  The location in the source that caused this assumption.
+  void addAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
+                     DebugLoc Loc);
 
   /// @brief Get the boundary context for this Scop.
   ///

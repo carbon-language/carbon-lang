@@ -512,7 +512,8 @@ void MemoryAccess::assumeNoOutOfBound() {
   // bail out more often than strictly necessary.
   Outside = isl_set_remove_divs(Outside);
   Outside = isl_set_complement(Outside);
-  Statement->getParent()->addAssumption(Outside);
+  Statement->getParent()->addAssumption(INBOUNDS, Outside,
+                                        getAccessInstruction()->getDebugLoc());
   isl_space_free(Space);
 }
 
@@ -1175,7 +1176,7 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
     isl_set *InBoundIfExecuted =
         isl_set_union(isl_set_complement(Executed), InBound);
 
-    Parent.addAssumption(InBoundIfExecuted);
+    Parent.addAssumption(INBOUNDS, InBoundIfExecuted, GEP->getDebugLoc());
   }
 
   isl_local_space_free(LSpace);
@@ -1607,6 +1608,7 @@ void Scop::buildBoundaryContext() {
   isl_ctx_reset_operations(getIslCtx());
   isl_ctx_set_max_operations(getIslCtx(), MaxOpsOld);
   BoundaryContext = isl_set_gist_params(BoundaryContext, getContext());
+  trackAssumption(WRAPPING, BoundaryContext, DebugLoc());
 }
 
 void Scop::addUserContext() {
@@ -2181,7 +2183,8 @@ void Scop::propagateDomainConstraints(Region *R) {
     if (containsErrorBlock(RN, getRegion(), LI, DT)) {
       IsOptimized = true;
       isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
-      addAssumption(isl_set_complement(DomPar));
+      addAssumption(ERRORBLOCK, isl_set_complement(DomPar),
+                    BB->getTerminator()->getDebugLoc());
     }
   }
 }
@@ -2282,7 +2285,8 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L) {
 
   isl_set *UnboundedCtx = isl_set_params(Parts.first);
   isl_set *BoundedCtx = isl_set_complement(UnboundedCtx);
-  addAssumption(BoundedCtx);
+  addAssumption(INFINITELOOP, BoundedCtx,
+                HeaderBB->getTerminator()->getDebugLoc());
 }
 
 void Scop::buildAliasChecks(AliasAnalysis &AA) {
@@ -2295,7 +2299,7 @@ void Scop::buildAliasChecks(AliasAnalysis &AA) {
   // If a problem occurs while building the alias groups we need to delete
   // this SCoP and pretend it wasn't valid in the first place. To this end
   // we make the assumed context infeasible.
-  addAssumption(isl_set_empty(getParamSpace()));
+  addAssumption(ALIASING, isl_set_empty(getParamSpace()), DebugLoc());
 
   DEBUG(dbgs() << "\n\nNOTE: Run time checks for " << getNameStr()
                << " could not be created as the number of parameters involved "
@@ -2802,7 +2806,8 @@ void Scop::hoistInvariantLoads() {
                    << ") is required to be invariant but was not marked as "
                       "such. SCoP for "
                    << getRegion() << " will be dropped\n\n");
-      addAssumption(isl_set_empty(getParamSpace()));
+      addAssumption(INVARIANTLOAD, isl_set_empty(getParamSpace()),
+                    LI->getDebugLoc());
       return;
     }
   }
@@ -2820,7 +2825,8 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
     // In case of mismatching array sizes, we bail out by setting the run-time
     // context to false.
     if (!SAI->updateSizes(Sizes))
-      addAssumption(isl_set_empty(getParamSpace()));
+      addAssumption(DELINEARIZATION, isl_set_empty(getParamSpace()),
+                    DebugLoc());
   }
   return SAI.get();
 }
@@ -2882,7 +2888,42 @@ bool Scop::hasFeasibleRuntimeContext() const {
   return IsFeasible;
 }
 
-void Scop::addAssumption(__isl_take isl_set *Set) {
+static std::string toString(AssumptionKind Kind) {
+  switch (Kind) {
+  case ALIASING:
+    return "No-aliasing";
+  case INBOUNDS:
+    return "Inbounds";
+  case WRAPPING:
+    return "No-overflows";
+  case ERRORBLOCK:
+    return "No-error";
+  case INFINITELOOP:
+    return "Finite loop";
+  case INVARIANTLOAD:
+    return "Invariant load";
+  case DELINEARIZATION:
+    return "Delinearization";
+  }
+  llvm_unreachable("Unknown AssumptionKind!");
+}
+
+void Scop::trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
+                           DebugLoc Loc) {
+  if (isl_set_is_subset(Context, Set))
+    return;
+
+  if (isl_set_is_subset(AssumedContext, Set))
+    return;
+
+  auto &F = *getRegion().getEntry()->getParent();
+  std::string Msg = toString(Kind) + " assumption:\t" + stringFromIslObj(Set);
+  emitOptimizationRemarkAnalysis(F.getContext(), DEBUG_TYPE, F, Loc, Msg);
+}
+
+void Scop::addAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
+                         DebugLoc Loc) {
+  trackAssumption(Kind, Set, Loc);
   AssumedContext = isl_set_intersect(AssumedContext, Set);
 
   int NSets = isl_set_n_basic_set(AssumedContext);
