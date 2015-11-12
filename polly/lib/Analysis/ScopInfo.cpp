@@ -164,8 +164,8 @@ static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
                              ArrayRef<const SCEV *> Sizes, enum ARRAYKIND Kind,
-                             Scop *S)
-    : BasePtr(BasePtr), ElementType(ElementType), Kind(Kind), S(*S) {
+                             const DataLayout &DL, Scop *S)
+    : BasePtr(BasePtr), ElementType(ElementType), Kind(Kind), DL(DL), S(*S) {
   std::string BasePtrName =
       getIslCompatibleName("MemRef_", BasePtr, Kind == KIND_PHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
@@ -216,7 +216,7 @@ ScopArrayInfo::~ScopArrayInfo() {
 std::string ScopArrayInfo::getName() const { return isl_id_get_name(Id); }
 
 int ScopArrayInfo::getElemSizeInBytes() const {
-  return ElementType->getPrimitiveSizeInBits() / 8;
+  return DL.getTypeAllocSize(ElementType);
 }
 
 isl_id *ScopArrayInfo::getBasePtrId() const { return isl_id_copy(Id); }
@@ -2863,8 +2863,9 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
                                ScopArrayInfo::ARRAYKIND Kind) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, Kind)];
   if (!SAI) {
-    SAI.reset(
-        new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, Kind, this));
+    auto &DL = getRegion().getEntry()->getModule()->getDataLayout();
+    SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, Kind,
+                                DL, this));
   } else {
     // In case of mismatching array sizes, we bail out by setting the run-time
     // context to false.
@@ -3573,13 +3574,13 @@ void ScopInfo::buildMemoryAccess(
 
   if (LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
     SizeType = Load->getType();
-    Size = TD->getTypeStoreSize(SizeType);
+    Size = TD->getTypeAllocSize(SizeType);
     Type = MemoryAccess::READ;
     Val = Load;
   } else {
     StoreInst *Store = cast<StoreInst>(Inst);
     SizeType = Store->getValueOperand()->getType();
-    Size = TD->getTypeStoreSize(SizeType);
+    Size = TD->getTypeAllocSize(SizeType);
     Type = MemoryAccess::MUST_WRITE;
     Val = Store->getValueOperand();
   }

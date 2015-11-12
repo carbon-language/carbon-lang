@@ -115,10 +115,11 @@ public:
   /// @param IslCtx         The isl context used to create the base pointer id.
   /// @param DimensionSizes A vector containing the size of each dimension.
   /// @param Kind           The kind of the array object.
+  /// @param DL             The data layout of the module.
   /// @param S              The scop this array object belongs to.
   ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
                 ArrayRef<const SCEV *> DimensionSizes, enum ARRAYKIND Kind,
-                Scop *S);
+                const DataLayout &DL, Scop *S);
 
   ///  @brief Update the sizes of the ScopArrayInfo object.
   ///
@@ -245,6 +246,9 @@ private:
   ///
   /// We distinguish between SCALAR, PHI and ARRAY objects.
   enum ARRAYKIND Kind;
+
+  /// @brief The data layout of the module.
+  const DataLayout &DL;
 
   /// @brief The scop this SAI object belongs to.
   Scop &S;
