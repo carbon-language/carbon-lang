@@ -466,7 +466,7 @@ bool ShrinkWrap::isShrinkWrapEnabled(const MachineFunction &MF) {
   switch (EnableShrinkWrapOpt) {
   case cl::BOU_UNSET:
     return TFI->enableShrinkWrapping(MF) &&
-      // Windows with CFI has some limitations that makes it impossible
+      // Windows with CFI has some limitations that make it impossible
       // to use shrink-wrapping.
       !MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   // If EnableShrinkWrap is set, it takes precedence on whatever the
