@@ -400,22 +400,26 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       assert(BC->GlobalSymbols.find(*Name) == BC->GlobalSymbols.end() &&
              "global name not unique");
       UniqueName = *Name;
+      /// It's possible we are seeing a globalized local. LLVM might treat it as
+      /// local if it has a "private global" prefix, e.g. ".L". Thus we have to
+      /// change the prefix to enforce global scope of the symbol.
+      if (StringRef(UniqueName)
+              .startswith(BC->AsmInfo->getPrivateGlobalPrefix()))
+        UniqueName = "PG." + UniqueName;
     } else {
       unsigned LocalCount = 1;
       std::string LocalName = (*Name).str() + "/" + FileSymbolName + "/";
+
+      if ((*Name).startswith(BC->AsmInfo->getPrivateGlobalPrefix())) {
+        LocalName = "PG." + LocalName;
+      }
+
       while (BC->GlobalSymbols.find(LocalName + std::to_string(LocalCount)) !=
              BC->GlobalSymbols.end()) {
         ++LocalCount;
       }
       UniqueName = LocalName + std::to_string(LocalCount);
     }
-
-    /// It's possible we are seeing a globalized local. Even though
-    /// we've made the name unique, LLVM might still treat it as local
-    /// if it has a "private global" prefix, e.g. ".L". Thus we have to
-    /// change the prefix to enforce global scope of the symbol.
-    if (StringRef(UniqueName).startswith(BC->AsmInfo->getPrivateGlobalPrefix()))
-      UniqueName = "PG." + UniqueName;
 
     // Add the name to global symbols map.
     BC->GlobalSymbols[UniqueName] = Address;
