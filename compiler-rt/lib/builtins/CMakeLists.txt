@@ -164,6 +164,8 @@ endif ()
 
 if (NOT MSVC)
   set(x86_64_SOURCES
+      x86_64/chkstk.S
+      x86_64/chkstk2.S
       x86_64/floatdidf.c
       x86_64/floatdisf.c
       x86_64/floatdixf.c
@@ -183,6 +185,8 @@ if (NOT MSVC)
   set(i386_SOURCES
       i386/ashldi3.S
       i386/ashrdi3.S
+      i386/chkstk.S
+      i386/chkstk2.S
       i386/divdi3.S
       i386/floatdidf.S
       i386/floatdisf.S
@@ -241,6 +245,8 @@ set(arm_SOURCES
   arm/aeabi_uldivmod.S
   arm/bswapdi2.S
   arm/bswapsi2.S
+  arm/clzdi2.S
+  arm/clzsi2.S
   arm/comparesf2.S
   arm/divdf3vfp.S
   arm/divmodsi4.S
@@ -274,12 +280,14 @@ set(arm_SOURCES
   arm/nesf2vfp.S
   arm/restore_vfp_d8_d15_regs.S
   arm/save_vfp_d8_d15_regs.S
+  arm/softfloat-alias.list
   arm/subdf3vfp.S
   arm/subsf3vfp.S
   arm/switch16.S
   arm/switch32.S
   arm/switch8.S
   arm/switchu8.S
+  arm/sync-ops.h
   arm/sync_fetch_and_add_4.S
   arm/sync_fetch_and_add_8.S
   arm/sync_fetch_and_and_4.S
