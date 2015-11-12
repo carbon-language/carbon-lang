@@ -110,7 +110,6 @@ void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
 
 #ifndef SANITIZER_GO
 void InitializeShadowMemoryPlatform() { }
-#endif
 
 // On OS X, GCD worker threads are created without a call to pthread_create. We
 // need to properly register these threads with ThreadCreate and ThreadStart.
@@ -148,6 +147,7 @@ static void my_pthread_introspection_hook(unsigned int event, pthread_t thread,
   if (prev_pthread_introspection_hook != nullptr)
     prev_pthread_introspection_hook(event, thread, addr, size);
 }
+#endif
 
 void InitializePlatform() {
   DisableCoreDumperIfNecessary();
@@ -156,10 +156,10 @@ void InitializePlatform() {
 
   CHECK_EQ(main_thread_identity, 0);
   main_thread_identity = (uptr)pthread_self();
-#endif
 
   prev_pthread_introspection_hook =
       pthread_introspection_hook_install(&my_pthread_introspection_hook);
+#endif
 }
 
 #ifndef SANITIZER_GO
