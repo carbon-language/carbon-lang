@@ -76,13 +76,14 @@ template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
 }
 
 template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
-  SmallVector<InputSectionBase<ELFT> *, 256> Q;
+  SmallVector<InputSection<ELFT> *, 256> Q;
 
   auto Enqueue = [&](InputSectionBase<ELFT> *Sec) {
     if (!Sec || Sec->Live)
       return;
     Sec->Live = true;
-    Q.push_back(Sec);
+    if (InputSection<ELFT> *S = dyn_cast<InputSection<ELFT>>(Sec))
+      Q.push_back(S);
   };
 
   auto MarkSymbol = [&](SymbolBody *Sym) {
@@ -124,8 +125,7 @@ template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
 
   // Mark all reachable sections.
   while (!Q.empty())
-    if (auto *Sec = dyn_cast<InputSection<ELFT>>(Q.pop_back_val()))
-      forEachSuccessor<ELFT>(Sec, Enqueue);
+    forEachSuccessor<ELFT>(Q.pop_back_val(), Enqueue);
 }
 
 template void lld::elf2::markLive<ELF32LE>(SymbolTable<ELF32LE> *);
