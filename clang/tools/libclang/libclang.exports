@@ -120,6 +120,7 @@ clang_disposeOverriddenCursors
 clang_disposeCXPlatformAvailability
 clang_disposeSourceRangeList
 clang_disposeString
+clang_disposeStringSet
 clang_disposeTokens
 clang_disposeTranslationUnit
 clang_enableStackTraces
