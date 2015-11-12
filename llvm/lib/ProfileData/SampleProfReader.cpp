@@ -32,37 +32,6 @@
 using namespace llvm::sampleprof;
 using namespace llvm;
 
-/// \brief Print the samples collected for a function on stream \p OS.
-///
-/// \param OS Stream to emit the output to.
-void FunctionSamples::print(raw_ostream &OS, unsigned Indent) const {
-  OS << TotalSamples << ", " << TotalHeadSamples << ", " << BodySamples.size()
-     << " sampled lines\n";
-  for (const auto &SI : BodySamples) {
-    LineLocation Loc = SI.first;
-    const SampleRecord &Sample = SI.second;
-    OS.indent(Indent);
-    OS << "line offset: " << Loc.LineOffset
-       << ", discriminator: " << Loc.Discriminator
-       << ", number of samples: " << Sample.getSamples();
-    if (Sample.hasCalls()) {
-      OS << ", calls:";
-      for (const auto &I : Sample.getCallTargets())
-        OS << " " << I.first() << ":" << I.second;
-    }
-    OS << "\n";
-  }
-  for (const auto &CS : CallsiteSamples) {
-    CallsiteLocation Loc = CS.first;
-    const FunctionSamples &CalleeSamples = CS.second;
-    OS.indent(Indent);
-    OS << "line offset: " << Loc.LineOffset
-       << ", discriminator: " << Loc.Discriminator
-       << ", inlined callee: " << Loc.CalleeName << ": ";
-    CalleeSamples.print(OS, Indent + 2);
-  }
-}
-
 /// \brief Dump the function profile for \p FName.
 ///
 /// \param FName Name of the function to print.
