@@ -220,6 +220,9 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   if (Files.empty())
     error("no input files.");
+
+  if (Config->GnuHash && Config->EMachine == EM_MIPS)
+    error("The .gnu.hash section is not compatible with the MIPS target.");
 }
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {

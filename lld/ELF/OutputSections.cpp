@@ -1081,6 +1081,17 @@ SymbolTableSection<ELFT>::SymbolTableSection(
   Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
 
+// Orders symbols according to their positions in the GOT,
+// in compliance with MIPS ABI rules.
+// See "Global Offset Table" in Chapter 5 in the following document
+// for detailed description:
+// ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+static bool sortMipsSymbols(SymbolBody *L, SymbolBody *R) {
+  if (!L->isInGot() || !R->isInGot())
+    return R->isInGot();
+  return L->GotIndex < R->GotIndex;
+}
+
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   if (this->Header.sh_size)
     return; // Already finalized.
@@ -1100,6 +1111,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   if (Out<ELFT>::GnuHashTab)
     // NB: It also sorts Symbols to meet the GNU hash table requirements.
     Out<ELFT>::GnuHashTab->addSymbols(Symbols);
+  else if (Config->EMachine == EM_MIPS)
+    std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
   size_t I = 0;
   for (SymbolBody *B : Symbols)
     B->setDynamicSymbolTableIndex(++I);
