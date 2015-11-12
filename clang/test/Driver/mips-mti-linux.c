@@ -5,7 +5,7 @@
 //        Ideally, we'd like to have an --llvm-toolchain option similar to
 //        the --gcc-toolchain one.
 
-// XFAIL: win32, win64
+// REQUIRES: shell
 
 // = Big-endian, mips32r2, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
