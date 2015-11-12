@@ -29,6 +29,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/MDBuilder.h"
@@ -1841,3 +1842,45 @@ template void CGBuilderInserter<PreserveNames>::InsertHelper(
     llvm::Instruction *I, const llvm::Twine &Name, llvm::BasicBlock *BB,
     llvm::BasicBlock::iterator InsertPt) const;
 #undef PreserveNames
+
+// Returns true if we have a valid set of target features.
+void CodeGenFunction::checkTargetFeatures(const CallExpr *E,
+                                          const FunctionDecl *TargetDecl) {
+  // Early exit if this is an indirect call.
+  if (!TargetDecl)
+    return;
+
+  // Get the current enclosing function if it exists. If it doesn't
+  // we can't check the target features anyhow.
+  const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl);
+  if (!FD)
+    return;
+
+  unsigned BuiltinID = TargetDecl->getBuiltinID();
+  const char *FeatureList =
+      CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+
+  if (!FeatureList || StringRef(FeatureList) == "")
+    return;
+
+  llvm::StringMap<bool> FeatureMap;
+  CGM.getFunctionFeatureMap(FeatureMap, FD);
+
+  // If we have at least one of the features in the feature list return
+  // true, otherwise return false.
+  SmallVector<StringRef, 1> AttrFeatures;
+  StringRef(FeatureList).split(AttrFeatures, ",");
+  if (!std::all_of(AttrFeatures.begin(), AttrFeatures.end(),
+                     [&](StringRef &Feature) {
+                       SmallVector<StringRef, 1> OrFeatures;
+                       Feature.split(OrFeatures, "|");
+                       return std::any_of(OrFeatures.begin(), OrFeatures.end(),
+                                          [&](StringRef &Feature) {
+                                            return FeatureMap[Feature];
+                                          });
+		   }))
+    CGM.getDiags().Report(E->getLocStart(), diag::err_builtin_needs_feature)
+        << TargetDecl->getDeclName()
+        << CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+}
+
