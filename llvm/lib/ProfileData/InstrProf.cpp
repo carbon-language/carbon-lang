@@ -32,22 +32,20 @@ class InstrProfErrorCategoryType : public std::error_category {
       return "Success";
     case instrprof_error::eof:
       return "End of File";
-    case instrprof_error::unrecognized_format:
-      return "Unrecognized instrumentation profile encoding format";
     case instrprof_error::bad_magic:
-      return "Invalid instrumentation profile data (bad magic)";
+      return "Invalid profile data (bad magic)";
     case instrprof_error::bad_header:
-      return "Invalid instrumentation profile data (file header is corrupt)";
+      return "Invalid profile data (file header is corrupt)";
     case instrprof_error::unsupported_version:
-      return "Unsupported instrumentation profile format version";
+      return "Unsupported profiling format version";
     case instrprof_error::unsupported_hash_type:
-      return "Unsupported instrumentation profile hash type";
+      return "Unsupported profiling hash";
     case instrprof_error::too_large:
       return "Too much profile data";
     case instrprof_error::truncated:
       return "Truncated profile data";
     case instrprof_error::malformed:
-      return "Malformed instrumentation profile data";
+      return "Malformed profile data";
     case instrprof_error::unknown_function:
       return "No profile data available for function";
     case instrprof_error::hash_mismatch:

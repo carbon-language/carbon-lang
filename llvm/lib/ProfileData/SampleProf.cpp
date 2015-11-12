@@ -28,17 +28,17 @@ class SampleProfErrorCategoryType : public std::error_category {
     case sampleprof_error::success:
       return "Success";
     case sampleprof_error::bad_magic:
-      return "Invalid sample profile data (bad magic)";
+      return "Invalid file format (bad magic)";
     case sampleprof_error::unsupported_version:
-      return "Unsupported sample profile format version";
+      return "Unsupported format version";
     case sampleprof_error::too_large:
       return "Too much profile data";
     case sampleprof_error::truncated:
       return "Truncated profile data";
     case sampleprof_error::malformed:
-      return "Malformed sample profile data";
+      return "Malformed profile data";
     case sampleprof_error::unrecognized_format:
-      return "Unrecognized sample profile encoding format";
+      return "Unrecognized profile encoding format";
     case sampleprof_error::unsupported_writing_format:
       return "Profile encoding format unsupported for writing operations";
     case sampleprof_error::truncated_name_table:

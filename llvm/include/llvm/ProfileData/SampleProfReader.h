@@ -292,9 +292,6 @@ public:
 
   /// \brief Read sample profiles from the associated file.
   std::error_code read() override;
-
-  /// \brief Return true if \p Buffer is in the format supported by this class.
-  static bool hasFormat(const MemoryBuffer &Buffer);
 };
 
 class SampleProfileReaderBinary : public SampleProfileReader {
