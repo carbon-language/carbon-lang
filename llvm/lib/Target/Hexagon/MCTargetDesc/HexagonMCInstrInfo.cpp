@@ -28,7 +28,8 @@ void HexagonMCInstrInfo::addConstant(MCInst &MI, uint64_t Value,
   MI.addOperand(MCOperand::createExpr(MCConstantExpr::create(Value, Context)));
 }
 
-void HexagonMCInstrInfo::addConstExtender(MCInstrInfo const &MCII, MCInst &MCB,
+void HexagonMCInstrInfo::addConstExtender(MCContext &Context,
+                                          MCInstrInfo const &MCII, MCInst &MCB,
                                           MCInst const &MCI) {
   assert(HexagonMCInstrInfo::isBundle(MCB));
   MCOperand const &exOp =
@@ -36,7 +37,7 @@ void HexagonMCInstrInfo::addConstExtender(MCInstrInfo const &MCII, MCInst &MCB,
 
   // Create the extender.
   MCInst *XMCI =
-      new MCInst(HexagonMCInstrInfo::deriveExtender(MCII, MCI, exOp));
+      new (Context) MCInst(HexagonMCInstrInfo::deriveExtender(MCII, MCI, exOp));
 
   MCB.addOperand(MCOperand::createInst(XMCI));
 }
@@ -150,10 +151,11 @@ MCInst const *HexagonMCInstrInfo::extenderForIndex(MCInst const &MCB,
   return nullptr;
 }
 
-void HexagonMCInstrInfo::extendIfNeeded(MCInstrInfo const &MCII, MCInst &MCB,
+void HexagonMCInstrInfo::extendIfNeeded(MCContext &Context,
+                                        MCInstrInfo const &MCII, MCInst &MCB,
                                         MCInst const &MCI, bool MustExtend) {
   if (isConstExtended(MCII, MCI) || MustExtend)
-    addConstExtender(MCII, MCB, MCI);
+    addConstExtender(Context, MCII, MCB, MCI);
 }
 
 HexagonII::MemAccessSize
