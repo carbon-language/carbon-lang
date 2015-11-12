@@ -13,6 +13,7 @@
 #include "SymbolTable.h"
 #include "Target.h"
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/StringSaver.h"
@@ -47,9 +48,12 @@ private:
   void scanRelocs(InputSection<ELFT> &C);
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
   void assignAddresses();
+  void buildSectionMap();
   void openFile(StringRef OutputPath);
   void writeHeader();
   void writeSections();
+  bool isDiscarded(InputSectionBase<ELFT> *IS) const;
+  StringRef getOutputSectionName(StringRef S) const;
   bool needsInterpSection() const {
     return !Symtab.getSharedFiles().empty() && !Config->DynamicLinker.empty();
   }
@@ -82,6 +86,8 @@ private:
 
   uintX_t FileSize;
   uintX_t SectionHeaderOff;
+
+  llvm::StringMap<llvm::StringRef> InputToOutputSection;
 };
 } // anonymous namespace
 
@@ -131,6 +137,7 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
 
 // The main function of the writer.
 template <class ELFT> void Writer<ELFT>::run() {
+  buildSectionMap();
   if (!Config->DiscardAll)
     copyLocalSymbols();
   createSections();
@@ -461,7 +468,12 @@ void Writer<ELFT>::addSharedCopySymbols(
   Out<ELFT>::Bss->setSize(Off);
 }
 
-static StringRef getOutputName(StringRef S) {
+template <class ELFT>
+StringRef Writer<ELFT>::getOutputSectionName(StringRef S) const {
+  auto It = InputToOutputSection.find(S);
+  if (It != std::end(InputToOutputSection))
+    return It->second;
+
   if (S.startswith(".text."))
     return ".text";
   if (S.startswith(".rodata."))
@@ -471,6 +483,27 @@ static StringRef getOutputName(StringRef S) {
   if (S.startswith(".bss."))
     return ".bss";
   return S;
+}
+
+template <class ELFT>
+bool Writer<ELFT>::isDiscarded(InputSectionBase<ELFT> *IS) const {
+  if (!IS || !IS->isLive() || IS == &InputSection<ELFT>::Discarded)
+    return true;
+  return InputToOutputSection.lookup(IS->getSectionName()) == "/DISCARD/";
+}
+
+template <class ELFT>
+static bool compareSections(OutputSectionBase<ELFT> *A,
+                            OutputSectionBase<ELFT> *B) {
+  auto ItA = Config->OutputSections.find(A->getName());
+  auto ItEnd = std::end(Config->OutputSections);
+  if (ItA == ItEnd)
+    return compareOutputSections(A, B);
+  auto ItB = Config->OutputSections.find(B->getName());
+  if (ItB == ItEnd)
+    return compareOutputSections(A, B);
+
+  return std::distance(ItA, ItB) > 0;
 }
 
 // Create output section objects and add them to OutputSections.
@@ -485,7 +518,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
-      if (!C || !C->isLive() || C == &InputSection<ELFT>::Discarded)
+      if (isDiscarded(C))
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
       uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
@@ -498,7 +531,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       if (OutType == SHT_PROGBITS && C->getSectionName() == ".eh_frame" &&
           Config->EMachine == EM_X86_64)
         OutType = SHT_X86_64_UNWIND;
-      SectionKey<ELFT::Is64Bits> Key{getOutputName(C->getSectionName()),
+      SectionKey<ELFT::Is64Bits> Key{getOutputSectionName(C->getSectionName()),
                                      OutType, OutFlags, EntSize};
       OutputSectionBase<ELFT> *&Sec = Map[Key];
       if (!Sec) {
@@ -577,14 +610,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
-    for (InputSectionBase<ELFT> *B : F->getSections()) {
-      if (auto *S = dyn_cast_or_null<InputSection<ELFT>>(B)) {
-        if (S != &InputSection<ELFT>::Discarded && S->isLive())
-          scanRelocs(*S);
-      } else if (auto *S = dyn_cast_or_null<EHInputSection<ELFT>>(B)) {
+    for (InputSectionBase<ELFT> *C : F->getSections()) {
+      if (isDiscarded(C))
+        continue;
+      if (auto *S = dyn_cast<InputSection<ELFT>>(C))
+        scanRelocs(*S);
+      else if (auto *S = dyn_cast<EHInputSection<ELFT>>(C))
         if (S->RelocSection)
           scanRelocs(*S, *S->RelocSection);
-      }
     }
   }
 
@@ -656,7 +689,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(Out<ELFT>::Plt);
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
-                   compareOutputSections<ELFT>);
+                   compareSections<ELFT>);
 
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
     OutputSections[I]->SectionIndex = I + 1;
@@ -950,6 +983,13 @@ void Writer<ELFT>::copyPhdr(Elf_Phdr *PH, OutputSectionBase<ELFT> *From) {
   PH->p_filesz = From->getSize();
   PH->p_memsz = From->getSize();
   PH->p_align = From->getAlign();
+}
+
+template <class ELFT> void Writer<ELFT>::buildSectionMap() {
+  for (const std::pair<StringRef, std::vector<StringRef>> &OutSec :
+       Config->OutputSections)
+    for (StringRef Name : OutSec.second)
+      InputToOutputSection[Name] = OutSec.first;
 }
 
 template void lld::elf2::writeResult<ELF32LE>(SymbolTable<ELF32LE> *Symtab);
