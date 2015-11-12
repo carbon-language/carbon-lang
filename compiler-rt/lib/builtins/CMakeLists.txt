@@ -2,6 +2,9 @@
 # generic implementations of the core runtime library along with optimized
 # architecture-specific code in various subdirectories.
 
+# TODO: Need to add a mechanism for logging errors when builtin source files are
+# added to a sub-directory and not this CMakeLists file.
+
 set(GENERIC_SOURCES
   absvdi2.c
   absvsi2.c
