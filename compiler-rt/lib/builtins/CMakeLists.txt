@@ -283,14 +283,12 @@ set(arm_SOURCES
   arm/nesf2vfp.S
   arm/restore_vfp_d8_d15_regs.S
   arm/save_vfp_d8_d15_regs.S
-  arm/softfloat-alias.list
   arm/subdf3vfp.S
   arm/subsf3vfp.S
   arm/switch16.S
   arm/switch32.S
   arm/switch8.S
   arm/switchu8.S
-  arm/sync-ops.h
   arm/sync_fetch_and_add_4.S
   arm/sync_fetch_and_add_8.S
   arm/sync_fetch_and_and_4.S
