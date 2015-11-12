@@ -1631,6 +1631,9 @@ public:
   /// @brief Get a union map of all reads performed in the SCoP.
   __isl_give isl_union_map *getReads();
 
+  /// @brief Get a union map of all memory accesses performed in the SCoP.
+  __isl_give isl_union_map *getAccesses();
+
   /// @brief Get the schedule of all the statements in the SCoP.
   __isl_give isl_union_map *getSchedule() const;
 

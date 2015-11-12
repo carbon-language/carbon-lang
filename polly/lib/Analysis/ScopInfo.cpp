@@ -3153,6 +3153,10 @@ __isl_give isl_union_map *Scop::getReads() {
   return getAccessesOfType([](MemoryAccess &MA) { return MA.isRead(); });
 }
 
+__isl_give isl_union_map *Scop::getAccesses() {
+  return getAccessesOfType([](MemoryAccess &MA) { return true; });
+}
+
 __isl_give isl_union_map *Scop::getSchedule() const {
   auto Tree = getScheduleTree();
   auto S = isl_schedule_get_map(Tree);
