@@ -40,7 +40,6 @@ floatuntisf
 floatuntixf
 lshrti3
 modti3
-muloti4
 multf
 multi3
 mulvti3
