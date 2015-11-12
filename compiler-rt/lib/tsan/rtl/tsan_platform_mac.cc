@@ -42,6 +42,7 @@
 
 namespace __tsan {
 
+#ifndef SANITIZER_GO
 static void *SignalSafeGetOrAllocate(uptr *dst, uptr size) {
   atomic_uintptr_t *a = (atomic_uintptr_t *)dst;
   void *val = (void *)atomic_load_relaxed(a);
@@ -61,7 +62,6 @@ static void *SignalSafeGetOrAllocate(uptr *dst, uptr size) {
   return val;
 }
 
-#ifndef SANITIZER_GO
 // On OS X, accessing TLVs via __thread or manually by using pthread_key_* is
 // problematic, because there are several places where interceptors are called
 // when TLVs are not accessible (early process startup, thread cleanup, ...).
