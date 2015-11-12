@@ -1843,7 +1843,8 @@ template void CGBuilderInserter<PreserveNames>::InsertHelper(
     llvm::BasicBlock::iterator InsertPt) const;
 #undef PreserveNames
 
-// Returns true if we have a valid set of target features.
+// Emits an error if we don't have a valid set of target features for the
+// called function.
 void CodeGenFunction::checkTargetFeatures(const CallExpr *E,
                                           const FunctionDecl *TargetDecl) {
   // Early exit if this is an indirect call.
@@ -1856,31 +1857,70 @@ void CodeGenFunction::checkTargetFeatures(const CallExpr *E,
   if (!FD)
     return;
 
+  // Grab the required features for the call. For a builtin this is listed in
+  // the td file with the default cpu, for an always_inline function this is any
+  // listed cpu and any listed features.
   unsigned BuiltinID = TargetDecl->getBuiltinID();
-  const char *FeatureList =
-      CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+  if (BuiltinID) {
+    SmallVector<StringRef, 1> ReqFeatures;
+    const char *FeatureList =
+        CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+    // Return if the builtin doesn't have any required features.
+    if (!FeatureList || StringRef(FeatureList) == "")
+      return;
+    StringRef(FeatureList).split(ReqFeatures, ",");
 
-  if (!FeatureList || StringRef(FeatureList) == "")
-    return;
+    // If there aren't any required features listed then go ahead and return.
+    if (ReqFeatures.empty())
+      return;
 
-  llvm::StringMap<bool> FeatureMap;
-  CGM.getFunctionFeatureMap(FeatureMap, FD);
+    // Now build up the set of caller features and verify that all the required
+    // features are there.
+    llvm::StringMap<bool> CallerFeatureMap;
+    CGM.getFunctionFeatureMap(CallerFeatureMap, FD);
 
-  // If we have at least one of the features in the feature list return
-  // true, otherwise return false.
-  SmallVector<StringRef, 1> AttrFeatures;
-  StringRef(FeatureList).split(AttrFeatures, ",");
-  if (!std::all_of(AttrFeatures.begin(), AttrFeatures.end(),
-                     [&](StringRef &Feature) {
-                       SmallVector<StringRef, 1> OrFeatures;
-                       Feature.split(OrFeatures, "|");
-                       return std::any_of(OrFeatures.begin(), OrFeatures.end(),
-                                          [&](StringRef &Feature) {
-                                            return FeatureMap[Feature];
-                                          });
-		   }))
-    CGM.getDiags().Report(E->getLocStart(), diag::err_builtin_needs_feature)
-        << TargetDecl->getDeclName()
-        << CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+    // If we have at least one of the features in the feature list return
+    // true, otherwise return false.
+    if (!std::all_of(
+            ReqFeatures.begin(), ReqFeatures.end(), [&](StringRef &Feature) {
+              SmallVector<StringRef, 1> OrFeatures;
+              Feature.split(OrFeatures, "|");
+              return std::any_of(OrFeatures.begin(), OrFeatures.end(),
+                                 [&](StringRef &Feature) {
+                                   return CallerFeatureMap.lookup(Feature);
+                                 });
+            }))
+      CGM.getDiags().Report(E->getLocStart(), diag::err_builtin_needs_feature)
+          << TargetDecl->getDeclName()
+          << CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+
+  } else if (TargetDecl->hasAttr<TargetAttr>()) {
+    // Get the required features for the callee.
+    SmallVector<StringRef, 1> ReqFeatures;
+    llvm::StringMap<bool> CalleeFeatureMap;
+    CGM.getFunctionFeatureMap(CalleeFeatureMap, TargetDecl);
+    for (const auto &F : CalleeFeatureMap)
+      ReqFeatures.push_back(F.getKey());
+    // If there aren't any required features listed then go ahead and return.
+    if (ReqFeatures.empty())
+      return;
+
+    // Now get the features that the caller provides.
+    llvm::StringMap<bool> CallerFeatureMap;
+    CGM.getFunctionFeatureMap(CallerFeatureMap, FD);
+
+    // If we have at least one of the features in the feature list return
+    // true, otherwise return false.
+    if (!std::all_of(
+            ReqFeatures.begin(), ReqFeatures.end(), [&](StringRef &Feature) {
+              SmallVector<StringRef, 1> OrFeatures;
+              Feature.split(OrFeatures, "|");
+              return std::any_of(OrFeatures.begin(), OrFeatures.end(),
+                                 [&](StringRef &Feature) {
+                                   return CallerFeatureMap.lookup(Feature);
+                                 });
+            }))
+      CGM.getDiags().Report(E->getLocStart(), diag::err_function_needs_feature)
+          << FD->getDeclName() << TargetDecl->getDeclName();
+  }
 }
-
