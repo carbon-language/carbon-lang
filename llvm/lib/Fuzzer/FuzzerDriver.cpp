@@ -152,7 +152,7 @@ static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
     std::string ToRun = Cmd + " > " + Log + " 2>&1\n";
     if (Flags.verbosity)
       Printf("%s", ToRun.c_str());
-    int ExitCode = system(ToRun.c_str());
+    int ExitCode = ExecuteCommand(ToRun.c_str());
     if (ExitCode != 0)
       *HasErrors = true;
     std::lock_guard<std::mutex> Lock(Mu);
@@ -255,14 +255,18 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   Options.ReportSlowUnits = Flags.report_slow_units;
   if (Flags.artifact_prefix)
     Options.ArtifactPrefix = Flags.artifact_prefix;
+  std::vector<Unit> Dictionary;
   if (Flags.dict)
-    if (!ParseDictionaryFile(FileToString(Flags.dict), &Options.Dictionary))
+    if (!ParseDictionaryFile(FileToString(Flags.dict), &Dictionary))
       return 1;
-  if (Flags.verbosity > 0 && !Options.Dictionary.empty())
-    Printf("Dictionary: %zd entries\n", Options.Dictionary.size());
+  if (Flags.verbosity > 0 && !Dictionary.empty())
+    Printf("Dictionary: %zd entries\n", Dictionary.size());
   Options.SaveArtifacts = !Flags.test_single_input;
 
   Fuzzer F(USF, Options);
+
+  for (auto &U: Dictionary)
+    USF.GetMD().AddWordToDictionary(U.data(), U.size());
 
   // Timer
   if (Flags.timeout > 0)
@@ -294,7 +298,11 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   F.ShuffleAndMinimize();
   if (Flags.save_minimized_corpus)
     F.SaveCorpus();
-  F.Loop();
+  else if (Flags.drill)
+    F.Drill();
+  else
+    F.Loop();
+
   if (Flags.verbosity)
     Printf("Done %d runs in %zd second(s)\n", F.getTotalNumberOfRuns(),
            F.secondsSinceProcessStartUp());
