@@ -94,6 +94,13 @@ getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
   return Default;
 }
 
+static bool hasZOption(opt::InputArgList &Args, StringRef Key) {
+  for (auto *Arg : Args.filtered(OPT_z))
+    if (Key == Arg->getValue())
+      return true;
+  return false;
+}
+
 void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initSymbols();
 
@@ -164,6 +171,10 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
+  Config->ZNodelete = hasZOption(Args, "nodelete");
+  Config->ZNow = hasZOption(Args, "now");
+  Config->ZOrigin = hasZOption(Args, "origin");
+
   if (auto *Arg = Args.getLastArg(OPT_O)) {
     StringRef Val = Arg->getValue();
     if (Val.getAsInteger(10, Config->Optimize))
@@ -183,16 +194,6 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
-
-  for (auto *Arg : Args.filtered(OPT_z)) {
-    StringRef S = Arg->getValue();
-    if (S == "nodelete")
-      Config->ZNodelete = true;
-    else if (S == "now")
-      Config->ZNow = true;
-    else if (S == "origin")
-      Config->ZOrigin = true;
-  }
 
   for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
