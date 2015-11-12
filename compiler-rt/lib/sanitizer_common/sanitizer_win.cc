@@ -220,12 +220,14 @@ struct ModuleInfo {
   uptr end_address;
 };
 
+#ifndef SANITIZER_GO
 int CompareModulesBase(const void *pl, const void *pr) {
   const ModuleInfo *l = (ModuleInfo *)pl, *r = (ModuleInfo *)pr;
   if (l->base_address < r->base_address)
     return -1;
   return l->base_address > r->base_address;
 }
+#endif
 }  // namespace
 
 #ifndef SANITIZER_GO
