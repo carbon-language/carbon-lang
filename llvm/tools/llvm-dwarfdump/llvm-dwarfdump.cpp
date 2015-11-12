@@ -60,6 +60,7 @@ static cl::opt<DIDumpType> DumpType(
         clEnumValN(DIDT_Loc, "loc", ".debug_loc"),
         clEnumValN(DIDT_LocDwo, "loc.dwo", ".debug_loc.dwo"),
         clEnumValN(DIDT_Frames, "frames", ".debug_frame"),
+        clEnumValN(DIDT_Macro, "macro", ".debug_macinfo"),
         clEnumValN(DIDT_Ranges, "ranges", ".debug_ranges"),
         clEnumValN(DIDT_Pubnames, "pubnames", ".debug_pubnames"),
         clEnumValN(DIDT_Pubtypes, "pubtypes", ".debug_pubtypes"),
