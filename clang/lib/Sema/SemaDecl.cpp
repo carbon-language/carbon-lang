@@ -7612,7 +7612,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // following restrictions:
         // - The declaration's parameter list shall be equivalent to an empty
         //   parameter list.
-        if ((FPT->getNumParams() > 0) || (FPT->isVariadic()))
+        if (FPT->getNumParams() > 0 || FPT->isVariadic())
           Diag(NewFD->getLocation(), diag::err_function_concept_with_params);
       }
 
