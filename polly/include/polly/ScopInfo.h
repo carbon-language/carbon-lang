@@ -34,6 +34,7 @@
 using namespace llvm;
 
 namespace llvm {
+class AssumptionCache;
 class Loop;
 class LoopInfo;
 class PHINode;
@@ -1195,7 +1196,7 @@ private:
        unsigned MaxLoopDepth);
 
   /// @brief Initialize this ScopInfo .
-  void init(AliasAnalysis &AA);
+  void init(AliasAnalysis &AA, AssumptionCache &AC);
 
   /// @brief Add loop carried constraints to the header block of the loop @p L.
   ///
@@ -1280,7 +1281,10 @@ private:
   /// @brief Build the BoundaryContext based on the wrapping of expressions.
   void buildBoundaryContext();
 
-  /// @brief Add user provided parameter constraints to context.
+  /// @brief Add user provided parameter constraints to context (source code).
+  void addUserAssumptions(AssumptionCache &AC);
+
+  /// @brief Add user provided parameter constraints to context (command line).
   void addUserContext();
 
   /// @brief Add the bounds of the parameters to the context.
@@ -1698,7 +1702,7 @@ class ScopInfo : public RegionPass {
   void clear();
 
   // Build the SCoP for Region @p R.
-  void buildScop(Region &R, DominatorTree &DT);
+  void buildScop(Region &R, DominatorTree &DT, AssumptionCache &AC);
 
   /// @brief Build an instance of MemoryAccess from the Load/Store instruction.
   ///

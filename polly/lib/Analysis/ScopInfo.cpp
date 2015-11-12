@@ -30,6 +30,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/RegionIterator.h"
@@ -1033,7 +1034,9 @@ buildConditionSets(Scop &S, SwitchInst *SI, Loop *L, __isl_keep isl_set *Domain,
 ///
 /// This will fill @p ConditionSets with the conditions under which control
 /// will be moved from @p TI to its successors. Hence, @p ConditionSets will
-/// have as many elements as @p TI has successors.
+/// have as many elements as @p TI has successors. If @p TI is nullptr the
+/// context under which @p Condition is true/false will be returned as the
+/// new elements of @p ConditionSets.
 static void
 buildConditionSets(Scop &S, Value *Condition, TerminatorInst *TI, Loop *L,
                    __isl_keep isl_set *Domain,
@@ -1067,13 +1070,18 @@ buildConditionSets(Scop &S, Value *Condition, TerminatorInst *TI, Loop *L,
            "Condition of exiting branch was neither constant nor ICmp!");
 
     ScalarEvolution &SE = *S.getSE();
-    BasicBlock *BB = TI->getParent();
+    BasicBlock *BB = TI ? TI->getParent() : nullptr;
     isl_pw_aff *LHS, *RHS;
     LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), BB);
     RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), BB);
     ConsequenceCondSet =
         buildConditionSet(ICond->getPredicate(), LHS, RHS, Domain);
   }
+
+  // If no terminator was given we are only looking for parameter constraints
+  // under which @p Condition is true/false.
+  if (!TI)
+    ConsequenceCondSet = isl_set_params(ConsequenceCondSet);
 
   assert(ConsequenceCondSet);
   isl_set *AlternativeCondSet =
@@ -1609,6 +1617,41 @@ void Scop::buildBoundaryContext() {
   isl_ctx_set_max_operations(getIslCtx(), MaxOpsOld);
   BoundaryContext = isl_set_gist_params(BoundaryContext, getContext());
   trackAssumption(WRAPPING, BoundaryContext, DebugLoc());
+}
+
+void Scop::addUserAssumptions(AssumptionCache &AC) {
+  auto *R = &getRegion();
+  auto &F = *R->getEntry()->getParent();
+  for (auto &Assumption : AC.assumptions()) {
+    auto *CI = dyn_cast_or_null<CallInst>(Assumption);
+    if (!CI || CI->getNumArgOperands() != 1)
+      continue;
+    if (!DT.dominates(CI->getParent(), R->getEntry()))
+      continue;
+
+    auto *Val = CI->getArgOperand(0);
+    std::vector<const SCEV *> Params;
+    if (!isAffineParamConstraint(Val, R, *SE, Params)) {
+      emitOptimizationRemarkAnalysis(F.getContext(), DEBUG_TYPE, F,
+                                     CI->getDebugLoc(),
+                                     "Non-affine user assumption ignored.");
+      continue;
+    }
+
+    addParams(Params);
+
+    auto *L = LI.getLoopFor(CI->getParent());
+    SmallVector<isl_set *, 2> ConditionSets;
+    buildConditionSets(*this, Val, nullptr, L, Context, ConditionSets);
+    assert(ConditionSets.size() == 2);
+    isl_set_free(ConditionSets[1]);
+
+    auto *AssumptionCtx = ConditionSets[0];
+    emitOptimizationRemarkAnalysis(
+        F.getContext(), DEBUG_TYPE, F, CI->getDebugLoc(),
+        "Use user assumption: " + stringFromIslObj(AssumptionCtx));
+    Context = isl_set_intersect(Context, AssumptionCtx);
+  }
 }
 
 void Scop::addUserContext() {
@@ -2510,8 +2553,9 @@ Scop::Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
       Affinator(this), AssumedContext(nullptr), BoundaryContext(nullptr),
       Schedule(nullptr) {}
 
-void Scop::init(AliasAnalysis &AA) {
+void Scop::init(AliasAnalysis &AA, AssumptionCache &AC) {
   buildContext();
+  addUserAssumptions(AC);
   buildInvariantEquivalenceClasses();
 
   buildDomains(&R);
@@ -3814,7 +3858,7 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
                   MemoryAccess::PHI);
 }
 
-void ScopInfo::buildScop(Region &R, DominatorTree &DT) {
+void ScopInfo::buildScop(Region &R, DominatorTree &DT, AssumptionCache &AC) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
   scop = new Scop(R, AccFuncMap, *SD, *SE, DT, *LI, ctx, MaxLoopDepth);
 
@@ -3831,7 +3875,7 @@ void ScopInfo::buildScop(Region &R, DominatorTree &DT) {
   if (!R.getExitingBlock())
     buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
 
-  scop->init(*AA);
+  scop->init(*AA, AC);
 }
 
 void ScopInfo::print(raw_ostream &OS, const Module *) const {
@@ -3869,6 +3913,7 @@ void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
   AU.addRequiredTransitive<ScopDetection>();
   AU.addRequired<AAResultsWrapperPass>();
+  AU.addRequired<AssumptionCacheTracker>();
   AU.setPreservesAll();
 }
 
@@ -3884,13 +3929,14 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   TD = &F->getParent()->getDataLayout();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(*F);
 
   DebugLoc Beg, End;
   getDebugLocations(R, Beg, End);
   std::string Msg = "SCoP begins here.";
   emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F, Beg, Msg);
 
-  buildScop(*R, DT);
+  buildScop(*R, DT, AC);
 
   DEBUG(scop->print(dbgs()));
 
@@ -3918,6 +3964,7 @@ INITIALIZE_PASS_BEGIN(ScopInfo, "polly-scops",
                       "Polly - Create polyhedral description of Scops", false,
                       false);
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
