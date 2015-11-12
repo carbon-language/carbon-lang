@@ -161,8 +161,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     DataExtractor CUIndexData(getCUIndexSection(), isLittleEndian(),
                               savedAddressByteSize);
     DWARFUnitIndex CUIndex;
-    CUIndex.parse(CUIndexData);
-    CUIndex.dump(OS);
+    if (CUIndex.parse(CUIndexData))
+      CUIndex.dump(OS);
   }
 
   if (DumpType == DIDT_All || DumpType == DIDT_TUIndex) {
@@ -170,8 +170,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     DataExtractor TUIndexData(getTUIndexSection(), isLittleEndian(),
                               savedAddressByteSize);
     DWARFUnitIndex TUIndex;
-    TUIndex.parse(TUIndexData);
-    TUIndex.dump(OS);
+    if (TUIndex.parse(TUIndexData))
+      TUIndex.dump(OS);
   }
 
   if (DumpType == DIDT_All || DumpType == DIDT_LineDwo) {
