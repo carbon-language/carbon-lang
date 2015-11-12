@@ -100,6 +100,12 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
   createFiles(Args);
 
+  // Traditional linkers can generate re-linkable object files instead
+  // of executables or DSOs. We don't support that since the feature
+  // does not seem to provide more value than the static archiver.
+  if (Args.hasArg(OPT_relocatable))
+    error("-r option is not supported. Use 'ar' command instead.");
+
   switch (Config->EKind) {
   case ELF32LEKind:
     link<ELF32LE>(Args);

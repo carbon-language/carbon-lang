@@ -82,6 +82,8 @@ def o : Separate<["-"], "o">, MetaVarName<"<path>">,
 def rpath : Separate<["-"], "rpath">,
   HelpText<"Add a DT_RUNPATH to the output">;
 
+def relocatable : Flag<["--"], "relocatable">;
+
 def script : Separate<["--"], "script">, HelpText<"Read linker script">;
 
 def shared : Flag<["-"], "shared">,
@@ -123,6 +125,7 @@ def alias_init_init : Joined<["-"], "init=">, Alias<init>;
 def alias_l__library : Joined<["--"], "library=">, Alias<l>;
 def alias_o_output : Joined<["--"], "output=">, Alias<o>;
 def alias_rpath_rpath : Joined<["-"], "rpath=">, Alias<rpath>;
+def alias_relocatable_r : Flag<["-"], "r">, Alias<relocatable>;
 def alias_shared_Bshareable : Flag<["-"], "Bshareable">, Alias<shared>;
 def alias_soname_h : Separate<["-"], "h">, Alias<soname>;
 def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
