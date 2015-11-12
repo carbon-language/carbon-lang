@@ -258,7 +258,7 @@ endfunction()
 macro(darwin_add_builtin_libraries)
   set(DARWIN_EXCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Darwin-excludes)
 
-  set(CFLAGS "-O3 -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
+  set(CFLAGS "-fPIC -O3 -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
   set(CMAKE_C_FLAGS "")
   set(CMAKE_CXX_FLAGS "")
   set(CMAKE_ASM_FLAGS "")
@@ -367,6 +367,7 @@ macro(darwin_add_embedded_builtin_libraries)
   set(SOFT_FLOAT_FLAG -mfloat-abi=soft)
   set(HARD_FLOAT_FLAG -mfloat-abi=hard)
 
+  set(ENABLE_PIC Off)
   set(PIC_FLAG -fPIC)
   set(STATIC_FLAG -static)
 
