@@ -225,10 +225,10 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
     MachineBasicBlock &MBB, SmallVectorImpl<NullCheck> &NullCheckList) {
   typedef TargetInstrInfo::MachineBranchPredicate MachineBranchPredicate;
 
-  MDNode *BranchMD =
-      MBB.getBasicBlock()
-          ? MBB.getBasicBlock()->getTerminator()->getMetadata(LLVMContext::MD_make_implicit)
-          : nullptr;
+  MDNode *BranchMD = nullptr;
+  if (auto *BB = MBB.getBasicBlock())
+    BranchMD = BB->getTerminator()->getMetadata(LLVMContext::MD_make_implicit);
+
   if (!BranchMD)
     return false;
 
