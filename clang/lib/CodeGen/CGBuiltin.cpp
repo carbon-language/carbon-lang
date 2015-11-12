@@ -344,24 +344,24 @@ Value *CodeGenFunction::EmitVAStartEnd(Value *ArgValue, bool IsStart) {
 }
 
 // Returns true if we have a valid set of target features.
-bool CodeGenFunction::checkBuiltinTargetFeatures(
-    const FunctionDecl *TargetDecl) {
+void CodeGenFunction::checkTargetFeatures(const CallExpr *E,
+                                          const FunctionDecl *TargetDecl) {
   // Early exit if this is an indirect call.
   if (!TargetDecl)
-    return true;
+    return;
 
   // Get the current enclosing function if it exists. If it doesn't
   // we can't check the target features anyhow.
   const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl);
   if (!FD)
-    return true;
+    return;
 
   unsigned BuiltinID = TargetDecl->getBuiltinID();
   const char *FeatureList =
       CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
 
   if (!FeatureList || StringRef(FeatureList) == "")
-    return true;
+    return;
 
   llvm::StringMap<bool> FeatureMap;
   CGM.getFunctionFeatureMap(FeatureMap, FD);
@@ -370,7 +370,7 @@ bool CodeGenFunction::checkBuiltinTargetFeatures(
   // true, otherwise return false.
   SmallVector<StringRef, 1> AttrFeatures;
   StringRef(FeatureList).split(AttrFeatures, ",");
-  return std::all_of(AttrFeatures.begin(), AttrFeatures.end(),
+  if (!std::all_of(AttrFeatures.begin(), AttrFeatures.end(),
                      [&](StringRef &Feature) {
                        SmallVector<StringRef, 1> OrFeatures;
                        Feature.split(OrFeatures, "|");
@@ -378,7 +378,10 @@ bool CodeGenFunction::checkBuiltinTargetFeatures(
                                           [&](StringRef &Feature) {
                                             return FeatureMap[Feature];
                                           });
-                     });
+		   }))
+    CGM.getDiags().Report(E->getLocStart(), diag::err_builtin_needs_feature)
+        << TargetDecl->getDeclName()
+        << CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
@@ -1969,10 +1972,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   // This is down here to avoid non-target specific builtins, however, if
   // generic builtins start to require generic target features then we
   // can move this up to the beginning of the function.
-  if (!checkBuiltinTargetFeatures(FD))
-    CGM.getDiags().Report(E->getLocStart(), diag::err_builtin_needs_feature)
-        << FD->getDeclName()
-        << CGM.getContext().BuiltinInfo.getRequiredFeatures(BuiltinID);
+  checkTargetFeatures(E, FD);
 
   // See if we have a target specific intrinsic.
   const char *Name = getContext().BuiltinInfo.getName(BuiltinID);
