@@ -109,7 +109,7 @@ PythonObject::Str() const
 }
 
 PythonObject
-PythonObject::ResolveNameWithDictionary(llvm::StringRef name, PythonDictionary dict)
+PythonObject::ResolveNameWithDictionary(llvm::StringRef name, const PythonDictionary &dict)
 {
     size_t dot_pos = name.find_first_of('.');
     llvm::StringRef piece = name.substr(0, dot_pos);

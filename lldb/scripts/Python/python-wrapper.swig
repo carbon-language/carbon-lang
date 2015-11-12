@@ -566,7 +566,7 @@ LLDBSwigPython_CalculateNumChildren
     }
 
     if (argc.count == 1)
-        ret_val = std::min(ret_val, max);
+        ret_val = std::min(ret_val, static_cast<size_t>(max));
 
     return ret_val;
 }

@@ -205,11 +205,11 @@ public:
     Str() const;
 
     static PythonObject
-    ResolveNameWithDictionary(llvm::StringRef name, PythonDictionary dict);
+    ResolveNameWithDictionary(llvm::StringRef name, const PythonDictionary &dict);
 
     template<typename T>
     static T
-    ResolveNameWithDictionary(llvm::StringRef name, PythonDictionary dict)
+    ResolveNameWithDictionary(llvm::StringRef name, const PythonDictionary &dict)
     {
         return ResolveNameWithDictionary(name, dict).AsType<T>();
     }
