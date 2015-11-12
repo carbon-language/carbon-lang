@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <stddef.h>
+#include <sched.h>
 
 // TSan-invisible barrier.
 // Tests use it to establish necessary execution order in a way that does not
@@ -25,7 +26,9 @@ void barrier_wait(invisible_barrier_t *barrier) {
     unsigned cur_epoch = (cur >> 8) / (cur & 0xff);
     if (cur_epoch != old_epoch)
       return;
-    usleep(1000);
+    // Can't use usleep, because it leads to spurious "As if synchronized via
+    // sleep" messages which fail some output tests.
+    sched_yield();
   }
 }
 
