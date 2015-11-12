@@ -4,3 +4,5 @@
 
 // MSBITFIELDS: -mms-bitfields
 // NO-MSBITFIELDS-NOT: -mms-bitfields
+
+// REQUIRES: clang-driver
