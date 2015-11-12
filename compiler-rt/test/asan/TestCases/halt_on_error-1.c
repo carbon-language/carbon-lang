@@ -3,8 +3,8 @@
 // RUN: %clang_asan -fsanitize-recover=address %s -o %t
 //
 // RUN: env not %run %t 2>&1 | FileCheck %s
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:halt_on_error=true not %run %t 2>&1 | FileCheck %s
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:halt_on_error=false %run %t 2>&1 | FileCheck %s --check-prefix CHECK-RECOVER
+// RUN: %env_asan_opts=halt_on_error=true not %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=halt_on_error=false %run %t 2>&1 | FileCheck %s --check-prefix CHECK-RECOVER
 
 #include <string.h>
 
