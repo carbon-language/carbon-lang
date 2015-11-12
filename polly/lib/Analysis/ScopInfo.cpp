@@ -2381,6 +2381,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     isl_set_free(AGDomain);
   }
 
+  auto &F = *getRegion().getEntry()->getParent();
   MapVector<const Value *, SmallPtrSet<MemoryAccess *, 8>> ReadOnlyPairs;
   SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
   for (AliasGroupTy &AG : AliasGroups) {
@@ -2393,6 +2394,11 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     }
 
     for (auto II = AG.begin(); II != AG.end();) {
+      emitOptimizationRemarkAnalysis(
+          F.getContext(), DEBUG_TYPE, F,
+          (*II)->getAccessInstruction()->getDebugLoc(),
+          "Possibly aliasing pointer, use restrict keyword.");
+
       Value *BaseAddr = (*II)->getBaseAddr();
       if (HasWriteAccess.count(BaseAddr)) {
         NonReadOnlyBaseValues.insert(BaseAddr);

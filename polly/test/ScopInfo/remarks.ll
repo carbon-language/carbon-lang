@@ -1,6 +1,9 @@
 ; RUN: opt %loadPolly -pass-remarks-analysis="polly-scops" -polly-scops < %s 2>&1| FileCheck %s
 ;
 ; CHECK: remark: test/ScopInfo/remarks.c:4:7: SCoP begins here.
+; CHECK: remark: test/ScopInfo/remarks.c:9:18: Possibly aliasing pointer, use restrict keyword.
+; CHECK: remark: test/ScopInfo/remarks.c:9:33: Possibly aliasing pointer, use restrict keyword.
+; CHECK: remark: test/ScopInfo/remarks.c:9:15: Possibly aliasing pointer, use restrict keyword.
 ; CHECK: remark: test/ScopInfo/remarks.c:14:3: SCoP ends here.
 ; CHECK: remark: test/ScopInfo/remarks.c:19:3: SCoP begins here.
 ; CHECK: remark: test/ScopInfo/remarks.c:22:16: SCoP ends here but was dismissed.
