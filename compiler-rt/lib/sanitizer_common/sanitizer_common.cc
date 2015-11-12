@@ -176,7 +176,9 @@ void NORETURN ReportMmapFailureAndDie(uptr size, const char *mem_type,
   Report("ERROR: %s failed to "
          "%s 0x%zx (%zd) bytes of %s (error code: %d)\n",
          SanitizerToolName, mmap_type, size, size, mem_type, err);
+#ifndef SANITIZER_GO
   DumpProcessMap();
+#endif
   UNREACHABLE("unable to mmap");
 }
 

@@ -368,6 +368,7 @@ static uptr GetPreferredBase(const char *modname) {
   return (uptr)pe_header->ImageBase;
 }
 
+#ifndef SANITIZER_GO
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
   HANDLE cur_process = GetCurrentProcess();
@@ -436,7 +437,6 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   return count;
 };
 
-#ifndef SANITIZER_GO
 // We can't use atexit() directly at __asan_init time as the CRT is not fully
 // initialized at this point.  Place the functions into a vector and use
 // atexit() as soon as it is ready for use (i.e. after .CRT$XIC initializers).
