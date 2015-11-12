@@ -37,8 +37,14 @@ bool DlAddrSymbolizer::SymbolizePC(uptr addr, SymbolizedStack *stack) {
   return true;
 }
 
-bool DlAddrSymbolizer::SymbolizeData(uptr addr, DataInfo *info) {
-  return false;
+bool DlAddrSymbolizer::SymbolizeData(uptr addr, DataInfo *datainfo) {
+  Dl_info info;
+  int result = dladdr((const void *)addr, &info);
+  if (!result) return false;
+  const char *demangled = DemangleCXXABI(info.dli_sname);
+  datainfo->name = internal_strdup(demangled);
+  datainfo->start = (uptr)info.dli_saddr;
+  return true;
 }
 
 class AtosSymbolizerProcess : public SymbolizerProcess {
