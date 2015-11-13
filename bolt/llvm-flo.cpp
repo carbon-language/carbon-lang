@@ -457,6 +457,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     );
   }
 
+  ArrayRef<uint8_t> LSDAData;
+  uint64_t LSDAAddress{0};
+
   // Process special sections.
   for (const auto &Section : File->sections()) {
     StringRef SectionName;
@@ -470,6 +473,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     if (SectionName == ".gcc_except_table") {
       readLSDA(SectionData, *BC);
+      LSDAData = SectionData;
+      LSDAAddress = Section.getAddress();
     }
   }
 
@@ -545,6 +550,11 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     // Fill in CFI information for this function
     if (EHFrame.ParseError.empty())
       DwCFIReader.fillCFIInfoFor(Function);
+
+    // Parse LSDA.
+    if (Function.getLSDAAddress() != 0) {
+      Function.parseLSDA(LSDAData, LSDAAddress);
+    }
 
     if (opts::PrintAll || opts::PrintDisasm)
       Function.print(errs(), "after disassembly");

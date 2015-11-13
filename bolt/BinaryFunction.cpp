@@ -99,6 +99,22 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   // Offset of the instruction in function.
   uint64_t Offset{0};
 
+  auto printInstruction = [&](const MCInst &Instruction) {
+    OS << format("    %08" PRIx64 ": ", Offset);
+    BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
+    if (BC.MIA->isCall(Instruction)) {
+      if (BC.MIA->isTailCall(Instruction))
+        OS << " # TAILCALL ";
+      if (Instruction.getNumOperands() > 1) {
+        OS << " # handler: " << Instruction.getOperand(1);
+        OS << "; action: " << Instruction.getOperand(2);
+      }
+    }
+    OS << "\n";
+    // In case we need MCInst printer:
+    // Instr.dump_pretty(OS, InstructionPrinter.get());
+  };
+
   if (BasicBlocks.empty() && !Instructions.empty()) {
     // Print before CFG was built.
     for (const auto &II : Instructions) {
@@ -109,10 +125,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       if (LI != Labels.end())
         OS << LI->second->getName() << ":\n";
 
-      auto &Instruction = II.second;
-      OS << format("    %08" PRIx64 ": ", Offset);
-      BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
-      OS << "\n";
+      printInstruction(II.second);
     }
   }
 
@@ -120,6 +133,10 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << BB->getName() << " ("
        << BB->Instructions.size() << " instructions, align : "
        << BB->getAlignment() << ")\n";
+
+    if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+      OS << "  Landing Pad\n";
+    }
 
     uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
@@ -138,12 +155,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     Offset = RoundUpToAlignment(Offset, BB->getAlignment());
 
     for (auto &Instr : *BB) {
-      OS << format("    %08" PRIx64 ": ", Offset);
-      BC.InstPrinter->printInst(&Instr, OS, "", *BC.STI);
-      OS << "\n";
-
-      // In case we need MCInst printer:
-      // Instr.dump_pretty(OS, InstructionPrinter.get());
+      printInstruction(Instr);
 
       // Calculate the size of the instruction.
       // Note: this is imprecise since happening prior to relaxation.
@@ -298,8 +310,14 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                      << ". Code size will be increased.\n";
             }
 
-            // This is a call regardless of the opcode (e.g. tail call).
-            IsCall = true;
+            // This is a call regardless of the opcode.
+            // Assign proper opcode for tail calls, so that they could be
+            // treated as calls.
+            if (!IsCall) {
+              MIA->convertJmpToTailCall(Instruction);
+              IsCall = true;
+            }
+
             TargetSymbol = BC.getOrCreateGlobalSymbol(InstructionTarget,
                                                       "FUNCat");
           }

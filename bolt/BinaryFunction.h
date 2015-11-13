@@ -119,6 +119,16 @@ private:
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
+  /// Binary blob reprsenting action, type, and type index tables for this
+  /// function' LSDA (exception handling).
+  ArrayRef<uint8_t> LSDATables;
+
+  /// Original LSDA address for the function.
+  uint64_t LSDAAddress{0};
+
+  /// Landing pads for the function.
+  std::set<MCSymbol *> LandingPads;
+
   /// Release storage used by instructions.
   BinaryFunction &clearInstructions() {
     InstrMapType TempMap;
@@ -401,12 +411,23 @@ public:
     return *this;
   }
 
+  /// Set LSDA address for the function.
+  BinaryFunction &setLSDAAddress(uint64_t Address) {
+    LSDAAddress = Address;
+    return *this;
+  }
+
   /// Return the profile information about the number of times
   /// the function was executed.
   ///
   /// Return COUNT_NO_PROFILE if there's no profile info.
   uint64_t getExecutionCount() const {
     return ExecutionCount;
+  }
+
+  /// Return original LSDA address for the function or NULL.
+  uint64_t getLSDAAddress() const {
+    return LSDAAddress;
   }
 
   /// Disassemble function from raw data \p FunctionData.
@@ -444,6 +465,9 @@ public:
   /// Traverse the CFG checking branches, inverting their condition, removing or
   /// adding jumps based on a new layout order.
   void fixBranches();
+
+  /// Process LSDA information for the function.
+  void parseLSDA(ArrayRef<uint8_t> LSDAData, uint64_t LSDAAddress);
 
   virtual ~BinaryFunction() {}
 };

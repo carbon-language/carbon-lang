@@ -252,6 +252,183 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
   }
 }
 
+void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
+                               uint64_t LSDASectionAddress) {
+  assert(CurrentState == State::Disassembled && "unexpecrted function state");
+
+  if (!getLSDAAddress())
+    return;
+
+  assert(getLSDAAddress() < LSDASectionAddress + LSDASectionData.size() &&
+         "wrong LSDA address");
+
+  const uint8_t *Ptr =
+      LSDASectionData.data() + getLSDAAddress() - LSDASectionAddress;
+
+  uint8_t LPStartEncoding = *Ptr++;
+  uintptr_t LPStart = 0;
+  if (LPStartEncoding != DW_EH_PE_omit) {
+    LPStart = readEncodedPointer(Ptr, LPStartEncoding);
+  }
+
+  assert(LPStart == 0 && "support for split functions not implemented");
+
+  uint8_t TTypeEncoding = *Ptr++;
+  uintptr_t TTypeEnd = 0;
+  if (TTypeEncoding != DW_EH_PE_omit) {
+    TTypeEnd = readULEB128(Ptr);
+  }
+
+  if (opts::PrintExceptions) {
+    errs() << "LPStart Encoding = " << (unsigned)LPStartEncoding << '\n';
+    errs() << "LPStart = 0x" << Twine::utohexstr(LPStart) << '\n';
+    errs() << "TType Encoding = " << (unsigned)TTypeEncoding << '\n';
+    errs() << "TType End = " << TTypeEnd << '\n';
+  }
+
+  // Table to store list of indices in type table. Entries are uleb128s values.
+  auto TypeIndexTableStart = Ptr + TTypeEnd;
+
+  // Offset past the last decoded index.
+  intptr_t MaxTypeIndexTableOffset = 0;
+
+  // The actual type info table starts at the same location, but grows in
+  // different direction. Encoding is different too (TTypeEncoding).
+  auto TypeTableStart = reinterpret_cast<const uint32_t *>(Ptr + TTypeEnd);
+
+  uint8_t       CallSiteEncoding = *Ptr++;
+  uint32_t      CallSiteTableLength = readULEB128(Ptr);
+  const uint8_t *CallSiteTableStart = Ptr;
+  const uint8_t *CallSiteTableEnd = CallSiteTableStart + CallSiteTableLength;
+  const uint8_t *CallSitePtr = CallSiteTableStart;
+  const uint8_t *ActionTableStart = CallSiteTableEnd;
+
+  if (opts::PrintExceptions) {
+    errs() << "CallSite Encoding = " << (unsigned)CallSiteEncoding << '\n';
+    errs() << "CallSite table length = " << CallSiteTableLength << '\n';
+    errs() << '\n';
+  }
+
+  unsigned NumCallSites = 0;
+  while (CallSitePtr < CallSiteTableEnd) {
+    ++NumCallSites;
+    uintptr_t Start = readEncodedPointer(CallSitePtr, CallSiteEncoding);
+    uintptr_t Length = readEncodedPointer(CallSitePtr, CallSiteEncoding);
+    uintptr_t LandingPad = readEncodedPointer(CallSitePtr, CallSiteEncoding);
+
+    uintptr_t ActionEntry = readULEB128(CallSitePtr);
+    uint64_t RangeBase = getAddress();
+    if (opts::PrintExceptions) {
+      errs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
+             << ", 0x" << Twine::utohexstr(RangeBase + Start + Length)
+             << "); landing pad: 0x" << Twine::utohexstr(LPStart + LandingPad)
+             << "; action entry: 0x" << Twine::utohexstr(ActionEntry) << "\n";
+    }
+
+    // Create a handler entry if necessary.
+    MCSymbol *LPSymbol{nullptr};
+    if (LandingPad) {
+      auto Label = Labels.find(LandingPad);
+      if (Label != Labels.end()) {
+        LPSymbol = Label->second;
+      } else {
+        LPSymbol = BC.Ctx->createTempSymbol("LP");
+        Labels[LandingPad] = LPSymbol;
+      }
+      LandingPads.insert(LPSymbol);
+    }
+
+    // Mark all call instructions in the range.
+    auto II = Instructions.find(Start);
+    assert(II != Instructions.end() &&
+           "exception range not pointing to instruction");
+    do {
+      auto &Instruction = II->second;
+      if (BC.MIA->isCall(Instruction)) {
+        if (LPSymbol) {
+          Instruction.addOperand(MCOperand::createExpr(
+              MCSymbolRefExpr::create(LPSymbol,
+                                      MCSymbolRefExpr::VK_None,
+                                      *BC.Ctx)));
+        } else {
+          Instruction.addOperand(MCOperand::createImm(0));
+        }
+        Instruction.addOperand(MCOperand::createImm(ActionEntry));
+      }
+      ++II;
+    } while (II->first < Start + Length);
+
+    if (ActionEntry != 0) {
+      auto printType = [&] (int Index, raw_ostream &OS) {
+        assert(Index > 0 && "only positive indices are valid");
+        assert(TTypeEncoding == DW_EH_PE_udata4 &&
+               "only udata4 supported for TTypeEncoding");
+        auto TypeAddress = *(TypeTableStart - Index);
+        if (TypeAddress == 0) {
+          OS << "<all>";
+          return;
+        }
+        auto NI = BC.GlobalAddresses.find(TypeAddress);
+        if (NI != BC.GlobalAddresses.end()) {
+          OS << NI->second;
+        } else {
+          OS << "0x" << Twine::utohexstr(TypeAddress);
+        }
+      };
+      if (opts::PrintExceptions)
+        errs() << "    actions: ";
+      const uint8_t *ActionPtr = ActionTableStart + ActionEntry - 1;
+      long long ActionType;
+      long long ActionNext;
+      auto Sep = "";
+      do {
+        ActionType = readSLEB128(ActionPtr);
+        auto Self = ActionPtr;
+        ActionNext = readSLEB128(ActionPtr);
+        if (opts::PrintExceptions)
+          errs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
+        if (ActionType == 0) {
+          if (opts::PrintExceptions)
+            errs() << "cleanup";
+        } else if (ActionType > 0) {
+          // It's an index into a type table.
+          if (opts::PrintExceptions) {
+            errs() << "catch type ";
+            printType(ActionType, errs());
+          }
+        } else { // ActionType < 0
+          if (opts::PrintExceptions)
+            errs() << "filter exception types ";
+          auto TSep = "";
+          // ActionType is a negative byte offset into uleb128-encoded table
+          // of indices with base 1.
+          // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
+          // encoded using uleb128 so we cannot directly dereference them.
+          auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
+          while (auto Index = readULEB128(TypeIndexTablePtr)) {
+            if (opts::PrintExceptions) {
+              errs() << TSep;
+              printType(Index, errs());
+              TSep = ", ";
+            }
+          }
+          MaxTypeIndexTableOffset =
+              std::max(MaxTypeIndexTableOffset,
+                       TypeIndexTablePtr - TypeIndexTableStart);
+        }
+
+        Sep = "; ";
+
+        ActionPtr = Self + ActionNext;
+      } while (ActionNext);
+      if (opts::PrintExceptions)
+        errs() << '\n';
+    }
+  }
+  if (opts::PrintExceptions)
+    errs() << '\n';
+}
+
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
 
@@ -269,6 +446,8 @@ void CFIReader::fillCFIInfoFor(BinaryFunction &Function) const {
                      "%dB\n",
                      Function.getSize(), CurFDE.getAddressRange());
   }
+
+  Function.setLSDAAddress(CurFDE.getLSDAAddress());
 
   uint64_t Offset = 0;
   uint64_t CodeAlignment = CurFDE.getLinkedCIE()->getCodeAlignmentFactor();
