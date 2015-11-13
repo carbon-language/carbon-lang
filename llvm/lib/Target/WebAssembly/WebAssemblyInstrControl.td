@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
-def BR_IF_ : I<(outs), (ins bb_op:$dst, I32:$a),
-               [(brcond I32:$a, bb:$dst)],
-               "br_if $dst, $a">;
+def BR_IF : I<(outs), (ins bb_op:$dst, I32:$a),
+              [(brcond I32:$a, bb:$dst)],
+              "br_if $dst, $a">;
 let isBarrier = 1 in {
 def BR   : I<(outs), (ins bb_op:$dst),
              [(br bb:$dst)],
