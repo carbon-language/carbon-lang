@@ -34,7 +34,7 @@ class Mutex {
   enum Type {
     Normal,
     RW,
-#ifndef APPLE
+#ifndef __APPLE__
     Spin
 #else
     Spin = Normal
