@@ -15,7 +15,6 @@ RUN: not llvm-profdata show %p/Inputs/no-counts.proftext 2>&1 | FileCheck %s --c
 NO-COUNTS: error: {{.*}}no-counts.proftext: Malformed instrumentation profile data
 
 4- Detect binary input
-RUN: echo -n $'\xff\xe5\xd0\xb1\xf4\c9\x94\xa8' > %t.bin
-RUN: not llvm-profdata show %t.bin 2>&1 | FileCheck %s --check-prefix=BINARY
+RUN: not llvm-profdata show %p/Inputs/text-format-errors.text.bin 2>&1 | FileCheck %s --check-prefix=BINARY
 BINARY: error: {{.+}}: Unrecognized instrumentation profile encoding format
 BINARY: Perhaps you forgot to use the -sample option?
