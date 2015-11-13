@@ -2800,12 +2800,12 @@ SUnit *GenericScheduler::pickNodeBidirectional(bool &IsTopNode) {
   // efficient, but also provides the best heuristics for CriticalPSets.
   if (SUnit *SU = Bot.pickOnlyChoice()) {
     IsTopNode = false;
-    DEBUG(dbgs() << "Pick Bot NOCAND\n");
+    DEBUG(dbgs() << "Pick Bot ONLY1\n");
     return SU;
   }
   if (SUnit *SU = Top.pickOnlyChoice()) {
     IsTopNode = true;
-    DEBUG(dbgs() << "Pick Top NOCAND\n");
+    DEBUG(dbgs() << "Pick Top ONLY1\n");
     return SU;
   }
   CandPolicy NoPolicy;
