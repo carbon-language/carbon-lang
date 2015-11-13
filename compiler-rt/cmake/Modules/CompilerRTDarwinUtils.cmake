@@ -411,11 +411,8 @@ macro(darwin_add_embedded_builtin_libraries)
       string(TOLOWER "${float_type}_${type}" lib_suffix)
       foreach(arch ${DARWIN_${float_type}_FLOAT_ARCHS})
         set(DARWIN_macho_embedded_SYSROOT ${DARWIN_osx_SYSROOT})
-        set(DARWIN_macho_embedded_BUILTIN_MIN_VER_FLAG ${DARWIN_osx_BUILTIN_MIN_VER_FLAG})
         set(float_flag)
         if(${arch} MATCHES "^arm")
-          set(DARWIN_macho_embedded_SYSROOT ${DARWIN_ios_SYSROOT})
-          set(DARWIN_macho_embedded_BUILTIN_MIN_VER_FLAG ${DARWIN_ios_BUILTIN_MIN_VER_FLAG})
           # x86 targets are hard float by default, but the complain about the
           # float ABI flag, so don't pass it unless we're targeting arm.
           set(float_flag ${${float_type}_FLOAT_FLAG})
