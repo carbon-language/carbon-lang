@@ -26,7 +26,7 @@ endif
 
 all:: $(InstallTargets)
 
-$(ToolDir)/%: % Makefile $(ToolDir)/.dir
+$(ToolDir)/%: bin/% Makefile $(ToolDir)/.dir
 	$(Echo) "Copying $(notdir $<) to the 'bin' directory..."
 	$(Verb)cp $< $@
 	$(Verb)chmod +x $@

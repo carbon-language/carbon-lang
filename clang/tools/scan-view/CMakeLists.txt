@@ -17,11 +17,11 @@ if(CLANG_INSTALL_SCANVIEW)
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/bin
                        COMMAND ${CMAKE_COMMAND} -E copy
-                         ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile}
+                         ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BinFile}
                          ${CMAKE_BINARY_DIR}/bin/
-                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${BinFile})
+                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BinFile})
     list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
-    install(PROGRAMS ${BinFile} DESTINATION bin)
+    install(PROGRAMS bin/${BinFile} DESTINATION bin)
   endforeach()
 
   foreach(ShareFile ${ShareFiles})

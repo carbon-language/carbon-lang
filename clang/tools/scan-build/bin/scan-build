@@ -1818,6 +1818,7 @@ if (defined $Options{OutputFormat}) {
       Diag "Viewing analysis results in '$Options{OutputDir}' using scan-view.\n";
       my $ScanView = Cwd::realpath("$RealBin/scan-view");
       if (! -x $ScanView) { $ScanView = "scan-view"; }
+      if (! -x $ScanView) { $ScanView = Cwd::realpath("$RealBin/../../scan-view/bin/scan-view"); }
       exec $ScanView, "$Options{OutputDir}";
     }
 
