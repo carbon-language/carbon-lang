@@ -133,17 +133,21 @@ def alias_script_T : Separate<["-"], "T">, Alias<script>;
 def alias_strip_all: Flag<["-"], "s">, Alias<strip_all>;
 def alias_undefined_u : Separate<["-"], "u">, Alias<undefined>;
 
-// Options listed below are silently ignored now.
-def build_id : Flag<["--"], "build-id">;
-def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
+// Our symbol resolution algorithm handles symbols in archive files better
+// than traditional linkers, so we don't need --start-group and --end-group.
+// These options are recongized but ignored for compatibility.
 def end_group : Flag<["--"], "end-group">;
 def end_group_paren: Flag<["-"], ")">;
+def start_group : Flag<["--"], "start-group">;
+def start_group_paren: Flag<["-"], "(">;
+
+// Options listed below are silently ignored for now for compatibility.
+def build_id : Flag<["--"], "build-id">;
+def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def fatal_warnings : Flag<["--"], "fatal-warnings">;
 def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def no_warn_mismatch : Flag<["--"], "no-warn-mismatch">;
-def start_group : Flag<["--"], "start-group">;
-def start_group_paren: Flag<["-"], "(">;
 def version_script : Separate<["--"], "version-script">;
 def warn_common : Flag<["--"], "warn-common">;
 def warn_shared_textrel : Flag<["--"], "warn-shared-textrel">;
