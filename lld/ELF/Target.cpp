@@ -216,7 +216,9 @@ X86_64TargetInfo::X86_64TargetInfo() {
   PltReloc = R_X86_64_JUMP_SLOT;
   RelativeReloc = R_X86_64_RELATIVE;
   TlsLocalDynamicReloc = R_X86_64_TLSLD;
+  TlsGlobalDynamicReloc = R_X86_64_TLSGD;
   TlsModuleIndexReloc = R_X86_64_DTPMOD64;
+  TlsOffsetReloc = R_X86_64_DTPOFF64;
   LazyRelocations = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 16;
@@ -335,6 +337,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   case R_X86_64_GOTPCREL:
   case R_X86_64_PLT32:
   case R_X86_64_TLSLD:
+  case R_X86_64_TLSGD:
     write32le(Loc, SA - P);
     break;
   case R_X86_64_64:

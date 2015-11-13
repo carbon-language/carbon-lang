@@ -80,6 +80,9 @@ GotSection<ELFT>::GotSection()
 template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody *Sym) {
   Sym->GotIndex = Target->getGotHeaderEntriesNum() + Entries.size();
   Entries.push_back(Sym);
+  // Global Dynamic TLS entries take two GOT slots.
+  if (Sym->isTLS())
+    Entries.push_back(nullptr);
 }
 
 template <class ELFT> uint32_t GotSection<ELFT>::addLocalModuleTlsIndex() {
@@ -187,8 +190,13 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     auto *P = reinterpret_cast<Elf_Rel *>(Buf);
     Buf += EntrySize;
 
-    InputSectionBase<ELFT> &C = Rel.C;
-    const Elf_Rel &RI = Rel.RI;
+    // Skip placeholder for global dynamic TLS relocation pair. It was already
+    // handled by the previous relocation.
+    if (!Rel.C || !Rel.RI)
+      continue;
+
+    InputSectionBase<ELFT> &C = *Rel.C;
+    const Elf_Rel &RI = *Rel.RI;
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     const ObjectFile<ELFT> &File = *C.getFile();
     SymbolBody *Body = File.getSymbolBody(SymIndex);
@@ -202,6 +210,17 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
                           Config->Mips64EL);
       P->r_offset =
           Out<ELFT>::Got->getVA() + Out<ELFT>::LocalModuleTlsIndexOffset;
+      continue;
+    }
+
+    if (Body && Type == Target->getTlsGlobalDynamicReloc()) {
+      P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                          Target->getTlsModuleIndexReloc(), Config->Mips64EL);
+      P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
+      auto *PNext = reinterpret_cast<Elf_Rel *>(Buf);
+      PNext->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                              Target->getTlsOffsetReloc(), Config->Mips64EL);
+      PNext->r_offset = Out<ELFT>::Got->getEntryAddr(*Body) + sizeof(uintX_t);
       continue;
     }
 

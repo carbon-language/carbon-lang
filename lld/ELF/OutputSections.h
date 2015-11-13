@@ -170,8 +170,8 @@ private:
 
 template <class ELFT> struct DynamicReloc {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
-  InputSectionBase<ELFT> &C;
-  const Elf_Rel &RI;
+  InputSectionBase<ELFT> *C;
+  const Elf_Rel *RI;
 };
 
 template <class ELFT>
