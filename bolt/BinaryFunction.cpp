@@ -100,14 +100,26 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   uint64_t Offset{0};
 
   auto printInstruction = [&](const MCInst &Instruction) {
+    if (BC.MIA->isEHLabel(Instruction)) {
+      OS << "  EH_LABEL: "
+         << cast<MCSymbolRefExpr>(Instruction.getOperand(0).getExpr())->
+                                                                    getSymbol()
+         << '\n';
+      return;
+    }
     OS << format("    %08" PRIx64 ": ", Offset);
     BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
     if (BC.MIA->isCall(Instruction)) {
       if (BC.MIA->isTailCall(Instruction))
         OS << " # TAILCALL ";
       if (Instruction.getNumOperands() > 1) {
-        OS << " # handler: " << Instruction.getOperand(1);
-        OS << "; action: " << Instruction.getOperand(2);
+        OS << " # handler: ";
+        if (Instruction.getOperand(1).isExpr())
+          OS << cast<MCSymbolRefExpr>(Instruction.getOperand(1).getExpr())->
+                                                                      getSymbol();
+        else
+          OS << '0';
+        OS << "; action: " << Instruction.getOperand(2).getImm();
       }
     }
     OS << "\n";
@@ -190,34 +202,46 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << '\n';
   }
 
-  if (FrameInstructions.empty()) {
-    OS << "End of Function \"" << getName() << "\"\n";
-    return;
-  }
-
-  OS << "DWARF CFI Instructions:\n";
-  for (auto &CFIInstr : FrameInstructions) {
-    OS << format("    %08x:   ", CFIInstr.first);
-    switch(CFIInstr.second.getOperation()) {
-    case MCCFIInstruction::OpSameValue:        OS << "OpSameValue";       break;
-    case MCCFIInstruction::OpRememberState:    OS << "OpRememberState";   break;
-    case MCCFIInstruction::OpRestoreState:     OS << "OpRestoreState";    break;
-    case MCCFIInstruction::OpOffset:           OS << "OpOffset";          break;
-    case MCCFIInstruction::OpDefCfaRegister:   OS << "OpDefCfaRegister";  break;
-    case MCCFIInstruction::OpDefCfaOffset:     OS << "OpDefCfaOffset";    break;
-    case MCCFIInstruction::OpDefCfa:           OS << "OpDefCfa";          break;
-    case MCCFIInstruction::OpRelOffset:        OS << "OpRelOffset";       break;
-    case MCCFIInstruction::OpAdjustCfaOffset:  OS << "OfAdjustCfaOffset"; break;
-    case MCCFIInstruction::OpEscape:           OS << "OpEscape";          break;
-    case MCCFIInstruction::OpRestore:          OS << "OpRestore";         break;
-    case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
-    case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
-    case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
+  // Dump new exception ranges for the function.
+  if (!CallSites.empty()) {
+    OS << "EH table:\n";
+    for (auto &CSI : CallSites) {
+      OS << "  [" << *CSI.Start << ", " << *CSI.End << ") landing pad : ";
+      if (CSI.LP)
+        OS << *CSI.LP;
+      else
+        OS << "0";
+      OS << ", action : " << CSI.Action << '\n';
     }
-    OS << "\n";
+    OS << '\n';
   }
 
-  OS << "End of Function \"" << getName() << "\"\n";
+  if (!FrameInstructions.empty()) {
+    OS << "DWARF CFI Instructions:\n";
+    for (auto &CFIInstr : FrameInstructions) {
+      OS << format("    %08x:   ", CFIInstr.first);
+      switch(CFIInstr.second.getOperation()) {
+      case MCCFIInstruction::OpSameValue:      OS << "OpSameValue";       break;
+      case MCCFIInstruction::OpRememberState:  OS << "OpRememberState";   break;
+      case MCCFIInstruction::OpRestoreState:   OS << "OpRestoreState";    break;
+      case MCCFIInstruction::OpOffset:         OS << "OpOffset";          break;
+      case MCCFIInstruction::OpDefCfaRegister: OS << "OpDefCfaRegister";  break;
+      case MCCFIInstruction::OpDefCfaOffset:   OS << "OpDefCfaOffset";    break;
+      case MCCFIInstruction::OpDefCfa:         OS << "OpDefCfa";          break;
+      case MCCFIInstruction::OpRelOffset:      OS << "OpRelOffset";       break;
+      case MCCFIInstruction::OpAdjustCfaOffset:OS << "OfAdjustCfaOffset"; break;
+      case MCCFIInstruction::OpEscape:         OS << "OpEscape";          break;
+      case MCCFIInstruction::OpRestore:        OS << "OpRestore";         break;
+      case MCCFIInstruction::OpUndefined:      OS << "OpUndefined";       break;
+      case MCCFIInstruction::OpRegister:       OS << "OpRegister";        break;
+      case MCCFIInstruction::OpWindowSave:     OS << "OpWindowSave";      break;
+      }
+      OS << '\n';
+    }
+    OS << '\n';
+  }
+
+  OS << "End of Function \"" << getName() << "\"\n\n";
 }
 
 bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {

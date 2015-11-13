@@ -128,6 +128,11 @@ PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
             cl::Hidden);
 
 static cl::opt<bool>
+PrintEHRanges("print-eh-ranges",
+              cl::desc("print function with updated exception ranges"),
+              cl::Hidden);
+
+static cl::opt<bool>
 PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
                cl::Hidden);
@@ -544,7 +549,13 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
           (SectionContents.data()) + FunctionOffset,
         Function.getSize());
 
-    if (!Function.disassemble(FunctionData) || !Function.isSimple())
+    if (!Function.disassemble(FunctionData))
+      continue;
+
+    if (opts::PrintAll || opts::PrintDisasm)
+      Function.print(errs(), "after disassembly");
+
+    if (!Function.isSimple())
       continue;
 
     // Fill in CFI information for this function
@@ -552,12 +563,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       DwCFIReader.fillCFIInfoFor(Function);
 
     // Parse LSDA.
-    if (Function.getLSDAAddress() != 0) {
+    if (Function.getLSDAAddress() != 0)
       Function.parseLSDA(LSDAData, LSDAAddress);
-    }
-
-    if (opts::PrintAll || opts::PrintDisasm)
-      Function.print(errs(), "after disassembly");
 
     if (!Function.buildCFG())
       continue;
@@ -584,6 +591,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     auto &Function = BFI.second;
 
     if (!opts::shouldProcess(Function.getName()))
+      continue;
+
+    if (!Function.isSimple())
       continue;
 
     // Detect and eliminate unreachable basic blocks. We could have those
@@ -638,6 +648,12 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       }
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks");
+    }
+
+    // Post-processing passes.
+    Function.updateEHRanges();
+    if (opts::PrintAll || opts::PrintEHRanges) {
+      Function.print(errs(), "after updating EH ranges");
     }
   }
 
@@ -719,6 +735,15 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         Streamer->EmitCodeAlignment(BB->getAlignment());
       Streamer->EmitLabel(BB->getLabel());
       for (const auto &Instr : *BB) {
+        // Handle pseudo instructions.
+        if (BC->MIA->isEHLabel(Instr)) {
+          assert(Instr.getNumOperands() == 1 && Instr.getOperand(0).isExpr() &&
+                 "bad EH_LABEL instruction");
+          auto Label = &(cast<MCSymbolRefExpr>(
+                Instr.getOperand(0).getExpr())->getSymbol());
+          Streamer->EmitLabel(const_cast<MCSymbol *>(Label));
+          continue;
+        }
         Streamer->EmitInstruction(Instr, *BC->STI);
       }
     }

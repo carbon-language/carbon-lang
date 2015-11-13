@@ -182,6 +182,15 @@ private:
   using CFIInstrMapType = std::multimap<uint32_t, MCCFIInstruction>;
   CFIInstrMapType FrameInstructions;
 
+  /// Exception handling ranges.
+  struct CallSite {
+    const MCSymbol *Start;
+    const MCSymbol *End;
+    const MCSymbol *LP;
+    uint64_t Action;
+  };
+  std::vector<CallSite> CallSites;
+
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
@@ -468,6 +477,9 @@ public:
 
   /// Process LSDA information for the function.
   void parseLSDA(ArrayRef<uint8_t> LSDAData, uint64_t LSDAAddress);
+
+  /// Update exception handling ranges for the function.
+  void updateEHRanges();
 
   virtual ~BinaryFunction() {}
 };

@@ -332,7 +332,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       if (Label != Labels.end()) {
         LPSymbol = Label->second;
       } else {
-        LPSymbol = BC.Ctx->createTempSymbol("LP");
+        LPSymbol = BC.Ctx->createTempSymbol("LP", true);
         Labels[LandingPad] = LPSymbol;
       }
       LandingPads.insert(LPSymbol);
@@ -427,6 +427,108 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   }
   if (opts::PrintExceptions)
     errs() << '\n';
+}
+
+void BinaryFunction::updateEHRanges() {
+  assert(CurrentState == State::CFG && "unexpected state");
+
+  // Build call sites table.
+  struct EHInfo {
+    const MCSymbol *LP; // landing pad
+    uint64_t Action;
+  };
+
+  // Markers for begining and the end of exceptions range.
+  const MCSymbol *StartRange{nullptr};
+  const MCSymbol *EndRange{nullptr};
+
+  // If previous call can throw, this is its exception handler.
+  EHInfo PreviousEH = {nullptr, 0};
+
+  for(auto &BB : BasicBlocksLayout) {
+    for (auto II = BB->begin(); II != BB->end(); ++II) {
+      auto Instr = *II;
+
+      if (!BC.MIA->isCall(Instr))
+        continue;
+
+      // Instruction can throw an exception that should be handled.
+      bool Throws = Instr.getNumOperands() > 1;
+
+      // Ignore the call if it's a continuation of a no-throw gap.
+      if (!Throws && !StartRange)
+        continue;
+
+      // Extract exception handling information from the instruction.
+      const MCSymbol *LP =
+        Throws ? (Instr.getOperand(1).isExpr()
+                   ? &(cast<MCSymbolRefExpr>(
+                                    Instr.getOperand(1).getExpr())->getSymbol())
+                   : nullptr)
+               : nullptr;
+      uint64_t Action = Throws ? Instr.getOperand(2).getImm() : 0;
+
+      // No action if the exception handler has not changed.
+      if (Throws &&
+          StartRange &&
+          PreviousEH.LP == LP &&
+          PreviousEH.Action == Action)
+        continue;
+
+      // Same symbol is used for the beginning and the end of the range.
+      const MCSymbol *EHSymbol = BC.Ctx->createTempSymbol("EH", true);
+      MCInst EHLabel;
+      BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
+      II = BB->Instructions.insert(II, EHLabel);
+      ++II;
+
+      // At this point we could be in the one of the following states:
+      //
+      // I. Exception handler has changed and we need to close the prev range
+      //    and start the new one.
+      //
+      // II. Start the new exception range after the gap.
+      //
+      // III. Close exception range and start the new gap.
+
+      if (StartRange) {
+        // I, III:
+        EndRange = EHSymbol;
+      } else {
+        // II:
+        StartRange = EHSymbol;
+        EndRange = nullptr;
+      }
+
+      // Close the previous range.
+      if (EndRange) {
+        assert(StartRange && "beginning of the range expected");
+        CallSites.emplace_back(CallSite{StartRange, EndRange,
+                                        PreviousEH.LP, PreviousEH.Action});
+        EndRange = nullptr;
+      }
+
+      if (Throws) {
+        // I, II:
+        StartRange = EHSymbol;
+        PreviousEH = EHInfo{LP, Action};
+      } else {
+        StartRange = nullptr;
+      }
+    }
+  }
+
+  // Check if we need to close the range.
+  if (StartRange) {
+    assert(!EndRange && "unexpected end of range");
+    EndRange = BC.Ctx->createTempSymbol("EH", true);
+    MCInst EHLabel;
+    BC.MIA->createEHLabel(EHLabel, EndRange, BC.Ctx.get());
+    BasicBlocksLayout.back()->Instructions.emplace_back(EHLabel);
+
+    CallSites.emplace_back(CallSite{StartRange, EndRange,
+                                    PreviousEH.LP, PreviousEH.Action});
+  }
 }
 
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
