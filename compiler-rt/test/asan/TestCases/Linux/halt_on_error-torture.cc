@@ -2,9 +2,9 @@
 //
 // RUN: %clangxx_asan -fsanitize-recover=address -pthread %s -o %t
 //
-// RUN: env ASAN_OPTIONS=halt_on_error=false %run %t 1 10 >1.txt 2>&1 || cat 1.txt
+// RUN: env ASAN_OPTIONS=halt_on_error=false %run %t 1 10 >1.txt 2>&1
 // RUN: FileCheck %s < 1.txt
-// RUN: [ $(wc -l < 1.txt) -eq 10 ]
+// RUN: [ $(grep -c 'ERROR: AddressSanitizer: use-after-poison' 1.txt) -eq 10 ]
 // RUN: FileCheck --check-prefix=CHECK-NO-COLLISION %s < 1.txt
 //
 // Collisions are unlikely but still possible so we need the ||.
