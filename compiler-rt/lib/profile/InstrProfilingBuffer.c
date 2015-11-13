@@ -79,6 +79,10 @@ int __llvm_profile_write_buffer_internal(
 
   /* Create the header. */
   __llvm_profile_header Header;
+
+  if (!DataSize)
+    return 0;
+
   Header.Magic = __llvm_profile_get_magic();
   Header.Version = __llvm_profile_get_version();
   Header.DataSize = DataSize;

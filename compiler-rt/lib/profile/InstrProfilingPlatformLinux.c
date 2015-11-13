@@ -21,6 +21,13 @@ extern uint64_t __stop___llvm_prf_cnts __attribute__((visibility("hidden")));
 extern char __start___llvm_prf_names __attribute__((visibility("hidden")));
 extern char __stop___llvm_prf_names __attribute__((visibility("hidden")));
 
+/* Add dummy data to ensure the section is always created. */
+__llvm_profile_data __llvm_prof_sect_data[0]
+    __attribute__((section("__llvm_prf_data")));
+uint64_t __llvm_prof_cnts_sect_data[0]
+    __attribute__((section("__llvm_prf_cnts")));
+char __llvm_prof_nms_sect_data[0] __attribute__((section("__llvm_prf_names")));
+
 __attribute__((visibility("hidden"))) const __llvm_profile_data *
 __llvm_profile_begin_data(void) {
   return &__start___llvm_prf_data;
