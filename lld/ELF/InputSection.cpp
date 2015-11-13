@@ -140,7 +140,7 @@ void InputSectionBase<ELFT>::relocate(
       Type = Target->getPLTRefReloc(Type);
     } else if (Target->relocNeedsGot(Type, Body)) {
       SymVA = Out<ELFT>::Got->getEntryAddr(Body);
-      Type = Target->getGotRefReloc();
+      Type = Body.isTLS() ? Target->getTlsGotReloc() : Target->getGotRefReloc();
     } else if (Target->relocPointsToGot(Type)) {
       SymVA = Out<ELFT>::Got->getVA();
       Type = Target->getPCRelReloc();
