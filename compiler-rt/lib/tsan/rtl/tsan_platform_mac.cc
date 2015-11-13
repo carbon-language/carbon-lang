@@ -139,7 +139,7 @@ static void my_pthread_introspection_hook(unsigned int event, pthread_t thread,
     }
   } else if (event == PTHREAD_INTROSPECTION_THREAD_DESTROY) {
     ThreadState *thr = cur_thread();
-    if (thr->tctx->parent_tid == kInvalidTid) {
+    if (thr->tctx && thr->tctx->parent_tid == kInvalidTid) {
       DestroyThreadState();
     }
   }
