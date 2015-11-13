@@ -10,7 +10,7 @@
 # SECTIONS command with the same order as default.
 # RUN: echo "SECTIONS { \
 # RUN:          .text : { *(.text) } \
-# RUN:          .data : { *(.data) } }" \ > %t.script
+# RUN:          .data : { *(.data) } }" > %t.script
 # RUN: ld.lld2 -o %t2 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t2 | \
 # RUN:   FileCheck -check-prefix=SEC-DEFAULT %s
@@ -33,7 +33,7 @@
 # RUN:          .symtab : { *(.symtab) } \
 # RUN:          .strtab : { *(.strtab) } \
 # RUN:          .data : { *(.data) } \
-# RUN:          .text : { *(.text) } }" \ > %t.script
+# RUN:          .text : { *(.text) } }" > %t.script
 # RUN: ld.lld2 -o %t3 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t3 | \
 # RUN:   FileCheck -check-prefix=SEC-ORDER %s
@@ -51,7 +51,7 @@
 # .text and .data have swapped names but proper sizes and types.
 # RUN: echo "SECTIONS { \
 # RUN:          .data : { *(.text) } \
-# RUN:          .text : { *(.data) } }" \ > %t.script
+# RUN:          .text : { *(.data) } }" > %t.script
 # RUN: ld.lld2 -o %t4 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t4 | \
 # RUN:   FileCheck -check-prefix=SEC-SWAP-NAMES %s
@@ -68,7 +68,7 @@
 
 # .shstrtab from the input object file is discarded.
 # RUN: echo "SECTIONS { \
-# RUN:          /DISCARD/ : { *(.shstrtab) } }" \ > %t.script
+# RUN:          /DISCARD/ : { *(.shstrtab) } }" > %t.script
 # RUN: ld.lld2 -o %t5 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t5 | \
 # RUN:   FileCheck -check-prefix=SEC-DISCARD %s
@@ -89,7 +89,7 @@
 # RUN:          .text : { *(.text) } \
 # RUN:          .data : { *(.data) } } \
 # RUN:       SECTIONS { \
-# RUN:          .data : { *(other) } }" \ > %t.script
+# RUN:          .data : { *(other) } }" > %t.script
 # RUN: ld.lld2 -o %t6 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t6 | \
 # RUN:   FileCheck -check-prefix=SEC-MULTI %s
