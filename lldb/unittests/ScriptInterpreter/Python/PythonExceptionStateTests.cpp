@@ -79,6 +79,33 @@ TEST_F(PythonExceptionStateTest, TestDiscardSemantics)
     EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
 }
 
+TEST_F(PythonExceptionStateTest, TestResetSemantics)
+{
+    PyErr_Clear();
+
+    // Resetting when auto-restore is true should restore.
+    RaiseException();
+    PythonExceptionState error(true);
+    EXPECT_TRUE(error.IsError());
+    EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
+    error.Reset();
+    EXPECT_FALSE(error.IsError());
+    EXPECT_TRUE(PythonExceptionState::HasErrorOccurred());
+
+    PyErr_Clear();
+
+    // Resetting when auto-restore is false should discard.
+    RaiseException();
+    PythonExceptionState error2(false);
+    EXPECT_TRUE(error2.IsError());
+    EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
+    error2.Reset();
+    EXPECT_FALSE(error2.IsError());
+    EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
+
+    PyErr_Clear();
+}
+
 TEST_F(PythonExceptionStateTest, TestManualRestoreSemantics)
 {
     PyErr_Clear();
@@ -115,6 +142,32 @@ TEST_F(PythonExceptionStateTest, TestAutoRestoreSemantics)
         EXPECT_TRUE(error.IsError());
         EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
     }
+    EXPECT_TRUE(PythonExceptionState::HasErrorOccurred());
+
+    PyErr_Clear();
+}
+
+TEST_F(PythonExceptionStateTest, TestAutoRestoreChanged)
+{
+    // Test that if we re-acquire with different auto-restore semantics,
+    // that the new semantics are respected.
+    PyErr_Clear();
+
+    RaiseException();
+    PythonExceptionState error(false);
+    EXPECT_TRUE(error.IsError());
+
+    error.Reset();
+    EXPECT_FALSE(error.IsError());
+    EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
+
+    RaiseException();
+    error.Acquire(true);
+    EXPECT_TRUE(error.IsError());
+    EXPECT_FALSE(PythonExceptionState::HasErrorOccurred());
+
+    error.Reset();
+    EXPECT_FALSE(error.IsError());
     EXPECT_TRUE(PythonExceptionState::HasErrorOccurred());
 
     PyErr_Clear();

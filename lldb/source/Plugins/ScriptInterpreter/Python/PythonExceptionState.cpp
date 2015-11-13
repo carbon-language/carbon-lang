@@ -50,6 +50,7 @@ PythonExceptionState::Acquire(bool restore_on_exit)
     m_type.Reset(PyRefType::Owned, py_type);
     m_value.Reset(PyRefType::Owned, py_value);
     m_traceback.Reset(PyRefType::Owned, py_traceback);
+    m_restore_on_exit = restore_on_exit;
 }
 
 void
@@ -75,6 +76,15 @@ PythonExceptionState::Discard()
     m_type.Reset();
     m_value.Reset();
     m_traceback.Reset();
+}
+
+void
+PythonExceptionState::Reset()
+{
+    if (m_restore_on_exit)
+        Restore();
+    else
+        Discard();
 }
 
 bool

@@ -30,6 +30,9 @@ class PythonExceptionState
     void
     Discard();
 
+    void
+    Reset();
+
     static bool
     HasErrorOccurred();
 
