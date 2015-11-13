@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLDB_DISABLE_PYTHON
+
 #include "lldb-python.h"
 #include "PythonExceptionState.h"
 
@@ -203,3 +205,5 @@ PythonExceptionState::ReadBacktrace() const
 
     return retval;
 }
+
+#endif
