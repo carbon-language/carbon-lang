@@ -1246,6 +1246,19 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   } else if (IsFunclet && STI.is32Bit()) {
     // Reset EBP / ESI to something good for funclets.
     MBBI = restoreWin32EHStackPointers(MBB, MBBI, DL);
+    // If we're a catch funclet, we can be returned to via catchret. Save ESP
+    // into the registration node so that the runtime will restore it for us.
+    if (!MBB.isCleanupFuncletEntry()) {
+      assert(classifyEHPersonality(Fn->getPersonalityFn()) ==
+             EHPersonality::MSVC_CXX);
+      unsigned FrameReg;
+      int FI = MMI.getWinEHFuncInfo(Fn).EHRegNodeFrameIndex;
+      int64_t EHRegOffset = getFrameIndexReference(MF, FI, FrameReg);
+      // ESP is the first field, so no extra displacement is needed.
+      addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32mr)), FrameReg,
+                   false, EHRegOffset)
+          .addReg(X86::ESP);
+    }
   }
 
   while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup)) {

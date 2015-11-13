@@ -66,6 +66,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 }
 
 ; X86-LABEL: _try_catch_catch:
+; X86: movl %esp, -[[sp_offset:[0-9]+]](%ebp)
 ; X86: movl $0, -{{[0-9]+}}(%ebp)
 ; X86: leal -[[local_offs:[0-9]+]](%ebp), %[[addr_reg:[a-z]+]]
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
@@ -76,15 +77,13 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 
 ; X86: [[restorebb1:LBB0_[0-9]+]]: # Block address taken
 ; X86-NEXT:                        # %invoke.cont.2
-; X86: movl -16(%ebp), %esp
-; X86: addl $12, %ebp
+; X86-NEXT: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
 ; FIXME: These should be de-duplicated.
 ; X86: [[restorebb2:LBB0_[0-9]+]]: # Block address taken
 ; X86-NEXT:                        # %invoke.cont.3
-; X86: movl -16(%ebp), %esp
-; X86: addl $12, %ebp
+; X86-NEXT: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
 ; X86: "?catch$[[catch1bb:[0-9]+]]@?0?try_catch_catch@4HA":
@@ -92,6 +91,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: pushl %ebp
 ; X86: subl $8, %esp
 ; X86: addl $12, %ebp
+; X86: movl %esp, -[[sp_offset]](%ebp)
 ; X86: leal -[[local_offs]](%ebp), %[[addr_reg:[a-z]+]]
 ; X86: movl -32(%ebp), %[[e_reg:[a-z]+]]
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
@@ -108,6 +108,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: pushl %ebp
 ; X86: subl $8, %esp
 ; X86: addl $12, %ebp
+; X86: movl %esp, -[[sp_offset]](%ebp)
 ; X86: leal -[[local_offs]](%ebp), %[[addr_reg:[a-z]+]]
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
@@ -258,8 +259,7 @@ catchendblock:
 
 ; X86: [[restorebb:LBB1_[0-9]+]]: # Block address taken
 ; X86-NEXT:                       # %catch.done
-; X86: movl -16(%ebp), %esp
-; X86: addl $12, %ebp
+; X86-NEXT: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
 ; X86: "?catch$[[catchdispbb:[0-9]+]]@?0?branch_to_normal_dest@4HA":

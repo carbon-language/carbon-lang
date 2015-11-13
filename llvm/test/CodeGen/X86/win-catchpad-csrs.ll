@@ -67,7 +67,6 @@ catchendblock:                                    ; preds = %catch,
 ; X86: retl
 
 ; X86: [[restorebb:LBB0_[0-9]+]]:
-; X86: movl -16(%ebp), %esp
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
