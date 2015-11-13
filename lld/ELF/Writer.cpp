@@ -199,7 +199,7 @@ void Writer<ELFT>::scanRelocs(
     SymbolBody *Body = File.getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(Config->Mips64EL);
 
-    if (Type == Target->getTlsLocalDynamicReloc()) {
+    if (Target->isTlsLocalDynamicReloc(Type)) {
       if (Out<ELFT>::LocalModuleTlsIndexOffset == uint32_t(-1)) {
         Out<ELFT>::LocalModuleTlsIndexOffset =
             Out<ELFT>::Got->addLocalModuleTlsIndex();
@@ -217,7 +217,7 @@ void Writer<ELFT>::scanRelocs(
       Body = Body->repl();
 
     if (Body && Body->isTLS()) {
-      if (Type != Target->getTlsGlobalDynamicReloc())
+      if (!Target->isTlsGlobalDynamicReloc(Type))
         continue;
       if (Body->isInGot())
         continue;

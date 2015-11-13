@@ -205,7 +205,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 
     uint32_t Type = RI.getType(Config->Mips64EL);
 
-    if (Type == Target->getTlsLocalDynamicReloc()) {
+    if (Target->isTlsLocalDynamicReloc(Type)) {
       P->setSymbolAndType(0, Target->getTlsModuleIndexReloc(),
                           Config->Mips64EL);
       P->r_offset =
@@ -213,7 +213,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       continue;
     }
 
-    if (Body && Type == Target->getTlsGlobalDynamicReloc()) {
+    if (Body && Target->isTlsGlobalDynamicReloc(Type)) {
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
                           Target->getTlsModuleIndexReloc(), Config->Mips64EL);
       P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);

@@ -29,8 +29,12 @@ public:
   unsigned getPltReloc() const { return PltReloc; }
   unsigned getGotRefReloc() const { return GotRefReloc; }
   unsigned getRelativeReloc() const { return RelativeReloc; }
-  unsigned getTlsLocalDynamicReloc() const { return TlsLocalDynamicReloc; }
-  unsigned getTlsGlobalDynamicReloc() const { return TlsGlobalDynamicReloc; }
+  bool isTlsLocalDynamicReloc(unsigned Type) const {
+    return Type == TlsLocalDynamicReloc;
+  }
+  bool isTlsGlobalDynamicReloc(unsigned Type) const {
+    return Type == TlsGlobalDynamicReloc;
+  }
   unsigned getTlsModuleIndexReloc() const { return TlsModuleIndexReloc; }
   unsigned getTlsOffsetReloc() const { return TlsOffsetReloc; }
   unsigned getPltZeroEntrySize() const { return PltZeroEntrySize; }
