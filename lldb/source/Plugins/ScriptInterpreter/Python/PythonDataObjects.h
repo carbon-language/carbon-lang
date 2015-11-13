@@ -415,6 +415,9 @@ class PythonModule : public PythonObject
     static PythonModule
     AddModule(llvm::StringRef module);
 
+    static PythonModule
+    ImportModule(llvm::StringRef module);
+
     // Bring in the no-argument base class version
     using PythonObject::Reset;
 
