@@ -90,7 +90,7 @@ bool WebAssemblyRegNumbering::runOnMachineFunction(MachineFunction &MF) {
     // Skip unused registers.
     if (MRI.use_empty(VReg))
       continue;
-    if (MFI.getWAReg(VReg) == -1u)
+    if (MFI.getWAReg(VReg) == WebAssemblyFunctionInfo::UnusedReg)
       MFI.setWAReg(VReg, NumArgRegs + CurReg++);
   }
 

@@ -104,7 +104,9 @@ std::string WebAssemblyAsmPrinter::regToString(const MachineOperand &MO) {
   if (TargetRegisterInfo::isPhysicalRegister(RegNo))
     return WebAssemblyInstPrinter::getRegisterName(RegNo);
 
-  return utostr(MFI->getWAReg(RegNo));
+  unsigned WAReg = MFI->getWAReg(RegNo);
+  assert(WAReg != WebAssemblyFunctionInfo::UnusedReg);
+  return utostr(WAReg);
 }
 
 const char *WebAssemblyAsmPrinter::toString(MVT VT) const {
