@@ -222,6 +222,22 @@ std::error_code SampleProfileReaderText::read() {
   return sampleprof_error::success;
 }
 
+bool SampleProfileReaderText::hasFormat(const MemoryBuffer &Buffer) {
+  bool result = false;
+
+  // Check that the first non-comment line is a valid function header.
+  line_iterator LineIt(Buffer, /*SkipBlanks=*/true, '#');
+  if (!LineIt.is_at_eof()) {
+    if ((*LineIt)[0] != ' ') {
+      uint64_t NumSamples, NumHeadSamples;
+      StringRef FName;
+      result = ParseHead(*LineIt, FName, NumSamples, NumHeadSamples);
+    }
+  }
+
+  return result;
+}
+
 template <typename T> ErrorOr<T> SampleProfileReaderBinary::readNumber() {
   unsigned NumBytesRead = 0;
   std::error_code EC;
@@ -685,8 +701,10 @@ SampleProfileReader::create(StringRef Filename, LLVMContext &C) {
     Reader.reset(new SampleProfileReaderBinary(std::move(Buffer), C));
   else if (SampleProfileReaderGCC::hasFormat(*Buffer))
     Reader.reset(new SampleProfileReaderGCC(std::move(Buffer), C));
-  else
+  else if (SampleProfileReaderText::hasFormat(*Buffer))
     Reader.reset(new SampleProfileReaderText(std::move(Buffer), C));
+  else
+    return sampleprof_error::unrecognized_format;
 
   if (std::error_code EC = Reader->readHeader())
     return EC;
