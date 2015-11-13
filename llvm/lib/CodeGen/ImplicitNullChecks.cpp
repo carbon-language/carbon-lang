@@ -281,7 +281,7 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
   //
   // we want to end up with
   //
-  //   Def = TrappingLoad (%RAX + <offset>), LblNull
+  //   Def = FaultingLoad (%RAX + <offset>), LblNull
   //   jmp LblNotNull ;; explicit or fallthrough
   //
   //  LblNotNull:
@@ -292,6 +292,30 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
   //  LblNull:
   //   callq throw_NullPointerException
   //
+  //
+  // To see why this is legal, consider the two possibilities:
+  //
+  //  1. %RAX is null: since we constrain <offset> to be less than PageSize, the
+  //     load instruction dereferences the null page, causing a segmentation
+  //     fault.
+  //
+  //  2. %RAX is not null: in this case we know that the load cannot fault, as
+  //     otherwise the load would've faulted in the original program too and the
+  //     original program would've been undefined.
+  //
+  // This reasoning cannot be extended to justify hoisting through arbitrary
+  // control flow.  For instance, in the example below (in pseudo-C)
+  //
+  //    if (ptr == null) { throw_npe(); unreachable; }
+  //    if (some_cond) { return 42; }
+  //    v = ptr->field;  // LD
+  //    ...
+  //
+  // we cannot (without code duplication) use the load marked "LD" to null check
+  // ptr -- clause (2) above does not apply in this case.  In the above program
+  // the safety of ptr->field can be dependent on some_cond; and, for instance,
+  // ptr could be some non-null invalid reference that never gets loaded from
+  // because some_cond is always true.
 
   unsigned PointerReg = MBP.LHS.getReg();
 
