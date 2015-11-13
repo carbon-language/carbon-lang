@@ -33,7 +33,7 @@ if(CLANG_INSTALL_SCANVIEW)
                          ${CMAKE_BINARY_DIR}/share/scan-view/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/share/${ShareFile})
     list(APPEND Depends ${CMAKE_BINARY_DIR}/share/scan-view/${ShareFile})
-    install(FILES Shares/${ShareFile} DESTINATION share/scan-view)
+    install(FILES share/${ShareFile} DESTINATION share/scan-view)
   endforeach()
 
   add_custom_target(scan-view ALL DEPENDS ${Depends})
