@@ -261,7 +261,7 @@ bool isSoloAin1(MCInstrInfo const &MCII, MCInst const &MCI);
 bool isVector(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Pad the bundle with nops to satisfy endloop requirements
-void padEndloop(MCInst &MCI);
+void padEndloop(MCContext &Context, MCInst &MCI);
 
 bool prefersSlot3(MCInstrInfo const &MCII, MCInst const &MCI);
 
