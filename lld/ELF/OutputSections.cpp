@@ -1053,7 +1053,7 @@ void MergeOutputSection<ELFT>::addSection(MergeInputSection<ELFT> *S) {
       if (End == StringRef::npos)
         error("String is not null terminated");
       StringRef Entry = Data.substr(0, End + EntSize);
-      size_t OutputOffset = Builder.add(Entry);
+      uintX_t OutputOffset = Builder.add(Entry);
       if (shouldTailMerge())
         OutputOffset = -1;
       S->Offsets.push_back(std::make_pair(Offset, OutputOffset));
