@@ -634,9 +634,10 @@ class ScopedInErrorReport {
     // ASan found two bugs in different threads simultaneously.
 
     u32 current_tid = GetCurrentTidOrInvalid();
-    if (current_tid == reporting_thread_tid_ || current_tid == kInvalidTid) {
+    if (reporting_thread_tid_ == current_tid ||
+        reporting_thread_tid_ == kInvalidTid) {
       // This is either asynch signal or nested error during error reporting.
-      // Fail fast to avoid deadlocks.
+      // Fail simple to avoid deadlocks in Report().
 
       // Can't use Report() here because of potential deadlocks
       // in nested signal handlers.
