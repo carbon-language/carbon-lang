@@ -2880,20 +2880,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   if (MMI.hasWinEHFuncInfo(Fn)) {
     EHPersonality Personality = classifyEHPersonality(Fn->getPersonalityFn());
-    if (Personality == EHPersonality::MSVC_CXX) {
-      if (Is64Bit) {
-        int UnwindHelpFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
-        SDValue StackSlot = DAG.getFrameIndex(UnwindHelpFI, MVT::i64);
-        MMI.getWinEHFuncInfo(MF.getFunction()).UnwindHelpFrameIdx =
-            UnwindHelpFI;
-        SDValue Neg2 = DAG.getConstant(-2, dl, MVT::i64);
-        Chain = DAG.getStore(Chain, dl, Neg2, StackSlot,
-                             MachinePointerInfo::getFixedStack(
-                                 DAG.getMachineFunction(), UnwindHelpFI),
-                             /*isVolatile=*/true,
-                             /*isNonTemporal=*/false, /*Alignment=*/0);
-      }
-    } else if (Personality == EHPersonality::CoreCLR) {
+    if (Personality == EHPersonality::CoreCLR) {
       assert(Is64Bit);
       // TODO: Add a mechanism to frame lowering that will allow us to indicate
       // that we'd prefer this slot be allocated towards the bottom of the frame

@@ -1696,10 +1696,11 @@ int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
     //   RETADDR
     //   PUSH RBP   <-- RBP points here
     //   PUSH CSRs
-    //   ~~~~~~~    <-- optional stack realignment dynamic adjustment
+    //   ~~~~~~~    <-- possible stack realignment (non-win64)
     //   ...
     //   STACK OBJECTS
     //   ...        <-- RSP after prologue points here
+    //   ~~~~~~~    <-- possible stack realignment (win64)
     //
     // if (hasVarSizedObjects()):
     //   ...        <-- "base pointer" (ESI/RBX) points here
@@ -1721,7 +1722,8 @@ int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
     // answer we give is relative to the SP after the prologue, and not the
     // SP in the middle of the function.
 
-    assert((!TRI->needsStackRealignment(MF) || !MFI->isFixedObjectIndex(FI)) &&
+    assert((!MFI->isFixedObjectIndex(FI) || !TRI->needsStackRealignment(MF) ||
+            STI.isTargetWin64()) &&
            "offset from fixed object to SP is not static");
 
     // We don't handle tail calls, and shouldn't be seeing them either.
@@ -2641,4 +2643,41 @@ unsigned X86FrameLowering::getWinEHParentFrameOffset(const MachineFunction &MF) 
   // Every funclet allocates enough stack space for the largest outgoing call.
   Offset += getWinEHFuncletFrameSize(MF);
   return Offset;
+}
+
+void X86FrameLowering::processFunctionBeforeFrameFinalized(
+    MachineFunction &MF, RegScavenger *RS) const {
+  // If this function isn't doing Win64-style C++ EH, we don't need to do
+  // anything.
+  const Function *Fn = MF.getFunction();
+  if (!STI.is64Bit() || !Fn->hasPersonalityFn() ||
+      classifyEHPersonality(MF.getFunction()->getPersonalityFn()) !=
+          EHPersonality::MSVC_CXX)
+    return;
+
+  // Win64 C++ EH needs to allocate the UnwindHelp object at some fixed offset
+  // relative to RSP after the prologue.  Find the offset of the last fixed
+  // object, so that we can allocate a slot immediately following it. Fixed
+  // objects have negative frame indices.
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  int64_t MinFixedObjOffset = 0;
+  for (int I = MFI->getObjectIndexBegin(); I < 0; ++I)
+    MinFixedObjOffset = std::min(MinFixedObjOffset, MFI->getObjectOffset(I));
+
+  int64_t UnwindHelpOffset = MinFixedObjOffset - SlotSize;
+  int UnwindHelpFI =
+      MFI->CreateFixedObject(SlotSize, UnwindHelpOffset, /*Immutable=*/false);
+  MF.getMMI().getWinEHFuncInfo(Fn).UnwindHelpFrameIdx = UnwindHelpFI;
+
+  // Store -2 into UnwindHelp on function entry. We have to scan forwards past
+  // other frame setup instructions.
+  MachineBasicBlock &MBB = MF.front();
+  auto MBBI = MBB.begin();
+  while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup))
+    ++MBBI;
+
+  DebugLoc DL = MBB.findDebugLoc(MBBI);
+  addFrameReference(BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64mi32)),
+                    UnwindHelpFI)
+      .addImm(-2);
 }

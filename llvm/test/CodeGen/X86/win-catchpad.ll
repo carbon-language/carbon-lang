@@ -138,6 +138,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: leaq 48(%rsp), %rbp
 ; X64: .seh_setframe 5, 48
 ; X64: .seh_endprologue
+; X64: movq $-2, -8(%rbp)
 ; X64: .Ltmp0
 ; X64-DAG: leaq -[[local_offs:[0-9]+]](%rbp), %rdx
 ; X64-DAG: movl $1, %ecx
@@ -159,7 +160,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: .seh_endprologue
 ; X64-DAG: .Ltmp4
 ; X64-DAG: leaq -[[local_offs]](%rbp), %rdx
-; X64-DAG: movl -4(%rbp), %ecx
+; X64-DAG: movl -12(%rbp), %ecx
 ; X64: callq f
 ; X64: leaq [[contbb]](%rip), %rax
 ; X64-NEXT: addq $32, %rsp
@@ -192,7 +193,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-NEXT: .long   ($tryMap$try_catch_catch)@IMGREL
 ; X64-NEXT: .long   4
 ; X64-NEXT: .long   ($ip2state$try_catch_catch)@IMGREL
-; X64-NEXT: .long   32
+; X64-NEXT: .long   40
 ; X64-NEXT: .long   0
 ; X64-NEXT: .long   1
 
@@ -206,8 +207,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: $handlerMap$0$try_catch_catch:
 ; X64-NEXT:   .long   0
 ; X64-NEXT:   .long   "??_R0H@8"@IMGREL
-; FIXME: This should probably be offset from rsp, not rbp.
-; X64-NEXT:   .long   44
+; X64-NEXT:   .long   36
 ; X64-NEXT:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"@IMGREL
 ; X64-NEXT:   .long   56
 ; X64-NEXT:   .long   64
