@@ -48,6 +48,9 @@ namespace __sanitizer {
 
 // Attempts to demangle the name via __cxa_demangle from __cxxabiv1.
 const char *DemangleCXXABI(const char *name) {
+  if (name[0] != '_' || name[1] != 'Z')
+    return name;
+
   // FIXME: __cxa_demangle aggressively insists on allocating memory.
   // There's not much we can do about that, short of providing our
   // own demangler (libc++abi's implementation could be adapted so that
