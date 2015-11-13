@@ -665,6 +665,17 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     updateAArch64Adr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
   }
+  case R_AARCH64_JUMP26:
+  case R_AARCH64_CALL26: {
+    uint64_t X = SA - P;
+    if (!isInt<28>(X)) {
+      if (Type == R_AARCH64_JUMP26)
+        error("Relocation R_AARCH64_JUMP26 out of range");
+      error("Relocation R_AARCH64_CALL26 out of range");
+    }
+    or32le(Loc, (X & 0x0FFFFFFC) >> 2);
+    break;
+  }
   case R_AARCH64_LDST64_ABS_LO12_NC:
     // No overflow check needed.
     or32le(Loc, (SA & 0xFF8) << 7);
