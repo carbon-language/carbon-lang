@@ -1738,7 +1738,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       GS.AccessingFunction->getName() == "main" &&
       GS.AccessingFunction->hasExternalLinkage() &&
       GV->getType()->getAddressSpace() == 0) {
-    DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV);
+    DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV << "\n");
     Instruction &FirstI = const_cast<Instruction&>(*GS.AccessingFunction
                                                    ->getEntryBlock().begin());
     Type *ElemTy = GV->getType()->getElementType();
@@ -1757,7 +1757,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   // If the global is never loaded (but may be stored to), it is dead.
   // Delete it now.
   if (!GS.IsLoaded) {
-    DEBUG(dbgs() << "GLOBAL NEVER LOADED: " << *GV);
+    DEBUG(dbgs() << "GLOBAL NEVER LOADED: " << *GV << "\n");
 
     bool Changed;
     if (isLeakCheckerRoot(GV)) {
