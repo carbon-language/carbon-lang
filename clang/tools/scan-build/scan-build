@@ -462,7 +462,7 @@ sub CopyFiles {
 
   my $Dir = shift;
 
-  my $JS = Cwd::realpath("$RealBin/sorttable.js");
+  my $JS = Cwd::realpath("$RealBin/../share/scan-build/sorttable.js");
 
   DieDiag("Cannot find 'sorttable.js'.\n")
     if (! -r $JS);
@@ -472,7 +472,7 @@ sub CopyFiles {
   DieDiag("Could not copy 'sorttable.js' to '$Dir'.\n")
     if (! -r "$Dir/sorttable.js");
 
-  my $CSS = Cwd::realpath("$RealBin/scanview.css");
+  my $CSS = Cwd::realpath("$RealBin/../share/scan-build/scanview.css");
 
   DieDiag("Cannot find 'scanview.css'.\n")
     if (! -r $CSS);

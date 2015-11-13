@@ -1,12 +1,12 @@
 option(CLANG_INSTALL_SCANVIEW "Install the scan-view tool" ON)
 
 set(BinFiles
-      Reporter.py
-      ScanView.py
-      scan-view
-      startfile.py)
+      scan-view)
 
 set(ShareFiles
+      ScanView.py
+      Reporter.py
+      startfile.py
       FileRadar.scpt
       GetRadarVersion.scpt
       bugcatcher.ico)

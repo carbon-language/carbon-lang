@@ -64,15 +64,15 @@ if(CLANG_INSTALL_SCANBUILD)
   endforeach()
 
   foreach(ShareFile ${ShareFiles})
-    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/share/scan-view/${ShareFile}
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/share/scan-build/${ShareFile}
                        COMMAND ${CMAKE_COMMAND} -E make_directory
-                         ${CMAKE_BINARY_DIR}/share/scan-view
+                         ${CMAKE_BINARY_DIR}/share/scan-build
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/share/${ShareFile}
-                         ${CMAKE_BINARY_DIR}/share/scan-view/
+                         ${CMAKE_BINARY_DIR}/share/scan-build/
                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/share/${ShareFile})
-    list(APPEND Depends ${CMAKE_BINARY_DIR}/share/scan-view/${ShareFile})
-    install(FILES share/${ShareFile} DESTINATION share/scan-view)
+    list(APPEND Depends ${CMAKE_BINARY_DIR}/share/scan-build/${ShareFile})
+    install(FILES share/${ShareFile} DESTINATION share/scan-build)
   endforeach()
 
   add_custom_target(scan-build ALL DEPENDS ${Depends})
