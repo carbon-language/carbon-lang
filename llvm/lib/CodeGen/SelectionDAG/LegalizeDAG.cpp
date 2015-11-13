@@ -2780,7 +2780,7 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
 SDValue SelectionDAGLegalize::ExpandBITREVERSE(SDValue Op, SDLoc dl) {
   EVT VT = Op.getValueType();
   EVT SHVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
-  unsigned Sz = VT.getSizeInBits();
+  unsigned Sz = VT.getScalarSizeInBits();
   
   SDValue Tmp, Tmp2;
   Tmp = DAG.getConstant(0, dl, VT);
@@ -2791,8 +2791,10 @@ SDValue SelectionDAGLegalize::ExpandBITREVERSE(SDValue Op, SDLoc dl) {
     else
       Tmp2 =
           DAG.getNode(ISD::SRL, dl, VT, Op, DAG.getConstant(I - J, dl, SHVT));
-    Tmp2 =
-        DAG.getNode(ISD::AND, dl, VT, Tmp2, DAG.getConstant(1U << J, dl, VT));
+    
+    APInt Shift(Sz, 1);
+    Shift = Shift.shl(J);
+    Tmp2 = DAG.getNode(ISD::AND, dl, VT, Tmp2, DAG.getConstant(Shift, dl, VT));
     Tmp = DAG.getNode(ISD::OR, dl, VT, Tmp, Tmp2);
   }
 
