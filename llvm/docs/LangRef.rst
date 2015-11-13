@@ -10418,7 +10418,7 @@ LLVM provides intrinsics for a few important bit manipulation
 operations. These allow efficient code generation for some algorithms.
 
 '``llvm.bitreverse.*``' Intrinsics
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
