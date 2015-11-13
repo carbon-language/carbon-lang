@@ -14,10 +14,29 @@ define <2 x i16> @f(<2 x i16> %a) {
 
 declare i8 @llvm.bitreverse.i8(i8) readnone
 
+; Unfortunately some of the shift-and-inserts become BFIs, and some do not :(
 define i8 @g(i8 %a) {
 ; CHECK-LABEL: g:
-; CHECK: lsl
-; CHECK: and
+; CHECK-DAG: lsr [[S5:w.*]], w0, #5
+; CHECK-DAG: lsr [[S4:w.*]], w0, #4
+; CHECK-DAG: lsr [[S3:w.*]], w0, #3
+; CHECK-DAG: lsr [[S2:w.*]], w0, #2
+; CHECK-DAG: lsl [[L1:w.*]], w0, #29
+; CHECK-DAG: lsl [[L2:w.*]], w0, #19
+; CHECK-DAG: lsl [[L3:w.*]], w0, #17
+
+; CHECK-DAG: and [[T1:w.*]], [[L1]], #0x40000000
+; CHECK-DAG: bfi [[T1]], w0, #31, #1
+; CHECK-DAG: bfi [[T1]], [[S2]], #29, #1
+; CHECK-DAG: bfi [[T1]], [[S3]], #28, #1
+; CHECK-DAG: bfi [[T1]], [[S4]], #27, #1
+; CHECK-DAG: bfi [[T1]], [[S5]], #26, #1
+; CHECK-DAG: and [[T2:w.*]], [[L2]], #0x2000000
+; CHECK-DAG: and [[T3:w.*]], [[L3]], #0x1000000
+; CHECK-DAG: orr [[T4:w.*]], [[T1]], [[T2]]
+; CHECK-DAG: orr [[T5:w.*]], [[T4]], [[T3]]
+; CHECK:     lsr w0, [[T5]], #24
+
   %b = call i8 @llvm.bitreverse.i8(i8 %a)
   ret i8 %b
 }
