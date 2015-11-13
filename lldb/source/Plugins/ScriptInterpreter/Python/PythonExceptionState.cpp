@@ -146,7 +146,6 @@ PythonExceptionState::Format() const
     }
     else
     {
-        __debugbreak();
         // Otherwise, append some information about why we were unable to
         // obtain the backtrace.
         PythonString bt_error = bt_error_state.GetValue().Str();
@@ -158,7 +157,6 @@ PythonExceptionState::Format() const
 std::string
 PythonExceptionState::ReadBacktrace() const
 {
-    __debugbreak();
     std::string retval("backtrace unavailable");
 
     auto traceback_module = PythonModule::ImportModule("traceback");
