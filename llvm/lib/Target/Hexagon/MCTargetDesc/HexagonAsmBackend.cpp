@@ -281,8 +281,7 @@ public:
     assert(HexagonMCInstrInfo::isBundle(Inst) &&
            "Hexagon relaxInstruction only works on bundles");
 
-    Res.setOpcode(Hexagon::BUNDLE);
-    Res.addOperand(MCOperand::createImm(0));
+    Res = HexagonMCInstrInfo::createBundle();
     // Copy the results into the bundle.
     bool Update = false;
     for (auto &I : HexagonMCInstrInfo::bundleInstructions(Inst)) {
