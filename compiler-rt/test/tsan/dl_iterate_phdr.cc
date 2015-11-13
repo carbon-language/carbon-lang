@@ -3,6 +3,9 @@
 
 // If we mention TSAN_OPTIONS, the test won't run from test_output.sh script.
 
+// dl_iterate_phdr doesn't exist on OS X.
+// UNSUPPORTED: darwin
+
 #ifdef BUILD_SO
 
 #include "test.h"
