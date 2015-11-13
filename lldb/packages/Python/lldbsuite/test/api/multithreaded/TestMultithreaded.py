@@ -17,6 +17,7 @@ class SBBreakpointCallbackCase(TestBase):
     @skipIfRemote
     @skipIfNoSBHeaders
     @skipIfWindows # clang-cl does not support throw or catch (llvm.org/pr24538)
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
     def test_breakpoint_callback(self):
         """Test the that SBBreakpoint callback is invoked when a breakpoint is hit. """
         self.build_and_test('driver.cpp test_breakpoint_callback.cpp',
