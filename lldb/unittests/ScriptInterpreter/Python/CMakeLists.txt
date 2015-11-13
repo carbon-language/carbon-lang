@@ -1,5 +1,6 @@
 add_lldb_unittest(ScriptInterpreterPythonTests
   PythonDataObjectsTests.cpp
+  PythonExceptionStateTests.cpp
   PythonTestSuite.cpp
   )
 
