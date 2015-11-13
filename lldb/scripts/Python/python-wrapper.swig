@@ -107,33 +107,6 @@ LLDBSwigPythonWatchpointCallbackFunction
     return stop_at_watchpoint;
 }
 
-bool
-PyObjectToString (PyObject* object,
-                  std::string& retval)
-{
-    retval.clear();
-    bool was_ok = false;
-    if (object != NULL && object != Py_None)
-    {
-        if (PyString_Check(object))
-        {
-            retval.assign(PyString_AsString(object));
-            was_ok = true;
-        }
-        else
-        {
-            PyObject* value_as_string = PyObject_Str(object);
-            if (value_as_string && value_as_string != Py_None && PyString_Check(value_as_string))
-            {
-                retval.assign(PyString_AsString(value_as_string));
-                was_ok = true;
-            }
-            Py_XDECREF(value_as_string);
-        }
-    }
-    return was_ok;
-}
-
 SWIGEXPORT bool
 LLDBSwigPythonCallTypeScript
 (
@@ -199,7 +172,7 @@ LLDBSwigPythonCallTypeScript
     else
         result = pfunc(value_arg,dict);
 
-    PyObjectToString(result.get(), retval);
+    retval = result.Str().GetString().str();
 
     return true;
 }
@@ -763,10 +736,9 @@ std::string& output)
     PythonObject process_arg(PyRefType::Owned, SBTypeToSWIGWrapper(process_sb));
     auto result = pfunc(process_arg, dict);
 
-    if (PyObjectToString(result.get(), output))
-        return true;
+    output = result.Str().GetString().str();
 
-    return false;
+    return true;
 }
 
 SWIGEXPORT bool
@@ -794,10 +766,9 @@ std::string& output)
     PythonObject thread_arg(PyRefType::Owned, SBTypeToSWIGWrapper(thread_sb));
     auto result = pfunc(thread_arg, dict);
 
-    if (PyObjectToString(result.get(), output))
-        return true;
+    output = result.Str().GetString().str();
 
-    return false;
+    return true;
 }
 
 SWIGEXPORT bool
@@ -824,10 +795,10 @@ std::string& output)
     lldb::SBTarget target_sb(target);
     PythonObject target_arg(PyRefType::Owned, SBTypeToSWIGWrapper(target_sb));
     auto result = pfunc(target_arg, dict);
-    if (PyObjectToString(result.get(),output))
-        return true;
 
-    return false;
+    output = result.Str().GetString().str();
+
+    return true;
 }
 
 SWIGEXPORT bool
@@ -855,10 +826,9 @@ std::string& output)
     PythonObject frame_arg(PyRefType::Owned, SBTypeToSWIGWrapper(frame_sb));
     auto result = pfunc(frame_arg, dict);
 
-    if (PyObjectToString(result.get(),output))
-        return true;
+    output = result.Str().GetString().str();
 
-    return false;
+    return true;
 }
 
 SWIGEXPORT bool
@@ -886,10 +856,9 @@ std::string& output)
     PythonObject value_arg(PyRefType::Owned, SBTypeToSWIGWrapper(value_sb));
     auto result = pfunc(value_arg, dict);
 
-    if (PyObjectToString(result.get(), output))
-        return true;
+    output = result.Str().GetString().str();
 
-    return false;
+    return true;
 }
 
 SWIGEXPORT bool
