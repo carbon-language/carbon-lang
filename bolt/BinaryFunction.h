@@ -579,6 +579,10 @@ public:
   /// has been filled with LBR data.
   void inferFallThroughCounts();
 
+  /// Computes a function hotness score: the sum of the products of BB frequency
+  /// and size.
+  uint64_t getFunctionScore();
+
   /// Annotate each basic block entry with its current CFI state. This is used
   /// to detect when reordering changes the CFI state seen by a basic block and
   /// fix this.

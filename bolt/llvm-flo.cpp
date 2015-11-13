@@ -545,6 +545,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   }
 
   // Disassemble every function and build it's control flow graph.
+  uint64_t TotalScore = 0;
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
@@ -623,6 +624,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     if (opts::PrintAll || opts::PrintCFG)
       Function.print(errs(), "after building cfg");
+
+    TotalScore += Function.getFunctionScore();
 
   } // Iterate over all functions
 
@@ -1006,6 +1009,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
   // Overwrite function in the output file.
   uint64_t CountOverwrittenFunctions = 0;
+  uint64_t OverwrittenScore = 0;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
@@ -1022,6 +1026,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       continue;
     }
 
+    OverwrittenScore += Function.getFunctionScore();
     // Overwrite function in the output file.
     outs() << "FLO: rewriting function \"" << Function.getName() << "\"\n";
     RealOut->os().pwrite(
@@ -1065,6 +1070,13 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   outs() << "FLO: " << CountOverwrittenFunctions
          << " out of " << BinaryFunctions.size()
          << " functions were overwritten.\n";
+
+  if (TotalScore != 0) {
+    double Coverage = OverwrittenScore / (double)TotalScore * 100.0;
+    outs() << format("FLO: Rewritten functions cover %.2lf", Coverage)
+           << "% of the execution count of simple functions of this binary.\n";
+  }
+
   // TODO: we should find a way to mark the binary as optimized by us.
 
   Out->keep();

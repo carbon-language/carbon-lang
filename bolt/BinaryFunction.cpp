@@ -744,6 +744,18 @@ void BinaryFunction::inferFallThroughCounts() {
   return;
 }
 
+uint64_t BinaryFunction::getFunctionScore() {
+  uint64_t TotalScore = 0ULL;
+  for (auto BB : layout()) {
+    uint64_t BBExecCount = BB->getExecutionCount();
+    if (BBExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
+      continue;
+    BBExecCount *= BB->Instructions.size();
+    TotalScore += BBExecCount;
+  }
+  return TotalScore;
+}
+
 void BinaryFunction::annotateCFIState() {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
