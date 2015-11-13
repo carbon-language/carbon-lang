@@ -552,6 +552,7 @@ bool LoopIdiomRecognize::processLoopStridedStore(
   Type *IntPtr = Builder.getIntPtrTy(*DL, DestAS);
 
   const SCEV *Start = Ev->getStart();
+  // Handle negative strided loops.
   if (NegStride)
     Start = getStartForNegStride(Start, BECount, IntPtr, StoreSize, SE);
 
