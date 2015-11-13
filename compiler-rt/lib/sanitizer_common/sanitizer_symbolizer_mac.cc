@@ -96,7 +96,9 @@ static bool IsAtosErrorMessage(const char *str) {
   return false;
 }
 
-static bool ParseCommandOutput(const char *str, SymbolizedStack *res) {
+static bool ParseCommandOutput(const char *str, uptr addr, char **out_name,
+                               char **out_module, char **out_file, uptr *line,
+                               uptr *start_address) {
   // Trim ending newlines.
   char *trim;
   ExtractTokenUpToDelimiter(str, "\n", &trim);
@@ -104,7 +106,9 @@ static bool ParseCommandOutput(const char *str, SymbolizedStack *res) {
   // The line from `atos` is in one of these formats:
   //   myfunction (in library.dylib) (sourcefile.c:17)
   //   myfunction (in library.dylib) + 0x1fe
+  //   myfunction (in library.dylib) + 15
   //   0xdeadbeef (in library.dylib) + 0x1fe
+  //   0xdeadbeef (in library.dylib) + 15
   //   0xdeadbeef (in library.dylib)
   //   0xdeadbeef
 
@@ -115,21 +119,27 @@ static bool ParseCommandOutput(const char *str, SymbolizedStack *res) {
   }
 
   const char *rest = trim;
-  char *function_name;
-  rest = ExtractTokenUpToDelimiter(rest, " (in ", &function_name);
-  if (internal_strncmp(function_name, "0x", 2) != 0)
-    res->info.function = function_name;
+  char *symbol_name;
+  rest = ExtractTokenUpToDelimiter(rest, " (in ", &symbol_name);
+  if (internal_strncmp(symbol_name, "0x", 2) != 0)
+    *out_name = symbol_name;
   else
-    InternalFree(function_name);
-  rest = ExtractTokenUpToDelimiter(rest, ") ", &res->info.module);
+    InternalFree(symbol_name);
+  rest = ExtractTokenUpToDelimiter(rest, ") ", out_module);
 
   if (rest[0] == '(') {
-    rest++;
-    rest = ExtractTokenUpToDelimiter(rest, ":", &res->info.file);
-    char *extracted_line_number;
-    rest = ExtractTokenUpToDelimiter(rest, ")", &extracted_line_number);
-    res->info.line = internal_atoll(extracted_line_number);
-    InternalFree(extracted_line_number);
+    if (out_file) {
+      rest++;
+      rest = ExtractTokenUpToDelimiter(rest, ":", out_file);
+      char *extracted_line_number;
+      rest = ExtractTokenUpToDelimiter(rest, ")", &extracted_line_number);
+      if (line) *line = (uptr)internal_atoll(extracted_line_number);
+      InternalFree(extracted_line_number);
+    }
+  } else if (rest[0] == '+') {
+    rest += 2;
+    uptr offset = internal_atoll(rest);
+    if (start_address) *start_address = addr - offset;
   }
 
   InternalFree(trim);
@@ -145,14 +155,29 @@ bool AtosSymbolizer::SymbolizePC(uptr addr, SymbolizedStack *stack) {
   internal_snprintf(command, sizeof(command), "0x%zx\n", addr);
   const char *buf = process_->SendCommand(command);
   if (!buf) return false;
-  if (!ParseCommandOutput(buf, stack)) {
+  uptr line;
+  if (!ParseCommandOutput(buf, addr, &stack->info.function, &stack->info.module,
+                          &stack->info.file, &line, nullptr)) {
+    process_ = nullptr;
+    return false;
+  }
+  stack->info.line = (int)line;
+  return true;
+}
+
+bool AtosSymbolizer::SymbolizeData(uptr addr, DataInfo *info) {
+  if (!process_) return false;
+  char command[32];
+  internal_snprintf(command, sizeof(command), "0x%zx\n", addr);
+  const char *buf = process_->SendCommand(command);
+  if (!buf) return false;
+  if (!ParseCommandOutput(buf, addr, &info->name, &info->module, nullptr,
+                          nullptr, &info->start)) {
     process_ = nullptr;
     return false;
   }
   return true;
 }
-
-bool AtosSymbolizer::SymbolizeData(uptr addr, DataInfo *info) { return false; }
 
 }  // namespace __sanitizer
 
