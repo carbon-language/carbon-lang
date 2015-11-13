@@ -491,6 +491,8 @@ StringRef Writer<ELFT>::getOutputSectionName(StringRef S) const {
     return ".text";
   if (S.startswith(".rodata."))
     return ".rodata";
+  if (S.startswith(".data.rel.ro"))
+    return ".data.rel.ro";
   if (S.startswith(".data."))
     return ".data";
   if (S.startswith(".bss."))
