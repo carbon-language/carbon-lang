@@ -2,11 +2,11 @@
 //
 // RUN: %clangxx_asan -fsanitize-recover=address -pthread %s -o %t
 //
-// RUN: env ASAN_OPTIONS=halt_on_error=false:max_errors=1000 %run %t 1 10 >1.txt 2>&1
+// RUN: env ASAN_OPTIONS=halt_on_error=false %run %t 1 10 >1.txt 2>&1
 // RUN: FileCheck %s < 1.txt
 // RUN: [ $(wc -l < 1.txt) -gt 1 ]
 //
-// RUN: env ASAN_OPTIONS=halt_on_error=false:max_errors=1000 %run %t 10 20 >10.txt 2>&1
+// RUN: env ASAN_OPTIONS=halt_on_error=false %run %t 10 20 >10.txt 2>&1
 // RUN: FileCheck %s < 10.txt
 // This one is racy although very unlikely to fail:
 // RUN: [ $(wc -l < 10.txt) -gt 1 ]
@@ -14,9 +14,6 @@
 // RUN: FileCheck --check-prefix=CHECK-COLLISION %s < 1.txt || FileCheck --check-prefix=CHECK-NO-COLLISION %s < 1.txt
 //
 // REQUIRES: stable-runtime
-// UNSUPPORTED: android
-
-#define _POSIX_C_SOURCE 200112  // rand_r
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +25,12 @@
 size_t nthreads = 10;
 size_t niter = 10;
 
+void random_delay(unsigned *seed) {
+  *seed = 1664525 * *seed + 1013904223;
+  struct timespec delay = { 0, (*seed % 1000) * 1000 };
+  nanosleep(&delay, 0);
+}
+
 void *run(void *arg) {
   unsigned seed = (unsigned)(size_t)arg;
 
@@ -35,9 +38,7 @@ void *run(void *arg) {
   __asan_poison_memory_region(&tmp, sizeof(tmp)); 
 
   for (size_t i = 0; i < niter; ++i) {
-    struct timespec delay = { 0, rand_r(&seed) * 1000000 };
-    nanosleep(&delay, 0);
-
+    random_delay(&seed);
     // Expect error collisions here
     // CHECK: AddressSanitizer: use-after-poison
     volatile int idx = 0;
