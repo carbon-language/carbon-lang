@@ -432,8 +432,9 @@ def err_arm_invalid_specialreg : Error<"invalid special register for builtin">;
 def err_invalid_cpu_supports : Error<"invalid cpu feature string for builtin">;
 def err_builtin_needs_feature : Error<"%0 needs target feature %1">;
 def err_function_needs_feature
-    : Error<"function %0 and always_inline callee function %1 are required to "
-            "have matching target features">;
+    : Error<"always_inline function %1 requires target feature '%2', but would "
+            "be inlined into function %0 that is compiled without support for "
+            "'%2'">;
 def warn_builtin_unknown : Warning<"use of unknown builtin %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultError;
 def warn_dyn_class_memaccess : Warning<
