@@ -3,12 +3,10 @@
 #include "../test.h"
 
 int GlobalData[10];
-long long x;
 
 void *Thread(void *a) {
   barrier_wait(&barrier);
   GlobalData[2] = 42;
-  x = 7;
   return 0;
 }
 
@@ -20,7 +18,6 @@ int main() {
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
   GlobalData[2] = 43;
-  x = 8;
   barrier_wait(&barrier);
   pthread_join(t, 0);
 }
@@ -30,5 +27,3 @@ int main() {
 // CHECK: addr=[[ADDR:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK: Location is global 'GlobalData' at [[ADDR]] ({{.*}}+0x{{[0-9,a-f]+}})
-// CHECK: WARNING: ThreadSanitizer: data race
-// CHECK: Location is global 'x' at {{.*}} ({{.*}}+0x{{[0-9,a-f]+}})
