@@ -64,6 +64,20 @@ namespace lldb_private {
             return m_regex_sp;
         }
         
+        void
+        LoopThrough (typename ExactMatchContainer::CallbackType exact_callback,
+                     typename RegexMatchContainer::CallbackType regex_callback)
+        {
+            GetExactMatch()->LoopThrough(exact_callback);
+            GetRegexMatch()->LoopThrough(regex_callback);
+        }
+        
+        uint32_t
+        GetCount ()
+        {
+            return GetExactMatch()->GetCount() + GetRegexMatch()->GetCount();
+        }
+        
     private:
         ExactMatchContainerSP m_exact_sp;
         RegexMatchContainerSP m_regex_sp;
@@ -117,6 +131,12 @@ namespace lldb_private {
             return m_format_cont.GetRegexMatch();
         }
         
+        FormatContainer&
+        GetFormatContainer ()
+        {
+            return m_format_cont;
+        }
+        
         SummaryContainerSP
         GetTypeSummariesContainer ()
         {
@@ -129,6 +149,12 @@ namespace lldb_private {
             return m_summary_cont.GetRegexMatch();
         }
         
+        SummaryContainer&
+        GetSummaryContainer ()
+        {
+            return m_summary_cont;
+        }
+        
         FilterContainerSP
         GetTypeFiltersContainer ()
         {
@@ -139,6 +165,12 @@ namespace lldb_private {
         GetRegexTypeFiltersContainer ()
         {
             return m_filter_cont.GetRegexMatch();
+        }
+        
+        FilterContainer&
+        GetFilterContainer ()
+        {
+            return m_filter_cont;
         }
 
         FormatContainer::MapValueType
@@ -187,6 +219,12 @@ namespace lldb_private {
         GetRegexTypeSyntheticsContainer ()
         {
             return m_synth_cont.GetRegexMatch();
+        }
+        
+        SynthContainer&
+        GetSyntheticsContainer ()
+        {
+            return m_synth_cont;
         }
         
         SynthContainer::MapValueType
