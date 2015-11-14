@@ -326,6 +326,8 @@ static void InitializeHighMemEnd() {
 }
 
 static void ProtectGap(uptr addr, uptr size) {
+  if (!flags()->protect_shadow_gap)
+    return;
   void *res = MmapNoAccess(addr, size, "shadow gap");
   if (addr == (uptr)res)
     return;
