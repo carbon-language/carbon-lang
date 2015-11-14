@@ -129,7 +129,6 @@ public:
 };
 
 class ARMAsmParser : public MCTargetAsmParser {
-  MCSubtargetInfo &STI;
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
   UnwindContext UC;
@@ -247,40 +246,40 @@ class ARMAsmParser : public MCTargetAsmParser {
                                      OperandVector &Operands);
   bool isThumb() const {
     // FIXME: Can tablegen auto-generate this?
-    return STI.getFeatureBits()[ARM::ModeThumb];
+    return getSTI().getFeatureBits()[ARM::ModeThumb];
   }
   bool isThumbOne() const {
-    return isThumb() && !STI.getFeatureBits()[ARM::FeatureThumb2];
+    return isThumb() && !getSTI().getFeatureBits()[ARM::FeatureThumb2];
   }
   bool isThumbTwo() const {
-    return isThumb() && STI.getFeatureBits()[ARM::FeatureThumb2];
+    return isThumb() && getSTI().getFeatureBits()[ARM::FeatureThumb2];
   }
   bool hasThumb() const {
-    return STI.getFeatureBits()[ARM::HasV4TOps];
+    return getSTI().getFeatureBits()[ARM::HasV4TOps];
   }
   bool hasV6Ops() const {
-    return STI.getFeatureBits()[ARM::HasV6Ops];
+    return getSTI().getFeatureBits()[ARM::HasV6Ops];
   }
   bool hasV6MOps() const {
-    return STI.getFeatureBits()[ARM::HasV6MOps];
+    return getSTI().getFeatureBits()[ARM::HasV6MOps];
   }
   bool hasV7Ops() const {
-    return STI.getFeatureBits()[ARM::HasV7Ops];
+    return getSTI().getFeatureBits()[ARM::HasV7Ops];
   }
   bool hasV8Ops() const {
-    return STI.getFeatureBits()[ARM::HasV8Ops];
+    return getSTI().getFeatureBits()[ARM::HasV8Ops];
   }
   bool hasARM() const {
-    return !STI.getFeatureBits()[ARM::FeatureNoARM];
+    return !getSTI().getFeatureBits()[ARM::FeatureNoARM];
   }
   bool hasDSP() const {
-    return STI.getFeatureBits()[ARM::FeatureDSP];
+    return getSTI().getFeatureBits()[ARM::FeatureDSP];
   }
   bool hasD16() const {
-    return STI.getFeatureBits()[ARM::FeatureD16];
+    return getSTI().getFeatureBits()[ARM::FeatureD16];
   }
   bool hasV8_1aOps() const {
-    return STI.getFeatureBits()[ARM::HasV8_1aOps];
+    return getSTI().getFeatureBits()[ARM::HasV8_1aOps];
   }
 
   void SwitchMode() {
@@ -288,7 +287,7 @@ class ARMAsmParser : public MCTargetAsmParser {
     setAvailableFeatures(FB);
   }
   bool isMClass() const {
-    return STI.getFeatureBits()[ARM::FeatureMClass];
+    return getSTI().getFeatureBits()[ARM::FeatureMClass];
   }
 
   /// @name Auto-generated Match Functions
@@ -351,7 +350,7 @@ public:
 
   ARMAsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(Options), STI(STI), MII(MII), UC(Parser) {
+    : MCTargetAsmParser(Options, STI), MII(MII), UC(Parser) {
     MCAsmParserExtension::Initialize(Parser);
 
     // Cache the MCRegisterInfo.
@@ -8611,7 +8610,7 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       return false;
 
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst, STI);
+    Out.EmitInstruction(Inst, getSTI());
     return false;
   case Match_MissingFeature: {
     assert(ErrorInfo && "Unknown missing feature!");
@@ -9166,7 +9165,7 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
 
   // FIXME: This is using table-gen data, but should be moved to
   // ARMTargetParser once that is table-gen'd.
-  if (!STI.isCPUStringValid(CPU)) {
+  if (!getSTI().isCPUStringValid(CPU)) {
     Error(L, "Unknown CPU name");
     return false;
   }

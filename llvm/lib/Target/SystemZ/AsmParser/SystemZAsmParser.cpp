@@ -349,7 +349,6 @@ class SystemZAsmParser : public MCTargetAsmParser {
 #include "SystemZGenAsmMatcher.inc"
 
 private:
-  MCSubtargetInfo &STI;
   MCAsmParser &Parser;
   enum RegisterGroup {
     RegGR,
@@ -389,11 +388,11 @@ public:
   SystemZAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                    const MCInstrInfo &MII,
                    const MCTargetOptions &Options)
-      : MCTargetAsmParser(Options), STI(sti), Parser(parser) {
+    : MCTargetAsmParser(Options, sti), Parser(parser) {
     MCAsmParserExtension::Initialize(Parser);
 
     // Initialize the set of available features.
-    setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+    setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));
   }
 
   // Override MCTargetAsmParser.
@@ -793,7 +792,7 @@ bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   switch (MatchResult) {
   case Match_Success:
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst, STI);
+    Out.EmitInstruction(Inst, getSTI());
     return false;
 
   case Match_MissingFeature: {
