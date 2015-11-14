@@ -283,6 +283,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   }
 
   void SwitchMode() {
+    MCSubtargetInfo &STI = copySTI();
     uint64_t FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
     setAvailableFeatures(FB);
   }
@@ -348,7 +349,7 @@ public:
 
   };
 
-  ARMAsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
+  ARMAsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, STI), MII(MII), UC(Parser) {
     MCAsmParserExtension::Initialize(Parser);
@@ -9038,6 +9039,7 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
   }
 
   Triple T;
+  MCSubtargetInfo &STI = copySTI();
   STI.setDefaultFeatures(T.getARMCPUForArch(Arch));
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
@@ -9170,6 +9172,7 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
     return false;
   }
 
+  MCSubtargetInfo &STI = copySTI();
   STI.setDefaultFeatures(CPU);
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
@@ -9188,6 +9191,7 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
     return false;
   }
 
+  MCSubtargetInfo &STI = copySTI();
   for (auto Feature : Features)
     STI.ApplyFeatureFlag(Feature);
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -9968,6 +9972,7 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
       return false;
     }
 
+    MCSubtargetInfo &STI = copySTI();
     FeatureBitset ToggleFeatures = EnableFeature
       ? (~STI.getFeatureBits() & Extension.Features)
       : ( STI.getFeatureBits() & Extension.Features);

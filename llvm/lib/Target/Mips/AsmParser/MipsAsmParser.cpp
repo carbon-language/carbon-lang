@@ -346,6 +346,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   // FeatureMipsGP64 | FeatureMips1)
   // Clearing Mips3 is equivalent to clear (FeatureMips3 | FeatureMips4).
   void selectArch(StringRef ArchFeature) {
+    MCSubtargetInfo &STI = copySTI();
     FeatureBitset FeatureBits = STI.getFeatureBits();
     FeatureBits &= ~MipsAssemblerOptions::AllArchRelatedMask;
     STI.setFeatureBits(FeatureBits);
@@ -356,6 +357,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   void setFeatureBits(uint64_t Feature, StringRef FeatureString) {
     if (!(getSTI().getFeatureBits()[Feature])) {
+      MCSubtargetInfo &STI = copySTI();
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
       AssemblerOptions.back()->setFeatures(STI.getFeatureBits());
@@ -364,6 +366,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   void clearFeatureBits(uint64_t Feature, StringRef FeatureString) {
     if (getSTI().getFeatureBits()[Feature]) {
+      MCSubtargetInfo &STI = copySTI();
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
       AssemblerOptions.back()->setFeatures(STI.getFeatureBits());
@@ -388,7 +391,7 @@ public:
 #undef GET_OPERAND_DIAGNOSTIC_TYPES
   };
 
-  MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
+  MipsAsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII, const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, sti),
         ABI(MipsABIInfo::computeTargetABI(Triple(sti.getTargetTriple()),
@@ -4746,6 +4749,7 @@ bool MipsAsmParser::parseSetPopDirective() {
   if (AssemblerOptions.size() == 2)
     return reportParseError(Loc, ".set pop with no .set push");
 
+  MCSubtargetInfo &STI = copySTI();
   AssemblerOptions.pop_back();
   setAvailableFeatures(
       ComputeAvailableFeatures(AssemblerOptions.back()->getFeatures()));
@@ -4819,6 +4823,7 @@ bool MipsAsmParser::parseSetMips0Directive() {
     return reportParseError("unexpected token, expected end of statement");
 
   // Reset assembler options to their initial values.
+  MCSubtargetInfo &STI = copySTI();
   setAvailableFeatures(
       ComputeAvailableFeatures(AssemblerOptions.front()->getFeatures()));
   STI.setFeatureBits(AssemblerOptions.front()->getFeatures());

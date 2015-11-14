@@ -93,7 +93,10 @@ private:
   MCTargetAsmParser(const MCTargetAsmParser &) = delete;
   void operator=(const MCTargetAsmParser &) = delete;
 protected: // Can only create subclasses.
-  MCTargetAsmParser(MCTargetOptions const &, MCSubtargetInfo &STI);
+  MCTargetAsmParser(MCTargetOptions const &, const MCSubtargetInfo &STI);
+
+  /// Create a copy of STI and return a non-const reference to it.
+  MCSubtargetInfo &copySTI();
 
   /// AvailableFeatures - The current set of available features.
   uint64_t AvailableFeatures;
@@ -109,7 +112,7 @@ protected: // Can only create subclasses.
   MCTargetOptions MCOptions;
 
   /// Current STI.
-  MCSubtargetInfo &STI;
+  const MCSubtargetInfo *STI;
 
 public:
   ~MCTargetAsmParser() override;

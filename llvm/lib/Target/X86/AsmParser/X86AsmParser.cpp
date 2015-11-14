@@ -770,6 +770,7 @@ private:
     return getSTI().getFeatureBits()[X86::Mode16Bit];
   }
   void SwitchMode(unsigned mode) {
+    MCSubtargetInfo &STI = copySTI();
     FeatureBitset AllModes({X86::Mode64Bit, X86::Mode32Bit, X86::Mode16Bit});
     FeatureBitset OldMode = STI.getFeatureBits() & AllModes;
     unsigned FB = ComputeAvailableFeatures(
@@ -799,7 +800,7 @@ private:
   /// }
 
 public:
-  X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &Parser,
+  X86AsmParser(const MCSubtargetInfo &sti, MCAsmParser &Parser,
                const MCInstrInfo &mii, const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, sti), MII(mii), InstInfo(nullptr) {
 

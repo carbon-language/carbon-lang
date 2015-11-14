@@ -12,15 +12,21 @@
 using namespace llvm;
 
 MCTargetAsmParser::MCTargetAsmParser(MCTargetOptions const &MCOptions,
-                                     MCSubtargetInfo &STI)
+                                     const MCSubtargetInfo &STI)
   : AvailableFeatures(0), ParsingInlineAsm(false), MCOptions(MCOptions),
-    STI(STI)
+    STI(&STI)
 {
 }
 
 MCTargetAsmParser::~MCTargetAsmParser() {
 }
 
+MCSubtargetInfo &MCTargetAsmParser::copySTI() {
+  MCSubtargetInfo &STICopy = getContext().getSubtargetCopy(getSTI());
+  STI = &STICopy;
+  return STICopy;
+}
+
 const MCSubtargetInfo &MCTargetAsmParser::getSTI() const {
-  return STI;
+  return *STI;
 }

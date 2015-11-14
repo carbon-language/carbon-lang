@@ -385,7 +385,7 @@ private:
   bool parseOperand(OperandVector &Operands, StringRef Mnemonic);
 
 public:
-  SystemZAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
+  SystemZAsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
                    const MCInstrInfo &MII,
                    const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, sti), Parser(parser) {

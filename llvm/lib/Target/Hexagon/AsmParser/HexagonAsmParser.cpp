@@ -133,7 +133,7 @@ class HexagonAsmParser : public MCTargetAsmParser {
   /// }
 
 public:
-  HexagonAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
+  HexagonAsmParser(const MCSubtargetInfo &_STI, MCAsmParser &_Parser,
                    const MCInstrInfo &MII, const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, _STI), Parser(_Parser),
       MCII (MII), MCB(HexagonMCInstrInfo::createBundle()), InBrackets(false) {

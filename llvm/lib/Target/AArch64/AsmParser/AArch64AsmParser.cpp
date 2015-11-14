@@ -114,7 +114,7 @@ public:
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "AArch64GenAsmMatcher.inc"
   };
-  AArch64AsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
+  AArch64AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
                    const MCInstrInfo &MII, const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, STI) {
     MCAsmParserExtension::Initialize(Parser);

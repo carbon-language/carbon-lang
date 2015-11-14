@@ -88,7 +88,7 @@ class SparcAsmParser : public MCTargetAsmParser {
                  SmallVectorImpl<MCInst> &Instructions);
 
 public:
-  SparcAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
+  SparcAsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII,
                 const MCTargetOptions &Options)
       : MCTargetAsmParser(Options, sti), Parser(parser) {

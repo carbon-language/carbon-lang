@@ -290,7 +290,7 @@ class PPCAsmParser : public MCTargetAsmParser {
 
 
 public:
-  PPCAsmParser(MCSubtargetInfo &STI, MCAsmParser &,
+  PPCAsmParser(const MCSubtargetInfo &STI, MCAsmParser &,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
     : MCTargetAsmParser(Options, STI), MII(MII) {
     // Check for 64-bit vs. 32-bit pointer mode.

@@ -364,14 +364,16 @@ public:
     Match_PreferE32 = FIRST_TARGET_MATCH_RESULT_TY
   };
 
-  AMDGPUAsmParser(MCSubtargetInfo &STI, MCAsmParser &_Parser,
+  AMDGPUAsmParser(const MCSubtargetInfo &STI, MCAsmParser &_Parser,
                const MCInstrInfo &MII,
                const MCTargetOptions &Options)
       : MCTargetAsmParser(Options, STI), MII(MII), Parser(_Parser),
         ForcedEncodingSize(0) {
+    MCAsmParserExtension::Initialize(Parser);
+
     if (getSTI().getFeatureBits().none()) {
       // Set default features.
-      STI.ToggleFeature("SOUTHERN_ISLANDS");
+      copySTI().ToggleFeature("SOUTHERN_ISLANDS");
     }
 
     setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));
