@@ -71,9 +71,8 @@ def ext_nullability : Extension<
 
 def error_empty_enum : Error<"use of empty enum">;
 def err_invalid_sign_spec : Error<"'%0' cannot be signed or unsigned">;
-def err_invalid_short_spec : Error<"'short %0' is invalid">;
-def err_invalid_long_spec : Error<"'long %0' is invalid">;
-def err_invalid_longlong_spec : Error<"'long long %0' is invalid">;
+def err_invalid_width_spec : Error<
+  "'%select{|short|long|long long}0 %1' is invalid">;
 def err_invalid_complex_spec : Error<"'_Complex %0' is invalid">;
 def err_friend_decl_spec : Error<"'%0' is invalid in friend declarations">;
 
@@ -380,10 +379,8 @@ def err_friend_invalid_in_context : Error<
   "'friend' used outside of class">;
 def err_use_of_tag_name_without_tag : Error<
   "must use '%1' tag to refer to type %0%select{| in this scope}2">;
-def err_templated_using_directive : Error<
-  "cannot template a using directive">;
-def err_templated_using_declaration : Error<
-  "cannot template a using declaration">;
+def err_templated_using_directive_declaration : Error<
+  "cannot template a using %select{directive|declaration}0">;
 def err_unexpected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier; did you mean '::'?">;
 def err_unexpected_token_in_nested_name_spec : Error<
@@ -698,12 +695,9 @@ def warn_static_inline_explicit_inst_ignored : Warning<
 // Constructor template diagnostics.
 def err_out_of_line_constructor_template_id : Error<
   "out-of-line constructor for %0 cannot have template arguments">;
-def err_out_of_line_template_id_names_constructor : Error<
+def err_out_of_line_template_id_type_names_constructor : Error<
   "qualified reference to %0 is a constructor name rather than a "
-  "template name wherever a constructor can be declared">;
-def err_out_of_line_type_names_constructor : Error<
-  "qualified reference to %0 is a constructor name rather than a "
-  "type wherever a constructor can be declared">;
+  "%select{template name|type}1 wherever a constructor can be declared">;
 
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;
@@ -743,15 +737,11 @@ def err_missing_whitespace_digraph : Error<
   "%select{template name|const_cast|dynamic_cast|reinterpret_cast|static_cast}0"
   " which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?">;
 
-def ext_deleted_function : ExtWarn<
-  "deleted function definitions are a C++11 extension">, InGroup<CXX11>;
-def warn_cxx98_compat_deleted_function : Warning<
-  "deleted function definitions are incompatible with C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
-def ext_defaulted_function : ExtWarn<
-  "defaulted function definitions are a C++11 extension">, InGroup<CXX11>;
-def warn_cxx98_compat_defaulted_function : Warning<
-  "defaulted function definitions are incompatible with C++98">,
+def ext_defaulted_deleted_function : ExtWarn<
+  "%select{defaulted|deleted}0 function definitions are a C++11 extension">,
+  InGroup<CXX11>;
+def warn_cxx98_compat_defaulted_deleted_function : Warning<
+  "%select{defaulted|deleted}0 function definitions are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 
 // C++11 in-class member initialization

@@ -1057,9 +1057,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // short -> short int, long long -> long long int.
     else if (TypeSpecType != TST_int) {
-      Diag(D, TSWLoc,
-           TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec
-                                      : diag::err_invalid_longlong_spec)
+      Diag(D, TSWLoc, diag::err_invalid_width_spec) << (int)TypeSpecWidth
         <<  getSpecifierName((TST)TypeSpecType, Policy);
       TypeSpecType = TST_int;
       TypeSpecOwned = false;
@@ -1069,7 +1067,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int;  // long -> long int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
-      Diag(D, TSWLoc, diag::err_invalid_long_spec)
+      Diag(D, TSWLoc, diag::err_invalid_width_spec) << (int)TypeSpecWidth
         << getSpecifierName((TST)TypeSpecType, Policy);
       TypeSpecType = TST_int;
       TypeSpecOwned = false;
