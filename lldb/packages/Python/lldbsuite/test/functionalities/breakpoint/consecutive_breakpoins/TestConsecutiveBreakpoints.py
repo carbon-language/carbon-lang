@@ -15,7 +15,7 @@ class ConsecutiveBreakpoitsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.expectedFailure("llvm.org/pr23478")
+    @expectedFailureAll("llvm.org/pr23478", oslist = not_in(["macosx"]))
     def test (self):
         self.build ()
         self.consecutive_breakpoints_tests()
