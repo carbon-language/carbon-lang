@@ -369,7 +369,6 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
 
-  unsigned ArgNo = 0;
   for (const ISD::InputArg &In : Ins) {
     if (In.Flags.isByVal())
       fail(DL, DAG, "WebAssembly hasn't implemented byval arguments");
@@ -385,12 +384,11 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
     InVals.push_back(
         In.Used
             ? DAG.getNode(WebAssemblyISD::ARGUMENT, DL, In.VT,
-                          DAG.getTargetConstant(ArgNo, DL, MVT::i32))
+                          DAG.getTargetConstant(InVals.size(), DL, MVT::i32))
             : DAG.getNode(ISD::UNDEF, DL, In.VT));
 
     // Record the number and types of arguments.
     MF.getInfo<WebAssemblyFunctionInfo>()->addParam(In.VT);
-    ++ArgNo;
   }
 
   return Chain;
