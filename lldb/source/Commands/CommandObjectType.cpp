@@ -1156,14 +1156,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        cate->Clear(eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
-        return true;
-    }
-    
 public:
     CommandObjectTypeFormatClear (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -1183,8 +1175,12 @@ protected:
     DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (m_options.m_delete_all)
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
-        
+        {
+            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Clear(eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+                return true;
+            });
+        }
         else
         {
             lldb::TypeCategoryImplSP category;
@@ -2188,16 +2184,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        cate->GetTypeSummariesContainer()->Clear();
-        cate->GetRegexTypeSummariesContainer()->Clear();
-        return true;
-        
-    }
-    
 public:
     CommandObjectTypeSummaryClear (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -2218,8 +2204,12 @@ protected:
     {
         
         if (m_options.m_delete_all)
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
-        
+        {
+            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
+                return true;
+            });
+        }
         else
         {        
             lldb::TypeCategoryImplSP category;
@@ -3931,15 +3921,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        cate->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
-        return true;
-        
-    }
-    
 public:
     CommandObjectTypeFilterClear (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -3960,8 +3941,12 @@ protected:
     {
         
         if (m_options.m_delete_all)
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
-        
+        {
+            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
+                return true;
+            });
+        }
         else
         {        
             lldb::TypeCategoryImplSP category;
@@ -3973,8 +3958,7 @@ protected:
             }
             else
                 DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->GetTypeFiltersContainer()->Clear();
-            category->GetRegexTypeFiltersContainer()->Clear();
+            category->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -4059,15 +4043,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        cate->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
-        return true;
-        
-    }
-    
 public:
     CommandObjectTypeSynthClear (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -4088,8 +4063,12 @@ protected:
     {
         
         if (m_options.m_delete_all)
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
-        
+        {
+            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
+                return true;
+            });
+        }
         else
         {        
             lldb::TypeCategoryImplSP category;
@@ -4101,8 +4080,7 @@ protected:
             }
             else
                 DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->GetTypeSyntheticsContainer()->Clear();
-            category->GetRegexTypeSyntheticsContainer()->Clear();
+            category->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
