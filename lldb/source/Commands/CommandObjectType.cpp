@@ -1372,9 +1372,9 @@ private:
         
         cate->GetTypeFormatsContainer()->LoopThrough(CommandObjectTypeFormatList_LoopCallback, param_vp);
         
-        if (cate->GetRegexTypeSummariesContainer()->GetCount() > 0)
+        if (cate->GetRegexTypeFormatsContainer()->GetCount() > 0)
         {
-            result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
+            result->GetOutputStream().Printf("Regex-based formats (slower):\n");
             cate->GetRegexTypeFormatsContainer()->LoopThrough(CommandObjectTypeRXFormatList_LoopCallback, param_vp);
         }
         return true;
