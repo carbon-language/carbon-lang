@@ -1160,10 +1160,8 @@ private:
     PerCategoryCallback(void* param,
                         const lldb::TypeCategoryImplSP& cate)
     {
-        cate->GetTypeFormatsContainer()->Clear();
-        cate->GetRegexTypeFormatsContainer()->Clear();
+        cate->Clear(eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
         return true;
-        
     }
     
 public:
@@ -3581,10 +3579,11 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& cate)
+                        const lldb::TypeCategoryImplSP& category_sp)
     {
         ConstString *name = (ConstString*)param;
-        return cate->Delete(*name, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
+        category_sp->Delete(*name, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
+        return true;
     }
     
 public:
@@ -3761,10 +3760,11 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& cate)
+                        const lldb::TypeCategoryImplSP& category_sp)
     {
-        ConstString* name = (ConstString*)param;
-        return cate->Delete(*name, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
+        ConstString *name = (ConstString*)param;
+        category_sp->Delete(*name, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
+        return true;
     }
     
 public:
