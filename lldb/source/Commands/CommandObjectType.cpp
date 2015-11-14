@@ -983,15 +983,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& category_sp)
-    {
-		ConstString *name = (ConstString*)param;
-		category_sp->Delete(*name, eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
-		return true;
-    }
-
 public:
     CommandObjectTypeFormatDelete (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -1041,7 +1032,10 @@ protected:
         
         if (m_options.m_delete_all)
         {
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, &typeCS);
+            DataVisualization::Categories::ForEach( [typeCS] (const lldb::TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Delete(typeCS, eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+                return true;
+            });
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
@@ -2013,15 +2007,6 @@ private:
     {
         return &m_options;
     }
-    
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& category_sp)
-    {
-		ConstString *name = (ConstString*)param;
-		category_sp->Delete(*name, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
-		return true;
-    }
 
 public:
     CommandObjectTypeSummaryDelete (CommandInterpreter &interpreter) :
@@ -2072,7 +2057,10 @@ protected:
         
         if (m_options.m_delete_all)
         {
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, &typeCS);
+            DataVisualization::Categories::ForEach( [typeCS] (const lldb::TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Delete(typeCS, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
+                return true;
+            });
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
@@ -3567,15 +3555,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& category_sp)
-    {
-        ConstString *name = (ConstString*)param;
-        category_sp->Delete(*name, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
-        return true;
-    }
-    
 public:
     CommandObjectTypeFilterDelete (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -3625,7 +3604,10 @@ protected:
         
         if (m_options.m_delete_all)
         {
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, (void*)&typeCS);
+            DataVisualization::Categories::ForEach( [typeCS] (const lldb::TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Delete(typeCS, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
+                return true;
+            });
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
@@ -3748,15 +3730,6 @@ private:
         return &m_options;
     }
     
-    static bool
-    PerCategoryCallback(void* param,
-                        const lldb::TypeCategoryImplSP& category_sp)
-    {
-        ConstString *name = (ConstString*)param;
-        category_sp->Delete(*name, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
-        return true;
-    }
-    
 public:
     CommandObjectTypeSynthDelete (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -3806,7 +3779,10 @@ protected:
         
         if (m_options.m_delete_all)
         {
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, (void*)&typeCS);
+            DataVisualization::Categories::ForEach( [typeCS] (const lldb::TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Delete(typeCS, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
+                return true;
+            });
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
