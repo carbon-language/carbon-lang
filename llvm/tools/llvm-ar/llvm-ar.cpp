@@ -653,20 +653,13 @@ static int performOperation(ArchiveOperation Operation,
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
       MemoryBuffer::getFile(ArchiveName, -1, false);
   std::error_code EC = Buf.getError();
-  if (EC && EC != errc::no_such_file_or_directory) {
-    errs() << ToolName << ": error opening '" << ArchiveName
-           << "': " << EC.message() << "!\n";
-    return 1;
-  }
+  if (EC && EC != errc::no_such_file_or_directory)
+    fail("error opening '" + ArchiveName + "': " + EC.message() + "!");
 
   if (!EC) {
     object::Archive Archive(Buf.get()->getMemBufferRef(), EC);
-
-    if (EC) {
-      errs() << ToolName << ": error loading '" << ArchiveName
-             << "': " << EC.message() << "!\n";
-      return 1;
-    }
+    failIfError(EC,
+                "error loading '" + ArchiveName + "': " + EC.message() + "!");
     performOperation(Operation, &Archive, NewMembers);
     return 0;
   }
