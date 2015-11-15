@@ -2671,7 +2671,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, PP, Policy);
+      DS.Finish(Actions, Policy);
       return;
 
     case tok::l_square:
@@ -4821,7 +4821,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, unsigned AttrReqs,
       DoneWithTypeQuals:
       // If this is not a type-qualifier token, we're done reading type
       // qualifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, PP, Actions.getASTContext().getPrintingPolicy());
+      DS.Finish(Actions, Actions.getASTContext().getPrintingPolicy());
       if (EndLoc.isValid())
         DS.SetRangeEnd(EndLoc);
       return;
