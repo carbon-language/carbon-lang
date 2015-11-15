@@ -2860,7 +2860,8 @@ enum CXTypeKind {
   CXType_IncompleteArray = 114,
   CXType_VariableArray = 115,
   CXType_DependentSizedArray = 116,
-  CXType_MemberPointer = 117
+  CXType_MemberPointer = 117,
+  CXType_Auto = 118
 };
 
 /**

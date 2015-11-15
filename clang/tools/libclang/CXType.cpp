@@ -90,6 +90,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(DependentSizedArray);
     TKCASE(Vector);
     TKCASE(MemberPointer);
+    TKCASE(Auto);
     default:
       return CXType_Unexposed;
   }
@@ -483,6 +484,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(DependentSizedArray);
     TKIND(Vector);
     TKIND(MemberPointer);
+    TKIND(Auto);
   }
 #undef TKIND
   return cxstring::createRef(s);

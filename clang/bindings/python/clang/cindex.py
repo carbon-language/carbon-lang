@@ -1699,6 +1699,7 @@ TypeKind.INCOMPLETEARRAY = TypeKind(114)
 TypeKind.VARIABLEARRAY = TypeKind(115)
 TypeKind.DEPENDENTSIZEDARRAY = TypeKind(116)
 TypeKind.MEMBERPOINTER = TypeKind(117)
+TypeKind.AUTO = TypeKind(118)
 
 class RefQualifierKind(BaseEnumeration):
     """Describes a specific ref-qualifier of a type."""
