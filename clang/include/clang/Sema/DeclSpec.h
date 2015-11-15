@@ -31,7 +31,6 @@
 #include "clang/Lex/Token.h"
 #include "clang/Sema/AttributeList.h"
 #include "clang/Sema/Ownership.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -44,8 +43,6 @@ namespace clang {
   class IdentifierInfo;
   class NamespaceAliasDecl;
   class NamespaceDecl;
-  class NestedNameSpecifier;
-  class NestedNameSpecifierLoc;
   class ObjCDeclSpec;
   class Sema;
   class Declarator;
