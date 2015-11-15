@@ -2296,8 +2296,9 @@ enum CXCursorKind {
    * \brief A module import declaration.
    */
   CXCursor_ModuleImportDecl              = 600,
+  CXCursor_TypeAliasTemplateDecl         = 601,
   CXCursor_FirstExtraDecl                = CXCursor_ModuleImportDecl,
-  CXCursor_LastExtraDecl                 = CXCursor_ModuleImportDecl,
+  CXCursor_LastExtraDecl                 = CXCursor_TypeAliasTemplateDecl,
 
   /**
    * \brief A code completion overload candidate.

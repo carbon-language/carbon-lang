@@ -1114,7 +1114,8 @@ CursorKind.INCLUSION_DIRECTIVE = CursorKind(503)
 
 # A module import declaration.
 CursorKind.MODULE_IMPORT_DECL = CursorKind(600)
-
+# A type alias template declaration
+CursorKind.TYPE_ALIAS_TEMPLATE_DECL = CursorKind(601)
 
 ### Template Argument Kinds ###
 class TemplateArgumentKind(BaseEnumeration):
