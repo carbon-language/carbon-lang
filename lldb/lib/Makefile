@@ -204,3 +204,14 @@ ifeq ($(HOST_OS),FreeBSD)
     LLVMLibsOptions += $(PYTHON_BUILD_FLAGS) -lrt -L/usr/local/lib -lexecinfo \
                        -ledit -lncurses -lpanel -lpthread
 endif
+
+ifeq ($(HOST_OS),NetBSD)
+    # Include everything from the .a's into the shared library.
+    ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
+                       -Wl,--no-whole-archive
+    # Allow unresolved symbols.
+    LLVMLibsOptions += -Wl,--allow-shlib-undefined
+    # Link in python
+    LLVMLibsOptions += $(PYTHON_BUILD_FLAGS) -lrt -L/usr/pkg/lib -lexecinfo \
+                       -ledit -lcurses -lpthread -lkvm -Wl,-rpath,/usr/pkg/lib
+endif
