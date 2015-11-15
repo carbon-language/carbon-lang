@@ -163,6 +163,20 @@ __m64 test_mm_cmpgt_pi32(__m64 a, __m64 b) {
   return _mm_cmpgt_pi32(a, b);
 }
 
+__m128 test_mm_cvt_pi2ps(__m128 a, __m64 b) {
+  // CHECK-LABEL: test_mm_cvt_pi2ps
+  // CHECK: <4 x float> @llvm.x86.sse.cvtpi2ps
+  // CHECK-ASM: cvtpi2ps %mm{{.*}}, %xmm{{.*}}
+  return _mm_cvt_pi2ps(a, b);
+}
+
+__m64 test_mm_cvt_ps2pi(__m128 a) {
+  // CHECK-LABEL: test_mm_cvt_ps2pi
+  // CHECK: call x86_mmx @llvm.x86.sse.cvtps2pi
+  // CHECK-ASM: cvtps2pi %xmm{{.*}}, %mm{{.*}}
+  return _mm_cvt_ps2pi(a);
+}
+
 __m64 test_mm_cvtpd_pi32(__m128d a) {
   // CHECK-LABEL: test_mm_cvtpd_pi32
   // CHECK: call x86_mmx @llvm.x86.sse.cvtpd2pi
@@ -184,11 +198,64 @@ __m128d test_mm_cvtpi32_pd(__m64 a) {
   return _mm_cvtpi32_pd(a);
 }
 
+__m128 test_mm_cvtpi32_ps(__m128 a, __m64 b) {
+  // CHECK-LABEL: test_mm_cvtpi32_ps
+  // CHECK: call <4 x float> @llvm.x86.sse.cvtpi2ps
+  // CHECK-ASM: cvtpi2ps %mm{{.*}}, %xmm{{.*}}
+  return _mm_cvtpi32_ps(a, b);
+}
+
+__m128 test_mm_cvtpi32x2_ps(__m64 a, __m64 b) {
+  // CHECK-LABEL: test_mm_cvtpi32x2_ps
+  // CHECK: call <4 x float> @llvm.x86.sse.cvtpi2ps
+  // CHECK: call <4 x float> @llvm.x86.sse.cvtpi2ps
+  // CHECK-ASM: cvtpi2ps %mm{{.*}}, %xmm{{.*}}
+  // CHECK-ASM: cvtpi2ps %mm{{.*}}, %xmm{{.*}}
+  return _mm_cvtpi32x2_ps(a, b);
+}
+
+__m64 test_mm_cvtps_pi16(__m128 a) {
+  // CHECK-LABEL: test_mm_cvtps_pi16
+  // CHECK: call x86_mmx @llvm.x86.sse.cvtps2pi
+  // CHECK-ASM: cvtps2pi %xmm{{.*}}, %mm{{.*}}
+  // CHECK-ASM: cvtps2pi %xmm{{.*}}, %mm{{.*}}
+  // CHECK-ASM: packssdw %mm{{.*}}, %mm{{.*}}
+  return _mm_cvtps_pi16(a);
+}
+
+__m64 test_mm_cvtps_pi32(__m128 a) {
+  // CHECK-LABEL: test_mm_cvtps_pi32
+  // CHECK: call x86_mmx @llvm.x86.sse.cvtps2pi
+  // CHECK-ASM: cvtps2pi %xmm{{.*}}, %mm{{.*}}
+  return _mm_cvtps_pi32(a);
+}
+
+__m64 test_mm_cvtsi32_si64(int a) {
+  // CHECK-LABEL: test_mm_cvtsi32_si64
+  // CHECK: insertelement <2 x i32>
+  // CHECK-ASM: movd
+  return _mm_cvtsi32_si64(a);
+}
+
+int test_mm_cvtsi64_si32(__m64 a) {
+  // CHECK-LABEL: test_mm_cvtsi64_si32
+  // CHECK: extractelement <2 x i32>
+  // CHECK-ASM: movd
+  return _mm_cvtsi64_si32(a);
+}
+
 __m64 test_mm_cvttpd_pi32(__m128d a) {
   // CHECK-LABEL: test_mm_cvttpd_pi32
   // CHECK: call x86_mmx @llvm.x86.sse.cvttpd2pi
   // CHECK-ASM: cvttpd2pi %xmm{{.*}}, %mm{{.*}}
   return _mm_cvttpd_pi32(a);
+}
+
+__m64 test_mm_cvttps_pi32(__m128 a) {
+  // CHECK-LABEL: test_mm_cvttps_pi32
+  // CHECK: call x86_mmx @llvm.x86.sse.cvttps2pi
+  // CHECK-ASM: cvttps2pi %xmm{{.*}}, %mm{{.*}}
+  return _mm_cvttps_pi32(a);
 }
 
 __m64 test_m_from_int(int a) {
@@ -366,6 +433,20 @@ __m64 test_mm_sad_pu8(__m64 a, __m64 b) {
   return _mm_sad_pu8(a, b);
 }
 
+__m64 test_mm_shuffle_pi8(__m64 a, __m64 b) {
+  // CHECK-LABEL: test_mm_shuffle_pi8
+  // CHECK: call x86_mmx @llvm.x86.ssse3.pshuf.b
+  // CHECK-ASM: pshufb %mm{{.*}}, %mm{{.*}}
+  return _mm_shuffle_pi8(a, b);
+}
+
+__m64 test_mm_shuffle_pi16(__m64 a) {
+  // CHECK-LABEL: test_mm_shuffle_pi16
+  // CHECK: call x86_mmx @llvm.x86.sse.pshuf.w
+  // CHECK-ASM: pshufw $3, %mm{{.*}}, %mm{{.*}}
+  return _mm_shuffle_pi16(a, 3);
+}
+
 __m64 test_mm_sign_pi8(__m64 a, __m64 b) {
   // CHECK-LABEL: test_mm_sign_pi8
   // CHECK: call x86_mmx @llvm.x86.ssse3.psign.b
@@ -385,20 +466,6 @@ __m64 test_mm_sign_pi32(__m64 a, __m64 b) {
   // CHECK: call x86_mmx @llvm.x86.ssse3.psign.d
   // CHECK-ASM: psignd %mm{{.*}}, %mm{{.*}}
   return _mm_sign_pi32(a, b);
-}
-
-__m64 test_mm_shuffle_pi8(__m64 a, __m64 b) {
-  // CHECK-LABEL: test_mm_shuffle_pi8
-  // CHECK: call x86_mmx @llvm.x86.ssse3.pshuf.b
-  // CHECK-ASM: pshufb %mm{{.*}}, %mm{{.*}}
-  return _mm_shuffle_pi8(a, b);
-}
-
-__m64 test_mm_shuffle_pi16(__m64 a) {
-  // CHECK-LABEL: test_mm_shuffle_pi16
-  // CHECK: call x86_mmx @llvm.x86.sse.pshuf.w
-  // CHECK-ASM: pshufw $3, %mm{{.*}}, %mm{{.*}}
-  return _mm_shuffle_pi16(a, 3);
 }
 
 __m64 test_mm_sll_pi16(__m64 a, __m64 b) {
