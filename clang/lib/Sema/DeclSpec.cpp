@@ -1,4 +1,4 @@
-//===--- SemaDeclSpec.cpp - Declaration Specifier Semantic Analysis -------===//
+//===--- DeclSpec.cpp - Declaration Specifier Semantic Analysis -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
