@@ -1469,7 +1469,7 @@ bool Sema::tryToRecoverWithCall(ExprResult &E, const PartialDiagnostic &PD,
     // arguments and that it returns something of a reasonable type,
     // so we can emit a fixit and carry on pretending that E was
     // actually a CallExpr.
-    SourceLocation ParenInsertionLoc = PP.getLocForEndOfToken(Range.getEnd());
+    SourceLocation ParenInsertionLoc = getLocForEndOfToken(Range.getEnd());
     Diag(Loc, PD)
       << /*zero-arg*/ 1 << Range
       << (IsCallableWithAppend(E.get())
