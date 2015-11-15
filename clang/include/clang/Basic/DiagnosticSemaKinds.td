@@ -67,6 +67,9 @@ def warn_wrong_absolute_value_type : Warning<
   "when argument is of %select{integer|floating point|complex}2 type">,
   InGroup<AbsoluteValue>;
 def note_replace_abs_function : Note<"use function '%0' instead">;
+def warn_pointer_abs : Warning<
+  "taking the absolute value of %select{pointer|function|array}0 type %1 is suspicious">,
+  InGroup<AbsoluteValue>;
 
 def warn_infinite_recursive_function : Warning<
   "all paths through this function will call itself">,
