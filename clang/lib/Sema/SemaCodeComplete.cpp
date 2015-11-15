@@ -3377,7 +3377,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case PCC_Statement:
   case PCC_RecoveryInFunction:
     if (S->getFnParent())
-      AddPrettyFunctionResults(PP.getLangOpts(), Results);        
+      AddPrettyFunctionResults(getLangOpts(), Results);
     break;
     
   case PCC_Namespace:
@@ -3521,7 +3521,7 @@ void Sema::CodeCompleteExpression(Scope *S,
   if (S->getFnParent() && 
       !Data.ObjCCollection && 
       !Data.IntegralConstantExpression)
-    AddPrettyFunctionResults(PP.getLangOpts(), Results);        
+    AddPrettyFunctionResults(getLangOpts(), Results);
 
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results, false, PreferredTypeIsPointer);
@@ -4206,7 +4206,7 @@ void Sema::CodeCompleteAfterIf(Scope *S) {
   Results.ExitScope();
   
   if (S->getFnParent())
-    AddPrettyFunctionResults(PP.getLangOpts(), Results);        
+    AddPrettyFunctionResults(getLangOpts(), Results);
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results, false);
