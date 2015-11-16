@@ -719,8 +719,7 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
     break;
 
   case ARM::AK_ARMV6K:
-  case ARM::AK_ARMV6Z:
-  case ARM::AK_ARMV6ZK:
+  case ARM::AK_ARMV6KZ:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(Virtualization_use, AllowTZ, false);

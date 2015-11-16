@@ -70,9 +70,7 @@ ARM_ARCH("armv6k", AK_ARMV6K, "6K", "v6k", ARMBuildAttrs::CPUArch::v6K,
           FK_VFPV2, AEK_DSP)
 ARM_ARCH("armv6t2", AK_ARMV6T2, "6T2", "v6t2", ARMBuildAttrs::CPUArch::v6T2,
           FK_NONE, AEK_DSP)
-ARM_ARCH("armv6z", AK_ARMV6Z, "6Z", "v6z", ARMBuildAttrs::CPUArch::v6KZ,
-          FK_VFPV2, (AEK_SEC | AEK_DSP))
-ARM_ARCH("armv6zk", AK_ARMV6ZK, "6ZK", "v6zk", ARMBuildAttrs::CPUArch::v6KZ,
+ARM_ARCH("armv6kz", AK_ARMV6KZ, "6KZ", "v6kz", ARMBuildAttrs::CPUArch::v6KZ,
           FK_VFPV2, (AEK_SEC | AEK_DSP))
 ARM_ARCH("armv6-m", AK_ARMV6M, "6-M", "v6m", ARMBuildAttrs::CPUArch::v6_M,
           FK_NONE, AEK_NONE)
@@ -171,13 +169,11 @@ ARM_CPU_NAME("arm1020e", AK_ARMV5TE, FK_NONE, false, AEK_NONE)
 ARM_CPU_NAME("arm1022e", AK_ARMV5TE, FK_NONE, true, AEK_NONE)
 ARM_CPU_NAME("arm926ej-s", AK_ARMV5TEJ, FK_NONE, true, AEK_NONE)
 ARM_CPU_NAME("arm1136jf-s", AK_ARMV6, FK_VFPV2, true, AEK_NONE)
-ARM_CPU_NAME("arm1176j-s", AK_ARMV6K, FK_NONE, false, AEK_NONE)
-ARM_CPU_NAME("arm1176jz-s", AK_ARMV6K, FK_NONE, false, AEK_NONE)
+ARM_CPU_NAME("arm1176j-s", AK_ARMV6K, FK_NONE, true, AEK_NONE)
+ARM_CPU_NAME("arm1176jz-s", AK_ARMV6KZ, FK_NONE, false, AEK_NONE)
 ARM_CPU_NAME("mpcore", AK_ARMV6K, FK_VFPV2, false, AEK_NONE)
 ARM_CPU_NAME("mpcorenovfp", AK_ARMV6K, FK_NONE, false, AEK_NONE)
-ARM_CPU_NAME("arm1176jzf-s", AK_ARMV6K, FK_VFPV2, true, AEK_NONE)
-ARM_CPU_NAME("arm1176jzf-s", AK_ARMV6Z, FK_VFPV2, true, AEK_NONE)
-ARM_CPU_NAME("arm1176jzf-s", AK_ARMV6ZK, FK_VFPV2, true, AEK_NONE)
+ARM_CPU_NAME("arm1176jzf-s", AK_ARMV6KZ, FK_VFPV2, true, AEK_NONE)
 ARM_CPU_NAME("arm1156t2-s", AK_ARMV6T2, FK_NONE, true, AEK_NONE)
 ARM_CPU_NAME("arm1156t2f-s", AK_ARMV6T2, FK_VFPV2, false, AEK_NONE)
 ARM_CPU_NAME("cortex-m0", AK_ARMV6M, FK_NONE, true, AEK_NONE)

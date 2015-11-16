@@ -289,7 +289,7 @@ def ARMv6t2   : Architecture<"armv6t2",   "ARMv6t2",  [HasV6T2Ops,
 
 def ARMv6k    : Architecture<"armv6k",    "ARMv6k",   [HasV6KOps]>;
 
-def ARMv6z    : Architecture<"armv6z",    "ARMv6z",   [HasV6KOps,
+def ARMv6kz   : Architecture<"armv6kz",   "ARMv6kz",  [HasV6KOps,
                                                        FeatureTrustZone]>;
 
 def ARMv6m    : Architecture<"armv6-m",   "ARMv6m",   [HasV6MOps,
@@ -413,8 +413,8 @@ def : Processor<"cortex-m0plus",    ARMV6Itineraries,   [ARMv6m]>;
 def : Processor<"cortex-m1",        ARMV6Itineraries,   [ARMv6m]>;
 def : Processor<"sc000",            ARMV6Itineraries,   [ARMv6m]>;
 
-def : Processor<"arm1176jz-s",      ARMV6Itineraries,   [ARMv6z]>;
-def : Processor<"arm1176jzf-s",     ARMV6Itineraries,   [ARMv6z,
+def : Processor<"arm1176jz-s",      ARMV6Itineraries,   [ARMv6kz]>;
+def : Processor<"arm1176jzf-s",     ARMV6Itineraries,   [ARMv6kz,
                                                          FeatureVFP2,
                                                          FeatureHasSlowFPVMLx]>;
 
