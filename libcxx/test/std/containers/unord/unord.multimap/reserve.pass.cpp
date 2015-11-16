@@ -42,7 +42,7 @@ void reserve_invariant(size_t n) // LWG #2156
         size_t buckets = c.bucket_count();
         for (size_t j = 0; j < i; ++j)
         {
-            c[i] = i;
+            c.insert(std::unordered_multimap<size_t, size_t>::value_type(i,i));
             assert(buckets == c.bucket_count());
         }
     }
