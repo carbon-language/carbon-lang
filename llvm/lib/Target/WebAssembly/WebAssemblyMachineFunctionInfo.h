@@ -33,6 +33,14 @@ class WebAssemblyFunctionInfo final : public MachineFunctionInfo {
   /// A mapping from CodeGen vreg index to WebAssembly register number.
   std::vector<unsigned> WARegs;
 
+  /// A mapping from CodeGen vreg index to a boolean value indicating whether
+  /// the given register is considered to be "stackified", meaning it has been
+  /// determined or made to meet the stack requirements:
+  ///   - single use (per path)
+  ///   - single def (per path)
+  ///   - defined and used in FIFO order with other stack registers
+  BitVector VRegStackified;
+
 public:
   explicit WebAssemblyFunctionInfo(MachineFunction &MF) : MF(MF) {}
   ~WebAssemblyFunctionInfo() override;
@@ -44,6 +52,17 @@ public:
   const std::vector<MVT> &getResults() const { return Results; }
 
   static const unsigned UnusedReg = -1u;
+
+  void stackifyVReg(unsigned VReg) {
+    if (TargetRegisterInfo::virtReg2Index(VReg) >= VRegStackified.size())
+      VRegStackified.resize(TargetRegisterInfo::virtReg2Index(VReg) + 1);
+    VRegStackified.set(TargetRegisterInfo::virtReg2Index(VReg));
+  }
+  bool isVRegStackified(unsigned VReg) const {
+    if (TargetRegisterInfo::virtReg2Index(VReg) >= VRegStackified.size())
+      return false;
+    return VRegStackified.test(TargetRegisterInfo::virtReg2Index(VReg));
+  }
 
   void initWARegs();
   void setWAReg(unsigned VReg, unsigned WAReg) {
