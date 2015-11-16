@@ -22,7 +22,7 @@ entry:
 
 define i32 @bar() !dbg !5 {
 entry:
-  ret i32 0, !dbg !13
+  ret i32 0, !dbg !16
 }
 
 !llvm.dbg.cu = !{!0}
@@ -44,3 +44,4 @@ entry:
 !13 = !DILocation(line: 7, scope: !4)
 !14 = !{!10}
 !15 = !DISubroutineType(types: !14)
+!16 = !DILocation(line: 7, scope: !5)
