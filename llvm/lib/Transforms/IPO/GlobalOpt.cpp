@@ -87,9 +87,10 @@ namespace {
     bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI,
                                const GlobalStatus &GS);
     bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
-    
-    bool isPointerValueDeadOnEntryToFunction(const Function *F, GlobalValue *GV);
-    
+
+    bool isPointerValueDeadOnEntryToFunction(const Function *F,
+                                             GlobalValue *GV);
+
     TargetLibraryInfo *TLI;
     SmallSet<const Comdat *, 8> NotDiscardableComdats;
   };
@@ -1769,6 +1770,19 @@ bool GlobalOpt::isPointerValueDeadOnEntryToFunction(const Function *F, GlobalVal
   // least one store.
   auto &DT = getAnalysis<DominatorTreeWrapperPass>(*const_cast<Function *>(F))
                  .getDomTree();
+
+  // The below check is quadratic. Check we're not going to do too many tests.
+  // FIXME: Even though this will always have worst-case quadratic time, we
+  // could put effort into minimizing the average time by putting stores that
+  // have been shown to dominate at least one load at the beginning of the
+  // Stores array, making subsequent dominance checks more likely to succeed
+  // early.
+  //
+  // The threshold here is fairly large because global->local demotion is a
+  // very powerful optimization should it fire.
+  const unsigned Threshold = 100;
+  if (Loads.size() * Stores.size() > Threshold)
+    return false;
 
   for (auto *L : Loads) {
     auto *LTy = L->getType();
