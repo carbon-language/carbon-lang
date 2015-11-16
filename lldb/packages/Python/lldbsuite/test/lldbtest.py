@@ -37,6 +37,7 @@ from __future__ import absolute_import
 # System modules
 import abc
 import collections
+from distutils.version import LooseVersion
 import gc
 import glob
 import os, sys, traceback
@@ -472,6 +473,29 @@ def android_device_api():
                 ">>> stderr:\n%s\n" % (stdout, stderr))
     return android_device_api.result
 
+def check_expected_version(comparison, expected, actual):
+    def fn_leq(x,y): return x <= y
+    def fn_less(x,y): return x < y
+    def fn_geq(x,y): return x >= y
+    def fn_greater(x,y): return x > y
+    def fn_eq(x,y): return x == y
+    def fn_neq(x,y): return x != y
+
+    op_lookup = {
+        "==": fn_eq,
+        "=": fn_eq,
+        "!=": fn_neq,
+        "<>": fn_neq,
+        ">": fn_greater,
+        "<": fn_less,
+        ">=": fn_geq,
+        "<=": fn_leq
+        }
+    expected_str = '.'.join([str(x) for x in expected])
+    actual_str = '.'.join([str(x) for x in actual])
+
+    return op_lookup[comparison](LooseVersion(actual_str), LooseVersion(expected_str))
+
 #
 # Decorators for categorizing test cases.
 #
@@ -620,13 +644,23 @@ def expectedFailure(expected_fn, bugnumber=None):
 # @expectedFailureAll, xfail for all platform/compiler/arch,
 # @expectedFailureAll(compiler='gcc'), xfail for gcc on all platform/architecture
 # @expectedFailureAll(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), xfail for gcc>=4.9 on linux with i386
-def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, triple=None, debug_info=None):
+def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, triple=None, debug_info=None, swig_version=None, py_version=None):
     def fn(self):
-        return ((oslist is None or self.getPlatform() in oslist) and
-                (compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))) and
-                self.expectedArch(archs) and
-                (triple is None or re.match(triple, lldb.DBG.GetSelectedPlatform().GetTriple())) and
-                (debug_info is None or self.debug_info in debug_info))
+        oslist_passes = oslist is None or self.getPlatform() in oslist
+        compiler_passes = compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))
+        arch_passes = self.expectedArch(archs)
+        triple_passes = triple is None or re.match(triple, lldb.DBG.GetSelectedPlatform().GetTriple())
+        debug_info_passes = debug_info is None or self.debug_info in debug_info
+        swig_version_passes = (swig_version is None) or (not hasattr(lldb, 'swig_version')) or (check_expected_version(swig_version[0], swig_version[1], lldb.swig_version))
+        py_version_passes = (py_version is None) or check_expected_version(py_version[0], py_version[1], sys.version_info)
+
+        return (oslist_passes and
+                compiler_passes and
+                arch_passes and
+                triple_passes and
+                debug_info_passes and
+                swig_version_passes and
+                py_version_passes)
     return expectedFailure(fn, bugnumber)
 
 def expectedFailureDwarf(bugnumber=None):
@@ -1048,12 +1082,21 @@ def skipIfLinuxClang(func):
 # @skipIf(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), skip for gcc>=4.9 on linux with i386
 
 # TODO: refactor current code, to make skipIfxxx functions to call this function
-def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None):
+def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None, swig_version=None, py_version=None):
     def fn(self):
-        return ((oslist is None or self.getPlatform() in oslist) and
-                (compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))) and
-                self.expectedArch(archs) and
-                (debug_info is None or self.debug_info in debug_info))
+        oslist_passes = oslist is None or self.getPlatform() in oslist
+        compiler_passes = compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))
+        arch_passes = self.expectedArch(archs)
+        debug_info_passes = debug_info is None or self.debug_info in debug_info
+        swig_version_passes = (swig_version is None) or (not hasattr(lldb, 'swig_version')) or (check_expected_version(swig_version[0], swig_version[1], lldb.swig_version))
+        py_version_passes = (py_version is None) or check_expected_version(py_version[0], py_version[1], sys.version_info)
+
+        return (oslist_passes and
+                compiler_passes and
+                arch_passes and
+                debug_info_passes and
+                swig_version_passes and
+                py_version_passes)
     return skipTestIfFn(fn, bugnumber, skipReason="skipping because os:%s compiler: %s %s arch: %s debug info: %s"%(oslist, compiler, compiler_version, archs, debug_info))
 
 def skipIfDebugInfo(bugnumber=None, debug_info=None):
