@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target aarch64--linux-gnu --defsym=main=fn \
+RUN: lld -flavor old-gnu -target aarch64--linux-gnu --defsym=main=fn \
 RUN: --noinhibit-exec %p/Inputs/fn.o -o %t
 RUN: llvm-readobj -symbols %t | FileCheck %s
 

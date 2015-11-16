@@ -6,7 +6,7 @@
 # settings as the input section.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t.o
 # RUN: llvm-readobj -s -program-headers -mips-abi-flags %t.so | FileCheck %s
 
 # CHECK:      Section {

@@ -1,6 +1,6 @@
 # Check handling of R_ARM_PREL31 relocation.
 # RUN: yaml2obj -format=elf -docnum=1 %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec --defsym=main=__gxx_personality_v0 %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 
@@ -10,7 +10,7 @@
 # CHECK: 00400054 g     F .text	{{[0-9a-f]+}} __gxx_personality_v0
 
 # RUN: yaml2obj -format=elf -docnum=2 %s > %t-o.o
-# RUN: not lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: not lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec --defsym=main=__gxx_personality_v0 %t-o.o -o %t 2> %t-error
 # RUN: FileCheck -check-prefix=OVERFLOW %s < %t-error
 

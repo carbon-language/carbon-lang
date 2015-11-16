@@ -2,7 +2,7 @@
 # object file does not contain such section.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mips64el -shared -o %t.so %t.o
 # RUN: llvm-readobj -s -dynamic-table %t.so | FileCheck %s
 
 # CHECK:     Sections [

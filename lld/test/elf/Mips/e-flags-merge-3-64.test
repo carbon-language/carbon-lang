@@ -5,20 +5,20 @@
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-pic.o
 # RUN: yaml2obj -format=elf -docnum 4 %s > %t-both.o
 
-# RUN: lld -flavor gnu -target mips64el -e T1 -o %t-abi1.exe \
+# RUN: lld -flavor old-gnu -target mips64el -e T1 -o %t-abi1.exe \
 # RUN:     %t-none.o %t-pic.o 2>&1 | FileCheck -check-prefix=ABI-CALLS-WARN %s
 # RUN: llvm-readobj -file-headers %t-abi1.exe \
 # RUN:              | FileCheck -check-prefix=ABI-CALLS1 %s
 
-# RUN: lld -flavor gnu -target mips64el -e T1 -o %t-abi2.exe \
+# RUN: lld -flavor old-gnu -target mips64el -e T1 -o %t-abi2.exe \
 # RUN:     %t-cpic.o %t-none.o 2>&1 | FileCheck -check-prefix=ABI-CALLS-WARN %s
 # RUN: llvm-readobj -file-headers %t-abi2.exe \
 # RUN:              | FileCheck -check-prefix=ABI-CALLS2 %s
 
-# RUN: lld -flavor gnu -target mips64el -e T2 -o %t-cpic.exe %t-cpic.o %t-pic.o
+# RUN: lld -flavor old-gnu -target mips64el -e T2 -o %t-cpic.exe %t-cpic.o %t-pic.o
 # RUN: llvm-readobj -file-headers %t-cpic.exe | FileCheck -check-prefix=CPIC %s
 
-# RUN: lld -flavor gnu -target mips64el -e T3 -o %t-both.exe %t-pic.o %t-both.o
+# RUN: lld -flavor old-gnu -target mips64el -e T3 -o %t-both.exe %t-pic.o %t-both.o
 # RUN: llvm-readobj -file-headers %t-both.exe | FileCheck -check-prefix=BOTH %s
 
 # ABI-CALLS-WARN: lld warning: linking abicalls and non-abicalls files

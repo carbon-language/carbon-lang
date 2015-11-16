@@ -1,7 +1,7 @@
 # Check incorrect alignment handling for R_MIPS_PC16 relocation.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: not lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.o 2>&1 \
 # RUN:       | FileCheck %s
 
 # CHECK: Relocation not aligned in file {{.*}} reference from T0+0 to T1+0 of type 10 (R_MIPS_PC16)

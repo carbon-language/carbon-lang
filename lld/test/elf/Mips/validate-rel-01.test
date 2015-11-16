@@ -2,13 +2,13 @@
 # in case of shared library linking.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-hi.o
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so %t-hi.o 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so %t-hi.o 2>&1 \
 # RUN:       | FileCheck -check-prefix=RHI %s
 
 # RHI: R_MIPS_HI16 (5) relocation cannot be used when making a shared object, recompile {{.*}}validate-rel-01.test.tmp-hi.o with -fPIC
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-26.o
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so %t-26.o 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so %t-26.o 2>&1 \
 # RUN:       | FileCheck -check-prefix=R26 %s
 
 # R26: R_MIPS_26 (4) relocation cannot be used when making a shared object, recompile {{.*}}validate-rel-01.test.tmp-26.o with -fPIC

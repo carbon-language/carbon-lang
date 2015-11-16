@@ -31,7 +31,7 @@
   This link should finish successfully. The --start-group/--end-group
   contains an existing absolute path to the file.
 
-RUN: lld -flavor gnu -target x86_64 -shared \
+RUN: lld -flavor old-gnu -target x86_64 -shared \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     --start-group %p/Inputs/shared.so-x86-64 --end-group -o %t1
 */
@@ -41,7 +41,7 @@ RUN:     --start-group %p/Inputs/shared.so-x86-64 --end-group -o %t1
   There is no shared.so-x86-64 file in the current directory.
 
 RUN: not \
-RUN: lld -flavor gnu -target x86_64 -shared \
+RUN: lld -flavor old-gnu -target x86_64 -shared \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     --start-group shared.so-x86-64 --end-group -o %t2
 */
@@ -52,7 +52,7 @@ RUN:     --start-group shared.so-x86-64 --end-group -o %t2
   should not attempt to search it under the sysroot directory.
 
 RUN: not \
-RUN: lld -flavor gnu -target x86_64 -shared --sysroot=%p/Inputs \
+RUN: lld -flavor old-gnu -target x86_64 -shared --sysroot=%p/Inputs \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     --start-group /shared.so-x86-64 --end-group -o %t3
 */
@@ -62,7 +62,7 @@ RUN:     --start-group /shared.so-x86-64 --end-group -o %t3
   script contains "GROUP ( shared.so-x86-64 )" command and the linker
   has to search shared.so-x86-64 through the library search paths.
 
-RUN: lld -flavor gnu -target x86_64 -shared \
+RUN: lld -flavor old-gnu -target x86_64 -shared \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     %p/Inputs/group-cmd-search-1.ls -o %t4
 */
@@ -73,7 +73,7 @@ RUN:     %p/Inputs/group-cmd-search-1.ls -o %t4
   a non-existing absolute path but there is no --sysroot argument.
 
 RUN: not \
-RUN: lld -flavor gnu -target x86_64 -shared \
+RUN: lld -flavor old-gnu -target x86_64 -shared \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     %p/Inputs/group-cmd-search-2.ls -o %t5
 */
@@ -84,7 +84,7 @@ RUN:     %p/Inputs/group-cmd-search-2.ls -o %t5
   directory is provided. The linker has to search the absolute path
   under the sysroot directory.
 
-RUN: lld -flavor gnu -target x86_64 -shared --sysroot=%p/Inputs \
+RUN: lld -flavor old-gnu -target x86_64 -shared --sysroot=%p/Inputs \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     %p/Inputs/group-cmd-search-2.ls -o %t6
 */
@@ -95,7 +95,7 @@ RUN:     %p/Inputs/group-cmd-search-2.ls -o %t6
   directory is provided. The linker has to search the absolute path
   under the sysroot directory.
 
-RUN: lld -flavor gnu -target x86_64 -shared --sysroot=%p/Inputs/../Inputs \
+RUN: lld -flavor old-gnu -target x86_64 -shared --sysroot=%p/Inputs/../Inputs \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     %p/Inputs/group-cmd-search-2.ls -o %t6
 */
@@ -108,7 +108,7 @@ RUN:     %p/Inputs/group-cmd-search-2.ls -o %t6
   has a -l<lib name> form and should be found by constructing a full
   library name lib<lib name>.a and iterating through lib dirs.
 
-RUN: lld -flavor gnu -target x86_64 -shared \
+RUN: lld -flavor old-gnu -target x86_64 -shared \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     %p/Inputs/group-cmd-search-3.ls -o %t8
 */
@@ -120,13 +120,13 @@ RUN:     %p/Inputs/group-cmd-search-3.ls -o %t8
   But the linker script itself is not under the sysroot.
 
 RUN: not \
-RUN: lld -flavor gnu -target x86_64 -shared --sysroot=%p/Inputs \
+RUN: lld -flavor old-gnu -target x86_64 -shared --sysroot=%p/Inputs \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     %s -o %t7
 */
 
 /*
-RUN: lld -flavor gnu -target x86_64 -shared \
+RUN: lld -flavor old-gnu -target x86_64 -shared \
 RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
 RUN:     -l:group-cmd-search-1.ls -o %t9
 */

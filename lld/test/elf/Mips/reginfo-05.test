@@ -6,7 +6,7 @@
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
 # RUN: llvm-ar q %T/libreginfo.a %t1.o %t2.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t3.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t3.o -L%T -lreginfo
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t3.o -L%T -lreginfo
 # RUN: llvm-readobj -t -mips-reginfo %t.exe | FileCheck %s
 
 # CHECK:      Name: _gp

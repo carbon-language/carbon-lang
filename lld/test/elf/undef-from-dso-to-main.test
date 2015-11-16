@@ -2,9 +2,9 @@
 # forces the final executable to export the symbol.
 
 #RUN: yaml2obj -format=elf %p/Inputs/undef2-so.o.yaml -o=%t.o.so
-#RUN: lld -flavor gnu  -target x86_64 -shared %t.o.so -o %T/libundef2.so
+#RUN: lld -flavor old-gnu  -target x86_64 -shared %t.o.so -o %T/libundef2.so
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu  -target x86_64 %t.o -L%T -lundef2 -o %t1
+#RUN: lld -flavor old-gnu  -target x86_64 %t.o -L%T -lundef2 -o %t1
 #RUN: llvm-readobj -dyn-symbols %t1 | FileCheck -check-prefix CHECKSYMS %s
 
 ---

@@ -2,7 +2,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
-# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t1.o %t2.o
+# RUN: lld -flavor old-gnu -target mips64el -shared -o %t.so %t1.o %t2.o
 # RUN: llvm-readobj -s -dynamic-table %t.so | FileCheck -check-prefix=SEC %s
 # RUN: llvm-objdump -s -t %t.so | FileCheck -check-prefix=RAW %s
 # RUN: llvm-readobj -program-headers %t.so | FileCheck -check-prefix=PHDR %s

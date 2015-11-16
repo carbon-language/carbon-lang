@@ -3,7 +3,7 @@ Test when program segment doesn't contain PHDRS attribute.
 
 RUN: yaml2obj -format=elf %p/Inputs/simple.o.yaml -o=%t.o
 
-RUN: not lld -flavor gnu -target x86_64 -T %s %t.o -static -o %t1 &> %t1-error
+RUN: not lld -flavor old-gnu -target x86_64 -T %s %t.o -static -o %t1 &> %t1-error
 RUN: FileCheck -check-prefix PROGRAM-PHDR-NO-PHDRS %s < %t1-error
 */
 

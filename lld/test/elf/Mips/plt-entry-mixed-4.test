@@ -7,11 +7,11 @@
 
 # Build shared library
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t.so.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t.so.o
 
 # Build executable
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t.o.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o.o %t.so
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.o.o %t.so
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # FIXME (simon): Check the disassembler output when llvm-objdump starts

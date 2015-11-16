@@ -1,6 +1,6 @@
 # Check handling of R_AARCH64_PREL32 relocation overflow.
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: not lld -flavor gnu -target arm64 -o %t-exe %t-obj 2>&1 | FileCheck %s
+# RUN: not lld -flavor old-gnu -target arm64 -o %t-exe %t-obj 2>&1 | FileCheck %s
 
 # CHECK: Relocation out of range in file {{.*}}: reference from data1+0 to data2+34359738369 of type 261 (R_AARCH64_PREL32)
 # CHECK: Relocation out of range in file {{.*}}: reference from data2+0 to data1+34359738369 of type 261 (R_AARCH64_PREL32)

@@ -2,7 +2,7 @@
 # R_ARM_GLOB_DAT may be present for the same symbol in the linked binary.
 
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -shared \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -shared \
 # RUN: --noinhibit-exec %t-o.o -lfn -L%p/Inputs -o %t
 # RUN: llvm-readobj -relocations %t | FileCheck %s
 

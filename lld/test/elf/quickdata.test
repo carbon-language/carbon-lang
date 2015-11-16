@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target hexagon --output-filetype=yaml %p/Inputs/quickdata-test.elf-hexagon \
+RUN: lld -flavor old-gnu -target hexagon --output-filetype=yaml %p/Inputs/quickdata-test.elf-hexagon \
 RUN: --noinhibit-exec | FileCheck %s -check-prefix hexagon
 
 hexagon:  - name:            ac1

@@ -1,7 +1,7 @@
 # Check that _GLOBAL_OFFSET_TABLE_ symbol is resolved
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-got.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-got.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=GOT %s
 
@@ -16,7 +16,7 @@
 # Check that __exidx_start/_end symbols are resolved
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-exidx.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --defsym=main=fn --noinhibit-exec %t-exidx.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=EXIDX %s
 
@@ -40,7 +40,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-got.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-exidx.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-got.o %t-exidx.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=SYMS %s
 

@@ -2,7 +2,7 @@
 
 # Build shared library
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mips64el -shared -o %t.so %t.o
 # RUN: llvm-readobj -file-headers %t.so | FileCheck %s
 
 # CHECK: Format: ELF64-mips

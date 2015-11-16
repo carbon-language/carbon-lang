@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/relocs-dynamic.x86-64 \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/relocs-dynamic.x86-64 \
 RUN:  --output-filetype=yaml --noinhibit-exec | FileCheck %s
 
 path:            <linker-internal>

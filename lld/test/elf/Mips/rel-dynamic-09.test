@@ -6,7 +6,7 @@
 #   b) There should be no PLT entries.
 #
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -e T0 -o %t2-exe %t-obj
+# RUN: lld -flavor old-gnu -target mipsel --noinhibit-exec -e T0 -o %t2-exe %t-obj
 # RUN: llvm-readobj -dt -r -s %t2-exe | FileCheck -check-prefix=PLT-SYM %s
 
 # PLT-SYM:     Sections [

@@ -2,7 +2,7 @@
 #
 # 1. R_ARM_TARGET1 is equal to R_ARM_ABS32
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-abs32.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec --target1-abs %t-abs32.o -o %t-abs32
 # RUN: llvm-objdump -s -t %t-abs32 | FileCheck -check-prefix=CHECK-ABS32 %s
 #
@@ -15,7 +15,7 @@
 # 2. R_ARM_TARGET1 is equal to R_ARM_REL32
 # Check handling of R_ARM_REL32 relocation.
 # RUN: yaml2obj -format=elf %s -docnum 2 > %t-rel32.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec --target1-rel %t-rel32.o -o %t-rel32
 # RUN: llvm-objdump -s -t %t-rel32 | FileCheck -check-prefix=CHECK-REL32 %s
 #

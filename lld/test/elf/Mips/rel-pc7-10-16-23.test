@@ -2,7 +2,7 @@
 # R_MICROMIPS_PC16_S1, and R_MICROMIPS_PC23_S2 relocations.
 
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
+# RUN: lld -flavor old-gnu -target mipsel -o %t-exe %t-obj
 # RUN: llvm-objdump -s -t %t-exe | FileCheck %s
 
 # CHECK: Contents of section .text:

@@ -1,6 +1,6 @@
 # Check handling of R_AARCH64_ADR_PREL_PG_HI21 relocation.
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: not lld -flavor gnu -target arm64 -o %t-exe %t-obj
+# RUN: not lld -flavor old-gnu -target arm64 -o %t-exe %t-obj
 
 # CHECK: Relocation out of range in file {{.*}}: reference from _start+0 to data1+1048577 of type 274 (R_AARCH64_ADR_PREL_LO21)
 

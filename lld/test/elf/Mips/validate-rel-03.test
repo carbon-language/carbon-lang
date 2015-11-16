@@ -2,7 +2,7 @@
 # against local symbol.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t.o
-# RUN: not lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.o 2>&1 \
 # RUN:       | FileCheck %s
 
 # CHECK: R_MIPS_CALL16 (11) relocation cannot be used against local symbol L0 in file {{.*}}validate-rel-03.test.tmp.o

@@ -2,7 +2,7 @@
 # equal to 0x400000 and the MIPS_BASE_ADDRESS dynamic tag's value should
 # be the same.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64el --noinhibit-exec -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mips64el --noinhibit-exec -o %t.exe %t.o
 # RUN: llvm-readobj -dynamic-table -program-headers %t.exe | FileCheck %s
 
 # CHECK: DynamicSection [ (15 entries)

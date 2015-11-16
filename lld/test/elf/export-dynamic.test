@@ -3,7 +3,7 @@
 # its dynamic symbol table.
 
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu  -target x86_64 -E %t.o -e=main -o %t1
+#RUN: lld -flavor old-gnu  -target x86_64 -E %t.o -e=main -o %t1
 #RUN: llvm-readobj -dt %t1 | FileCheck -check-prefix CHECKSYMS %s
 
 #CHECKSYMS: myfunc1@

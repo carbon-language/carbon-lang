@@ -5,10 +5,10 @@
 
 # RUN: yaml2obj -format=elf %s > %t-micro.o
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-micro.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-micro.o
 # RUN: llvm-readobj -dyn-symbols %t.so | FileCheck -check-prefix=SO %s
 
-# RUN: lld -flavor gnu -target mipsel -e S0 -o %t.exe %t-micro.o
+# RUN: lld -flavor old-gnu -target mipsel -e S0 -o %t.exe %t-micro.o
 # RUN: llvm-readobj -symbols %t.exe | FileCheck -check-prefix=EXE-SYM %s
 # RUN: llvm-readobj -dyn-symbols %t.exe | FileCheck -check-prefix=EXE-DSYM %s
 

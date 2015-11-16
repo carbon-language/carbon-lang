@@ -2,7 +2,7 @@
 
 # 1. Check header flags for statically linked executable with default options.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t.o -o %t
 # RUN: llvm-readobj -file-headers %t | FileCheck -check-prefix=STATIC-DEF %s
 #
@@ -11,7 +11,7 @@
 
 # 2. Check header flags for dynamically linked executable with default options.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi \
 # RUN: --noinhibit-exec %t.o -o %t
 # RUN: llvm-readobj -file-headers %t | FileCheck -check-prefix=EXEC-DYN-DEF %s
 #
@@ -20,7 +20,7 @@
 
 # 3. Check header flags for shared object with default options.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -shared \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -shared \
 # RUN: --noinhibit-exec %t.o -o %t
 # RUN: llvm-readobj -file-headers %t | FileCheck -check-prefix=SHARED-DEF %s
 #

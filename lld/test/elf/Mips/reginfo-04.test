@@ -2,9 +2,9 @@
 # output .reginfo section content.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t.so.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t.so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t.exe.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.so %t.exe.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.so %t.exe.o
 # RUN: llvm-readobj -t -mips-reginfo %t.exe | FileCheck %s
 
 # CHECK:      Name: _gp

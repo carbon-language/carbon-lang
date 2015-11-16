@@ -2,7 +2,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 -o %t1.o %s
 # RUN: yaml2obj -format=elf -docnum 2 -o %t2.o %s
-# RUN: lld -flavor gnu -target mipsel -e T0 -static -o %t.exe %t1.o %t2.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -static -o %t.exe %t1.o %t2.o
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK:      Contents of section .text:

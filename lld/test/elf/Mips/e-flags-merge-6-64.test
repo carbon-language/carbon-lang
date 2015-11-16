@@ -5,7 +5,7 @@
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-m64.o
 # RUN: yaml2obj -format=elf -docnum 4 %s > %t-m64r2.o
 
-# RUN: lld -flavor gnu -target mips64el -shared -o %t.so \
+# RUN: lld -flavor old-gnu -target mips64el -shared -o %t.so \
 # RUN:     %t-m64.o %t-m5.o %t-m64r2.o %t-m3.o
 # RUN: llvm-readobj -file-headers %t.so | FileCheck %s
 

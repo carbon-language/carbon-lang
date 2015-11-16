@@ -1,7 +1,7 @@
 # Check _DYNAMIC symbol's value
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared -e T0 -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -e T0 -o %t.so %t.o
 # RUN: llvm-objdump -h -t %t.so | FileCheck -check-prefix=SHARED %s
 
 # SHARED: Sections:
@@ -11,7 +11,7 @@
 # SHARED: SYMBOL TABLE:
 # SHARED: [[ADDR]]  g  .dynamic  00000000 _DYNAMIC
 
-# RUN: lld -flavor gnu -target mipsel -e main -e T0 -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel -e main -e T0 -o %t.exe %t.o
 # RUN: llvm-objdump -h -t %t.exe | FileCheck -check-prefix=EXE %s
 
 # EXE: Sections:

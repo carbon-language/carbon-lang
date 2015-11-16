@@ -2,7 +2,7 @@
 # and the linker uses these name to search symbols and setup DT_INIT/DT_FINI.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target x86_64 -shared -o %t.so %t.o \
+# RUN: lld -flavor old-gnu -target x86_64 -shared -o %t.so %t.o \
 # RUN:     -init _init -init _start -fini _fini -fini _stop
 # RUN: llvm-readobj -symbols -dynamic-table %t.so | FileCheck %s
 

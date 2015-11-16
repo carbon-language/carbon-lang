@@ -1,6 +1,6 @@
 # Check program interpreter setup.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64el -e main -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mips64el -e main -o %t.exe %t.o
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK: Contents of section .interp:

@@ -3,7 +3,7 @@
 # 1. ARM <=> Thumb generates both veneers.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-a-arm.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-t-thm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu --defsym=main=f_a \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu --defsym=main=f_a \
 # RUN: -Bstatic --noinhibit-exec %t-a-arm.o %t-t-thm.o -o %t
 # RUN: llvm-objdump -t %t | FileCheck -check-prefix=INTER %s
 
@@ -14,7 +14,7 @@
 # 2. Thumb <=> Thumb doesn't generate veneers.
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-a-thm.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-t-thm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu --defsym=main=f_t \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu --defsym=main=f_t \
 # RUN: -Bstatic --noinhibit-exec %t-t-thm.o %t-a-thm.o -o %t
 # RUN: llvm-objdump -t %t | FileCheck -check-prefix=THUMB %s
 

@@ -1,7 +1,7 @@
 # Check R_MICROMIPS_GPREL16 relocation overflow handling.
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so %t.o 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so %t.o 2>&1 \
 # RUN:       | FileCheck %s
 
 # CHECK: Relocation out of range in file {{.*}} reference from +0 to L0+0 of type 136 (R_MICROMIPS_GPREL16)

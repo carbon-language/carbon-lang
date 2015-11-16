@@ -3,7 +3,7 @@
 # for other cases.
 
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 

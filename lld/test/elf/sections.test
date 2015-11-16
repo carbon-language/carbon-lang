@@ -1,6 +1,6 @@
 # This test checks if sections are created properly in the output that appear in
 # the input
-RUN: lld -flavor gnu -target i386 -o %t1 %p/Inputs/section-test.i386 \
+RUN: lld -flavor old-gnu -target i386 -o %t1 %p/Inputs/section-test.i386 \
 RUN:    -static -e baz
 RUN: llvm-objdump -section-headers %t1 |  FileCheck -check-prefix=OBJDUMP %s
 RUN: llvm-readobj -h -s -t %t1 |  FileCheck -check-prefix=READOBJ %s

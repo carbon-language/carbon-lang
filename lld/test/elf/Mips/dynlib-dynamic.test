@@ -2,7 +2,7 @@
 
 # Build shared library
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared --noinhibit-exec -o %t.so %t.o
 # RUN: llvm-readobj -dynamic-table %t.so | FileCheck %s
 
 # CHECK: Format: ELF32-mips

@@ -3,7 +3,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 -o %t-so1.o %s
 # RUN: yaml2obj -format=elf -docnum 2 -o %t-so2.o %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so1.o %t-so2.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-so1.o %t-so2.o
 
 # RUN: llvm-readobj -r %t.so | FileCheck -check-prefix=REL %s
 # RUN: llvm-readobj -dynamic-table %t.so | FileCheck -check-prefix=DYN %s

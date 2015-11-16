@@ -2,10 +2,10 @@
 
 # Check handling of global/local GOT16 relocations.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
+# RUN: lld -flavor old-gnu -target mipsel -shared --noinhibit-exec \
 # RUN:     --output-filetype=yaml %t.o \
 # RUN:     | FileCheck -check-prefix YAML %s
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared --noinhibit-exec -o %t2 %t.o
 # RUN: llvm-objdump -t -disassemble %t2 | FileCheck -check-prefix RAW %s
 
 # Function glob

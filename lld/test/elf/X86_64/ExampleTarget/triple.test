@@ -1,7 +1,7 @@
 # Check that the Example Target is actually used.
 
 # RUN: yaml2obj -format=elf %s -o %t.o
-# RUN: lld -flavor gnu -target x86_64-example-freebsd9 %t.o -o %t.exe
+# RUN: lld -flavor old-gnu -target x86_64-example-freebsd9 %t.o -o %t.exe
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
 #
 # CHECK: Type: 0xFF00

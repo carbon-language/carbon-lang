@@ -1,6 +1,6 @@
 # Check handling of a bad relocation (in this case dynamic in a static object).
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: not lld -flavor gnu -target arm64 -o %t-exe %t-obj 2>&1 | FileCheck %s
+# RUN: not lld -flavor old-gnu -target arm64 -o %t-exe %t-obj 2>&1 | FileCheck %s
 
 # CHECK: Unhandled reference type in file {{.*}}: reference from data1+4 to data1+0 of type 1024 (R_AARCH64_COPY)
 

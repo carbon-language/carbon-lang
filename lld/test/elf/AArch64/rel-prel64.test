@@ -1,6 +1,6 @@
 # Check handling of R_AARCH64_PREL64 relocation.
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target arm64 -o %t-exe %t-obj
+# RUN: lld -flavor old-gnu -target arm64 -o %t-exe %t-obj
 # RUN: llvm-objdump -s -t %t-exe | FileCheck %s
 
 # CHECK: Contents of section .data:

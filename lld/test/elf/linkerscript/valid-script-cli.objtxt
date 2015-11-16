@@ -1,15 +1,15 @@
 # Check that the linker script inputs are accepted properly.
 
-# RUN: lld -flavor gnu -target x86_64 %p/Inputs/valid.ls -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 %p/Inputs/valid.ls -r %s \
 # RUN:     --output-filetype=yaml | FileCheck %s
 
-# RUN: lld -flavor gnu -target x86_64 -T %p/Inputs/valid.ls -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 -T %p/Inputs/valid.ls -r %s \
 # RUN:     --output-filetype=yaml | FileCheck %s
 
-# RUN: lld -flavor gnu -target x86_64 --script=%p/Inputs/valid.ls -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 --script=%p/Inputs/valid.ls -r %s \
 # RUN:     --output-filetype=yaml | FileCheck %s
 
-# RUN: lld -flavor gnu -target x86_64 -L%p/Inputs/ -l:valid.ls -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 -L%p/Inputs/ -l:valid.ls -r %s \
 # RUN:     --output-filetype=yaml | FileCheck %s
 
 defined-atoms:

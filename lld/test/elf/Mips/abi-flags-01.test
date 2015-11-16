@@ -1,7 +1,7 @@
 # Check rejecting .MIPS.abiflags section with a wrong version.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so %t.o 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so %t.o 2>&1 \
 # RUN:       | FileCheck %s
 
 # CHECK: {{.*}}abi-flags-01.test.tmp.o: .MIPS.abiflags section has unsupported version '1'

@@ -1,7 +1,7 @@
 # Check handling of R_ARM_TLS_LE32 relocation.
 
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=STATIC %s
 
@@ -13,7 +13,7 @@
 # STATIC: 00000000 g       .tdata 00000004 i
 
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=EXEC-DYN %s
 

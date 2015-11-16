@@ -3,7 +3,7 @@ Test sections put to different segments with FLAGS attribute set.
 
 RUN: yaml2obj -format=elf %p/Inputs/simple.o.yaml -o=%t.o
 
-RUN: lld -flavor gnu -target x86_64 -T %s %t.o -static -o %t1
+RUN: lld -flavor old-gnu -target x86_64 -T %s %t.o -static -o %t1
 RUN: llvm-objdump -section-headers %t1 | FileCheck -check-prefix FLAGS-PHDRS-SECS %s
 RUN: llvm-readobj -program-headers %t1 | FileCheck -check-prefix FLAGS-PHDRS-HDRS %s
 */

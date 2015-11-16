@@ -2,7 +2,7 @@
 
 # Check handling of R_ARM_V4BX relocation.
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -d -triple=armv4t %t | FileCheck %s
 

@@ -1,6 +1,6 @@
 # This tests verifies that TLS variables have correct offsets
 # when variables the TLS variables are not defined in the program
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/externtls.x86-64 -static  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/externtls.x86-64 -static  \
 RUN: --output-filetype=yaml --noinhibit-exec | FileCheck %s -check-prefix=CHECKGOT
 
 # Currently x86_64 relocation pass handles the R_X86_64_GOTTPOFF by

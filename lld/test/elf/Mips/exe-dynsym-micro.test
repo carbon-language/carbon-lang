@@ -5,11 +5,11 @@
 
 # Build executable
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel -e glob -o %t.exe %t.o
 # RUN: llvm-readobj -dyn-symbols %t.exe | FileCheck -check-prefix=CHECK-DYN %s
 
 # Build executabl (yaml format)e
-# RUN: lld -flavor gnu -target mipsel -e glob \
+# RUN: lld -flavor old-gnu -target mipsel -e glob \
 # RUN:     --output-filetype=yaml -o %t.yaml %t.o
 # RUN: FileCheck -check-prefix=CHECK-GOT %s < %t.yaml
 

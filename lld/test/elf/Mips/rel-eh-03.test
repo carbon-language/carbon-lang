@@ -2,7 +2,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
-# RUN: lld -flavor gnu -target mipsel -e T0 \
+# RUN: lld -flavor old-gnu -target mipsel -e T0 \
 # RUN:     -pcrel-eh-reloc -o %t.exe %t1.o %t2.o
 # RUN: llvm-objdump -s -t %t.exe | FileCheck -check-prefix=RAW %s
 

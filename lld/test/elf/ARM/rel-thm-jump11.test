@@ -1,6 +1,6 @@
 # Check handling of R_ARM_THM_JUMP11 relocation.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 
@@ -11,7 +11,7 @@
 # CHECK: 004001a4 g     F .text	00000004 __gnu_h2f_alternative
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
-# RUN: not lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: not lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t 2> %t-error
 # RUN: FileCheck -check-prefix=OVERFLOW %s < %t-error
 

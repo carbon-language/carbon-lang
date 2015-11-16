@@ -7,7 +7,7 @@
 #   b) Linker creates a single R_MIPS_REL32 relocation.
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mips64el -shared -o %t.so %t.o
 # RUN: llvm-readobj -dt -r -s %t.so | FileCheck -check-prefix=SYM %s
 # RUN: llvm-readobj -mips-plt-got %t.so | FileCheck -check-prefix=GOT %s
 

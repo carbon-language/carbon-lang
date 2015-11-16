@@ -2,11 +2,11 @@
 
 # Build shared library
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared --noinhibit-exec -o %t-so %t.o
 # RUN: llvm-readobj -dyn-symbols %t-so | FileCheck -check-prefix=CHECK-DYN %s
 
 # Build shared library (yaml format)
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
+# RUN: lld -flavor old-gnu -target mipsel -shared --noinhibit-exec \
 # RUN:     --output-filetype=yaml -o %t-yaml %t.o
 # RUN: FileCheck -check-prefix=CHECK-GOT %s < %t-yaml
 

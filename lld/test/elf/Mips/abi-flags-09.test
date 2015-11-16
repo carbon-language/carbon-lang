@@ -2,7 +2,7 @@
 # It should go right after the PT_INTERP segment.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.o
 # RUN: llvm-readobj -program-headers %t.exe | FileCheck %s
 
 # CHECK:      ProgramHeader {

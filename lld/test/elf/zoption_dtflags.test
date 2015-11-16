@@ -1,7 +1,7 @@
 # Test that -z {origin, now} options work.
 #
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu -target x86_64 %t.o -e=main -z now -z origin -o %t1
+#RUN: lld -flavor old-gnu -target x86_64 %t.o -e=main -z now -z origin -o %t1
 #RUN: llvm-readobj -dynamic-table %t1 | FileCheck %s
 #
 #CHECK: 0x000000000000001E FLAGS                ORIGIN BIND_NOW

@@ -2,7 +2,7 @@
 # use adjusted values with set the last bit.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t.o
 # RUN: llvm-readobj -symbols -dynamic-table %t.so | FileCheck %s
 
 # CHECK:      Name: _init (1)

@@ -6,7 +6,7 @@
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
 # RUN: llvm-ar q %T/liboptions.a %t1.o %t2.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t3.o
-# RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t3.o -L%T -loptions
+# RUN: lld -flavor old-gnu -target mips64el -e T0 -o %t.exe %t3.o -L%T -loptions
 # RUN: llvm-objdump -s -t %t.exe | FileCheck %s
 
 # CHECK:      Contents of section .MIPS.options:

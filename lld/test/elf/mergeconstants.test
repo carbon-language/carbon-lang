@@ -1,5 +1,5 @@
 # The test checks for mergeable strings that appear in the object file
-RUN: lld -flavor gnu --merge-strings --output-filetype=yaml -target x86_64 \
+RUN: lld -flavor old-gnu --merge-strings --output-filetype=yaml -target x86_64 \
 RUN:   %p/Inputs/constants-merge.x86-64 --noinhibit-exec \
 RUN:   | FileCheck -check-prefix=mergeAtoms %s
 

@@ -2,7 +2,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-tls.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-tlsv.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-tls.o %t-tlsv.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=STATIC %s
 
@@ -19,7 +19,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-tls.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-tlsv.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi \
 # RUN: --noinhibit-exec %t-tls.o %t-tlsv.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=EXEC-DYN %s
 

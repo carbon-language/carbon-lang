@@ -1,8 +1,8 @@
 # This tests verifies that the value of _end symbol is point to the right value
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/nmagic.o  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/nmagic.o  \
 RUN: --noinhibit-exec -o %t --nmagic
 RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=NMAGICABSSYMBOLS %s
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/nmagic.o  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/nmagic.o  \
 RUN: --noinhibit-exec -o %t --omagic
 RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=OMAGICABSSYMBOLS %s
 

@@ -1,7 +1,7 @@
 # Check reading GP0 value from .MIPS.options section
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64el -e G1 -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mips64el -e G1 -shared -o %t.so %t.o
 # RUN: llvm-readobj -symbols %t.so | FileCheck -check-prefix=SYM %s
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=SEC %s
 

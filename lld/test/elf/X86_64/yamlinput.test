@@ -1,9 +1,9 @@
 # This tests the functionality that lld is able to read
 # an input YAML from a previous link
 
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/initfini.o \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/initfini.o \
 RUN: --noinhibit-exec --output-filetype=yaml -o %t.objtxt
-RUN: lld -flavor gnu -target x86_64-linux %t.objtxt \
+RUN: lld -flavor old-gnu -target x86_64-linux %t.objtxt \
 RUN: --noinhibit-exec -o %t1
 RUN: llvm-readobj -sections %t1 | FileCheck %s -check-prefix=SECTIONS
 

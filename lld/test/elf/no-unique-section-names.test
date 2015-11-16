@@ -1,6 +1,6 @@
 # Check handling object files with non-unique named sections.
 
-RUN: lld -flavor gnu -target x86_64-linux -shared -o %t \
+RUN: lld -flavor old-gnu -target x86_64-linux -shared -o %t \
 RUN:     %p/Inputs/no-unique-section-names.x86-64 
 RUN: llvm-objdump -s %p/Inputs/no-unique-section-names.x86-64 %t \
 RUN:   | FileCheck %s

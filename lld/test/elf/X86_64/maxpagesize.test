@@ -4,15 +4,15 @@
 
 # Build executable
 # RUN: yaml2obj -format=elf -docnum 1 %s -o %t.o
-# RUN: not lld -flavor gnu -target x86_64 %t.o -o %t.exe -static \
+# RUN: not lld -flavor old-gnu -target x86_64 %t.o -o %t.exe -static \
 # RUN: --no-align-segments --noinhibit-exec -z max-page-size=0
-# RUN: not lld -flavor gnu -target x86_64 %t.o -o %t.exe -static \
+# RUN: not lld -flavor old-gnu -target x86_64 %t.o -o %t.exe -static \
 # RUN: --no-align-segments --noinhibit-exec -z max-page-size=0xFF
-# RUN: not lld -flavor gnu -target x86_64 %t.o -o %t.exe -static \
+# RUN: not lld -flavor old-gnu -target x86_64 %t.o -o %t.exe -static \
 # RUN: --no-align-segments --noinhibit-exec -z max-page-size=0x1010
-# RUN: lld -flavor gnu -target x86_64 %t.o -o %t1.exe -static \
+# RUN: lld -flavor old-gnu -target x86_64 %t.o -o %t1.exe -static \
 # RUN: --no-align-segments --noinhibit-exec -z max-page-size=0x100000
-# RUN: lld -flavor gnu -target x86_64 %t.o -o %t.exe -static \
+# RUN: lld -flavor old-gnu -target x86_64 %t.o -o %t.exe -static \
 # RUN: --no-align-segments --noinhibit-exec -z max-page-size=0x10000
 # RUN: llvm-readobj -program-headers %t.exe | FileCheck %s
 # RUN: llvm-readobj -program-headers %t1.exe | FileCheck %s -check-prefix=CHECKLARGE

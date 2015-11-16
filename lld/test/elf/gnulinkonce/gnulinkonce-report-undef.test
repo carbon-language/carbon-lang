@@ -14,10 +14,10 @@
 #        .long    foo
 #RUN: yaml2obj -format=elf -docnum 1 %s -o %t.linkonce1a.o
 #RUN: yaml2obj -format=elf -docnum 2 %s -o %t.linkonce1b.o
-#RUN: not lld -flavor gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
+#RUN: not lld -flavor old-gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
 #RUN:  --output-filetype=yaml -o %t2.out.yaml 2>&1 | FileCheck \
 #RUN: -check-prefix=UNDEFS %s
-#RUN: not lld -flavor gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
+#RUN: not lld -flavor old-gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
 #RUN: -o %t2.out 2>&1 | FileCheck -check-prefix=UNDEFS %s
 #UNDEFS: Undefined symbol: {{.*}} foo
 ---

@@ -1,7 +1,7 @@
 # Check weak references fixup.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-jmp11.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-jmp11.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=JMP11-CHECK %s
 
@@ -18,7 +18,7 @@
 # JMP11-CHECK: 00000000  w      *UND*	00000000 __gnu_h2f_internal
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-thm-call.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-thm-call.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=THM-CALL-CHECK %s
 
@@ -33,7 +33,7 @@
 # THM-CALL-CHECK: 00000000  w      *UND*	00000000 weak_fn
 
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-arm-call.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-arm-call.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=ARM-CALL-CHECK %s
 

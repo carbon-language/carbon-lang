@@ -3,7 +3,7 @@
 # Any typeZeroFill content wouldn't have space reserved in the file to store
 # its content
 
-RUN: lld -flavor gnu -target x86_64 %p/Inputs/largebss.o --output-filetype=yaml --noinhibit-exec | FileCheck %s
+RUN: lld -flavor old-gnu -target x86_64 %p/Inputs/largebss.o --output-filetype=yaml --noinhibit-exec | FileCheck %s
 
 CHECK:  - name:            largecommon
 CHECK:    scope:           global

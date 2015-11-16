@@ -4,9 +4,9 @@
 # if all PLT entries use microMIPS big-endian encoding.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
-# RUN: lld -flavor gnu -target mips -shared -o %t.so %t1.o
+# RUN: lld -flavor old-gnu -target mips -shared -o %t.so %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
-# RUN: lld -flavor gnu -target mips -o %t.exe %t2.o %t.so
+# RUN: lld -flavor old-gnu -target mips -o %t.exe %t2.o %t.so
 # RUN: llvm-objdump -section-headers -d -mattr=micromips %t.exe | FileCheck %s
 
 # CHECK:      Disassembly of section .plt:

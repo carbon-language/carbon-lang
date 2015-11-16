@@ -18,7 +18,7 @@
 #
 # Assembled with: "as --32"
 
-RUN: lld -flavor gnu -target i386 -e back --output-filetype=yaml %p/Inputs/reloc-xb.x86 %p/Inputs/reloc-xt.x86 | FileCheck %s     -check-prefix x86-yaml
+RUN: lld -flavor old-gnu -target i386 -e back --output-filetype=yaml %p/Inputs/reloc-xb.x86 %p/Inputs/reloc-xt.x86 | FileCheck %s     -check-prefix x86-yaml
 
 x86-yaml:    - name:              back
 x86-yaml:      scope:             global

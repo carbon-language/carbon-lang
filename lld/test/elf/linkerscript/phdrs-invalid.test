@@ -38,7 +38,7 @@ RUN: yaml2obj -format=elf %p/Inputs/simple.o.yaml -o=%t.o
 /*
 Test undefined header used when no PHDRS defined.
 
-RUN: not lld -flavor gnu -target x86_64 -T %p/phdrs/undef-no-phdrs.script %t.o -static -o %t1 &> %t1-error
+RUN: not lld -flavor old-gnu -target x86_64 -T %p/phdrs/undef-no-phdrs.script %t.o -static -o %t1 &> %t1-error
 RUN: FileCheck -check-prefix UNDEF-NO-PHDRS %s < %t1-error
 
 UNDEF-NO-PHDRS: Unknown header identifiers (missing in PHDRS command) are used
@@ -47,7 +47,7 @@ UNDEF-NO-PHDRS: Unknown header identifiers (missing in PHDRS command) are used
 /*
 Test undefined header used when PHDRS is empty.
 
-RUN: not lld -flavor gnu -target x86_64 -T %p/phdrs/undef-empty-phdrs.script %t.o -static -o %t2 &> %t2-error
+RUN: not lld -flavor old-gnu -target x86_64 -T %p/phdrs/undef-empty-phdrs.script %t.o -static -o %t2 &> %t2-error
 RUN: FileCheck -check-prefix UNDEF-EMPTY-PHDRS %s < %t2-error
 
 UNDEF-EMPTY-PHDRS: Unknown header identifiers (missing in PHDRS command) are used
@@ -56,7 +56,7 @@ UNDEF-EMPTY-PHDRS: Unknown header identifiers (missing in PHDRS command) are use
 /*
 Test undefined header used when PHDRS contains definitions.
 
-RUN: not lld -flavor gnu -target x86_64 -T %p/phdrs/undef-id-phdrs.script %t.o -static -o %t3 &> %t3-error
+RUN: not lld -flavor old-gnu -target x86_64 -T %p/phdrs/undef-id-phdrs.script %t.o -static -o %t3 &> %t3-error
 RUN: FileCheck -check-prefix UNDEF-ID-PHDRS %s < %t3-error
 
 UNDEF-ID-PHDRS: Unknown header identifiers (missing in PHDRS command) are used

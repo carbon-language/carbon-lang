@@ -29,7 +29,7 @@
 
 #RUN: yaml2obj -format=elf %p/Inputs/initial-exec-tls-1.yaml -o=%t-t1.o
 #RUN: yaml2obj -format=elf %s -o %t-t0.o
-#RUN: lld -flavor gnu -target arm64 --noinhibit-exec -o %t.exe %t-t0.o %t-t1.o
+#RUN: lld -flavor old-gnu -target arm64 --noinhibit-exec -o %t.exe %t-t0.o %t-t1.o
 #RUN: llvm-readobj -relocations %t.exe | FileCheck %s -check-prefix=CHECKRELOCATION
 #RUN: llvm-objdump -s -t %t.exe        | FileCheck %s
 

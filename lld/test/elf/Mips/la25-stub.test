@@ -4,7 +4,7 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-npic.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-pic.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-main.o
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe \
+# RUN: lld -flavor old-gnu -target mipsel -e glob -o %t.exe \
 # RUN:         %t-npic.o %t-pic.o %t-main.o
 
 # RUN: llvm-readobj -t %t.exe | FileCheck -check-prefix=SYM %s

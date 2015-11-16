@@ -2,7 +2,7 @@
 
 # Check pairing of R_MIPS_HI16 and R_MIPS_LO16 relocations.
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -e glob1 -o %t-exe %t-obj
+# RUN: lld -flavor old-gnu -target mipsel -e glob1 -o %t-exe %t-obj
 # RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
 
 # CHECK: Disassembly of section .text:

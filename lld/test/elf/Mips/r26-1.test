@@ -4,13 +4,13 @@
 
 # Build shared library
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-so.o
 
 # Build executable
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
 # RUN: llvm-readobj -relocations %t-o.o | \
 # RUN:   FileCheck -check-prefix=OBJ-REL %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t-o.o %t.so
+# RUN: lld -flavor old-gnu -target mipsel -e glob -o %t.exe %t-o.o %t.so
 # RUN: llvm-objdump -section-headers -disassemble %t.exe | \
 # RUN:   FileCheck -check-prefix=EXE %s
 # RUN: llvm-readobj -relocations %t.exe | FileCheck -check-prefix=EXE-REL %s

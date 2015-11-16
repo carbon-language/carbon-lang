@@ -1,7 +1,7 @@
 # Test that -X/--discard-locals works.
 #
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu -target x86_64 %t.o -shared -X -o %t1
+#RUN: lld -flavor old-gnu -target x86_64 %t.o -shared -X -o %t1
 #RUN: llvm-objdump -t %t1 | FileCheck %s
 
 #CHECK-NOT: 0000000000400121 l .rodata 00000000 .Lsym8

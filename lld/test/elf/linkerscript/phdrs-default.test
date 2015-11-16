@@ -38,7 +38,7 @@ RUN: yaml2obj -format=elf %p/Inputs/simple.o.yaml -o=%t.o
 /*
 Test when no linker script passed.
 
-RUN: lld -flavor gnu -target x86_64 %t.o -static -o %t1
+RUN: lld -flavor old-gnu -target x86_64 %t.o -static -o %t1
 RUN: llvm-objdump -section-headers %t1 | FileCheck -check-prefix SECTIONS %s
 RUN: llvm-readobj -program-headers %t1 | FileCheck -check-prefix HEADERS %s
 
@@ -58,7 +58,7 @@ HEADERS: }
 /*
 Test when linker script doesn't contain PHDRS and sections are not assigned to any segments.
 
-RUN: lld -flavor gnu -target x86_64 -T %p/phdrs/sections-no-phdrs.script %t.o -static -o %t2
+RUN: lld -flavor old-gnu -target x86_64 -T %p/phdrs/sections-no-phdrs.script %t.o -static -o %t2
 RUN: llvm-objdump -section-headers %t2 | FileCheck -check-prefix SECTIONS %s
 RUN: llvm-readobj -program-headers %t2 | FileCheck -check-prefix HEADERS %s
 */
@@ -66,7 +66,7 @@ RUN: llvm-readobj -program-headers %t2 | FileCheck -check-prefix HEADERS %s
 /*
 Test when linker script contains empty PHDRS and sections are not assigned to any segments.
 
-RUN: lld -flavor gnu -target x86_64 -T %p/phdrs/sections-empty-phdrs.script %t.o -static -o %t3
+RUN: lld -flavor old-gnu -target x86_64 -T %p/phdrs/sections-empty-phdrs.script %t.o -static -o %t3
 RUN: llvm-objdump -section-headers %t3 | FileCheck -check-prefix SECTIONS %s
 RUN: llvm-readobj -program-headers %t3 | FileCheck -check-prefix HEADERS %s
 */
@@ -76,7 +76,7 @@ Test when linker script contains empty PHDRS and sections are only assigned to N
 or not assigned at all.
 NOTE: Segments with the name NONE are ignored in such a case.
 
-RUN: lld -flavor gnu -target x86_64 -T %p/phdrs/sections-none-phdrs.script %t.o -static -o %t4
+RUN: lld -flavor old-gnu -target x86_64 -T %p/phdrs/sections-none-phdrs.script %t.o -static -o %t4
 RUN: llvm-objdump -section-headers %t4 | FileCheck -check-prefix SECTIONS %s
 RUN: llvm-readobj -program-headers %t4 | FileCheck -check-prefix HEADERS %s
 */

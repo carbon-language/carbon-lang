@@ -1,7 +1,7 @@
 # Check that LLD shows an error if .reginfo section has invalid size
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: not lld -flavor gnu -target mipsel -o %t.exe %t.o 2>&1 | FileCheck %s
+# RUN: not lld -flavor old-gnu -target mipsel -o %t.exe %t.o 2>&1 | FileCheck %s
 
 # CHECK: Invalid size of MIPS_REGINFO section
 

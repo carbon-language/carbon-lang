@@ -1,7 +1,7 @@
 # This test checks emission for program header for ELF binaries
-RUN: lld -flavor gnu -target i386-linux -o %t1 -e main %p/Inputs/phdr.i386 \
+RUN: lld -flavor old-gnu -target i386-linux -o %t1 -e main %p/Inputs/phdr.i386 \
 RUN:  && llvm-readobj -program-headers %t1 |  FileCheck -check-prefix=I386 %s
-RUN: lld -flavor gnu -target x86_64-linux -o %t1 -e _start %p/Inputs/relocs.x86-64 -static \
+RUN: lld -flavor old-gnu -target x86_64-linux -o %t1 -e _start %p/Inputs/relocs.x86-64 -static \
 RUN:  && llvm-objdump -p %t1 | FileCheck %s -check-prefix=X86_64
 
 

@@ -1,7 +1,7 @@
 # 1. Check handling of R_ARM_THM_MOVW_ABS_NC and R_THM_ARM_MOVT_ABS relocation pair.
 # 2. Check that instructions are not cropped for symbols that address Thumb code.
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 # RUN: llvm-objdump -s -t %t | FileCheck -check-prefix=INSN-CROP %s

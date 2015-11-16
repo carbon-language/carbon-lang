@@ -6,9 +6,9 @@
 #   a) Emitting of R_MIPS_REL32 relocations.
 #
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
-# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t-so.o
+# RUN: lld -flavor old-gnu -target mips64el -shared -o %t.so %t-so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
-# RUN: lld -flavor gnu -target mips64el -e T0 --noinhibit-exec \
+# RUN: lld -flavor old-gnu -target mips64el -e T0 --noinhibit-exec \
 # RUN:     -o %t.exe %t-o.o %t.so
 # RUN: llvm-readobj -dt -r -sections %t.exe | FileCheck %s
 # RUN: llvm-readobj -mips-plt-got %t.exe | FileCheck -check-prefix=GOT %s

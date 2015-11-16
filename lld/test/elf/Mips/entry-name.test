@@ -1,6 +1,6 @@
 # Check name of executable entry symbol.
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel --noinhibit-exec -o %t.exe %t.o
 # RUN: llvm-nm %t.exe | FileCheck %s
 
 # CHECK:               U __start

@@ -1,7 +1,7 @@
 # This tests that a typeZeroFillFast atom is associated with a section that has
 # the correct memory size.
 
-RUN: lld -flavor gnu -target hexagon %p/Inputs/sdata1.o %p/Inputs/sdata2.o \
+RUN: lld -flavor old-gnu -target hexagon %p/Inputs/sdata1.o %p/Inputs/sdata2.o \
 RUN:    -o %t --noinhibit-exec -static
 RUN: llvm-readobj -sections %t | FileCheck -check-prefix=CHECKSECTIONSANDSIZE %s
 

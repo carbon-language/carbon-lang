@@ -1,10 +1,10 @@
-# RUN: lld -flavor gnu -target x86_64 --defsym=foo=0x1234 -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 --defsym=foo=0x1234 -r %s \
 # RUN:     --output-filetype=yaml | FileCheck -check-prefix=ABS %s
 
-# RUN: lld -flavor gnu -target x86_64 --defsym=foo=main -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 --defsym=foo=main -r %s \
 # RUN:     --output-filetype=yaml | FileCheck -check-prefix=ALIAS %s
 
-# RUN: lld -flavor gnu -target x86_64 --defsym foo=main -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 --defsym foo=main -r %s \
 # RUN:     --output-filetype=yaml | FileCheck -check-prefix=ALIAS %s
 
 defined-atoms:

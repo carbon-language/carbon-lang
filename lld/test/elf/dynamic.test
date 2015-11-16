@@ -1,8 +1,8 @@
 # Checks functionality of dynamic executables
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
 RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main --allow-shlib-undefined \
 RUN:   -rpath /l1:/l2 -rpath /l3
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
 RUN:   %p/Inputs/shared.so-x86-64 --output-filetype=yaml -o %t2 --allow-shlib-undefined \
 RUN: --noinhibit-exec
 RUN: llvm-objdump -p %t >> %t2

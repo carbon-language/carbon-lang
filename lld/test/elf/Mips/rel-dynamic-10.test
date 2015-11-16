@@ -7,7 +7,7 @@
 #
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-o1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o2.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o1.o %t-o2.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t-o1.o %t-o2.o
 # RUN: llvm-readobj -dt -r -s %t.exe | FileCheck -check-prefix=PLT-SYM %s
 
 # PLT-SYM:     Sections [

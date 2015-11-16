@@ -2,7 +2,7 @@
 # are undefined the linker does not emit DT_INIT/DT_FINI tags.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target x86_64 -shared --noinhibit-exec -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target x86_64 -shared --noinhibit-exec -o %t.so %t.o
 # RUN: llvm-readobj -dynamic-table %t.so | FileCheck %s
 
 # CHECK-NOT: 0x000000000000000C INIT 0x{{[0-9A-F]+}}

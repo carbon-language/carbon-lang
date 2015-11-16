@@ -62,7 +62,7 @@ RUN: yaml2obj -format=elf %p/Inputs/prog2.o.yaml -o=%T/prog2.o
 RUN: yaml2obj -format=elf %p/Inputs/prog3.o.yaml -o=%T/prog3.o
 RUN: cd %T
 
-RUN: lld -flavor gnu  -target x86_64 -T %s prog1.o prog2.o prog3.o \
+RUN: lld -flavor old-gnu  -target x86_64 -T %s prog1.o prog2.o prog3.o \
 RUN:   -static -o %t1
 RUN: llvm-readobj -s %t1 | FileCheck -check-prefix CHECKSECTIONS %s
 

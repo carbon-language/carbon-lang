@@ -1,6 +1,6 @@
 # Tests that lld can handle relocations of type R_X86_64_PC64
 #RUN: yaml2obj -format=elf -docnum 1 %s -o %t1.o
-#RUN: lld -flavor gnu -target x86_64 %t1.o --noinhibit-exec -o %t2.out -static
+#RUN: lld -flavor old-gnu -target x86_64 %t1.o --noinhibit-exec -o %t2.out -static
 #RUN: llvm-objdump -s %t2.out | FileCheck %s
 #CHECK: Contents of section .data:
 #CHECK: 401000 0a00

@@ -2,7 +2,7 @@
 # by the R_MIPS_TLS_GD relocation gets an entry in the dynamic symbol table.
 
 # RUN: yaml2obj -format=elf -o %t-o.o %s
-# RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t-o.o
+# RUN: lld -flavor old-gnu -target mips64el -e T0 -o %t.exe %t-o.o
 
 # Check dynamic relocations:
 # RUN: llvm-readobj -r %t.exe | FileCheck -check-prefix=REL %s

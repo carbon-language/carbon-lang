@@ -3,9 +3,9 @@
 
 # Build executable
 # RUN: yaml2obj -format=elf -docnum 1 %s -o %t.o
-# RUN: lld -flavor gnu -target x86_64 %t.o -o %t1.exe -static \
+# RUN: lld -flavor old-gnu -target x86_64 %t.o -o %t1.exe -static \
 # RUN: --no-align-segments --noinhibit-exec
-# RUN: lld -flavor gnu -target x86_64 %t.o -o %t2.exe -static \
+# RUN: lld -flavor old-gnu -target x86_64 %t.o -o %t2.exe -static \
 # RUN: --noinhibit-exec
 # RUN: llvm-readobj -program-headers %t1.exe | FileCheck %s -check-prefix=SEGMENTS
 # RUN: llvm-readobj -program-headers %t2.exe | FileCheck %s -check-prefix=SEGMENTS

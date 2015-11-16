@@ -68,11 +68,11 @@ public:
 
 enum class Flavor {
   invalid,
-  gnu_ld,    // -flavor gnu
-  gnu_ld2,   // -flavor gnu2
-  win_link,  // -flavor link
-  darwin_ld, // -flavor darwin
-  core       // -flavor core OR -core
+  old_gnu_ld, // -flavor old-gnu
+  gnu_ld2,    // -flavor gnu2
+  win_link,   // -flavor link
+  darwin_ld,  // -flavor darwin
+  core        // -flavor core OR -core
 };
 
 struct ProgramNameParts {
@@ -84,14 +84,14 @@ struct ProgramNameParts {
 
 static Flavor strToFlavor(StringRef str) {
   return llvm::StringSwitch<Flavor>(str)
-      .Case("gnu", Flavor::gnu_ld)
+      .Case("old-gnu", Flavor::old_gnu_ld)
       .Case("gnu2", Flavor::gnu_ld2)
       .Case("ld.lld2", Flavor::gnu_ld2)
       .Case("link", Flavor::win_link)
       .Case("lld-link", Flavor::win_link)
       .Case("darwin", Flavor::darwin_ld)
       .Case("core", Flavor::core)
-      .Case("ld", Flavor::gnu_ld)
+      .Case("ld", Flavor::old_gnu_ld)
       .Default(Flavor::invalid);
 }
 
@@ -153,7 +153,7 @@ static Flavor getFlavor(llvm::MutableArrayRef<const char *> &args,
     return Flavor::darwin_ld;
 #endif
     // On a ELF based systems, if linker binary is named "ld", use gnu driver.
-    return Flavor::gnu_ld;
+    return Flavor::old_gnu_ld;
   }
 #endif
 
@@ -202,7 +202,7 @@ bool UniversalDriver::link(llvm::MutableArrayRef<const char *> args,
 
   // Switch to appropriate driver.
   switch (flavor) {
-  case Flavor::gnu_ld:
+  case Flavor::old_gnu_ld:
     return GnuLdDriver::linkELF(args, diagnostics);
   case Flavor::gnu_ld2:
     elf2::link(args);

@@ -2,7 +2,7 @@
 # if there is a SHT_MIPS_ABIFLAGS section.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.o
 # RUN: llvm-readobj -program-headers %t.exe | FileCheck %s
 
 # CHECK:      ProgramHeaders [

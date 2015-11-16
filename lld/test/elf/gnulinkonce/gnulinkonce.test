@@ -24,9 +24,9 @@
 #        .long    0
 #RUN: yaml2obj -format=elf -docnum 1 %s -o %t.linkonce1a.o
 #RUN: yaml2obj -format=elf -docnum 2 %s -o %t.linkonce1b.o
-#RUN: lld -flavor gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
+#RUN: lld -flavor old-gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
 #RUN: --noinhibit-exec --output-filetype=yaml -o %t2.out.yaml
-#RUN: lld -flavor gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
+#RUN: lld -flavor old-gnu -target x86_64 %t.linkonce1a.o %t.linkonce1b.o \
 #RUN: --noinhibit-exec -o %t2.out
 #RUN: FileCheck %s -check-prefix=CHECKGNULINKONCE < %t2.out.yaml
 #RUN: llvm-readobj -sections %t2.out | FileCheck %s -check-prefix=CHECKGNULINKONCESECTIONS

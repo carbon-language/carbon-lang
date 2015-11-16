@@ -19,7 +19,7 @@
 # }
 
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu -target x86_64 %t.o -e=main --strip-all -o %t1
+#RUN: lld -flavor old-gnu -target x86_64 %t.o -e=main --strip-all -o %t1
 #RUN: llvm-objdump -section-headers %t1 | FileCheck %s
 
 #CHECK:  14 .shstrtab     0000007d 0000000000000000

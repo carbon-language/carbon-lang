@@ -1,7 +1,7 @@
 # Check that LLD shows an error if ADDIUPC immediate is out of range.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: not lld -flavor gnu -target mipsel -o %t.exe %t.o 2>&1 | FileCheck %s
+# RUN: not lld -flavor old-gnu -target mipsel -o %t.exe %t.o 2>&1 | FileCheck %s
 
 # CHECK: Relocation out of range in file {{.*}}: reference from __start+4 to T0+4 of type 173 (R_MICROMIPS_PC23_S2)
 

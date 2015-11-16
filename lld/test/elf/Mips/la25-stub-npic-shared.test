@@ -4,8 +4,8 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-pic.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-reg.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-micro.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-pic.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-reg.o %t-micro.o %t.so
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-pic.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t-reg.o %t-micro.o %t.so
 
 # RUN: llvm-objdump -s -t %t.exe | FileCheck %s
 

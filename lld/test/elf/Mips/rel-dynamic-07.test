@@ -6,9 +6,9 @@
 #   b) There should be no R_MIPS_REL32 relocations for the _gp_disp symbol.
 #
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t1.so %t-so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t1.so %t-so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
+# RUN: lld -flavor old-gnu -target mipsel -shared --noinhibit-exec \
 # RUN:     -o %t2.so %t-o.o %t1.so
 # RUN: llvm-readobj -dt -r -sections %t2.so | FileCheck %s
 # RUN: llvm-readobj -mips-plt-got %t2.so | FileCheck -check-prefix=GOT %s

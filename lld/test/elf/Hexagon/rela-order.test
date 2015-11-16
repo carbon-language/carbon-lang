@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target hexagon %p/Inputs/dynobj.o -shared \
+RUN: lld -flavor old-gnu -target hexagon %p/Inputs/dynobj.o -shared \
 RUN:  --noinhibit-exec -o %t
 RUN: llvm-objdump -section-headers %t | FileCheck %s
 

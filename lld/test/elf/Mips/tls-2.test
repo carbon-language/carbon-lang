@@ -4,7 +4,7 @@
 
 # Create a shared library with thread symbol D1.
 # RUN: yaml2obj -format=elf -o %t-so.o %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-so.o
 
 # Check dynamic relocations and GOT in the shared library.
 # RUN: llvm-readobj -r %t.so | FileCheck -check-prefix=REL %s

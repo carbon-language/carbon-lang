@@ -3,7 +3,7 @@
 # Reference: Ulrich Drepper's "ELF Handling for Thread-Local storage"
 
 #RUN: yaml2obj -format=elf %s -o %t.o
-#RUN: lld -flavor gnu -target x86_64 %t.o -o %t -e=main --defsym=__tls_get_addr=0
+#RUN: lld -flavor old-gnu -target x86_64 %t.o -o %t -e=main --defsym=__tls_get_addr=0
 #RUN: llvm-readobj -r %t | FileCheck %s
 #
 #CHECK:   Section (5) .rela.dyn {

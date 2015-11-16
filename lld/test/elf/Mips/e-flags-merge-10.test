@@ -4,7 +4,7 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-32r2.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-32r6.o
 
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so \
 # RUN:         %t-32r2.o %t-32r6.o 2>&1 | FileCheck %s
 
 # CHECK: Linking modules with incompatible ISA

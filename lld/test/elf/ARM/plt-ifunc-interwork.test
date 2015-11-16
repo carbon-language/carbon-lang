@@ -3,7 +3,7 @@
 #
 # 1. ARM code generates PLT without transition veneer.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-f1-arm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-arm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=ARM-ONE %s
 
@@ -15,7 +15,7 @@
 
 # 2. Thumb code generates PLT with transition veneer.
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-f1-thm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-thm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-ONE %s
 
@@ -28,21 +28,21 @@
 # 3. ARM + Thumb code generate same single PLT with transition veneer.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-f1-arm.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-f1-thm-for-arm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-arm.o %t-f1-thm-for-arm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-ONE %s
 
 # 4. Thumb + ARM code generate same single PLT with transition veneer.
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-f1-thm-for-arm.o
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-f1-arm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-thm-for-arm.o %t-f1-arm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-ONE %s
 
 # 5. ARM + ARM code generate two PLTs without transition veneers.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-f1-arm.o
 # RUN: yaml2obj -format=elf -docnum 4 %s > %t-f2-arm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-arm.o %t-f2-arm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=ARM-TWO %s
 
@@ -57,7 +57,7 @@
 # 6. ARM + Thumb code generate two PLTs without and with transition veneer.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-f1-arm.o
 # RUN: yaml2obj -format=elf -docnum 5 %s > %t-f2-thm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-arm.o %t-f2-thm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=ARM-THM-TWO %s
 
@@ -72,7 +72,7 @@
 # 7. Thumb + ARM code generate two PLTs with and without transition veneer.
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-f1-thm.o
 # RUN: yaml2obj -format=elf -docnum 4 %s > %t-f2-arm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-thm.o %t-f2-arm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-ARM-TWO %s
 
@@ -87,7 +87,7 @@
 # 8. Thumb + Thumb code generate two PLTs with transition veneers.
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-f1-thm.o
 # RUN: yaml2obj -format=elf -docnum 5 %s > %t-f2-thm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-thm.o %t-f2-thm.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-TWO %s
 
@@ -101,7 +101,7 @@
 
 # 9. Thumb code generates PLT without transition veneer when bl->blx is done.
 # RUN: yaml2obj -format=elf -docnum 6 %s > %t-f1-thm-c.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-f1-thm-c.o -o %t
 # RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-BL %s
 

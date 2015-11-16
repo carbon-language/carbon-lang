@@ -1,10 +1,10 @@
 # Checks that linking an object file with a shared object creates the necessary
 # PLT/GOT Entries
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
 RUN:   %p/Inputs/shared.so-x86-64 --output-filetype=yaml -o %t1 --noinhibit-exec
 RUN: FileCheck %s < %t1
 
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared-32s.x86-64 \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/use-shared-32s.x86-64 \
 RUN:   %p/Inputs/shared.so-x86-64 --output-filetype=yaml --noinhibit-exec \
 RUN: | FileCheck %s --check-prefix=32S
 

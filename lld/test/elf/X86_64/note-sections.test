@@ -1,7 +1,7 @@
 # This tests the functionality that lld is able to recreate the note sections
 # if they appear in the input
 
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/note.o  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/note.o  \
 RUN: --noinhibit-exec -o %t -static
 RUN: llvm-readobj -sections %t | FileCheck -check-prefix=NOTESECTIONS %s
 RUN: llvm-readobj -program-headers %t | FileCheck -check-prefix=NOTESEGMENT %s

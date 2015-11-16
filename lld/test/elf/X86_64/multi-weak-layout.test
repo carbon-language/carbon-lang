@@ -1,7 +1,7 @@
 # Test that we are able to layout multiple weak symbols
 # properly
 
-RUN: lld -flavor gnu -target x86_64 %p/Inputs/multiweaksyms.o  \
+RUN: lld -flavor old-gnu -target x86_64 %p/Inputs/multiweaksyms.o  \
 RUN: --noinhibit-exec -static --output-filetype=yaml -o %t
 RUN: FileCheck %s -check-prefix=WEAKSYMS < %t
 

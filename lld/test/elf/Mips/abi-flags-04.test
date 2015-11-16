@@ -11,7 +11,7 @@
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-64.o
 # RUN: yaml2obj -format=elf -docnum 4 %s > %t-64a.o
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t1 %t-xx.o %t-double.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t1 %t-xx.o %t-double.o
 # RUN: llvm-readobj -mips-abi-flags %t1 | FileCheck -check-prefix=XX-DOUBLE %s
 
 # XX-DOUBLE:  FP ABI:     Hard float (double precision) (0x1)
@@ -19,7 +19,7 @@
 # XX-DOUBLE:  CPR1 size:  32
 # XX-DOUBLE:  Flags 1     [ (0x0)
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t-xx.o %t-64.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t2 %t-xx.o %t-64.o
 # RUN: llvm-readobj -mips-abi-flags %t2 | FileCheck -check-prefix=XX-64 %s
 
 # XX-64:  FP ABI:     Hard float (32-bit CPU, 64-bit FPU) (0x6)
@@ -28,7 +28,7 @@
 # XX-64:  Flags 1     [ (0x1)
 # XX-64:    ODDSPREG (0x1)
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t3 %t-xx.o %t-64a.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t3 %t-xx.o %t-64a.o
 # RUN: llvm-readobj -mips-abi-flags %t3 | FileCheck -check-prefix=XX-64A %s
 
 # XX-64A:  FP ABI:     Hard float compat (32-bit CPU, 64-bit FPU) (0x7)
@@ -36,7 +36,7 @@
 # XX-64A:  CPR1 size:  64
 # XX-64A:  Flags 1     [ (0x0)
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t4 %t-64.o %t-64a.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t4 %t-64.o %t-64a.o
 # RUN: llvm-readobj -mips-abi-flags %t4 | FileCheck -check-prefix=64-64A %s
 
 # 64-64A:  FP ABI:     Hard float (32-bit CPU, 64-bit FPU) (0x6)

@@ -1,7 +1,7 @@
 # This tests verifies functionality of NMAGIC that we create only two segments,
 # PT_LOAD, PT_TLS
 # The data segment should be aligned to a page boundary
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/nmagic.o  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/nmagic.o  \
 RUN: --noinhibit-exec -o %t --nmagic -static
 RUN: llvm-readobj -sections %t | FileCheck -check-prefix=NMAGICSECTIONS %s
 RUN: llvm-readobj -program-headers %t | FileCheck -check-prefix=NMAGICPROGRAMHEADERS %s

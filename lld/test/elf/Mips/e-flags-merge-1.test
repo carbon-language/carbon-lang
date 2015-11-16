@@ -2,11 +2,11 @@
 # or unsupported ABI and ARCH flags or unsupported ASE flags.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-no-abi.o
-# RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-no-abi.o 2>&1 | \
+# RUN: not lld -flavor old-gnu -target mipsel -e T -o %t.exe %t-no-abi.o 2>&1 | \
 # RUN:   FileCheck -check-prefix=INVALID-ABI %s
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-mips16.o
-# RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-mips16.o 2>&1 | \
+# RUN: not lld -flavor old-gnu -target mipsel -e T -o %t.exe %t-mips16.o 2>&1 | \
 # RUN:   FileCheck -check-prefix=MIPS16 %s
 
 # INVALID-ABI: Unsupported ABI

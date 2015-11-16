@@ -16,7 +16,7 @@
 #
 #RUN: yaml2obj -format=elf -docnum 1 %s -o %t.group1a.o
 #RUN: yaml2obj -format=elf -docnum 2 %s -o %t.group1b.o
-#RUN: lld -flavor gnu -target x86_64 %t.group1a.o %t.group1b.o \
+#RUN: lld -flavor old-gnu -target x86_64 %t.group1a.o %t.group1b.o \
 #RUN: --noinhibit-exec -o %t2.out 2>&1 | FileCheck %s
 #CHECK: Undefined symbol: {{.*}} g1
 ---

@@ -2,7 +2,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-arm.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-thm.o
-# RUN: lld -flavor gnu -target arm-linux-gnu --defsym=main=fa \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu --defsym=main=fa \
 # RUN: -Bstatic --noinhibit-exec %t-arm.o %t-thm.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck %s
 

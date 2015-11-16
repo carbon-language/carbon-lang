@@ -2,9 +2,9 @@
 # when merging strings is enabled.
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target x86_64 %t.o --noinhibit-exec -o %t1.out
+# RUN: lld -flavor old-gnu -target x86_64 %t.o --noinhibit-exec -o %t1.out
 # RUN: llvm-readobj -sections %t1.out | FileCheck %s
-# RUN: lld -flavor gnu -target x86_64 %t.o --noinhibit-exec -o %t2.out --output-filetype=yaml
+# RUN: lld -flavor old-gnu -target x86_64 %t.o --noinhibit-exec -o %t2.out --output-filetype=yaml
 # RUN: FileCheck %s -check-prefix=CHECKRELOCS < %t2.out
 
 FileHeader:

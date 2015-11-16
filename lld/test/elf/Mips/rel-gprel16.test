@@ -1,7 +1,7 @@
 # Check R_MIPS_GPREL16 relocation handling.
 #
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -e G1 -shared -o %t.so %t-obj
+# RUN: lld -flavor old-gnu -target mipsel -e G1 -shared -o %t.so %t-obj
 # RUN: llvm-readobj -symbols %t.so | FileCheck -check-prefix=SYM %s
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=SEC %s
 

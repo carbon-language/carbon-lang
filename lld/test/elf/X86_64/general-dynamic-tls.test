@@ -10,12 +10,12 @@
 
 # Prepare inputs
 #RUN: yaml2obj -format=elf %p/Inputs/generaltls-so.o.yaml -o=%t.o.so
-#RUN: lld -flavor gnu  -target x86_64 -shared %t.o.so -o %T/libgeneraltls.so
+#RUN: lld -flavor old-gnu  -target x86_64 -shared %t.o.so -o %T/libgeneraltls.so
 #RUN: yaml2obj -format=elf %s -o=%t.o
 
 # Link - (we supply --defsym=__tls_get_addr to avoid the need to link with
 # system libraries)
-#RUN: lld -flavor gnu  -target x86_64 -e main %t.o -L%T -lgeneraltls -o %t1 \
+#RUN: lld -flavor old-gnu  -target x86_64 -e main %t.o -L%T -lgeneraltls -o %t1 \
 #RUN:   --defsym=__tls_get_addr=0
 
 # Check

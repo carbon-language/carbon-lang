@@ -8,7 +8,7 @@
 #  }
 #
 
-# RUN: lld -flavor gnu -target x86_64 %s -e _entrypoint --noinhibit-exec -o %t1
+# RUN: lld -flavor old-gnu -target x86_64 %s -e _entrypoint --noinhibit-exec -o %t1
 # RUN: llvm-nm -n %t1 | FileCheck %s
 #
 # CHECK:           U _entrypoint

@@ -25,9 +25,9 @@
 #RUN: yaml2obj -format=elf -docnum 1 %s -o %t.main.o
 #RUN: yaml2obj -format=elf -docnum 2 %s -o %t.wrapfoo.o
 #RUN: yaml2obj -format=elf -docnum 3 %s -o %t.realfoo.o
-#RUN: lld -flavor gnu -target x86_64 %t.main.o %t.wrapfoo.o %t.realfoo.o \
+#RUN: lld -flavor old-gnu -target x86_64 %t.main.o %t.wrapfoo.o %t.realfoo.o \
 #RUN: --wrap foo --wrap foo --noinhibit-exec --output-filetype=yaml -o %t2.out
-#RUN: lld -flavor gnu -target x86_64 %t.main.o %t.wrapfoo.o  \
+#RUN: lld -flavor old-gnu -target x86_64 %t.main.o %t.wrapfoo.o  \
 #RUN: --wrap foo --wrap foo --noinhibit-exec --output-filetype=yaml -o %t2.out.undef 2>&1 |  \
 #RUN: FileCheck %s -check-prefix=CHECKUNDEF
 #CHECKWRAP:  - name:            main

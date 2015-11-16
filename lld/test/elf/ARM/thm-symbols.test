@@ -4,7 +4,7 @@
 # 3. Symbol content.
 
 # RUN: yaml2obj -format=elf %s > %t-t.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-t.o -o %t-t
 # RUN: llvm-readobj -symbols %t-t | FileCheck -check-prefix=SYM-ADDR %s
 # RUN: llvm-readobj -symbols %t-t | FileCheck -check-prefix=SYM-SIZE %s

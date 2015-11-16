@@ -13,57 +13,57 @@
 # RUN: yaml2obj -format=elf -docnum 5 %s > %t-64.o
 # RUN: yaml2obj -format=elf -docnum 6 %s > %t-64a.o
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t1 %t-xx.o %t-sgl.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t1 %t-xx.o %t-sgl.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=XX-SINGLE-WARN %s
 
 # XX-SINGLE-WARN:  FP ABI {{-mfpxx|-msingle-float}} is incompatible with {{-msingle-float|-mfpxx}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t-xx.o %t-soft.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t2 %t-xx.o %t-soft.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=XX-SOFT-WARN %s
 
 # XX-SOFT-WARN:  FP ABI {{-mfpxx|-msoft-float}} is incompatible with {{-msoft-float|-mfpxx}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t3 %t-dbl.o %t-sgl.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t3 %t-dbl.o %t-sgl.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=DOUBLE-SINGLE-WARN %s
 
 # DOUBLE-SINGLE-WARN:  FP ABI {{-mdouble-float|-msingle-float}} is incompatible with {{-msingle-float|-mdouble-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t4 %t-dbl.o %t-soft.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t4 %t-dbl.o %t-soft.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=DOUBLE-SOFT-WARN %s
 
 # DOUBLE-SOFT-WARN:  FP ABI {{-mdouble-float|-msoft-float}} is incompatible with {{-msoft-float|-mdouble-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t5 %t-dbl.o %t-64.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t5 %t-dbl.o %t-64.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=DOUBLE-64-WARN %s
 
 # DOUBLE-64-WARN:  FP ABI {{-mdouble-float|-mgp32 -mfp64}} is incompatible with {{-mgp32 -mfp64|-mdouble-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t6 %t-dbl.o %t-64a.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t6 %t-dbl.o %t-64a.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=DOUBLE-64A-WARN %s
 
 # DOUBLE-64A-WARN:  FP ABI {{-mdouble-float|-mgp32 -mfp64 -mno-odd-spreg}} is incompatible with {{-mgp32 -mfp64 -mno-odd-spreg|-mdouble-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t7 %t-sgl.o %t-soft.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t7 %t-sgl.o %t-soft.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=SINGLE-SOFT-WARN %s
 
 # SINGLE-SOFT-WARN:  FP ABI {{-msingle-float|-msoft-float}} is incompatible with {{-msoft-float|-msingle-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t8 %t-sgl.o %t-64.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t8 %t-sgl.o %t-64.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=SINGLE-64-WARN %s
 
 # SINGLE-64-WARN:  FP ABI {{-msingle-float|-mgp32 -mfp64}} is incompatible with {{-mgp32 -mfp64|-msingle-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t9 %t-sgl.o %t-64a.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t9 %t-sgl.o %t-64a.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=SINGLE-64A-WARN %s
 
 # SINGLE-64A-WARN:  FP ABI {{-msingle-float|-mgp32 -mfp64 -mno-odd-spreg}} is incompatible with {{-mgp32 -mfp64 -mno-odd-spreg|-msingle-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t10 %t-soft.o %t-64.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t10 %t-soft.o %t-64.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=SOFT-64-WARN %s
 
 # SOFT-64-WARN:  FP ABI {{-msoft-float|-mgp32 -mfp64}} is incompatible with {{-mgp32 -mfp64|-msoft-float}}
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t11 %t-soft.o %t-64a.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t11 %t-soft.o %t-64a.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=SOFT-64A-WARN %s
 
 # SOFT-64A-WARN:  FP ABI {{-msoft-float|-mgp32 -mfp64 -mno-odd-spreg}} is incompatible with {{-mgp32 -mfp64 -mno-odd-spreg|-msoft-float}}

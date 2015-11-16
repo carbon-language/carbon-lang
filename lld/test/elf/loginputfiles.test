@@ -20,7 +20,7 @@
 # }
 # gcc -c main.c fn.c fn1.c
 
-RUN: lld -flavor gnu -target x86_64-linux \
+RUN: lld -flavor old-gnu -target x86_64-linux \
 RUN:   %p/Inputs/mainobj.x86_64 %p/Inputs/libfnarchive.a -t --noinhibit-exec 2>&1 | \
 RUN:   FileCheck -check-prefix INPUTFILES %s
 

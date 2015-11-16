@@ -1,7 +1,7 @@
 # Check that LLD shows an error if jalx target value is not word-aligned.
 
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: not lld -flavor gnu -target mipsel -e T0 -o %t-exe %t-obj 2>&1 \
+# RUN: not lld -flavor old-gnu -target mipsel -e T0 -o %t-exe %t-obj 2>&1 \
 # RUN:       | FileCheck %s
 
 # CHECK: The jalx target 0x{{[0-9a-f]+}} is not word-aligned

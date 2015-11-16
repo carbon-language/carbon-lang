@@ -4,7 +4,7 @@
 # relocations for a regular symbol.
 
 # RUN: llvm-mc -arch=mipsel -filetype=obj -mattr=micromips -o=%t.o %s
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t.o
 # RUN: llvm-objdump -d -mattr=micromips %t.exe | FileCheck %s
 
 # CHECK:      Disassembly of section .text:

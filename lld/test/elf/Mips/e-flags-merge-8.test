@@ -5,7 +5,7 @@
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-64.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-64r2.o
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-32.o %t-64.o %t-64r2.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-32.o %t-64.o %t-64r2.o
 # RUN: llvm-readobj -file-headers %t.so | FileCheck %s
 
 # CHECK:      Flags [ (0x80001100)

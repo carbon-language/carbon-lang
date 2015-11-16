@@ -1,7 +1,7 @@
 # This tests that we are able to merge the section .gcc_except_table,
 # .data.rel.local, .data.rel.ro, any other sections that belong to .data
 # into appropriate output sections
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/sectionmap.o  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/sectionmap.o  \
 RUN: --noinhibit-exec -o %t
 RUN: llvm-readobj -sections %t | FileCheck %s -check-prefix=VERIFYSECTIONHEADERS
 

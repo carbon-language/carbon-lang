@@ -1,5 +1,5 @@
 # This tests GOT's and PLT's for dynamic libraries for Hexagon
-RUN: lld -flavor gnu -target hexagon %p/Inputs/dynobj.o \
+RUN: lld -flavor old-gnu -target hexagon %p/Inputs/dynobj.o \
 RUN:   -o %t --output-filetype=yaml -shared --noinhibit-exec
 RUN: FileCheck -check-prefix=CHECKGOTPLT %s < %t
 

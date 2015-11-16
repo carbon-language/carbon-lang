@@ -1,7 +1,7 @@
 # Check that _MISSING_SYMBOL_ symbol is not resolved
 
 # RUN: yaml2obj -format=elf %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t 2>&1 | FileCheck %s
 
 # CHECK: Undefined symbol: {{.*}}: _MISSING_SYMBOL_

@@ -1,7 +1,7 @@
 # Check that mapping symbols have zero size, local binding and none type.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-a.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-t.o
-# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: lld -flavor old-gnu -target arm-linux-gnu \
 # RUN: -Bstatic --noinhibit-exec %t-a.o %t-t.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck %s
 

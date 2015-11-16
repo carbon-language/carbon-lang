@@ -2,11 +2,11 @@
 # when linking non-shared executable file.
 #
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-so1.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t1.so %t-so1.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t1.so %t-so1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-so2.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2.so %t-so2.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t2.so %t-so2.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-o.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t1.so %t2.so
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t-o.o %t1.so %t2.so
 # RUN: llvm-readobj -dt -r -dynamic-table %t.exe | FileCheck %s
 
 # CHECK:      Relocations [

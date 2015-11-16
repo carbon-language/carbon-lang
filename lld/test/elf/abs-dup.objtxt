@@ -1,5 +1,5 @@
 # Tests handling an absolute symbol with no name
-# RUN: lld -flavor gnu -target x86_64 -r %s \
+# RUN: lld -flavor old-gnu -target x86_64 -r %s \
 # RUN:     --output-filetype=yaml | FileCheck %s
 
 absolute-atoms:

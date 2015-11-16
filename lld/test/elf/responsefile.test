@@ -1,4 +1,4 @@
-# RUN: not lld -flavor gnu --abc @%p/Inputs/responsefile --baz >& %t.log
+# RUN: not lld -flavor old-gnu --abc @%p/Inputs/responsefile --baz >& %t.log
 # RUN: FileCheck %s < %t.log
 
 CHECK: warning: ignoring unknown argument: --abc

@@ -1,6 +1,6 @@
 # Check handling of section alignment.
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target arm64 -o %t-exe %t-obj
+# RUN: lld -flavor old-gnu -target arm64 -o %t-exe %t-obj
 # RUN: llvm-objdump -h %t-exe | FileCheck %s
 
 # CHECK: 8 .data         00000000 0000000000402000 DATA

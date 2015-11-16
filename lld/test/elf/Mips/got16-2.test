@@ -2,7 +2,7 @@
 # symbols when addresses of local data cross 64 KBytes border.
 
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t-exe %t-obj
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t-exe %t-obj
 # RUN: llvm-objdump -s %t-exe | FileCheck %s
 
 # CHECK:      Contents of section .got:

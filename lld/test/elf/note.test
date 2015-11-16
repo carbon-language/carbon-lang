@@ -1,6 +1,6 @@
 # Check that the linker is not ignoring input sections.
 # RUN: yaml2obj -format=elf %s > %t.obj
-# RUN: lld -flavor gnu -target x86_64 %t.obj -o %t.exe --noinhibit-exec
+# RUN: lld -flavor old-gnu -target x86_64 %t.obj -o %t.exe --noinhibit-exec
 # RUN: llvm-readobj -s %t.exe | FileCheck %s
 
 # CHECK: Section {

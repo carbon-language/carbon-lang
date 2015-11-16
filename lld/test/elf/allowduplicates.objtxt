@@ -1,12 +1,12 @@
-# RUN: lld -flavor gnu -target x86_64 --allow-multiple-definition %s \
+# RUN: lld -flavor old-gnu -target x86_64 --allow-multiple-definition %s \
 # RUN:     %p/Inputs/allowduplicates.objtxt \
 # RUN:     --output-filetype=yaml --noinhibit-exec | FileCheck %s
 #
-# RUN: not lld -flavor gnu -target x86_64 %s %p/Inputs/allowduplicates.objtxt \
+# RUN: not lld -flavor old-gnu -target x86_64 %s %p/Inputs/allowduplicates.objtxt \
 # RUN: --output-filetype=yaml \
 # RUN: --noinhibit-exec 2>&1 | FileCheck -check-prefix=ERROR %s
 #
-# RUN: lld -flavor gnu -target x86_64 -z muldefs %s \
+# RUN: lld -flavor old-gnu -target x86_64 -z muldefs %s \
 # RUN: %p/Inputs/allowduplicates.objtxt \
 # RUN: --noinhibit-exec --output-filetype=yaml | FileCheck %s
 

@@ -3,9 +3,9 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-crtbeginS.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-crtendS.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-obj.o
-# RUN: lld -flavor gnu -target mipsel -shared --output-filetype=yaml \
+# RUN: lld -flavor old-gnu -target mipsel -shared --output-filetype=yaml \
 # RUN:     %t-crtbeginS.o %t-obj.o %t-crtendS.o | FileCheck %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so \
 # RUN:     %t-crtbeginS.o %t-obj.o %t-crtendS.o
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=RAW %s
 

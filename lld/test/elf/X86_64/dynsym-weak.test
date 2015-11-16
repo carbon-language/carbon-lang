@@ -3,19 +3,19 @@
 # symbol as strong.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t.foo.o
-# RUN: lld -flavor gnu -target x86_64 -shared -o %t.so %t.foo.o
+# RUN: lld -flavor old-gnu -target x86_64 -shared -o %t.so %t.foo.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t.main.o
 #
 # Link executable file with strong symbol. Weak symbol is in the shared lib.
-# RUN: lld -flavor gnu -target x86_64 -e main -o %t1.exe %t.main.o %t.so
+# RUN: lld -flavor old-gnu -target x86_64 -e main -o %t1.exe %t.main.o %t.so
 # RUN: llvm-readobj -dyn-symbols %t1.exe | FileCheck -check-prefix=EXE %s
 #
 # Link executable file. Strong and weak symbol come from different object files.
-# RUN: lld -flavor gnu -target x86_64 -e main -o %t2.exe %t.main.o %t.foo.o
+# RUN: lld -flavor old-gnu -target x86_64 -e main -o %t2.exe %t.main.o %t.foo.o
 # RUN: llvm-readobj -dyn-symbols %t2.exe | FileCheck -check-prefix=OBJ %s
 #
 # Link shared library. Weak symbol is in the another shared lib.
-# RUN: lld -flavor gnu -target x86_64 -shared -o %t.res.so %t.main.o %t.so
+# RUN: lld -flavor old-gnu -target x86_64 -shared -o %t.res.so %t.main.o %t.so
 # RUN: llvm-readobj -dyn-symbols %t.res.so | FileCheck -check-prefix=SO %s
 
 # EXE:      Symbol {

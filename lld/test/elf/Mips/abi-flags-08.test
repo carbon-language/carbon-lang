@@ -4,11 +4,11 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-isa.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-ext.o
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-ases.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t1.so %t-isa.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t1.so %t-isa.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=ISA-ERR %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2.so %t-ext.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t2.so %t-ext.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=EXT-ERR %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t3.so %t-ases.o 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t3.so %t-ases.o 2>&1 \
 # RUN:   | FileCheck -check-prefix=ASE-ERR %s
 # RUN: llvm-readobj -mips-abi-flags %t1.so %t2.so %t3.so \
 # RUN:   | FileCheck -check-prefix=SEC %s

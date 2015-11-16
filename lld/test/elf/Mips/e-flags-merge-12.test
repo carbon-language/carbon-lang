@@ -3,7 +3,7 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-o32.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-n32.o
 
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so \
 # RUN:         %t-o32.o %t-n32.o 2>&1 | FileCheck %s
 
 # CHECK: Linking modules with incompatible ABI

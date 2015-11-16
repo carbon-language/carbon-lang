@@ -2,7 +2,7 @@
 # symbols if the symbols referenced by R_MIPS_32 relocation.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t.o
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=RAW %s
 # RUN: llvm-readobj -r %t.so | FileCheck -check-prefix=REL %s
 

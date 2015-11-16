@@ -3,7 +3,7 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-2008.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-legacy.o
 
-# RUN: not lld -flavor gnu -target mipsel -shared -o %t.so \
+# RUN: not lld -flavor old-gnu -target mipsel -shared -o %t.so \
 # RUN:         %t-2008.o %t-legacy.o 2>&1 | FileCheck %s
 
 # CHECK: Linking -mnan=2008 and -mnan=legacy modules

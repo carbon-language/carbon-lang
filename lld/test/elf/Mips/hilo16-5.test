@@ -2,9 +2,9 @@
 # there is orphaned R_MIPS_HI16 relocation.
 
 # RUN: yaml2obj -format=elf -o %t-so.o -docnum 1 %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-so.o
 # RUN: yaml2obj -format=elf -o %t-o.o -docnum 2 %s
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t.so 2>&1 \
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t-o.o %t.so 2>&1 \
 # RUN:   | FileCheck -check-prefix=DIAG %s
 # RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=DATA %s
 

@@ -6,8 +6,8 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-bar.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-foo.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-bar.so %t-bar.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-foo.so %t-foo.o %t-bar.so
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t-bar.so %t-bar.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t-foo.so %t-foo.o %t-bar.so
 # RUN: llvm-readobj -dt -dynamic-table %t-foo.so | FileCheck %s
 
 # CHECK:      DynamicSymbols [

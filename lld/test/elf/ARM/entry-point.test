@@ -1,6 +1,6 @@
 # 1. Check entry point address for ARM code - should be even.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-arm.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-arm.o -o %t-arm
 # RUN: llvm-readobj -file-headers %t-arm | FileCheck -check-prefix=ARM-ENTRY %s
 #
@@ -8,7 +8,7 @@
 
 # 2. Check entry point address for Thumb code - should be odd.
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-thm.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-thm.o -o %t-thm
 # RUN: llvm-readobj -file-headers %t-thm | FileCheck -check-prefix=THM-ENTRY %s
 #
@@ -16,7 +16,7 @@
 
 # 3. Check wrong entry point address align for ARM code.
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-arm-wrong.o
-# RUN: not lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: not lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-arm-wrong.o -o %t-arm-wrong 2> %t-error
 # FileCheck -check-prefix=ARM-WRONG %s < %t-error
 #

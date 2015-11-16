@@ -13,9 +13,9 @@
 #bar:
 #RUN: yaml2obj -format=elf -docnum 1 %s -o %t.group1a.o
 #RUN: yaml2obj -format=elf -docnum 2 %s -o %t.group1b.o
-#RUN: lld -flavor gnu -target x86_64 %t.group1a.o %t.group1b.o \
+#RUN: lld -flavor old-gnu -target x86_64 %t.group1a.o %t.group1b.o \
 #RUN: --noinhibit-exec --output-filetype=yaml -o %t2.out.yaml
-#RUN: lld -flavor gnu -target x86_64 %t.group1a.o %t.group1b.o \
+#RUN: lld -flavor old-gnu -target x86_64 %t.group1a.o %t.group1b.o \
 #RUN: --noinhibit-exec -o %t2.out
 #RUN: FileCheck %s -check-prefix=CHECKGROUP < %t2.out.yaml
 #RUN: llvm-readobj -sections %t2.out | FileCheck %s -check-prefix=CHECKGROUPSECTIONS

@@ -3,7 +3,7 @@
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t1.o %t2.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t1.o %t2.o
 # RUN: llvm-readobj -mips-abi-flags %t.so | FileCheck %s
 
 # CHECK: There is no .MIPS.abiflags section in the file.

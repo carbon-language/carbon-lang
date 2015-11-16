@@ -1,7 +1,7 @@
 # Check ELF Header for non-pic big-endian 64-bit executable file.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mips64 -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mips64 -o %t.exe %t.o
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
 
 # CHECK: Format: ELF64-mips

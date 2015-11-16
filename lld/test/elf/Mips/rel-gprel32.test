@@ -1,7 +1,7 @@
 # Check R_MIPS_GPREL32 relocation handling.
 #
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
+# RUN: lld -flavor old-gnu -target mipsel -o %t-exe %t-obj
 # RUN: llvm-readobj -symbols %t-exe | FileCheck -check-prefix=SYM %s
 # RUN: llvm-objdump -s %t-exe | FileCheck -check-prefix=SEC %s
 

@@ -9,11 +9,11 @@
 # XFAIL: *
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-1.so %t-so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t-1.so %t-so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t-1.so
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t-o.o %t-1.so
 # RUN: llvm-readobj -r %t.exe | FileCheck -check-prefix=EXE %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-2.so %t-o.o %t-1.so
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t-2.so %t-o.o %t-1.so
 # RUN: llvm-readobj -r %t-2.so | FileCheck -check-prefix=SO %s
 
 # EXE:      Relocations [

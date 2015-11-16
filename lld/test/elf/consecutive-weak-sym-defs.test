@@ -12,7 +12,7 @@
 #
 #RUN: yaml2obj -format=elf %p/Inputs/consecutive-weak-defs.o.yaml -o=%t1.o
 #RUN: yaml2obj -format=elf %p/Inputs/main-with-global-def.o.yaml -o=%t2.o
-#RUN: lld -flavor gnu -target x86_64 %t1.o %t2.o -e=main -o %t1
+#RUN: lld -flavor old-gnu -target x86_64 %t1.o %t2.o -e=main -o %t1
 #RUN: obj2yaml %t1 | FileCheck -check-prefix CHECKLAYOUT %s
 #
 # Check that the layout has not been changed:

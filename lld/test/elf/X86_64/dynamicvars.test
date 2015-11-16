@@ -2,7 +2,7 @@
 # values.
 
 #RUN: yaml2obj --format elf -docnum 1 %s -o %t.o
-#RUN: lld -flavor gnu  -target x86_64 -e main %t.o -o %t1 --noinhibit-exec
+#RUN: lld -flavor old-gnu  -target x86_64 -e main %t.o -o %t1 --noinhibit-exec
 #RUN: llvm-readobj -sections -symbols %t1 | FileCheck -check-prefix CHECKSYMS %s
 
 

@@ -1,6 +1,6 @@
 # ELF files can have mergeable strings which are global!, treat them as global
 # defined atoms
-RUN: lld -flavor gnu --output-filetype=yaml %p/Inputs/globalconst.o.x86-64 \
+RUN: lld -flavor old-gnu --output-filetype=yaml %p/Inputs/globalconst.o.x86-64 \
 RUN: --noinhibit-exec -target x86_64 | FileCheck -check-prefix=globalatoms %s
 
 globalatoms:  - name:            mystr

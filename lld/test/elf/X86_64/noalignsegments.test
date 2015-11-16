@@ -3,7 +3,7 @@
 
 # Build executable
 # RUN: yaml2obj -format=elf -docnum 1 %s -o %t.o
-# RUN: lld -flavor gnu -target x86_64 %t.o -o %t.exe -static \
+# RUN: lld -flavor old-gnu -target x86_64 %t.o -o %t.exe -static \
 # RUN: --no-align-segments --noinhibit-exec
 # RUN: llvm-readobj -program-headers %t.exe | FileCheck %s
 #

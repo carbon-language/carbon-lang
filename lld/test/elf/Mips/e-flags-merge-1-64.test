@@ -2,7 +2,7 @@
 # file has unsupported ASE flags.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-mips16.o
-# RUN: not lld -flavor gnu -target mips64el -e T -o %t.exe %t-mips16.o 2>&1 | \
+# RUN: not lld -flavor old-gnu -target mips64el -e T -o %t.exe %t-mips16.o 2>&1 | \
 # RUN:   FileCheck -check-prefix=MIPS16 %s
 
 # MIPS16: Unsupported extension: MIPS16

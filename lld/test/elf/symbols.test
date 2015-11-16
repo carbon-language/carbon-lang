@@ -14,9 +14,9 @@
 #}
 #
 
-RUN: lld -flavor gnu  -target i386 -e main %p/Inputs/writersyms.o -o %t1
+RUN: lld -flavor old-gnu  -target i386 -e main %p/Inputs/writersyms.o -o %t1
 RUN: llvm-nm -n %t1 | FileCheck -check-prefix CHECKSYMS %s
-RUN: lld -flavor gnu -shared -target i386 -e main %p/Inputs/writersyms.o -o %t1
+RUN: lld -flavor old-gnu -shared -target i386 -e main %p/Inputs/writersyms.o -o %t1
 RUN: llvm-nm -n %t1 | FileCheck -check-prefix CHECKSHAREDSYMS %s
 
 CHECKSYMS:  {{[0-9a-f]+}} a 1.c

@@ -1,7 +1,7 @@
 # Check program interpreter setup in case of N32 ABI.
 
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -o %t.exe %t.o
+# RUN: lld -flavor old-gnu -target mipsel -o %t.exe %t.o
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK: Contents of section .interp:

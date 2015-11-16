@@ -1,5 +1,5 @@
 # RUN: yaml2obj -format=elf %s > %t.obj
-# RUN: lld -flavor gnu -target amdgcn--hsa %t.obj -o %t.exe --noinhibit-exec
+# RUN: lld -flavor old-gnu -target amdgcn--hsa %t.obj -o %t.exe --noinhibit-exec
 # RUN: llvm-readobj -h -program-headers -s -symbols %t.exe | FileCheck %s
 
 # CHECK: ElfHeader {

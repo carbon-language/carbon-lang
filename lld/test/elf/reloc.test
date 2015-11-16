@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target i386 --merge-strings -r --output-filetype=yaml \
+RUN: lld -flavor old-gnu -target i386 --merge-strings -r --output-filetype=yaml \
 RUN:   %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
 
 ELF-i386: defined-atoms:

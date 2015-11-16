@@ -3,7 +3,7 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-32.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-64.o
 
-# RUN: not lld -flavor gnu -target mips64el -shared -o %t.so \
+# RUN: not lld -flavor old-gnu -target mips64el -shared -o %t.so \
 # RUN:         %t-32.o %t-64.o 2>&1 | FileCheck %s
 
 # CHECK: ELF64 expected, but got ELF32

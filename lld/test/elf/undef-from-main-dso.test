@@ -1,8 +1,8 @@
-RUN: lld -flavor gnu -target x86_64 -e main -o %t -L%p/Inputs \
+RUN: lld -flavor old-gnu -target x86_64 -e main -o %t -L%p/Inputs \
 RUN:   %p/Inputs/undef.o -lundef
 RUN: llvm-readobj -relocations -symbols -dyn-symbols %t | FileCheck %s
 
-RUN: lld -flavor gnu -target x86_64 -e main -o %t -L%p/Inputs \
+RUN: lld -flavor old-gnu -target x86_64 -e main -o %t -L%p/Inputs \
 RUN:   %p/Inputs/undef-pc32.o -lundef
 RUN: llvm-readobj -relocations -symbols -dyn-symbols %t | FileCheck %s
 

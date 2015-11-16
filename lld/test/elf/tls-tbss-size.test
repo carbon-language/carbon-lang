@@ -22,7 +22,7 @@
 
 #RUN: yaml2obj -format=elf -o=%t-t1.o %p/Inputs/tls-tbss-size.yaml
 #RUN: yaml2obj -format=elf -o=%t-t0.o %s
-#RUN: lld -flavor gnu -target x86_64-linux --noinhibit-exec -o %t.exe %t-t0.o %t-t1.o
+#RUN: lld -flavor old-gnu -target x86_64-linux --noinhibit-exec -o %t.exe %t-t0.o %t-t1.o
 #RUN: llvm-readobj --sections %t.exe | FileCheck %s
                                           
 #CHECK: Sections [

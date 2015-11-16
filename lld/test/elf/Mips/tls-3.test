@@ -4,13 +4,13 @@
 
 # Create a shared library with thread symbol D1.
 # RUN: yaml2obj -format=elf -docnum 1 -o %t-so.o %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t-so.o
 
 # Create executable file linked using two object files and the shared library.
 # The object files defines thread symbols D0 and D2.
 # RUN: yaml2obj -format=elf -docnum 2 -o %t-o1.o %s
 # RUN: yaml2obj -format=elf -docnum 3 -o %t-o2.o %s
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o1.o %t-o2.o %t.so
+# RUN: lld -flavor old-gnu -target mipsel -e T0 -o %t.exe %t-o1.o %t-o2.o %t.so
 
 # Check dynamic relocations and GOT in the executable file.
 # RUN: llvm-readobj -r %t.exe | FileCheck -check-prefix=REL %s

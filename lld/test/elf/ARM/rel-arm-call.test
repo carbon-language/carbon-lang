@@ -1,6 +1,6 @@
 # Check handling of R_ARM_CALL relocation.
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-o.o
-# RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 
@@ -14,7 +14,7 @@
 # CHECK: 00400088 g     F .text  {{[0-9a-f]+}} main
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
-# RUN: not lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: not lld -flavor old-gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t 2> %t-error
 # RUN: FileCheck -check-prefix=OVERFLOW %s < %t-error
 

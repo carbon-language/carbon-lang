@@ -4,7 +4,7 @@
 # .rld_map section, and __RLD_MAP symbol.
 
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %t.o
-# RUN: lld -flavor gnu -target mips %t.o -o %t.exe
+# RUN: lld -flavor old-gnu -target mips %t.o -o %t.exe
 # RUN: llvm-readobj -dynamic-table -s -st %t.exe \
 # RUN:   | FileCheck -check-prefix=EXE-DYN %s
 
@@ -28,12 +28,12 @@
 # EXE-DYN: 0x70000016  MIPS_RLD_MAP      0x[[ADDR]]
 # EXE-DYN: 0x70000035  MIPS_RLD_MAP_REL  0x1E48
 
-# RUN: lld -flavor gnu -target mips -static %t.o -o %t.exe
+# RUN: lld -flavor old-gnu -target mips -static %t.o -o %t.exe
 # RUN: llvm-nm -just-symbol-name %t.exe | FileCheck -check-prefix=EXE-STATIC %s
 
 # EXE-STATIC-NOT: __RLD_MAP
 
-# RUN: lld -flavor gnu -target mips -shared %t.o -o %t.so
+# RUN: lld -flavor old-gnu -target mips -shared %t.o -o %t.so
 # RUN: llvm-nm -just-symbol-name %t.so | FileCheck -check-prefix=DYNLIB %s
 
 # DYNLIB-NOT: __RLD_MAP

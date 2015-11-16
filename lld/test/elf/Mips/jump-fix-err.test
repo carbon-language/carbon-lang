@@ -2,7 +2,7 @@
 # of replacing an unknown unstruction by jalx.
 
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: not lld -flavor gnu -target mipsel -o %t-exe %t-obj 2>&1 | FileCheck %s
+# RUN: not lld -flavor old-gnu -target mipsel -o %t-exe %t-obj 2>&1 | FileCheck %s
 
 # CHECK: Unsupported jump opcode (0x0) for ISA modes cross call
 

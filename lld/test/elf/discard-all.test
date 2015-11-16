@@ -1,7 +1,7 @@
 # Test that -x/--discard all works.
 #
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu -target x86_64 %t.o -e=main -x -o %t1
+#RUN: lld -flavor old-gnu -target x86_64 %t.o -e=main -x -o %t1
 #RUN: llvm-objdump -t %t1 | FileCheck %s
 
 #CHECK-NOT: 0000000000400210 l F .text 00000009 local

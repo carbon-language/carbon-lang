@@ -2,7 +2,7 @@
 # relocations for the _gp_disp symbol.
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so %t.o
 # RUN: llvm-objdump -s -t %t.so | FileCheck %s
 
 # CHECK:      Contents of section .text:

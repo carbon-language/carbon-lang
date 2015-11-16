@@ -3,7 +3,7 @@
 # corresponds to the the .init_array/.fini_array sections
 # in the output ELF.
 
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/initfini.o  \
+RUN: lld -flavor old-gnu -target x86_64-linux %p/Inputs/initfini.o  \
 RUN: --noinhibit-exec --output-filetype=yaml -o %t
 RUN: FileCheck %s < %t
 

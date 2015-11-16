@@ -5,7 +5,7 @@
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-m32.o
 # RUN: yaml2obj -format=elf -docnum 4 %s > %t-m32r2.o
 
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so \
+# RUN: lld -flavor old-gnu -target mipsel -shared -o %t.so \
 # RUN:     %t-m32.o %t-m2.o %t-m32r2.o %t-m1.o
 # RUN: llvm-readobj -file-headers %t.so | FileCheck %s
 
