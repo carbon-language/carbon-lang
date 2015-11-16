@@ -61,13 +61,13 @@ void InitializeFlags(Flags *f, const char *env) {
     CommonFlags cf;
     cf.CopyFrom(*common_flags());
     cf.allow_addr2line = true;
-#ifdef SANITIZER_GO
-    // Does not work as expected for Go: runtime handles SIGABRT and crashes.
-    cf.abort_on_error = false;
-    // Go does not have mutexes.
-#else
-    cf.detect_deadlocks = true;
-#endif
+    if (kGoMode) {
+      // Does not work as expected for Go: runtime handles SIGABRT and crashes.
+      cf.abort_on_error = false;
+      // Go does not have mutexes.
+    } else {
+      cf.detect_deadlocks = true;
+    }
     cf.print_suppressions = false;
     cf.stack_trace_format = "    #%n %f %S %M";
     cf.exitcode = 66;
