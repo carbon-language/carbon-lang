@@ -194,24 +194,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::BLENDPDrri:
   case X86::VBLENDPDrri:
+  case X86::VBLENDPDYrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::BLENDPDrmi:
   case X86::VBLENDPDrmi:
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v2f64,
-                      MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                      ShuffleMask);
-    Src1Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    break;
-
-  case X86::VBLENDPDYrri:
-    Src2Name = getRegName(MI->getOperand(2).getReg());
-    // FALL THROUGH.
   case X86::VBLENDPDYrmi:
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v4f64,
+      DecodeBLENDMask(getRegOperandVectorVT(MI, MVT::f64, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
                       ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
@@ -220,24 +210,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::BLENDPSrri:
   case X86::VBLENDPSrri:
+  case X86::VBLENDPSYrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::BLENDPSrmi:
   case X86::VBLENDPSrmi:
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v4f32,
-                      MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                      ShuffleMask);
-    Src1Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    break;
-
-  case X86::VBLENDPSYrri:
-    Src2Name = getRegName(MI->getOperand(2).getReg());
-    // FALL THROUGH.
   case X86::VBLENDPSYrmi:
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v8f32,
+      DecodeBLENDMask(getRegOperandVectorVT(MI, MVT::f32, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
                       ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
@@ -246,24 +226,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::PBLENDWrri:
   case X86::VPBLENDWrri:
+  case X86::VPBLENDWYrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::PBLENDWrmi:
   case X86::VPBLENDWrmi:
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v8i16,
-                      MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                      ShuffleMask);
-    Src1Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    break;
-
-  case X86::VPBLENDWYrri:
-    Src2Name = getRegName(MI->getOperand(2).getReg());
-    // FALL THROUGH.
   case X86::VPBLENDWYrmi:
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v16i16,
+      DecodeBLENDMask(getRegOperandVectorVT(MI, MVT::i16, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
                       ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
@@ -271,23 +241,13 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     break;
 
   case X86::VPBLENDDrri:
-    Src2Name = getRegName(MI->getOperand(2).getReg());
-    // FALL THROUGH.
-  case X86::VPBLENDDrmi:
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v4i32,
-                      MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                      ShuffleMask);
-    Src1Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    break;
-
   case X86::VPBLENDDYrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
+  case X86::VPBLENDDrmi:
   case X86::VPBLENDDYrmi:
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodeBLENDMask(MVT::v8i32,
+      DecodeBLENDMask(getRegOperandVectorVT(MI, MVT::i32, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
                       ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
