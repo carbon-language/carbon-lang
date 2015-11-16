@@ -9040,7 +9040,7 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
 
   Triple T;
   MCSubtargetInfo &STI = copySTI();
-  STI.setDefaultFeatures(T.getARMCPUForArch(Arch));
+  STI.setDefaultFeatures("", ("+" + ARM::getArchName(ID)).str());
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   getTargetStreamer().emitArch(ID);
@@ -9173,7 +9173,7 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
   }
 
   MCSubtargetInfo &STI = copySTI();
-  STI.setDefaultFeatures(CPU);
+  STI.setDefaultFeatures(CPU, "");
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   return false;
