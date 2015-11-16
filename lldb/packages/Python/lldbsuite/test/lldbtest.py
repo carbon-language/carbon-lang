@@ -40,6 +40,7 @@ import collections
 from distutils.version import LooseVersion
 import gc
 import glob
+import inspect
 import os, sys, traceback
 import os.path
 import re
@@ -1109,7 +1110,13 @@ def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, ar
                 debug_info_passes and
                 swig_version_passes and
                 py_version_passes)
-    return skipTestIfFn(fn, bugnumber, skipReason="skipping because os:%s compiler: %s %s arch: %s debug info: %s"%(oslist, compiler, compiler_version, archs, debug_info))
+
+    local_vars = locals()
+    args = [x for x in inspect.getargspec(skipIf).args]
+    arg_vals = [eval(x, globals(), local_vars) for x in args]
+    args = [x for x in zip(args, arg_vals) if x[1] is not None]
+    reasons = ['%s=%s' % (x, str(y)) for (x,y) in args]
+    return skipTestIfFn(fn, bugnumber, skipReason='skipping because ' + ' && '.join(reasons))
 
 def skipIfDebugInfo(bugnumber=None, debug_info=None):
     return skipIf(bugnumber=bugnumber, debug_info=debug_info)
