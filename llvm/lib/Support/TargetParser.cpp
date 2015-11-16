@@ -27,7 +27,7 @@ namespace {
 // features they correspond to (use getFPUFeatures).
 // FIXME: TableGen this.
 // The entries must appear in the order listed in ARM::FPUKind for correct indexing
-struct {
+static const struct {
   const char *NameCStr;
   size_t NameLength;
   ARM::FPUKind ID;
@@ -50,7 +50,7 @@ struct {
 // of the triples and are not conforming with their official names.
 // Check to see if the expectation should be changed.
 // FIXME: TableGen this.
-struct {
+static const struct {
   const char *NameCStr;
   size_t NameLength;
   ARM::ArchKind ID;
@@ -78,7 +78,7 @@ struct {
 
 // List of Arch Extension names.
 // FIXME: TableGen this.
-struct {
+static const struct {
   const char *NameCStr;
   size_t NameLength;
   unsigned ID;
@@ -92,7 +92,7 @@ struct {
 // List of HWDiv names (use getHWDivSynonym) and which architectural
 // features they correspond to (use getHWDivFeatures).
 // FIXME: TableGen this.
-struct {
+static const struct {
   const char *NameCStr;
   size_t NameLength;
   unsigned ID;
@@ -108,7 +108,7 @@ struct {
 // When finding the Arch for a CPU, first-found prevails. Sort them accordingly.
 // When this becomes table-generated, we'd probably need two tables.
 // FIXME: TableGen this.
-struct {
+static const struct {
   const char *NameCStr;
   size_t NameLength;
   ARM::ArchKind ArchID;
@@ -161,6 +161,17 @@ unsigned llvm::ARM::getDefaultFPU(StringRef CPU, unsigned ArchKind) {
     .Case(NAME, DEFAULT_FPU)
 #include "llvm/Support/ARMTargetParser.def"
     .Default(ARM::FK_INVALID);
+}
+
+unsigned llvm::ARM::getDefaultExtensions(StringRef CPU, unsigned ArchKind) {
+  if (CPU == "generic")
+    return ARCHNames[ArchKind].ArchBaseExtensions;
+
+  return StringSwitch<unsigned>(CPU)
+#define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT, DEFAULT_EXT) \
+    .Case(NAME, ARCHNames[ID].ArchBaseExtensions | DEFAULT_EXT)
+#include "llvm/Support/ARMTargetParser.def"
+    .Default(ARM::AEK_INVALID);
 }
 
 bool llvm::ARM::getHWDivFeatures(unsigned HWDivKind,
@@ -321,17 +332,6 @@ StringRef llvm::ARM::getHWDivName(unsigned HWDivKind) {
       return D.getName();
   }
   return StringRef();
-}
-
-unsigned llvm::ARM::getDefaultExtensions(StringRef CPU, unsigned ArchKind) {
-  if (CPU == "generic")
-    return ARCHNames[ArchKind].ArchBaseExtensions;
-
-  for (const auto C : CPUNames) {
-    if (CPU == C.getName())
-      return (ARCHNames[C.ArchID].ArchBaseExtensions | C.DefaultExtensions);
-  }
-  return ARM::AEK_INVALID;
 }
 
 StringRef llvm::ARM::getDefaultCPU(StringRef Arch) {
