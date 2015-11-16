@@ -21,7 +21,7 @@ using namespace llvm;
 using namespace lld;
 
 TEST(UniversalDriver, flavor) {
-  const char *args[] = { "gnu-ld" };
+  const char *args[] = {"old-ld"};
 
   std::string diags;
   raw_string_ostream os(diags);
