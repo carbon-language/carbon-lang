@@ -59,6 +59,7 @@ struct {
   const char *SubArchCStr;
   size_t SubArchLength;
   ARMBuildAttrs::CPUArch ArchAttr; // Arch ID in build attributes.
+  unsigned DefaultFPU;
   unsigned ArchBaseExtensions;
 
   StringRef getName() const { return StringRef(NameCStr, NameLength); }
@@ -69,9 +70,9 @@ struct {
   // Sub-Arch name.
   StringRef getSubArch() const { return StringRef(SubArchCStr, SubArchLength); }
 } ARCHNames[] = {
-#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR, ARCH_BASE_EXT)       \
+#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR, ARCH_FPU, ARCH_BASE_EXT)       \
   {NAME, sizeof(NAME) - 1, ID, CPU_ATTR, sizeof(CPU_ATTR) - 1, SUB_ARCH,       \
-   sizeof(SUB_ARCH) - 1, ARCH_ATTR, ARCH_BASE_EXT},
+   sizeof(SUB_ARCH) - 1, ARCH_ATTR, ARCH_FPU, ARCH_BASE_EXT},
 #include "llvm/Support/ARMTargetParser.def"
 };
 
@@ -151,7 +152,10 @@ unsigned llvm::ARM::getFPURestriction(unsigned FPUKind) {
   return FPUNames[FPUKind].Restriction;
 }
 
-unsigned llvm::ARM::getDefaultFPU(StringRef CPU) {
+unsigned llvm::ARM::getDefaultFPU(StringRef CPU, unsigned ArchKind) {
+  if (CPU == "generic")
+    return ARCHNames[ArchKind].DefaultFPU;
+
   return StringSwitch<unsigned>(CPU)
 #define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT, DEFAULT_EXT) \
     .Case(NAME, DEFAULT_FPU)
@@ -319,7 +323,10 @@ StringRef llvm::ARM::getHWDivName(unsigned HWDivKind) {
   return StringRef();
 }
 
-unsigned llvm::ARM::getDefaultExtensions(StringRef CPU) {
+unsigned llvm::ARM::getDefaultExtensions(StringRef CPU, unsigned ArchKind) {
+  if (CPU == "generic")
+    return ARCHNames[ArchKind].ArchBaseExtensions;
+
   for (const auto C : CPUNames) {
     if (CPU == C.getName())
       return (ARCHNames[C.ArchID].ArchBaseExtensions | C.DefaultExtensions);
@@ -337,7 +344,9 @@ StringRef llvm::ARM::getDefaultCPU(StringRef Arch) {
     if (CPU.ArchID == AK && CPU.Default)
       return CPU.getName();
   }
-  return StringRef();
+
+  // If we can't find a default then target the architecture instead
+  return "generic";
 }
 
 // ======================================================= //
