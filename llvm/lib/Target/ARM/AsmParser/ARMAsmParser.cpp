@@ -8801,7 +8801,7 @@ bool ARMAsmParser::parseLiteralValues(unsigned Size, SMLoc L) {
         return false;
       }
 
-      getParser().getStreamer().EmitValue(Value, Size);
+      getParser().getStreamer().EmitValue(Value, Size, L);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;

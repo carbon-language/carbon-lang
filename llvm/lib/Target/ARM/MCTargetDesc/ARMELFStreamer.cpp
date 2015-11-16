@@ -513,7 +513,7 @@ public:
         getContext().reportFatalError(Loc, "relocated expression must be 32-bit");
 
     EmitDataMappingSymbol();
-    MCELFStreamer::EmitValueImpl(Value, Size);
+    MCELFStreamer::EmitValueImpl(Value, Size, Loc);
   }
 
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override {

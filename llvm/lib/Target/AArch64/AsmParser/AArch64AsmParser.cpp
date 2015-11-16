@@ -4131,7 +4131,7 @@ bool AArch64AsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
       if (getParser().parseExpression(Value))
         return true;
 
-      getParser().getStreamer().EmitValue(Value, Size);
+      getParser().getStreamer().EmitValue(Value, Size, L);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
