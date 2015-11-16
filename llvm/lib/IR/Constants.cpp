@@ -1161,8 +1161,8 @@ Constant *ConstantVector::getSplat(unsigned NumElts, Constant *V) {
 ConstantTokenNone *ConstantTokenNone::get(LLVMContext &Context) {
   LLVMContextImpl *pImpl = Context.pImpl;
   if (!pImpl->TheNoneToken)
-    pImpl->TheNoneToken = new ConstantTokenNone(Context);
-  return pImpl->TheNoneToken;
+    pImpl->TheNoneToken.reset(new ConstantTokenNone(Context));
+  return pImpl->TheNoneToken.get();
 }
 
 /// Remove the constant from the constant table.
