@@ -6224,7 +6224,7 @@ void amdgpu::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   std::string Linker = getToolChain().GetProgramPath(getShortName());
   ArgStringList CmdArgs;
   CmdArgs.push_back("-flavor");
-  CmdArgs.push_back("gnu");
+  CmdArgs.push_back("old-gnu");
   CmdArgs.push_back("-target");
   CmdArgs.push_back(Args.MakeArgString(getToolChain().getTripleString()));
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
@@ -8477,7 +8477,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (llvm::sys::path::filename(ToolChain.Linker) == "lld") {
     CmdArgs.push_back("-flavor");
-    CmdArgs.push_back("gnu");
+    CmdArgs.push_back("old-gnu");
     CmdArgs.push_back("-target");
     CmdArgs.push_back(Args.MakeArgString(getToolChain().getTripleString()));
   }
@@ -9467,7 +9467,7 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   StringRef LinkerName = Args.getLastArgValue(options::OPT_fuse_ld_EQ, "ld");
   if (LinkerName.equals_lower("lld")) {
     CmdArgs.push_back("-flavor");
-    CmdArgs.push_back("gnu");
+    CmdArgs.push_back("old-gnu");
   } else if (!LinkerName.equals_lower("ld")) {
     D.Diag(diag::err_drv_unsupported_linker) << LinkerName;
   }
