@@ -3,9 +3,8 @@
 // Test case for longjumping out of signal handler:
 // https://code.google.com/p/thread-sanitizer/issues/detail?id=75
 
-// Longjmp assembly has not been implemented for mips64 or aarch64 yet
+// Longjmp assembly has not been implemented for mips64 yet
 // XFAIL: mips64
-// XFAIL: aarch64
 
 #include <setjmp.h>
 #include <signal.h>

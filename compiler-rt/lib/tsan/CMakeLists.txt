@@ -121,6 +121,11 @@ else()
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
         COMMENT "Checking TSan Go runtime..."
         VERBATIM)
+    elseif(arch STREQUAL "aarch64")
+      set(TSAN_ASM_SOURCES rtl/tsan_rtl_aarch64.S)
+      # Pass ASM file directly to the C++ compiler.
+      set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+        LANGUAGE C)
     else()
       set(TSAN_ASM_SOURCES)
     endif()

@@ -23,8 +23,11 @@
 # define CFI_STARTPROC .cfi_startproc
 # define CFI_ENDPROC .cfi_endproc
 # define CFI_ADJUST_CFA_OFFSET(n) .cfi_adjust_cfa_offset n
+# define CFI_DEF_CFA_OFFSET(n) .cfi_def_cfa_offset n
 # define CFI_REL_OFFSET(reg, n) .cfi_rel_offset reg, n
+# define CFI_OFFSET(reg, n) .cfi_offset reg, n
 # define CFI_DEF_CFA_REGISTER(reg) .cfi_def_cfa_register reg
+# define CFI_DEF_CFA(reg, n) .cfi_def_cfa reg, n
 # define CFI_RESTORE(reg) .cfi_restore reg
 
 #else  // No CFI
@@ -32,8 +35,11 @@
 # define CFI_STARTPROC
 # define CFI_ENDPROC
 # define CFI_ADJUST_CFA_OFFSET(n)
+# define CFI_DEF_CFA_OFFSET(n)
 # define CFI_REL_OFFSET(reg, n)
+# define CFI_OFFSET(reg, n)
 # define CFI_DEF_CFA_REGISTER(reg)
+# define CFI_DEF_CFA(reg, n)
 # define CFI_RESTORE(reg)
 #endif
 
