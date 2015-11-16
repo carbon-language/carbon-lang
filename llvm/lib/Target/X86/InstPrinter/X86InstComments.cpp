@@ -363,64 +363,38 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::PSLLDQri:
   case X86::VPSLLDQri:
-    Src1Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodePSLLDQMask(MVT::v16i8,
-                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                       ShuffleMask);
-    break;
-
   case X86::VPSLLDQYri:
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodePSLLDQMask(MVT::v32i8,
+      DecodePSLLDQMask(getRegOperandVectorVT(MI, MVT::i8, 0),
                        MI->getOperand(MI->getNumOperands() - 1).getImm(),
                        ShuffleMask);
     break;
 
   case X86::PSRLDQri:
   case X86::VPSRLDQri:
-    Src1Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodePSRLDQMask(MVT::v16i8,
-                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                       ShuffleMask);
-    break;
-
   case X86::VPSRLDQYri:
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodePSRLDQMask(MVT::v32i8,
+      DecodePSRLDQMask(getRegOperandVectorVT(MI, MVT::i8, 0),
                        MI->getOperand(MI->getNumOperands() - 1).getImm(),
                        ShuffleMask);
     break;
 
   case X86::PALIGNR128rr:
   case X86::VPALIGNR128rr:
+  case X86::VPALIGNR256rr:
     Src1Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::PALIGNR128rm:
   case X86::VPALIGNR128rm:
-    Src2Name = getRegName(MI->getOperand(1).getReg());
-    DestName = getRegName(MI->getOperand(0).getReg());
-    if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodePALIGNRMask(MVT::v16i8,
-                        MI->getOperand(MI->getNumOperands() - 1).getImm(),
-                        ShuffleMask);
-    break;
-
-  case X86::VPALIGNR256rr:
-    Src1Name = getRegName(MI->getOperand(2).getReg());
-    // FALL THROUGH.
   case X86::VPALIGNR256rm:
     Src2Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
-      DecodePALIGNRMask(MVT::v32i8,
+      DecodePALIGNRMask(getRegOperandVectorVT(MI, MVT::i8, 0),
                         MI->getOperand(MI->getNumOperands() - 1).getImm(),
                         ShuffleMask);
     break;
