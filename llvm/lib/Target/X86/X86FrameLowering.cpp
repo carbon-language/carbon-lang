@@ -2568,8 +2568,7 @@ bool X86FrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {
   // not taking a chance at messing with them.
   // I.e., unless this block is already an exit block, we can't use
   // it as an epilogue.
-  if (MBB.getParent()->getSubtarget<X86Subtarget>().isTargetWin64() &&
-      !MBB.succ_empty() && !MBB.isReturnBlock())
+  if (STI.isTargetWin64() && !MBB.succ_empty() && !MBB.isReturnBlock())
     return false;
 
   if (canUseLEAForSPInEpilogue(*MBB.getParent()))
