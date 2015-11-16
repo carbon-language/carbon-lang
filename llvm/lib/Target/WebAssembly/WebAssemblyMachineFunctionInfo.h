@@ -28,7 +28,6 @@ class WebAssemblyFunctionInfo final : public MachineFunctionInfo {
   MachineFunction &MF;
 
   std::vector<MVT> Params;
-  std::vector<MVT> Results;
 
   /// A mapping from CodeGen vreg index to WebAssembly register number.
   std::vector<unsigned> WARegs;
@@ -47,9 +46,6 @@ public:
 
   void addParam(MVT VT) { Params.push_back(VT); }
   const std::vector<MVT> &getParams() const { return Params; }
-
-  void addResult(MVT VT) { Results.push_back(VT); }
-  const std::vector<MVT> &getResults() const { return Results; }
 
   static const unsigned UnusedReg = -1u;
 
