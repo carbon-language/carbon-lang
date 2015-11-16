@@ -53,14 +53,6 @@ protected:
 template<typename UnitType>
 class DWARFUnitSection final : public SmallVector<std::unique_ptr<UnitType>, 1>,
                                public DWARFUnitSectionBase {
-
-  struct UnitOffsetComparator {
-    bool operator()(uint32_t LHS,
-                    const std::unique_ptr<UnitType> &RHS) const {
-      return LHS < RHS->getNextUnitOffset();
-    }
-  };
-
   bool Parsed;
 
 public:
@@ -73,8 +65,11 @@ public:
   typedef llvm::iterator_range<typename UnitVector::iterator> iterator_range;
 
   UnitType *getUnitForOffset(uint32_t Offset) const override {
-    auto *CU = std::upper_bound(this->begin(), this->end(), Offset,
-                                UnitOffsetComparator());
+    auto *CU = std::upper_bound(
+        this->begin(), this->end(), Offset,
+        [](uint32_t LHS, const std::unique_ptr<UnitType> &RHS) {
+          return LHS < RHS->getNextUnitOffset();
+        });
     if (CU != this->end())
       return CU->get();
     return nullptr;
