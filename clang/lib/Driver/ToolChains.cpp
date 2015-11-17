@@ -4104,6 +4104,15 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   }
 }
 
+void Linux::AddCudaIncludeArgs(const ArgList &DriverArgs,
+                               ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nocudainc))
+    return;
+
+  if (CudaInstallation.isValid())
+    addSystemInclude(DriverArgs, CC1Args, CudaInstallation.getIncludePath());
+}
+
 bool Linux::isPIEDefault() const { return getSanitizerArgs().requiresPIE(); }
 
 SanitizerMask Linux::getSupportedSanitizers() const {
