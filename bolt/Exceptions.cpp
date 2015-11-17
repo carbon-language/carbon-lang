@@ -340,8 +340,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
 
     // Mark all call instructions in the range.
     auto II = Instructions.find(Start);
-    assert(II != Instructions.end() &&
-           "exception range not pointing to instruction");
+    auto IE = Instructions.end();
+    assert(II != IE && "exception range not pointing to an instruction");
     do {
       auto &Instruction = II->second;
       if (BC.MIA->isCall(Instruction)) {
@@ -356,7 +356,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         Instruction.addOperand(MCOperand::createImm(ActionEntry));
       }
       ++II;
-    } while (II->first < Start + Length);
+    } while (II != IE && II->first < Start + Length);
 
     if (ActionEntry != 0) {
       auto printType = [&] (int Index, raw_ostream &OS) {

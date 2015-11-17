@@ -544,7 +544,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
           (SectionContents.data()) + FunctionOffset,
         Function.getSize());
 
-    if (!Function.disassemble(FunctionData))
+    if (!Function.disassemble(FunctionData) || !Function.isSimple())
       continue;
 
     // Fill in CFI information for this function
