@@ -469,7 +469,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
 
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0), likewise for vector.
   if (DestTy->getScalarSizeInBits() == 1) {
-    Constant *One = ConstantInt::get(Src->getType(), 1);
+    Constant *One = ConstantInt::get(SrcTy, 1);
     Src = Builder->CreateAnd(Src, One);
     Value *Zero = Constant::getNullValue(Src->getType());
     return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
@@ -488,14 +488,14 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     // If the shift amount is larger than the size of A, then the result is
     // known to be zero because all the input bits got shifted out.
     if (Cst->getZExtValue() >= ASize)
-      return ReplaceInstUsesWith(CI, Constant::getNullValue(CI.getType()));
+      return ReplaceInstUsesWith(CI, Constant::getNullValue(DestTy));
 
     // Since we're doing an lshr and a zero extend, and know that the shift
     // amount is smaller than ASize, it is always safe to do the shift in A's
     // type, then zero extend or truncate to the result.
     Value *Shift = Builder->CreateLShr(A, Cst->getZExtValue());
     Shift->takeName(Src);
-    return CastInst::CreateIntegerCast(Shift, CI.getType(), false);
+    return CastInst::CreateIntegerCast(Shift, DestTy, false);
   }
 
   // Transform trunc(lshr (sext A), Cst) to ashr A, Cst to eliminate type
@@ -520,12 +520,12 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
 
   // Transform "trunc (and X, cst)" -> "and (trunc X), cst" so long as the dest
   // type isn't non-native.
-  if (Src->hasOneUse() && isa<IntegerType>(Src->getType()) &&
-      ShouldChangeType(Src->getType(), CI.getType()) &&
+  if (Src->hasOneUse() && isa<IntegerType>(SrcTy) &&
+      ShouldChangeType(SrcTy, DestTy) &&
       match(Src, m_And(m_Value(A), m_ConstantInt(Cst)))) {
-    Value *NewTrunc = Builder->CreateTrunc(A, CI.getType(), A->getName()+".tr");
+    Value *NewTrunc = Builder->CreateTrunc(A, DestTy, A->getName() + ".tr");
     return BinaryOperator::CreateAnd(NewTrunc,
-                                     ConstantExpr::getTrunc(Cst, CI.getType()));
+                                     ConstantExpr::getTrunc(Cst, DestTy));
   }
 
   return nullptr;
