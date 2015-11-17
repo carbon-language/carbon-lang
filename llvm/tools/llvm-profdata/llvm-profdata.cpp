@@ -75,9 +75,13 @@ static void handleMergeWriterError(std::error_code &Error,
     StringRef Hint = "";
     if (Error.category() == instrprof_category()) {
       instrprof_error instrError = static_cast<instrprof_error>(Error.value());
-      if (instrError == instrprof_error::count_mismatch) {
+      switch (instrError) {
+      case instrprof_error::hash_mismatch:
+      case instrprof_error::count_mismatch:
+      case instrprof_error::value_site_count_mismatch:
         Hint = "Make sure that all profile data to be merged is generated " \
                "from the same binary.";
+        break;
       }
     }
 
