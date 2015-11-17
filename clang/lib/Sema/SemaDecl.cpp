@@ -1834,8 +1834,7 @@ static void filterNonConflictingPreviousTypedefDecls(Sema &S,
         continue;
     }
 
-    if (!Old->isExternallyVisible())
-      Filter.erase();
+    Filter.erase();
   }
 
   Filter.done();
@@ -3344,6 +3343,9 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   if (New->isInvalidDecl())
     return;
 
+  if (!shouldLinkPossiblyHiddenDecl(Previous, New))
+    return;
+
   VarTemplateDecl *NewTemplate = New->getDescribedVarTemplate();
 
   // Verify the old decl was also a variable or variable template.
@@ -3374,9 +3376,6 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
          diag::note_previous_definition);
     return New->setInvalidDecl();
   }
-
-  if (!shouldLinkPossiblyHiddenDecl(Old, New))
-    return;
 
   // Ensure the template parameters are compatible.
   if (NewTemplate &&
