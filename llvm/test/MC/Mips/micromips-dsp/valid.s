@@ -47,3 +47,8 @@
   shra_r.w $3, $4, 5           # CHECK: shra_r.w $3, $4, 5      # encoding: [0x00,0x64,0x2a,0xf5]
   shrl.qb $3, $4, 5            # CHECK: shrl.qb $3, $4, 5       # encoding: [0x00,0x64,0xb8,0x7c]
   shrlv.qb $3, $4, $5          # CHECK: shrlv.qb $3, $4, $5     # encoding: [0x00,0x85,0x1b,0x55]
+  subq.ph $3, $4, $5           # CHECK: subq.ph $3, $4, $5      # encoding: [0x00,0xa4,0x1a,0x0d]
+  subq_s.ph $3, $4, $5         # CHECK: subq_s.ph $3, $4, $5    # encoding: [0x00,0xa4,0x1e,0x0d]
+  subq_s.w $3, $4, $5          # CHECK: subq_s.w $3, $4, $5     # encoding: [0x00,0xa4,0x1b,0x45]
+  subu.qb $3, $4, $5           # CHECK: subu.qb $3, $4, $5      # encoding: [0x00,0xa4,0x1a,0xcd]
+  subu_s.qb $3, $4, $5         # CHECK: subu_s.qb $3, $4, $5    # encoding: [0x00,0xa4,0x1e,0xcd]
