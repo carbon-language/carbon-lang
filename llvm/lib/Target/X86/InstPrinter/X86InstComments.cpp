@@ -155,6 +155,21 @@ static void getZeroExtensionTypes(const MCInst *MI, MVT &SrcVT, MVT &DstVT) {
   CASE_AVX_INS_COMMON(Inst, Y, r##src)          \
   CASE_SSE_INS_COMMON(Inst, r##src)             \
 
+#define CASE_SHUF(Inst, src)                    \
+  CASE_MASK_INS_COMMON(Inst, Z, r##src##i)      \
+  CASE_MASK_INS_COMMON(Inst, Z256, r##src##i)   \
+  CASE_MASK_INS_COMMON(Inst, Z128, r##src##i)   \
+  CASE_AVX_INS_COMMON(Inst, , r##src##i)        \
+  CASE_AVX_INS_COMMON(Inst, Y, r##src##i)       \
+  CASE_SSE_INS_COMMON(Inst, r##src##i)          \
+
+#define CASE_VPERM(Inst, src)                   \
+  CASE_MASK_INS_COMMON(Inst, Z, src##i)         \
+  CASE_MASK_INS_COMMON(Inst, Z256, src##i)      \
+  CASE_MASK_INS_COMMON(Inst, Z128, src##i)      \
+  CASE_AVX_INS_COMMON(Inst, , src##i)           \
+  CASE_AVX_INS_COMMON(Inst, Y, src##i)          \
+
 #define CASE_VSHUF(Inst, src)                          \
   CASE_MASK_INS_COMMON(SHUFF##Inst, Z, r##src##i)      \
   CASE_MASK_INS_COMMON(SHUFI##Inst, Z, r##src##i)      \
@@ -515,14 +530,10 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DecodeUNPCKLMask(getRegOperandVectorVT(MI, MVT::i64, 0), ShuffleMask);
     break;
 
-  case X86::SHUFPDrri:
-  case X86::VSHUFPDrri:
-  case X86::VSHUFPDYrri:
+  CASE_SHUF(SHUFPD, r)
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
-  case X86::SHUFPDrmi:
-  case X86::VSHUFPDrmi:
-  case X86::VSHUFPDYrmi:
+  CASE_SHUF(SHUFPD, m)
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
       DecodeSHUFPMask(getRegOperandVectorVT(MI, MVT::f64, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
@@ -531,14 +542,10 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
 
-  case X86::SHUFPSrri:
-  case X86::VSHUFPSrri:
-  case X86::VSHUFPSYrri:
+  CASE_SHUF(SHUFPS, r)
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
-  case X86::SHUFPSrmi:
-  case X86::VSHUFPSrmi:
-  case X86::VSHUFPSYrmi:
+  CASE_SHUF(SHUFPS, m)
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
       DecodeSHUFPMask(getRegOperandVectorVT(MI, MVT::f32, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
@@ -605,12 +612,10 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
 
-  case X86::VPERMILPSri:
-  case X86::VPERMILPSYri:
+  CASE_VPERM(PERMILPS, r)
     Src1Name = getRegName(MI->getOperand(1).getReg());
     // FALL THROUGH.
-  case X86::VPERMILPSmi:
-  case X86::VPERMILPSYmi:
+  CASE_VPERM(PERMILPS, m)
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
       DecodePSHUFMask(getRegOperandVectorVT(MI, MVT::f32, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),
@@ -618,12 +623,10 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
 
-  case X86::VPERMILPDri:
-  case X86::VPERMILPDYri:
+  CASE_VPERM(PERMILPD, r)
     Src1Name = getRegName(MI->getOperand(1).getReg());
     // FALL THROUGH.
-  case X86::VPERMILPDmi:
-  case X86::VPERMILPDYmi:
+  CASE_VPERM(PERMILPD, m)
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())
       DecodePSHUFMask(getRegOperandVectorVT(MI, MVT::f64, 0),
                       MI->getOperand(MI->getNumOperands() - 1).getImm(),

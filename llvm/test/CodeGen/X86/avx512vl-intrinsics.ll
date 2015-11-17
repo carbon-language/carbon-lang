@@ -4726,9 +4726,12 @@ define <2 x double>@test_int_x86_avx512_mask_shuf_pd_128(<2 x double> %x0, <2 x 
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshufpd $22, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    ## xmm2 = xmm2[0],k1[1]
 ; CHECK-NEXT:    vshufpd $22, %xmm1, %xmm0, %xmm3 {%k1} {z}
+; CHECK-NEXT:    ## xmm3 = k1[0],xmm0[1]
 ; CHECK-NEXT:    vshufpd $22, %xmm1, %xmm0, %xmm0
-; CHECK:         vaddpd %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    ## xmm0 = xmm0[0],xmm1[1]
+; CHECK-NEXT:    vaddpd %xmm0, %xmm2, %xmm0
 ; CHECK-NEXT:    vaddpd %xmm0, %xmm3, %xmm0
 ; CHECK-NEXT:    retq
   %res = call <2 x double> @llvm.x86.avx512.mask.shuf.pd.128(<2 x double> %x0, <2 x double> %x1, i32 22, <2 x double> %x3, i8 %x4)
@@ -4747,8 +4750,10 @@ define <4 x double>@test_int_x86_avx512_mask_shuf_pd_256(<4 x double> %x0, <4 x 
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshufpd $22, %ymm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    ## ymm2 = ymm2[0],k1[1],ymm2[3],k1[2]
 ; CHECK-NEXT:    vshufpd $22, %ymm1, %ymm0, %ymm0
-; CHECK:         vaddpd %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    ## ymm0 = ymm0[0],ymm1[1],ymm0[3],ymm1[2]
+; CHECK-NEXT:    vaddpd %ymm0, %ymm2, %ymm0
 ; CHECK-NEXT:    retq
   %res = call <4 x double> @llvm.x86.avx512.mask.shuf.pd.256(<4 x double> %x0, <4 x double> %x1, i32 22, <4 x double> %x3, i8 %x4)
   %res1 = call <4 x double> @llvm.x86.avx512.mask.shuf.pd.256(<4 x double> %x0, <4 x double> %x1, i32 22, <4 x double> %x3, i8 -1)
@@ -4764,8 +4769,10 @@ define <4 x float>@test_int_x86_avx512_mask_shuf_ps_128(<4 x float> %x0, <4 x fl
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshufps $22, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    ## xmm2 = xmm2[2,1],k1[1,0]
 ; CHECK-NEXT:    vshufps $22, %xmm1, %xmm0, %xmm0
-; CHECK:         vaddps %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    ## xmm0 = xmm0[2,1],xmm1[1,0]
+; CHECK-NEXT:    vaddps %xmm0, %xmm2, %xmm0
 ; CHECK-NEXT:    retq
   %res = call <4 x float> @llvm.x86.avx512.mask.shuf.ps.128(<4 x float> %x0, <4 x float> %x1, i32 22, <4 x float> %x3, i8 %x4)
   %res1 = call <4 x float> @llvm.x86.avx512.mask.shuf.ps.128(<4 x float> %x0, <4 x float> %x1, i32 22, <4 x float> %x3, i8 -1)
@@ -4781,8 +4788,10 @@ define <8 x float>@test_int_x86_avx512_mask_shuf_ps_256(<8 x float> %x0, <8 x fl
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshufps $22, %ymm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    ## ymm2 = ymm2[2,1],k1[1,0],ymm2[6,5],k1[5,4]
 ; CHECK-NEXT:    vshufps $22, %ymm1, %ymm0, %ymm0
-; CHECK:         vaddps %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    ## ymm0 = ymm0[2,1],ymm1[1,0],ymm0[6,5],ymm1[5,4]
+; CHECK-NEXT:    vaddps %ymm0, %ymm2, %ymm0
 ; CHECK-NEXT:    retq
   %res = call <8 x float> @llvm.x86.avx512.mask.shuf.ps.256(<8 x float> %x0, <8 x float> %x1, i32 22, <8 x float> %x3, i8 %x4)
   %res1 = call <8 x float> @llvm.x86.avx512.mask.shuf.ps.256(<8 x float> %x0, <8 x float> %x1, i32 22, <8 x float> %x3, i8 -1)
@@ -4870,8 +4879,11 @@ define <4 x double>@test_int_x86_avx512_mask_vpermil_pd_256(<4 x double> %x0, <4
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vpermilpd $22, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    ## ymm1 = ymm1[0,1,3,2]
 ; CHECK-NEXT:    vpermilpd $22, %ymm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:    ## ymm2 = k1[0,1,3,2]
 ; CHECK-NEXT:    vpermilpd $22, %ymm0, %ymm0
+; CHECK-NEXT:    ## ymm0 = ymm0[0,1,3,2]
 ; CHECK-NEXT:    vaddpd %ymm2, %ymm1, %ymm1
 ; CHECK-NEXT:    vaddpd %ymm1, %ymm0, %ymm0
 ; CHECK-NEXT:    retq
@@ -4891,8 +4903,11 @@ define <2 x double>@test_int_x86_avx512_mask_vpermil_pd_128(<2 x double> %x0, <2
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vpermilpd $1, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    ## xmm1 = xmm1[1,0]
 ; CHECK-NEXT:    vpermilpd $1, %xmm0, %xmm2 {%k1} {z}
+; CHECK-NEXT:    ## xmm2 = k1[1,0]
 ; CHECK-NEXT:    vpermilpd $1, %xmm0, %xmm0
+; CHECK-NEXT:    ## xmm0 = xmm0[1,0]
 ; CHECK-NEXT:    vaddpd %xmm2, %xmm1, %xmm1
 ; CHECK-NEXT:    vaddpd %xmm0, %xmm1, %xmm0
 ; CHECK-NEXT:    retq
@@ -4912,8 +4927,11 @@ define <8 x float>@test_int_x86_avx512_mask_vpermil_ps_256(<8 x float> %x0, <8 x
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vpermilps $22, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    ## ymm1 = ymm1[2,1,1,0,6,5,5,4]
 ; CHECK-NEXT:    vpermilps $22, %ymm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:    ## ymm2 = k1[2,1,1,0,6,5,5,4]
 ; CHECK-NEXT:    vpermilps $22, %ymm0, %ymm0
+; CHECK-NEXT:    ## ymm0 = ymm0[2,1,1,0,6,5,5,4]
 ; CHECK-NEXT:    vaddps %ymm2, %ymm1, %ymm1
 ; CHECK-NEXT:    vaddps %ymm0, %ymm1, %ymm0
 ; CHECK-NEXT:    retq
@@ -4933,8 +4951,11 @@ define <4 x float>@test_int_x86_avx512_mask_vpermil_ps_128(<4 x float> %x0, <4 x
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vpermilps $22, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    ## xmm1 = xmm1[2,1,1,0]
 ; CHECK-NEXT:    vpermilps $22, %xmm0, %xmm2 {%k1} {z}
+; CHECK-NEXT:    ## xmm2 = k1[2,1,1,0]
 ; CHECK-NEXT:    vpermilps $22, %xmm0, %xmm0
+; CHECK-NEXT:    ## xmm0 = xmm0[2,1,1,0]
 ; CHECK-NEXT:    vaddps %xmm2, %xmm1, %xmm1
 ; CHECK-NEXT:    vaddps %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq

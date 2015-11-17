@@ -4399,8 +4399,11 @@ define <8 x double>@test_int_x86_avx512_mask_shuf_pd_512(<8 x double> %x0, <8 x 
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshufpd $22, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    ## zmm2 = zmm2[0],k1[1],zmm2[3],k1[2],zmm2[5],k1[4],zmm2[6],k1[6]
 ; CHECK-NEXT:    vshufpd $22, %zmm1, %zmm0, %zmm3 {%k1} {z}
+; CHECK-NEXT:    ## zmm3 = k1[0],zmm0[1],k1[3],zmm0[2],k1[5],zmm0[4],k1[6],zmm0[6]
 ; CHECK-NEXT:    vshufpd $22, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[0],zmm1[1],zmm0[3],zmm1[2],zmm0[5],zmm1[4],zmm0[6],zmm1[6]
 ; CHECK-NEXT:    vaddpd %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    vaddpd %zmm3, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
@@ -4420,11 +4423,13 @@ define <16 x float>@test_int_x86_avx512_mask_shuf_ps_512(<16 x float> %x0, <16 x
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
 ; CHECK-NEXT:    vshufps $22, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    ## zmm2 = zmm2[2,1],k1[1,0],zmm2[6,5],k1[5,4],zmm2[10,9],k1[9,8],zmm2[14,13],k1[13,12]
 ; CHECK-NEXT:    vshufps $22, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[2,1],zmm1[1,0],zmm0[6,5],zmm1[5,4],zmm0[10,9],zmm1[9,8],zmm0[14,13],zmm1[13,12]
 ; CHECK-NEXT:    vaddps %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <16 x float> @llvm.x86.avx512.mask.shuf.ps.512(<16 x float> %x0, <16 x float> %x1, i32 22, <16 x float> %x3, i16 %x4)
-  %res1 = call <16 x float> @llvm.x86.avx512.mask.shuf.ps.512(<16 x float> %x0, <16 x float> %x1, i32 22, <16 x float> %x3, i16 -1)  
+  %res1 = call <16 x float> @llvm.x86.avx512.mask.shuf.ps.512(<16 x float> %x0, <16 x float> %x1, i32 22, <16 x float> %x3, i16 -1)
   %res2 = fadd <16 x float> %res, %res1
   ret <16 x float> %res2
 }
@@ -4435,13 +4440,16 @@ define <8 x double>@test_int_x86_avx512_mask_vpermil_pd_512(<8 x double> %x0, <8
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_pd_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    movzbl %dil, %eax
-; CHECK-NEXT:    kmovw %eax, %k1 
-; CHECK-NEXT:    vpermilpd $22, %zmm0, %zmm1 {%k1} 
-; CHECK-NEXT:    vpermilpd $22, %zmm0, %zmm2 {%k1} {z} 
-; CHECK-NEXT:    vpermilpd $22, %zmm0, %zmm0 
-; CHECK-NEXT:    vaddpd %zmm2, %zmm1, %zmm1 
-; CHECK-NEXT:    vaddpd %zmm0, %zmm1, %zmm0 
-; CHECK-NEXT:    retq 
+; CHECK-NEXT:    kmovw %eax, %k1
+; CHECK-NEXT:    vpermilpd $22, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    ## zmm1 = zmm1[0,1,3,2,5,4,6,6]
+; CHECK-NEXT:    vpermilpd $22, %zmm0, %zmm2 {%k1} {z}
+; CHECK-NEXT:    ## zmm2 = k1[0,1,3,2,5,4,6,6]
+; CHECK-NEXT:    vpermilpd $22, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[0,1,3,2,5,4,6,6]
+; CHECK-NEXT:    vaddpd %zmm2, %zmm1, %zmm1
+; CHECK-NEXT:    vaddpd %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
   %res = call <8 x double> @llvm.x86.avx512.mask.vpermil.pd.512(<8 x double> %x0, i32 22, <8 x double> %x2, i8 %x3)
   %res1 = call <8 x double> @llvm.x86.avx512.mask.vpermil.pd.512(<8 x double> %x0, i32 22, <8 x double> zeroinitializer, i8 %x3)
   %res2 = call <8 x double> @llvm.x86.avx512.mask.vpermil.pd.512(<8 x double> %x0, i32 22, <8 x double> %x2, i8 -1)
@@ -4455,13 +4463,16 @@ declare <16 x float> @llvm.x86.avx512.mask.vpermil.ps.512(<16 x float>, i32, <16
 define <16 x float>@test_int_x86_avx512_mask_vpermil_ps_512(<16 x float> %x0, <16 x float> %x2, i16 %x3) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_ps_512:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edi, %k1 
-; CHECK-NEXT:    vpermilps $22, %zmm0, %zmm1 {%k1} 
-; CHECK-NEXT:    vpermilps $22, %zmm0, %zmm2 {%k1} {z} 
-; CHECK-NEXT:    vpermilps $22, %zmm0, %zmm0 
-; CHECK-NEXT:    vaddps %zmm2, %zmm1, %zmm1 
-; CHECK-NEXT:    vaddps %zmm0, %zmm1, %zmm0 
-; CHECK-NEXT:    retq 
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vpermilps $22, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    ## zmm1 = zmm1[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
+; CHECK-NEXT:    vpermilps $22, %zmm0, %zmm2 {%k1} {z}
+; CHECK-NEXT:    ## zmm2 = k1[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
+; CHECK-NEXT:    vpermilps $22, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
+; CHECK-NEXT:    vaddps %zmm2, %zmm1, %zmm1
+; CHECK-NEXT:    vaddps %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
   %res = call <16 x float> @llvm.x86.avx512.mask.vpermil.ps.512(<16 x float> %x0, i32 22, <16 x float> %x2, i16 %x3)
   %res1 = call <16 x float> @llvm.x86.avx512.mask.vpermil.ps.512(<16 x float> %x0, i32 22, <16 x float> zeroinitializer, i16 %x3)
   %res2 = call <16 x float> @llvm.x86.avx512.mask.vpermil.ps.512(<16 x float> %x0, i32 22, <16 x float> %x2, i16 -1)
