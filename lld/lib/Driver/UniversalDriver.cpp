@@ -91,7 +91,7 @@ static Flavor strToFlavor(StringRef str) {
       .Case("lld-link", Flavor::win_link)
       .Case("darwin", Flavor::darwin_ld)
       .Case("core", Flavor::core)
-      .Case("ld", Flavor::old_gnu_ld)
+      .Case("ld", Flavor::gnu_ld)
       .Default(Flavor::invalid);
 }
 
@@ -153,7 +153,7 @@ static Flavor getFlavor(llvm::MutableArrayRef<const char *> &args,
     return Flavor::darwin_ld;
 #endif
     // On a ELF based systems, if linker binary is named "ld", use gnu driver.
-    return Flavor::old_gnu_ld;
+    return Flavor::gnu_ld;
   }
 #endif
 
