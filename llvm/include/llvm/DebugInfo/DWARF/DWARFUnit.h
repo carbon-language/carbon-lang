@@ -16,6 +16,7 @@
 #include "llvm/DebugInfo/DWARF/DWARFDebugRangeList.h"
 #include "llvm/DebugInfo/DWARF/DWARFRelocMap.h"
 #include "llvm/DebugInfo/DWARF/DWARFSection.h"
+#include "llvm/DebugInfo/DWARF/DWARFUnitIndex.h"
 #include <vector>
 
 namespace llvm {
@@ -39,7 +40,8 @@ public:
   virtual DWARFUnit *getUnitForOffset(uint32_t Offset) const = 0;
 
   void parse(DWARFContext &C, const DWARFSection &Section);
-  void parseDWO(DWARFContext &C, const DWARFSection &DWOSection);
+  void parseDWO(DWARFContext &C, const DWARFSection &DWOSection,
+                DWARFUnitIndex *Index = nullptr);
 
 protected:
   virtual void parseImpl(DWARFContext &Context, const DWARFSection &Section,
@@ -48,6 +50,9 @@ protected:
 
   ~DWARFUnitSectionBase() = default;
 };
+
+const DWARFUnitIndex &getDWARFUnitIndex(DWARFContext &Context,
+                                        DWARFSectionKind Kind);
 
 /// Concrete instance of DWARFUnitSection, specialized for one Unit type.
 template<typename UnitType>
@@ -81,11 +86,13 @@ private:
                  StringRef SOS, StringRef AOS, bool LE) override {
     if (Parsed)
       return;
+    const auto &Index = getDWARFUnitIndex(Context, UnitType::Section);
     DataExtractor Data(Section.Data, LE, 0);
     uint32_t Offset = 0;
     while (Data.isValidOffset(Offset)) {
-      auto U = llvm::make_unique<UnitType>(Context, Section, DA, RS, SS, SOS,
-                                           AOS, LE, *this);
+      auto U =
+          llvm::make_unique<UnitType>(Context, Section, DA, RS, SS, SOS, AOS,
+                                      LE, *this, Index.getFromOffset(Offset));
       if (!U->extract(Data, &Offset))
         break;
       this->push_back(std::move(U));
@@ -129,6 +136,8 @@ class DWARFUnit {
   };
   std::unique_ptr<DWOHolder> DWO;
 
+  const DWARFUnitIndex::Entry *IndexEntry;
+
 protected:
   virtual bool extractImpl(DataExtractor debug_info, uint32_t *offset_ptr);
   /// Size in bytes of the unit header.
@@ -138,7 +147,8 @@ public:
   DWARFUnit(DWARFContext &Context, const DWARFSection &Section,
             const DWARFDebugAbbrev *DA, StringRef RS, StringRef SS,
             StringRef SOS, StringRef AOS, bool LE,
-            const DWARFUnitSectionBase &UnitSection);
+            const DWARFUnitSectionBase &UnitSection,
+            const DWARFUnitIndex::Entry *IndexEntry = nullptr);
 
   virtual ~DWARFUnit();
 
