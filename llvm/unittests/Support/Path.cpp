@@ -360,6 +360,7 @@ TEST(Support, TempDirectory) {
   EXPECT_TRUE(!TempDir.empty());
 }
 
+#ifdef LLVM_ON_WIN32
 static std::string path2regex(std::string Path) {
   size_t Pos = 0;
   while ((Pos = Path.find('\\', Pos)) != std::string::npos) {
@@ -381,7 +382,6 @@ static std::string path2regex(std::string Path) {
       },                                                                       \
       ::testing::ExitedWithCode(0), path2regex(expected))
 
-#ifdef LLVM_ON_WIN32
 TEST(SupportDeathTest, TempDirectoryOnWindows) {
   // In this test we want to check how system_temp_directory responds to
   // different values of specific env vars. To prevent corrupting env vars of
