@@ -6153,9 +6153,7 @@ constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
   //----------------------------------------------------------------------------
   // Library Search Paths
   //----------------------------------------------------------------------------
-  const ToolChain::path_list &LibPaths = ToolChain.getFilePaths();
-  for (const auto &LibPath : LibPaths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + LibPath));
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
 
   //----------------------------------------------------------------------------
   //
@@ -6525,9 +6523,7 @@ void cloudabi::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
-  const ToolChain::path_list &Paths = ToolChain.getFilePaths();
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
   Args.AddAllArgs(CmdArgs,
                   {options::OPT_T_Group, options::OPT_e, options::OPT_s,
                    options::OPT_t, options::OPT_Z_Flag, options::OPT_r});
@@ -7127,9 +7123,7 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
         Args.MakeArgString(getToolChain().GetFilePath("crtbegin.o")));
   }
 
-  const ToolChain::path_list &Paths = getToolChain().getFilePaths();
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+  getToolChain().AddFilePathLibArgs(Args, CmdArgs);
 
   Args.AddAllArgs(CmdArgs, {options::OPT_L, options::OPT_T_Group,
                             options::OPT_e, options::OPT_r});
@@ -7674,9 +7668,7 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
-  const ToolChain::path_list &Paths = ToolChain.getFilePaths();
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
   Args.AddAllArgs(CmdArgs, options::OPT_s);
@@ -8567,10 +8559,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_u);
 
-  const ToolChain::path_list &Paths = ToolChain.getFilePaths();
-
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
 
   if (D.isUsingLTO())
     AddGoldPlugin(ToolChain, Args, CmdArgs, D.getLTOMode() == LTOK_Thin);
@@ -8771,10 +8760,7 @@ void nacltools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_u);
 
-  const ToolChain::path_list &Paths = ToolChain.getFilePaths();
-
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
 
   if (Args.hasArg(options::OPT_Z_Xlinker__no_demangle))
     CmdArgs.push_back("--no-demangle");
@@ -9539,10 +9525,7 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
-  const ToolChain::path_list Paths = TC.getFilePaths();
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
-
+  TC.AddFilePathLibArgs(Args, CmdArgs);
   AddLinkerInputs(TC, Inputs, Args, CmdArgs);
 
   // TODO: Add ASan stuff here
@@ -9822,11 +9805,7 @@ void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
-
-  const auto &Paths = TC.getFilePaths();
-  for (const auto &Path : Paths)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
-
+  TC.AddFilePathLibArgs(Args, CmdArgs);
   AddLinkerInputs(TC, Inputs, Args, CmdArgs);
 
   if (D.CCCIsCXX() && !Args.hasArg(options::OPT_nostdlib) &&
@@ -10222,12 +10201,7 @@ static void ConstructGoldLinkJob(const Tool &T, Compilation &C,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
-
-  const ToolChain::path_list Paths = ToolChain.getFilePaths();
-  for (ToolChain::path_list::const_iterator i = Paths.begin(), e = Paths.end();
-       i != e; ++i)
-    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + *i));
-
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
   Args.AddAllArgs(CmdArgs, options::OPT_s);

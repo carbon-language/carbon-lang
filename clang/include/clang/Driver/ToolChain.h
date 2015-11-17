@@ -377,6 +377,10 @@ public:
   virtual void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
                                    llvm::opt::ArgStringList &CmdArgs) const;
 
+  /// AddFilePathLibArgs - Add each thing in getFilePaths() as a "-L" option.
+  void AddFilePathLibArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs) const;
+
   /// AddCCKextLibArgs - Add the system specific linker arguments to use
   /// for kernel extensions (Darwin-specific).
   virtual void AddCCKextLibArgs(const llvm::opt::ArgList &Args,
