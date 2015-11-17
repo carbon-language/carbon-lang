@@ -9941,7 +9941,7 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       static_cast<const toolchains::MyriadToolChain &>(getToolChain());
   const llvm::Triple &T = TC.getTriple();
   ArgStringList CmdArgs;
-  bool UseStartfiles = !Args.hasArg(options::OPT_nostartfiles);
+  bool UseStartfiles = !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
   bool UseDefaultLibs =
       !Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs);
 
