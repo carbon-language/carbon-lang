@@ -1094,31 +1094,9 @@ CommandObjectTypeFormatterDelete::CommandOptions::g_option_table[] =
 
 
 
-//-------------------------------------------------------------------------
-// CommandObjectTypeFormatDelete
-//-------------------------------------------------------------------------
 
-class CommandObjectTypeFormatDelete : public CommandObjectTypeFormatterDelete
-{
-public:
-    CommandObjectTypeFormatDelete (CommandInterpreter &interpreter) :
-        CommandObjectTypeFormatterDelete (interpreter,
-                                          eFormatCategoryItemValue | eFormatCategoryItemRegexValue,
-                                          "type format delete",
-                                          "Delete an existing formatting style for a type.")
-    {
-    }
-    
-    ~CommandObjectTypeFormatDelete () override
-    {
-    }
-};
 
-//-------------------------------------------------------------------------
-// CommandObjectTypeFormatClear
-//-------------------------------------------------------------------------
-
-class CommandObjectTypeFormatClear : public CommandObjectParsed
+class CommandObjectTypeFormatterClear : public CommandObjectParsed
 {
 private:
     
@@ -1169,13 +1147,12 @@ private:
         static OptionDefinition g_option_table[];
         
         // Instance variables to hold the values for command options.
-        
         bool m_delete_all;
-        bool m_delete_named;
     };
     
     CommandOptions m_options;
-    
+    uint32_t m_formatter_kind_mask;
+
     Options *
     GetOptions () override
     {
@@ -1183,27 +1160,36 @@ private:
     }
     
 public:
-    CommandObjectTypeFormatClear (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type format clear",
-                             "Delete all existing format styles.",
-                             NULL),
-    m_options(interpreter)
+    CommandObjectTypeFormatterClear (CommandInterpreter &interpreter,
+                                     uint32_t formatter_kind_mask,
+                                     const char* name,
+                                     const char* help) :
+    CommandObjectParsed (interpreter,
+                         name,
+                         help,
+                         NULL),
+    m_options(interpreter),
+    m_formatter_kind_mask(formatter_kind_mask)
     {
     }
     
-    ~CommandObjectTypeFormatClear () override
+    ~CommandObjectTypeFormatterClear () override
     {
     }
     
 protected:
+    virtual void
+    FormatterSpecificDeletion ()
+    {
+    }
+    
     bool
     DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (m_options.m_delete_all)
         {
-            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
-                category_sp->Clear(eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+            DataVisualization::Categories::ForEach( [this] (const TypeCategoryImplSP& category_sp) -> bool {
+                category_sp->Clear(m_formatter_kind_mask);
                 return true;
             });
         }
@@ -1218,8 +1204,10 @@ protected:
             }
             else
                 DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->Clear(eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
-        }
+                category->Clear(m_formatter_kind_mask);
+                }
+        
+        FormatterSpecificDeletion();
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
@@ -1228,10 +1216,50 @@ protected:
 };
 
 OptionDefinition
-CommandObjectTypeFormatClear::CommandOptions::g_option_table[] =
+CommandObjectTypeFormatterClear::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Clear every category."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+};
+
+
+
+
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeFormatDelete
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeFormatDelete : public CommandObjectTypeFormatterDelete
+{
+public:
+    CommandObjectTypeFormatDelete (CommandInterpreter &interpreter) :
+        CommandObjectTypeFormatterDelete (interpreter,
+                                          eFormatCategoryItemValue | eFormatCategoryItemRegexValue,
+                                          "type format delete",
+                                          "Delete an existing formatting style for a type.")
+    {
+    }
+    
+    ~CommandObjectTypeFormatDelete () override
+    {
+    }
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeFormatClear
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeFormatClear : public CommandObjectTypeFormatterClear
+{
+public:
+    CommandObjectTypeFormatClear (CommandInterpreter &interpreter) :
+        CommandObjectTypeFormatterClear (interpreter,
+                                         eFormatCategoryItemValue | eFormatCategoryItemRegexValue,
+                                         "type format clear",
+                                         "Delete all existing format styles.")
+    {
+    }
 };
 
 //-------------------------------------------------------------------------
@@ -1993,123 +2021,23 @@ protected:
     }
 };
 
-class CommandObjectTypeSummaryClear : public CommandObjectParsed
+class CommandObjectTypeSummaryClear : public CommandObjectTypeFormatterClear
 {
-private:
-    
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
-        {
-        }
-        
-        ~CommandOptions () override {}
-        
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg) override
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 'a':
-                    m_delete_all = true;
-                    break;
-                default:
-                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
-                    break;
-            }
-            
-            return error;
-        }
-        
-        void
-        OptionParsingStarting () override
-        {
-            m_delete_all = false;
-        }
-        
-        const OptionDefinition*
-        GetDefinitions () override
-        {
-            return g_option_table;
-        }
-        
-        // Options table: Required for subclasses of Options.
-        
-        static OptionDefinition g_option_table[];
-        
-        // Instance variables to hold the values for command options.
-        
-        bool m_delete_all;
-        bool m_delete_named;
-    };
-    
-    CommandOptions m_options;
-    
-    Options *
-    GetOptions () override
-    {
-        return &m_options;
-    }
-    
 public:
     CommandObjectTypeSummaryClear (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type summary clear",
-                             "Delete all existing summary styles.",
-                             NULL),
-        m_options(interpreter)
-    {
-    }
-    
-    ~CommandObjectTypeSummaryClear () override
+    CommandObjectTypeFormatterClear (interpreter,
+                                     eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary,
+                                     "type summary clear",
+                                     "Delete all existing summaries.")
     {
     }
     
 protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result) override
+    void
+    FormatterSpecificDeletion () override
     {
-        
-        if (m_options.m_delete_all)
-        {
-            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
-                category_sp->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
-                return true;
-            });
-        }
-        else
-        {        
-            lldb::TypeCategoryImplSP category;
-            if (command.GetArgumentCount() > 0)
-            {
-                const char* cat_name = command.GetArgumentAtIndex(0);
-                ConstString cat_nameCS(cat_name);
-                DataVisualization::Categories::GetCategory(cat_nameCS, category);
-            }
-            else
-                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
-        }
-        
         DataVisualization::NamedSummaryFormats::Clear();
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
     }
-    
-};
-
-OptionDefinition
-CommandObjectTypeSummaryClear::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Clear every category."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -3412,121 +3340,16 @@ public:
 // CommandObjectTypeFilterClear
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeFilterClear : public CommandObjectParsed
+class CommandObjectTypeFilterClear : public CommandObjectTypeFormatterClear
 {
-private:
-    
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
-        {
-        }
-        
-        ~CommandOptions () override {}
-        
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg) override
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 'a':
-                    m_delete_all = true;
-                    break;
-                default:
-                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
-                    break;
-            }
-            
-            return error;
-        }
-        
-        void
-        OptionParsingStarting () override
-        {
-            m_delete_all = false;
-        }
-        
-        const OptionDefinition*
-        GetDefinitions () override
-        {
-            return g_option_table;
-        }
-        
-        // Options table: Required for subclasses of Options.
-        
-        static OptionDefinition g_option_table[];
-        
-        // Instance variables to hold the values for command options.
-        
-        bool m_delete_all;
-        bool m_delete_named;
-    };
-    
-    CommandOptions m_options;
-    
-    Options *
-    GetOptions () override
-    {
-        return &m_options;
-    }
-    
 public:
     CommandObjectTypeFilterClear (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type filter clear",
-                             "Delete all existing filters.",
-                             NULL),
-        m_options(interpreter)
+    CommandObjectTypeFormatterClear (interpreter,
+                                     eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter,
+                                     "type filter clear",
+                                     "Delete all existing filter.")
     {
     }
-    
-    ~CommandObjectTypeFilterClear () override
-    {
-    }
-    
-protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result) override
-    {
-        
-        if (m_options.m_delete_all)
-        {
-            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
-                category_sp->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
-                return true;
-            });
-        }
-        else
-        {        
-            lldb::TypeCategoryImplSP category;
-            if (command.GetArgumentCount() > 0)
-            {
-                const char* cat_name = command.GetArgumentAtIndex(0);
-                ConstString cat_nameCS(cat_name);
-                DataVisualization::Categories::GetCategory(cat_nameCS, category);
-            }
-            else
-                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
-        }
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
-    }
-    
-};
-
-OptionDefinition
-CommandObjectTypeFilterClear::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Clear every category."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -3534,123 +3357,17 @@ CommandObjectTypeFilterClear::CommandOptions::g_option_table[] =
 // CommandObjectTypeSynthClear
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeSynthClear : public CommandObjectParsed
+class CommandObjectTypeSynthClear : public CommandObjectTypeFormatterClear
 {
-private:
-    
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
-        {
-        }
-        
-        ~CommandOptions () override {}
-        
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg) override
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 'a':
-                    m_delete_all = true;
-                    break;
-                default:
-                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
-                    break;
-            }
-            
-            return error;
-        }
-        
-        void
-        OptionParsingStarting () override
-        {
-            m_delete_all = false;
-        }
-        
-        const OptionDefinition*
-        GetDefinitions () override
-        {
-            return g_option_table;
-        }
-        
-        // Options table: Required for subclasses of Options.
-        
-        static OptionDefinition g_option_table[];
-        
-        // Instance variables to hold the values for command options.
-        
-        bool m_delete_all;
-        bool m_delete_named;
-    };
-    
-    CommandOptions m_options;
-    
-    Options *
-    GetOptions () override
-    {
-        return &m_options;
-    }
-    
 public:
     CommandObjectTypeSynthClear (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type synthetic clear",
-                             "Delete all existing synthetic providers.",
-                             NULL),
-        m_options(interpreter)
+    CommandObjectTypeFormatterClear (interpreter,
+                                     eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth,
+                                     "type synthetic clear",
+                                     "Delete all existing synthetic providers.")
     {
     }
-    
-    ~CommandObjectTypeSynthClear () override
-    {
-    }
-    
-protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result) override
-    {
-        
-        if (m_options.m_delete_all)
-        {
-            DataVisualization::Categories::ForEach( [] (const TypeCategoryImplSP& category_sp) -> bool {
-                category_sp->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
-                return true;
-            });
-        }
-        else
-        {        
-            lldb::TypeCategoryImplSP category;
-            if (command.GetArgumentCount() > 0)
-            {
-                const char* cat_name = command.GetArgumentAtIndex(0);
-                ConstString cat_nameCS(cat_name);
-                DataVisualization::Categories::GetCategory(cat_nameCS, category);
-            }
-            else
-                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
-        }
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
-    }
-    
 };
-
-OptionDefinition
-CommandObjectTypeSynthClear::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Clear every category."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
-};
-
 
 bool
 CommandObjectTypeSynthAdd::Execute_HandwritePython (Args& command, CommandReturnObject &result)
