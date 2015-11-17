@@ -90,6 +90,18 @@ class SUBU_QB_MM_ENC : POOL32A_3R_FMT<"subu.qb", 0b01011001101>;
 class SUBU_S_QB_MM_ENC : POOL32A_3R_FMT<"subu_s.qb", 0b11011001101>;
 class SUBUH_QB_MMR2_ENC : POOL32A_3R_FMT<"subuh.qb", 0b01101001101>;
 class SUBUH_R_QB_MMR2_ENC : POOL32A_3R_FMT<"subuh_r.qb", 0b11101001101>;
+class EXTP_MM_ENC : POOL32A_1RIMM5AC_FMT<"extp", 0b10011001>;
+class EXTPDP_MM_ENC : POOL32A_1RIMM5AC_FMT<"extpdp", 0b11011001>;
+class EXTPDPV_MM_ENC : POOL32A_2RAC_FMT<"extpdpv", 0b11100010>;
+class EXTPV_MM_ENC : POOL32A_2RAC_FMT<"extpv", 0b10100010>;
+class EXTR_W_MM_ENC : POOL32A_1RIMM5AC_FMT<"extr.w", 0b00111001>;
+class EXTR_R_W_MM_ENC : POOL32A_1RIMM5AC_FMT<"extr_r.w", 0b01111001>;
+class EXTR_RS_W_MM_ENC : POOL32A_1RIMM5AC_FMT<"extr_rs.w", 0b10111001>;
+class EXTR_S_H_MM_ENC : POOL32A_1RIMM5AC_FMT<"extr_s.h", 0b11111001>;
+class EXTRV_W_MM_ENC : POOL32A_2RAC_FMT<"extrv.w", 0b00111010>;
+class EXTRV_R_W_MM_ENC : POOL32A_2RAC_FMT<"extrv_r.w", 0b01111010>;
+class EXTRV_RS_W_MM_ENC : POOL32A_2RAC_FMT<"extrv_rs.w", 0b10111010>;
+class EXTRV_S_H_MM_ENC : POOL32A_2RAC_FMT<"extrv_s.h", 0b11111010>;
 
 // Instruction desc.
 class ABSQ_S_PH_MM_R2_DESC_BASE<string opstr, SDPatternOperator OpNode,
@@ -197,6 +209,57 @@ class SHRLV_PH_MMR2_DESC : SHLLV_R3_MM_DESC_BASE<
 class SHRLV_QB_MM_DESC : SHLLV_R3_MM_DESC_BASE<
   "shrlv.qb", int_mips_shrl_qb, NoItinerary, DSPROpnd>;
 
+class EXT_MM_2R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                          InstrItinClass itin> {
+  dag OutOperandList = (outs GPR32Opnd:$rt);
+  dag InOperandList = (ins ACC64DSPOpnd:$ac, GPR32Opnd:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $rs");
+  InstrItinClass Itinerary = itin;
+}
+class EXT_MM_1R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                          InstrItinClass itin> {
+  dag OutOperandList = (outs GPR32Opnd:$rt);
+  dag InOperandList = (ins ACC64DSPOpnd:$ac, uimm5:$imm);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $imm");
+  InstrItinClass Itinerary = itin;
+}
+class EXTP_MM_DESC
+    : EXT_MM_1R_DESC_BASE<"extp", MipsEXTP, NoItinerary>,
+      Uses<[DSPPos]>, Defs<[DSPEFI]>;
+class EXTPDP_MM_DESC
+    : EXT_MM_1R_DESC_BASE<"extpdp", MipsEXTPDP, NoItinerary>,
+      Uses<[DSPPos]>, Defs<[DSPPos, DSPEFI]>;
+class EXTPDPV_MM_DESC
+    : EXT_MM_2R_DESC_BASE<"extpdpv", MipsEXTPDP, NoItinerary>,
+      Uses<[DSPPos]>, Defs<[DSPPos, DSPEFI]>;
+class EXTPV_MM_DESC
+    : EXT_MM_2R_DESC_BASE<"extpv", MipsEXTP, NoItinerary>,
+      Uses<[DSPPos]>, Defs<[DSPEFI]>;
+class EXTR_W_MM_DESC
+    : EXT_MM_1R_DESC_BASE<"extr.w", MipsEXTR_W, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTR_R_W_MM_DESC
+    : EXT_MM_1R_DESC_BASE<"extr_r.w", MipsEXTR_R_W, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTR_RS_W_MM_DESC
+    : EXT_MM_1R_DESC_BASE<"extr_rs.w", MipsEXTR_RS_W, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTR_S_H_MM_DESC
+    : EXT_MM_1R_DESC_BASE<"extr_s.h", MipsEXTR_S_H, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTRV_W_MM_DESC
+    : EXT_MM_2R_DESC_BASE<"extrv.w", MipsEXTR_W, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTRV_R_W_MM_DESC
+    : EXT_MM_2R_DESC_BASE<"extrv_r.w", MipsEXTR_R_W, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTRV_RS_W_MM_DESC
+    : EXT_MM_2R_DESC_BASE<"extrv_rs.w", MipsEXTR_RS_W, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+class EXTRV_S_H_MM_DESC
+    : EXT_MM_2R_DESC_BASE<"extrv_s.h", MipsEXTR_S_H, NoItinerary>,
+      Defs<[DSPOutFlag23]>;
+
 // Instruction defs.
 // microMIPS DSP Rev 1
 def ADDQ_PH_MM : DspMMRel, ADDQ_PH_MM_ENC, ADDQ_PH_DESC;
@@ -252,6 +315,18 @@ def SUBQ_S_PH_MM : DspMMRel, SUBQ_S_PH_MM_ENC, SUBQ_S_PH_DESC;
 def SUBQ_S_W_MM : DspMMRel, SUBQ_S_W_MM_ENC, SUBQ_S_W_DESC;
 def SUBU_QB_MM : DspMMRel, SUBU_QB_MM_ENC, SUBU_QB_DESC;
 def SUBU_S_QB_MM : DspMMRel, SUBU_S_QB_MM_ENC, SUBU_S_QB_DESC;
+def EXTP_MM : DspMMRel, EXTP_MM_ENC, EXTP_MM_DESC;
+def EXTPDP_MM : DspMMRel, EXTPDP_MM_ENC, EXTPDP_MM_DESC;
+def EXTPDPV_MM : DspMMRel, EXTPDPV_MM_ENC, EXTPDPV_MM_DESC;
+def EXTPV_MM : DspMMRel, EXTPV_MM_ENC, EXTPV_MM_DESC;
+def EXTR_W_MM : DspMMRel, EXTR_W_MM_ENC, EXTR_W_MM_DESC;
+def EXTR_R_W_MM : DspMMRel, EXTR_R_W_MM_ENC, EXTR_R_W_MM_DESC;
+def EXTR_RS_W_MM : DspMMRel, EXTR_RS_W_MM_ENC, EXTR_RS_W_MM_DESC;
+def EXTR_S_H_MM : DspMMRel, EXTR_S_H_MM_ENC, EXTR_S_H_MM_DESC;
+def EXTRV_W_MM : DspMMRel, EXTRV_W_MM_ENC, EXTRV_W_MM_DESC;
+def EXTRV_R_W_MM : DspMMRel, EXTRV_R_W_MM_ENC, EXTRV_R_W_MM_DESC;
+def EXTRV_RS_W_MM : DspMMRel, EXTRV_RS_W_MM_ENC, EXTRV_RS_W_MM_DESC;
+def EXTRV_S_H_MM : DspMMRel, EXTRV_S_H_MM_ENC, EXTRV_S_H_MM_DESC;
 // microMIPS DSP Rev 2
 def ABSQ_S_QB_MMR2 : DspMMRel, ABSQ_S_QB_MMR2_ENC, ABSQ_S_QB_MMR2_DESC,
                      ISA_DSPR2;

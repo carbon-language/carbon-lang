@@ -388,6 +388,7 @@ class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   dag InOperandList = (ins ACC64DSPOpnd:$ac, GPR32Opnd:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
+  string BaseOpcode = instr_asm;
 }
 
 class EXTR_W_TY1_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -396,6 +397,7 @@ class EXTR_W_TY1_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   dag InOperandList = (ins ACC64DSPOpnd:$ac, uimm16:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
+  string BaseOpcode = instr_asm;
 }
 
 class SHILO_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
@@ -1183,18 +1185,18 @@ def LHX : LHX_ENC, LHX_DESC;
 def LBUX : LBUX_ENC, LBUX_DESC;
 def BPOSGE32 : BPOSGE32_ENC, BPOSGE32_DESC;
 def INSV : DspMMRel, INSV_ENC, INSV_DESC;
-def EXTP : EXTP_ENC, EXTP_DESC;
-def EXTPV : EXTPV_ENC, EXTPV_DESC;
-def EXTPDP : EXTPDP_ENC, EXTPDP_DESC;
-def EXTPDPV : EXTPDPV_ENC, EXTPDPV_DESC;
-def EXTR_W : EXTR_W_ENC, EXTR_W_DESC;
-def EXTRV_W : EXTRV_W_ENC, EXTRV_W_DESC;
-def EXTR_R_W : EXTR_R_W_ENC, EXTR_R_W_DESC;
-def EXTRV_R_W : EXTRV_R_W_ENC, EXTRV_R_W_DESC;
-def EXTR_RS_W : EXTR_RS_W_ENC, EXTR_RS_W_DESC;
-def EXTRV_RS_W : EXTRV_RS_W_ENC, EXTRV_RS_W_DESC;
-def EXTR_S_H : EXTR_S_H_ENC, EXTR_S_H_DESC;
-def EXTRV_S_H : EXTRV_S_H_ENC, EXTRV_S_H_DESC;
+def EXTP : DspMMRel, EXTP_ENC, EXTP_DESC;
+def EXTPV : DspMMRel, EXTPV_ENC, EXTPV_DESC;
+def EXTPDP : DspMMRel, EXTPDP_ENC, EXTPDP_DESC;
+def EXTPDPV : DspMMRel, EXTPDPV_ENC, EXTPDPV_DESC;
+def EXTR_W : DspMMRel, EXTR_W_ENC, EXTR_W_DESC;
+def EXTRV_W : DspMMRel, EXTRV_W_ENC, EXTRV_W_DESC;
+def EXTR_R_W : DspMMRel, EXTR_R_W_ENC, EXTR_R_W_DESC;
+def EXTRV_R_W : DspMMRel, EXTRV_R_W_ENC, EXTRV_R_W_DESC;
+def EXTR_RS_W : DspMMRel, EXTR_RS_W_ENC, EXTR_RS_W_DESC;
+def EXTRV_RS_W : DspMMRel, EXTRV_RS_W_ENC, EXTRV_RS_W_DESC;
+def EXTR_S_H : DspMMRel, EXTR_S_H_ENC, EXTR_S_H_DESC;
+def EXTRV_S_H : DspMMRel, EXTRV_S_H_ENC, EXTRV_S_H_DESC;
 def SHILO : SHILO_ENC, SHILO_DESC;
 def SHILOV : SHILOV_ENC, SHILOV_DESC;
 def MTHLIP : MTHLIP_ENC, MTHLIP_DESC;
