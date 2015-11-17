@@ -61,7 +61,7 @@ public:
 class X86_64TargetInfo final : public TargetInfo {
 public:
   X86_64TargetInfo();
-  unsigned getPLTRefReloc(unsigned Type) const override;
+  unsigned getPltRefReloc(unsigned Type) const override;
   void writeGotPltHeaderEntries(uint8_t *Buf) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -152,7 +152,7 @@ bool TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
-unsigned TargetInfo::getPLTRefReloc(unsigned Type) const { return PCRelReloc; }
+unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
 bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
 
@@ -279,7 +279,7 @@ bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
          relocNeedsPlt(Type, S);
 }
 
-unsigned X86_64TargetInfo::getPLTRefReloc(unsigned Type) const {
+unsigned X86_64TargetInfo::getPltRefReloc(unsigned Type) const {
   if (Type == R_X86_64_PLT32)
     return R_X86_64_PC32;
   return Type;
