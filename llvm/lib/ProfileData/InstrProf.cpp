@@ -131,8 +131,6 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
   return createPGOFuncNameVar(*F.getParent(), F.getLinkage(), FuncName);
 }
 
-namespace IndexedInstrProf {
-
 uint32_t ValueProfRecord::getHeaderSize(uint32_t NumValueSites) {
   uint32_t Size = offsetof(ValueProfRecord, SiteCountArray) +
                   sizeof(uint8_t) * NumValueSites;
@@ -174,7 +172,8 @@ void ValueProfRecord::serializeFrom(const InstrProfRecord &Record,
       DstVD[I] = SrcVD[I];
       switch (ValueKind) {
       case IPVK_IndirectCallTarget:
-        DstVD[I].Value = ComputeHash(HashType, (const char *)DstVD[I].Value);
+        DstVD[I].Value = IndexedInstrProf::ComputeHash(
+            IndexedInstrProf::HashType, (const char *)DstVD[I].Value);
         break;
       default:
         llvm_unreachable("value kind not handled !");
@@ -361,6 +360,4 @@ InstrProfValueData *ValueProfRecord::getValueData() {
   return reinterpret_cast<InstrProfValueData *>((char *)this +
                                                 getHeaderSize(NumValueSites));
 }
-
-} // End of IndexedInstrProf namespace.
 }
