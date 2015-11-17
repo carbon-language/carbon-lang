@@ -1629,6 +1629,7 @@ void Generic_GCC::CudaInstallationDetector::init(
         Args.getLastArgValue(options::OPT_cuda_path_EQ));
   else {
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda");
+    CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.5");
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.0");
   }
 
@@ -4134,8 +4135,11 @@ void Linux::AddCudaIncludeArgs(const ArgList &DriverArgs,
   if (DriverArgs.hasArg(options::OPT_nocudainc))
     return;
 
-  if (CudaInstallation.isValid())
+  if (CudaInstallation.isValid()) {
     addSystemInclude(DriverArgs, CC1Args, CudaInstallation.getIncludePath());
+    CC1Args.push_back("-include");
+    CC1Args.push_back("cuda_runtime.h");
+  }
 }
 
 bool Linux::isPIEDefault() const { return getSanitizerArgs().requiresPIE(); }

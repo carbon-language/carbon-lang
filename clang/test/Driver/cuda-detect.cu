@@ -8,8 +8,6 @@
 // RUN: %clang -v --target=i386-unknown-linux \
 // RUN:   --sysroot=%S/Inputs/CUDA 2>&1 | FileCheck %s
 // RUN: %clang -v --target=i386-unknown-linux \
-// RUN:   --sysroot=%S/Inputs/CUDA 2>&1 | FileCheck %s
-// RUN: %clang -v --target=i386-unknown-linux \
 // RUN:   --cuda-path=%S/Inputs/CUDA/usr/local/cuda 2>&1 | FileCheck %s
 
 // Make sure we map libdevice bitcode files to proper GPUs.
@@ -40,6 +38,12 @@
 // RUN: %clang -### -v --target=i386-unknown-linux --cuda-gpu-arch=sm_35 \
 // RUN:   -nocudalib --cuda-path=%S/Inputs/CUDA/usr/local/cuda %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix COMMON -check-prefix NOLIBDEVICE
+// Verify that we don't add include paths, link with libdevice or
+// -include cuda_runtime without valid CUDA installation.
+// RUN: %clang -### -v --target=i386-unknown-linux --cuda-gpu-arch=sm_35 \
+// RUN:   --cuda-path=%S/no-cuda-there %s 2>&1 \
+// RUN:   | FileCheck %s -check-prefix COMMON \
+// RUN:     -check-prefix NOCUDAINC -check-prefix NOLIBDEVICE
 
 // CHECK: Found CUDA installation: {{.*}}/Inputs/CUDA/usr/local/cuda
 // NOCUDA-NOT: Found CUDA installation:
@@ -55,5 +59,6 @@
 // NOLIBDEVICE-NOT: "-target-feature" "+ptx42"
 // CUDAINC-SAME: "-internal-isystem" "{{.*}}/Inputs/CUDA/usr/local/cuda/include"
 // NOCUDAINC-NOT: "-internal-isystem" "{{.*}}/cuda/include"
+// CUDAINC-SAME: "-include" "cuda_runtime.h"
+// NOCUDAINC-NOT: "-include" "cuda_runtime.h"
 // COMMON-SAME: "-x" "cuda"
-
