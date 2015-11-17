@@ -37,7 +37,11 @@ DWARFUnit::DWARFUnit(DWARFContext &DC, const DWARFSection &Section,
                      const DWARFUnitSectionBase &UnitSection,
                      const DWARFUnitIndex::Entry *IndexEntry)
     : Context(DC), InfoSection(Section), Abbrev(DA), RangeSection(RS),
-      LineSection(LS), StringSection(SS), StringOffsetSection(SOS),
+      LineSection(LS), StringSection(SS), StringOffsetSection([&]() {
+        if (const auto *C = IndexEntry->getOffset(DW_SECT_STR_OFFSETS))
+          return SOS.slice(C->Offset, C->Offset + C->Length);
+        return SOS;
+      }()),
       AddrOffsetSection(AOS), isLittleEndian(LE), UnitSection(UnitSection),
       IndexEntry(IndexEntry) {
   clear();

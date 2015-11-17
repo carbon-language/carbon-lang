@@ -17,8 +17,7 @@ RUN: llvm-dwarfdump %p/Inputs/dwarfdump-dwp.x86_64.o | FileCheck %s
 ; CHECK-SAME: abbr_offset = 0x0043
 ; CHECK: DW_TAG_compile_unit
 ; CHECK-NOT: DW_TAG
-; FIXME: Implement str_offsets support so we find b.cpp here \/
-; CHECK:   DW_AT_name {{.*}} "a.cpp"
+; CHECK:   DW_AT_name {{.*}} "b.cpp"
 
 ; Verify that abbreviations are decoded using the abbrev offset in the index
 ; CHECK:   DW_TAG_structure_type
