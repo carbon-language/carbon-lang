@@ -166,6 +166,7 @@ protected:
     std::string CudaLibPath;
     std::string CudaLibDevicePath;
     std::string CudaIncludePath;
+    llvm::StringMap<std::string> CudaLibDeviceMap;
 
   public:
     CudaInstallationDetector(const Driver &D) : IsValid(false), D(D) {}
@@ -185,6 +186,9 @@ protected:
     /// \brief Get the detected Cuda device library path.
     StringRef getLibDevicePath() const { return CudaLibDevicePath; }
     /// \brief Get libdevice file for given architecture
+    StringRef getLibDeviceFile(StringRef Gpu) const {
+      return CudaLibDeviceMap.lookup(Gpu);
+    }
   };
 
   CudaInstallationDetector CudaInstallation;
