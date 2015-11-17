@@ -50,7 +50,7 @@ protected:
     None, AClass, RClass, MClass
   };
   enum ARMArchEnum {
-    Other, ARMv2, ARMv2a, ARMv3, ARMv3m, ARMv4, ARMv4t, ARMv5, ARMv5t, ARMv5te,
+    ARMv2, ARMv2a, ARMv3, ARMv3m, ARMv4, ARMv4t, ARMv5, ARMv5t, ARMv5te,
     ARMv5tej, ARMv6, ARMv6k, ARMv6kz, ARMv6t2, ARMv6m, ARMv6sm, ARMv7a, ARMv7r,
     ARMv7m, ARMv7em, ARMv8a, ARMv81a
   };
