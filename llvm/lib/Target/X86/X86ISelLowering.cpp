@@ -2721,8 +2721,6 @@ SDValue X86TargetLowering::LowerFormalArguments(
         MFI->CreateFixedObject(1, StackSize, true));
   }
 
-  MachineModuleInfo &MMI = MF.getMMI();
-
   // Figure out if XMM registers are in use.
   assert(!(Subtarget->useSoftFloat() &&
            Fn->hasFnAttribute(Attribute::NoImplicitFloat)) &&
@@ -2878,7 +2876,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   FuncInfo->setArgumentStackSize(StackSize);
 
-  if (MMI.hasWinEHFuncInfo(Fn)) {
+  if (WinEHFuncInfo *EHInfo = MF.getWinEHFuncInfo()) {
     EHPersonality Personality = classifyEHPersonality(Fn->getPersonalityFn());
     if (Personality == EHPersonality::CoreCLR) {
       assert(Is64Bit);
@@ -2891,7 +2889,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
       // how far this slot is from the bottom (since they allocate just enough
       // space to accomodate holding this slot at the correct offset).
       int PSPSymFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
-      MMI.getWinEHFuncInfo(MF.getFunction()).PSPSymFrameIdx = PSPSymFI;
+      EHInfo->PSPSymFrameIdx = PSPSymFI;
     }
   }
 
@@ -16940,6 +16938,24 @@ static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
   return Chain;
 }
 
+static SDValue MarkEHRegistrationNode(SDValue Op, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  SDValue Chain = Op.getOperand(0);
+  SDValue RegNode = Op.getOperand(2);
+  WinEHFuncInfo *EHInfo = MF.getWinEHFuncInfo();
+  if (!EHInfo)
+    report_fatal_error("EH registrations only live in functions using WinEH");
+
+  // Cast the operand to an alloca, and remember the frame index.
+  auto *FINode = dyn_cast<FrameIndexSDNode>(RegNode);
+  if (!FINode)
+    report_fatal_error("llvm.x86.seh.ehregnode expects a static alloca");
+  EHInfo->EHRegNodeFrameIndex = FINode->getIndex();
+
+  // Return the chain operand without making any DAG nodes.
+  return Chain;
+}
+
 /// \brief Lower intrinsics for TRUNCATE_TO_MEM case
 /// return truncate Store/MaskedStore Node
 static SDValue LowerINTRINSIC_TRUNCATE_TO_MEM(const SDValue & Op,
@@ -16985,6 +17001,8 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   if (!IntrData) {
     if (IntNo == llvm::Intrinsic::x86_seh_restoreframe)
       return LowerSEHRESTOREFRAME(Op, Subtarget, DAG);
+    else if (IntNo == llvm::Intrinsic::x86_seh_ehregnode)
+      return MarkEHRegistrationNode(Op, DAG);
     return SDValue();
   }
 
