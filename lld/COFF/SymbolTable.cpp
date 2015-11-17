@@ -406,7 +406,7 @@ std::vector<ObjectFile *> SymbolTable::createLTOObjects(LTOCodeGenerator *CG) {
 
   CG->setModule(BitcodeFiles[0]->takeModule());
   for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)
-    CG->addModule(BitcodeFiles[I]->getModule());
+    CG->addModule(BitcodeFiles[I]->takeModule().get());
 
   bool DisableVerify = true;
 #ifdef NDEBUG
