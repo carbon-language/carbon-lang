@@ -51,13 +51,13 @@ class InstrProfErrorCategoryType : public std::error_category {
     case instrprof_error::unknown_function:
       return "No profile data available for function";
     case instrprof_error::hash_mismatch:
-      return "Function hash mismatch";
+      return "Function control flow change detected (hash mismatch)";
     case instrprof_error::count_mismatch:
-      return "Function count mismatch";
+      return "Function basic block count change detected (counter mismatch)";
     case instrprof_error::counter_overflow:
       return "Counter overflow";
     case instrprof_error::value_site_count_mismatch:
-      return "Function's value site counts mismatch";
+      return "Function value site count change detected (counter mismatch)";
     }
     llvm_unreachable("A value of instrprof_error has no message.");
   }
