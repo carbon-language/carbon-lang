@@ -1203,9 +1203,11 @@ protected:
                 DataVisualization::Categories::GetCategory(cat_nameCS, category);
             }
             else
+            {
                 DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-                category->Clear(m_formatter_kind_mask);
-                }
+            }
+            category->Clear(m_formatter_kind_mask);
+        }
         
         FormatterSpecificDeletion();
         
