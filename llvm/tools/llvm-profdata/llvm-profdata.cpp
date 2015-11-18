@@ -82,6 +82,8 @@ static void handleMergeWriterError(std::error_code &Error,
         Hint = "Make sure that all profile data to be merged is generated " \
                "from the same binary.";
         break;
+      default:
+        break;
       }
     }
 
