@@ -55,15 +55,17 @@ void __llvm_profile_reset_counters(void) {
 
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
   const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
-  for (const __llvm_profile_data *DI = DataBegin; DI != DataEnd; ++DI) {
+  const __llvm_profile_data *DI;
+  for (DI = DataBegin; DI != DataEnd; ++DI) {
+    uint64_t CurrentVSiteCount = 0;
+    uint32_t VKI, i;
     if (!DI->ValueCounters)
       continue;
 
-    uint64_t CurrentVSiteCount = 0;
-    for (uint32_t VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+    for (VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
       CurrentVSiteCount += DI->NumValueSites[VKI];
 
-    for (uint32_t i = 0; i < CurrentVSiteCount; ++i) {
+    for (i = 0; i < CurrentVSiteCount; ++i) {
       __llvm_profile_value_node *CurrentVNode = DI->ValueCounters[i];
 
       while (CurrentVNode) {
@@ -86,7 +88,8 @@ void __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
 
   if (!Data->ValueCounters) {
     uint64_t NumVSites = 0;
-    for (uint32_t VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+    uint32_t VKI;
+    for (VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
       NumVSites += Data->NumValueSites[VKI];
 
     __llvm_profile_value_node** Mem = (__llvm_profile_value_node**)
@@ -157,14 +160,17 @@ uint64_t __llvm_profile_gather_value_data(uint8_t **VDataArray) {
   uint8_t *PerSiteCountsHead = *VDataArray;
   const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
-  for (__llvm_profile_data *I = (__llvm_profile_data *)DataBegin;
+  __llvm_profile_data *I;
+  for (I = (__llvm_profile_data *)DataBegin;
        I != DataEnd; ++I) {
+
+    uint64_t NumVSites = 0;
+    uint32_t VKI, i;
 
     if (!I->ValueCounters)
       continue;
 
-    uint64_t NumVSites = 0;
-    for (uint32_t VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+    for (VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
       NumVSites += I->NumValueSites[VKI];
     uint8_t Padding = __llvm_profile_get_num_padding_bytes(NumVSites);
 
@@ -172,7 +178,7 @@ uint64_t __llvm_profile_gather_value_data(uint8_t **VDataArray) {
     __llvm_profile_value_data *VDataPtr =
         (__llvm_profile_value_data *)(PerSiteCountPtr + NumVSites + Padding);
 
-    for (uint32_t i = 0; i < NumVSites; ++i) {
+    for (i = 0; i < NumVSites; ++i) {
 
       __llvm_profile_value_node *VNode = I->ValueCounters[i];
 
