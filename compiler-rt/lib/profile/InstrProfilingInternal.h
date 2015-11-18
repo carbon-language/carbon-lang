@@ -11,6 +11,7 @@
 #define PROFILE_INSTRPROFILING_INTERNALH_
 
 #include "InstrProfiling.h"
+#include "stddef.h"
 
 /*!
  * \brief Write instrumentation data to the given buffer, given explicit
@@ -36,5 +37,19 @@ int __llvm_profile_write_buffer_internal(
     char *Buffer, const __llvm_profile_data *DataBegin,
     const __llvm_profile_data *DataEnd, const uint64_t *CountersBegin,
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd);
+
+/*!
+ * This is an internal function not intended to be used externally.
+ */
+typedef size_t (*WriterCallback)(const void *Data, size_t ElmS, size_t NumElm,
+                                 void **BufferOrFile);
+int llvmWriteProfData(void *BufferOrFile, const uint8_t *ValueDataBegin, const uint64_t ValueDataSize, WriterCallback Writer);
+int llvmWriteProfDataImpl(void *BufferOrFile, WriterCallback Writer,
+                          const __llvm_profile_data *DataBegin,
+                          const __llvm_profile_data *DataEnd,
+                          const uint64_t *CountersBegin, const uint64_t *CountersEnd,
+                          const uint8_t *ValueDataBegin, const uint64_t ValueDataSize,
+                          const char *NamesBegin,
+                          const char *NamesEnd);
 
 #endif

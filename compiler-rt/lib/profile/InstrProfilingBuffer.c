@@ -37,75 +37,28 @@ uint64_t __llvm_profile_get_size_for_buffer_internal(
   const uint64_t NamesSize = PROFILE_RANGE_SIZE(Names) * sizeof(char);
   const uint8_t Padding = __llvm_profile_get_num_padding_bytes(NamesSize);
   return sizeof(__llvm_profile_header) +
-      PROFILE_RANGE_SIZE(Data) * sizeof(__llvm_profile_data) +
-      PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) +
-      NamesSize + Padding;
+         PROFILE_RANGE_SIZE(Data) * sizeof(__llvm_profile_data) +
+         PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) + NamesSize + Padding;
 }
 
-__attribute__((visibility("hidden")))
-int __llvm_profile_write_buffer(char *Buffer) {
-  /* Match logic in __llvm_profile_get_size_for_buffer().
-   * Match logic in __llvm_profile_write_file().
-   */
-  const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
-  const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
-  const uint64_t *CountersBegin = __llvm_profile_begin_counters();
-  const uint64_t *CountersEnd   = __llvm_profile_end_counters();
-  const char *NamesBegin = __llvm_profile_begin_names();
-  const char *NamesEnd   = __llvm_profile_end_names();
-
-  return __llvm_profile_write_buffer_internal(Buffer, DataBegin, DataEnd,
-                                              CountersBegin, CountersEnd,
-                                              NamesBegin, NamesEnd);
+static size_t BufferWriter(const void *Data, size_t ElmSize, size_t NumElm,
+                           void **Buffer) {
+  size_t Length = ElmSize * NumElm;
+  memcpy(*Buffer, Data, Length);
+  *(char **)Buffer += Length;
+  return NumElm;
 }
 
-__attribute__((visibility("hidden")))
-int __llvm_profile_write_buffer_internal(
+__attribute__((visibility("hidden"))) int
+__llvm_profile_write_buffer(char *Buffer) {
+  return llvmWriteProfData(Buffer, 0, 0, BufferWriter);
+}
+
+__attribute__((visibility("hidden"))) int __llvm_profile_write_buffer_internal(
     char *Buffer, const __llvm_profile_data *DataBegin,
     const __llvm_profile_data *DataEnd, const uint64_t *CountersBegin,
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd) {
-  /* Match logic in __llvm_profile_get_size_for_buffer().
-   * Match logic in __llvm_profile_write_file().
-   */
-
-  /* Calculate size of sections. */
-  const uint64_t DataSize = DataEnd - DataBegin;
-  const uint64_t CountersSize = CountersEnd - CountersBegin;
-  const uint64_t NamesSize = NamesEnd - NamesBegin;
-  const uint8_t Padding = __llvm_profile_get_num_padding_bytes(NamesSize);
-
-  /* Enough zeroes for padding. */
-  const char Zeroes[sizeof(uint64_t)] = {0};
-
-  /* Create the header. */
-  __llvm_profile_header Header;
-
-  if (!DataSize)
-    return 0;
-
-  Header.Magic = __llvm_profile_get_magic();
-  Header.Version = __llvm_profile_get_version();
-  Header.DataSize = DataSize;
-  Header.CountersSize = CountersSize;
-  Header.NamesSize = NamesSize;
-  Header.CountersDelta = (uintptr_t)CountersBegin;
-  Header.NamesDelta = (uintptr_t)NamesBegin;
-  Header.ValueKindLast = VK_LAST;
-  Header.ValueDataSize = 0;
-  Header.ValueDataDelta = (uintptr_t)NULL;
-
-  /* Write the data. */
-#define UPDATE_memcpy(Data, Size) \
-  do {                            \
-    memcpy(Buffer, Data, Size);   \
-    Buffer += Size;               \
-  } while (0)
-  UPDATE_memcpy(&Header,  sizeof(__llvm_profile_header));
-  UPDATE_memcpy(DataBegin,     DataSize      * sizeof(__llvm_profile_data));
-  UPDATE_memcpy(CountersBegin, CountersSize  * sizeof(uint64_t));
-  UPDATE_memcpy(NamesBegin,    NamesSize     * sizeof(char));
-  UPDATE_memcpy(Zeroes,        Padding       * sizeof(char));
-#undef UPDATE_memcpy
-
-  return 0;
+  return llvmWriteProfDataImpl(Buffer, BufferWriter, DataBegin, DataEnd,
+                               CountersBegin, CountersEnd, 0, 0, NamesBegin,
+                               NamesEnd);
 }

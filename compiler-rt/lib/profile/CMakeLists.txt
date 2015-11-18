@@ -5,6 +5,7 @@ set(PROFILE_SOURCES
   InstrProfiling.c
   InstrProfilingBuffer.c
   InstrProfilingFile.c
+  InstrProfilingWriter.c
   InstrProfilingPlatformDarwin.c
   InstrProfilingPlatformLinux.c
   InstrProfilingPlatformOther.c

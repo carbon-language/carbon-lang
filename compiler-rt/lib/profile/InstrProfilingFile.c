@@ -9,6 +9,7 @@
 
 #include "InstrProfiling.h"
 #include "InstrProfilingUtil.h"
+#include "InstrProfilingInternal.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,57 +17,18 @@
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
-static int writeFile(FILE *File) {
-  /* Match logic in __llvm_profile_write_buffer(). */
-  const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
-  const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
-  const uint64_t *CountersBegin = __llvm_profile_begin_counters();
-  const uint64_t *CountersEnd   = __llvm_profile_end_counters();
-  const char *NamesBegin = __llvm_profile_begin_names();
-  const char *NamesEnd   = __llvm_profile_end_names();
+static size_t FileWriter(const void *Data, size_t ElmSize, size_t NumElm,
+                         void **File) {
+  return fwrite(Data, ElmSize, NumElm, (FILE *)*File);
+}
   uint8_t *ValueDataBegin = NULL;
 
-  /* Calculate size of sections. */
-  const uint64_t DataSize = DataEnd - DataBegin;
-  const uint64_t CountersSize = CountersEnd - CountersBegin;
-  const uint64_t NamesSize = NamesEnd - NamesBegin;
-  const uint8_t Padding = __llvm_profile_get_num_padding_bytes(NamesSize);
-  const uint64_t ValueDataSize =
-      __llvm_profile_gather_value_data(&ValueDataBegin);
-
-  /* Enough zeroes for padding. */
-  const char Zeroes[sizeof(uint64_t)] = {0};
-
-  /* Create the header. */
-  __llvm_profile_header Header;
-
-  if (!DataSize)
-    return 0;
-
-  Header.Magic = __llvm_profile_get_magic();
-  Header.Version = __llvm_profile_get_version();
-  Header.DataSize = DataSize;
-  Header.CountersSize = CountersSize;
-  Header.NamesSize = NamesSize;
-  Header.CountersDelta = (uintptr_t)CountersBegin;
-  Header.NamesDelta = (uintptr_t)NamesBegin;
-  Header.ValueKindLast = VK_LAST;
-  Header.ValueDataSize = ValueDataSize;
-  Header.ValueDataDelta = (uintptr_t)ValueDataBegin;
-
-  /* Write the data. */
-#define CHECK_fwrite(Data, Size, Length, File) \
-  do { if (fwrite(Data, Size, Length, File) != Length) return -1; } while (0)
-  CHECK_fwrite(&Header,       sizeof(__llvm_profile_header), 1, File);
-  CHECK_fwrite(DataBegin,     sizeof(__llvm_profile_data), DataSize, File);
-  CHECK_fwrite(CountersBegin, sizeof(uint64_t), CountersSize, File);
-  CHECK_fwrite(NamesBegin,    sizeof(char), NamesSize, File);
-  CHECK_fwrite(Zeroes,        sizeof(char), Padding, File);
-  CHECK_fwrite(ValueDataBegin,
-      sizeof(__llvm_profile_value_data), ValueDataSize, File);
-#undef CHECK_fwrite
-  free(ValueDataBegin);
-  return 0;
+static int writeFile(FILE *File) {
+  uint8_t *ValueDataBegin = NULL;
+  const uint64_t ValueDataSize = __llvm_profile_gather_value_data(&ValueDataBegin);
+  int r = llvmWriteProfData(File, ValueDataBegin, ValueDataSize, FileWriter);
+  free (ValueDataBegin);
+  return r;
 }
 
 static int writeFileWithName(const char *OutputName) {
