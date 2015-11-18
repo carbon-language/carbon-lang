@@ -186,7 +186,7 @@ protected:
     /// \brief Get the detected Cuda device library path.
     StringRef getLibDevicePath() const { return CudaLibDevicePath; }
     /// \brief Get libdevice file for given architecture
-    StringRef getLibDeviceFile(StringRef Gpu) const {
+    std::string getLibDeviceFile(StringRef Gpu) const {
       return CudaLibDeviceMap.lookup(Gpu);
     }
   };
