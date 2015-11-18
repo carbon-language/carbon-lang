@@ -2709,7 +2709,7 @@ bool GVN::performPRE(Function &F) {
                               BE = CurrentBlock->end();
          BI != BE;) {
       Instruction *CurInst = &*BI++;
-      Changed = performScalarPRE(CurInst);
+      Changed |= performScalarPRE(CurInst);
     }
   }
 
