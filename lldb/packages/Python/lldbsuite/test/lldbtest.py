@@ -461,8 +461,11 @@ def android_device_api():
         assert lldb.platform_url is not None
         device_id = None
         parsed_url = urlparse.urlparse(lldb.platform_url)
-        if parsed_url.scheme == "adb":
-            device_id = parsed_url.netloc.split(":")[0]
+        host_name = parsed_url.netloc.split(":")[0]
+        if host_name != 'localhost':
+            device_id = host_name
+            if device_id.startswith('[') and device_id.endswith(']'):
+                device_id = device_id[1:-1]
         retcode, stdout, stderr = run_adb_command(
             ["shell", "getprop", "ro.build.version.sdk"], device_id)
         if retcode == 0:
