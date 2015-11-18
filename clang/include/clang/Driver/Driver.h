@@ -310,8 +310,6 @@ public:
   ///
   /// \param C - The compilation that is being built.
   /// \param TC - The default host tool chain.
-  /// \param Args - The input arguments.
-  /// \param Actions - The list to store the resulting actions onto.
   void BuildUniversalActions(Compilation &C, const ToolChain &TC,
                              const InputList &BAInputs) const;
 
