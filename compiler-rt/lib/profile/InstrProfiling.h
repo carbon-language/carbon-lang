@@ -100,6 +100,12 @@ uint64_t *__llvm_profile_begin_counters(void);
 uint64_t *__llvm_profile_end_counters(void);
 
 /*!
+ * \brief Clear profile counters to zero.
+ *
+ */
+void __llvm_profile_reset_counters(void);
+
+/*!
  * \brief Counts the number of times a target value is seen.
  *
  * Records the target value for the CounterIndex if not seen before. Otherwise,
