@@ -355,12 +355,7 @@ static MCSymbol *getOrCreateEmuTLSInitSym(MCSymbol *GVSym, MCContext &C) {
 void AsmPrinter::EmitEmulatedTLSControlVariable(const GlobalVariable *GV,
                                                 MCSymbol *EmittedSym,
                                                 bool AllZeroInitValue) {
-  // If there is init value, use .data.rel.local section;
-  // otherwise use the .data section.
-  MCSection *TLSVarSection =
-      const_cast<MCSection *>((GV->hasInitializer() && !AllZeroInitValue)
-                                  ? getObjFileLowering().getDataRelSection()
-                                  : getObjFileLowering().getDataSection());
+  MCSection *TLSVarSection = getObjFileLowering().getDataSection();
   OutStreamer->SwitchSection(TLSVarSection);
   MCSymbol *GVSym = getSymbol(GV);
   EmitLinkage(GV, EmittedSym);  // same linkage as GV
@@ -1139,7 +1134,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     // Output stubs for external and common global variables.
     MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
     if (!Stubs.empty()) {
-      OutStreamer->SwitchSection(TLOF.getDataRelSection());
+      OutStreamer->SwitchSection(TLOF.getDataSection());
       const DataLayout &DL = M.getDataLayout();
 
       for (const auto &Stub : Stubs) {
