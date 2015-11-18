@@ -388,7 +388,7 @@ def system(commands, **kwargs):
             raise ValueError('stdout argument not allowed, it will be overridden.')
         if 'shell' in kwargs and kwargs['shell']==False:
             raise ValueError('shell=False not allowed')
-        process = Popen(shellCommand, stdout=PIPE, stderr=PIPE, shell=True, **kwargs)
+        process = Popen(shellCommand, stdout=PIPE, stderr=PIPE, shell=True, universal_newlines=True, **kwargs)
         pid = process.pid
         this_output, this_error = process.communicate()
         retcode = process.poll()
