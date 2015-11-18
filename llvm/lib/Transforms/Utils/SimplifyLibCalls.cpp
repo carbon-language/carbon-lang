@@ -1096,6 +1096,8 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
                                   Callee->getAttributes());
   }
 
+  bool unsafeFPMath = canUseUnsafeFPMath(CI->getParent()->getParent());
+
   // pow(exp(x), y) -> exp(x*y)
   // pow(exp2(x), y) -> exp2(x * y)
   // We enable these only under fast-math. Besides rounding
@@ -1103,7 +1105,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
   // underflow behavior quite dramatically.
   // Example: x = 1000, y = 0.001.
   // pow(exp(x), y) = pow(inf, 0.001) = inf, whereas exp(x*y) = exp(1).
-  if (canUseUnsafeFPMath(CI->getParent()->getParent())) {
+  if (unsafeFPMath) {
     if (auto *OpC = dyn_cast<CallInst>(Op1)) {
       IRBuilder<>::FastMathFlagGuard Guard(B);
       FastMathFlags FMF;
@@ -1134,10 +1136,15 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
                       LibFunc::sqrtl) &&
       hasUnaryFloatFn(TLI, Op2->getType(), LibFunc::fabs, LibFunc::fabsf,
                       LibFunc::fabsl)) {
+
+    // In -ffast-math, pow(x, 0.5) -> sqrt(x).
+    if (unsafeFPMath)
+      return EmitUnaryFloatFnCall(Op1, TLI->getName(LibFunc::sqrt), B,
+                                  Callee->getAttributes());
+
     // Expand pow(x, 0.5) to (x == -infinity ? +infinity : fabs(sqrt(x))).
     // This is faster than calling pow, and still handles negative zero
     // and negative infinity correctly.
-    // TODO: In fast-math mode, this could be just sqrt(x).
     // TODO: In finite-only mode, this could be just fabs(sqrt(x)).
     Value *Inf = ConstantFP::getInfinity(CI->getType());
     Value *NegInf = ConstantFP::getInfinity(CI->getType(), true);
