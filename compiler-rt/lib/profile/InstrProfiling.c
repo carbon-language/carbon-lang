@@ -29,7 +29,8 @@ __attribute__((visibility("hidden"))) uint64_t __llvm_profile_get_magic(void) {
 }
 
 /* Return the number of bytes needed to add to SizeInBytes to make it
-   the result a multiple of 8.  */
+ *   the result a multiple of 8.
+ */
 __attribute__((visibility("hidden"))) uint8_t
 __llvm_profile_get_num_padding_bytes(uint64_t SizeInBytes) {
   return 7 & (sizeof(uint64_t) - SizeInBytes % sizeof(uint64_t));
@@ -70,13 +71,14 @@ __attribute__((visibility("hidden"))) void __llvm_profile_reset_counters(void) {
   }
 }
 
-// Total number of value profile data in bytes.
+/* Total number of value profile data in bytes. */
 static uint64_t TotalValueDataSize = 0;
 
 /* Allocate an array that holds the pointers to the linked lists of
-   value profile counter nodes. The number of element of the array
-   is the total number of value profile sites instrumented. Returns
-   0 if allocation fails.  */
+ * value profile counter nodes. The number of element of the array
+ * is the total number of value profile sites instrumented. Returns
+ *  0 if allocation fails.
+ */
 
 static int allocateValueProfileCounters(__llvm_profile_data *Data) {
   uint64_t NumVSites = 0;
@@ -92,10 +94,11 @@ static int allocateValueProfileCounters(__llvm_profile_data *Data) {
     free(Mem);
     return 0;
   }
-  /* In the raw format, there will be an value count array preceding
-     the value profile data. The element type of the array is uint8_t,
-   and there is one element in array per value site. The element
-   stores the number of values profiled for the corresponding site. */
+  /*  In the raw format, there will be an value count array preceding
+   *  the value profile data. The element type of the array is uint8_t,
+   *  and there is one element in array per value site. The element
+   *  stores the number of values profiled for the corresponding site.
+   */
   uint8_t Padding = __llvm_profile_get_num_padding_bytes(NumVSites);
   __sync_fetch_and_add(&TotalValueDataSize, NumVSites + Padding);
   return 1;
