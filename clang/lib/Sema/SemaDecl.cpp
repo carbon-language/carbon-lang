@@ -6079,9 +6079,20 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       }
     } else if (SC == SC_Register) {
       // Global Named register
-      if (!Context.getTargetInfo().isValidGCCRegisterName(Label) &&
-          DeclAttrsMatchCUDAMode(getLangOpts(), NewVD))
-        Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
+      if (DeclAttrsMatchCUDAMode(getLangOpts(), NewVD)) {
+        const auto &TI = Context.getTargetInfo();
+        bool HasSizeMismatch;
+
+        if (!TI.isValidGCCRegisterName(Label))
+          Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
+        else if (!TI.validateGlobalRegisterVariable(Label,
+                                                    Context.getTypeSize(R),
+                                                    HasSizeMismatch))
+          Diag(E->getExprLoc(), diag::err_asm_invalid_global_var_reg) << Label;
+        else if (HasSizeMismatch)
+          Diag(E->getExprLoc(), diag::err_asm_register_size_mismatch) << Label;
+      }
+
       if (!R->isIntegralType(Context) && !R->isPointerType()) {
         Diag(D.getLocStart(), diag::err_asm_bad_register_type);
         NewVD->setInvalidDecl(true);
