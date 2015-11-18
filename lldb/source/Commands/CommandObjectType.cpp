@@ -1089,13 +1089,6 @@ CommandObjectTypeFormatterDelete::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
-
-
-
-
-
-
-
 class CommandObjectTypeFormatterClear : public CommandObjectParsed
 {
 private:
@@ -1224,10 +1217,6 @@ CommandObjectTypeFormatterClear::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
-
-
-
-
 //-------------------------------------------------------------------------
 // CommandObjectTypeFormatDelete
 //-------------------------------------------------------------------------
@@ -1264,26 +1253,11 @@ public:
     }
 };
 
-//-------------------------------------------------------------------------
-// CommandObjectTypeFormatList
-//-------------------------------------------------------------------------
-
-bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeFormatImplSP& entry);
-bool CommandObjectTypeRXFormatList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::TypeFormatImplSP& entry);
-
-class CommandObjectTypeFormatList;
-
-struct CommandObjectTypeFormatList_LoopCallbackParam {
-    CommandObjectTypeFormatList* self;
-    CommandReturnObject* result;
-    RegularExpression* regex;
-    RegularExpression* cate_regex;
-    CommandObjectTypeFormatList_LoopCallbackParam(CommandObjectTypeFormatList* S, CommandReturnObject* R,
-                                            RegularExpression* X = NULL, RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
-};
-
-class CommandObjectTypeFormatList : public CommandObjectParsed
+template <typename FormatterType>
+class CommandObjectTypeFormatterList : public CommandObjectParsed
 {
+    typedef typename FormatterType::SharedPointer FormatterSharedPointer;
+
     class CommandOptions : public Options
     {
     public:
@@ -1323,6 +1297,12 @@ class CommandObjectTypeFormatList : public CommandObjectParsed
         const OptionDefinition*
         GetDefinitions () override
         {
+            static OptionDefinition g_option_table[] =
+            {
+                { LLDB_OPT_SET_ALL, false, "category-regex", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
+                { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+            };
+
             return g_option_table;
         }
         
@@ -1345,10 +1325,12 @@ class CommandObjectTypeFormatList : public CommandObjectParsed
     }
 
 public:
-    CommandObjectTypeFormatList (CommandInterpreter &interpreter) :
+    CommandObjectTypeFormatterList (CommandInterpreter &interpreter,
+                                    const char* name,
+                                    const char* help) :
         CommandObjectParsed (interpreter,
-                             "type format list",
-                             "Show a list of current formatting styles.",
+                             name,
+                             help,
                              NULL),
     m_options(interpreter)
     {
@@ -1363,115 +1345,141 @@ public:
         m_arguments.push_back (type_arg);
     }
     
-    ~CommandObjectTypeFormatList () override
+    ~CommandObjectTypeFormatterList () override
     {
     }
     
 protected:
+    virtual void
+    FormatterSpecificList (CommandReturnObject &result)
+    {
+    }
+    
     bool
     DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
-        CommandObjectTypeFormatList_LoopCallbackParam *param;
-        RegularExpression* cate_regex =
-        m_options.m_category_regex.empty() ? NULL :
-        new RegularExpression(m_options.m_category_regex.c_str());
+        std::unique_ptr<RegularExpression> category_regex;
+        std::unique_ptr<RegularExpression> formatter_regex;
+        
+        if (m_options.m_category_regex.size() > 0)
+        {
+            category_regex.reset(new RegularExpression());
+            if (!category_regex->Compile(m_options.m_category_regex.c_str()))
+            {
+                result.AppendErrorWithFormat("syntax error in category regular expression '%s'", m_options.m_category_regex.c_str());
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
         
         if (argc == 1)
         {
-            RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-            regex->Compile(command.GetArgumentAtIndex(0));
-            param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,regex,cate_regex);
+            const char* arg = command.GetArgumentAtIndex(1);
+            formatter_regex.reset(new RegularExpression());
+            if (!formatter_regex->Compile(arg))
+            {
+                result.AppendErrorWithFormat("syntax error in regular expression '%s'", arg);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
         }
-        else
-            param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
-        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
-        delete param;
+        DataVisualization::Categories::ForEach( [this, &command, &result, &category_regex, &formatter_regex] (const lldb::TypeCategoryImplSP& category) -> bool {
+            if (category_regex)
+            {
+                bool escape = true;
+                if (0 == strcmp(category->GetName(), category_regex->GetText()))
+                {
+                    escape = false;
+                }
+                else if (category_regex->Execute(category->GetName()))
+                {
+                    escape = false;
+                }
+                
+                if (escape)
+                    return true;
+            }
 
-        if (cate_regex)
-            delete cate_regex;
+            result.GetOutputStream().Printf("-----------------------\nCategory: %s\n-----------------------\n", category->GetName());
+            
+            typedef const std::shared_ptr<FormatterType> Bar;
+            typedef std::function<bool(ConstString,Bar)> Func1Type;
+            typedef std::function<bool(RegularExpressionSP,Bar)> Func2Type;
+
+            TypeCategoryImpl::ForEachCallbacks<FormatterType> foreach;
+            foreach.SetExact([&result, &formatter_regex] (ConstString name, const FormatterSharedPointer& format_sp) -> bool {
+                if (formatter_regex)
+                {
+                    bool escape = true;
+                    if (0 == strcmp(name.AsCString(), formatter_regex->GetText()))
+                    {
+                        escape = false;
+                    }
+                    else if (formatter_regex->Execute(name.AsCString()))
+                    {
+                        escape = false;
+                    }
+                    
+                    if (escape)
+                        return true;
+                }
+
+                result.GetOutputStream().Printf ("%s: %s\n", name.AsCString(), format_sp->GetDescription().c_str());
+                
+                return true;
+            });
+
+            foreach.SetWithRegex( [&result, &formatter_regex] (RegularExpressionSP regex_sp, const FormatterSharedPointer& format_sp) -> bool {
+                if (formatter_regex)
+                {
+                    bool escape = true;
+                    if (0 == strcmp(regex_sp->GetText(), formatter_regex->GetText()))
+                    {
+                        escape = false;
+                    }
+                    else if (formatter_regex->Execute(regex_sp->GetText()))
+                    {
+                        escape = false;
+                    }
+                    
+                    if (escape)
+                        return true;
+                }
+                
+                result.GetOutputStream().Printf ("%s: %s\n", regex_sp->GetText(), format_sp->GetDescription().c_str());
+                
+                return true;
+            });
+
+            category->ForEach(foreach);
+            
+            return true;
+        });
         
+        FormatterSpecificList(result);
+
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
-    
-private:
-    
-    static bool
-    PerCategoryCallback(void* param_vp,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        
-        CommandObjectTypeFormatList_LoopCallbackParam* param =
-        (CommandObjectTypeFormatList_LoopCallbackParam*)param_vp;
-        CommandReturnObject* result = param->result;
-        
-        const char* cate_name = cate->GetName();
-        
-        // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemValue | eFormatCategoryItemRegexValue) == 0) && param->cate_regex == NULL)
-            return true;
-        
-        // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
-            return true;
-        
-        result->GetOutputStream().Printf("-----------------------\nCategory: %s\n-----------------------\n", cate->GetDescription().c_str());
-        
-        cate->GetTypeFormatsContainer()->LoopThrough(CommandObjectTypeFormatList_LoopCallback, param_vp);
-        
-        if (cate->GetRegexTypeFormatsContainer()->GetCount() > 0)
-        {
-            result->GetOutputStream().Printf("Regex-based formats (slower):\n");
-            cate->GetRegexTypeFormatsContainer()->LoopThrough(CommandObjectTypeRXFormatList_LoopCallback, param_vp);
-        }
-        return true;
-    }
-    
-    
-    bool
-    LoopCallback (const char* type,
-                  const lldb::TypeFormatImplSP& entry,
-                  RegularExpression* regex,
-                  CommandReturnObject *result)
-    {
-        if (regex == NULL || strcmp(type,regex->GetText()) == 0 || regex->Execute(type))
-            result->GetOutputStream().Printf ("%s: %s\n", type, entry->GetDescription().c_str());
-        return true;
-    }
-    
-    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeFormatImplSP& entry);
-    friend bool CommandObjectTypeRXFormatList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::TypeFormatImplSP& entry);
-    
 };
 
-bool
-CommandObjectTypeFormatList_LoopCallback (
-                                    void* pt2self,
-                                    ConstString type,
-                                    const lldb::TypeFormatImplSP& entry)
-{
-    CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
-}
+//-------------------------------------------------------------------------
+// CommandObjectTypeFormatList
+//-------------------------------------------------------------------------
 
-bool
-CommandObjectTypeRXFormatList_LoopCallback (
-                                             void* pt2self,
-                                             lldb::RegularExpressionSP regex,
-                                             const lldb::TypeFormatImplSP& entry)
+class CommandObjectTypeFormatList : public CommandObjectTypeFormatterList<TypeFormatImpl>
 {
-    CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
-}
-
-OptionDefinition
-CommandObjectTypeFormatList::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "category-regex", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+public:
+    
+    CommandObjectTypeFormatList (CommandInterpreter &interpreter) :
+        CommandObjectTypeFormatterList(interpreter,
+                                       "type format list",
+                                       "Show a list of current formats.")
+    {
+    }
 };
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -2046,226 +2054,30 @@ protected:
 // CommandObjectTypeSummaryList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const StringSummaryFormat::SharedPointer& entry);
-bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const StringSummaryFormat::SharedPointer& entry);
-
-class CommandObjectTypeSummaryList;
-
-struct CommandObjectTypeSummaryList_LoopCallbackParam {
-    CommandObjectTypeSummaryList* self;
-    CommandReturnObject* result;
-    RegularExpression* regex;
-    RegularExpression* cate_regex;
-    CommandObjectTypeSummaryList_LoopCallbackParam(CommandObjectTypeSummaryList* S, CommandReturnObject* R,
-                                                  RegularExpression* X = NULL,
-                                                  RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
-};
-
-class CommandObjectTypeSummaryList : public CommandObjectParsed
+class CommandObjectTypeSummaryList : public CommandObjectTypeFormatterList<TypeSummaryImpl>
 {
-    
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
-        {
-        }
-        
-        ~CommandOptions () override {}
-        
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg) override
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 'w':
-                    m_category_regex = std::string(option_arg);
-                    break;
-                default:
-                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
-                    break;
-            }
-            
-            return error;
-        }
-        
-        void
-        OptionParsingStarting () override
-        {
-            m_category_regex = "";
-        }
-        
-        const OptionDefinition*
-        GetDefinitions () override
-        {
-            return g_option_table;
-        }
-        
-        // Options table: Required for subclasses of Options.
-        
-        static OptionDefinition g_option_table[];
-        
-        // Instance variables to hold the values for command options.
-        
-        std::string m_category_regex;
-        
-    };
-    
-    CommandOptions m_options;
-    
-    Options *
-    GetOptions () override
-    {
-        return &m_options;
-    }
-    
 public:
-    CommandObjectTypeSummaryList (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type summary list",
-                             "Show a list of current summary styles.",
-                             NULL),
-        m_options(interpreter)
-    {
-        CommandArgumentEntry type_arg;
-        CommandArgumentData type_style_arg;
-        
-        type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatOptional;
-        
-        type_arg.push_back (type_style_arg);
-        
-        m_arguments.push_back (type_arg);
-    }
     
-    ~CommandObjectTypeSummaryList () override
+    CommandObjectTypeSummaryList (CommandInterpreter &interpreter) :
+    CommandObjectTypeFormatterList(interpreter,
+                                   "type summary list",
+                                   "Show a list of current summaries.")
     {
     }
     
 protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result) override
+    void
+    FormatterSpecificList (CommandReturnObject &result) override
     {
-        const size_t argc = command.GetArgumentCount();
-        
-        CommandObjectTypeSummaryList_LoopCallbackParam *param;
-        RegularExpression* cate_regex = 
-        m_options.m_category_regex.empty() ? NULL :
-        new RegularExpression(m_options.m_category_regex.c_str());
-        
-        if (argc == 1)
-        {
-            RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-            regex->Compile(command.GetArgumentAtIndex(0));
-            param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex,cate_regex);
-        }
-        else
-            param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,NULL,cate_regex);
-        
-        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
-        delete param;
-
         if (DataVisualization::NamedSummaryFormats::GetCount() > 0)
         {
             result.GetOutputStream().Printf("Named summaries:\n");
-            if (argc == 1)
-            {
-                RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-                regex->Compile(command.GetArgumentAtIndex(0));
-                param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex);
-            }
-            else
-                param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
-            DataVisualization::NamedSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
-            delete param;
+            DataVisualization::NamedSummaryFormats::ForEach( [&result] (ConstString name, const TypeSummaryImplSP& summary_sp) -> bool {
+                result.GetOutputStream().Printf ("%s: %s\n", name.AsCString(), summary_sp->GetDescription().c_str());
+                return true;
+            });
         }
-        
-        if (cate_regex)
-            delete cate_regex;
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
     }
-    
-private:
-    
-    static bool
-    PerCategoryCallback(void* param_vp,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        
-        CommandObjectTypeSummaryList_LoopCallbackParam* param = 
-            (CommandObjectTypeSummaryList_LoopCallbackParam*)param_vp;
-        CommandReturnObject* result = param->result;
-        
-        const char* cate_name = cate->GetName();
-        
-        // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary) == 0) && param->cate_regex == NULL)
-            return true;
-        
-        // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
-            return true;
-        
-        result->GetOutputStream().Printf("-----------------------\nCategory: %s\n-----------------------\n", cate->GetDescription().c_str());
-
-        cate->GetTypeSummariesContainer()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param_vp);
-        
-        if (cate->GetRegexTypeSummariesContainer()->GetCount() > 0)
-        {
-            result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
-            cate->GetRegexTypeSummariesContainer()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param_vp);
-        }
-        return true;
-    }
-
-    
-    bool
-    LoopCallback (const char* type,
-                  const lldb::TypeSummaryImplSP& entry,
-                  RegularExpression* regex,
-                  CommandReturnObject *result)
-    {
-        if (regex == NULL || strcmp(type,regex->GetText()) == 0 || regex->Execute(type))
-                result->GetOutputStream().Printf ("%s: %s\n", type, entry->GetDescription().c_str());
-        return true;
-    }
-    
-    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeSummaryImplSP& entry);
-    friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::TypeSummaryImplSP& entry);
-};
-
-bool
-CommandObjectTypeSummaryList_LoopCallback (
-                                          void* pt2self,
-                                          ConstString type,
-                                          const lldb::TypeSummaryImplSP& entry)
-{
-    CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
-}
-
-bool
-CommandObjectTypeRXSummaryList_LoopCallback (
-                                           void* pt2self,
-                                           lldb::RegularExpressionSP regex,
-                                           const lldb::TypeSummaryImplSP& entry)
-{
-    CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
-}
-
-OptionDefinition
-CommandObjectTypeSummaryList::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "category-regex", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -2786,37 +2598,6 @@ CommandObjectTypeCategoryDisable::CommandOptions::g_option_table[] =
 
 class CommandObjectTypeCategoryList : public CommandObjectParsed
 {
-private:
-    
-    struct CommandObjectTypeCategoryList_CallbackParam
-    {
-        CommandReturnObject* result;
-        RegularExpression* regex;
-        
-        CommandObjectTypeCategoryList_CallbackParam(CommandReturnObject* res,
-                                                    RegularExpression* rex = NULL) :
-        result(res),
-        regex(rex)
-        {
-        }
-        
-    };
-    
-    static bool
-    PerCategoryCallback(void* param_vp,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        CommandObjectTypeCategoryList_CallbackParam* param =
-            (CommandObjectTypeCategoryList_CallbackParam*)param_vp;
-        CommandReturnObject* result = param->result;
-        RegularExpression* regex = param->regex;
-        
-        const char* cate_name = cate->GetName();
-        
-        if (regex == NULL || strcmp(cate_name, regex->GetText()) == 0 || regex->Execute(cate_name))
-            result->GetOutputStream().Printf("Category: %s\n", cate->GetDescription().c_str());
-        return true;
-    }
 public:
     CommandObjectTypeCategoryList (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -2844,26 +2625,48 @@ protected:
     DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
-        RegularExpression* regex = NULL;
+
+        std::unique_ptr<RegularExpression> regex;
         
-        if (argc == 0)
-            ;
-        else if (argc == 1)
-            regex = new RegularExpression(command.GetArgumentAtIndex(0));
-        else
+        if (argc == 1)
+        {
+            regex.reset(new RegularExpression());
+            const char* arg = command.GetArgumentAtIndex(0);
+            if (!regex->Compile(arg))
+            {
+                result.AppendErrorWithFormat("syntax error in category regular expression '%s'", arg);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        else if (argc != 0)
         {
             result.AppendErrorWithFormat ("%s takes 0 or one arg.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        CommandObjectTypeCategoryList_CallbackParam param(&result,
-                                                          regex);
-        
-        DataVisualization::Categories::LoopThrough(PerCategoryCallback, &param);
-        
-        if (regex)
-            delete regex;
+        DataVisualization::Categories::ForEach( [&regex, &result] (const lldb::TypeCategoryImplSP& category_sp) -> bool {
+            if (regex)
+            {
+                bool escape = true;
+                if (0 == strcmp(category_sp->GetName(), regex->GetText()))
+                {
+                    escape = false;
+                }
+                else if (regex->Execute(category_sp->GetName()))
+                {
+                    escape = false;
+                }
+                
+                if (escape)
+                    return true;
+            }
+            
+            result.GetOutputStream().Printf("Category: %s\n", category_sp->GetDescription().c_str());
+            
+            return true;
+        });
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
@@ -2875,210 +2678,16 @@ protected:
 // CommandObjectTypeFilterList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeFilterList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
-bool CommandObjectTypeFilterRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
-
-class CommandObjectTypeFilterList;
-
-struct CommandObjectTypeFilterList_LoopCallbackParam {
-    CommandObjectTypeFilterList* self;
-    CommandReturnObject* result;
-    RegularExpression* regex;
-    RegularExpression* cate_regex;
-    CommandObjectTypeFilterList_LoopCallbackParam(CommandObjectTypeFilterList* S, CommandReturnObject* R,
-                                                  RegularExpression* X = NULL,
-                                                  RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
-};
-
-class CommandObjectTypeFilterList : public CommandObjectParsed
+class CommandObjectTypeFilterList : public CommandObjectTypeFormatterList<TypeFilterImpl>
 {
-    
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
-        {
-        }
-        
-        ~CommandOptions () override {}
-        
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg) override
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 'w':
-                    m_category_regex = std::string(option_arg);
-                    break;
-                default:
-                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
-                    break;
-            }
-            
-            return error;
-        }
-        
-        void
-        OptionParsingStarting () override
-        {
-            m_category_regex = "";
-        }
-        
-        const OptionDefinition*
-        GetDefinitions () override
-        {
-            return g_option_table;
-        }
-        
-        // Options table: Required for subclasses of Options.
-        
-        static OptionDefinition g_option_table[];
-        
-        // Instance variables to hold the values for command options.
-        
-        std::string m_category_regex;
-        
-    };
-    
-    CommandOptions m_options;
-    
-    Options *
-    GetOptions () override
-    {
-        return &m_options;
-    }
-    
 public:
+    
     CommandObjectTypeFilterList (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type filter list",
-                             "Show a list of current filters.",
-                             NULL),
-        m_options(interpreter)
-    {
-        CommandArgumentEntry type_arg;
-        CommandArgumentData type_style_arg;
-        
-        type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatOptional;
-        
-        type_arg.push_back (type_style_arg);
-        
-        m_arguments.push_back (type_arg);
-    }
-    
-    ~CommandObjectTypeFilterList () override
+    CommandObjectTypeFormatterList(interpreter,
+                                   "type filter list",
+                                   "Show a list of current filters.")
     {
     }
-    
-protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result) override
-    {
-        const size_t argc = command.GetArgumentCount();
-        
-        CommandObjectTypeFilterList_LoopCallbackParam *param;
-        RegularExpression* cate_regex = 
-        m_options.m_category_regex.empty() ? NULL :
-        new RegularExpression(m_options.m_category_regex.c_str());
-        
-        if (argc == 1)
-        {
-            RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-            regex->Compile(command.GetArgumentAtIndex(0));
-            param = new CommandObjectTypeFilterList_LoopCallbackParam(this,&result,regex,cate_regex);
-        }
-        else
-            param = new CommandObjectTypeFilterList_LoopCallbackParam(this,&result,NULL,cate_regex);
-        
-        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
-        delete param;
-        
-        if (cate_regex)
-            delete cate_regex;
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
-    }
-    
-private:
-    
-    static bool
-    PerCategoryCallback(void* param_vp,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        
-        const char* cate_name = cate->GetName();
-        
-        CommandObjectTypeFilterList_LoopCallbackParam* param = 
-        (CommandObjectTypeFilterList_LoopCallbackParam*)param_vp;
-        CommandReturnObject* result = param->result;
-        
-        // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter) == 0) && param->cate_regex == NULL)
-            return true;
-        
-        // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
-            return true;
-        
-        result->GetOutputStream().Printf("-----------------------\nCategory: %s\n-----------------------\n", cate->GetDescription().c_str());
-        
-        cate->GetTypeFiltersContainer()->LoopThrough(CommandObjectTypeFilterList_LoopCallback, param_vp);
-        
-        if (cate->GetRegexTypeFiltersContainer()->GetCount() > 0)
-        {
-            result->GetOutputStream().Printf("Regex-based filters (slower):\n");
-            cate->GetRegexTypeFiltersContainer()->LoopThrough(CommandObjectTypeFilterRXList_LoopCallback, param_vp);
-        }
-        
-        return true;
-    }
-    
-    bool
-    LoopCallback (const char* type,
-                  const SyntheticChildren::SharedPointer& entry,
-                  RegularExpression* regex,
-                  CommandReturnObject *result)
-    {
-        if (regex == NULL || regex->Execute(type))
-            result->GetOutputStream().Printf ("%s: %s\n", type, entry->GetDescription().c_str());
-        return true;
-    }
-    
-    friend bool CommandObjectTypeFilterList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
-    friend bool CommandObjectTypeFilterRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
-};
-
-bool
-CommandObjectTypeFilterList_LoopCallback (void* pt2self,
-                                         ConstString type,
-                                         const SyntheticChildren::SharedPointer& entry)
-{
-    CommandObjectTypeFilterList_LoopCallbackParam* param = (CommandObjectTypeFilterList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
-}
-
-bool
-CommandObjectTypeFilterRXList_LoopCallback (void* pt2self,
-                                           lldb::RegularExpressionSP regex,
-                                           const SyntheticChildren::SharedPointer& entry)
-{
-    CommandObjectTypeFilterList_LoopCallbackParam* param = (CommandObjectTypeFilterList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
-}
-
-
-OptionDefinition
-CommandObjectTypeFilterList::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "category-regex", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -3087,210 +2696,16 @@ CommandObjectTypeFilterList::CommandOptions::g_option_table[] =
 // CommandObjectTypeSynthList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeSynthList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
-bool CommandObjectTypeSynthRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
-
-class CommandObjectTypeSynthList;
-
-struct CommandObjectTypeSynthList_LoopCallbackParam {
-    CommandObjectTypeSynthList* self;
-    CommandReturnObject* result;
-    RegularExpression* regex;
-    RegularExpression* cate_regex;
-    CommandObjectTypeSynthList_LoopCallbackParam(CommandObjectTypeSynthList* S, CommandReturnObject* R,
-                                                 RegularExpression* X = NULL,
-                                                 RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
-};
-
-class CommandObjectTypeSynthList : public CommandObjectParsed
+class CommandObjectTypeSynthList : public CommandObjectTypeFormatterList<SyntheticChildren>
 {
-    
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
-        {
-        }
-        
-        ~CommandOptions () override {}
-        
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg) override
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 'w':
-                    m_category_regex = std::string(option_arg);
-                    break;
-                default:
-                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
-                    break;
-            }
-            
-            return error;
-        }
-        
-        void
-        OptionParsingStarting () override
-        {
-            m_category_regex = "";
-        }
-        
-        const OptionDefinition*
-        GetDefinitions () override
-        {
-            return g_option_table;
-        }
-        
-        // Options table: Required for subclasses of Options.
-        
-        static OptionDefinition g_option_table[];
-        
-        // Instance variables to hold the values for command options.
-        
-        std::string m_category_regex;
-        
-    };
-    
-    CommandOptions m_options;
-    
-    Options *
-    GetOptions () override
-    {
-        return &m_options;
-    }
-    
 public:
+    
     CommandObjectTypeSynthList (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "type synthetic list",
-                             "Show a list of current synthetic providers.",
-                             NULL),
-        m_options(interpreter)
-    {
-        CommandArgumentEntry type_arg;
-        CommandArgumentData type_style_arg;
-        
-        type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatOptional;
-        
-        type_arg.push_back (type_style_arg);
-        
-        m_arguments.push_back (type_arg);
-    }
-    
-    ~CommandObjectTypeSynthList () override
+    CommandObjectTypeFormatterList(interpreter,
+                                   "type synthetic list",
+                                   "Show a list of current synthetic providers.")
     {
     }
-    
-protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result) override
-    {
-        const size_t argc = command.GetArgumentCount();
-        
-        CommandObjectTypeSynthList_LoopCallbackParam *param;
-        RegularExpression* cate_regex = 
-        m_options.m_category_regex.empty() ? NULL :
-        new RegularExpression(m_options.m_category_regex.c_str());
-        
-        if (argc == 1)
-        {
-            RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-            regex->Compile(command.GetArgumentAtIndex(0));
-            param = new CommandObjectTypeSynthList_LoopCallbackParam(this,&result,regex,cate_regex);
-        }
-        else
-            param = new CommandObjectTypeSynthList_LoopCallbackParam(this,&result,NULL,cate_regex);
-        
-        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
-        delete param;
-
-        if (cate_regex)
-            delete cate_regex;
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
-    }
-    
-private:
-    
-    static bool
-    PerCategoryCallback(void* param_vp,
-                        const lldb::TypeCategoryImplSP& cate)
-    {
-        
-        CommandObjectTypeSynthList_LoopCallbackParam* param = 
-        (CommandObjectTypeSynthList_LoopCallbackParam*)param_vp;
-        CommandReturnObject* result = param->result;
-        
-        const char* cate_name = cate->GetName();
-        
-        // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth) == 0) && param->cate_regex == NULL)
-            return true;
-        
-        // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
-            return true;
-        
-        result->GetOutputStream().Printf("-----------------------\nCategory: %s\n-----------------------\n", cate->GetDescription().c_str());
-        
-        cate->GetTypeSyntheticsContainer()->LoopThrough(CommandObjectTypeSynthList_LoopCallback, param_vp);
-        
-        if (cate->GetRegexTypeSyntheticsContainer()->GetCount() > 0)
-        {
-            result->GetOutputStream().Printf("Regex-based synthetic providers (slower):\n");
-            cate->GetRegexTypeSyntheticsContainer()->LoopThrough(CommandObjectTypeSynthRXList_LoopCallback, param_vp);
-        }
-        
-        return true;
-    }
-    
-    bool
-    LoopCallback (const char* type,
-                  const SyntheticChildren::SharedPointer& entry,
-                  RegularExpression* regex,
-                  CommandReturnObject *result)
-    {
-        if (regex == NULL || regex->Execute(type))
-            result->GetOutputStream().Printf ("%s: %s\n", type, entry->GetDescription().c_str());
-        return true;
-    }
-    
-    friend bool CommandObjectTypeSynthList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
-    friend bool CommandObjectTypeSynthRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
-};
-
-bool
-CommandObjectTypeSynthList_LoopCallback (void* pt2self,
-                                         ConstString type,
-                                         const SyntheticChildren::SharedPointer& entry)
-{
-    CommandObjectTypeSynthList_LoopCallbackParam* param = (CommandObjectTypeSynthList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
-}
-
-bool
-CommandObjectTypeSynthRXList_LoopCallback (void* pt2self,
-                                         lldb::RegularExpressionSP regex,
-                                         const SyntheticChildren::SharedPointer& entry)
-{
-    CommandObjectTypeSynthList_LoopCallbackParam* param = (CommandObjectTypeSynthList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
-}
-
-
-OptionDefinition
-CommandObjectTypeSynthList::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "category-regex", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 #endif // #ifndef LLDB_DISABLE_PYTHON
@@ -3664,7 +3079,7 @@ private:
     
     bool
     AddFilter(ConstString type_name,
-              SyntheticChildrenSP entry,
+              TypeFilterImplSP entry,
               FilterFormatType type,
               std::string category_name,
               Error* error)
@@ -3787,19 +3202,15 @@ protected:
             return false;
         }
         
-        SyntheticChildrenSP entry;
-        
-        TypeFilterImpl* impl = new TypeFilterImpl(SyntheticChildren::Flags().SetCascades(m_options.m_cascade).
-                                                    SetSkipPointers(m_options.m_skip_pointers).
-                                                    SetSkipReferences(m_options.m_skip_references));
-        
-        entry.reset(impl);
+        TypeFilterImplSP entry(new TypeFilterImpl(SyntheticChildren::Flags().SetCascades(m_options.m_cascade).
+                                       SetSkipPointers(m_options.m_skip_pointers).
+                                                  SetSkipReferences(m_options.m_skip_references)));
         
         // go through the expression paths
         CommandOptions::ExpressionPathsIterator begin, end = m_options.m_expr_paths.end();
         
         for (begin = m_options.m_expr_paths.begin(); begin != end; begin++)
-            impl->AddExpressionPath(*begin);
+            entry->AddExpressionPath(*begin);
         
         
         // now I have a valid provider, let's add it to every type
@@ -4289,5 +3700,3 @@ CommandObjectType::CommandObjectType (CommandInterpreter &interpreter) :
 CommandObjectType::~CommandObjectType ()
 {
 }
-
-
