@@ -1355,6 +1355,29 @@ TEST(Matcher, VarDecl_Storage) {
   EXPECT_TRUE(matches("void f() { static int X; }", M));
 }
 
+TEST(Matcher, VarDecl_StorageDuration) {
+  std::string T =
+      "void f() { int x; static int y; thread_local int z; } int a;";
+
+  EXPECT_TRUE(matches(T, varDecl(hasName("x"), hasAutomaticStorageDuration())));
+  EXPECT_TRUE(
+      notMatches(T, varDecl(hasName("y"), hasAutomaticStorageDuration())));
+  EXPECT_TRUE(
+      notMatches(T, varDecl(hasName("z"), hasAutomaticStorageDuration())));
+  EXPECT_TRUE(
+      notMatches(T, varDecl(hasName("a"), hasAutomaticStorageDuration())));
+
+  EXPECT_TRUE(matches(T, varDecl(hasName("y"), hasStaticStorageDuration())));
+  EXPECT_TRUE(matches(T, varDecl(hasName("a"), hasStaticStorageDuration())));
+  EXPECT_TRUE(notMatches(T, varDecl(hasName("x"), hasStaticStorageDuration())));
+  EXPECT_TRUE(notMatches(T, varDecl(hasName("z"), hasStaticStorageDuration())));
+
+  EXPECT_TRUE(matches(T, varDecl(hasName("z"), hasThreadStorageDuration())));
+  EXPECT_TRUE(notMatches(T, varDecl(hasName("x"), hasThreadStorageDuration())));
+  EXPECT_TRUE(notMatches(T, varDecl(hasName("y"), hasThreadStorageDuration())));
+  EXPECT_TRUE(notMatches(T, varDecl(hasName("a"), hasThreadStorageDuration())));
+}
+
 TEST(Matcher, FindsVarDeclInFunctionParameter) {
   EXPECT_TRUE(matches(
       "void f(int i) {}",
