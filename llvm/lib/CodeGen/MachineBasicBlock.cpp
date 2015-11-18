@@ -545,7 +545,6 @@ void MachineBasicBlock::addSuccessorWithoutProb(MachineBasicBlock *Succ) {
 
 void MachineBasicBlock::removeSuccessor(MachineBasicBlock *Succ) {
   succ_iterator I = std::find(Successors.begin(), Successors.end(), Succ);
-  assert(I != Successors.end() && "Not a current successor!");
   removeSuccessor(I);
 }
 
