@@ -10,6 +10,14 @@
 #ifndef PROFILE_INSTRPROFILING_H_
 #define PROFILE_INSTRPROFILING_H_
 
+#ifdef _MSC_VER
+# define LLVM_ALIGNAS(x) __declspec(align(x))
+#elif __GNUC__ && !__has_feature(cxx_alignas)
+# define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
+#else
+# define LLVM_ALIGNAS(x) alignas(x)
+#endif
+
 #if defined(__FreeBSD__) && defined(__i386__)
 
 /* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
@@ -27,13 +35,31 @@ typedef uint32_t uintptr_t;
 
 #endif /* defined(__FreeBSD__) && defined(__i386__) */
 
+typedef enum ValueKind {
+  VK_IndirectCallTarget = 0,
+  VK_FIRST = VK_IndirectCallTarget,
+  VK_LAST = VK_IndirectCallTarget
+} __llvm_profile_value_kind;
 
-typedef struct __llvm_profile_data {
+typedef struct __llvm_profile_value_data {
+  uint64_t TargetValue;
+  uint64_t NumTaken;
+} __llvm_profile_value_data;
+
+typedef struct __llvm_profile_value_node {
+  __llvm_profile_value_data VData;
+  struct __llvm_profile_value_node *Next;
+} __llvm_profile_value_node;
+
+typedef struct LLVM_ALIGNAS(8) __llvm_profile_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
   const uint64_t FuncHash;
   const char *const NamePtr;
   uint64_t *const CounterPtr;
+  const uint8_t *FunctionPointer;
+  __llvm_profile_value_node **ValueCounters;
+  const uint16_t NumValueSites[VK_LAST + 1];
 } __llvm_profile_data;
 
 typedef struct __llvm_profile_header {
@@ -44,8 +70,16 @@ typedef struct __llvm_profile_header {
   uint64_t NamesSize;
   uint64_t CountersDelta;
   uint64_t NamesDelta;
+  uint64_t ValueKindLast;
+  uint64_t ValueDataSize;
+  uint64_t ValueDataDelta;
 } __llvm_profile_header;
 
+/*!
+ * \brief Get number of bytes necessary to pad the argument to eight
+ * byte boundary.
+ */
+uint8_t __llvm_profile_get_num_padding_bytes(uint64_t SizeInBytes);
 
 /*!
  * \brief Get required size for profile buffer.
@@ -66,6 +100,23 @@ const char *__llvm_profile_begin_names(void);
 const char *__llvm_profile_end_names(void);
 uint64_t *__llvm_profile_begin_counters(void);
 uint64_t *__llvm_profile_end_counters(void);
+
+/*!
+ * \brief Counts the number of times a target value is seen.
+ *
+ * Records the target value for the CounterIndex if not seen before. Otherwise,
+ * increments the counter associated w/ the target value.
+ */
+void __llvm_profile_instrument_target(uint64_t TargetValue,
+  void *Data_, uint32_t CounterIndex);
+
+/*!
+ * \brief Prepares the value profiling data for output.
+ *
+ * Prepares a single __llvm_profile_value_data array out of the many
+ * __llvm_profile_value_node trees (one per instrumented function).
+ */
+uint64_t __llvm_profile_gather_value_data(uint8_t **DataArray);
 
 /*!
  * \brief Write instrumentation data to the current file.

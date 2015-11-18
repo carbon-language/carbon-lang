@@ -24,12 +24,15 @@ static int writeFile(FILE *File) {
   const uint64_t *CountersEnd   = __llvm_profile_end_counters();
   const char *NamesBegin = __llvm_profile_begin_names();
   const char *NamesEnd   = __llvm_profile_end_names();
+  uint8_t *ValueDataBegin = NULL;
 
   /* Calculate size of sections. */
   const uint64_t DataSize = DataEnd - DataBegin;
   const uint64_t CountersSize = CountersEnd - CountersBegin;
   const uint64_t NamesSize = NamesEnd - NamesBegin;
-  const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
+  const uint8_t Padding = __llvm_profile_get_num_padding_bytes(NamesSize);
+  const uint64_t ValueDataSize =
+      __llvm_profile_gather_value_data(&ValueDataBegin);
 
   /* Enough zeroes for padding. */
   const char Zeroes[sizeof(uint64_t)] = {0};
@@ -47,17 +50,22 @@ static int writeFile(FILE *File) {
   Header.NamesSize = NamesSize;
   Header.CountersDelta = (uintptr_t)CountersBegin;
   Header.NamesDelta = (uintptr_t)NamesBegin;
+  Header.ValueKindLast = VK_LAST;
+  Header.ValueDataSize = ValueDataSize;
+  Header.ValueDataDelta = (uintptr_t)ValueDataBegin;
 
   /* Write the data. */
 #define CHECK_fwrite(Data, Size, Length, File) \
   do { if (fwrite(Data, Size, Length, File) != Length) return -1; } while (0)
-  CHECK_fwrite(&Header,        sizeof(__llvm_profile_header), 1, File);
+  CHECK_fwrite(&Header,       sizeof(__llvm_profile_header), 1, File);
   CHECK_fwrite(DataBegin,     sizeof(__llvm_profile_data), DataSize, File);
   CHECK_fwrite(CountersBegin, sizeof(uint64_t), CountersSize, File);
   CHECK_fwrite(NamesBegin,    sizeof(char), NamesSize, File);
   CHECK_fwrite(Zeroes,        sizeof(char), Padding, File);
+  CHECK_fwrite(ValueDataBegin,
+      sizeof(__llvm_profile_value_data), ValueDataSize, File);
 #undef CHECK_fwrite
-
+  free(ValueDataBegin);
   return 0;
 }
 

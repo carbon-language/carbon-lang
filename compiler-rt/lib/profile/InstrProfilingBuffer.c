@@ -35,7 +35,7 @@ uint64_t __llvm_profile_get_size_for_buffer_internal(
         const char *NamesEnd) {
   /* Match logic in __llvm_profile_write_buffer(). */
   const uint64_t NamesSize = PROFILE_RANGE_SIZE(Names) * sizeof(char);
-  const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
+  const uint8_t Padding = __llvm_profile_get_num_padding_bytes(NamesSize);
   return sizeof(__llvm_profile_header) +
       PROFILE_RANGE_SIZE(Data) * sizeof(__llvm_profile_data) +
       PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) +
@@ -72,7 +72,7 @@ int __llvm_profile_write_buffer_internal(
   const uint64_t DataSize = DataEnd - DataBegin;
   const uint64_t CountersSize = CountersEnd - CountersBegin;
   const uint64_t NamesSize = NamesEnd - NamesBegin;
-  const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
+  const uint8_t Padding = __llvm_profile_get_num_padding_bytes(NamesSize);
 
   /* Enough zeroes for padding. */
   const char Zeroes[sizeof(uint64_t)] = {0};
@@ -90,6 +90,9 @@ int __llvm_profile_write_buffer_internal(
   Header.NamesSize = NamesSize;
   Header.CountersDelta = (uintptr_t)CountersBegin;
   Header.NamesDelta = (uintptr_t)NamesBegin;
+  Header.ValueKindLast = VK_LAST;
+  Header.ValueDataSize = 0;
+  Header.ValueDataDelta = (uintptr_t)NULL;
 
   /* Write the data. */
 #define UPDATE_memcpy(Data, Size) \

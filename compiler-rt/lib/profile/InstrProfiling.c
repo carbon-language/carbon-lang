@@ -8,6 +8,8 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 __attribute__((visibility("hidden")))
@@ -34,9 +36,14 @@ uint64_t __llvm_profile_get_magic(void) {
 }
 
 __attribute__((visibility("hidden")))
+uint8_t __llvm_profile_get_num_padding_bytes(uint64_t SizeInBytes) {
+  return 7 & (sizeof(uint64_t) - SizeInBytes % sizeof(uint64_t));
+}
+
+__attribute__((visibility("hidden")))
 uint64_t __llvm_profile_get_version(void) {
   /* This should be bumped any time the output format changes. */
-  return 1;
+  return 2;
 }
 
 __attribute__((visibility("hidden")))
@@ -45,4 +52,143 @@ void __llvm_profile_reset_counters(void) {
   uint64_t *E = __llvm_profile_end_counters();
 
   memset(I, 0, sizeof(uint64_t)*(E - I));
+
+  const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
+  const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
+  for (const __llvm_profile_data *DI = DataBegin; DI != DataEnd; ++DI) {
+    if (!DI->ValueCounters)
+      continue;
+
+    uint64_t CurrentVSiteCount = 0;
+    for (uint32_t VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+      CurrentVSiteCount += DI->NumValueSites[VKI];
+
+    for (uint32_t i = 0; i < CurrentVSiteCount; ++i) {
+      __llvm_profile_value_node *CurrentVNode = DI->ValueCounters[i];
+
+      while (CurrentVNode) {
+        CurrentVNode->VData.NumTaken = 0;
+        CurrentVNode = CurrentVNode->Next;
+      }
+    }
+  }
+}
+
+static uint64_t TotalValueDataSize = 0;
+
+__attribute__((visibility("hidden")))
+void __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
+  uint32_t CounterIndex) {
+
+  __llvm_profile_data *Data = (__llvm_profile_data*)Data_;
+  if (!Data)
+    return;
+
+  if (!Data->ValueCounters) {
+    uint64_t NumVSites = 0;
+    for (uint32_t VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+      NumVSites += Data->NumValueSites[VKI];
+
+    __llvm_profile_value_node** Mem = (__llvm_profile_value_node**)
+        calloc(NumVSites, sizeof(__llvm_profile_value_node*));
+    if (!Mem)
+      return;
+    if (!__sync_bool_compare_and_swap(&Data->ValueCounters, 0, Mem)) {
+      free(Mem);
+      return;
+    }
+    // Acccount for padding during write out.
+    uint8_t Padding = __llvm_profile_get_num_padding_bytes(NumVSites);
+    __sync_fetch_and_add(&TotalValueDataSize, NumVSites + Padding);
+  }
+
+  __llvm_profile_value_node *PrevVNode = NULL;
+  __llvm_profile_value_node *CurrentVNode = Data->ValueCounters[CounterIndex];
+
+  uint8_t VDataCount = 0;
+  while (CurrentVNode) {
+    if (TargetValue == CurrentVNode->VData.TargetValue) {
+      CurrentVNode->VData.NumTaken++;
+      return;
+    }
+    PrevVNode = CurrentVNode;
+    CurrentVNode = CurrentVNode->Next;
+    ++VDataCount;
+  }
+
+  if (VDataCount >= UCHAR_MAX)
+    return;
+
+  CurrentVNode = (__llvm_profile_value_node*)
+    calloc(1, sizeof(__llvm_profile_value_node));
+  if (!CurrentVNode)
+    return;
+
+  CurrentVNode->VData.TargetValue = TargetValue;
+  CurrentVNode->VData.NumTaken++;
+
+  uint32_t Success = 0;
+  if (!Data->ValueCounters[CounterIndex])
+   Success = __sync_bool_compare_and_swap(
+      &(Data->ValueCounters[CounterIndex]), 0, CurrentVNode);
+  else if (PrevVNode && !PrevVNode->Next)
+    Success = __sync_bool_compare_and_swap(&(PrevVNode->Next), 0, CurrentVNode);
+
+  if (!Success) {
+    free(CurrentVNode);
+    return;
+  }
+  __sync_fetch_and_add(&TotalValueDataSize,
+                       Success * sizeof(__llvm_profile_value_data));
+}
+
+__attribute__((visibility("hidden")))
+uint64_t __llvm_profile_gather_value_data(uint8_t **VDataArray) {
+
+  if (!VDataArray || 0 == TotalValueDataSize)
+    return 0;
+
+  uint64_t NumData = TotalValueDataSize;
+  *VDataArray = (uint8_t*) calloc(NumData, sizeof(uint8_t));
+  if (!*VDataArray)
+    return 0;
+
+  uint8_t *VDataEnd = *VDataArray + NumData;
+  uint8_t *PerSiteCountsHead = *VDataArray;
+  const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
+  const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
+  for (__llvm_profile_data *I = (__llvm_profile_data *)DataBegin;
+       I != DataEnd; ++I) {
+
+    if (!I->ValueCounters)
+      continue;
+
+    uint64_t NumVSites = 0;
+    for (uint32_t VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+      NumVSites += I->NumValueSites[VKI];
+    uint8_t Padding = __llvm_profile_get_num_padding_bytes(NumVSites);
+
+    uint8_t *PerSiteCountPtr = PerSiteCountsHead;
+    __llvm_profile_value_data *VDataPtr =
+        (__llvm_profile_value_data *)(PerSiteCountPtr + NumVSites + Padding);
+
+    for (uint32_t i = 0; i < NumVSites; ++i) {
+
+      __llvm_profile_value_node *VNode = I->ValueCounters[i];
+
+      uint8_t VDataCount = 0;
+      while (VNode && ((uint8_t*)(VDataPtr + 1) <= VDataEnd)) {
+        *VDataPtr = VNode->VData;
+        VNode = VNode->Next;
+        ++VDataPtr;
+        if (++VDataCount == UCHAR_MAX)
+          break;
+      }
+      *PerSiteCountPtr = VDataCount;
+      ++PerSiteCountPtr;
+    }
+    I->ValueCounters = (void *)PerSiteCountsHead;
+    PerSiteCountsHead = (uint8_t *)VDataPtr;
+  }
+  return PerSiteCountsHead - *VDataArray;
 }
