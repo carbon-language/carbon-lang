@@ -1162,6 +1162,14 @@ template <typename InputTy> struct OperandBundleDefT {
   OperandBundleDefT() {}
   explicit OperandBundleDefT(StringRef Tag, const std::vector<InputTy> &Inputs)
       : Tag(Tag), Inputs(Inputs) {}
+
+  explicit OperandBundleDefT(StringRef Tag, std::vector<InputTy> &&Inputs)
+      : Tag(Tag), Inputs(Inputs) {}
+
+  explicit OperandBundleDefT(const OperandBundleUse &OBU) {
+    Tag = OBU.getTagName();
+    Inputs.insert(Inputs.end(), OBU.Inputs.begin(), OBU.Inputs.end());
+  }
 };
 
 typedef OperandBundleDefT<Value *> OperandBundleDef;
