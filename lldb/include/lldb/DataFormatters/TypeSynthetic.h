@@ -479,6 +479,8 @@ namespace lldb_private {
             return SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(this, backend));
         }
         
+        typedef std::shared_ptr<TypeFilterImpl> SharedPointer;
+        
     private:
         DISALLOW_COPY_AND_ASSIGN(TypeFilterImpl);
     };

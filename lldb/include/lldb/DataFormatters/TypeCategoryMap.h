@@ -88,9 +88,6 @@ namespace lldb_private {
              ValueSP& entry);
         
         void
-        LoopThrough (CallbackType callback, void* param);
-        
-        void
         ForEach (ForEachCallback callback);
         
         lldb::TypeCategoryImplSP

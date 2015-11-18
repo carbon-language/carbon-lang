@@ -141,22 +141,6 @@ public:
     }
     
     void
-    LoopThrough (CallbackType callback, void* param)
-    {
-        if (callback)
-        {
-            Mutex::Locker locker(m_map_mutex);
-            MapIterator pos, end = m_map.end();
-            for (pos = m_map.begin(); pos != end; pos++)
-            {
-                KeyType type = pos->first;
-                if (!callback(param, type, pos->second))
-                    break;
-            }
-        }
-    }
-    
-    void
     ForEach (ForEachCallback callback)
     {
         if (callback)
@@ -313,12 +297,6 @@ public:
     Clear ()
     {
         m_format_map.Clear();
-    }
-    
-    void
-    LoopThrough (CallbackType callback, void* param)
-    {
-        m_format_map.LoopThrough(callback,param);
     }
     
     void

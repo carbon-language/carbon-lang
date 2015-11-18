@@ -140,9 +140,6 @@ public:
     }
     
     void
-    LoopThroughCategories (CategoryCallback callback, void* param);
-
-    void
     ForEachCategory (TypeCategoryMap::ForEachCallback callback);
     
     lldb::TypeCategoryImplSP
