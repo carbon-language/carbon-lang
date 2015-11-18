@@ -92,16 +92,14 @@ public:
   uint64_t scaleByInverse(uint64_t Num) const;
 
   BranchProbability &operator+=(BranchProbability RHS) {
-    assert(N <= D - RHS.N &&
-           "The sum of branch probabilities should not exceed one!");
-    N += RHS.N;
+    // Saturate the result in case of overflow.
+    N = (uint64_t(N) + RHS.N > D) ? D : N + RHS.N;
     return *this;
   }
 
   BranchProbability &operator-=(BranchProbability RHS) {
-    assert(N >= RHS.N &&
-           "Can only subtract a smaller probability from a larger one!");
-    N -= RHS.N;
+    // Saturate the result in case of underflow.
+    N = N < RHS.N ? 0 : N - RHS.N;
     return *this;
   }
 
