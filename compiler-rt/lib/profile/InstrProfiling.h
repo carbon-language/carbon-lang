@@ -13,7 +13,7 @@
 #ifdef _MSC_VER
 # define LLVM_ALIGNAS(x) __declspec(align(x))
 #elif __GNUC__ && !__has_feature(cxx_alignas)
-# define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
+# define LLVM_ALIGNAS(x) __attribute__((aligned(x))
 #else
 # define LLVM_ALIGNAS(x) alignas(x)
 #endif
