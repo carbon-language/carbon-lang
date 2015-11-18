@@ -9945,10 +9945,6 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   bool UseDefaultLibs =
       !Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs);
 
-  std::string StartFilesDir, BuiltinLibDir;
-  TC.getCompilerSupportDir(StartFilesDir);
-  TC.getBuiltinLibDir(BuiltinLibDir);
-
   if (T.getArch() == llvm::Triple::sparc)
     CmdArgs.push_back("-EB");
   else // SHAVE assumes little-endian, and sparcel is expressly so.
@@ -9972,19 +9968,15 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (UseStartfiles) {
     // If you want startfiles, it means you want the builtin crti and crtbegin,
     // but not crt0. Myriad link commands provide their own crt0.o as needed.
-    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crti.o"));
-    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtbegin.o"));
+    CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crti.o")));
+    CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crtbegin.o")));
   }
 
   Args.AddAllArgs(CmdArgs, {options::OPT_L, options::OPT_T_Group,
                             options::OPT_e, options::OPT_s, options::OPT_t,
                             options::OPT_Z_Flag, options::OPT_r});
 
-  // The linker doesn't use these builtin paths unless directed to,
-  // because it was not compiled for support with sysroots, nor does
-  // it have a default of little-endian with FPU.
-  CmdArgs.push_back(Args.MakeArgString("-L" + BuiltinLibDir));
-  CmdArgs.push_back(Args.MakeArgString("-L" + StartFilesDir));
+  TC.AddFilePathLibArgs(Args, CmdArgs);
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
@@ -10004,8 +9996,8 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-lgcc");
   }
   if (UseStartfiles) {
-    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtend.o"));
-    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtn.o"));
+    CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crtend.o")));
+    CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crtn.o")));
   }
 
   std::string Exec =
