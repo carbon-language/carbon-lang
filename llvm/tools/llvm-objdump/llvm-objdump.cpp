@@ -964,9 +964,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         uint64_t Address = Symb.first;
         StringRef Name = Symb.second;
         if (Name.startswith("$d"))
-          DataMappingSymsAddr.push_back(Address);
+          DataMappingSymsAddr.push_back(Address - SectionAddr);
         if (Name.startswith("$x"))
-          TextMappingSymsAddr.push_back(Address);
+          TextMappingSymsAddr.push_back(Address - SectionAddr);
       }
     }
 
@@ -1000,7 +1000,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
     // If the section has no symbol at the start, just insert a dummy one.
     if (Symbols.empty() || Symbols[0].first != 0)
-      Symbols.insert(Symbols.begin(), std::make_pair(0, name));
+      Symbols.insert(Symbols.begin(), std::make_pair(SectionAddr, name));
 
     SmallString<40> Comments;
     raw_svector_ostream CommentStream(Comments);
@@ -1127,7 +1127,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
                                const std::pair<uint64_t, StringRef> &RHS) {
                       return LHS < RHS.first;
                     });
-                if (TargetSym != Symbols.begin()) {
+                if (TargetSym != TargetSectionSymbols->begin()) {
                   --TargetSym;
                   uint64_t TargetAddress = std::get<0>(*TargetSym);
                   StringRef TargetName = std::get<1>(*TargetSym);
