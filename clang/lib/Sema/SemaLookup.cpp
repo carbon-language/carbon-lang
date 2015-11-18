@@ -1907,7 +1907,18 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
           cast<TagDecl>(LookupCtx)->isBeingDefined()) &&
          "Declaration context must already be complete!");
 
-  // Perform qualified name lookup into the LookupCtx.
+  struct QualifiedLookupInScope {
+    bool oldVal;
+    DeclContext *Context;
+    // Set flag in DeclContext informing debugger that we're looking for qualified name
+    QualifiedLookupInScope(DeclContext *ctx) : Context(ctx) { 
+      oldVal = ctx->setUseQualifiedLookup(); 
+    }
+    ~QualifiedLookupInScope() { 
+      Context->setUseQualifiedLookup(oldVal); 
+    }
+  } QL(LookupCtx);
+
   if (LookupDirect(*this, R, LookupCtx)) {
     R.resolveKind();
     if (isa<CXXRecordDecl>(LookupCtx))
