@@ -255,7 +255,8 @@ template <class IntPtrT>
 std::error_code RawInstrProfReader<IntPtrT>::readName(InstrProfRecord &Record) {
   Record.Name = StringRef(getName(Data->NamePtr), swap(Data->NameSize));
   if (Record.Name.data() < NamesStart ||
-      Record.Name.data() + Record.Name.size() > (char*)ValueDataStart)
+      Record.Name.data() + Record.Name.size() >
+          reinterpret_cast<const char *>(ValueDataStart))
     return error(instrprof_error::malformed);
   return success();
 }
@@ -311,7 +312,8 @@ std::error_code RawInstrProfReader<IntPtrT>::readValueData(
   auto VDataCounts = makeArrayRef(getValueDataCounts(Data->Values), NumVSites);
   // Check bounds.
   if (VDataCounts.data() < ValueDataStart ||
-      VDataCounts.data() + VDataCounts.size() > (const uint8_t *)ProfileEnd)
+      VDataCounts.data() + VDataCounts.size() >
+          reinterpret_cast<const uint8_t *>(ProfileEnd))
     return error(instrprof_error::malformed);
 
   const InstrProfValueData *VDataPtr =

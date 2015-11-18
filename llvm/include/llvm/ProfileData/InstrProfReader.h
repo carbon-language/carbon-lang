@@ -20,12 +20,11 @@
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/OnDiskHashTable.h"
+#include "llvm/Support/raw_ostream.h"
 #include <iterator>
-#include <map>
 
 namespace llvm {
 
@@ -186,13 +185,15 @@ private:
     return NamesStart + Offset;
   }
   const uint8_t *getValueDataCounts(IntPtrT ValueCountsPtr) const {
-    ptrdiff_t Offset = (swap(ValueCountsPtr) - ValueDataDelta) / sizeof(uint8_t);
+    ptrdiff_t Offset =
+        (swap(ValueCountsPtr) - ValueDataDelta) / sizeof(uint8_t);
     return ValueDataStart + Offset;
   }
   // This accepts an already byte-swapped ValueDataPtr argument.
   const InstrProfValueData *getValueData(IntPtrT ValueDataPtr) const {
     ptrdiff_t Offset = (ValueDataPtr - ValueDataDelta) / sizeof(uint8_t);
-    return reinterpret_cast<const InstrProfValueData*>(ValueDataStart + Offset);
+    return reinterpret_cast<const InstrProfValueData *>(ValueDataStart +
+                                                        Offset);
   }
 };
 
