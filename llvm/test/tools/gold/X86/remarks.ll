@@ -15,7 +15,7 @@ target triple = "x86_64-unknown-linux-gnu"
 declare i32 @bar()
 
 define i32 @f() {
-  %a = call void @bar()
+  %a = call i32 @bar()
   ret i32 %a
 }
 
