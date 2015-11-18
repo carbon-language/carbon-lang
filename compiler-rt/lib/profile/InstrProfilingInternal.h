@@ -43,13 +43,15 @@ int __llvm_profile_write_buffer_internal(
  */
 typedef size_t (*WriterCallback)(const void *Data, size_t ElmS, size_t NumElm,
                                  void **BufferOrFile);
-int llvmWriteProfData(void *BufferOrFile, const uint8_t *ValueDataBegin, const uint64_t ValueDataSize, WriterCallback Writer);
+int llvmWriteProfData(void *BufferOrFile, const uint8_t *ValueDataBegin,
+                      const uint64_t ValueDataSize, WriterCallback Writer);
 int llvmWriteProfDataImpl(void *BufferOrFile, WriterCallback Writer,
                           const __llvm_profile_data *DataBegin,
                           const __llvm_profile_data *DataEnd,
-                          const uint64_t *CountersBegin, const uint64_t *CountersEnd,
-                          const uint8_t *ValueDataBegin, const uint64_t ValueDataSize,
-                          const char *NamesBegin,
+                          const uint64_t *CountersBegin,
+                          const uint64_t *CountersEnd,
+                          const uint8_t *ValueDataBegin,
+                          const uint64_t ValueDataSize, const char *NamesBegin,
                           const char *NamesEnd);
 
 #endif

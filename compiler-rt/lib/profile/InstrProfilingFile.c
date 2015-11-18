@@ -8,8 +8,8 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
-#include "InstrProfilingUtil.h"
 #include "InstrProfilingInternal.h"
+#include "InstrProfilingUtil.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,13 +21,14 @@ static size_t FileWriter(const void *Data, size_t ElmSize, size_t NumElm,
                          void **File) {
   return fwrite(Data, ElmSize, NumElm, (FILE *)*File);
 }
-  uint8_t *ValueDataBegin = NULL;
+uint8_t *ValueDataBegin = NULL;
 
 static int writeFile(FILE *File) {
   uint8_t *ValueDataBegin = NULL;
-  const uint64_t ValueDataSize = __llvm_profile_gather_value_data(&ValueDataBegin);
+  const uint64_t ValueDataSize =
+      __llvm_profile_gather_value_data(&ValueDataBegin);
   int r = llvmWriteProfData(File, ValueDataBegin, ValueDataSize, FileWriter);
-  free (ValueDataBegin);
+  free(ValueDataBegin);
   return r;
 }
 

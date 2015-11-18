@@ -11,7 +11,8 @@
 #include "InstrProfilingInternal.h"
 
 __attribute__((visibility("hidden"))) int
-llvmWriteProfData(void *BufferOrFile, const uint8_t * ValueDataBegin, const uint64_t ValueDataSize,  WriterCallback Writer) {
+llvmWriteProfData(void *BufferOrFile, const uint8_t *ValueDataBegin,
+                  const uint64_t ValueDataSize, WriterCallback Writer) {
   /* Match logic in __llvm_profile_write_buffer(). */
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
   const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
@@ -20,10 +21,8 @@ llvmWriteProfData(void *BufferOrFile, const uint8_t * ValueDataBegin, const uint
   const char *NamesBegin = __llvm_profile_begin_names();
   const char *NamesEnd = __llvm_profile_end_names();
   return llvmWriteProfDataImpl(BufferOrFile, Writer, DataBegin, DataEnd,
-                               CountersBegin, CountersEnd,
-                               ValueDataBegin, ValueDataSize,
-                               NamesBegin,
-                               NamesEnd);
+                               CountersBegin, CountersEnd, ValueDataBegin,
+                               ValueDataSize, NamesBegin, NamesEnd);
 }
 
 __attribute__((visibility("hidden"))) int llvmWriteProfDataImpl(
@@ -60,10 +59,10 @@ __attribute__((visibility("hidden"))) int llvmWriteProfDataImpl(
   Header.ValueDataDelta = (uintptr_t)ValueDataBegin;
 
 /* Write the data. */
-#define CHECK_write(Data, Size, Length, BuffOrFile)                           \
-  do {                                                                        \
-    if (Writer(Data, Size, Length, &BuffOrFile) != Length)                    \
-      return -1;                                                              \
+#define CHECK_write(Data, Size, Length, BuffOrFile)                            \
+  do {                                                                         \
+    if (Writer(Data, Size, Length, &BuffOrFile) != Length)                     \
+      return -1;                                                               \
   } while (0)
   CHECK_write(&Header, sizeof(__llvm_profile_header), 1, BufferOrFile);
   CHECK_write(DataBegin, sizeof(__llvm_profile_data), DataSize, BufferOrFile);
