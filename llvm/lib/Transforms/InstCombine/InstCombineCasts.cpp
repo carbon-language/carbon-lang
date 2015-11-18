@@ -1715,62 +1715,53 @@ static Value *optimizeIntegerToVectorInsertions(BitCastInst &CI,
   return Result;
 }
 
+static Instruction *foldVecTruncToExtElt(Value *VecInput, Type *DestTy,
+                                         unsigned ShiftAmt, InstCombiner &IC,
+                                         const DataLayout &DL) {
+  VectorType *VecTy = cast<VectorType>(VecInput->getType());
+  unsigned DestWidth = DestTy->getPrimitiveSizeInBits();
+  unsigned VecWidth = VecTy->getPrimitiveSizeInBits();
+
+  if ((VecWidth % DestWidth != 0) || (ShiftAmt % DestWidth != 0))
+    return nullptr;
+
+  // If the element type of the vector doesn't match the result type,
+  // bitcast it to be a vector type we can extract from.
+  unsigned NumVecElts = VecWidth / DestWidth;
+  if (VecTy->getElementType() != DestTy) {
+    VecTy = VectorType::get(DestTy, NumVecElts);
+    VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
+  }
+
+  unsigned Elt = ShiftAmt / DestWidth;
+  if (DL.isBigEndian())
+    Elt = NumVecElts - 1 - Elt;
+
+  return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(Elt));
+}
 
 /// See if we can optimize an integer->float/double bitcast.
 /// The various long double bitcasts can't get in here.
 static Instruction *optimizeIntToFloatBitCast(BitCastInst &CI, InstCombiner &IC,
                                               const DataLayout &DL) {
   Value *Src = CI.getOperand(0);
-  Type *DestTy = CI.getType();
+  Type *DstTy = CI.getType();
 
   // If this is a bitcast from int to float, check to see if the int is an
   // extraction from a vector.
   Value *VecInput = nullptr;
   // bitcast(trunc(bitcast(somevector)))
   if (match(Src, m_Trunc(m_BitCast(m_Value(VecInput)))) &&
-      isa<VectorType>(VecInput->getType())) {
-    VectorType *VecTy = cast<VectorType>(VecInput->getType());
-    unsigned DestWidth = DestTy->getPrimitiveSizeInBits();
-
-    if (VecTy->getPrimitiveSizeInBits() % DestWidth == 0) {
-      // If the element type of the vector doesn't match the result type,
-      // bitcast it to be a vector type we can extract from.
-      if (VecTy->getElementType() != DestTy) {
-        VecTy = VectorType::get(DestTy,
-                                VecTy->getPrimitiveSizeInBits() / DestWidth);
-        VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
-      }
-
-      unsigned Elt = 0;
-      if (DL.isBigEndian())
-        Elt = VecTy->getPrimitiveSizeInBits() / DestWidth - 1;
-      return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(Elt));
-    }
-  }
+      isa<VectorType>(VecInput->getType()))
+    return foldVecTruncToExtElt(VecInput, DstTy, 0, IC, DL);
 
   // bitcast(trunc(lshr(bitcast(somevector), cst))
   ConstantInt *ShAmt = nullptr;
   if (match(Src, m_Trunc(m_LShr(m_BitCast(m_Value(VecInput)),
                                 m_ConstantInt(ShAmt)))) &&
-      isa<VectorType>(VecInput->getType())) {
-    VectorType *VecTy = cast<VectorType>(VecInput->getType());
-    unsigned DestWidth = DestTy->getPrimitiveSizeInBits();
-    if (VecTy->getPrimitiveSizeInBits() % DestWidth == 0 &&
-        ShAmt->getZExtValue() % DestWidth == 0) {
-      // If the element type of the vector doesn't match the result type,
-      // bitcast it to be a vector type we can extract from.
-      if (VecTy->getElementType() != DestTy) {
-        VecTy = VectorType::get(DestTy,
-                                VecTy->getPrimitiveSizeInBits() / DestWidth);
-        VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
-      }
+      isa<VectorType>(VecInput->getType()))
+    return foldVecTruncToExtElt(VecInput, DstTy, ShAmt->getZExtValue(), IC, DL);
 
-      unsigned Elt = ShAmt->getZExtValue() / DestWidth;
-      if (DL.isBigEndian())
-        Elt = VecTy->getPrimitiveSizeInBits() / DestWidth - 1 - Elt;
-      return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(Elt));
-    }
-  }
   return nullptr;
 }
 
