@@ -56,8 +56,9 @@ public:
 
   // Normalize given probabilties so that the sum of them becomes approximate
   // one.
-  template <class ProbabilityList>
-  static void normalizeProbabilities(ProbabilityList &Probs);
+  template <class ProbabilityIter>
+  static void normalizeProbabilities(ProbabilityIter Begin,
+                                     ProbabilityIter End);
 
   // Normalize a list of weights by scaling them down so that the sum of them
   // doesn't exceed UINT32_MAX.
@@ -140,14 +141,18 @@ inline BranchProbability operator/(BranchProbability LHS, uint32_t RHS) {
   return BranchProbability::getRaw(LHS.getNumerator() / RHS);
 }
 
-template <class ProbabilityList>
-void BranchProbability::normalizeProbabilities(ProbabilityList &Probs) {
+template <class ProbabilityIter>
+void BranchProbability::normalizeProbabilities(ProbabilityIter Begin,
+                                               ProbabilityIter End) {
+  if (Begin == End)
+    return;
+
   uint64_t Sum = 0;
-  for (auto Prob : Probs)
-    Sum += Prob.N;
+  for (auto I = Begin; I != End; ++I)
+    Sum += I->N;
   assert(Sum > 0);
-  for (auto &Prob : Probs)
-    Prob.N = (Prob.N * uint64_t(D) + Sum / 2) / Sum;
+  for (auto I = Begin; I != End; ++I)
+    I->N = (I->N * uint64_t(D) + Sum / 2) / Sum;
 }
 
 template <class WeightListIter>
