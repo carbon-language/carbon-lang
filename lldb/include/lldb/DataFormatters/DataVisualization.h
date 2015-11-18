@@ -101,7 +101,7 @@ public:
         Clear ();
         
         static void
-        ForEach (std::function<bool(ConstString, const lldb::TypeSummaryImplSP&)> callback);
+        LoopThrough (TypeSummaryImpl::SummaryCallback callback, void* callback_baton);
         
         static uint32_t
         GetCount ();
@@ -156,6 +156,9 @@ public:
         
         static void
         DisableStar ();
+        
+        static void
+        LoopThrough (FormatManager::CategoryCallback callback, void* callback_baton);
         
         static void
         ForEach (TypeCategoryMap::ForEachCallback callback);

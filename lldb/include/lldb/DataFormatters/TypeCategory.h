@@ -67,6 +67,14 @@ namespace lldb_private {
             return m_regex_sp;
         }
         
+        void
+        LoopThrough (typename ExactMatchContainer::CallbackType exact_callback,
+                     typename RegexMatchContainer::CallbackType regex_callback)
+        {
+            GetExactMatch()->LoopThrough(exact_callback);
+            GetRegexMatch()->LoopThrough(regex_callback);
+        }
+        
         uint32_t
         GetCount ()
         {
@@ -87,7 +95,7 @@ namespace lldb_private {
         typedef FormatterContainerPair<TypeValidatorImpl> ValidatorContainer;
         
 #ifndef LLDB_DISABLE_PYTHON
-        typedef FormatterContainerPair<SyntheticChildren> SynthContainer;
+        typedef FormatterContainerPair<ScriptedSyntheticChildren> SynthContainer;
 #endif // LLDB_DISABLE_PYTHON
 
     public:
@@ -110,84 +118,74 @@ namespace lldb_private {
         typedef ValidatorContainer::ExactMatchContainerSP ValidatorContainerSP;
         typedef ValidatorContainer::RegexMatchContainerSP RegexValidatorContainerSP;
         
-        template <typename T>
-        class ForEachCallbacks
+        class ForEach
         {
         public:
-            ForEachCallbacks () = default;
-            ~ForEachCallbacks () = default;
+            ForEach () = default;
+            ~ForEach () = default;
             
-            template<typename U = TypeFormatImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (FormatContainer::ExactMatchForEachCallback callback)
+            ForEach&
+            SetFormatExactCallback (FormatContainer::ExactMatchForEachCallback callback)
             {
                 m_format_exact = callback;
                 return *this;
             }
-            template<typename U = TypeFormatImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (FormatContainer::RegexMatchForEachCallback callback)
+            ForEach&
+            SetFormatRegexCallback (FormatContainer::RegexMatchForEachCallback callback)
             {
                 m_format_regex = callback;
                 return *this;
             }
 
-            template<typename U = TypeSummaryImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (SummaryContainer::ExactMatchForEachCallback callback)
+            ForEach&
+            SetSummaryExactCallback (SummaryContainer::ExactMatchForEachCallback callback)
             {
                 m_summary_exact = callback;
                 return *this;
             }
-            template<typename U = TypeSummaryImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (SummaryContainer::RegexMatchForEachCallback callback)
+            ForEach&
+            SetSummaryRegexCallback (SummaryContainer::RegexMatchForEachCallback callback)
             {
                 m_summary_regex = callback;
                 return *this;
             }
 
-            template<typename U = TypeFilterImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (FilterContainer::ExactMatchForEachCallback callback)
+            ForEach&
+            SetFilterExactCallback (FilterContainer::ExactMatchForEachCallback callback)
             {
                 m_filter_exact = callback;
                 return *this;
             }
-            template<typename U = TypeFilterImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (FilterContainer::RegexMatchForEachCallback callback)
+            ForEach&
+            SetFilterRegexCallback (FilterContainer::RegexMatchForEachCallback callback)
             {
                 m_filter_regex = callback;
                 return *this;
             }
 
 #ifndef LLDB_DISABLE_PYTHON
-            template<typename U = SyntheticChildren>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (SynthContainer::ExactMatchForEachCallback callback)
+            ForEach&
+            SetSynthExactCallback (SynthContainer::ExactMatchForEachCallback callback)
             {
                 m_synth_exact = callback;
                 return *this;
             }
-            template<typename U = SyntheticChildren>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (SynthContainer::RegexMatchForEachCallback callback)
+            ForEach&
+            SetSynthRegexCallback (SynthContainer::RegexMatchForEachCallback callback)
             {
                 m_synth_regex = callback;
                 return *this;
             }
 #endif // LLDB_DISABLE_PYTHON
-            template<typename U = TypeValidatorImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (ValidatorContainer::ExactMatchForEachCallback callback)
+
+            ForEach&
+            SetValidatorExactCallback (ValidatorContainer::ExactMatchForEachCallback callback)
             {
                 m_validator_exact = callback;
                 return *this;
             }
-            template<typename U = TypeValidatorImpl>
-            typename std::enable_if<std::is_same<U,T>::value, ForEachCallbacks&>::type
-            Set (ValidatorContainer::RegexMatchForEachCallback callback)
+            ForEach&
+            SetValidatorRegexCallback (ValidatorContainer::RegexMatchForEachCallback callback)
             {
                 m_validator_regex = callback;
                 return *this;
@@ -273,9 +271,8 @@ namespace lldb_private {
                           ConstString name,
                           std::initializer_list<lldb::LanguageType> langs = {});
         
-        template <typename T>
         void
-        ForEach (const ForEachCallbacks<T> &foreach)
+        ForEach (const ForEach &foreach)
         {
             GetTypeFormatsContainer()->ForEach(foreach.GetFormatExactCallback());
             GetRegexTypeFormatsContainer()->ForEach(foreach.GetFormatRegexCallback());

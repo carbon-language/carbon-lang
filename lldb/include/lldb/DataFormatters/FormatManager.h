@@ -43,6 +43,8 @@ class FormatManager : public IFormatChangeListener
 public:
     typedef std::map<lldb::LanguageType, LanguageCategory::UniquePointer> LanguageCategories;
     
+    typedef TypeCategoryMap::CallbackType CategoryCallback;
+    
     FormatManager();
     
     ~FormatManager() override = default;
@@ -137,6 +139,9 @@ public:
         return m_categories_map.GetAtIndex(index);
     }
     
+    void
+    LoopThroughCategories (CategoryCallback callback, void* param);
+
     void
     ForEachCategory (TypeCategoryMap::ForEachCallback callback);
     
