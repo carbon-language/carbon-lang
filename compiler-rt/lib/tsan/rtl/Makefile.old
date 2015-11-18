@@ -33,7 +33,7 @@ LIBTSAN_HEADERS=$(wildcard *.h) \
 		$(wildcard $(INTERCEPTION)/*.h) \
 		$(wildcard $(COMMON)/*.h)
 LIBTSAN_SRC=$(wildcard *.cc)
-LIBTSAN_ASM_SRC=$(wildcard *.S)
+LIBTSAN_ASM_SRC=tsan_rtl_amd64.S
 INTERCEPTION_SRC=$(wildcard $(INTERCEPTION)/*.cc)
 COMMON_SRC=$(filter-out $(wildcard $(COMMON)/*_nolibc.cc),$(wildcard $(COMMON)/*.cc))
 
