@@ -3890,8 +3890,6 @@ void TypoCorrectionConsumer::addNamespaces(
   auto &Types = SemaRef.getASTContext().getTypes();
   for (unsigned I = 0; I != Types.size(); ++I) {
     const auto *TI = Types[I];
-    if (!TI->isClassType() && isa<TemplateSpecializationType>(TI))
-      continue;
     if (CXXRecordDecl *CD = TI->getAsCXXRecordDecl()) {
       CD = CD->getCanonicalDecl();
       if (!CD->isDependentType() && !CD->isAnonymousStructOrUnion() &&
