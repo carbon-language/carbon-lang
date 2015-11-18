@@ -43,8 +43,6 @@ class FormatManager : public IFormatChangeListener
 public:
     typedef std::map<lldb::LanguageType, LanguageCategory::UniquePointer> LanguageCategories;
     
-    typedef TypeCategoryMap::CallbackType CategoryCallback;
-    
     FormatManager();
     
     ~FormatManager() override = default;

@@ -37,8 +37,6 @@ namespace lldb_private {
     public:
         typedef std::map<KeyType, ValueSP> MapType;
         typedef MapType::iterator MapIterator;
-        typedef bool(*CallbackType)(void*, const ValueSP&);
-        
         typedef std::function<bool(const ValueSP&)> ForEachCallback;
         
         typedef uint32_t Position;

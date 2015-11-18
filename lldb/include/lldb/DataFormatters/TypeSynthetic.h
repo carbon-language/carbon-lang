@@ -348,7 +348,6 @@ namespace lldb_private {
         GetFrontEnd (ValueObject &backend) = 0;
         
         typedef std::shared_ptr<SyntheticChildren> SharedPointer;
-        typedef std::function<bool(void*, ConstString, SyntheticChildren::SharedPointer)> SyntheticChildrenCallback;
         
         uint32_t&
         GetRevision ()
