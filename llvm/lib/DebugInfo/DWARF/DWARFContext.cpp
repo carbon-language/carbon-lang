@@ -704,7 +704,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     // relocation point already factors in the section address
     // (actually applying the relocations will produce wrong results
     // as the section address will be added twice).
-    if (!L && dyn_cast<MachOObjectFile>(&Obj))
+    if (!L && isa<MachOObjectFile>(&Obj))
       continue;
 
     RelSecName = RelSecName.substr(
