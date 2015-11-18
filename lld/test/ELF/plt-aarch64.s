@@ -1,8 +1,8 @@
 // RUN: llvm-mc -filetype=obj -triple=aarch64-pc-freebsd %s -o %t.o
 // RUN: llvm-mc -filetype=obj -triple=aarch64-pc-freebsd %p/Inputs/shared.s -o %t2.o
-// RUN: ld.lld2 -shared %t2.o -o %t2.so
-// RUN: ld.lld2 -shared %t.o %t2.so -o %t.so
-// RUN: ld.lld2 %t.o %t2.so -o %t.exe
+// RUN: ld.lld -shared %t2.o -o %t2.so
+// RUN: ld.lld -shared %t.o %t2.so -o %t.so
+// RUN: ld.lld %t.o %t2.so -o %t.exe
 // RUN: llvm-readobj -s -r %t.so | FileCheck --check-prefix=CHECKDSO %s
 // RUN: llvm-objdump -s -section=.got.plt %t.so | FileCheck --check-prefix=DUMPDSO %s
 // RUN: llvm-objdump -d %t.so | FileCheck --check-prefix=DISASMDSO %s
