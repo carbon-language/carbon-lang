@@ -64,3 +64,7 @@
   subq_s.w $3, $4, $5          # CHECK: subq_s.w $3, $4, $5     # encoding: [0x00,0xa4,0x1b,0x45]
   subu.qb $3, $4, $5           # CHECK: subu.qb $3, $4, $5      # encoding: [0x00,0xa4,0x1a,0xcd]
   subu_s.qb $3, $4, $5         # CHECK: subu_s.qb $3, $4, $5    # encoding: [0x00,0xa4,0x1e,0xcd]
+  dpsq_s.w.ph $ac1, $4, $6     # CHECK: dpsq_s.w.ph $ac1, $4, $6   # encoding: [0x00,0xc4,0x46,0xbc]
+  dpsq_sa.l.w $ac1, $4, $6     # CHECK: dpsq_sa.l.w $ac1, $4, $6   # encoding: [0x00,0xc4,0x56,0xbc]
+  dpsu.h.qbl $ac1, $4, $6      # CHECK: dpsu.h.qbl $ac1, $4, $6    # encoding: [0x00,0xc4,0x64,0xbc]
+  dpsu.h.qbr $ac1, $4, $6      # CHECK: dpsu.h.qbr $ac1, $4, $6    # encoding: [0x00,0xc4,0x74,0xbc]
