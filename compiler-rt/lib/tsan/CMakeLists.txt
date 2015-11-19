@@ -47,6 +47,7 @@ set(TSAN_CXX_SOURCES
 
 if(APPLE)
   list(APPEND TSAN_SOURCES
+    rtl/tsan_libdispatch_mac.cc
     rtl/tsan_platform_mac.cc
     rtl/tsan_platform_posix.cc)
 elseif(UNIX)
