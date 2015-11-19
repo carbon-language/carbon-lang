@@ -205,7 +205,8 @@ bool AddDiscriminators::runOnFunction(Function &F) {
       I.setDebugLoc(DILocation::get(Ctx, DIL->getLine(), DIL->getColumn(),
                                     NewScope, DIL->getInlinedAt()));
       DEBUG(dbgs() << DIL->getFilename() << ":" << DIL->getLine() << ":"
-                   << DIL->getColumn() << ":" << NewScope->getDiscriminator()
+                   << DIL->getColumn() << ":"
+                   << dyn_cast<DILexicalBlockFile>(NewScope)->getDiscriminator()
                    << I << "\n");
       Changed = true;
     }
