@@ -4226,26 +4226,6 @@ multiclass avx512_pshufb_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode> {
 defm VPSHUFB: avx512_pshufb_sizes<0x00, "vpshufb", X86pshufb>;
 
 //===----------------------------------------------------------------------===//
-// AVX-512 - MOVDDUP
-//===----------------------------------------------------------------------===//
-
-multiclass avx512_movddup<string OpcodeStr, RegisterClass RC, ValueType VT,
-                        X86MemOperand x86memop, PatFrag memop_frag> {
-def rr  : AVX512PDI<0x12, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set RC:$dst, (VT (X86Movddup RC:$src)))]>, EVEX;
-def rm  : AVX512PDI<0x12, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set RC:$dst,
-                      (VT (X86Movddup (memop_frag addr:$src))))]>, EVEX;
-}
-
-defm VMOVDDUPZ : avx512_movddup<"vmovddup", VR512, v8f64, f512mem, loadv8f64>,
-                 VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
-def : Pat<(X86Movddup (v8f64 (scalar_to_vector (loadf64 addr:$src)))),
-          (VMOVDDUPZrm addr:$src)>;
-
-//===----------------------------------------------------------------------===//
 // Move Low to High and High to Low packed FP Instructions
 //===----------------------------------------------------------------------===//
 def VMOVLHPSZrr : AVX512PSI<0x16, MRMSrcReg, (outs VR128X:$dst),
@@ -7128,6 +7108,52 @@ multiclass avx512_replicate<bits<8> opc, string OpcodeStr, SDNode OpNode>{
 
 defm VMOVSHDUP : avx512_replicate<0x16, "vmovshdup", X86Movshdup>;
 defm VMOVSLDUP : avx512_replicate<0x12, "vmovsldup", X86Movsldup>;
+
+//===----------------------------------------------------------------------===//
+// AVX-512 - MOVDDUP
+//===----------------------------------------------------------------------===//
+
+multiclass avx512_movddup_128<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                                            X86VectorVTInfo _> {
+  defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                   (ins _.RC:$src), OpcodeStr, "$src", "$src",
+                   (_.VT (OpNode (_.VT _.RC:$src)))>, EVEX;
+  let mayLoad = 1 in
+    defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                   (ins _.ScalarMemOp:$src), OpcodeStr, "$src", "$src",
+                   (_.VT (OpNode (_.VT (scalar_to_vector
+                                         (_.ScalarLdFrag addr:$src)))))>,
+                   EVEX, EVEX_CD8<_.EltSize, CD8VH>;
+}
+
+multiclass avx512_movddup_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                                  AVX512VLVectorVTInfo VTInfo> {
+
+  defm Z : avx512_unary_rm<opc, OpcodeStr, OpNode, VTInfo.info512>, EVEX_V512;
+
+  let Predicates = [HasAVX512, HasVLX] in {
+    defm Z256 : avx512_unary_rm<opc, OpcodeStr, OpNode, VTInfo.info256>,
+                               EVEX_V256;
+    defm Z128 : avx512_movddup_128<opc, OpcodeStr, OpNode, VTInfo.info128>,
+                               EVEX_V128;
+  }
+}
+
+multiclass avx512_movddup<bits<8> opc, string OpcodeStr, SDNode OpNode>{
+  defm NAME:      avx512_movddup_common<opc, OpcodeStr, OpNode,
+                                        avx512vl_f64_info>, XD, VEX_W;
+  let isCodeGenOnly = 1 in
+    defm NAME#_I: avx512_movddup_common<opc, OpcodeStr, OpNode,
+                                        avx512vl_i64_info>;
+}
+
+defm VMOVDDUP : avx512_movddup<0x12, "vmovddup", X86Movddup>;
+
+def : Pat<(X86Movddup (loadv2f64 addr:$src)),
+          (VMOVDDUPZ128rm addr:$src)>, Requires<[HasAVX512, HasVLX]>;
+def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
+          (VMOVDDUPZ128rm addr:$src)>, Requires<[HasAVX512, HasVLX]>;
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - Unpack Instructions
 //===----------------------------------------------------------------------===//
