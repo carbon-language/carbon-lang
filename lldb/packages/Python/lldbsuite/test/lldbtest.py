@@ -1225,7 +1225,8 @@ def skipUnlessCompilerRt(func):
     def wrapper(*args, **kwargs):
         from unittest2 import case
         import os.path
-        compilerRtPath = os.path.join(os.path.dirname(__file__), "..", "..", "..", "projects", "compiler-rt")
+        compilerRtPath = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "llvm","projects","compiler-rt")
+        print(compilerRtPath)
         if not os.path.exists(compilerRtPath):
             self = args[0]
             self.skipTest("skip if compiler-rt not found")
@@ -2195,7 +2196,7 @@ class Base(unittest2.TestCase):
           "llvm-build/Release/x86_64/Release/bin/clang",
           "llvm-build/Debug/x86_64/Debug/bin/clang",
         ]
-        lldb_root_path = os.path.join(os.path.dirname(__file__), "..")
+        lldb_root_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
         for p in paths_to_try:
             path = os.path.join(lldb_root_path, p)
             if os.path.exists(path):
