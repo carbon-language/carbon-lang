@@ -18561,6 +18561,102 @@ vpermilpd $0x23, 0x400(%rbx), %zmm2
 // CHECK: encoding: [0x62,0x61,0xfd,0x08,0x17,0x8a,0xf8,0xfb,0xff,0xff]
           vmovhpd	%xmm25, -1032(%rdx)     
 
+// CHECK: vmovsd.s %xmm15, %xmm22, %xmm21
+// CHECK:  encoding: [0x62,0x31,0xcf,0x00,0x11,0xfd]
+          vmovsd.s %xmm15, %xmm22, %xmm21
+
+// CHECK: vmovsd.s %xmm15, %xmm22, %xmm21 {%k7}
+// CHECK:  encoding: [0x62,0x31,0xcf,0x07,0x11,0xfd]
+          vmovsd.s %xmm15, %xmm22, %xmm21 {%k7}
+
+// CHECK: vmovsd.s %xmm15, %xmm22, %xmm21 {%k7} {z}
+// CHECK:  encoding: [0x62,0x31,0xcf,0x87,0x11,0xfd]
+          vmovsd.s %xmm15, %xmm22, %xmm21 {%k7} {z}
+
+// CHECK: vmovsd.s %xmm8, %xmm13, %xmm23
+// CHECK:  encoding: [0x62,0x31,0x97,0x08,0x11,0xc7]
+          vmovsd.s %xmm8, %xmm13, %xmm23
+
+// CHECK: vmovsd.s %xmm8, %xmm13, %xmm3 {%k5}
+// CHECK:  encoding: [0x62,0x71,0x97,0x0d,0x11,0xc3]
+          vmovsd.s %xmm8, %xmm13, %xmm3 {%k5}
+
+// CHECK: vmovsd.s %xmm8, %xmm13, %xmm3 {%k5} {z}
+// CHECK:  encoding: [0x62,0x71,0x97,0x8d,0x11,0xc3]
+          vmovsd.s %xmm8, %xmm13, %xmm3 {%k5} {z}
+
+// CHECK: vmovsd.s %xmm4, %xmm15, %xmm24
+// CHECK:  encoding: [0x62,0x91,0x87,0x08,0x11,0xe0]
+          vmovsd.s %xmm4, %xmm15, %xmm24
+
+// CHECK: vmovsd.s %xmm4, %xmm15, %xmm4 {%k6}
+// CHECK:  encoding: [0x62,0xf1,0x87,0x0e,0x11,0xe4]
+          vmovsd.s %xmm4, %xmm15, %xmm4 {%k6}
+
+// CHECK: vmovsd.s %xmm4, %xmm15, %xmm4 {%k6} {z}
+// CHECK:  encoding: [0x62,0xf1,0x87,0x8e,0x11,0xe4]
+          vmovsd.s %xmm4, %xmm15, %xmm4 {%k6} {z}
+
+// CHECK: vmovsd.s %xmm14, %xmm2, %xmm20
+// CHECK:  encoding: [0x62,0x31,0xef,0x08,0x11,0xf4]
+          vmovsd.s %xmm14, %xmm2, %xmm20
+
+// CHECK: vmovsd.s %xmm14, %xmm2, %xmm20 {%k7}
+// CHECK:  encoding: [0x62,0x31,0xef,0x0f,0x11,0xf4]
+          vmovsd.s %xmm14, %xmm2, %xmm20 {%k7}
+
+// CHECK: vmovsd.s %xmm14, %xmm2, %xmm20 {%k7} {z}
+// CHECK:  encoding: [0x62,0x31,0xef,0x8f,0x11,0xf4]
+          vmovsd.s %xmm14, %xmm2, %xmm20 {%k7} {z}
+
+// CHECK: vmovss.s %xmm2, %xmm27, %xmm17
+// CHECK:  encoding: [0x62,0xb1,0x26,0x00,0x11,0xd1]
+          vmovss.s %xmm2, %xmm27, %xmm17
+
+// CHECK: vmovss.s %xmm2, %xmm27, %xmm17 {%k2}
+// CHECK:  encoding: [0x62,0xb1,0x26,0x02,0x11,0xd1]
+          vmovss.s %xmm2, %xmm27, %xmm17 {%k2}
+
+// CHECK: vmovss.s %xmm2, %xmm27, %xmm17 {%k2} {z}
+// CHECK:  encoding: [0x62,0xb1,0x26,0x82,0x11,0xd1]
+          vmovss.s %xmm2, %xmm27, %xmm17 {%k2} {z}
+
+// CHECK: vmovss.s %xmm23, %xmm19, %xmm10
+// CHECK:  encoding: [0x62,0xc1,0x66,0x00,0x11,0xfa]
+          vmovss.s %xmm23, %xmm19, %xmm10
+
+// CHECK: vmovss.s %xmm23, %xmm19, %xmm10 {%k3}
+// CHECK:  encoding: [0x62,0xc1,0x66,0x03,0x11,0xfa]
+          vmovss.s %xmm23, %xmm19, %xmm10 {%k3}
+
+// CHECK: vmovss.s %xmm23, %xmm19, %xmm10 {%k3} {z}
+// CHECK:  encoding: [0x62,0xc1,0x66,0x83,0x11,0xfa]
+          vmovss.s %xmm23, %xmm19, %xmm10 {%k3} {z}
+
+// CHECK: vmovss.s %xmm19, %xmm11, %xmm21
+// CHECK:  encoding: [0x62,0xa1,0x26,0x08,0x11,0xdd]
+          vmovss.s %xmm19, %xmm11, %xmm21
+
+// CHECK: vmovss.s %xmm19, %xmm11, %xmm21 {%k3}
+// CHECK:  encoding: [0x62,0xa1,0x26,0x0b,0x11,0xdd]
+          vmovss.s %xmm19, %xmm11, %xmm21 {%k3}
+
+// CHECK: vmovss.s %xmm19, %xmm11, %xmm21 {%k3} {z}
+// CHECK:  encoding: [0x62,0xa1,0x26,0x8b,0x11,0xdd]
+          vmovss.s %xmm19, %xmm11, %xmm21 {%k3} {z}
+
+// CHECK: vmovss.s %xmm24, %xmm27, %xmm15
+// CHECK:  encoding: [0x62,0x41,0x26,0x00,0x11,0xc7]
+          vmovss.s %xmm24, %xmm27, %xmm15
+
+// CHECK: vmovss.s %xmm24, %xmm27, %xmm15 {%k2}
+// CHECK:  encoding: [0x62,0x41,0x26,0x02,0x11,0xc7]
+          vmovss.s %xmm24, %xmm27, %xmm15 {%k2}
+
+// CHECK: vmovss.s %xmm24, %xmm27, %xmm15 {%k2} {z}
+// CHECK:  encoding: [0x62,0x41,0x26,0x82,0x11,0xc7]
+          vmovss.s %xmm24, %xmm27, %xmm15 {%k2} {z}
+
 // CHECK: vmovapd.s %zmm29, %zmm13
 // CHECK:  encoding: [0x62,0x41,0xfd,0x48,0x29,0xed]
           vmovapd.s %zmm29, %zmm13

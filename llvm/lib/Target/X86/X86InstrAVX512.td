@@ -2916,19 +2916,15 @@ def : Pat<(int_x86_avx512_mask_store_ss addr:$dst, VR128X:$src, GR8:$mask),
           (VMOVSSZmrk addr:$dst, (i1 (COPY_TO_REGCLASS GR8:$mask, VK1WM)),
            (COPY_TO_REGCLASS VR128X:$src, FR32X))>;
 
-// For the disassembler
-let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
-  def VMOVSSZrr_REV : SI<0x11, MRMDestReg, (outs VR128X:$dst),
-                        (ins VR128X:$src1, FR32X:$src2),
-                        "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
-                        IIC_SSE_MOV_S_RR>,
-                        XS, EVEX_4V, VEX_LIG;
-  def VMOVSDZrr_REV : SI<0x11, MRMDestReg, (outs VR128X:$dst),
-                        (ins VR128X:$src1, FR64X:$src2),
-                        "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
-                        IIC_SSE_MOV_S_RR>,
-                        XD, EVEX_4V, VEX_LIG, VEX_W;
-}
+defm VMOVSSZrr_REV : AVX512_maskable_in_asm<0x11, MRMDestReg, f32x_info,
+                           (outs VR128X:$dst), (ins VR128X:$src1, VR128X:$src2),
+                           "vmovss.s", "$src2, $src1", "$src1, $src2", []>,
+                           XS, EVEX_4V, VEX_LIG;
+
+defm VMOVSSDrr_REV : AVX512_maskable_in_asm<0x11, MRMDestReg, f64x_info,
+                           (outs VR128X:$dst), (ins VR128X:$src1, VR128X:$src2),
+                           "vmovsd.s", "$src2, $src1", "$src1, $src2", []>,
+                           XD, EVEX_4V, VEX_LIG, VEX_W;
 
 let Predicates = [HasAVX512] in {
   let AddedComplexity = 15 in {
