@@ -267,10 +267,15 @@ static bool FrameIsInternal(const SymbolizedStack *frame) {
   if (frame == 0)
     return false;
   const char *file = frame->info.file;
-  return file != 0 &&
-         (internal_strstr(file, "tsan_interceptors.cc") ||
-          internal_strstr(file, "sanitizer_common_interceptors.inc") ||
-          internal_strstr(file, "tsan_interface_"));
+  const char *module = frame->info.module;
+  if (file != 0 &&
+      (internal_strstr(file, "tsan_interceptors.cc") ||
+       internal_strstr(file, "sanitizer_common_interceptors.inc") ||
+       internal_strstr(file, "tsan_interface_")))
+    return true;
+  if (module != 0 && (internal_strstr(module, "libclang_rt.tsan_")))
+    return true;
+  return false;
 }
 
 static SymbolizedStack *SkipTsanInternalFrames(SymbolizedStack *frames) {
