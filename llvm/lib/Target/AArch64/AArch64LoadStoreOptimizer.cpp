@@ -41,7 +41,7 @@ STATISTIC(NumPostFolded, "Number of post-index updates folded");
 STATISTIC(NumPreFolded, "Number of pre-index updates folded");
 STATISTIC(NumUnscaledPairCreated,
           "Number of load/store from unscaled generated");
-STATISTIC(NumSmallTypeMerged, "Number of small type loads merged");
+STATISTIC(NumNarrowLoadsPromoted, "Number of narrow loads promoted");
 
 static cl::opt<unsigned> ScanLimit("aarch64-load-store-scan-limit",
                                    cl::init(20), cl::Hidden);
@@ -189,7 +189,7 @@ static unsigned getBitExtrOpcode(MachineInstr *MI) {
   }
 }
 
-static bool isSmallTypeLdMerge(unsigned Opc) {
+static bool isNarrowLoad(unsigned Opc) {
   switch (Opc) {
   default:
     return false;
@@ -205,8 +205,8 @@ static bool isSmallTypeLdMerge(unsigned Opc) {
   }
 }
 
-static bool isSmallTypeLdMerge(MachineInstr *MI) {
-  return isSmallTypeLdMerge(MI->getOpcode());
+static bool isNarrowLoad(MachineInstr *MI) {
+  return isNarrowLoad(MI->getOpcode());
 }
 
 // Scaling factor for unscaled load or store.
@@ -582,7 +582,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
 
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
 
-  if (isSmallTypeLdMerge(Opc)) {
+  if (isNarrowLoad(Opc)) {
     // Change the scaled offset from small to large type.
     if (!IsUnscaled) {
       assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
@@ -840,8 +840,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
   int OffsetStride = IsUnscaled ? getMemScale(FirstMI) : 1;
-  if (!isSmallTypeLdMerge(Opc) &&
-      !inBoundsForPair(IsUnscaled, Offset, OffsetStride))
+  if (!isNarrowLoad(Opc) && !inBoundsForPair(IsUnscaled, Offset, OffsetStride))
     return E;
 
   // Track which registers have been modified and used between the first insn
@@ -900,15 +899,15 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // If the resultant immediate offset of merging these instructions
         // is out of range for a pairwise instruction, bail and keep looking.
         bool MIIsUnscaled = isUnscaledLdSt(MI);
-        bool IsSmallTypeLd = isSmallTypeLdMerge(MI->getOpcode());
-        if (!IsSmallTypeLd &&
+        bool IsNarrowLoad = isNarrowLoad(MI->getOpcode());
+        if (!IsNarrowLoad &&
             !inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
           MemInsns.push_back(MI);
           continue;
         }
 
-        if (IsSmallTypeLd) {
+        if (IsNarrowLoad) {
           // If the alignment requirements of the larger type scaled load
           // instruction can't express the scaled offset of the smaller type
           // input, bail and keep looking.
@@ -1227,8 +1226,8 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
   LdStPairFlags Flags;
   MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, ScanLimit);
   if (Paired != E) {
-    if (isSmallTypeLdMerge(MI)) {
-      ++NumSmallTypeMerged;
+    if (isNarrowLoad(MI)) {
+      ++NumNarrowLoadsPromoted;
     } else {
       ++NumPairCreated;
       if (isUnscaledLdSt(MI))
@@ -1463,14 +1462,12 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
 }
 
 bool AArch64LoadStoreOpt::enableNarrowLdMerge(MachineFunction &Fn) {
-  const AArch64Subtarget *SubTarget =
-      &static_cast<const AArch64Subtarget &>(Fn.getSubtarget());
-  bool ProfitableArch = SubTarget->isCortexA57();
+  bool ProfitableArch = Subtarget->isCortexA57();
   // FIXME: The benefit from converting narrow loads into a wider load could be
   // microarchitectural as it assumes that a single load with two bitfield
   // extracts is cheaper than two narrow loads. Currently, this conversion is
   // enabled only in cortex-a57 on which performance benefits were verified.
-  return ProfitableArch & (!SubTarget->requiresStrictAlign());
+  return ProfitableArch && !Subtarget->requiresStrictAlign();
 }
 
 bool AArch64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
