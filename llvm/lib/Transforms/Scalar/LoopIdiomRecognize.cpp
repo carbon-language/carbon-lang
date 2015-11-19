@@ -624,7 +624,8 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   // See if the pointer expression is an AddRec like {base,+,1} on the current
   // loop, which indicates a strided load.  If we have something else, it's a
   // random load we can't handle.
-  const SCEVAddRecExpr *LoadEv = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(LI->getPointerOperand()));
+  const SCEVAddRecExpr *LoadEv =
+      dyn_cast<SCEVAddRecExpr>(SE->getSCEV(LI->getPointerOperand()));
   if (!LoadEv || LoadEv->getLoop() != CurLoop || !LoadEv->isAffine())
     return false;
 
