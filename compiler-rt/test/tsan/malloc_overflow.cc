@@ -1,5 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t
-// RUN: TSAN_OPTIONS=allocator_may_return_null=1 %run %t 2>&1 | FileCheck %s
+// RUN: %env_tsan_opts=allocator_may_return_null=1 %run %t 2>&1 | FileCheck %s
 #include <stdio.h>
 #include <stdlib.h>
 

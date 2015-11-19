@@ -1,5 +1,5 @@
 // RUN: %clangxx_tsan %s -o %t
-// RUN: TSAN_OPTIONS=$TSAN_OPTIONS:verbosity=2:external_symbolizer_path=/usr/bin/atos %deflake %run %t | FileCheck %s
+// RUN: %env_tsan_opts=verbosity=2:external_symbolizer_path=/usr/bin/atos %deflake %run %t | FileCheck %s
 #include "../test.h"
 
 int GlobalData[10];

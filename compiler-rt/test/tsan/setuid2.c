@@ -1,4 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t && TSAN_OPTIONS="flush_memory_ms=1 memory_limit_mb=1" %run %t 2>&1 | FileCheck %s
+// RUN: %clang_tsan -O1 %s -o %t && %env_tsan_opts=flush_memory_ms=1:memory_limit_mb=1 %run %t 2>&1 | FileCheck %s
 #include "test.h"
 #include <sys/types.h>
 #include <unistd.h>
