@@ -367,7 +367,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   //   for (i) A[i] = B[i];
   if (LoadInst *LI = dyn_cast<LoadInst>(StoredVal)) {
     const SCEVAddRecExpr *LoadEv =
-        dyn_cast<SCEVAddRecExpr>(SE->getSCEV(LI->getOperand(0)));
+        dyn_cast<SCEVAddRecExpr>(SE->getSCEV(LI->getPointerOperand()));
     if (LoadEv && LoadEv->getLoop() == CurLoop && LoadEv->isAffine() &&
         StoreEv->getOperand(1) == LoadEv->getOperand(1) && LI->isSimple())
       if (processLoopStoreOfLoopLoad(SI, StoreSize, StoreEv, LoadEv, BECount,
