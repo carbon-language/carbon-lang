@@ -108,15 +108,18 @@ void FunctionSamples::print(raw_ostream &OS, unsigned Indent) const {
   OS << TotalSamples << ", " << TotalHeadSamples << ", " << BodySamples.size()
      << " sampled lines\n";
 
-  for (const auto &SI : BodySamples) {
+  SampleSorter<LineLocation, SampleRecord> SortedBodySamples(BodySamples);
+  for (const auto &SI : SortedBodySamples.get()) {
     OS.indent(Indent);
-    OS << SI.first << ": " << SI.second;
+    OS << SI->first << ": " << SI->second;
   }
 
-  for (const auto &CS : CallsiteSamples) {
+  SampleSorter<CallsiteLocation, FunctionSamples> SortedCallsiteSamples(
+      CallsiteSamples);
+  for (const auto &CS : SortedCallsiteSamples.get()) {
     OS.indent(Indent);
-    OS << CS.first << ": ";
-    CS.second.print(OS, Indent + 2);
+    OS << CS->first << ": ";
+    CS->second.print(OS, Indent + 2);
   }
 }
 
