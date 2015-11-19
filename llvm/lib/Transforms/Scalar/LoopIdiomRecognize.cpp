@@ -361,9 +361,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
                               StoredVal, SI, StoreEv, BECount, NegStride))
     return true;
 
-  // If the stored value is a strided load in the same loop with the same stride
-  // this may be transformable into a memcpy.  This kicks in for stuff like
-  //   for (i) A[i] = B[i];
+  // Optimize the store into a memcpy, if it feeds an similarly strided load.
   return processLoopStoreOfLoopLoad(SI, StoreSize, StoreEv, BECount, NegStride);
 }
 
@@ -607,8 +605,9 @@ bool LoopIdiomRecognize::processLoopStridedStore(
   return true;
 }
 
-/// processLoopStoreOfLoopLoad - We see a strided store whose value is a
-/// same-strided load.
+/// If the stored value is a strided load in the same loop with the same stride
+/// this may be transformable into a memcpy.  This kicks in for stuff like
+///   for (i) A[i] = B[i];
 bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
     StoreInst *SI, unsigned StoreSize, const SCEVAddRecExpr *StoreEv,
     const SCEV *BECount, bool NegStride) {
