@@ -331,7 +331,7 @@ StringRef llvm::ARM::getArchExtName(unsigned ArchExtKind) {
 }
 
 const char *llvm::ARM::getArchExtFeature(StringRef ArchExt) {
-  if (ArchExt.substr(0, 2) == "no") {
+  if (ArchExt.startswith("no")) {
     StringRef ArchExtBase(ArchExt.substr(2));
     for (const auto AE : ARCHExtNames) {
       if (AE.NegFeature && ArchExtBase == AE.getName())
