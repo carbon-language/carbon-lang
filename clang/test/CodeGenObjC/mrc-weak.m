@@ -6,6 +6,26 @@
 - (void) run;
 @end
 
+// The ivars in HighlyAlignedSubclass should be placed in the tail-padding
+// of the superclass.  Ensure that they're still covered by layouts.
+@interface HighlyAligned : Object {
+  __attribute__((aligned(32))) void *array[2];
+}
+@end
+// CHECK-MODERN: @"OBJC_IVAR_$_HighlyAlignedSubclass.ivar2" = global i64 24,
+// CHECK-MODERN: @"OBJC_IVAR_$_HighlyAlignedSubclass.ivar" = global i64 16,
+// CHECK-MODERN: @OBJC_CLASS_NAME_{{.*}} = {{.*}} c"\02\00"
+// CHECK-MODERN: @"\01l_OBJC_CLASS_RO_$_HighlyAlignedSubclass" = {{.*}} {
+// CHECK-FRAGILE: @OBJC_INSTANCE_VARIABLES_HighlyAlignedSubclass = {{.*}}, i32 8 }, {{.*}}, i32 12 }]
+// CHECK-FRAGILE: @OBJC_CLASS_NAME_{{.*}} = {{.*}} c"\02\00"
+// CHECK-FRAGILE: @OBJC_CLASS_HighlyAlignedSubclass
+@interface HighlyAlignedSubclass : HighlyAligned {
+  __weak id ivar;
+  __weak id ivar2;
+}
+@end
+@implementation HighlyAlignedSubclass @end
+
 // CHECK-MODERN: @OBJC_CLASS_NAME_{{.*}} = {{.*}} c"\01\00"
 // CHECK-MODERN: @"\01l_OBJC_CLASS_RO_$_Foo" = {{.*}} { i32 772
 //   772 == 0x304
