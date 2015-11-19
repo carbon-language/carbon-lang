@@ -7971,14 +7971,14 @@ def ext_coroutine_without_co_await_co_yield : ExtWarn<
 def err_implied_std_coroutine_traits_not_found : Error<
   "you need to include <coroutine> before defining a coroutine">;
 def err_malformed_std_coroutine_traits : Error<
-  "std::coroutine_traits must be a class template">;
+  "'std::coroutine_traits' must be a class template">;
 def err_implied_std_coroutine_traits_promise_type_not_found : Error<
-  "this function cannot be a coroutine: %0 has no member named 'promise_type'">;
+  "this function cannot be a coroutine: %q0 has no member named 'promise_type'">;
 def err_implied_std_coroutine_traits_promise_type_not_class : Error<
   "this function cannot be a coroutine: %0 is not a class">;
 def err_coroutine_traits_missing_specialization : Error<
   "this function cannot be a coroutine: missing definition of "
-  "specialization %0">;
+  "specialization %q0">;
 }
 
 let CategoryName = "Documentation Issue" in {
