@@ -5642,6 +5642,8 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
 ///       ParameterList OptionalAttrs
 ///   ::= 'musttail' 'call' OptionalCallingConv OptionalAttrs Type Value
 ///       ParameterList OptionalAttrs
+///   ::= 'notail' 'call'  OptionalCallingConv OptionalAttrs Type Value
+///       ParameterList OptionalAttrs
 bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
                          CallInst::TailCallKind TCK) {
   AttrBuilder RetAttrs, FnAttrs;
@@ -5656,7 +5658,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   LocTy CallLoc = Lex.getLoc();
 
   if ((TCK != CallInst::TCK_None &&
-       ParseToken(lltok::kw_call, "expected 'tail call'")) ||
+       ParseToken(lltok::kw_call,
+                  "expected 'tail call', 'musttail call', or 'notail call'")) ||
       ParseOptionalCallingConv(CC) || ParseOptionalReturnAttrs(RetAttrs) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
