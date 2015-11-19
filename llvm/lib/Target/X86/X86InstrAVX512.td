@@ -2550,23 +2550,21 @@ multiclass avx512_load_vl<bits<8> opc, string OpcodeStr,
 
 multiclass avx512_store<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                         PatFrag st_frag, PatFrag mstore> {
-  let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
-  def rr_alt : AVX512PI<opc, MRMDestReg, (outs _.RC:$dst), (ins _.RC:$src),
-                        OpcodeStr # "\t{$src, $dst|$dst, $src}", [],
-                        _.ExeDomain>, EVEX;
-  let Constraints = "$src1 = $dst" in
-  def rrk_alt : AVX512PI<opc, MRMDestReg, (outs  _.RC:$dst),
-                         (ins _.RC:$src1, _.KRCWM:$mask, _.RC:$src2),
-                         OpcodeStr #
-                         "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}",
+
+  def rr_REV  : AVX512PI<opc, MRMDestReg, (outs _.RC:$dst), (ins _.RC:$src),
+                         OpcodeStr # ".s\t{$src, $dst|$dst, $src}",
+                         [], _.ExeDomain>, EVEX;
+  def rrk_REV : AVX512PI<opc, MRMDestReg, (outs  _.RC:$dst),
+                         (ins _.KRCWM:$mask, _.RC:$src),
+                         OpcodeStr # ".s\t{$src, ${dst} {${mask}}|"#
+                         "${dst} {${mask}}, $src}",
                          [], _.ExeDomain>,  EVEX, EVEX_K;
-  def rrkz_alt : AVX512PI<opc, MRMDestReg, (outs  _.RC:$dst),
+  def rrkz_REV : AVX512PI<opc, MRMDestReg, (outs  _.RC:$dst),
                           (ins _.KRCWM:$mask, _.RC:$src),
-                          OpcodeStr #
-                          "\t{$src, ${dst} {${mask}} {z}|" #
+                          OpcodeStr # ".s\t{$src, ${dst} {${mask}} {z}|" #
                           "${dst} {${mask}} {z}, $src}",
                           [], _.ExeDomain>, EVEX, EVEX_KZ;
-  }
+
   let mayStore = 1 in {
   def mr : AVX512PI<opc, MRMDestMem, (outs), (ins _.MemOp:$dst, _.RC:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
