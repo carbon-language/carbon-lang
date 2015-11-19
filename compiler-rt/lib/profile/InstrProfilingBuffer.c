@@ -41,7 +41,7 @@ uint64_t __llvm_profile_get_size_for_buffer_internal(
          PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) + NamesSize + Padding;
 }
 
-static size_t BufferWriter(const void *Data, size_t ElmSize, size_t NumElm,
+static size_t bufferWriter(const void *Data, size_t ElmSize, size_t NumElm,
                            void **Buffer) {
   size_t Length = ElmSize * NumElm;
   memcpy(*Buffer, Data, Length);
@@ -51,14 +51,14 @@ static size_t BufferWriter(const void *Data, size_t ElmSize, size_t NumElm,
 
 __attribute__((visibility("hidden"))) int
 __llvm_profile_write_buffer(char *Buffer) {
-  return llvmWriteProfData(Buffer, 0, 0, BufferWriter);
+  return llvmWriteProfData(Buffer, bufferWriter, 0, 0);
 }
 
 __attribute__((visibility("hidden"))) int __llvm_profile_write_buffer_internal(
     char *Buffer, const __llvm_profile_data *DataBegin,
     const __llvm_profile_data *DataEnd, const uint64_t *CountersBegin,
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd) {
-  return llvmWriteProfDataImpl(Buffer, BufferWriter, DataBegin, DataEnd,
+  return llvmWriteProfDataImpl(Buffer, bufferWriter, DataBegin, DataEnd,
                                CountersBegin, CountersEnd, 0, 0, NamesBegin,
                                NamesEnd);
 }

@@ -17,7 +17,7 @@
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
-static size_t FileWriter(const void *Data, size_t ElmSize, size_t NumElm,
+static size_t fileWriter(const void *Data, size_t ElmSize, size_t NumElm,
                          void **File) {
   return fwrite(Data, ElmSize, NumElm, (FILE *)*File);
 }
@@ -27,7 +27,7 @@ static int writeFile(FILE *File) {
   uint8_t *ValueDataBegin = NULL;
   const uint64_t ValueDataSize =
       __llvm_profile_gather_value_data(&ValueDataBegin);
-  int r = llvmWriteProfData(File, ValueDataBegin, ValueDataSize, FileWriter);
+  int r = llvmWriteProfData(File, fileWriter, ValueDataBegin, ValueDataSize);
   free(ValueDataBegin);
   return r;
 }
