@@ -6,8 +6,6 @@
 // RUN: %env_asan_opts=halt_on_error=false %run %t 100 >%t.log 2>&1 || true
 // Collision will almost always get triggered but we still need to check the unlikely case:
 // RUN: FileCheck --check-prefix=CHECK-COLLISION %s < %t.log || FileCheck --check-prefix=CHECK-NO-COLLISION %s < %t.log
-//
-// REQUIRES: stable-runtime
 
 #define _SVID_SOURCE 1  // SA_NODEFER
 

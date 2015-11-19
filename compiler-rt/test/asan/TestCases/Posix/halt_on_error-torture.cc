@@ -12,8 +12,6 @@
 // This one is racy although _very_ unlikely to fail:
 // RUN: FileCheck %s < 10.txt
 // RUN: FileCheck --check-prefix=CHECK-COLLISION %s < 1.txt || FileCheck --check-prefix=CHECK-NO-COLLISION %s < 1.txt
-//
-// REQUIRES: stable-runtime
 
 #include <stdio.h>
 #include <stdlib.h>
