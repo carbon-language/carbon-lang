@@ -1,6 +1,6 @@
 // Regression test. Disabler should not depend on TSD validity.
 // RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=1"
-// RUN: %clangxx_lsan %s -o %t
+// RUN: %clang_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %run %t
 
 #include <assert.h>
@@ -13,11 +13,12 @@
 pthread_key_t key;
 
 void key_destructor(void *arg) {
-  __lsan::ScopedDisabler d;
+  __lsan_disable();
   void *p = malloc(1337);
   // Break optimization.
   fprintf(stderr, "Test alloc: %p.\n", p);
   pthread_setspecific(key, 0);
+  __lsan_enable();
 }
 
 void *thread_func(void *arg) {
