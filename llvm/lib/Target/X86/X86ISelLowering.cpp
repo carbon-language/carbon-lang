@@ -7351,8 +7351,9 @@ static SDValue lowerVectorShuffleWithSSE4A(SDLoc DL, MVT VT, SDValue V1,
       SDValue &V = (M < Size ? V1 : V2);
       M = M % Size;
 
-      // All mask elements must be in the lower half.
-      if (M >= HalfSize)
+      // The extracted elements must start at a valid index and all mask
+      // elements must be in the lower half.
+      if (i > M || M >= HalfSize)
         return SDValue();
 
       if (Idx < 0 || (Src == V && Idx == (M - i))) {
