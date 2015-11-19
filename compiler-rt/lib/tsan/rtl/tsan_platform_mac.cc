@@ -124,7 +124,7 @@ typedef void (*pthread_introspection_hook_t)(unsigned int event,
 extern "C" pthread_introspection_hook_t pthread_introspection_hook_install(
     pthread_introspection_hook_t hook);
 static const uptr PTHREAD_INTROSPECTION_THREAD_CREATE = 1;
-static const uptr PTHREAD_INTROSPECTION_THREAD_DESTROY = 4;
+static const uptr PTHREAD_INTROSPECTION_THREAD_TERMINATE = 3;
 static pthread_introspection_hook_t prev_pthread_introspection_hook;
 static void my_pthread_introspection_hook(unsigned int event, pthread_t thread,
                                           void *addr, size_t size) {
@@ -137,10 +137,12 @@ static void my_pthread_introspection_hook(unsigned int event, pthread_t thread,
       ThreadState *thr = cur_thread();
       ThreadStart(thr, tid, GetTid());
     }
-  } else if (event == PTHREAD_INTROSPECTION_THREAD_DESTROY) {
-    ThreadState *thr = cur_thread();
-    if (thr->tctx && thr->tctx->parent_tid == kInvalidTid) {
-      DestroyThreadState();
+  } else if (event == PTHREAD_INTROSPECTION_THREAD_TERMINATE) {
+    if (thread == pthread_self()) {
+      ThreadState *thr = cur_thread();
+      if (thr->tctx) {
+        DestroyThreadState();
+      }
     }
   }
 

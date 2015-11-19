@@ -233,7 +233,9 @@ static ThreadSignalContext *SigCtx(ThreadState *thr) {
   return ctx;
 }
 
+#if !SANITIZER_MAC
 static unsigned g_thread_finalize_key;
+#endif
 
 ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
                                      uptr pc)
@@ -825,6 +827,7 @@ void DestroyThreadState() {
 }
 }  // namespace __tsan
 
+#if !SANITIZER_MAC
 static void thread_finalize(void *v) {
   uptr iter = (uptr)v;
   if (iter > 1) {
@@ -836,6 +839,7 @@ static void thread_finalize(void *v) {
   }
   DestroyThreadState();
 }
+#endif
 
 
 struct ThreadParam {
@@ -853,6 +857,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
     ThreadState *thr = cur_thread();
     // Thread-local state is not initialized yet.
     ScopedIgnoreInterceptors ignore;
+#if !SANITIZER_MAC
     ThreadIgnoreBegin(thr, 0);
     if (pthread_setspecific(g_thread_finalize_key,
                             (void *)GetPthreadDestructorIterations())) {
@@ -860,6 +865,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
       Die();
     }
     ThreadIgnoreEnd(thr, 0);
+#endif
     while ((tid = atomic_load(&p->tid, memory_order_acquire)) == 0)
       internal_sched_yield();
     ThreadStart(thr, tid, GetTid());
@@ -2640,10 +2646,12 @@ void InitializeInterceptors() {
     Die();
   }
 
+#if !SANITIZER_MAC
   if (pthread_key_create(&g_thread_finalize_key, &thread_finalize)) {
     Printf("ThreadSanitizer: failed to create thread key\n");
     Die();
   }
+#endif
 
   FdInit();
 }
