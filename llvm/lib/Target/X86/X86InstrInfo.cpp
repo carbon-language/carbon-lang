@@ -5315,14 +5315,7 @@ static void addOperands(MachineInstrBuilder &MIB, ArrayRef<MachineOperand> MOs,
     for (unsigned i = 0; i != NumAddrOps; ++i) {
       const MachineOperand &MO = MOs[i];
       if (i == 3 && PtrOffset != 0) {
-        assert((MO.isImm() || MO.isGlobal()) &&
-               "Unexpected memory operand type");
-        if (MO.isImm()) {
-          MIB.addImm(MO.getImm() + PtrOffset);
-        } else {
-          MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset() + PtrOffset,
-                               MO.getTargetFlags());
-        }
+        MIB.addDisp(MO, PtrOffset);
       } else {
         MIB.addOperand(MO);
       }
