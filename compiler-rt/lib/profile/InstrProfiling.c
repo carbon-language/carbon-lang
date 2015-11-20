@@ -74,6 +74,14 @@ __attribute__((visibility("hidden"))) void __llvm_profile_reset_counters(void) {
 /* Total number of value profile data in bytes. */
 static uint64_t TotalValueDataSize = 0;
 
+#ifdef _MIPS_ARCH
+__attribute__((visibility("hidden"))) void
+__llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
+                                 uint32_t CounterIndex) {
+}
+
+#else
+
 /* Allocate an array that holds the pointers to the linked lists of
  * value profile counter nodes. The number of element of the array
  * is the total number of value profile sites instrumented. Returns
@@ -156,6 +164,7 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
   __sync_fetch_and_add(&TotalValueDataSize,
                        Success * sizeof(__llvm_profile_value_data));
 }
+#endif
 
 __attribute__((visibility("hidden"))) uint64_t
 __llvm_profile_gather_value_data(uint8_t **VDataArray) {
