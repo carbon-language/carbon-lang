@@ -16,7 +16,9 @@
 #include "gtest/gtest.h"
 
 #if SANITIZER_WINDOWS
+#define NOMINMAX
 #include <windows.h>
+#undef NOMINMAX
 #endif
 #if SANITIZER_POSIX
 # include <sys/stat.h>
