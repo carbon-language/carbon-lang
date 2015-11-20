@@ -648,11 +648,15 @@ def expectedFailure(expected_fn, bugnumber=None):
 def not_in (iterable):
     return lambda x : x not in iterable
 
-def check_list_or_lambda (list_or_lambda, value):
-    if six.callable(list_or_lambda):
-        return list_or_lambda(value)
+def check_decorator_attribute(attr, value):
+    if attr is None:
+        return True
+    if six.callable(attr):
+        return attr(value)
+    elif isinstance(attr, (list, tuple)):
+        return value in attr
     else:
-        return list_or_lambda is None or value is None or value in list_or_lambda
+        return value == attr
 
 # provide a function to xfail on defined oslist, compiler version, and archs
 # if none is specified for any argument, that argument won't be checked and thus means for all
@@ -662,11 +666,11 @@ def check_list_or_lambda (list_or_lambda, value):
 # @expectedFailureAll(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), xfail for gcc>=4.9 on linux with i386
 def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, triple=None, debug_info=None, swig_version=None, py_version=None):
     def fn(self):
-        oslist_passes = check_list_or_lambda(oslist, self.getPlatform())
-        compiler_passes = check_list_or_lambda(self.getCompiler(), compiler) and self.expectedCompilerVersion(compiler_version)
+        oslist_passes = check_decorator_attribute(oslist, self.getPlatform())
+        compiler_passes = check_decorator_attribute(self.getCompiler(), compiler) and self.expectedCompilerVersion(compiler_version)
         arch_passes = self.expectedArch(archs)
         triple_passes = triple is None or re.match(triple, lldb.DBG.GetSelectedPlatform().GetTriple())
-        debug_info_passes = check_list_or_lambda(debug_info, self.debug_info)
+        debug_info_passes = check_decorator_attribute(debug_info, self.debug_info)
         swig_version_passes = (swig_version is None) or (not hasattr(lldb, 'swig_version')) or (check_expected_version(swig_version[0], swig_version[1], lldb.swig_version))
         py_version_passes = (py_version is None) or check_expected_version(py_version[0], py_version[1], sys.version_info)
 
@@ -1100,10 +1104,10 @@ def skipIfLinuxClang(func):
 # TODO: refactor current code, to make skipIfxxx functions to call this function
 def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None, swig_version=None, py_version=None):
     def fn(self):
-        oslist_passes = oslist is None or self.getPlatform() in oslist
-        compiler_passes = compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))
+        oslist_passes = check_decorator_attribute(oslist, self.getPlatform())
+        compiler_passes = check_decorator_attribute(compiler, self.getCompiler()) and self.expectedCompilerVersion(compiler_version)
         arch_passes = self.expectedArch(archs)
-        debug_info_passes = debug_info is None or self.debug_info in debug_info
+        debug_info_passes = check_decorator_attribute(debug_info, self.debug_info)
         swig_version_passes = (swig_version is None) or (not hasattr(lldb, 'swig_version')) or (check_expected_version(swig_version[0], swig_version[1], lldb.swig_version))
         py_version_passes = (py_version is None) or check_expected_version(py_version[0], py_version[1], sys.version_info)
 
