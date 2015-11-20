@@ -276,7 +276,8 @@ FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4 $(ATOMIC_FUNCTIONS) $(FP16_FUNCTIONS)
 
 FUNCTIONS.profile_osx := GCDAProfiling InstrProfiling InstrProfilingBuffer \
                          InstrProfilingFile InstrProfilingPlatformDarwin \
-                         InstrProfilingRuntime InstrProfilingUtil
+                         InstrProfilingRuntime InstrProfilingUtil \
+                         InstrProfilingWriter
 FUNCTIONS.profile_ios := $(FUNCTIONS.profile_osx)
 
 FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(AsanCXXFunctions) \
