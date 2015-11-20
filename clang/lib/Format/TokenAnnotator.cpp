@@ -2047,7 +2047,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if ((Left.is(TT_TemplateOpener)) != (Right.is(TT_TemplateCloser)))
     return Style.SpacesInAngles;
   if ((Right.is(TT_BinaryOperator) && !Left.is(tok::l_paren)) ||
-      Left.isOneOf(TT_BinaryOperator, TT_ConditionalExpr))
+      (Left.isOneOf(TT_BinaryOperator, TT_ConditionalExpr) &&
+       !Right.is(tok::r_paren)))
     return true;
   if (Left.is(TT_TemplateCloser) && Right.is(tok::l_paren) &&
       Right.isNot(TT_FunctionTypeLParen))
