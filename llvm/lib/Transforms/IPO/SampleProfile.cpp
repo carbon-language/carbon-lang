@@ -344,9 +344,11 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
     if (FirstMark) {
       const Function *F = Inst.getParent()->getParent();
       LLVMContext &Ctx = F->getContext();
-      emitOptimizationRemark(Ctx, DEBUG_TYPE, *F, DLoc,
-                             Twine("Applied ") + Twine(*R) +
-                                 " samples from profile");
+      emitOptimizationRemark(
+          Ctx, DEBUG_TYPE, *F, DLoc,
+          Twine("Applied ") + Twine(*R) + " samples from profile (offset: " +
+              Twine(LineOffset) +
+              ((Discriminator) ? Twine(".") + Twine(Discriminator) : "") + ")");
     }
     DEBUG(dbgs() << "    " << Lineno << "." << DIL->getDiscriminator() << ":"
                  << Inst << " (line offset: " << Lineno - HeaderLineno << "."
