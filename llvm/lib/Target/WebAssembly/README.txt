@@ -21,3 +21,20 @@ Interesting work that remains to be done:
   for WebAssembly.
 
 //===---------------------------------------------------------------------===//
+
+set_local and store instructions have a return value. We should (a) model this,
+and (b) write optimizations which take advantage of it. Keep in mind that
+many set_local instructions are implicit!
+
+//===---------------------------------------------------------------------===//
+
+Load and store instructions can have a constant offset. We should (a) model
+this, and (b) do address-mode folding with it.
+
+//===---------------------------------------------------------------------===//
+
+Br, br_if, and tableswitch instructions can support having a value on the
+expression stack across the jump (sometimes). We should (a) model this, and
+(b) extend the stackifier to utilize it.
+
+//===---------------------------------------------------------------------===//
