@@ -486,6 +486,8 @@ determinePointerReadAttrs(Argument *A,
         return Attribute::None;
       }
 
+      Captures &= !CS.doesNotCapture(UseIndex);
+
       // Since the optimizer (by design) cannot see the data flow corresponding
       // to a operand bundle use, these cannot participate in the optimistic SCC
       // analysis.  Instead, we model the operand bundle uses as arguments in
