@@ -128,9 +128,12 @@ checkCoroutineContext(Sema &S, SourceLocation Loc, StringRef Keyword) {
     assert(ScopeInfo && "missing function scope for function");
 
     // If we don't have a promise variable, build one now.
-    if (!ScopeInfo->CoroutinePromise && !FD->getType()->isDependentType()) {
+    if (!ScopeInfo->CoroutinePromise) {
       QualType T =
-          lookupPromiseType(S, FD->getType()->castAs<FunctionProtoType>(), Loc);
+          FD->getType()->isDependentType()
+              ? S.Context.DependentTy
+              : lookupPromiseType(S, FD->getType()->castAs<FunctionProtoType>(),
+                                  Loc);
       if (T.isNull())
         return nullptr;
 
@@ -165,6 +168,23 @@ struct ReadySuspendResumeResult {
   Expr *Results[3];
 };
 
+static ExprResult buildMemberCall(Sema &S, Expr *Base, SourceLocation Loc,
+                                  StringRef Name,
+                                  MutableArrayRef<Expr *> Args) {
+  DeclarationNameInfo NameInfo(&S.PP.getIdentifierTable().get(Name), Loc);
+
+  // FIXME: Fix BuildMemberReferenceExpr to take a const CXXScopeSpec&.
+  CXXScopeSpec SS;
+  ExprResult Result = S.BuildMemberReferenceExpr(
+      Base, Base->getType(), Loc, /*IsPtr=*/false, SS,
+      SourceLocation(), nullptr, NameInfo, /*TemplateArgs=*/nullptr,
+      /*Scope=*/nullptr);
+  if (Result.isInvalid())
+    return ExprError();
+
+  return S.ActOnCallExpr(nullptr, Result.get(), Loc, Args, Loc, nullptr);
+}
+
 /// Build calls to await_ready, await_suspend, and await_resume for a co_await
 /// expression.
 static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, SourceLocation Loc,
@@ -174,22 +194,11 @@ static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, SourceLocation Loc,
 
   const StringRef Funcs[] = {"await_ready", "await_suspend", "await_resume"};
   for (size_t I = 0, N = llvm::array_lengthof(Funcs); I != N; ++I) {
-    DeclarationNameInfo NameInfo(&S.PP.getIdentifierTable().get(Funcs[I]), Loc);
-
     Expr *Operand = new (S.Context) OpaqueValueExpr(
         Loc, E->getType(), E->getValueKind(), E->getObjectKind(), E);
 
-    // FIXME: Fix BuildMemberReferenceExpr to take a const CXXScopeSpec&.
-    CXXScopeSpec SS;
-    ExprResult Result = S.BuildMemberReferenceExpr(
-        Operand, Operand->getType(), Loc, /*IsPtr=*/false, SS,
-        SourceLocation(), nullptr, NameInfo, /*TemplateArgs=*/nullptr,
-        /*Scope=*/nullptr);
-    if (Result.isInvalid())
-      return Calls;
-
     // FIXME: Pass coroutine handle to await_suspend.
-    Result = S.ActOnCallExpr(nullptr, Result.get(), Loc, None, Loc, nullptr);
+    ExprResult Result = buildMemberCall(S, Operand, Loc, Funcs[I], None);
     if (Result.isInvalid())
       return Calls;
     Calls.Results[I] = Result.get();
@@ -236,11 +245,36 @@ ExprResult Sema::BuildCoawaitExpr(SourceLocation Loc, Expr *E) {
   return Res;
 }
 
+static ExprResult buildYieldValueCall(Sema &S, FunctionScopeInfo *Coroutine,
+                                      SourceLocation Loc, Expr *E) {
+  assert(Coroutine->CoroutinePromise && "no promise for coroutine");
+
+  // Form a reference to the promise.
+  auto *Promise = Coroutine->CoroutinePromise;
+  ExprResult PromiseRef = S.BuildDeclRefExpr(
+      Promise, Promise->getType().getNonReferenceType(), VK_LValue, Loc);
+  if (PromiseRef.isInvalid())
+    return ExprError();
+
+  // Call 'yield_value', passing in E.
+  return buildMemberCall(S, PromiseRef.get(), Loc, "yield_value", E);
+}
+
 ExprResult Sema::ActOnCoyieldExpr(Scope *S, SourceLocation Loc, Expr *E) {
-  // FIXME: Build yield_value call.
-  ExprResult Awaitable = buildOperatorCoawaitCall(*this, S, Loc, E);
+  auto *Coroutine = checkCoroutineContext(*this, Loc, "co_yield");
+  if (!Coroutine)
+    return ExprError();
+
+  // Build yield_value call.
+  ExprResult Awaitable = buildYieldValueCall(*this, Coroutine, Loc, E);
   if (Awaitable.isInvalid())
     return ExprError();
+
+  // Build 'operator co_await' call.
+  Awaitable = buildOperatorCoawaitCall(*this, S, Loc, Awaitable.get());
+  if (Awaitable.isInvalid())
+    return ExprError();
+
   return BuildCoyieldExpr(Loc, Awaitable.get());
 }
 ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {

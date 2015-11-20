@@ -29,6 +29,13 @@ double bad_promise_type(double) {
   co_await a; // expected-error {{this function cannot be a coroutine: 'std::coroutine_traits<double, double>::promise_type' (aka 'int') is not a class}}
 }
 
+template<> struct std::coroutine_traits<double, int> {
+  struct promise_type {};
+};
+double bad_promise_type_2(int) {
+  co_yield 0; // expected-error {{no member named 'yield_value' in 'std::coroutine_traits<double, int>::promise_type'}}
+}
+
 struct promise; // expected-note {{forward declaration}}
 template<typename ...T> struct std::coroutine_traits<void, T...> { using promise_type = promise; };
 
@@ -37,7 +44,18 @@ void undefined_promise() { // expected-error {{variable has incomplete type 'pro
   co_await a;
 }
 
-struct promise {};
+struct yielded_thing { int a, b, c; const char *p; };
+
+struct promise {
+  awaitable yield_value(int); // expected-note {{candidate}}
+  awaitable yield_value(yielded_thing); // expected-note {{candidate}}
+};
+
+void yield() {
+  co_yield 0;
+  co_yield {1, 2, 3, "foo"}; // FIXME expected-error {{expected expression}}
+  co_yield "foo"; // expected-error {{no matching}}
+}
 
 void mixed_yield() {
   co_yield 0; // expected-note {{use of 'co_yield'}}
