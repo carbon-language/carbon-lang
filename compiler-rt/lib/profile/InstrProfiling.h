@@ -27,6 +27,13 @@ typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef uint32_t uintptr_t;
+#elif defined(__FreeBSD__) && defined(__x86_64__)
+#define PRIu64 "lu"
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+typedef unsigned long int uintptr_t;
 
 #else /* defined(__FreeBSD__) && defined(__i386__) */
 
