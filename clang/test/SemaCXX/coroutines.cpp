@@ -140,3 +140,18 @@ namespace dependent_operator_co_await_lookup {
   template void await_template(outer); // expected-note {{instantiation}}
   template void await_template_2(outer);
 }
+
+namespace placeholder {
+  awaitable f(), f(int); // expected-note 2{{possible target}}
+  int g(), g(int); // expected-note 4{{possible target}}
+  void x() {
+    co_await f; // expected-error {{reference to overloaded function}}
+  }
+  void y() {
+    co_yield g; // expected-error {{reference to overloaded function}}
+  }
+  void z() {
+    co_await a;
+    co_return g; // expected-error {{reference to overloaded function}}
+  }
+}

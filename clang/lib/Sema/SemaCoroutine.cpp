@@ -209,6 +209,12 @@ static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, SourceLocation Loc,
 }
 
 ExprResult Sema::ActOnCoawaitExpr(Scope *S, SourceLocation Loc, Expr *E) {
+  if (E->getType()->isPlaceholderType()) {
+    ExprResult R = CheckPlaceholderExpr(E);
+    if (R.isInvalid()) return ExprError();
+    E = R.get();
+  }
+
   ExprResult Awaitable = buildOperatorCoawaitCall(*this, S, Loc, E);
   if (Awaitable.isInvalid())
     return ExprError();
@@ -219,16 +225,16 @@ ExprResult Sema::BuildCoawaitExpr(SourceLocation Loc, Expr *E) {
   if (!Coroutine)
     return ExprError();
 
-  if (E->getType()->isDependentType()) {
-    Expr *Res = new (Context) CoawaitExpr(Loc, Context.DependentTy, E);
-    Coroutine->CoroutineStmts.push_back(Res);
-    return Res;
-  }
-
   if (E->getType()->isPlaceholderType()) {
     ExprResult R = CheckPlaceholderExpr(E);
     if (R.isInvalid()) return ExprError();
     E = R.get();
+  }
+
+  if (E->getType()->isDependentType()) {
+    Expr *Res = new (Context) CoawaitExpr(Loc, Context.DependentTy, E);
+    Coroutine->CoroutineStmts.push_back(Res);
+    return Res;
   }
 
   // FIXME: If E is a prvalue, create a temporary.
@@ -261,6 +267,12 @@ static ExprResult buildYieldValueCall(Sema &S, FunctionScopeInfo *Coroutine,
 }
 
 ExprResult Sema::ActOnCoyieldExpr(Scope *S, SourceLocation Loc, Expr *E) {
+  if (E->getType()->isPlaceholderType()) {
+    ExprResult R = CheckPlaceholderExpr(E);
+    if (R.isInvalid()) return ExprError();
+    E = R.get();
+  }
+
   auto *Coroutine = checkCoroutineContext(*this, Loc, "co_yield");
   if (!Coroutine)
     return ExprError();
@@ -282,6 +294,12 @@ ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {
   if (!Coroutine)
     return ExprError();
 
+  if (E->getType()->isPlaceholderType()) {
+    ExprResult R = CheckPlaceholderExpr(E);
+    if (R.isInvalid()) return ExprError();
+    E = R.get();
+  }
+
   // FIXME: Build await_* calls.
   Expr *Res = new (Context) CoyieldExpr(Loc, Context.VoidTy, E);
   Coroutine->CoroutineStmts.push_back(Res);
@@ -292,6 +310,12 @@ StmtResult Sema::ActOnCoreturnStmt(SourceLocation Loc, Expr *E) {
   return BuildCoreturnStmt(Loc, E);
 }
 StmtResult Sema::BuildCoreturnStmt(SourceLocation Loc, Expr *E) {
+  if (E && E->getType()->isPlaceholderType()) {
+    ExprResult R = CheckPlaceholderExpr(E);
+    if (R.isInvalid()) return StmtError();
+    E = R.get();
+  }
+
   auto *Coroutine = checkCoroutineContext(*this, Loc, "co_return");
   if (!Coroutine)
     return StmtError();
