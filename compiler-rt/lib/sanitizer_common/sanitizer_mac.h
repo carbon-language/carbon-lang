@@ -13,6 +13,7 @@
 #ifndef SANITIZER_MAC_H
 #define SANITIZER_MAC_H
 
+#include "sanitizer_common.h"
 #include "sanitizer_platform.h"
 #if SANITIZER_MAC
 #include "sanitizer_posix.h"
@@ -36,6 +37,17 @@ MacosVersion GetMacosVersion();
 char **GetEnviron();
 
 }  // namespace __sanitizer
+
+extern "C" {
+static char __crashreporter_info_buff__[kErrorMessageBufferSize] = {};
+static const char *__crashreporter_info__ __attribute__((__used__)) =
+  &__crashreporter_info_buff__[0];
+asm(".desc ___crashreporter_info__, 0x10");
+} // extern "C"
+
+INLINE void CRSetCrashLogMessage(const char *msg) {
+  internal_strlcpy(__crashreporter_info_buff__, msg,
+                   sizeof(__crashreporter_info_buff__)); }
 
 #endif  // SANITIZER_MAC
 #endif  // SANITIZER_MAC_H

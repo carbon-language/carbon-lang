@@ -453,6 +453,10 @@ void LogFullErrorReport(const char *buffer) {
   BlockingMutexLock l(&syslog_lock);
   if (common_flags()->log_to_syslog)
     WriteToSyslog(buffer);
+
+  // Log to CrashLog.
+  if (common_flags()->abort_on_error)
+    CRSetCrashLogMessage(buffer);
 }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
