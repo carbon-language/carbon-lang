@@ -36,6 +36,14 @@ ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef M)
     : InputFile(K, M), ELFObj(MB.getBuffer(), ECRAII().getEC()) {}
 
 template <class ELFT>
+ELFKind ELFFileBase<ELFT>::getELFKind() {
+  using llvm::support::little;
+  if (ELFT::Is64Bits)
+    return ELFT::TargetEndianness == little ? ELF64LEKind : ELF64BEKind;
+  return ELFT::TargetEndianness == little ? ELF32LEKind : ELF32BEKind;
+}
+
+template <class ELFT>
 typename ELFFileBase<ELFT>::Elf_Sym_Range
 ELFFileBase<ELFT>::getSymbolsHelper(bool Local) {
   if (!Symtab)
