@@ -95,6 +95,7 @@ private:
 
   /// Offset in the file.
   uint64_t FileOffset{0};
+  uint64_t ColdFileOffset{0};
 
   /// Maximum size this function is allowed to have.
   uint64_t MaxSize{std::numeric_limits<uint64_t>::max()};
@@ -113,15 +114,21 @@ private:
 
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
+  uint64_t ColdImageAddress{0};
 
   /// The size of the code in memory.
   uint64_t ImageSize{0};
+  uint64_t ColdImageSize{0};
 
   /// Name for the section this function code should reside in.
   std::string CodeSectionName;
 
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
+
+  /// Score of the function (estimated number of instructions executed,
+  /// according to profile data). -1 if the score has not been calculated yet.
+  int64_t FunctionScore{-1};
 
   /// Binary blob reprsenting action, type, and type index tables for this
   /// function' LSDA (exception handling).
@@ -132,6 +139,10 @@ private:
 
   /// Landing pads for the function.
   std::set<MCSymbol *> LandingPads;
+
+  /// True if this function needs to be emitted in two separate parts, one for
+  /// the hot basic blocks and another for the cold basic blocks.
+  bool IsSplit{false};
 
   /// Release storage used by instructions.
   BinaryFunction &clearInstructions() {
@@ -290,7 +301,7 @@ public:
 
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
-  void optimizeLayout(HeuristicPriority Priority);
+  void optimizeLayout(HeuristicPriority Priority, bool Split);
 
   /// Dynamic programming implementation for the TSP, applied to BB layout. Find
   /// the optimal way to maximize weight during a path traversing all BBs. In
@@ -298,7 +309,7 @@ public:
   ///
   /// Uses exponential amount of memory on the number of basic blocks and should
   /// only be used for small functions.
-  void solveOptimalLayout();
+  void solveOptimalLayout(bool Split);
 
   /// View CFG in graphviz program
   void viewGraph();
@@ -330,6 +341,10 @@ public:
     return FileOffset;
   }
 
+  uint64_t getColdFileOffset() const {
+    return ColdFileOffset;
+  }
+
   /// Return (original) size of the function.
   uint64_t getSize() const {
     return Size;
@@ -349,6 +364,10 @@ public:
   /// Return true if the function could be correctly processed.
   bool isSimple() const {
     return IsSimple;
+  }
+
+  bool isSplit() const {
+    return IsSplit;
   }
 
   MCSymbol *getPersonalityFunction() const {
@@ -473,6 +492,11 @@ public:
     return *this;
   }
 
+  BinaryFunction &setColdFileOffset(uint64_t Offset) {
+    ColdFileOffset = Offset;
+    return *this;
+  }
+
   BinaryFunction &setMaxSize(uint64_t Size) {
     MaxSize = Size;
     return *this;
@@ -507,9 +531,18 @@ public:
     return *this;
   }
 
+  BinaryFunction &setColdImageAddress(uint64_t Address) {
+    ColdImageAddress = Address;
+    return *this;
+  }
+
   /// Return the address of this function' image in memory.
   uint64_t getImageAddress() const {
     return ImageAddress;
+  }
+
+  uint64_t getColdImageAddress() const {
+    return ColdImageAddress;
   }
 
   BinaryFunction &setImageSize(uint64_t Size) {
@@ -517,9 +550,18 @@ public:
     return *this;
   }
 
+  BinaryFunction &setColdImageSize(uint64_t Size) {
+    ColdImageSize = Size;
+    return *this;
+  }
+
   /// Return the size of this function' image in memory.
   uint64_t getImageSize() const {
     return ImageSize;
+  }
+
+  uint64_t getColdImageSize() const {
+    return ColdImageSize;
   }
 
   /// Set the profile data for the number of times the function was called.
@@ -597,6 +639,10 @@ public:
   /// Traverse the CFG checking branches, inverting their condition, removing or
   /// adding jumps based on a new layout order.
   void fixBranches();
+
+  /// Split function in two: a part with warm or hot BBs and a part with never
+  /// executed BBs. The cold part is moved to a new BinaryFunction.
+  void splitFunction();
 
   /// Process LSDA information for the function.
   void parseLSDA(ArrayRef<uint8_t> LSDAData, uint64_t LSDAAddress);

@@ -30,7 +30,7 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC);
 class CFIReaderWriter {
 public:
   explicit CFIReaderWriter(const DWARFFrame &EHFrame, uint64_t FrameHdrAddress,
-                      MutableArrayRef<char> FrameHdrContents)
+                           std::vector<char> &FrameHdrContents)
       : EHFrame(EHFrame), FrameHdrAddress(FrameHdrAddress),
         FrameHdrContents(FrameHdrContents) {
     // Prepare FDEs for fast lookup
@@ -48,12 +48,13 @@ public:
 
   // Include a new EHFrame, updating the .eh_frame_hdr
   void rewriteHeaderFor(StringRef EHFrame, uint64_t EHFrameAddress,
+                        uint64_t NewFrameHdrAddress,
                         ArrayRef<uint64_t> FailedAddresses);
 
 private:
   const DWARFFrame &EHFrame;
   uint64_t FrameHdrAddress;
-  MutableArrayRef<char> FrameHdrContents;
+  std::vector<char> &FrameHdrContents;
   FDEsMap FDEs;
 };
 

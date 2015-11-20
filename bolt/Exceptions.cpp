@@ -683,13 +683,19 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
 }
 
 void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
-                                       uint64_t EHFrameAddress,
+                                       uint64_t NewEHFrameAddress,
+                                       uint64_t NewFrameHdrAddress,
                                        ArrayRef<uint64_t> FailedAddresses) {
   DataExtractor Data(EHFrame,
                      /*IsLittleEndian=*/true,
                      /*PtrSize=*/4);
   uint32_t Offset = 0;
   std::map<uint64_t, uint64_t> PCToFDE;
+
+  DEBUG(dbgs() << format(
+            "CFIReaderWriter: Starting to patch .eh_frame_hdr.\n"
+            "New .eh_frame address = %08x\nNew .eh_frame_hdr address = %08x\n",
+            NewEHFrameAddress, NewFrameHdrAddress));
 
   // Scans the EHFrame, parsing start addresses for each function
   while (Data.isValidOffset(Offset)) {
@@ -712,7 +718,7 @@ void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
     const uint8_t *DataEnd = DataStart;
     uint64_t FuncAddress =
         readEncodedPointer(DataEnd, DW_EH_PE_sdata4 | DW_EH_PE_pcrel,
-                           EHFrameAddress + Offset - (uintptr_t)DataEnd);
+                           NewEHFrameAddress + Offset - (uintptr_t)DataEnd);
     Offset += DataEnd - DataStart;
 
     auto I = std::lower_bound(FailedAddresses.begin(), FailedAddresses.end(),
@@ -722,7 +728,7 @@ void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
       continue;
     }
 
-    PCToFDE[FuncAddress] = EHFrameAddress + StartOffset;
+    PCToFDE[FuncAddress] = NewEHFrameAddress + StartOffset;
     Offset = EndStructureOffset;
   }
 
@@ -742,32 +748,53 @@ void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
   const uint8_t *DataStart = reinterpret_cast<const uint8_t *>(
       HDRData.getData().substr(Offset).data());
   const uint8_t *DataEnd = DataStart;
-  // Advance Offset past .eh_frame addr
-  readEncodedPointer(DataEnd, EhFrameAddrEncoding);
+
+  uint64_t EHFrameAddrOffset = Offset;
+  uint64_t EHFrameAddress = readEncodedPointer(
+      DataEnd, EhFrameAddrEncoding,
+      FrameHdrAddress + Offset - (uintptr_t)DataEnd, FrameHdrAddress);
   Offset += DataEnd - DataStart;
 
   DataStart = reinterpret_cast<const uint8_t *>(
       HDRData.getData().substr(Offset).data());
   DataEnd = DataStart;
+  uint64_t FDECountOffset = Offset;
   uint64_t FDECount = readEncodedPointer(
       DataEnd, FDECntEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
       FrameHdrAddress);
   Offset += DataEnd - DataStart;
 
   assert(FDECount > 0 && "Empty binary search table in .eh_frame_hdr!");
+  assert(EhFrameAddrEncoding == (DW_EH_PE_pcrel | DW_EH_PE_sdata4) &&
+         "Don't know how to handle other .eh_frame address encoding!");
+  assert(FDECntEncoding == DW_EH_PE_udata4 &&
+         "Don't know how to thandle other .eh_frame_hdr encoding!");
   assert(TableEncoding == (DW_EH_PE_datarel | DW_EH_PE_sdata4) &&
-         "Don't know how to handle other .eh_frame.hdr encoding!");
+         "Don't know how to handle other .eh_frame_hdr encoding!");
+
+  // Update .eh_frame address
+  // Write address using signed 4-byte pc-relative encoding
+  DEBUG(dbgs() << format("CFIReaderWriter: Patching .eh_frame_hdr contents "
+                         "(.eh_frame pointer) with %08x\n",
+                         EHFrameAddress));
+  int64_t RealOffset = EHFrameAddress - EHFrameAddrOffset - NewFrameHdrAddress;
+  assert(isInt<32>(RealOffset));
+  support::ulittle32_t::ref(FrameHdrContents.data() + EHFrameAddrOffset) =
+    RealOffset;
 
   // Offset now points to the binary search table. Update it.
+  uint64_t LastPC = 0;
   for (uint64_t I = 0; I != FDECount; ++I) {
     assert(HDRData.isValidOffset(Offset) &&
            ".eh_frame_hdr table finished earlier than we expected");
     DataStart = reinterpret_cast<const uint8_t *>(
         HDRData.getData().substr(Offset).data());
     DataEnd = DataStart;
+    uint64_t InitialPCOffset = Offset;
     uint64_t InitialPC = readEncodedPointer(
         DataEnd, TableEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
         FrameHdrAddress);
+    LastPC = InitialPC;
     Offset += DataEnd - DataStart;
 
     uint64_t FDEPtrOffset = Offset;
@@ -775,19 +802,61 @@ void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
         HDRData.getData().substr(Offset).data());
     DataEnd = DataStart;
     // Advance Offset past FDEPtr
-    readEncodedPointer(DataEnd, TableEncoding);
+    uint64_t FDEPtr = readEncodedPointer(
+        DataEnd, TableEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
+        FrameHdrAddress);
     Offset += DataEnd - DataStart;
 
-    if (uint64_t NewPtr = PCToFDE[InitialPC]) {
-      // Patch FDEPtr
-      int64_t RealOffset = NewPtr - FrameHdrAddress;
+    // Update InitialPC according to new eh_frame_hdr address
+    // Write using signed 4-byte "data relative" (relative to .eh_frame_addr)
+    // encoding
+    int64_t RealOffset = InitialPC - NewFrameHdrAddress;
+    assert(isInt<32>(RealOffset));
+    support::ulittle32_t::ref(FrameHdrContents.data() + InitialPCOffset) =
+        RealOffset;
 
-      assert(isInt<32>(RealOffset));
-      DEBUG(dbgs() << format("CFIReaderWriter: Patching .eh_frame_hdr contents "
-                             "@offset %08x with new FDE ptr %08x\n",
-                             FDEPtrOffset, NewPtr));
-      support::ulittle32_t::ref(FrameHdrContents.data() + FDEPtrOffset) = RealOffset;
-    }
+    if (uint64_t NewPtr = PCToFDE[InitialPC])
+      RealOffset = NewPtr - NewFrameHdrAddress;
+    else
+      RealOffset = FDEPtr - NewFrameHdrAddress;
+
+    assert(isInt<32>(RealOffset));
+    DEBUG(dbgs() << format("CFIReaderWriter: Patching .eh_frame_hdr contents "
+                           "@offset %08x with new FDE ptr %08x\n",
+                           FDEPtrOffset, RealOffset + NewFrameHdrAddress));
+    support::ulittle32_t::ref(FrameHdrContents.data() + FDEPtrOffset) = RealOffset;
+  }
+  // Add new entries (for cold function parts)
+  uint64_t ExtraEntries = 0;
+  for (auto I = PCToFDE.upper_bound(LastPC), E = PCToFDE.end(); I != E; ++I) {
+    ++ExtraEntries;
+  }
+  if (ExtraEntries == 0)
+    return;
+  FrameHdrContents.resize(FrameHdrContents.size() + (ExtraEntries * 8));
+  // Update FDE count
+  DEBUG(dbgs() << "CFIReaderWriter: Updating .eh_frame_hdr FDE count from "
+               << FDECount << " to " << (FDECount + ExtraEntries) << "\n");
+  support::ulittle32_t::ref(FrameHdrContents.data() + FDECountOffset) =
+      FDECount + ExtraEntries;
+
+  for (auto I = PCToFDE.upper_bound(LastPC), E = PCToFDE.end(); I != E; ++I) {
+    // Write PC
+    DEBUG(dbgs() << format("CFIReaderWriter: Writing extra FDE entry for PC "
+                           "0x%x, FDE pointer 0x%x\n",
+                           I->first, I->second));
+    uint64_t InitialPC = I->first;
+    int64_t RealOffset = InitialPC - NewFrameHdrAddress;
+    assert(isInt<32>(RealOffset));
+    support::ulittle32_t::ref(FrameHdrContents.data() + Offset) = RealOffset;
+    Offset += 4;
+
+    // Write FDE pointer
+    uint64_t FDEPtr = I->second;
+    RealOffset = FDEPtr - NewFrameHdrAddress;
+    assert(isInt<32>(RealOffset));
+    support::ulittle32_t::ref(FrameHdrContents.data() + Offset) = RealOffset;
+    Offset += 4;
   }
 }
 

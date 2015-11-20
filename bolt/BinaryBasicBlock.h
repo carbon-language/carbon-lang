@@ -51,6 +51,10 @@ class BinaryBasicBlock {
   /// Number of times this basic block was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
+  /// In cases where the parent function has been split, IsCold == true means
+  /// this BB will be allocated outside its parent function.
+  bool IsCold{false};
+
   /// Vector of all instructions in the block.
   std::vector<MCInst> Instructions;
 
@@ -227,6 +231,10 @@ public:
   /// Return COUNT_NO_PROFILE if there's no profile info.
   uint64_t getExecutionCount() const {
     return ExecutionCount;
+  }
+
+  bool isCold() const {
+    return IsCold;
   }
 
   bool eraseInstruction(MCInst *Inst) {

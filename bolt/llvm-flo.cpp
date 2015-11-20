@@ -96,6 +96,11 @@ EliminateUnreachable("eliminate-unreachable",
                      cl::desc("eliminate unreachable code"),
                      cl::Optional);
 
+static cl::opt<bool>
+SplitFunctions("split-functions",
+               cl::desc("split functions into hot and cold distinct regions"),
+               cl::Optional);
+
 static cl::opt<std::string> ReorderBlocks(
     "reorder-blocks",
     cl::desc("redo basic block layout based on profiling data with a specific "
@@ -363,7 +368,180 @@ static uint64_t discoverFileOffset(ELFObjectFileBase *File, uint64_t MemAddr) {
   return 0ULL;
 }
 
-static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
+// Helper function to emit the contents of a function via a MCStreamer object.
+static void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
+                         BinaryContext &BC, bool EmitColdPart,
+                         bool HasExtraStorage) {
+  // Define a helper to decode and emit CFI instructions at a given point in a
+  // BB
+  auto emitCFIInstr = [&Streamer](MCCFIInstruction &CFIInstr) {
+    switch (CFIInstr.getOperation()) {
+    default:
+      llvm_unreachable("Unexpected instruction");
+    case MCCFIInstruction::OpDefCfaOffset:
+      Streamer.EmitCFIDefCfaOffset(CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpAdjustCfaOffset:
+      Streamer.EmitCFIAdjustCfaOffset(CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpDefCfa:
+      Streamer.EmitCFIDefCfa(CFIInstr.getRegister(), CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpDefCfaRegister:
+      Streamer.EmitCFIDefCfaRegister(CFIInstr.getRegister());
+      break;
+    case MCCFIInstruction::OpOffset:
+      Streamer.EmitCFIOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpRegister:
+      Streamer.EmitCFIRegister(CFIInstr.getRegister(),
+                                CFIInstr.getRegister2());
+      break;
+    case MCCFIInstruction::OpRelOffset:
+      Streamer.EmitCFIRelOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpUndefined:
+      Streamer.EmitCFIUndefined(CFIInstr.getRegister());
+      break;
+    case MCCFIInstruction::OpRememberState:
+      Streamer.EmitCFIRememberState();
+      break;
+    case MCCFIInstruction::OpRestoreState:
+      Streamer.EmitCFIRestoreState();
+      break;
+    case MCCFIInstruction::OpRestore:
+      Streamer.EmitCFIRestore(CFIInstr.getRegister());
+      break;
+    case MCCFIInstruction::OpSameValue:
+      Streamer.EmitCFISameValue(CFIInstr.getRegister());
+      break;
+    }
+  };
+
+  // No need for human readability?
+  // FIXME: what difference does it make in reality?
+  // Ctx.setUseNamesOnTempLabels(false);
+
+  // Emit function start
+
+  // Each fuction is emmitted into its own section.
+  MCSectionELF *FunctionSection =
+      EmitColdPart
+          ? BC.Ctx->getELFSection(
+                Function.getCodeSectionName().str().append(".cold"),
+                ELF::SHT_PROGBITS, ELF::SHF_EXECINSTR | ELF::SHF_ALLOC)
+          : BC.Ctx->getELFSection(Function.getCodeSectionName(),
+                                  ELF::SHT_PROGBITS,
+                                  ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+
+  MCSection *Section = FunctionSection;
+  Streamer.SwitchSection(Section);
+
+  Streamer.EmitCodeAlignment(Function.getAlignment());
+
+  if (!EmitColdPart) {
+    MCSymbol *FunctionSymbol = BC.Ctx->getOrCreateSymbol(Function.getName());
+    Streamer.EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
+    Streamer.EmitLabel(FunctionSymbol);
+  } else {
+    MCSymbol *FunctionSymbol =
+      BC.Ctx->getOrCreateSymbol(Twine(Function.getName()).concat(".cold"));
+    Streamer.EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
+    Streamer.EmitLabel(FunctionSymbol);
+  }
+
+  // Emit CFI start
+  if (Function.hasCFI() && HasExtraStorage) {
+    Streamer.EmitCFIStartProc(/*IsSimple=*/false);
+    if (Function.getPersonalityFunction() != nullptr) {
+      Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
+                                  Function.getPersonalityEncoding());
+    }
+    // Emit CFI instructions relative to the CIE
+    for (auto &CFIInstr : Function.cie()) {
+      // Ignore these CIE CFI insns because LLVM will already emit this.
+      switch (CFIInstr.getOperation()) {
+      default:
+        break;
+      case MCCFIInstruction::OpDefCfa:
+        if (CFIInstr.getRegister() == 7 && CFIInstr.getOffset() == 8)
+          continue;
+        break;
+      case MCCFIInstruction::OpOffset:
+        if (CFIInstr.getRegister() == 16 && CFIInstr.getOffset() == -8)
+          continue;
+        break;
+      }
+      emitCFIInstr(CFIInstr);
+    }
+  }
+
+  // Emit code.
+  for (auto BB : Function.layout()) {
+    if (EmitColdPart != BB->isCold())
+      continue;
+    if (BB->getAlignment() > 1)
+      Streamer.EmitCodeAlignment(BB->getAlignment());
+    Streamer.EmitLabel(BB->getLabel());
+    for (const auto &Instr : *BB) {
+      // Handle pseudo instructions.
+      if (BC.MIA->isEHLabel(Instr)) {
+        assert(Instr.getNumOperands() == 1 && Instr.getOperand(0).isExpr() &&
+               "bad EH_LABEL instruction");
+        auto Label = &(cast<MCSymbolRefExpr>(Instr.getOperand(0).getExpr())
+                           ->getSymbol());
+        Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
+        continue;
+      }
+      if (!BC.MIA->isCFI(Instr)) {
+        Streamer.EmitInstruction(Instr, *BC.STI);
+        continue;
+      }
+      if (HasExtraStorage)
+        emitCFIInstr(*Function.getCFIFor(Instr));
+    }
+  }
+
+  // Emit CFI end
+  if (Function.hasCFI() && HasExtraStorage)
+    Streamer.EmitCFIEndProc();
+
+  // TODO: is there any use in emiting end of function?
+  //       Perhaps once we have a support for C++ exceptions.
+  // auto FunctionEndLabel = Ctx.createTempSymbol("func_end");
+  // Streamer.EmitLabel(FunctionEndLabel);
+  // Streamer.emitELFSize(FunctionSymbol, MCExpr());
+}
+
+// Helper to locate EH_FRAME_HDR segment, specialized for 64-bit LE ELF
+static bool patchEhFrameHdrSegment(const ELFFile<ELF64LE> *Obj,
+                                   raw_pwrite_stream *OS, uint64_t Offset,
+                                   uint64_t Addr, uint64_t Size) {
+  for (const auto &Phdr : Obj->program_headers()) {
+    if (Phdr.p_type != ELF::PT_GNU_EH_FRAME)
+      continue;
+    uint64_t OffsetLoc = (uintptr_t)&Phdr.p_offset - (uintptr_t)Obj->base();
+    uint64_t VAddrLoc = (uintptr_t)&Phdr.p_vaddr - (uintptr_t)Obj->base();
+    uint64_t PAddrLoc = (uintptr_t)&Phdr.p_paddr - (uintptr_t)Obj->base();
+    uint64_t FileSzLoc = (uintptr_t)&Phdr.p_filesz - (uintptr_t)Obj->base();
+    uint64_t MemSzLoc = (uintptr_t)&Phdr.p_memsz - (uintptr_t)Obj->base();
+    char Buffer[8];
+    // Update Offset
+    support::ulittle64_t::ref(Buffer + 0) = Offset;
+    OS->pwrite(Buffer, 8, OffsetLoc);
+    support::ulittle64_t::ref(Buffer + 0) = Addr;
+    OS->pwrite(Buffer, 8, VAddrLoc);
+    OS->pwrite(Buffer, 8, PAddrLoc);
+    support::ulittle64_t::ref(Buffer + 0) = Size;
+    OS->pwrite(Buffer, 8, FileSzLoc);
+    OS->pwrite(Buffer, 8, MemSzLoc);
+    return true;
+  }
+  return false;
+}
+
+template <typename ELFT> static
+void OptimizeFile(ELFObjectFile<ELFT> *File, const DataReader &DR) {
 
   // FIXME: there should be some way to extract arch and triple information
   //        from the file.
@@ -387,8 +565,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     uint64_t Addr;
     uint64_t FileOffset;
     uint64_t Size;
+    uint64_t AddrEnd;
+    uint64_t BumpPtr;
   };
-  BlobTy ExtraStorage = {0ULL, 0ULL, 0ULL};
+  BlobTy ExtraStorage = {0ULL, 0ULL, 0ULL, 0ULL, 0ULL};
 
   // Populate array of binary functions and file symbols
   // from file symbol table.
@@ -407,12 +587,15 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     if (*Name == "__flo_storage") {
       ExtraStorage.Addr = Symbol.getValue();
+      ExtraStorage.BumpPtr = ExtraStorage.Addr;
       ExtraStorage.FileOffset = discoverFileOffset(File, ExtraStorage.Addr);
       assert(ExtraStorage.FileOffset != 0 && "Corrupt __flo_storage symbol");
+
+      FileSymRefs[ExtraStorage.Addr] = Symbol;
       continue;
     }
-    if (*Name == "__flo_storage_size") {
-      ExtraStorage.Size = Symbol.getValue();
+    if (*Name == "__flo_storage_end") {
+      ExtraStorage.AddrEnd = Symbol.getValue();
       continue;
     }
 
@@ -502,12 +685,14 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
                        SymbolSize, *BC)
     );
   }
+  ExtraStorage.Size = ExtraStorage.AddrEnd - ExtraStorage.Addr;
 
   ArrayRef<uint8_t> LSDAData;
   uint64_t LSDAAddress{0};
 
   // Process special sections.
   uint64_t FrameHdrAddress = 0ULL;
+  uint64_t FrameHdrAlign = 1;
   StringRef FrameHdrContents;
   for (const auto &Section : File->sections()) {
     StringRef SectionName;
@@ -527,6 +712,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (SectionName == ".eh_frame_hdr") {
       FrameHdrAddress = Section.getAddress();
       FrameHdrContents = SectionContents;
+      FrameHdrAlign = Section.getAlignment();
     }
   }
 
@@ -694,12 +880,16 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     }
 
     if (opts::ReorderBlocks != "disable") {
+      bool ShouldSplit = opts::SplitFunctions &&
+                         (Function.getFunctionScore() * 1000) > TotalScore;
       if (opts::ReorderBlocks == "branch-predictor") {
-        BFI.second.optimizeLayout(BinaryFunction::HP_BRANCH_PREDICTOR);
+        BFI.second.optimizeLayout(BinaryFunction::HP_BRANCH_PREDICTOR,
+                                  ShouldSplit);
       } else if (opts::ReorderBlocks == "cache") {
-        BFI.second.optimizeLayout(BinaryFunction::HP_CACHE_UTILIZATION);
+        BFI.second.optimizeLayout(BinaryFunction::HP_CACHE_UTILIZATION,
+                                  ShouldSplit);
       } else {
-        BFI.second.optimizeLayout(BinaryFunction::HP_NONE);
+        BFI.second.optimizeLayout(BinaryFunction::HP_NONE, ShouldSplit);
       }
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks");
@@ -755,52 +945,6 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
   Streamer->InitSections(false);
 
-  // Define a helper to decode and emit CFI instructions at a given point in a
-  // BB
-  auto emitCFIInstr = [&Streamer](MCCFIInstruction &CFIInstr) {
-    switch (CFIInstr.getOperation()) {
-    default:
-      llvm_unreachable("Unexpected instruction");
-    case MCCFIInstruction::OpDefCfaOffset:
-      Streamer->EmitCFIDefCfaOffset(CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpAdjustCfaOffset:
-      Streamer->EmitCFIAdjustCfaOffset(CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpDefCfa:
-      Streamer->EmitCFIDefCfa(CFIInstr.getRegister(), CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpDefCfaRegister:
-      Streamer->EmitCFIDefCfaRegister(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpOffset:
-      Streamer->EmitCFIOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpRegister:
-      Streamer->EmitCFIRegister(CFIInstr.getRegister(),
-                                CFIInstr.getRegister2());
-      break;
-    case MCCFIInstruction::OpRelOffset:
-      Streamer->EmitCFIRelOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpUndefined:
-      Streamer->EmitCFIUndefined(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpRememberState:
-      Streamer->EmitCFIRememberState();
-      break;
-    case MCCFIInstruction::OpRestoreState:
-      Streamer->EmitCFIRestoreState();
-      break;
-    case MCCFIInstruction::OpRestore:
-      Streamer->EmitCFIRestore(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpSameValue:
-      Streamer->EmitCFISameValue(CFIInstr.getRegister());
-      break;
-    }
-  };
-
   bool HasEHFrame = false;
   bool NoSpaceWarning = false;
   // Output functions one by one.
@@ -813,95 +957,24 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (!opts::shouldProcess(Function.getName()))
       continue;
 
-    DEBUG(dbgs() << "FLO: generating code for function \""
-                 << Function.getName() << "\"\n");
+    DEBUG(dbgs() << "FLO: generating code for function \"" << Function.getName()
+          << "\"\n");
 
-    // No need for human readability?
-    // FIXME: what difference does it make in reality?
-    //Ctx.setUseNamesOnTempLabels(false);
-
-    // Emit function start
-
-    // Each fuction is emmitted into its own section.
-    MCSectionELF *FunctionSection =
-      BC->Ctx->getELFSection(Function.getCodeSectionName(),
-                             ELF::SHT_PROGBITS,
-                             ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
-
-    MCSection *Section = FunctionSection;
-    Streamer->SwitchSection(Section);
-
-    Streamer->EmitCodeAlignment(Function.getAlignment());
-
-    MCSymbol *FunctionSymbol = BC->Ctx->getOrCreateSymbol(Function.getName());
-    Streamer->EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
-    Streamer->EmitLabel(FunctionSymbol);
-
-    // Emit CFI start
     if (Function.hasCFI()) {
-      if (ExtraStorage.Size != 0ULL) {
+      if (ExtraStorage.Size != 0)
         HasEHFrame = true;
-        Streamer->EmitCFIStartProc(/*IsSimple=*/false);
-        if (Function.getPersonalityFunction() != nullptr) {
-          Streamer->EmitCFIPersonality(Function.getPersonalityFunction(),
-                                       Function.getPersonalityEncoding());
-        }
-        // Emit CFI instructions relative to the CIE
-        for (auto &CFIInstr : Function.cie()) {
-          // Ignore these CIE CFI insns because LLVM will already emit this.
-          switch (CFIInstr.getOperation()) {
-          default:
-            break;
-          case MCCFIInstruction::OpDefCfa:
-            if (CFIInstr.getRegister() == 7 && CFIInstr.getOffset() == 8)
-              continue;
-            break;
-          case MCCFIInstruction::OpOffset:
-            if (CFIInstr.getRegister() == 16 && CFIInstr.getOffset() == -8)
-              continue;
-            break;
-          }
-          emitCFIInstr(CFIInstr);
-        }
-      } else {
+      else
         NoSpaceWarning = true;
-      }
     }
 
-    // Emit code.
-    for (auto BB : Function.layout()) {
-      if (BB->getAlignment() > 1)
-        Streamer->EmitCodeAlignment(BB->getAlignment());
-      Streamer->EmitLabel(BB->getLabel());
-      for (const auto &Instr : *BB) {
-        // Handle pseudo instructions.
-        if (BC->MIA->isEHLabel(Instr)) {
-          assert(Instr.getNumOperands() == 1 && Instr.getOperand(0).isExpr() &&
-                 "bad EH_LABEL instruction");
-          auto Label = &(cast<MCSymbolRefExpr>(
-                Instr.getOperand(0).getExpr())->getSymbol());
-          Streamer->EmitLabel(const_cast<MCSymbol *>(Label));
-          continue;
-        }
-        if (!BC->MIA->isCFI(Instr)) {
-          Streamer->EmitInstruction(Instr, *BC->STI);
-          continue;
-        }
-        if (ExtraStorage.Size == 0)
-          continue;
-        emitCFIInstr(*Function.getCFIFor(Instr));
-      }
-    }
+    emitFunction(*Streamer, Function, *BC.get(),
+                 /*EmitColdPart=*/false,
+                 /*HasExtraStorage=*/ExtraStorage.Size != 0);
 
-    // Emit CFI end
-    if (Function.hasCFI() && ExtraStorage.Size != 0)
-      Streamer->EmitCFIEndProc();
-
-    // TODO: is there any use in emiting end of function?
-    //       Perhaps once we have a support for C++ exceptions.
-    //auto FunctionEndLabel = Ctx.createTempSymbol("func_end");
-    //Streamer->EmitLabel(FunctionEndLabel);
-    //Streamer->emitELFSize(FunctionSymbol, MCExpr());
+    if (Function.isSplit())
+      emitFunction(*Streamer, Function, *BC.get(),
+                   /*EmitColdPart=*/true,
+                   /*HasExtraStorage=*/ExtraStorage.Size != 0);
   }
   if (NoSpaceWarning) {
     errs() << "FLO-WARNING: missing __flo_storage in this binary. No "
@@ -973,31 +1046,65 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       errs() << "FLO: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
-  }
-  // Map .eh_frame
-  StringRef NewEhFrameContents;
-  if (HasEHFrame) {
-    auto SAI = EFMM->SectionAddressInfo.find(".eh_frame");
+
+    if (!Function.isSplit())
+      continue;
+
+    SAI = EFMM->SectionAddressInfo.find(
+        Function.getCodeSectionName().str().append(".cold"));
     if (SAI != EFMM->SectionAddressInfo.end()) {
+      // Align at a 16-byte boundary
+      ExtraStorage.BumpPtr = (ExtraStorage.BumpPtr + 15) & ~(15ULL);
+
       DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
-                   << " to 0x" << Twine::utohexstr(ExtraStorage.Addr)
+                   << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
+                   << " with size " << Twine::utohexstr(SAI->second.second)
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
           reinterpret_cast<const void*>(SAI->second.first),
-          ExtraStorage.Addr);
+          ExtraStorage.BumpPtr);
+      Function.setColdImageAddress(SAI->second.first);
+      Function.setColdImageSize(SAI->second.second);
+      Function.setColdFileOffset(ExtraStorage.BumpPtr - ExtraStorage.Addr +
+                                 ExtraStorage.FileOffset);
+      ExtraStorage.BumpPtr += SAI->second.second;
+    } else {
+      errs() << "FLO: cannot remap function " << Function.getName() << "\n";
+      FailedAddresses.emplace_back(Function.getAddress());
+    }
+  }
+  // Map .eh_frame
+  StringRef NewEhFrameContents;
+  uint64_t NewEhFrameAddress = 0;
+  uint64_t NewEhFrameOffset = 0;
+  if (HasEHFrame) {
+    auto SAI = EFMM->SectionAddressInfo.find(".eh_frame");
+    if (SAI != EFMM->SectionAddressInfo.end()) {
+      // Align at an 8-byte boundary
+      ExtraStorage.BumpPtr = (ExtraStorage.BumpPtr + 7) & ~(7ULL);
+      DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
+                   << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
+                   << '\n');
+      NewEhFrameAddress = ExtraStorage.BumpPtr;
+      NewEhFrameOffset =
+          ExtraStorage.BumpPtr - ExtraStorage.Addr + ExtraStorage.FileOffset;
+      OLT.mapSectionAddress(ObjectsHandle,
+                            reinterpret_cast<const void *>(SAI->second.first),
+                            ExtraStorage.BumpPtr);
+      ExtraStorage.BumpPtr += SAI->second.second;
       NewEhFrameContents =
           StringRef(reinterpret_cast<const char *>(SAI->second.first),
                     SAI->second.second);
-      if (ExtraStorage.Size < SAI->second.second) {
-        errs() << format("FLO fatal error: new .eh_frame requires 0x%x bytes, "
-                         "but __flo_storage in this binary only has 0x%x extra "
-                         "bytes available.",
-                         SAI->second.second, ExtraStorage.Size);
-        exit(1);
-      }
     } else {
       errs() << "FLO: cannot remap .eh_frame\n";
     }
+  }
+  if (ExtraStorage.BumpPtr - ExtraStorage.Addr > ExtraStorage.Size) {
+    errs() << format(
+        "FLO fatal error: __flo_storage in this binary has not enough free "
+        "space (required %d bytes, available %d bytes).\n",
+        ExtraStorage.BumpPtr - ExtraStorage.Addr, ExtraStorage.Size);
+    exit(1);
   }
 
   OLT.emitAndFinalize(ObjectsHandle);
@@ -1007,6 +1114,12 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     static_cast<MCObjectStreamer*>(Streamer.get())->getAssembler().getWriter();
   Writer.setStream(RealOut->os());
 
+  // Print _flo_storage area stats for debug
+  DEBUG(dbgs() << format("INFO: __flo_storage address = 0x%x file offset = "
+                         "0x%x total size = 0x%x\n",
+                         ExtraStorage.Addr, ExtraStorage.FileOffset,
+                         ExtraStorage.Size));
+
   // Overwrite function in the output file.
   uint64_t CountOverwrittenFunctions = 0;
   uint64_t OverwrittenScore = 0;
@@ -1014,6 +1127,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     auto &Function = BFI.second;
 
     if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
+      continue;
+    if (Function.isSplit() && (Function.getColdImageAddress() == 0 ||
+                               Function.getColdImageSize() == 0))
       continue;
 
     if (Function.getImageSize() > Function.getMaxSize()) {
@@ -1041,23 +1157,57 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
                           &Writer);
     RealOut->os().seek(Pos);
 
-    ++CountOverwrittenFunctions;
+    if (!Function.isSplit()) {
+      ++CountOverwrittenFunctions;
+      if (opts::MaxFunctions &&
+          CountOverwrittenFunctions == opts::MaxFunctions) {
+        outs() << "FLO: maximum number of functions reached\n";
+        break;
+      }
+      continue;
+    }
 
+    // Write cold part
+    outs() << "FLO: rewriting function \"" << Function.getName()
+           << "\" (cold part)\n";
+    RealOut->os().pwrite(
+        reinterpret_cast<char *>(Function.getColdImageAddress()),
+        Function.getColdImageSize(), Function.getColdFileOffset());
+
+    ++CountOverwrittenFunctions;
     if (opts::MaxFunctions && CountOverwrittenFunctions == opts::MaxFunctions) {
       outs() << "FLO: maximum number of functions reached\n";
       break;
     }
   }
   if (NewEhFrameContents.size()) {
+    outs() << "FLO: writing a new .eh_frame_hdr\n";
+    if (FrameHdrAlign > 1)
+      ExtraStorage.BumpPtr =
+          (ExtraStorage.BumpPtr + FrameHdrAlign - 1) & ~(FrameHdrAlign - 1);
+    if (ExtraStorage.BumpPtr - ExtraStorage.Addr - ExtraStorage.Size <
+        FrameHdrContents.size()) {
+      errs() << "FLO fatal error: __flo_storage in this binary has not enough "
+                "free space\n";
+      exit(1);
+    }
     std::sort(FailedAddresses.begin(), FailedAddresses.end());
-    CFIRdWrt.rewriteHeaderFor(NewEhFrameContents, ExtraStorage.Addr,
-                              FailedAddresses);
-    outs() << "FLO: rewriting .eh_frame_hdr\n";
+    CFIRdWrt.rewriteHeaderFor(NewEhFrameContents, NewEhFrameAddress,
+                              ExtraStorage.BumpPtr, FailedAddresses);
+    uint64_t HdrFileOffset =
+        ExtraStorage.BumpPtr - ExtraStorage.Addr + ExtraStorage.FileOffset;
     RealOut->os().pwrite(FrameHdrCopy.data(), FrameHdrCopy.size(),
-                         FrameHdrContents.data() - File->getData().data());
+                         HdrFileOffset);
+    outs() << "FLO: patching EH_FRAME program segment to reflect new "
+              ".eh_frame_hdr\n";
+    auto Obj = File->getELFFile();
+    if (!patchEhFrameHdrSegment(Obj, &RealOut->os(), HdrFileOffset,
+                                ExtraStorage.BumpPtr, FrameHdrCopy.size())) {
+      outs() << "FAILED to patch program segment!\n";
+    }
     outs() << "FLO: writing a new .eh_frame\n";
     RealOut->os().pwrite(NewEhFrameContents.data(), NewEhFrameContents.size(),
-                         ExtraStorage.FileOffset);
+                         NewEhFrameOffset);
   }
 
   if (EntryPointFunction) {
@@ -1133,7 +1283,7 @@ int main(int argc, char **argv) {
     report_error(opts::InputFilename, EC);
   Binary &Binary = *BinaryOrErr.get().getBinary();
 
-  if (ELFObjectFileBase *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
+  if (auto *e = dyn_cast<ELF64LEObjectFile>(&Binary)) {
     OptimizeFile(e, *DR.get());
   } else {
     report_error(opts::InputFilename, object_error::invalid_file_type);

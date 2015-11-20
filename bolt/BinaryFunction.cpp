@@ -76,6 +76,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Section     : "   << SectionName
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  IsSimple    : "   << IsSimple
+     << "\n  IsSplit     : "   << IsSplit
      << "\n  BB Count    : "   << BasicBlocksLayout.size();
   if (FrameInstructions.size()) {
     OS << "\n  CFI Instrs  : "   << FrameInstructions.size();
@@ -171,7 +172,12 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     }
   }
 
-  for (auto BB : BasicBlocksLayout) {
+  for (uint32_t I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
+    auto BB = BasicBlocksLayout[I];
+    if (I != 0 &&
+        BB->IsCold != BasicBlocksLayout[I - 1]->IsCold)
+      OS << "-------   HOT-COLD SPLIT POINT   -------\n\n";
+
     OS << BB->getName() << " ("
        << BB->Instructions.size() << " instructions, align : "
        << BB->getAlignment() << ")\n";
@@ -745,15 +751,19 @@ void BinaryFunction::inferFallThroughCounts() {
 }
 
 uint64_t BinaryFunction::getFunctionScore() {
+  if (FunctionScore != -1)
+    return FunctionScore;
+
   uint64_t TotalScore = 0ULL;
   for (auto BB : layout()) {
     uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
       continue;
-    BBExecCount *= BB->Instructions.size();
+    BBExecCount *= (BB->Instructions.size() - BB->getNumPseudos());
     TotalScore += BBExecCount;
   }
-  return TotalScore;
+  FunctionScore = TotalScore;
+  return FunctionScore;
 }
 
 void BinaryFunction::annotateCFIState() {
@@ -831,8 +841,15 @@ bool BinaryFunction::fixCFIState() {
 
   uint32_t State = 0;
   BinaryBasicBlock *EntryBB = *BasicBlocksLayout.begin();
-  for (BinaryBasicBlock *BB : BasicBlocksLayout) {
+  for (uint32_t I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
+    BinaryBasicBlock *BB = BasicBlocksLayout[I];
     uint32_t BBIndex = BB - &*BasicBlocks.begin();
+
+    // Hot-cold border: check if this is the first BB to be allocated in a cold
+    // region (a different function). If yes, we need to reset the CFI state.
+    if (I != 0 &&
+        BB->IsCold != BasicBlocksLayout[I - 1]->IsCold)
+      State = 0;
 
     // Check if state is what this BB expect it to be at its entry point
     if (BBCFIState[BBIndex] != State) {
@@ -904,7 +921,7 @@ bool BinaryFunction::fixCFIState() {
   return true;
 }
 
-void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
+void BinaryFunction::optimizeLayout(HeuristicPriority Priority, bool Split) {
   // Bail if no profiling information or if empty
   if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE ||
       BasicBlocksLayout.empty()) {
@@ -913,7 +930,7 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
 
   // Work on optimal solution if problem is small enough
   if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD)
-    return solveOptimalLayout();
+    return solveOptimalLayout(Split);
 
   DEBUG(dbgs() << "running block layout heuristics on " << getName() << "\n");
 
@@ -1131,10 +1148,12 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
                              Cluster.end());
   }
 
+  if (Split)
+    splitFunction();
   fixBranches();
 }
 
-void BinaryFunction::solveOptimalLayout() {
+void BinaryFunction::solveOptimalLayout(bool Split) {
   std::vector<std::vector<uint64_t>> Weight;
   std::map<BinaryBasicBlock *, int> BBToIndex;
   std::vector<BinaryBasicBlock *> IndexToBB;
@@ -1234,6 +1253,8 @@ void BinaryFunction::solveOptimalLayout() {
       BasicBlocksLayout.push_back(BB);
   }
 
+  if (Split)
+    splitFunction();
   fixBranches();
 }
 
@@ -1264,8 +1285,12 @@ void BinaryFunction::fixBranches() {
 
     // Check if the original fall-through for this block has been moved
     const MCSymbol *FT = nullptr;
-    if (I + 1 != BasicBlocksLayout.size())
+    bool HotColdBorder = false;
+    if (I + 1 != BasicBlocksLayout.size()) {
       FT = BasicBlocksLayout[I + 1]->getLabel();
+      if (BB->IsCold != BasicBlocksLayout[I + 1]->IsCold)
+        HotColdBorder = true;
+    }
     const BinaryBasicBlock *OldFTBB = getOriginalLayoutSuccessor(BB);
     const MCSymbol *OldFT = nullptr;
     if (OldFTBB != nullptr)
@@ -1284,9 +1309,10 @@ void BinaryFunction::fixBranches() {
         if (MIA->isReturn(*LastInstIter))
           continue;
       }
-      // Case 1b: Layout has changed and the fallthrough is not the same. Need
-      // to add a new unconditional branch to jump to the old fallthrough.
-      if (FT != OldFT && OldFT != nullptr) {
+      // Case 1b: Layout has changed and the fallthrough is not the same (or the
+      // fallthrough got moved to a cold region). Need to add a new
+      // unconditional branch to jump to the old fallthrough.
+      if ((FT != OldFT || HotColdBorder) && OldFT != nullptr) {
         MCInst NewInst;
         if (!MIA->createUncondBranch(NewInst, OldFT, BC.Ctx.get()))
           llvm_unreachable("Target does not support creating new branches");
@@ -1299,7 +1325,7 @@ void BinaryFunction::fixBranches() {
     // Case 2: There is a single jump, unconditional, in this basic block
     if (CondBranch == nullptr) {
       // Case 2a: It jumps to the new fall-through, so we can delete it
-      if (TBB == FT) {
+      if (TBB == FT && !HotColdBorder) {
         BB->eraseInstruction(UncondBranch);
       }
       // Case 2b: If 2a doesn't happen, there is nothing we can do
@@ -1310,7 +1336,7 @@ void BinaryFunction::fixBranches() {
     if (UncondBranch == nullptr) {
       // Case 3a: If the taken branch goes to the next block in the new layout,
       // invert this conditional branch logic so we can make this a fallthrough.
-      if (TBB == FT) {
+      if (TBB == FT && !HotColdBorder) {
         assert(OldFT != nullptr && "malformed CFG");
         if (!MIA->reverseBranchCondition(*CondBranch, OldFT, BC.Ctx.get()))
           llvm_unreachable("Target does not support reversing branches");
@@ -1318,7 +1344,7 @@ void BinaryFunction::fixBranches() {
       }
       // Case 3b: Need to add a new unconditional branch because layout
       // has changed
-      if (FT != OldFT && OldFT != nullptr) {
+      if ((FT != OldFT || HotColdBorder) && OldFT != nullptr) {
         MCInst NewInst;
         if (!MIA->createUncondBranch(NewInst, OldFT, BC.Ctx.get()))
           llvm_unreachable("Target does not support creating new branches");
@@ -1333,20 +1359,45 @@ void BinaryFunction::fixBranches() {
     // by another unconditional.
     // Case 4a: If the unconditional jump target is the new fall through,
     // delete it.
-    if (FBB == FT) {
+    if (FBB == FT && !HotColdBorder) {
       BB->eraseInstruction(UncondBranch);
       continue;
     }
     // Case 4b: If the taken branch goes to the next block in the new layout,
     // invert this conditional branch logic so we can make this a fallthrough.
     // Now we don't need the unconditional jump anymore, so we also delete it.
-    if (TBB == FT) {
+    if (TBB == FT && !HotColdBorder) {
       if (!MIA->reverseBranchCondition(*CondBranch, FBB, BC.Ctx.get()))
         llvm_unreachable("Target does not support reversing branches");
       BB->eraseInstruction(UncondBranch);
       continue;
     }
     // Case 4c: Nothing interesting happening.
+  }
+}
+
+void BinaryFunction::splitFunction() {
+  bool AllCold = true;
+  for (BinaryBasicBlock *BB : BasicBlocksLayout) {
+    auto ExecCount = BB->getExecutionCount();
+    if (ExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
+      return;
+    if (ExecCount != 0)
+      AllCold = false;
+  }
+
+  if (AllCold)
+    return;
+
+  assert(BasicBlocksLayout.size() > 0);
+  // Separate hot from cold
+  for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
+       I != E; ++I) {
+    BinaryBasicBlock *BB = *I;
+    if (BB->getExecutionCount() != 0)
+      break;
+    BB->IsCold = true;
+    IsSplit = true;
   }
 }
 
