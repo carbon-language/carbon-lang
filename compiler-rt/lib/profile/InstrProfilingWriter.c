@@ -54,7 +54,7 @@ __attribute__((visibility("hidden"))) int llvmWriteProfDataImpl(
   Header.NamesSize = NamesSize;
   Header.CountersDelta = (uintptr_t)CountersBegin;
   Header.NamesDelta = (uintptr_t)NamesBegin;
-  Header.ValueKindLast = VK_LAST;
+  Header.ValueKindLast = IPVK_Last;
   Header.ValueDataSize = ValueDataSize;
   Header.ValueDataDelta = (uintptr_t)ValueDataBegin;
 

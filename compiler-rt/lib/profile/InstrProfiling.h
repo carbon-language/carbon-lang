@@ -35,31 +35,27 @@ typedef uint32_t uintptr_t;
 
 #endif /* defined(__FreeBSD__) && defined(__i386__) */
 
-typedef enum ValueKind {
-  VK_IndirectCallTarget = 0,
-  VK_FIRST = VK_IndirectCallTarget,
-  VK_LAST = VK_IndirectCallTarget
-} __llvm_profile_value_kind;
+enum ValueKind {
+  IPVK_IndirectCallTarget = 0,
+  IPVK_First = IPVK_IndirectCallTarget,
+  IPVK_Last = IPVK_IndirectCallTarget
+};
 
 typedef struct __llvm_profile_value_data {
   uint64_t TargetValue;
   uint64_t NumTaken;
 } __llvm_profile_value_data;
 
-typedef struct __llvm_profile_value_node {
-  __llvm_profile_value_data VData;
-  struct __llvm_profile_value_node *Next;
-} __llvm_profile_value_node;
-
+typedef void *IntPtrT;
 typedef struct LLVM_ALIGNAS(8) __llvm_profile_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
   const uint64_t FuncHash;
-  const char *const NamePtr;
-  uint64_t *const CounterPtr;
-  const uint8_t *FunctionPointer;
-  __llvm_profile_value_node **ValueCounters;
-  const uint16_t NumValueSites[VK_LAST + 1];
+  const IntPtrT NamePtr;
+  const IntPtrT CounterPtr;
+  const IntPtrT FunctionPointer;
+  IntPtrT Values;
+  const uint16_t NumValueSites[IPVK_Last + 1];
 } __llvm_profile_data;
 
 typedef struct __llvm_profile_header {
@@ -113,14 +109,14 @@ void __llvm_profile_reset_counters(void);
  * Records the target value for the CounterIndex if not seen before. Otherwise,
  * increments the counter associated w/ the target value.
  */
-void __llvm_profile_instrument_target(uint64_t TargetValue,
-  void *Data_, uint32_t CounterIndex);
+void __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
+                                      uint32_t CounterIndex);
 
 /*!
  * \brief Prepares the value profiling data for output.
  *
  * Prepares a single __llvm_profile_value_data array out of the many
- * __llvm_profile_value_node trees (one per instrumented function).
+ * ValueProfNode trees (one per instrumented function).
  */
 uint64_t __llvm_profile_gather_value_data(uint8_t **DataArray);
 

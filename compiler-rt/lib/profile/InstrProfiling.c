@@ -12,6 +12,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct ValueProfNode {
+  __llvm_profile_value_data VData;
+  struct ValueProfNode *Next;
+} ValueProfNode;
+
 __attribute__((visibility("hidden"))) uint64_t __llvm_profile_get_magic(void) {
   /* Magic number to detect file format and endianness.
    *
@@ -54,14 +59,16 @@ __attribute__((visibility("hidden"))) void __llvm_profile_reset_counters(void) {
   for (DI = DataBegin; DI != DataEnd; ++DI) {
     uint64_t CurrentVSiteCount = 0;
     uint32_t VKI, i;
-    if (!DI->ValueCounters)
+    if (!DI->Values)
       continue;
 
-    for (VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+    ValueProfNode **ValueCounters = (ValueProfNode **)DI->Values;
+
+    for (VKI = IPVK_First; VKI <= IPVK_Last; ++VKI)
       CurrentVSiteCount += DI->NumValueSites[VKI];
 
     for (i = 0; i < CurrentVSiteCount; ++i) {
-      __llvm_profile_value_node *CurrentVNode = DI->ValueCounters[i];
+      ValueProfNode *CurrentVNode = ValueCounters[i];
 
       while (CurrentVNode) {
         CurrentVNode->VData.NumTaken = 0;
@@ -91,14 +98,14 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
 static int allocateValueProfileCounters(__llvm_profile_data *Data) {
   uint64_t NumVSites = 0;
   uint32_t VKI;
-  for (VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+  for (VKI = IPVK_First; VKI <= IPVK_Last; ++VKI)
     NumVSites += Data->NumValueSites[VKI];
 
-  __llvm_profile_value_node **Mem = (__llvm_profile_value_node **)calloc(
-      NumVSites, sizeof(__llvm_profile_value_node *));
+  ValueProfNode **Mem =
+      (ValueProfNode **)calloc(NumVSites, sizeof(ValueProfNode *));
   if (!Mem)
     return 0;
-  if (!__sync_bool_compare_and_swap(&Data->ValueCounters, 0, Mem)) {
+  if (!__sync_bool_compare_and_swap(&Data->Values, 0, Mem)) {
     free(Mem);
     return 0;
   }
@@ -113,20 +120,21 @@ static int allocateValueProfileCounters(__llvm_profile_data *Data) {
 }
 
 __attribute__((visibility("hidden"))) void
-__llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
+__llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
                                  uint32_t CounterIndex) {
 
-  __llvm_profile_data *Data = (__llvm_profile_data *)Data_;
-  if (!Data)
+  __llvm_profile_data *VData = (__llvm_profile_data *)Data;
+  if (!VData)
     return;
 
-  if (!Data->ValueCounters) {
-    if (!allocateValueProfileCounters(Data))
+  if (!VData->Values) {
+    if (!allocateValueProfileCounters(VData))
       return;
   }
 
-  __llvm_profile_value_node *PrevVNode = NULL;
-  __llvm_profile_value_node *CurrentVNode = Data->ValueCounters[CounterIndex];
+  ValueProfNode **ValueCounters = (ValueProfNode **)VData->Values;
+  ValueProfNode *PrevVNode = NULL;
+  ValueProfNode *CurrentVNode = ValueCounters[CounterIndex];
 
   uint8_t VDataCount = 0;
   while (CurrentVNode) {
@@ -142,8 +150,7 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
   if (VDataCount >= UCHAR_MAX)
     return;
 
-  CurrentVNode =
-      (__llvm_profile_value_node *)calloc(1, sizeof(__llvm_profile_value_node));
+  CurrentVNode = (ValueProfNode *)calloc(1, sizeof(ValueProfNode));
   if (!CurrentVNode)
     return;
 
@@ -151,9 +158,9 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
   CurrentVNode->VData.NumTaken++;
 
   uint32_t Success = 0;
-  if (!Data->ValueCounters[CounterIndex])
-    Success = __sync_bool_compare_and_swap(&(Data->ValueCounters[CounterIndex]),
-                                           0, CurrentVNode);
+  if (!ValueCounters[CounterIndex])
+    Success = __sync_bool_compare_and_swap(&ValueCounters[CounterIndex], 0,
+                                           CurrentVNode);
   else if (PrevVNode && !PrevVNode->Next)
     Success = __sync_bool_compare_and_swap(&(PrevVNode->Next), 0, CurrentVNode);
 
@@ -161,8 +168,7 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
     free(CurrentVNode);
     return;
   }
-  __sync_fetch_and_add(&TotalValueDataSize,
-                       Success * sizeof(__llvm_profile_value_data));
+  __sync_fetch_and_add(&TotalValueDataSize, Success * sizeof(ValueProfNode));
 }
 #endif
 
@@ -187,10 +193,12 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
     uint64_t NumVSites = 0;
     uint32_t VKI, i;
 
-    if (!I->ValueCounters)
+    if (!I->Values)
       continue;
 
-    for (VKI = VK_FIRST; VKI <= VK_LAST; ++VKI)
+    ValueProfNode **ValueCounters = (ValueProfNode **)I->Values;
+
+    for (VKI = IPVK_First; VKI <= IPVK_Last; ++VKI)
       NumVSites += I->NumValueSites[VKI];
     uint8_t Padding = __llvm_profile_get_num_padding_bytes(NumVSites);
 
@@ -200,7 +208,7 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
 
     for (i = 0; i < NumVSites; ++i) {
 
-      __llvm_profile_value_node *VNode = I->ValueCounters[i];
+      ValueProfNode *VNode = ValueCounters[i];
 
       uint8_t VDataCount = 0;
       while (VNode && ((uint8_t *)(VDataPtr + 1) <= VDataEnd)) {
@@ -213,7 +221,7 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
       *PerSiteCountPtr = VDataCount;
       ++PerSiteCountPtr;
     }
-    I->ValueCounters = (void *)PerSiteCountsHead;
+    I->Values = (void *)PerSiteCountsHead;
     PerSiteCountsHead = (uint8_t *)VDataPtr;
   }
   return PerSiteCountsHead - *VDataArray;
