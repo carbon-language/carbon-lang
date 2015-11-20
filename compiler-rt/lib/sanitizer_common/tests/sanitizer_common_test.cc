@@ -208,6 +208,30 @@ TEST(SanitizerCommon, StripPathPrefix) {
   EXPECT_STREQ("file.h", StripPathPrefix("/usr/lib/./file.h", "/usr/lib/"));
 }
 
+TEST(SanitizerCommon, RemoveANSIEscapeSequencesFromString) {
+  RemoveANSIEscapeSequencesFromString(nullptr);
+  const char *buffs[22] = {
+    "Default",                                "Default",
+    "\033[95mLight magenta",                  "Light magenta",
+    "\033[30mBlack\033[32mGreen\033[90mGray", "BlackGreenGray",
+    "\033[106mLight cyan \033[107mWhite ",    "Light cyan White ",
+    "\033[31mHello\033[0m World",             "Hello World",
+    "\033[38;5;82mHello \033[38;5;198mWorld", "Hello World",
+    "123[653456789012",                       "123[653456789012",
+    "Normal \033[5mBlink \033[25mNormal",     "Normal Blink Normal",
+    "\033[106m\033[107m",                     "",
+    "",                                       "",
+    " ",                                      " ",
+  };
+
+  for (size_t i = 0; i < ARRAY_SIZE(buffs); i+=2) {
+    char *buffer_copy = internal_strdup(buffs[i]);
+    RemoveANSIEscapeSequencesFromString(buffer_copy);
+    EXPECT_STREQ(buffer_copy, buffs[i+1]);
+    InternalFree(buffer_copy);
+  }
+}
+
 TEST(SanitizerCommon, InternalScopedString) {
   InternalScopedString str(10);
   EXPECT_EQ(0U, str.length());

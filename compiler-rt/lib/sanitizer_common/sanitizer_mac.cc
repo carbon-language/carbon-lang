@@ -36,6 +36,14 @@
 extern char **environ;
 #endif
 
+#if defined(__has_include) && __has_include(<os/trace.h>)
+#define SANITIZER_OS_TRACE 1
+#include <os/trace.h>
+#else
+#define SANITIZER_OS_TRACE 0
+#endif
+
+#include <asl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <libkern/OSAtomic.h>
@@ -405,6 +413,47 @@ void *internal_start_thread(void(*func)(void *arg), void *arg) {
 }
 
 void internal_join_thread(void *th) { pthread_join((pthread_t)th, 0); }
+
+static BlockingMutex syslog_lock(LINKER_INITIALIZED);
+
+void WriteOneLineToSyslog(const char *s) {
+  syslog_lock.CheckLocked();
+  asl_log(nullptr, nullptr, ASL_LEVEL_ERR, "%s", s);
+}
+
+void LogFullErrorReport(const char *buffer) {
+  // Log with os_trace. This will make it into the crash log.
+#if SANITIZER_OS_TRACE
+  if (GetMacosVersion() >= MACOS_VERSION_YOSEMITE) {
+    // os_trace requires the message (format parameter) to be a string literal.
+    if (internal_strncmp(SanitizerToolName, "AddressSanitizer",
+                         sizeof("AddressSanitizer") - 1) == 0)
+      os_trace("Address Sanitizer reported a failure.");
+    else if (internal_strncmp(SanitizerToolName, "UndefinedBehaviorSanitizer",
+                              sizeof("UndefinedBehaviorSanitizer") - 1) == 0)
+      os_trace("Undefined Behavior Sanitizer reported a failure.");
+    else if (internal_strncmp(SanitizerToolName, "ThreadSanitizer",
+                              sizeof("ThreadSanitizer") - 1) == 0)
+      os_trace("Thread Sanitizer reported a failure.");
+    else
+      os_trace("Sanitizer tool reported a failure.");
+
+    if (common_flags()->log_to_syslog)
+      os_trace("Consult syslog for more information.");
+  }
+#endif
+
+  // Log to syslog.
+  // The logging on OS X may call pthread_create so we need the threading
+  // environment to be fully initialized. Also, this should never be called when
+  // holding the thread registry lock since that may result in a deadlock. If
+  // the reporting thread holds the thread registry mutex, and asl_log waits
+  // for GCD to dispatch a new thread, the process will deadlock, because the
+  // pthread_create wrapper needs to acquire the lock as well.
+  BlockingMutexLock l(&syslog_lock);
+  if (common_flags()->log_to_syslog)
+    WriteToSyslog(buffer);
+}
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
