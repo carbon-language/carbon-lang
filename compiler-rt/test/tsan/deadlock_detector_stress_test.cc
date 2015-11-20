@@ -56,6 +56,7 @@ class PthreadRecursiveMutex : public PthreadMutex {
   static bool supports_recursive_lock() { return true; }
 };
 
+#ifndef __APPLE__
 class PthreadSpinLock {
  public:
   PthreadSpinLock() { assert(0 == pthread_spin_init(&mu_, 0)); }
@@ -76,6 +77,9 @@ class PthreadSpinLock {
   pthread_spinlock_t mu_;
   char padding_[64 - sizeof(pthread_spinlock_t)];
 };
+#else
+class PthreadSpinLock : public PthreadMutex { };
+#endif
 
 class PthreadRWLock {
  public:
@@ -95,7 +99,7 @@ class PthreadRWLock {
 
  private:
   pthread_rwlock_t mu_;
-  char padding_[64 - sizeof(pthread_rwlock_t)];
+  char padding_[256 - sizeof(pthread_rwlock_t)];
 };
 
 class LockTest {
