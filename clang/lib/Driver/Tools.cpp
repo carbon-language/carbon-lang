@@ -8500,7 +8500,8 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   // handled somewhere else.
   Args.ClaimAllArgs(options::OPT_w);
 
-  if (llvm::sys::path::filename(ToolChain.Linker) == "lld") {
+  const char *Exec = Args.MakeArgString(ToolChain.GetLinkerPath());
+  if (llvm::sys::path::filename(Exec) == "lld") {
     CmdArgs.push_back("-flavor");
     CmdArgs.push_back("old-gnu");
     CmdArgs.push_back("-target");
@@ -8686,8 +8687,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   } else if (Args.hasArg(options::OPT_rtlib_EQ))
     AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
 
-  C.addCommand(llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(),
-                                          CmdArgs, Inputs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 // NaCl ARM assembly (inline or standalone) can be written with a set of macros
@@ -8858,8 +8858,8 @@ void nacltools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  C.addCommand(llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(),
-                                          CmdArgs, Inputs));
+  const char *Exec = Args.MakeArgString(ToolChain.GetLinkerPath());
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void minix::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
