@@ -439,6 +439,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   if (Fn.hasFnAttribute(Attribute::OptimizeNone))
     NewOptLevel = CodeGenOpt::None;
   OptLevelChanger OLC(*this, NewOptLevel);
+  errs() << "OptLevel is -O" << OptLevel << "\n";
 
   TII = MF->getSubtarget().getInstrInfo();
   TLI = MF->getSubtarget().getTargetLowering();

@@ -1708,14 +1708,25 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                 MCOperand::createExpr(GotDispRelocExpr), IDLoc, Instructions);
       }
     } else {
-      // If it's an external/weak symbol, we expand to:
-      //  lw/ld    $25, 0($gp)
-      //    R_(MICRO)MIPS_CALL16  label
-      //  jalr  $25
-      const MCExpr *Call16RelocExpr = evaluateRelocExpr(JalExpr, "call16");
+      if (isABI_O32()) {
+        // If it's an external/weak symbol, we expand to:
+        //  lw/ld    $25, 0($gp)
+        //    R_(MICRO)MIPS_CALL16  label
+        //  jalr  $25
+        const MCExpr *Call16RelocExpr = evaluateRelocExpr(JalExpr, "call16");
 
-      emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9, Mips::GP,
-              MCOperand::createExpr(Call16RelocExpr), IDLoc, Instructions);
+        emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9, Mips::GP,
+                MCOperand::createExpr(Call16RelocExpr), IDLoc, Instructions);
+      } else if (isABI_N32() || isABI_N64()) {
+        // If it's an external/weak symbol, we expand to:
+        //  lw/ld    $25, 0($gp)
+        //    R_(MICRO)MIPS_GOT_DISP  label
+        //  jalr  $25
+        const MCExpr *GotDispRelocExpr = evaluateRelocExpr(JalExpr, "got_disp");
+
+        emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9, Mips::GP,
+                MCOperand::createExpr(GotDispRelocExpr), IDLoc, Instructions);
+      }
     }
 
     MCInst JalrInst;
