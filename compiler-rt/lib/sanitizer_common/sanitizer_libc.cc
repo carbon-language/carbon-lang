@@ -175,6 +175,19 @@ uptr internal_strlen(const char *s) {
   return i;
 }
 
+uptr internal_strlcat(char *dst, const char *src, uptr maxlen) {
+  const uptr srclen = internal_strlen(src);
+  const uptr dstlen = internal_strnlen(dst, maxlen);
+  if (dstlen == maxlen) return maxlen + srclen;
+  if (srclen < maxlen - dstlen) {
+    internal_memmove(dst + dstlen, src, srclen + 1);
+  } else {
+    internal_memmove(dst + dstlen, src, maxlen - dstlen - 1);
+    dst[maxlen - 1] = '\0';
+  }
+  return dstlen + srclen;
+}
+
 char *internal_strncat(char *dst, const char *src, uptr n) {
   uptr len = internal_strlen(dst);
   uptr i;
@@ -182,6 +195,17 @@ char *internal_strncat(char *dst, const char *src, uptr n) {
     dst[len + i] = src[i];
   dst[len + i] = 0;
   return dst;
+}
+
+uptr internal_strlcpy(char *dst, const char *src, uptr maxlen) {
+  const uptr srclen = internal_strlen(src);
+  if (srclen < maxlen) {
+    internal_memmove(dst, src, srclen + 1);
+  } else if (maxlen != 0) {
+    internal_memmove(dst, src, maxlen - 1);
+    dst[maxlen - 1] = '\0';
+  }
+  return srclen;
 }
 
 char *internal_strncpy(char *dst, const char *src, uptr n) {
