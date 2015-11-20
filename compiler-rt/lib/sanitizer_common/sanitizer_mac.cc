@@ -52,6 +52,7 @@ extern char **environ;
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <util.h>
 
 namespace __sanitizer {
 
@@ -147,9 +148,30 @@ uptr internal_sigprocmask(int how, __sanitizer_sigset_t *set,
   return sigprocmask(how, set, oldset);
 }
 
+// Doesn't call pthread_atfork() handlers.
+extern "C" pid_t __fork(void);
+
 int internal_fork() {
-  // TODO(glider): this may call user's pthread_atfork() handlers which is bad.
-  return fork();
+  return __fork();
+}
+
+int internal_forkpty(int *amaster) {
+  int master, slave;
+  if (openpty(&master, &slave, nullptr, nullptr, nullptr) == -1) return -1;
+  int pid = __fork();
+  if (pid == -1) {
+    close(master);
+    close(slave);
+    return -1;
+  }
+  if (pid == 0) {
+    close(master);
+    CHECK_EQ(login_tty(slave), 0);
+  } else {
+    *amaster = master;
+    close(slave);
+  }
+  return pid;
 }
 
 uptr internal_rename(const char *oldpath, const char *newpath) {

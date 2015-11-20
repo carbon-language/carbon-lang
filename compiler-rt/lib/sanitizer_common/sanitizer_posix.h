@@ -54,6 +54,7 @@ uptr internal_ptrace(int request, int pid, void *addr, void *data);
 uptr internal_waitpid(int pid, int *status, int options);
 
 int internal_fork();
+int internal_forkpty(int *amaster);
 
 // These functions call appropriate pthread_ functions directly, bypassing
 // the interceptor. They are weak and may not be present in some tools.
