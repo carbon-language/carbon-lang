@@ -545,6 +545,11 @@ TEST_F(FormatTestJS, ReturnStatements) {
                "}");
 }
 
+TEST_F(FormatTestJS, ForLoops) {
+  verifyFormat("for (var i in [2, 3]) {\n"
+               "}");
+}
+
 TEST_F(FormatTestJS, AutomaticSemicolonInsertion) {
   // The following statements must not wrap, as otherwise the program meaning
   // would change due to automatic semicolon insertion.

@@ -1955,7 +1955,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
         Left.isOneOf(Keywords.kw_returns, Keywords.kw_option))
       return true;
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
-    if (Left.isOneOf(Keywords.kw_let, Keywords.kw_var, TT_JsFatArrow))
+    if (Left.isOneOf(Keywords.kw_let, Keywords.kw_var, TT_JsFatArrow,
+                     Keywords.kw_in))
       return true;
     if (Right.isOneOf(TT_JsTypeColon, TT_JsTypeOptionalQuestion))
       return false;
