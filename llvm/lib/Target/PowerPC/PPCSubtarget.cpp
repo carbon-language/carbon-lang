@@ -210,5 +210,33 @@ bool PPCSubtarget::enableSubRegLiveness() const {
   return UseSubRegLiveness;
 }
 
+unsigned char PPCSubtarget::classifyGlobalReference(
+    const GlobalValue *GV) const {
+  // Note that currently we don't generate non-pic references.
+  // If a caller wants that, this will have to be updated.
+
+  // Large code model always uses the TOC even for local symbols.
+  if (TM.getCodeModel() == CodeModel::Large)
+    return PPCII::MO_PIC_FLAG | PPCII::MO_NLP_FLAG;
+
+  unsigned char flags = PPCII::MO_PIC_FLAG;
+
+  // Only if the relocation mode is PIC do we have to worry about
+  // interposition. In all other cases we can use a slightly looser standard to
+  // decide how to access the symbol.
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    // If it's local, or it's non-default, it can't be interposed.
+    if (!GV->hasLocalLinkage() &&
+        GV->hasDefaultVisibility()) {
+      flags |= PPCII::MO_NLP_FLAG;
+    }
+    return flags;
+  }
+
+  if (GV->isStrongDefinitionForLinker())
+    return flags;
+  return flags | PPCII::MO_NLP_FLAG;
+}
+
 bool PPCSubtarget::isELFv2ABI() const { return TM.isELFv2ABI(); }
 bool PPCSubtarget::isPPC64() const { return TM.isPPC64(); }

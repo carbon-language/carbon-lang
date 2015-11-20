@@ -285,6 +285,10 @@ public:
   bool useAA() const override;
 
   bool enableSubRegLiveness() const override;
+
+  /// classifyGlobalReference - Classify a global variable reference for the
+  /// current subtarget accourding to how we should reference it.
+  unsigned char classifyGlobalReference(const GlobalValue *GV) const;
 };
 } // End llvm namespace
 
