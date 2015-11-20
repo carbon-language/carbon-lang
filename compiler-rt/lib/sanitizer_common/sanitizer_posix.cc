@@ -112,14 +112,14 @@ uptr GetMaxVirtualAddress() {
 #endif  // SANITIZER_WORDSIZE
 }
 
-void *MmapOrDie(uptr size, const char *mem_type) {
+void *MmapOrDie(uptr size, const char *mem_type, bool raw_report) {
   size = RoundUpTo(size, GetPageSizeCached());
   uptr res = internal_mmap(nullptr, size,
                            PROT_READ | PROT_WRITE,
                            MAP_PRIVATE | MAP_ANON, -1, 0);
   int reserrno;
   if (internal_iserror(res, &reserrno))
-    ReportMmapFailureAndDie(size, mem_type, "allocate", reserrno);
+    ReportMmapFailureAndDie(size, mem_type, "allocate", reserrno, raw_report);
   IncreaseTotalMmap(size);
   return (void *)res;
 }

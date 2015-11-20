@@ -49,6 +49,8 @@ static const uptr kMaxNumberOfModules = 1 << 14;
 
 const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
 
+static const uptr kErrorMessageBufferSize = 1 << 16;
+
 // Denotes fake PC values that come from JIT/JAVA/etc.
 // For such PC values __tsan_symbolize_external() will be called.
 const u64 kExternalPCBit = 1ULL << 60;
@@ -76,7 +78,10 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size);
 
 // Memory management
-void *MmapOrDie(uptr size, const char *mem_type);
+void *MmapOrDie(uptr size, const char *mem_type, bool raw_report = false);
+INLINE void *MmapOrDieQuietly(uptr size, const char *mem_type) {
+  return MmapOrDie(size, mem_type, /*raw_report*/ true);
+}
 void UnmapOrDie(void *addr, uptr size);
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size,
                          const char *name = nullptr);
@@ -310,7 +315,8 @@ void NORETURN Die();
 void NORETURN
 CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
 void NORETURN ReportMmapFailureAndDie(uptr size, const char *mem_type,
-                                      const char *mmap_type, error_t err);
+                                      const char *mmap_type, error_t err,
+                                      bool raw_report = false);
 
 // Set the name of the current thread to 'name', return true on succees.
 // The name may be truncated to a system-dependent limit.
@@ -423,7 +429,7 @@ INLINE uptr RoundUpToPowerOfTwo(uptr size) {
 }
 
 INLINE uptr RoundUpTo(uptr size, uptr boundary) {
-  CHECK(IsPowerOfTwo(boundary));
+  RAW_CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
 
@@ -652,9 +658,9 @@ enum AndroidApiLevel {
 void WriteToSyslog(const char *buffer);
 
 #if SANITIZER_MAC
-void LogFullErrorReport(const char *error_message_buffer);
+void LogFullErrorReport(const char *buffer);
 #else
-INLINE void LogFullErrorReport(const char *error_message_buffer) {}
+INLINE void LogFullErrorReport(const char *buffer) {}
 #endif
 
 #if SANITIZER_LINUX || SANITIZER_MAC

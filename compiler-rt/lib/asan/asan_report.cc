@@ -30,7 +30,6 @@ namespace __asan {
 static void (*error_report_callback)(const char*);
 static char *error_message_buffer = nullptr;
 static uptr error_message_buffer_pos = 0;
-static uptr error_message_buffer_size = 0;
 static BlockingMutex error_message_buf_mutex(LINKER_INITIALIZED);
 
 struct ReportData {
@@ -49,17 +48,16 @@ static ReportData report_data = {};
 void AppendToErrorMessageBuffer(const char *buffer) {
   BlockingMutexLock l(&error_message_buf_mutex);
   if (!error_message_buffer) {
-    error_message_buffer_size = 1 << 16;
     error_message_buffer =
-      (char*)MmapOrDie(error_message_buffer_size, __func__);
+      (char*)MmapOrDieQuietly(kErrorMessageBufferSize, __func__);
     error_message_buffer_pos = 0;
   }
   uptr length = internal_strlen(buffer);
-  CHECK_GE(error_message_buffer_size, error_message_buffer_pos);
-  uptr remaining = error_message_buffer_size - error_message_buffer_pos;
+  RAW_CHECK(kErrorMessageBufferSize >= error_message_buffer_pos);
+  uptr remaining = kErrorMessageBufferSize - error_message_buffer_pos;
   internal_strncpy(error_message_buffer + error_message_buffer_pos,
                    buffer, remaining);
-  error_message_buffer[error_message_buffer_size - 1] = '\0';
+  error_message_buffer[kErrorMessageBufferSize - 1] = '\0';
   // FIXME: reallocate the buffer instead of truncating the message.
   error_message_buffer_pos += Min(remaining, length);
 }
@@ -686,13 +684,23 @@ class ScopedInErrorReport {
     // Print memory stats.
     if (flags()->print_stats)
       __asan_print_accumulated_stats();
+
+    // Copy the message buffer so that we could start logging without holding a
+    // lock that gets aquired during printing.
+    InternalScopedBuffer<char> buffer_copy(kErrorMessageBufferSize);
     {
       BlockingMutexLock l(&error_message_buf_mutex);
-      LogFullErrorReport(error_message_buffer);
+      internal_memcpy(buffer_copy.data(),
+                      error_message_buffer, kErrorMessageBufferSize);
+    }
 
-      if (error_report_callback) {
-        error_report_callback(error_message_buffer);
-      }
+    // Remove color sequences since logs cannot print them.
+    RemoveANSIEscapeSequencesFromString(buffer_copy.data());
+
+    LogFullErrorReport(buffer_copy.data());
+
+    if (error_report_callback) {
+      error_report_callback(buffer_copy.data());
     }
     CommonSanitizerReportMutex.Unlock();
     reporting_thread_tid_ = kInvalidTid;

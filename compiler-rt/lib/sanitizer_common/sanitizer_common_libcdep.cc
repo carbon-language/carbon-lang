@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common.h"
-#include "sanitizer_allocator_internal.h"
+
 #include "sanitizer_flags.h"
 #include "sanitizer_stackdepot.h"
 #include "sanitizer_stacktrace.h"
@@ -119,13 +119,14 @@ void BackgroundThread(void *arg) {
   }
 }
 
-void WriteToSyslog(const char *buffer) {
-  char *copy = internal_strdup(buffer);
-  char *p = copy;
+void WriteToSyslog(const char *msg) {
+  InternalScopedString msg_copy(kErrorMessageBufferSize);
+  msg_copy.append("%s", msg);
+  char *p = msg_copy.data();
   char *q;
 
   // Remove color sequences since syslogs cannot print them.
-  RemoveANSIEscapeSequencesFromString(copy);
+  RemoveANSIEscapeSequencesFromString(p);
 
   // Print one line at a time.
   // syslog, at least on Android, has an implicit message length limit.
@@ -137,7 +138,6 @@ void WriteToSyslog(const char *buffer) {
     if (q)
       p = q + 1;
   } while (q);
-  InternalFree(copy);
 }
 
 void MaybeStartBackgroudThread() {

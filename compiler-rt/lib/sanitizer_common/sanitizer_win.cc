@@ -83,10 +83,11 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 }
 #endif  // #if !SANITIZER_GO
 
-void *MmapOrDie(uptr size, const char *mem_type) {
+void *MmapOrDie(uptr size, const char *mem_type, bool raw_report) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (rv == 0)
-    ReportMmapFailureAndDie(size, mem_type, "allocate", GetLastError());
+    ReportMmapFailureAndDie(size, mem_type, "allocate",
+                            GetLastError(), raw_report);
   return rv;
 }
 

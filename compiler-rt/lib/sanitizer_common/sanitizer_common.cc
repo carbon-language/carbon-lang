@@ -164,11 +164,12 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 }
 
 void NORETURN ReportMmapFailureAndDie(uptr size, const char *mem_type,
-                                      const char *mmap_type, error_t err) {
+                                      const char *mmap_type, error_t err,
+                                      bool raw_report) {
   static int recursion_count;
-  if (recursion_count) {
+  if (raw_report || recursion_count) {
+    // If raw report is requested or we went into recursion, just die.
     // The Report() and CHECK calls below may call mmap recursively and fail.
-    // If we went into recursion, just die.
     RawWrite("ERROR: Failed to mmap\n");
     Die();
   }
