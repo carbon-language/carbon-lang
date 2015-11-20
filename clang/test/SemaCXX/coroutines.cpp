@@ -44,7 +44,7 @@ void undefined_promise() { // expected-error {{variable has incomplete type 'pro
   co_await a;
 }
 
-struct yielded_thing { int a, b, c; const char *p; };
+struct yielded_thing { const char *p; short a, b; };
 
 struct promise {
   awaitable yield_value(int); // expected-note {{candidate}}
@@ -53,7 +53,10 @@ struct promise {
 
 void yield() {
   co_yield 0;
-  co_yield {1, 2, 3, "foo"}; // FIXME expected-error {{expected expression}}
+  co_yield {"foo", 1, 2};
+  co_yield {1e100}; // expected-error {{cannot be narrowed}} expected-note {{explicit cast}} expected-warning {{changes value}} expected-warning {{braces around scalar}}
+  co_yield {"foo", __LONG_LONG_MAX__}; // expected-error {{cannot be narrowed}} expected-note {{explicit cast}} expected-warning {{changes value}}
+  co_yield {"foo"};
   co_yield "foo"; // expected-error {{no matching}}
 }
 
