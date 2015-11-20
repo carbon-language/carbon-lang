@@ -427,8 +427,6 @@ static std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
 
 template <template <class> class T>
 std::unique_ptr<InputFile> lld::elf2::createELFFile(MemoryBufferRef MB) {
-  using namespace llvm;
-
   std::pair<unsigned char, unsigned char> Type =
     object::getElfArchType(MB.getBuffer());
   if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
