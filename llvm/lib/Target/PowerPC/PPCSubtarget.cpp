@@ -100,6 +100,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasDirectMove = false;
   IsQPXStackUnaligned = false;
   HasHTM = false;
+  HasFusion = false;
 }
 
 void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {

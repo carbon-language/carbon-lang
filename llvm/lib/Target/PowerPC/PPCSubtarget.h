@@ -119,6 +119,7 @@ protected:
   bool HasPartwordAtomics;
   bool HasDirectMove;
   bool HasHTM;
+  bool HasFusion;
 
   /// When targeting QPX running a stock PPC64 Linux kernel where the stack
   /// alignment has not been changed, we need to keep the 16-byte alignment
@@ -254,6 +255,7 @@ public:
     return 16;
   }
   bool hasHTM() const { return HasHTM; }
+  bool hasFusion() const { return HasFusion; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 
