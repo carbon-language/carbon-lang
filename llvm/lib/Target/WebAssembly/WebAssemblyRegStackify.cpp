@@ -177,5 +177,28 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
       MBB.addLiveIn(WebAssembly::EXPR_STACK);
   }
 
+#ifndef NDEBUG
+  // Verify that pushes and pops are performed in FIFO order.
+  SmallVector<unsigned, 0> Stack;
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : MBB) {
+      for (MachineOperand &MO : reverse(MI.explicit_operands())) {
+        if (!MO.isReg()) continue;
+        unsigned VReg = MO.getReg();
+
+        if (MFI.isVRegStackified(VReg)) {
+          if (MO.isDef())
+            Stack.push_back(VReg);
+          else
+            assert(Stack.pop_back_val() == VReg);
+        }
+      }
+    }
+    // TODO: Generalize this code to support keeping values on the stack across
+    // basic block boundaries.
+    assert(Stack.empty());
+  }
+#endif
+
   return Changed;
 }
