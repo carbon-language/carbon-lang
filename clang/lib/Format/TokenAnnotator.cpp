@@ -2104,6 +2104,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
         !Left.Children.empty())
       // Support AllowShortFunctionsOnASingleLine for JavaScript.
       return Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_None ||
+             Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Empty ||
              (Left.NestingLevel == 0 && Line.Level == 0 &&
               Style.AllowShortFunctionsOnASingleLine ==
                   FormatStyle::SFS_Inline);

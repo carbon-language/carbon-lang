@@ -448,6 +448,12 @@ TEST_F(FormatTestJS, InliningFunctionLiterals) {
                "  }\n"
                "}",
                Style);
+
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Empty;
+  verifyFormat("var func = function() {\n"
+               "  return 1;\n"
+               "};",
+               Style);
 }
 
 TEST_F(FormatTestJS, MultipleFunctionLiterals) {
