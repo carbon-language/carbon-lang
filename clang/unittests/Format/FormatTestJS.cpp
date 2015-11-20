@@ -111,6 +111,8 @@ TEST_F(FormatTestJS, ReservedWords) {
                "  interface: 1,\n"
                "  switch: 1,\n"
                "};");
+  verifyFormat("var struct = 2;");
+  verifyFormat("var union = 2;");
 }
 
 TEST_F(FormatTestJS, ES6DestructuringAssignment) {
