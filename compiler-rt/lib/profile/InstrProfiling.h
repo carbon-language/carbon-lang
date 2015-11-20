@@ -22,6 +22,8 @@
  * FreeBSD 10, r232261) when compiled in 32-bit mode.
  */
 #define PRIu64 "llu"
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef uint32_t uintptr_t;
