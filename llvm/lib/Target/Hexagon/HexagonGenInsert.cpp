@@ -1495,7 +1495,7 @@ bool HexagonGenInsert::runOnMachineFunction(MachineFunction &MF) {
   // version of DCE that preserves lifetime markers. Without it, merging
   // of stack objects can fail to recognize and merge disjoint objects
   // leading to unnecessary stack growth.
-  Changed |= removeDeadCode(MDT->getRootNode());
+  removeDeadCode(MDT->getRootNode());
 
   const HexagonEvaluator HE(*HRI, *MRI, *HII, MF);
   BitTracker BTLoc(HE, MF);
