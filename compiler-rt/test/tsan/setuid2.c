@@ -7,11 +7,11 @@
 // Test that setuid call works in presence of stoptheworld.
 
 int main() {
-  struct timespec tp0, tp1;
-  clock_gettime(CLOCK_MONOTONIC, &tp0);
-  clock_gettime(CLOCK_MONOTONIC, &tp1);
-  while (tp1.tv_sec - tp0.tv_sec < 3) {
-    clock_gettime(CLOCK_MONOTONIC, &tp1);
+  unsigned long long tp0, tp1;
+  tp0 = monotonic_clock_ns();
+  tp1 = monotonic_clock_ns();
+  while (tp1 - tp0 < 3 * 1000000000ull) {
+    tp1 = monotonic_clock_ns();
     setuid(0);
   }
   fprintf(stderr, "DONE\n");
