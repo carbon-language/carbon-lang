@@ -31,17 +31,10 @@
 #include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
-DFAPacketizer::DFAPacketizer(const InstrItineraryData *I,
-                             const DFAStateInput (*SIT)[2],
+DFAPacketizer::DFAPacketizer(const InstrItineraryData *I, const int (*SIT)[2],
                              const unsigned *SET):
   InstrItins(I), CurrentState(0), DFAStateInputTable(SIT),
-  DFAStateEntryTable(SET) {
-  // Make sure DFA types are large enough for the number of terms & resources.
-  assert((DFA_MAX_RESTERMS * DFA_MAX_RESOURCES) <= (8 * sizeof(DFAInput))
-        && "(DFA_MAX_RESTERMS * DFA_MAX_RESOURCES) too big for DFAInput");
-  assert((DFA_MAX_RESTERMS * DFA_MAX_RESOURCES) <= (8 * sizeof(DFAStateInput))
-        && "(DFA_MAX_RESTERMS * DFA_MAX_RESOURCES) too big for DFAStateInput");
-}
+  DFAStateEntryTable(SET) {}
 
 
 //
@@ -67,40 +60,26 @@ void DFAPacketizer::ReadTable(unsigned int state) {
       DFAStateInputTable[i][1];
 }
 
-//
-// getInsnInput - Return the DFAInput for an instruction class.
-//
-DFAInput DFAPacketizer::getInsnInput(unsigned InsnClass) {
-  // note: this logic must match that in DFAPacketizer.h for input vectors
-  DFAInput InsnInput = 0;
-  unsigned i = 0;
-  for (const InstrStage *IS = InstrItins->beginStage(InsnClass),
-        *IE = InstrItins->endStage(InsnClass); IS != IE; ++IS, ++i) {
-    unsigned FuncUnits = IS->getUnits();
-    InsnInput <<= DFA_MAX_RESOURCES;  // Shift over any previous AND'ed terms.
-    InsnInput |= FuncUnits;
-    assert ((i < DFA_MAX_RESTERMS) && "Exceeded maximum number of DFA inputs");
-  }
-
-  return InsnInput;
-}
 
 // canReserveResources - Check if the resources occupied by a MCInstrDesc
 // are available in the current state.
 bool DFAPacketizer::canReserveResources(const llvm::MCInstrDesc *MID) {
   unsigned InsnClass = MID->getSchedClass();
-  DFAInput InsnInput = getInsnInput(InsnClass);
-  UnsignPair StateTrans = UnsignPair(CurrentState, InsnInput);
+  const llvm::InstrStage *IS = InstrItins->beginStage(InsnClass);
+  unsigned FuncUnits = IS->getUnits();
+  UnsignPair StateTrans = UnsignPair(CurrentState, FuncUnits);
   ReadTable(CurrentState);
   return (CachedTable.count(StateTrans) != 0);
 }
+
 
 // reserveResources - Reserve the resources occupied by a MCInstrDesc and
 // change the current state to reflect that change.
 void DFAPacketizer::reserveResources(const llvm::MCInstrDesc *MID) {
   unsigned InsnClass = MID->getSchedClass();
-  DFAInput InsnInput = getInsnInput(InsnClass);
-  UnsignPair StateTrans = UnsignPair(CurrentState, InsnInput);
+  const llvm::InstrStage *IS = InstrItins->beginStage(InsnClass);
+  unsigned FuncUnits = IS->getUnits();
+  UnsignPair StateTrans = UnsignPair(CurrentState, FuncUnits);
   ReadTable(CurrentState);
   assert(CachedTable.count(StateTrans) != 0);
   CurrentState = CachedTable[StateTrans];

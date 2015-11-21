@@ -40,67 +40,27 @@ class InstrItineraryData;
 class DefaultVLIWScheduler;
 class SUnit;
 
-// DFA_MAX_RESTERMS * DFA_MAX_RESOURCES must fit within sizeof DFAInput.
-// This is verified in DFAPacketizer.cpp:DFAPacketizer::DFAPacketizer.
-//
-// e.g. terms x resource bit combinations that fit in uint32_t:
-//      4 terms x 8  bits = 32 bits
-//      3 terms x 10 bits = 30 bits
-//      2 terms x 16 bits = 32 bits
-//
-// e.g. terms x resource bit combinations that fit in uint64_t:
-//      8 terms x 8  bits = 64 bits
-//      7 terms x 9  bits = 63 bits
-//      6 terms x 10 bits = 60 bits
-//      5 terms x 12 bits = 60 bits
-//      4 terms x 16 bits = 64 bits <--- current
-//      3 terms x 21 bits = 63 bits
-//      2 terms x 32 bits = 64 bits
-//
-#define DFA_MAX_RESTERMS        4   // The max # of AND'ed resource terms.
-#define DFA_MAX_RESOURCES       16  // The max # of resource bits in one term.
-
-typedef uint64_t                DFAInput;
-typedef int64_t                 DFAStateInput;
-#define DFA_TBLTYPE             "int64_t" // For generating DFAStateInputTable.
-
 class DFAPacketizer {
 private:
-  typedef std::pair<unsigned, DFAInput> UnsignPair;
-
+  typedef std::pair<unsigned, unsigned> UnsignPair;
   const InstrItineraryData *InstrItins;
   int CurrentState;
-  const DFAStateInput (*DFAStateInputTable)[2];
+  const int (*DFAStateInputTable)[2];
   const unsigned *DFAStateEntryTable;
 
   // CachedTable is a map from <FromState, Input> to ToState.
   DenseMap<UnsignPair, unsigned> CachedTable;
 
   // ReadTable - Read the DFA transition table and update CachedTable.
-  void ReadTable(unsigned state);
+  void ReadTable(unsigned int state);
 
 public:
-  DFAPacketizer(const InstrItineraryData *I, const DFAStateInput (*SIT)[2],
+  DFAPacketizer(const InstrItineraryData *I, const int (*SIT)[2],
                 const unsigned *SET);
 
   // Reset the current state to make all resources available.
   void clearResources() {
     CurrentState = 0;
-  }
-
-  // getInsnInput - Return the DFAInput for an instruction class.
-  DFAInput getInsnInput(unsigned InsnClass);
-
-  // getInsnInput - Return the DFAInput for an instruction class input vector.
-  static DFAInput getInsnInput(const std::vector<unsigned> &InsnClass) {
-    DFAInput InsnInput = 0;
-    unsigned N = InsnClass.size();
-    assert ((N <= DFA_MAX_RESTERMS) && "Exceeded maximum number of DFA terms");
-    for (unsigned i = 0; i < N; i++) {
-      InsnInput <<= DFA_MAX_RESOURCES;  // Shift over any previous AND'ed terms.
-      InsnInput |= InsnClass[i];
-    }
-    return(InsnInput);
   }
 
   // canReserveResources - Check if the resources occupied by a MCInstrDesc
