@@ -38,6 +38,7 @@ static __thread ReportType expect_report_type;
 #define __interceptor_memset wrap_memset
 #define __interceptor_pthread_create wrap_pthread_create
 #define __interceptor_pthread_join wrap_pthread_join
+#define __interceptor_pthread_detach wrap_pthread_detach
 #define __interceptor_pthread_mutex_init wrap_pthread_mutex_init
 #define __interceptor_pthread_mutex_lock wrap_pthread_mutex_lock
 #define __interceptor_pthread_mutex_unlock wrap_pthread_mutex_unlock
@@ -59,6 +60,7 @@ extern "C" int __interceptor_pthread_create(pthread_t *thread,
                                             void *(*start_routine)(void *),
                                             void *arg);
 extern "C" int __interceptor_pthread_join(pthread_t thread, void **value_ptr);
+extern "C" int __interceptor_pthread_detach(pthread_t thread);
 
 extern "C" int __interceptor_pthread_mutex_init(
     pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);
@@ -410,7 +412,8 @@ ScopedThread::ScopedThread(bool detached, bool main) {
   if (!main) {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, detached);
+    pthread_attr_setdetachstate(
+        &attr, detached ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE);
     pthread_attr_setstacksize(&attr, 64*1024);
     __interceptor_pthread_create(&impl_->thread, &attr,
         ScopedThread::Impl::ScopedThreadCallback, impl_);
@@ -431,7 +434,7 @@ void ScopedThread::Detach() {
   CHECK(!impl_->main);
   CHECK(!impl_->detached);
   impl_->detached = true;
-  pthread_detach(impl_->thread);
+  __interceptor_pthread_detach(impl_->thread);
 }
 
 void ScopedThread::Access(void *addr, bool is_write,
