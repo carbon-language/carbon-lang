@@ -1967,6 +1967,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
       MDValueList.tryToResolveCycles();
+      assert((!(ModuleLevel && SeenModuleValuesRecord) ||
+              NumModuleMDs == MDValueList.size()) &&
+             "Inconsistent bitcode: METADATA_VALUES mismatch");
       return std::error_code();
     case BitstreamEntry::Record:
       // The interesting case.
@@ -2396,9 +2399,6 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
     }
     }
   }
-  assert((!(ModuleLevel && SeenModuleValuesRecord) ||
-          NumModuleMDs == MDValueList.size()) &&
-         "Inconsistent bitcode: METADATA_VALUES mismatch");
 #undef GET_OR_DISTINCT
 }
 
