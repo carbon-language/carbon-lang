@@ -610,19 +610,23 @@ static int linkAndVerify() {
 
   std::unique_ptr<MCSubtargetInfo> STI(
     TheTarget->createMCSubtargetInfo(TripleName, MCPU, ""));
-  assert(STI && "Unable to create subtarget info!");
+  if (!STI)
+    return Error("Unable to create subtarget info!");
 
   std::unique_ptr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
-  assert(MRI && "Unable to create target register info!");
+  if (!MRI)
+    return Error("Unable to create target register info!");
 
   std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
-  assert(MAI && "Unable to create target asm info!");
+  if (!MAI)
+    return Error("Unable to create target asm info!");
 
   MCContext Ctx(MAI.get(), MRI.get(), nullptr);
 
   std::unique_ptr<MCDisassembler> Disassembler(
     TheTarget->createMCDisassembler(*STI, Ctx));
-  assert(Disassembler && "Unable to create disassembler!");
+  if (!Disassembler)
+    return Error("Unable to create disassembler!");
 
   std::unique_ptr<MCInstrInfo> MII(TheTarget->createMCInstrInfo());
 
