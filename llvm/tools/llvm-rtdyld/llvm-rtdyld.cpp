@@ -595,21 +595,17 @@ static void remapSectionsAndSymbols(const llvm::Triple &TargetTriple,
 static int linkAndVerify() {
 
   // Check for missing triple.
-  if (TripleName == "") {
-    llvm::errs() << "Error: -triple required when running in -verify mode.\n";
-    return 1;
-  }
+  if (TripleName == "")
+    return Error("-triple required when running in -verify mode.");
 
   // Look up the target and build the disassembler.
   Triple TheTriple(Triple::normalize(TripleName));
   std::string ErrorStr;
   const Target *TheTarget =
     TargetRegistry::lookupTarget("", TheTriple, ErrorStr);
-  if (!TheTarget) {
-    llvm::errs() << "Error accessing target '" << TripleName << "': "
-                 << ErrorStr << "\n";
-    return 1;
-  }
+  if (!TheTarget)
+    return Error("Error accessing target '" + TripleName + "': " + ErrorStr);
+
   TripleName = TheTriple.getTriple();
 
   std::unique_ptr<MCSubtargetInfo> STI(
@@ -687,11 +683,9 @@ static int linkAndVerify() {
   Dyld.registerEHFrames();
 
   int ErrorCode = checkAllExpressions(Checker);
-  if (Dyld.hasError()) {
-    errs() << "RTDyld reported an error applying relocations:\n  "
-           << Dyld.getErrorString() << "\n";
-    ErrorCode = 1;
-  }
+  if (Dyld.hasError())
+    return Error("RTDyld reported an error applying relocations:\n  " +
+                 Dyld.getErrorString());
 
   return ErrorCode;
 }
