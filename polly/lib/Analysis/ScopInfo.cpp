@@ -2551,8 +2551,23 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   return true;
 }
 
+/// @brief Get the smallest loop that contains @p R but is not in @p R.
 static Loop *getLoopSurroundingRegion(Region &R, LoopInfo &LI) {
+  // Start with the smallest loop containing the entry and expand that
+  // loop until it contains all blocks in the region. If there is a loop
+  // containing all blocks in the region check if it is itself contained
+  // and if so take the parent loop as it will be the smallest containing
+  // the region but not contained by it.
   Loop *L = LI.getLoopFor(R.getEntry());
+  while (L) {
+    bool AllContained = true;
+    for (auto *BB : R.blocks())
+      AllContained &= L->contains(BB);
+    if (AllContained)
+      break;
+    L = L->getParentLoop();
+  }
+
   return L ? (R.contains(L) ? L->getParentLoop() : L) : nullptr;
 }
 
