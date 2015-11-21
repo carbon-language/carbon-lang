@@ -31,6 +31,7 @@
 #include <queue>
 using namespace llvm;
 
+#ifndef NDEBUG
 // To enable debugging, run llvm-tblgen with: "-debug-only dfa-emitter".
 //
 // dbgsInsnClass - When debugging, print instruction class stages.
@@ -44,6 +45,7 @@ void dbgsStateInfo(const std::set<unsigned> &stateInfo);
 // dbgsIndent - When debugging, indent by the specified amount.
 //
 void dbgsIndent(unsigned indent);
+#endif
 
 //
 // class DFAPacketizerEmitter: class that generates and prints out the DFA
@@ -326,11 +328,13 @@ void State::AddInsnClassStages(std::vector<unsigned> &InsnClass,
   assert((chkstage < numstages) && "AddInsnClassStages: stage out of range");
   unsigned thisStage = InsnClass[chkstage];
 
-  dbgsIndent((1 + numstages - chkstage) << 1);
-  DEBUG(dbgs() << "AddInsnClassStages " << chkstage
-               << " (0x" << utohexstr(thisStage) << ") from ");
-  dbgsInsnClass(InsnClass);
-  DEBUG(dbgs() << "\n");
+  DEBUG({
+    dbgsIndent((1 + numstages - chkstage) << 1);
+    dbgs() << "AddInsnClassStages " << chkstage << " (0x"
+           << utohexstr(thisStage) << ") from ";
+    dbgsInsnClass(InsnClass);
+    dbgs() << "\n";
+  });
 
   //
   // Iterate over all possible resources used in thisStage.
@@ -351,13 +355,14 @@ void State::AddInsnClassStages(std::vector<unsigned> &InsnClass,
       // resource state if that resource was used.
       //
       unsigned ResultingResourceState = prevState | resourceMask | combo;
-      dbgsIndent((2 + numstages - chkstage) << 1);
-      DEBUG(dbgs() << "0x" << utohexstr(prevState)
-                   << " | 0x" << utohexstr(resourceMask));
-      if (combo) {
-        DEBUG(dbgs() << " | 0x" << utohexstr(combo));
-      }
-      DEBUG(dbgs() << " = 0x" << utohexstr(ResultingResourceState) << " ");
+      DEBUG({
+        dbgsIndent((2 + numstages - chkstage) << 1);
+        dbgs() << "0x" << utohexstr(prevState)
+               << " | 0x" << utohexstr(resourceMask);
+        if (combo)
+          dbgs() << " | 0x" << utohexstr(combo);
+        dbgs() << " = 0x" << utohexstr(ResultingResourceState) << " ";
+      });
 
       //
       // If this is the final stage for this class
@@ -741,9 +746,11 @@ int DFAPacketizerEmitter::collectOneInsnClass(const std::string &ProcName,
   if (UnitBits.size() > 0)
     allInsnClasses.push_back(UnitBits);
 
-  DEBUG(dbgs() << "        ");
-  dbgsInsnClass(UnitBits);
-  DEBUG(dbgs() << "\n");
+  DEBUG({
+    dbgs() << "        ";
+    dbgsInsnClass(UnitBits);
+    dbgs() << "\n";
+  });
 
   return NStages;
 }
@@ -867,15 +874,19 @@ void DFAPacketizerEmitter::run(raw_ostream &OS) {
   //
   while (!WorkList.empty()) {
     const State *current = WorkList.pop_back_val();
-    DEBUG(dbgs() << "---------------------\n");
-    DEBUG(dbgs() << "Processing state: " << current->stateNum << " - ");
-    dbgsStateInfo(current->stateInfo);
-    DEBUG(dbgs() << "\n");
+    DEBUG({
+      dbgs() << "---------------------\n";
+      dbgs() << "Processing state: " << current->stateNum << " - ";
+      dbgsStateInfo(current->stateInfo);
+      dbgs() << "\n";
+    });
     for (unsigned i = 0; i < allInsnClasses.size(); i++) {
       std::vector<unsigned> InsnClass = allInsnClasses[i];
-      DEBUG(dbgs() << i << " ");
-      dbgsInsnClass(InsnClass);
-      DEBUG(dbgs() << "\n");
+      DEBUG({
+        dbgs() << i << " ";
+        dbgsInsnClass(InsnClass);
+        dbgs() << "\n";
+      });
 
       std::set<unsigned> NewStateResources;
       //
@@ -891,9 +902,11 @@ void DFAPacketizerEmitter::run(raw_ostream &OS) {
           continue;
         }
 
-        DEBUG(dbgs() << "\t");
-        dbgsStateInfo(NewStateResources);
-        DEBUG(dbgs() << "\n");
+        DEBUG({
+          dbgs() << "\t";
+          dbgsStateInfo(NewStateResources);
+          dbgs() << "\n";
+        });
 
         //
         // If we have seen this state before, then do not create a new state.
@@ -901,19 +914,22 @@ void DFAPacketizerEmitter::run(raw_ostream &OS) {
         auto VI = Visited.find(NewStateResources);
         if (VI != Visited.end()) {
           NewState = VI->second;
-          DEBUG(dbgs() << "\tFound existing state: "
-                       << NewState->stateNum << " - ");
-          dbgsStateInfo(NewState->stateInfo);
-          DEBUG(dbgs() << "\n");
+          DEBUG({
+            dbgs() << "\tFound existing state: " << NewState->stateNum
+                   << " - ";
+            dbgsStateInfo(NewState->stateInfo);
+            dbgs() << "\n";
+          });
         } else {
           NewState = &D.newState();
           NewState->stateInfo = NewStateResources;
           Visited[NewStateResources] = NewState;
           WorkList.push_back(NewState);
-          DEBUG(dbgs() << "\tAccepted new state: "
-                       << NewState->stateNum << " - ");
-          dbgsStateInfo(NewState->stateInfo);
-          DEBUG(dbgs() << "\n");
+          DEBUG({
+            dbgs() << "\tAccepted new state: " << NewState->stateNum << " - ";
+            dbgsStateInfo(NewState->stateInfo);
+            dbgs() << "\n";
+          });
         }
 
         current->addTransition(InsnClass, NewState);
