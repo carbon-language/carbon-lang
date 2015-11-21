@@ -1,6 +1,7 @@
-; RUN: llc -mtriple=x86_64-apple-macosx10.8.0 -mattr=+ssse3 < %s | FileCheck %s --check-prefix=SSE --check-prefix=SSSE3
-; RUN: llc -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx < %s | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
-; RUN: llc -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx2 < %s | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.8.0 -mattr=+sse2 | FileCheck %s --check-prefix=SSE --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.8.0 -mattr=+ssse3 | FileCheck %s --check-prefix=SSE --check-prefix=SSSE3
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
 
 define void @test1(i16* nocapture %head) nounwind {
 ; SSE-LABEL: test1:
@@ -53,14 +54,25 @@ vector.ph:
 }
 
 define void @test3(i16* nocapture %head, i16 zeroext %w) nounwind {
-; SSE-LABEL: test3:
-; SSE:       ## BB#0: ## %vector.ph
-; SSE-NEXT:    movd %esi, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
-; SSE-NEXT:    movdqu (%rdi), %xmm1
-; SSE-NEXT:    psubusw %xmm0, %xmm1
-; SSE-NEXT:    movdqu %xmm1, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test3:
+; SSE2:       ## BB#0: ## %vector.ph
+; SSE2-NEXT:    movd %esi, %xmm0
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,4,4,4]
+; SSE2-NEXT:    movdqu (%rdi), %xmm1
+; SSE2-NEXT:    psubusw %xmm0, %xmm1
+; SSE2-NEXT:    movdqu %xmm1, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: test3:
+; SSSE3:       ## BB#0: ## %vector.ph
+; SSSE3-NEXT:    movd %esi, %xmm0
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
+; SSSE3-NEXT:    movdqu (%rdi), %xmm1
+; SSSE3-NEXT:    psubusw %xmm0, %xmm1
+; SSSE3-NEXT:    movdqu %xmm1, (%rdi)
+; SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: test3:
 ; AVX1:       ## BB#0: ## %vector.ph
@@ -143,15 +155,27 @@ vector.ph:
 }
 
 define void @test6(i8* nocapture %head, i8 zeroext %w) nounwind {
-; SSE-LABEL: test6:
-; SSE:       ## BB#0: ## %vector.ph
-; SSE-NEXT:    movd %esi, %xmm0
-; SSE-NEXT:    pxor %xmm1, %xmm1
-; SSE-NEXT:    pshufb %xmm1, %xmm0
-; SSE-NEXT:    movdqu (%rdi), %xmm1
-; SSE-NEXT:    psubusb %xmm0, %xmm1
-; SSE-NEXT:    movdqu %xmm1, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test6:
+; SSE2:       ## BB#0: ## %vector.ph
+; SSE2-NEXT:    movd %esi, %xmm0
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,4,4,4]
+; SSE2-NEXT:    movdqu (%rdi), %xmm1
+; SSE2-NEXT:    psubusb %xmm0, %xmm1
+; SSE2-NEXT:    movdqu %xmm1, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: test6:
+; SSSE3:       ## BB#0: ## %vector.ph
+; SSSE3-NEXT:    movd %esi, %xmm0
+; SSSE3-NEXT:    pxor %xmm1, %xmm1
+; SSSE3-NEXT:    pshufb %xmm1, %xmm0
+; SSSE3-NEXT:    movdqu (%rdi), %xmm1
+; SSSE3-NEXT:    psubusb %xmm0, %xmm1
+; SSSE3-NEXT:    movdqu %xmm1, (%rdi)
+; SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: test6:
 ; AVX1:       ## BB#0: ## %vector.ph
@@ -280,17 +304,31 @@ vector.ph:
 }
 
 define void @test9(i16* nocapture %head, i16 zeroext %w) nounwind {
-; SSE-LABEL: test9:
-; SSE:       ## BB#0: ## %vector.ph
-; SSE-NEXT:    movd %esi, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
-; SSE-NEXT:    movdqu (%rdi), %xmm1
-; SSE-NEXT:    movdqu 16(%rdi), %xmm2
-; SSE-NEXT:    psubusw %xmm0, %xmm1
-; SSE-NEXT:    psubusw %xmm0, %xmm2
-; SSE-NEXT:    movdqu %xmm2, 16(%rdi)
-; SSE-NEXT:    movdqu %xmm1, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test9:
+; SSE2:       ## BB#0: ## %vector.ph
+; SSE2-NEXT:    movd %esi, %xmm0
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,4,4,4]
+; SSE2-NEXT:    movdqu (%rdi), %xmm1
+; SSE2-NEXT:    movdqu 16(%rdi), %xmm2
+; SSE2-NEXT:    psubusw %xmm0, %xmm1
+; SSE2-NEXT:    psubusw %xmm0, %xmm2
+; SSE2-NEXT:    movdqu %xmm2, 16(%rdi)
+; SSE2-NEXT:    movdqu %xmm1, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: test9:
+; SSSE3:       ## BB#0: ## %vector.ph
+; SSSE3-NEXT:    movd %esi, %xmm0
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
+; SSSE3-NEXT:    movdqu (%rdi), %xmm1
+; SSSE3-NEXT:    movdqu 16(%rdi), %xmm2
+; SSSE3-NEXT:    psubusw %xmm0, %xmm1
+; SSSE3-NEXT:    psubusw %xmm0, %xmm2
+; SSSE3-NEXT:    movdqu %xmm2, 16(%rdi)
+; SSSE3-NEXT:    movdqu %xmm1, (%rdi)
+; SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: test9:
 ; AVX1:       ## BB#0: ## %vector.ph
@@ -429,18 +467,33 @@ vector.ph:
 }
 
 define void @test12(i8* nocapture %head, i8 zeroext %w) nounwind {
-; SSE-LABEL: test12:
-; SSE:       ## BB#0: ## %vector.ph
-; SSE-NEXT:    movd %esi, %xmm0
-; SSE-NEXT:    pxor %xmm1, %xmm1
-; SSE-NEXT:    pshufb %xmm1, %xmm0
-; SSE-NEXT:    movdqu (%rdi), %xmm1
-; SSE-NEXT:    movdqu 16(%rdi), %xmm2
-; SSE-NEXT:    psubusb %xmm0, %xmm1
-; SSE-NEXT:    psubusb %xmm0, %xmm2
-; SSE-NEXT:    movdqu %xmm2, 16(%rdi)
-; SSE-NEXT:    movdqu %xmm1, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test12:
+; SSE2:       ## BB#0: ## %vector.ph
+; SSE2-NEXT:    movd %esi, %xmm0
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,4,4,4]
+; SSE2-NEXT:    movdqu (%rdi), %xmm1
+; SSE2-NEXT:    movdqu 16(%rdi), %xmm2
+; SSE2-NEXT:    psubusb %xmm0, %xmm1
+; SSE2-NEXT:    psubusb %xmm0, %xmm2
+; SSE2-NEXT:    movdqu %xmm2, 16(%rdi)
+; SSE2-NEXT:    movdqu %xmm1, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: test12:
+; SSSE3:       ## BB#0: ## %vector.ph
+; SSSE3-NEXT:    movd %esi, %xmm0
+; SSSE3-NEXT:    pxor %xmm1, %xmm1
+; SSSE3-NEXT:    pshufb %xmm1, %xmm0
+; SSSE3-NEXT:    movdqu (%rdi), %xmm1
+; SSSE3-NEXT:    movdqu 16(%rdi), %xmm2
+; SSSE3-NEXT:    psubusb %xmm0, %xmm1
+; SSSE3-NEXT:    psubusb %xmm0, %xmm2
+; SSSE3-NEXT:    movdqu %xmm2, 16(%rdi)
+; SSSE3-NEXT:    movdqu %xmm1, (%rdi)
+; SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: test12:
 ; AVX1:       ## BB#0: ## %vector.ph
