@@ -1031,14 +1031,6 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     return false;
   }
 
-  if (!CurRegion.getEnteringBlock()) {
-    BasicBlock *entry = CurRegion.getEntry();
-    Loop *L = LI->getLoopFor(entry);
-
-    if (L && !L->isLoopSimplifyForm())
-      return invalid<ReportSimpleLoop>(Context, /*Assert=*/true);
-  }
-
   // SCoP cannot contain the entry block of the function, because we need
   // to insert alloca instruction there when translate scalar to array.
   if (CurRegion.getEntry() ==
