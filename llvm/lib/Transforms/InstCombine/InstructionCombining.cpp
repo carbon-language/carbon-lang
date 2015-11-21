@@ -1325,14 +1325,8 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
     }
     if (MayChange) {
       Constant *C2 = ConstantVector::get(C2M);
-      Value *NewLHS, *NewRHS;
-      if (isa<Constant>(LHS)) {
-        NewLHS = C2;
-        NewRHS = Shuffle->getOperand(0);
-      } else {
-        NewLHS = Shuffle->getOperand(0);
-        NewRHS = C2;
-      }
+      Value *NewLHS = isa<Constant>(LHS) ? C2 : Shuffle->getOperand(0);
+      Value *NewRHS = isa<Constant>(LHS) ? Shuffle->getOperand(0) : C2;
       Value *NewBO = CreateBinOpAsGiven(Inst, NewLHS, NewRHS, Builder);
       return Builder->CreateShuffleVector(NewBO,
           UndefValue::get(Inst.getType()), Shuffle->getMask());
