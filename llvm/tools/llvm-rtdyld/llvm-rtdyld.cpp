@@ -250,10 +250,9 @@ static void loadDylibs() {
     if (sys::fs::is_regular_file(Dylib)) {
       std::string ErrMsg;
       if (sys::DynamicLibrary::LoadLibraryPermanently(Dylib.c_str(), &ErrMsg))
-        llvm::errs() << "Error loading '" << Dylib << "': "
-                     << ErrMsg << "\n";
+        report_fatal_error("Error loading '" + Dylib + "': " + ErrMsg);
     } else
-      llvm::errs() << "Dylib not found: '" << Dylib << "'.\n";
+      report_fatal_error("Dylib not found: '" + Dylib + "'.");
   }
 }
 
