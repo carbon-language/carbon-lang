@@ -217,6 +217,7 @@ public:
 };
 } // End anonymous namespace.
 
+#ifndef NDEBUG
 // To enable debugging, run llvm-tblgen with: "-debug-only dfa-emitter".
 //
 // dbgsInsnClass - When debugging, print instruction class stages.
@@ -257,6 +258,7 @@ void dbgsIndent(unsigned indent) {
     DEBUG(dbgs() << " ");
   }
 }
+#endif
 
 //
 // Constructors and destructors for State and DFA
@@ -605,12 +607,11 @@ int DFAPacketizerEmitter::collectAllFuncUnits(
   // Parse functional units for all the itineraries.
   for (unsigned i = 0, N = ProcItinList.size(); i < N; ++i) {
     Record *Proc = ProcItinList[i];
-    const std::string &ProcName = Proc->getName();
     std::vector<Record*> FUs = Proc->getValueAsListOfDefs("FU");
 
     DEBUG(dbgs() << "    FU:" << i
                  << " (" << FUs.size() << " FUs) "
-                 << ProcName);
+                 << Proc->getName());
 
 
     // Convert macros to bits for each stage.
@@ -648,12 +649,11 @@ int DFAPacketizerEmitter::collectAllComboFuncs(
   int numCombos = 0;
   for (unsigned i = 0, N = ComboFuncList.size(); i < N; ++i) {
     Record *Func = ComboFuncList[i];
-    const std::string &ProcName = Func->getName();
     std::vector<Record*> FUs = Func->getValueAsListOfDefs("CFD");
 
     DEBUG(dbgs() << "    CFD:" << i
                  << " (" << FUs.size() << " combo FUs) "
-                 << ProcName << "\n");
+                 << Func->getName() << "\n");
 
     // Convert macros to bits for each stage.
     for (unsigned j = 0, N = FUs.size(); j < N; ++j) {
@@ -694,16 +694,13 @@ int DFAPacketizerEmitter::collectOneInsnClass(const std::string &ProcName,
                         std::map<std::string, unsigned> &FUNameToBitsMap,
                         Record *ItinData,
                         raw_ostream &OS) {
-  // Collect instruction classes.
-  Record *ItinDef = ItinData->getValueAsDef("TheClass");
-
   const std::vector<Record*> &StageList =
     ItinData->getValueAsListOfDefs("Stages");
 
   // The number of stages.
   unsigned NStages = StageList.size();
 
-  DEBUG(dbgs() << "    " << ItinDef->getName()
+  DEBUG(dbgs() << "    " << ItinData->getValueAsDef("TheClass")->getName()
                << "\n");
 
   std::vector<unsigned> UnitBits;
