@@ -42,7 +42,7 @@ int __llvm_profile_write_buffer_internal(
  * This is an internal function not intended to be used externally.
  */
 typedef struct ProfDataIOVec {
-  const char *Data;
+  const void *Data;
   size_t ElmSize;
   size_t NumElm;
 } ProfDataIOVec;

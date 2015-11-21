@@ -60,11 +60,11 @@ __attribute__((visibility("hidden"))) int llvmWriteProfDataImpl(
 
   /* Write the data. */
   ProfDataIOVec IOVec[] = {
-      {(const char *)&Header, sizeof(__llvm_profile_header), 1},
-      {(const char *)DataBegin, sizeof(__llvm_profile_data), DataSize},
-      {(const char *)CountersBegin, sizeof(uint64_t), CountersSize},
-      {(const char *)NamesBegin, sizeof(char), NamesSize},
-      {(const char *)Zeroes, sizeof(char), Padding}};
+      {&Header, sizeof(__llvm_profile_header), 1},
+      {DataBegin, sizeof(__llvm_profile_data), DataSize},
+      {CountersBegin, sizeof(uint64_t), CountersSize},
+      {NamesBegin, sizeof(char), NamesSize},
+      {Zeroes, sizeof(char), Padding}};
   if (Writer(IOVec, sizeof(IOVec) / sizeof(ProfDataIOVec), &WriterCtx))
     return -1;
   if (ValueDataBegin) {
