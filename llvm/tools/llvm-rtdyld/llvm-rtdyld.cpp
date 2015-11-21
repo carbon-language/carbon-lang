@@ -463,11 +463,9 @@ applySpecificSectionMappings(RuntimeDyldChecker &Checker) {
     std::string SectionIDStr = Mapping.substr(0, EqualsIdx);
     size_t ComaIdx = Mapping.find_first_of(",");
 
-    if (ComaIdx == StringRef::npos) {
-      errs() << "Invalid section specification '" << Mapping
-             << "'. Should be '<file name>,<section name>=<addr>'\n";
-      exit(1);
-    }
+    if (ComaIdx == StringRef::npos)
+      report_fatal_error("Invalid section specification '" + Mapping +
+                         "'. Should be '<file name>,<section name>=<addr>'");
 
     std::string FileName = SectionIDStr.substr(0, ComaIdx);
     std::string SectionName = SectionIDStr.substr(ComaIdx + 1);
@@ -477,20 +475,17 @@ applySpecificSectionMappings(RuntimeDyldChecker &Checker) {
     std::tie(OldAddrInt, ErrorMsg) =
       Checker.getSectionAddr(FileName, SectionName, true);
 
-    if (ErrorMsg != "") {
-      errs() << ErrorMsg;
-      exit(1);
-    }
+    if (ErrorMsg != "")
+      report_fatal_error(ErrorMsg);
 
     void* OldAddr = reinterpret_cast<void*>(static_cast<uintptr_t>(OldAddrInt));
 
     std::string NewAddrStr = Mapping.substr(EqualsIdx + 1);
     uint64_t NewAddr;
 
-    if (StringRef(NewAddrStr).getAsInteger(0, NewAddr)) {
-      errs() << "Invalid section address in mapping '" << Mapping << "'.\n";
-      exit(1);
-    }
+    if (StringRef(NewAddrStr).getAsInteger(0, NewAddr))
+      report_fatal_error("Invalid section address in mapping '" + Mapping +
+                         "'.");
 
     Checker.getRTDyld().mapSectionAddress(OldAddr, NewAddr);
     SpecificMappings[OldAddr] = NewAddr;
@@ -579,20 +574,16 @@ static void remapSectionsAndSymbols(const llvm::Triple &TargetTriple,
   for (const auto &Mapping : DummySymbolMappings) {
     size_t EqualsIdx = Mapping.find_first_of("=");
 
-    if (EqualsIdx == StringRef::npos) {
-      errs() << "Invalid dummy symbol specification '" << Mapping
-             << "'. Should be '<symbol name>=<addr>'\n";
-      exit(1);
-    }
+    if (EqualsIdx == StringRef::npos)
+      report_fatal_error("Invalid dummy symbol specification '" + Mapping +
+                         "'. Should be '<symbol name>=<addr>'");
 
     std::string Symbol = Mapping.substr(0, EqualsIdx);
     std::string AddrStr = Mapping.substr(EqualsIdx + 1);
 
     uint64_t Addr;
-    if (StringRef(AddrStr).getAsInteger(0, Addr)) {
-      errs() << "Invalid symbol mapping '" << Mapping << "'.\n";
-      exit(1);
-    }
+    if (StringRef(AddrStr).getAsInteger(0, Addr))
+      report_fatal_error("Invalid symbol mapping '" + Mapping + "'.");
 
     MemMgr.addDummySymbol(Symbol, Addr);
   }
