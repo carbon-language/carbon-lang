@@ -17,17 +17,24 @@
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
-static size_t fileWriter(const void *Data, size_t ElmSize, size_t NumElm,
-                         void **File) {
-  return fwrite(Data, ElmSize, NumElm, (FILE *)*File);
+/* Return 1 if there is an error, otherwise return  0.  */
+static uint32_t fileWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
+                           void **WriterCtx) {
+  uint32_t I;
+  FILE *File = (FILE *)*WriterCtx;
+  for (I = 0; I < NumIOVecs; I++) {
+    if (fwrite(IOVecs[I].Data, IOVecs[I].ElmSize, IOVecs[I].NumElm, File) !=
+        IOVecs[I].NumElm)
+      return 1;
+  }
+  return 0;
 }
-uint8_t *ValueDataBegin = NULL;
 
 static int writeFile(FILE *File) {
   uint8_t *ValueDataBegin = NULL;
   const uint64_t ValueDataSize =
       __llvm_profile_gather_value_data(&ValueDataBegin);
-  int r = llvmWriteProfData(File, fileWriter, ValueDataBegin, ValueDataSize);
+  int r = llvmWriteProfData(fileWriter, File, ValueDataBegin, ValueDataSize);
   free(ValueDataBegin);
   return r;
 }

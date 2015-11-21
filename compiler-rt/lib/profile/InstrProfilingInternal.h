@@ -41,12 +41,18 @@ int __llvm_profile_write_buffer_internal(
 /*!
  * This is an internal function not intended to be used externally.
  */
-typedef size_t (*WriterCallback)(const void *Data, size_t ElmS, size_t NumElm,
-                                 void **BufferOrFile);
-int llvmWriteProfData(void *WriterCtx, WriterCallback Writer,
+typedef struct ProfDataIOVec {
+  const char *Data;
+  size_t ElmSize;
+  size_t NumElm;
+} ProfDataIOVec;
+
+typedef uint32_t (*WriterCallback)(ProfDataIOVec *, uint32_t NumIOVecs,
+                                   void **WriterCtx);
+int llvmWriteProfData(WriterCallback Writer, void *WriterCtx,
                       const uint8_t *ValueDataBegin,
                       const uint64_t ValueDataSize);
-int llvmWriteProfDataImpl(void *WriterCtx, WriterCallback Writer,
+int llvmWriteProfDataImpl(WriterCallback Writer, void *WriterCtx,
                           const __llvm_profile_data *DataBegin,
                           const __llvm_profile_data *DataEnd,
                           const uint64_t *CountersBegin,

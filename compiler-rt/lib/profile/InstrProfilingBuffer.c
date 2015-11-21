@@ -41,24 +41,31 @@ uint64_t __llvm_profile_get_size_for_buffer_internal(
          PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) + NamesSize + Padding;
 }
 
-static size_t bufferWriter(const void *Data, size_t ElmSize, size_t NumElm,
-                           void **Buffer) {
-  size_t Length = ElmSize * NumElm;
-  memcpy(*Buffer, Data, Length);
-  *(char **)Buffer += Length;
-  return NumElm;
+/* The buffer writer is reponsponsible in keeping writer state
+ * across the call.
+ */
+static uint32_t bufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
+                             void **WriterCtx) {
+  uint32_t I;
+  char **Buffer = (char **)WriterCtx;
+  for (I = 0; I < NumIOVecs; I++) {
+    size_t Length = IOVecs[I].ElmSize * IOVecs[I].NumElm;
+    memcpy(*Buffer, IOVecs[I].Data, Length);
+    *Buffer += Length;
+  }
+  return 0;
 }
 
 __attribute__((visibility("hidden"))) int
 __llvm_profile_write_buffer(char *Buffer) {
-  return llvmWriteProfData(Buffer, bufferWriter, 0, 0);
+  return llvmWriteProfData(bufferWriter, Buffer, 0, 0);
 }
 
 __attribute__((visibility("hidden"))) int __llvm_profile_write_buffer_internal(
     char *Buffer, const __llvm_profile_data *DataBegin,
     const __llvm_profile_data *DataEnd, const uint64_t *CountersBegin,
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd) {
-  return llvmWriteProfDataImpl(Buffer, bufferWriter, DataBegin, DataEnd,
+  return llvmWriteProfDataImpl(bufferWriter, Buffer, DataBegin, DataEnd,
                                CountersBegin, CountersEnd, 0, 0, NamesBegin,
                                NamesEnd);
 }
