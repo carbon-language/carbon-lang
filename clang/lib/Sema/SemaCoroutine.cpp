@@ -52,6 +52,8 @@ static QualType lookupPromiseType(Sema &S, const FunctionProtoType *FnType,
   Args.addArgument(TemplateArgumentLoc(
       TemplateArgument(FnType->getReturnType()),
       S.Context.getTrivialTypeSourceInfo(FnType->getReturnType(), Loc)));
+  // FIXME: If the function is a non-static member function, add the type
+  // of the implicit object parameter before the formal parameters.
   for (QualType T : FnType->getParamTypes())
     Args.addArgument(TemplateArgumentLoc(
         TemplateArgument(T), S.Context.getTrivialTypeSourceInfo(T, Loc)));
@@ -270,12 +272,6 @@ static ExprResult buildPromiseCall(Sema &S, FunctionScopeInfo *Coroutine,
 }
 
 ExprResult Sema::ActOnCoyieldExpr(Scope *S, SourceLocation Loc, Expr *E) {
-  if (E->getType()->isPlaceholderType()) {
-    ExprResult R = CheckPlaceholderExpr(E);
-    if (R.isInvalid()) return ExprError();
-    E = R.get();
-  }
-
   auto *Coroutine = checkCoroutineContext(*this, Loc, "co_yield");
   if (!Coroutine)
     return ExprError();
@@ -330,15 +326,16 @@ StmtResult Sema::ActOnCoreturnStmt(SourceLocation Loc, Expr *E) {
   return BuildCoreturnStmt(Loc, E);
 }
 StmtResult Sema::BuildCoreturnStmt(SourceLocation Loc, Expr *E) {
-  if (E && E->getType()->isPlaceholderType()) {
+  auto *Coroutine = checkCoroutineContext(*this, Loc, "co_return");
+  if (!Coroutine)
+    return StmtError();
+
+  if (E && E->getType()->isPlaceholderType() &&
+      !E->getType()->isSpecificPlaceholderType(BuiltinType::Overload)) {
     ExprResult R = CheckPlaceholderExpr(E);
     if (R.isInvalid()) return StmtError();
     E = R.get();
   }
-
-  auto *Coroutine = checkCoroutineContext(*this, Loc, "co_return");
-  if (!Coroutine)
-    return StmtError();
 
   // FIXME: If the operand is a reference to a variable that's about to go out
   // ot scope, we should treat the operand as an xvalue for this overload
