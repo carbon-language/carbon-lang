@@ -195,7 +195,7 @@ static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, SourceLocation Loc,
   const StringRef Funcs[] = {"await_ready", "await_suspend", "await_resume"};
   for (size_t I = 0, N = llvm::array_lengthof(Funcs); I != N; ++I) {
     Expr *Operand = new (S.Context) OpaqueValueExpr(
-        Loc, E->getType(), E->getValueKind(), E->getObjectKind(), E);
+        Loc, E->getType(), VK_LValue, E->getObjectKind(), E);
 
     // FIXME: Pass coroutine handle to await_suspend.
     ExprResult Result = buildMemberCall(S, Operand, Loc, Funcs[I], None);
@@ -237,8 +237,10 @@ ExprResult Sema::BuildCoawaitExpr(SourceLocation Loc, Expr *E) {
     return Res;
   }
 
-  // FIXME: If E is a prvalue, create a temporary.
-  // FIXME: If E is an xvalue, convert to lvalue.
+  // If the expression is a temporary, materialize it as an lvalue so that we
+  // can use it multiple times.
+  if (E->getValueKind() == VK_RValue)
+    E = new (Context) MaterializeTemporaryExpr(E->getType(), E, true);
 
   // Build the await_ready, await_suspend, await_resume calls.
   ReadySuspendResumeResult RSS = buildCoawaitCalls(*this, Loc, E);
@@ -306,8 +308,10 @@ ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {
     return Res;
   }
 
-  // FIXME: If E is a prvalue, create a temporary.
-  // FIXME: If E is an xvalue, convert to lvalue.
+  // If the expression is a temporary, materialize it as an lvalue so that we
+  // can use it multiple times.
+  if (E->getValueKind() == VK_RValue)
+    E = new (Context) MaterializeTemporaryExpr(E->getType(), E, true);
 
   // Build the await_ready, await_suspend, await_resume calls.
   ReadySuspendResumeResult RSS = buildCoawaitCalls(*this, Loc, E);
