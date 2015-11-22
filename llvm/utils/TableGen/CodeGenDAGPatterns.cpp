@@ -107,36 +107,24 @@ bool EEVT::TypeSet::FillWithPossibleTypes(TreePattern &TP,
 /// hasIntegerTypes - Return true if this TypeSet contains iAny or an
 /// integer value type.
 bool EEVT::TypeSet::hasIntegerTypes() const {
-  return std::any_of(TypeVec.begin(), TypeVec.end(),
-                     [](MVT::SimpleValueType VT) {
-                       return isInteger(VT);
-                     });
+  return std::any_of(TypeVec.begin(), TypeVec.end(), isInteger);
 }
 
 /// hasFloatingPointTypes - Return true if this TypeSet contains an fAny or
 /// a floating point value type.
 bool EEVT::TypeSet::hasFloatingPointTypes() const {
-  return std::any_of(TypeVec.begin(), TypeVec.end(),
-                     [](MVT::SimpleValueType VT) {
-                       return isFloatingPoint(VT);
-                     });
+  return std::any_of(TypeVec.begin(), TypeVec.end(), isFloatingPoint);
 }
 
 /// hasScalarTypes - Return true if this TypeSet contains a scalar value type.
 bool EEVT::TypeSet::hasScalarTypes() const {
-  return std::any_of(TypeVec.begin(), TypeVec.end(),
-                     [](MVT::SimpleValueType VT) {
-                       return isScalar(VT);
-                     });
+  return std::any_of(TypeVec.begin(), TypeVec.end(), isScalar);
 }
 
 /// hasVectorTypes - Return true if this TypeSet contains a vAny or a vector
 /// value type.
 bool EEVT::TypeSet::hasVectorTypes() const {
-  return std::any_of(TypeVec.begin(), TypeVec.end(),
-                     [](MVT::SimpleValueType VT) {
-                       return isVector(VT);
-                     });
+  return std::any_of(TypeVec.begin(), TypeVec.end(), isVector);
 }
 
 
