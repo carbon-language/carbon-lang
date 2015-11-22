@@ -104,7 +104,7 @@ int test__divtc3(long double a, long double b, long double c, long double d)
             {
             long double _Complex z = (a * c + b * d) / (c * c + d * d)
                                    + (b * c - a * d) / (c * c + d * d) * _Complex_I;
-            if (cabs((r - z)/r) > 1.e-6)
+            if (cabsl((r - z)/r) > 1.e-6)
                 return 1;
             }
             break;
