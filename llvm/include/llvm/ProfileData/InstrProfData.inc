@@ -1,42 +1,60 @@
-//===-- InstrProfData.inc - instr profiling runtime structures-----===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file defines templates for core runtime data structures used by  
-// instrumentation based profiling and coverage mapping. The instrumentation  
-// runtime library, the compiler IR lowering, and profile reader/writer need
-// to use the same template to make sure the same data structure is defined
-// consistently.
-//
-// Examples of how the template is used:
-// 1. To declare a structure:
-// 
-// struct ProfData {
-// #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
-//    Type Name;
-// #include "llvm/ProfileData/InstrProfData.inc"
-// };
-//
-// 2. To construct LLVM type arrays for the struct type:
-//
-// Type *DataTypes[] = {
-// #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
-//   LLVMType,
-// #include "llvm/ProfileData/InstrProfData.inc"
-// };
-//
-// 4. To construct constant array for the initializers:
-// #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
-//   Initializer,
-// Constant *ConstantVals[] = {
-// #include "llvm/ProfileData/InstrProfData.inc"
-// };
-//===----------------------------------------------------------------------===//
+/*===-- InstrProfData.inc - instr profiling runtime structures -----------=== *\
+|*
+|*                     The LLVM Compiler Infrastructure
+|*
+|* This file is distributed under the University of Illinois Open Source
+|* License. See LICENSE.TXT for details.
+|*
+\*===----------------------------------------------------------------------===*/
+/*
+ * This is the master file that defines all the data structure, signature,
+ * constant literals that are shared across profiling runtime library,
+ * compiler (instrumentation), and host tools (reader/writer). The entities
+ * defined in this file affect the profile runtime ABI, the raw profile format,
+ * or both.
+ *
+ * The file has two identical copies. The master copy lives in LLVM and
+ * the other one  sits in compiler-rt/lib/profile directory. Changes can only
+ * be made directly made in the master copy. Whenever the master copy changes,
+ * the compiler-rt copy needs to be kept in sync with the master.
+ *
+ * The first part of the file includes macros that defines types, names, and
+ * initializers for the member fields of the core data structures. The field
+ * declarations for one structure is enabled by defining the field activation
+ * macro associated with that structure. Only one field activation record
+ * can be defined at one time and the rest definitions will be filtered out by
+ * the preprocessor.
+ *
+ * Examples of how the template is used to instantiate structure definition:
+ * 1. To declare a structure:
+ * 
+ * struct ProfData {
+ * #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
+ *    Type Name;
+ * #include "llvm/ProfileData/InstrProfData.inc"
+ * };
+ *
+ * 2. To construct LLVM type arrays for the struct type:
+ *
+ * Type *DataTypes[] = {
+ * #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
+ *   LLVMType,
+ * #include "llvm/ProfileData/InstrProfData.inc"
+ * };
+ *
+ * 4. To construct constant array for the initializers:
+ * #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
+ *   Initializer,
+ * Constant *ConstantVals[] = {
+ * #include "llvm/ProfileData/InstrProfData.inc"
+ * };
+ *
+ *
+ * The second part of the file includes definitions all other entities that
+ * are related to runtime ABI and format. When no field activation macro is
+ * defined, this file can be included to introduce the definitions.
+ *
+\*===----------------------------------------------------------------------===*/
 
 /* INSTR_PROF_DATA start. */
 /* Definition of member fields of the per-function control structure. */
@@ -148,4 +166,20 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
 #undef COVMAP_FUNC_RECORD
 /* COVMAP_FUNC_RECORD end.  */
 
+
+
+/*============================================================================*/
+
+
+#ifndef INSTR_PROF_DATA_DEFINED
+
+#ifndef INSTR_PROF_DATA_INC_
+#define INSTR_PROF_DATA_INC_
+
+
+#endif /* INSTR_PROF_DATA_INC_ */
+
+#else
+#undef INSTR_PROF_DATA_DEFINED
+#endif
 
