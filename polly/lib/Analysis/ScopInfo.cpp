@@ -23,6 +23,7 @@
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2005,6 +2006,38 @@ isl_set *Scop::getDomainConditions(BasicBlock *BB) {
   return isl_set_copy(DomainMap[BB]);
 }
 
+void Scop::removeErrorBlockDomains() {
+  auto removeDomains = [this](BasicBlock *Start) {
+    auto BBNode = DT.getNode(Start);
+    for (auto ErrorChild : depth_first(BBNode)) {
+      auto ErrorChildBlock = ErrorChild->getBlock();
+      auto CurrentDomain = DomainMap[ErrorChildBlock];
+      auto Empty = isl_set_empty(isl_set_get_space(CurrentDomain));
+      DomainMap[ErrorChildBlock] = Empty;
+      isl_set_free(CurrentDomain);
+    }
+  };
+
+  std::vector<Region *> Todo = {&R};
+
+  while (!Todo.empty()) {
+    auto SubRegion = Todo.back();
+    Todo.pop_back();
+
+    if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
+      for (auto &Child : *SubRegion)
+        Todo.push_back(Child.get());
+      continue;
+    }
+    if (containsErrorBlock(SubRegion->getNode(), getRegion(), LI, DT))
+      removeDomains(SubRegion->getEntry());
+  }
+
+  for (auto BB : R.blocks())
+    if (isErrorBlock(*BB, R, LI, DT))
+      removeDomains(BB);
+}
+
 void Scop::buildDomains(Region *R) {
 
   auto *EntryBB = R->getEntry();
@@ -2024,6 +2057,16 @@ void Scop::buildDomains(Region *R) {
 
   buildDomainsWithBranchConstraints(R);
   propagateDomainConstraints(R);
+
+  // Error blocks and blocks dominated by them have been assumed to never be
+  // executed. Representing them in the Scop does not add any value. In fact,
+  // it is likely to cause issues during construction of the ScopStmts. The
+  // contents of error blocks have not been verfied to be expressible and
+  // will cause problems when building up a ScopStmt for them.
+  // Furthermore, basic blocks dominated by error blocks may reference
+  // instructions in the error block which, if the error block is not modeled,
+  // can themselves not be constructed properly.
+  removeErrorBlockDomains();
 }
 
 void Scop::buildDomainsWithBranchConstraints(Region *R) {

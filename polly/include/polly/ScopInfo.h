@@ -1218,6 +1218,10 @@ private:
   /// @param R  The region we currently build branching conditions for.
   void propagateDomainConstraints(Region *R);
 
+  /// @brief Remove domains of error blocks/regions (and blocks dominated by
+  ///        them).
+  void removeErrorBlockDomains();
+
   /// @brief Compute the domain for each basic block in @p R.
   ///
   /// @param R  The region we currently traverse.
