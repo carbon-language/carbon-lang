@@ -253,8 +253,9 @@ ExprResult Sema::BuildCoawaitExpr(SourceLocation Loc, Expr *E) {
   return Res;
 }
 
-static ExprResult buildYieldValueCall(Sema &S, FunctionScopeInfo *Coroutine,
-                                      SourceLocation Loc, Expr *E) {
+static ExprResult buildPromiseCall(Sema &S, FunctionScopeInfo *Coroutine,
+                                   SourceLocation Loc, StringRef Name,
+                                   MutableArrayRef<Expr *> Args) {
   assert(Coroutine->CoroutinePromise && "no promise for coroutine");
 
   // Form a reference to the promise.
@@ -265,7 +266,7 @@ static ExprResult buildYieldValueCall(Sema &S, FunctionScopeInfo *Coroutine,
     return ExprError();
 
   // Call 'yield_value', passing in E.
-  return buildMemberCall(S, PromiseRef.get(), Loc, "yield_value", E);
+  return buildMemberCall(S, PromiseRef.get(), Loc, Name, Args);
 }
 
 ExprResult Sema::ActOnCoyieldExpr(Scope *S, SourceLocation Loc, Expr *E) {
@@ -280,7 +281,8 @@ ExprResult Sema::ActOnCoyieldExpr(Scope *S, SourceLocation Loc, Expr *E) {
     return ExprError();
 
   // Build yield_value call.
-  ExprResult Awaitable = buildYieldValueCall(*this, Coroutine, Loc, E);
+  ExprResult Awaitable =
+      buildPromiseCall(*this, Coroutine, Loc, "yield_value", E);
   if (Awaitable.isInvalid())
     return ExprError();
 
@@ -338,8 +340,22 @@ StmtResult Sema::BuildCoreturnStmt(SourceLocation Loc, Expr *E) {
   if (!Coroutine)
     return StmtError();
 
-  // FIXME: Build return_* calls.
-  Stmt *Res = new (Context) CoreturnStmt(Loc, E);
+  // FIXME: If the operand is a reference to a variable that's about to go out
+  // ot scope, we should treat the operand as an xvalue for this overload
+  // resolution.
+  ExprResult PC;
+  if (E && !E->getType()->isVoidType()) {
+    PC = buildPromiseCall(*this, Coroutine, Loc, "return_value", E);
+  } else {
+    E = MakeFullDiscardedValueExpr(E).get();
+    PC = buildPromiseCall(*this, Coroutine, Loc, "return_void", None);
+  }
+  if (PC.isInvalid())
+    return StmtError();
+
+  Expr *PCE = ActOnFinishFullExpr(PC.get()).get();
+
+  Stmt *Res = new (Context) CoreturnStmt(Loc, E, PCE);
   Coroutine->CoroutineStmts.push_back(Res);
   return Res;
 }

@@ -52,6 +52,8 @@ struct promise {
   awaitable yield_value(int); // expected-note {{candidate}}
   awaitable yield_value(yielded_thing); // expected-note {{candidate}}
   not_awaitable yield_value(void()); // expected-note {{candidate}}
+  void return_void();
+  void return_value(int); // expected-note {{here}}
 };
 
 void yield() {
@@ -63,6 +65,17 @@ void yield() {
   co_yield "foo"; // expected-error {{no matching}}
   co_yield 1.0;
   co_yield yield; // expected-error {{no member named 'await_ready' in 'not_awaitable'}}
+}
+
+void coreturn(int n) {
+  co_await a;
+  if (n == 0)
+    co_return 3;
+  if (n == 1)
+    co_return {4};
+  if (n == 2)
+    co_return "foo"; // expected-error {{cannot initialize a parameter of type 'int' with an lvalue of type 'const char [4]'}}
+  co_return;
 }
 
 void mixed_yield() {
