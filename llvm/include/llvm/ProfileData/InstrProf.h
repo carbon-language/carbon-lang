@@ -37,19 +37,28 @@ class Module;
 
 /// Return the name of data section containing profile counter variables.
 inline StringRef getInstrProfCountersSectionName(bool AddSegment) {
-  return AddSegment ? "__DATA,__llvm_prf_cnts" : "__llvm_prf_cnts";
+  return AddSegment ? "__DATA," INSTR_PROF_CNTS_SECT_NAME_STR
+                    : INSTR_PROF_CNTS_SECT_NAME_STR;
 }
 
 /// Return the name of data section containing names of instrumented
 /// functions.
 inline StringRef getInstrProfNameSectionName(bool AddSegment) {
-  return AddSegment ? "__DATA,__llvm_prf_names" : "__llvm_prf_names";
+  return AddSegment ? "__DATA," INSTR_PROF_NAME_SECT_NAME_STR
+                    : INSTR_PROF_NAME_SECT_NAME_STR;
 }
 
 /// Return the name of the data section containing per-function control
 /// data.
 inline StringRef getInstrProfDataSectionName(bool AddSegment) {
-  return AddSegment ? "__DATA,__llvm_prf_data" : "__llvm_prf_data";
+  return AddSegment ? "__DATA," INSTR_PROF_DATA_SECT_NAME_STR
+                    : INSTR_PROF_DATA_SECT_NAME_STR;
+}
+
+/// Return the name profile runtime entry point to do value profiling
+/// for a given site.
+inline StringRef getInstrProfValueProfFuncName() {
+  return INSTR_PROF_VALUE_PROF_FUNC_STR;
 }
 
 /// Return the name of the section containing function coverage mapping

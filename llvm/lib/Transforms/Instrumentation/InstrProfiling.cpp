@@ -181,7 +181,7 @@ static Constant *getOrInsertValueProfilingCall(Module &M) {
   };
   auto *ValueProfilingCallTy =
       FunctionType::get(ReturnTy, makeArrayRef(ParamTypes), false);
-  return M.getOrInsertFunction("__llvm_profile_instrument_target",
+  return M.getOrInsertFunction(getInstrProfValueProfFuncName(),
                                ValueProfilingCallTy);
 }
 

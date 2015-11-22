@@ -14,9 +14,10 @@
  * or both.
  *
  * The file has two identical copies. The master copy lives in LLVM and
- * the other one  sits in compiler-rt/lib/profile directory. Changes can only
- * be made directly made in the master copy. Whenever the master copy changes,
- * the compiler-rt copy needs to be kept in sync with the master.
+ * the other one  sits in compiler-rt/lib/profile directory. To make changes
+ * in this file, first modify the master copy and copy it over to compiler-rt.
+ * Testing of any change in this file can start only after the two copies are
+ * synced up.
  *
  * The first part of the file includes macros that defines types, names, and
  * initializers for the member fields of the core data structures. The field
@@ -176,6 +177,13 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
 #ifndef INSTR_PROF_DATA_INC_
 #define INSTR_PROF_DATA_INC_
 
+/* Helper macros.  */
+#define INSTR_PROF_SIMPLE_QUOTE(x) #x
+#define INSTR_PROF_QUOTE(x) INSTR_PROF_SIMPLE_QUOTE(x)
+#define INSTR_PROF_SIMPLE_CONCAT(x,y) x ## y
+#define INSTR_PROF_CONCAT(x,y) INSTR_PROF_SIMPLE_CONCAT(x,y)
+
+
 /* Magic number to detect file format and endianness.
  * Use 255 at one end, since no UTF-8 file can use that character.  Avoid 0,             
  * so that utilities, like strings, don't grab it as a string.  129 is also              
@@ -194,6 +202,33 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
 
 /* Raw profile format version. */
 #define INSTR_PROF_RAW_VERSION 2
+
+/* Runtime section names and name strings.  */
+#define INSTR_PROF_DATA_SECT_NAME __llvm_prf_data
+#define INSTR_PROF_NAME_SECT_NAME __llvm_prf_names
+#define INSTR_PROF_CNTS_SECT_NAME __llvm_prf_cnts
+
+#define INSTR_PROF_DATA_SECT_NAME_STR \
+        INSTR_PROF_QUOTE(INSTR_PROF_DATA_SECT_NAME)
+#define INSTR_PROF_NAME_SECT_NAME_STR \
+        INSTR_PROF_QUOTE(INSTR_PROF_NAME_SECT_NAME)
+#define INSTR_PROF_CNTS_SECT_NAME_STR \
+        INSTR_PROF_QUOTE(INSTR_PROF_CNTS_SECT_NAME)
+
+/* Macros to define start/stop section symbol for a given
+ * section on Linux. For instance
+ * INSTR_PROF_SECT_START(INSTR_PROF_DATA_SECT_NAME) will
+ * expand to __start___llvm_prof_data
+ */
+#define INSTR_PROF_SECT_START(Sect) \
+        INSTR_PROF_CONCAT(__start_,Sect)
+#define INSTR_PROF_SECT_STOP(Sect) \
+        INSTR_PROF_CONCAT(__stop_,Sect)
+
+/* Value Profiling API linkage name.  */
+#define INSTR_PROF_VALUE_PROF_FUNC __llvm_profile_instrument_target
+#define INSTR_PROF_VALUE_PROF_FUNC_STR \
+        INSTR_PROF_QUOTE(INSTR_PROF_VALUE_PROF_FUNC)
 
 #endif /* INSTR_PROF_DATA_INC_ */
 
