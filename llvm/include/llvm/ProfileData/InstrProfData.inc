@@ -107,6 +107,24 @@ VALUE_PROF_FUNC_PARAM(uint32_t, CounterIndex, Type::getInt32Ty(Ctx))
 #undef INSTR_PROF_COMMA
 /* VALUE_PROF_FUNC_PARAM end */
 
+/* VALUE_PROF_KIND start */
+#ifndef VALUE_PROF_KIND
+#define VALUE_PROF_KIND(Enumerator, Value)
+#else
+#define INSTR_PROF_DATA_DEFINED
+#endif
+VALUE_PROF_KIND(IPVK_IndirectCallTarget, 0)
+/* These two kinds must be the last to be
+ * declared. This is to make sure the string
+ * array created with the template can be
+ * indexed with the kind value.
+ */
+VALUE_PROF_KIND(IPVK_First, IPVK_IndirectCallTarget)
+VALUE_PROF_KIND(IPVK_Last, IPVK_IndirectCallTarget)
+
+#undef VALUE_PROF_KIND
+/* VALUE_PROF_KIND end */
+
 /* COVMAP_FUNC_RECORD start */
 /* Definition of member fields of the function record structure in coverage
  * map.

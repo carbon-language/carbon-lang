@@ -169,10 +169,8 @@ inline std::error_code make_error_code(instrprof_error E) {
 }
 
 enum InstrProfValueKind : uint32_t {
-  IPVK_IndirectCallTarget = 0,
-
-  IPVK_First = IPVK_IndirectCallTarget,
-  IPVK_Last = IPVK_IndirectCallTarget
+#define VALUE_PROF_KIND(Enumerator, Value) Enumerator = Value,
+#include "llvm/ProfileData/InstrProfData.inc"
 };
 
 struct InstrProfStringTable {
