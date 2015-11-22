@@ -38,11 +38,14 @@
 // };
 //===----------------------------------------------------------------------===//
 
+/* INSTR_PROF_DATA start. */
+/* Definition of member fields of the per-function control structure. */
 #ifndef INSTR_PROF_DATA
 #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer)
+#else
+#define INSTR_PROF_DATA_DEFINED
 #endif
 
-// INSTR_PROF_DATA_START
 INSTR_PROF_DATA(const uint32_t, llvm::Type::getInt32Ty(Ctx), NameSize, \
                 ConstantInt::get(llvm::Type::getInt32Ty(Ctx), \
                 NamePtr->getType()->getPointerElementType()->getArrayNumElements()))
@@ -58,22 +61,44 @@ INSTR_PROF_DATA(const IntPtrT, llvm::Type::getInt64PtrTy(Ctx), CounterPtr, \
                 llvm::Type::getInt64PtrTy(Ctx)))
 INSTR_PROF_DATA(const IntPtrT, llvm::Type::getInt8PtrTy(Ctx), FunctionPointer, \
                 FunctionAddr)
-INSTR_PROF_DATA(const IntPtrT, llvm::Type::getInt8PtrTy(Ctx), Values, \
+INSTR_PROF_DATA(IntPtrT, llvm::Type::getInt8PtrTy(Ctx), Values, \
                 ConstantPointerNull::get(Int8PtrTy))
 INSTR_PROF_DATA(const uint16_t, Int16ArrayTy, NumValueSites[IPVK_Last+1], \
                 ConstantArray::get(Int16ArrayTy, Int16ArrayVals))
-// INSTR_PROF_DATA_END
-
-#ifdef INSTR_PROF_DATA
 #undef INSTR_PROF_DATA
+
+/* INSTR_PROF_DATA end. */
+
+/* INSTR_PROF_RAW_HEADER  start */
+/* Definition of member fields of the raw profile header data structure. */
+#ifndef INSTR_PROF_RAW_HEADER
+#define INSTR_PROF_RAW_HEADER(Type, Name, Initializer)
+#else
+#define INSTR_PROF_DATA_DEFINED
 #endif
+INSTR_PROF_RAW_HEADER(const uint64_t, Magic, __llvm_profile_get_magic())
+INSTR_PROF_RAW_HEADER(const uint64_t, Version, __llvm_profile_get_version())
+INSTR_PROF_RAW_HEADER(const uint64_t, DataSize, DataSize)
+INSTR_PROF_RAW_HEADER(const uint64_t, CountersSize, CountersSize)
+INSTR_PROF_RAW_HEADER(const uint64_t, NamesSize,  NameSize)
+INSTR_PROF_RAW_HEADER(const uint64_t, CountersDelta, (uintptr_t)CountersBegin)
+INSTR_PROF_RAW_HEADER(const uint64_t, NamesDelta, (uintptr_t)NamesBegin)
+INSTR_PROF_RAW_HEADER(const uint64_t, ValueKindLast, IPVK_Last)
+INSTR_PROF_RAW_HEADER(const uint64_t, ValueDataSize, ValueDataSize)
+INSTR_PROF_RAW_HEADER(const uint64_t, ValueDataDelta, (uintptr_t)ValueDataBegin)
+#undef INSTR_PROF_RAW_HEADER
+/* INSTR_PROF_RAW_HEADER  end */
 
 
+/* COVMAP_FUNC_RECORD start */
+/* Definition of member fields of the function record structure in coverage
+ * map.
+ */
 #ifndef COVMAP_FUNC_RECORD
 #define COVMAP_FUNC_RECORD(Type, LLVMType, Name, Initializer)
+#else
+#define INSTR_PROF_DATA_DEFINED
 #endif
-
-// COVMAP_FUNC_RECORD_START
 COVMAP_FUNC_RECORD(const IntPtrT, llvm::Type::getInt8PtrTy(Ctx), \
                    NamePtr, llvm::ConstantExpr::getBitCast(NamePtr, \
                    llvm::Type::getInt8PtrTy(Ctx))) 
@@ -85,10 +110,7 @@ COVMAP_FUNC_RECORD(const uint32_t, llvm::Type::getInt32Ty(Ctx), DataSize, \
                    CoverageMapping.size()))
 COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
                    llvm::ConstantInt::get(llvm::Type::getInt64Ty(Ctx), FuncHash))
-// COVMAP_FUNC_RECORD_END
-
-#ifdef COVMAP_FUNC_RECORD
 #undef COVMAP_FUNC_RECORD
-#endif
+/* COVMAP_FUNC_RECORD end.  */
 
 

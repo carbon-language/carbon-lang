@@ -614,16 +614,8 @@ template <class IntPtrT> struct LLVM_ALIGNAS(8) ProfileData {
 // compiler-rt/lib/profile/InstrProfilingFile.c  and
 // InstrProfilingBuffer.c.
 struct Header {
-  const uint64_t Magic;
-  const uint64_t Version;
-  const uint64_t DataSize;
-  const uint64_t CountersSize;
-  const uint64_t NamesSize;
-  const uint64_t CountersDelta;
-  const uint64_t NamesDelta;
-  const uint64_t ValueKindLast;
-  const uint64_t ValueDataSize;
-  const uint64_t ValueDataDelta;
+#define INSTR_PROF_RAW_HEADER(Type, Name, Init) Type Name;
+#include "llvm/ProfileData/InstrProfData.inc"
 };
 
 }  // end namespace RawInstrProf
