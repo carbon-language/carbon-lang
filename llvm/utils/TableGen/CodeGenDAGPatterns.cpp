@@ -3523,8 +3523,8 @@ static void CombineChildVariants(TreePatternNode *Orig,
     std::vector<TreePatternNode*> NewChildren;
     for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
       NewChildren.push_back(ChildVariants[i][Idxs[i]]);
-    TreePatternNode *R = new TreePatternNode(Orig->getOperator(), NewChildren,
-                                             Orig->getNumTypes());
+    auto R = llvm::make_unique<TreePatternNode>(
+        Orig->getOperator(), NewChildren, Orig->getNumTypes());
 
     // Copy over properties.
     R->setName(Orig->getName());
@@ -3535,21 +3535,16 @@ static void CombineChildVariants(TreePatternNode *Orig,
 
     // If this pattern cannot match, do not include it as a variant.
     std::string ErrString;
-    if (!R->canPatternMatch(ErrString, CDP)) {
-      delete R;
-    } else {
-      // Scan to see if this pattern has already been emitted.  We can get
-      // duplication due to things like commuting:
-      //   (and GPRC:$a, GPRC:$b) -> (and GPRC:$b, GPRC:$a)
-      // which are the same pattern.  Ignore the dups.
-      if (std::any_of(OutVariants.begin(), OutVariants.end(),
-                      [=](TreePatternNode *Variant) {
-                        return R->isIsomorphicTo(Variant, DepVars);
-                      }))
-        delete R;
-      else
-        OutVariants.push_back(R);
-    }
+    // Scan to see if this pattern has already been emitted.  We can get
+    // duplication due to things like commuting:
+    //   (and GPRC:$a, GPRC:$b) -> (and GPRC:$b, GPRC:$a)
+    // which are the same pattern.  Ignore the dups.
+    if (R->canPatternMatch(ErrString, CDP) &&
+        std::none_of(OutVariants.begin(), OutVariants.end(),
+                     [&](TreePatternNode *Variant) {
+                       return R->isIsomorphicTo(Variant, DepVars);
+                     }))
+      OutVariants.push_back(R.release());
 
     // Increment indices to the next permutation by incrementing the
     // indices from last index backward, e.g., generate the sequence
