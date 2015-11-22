@@ -37,4 +37,9 @@ static __inline ALWAYS_INLINE int different_sign(double x, double y) {
   return result;
 }
 
+long double __gcc_qadd(long double, long double);
+long double __gcc_qsub(long double, long double);
+long double __gcc_qmul(long double, long double);
+long double __gcc_qdiv(long double, long double);
+
 #endif /* COMPILERRT_DD_HEADER */
