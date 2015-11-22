@@ -3715,14 +3715,14 @@ void CodeGenDAGPatterns::GenerateVariants() {
   // intentionally do not reconsider these.  Any variants of added patterns have
   // already been added.
   //
-  for (PatternToMatch &PTM : PatternsToMatch) {
+  for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
     MultipleUseVarSet             DepVars;
     std::vector<TreePatternNode*> Variants;
-    FindDepVars(PTM.getSrcPattern(), DepVars);
+    FindDepVars(PatternsToMatch[i].getSrcPattern(), DepVars);
     DEBUG(errs() << "Dependent/multiply used variables: ");
     DEBUG(DumpDepVars(DepVars));
     DEBUG(errs() << "\n");
-    GenerateVariantsOf(PTM.getSrcPattern(), Variants, *this,
+    GenerateVariantsOf(PatternsToMatch[i].getSrcPattern(), Variants, *this,
                        DepVars);
 
     assert(!Variants.empty() && "Must create at least original variant!");
@@ -3732,7 +3732,7 @@ void CodeGenDAGPatterns::GenerateVariants() {
       continue;
 
     DEBUG(errs() << "FOUND VARIANTS OF: ";
-          PTM.getSrcPattern()->dump();
+          PatternsToMatch[i].getSrcPattern()->dump();
           errs() << "\n");
 
     for (unsigned v = 0, e = Variants.size(); v != e; ++v) {
@@ -3744,12 +3744,14 @@ void CodeGenDAGPatterns::GenerateVariants() {
 
       // Scan to see if an instruction or explicit pattern already matches this.
       bool AlreadyExists = false;
-      for (PatternToMatch &OtherPTM : PatternsToMatch) {
+      for (unsigned p = 0, e = PatternsToMatch.size(); p != e; ++p) {
         // Skip if the top level predicates do not match.
-        if (PTM.getPredicates() != OtherPTM.getPredicates())
+        if (PatternsToMatch[i].getPredicates() !=
+            PatternsToMatch[p].getPredicates())
           continue;
         // Check to see if this variant already exists.
-        if (Variant->isIsomorphicTo(OtherPTM.getSrcPattern(), DepVars)) {
+        if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern(),
+                                    DepVars)) {
           DEBUG(errs() << "  *** ALREADY EXISTS, ignoring variant.\n");
           AlreadyExists = true;
           break;
@@ -3759,10 +3761,11 @@ void CodeGenDAGPatterns::GenerateVariants() {
       if (AlreadyExists) continue;
 
       // Otherwise, add it to the list of patterns we have.
-      PatternsToMatch.emplace_back(PTM.getSrcRecord(), PTM.getPredicates(),
-                                   Variant, PTM.getDstPattern(),
-                                   PTM.getDstRegs(), PTM.getAddedComplexity(),
-                                   Record::getNewUID());
+      PatternsToMatch.emplace_back(
+          PatternsToMatch[i].getSrcRecord(), PatternsToMatch[i].getPredicates(),
+          Variant, PatternsToMatch[i].getDstPattern(),
+          PatternsToMatch[i].getDstRegs(),
+          PatternsToMatch[i].getAddedComplexity(), Record::getNewUID());
     }
 
     DEBUG(errs() << "\n");
