@@ -66,7 +66,6 @@ INSTR_PROF_DATA(IntPtrT, llvm::Type::getInt8PtrTy(Ctx), Values, \
 INSTR_PROF_DATA(const uint16_t, Int16ArrayTy, NumValueSites[IPVK_Last+1], \
                 ConstantArray::get(Int16ArrayTy, Int16ArrayVals))
 #undef INSTR_PROF_DATA
-
 /* INSTR_PROF_DATA end. */
 
 /* INSTR_PROF_RAW_HEADER  start */
@@ -89,6 +88,24 @@ INSTR_PROF_RAW_HEADER(const uint64_t, ValueDataDelta, (uintptr_t)ValueDataBegin)
 #undef INSTR_PROF_RAW_HEADER
 /* INSTR_PROF_RAW_HEADER  end */
 
+/* VALUE_PROF_FUNC_PARAM start */
+/* Definition of parameter types of the runtime API used to do value profiling
+ * for a given value site.
+ */
+#ifndef VALUE_PROF_FUNC_PARAM
+#define VALUE_PROF_FUNC_PARAM(ArgType, ArgName, ArgLLVMType)
+#define INSTR_PROF_COMMA
+#else
+#define INSTR_PROF_DATA_DEFINED
+#define INSTR_PROF_COMMA ,
+#endif
+VALUE_PROF_FUNC_PARAM(uint64_t, TargetValue, Type::getInt64Ty(Ctx)) \
+                      INSTR_PROF_COMMA
+VALUE_PROF_FUNC_PARAM(void *, Data, Type::getInt8PtrTy(Ctx)) INSTR_PROF_COMMA
+VALUE_PROF_FUNC_PARAM(uint32_t, CounterIndex, Type::getInt32Ty(Ctx))
+#undef VALUE_PROF_FUNC_PARAM
+#undef INSTR_PROF_COMMA
+/* VALUE_PROF_FUNC_PARAM end */
 
 /* COVMAP_FUNC_RECORD start */
 /* Definition of member fields of the function record structure in coverage
