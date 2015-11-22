@@ -1299,8 +1299,8 @@ TreePatternNode *TreePatternNode::clone() const {
 
 /// RemoveAllTypes - Recursively strip all the types of this tree.
 void TreePatternNode::RemoveAllTypes() {
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    Types[i] = EEVT::TypeSet();  // Reset to unknown type.
+  // Reset to unknown type.
+  std::fill(Types.begin(), Types.end(), EEVT::TypeSet());
   if (isLeaf()) return;
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
     getChild(i)->RemoveAllTypes();
