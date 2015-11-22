@@ -107,36 +107,36 @@ bool EEVT::TypeSet::FillWithPossibleTypes(TreePattern &TP,
 /// hasIntegerTypes - Return true if this TypeSet contains iAny or an
 /// integer value type.
 bool EEVT::TypeSet::hasIntegerTypes() const {
-  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
-    if (isInteger(TypeVec[i]))
-      return true;
-  return false;
+  return std::any_of(TypeVec.begin(), TypeVec.end(),
+                     [](MVT::SimpleValueType VT) {
+                       return isInteger(VT);
+                     });
 }
 
 /// hasFloatingPointTypes - Return true if this TypeSet contains an fAny or
 /// a floating point value type.
 bool EEVT::TypeSet::hasFloatingPointTypes() const {
-  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
-    if (isFloatingPoint(TypeVec[i]))
-      return true;
-  return false;
+  return std::any_of(TypeVec.begin(), TypeVec.end(),
+                     [](MVT::SimpleValueType VT) {
+                       return isFloatingPoint(VT);
+                     });
 }
 
 /// hasScalarTypes - Return true if this TypeSet contains a scalar value type.
 bool EEVT::TypeSet::hasScalarTypes() const {
-  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
-    if (isScalar(TypeVec[i]))
-      return true;
-  return false;
+  return std::any_of(TypeVec.begin(), TypeVec.end(),
+                     [](MVT::SimpleValueType VT) {
+                       return isScalar(VT);
+                     });
 }
 
 /// hasVectorTypes - Return true if this TypeSet contains a vAny or a vector
 /// value type.
 bool EEVT::TypeSet::hasVectorTypes() const {
-  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
-    if (isVector(TypeVec[i]))
-      return true;
-  return false;
+  return std::any_of(TypeVec.begin(), TypeVec.end(),
+                     [](MVT::SimpleValueType VT) {
+                       return isVector(VT);
+                     });
 }
 
 
@@ -220,14 +220,10 @@ bool EEVT::TypeSet::MergeInTypeInfo(const EEVT::TypeSet &InVT, TreePattern &TP){
   TypeSet InputSet(*this);
 
   for (unsigned i = 0; i != TypeVec.size(); ++i) {
-    bool InInVT = false;
-    for (unsigned j = 0, e = InVT.TypeVec.size(); j != e; ++j)
-      if (TypeVec[i] == InVT.TypeVec[j]) {
-        InInVT = true;
-        break;
-      }
+    if (std::find(InVT.TypeVec.begin(), InVT.TypeVec.end(), TypeVec[i]) !=
+        InVT.TypeVec.end())
+      continue;
 
-    if (InInVT) continue;
     TypeVec.erase(TypeVec.begin()+i--);
     MadeChange = true;
   }
@@ -3554,19 +3550,14 @@ static void CombineChildVariants(TreePatternNode *Orig,
     if (!R->canPatternMatch(ErrString, CDP)) {
       delete R;
     } else {
-      bool AlreadyExists = false;
-
       // Scan to see if this pattern has already been emitted.  We can get
       // duplication due to things like commuting:
       //   (and GPRC:$a, GPRC:$b) -> (and GPRC:$b, GPRC:$a)
       // which are the same pattern.  Ignore the dups.
-      for (unsigned i = 0, e = OutVariants.size(); i != e; ++i)
-        if (R->isIsomorphicTo(OutVariants[i], DepVars)) {
-          AlreadyExists = true;
-          break;
-        }
-
-      if (AlreadyExists)
+      if (std::any_of(OutVariants.begin(), OutVariants.end(),
+                      [=](TreePatternNode *Variant) {
+                        return R->isIsomorphicTo(Variant, DepVars);
+                      }))
         delete R;
       else
         OutVariants.push_back(R);
