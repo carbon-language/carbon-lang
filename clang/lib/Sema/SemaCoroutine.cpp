@@ -300,8 +300,22 @@ ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {
     E = R.get();
   }
 
-  // FIXME: Build await_* calls.
-  Expr *Res = new (Context) CoyieldExpr(Loc, Context.VoidTy, E);
+  if (E->getType()->isDependentType()) {
+    Expr *Res = new (Context) CoyieldExpr(Loc, Context.DependentTy, E);
+    Coroutine->CoroutineStmts.push_back(Res);
+    return Res;
+  }
+
+  // FIXME: If E is a prvalue, create a temporary.
+  // FIXME: If E is an xvalue, convert to lvalue.
+
+  // Build the await_ready, await_suspend, await_resume calls.
+  ReadySuspendResumeResult RSS = buildCoawaitCalls(*this, Loc, E);
+  if (RSS.IsInvalid)
+    return ExprError();
+
+  Expr *Res = new (Context) CoyieldExpr(Loc, E, RSS.Results[0], RSS.Results[1],
+                                        RSS.Results[2]);
   Coroutine->CoroutineStmts.push_back(Res);
   return Res;
 }

@@ -46,9 +46,12 @@ void undefined_promise() { // expected-error {{variable has incomplete type 'pro
 
 struct yielded_thing { const char *p; short a, b; };
 
+struct not_awaitable {};
+
 struct promise {
   awaitable yield_value(int); // expected-note {{candidate}}
   awaitable yield_value(yielded_thing); // expected-note {{candidate}}
+  not_awaitable yield_value(void()); // expected-note {{candidate}}
 };
 
 void yield() {
@@ -58,6 +61,8 @@ void yield() {
   co_yield {"foo", __LONG_LONG_MAX__}; // expected-error {{cannot be narrowed}} expected-note {{explicit cast}} expected-warning {{changes value}}
   co_yield {"foo"};
   co_yield "foo"; // expected-error {{no matching}}
+  co_yield 1.0;
+  co_yield yield; // expected-error {{no member named 'await_ready' in 'not_awaitable'}}
 }
 
 void mixed_yield() {
