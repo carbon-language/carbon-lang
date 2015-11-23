@@ -184,7 +184,7 @@ entry:
 ; CHECK-LABEL: minimal_loop:
 ; CHECK-NOT: br
 ; CHECK: BB7_1:
-; CHECK: i32.store $0, $pop{{[0-9]+}}{{$}}
+; CHECK: i32.store $discard, $0, $pop{{[0-9]+}}{{$}}
 ; CHECK: br BB7_1{{$}}
 ; CHECK: BB7_2:
 define i32 @minimal_loop(i32* %p) {

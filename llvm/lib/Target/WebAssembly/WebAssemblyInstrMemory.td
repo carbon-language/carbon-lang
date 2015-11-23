@@ -76,36 +76,47 @@ def : Pat<(i64 (extloadi16 I32:$addr)), (LOAD16_U_I64 $addr)>;
 def : Pat<(i64 (extloadi32 I32:$addr)), (LOAD32_U_I64 $addr)>;
 
 // Basic store.
+// Note that we split the patterns out of the instruction definitions because
+// WebAssembly's stores return their operand value, and tablegen doesn't like
+// instruction definition patterns that don't reference all of the output
+// operands.
 // Note: WebAssembly inverts SelectionDAG's usual operand order.
-def STORE_I32  : I<(outs), (ins I32:$addr, I32:$val),
-                   [(store i32:$val, I32:$addr)],
-                   "i32.store\t$addr, $val">;
-def STORE_I64  : I<(outs), (ins I32:$addr, I64:$val),
-                   [(store i64:$val, I32:$addr)],
-                   "i64.store\t$addr, $val">;
-def STORE_F32  : I<(outs), (ins I32:$addr, F32:$val),
-                   [(store f32:$val, I32:$addr)],
-                   "f32.store\t$addr, $val">;
-def STORE_F64  : I<(outs), (ins I32:$addr, F64:$val),
-                   [(store f64:$val, I32:$addr)],
-                   "f64.store\t$addr, $val">;
+def STORE_I32  : I<(outs I32:$dst), (ins I32:$addr, I32:$val), [],
+                   "i32.store\t$dst, $addr, $val">;
+def STORE_I64  : I<(outs I64:$dst), (ins I32:$addr, I64:$val), [],
+                   "i64.store\t$dst, $addr, $val">;
+def STORE_F32  : I<(outs F32:$dst), (ins I32:$addr, F32:$val), [],
+                   "f32.store\t$dst, $addr, $val">;
+def STORE_F64  : I<(outs F64:$dst), (ins I32:$addr, F64:$val), [],
+                   "f64.store\t$dst, $addr, $val">;
+
+def : Pat<(store I32:$val, I32:$addr), (STORE_I32 I32:$addr, I32:$val)>;
+def : Pat<(store I64:$val, I32:$addr), (STORE_I64 I32:$addr, I64:$val)>;
+def : Pat<(store F32:$val, I32:$addr), (STORE_F32 I32:$addr, F32:$val)>;
+def : Pat<(store F64:$val, I32:$addr), (STORE_F64 I32:$addr, F64:$val)>;
 
 // Truncating store.
-def STORE8_I32  : I<(outs), (ins I32:$addr, I32:$val),
-                    [(truncstorei8 I32:$val, I32:$addr)],
-                    "i32.store8\t$addr, $val">;
-def STORE16_I32 : I<(outs), (ins I32:$addr, I32:$val),
-                    [(truncstorei16 I32:$val, I32:$addr)],
-                    "i32.store16\t$addr, $val">;
-def STORE8_I64  : I<(outs), (ins I32:$addr, I64:$val),
-                    [(truncstorei8 I64:$val, I32:$addr)],
-                    "i64.store8\t$addr, $val">;
-def STORE16_I64 : I<(outs), (ins I32:$addr, I64:$val),
-                    [(truncstorei16 I64:$val, I32:$addr)],
-                    "i64.store16\t$addr, $val">;
-def STORE32_I64 : I<(outs), (ins I32:$addr, I64:$val),
-                    [(truncstorei32 I64:$val, I32:$addr)],
-                    "i64.store32\t$addr, $val">;
+def STORE8_I32  : I<(outs I32:$dst), (ins I32:$addr, I32:$val), [],
+                    "i32.store8\t$dst, $addr, $val">;
+def STORE16_I32 : I<(outs I32:$dst), (ins I32:$addr, I32:$val), [],
+                    "i32.store16\t$dst, $addr, $val">;
+def STORE8_I64  : I<(outs I64:$dst), (ins I32:$addr, I64:$val), [],
+                    "i64.store8\t$dst, $addr, $val">;
+def STORE16_I64 : I<(outs I64:$dst), (ins I32:$addr, I64:$val), [],
+                    "i64.store16\t$dst, $addr, $val">;
+def STORE32_I64 : I<(outs I64:$dst), (ins I32:$addr, I64:$val), [],
+                    "i64.store32\t$dst, $addr, $val">;
+
+def : Pat<(truncstorei8 I32:$val, I32:$addr),
+          (STORE8_I32 I32:$addr, I32:$val)>;
+def : Pat<(truncstorei16 I32:$val, I32:$addr),
+          (STORE16_I32 I32:$addr, I32:$val)>;
+def : Pat<(truncstorei8 I64:$val, I32:$addr),
+          (STORE8_I64 I32:$addr, I64:$val)>;
+def : Pat<(truncstorei16 I64:$val, I32:$addr),
+          (STORE16_I64 I32:$addr, I64:$val)>;
+def : Pat<(truncstorei32 I64:$val, I32:$addr),
+          (STORE32_I64 I32:$addr, I64:$val)>;
 
 // Memory size.
 def MEMORY_SIZE_I32 : I<(outs I32:$dst), (ins),
