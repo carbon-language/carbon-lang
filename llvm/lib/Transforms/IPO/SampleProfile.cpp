@@ -188,6 +188,7 @@ public:
   unsigned computeCoverage(unsigned Used, unsigned Total) const;
   unsigned countUsedSamples(const FunctionSamples *Samples) const;
   unsigned countBodySamples(const FunctionSamples *Samples) const;
+  void clear() { SampleCoverage.clear(); }
 
 private:
   typedef DenseMap<LineLocation, unsigned> BodySampleCoverageMap;
@@ -285,6 +286,7 @@ void SampleProfileLoader::clearFunctionData() {
   LI = nullptr;
   Predecessors.clear();
   Successors.clear();
+  CoverageTracker.clear();
 }
 
 /// \brief Returns the offset of lineno \p L to head_lineno \p H
