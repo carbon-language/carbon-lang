@@ -82,7 +82,11 @@ public:
                size_t allocationSize, uintptr_t objAddress)
       : Name(name), Address(address), Size(size),
         LoadAddress(reinterpret_cast<uintptr_t>(address)), StubOffset(size),
-        AllocationSize(allocationSize), ObjAddress(objAddress) {}
+        AllocationSize(allocationSize), ObjAddress(objAddress) {
+    // AllocationSize is used only in asserts, prevent an "unused private field"
+    // warning:
+    (void)AllocationSize;
+  }
 
   StringRef getName() const { return Name; }
 
