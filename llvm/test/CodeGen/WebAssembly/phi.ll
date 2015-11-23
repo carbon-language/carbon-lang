@@ -26,9 +26,9 @@ done:
 
 ; CHECK-LABEL: test1:
 ; CHECK: BB1_1:
-; CHECK: set_local $[[NUM0:[0-9]+]], $[[NUM1:[0-9]+]]{{$}}
-; CHECK: set_local $[[NUM1]], $[[NUM2:[0-9]+]]{{$}}
-; CHECK: set_local $[[NUM2]], $[[NUM0]]{{$}}
+; CHECK: copy_local $[[NUM0:[0-9]+]], $[[NUM1:[0-9]+]]{{$}}
+; CHECK: copy_local $[[NUM1]], $[[NUM2:[0-9]+]]{{$}}
+; CHECK: copy_local $[[NUM2]], $[[NUM0]]{{$}}
 define i32 @test1(i32 %n) {
 entry:
   br label %loop

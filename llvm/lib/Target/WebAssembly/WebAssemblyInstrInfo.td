@@ -98,6 +98,14 @@ multiclass LOCAL<WebAssemblyRegClass vt> {
   // TODO: set_local returns its operand value
   def SET_LOCAL_#vt : I<(outs), (ins i32imm:$regno, vt:$src), [],
                         "set_local\t$regno, $src">;
+
+  // COPY_LOCAL is not an actual instruction in wasm, but since we allow
+  // get_local and set_local to be implicit, we can have a COPY_LOCAL which
+  // is actually a no-op because all the work is done in the implied
+  // get_local and set_local.
+  let isAsCheapAsAMove = 1 in
+  def COPY_LOCAL_#vt : I<(outs vt:$res), (ins vt:$src), [],
+                         "copy_local\t$res, $src">;
 }
 defm : LOCAL<I32>;
 defm : LOCAL<I64>;
