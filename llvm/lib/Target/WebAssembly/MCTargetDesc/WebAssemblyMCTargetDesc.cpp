@@ -65,8 +65,5 @@ extern "C" void LLVMInitializeWebAssemblyTargetMC() {
 
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createWebAssemblyMCInstPrinter);
-
-    // Register the MC code emitter
-    TargetRegistry::RegisterMCCodeEmitter(*T, createWebAssemblyMCCodeEmitter);
   }
 }
