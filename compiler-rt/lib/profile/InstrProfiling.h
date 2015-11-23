@@ -45,16 +45,13 @@ typedef unsigned long int uintptr_t;
 
 #endif /* defined(__FreeBSD__) && defined(__i386__) */
 
+#include "InstrProfData.inc"
+
 enum ValueKind {
   IPVK_IndirectCallTarget = 0,
   IPVK_First = IPVK_IndirectCallTarget,
   IPVK_Last = IPVK_IndirectCallTarget
 };
-
-typedef struct __llvm_profile_value_data {
-  uint64_t TargetValue;
-  uint64_t NumTaken;
-} __llvm_profile_value_data;
 
 typedef void *IntPtrT;
 typedef struct LLVM_ALIGNAS(8) __llvm_profile_data {

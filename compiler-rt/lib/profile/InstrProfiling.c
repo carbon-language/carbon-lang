@@ -12,11 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct ValueProfNode {
-  __llvm_profile_value_data VData;
-  struct ValueProfNode *Next;
-} ValueProfNode;
-
 LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
   /* Magic number to detect file format and endianness.
    *
@@ -70,7 +65,7 @@ LLVM_LIBRARY_VISIBILITY void __llvm_profile_reset_counters(void) {
       ValueProfNode *CurrentVNode = ValueCounters[i];
 
       while (CurrentVNode) {
-        CurrentVNode->VData.NumTaken = 0;
+        CurrentVNode->VData.Count = 0;
         CurrentVNode = CurrentVNode->Next;
       }
     }
@@ -121,23 +116,23 @@ LLVM_LIBRARY_VISIBILITY void
 __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
                                  uint32_t CounterIndex) {
 
-  __llvm_profile_data *VData = (__llvm_profile_data *)Data;
-  if (!VData)
+  __llvm_profile_data *PData = (__llvm_profile_data *)Data;
+  if (!PData)
     return;
 
-  if (!VData->Values) {
-    if (!allocateValueProfileCounters(VData))
+  if (!PData->Values) {
+    if (!allocateValueProfileCounters(PData))
       return;
   }
 
-  ValueProfNode **ValueCounters = (ValueProfNode **)VData->Values;
+  ValueProfNode **ValueCounters = (ValueProfNode **)PData->Values;
   ValueProfNode *PrevVNode = NULL;
   ValueProfNode *CurrentVNode = ValueCounters[CounterIndex];
 
   uint8_t VDataCount = 0;
   while (CurrentVNode) {
-    if (TargetValue == CurrentVNode->VData.TargetValue) {
-      CurrentVNode->VData.NumTaken++;
+    if (TargetValue == CurrentVNode->VData.Value) {
+      CurrentVNode->VData.Count++;
       return;
     }
     PrevVNode = CurrentVNode;
@@ -152,8 +147,8 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
   if (!CurrentVNode)
     return;
 
-  CurrentVNode->VData.TargetValue = TargetValue;
-  CurrentVNode->VData.NumTaken++;
+  CurrentVNode->VData.Value = TargetValue;
+  CurrentVNode->VData.Count++;
 
   uint32_t Success = 0;
   if (!ValueCounters[CounterIndex])
@@ -201,8 +196,8 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
     uint8_t Padding = __llvm_profile_get_num_padding_bytes(NumVSites);
 
     uint8_t *PerSiteCountPtr = PerSiteCountsHead;
-    __llvm_profile_value_data *VDataPtr =
-        (__llvm_profile_value_data *)(PerSiteCountPtr + NumVSites + Padding);
+    InstrProfValueData *VDataPtr =
+        (InstrProfValueData *)(PerSiteCountPtr + NumVSites + Padding);
 
     for (i = 0; i < NumVSites; ++i) {
 
