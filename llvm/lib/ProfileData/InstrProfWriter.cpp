@@ -171,6 +171,21 @@ void InstrProfWriter::write(raw_fd_ostream &OS) {
   endian::Writer<little>(OS).write<uint64_t>(TableStart.second);
 }
 
+void InstrProfWriter::writeRecordInText(const InstrProfRecord &Func,
+                                        raw_fd_ostream &OS) {
+  OS << Func.Name << "\n" << Func.Hash << "\n" << Func.Counts.size() << "\n";
+  for (uint64_t Count : Func.Counts)
+    OS << Count << "\n";
+
+  OS << "\n";
+}
+
+void InstrProfWriter::writeText(raw_fd_ostream &OS) {
+  for (const auto &I : FunctionData)
+    for (const auto &Func : I.getValue())
+      writeRecordInText(Func.second, OS);
+}
+
 std::unique_ptr<MemoryBuffer> InstrProfWriter::writeBuffer() {
   std::string Data;
   llvm::raw_string_ostream OS(Data);
