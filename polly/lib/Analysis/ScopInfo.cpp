@@ -2018,7 +2018,7 @@ void Scop::removeErrorBlockDomains() {
     }
   };
 
-  std::vector<Region *> Todo = {&R};
+  SmallVector<Region *, 4> Todo = {&R};
 
   while (!Todo.empty()) {
     auto SubRegion = Todo.back();
