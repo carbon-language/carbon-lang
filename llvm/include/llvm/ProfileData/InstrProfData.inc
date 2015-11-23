@@ -230,6 +230,25 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
 #define INSTR_PROF_VALUE_PROF_FUNC_STR \
         INSTR_PROF_QUOTE(INSTR_PROF_VALUE_PROF_FUNC)
 
+/* The data structure that represents a tracked value by the
+ * value profiler.
+ */
+typedef struct InstrProfValueData {
+  // Profiled value.
+  uint64_t Value;
+  // Number of times the value appears in the training run.
+  uint64_t Count;
+} InstrProfValueData;
+
+/* This is an internal data structure used by value profiler. It
+ * is defined here to allow serialization code sharing by LLVM
+ * to be used in unit test.
+ */
+typedef struct ValueProfNode {
+  InstrProfValueData VData;
+  struct ValueProfNode *Next;
+} ValueProfNode;
+
 #endif /* INSTR_PROF_DATA_INC_ */
 
 #else

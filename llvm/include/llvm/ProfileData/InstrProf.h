@@ -199,13 +199,6 @@ struct InstrProfStringTable {
   }
 };
 
-struct InstrProfValueData {
-  // Profiled value.
-  uint64_t Value;
-  // Number of times the value appears in the training run.
-  uint64_t Count;
-};
-
 struct InstrProfValueSiteRecord {
   /// Value profiling data pairs at a given value site.
   std::list<InstrProfValueData> ValueData;
