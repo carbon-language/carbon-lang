@@ -48,9 +48,8 @@ typedef unsigned long int uintptr_t;
 #include "InstrProfData.inc"
 
 enum ValueKind {
-  IPVK_IndirectCallTarget = 0,
-  IPVK_First = IPVK_IndirectCallTarget,
-  IPVK_Last = IPVK_IndirectCallTarget
+#define VALUE_PROF_KIND(Enumerator, Value) Enumerator = Value,
+#include "InstrProfData.inc"
 };
 
 typedef void *IntPtrT;
