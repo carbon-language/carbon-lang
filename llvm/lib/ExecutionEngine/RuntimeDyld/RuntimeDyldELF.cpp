@@ -1770,7 +1770,7 @@ uint64_t RuntimeDyldELF::allocateGOTEntries(unsigned SectionID, unsigned no)
     GOTSectionID = Sections.size();
     // Reserve a section id. We'll allocate the section later
     // once we know the total size
-    Sections.push_back(SectionEntry(".got", nullptr, 0, 0));
+    Sections.push_back(SectionEntry(".got", nullptr, 0, 0, 0));
   }
   uint64_t StartOffset = CurrentGOTIndex * getGOTEntrySize();
   CurrentGOTIndex += no;
@@ -1806,7 +1806,8 @@ void RuntimeDyldELF::finalizeLoad(const ObjectFile &Obj,
     if (!Addr)
       report_fatal_error("Unable to allocate memory for GOT!");
 
-    Sections[GOTSectionID] = SectionEntry(".got", Addr, TotalSize, 0);
+    Sections[GOTSectionID] =
+        SectionEntry(".got", Addr, TotalSize, TotalSize, 0);
 
     if (Checker)
       Checker->registerSection(Obj.getFileName(), GOTSectionID);

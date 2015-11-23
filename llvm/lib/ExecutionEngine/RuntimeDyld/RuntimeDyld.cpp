@@ -518,7 +518,8 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
-  Sections.push_back(SectionEntry("<common symbols>", Addr, CommonSize, 0));
+  Sections.push_back(
+      SectionEntry("<common symbols>", Addr, CommonSize, CommonSize, 0));
   memset(Addr, 0, CommonSize);
 
   DEBUG(dbgs() << "emitCommonSection SectionID: " << SectionID << " new addr: "
@@ -643,7 +644,8 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
                  << " Allocate: " << Allocate << "\n");
   }
 
-  Sections.push_back(SectionEntry(Name, Addr, DataSize, (uintptr_t)pData));
+  Sections.push_back(
+      SectionEntry(Name, Addr, DataSize, Allocate, (uintptr_t)pData));
 
   if (Checker)
     Checker->registerSection(Obj.getFileName(), SectionID);

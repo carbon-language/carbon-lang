@@ -69,16 +69,20 @@ class SectionEntry {
   /// relocations (like ARM).
   uintptr_t StubOffset;
 
+  /// The total amount of space allocated for this section.  This includes the
+  /// section size and the maximum amount of space that the stubs can occupy.
+  size_t AllocationSize;
+
   /// ObjAddress - address of the section in the in-memory object file.  Used
   /// for calculating relocations in some object formats (like MachO).
   uintptr_t ObjAddress;
 
 public:
   SectionEntry(StringRef name, uint8_t *address, size_t size,
-               uintptr_t objAddress)
+               size_t allocationSize, uintptr_t objAddress)
       : Name(name), Address(address), Size(size),
         LoadAddress(reinterpret_cast<uintptr_t>(address)), StubOffset(size),
-        ObjAddress(objAddress) {}
+        AllocationSize(allocationSize), ObjAddress(objAddress) {}
 
   StringRef getName() const { return Name; }
 
@@ -86,6 +90,7 @@ public:
 
   /// \brief Return the address of this section with an offset.
   uint8_t *getAddressWithOffset(unsigned OffsetBytes) const {
+    assert(OffsetBytes <= AllocationSize && "Offset out of bounds!");
     return Address + OffsetBytes;
   }
 
@@ -96,12 +101,16 @@ public:
 
   /// \brief Return the load address of this section with an offset.
   uint64_t getLoadAddressWithOffset(unsigned OffsetBytes) const {
+    assert(OffsetBytes <= AllocationSize && "Offset out of bounds!");
     return LoadAddress + OffsetBytes;
   }
 
   uintptr_t getStubOffset() const { return StubOffset; }
 
-  void advanceStubOffset(unsigned StubSize) { StubOffset += StubSize; }
+  void advanceStubOffset(unsigned StubSize) {
+    StubOffset += StubSize;
+    assert(StubOffset <= AllocationSize && "Not enough space allocated!");
+  }
 
   uintptr_t getObjAddress() const { return ObjAddress; }
 };
