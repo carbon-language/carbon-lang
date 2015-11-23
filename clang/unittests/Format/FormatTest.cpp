@@ -4080,7 +4080,8 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
 
   verifyFormat("std::vector<aaaaaaaaaaaaaaaaaaaaaaa,\n"
                "            aaaaaaaaaaaaaaaaaaaaaaa,\n"
-               "            aaaaaaaaaaaaaaaaaaaaaaa> aaaaaaaaaaaaaaaaaa;",
+               "            aaaaaaaaaaaaaaaaaaaaaaa>\n"
+               "    aaaaaaaaaaaaaaaaaa;",
                NoBinPacking);
   verifyFormat("a(\"a\"\n"
                "  \"a\",\n"
