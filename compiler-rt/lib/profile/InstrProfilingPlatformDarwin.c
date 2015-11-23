@@ -13,17 +13,21 @@
 /* Use linker magic to find the bounds of the Data section. */
 LLVM_LIBRARY_VISIBILITY
 extern __llvm_profile_data
-    DataStart __asm("section$start$__DATA$__llvm_prf_data");
+    DataStart __asm("section$start$__DATA$" INSTR_PROF_DATA_SECT_NAME_STR);
 LLVM_LIBRARY_VISIBILITY
-extern __llvm_profile_data DataEnd __asm("section$end$__DATA$__llvm_prf_data");
+extern __llvm_profile_data
+    DataEnd __asm("section$end$__DATA$" INSTR_PROF_DATA_SECT_NAME_STR);
 LLVM_LIBRARY_VISIBILITY
-extern char NamesStart __asm("section$start$__DATA$__llvm_prf_names");
+extern char
+    NamesStart __asm("section$start$__DATA$" INSTR_PROF_NAME_SECT_NAME_STR);
 LLVM_LIBRARY_VISIBILITY
-extern char NamesEnd __asm("section$end$__DATA$__llvm_prf_names");
+extern char NamesEnd __asm("section$end$__DATA$" INSTR_PROF_NAME_SECT_NAME_STR);
 LLVM_LIBRARY_VISIBILITY
-extern uint64_t CountersStart __asm("section$start$__DATA$__llvm_prf_cnts");
+extern uint64_t
+    CountersStart __asm("section$start$__DATA$" INSTR_PROF_CNTS_SECT_NAME_STR);
 LLVM_LIBRARY_VISIBILITY
-extern uint64_t CountersEnd __asm("section$end$__DATA$__llvm_prf_cnts");
+extern uint64_t
+    CountersEnd __asm("section$end$__DATA$" INSTR_PROF_CNTS_SECT_NAME_STR);
 
 LLVM_LIBRARY_VISIBILITY
 const __llvm_profile_data *__llvm_profile_begin_data(void) {
