@@ -1109,7 +1109,8 @@ private:
   SCEVAffinator Affinator;
 
   typedef MapVector<std::pair<AssertingVH<const Value>, int>,
-                    std::unique_ptr<ScopArrayInfo>> ArrayInfoMapTy;
+                    std::unique_ptr<ScopArrayInfo>>
+      ArrayInfoMapTy;
   /// @brief A map to remember ScopArrayInfo objects for all base pointers.
   ///
   /// As PHI nodes may have two array info objects associated, we add a flag
