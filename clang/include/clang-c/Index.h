@@ -2481,7 +2481,7 @@ enum CXVisibilityKind {
   /** \brief Symbol seen by the linker but resolves to a symbol inside this object. */
   CXVisibility_Protected,
   /** \brief Symbol seen by the linker and acts like a normal symbol. */
-  CXVisibility_Default,
+  CXVisibility_Default
 };
 
 CINDEX_LINKAGE enum CXVisibilityKind clang_getCursorVisibility(CXCursor cursor);
