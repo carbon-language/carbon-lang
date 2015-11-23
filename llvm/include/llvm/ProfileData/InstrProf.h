@@ -606,7 +606,7 @@ template <class IntPtrT> struct LLVM_ALIGNAS(8) ProfileData {
 // compiler-rt/lib/profile/InstrProfilingFile.c  and
 // InstrProfilingBuffer.c.
 struct Header {
-#define INSTR_PROF_RAW_HEADER(Type, Name, Init) Type Name;
+#define INSTR_PROF_RAW_HEADER(Type, Name, Init) const Type Name;
 #include "llvm/ProfileData/InstrProfData.inc"
 };
 

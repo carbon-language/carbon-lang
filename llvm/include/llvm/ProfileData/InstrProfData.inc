@@ -94,16 +94,16 @@ INSTR_PROF_DATA(const uint16_t, Int16ArrayTy, NumValueSites[IPVK_Last+1], \
 #else
 #define INSTR_PROF_DATA_DEFINED
 #endif
-INSTR_PROF_RAW_HEADER(const uint64_t, Magic, __llvm_profile_get_magic())
-INSTR_PROF_RAW_HEADER(const uint64_t, Version, __llvm_profile_get_version())
-INSTR_PROF_RAW_HEADER(const uint64_t, DataSize, DataSize)
-INSTR_PROF_RAW_HEADER(const uint64_t, CountersSize, CountersSize)
-INSTR_PROF_RAW_HEADER(const uint64_t, NamesSize,  NameSize)
-INSTR_PROF_RAW_HEADER(const uint64_t, CountersDelta, (uintptr_t)CountersBegin)
-INSTR_PROF_RAW_HEADER(const uint64_t, NamesDelta, (uintptr_t)NamesBegin)
-INSTR_PROF_RAW_HEADER(const uint64_t, ValueKindLast, IPVK_Last)
-INSTR_PROF_RAW_HEADER(const uint64_t, ValueDataSize, ValueDataSize)
-INSTR_PROF_RAW_HEADER(const uint64_t, ValueDataDelta, (uintptr_t)ValueDataBegin)
+INSTR_PROF_RAW_HEADER(uint64_t, Magic, __llvm_profile_get_magic())
+INSTR_PROF_RAW_HEADER(uint64_t, Version, __llvm_profile_get_version())
+INSTR_PROF_RAW_HEADER(uint64_t, DataSize, DataSize)
+INSTR_PROF_RAW_HEADER(uint64_t, CountersSize, CountersSize)
+INSTR_PROF_RAW_HEADER(uint64_t, NamesSize,  NamesSize)
+INSTR_PROF_RAW_HEADER(uint64_t, CountersDelta, (uintptr_t)CountersBegin)
+INSTR_PROF_RAW_HEADER(int64_t, NamesDelta, (uintptr_t)NamesBegin)
+INSTR_PROF_RAW_HEADER(uint64_t, ValueKindLast, IPVK_Last)
+INSTR_PROF_RAW_HEADER(uint64_t, ValueDataSize, ValueDataSize)
+INSTR_PROF_RAW_HEADER(uint64_t, ValueDataDelta, (uintptr_t)ValueDataBegin)
 #undef INSTR_PROF_RAW_HEADER
 /* INSTR_PROF_RAW_HEADER  end */
 
@@ -193,12 +193,12 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
  * The magic and version need to be kept in sync with                                    
  * projects/compiler-rt/lib/profile/InstrProfiling.c                                     
  */
-#define INSTR_PROF_RAW_MAGIC_64 uint64_t(255) << 56 | uint64_t('l') << 48 | \
-       uint64_t('p') << 40 | uint64_t('r') << 32 | uint64_t('o') << 24 |  \
-        uint64_t('f') << 16 | uint64_t('r') << 8 | uint64_t(129)
-#define INSTR_PROF_RAW_MAGIC_32 uint64_t(255) << 56 | uint64_t('l') << 48 | \
-       uint64_t('p') << 40 | uint64_t('r') << 32 | uint64_t('o') << 24 |  \
-        uint64_t('f') << 16 | uint64_t('R') << 8 | uint64_t(129)
+#define INSTR_PROF_RAW_MAGIC_64 (uint64_t)255 << 56 | (uint64_t)'l' << 48 | \
+       (uint64_t)'p' << 40 | (uint64_t)'r' << 32 | (uint64_t)'o' << 24 |  \
+        (uint64_t)'f' << 16 | (uint64_t)'r' << 8 | (uint64_t)129
+#define INSTR_PROF_RAW_MAGIC_32 (uint64_t)255 << 56 | (uint64_t)'l' << 48 | \
+       (uint64_t)'p' << 40 | (uint64_t)'r' << 32 | (uint64_t)'o' << 24 |  \
+        (uint64_t)'f' << 16 | (uint64_t)'R' << 8 | (uint64_t)129
 
 /* Raw profile format version. */
 #define INSTR_PROF_RAW_VERSION 2
