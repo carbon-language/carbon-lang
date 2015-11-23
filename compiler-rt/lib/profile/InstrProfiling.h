@@ -100,9 +100,13 @@ void __llvm_profile_reset_counters(void);
  *
  * Records the target value for the CounterIndex if not seen before. Otherwise,
  * increments the counter associated w/ the target value.
+ * void __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
+ *                                       uint32_t CounterIndex);
  */
-void __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
-                                      uint32_t CounterIndex);
+void INSTR_PROF_VALUE_PROF_FUNC(
+#define VALUE_PROF_FUNC_PARAM(ArgType, ArgName, ArgLLVMType) ArgType ArgName
+#include "InstrProfData.inc"
+);
 
 /*!
  * \brief Prepares the value profiling data for output.
