@@ -2460,17 +2460,6 @@ enum CXLinkageKind {
  */
 CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
 
-/**
- * \brief Describe the visibility of the entity referred to by a cursor.
- *
- * This returns the default visibility if not explicitly specified by
- * a visibility attribute. The default visibility may be changed by
- * commandline arguments.
- *
- * \param cursor The cursor to query.
- *
- * \returns The visibility of the cursor.
- */
 enum CXVisibilityKind {
   /** \brief This value indicates that no visibility information is available
    * for a provided CXCursor. */
@@ -2484,6 +2473,17 @@ enum CXVisibilityKind {
   CXVisibility_Default
 };
 
+/**
+ * \brief Describe the visibility of the entity referred to by a cursor.
+ *
+ * This returns the default visibility if not explicitly specified by
+ * a visibility attribute. The default visibility may be changed by
+ * commandline arguments.
+ *
+ * \param cursor The cursor to query.
+ *
+ * \returns The visibility of the cursor.
+ */
 CINDEX_LINKAGE enum CXVisibilityKind clang_getCursorVisibility(CXCursor cursor);
 
 /**
