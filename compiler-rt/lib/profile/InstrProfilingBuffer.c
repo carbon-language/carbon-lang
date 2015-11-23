@@ -55,7 +55,7 @@ static uint32_t bufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
   return 0;
 }
 
-LLVM_LIBRARY_VISIBILITY
+LLVM_LIBRARY_VISIBILITY int
 __llvm_profile_write_buffer(char *Buffer) {
   return llvmWriteProfData(bufferWriter, Buffer, 0, 0);
 }
