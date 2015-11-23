@@ -53,7 +53,7 @@ enum ValueKind {
 };
 
 typedef void *IntPtrT;
-typedef struct LLVM_ALIGNAS(8) __llvm_profile_data {
+typedef struct LLVM_ALIGNAS(INSTR_PROF_DATA_ALIGNMENT) __llvm_profile_data {
 #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) Type Name;
 #include "InstrProfData.inc"
 } __llvm_profile_data;
