@@ -17,7 +17,7 @@ typedef struct ValueProfNode {
   struct ValueProfNode *Next;
 } ValueProfNode;
 
-__attribute__((visibility("hidden"))) uint64_t __llvm_profile_get_magic(void) {
+LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
   /* Magic number to detect file format and endianness.
    *
    * Use 255 at one end, since no UTF-8 file can use that character.  Avoid 0,
@@ -36,18 +36,17 @@ __attribute__((visibility("hidden"))) uint64_t __llvm_profile_get_magic(void) {
 /* Return the number of bytes needed to add to SizeInBytes to make it
  *   the result a multiple of 8.
  */
-__attribute__((visibility("hidden"))) uint8_t
+LLVM_LIBRARY_VISIBILITY uint8_t
 __llvm_profile_get_num_padding_bytes(uint64_t SizeInBytes) {
   return 7 & (sizeof(uint64_t) - SizeInBytes % sizeof(uint64_t));
 }
 
-__attribute__((visibility("hidden"))) uint64_t
-__llvm_profile_get_version(void) {
+LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_version(void) {
   /* This should be bumped any time the output format changes. */
   return 2;
 }
 
-__attribute__((visibility("hidden"))) void __llvm_profile_reset_counters(void) {
+LLVM_LIBRARY_VISIBILITY void __llvm_profile_reset_counters(void) {
   uint64_t *I = __llvm_profile_begin_counters();
   uint64_t *E = __llvm_profile_end_counters();
 
@@ -82,10 +81,9 @@ __attribute__((visibility("hidden"))) void __llvm_profile_reset_counters(void) {
 static uint64_t TotalValueDataSize = 0;
 
 #ifdef _MIPS_ARCH
-__attribute__((visibility("hidden"))) void
+LLVM_LIBRARY_VISIBILITY void
 __llvm_profile_instrument_target(uint64_t TargetValue, void *Data_,
-                                 uint32_t CounterIndex) {
-}
+                                 uint32_t CounterIndex) {}
 
 #else
 
@@ -119,7 +117,7 @@ static int allocateValueProfileCounters(__llvm_profile_data *Data) {
   return 1;
 }
 
-__attribute__((visibility("hidden"))) void
+LLVM_LIBRARY_VISIBILITY void
 __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
                                  uint32_t CounterIndex) {
 
@@ -172,7 +170,7 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
 }
 #endif
 
-__attribute__((visibility("hidden"))) uint64_t
+LLVM_LIBRARY_VISIBILITY uint64_t
 __llvm_profile_gather_value_data(uint8_t **VDataArray) {
 
   if (!VDataArray || 0 == TotalValueDataSize)

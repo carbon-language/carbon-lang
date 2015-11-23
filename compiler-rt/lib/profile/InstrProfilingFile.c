@@ -164,7 +164,7 @@ static void setFilenameAutomatically(void) {
   resetFilenameToDefault();
 }
 
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 void __llvm_profile_initialize_file(void) {
   /* Check if the filename has been initialized. */
   if (__llvm_profile_CurrentFilename)
@@ -174,12 +174,12 @@ void __llvm_profile_initialize_file(void) {
   setFilenameAutomatically();
 }
 
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 void __llvm_profile_set_filename(const char *Filename) {
   setFilenamePossiblyWithPid(Filename);
 }
 
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 void __llvm_profile_override_default_filename(const char *Filename) {
   /* If the env var is set, skip setting filename from argument. */
   const char *Env_Filename = getenv("LLVM_PROFILE_FILE");
@@ -188,7 +188,7 @@ void __llvm_profile_override_default_filename(const char *Filename) {
   setFilenamePossiblyWithPid(Filename);
 }
 
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 int __llvm_profile_write_file(void) {
   int rc;
 
@@ -204,11 +204,9 @@ int __llvm_profile_write_file(void) {
   return rc;
 }
 
-static void writeFileWithoutReturn(void) {
-  __llvm_profile_write_file();
-}
+static void writeFileWithoutReturn(void) { __llvm_profile_write_file(); }
 
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 int __llvm_profile_register_write_file_atexit(void) {
   static int HasBeenRegistered = 0;
 

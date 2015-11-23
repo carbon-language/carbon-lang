@@ -8,6 +8,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfilingUtil.h"
+#include "InstrProfiling.h"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -18,7 +19,7 @@ int mkdir(const char*, unsigned short);
 #include <sys/types.h>
 #endif
 
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 void __llvm_profile_recursive_mkdir(char *path) {
   int i;
 

@@ -26,10 +26,10 @@ static uint64_t *CountersLast = NULL;
  * calls are only required (and only emitted) on targets where we haven't
  * implemented linker magic to find the bounds of the sections.
  */
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 void __llvm_profile_register_function(void *Data_) {
   /* TODO: Only emit this function if we can't use linker magic. */
-  const __llvm_profile_data *Data = (__llvm_profile_data*)Data_;
+  const __llvm_profile_data *Data = (__llvm_profile_data *)Data_;
   if (!DataFirst) {
     DataFirst = Data;
     DataLast = Data + 1;
@@ -55,20 +55,16 @@ void __llvm_profile_register_function(void *Data_) {
 #undef UPDATE_LAST
 }
 
-__attribute__((visibility("hidden")))
-const __llvm_profile_data *__llvm_profile_begin_data(void) {
-  return DataFirst;
-}
-__attribute__((visibility("hidden")))
-const __llvm_profile_data *__llvm_profile_end_data(void) {
-  return DataLast;
-}
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
+const __llvm_profile_data *__llvm_profile_begin_data(void) { return DataFirst; }
+LLVM_LIBRARY_VISIBILITY
+const __llvm_profile_data *__llvm_profile_end_data(void) { return DataLast; }
+LLVM_LIBRARY_VISIBILITY
 const char *__llvm_profile_begin_names(void) { return NamesFirst; }
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 const char *__llvm_profile_end_names(void) { return NamesLast; }
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 uint64_t *__llvm_profile_begin_counters(void) { return CountersFirst; }
-__attribute__((visibility("hidden")))
+LLVM_LIBRARY_VISIBILITY
 uint64_t *__llvm_profile_end_counters(void) { return CountersLast; }
 #endif
