@@ -159,7 +159,7 @@ bool EEVT::TypeSet::MergeInTypeInfo(const EEVT::TypeSet &InVT, TreePattern &TP){
     return true;
   }
 
-  assert(TypeVec.size() >= 1 && InVT.TypeVec.size() >= 1 && "No unknowns");
+  assert(!TypeVec.empty() && !InVT.TypeVec.empty() && "No unknowns");
 
   // Handle the abstract cases, seeing if we can resolve them better.
   switch (TypeVec[0]) {
@@ -233,6 +233,7 @@ bool EEVT::TypeSet::EnforceInteger(TreePattern &TP) {
   // If we know nothing, then get the full set.
   if (TypeVec.empty())
     return FillWithPossibleTypes(TP, isInteger, "integer");
+
   if (!hasFloatingPointTypes())
     return false;
 
