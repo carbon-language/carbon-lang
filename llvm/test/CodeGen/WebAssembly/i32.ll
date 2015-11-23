@@ -10,8 +10,7 @@ declare i32 @llvm.cttz.i32(i32, i1)
 declare i32 @llvm.ctpop.i32(i32)
 
 ; CHECK-LABEL: add32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.add $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -21,8 +20,7 @@ define i32 @add32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: sub32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.sub $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -32,8 +30,7 @@ define i32 @sub32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: mul32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.mul $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -43,8 +40,7 @@ define i32 @mul32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: sdiv32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.div_s $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -54,8 +50,7 @@ define i32 @sdiv32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: udiv32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.div_u $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -65,8 +60,7 @@ define i32 @udiv32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: srem32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.rem_s $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -76,8 +70,7 @@ define i32 @srem32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: urem32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.rem_u $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -87,8 +80,7 @@ define i32 @urem32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: and32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.and $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -98,8 +90,7 @@ define i32 @and32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: or32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.or $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -109,8 +100,7 @@ define i32 @or32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: xor32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.xor $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -120,8 +110,7 @@ define i32 @xor32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: shl32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.shl $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -131,8 +120,7 @@ define i32 @shl32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: shr32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.shr_u $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}
@@ -142,8 +130,7 @@ define i32 @shr32(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: sar32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i32.shr_s $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}

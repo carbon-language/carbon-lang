@@ -6,8 +6,7 @@ target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: sti32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: i32.store $0, $1{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @sti32(i32 *%p, i32 %v) {
@@ -16,8 +15,7 @@ define void @sti32(i32 *%p, i32 %v) {
 }
 
 ; CHECK-LABEL: sti64:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param i64{{$}}
+; CHECK-NEXT: .param i32, i64{{$}}
 ; CHECK-NEXT: i64.store $0, $1{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @sti64(i64 *%p, i64 %v) {
@@ -26,8 +24,7 @@ define void @sti64(i64 *%p, i64 %v) {
 }
 
 ; CHECK-LABEL: stf32:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param i32, f32{{$}}
 ; CHECK-NEXT: f32.store $0, $1{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @stf32(float *%p, float %v) {
@@ -36,8 +33,7 @@ define void @stf32(float *%p, float %v) {
 }
 
 ; CHECK-LABEL: stf64:
-; CHECK-NEXT: .param i32{{$}}
-; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .param i32, f64{{$}}
 ; CHECK-NEXT: f64.store $0, $1{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @stf64(double *%p, double %v) {

@@ -124,6 +124,11 @@ def JUMP_TABLE : I<(outs I32:$dst), (ins tjumptable_op:$addr),
                    [(set I32:$dst, (WebAssemblywrapper tjumptable:$addr))],
                    "jump_table\t$dst, $addr">;
 
+// Function signature and local variable declaration "instructions".
+def PARAM  : I<(outs), (ins variable_ops), [], ".param  \t">;
+def RESULT : I<(outs), (ins variable_ops), [], ".result \t">;
+def LOCAL  : I<(outs), (ins variable_ops), [], ".local  \t">;
+
 //===----------------------------------------------------------------------===//
 // Additional sets of instructions.
 //===----------------------------------------------------------------------===//

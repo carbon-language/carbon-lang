@@ -15,8 +15,7 @@ declare double @llvm.nearbyint.f64(double)
 declare double @llvm.rint.f64(double)
 
 ; CHECK-LABEL: fadd64:
-; CHECK-NEXT: .param f64{{$}}
-; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .param f64, f64{{$}}
 ; CHECK-NEXT: .result f64{{$}}
 ; CHECK-NEXT: f64.add $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}

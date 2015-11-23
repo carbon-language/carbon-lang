@@ -6,8 +6,7 @@ target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: eq_i64:
-; CHECK-NEXT: .param i64{{$}}
-; CHECK-NEXT: .param i64{{$}}
+; CHECK-NEXT: .param i64, i64{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: i64.eq $push[[NUM:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: return $pop[[NUM]]{{$}}

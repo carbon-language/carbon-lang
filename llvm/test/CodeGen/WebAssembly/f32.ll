@@ -15,8 +15,7 @@ declare float @llvm.nearbyint.f32(float)
 declare float @llvm.rint.f32(float)
 
 ; CHECK-LABEL: fadd32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result f32{{$}}
 ; CHECK-NEXT: f32.add $push0, $0, $1{{$}}
 ; CHECK-NEXT: return $pop0{{$}}

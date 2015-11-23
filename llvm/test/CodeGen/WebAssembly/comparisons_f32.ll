@@ -7,8 +7,7 @@ target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: ord_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.eq $push[[NUM0:[0-9]+]], $0, $0{{$}}
 ; CHECK-NEXT: f32.eq $push[[NUM1:[0-9]+]], $1, $1{{$}}
@@ -21,8 +20,7 @@ define i32 @ord_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: uno_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM0:[0-9]+]], $0, $0{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM1:[0-9]+]], $1, $1{{$}}
@@ -35,8 +33,7 @@ define i32 @uno_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: oeq_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.eq $push[[NUM:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: return $pop[[NUM]]{{$}}
@@ -94,8 +91,7 @@ define i32 @oge_f32(float %x, float %y) {
 ; Expanded comparisons, which also check for NaN.
 
 ; CHECK-LABEL: ueq_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.eq $push[[NUM0:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM1:[0-9]+]], $0, $0{{$}}
@@ -111,7 +107,6 @@ define i32 @ueq_f32(float %x, float %y) {
 
 ; CHECK-LABEL: one_f32:
 ; CHECK-NEXT: .param f32
-; CHECK-NEXT: .param f32
 ; CHECK-NEXT: .result i32
 ; CHECK-NEXT: f32.ne $push[[NUM0:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: f32.eq $push[[NUM1:[0-9]+]], $0, $0{{$}}
@@ -126,8 +121,7 @@ define i32 @one_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: ult_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.lt $push[[NUM0:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM1:[0-9]+]], $0, $0{{$}}
@@ -142,8 +136,7 @@ define i32 @ult_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: ule_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.le $push[[NUM0:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM1:[0-9]+]], $0, $0{{$}}
@@ -158,8 +151,7 @@ define i32 @ule_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: ugt_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.gt $push[[NUM0:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM1:[0-9]+]], $0, $0{{$}}
@@ -174,8 +166,7 @@ define i32 @ugt_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: uge_f32:
-; CHECK-NEXT: .param f32{{$}}
-; CHECK-NEXT: .param f32{{$}}
+; CHECK-NEXT: .param f32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: f32.ge $push[[NUM0:[0-9]+]], $0, $1{{$}}
 ; CHECK-NEXT: f32.ne $push[[NUM1:[0-9]+]], $0, $0{{$}}
