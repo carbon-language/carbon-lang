@@ -1060,13 +1060,19 @@ private:
     FormatToken *LeftOfParens = nullptr;
     if (Tok.MatchingParen)
       LeftOfParens = Tok.MatchingParen->getPreviousNonComment();
-    if (LeftOfParens && LeftOfParens->is(tok::r_paren) &&
-        LeftOfParens->MatchingParen)
-      LeftOfParens = LeftOfParens->MatchingParen->Previous;
-    if (LeftOfParens && LeftOfParens->is(tok::r_square) &&
-        LeftOfParens->MatchingParen &&
-        LeftOfParens->MatchingParen->is(TT_LambdaLSquare))
-      return false;
+
+    if (LeftOfParens) {
+      if (LeftOfParens->Tok.getIdentifierInfo() &&
+          !LeftOfParens->isOneOf(Keywords.kw_in, tok::kw_return, tok::kw_case,
+                                 tok::kw_delete))
+        return false;
+      if (LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof, tok::at,
+                                tok::r_square, TT_OverloadedOperator,
+                                TT_TemplateCloser))
+        return false;
+      if (LeftOfParens->is(tok::r_paren) && LeftOfParens->MatchingParen)
+        LeftOfParens = LeftOfParens->MatchingParen->Previous;
+    }
     if (Tok.Next) {
       if (Tok.Next->is(tok::question))
         return false;
@@ -1085,22 +1091,14 @@ private:
     bool ParensCouldEndDecl =
         Tok.Next &&
         Tok.Next->isOneOf(tok::equal, tok::semi, tok::l_brace, tok::greater);
-    bool IsSizeOfOrAlignOf =
-        LeftOfParens && LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof);
-    if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
+    if (ParensAreType && !ParensCouldEndDecl &&
         (Contexts.size() > 1 && Contexts[Contexts.size() - 2].IsExpression))
       IsCast = true;
     else if (Tok.Next && Tok.Next->isNot(tok::string_literal) &&
              (Tok.Next->Tok.isLiteral() ||
               Tok.Next->isOneOf(tok::kw_sizeof, tok::kw_alignof)))
       IsCast = true;
-    // If there is an identifier after the (), it is likely a cast, unless
-    // there is also an identifier before the ().
-    else if (LeftOfParens && Tok.Next &&
-             (LeftOfParens->Tok.getIdentifierInfo() == nullptr ||
-              LeftOfParens->isOneOf(tok::kw_return, tok::kw_case)) &&
-             !LeftOfParens->isOneOf(TT_OverloadedOperator, tok::at,
-                                    TT_TemplateCloser)) {
+    else if (LeftOfParens && Tok.Next) {
       if (Tok.Next->isOneOf(tok::identifier, tok::numeric_constant)) {
         IsCast = true;
       } else {
