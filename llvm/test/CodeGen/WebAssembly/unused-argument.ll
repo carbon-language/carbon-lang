@@ -22,7 +22,7 @@ define i32 @unused_second(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: call_something:
-; CHECK-NEXT: call return_something, $discard{{$}}
+; CHECK-NEXT: call return_something, $discard={{$}}
 ; CHECK-NEXT: return{{$}}
 declare i32 @return_something()
 define void @call_something() {

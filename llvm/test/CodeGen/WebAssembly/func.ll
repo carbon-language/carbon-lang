@@ -14,7 +14,7 @@ define void @f0() {
 
 ; CHECK-LABEL: f1:
 ; CHECK-NEXT: .result i32{{$}}
-; CHECK-NEXT: i32.const $push[[NUM:[0-9]+]], 0{{$}}
+; CHECK-NEXT: i32.const $push[[NUM:[0-9]+]]=, 0{{$}}
 ; CHECK-NEXT: return $pop[[NUM]]{{$}}
 ; CHECK: .size f1,
 define i32 @f1() {
@@ -24,7 +24,7 @@ define i32 @f1() {
 ; CHECK-LABEL: f2:
 ; CHECK-NEXT: .param i32, f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
-; CHECK-NEXT: i32.const $push[[NUM:[0-9]+]], 0{{$}}
+; CHECK-NEXT: i32.const $push[[NUM:[0-9]+]]=, 0{{$}}
 ; CHECK-NEXT: return $pop[[NUM]]{{$}}
 ; CHECK: .size f2,
 define i32 @f2(i32 %p1, float %p2) {

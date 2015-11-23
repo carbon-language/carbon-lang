@@ -90,6 +90,9 @@ void WebAssemblyInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       O << "$push" << (WAReg & INT32_MAX);
     else
       O << "$discard";
+    // Add a '=' suffix if this is a def.
+    if (OpNo < MII.get(MI->getOpcode()).getNumDefs())
+      O << '=';
   } else if (Op.isImm()) {
     switch (MI->getOpcode()) {
     case WebAssembly::PARAM:
