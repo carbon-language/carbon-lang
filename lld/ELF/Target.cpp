@@ -755,12 +755,12 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     or32le(Loc, (SA & 0xFFF) << 10);
     break;
   case R_AARCH64_PREL16:
-    if (!isInt<16>(SA))
+    if (!isInt<16>(SA - P))
       error("Relocation R_AARCH64_PREL16 out of range");
     write16le(Loc, SA - P);
     break;
   case R_AARCH64_PREL32:
-    if (!isInt<32>(SA))
+    if (!isInt<32>(SA - P))
       error("Relocation R_AARCH64_PREL32 out of range");
     write32le(Loc, SA - P);
     break;
