@@ -121,19 +121,19 @@ def : Pat<(truncstorei32 I64:$val, I32:$addr),
 // Memory size.
 def MEMORY_SIZE_I32 : I<(outs I32:$dst), (ins),
                         [(set I32:$dst, (int_wasm_memory_size))],
-                        "i32.memory_size\t$dst">,
+                        "memory_size\t$dst">,
                       Requires<[HasAddr32]>;
 def MEMORY_SIZE_I64 : I<(outs I64:$dst), (ins),
                         [(set I64:$dst, (int_wasm_memory_size))],
-                        "i64.memory_size\t$dst">,
+                        "memory_size\t$dst">,
                       Requires<[HasAddr64]>;
 
 // Grow memory.
 def GROW_MEMORY_I32 : I<(outs), (ins I32:$delta),
                         [(int_wasm_grow_memory I32:$delta)],
-                        "i32.grow_memory\t$delta">,
+                        "grow_memory\t$delta">,
                       Requires<[HasAddr32]>;
 def GROW_MEMORY_I64 : I<(outs), (ins I64:$delta),
                         [(int_wasm_grow_memory I64:$delta)],
-                        "i64.grow_memory\t$delta">,
+                        "grow_memory\t$delta">,
                       Requires<[HasAddr64]>;
