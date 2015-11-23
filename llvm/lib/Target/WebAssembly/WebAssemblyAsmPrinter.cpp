@@ -221,6 +221,10 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // These represent values which are live into the function entry, so there's
     // no instruction to emit.
     break;
+  case WebAssembly::LOOP_END:
+    // This is a no-op which just exists to tell AsmPrinter.cpp that there's a
+    // fallthrough which nevertheless requires a label for the destination here.
+    break;
   default: {
     WebAssemblyMCInstLower MCInstLowering(OutContext, *this);
     MCInst TmpInst;

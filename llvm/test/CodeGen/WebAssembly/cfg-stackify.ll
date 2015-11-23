@@ -186,6 +186,7 @@ entry:
 ; CHECK: BB7_1:
 ; CHECK: i32.store $0, $pop{{[0-9]+}}{{$}}
 ; CHECK: br BB7_1{{$}}
+; CHECK: BB7_2:
 define i32 @minimal_loop(i32* %p) {
 entry:
   store volatile i32 0, i32* %p
@@ -200,6 +201,7 @@ loop:
 ; CHECK: BB8_1:
 ; CHECK: loop BB8_2{{$}}
 ; CHECK: br_if $pop{{[0-9]+}}, BB8_1{{$}}
+; CHECK: BB8_2:
 ; CHECK: return ${{[0-9]+}}{{$}}
 define i32 @simple_loop(i32* %p, i32 %a) {
 entry:
@@ -285,6 +287,7 @@ exit:
 ; CHECK: BB11_5:
 ; CHECK: BB11_6:
 ; CHECK: br              BB11_1{{$}}
+; CHECK: BB11_7:
 define i32 @doublediamond_in_a_loop(i32 %a, i32 %b, i32* %p) {
 entry:
   br label %header

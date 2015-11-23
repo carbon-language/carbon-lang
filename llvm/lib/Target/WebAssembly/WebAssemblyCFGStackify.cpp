@@ -289,11 +289,21 @@ static void PlaceMarkers(MachineFunction &MF, const MachineLoopInfo &MLI,
         MachineBasicBlock *Bottom = Loop->getBottomBlock();
         auto Iter = next(MachineFunction::iterator(Bottom));
         if (Iter == MF.end()) {
-          MF.push_back(MF.CreateMachineBasicBlock());
+          MachineBasicBlock *Label = MF.CreateMachineBasicBlock();
+          // Give it a fake predecessor so that AsmPrinter prints its label.
+          Label->addSuccessor(Label);
+          MF.push_back(Label);
           Iter = next(MachineFunction::iterator(Bottom));
         }
         BuildMI(MBB, MBB.begin(), DebugLoc(), TII.get(WebAssembly::LOOP))
             .addMBB(&*Iter);
+
+        // Emit a special no-op telling the asm printer that we need a label
+        // to close the loop scope, even though the destination is only
+        // reachable by fallthrough.
+        if (!Bottom->back().isBarrier())
+          BuildMI(*Bottom, Bottom->end(), DebugLoc(),
+                  TII.get(WebAssembly::LOOP_END));
       }
 
     // Place the BLOCK for MBB if MBB is branched to from above.
