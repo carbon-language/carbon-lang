@@ -48,16 +48,9 @@ LLVM_LIBRARY_VISIBILITY int llvmWriteProfDataImpl(
   if (!DataSize)
     return 0;
 
-  Header.Magic = __llvm_profile_get_magic();
-  Header.Version = __llvm_profile_get_version();
-  Header.DataSize = DataSize;
-  Header.CountersSize = CountersSize;
-  Header.NamesSize = NamesSize;
-  Header.CountersDelta = (uintptr_t)CountersBegin;
-  Header.NamesDelta = (uintptr_t)NamesBegin;
-  Header.ValueKindLast = IPVK_Last;
-  Header.ValueDataSize = ValueDataSize;
-  Header.ValueDataDelta = (uintptr_t)ValueDataBegin;
+  /* Initialize header struture.  */
+#define INSTR_PROF_RAW_HEADER(Type, Name, Init) Header.Name = Init;
+#include "InstrProfData.inc"
 
   /* Write the data. */
   ProfDataIOVec IOVec[] = {

@@ -59,16 +59,8 @@ typedef struct LLVM_ALIGNAS(INSTR_PROF_DATA_ALIGNMENT) __llvm_profile_data {
 } __llvm_profile_data;
 
 typedef struct __llvm_profile_header {
-  uint64_t Magic;
-  uint64_t Version;
-  uint64_t DataSize;
-  uint64_t CountersSize;
-  uint64_t NamesSize;
-  uint64_t CountersDelta;
-  uint64_t NamesDelta;
-  uint64_t ValueKindLast;
-  uint64_t ValueDataSize;
-  uint64_t ValueDataDelta;
+#define INSTR_PROF_RAW_HEADER(Type, Name, Initializer) Type Name;
+#include "InstrProfData.inc"
 } __llvm_profile_header;
 
 /*!
