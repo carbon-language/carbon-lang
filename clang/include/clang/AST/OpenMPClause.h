@@ -2657,7 +2657,7 @@ class OMPMapClause : public OMPVarListClause<OMPMapClause> {
 
   /// \brief Build clause with number of variables \a N.
   ///
-  /// \param MayTypeModifier Map type modifier.
+  /// \param MapTypeModifier Map type modifier.
   /// \param MapType Map type.
   /// \param MapLoc Location of the map type.
   /// \param StartLoc Starting location of the clause.
@@ -2684,8 +2684,8 @@ public:
   /// \brief Creates clause with a list of variables \a VL.
   ///
   /// \param C AST context.
-  /// \brief StartLoc Starting location of the clause.
-  /// \brief EndLoc Ending location of the clause.
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
   /// \param VL List of references to the variables.
   /// \param TypeModifier Map type modifier.
   /// \param Type Map type.
