@@ -143,7 +143,7 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
 
 /// Load a function index if requested by the -functionindex option.
 static ErrorOr<std::unique_ptr<FunctionInfoIndex>>
-loadIndex(LLVMContext &Context, const Module *ExportingModule = nullptr) {
+loadIndex(const Module *ExportingModule = nullptr) {
   assert(!FunctionIndex.empty());
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFileOrSTDIN(FunctionIndex);
@@ -208,8 +208,7 @@ static bool importFunctions(const char *argv0, LLVMContext &Context,
 
     std::unique_ptr<FunctionInfoIndex> Index;
     if (!FunctionIndex.empty()) {
-      ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr =
-          loadIndex(Context);
+      ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr = loadIndex();
       std::error_code EC = IndexOrErr.getError();
       if (EC) {
         errs() << EC.message() << '\n';
@@ -246,8 +245,7 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
     // local functions/variables as exported and promote if necessary.
     std::unique_ptr<FunctionInfoIndex> Index;
     if (!FunctionIndex.empty()) {
-      ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr =
-          loadIndex(Context, &*M);
+      ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr = loadIndex(&*M);
       std::error_code EC = IndexOrErr.getError();
       if (EC) {
         errs() << EC.message() << '\n';
