@@ -432,10 +432,9 @@ unsigned RuntimeDyldImpl::computeSectionStubBufSize(const ObjectFile &Obj,
     if (!(RelSecI == Section))
       continue;
 
-    for (const RelocationRef &Reloc : SI->relocations()) {
-      (void)Reloc;
-      StubBufSize += StubSize;
-    }
+    for (const RelocationRef &Reloc : SI->relocations())
+      if (relocationNeedsStub(Reloc))
+        StubBufSize += StubSize;
   }
 
   // Get section data size and alignment

@@ -1851,4 +1851,23 @@ bool RuntimeDyldELF::isCompatibleFile(const object::ObjectFile &Obj) const {
   return Obj.isELF();
 }
 
+bool RuntimeDyldELF::relocationNeedsStub(const RelocationRef &R) const {
+  if (Arch != Triple::x86_64)
+    return true;  // Conservative answer
+
+  switch (R.getType()) {
+  default:
+    return true;  // Conservative answer
+
+
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_PC64:
+  case ELF::R_X86_64_64:
+    // We know that these reloation types won't need a stub function.  This list
+    // can be extended as needed.
+    return false;
+  }
+}
+
 } // namespace llvm

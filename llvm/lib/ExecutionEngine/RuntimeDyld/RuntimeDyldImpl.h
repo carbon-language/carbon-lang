@@ -416,6 +416,11 @@ protected:
   // \brief Implementation of the generic part of the loadObject algorithm.
   ObjSectionToIDMap loadObjectImpl(const object::ObjectFile &Obj);
 
+  // \brief Return true if the relocation R may require allocating a stub.
+  virtual bool relocationNeedsStub(const RelocationRef &R) const {
+    return true;    // Conservative answer
+  }
+
 public:
   RuntimeDyldImpl(RuntimeDyld::MemoryManager &MemMgr,
                   RuntimeDyld::SymbolResolver &Resolver)
