@@ -234,9 +234,9 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
  * value profiler.
  */
 typedef struct InstrProfValueData {
-  // Profiled value.
+  /* Profiled value. */
   uint64_t Value;
-  // Number of times the value appears in the training run.
+  /* Number of times the value appears in the training run. */
   uint64_t Count;
 } InstrProfValueData;
 
