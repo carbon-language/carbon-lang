@@ -2621,9 +2621,6 @@ public:
   /// EmitCall - Generate a call of the given function, expecting the given
   /// result type, and using the given argument list which specifies both the
   /// LLVM arguments and the types they were derived from.
-  ///
-  /// \param TargetDecl - If given, the decl of the function in a direct call;
-  /// used to set attributes on the call (noreturn, etc.).
   RValue EmitCall(const CGFunctionInfo &FnInfo, llvm::Value *Callee,
                   ReturnValueSlot ReturnValue, const CallArgList &Args,
                   CGCalleeInfo CalleeInfo = CGCalleeInfo(),
