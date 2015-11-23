@@ -54,14 +54,8 @@ enum ValueKind {
 
 typedef void *IntPtrT;
 typedef struct LLVM_ALIGNAS(8) __llvm_profile_data {
-  const uint32_t NameSize;
-  const uint32_t NumCounters;
-  const uint64_t FuncHash;
-  const IntPtrT NamePtr;
-  const IntPtrT CounterPtr;
-  const IntPtrT FunctionPointer;
-  IntPtrT Values;
-  const uint16_t NumValueSites[IPVK_Last + 1];
+#define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) Type Name;
+#include "InstrProfData.inc"
 } __llvm_profile_data;
 
 typedef struct __llvm_profile_header {
