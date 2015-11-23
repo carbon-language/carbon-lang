@@ -240,9 +240,9 @@ bool EEVT::TypeSet::EnforceInteger(TreePattern &TP) {
   TypeSet InputSet(*this);
 
   // Filter out all the fp types.
-  for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (!isInteger(TypeVec[i]))
-      TypeVec.erase(TypeVec.begin()+i--);
+  TypeVec.erase(std::remove_if(TypeVec.begin(), TypeVec.end(),
+                               std::not1(std::ptr_fun(isInteger))),
+                TypeVec.end());
 
   if (TypeVec.empty()) {
     TP.error("Type inference contradiction found, '" +
@@ -265,10 +265,10 @@ bool EEVT::TypeSet::EnforceFloatingPoint(TreePattern &TP) {
 
   TypeSet InputSet(*this);
 
-  // Filter out all the fp types.
-  for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (!isFloatingPoint(TypeVec[i]))
-      TypeVec.erase(TypeVec.begin()+i--);
+  // Filter out all the integer types.
+  TypeVec.erase(std::remove_if(TypeVec.begin(), TypeVec.end(),
+                               std::not1(std::ptr_fun(isFloatingPoint))),
+                TypeVec.end());
 
   if (TypeVec.empty()) {
     TP.error("Type inference contradiction found, '" +
@@ -293,9 +293,9 @@ bool EEVT::TypeSet::EnforceScalar(TreePattern &TP) {
   TypeSet InputSet(*this);
 
   // Filter out all the vector types.
-  for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (!isScalar(TypeVec[i]))
-      TypeVec.erase(TypeVec.begin()+i--);
+  TypeVec.erase(std::remove_if(TypeVec.begin(), TypeVec.end(),
+                               std::not1(std::ptr_fun(isScalar))),
+                TypeVec.end());
 
   if (TypeVec.empty()) {
     TP.error("Type inference contradiction found, '" +
@@ -318,11 +318,9 @@ bool EEVT::TypeSet::EnforceVector(TreePattern &TP) {
   bool MadeChange = false;
 
   // Filter out all the scalar types.
-  for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (!isVector(TypeVec[i])) {
-      TypeVec.erase(TypeVec.begin()+i--);
-      MadeChange = true;
-    }
+  TypeVec.erase(std::remove_if(TypeVec.begin(), TypeVec.end(),
+                               std::not1(std::ptr_fun(isVector))),
+                TypeVec.end());
 
   if (TypeVec.empty()) {
     TP.error("Type inference contradiction found, '" +
