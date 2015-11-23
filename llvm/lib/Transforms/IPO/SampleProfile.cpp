@@ -236,7 +236,7 @@ SampleCoverageTracker::countUsedSamples(const FunctionSamples *Samples) const {
   for (const auto &I : Samples->getCallsiteSamples()) {
     const FunctionSamples *CalleeSamples = &I.second;
     if (CalleeSamples->getTotalSamples() > 0)
-      Count += countUsedSamples(&I.second);
+      Count += countUsedSamples(CalleeSamples);
   }
 
   return Count;
@@ -255,7 +255,7 @@ SampleCoverageTracker::countBodySamples(const FunctionSamples *Samples) const {
   for (const auto &I : Samples->getCallsiteSamples()) {
     const FunctionSamples *CalleeSamples = &I.second;
     if (CalleeSamples->getTotalSamples() > 0)
-      Count += countBodySamples(&I.second);
+      Count += countBodySamples(CalleeSamples);
   }
 
   return Count;
