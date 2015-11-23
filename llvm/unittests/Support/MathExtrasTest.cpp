@@ -207,4 +207,52 @@ TEST(MathExtras, SaturatingAdd) {
   SaturatingAddTestHelper<uint64_t>();
 }
 
+template<typename T>
+void SaturatingMultiplyTestHelper()
+{
+  const T Max = std::numeric_limits<T>::max();
+
+  // Test basic multiplication.
+  EXPECT_EQ(T(6), SaturatingMultiply(T(2), T(3)));
+  EXPECT_EQ(T(6), SaturatingMultiply(T(3), T(2)));
+
+  // Test multiplication by zero.
+  EXPECT_EQ(T(0), SaturatingMultiply(T(0), T(0)));
+  EXPECT_EQ(T(0), SaturatingMultiply(T(1), T(0)));
+  EXPECT_EQ(T(0), SaturatingMultiply(T(0), T(1)));
+  EXPECT_EQ(T(0), SaturatingMultiply(Max, T(0)));
+  EXPECT_EQ(T(0), SaturatingMultiply(T(0), Max));
+
+  // Test multiplication by maximum value.
+  EXPECT_EQ(Max, SaturatingMultiply(Max, T(2)));
+  EXPECT_EQ(Max, SaturatingMultiply(T(2),Max));
+  EXPECT_EQ(Max, SaturatingMultiply(Max, Max));
+
+  // Test interesting boundary conditions for algorithm -
+  // ((1 << A) - 1) * ((1 << B) + K) for K in [-1, 0, 1]
+  // and A + B == std::numeric_limits<T>::digits.
+  // We expect overflow iff A > B and K = 1.
+  const int Digits = std::numeric_limits<T>::digits;
+  for (int A = 1, B = Digits - 1; B >= 1; ++A, --B) {
+    for (int K = -1; K <= 1; ++K) {
+      T X = (T(1) << A) - T(1);
+      T Y = (T(1) << B) + K;
+      bool OverflowExpected = A > B && K == 1;
+
+      if(OverflowExpected) {
+        EXPECT_EQ(Max, SaturatingMultiply(X, Y));
+      } else {
+        EXPECT_EQ(X * Y, SaturatingMultiply(X, Y));
+      }
+    }
+  }
+}
+
+TEST(MathExtras, SaturatingMultiply) {
+  SaturatingMultiplyTestHelper<uint8_t>();
+  SaturatingMultiplyTestHelper<uint16_t>();
+  SaturatingMultiplyTestHelper<uint32_t>();
+  SaturatingMultiplyTestHelper<uint64_t>();
+}
+
 }

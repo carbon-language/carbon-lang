@@ -671,12 +671,30 @@ SaturatingAdd(T X, T Y) {
 template <typename T>
 typename std::enable_if<std::is_unsigned<T>::value, T>::type
 SaturatingMultiply(T X, T Y) {
-  // Hacker's Delight, p. 30
-  T Z = X * Y;
-  if (Y != 0 && Z / Y != X)
-    return std::numeric_limits<T>::max();
-  else
-    return Z;
+  // Hacker's Delight, p. 30 has a different algorithm, but we don't use that
+  // because it fails for uint16_t (where multiplication can have undefined
+  // behavior due to promotion to int), and requires a division in addition
+  // to the multiplication.
+
+  // Log2(Z) would be either Log2Z or Log2Z + 1.
+  // Special case: if X or Y is 0, Log2_64 gives -1, and Log2Z
+  // will necessarily be less than Log2Max as desired.
+  int Log2Z = Log2_64(X) + Log2_64(Y);
+  const T Max = std::numeric_limits<T>::max();
+  int Log2Max = Log2_64(Max);
+  if (Log2Z < Log2Max)
+    return X * Y;
+  if (Log2Z > Log2Max)
+    return Max;
+
+  // We're going to use the top bit, and maybe overflow one
+  // bit past it. Multiply all but the bottom bit then add
+  // that on at the end.
+  T Z = (X >> 1) * Y;
+  if (Z & ~(Max >> 1))
+    return Max;
+  Z <<= 1;
+  return (X & 1) ? SaturatingAdd(Z, Y) : Z;
 }
 
 extern const float huge_valf;
