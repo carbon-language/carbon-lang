@@ -173,7 +173,10 @@ void InstrProfWriter::write(raw_fd_ostream &OS) {
 
 void InstrProfWriter::writeRecordInText(const InstrProfRecord &Func,
                                         raw_fd_ostream &OS) {
-  OS << Func.Name << "\n" << Func.Hash << "\n" << Func.Counts.size() << "\n";
+  OS << Func.Name << "\n";
+  OS << "# Func Hash:\n" << Func.Hash << "\n";
+  OS << "# Num Counters:\n" <<Func.Counts.size() << "\n";
+  OS << "# Counter Values:\n";
   for (uint64_t Count : Func.Counts)
     OS << Count << "\n";
 
