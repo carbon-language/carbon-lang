@@ -1068,6 +1068,15 @@ private:
 
     FormatToken *LeftOfParens = Tok.MatchingParen->getPreviousNonComment();
     if (LeftOfParens) {
+      // If there is an opening parenthesis left of the current parentheses,
+      // look past it as these might be chained casts.
+      if (LeftOfParens->is(tok::r_paren)) {
+        if (!LeftOfParens->MatchingParen ||
+            !LeftOfParens->MatchingParen->Previous)
+          return false;
+        LeftOfParens = LeftOfParens->MatchingParen->Previous;
+      }
+
       // If there is an identifier (or with a few exceptions a keyword) right
       // before the parentheses, this is unlikely to be a cast.
       if (LeftOfParens->Tok.getIdentifierInfo() &&
