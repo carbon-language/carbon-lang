@@ -99,9 +99,9 @@ for.end:
 
 ; CHECK-LABEL: doublediamond:
 ; CHECK: block BB3_5{{$}}
-; CHECK: block BB3_4{{$}}
 ; CHECK: block BB3_2{{$}}
 ; CHECK: br_if $pop{{[0-9]+}}, BB3_2{{$}}
+; CHECK: block BB3_4{{$}}
 ; CHECK: br_if $pop{{[0-9]+}}, BB3_4{{$}}
 ; CHECK: br BB3_5{{$}}
 ; CHECK: BB3_4:
@@ -216,8 +216,8 @@ exit:
 
 ; CHECK-LABEL: doubletriangle:
 ; CHECK: block BB9_4{{$}}
-; CHECK: block BB9_3{{$}}
 ; CHECK: br_if $pop{{[0-9]+}}, BB9_4{{$}}
+; CHECK: block BB9_3{{$}}
 ; CHECK: br_if $pop{{[0-9]+}}, BB9_3{{$}}
 ; CHECK: BB9_3:
 ; CHECK: BB9_4:
@@ -269,6 +269,45 @@ ft:
 exit:
   store volatile i32 4, i32* %p
   ret i32 0
+}
+
+; CHECK-LABEL: doublediamond_in_a_loop:
+; CHECK: BB11_1:
+; CHECK: loop            BB11_7{{$}}
+; CHECK: block           BB11_6{{$}}
+; CHECK: block           BB11_3{{$}}
+; CHECK: br_if           $pop{{.*}}, BB11_3{{$}}
+; CHECK: br              BB11_6{{$}}
+; CHECK: BB11_3:
+; CHECK: block           BB11_5{{$}}
+; CHECK: br_if           $pop{{.*}}, BB11_5{{$}}
+; CHECK: br              BB11_6{{$}}
+; CHECK: BB11_5:
+; CHECK: BB11_6:
+; CHECK: br              BB11_1{{$}}
+define i32 @doublediamond_in_a_loop(i32 %a, i32 %b, i32* %p) {
+entry:
+  br label %header
+header:
+  %c = icmp eq i32 %a, 0
+  %d = icmp eq i32 %b, 0
+  store volatile i32 0, i32* %p
+  br i1 %c, label %true, label %false
+true:
+  store volatile i32 1, i32* %p
+  br label %exit
+false:
+  store volatile i32 2, i32* %p
+  br i1 %d, label %ft, label %ff
+ft:
+  store volatile i32 3, i32* %p
+  br label %exit
+ff:
+  store volatile i32 4, i32* %p
+  br label %exit
+exit:
+  store volatile i32 5, i32* %p
+  br label %header
 }
 
 ; Test that nested loops are handled.
