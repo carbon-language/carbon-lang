@@ -183,6 +183,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
+  Config->ZExecStack = hasZOption(Args, "execstack");
   Config->ZNodelete = hasZOption(Args, "nodelete");
   Config->ZNow = hasZOption(Args, "now");
   Config->ZOrigin = hasZOption(Args, "origin");
@@ -286,14 +287,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   for (StringRef S : Config->Undefined)
     Symtab.addUndefinedOpt(S);
-
-  // "-z execstack" value is inferred from input object files (it's false
-  // if all input files have .note.GNU-stack section). Explicit options
-  // override the inferred default value.
-  if (hasZOption(Args, "execstack"))
-    Config->ZExecStack = true;
-  if (hasZOption(Args, "noexecstack"))
-    Config->ZExecStack = false;
 
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
