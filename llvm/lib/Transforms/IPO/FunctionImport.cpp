@@ -142,11 +142,12 @@ bool FunctionImporter::importFunctions(Module &M) {
       llvm_unreachable("Can't load function in Module");
     }
 
-    // We cannot import weak_any functions without possibly affecting the
-    // order they are seen and selected by the linker, changing program
+    // We cannot import weak_any functions/aliases without possibly affecting
+    // the order they are seen and selected by the linker, changing program
     // semantics.
-    if (F->hasWeakAnyLinkage()) {
-      DEBUG(dbgs() << "Ignoring import request for weak-any function "
+    if (SGV->hasWeakAnyLinkage()) {
+      DEBUG(dbgs() << "Ignoring import request for weak-any "
+                   << (isa<Function>(SGV) ? "function " : "alias ")
                    << CalledFunctionName << " from " << FileName << "\n");
       continue;
     }

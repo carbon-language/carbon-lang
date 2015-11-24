@@ -15,12 +15,17 @@ entry:
   %call2 = call i32 (...) @referencecommon()
   call void (...) @setfuncptr()
   call void (...) @callfuncptr()
-  call void (...) @callweakfunc()
+  call void (...) @weakfunc()
   ret i32 0
 }
 
-; Won't import alias
+; Won't import weak alias
+; CHECK-DAG: declare extern_weak void @weakalias()
 declare void @weakalias(...) #1
+
+; Aliases import the aliasee function
+; CHECK-DAG: @analias = alias void (...), bitcast (void ()* @globalfunc2 to void (...)*)
+; CHECK-DAG: define available_externally void @globalfunc2()
 declare void @analias(...) #1
 
 ; CHECK-DAG: define available_externally i32 @referencestatics(i32 %i)
@@ -39,4 +44,6 @@ declare void @setfuncptr(...) #1
 declare void @callfuncptr(...) #1
 
 ; Won't import weak func
-declare void @callweakfunc(...) #1
+; CHECK-DAG: declare void @weakfunc(...)
+declare void @weakfunc(...) #1
+
