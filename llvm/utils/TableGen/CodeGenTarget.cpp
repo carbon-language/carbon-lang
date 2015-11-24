@@ -217,7 +217,8 @@ CodeGenRegBank &CodeGenTarget::getRegBank() const {
 
 void CodeGenTarget::ReadRegAltNameIndices() const {
   RegAltNameIndices = Records.getAllDerivedDefinitions("RegAltNameIndex");
-  std::sort(RegAltNameIndices.begin(), RegAltNameIndices.end(), LessRecord());
+  array_pod_sort(RegAltNameIndices.begin(), RegAltNameIndices.end(),
+                 LessRecord());
 }
 
 /// getRegisterByName - If there is a register with the specific AsmName,
@@ -253,7 +254,7 @@ void CodeGenTarget::ReadLegalValueTypes() const {
     LegalValueTypes.insert(LegalValueTypes.end(), RC.VTs.begin(), RC.VTs.end());
 
   // Remove duplicates.
-  std::sort(LegalValueTypes.begin(), LegalValueTypes.end());
+  array_pod_sort(LegalValueTypes.begin(), LegalValueTypes.end());
   LegalValueTypes.erase(std::unique(LegalValueTypes.begin(),
                                     LegalValueTypes.end()),
                         LegalValueTypes.end());
