@@ -481,8 +481,7 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
   if (isConcrete()) {
     MVT IVT = getConcrete();
     IVT = IVT.getVectorElementType();
-    return MadeChange |
-      VTOperand.MergeInTypeInfo(IVT.SimpleTy, TP);
+    return MadeChange || VTOperand.MergeInTypeInfo(IVT.SimpleTy, TP);
   }
 
   // If the scalar type is known, filter out vector types whose element types
