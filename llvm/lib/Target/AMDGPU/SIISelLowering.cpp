@@ -1191,7 +1191,8 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
           break;
         // fall-through
       case AMDGPUAS::LOCAL_ADDRESS:
-        return ScalarizeVectorLoad(Op, DAG);
+        // If properly aligned, if we split we might be able to use ds_read_b64.
+        return SplitVectorLoad(Op, DAG);
     }
   }
 

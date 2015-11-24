@@ -1484,7 +1484,7 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   if ((Store->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
        Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) &&
       Store->getValue().getValueType().isVector()) {
-    return ScalarizeVectorStore(Op, DAG);
+    return SplitVectorStore(Op, DAG);
   }
 
   EVT MemVT = Store->getMemoryVT();
