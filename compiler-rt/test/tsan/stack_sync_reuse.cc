@@ -31,7 +31,8 @@ void *Thread(void *x) {
 }
 
 void __attribute__((noinline)) foobar() {
-  long s;
+  __attribute__((aligned(64))) long s;
+
   addr = &s;
   __atomic_store_n(&s, 0, __ATOMIC_RELAXED);
   __atomic_store_n(&syncp, &s, __ATOMIC_RELEASE);
@@ -40,7 +41,8 @@ void __attribute__((noinline)) foobar() {
 }
 
 void __attribute__((noinline)) barfoo() {
-  long s;
+  __attribute__((aligned(64))) long s;
+
   if (addr != &s) {
     printf("address mismatch addr=%p &s=%p\n", addr, &s);
     exit(1);
