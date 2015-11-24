@@ -131,20 +131,6 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
   return createPGOFuncNameVar(*F.getParent(), F.getLinkage(), FuncName);
 }
 
-uint32_t ValueProfRecord::getHeaderSize(uint32_t NumValueSites) {
-  uint32_t Size = offsetof(ValueProfRecord, SiteCountArray) +
-                  sizeof(uint8_t) * NumValueSites;
-  // Round the size to multiple of 8 bytes.
-  Size = (Size + 7) & ~7;
-  return Size;
-}
-
-uint32_t ValueProfRecord::getSize(uint32_t NumValueSites,
-                                  uint32_t NumValueData) {
-  return getHeaderSize(NumValueSites) +
-         sizeof(InstrProfValueData) * NumValueData;
-}
-
 void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
                                     InstrProfRecord::ValueMapType *VMap) {
   Record.reserveSites(Kind, NumValueSites);
@@ -228,7 +214,7 @@ uint32_t ValueProfData::getSize(const InstrProfRecord &Record) {
     if (!NumValueSites)
       continue;
     TotalSize +=
-        ValueProfRecord::getSize(NumValueSites, Record.getNumValueData(Kind));
+        getValueProfRecordSize(NumValueSites, Record.getNumValueData(Kind));
   }
   return TotalSize;
 }
@@ -355,7 +341,7 @@ ValueProfRecord *ValueProfRecord::getNext() {
 }
 
 InstrProfValueData *ValueProfRecord::getValueData() {
-  return reinterpret_cast<InstrProfValueData *>((char *)this +
-                                                getHeaderSize(NumValueSites));
+  return reinterpret_cast<InstrProfValueData *>(
+      (char *)this + getValueProfRecordHeaderSize(NumValueSites));
 }
 }

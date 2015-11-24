@@ -83,7 +83,7 @@ inline StringRef getInstrProfCountersVarPrefix() {
 /// associated with a COMDAT function.
 inline StringRef getInstrProfComdatPrefix() { return "__llvm_profile_vars_"; }
 
-/// Return the name of a covarage mapping variable (internal linkage) 
+/// Return the name of a covarage mapping variable (internal linkage)
 /// for each instrumented source module. Such variables are allocated
 /// in the __llvm_covmap section.
 inline StringRef getCoverageMappingVarName() {
@@ -440,9 +440,15 @@ inline support::endianness getHostEndianness() {
   return sys::IsLittleEndianHost ? support::little : support::big;
 }
 
+/// Return the \c ValueProfRecord header size including the padding bytes.
+uint32_t getValueProfRecordHeaderSize(uint32_t NumValueSites);
+/// Return the total size of the value profile record including the
+/// header and the value data.
+uint32_t getValueProfRecordSize(uint32_t NumValueSites, uint32_t NumValueData);
+
 /// This is the header of the data structure that defines the on-disk
 /// layout of the value profile data of a particular kind for one function.
-struct ValueProfRecord {
+typedef struct ValueProfRecord {
   // The kind of the value profile record.
   uint32_t Kind;
   // The number of value profile sites. It is guaranteed to be non-zero;
@@ -462,14 +468,11 @@ struct ValueProfRecord {
   // of all elements in SiteCountArray[].
   // InstrProfValueData ValueData[];
 
-  /// Return the \c ValueProfRecord header size including the padding bytes.
-  static uint32_t getHeaderSize(uint32_t NumValueSites);
   /// Return the total size of the value profile record including the
   /// header and the value data.
-  static uint32_t getSize(uint32_t NumValueSites, uint32_t NumValueData);
-  /// Return the total size of the value profile record including the
-  /// header and the value data.
-  uint32_t getSize() const { return getSize(NumValueSites, getNumValueData()); }
+  uint32_t getSize() const {
+    return getValueProfRecordSize(NumValueSites, getNumValueData());
+  }
   /// Use this method to advance to the next \c ValueProfRecord.
   ValueProfRecord *getNext();
   /// Return the pointer to the first value profile data.
@@ -488,11 +491,11 @@ struct ValueProfRecord {
   /// Do byte swap for this instance. \c Old is the original order before
   /// the swap, and \c New is the New byte order.
   void swapBytes(support::endianness Old, support::endianness New);
-};
+} ValueProfRecord;
 
 /// Per-function header/control data structure for value profiling
 /// data in indexed format.
-struct ValueProfData {
+typedef struct ValueProfData {
   // Total size in bytes including this field. It must be a multiple
   // of sizeof(uint64_t).
   uint32_t TotalSize;
@@ -533,7 +536,21 @@ struct ValueProfData {
                      InstrProfRecord::ValueMapType *VMap);
   /// Return the first \c ValueProfRecord instance.
   ValueProfRecord *getFirstValueProfRecord();
-};
+} ValueProfData;
+
+inline uint32_t getValueProfRecordHeaderSize(uint32_t NumValueSites) {
+  uint32_t Size = offsetof(ValueProfRecord, SiteCountArray) +
+                  sizeof(uint8_t) * NumValueSites;
+  // Round the size to multiple of 8 bytes.
+  Size = (Size + 7) & ~7;
+  return Size;
+}
+
+inline uint32_t getValueProfRecordSize(uint32_t NumValueSites,
+                                       uint32_t NumValueData) {
+  return getValueProfRecordHeaderSize(NumValueSites) +
+         sizeof(InstrProfValueData) * NumValueData;
+}
 
 namespace IndexedInstrProf {
 
