@@ -19316,7 +19316,8 @@ static SDValue LowerHorizontalByteSum(SDValue V, MVT VT,
   // chunks, thus directly computes the pop count for v2i64 and v4i64.
   if (EltVT == MVT::i64) {
     SDValue Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
-    V = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT, V, Zeros);
+    MVT SadVecVT = MVT::getVectorVT(MVT::i64, VecSize / 64);
+    V = DAG.getNode(X86ISD::PSADBW, DL, SadVecVT, V, Zeros);
     return DAG.getBitcast(VT, V);
   }
 
@@ -19332,9 +19333,10 @@ static SDValue LowerHorizontalByteSum(SDValue V, MVT VT,
 
     // Do the horizontal sums into two v2i64s.
     Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
-    Low = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT,
+    MVT SadVecVT = MVT::getVectorVT(MVT::i64, VecSize / 64);
+    Low = DAG.getNode(X86ISD::PSADBW, DL, SadVecVT,
                       DAG.getBitcast(ByteVecVT, Low), Zeros);
-    High = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT,
+    High = DAG.getNode(X86ISD::PSADBW, DL, SadVecVT,
                        DAG.getBitcast(ByteVecVT, High), Zeros);
 
     // Merge them together.

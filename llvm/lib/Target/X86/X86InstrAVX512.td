@@ -7369,32 +7369,34 @@ defm VPSRLDQ : avx512_shift_packed_all<0x73, X86vshrdq, MRM3r, MRM3m, "vpsrldq",
 
 
 multiclass avx512_psadbw_packed<bits<8> opc, SDNode OpNode, 
-                                string OpcodeStr, X86VectorVTInfo _src>{
+                                string OpcodeStr, X86VectorVTInfo _dst,
+                                X86VectorVTInfo _src>{
   def rr : AVX512BI<opc, MRMSrcReg,
-             (outs _src.RC:$dst), (ins _src.RC:$src1, _src.RC:$src2),
+             (outs _dst.RC:$dst), (ins _src.RC:$src1, _src.RC:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set _src.RC:$dst,(_src.VT 
-                                (OpNode _src.RC:$src1, _src.RC:$src2)))]>;
+             [(set _dst.RC:$dst,(_dst.VT
+                                (OpNode (_src.VT _src.RC:$src1),
+                                        (_src.VT _src.RC:$src2))))]>;
   let mayLoad = 1 in
     def rm : AVX512BI<opc, MRMSrcMem,
-             (outs _src.RC:$dst), (ins _src.RC:$src1, _src.MemOp:$src2),
+             (outs _dst.RC:$dst), (ins _src.RC:$src1, _src.MemOp:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set _src.RC:$dst,(_src.VT 
-                                (OpNode _src.RC:$src1, 
-                                (_src.VT (bitconvert 
+             [(set _dst.RC:$dst,(_dst.VT
+                                (OpNode (_src.VT _src.RC:$src1),
+                                (_src.VT (bitconvert
                                           (_src.LdFrag addr:$src2))))))]>;
 }
 
 multiclass avx512_psadbw_packed_all<bits<8> opc, SDNode OpNode, 
                                     string OpcodeStr, Predicate prd> {
   let Predicates = [prd] in
-    defm Z512 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, v64i8_info>, 
-                                    EVEX_V512;
+    defm Z512 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, v8i64_info,
+                                    v64i8_info>, EVEX_V512;
   let Predicates = [prd, HasVLX] in {
-    defm Z256 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, v32i8x_info>, 
-                                    EVEX_V256;
-    defm Z128 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, v16i8x_info>,
-                                    EVEX_V128;
+    defm Z256 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, v4i64x_info,
+                                    v32i8x_info>, EVEX_V256;
+    defm Z128 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, v2i64x_info,
+                                    v16i8x_info>, EVEX_V128;
   }
 }
 
