@@ -94,6 +94,7 @@ public:
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();
+  unsigned getGotRefReloc(unsigned Type) const override;
   unsigned getPltRefReloc(unsigned Type) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -152,6 +153,8 @@ uint64_t TargetInfo::getVAStart() const { return Config->Shared ? 0 : VAStart; }
 bool TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
+
+unsigned TargetInfo::getGotRefReloc(unsigned Type) const { return GotRefReloc; }
 
 unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
@@ -608,11 +611,14 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 AArch64TargetInfo::AArch64TargetInfo() {
+  GotReloc = R_AARCH64_GLOB_DAT;
   PltReloc = R_AARCH64_JUMP_SLOT;
   LazyRelocations = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 32;
 }
+
+unsigned AArch64TargetInfo::getGotRefReloc(unsigned Type) const { return Type; }
 
 unsigned AArch64TargetInfo::getPltRefReloc(unsigned Type) const { return Type; }
 
@@ -663,7 +669,8 @@ void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 
 bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
                                       const SymbolBody &S) const {
-  return relocNeedsPlt(Type, S);
+  return Type == R_AARCH64_ADR_GOT_PAGE || Type == R_AARCH64_LD64_GOT_LO12_NC ||
+         relocNeedsPlt(Type, S);
 }
 
 bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
@@ -728,6 +735,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     updateAArch64Adr(Loc, X & 0x1FFFFF);
     break;
   }
+  case R_AARCH64_ADR_GOT_PAGE:
   case R_AARCH64_ADR_PREL_PG_HI21: {
     uint64_t X = getAArch64Page(SA) - getAArch64Page(P);
     checkAArch64OutOfRange<33>(X, Type);
@@ -744,6 +752,12 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_AARCH64_LDST32_ABS_LO12_NC:
     // No overflow check needed.
     or32le(Loc, (SA & 0xFFC) << 8);
+    break;
+  case R_AARCH64_LD64_GOT_LO12_NC:
+    if (SA & 0x7)
+      error("Relocation R_AARCH64_LD64_GOT_LO12_NC not aligned");
+    // No overflow check needed.
+    or32le(Loc, (SA & 0xFF8) << 7);
     break;
   case R_AARCH64_LDST64_ABS_LO12_NC:
     // No overflow check needed.
