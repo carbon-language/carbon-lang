@@ -28,6 +28,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "function-import"
 
+/// Limit on instruction count of imported functions.
+static cl::opt<unsigned> ImportInstrLimit(
+    "import-instr-limit", cl::init(100), cl::Hidden, cl::value_desc("N"),
+    cl::desc("Only import functions with less than N instructions"));
+
 // Load lazily a module from \p FileName in \p Context.
 static std::unique_ptr<Module> loadFile(const std::string &FileName,
                                         LLVMContext &Context) {
@@ -122,6 +127,13 @@ bool FunctionImporter::importFunctions(Module &M) {
       dbgs() << "Missing summary for  " << CalledFunctionName
              << ", error at import?\n";
       llvm_unreachable("Missing summary");
+    }
+
+    if (Summary->instCount() > ImportInstrLimit) {
+      dbgs() << "Skip import of " << CalledFunctionName << " with "
+             << Summary->instCount() << " instructions (limit "
+             << ImportInstrLimit << ")\n";
+      continue;
     }
 
     //

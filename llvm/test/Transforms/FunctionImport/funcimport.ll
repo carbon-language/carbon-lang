@@ -4,7 +4,11 @@
 ; RUN: llvm-lto -thinlto -o %t3 %t.bc %t2.bc
 
 ; Do the import now
-; RUN: opt -function-import -summary-file %t3.thinlto.bc %s -S | FileCheck %s
+; RUN: opt -function-import -summary-file %t3.thinlto.bc %s -S | FileCheck %s --check-prefix=CHECK --check-prefix=INSTLIMDEF
+
+; Test import with smaller instruction limit
+; RUN: opt -function-import -summary-file %t3.thinlto.bc %s -import-instr-limit=5 -S | FileCheck %s --check-prefix=CHECK --check-prefix=INSTLIM5
+; INSTLIM5-NOT: @staticfunc.llvm.2
 
 define i32 @main() #0 {
 entry:
@@ -28,14 +32,15 @@ declare void @weakalias(...) #1
 ; CHECK-DAG: define available_externally void @globalfunc2()
 declare void @analias(...) #1
 
-; CHECK-DAG: define available_externally i32 @referencestatics(i32 %i)
+; INSTLIMDEF-DAG: define available_externally i32 @referencestatics(i32 %i)
+; INSTLIM5-DAG: declare i32 @referencestatics(...)
 declare i32 @referencestatics(...) #1
 
 ; The import of referencestatics will expose call to staticfunc that
 ; should in turn be imported as a promoted/renamed and hidden function.
 ; Ensure that the call is to the properly-renamed function.
-; CHECK-DAG: %call = call i32 @staticfunc.llvm.2()
-; CHECK-DAG: define available_externally hidden i32 @staticfunc.llvm.2()
+; INSTLIMDEF-DAG: %call = call i32 @staticfunc.llvm.2()
+; INSTLIMDEF-DAG: define available_externally hidden i32 @staticfunc.llvm.2()
 
 ; CHECK-DAG: define available_externally i32 @referenceglobals(i32 %i)
 declare i32 @referenceglobals(...) #1
