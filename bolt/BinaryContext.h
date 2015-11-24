@@ -57,7 +57,9 @@ public:
 
   const Target *TheTarget;
 
-  MCCodeEmitter *MCE;
+  std::string TripleName;
+
+  std::unique_ptr<MCCodeEmitter> MCE;
 
   std::unique_ptr<MCObjectFileInfo> MOFI;
 
@@ -77,14 +79,13 @@ public:
 
   std::function<void(std::error_code)> ErrorCheck;
 
-  MCAsmBackend *MAB;
-
   const DataReader &DR;
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<Triple> TheTriple,
                 const Target *TheTarget,
-                MCCodeEmitter *MCE,
+                std::string TripleName,
+                std::unique_ptr<MCCodeEmitter> MCE,
                 std::unique_ptr<MCObjectFileInfo> MOFI,
                 std::unique_ptr<const MCAsmInfo> AsmInfo,
                 std::unique_ptr<const MCInstrInfo> MII,
@@ -93,12 +94,12 @@ public:
                 std::unique_ptr<const MCInstrAnalysis> MIA,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
-                MCAsmBackend *MAB,
                 const DataReader &DR) :
       Ctx(std::move(Ctx)),
       TheTriple(std::move(TheTriple)),
       TheTarget(TheTarget),
-      MCE(MCE),
+      TripleName(TripleName),
+      MCE(std::move(MCE)),
       MOFI(std::move(MOFI)),
       AsmInfo(std::move(AsmInfo)),
       MII(std::move(MII)),
@@ -107,7 +108,6 @@ public:
       MIA(std::move(MIA)),
       MRI(std::move(MRI)),
       DisAsm(std::move(DisAsm)),
-      MAB(MAB),
       DR(DR) {}
 
   ~BinaryContext() {}

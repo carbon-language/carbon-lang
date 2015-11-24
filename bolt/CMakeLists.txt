@@ -18,4 +18,5 @@ add_llvm_tool(llvm-flo
   BinaryFunction.cpp
   DataReader.cpp
   Exceptions.cpp
+  RewriteInstance.cpp
   )
