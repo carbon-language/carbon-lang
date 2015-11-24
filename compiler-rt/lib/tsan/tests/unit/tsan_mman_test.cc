@@ -141,11 +141,13 @@ TEST(Mman, CallocOverflow) {
   // which is overflown by tsan memory accesses functions in debug mode.
   return;
 #endif
+  ThreadState *thr = cur_thread();
+  uptr pc = 0;
   size_t kArraySize = 4096;
   volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
   volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;
   volatile void *p = NULL;
-  EXPECT_DEATH(p = calloc(kArraySize, kArraySize2),
+  EXPECT_DEATH(p = user_calloc(thr, pc, kArraySize, kArraySize2),
                "allocator is terminating the process instead of returning 0");
   EXPECT_EQ(0L, p);
 }
