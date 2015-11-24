@@ -1773,6 +1773,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::ADD);
   setTargetDAGCombine(ISD::FADD);
   setTargetDAGCombine(ISD::FSUB);
+  setTargetDAGCombine(ISD::FNEG);
   setTargetDAGCombine(ISD::FMA);
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::LOAD);
@@ -26148,6 +26149,33 @@ static SDValue PerformFSUBCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// Do target-specific dag combines on floating point negations.
+static SDValue PerformFNEGCombine(SDNode *N, SelectionDAG &DAG,
+                                  const X86Subtarget *Subtarget) {
+  EVT VT = N->getValueType(0);
+  SDValue Arg = N->getOperand(0);
+
+  // If we're negating a FMA node, then we can adjust the
+  // instruction to include the extra negation.
+  if (Arg.hasOneUse()) {
+    switch (Arg.getOpcode()) {
+      case X86ISD::FMADD:
+        return DAG.getNode(X86ISD::FNMSUB, SDLoc(N), VT, Arg.getOperand(0),
+                           Arg.getOperand(1), Arg.getOperand(2));
+      case X86ISD::FMSUB:
+        return DAG.getNode(X86ISD::FNMADD, SDLoc(N), VT, Arg.getOperand(0),
+                           Arg.getOperand(1), Arg.getOperand(2));
+      case X86ISD::FNMADD:
+        return DAG.getNode(X86ISD::FMSUB, SDLoc(N), VT, Arg.getOperand(0),
+                           Arg.getOperand(1), Arg.getOperand(2));
+      case X86ISD::FNMSUB:
+        return DAG.getNode(X86ISD::FMADD, SDLoc(N), VT, Arg.getOperand(0),
+                           Arg.getOperand(1), Arg.getOperand(2));
+    }
+  }
+  return SDValue();
+}
+
 /// Do target-specific dag combines on X86ISD::FOR and X86ISD::FXOR nodes.
 static SDValue PerformFORCombine(SDNode *N, SelectionDAG &DAG,
                                  const X86Subtarget *Subtarget) {
@@ -27042,6 +27070,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::UINT_TO_FP:     return PerformUINT_TO_FPCombine(N, DAG, Subtarget);
   case ISD::FADD:           return PerformFADDCombine(N, DAG, Subtarget);
   case ISD::FSUB:           return PerformFSUBCombine(N, DAG, Subtarget);
+  case ISD::FNEG:           return PerformFNEGCombine(N, DAG, Subtarget);
   case ISD::TRUNCATE:       return PerformTRUNCATECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG, Subtarget);
