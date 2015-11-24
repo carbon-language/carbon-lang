@@ -613,22 +613,9 @@ define void @merge_global_store_7_constants_i32(i32 addrspace(1)* %out) {
   ret void
 }
 
-; FIXME: This should do 2 dwordx4 loads
 ; GCN-LABEL: {{^}}merge_global_store_8_constants_i32:
-
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-; GCN-NOAA: buffer_store_dword v
-
-; GCN-AA: buffer_store_dwordx4
-; GCN-AA: buffer_store_dwordx2
-; GCN-AA: buffer_store_dwordx2
-
+; GCN: buffer_store_dwordx4
+; GCN: buffer_store_dwordx4
 ; GCN: s_endpgm
 define void @merge_global_store_8_constants_i32(i32 addrspace(1)* %out) {
   store i32 34, i32 addrspace(1)* %out, align 4
