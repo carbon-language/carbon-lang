@@ -538,6 +538,18 @@ typedef struct ValueProfData {
   ValueProfRecord *getFirstValueProfRecord();
 } ValueProfData;
 
+typedef struct ValueProfRecordClosure {
+  void *Record;
+  uint32_t (*GetNumValueKinds)(void *Record);
+  uint32_t (*GetNumValueSites)(void *Record, uint32_t VKind);
+  uint32_t (*GetNumValueData)(void *Record, uint32_t VKind);
+  uint32_t (*GetNumValueDataForSite)(void *R, uint32_t VK, uint32_t S);
+  uint64_t (*RemapValueData)(uint64_t Value);
+  void (*GetValueForSite)(InstrProfValueData Dst[], void *R, uint32_t K,
+                          uint32_t S);
+  ValueProfData *(*AllocateValueProfData)(size_t TotalSizeInBytes);
+} ValueProfRecordClosure;
+
 inline uint32_t getValueProfRecordHeaderSize(uint32_t NumValueSites) {
   uint32_t Size = offsetof(ValueProfRecord, SiteCountArray) +
                   sizeof(uint8_t) * NumValueSites;
