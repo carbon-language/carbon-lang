@@ -161,8 +161,13 @@ def run(args):
     else:
         logging.info("swig bot client using remote generation with server '{}'"
                      .format(options.remote))
-        config_json = config.generate_config_json(options)
-        packed_input = local.pack_archive(config_json, options)
-        connection = establish_remote_connection(options.remote)
-        response = transmit_data(connection, packed_input)
-        logging.debug("Received {} byte response.".format(len(response)))
+        connection = None
+        try:
+            config_json = config.generate_config_json(options)
+            packed_input = local.pack_archive(config_json, options)
+            connection = establish_remote_connection(options.remote)
+            response = transmit_data(connection, packed_input)
+            logging.debug("Received {} byte response.".format(len(response)))
+        finally:
+            if connection is not None:
+                connection.close()
