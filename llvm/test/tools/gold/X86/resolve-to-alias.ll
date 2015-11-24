@@ -4,7 +4,16 @@
 ; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=emit-llvm \
 ; RUN:    -shared %t.o %t2.o -o %t.bc
-; RUN: llvm-dis %t.bc -o - | FileCheck %s
+; RUN: llvm-dis %t.bc -o %t.ll
+; RUN: FileCheck --check-prefix=PASS1 %s < %t.ll
+; RUN: FileCheck --check-prefix=PASS2 %s < %t.ll
+
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
+; RUN:    --plugin-opt=emit-llvm \
+; RUN:    -shared %t2.o %t.o -o %t.bc
+; RUN: llvm-dis %t.bc -o %t.ll
+; RUN: FileCheck --check-prefix=PASS1 %s < %t.ll
+; RUN: FileCheck --check-prefix=PASS2 %s < %t.ll
 
 define void @foo() {
   call void @bar()
@@ -12,13 +21,13 @@ define void @foo() {
 }
 declare void @bar()
 
-; CHECK: @bar = alias void (), void ()* @zed
+; PASS1: @bar = alias void (), void ()* @zed
 
-; CHECK:      define void @foo() {
-; CHECK-NEXT:   call void @bar()
-; CHECK-NEXT:   ret void
-; CHECK-NEXT: }
+; PASS1:      define void @foo() {
+; PASS1-NEXT:   call void @bar()
+; PASS1-NEXT:   ret void
+; PASS1-NEXT: }
 
-; CHECK:      define void @zed() {
-; CHECK-NEXT:   ret void
-; CHECK-NEXT: }
+; PASS2:      define void @zed() {
+; PASS2-NEXT:   ret void
+; PASS2-NEXT: }
