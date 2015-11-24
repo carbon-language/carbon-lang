@@ -166,10 +166,8 @@ void ValueProfRecord::serializeFrom(const InstrProfRecord &Record,
   for (uint32_t S = 0; S < NumValueSites; S++) {
     uint32_t ND = Record.getNumValueDataForSite(ValueKind, S);
     SiteCountArray[S] = ND;
-    std::unique_ptr<InstrProfValueData[]> SrcVD =
-        Record.getValueForSite(ValueKind, S);
+    Record.getValueForSite(DstVD, ValueKind, S);
     for (uint32_t I = 0; I < ND; I++) {
-      DstVD[I] = SrcVD[I];
       switch (ValueKind) {
       case IPVK_IndirectCallTarget:
         DstVD[I].Value = IndexedInstrProf::ComputeHash(

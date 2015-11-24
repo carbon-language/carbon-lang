@@ -259,8 +259,11 @@ struct InstrProfRecord {
   /// site: Site.
   inline uint32_t getNumValueDataForSite(uint32_t ValueKind,
                                          uint32_t Site) const;
+  /// Return the array of profiled values at \p Site.
   inline std::unique_ptr<InstrProfValueData[]>
   getValueForSite(uint32_t ValueKind, uint32_t Site) const;
+  inline void getValueForSite(InstrProfValueData Dest[], uint32_t ValueKind,
+                              uint32_t Site) const;
   /// Reserve space for NumValueSites sites.
   inline void reserveSites(uint32_t ValueKind, uint32_t NumValueSites);
   /// Add ValueData for ValueKind at value Site.
@@ -369,14 +372,17 @@ InstrProfRecord::getValueForSite(uint32_t ValueKind, uint32_t Site) const {
     return std::unique_ptr<InstrProfValueData[]>(nullptr);
 
   auto VD = llvm::make_unique<InstrProfValueData[]>(N);
-  uint32_t I = 0;
-  for (auto V : getValueSitesForKind(ValueKind)[Site].ValueData) {
-    VD[I] = V;
-    I++;
-  }
-  assert(I == N);
+  getValueForSite(VD.get(), ValueKind, Site);
 
   return VD;
+}
+void InstrProfRecord::getValueForSite(InstrProfValueData Dest[],
+                                      uint32_t ValueKind, uint32_t Site) const {
+  uint32_t I = 0;
+  for (auto V : getValueSitesForKind(ValueKind)[Site].ValueData) {
+    Dest[I] = V;
+    I++;
+  }
 }
 
 void InstrProfRecord::addValueData(uint32_t ValueKind, uint32_t Site,
