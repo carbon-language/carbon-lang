@@ -131,10 +131,24 @@ bool FunctionImporter::importFunctions(Module &M) {
 
     // The function that we will import!
     GlobalValue *SGV = Module.getNamedValue(CalledFunctionName);
+    StringRef ImportFunctionName = CalledFunctionName;
+    if (!SGV) {
+      // Might be local in source Module, promoted/renamed in dest Module M.
+      std::pair<StringRef, StringRef> Split =
+          CalledFunctionName.split(".llvm.");
+      SGV = Module.getNamedValue(Split.first);
+#ifndef NDEBUG
+      // Assert that Split.second is module id
+      uint64_t ModuleId;
+      assert(!Split.second.getAsInteger(10, ModuleId));
+      assert(ModuleId == Index.getModuleId(FileName));
+#endif
+    }
     Function *F = dyn_cast<Function>(SGV);
     if (!F && isa<GlobalAlias>(SGV)) {
       auto *SGA = dyn_cast<GlobalAlias>(SGV);
       F = dyn_cast<Function>(SGA->getBaseObject());
+      ImportFunctionName = F->getName();
     }
     if (!F) {
       errs() << "Can't load function '" << CalledFunctionName << "' in Module '"
@@ -156,8 +170,28 @@ bool FunctionImporter::importFunctions(Module &M) {
     if (L.linkInModule(&Module, Linker::Flags::None, &Index, F))
       report_fatal_error("Function Import: link error");
 
-    // TODO: Process the newly imported function and add callees to the
-    // worklist.
+    // Process the newly imported function and add callees to the worklist.
+    GlobalValue *NewGV = M.getNamedValue(ImportFunctionName);
+    assert(NewGV);
+    Function *NewF = dyn_cast<Function>(NewGV);
+    assert(NewF);
+
+    for (auto &BB : *NewF) {
+      for (auto &I : BB) {
+        if (isa<CallInst>(I)) {
+          DEBUG(dbgs() << "Found a call: '" << I << "'\n");
+          auto CalledFunction = cast<CallInst>(I).getCalledFunction();
+          // Insert any new external calls that have not already been
+          // added to set/worklist.
+          if (CalledFunction && CalledFunction->hasName() &&
+              CalledFunction->isDeclaration() &&
+              !CalledFunctions.count(CalledFunction->getName())) {
+            CalledFunctions.insert(CalledFunction->getName());
+            Worklist.push_back(CalledFunction->getName());
+          }
+        }
+      }
+    }
 
     Changed = true;
   }

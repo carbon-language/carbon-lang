@@ -31,8 +31,18 @@ declare void @analias(...) #1
 ; CHECK-DAG: define available_externally i32 @referencestatics(i32 %i)
 declare i32 @referencestatics(...) #1
 
+; The import of referencestatics will expose call to staticfunc that
+; should in turn be imported as a promoted/renamed and hidden function.
+; Ensure that the call is to the properly-renamed function.
+; CHECK-DAG: %call = call i32 @staticfunc.llvm.2()
+; CHECK-DAG: define available_externally hidden i32 @staticfunc.llvm.2()
+
 ; CHECK-DAG: define available_externally i32 @referenceglobals(i32 %i)
 declare i32 @referenceglobals(...) #1
+
+; The import of referenceglobals will expose call to globalfunc1 that
+; should in turn be imported.
+; CHECK-DAG: define available_externally void @globalfunc1()
 
 ; CHECK-DAG: define available_externally i32 @referencecommon(i32 %i)
 declare i32 @referencecommon(...) #1
