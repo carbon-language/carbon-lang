@@ -194,8 +194,7 @@ bool EEVT::TypeSet::MergeInTypeInfo(const EEVT::TypeSet &InVT, TreePattern &TP){
     // multiple different integer types, replace them with a single iPTR.
     if ((InVT.TypeVec[0] == MVT::iPTR || InVT.TypeVec[0] == MVT::iPTRAny) &&
         TypeVec.size() != 1) {
-      TypeVec.resize(1);
-      TypeVec[0] = InVT.TypeVec[0];
+      TypeVec.assign(1, InVT.TypeVec[0]);
       MadeChange = true;
     }
 
