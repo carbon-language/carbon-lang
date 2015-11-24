@@ -2376,10 +2376,10 @@ void X86FrameLowering::adjustForHiPEPrologue(
                  .addReg(ScratchReg), PReg, false, SPLimitOffset);
     BuildMI(incStackMBB, DL, TII.get(X86::JLE_1)).addMBB(incStackMBB);
 
-    stackCheckMBB->addSuccessor(&PrologueMBB, 99);
-    stackCheckMBB->addSuccessor(incStackMBB, 1);
-    incStackMBB->addSuccessor(&PrologueMBB, 99);
-    incStackMBB->addSuccessor(incStackMBB, 1);
+    stackCheckMBB->addSuccessor(&PrologueMBB, {99, 100});
+    stackCheckMBB->addSuccessor(incStackMBB, {1, 100});
+    incStackMBB->addSuccessor(&PrologueMBB, {99, 100});
+    incStackMBB->addSuccessor(incStackMBB, {1, 100});
   }
 #ifdef XDEBUG
   MF.verify();
