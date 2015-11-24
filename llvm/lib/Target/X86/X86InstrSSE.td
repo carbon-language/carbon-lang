@@ -4683,7 +4683,7 @@ def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
 } // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//
-// SSE2 - Move Doubleword
+// SSE2 - Move Doubleword/Quadword
 //===---------------------------------------------------------------------===//
 
 //===---------------------------------------------------------------------===//
@@ -4883,30 +4883,18 @@ let isCodeGenOnly = 1 in {
                         IIC_SSE_MOVDQ>, Sched<[WriteStore]>;
 }
 
-//===---------------------------------------------------------------------===//
-// Patterns and instructions to describe movd/movq to XMM register zero-extends
-//
-let isCodeGenOnly = 1, SchedRW = [WriteMove] in {
-let AddedComplexity = 15 in {
-def VMOVZQI2PQIrr : VS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
-                       "movq\t{$src, $dst|$dst, $src}", // X86-64 only
-                       [(set VR128:$dst, (v2i64 (X86vzmovl
-                                      (v2i64 (scalar_to_vector GR64:$src)))))],
-                                      IIC_SSE_MOVDQ>,
-                                      VEX, VEX_W;
-def MOVZQI2PQIrr : RS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
-                       "mov{d|q}\t{$src, $dst|$dst, $src}", // X86-64 only
-                       [(set VR128:$dst, (v2i64 (X86vzmovl
-                                      (v2i64 (scalar_to_vector GR64:$src)))))],
-                                      IIC_SSE_MOVDQ>;
-}
-} // isCodeGenOnly, SchedRW
-
 let Predicates = [UseAVX] in {
-  let AddedComplexity = 15 in
+  let AddedComplexity = 15 in {
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector GR32:$src)))),
               (VMOVDI2PDIrr GR32:$src)>;
 
+    def : Pat<(v2i64 (X86vzmovl (v2i64 (scalar_to_vector GR64:$src)))),
+              (VMOV64toPQIrr GR64:$src)>;
+
+    def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
+                (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
+              (SUBREG_TO_REG (i64 0), (VMOV64toPQIrr GR64:$src), sub_xmm)>;
+  }
   // AVX 128-bit movd/movq instructions write zeros in the high 128-bit part.
   // These instructions also write zeros in the high part of a 256-bit register.
   let AddedComplexity = 20 in {
@@ -4924,16 +4912,16 @@ let Predicates = [UseAVX] in {
   def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
                                (v4i32 (scalar_to_vector GR32:$src)),(iPTR 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVDI2PDIrr GR32:$src), sub_xmm)>;
-  def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
-                               (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
-            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrr GR64:$src), sub_xmm)>;
 }
 
 let Predicates = [UseSSE2] in {
-  let AddedComplexity = 15 in
+  let AddedComplexity = 15 in {
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector GR32:$src)))),
               (MOVDI2PDIrr GR32:$src)>;
 
+    def : Pat<(v2i64 (X86vzmovl (v2i64 (scalar_to_vector GR64:$src)))),
+              (MOV64toPQIrr GR64:$src)>;
+  }
   let AddedComplexity = 20 in {
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector (loadi32 addr:$src))))),
               (MOVDI2PDIrm addr:$src)>;
