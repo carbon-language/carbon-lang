@@ -471,26 +471,8 @@ private:
   /// \brief Process clauses with list of variables.
   template <typename T> bool VisitOMPClauseList(T *Node);
 
-  bool dataTraverse(Stmt *S);
   bool dataTraverseNode(Stmt *S, DataRecursionQueue *Queue);
 };
-
-template <typename Derived>
-bool RecursiveASTVisitor<Derived>::dataTraverse(Stmt *S) {
-  SmallVector<Stmt*, 16> Queue;
-  Queue.push_back(S);
-
-  while (!Queue.empty()) {
-    Stmt *CurrS = Queue.pop_back_val();
-
-    size_t N = Queue.size();
-    TRY_TO(dataTraverseNode(CurrS, &Queue));
-    // Process new children in the order they were added.
-    std::reverse(Queue.begin() + N, Queue.end());
-  }
-
-  return true;
-}
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::dataTraverseNode(Stmt *S,
@@ -561,10 +543,23 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S,
                               &RecursiveASTVisitor::TraverseStmt>::value)
     return dataTraverseNode(S, nullptr);
 
-  if (!Queue)
-    return dataTraverse(S);
+  if (Queue) {
+    Queue->push_back(S);
+    return true;
+  }
 
-  Queue->push_back(S);
+  SmallVector<Stmt *, 8> LocalQueue;
+  LocalQueue.push_back(S);
+
+  while (!LocalQueue.empty()) {
+    Stmt *CurrS = LocalQueue.pop_back_val();
+
+    size_t N = LocalQueue.size();
+    TRY_TO(dataTraverseNode(CurrS, &LocalQueue));
+    // Process new children in the order they were added.
+    std::reverse(LocalQueue.begin() + N, LocalQueue.end());
+  }
+
   return true;
 }
 
