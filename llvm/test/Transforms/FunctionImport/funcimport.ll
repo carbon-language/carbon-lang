@@ -43,6 +43,12 @@ declare void @setfuncptr(...) #1
 ; CHECK-DAG: define available_externally void @callfuncptr()
 declare void @callfuncptr(...) #1
 
+; Ensure that all uses of local variable @P which has used in setfuncptr
+; and callfuncptr are to the same promoted/renamed global.
+; CHECK-DAG: @P.llvm.2 = available_externally hidden global void ()* null
+; CHECK-DAG: %0 = load void ()*, void ()** @P.llvm.2,
+; CHECK-DAG: store void ()* @staticfunc2.llvm.2, void ()** @P.llvm.2,
+
 ; Won't import weak func
 ; CHECK-DAG: declare void @weakfunc(...)
 declare void @weakfunc(...) #1
