@@ -217,8 +217,7 @@ CodeGenRegBank &CodeGenTarget::getRegBank() const {
 
 void CodeGenTarget::ReadRegAltNameIndices() const {
   RegAltNameIndices = Records.getAllDerivedDefinitions("RegAltNameIndex");
-  array_pod_sort(RegAltNameIndices.begin(), RegAltNameIndices.end(),
-                 LessRecord());
+  std::sort(RegAltNameIndices.begin(), RegAltNameIndices.end(), LessRecord());
 }
 
 /// getRegisterByName - If there is a register with the specific AsmName,
