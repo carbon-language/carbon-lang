@@ -17,12 +17,19 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 import zipfile
 
 # LLDB modules
 import use_lldb_suite
 
-def pack_input(options):
+class GenOptions(object):
+    src_root = None
+    target_dir = None
+    languages = None
+    swig_executable = None
+
+def pack_archive(config_json, options):
     logging.info("Creating input file package...")
     zip_data = io.BytesIO()
     zip_file = None
@@ -61,7 +68,25 @@ def pack_input(options):
                 os.path.join(options.src_root, relative_path))
             logging.info("{} -> {}".format(full_path, relative_path))
             zip_file.write(full_path, relative_path)
+
+    logging.info("(null) -> config.json")
+    zip_file.writestr("config.json", config_json)
+    zip_file.close()
     return zip_data.getvalue()
+
+def unpack_archive(subfolder, archive_bytes):
+    tempfolder = os.path.join(tempfile.gettempdir(), subfolder)
+    os.makedirs(tempfolder, exist_ok=True)
+
+    tempfolder = tempfile.mkdtemp(dir=tempfolder)
+    logging.debug("Extracting archive to {}".format(tempfolder))
+
+    zip_data = io.BytesIO(archive_bytes)
+    logging.debug("Opening zip archive...")
+    zip_file = zipfile.ZipFile(zip_data, mode='r')
+    zip_file.extractall(tempfolder)
+    zip_file.close()
+    return tempfolder
 
 def generate(options):
     include_folder = os.path.join(options.src_root, "include")

@@ -23,6 +23,7 @@ from lldbsuite.support import fs
 from lldbsuite.support import sockutil
 
 # package imports
+from . import config
 from . import local
 
 default_ip = "127.0.0.1"
@@ -151,11 +152,17 @@ def run(args):
         if not os.path.isfile(options.swig_executable):
             logging.error("Swig executable '{}' does not exist."
                           .format(options.swig_executable))
-        local.generate(options)
+        gen_options = local.GenOptions()
+        gen_options.languages = options.languages
+        gen_options.src_root = options.src_root
+        gen_options.target_dir = options.target_dir
+        gen_options.swig_executable = options.swig_executable
+        local.generate(gen_options)
     else:
         logging.info("swig bot client using remote generation with server '{}'"
                      .format(options.remote))
-        packed_input = local.pack_input(options)
+        config_json = config.generate_config_json(options)
+        packed_input = local.pack_archive(config_json, options)
         connection = establish_remote_connection(options.remote)
         response = transmit_data(connection, packed_input)
         logging.debug("Received {} byte response.".format(len(response)))

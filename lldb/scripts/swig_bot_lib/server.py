@@ -14,9 +14,11 @@ import argparse
 import logging
 import os
 import select
+import shutil
 import socket
 import struct
 import sys
+import tempfile
 import traceback
 
 # LLDB modules
@@ -68,9 +70,19 @@ def accept_once(sock, options):
         logging.info("Received {} bytes of data from client"
                      .format(len(data)))
 
-        logging.info("Sending {} byte response".format(len(data)))
-        client.sendall(struct.pack("!I", len(data)))
-        client.sendall(data)
+        pack_location = None
+        try:
+            pack_location = local.unpack_archive("swig-bot", data)
+            logging.debug("Successfully unpacked archive...")
+
+            logging.info("Sending {} byte response".format(len(data)))
+            client.sendall(struct.pack("!I", len(data)))
+            client.sendall(data)
+        finally:
+            if pack_location is not None:
+                logging.debug("Removing temporary folder {}"
+                              .format(pack_location))
+                shutil.rmtree(pack_location)
 
 def accept_loop(sock, options):
     while True:
