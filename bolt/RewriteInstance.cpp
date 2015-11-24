@@ -330,6 +330,20 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File,
 
 RewriteInstance::~RewriteInstance() {}
 
+void RewriteInstance::reset() {
+  BinaryFunctions.clear();
+  FileSymRefs.clear();
+  auto &DR = BC->DR;
+  BC = CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR);
+  DwCtx.reset(new DWARFContextInMemory(*File));
+  CFIRdWrt.reset(nullptr);
+  SectionMM.reset(nullptr);
+  Out.reset(nullptr);
+  EHFrame = nullptr;
+  FailedAddresses.clear();
+  TotalScore = 0;
+}
+
 void RewriteInstance::run() {
   if (!BC) {
     errs() << "failed to create a binary context\n";
@@ -341,6 +355,17 @@ void RewriteInstance::run() {
   disassembleFunctions();
   runOptimizationPasses();
   emitFunctions();
+
+  if (opts::SplitFunctions && splitLargeFunctions()) {
+    // Emit again because now some functions have been split
+    outs() << "FLO: split-functions: starting pass 2...\n";
+    reset();
+    readSymbolTable();
+    readSpecialSections();
+    disassembleFunctions();
+    runOptimizationPasses();
+    emitFunctions();
+  }
 
   // Copy input file to output
   std::error_code EC;
@@ -689,8 +714,8 @@ void RewriteInstance::runOptimizationPasses() {
     }
 
     if (opts::ReorderBlocks != "disable") {
-      bool ShouldSplit = opts::SplitFunctions &&
-                         (Function.getFunctionScore() * 1000) > TotalScore;
+      bool ShouldSplit = ToSplit.find(BFI.first) != ToSplit.end();
+
       if (opts::ReorderBlocks == "branch-predictor") {
         BFI.second.optimizeLayout(BinaryFunction::HP_BRANCH_PREDICTOR,
                                   ShouldSplit);
@@ -1061,6 +1086,24 @@ void RewriteInstance::emitFunctions() {
 
   OLT.emitAndFinalize(ObjectsHandle);
   TempOut->keep();
+}
+
+bool RewriteInstance::splitLargeFunctions() {
+  bool Changed = false;
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+
+    // Ignore this function if we failed to map it to the output binary
+    if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
+      continue;
+
+    if (Function.getImageSize() <= Function.getMaxSize())
+      continue;
+
+    ToSplit.insert(BFI.first);
+    Changed = true;
+  }
+  return Changed;
 }
 
 namespace {

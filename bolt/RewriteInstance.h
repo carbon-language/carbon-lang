@@ -18,6 +18,7 @@
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include <map>
+#include <set>
 
 namespace llvm {
 
@@ -42,6 +43,10 @@ public:
   RewriteInstance(llvm::object::ELFObjectFileBase *File, const DataReader &DR);
   ~RewriteInstance();
 
+  /// Reset all state except for split hints. Used to run a second pass with
+  /// function splitting information.
+  void reset();
+
   /// Run all the necessary steps to read, optimize and rewrite the binary.
   void run();
 
@@ -65,6 +70,13 @@ public:
   /// addresses and link this object file, resolving all relocations and
   /// performing final relaxation.
   void emitFunctions();
+
+  /// Check which functions became larger than their original version and
+  /// annotate function splitting information.
+  ///
+  /// Returns true if any function was annotated, requiring us to perform a
+  /// second pass to emit those functions in two parts.
+  bool splitLargeFunctions();
 
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
@@ -130,6 +142,9 @@ private:
   // Keep track of functions we fail to write in the binary. We need to avoid
   // rewriting CFI info for these functions.
   std::vector<uint64_t> FailedAddresses;
+
+  // Keep track of which functions to split in a second pass.
+  std::set<uint64_t> ToSplit;
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
