@@ -52,12 +52,8 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
     return {ELF64LEKind, EM_X86_64};
   if (S == "aarch64linux")
     return {ELF64LEKind, EM_AARCH64};
-  if (S == "i386pe")
-    return {ELFNoneKind, EM_386};
-  if (S == "i386pep")
-    return {ELFNoneKind, EM_X86_64};
-  if (S == "thumb2pe")
-    return {ELFNoneKind, EM_ARM};
+  if (S == "i386pe" || S == "i386pep" || S == "thumb2pe")
+    error("Windows targets are not supported on the ELF frontend: " + S);
   error("Unknown emulation: " + S);
 }
 
@@ -110,21 +106,9 @@ static bool hasZOption(opt::InputArgList &Args, StringRef Key) {
 }
 
 void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
+  initSymbols();
 
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
-
-  if (auto *Arg = Args.getLastArg(OPT_m)) {
-    StringRef S = Arg->getValue();
-    std::pair<ELFKind, uint16_t> P = parseEmulation(S);
-    Config->EKind = P.first;
-    Config->EMachine = P.second;
-    Config->Emulation = S;
-  }
-
-  if((Config->EKind == ELFNoneKind) && (Config->EMachine !=  EM_NONE))
-    error("windows coff targets aren't supported on the gnu frontend.");
-
-  initSymbols();
   createFiles(Args);
 
   // Traditional linkers can generate re-linkable object files instead
@@ -160,6 +144,14 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     RPaths.push_back(Arg->getValue());
   if (!RPaths.empty())
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
+
+  if (auto *Arg = Args.getLastArg(OPT_m)) {
+    StringRef S = Arg->getValue();
+    std::pair<ELFKind, uint16_t> P = parseEmulation(S);
+    Config->EKind = P.first;
+    Config->EMachine = P.second;
+    Config->Emulation = S;
+  }
 
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);
