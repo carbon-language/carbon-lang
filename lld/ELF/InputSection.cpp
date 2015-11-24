@@ -134,6 +134,12 @@ void InputSectionBase<ELFT>::relocate(
       continue;
     }
 
+    if (Target->isTlsOptimized(Type, Body)) {
+      Target->relocateTlsOptimize(BufLoc, BufEnd, AddrLoc,
+                                  getSymVA<ELFT>(Body));
+      continue;
+    }
+
     uintX_t SymVA = getSymVA<ELFT>(Body);
     if (Target->relocNeedsPlt(Type, Body)) {
       SymVA = Out<ELFT>::Plt->getEntryAddr(Body);

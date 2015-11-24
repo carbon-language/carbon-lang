@@ -59,7 +59,9 @@ public:
   virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
   virtual void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                            uint64_t P, uint64_t SA) const = 0;
-
+  virtual bool isTlsOptimized(unsigned Type, const SymbolBody &S) const;
+  virtual void relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
+                                   uint64_t SA) const;
   virtual ~TargetInfo();
 
 protected:

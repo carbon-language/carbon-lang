@@ -74,6 +74,9 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
+  bool isTlsOptimized(unsigned Type, const SymbolBody &S) const override;
+  void relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
+                           uint64_t SA) const override;
 };
 
 class PPC64TargetInfo final : public TargetInfo {
@@ -148,6 +151,10 @@ TargetInfo *createTarget() {
 
 TargetInfo::~TargetInfo() {}
 
+bool TargetInfo::isTlsOptimized(unsigned Type, const SymbolBody &S) const {
+  return false;
+}
+
 uint64_t TargetInfo::getVAStart() const { return Config->Shared ? 0 : VAStart; }
 
 bool TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
@@ -161,6 +168,9 @@ unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
+
+void TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
+                                     uint64_t SA) const {}
 
 void TargetInfo::writeGotHeaderEntries(uint8_t *Buf) const {}
 
@@ -279,6 +289,8 @@ bool X86_64TargetInfo::relocNeedsCopy(uint32_t Type,
 }
 
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  if (Type == R_X86_64_GOTTPOFF)
+    return !isTlsOptimized(Type, S);
   return Type == R_X86_64_GOTTPOFF || Type == R_X86_64_GOTPCREL ||
          relocNeedsPlt(Type, S);
 }
@@ -342,6 +354,48 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   case R_X86_64_DTPOFF64:
     return true;
   }
+}
+
+bool X86_64TargetInfo::isTlsOptimized(unsigned Type,
+                                      const SymbolBody &S) const {
+  if (Config->Shared || !S.isTLS())
+    return false;
+  return Type == R_X86_64_GOTTPOFF && !canBePreempted(&S, true);
+}
+
+// In some conditions, R_X86_64_GOTTPOFF relocation can be optimized to
+// R_X86_64_TPOFF32 so that R_X86_64_TPOFF32 so that it does not use GOT.
+// This function does that. Read "ELF Handling For Thread-Local Storage,
+// 5.5 x86-x64 linker optimizations" (http://www.akkadia.org/drepper/tls.pdf)
+// by Ulrich Drepper for details.
+void X86_64TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
+                                           uint64_t P, uint64_t SA) const {
+  // Ulrich's document section 6.5 says that @gottpoff(%rip) must be
+  // used in MOVQ or ADDQ instructions only.
+  // "MOVQ foo@GOTTPOFF(%RIP), %REG" is transformed to "MOVQ $foo, %REG".
+  // "ADDQ foo@GOTTPOFF(%RIP), %REG" is transformed to "LEAQ foo(%REG), %REG"
+  // (if the register is not RSP/R12) or "ADDQ $foo, %RSP".
+  // Opcodes info can be found at http://ref.x86asm.net/coder64.html#x48.
+  uint8_t *Prefix = Loc - 3;
+  uint8_t *Inst = Loc - 2;
+  uint8_t *RegSlot = Loc - 1;
+  uint8_t Reg = Loc[-1] >> 3;
+  bool IsMov = *Inst == 0x8b;
+  bool RspAdd = !IsMov && Reg == 4;
+  // r12 and rsp registers requires special handling.
+  // Problem is that for other registers, for example leaq 0xXXXXXXXX(%r11),%r11
+  // result out is 7 bytes: 4d 8d 9b XX XX XX XX,
+  // but leaq 0xXXXXXXXX(%r12),%r12 is 8 bytes: 4d 8d a4 24 XX XX XX XX.
+  // The same true for rsp. So we convert to addq for them, saving 1 byte that
+  // we dont have.
+  if (RspAdd)
+    *Inst = 0x81;
+  else
+    *Inst = IsMov ? 0xc7 : 0x8d;
+  if (*Prefix == 0x4c)
+    *Prefix = (IsMov || RspAdd) ? 0x49 : 0x4d;
+  *RegSlot = (IsMov || RspAdd) ? (0xc0 | Reg) : (0x80 | Reg | (Reg << 3));
+  relocateOne(Loc, BufEnd, R_X86_64_TPOFF32, P, SA);
 }
 
 void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
