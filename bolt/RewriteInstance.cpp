@@ -556,8 +556,9 @@ void RewriteInstance::readSpecialSections() {
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame, FrameHdrAddress, FrameHdrCopy));
   if (!EHFrame->ParseError.empty()) {
-    errs() << "FLO-WARNING: EHFrame reader failed with message \""
+    errs() << "FLO-ERROR: EHFrame reader failed with message \""
            << EHFrame->ParseError << "\"\n";
+    exit(1);
   }
 }
 

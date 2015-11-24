@@ -657,8 +657,6 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_val_expression:
           llvm_unreachable("DWARF CFA expressions unimplemented");
           break;
-          dbgs() << "DW_CFA_val_expression";
-          break;
         case DW_CFA_MIPS_advance_loc8:
           llvm_unreachable("DW_CFA_MIPS_advance_loc unimplemented");
           break;
