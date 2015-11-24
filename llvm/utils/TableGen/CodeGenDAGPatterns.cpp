@@ -491,22 +491,8 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
 
   MVT::SimpleValueType VT = VTOperand.getConcrete();
 
-  TypeSet InputSet(*this);
+  MadeChange |= EnforceVectorEltTypeIs(VT, TP);
 
-  // Filter out all the types which don't have the right element type.
-  for (unsigned i = 0; i != TypeVec.size(); ++i) {
-    assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
-    if (MVT(TypeVec[i]).getVectorElementType().SimpleTy != VT) {
-      TypeVec.erase(TypeVec.begin()+i--);
-      MadeChange = true;
-    }
-  }
-
-  if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
-    TP.error("Type inference contradiction found, forcing '" +
-             InputSet.getName() + "' to have a vector element");
-    return false;
-  }
   return MadeChange;
 }
 
