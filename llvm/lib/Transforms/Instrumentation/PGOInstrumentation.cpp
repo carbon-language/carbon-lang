@@ -264,8 +264,8 @@ void FuncPGOInstrumentation<Edge, BBInfo>::computeCFGHash() {
     for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
       BasicBlock *Succ = TI->getSuccessor(s);
       uint32_t Index = getBBInfo(Succ).Index;
-      for (int i = 0; i < sizeof(uint32_t) / sizeof(char); i++)
-        Indexes.push_back((char)(Index >> (i * sizeof(char))));
+      for (int i = 0; i < 4; i++)
+        Indexes.push_back((char)(Index >> i));
     }
   }
   JC.update(Indexes);

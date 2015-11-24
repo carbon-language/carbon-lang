@@ -97,7 +97,7 @@ public:
       uint64_t BBWeight = BFI->getBlockFreq(&*BB).getFrequency();
       uint64_t Weight;
       if (int successors = TI->getNumSuccessors()) {
-        for (uint32_t i = 0; i != successors; ++i) {
+        for (int i = 0; i != successors; ++i) {
           BasicBlock *TargetBB = TI->getSuccessor(i);
           bool Critical = isCriticalEdge(TI, i);
           uint64_t scaleFactor = BBWeight;
