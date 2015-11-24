@@ -297,14 +297,17 @@ void LinkerScript::readOutputSectionDescription() {
   }
 }
 
+static bool isUnderSysroot(StringRef Path) {
+  if (Config->Sysroot == "")
+    return false;
+  for (; !Path.empty(); Path = sys::path::parent_path(Path))
+    if (sys::fs::equivalent(Config->Sysroot, Path))
+      return true;
+  return false;
+}
+
 // Entry point. The other functions or classes are private to this file.
 void lld::elf2::readLinkerScript(BumpPtrAllocator *A, MemoryBufferRef MB) {
   StringRef Path = MB.getBufferIdentifier();
-  if (!Config->Sysroot.empty())
-    for (; !Path.empty(); Path = sys::path::parent_path(Path))
-      if (sys::fs::equivalent(Config->Sysroot, Path)) {
-        LinkerScript(A, MB.getBuffer(), true).run();
-        return;
-      }
-  LinkerScript(A, MB.getBuffer(), false).run();
+  LinkerScript(A, MB.getBuffer(), isUnderSysroot(Path)).run();
 }
