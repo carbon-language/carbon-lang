@@ -53,6 +53,29 @@ Module &FunctionImporter::getOrLoadModule(StringRef FileName) {
   return *Module;
 }
 
+/// Walk through the instructions in \p F looking for external
+/// calls not already in the \p CalledFunctions set. If any are
+/// found they are added to the \p Worklist for importing.
+static void findExternalCalls(const Function &F, StringSet<> &CalledFunctions,
+                              SmallVector<StringRef, 64> &Worklist) {
+  for (auto &BB : F) {
+    for (auto &I : BB) {
+      if (isa<CallInst>(I)) {
+        DEBUG(dbgs() << "Found a call: '" << I << "'\n");
+        auto CalledFunction = cast<CallInst>(I).getCalledFunction();
+        // Insert any new external calls that have not already been
+        // added to set/worklist.
+        if (CalledFunction && CalledFunction->hasName() &&
+            CalledFunction->isDeclaration() &&
+            !CalledFunctions.count(CalledFunction->getName())) {
+          CalledFunctions.insert(CalledFunction->getName());
+          Worklist.push_back(CalledFunction->getName());
+        }
+      }
+    }
+  }
+}
+
 // Automatically import functions in Module \p M based on the summaries index.
 //
 // The current implementation imports every called functions that exists in the
@@ -62,35 +85,19 @@ bool FunctionImporter::importFunctions(Module &M) {
 
   bool Changed = false;
 
-  /// First step is collecting the called functions and the one defined in this
-  /// module.
+  /// First step is collecting the called external functions.
   StringSet<> CalledFunctions;
+  SmallVector<StringRef, 64> Worklist;
   for (auto &F : M) {
     if (F.isDeclaration() || F.hasFnAttribute(Attribute::OptimizeNone))
       continue;
-    for (auto &BB : F) {
-      for (auto &I : BB) {
-        if (isa<CallInst>(I)) {
-          DEBUG(dbgs() << "Found a call: '" << I << "'\n");
-          auto CalledFunction = cast<CallInst>(I).getCalledFunction();
-          if (CalledFunction && CalledFunction->hasName() &&
-              CalledFunction->isDeclaration())
-            CalledFunctions.insert(CalledFunction->getName());
-        }
-      }
-    }
+    findExternalCalls(F, CalledFunctions, Worklist);
   }
 
   /// Second step: for every call to an external function, try to import it.
 
   // Linker that will be used for importing function
   Linker L(&M, DiagnosticHandler);
-
-  /// Insert initial called function set in a worklist, so that we can add
-  /// transively called functions when importing.
-  SmallVector<StringRef, 64> Worklist;
-  for (auto &CalledFunction : CalledFunctions)
-    Worklist.push_back(CalledFunction.first());
 
   while (!Worklist.empty()) {
     auto CalledFunctionName = Worklist.pop_back_val();
@@ -175,23 +182,7 @@ bool FunctionImporter::importFunctions(Module &M) {
     assert(NewGV);
     Function *NewF = dyn_cast<Function>(NewGV);
     assert(NewF);
-
-    for (auto &BB : *NewF) {
-      for (auto &I : BB) {
-        if (isa<CallInst>(I)) {
-          DEBUG(dbgs() << "Found a call: '" << I << "'\n");
-          auto CalledFunction = cast<CallInst>(I).getCalledFunction();
-          // Insert any new external calls that have not already been
-          // added to set/worklist.
-          if (CalledFunction && CalledFunction->hasName() &&
-              CalledFunction->isDeclaration() &&
-              !CalledFunctions.count(CalledFunction->getName())) {
-            CalledFunctions.insert(CalledFunction->getName());
-            Worklist.push_back(CalledFunction->getName());
-          }
-        }
-      }
-    }
+    findExternalCalls(*NewF, CalledFunctions, Worklist);
 
     Changed = true;
   }
