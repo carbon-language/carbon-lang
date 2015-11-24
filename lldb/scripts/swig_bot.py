@@ -57,6 +57,9 @@ if __name__ == "__main__":
         else:
             logging.error("Unknown mode specified.  Expected client or server.")
             sys.exit(-1)
+    except KeyboardInterrupt as e:
+        logging.info("Ctrl+C received.  Shutting down...")
+        sys.exit(-1)
     except Exception as e:
         error = traceback.format_exc()
         logging.error("An error occurred running swig-bot.")

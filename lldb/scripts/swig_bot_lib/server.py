@@ -13,6 +13,7 @@ from __future__ import print_function
 import argparse
 import logging
 import os
+import select
 import socket
 import struct
 import sys
@@ -53,16 +54,23 @@ def initialize_listening_socket(options):
 
 def accept_once(sock, options):
     logging.debug("Waiting for connection...")
-    client, addr = sock.accept()
-    logging.info("Received connection from {}".format(addr))
-    data_size = struct.unpack("!I", sockutil.recvall(client, 4))[0]
-    logging.debug("Expecting {} bytes of data from client".format(data_size))
-    data = sockutil.recvall(client, data_size)
-    logging.info("Received {} bytes of data from client".format(len(data)))
+    while True:
+        rlist, wlist, xlist = select.select([sock], [], [], 0.5)
+        if not rlist:
+            continue
 
-    logging.info("Sending {} byte response".format(len(data)))
-    client.sendall(struct.pack("!I", len(data)))
-    client.sendall(data)
+        client, addr = sock.accept()
+        logging.info("Received connection from {}".format(addr))
+        data_size = struct.unpack("!I", sockutil.recvall(client, 4))[0]
+        logging.debug("Expecting {} bytes of data from client"
+                      .format(data_size))
+        data = sockutil.recvall(client, data_size)
+        logging.info("Received {} bytes of data from client"
+                     .format(len(data)))
+
+        logging.info("Sending {} byte response".format(len(data)))
+        client.sendall(struct.pack("!I", len(data)))
+        client.sendall(data)
 
 def accept_loop(sock, options):
     while True:
