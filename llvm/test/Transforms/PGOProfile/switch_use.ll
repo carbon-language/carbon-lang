@@ -33,4 +33,4 @@ sw.epilog:
   ret i32 %retv
 }
 
-;CHECK: !0 = !{!"branch_weights", i32 3, i32 0, i32 0, i32 0}
+; CHECK: !0 = !{!"branch_weights"

@@ -18,20 +18,16 @@ entry:
   ]
 
 ; CHECK: entry.sw.bb3_crit_edge1:
-; CHECK:   call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 1)
 ; CHECK:   br label %sw.bb3
 
 ; CHECK: entry.sw.bb3_crit_edge:
-; CHECK:   call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 0)
 ; CHECK:   br label %sw.bb3
 
 sw.bb:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 5)
   %call = call i32 @_ZL3bari(i32 2)
   br label %sw.epilog
 
 sw.bb1:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 4)
   %call2 = call i32 @_ZL3bari(i32 1024)
   br label %sw.epilog
 
@@ -40,23 +36,19 @@ sw.bb3:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 2)
   %call4 = call i32 @_ZL3bari(i32 4)
   br label %return
 
 if.end:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 3)
   %call5 = call i32 @_ZL3bari(i32 8)
   br label %sw.epilog
 
 sw.default:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 6)
   %call6 = call i32 @_ZL3bari(i32 32)
   %cmp7 = icmp sgt i32 %j, 10
   br i1 %cmp7, label %if.then8, label %if.end9
 
 if.then8:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @__llvm_profile_name__Z17test_criticalEdgeii, i32 0, i32 0), i64 82348442248, i32 8, i32 7)
   %add = add nsw i32 %call6, 10
   br label %if.end9
 
@@ -75,6 +67,5 @@ return:
 
 define internal i32 @_ZL3bari(i32 %i) {
 entry:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @"__llvm_profile_name_<stdin>:_ZL3bari", i32 0, i32 0), i64 12884901887, i32 1, i32 0)
   ret i32 %i
 }

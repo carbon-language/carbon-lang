@@ -12,7 +12,7 @@ for.cond:
   %nested_for_sum.0 = phi i32 [ 1, %entry ], [ %nested_for_sum.1, %for.inc11 ]
   %cmp = icmp slt i32 %i.0, %r
   br i1 %cmp, label %for.body, label %for.end13
-; CHECK: !prof !0
+; CHECK: !prof
 
 for.body:
   br label %for.cond1
@@ -22,7 +22,7 @@ for.cond1:
   %nested_for_sum.1 = phi i32 [ %nested_for_sum.0, %for.body ], [ %nested_for_sum.2, %for.inc8 ]
   %cmp2 = icmp slt i32 %j.0, %s
   br i1 %cmp2, label %for.body3, label %for.end10
-; CHECK: !prof !1
+; CHECK: !prof
 
 for.body3:
   br label %for.cond4
@@ -32,7 +32,7 @@ for.cond4:
   %nested_for_sum.2 = phi i32 [ %nested_for_sum.1, %for.body3 ], [ %inc, %for.inc ]
   %cmp5 = icmp slt i32 %k.0, %t
   br i1 %cmp5, label %for.body6, label %for.end
-; CHECK: !prof !2
+; CHECK: !prof
 
 for.body6:
   %inc = add nsw i32 %nested_for_sum.2, 1
@@ -60,6 +60,4 @@ for.end13:
   ret i32 %nested_for_sum.0
 }
 
-; CHECK: !0 = !{!"branch_weights", i32 10, i32 6}
-; CHECK: !1 = !{!"branch_weights", i32 33, i32 10}
-; CHECK: !2 = !{!"branch_weights", i32 186, i32 33}
+; CHECK: !{!"branch_weights"

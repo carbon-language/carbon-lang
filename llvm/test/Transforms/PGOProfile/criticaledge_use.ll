@@ -14,7 +14,7 @@ entry:
 ; CHECK:    i32 4, label %entry.sw.bb3_crit_edge1
     i32 5, label %sw.bb3
   ]
-; CHECK: !prof !0
+; CHECK: !prof !
 
 ; CHECK: entry.sw.bb3_crit_edge1:
 ; CHECK:   br label %sw.bb3
@@ -32,7 +32,7 @@ sw.bb1:
 sw.bb3:
   %cmp = icmp eq i32 %j, 2
   br i1 %cmp, label %if.then, label %if.end
-; CHECK: !prof !1
+; CHECK: !prof !
 
 if.then:
   %call4 = call i32 @_ZL3bari(i32 4)
@@ -46,7 +46,7 @@ sw.default:
   %call6 = call i32 @_ZL3bari(i32 32)
   %cmp7 = icmp sgt i32 %j, 10
   br i1 %cmp7, label %if.then8, label %if.end9
-; CHECK: !prof !2
+; CHECK: !prof !
 
 if.then8:
   %add = add nsw i32 %call6, 10
@@ -70,6 +70,5 @@ entry:
   ret i32 %i
 }
 
-; CHECK: !0 = !{!"branch_weights", i32 2, i32 1, i32 0, i32 2, i32 1, i32 1}
-; CHECK: !1 = !{!"branch_weights", i32 2, i32 2}
-; CHECK: !2 = !{!"branch_weights", i32 1, i32 1}
+; CHECK-DAG: !{!"branch_weights", i32 2, i32 2}
+; CHECK-DAG: !{!"branch_weights", i32 1, i32 1}

@@ -13,22 +13,18 @@ entry:
   ]
 
 sw.bb:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @__llvm_profile_name__Z13test_switch_1i, i32 0, i32 0), i64 46628225222, i32 4, i32 2)
   %add = add nsw i32 %i, 2
   br label %sw.epilog
 
 sw.bb1:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @__llvm_profile_name__Z13test_switch_1i, i32 0, i32 0), i64 46628225222, i32 4, i32 0)
   %add2 = add nsw i32 %i, 100
   br label %sw.epilog
 
 sw.bb3:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @__llvm_profile_name__Z13test_switch_1i, i32 0, i32 0), i64 46628225222, i32 4, i32 1)
   %add4 = add nsw i32 %i, 4
   br label %sw.epilog
 
 sw.default:
-; CHECK: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @__llvm_profile_name__Z13test_switch_1i, i32 0, i32 0), i64 46628225222, i32 4, i32 3)
   %add5 = add nsw i32 %i, 1
   br label %sw.epilog
 
