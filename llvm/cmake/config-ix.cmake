@@ -301,7 +301,7 @@ else()
   set(ENABLE_PIC 0)
   check_cxx_compiler_flag("-fno-pie" SUPPORTS_NO_PIE_FLAG)
   if(SUPPORTS_NO_PIE_FLAG)
-    list(APPEND CMAKE_EXE_LINKER_FLAGS "-fno-pie")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-pie")
   endif()
 endif()
 
