@@ -261,9 +261,11 @@ struct InstrProfRecord {
                                          uint32_t Site) const;
   /// Return the array of profiled values at \p Site.
   inline std::unique_ptr<InstrProfValueData[]>
-  getValueForSite(uint32_t ValueKind, uint32_t Site) const;
-  inline void getValueForSite(InstrProfValueData Dest[], uint32_t ValueKind,
-                              uint32_t Site) const;
+  getValueForSite(uint32_t ValueKind, uint32_t Site,
+                  uint64_t (*ValueMapper)(uint32_t, uint64_t) = 0) const;
+  inline void
+  getValueForSite(InstrProfValueData Dest[], uint32_t ValueKind, uint32_t Site,
+                  uint64_t (*ValueMapper)(uint32_t, uint64_t) = 0) const;
   /// Reserve space for NumValueSites sites.
   inline void reserveSites(uint32_t ValueKind, uint32_t NumValueSites);
   /// Add ValueData for ValueKind at value Site.
@@ -365,22 +367,27 @@ uint32_t InstrProfRecord::getNumValueDataForSite(uint32_t ValueKind,
   return getValueSitesForKind(ValueKind)[Site].ValueData.size();
 }
 
-std::unique_ptr<InstrProfValueData[]>
-InstrProfRecord::getValueForSite(uint32_t ValueKind, uint32_t Site) const {
+std::unique_ptr<InstrProfValueData[]> InstrProfRecord::getValueForSite(
+    uint32_t ValueKind, uint32_t Site,
+    uint64_t (*ValueMapper)(uint32_t, uint64_t)) const {
   uint32_t N = getNumValueDataForSite(ValueKind, Site);
   if (N == 0)
     return std::unique_ptr<InstrProfValueData[]>(nullptr);
 
   auto VD = llvm::make_unique<InstrProfValueData[]>(N);
-  getValueForSite(VD.get(), ValueKind, Site);
+  getValueForSite(VD.get(), ValueKind, Site, ValueMapper);
 
   return VD;
 }
+
 void InstrProfRecord::getValueForSite(InstrProfValueData Dest[],
-                                      uint32_t ValueKind, uint32_t Site) const {
+                                      uint32_t ValueKind, uint32_t Site,
+                                      uint64_t (*ValueMapper)(uint32_t,
+                                                              uint64_t)) const {
   uint32_t I = 0;
   for (auto V : getValueSitesForKind(ValueKind)[Site].ValueData) {
-    Dest[I] = V;
+    Dest[I].Value = ValueMapper ? ValueMapper(ValueKind, V.Value) : V.Value;
+    Dest[I].Count = V.Count;
     I++;
   }
 }

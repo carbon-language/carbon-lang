@@ -131,6 +131,18 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
   return createPGOFuncNameVar(*F.getParent(), F.getLinkage(), FuncName);
 }
 
+uint64_t StringToHash(uint32_t ValueKind, uint64_t Value) {
+  switch (ValueKind) {
+  case IPVK_IndirectCallTarget:
+    return IndexedInstrProf::ComputeHash(IndexedInstrProf::HashType,
+                                         (const char *)Value);
+    break;
+  default:
+    llvm_unreachable("value kind not handled !");
+  }
+  return Value;
+}
+
 void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
                                     InstrProfRecord::ValueMapType *VMap) {
   Record.reserveSites(Kind, NumValueSites);
@@ -152,17 +164,7 @@ void ValueProfRecord::serializeFrom(const InstrProfRecord &Record,
   for (uint32_t S = 0; S < NumValueSites; S++) {
     uint32_t ND = Record.getNumValueDataForSite(ValueKind, S);
     SiteCountArray[S] = ND;
-    Record.getValueForSite(DstVD, ValueKind, S);
-    for (uint32_t I = 0; I < ND; I++) {
-      switch (ValueKind) {
-      case IPVK_IndirectCallTarget:
-        DstVD[I].Value = IndexedInstrProf::ComputeHash(
-            IndexedInstrProf::HashType, (const char *)DstVD[I].Value);
-        break;
-      default:
-        llvm_unreachable("value kind not handled !");
-      }
-    }
+    Record.getValueForSite(DstVD, ValueKind, S, StringToHash);
     DstVD += ND;
   }
 }
