@@ -203,21 +203,20 @@ bool EEVT::TypeSet::MergeInTypeInfo(const EEVT::TypeSet &InVT, TreePattern &TP){
 
   // If this is a type list and the RHS is a typelist as well, eliminate entries
   // from this list that aren't in the other one.
-  bool MadeChange = false;
   TypeSet InputSet(*this);
 
-  for (unsigned i = 0; i != TypeVec.size(); ++i) {
-    if (std::find(InVT.TypeVec.begin(), InVT.TypeVec.end(), TypeVec[i]) !=
-        InVT.TypeVec.end())
-      continue;
+  TypeVec.clear();
+  std::set_intersection(InputSet.TypeVec.begin(), InputSet.TypeVec.end(),
+                        InVT.TypeVec.begin(), InVT.TypeVec.end(),
+                        std::back_inserter(TypeVec));
 
-    TypeVec.erase(TypeVec.begin()+i--);
-    MadeChange = true;
-  }
+  // If the intersection is the same size as the original set then we're done.
+  if (TypeVec.size() == InputSet.TypeVec.size())
+    return false;
 
   // If we removed all of our types, we have a type contradiction.
   if (!TypeVec.empty())
-    return MadeChange;
+    return true;
 
   // FIXME: Really want an SMLoc here!
   TP.error("Type inference contradiction found, merging '" +
