@@ -161,7 +161,7 @@ multiclass fma3s_rm<bits<8> opc, string OpcodeStr,
 
 // These FMA*_Int instructions are defined specially for being used when
 // the scalar FMA intrinsics are lowered to machine instructions, and in that
-// sence they are similar to existing ADD*_Int, SUB*_Int, MUL*_Int, etc.
+// sense, they are similar to existing ADD*_Int, SUB*_Int, MUL*_Int, etc.
 // instructions.
 //
 // All of the FMA*_Int opcodes are defined as commutable here.
