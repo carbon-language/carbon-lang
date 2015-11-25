@@ -50,8 +50,9 @@ public:
   virtual void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const = 0;
   virtual void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                  uint64_t PltEntryAddr) const = 0;
-  virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                             uint64_t PltEntryAddr, int32_t Index) const = 0;
+  virtual void writePltEntry(uint8_t *Buf, uint64_t GotAddr,
+                             uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                             int32_t Index, unsigned RelOff) const = 0;
   virtual bool isRelRelative(uint32_t Type) const;
   virtual bool relocNeedsCopy(uint32_t Type, const SymbolBody &S) const;
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
