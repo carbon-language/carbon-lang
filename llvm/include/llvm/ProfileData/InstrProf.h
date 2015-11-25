@@ -447,12 +447,6 @@ inline support::endianness getHostEndianness() {
   return sys::IsLittleEndianHost ? support::little : support::big;
 }
 
-/// Return the \c ValueProfRecord header size including the padding bytes.
-uint32_t getValueProfRecordHeaderSize(uint32_t NumValueSites);
-/// Return the total size of the value profile record including the
-/// header and the value data.
-uint32_t getValueProfRecordSize(uint32_t NumValueSites, uint32_t NumValueData);
-
 /// This is the header of the data structure that defines the on-disk
 /// layout of the value profile data of a particular kind for one function.
 typedef struct ValueProfRecord {
@@ -475,19 +469,8 @@ typedef struct ValueProfRecord {
   // of all elements in SiteCountArray[].
   // InstrProfValueData ValueData[];
 
-  /// Return the total size of the value profile record including the
-  /// header and the value data.
-  uint32_t getSize() const {
-    return getValueProfRecordSize(NumValueSites, getNumValueData());
-  }
-  /// Use this method to advance to the next \c ValueProfRecord.
-  ValueProfRecord *getNext();
-  /// Return the pointer to the first value profile data.
-  InstrProfValueData *getValueData();
   /// Return the number of value sites.
   uint32_t getNumValueSites() const { return NumValueSites; }
-  /// Return the number of value data.
-  uint32_t getNumValueData() const;
   /// Read data from this record and save it to Record.
   void deserializeTo(InstrProfRecord &Record,
                      InstrProfRecord::ValueMapType *VMap);
@@ -576,6 +559,7 @@ typedef struct ValueProfRecordClosure {
   ValueProfData *(*AllocateValueProfData)(size_t TotalSizeInBytes);
 } ValueProfRecordClosure;
 
+/// Return the \c ValueProfRecord header size including the padding bytes.
 inline uint32_t getValueProfRecordHeaderSize(uint32_t NumValueSites) {
   uint32_t Size = offsetof(ValueProfRecord, SiteCountArray) +
                   sizeof(uint8_t) * NumValueSites;
@@ -584,10 +568,35 @@ inline uint32_t getValueProfRecordHeaderSize(uint32_t NumValueSites) {
   return Size;
 }
 
+/// Return the total size of the value profile record including the
+/// header and the value data.
 inline uint32_t getValueProfRecordSize(uint32_t NumValueSites,
                                        uint32_t NumValueData) {
   return getValueProfRecordHeaderSize(NumValueSites) +
          sizeof(InstrProfValueData) * NumValueData;
+}
+
+/// Return the pointer to the start of value data array.
+inline InstrProfValueData *getValueProfRecordValueData(ValueProfRecord *This) {
+  return (InstrProfValueData *)((char *)This + getValueProfRecordHeaderSize(
+                                                   This->NumValueSites));
+}
+
+/// Return the total number of value data for \c This record.
+inline uint32_t getValueProfRecordNumValueData(ValueProfRecord *This) {
+  uint32_t NumValueData = 0;
+  uint32_t I;
+  for (I = 0; I < This->NumValueSites; I++)
+    NumValueData += This->SiteCountArray[I];
+  return NumValueData;
+}
+
+/// Use this method to advance to the next \c This \c ValueProfRecord.
+inline ValueProfRecord *getValueProfRecordNext(ValueProfRecord *This) {
+  uint32_t NumValueData = getValueProfRecordNumValueData(This);
+  return (ValueProfRecord *)((char *)This +
+                             getValueProfRecordSize(This->NumValueSites,
+                                                    NumValueData));
 }
 
 namespace IndexedInstrProf {

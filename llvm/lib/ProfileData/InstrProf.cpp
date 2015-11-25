@@ -143,27 +143,11 @@ uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
   return Value;
 }
 
-uint32_t ValueProfRecord::getNumValueData() const {
-  uint32_t NumValueData = 0;
-  for (uint32_t I = 0; I < NumValueSites; I++)
-    NumValueData += SiteCountArray[I];
-  return NumValueData;
-}
-
-ValueProfRecord *ValueProfRecord::getNext() {
-  return reinterpret_cast<ValueProfRecord *>((char *)this + getSize());
-}
-
-InstrProfValueData *ValueProfRecord::getValueData() {
-  return reinterpret_cast<InstrProfValueData *>(
-      (char *)this + getValueProfRecordHeaderSize(NumValueSites));
-}
-
 void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
                                     InstrProfRecord::ValueMapType *VMap) {
   Record.reserveSites(Kind, NumValueSites);
 
-  InstrProfValueData *ValueData = this->getValueData();
+  InstrProfValueData *ValueData = getValueProfRecordValueData(this);
   for (uint64_t VSite = 0; VSite < NumValueSites; ++VSite) {
     uint8_t ValueDataCount = this->SiteCountArray[VSite];
     Record.addValueData(Kind, VSite, ValueData, ValueDataCount, VMap);
@@ -176,7 +160,7 @@ void ValueProfRecord::serializeFrom(const InstrProfRecord &Record,
                                     uint32_t NumValueSites) {
   Kind = ValueKind;
   this->NumValueSites = NumValueSites;
-  InstrProfValueData *DstVD = getValueData();
+  InstrProfValueData *DstVD = getValueProfRecordValueData(this);
   for (uint32_t S = 0; S < NumValueSites; S++) {
     uint32_t ND = Record.getNumValueDataForSite(ValueKind, S);
     SiteCountArray[S] = ND;
@@ -207,8 +191,8 @@ void ValueProfRecord::swapBytes(support::endianness Old,
     sys::swapByteOrder<uint32_t>(NumValueSites);
     sys::swapByteOrder<uint32_t>(Kind);
   }
-  uint32_t ND = getNumValueData();
-  InstrProfValueData *VD = getValueData();
+  uint32_t ND = getValueProfRecordNumValueData(this);
+  InstrProfValueData *VD = getValueProfRecordValueData(this);
 
   // No need to swap byte array: SiteCountArrray.
   for (uint32_t I = 0; I < ND; I++) {
@@ -245,7 +229,7 @@ void ValueProfData::deserializeTo(InstrProfRecord &Record,
   ValueProfRecord *VR = getFirstValueProfRecord();
   for (uint32_t K = 0; K < NumValueKinds; K++) {
     VR->deserializeTo(Record, VMap);
-    VR = VR->getNext();
+    VR = getValueProfRecordNext(VR);
   }
 }
 
@@ -268,7 +252,7 @@ ValueProfData::serializeFrom(const InstrProfRecord &Record) {
     if (!NumValueSites)
       continue;
     VR->serializeFrom(Record, Kind, NumValueSites);
-    VR = VR->getNext();
+    VR = getValueProfRecordNext(VR);
   }
   return VPD;
 }
@@ -299,12 +283,12 @@ ValueProfData::getValueProfData(const unsigned char *D,
   // Byte swap.
   VPD->swapBytesToHost(Endianness);
 
-  // Data integrety check:
+  // Data integrity check:
   ValueProfRecord *VR = VPD->getFirstValueProfRecord();
   for (uint32_t K = 0; K < VPD->NumValueKinds; K++) {
     if (VR->Kind > IPVK_Last)
       return instrprof_error::malformed;
-    VR = VR->getNext();
+    VR = getValueProfRecordNext(VR);
     if ((char *)VR - (char *)VPD.get() > (ptrdiff_t)TotalSize)
       return instrprof_error::malformed;
   }
@@ -323,7 +307,7 @@ void ValueProfData::swapBytesToHost(support::endianness Endianness) {
   ValueProfRecord *VR = getFirstValueProfRecord();
   for (uint32_t K = 0; K < NumValueKinds; K++) {
     VR->swapBytes(Endianness, getHostEndianness());
-    VR = VR->getNext();
+    VR = getValueProfRecordNext(VR);
   }
 }
 
@@ -334,7 +318,7 @@ void ValueProfData::swapBytesFromHost(support::endianness Endianness) {
 
   ValueProfRecord *VR = getFirstValueProfRecord();
   for (uint32_t K = 0; K < NumValueKinds; K++) {
-    ValueProfRecord *NVR = VR->getNext();
+    ValueProfRecord *NVR = getValueProfRecordNext(VR);
     VR->swapBytes(getHostEndianness(), Endianness);
     VR = NVR;
   }
@@ -346,6 +330,4 @@ ValueProfRecord *ValueProfData::getFirstValueProfRecord() {
   return reinterpret_cast<ValueProfRecord *>((char *)this +
                                              sizeof(ValueProfData));
 }
-
 }
-
