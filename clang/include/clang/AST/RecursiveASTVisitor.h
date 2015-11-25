@@ -2112,6 +2112,8 @@ DEF_TRAVERSE_STMT(MSPropertyRefExpr, {
   TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
 })
 
+DEF_TRAVERSE_STMT(MSPropertySubscriptExpr, {})
+
 DEF_TRAVERSE_STMT(CXXUuidofExpr, {
   // The child-iterator will pick up the arg if it's an expression,
   // but not if it's a type.
