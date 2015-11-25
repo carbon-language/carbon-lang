@@ -187,7 +187,12 @@ void WebAssemblyPassConfig::addPostRegAlloc() {
 void WebAssemblyPassConfig::addPreSched2() {}
 
 void WebAssemblyPassConfig::addPreEmitPass() {
+  // Put the CFG in structured form; insert BLOCK and LOOP markers.
   addPass(createWebAssemblyCFGStackify());
+
+  // Create a mapping from LLVM CodeGen virtual registers to wasm registers.
   addPass(createWebAssemblyRegNumbering());
+
+  // Perform the very last peephole optimizations on the code.
   addPass(createWebAssemblyPeephole());
 }
