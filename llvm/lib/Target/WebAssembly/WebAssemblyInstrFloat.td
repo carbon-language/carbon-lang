@@ -73,3 +73,17 @@ def SELECT_F64 : I<(outs F64:$dst), (ins I32:$cond, F64:$lhs, F64:$rhs),
                    "f64.select\t$dst, $cond, $lhs, $rhs">;
 
 } // Defs = [ARGUMENTS]
+
+// ISD::SELECT requires its operand to conform to getBooleanContents, but
+// WebAssembly's select interprets any non-zero value as true, so we can fold
+// a setne with 0 into a select.
+def : Pat<(select (i32 (setne I32:$cond, 0)), F32:$lhs, F32:$rhs),
+          (SELECT_F32 I32:$cond, F32:$lhs, F32:$rhs)>;
+def : Pat<(select (i32 (setne I32:$cond, 0)), F64:$lhs, F64:$rhs),
+          (SELECT_F64 I32:$cond, F64:$lhs, F64:$rhs)>;
+
+// And again, this time with seteq instead of setne and the arms reversed.
+def : Pat<(select (i32 (seteq I32:$cond, 0)), F32:$lhs, F32:$rhs),
+          (SELECT_F32 I32:$cond, F32:$rhs, F32:$lhs)>;
+def : Pat<(select (i32 (seteq I32:$cond, 0)), F64:$lhs, F64:$rhs),
+          (SELECT_F64 I32:$cond, F64:$rhs, F64:$lhs)>;
