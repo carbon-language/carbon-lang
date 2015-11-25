@@ -46,6 +46,8 @@ namespace {
 class X86TargetInfo final : public TargetInfo {
 public:
   X86TargetInfo();
+  unsigned getDynReloc(unsigned Type) const override;
+  bool isTlsDynReloc(unsigned Type) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                          uint64_t PltEntryAddr) const override;
@@ -62,6 +64,7 @@ class X86_64TargetInfo final : public TargetInfo {
 public:
   X86_64TargetInfo();
   unsigned getPltRefReloc(unsigned Type) const override;
+  bool isTlsDynReloc(unsigned Type) const override;
   void writeGotPltHeaderEntries(uint8_t *Buf) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -182,6 +185,20 @@ X86TargetInfo::X86TargetInfo() {
   PltReloc = R_386_JUMP_SLOT;
 }
 
+unsigned X86TargetInfo::getDynReloc(unsigned Type) const {
+  if (Type == R_386_TLS_LE)
+    return R_386_TLS_TPOFF;
+  if (Type == R_386_TLS_LE_32)
+    return R_386_TLS_TPOFF32;
+  return Type;
+}
+
+bool X86TargetInfo::isTlsDynReloc(unsigned Type) const {
+  if (Type == R_386_TLS_LE || Type == R_386_TLS_LE_32)
+    return Config->Shared;
+  return false;
+}
+
 void X86TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
 void X86TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                       uint64_t PltEntryAddr) const {}
@@ -225,6 +242,12 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   case R_386_32:
     add32le(Loc, SA);
     break;
+  case R_386_TLS_LE:
+    write32le(Loc, SA - Out<ELF32LE>::TlsPhdr->p_memsz);
+    break;
+  case R_386_TLS_LE_32:
+    write32le(Loc, Out<ELF32LE>::TlsPhdr->p_memsz - SA);
+    break;
   default:
     error("unrecognized reloc " + Twine(Type));
   }
@@ -242,7 +265,6 @@ X86_64TargetInfo::X86_64TargetInfo() {
   TlsGlobalDynamicReloc = R_X86_64_TLSGD;
   TlsModuleIndexReloc = R_X86_64_DTPMOD64;
   TlsOffsetReloc = R_X86_64_DTPOFF64;
-  TlsPcRelGotReloc = R_X86_64_GOTTPOFF;
   LazyRelocations = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 16;
@@ -298,6 +320,10 @@ bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
     return !isTlsOptimized(Type, S);
   return Type == R_X86_64_GOTTPOFF || Type == R_X86_64_GOTPCREL ||
          relocNeedsPlt(Type, S);
+}
+
+bool X86_64TargetInfo::isTlsDynReloc(unsigned Type) const {
+  return Type == R_X86_64_GOTTPOFF;
 }
 
 unsigned X86_64TargetInfo::getPltRefReloc(unsigned Type) const {

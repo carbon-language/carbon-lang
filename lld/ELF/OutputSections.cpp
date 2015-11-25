@@ -241,7 +241,8 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
                             Config->Mips64EL);
       else
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
-                            NeedsCopy ? Target->getCopyReloc() : Type,
+                            NeedsCopy ? Target->getCopyReloc()
+                                      : Target->getDynReloc(Type),
                             Config->Mips64EL);
     } else {
       P->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);

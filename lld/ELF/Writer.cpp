@@ -229,7 +229,7 @@ void Writer<ELFT>::scanRelocs(
       continue;
     }
 
-    if ((Body && Body->isTLS()) && Type != Target->getTlsPcRelGotReloc())
+    if ((Body && Body->isTLS()) && !Target->isTlsDynReloc(Type))
       continue;
 
     bool NeedsGot = false;

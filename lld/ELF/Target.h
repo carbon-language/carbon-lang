@@ -28,7 +28,6 @@ public:
   unsigned getPltReloc() const { return PltReloc; }
   unsigned getRelativeReloc() const { return RelativeReloc; }
   unsigned getTlsGotReloc() const { return TlsGotReloc; }
-  unsigned getTlsPcRelGotReloc() const { return TlsPcRelGotReloc; }
   bool isTlsLocalDynamicReloc(unsigned Type) const {
     return Type == TlsLocalDynamicReloc;
   }
@@ -42,6 +41,8 @@ public:
   bool supportsLazyRelocations() const { return LazyRelocations; }
   unsigned getGotHeaderEntriesNum() const { return GotHeaderEntriesNum; }
   unsigned getGotPltHeaderEntriesNum() const { return GotPltHeaderEntriesNum; }
+  virtual unsigned getDynReloc(unsigned Type) const { return Type; }
+  virtual bool isTlsDynReloc(unsigned Type) const { return false; }
   virtual unsigned getGotRefReloc(unsigned Type) const;
   virtual unsigned getPltRefReloc(unsigned Type) const;
   virtual void writeGotHeaderEntries(uint8_t *Buf) const;
@@ -84,7 +85,6 @@ protected:
   unsigned TlsGlobalDynamicReloc = 0;
   unsigned TlsModuleIndexReloc;
   unsigned TlsOffsetReloc;
-  unsigned TlsPcRelGotReloc = 0;
   unsigned PltEntrySize = 8;
   unsigned PltZeroEntrySize = 0;
   unsigned GotHeaderEntriesNum = 0;

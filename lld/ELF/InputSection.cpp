@@ -151,6 +151,8 @@ void InputSectionBase<ELFT>::relocate(
     } else if (!Target->relocNeedsCopy(Type, Body) &&
                isa<SharedSymbol<ELFT>>(Body)) {
       continue;
+    } else if (Target->isTlsDynReloc(Type)) {
+      continue;
     }
     Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
                         SymVA + getAddend<ELFT>(RI));
