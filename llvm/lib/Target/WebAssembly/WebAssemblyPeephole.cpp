@@ -69,6 +69,7 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
           MO.setReg(NewReg);
           MO.setIsDead();
           MFI.stackifyVReg(NewReg);
+          MFI.addWAReg(NewReg, WebAssemblyFunctionInfo::UnusedReg);
         }
       }
       }
