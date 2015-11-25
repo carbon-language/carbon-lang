@@ -220,7 +220,11 @@ WebAssemblyTargetLowering::getRegForInlineAsmConstraint(
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':
-      return std::make_pair(0U, &WebAssembly::I32RegClass);
+      if (VT == MVT::i32)
+        return std::make_pair(0U, &WebAssembly::I32RegClass);
+      if (VT == MVT::i64)
+        return std::make_pair(0U, &WebAssembly::I64RegClass);
+      break;
     default:
       break;
     }
