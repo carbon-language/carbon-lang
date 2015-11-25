@@ -38,7 +38,8 @@ using namespace llvm;
 
 namespace {
 // Diagnostic information for unimplemented or unsupported feature reporting.
-// FIXME copied from BPF and AMDGPU.
+// TODO: This code is copied from BPF and AMDGPU; consider factoring it out
+// and sharing code.
 class DiagnosticInfoUnsupported final : public DiagnosticInfo {
 private:
   // Debug location where this diagnostic is triggered.
@@ -387,7 +388,8 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
       fail(DL, DAG, "WebAssembly hasn't implemented cons regs arguments");
     if (In.Flags.isInConsecutiveRegsLast())
       fail(DL, DAG, "WebAssembly hasn't implemented cons regs last arguments");
-    // FIXME Do something with In.getOrigAlign()?
+    // Ignore In.getOrigAlign() because all our arguments are passed in
+    // registers.
     InVals.push_back(
         In.Used
             ? DAG.getNode(WebAssemblyISD::ARGUMENT, DL, In.VT,

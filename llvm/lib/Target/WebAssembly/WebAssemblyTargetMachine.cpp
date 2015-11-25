@@ -134,9 +134,8 @@ FunctionPass *WebAssemblyPassConfig::createTargetRegisterAllocator(bool) {
 //===----------------------------------------------------------------------===//
 
 void WebAssemblyPassConfig::addIRPasses() {
-  // FIXME: the default for this option is currently POSIX, whereas
-  // WebAssembly's MVP should default to Single.
   if (TM->Options.ThreadModel == ThreadModel::Single)
+    // In "single" mode, atomics get lowered to non-atomics.
     addPass(createLowerAtomicPass());
   else
     // Expand some atomic operations. WebAssemblyTargetLowering has hooks which
@@ -168,8 +167,9 @@ void WebAssemblyPassConfig::addPreRegAlloc() {
 }
 
 void WebAssemblyPassConfig::addPostRegAlloc() {
-  // FIXME: the following passes dislike virtual registers. Disable them for now
-  //        so that basic tests can pass. Future patches will remedy this.
+  // TODO: The following CodeGen passes don't currently support code containing
+  // virtual registers. Consider removing their restrictions and re-enabling
+  // them.
   //
   // Fails with: Regalloc must assign all vregs.
   disablePass(&PrologEpilogCodeInserterID);
