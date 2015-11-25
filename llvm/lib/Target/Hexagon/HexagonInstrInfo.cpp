@@ -869,6 +869,20 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI)
     case Hexagon::TCRETURNr:
       MI->setDesc(get(Hexagon::J2_jumpr));
       return true;
+    case Hexagon::TFRI_f:
+    case Hexagon::TFRI_cPt_f:
+    case Hexagon::TFRI_cNotPt_f: {
+      unsigned Opx = (Opc == Hexagon::TFRI_f) ? 1 : 2;
+      APFloat FVal = MI->getOperand(Opx).getFPImm()->getValueAPF();
+      APInt IVal = FVal.bitcastToAPInt();
+      MI->RemoveOperand(Opx);
+      unsigned NewOpc = (Opc == Hexagon::TFRI_f)     ? Hexagon::A2_tfrsi   :
+                        (Opc == Hexagon::TFRI_cPt_f) ? Hexagon::C2_cmoveit :
+                                                       Hexagon::C2_cmoveif;
+      MI->setDesc(get(NewOpc));
+      MI->addOperand(MachineOperand::CreateImm(IVal.getZExtValue()));
+      return true;
+    }
   }
 
   return false;
