@@ -18,7 +18,7 @@ define i64 @memory_size() {
 }
 
 ; CHECK-LABEL: grow_memory:
-; CHECK-NEXT: .param i64
+; CHECK-NEXT: .param i64{{$}}
 ; CHECK: grow_memory $0{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @grow_memory(i64 %n) {

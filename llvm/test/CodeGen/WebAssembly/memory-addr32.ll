@@ -18,7 +18,7 @@ define i32 @memory_size() {
 }
 
 ; CHECK-LABEL: grow_memory:
-; CHECK-NEXT: .param i32
+; CHECK-NEXT: .param i32{{$}}
 ; CHECK: grow_memory $0{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @grow_memory(i32 %n) {
