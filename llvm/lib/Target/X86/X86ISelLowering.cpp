@@ -6244,7 +6244,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   unsigned NumZero  = 0;
   unsigned NumNonZero = 0;
-  unsigned NonZeros = 0;
+  uint64_t NonZeros = 0;
   bool IsAllConstants = true;
   SmallSet<SDValue, 8> Values;
   for (unsigned i = 0; i < NumElems; ++i) {
@@ -6258,7 +6258,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     if (X86::isZeroNode(Elt))
       NumZero++;
     else {
-      NonZeros |= (1 << i);
+      assert(i < sizeof(NonZeros) * 8); // Make sure the shift is within range.
+      NonZeros |= ((uint64_t)1 << i);
       NumNonZero++;
     }
   }
