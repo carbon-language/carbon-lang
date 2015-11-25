@@ -131,85 +131,6 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
   return createPGOFuncNameVar(*F.getParent(), F.getLinkage(), FuncName);
 }
 
-uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
-  switch (ValueKind) {
-  case IPVK_IndirectCallTarget:
-    return IndexedInstrProf::ComputeHash(IndexedInstrProf::HashType,
-                                         (const char *)Value);
-    break;
-  default:
-    llvm_unreachable("value kind not handled !");
-  }
-  return Value;
-}
-
-void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
-                                    InstrProfRecord::ValueMapType *VMap) {
-  Record.reserveSites(Kind, NumValueSites);
-
-  InstrProfValueData *ValueData = getValueProfRecordValueData(this);
-  for (uint64_t VSite = 0; VSite < NumValueSites; ++VSite) {
-    uint8_t ValueDataCount = this->SiteCountArray[VSite];
-    Record.addValueData(Kind, VSite, ValueData, ValueDataCount, VMap);
-    ValueData += ValueDataCount;
-  }
-}
-
-// Extract data from \c Closure and serialize into \c This instance.
-void serializeValueProfRecordFrom(ValueProfRecord *This,
-                                  ValueProfRecordClosure *Closure,
-                                  uint32_t ValueKind, uint32_t NumValueSites) {
-  uint32_t S;
-  const void *Record = Closure->Record;
-  This->Kind = ValueKind;
-  This->NumValueSites = NumValueSites;
-  InstrProfValueData *DstVD = getValueProfRecordValueData(This);
-
-  for (S = 0; S < NumValueSites; S++) {
-    uint32_t ND = Closure->GetNumValueDataForSite(Record, ValueKind, S);
-    This->SiteCountArray[S] = ND;
-    Closure->GetValueForSite(Record, DstVD, ValueKind, S,
-                             Closure->RemapValueData);
-    DstVD += ND;
-  }
-}
-
-template <class T>
-static T swapToHostOrder(const unsigned char *&D, support::endianness Orig) {
-  using namespace support;
-  if (Orig == little)
-    return endian::readNext<T, little, unaligned>(D);
-  else
-    return endian::readNext<T, big, unaligned>(D);
-}
-
-// For writing/serializing,  Old is the host endianness, and  New is
-// byte order intended on disk. For Reading/deserialization, Old
-// is the on-disk source endianness, and New is the host endianness.
-void ValueProfRecord::swapBytes(support::endianness Old,
-                                support::endianness New) {
-  using namespace support;
-  if (Old == New)
-    return;
-
-  if (getHostEndianness() != Old) {
-    sys::swapByteOrder<uint32_t>(NumValueSites);
-    sys::swapByteOrder<uint32_t>(Kind);
-  }
-  uint32_t ND = getValueProfRecordNumValueData(this);
-  InstrProfValueData *VD = getValueProfRecordValueData(this);
-
-  // No need to swap byte array: SiteCountArrray.
-  for (uint32_t I = 0; I < ND; I++) {
-    sys::swapByteOrder<uint64_t>(VD[I].Value);
-    sys::swapByteOrder<uint64_t>(VD[I].Count);
-  }
-  if (getHostEndianness() == Old) {
-    sys::swapByteOrder<uint32_t>(NumValueSites);
-    sys::swapByteOrder<uint32_t>(Kind);
-  }
-}
-
 /// Return the total size in bytes of the on-disk value profile data
 /// given the data stored in Record.
 uint32_t getValueProfDataSize(ValueProfRecordClosure *Closure) {
@@ -230,21 +151,23 @@ uint32_t getValueProfDataSize(ValueProfRecordClosure *Closure) {
   return TotalSize;
 }
 
-void ValueProfData::deserializeTo(InstrProfRecord &Record,
-                                  InstrProfRecord::ValueMapType *VMap) {
-  if (NumValueKinds == 0)
-    return;
+// Extract data from \c Closure and serialize into \c This instance.
+void serializeValueProfRecordFrom(ValueProfRecord *This,
+                                  ValueProfRecordClosure *Closure,
+                                  uint32_t ValueKind, uint32_t NumValueSites) {
+  uint32_t S;
+  const void *Record = Closure->Record;
+  This->Kind = ValueKind;
+  This->NumValueSites = NumValueSites;
+  InstrProfValueData *DstVD = getValueProfRecordValueData(This);
 
-  ValueProfRecord *VR = getFirstValueProfRecord(this);
-  for (uint32_t K = 0; K < NumValueKinds; K++) {
-    VR->deserializeTo(Record, VMap);
-    VR = getValueProfRecordNext(VR);
+  for (S = 0; S < NumValueSites; S++) {
+    uint32_t ND = Closure->GetNumValueDataForSite(Record, ValueKind, S);
+    This->SiteCountArray[S] = ND;
+    Closure->GetValueForSite(Record, DstVD, ValueKind, S,
+                             Closure->RemapValueData);
+    DstVD += ND;
   }
-}
-
-static std::unique_ptr<ValueProfData> allocValueProfData(uint32_t TotalSize) {
-  return std::unique_ptr<ValueProfData>(new (::operator new(TotalSize))
-                                            ValueProfData());
 }
 
 ValueProfData *serializeValueProfDataFrom(ValueProfRecordClosure *Closure) {
@@ -295,6 +218,18 @@ void getValueForSiteInstrProf(const void *R, InstrProfValueData *Dst,
       ->getValueForSite(Dst, K, S, Mapper);
 }
 
+uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
+  switch (ValueKind) {
+  case IPVK_IndirectCallTarget:
+    return IndexedInstrProf::ComputeHash(IndexedInstrProf::HashType,
+                                         (const char *)Value);
+    break;
+  default:
+    llvm_unreachable("value kind not handled !");
+  }
+  return Value;
+}
+
 ValueProfData *allocValueProfDataInstrProf(size_t TotalSizeInBytes) {
   return (ValueProfData *)(new (::operator new(TotalSizeInBytes))
                                ValueProfData());
@@ -308,13 +243,16 @@ static ValueProfRecordClosure InstrProfRecordClosure = {
     getNumValueDataForSiteInstrProf,
     stringToHash,
     getValueForSiteInstrProf,
-    allocValueProfDataInstrProf};
+    allocValueProfDataInstrProf
+};
 
+// Wrapper implementation using the closure mechanism.
 uint32_t ValueProfData::getSize(const InstrProfRecord &Record) {
   InstrProfRecordClosure.Record = &Record;
   return getValueProfDataSize(&InstrProfRecordClosure);
 }
 
+// Wrapper implementation using the closure mechanism.
 std::unique_ptr<ValueProfData>
 ValueProfData::serializeFrom(const InstrProfRecord &Record) {
   InstrProfRecordClosure.Record = &Record;
@@ -322,6 +260,70 @@ ValueProfData::serializeFrom(const InstrProfRecord &Record) {
   std::unique_ptr<ValueProfData> VPD(
       serializeValueProfDataFrom(&InstrProfRecordClosure));
   return VPD;
+}
+
+void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
+                                    InstrProfRecord::ValueMapType *VMap) {
+  Record.reserveSites(Kind, NumValueSites);
+
+  InstrProfValueData *ValueData = getValueProfRecordValueData(this);
+  for (uint64_t VSite = 0; VSite < NumValueSites; ++VSite) {
+    uint8_t ValueDataCount = this->SiteCountArray[VSite];
+    Record.addValueData(Kind, VSite, ValueData, ValueDataCount, VMap);
+    ValueData += ValueDataCount;
+  }
+}
+// For writing/serializing,  Old is the host endianness, and  New is
+// byte order intended on disk. For Reading/deserialization, Old
+// is the on-disk source endianness, and New is the host endianness.
+void ValueProfRecord::swapBytes(support::endianness Old,
+                                support::endianness New) {
+  using namespace support;
+  if (Old == New)
+    return;
+
+  if (getHostEndianness() != Old) {
+    sys::swapByteOrder<uint32_t>(NumValueSites);
+    sys::swapByteOrder<uint32_t>(Kind);
+  }
+  uint32_t ND = getValueProfRecordNumValueData(this);
+  InstrProfValueData *VD = getValueProfRecordValueData(this);
+
+  // No need to swap byte array: SiteCountArrray.
+  for (uint32_t I = 0; I < ND; I++) {
+    sys::swapByteOrder<uint64_t>(VD[I].Value);
+    sys::swapByteOrder<uint64_t>(VD[I].Count);
+  }
+  if (getHostEndianness() == Old) {
+    sys::swapByteOrder<uint32_t>(NumValueSites);
+    sys::swapByteOrder<uint32_t>(Kind);
+  }
+}
+
+void ValueProfData::deserializeTo(InstrProfRecord &Record,
+                                  InstrProfRecord::ValueMapType *VMap) {
+  if (NumValueKinds == 0)
+    return;
+
+  ValueProfRecord *VR = getFirstValueProfRecord(this);
+  for (uint32_t K = 0; K < NumValueKinds; K++) {
+    VR->deserializeTo(Record, VMap);
+    VR = getValueProfRecordNext(VR);
+  }
+}
+
+template <class T>
+static T swapToHostOrder(const unsigned char *&D, support::endianness Orig) {
+  using namespace support;
+  if (Orig == little)
+    return endian::readNext<T, little, unaligned>(D);
+  else
+    return endian::readNext<T, big, unaligned>(D);
+}
+
+static std::unique_ptr<ValueProfData> allocValueProfData(uint32_t TotalSize) {
+  return std::unique_ptr<ValueProfData>(new (::operator new(TotalSize))
+                                            ValueProfData());
 }
 
 ErrorOr<std::unique_ptr<ValueProfData>>
@@ -392,4 +394,5 @@ void ValueProfData::swapBytesFromHost(support::endianness Endianness) {
   sys::swapByteOrder<uint32_t>(TotalSize);
   sys::swapByteOrder<uint32_t>(NumValueKinds);
 }
+
 }
