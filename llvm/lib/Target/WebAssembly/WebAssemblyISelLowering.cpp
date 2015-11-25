@@ -114,6 +114,7 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
   setOperationAction(ISD::GlobalAddress, MVTPtr, Custom);
+  setOperationAction(ISD::ExternalSymbol, MVTPtr, Custom);
   setOperationAction(ISD::JumpTable, MVTPtr, Custom);
 
   for (auto T : {MVT::f32, MVT::f64}) {
@@ -412,6 +413,8 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     return SDValue();
   case ISD::GlobalAddress:
     return LowerGlobalAddress(Op, DAG);
+  case ISD::ExternalSymbol:
+    return LowerExternalSymbol(Op, DAG);
   case ISD::JumpTable:
     return LowerJumpTable(Op, DAG);
   case ISD::BR_JT:
@@ -431,6 +434,16 @@ SDValue WebAssemblyTargetLowering::LowerGlobalAddress(SDValue Op,
     fail(DL, DAG, "WebAssembly only expects the 0 address space");
   return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
                      DAG.getTargetGlobalAddress(GA->getGlobal(), DL, VT));
+}
+
+SDValue WebAssemblyTargetLowering::LowerExternalSymbol(SDValue Op,
+                                                       SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  const auto *ES = cast<ExternalSymbolSDNode>(Op);
+  EVT VT = Op.getValueType();
+  assert(ES->getTargetFlags() == 0 && "WebAssembly doesn't set target flags");
+  return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
+                     DAG.getTargetExternalSymbol(ES->getSymbol(), VT));
 }
 
 SDValue WebAssemblyTargetLowering::LowerJumpTable(SDValue Op,
