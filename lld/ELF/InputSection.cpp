@@ -259,7 +259,7 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
   if (Base != uintX_t(-1))
     return Base + Addend;
 
-  // Map the base to the offset in the output section and cashe it.
+  // Map the base to the offset in the output section and cache it.
   ArrayRef<uint8_t> D = this->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
   StringRef Entry = Data.substr(Start, End - Start);
