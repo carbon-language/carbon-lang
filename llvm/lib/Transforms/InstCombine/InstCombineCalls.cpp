@@ -2268,11 +2268,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
                                                        attrVec);
 
   SmallVector<OperandBundleDef, 1> OpBundles;
-
-  // Convert the operand bundle uses to operand bundle defs.  See InstrTypes.h
-  // for details on how these differ.
-  for (unsigned i = 0, e = CS.getNumOperandBundles(); i != e; ++i)
-    OpBundles.emplace_back(CS.getOperandBundleAt(i));
+  CS.getOperandBundlesAsDefs(OpBundles);
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
