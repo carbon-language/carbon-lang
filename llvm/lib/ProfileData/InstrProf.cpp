@@ -131,7 +131,7 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
   return createPGOFuncNameVar(*F.getParent(), F.getLinkage(), FuncName);
 }
 
-uint64_t StringToHash(uint32_t ValueKind, uint64_t Value) {
+uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
   switch (ValueKind) {
   case IPVK_IndirectCallTarget:
     return IndexedInstrProf::ComputeHash(IndexedInstrProf::HashType,
@@ -164,7 +164,7 @@ void ValueProfRecord::serializeFrom(const InstrProfRecord &Record,
   for (uint32_t S = 0; S < NumValueSites; S++) {
     uint32_t ND = Record.getNumValueDataForSite(ValueKind, S);
     SiteCountArray[S] = ND;
-    Record.getValueForSite(DstVD, ValueKind, S, StringToHash);
+    Record.getValueForSite(DstVD, ValueKind, S, stringToHash);
     DstVD += ND;
   }
 }
