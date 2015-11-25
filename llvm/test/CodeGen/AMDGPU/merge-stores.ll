@@ -191,9 +191,7 @@ define void @merge_global_store_3_constants_i32(i32 addrspace(1)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_2_constants_i64:
-; XGCN: buffer_store_dwordx4
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
+; GCN: buffer_store_dwordx4
 define void @merge_global_store_2_constants_i64(i64 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i64, i64 addrspace(1)* %out, i64 1
 
@@ -203,13 +201,8 @@ define void @merge_global_store_2_constants_i64(i64 addrspace(1)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_4_constants_i64:
-; XGCN: buffer_store_dwordx4
-; XGCN: buffer_store_dwordx4
-
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
+; GCN: buffer_store_dwordx4
+; GCN: buffer_store_dwordx4
 define void @merge_global_store_4_constants_i64(i64 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i64, i64 addrspace(1)* %out, i64 1
   %out.gep.2 = getelementptr i64, i64 addrspace(1)* %out, i64 2
