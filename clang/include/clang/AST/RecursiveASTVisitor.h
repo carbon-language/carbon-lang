@@ -291,10 +291,10 @@ private:
   // class can take a queue, so if we're taking the second arm, make the first
   // arm call our function rather than the derived class version.
 #define TRAVERSE_STMT_BASE(NAME, CLASS, VAR, QUEUE)                            \
-  (decltype(callableWithQueue<CLASS *>(&Derived::Traverse##NAME))::value       \
+  (decltype(callableWithQueue<CLASS>(&Derived::Traverse##NAME))::value         \
        ? static_cast<typename std::conditional<                                \
              decltype(                                                         \
-                 callableWithQueue<CLASS *>(&Derived::Traverse##NAME))::value, \
+                 callableWithQueue<CLASS>(&Derived::Traverse##NAME))::value,   \
              Derived &, RecursiveASTVisitor &>::type>(*this)                   \
              .Traverse##NAME(static_cast<CLASS *>(VAR), QUEUE)                 \
        : getDerived().Traverse##NAME(static_cast<CLASS *>(VAR)))
