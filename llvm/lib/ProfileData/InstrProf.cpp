@@ -143,6 +143,22 @@ uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
   return Value;
 }
 
+uint32_t ValueProfRecord::getNumValueData() const {
+  uint32_t NumValueData = 0;
+  for (uint32_t I = 0; I < NumValueSites; I++)
+    NumValueData += SiteCountArray[I];
+  return NumValueData;
+}
+
+ValueProfRecord *ValueProfRecord::getNext() {
+  return reinterpret_cast<ValueProfRecord *>((char *)this + getSize());
+}
+
+InstrProfValueData *ValueProfRecord::getValueData() {
+  return reinterpret_cast<InstrProfValueData *>(
+      (char *)this + getValueProfRecordHeaderSize(NumValueSites));
+}
+
 void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
                                     InstrProfRecord::ValueMapType *VMap) {
   Record.reserveSites(Kind, NumValueSites);
@@ -331,19 +347,5 @@ ValueProfRecord *ValueProfData::getFirstValueProfRecord() {
                                              sizeof(ValueProfData));
 }
 
-uint32_t ValueProfRecord::getNumValueData() const {
-  uint32_t NumValueData = 0;
-  for (uint32_t I = 0; I < NumValueSites; I++)
-    NumValueData += SiteCountArray[I];
-  return NumValueData;
 }
 
-ValueProfRecord *ValueProfRecord::getNext() {
-  return reinterpret_cast<ValueProfRecord *>((char *)this + getSize());
-}
-
-InstrProfValueData *ValueProfRecord::getValueData() {
-  return reinterpret_cast<InstrProfValueData *>(
-      (char *)this + getValueProfRecordHeaderSize(NumValueSites));
-}
-}
