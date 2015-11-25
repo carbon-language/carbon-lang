@@ -143,6 +143,9 @@ void WebAssemblyPassConfig::addIRPasses() {
     // control specifically what gets lowered.
     addPass(createAtomicExpandPass(TM));
 
+  // Optimize "returned" function attributes.
+  addPass(createWebAssemblyOptimizeReturned());
+
   TargetPassConfig::addIRPasses();
 }
 
@@ -157,6 +160,9 @@ bool WebAssemblyPassConfig::addInstSelector() {
 bool WebAssemblyPassConfig::addILPOpts() { return true; }
 
 void WebAssemblyPassConfig::addPreRegAlloc() {
+  // Prepare store instructions for register stackifying.
+  addPass(createWebAssemblyStoreResults());
+
   // Mark registers as representing wasm's expression stack.
   addPass(createWebAssemblyRegStackify());
 }
@@ -183,4 +189,5 @@ void WebAssemblyPassConfig::addPreSched2() {}
 void WebAssemblyPassConfig::addPreEmitPass() {
   addPass(createWebAssemblyCFGStackify());
   addPass(createWebAssemblyRegNumbering());
+  addPass(createWebAssemblyPeephole());
 }
