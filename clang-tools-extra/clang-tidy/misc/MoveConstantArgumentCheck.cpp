@@ -60,8 +60,8 @@ void MoveConstantArgumentCheck::check(const MatchFinder::MatchResult &Result) {
         SM, getLangOpts());
 
     if (BeforeArgumentsRange.isValid() && AfterArgumentsRange.isValid()) {
-      DB << FixItHint::CreateRemoval(BeforeArgumentsRange)
-         << FixItHint::CreateRemoval(AfterArgumentsRange);
+      Diag << FixItHint::CreateRemoval(BeforeArgumentsRange)
+           << FixItHint::CreateRemoval(AfterArgumentsRange);
     }
   }
 }
