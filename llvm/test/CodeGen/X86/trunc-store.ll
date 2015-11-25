@@ -27,7 +27,7 @@
 
 define void @fn1() {
 ; CHECK-LABEL: fn1
-; CHECK: movb	$0, -8(%rsp)
+; CHECK: movb	$0, {{.*}}(%rsp)
 ; CHECK: cmpq	$8, %rax
 for.cond:
   br label %vector.body
