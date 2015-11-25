@@ -39,7 +39,7 @@ using namespace llvm;
 namespace {
 // Diagnostic information for unimplemented or unsupported feature reporting.
 // FIXME copied from BPF and AMDGPU.
-class DiagnosticInfoUnsupported : public DiagnosticInfo {
+class DiagnosticInfoUnsupported final : public DiagnosticInfo {
 private:
   // Debug location where this diagnostic is triggered.
   DebugLoc DLoc;
