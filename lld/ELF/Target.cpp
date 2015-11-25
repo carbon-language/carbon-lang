@@ -53,7 +53,6 @@ public:
                      uint64_t PltEntryAddr, int32_t Index) const override;
   bool relocNeedsCopy(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocPointsToGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
@@ -166,8 +165,6 @@ unsigned TargetInfo::getGotRefReloc(unsigned Type) const { return GotRefReloc; }
 
 unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
-bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
-
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
 void TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
@@ -209,10 +206,6 @@ bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   return Type == R_386_GOT32 || relocNeedsPlt(Type, S);
 }
 
-bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
-  return Type == R_386_GOTPC;
-}
-
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return Type == R_386_PLT32 || (Type == R_386_PC32 && S.isShared());
 }
@@ -222,6 +215,9 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   switch (Type) {
   case R_386_GOT32:
     add32le(Loc, SA - Out<ELF32LE>::Got->getVA());
+    break;
+  case R_386_GOTPC:
+    add32le(Loc, SA + Out<ELF32LE>::Got->getVA() - P);
     break;
   case R_386_PC32:
     add32le(Loc, SA - P);
