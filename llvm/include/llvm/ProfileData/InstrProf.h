@@ -545,15 +545,34 @@ typedef struct ValueProfData {
   ValueProfRecord *getFirstValueProfRecord();
 } ValueProfData;
 
+/* The closure is designed to abstact away two types of value profile data:
+ *  - InstrProfRecord which is the primary data structure used to
+ *    represent profile data in host tools (reader, writer, and profile-use)
+ * - value profile runtime data structure suitable to be used by C
+ *    runtime library.
+ *
+ * Both sources of data need to serialize to disk/memory-buffer in common
+ * format: ValueProfData. The abstraction allows compiler-rt's raw profiler
+ * writer to share * the same code with indexed profile writer.
+ *
+ * For documentation of the member methods below, refer to corresponding methods
+ * in class InstrProfRecord.
+ */
 typedef struct ValueProfRecordClosure {
   void *Record;
   uint32_t (*GetNumValueKinds)(void *Record);
   uint32_t (*GetNumValueSites)(void *Record, uint32_t VKind);
   uint32_t (*GetNumValueData)(void *Record, uint32_t VKind);
   uint32_t (*GetNumValueDataForSite)(void *R, uint32_t VK, uint32_t S);
-  uint64_t (*RemapValueData)(uint64_t Value);
-  void (*GetValueForSite)(InstrProfValueData Dst[], void *R, uint32_t K,
-                          uint32_t S);
+
+  /* After extracting the value profile data from the value profile record,
+   * this method is used to map the in-memory value to on-disk value. If
+   * the method is null, value will be written out untranslated.
+   */
+  uint64_t (*RemapValueData)(uint32_t, uint64_t Value);
+  void (*GetValueForSite)(InstrProfValueData *Dst, void *R, uint32_t K,
+                          uint32_t S, uint64_t (*Mapper)(uint32_t, uint64_t));
+
   ValueProfData *(*AllocateValueProfData)(size_t TotalSizeInBytes);
 } ValueProfRecordClosure;
 
