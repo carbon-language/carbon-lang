@@ -474,9 +474,6 @@ typedef struct ValueProfRecord {
   /// Read data from this record and save it to Record.
   void deserializeTo(InstrProfRecord &Record,
                      InstrProfRecord::ValueMapType *VMap);
-  /// Extract data from \c Record and serialize into this instance.
-  void serializeFrom(const InstrProfRecord &Record, uint32_t ValueKind,
-                     uint32_t NumValueSites);
   /// In-place byte swap:
   /// Do byte swap for this instance. \c Old is the original order before
   /// the swap, and \c New is the New byte order.
@@ -524,8 +521,6 @@ typedef struct ValueProfData {
   /// Read data from this data and save it to \c Record.
   void deserializeTo(InstrProfRecord &Record,
                      InstrProfRecord::ValueMapType *VMap);
-  /// Return the first \c ValueProfRecord instance.
-  ValueProfRecord *getFirstValueProfRecord();
 } ValueProfData;
 
 /* The closure is designed to abstact away two types of value profile data:
@@ -542,21 +537,20 @@ typedef struct ValueProfData {
  * in class InstrProfRecord.
  */
 typedef struct ValueProfRecordClosure {
-  void *Record;
-  uint32_t (*GetNumValueKinds)(void *Record);
-  uint32_t (*GetNumValueSites)(void *Record, uint32_t VKind);
-  uint32_t (*GetNumValueData)(void *Record, uint32_t VKind);
-  uint32_t (*GetNumValueDataForSite)(void *R, uint32_t VK, uint32_t S);
+  const void *Record;
+  uint32_t (*GetNumValueKinds)(const void *Record);
+  uint32_t (*GetNumValueSites)(const void *Record, uint32_t VKind);
+  uint32_t (*GetNumValueData)(const void *Record, uint32_t VKind);
+  uint32_t (*GetNumValueDataForSite)(const void *R, uint32_t VK, uint32_t S);
 
   /* After extracting the value profile data from the value profile record,
    * this method is used to map the in-memory value to on-disk value. If
    * the method is null, value will be written out untranslated.
    */
   uint64_t (*RemapValueData)(uint32_t, uint64_t Value);
-  void (*GetValueForSite)(InstrProfValueData *Dst, void *R, uint32_t K,
+  void (*GetValueForSite)(const void *R, InstrProfValueData *Dst, uint32_t K,
                           uint32_t S, uint64_t (*Mapper)(uint32_t, uint64_t));
-
-  ValueProfData *(*AllocateValueProfData)(size_t TotalSizeInBytes);
+  ValueProfData *(*AllocValueProfData)(size_t TotalSizeInBytes);
 } ValueProfRecordClosure;
 
 /// Return the \c ValueProfRecord header size including the padding bytes.
@@ -597,6 +591,11 @@ inline ValueProfRecord *getValueProfRecordNext(ValueProfRecord *This) {
   return (ValueProfRecord *)((char *)This +
                              getValueProfRecordSize(This->NumValueSites,
                                                     NumValueData));
+}
+
+/// Return the first \c ValueProfRecord instance.
+inline ValueProfRecord *getFirstValueProfRecord(ValueProfData *This) {
+  return (ValueProfRecord *)((char *)This + sizeof(ValueProfData));
 }
 
 namespace IndexedInstrProf {
