@@ -166,7 +166,7 @@ public:
   uintX_t getEntryAddr(const SymbolBody &B) const;
 
 private:
-  std::vector<std::pair<const SymbolBody *, unsigned>> Entries;
+  std::vector<const SymbolBody *> Entries;
 };
 
 template <class ELFT> struct DynamicReloc {
@@ -216,7 +216,6 @@ class RelocationSection final : public OutputSectionBase<ELFT> {
 public:
   RelocationSection(StringRef Name, bool IsRela);
   void addReloc(const DynamicReloc<ELFT> &Reloc) { Relocs.push_back(Reloc); }
-  unsigned getRelocOffset();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
   bool hasRelocs() const { return !Relocs.empty(); }
