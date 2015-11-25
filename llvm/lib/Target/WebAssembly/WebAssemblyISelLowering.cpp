@@ -377,6 +377,10 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
 
+  // Set up the incoming ARGUMENTS value, which serves to represent the liveness
+  // of the incoming values before they're represented by virtual registers.
+  MF.getRegInfo().addLiveIn(WebAssembly::ARGUMENTS);
+
   for (const ISD::InputArg &In : Ins) {
     if (In.Flags.isByVal())
       fail(DL, DAG, "WebAssembly hasn't implemented byval arguments");
