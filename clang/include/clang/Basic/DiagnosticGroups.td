@@ -187,6 +187,8 @@ def CXX14Compat : DiagGroup<"c++14-compat", [CXXPre1zCompat]>;
 def CXX14CompatPedantic : DiagGroup<"c++14-compat-pedantic",
                                     [CXXPre1zCompatPedantic]>;
 
+def CXX1zCompat : DiagGroup<"c++1z-compat", [DeprecatedRegister]>;
+
 def : DiagGroup<"effc++">;
 def DivZero : DiagGroup<"division-by-zero">;
 def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
@@ -314,6 +316,7 @@ def : DiagGroup<"redundant-decls">;
 def RedeclaredClassMember : DiagGroup<"redeclared-class-member">;
 def GNURedeclaredEnum : DiagGroup<"gnu-redeclared-enum">;
 def RedundantMove : DiagGroup<"redundant-move">;
+def Register : DiagGroup<"register", [DeprecatedRegister]>;
 def ReturnStackAddress : DiagGroup<"return-stack-address">;
 def ReturnTypeCLinkage : DiagGroup<"return-type-c-linkage">;
 def ReturnType : DiagGroup<"return-type", [ReturnTypeCLinkage]>;

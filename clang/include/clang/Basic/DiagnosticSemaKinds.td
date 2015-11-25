@@ -213,8 +213,11 @@ def warn_auto_storage_class : Warning<
   InGroup<CXX11Compat>, DefaultIgnore;
 
 def warn_deprecated_register : Warning<
-  "'register' storage class specifier is deprecated">,
-  InGroup<DeprecatedRegister>;
+  "'register' storage class specifier is deprecated "
+  "and incompatible with C++1z">, InGroup<DeprecatedRegister>;
+def ext_register_storage_class : ExtWarn<
+  "ISO C++1z does not allow 'register' storage class specifier">,
+  DefaultError, InGroup<Register>;
 
 def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
