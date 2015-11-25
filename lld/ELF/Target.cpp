@@ -116,6 +116,7 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
+  unsigned getGotRefReloc(unsigned Type) const override;
   void writeGotHeaderEntries(uint8_t *Buf) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -876,6 +877,11 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
 }
 
 template <class ELFT>
+unsigned MipsTargetInfo<ELFT>::getGotRefReloc(unsigned Type) const {
+  return Type;
+}
+
+template <class ELFT>
 void MipsTargetInfo<ELFT>::writeGotHeaderEntries(uint8_t *Buf) const {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Off Elf_Off;
   auto *P = reinterpret_cast<Elf_Off *>(Buf);
@@ -895,7 +901,7 @@ void MipsTargetInfo<ELFT>::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::relocNeedsGot(uint32_t Type,
                                          const SymbolBody &S) const {
-  return Type == R_MIPS_GOT16;
+  return Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16;
 }
 
 template <class ELFT>
@@ -913,9 +919,10 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_MIPS_32:
     add32<E>(Loc, SA);
     break;
+  case R_MIPS_CALL16:
   case R_MIPS_GOT16: {
     int64_t V = SA - getMipsGpAddr<ELFT>();
-    if (!isInt<16>(V))
+    if (Type == R_MIPS_GOT16 && !isInt<16>(V))
       error("Relocation R_MIPS_GOT16 out of range");
     write32<E>(Loc, (read32<E>(Loc) & 0xffff0000) | (V & 0xffff));
     break;
