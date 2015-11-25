@@ -28,8 +28,8 @@ using namespace lld::elf2;
 namespace {
 class LinkerScript {
 public:
-  LinkerScript(BumpPtrAllocator *A, StringRef S, bool B)
-      : Saver(*A), Tokens(tokenize(S)), IsUnderSysroot(B) {}
+  LinkerScript(BumpPtrAllocator *A, StringRef S)
+      : Saver(*A), Tokens(tokenize(S)) {}
   void run();
 
 private:
@@ -58,7 +58,6 @@ private:
   StringSaver Saver;
   std::vector<StringRef> Tokens;
   size_t Pos = 0;
-  bool IsUnderSysroot;
 };
 }
 
@@ -162,12 +161,6 @@ void LinkerScript::expect(StringRef Expect) {
 
 void LinkerScript::addFile(StringRef S) {
   if (sys::path::is_absolute(S)) {
-    if (IsUnderSysroot) {
-      SmallString<128> Path;
-      (Config->Sysroot + S).toStringRef(Path);
-      if (sys::fs::exists(Path))
-        S = Saver.save(Path.str());
-    }
     Driver->addFile(S);
   } else if (S.startswith("=")) {
     if (Config->Sysroot.empty())
@@ -308,6 +301,5 @@ static bool isUnderSysroot(StringRef Path) {
 
 // Entry point. The other functions or classes are private to this file.
 void lld::elf2::readLinkerScript(BumpPtrAllocator *A, MemoryBufferRef MB) {
-  StringRef Path = MB.getBufferIdentifier();
-  LinkerScript(A, MB.getBuffer(), isUnderSysroot(Path)).run();
+  LinkerScript(A, MB.getBuffer()).run();
 }
