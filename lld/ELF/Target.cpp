@@ -80,9 +80,17 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool isTlsOptimized(unsigned Type, const SymbolBody &S) const override;
-  void relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
-                           uint64_t SA) const override;
+  bool isTlsOptimized(unsigned Type, const SymbolBody *S) const override;
+  unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                               uint64_t P, uint64_t SA) const override;
+
+private:
+  void relocateTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
+                         uint64_t SA) const;
+  void relocateTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
+                         uint64_t SA) const;
+  void relocateTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
+                         uint64_t SA) const;
 };
 
 class PPC64TargetInfo final : public TargetInfo {
@@ -161,7 +169,7 @@ TargetInfo *createTarget() {
 
 TargetInfo::~TargetInfo() {}
 
-bool TargetInfo::isTlsOptimized(unsigned Type, const SymbolBody &S) const {
+bool TargetInfo::isTlsOptimized(unsigned Type, const SymbolBody *S) const {
   return false;
 }
 
@@ -177,8 +185,11 @@ unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
-void TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
-                                     uint64_t SA) const {}
+unsigned TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
+                                         uint32_t Type, uint64_t P,
+                                         uint64_t SA) const {
+  return 0;
+}
 
 void TargetInfo::writeGotHeaderEntries(uint8_t *Buf) const {}
 
@@ -364,7 +375,7 @@ bool X86_64TargetInfo::relocNeedsCopy(uint32_t Type,
 
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   if (Type == R_X86_64_GOTTPOFF)
-    return !isTlsOptimized(Type, S);
+    return !isTlsOptimized(Type, &S);
   return Type == R_X86_64_GOTTPOFF || Type == R_X86_64_GOTPCREL ||
          relocNeedsPlt(Type, S);
 }
@@ -435,10 +446,54 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
 }
 
 bool X86_64TargetInfo::isTlsOptimized(unsigned Type,
-                                      const SymbolBody &S) const {
-  if (Config->Shared || !S.isTLS())
+                                      const SymbolBody *S) const {
+  if (Config->Shared || (S && !S->isTLS()))
     return false;
-  return Type == R_X86_64_GOTTPOFF && !canBePreempted(&S, true);
+  return Type == R_X86_64_TLSLD || Type == R_X86_64_DTPOFF32 ||
+         (Type == R_X86_64_TLSGD && !canBePreempted(S, true)) ||
+         (Type == R_X86_64_GOTTPOFF && !canBePreempted(S, true));
+}
+
+// "Ulrich Drepper, ELF Handling For Thread-Local Storage" (5.5
+// x86-x64 linker optimizations, http://www.akkadia.org/drepper/tls.pdf) shows
+// how LD can be optimized to LE:
+//   leaq bar@tlsld(%rip), %rdi
+//   callq __tls_get_addr@PLT
+//   leaq bar@dtpoff(%rax), %rcx
+// Is converted to:
+//  .word 0x6666
+//  .byte 0x66
+//  mov %fs:0,%rax
+//  leaq bar@tpoff(%rax), %rcx
+void X86_64TargetInfo::relocateTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd,
+                                         uint64_t P, uint64_t SA) const {
+  const uint8_t Inst[] = {
+      0x66, 0x66,                                          //.word 0x6666
+      0x66,                                                //.byte 0x66
+      0x64, 0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00 // mov %fs:0,%rax
+  };
+  memcpy(Loc - 3, Inst, sizeof(Inst));
+}
+
+// "Ulrich Drepper, ELF Handling For Thread-Local Storage" (5.5
+// x86-x64 linker optimizations, http://www.akkadia.org/drepper/tls.pdf) shows
+// how GD can be optimized to LE:
+//  .byte 0x66
+//  leaq x@tlsgd(%rip), %rdi
+//  .word 0x6666
+//  rex64
+//  call __tls_get_addr@plt
+// Is converted to:
+//  mov %fs:0x0,%rax
+//  lea x@tpoff,%rax
+void X86_64TargetInfo::relocateTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd,
+                                         uint64_t P, uint64_t SA) const {
+  const uint8_t Inst[] = {
+      0x64, 0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00, // mov %fs:0x0,%rax
+      0x48, 0x8d, 0x80, 0x00, 0x00, 0x00, 0x00              // lea x@tpoff,%rax
+  };
+  memcpy(Loc - 4, Inst, sizeof(Inst));
+  relocateOne(Loc + 8, BufEnd, R_X86_64_TPOFF32, P, SA);
 }
 
 // In some conditions, R_X86_64_GOTTPOFF relocation can be optimized to
@@ -446,8 +501,8 @@ bool X86_64TargetInfo::isTlsOptimized(unsigned Type,
 // This function does that. Read "ELF Handling For Thread-Local Storage,
 // 5.5 x86-x64 linker optimizations" (http://www.akkadia.org/drepper/tls.pdf)
 // by Ulrich Drepper for details.
-void X86_64TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
-                                           uint64_t P, uint64_t SA) const {
+void X86_64TargetInfo::relocateTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
+                                         uint64_t P, uint64_t SA) const {
   // Ulrich's document section 6.5 says that @gottpoff(%rip) must be
   // used in MOVQ or ADDQ instructions only.
   // "MOVQ foo@GOTTPOFF(%RIP), %REG" is transformed to "MOVQ $foo, %REG".
@@ -474,6 +529,33 @@ void X86_64TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
     *Prefix = (IsMov || RspAdd) ? 0x49 : 0x4d;
   *RegSlot = (IsMov || RspAdd) ? (0xc0 | Reg) : (0x80 | Reg | (Reg << 3));
   relocateOne(Loc, BufEnd, R_X86_64_TPOFF32, P, SA);
+}
+
+// This function applies a TLS relocation with an optimization as described
+// in the Ulrich's document. As a result of rewriting instructions at the
+// relocation target, relocations immediately follow the TLS relocation (which
+// would be applied to rewritten instructions) may have to be skipped.
+// This function returns a number of relocations that need to be skipped.
+unsigned X86_64TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
+                                               uint32_t Type, uint64_t P,
+                                               uint64_t SA) const {
+  switch (Type) {
+  case R_X86_64_GOTTPOFF:
+    relocateTlsIeToLe(Loc, BufEnd, P, SA);
+    return 0;
+  case R_X86_64_TLSLD:
+    relocateTlsLdToLe(Loc, BufEnd, P, SA);
+    // The next relocation should be against __tls_get_addr, so skip it
+    return 1;
+  case R_X86_64_TLSGD:
+    relocateTlsGdToLe(Loc, BufEnd, P, SA);
+    // The next relocation should be against __tls_get_addr, so skip it
+    return 1;
+  case R_X86_64_DTPOFF32:
+    relocateOne(Loc, BufEnd, R_X86_64_TPOFF32, P, SA);
+    return 0;
+  }
+  llvm_unreachable("Unknown TLS optimization");
 }
 
 void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,

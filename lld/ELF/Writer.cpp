@@ -203,6 +203,8 @@ void Writer<ELFT>::scanRelocs(
     uint32_t Type = RI.getType(Config->Mips64EL);
 
     if (Target->isTlsLocalDynamicReloc(Type)) {
+      if (Target->isTlsOptimized(Type, nullptr))
+        continue;
       if (Out<ELFT>::LocalModuleTlsIndexOffset == uint32_t(-1)) {
         Out<ELFT>::LocalModuleTlsIndexOffset =
             Out<ELFT>::Got->addLocalModuleTlsIndex();
@@ -220,6 +222,8 @@ void Writer<ELFT>::scanRelocs(
       Body = Body->repl();
 
     if (Body && Body->isTLS() && Target->isTlsGlobalDynamicReloc(Type)) {
+      if (Target->isTlsOptimized(Type, Body))
+        continue;
       if (Body->isInGot())
         continue;
       Out<ELFT>::Got->addDynTlsEntry(Body);
