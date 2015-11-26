@@ -646,6 +646,18 @@ SDValue SITargetLowering::LowerFormalArguments(
     CCInfo.AllocateReg(ScratchPtrRegHi);
     MF.addLiveIn(InputPtrReg, &AMDGPU::SReg_64RegClass);
     MF.addLiveIn(ScratchPtrReg, &AMDGPU::SReg_64RegClass);
+    SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+    if (Subtarget->isAmdHsaOS() && MFI->hasDispatchPtr()) {
+      unsigned DispatchPtrReg =
+        TRI->getPreloadedValue(MF, SIRegisterInfo::DISPATCH_PTR);
+      unsigned DispatchPtrRegLo =
+        TRI->getPhysRegSubReg(DispatchPtrReg, &AMDGPU::SReg_32RegClass, 0);
+      unsigned DispatchPtrRegHi =
+        TRI->getPhysRegSubReg(DispatchPtrReg, &AMDGPU::SReg_32RegClass, 1);
+      CCInfo.AllocateReg(DispatchPtrRegLo);
+      CCInfo.AllocateReg(DispatchPtrRegHi);
+      MF.addLiveIn(DispatchPtrReg, &AMDGPU::SReg_64RegClass);
+    }
   }
 
   if (Info->getShaderType() == ShaderType::COMPUTE) {
@@ -1053,6 +1065,10 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   // TODO: Should this propagate fast-math-flags?
 
   switch (IntrinsicID) {
+  case Intrinsic::amdgcn_dispatch_ptr:
+    return CreateLiveInRegister(DAG, &AMDGPU::SReg_64RegClass,
+      TRI->getPreloadedValue(MF, SIRegisterInfo::DISPATCH_PTR), VT);
+
   case Intrinsic::r600_read_ngroups_x:
     return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
                           SI::KernelInputOffsets::NGROUPS_X, false);
