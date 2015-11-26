@@ -780,6 +780,21 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
         break;
       }
       break;
+    case 9:
+      switch (Op1Val) {
+      default:
+        break;
+      case 0:
+        if (STI.getFeatureBits()[AArch64::HasV8_2aOps]) {
+          switch (Op2Val) {
+          default:
+            break;
+          case 0: Asm = "at\ts1e1rp"; break;
+          case 1: Asm = "at\ts1e1wp"; break;
+          }
+        }
+        break;
+      }
     }
   } else if (CnVal == 8) {
     // TLBI aliases
