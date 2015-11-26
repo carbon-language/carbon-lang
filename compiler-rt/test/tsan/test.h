@@ -57,7 +57,7 @@ void print_address(void *address) {
   else if (vma == 42)
     format = "0x%011lx";
   else {
-    fprintf(stderr, "unsupported vma: %ul\n", vma);
+    fprintf(stderr, "unsupported vma: %lu\n", vma);
     exit(1);
   }
 

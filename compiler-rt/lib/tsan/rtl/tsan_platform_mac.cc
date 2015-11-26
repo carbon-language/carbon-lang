@@ -151,6 +151,9 @@ static void my_pthread_introspection_hook(unsigned int event, pthread_t thread,
 }
 #endif
 
+void InitializePlatformEarly() {
+}
+
 void InitializePlatform() {
   DisableCoreDumperIfNecessary();
 #ifndef SANITIZER_GO

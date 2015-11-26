@@ -27,11 +27,12 @@ namespace __tsan {
 void InitializeShadowMemory() {
   // Map memory shadow.
   uptr shadow =
-      (uptr)MmapFixedNoReserve(kShadowBeg, kShadowEnd - kShadowBeg, "shadow");
-  if (shadow != kShadowBeg) {
+      (uptr)MmapFixedNoReserve(ShadowBeg(), ShadowEnd() - ShadowBeg(),
+                               "shadow");
+  if (shadow != ShadowBeg()) {
     Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     Printf("FATAL: Make sure to compile with -fPIE and "
-               "to link with -pie (%p, %p).\n", shadow, kShadowBeg);
+               "to link with -pie (%p, %p).\n", shadow, ShadowBeg());
     Die();
   }
   // This memory range is used for thread stacks and large user mmaps.
@@ -46,29 +47,38 @@ void InitializeShadowMemory() {
   const uptr kMadviseRangeBeg  = 0xff00000000ull;
   const uptr kMadviseRangeSize = 0x0100000000ull;
 #elif defined(__aarch64__)
-  const uptr kMadviseRangeBeg  = 0x7e00000000ull;
-  const uptr kMadviseRangeSize = 0x0100000000ull;
+  uptr kMadviseRangeBeg = 0;
+  uptr kMadviseRangeSize = 0;
+  if (vmaSize == 39) {
+    kMadviseRangeBeg  = 0x7d00000000ull;
+    kMadviseRangeSize = 0x0300000000ull;
+  } else if (vmaSize == 42) {
+    kMadviseRangeBeg  = 0x3f000000000ull;
+    kMadviseRangeSize = 0x01000000000ull;
+  } else {
+    DCHECK(0);
+  }
 #endif
   NoHugePagesInRegion(MemToShadow(kMadviseRangeBeg),
                       kMadviseRangeSize * kShadowMultiplier);
   // Meta shadow is compressing and we don't flush it,
   // so it makes sense to mark it as NOHUGEPAGE to not over-allocate memory.
   // On one program it reduces memory consumption from 5GB to 2.5GB.
-  NoHugePagesInRegion(kMetaShadowBeg, kMetaShadowEnd - kMetaShadowBeg);
+  NoHugePagesInRegion(MetaShadowBeg(), MetaShadowEnd() - MetaShadowBeg());
   if (common_flags()->use_madv_dontdump)
-    DontDumpShadowMemory(kShadowBeg, kShadowEnd - kShadowBeg);
+    DontDumpShadowMemory(ShadowBeg(), ShadowEnd() - ShadowBeg());
   DPrintf("memory shadow: %zx-%zx (%zuGB)\n",
-      kShadowBeg, kShadowEnd,
-      (kShadowEnd - kShadowBeg) >> 30);
+      ShadowBeg(), ShadowEnd(),
+      (ShadowEnd() - ShadowBeg()) >> 30);
 
   // Map meta shadow.
-  uptr meta_size = kMetaShadowEnd - kMetaShadowBeg;
+  uptr meta_size = MetaShadowEnd() - MetaShadowBeg();
   uptr meta =
-      (uptr)MmapFixedNoReserve(kMetaShadowBeg, meta_size, "meta shadow");
-  if (meta != kMetaShadowBeg) {
+      (uptr)MmapFixedNoReserve(MetaShadowBeg(), meta_size, "meta shadow");
+  if (meta != MetaShadowBeg()) {
     Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     Printf("FATAL: Make sure to compile with -fPIE and "
-               "to link with -pie (%p, %p).\n", meta, kMetaShadowBeg);
+               "to link with -pie (%p, %p).\n", meta, MetaShadowBeg());
     Die();
   }
   if (common_flags()->use_madv_dontdump)
@@ -97,25 +107,25 @@ void CheckAndProtect() {
   while (proc_maps.Next(&p, &end, 0, 0, 0, &prot)) {
     if (IsAppMem(p))
       continue;
-    if (p >= kHeapMemEnd &&
+    if (p >= HeapMemEnd() &&
         p < HeapEnd())
       continue;
     if (prot == 0)  // Zero page or mprotected.
       continue;
-    if (p >= kVdsoBeg)  // vdso
+    if (p >= VdsoBeg())  // vdso
       break;
     Printf("FATAL: ThreadSanitizer: unexpected memory mapping %p-%p\n", p, end);
     Die();
   }
 
-  ProtectRange(kLoAppMemEnd, kShadowBeg);
-  ProtectRange(kShadowEnd, kMetaShadowBeg);
-  ProtectRange(kMetaShadowEnd, kTraceMemBeg);
+  ProtectRange(LoAppMemEnd(), ShadowBeg());
+  ProtectRange(ShadowEnd(), MetaShadowBeg());
+  ProtectRange(MetaShadowEnd(), TraceMemBeg());
   // Memory for traces is mapped lazily in MapThreadTrace.
   // Protect the whole range for now, so that user does not map something here.
-  ProtectRange(kTraceMemBeg, kTraceMemEnd);
-  ProtectRange(kTraceMemEnd, kHeapMemBeg);
-  ProtectRange(HeapEnd(), kHiAppMemBeg);
+  ProtectRange(TraceMemBeg(), TraceMemEnd());
+  ProtectRange(TraceMemEnd(), HeapMemBeg());
+  ProtectRange(HeapEnd(), HiAppMemBeg());
 }
 #endif
 

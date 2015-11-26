@@ -273,8 +273,8 @@ void MapShadow(uptr addr, uptr size) {
 
 void MapThreadTrace(uptr addr, uptr size, const char *name) {
   DPrintf("#0: Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
-  CHECK_GE(addr, kTraceMemBeg);
-  CHECK_LE(addr + size, kTraceMemEnd);
+  CHECK_GE(addr, TraceMemBeg());
+  CHECK_LE(addr + size, TraceMemEnd());
   CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
   uptr addr1 = (uptr)MmapFixedNoReserve(addr, size, name);
   if (addr1 != addr) {
@@ -285,9 +285,8 @@ void MapThreadTrace(uptr addr, uptr size, const char *name) {
 }
 
 static void CheckShadowMapping() {
-  for (uptr i = 0; i < ARRAY_SIZE(UserRegions); i += 2) {
-    const uptr beg = UserRegions[i];
-    const uptr end = UserRegions[i + 1];
+  uptr beg, end;
+  for (int i = 0; GetUserRegion(i, &beg, &end); i++) {
     VPrintf(3, "checking shadow region %p-%p\n", beg, end);
     for (uptr p0 = beg; p0 <= end; p0 += (end - beg) / 4) {
       for (int x = -1; x <= 1; x++) {
@@ -322,7 +321,7 @@ void Initialize(ThreadState *thr) {
   const char *options = GetEnv(kTsanOptionsEnv);
   CacheBinaryName();
   InitializeFlags(&ctx->flags, options);
-  CheckVMASize();
+  InitializePlatformEarly();
 #ifndef SANITIZER_GO
   InitializeAllocator();
   ReplaceSystemMalloc();
