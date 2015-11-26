@@ -42,6 +42,27 @@ template <endianness E> static void add32(void *P, int32_t V) {
 static void add32le(uint8_t *P, int32_t V) { add32<support::little>(P, V); }
 static void or32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) | V); }
 
+template <unsigned N> static void checkInt(int64_t V, uint32_t Type) {
+  if (isInt<N>(V))
+    return;
+  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
+  error("Relocation " + S + " out of range");
+}
+
+template <unsigned N> static void checkUInt(uint64_t V, uint32_t Type) {
+  if (isUInt<N>(V))
+    return;
+  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
+  error("Relocation " + S + " out of range");
+}
+
+template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
+  if ((V & (N - 1)) == 0)
+    return;
+  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
+  error("Improper alignment for relocation " + S);
+}
+
 namespace {
 class X86TargetInfo final : public TargetInfo {
 public:
@@ -574,11 +595,11 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     write64le(Loc, SA);
     break;
   case R_X86_64_32:
+    checkUInt<32>(SA, Type);
+    write32le(Loc, SA);
+    break;
   case R_X86_64_32S:
-    if (Type == R_X86_64_32 && !isUInt<32>(SA))
-      error("R_X86_64_32 out of range");
-    else if (!isInt<32>(SA))
-      error("R_X86_64_32S out of range");
+    checkInt<32>(SA, Type);
     write32le(Loc, SA);
     break;
   case R_X86_64_DTPOFF32:
@@ -586,8 +607,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     break;
   case R_X86_64_TPOFF32: {
     uint64_t Val = SA - Out<ELF64LE>::TlsPhdr->p_memsz;
-    if (!isInt<32>(Val))
-      error("R_X86_64_TPOFF32 out of range");
+    checkInt<32>(Val, Type);
     write32le(Loc, Val);
     break;
   }
@@ -721,13 +741,11 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 
   switch (Type) {
   case R_PPC64_ADDR16:
-    if (!isInt<16>(SA))
-      error("Relocation R_PPC64_ADDR16 overflow");
+    checkInt<16>(SA, Type);
     write16be(Loc, SA);
     break;
   case R_PPC64_ADDR16_DS:
-    if (!isInt<16>(SA))
-      error("Relocation R_PPC64_ADDR16_DS overflow");
+    checkInt<16>(SA, Type);
     write16be(Loc, (read16be(Loc) & 3) | (SA & ~3));
     break;
   case R_PPC64_ADDR16_LO:
@@ -755,9 +773,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     write16be(Loc, applyPPCHighesta(SA));
     break;
   case R_PPC64_ADDR14: {
-    if ((SA & 3) != 0)
-      error("Improper alignment for relocation R_PPC64_ADDR14");
-
+    checkAlignment<4>(SA, Type);
     // Preserve the AA/LK bits in the branch instruction
     uint8_t AALK = Loc[3];
     write16be(Loc + 2, (AALK & 3) | (SA & 0xfffc));
@@ -773,8 +789,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     write16be(Loc, applyPPCHa(SA - P));
     break;
   case R_PPC64_ADDR32:
-    if (!isInt<32>(SA))
-      error("Relocation R_PPC64_ADDR32 overflow");
+    checkInt<32>(SA, Type);
     write32be(Loc, SA);
     break;
   case R_PPC64_REL24: {
@@ -800,8 +815,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     }
 
     uint32_t Mask = 0x03FFFFFC;
-    if (!isInt<24>(SA - P))
-      error("Relocation R_PPC64_REL24 overflow");
+    checkInt<24>(SA - P, Type);
     write32be(Loc, (read32be(Loc) & ~Mask) | ((SA - P) & Mask));
 
     uint32_t Nop = 0x60000000;
@@ -810,8 +824,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     break;
   }
   case R_PPC64_REL32:
-    if (!isInt<32>(SA - P))
-      error("Relocation R_PPC64_REL32 overflow");
+    checkInt<32>(SA - P, Type);
     write32be(Loc, SA - P);
     break;
   case R_PPC64_REL64:
@@ -915,23 +928,16 @@ static uint64_t getAArch64Page(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
-template <unsigned N>
-static void checkAArch64OutOfRange(int64_t X, uint32_t Type) {
-  if (!isInt<N>(X))
-    error("Relocation " + getELFRelocationTypeName(EM_AARCH64, Type) +
-          " out of range");
-}
-
 void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
                                     uint32_t Type, uint64_t P,
                                     uint64_t SA) const {
   switch (Type) {
   case R_AARCH64_ABS16:
-    checkAArch64OutOfRange<16>(SA, Type);
+    checkInt<16>(SA, Type);
     write16le(Loc, SA);
     break;
   case R_AARCH64_ABS32:
-    checkAArch64OutOfRange<32>(SA, Type);
+    checkInt<32>(SA, Type);
     write32le(Loc, SA);
     break;
   case R_AARCH64_ABS64:
@@ -948,21 +954,21 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     break;
   case R_AARCH64_ADR_PREL_LO21: {
     uint64_t X = SA - P;
-    checkAArch64OutOfRange<21>(X, Type);
+    checkInt<21>(X, Type);
     updateAArch64Adr(Loc, X & 0x1FFFFF);
     break;
   }
   case R_AARCH64_ADR_GOT_PAGE:
   case R_AARCH64_ADR_PREL_PG_HI21: {
     uint64_t X = getAArch64Page(SA) - getAArch64Page(P);
-    checkAArch64OutOfRange<33>(X, Type);
+    checkInt<33>(X, Type);
     updateAArch64Adr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
   }
   case R_AARCH64_JUMP26:
   case R_AARCH64_CALL26: {
     uint64_t X = SA - P;
-    checkAArch64OutOfRange<28>(X, Type);
+    checkInt<28>(X, Type);
     or32le(Loc, (X & 0x0FFFFFFC) >> 2);
     break;
   }
@@ -971,8 +977,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     or32le(Loc, (SA & 0xFFC) << 8);
     break;
   case R_AARCH64_LD64_GOT_LO12_NC:
-    if (SA & 0x7)
-      error("Relocation R_AARCH64_LD64_GOT_LO12_NC not aligned");
+    checkAlignment<8>(SA, Type);
     // No overflow check needed.
     or32le(Loc, (SA & 0xFF8) << 7);
     break;
@@ -985,11 +990,11 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     or32le(Loc, (SA & 0xFFF) << 10);
     break;
   case R_AARCH64_PREL16:
-    checkAArch64OutOfRange<16>(SA - P, Type);
+    checkInt<16>(SA - P, Type);
     write16le(Loc, SA - P);
     break;
   case R_AARCH64_PREL32:
-    checkAArch64OutOfRange<32>(SA - P, Type);
+    checkInt<32>(SA - P, Type);
     write32le(Loc, SA - P);
     break;
   case R_AARCH64_PREL64:
@@ -1055,8 +1060,8 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_MIPS_CALL16:
   case R_MIPS_GOT16: {
     int64_t V = SA - getMipsGpAddr<ELFT>();
-    if (Type == R_MIPS_GOT16 && !isInt<16>(V))
-      error("Relocation R_MIPS_GOT16 out of range");
+    if (Type == R_MIPS_GOT16)
+      checkInt<16>(V, Type);
     write32<E>(Loc, (read32<E>(Loc) & 0xffff0000) | (V & 0xffff));
     break;
   }
