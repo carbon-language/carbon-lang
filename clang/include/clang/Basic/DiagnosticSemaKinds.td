@@ -7901,6 +7901,10 @@ def note_omp_static_member_in_target : Note<
   "mappable type cannot contain static members">;
 def err_omp_threadprivate_in_map : Error<
   "threadprivate variables are not allowed in map clause">;
+def err_omp_wrong_ordered_loop_count : Error<
+  "the parameter of the 'ordered' clause must be greater than or equal to the parameter of the 'collapse' clause">;
+def note_collapse_loop_count : Note<
+  "parameter of the 'collapse' clause">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
