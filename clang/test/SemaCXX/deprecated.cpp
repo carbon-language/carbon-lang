@@ -28,7 +28,19 @@ void stuff() {
 
   int k = to_int(n); // no-warning
   bool b;
-  ++b; // expected-warning {{incrementing expression of type bool is deprecated}}
+  ++b;
+#if __cplusplus > 201402L
+  // expected-error@-2 {{ISO C++1z does not allow incrementing expression of type bool}}
+#else
+  // expected-warning@-4 {{incrementing expression of type bool is deprecated}}
+#endif
+
+  b++;
+#if __cplusplus > 201402L
+  // expected-error@-2 {{ISO C++1z does not allow incrementing expression of type bool}}
+#else
+  // expected-warning@-4 {{incrementing expression of type bool is deprecated}}
+#endif
 
   char *p = "foo";
 #if __cplusplus < 201103L

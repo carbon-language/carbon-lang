@@ -187,7 +187,8 @@ def CXX14Compat : DiagGroup<"c++14-compat", [CXXPre1zCompat]>;
 def CXX14CompatPedantic : DiagGroup<"c++14-compat-pedantic",
                                     [CXXPre1zCompatPedantic]>;
 
-def CXX1zCompat : DiagGroup<"c++1z-compat", [DeprecatedRegister]>;
+def CXX1zCompat : DiagGroup<"c++1z-compat", [DeprecatedRegister,
+                                             DeprecatedIncrementBool]>;
 
 def : DiagGroup<"effc++">;
 def DivZero : DiagGroup<"division-by-zero">;
@@ -204,6 +205,7 @@ def DanglingElse: DiagGroup<"dangling-else">;
 def DanglingField : DiagGroup<"dangling-field">;
 def DistributedObjectModifiers : DiagGroup<"distributed-object-modifiers">;
 def FlagEnum : DiagGroup<"flag-enum">;
+def IncrementBool : DiagGroup<"increment-bool", [DeprecatedIncrementBool]>;
 def InfiniteRecursion : DiagGroup<"infinite-recursion">;
 def GNUImaginaryConstant : DiagGroup<"gnu-imaginary-constant">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;

@@ -9680,7 +9680,9 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
       return QualType();
     }
     // Increment of bool sets it to true, but is deprecated.
-    S.Diag(OpLoc, diag::warn_increment_bool) << Op->getSourceRange();
+    S.Diag(OpLoc, S.getLangOpts().CPlusPlus1z ? diag::ext_increment_bool
+                                              : diag::warn_increment_bool)
+      << Op->getSourceRange();
   } else if (S.getLangOpts().CPlusPlus && ResType->isEnumeralType()) {
     // Error on enum increments and decrements in C++ mode
     S.Diag(OpLoc, diag::err_increment_decrement_enum) << IsInc << ResType;
