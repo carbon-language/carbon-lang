@@ -594,7 +594,7 @@ bool EEVT::TypeSet::EnforceVectorSameNumElts(EEVT::TypeSet &VTOperand,
     MVT IVT = getConcrete();
     unsigned NumElems = IVT.getVectorNumElements();
 
-    // Only keep types that have same elements as VTOperand.
+    // Only keep types that have same elements as 'this'.
     TypeSet InputSet(VTOperand);
 
     auto I = std::remove_if(VTOperand.TypeVec.begin(), VTOperand.TypeVec.end(),
@@ -614,7 +614,7 @@ bool EEVT::TypeSet::EnforceVectorSameNumElts(EEVT::TypeSet &VTOperand,
     MVT IVT = VTOperand.getConcrete();
     unsigned NumElems = IVT.getVectorNumElements();
 
-    // Only keep types that have same elements as 'this'.
+    // Only keep types that have same elements as VTOperand.
     TypeSet InputSet(*this);
 
     auto I = std::remove_if(TypeVec.begin(), TypeVec.end(),
