@@ -56,6 +56,13 @@ template <unsigned N> static void checkUInt(uint64_t V, uint32_t Type) {
   error("Relocation " + S + " out of range");
 }
 
+template <unsigned N> static void checkIntUInt(uint64_t V, uint32_t Type) {
+  if (isInt<N>(V) || isUInt<N>(V))
+    return;
+  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
+  error("Relocation " + S + " out of range");
+}
+
 template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
   if ((V & (N - 1)) == 0)
     return;
@@ -933,11 +940,11 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
                                     uint64_t SA) const {
   switch (Type) {
   case R_AARCH64_ABS16:
-    checkInt<16>(SA, Type);
+    checkIntUInt<16>(SA, Type);
     write16le(Loc, SA);
     break;
   case R_AARCH64_ABS32:
-    checkInt<32>(SA, Type);
+    checkIntUInt<32>(SA, Type);
     write32le(Loc, SA);
     break;
   case R_AARCH64_ABS64:
@@ -990,11 +997,11 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     or32le(Loc, (SA & 0xFFF) << 10);
     break;
   case R_AARCH64_PREL16:
-    checkInt<16>(SA - P, Type);
+    checkIntUInt<16>(SA - P, Type);
     write16le(Loc, SA - P);
     break;
   case R_AARCH64_PREL32:
-    checkInt<32>(SA - P, Type);
+    checkIntUInt<32>(SA - P, Type);
     write32le(Loc, SA - P);
     break;
   case R_AARCH64_PREL64:
