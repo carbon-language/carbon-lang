@@ -278,8 +278,8 @@ bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
     return true;
 
   // Perform the mapping change.
-  for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i) {
-    DiagnosticMapping &Info = GetCurDiagState()->getOrAddMapping(GroupDiags[i]);
+  for (diag::kind Diag : GroupDiags) {
+    DiagnosticMapping &Info = GetCurDiagState()->getOrAddMapping(Diag);
 
     if (Info.getSeverity() == diag::Severity::Error ||
         Info.getSeverity() == diag::Severity::Fatal)
@@ -309,8 +309,8 @@ bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
     return true;
 
   // Perform the mapping change.
-  for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i) {
-    DiagnosticMapping &Info = GetCurDiagState()->getOrAddMapping(GroupDiags[i]);
+  for (diag::kind Diag : GroupDiags) {
+    DiagnosticMapping &Info = GetCurDiagState()->getOrAddMapping(Diag);
 
     if (Info.getSeverity() == diag::Severity::Fatal)
       Info.setSeverity(diag::Severity::Error);
@@ -329,9 +329,9 @@ void DiagnosticsEngine::setSeverityForAll(diag::Flavor Flavor,
   Diags->getAllDiagnostics(Flavor, AllDiags);
 
   // Set the mapping.
-  for (unsigned i = 0, e = AllDiags.size(); i != e; ++i)
-    if (Diags->isBuiltinWarningOrExtension(AllDiags[i]))
-      setSeverity(AllDiags[i], Map, Loc);
+  for (diag::kind Diag : AllDiags)
+    if (Diags->isBuiltinWarningOrExtension(Diag))
+      setSeverity(Diag, Map, Loc);
 }
 
 void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
