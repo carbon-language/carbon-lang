@@ -463,6 +463,9 @@ namespace AArch64PState {
 
     // v8.1a "Privileged Access Never" extension-specific PStates
     PAN = 0x04,
+
+    // v8.2a "User Access Override" extension-specific PStates
+    UAO = 0x03
   };
 
   struct PStateMapper : AArch64NamedImmMapper {
@@ -1190,6 +1193,9 @@ namespace AArch64SysReg {
     CNTV_CVAL_EL02    = 0xef1a, // 11  101  1110  0011  010
     SPSR_EL12         = 0xea00, // 11  101  0100  0000  000
     ELR_EL12          = 0xea01, // 11  101  0100  0000  001
+
+    // v8.2a registers
+    UAO               = 0xc214, // 11  000  0100  0010  100
 
     // Cyclone specific system registers
     CPM_IOACC_CTL_EL3 = 0xff90,

@@ -146,6 +146,9 @@ const AArch64NamedImmMapper::Mapping AArch64PState::PStateMapper::PStateMappings
 
   // v8.1a "Privileged Access Never" extension-specific PStates
   {"pan", PAN, {AArch64::HasV8_1aOps}},
+
+  // v8.2a
+  {"uao", UAO, {AArch64::HasV8_2aOps}},
 };
 
 AArch64PState::PStateMapper::PStateMapper()
@@ -802,6 +805,9 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::SysRegMapper::SysRegMappings
   {"cntv_cval_el02", CNTV_CVAL_EL02, {AArch64::HasV8_1aOps}},
   {"spsr_el12", SPSR_EL12, {AArch64::HasV8_1aOps}},
   {"elr_el12", ELR_EL12, {AArch64::HasV8_1aOps}},
+
+  // v8.2a registers
+  {"uao",           UAO,           {AArch64::HasV8_2aOps}},
 };
 
 uint32_t
