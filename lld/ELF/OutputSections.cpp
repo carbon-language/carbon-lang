@@ -150,7 +150,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
     Target->writePltZeroEntry(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
     Off += Target->getPltZeroEntrySize();
   }
-  for (std::pair<const SymbolBody *, unsigned> &I : Entries) {
+  for (auto &I : Entries) {
     const SymbolBody *E = I.first;
     unsigned RelOff = I.second;
     uint64_t GotVA =
