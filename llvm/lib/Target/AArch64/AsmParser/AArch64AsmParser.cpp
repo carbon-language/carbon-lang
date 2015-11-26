@@ -2465,6 +2465,13 @@ bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
     } else if (!Op.compare_lower("cisw")) {
       // SYS #0, C7, C14, #2
       SYS_ALIAS(0, 7, 14, 2);
+    } else if (!Op.compare_lower("cvap")) {
+      if (getSTI().getFeatureBits()[AArch64::HasV8_2aOps]) {
+        // SYS #3, C7, C12, #1
+        SYS_ALIAS(3, 7, 12, 1);
+      } else {
+        return TokError("DC CVAP requires ARMv8.2a");
+      }
     } else {
       return TokError("invalid operand for DC instruction");
     }

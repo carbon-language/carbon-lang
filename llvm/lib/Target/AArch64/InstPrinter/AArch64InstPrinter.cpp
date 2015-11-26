@@ -55,7 +55,7 @@ void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   unsigned Opcode = MI->getOpcode();
 
   if (Opcode == AArch64::SYSxt)
-    if (printSysAlias(MI, O)) {
+    if (printSysAlias(MI, STI, O)) {
       printAnnotation(O, Annot);
       return;
     }
@@ -674,7 +674,9 @@ void AArch64AppleInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   AArch64InstPrinter::printInst(MI, O, Annot, STI);
 }
 
-bool AArch64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
+bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
+                                       const MCSubtargetInfo &STI,
+                                       raw_ostream &O) {
 #ifndef NDEBUG
   unsigned Opcode = MI->getOpcode();
   assert(Opcode == AArch64::SYSxt && "Invalid opcode for SYS alias!");
@@ -728,6 +730,11 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
     case 11:
       if (Op1Val == 3 && Op2Val == 1)
         Asm = "dc\tcvau";
+      break;
+    case 12:
+      if (Op1Val == 3 && Op2Val == 1 &&
+          (STI.getFeatureBits()[AArch64::HasV8_2aOps]))
+        Asm = "dc\tcvap";
       break;
     case 14:
       if (Op1Val == 3 && Op2Val == 1)
