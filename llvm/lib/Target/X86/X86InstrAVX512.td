@@ -1266,15 +1266,15 @@ multiclass avx512_perm_t_sizes_w<bits<8> opc, string OpcodeStr,
   }
 }
 
-defm VPERMT2D  : avx512_perm_t_sizes<0x7E, "vpermt2d", X86VPermt2Int,
+defm VPERMT2D  : avx512_perm_t_sizes<0x7E, "vpermt2d", X86VPermt2,
                   avx512vl_i32_info, avx512vl_i32_info>, EVEX_CD8<32, CD8VF>;
-defm VPERMT2Q  : avx512_perm_t_sizes<0x7E, "vpermt2q", X86VPermt2Int,
+defm VPERMT2Q  : avx512_perm_t_sizes<0x7E, "vpermt2q", X86VPermt2,
                   avx512vl_i64_info, avx512vl_i64_info>, VEX_W, EVEX_CD8<64, CD8VF>;
-defm VPERMT2W  : avx512_perm_t_sizes_w<0x7D, "vpermt2w", X86VPermt2Int,
+defm VPERMT2W  : avx512_perm_t_sizes_w<0x7D, "vpermt2w", X86VPermt2,
                   avx512vl_i16_info, avx512vl_i16_info>, VEX_W, EVEX_CD8<16, CD8VF>;
-defm VPERMT2PS : avx512_perm_t_sizes<0x7F, "vpermt2ps", X86VPermt2Fp,
+defm VPERMT2PS : avx512_perm_t_sizes<0x7F, "vpermt2ps", X86VPermt2,
                   avx512vl_f32_info, avx512vl_i32_info>, EVEX_CD8<32, CD8VF>;
-defm VPERMT2PD : avx512_perm_t_sizes<0x7F, "vpermt2pd", X86VPermt2Fp,
+defm VPERMT2PD : avx512_perm_t_sizes<0x7F, "vpermt2pd", X86VPermt2,
                   avx512vl_f64_info, avx512vl_i64_info>, VEX_W, EVEX_CD8<64, CD8VF>;
 
 //===----------------------------------------------------------------------===//
