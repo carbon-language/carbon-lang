@@ -401,12 +401,9 @@ def X86VRndScale   : SDNode<"X86ISD::VRNDSCALE", SDTFPUnaryOpImmRound>;
 def X86VGetMant    : SDNode<"X86ISD::VGETMANT",  SDTFPUnaryOpImmRound>;
 def X86Vfpclass    : SDNode<"X86ISD::VFPCLASS",
                        SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCVecEltisVT<0, i1>,
-                                            SDTCisVec<1>, SDTCisFP<1>,
-                                            SDTCisSameNumEltsAs<0,1>,
-                                            SDTCisVT<2, i32>]>, []>;
-def X86Vfpclasss   : SDNode<"X86ISD::VFPCLASS",
-                       SDTypeProfile<1, 2, [SDTCisVT<0, i1>,
-                                            SDTCisFP<1>, SDTCisVT<2, i32>]>,[]>;
+                                            SDTCisVec<1>, SDTCisInt<2>]>, []>;
+def X86Vfpclasss   : SDNode<"X86ISD::VFPCLASS", SDTypeProfile<1, 2, [SDTCisInt<0>,
+                              SDTCisFP<1>, SDTCisInt<2>]>,[]>;
 
 def X86SubVBroadcast : SDNode<"X86ISD::SUBV_BROADCAST",
                     SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
