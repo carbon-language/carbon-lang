@@ -80,6 +80,11 @@ class SDTCisSameNumEltsAs<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
   int OtherOperandNum = OtherOp;
 }
 
+// SDTCisSameSizeAs - The two specified operands have identical size.
+class SDTCisSameSizeAs<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
+  int OtherOperandNum = OtherOp;
+}
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Profile definitions.
 //
