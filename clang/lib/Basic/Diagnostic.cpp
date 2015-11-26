@@ -226,12 +226,12 @@ void DiagnosticsEngine::setSeverity(diag::kind Diag, diag::Severity Map,
   // Update all diagnostic states that are active after the given location.
   for (DiagStatePointsTy::iterator
          I = Pos+1, E = DiagStatePoints.end(); I != E; ++I) {
-    GetCurDiagState()->setMapping(Diag, Mapping);
+    I->State->setMapping(Diag, Mapping);
   }
 
   // If the location corresponds to an existing point, just update its state.
   if (Pos->Loc == Loc) {
-    GetCurDiagState()->setMapping(Diag, Mapping);
+    Pos->State->setMapping(Diag, Mapping);
     return;
   }
 
@@ -240,7 +240,7 @@ void DiagnosticsEngine::setSeverity(diag::kind Diag, diag::Severity Map,
   assert(Pos->Loc.isBeforeInTranslationUnitThan(Loc));
   DiagStates.push_back(*Pos->State);
   DiagState *NewState = &DiagStates.back();
-  GetCurDiagState()->setMapping(Diag, Mapping);
+  NewState->setMapping(Diag, Mapping);
   DiagStatePoints.insert(Pos+1, DiagStatePoint(NewState,
                                                FullSourceLoc(Loc, *SourceMgr)));
 }
