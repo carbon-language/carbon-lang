@@ -269,7 +269,7 @@ class RegisterCommandsTestCase(TestBase):
         elif self.getArchitecture() in ['arm']:
             reg_list = [
                 # reg      value                                                                               must-have
-                ("fpscr", "0x0000ff0e",                                                                        True),
+                ("fpscr", "0xfbf79f9f",                                                                        True),
                 ("s0",    "1.25",                                                                              True),
                 ("s31",   "0.75",                                                                              True),
                 ("d1",    "123",                                                                               True),
