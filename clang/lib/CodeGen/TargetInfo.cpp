@@ -5900,7 +5900,6 @@ public:
 
     const char *Kind;
     switch (Attr->getInterrupt()) {
-    default: llvm_unreachable("Unknown Mips interrupt attribute type!");
     case MipsInterruptAttr::eic:     Kind = "eic"; break;
     case MipsInterruptAttr::sw0:     Kind = "sw0"; break;
     case MipsInterruptAttr::sw1:     Kind = "sw1"; break;
