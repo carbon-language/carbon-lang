@@ -133,7 +133,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Combine a new optimization goal with existing ones.
   if (OptimizationGoals == -1) // uninitialized goals
     OptimizationGoals = OptimizationGoal;
-  else if (OptimizationGoals != OptimizationGoal) // conflicting goals
+  else if (OptimizationGoals != (int)OptimizationGoal) // conflicting goals
     OptimizationGoals = 0;
 
   if (Subtarget->isTargetCOFF()) {
