@@ -71,8 +71,8 @@ static cl::opt<unsigned> SampleProfileSampleCoverage(
     "sample-profile-check-sample-coverage", cl::init(0), cl::value_desc("N"),
     cl::desc("Emit a warning if less than N% of samples in the input profile "
              "are matched to the IR."));
-static cl::opt<unsigned> SampleProfileHotThreshold(
-    "sample-profile-inline-hot-threshold", cl::init(5), cl::value_desc("N"),
+static cl::opt<double> SampleProfileHotThreshold(
+    "sample-profile-inline-hot-threshold", cl::init(0.1), cl::value_desc("N"),
     cl::desc("Inlined functions that account for more than N% of all samples "
              "collected in the parent function, will be inlined again."));
 
@@ -262,7 +262,8 @@ bool callsiteIsHot(const FunctionSamples *CallerFS,
   if (CallsiteTotalSamples == 0)
     return false; // Callsite is trivially cold.
 
-  uint64_t PercentSamples = CallsiteTotalSamples * 100 / ParentTotalSamples;
+  double PercentSamples =
+      (double)CallsiteTotalSamples / (double)ParentTotalSamples * 100.0;
   return PercentSamples >= SampleProfileHotThreshold;
 }
 
