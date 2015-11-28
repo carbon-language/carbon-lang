@@ -95,11 +95,19 @@ add_compiler_rt_object_libraries(RTTsan_dynamic
   CFLAGS ${TSAN_RTL_CFLAGS})
 
 if(APPLE)
+  set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
+  # Xcode will try to compile this file as C ('clang -x c'), and that will fail.
+  if (${CMAKE_GENERATOR} STREQUAL "Xcode")
+    enable_language(ASM)
+  else()
+    # Pass ASM file directly to the C++ compiler.
+    set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES LANGUAGE C)
+  endif()
   add_compiler_rt_runtime(clang_rt.tsan
     SHARED
     OS ${TSAN_SUPPORTED_OS}
     ARCHS ${TSAN_SUPPORTED_ARCH}
-    SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES}
+    SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES} ${TSAN_ASM_SOURCES}
     OBJECT_LIBS RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc

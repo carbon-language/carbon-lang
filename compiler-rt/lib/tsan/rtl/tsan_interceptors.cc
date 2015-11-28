@@ -440,7 +440,7 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
 }
 
 static void LongJmp(ThreadState *thr, uptr *env) {
-#if SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD || SANITIZER_MAC
   uptr mangled_sp = env[2];
 #elif defined(SANITIZER_LINUX)
 # ifdef __aarch64__
@@ -478,6 +478,11 @@ extern "C" void __tsan_setjmp(uptr sp, uptr mangled_sp) {
   SetJmp(cur_thread(), sp, mangled_sp);
 }
 
+#if SANITIZER_MAC
+TSAN_INTERCEPTOR(int, setjmp, void *env);
+TSAN_INTERCEPTOR(int, _setjmp, void *env);
+TSAN_INTERCEPTOR(int, sigsetjmp, void *env);
+#else  // SANITIZER_MAC
 // Not called.  Merely to satisfy TSAN_INTERCEPT().
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 int __interceptor_setjmp(void *env);
@@ -516,6 +521,7 @@ DEFINE_REAL(int, setjmp, void *env)
 DEFINE_REAL(int, _setjmp, void *env)
 DEFINE_REAL(int, sigsetjmp, void *env)
 DEFINE_REAL(int, __sigsetjmp, void *env)
+#endif  // SANITIZER_MAC
 
 TSAN_INTERCEPTOR(void, longjmp, uptr *env, int val) {
   {

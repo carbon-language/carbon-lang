@@ -43,4 +43,16 @@
 # define CFI_RESTORE(reg)
 #endif
 
-
+#if !defined(__APPLE__)
+# define ASM_HIDDEN(symbol) .hidden symbol
+# define ASM_TYPE_FUNCTION(symbol) .type symbol, @function
+# define ASM_SIZE(symbol) .size symbol, .-symbol
+# define ASM_TSAN_SYMBOL(symbol) symbol
+# define ASM_TSAN_SYMBOL_INTERCEPTOR(symbol) symbol
+#else
+# define ASM_HIDDEN(symbol)
+# define ASM_TYPE_FUNCTION(symbol)
+# define ASM_SIZE(symbol)
+# define ASM_TSAN_SYMBOL(symbol) _##symbol
+# define ASM_TSAN_SYMBOL_INTERCEPTOR(symbol) _wrap_##symbol
+#endif
