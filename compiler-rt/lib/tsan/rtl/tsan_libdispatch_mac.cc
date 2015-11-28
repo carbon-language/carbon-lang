@@ -33,6 +33,35 @@ typedef struct {
   dispatch_function_t orig_work;
 } tsan_block_context_t;
 
+// The offsets of different fields of the dispatch_queue_t structure, exported
+// by libdispatch.dylib.
+extern "C" struct dispatch_queue_offsets_s {
+  const uint16_t dqo_version;
+  const uint16_t dqo_label;
+  const uint16_t dqo_label_size;
+  const uint16_t dqo_flags;
+  const uint16_t dqo_flags_size;
+  const uint16_t dqo_serialnum;
+  const uint16_t dqo_serialnum_size;
+  const uint16_t dqo_width;
+  const uint16_t dqo_width_size;
+  const uint16_t dqo_running;
+  const uint16_t dqo_running_size;
+  const uint16_t dqo_suspend_cnt;
+  const uint16_t dqo_suspend_cnt_size;
+  const uint16_t dqo_target_queue;
+  const uint16_t dqo_target_queue_size;
+  const uint16_t dqo_priority;
+  const uint16_t dqo_priority_size;
+} dispatch_queue_offsets;
+
+static bool IsQueueSerial(dispatch_queue_t q) {
+  CHECK_EQ(dispatch_queue_offsets.dqo_width_size, 2);
+  uptr width = *(uint16_t *)(((uptr)q) + dispatch_queue_offsets.dqo_width);
+  CHECK_NE(width, 0);
+  return width == 1;
+}
+
 static tsan_block_context_t *AllocContext(ThreadState *thr, uptr pc,
                                           dispatch_queue_t queue,
                                           void *orig_context,
@@ -49,7 +78,11 @@ static void dispatch_callback_wrap_acquire(void *param) {
   SCOPED_INTERCEPTOR_RAW(dispatch_async_f_callback_wrap);
   tsan_block_context_t *context = (tsan_block_context_t *)param;
   Acquire(thr, pc, (uptr)context);
+  // In serial queues, work items can be executed on different threads, we need
+  // to explicitly synchronize on the queue itself.
+  if (IsQueueSerial(context->queue)) Acquire(thr, pc, (uptr)context->queue);
   context->orig_work(context->orig_context);
+  if (IsQueueSerial(context->queue)) Release(thr, pc, (uptr)context->queue);
   user_free(thr, pc, context);
 }
 
