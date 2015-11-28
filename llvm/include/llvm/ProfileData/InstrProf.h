@@ -513,7 +513,8 @@ typedef struct ValueProfData {
   /// All data in the instance are properly byte swapped. The input
   /// data is assumed to be in little endian order.
   static ErrorOr<std::unique_ptr<ValueProfData>>
-  getValueProfData(const unsigned char *D, const unsigned char *const BufferEnd,
+  getValueProfData(const unsigned char *SrcBuffer,
+                   const unsigned char *const SrcBufferEnd,
                    support::endianness SrcDataEndianness);
   /// Swap byte order from \c Endianness order to host byte order.
   void swapBytesToHost(support::endianness Endianness);
@@ -596,8 +597,8 @@ uint32_t getValueProfDataSizeRT(const ValueProfRuntimeRecord *Record);
 
 /* Return a ValueProfData instance that stores the data collected at runtime. */
 ValueProfData *
-serializeValueProfDataFromRT(const ValueProfRuntimeRecord *Record);
-
+serializeValueProfDataFromRT(const ValueProfRuntimeRecord *Record,
+                             ValueProfData *Dst);
 
 /*! \brief Return the \c ValueProfRecord header size including the
  * padding bytes.

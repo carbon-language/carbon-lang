@@ -170,10 +170,12 @@ void serializeValueProfRecordFrom(ValueProfRecord *This,
   }
 }
 
-ValueProfData *serializeValueProfDataFrom(ValueProfRecordClosure *Closure) {
+ValueProfData *serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
+                                          ValueProfData *DstData) {
   uint32_t TotalSize = getValueProfDataSize(Closure);
 
-  ValueProfData *VPD = Closure->AllocValueProfData(TotalSize);
+  ValueProfData *VPD =
+      DstData ? DstData : Closure->AllocValueProfData(TotalSize);
 
   VPD->TotalSize = TotalSize;
   VPD->NumValueKinds = Closure->GetNumValueKinds(Closure->Record);
@@ -259,7 +261,7 @@ ValueProfData::serializeFrom(const InstrProfRecord &Record) {
   InstrProfRecordClosure.Record = &Record;
 
   std::unique_ptr<ValueProfData> VPD(
-      serializeValueProfDataFrom(&InstrProfRecordClosure));
+      serializeValueProfDataFrom(&InstrProfRecordClosure, 0));
   return VPD;
 }
 
@@ -367,15 +369,17 @@ uint32_t getValueProfDataSizeRT(const ValueProfRuntimeRecord *Record) {
 }
 
 /* Return a ValueProfData instance that stores the data collected
-   from runtime. */
+ * from runtime. If \c DstData is provided by the caller, the value
+ * profile data will be store in *DstData and DstData is returned,
+ * otherwise the method will allocate space for the value data and
+ * return pointer to the newly allocated space.
+ */
 ValueProfData *
-serializeValueProfDataFromRT(const ValueProfRuntimeRecord *Record) {
+serializeValueProfDataFromRT(const ValueProfRuntimeRecord *Record,
+                             ValueProfData *DstData) {
   RTRecordClosure.Record = Record;
-  return serializeValueProfDataFrom(&RTRecordClosure);
+  return serializeValueProfDataFrom(&RTRecordClosure, DstData);
 }
-
-
-
 
 void ValueProfRecord::deserializeTo(InstrProfRecord &Record,
                                     InstrProfRecord::ValueMapType *VMap) {
