@@ -200,16 +200,16 @@ void ScopedReport::AddThread(const ThreadContext *tctx, bool suppressable) {
 }
 
 #ifndef SANITIZER_GO
+static bool FindThreadByUidLockedCallback(ThreadContextBase *tctx, void *arg) {
+  int unique_id = *(int *)arg;
+  return tctx->unique_id == (u32)unique_id;
+}
+
 static ThreadContext *FindThreadByUidLocked(int unique_id) {
   ctx->thread_registry->CheckLocked();
-  for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = static_cast<ThreadContext*>(
-        ctx->thread_registry->GetThreadLocked(i));
-    if (tctx && tctx->unique_id == (u32)unique_id) {
-      return tctx;
-    }
-  }
-  return 0;
+  return static_cast<ThreadContext *>(
+      ctx->thread_registry->FindThreadContextLocked(
+          FindThreadByUidLockedCallback, &unique_id));
 }
 
 static ThreadContext *FindThreadByTidLocked(int tid) {
