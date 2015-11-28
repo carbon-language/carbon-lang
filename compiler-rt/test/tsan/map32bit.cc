@@ -11,6 +11,9 @@
 // XFAIL: mips64
 // XFAIL: aarch64
 
+// MAP_32BIT doesn't exist on OS X.
+// UNSUPPORTED: darwin
+
 void *Thread(void *ptr) {
   *(int*)ptr = 42;
   barrier_wait(&barrier);
