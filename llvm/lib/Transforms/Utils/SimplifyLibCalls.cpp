@@ -1454,8 +1454,8 @@ LibCallSimplifier::classifyArgUse(Value *Val, BasicBlock *BB, bool IsFloat,
 
   Function *Callee = CI->getCalledFunction();
   LibFunc::Func Func;
-  if (Callee && (!TLI->getLibFunc(Callee->getName(), Func) || !TLI->has(Func) ||
-                 !isTrigLibCall(CI)))
+  if (!Callee || !TLI->getLibFunc(Callee->getName(), Func) || !TLI->has(Func) ||
+      !isTrigLibCall(CI))
     return;
 
   if (IsFloat) {
