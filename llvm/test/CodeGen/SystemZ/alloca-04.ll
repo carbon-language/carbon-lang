@@ -2,7 +2,7 @@
 
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -debug-only=codegen 2>&1 | \
 ; RUN:   FileCheck %s
-
+; REQUIRES: asserts
 
 define void @f6() "no-realign-stack" {
   %x = alloca i64, i64 1, align 128
