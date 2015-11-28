@@ -86,10 +86,9 @@ static bool isOnlyUsedInEqualityComparison(Value *V, Value *With) {
 }
 
 static bool callHasFloatingPointArgument(const CallInst *CI) {
-  for (const Use &OI : CI->operands())
-    if (OI->getType()->isFloatingPointTy())
-      return true;
-  return false;
+  return std::any_of(CI->op_begin(), CI->op_end(), [](const Use &OI) {
+    return OI->getType()->isFloatingPointTy();
+  });
 }
 
 /// \brief Check whether the overloaded unary floating point function
