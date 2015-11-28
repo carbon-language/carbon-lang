@@ -506,6 +506,9 @@ typedef struct ValueProfData {
   /// Return a pointer to \c ValueProfData instance ready to be streamed.
   static std::unique_ptr<ValueProfData>
   serializeFrom(const InstrProfRecord &Record);
+  /// Check the integrity of the record. Return the error code when
+  /// an error is detected, otherwise return instrprof_error::success.
+  instrprof_error checkIntegrity();
   /// Return a pointer to \c ValueProfileData instance ready to be read.
   /// All data in the instance are properly byte swapped. The input
   /// data is assumed to be in little endian order.
