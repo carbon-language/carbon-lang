@@ -271,9 +271,9 @@ ValueProfData::serializeFrom(const InstrProfRecord &Record) {
  * pre-compute the information needed to efficiently implement
  * ValueProfRecordClosure's callback interfaces.
  */
-void initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
-                                      uint16_t *NumValueSites,
-                                      ValueProfNode **Nodes) {
+int initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
+                                     uint16_t *NumValueSites,
+                                     ValueProfNode **Nodes) {
   unsigned I, J, S = 0, NumValueKinds = 0;
   RuntimeRecord->NumValueSites = NumValueSites;
   RuntimeRecord->Nodes = Nodes;
@@ -286,6 +286,8 @@ void initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
     NumValueKinds++;
     RuntimeRecord->SiteCountArray[I] = (uint8_t *)calloc(N, 1);
     RuntimeRecord->NodesKind[I] = &RuntimeRecord->Nodes[S];
+    if (!RuntimeRecord->NodesKind[I])
+      return 1;
     for (J = 0; J < N; J++) {
       uint8_t C = 0;
       ValueProfNode *Site = RuntimeRecord->Nodes[S + J];
@@ -300,6 +302,7 @@ void initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
     S += N;
   }
   RuntimeRecord->NumValueKinds = NumValueKinds;
+  return 0;
 }
 
 void finalizeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord) {

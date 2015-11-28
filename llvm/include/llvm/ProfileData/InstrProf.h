@@ -583,10 +583,13 @@ typedef struct ValueProfRuntimeRecord {
   ValueProfNode **NodesKind[IPVK_Last + 1];
 } ValueProfRuntimeRecord;
 
-/* Initialize the record for runtime value profile data.  */
-void initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
-                                      uint16_t *NumValueSites,
-                                      ValueProfNode **Nodes);
+/* Initialize the record for runtime value profile data. 
+ * Return 0 if the initialization is successful, otherwise
+ * return 1.
+ */
+int initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
+                                     uint16_t *NumValueSites,
+                                     ValueProfNode **Nodes);
 
 /* Release memory allocated for the runtime record.  */
 void finalizeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord);
