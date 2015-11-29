@@ -64,7 +64,6 @@ void WebAssemblyMCInstLower::Lower(const MachineInstr *MI,
       // Ignore all implicit register operands.
       if (MO.isImplicit())
         continue;
-      // TODO: Handle physical registers.
       const WebAssemblyFunctionInfo &MFI =
           *MI->getParent()->getParent()->getInfo<WebAssemblyFunctionInfo>();
       unsigned WAReg = MFI.getWAReg(MO.getReg());
