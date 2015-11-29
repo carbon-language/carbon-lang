@@ -88,12 +88,6 @@ set(TSAN_HEADERS
 set(TSAN_RUNTIME_LIBRARIES)
 add_custom_target(tsan)
 
-add_compiler_rt_object_libraries(RTTsan_dynamic 
-  OS ${TSAN_SUPPORTED_OS}
-  ARCHS ${TSAN_SUPPORTED_ARCH}
-  SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES}
-  CFLAGS ${TSAN_RTL_CFLAGS})
-
 if(APPLE)
   set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
   # Xcode will try to compile this file as C ('clang -x c'), and that will fail.
@@ -114,6 +108,11 @@ if(APPLE)
                 RTUbsan
     CFLAGS ${TSAN_RTL_CFLAGS}
     PARENT_TARGET tsan)
+  add_compiler_rt_object_libraries(RTTsan_dynamic 
+    OS ${TSAN_SUPPORTED_OS}
+    ARCHS ${TSAN_SUPPORTED_ARCH}
+    SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES} ${TSAN_ASM_SOURCES}
+    CFLAGS ${TSAN_RTL_CFLAGS})
 else()
   foreach(arch ${TSAN_SUPPORTED_ARCH})
     if(arch STREQUAL "x86_64")
