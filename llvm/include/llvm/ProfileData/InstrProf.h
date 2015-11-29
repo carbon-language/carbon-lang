@@ -458,7 +458,7 @@ inline support::endianness getHostEndianness() {
  * return 1.
  */
 int initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
-                                     uint16_t *NumValueSites,
+                                     const uint16_t *NumValueSites,
                                      ValueProfNode **Nodes);
 
 /* Release memory allocated for the runtime record.  */

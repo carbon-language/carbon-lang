@@ -296,14 +296,14 @@ typedef struct ValueProfData {
 
 /* 
  * The closure is designed to abstact away two types of value profile data:
- *  - InstrProfRecord which is the primary data structure used to
- *    represent profile data in host tools (reader, writer, and profile-use)
+ * - InstrProfRecord which is the primary data structure used to
+ *   represent profile data in host tools (reader, writer, and profile-use)
  * - value profile runtime data structure suitable to be used by C
- *    runtime library.
+ *   runtime library.
  *
  * Both sources of data need to serialize to disk/memory-buffer in common
  * format: ValueProfData. The abstraction allows compiler-rt's raw profiler
- * writer to share * the same code with indexed profile writer.
+ * writer to share the same format and code with indexed profile writer.
  *
  * For documentation of the member methods below, refer to corresponding methods
  * in class InstrProfRecord.
@@ -337,7 +337,7 @@ typedef struct ValueProfRecordClosure {
  */
 typedef struct ValueProfRuntimeRecord {
   /* Number of sites for each value profile kind.  */
-  uint16_t *NumValueSites;
+  const uint16_t *NumValueSites;
   /* An array of linked-list headers. The size of of the array is the
    * total number of value profile sites : sum(NumValueSites[*])). Each
    * linked-list stores the values profiled for a value profile site. */
@@ -351,6 +351,16 @@ typedef struct ValueProfRuntimeRecord {
   uint8_t *SiteCountArray[IPVK_Last + 1];
   ValueProfNode **NodesKind[IPVK_Last + 1];
 } ValueProfRuntimeRecord;
+
+/* Forward declarations of C interfaces.  */
+int initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
+                                     const uint16_t *NumValueSites,
+                                     ValueProfNode **Nodes);
+void finalizeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord);
+uint32_t getValueProfDataSizeRT(const ValueProfRuntimeRecord *Record);
+ValueProfData *
+serializeValueProfDataFromRT(const ValueProfRuntimeRecord *Record,
+                             ValueProfData *Dst);
 
 #undef INSTR_PROF_VALUE_PROF_DATA
 #endif  /* INSTR_PROF_VALUE_PROF_DATA */ 
@@ -506,13 +516,15 @@ ValueProfData *serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
 
 /* 
  * The value profiler runtime library stores the value profile data
- * for a given function in NumValueSites and Nodes. This is the
- * method to initialize the RuntimeRecord with the runtime data to
- * pre-compute the information needed to efficiently implement
- * ValueProfRecordClosure's callback interfaces.
+ * for a given function in \c NumValueSites and \c Nodes structures.
+ * \c ValueProfRuntimeRecord class is used to encapsulate the runtime
+ * profile data and provides fast interfaces to retrieve the profile
+ * information. This interface is used to initialize the runtime record
+ * and pre-compute the information needed for efficient implementation
+ * of callbacks required by ValueProfRecordClosure class.
  */
 int initializeValueProfRuntimeRecord(ValueProfRuntimeRecord *RuntimeRecord,
-                                     uint16_t *NumValueSites,
+                                     const uint16_t *NumValueSites,
                                      ValueProfNode **Nodes) {
   unsigned I, J, S = 0, NumValueKinds = 0;
   RuntimeRecord->NumValueSites = NumValueSites;
