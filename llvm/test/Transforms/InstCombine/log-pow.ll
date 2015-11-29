@@ -13,6 +13,15 @@ entry:
 ; CHECK:   ret double %mul
 ; CHECK: }
 
+define double @test2(double ()* %fptr, double %p1) #0 {
+  %call1 = call double %fptr()
+  %pow = call double @log(double %call1)
+  ret double %pow
+}
+
+; CHECK-LABEL: @test2
+; CHECK: log
+
 declare double @log(double) #0
 declare double @llvm.pow.f64(double, double)
 

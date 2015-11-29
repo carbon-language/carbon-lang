@@ -1317,9 +1317,8 @@ Value *LibCallSimplifier::optimizeLog(CallInst *CI, IRBuilder<> &B) {
 
   LibFunc::Func Func;
   Function *F = OpC->getCalledFunction();
-  StringRef FuncName = F->getName();
-  if ((TLI->getLibFunc(FuncName, Func) && TLI->has(Func) &&
-      Func == LibFunc::pow) || F->getIntrinsicID() == Intrinsic::pow)
+  if (F && ((TLI->getLibFunc(F->getName(), Func) && TLI->has(Func) &&
+      Func == LibFunc::pow) || F->getIntrinsicID() == Intrinsic::pow))
     return B.CreateFMul(OpC->getArgOperand(1),
       EmitUnaryFloatFnCall(OpC->getOperand(0), Callee->getName(), B,
                            Callee->getAttributes()), "mul");
