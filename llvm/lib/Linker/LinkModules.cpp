@@ -537,7 +537,7 @@ private:
   bool linkGlobalValueProto(GlobalValue *GV);
   bool linkModuleFlagsMetadata();
 
-  void linkAppendingVarInit(const AppendingVarInfo &AVI);
+  void linkAppendingVarInit(AppendingVarInfo &AVI);
 
   void linkGlobalInit(GlobalVariable &Dst, GlobalVariable &Src);
   bool linkFunctionBody(Function &Dst, Function &Src);
@@ -1493,7 +1493,7 @@ static void getArrayElements(const Constant *C,
     Dest.push_back(C->getAggregateElement(i));
 }
 
-void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
+void ModuleLinker::linkAppendingVarInit(AppendingVarInfo &AVI) {
   // Merge the initializer.
   SmallVector<Constant *, 16> DstElements;
   getArrayElements(AVI.DstInit, DstElements);
@@ -1517,9 +1517,18 @@ void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
     DstElements.push_back(
         MapValue(V, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer));
   }
-  if (IsNewStructor) {
+  if (DstElements.size() != NewType->getNumElements()) {
     NewType = ArrayType::get(NewType->getElementType(), DstElements.size());
-    AVI.NewGV->mutateType(PointerType::get(NewType, 0));
+    GlobalVariable *Old = AVI.NewGV;
+    GlobalVariable *NG = new GlobalVariable(
+        *DstM, NewType, Old->isConstant(), Old->getLinkage(), /*init*/ nullptr,
+        /*name*/ "", Old, Old->getThreadLocalMode(),
+        Old->getType()->getAddressSpace());
+    copyGVAttributes(NG, Old);
+    AVI.NewGV->replaceAllUsesWith(
+        ConstantExpr::getBitCast(NG, AVI.NewGV->getType()));
+    AVI.NewGV->eraseFromParent();
+    AVI.NewGV = NG;
   }
 
   AVI.NewGV->setInitializer(ConstantArray::get(NewType, DstElements));
@@ -1909,7 +1918,7 @@ bool ModuleLinker::run() {
     if (linkGlobalValueProto(&GA))
       return true;
 
-  for (const AppendingVarInfo &AppendingVar : AppendingVars)
+  for (AppendingVarInfo &AppendingVar : AppendingVars)
     linkAppendingVarInit(AppendingVar);
 
   for (const auto &Entry : DstM->getComdatSymbolTable()) {
