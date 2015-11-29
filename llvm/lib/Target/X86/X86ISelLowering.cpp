@@ -23141,14 +23141,19 @@ static SDValue combineShuffleToAddSub(SDNode *N, SelectionDAG &DAG) {
     return SDValue();
 
   auto *SVN = cast<ShuffleVectorSDNode>(N);
-  ArrayRef<int> Mask = SVN->getMask();
+  SmallVector<int, 8> Mask;
+  for (int M : SVN->getMask())
+    Mask.push_back(M);
+
   SDValue V1 = N->getOperand(0);
   SDValue V2 = N->getOperand(1);
 
-  // We require the first shuffle operand to be the SUB node, and the second to
-  // be the ADD node.
-  // FIXME: We should support the commuted patterns.
-  if (V1->getOpcode() != ISD::FSUB || V2->getOpcode() != ISD::FADD)
+  // We require the first shuffle operand to be the FSUB node, and the second to
+  // be the FADD node.
+  if (V1.getOpcode() == ISD::FADD && V2.getOpcode() == ISD::FSUB) {
+    ShuffleVectorSDNode::commuteMask(Mask);
+    std::swap(V1, V2);
+  } else if (V1.getOpcode() != ISD::FSUB || V2.getOpcode() != ISD::FADD)
     return SDValue();
 
   // If there are other uses of these operations we can't fold them.
