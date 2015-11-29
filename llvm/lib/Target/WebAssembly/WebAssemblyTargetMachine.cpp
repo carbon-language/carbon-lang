@@ -102,12 +102,10 @@ public:
   FunctionPass *createTargetRegisterAllocator(bool) override;
 
   void addIRPasses() override;
-  bool addPreISel() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
   void addPreRegAlloc() override;
   void addPostRegAlloc() override;
-  void addPreSched2() override;
   void addPreEmitPass() override;
 };
 } // end anonymous namespace
@@ -147,8 +145,6 @@ void WebAssemblyPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
 }
 
-bool WebAssemblyPassConfig::addPreISel() { return false; }
-
 bool WebAssemblyPassConfig::addInstSelector() {
   addPass(
       createWebAssemblyISelDag(getWebAssemblyTargetMachine(), getOptLevel()));
@@ -182,8 +178,6 @@ void WebAssemblyPassConfig::addPostRegAlloc() {
   // Run the register coloring pass to reduce the total number of registers.
   addPass(createWebAssemblyRegColoring());
 }
-
-void WebAssemblyPassConfig::addPreSched2() {}
 
 void WebAssemblyPassConfig::addPreEmitPass() {
   // Put the CFG in structured form; insert BLOCK and LOOP markers.
