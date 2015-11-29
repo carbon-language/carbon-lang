@@ -2301,12 +2301,10 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) {
 //
 // log, logf, logl:
 //   * log(exp(x))   -> x
-//   * log(x**y)     -> y*log(x)
 //   * log(exp(y))   -> y*log(e)
 //   * log(exp2(y))  -> y*log(2)
 //   * log(exp10(y)) -> y*log(10)
 //   * log(sqrt(x))  -> 0.5*log(x)
-//   * log(pow(x,y)) -> y*log(x)
 //
 // lround, lroundf, lroundl:
 //   * lround(cnst) -> cnst'
