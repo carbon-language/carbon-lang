@@ -116,10 +116,6 @@ public:
                            SDValue Ptr,
                            uint32_t RsrcDword1,
                            uint64_t RsrcDword2And3) const;
-  MachineSDNode *buildScratchRSRC(SelectionDAG &DAG,
-                                  SDLoc DL,
-                                  SDValue Ptr) const;
-
   std::pair<unsigned, const TargetRegisterClass *>
   getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
                                StringRef Constraint, MVT VT) const override;

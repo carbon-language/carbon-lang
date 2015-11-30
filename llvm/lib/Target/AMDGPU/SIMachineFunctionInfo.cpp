@@ -68,6 +68,14 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     WorkItemIDZ = true;
 }
 
+void SIMachineFunctionInfo::setScratchRSrcReg(const SIRegisterInfo *TRI) {
+  // We need to round up to next multiple of 4.
+  unsigned NextSReg128 = RoundUpToAlignment(NumUserSGPRs + 5, 4);
+  unsigned RegSub0 = AMDGPU::SReg_32RegClass.getRegister(NextSReg128);
+  ScratchRSrcReg = TRI->getMatchingSuperReg(RegSub0, AMDGPU::sub0,
+                                            &AMDGPU::SReg_128RegClass);
+}
+
 SIMachineFunctionInfo::SpilledReg SIMachineFunctionInfo::getSpilledReg(
                                                        MachineFunction *MF,
                                                        unsigned FrameIndex,

@@ -68,6 +68,22 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     }
   }
 
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  unsigned ScratchRSrcReg = MFI->getScratchRSrcReg();
+  if (ScratchRSrcReg != AMDGPU::NoRegister) {
+    unsigned ScratchOffsetPreloadReg
+      = getPreloadedValue(MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+    // We will need to use this user SGPR argument for spilling, and thus never
+    // want it to be spilled.
+    reserveRegisterTuples(Reserved, ScratchOffsetPreloadReg);
+
+    // Reserve 4 SGPRs for the scratch buffer resource descriptor in case we need
+    // to spill.
+    // TODO: May need to reserve a VGPR if doing LDS spilling.
+    reserveRegisterTuples(Reserved, ScratchRSrcReg);
+    assert(!isSubRegister(ScratchRSrcReg, ScratchOffsetPreloadReg));
+  }
+
   return Reserved;
 }
 
@@ -243,6 +259,9 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                 .addReg(SubReg)
                 .addImm(Spill.Lane);
 
+        // FIXME: Since this spills to another register instead of an actual
+        // frame index, we should delete the frame index when all references to
+        // it are fixed.
       }
       MI->eraseFromParent();
       break;

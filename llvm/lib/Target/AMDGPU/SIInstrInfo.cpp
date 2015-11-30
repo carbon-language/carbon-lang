@@ -551,15 +551,16 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
 
+  unsigned ScratchOffsetPreloadReg
+    = RI.getPreloadedValue(*MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+
   unsigned Opcode = getVGPRSpillSaveOpcode(RC->getSize());
   MFI->setHasSpilledVGPRs();
   BuildMI(MBB, MI, DL, get(Opcode))
     .addReg(SrcReg)                   // src
     .addFrameIndex(FrameIndex)        // frame_idx
-    // Place-holder registers, these will be filled in by
-    // SIPrepareScratchRegs.
-    .addReg(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, RegState::Undef)
-    .addReg(AMDGPU::SGPR0, RegState::Undef)
+    .addReg(MFI->getScratchRSrcReg()) // scratch_rsrc
+    .addReg(ScratchOffsetPreloadReg)  // scratch_offset
     .addMemOperand(MMO);
 }
 
@@ -637,13 +638,14 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
 
+  unsigned ScratchOffsetPreloadReg
+    = RI.getPreloadedValue(*MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+
   unsigned Opcode = getVGPRSpillRestoreOpcode(RC->getSize());
   BuildMI(MBB, MI, DL, get(Opcode), DestReg)
     .addFrameIndex(FrameIndex)        // frame_idx
-    // Place-holder registers, these will be filled in by
-    // SIPrepareScratchRegs.
-    .addReg(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, RegState::Undef)
-    .addReg(AMDGPU::SGPR0, RegState::Undef)
+    .addReg(MFI->getScratchRSrcReg()) // scratch_rsrc
+    .addReg(ScratchOffsetPreloadReg)  // scratch_offset
     .addMemOperand(MMO);
 }
 

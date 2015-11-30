@@ -552,6 +552,7 @@ SDValue SITargetLowering::LowerFormalArguments(
   MachineFunction &MF = DAG.getMachineFunction();
   FunctionType *FType = MF.getFunction()->getFunctionType();
   SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
+  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
 
   if (Subtarget->isAmdHsaOS() && Info->getShaderType() != ShaderType::COMPUTE) {
     const Function *Fn = MF.getFunction();
@@ -622,9 +623,9 @@ SDValue SITargetLowering::LowerFormalArguments(
   // The pointer to the scratch buffer is stored in SGPR2, SGPR3
   if (Info->getShaderType() == ShaderType::COMPUTE) {
     if (Subtarget->isAmdHsaOS())
-      Info->NumUserSGPRs = 2;  // FIXME: Need to support scratch buffers.
+      Info->NumUserSGPRs += 4;  // FIXME: Need to support scratch buffers.
     else
-      Info->NumUserSGPRs = 4;
+      Info->NumUserSGPRs += 4;
 
     unsigned InputPtrReg =
         TRI->getPreloadedValue(MF, SIRegisterInfo::INPUT_PTR);
@@ -749,6 +750,9 @@ SDValue SITargetLowering::LowerFormalArguments(
         AMDGPU::SGPR_32RegClass.begin(), AMDGPU::SGPR_32RegClass.getNumRegs()));
     Info->ScratchOffsetReg = AMDGPU::SGPR_32RegClass.getRegister(ScratchIdx);
   }
+
+  if (MF.getFrameInfo()->hasStackObjects() || ST.isVGPRSpillingEnabled(Info))
+    Info->setScratchRSrcReg(TRI);
 
   if (Chains.empty())
     return Chain;
@@ -2333,15 +2337,6 @@ MachineSDNode *SITargetLowering::buildRSRC(SelectionDAG &DAG,
   };
 
   return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops);
-}
-
-MachineSDNode *SITargetLowering::buildScratchRSRC(SelectionDAG &DAG,
-                                                  SDLoc DL,
-                                                  SDValue Ptr) const {
-  const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
-
-  return buildRSRC(DAG, DL, Ptr, 0, TII->getScratchRsrcWords23());
 }
 
 SDValue SITargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
