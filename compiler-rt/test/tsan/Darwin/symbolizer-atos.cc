@@ -12,9 +12,7 @@ void *Thread(void *a) {
 
 int main() {
   barrier_init(&barrier, 2);
-  fprintf(stderr, "addr=");
-  print_address(GlobalData);
-  fprintf(stderr, "\n");
+  print_address("addr=", 1, GlobalData);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
   GlobalData[2] = 43;

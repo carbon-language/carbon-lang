@@ -321,22 +321,6 @@ SignalContext SignalContext::Create(void *siginfo, void *context) {
   return SignalContext(context, addr, pc, sp, bp);
 }
 
-// This function check is the built VMA matches the runtime one for
-// architectures with multiple VMA size.
-void CheckVMASize() {
-#ifdef __aarch64__
-  static const unsigned kBuiltVMA = SANITIZER_AARCH64_VMA;
-  unsigned maxRuntimeVMA =
-    (MostSignificantSetBitIndex(GET_CURRENT_FRAME()) + 1);
-  if (kBuiltVMA != maxRuntimeVMA) {
-    Printf("WARNING: %s runtime VMA is not the one built for.\n",
-      SanitizerToolName);
-    Printf("\tBuilt VMA:   %u bits\n", kBuiltVMA);
-    Printf("\tRuntime VMA: %u bits\n", maxRuntimeVMA);
-  }
-#endif
-}
-
 } // namespace __sanitizer
 
 #endif // SANITIZER_POSIX

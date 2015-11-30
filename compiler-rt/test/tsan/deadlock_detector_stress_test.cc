@@ -152,7 +152,7 @@ class LockTest {
     fprintf(stderr, "Starting Test1\n");
     // CHECK: Starting Test1
     Init(5);
-    fprintf(stderr, "Expecting lock inversion: %p %p\n", A(0), A(1));
+    print_address("Expecting lock inversion: ", 2, A(0), A(1));
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]]
     Lock_0_1();
     Lock_1_0();
@@ -178,7 +178,7 @@ class LockTest {
     fprintf(stderr, "Starting Test2\n");
     // CHECK: Starting Test2
     Init(5);
-    fprintf(stderr, "Expecting lock inversion: %p %p %p\n", A(0), A(1), A(2));
+    print_address("Expecting lock inversion: ", 3, A(0), A(1), A(2));
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]] [[A3:0x[a-f0-9]*]]
     Lock2(0, 1);
     Lock2(1, 2);
