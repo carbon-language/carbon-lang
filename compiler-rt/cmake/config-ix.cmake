@@ -30,6 +30,12 @@ check_cxx_compiler_flag(-fno-lto             COMPILER_RT_HAS_FNO_LTO_FLAG)
 check_cxx_compiler_flag(-msse3               COMPILER_RT_HAS_MSSE3_FLAG)
 check_cxx_compiler_flag(-std=c99             COMPILER_RT_HAS_STD_C99_FLAG)
 
+if(NOT WIN32 AND NOT CYGWIN)
+  # MinGW warns if -fvisibility-inlines-hidden is used.
+  check_cxx_compiler_flag("-fvisibility-inlines-hidden" COMPILER_RT_HAS_FVISIBILITY_INLINES_HIDDEN_FLAG)
+  append_string_if(COMPILER_RT_HAS_FVISIBILITY_INLINES_HIDDEN_FLAG "-fvisibility-inlines-hidden" CMAKE_CXX_FLAGS)
+endif()
+
 check_cxx_compiler_flag(/GR COMPILER_RT_HAS_GR_FLAG)
 check_cxx_compiler_flag(/GS COMPILER_RT_HAS_GS_FLAG)
 check_cxx_compiler_flag(/MT COMPILER_RT_HAS_MT_FLAG)
