@@ -6431,7 +6431,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   SmallVector<SDValue, 8> V(NumElems);
   if (NumElems == 4 && NumZero > 0) {
     for (unsigned i = 0; i < 4; ++i) {
-      bool isZero = !(NonZeros & (1 << i));
+      bool isZero = !(NonZeros & (1ULL << i));
       if (isZero)
         V[i] = getZeroVector(VT, Subtarget, DAG, dl);
       else
