@@ -940,12 +940,8 @@ void ModuleLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old) {
   if (isPerformingImport() && !doImportAsDefinition(Old))
     return;
 
-  if (DoNotLinkFromSource.count(Old)) {
-    if (!New->hasExternalLinkage() && !New->hasExternalWeakLinkage() &&
-        !New->hasAppendingLinkage())
-      emitError("Declaration points to discarded value");
+  if (DoNotLinkFromSource.count(Old))
     return;
-  }
 
   linkGlobalValueBody(*Old);
 }
