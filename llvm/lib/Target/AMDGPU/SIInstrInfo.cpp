@@ -551,8 +551,8 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
 
-  unsigned ScratchOffsetPreloadReg
-    = RI.getPreloadedValue(*MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+  unsigned ScratchOffsetPreloadReg = RI.getPreloadedValue(
+    *MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
 
   unsigned Opcode = getVGPRSpillSaveOpcode(RC->getSize());
   MFI->setHasSpilledVGPRs();
@@ -638,8 +638,8 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
 
-  unsigned ScratchOffsetPreloadReg
-    = RI.getPreloadedValue(*MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+  unsigned ScratchOffsetPreloadReg = RI.getPreloadedValue(
+    *MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
 
   unsigned Opcode = getVGPRSpillRestoreOpcode(RC->getSize());
   BuildMI(MBB, MI, DL, get(Opcode), DestReg)
@@ -678,11 +678,14 @@ unsigned SIInstrInfo::calculateLDSSpillAddress(MachineBasicBlock &MBB,
     if (MFI->getShaderType() == ShaderType::COMPUTE &&
         WorkGroupSize > WavefrontSize) {
 
-      unsigned TIDIGXReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_X);
-      unsigned TIDIGYReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_Y);
-      unsigned TIDIGZReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_Z);
+      unsigned TIDIGXReg
+        = TRI->getPreloadedValue(*MF, SIRegisterInfo::WORKGROUP_ID_X);
+      unsigned TIDIGYReg
+        = TRI->getPreloadedValue(*MF, SIRegisterInfo::WORKGROUP_ID_Y);
+      unsigned TIDIGZReg
+        = TRI->getPreloadedValue(*MF, SIRegisterInfo::WORKGROUP_ID_Z);
       unsigned InputPtrReg =
-          TRI->getPreloadedValue(*MF, SIRegisterInfo::INPUT_PTR);
+          TRI->getPreloadedValue(*MF, SIRegisterInfo::KERNARG_SEGMENT_PTR);
       for (unsigned Reg : {TIDIGXReg, TIDIGYReg, TIDIGZReg}) {
         if (!Entry.isLiveIn(Reg))
           Entry.addLiveIn(Reg);

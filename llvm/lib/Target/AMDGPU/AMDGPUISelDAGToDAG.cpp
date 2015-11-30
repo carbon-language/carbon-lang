@@ -1066,8 +1066,8 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,
       static_cast<const SIRegisterInfo *>(Subtarget->getRegisterInfo());
   const SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
 
-  unsigned ScratchOffsetReg
-    = TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+  unsigned ScratchOffsetReg = TRI->getPreloadedValue(
+    MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
   Rsrc = CurDAG->getRegister(Info->getScratchRSrcReg(), MVT::v4i32);
   SOffset = CurDAG->getRegister(ScratchOffsetReg, MVT::i32);
 
