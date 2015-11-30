@@ -1080,7 +1080,7 @@ template <class _Tp, size_t _Np> struct _LIBCPP_TYPE_VIS_ONLY rank<_Tp[_Np]>
     : public integral_constant<size_t, rank<_Tp>::value + 1> {};
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
-template <class _Tp> _LIBCPP_CONSTEXPR bool rank_v
+template <class _Tp> _LIBCPP_CONSTEXPR size_t rank_v
     = rank<_Tp>::value;
 #endif
 
@@ -1098,7 +1098,7 @@ template <class _Tp, size_t _Np, unsigned _Ip> struct _LIBCPP_TYPE_VIS_ONLY exte
     : public integral_constant<size_t, extent<_Tp, _Ip-1>::value> {};
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
-template <class _Tp, unsigned _Ip = 0> _LIBCPP_CONSTEXPR bool extent_v
+template <class _Tp, unsigned _Ip = 0> _LIBCPP_CONSTEXPR size_t extent_v
     = extent<_Tp, _Ip>::value;
 #endif
 
@@ -1451,7 +1451,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY alignment_of
     : public integral_constant<size_t, __alignof__(_Tp)> {};
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
-template <class _Tp> _LIBCPP_CONSTEXPR bool alignment_of_v
+template <class _Tp> _LIBCPP_CONSTEXPR size_t alignment_of_v
     = alignment_of<_Tp>::value;
 #endif
 
