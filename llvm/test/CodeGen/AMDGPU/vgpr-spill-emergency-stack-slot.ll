@@ -11,14 +11,14 @@
 
 ; GCN-LABEL: {{^}}main:
 
-; GCN: s_mov_b32 s8, SCRATCH_RSRC_DWORD0
-; GCN-NEXT: s_mov_b32 s9, SCRATCH_RSRC_DWORD1
-; GCN-NEXT: s_mov_b32 s10, -1
-; SI-NEXT: s_mov_b32 s11, 0x80f000
-; VI-NEXT: s_mov_b32 s11, 0x800000
+; GCN: s_mov_b32 s12, SCRATCH_RSRC_DWORD0
+; GCN-NEXT: s_mov_b32 s13, SCRATCH_RSRC_DWORD1
+; GCN-NEXT: s_mov_b32 s14, -1
+; SI-NEXT: s_mov_b32 s15, 0x80f000
+; VI-NEXT: s_mov_b32 s15, 0x800000
 
 ; s12 is offset user SGPR
-; GCN: buffer_store_dword {{v[0-9]+}}, s[8:11], s12 offset:{{[0-9]+}} ; 4-byte Folded Spill
+; GCN: buffer_store_dword {{v[0-9]+}}, s[12:15], s11 offset:{{[0-9]+}} ; 4-byte Folded Spill
 
 ; GCN: NumVgprs: 256
 ; GCN: ScratchSize: 1024

@@ -542,6 +542,11 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                      Align); // Alignment
 }
 
+static ArrayRef<MCPhysReg> getAllSGPRs() {
+  return makeArrayRef(AMDGPU::SGPR_32RegClass.begin(),
+                      AMDGPU::SGPR_32RegClass.getNumRegs());
+}
+
 SDValue SITargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc DL, SelectionDAG &DAG,
@@ -619,37 +624,28 @@ SDValue SITargetLowering::LowerFormalArguments(
     CCInfo.AllocateReg(AMDGPU::VGPR1);
   }
 
-  // The pointer to the list of arguments is stored in SGPR0, SGPR1
-  // The pointer to the scratch buffer is stored in SGPR2, SGPR3
-  if (Info->getShaderType() == ShaderType::COMPUTE) {
-    if (Subtarget->isAmdHsaOS())
-      Info->NumUserSGPRs += 4;  // FIXME: Need to support scratch buffers.
-    else
-      Info->NumUserSGPRs += 4;
-
-    unsigned InputPtrReg =
-        TRI->getPreloadedValue(MF, SIRegisterInfo::KERNARG_SEGMENT_PTR);
-    unsigned InputPtrRegLo =
-        TRI->getPhysRegSubReg(InputPtrReg, &AMDGPU::SReg_32RegClass, 0);
-    unsigned InputPtrRegHi =
-        TRI->getPhysRegSubReg(InputPtrReg, &AMDGPU::SReg_32RegClass, 1);
-
-    CCInfo.AllocateReg(InputPtrRegLo);
-    CCInfo.AllocateReg(InputPtrRegHi);
-    MF.addLiveIn(InputPtrReg, &AMDGPU::SReg_64RegClass);
-
-    const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
-
-    if (MFI->hasDispatchPtr()) {
-      unsigned DispatchPtrReg
-        = TRI->getPreloadedValue(MF, SIRegisterInfo::DISPATCH_PTR);
-      MF.addLiveIn(DispatchPtrReg, &AMDGPU::SReg_64RegClass);
-    }
-  }
-
   if (Info->getShaderType() == ShaderType::COMPUTE) {
     getOriginalFunctionArgs(DAG, DAG.getMachineFunction().getFunction(), Ins,
                             Splits);
+  }
+
+  // FIXME: How should these inputs interact with inreg / custom SGPR inputs?
+  if (Info->hasPrivateSegmentBuffer()) {
+    unsigned PrivateSegmentBufferReg = Info->addPrivateSegmentBuffer(*TRI);
+    MF.addLiveIn(PrivateSegmentBufferReg, &AMDGPU::SReg_128RegClass);
+    CCInfo.AllocateReg(PrivateSegmentBufferReg);
+  }
+
+  if (Info->hasDispatchPtr()) {
+    unsigned DispatchPtrReg = Info->addDispatchPtr(*TRI);
+    MF.addLiveIn(DispatchPtrReg, &AMDGPU::SReg_64RegClass);
+    CCInfo.AllocateReg(DispatchPtrReg);
+  }
+
+  if (Info->hasKernargSegmentPtr()) {
+    unsigned InputPtrReg = Info->addKernargSegmentPtr(*TRI);
+    MF.addLiveIn(InputPtrReg, &AMDGPU::SReg_64RegClass);
+    CCInfo.AllocateReg(InputPtrReg);
   }
 
   AnalyzeFormalArguments(CCInfo, Splits);
@@ -739,14 +735,114 @@ SDValue SITargetLowering::LowerFormalArguments(
     InVals.push_back(Val);
   }
 
-  if (Info->getShaderType() != ShaderType::COMPUTE) {
-    unsigned ScratchIdx = CCInfo.getFirstUnallocated(makeArrayRef(
-        AMDGPU::SGPR_32RegClass.begin(), AMDGPU::SGPR_32RegClass.getNumRegs()));
-    Info->ScratchOffsetReg = AMDGPU::SGPR_32RegClass.getRegister(ScratchIdx);
+  // TODO: Add GridWorkGroupCount user SGPRs when used. For now with HSA we read
+  // these from the dispatch pointer.
+
+  // Start adding system SGPRs.
+  if (Info->hasWorkGroupIDX()) {
+    unsigned Reg = Info->addWorkGroupIDX();
+    MF.addLiveIn(Reg, &AMDGPU::SReg_32RegClass);
+    CCInfo.AllocateReg(Reg);
+  } else
+    llvm_unreachable("work group id x is always enabled");
+
+  if (Info->hasWorkGroupIDY()) {
+    unsigned Reg = Info->addWorkGroupIDY();
+    MF.addLiveIn(Reg, &AMDGPU::SReg_32RegClass);
+    CCInfo.AllocateReg(Reg);
   }
 
-  if (MF.getFrameInfo()->hasStackObjects() || ST.isVGPRSpillingEnabled(Info))
-    Info->setScratchRSrcReg(TRI);
+  if (Info->hasWorkGroupIDZ()) {
+    unsigned Reg = Info->addWorkGroupIDZ();
+    MF.addLiveIn(Reg, &AMDGPU::SReg_32RegClass);
+    CCInfo.AllocateReg(Reg);
+  }
+
+  if (Info->hasWorkGroupInfo()) {
+    unsigned Reg = Info->addWorkGroupInfo();
+    MF.addLiveIn(Reg, &AMDGPU::SReg_32RegClass);
+    CCInfo.AllocateReg(Reg);
+  }
+
+  if (Info->hasPrivateSegmentWaveByteOffset()) {
+    // Scratch wave offset passed in system SGPR.
+    unsigned PrivateSegmentWaveByteOffsetReg
+      = Info->addPrivateSegmentWaveByteOffset();
+
+    MF.addLiveIn(PrivateSegmentWaveByteOffsetReg, &AMDGPU::SGPR_32RegClass);
+    CCInfo.AllocateReg(PrivateSegmentWaveByteOffsetReg);
+  }
+
+  // Now that we've figured out where the scratch register inputs are, see if
+  // should reserve the arguments and use them directly.
+
+  bool HasStackObjects = MF.getFrameInfo()->hasStackObjects();
+
+  if (ST.isAmdHsaOS()) {
+    // TODO: Assume we will spill without optimizations.
+    if (HasStackObjects) {
+      // If we have stack objects, we unquestionably need the private buffer
+      // resource. For the HSA ABI, this will be the first 4 user SGPR
+      // inputs. We can reserve those and use them directly.
+
+      unsigned PrivateSegmentBufferReg = TRI->getPreloadedValue(
+        MF, SIRegisterInfo::PRIVATE_SEGMENT_BUFFER);
+      Info->setScratchRSrcReg(PrivateSegmentBufferReg);
+
+      unsigned PrivateSegmentWaveByteOffsetReg = TRI->getPreloadedValue(
+        MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
+      Info->setScratchWaveOffsetReg(PrivateSegmentWaveByteOffsetReg);
+    } else {
+      unsigned ReservedBufferReg
+        = TRI->reservedPrivateSegmentBufferReg(MF);
+      unsigned ReservedOffsetReg
+        = TRI->reservedPrivateSegmentWaveByteOffsetReg(MF);
+
+      // We tentatively reserve the last registers (skipping the last two
+      // which may contain VCC). After register allocation, we'll replace
+      // these with the ones immediately after those which were really
+      // allocated. In the prologue copies will be inserted from the argument
+      // to these reserved registers.
+      Info->setScratchRSrcReg(ReservedBufferReg);
+      Info->setScratchWaveOffsetReg(ReservedOffsetReg);
+    }
+  } else {
+    unsigned ReservedBufferReg = TRI->reservedPrivateSegmentBufferReg(MF);
+
+    // Without HSA, relocations are used for the scratch pointer and the
+    // buffer resource setup is always inserted in the prologue. Scratch wave
+    // offset is still in an input SGPR.
+    Info->setScratchRSrcReg(ReservedBufferReg);
+
+    if (HasStackObjects) {
+      unsigned ScratchWaveOffsetReg = TRI->getPreloadedValue(
+        MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
+      Info->setScratchWaveOffsetReg(ScratchWaveOffsetReg);
+    } else {
+      unsigned ReservedOffsetReg
+        = TRI->reservedPrivateSegmentWaveByteOffsetReg(MF);
+      Info->setScratchWaveOffsetReg(ReservedOffsetReg);
+    }
+  }
+
+  if (Info->hasWorkItemIDX()) {
+    unsigned Reg = TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_X);
+    MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
+    CCInfo.AllocateReg(Reg);
+  } else
+    llvm_unreachable("workitem id x should always be enabled");
+
+  if (Info->hasWorkItemIDY()) {
+    unsigned Reg = TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_Y);
+    MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
+    CCInfo.AllocateReg(Reg);
+  }
+
+  if (Info->hasWorkItemIDZ()) {
+    unsigned Reg = TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_Z);
+    MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
+    CCInfo.AllocateReg(Reg);
+  }
 
   if (Chains.empty())
     return Chain;

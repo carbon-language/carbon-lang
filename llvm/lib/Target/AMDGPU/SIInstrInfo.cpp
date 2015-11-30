@@ -551,16 +551,13 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
 
-  unsigned ScratchOffsetPreloadReg = RI.getPreloadedValue(
-    *MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
-
   unsigned Opcode = getVGPRSpillSaveOpcode(RC->getSize());
   MFI->setHasSpilledVGPRs();
   BuildMI(MBB, MI, DL, get(Opcode))
     .addReg(SrcReg)                   // src
     .addFrameIndex(FrameIndex)        // frame_idx
-    .addReg(MFI->getScratchRSrcReg()) // scratch_rsrc
-    .addReg(ScratchOffsetPreloadReg)  // scratch_offset
+    .addReg(MFI->getScratchRSrcReg())       // scratch_rsrc
+    .addReg(MFI->getScratchWaveOffsetReg()) // scratch_offset
     .addMemOperand(MMO);
 }
 
@@ -638,14 +635,11 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
 
-  unsigned ScratchOffsetPreloadReg = RI.getPreloadedValue(
-    *MF, SIRegisterInfo::PRIVATE_SEGMENT_WAVE_BYTE_OFFSET);
-
   unsigned Opcode = getVGPRSpillRestoreOpcode(RC->getSize());
   BuildMI(MBB, MI, DL, get(Opcode), DestReg)
     .addFrameIndex(FrameIndex)        // frame_idx
-    .addReg(MFI->getScratchRSrcReg()) // scratch_rsrc
-    .addReg(ScratchOffsetPreloadReg)  // scratch_offset
+    .addReg(MFI->getScratchRSrcReg())       // scratch_rsrc
+    .addReg(MFI->getScratchWaveOffsetReg()) // scratch_offset
     .addMemOperand(MMO);
 }
 

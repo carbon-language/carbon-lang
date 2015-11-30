@@ -17,16 +17,18 @@ declare i32 @llvm.r600.read.tgid.z() #1
 
 ; GCN-LABEL: {{^}}spill_vgpr_compute:
 
+; GCN: s_mov_b32 s16, s3
 ; GCN: s_mov_b32 s12, SCRATCH_RSRC_DWORD0
 ; GCN-NEXT: s_mov_b32 s13, SCRATCH_RSRC_DWORD1
 ; GCN-NEXT: s_mov_b32 s14, -1
 ; SI-NEXT: s_mov_b32 s15, 0x80f000
 ; VI-NEXT: s_mov_b32 s15, 0x800000
 
-; GCN: buffer_store_dword {{v[0-9]+}}, s[12:15], s8 offset:{{[0-9]+}} ; 4-byte Folded Spill
 
-; GCN: buffer_store_dword {{v[0-9]+}}, {{v[0-9]+}}, s[12:15], s8 offen offset:{{[0-9]+}}
-; GCN: buffer_load_dword {{v[0-9]+}}, {{v[0-9]+}}, s[12:15], s8 offen offset:{{[0-9]+}}
+; GCN: buffer_store_dword {{v[0-9]+}}, s[12:15], s16 offset:{{[0-9]+}} ; 4-byte Folded Spill
+
+; GCN: buffer_store_dword {{v[0-9]+}}, {{v[0-9]+}}, s[12:15], s16 offen offset:{{[0-9]+}}
+; GCN: buffer_load_dwordx4 {{v\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, s[12:15], s16 offen offset:{{[0-9]+}}
 
 ; GCN: NumVgprs: 256
 ; GCN: ScratchSize: 1024
