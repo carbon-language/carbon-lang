@@ -542,11 +542,6 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                      Align); // Alignment
 }
 
-static ArrayRef<MCPhysReg> getAllSGPRs() {
-  return makeArrayRef(AMDGPU::SGPR_32RegClass.begin(),
-                      AMDGPU::SGPR_32RegClass.getNumRegs());
-}
-
 SDValue SITargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc DL, SelectionDAG &DAG,
