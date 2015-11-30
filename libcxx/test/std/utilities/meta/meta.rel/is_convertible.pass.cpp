@@ -22,7 +22,7 @@ void test_is_convertible()
     static_assert((std::is_convertible<const T, U>::value), "");
     static_assert((std::is_convertible<T, const U>::value), "");
     static_assert((std::is_convertible<const T, const U>::value), "");
-#if TEST_STD_VERS > 14
+#if TEST_STD_VER > 14
     static_assert((std::is_convertible_v<T, U>), "");
     static_assert((std::is_convertible_v<const T, U>), "");
     static_assert((std::is_convertible_v<T, const U>), "");
@@ -37,7 +37,7 @@ void test_is_not_convertible()
     static_assert((!std::is_convertible<const T, U>::value), "");
     static_assert((!std::is_convertible<T, const U>::value), "");
     static_assert((!std::is_convertible<const T, const U>::value), "");
-#if TEST_STD_VERS > 14
+#if TEST_STD_VER > 14
     static_assert((!std::is_convertible_v<T, U>), "");
     static_assert((!std::is_convertible_v<const T, U>), "");
     static_assert((!std::is_convertible_v<T, const U>), "");
