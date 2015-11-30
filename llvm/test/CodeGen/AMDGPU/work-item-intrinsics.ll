@@ -213,6 +213,66 @@ entry:
   ret void
 }
 
+; FUNC-LABEL: {{^}}local_size_x_known_bits:
+; SI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x6
+; VI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x18
+; GCN-NOT: 0xffff
+; GCN: v_mov_b32_e32 [[VVAL:v[0-9]+]], [[VAL]]
+; GCN-NEXT: buffer_store_dword [[VVAL]]
+define void @local_size_x_known_bits(i32 addrspace(1)* %out) {
+entry:
+  %size = call i32 @llvm.r600.read.local.size.x() #0
+  %shl = shl i32 %size, 16
+  %shr = lshr i32 %shl, 16
+  store i32 %shr, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}local_size_y_known_bits:
+; SI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x7
+; VI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x1c
+; GCN-NOT: 0xffff
+; GCN: v_mov_b32_e32 [[VVAL:v[0-9]+]], [[VAL]]
+; GCN-NEXT: buffer_store_dword [[VVAL]]
+define void @local_size_y_known_bits(i32 addrspace(1)* %out) {
+entry:
+  %size = call i32 @llvm.r600.read.local.size.y() #0
+  %shl = shl i32 %size, 16
+  %shr = lshr i32 %shl, 16
+  store i32 %shr, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}local_size_z_known_bits:
+; SI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x8
+; VI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x20
+; GCN-NOT: 0xffff
+; GCN: v_mov_b32_e32 [[VVAL:v[0-9]+]], [[VAL]]
+; GCN-NEXT: buffer_store_dword [[VVAL]]
+define void @local_size_z_known_bits(i32 addrspace(1)* %out) {
+entry:
+  %size = call i32 @llvm.r600.read.local.size.z() #0
+  %shl = shl i32 %size, 16
+  %shr = lshr i32 %shl, 16
+  store i32 %shr, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}get_work_dim_known_bits:
+; SI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0xb
+; VI: s_load_dword [[VAL:s[0-9]+]], s[0:1], 0x2c
+; GCN-NOT: 0xff
+; GCN: v_mov_b32_e32 [[VVAL:v[0-9]+]], [[VAL]]
+; GCN: buffer_store_dword [[VVAL]]
+define void @get_work_dim_known_bits(i32 addrspace(1)* %out) {
+entry:
+  %dim = call i32 @llvm.AMDGPU.read.workdim() #0
+  %shl = shl i32 %dim, 24
+  %shr = lshr i32 %shl, 24
+  store i32 %shr, i32 addrspace(1)* %out
+  ret void
+}
+
 declare i32 @llvm.r600.read.ngroups.x() #0
 declare i32 @llvm.r600.read.ngroups.y() #0
 declare i32 @llvm.r600.read.ngroups.z() #0

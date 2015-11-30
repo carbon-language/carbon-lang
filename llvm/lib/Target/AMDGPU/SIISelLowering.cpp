@@ -1043,6 +1043,18 @@ SDValue SITargetLowering::copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL,
                                                       // a glue result.
 }
 
+SDValue SITargetLowering::lowerImplicitZextParam(SelectionDAG &DAG,
+                                                 SDValue Op,
+                                                 MVT VT,
+                                                 unsigned Offset) const {
+  SDLoc SL(Op);
+  SDValue Param = LowerParameter(DAG, MVT::i32, MVT::i32, SL,
+                                 DAG.getEntryNode(), Offset, false);
+  // The local size values will have the hi 16-bits as zero.
+  return DAG.getNode(ISD::AssertZext, SL, MVT::i32, Param,
+                     DAG.getValueType(VT));
+}
+
 SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                   SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -1080,19 +1092,18 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
                           SI::KernelInputOffsets::GLOBAL_SIZE_Z, false);
   case Intrinsic::r600_read_local_size_x:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
-                          SI::KernelInputOffsets::LOCAL_SIZE_X, false);
+    return lowerImplicitZextParam(DAG, Op, MVT::i16,
+                                  SI::KernelInputOffsets::LOCAL_SIZE_X);
   case Intrinsic::r600_read_local_size_y:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
-                          SI::KernelInputOffsets::LOCAL_SIZE_Y, false);
+    return lowerImplicitZextParam(DAG, Op, MVT::i16,
+                                  SI::KernelInputOffsets::LOCAL_SIZE_Y);
   case Intrinsic::r600_read_local_size_z:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
-                          SI::KernelInputOffsets::LOCAL_SIZE_Z, false);
-
+    return lowerImplicitZextParam(DAG, Op, MVT::i16,
+                                  SI::KernelInputOffsets::LOCAL_SIZE_Z);
   case Intrinsic::AMDGPU_read_workdim:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
-                          getImplicitParameterOffset(MFI, GRID_DIM), false);
-
+    // Really only 2 bits.
+    return lowerImplicitZextParam(DAG, Op, MVT::i8,
+                                  getImplicitParameterOffset(MFI, GRID_DIM));
   case Intrinsic::r600_read_tgid_x:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::TGID_X), VT);
