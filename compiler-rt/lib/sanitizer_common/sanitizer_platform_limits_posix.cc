@@ -123,6 +123,10 @@
 #  include <asm/ptrace.h>
 #  ifdef __arm__
 typedef struct user_fpregs elf_fpregset_t;
+#   define ARM_VFPREGS_SIZE_ASAN (32 * 8 /*fpregs*/ + 4 /*fpscr*/)
+#   if !defined(ARM_VFPREGS_SIZE)
+#     define ARM_VFPREGS_SIZE ARM_VFPREGS_SIZE_ASAN
+#   endif
 #  endif
 # endif
 # include <semaphore.h>
@@ -1262,6 +1266,10 @@ CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, close);
 
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
 CHECK_TYPE_SIZE(sem_t);
+#endif
+
+#if SANITIZER_LINUX && defined(__arm__)
+COMPILER_CHECK(ARM_VFPREGS_SIZE == ARM_VFPREGS_SIZE_ASAN);
 #endif
 
 #endif // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC
