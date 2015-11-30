@@ -1,9 +1,9 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-define double @mylog(double %x, double %y) #0 {
+define double @mylog(double %x, double %y) {
 entry:
   %pow = call double @llvm.pow.f64(double %x, double %y)
-  %call = call double @log(double %pow) #0
+  %call = call double @log(double %pow)
   ret double %call
 }
 
@@ -13,9 +13,9 @@ entry:
 ; CHECK:   ret double %call
 ; CHECK: }
 
-define double @test3(double %x) #0 {
-  %call2 = call double @exp2(double %x) #0
-  %call3 = call double @log(double %call2) #0
+define double @test3(double %x) {
+  %call2 = call double @exp2(double %x)
+  %call3 = call double @log(double %call2)
   ret double %call3
 }
 
@@ -25,6 +25,6 @@ define double @test3(double %x) #0 {
 ; CHECK:   ret double %call3
 ; CHECK: }
 
-declare double @log(double) #0
+declare double @log(double)
 declare double @exp2(double)
 declare double @llvm.pow.f64(double, double)
