@@ -1468,8 +1468,7 @@ void ScopStmt::removeMemoryAccesses(MemoryAccessList &InvMAs) {
   // together with all scalar accesses that were caused by them.
   for (MemoryAccess *MA : InvMAs) {
     auto Predicate = [&](MemoryAccess *Acc) {
-      return Acc == MA ||
-             Acc->getAccessInstruction() == MA->getAccessInstruction();
+      return Acc->getAccessInstruction() == MA->getAccessInstruction();
     };
     MemAccs.erase(std::remove_if(MemAccs.begin(), MemAccs.end(), Predicate),
                   MemAccs.end());
