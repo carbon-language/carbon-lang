@@ -12,6 +12,12 @@
 #include <stdio.h>
 #include <sys/mman.h>
 
+#ifdef __APPLE__
+#define SIGNAL_TO_HANDLE SIGBUS
+#else
+#define SIGNAL_TO_HANDLE SIGSEGV
+#endif
+
 sigjmp_buf fault_jmp;
 volatile int fault_expected;
 
@@ -44,7 +50,7 @@ int main() {
     exit(1);
   }
 
-  if (sigaction(SIGSEGV, &act, NULL)) {
+  if (sigaction(SIGNAL_TO_HANDLE, &act, NULL)) {
     perror("sigaction");
     exit(1);
   }

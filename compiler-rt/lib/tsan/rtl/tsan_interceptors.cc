@@ -160,6 +160,9 @@ struct sigaction_t {
 #if SANITIZER_FREEBSD
   int sa_flags;
   __sanitizer_sigset_t sa_mask;
+#elif SANITIZER_MAC
+  __sanitizer_sigset_t sa_mask;
+  int sa_flags;
 #else
   __sanitizer_sigset_t sa_mask;
 #ifndef __mips__
@@ -172,7 +175,7 @@ struct sigaction_t {
 const sighandler_t SIG_DFL = (sighandler_t)0;
 const sighandler_t SIG_IGN = (sighandler_t)1;
 const sighandler_t SIG_ERR = (sighandler_t)-1;
-#if SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD || SANITIZER_MAC
 const int SA_SIGINFO = 0x40;
 const int SIG_SETMASK = 3;
 #elif defined(__mips__)
@@ -2033,7 +2036,7 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
   sigactions[sig].sa_flags = *(volatile int*)&act->sa_flags;
   internal_memcpy(&sigactions[sig].sa_mask, &act->sa_mask,
       sizeof(sigactions[sig].sa_mask));
-#if !SANITIZER_FREEBSD
+#if !SANITIZER_FREEBSD && !SANITIZER_MAC
   sigactions[sig].sa_restorer = act->sa_restorer;
 #endif
   sigaction_t newact;

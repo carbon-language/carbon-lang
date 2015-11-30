@@ -300,7 +300,7 @@ ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp):
   movq _ZN14__interception14real_sigsetjmpE@GOTPCREL(%rip), %rdx
   jmp *(%rdx)
 #else
-  jmp ASM_TSAN_SYMBOL(setjmp)
+  jmp ASM_TSAN_SYMBOL(sigsetjmp)
 #endif
   CFI_ENDPROC
 ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp))
