@@ -6,7 +6,7 @@
 #include <semaphore.h>
 
 // Test that signals can be delivered to blocked pthread_cond_wait.
-// https://code.google.com/p/thread-sanitizer/issues/detail?id=91
+// https://github.com/google/sanitizers/issues/498
 
 int g_thread_run = 1;
 pthread_mutex_t mutex;

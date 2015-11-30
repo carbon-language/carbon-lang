@@ -1,7 +1,7 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 #include "test.h"
 
-// Test case https://code.google.com/p/thread-sanitizer/issues/detail?id=87
+// Test case https://github.com/google/sanitizers/issues/494
 // Tsan sees false HB edge on address pointed to by syncp variable.
 // It is false because when acquire is done syncp points to a var in one frame,
 // and during release it points to a var in a different frame.

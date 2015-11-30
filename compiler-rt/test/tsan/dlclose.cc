@@ -4,7 +4,7 @@
 // If we mention TSAN_OPTIONS, the test won't run from test_output.sh script.
 
 // Test case for
-// https://code.google.com/p/thread-sanitizer/issues/detail?id=80
+// https://github.com/google/sanitizers/issues/487
 
 #ifdef BUILD_SO
 

@@ -1,5 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %run %t | FileCheck %s
-// Regtest for https://code.google.com/p/thread-sanitizer/issues/detail?id=40
+// Regtest for https://github.com/google/sanitizers/issues/447
 // This is a correct program and tsan should not report a race.
 #include "test.h"
 
