@@ -633,21 +633,13 @@ SDValue SITargetLowering::LowerFormalArguments(
     unsigned InputPtrRegHi =
         TRI->getPhysRegSubReg(InputPtrReg, &AMDGPU::SReg_32RegClass, 1);
 
-    unsigned ScratchPtrReg =
-        TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_PTR);
-    unsigned ScratchPtrRegLo =
-        TRI->getPhysRegSubReg(ScratchPtrReg, &AMDGPU::SReg_32RegClass, 0);
-    unsigned ScratchPtrRegHi =
-        TRI->getPhysRegSubReg(ScratchPtrReg, &AMDGPU::SReg_32RegClass, 1);
-
     CCInfo.AllocateReg(InputPtrRegLo);
     CCInfo.AllocateReg(InputPtrRegHi);
-    CCInfo.AllocateReg(ScratchPtrRegLo);
-    CCInfo.AllocateReg(ScratchPtrRegHi);
     MF.addLiveIn(InputPtrReg, &AMDGPU::SReg_64RegClass);
-    MF.addLiveIn(ScratchPtrReg, &AMDGPU::SReg_64RegClass);
-    SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
-    if (Subtarget->isAmdHsaOS() && MFI->hasDispatchPtr()) {
+
+    const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+
+    if (MFI->hasDispatchPtr()) {
       unsigned DispatchPtrReg =
         TRI->getPreloadedValue(MF, SIRegisterInfo::DISPATCH_PTR);
       unsigned DispatchPtrRegLo =
