@@ -3517,11 +3517,14 @@ unsigned X86InstrInfo::getFMA3OpcodeToCommuteOperands(MachineInstr *MI,
   bool IsIntrinOpcode;
   isFMA3(Opc, &IsIntrinOpcode);
 
-  ArrayRef<unsigned[3]> OpcodeGroups;
+  unsigned GroupsNum;
+  const unsigned (*OpcodeGroups)[3];
   if (IsIntrinOpcode) {
-    OpcodeGroups = makeArrayRef(IntrinOpcodeGroups);
+    GroupsNum = sizeof(IntrinOpcodeGroups) / sizeof(IntrinOpcodeGroups[0]);
+    OpcodeGroups = IntrinOpcodeGroups;
   } else {
-    OpcodeGroups = makeArrayRef(RegularOpcodeGroups);
+    GroupsNum = sizeof(RegularOpcodeGroups) / sizeof(RegularOpcodeGroups[0]);
+    OpcodeGroups = RegularOpcodeGroups;
   }
 
   const unsigned *FoundOpcodesGroup = nullptr;
@@ -3529,7 +3532,7 @@ unsigned X86InstrInfo::getFMA3OpcodeToCommuteOperands(MachineInstr *MI,
 
   // Look for the input opcode in the corresponding opcodes table.
   unsigned GroupIndex = 0;
-  for (; GroupIndex < OpcodeGroups.size() && !FoundOpcodesGroup; GroupIndex++) {
+  for (; GroupIndex < GroupsNum && !FoundOpcodesGroup; GroupIndex++) {
     for (FormIndex = 0; FormIndex < FormsNum; FormIndex++) {
       if (OpcodeGroups[GroupIndex][FormIndex] == Opc) {
         FoundOpcodesGroup = OpcodeGroups[GroupIndex];
