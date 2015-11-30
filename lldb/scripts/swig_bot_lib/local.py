@@ -44,44 +44,45 @@ def pack_archive(bytes_io, src_root, filters):
     except RuntimeError:
         zip_file = zipfile.ZipFile(bytes_io, mode='w',
                                    compression=zipfile.ZIP_STORED)
+    archive_entries = []
+    if filters is not None:
+        def filter_func(t):
+            subfolder = t[0]
+            ext = t[1]
+            full_path = os.path.normpath(os.path.join(src_root, subfolder))
+            candidates = [os.path.normpath(os.path.join(full_path, f))
+                          for f in os.listdir(full_path)]
+            actual = filter(
+                lambda f : os.path.isfile(f) and os.path.splitext(f)[1] == ext,
+                candidates)
+            return (subfolder, map(lambda f : os.path.basename(f), actual))
+        archive_entries = map(filter_func, filters)
+    else:
+        for (root, dirs, files) in os.walk(src_root):
+            logging.debug("Adding files {} from directory {} to output package"
+                          .format(files, root))
+            if len(files) > 0:
+                rel_root = os.path.relpath(root, src_root)
+                archive_entries.append((rel_root, files))
 
-    def filter_func(t):
-        subfolder = t[0]
-        ext = t[1]
-        full_path = os.path.normpath(os.path.join(src_root, subfolder))
-        candidates = [os.path.normpath(os.path.join(full_path, f))
-                      for f in os.listdir(full_path)]
-        actual = filter(
-            lambda f : os.path.isfile(f) and os.path.splitext(f)[1] == ext,
-            candidates)
-        return (subfolder, map(lambda f : os.path.basename(f), actual))
-    archive_entries = map(filter_func, filters)
-
+    archive_entries = list(archive_entries)
     for entry in archive_entries:
         subfolder = entry[0]
-        files = entry[1]
+        files = list(entry[1])
         for file in files:
-            relative_path = os.path.normpath(os.path.join(subfolder, file))
-            full_path = os.path.normpath(
-                os.path.join(src_root, relative_path))
-            logging.info("{} -> {}".format(full_path, relative_path))
-            zip_file.write(full_path, relative_path)
+            rel_path = os.path.normpath(os.path.join(subfolder, file))
+            full_path = os.path.join(src_root, rel_path)
+            logging.info("{} -> {}".format(full_path, rel_path))
+            zip_file.write(full_path, rel_path)
 
     return zip_file
 
-def unpack_archive(subfolder, archive_bytes):
-    tempfolder = os.path.join(tempfile.gettempdir(), subfolder)
-    os.makedirs(tempfolder, exist_ok=True)
-
-    tempfolder = tempfile.mkdtemp(dir=tempfolder)
-    logging.debug("Extracting archive to {}".format(tempfolder))
-
+def unpack_archive(folder, archive_bytes):
     zip_data = io.BytesIO(archive_bytes)
     logging.debug("Opening zip archive...")
     zip_file = zipfile.ZipFile(zip_data, mode='r')
-    zip_file.extractall(tempfolder)
+    zip_file.extractall(folder)
     zip_file.close()
-    return tempfolder
 
 def generate(options):
     include_folder = os.path.join(options.src_root, "include")
@@ -93,7 +94,7 @@ def generate(options):
         out_dir = os.path.join(options.target_dir, lang.title())
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        out_file = os.path.join(out_dir, "LLDBWrap{}".format(lang.title()))
+        out_file = os.path.join(out_dir, "LLDBWrap{}.cpp".format(lang.title()))
         swig_command = [
             options.swig_executable,
             "-c++",
@@ -122,7 +123,9 @@ def generate(options):
             logging.info("swig generation succeeded")
             if swig_output is not None and len(swig_output) > 0:
                 logging.info("swig output: %s", swig_output)
+            return (0, swig_output)
         except subprocess.CalledProcessError as e:
             logging.error("An error occurred executing swig.  returncode={}"
                           .format(e.returncode))
             logging.error(e.output)
+            return (e.returncode, e.output)

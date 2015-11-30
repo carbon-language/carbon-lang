@@ -81,7 +81,13 @@ def accept_once(sock, options):
 
         pack_location = None
         try:
-            pack_location = local.unpack_archive("swig-bot", data)
+            tempfolder = os.path.join(tempfile.gettempdir(), "swig-bot")
+            os.makedirs(tempfolder, exist_ok=True)
+
+            pack_location = tempfile.mkdtemp(dir=tempfolder)
+            logging.debug("Extracting archive to {}".format(pack_location))
+
+            local.unpack_archive(pack_location, data)
             logging.debug("Successfully unpacked archive...")
 
             config_file = os.path.normpath(os.path.join(pack_location,
@@ -98,12 +104,16 @@ def accept_once(sock, options):
                 .format(config.languages, config.swig_executable,
                         config.src_root, config.target_dir))
 
-            local.generate(config)
-            logging.debug("Finished running swig.  Packaging up output")
+            status = local.generate(config)
+            logging.debug("Finished running swig.  Packaging up files {}"
+                          .format(os.listdir(config.target_dir)))
             zip_data = io.BytesIO()
-            zip_file = local.pack_archive(zip_data,
-                                          config.target_dir,
-                                          [(".", None)])
+            zip_file = local.pack_archive(zip_data, config.target_dir, None)
+            response_status = remote.serialize_response_status(status)
+            logging.debug("Sending response status {}".format(response_status))
+            logging.info("(swig output) -> swig_output.json")
+            zip_file.writestr("swig_output.json", response_status)
+
             zip_file.close()
             response_data = zip_data.getvalue()
             logging.info("Sending {} byte response".format(len(response_data)))
