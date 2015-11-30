@@ -436,8 +436,6 @@ class ModuleLinker {
   /// references.
   bool DoneLinkingBodies;
 
-  bool HasError = false;
-
 public:
   ModuleLinker(Module *dstM, Linker::IdentifiedStructTypeSet &Set, Module *srcM,
                DiagnosticHandlerFunction DiagnosticHandler, unsigned Flags,
@@ -485,7 +483,6 @@ private:
   /// Helper method for setting a message and returning an error code.
   bool emitError(const Twine &Message) {
     DiagnosticHandler(LinkDiagnosticInfo(DS_Error, Message));
-    HasError = true;
     return true;
   }
 
@@ -534,7 +531,6 @@ private:
   void upgradeMismatchedGlobalArray(StringRef Name);
   void upgradeMismatchedGlobals();
 
-  bool linkIfNeeded(GlobalValue &GV);
   bool linkAppendingVarProto(GlobalVariable *DstGV,
                              const GlobalVariable *SrcGV);
 
@@ -908,12 +904,16 @@ Value *ModuleLinker::materializeDeclFor(Value *V) {
   if (doneLinkingBodies())
     return nullptr;
 
-  linkGlobalValueProto(SGV);
-  if (HasError)
-    return nullptr;
-  Value *Ret = ValueMap[SGV];
-  assert(Ret);
-  return Ret;
+  GlobalValue *DGV = copyGlobalValueProto(TypeMap, SGV);
+
+  if (Comdat *SC = SGV->getComdat()) {
+    if (auto *DGO = dyn_cast<GlobalObject>(DGV)) {
+      Comdat *DC = DstM->getOrInsertComdat(SC->getName());
+      DGO->setComdat(DC);
+    }
+  }
+
+  return DGV;
 }
 
 void ValueMaterializerTy::materializeInitFor(GlobalValue *New,
@@ -922,27 +922,15 @@ void ValueMaterializerTy::materializeInitFor(GlobalValue *New,
 }
 
 void ModuleLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old) {
-  if (auto *F = dyn_cast<Function>(New)) {
-    if (!F->isDeclaration())
-      return;
-  } else if (auto *V = dyn_cast<GlobalVariable>(New)) {
-    if (V->hasInitializer())
-      return;
-  } else {
-    auto *A = cast<GlobalAlias>(New);
-    if (A->getAliasee())
-      return;
-  }
-
-  if (Old->isDeclaration())
-    return;
-
   if (isPerformingImport() && !doImportAsDefinition(Old))
     return;
 
-  if (DoNotLinkFromSource.count(Old))
+  // Skip declarations that ValueMaterializer may have created in
+  // case we link in only some of SrcM.
+  if (shouldLinkOnlyNeeded() && Old->isDeclaration())
     return;
 
+  assert(!Old->isDeclaration() && "users should not pass down decls");
   linkGlobalValueBody(*Old);
 }
 
@@ -1417,6 +1405,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
     C = DstM->getOrInsertComdat(SC->getName());
     C->setSelectionKind(SK);
+    ComdatMembers[SC].push_back(SGV);
   } else if (DGV) {
     if (shouldLinkFromSource(LinkFromSrc, *DGV, *SGV))
       return true;
@@ -1436,12 +1425,31 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   if (DGV)
     HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
 
+  if (!LinkFromSrc && !DGV)
+    return false;
+
   GlobalValue *NewGV;
-  if (!LinkFromSrc && DGV) {
+  if (!LinkFromSrc) {
     NewGV = DGV;
     // When linking from source we setVisibility from copyGlobalValueProto.
     setVisibility(NewGV, SGV, DGV);
   } else {
+    // If the GV is to be lazily linked, don't create it just yet.
+    // The ValueMaterializerTy will deal with creating it if it's used.
+    if (!DGV && !shouldOverrideFromSrc() && SGV != ImportFunction &&
+        (SGV->hasLocalLinkage() || SGV->hasLinkOnceLinkage() ||
+         SGV->hasAvailableExternallyLinkage())) {
+      DoNotLinkFromSource.insert(SGV);
+      return false;
+    }
+
+    // When we only want to link in unresolved dependencies, blacklist
+    // the symbol unless unless DestM has a matching declaration (DGV).
+    if (shouldLinkOnlyNeeded() && !(DGV && DGV->isDeclaration())) {
+      DoNotLinkFromSource.insert(SGV);
+      return false;
+    }
+
     NewGV = copyGlobalValueProto(TypeMap, SGV, DGV);
 
     if (isPerformingImport() && !doImportAsDefinition(SGV))
@@ -1451,7 +1459,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   NewGV->setUnnamedAddr(HasUnnamedAddr);
 
   if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
-    if (C && LinkFromSrc)
+    if (C)
       NewGO->setComdat(C);
 
     if (DGV && DGV->hasCommonLinkage() && SGV->hasCommonLinkage())
@@ -1834,38 +1842,6 @@ static std::string mergeTriples(const Triple &SrcTriple, const Triple &DstTriple
   return DstTriple.str();
 }
 
-bool ModuleLinker::linkIfNeeded(GlobalValue &GV) {
-  GlobalValue *DGV = getLinkedToGlobal(&GV);
-
-  if (shouldLinkOnlyNeeded() && !(DGV && DGV->isDeclaration()))
-    return false;
-
-  if (DGV && !GV.hasLocalLinkage()) {
-    GlobalValue::VisibilityTypes Visibility =
-        getMinVisibility(DGV->getVisibility(), GV.getVisibility());
-    DGV->setVisibility(Visibility);
-    GV.setVisibility(Visibility);
-  }
-
-  if (const Comdat *SC = GV.getComdat()) {
-    bool LinkFromSrc;
-    Comdat::SelectionKind SK;
-    std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
-    if (!LinkFromSrc) {
-      DoNotLinkFromSource.insert(&GV);
-      return false;
-    }
-  }
-
-  if (!DGV && !shouldOverrideFromSrc() &&
-      (GV.hasLocalLinkage() || GV.hasLinkOnceLinkage() ||
-       GV.hasAvailableExternallyLinkage())) {
-    return false;
-  }
-  MapValue(&GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
-  return HasError;
-}
-
 bool ModuleLinker::run() {
   assert(DstM && "Null destination module");
   assert(SrcM && "Null source module");
@@ -1925,30 +1901,24 @@ bool ModuleLinker::run() {
   // Upgrade mismatched global arrays.
   upgradeMismatchedGlobals();
 
-  for (GlobalVariable &GV : SrcM->globals())
-    if (const Comdat *SC = GV.getComdat())
-      ComdatMembers[SC].push_back(&GV);
-
-  for (Function &SF : *SrcM)
-    if (const Comdat *SC = SF.getComdat())
-      ComdatMembers[SC].push_back(&SF);
-
-  for (GlobalAlias &GA : SrcM->aliases())
-    if (const Comdat *SC = GA.getComdat())
-      ComdatMembers[SC].push_back(&GA);
-
   // Insert all of the globals in src into the DstM module... without linking
   // initializers (which could refer to functions not yet mapped over).
   for (GlobalVariable &GV : SrcM->globals())
-    if (linkIfNeeded(GV))
+    if (linkGlobalValueProto(&GV))
       return true;
 
-  for (Function &SF : *SrcM)
-    if (linkIfNeeded(SF))
+  // Link the functions together between the two modules, without doing function
+  // bodies... this just adds external function prototypes to the DstM
+  // function...  We do this so that when we begin processing function bodies,
+  // all of the global values that may be referenced are available in our
+  // ValueMap.
+  for (Function &F :*SrcM)
+    if (linkGlobalValueProto(&F))
       return true;
 
+  // If there were any aliases, link them now.
   for (GlobalAlias &GA : SrcM->aliases())
-    if (linkIfNeeded(GA))
+    if (linkGlobalValueProto(&GA))
       return true;
 
   for (AppendingVarInfo &AppendingVar : AppendingVars)
@@ -1961,6 +1931,37 @@ bool ModuleLinker::run() {
     const GlobalValue *GV = SrcM->getNamedValue(C.getName());
     if (GV)
       MapValue(GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
+  }
+
+  // Link in the function bodies that are defined in the source module into
+  // DstM.
+  for (Function &SF : *SrcM) {
+    // Skip if no body (function is external).
+    if (SF.isDeclaration())
+      continue;
+
+    // Skip if not linking from source.
+    if (DoNotLinkFromSource.count(&SF))
+      continue;
+
+    if (linkGlobalValueBody(SF))
+      return true;
+  }
+
+  // Resolve all uses of aliases with aliasees.
+  for (GlobalAlias &Src : SrcM->aliases()) {
+    if (DoNotLinkFromSource.count(&Src))
+      continue;
+    linkGlobalValueBody(Src);
+  }
+
+  // Update the initializers in the DstM module now that all globals that may
+  // be referenced are in DstM.
+  for (GlobalVariable &Src : SrcM->globals()) {
+    // Only process initialized GV's or ones not already in dest.
+    if (!Src.hasInitializer() || DoNotLinkFromSource.count(&Src))
+      continue;
+    linkGlobalValueBody(Src);
   }
 
   // Note that we are done linking global value bodies. This prevents
