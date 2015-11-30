@@ -19,12 +19,14 @@
 #include "tsan_flags.h"
 
 // May be overriden by front-end.
-extern "C" void WEAK __sanitizer_malloc_hook(void *ptr, uptr size) {
+SANITIZER_WEAK_DEFAULT_IMPL
+void __sanitizer_malloc_hook(void *ptr, uptr size) {
   (void)ptr;
   (void)size;
 }
 
-extern "C" void WEAK __sanitizer_free_hook(void *ptr) {
+SANITIZER_WEAK_DEFAULT_IMPL
+void __sanitizer_free_hook(void *ptr) {
   (void)ptr;
 }
 

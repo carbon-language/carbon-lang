@@ -34,7 +34,8 @@ static const char *const std_suppressions =
 "race:std::_Sp_counted_ptr_inplace<std::thread::_Impl\n";
 
 // Can be overriden in frontend.
-extern "C" const char *WEAK __tsan_default_suppressions() {
+SANITIZER_WEAK_DEFAULT_IMPL
+const char *__tsan_default_suppressions() {
   return 0;
 }
 #endif
