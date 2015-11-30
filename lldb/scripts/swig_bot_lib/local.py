@@ -23,34 +23,32 @@ import zipfile
 # LLDB modules
 import use_lldb_suite
 
-class GenOptions(object):
+# Package imports
+from lldbsuite.support import fs
+
+class LocalConfig(object):
     src_root = None
     target_dir = None
     languages = None
     swig_executable = None
 
-def pack_archive(config_json, options):
+def pack_archive(bytes_io, src_root, filters):
     logging.info("Creating input file package...")
-    zip_data = io.BytesIO()
     zip_file = None
     try:
         # It's possible that a custom-built interpreter will not have the
         # standard zlib module.  If so, we can only store, not compress.  By
         # try to compress since we usually have a standard Python distribution.
-        zip_file = zipfile.ZipFile(zip_data, mode='w',
+        zip_file = zipfile.ZipFile(bytes_io, mode='w',
                                    compression=zipfile.ZIP_DEFLATED)
     except RuntimeError:
-        zip_file = zipfile.ZipFile(zip_data, mode='w',
+        zip_file = zipfile.ZipFile(bytes_io, mode='w',
                                    compression=zipfile.ZIP_STORED)
 
-    filters = [("include/lldb", ".h"),
-               ("scripts", ".swig"),
-               ("scripts/Python", ".swig"),
-               ("scripts/interface", ".i")]
     def filter_func(t):
         subfolder = t[0]
         ext = t[1]
-        full_path = os.path.normpath(os.path.join(options.src_root, subfolder))
+        full_path = os.path.normpath(os.path.join(src_root, subfolder))
         candidates = [os.path.normpath(os.path.join(full_path, f))
                       for f in os.listdir(full_path)]
         actual = filter(
@@ -65,14 +63,11 @@ def pack_archive(config_json, options):
         for file in files:
             relative_path = os.path.normpath(os.path.join(subfolder, file))
             full_path = os.path.normpath(
-                os.path.join(options.src_root, relative_path))
+                os.path.join(src_root, relative_path))
             logging.info("{} -> {}".format(full_path, relative_path))
             zip_file.write(full_path, relative_path)
 
-    logging.info("(null) -> config.json")
-    zip_file.writestr("config.json", config_json)
-    zip_file.close()
-    return zip_data.getvalue()
+    return zip_file
 
 def unpack_archive(subfolder, archive_bytes):
     tempfolder = os.path.join(tempfile.gettempdir(), subfolder)
