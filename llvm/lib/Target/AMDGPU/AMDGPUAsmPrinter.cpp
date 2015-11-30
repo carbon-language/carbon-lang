@@ -401,6 +401,11 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
     ProgInfo.NumSGPR = AMDGPUSubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
   }
 
+  if (MFI->NumUserSGPRs > STM.getMaxNumUserSGPRs()) {
+    LLVMContext &Ctx = MF.getFunction()->getContext();
+    Ctx.emitError("too many user SGPRs used");
+  }
+
   ProgInfo.VGPRBlocks = (ProgInfo.NumVGPR - 1) / 4;
   ProgInfo.SGPRBlocks = (ProgInfo.NumSGPR - 1) / 8;
   // Set the value to initialize FP_ROUND and FP_DENORM parts of the mode
