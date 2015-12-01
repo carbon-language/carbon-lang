@@ -459,9 +459,6 @@ private:
   /// Check if we should promote the given local value to global scope.
   bool doPromoteLocalToGlobal(const GlobalValue *SGV);
 
-  /// Check if all global value body linking is complete.
-  bool doneLinkingBodies() { return DoneLinkingBodies; }
-
   bool shouldLinkFromSource(bool &LinkFromSrc, const GlobalValue &Dest,
                             const GlobalValue &Src);
 
@@ -886,7 +883,7 @@ Value *ModuleLinker::materializeDeclFor(Value *V) {
   // If we are done linking global value bodies (i.e. we are performing
   // metadata linking), don't link in the global value due to this
   // reference, simply map it to null.
-  if (doneLinkingBodies())
+  if (DoneLinkingBodies)
     return nullptr;
 
   linkGlobalValueProto(SGV);
