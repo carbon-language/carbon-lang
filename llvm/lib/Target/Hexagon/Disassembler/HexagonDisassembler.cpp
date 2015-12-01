@@ -568,7 +568,7 @@ static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     Hexagon::CS0, Hexagon::CS1, Hexagon::UPCL, Hexagon::UPC
   };
 
-  if (RegNo >= sizeof(CtrlRegDecoderTable) / sizeof(CtrlRegDecoderTable[0]))
+  if (RegNo >= array_lengthof(CtrlRegDecoderTable))
     return MCDisassembler::Fail;
 
   if (CtrlRegDecoderTable[RegNo] == Hexagon::NoRegister)
@@ -592,7 +592,7 @@ static DecodeStatus DecodeCtrRegs64RegisterClass(MCInst &Inst, unsigned RegNo,
       Hexagon::UPC,    Hexagon::NoRegister
   };
 
-  if (RegNo >= sizeof(CtrlReg64DecoderTable) / sizeof(CtrlReg64DecoderTable[0]))
+  if (RegNo >= array_lengthof(CtrlReg64DecoderTable))
     return MCDisassembler::Fail;
 
   if (CtrlReg64DecoderTable[RegNo] == Hexagon::NoRegister)
