@@ -61,10 +61,8 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
       OpenedHandles = new DenseSet<HMODULE>();
 
     if (!fEnumerateLoadedModules) {
-      if (!loadDebugHelp()) {
-        assert(false && "These APIs should always be available");
-        return DynamicLibrary();
-      }
+      assert(loadDebugHelp() && "These APIs should always be available");
+      return DynamicLibrary();
     }
 
     fEnumerateLoadedModules(GetCurrentProcess(), ELM_Callback, 0);
