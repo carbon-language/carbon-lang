@@ -1,5 +1,5 @@
 // RUN: %clangxx -fsanitize=integer %s -o %t
-// RUN: %t 2>&1 | FileCheck %s --check-prefix=CHECK-NOTYPE
+// RUN: %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-NOTYPE
 // RUN: %env_ubsan_opts=report_error_type=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-TYPE
 // REQUIRES: ubsan-asan
 
