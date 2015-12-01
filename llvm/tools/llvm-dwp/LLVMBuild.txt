@@ -1,4 +1,4 @@
-;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===;
+;===- ./tools/llvm-dwp/LLVMBuild.txt ---------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,37 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories =
- bugpoint
- dsymutil
- llc
- lli
- llvm-ar
- llvm-as
- llvm-bcanalyzer
- llvm-cov
- llvm-diff
- llvm-dis
- llvm-dwarfdump
- llvm-dwp
- llvm-extract
- llvm-jitlistener
- llvm-link
- llvm-lto
- llvm-mc
- llvm-mcmarkup
- llvm-nm
- llvm-objdump
- llvm-pdbdump
- llvm-profdata
- llvm-rtdyld
- llvm-size
- llvm-split
- opt
- verify-uselistorder
-
 [component_0]
-type = Group
-name = Tools
-parent = $ROOT
+type = Tool
+name = llvm-dwp
+parent = Tools
+required_libraries = AsmPrinter DebugInfoDWARF MC Object Support all-targets
+
