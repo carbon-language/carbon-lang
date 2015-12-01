@@ -6715,16 +6715,16 @@ static const uint16_t ReplaceableInstrsAVX2[][3] = {
 // domains, but they require a bit more work than just switching opcodes.
 
 static const uint16_t *lookup(unsigned opcode, unsigned domain) {
-  for (unsigned i = 0, e = array_lengthof(ReplaceableInstrs); i != e; ++i)
-    if (ReplaceableInstrs[i][domain-1] == opcode)
-      return ReplaceableInstrs[i];
+  for (const uint16_t (&Row)[3] : ReplaceableInstrs)
+    if (Row[domain-1] == opcode)
+      return Row;
   return nullptr;
 }
 
 static const uint16_t *lookupAVX2(unsigned opcode, unsigned domain) {
-  for (unsigned i = 0, e = array_lengthof(ReplaceableInstrsAVX2); i != e; ++i)
-    if (ReplaceableInstrsAVX2[i][domain-1] == opcode)
-      return ReplaceableInstrsAVX2[i];
+  for (const uint16_t (&Row)[3] : ReplaceableInstrsAVX2)
+    if (Row[domain-1] == opcode)
+      return Row;
   return nullptr;
 }
 
