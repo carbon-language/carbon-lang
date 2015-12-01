@@ -2032,7 +2032,7 @@ bool Linker::IdentifiedStructTypeSet::hasType(StructType *Ty) {
   return *I == Ty;
 }
 
-void Linker::init(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
+Linker::Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
   this->Composite = M;
   this->DiagnosticHandler = DiagnosticHandler;
 
@@ -2046,15 +2046,10 @@ void Linker::init(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
   }
 }
 
-Linker::Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
-  init(M, DiagnosticHandler);
-}
-
-Linker::Linker(Module *M) {
-  init(M, [this](const DiagnosticInfo &DI) {
-    Composite->getContext().diagnose(DI);
-  });
-}
+Linker::Linker(Module *M)
+    : Linker(M, [this](const DiagnosticInfo &DI) {
+        Composite->getContext().diagnose(DI);
+      }) {}
 
 void Linker::deleteModule() {
   delete Composite;

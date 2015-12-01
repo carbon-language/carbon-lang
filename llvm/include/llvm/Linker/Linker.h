@@ -93,7 +93,6 @@ public:
                           unsigned Flags = Flags::None);
 
 private:
-  void init(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
   Module *Composite;
 
   IdentifiedStructTypeSet IdentifiedStructTypes;
