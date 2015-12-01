@@ -412,12 +412,12 @@ class ModuleLinker {
   /// from this source module, in which case we must conservatively assume
   /// that any of its functions may be imported into another module
   /// as part of a different backend compilation process.
-  bool HasExportedFunctions;
+  bool HasExportedFunctions = false;
 
   /// Set to true when all global value body linking is complete (including
   /// lazy linking). Used to prevent metadata linking from creating new
   /// references.
-  bool DoneLinkingBodies;
+  bool DoneLinkingBodies = false;
 
   bool HasError = false;
 
@@ -428,8 +428,7 @@ public:
                Function *FuncToImport = nullptr)
       : DstM(DstM), SrcM(SrcM), TypeMap(Set), ValMaterializer(this),
         DiagnosticHandler(DiagnosticHandler), Flags(Flags), ImportIndex(Index),
-        ImportFunction(FuncToImport), HasExportedFunctions(false),
-        DoneLinkingBodies(false) {
+        ImportFunction(FuncToImport) {
     assert((ImportIndex || !ImportFunction) &&
            "Expect a FunctionInfoIndex when importing");
     // If we have a FunctionInfoIndex but no function to import,
