@@ -2071,10 +2071,6 @@ bool Linker::linkInModule(Module *Src, unsigned Flags,
   return RetCode;
 }
 
-void Linker::setModule(Module *Dst) {
-  init(Dst, DiagnosticHandler);
-}
-
 //===----------------------------------------------------------------------===//
 // LinkModules entrypoint.
 //===----------------------------------------------------------------------===//

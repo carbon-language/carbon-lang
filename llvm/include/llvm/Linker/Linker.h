@@ -85,9 +85,6 @@ public:
                     const FunctionInfoIndex *Index = nullptr,
                     Function *FuncToImport = nullptr);
 
-  /// \brief Set the composite to the passed-in module.
-  void setModule(Module *Dst);
-
   static bool LinkModules(Module *Dest, Module *Src,
                           DiagnosticHandlerFunction DiagnosticHandler,
                           unsigned Flags = Flags::None);
