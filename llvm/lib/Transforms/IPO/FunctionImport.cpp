@@ -124,15 +124,15 @@ bool FunctionImporter::importFunctions(Module &M) {
     auto *Summary = Info->functionSummary();
     if (!Summary) {
       // FIXME: in case we are lazyloading summaries, we can do it now.
-      dbgs() << "Missing summary for  " << CalledFunctionName
-             << ", error at import?\n";
+      DEBUG(dbgs() << "Missing summary for  " << CalledFunctionName
+                   << ", error at import?\n");
       llvm_unreachable("Missing summary");
     }
 
     if (Summary->instCount() > ImportInstrLimit) {
-      dbgs() << "Skip import of " << CalledFunctionName << " with "
-             << Summary->instCount() << " instructions (limit "
-             << ImportInstrLimit << ")\n";
+      DEBUG(dbgs() << "Skip import of " << CalledFunctionName << " with "
+                   << Summary->instCount() << " instructions (limit "
+                   << ImportInstrLimit << ")\n");
       continue;
     }
 
