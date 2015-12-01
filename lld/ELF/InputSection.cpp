@@ -132,7 +132,7 @@ void InputSectionBase<ELFT>::relocate(
     if (Target->isTlsGlobalDynamicReloc(Type) &&
         !Target->isTlsOptimized(Type, &Body)) {
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getEntryAddr(Body) +
+                          Out<ELFT>::Got->getGlobalDynAddr(Body) +
                               getAddend<ELFT>(RI));
       continue;
     }
