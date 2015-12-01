@@ -365,9 +365,6 @@ public:
     return CurrSetPressure;
   }
 
-  void discoverLiveOut(unsigned Reg);
-  void discoverLiveIn(unsigned Reg);
-
   bool isTopClosed() const;
   bool isBottomClosed() const;
 
@@ -442,6 +439,9 @@ public:
   void dump() const;
 
 protected:
+  void discoverLiveOut(unsigned Reg);
+  void discoverLiveIn(unsigned Reg);
+
   const LiveRange *getLiveRange(unsigned Reg) const;
 
   void increaseRegPressure(ArrayRef<unsigned> Regs);
