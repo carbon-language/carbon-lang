@@ -34,7 +34,6 @@
 #include <tuple>
 using namespace llvm;
 
-
 //===----------------------------------------------------------------------===//
 // TypeMap implementation.
 //===----------------------------------------------------------------------===//
@@ -42,22 +41,22 @@ using namespace llvm;
 namespace {
 class TypeMapTy : public ValueMapTypeRemapper {
   /// This is a mapping from a source type to a destination type to use.
-  DenseMap<Type*, Type*> MappedTypes;
+  DenseMap<Type *, Type *> MappedTypes;
 
   /// When checking to see if two subgraphs are isomorphic, we speculatively
   /// add types to MappedTypes, but keep track of them here in case we need to
   /// roll back.
-  SmallVector<Type*, 16> SpeculativeTypes;
+  SmallVector<Type *, 16> SpeculativeTypes;
 
-  SmallVector<StructType*, 16> SpeculativeDstOpaqueTypes;
+  SmallVector<StructType *, 16> SpeculativeDstOpaqueTypes;
 
   /// This is a list of non-opaque structs in the source module that are mapped
   /// to an opaque struct in the destination module.
-  SmallVector<StructType*, 16> SrcDefinitionsToResolve;
+  SmallVector<StructType *, 16> SrcDefinitionsToResolve;
 
   /// This is the set of opaque types in the destination modules who are
   /// getting a body from the source module.
-  SmallPtrSet<StructType*, 16> DstResolvedOpaqueTypes;
+  SmallPtrSet<StructType *, 16> DstResolvedOpaqueTypes;
 
 public:
   TypeMapTy(Linker::IdentifiedStructTypeSet &DstStructTypesSet)
@@ -179,7 +178,7 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
 
   // Fail if any of the extra properties (e.g. array size) of the type disagree.
   if (isa<IntegerType>(DstTy))
-    return false;  // bitwidth disagrees.
+    return false; // bitwidth disagrees.
   if (PointerType *PT = dyn_cast<PointerType>(DstTy)) {
     if (PT->getAddressSpace() != cast<PointerType>(SrcTy)->getAddressSpace())
       return false;
@@ -215,7 +214,7 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
 }
 
 void TypeMapTy::linkDefinedTypeBodies() {
-  SmallVector<Type*, 16> Elements;
+  SmallVector<Type *, 16> Elements;
   for (StructType *SrcSTy : SrcDefinitionsToResolve) {
     StructType *DstSTy = cast<StructType>(MappedTypes[SrcSTy]);
     assert(DstSTy->isOpaque());
@@ -596,10 +595,10 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
   // If there is a conflict, rename the conflict.
   if (GlobalValue *ConflictGV = M->getNamedValue(Name)) {
     GV->takeName(ConflictGV);
-    ConflictGV->setName(Name);    // This will cause ConflictGV to get renamed
+    ConflictGV->setName(Name); // This will cause ConflictGV to get renamed
     assert(ConflictGV->getName() != Name && "forceRenaming didn't work");
   } else {
-    GV->setName(Name);              // Force the name back
+    GV->setName(Name); // Force the name back
   }
 }
 
@@ -1534,7 +1533,7 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dst.arg_begin();
   for (Argument &Arg : Src.args()) {
-    DI->setName(Arg.getName());  // Copy the name over.
+    DI->setName(Arg.getName()); // Copy the name over.
 
     // Add a mapping to our mapping.
     ValueMap[&Arg] = &*DI;
@@ -1625,7 +1624,8 @@ void ModuleLinker::linkNamedMDNodes() {
 bool ModuleLinker::linkModuleFlagsMetadata() {
   // If the source module has no module flags, we are done.
   const NamedMDNode *SrcModFlags = SrcM.getModuleFlagsMetadata();
-  if (!SrcModFlags) return false;
+  if (!SrcModFlags)
+    return false;
 
   // If the destination module doesn't have module flags yet, then just copy
   // over the source module's flags.
@@ -1639,7 +1639,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
 
   // First build a map of the existing module flags and requirements.
   DenseMap<MDString *, std::pair<MDNode *, unsigned>> Flags;
-  SmallSetVector<MDNode*, 16> Requirements;
+  SmallSetVector<MDNode *, 16> Requirements;
   for (unsigned I = 0, E = DstModFlags->getNumOperands(); I != E; ++I) {
     MDNode *Op = DstModFlags->getOperand(I);
     ConstantInt *Behavior = mdconst::extract<ConstantInt>(Op->getOperand(0));
@@ -1720,7 +1720,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     // Perform the merge for standard behavior types.
     switch (SrcBehaviorValue) {
     case Module::Require:
-    case Module::Override: llvm_unreachable("not possible");
+    case Module::Override:
+      llvm_unreachable("not possible");
     case Module::Error: {
       // Emit an error if the values differ.
       if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
@@ -1783,16 +1784,15 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
 static bool triplesMatch(const Triple &T0, const Triple &T1) {
   // If vendor is apple, ignore the version number.
   if (T0.getVendor() == Triple::Apple)
-    return T0.getArch() == T1.getArch() &&
-           T0.getSubArch() == T1.getSubArch() &&
-           T0.getVendor() == T1.getVendor() &&
-           T0.getOS() == T1.getOS();
+    return T0.getArch() == T1.getArch() && T0.getSubArch() == T1.getSubArch() &&
+           T0.getVendor() == T1.getVendor() && T0.getOS() == T1.getOS();
 
   return T0 == T1;
 }
 
 // This function returns the merged triple.
-static std::string mergeTriples(const Triple &SrcTriple, const Triple &DstTriple) {
+static std::string mergeTriples(const Triple &SrcTriple,
+                                const Triple &DstTriple) {
   // If vendor is apple, pick the triple with the larger version number.
   if (SrcTriple.getVendor() == Triple::Apple)
     if (DstTriple.isOSVersionLT(SrcTriple))
