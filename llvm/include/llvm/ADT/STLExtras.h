@@ -371,6 +371,14 @@ bool all_of(R &&Range, UnaryPredicate &&P) {
                      std::forward<UnaryPredicate>(P));
 }
 
+/// Provide wrappers to std::any_of which take ranges instead of having to pass
+/// begin/end explicitly.
+template <typename R, class UnaryPredicate>
+bool any_of(R &&Range, UnaryPredicate &&P) {
+  return std::any_of(Range.begin(), Range.end(),
+                     std::forward<UnaryPredicate>(P));
+}
+
 //===----------------------------------------------------------------------===//
 //     Extra additions to <memory>
 //===----------------------------------------------------------------------===//
