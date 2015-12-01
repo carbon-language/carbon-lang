@@ -40,8 +40,9 @@ static int error(const Twine &Error, const Twine &Context) {
 
 static std::error_code
 writeStringsAndOffsets(MCStreamer &Out, StringMap<uint32_t> &Strings,
-                       uint32_t &StringOffset, MCSection *StrOffsetSection,
-                       StringRef CurStrSection, StringRef CurStrOffsetSection) {
+                       uint32_t &StringOffset, MCSection *StrSection,
+                       MCSection *StrOffsetSection, StringRef CurStrSection,
+                       StringRef CurStrOffsetSection) {
   // Could possibly produce an error or warning if one of these was non-null but
   // the other was null.
   if (CurStrSection.empty() || CurStrOffsetSection.empty())
@@ -54,9 +55,14 @@ writeStringsAndOffsets(MCStreamer &Out, StringMap<uint32_t> &Strings,
   uint32_t PrevOffset = 0;
   while (const char *s = Data.getCStr(&LocalOffset)) {
     StringRef Str(s, LocalOffset - PrevOffset - 1);
-    OffsetRemapping[PrevOffset] = StringOffset;
-    // insert, if successful, write new string to the str.dwo section
-    StringOffset += Str.size() + 1;
+    auto Pair = Strings.insert(std::make_pair(Str, StringOffset));
+    if (Pair.second) {
+      Out.SwitchSection(StrSection);
+      Out.EmitBytes(
+          StringRef(Pair.first->getKeyData(), Pair.first->getKeyLength() + 1));
+      StringOffset += Str.size() + 1;
+    }
+    OffsetRemapping[PrevOffset] = Pair.first->second;
     PrevOffset = LocalOffset;
   }
 
@@ -106,19 +112,19 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         StringRef Contents;
         if (auto Err = Section.getContents(Contents))
           return Err;
-        if (OutSection == StrOffsetSection) {
+        if (OutSection == StrOffsetSection)
           CurStrOffsetSection = Contents;
-          continue;
-        }
-        if (OutSection == StrSection)
+        else if (OutSection == StrSection)
           CurStrSection = Contents;
-        Out.SwitchSection(OutSection);
-        Out.EmitBytes(Contents);
+        else {
+          Out.SwitchSection(OutSection);
+          Out.EmitBytes(Contents);
+        }
       }
     }
-    if (auto Err =
-            writeStringsAndOffsets(Out, Strings, StringOffset, StrOffsetSection,
-                                   CurStrSection, CurStrOffsetSection))
+    if (auto Err = writeStringsAndOffsets(Out, Strings, StringOffset,
+                                          StrSection, StrOffsetSection,
+                                          CurStrSection, CurStrOffsetSection))
       return Err;
   }
   return std::error_code();
