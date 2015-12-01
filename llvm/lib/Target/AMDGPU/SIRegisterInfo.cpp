@@ -566,8 +566,9 @@ bool SIRegisterInfo::opCanUseInlineConstant(unsigned OpType) const {
 unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
                                            enum PreloadedValue Value) const {
 
-  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
   const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
+  (void)ST;
   switch (Value) {
   case SIRegisterInfo::WORKGROUP_ID_X:
     assert(MFI->hasWorkGroupIDX());
