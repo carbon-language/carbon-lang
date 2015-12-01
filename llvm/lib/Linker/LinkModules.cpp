@@ -401,14 +401,6 @@ class ModuleLinker {
   /// but this allows us to reuse the ValueMapper code.
   ValueToValueMapTy ValueMap;
 
-  struct AppendingVarInfo {
-    GlobalVariable *NewGV;   // New aggregate global in dest module.
-    const Constant *DstInit; // Old initializer from dest module.
-    const Constant *SrcInit; // Old initializer from src module.
-  };
-
-  std::vector<AppendingVarInfo> AppendingVars;
-
   // Set of items not to link in from source.
   SmallPtrSet<const GlobalValue *, 16> DoNotLinkFromSource;
 
@@ -540,8 +532,6 @@ private:
 
   bool linkGlobalValueProto(GlobalValue *GV);
   bool linkModuleFlagsMetadata();
-
-  void linkAppendingVarInit(AppendingVarInfo &AVI);
 
   void linkGlobalInit(GlobalVariable &Dst, GlobalVariable &Src);
   bool linkFunctionBody(Function &Dst, Function &Src);
@@ -1318,6 +1308,14 @@ void ModuleLinker::upgradeMismatchedGlobals() {
   upgradeMismatchedGlobalArray("llvm.global_dtors");
 }
 
+static void getArrayElements(const Constant *C,
+                             SmallVectorImpl<Constant *> &Dest) {
+  unsigned NumElements = cast<ArrayType>(C->getType())->getNumElements();
+
+  for (unsigned i = 0; i != NumElements; ++i)
+    Dest.push_back(C->getAggregateElement(i));
+}
+
 /// If there were any appending global variables, link them together now.
 /// Return true on error.
 bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
@@ -1326,10 +1324,8 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
       cast<ArrayType>(TypeMap.get(SrcGV->getType()->getElementType()));
   Type *EltTy = SrcTy->getElementType();
 
-  uint64_t NewSize = SrcTy->getNumElements();
   if (DstGV) {
     ArrayType *DstTy = cast<ArrayType>(DstGV->getType()->getElementType());
-    NewSize += DstTy->getNumElements();
 
     if (!SrcGV->hasAppendingLinkage() || !DstGV->hasAppendingLinkage())
       return emitError(
@@ -1359,6 +1355,27 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
           "Appending variables with different section name need to be linked!");
   }
 
+  SmallVector<Constant *, 16> DstElements;
+  if (DstGV)
+    getArrayElements(DstGV->getInitializer(), DstElements);
+
+  SmallVector<Constant *, 16> SrcElements;
+  getArrayElements(SrcGV->getInitializer(), SrcElements);
+
+  StringRef Name = SrcGV->getName();
+  bool IsNewStructor =
+      (Name == "llvm.global_ctors" || Name == "llvm.global_dtors") &&
+      cast<StructType>(EltTy)->getNumElements() == 3;
+  if (IsNewStructor)
+    SrcElements.erase(
+        std::remove_if(SrcElements.begin(), SrcElements.end(),
+                       [this](Constant *E) {
+                         auto *Key = dyn_cast<GlobalValue>(
+                             E->getAggregateElement(2)->stripPointerCasts());
+                         return DoNotLinkFromSource.count(Key);
+                       }),
+        SrcElements.end());
+  uint64_t NewSize = DstElements.size() + SrcElements.size();
   ArrayType *NewType = ArrayType::get(EltTy, NewSize);
 
   // Create the new global variable.
@@ -1370,23 +1387,21 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   // Propagate alignment, visibility and section info.
   copyGVAttributes(NG, SrcGV);
 
-  AppendingVarInfo AVI;
-  AVI.NewGV = NG;
-  AVI.DstInit = DstGV ? DstGV->getInitializer() : nullptr;
-  AVI.SrcInit = SrcGV->getInitializer();
-  AppendingVars.push_back(AVI);
-
   // Replace any uses of the two global variables with uses of the new
   // global.
   ValueMap[SrcGV] = ConstantExpr::getBitCast(NG, TypeMap.get(SrcGV->getType()));
+
+  for (auto *V : SrcElements) {
+    DstElements.push_back(
+        MapValue(V, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer));
+  }
+
+  NG->setInitializer(ConstantArray::get(NewType, DstElements));
 
   if (DstGV) {
     DstGV->replaceAllUsesWith(ConstantExpr::getBitCast(NG, DstGV->getType()));
     DstGV->eraseFromParent();
   }
-
-  // Track the source variable so we don't try to link it.
-  DoNotLinkFromSource.insert(SrcGV);
 
   return false;
 }
@@ -1478,57 +1493,6 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   }
 
   return false;
-}
-
-static void getArrayElements(const Constant *C,
-                             SmallVectorImpl<Constant *> &Dest) {
-  unsigned NumElements = cast<ArrayType>(C->getType())->getNumElements();
-
-  for (unsigned i = 0; i != NumElements; ++i)
-    Dest.push_back(C->getAggregateElement(i));
-}
-
-void ModuleLinker::linkAppendingVarInit(AppendingVarInfo &AVI) {
-  // Merge the initializer.
-  SmallVector<Constant *, 16> DstElements;
-  if (AVI.DstInit)
-    getArrayElements(AVI.DstInit, DstElements);
-
-  SmallVector<Constant *, 16> SrcElements;
-  getArrayElements(AVI.SrcInit, SrcElements);
-
-  ArrayType *NewType = cast<ArrayType>(AVI.NewGV->getType()->getElementType());
-
-  StringRef Name = AVI.NewGV->getName();
-  bool IsNewStructor =
-      (Name == "llvm.global_ctors" || Name == "llvm.global_dtors") &&
-      cast<StructType>(NewType->getElementType())->getNumElements() == 3;
-
-  for (auto *V : SrcElements) {
-    if (IsNewStructor) {
-      auto *Key =
-          dyn_cast<GlobalValue>(V->getAggregateElement(2)->stripPointerCasts());
-      if (DoNotLinkFromSource.count(Key))
-        continue;
-    }
-    DstElements.push_back(
-        MapValue(V, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer));
-  }
-  if (DstElements.size() != NewType->getNumElements()) {
-    NewType = ArrayType::get(NewType->getElementType(), DstElements.size());
-    GlobalVariable *Old = AVI.NewGV;
-    GlobalVariable *NG = new GlobalVariable(
-        *DstM, NewType, Old->isConstant(), Old->getLinkage(), /*init*/ nullptr,
-        /*name*/ "", Old, Old->getThreadLocalMode(),
-        Old->getType()->getAddressSpace());
-    copyGVAttributes(NG, Old);
-    AVI.NewGV->replaceAllUsesWith(
-        ConstantExpr::getBitCast(NG, AVI.NewGV->getType()));
-    AVI.NewGV->eraseFromParent();
-    AVI.NewGV = NG;
-  }
-
-  AVI.NewGV->setInitializer(ConstantArray::get(NewType, DstElements));
 }
 
 /// Update the initializers in the Dest module now that all globals that may be
@@ -1952,9 +1916,6 @@ bool ModuleLinker::run() {
   for (GlobalAlias &GA : SrcM->aliases())
     if (linkIfNeeded(GA))
       return true;
-
-  for (AppendingVarInfo &AppendingVar : AppendingVars)
-    linkAppendingVarInit(AppendingVar);
 
   for (const auto &Entry : DstM->getComdatSymbolTable()) {
     const Comdat &C = Entry.getValue();
