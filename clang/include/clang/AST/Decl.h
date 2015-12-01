@@ -3307,8 +3307,12 @@ public:
   bool hasVolatileMember() const { return HasVolatileMember; }
   void setHasVolatileMember (bool val) { HasVolatileMember = val; }
 
-  bool hasLoadedFieldsFromExternalStorage() const { return LoadedFieldsFromExternalStorage; }
-  void setHasLoadedFieldsFromExternalStorage (bool val) { LoadedFieldsFromExternalStorage = val; }
+  bool hasLoadedFieldsFromExternalStorage() const {
+    return LoadedFieldsFromExternalStorage;
+  }
+  void setHasLoadedFieldsFromExternalStorage(bool val) {
+    LoadedFieldsFromExternalStorage = val;
+  }
 
   /// \brief Determines whether this declaration represents the
   /// injected class name.
