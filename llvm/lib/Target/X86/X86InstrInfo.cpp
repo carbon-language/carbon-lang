@@ -3517,23 +3517,23 @@ unsigned X86InstrInfo::getFMA3OpcodeToCommuteOperands(MachineInstr *MI,
   bool IsIntrinOpcode;
   isFMA3(Opc, &IsIntrinOpcode);
 
-  unsigned GroupsNum;
+  size_t GroupsNum;
   const unsigned (*OpcodeGroups)[3];
   if (IsIntrinOpcode) {
-    GroupsNum = sizeof(IntrinOpcodeGroups) / sizeof(IntrinOpcodeGroups[0]);
+    GroupsNum = array_lengthof(IntrinOpcodeGroups);
     OpcodeGroups = IntrinOpcodeGroups;
   } else {
-    GroupsNum = sizeof(RegularOpcodeGroups) / sizeof(RegularOpcodeGroups[0]);
+    GroupsNum = array_lengthof(RegularOpcodeGroups);
     OpcodeGroups = RegularOpcodeGroups;
   }
 
   const unsigned *FoundOpcodesGroup = nullptr;
-  unsigned FormIndex;
+  size_t FormIndex;
 
   // Look for the input opcode in the corresponding opcodes table.
-  unsigned GroupIndex = 0;
-  for (; GroupIndex < GroupsNum && !FoundOpcodesGroup; GroupIndex++) {
-    for (FormIndex = 0; FormIndex < FormsNum; FormIndex++) {
+  for (size_t GroupIndex = 0; GroupIndex < GroupsNum && !FoundOpcodesGroup;
+         ++GroupIndex) {
+    for (FormIndex = 0; FormIndex < FormsNum; ++FormIndex) {
       if (OpcodeGroups[GroupIndex][FormIndex] == Opc) {
         FoundOpcodesGroup = OpcodeGroups[GroupIndex];
         break;
