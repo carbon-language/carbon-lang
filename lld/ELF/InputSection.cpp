@@ -113,7 +113,8 @@ void InputSectionBase<ELFT>::relocate(
     if (Target->isTlsLocalDynamicReloc(Type) &&
         !Target->isTlsOptimized(Type, nullptr)) {
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getLocalTlsIndexVA() +
+                          Out<ELFT>::Got->getVA() +
+                              Out<ELFT>::LocalModuleTlsIndexOffset +
                               getAddend<ELFT>(RI));
       continue;
     }
