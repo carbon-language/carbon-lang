@@ -47,12 +47,12 @@ CHECK: .debug_str.dwo contents:
 CHECK: "clang version
 CHECK: 0x[[ACPP:.*]]: "a.cpp"
 FIXME: Remove duplicates
-CHECK: "clang version
+CHECK: 0x[[SECONDREV:.*]]: "clang version
 CHECK: 0x[[BCPP:.*]]: "b.cpp"
 
 CHECK: .debug_str_offsets.dwo contents:
 CHECK: : 00000000
 CHECK: : [[ACPP]]
-CHECK: : 00000000
+CHECK: : [[SECONDREV]]
 FIXME: Update str offset indexes, this should be BCPP \/
-CHECK: : [[ACPP]]
+CHECK: : [[BCPP]]
