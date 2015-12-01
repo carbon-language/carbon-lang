@@ -60,10 +60,8 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
     if (OpenedHandles == 0)
       OpenedHandles = new DenseSet<HMODULE>();
 
-    if (!fEnumerateLoadedModules) {
+    if (!fEnumerateLoadedModules)
       assert(loadDebugHelp() && "These APIs should always be available");
-      return DynamicLibrary();
-    }
 
     fEnumerateLoadedModules(GetCurrentProcess(), ELM_Callback, 0);
     // Dummy library that represents "search all handles".
