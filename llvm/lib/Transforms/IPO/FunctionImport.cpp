@@ -136,10 +136,6 @@ bool FunctionImporter::importFunctions(Module &M) {
       continue;
     }
 
-    //
-    // No profitability notion right now, just import all the time...
-    //
-
     // Get the module path from the summary.
     auto FileName = Summary->modulePath();
     DEBUG(dbgs() << "Importing " << CalledFunctionName << " from " << FileName
