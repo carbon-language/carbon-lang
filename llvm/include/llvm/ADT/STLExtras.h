@@ -379,6 +379,13 @@ bool any_of(R &&Range, UnaryPredicate &&P) {
                      std::forward<UnaryPredicate>(P));
 }
 
+/// Provide wrappers to std::find which take ranges instead of having to pass
+/// begin/end explicitly.
+template<typename R, class T>
+auto find(R &&Range, const T &val) -> decltype(Range.begin()) {
+  return std::find(Range.begin(), Range.end(), val);
+}
+
 //===----------------------------------------------------------------------===//
 //     Extra additions to <memory>
 //===----------------------------------------------------------------------===//
