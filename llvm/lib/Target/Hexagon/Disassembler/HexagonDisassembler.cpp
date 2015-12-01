@@ -779,7 +779,7 @@ static DecodeStatus brtargetDecoder(MCInst &MI, unsigned tmp, uint64_t Address,
 // Please note that the instructions must be ordered in the descending order
 // of their opcode.
 // HexagonII::INST_ICLASS_ST
-static unsigned int StoreConditionalOpcodeData[][2] = {
+static const unsigned int StoreConditionalOpcodeData[][2] = {
     {S4_pstorerdfnew_abs, 0xafc02084},
     {S4_pstorerdtnew_abs, 0xafc02080},
     {S4_pstorerdf_abs, 0xafc00084},
@@ -825,18 +825,16 @@ static unsigned int LoadStoreOpcodeData[][2] = {{L4_loadrd_abs, 0x49c00000},
                                                 {S2_storerfabs, 0x48600000},
                                                 {S2_storerhabs, 0x48400000},
                                                 {S2_storerbabs, 0x48000000}};
-static int NumCondS =
-    sizeof(StoreConditionalOpcodeData) / sizeof(StoreConditionalOpcodeData[0]);
-static int NumLS = sizeof(LoadStoreOpcodeData) / sizeof(LoadStoreOpcodeData[0]);
+static const size_t NumCondS = array_lengthof(StoreConditionalOpcodeData);
+static const size_t NumLS = array_lengthof(LoadStoreOpcodeData);
 
 static DecodeStatus decodeSpecial(MCInst &MI, uint32_t insn) {
 
   unsigned MachineOpcode = 0;
   unsigned LLVMOpcode = 0;
-  int i;
 
   if ((insn & HexagonII::INST_ICLASS_MASK) == HexagonII::INST_ICLASS_ST) {
-    for (i = 0; i < NumCondS; ++i) {
+    for (size_t i = 0; i < NumCondS; ++i) {
       if ((insn & StoreConditionalOpcodeData[i][1]) ==
           StoreConditionalOpcodeData[i][1]) {
         MachineOpcode = StoreConditionalOpcodeData[i][1];
@@ -846,7 +844,7 @@ static DecodeStatus decodeSpecial(MCInst &MI, uint32_t insn) {
     }
   }
   if ((insn & HexagonII::INST_ICLASS_MASK) == HexagonII::INST_ICLASS_LD_ST_2) {
-    for (i = 0; i < NumLS; ++i) {
+    for (size_t i = 0; i < NumLS; ++i) {
       if ((insn & LoadStoreOpcodeData[i][1]) == LoadStoreOpcodeData[i][1]) {
         MachineOpcode = LoadStoreOpcodeData[i][1];
         LLVMOpcode = LoadStoreOpcodeData[i][0];
