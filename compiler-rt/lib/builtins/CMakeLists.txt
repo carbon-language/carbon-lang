@@ -154,7 +154,7 @@ if(APPLE)
     atomic_thread_fence.c)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 OR MINGW)
   set(GENERIC_SOURCES
       ${GENERIC_SOURCES}
       emutls.c)
