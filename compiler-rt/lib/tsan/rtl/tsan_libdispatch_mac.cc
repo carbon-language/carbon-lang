@@ -25,6 +25,8 @@
 #include <dispatch/dispatch.h>
 #include <pthread.h>
 
+typedef long long_t;  // NOLINT
+
 namespace __tsan {
 
 typedef struct {
@@ -164,6 +166,21 @@ TSAN_INTERCEPTOR(void, dispatch_once_f, dispatch_once_t *predicate,
   WRAP(dispatch_once)(predicate, ^(void) {
     function(context);
   });
+}
+
+TSAN_INTERCEPTOR(long_t, dispatch_semaphore_signal,
+                 dispatch_semaphore_t dsema) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_semaphore_signal, dsema);
+  Release(thr, pc, (uptr)dsema);
+  return REAL(dispatch_semaphore_signal)(dsema);
+}
+
+TSAN_INTERCEPTOR(long_t, dispatch_semaphore_wait, dispatch_semaphore_t dsema,
+                 dispatch_time_t timeout) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_semaphore_wait, dsema, timeout);
+  long_t result = REAL(dispatch_semaphore_wait)(dsema, timeout);
+  if (result == 0) Acquire(thr, pc, (uptr)dsema);
+  return result;
 }
 
 }  // namespace __tsan
