@@ -1181,7 +1181,7 @@ bool TwoAddressInstructionPass::tryInstructionCommute(MachineInstr *MI,
   unsigned OtherOpIdx = MI->getDesc().getNumDefs();
   for (; OtherOpIdx < OpsNum; OtherOpIdx++) {
     // The call of findCommutedOpIndices below only checks if BaseOpIdx
-    // and OtherOpIdx are commutable, it does not really searches for
+    // and OtherOpIdx are commutable, it does not really search for
     // other commutable operands and does not change the values of passed
     // variables.
     if (OtherOpIdx == BaseOpIdx ||
