@@ -137,6 +137,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_cancellation_point:
   case OMPD_cancel:
   case OMPD_target_data:
+  case OMPD_taskloop:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
     break;
@@ -232,7 +233,8 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_target:
   case OMPD_teams:
   case OMPD_taskgroup:
-  case OMPD_target_data: {
+  case OMPD_target_data:
+  case OMPD_taskloop: {
     ConsumeToken();
     // Parse directive name of the 'critical' directive if any.
     if (DKind == OMPD_critical) {

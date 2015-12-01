@@ -2542,10 +2542,18 @@ CodeGenFunction::getOMPCancelDestination(OpenMPDirectiveKind Kind) {
 // Generate the instructions for '#pragma omp target data' directive.
 void CodeGenFunction::EmitOMPTargetDataDirective(
     const OMPTargetDataDirective &S) {
-
   // emit the code inside the construct for now
   auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
   CGM.getOpenMPRuntime().emitInlinedDirective(
       *this, OMPD_target_data,
       [&CS](CodeGenFunction &CGF) { CGF.EmitStmt(CS->getCapturedStmt()); });
 }
+
+void CodeGenFunction::EmitOMPTaskLoopDirective(const OMPTaskLoopDirective &S) {
+  // emit the code inside the construct for now
+  auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
+  CGM.getOpenMPRuntime().emitInlinedDirective(
+      *this, OMPD_taskloop,
+      [&CS](CodeGenFunction &CGF) { CGF.EmitStmt(CS->getCapturedStmt()); });
+}
+

@@ -2239,6 +2239,11 @@ void ASTStmtWriter::VisitOMPCancelDirective(OMPCancelDirective *D) {
   Code = serialization::STMT_OMP_CANCEL_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPTaskLoopDirective(OMPTaskLoopDirective *D) {
+  VisitOMPLoopDirective(D);
+  Code = serialization::STMT_OMP_TASKLOOP_DIRECTIVE;
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//

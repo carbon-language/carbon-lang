@@ -2412,6 +2412,10 @@ void ASTStmtReader::VisitOMPCancelDirective(OMPCancelDirective *D) {
   D->setCancelRegion(static_cast<OpenMPDirectiveKind>(Record[Idx++]));
 }
 
+void ASTStmtReader::VisitOMPTaskLoopDirective(OMPTaskLoopDirective *D) {
+  VisitOMPLoopDirective(D);
+}
+
 //===----------------------------------------------------------------------===//
 // ASTReader Implementation
 //===----------------------------------------------------------------------===//
@@ -3033,6 +3037,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = OMPCancelDirective::CreateEmpty(
           Context, Record[ASTStmtReader::NumStmtFields], Empty);
       break;
+
+    case STMT_OMP_TASKLOOP_DIRECTIVE: {
+      unsigned NumClauses = Record[ASTStmtReader::NumStmtFields];
+      unsigned CollapsedNum = Record[ASTStmtReader::NumStmtFields + 1];
+      S = OMPTaskLoopDirective::CreateEmpty(Context, NumClauses, CollapsedNum,
+                                            Empty);
+      break;
+    }
 
     case EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(Context, Empty);

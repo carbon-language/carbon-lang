@@ -582,6 +582,10 @@ void StmtProfiler::VisitOMPCancelDirective(const OMPCancelDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTaskLoopDirective(const OMPTaskLoopDirective *S) {
+  VisitOMPLoopDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

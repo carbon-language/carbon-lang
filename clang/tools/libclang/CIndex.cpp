@@ -1942,6 +1942,7 @@ public:
   void VisitOMPTargetDirective(const OMPTargetDirective *D);
   void VisitOMPTargetDataDirective(const OMPTargetDataDirective *D);
   void VisitOMPTeamsDirective(const OMPTeamsDirective *D);
+  void VisitOMPTaskLoopDirective(const OMPTaskLoopDirective *D);
 
 private:
   void AddDeclarationNameInfo(const Stmt *S);
@@ -2605,6 +2606,10 @@ void EnqueueVisitor::VisitOMPCancellationPointDirective(
 
 void EnqueueVisitor::VisitOMPCancelDirective(const OMPCancelDirective *D) {
   VisitOMPExecutableDirective(D);
+}
+
+void EnqueueVisitor::VisitOMPTaskLoopDirective(const OMPTaskLoopDirective *D) {
+  VisitOMPLoopDirective(D);
 }
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, const Stmt *S) {
@@ -4463,6 +4468,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("OMPCancellationPointDirective");
   case CXCursor_OMPCancelDirective:
     return cxstring::createRef("OMPCancelDirective");
+  case CXCursor_OMPTaskLoopDirective:
+    return cxstring::createRef("OMPTaskLoopDirective");
   case CXCursor_OverloadCandidate:
       return cxstring::createRef("OverloadCandidate");
   case CXCursor_TypeAliasTemplateDecl:
