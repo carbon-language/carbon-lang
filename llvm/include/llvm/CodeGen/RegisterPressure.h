@@ -328,10 +328,6 @@ public:
   // position changes while pressure does not.
   void setPos(MachineBasicBlock::const_iterator Pos) { CurrPos = Pos; }
 
-  /// \brief Get the SlotIndex for the first nondebug instruction including or
-  /// after the current position.
-  SlotIndex getCurrSlot() const;
-
   /// Recede across the previous instruction.
   bool recede(SmallVectorImpl<unsigned> *LiveUses = nullptr,
               PressureDiff *PDiff = nullptr);
@@ -441,6 +437,10 @@ public:
 protected:
   void discoverLiveOut(unsigned Reg);
   void discoverLiveIn(unsigned Reg);
+
+  /// \brief Get the SlotIndex for the first nondebug instruction including or
+  /// after the current position.
+  SlotIndex getCurrSlot() const;
 
   const LiveRange *getLiveRange(unsigned Reg) const;
 
