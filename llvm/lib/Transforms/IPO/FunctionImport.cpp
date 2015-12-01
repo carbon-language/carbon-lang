@@ -102,7 +102,7 @@ bool FunctionImporter::importFunctions(Module &M) {
   /// Second step: for every call to an external function, try to import it.
 
   // Linker that will be used for importing function
-  Linker L(&M, DiagnosticHandler);
+  Linker L(M, DiagnosticHandler);
 
   while (!Worklist.empty()) {
     auto CalledFunctionName = Worklist.pop_back_val();
@@ -182,7 +182,7 @@ bool FunctionImporter::importFunctions(Module &M) {
     }
 
     // Link in the specified function.
-    if (L.linkInModule(&Module, Linker::Flags::None, &Index, F))
+    if (L.linkInModule(Module, Linker::Flags::None, &Index, F))
       report_fatal_error("Function Import: link error");
 
     // Process the newly imported function and add callees to the worklist.
