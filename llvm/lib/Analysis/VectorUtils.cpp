@@ -420,7 +420,8 @@ Value *llvm::findScalarElement(Value *V, unsigned EltNo) {
 const llvm::Value *llvm::getSplatValue(const Value *V) {
 
   if (auto *C = dyn_cast<Constant>(V))
-    return C->getSplatValue();
+    if (isa<VectorType>(V->getType()))
+      return C->getSplatValue();
 
   auto *ShuffleInst = dyn_cast<ShuffleVectorInst>(V);
   if (!ShuffleInst)
