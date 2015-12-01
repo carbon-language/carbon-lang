@@ -72,7 +72,6 @@ public:
   Linker(Module *M);
 
   Module *getModule() const { return Composite; }
-  void deleteModule();
 
   /// \brief Link \p Src into the composite. The source is destroyed.
   /// Passing OverrideSymbols as true will have symbols from Src

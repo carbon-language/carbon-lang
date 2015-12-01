@@ -2051,11 +2051,6 @@ Linker::Linker(Module *M)
         Composite->getContext().diagnose(DI);
       }) {}
 
-void Linker::deleteModule() {
-  delete Composite;
-  Composite = nullptr;
-}
-
 bool Linker::linkInModule(Module *Src, unsigned Flags,
                           const FunctionInfoIndex *Index,
                           Function *FuncToImport) {
