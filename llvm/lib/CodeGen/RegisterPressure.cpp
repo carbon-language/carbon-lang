@@ -491,13 +491,9 @@ void RegPressureTracker::discoverLiveOut(unsigned Reg) {
 /// registers that are both defined and used by the instruction.  If a pressure
 /// difference pointer is provided record the changes is pressure caused by this
 /// instruction independent of liveness.
-bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
+void RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
                                 PressureDiff *PDiff) {
-  // Check for the top of the analyzable region.
-  if (CurrPos == MBB->begin()) {
-    closeRegion();
-    return false;
-  }
+  assert(CurrPos != MBB->begin());
   if (!isBottomClosed())
     closeBottom();
 
@@ -509,11 +505,8 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
   do
     --CurrPos;
   while (CurrPos != MBB->begin() && CurrPos->isDebugValue());
+  assert(!CurrPos->isDebugValue());
 
-  if (CurrPos->isDebugValue()) {
-    closeRegion();
-    return false;
-  }
   SlotIndex SlotIdx;
   if (RequireIntervals)
     SlotIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
@@ -584,18 +577,13 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
         UntiedDefs.insert(Reg);
     }
   }
-  return true;
 }
 
 /// Advance across the current instruction.
-bool RegPressureTracker::advance() {
+void RegPressureTracker::advance() {
   assert(!TrackUntiedDefs && "unsupported mode");
 
-  // Check for the bottom of the analyzable region.
-  if (CurrPos == MBB->end()) {
-    closeRegion();
-    return false;
-  }
+  assert(CurrPos != MBB->end());
   if (!isTopClosed())
     closeTop();
 
@@ -653,7 +641,6 @@ bool RegPressureTracker::advance() {
   do
     ++CurrPos;
   while (CurrPos != MBB->end() && CurrPos->isDebugValue());
-  return true;
 }
 
 /// Find the max change in excess pressure across all sets.
