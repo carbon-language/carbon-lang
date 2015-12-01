@@ -377,11 +377,9 @@ public:
                                        const ReturnAdjustment &RA) override;
 
   void EmitThreadLocalInitFuncs(
-      CodeGenModule &CGM,
-      ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *>>
-          CXXThreadLocals,
+      CodeGenModule &CGM, ArrayRef<const VarDecl *> CXXThreadLocals,
       ArrayRef<llvm::Function *> CXXThreadLocalInits,
-      ArrayRef<llvm::GlobalVariable *> CXXThreadLocalInitVars) override;
+      ArrayRef<const VarDecl *> CXXThreadLocalInitVars) override;
 
   bool usesThreadWrapperFunction() const override { return false; }
   LValue EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF, const VarDecl *VD,
@@ -2197,11 +2195,9 @@ void MicrosoftCXXABI::registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
 }
 
 void MicrosoftCXXABI::EmitThreadLocalInitFuncs(
-    CodeGenModule &CGM,
-    ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *>>
-        CXXThreadLocals,
+    CodeGenModule &CGM, ArrayRef<const VarDecl *> CXXThreadLocals,
     ArrayRef<llvm::Function *> CXXThreadLocalInits,
-    ArrayRef<llvm::GlobalVariable *> CXXThreadLocalInitVars) {
+    ArrayRef<const VarDecl *> CXXThreadLocalInitVars) {
   // This will create a GV in the .CRT$XDU section.  It will point to our
   // initialization function.  The CRT will call all of these function
   // pointers at start-up time and, eventually, at thread-creation time.
@@ -2219,7 +2215,8 @@ void MicrosoftCXXABI::EmitThreadLocalInitFuncs(
 
   std::vector<llvm::Function *> NonComdatInits;
   for (size_t I = 0, E = CXXThreadLocalInitVars.size(); I != E; ++I) {
-    llvm::GlobalVariable *GV = CXXThreadLocalInitVars[I];
+    llvm::GlobalVariable *GV = cast<llvm::GlobalVariable>(
+        CGM.GetGlobalValue(CGM.getMangledName(CXXThreadLocalInitVars[I])));
     llvm::Function *F = CXXThreadLocalInits[I];
 
     // If the GV is already in a comdat group, then we have to join it.
