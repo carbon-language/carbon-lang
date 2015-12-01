@@ -140,7 +140,6 @@ public:
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();
-  unsigned getGotRefReloc(unsigned Type) const override;
   unsigned getPltRefReloc(unsigned Type) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -157,7 +156,6 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
-  unsigned getGotRefReloc(unsigned Type) const override;
   void writeGotHeaderEntries(uint8_t *Buf) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -207,8 +205,6 @@ bool TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
-unsigned TargetInfo::getGotRefReloc(unsigned Type) const { return GotRefReloc; }
-
 unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
@@ -227,7 +223,6 @@ X86TargetInfo::X86TargetInfo() {
   CopyReloc = R_386_COPY;
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
-  GotRefReloc = R_386_GOT32;
   PltReloc = R_386_JUMP_SLOT;
   LazyRelocations = true;
   PltEntrySize = 16;
@@ -342,7 +337,6 @@ X86_64TargetInfo::X86_64TargetInfo() {
   CopyReloc = R_X86_64_COPY;
   PCRelReloc = R_X86_64_PC32;
   GotReloc = R_X86_64_GLOB_DAT;
-  GotRefReloc = R_X86_64_PC32;
   PltReloc = R_X86_64_JUMP_SLOT;
   RelativeReloc = R_X86_64_RELATIVE;
   TlsGotReloc = R_X86_64_TPOFF64;
@@ -642,7 +636,6 @@ static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 PPC64TargetInfo::PPC64TargetInfo() {
   PCRelReloc = R_PPC64_REL24;
   GotReloc = R_PPC64_GLOB_DAT;
-  GotRefReloc = R_PPC64_REL64;
   RelativeReloc = R_PPC64_RELATIVE;
   PltEntrySize = 32;
 
@@ -860,8 +853,6 @@ AArch64TargetInfo::AArch64TargetInfo() {
   PltZeroEntrySize = 32;
 }
 
-unsigned AArch64TargetInfo::getGotRefReloc(unsigned Type) const { return Type; }
-
 unsigned AArch64TargetInfo::getPltRefReloc(unsigned Type) const { return Type; }
 
 void AArch64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
@@ -1019,13 +1010,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   PageSize = 65536;
-  GotRefReloc = R_MIPS_GOT16;
   GotHeaderEntriesNum = 2;
-}
-
-template <class ELFT>
-unsigned MipsTargetInfo<ELFT>::getGotRefReloc(unsigned Type) const {
-  return Type;
 }
 
 template <class ELFT>

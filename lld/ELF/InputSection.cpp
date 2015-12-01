@@ -152,8 +152,8 @@ void InputSectionBase<ELFT>::relocate(
       Type = Target->getPltRefReloc(Type);
     } else if (Target->relocNeedsGot(Type, Body)) {
       SymVA = Out<ELFT>::Got->getEntryAddr(Body);
-      Type = Body.isTLS() ? Target->getTlsGotReloc()
-                          : Target->getGotRefReloc(Type);
+      if (Body.isTLS())
+        Type = Target->getTlsGotReloc();
     } else if (!Target->relocNeedsCopy(Type, Body) &&
                isa<SharedSymbol<ELFT>>(Body)) {
       continue;
