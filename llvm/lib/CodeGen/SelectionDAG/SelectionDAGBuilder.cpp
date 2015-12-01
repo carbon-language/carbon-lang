@@ -4928,6 +4928,21 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, sdl, MVT::Other, getRoot(), Res));
     return nullptr;
   }
+  case Intrinsic::get_dynamic_area_offset: {
+    SDValue Op = getRoot();
+    EVT PtrTy = TLI.getPointerTy(DAG.getDataLayout());
+    EVT ResTy = TLI.getValueType(DAG.getDataLayout(), I.getType());
+    // Result type for @llvm.get.dynamic.area.offset should match PtrTy for
+    // target.
+    if (PtrTy != ResTy)
+      report_fatal_error("Wrong result type for @llvm.get.dynamic.area.offset"
+                         " intrinsic!");
+    Res = DAG.getNode(ISD::GET_DYNAMIC_AREA_OFFSET, sdl, DAG.getVTList(ResTy),
+                      Op);
+    DAG.setRoot(Op);
+    setValue(&I, Res);
+    return nullptr;
+  }
   case Intrinsic::stackprotector: {
     // Emit code into the DAG to store the stack guard onto the stack.
     MachineFunction &MF = DAG.getMachineFunction();
