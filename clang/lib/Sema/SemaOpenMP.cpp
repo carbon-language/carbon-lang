@@ -5190,6 +5190,9 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_thread_limit:
     Res = ActOnOpenMPThreadLimitClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_priority:
+    Res = ActOnOpenMPPriorityClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_default:
   case OMPC_proc_bind:
@@ -5308,7 +5311,8 @@ ExprResult Sema::PerformOpenMPImplicitIntegerConversion(SourceLocation Loc,
 }
 
 static bool IsNonNegativeIntegerValue(Expr *&ValExpr, Sema &SemaRef,
-                                      OpenMPClauseKind CKind) {
+                                      OpenMPClauseKind CKind,
+                                      bool StrictlyPositive) {
   if (!ValExpr->isTypeDependent() && !ValExpr->isValueDependent() &&
       !ValExpr->isInstantiationDependent()) {
     SourceLocation Loc = ValExpr->getExprLoc();
@@ -5321,9 +5325,12 @@ static bool IsNonNegativeIntegerValue(Expr *&ValExpr, Sema &SemaRef,
     // The expression must evaluate to a non-negative integer value.
     llvm::APSInt Result;
     if (ValExpr->isIntegerConstantExpr(Result, SemaRef.Context) &&
-        Result.isSigned() && !Result.isStrictlyPositive()) {
+        Result.isSigned() &&
+        !((!StrictlyPositive && Result.isNonNegative()) ||
+          (StrictlyPositive && Result.isStrictlyPositive()))) {
       SemaRef.Diag(Loc, diag::err_omp_negative_expression_in_clause)
-          << getOpenMPClauseName(CKind) << ValExpr->getSourceRange();
+          << getOpenMPClauseName(CKind) << (StrictlyPositive ? 1 : 0)
+          << ValExpr->getSourceRange();
       return false;
     }
   }
@@ -5338,7 +5345,8 @@ OMPClause *Sema::ActOnOpenMPNumThreadsClause(Expr *NumThreads,
 
   // OpenMP [2.5, Restrictions]
   //  The num_threads expression must evaluate to a positive integer value.
-  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_num_threads))
+  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_num_threads,
+                                 /*StrictlyPositive=*/true))
     return nullptr;
 
   return new (Context)
@@ -5358,7 +5366,7 @@ ExprResult Sema::VerifyPositiveIntegerConstantInClause(Expr *E,
     return ExprError();
   if (!Result.isStrictlyPositive()) {
     Diag(E->getExprLoc(), diag::err_omp_negative_expression_in_clause)
-        << getOpenMPClauseName(CKind) << E->getSourceRange();
+        << getOpenMPClauseName(CKind) << 1 << E->getSourceRange();
     return ExprError();
   }
   if (CKind == OMPC_aligned && !Result.isPowerOf2()) {
@@ -5487,6 +5495,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_map:
   case OMPC_num_teams:
   case OMPC_thread_limit:
+  case OMPC_priority:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5619,6 +5628,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_map:
   case OMPC_num_teams:
   case OMPC_thread_limit:
+  case OMPC_priority:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5672,7 +5682,7 @@ OMPClause *Sema::ActOnOpenMPScheduleClause(
       if (ValExpr->isIntegerConstantExpr(Result, Context)) {
         if (Result.isSigned() && !Result.isStrictlyPositive()) {
           Diag(ChunkSizeLoc, diag::err_omp_negative_expression_in_clause)
-              << "schedule" << ChunkSize->getSourceRange();
+              << "schedule" << 1 << ChunkSize->getSourceRange();
           return nullptr;
         }
       } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
@@ -5753,6 +5763,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_map:
   case OMPC_num_teams:
   case OMPC_thread_limit:
+  case OMPC_priority:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5884,6 +5895,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_simd:
   case OMPC_num_teams:
   case OMPC_thread_limit:
+  case OMPC_priority:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -7566,7 +7578,8 @@ OMPClause *Sema::ActOnOpenMPDeviceClause(Expr *Device, SourceLocation StartLoc,
 
   // OpenMP [2.9.1, Restrictions]
   // The device expression must evaluate to a non-negative integer value.
-  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_device))
+  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_device,
+                                 /*StrictlyPositive=*/false))
     return nullptr;
 
   return new (Context) OMPDeviceClause(ValExpr, StartLoc, LParenLoc, EndLoc);
@@ -7756,7 +7769,8 @@ OMPClause *Sema::ActOnOpenMPNumTeamsClause(Expr *NumTeams,
 
   // OpenMP [teams Constrcut, Restrictions]
   // The num_teams expression must evaluate to a positive integer value.
-  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_num_teams))
+  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_num_teams,
+                                 /*StrictlyPositive=*/true))
     return nullptr;
 
   return new (Context) OMPNumTeamsClause(ValExpr, StartLoc, LParenLoc, EndLoc);
@@ -7770,9 +7784,25 @@ OMPClause *Sema::ActOnOpenMPThreadLimitClause(Expr *ThreadLimit,
 
   // OpenMP [teams Constrcut, Restrictions]
   // The thread_limit expression must evaluate to a positive integer value.
-  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_thread_limit))
+  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_thread_limit,
+                                 /*StrictlyPositive=*/true))
     return nullptr;
 
   return new (Context) OMPThreadLimitClause(ValExpr, StartLoc, LParenLoc,
                                             EndLoc);
+}
+
+OMPClause *Sema::ActOnOpenMPPriorityClause(Expr *Priority,
+                                           SourceLocation StartLoc,
+                                           SourceLocation LParenLoc,
+                                           SourceLocation EndLoc) {
+  Expr *ValExpr = Priority;
+
+  // OpenMP [2.9.1, task Constrcut]
+  // The priority-value is a non-negative numerical scalar expression.
+  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_priority,
+                                 /*StrictlyPositive=*/false))
+    return nullptr;
+
+  return new (Context) OMPPriorityClause(ValExpr, StartLoc, LParenLoc, EndLoc);
 }

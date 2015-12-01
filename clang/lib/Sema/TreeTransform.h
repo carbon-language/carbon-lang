@@ -1689,6 +1689,17 @@ public:
                                                   LParenLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'priority' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPPriorityClause(Expr *Priority, SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPPriorityClause(Priority, StartLoc, LParenLoc,
+                                               EndLoc);
+  }
+
   /// \brief Rebuild the operand to an Objective-C \@synchronized statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -7748,6 +7759,16 @@ TreeTransform<Derived>::TransformOMPThreadLimitClause(OMPThreadLimitClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPThreadLimitClause(
+      E.get(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
+}
+
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPPriorityClause(OMPPriorityClause *C) {
+  ExprResult E = getDerived().TransformExpr(C->getPriority());
+  if (E.isInvalid())
+    return nullptr;
+  return getDerived().RebuildOMPPriorityClause(
       E.get(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 

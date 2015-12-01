@@ -2084,6 +2084,10 @@ void OMPClauseEnqueue::VisitOMPThreadLimitClause(const OMPThreadLimitClause *C) 
   Visitor->AddStmt(C->getThreadLimit());
 }
 
+void OMPClauseEnqueue::VisitOMPPriorityClause(const OMPPriorityClause *C) {
+  Visitor->AddStmt(C->getPriority());
+}
+
 template<typename T>
 void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
   for (const auto *I : Node->varlists()) {

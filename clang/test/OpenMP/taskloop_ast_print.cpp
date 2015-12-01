@@ -13,14 +13,14 @@ T tmain(T argc) {
   T b = argc, c, d, e, f, g;
   static T a;
 // CHECK: static T a;
-#pragma omp taskloop if(taskloop: argc > N) default(shared) untied
-  // CHECK-NEXT: #pragma omp taskloop if(taskloop: argc > N) default(shared) untied
+#pragma omp taskloop if(taskloop: argc > N) default(shared) untied priority(N)
+  // CHECK-NEXT: #pragma omp taskloop if(taskloop: argc > N) default(shared) untied priority(N)
   for (int i = 0; i < 2; ++i)
     a = 2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: a = 2;
 #pragma omp parallel
-#pragma omp taskloop private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N) shared(g) if (c) final(d) mergeable
+#pragma omp taskloop private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N) shared(g) if (c) final(d) mergeable priority(f)
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 2; ++j)
       for (int j = 0; j < 2; ++j)
@@ -33,7 +33,7 @@ T tmain(T argc) {
           for (int j = 0; j < 2; ++j)
             foo();
   // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp taskloop private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N) shared(g) if(c) final(d) mergeable
+  // CHECK-NEXT: #pragma omp taskloop private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N) shared(g) if(c) final(d) mergeable priority(f)
   // CHECK-NEXT: for (int i = 0; i < 2; ++i)
   // CHECK-NEXT: for (int j = 0; j < 2; ++j)
   // CHECK-NEXT: for (int j = 0; j < 2; ++j)
@@ -52,19 +52,19 @@ int main(int argc, char **argv) {
   int b = argc, c, d, e, f, g;
   static int a;
 // CHECK: static int a;
-#pragma omp taskloop if(taskloop: a) default(none) shared(a) final(b)
-  // CHECK-NEXT: #pragma omp taskloop if(taskloop: a) default(none) shared(a) final(b)
+#pragma omp taskloop if(taskloop: a) default(none) shared(a) final(b) priority(5)
+  // CHECK-NEXT: #pragma omp taskloop if(taskloop: a) default(none) shared(a) final(b) priority(5)
   for (int i = 0; i < 2; ++i)
     a = 2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: a = 2;
 #pragma omp parallel
-#pragma omp taskloop private(argc, b), firstprivate(argv, c), lastprivate(d, f) collapse(2) shared(g) if(argc) mergeable
+#pragma omp taskloop private(argc, b), firstprivate(argv, c), lastprivate(d, f) collapse(2) shared(g) if(argc) mergeable priority(argc)
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
       foo();
   // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp taskloop private(argc,b) firstprivate(argv,c) lastprivate(d,f) collapse(2) shared(g) if(argc) mergeable
+  // CHECK-NEXT: #pragma omp taskloop private(argc,b) firstprivate(argv,c) lastprivate(d,f) collapse(2) shared(g) if(argc) mergeable priority(argc)
   // CHECK-NEXT: for (int i = 0; i < 10; ++i)
   // CHECK-NEXT: for (int j = 0; j < 10; ++j)
   // CHECK-NEXT: foo();

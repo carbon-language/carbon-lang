@@ -175,17 +175,17 @@ void test_collapse() {
   for (i = 0; i < 16; ++i)
     ;
 #pragma omp parallel
-// expected-error@+1 {{argument to 'collapse' clause must be a positive integer value}}
+// expected-error@+1 {{argument to 'collapse' clause must be a strictly positive integer value}}
 #pragma omp for collapse(-5)
   for (i = 0; i < 16; ++i)
     ;
 #pragma omp parallel
-// expected-error@+1 {{argument to 'collapse' clause must be a positive integer value}}
+// expected-error@+1 {{argument to 'collapse' clause must be a strictly positive integer value}}
 #pragma omp for collapse(0)
   for (i = 0; i < 16; ++i)
     ;
 #pragma omp parallel
-// expected-error@+1 {{argument to 'collapse' clause must be a positive integer value}}
+// expected-error@+1 {{argument to 'collapse' clause must be a strictly positive integer value}}
 #pragma omp for collapse(5 - 5)
   for (i = 0; i < 16; ++i)
     ;
