@@ -527,7 +527,7 @@ private:
   void linkGlobalInit(GlobalVariable &Dst, GlobalVariable &Src);
   bool linkFunctionBody(Function &Dst, Function &Src);
   void linkAliasBody(GlobalAlias &Dst, GlobalAlias &Src);
-  bool linkGlobalValueBody(GlobalValue &Src);
+  bool linkGlobalValueBody(GlobalValue &Dst, GlobalValue &Src);
 
   /// Functions that take care of cloning a specific global value type
   /// into the destination module.
@@ -924,7 +924,7 @@ void ModuleLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old) {
   if (!New->hasLocalLinkage() && DoNotLinkFromSource.count(Old))
     return;
 
-  linkGlobalValueBody(*Old);
+  linkGlobalValueBody(*New, *Old);
 }
 
 bool ModuleLinker::getComdatLeader(Module &M, StringRef ComdatName,
@@ -1566,9 +1566,7 @@ void ModuleLinker::linkAliasBody(GlobalAlias &Dst, GlobalAlias &Src) {
   Dst.setAliasee(Val);
 }
 
-bool ModuleLinker::linkGlobalValueBody(GlobalValue &Src) {
-  Value *Dst = ValueMap[&Src];
-  assert(Dst);
+bool ModuleLinker::linkGlobalValueBody(GlobalValue &Dst, GlobalValue &Src) {
   if (const Comdat *SC = Src.getComdat()) {
     // To ensure that we don't generate an incomplete comdat group,
     // we must materialize and map in any other members that are not
@@ -1583,15 +1581,15 @@ bool ModuleLinker::linkGlobalValueBody(GlobalValue &Src) {
     }
   }
   if (shouldInternalizeLinkedSymbols())
-    if (auto *DGV = dyn_cast<GlobalValue>(Dst))
+    if (auto *DGV = dyn_cast<GlobalValue>(&Dst))
       DGV->setLinkage(GlobalValue::InternalLinkage);
   if (auto *F = dyn_cast<Function>(&Src))
-    return linkFunctionBody(cast<Function>(*Dst), *F);
+    return linkFunctionBody(cast<Function>(Dst), *F);
   if (auto *GVar = dyn_cast<GlobalVariable>(&Src)) {
-    linkGlobalInit(cast<GlobalVariable>(*Dst), *GVar);
+    linkGlobalInit(cast<GlobalVariable>(Dst), *GVar);
     return false;
   }
-  linkAliasBody(cast<GlobalAlias>(*Dst), cast<GlobalAlias>(Src));
+  linkAliasBody(cast<GlobalAlias>(Dst), cast<GlobalAlias>(Src));
   return false;
 }
 
