@@ -13,6 +13,8 @@
 ;   return zzz.a[len];
 ; }
 
+; REQUIRES: tls
+
 ; CHECK: ![[ZZZ:.*]] = !DILocalVariable(name: "zzz",
 ; CHECK: ![[ZZZ_EXPR:.*]] = !DIExpression(DW_OP_deref, DW_OP_minus, 400)
 ; CHECK: DBG_VALUE {{.*}} ![[ZZZ]], ![[ZZZ_EXPR]]
