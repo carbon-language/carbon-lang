@@ -20,6 +20,10 @@
 
 #include "int_endianness.h"
 
+/* si_int is defined in Linux sysroot's asm-generic/siginfo.h */
+#ifdef si_int
+#undef si_int
+#endif
 typedef      int si_int;
 typedef unsigned su_int;
 
