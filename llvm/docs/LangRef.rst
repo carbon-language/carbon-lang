@@ -9340,7 +9340,7 @@ See the description for :ref:`llvm.stacksave <int_stacksave>`.
 .. _int_get_dynamic_area_offset:
 
 '``llvm.get.dynamic.area.offset``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
