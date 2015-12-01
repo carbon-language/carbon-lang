@@ -118,6 +118,10 @@ class SafeStack : public FunctionPass {
                  SmallVectorImpl<ReturnInst *> &Returns,
                  SmallVectorImpl<Instruction *> &StackRestorePoints);
 
+  /// \brief Calculate the allocation size of a given alloca. Returns 0 if the
+  /// size can not be statically determined.
+  uint64_t getStaticAllocaAllocationSize(const AllocaInst* AI);
+
   /// \brief Allocate space for all static allocas in \p StaticAllocas,
   /// replace allocas with pointers into the unsafe stack and generate code to
   /// restore the stack pointer before all return instructions in \p Returns.
@@ -177,6 +181,17 @@ public:
   bool runOnFunction(Function &F) override;
 }; // class SafeStack
 
+uint64_t SafeStack::getStaticAllocaAllocationSize(const AllocaInst* AI) {
+  uint64_t Size = DL->getTypeAllocSize(AI->getAllocatedType());
+  if (AI->isArrayAllocation()) {
+    auto C = dyn_cast<ConstantInt>(AI->getArraySize());
+    if (!C)
+      return 0;
+    Size *= C->getZExtValue();
+  }
+  return Size;
+}
+
 bool SafeStack::IsAccessSafe(Value *Addr, uint64_t Size, const AllocaInst *AI) {
   AllocaOffsetRewriter Rewriter(*SE, AI);
   const SCEV *Expr = Rewriter.visit(SE->getSCEV(Addr));
@@ -187,8 +202,7 @@ bool SafeStack::IsAccessSafe(Value *Addr, uint64_t Size, const AllocaInst *AI) {
       ConstantRange(APInt(BitWidth, 0), APInt(BitWidth, Size));
   ConstantRange AccessRange = AccessStartRange.add(SizeRange);
   ConstantRange AllocaRange = ConstantRange(
-      APInt(BitWidth, 0),
-      APInt(BitWidth, DL->getTypeStoreSize(AI->getAllocatedType())));
+      APInt(BitWidth, 0), APInt(BitWidth, getStaticAllocaAllocationSize(AI)));
   bool Safe = AllocaRange.contains(AccessRange);
 
   DEBUG(dbgs() << "[SafeStack] Alloca " << *AI << "\n"
@@ -463,10 +477,8 @@ SafeStack::moveStaticAllocasToUnsafeStack(IRBuilder<> &IRB, Function &F,
   for (AllocaInst *AI : StaticAllocas) {
     IRB.SetInsertPoint(AI);
 
-    auto CArraySize = cast<ConstantInt>(AI->getArraySize());
     Type *Ty = AI->getAllocatedType();
-
-    uint64_t Size = DL->getTypeAllocSize(Ty) * CArraySize->getZExtValue();
+    uint64_t Size = getStaticAllocaAllocationSize(AI);
     if (Size == 0)
       Size = 1; // Don't create zero-sized stack objects.
 
