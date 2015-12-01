@@ -734,11 +734,7 @@ void RegPressureTracker::bumpUpwardPressure(const MachineInstr *MI) {
   // Account for register pressure similar to RegPressureTracker::recede().
   RegisterOperands RegOpers;
   RegOpers.collect(*MI, *TRI, *MRI, /*IgnoreDead=*/true);
-
-  // Boost max pressure for all dead defs together.
-  // Since CurrSetPressure and MaxSetPressure
-  increaseRegPressure(RegOpers.DeadDefs);
-  decreaseRegPressure(RegOpers.DeadDefs);
+  assert(RegOpers.DeadDefs.size() == 0);
 
   // Kill liveness at live defs.
   for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
