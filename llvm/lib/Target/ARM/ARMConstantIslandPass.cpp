@@ -2274,7 +2274,8 @@ adjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB) {
 
   // Update the CFG.
   NewBB->addSuccessor(BB);
-  JTBB->replaceSuccessor(BB, NewBB);
+  JTBB->removeSuccessor(BB);
+  JTBB->addSuccessor(NewBB);
 
   ++NumJTInserted;
   return NewBB;

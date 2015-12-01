@@ -1099,16 +1099,13 @@ void BranchFolder::setCommonTailEdgeWeights(MachineBasicBlock &TailMBB) {
   if (TailMBB.succ_size() <= 1)
     return;
 
-  auto SumEdgeFreq =
-      std::accumulate(EdgeFreqLs.begin(), EdgeFreqLs.end(), BlockFrequency(0))
-          .getFrequency();
+  auto MaxEdgeFreq = *std::max_element(EdgeFreqLs.begin(), EdgeFreqLs.end());
+  uint64_t Scale = MaxEdgeFreq.getFrequency() / UINT32_MAX + 1;
   auto EdgeFreq = EdgeFreqLs.begin();
 
   for (auto SuccI = TailMBB.succ_begin(), SuccE = TailMBB.succ_end();
        SuccI != SuccE; ++SuccI, ++EdgeFreq)
-    TailMBB.setSuccProbability(
-        SuccI, BranchProbability::getBranchProbability(EdgeFreq->getFrequency(),
-                                                       SumEdgeFreq));
+    TailMBB.setSuccWeight(SuccI, EdgeFreq->getFrequency() / Scale);
 }
 
 //===----------------------------------------------------------------------===//
