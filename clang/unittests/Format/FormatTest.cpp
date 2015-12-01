@@ -8659,7 +8659,7 @@ TEST_F(FormatTest, AlignConsecutiveAssignments) {
                Alignment);
   verifyFormat("class C {\n"
                "public:\n"
-               "  int i = 1;\n"
+               "  int i            = 1;\n"
                "  virtual void f() = 0;\n"
                "};",
                Alignment);
@@ -8708,6 +8708,19 @@ TEST_F(FormatTest, AlignConsecutiveAssignments) {
       "                          loooooooooooooooooooooongParameterB);\n"
       "int j = 2;",
       Alignment);
+
+  verifyFormat("template <typename T, typename T_0 = very_long_type_name_0,\n"
+               "          typename B   = very_long_type_name_1,\n"
+               "          typename T_2 = very_long_type_name_2>\n"
+               "auto foo() {}\n",
+               Alignment);
+  verifyFormat("int a, b = 1;\n"
+               "int c  = 2;\n"
+               "int dd = 3;\n",
+               Alignment);
+  verifyFormat("int aa       = ((1 > 2) ? 3 : 4);\n"
+               "float b[1][] = {{3.f}};\n",
+               Alignment);
 }
 
 TEST_F(FormatTest, AlignConsecutiveDeclarations) {
@@ -8907,6 +8920,47 @@ TEST_F(FormatTest, AlignConsecutiveDeclarations) {
                "VeryVeryLongType k  = 2;\n"
                "int              myvar = 1;",
                Alignment);
+  Alignment.ColumnLimit = 80;
+  Alignment.AlignConsecutiveAssignments = false;
+
+  verifyFormat(
+      "template <typename LongTemplate, typename VeryLongTemplateTypeName,\n"
+      "          typename LongType, typename B>\n"
+      "auto foo() {}\n",
+      Alignment);
+  verifyFormat("float a, b = 1;\n"
+               "int   c = 2;\n"
+               "int   dd = 3;\n",
+               Alignment);
+  verifyFormat("int   aa = ((1 > 2) ? 3 : 4);\n"
+               "float b[1][] = {{3.f}};\n",
+               Alignment);
+  Alignment.AlignConsecutiveAssignments = true;
+  verifyFormat("float a, b = 1;\n"
+               "int   c  = 2;\n"
+               "int   dd = 3;\n",
+               Alignment);
+  verifyFormat("int   aa     = ((1 > 2) ? 3 : 4);\n"
+               "float b[1][] = {{3.f}};\n",
+               Alignment);
+  Alignment.AlignConsecutiveAssignments = false;
+
+  Alignment.ColumnLimit = 30;
+  Alignment.BinPackParameters = false;
+  verifyFormat("void foo(float     a,\n"
+               "         float     b,\n"
+               "         int       c,\n"
+               "         uint32_t *d) {\n"
+               "  int *  e = 0;\n"
+               "  float  f = 0;\n"
+               "  double g = 0;\n"
+               "}\n"
+               "void bar(ino_t     a,\n"
+               "         int       b,\n"
+               "         uint32_t *c,\n"
+               "         bool      d) {}\n",
+               Alignment);
+  Alignment.BinPackParameters = true;
   Alignment.ColumnLimit = 80;
 }
 
