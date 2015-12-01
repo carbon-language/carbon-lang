@@ -3487,7 +3487,7 @@ llvm::GlobalVariable *MSRTTIBuilder::getClassHierarchyDescriptor() {
   auto Type = ABI.getClassHierarchyDescriptorType();
   auto CHD = new llvm::GlobalVariable(Module, Type, /*Constant=*/true, Linkage,
                                       /*Initializer=*/nullptr,
-                                      StringRef(MangledName));
+                                      MangledName);
   if (CHD->isWeakForLinker())
     CHD->setComdat(CGM.getModule().getOrInsertComdat(CHD->getName()));
 
@@ -3525,7 +3525,7 @@ MSRTTIBuilder::getBaseClassArray(SmallVectorImpl<MSRTTIClass> &Classes) {
   auto *BCA =
       new llvm::GlobalVariable(Module, ArrType,
                                /*Constant=*/true, Linkage,
-                               /*Initializer=*/nullptr, StringRef(MangledName));
+                               /*Initializer=*/nullptr, MangledName);
   if (BCA->isWeakForLinker())
     BCA->setComdat(CGM.getModule().getOrInsertComdat(BCA->getName()));
 
@@ -3567,7 +3567,7 @@ MSRTTIBuilder::getBaseClassDescriptor(const MSRTTIClass &Class) {
   auto Type = ABI.getBaseClassDescriptorType();
   auto BCD =
       new llvm::GlobalVariable(Module, Type, /*Constant=*/true, Linkage,
-                               /*Initializer=*/nullptr, StringRef(MangledName));
+                               /*Initializer=*/nullptr, MangledName);
   if (BCD->isWeakForLinker())
     BCD->setComdat(CGM.getModule().getOrInsertComdat(BCD->getName()));
 
@@ -3613,7 +3613,7 @@ MSRTTIBuilder::getCompleteObjectLocator(const VPtrInfo *Info) {
   // Forward-declare the complete object locator.
   llvm::StructType *Type = ABI.getCompleteObjectLocatorType();
   auto COL = new llvm::GlobalVariable(Module, Type, /*Constant=*/true, Linkage,
-    /*Initializer=*/nullptr, StringRef(MangledName));
+    /*Initializer=*/nullptr, MangledName);
 
   // Initialize the CompleteObjectLocator.
   llvm::Constant *Fields[] = {
@@ -3721,7 +3721,7 @@ llvm::Constant *MicrosoftCXXABI::getAddrOfRTTIDescriptor(QualType Type) {
       CGM.getModule(), TypeDescriptorType, /*Constant=*/false,
       getLinkageForRTTI(Type),
       llvm::ConstantStruct::get(TypeDescriptorType, Fields),
-      StringRef(MangledName));
+      MangledName);
   if (Var->isWeakForLinker())
     Var->setComdat(CGM.getModule().getOrInsertComdat(Var->getName()));
   return llvm::ConstantExpr::getBitCast(Var, CGM.Int8PtrTy);
@@ -3964,7 +3964,7 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
   llvm::StructType *CTType = getCatchableTypeType();
   auto *GV = new llvm::GlobalVariable(
       CGM.getModule(), CTType, /*Constant=*/true, getLinkageForRTTI(T),
-      llvm::ConstantStruct::get(CTType, Fields), StringRef(MangledName));
+      llvm::ConstantStruct::get(CTType, Fields), MangledName);
   GV->setUnnamedAddr(true);
   GV->setSection(".xdata");
   if (GV->isWeakForLinker())
@@ -4082,7 +4082,7 @@ llvm::GlobalVariable *MicrosoftCXXABI::getCatchableTypeArray(QualType T) {
   }
   CTA = new llvm::GlobalVariable(
       CGM.getModule(), CTAType, /*Constant=*/true, getLinkageForRTTI(T),
-      llvm::ConstantStruct::get(CTAType, Fields), StringRef(MangledName));
+      llvm::ConstantStruct::get(CTAType, Fields), MangledName);
   CTA->setUnnamedAddr(true);
   CTA->setSection(".xdata");
   if (CTA->isWeakForLinker())
