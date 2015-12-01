@@ -423,9 +423,13 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
 
   DEBUG(dbgs() << "Attempting merge from: " << getBlockName(BB) << "\n");
   for (MachineBasicBlock *Succ : Successors) {
-    BranchProbability SuccProb(
-        MBPI->getEdgeProbability(BB, Succ).getNumerator(),
-        AdjustedSumProb.getNumerator());
+    BranchProbability SuccProb;
+    uint32_t SuccProbN = MBPI->getEdgeProbability(BB, Succ).getNumerator();
+    uint32_t SuccProbD = AdjustedSumProb.getNumerator();
+    if (SuccProbN >= SuccProbD)
+      SuccProb = BranchProbability::getOne();
+    else
+      SuccProb = BranchProbability(SuccProbN, SuccProbD);
 
     // If we outline optional branches, look whether Succ is unavoidable, i.e.
     // dominates all terminators of the MachineFunction. If it does, other
