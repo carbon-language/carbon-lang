@@ -360,6 +360,18 @@ def ARMv81a   : Architecture<"armv8.1-a", "ARMv81a",  [HasV8_1aOps,
                                                        FeatureCrypto,
                                                        FeatureCRC]>;
 
+def ARMv82a   : Architecture<"armv8.2-a", "ARMv82a",  [HasV8_2aOps,
+                                                       FeatureAClass,
+                                                       FeatureDB,
+                                                       FeatureFPARMv8,
+                                                       FeatureNEON,
+                                                       FeatureDSP,
+                                                       FeatureTrustZone,
+                                                       FeatureMP,
+                                                       FeatureVirtualization,
+                                                       FeatureCrypto,
+                                                       FeatureCRC]>;
+
 // Aliases
 def IWMMXT   : Architecture<"iwmmxt",      "ARMv5te",  [ARMv5te]>;
 def IWMMXT2  : Architecture<"iwmmxt2",     "ARMv5te",  [ARMv5te]>;
