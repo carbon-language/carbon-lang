@@ -1716,6 +1716,15 @@ TEST(IsDeleted, MatchesDeletedFunctionDeclarations) {
                       functionDecl(hasName("Func"), isDeleted())));
 }
 
+TEST(IsNoThrow, MatchesNoThrowFunctionDeclarations) {
+  EXPECT_TRUE(notMatches("void f();", functionDecl(isNoThrow())));
+  EXPECT_TRUE(notMatches("void f() throw(int);", functionDecl(isNoThrow())));
+  EXPECT_TRUE(
+      notMatches("void f() noexcept(false);", functionDecl(isNoThrow())));
+  EXPECT_TRUE(matches("void f() throw();", functionDecl(isNoThrow())));
+  EXPECT_TRUE(matches("void f() noexcept;", functionDecl(isNoThrow())));
+}
+
 TEST(isConstexpr, MatchesConstexprDeclarations) {
   EXPECT_TRUE(matches("constexpr int foo = 42;",
                       varDecl(hasName("foo"), isConstexpr())));
