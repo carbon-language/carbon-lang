@@ -392,8 +392,7 @@ class ModuleLinker {
   /// but this allows us to reuse the ValueMapper code.
   ValueToValueMapTy ValueMap;
 
-  // Set of items not to link in from source.
-  SmallPtrSet<const GlobalValue *, 16> DoNotLinkFromSource;
+  SetVector<GlobalValue *> ValuesToLink;
 
   DiagnosticHandlerFunction DiagnosticHandler;
 
@@ -862,23 +861,18 @@ Value *ModuleLinker::materializeDeclFor(Value *V) {
   if (!SGV)
     return nullptr;
 
-  // If we are done linking global value bodies (i.e. we are performing
-  // metadata linking), don't link in the global value due to this
-  // reference, simply map it to null.
-  if (DoneLinkingBodies)
-    return nullptr;
-
   linkGlobalValueProto(SGV);
-  if (HasError)
-    return nullptr;
-  Value *Ret = ValueMap[SGV];
-  assert(Ret);
-  return Ret;
+  return ValueMap[SGV];
 }
 
 void ValueMaterializerTy::materializeInitFor(GlobalValue *New,
                                              GlobalValue *Old) {
   return ModLinker->materializeInitFor(New, Old);
+}
+
+static bool shouldLazyLink(const GlobalValue &GV) {
+  return GV.hasLocalLinkage() || GV.hasLinkOnceLinkage() ||
+         GV.hasAvailableExternallyLinkage();
 }
 
 void ModuleLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old) {
@@ -900,7 +894,7 @@ void ModuleLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old) {
   if (isPerformingImport() && !doImportAsDefinition(Old))
     return;
 
-  if (!New->hasLocalLinkage() && DoNotLinkFromSource.count(Old))
+  if (!ValuesToLink.count(Old) && !shouldLazyLink(*Old))
     return;
 
   linkGlobalValueBody(*New, *Old);
@@ -1342,7 +1336,8 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
                        [this](Constant *E) {
                          auto *Key = dyn_cast<GlobalValue>(
                              E->getAggregateElement(2)->stripPointerCasts());
-                         return DoNotLinkFromSource.count(Key);
+                         return Key && !ValuesToLink.count(Key) &&
+                                !shouldLazyLink(*Key);
                        }),
         SrcElements.end());
   uint64_t NewSize = DstElements.size() + SrcElements.size();
@@ -1381,14 +1376,6 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
 
   // Handle the ultra special appending linkage case first.
   assert(!DGV || SGV->hasAppendingLinkage() == DGV->hasAppendingLinkage());
-  if (SGV->hasAppendingLinkage() && isPerformingImport()) {
-    // Don't want to append to global_ctors list, for example, when we
-    // are importing for ThinLTO, otherwise the global ctors and dtors
-    // get executed multiple times for local variables (the latter causing
-    // double frees).
-    DoNotLinkFromSource.insert(SGV);
-    return false;
-  }
   if (SGV->hasAppendingLinkage())
     return linkAppendingVarProto(cast_or_null<GlobalVariable>(DGV),
                                  cast<GlobalVariable>(SGV));
@@ -1411,15 +1398,9 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
       return true;
   }
 
-  if (!LinkFromSrc) {
-    // Track the source global so that we don't attempt to copy it over when
-    // processing global initializers.
-    DoNotLinkFromSource.insert(SGV);
-
-    if (DGV)
-      // Make sure to remember this mapping.
-      ValueMap[SGV] =
-          ConstantExpr::getBitCast(DGV, TypeMap.get(SGV->getType()));
+  if (!LinkFromSrc && DGV) {
+    // Make sure to remember this mapping.
+    ValueMap[SGV] = ConstantExpr::getBitCast(DGV, TypeMap.get(SGV->getType()));
   }
 
   if (DGV)
@@ -1431,6 +1412,12 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     // When linking from source we setVisibility from copyGlobalValueProto.
     setVisibility(NewGV, SGV, DGV);
   } else {
+    // If we are done linking global value bodies (i.e. we are performing
+    // metadata linking), don't link in the global value due to this
+    // reference, simply map it to null.
+    if (DoneLinkingBodies)
+      return false;
+
     NewGV = copyGlobalValueProto(TypeMap, SGV, DGV, LinkFromSrc);
   }
 
@@ -1774,30 +1761,62 @@ bool ModuleLinker::linkIfNeeded(GlobalValue &GV) {
   if (shouldLinkOnlyNeeded() && !(DGV && DGV->isDeclaration()))
     return false;
 
-  if (DGV && !GV.hasLocalLinkage()) {
+  if (DGV && !GV.hasLocalLinkage() && !GV.hasAppendingLinkage()) {
+    auto *DGVar = dyn_cast<GlobalVariable>(DGV);
+    auto *SGVar = dyn_cast<GlobalVariable>(&GV);
+    if (DGVar && SGVar) {
+      if (DGVar->isDeclaration() && SGVar->isDeclaration() &&
+          (!DGVar->isConstant() || !SGVar->isConstant())) {
+        DGVar->setConstant(false);
+        SGVar->setConstant(false);
+      }
+      if (DGVar->hasCommonLinkage() && SGVar->hasCommonLinkage()) {
+        unsigned Align = std::max(DGVar->getAlignment(), SGVar->getAlignment());
+        SGVar->setAlignment(Align);
+        DGVar->setAlignment(Align);
+      }
+    }
+
     GlobalValue::VisibilityTypes Visibility =
         getMinVisibility(DGV->getVisibility(), GV.getVisibility());
     DGV->setVisibility(Visibility);
     GV.setVisibility(Visibility);
+
+    bool HasUnnamedAddr = GV.hasUnnamedAddr() && DGV->hasUnnamedAddr();
+    DGV->setUnnamedAddr(HasUnnamedAddr);
+    GV.setUnnamedAddr(HasUnnamedAddr);
   }
+
+  // Don't want to append to global_ctors list, for example, when we
+  // are importing for ThinLTO, otherwise the global ctors and dtors
+  // get executed multiple times for local variables (the latter causing
+  // double frees).
+  if (GV.hasAppendingLinkage() && isPerformingImport())
+    return false;
+
+  if (isPerformingImport() && !doImportAsDefinition(&GV))
+    return false;
+
+  if (!DGV && !shouldOverrideFromSrc() &&
+      (GV.hasLocalLinkage() || GV.hasLinkOnceLinkage() ||
+       GV.hasAvailableExternallyLinkage()))
+    return false;
 
   if (const Comdat *SC = GV.getComdat()) {
     bool LinkFromSrc;
     Comdat::SelectionKind SK;
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
-    if (!LinkFromSrc) {
-      DoNotLinkFromSource.insert(&GV);
-      return false;
-    }
-  }
-
-  if (!DGV && !shouldOverrideFromSrc() &&
-      (GV.hasLocalLinkage() || GV.hasLinkOnceLinkage() ||
-       GV.hasAvailableExternallyLinkage())) {
+    if (LinkFromSrc)
+      ValuesToLink.insert(&GV);
     return false;
   }
-  MapValue(&GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
-  return HasError;
+
+  bool LinkFromSrc = true;
+  if (DGV && shouldLinkFromSource(LinkFromSrc, *DGV, GV))
+    return true;
+  if (LinkFromSrc)
+    ValuesToLink.insert(&GV);
+  return false;
 }
 
 bool ModuleLinker::run() {
@@ -1881,13 +1900,10 @@ bool ModuleLinker::run() {
     if (linkIfNeeded(GA))
       return true;
 
-  for (const auto &Entry : DstM.getComdatSymbolTable()) {
-    const Comdat &C = Entry.getValue();
-    if (C.getSelectionKind() == Comdat::Any)
-      continue;
-    const GlobalValue *GV = SrcM.getNamedValue(C.getName());
-    if (GV)
-      MapValue(GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
+  for (GlobalValue *GV : ValuesToLink) {
+    MapValue(GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
+    if (HasError)
+      return true;
   }
 
   // Note that we are done linking global value bodies. This prevents
