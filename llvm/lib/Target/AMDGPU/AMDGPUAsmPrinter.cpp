@@ -123,11 +123,46 @@ void AMDGPUAsmPrinter::EmitFunctionEntryLabel() {
   AsmPrinter::EmitFunctionEntryLabel();
 }
 
+static bool isModuleLinkage(const GlobalValue *GV) {
+  switch (GV->getLinkage()) {
+  case GlobalValue::InternalLinkage:
+  case GlobalValue::CommonLinkage:
+   return true;
+  case GlobalValue::ExternalLinkage:
+   return false;
+  default: llvm_unreachable("unknown linkage type");
+  }
+}
+
 void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   if (TM.getTargetTriple().getOS() != Triple::AMDHSA ||
-      !AMDGPU::isGroupSegment(GV))
-    return AsmPrinter::EmitGlobalVariable(GV);
+      GV->isDeclaration() || AMDGPU::isReadOnlySegment(GV)) {
+    AsmPrinter::EmitGlobalVariable(GV);
+    return;
+  }
+
+  // Group segment variables aren't emitted in HSA.
+  if (AMDGPU::isGroupSegment(GV))
+    return;
+
+  AMDGPUTargetStreamer *TS =
+      static_cast<AMDGPUTargetStreamer *>(OutStreamer->getTargetStreamer());
+  if (isModuleLinkage(GV)) {
+    TS->EmitAMDGPUHsaModuleScopeGlobal(GV->getName());
+  } else {
+    TS->EmitAMDGPUHsaProgramScopeGlobal(GV->getName());
+  }
+
+  const DataLayout &DL = getDataLayout();
+  OutStreamer->PushSection();
+  OutStreamer->SwitchSection(
+      getObjFileLowering().SectionForGlobal(GV, *Mang, TM));
+  MCSymbol *GVSym = getSymbol(GV);
+  const Constant *C = GV->getInitializer();
+  OutStreamer->EmitLabel(GVSym);
+  EmitGlobalConstant(DL, C);
+  OutStreamer->PopSection();
 }
 
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {

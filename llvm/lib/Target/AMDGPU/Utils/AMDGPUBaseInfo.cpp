@@ -68,8 +68,29 @@ MCSection *getHSATextSection(MCContext &Ctx) {
                            ELF::SHF_AMDGPU_HSA_CODE);
 }
 
+MCSection *getHSADataGlobalAgentSection(MCContext &Ctx) {
+  return Ctx.getELFSection(".hsadata_global_agent", ELF::SHT_PROGBITS,
+                           ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                           ELF::SHF_AMDGPU_HSA_GLOBAL |
+                           ELF::SHF_AMDGPU_HSA_AGENT);
+}
+
+MCSection *getHSADataGlobalProgramSection(MCContext &Ctx) {
+  return  Ctx.getELFSection(".hsadata_global_program", ELF::SHT_PROGBITS,
+                            ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                            ELF::SHF_AMDGPU_HSA_GLOBAL);
+}
+
 bool isGroupSegment(const GlobalValue *GV) {
   return GV->getType()->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+}
+
+bool isGlobalSegment(const GlobalValue *GV) {
+  return GV->getType()->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
+}
+
+bool isReadOnlySegment(const GlobalValue *GV) {
+  return GV->getType()->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS;
 }
 
 } // End namespace AMDGPU

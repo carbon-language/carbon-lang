@@ -36,6 +36,7 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Triple &TT) : MCAsmInfoELF() {
 }
 
 bool AMDGPUMCAsmInfo::shouldOmitSectionDirective(StringRef SectionName) const {
-  return SectionName == ".hsatext" ||
+  return SectionName == ".hsatext" || SectionName == ".hsadata_global_agent" ||
+         SectionName == ".hsadata_global_program" ||
          MCAsmInfo::shouldOmitSectionDirective(SectionName);
 }
