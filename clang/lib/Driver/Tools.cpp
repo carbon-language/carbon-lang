@@ -8694,8 +8694,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       if (!isAndroid)
         CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
     }
-  } else if (Args.hasArg(options::OPT_rtlib_EQ))
-    AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
+  }
 
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
