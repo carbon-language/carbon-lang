@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -O3 -triple %itanium_abi_triple -emit-llvm -o - %s | FileCheck %s
 
-// Is FP_CONTRACT is honored in a simple case?
+// Is FP_CONTRACT honored in a simple case?
 float fp_contract_1(float a, float b, float c) {
 // CHECK: _Z13fp_contract_1fff
 // CHECK: tail call float @llvm.fmuladd
@@ -19,7 +19,7 @@ float fp_contract_2(float a, float b, float c) {
   return a * b + c;  
 }
 
-// Does FP_CONTRACT survive template instatiation?
+// Does FP_CONTRACT survive template instantiation?
 class Foo {};
 Foo operator+(Foo, Foo);
 
