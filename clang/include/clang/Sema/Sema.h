@@ -7751,6 +7751,12 @@ private:
   ExprResult VerifyPositiveIntegerConstantInClause(Expr *Op,
                                                    OpenMPClauseKind CKind);
 public:
+  /// \brief Return true if the provided declaration \a VD should be captured by
+  /// reference in the provided scope \a RSI. This will take into account the
+  /// semantics of the directive and associated clauses.
+  bool IsOpenMPCapturedByRef(VarDecl *VD,
+                             const sema::CapturedRegionScopeInfo *RSI);
+
   /// \brief Check if the specified variable is used in one of the private
   /// clauses (private, firstprivate, lastprivate, reduction etc.) in OpenMP
   /// constructs.

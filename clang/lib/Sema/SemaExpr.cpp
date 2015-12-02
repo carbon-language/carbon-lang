@@ -12621,10 +12621,15 @@ static bool isVariableAlreadyCapturedInScopeInfo(CapturingScopeInfo *CSI, VarDec
       
     // Compute the type of an expression that refers to this variable.
     DeclRefType = CaptureType.getNonReferenceType();
-      
+
+    // Similarly to mutable captures in lambda, all the OpenMP captures by copy
+    // are mutable in the sense that user can change their value - they are
+    // private instances of the captured declarations.
     const CapturingScopeInfo::Capture &Cap = CSI->getCapture(Var);
     if (Cap.isCopyCapture() &&
-        !(isa<LambdaScopeInfo>(CSI) && cast<LambdaScopeInfo>(CSI)->Mutable))
+        !(isa<LambdaScopeInfo>(CSI) && cast<LambdaScopeInfo>(CSI)->Mutable) &&
+        !(isa<CapturedRegionScopeInfo>(CSI) &&
+          cast<CapturedRegionScopeInfo>(CSI)->CapRegionKind == CR_OpenMP))
       DeclRefType.addConst();
     return true;
   }
@@ -12812,9 +12817,17 @@ static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
   // By default, capture variables by reference.
   bool ByRef = true;
   // Using an LValue reference type is consistent with Lambdas (see below).
-  if (S.getLangOpts().OpenMP && S.IsOpenMPCapturedVar(Var))
-    DeclRefType = DeclRefType.getUnqualifiedType();
-  CaptureType = S.Context.getLValueReferenceType(DeclRefType);
+  if (S.getLangOpts().OpenMP) {
+    ByRef = S.IsOpenMPCapturedByRef(Var, RSI);
+    if (S.IsOpenMPCapturedVar(Var))
+      DeclRefType = DeclRefType.getUnqualifiedType();
+  }
+
+  if (ByRef)
+    CaptureType = S.Context.getLValueReferenceType(DeclRefType);
+  else
+    CaptureType = DeclRefType;
+
   Expr *CopyExpr = nullptr;
   if (BuildAndDiagnose) {
     // The current implementation assumes that all variables are captured

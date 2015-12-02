@@ -222,6 +222,8 @@ public:
       return Stack[Stack.size() - 2].Directive;
     return OMPD_unknown;
   }
+  /// \brief Return the directive associated with the provided scope.
+  OpenMPDirectiveKind getDirectiveForScope(const Scope *S) const;
 
   /// \brief Set default data sharing attribute to none.
   void setDefaultDSANone(SourceLocation Loc) {
@@ -729,11 +731,106 @@ bool DSAStackTy::hasDirective(NamedDirectivesPredicate DPred, bool FromParent) {
   return false;
 }
 
+OpenMPDirectiveKind DSAStackTy::getDirectiveForScope(const Scope *S) const {
+  for (auto I = Stack.rbegin(), EE = Stack.rend(); I != EE; ++I)
+    if (I->CurScope == S)
+      return I->Directive;
+  return OMPD_unknown;
+}
+
 void Sema::InitDataSharingAttributesStack() {
   VarDataSharingAttributesStack = new DSAStackTy(*this);
 }
 
 #define DSAStack static_cast<DSAStackTy *>(VarDataSharingAttributesStack)
+
+bool Sema::IsOpenMPCapturedByRef(VarDecl *VD,
+                                 const CapturedRegionScopeInfo *RSI) {
+  assert(LangOpts.OpenMP && "OpenMP is not allowed");
+
+  auto &Ctx = getASTContext();
+  bool IsByRef = true;
+
+  // Find the directive that is associated with the provided scope.
+  auto DKind = DSAStack->getDirectiveForScope(RSI->TheScope);
+  auto Ty = VD->getType();
+
+  if (isOpenMPTargetDirective(DKind)) {
+    // This table summarizes how a given variable should be passed to the device
+    // given its type and the clauses where it appears. This table is based on
+    // the description in OpenMP 4.5 [2.10.4, target Construct] and
+    // OpenMP 4.5 [2.15.5, Data-mapping Attribute Rules and Clauses].
+    //
+    // =========================================================================
+    // | type |  defaultmap   | pvt | first | is_device_ptr |    map   | res.  |
+    // |      |(tofrom:scalar)|     |  pvt  |               |          |       |
+    // =========================================================================
+    // | scl  |               |     |       |       -       |          | bycopy|
+    // | scl  |               |  -  |   x   |       -       |     -    | bycopy|
+    // | scl  |               |  x  |   -   |       -       |     -    | null  |
+    // | scl  |       x       |     |       |       -       |          | byref |
+    // | scl  |       x       |  -  |   x   |       -       |     -    | bycopy|
+    // | scl  |       x       |  x  |   -   |       -       |     -    | null  |
+    // | scl  |               |  -  |   -   |       -       |     x    | byref |
+    // | scl  |       x       |  -  |   -   |       -       |     x    | byref |
+    //
+    // | agg  |      n.a.     |     |       |       -       |          | byref |
+    // | agg  |      n.a.     |  -  |   x   |       -       |     -    | byref |
+    // | agg  |      n.a.     |  x  |   -   |       -       |     -    | null  |
+    // | agg  |      n.a.     |  -  |   -   |       -       |     x    | byref |
+    // | agg  |      n.a.     |  -  |   -   |       -       |    x[]   | byref |
+    //
+    // | ptr  |      n.a.     |     |       |       -       |          | bycopy|
+    // | ptr  |      n.a.     |  -  |   x   |       -       |     -    | bycopy|
+    // | ptr  |      n.a.     |  x  |   -   |       -       |     -    | null  |
+    // | ptr  |      n.a.     |  -  |   -   |       -       |     x    | byref |
+    // | ptr  |      n.a.     |  -  |   -   |       -       |    x[]   | bycopy|
+    // | ptr  |      n.a.     |  -  |   -   |       x       |          | bycopy|
+    // | ptr  |      n.a.     |  -  |   -   |       x       |     x    | bycopy|
+    // | ptr  |      n.a.     |  -  |   -   |       x       |    x[]   | bycopy|
+    // =========================================================================
+    // Legend:
+    //  scl - scalar
+    //  ptr - pointer
+    //  agg - aggregate
+    //  x - applies
+    //  - - invalid in this combination
+    //  [] - mapped with an array section
+    //  byref - should be mapped by reference
+    //  byval - should be mapped by value
+    //  null - initialize a local variable to null on the device
+    //
+    // Observations:
+    //  - All scalar declarations that show up in a map clause have to be passed
+    //    by reference, because they may have been mapped in the enclosing data
+    //    environment.
+    //  - If the scalar value does not fit the size of uintptr, it has to be
+    //    passed by reference, regardless the result in the table above.
+    //  - For pointers mapped by value that have either an implicit map or an
+    //    array section, the runtime library may pass the NULL value to the
+    //    device instead of the value passed to it by the compiler.
+
+    // FIXME: Right now, only implicit maps are implemented. Properly mapping
+    // values requires having the map, private, and firstprivate clauses SEMA
+    // and parsing in place, which we don't yet.
+
+    if (Ty->isReferenceType())
+      Ty = Ty->castAs<ReferenceType>()->getPointeeType();
+    IsByRef = !Ty->isScalarType();
+  }
+
+  // When passing data by value, we need to make sure it fits the uintptr size
+  // and alignment, because the runtime library only deals with uintptr types.
+  // If it does not fit the uintptr size, we need to pass the data by reference
+  // instead.
+  if (!IsByRef &&
+      (Ctx.getTypeSizeInChars(Ty) >
+           Ctx.getTypeSizeInChars(Ctx.getUIntPtrType()) ||
+       Ctx.getDeclAlign(VD) > Ctx.getTypeAlignInChars(Ctx.getUIntPtrType())))
+    IsByRef = true;
+
+  return IsByRef;
+}
 
 bool Sema::IsOpenMPCapturedVar(VarDecl *VD) {
   assert(LangOpts.OpenMP && "OpenMP is not allowed");
@@ -5015,7 +5112,13 @@ StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,
   if (!AStmt)
     return StmtError();
 
-  assert(isa<CapturedStmt>(AStmt) && "Captured statement expected");
+  CapturedStmt *CS = cast<CapturedStmt>(AStmt);
+  // 1.2.2 OpenMP Language Terminology
+  // Structured block - An executable statement with a single entry at the
+  // top and a single exit at the bottom.
+  // The point of exit cannot be a branch out of the structured block.
+  // longjmp() and throw() must not violate the entry/exit criteria.
+  CS->getCapturedDecl()->setNothrow();
 
   // OpenMP [2.16, Nesting of Regions]
   // If specified, a teams construct must be contained within a target
