@@ -4304,7 +4304,7 @@ static SDValue getConstVector(ArrayRef<int> Values, MVT VT,
 }
 
 /// Returns a vector of specified type with all zero elements.
-static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
+static SDValue getZeroVector(MVT VT, const X86Subtarget *Subtarget,
                              SelectionDAG &DAG, SDLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
 
@@ -16803,7 +16803,7 @@ static SDValue getGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   SDValue Disp = DAG.getTargetConstant(0, dl, MVT::i32);
   SDValue Segment = DAG.getRegister(0, MVT::i32);
   if (Src.getOpcode() == ISD::UNDEF)
-    Src = getZeroVector(Op.getValueType(), Subtarget, DAG, dl);
+    Src = getZeroVector(Op.getSimpleValueType(), Subtarget, DAG, dl);
   SDValue Ops[] = {Src, MaskInReg, Base, Scale, Index, Disp, Segment, Chain};
   SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
   SDValue RetOps[] = { SDValue(Res, 0), SDValue(Res, 2) };
@@ -22319,7 +22319,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getSimpleValueType(0);
   unsigned NumElems = VT.getVectorNumElements();
 
   if (V1.getOpcode() == ISD::CONCAT_VECTORS &&
@@ -23202,7 +23202,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
       return AddSub;
 
   // Combine 256-bit vector shuffles. This is only profitable when in AVX mode
-  if (Subtarget->hasFp256() && VT.is256BitVector() &&
+  if (TLI.isTypeLegal(VT) && Subtarget->hasFp256() && VT.is256BitVector() &&
       N->getOpcode() == ISD::VECTOR_SHUFFLE)
     return PerformShuffleCombine256(N, DAG, DCI, Subtarget);
 
@@ -24677,7 +24677,7 @@ static SDValue performShiftToAllZeros(SDNode *N, SelectionDAG &DAG,
       // the element size. The constant shift amount will be
       // encoded as a 8-bit immediate.
       if (ShiftAmt.trunc(8).uge(MaxAmount))
-        return getZeroVector(VT, Subtarget, DAG, DL);
+        return getZeroVector(VT.getSimpleVT(), Subtarget, DAG, DL);
     }
 
   return SDValue();
