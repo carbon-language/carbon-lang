@@ -30,6 +30,13 @@ void DWARFUnitIndex::Header::dump(raw_ostream &OS) const {
 }
 
 bool DWARFUnitIndex::parse(DataExtractor IndexData) {
+  bool b = parseImpl(IndexData);
+  if (!b)
+    *this = DWARFUnitIndex(InfoColumnKind);
+  return b;
+}
+
+bool DWARFUnitIndex::parseImpl(DataExtractor IndexData) {
   uint32_t Offset = 0;
   if (!Header.parse(IndexData, &Offset))
     return false;
@@ -62,7 +69,7 @@ bool DWARFUnitIndex::parse(DataExtractor IndexData) {
   // Read the Column Headers
   for (unsigned i = 0; i != Header.NumColumns; ++i) {
     ColumnKinds[i] = static_cast<DWARFSectionKind>(IndexData.getU32(&Offset));
-    if (ColumnKinds[i] == DW_SECT_INFO || ColumnKinds[i] == DW_SECT_TYPES) {
+    if (ColumnKinds[i] == InfoColumnKind) {
       if (InfoColumn != -1)
         return false;
       InfoColumn = i;
@@ -107,6 +114,9 @@ StringRef DWARFUnitIndex::getColumnHeader(DWARFSectionKind DS) {
 }
 
 void DWARFUnitIndex::dump(raw_ostream &OS) const {
+  if (!Header.NumBuckets)
+    return;
+
   Header.dump(OS);
   OS << "Index Signature         ";
   for (unsigned i = 0; i != Header.NumColumns; ++i)
