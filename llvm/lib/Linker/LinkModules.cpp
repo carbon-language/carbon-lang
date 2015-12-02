@@ -791,30 +791,6 @@ Function *ModuleLinker::copyFunctionProto(TypeMapTy &TypeMap,
 /// Set up prototypes for any aliases that come over from the source module.
 GlobalValue *ModuleLinker::copyGlobalAliasProto(TypeMapTy &TypeMap,
                                                 const GlobalAlias *SGA) {
-  // If we are importing and encounter a weak_any alias, or an alias to
-  // an object being imported as a declaration, we must import the alias
-  // as a declaration as well, which involves converting it to a non-alias.
-  // See comments in ModuleLinker::getLinkage for why we cannot import
-  // weak_any defintions.
-  if (isPerformingImport() && !doImportAsDefinition(SGA)) {
-    // Need to convert to declaration. All aliases must be definitions.
-    const GlobalValue *GVal = SGA->getBaseObject();
-    GlobalValue *NewGV;
-    if (auto *GVar = dyn_cast<GlobalVariable>(GVal))
-      NewGV = copyGlobalVariableProto(TypeMap, GVar);
-    else {
-      auto *F = dyn_cast<Function>(GVal);
-      assert(F);
-      NewGV = copyFunctionProto(TypeMap, F);
-    }
-    // Set the linkage to External or ExternalWeak (see comments in
-    // ModuleLinker::getLinkage for why WeakAny is converted to ExternalWeak).
-    if (SGA->hasWeakAnyLinkage())
-      NewGV->setLinkage(GlobalValue::ExternalWeakLinkage);
-    else
-      NewGV->setLinkage(GlobalValue::ExternalLinkage);
-    return NewGV;
-  }
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
   auto *Ty = TypeMap.get(SGA->getValueType());
@@ -1421,7 +1397,9 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   Comdat *C = nullptr;
   bool HasUnnamedAddr = SGV->hasUnnamedAddr();
 
-  if (const Comdat *SC = SGV->getComdat()) {
+  if (isPerformingImport() && !doImportAsDefinition(SGV)) {
+    LinkFromSrc = false;
+  } else if (const Comdat *SC = SGV->getComdat()) {
     Comdat::SelectionKind SK;
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
     C = DstM.getOrInsertComdat(SC->getName());
@@ -1454,9 +1432,6 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     setVisibility(NewGV, SGV, DGV);
   } else {
     NewGV = copyGlobalValueProto(TypeMap, SGV, DGV, LinkFromSrc);
-
-    if (isPerformingImport() && !doImportAsDefinition(SGV))
-      DoNotLinkFromSource.insert(SGV);
   }
 
   NewGV->setUnnamedAddr(HasUnnamedAddr);
