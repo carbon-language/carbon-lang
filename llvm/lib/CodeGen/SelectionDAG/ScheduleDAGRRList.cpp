@@ -1244,7 +1244,7 @@ static void CheckForLiveRegDefMasked(SUnit *SU, const uint32_t *RegMask,
                                      SmallSet<unsigned, 4> &RegAdded,
                                      SmallVectorImpl<unsigned> &LRegs) {
   // Look at all live registers. Skip Reg0 and the special CallResource.
-  for (unsigned i = 1, e = LiveRegDefs.size(); i != e; ++i) {
+  for (unsigned i = 1, e = LiveRegDefs.size()-1; i != e; ++i) {
     if (!LiveRegDefs[i]) continue;
     if (LiveRegDefs[i] == SU) continue;
     if (!MachineOperand::clobbersPhysReg(RegMask, i)) continue;
