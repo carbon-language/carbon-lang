@@ -2748,7 +2748,8 @@ Sema::CheckVarTemplateId(VarTemplateDecl *Template, SourceLocation TemplateLoc,
   typedef PartialSpecMatchResult MatchResult;
   SmallVector<MatchResult, 4> Matched;
   SourceLocation PointOfInstantiation = TemplateNameLoc;
-  TemplateSpecCandidateSet FailedCandidates(PointOfInstantiation);
+  TemplateSpecCandidateSet FailedCandidates(PointOfInstantiation,
+                                            /*ForTakingAddress=*/false);
 
   // 1. Attempt to find the closest partial specialization that this
   // specializes, if any.
@@ -6822,7 +6823,8 @@ bool Sema::CheckFunctionTemplateSpecialization(
   // The set of function template specializations that could match this
   // explicit function template specialization.
   UnresolvedSet<8> Candidates;
-  TemplateSpecCandidateSet FailedCandidates(FD->getLocation());
+  TemplateSpecCandidateSet FailedCandidates(FD->getLocation(),
+                                            /*ForTakingAddress=*/false);
 
   llvm::SmallDenseMap<FunctionDecl *, TemplateArgumentListInfo, 8>
       ConvertedTemplateArgs;

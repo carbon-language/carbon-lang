@@ -914,6 +914,12 @@ private:
   /// decls.
   DeclMapTy LocalDeclMap;
 
+  /// SizeArguments - If a ParmVarDecl had the pass_object_size attribute, this
+  /// will contain a mapping from said ParmVarDecl to its implicit "object_size"
+  /// parameter.
+  llvm::SmallDenseMap<const ParmVarDecl *, const ImplicitParamDecl *, 2>
+      SizeArguments;
+
   /// Track escaped local variables with auto storage. Used during SEH
   /// outlining to produce a call to llvm.localescape.
   llvm::DenseMap<llvm::AllocaInst *, int> EscapedLocals;
@@ -3061,6 +3067,18 @@ private:
                                   LValue InputValue, QualType InputType,
                                   std::string &ConstraintStr,
                                   SourceLocation Loc);
+
+  /// \brief Attempts to statically evaluate the object size of E. If that
+  /// fails, emits code to figure the size of E out for us. This is
+  /// pass_object_size aware.
+  llvm::Value *evaluateOrEmitBuiltinObjectSize(const Expr *E, unsigned Type,
+                                               llvm::IntegerType *ResType);
+
+  /// \brief Emits the size of E, as required by __builtin_object_size. This
+  /// function is aware of pass_object_size parameters, and will act accordingly
+  /// if E is a parameter with the pass_object_size attribute.
+  llvm::Value *emitBuiltinObjectSize(const Expr *E, unsigned Type,
+                                     llvm::IntegerType *ResType);
 
 public:
 #ifndef NDEBUG

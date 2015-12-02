@@ -1156,6 +1156,7 @@ static bool EvaluateIntegerOrLValue(const Expr *E, APValue &Result,
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
 static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 static bool EvaluateAtomic(const Expr *E, APValue &Result, EvalInfo &Info);
+static bool EvaluateAsRValue(EvalInfo &Info, const Expr *E, APValue &Result);
 
 //===----------------------------------------------------------------------===//
 // Misc utilities
@@ -6377,8 +6378,28 @@ static bool refersToCompleteObject(const LValue &LVal) {
   return false;
 }
 
-bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
-                                                    unsigned Type) {
+/// Tries to evaluate the __builtin_object_size for @p E. If successful, returns
+/// true and stores the result in @p Size.
+///
+/// If @p WasError is non-null, this will report whether the failure to evaluate
+/// is to be treated as an Error in IntExprEvaluator.
+static bool tryEvaluateBuiltinObjectSize(const Expr *E, unsigned Type,
+                                         EvalInfo &Info, uint64_t &Size,
+                                         bool *WasError = nullptr) {
+  if (WasError != nullptr)
+    *WasError = false;
+
+  auto Error = [&](const Expr *E) {
+    if (WasError != nullptr)
+      *WasError = true;
+    return false;
+  };
+
+  auto Success = [&](uint64_t S, const Expr *E) {
+    Size = S;
+    return true;
+  };
+
   // Determine the denoted object.
   LValue Base;
   {
@@ -6387,8 +6408,15 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
     // ignore the side-effects.
     SpeculativeEvaluationRAII SpeculativeEval(Info);
     FoldOffsetRAII Fold(Info, Type & 1);
-    const Expr *Ptr = ignorePointerCastsAndParens(E->getArg(0));
-    if (!EvaluatePointer(Ptr, Base, Info))
+
+    if (E->isGLValue()) {
+      // It's possible for us to be given GLValues if we're called via
+      // Expr::tryEvaluateObjectSize.
+      APValue RVal;
+      if (!EvaluateAsRValue(Info, E, RVal))
+        return false;
+      Base.setFrom(Info.Ctx, RVal);
+    } else if (!EvaluatePointer(ignorePointerCastsAndParens(E), Base, Info))
       return false;
   }
 
@@ -6447,7 +6475,7 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
       End.Designator.Entries.size() == End.Designator.MostDerivedPathLength) {
     // We got a pointer to an array. Step to its end.
     AmountToAdd = End.Designator.MostDerivedArraySize -
-      End.Designator.Entries.back().ArrayIndex;
+                  End.Designator.Entries.back().ArrayIndex;
   } else if (End.Designator.isOnePastTheEnd()) {
     // We're already pointing at the end of the object.
     AmountToAdd = 0;
@@ -6484,7 +6512,18 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
   if (BaseOffset > EndOffset)
     return Success(0, E);
 
-  return Success(EndOffset - BaseOffset, E);
+  return Success((EndOffset - BaseOffset).getQuantity(), E);
+}
+
+bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
+                                                    unsigned Type) {
+  uint64_t Size;
+  bool WasError;
+  if (::tryEvaluateBuiltinObjectSize(E->getArg(0), Type, Info, Size, &WasError))
+    return Success(Size, E);
+  if (WasError)
+    return Error(E);
+  return false;
 }
 
 bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
@@ -6501,12 +6540,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     if (TryEvaluateBuiltinObjectSize(E, Type))
       return true;
 
-    // If evaluating the argument has side-effects, we can't determine the size
-    // of the object, and so we lower it to unknown now. CodeGen relies on us to
-    // handle all cases where the expression has side-effects.
-    // Likewise, if Type is 3, we must handle this because CodeGen cannot give a
-    // conservatively correct answer in that case.
-    if (E->getArg(0)->HasSideEffects(Info.Ctx) || Type == 3)
+    if (E->getArg(0)->HasSideEffects(Info.Ctx))
       return Success((Type & 2) ? 0 : -1, E);
 
     // Expression had no side effects, but we couldn't statically determine the
@@ -9482,4 +9516,14 @@ bool Expr::isPotentialConstantExprUnevaluated(Expr *E,
   APValue ResultScratch;
   Evaluate(ResultScratch, Info, E);
   return Diags.empty();
+}
+
+bool Expr::tryEvaluateObjectSize(uint64_t &Result, ASTContext &Ctx,
+                                 unsigned Type) const {
+  if (!getType()->isPointerType())
+    return false;
+
+  Expr::EvalStatus Status;
+  EvalInfo Info(Ctx, Status, EvalInfo::EM_ConstantFold);
+  return ::tryEvaluateBuiltinObjectSize(this, Type, Info, Result);
 }
