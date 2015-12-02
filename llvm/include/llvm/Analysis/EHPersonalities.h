@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LIBCALLSEMANTICS_H
-#define LLVM_ANALYSIS_LIBCALLSEMANTICS_H
+#ifndef LLVM_ANALYSIS_EHPERSONALITIES_H
+#define LLVM_ANALYSIS_EHPERSONALITIES_H
 
 #include "llvm/Support/ErrorHandling.h"
 
