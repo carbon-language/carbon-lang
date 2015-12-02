@@ -1514,8 +1514,7 @@ unsigned HexagonAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
 void HexagonAsmParser::OutOfRange(SMLoc IDLoc, long long Val, long long Max) {
   std::string errStr;
   raw_string_ostream ES(errStr);
-  ES << "value " << Val << "(" << format("0x%" PRIx64, Val)
-         << ") out of range: ";
+  ES << "value " << Val << "(" << format_hex(Val, 0) << ") out of range: ";
   if (Max >= 0)
     ES << "0-" << Max;
   else
