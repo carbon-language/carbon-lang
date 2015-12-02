@@ -1027,10 +1027,11 @@ class RawPickledFormatter(ResultsFormatter):
         # Tack on the pid.
         test_event["pid"] = self.pid
 
-        # Send it as {serialized_length_of_serialized_bytes}#{serialized_bytes}
-        pickled_message = cPickle.dumps(test_event)
-        self.out_file.send("{}#".format(len(pickled_message)))
-        self.out_file.send(pickled_message)
+        # Send it as {serialized_length_of_serialized_bytes}{serialized_bytes}
+        import struct
+        msg = cPickle.dumps(test_event)
+        packet = struct.pack("!I%ds" % len(msg), len(msg), msg)
+        self.out_file.send(packet)
 
 
 class DumpFormatter(ResultsFormatter):
