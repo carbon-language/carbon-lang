@@ -15,6 +15,7 @@
 namespace llvm {
 
 class FeatureBitset;
+class GlobalValue;
 class MCContext;
 class MCSection;
 
@@ -30,6 +31,8 @@ IsaVersion getIsaVersion(const FeatureBitset &Features);
 void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
                                const FeatureBitset &Features);
 MCSection *getHSATextSection(MCContext &Ctx);
+
+bool isGroupSegment(const GlobalValue *GV);
 
 } // end namespace AMDGPU
 } // end namespace llvm

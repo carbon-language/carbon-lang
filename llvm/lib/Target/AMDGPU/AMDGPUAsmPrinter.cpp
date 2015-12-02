@@ -123,6 +123,13 @@ void AMDGPUAsmPrinter::EmitFunctionEntryLabel() {
   AsmPrinter::EmitFunctionEntryLabel();
 }
 
+void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
+
+  if (TM.getTargetTriple().getOS() != Triple::AMDHSA ||
+      !AMDGPU::isGroupSegment(GV))
+    return AsmPrinter::EmitGlobalVariable(GV);
+}
+
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // The starting address of all shader programs must be 256 bytes aligned.

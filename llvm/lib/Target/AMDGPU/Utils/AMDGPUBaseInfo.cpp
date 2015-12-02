@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AMDGPUBaseInfo.h"
+#include "AMDGPU.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/SubtargetFeature.h"
@@ -64,6 +66,10 @@ MCSection *getHSATextSection(MCContext &Ctx) {
                            ELF::SHF_EXECINSTR |
                            ELF::SHF_AMDGPU_HSA_AGENT |
                            ELF::SHF_AMDGPU_HSA_CODE);
+}
+
+bool isGroupSegment(const GlobalValue *GV) {
+  return GV->getType()->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }
 
 } // End namespace AMDGPU
