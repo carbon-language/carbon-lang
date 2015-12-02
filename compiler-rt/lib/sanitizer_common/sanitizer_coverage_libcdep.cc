@@ -96,7 +96,7 @@ class CoverageData {
   void DumpAll();
 
   ALWAYS_INLINE
-  void TraceBasicBlock(s32 *id);
+  void TraceBasicBlock(u32 *id);
 
   void InitializeGuardArray(s32 *guards);
   void InitializeGuards(s32 *guards, uptr n, const char *module_name,
@@ -682,11 +682,11 @@ void CoverageData::DumpCallerCalleePairs() {
 // it once and then cache in the provided 'cache' storage.
 //
 // This function will eventually be inlined by the compiler.
-void CoverageData::TraceBasicBlock(s32 *id) {
+void CoverageData::TraceBasicBlock(u32 *id) {
   // Will trap here if
   //  1. coverage is not enabled at run-time.
   //  2. The array tr_event_array is full.
-  *tr_event_pointer = static_cast<u32>(*id - 1);
+  *tr_event_pointer = *id - 1;
   tr_event_pointer++;
 }
 
@@ -920,11 +920,13 @@ uptr __sanitizer_get_total_unique_caller_callee_pairs() {
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_cov_trace_func_enter(s32 *id) {
+void __sanitizer_cov_trace_func_enter(u32 *id) {
+  __sanitizer_cov_with_check(id);
   coverage_data.TraceBasicBlock(id);
 }
 SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_cov_trace_basic_block(s32 *id) {
+void __sanitizer_cov_trace_basic_block(u32 *id) {
+  __sanitizer_cov_with_check(id);
   coverage_data.TraceBasicBlock(id);
 }
 SANITIZER_INTERFACE_ATTRIBUTE
