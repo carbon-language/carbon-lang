@@ -1029,8 +1029,8 @@ class RawPickledFormatter(ResultsFormatter):
 
         # Send it as {serialized_length_of_serialized_bytes}#{serialized_bytes}
         pickled_message = cPickle.dumps(test_event)
-        self.out_file.send(
-            "{}#{}".format(len(pickled_message), pickled_message))
+        self.out_file.send("{}#".format(len(pickled_message)))
+        self.out_file.send(pickled_message)
 
 
 class DumpFormatter(ResultsFormatter):

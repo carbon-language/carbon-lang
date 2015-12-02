@@ -47,7 +47,7 @@ class UnpicklingForwardingReaderChannel(asyncore.dispatcher):
         self.header_contents = ''
         self.packet_bytes_remaining = 0
         self.reading_header = True
-        self.ibuffer = ''
+        self.ibuffer = b''
         self.forwarding_func = forwarding_func
         if forwarding_func is None:
             # This whole class is useless if we do nothing with the
@@ -58,7 +58,7 @@ class UnpicklingForwardingReaderChannel(asyncore.dispatcher):
         """Unpickles the collected input buffer bytes and forwards."""
         if len(self.ibuffer) > 0:
             self.forwarding_func(cPickle.loads(self.ibuffer))
-            self.ibuffer = ''
+            self.ibuffer = b''
 
     def consume_header_bytes(self, data):
         """Consumes header bytes from the front of data.
