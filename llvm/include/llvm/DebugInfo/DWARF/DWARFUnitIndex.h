@@ -55,6 +55,7 @@ public:
     const SectionContribution *getOffset() const;
   };
 
+private:
   struct Header Header;
 
   int InfoColumn = -1;
