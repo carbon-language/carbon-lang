@@ -1426,7 +1426,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
     C = DstM.getOrInsertComdat(SC->getName());
     C->setSelectionKind(SK);
-    if (SGV->hasInternalLinkage())
+    if (SGV->hasLocalLinkage())
       LinkFromSrc = true;
   } else if (DGV) {
     if (shouldLinkFromSource(LinkFromSrc, *DGV, *SGV))
