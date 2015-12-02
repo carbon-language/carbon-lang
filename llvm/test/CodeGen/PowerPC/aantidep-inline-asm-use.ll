@@ -302,7 +302,4 @@ attributes #0 = { nounwind "disable-tail-calls"="false" "less-precise-fpmad"="fa
 attributes #1 = { nounwind argmemonly }
 attributes #2 = { nounwind }
 
-!llvm.ident = !{!0}
-
-!0 = !{!"clang version google3-trunk (trunk r251807)"}
 !1 = !{i32 -2140527538, i32 -2140527533}
