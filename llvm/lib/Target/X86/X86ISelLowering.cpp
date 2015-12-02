@@ -26570,18 +26570,18 @@ static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG,
 
   if ((CC == ISD::SETNE || CC == ISD::SETEQ) && LHS.getOpcode() == ISD::SUB)
     if (isNullConstant(LHS.getOperand(0)) && LHS.hasOneUse()) {
-        SDValue addV = DAG.getNode(ISD::ADD, DL, LHS.getValueType(), RHS,
-                                   LHS.getOperand(1));
-        return DAG.getSetCC(DL, N->getValueType(0), addV,
-                            DAG.getConstant(0, DL, addV.getValueType()), CC);
-      }
+      SDValue addV = DAG.getNode(ISD::ADD, DL, LHS.getValueType(), RHS,
+                                 LHS.getOperand(1));
+      return DAG.getSetCC(DL, N->getValueType(0), addV,
+                          DAG.getConstant(0, DL, addV.getValueType()), CC);
+    }
   if ((CC == ISD::SETNE || CC == ISD::SETEQ) && RHS.getOpcode() == ISD::SUB)
     if (isNullConstant(RHS.getOperand(0)) && RHS.hasOneUse()) {
-        SDValue addV = DAG.getNode(ISD::ADD, DL, RHS.getValueType(), LHS,
-                                   RHS.getOperand(1));
-        return DAG.getSetCC(DL, N->getValueType(0), addV,
-                            DAG.getConstant(0, DL, addV.getValueType()), CC);
-      }
+      SDValue addV = DAG.getNode(ISD::ADD, DL, RHS.getValueType(), LHS,
+                                 RHS.getOperand(1));
+      return DAG.getSetCC(DL, N->getValueType(0), addV,
+                          DAG.getConstant(0, DL, addV.getValueType()), CC);
+    }
 
   if (VT.getScalarType() == MVT::i1 &&
       (CC == ISD::SETNE || CC == ISD::SETEQ || ISD::isSignedIntSetCC(CC))) {
