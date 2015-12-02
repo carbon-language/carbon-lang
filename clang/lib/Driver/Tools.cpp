@@ -2057,7 +2057,7 @@ static bool DecodeAArch64Mcpu(const Driver &D, StringRef Mcpu, StringRef &CPU,
   std::pair<StringRef, StringRef> Split = Mcpu.split("+");
   CPU = Split.first;
   if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57" ||
-      CPU == "cortex-a72") {
+      CPU == "cortex-a72" || CPU == "cortex-a35") {
     Features.push_back("+neon");
     Features.push_back("+crc");
     Features.push_back("+crypto");
