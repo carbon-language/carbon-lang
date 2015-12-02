@@ -183,7 +183,7 @@ namespace llvm {
 
   protected:
     SCEVPredicateKind Kind;
-    virtual ~SCEVPredicate();
+    ~SCEVPredicate() = default;
     SCEVPredicate(const SCEVPredicate&) = default;
     SCEVPredicate &operator=(const SCEVPredicate&) = default;
 
@@ -211,9 +211,6 @@ namespace llvm {
     /// if this is a SCEVUnionPredicate.
     virtual const SCEV *getExpr() const = 0;
   };
-  
-  /// Default destructor must be defined outside class due to g++ PR53613.
-  SCEVPredicate::~SCEVPredicate() = default;
 
   inline raw_ostream &operator<<(raw_ostream &OS, const SCEVPredicate &P) {
     P.print(OS);
