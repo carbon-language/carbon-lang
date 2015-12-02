@@ -31,8 +31,13 @@ void DWARFUnitIndex::Header::dump(raw_ostream &OS) const {
 
 bool DWARFUnitIndex::parse(DataExtractor IndexData) {
   bool b = parseImpl(IndexData);
-  if (!b)
-    *this = DWARFUnitIndex(InfoColumnKind);
+  if (!b) {
+    // Make sure we don't try to dump anything
+    Header.NumBuckets = 0;
+    // Release any partially initialized data.
+    ColumnKinds.reset();
+    Rows.reset();
+  }
   return b;
 }
 
