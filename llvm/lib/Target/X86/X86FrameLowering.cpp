@@ -211,6 +211,7 @@ static bool isEAXLiveIn(MachineFunction &MF) {
 static bool
 flagsNeedToBePreservedBeforeTheTerminators(const MachineBasicBlock &MBB) {
   for (const MachineInstr &MI : MBB.terminators()) {
+    bool BreakNext = false;
     for (const MachineOperand &MO : MI.operands()) {
       if (!MO.isReg())
         continue;
@@ -224,8 +225,13 @@ flagsNeedToBePreservedBeforeTheTerminators(const MachineBasicBlock &MBB) {
       if (!MO.isDef())
         return true;
       // This terminator defines the eflags, i.e., we don't need to preserve it.
-      return false;
+      // However, we still need to check this specific terminator does not
+      // read a live-in value.
+      BreakNext = true;
     }
+    // We found a definition of the eflags, no need to preserve them.
+    if (BreakNext)
+      return false;
   }
 
   // None of the terminators use or define the eflags.
