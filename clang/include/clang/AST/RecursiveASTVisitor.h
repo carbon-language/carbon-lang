@@ -1324,6 +1324,8 @@ DEF_TRAVERSE_DECL(
 DEF_TRAVERSE_DECL(ExternCContextDecl, {})
 
 DEF_TRAVERSE_DECL(NamespaceAliasDecl, {
+  TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
+
   // We shouldn't traverse an aliased namespace, since it will be
   // defined (and, therefore, traversed) somewhere else.
   //

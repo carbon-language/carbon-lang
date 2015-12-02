@@ -4487,6 +4487,8 @@ TEST(NNS, MatchesNestedNameSpecifiers) {
                       nestedNameSpecifier()));
   EXPECT_TRUE(matches("struct A { void f(); }; void A::f() {}",
                       nestedNameSpecifier()));
+  EXPECT_TRUE(matches("namespace a { namespace b {} } namespace ab = a::b;",
+                      nestedNameSpecifier()));
 
   EXPECT_TRUE(matches(
     "struct A { static void f() {} }; void g() { A::f(); }",
