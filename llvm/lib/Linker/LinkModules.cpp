@@ -593,12 +593,7 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
 /// from the SrcGV to the DestGV.
 void ModuleLinker::copyGVAttributes(GlobalValue *NewGV,
                                     const GlobalValue *SrcGV) {
-  auto *GA = dyn_cast<GlobalAlias>(SrcGV);
-  if (GA && !dyn_cast<GlobalAlias>(NewGV)) {
-    // FIXME: this is likelly bogus:
-    NewGV->copyAttributesFrom(GA->getBaseObject());
-  } else
-    NewGV->copyAttributesFrom(SrcGV);
+  NewGV->copyAttributesFrom(SrcGV);
   forceRenaming(NewGV, getName(SrcGV));
 }
 

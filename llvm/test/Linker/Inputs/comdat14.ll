@@ -1,6 +1,6 @@
 $c = comdat any
 
-@v2 = weak global i32 0, comdat ($c)
+@v2 = weak dllexport global i32 0, comdat ($c)
 define i32* @f2() {
   ret i32* @v2
 }
