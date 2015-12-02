@@ -26157,24 +26157,40 @@ static SDValue PerformFSUBCombine(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformFNEGCombine(SDNode *N, SelectionDAG &DAG,
                                   const X86Subtarget *Subtarget) {
   EVT VT = N->getValueType(0);
+  EVT SVT = VT.getScalarType();
   SDValue Arg = N->getOperand(0);
+  SDLoc DL(N);
+
+  // Let legalize expand this if it isn't a legal type yet.
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+
+  // If we're negating a FMUL node on a target with FMA, then we can avoid the
+  // use of a constant by performing (-0 - A*B) instead.
+  // FIXME: Check rounding control flags as well once it becomes available. 
+  if (Arg.getOpcode() == ISD::FMUL && (SVT == MVT::f32 || SVT == MVT::f64) &&
+      Arg->getFlags()->hasNoSignedZeros() && Subtarget->hasAnyFMA()) {
+    SDValue Zero = DAG.getConstantFP(0.0, DL, VT);
+    return DAG.getNode(X86ISD::FNMSUB, DL, VT, Arg.getOperand(0),
+                       Arg.getOperand(1), Zero);
+  }
 
   // If we're negating a FMA node, then we can adjust the
   // instruction to include the extra negation.
   if (Arg.hasOneUse()) {
     switch (Arg.getOpcode()) {
-      case X86ISD::FMADD:
-        return DAG.getNode(X86ISD::FNMSUB, SDLoc(N), VT, Arg.getOperand(0),
-                           Arg.getOperand(1), Arg.getOperand(2));
-      case X86ISD::FMSUB:
-        return DAG.getNode(X86ISD::FNMADD, SDLoc(N), VT, Arg.getOperand(0),
-                           Arg.getOperand(1), Arg.getOperand(2));
-      case X86ISD::FNMADD:
-        return DAG.getNode(X86ISD::FMSUB, SDLoc(N), VT, Arg.getOperand(0),
-                           Arg.getOperand(1), Arg.getOperand(2));
-      case X86ISD::FNMSUB:
-        return DAG.getNode(X86ISD::FMADD, SDLoc(N), VT, Arg.getOperand(0),
-                           Arg.getOperand(1), Arg.getOperand(2));
+    case X86ISD::FMADD:
+      return DAG.getNode(X86ISD::FNMSUB, DL, VT, Arg.getOperand(0),
+                         Arg.getOperand(1), Arg.getOperand(2));
+    case X86ISD::FMSUB:
+      return DAG.getNode(X86ISD::FNMADD, DL, VT, Arg.getOperand(0),
+                         Arg.getOperand(1), Arg.getOperand(2));
+    case X86ISD::FNMADD:
+      return DAG.getNode(X86ISD::FMSUB, DL, VT, Arg.getOperand(0),
+                         Arg.getOperand(1), Arg.getOperand(2));
+    case X86ISD::FNMSUB:
+      return DAG.getNode(X86ISD::FMADD, DL, VT, Arg.getOperand(0),
+                         Arg.getOperand(1), Arg.getOperand(2));
     }
   }
   return SDValue();
