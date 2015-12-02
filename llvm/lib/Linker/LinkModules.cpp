@@ -453,7 +453,7 @@ private:
   /// Handles cloning of a global values from the source module into
   /// the destination module, including setting the attributes and visibility.
   GlobalValue *copyGlobalValueProto(TypeMapTy &TypeMap, const GlobalValue *SGV,
-                                    const GlobalValue *DGV = nullptr);
+                                    const GlobalValue *DGV, bool ForDefinition);
 
   /// Check if we should promote the given local value to global scope.
   bool doPromoteLocalToGlobal(const GlobalValue *SGV);
@@ -594,14 +594,8 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
 void ModuleLinker::copyGVAttributes(GlobalValue *NewGV,
                                     const GlobalValue *SrcGV) {
   auto *GA = dyn_cast<GlobalAlias>(SrcGV);
-  // Check for the special case of converting an alias (definition) to a
-  // non-alias (declaration). This can happen when we are importing and
-  // encounter a weak_any alias (weak_any defs may not be imported, see
-  // comments in ModuleLinker::getLinkage) or an alias whose base object is
-  // being imported as a declaration. In that case copy the attributes from the
-  // base object.
   if (GA && !dyn_cast<GlobalAlias>(NewGV)) {
-    assert(isPerformingImport() && !doImportAsDefinition(GA));
+    // FIXME: this is likelly bogus:
     NewGV->copyAttributesFrom(GA->getBaseObject());
   } else
     NewGV->copyAttributesFrom(SrcGV);
@@ -779,11 +773,12 @@ ModuleLinker::copyGlobalVariableProto(TypeMapTy &TypeMap,
   // No linking to be performed or linking from the source: simply create an
   // identical version of the symbol over in the dest module... the
   // initializer will be filled in later by LinkGlobalInits.
-  GlobalVariable *NewDGV = new GlobalVariable(
-      DstM, TypeMap.get(SGVar->getType()->getElementType()),
-      SGVar->isConstant(), getLinkage(SGVar), /*init*/ nullptr, getName(SGVar),
-      /*insertbefore*/ nullptr, SGVar->getThreadLocalMode(),
-      SGVar->getType()->getAddressSpace());
+  GlobalVariable *NewDGV =
+      new GlobalVariable(DstM, TypeMap.get(SGVar->getType()->getElementType()),
+                         SGVar->isConstant(), GlobalValue::ExternalLinkage,
+                         /*init*/ nullptr, getName(SGVar),
+                         /*insertbefore*/ nullptr, SGVar->getThreadLocalMode(),
+                         SGVar->getType()->getAddressSpace());
 
   return NewDGV;
 }
@@ -794,8 +789,8 @@ Function *ModuleLinker::copyFunctionProto(TypeMapTy &TypeMap,
                                           const Function *SF) {
   // If there is no linkage to be performed or we are linking from the source,
   // bring SF over.
-  return Function::Create(TypeMap.get(SF->getFunctionType()), getLinkage(SF),
-                          getName(SF), &DstM);
+  return Function::Create(TypeMap.get(SF->getFunctionType()),
+                          GlobalValue::ExternalLinkage, getName(SF), &DstM);
 }
 
 /// Set up prototypes for any aliases that come over from the source module.
@@ -829,7 +824,7 @@ GlobalValue *ModuleLinker::copyGlobalAliasProto(TypeMapTy &TypeMap,
   // bring over SGA.
   auto *Ty = TypeMap.get(SGA->getValueType());
   return GlobalAlias::create(Ty, SGA->getType()->getPointerAddressSpace(),
-                             getLinkage(SGA), getName(SGA), &DstM);
+                             GlobalValue::ExternalLinkage, getName(SGA), &DstM);
 }
 
 static GlobalValue::VisibilityTypes
@@ -857,14 +852,31 @@ void ModuleLinker::setVisibility(GlobalValue *NewGV, const GlobalValue *SGV,
 
 GlobalValue *ModuleLinker::copyGlobalValueProto(TypeMapTy &TypeMap,
                                                 const GlobalValue *SGV,
-                                                const GlobalValue *DGV) {
+                                                const GlobalValue *DGV,
+                                                bool ForDefinition) {
   GlobalValue *NewGV;
-  if (auto *SGVar = dyn_cast<GlobalVariable>(SGV))
+  if (auto *SGVar = dyn_cast<GlobalVariable>(SGV)) {
     NewGV = copyGlobalVariableProto(TypeMap, SGVar);
-  else if (auto *SF = dyn_cast<Function>(SGV))
+  } else if (auto *SF = dyn_cast<Function>(SGV)) {
     NewGV = copyFunctionProto(TypeMap, SF);
-  else
-    NewGV = copyGlobalAliasProto(TypeMap, cast<GlobalAlias>(SGV));
+  } else {
+    if (ForDefinition)
+      NewGV = copyGlobalAliasProto(TypeMap, cast<GlobalAlias>(SGV));
+    else
+      NewGV = new GlobalVariable(
+          DstM, TypeMap.get(SGV->getType()->getElementType()),
+          /*isConstant*/ false, GlobalValue::ExternalLinkage,
+          /*init*/ nullptr, getName(SGV),
+          /*insertbefore*/ nullptr, SGV->getThreadLocalMode(),
+          SGV->getType()->getAddressSpace());
+  }
+
+  if (ForDefinition)
+    NewGV->setLinkage(getLinkage(SGV));
+  else if (SGV->hasAvailableExternallyLinkage() || SGV->hasWeakLinkage() ||
+           SGV->hasLinkOnceLinkage())
+    NewGV->setLinkage(GlobalValue::ExternalWeakLinkage);
+
   copyGVAttributes(NewGV, SGV);
   setVisibility(NewGV, SGV, DGV);
   return NewGV;
@@ -1446,7 +1458,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     // When linking from source we setVisibility from copyGlobalValueProto.
     setVisibility(NewGV, SGV, DGV);
   } else {
-    NewGV = copyGlobalValueProto(TypeMap, SGV, DGV);
+    NewGV = copyGlobalValueProto(TypeMap, SGV, DGV, LinkFromSrc);
 
     if (isPerformingImport() && !doImportAsDefinition(SGV))
       DoNotLinkFromSource.insert(SGV);
