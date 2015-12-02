@@ -406,7 +406,7 @@ class ModuleLinker {
 
   /// Function to import from source module, all other functions are
   /// imported as declarations instead of definitions.
-  Function *ImportFunction;
+  DenseSet<const GlobalValue *> *ImportFunction;
 
   /// Set to true if the given FunctionInfoIndex contains any functions
   /// from this source module, in which case we must conservatively assume
@@ -425,7 +425,7 @@ public:
   ModuleLinker(Module &DstM, Linker::IdentifiedStructTypeSet &Set, Module &SrcM,
                DiagnosticHandlerFunction DiagnosticHandler, unsigned Flags,
                const FunctionInfoIndex *Index = nullptr,
-               Function *FuncToImport = nullptr)
+               DenseSet<const GlobalValue *> *FuncToImport = nullptr)
       : DstM(DstM), SrcM(SrcM), TypeMap(Set), ValMaterializer(this),
         DiagnosticHandler(DiagnosticHandler), Flags(Flags), ImportIndex(Index),
         ImportFunction(FuncToImport) {
@@ -632,7 +632,7 @@ bool ModuleLinker::doImportAsDefinition(const GlobalValue *SGV) {
     return true;
   // Only import the function requested for importing.
   auto *SF = dyn_cast<Function>(SGV);
-  if (SF && SF == ImportFunction)
+  if (SF && ImportFunction->count(SF))
     return true;
   // Otherwise no.
   return false;
@@ -1058,7 +1058,7 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
     if (isa<Function>(&Src)) {
       // For functions, LinkFromSrc iff this is the function requested
       // for importing. For variables, decide below normally.
-      LinkFromSrc = (&Src == ImportFunction);
+      LinkFromSrc = ImportFunction->count(&Src);
       return false;
     }
 
@@ -2033,7 +2033,7 @@ Linker::Linker(Module &M)
 
 bool Linker::linkInModule(Module &Src, unsigned Flags,
                           const FunctionInfoIndex *Index,
-                          Function *FuncToImport) {
+                          DenseSet<const GlobalValue *> *FuncToImport) {
   ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
                          DiagnosticHandler, Flags, Index, FuncToImport);
   bool RetCode = TheLinker.run();

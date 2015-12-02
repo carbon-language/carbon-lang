@@ -182,7 +182,10 @@ bool FunctionImporter::importFunctions(Module &M) {
     }
 
     // Link in the specified function.
-    if (L.linkInModule(Module, Linker::Flags::None, &Index, F))
+    DenseSet<const GlobalValue *> FunctionsToImport;
+    FunctionsToImport.insert(F);
+    if (L.linkInModule(Module, Linker::Flags::None, &Index,
+                       &FunctionsToImport))
       report_fatal_error("Function Import: link error");
 
     // Process the newly imported function and add callees to the worklist.
@@ -194,6 +197,7 @@ bool FunctionImporter::importFunctions(Module &M) {
 
     Changed = true;
   }
+
   return Changed;
 }
 
