@@ -224,6 +224,11 @@ X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
   PltReloc = R_386_JUMP_SLOT;
+  TlsGotReloc = R_386_TLS_TPOFF;
+  TlsGlobalDynamicReloc = R_386_TLS_GD;
+  TlsLocalDynamicReloc = R_386_TLS_LDM;
+  TlsModuleIndexReloc = R_386_TLS_DTPMOD32;
+  TlsOffsetReloc = R_386_TLS_DTPOFF32;
   LazyRelocations = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 16;
@@ -247,7 +252,8 @@ unsigned X86TargetInfo::getDynReloc(unsigned Type) const {
 }
 
 bool X86TargetInfo::isTlsDynReloc(unsigned Type) const {
-  if (Type == R_386_TLS_LE || Type == R_386_TLS_LE_32)
+  if (Type == R_386_TLS_LE || Type == R_386_TLS_LE_32 ||
+      Type == R_386_TLS_GOTIE)
     return Config->Shared;
   return false;
 }
@@ -300,7 +306,8 @@ bool X86TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
 }
 
 bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  return Type == R_386_GOT32 || relocNeedsPlt(Type, S);
+  return Type == R_386_TLS_GOTIE || Type == R_386_GOT32 ||
+         relocNeedsPlt(Type, S);
 }
 
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
@@ -322,6 +329,18 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     break;
   case R_386_PC32:
     add32le(Loc, SA - P);
+    break;
+  case R_386_TLS_GD:
+  case R_386_TLS_LDM:
+  case R_386_TLS_TPOFF: {
+    uint64_t V = SA - Out<ELF32LE>::Got->getVA() -
+                 Out<ELF32LE>::Got->getNumEntries() * 4;
+    checkInt<32>(V, Type);
+    write32le(Loc, V);
+    break;
+  }
+  case R_386_TLS_LDO_32:
+    write32le(Loc, SA);
     break;
   case R_386_TLS_LE:
     write32le(Loc, SA - Out<ELF32LE>::TlsPhdr->p_memsz);
