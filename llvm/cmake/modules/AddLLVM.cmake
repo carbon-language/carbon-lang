@@ -667,7 +667,7 @@ function(export_executable_symbols target)
   if (NOT MSVC) # MSVC's linker doesn't support exporting all symbols.
     set_target_properties(${target} PROPERTIES ENABLE_EXPORTS 1)
     if (APPLE)
-      set_target_properties(${target} PROPERTIES
+      set_property(TARGET ${target} APPEND_STRING PROPERTY
         LINK_FLAGS "-rdynamic")
     endif()
   endif()
@@ -1185,8 +1185,8 @@ function(llvm_externalize_debuginfo name)
       OR CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE} MATCHES "-flto")
 
       set(lto_object ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${name}-lto.o)
-      set_target_properties(${name} PROPERTIES
-        LINK_FLAGS "-Wl,-object_path_lto -Wl,${lto_object}")
+      set_property(TARGET ${name} APPEND_STRING PROPERTY
+        LINK_FLAGS " -Wl,-object_path_lto,${lto_object}")
     endif()
     add_custom_command(TARGET ${name} POST_BUILD
       COMMAND xcrun dsymutil $<TARGET_FILE:${name}>
