@@ -147,6 +147,7 @@ public:
   void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                      uint64_t PltEntryAddr, int32_t Index,
                      unsigned RelOff) const override;
+  bool relocNeedsCopy(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -868,6 +869,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 AArch64TargetInfo::AArch64TargetInfo() {
+  CopyReloc = R_AARCH64_COPY;
   GotReloc = R_AARCH64_GLOB_DAT;
   PltReloc = R_AARCH64_JUMP_SLOT;
   LazyRelocations = true;
@@ -921,6 +923,28 @@ void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
               GotEntryAddr);
   relocateOne(Buf + 8, Buf + 12, R_AARCH64_ADD_ABS_LO12_NC, PltEntryAddr + 8,
               GotEntryAddr);
+}
+
+bool AArch64TargetInfo::relocNeedsCopy(uint32_t Type,
+                                       const SymbolBody &S) const {
+  if (Config->Shared)
+    return false;
+  switch (Type) {
+  default:
+    return false;
+  case R_AARCH64_ABS16:
+  case R_AARCH64_ABS32:
+  case R_AARCH64_ABS64:
+  case R_AARCH64_ADD_ABS_LO12_NC:
+  case R_AARCH64_ADR_PREL_LO21:
+  case R_AARCH64_ADR_PREL_PG_HI21:
+  case R_AARCH64_LDST8_ABS_LO12_NC:
+  case R_AARCH64_LDST32_ABS_LO12_NC:
+  case R_AARCH64_LDST64_ABS_LO12_NC:
+    if (auto *SS = dyn_cast<SharedSymbol<ELF64LE>>(&S))
+      return SS->Sym.getType() == STT_OBJECT;
+    return false;
+  }
 }
 
 bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
