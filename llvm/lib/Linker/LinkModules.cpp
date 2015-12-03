@@ -726,8 +726,10 @@ GlobalValue::LinkageTypes ModuleLinker::getLinkage(const GlobalValue *SGV) {
     // It would be incorrect to import an appending linkage variable,
     // since it would cause global constructors/destructors to be
     // executed multiple times. This should have already been handled
-    // by linkGlobalValueProto.
-    llvm_unreachable("Cannot import appending linkage variable");
+    // by linkIfNeeded, and we will assert in shouldLinkFromSource
+    // if we try to import, so we simply return AppendingLinkage here
+    // as this helper is called more widely in getLinkedToGlobal.
+    return GlobalValue::AppendingLinkage;
 
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
@@ -1015,8 +1017,7 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
 
   // We always have to add Src if it has appending linkage.
   if (Src.hasAppendingLinkage()) {
-    // Caller should have already determined that we can't link from source
-    // when importing (see comments in linkGlobalValueProto).
+    // Should have prevented importing for appending linkage in linkIfNeeded.
     assert(!isPerformingImport());
     LinkFromSrc = true;
     return false;
@@ -1387,9 +1388,12 @@ Constant *ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
 
   // Handle the ultra special appending linkage case first.
   assert(!DGV || SGV->hasAppendingLinkage() == DGV->hasAppendingLinkage());
-  if (SGV->hasAppendingLinkage())
+  if (SGV->hasAppendingLinkage()) {
+    // Should have prevented importing for appending linkage in linkIfNeeded.
+    assert(!isPerformingImport());
     return linkAppendingVarProto(cast_or_null<GlobalVariable>(DGV),
                                  cast<GlobalVariable>(SGV));
+  }
 
   bool LinkFromSrc = true;
   Comdat *C = nullptr;
