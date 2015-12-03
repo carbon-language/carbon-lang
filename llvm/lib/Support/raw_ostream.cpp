@@ -264,10 +264,6 @@ raw_ostream &raw_ostream::operator<<(double N) {
   return this->operator<<(format("%e", N));
 }
 
-raw_ostream &raw_ostream::operator<<(Printable P) {
-  P(*this);
-  return *this;
-}
 
 
 void raw_ostream::flush_nonempty() {

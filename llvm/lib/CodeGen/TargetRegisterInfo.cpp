@@ -40,70 +40,57 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
 
 TargetRegisterInfo::~TargetRegisterInfo() {}
 
-namespace llvm {
-
-Printable PrintReg(unsigned Reg, const TargetRegisterInfo *TRI,
-                   unsigned SubIdx) {
-  return [Reg, TRI, SubIdx](raw_ostream &OS) {
-    if (!Reg)
-      OS << "%noreg";
-    else if (TargetRegisterInfo::isStackSlot(Reg))
-      OS << "SS#" << TargetRegisterInfo::stackSlot2Index(Reg);
-    else if (TargetRegisterInfo::isVirtualRegister(Reg))
-      OS << "%vreg" << TargetRegisterInfo::virtReg2Index(Reg);
-    else if (TRI && Reg < TRI->getNumRegs())
-      OS << '%' << TRI->getName(Reg);
+void PrintReg::print(raw_ostream &OS) const {
+  if (!Reg)
+    OS << "%noreg";
+  else if (TargetRegisterInfo::isStackSlot(Reg))
+    OS << "SS#" << TargetRegisterInfo::stackSlot2Index(Reg);
+  else if (TargetRegisterInfo::isVirtualRegister(Reg))
+    OS << "%vreg" << TargetRegisterInfo::virtReg2Index(Reg);
+  else if (TRI && Reg < TRI->getNumRegs())
+    OS << '%' << TRI->getName(Reg);
+  else
+    OS << "%physreg" << Reg;
+  if (SubIdx) {
+    if (TRI)
+      OS << ':' << TRI->getSubRegIndexName(SubIdx);
     else
-      OS << "%physreg" << Reg;
-    if (SubIdx) {
-      if (TRI)
-        OS << ':' << TRI->getSubRegIndexName(SubIdx);
-      else
-        OS << ":sub(" << SubIdx << ')';
-    }
-  };
+      OS << ":sub(" << SubIdx << ')';
+  }
 }
 
-Printable PrintRegUnit(unsigned Unit, const TargetRegisterInfo *TRI) {
-  return [Unit, TRI](raw_ostream &OS) {
-    // Generic printout when TRI is missing.
-    if (!TRI) {
-      OS << "Unit~" << Unit;
-      return;
-    }
+void PrintRegUnit::print(raw_ostream &OS) const {
+  // Generic printout when TRI is missing.
+  if (!TRI) {
+    OS << "Unit~" << Unit;
+    return;
+  }
 
-    // Check for invalid register units.
-    if (Unit >= TRI->getNumRegUnits()) {
-      OS << "BadUnit~" << Unit;
-      return;
-    }
+  // Check for invalid register units.
+  if (Unit >= TRI->getNumRegUnits()) {
+    OS << "BadUnit~" << Unit;
+    return;
+  }
 
-    // Normal units have at least one root.
-    MCRegUnitRootIterator Roots(Unit, TRI);
-    assert(Roots.isValid() && "Unit has no roots.");
-    OS << TRI->getName(*Roots);
-    for (++Roots; Roots.isValid(); ++Roots)
-      OS << '~' << TRI->getName(*Roots);
-  };
+  // Normal units have at least one root.
+  MCRegUnitRootIterator Roots(Unit, TRI);
+  assert(Roots.isValid() && "Unit has no roots.");
+  OS << TRI->getName(*Roots);
+  for (++Roots; Roots.isValid(); ++Roots)
+    OS << '~' << TRI->getName(*Roots);
 }
 
-Printable PrintVRegOrUnit(unsigned Unit, const TargetRegisterInfo *TRI) {
-  return [Unit, TRI](raw_ostream &OS) {
-    if (TRI && TRI->isVirtualRegister(Unit)) {
-      OS << "%vreg" << TargetRegisterInfo::virtReg2Index(Unit);
-    } else {
-      OS << PrintRegUnit(Unit, TRI);
-    }
-  };
+void PrintVRegOrUnit::print(raw_ostream &OS) const {
+  if (TRI && TRI->isVirtualRegister(Unit)) {
+    OS << "%vreg" << TargetRegisterInfo::virtReg2Index(Unit);
+    return;
+  }
+  PrintRegUnit::print(OS);
 }
 
-Printable PrintLaneMask(LaneBitmask LaneMask) {
-  return [LaneMask](raw_ostream &OS) {
-    OS << format("%08X", LaneMask);
-  };
+void PrintLaneMask::print(raw_ostream &OS) const {
+  OS << format("%08X", LaneMask);
 }
-
-} // End of llvm namespace
 
 /// getAllocatableClass - Return the maximal subclass of the given register
 /// class that is alloctable, or NULL.
