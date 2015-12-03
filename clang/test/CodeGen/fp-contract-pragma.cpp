@@ -68,8 +68,8 @@ float fp_contract_6(float a, float b, float c) {
 
 float fp_contract_7(float a, float b, float c) {
 // CHECK: _Z13fp_contract_7fff
-// CHECK:  %mul = fmul float %b, 2.000000e+00
-// CHECK-NEXT: fsub float %mul, %c
+// CHECK:  %[[M:.+]] = fmul float %b, 2.000000e+00
+// CHECK-NEXT: fsub float %[[M]], %c
   #pragma STDC FP_CONTRACT ON
   return (a = 2 * b) - c;
 }
