@@ -1061,7 +1061,7 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
 
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writeGotHeaderEntries(uint8_t *Buf) const {
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Off Elf_Off;
+  typedef typename ELFFile<ELFT>::Elf_Off Elf_Off;
   auto *P = reinterpret_cast<Elf_Off *>(Buf);
   // Module pointer
   P[1] = ELFT::Is64Bits ? 0x8000000000000000 : 0x80000000;
@@ -1103,7 +1103,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     uint32_t Instr = read32<E>(Loc);
     if (PairedLoc) {
       uint64_t AHL = ((Instr & 0xffff) << 16) +
-                     llvm::SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
+                     SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
       write32<E>(Loc, (Instr & 0xffff0000) | (((SA + AHL) >> 16) & 0xffff));
     } else {
       warning("Can't find matching R_MIPS_LO16 relocation for R_MIPS_HI16");
@@ -1113,7 +1113,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   }
   case R_MIPS_LO16: {
     uint32_t Instr = read32<E>(Loc);
-    int64_t AHL = llvm::SignExtend64<16>(Instr & 0xffff);
+    int64_t AHL = SignExtend64<16>(Instr & 0xffff);
     write32<E>(Loc, (Instr & 0xffff0000) | ((SA + AHL) & 0xffff));
     break;
   }
@@ -1130,8 +1130,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   }
 }
 
-template <class ELFT>
-typename llvm::object::ELFFile<ELFT>::uintX_t getMipsGpAddr() {
+template <class ELFT> typename ELFFile<ELFT>::uintX_t getMipsGpAddr() {
   const unsigned GPOffset = 0x7ff0;
   return Out<ELFT>::Got->getVA() ? (Out<ELFT>::Got->getVA() + GPOffset) : 0;
 }
