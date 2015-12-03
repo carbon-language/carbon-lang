@@ -668,7 +668,7 @@ function(export_executable_symbols target)
     set_target_properties(${target} PROPERTIES ENABLE_EXPORTS 1)
     if (APPLE)
       set_property(TARGET ${target} APPEND_STRING PROPERTY
-        LINK_FLAGS "-rdynamic")
+        LINK_FLAGS " -rdynamic")
     endif()
   endif()
 endfunction()
