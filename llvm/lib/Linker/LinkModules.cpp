@@ -424,10 +424,10 @@ public:
   ModuleLinker(Module &DstM, Linker::IdentifiedStructTypeSet &Set, Module &SrcM,
                DiagnosticHandlerFunction DiagnosticHandler, unsigned Flags,
                const FunctionInfoIndex *Index = nullptr,
-               DenseSet<const GlobalValue *> *FuncToImport = nullptr)
+               DenseSet<const GlobalValue *> *FunctionsToImport = nullptr)
       : DstM(DstM), SrcM(SrcM), TypeMap(Set), ValMaterializer(this),
         DiagnosticHandler(DiagnosticHandler), Flags(Flags), ImportIndex(Index),
-        ImportFunction(FuncToImport) {
+        ImportFunction(FunctionsToImport) {
     assert((ImportIndex || !ImportFunction) &&
            "Expect a FunctionInfoIndex when importing");
     // If we have a FunctionInfoIndex but no function to import,
@@ -2031,9 +2031,9 @@ Linker::Linker(Module &M)
 
 bool Linker::linkInModule(Module &Src, unsigned Flags,
                           const FunctionInfoIndex *Index,
-                          DenseSet<const GlobalValue *> *FuncToImport) {
+                          DenseSet<const GlobalValue *> *FunctionsToImport) {
   ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
-                         DiagnosticHandler, Flags, Index, FuncToImport);
+                         DiagnosticHandler, Flags, Index, FunctionsToImport);
   bool RetCode = TheLinker.run();
   Composite.dropTriviallyDeadConstantArrays();
   return RetCode;
