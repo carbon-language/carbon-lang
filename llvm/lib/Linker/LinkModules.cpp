@@ -513,10 +513,10 @@ private:
   void upgradeMismatchedGlobals();
 
   bool linkIfNeeded(GlobalValue &GV);
-  bool linkAppendingVarProto(GlobalVariable *DstGV,
-                             const GlobalVariable *SrcGV);
+  Constant *linkAppendingVarProto(GlobalVariable *DstGV,
+                                  const GlobalVariable *SrcGV);
 
-  bool linkGlobalValueProto(GlobalValue *GV);
+  Constant *linkGlobalValueProto(GlobalValue *GV);
   bool linkModuleFlagsMetadata();
 
   void linkGlobalInit(GlobalVariable &Dst, GlobalVariable &Src);
@@ -856,8 +856,7 @@ Value *ModuleLinker::materializeDeclFor(Value *V) {
   if (!SGV)
     return nullptr;
 
-  linkGlobalValueProto(SGV);
-  return ValueMap[SGV];
+  return linkGlobalValueProto(SGV);
 }
 
 void ValueMaterializerTy::materializeInitFor(GlobalValue *New,
@@ -1277,8 +1276,8 @@ static void getArrayElements(const Constant *C,
 
 /// If there were any appending global variables, link them together now.
 /// Return true on error.
-bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
-                                         const GlobalVariable *SrcGV) {
+Constant *ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
+                                              const GlobalVariable *SrcGV) {
   ArrayType *SrcTy =
       cast<ArrayType>(TypeMap.get(SrcGV->getType()->getElementType()));
   Type *EltTy = SrcTy->getElementType();
@@ -1286,32 +1285,46 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   if (DstGV) {
     ArrayType *DstTy = cast<ArrayType>(DstGV->getType()->getElementType());
 
-    if (!SrcGV->hasAppendingLinkage() || !DstGV->hasAppendingLinkage())
-      return emitError(
+    if (!SrcGV->hasAppendingLinkage() || !DstGV->hasAppendingLinkage()) {
+      emitError(
           "Linking globals named '" + SrcGV->getName() +
           "': can only link appending global with another appending global!");
+      return nullptr;
+    }
 
     // Check to see that they two arrays agree on type.
-    if (EltTy != DstTy->getElementType())
-      return emitError("Appending variables with different element types!");
-    if (DstGV->isConstant() != SrcGV->isConstant())
-      return emitError("Appending variables linked with different const'ness!");
+    if (EltTy != DstTy->getElementType()) {
+      emitError("Appending variables with different element types!");
+      return nullptr;
+    }
+    if (DstGV->isConstant() != SrcGV->isConstant()) {
+      emitError("Appending variables linked with different const'ness!");
+      return nullptr;
+    }
 
-    if (DstGV->getAlignment() != SrcGV->getAlignment())
-      return emitError(
+    if (DstGV->getAlignment() != SrcGV->getAlignment()) {
+      emitError(
           "Appending variables with different alignment need to be linked!");
+      return nullptr;
+    }
 
-    if (DstGV->getVisibility() != SrcGV->getVisibility())
-      return emitError(
+    if (DstGV->getVisibility() != SrcGV->getVisibility()) {
+      emitError(
           "Appending variables with different visibility need to be linked!");
+      return nullptr;
+    }
 
-    if (DstGV->hasUnnamedAddr() != SrcGV->hasUnnamedAddr())
-      return emitError(
+    if (DstGV->hasUnnamedAddr() != SrcGV->hasUnnamedAddr()) {
+      emitError(
           "Appending variables with different unnamed_addr need to be linked!");
+      return nullptr;
+    }
 
-    if (StringRef(DstGV->getSection()) != SrcGV->getSection())
-      return emitError(
+    if (StringRef(DstGV->getSection()) != SrcGV->getSection()) {
+      emitError(
           "Appending variables with different section name need to be linked!");
+      return nullptr;
+    }
   }
 
   SmallVector<Constant *, 16> DstElements;
@@ -1347,9 +1360,10 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   // Propagate alignment, visibility and section info.
   copyGVAttributes(NG, SrcGV);
 
-  // Replace any uses of the two global variables with uses of the new
-  // global.
-  ValueMap[SrcGV] = ConstantExpr::getBitCast(NG, TypeMap.get(SrcGV->getType()));
+  Constant *Ret = ConstantExpr::getBitCast(NG, TypeMap.get(SrcGV->getType()));
+
+  // Stop recursion.
+  ValueMap[SrcGV] = Ret;
 
   for (auto *V : SrcElements) {
     DstElements.push_back(
@@ -1358,15 +1372,17 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
 
   NG->setInitializer(ConstantArray::get(NewType, DstElements));
 
+  // Replace any uses of the two global variables with uses of the new
+  // global.
   if (DstGV) {
     DstGV->replaceAllUsesWith(ConstantExpr::getBitCast(NG, DstGV->getType()));
     DstGV->eraseFromParent();
   }
 
-  return false;
+  return Ret;
 }
 
-bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
+Constant *ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   GlobalValue *DGV = getLinkedToGlobal(SGV);
 
   // Handle the ultra special appending linkage case first.
@@ -1390,12 +1406,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
       LinkFromSrc = true;
   } else if (DGV) {
     if (shouldLinkFromSource(LinkFromSrc, *DGV, *SGV))
-      return true;
-  }
-
-  if (!LinkFromSrc && DGV) {
-    // Make sure to remember this mapping.
-    ValueMap[SGV] = ConstantExpr::getBitCast(DGV, TypeMap.get(SGV->getType()));
+      return nullptr;
   }
 
   if (DGV)
@@ -1411,7 +1422,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     // metadata linking), don't link in the global value due to this
     // reference, simply map it to null.
     if (DoneLinkingBodies)
-      return false;
+      return nullptr;
 
     NewGV = copyGlobalValueProto(SGV, DGV, LinkFromSrc);
   }
@@ -1434,16 +1445,12 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
       NewGVar->setConstant(false);
   }
 
-  // Make sure to remember this mapping.
-  if (NewGV != DGV) {
-    if (DGV) {
-      DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewGV, DGV->getType()));
-      DGV->eraseFromParent();
-    }
-    ValueMap[SGV] = NewGV;
+  if (NewGV != DGV && DGV) {
+    DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewGV, DGV->getType()));
+    DGV->eraseFromParent();
   }
 
-  return false;
+  return ConstantExpr::getBitCast(NewGV, TypeMap.get(SGV->getType()));
 }
 
 /// Update the initializers in the Dest module now that all globals that may be
@@ -1534,7 +1541,7 @@ bool ModuleLinker::linkGlobalValueBody(GlobalValue &Dst, GlobalValue &Src) {
     // are linked in. Otherwise, linkonce and other lazy linked GVs will
     // not be materialized if they aren't referenced.
     for (auto *SGV : ComdatMembers[SC]) {
-      auto *DGV = cast_or_null<GlobalValue>(ValueMap[SGV]);
+      auto *DGV = cast_or_null<GlobalValue>(ValueMap.lookup(SGV));
       if (DGV && !DGV->isDeclaration())
         continue;
       MapValue(SGV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
