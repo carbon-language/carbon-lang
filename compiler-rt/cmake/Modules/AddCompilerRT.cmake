@@ -155,6 +155,10 @@ function(add_compiler_rt_runtime name type)
       set_target_properties(${libname} PROPERTIES
       OSX_ARCHITECTURES "${LIB_ARCHS_${libname}}")
     endif()
+
+    if(type STREQUAL "SHARED")
+      rt_externalize_debuginfo(${libname})
+    endif()
   endforeach()
   if(LIB_PARENT_TARGET)
     add_dependencies(${LIB_PARENT_TARGET} ${libnames})
@@ -310,3 +314,24 @@ macro(add_custom_libcxx name prefix)
     DEPENDS ${LIBCXX_DEPS}
     )
 endmacro()
+
+function(rt_externalize_debuginfo name)
+  if(NOT COMPILER_RT_EXTERNALIZE_DEBUGINFO)
+    return()
+  endif()
+
+  if(APPLE)
+    if(CMAKE_CXX_FLAGS MATCHES "-flto"
+      OR CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE} MATCHES "-flto")
+
+      set(lto_object ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${name}-lto.o)
+      set_target_properties(${name} PROPERTIES
+        LINK_FLAGS "-Wl,-object_path_lto -Wl,${lto_object}")
+    endif()
+    add_custom_command(TARGET ${name} POST_BUILD
+      COMMAND xcrun dsymutil $<TARGET_FILE:${name}>
+      COMMAND xcrun strip -Sl $<TARGET_FILE:${name}>)
+  else()
+    message(FATAL_ERROR "COMPILER_RT_EXTERNALIZE_DEBUGINFO isn't implemented for non-darwin platforms!")
+  endif()
+endfunction()
