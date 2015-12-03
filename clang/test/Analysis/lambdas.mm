@@ -76,10 +76,10 @@ void castToBlockAndInline() {
 }
 
 void castLambdaInLocalBlock() {
-  // FIXME: This results in a spurious
-  // "Address of stack-allocated block declared on line XX returned to caller" warning
-  // because we're not handling lambda to block conversions properly in ExprEngine.
-  auto lambda = []{ }; // expected-warning {{Address of stack-allocated block declared on line}}
+  // Make sure we don't emit a spurious diagnostic about the address of a block
+  // escaping in the implicit conversion operator method for lambda-to-block
+  // conversions.
+  auto lambda = []{ }; // no-warning
 
   void(^block)() = lambda;
   (void)block;
