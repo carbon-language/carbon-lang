@@ -451,7 +451,7 @@ private:
 
   /// Handles cloning of a global values from the source module into
   /// the destination module, including setting the attributes and visibility.
-  GlobalValue *copyGlobalValueProto(TypeMapTy &TypeMap, const GlobalValue *SGV,
+  GlobalValue *copyGlobalValueProto(const GlobalValue *SGV,
                                     const GlobalValue *DGV, bool ForDefinition);
 
   /// Check if we should promote the given local value to global scope.
@@ -526,10 +526,9 @@ private:
 
   /// Functions that take care of cloning a specific global value type
   /// into the destination module.
-  GlobalVariable *copyGlobalVariableProto(TypeMapTy &TypeMap,
-                                          const GlobalVariable *SGVar);
-  Function *copyFunctionProto(TypeMapTy &TypeMap, const Function *SF);
-  GlobalValue *copyGlobalAliasProto(TypeMapTy &TypeMap, const GlobalAlias *SGA);
+  GlobalVariable *copyGlobalVariableProto(const GlobalVariable *SGVar);
+  Function *copyFunctionProto(const Function *SF);
+  GlobalValue *copyGlobalAliasProto(const GlobalAlias *SGA);
 
   /// Helper methods to check if we are importing from or potentially
   /// exporting from the current source module.
@@ -762,8 +761,7 @@ GlobalValue::LinkageTypes ModuleLinker::getLinkage(const GlobalValue *SGV) {
 /// Loop through the global variables in the src module and merge them into the
 /// dest module.
 GlobalVariable *
-ModuleLinker::copyGlobalVariableProto(TypeMapTy &TypeMap,
-                                      const GlobalVariable *SGVar) {
+ModuleLinker::copyGlobalVariableProto(const GlobalVariable *SGVar) {
   // No linking to be performed or linking from the source: simply create an
   // identical version of the symbol over in the dest module... the
   // initializer will be filled in later by LinkGlobalInits.
@@ -779,8 +777,7 @@ ModuleLinker::copyGlobalVariableProto(TypeMapTy &TypeMap,
 
 /// Link the function in the source module into the destination module if
 /// needed, setting up mapping information.
-Function *ModuleLinker::copyFunctionProto(TypeMapTy &TypeMap,
-                                          const Function *SF) {
+Function *ModuleLinker::copyFunctionProto(const Function *SF) {
   // If there is no linkage to be performed or we are linking from the source,
   // bring SF over.
   return Function::Create(TypeMap.get(SF->getFunctionType()),
@@ -788,8 +785,7 @@ Function *ModuleLinker::copyFunctionProto(TypeMapTy &TypeMap,
 }
 
 /// Set up prototypes for any aliases that come over from the source module.
-GlobalValue *ModuleLinker::copyGlobalAliasProto(TypeMapTy &TypeMap,
-                                                const GlobalAlias *SGA) {
+GlobalValue *ModuleLinker::copyGlobalAliasProto(const GlobalAlias *SGA) {
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
   auto *Ty = TypeMap.get(SGA->getValueType());
@@ -820,18 +816,17 @@ void ModuleLinker::setVisibility(GlobalValue *NewGV, const GlobalValue *SGV,
   NewGV->setVisibility(Visibility);
 }
 
-GlobalValue *ModuleLinker::copyGlobalValueProto(TypeMapTy &TypeMap,
-                                                const GlobalValue *SGV,
+GlobalValue *ModuleLinker::copyGlobalValueProto(const GlobalValue *SGV,
                                                 const GlobalValue *DGV,
                                                 bool ForDefinition) {
   GlobalValue *NewGV;
   if (auto *SGVar = dyn_cast<GlobalVariable>(SGV)) {
-    NewGV = copyGlobalVariableProto(TypeMap, SGVar);
+    NewGV = copyGlobalVariableProto(SGVar);
   } else if (auto *SF = dyn_cast<Function>(SGV)) {
-    NewGV = copyFunctionProto(TypeMap, SF);
+    NewGV = copyFunctionProto(SF);
   } else {
     if (ForDefinition)
-      NewGV = copyGlobalAliasProto(TypeMap, cast<GlobalAlias>(SGV));
+      NewGV = copyGlobalAliasProto(cast<GlobalAlias>(SGV));
     else
       NewGV = new GlobalVariable(
           DstM, TypeMap.get(SGV->getType()->getElementType()),
@@ -1418,7 +1413,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     if (DoneLinkingBodies)
       return false;
 
-    NewGV = copyGlobalValueProto(TypeMap, SGV, DGV, LinkFromSrc);
+    NewGV = copyGlobalValueProto(SGV, DGV, LinkFromSrc);
   }
 
   NewGV->setUnnamedAddr(HasUnnamedAddr);
