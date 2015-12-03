@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=x86_64-pc-windows-msvc < %s | FileCheck %s
+; REQUIRES: X86
 
 declare i32 @__CxxFrameHandler3(...)
 
