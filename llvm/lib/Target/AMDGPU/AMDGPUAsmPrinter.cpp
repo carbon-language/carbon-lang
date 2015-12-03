@@ -137,7 +137,7 @@ static bool isModuleLinkage(const GlobalValue *GV) {
 void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   if (TM.getTargetTriple().getOS() != Triple::AMDHSA ||
-      GV->isDeclaration() || AMDGPU::isReadOnlySegment(GV)) {
+      GV->isDeclaration()) {
     AsmPrinter::EmitGlobalVariable(GV);
     return;
   }

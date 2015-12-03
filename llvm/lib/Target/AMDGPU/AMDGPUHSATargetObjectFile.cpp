@@ -26,6 +26,7 @@ void AMDGPUHSATargetObjectFile::Initialize(MCContext &Ctx,
   DataGlobalAgentSection = AMDGPU::getHSADataGlobalAgentSection(Ctx);
   DataGlobalProgramSection = AMDGPU::getHSADataGlobalProgramSection(Ctx);
 
+  RodataReadonlyAgentSection = AMDGPU::getHSARodataReadonlyAgentSection(Ctx);
 }
 
 bool AMDGPUHSATargetObjectFile::isAgentAllocationSection(
@@ -62,6 +63,9 @@ MCSection *AMDGPUHSATargetObjectFile::SelectSectionForGlobal(
     if (isProgramAllocation(GV))
       return DataGlobalProgramSection;
   }
+
+  if (Kind.isReadOnly() && AMDGPU::isReadOnlySegment(GV))
+    return RodataReadonlyAgentSection;
 
   return TargetLoweringObjectFileELF::SelectSectionForGlobal(GV, Kind, Mang, TM);
 }

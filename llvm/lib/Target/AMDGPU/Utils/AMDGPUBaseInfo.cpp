@@ -81,6 +81,12 @@ MCSection *getHSADataGlobalProgramSection(MCContext &Ctx) {
                             ELF::SHF_AMDGPU_HSA_GLOBAL);
 }
 
+MCSection *getHSARodataReadonlyAgentSection(MCContext &Ctx) {
+  return Ctx.getELFSection(".hsarodata_readonly_agent", ELF::SHT_PROGBITS,
+                           ELF::SHF_ALLOC | ELF::SHF_AMDGPU_HSA_READONLY |
+                           ELF::SHF_AMDGPU_HSA_AGENT);
+}
+
 bool isGroupSegment(const GlobalValue *GV) {
   return GV->getType()->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }

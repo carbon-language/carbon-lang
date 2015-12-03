@@ -36,6 +36,8 @@ MCSection *getHSADataGlobalAgentSection(MCContext &Ctx);
 
 MCSection *getHSADataGlobalProgramSection(MCContext &Ctx);
 
+MCSection *getHSARodataReadonlyAgentSection(MCContext &Ctx);
+
 bool isGroupSegment(const GlobalValue *GV);
 bool isGlobalSegment(const GlobalValue *GV);
 bool isReadOnlySegment(const GlobalValue *GV);
