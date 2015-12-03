@@ -1099,6 +1099,14 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_MIPS_32:
     add32<E>(Loc, SA);
     break;
+  case R_MIPS_CALL16:
+  case R_MIPS_GOT16: {
+    int64_t V = SA - getMipsGpAddr<ELFT>();
+    if (Type == R_MIPS_GOT16)
+      checkInt<16>(V, Type);
+    write32<E>(Loc, (read32<E>(Loc) & 0xffff0000) | (V & 0xffff));
+    break;
+  }
   case R_MIPS_HI16: {
     uint32_t Instr = read32<E>(Loc);
     if (PairedLoc) {
@@ -1115,14 +1123,6 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     uint32_t Instr = read32<E>(Loc);
     int64_t AHL = SignExtend64<16>(Instr & 0xffff);
     write32<E>(Loc, (Instr & 0xffff0000) | ((SA + AHL) & 0xffff));
-    break;
-  }
-  case R_MIPS_CALL16:
-  case R_MIPS_GOT16: {
-    int64_t V = SA - getMipsGpAddr<ELFT>();
-    if (Type == R_MIPS_GOT16)
-      checkInt<16>(V, Type);
-    write32<E>(Loc, (read32<E>(Loc) & 0xffff0000) | (V & 0xffff));
     break;
   }
   default:
