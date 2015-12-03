@@ -566,9 +566,9 @@ void MaybeReexec() {
   if (DyldNeedsEnvVariable() && !lib_is_in_env) {
     // DYLD_INSERT_LIBRARIES is not set or does not contain the runtime
     // library.
-    char program_name[1024];
-    uint32_t buf_size = sizeof(program_name);
-    _NSGetExecutablePath(program_name, &buf_size);
+    InternalScopedString program_name(1024);
+    uint32_t buf_size = program_name.size();
+    _NSGetExecutablePath(program_name.data(), &buf_size);
     char *new_env = const_cast<char*>(info.dli_fname);
     if (dyld_insert_libraries) {
       // Append the runtime dylib name to the existing value of
@@ -589,7 +589,7 @@ void MaybeReexec() {
     VReport(1, "exec()-ing the program with\n");
     VReport(1, "%s=%s\n", kDyldInsertLibraries, new_env);
     VReport(1, "to enable wrappers.\n");
-    execv(program_name, *_NSGetArgv());
+    execv(program_name.data(), *_NSGetArgv());
 
     // We get here only if execv() failed.
     Report("ERROR: The process is launched without DYLD_INSERT_LIBRARIES, "
