@@ -2338,6 +2338,7 @@ public:
   EmitOMPCancellationPointDirective(const OMPCancellationPointDirective &S);
   void EmitOMPCancelDirective(const OMPCancelDirective &S);
   void EmitOMPTaskLoopDirective(const OMPTaskLoopDirective &S);
+  void EmitOMPTaskLoopSimdDirective(const OMPTaskLoopSimdDirective &S);
 
   /// \brief Emit inner loop of the worksharing/simd construct.
   ///

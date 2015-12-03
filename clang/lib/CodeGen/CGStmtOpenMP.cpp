@@ -2602,3 +2602,12 @@ void CodeGenFunction::EmitOMPTaskLoopDirective(const OMPTaskLoopDirective &S) {
       [&CS](CodeGenFunction &CGF) { CGF.EmitStmt(CS->getCapturedStmt()); });
 }
 
+void CodeGenFunction::EmitOMPTaskLoopSimdDirective(
+    const OMPTaskLoopSimdDirective &S) {
+  // emit the code inside the construct for now
+  auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
+  CGM.getOpenMPRuntime().emitInlinedDirective(
+      *this, OMPD_taskloop_simd,
+      [&CS](CodeGenFunction &CGF) { CGF.EmitStmt(CS->getCapturedStmt()); });
+}
+
