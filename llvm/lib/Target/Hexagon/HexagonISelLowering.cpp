@@ -2380,9 +2380,8 @@ HexagonTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
 
   if (UseHVX) {
     SDValue Vec0 = Op.getOperand(1);
-    uint64_t VS = VecVT.getSizeInBits();
-    assert((VS == 64*8 && Subtarget.useHVXSglOps()) ||
-           (VS == 128*8 && Subtarget.useHVXDblOps()));
+    assert((VecVT.getSizeInBits() == 64*8 && Subtarget.useHVXSglOps()) ||
+           (VecVT.getSizeInBits() == 128*8 && Subtarget.useHVXDblOps()));
     SDValue Combined = DAG.getNode(HexagonISD::VCOMBINE, dl, VT, Vec0, Vec);
     return Combined;
   }
