@@ -198,10 +198,10 @@ static bool importFunctions(const char *argv0, LLVMContext &Context,
     }
 
     // Link in the specified function.
-    DenseSet<const GlobalValue *> FunctionToImport;
-    FunctionToImport.insert(F);
+    DenseSet<const GlobalValue *> FunctionsToImport;
+    FunctionsToImport.insert(F);
     if (L.linkInModule(*M, Linker::Flags::None, Index.get(),
-                       &FunctionToImport))
+                       &FunctionsToImport))
       return false;
   }
   return true;
