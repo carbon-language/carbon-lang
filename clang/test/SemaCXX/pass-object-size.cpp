@@ -46,7 +46,7 @@ void Assigns() {
 
   int (Members::*M)(void *);
   M = &Members::Foo; //expected-error{{cannot take address of function 'Foo' because parameter 1 has pass_object_size attribute}}
-  M = &Members::OvlFoo; //expected-error{{assigning to 'int (simple::Members::*)(void *)' from incompatible type '<overloaded function type>'}} expected-note@18{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}} expected-note@19{{candidate function has different number of parameters (expected 1 but has 2)}}
+  M = &Members::OvlFoo; //expected-error-re{{assigning to '{{.*}}' from incompatible type '<overloaded function type>'}} expected-note@18{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}} expected-note@19{{candidate function has different number of parameters (expected 1 but has 2)}}
 }
 
 } // namespace simple
@@ -66,13 +66,13 @@ template <typename T> struct Bar {
 
 void Decls() {
   int (*A)(void *) = &Foo<void*>; //expected-error{{address of overloaded function 'Foo' does not match required type 'int (void *)'}} expected-note@56{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}}
-  int (Bar<int>::*B)(void *) = &Bar<int>::Foo<double>; //expected-error{{address of overloaded function 'Foo' does not match required type 'int (void *)'}} expected-note@62{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}}
+  int (Bar<int>::*B)(void *) = &Bar<int>::Foo<double>; //expected-error{{address of overloaded function 'Foo' does not match required type}} expected-note@62{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}}
 }
 
 void Assigns() {
   int (*A)(void *);
   A = &Foo<void*>; // expected-error{{assigning to 'int (*)(void *)' from incompatible type '<overloaded function type>'}} expected-note@56{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}}
-  int (Bar<int>::*B)(void *) = &Bar<int>::Foo<double>; //expected-error{{address of overloaded function 'Foo' does not match required type 'int (void *)'}} expected-note@62{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}}
+  int (Bar<int>::*B)(void *) = &Bar<int>::Foo<double>; //expected-error{{address of overloaded function 'Foo' does not match required type}} expected-note@62{{candidate address cannot be taken because parameter 1 has pass_object_size attribute}}
 }
 } // namespace templates
 
