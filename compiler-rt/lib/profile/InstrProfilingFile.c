@@ -193,13 +193,15 @@ int __llvm_profile_write_file(void) {
   int rc;
 
   /* Check the filename. */
-  if (!__llvm_profile_CurrentFilename)
+  if (!__llvm_profile_CurrentFilename) {
+    PROF_ERR("LLVM Profile: Failed to write file : %s\n", "Filename not set");
     return -1;
+  }
 
   /* Write the file. */
   rc = writeFileWithName(__llvm_profile_CurrentFilename);
-  if (rc && getenv("LLVM_PROFILE_VERBOSE_ERRORS"))
-    fprintf(stderr, "LLVM Profile: Failed to write file \"%s\": %s\n",
+  if (rc)
+    PROF_ERR("LLVM Profile: Failed to write file \"%s\": %s\n",
             __llvm_profile_CurrentFilename, strerror(errno));
   return rc;
 }

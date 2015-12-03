@@ -163,4 +163,8 @@ uint64_t __llvm_profile_get_magic(void);
 /*! \brief Get the version of the file format. */
 uint64_t __llvm_profile_get_version(void);
 
+#define PROF_ERR(Format, ...) \
+ if (getenv("LLVM_PROFILE_VERBOSE_ERRORS")) \
+   fprintf(stderr, Format, __VA_ARGS__ );
+
 #endif /* PROFILE_INSTRPROFILING_H_ */
