@@ -62,3 +62,15 @@ float fp_contract_6(float a, float b, float c) {
   return a * b + c;
 }
 
+// If the multiply has multiple uses, don't produce fmuladd.
+// This used to assert (PR25719):
+// https://llvm.org/bugs/show_bug.cgi?id=25719
+
+float fp_contract_7(float a, float b, float c) {
+// CHECK: _Z13fp_contract_7fff
+// CHECK:  %mul = fmul float %b, 2.000000e+00
+// CHECK-NEXT: fsub float %mul, %c
+  #pragma STDC FP_CONTRACT ON
+  return (a = 2 * b) - c;
+}
+
