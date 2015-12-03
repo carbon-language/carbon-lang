@@ -17,12 +17,14 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include <functional>
 #include <system_error>
 
 namespace llvm {
 class format_object_base;
 class FormattedString;
 class FormattedNumber;
+class raw_ostream;
 template <typename T> class SmallVectorImpl;
 
 namespace sys {
@@ -30,6 +32,15 @@ namespace fs {
 enum OpenFlags : unsigned;
 }
 }
+
+/// Type of function that prints to raw_ostream.
+///
+/// Typical usage:
+///     Printable PrintFoo(Foo x) {
+///       return [] (raw_ostream &os) { os << /* ... */; };
+///     }
+///     os << "Foo: " << PrintFoo(foo) << '\n';
+typedef std::function<void(raw_ostream&)> Printable;
 
 /// This class implements an extremely fast bulk output stream that can *only*
 /// output to a stream.  It does not support seeking, reopening, rewinding, line
@@ -202,6 +213,9 @@ public:
   }
 
   raw_ostream &operator<<(double N);
+
+  /// IO manipulator, \see Printable.
+  raw_ostream &operator<<(Printable P);
 
   /// Output \p N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);
