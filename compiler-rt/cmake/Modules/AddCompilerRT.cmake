@@ -325,7 +325,7 @@ function(rt_externalize_debuginfo name)
       OR CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE} MATCHES "-flto")
 
       set(lto_object ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${name}-lto.o)
-      set_target_properties(${name} PROPERTIES
+      set_property(TARGET ${name} APPEND_STRING PROPERTY
         LINK_FLAGS "-Wl,-object_path_lto -Wl,${lto_object}")
     endif()
     add_custom_command(TARGET ${name} POST_BUILD
