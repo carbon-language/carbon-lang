@@ -95,6 +95,10 @@ static cl::opt<std::string> ReorderBlocks(
              "priority (none, branch-predictor or cache)"),
     cl::value_desc("priority"), cl::init("disable"));
 
+static cl::opt<bool> AlignBlocks("align-blocks",
+                                 cl::desc("try to align BBs inserting nops"),
+                                 cl::Optional);
+
 static cl::opt<bool>
 DumpEHFrame("dump-eh-frame", cl::desc("dump parsed .eh_frame (debugging)"),
          cl::Hidden);
@@ -856,7 +860,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   for (auto BB : Function.layout()) {
     if (EmitColdPart != BB->isCold())
       continue;
-    if (BB->getAlignment() > 1)
+    if (opts::AlignBlocks && BB->getAlignment() > 1)
       Streamer.EmitCodeAlignment(BB->getAlignment());
     Streamer.EmitLabel(BB->getLabel());
     for (const auto &Instr : *BB) {
