@@ -2784,9 +2784,10 @@ def warn_int_to_void_pointer_cast : Warning<
   "cast to %1 from smaller integer type %0">,
   InGroup<IntToVoidPointerCast>;
 
-def warn_attribute_ignored_for_field_of_type : Warning<
-  "%0 attribute ignored for field of type %1">,
-  InGroup<IgnoredAttributes>;
+def warn_attribute_packed_for_bitfield : Warning<
+  "'packed' attribute was ignored on bit-fields with single-byte alignment "
+  "in older versions of GCC and Clang">,
+  InGroup<DiagGroup<"attribute-packed-for-bitfield">>;
 def warn_transparent_union_attribute_field_size_align : Warning<
   "%select{alignment|size}0 of field %1 (%2 bits) does not match the "
   "%select{alignment|size}0 of the first field in transparent union; "
