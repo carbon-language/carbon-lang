@@ -229,7 +229,7 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
     std::unique_ptr<FunctionInfoIndex> Index;
     if (!FunctionIndex.empty()) {
       ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr =
-          llvm::getFunctionIndexForFile(FunctionIndex, diagnosticHandler, &*M);
+          llvm::getFunctionIndexForFile(FunctionIndex, diagnosticHandler);
       std::error_code EC = IndexOrErr.getError();
       if (EC) {
         errs() << EC.message() << '\n';

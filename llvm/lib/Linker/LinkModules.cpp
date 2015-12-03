@@ -435,7 +435,7 @@ public:
     // backend compilation, and we need to see if it has functions that
     // may be exported to another backend compilation.
     if (ImportIndex && !ImportFunction)
-      HasExportedFunctions = ImportIndex->hasExportedFunctions(&SrcM);
+      HasExportedFunctions = ImportIndex->hasExportedFunctions(SrcM);
   }
 
   bool run();
