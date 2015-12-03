@@ -326,7 +326,7 @@ function(rt_externalize_debuginfo name)
 
       set(lto_object ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${name}-lto.o)
       set_property(TARGET ${name} APPEND_STRING PROPERTY
-        LINK_FLAGS "-Wl,-object_path_lto -Wl,${lto_object}")
+        LINK_FLAGS " -Wl,-object_path_lto -Wl,${lto_object}")
     endif()
     add_custom_command(TARGET ${name} POST_BUILD
       COMMAND xcrun dsymutil $<TARGET_FILE:${name}>
