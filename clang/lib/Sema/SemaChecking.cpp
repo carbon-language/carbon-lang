@@ -8547,7 +8547,7 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
     return;
 
   llvm::APSInt index;
-  if (!IndexExpr->EvaluateAsInt(index, Context))
+  if (!IndexExpr->EvaluateAsInt(index, Context, Expr::SE_AllowSideEffects))
     return;
   if (IndexNegated)
     index = -index;
