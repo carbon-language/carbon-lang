@@ -80,13 +80,13 @@ static void findExternalCalls(const Function &F, StringSet<> &CalledFunctions,
   }
 }
 
-
 // Helper function: given a worklist and an index, will process all the worklist
 // and import them based on the summary information
-static unsigned ProcessImportWorklist(Module &DestModule, SmallVector<StringRef, 64> &Worklist,
-                                      StringSet<> &CalledFunctions,
-                            Linker &TheLinker, const FunctionInfoIndex &Index,
-                            std::function<Module &(StringRef FileName)> &LazyModuleLoader) {
+static unsigned ProcessImportWorklist(
+    Module &DestModule, SmallVector<StringRef, 64> &Worklist,
+    StringSet<> &CalledFunctions, Linker &TheLinker,
+    const FunctionInfoIndex &Index,
+    std::function<Module &(StringRef FileName)> &LazyModuleLoader) {
   unsigned ImportCount = 0;
   while (!Worklist.empty()) {
     auto CalledFunctionName = Worklist.pop_back_val();
@@ -170,7 +170,7 @@ static unsigned ProcessImportWorklist(Module &DestModule, SmallVector<StringRef,
     DenseSet<const GlobalValue *> FunctionsToImport;
     FunctionsToImport.insert(F);
     if (TheLinker.linkInModule(Module, Linker::Flags::None, &Index,
-                       &FunctionsToImport))
+                               &FunctionsToImport))
       report_fatal_error("Function Import: link error");
 
     // Process the newly imported function and add callees to the worklist.
@@ -190,8 +190,8 @@ static unsigned ProcessImportWorklist(Module &DestModule, SmallVector<StringRef,
 // The current implementation imports every called functions that exists in the
 // summaries index.
 bool FunctionImporter::importFunctions(Module &DestModule) {
-  DEBUG(errs() << "Starting import for Module " << DestModule.getModuleIdentifier()
-               << "\n");
+  DEBUG(errs() << "Starting import for Module "
+               << DestModule.getModuleIdentifier() << "\n");
   unsigned ImportedCount = 0;
 
   /// First step is collecting the called external functions.
@@ -210,7 +210,8 @@ bool FunctionImporter::importFunctions(Module &DestModule) {
   // Linker that will be used for importing function
   Linker TheLinker(DestModule, DiagnosticHandler);
 
-  ImportedCount += ProcessImportWorklist(DestModule, Worklist, CalledFunctions, TheLinker, Index, getLazyModule );
+  ImportedCount += ProcessImportWorklist(DestModule, Worklist, CalledFunctions,
+                                         TheLinker, Index, getLazyModule);
 
   DEBUG(errs() << "Imported " << ImportedCount << " functions for Module "
                << DestModule.getModuleIdentifier() << "\n");
