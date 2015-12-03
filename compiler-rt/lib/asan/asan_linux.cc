@@ -70,14 +70,6 @@ namespace __asan {
 
 void InitializePlatformInterceptors() {}
 
-void DisableReexec() {
-  // No need to re-exec on Linux.
-}
-
-void MaybeReexec() {
-  // No need to re-exec on Linux.
-}
-
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h

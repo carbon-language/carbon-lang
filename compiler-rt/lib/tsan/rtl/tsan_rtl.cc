@@ -323,6 +323,9 @@ void Initialize(ThreadState *thr) {
   InitializeFlags(&ctx->flags, options);
   InitializePlatformEarly();
 #ifndef SANITIZER_GO
+  // Re-exec ourselves if we need to set additional env or command line args.
+  MaybeReexec();
+
   InitializeAllocator();
   ReplaceSystemMalloc();
 #endif

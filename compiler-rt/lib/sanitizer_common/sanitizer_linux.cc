@@ -1143,6 +1143,14 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #endif
 }
 
+void DisableReexec() {
+  // No need to re-exec on Linux.
+}
+
+void MaybeReexec() {
+  // No need to re-exec on Linux.
+}
+
 } // namespace __sanitizer
 
 #endif // SANITIZER_FREEBSD || SANITIZER_LINUX
