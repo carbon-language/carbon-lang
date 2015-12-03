@@ -171,16 +171,24 @@ BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
 static inline
 const TargetRegisterClass *firstCommonClass(const uint32_t *A,
                                             const uint32_t *B,
-                                            const TargetRegisterInfo *TRI) {
+                                            const TargetRegisterInfo *TRI,
+                                            const MVT::SimpleValueType SVT =
+                                            MVT::SimpleValueType::Any) {
+  const MVT VT(SVT);
   for (unsigned I = 0, E = TRI->getNumRegClasses(); I < E; I += 32)
-    if (unsigned Common = *A++ & *B++)
-      return TRI->getRegClass(I + countTrailingZeros(Common));
+    if (unsigned Common = *A++ & *B++) {
+      const TargetRegisterClass *RC =
+          TRI->getRegClass(I + countTrailingZeros(Common));
+      if (SVT == MVT::SimpleValueType::Any || RC->hasType(VT))
+        return RC;
+    }
   return nullptr;
 }
 
 const TargetRegisterClass *
 TargetRegisterInfo::getCommonSubClass(const TargetRegisterClass *A,
-                                      const TargetRegisterClass *B) const {
+                                      const TargetRegisterClass *B,
+                                      const MVT::SimpleValueType SVT) const {
   // First take care of the trivial cases.
   if (A == B)
     return A;
@@ -189,7 +197,7 @@ TargetRegisterInfo::getCommonSubClass(const TargetRegisterClass *A,
 
   // Register classes are ordered topologically, so the largest common
   // sub-class it the common sub-class with the smallest ID.
-  return firstCommonClass(A->getSubClassMask(), B->getSubClassMask(), this);
+  return firstCommonClass(A->getSubClassMask(), B->getSubClassMask(), this, SVT);
 }
 
 const TargetRegisterClass *

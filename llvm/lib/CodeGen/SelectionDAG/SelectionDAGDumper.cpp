@@ -626,7 +626,10 @@ void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
 
 static bool printOperand(raw_ostream &OS, const SelectionDAG *G,
                          const SDValue Value) {
-  if (shouldPrintInline(*Value.getNode())) {
+  if (!Value.getNode()) {
+    OS << "<null>";
+    return false;
+  } else if (shouldPrintInline(*Value.getNode())) {
     OS << Value->getOperationName(G) << ':';
     Value->print_types(OS, G);
     Value->print_details(OS, G);
