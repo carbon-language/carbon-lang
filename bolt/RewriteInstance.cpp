@@ -651,6 +651,25 @@ void RewriteInstance::disassembleFunctions() {
     TotalScore += Function.getFunctionScore();
 
   } // Iterate over all functions
+
+  // Mark all functions with internal addresses serving as interprocedural
+  // branch targets as not simple --  pretty rare but can happen in code
+  // written in assembly.
+  // TODO: #9301815
+  for (auto Addr : BC->InterproceduralBranchTargets) {
+    // Check if this address is internal to some function we are reordering
+    auto I = BinaryFunctions.upper_bound(Addr);
+    if (I == BinaryFunctions.begin())
+      continue;
+    BinaryFunction &Func = (--I)->second;
+    uint64_t Offset = Addr - I->first;
+    if (Offset == 0 || Offset >= Func.getSize())
+      continue;
+    errs() << "FLO-WARNING: Function " << Func.getName()
+           << " has internal BBs that are target of a branch located in "
+              "another function. We will not process this function.\n";
+    Func.setSimple(false);
+  }
 }
 
 void RewriteInstance::runOptimizationPasses() {

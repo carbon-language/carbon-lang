@@ -357,7 +357,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                          << Twine::utohexstr(AbsoluteInstrAddr)
                          << " in function " << getName() << "\n");
             IsSimple = false;
-            break;
           }
         }
 
@@ -374,6 +373,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               TargetSymbol = LI->second;
             }
           } else {
+            BC.InterproceduralBranchTargets.insert(InstructionTarget);
             if (!IsCall && Size == 2) {
               errs() << "FLO-WARNING: relaxed tail call detected at 0x"
                      << Twine::utohexstr(AbsoluteInstrAddr)
@@ -394,7 +394,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               errs() << "FLO-WARNING: Function \":" << getName()
                      << "\" has call to address zero. Ignoring it.\n";
               IsSimple = false;
-              break;
             }
           }
         }
@@ -419,13 +418,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // latter case.
         if (MIA->isIndirectBranch(Instruction)) {
           IsSimple = false;
-          break;
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
             IsSimple = false;
-            break;
           }
         }
       }
@@ -433,7 +430,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       if (MIA->hasRIPOperand(Instruction)) {
         if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
           IsSimple = false;
-          break;
         }
       }
     }

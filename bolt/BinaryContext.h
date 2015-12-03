@@ -30,6 +30,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <system_error>
 
@@ -50,6 +51,9 @@ public:
 
   // [address] -> [name1], [name2], ...
   std::multimap<uint64_t, std::string> GlobalAddresses;
+
+  // Set of addresses we cannot relocate because we have a direct branch to it.
+  std::set<uint64_t> InterproceduralBranchTargets;
 
   std::unique_ptr<MCContext> Ctx;
 
