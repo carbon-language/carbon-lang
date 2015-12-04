@@ -264,12 +264,15 @@ private:
       // TODO: We could consider sorting the dependency arrays within the
       // AnalysisUsage (since they are conceptually unordered).
       ID.AddBoolean(AU.getPreservesAll());
-      for (auto &Vec : {AU.getRequiredSet(), AU.getRequiredTransitiveSet(),
-            AU.getPreservedSet(), AU.getUsedSet()}) {
+      auto ProfileVec = [&](const SmallVectorImpl<AnalysisID>& Vec) {
         ID.AddInteger(Vec.size());
         for(AnalysisID AID : Vec)
           ID.AddPointer(AID);
-      }
+      };
+      ProfileVec(AU.getRequiredSet());
+      ProfileVec(AU.getRequiredTransitiveSet());
+      ProfileVec(AU.getPreservedSet());
+      ProfileVec(AU.getUsedSet());
     }
   };
 
