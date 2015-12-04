@@ -30,7 +30,7 @@
 using namespace __asan;  // NOLINT
 
 // This code has issues on OSX.
-// See https://code.google.com/p/address-sanitizer/issues/detail?id=131.
+// See https://github.com/google/sanitizers/issues/131.
 
 // Fake std::nothrow_t to avoid including <new>.
 namespace std {

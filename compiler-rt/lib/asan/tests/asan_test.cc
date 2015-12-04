@@ -610,7 +610,7 @@ NOINLINE void BuiltinLongJmpFunc1(jmp_buf buf) {
 }
 
 // Does not work on Power and ARM:
-// https://code.google.com/p/address-sanitizer/issues/detail?id=185
+// https://github.com/google/sanitizers/issues/185
 TEST(AddressSanitizer, BuiltinLongJmpTest) {
   static jmp_buf buf;
   if (!__builtin_setjmp((void**)buf)) {
@@ -1156,9 +1156,9 @@ TEST(AddressSanitizer, AttributeNoSanitizeAddressTest) {
 // The new/delete/etc mismatch checks don't work on Android,
 //   as calls to new/delete go through malloc/free.
 // OS X support is tracked here:
-//   https://code.google.com/p/address-sanitizer/issues/detail?id=131
+//   https://github.com/google/sanitizers/issues/131
 // Windows support is tracked here:
-//   https://code.google.com/p/address-sanitizer/issues/detail?id=309
+//   https://github.com/google/sanitizers/issues/309
 #if !defined(__ANDROID__) && \
     !defined(__APPLE__) && \
     !defined(_WIN32)
@@ -1255,7 +1255,7 @@ TEST(AddressSanitizer, DISABLED_DemoTooMuchMemoryTest) {
   }
 }
 
-// http://code.google.com/p/address-sanitizer/issues/detail?id=66
+// https://github.com/google/sanitizers/issues/66
 TEST(AddressSanitizer, BufferOverflowAfterManyFrees) {
   for (int i = 0; i < 1000000; i++) {
     delete [] (Ident(new char [8644]));

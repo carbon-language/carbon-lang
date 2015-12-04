@@ -102,7 +102,7 @@ using namespace __asan;  // NOLINT
 // that user program (un)poisons the memory it owns. It poisons memory
 // conservatively, and unpoisons progressively to make sure asan shadow
 // mapping invariant is preserved (see detailed mapping description here:
-// http://code.google.com/p/address-sanitizer/wiki/AddressSanitizerAlgorithm).
+// https://github.com/google/sanitizers/wiki/AddressSanitizerAlgorithm).
 //
 // * if user asks to poison region [left, right), the program poisons
 // at least [left, AlignDown(right)).
@@ -354,7 +354,7 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   // Make a quick sanity check that we are indeed in this state.
   //
   // FIXME: Two of these three checks are disabled until we fix
-  // https://code.google.com/p/address-sanitizer/issues/detail?id=258.
+  // https://github.com/google/sanitizers/issues/258.
   // if (d1 != d2)
   //  CHECK_EQ(*(u8*)MemToShadow(d1), old_mid - d1);
   if (a + granularity <= d1)
