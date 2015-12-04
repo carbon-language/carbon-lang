@@ -124,8 +124,8 @@ void LTOCodeGenerator::setModule(std::unique_ptr<LTOModule> Mod) {
   AsmUndefinedRefs.clear();
 
   MergedModule = Mod->takeModule();
-  IRLinker =
-      make_unique<Linker>(*MergedModule, IRLinker->getDiagnosticHandler());
+  IRLinker = llvm::make_unique<Linker>(*MergedModule,
+                                       IRLinker->getDiagnosticHandler());
 
   const std::vector<const char*> &Undefs = Mod->getAsmUndefinedRefs();
   for (int I = 0, E = Undefs.size(); I != E; ++I)
