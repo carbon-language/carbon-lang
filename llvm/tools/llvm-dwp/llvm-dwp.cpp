@@ -1,5 +1,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -82,6 +83,52 @@ writeStringsAndOffsets(MCStreamer &Out, StringMap<uint32_t> &Strings,
   return std::error_code();
 }
 
+static uint32_t getCUAbbrev(StringRef Abbrev, uint64_t AbbrCode) {
+  uint64_t CurCode;
+  uint32_t Offset = 0;
+  DataExtractor AbbrevData(Abbrev, true, 0);
+  while ((CurCode = AbbrevData.getULEB128(&Offset)) != AbbrCode) {
+    // Tag
+    AbbrevData.getULEB128(&Offset);
+    // DW_CHILDREN
+    AbbrevData.getU8(&Offset);
+    // Attributes
+    while (AbbrevData.getULEB128(&Offset) | AbbrevData.getULEB128(&Offset))
+      ;
+  }
+  return Offset;
+}
+
+static uint64_t getCUSignature(StringRef Abbrev, StringRef Info) {
+  uint32_t Offset = 0;
+  DataExtractor InfoData(Info, true, 0);
+  InfoData.getU32(&Offset); // Length
+  uint16_t Version = InfoData.getU16(&Offset);
+  InfoData.getU32(&Offset); // Abbrev offset (should be zero)
+  uint8_t AddrSize = InfoData.getU8(&Offset);
+
+  uint32_t AbbrCode = InfoData.getULEB128(&Offset);
+
+  DataExtractor AbbrevData(Abbrev, true, 0);
+  uint32_t AbbrevOffset = getCUAbbrev(Abbrev, AbbrCode);
+  uint64_t Tag = AbbrevData.getULEB128(&AbbrevOffset);
+  (void)Tag;
+  // FIXME: Real error handling
+  assert(Tag == dwarf::DW_TAG_compile_unit);
+  // DW_CHILDREN
+  AbbrevData.getU8(&AbbrevOffset);
+  uint32_t Name;
+  uint32_t Form;
+  while ((Name = AbbrevData.getULEB128(&AbbrevOffset)) |
+             (Form = AbbrevData.getULEB128(&AbbrevOffset)) &&
+         Name != dwarf::DW_AT_GNU_dwo_id) {
+    DWARFFormValue::skipValue(Form, InfoData, &Offset, Version, AddrSize);
+  }
+  // FIXME: Real error handling
+  assert(Name == dwarf::DW_AT_GNU_dwo_id);
+  return InfoData.getU64(&Offset);
+}
+
 static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   const auto &MCOFI = *Out.getContext().getObjectFileInfo();
   MCSection *const StrSection = MCOFI.getDwarfStrDWOSection();
@@ -104,7 +151,6 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   StringMap<uint32_t> Strings;
   uint32_t StringOffset = 0;
 
-  uint64_t UnitIndex = 0;
   uint32_t ContributionOffsets[8] = {};
 
   for (const auto &Input : Inputs) {
@@ -114,10 +160,11 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
     IndexEntries.emplace_back();
     UnitIndexEntry &CurEntry = IndexEntries.back();
-    CurEntry.Signature = UnitIndex++;
 
     StringRef CurStrSection;
     StringRef CurStrOffsetSection;
+    StringRef InfoSection;
+    StringRef AbbrevSection;
 
     for (const auto &Section : ErrOrObj->getBinary()->sections()) {
       StringRef Name;
@@ -138,6 +185,14 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         CurEntry.Contributions[Index].Offset = ContributionOffsets[Index];
         ContributionOffsets[Index] +=
             (CurEntry.Contributions[Index].Length = Contents.size());
+
+        if (Kind == DW_SECT_INFO) {
+          assert(InfoSection.empty());
+          InfoSection = Contents;
+        } else if (Kind == DW_SECT_ABBREV) {
+          assert(AbbrevSection.empty());
+          AbbrevSection = Contents;
+        }
       }
 
       MCSection *OutSection = SectionPair->second.first;
@@ -150,6 +205,10 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         Out.EmitBytes(Contents);
       }
     }
+
+    assert(!AbbrevSection.empty());
+    assert(!InfoSection.empty());
+    CurEntry.Signature = getCUSignature(AbbrevSection, InfoSection);
 
     if (auto Err = writeStringsAndOffsets(Out, Strings, StringOffset,
                                           StrSection, StrOffsetSection,

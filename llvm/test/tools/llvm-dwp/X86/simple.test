@@ -28,6 +28,7 @@ CHECK: .debug_info.dwo contents:
 CHECK: 0x00000000: Compile Unit: length = 0x00000025 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x08 (next unit at 0x00000029)
 CHECK: DW_TAG_compile_unit
 CHECK:   DW_AT_name {{.*}} "a.cpp"
+CHECK:   DW_AT_GNU_dwo_id {{.*}} ([[DWOA:.*]])
 CHECK:   DW_TAG_variable
 CHECK:     DW_AT_name {{.*}} "a"
 CHECK:   DW_TAG_structure_type
@@ -35,6 +36,7 @@ CHECK:     DW_AT_name {{.*}} "foo"
 
 CHECK: 0x00000029: Compile Unit: length = 0x00000031 version = 0x0004 abbr_offset = 0x0031 addr_size = 0x08 (next unit at 0x0000005e)
 CHECK:   DW_AT_name {{.*}} "b.cpp"
+CHECK:   DW_AT_GNU_dwo_id {{.*}} ([[DWOB:.*]])
 CHECK:   DW_TAG_structure_type
 CHECK:     DW_AT_name {{.*}} "bar"
 CHECK:   DW_TAG_subprogram
@@ -45,8 +47,8 @@ CHECK: .debug_cu_index contents:
 Ensure only the relevant/contained sections are included in the table:
 CHECK: Index Signature          INFO                     ABBREV                   STR_OFFSETS
 Don't bother checking the Signatures, they aren't correct yet.
-CHECK:                          [0x00000000, 0x00000029) [0x00000000, 0x00000031) [0x00000000, 0x00000010)
-CHECK:                          [0x00000029, 0x0000005e) [0x00000031, 0x00000075) [0x00000010, 0x00000024)
+CHECK:     1 [[DWOA]]           [0x00000000, 0x00000029) [0x00000000, 0x00000031) [0x00000000, 0x00000010)
+CHECK:     2 [[DWOB]]           [0x00000029, 0x0000005e) [0x00000031, 0x00000075) [0x00000010, 0x00000024)
 
 CHECK: .debug_str.dwo contents:
 CHECK: "clang version
