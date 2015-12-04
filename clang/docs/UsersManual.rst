@@ -977,21 +977,8 @@ are listed below.
    undefined behavior that can be detected and the :ref:`list <cfi-schemes>`
    of control flow integrity schemes.
 
-   You can turn off or modify checks for certain source files, functions
-   or even variables by providing a special file:
-
-   -  ``-fsanitize-blacklist=/path/to/blacklist/file``: disable or modify
-      sanitizer checks for objects listed in the file. See
-      :doc:`SanitizerSpecialCaseList` for file format description.
-   -  ``-fno-sanitize-blacklist``: don't use blacklist file, if it was
-      specified earlier in the command line.
-
    The ``-fsanitize=`` argument must also be provided when linking, in
-   order to link to the appropriate runtime library. When using
-   ``-fsanitize=vptr`` (or a group that includes it, such as
-   ``-fsanitize=undefined``) with a C++ program, the link must be
-   performed by ``clang++``, not ``clang``, in order to link against the
-   C++-specific parts of the runtime library.
+   order to link to the appropriate runtime library.
 
    It is not possible to combine more than one of the ``-fsanitize=address``,
    ``-fsanitize=thread``, and ``-fsanitize=memory`` checkers in the same
@@ -1028,13 +1015,23 @@ are listed below.
    be used (for instance, when building libc or a kernel module), or where
    the binary size increase caused by the sanitizer runtime is a concern.
 
-   This flag is only compatible with ``local-bounds``,
-   ``unsigned-integer-overflow``, sanitizers in the ``cfi`` group and
-   sanitizers in the ``undefined`` group other than ``vptr``. If this flag
+   This flag is only compatible with :doc:`control flow integrity
+   <ControlFlowIntegrity>` schemes and :doc:`UndefinedBehaviorSanitizer`
+   checks other than ``vptr``. If this flag
    is supplied together with ``-fsanitize=undefined``, the ``vptr`` sanitizer
    will be implicitly disabled.
 
    This flag is enabled by default for sanitizers in the ``cfi`` group.
+
+.. option:: -fsanitize-blacklist=/path/to/blacklist/file
+
+   Disable or modify sanitizer checks for objects (source files, functions,
+   variables, types) listed in the file. See
+   :doc:`SanitizerSpecialCaseList` for file format description.
+
+.. option:: -fno-sanitize-blacklist
+
+   Don't use blacklist file, if it was specified earlier in the command line.
 
 **-f[no-]sanitize-coverage=[type,features,...]**
 
