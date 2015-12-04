@@ -333,6 +333,8 @@ namespace llvm {
   /// This pass assigns indexes to each instruction.
   class SlotIndexes : public MachineFunctionPass {
   private:
+    // IndexListEntry allocator.
+    BumpPtrAllocator ileAllocator;
 
     typedef ilist<IndexListEntry> IndexList;
     IndexList indexList;
@@ -352,9 +354,6 @@ namespace llvm {
     /// Idx2MBBMap - Sorted list of pairs of index of first instruction
     /// and MBB id.
     SmallVector<IdxMBBPair, 8> idx2MBBMap;
-
-    // IndexListEntry allocator.
-    BumpPtrAllocator ileAllocator;
 
     IndexListEntry* createEntry(MachineInstr *mi, unsigned index) {
       IndexListEntry *entry =
