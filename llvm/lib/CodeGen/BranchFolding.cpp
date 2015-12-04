@@ -744,35 +744,24 @@ bool BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
   return true;
 }
 
-// Add MI1's MMOs to MI2's MMOs while excluding any duplicates. The MI scheduler
-// currently doesn't handle multiple MMOs, so duplicates would likely pessimize
-// the scheduler.
-static void mergeMMOs(MachineInstr *MI1, MachineInstr *MI2) {
+static bool hasIdenticalMMOs(const MachineInstr *MI1, const MachineInstr *MI2) {
   auto I1 = MI1->memoperands_begin(), E1 = MI1->memoperands_end();
   auto I2 = MI2->memoperands_begin(), E2 = MI2->memoperands_end();
-  MachineFunction *MF = MI1->getParent()->getParent();
-
-  // Mostly, MI1's MMO count is 1 or zero. So we don't have to use
-  // SmallSet.
-  for (; I1 != E1; ++I1) {
-    bool IsDupMMO = false;
-    for (I2 = MI2->memoperands_begin(); I2 != E2; ++I2) {
-      if (**I1 == **I2) {
-        IsDupMMO = true;
-        break;
-      }
-    }
-    if (IsDupMMO == false) {
-      MI2->addMemOperand(*MF, *I1);
-      E2 = MI2->memoperands_end();
-    }
+  if ((E1 - I1) != (E2 - I2))
+    return false;
+  for (; I1 != E1; ++I1, ++I2) {
+    if (**I1 != **I2)
+      return false;
   }
+  return true;
 }
 
 static void
-mergeMMOsFromMemoryOperations(MachineBasicBlock::iterator MBBIStartPos,
-                              MachineBasicBlock &MBBCommon) {
-  // Merge MMOs from memory operations in the common block
+removeMMOsFromMemoryOperations(MachineBasicBlock::iterator MBBIStartPos,
+                               MachineBasicBlock &MBBCommon) {
+  // Remove MMOs from memory operations in the common block
+  // when they do not match the ones from the block being tail-merged.
+  // This ensures later passes conservatively compute dependencies.
   MachineBasicBlock *MBB = MBBIStartPos->getParent();
   // Note CommonTailLen does not necessarily matches the size of
   // the common BB nor all its instructions because of debug
@@ -803,7 +792,8 @@ mergeMMOsFromMemoryOperations(MachineBasicBlock::iterator MBBIStartPos,
     assert(MBBICommon->isIdenticalTo(&*MBBI) && "Expected matching MIIs!");
 
     if (MBBICommon->mayLoad() || MBBICommon->mayStore())
-      mergeMMOs(&*MBBI, &*MBBICommon);
+      if (!hasIdenticalMMOs(&*MBBI, &*MBBICommon))
+        MBBICommon->clearMemRefs();
 
     ++MBBI;
     ++MBBICommon;
@@ -923,8 +913,8 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
         continue;
       DEBUG(dbgs() << "BB#" << SameTails[i].getBlock()->getNumber()
                    << (i == e-1 ? "" : ", "));
-      // Merge MMOs from memory operations as needed.
-      mergeMMOsFromMemoryOperations(SameTails[i].getTailStartPos(), *MBB);
+      // Remove MMOs from memory operations as needed.
+      removeMMOsFromMemoryOperations(SameTails[i].getTailStartPos(), *MBB);
       // Hack the end off BB i, making it jump to BB commonTailIndex instead.
       ReplaceTailWithBranchTo(SameTails[i].getTailStartPos(), MBB);
       // BB i is no longer a predecessor of SuccBB; remove it from the worklist.
