@@ -27,7 +27,7 @@
 #include "sanitizer_common/sanitizer_mac.h"
 
 // Similar code is used in Google Perftools,
-// http://code.google.com/p/google-perftools.
+// https://github.com/gperftools/gperftools.
 
 static malloc_zone_t sanitizer_zone;
 
@@ -56,7 +56,7 @@ INTERCEPTOR(malloc_zone_t *, malloc_default_zone, void) {
 
 INTERCEPTOR(malloc_zone_t *, malloc_default_purgeable_zone, void) {
   // FIXME: ASan should support purgeable allocations.
-  // https://code.google.com/p/address-sanitizer/issues/detail?id=139
+  // https://github.com/google/sanitizers/issues/139
   COMMON_MALLOC_ENTER();
   return &sanitizer_zone;
 }

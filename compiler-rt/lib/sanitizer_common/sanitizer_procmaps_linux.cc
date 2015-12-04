@@ -67,7 +67,7 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   while (IsDecimal(*current_))
     current_++;
   // Qemu may lack the trailing space.
-  // http://code.google.com/p/address-sanitizer/issues/detail?id=160
+  // https://github.com/google/sanitizers/issues/160
   // CHECK_EQ(*current_++, ' ');
   // Skip spaces.
   while (current_ < next_line && *current_ == ' ')

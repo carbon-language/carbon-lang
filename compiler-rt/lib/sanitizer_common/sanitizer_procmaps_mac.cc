@@ -65,7 +65,7 @@ void MemoryMappingLayout::LoadFromCache() {
 }
 
 // Next and NextSegmentLoad were inspired by base/sysinfo.cc in
-// Google Perftools, http://code.google.com/p/google-perftools.
+// Google Perftools, https://github.com/gperftools/gperftools.
 
 // NextSegmentLoad scans the current image for the next segment load command
 // and returns the start and end addresses and file offset of the corresponding

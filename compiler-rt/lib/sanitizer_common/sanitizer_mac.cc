@@ -219,7 +219,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   uptr stacksize = pthread_get_stacksize_np(pthread_self());
   // pthread_get_stacksize_np() returns an incorrect stack size for the main
   // thread on Mavericks. See
-  // https://code.google.com/p/address-sanitizer/issues/detail?id=261
+  // https://github.com/google/sanitizers/issues/261
   if ((GetMacosVersion() >= MACOS_VERSION_MAVERICKS) && at_initialization &&
       stacksize == (1 << 19))  {
     struct rlimit rl;

@@ -82,7 +82,7 @@ TEST_F(FastUnwindTest, Basic) {
   }
 }
 
-// From: http://code.google.com/p/address-sanitizer/issues/detail?id=162
+// From: https://github.com/google/sanitizers/issues/162
 TEST_F(FastUnwindTest, FramePointerLoop) {
   // Make one fp point to itself.
   fake_stack[4] = (uhwptr)&fake_stack[4];
