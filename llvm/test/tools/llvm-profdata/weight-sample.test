@@ -1,0 +1,43 @@
+Tests for weighted merge of sample profiles.
+
+1- Merge the foo and bar profiles with unity weight and verify the combined output
+RUN: llvm-profdata merge --sample --text %p/Inputs/weight-sample-bar.proftext:1 %p/Inputs/weight-sample-foo.proftext:1 -o - | FileCheck %s --check-prefix=WEIGHT1
+WEIGHT1: foo:1763288:35327
+WEIGHT1:  7: 35327
+WEIGHT1:  8: 35327
+WEIGHT1:  9: 6930
+WEIGHT1:  10: 29341
+WEIGHT1:  11: 11906
+WEIGHT1:  13: 18185 foo:19531
+WEIGHT1:  15: 36458
+WEIGHT1: bar:1772037:35370
+WEIGHT1:  17: 35370
+WEIGHT1:  18: 35370
+WEIGHT1:  19: 7005
+WEIGHT1:  20: 29407
+WEIGHT1:  21: 12170
+WEIGHT1:  23: 18150 bar:19829
+WEIGHT1:  25: 36666
+
+2- Merge the foo and bar profiles with weight 3x and 5x respectively and verify the combined output
+RUN: llvm-profdata merge --sample --text %p/Inputs/weight-sample-bar.proftext:3 %p/Inputs/weight-sample-foo.proftext:5 -o - | FileCheck %s --check-prefix=WEIGHT2
+WEIGHT2: foo:8816440:176635
+WEIGHT2:  7: 176635
+WEIGHT2:  8: 176635
+WEIGHT2:  9: 34650
+WEIGHT2:  10: 146705
+WEIGHT2:  11: 59530
+WEIGHT2:  13: 90925 foo:97655
+WEIGHT2:  15: 182290
+WEIGHT2: bar:5316111:106110
+WEIGHT2:  17: 106110
+WEIGHT2:  18: 106110
+WEIGHT2:  19: 21015
+WEIGHT2:  20: 88221
+WEIGHT2:  21: 36510
+WEIGHT2:  23: 54450 bar:59487
+WEIGHT2:  25: 109998
+
+3- Bad merge: foo and bar profiles with invalid weights
+RUN: not llvm-profdata merge --sample --text %p/Inputs/weight-sample-bar.proftext:3 %p/Inputs/weight-sample-foo.proftext:-5 -o %t.out 2>&1 | FileCheck %s --check-prefix=ERROR3
+ERROR3: error: Input weight must be a positive integer.
