@@ -99,6 +99,13 @@ private:
   DiagnosticHandlerFunction DiagnosticHandler;
 };
 
+/// Create a new module with exported local functions renamed and promoted
+/// for ThinLTO.
+std::unique_ptr<Module>
+renameModuleForThinLTO(std::unique_ptr<Module> &M,
+                       const FunctionInfoIndex *Index,
+                       DiagnosticHandlerFunction DiagnosticHandler);
+
 } // End llvm namespace
 
 #endif
