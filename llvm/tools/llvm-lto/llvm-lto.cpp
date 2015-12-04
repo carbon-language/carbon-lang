@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
 
   unsigned BaseArg = 0;
 
-  LTOCodeGenerator CodeGen;
+  LTOCodeGenerator CodeGen(getGlobalContext());
 
   if (UseDiagnosticHandler)
     CodeGen.setDiagnosticHandler(handleDiagnostics, nullptr);
