@@ -974,19 +974,8 @@ are listed below.
 
    There are more fine-grained checks available: see
    the :ref:`list <ubsan-checks>` of specific kinds of
-   undefined behavior that can be detected. Checks for :doc:`ControlFlowIntegrity`
-   are:
-
-   -  ``-fsanitize=cfi-cast-strict``: Enables :ref:`strict cast checks
-      <cfi-strictness>`.
-   -  ``-fsanitize=cfi-derived-cast``: Base-to-derived cast to the wrong
-      dynamic type. Requires ``-flto``.
-   -  ``-fsanitize=cfi-unrelated-cast``: Cast from ``void*`` or another
-      unrelated type to the wrong dynamic type. Requires ``-flto``.
-   -  ``-fsanitize=cfi-nvcall``: Non-virtual call via an object whose vptr is of
-      the wrong dynamic type. Requires ``-flto``.
-   -  ``-fsanitize=cfi-vcall``: Virtual call via an object whose vptr is of the
-      wrong dynamic type. Requires ``-flto``.
+   undefined behavior that can be detected and the :ref:`list <cfi-schemes>`
+   of control flow integrity schemes.
 
    You can turn off or modify checks for certain source files, functions
    or even variables by providing a special file:
