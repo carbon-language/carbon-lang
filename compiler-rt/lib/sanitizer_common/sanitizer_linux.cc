@@ -986,15 +986,6 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
 #if SANITIZER_ANDROID
-#define PROP_VALUE_MAX 92
-extern "C" SANITIZER_WEAK_ATTRIBUTE int __system_property_get(const char *name,
-                                                              char *value);
-void GetExtraActivationFlags(char *buf, uptr size) {
-  CHECK(size > PROP_VALUE_MAX);
-  CHECK(&__system_property_get);
-  __system_property_get("asan.options", buf);
-}
-
 #if __ANDROID_API__ < 21
 extern "C" __attribute__((weak)) int dl_iterate_phdr(
     int (*)(struct dl_phdr_info *, size_t, void *), void *);

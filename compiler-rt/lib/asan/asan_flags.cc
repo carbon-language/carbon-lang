@@ -116,14 +116,6 @@ void InitializeFlags() {
   ubsan_parser.ParseString(GetEnv("UBSAN_OPTIONS"));
 #endif
 
-  // Let activation flags override current settings. On Android they come
-  // from a system property. On other platforms this is no-op.
-  if (!flags()->start_deactivated) {
-    char buf[100];
-    GetExtraActivationFlags(buf, sizeof(buf));
-    asan_parser.ParseString(buf);
-  }
-
   SetVerbosity(common_flags()->verbosity);
 
   // TODO(eugenis): dump all flags at verbosity>=2?

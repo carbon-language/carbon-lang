@@ -61,11 +61,6 @@ static struct AsanDeactivatedFlags {
       parser.ParseString(env);
     }
 
-    // Override from getprop asan.options.
-    char buf[100];
-    GetExtraActivationFlags(buf, sizeof(buf));
-    parser.ParseString(buf);
-
     SetVerbosity(cf.verbosity);
 
     if (Verbosity()) ReportUnrecognizedFlags();
