@@ -558,7 +558,7 @@ def : Proc<"athlon64-sse3",   [FeatureSlowUAMem16, FeatureSSE3,   Feature3DNowA,
                                FeatureSlowSHLD]>;
 def : Proc<"amdfam10",        [FeatureSSE4A, Feature3DNowA, FeatureFXSR,
                                FeatureCMPXCHG16B, FeatureLZCNT, FeaturePOPCNT,
-                               FeatureSlowBTMem, FeatureSlowSHLD]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD, FeatureLAHFSAHF]>;
 def : Proc<"barcelona",       [FeatureSSE4A, Feature3DNowA, FeatureFXSR,
                                FeatureCMPXCHG16B, FeatureLZCNT, FeaturePOPCNT,
                                FeatureSlowBTMem, FeatureSlowSHLD, FeatureLAHFSAHF]>;
