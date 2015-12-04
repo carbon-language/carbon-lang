@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/ProfileData/InstrProfReader.h"
@@ -28,7 +27,6 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
-#include <tuple>
 
 using namespace llvm;
 
@@ -95,17 +93,7 @@ static void handleMergeWriterError(std::error_code &Error,
   }
 }
 
-struct WeightedFile {
-  StringRef Filename;
-  uint64_t Weight;
-
-  WeightedFile() {}
-
-  WeightedFile(StringRef F, uint64_t W) : Filename{F}, Weight{W} {}
-};
-typedef SmallVector<WeightedFile, 5> WeightedFileVector;
-
-static void mergeInstrProfile(const WeightedFileVector &Inputs,
+static void mergeInstrProfile(const cl::list<std::string> &Inputs,
                               StringRef OutputFilename,
                               ProfileFormat OutputFormat) {
   if (OutputFilename.compare("-") == 0)
@@ -121,21 +109,21 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
 
   InstrProfWriter Writer;
   SmallSet<std::error_code, 4> WriterErrorCodes;
-  for (const auto &Input : Inputs) {
-    auto ReaderOrErr = InstrProfReader::create(Input.Filename);
+  for (const auto &Filename : Inputs) {
+    auto ReaderOrErr = InstrProfReader::create(Filename);
     if (std::error_code ec = ReaderOrErr.getError())
-      exitWithErrorCode(ec, Input.Filename);
+      exitWithErrorCode(ec, Filename);
 
     auto Reader = std::move(ReaderOrErr.get());
     for (auto &I : *Reader) {
-      if (std::error_code EC = Writer.addRecord(std::move(I), Input.Weight)) {
+      if (std::error_code EC = Writer.addRecord(std::move(I))) {
         // Only show hint the first time an error occurs.
         bool firstTime = WriterErrorCodes.insert(EC).second;
-        handleMergeWriterError(EC, Input.Filename, I.Name, firstTime);
+        handleMergeWriterError(EC, Filename, I.Name, firstTime);
       }
     }
     if (Reader->hasError())
-      exitWithErrorCode(Reader->getError(), Input.Filename);
+      exitWithErrorCode(Reader->getError(), Filename);
   }
   if (OutputFormat == PF_Text)
     Writer.writeText(Output);
@@ -147,7 +135,7 @@ static sampleprof::SampleProfileFormat FormatMap[] = {
     sampleprof::SPF_None, sampleprof::SPF_Text, sampleprof::SPF_Binary,
     sampleprof::SPF_GCC};
 
-static void mergeSampleProfile(const WeightedFileVector &Inputs,
+static void mergeSampleProfile(const cl::list<std::string> &Inputs,
                                StringRef OutputFilename,
                                ProfileFormat OutputFormat) {
   using namespace sampleprof;
@@ -159,11 +147,11 @@ static void mergeSampleProfile(const WeightedFileVector &Inputs,
   auto Writer = std::move(WriterOrErr.get());
   StringMap<FunctionSamples> ProfileMap;
   SmallVector<std::unique_ptr<sampleprof::SampleProfileReader>, 5> Readers;
-  for (const auto &Input : Inputs) {
+  for (const auto &Filename : Inputs) {
     auto ReaderOrErr =
-        SampleProfileReader::create(Input.Filename, getGlobalContext());
+        SampleProfileReader::create(Filename, getGlobalContext());
     if (std::error_code EC = ReaderOrErr.getError())
-      exitWithErrorCode(EC, Input.Filename);
+      exitWithErrorCode(EC, Filename);
 
     // We need to keep the readers around until after all the files are
     // read so that we do not lose the function names stored in each
@@ -172,7 +160,7 @@ static void mergeSampleProfile(const WeightedFileVector &Inputs,
     Readers.push_back(std::move(ReaderOrErr.get()));
     const auto Reader = Readers.back().get();
     if (std::error_code EC = Reader->read())
-      exitWithErrorCode(EC, Input.Filename);
+      exitWithErrorCode(EC, Filename);
 
     StringMap<FunctionSamples> &Profiles = Reader->getProfiles();
     for (StringMap<FunctionSamples>::iterator I = Profiles.begin(),
@@ -180,38 +168,15 @@ static void mergeSampleProfile(const WeightedFileVector &Inputs,
          I != E; ++I) {
       StringRef FName = I->first();
       FunctionSamples &Samples = I->second;
-      ProfileMap[FName].merge(Samples, Input.Weight);
+      ProfileMap[FName].merge(Samples);
     }
   }
   Writer->write(ProfileMap);
 }
 
-static void parseInputFiles(const cl::list<std::string> &Inputs,
-                            WeightedFileVector &WeightedInputs) {
-  WeightedInputs.reserve(Inputs.size());
-
-  for (StringRef Input : Inputs) {
-    StringRef FileName;
-    StringRef WeightStr;
-    std::tie(FileName, WeightStr) = Input.rsplit(':');
-    if (WeightStr.empty() || sys::fs::exists(Input)) {
-      // No weight specified or valid path containing delimiter.
-      WeightedInputs.push_back(WeightedFile(Input, 1));
-    } else {
-      // Input weight specified.
-      uint64_t Weight;
-      if (WeightStr.getAsInteger(10, Weight) || Weight < 1) {
-        // Invalid input weight.
-        exitWithError("Input weight must be a positive integer.");
-      }
-      WeightedInputs.push_back(WeightedFile(FileName, Weight));
-    }
-  }
-}
-
 static int merge_main(int argc, const char *argv[]) {
   cl::list<std::string> Inputs(cl::Positional, cl::Required, cl::OneOrMore,
-                               cl::desc("<filename[:weight]...>"));
+                               cl::desc("<filenames...>"));
 
   cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
                                       cl::init("-"), cl::Required,
@@ -233,13 +198,10 @@ static int merge_main(int argc, const char *argv[]) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
-  WeightedFileVector WeightedInputs;
-  parseInputFiles(Inputs, WeightedInputs);
-
   if (ProfileKind == instr)
-    mergeInstrProfile(WeightedInputs, OutputFilename, OutputFormat);
+    mergeInstrProfile(Inputs, OutputFilename, OutputFormat);
   else
-    mergeSampleProfile(WeightedInputs, OutputFilename, OutputFormat);
+    mergeSampleProfile(Inputs, OutputFilename, OutputFormat);
 
   return 0;
 }

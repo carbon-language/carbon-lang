@@ -490,24 +490,4 @@ TEST_F(InstrProfTest, get_max_function_count) {
   ASSERT_EQ(1ULL << 63, Reader->getMaximumFunctionCount());
 }
 
-TEST_F(InstrProfTest, get_weighted_function_counts) {
-  InstrProfRecord Record1("foo", 0x1234, {1, 2});
-  InstrProfRecord Record2("foo", 0x1235, {3, 4});
-  Writer.addRecord(std::move(Record1), 3);
-  Writer.addRecord(std::move(Record2), 5);
-  auto Profile = Writer.writeBuffer();
-  readProfile(std::move(Profile));
-
-  std::vector<uint64_t> Counts;
-  ASSERT_TRUE(NoError(Reader->getFunctionCounts("foo", 0x1234, Counts)));
-  ASSERT_EQ(2U, Counts.size());
-  ASSERT_EQ(3U, Counts[0]);
-  ASSERT_EQ(6U, Counts[1]);
-
-  ASSERT_TRUE(NoError(Reader->getFunctionCounts("foo", 0x1235, Counts)));
-  ASSERT_EQ(2U, Counts.size());
-  ASSERT_EQ(15U, Counts[0]);
-  ASSERT_EQ(20U, Counts[1]);
-}
-
 } // end anonymous namespace
