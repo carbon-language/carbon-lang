@@ -51,7 +51,7 @@ void *CallerAddrs[] = {FUNC_128_ADDRS(caller)};
 
 void *CalleeAddrs[] = {FUNC_8_ADDRS(callee)};
 
-static int cmpaddr(const void *p1, const void *p2) {
+int cmpaddr(const void *p1, const void *p2) {
   void *addr1 = *(void **)p1;
   void *addr2 = *(void **)p2;
   return (intptr_t)addr2 - (intptr_t)addr1;
