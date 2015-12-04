@@ -46,7 +46,7 @@ help:
 	@ echo "  make install_deps  # Install third-party dependencies required for building"
 	@ echo "  make presubmit     # Run it every time before committing"
 	@ echo
-	@ echo "For more info, see http://code.google.com/p/thread-sanitizer/wiki/Development"
+	@ echo "For more info, see https://github.com/google/sanitizers/wiki/ThreadSanitizerDevelopment"
 
 $(LIBTSAN): libtsan
 
