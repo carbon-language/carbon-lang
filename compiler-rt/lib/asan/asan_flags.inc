@@ -96,8 +96,8 @@ ASAN_FLAG(bool, poison_array_cookie, true,
           "Poison (or not) the array cookie after operator new[].")
 
 // Turn off alloc/dealloc mismatch checker on Mac and Windows for now.
-// https://code.google.com/p/address-sanitizer/issues/detail?id=131
-// https://code.google.com/p/address-sanitizer/issues/detail?id=309
+// https://github.com/google/sanitizers/issues/131
+// https://github.com/google/sanitizers/issues/309
 // TODO(glider,timurrrr): Fix known issues and enable this back.
 ASAN_FLAG(bool, alloc_dealloc_mismatch,
           (SANITIZER_MAC == 0) && (SANITIZER_WINDOWS == 0),
@@ -123,8 +123,8 @@ ASAN_FLAG(
     "The bigger the value the harder we try.")
 ASAN_FLAG(
     bool, detect_container_overflow, true,
-    "If true, honor the container overflow  annotations. "
-    "See https://code.google.com/p/address-sanitizer/wiki/ContainerOverflow")
+    "If true, honor the container overflow annotations. See "
+    "https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow")
 ASAN_FLAG(int, detect_odr_violation, 2,
           "If >=2, detect violation of One-Definition-Rule (ODR); "
           "If ==1, detect ODR-violation only if the two variables "
