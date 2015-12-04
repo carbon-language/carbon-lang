@@ -19,6 +19,11 @@
 #define LLVM_LIBRARY_VISIBILITY __attribute__((visibility("hidden")))
 #define LLVM_SECTION(Sect) __attribute__((section(Sect)))
 
+#define PROF_ERR(Format, ...) \
+ if (getenv("LLVM_PROFILE_VERBOSE_ERRORS")) \
+   fprintf(stderr, Format, __VA_ARGS__ );
+
+
 #if defined(__FreeBSD__) && defined(__i386__)
 
 /* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
@@ -162,9 +167,5 @@ uint64_t __llvm_profile_get_magic(void);
 
 /*! \brief Get the version of the file format. */
 uint64_t __llvm_profile_get_version(void);
-
-#define PROF_ERR(Format, ...) \
- if (getenv("LLVM_PROFILE_VERBOSE_ERRORS")) \
-   fprintf(stderr, Format, __VA_ARGS__ );
 
 #endif /* PROFILE_INSTRPROFILING_H_ */
