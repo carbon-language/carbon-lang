@@ -114,6 +114,16 @@ if(APPLE)
     ARCHS ${TSAN_SUPPORTED_ARCH}
     SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES} ${TSAN_ASM_SOURCES}
     CFLAGS ${TSAN_RTL_CFLAGS})
+
+  # Build and check Go runtime.
+  set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
+  add_custom_target(GotsanRuntimeCheck
+    COMMAND env "CC=${CMAKE_C_COMPILER} ${OSX_SYSROOT_FLAG}"
+            IN_TMPDIR=1 SILENT=1 ${BUILDGO_SCRIPT}
+    DEPENDS tsan ${BUILDGO_SCRIPT}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
+    COMMENT "Checking TSan Go runtime..."
+    VERBATIM)
 else()
   foreach(arch ${TSAN_SUPPORTED_ARCH})
     if(arch STREQUAL "x86_64")
