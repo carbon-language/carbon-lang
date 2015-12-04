@@ -257,6 +257,16 @@ static void fail(SDLoc DL, SelectionDAG &DAG, const char *msg) {
       DiagnosticInfoUnsupported(DL, *MF.getFunction(), msg, SDValue()));
 }
 
+// Test whether the given calling convention is supported.
+static bool
+CallingConvSupported(CallingConv::ID CallConv) {
+  // We currently support the language-independent target-independent
+  // conventions.
+  return CallConv == CallingConv::C ||
+         CallConv == CallingConv::Fast ||
+         CallConv == CallingConv::Cold;
+}
+
 SDValue
 WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
                                      SmallVectorImpl<SDValue> &InVals) const {
@@ -267,8 +277,7 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   MachineFunction &MF = DAG.getMachineFunction();
 
   CallingConv::ID CallConv = CLI.CallConv;
-  if (CallConv != CallingConv::C && CallConv != CallingConv::Fast &&
-      CallConv != CallingConv::Cold)
+  if (!CallingConvSupported(CallConv))
     fail(DL, DAG,
          "WebAssembly doesn't support language-specific or target-specific "
          "calling conventions yet");
@@ -367,7 +376,7 @@ SDValue WebAssemblyTargetLowering::LowerReturn(
     const SmallVectorImpl<SDValue> &OutVals, SDLoc DL,
     SelectionDAG &DAG) const {
   assert(Outs.size() <= 1 && "WebAssembly can only return up to one value");
-  if (CallConv != CallingConv::C)
+  if (!CallingConvSupported(CallConv))
     fail(DL, DAG, "WebAssembly doesn't support non-C calling conventions");
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
@@ -399,7 +408,7 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
     SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
 
-  if (CallConv != CallingConv::C)
+  if (!CallingConvSupported(CallConv))
     fail(DL, DAG, "WebAssembly doesn't support non-C calling conventions");
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
