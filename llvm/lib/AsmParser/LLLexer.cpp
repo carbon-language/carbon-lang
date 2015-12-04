@@ -591,6 +591,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(ghccc);
   KEYWORD(hhvmcc);
   KEYWORD(hhvm_ccc);
+  KEYWORD(cxx_fast_tlscc);
 
   KEYWORD(cc);
   KEYWORD(c);
