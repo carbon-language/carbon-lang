@@ -139,6 +139,7 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       {"debug_str_offsets.dwo", {StrOffsetSection, DW_SECT_STR_OFFSETS}},
       {"debug_str.dwo", {StrSection, static_cast<DWARFSectionKind>(0)}},
       {"debug_loc.dwo", {MCOFI.getDwarfLocDWOSection(), DW_SECT_LOC}},
+      {"debug_line.dwo", {MCOFI.getDwarfLineDWOSection(), DW_SECT_LINE}},
       {"debug_abbrev.dwo", {MCOFI.getDwarfAbbrevDWOSection(), DW_SECT_ABBREV}}};
 
   struct UnitIndexEntry {
