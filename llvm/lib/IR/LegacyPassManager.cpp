@@ -589,7 +589,7 @@ AnalysisUsage *PMTopLevelManager::findAnalysisUsage(Pass *P) {
     if (auto *N = UniqueAnalysisUsages.FindNodeOrInsertPos(ID, IP))
       Node = N;
     else {
-      Node = new (AUFoldingSetNodeAllocator) AUFoldingSetNode(AU);
+      Node = new (AUFoldingSetNodeAllocator.Allocate()) AUFoldingSetNode(AU);
       UniqueAnalysisUsages.InsertNode(Node, IP);
     }
     assert(Node && "cached analysis usage must be non null");

@@ -283,7 +283,7 @@ private:
   
   // Allocator used for allocating UAFoldingSetNodes.  This handles deletion of
   // all allocated nodes in one fell swoop.
-  BumpPtrAllocator AUFoldingSetNodeAllocator;
+  SpecificBumpPtrAllocator<AUFoldingSetNode> AUFoldingSetNodeAllocator;
   
   // Maps from a pass to it's associated entry in UniqueAnalysisUsages.  Does
   // not own the storage associated with either key or value.. 
