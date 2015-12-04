@@ -69,7 +69,6 @@ public:
   };
 
   Linker(Module &M, DiagnosticHandlerFunction DiagnosticHandler);
-  Linker(Module &M);
 
   /// \brief Link \p Src into the composite. The source is destroyed.
   ///
@@ -88,8 +87,9 @@ public:
                           DiagnosticHandlerFunction DiagnosticHandler,
                           unsigned Flags = Flags::None);
 
-  static bool linkModules(Module &Dest, Module &Src,
-                          unsigned Flags = Flags::None);
+  DiagnosticHandlerFunction getDiagnosticHandler() const {
+    return DiagnosticHandler;
+  }
 
 private:
   Module &Composite;

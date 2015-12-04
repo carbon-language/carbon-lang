@@ -2030,11 +2030,6 @@ Linker::Linker(Module &M, DiagnosticHandlerFunction DiagnosticHandler)
   }
 }
 
-Linker::Linker(Module &M)
-    : Linker(M, [this](const DiagnosticInfo &DI) {
-        Composite.getContext().diagnose(DI);
-      }) {}
-
 bool Linker::linkInModule(Module &Src, unsigned Flags,
                           const FunctionInfoIndex *Index,
                           DenseSet<const GlobalValue *> *FunctionsToImport) {
@@ -2058,11 +2053,6 @@ bool Linker::linkModules(Module &Dest, Module &Src,
                          DiagnosticHandlerFunction DiagnosticHandler,
                          unsigned Flags) {
   Linker L(Dest, DiagnosticHandler);
-  return L.linkInModule(Src, Flags);
-}
-
-bool Linker::linkModules(Module &Dest, Module &Src, unsigned Flags) {
-  Linker L(Dest);
   return L.linkInModule(Src, Flags);
 }
 
