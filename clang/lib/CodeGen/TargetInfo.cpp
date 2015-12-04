@@ -4730,6 +4730,11 @@ public:
     }
   }
 
+  bool isAndroid() const {
+    return (getTarget().getTriple().getEnvironment() ==
+            llvm::Triple::Android);
+  }
+
   ABIKind getABIKind() const { return Kind; }
 
 private:
@@ -5233,15 +5238,27 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
 
 /// isIllegalVector - check whether Ty is an illegal vector type.
 bool ARMABIInfo::isIllegalVectorType(QualType Ty) const {
-  if (const VectorType *VT = Ty->getAs<VectorType>()) {
-    // Check whether VT is legal.
-    unsigned NumElements = VT->getNumElements();
-    uint64_t Size = getContext().getTypeSize(VT);
-    // NumElements should be power of 2.
-    if ((NumElements & (NumElements - 1)) != 0)
-      return true;
-    // Size should be greater than 32 bits.
-    return Size <= 32;
+  if (const VectorType *VT = Ty->getAs<VectorType> ()) {
+    if (isAndroid()) {
+      // Android shipped using Clang 3.1, which supported a slightly different
+      // vector ABI. The primary differences were that 3-element vector types
+      // were legal, and so were sub 32-bit vectors (i.e. <2 x i8>). This path
+      // accepts that legacy behavior for Android only.
+      // Check whether VT is legal.
+      unsigned NumElements = VT->getNumElements();
+      // NumElements should be power of 2 or equal to 3.
+      if (!llvm::isPowerOf2_32(NumElements) && NumElements != 3)
+        return true;
+    } else {
+      // Check whether VT is legal.
+      unsigned NumElements = VT->getNumElements();
+      uint64_t Size = getContext().getTypeSize(VT);
+      // NumElements should be power of 2.
+      if (!llvm::isPowerOf2_32(NumElements))
+        return true;
+      // Size should be greater than 32 bits.
+      return Size <= 32;
+    }
   }
   return false;
 }
