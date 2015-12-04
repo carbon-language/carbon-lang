@@ -989,32 +989,10 @@ static INLINE void CheckForInvalidPointerPair(void *p1, void *p2) {
 }
 // ----------------------- Mac-specific reports ----------------- {{{1
 
-void WarnMacFreeUnallocated(uptr addr, uptr zone_ptr, const char *zone_name,
-                            BufferedStackTrace *stack) {
-  // Just print a warning here.
-  Printf("free_common(%p) -- attempting to free unallocated memory.\n"
-             "AddressSanitizer is ignoring this error on Mac OS now.\n",
-             addr);
-  PrintZoneForPointer(addr, zone_ptr, zone_name);
-  stack->Print();
-  DescribeHeapAddress(addr, 1);
-}
-
 void ReportMacMzReallocUnknown(uptr addr, uptr zone_ptr, const char *zone_name,
                                BufferedStackTrace *stack) {
   ScopedInErrorReport in_report;
   Printf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
-             "This is an unrecoverable problem, exiting now.\n",
-             addr);
-  PrintZoneForPointer(addr, zone_ptr, zone_name);
-  stack->Print();
-  DescribeHeapAddress(addr, 1);
-}
-
-void ReportMacCfReallocUnknown(uptr addr, uptr zone_ptr, const char *zone_name,
-                               BufferedStackTrace *stack) {
-  ScopedInErrorReport in_report;
-  Printf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);

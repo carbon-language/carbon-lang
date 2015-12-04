@@ -58,10 +58,6 @@ using namespace __tsan;
 #define COMMON_MALLOC_REPORT_UNKNOWN_REALLOC(ptr, zone_ptr, zone_name) \
   (void)zone_name; \
   Report("mz_realloc(%p) -- attempting to realloc unallocated memory.\n", ptr);
-#define COMMON_MALLOC_IGNORE_INVALID_FREE false
-#define COMMON_MALLOC_REPORT_FREE_UNALLOCATED(ptr, zone_ptr, zone_name) \
-  (void)zone_name; \
-  Report("free_common(%p) -- attempting to free unallocated memory.\n", ptr);
 #define COMMON_MALLOC_NAMESPACE __tsan
 
 #include "sanitizer_common/sanitizer_malloc_mac.inc"

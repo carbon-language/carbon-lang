@@ -184,27 +184,17 @@ void *__sanitizer_mz_valloc(malloc_zone_t *zone, size_t size) {
   return p;
 }
 
-#define GET_ZONE_FOR_PTR(ptr) \
-  malloc_zone_t *zone_ptr = malloc_zone_from_ptr(ptr); \
-  const char *zone_name = (zone_ptr == 0) ? 0 : zone_ptr->zone_name
-
-void ALWAYS_INLINE free_common(void *context, void *ptr) {
-  if (!ptr) return;
-  // FIXME: need to retire this flag.
-  if (!COMMON_MALLOC_IGNORE_INVALID_FREE) {
-    COMMON_MALLOC_FREE(ptr);
-  } else {
-    GET_ZONE_FOR_PTR(ptr);
-    COMMON_MALLOC_REPORT_FREE_UNALLOCATED(ptr, zone_ptr, zone_name);
-  }
-}
-
 // TODO(glider): the allocation callbacks need to be refactored.
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_mz_free(malloc_zone_t *zone, void *ptr) {
-  free_common(zone, ptr);
+  if (!ptr) return;
+  COMMON_MALLOC_FREE(ptr);
 }
+
+#define GET_ZONE_FOR_PTR(ptr) \
+  malloc_zone_t *zone_ptr = malloc_zone_from_ptr(ptr); \
+  const char *zone_name = (zone_ptr == 0) ? 0 : zone_ptr->zone_name
 
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
