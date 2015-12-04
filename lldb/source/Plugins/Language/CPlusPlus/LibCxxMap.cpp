@@ -27,47 +27,6 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
-namespace lldb_private {
-    namespace formatters {
-        class LibcxxStdMapSyntheticFrontEnd : public SyntheticChildrenFrontEnd
-        {
-        public:
-            LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
-
-            ~LibcxxStdMapSyntheticFrontEnd() override = default;
-
-            size_t
-            CalculateNumChildren() override;
-            
-            lldb::ValueObjectSP
-            GetChildAtIndex(size_t idx) override;
-            
-            bool
-            Update() override;
-            
-            bool
-            MightHaveChildren() override;
-            
-            size_t
-            GetIndexOfChildWithName(const ConstString &name) override;
-            
-        private:
-            bool
-            GetDataType();
-            
-            void
-            GetValueOffset (const lldb::ValueObjectSP& node);
-            
-            ValueObject* m_tree;
-            ValueObject* m_root_node;
-            CompilerType m_element_type;
-            uint32_t m_skip_size;
-            size_t m_count;
-            std::map<size_t,lldb::ValueObjectSP> m_children;
-        };
-    } // namespace formatters
-} // namespace lldb_private
-
 class MapEntry
 {
 public:
@@ -180,7 +139,7 @@ public:
         }
         return m_entry.GetEntry();
     }
-
+    
 protected:
     void
     next ()
@@ -211,7 +170,7 @@ protected:
         }
         m_entry = MapEntry(m_entry.parent());
     }
-
+    
 private:
     MapEntry
     tree_min (MapEntry&& x)
@@ -235,7 +194,7 @@ private:
         }
         return x;
     }
-
+    
     bool
     is_left_child (const MapEntry& x)
     {
@@ -251,6 +210,48 @@ private:
     bool m_error;
 };
 
+namespace lldb_private {
+    namespace formatters {
+        class LibcxxStdMapSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~LibcxxStdMapSyntheticFrontEnd() override = default;
+
+            size_t
+            CalculateNumChildren() override;
+            
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
+            
+            bool
+            Update() override;
+            
+            bool
+            MightHaveChildren() override;
+            
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
+            
+        private:
+            bool
+            GetDataType();
+            
+            void
+            GetValueOffset (const lldb::ValueObjectSP& node);
+            
+            ValueObject* m_tree;
+            ValueObject* m_root_node;
+            CompilerType m_element_type;
+            uint32_t m_skip_size;
+            size_t m_count;
+            std::map<size_t, lldb::ValueObjectSP> m_children;
+            std::map<size_t, MapIterator> m_iterators;
+        };
+    } // namespace formatters
+} // namespace lldb_private
+
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_tree(NULL),
@@ -258,7 +259,8 @@ m_root_node(NULL),
 m_element_type(),
 m_skip_size(UINT32_MAX),
 m_count(UINT32_MAX),
-m_children()
+m_children(),
+m_iterators()
 {
     if (valobj_sp)
         Update();
@@ -328,10 +330,22 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
     auto cached = m_children.find(idx);
     if (cached != m_children.end())
         return cached->second;
-    
-    bool need_to_skip = (idx > 0);
+
     MapIterator iterator(m_root_node, CalculateNumChildren());
-    ValueObjectSP iterated_sp(iterator.advance(idx));
+    
+    const bool need_to_skip = (idx > 0);
+    size_t actual_advancde = idx;
+    if (need_to_skip)
+    {
+        auto cached_iterator = m_iterators.find(idx-1);
+        if (cached_iterator != m_iterators.end())
+        {
+            iterator = cached_iterator->second;
+            actual_advancde = 1;
+        }
+    }
+    
+    ValueObjectSP iterated_sp(iterator.advance(actual_advancde));
     if (iterated_sp.get() == NULL)
     {
         // this tree is garbage - stop
@@ -417,6 +431,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
         }
         potential_child_sp->SetName(ConstString(name.GetData()));
     }
+    m_iterators[idx] = iterator;
     return (m_children[idx] = potential_child_sp);
 }
 
@@ -426,6 +441,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::Update()
     m_count = UINT32_MAX;
     m_tree = m_root_node = NULL;
     m_children.clear();
+    m_iterators.clear();
     m_tree = m_backend.GetChildMemberWithName(ConstString("__tree_"), true).get();
     if (!m_tree)
         return false;
