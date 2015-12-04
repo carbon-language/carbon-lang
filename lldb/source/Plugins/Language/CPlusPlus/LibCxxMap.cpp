@@ -269,14 +269,17 @@ m_iterators()
 size_t
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::CalculateNumChildren ()
 {
+    static ConstString g___pair3_("__pair3_");
+    static ConstString g___first_("__first_");
+
     if (m_count != UINT32_MAX)
         return m_count;
     if (m_tree == NULL)
         return 0;
-    ValueObjectSP m_item(m_tree->GetChildMemberWithName(ConstString("__pair3_"), true));
+    ValueObjectSP m_item(m_tree->GetChildMemberWithName(g___pair3_, true));
     if (!m_item)
         return 0;
-    m_item = m_item->GetChildMemberWithName(ConstString("__first_"), true);
+    m_item = m_item->GetChildMemberWithName(g___first_, true);
     if (!m_item)
         return 0;
     m_count = m_item->GetValueAsUnsigned(0);
@@ -286,6 +289,8 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::CalculateNumChildren ()
 bool
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetDataType()
 {
+    static ConstString g___value_("__value_");
+    
     if (m_element_type.GetOpaqueQualType() && m_element_type.GetTypeSystem())
         return true;
     m_element_type.Clear();
@@ -294,7 +299,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetDataType()
     deref = m_root_node->Dereference(error);
     if (!deref || error.Fail())
         return false;
-    deref = deref->GetChildMemberWithName(ConstString("__value_"), true);
+    deref = deref->GetChildMemberWithName(g___value_, true);
     if (!deref)
         return false;
     m_element_type = deref->GetCompilerType();
@@ -320,6 +325,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
 {
     static ConstString g___cc("__cc");
     static ConstString g___nc("__nc");
+    static ConstString g___value_("__value_");
 
     
     if (idx >= CalculateNumChildren())
@@ -364,7 +370,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
                 return lldb::ValueObjectSP();
             }
             GetValueOffset(iterated_sp);
-            iterated_sp = iterated_sp->GetChildMemberWithName(ConstString("__value_"), true);
+            iterated_sp = iterated_sp->GetChildMemberWithName(g___value_, true);
             if (!iterated_sp)
             {
                 m_tree = NULL;
@@ -438,14 +444,16 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
 bool
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::Update()
 {
+    static ConstString g___tree_("__tree_");
+    static ConstString g___begin_node_("__begin_node_");
     m_count = UINT32_MAX;
     m_tree = m_root_node = NULL;
     m_children.clear();
     m_iterators.clear();
-    m_tree = m_backend.GetChildMemberWithName(ConstString("__tree_"), true).get();
+    m_tree = m_backend.GetChildMemberWithName(g___tree_, true).get();
     if (!m_tree)
         return false;
-    m_root_node = m_tree->GetChildMemberWithName(ConstString("__begin_node_"), true).get();
+    m_root_node = m_tree->GetChildMemberWithName(g___begin_node_, true).get();
     return false;
 }
 
