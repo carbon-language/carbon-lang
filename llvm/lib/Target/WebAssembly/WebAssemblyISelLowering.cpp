@@ -400,7 +400,7 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
         In.Used
             ? DAG.getNode(WebAssemblyISD::ARGUMENT, DL, In.VT,
                           DAG.getTargetConstant(InVals.size(), DL, MVT::i32))
-            : DAG.getNode(ISD::UNDEF, DL, In.VT));
+            : DAG.getUNDEF(In.VT));
 
     // Record the number and types of arguments.
     MF.getInfo<WebAssemblyFunctionInfo>()->addParam(In.VT);
