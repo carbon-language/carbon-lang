@@ -952,8 +952,6 @@ are listed below.
       ``-fsanitize=address``:
       :doc:`AddressSanitizer`, a memory error
       detector.
-   -  ``-fsanitize=integer``: Enables checks for undefined or
-      suspicious integer behavior.
    -  .. _opt_fsanitize_thread:
 
       ``-fsanitize=thread``: :doc:`ThreadSanitizer`, a data race detector.
@@ -964,14 +962,8 @@ are listed below.
       widespread use.
    -  .. _opt_fsanitize_undefined:
 
-      ``-fsanitize=undefined``: Fast and compatible undefined behavior
-      checker. Enables the undefined behavior checks that have small
-      runtime cost and no impact on address space layout or ABI. This
-      includes all of the checks listed below other than
-      ``unsigned-integer-overflow``.
-
-   -  ``-fsanitize=undefined-trap``: This is a deprecated alias for
-      ``-fsanitize=undefined``.
+      ``-fsanitize=undefined``: :doc:`UndefinedBehaviorSanitizer`,
+      a fast and compatible undefined behavior checker.
 
    -  ``-fsanitize=dataflow``: :doc:`DataFlowSanitizer`, a general data
       flow analysis.
@@ -980,14 +972,11 @@ are listed below.
    -  ``-fsanitize=safe-stack``: :doc:`safe stack <SafeStack>`
       protection against stack-based memory corruption errors.
 
-   The following more fine-grained checks are also available:
+   There are more fine-grained checks available: see
+   the :ref:`list <ubsan-checks>` of specific kinds of
+   undefined behavior that can be detected. Checks for :doc:`ControlFlowIntegrity`
+   are:
 
-   -  ``-fsanitize=alignment``: Use of a misaligned pointer or creation
-      of a misaligned reference.
-   -  ``-fsanitize=bool``: Load of a ``bool`` value which is neither
-      ``true`` nor ``false``.
-   -  ``-fsanitize=bounds``: Out of bounds array indexing, in cases
-      where the array bound can be statically determined.
    -  ``-fsanitize=cfi-cast-strict``: Enables :ref:`strict cast checks
       <cfi-strictness>`.
    -  ``-fsanitize=cfi-derived-cast``: Base-to-derived cast to the wrong
@@ -998,49 +987,6 @@ are listed below.
       the wrong dynamic type. Requires ``-flto``.
    -  ``-fsanitize=cfi-vcall``: Virtual call via an object whose vptr is of the
       wrong dynamic type. Requires ``-flto``.
-   -  ``-fsanitize=enum``: Load of a value of an enumerated type which
-      is not in the range of representable values for that enumerated
-      type.
-   -  ``-fsanitize=float-cast-overflow``: Conversion to, from, or
-      between floating-point types which would overflow the
-      destination.
-   -  ``-fsanitize=float-divide-by-zero``: Floating point division by
-      zero.
-   -  ``-fsanitize=function``: Indirect call of a function through a
-      function pointer of the wrong type (Linux, C++ and x86/x86_64 only).
-   -  ``-fsanitize=integer-divide-by-zero``: Integer division by zero.
-   -  ``-fsanitize=nonnull-attribute``: Passing null pointer as a function
-      parameter which is declared to never be null.
-   -  ``-fsanitize=null``: Use of a null pointer or creation of a null
-      reference.
-   -  ``-fsanitize=object-size``: An attempt to use bytes which the
-      optimizer can determine are not part of the object being
-      accessed. The sizes of objects are determined using
-      ``__builtin_object_size``, and consequently may be able to detect
-      more problems at higher optimization levels.
-   -  ``-fsanitize=return``: In C++, reaching the end of a
-      value-returning function without returning a value.
-   -  ``-fsanitize=returns-nonnull-attribute``: Returning null pointer
-      from a function which is declared to never return null.
-   -  ``-fsanitize=shift``: Shift operators where the amount shifted is
-      greater or equal to the promoted bit-width of the left hand side
-      or less than zero, or where the left hand side is negative. For a
-      signed left shift, also checks for signed overflow in C, and for
-      unsigned overflow in C++. You can use ``-fsanitize=shift-base`` or
-      ``-fsanitize=shift-exponent`` to check only left-hand side or
-      right-hand side of shift operation, respectively.
-   -  ``-fsanitize=signed-integer-overflow``: Signed integer overflow,
-      including all the checks added by ``-ftrapv``, and checking for
-      overflow in signed division (``INT_MIN / -1``).
-   -  ``-fsanitize=unreachable``: If control flow reaches
-      ``__builtin_unreachable``.
-   -  ``-fsanitize=unsigned-integer-overflow``: Unsigned integer
-      overflows.
-   -  ``-fsanitize=vla-bound``: A variable-length array whose bound
-      does not evaluate to a positive value.
-   -  ``-fsanitize=vptr``: Use of an object whose vptr indicates that
-      it is of the wrong dynamic type, or that its lifetime has not
-      begun or has ended. Incompatible with ``-fno-rtti``.
 
    You can turn off or modify checks for certain source files, functions
    or even variables by providing a special file:
@@ -1094,7 +1040,8 @@ are listed below.
    If the check is fatal, program will halt after the first error
    of this kind is detected and error report is printed.
 
-   By default, non-fatal checks are those enabled by UndefinedBehaviorSanitizer,
+   By default, non-fatal checks are those enabled by
+   :doc:`UndefinedBehaviorSanitizer`,
    except for ``-fsanitize=return`` and ``-fsanitize=unreachable``. Some
    sanitizers may not support recovery (or not support it by default
    e.g. :doc:`AddressSanitizer`), and always crash the program after the issue
