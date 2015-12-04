@@ -22,6 +22,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Printable.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
@@ -369,25 +370,14 @@ const char *SDNode::getIndexedModeName(ISD::MemIndexedMode AM) {
   }
 }
 
-namespace {
-class PrintNodeId {
-  const SDNode &Node;
-public:
-  explicit PrintNodeId(const SDNode &Node)
-      : Node(Node) {}
-  void print(raw_ostream &OS) const {
+static Printable PrintNodeId(const SDNode &Node) {
+  return Printable([&Node](raw_ostream &OS) {
 #ifndef NDEBUG
     OS << 't' << Node.PersistentId;
 #else
     OS << (const void*)&Node;
 #endif
-  }
-};
-
-static inline raw_ostream &operator<<(raw_ostream &OS, const PrintNodeId &P) {
-  P.print(OS);
-  return OS;
-}
+  });
 }
 
 void SDNode::dump() const { dump(nullptr); }
