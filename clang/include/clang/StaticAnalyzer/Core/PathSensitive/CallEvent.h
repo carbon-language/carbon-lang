@@ -521,9 +521,8 @@ public:
     const BlockDataRegion *BR = getBlockRegion();
     assert(BR && "Block converted from lambda must have a block region");
 
-    BlockDataRegion::referenced_vars_iterator I = BR->referenced_vars_begin(),
-    E = BR->referenced_vars_end();
-    assert(I != E);
+    auto I = BR->referenced_vars_begin();
+    assert(I != BR->referenced_vars_end());
 
     return I.getCapturedRegion();
   }
