@@ -114,9 +114,9 @@ extern "C" {
 // 
 //   __cxa_vec_new2(element_count, element_size, padding_size, constructor,
 //                  destructor, &::operator new[], &::operator delete[])
-void *__cxa_vec_new(size_t element_count, size_t element_size,
-                    size_t padding_size, void (*constructor)(void *),
-                    void (*destructor)(void *)) {
+_LIBCXXABI_FUNC_VIS void *
+__cxa_vec_new(size_t element_count, size_t element_size, size_t padding_size,
+              void (*constructor)(void *), void (*destructor)(void *)) {
     return __cxa_vec_new2 ( element_count, element_size, padding_size, 
         constructor, destructor, &::operator new [], &::operator delete [] );
 }
@@ -139,10 +139,10 @@ void *__cxa_vec_new(size_t element_count, size_t element_size,
 // not be called.
 // 
 // Neither alloc nor dealloc may be NULL.
-void *__cxa_vec_new2(size_t element_count, size_t element_size,
-                     size_t padding_size, void (*constructor)(void *),
-                     void (*destructor)(void *), void *(*alloc)(size_t),
-                     void (*dealloc)(void *)) {
+_LIBCXXABI_FUNC_VIS void *
+__cxa_vec_new2(size_t element_count, size_t element_size, size_t padding_size,
+               void (*constructor)(void *), void (*destructor)(void *),
+               void *(*alloc)(size_t), void (*dealloc)(void *)) {
     const size_t heap_size = element_count * element_size + padding_size;
     char * const heap_block = static_cast<char *> ( alloc ( heap_size ));
     char *vec_base = heap_block;
@@ -167,10 +167,10 @@ void *__cxa_vec_new2(size_t element_count, size_t element_size,
 
 // Same as __cxa_vec_new2 except that the deallocation function takes both
 // the object address and its size.
-void *__cxa_vec_new3(size_t element_count, size_t element_size,
-                     size_t padding_size, void (*constructor)(void *),
-                     void (*destructor)(void *), void *(*alloc)(size_t),
-                     void (*dealloc)(void *, size_t)) {
+_LIBCXXABI_FUNC_VIS void *
+__cxa_vec_new3(size_t element_count, size_t element_size, size_t padding_size,
+               void (*constructor)(void *), void (*destructor)(void *),
+               void *(*alloc)(size_t), void (*dealloc)(void *, size_t)) {
     const size_t heap_size = element_count * element_size + padding_size;
     char * const heap_block = static_cast<char *> ( alloc ( heap_size ));
     char *vec_base = heap_block;
@@ -203,9 +203,11 @@ void *__cxa_vec_new3(size_t element_count, size_t element_size,
 // pointers may be NULL. If either is NULL, no action is taken when it
 // would have been called.
 
-void __cxa_vec_cctor(void *dest_array, void *src_array, size_t element_count,
-                     size_t element_size, void (*constructor)(void *, void *),
-                     void (*destructor)(void *)) {
+_LIBCXXABI_FUNC_VIS void __cxa_vec_cctor(void *dest_array, void *src_array,
+                                         size_t element_count,
+                                         size_t element_size,
+                                         void (*constructor)(void *, void *),
+                                         void (*destructor)(void *)) {
     if ( NULL != constructor ) {
         size_t idx = 0;
         char *src_ptr  = static_cast<char *>(src_array);
@@ -227,9 +229,9 @@ void __cxa_vec_cctor(void *dest_array, void *src_array, size_t element_count,
 // exception. If the destructor throws an exception, call terminate(). The
 // constructor and/or destructor pointers may be NULL. If either is NULL,
 // no action is taken when it would have been called.
-void __cxa_vec_ctor(void *array_address, size_t element_count,
-                    size_t element_size, void (*constructor)(void *),
-                    void (*destructor)(void *)) {
+_LIBCXXABI_FUNC_VIS void
+__cxa_vec_ctor(void *array_address, size_t element_count, size_t element_size,
+               void (*constructor)(void *), void (*destructor)(void *)) {
     if ( NULL != constructor ) {
         size_t idx;
         char *ptr = static_cast <char *> ( array_address );
@@ -248,8 +250,10 @@ void __cxa_vec_ctor(void *array_address, size_t element_count,
 // elements if possible. If the destructor throws a second exception, call
 // terminate(). The destructor pointer may be NULL, in which case this
 // routine does nothing.
-void __cxa_vec_dtor(void *array_address, size_t element_count,
-                    size_t element_size, void (*destructor)(void *)) {
+_LIBCXXABI_FUNC_VIS void __cxa_vec_dtor(void *array_address,
+                                        size_t element_count,
+                                        size_t element_size,
+                                        void (*destructor)(void *)) {
     if ( NULL != destructor ) {
         char *ptr = static_cast <char *> (array_address);
         size_t idx = element_count;
@@ -272,8 +276,10 @@ void __cxa_vec_dtor(void *array_address, size_t element_count,
 // size of its elements, call the given destructor on each element. If the
 // destructor throws an exception, call terminate(). The destructor pointer
 // may be NULL, in which case this routine does nothing.
-void __cxa_vec_cleanup(void *array_address, size_t element_count,
-                       size_t element_size, void (*destructor)(void *)) {
+_LIBCXXABI_FUNC_VIS void __cxa_vec_cleanup(void *array_address,
+                                           size_t element_count,
+                                           size_t element_size,
+                                           void (*destructor)(void *)) {
     if ( NULL != destructor ) {
         char *ptr = static_cast <char *> (array_address);
         size_t idx = element_count;
@@ -308,8 +314,10 @@ void __cxa_vec_cleanup(void *array_address, size_t element_count,
 // function be called even if the destructor throws an exception derives
 // from the resolution to DR 353 to the C++ standard, which was adopted in
 // April, 2003.
-void __cxa_vec_delete(void *array_address, size_t element_size,
-                      size_t padding_size, void (*destructor)(void *)) {
+_LIBCXXABI_FUNC_VIS void __cxa_vec_delete(void *array_address,
+                                          size_t element_size,
+                                          size_t padding_size,
+                                          void (*destructor)(void *)) {
     __cxa_vec_delete2 ( array_address, element_size, padding_size,
                destructor, &::operator delete [] );
 }
@@ -318,9 +326,9 @@ void __cxa_vec_delete(void *array_address, size_t element_size,
 // deallocation instead of the default delete function. If dealloc throws
 // an exception, the result is undefined. The dealloc pointer may not be
 // NULL.
-void __cxa_vec_delete2(void *array_address, size_t element_size,
-                       size_t padding_size, void (*destructor)(void *),
-                       void (*dealloc)(void *)) {
+_LIBCXXABI_FUNC_VIS void
+__cxa_vec_delete2(void *array_address, size_t element_size, size_t padding_size,
+                  void (*destructor)(void *), void (*dealloc)(void *)) {
     if ( NULL != array_address ) {
         char *vec_base   = static_cast <char *> (array_address);
         char *heap_block = vec_base - padding_size;
@@ -338,9 +346,9 @@ void __cxa_vec_delete2(void *array_address, size_t element_size,
 // function takes both the object address and its size. If dealloc throws
 // an exception, the result is undefined. The dealloc pointer may not be
 // NULL.
-void __cxa_vec_delete3(void *array_address, size_t element_size,
-                       size_t padding_size, void (*destructor)(void *),
-                       void (*dealloc)(void *, size_t)) {
+_LIBCXXABI_FUNC_VIS void
+__cxa_vec_delete3(void *array_address, size_t element_size, size_t padding_size,
+                  void (*destructor)(void *), void (*dealloc)(void *, size_t)) {
     if ( NULL != array_address ) {
         char *vec_base   = static_cast <char *> (array_address);
         char *heap_block = vec_base - padding_size;

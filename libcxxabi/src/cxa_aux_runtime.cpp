@@ -16,14 +16,16 @@
 
 namespace __cxxabiv1 {
 extern "C" {
-LIBCXXABI_NORETURN
-void __cxa_bad_cast(void) { throw std::bad_cast(); }
+_LIBCXXABI_FUNC_VIS LIBCXXABI_NORETURN void __cxa_bad_cast(void) {
+  throw std::bad_cast();
+}
 
-LIBCXXABI_NORETURN
-void __cxa_bad_typeid(void) { throw std::bad_typeid(); }
+_LIBCXXABI_FUNC_VIS LIBCXXABI_NORETURN void __cxa_bad_typeid(void) {
+  throw std::bad_typeid();
+}
 
-LIBCXXABI_NORETURN
-void __cxa_throw_bad_array_new_length(void) {
+_LIBCXXABI_FUNC_VIS LIBCXXABI_NORETURN void
+__cxa_throw_bad_array_new_length(void) {
   throw std::bad_array_new_length();
 }
 } // extern "C"
