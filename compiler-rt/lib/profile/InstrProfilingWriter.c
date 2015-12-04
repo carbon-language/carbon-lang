@@ -59,11 +59,11 @@ LLVM_LIBRARY_VISIBILITY int llvmWriteProfDataImpl(
       {CountersBegin, sizeof(uint64_t), CountersSize},
       {NamesBegin, sizeof(char), NamesSize},
       {Zeroes, sizeof(char), Padding}};
-  if (Writer(IOVec, sizeof(IOVec) / sizeof(ProfDataIOVec), &WriterCtx))
+  if (Writer(IOVec, sizeof(IOVec) / sizeof(*IOVec), &WriterCtx))
     return -1;
   if (ValueDataBegin) {
-    ProfDataIOVec IOVec[1] = {{ValueDataBegin, sizeof(char), ValueDataSize}};
-    if (Writer(IOVec, 1, &WriterCtx))
+    ProfDataIOVec IOVec2[] = {{ValueDataBegin, sizeof(char), ValueDataSize}};
+    if (Writer(IOVec2, sizeof(IOVec2) / sizeof(*IOVec2), &WriterCtx))
       return -1;
   }
   return 0;
