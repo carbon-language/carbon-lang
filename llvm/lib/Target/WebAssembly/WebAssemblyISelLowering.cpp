@@ -289,6 +289,18 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   if (Ins.size() > 1)
     fail(DL, DAG, "WebAssembly doesn't support more than 1 returned value yet");
 
+  SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
+  for (const ISD::OutputArg &Out : Outs) {
+    assert(!Out.Flags.isByVal() && "byval is not valid for return values");
+    assert(!Out.Flags.isNest() && "nest is not valid for return values");
+    if (Out.Flags.isInAlloca())
+      fail(DL, DAG, "WebAssembly hasn't implemented inalloca results");
+    if (Out.Flags.isInConsecutiveRegs())
+      fail(DL, DAG, "WebAssembly hasn't implemented cons regs results");
+    if (Out.Flags.isInConsecutiveRegsLast())
+      fail(DL, DAG, "WebAssembly hasn't implemented cons regs last results");
+  }
+
   bool IsVarArg = CLI.IsVarArg;
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
@@ -309,8 +321,21 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   Ops.append(OutVals.begin(), OutVals.end());
 
   SmallVector<EVT, 8> Tys;
-  for (const auto &In : Ins)
+  for (const auto &In : Ins) {
+    if (In.Flags.isByVal())
+      fail(DL, DAG, "WebAssembly hasn't implemented byval arguments");
+    if (In.Flags.isInAlloca())
+      fail(DL, DAG, "WebAssembly hasn't implemented inalloca arguments");
+    if (In.Flags.isNest())
+      fail(DL, DAG, "WebAssembly hasn't implemented nest arguments");
+    if (In.Flags.isInConsecutiveRegs())
+      fail(DL, DAG, "WebAssembly hasn't implemented cons regs arguments");
+    if (In.Flags.isInConsecutiveRegsLast())
+      fail(DL, DAG, "WebAssembly hasn't implemented cons regs last arguments");
+    // Ignore In.getOrigAlign() because all our arguments are passed in
+    // registers.
     Tys.push_back(In.VT);
+  }
   Tys.push_back(MVT::Other);
   SDVTList TyList = DAG.getVTList(Tys);
   SDValue Res =
