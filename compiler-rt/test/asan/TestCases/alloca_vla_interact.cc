@@ -2,7 +2,6 @@
 // RUN: %run %t 2>&1
 //
 // REQUIRES: stable-runtime
-// XFAIL: powerpc64
 
 // This testcase checks correct interaction between VLAs and allocas.
 
