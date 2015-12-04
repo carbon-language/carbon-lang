@@ -302,10 +302,8 @@ void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
   WriteToFile(U, Path);
   Printf("artifact_prefix='%s'; Test unit written to %s\n",
          Options.ArtifactPrefix.c_str(), Path.c_str());
-  if (U.size() <= kMaxUnitSizeToPrint) {
-    Printf("Base64: ");
-    PrintFileAsBase64(Path);
-  }
+  if (U.size() <= kMaxUnitSizeToPrint)
+    Printf("Base64: %s\n", Base64(U).c_str());
 }
 
 void Fuzzer::SaveCorpus() {
