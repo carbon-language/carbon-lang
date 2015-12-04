@@ -260,9 +260,14 @@ static void fail(SDLoc DL, SelectionDAG &DAG, const char *msg) {
 // Test whether the given calling convention is supported.
 static bool CallingConvSupported(CallingConv::ID CallConv) {
   // We currently support the language-independent target-independent
-  // conventions.
+  // conventions. We don't yet have a way to annotate calls with properties like
+  // "cold", and we don't have any call-clobbered registers, so these are mostly
+  // all handled the same.
   return CallConv == CallingConv::C || CallConv == CallingConv::Fast ||
-         CallConv == CallingConv::Cold;
+         CallConv == CallingConv::Cold ||
+         CallConv == CallingConv::PreserveMost ||
+         CallConv == CallingConv::PreserveAll ||
+         CallConv == CallingConv::CXX_FAST_TLS;
 }
 
 SDValue
