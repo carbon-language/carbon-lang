@@ -10,7 +10,6 @@
 #include "cxxabi.h"
 
 namespace __cxxabiv1 {
-
 extern "C" {
 
 #ifdef HAVE___CXA_THREAD_ATEXIT_IMPL
@@ -24,5 +23,4 @@ int __cxa_thread_atexit(void (*dtor)(void *), void *obj,
 #endif // HAVE__CXA_THREAD_ATEXIT_IMPL
 
 } // extern "C"
-
 } // namespace __cxxabiv1
