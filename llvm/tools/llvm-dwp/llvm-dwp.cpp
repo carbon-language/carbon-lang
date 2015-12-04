@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnitIndex.h"
+#include "llvm/Support/MathExtras.h"
 #include <memory>
 #include <list>
 #include <unordered_set>
@@ -222,20 +223,30 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     if (C)
       ++Columns;
 
+  std::vector<unsigned> Buckets(NextPowerOf2(3 * IndexEntries.size() / 2));
+  uint64_t Mask = Buckets.size() - 1;
+  for (size_t i = 0; i != IndexEntries.size(); ++i) {
+    auto S = IndexEntries[i].Signature;
+    auto H = S & Mask;
+    while (Buckets[H])
+      H += ((S >> 32) & Mask) | 1;
+    Buckets[H] = i + 1;
+  }
+
   Out.SwitchSection(MCOFI.getDwarfCUIndexSection());
   Out.EmitIntValue(2, 4);                   // Version
   Out.EmitIntValue(Columns, 4);             // Columns
   Out.EmitIntValue(IndexEntries.size(), 4); // Num Units
   // FIXME: This is not the right number of buckets for a real hash.
-  Out.EmitIntValue(IndexEntries.size(), 4); // Num Buckets
+  Out.EmitIntValue(Buckets.size(), 4); // Num Buckets
 
   // Write the signatures.
-  for (const auto &E : IndexEntries)
-    Out.EmitIntValue(E.Signature, 8);
+  for (const auto &I : Buckets)
+    Out.EmitIntValue(I ? IndexEntries[I - 1].Signature : 0, 8);
 
   // Write the indexes.
-  for (size_t i = 0; i != IndexEntries.size(); ++i)
-    Out.EmitIntValue(i + 1, 4);
+  for (const auto &I : Buckets)
+    Out.EmitIntValue(I, 4);
 
   // Write the column headers (which sections will appear in the table)
   for (size_t i = 0; i != array_lengthof(ContributionOffsets); ++i)
