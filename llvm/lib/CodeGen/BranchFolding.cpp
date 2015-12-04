@@ -371,7 +371,7 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   }
   // Back past possible debugging pseudos at beginning of block.  This matters
   // when one block differs from the other only by whether debugging pseudos
-  // are present at the beginning.  (This way, the various checks later for
+  // are present at the beginning. (This way, the various checks later for
   // I1==MBB1->begin() work as expected.)
   if (I1 == MBB1->begin() && I2 != MBB2->begin()) {
     --I2;
