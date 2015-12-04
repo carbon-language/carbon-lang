@@ -258,12 +258,10 @@ static void fail(SDLoc DL, SelectionDAG &DAG, const char *msg) {
 }
 
 // Test whether the given calling convention is supported.
-static bool
-CallingConvSupported(CallingConv::ID CallConv) {
+static bool CallingConvSupported(CallingConv::ID CallConv) {
   // We currently support the language-independent target-independent
   // conventions.
-  return CallConv == CallingConv::C ||
-         CallConv == CallingConv::Fast ||
+  return CallConv == CallingConv::C || CallConv == CallingConv::Fast ||
          CallConv == CallingConv::Cold;
 }
 
