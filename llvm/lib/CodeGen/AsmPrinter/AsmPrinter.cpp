@@ -1187,6 +1187,11 @@ bool AsmPrinter::doFinalization(Module &M) {
     else
       assert(Alias.hasLocalLinkage() && "Invalid alias linkage");
 
+    // Set the symbol type to function if the alias has a function type.
+    // This affects codegen when the aliasee is not a function.
+    if (Alias.getType()->getPointerElementType()->isFunctionTy())
+      OutStreamer->EmitSymbolAttribute(Name, MCSA_ELF_TypeFunction);
+
     EmitVisibility(Name, Alias.getVisibility());
 
     // Emit the directives as assignments aka .set:
