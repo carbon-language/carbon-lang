@@ -4385,7 +4385,32 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   int Reg = FromEFLAGS ? DestReg : SrcReg;
   bool is32 = X86::GR32RegClass.contains(Reg);
   bool is64 = X86::GR64RegClass.contains(Reg);
+
   if ((FromEFLAGS || ToEFLAGS) && (is32 || is64)) {
+    int Mov = is64 ? X86::MOV64rr : X86::MOV32rr;
+    int Push = is64 ? X86::PUSH64r : X86::PUSH32r;
+    int PushF = is64 ? X86::PUSHF64 : X86::PUSHF32;
+    int Pop = is64 ? X86::POP64r : X86::POP32r;
+    int PopF = is64 ? X86::POPF64 : X86::POPF32;
+    int AX = is64 ? X86::RAX : X86::EAX;
+
+    if (!Subtarget.hasLAHFSAHF()) {
+      assert(is64 && "Not having LAHF/SAHF only happens on 64-bit.");
+      // Moving EFLAGS to / from another register requires a push and a pop.
+      // Notice that we have to adjust the stack if we don't want to clobber the
+      // first frame index. See X86FrameLowering.cpp - clobbersTheStack.
+      if (FromEFLAGS) {
+        BuildMI(MBB, MI, DL, get(PushF));
+        BuildMI(MBB, MI, DL, get(Pop), DestReg);
+      }
+      if (ToEFLAGS) {
+        BuildMI(MBB, MI, DL, get(Push))
+            .addReg(SrcReg, getKillRegState(KillSrc));
+        BuildMI(MBB, MI, DL, get(PopF));
+      }
+      return;
+    }
+
     // The flags need to be saved, but saving EFLAGS with PUSHF/POPF is
     // inefficient. Instead:
     //   - Save the overflow flag OF into AL using SETO, and restore it using a
@@ -4407,10 +4432,6 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     // Notice that we have to adjust the stack if we don't want to clobber the
     // first frame index. See X86FrameLowering.cpp - clobbersTheStack.
 
-    int Mov = is64 ? X86::MOV64rr : X86::MOV32rr;
-    int Push = is64 ? X86::PUSH64r : X86::PUSH32r;
-    int Pop = is64 ? X86::POP64r : X86::POP32r;
-    int AX = is64 ? X86::RAX : X86::EAX;
 
     bool AXDead = (Reg == AX);
     // FIXME: The above could figure out that AX is dead in more cases with:
