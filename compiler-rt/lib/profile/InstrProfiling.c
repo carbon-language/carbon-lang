@@ -23,6 +23,22 @@
     return 0;                                                                  \
   }
 
+#ifdef _MIPS_ARCH
+LLVM_LIBRARY_VISIBILITY
+uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
+  void *R = *Ptr;
+  if (R == OldV) {
+    *Ptr = NewV;
+    return 1;
+  }
+  return 0;
+}
+#define BOOL_CMPXCHG(Ptr, OldV, NewV) BoolCmpXchg((void **)Ptr, OldV, NewV)
+#else
+#define BOOL_CMPXCHG(Ptr, OldV, NewV)                                          \
+  __sync_bool_compare_and_swap(Ptr, OldV, NewV)
+#endif
+
 LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
   return sizeof(void *) == sizeof(uint64_t) ? (INSTR_PROF_RAW_MAGIC_64)
                                             : (INSTR_PROF_RAW_MAGIC_32);
@@ -106,7 +122,7 @@ static int allocateValueProfileCounters(__llvm_profile_data *Data) {
       (ValueProfNode **)calloc(NumVSites, sizeof(ValueProfNode *));
   if (!Mem)
     return 0;
-  if (!__sync_bool_compare_and_swap(&Data->Values, 0, Mem)) {
+  if (!BOOL_CMPXCHG(&Data->Values, 0, Mem)) {
     free(Mem);
     return 0;
   }
@@ -171,10 +187,9 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
 
   uint32_t Success = 0;
   if (!ValueCounters[CounterIndex])
-    Success = __sync_bool_compare_and_swap(&ValueCounters[CounterIndex], 0,
-                                           CurrentVNode);
+    Success = BOOL_CMPXCHG(&ValueCounters[CounterIndex], 0, CurrentVNode);
   else if (PrevVNode && !PrevVNode->Next)
-    Success = __sync_bool_compare_and_swap(&(PrevVNode->Next), 0, CurrentVNode);
+    Success = BOOL_CMPXCHG(&(PrevVNode->Next), 0, CurrentVNode);
 
   if (!Success) {
     free(CurrentVNode);
