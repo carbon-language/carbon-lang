@@ -222,8 +222,13 @@ elif [[ -f "$HERE/$ASAN_RT" ]]; then
     ASAN_RT_PATH="$HERE"
 elif [[ $(basename "$HERE") == "bin" ]]; then
     # We could be in the toolchain's base directory.
-    # Consider ../lib, ../lib/asan, ../lib/linux and ../lib/clang/$VERSION/lib/linux.
-    P=$(ls "$HERE"/../lib/"$ASAN_RT" "$HERE"/../lib/asan/"$ASAN_RT" "$HERE"/../lib/linux/"$ASAN_RT" "$HERE"/../lib/clang/*/lib/linux/"$ASAN_RT" 2>/dev/null | sort | tail -1)
+    # Consider ../lib, ../lib/asan, ../lib/linux,
+    # ../lib/clang/$VERSION/lib/linux, and ../lib64/clang/$VERSION/lib/linux.
+    P=$(ls "$HERE"/../lib/"$ASAN_RT" \
+           "$HERE"/../lib/asan/"$ASAN_RT" \
+           "$HERE"/../lib/linux/"$ASAN_RT" \
+           "$HERE"/../lib/clang/*/lib/linux/"$ASAN_RT" \
+           "$HERE"/../lib64/clang/*/lib/linux/"$ASAN_RT" 2>/dev/null | sort | tail -1)
     if [[ -n "$P" ]]; then
         ASAN_RT_PATH="$(dirname "$P")"
     fi
