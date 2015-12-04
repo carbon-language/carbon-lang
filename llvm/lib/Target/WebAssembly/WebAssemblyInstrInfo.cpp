@@ -28,7 +28,9 @@ using namespace llvm;
 #include "WebAssemblyGenInstrInfo.inc"
 
 WebAssemblyInstrInfo::WebAssemblyInstrInfo(const WebAssemblySubtarget &STI)
-    : RI(STI.getTargetTriple()) {}
+    : WebAssemblyGenInstrInfo(WebAssembly::ADJCALLSTACKDOWN,
+                              WebAssembly::ADJCALLSTACKUP),
+      RI(STI.getTargetTriple()) {}
 
 void WebAssemblyInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I,

@@ -204,6 +204,10 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
           continue;
         unsigned VReg = MO.getReg();
 
+        // Don't stackify physregs like SP or FP.
+        if (!TargetRegisterInfo::isVirtualRegister(VReg))
+          continue;
+
         if (MFI.isVRegStackified(VReg)) {
           if (MO.isDef())
             Stack.push_back(VReg);
