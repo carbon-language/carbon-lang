@@ -5,6 +5,8 @@ set(LLVM_LINK_COMPONENTS
   AllTargetsInfos
   DebugInfoDWARF
   DebugInfoPDB
+  MC
+  MCDisassembler
   Object
   Support
   Symbolize
