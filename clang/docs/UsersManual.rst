@@ -958,8 +958,8 @@ are listed below.
    -  .. _opt_fsanitize_memory:
 
       ``-fsanitize=memory``: :doc:`MemorySanitizer`,
-      an *experimental* detector of uninitialized reads. Not ready for
-      widespread use.
+      a detector of uninitialized reads. Requires instrumentation of all
+      program code.
    -  .. _opt_fsanitize_undefined:
 
       ``-fsanitize=undefined``: :doc:`UndefinedBehaviorSanitizer`,
@@ -985,31 +985,6 @@ are listed below.
       :doc:`SanitizerSpecialCaseList` for file format description.
    -  ``-fno-sanitize-blacklist``: don't use blacklist file, if it was
       specified earlier in the command line.
-
-   Extra features of MemorySanitizer (require explicit
-   ``-fsanitize=memory``):
-
-   -  ``-fsanitize-memory-track-origins[=level]``: Enables origin tracking in
-      MemorySanitizer. Adds a second section to MemorySanitizer
-      reports pointing to the heap or stack allocation the
-      uninitialized bits came from. Slows down execution by additional
-      1.5x-2x.
-
-      Possible values for level are 0 (off), 1, 2 (default). Level 2
-      adds more sections to MemorySanitizer reports describing the
-      order of memory stores the uninitialized value went
-      through. This mode may use extra memory in programs that copy
-      uninitialized memory a lot.
-   -  ``-fsanitize-memory-use-after-dtor``: Enables use-after-destruction
-      detection in MemorySanitizer. After invocation of the destructor,
-      the object is considered no longer readable. Facilitates the
-      detection of use-after-destroy bugs.
-
-      Setting the MSAN_OPTIONS=poison_in_dtor=1 enables the poisoning of
-      memory at runtime. Any subsequent access to the destroyed object
-      fails at runtime. This feature is still experimental, but this
-      environment variable must be set to 1 in order for the above flag
-      to have any effect.
 
    The ``-fsanitize=`` argument must also be provided when linking, in
    order to link to the appropriate runtime library. When using
