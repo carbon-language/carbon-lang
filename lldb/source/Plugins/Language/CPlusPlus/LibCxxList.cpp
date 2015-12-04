@@ -31,6 +31,9 @@ namespace {
 
     class ListEntry
     {
+    private:
+        static const std::initializer_list<size_t> __prev_idx;
+        static const std::initializer_list<size_t> __next_idx;
     public:
         ListEntry() = default;
         ListEntry (ValueObjectSP entry_sp) : m_entry_sp(entry_sp) {}
@@ -42,7 +45,7 @@ namespace {
         {
             if (!m_entry_sp)
                 return ListEntry();
-            return ListEntry(m_entry_sp->GetChildMemberWithName(ConstString("__next_"), true));
+            return ListEntry(m_entry_sp->GetChildAtIndexPath({0,1}));
         }
 
         ListEntry
@@ -50,7 +53,7 @@ namespace {
         {
             if (!m_entry_sp)
                 return ListEntry();
-            return ListEntry(m_entry_sp->GetChildMemberWithName(ConstString("__prev_"), true));
+            return ListEntry(m_entry_sp->GetChildAtIndexPath({0,0}));
         }
 
         uint64_t
@@ -321,7 +324,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::GetChildAtIndex (size_
     ValueObjectSP current_sp(current.advance(idx));
     if (!current_sp)
         return lldb::ValueObjectSP();
-    current_sp = current_sp->GetChildMemberWithName(ConstString("__value_"), true);
+    current_sp = current_sp->GetChildAtIndex(1, true); // get the __value_ child
     if (!current_sp)
         return lldb::ValueObjectSP();
     // we need to copy current_sp into a new object otherwise we will end up with all items named __value_
