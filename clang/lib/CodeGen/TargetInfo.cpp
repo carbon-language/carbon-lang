@@ -162,6 +162,23 @@ void ABIArgInfo::dump() const {
   OS << ")\n";
 }
 
+// Dynamically round a pointer up to a multiple of the given alignment.
+static llvm::Value *emitRoundPointerUpToAlignment(CodeGenFunction &CGF,
+                                                  llvm::Value *Ptr,
+                                                  CharUnits Align) {
+  llvm::Value *PtrAsInt = Ptr;
+  // OverflowArgArea = (OverflowArgArea + Align - 1) & -Align;
+  PtrAsInt = CGF.Builder.CreatePtrToInt(PtrAsInt, CGF.IntPtrTy);
+  PtrAsInt = CGF.Builder.CreateAdd(PtrAsInt,
+        llvm::ConstantInt::get(CGF.IntPtrTy, Align.getQuantity() - 1));
+  PtrAsInt = CGF.Builder.CreateAnd(PtrAsInt,
+           llvm::ConstantInt::get(CGF.IntPtrTy, -Align.getQuantity()));
+  PtrAsInt = CGF.Builder.CreateIntToPtr(PtrAsInt,
+                                        Ptr->getType(),
+                                        Ptr->getName() + ".aligned");
+  return PtrAsInt;
+}
+
 /// Emit va_arg for a platform using the common void* representation,
 /// where arguments are simply emitted in an array of slots on the stack.
 ///
@@ -193,17 +210,10 @@ static Address emitVoidPtrDirectVAArg(CodeGenFunction &CGF,
   // If the CC aligns values higher than the slot size, do so if needed.
   Address Addr = Address::invalid();
   if (AllowHigherAlign && DirectAlign > SlotSize) {
-    llvm::Value *PtrAsInt = Ptr;
-    PtrAsInt = CGF.Builder.CreatePtrToInt(PtrAsInt, CGF.IntPtrTy);
-    PtrAsInt = CGF.Builder.CreateAdd(PtrAsInt,
-          llvm::ConstantInt::get(CGF.IntPtrTy, DirectAlign.getQuantity() - 1));
-    PtrAsInt = CGF.Builder.CreateAnd(PtrAsInt,
-             llvm::ConstantInt::get(CGF.IntPtrTy, -DirectAlign.getQuantity()));
-    Addr = Address(CGF.Builder.CreateIntToPtr(PtrAsInt, Ptr->getType(),
-                                              "argp.cur.aligned"),
-                   DirectAlign);
+    Addr = Address(emitRoundPointerUpToAlignment(CGF, Ptr, DirectAlign),
+                                                 DirectAlign);
   } else {
-    Addr = Address(Ptr, SlotSize);
+    Addr = Address(Ptr, SlotSize); 
   }
 
   // Advance the pointer past the argument, then store that back.
@@ -3072,19 +3082,10 @@ static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
   // byte boundary if alignment needed by type exceeds 8 byte boundary.
   // It isn't stated explicitly in the standard, but in practice we use
   // alignment greater than 16 where necessary.
-  uint64_t Align = CGF.getContext().getTypeAlignInChars(Ty).getQuantity();
-  if (Align > 8) {
-    // overflow_arg_area = (overflow_arg_area + align - 1) & -align;
-    llvm::Value *Offset =
-      llvm::ConstantInt::get(CGF.Int64Ty, Align - 1);
-    overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset);
-    llvm::Value *AsInt = CGF.Builder.CreatePtrToInt(overflow_arg_area,
-                                                    CGF.Int64Ty);
-    llvm::Value *Mask = llvm::ConstantInt::get(CGF.Int64Ty, -(uint64_t)Align);
-    overflow_arg_area =
-      CGF.Builder.CreateIntToPtr(CGF.Builder.CreateAnd(AsInt, Mask),
-                                 overflow_arg_area->getType(),
-                                 "overflow_arg_area.align");
+  CharUnits Align = CGF.getContext().getTypeAlignInChars(Ty);
+  if (Align > CharUnits::fromQuantity(8)) {
+    overflow_arg_area = emitRoundPointerUpToAlignment(CGF, overflow_arg_area,
+                                                      Align);
   }
 
   // AMD64-ABI 3.5.7p5: Step 8. Fetch type from l->overflow_arg_area.
@@ -3106,7 +3107,7 @@ static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
   CGF.Builder.CreateStore(overflow_arg_area, overflow_arg_area_p);
 
   // AMD64-ABI 3.5.7p5: Step 11. Return the fetched type.
-  return Address(Res, CharUnits::fromQuantity(Align));
+  return Address(Res, Align);
 }
 
 Address X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
@@ -3541,11 +3542,16 @@ Address PPC32_SVR4_ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAList,
 
     Address OverflowAreaAddr =
       Builder.CreateStructGEP(VAList, 3, CharUnits::fromQuantity(4));
-    Address OverflowArea(Builder.CreateLoad(OverflowAreaAddr),
+    Address OverflowArea(Builder.CreateLoad(OverflowAreaAddr, "argp.cur"),
                          OverflowAreaAlign);
-
-    // The current address is the address of the varargs element.
-    // FIXME: do we not need to round up to alignment?
+    // Round up address of argument to alignment
+    CharUnits Align = CGF.getContext().getTypeAlignInChars(Ty);
+    if (Align > OverflowAreaAlign) {
+      llvm::Value *Ptr = OverflowArea.getPointer();
+      OverflowArea = Address(emitRoundPointerUpToAlignment(CGF, Ptr, Align),
+                                                           Align);
+    }
+ 
     MemAddr = Builder.CreateElementBitCast(OverflowArea, DirectTy);
 
     // Increase the overflow area.
