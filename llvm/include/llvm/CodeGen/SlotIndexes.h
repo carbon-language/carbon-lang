@@ -376,6 +376,11 @@ namespace llvm {
       initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     }
 
+    ~SlotIndexes() {
+      // The indexList's nodes are all allocated in the BumpPtrAllocator.
+      indexList.clearAndLeakNodesUnsafely();
+    }
+
     void getAnalysisUsage(AnalysisUsage &au) const override;
     void releaseMemory() override;
 
