@@ -1,7 +1,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARF/DWARFUnitIndex.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -11,17 +12,16 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/DataExtractor.h"
-#include "llvm/Support/Options.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Options.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/DebugInfo/DWARF/DWARFUnitIndex.h"
-#include "llvm/Support/MathExtras.h"
-#include <memory>
 #include <list>
+#include <memory>
 #include <unordered_set>
 
 using namespace llvm;
@@ -32,8 +32,10 @@ OptionCategory DwpCategory("Specific Options");
 static list<std::string> InputFiles(Positional, OneOrMore,
                                     desc("<input files>"), cat(DwpCategory));
 
-static opt<std::string> OutputFilename(Required, "o", desc("Specify the output file."),
-                                      value_desc("filename"), cat(DwpCategory));
+static opt<std::string> OutputFilename(Required, "o",
+                                       desc("Specify the output file."),
+                                       value_desc("filename"),
+                                       cat(DwpCategory));
 
 static int error(const Twine &Error, const Twine &Context) {
   errs() << Twine("while processing ") + Context + ":\n";
@@ -191,7 +193,7 @@ static void writeIndex(MCStreamer &Out, MCSection *Section,
   Out.EmitIntValue(2, 4);                   // Version
   Out.EmitIntValue(Columns, 4);             // Columns
   Out.EmitIntValue(IndexEntries.size(), 4); // Num Units
-  Out.EmitIntValue(Buckets.size(), 4); // Num Buckets
+  Out.EmitIntValue(Buckets.size(), 4);      // Num Buckets
 
   // Write the signatures.
   for (const auto &I : Buckets)
@@ -325,7 +327,7 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   return std::error_code();
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 
   ParseCommandLineOptions(argc, argv, "merge split dwarf (.dwo) files");
 
@@ -357,8 +359,7 @@ int main(int argc, char** argv) {
 
   MCObjectFileInfo MOFI;
   MCContext MC(MAI.get(), MRI.get(), &MOFI);
-  MOFI.InitMCObjectFileInfo(TheTriple, Reloc::Default, CodeModel::Default,
-                             MC);
+  MOFI.InitMCObjectFileInfo(TheTriple, Reloc::Default, CodeModel::Default, MC);
 
   auto MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, "");
   if (!MAB)
