@@ -202,7 +202,7 @@ private:
 					  sys::Memory::MF_READ |
 					  sys::Memory::MF_EXEC);
     assert(!EC && "Failed to mprotect trampoline block");
-    
+
     TrampolineBlocks.push_back(std::move(TrampolineBlock));
   }
 
@@ -404,7 +404,7 @@ void moveGlobalVariableInitializer(GlobalVariable &OrigGV,
                                    ValueMaterializer *Materializer = nullptr,
                                    GlobalVariable *NewGV = nullptr);
 
-/// @brief Clone 
+/// @brief Clone
 GlobalAlias* cloneGlobalAliasDecl(Module &Dst, const GlobalAlias &OrigA,
                                   ValueToValueMapTy &VMap);
 
