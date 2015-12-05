@@ -68,7 +68,6 @@ def WebAssemblywrapper  : SDNode<"WebAssemblyISD::Wrapper",
 
 def bb_op : Operand<OtherVT>;
 def tjumptable_op : Operand<iPTR>;
-def global : Operand<iPTR>;
 
 //===----------------------------------------------------------------------===//
 // WebAssembly Instruction Format Definitions.
