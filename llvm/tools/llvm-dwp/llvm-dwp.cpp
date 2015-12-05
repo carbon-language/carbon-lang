@@ -310,11 +310,13 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       return Err;
   }
 
-  // Lie about there being no info contributions so the TU index only includes
-  // the type unit contribution
-  ContributionOffsets[0] = 0;
-  writeIndex(Out, MCOFI.getDwarfTUIndexSection(), ContributionOffsets,
-             TypeIndexEntries);
+  if (!TypeIndexEntries.empty()) {
+    // Lie about there being no info contributions so the TU index only includes
+    // the type unit contribution
+    ContributionOffsets[0] = 0;
+    writeIndex(Out, MCOFI.getDwarfTUIndexSection(), ContributionOffsets,
+               TypeIndexEntries);
+  }
 
   // Lie about the type contribution
   ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO] = 0;
