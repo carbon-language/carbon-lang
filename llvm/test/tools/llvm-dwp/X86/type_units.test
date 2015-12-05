@@ -1,4 +1,4 @@
-RUN: llvm-dwp %p/../Inputs/simple/a.dwo %p/../Inputs/simple/b.dwo -o %t
+RUN: llvm-dwp %p/../Inputs/type_units/a.dwo %p/../Inputs/type_units/b.dwo -o %t
 RUN: llvm-dwarfdump %t | FileCheck %s
 
 FIXME: For some reason, piping straight from llvm-dwp to llvm-dwarfdump doesn't behave well - looks like dwarfdump is reading/closes before dwp has finished.
