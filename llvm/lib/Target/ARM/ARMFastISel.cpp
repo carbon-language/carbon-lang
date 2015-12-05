@@ -3036,7 +3036,7 @@ bool ARMFastISel::fastLowerArguments() {
   }
 
 
-  static const uint16_t GPRArgRegs[] = {
+  static const MCPhysReg GPRArgRegs[] = {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
   };
 

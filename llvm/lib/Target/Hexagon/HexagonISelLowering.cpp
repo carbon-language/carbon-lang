@@ -316,18 +316,18 @@ static bool CC_HexagonVector(unsigned ValNo, MVT ValVT,
                              MVT LocVT, CCValAssign::LocInfo LocInfo,
                              ISD::ArgFlagsTy ArgFlags, CCState &State) {
 
-    static const uint16_t VecLstS[] = { Hexagon::V0, Hexagon::V1,
-                                        Hexagon::V2, Hexagon::V3,
-                                        Hexagon::V4, Hexagon::V5,
-                                        Hexagon::V6, Hexagon::V7,
-                                        Hexagon::V8, Hexagon::V9,
-                                        Hexagon::V10, Hexagon::V11,
-                                        Hexagon::V12, Hexagon::V13,
-                                        Hexagon::V14, Hexagon::V15};
-    static const uint16_t VecLstD[] = { Hexagon::W0, Hexagon::W1,
-                                        Hexagon::W2, Hexagon::W3,
-                                        Hexagon::W4, Hexagon::W5,
-                                        Hexagon::W6, Hexagon::W7};
+    static const MCPhysReg VecLstS[] = { Hexagon::V0, Hexagon::V1,
+                                         Hexagon::V2, Hexagon::V3,
+                                         Hexagon::V4, Hexagon::V5,
+                                         Hexagon::V6, Hexagon::V7,
+                                         Hexagon::V8, Hexagon::V9,
+                                         Hexagon::V10, Hexagon::V11,
+                                         Hexagon::V12, Hexagon::V13,
+                                         Hexagon::V14, Hexagon::V15};
+    static const MCPhysReg VecLstD[] = { Hexagon::W0, Hexagon::W1,
+                                         Hexagon::W2, Hexagon::W3,
+                                         Hexagon::W4, Hexagon::W5,
+                                         Hexagon::W6, Hexagon::W7};
   auto &MF = State.getMachineFunction();
   auto &HST = MF.getSubtarget<HexagonSubtarget>();
   bool UseHVX = HST.useHVXOps();
