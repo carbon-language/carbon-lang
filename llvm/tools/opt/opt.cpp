@@ -614,22 +614,26 @@ int main(int argc, char **argv) {
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
 
-  // Now that we have all of the passes ready, run them.
-  Passes.run(*M);
-
   // If requested, run all passes again with the same pass manager to catch
   // bugs caused by persistent state in the passes
   if (RunTwice) {
+      std::unique_ptr<Module> M2(CloneModule(M.get()));
+      Passes.run(*M2);
+      CompileTwiceBuffer = Buffer;
+      Buffer.clear();
+  }
+
+  // Now that we have all of the passes ready, run them.
+  Passes.run(*M);
+
+  // Compare the two outputs and make sure they're the same
+  if (RunTwice) {
     assert(Out);
-    CompileTwiceBuffer = Buffer;
-    Buffer.clear();
-    std::unique_ptr<Module> M2(CloneModule(M.get()));
-    Passes.run(*M2);
     if (Buffer.size() != CompileTwiceBuffer.size() ||
         (memcmp(Buffer.data(), CompileTwiceBuffer.data(), Buffer.size()) !=
          0)) {
       errs() << "Running the pass manager twice changed the output.\n"
-                "Writing the result of the second run to the specified output."
+                "Writing the result of the second run to the specified output.\n"
                 "To generate the one-run comparison binary, just run without\n"
                 "the compile-twice option\n";
       Out->os() << BOS->str();
