@@ -130,6 +130,90 @@ static uint64_t getCUSignature(StringRef Abbrev, StringRef Info) {
   return InfoData.getU64(&Offset);
 }
 
+struct UnitIndexEntry {
+  uint64_t Signature;
+  DWARFUnitIndex::Entry::SectionContribution Contributions[8];
+};
+
+static void addAllTypes(std::vector<UnitIndexEntry> &TypeIndexEntries,
+                        uint32_t OutTypesOffset, StringRef Types,
+                        const UnitIndexEntry &CUEntry) {
+  uint32_t Offset = 0;
+  DataExtractor Data(Types, true, 0);
+  while (Data.isValidOffset(Offset)) {
+    TypeIndexEntries.push_back(CUEntry);
+    auto &Entry = TypeIndexEntries.back();
+    // Zero out the debug_info contribution
+    Entry.Contributions[0] = {};
+    auto &C = Entry.Contributions[DW_SECT_TYPES - DW_SECT_INFO];
+    C.Offset = OutTypesOffset + Offset;
+    auto PrevOffset = Offset;
+    // Length of the unit, including the 4 byte length field.
+    C.Length = Data.getU32(&Offset) + 4;
+
+    Data.getU16(&Offset); // Version
+    Data.getU32(&Offset); // Abbrev offset
+    Data.getU8(&Offset);  // Address size
+    Entry.Signature = Data.getU64(&Offset);
+    Offset = PrevOffset + C.Length;
+  }
+}
+
+static void
+writeIndexTable(MCStreamer &Out, ArrayRef<unsigned> ContributionOffsets,
+                ArrayRef<UnitIndexEntry> IndexEntries,
+                uint32_t DWARFUnitIndex::Entry::SectionContribution::*Field) {
+  for (const auto &E : IndexEntries)
+    for (size_t i = 0; i != array_lengthof(E.Contributions); ++i)
+      if (ContributionOffsets[i])
+        Out.EmitIntValue(E.Contributions[i].*Field, 4);
+}
+
+static void writeIndex(MCStreamer &Out, MCSection *Section,
+                       ArrayRef<unsigned> ContributionOffsets,
+                       ArrayRef<UnitIndexEntry> IndexEntries) {
+  unsigned Columns = 0;
+  for (auto &C : ContributionOffsets)
+    if (C)
+      ++Columns;
+
+  std::vector<unsigned> Buckets(NextPowerOf2(3 * IndexEntries.size() / 2));
+  uint64_t Mask = Buckets.size() - 1;
+  for (size_t i = 0; i != IndexEntries.size(); ++i) {
+    auto S = IndexEntries[i].Signature;
+    auto H = S & Mask;
+    while (Buckets[H])
+      H += ((S >> 32) & Mask) | 1;
+    Buckets[H] = i + 1;
+  }
+
+  Out.SwitchSection(Section);
+  Out.EmitIntValue(2, 4);                   // Version
+  Out.EmitIntValue(Columns, 4);             // Columns
+  Out.EmitIntValue(IndexEntries.size(), 4); // Num Units
+  Out.EmitIntValue(Buckets.size(), 4); // Num Buckets
+
+  // Write the signatures.
+  for (const auto &I : Buckets)
+    Out.EmitIntValue(I ? IndexEntries[I - 1].Signature : 0, 8);
+
+  // Write the indexes.
+  for (const auto &I : Buckets)
+    Out.EmitIntValue(I, 4);
+
+  // Write the column headers (which sections will appear in the table)
+  for (size_t i = 0; i != ContributionOffsets.size(); ++i)
+    if (ContributionOffsets[i])
+      Out.EmitIntValue(i + DW_SECT_INFO, 4);
+
+  // Write the offsets.
+  writeIndexTable(Out, ContributionOffsets, IndexEntries,
+                  &DWARFUnitIndex::Entry::SectionContribution::Offset);
+
+  // Write the lengths.
+  writeIndexTable(Out, ContributionOffsets, IndexEntries,
+                  &DWARFUnitIndex::Entry::SectionContribution::Length);
+}
 static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   const auto &MCOFI = *Out.getContext().getObjectFileInfo();
   MCSection *const StrSection = MCOFI.getDwarfStrDWOSection();
@@ -143,12 +227,8 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       {"debug_line.dwo", {MCOFI.getDwarfLineDWOSection(), DW_SECT_LINE}},
       {"debug_abbrev.dwo", {MCOFI.getDwarfAbbrevDWOSection(), DW_SECT_ABBREV}}};
 
-  struct UnitIndexEntry {
-    uint64_t Signature;
-    DWARFUnitIndex::Entry::SectionContribution Contributions[8];
-  };
-
   std::vector<UnitIndexEntry> IndexEntries;
+  std::vector<UnitIndexEntry> TypeIndexEntries;
 
   StringMap<uint32_t> Strings;
   uint32_t StringOffset = 0;
@@ -167,6 +247,9 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     StringRef CurStrOffsetSection;
     StringRef InfoSection;
     StringRef AbbrevSection;
+    StringRef TypesSection;
+
+    auto TypesOffset = ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO];
 
     for (const auto &Section : ErrOrObj->getBinary()->sections()) {
       StringRef Name;
@@ -188,12 +271,18 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         ContributionOffsets[Index] +=
             (CurEntry.Contributions[Index].Length = Contents.size());
 
-        if (Kind == DW_SECT_INFO) {
-          assert(InfoSection.empty());
+        switch (Kind) {
+        case DW_SECT_INFO:
           InfoSection = Contents;
-        } else if (Kind == DW_SECT_ABBREV) {
-          assert(AbbrevSection.empty());
+          break;
+        case DW_SECT_ABBREV:
           AbbrevSection = Contents;
+          break;
+        case DW_SECT_TYPES:
+          TypesSection = Contents;
+          break;
+        default:
+          break;
         }
       }
 
@@ -211,6 +300,7 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     assert(!AbbrevSection.empty());
     assert(!InfoSection.empty());
     CurEntry.Signature = getCUSignature(AbbrevSection, InfoSection);
+    addAllTypes(TypeIndexEntries, TypesOffset, TypesSection, CurEntry);
 
     if (auto Err = writeStringsAndOffsets(Out, Strings, StringOffset,
                                           StrSection, StrOffsetSection,
@@ -218,52 +308,19 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       return Err;
   }
 
-  unsigned Columns = 0;
-  for (auto &C : ContributionOffsets)
-    if (C)
-      ++Columns;
+  // Lie about there being no info contributions so the TU index only includes
+  // the type unit contribution
+  ContributionOffsets[0] = 0;
+  writeIndex(Out, MCOFI.getDwarfTUIndexSection(), ContributionOffsets,
+             TypeIndexEntries);
 
-  std::vector<unsigned> Buckets(NextPowerOf2(3 * IndexEntries.size() / 2));
-  uint64_t Mask = Buckets.size() - 1;
-  for (size_t i = 0; i != IndexEntries.size(); ++i) {
-    auto S = IndexEntries[i].Signature;
-    auto H = S & Mask;
-    while (Buckets[H])
-      H += ((S >> 32) & Mask) | 1;
-    Buckets[H] = i + 1;
-  }
+  // Lie about the type contribution
+  ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO] = 0;
+  // Unlie about the info contribution
+  ContributionOffsets[0] = 1;
 
-  Out.SwitchSection(MCOFI.getDwarfCUIndexSection());
-  Out.EmitIntValue(2, 4);                   // Version
-  Out.EmitIntValue(Columns, 4);             // Columns
-  Out.EmitIntValue(IndexEntries.size(), 4); // Num Units
-  // FIXME: This is not the right number of buckets for a real hash.
-  Out.EmitIntValue(Buckets.size(), 4); // Num Buckets
-
-  // Write the signatures.
-  for (const auto &I : Buckets)
-    Out.EmitIntValue(I ? IndexEntries[I - 1].Signature : 0, 8);
-
-  // Write the indexes.
-  for (const auto &I : Buckets)
-    Out.EmitIntValue(I, 4);
-
-  // Write the column headers (which sections will appear in the table)
-  for (size_t i = 0; i != array_lengthof(ContributionOffsets); ++i)
-    if (ContributionOffsets[i])
-      Out.EmitIntValue(i + DW_SECT_INFO, 4);
-
-  // Write the offsets.
-  for (const auto &E : IndexEntries)
-    for (size_t i = 0; i != array_lengthof(E.Contributions); ++i)
-      if (ContributionOffsets[i])
-        Out.EmitIntValue(E.Contributions[i].Offset, 4);
-
-  // Write the lengths.
-  for (const auto &E : IndexEntries)
-    for (size_t i = 0; i != array_lengthof(E.Contributions); ++i)
-      if (ContributionOffsets[i])
-        Out.EmitIntValue(E.Contributions[i].Length, 4);
+  writeIndex(Out, MCOFI.getDwarfCUIndexSection(), ContributionOffsets,
+             IndexEntries);
 
   return std::error_code();
 }

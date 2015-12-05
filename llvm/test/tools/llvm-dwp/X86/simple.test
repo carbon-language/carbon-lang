@@ -13,48 +13,73 @@ b.cpp:
   void b(bar) {
   }
 
-CHECK: .debug_abbrev.dwo contents:
-CHECK: Abbrev table for offset: 0x00000000
+CHECK-LABEL: .debug_abbrev.dwo contents:
+CHECK-LABEL: Abbrev table for offset:
+CHECK: 0x0000[[AAOFF:.*]]
 CHECK: DW_TAG_compile_unit
 CHECK: DW_TAG_variable
 CHECK: DW_TAG_structure_type
-CHECK: Abbrev table for offset: 0x00000031
+CHECK-LABEL: Abbrev table for offset:
+CHECK: 0x0000[[BAOFF:.*]]
 CHECK: DW_TAG_compile_unit
 CHECK: DW_TAG_structure_type
 CHECK: DW_TAG_subprogram
 CHECK: DW_TAG_formal_parameter
 
 CHECK: .debug_info.dwo contents:
-CHECK: 0x00000000: Compile Unit: length = 0x00000025 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x08 (next unit at 0x00000029)
+CHECK: [[AOFF:0x[0-9a-f]*]]:
+CHECK-LABEL: Compile Unit: length = 0x00000029 version = 0x0004 abbr_offset =
+CHECK:         0x[[AAOFF]] addr_size = 0x08 (next unit at [[BOFF:.*]])
 CHECK: DW_TAG_compile_unit
 CHECK:   DW_AT_name {{.*}} "a.cpp"
 CHECK:   DW_AT_GNU_dwo_id {{.*}} ([[DWOA:.*]])
 CHECK:   DW_TAG_variable
 CHECK:     DW_AT_name {{.*}} "a"
 CHECK:   DW_TAG_structure_type
-CHECK:     DW_AT_name {{.*}} "foo"
+CHECK:     DW_AT_signature {{.*}} ([[FOOSIG:.*]])
 
-CHECK: 0x00000029: Compile Unit: length = 0x00000031 version = 0x0004 abbr_offset = 0x0031 addr_size = 0x08 (next unit at 0x0000005e)
+CHECK: [[BOFF]]:
+CHECK-LABEL: Compile Unit: length = 0x00000035 version = 0x0004 abbr_offset =
+CHECK:         0x[[BAOFF]] addr_size = 0x08 (next unit at [[XOFF:.*]])
 CHECK:   DW_AT_name {{.*}} "b.cpp"
 CHECK:   DW_AT_GNU_dwo_id {{.*}} ([[DWOB:.*]])
 CHECK:   DW_TAG_structure_type
-CHECK:     DW_AT_name {{.*}} "bar"
+CHECK:     DW_AT_signature {{.*}} ([[BARSIG:.*]])
 CHECK:   DW_TAG_subprogram
 CHECK:     DW_AT_name {{.*}} "b"
 CHECK:     DW_TAG_formal_parameter
 
-CHECK: .debug_cu_index contents:
-CHECK: Index Signature          INFO                     ABBREV                   LINE                     STR_OFFSETS
-CHECK:     3 [[DWOA]]           [0x00000000, 0x00000029) [0x00000000, 0x00000031) [0x00000000, 0x00000011) [0x00000000, 0x00000010)
-CHECK:     4 [[DWOB]]           [0x00000029, 0x0000005e) [0x00000031, 0x00000075) [0x00000011, 0x00000022) [0x00000010, 0x00000024)
+CHECK-LABEL: .debug_types.dwo contents:
+CHECK: [[FOOUOFF:0x[0-9a-f]*]]:
+CHECK-LABEL: Type Unit: length = 0x00000020 version = 0x0004 abbr_offset =
+CHECK:         0x[[AAOFF]] addr_size = 0x08 type_signature = [[FOOSIG]] type_offset = 0x[[FOOOFF:.*]] (next unit at [[BARUOFF:.*]])
+CHECK:             DW_TAG_type_unit
+CHECK: [[FOOOFF]]:   DW_TAG_structure_type
+CHECK:                 DW_AT_name {{.*}} "foo"
+CHECK: [[BARUOFF]]:
+CHECK-LABEL: Type Unit: length = 0x00000020 version = 0x0004 abbr_offset =
+CHECK:         0x[[BAOFF]] addr_size = 0x08 type_signature = [[BARSIG]] type_offset = 0x001e (next unit at [[XUOFF:.*]])
+CHECK:             DW_TAG_type_unit
+CHECK: 0x00000042:   DW_TAG_structure_type
+CHECK:                 DW_AT_name {{.*}} "bar"
 
-CHECK: .debug_str.dwo contents:
+CHECK-LABEL: .debug_cu_index contents:
+CHECK: Index Signature INFO                      ABBREV                             LINE                     STR_OFFSETS
+CHECK:     1 [[DWOA]]  {{\[}}[[AOFF]], [[BOFF]]) [0x0000[[AAOFF]], 0x0000[[BAOFF]]) [0x00000000, 0x0000001a) [0x00000000, 0x00000010)
+CHECK:     3 [[DWOB]]  {{\[}}[[BOFF]], [[XOFF]]) [0x0000[[BAOFF]], 0x00000099)      [0x0000001a, 0x00000034) [0x00000010, 0x00000024)
+
+CHECK-LABEL: .debug_tu_index contents:
+CHECK: Index Signature  TYPES                           ABBREV                             LINE                     STR_OFFSETS
+CHECK:     1 [[FOOSIG]] {{\[}}[[FOOUOFF]], [[BARUOFF]]) [0x0000[[AAOFF]], 0x0000[[BAOFF]]) [0x00000000, 0x0000001a) [0x00000000, 0x00000010)
+CHECK:     4 [[BARSIG]] {{\[}}[[BARUOFF]], [[XUOFF]])   [0x0000[[BAOFF]], 0x00000099)      [0x0000001a, 0x00000034) [0x00000010, 0x00000024)
+
+CHECK-LABEL: .debug_str.dwo contents:
 CHECK: "clang version
 CHECK: 0x[[ACPP:.*]]: "a.cpp"
 CHECK-NOT: "clang version
 CHECK: 0x[[BCPP:.*]]: "b.cpp"
 
-CHECK: .debug_str_offsets.dwo contents:
+CHECK-LABEL: .debug_str_offsets.dwo contents:
 CHECK: : 00000000
 CHECK: : [[ACPP]]
 CHECK: : 00000000
