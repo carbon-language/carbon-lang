@@ -1650,6 +1650,12 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::PEXT32rr,          X86::PEXT32rm,            0 },
     { X86::PEXT64rr,          X86::PEXT64rm,            0 },
 
+    // ADX foldable instructions
+    { X86::ADCX32rr,          X86::ADCX32rm,            0 },
+    { X86::ADCX64rr,          X86::ADCX64rm,            0 },
+    { X86::ADOX32rr,          X86::ADOX32rm,            0 },
+    { X86::ADOX64rr,          X86::ADOX64rm,            0 },
+
     // AVX-512 foldable instructions
     { X86::VADDPSZrr,         X86::VADDPSZrm,           0 },
     { X86::VADDPDZrr,         X86::VADDPDZrm,           0 },
