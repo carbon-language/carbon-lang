@@ -14,8 +14,8 @@
 
 let Defs = [ARGUMENTS] in {
 
-// The call sequence start/end LLVM-isms isn't useful to WebAssembly since it's
-// a virtual ISA.
+// Call sequence markers. These have an immediate which represents the amount of
+// stack space to allocate or free, which is used for varargs lowering.
 let isCodeGenOnly = 1 in {
 def ADJCALLSTACKDOWN : I<(outs), (ins i64imm:$amt),
                          [(WebAssemblycallseq_start timm:$amt)]>;
