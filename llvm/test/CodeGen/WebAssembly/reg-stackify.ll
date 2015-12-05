@@ -44,4 +44,32 @@ define i32 @yes1(i32* %q) {
   ret i32 %t
 }
 
+; Don't schedule stack uses into the stack. To reduce register pressure, the
+; scheduler might be tempted to move the definition of $2 down. However, this
+; would risk getting incorrect liveness if the instructions are later
+; rearranged to make the stack contiguous.
+
+; CHECK-LABEL: stack_uses:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: local i32, i32{{$}}
+; CHECK-NEXT: i32.const       $1=, 1{{$}}
+; CHECK-NEXT: i32.const       $2=, 0{{$}}
+; CHECK-NEXT: i32.and         $push0=, $0, $1{{$}}
+; CHECK-NEXT: i32.eq          $push1=, $pop0, $2{{$}}
+; CHECK-NEXT: block           BB4_2{{$}}
+; CHECK-NEXT: br_if           $pop1, BB4_2{{$}}
+; CHECK-NEXT: return          $2{{$}}
+; CHECK-NEXT: BB4_2:{{$}}
+; CHECK-NEXT: return          $1{{$}}
+define i32 @stack_uses(i32 %x) {
+entry:
+  %c = trunc i32 %x to i1
+  br i1 %c, label %true, label %false
+true:
+  ret i32 0
+false:
+  ret i32 1
+}
+
 !0 = !{}

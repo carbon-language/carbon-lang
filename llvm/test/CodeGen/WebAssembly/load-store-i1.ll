@@ -15,8 +15,8 @@ define i32 @load_u_i1_i32(i1* %p) {
 }
 
 ; CHECK-LABEL: load_s_i1_i32:
-; CHECK:      i32.load8_u $push[[NUM0:[0-9]+]]=, 0($0){{$}}
-; CHECK-NEXT: i32.const $[[NUM1:[0-9]+]]=, 31{{$}}
+; CHECK:      i32.const $[[NUM1:[0-9]+]]=, 31{{$}}
+; CHECK-NEXT: i32.load8_u $push[[NUM0:[0-9]+]]=, 0($0){{$}}
 ; CHECK-NEXT: shl $push[[NUM2:[0-9]+]]=, $pop[[NUM0]], $[[NUM1]]{{$}}
 ; CHECK-NEXT: shr_s $push[[NUM3:[0-9]+]]=, $pop[[NUM2]], $[[NUM1]]{{$}}
 ; CHECK-NEXT: return $pop[[NUM3]]{{$}}
@@ -36,8 +36,8 @@ define i64 @load_u_i1_i64(i1* %p) {
 }
 
 ; CHECK-LABEL: load_s_i1_i64:
-; CHECK:      i64.load8_u $push[[NUM0:[0-9]+]]=, 0($0){{$}}
-; CHECK-NEXT: i64.const $[[NUM1:[0-9]+]]=, 63{{$}}
+; CHECK:      i64.const $[[NUM1:[0-9]+]]=, 63{{$}}
+; CHECK-NEXT: i64.load8_u $push[[NUM0:[0-9]+]]=, 0($0){{$}}
 ; CHECK-NEXT: shl $push[[NUM2:[0-9]+]]=, $pop[[NUM0]], $[[NUM1]]{{$}}
 ; CHECK-NEXT: shr_s $push[[NUM3:[0-9]+]]=, $pop[[NUM2]], $[[NUM1]]{{$}}
 ; CHECK-NEXT: return $pop[[NUM3]]{{$}}
