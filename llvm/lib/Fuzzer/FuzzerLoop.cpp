@@ -468,10 +468,15 @@ void Fuzzer::Drill() {
 }
 
 void Fuzzer::Loop() {
+  system_clock::time_point LastCorpusReload = system_clock::now();
   while (true) {
     size_t J1 = ChooseUnitIdxToMutate();;
     SyncCorpus();
-    RereadOutputCorpus();
+    auto Now = system_clock::now();
+    if (duration_cast<seconds>(Now - LastCorpusReload).count()) {
+      RereadOutputCorpus();
+      LastCorpusReload = Now;
+    }
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
       break;
     if (Options.MaxTotalTimeSec > 0 &&
