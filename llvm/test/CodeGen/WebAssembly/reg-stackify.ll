@@ -50,22 +50,35 @@ define i32 @yes1(i32* %q) {
 ; rearranged to make the stack contiguous.
 
 ; CHECK-LABEL: stack_uses:
-; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .param i32, i32, i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
-; CHECK-NEXT: local i32, i32{{$}}
-; CHECK-NEXT: i32.const       $1=, 1{{$}}
-; CHECK-NEXT: i32.const       $2=, 0{{$}}
-; CHECK-NEXT: i32.and         $push0=, $0, $1{{$}}
-; CHECK-NEXT: i32.eq          $push1=, $pop0, $2{{$}}
-; CHECK-NEXT: block           BB4_2{{$}}
-; CHECK-NEXT: br_if           $pop1, BB4_2{{$}}
-; CHECK-NEXT: return          $2{{$}}
-; CHECK-NEXT: BB4_2:{{$}}
-; CHECK-NEXT: return          $1{{$}}
-define i32 @stack_uses(i32 %x) {
+; CHECK-NEXT: .local i32, i32{{$}}
+; CHECK-NEXT: i32.const   $4=, 1{{$}}
+; CHECK-NEXT: i32.const   $5=, 2{{$}}
+; CHECK-NEXT: i32.lt_s    $push0=, $0, $4{{$}}
+; CHECK-NEXT: i32.lt_s    $push1=, $1, $5{{$}}
+; CHECK-NEXT: i32.xor     $push4=, $pop0, $pop1{{$}}
+; CHECK-NEXT: i32.lt_s    $push2=, $2, $4{{$}}
+; CHECK-NEXT: i32.lt_s    $push3=, $3, $5{{$}}
+; CHECK-NEXT: i32.xor     $push5=, $pop2, $pop3{{$}}
+; CHECK-NEXT: i32.xor     $push6=, $pop4, $pop5{{$}}
+; CHECK-NEXT: i32.ne      $push7=, $pop6, $4{{$}}
+; CHECK-NEXT: block       BB4_2{{$}}
+; CHECK-NEXT: br_if       $pop7, BB4_2{{$}}
+; CHECK-NEXT: i32.const   $push8=, 0{{$}}
+; CHECK-NEXT: return      $pop8{{$}}
+; CHECK-NEXT: BB4_2:
+; CHECK-NEXT: return      $4{{$}}
+define i32 @stack_uses(i32 %x, i32 %y, i32 %z, i32 %w) {
 entry:
-  %c = trunc i32 %x to i1
-  br i1 %c, label %true, label %false
+  %c = icmp sle i32 %x, 0
+  %d = icmp sle i32 %y, 1
+  %e = icmp sle i32 %z, 0
+  %f = icmp sle i32 %w, 1
+  %g = xor i1 %c, %d
+  %h = xor i1 %e, %f
+  %i = xor i1 %g, %h
+  br i1 %i, label %true, label %false
 true:
   ret i32 0
 false:
