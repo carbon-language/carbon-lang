@@ -209,6 +209,14 @@ static unsigned getVprofExtraBytes() {
   return (unsigned)atoi(ExtraStr);
 }
 
+/* Extract the value profile data info from the runtime. */
+#define DEF_VALUE_RECORD(R, NS, V)                                             \
+  ValueProfRuntimeRecord R;                                                    \
+  if (initializeValueProfRuntimeRecord(&R, NS, V))                             \
+    PROF_OOM_RETURN("Failed to write value profile data ");
+
+#define DTOR_VALUE_RECORD(R) finalizeValueProfRuntimeRecord(&R);
+
 LLVM_LIBRARY_VISIBILITY uint64_t
 __llvm_profile_gather_value_data(uint8_t **VDataArray) {
   size_t S = 0, RealSize = 0, BufferCapacity = 0, Extra = 0;
@@ -224,14 +232,14 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
    * structures for functions with value profile data.
    */
   for (I = (__llvm_profile_data *)DataBegin; I != DataEnd; ++I) {
-    ValueProfRuntimeRecord R;
-    /* Extract the value profile data info from the runtime. */
-    if (initializeValueProfRuntimeRecord(&R, I->NumValueSites, I->Values))
-      PROF_OOM_RETURN("Failed to write value profile data ");
+
+    DEF_VALUE_RECORD(R, I->NumValueSites, I->Values);
+
     /* Compute the size of ValueProfData from this runtime record.  */
     if (getNumValueKindsRT(&R) != 0)
       S += getValueProfDataSizeRT(&R);
-    finalizeValueProfRuntimeRecord(&R);
+
+    DTOR_VALUE_RECORD(R);
   }
   /* No value sites or no value profile data is collected. */
   if (!S)
@@ -253,9 +261,7 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
    * very low taken count.
    */
   for (I = (__llvm_profile_data *)DataBegin; I != DataEnd; ++I) {
-    ValueProfRuntimeRecord R;
-    if (initializeValueProfRuntimeRecord(&R, I->NumValueSites, I->Values))
-      PROF_OOM_RETURN("Failed to write value profile data ");
+    DEF_VALUE_RECORD(R, I->NumValueSites, I->Values);
     if (getNumValueKindsRT(&R) == 0)
       continue;
 
@@ -272,9 +278,9 @@ __llvm_profile_gather_value_data(uint8_t **VDataArray) {
     serializeValueProfDataFromRT(&R, VD);
     deallocateValueProfileCounters(I);
     I->Values = VD;
-    finalizeValueProfRuntimeRecord(&R);
     RealSize += VD->TotalSize;
     VD = (ValueProfData *)((char *)VD + VD->TotalSize);
+    DTOR_VALUE_RECORD(R);
   }
 
   return RealSize;
