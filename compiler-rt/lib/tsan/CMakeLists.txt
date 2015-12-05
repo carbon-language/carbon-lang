@@ -8,6 +8,13 @@ set(TSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_list_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE TSAN_CFLAGS)
 append_no_rtti_flag(TSAN_CFLAGS)
 
+if(COMPILER_RT_TSAN_DEBUG_OUTPUT)
+  # Add extra debug information to TSan runtime. This configuration is rarely
+  # used, but we need to support it so that debug output will not bitrot.
+  list(APPEND TSAN_CFLAGS -DTSAN_COLLECT_STATS=1
+                          -DTSAN_DEBUG_OUTPUT=2)
+endif()
+
 set(TSAN_RTL_CFLAGS ${TSAN_CFLAGS})
 append_list_if(COMPILER_RT_HAS_MSSE3_FLAG -msse3 TSAN_RTL_CFLAGS)
 append_list_if(SANITIZER_LIMIT_FRAME_SIZE -Wframe-larger-than=512
