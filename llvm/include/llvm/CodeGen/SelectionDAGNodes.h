@@ -576,10 +576,10 @@ public:
   static use_iterator use_end() { return use_iterator(nullptr); }
 
   inline iterator_range<use_iterator> uses() {
-    return iterator_range<use_iterator>(use_begin(), use_end());
+    return make_range(use_begin(), use_end());
   }
   inline iterator_range<use_iterator> uses() const {
-    return iterator_range<use_iterator>(use_begin(), use_end());
+    return make_range(use_begin(), use_end());
   }
 
   /// Return true if there are exactly NUSES uses of the indicated value.
@@ -651,8 +651,8 @@ public:
   };
 
   iterator_range<value_op_iterator> op_values() const {
-    return iterator_range<value_op_iterator>(value_op_iterator(op_begin()),
-                                             value_op_iterator(op_end()));
+    return make_range(value_op_iterator(op_begin()),
+                      value_op_iterator(op_end()));
   }
 
   SDVTList getVTList() const {
