@@ -664,7 +664,7 @@ public:
   /// to which the glue operand points. Otherwise return NULL.
   SDNode *getGluedNode() const {
     if (getNumOperands() != 0 &&
-      getOperand(getNumOperands()-1).getValueType() == MVT::Glue)
+        getOperand(getNumOperands()-1).getValueType() == MVT::Glue)
       return getOperand(getNumOperands()-1).getNode();
     return nullptr;
   }
