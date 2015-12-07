@@ -451,8 +451,7 @@ private:
 
   /// Handles cloning of a global values from the source module into
   /// the destination module, including setting the attributes and visibility.
-  GlobalValue *copyGlobalValueProto(const GlobalValue *SGV,
-                                    const GlobalValue *DGV, bool ForDefinition);
+  GlobalValue *copyGlobalValueProto(const GlobalValue *SGV, bool ForDefinition);
 
   /// Check if we should promote the given local value to global scope.
   bool doPromoteLocalToGlobal(const GlobalValue *SGV);
@@ -816,7 +815,6 @@ void ModuleLinker::setVisibility(GlobalValue *NewGV, const GlobalValue *SGV,
 }
 
 GlobalValue *ModuleLinker::copyGlobalValueProto(const GlobalValue *SGV,
-                                                const GlobalValue *DGV,
                                                 bool ForDefinition) {
   GlobalValue *NewGV;
   if (auto *SGVar = dyn_cast<GlobalVariable>(SGV)) {
@@ -842,7 +840,6 @@ GlobalValue *ModuleLinker::copyGlobalValueProto(const GlobalValue *SGV,
     NewGV->setLinkage(GlobalValue::ExternalWeakLinkage);
 
   copyGVAttributes(NewGV, SGV);
-  setVisibility(NewGV, SGV, DGV);
   return NewGV;
 }
 
@@ -1364,8 +1361,6 @@ Constant *ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   GlobalValue *NewGV;
   if (!LinkFromSrc && DGV) {
     NewGV = DGV;
-    // When linking from source we setVisibility from copyGlobalValueProto.
-    setVisibility(NewGV, SGV, DGV);
   } else {
     // If we are done linking global value bodies (i.e. we are performing
     // metadata linking), don't link in the global value due to this
@@ -1373,9 +1368,10 @@ Constant *ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     if (DoneLinkingBodies)
       return nullptr;
 
-    NewGV = copyGlobalValueProto(SGV, DGV, LinkFromSrc);
+    NewGV = copyGlobalValueProto(SGV, LinkFromSrc);
   }
 
+  setVisibility(NewGV, SGV, DGV);
   NewGV->setUnnamedAddr(HasUnnamedAddr);
 
   if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
