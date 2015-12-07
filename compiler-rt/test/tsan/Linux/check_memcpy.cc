@@ -3,9 +3,13 @@
 // check_memcpy.sh script.
 
 // RUN: %clangxx_tsan -O1 %s -o %t
-// RUN: %S/check_memcpy.sh %t
+// RUN: llvm-objdump -d %t | FileCheck %s
 
 int main() {
   return 0;
 }
+
+// CHECK-NOT: callq {{.*<(__interceptor_)?mem(cpy|set)>}}
+// tail calls:
+// CHECK-NOT: jmpq {{.*<(__interceptor_)?mem(cpy|set)>}}
 

@@ -19,8 +19,8 @@ if(NOT ANDROID)
   if(NOT COMPILER_RT_STANDALONE_BUILD)
     # Use LLVM utils and Clang from the same build tree.
     list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS
-      clang clang-headers FileCheck count not llvm-config llvm-nm llvm-symbolizer
-      compiler-rt-headers)
+      clang clang-headers FileCheck count not llvm-config llvm-nm llvm-objdump
+      llvm-symbolizer compiler-rt-headers)
     if (COMPILER_RT_HAS_PROFILE)
       list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS profile)
     endif()
