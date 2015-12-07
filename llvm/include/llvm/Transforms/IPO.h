@@ -88,7 +88,7 @@ ModulePass *createGVExtractionPass(std::vector<GlobalValue*>& GVs, bool
 
 //===----------------------------------------------------------------------===//
 /// This pass performs iterative function importing from other modules.
-ModulePass *createFunctionImportPass(FunctionInfoIndex *Index = nullptr);
+Pass *createFunctionImportPass(FunctionInfoIndex *Index = nullptr);
 
 //===----------------------------------------------------------------------===//
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic
