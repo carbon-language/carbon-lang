@@ -1559,7 +1559,6 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
 
   // Merge in the flags from the source module, and also collect its set of
   // requirements.
-  bool HasErr = false;
   for (unsigned I = 0, E = SrcModFlags->getNumOperands(); I != E; ++I) {
     MDNode *SrcOp = SrcModFlags->getOperand(I);
     ConstantInt *SrcBehavior =
@@ -1597,8 +1596,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       // Diagnose inconsistent flags which both have override behavior.
       if (SrcBehaviorValue == Module::Override &&
           SrcOp->getOperand(2) != DstOp->getOperand(2)) {
-        HasErr |= emitError("linking module flags '" + ID->getString() +
-                            "': IDs have conflicting override values");
+        emitError("linking module flags '" + ID->getString() +
+                  "': IDs have conflicting override values");
       }
       continue;
     } else if (SrcBehaviorValue == Module::Override) {
@@ -1610,8 +1609,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
 
     // Diagnose inconsistent merge behavior types.
     if (SrcBehaviorValue != DstBehaviorValue) {
-      HasErr |= emitError("linking module flags '" + ID->getString() +
-                          "': IDs have conflicting behaviors");
+      emitError("linking module flags '" + ID->getString() +
+                "': IDs have conflicting behaviors");
       continue;
     }
 
@@ -1630,8 +1629,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     case Module::Error: {
       // Emit an error if the values differ.
       if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
-        HasErr |= emitError("linking module flags '" + ID->getString() +
-                            "': IDs have conflicting values");
+        emitError("linking module flags '" + ID->getString() +
+                  "': IDs have conflicting values");
       }
       continue;
     }
@@ -1676,13 +1675,13 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
 
     MDNode *Op = Flags[Flag].first;
     if (!Op || Op->getOperand(2) != ReqValue) {
-      HasErr |= emitError("linking module flags '" + Flag->getString() +
-                          "': does not have the required value");
+      emitError("linking module flags '" + Flag->getString() +
+                "': does not have the required value");
       continue;
     }
   }
 
-  return HasErr;
+  return HasError;
 }
 
 // This function returns true if the triples match.
