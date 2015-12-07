@@ -79,7 +79,6 @@ presubmit:
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=gcc CXX=g++
 	./check_memcpy.sh
-	./check_analyze.sh
 	# Sanity check for Go runtime
 	(cd go && ./buildgo.sh)
 	# Check cmake build
