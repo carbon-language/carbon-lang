@@ -1,8 +1,6 @@
 // RUN: %clangxx_tsan -O1 %s -DBUILD_SO -fPIC -shared -o %t-so.so
 // RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 
-// If we mention TSAN_OPTIONS, the test won't run from test_output.sh script.
-
 // dl_iterate_phdr doesn't exist on OS X.
 // UNSUPPORTED: darwin
 
