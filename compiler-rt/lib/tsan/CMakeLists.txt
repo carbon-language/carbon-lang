@@ -21,7 +21,6 @@ append_list_if(SANITIZER_LIMIT_FRAME_SIZE -Wframe-larger-than=512
                TSAN_RTL_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors
                TSAN_RTL_CFLAGS)
-# FIXME: Add support for --sysroot=. compile flag:
 
 set(TSAN_SOURCES
   rtl/tsan_clock.cc
@@ -186,6 +185,18 @@ else()
 endif()
 
 add_dependencies(compiler-rt tsan)
+
+# Make sure that non-platform-specific files don't include any system headers.
+if(COMPILER_RT_HAS_SYSROOT_FLAG)
+  file(GLOB _tsan_generic_sources rtl/tsan*)
+  file(GLOB _tsan_platform_sources rtl/tsan*posix* rtl/tsan*mac*
+                                   rtl/tsan*linux*)
+  list(REMOVE_ITEM _tsan_generic_sources ${_tsan_platform_sources})
+  message(STATUS "platform: ${_tsan_platform_sources}")
+  message(STATUS "generic: ${_tsan_generic_sources}")
+  set_source_files_properties(${_tsan_generic_sources}
+    PROPERTIES COMPILE_FLAGS "--sysroot=.")
+endif()
 
 # Build libcxx instrumented with TSan.
 if(COMPILER_RT_HAS_LIBCXX_SOURCES AND

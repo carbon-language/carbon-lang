@@ -29,6 +29,7 @@ check_cxx_compiler_flag(-ftls-model=initial-exec COMPILER_RT_HAS_FTLS_MODEL_INIT
 check_cxx_compiler_flag(-fno-lto             COMPILER_RT_HAS_FNO_LTO_FLAG)
 check_cxx_compiler_flag(-msse3               COMPILER_RT_HAS_MSSE3_FLAG)
 check_cxx_compiler_flag(-std=c99             COMPILER_RT_HAS_STD_C99_FLAG)
+check_cxx_compiler_flag(--sysroot=.          COMPILER_RT_HAS_SYSROOT_FLAG)
 
 if(NOT WIN32 AND NOT CYGWIN)
   # MinGW warns if -fvisibility-inlines-hidden is used.
