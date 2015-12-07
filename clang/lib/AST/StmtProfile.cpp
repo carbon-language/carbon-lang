@@ -465,6 +465,9 @@ void OMPClauseProfiler::VisitOMPThreadLimitClause(
 void OMPClauseProfiler::VisitOMPPriorityClause(const OMPPriorityClause *C) {
   Profiler->VisitStmt(C->getPriority());
 }
+void OMPClauseProfiler::VisitOMPGrainsizeClause(const OMPGrainsizeClause *C) {
+  Profiler->VisitStmt(C->getGrainsize());
+}
 }
 
 void

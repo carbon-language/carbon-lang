@@ -731,6 +731,12 @@ void OMPClausePrinter::VisitOMPPriorityClause(OMPPriorityClause *Node) {
   OS << ")";
 }
 
+void OMPClausePrinter::VisitOMPGrainsizeClause(OMPGrainsizeClause *Node) {
+  OS << "grainsize(";
+  Node->getGrainsize()->printPretty(OS, nullptr, Policy, 0);
+  OS << ")";
+}
+
 template<typename T>
 void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
   for (typename T::varlist_iterator I = Node->varlist_begin(),

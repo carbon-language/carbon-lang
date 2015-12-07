@@ -5381,6 +5381,9 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_priority:
     Res = ActOnOpenMPPriorityClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_grainsize:
+    Res = ActOnOpenMPGrainsizeClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_default:
   case OMPC_proc_bind:
@@ -5685,6 +5688,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_num_teams:
   case OMPC_thread_limit:
   case OMPC_priority:
+  case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
@@ -5819,6 +5823,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_num_teams:
   case OMPC_thread_limit:
   case OMPC_priority:
+  case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
@@ -5958,6 +5963,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_num_teams:
   case OMPC_thread_limit:
   case OMPC_priority:
+  case OMPC_grainsize:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6095,6 +6101,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_num_teams:
   case OMPC_thread_limit:
   case OMPC_priority:
+  case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
@@ -8005,4 +8012,20 @@ OMPClause *Sema::ActOnOpenMPPriorityClause(Expr *Priority,
     return nullptr;
 
   return new (Context) OMPPriorityClause(ValExpr, StartLoc, LParenLoc, EndLoc);
+}
+
+OMPClause *Sema::ActOnOpenMPGrainsizeClause(Expr *Grainsize,
+                                            SourceLocation StartLoc,
+                                            SourceLocation LParenLoc,
+                                            SourceLocation EndLoc) {
+  Expr *ValExpr = Grainsize;
+
+  // OpenMP [2.9.2, taskloop Constrcut]
+  // The parameter of the grainsize clause must be a positive integer
+  // expression.
+  if (!IsNonNegativeIntegerValue(ValExpr, *this, OMPC_grainsize,
+                                 /*StrictlyPositive=*/true))
+    return nullptr;
+
+  return new (Context) OMPGrainsizeClause(ValExpr, StartLoc, LParenLoc, EndLoc);
 }

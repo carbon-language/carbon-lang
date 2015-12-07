@@ -1862,6 +1862,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_priority:
     C = new (Context) OMPPriorityClause();
     break;
+  case OMPC_grainsize:
+    C = new (Context) OMPGrainsizeClause();
+    break;
   }
   Visit(C);
   C->setLocStart(Reader->ReadSourceLocation(Record, Idx));
@@ -2200,6 +2203,11 @@ void OMPClauseReader::VisitOMPThreadLimitClause(OMPThreadLimitClause *C) {
 
 void OMPClauseReader::VisitOMPPriorityClause(OMPPriorityClause *C) {
   C->setPriority(Reader->Reader.ReadSubExpr());
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+}
+
+void OMPClauseReader::VisitOMPGrainsizeClause(OMPGrainsizeClause *C) {
+  C->setGrainsize(Reader->Reader.ReadSubExpr());
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
 }
 

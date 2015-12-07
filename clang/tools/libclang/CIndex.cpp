@@ -2091,6 +2091,10 @@ void OMPClauseEnqueue::VisitOMPPriorityClause(const OMPPriorityClause *C) {
   Visitor->AddStmt(C->getPriority());
 }
 
+void OMPClauseEnqueue::VisitOMPGrainsizeClause(const OMPGrainsizeClause *C) {
+  Visitor->AddStmt(C->getGrainsize());
+}
+
 template<typename T>
 void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
   for (const auto *I : Node->varlists()) {

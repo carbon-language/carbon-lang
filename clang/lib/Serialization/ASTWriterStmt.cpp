@@ -2018,6 +2018,11 @@ void OMPClauseWriter::VisitOMPPriorityClause(OMPPriorityClause *C) {
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
 }
 
+void OMPClauseWriter::VisitOMPGrainsizeClause(OMPGrainsizeClause *C) {
+  Writer->Writer.AddStmt(C->getGrainsize());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+}
+
 //===----------------------------------------------------------------------===//
 // OpenMP Directives.
 //===----------------------------------------------------------------------===//

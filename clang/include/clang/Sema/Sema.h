@@ -8002,6 +8002,10 @@ public:
   ActOnOpenMPOrderedClause(SourceLocation StartLoc, SourceLocation EndLoc,
                            SourceLocation LParenLoc = SourceLocation(),
                            Expr *NumForLoops = nullptr);
+  /// \brief Called on well-formed 'grainsize' clause.
+  OMPClause *ActOnOpenMPGrainsizeClause(Expr *Size, SourceLocation StartLoc,
+                                        SourceLocation LParenLoc,
+                                        SourceLocation EndLoc);
 
   OMPClause *ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
                                      unsigned Argument,

@@ -400,7 +400,8 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///       mergeable-clause | flush-clause | read-clause | write-clause |
 ///       update-clause | capture-clause | seq_cst-clause | device-clause |
 ///       simdlen-clause | threads-clause | simd-clause | num_teams-clause |
-///       thread_limit-clause | priority-clause | nogroup-clause
+///       thread_limit-clause | priority-clause | grainsize-clause |
+///       nogroup-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -424,6 +425,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_num_teams:
   case OMPC_thread_limit:
   case OMPC_priority:
+  case OMPC_grainsize:
     // OpenMP [2.5, Restrictions]
     //  At most one num_threads clause can appear on the directive.
     // OpenMP [2.8.1, simd construct, Restrictions]
@@ -440,6 +442,8 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     //  At most one thread_limit clause can appear on the directive.
     // OpenMP [2.9.1, task Construct, Restrictions]
     // At most one priority clause can appear on the directive.
+    // OpenMP [2.9.2, taskloop Construct, Restrictions]
+    // At most one grainsize clause can appear on the directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause)
           << getOpenMPDirectiveName(DKind) << getOpenMPClauseName(CKind) << 0;
@@ -531,7 +535,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 
 /// \brief Parsing of OpenMP clauses with single expressions like 'final',
 /// 'collapse', 'safelen', 'num_threads', 'simdlen', 'num_teams',
-/// 'thread_limit', 'simdlen' or 'priority'.
+/// 'thread_limit', 'simdlen', 'priority' or 'grainsize'.
 ///
 ///    final-clause:
 ///      'final' '(' expression ')'
@@ -550,6 +554,9 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 ///
 ///    priority-clause:
 ///      'priority' '(' expression ')'
+///
+///    grainsize-clause:
+///      'grainsize' '(' expression ')'
 ///
 OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = ConsumeToken();
