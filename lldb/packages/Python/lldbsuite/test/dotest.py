@@ -43,8 +43,8 @@ import lldbsuite
 from . import dotest_args
 from . import lldbtest_config
 from . import test_categories
-from . import test_results
-from .test_results import EventBuilder
+from . import result_formatter
+from .result_formatter import EventBuilder
 from ..support import seven
 
 def is_exe(fpath):
@@ -795,7 +795,7 @@ def parseOptionsAndInitTestdirs():
         # Tell the event builder to create all events with these
         # key/val pairs in them.
         if len(entries) > 0:
-            test_results.EventBuilder.add_entries_to_all_events(entries)
+            result_formatter.EventBuilder.add_entries_to_all_events(entries)
 
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
@@ -930,13 +930,13 @@ def setupTestResults():
         else:
             results_file_object = open(results_filename, "w")
             cleanup_func = results_file_object.close
-        default_formatter_name = "lldbsuite.test.test_results.XunitFormatter"
+        default_formatter_name = "lldbsuite.test.result_formatter.XunitFormatter"
     elif results_port:
         # Connect to the specified localhost port.
         results_file_object, cleanup_func = createSocketToLocalPort(
             results_port)
         default_formatter_name = (
-            "lldbsuite.test.test_results.RawPickledFormatter")
+            "lldbsuite.test.result_formatter.RawPickledFormatter")
 
     # If we have a results formatter name specified and we didn't specify
     # a results file, we should use stdout.
