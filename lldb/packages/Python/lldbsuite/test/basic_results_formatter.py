@@ -13,9 +13,8 @@ from __future__ import print_function
 import os
 
 # Our imports
-
 from . import test_results
-
+import lldbsuite
 
 class BasicResultsFormatter(test_results.ResultsFormatter):
     """Provides basic test result output."""
@@ -220,14 +219,12 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
         print_matching_tests = category[2]
         detail_label = category[3]
 
-        test_base_dir = os.path.realpath(os.path.dirname(__file__))
-
         if print_matching_tests:
             # Sort by test name
             for (_, event) in result_events_by_status[result_status_id]:
                 test_relative_path = os.path.relpath(
                     os.path.realpath(event["test_filename"]),
-                    test_base_dir)
+                    lldbsuite.lldb_test_root)
                 self.out_file.write("{}: {} ({})\n".format(
                     detail_label,
                     event["test_name"],
