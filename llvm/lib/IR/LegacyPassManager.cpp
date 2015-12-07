@@ -589,12 +589,6 @@ AnalysisUsage *PMTopLevelManager::findAnalysisUsage(Pass *P) {
     if (auto *N = UniqueAnalysisUsages.FindNodeOrInsertPos(ID, IP))
       Node = N;
     else {
-#if 0
-      dbgs() << AU.getRequiredSet().size() << " "
-             << AU.getRequiredTransitiveSet().size() << " "
-             << AU.getPreservedSet().size() << " "
-             << AU.getUsedSet().size() << "\n";
-#endif
       Node = new (AUFoldingSetNodeAllocator.Allocate()) AUFoldingSetNode(AU);
       UniqueAnalysisUsages.InsertNode(Node, IP);
     }
