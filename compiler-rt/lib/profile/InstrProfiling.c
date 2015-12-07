@@ -39,6 +39,8 @@ uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
   __sync_bool_compare_and_swap(Ptr, OldV, NewV)
 #endif
 
+char *(*GetEnvHook)(const char *) = 0;
+
 LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
   return sizeof(void *) == sizeof(uint64_t) ? (INSTR_PROF_RAW_MAGIC_64)
                                             : (INSTR_PROF_RAW_MAGIC_32);
@@ -203,7 +205,8 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
    data buffer. The size of the extra space is controlled by an environment
    varaible. */
 static unsigned getVprofExtraBytes() {
-  const char *ExtraStr = getenv("LLVM_VALUE_PROF_BUFFER_EXTRA");
+  const char *ExtraStr =
+      GetEnvHook ? GetEnvHook("LLVM_VALUE_PROF_BUFFER_EXTRA") : 0;
   if (!ExtraStr || !ExtraStr[0])
     return 1024;
   return (unsigned)atoi(ExtraStr);

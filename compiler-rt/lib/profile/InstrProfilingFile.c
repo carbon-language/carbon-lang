@@ -192,6 +192,7 @@ LLVM_LIBRARY_VISIBILITY
 int __llvm_profile_write_file(void) {
   int rc;
 
+  GetEnvHook = &getenv;
   /* Check the filename. */
   if (!__llvm_profile_CurrentFilename) {
     PROF_ERR("LLVM Profile: Failed to write file : %s\n", "Filename not set");

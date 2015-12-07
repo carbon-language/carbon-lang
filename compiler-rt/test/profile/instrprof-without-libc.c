@@ -56,5 +56,6 @@ int main(int argc, const char *argv[]) {
 // CHECK-SYMBOLS-NOT: _fopen
 // CHECK-SYMBOLS-NOT: _fwrite
 // CHECK-SYMBOLS-NOT: _getenv
+// CHECK-SYMBOLS-NOT: getenv
 // CHECK-SYMBOLS-NOT: _malloc
 // CHECK-SYMBOLS-NOT: _open

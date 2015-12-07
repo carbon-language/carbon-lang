@@ -19,10 +19,11 @@
 #define LLVM_LIBRARY_VISIBILITY __attribute__((visibility("hidden")))
 #define LLVM_SECTION(Sect) __attribute__((section(Sect)))
 
-#define PROF_ERR(Format, ...) \
- if (getenv("LLVM_PROFILE_VERBOSE_ERRORS")) \
-   fprintf(stderr, Format, __VA_ARGS__ );
+#define PROF_ERR(Format, ...)                                                  \
+  if (GetEnvHook && GetEnvHook("LLVM_PROFILE_VERBOSE_ERRORS"))                 \
+    fprintf(stderr, Format, __VA_ARGS__);
 
+extern char *(*GetEnvHook)(const char *);
 
 #if defined(__FreeBSD__) && defined(__i386__)
 
