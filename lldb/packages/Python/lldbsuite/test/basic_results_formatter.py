@@ -126,7 +126,8 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
                 key=lambda x: x[1]["test_name"])
         return partitioned_events
 
-    def _print_summary_counts(self, categories, result_events_by_status):
+    def _print_summary_counts(
+        self, categories, result_events_by_status, extra_rows):
         """Prints summary counts for all categories.
 
         @param categories the list of categories on which to partition.
@@ -143,6 +144,13 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
             categories, key=lambda x: len(x[1]))
         max_category_name_length = len(category_with_max_printed_name[1])
 
+        # If we are provided with extra rows, consider these row name lengths.
+        if extra_rows is not None:
+            for row in extra_rows:
+                name_length = len(row[0])
+                if name_length > max_category_name_length:
+                    max_category_name_length = name_length
+
         banner_text = "Test Result Summary"
         banner_separator = "".ljust(len(banner_text), "=")
 
@@ -150,6 +158,13 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
             banner_separator,
             banner_text,
             banner_separator))
+
+        # Prepend extra rows
+        if extra_rows is not None:
+            for row in extra_rows:
+                extra_label = "{}:".format(row[0]).ljust(
+                    max_category_name_length + 1)
+                self.out_file.write("{} {:4}\n".format(extra_label, row[1]))
 
         for category in categories:
             result_status_id = category[0]
@@ -220,12 +235,10 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
 
     def _finish_output_no_lock(self):
         """Writes the test result report to the output file."""
-        self.out_file.write("\nTest Results\n")
-        self.out_file.write(
-            "Total Test Methods Run (excluding reruns): {}\n".format(
-                len(self.result_events)))
-        self.out_file.write("Test Method rerun count: {}\n".format(
-            self.test_method_rerun_count))
+        extra_results = [
+            # Total test methods processed, excluding reruns.
+            ["Test Methods", len(self.result_events)],
+            ["Reruns", self.test_method_rerun_count]]
 
         # Output each of the test result entries.
         categories = [
@@ -255,7 +268,8 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
                     category, result_events_by_status)
 
         # Print the summary
-        self._print_summary_counts(categories, result_events_by_status)
+        self._print_summary_counts(
+            categories, result_events_by_status, extra_results)
 
 
     def _finish_output(self):
