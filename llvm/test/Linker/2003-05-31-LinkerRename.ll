@@ -6,12 +6,12 @@
 ; CHECK-NEXT:   ret i32 7
 ; CHECK-NEXT: }
 
-; CHECK: declare i32 @foo()
-
 ; CHECK:      define i32 @test() {
 ; CHECK-NEXT:   %X = call i32 @foo()
 ; CHECK-NEXT:   ret i32 %X
 ; CHECK-NEXT: }
+
+; CHECK: declare i32 @foo()
 
 declare i32 @foo()
 

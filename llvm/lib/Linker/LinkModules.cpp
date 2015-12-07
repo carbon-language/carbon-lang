@@ -1753,6 +1753,9 @@ bool ModuleLinker::linkIfNeeded(GlobalValue &GV) {
        GV.hasAvailableExternallyLinkage()))
     return false;
 
+  if (GV.isDeclaration())
+    return false;
+
   if (const Comdat *SC = GV.getComdat()) {
     bool LinkFromSrc;
     Comdat::SelectionKind SK;
