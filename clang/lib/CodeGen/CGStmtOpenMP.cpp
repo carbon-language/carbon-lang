@@ -2481,6 +2481,7 @@ static void EmitOMPAtomicExpr(CodeGenFunction &CGF, OpenMPClauseKind Kind,
   case OMPC_num_teams:
   case OMPC_thread_limit:
   case OMPC_priority:
+  case OMPC_nogroup:
     llvm_unreachable("Clause is not allowed in 'omp atomic'.");
   }
 }
