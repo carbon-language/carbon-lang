@@ -71,14 +71,12 @@ presubmit:
 	# Release build with clang.
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=$(CLANG) CXX=$(CLANG)++
-	./check_memcpy.sh
 	# Debug build with gcc
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=gcc CXX=g++
 	# Release build with gcc
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=gcc CXX=g++
-	./check_memcpy.sh
 	# Sanity check for Go runtime
 	(cd go && ./buildgo.sh)
 	# Check cmake build
