@@ -102,6 +102,159 @@ entry:
   ret <4 x i32> %vecinit6.i
 }
 
+; FIXME: Pointer adjusted broadcasts
+
+define <4 x i32> @load_splat_4i32_4i32_1111(<4 x i32>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_4i32_4i32_1111:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm0 = mem[1,1,1,1]
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <4 x i32>, <4 x i32>* %ptr
+  %ret = shufflevector <4 x i32> %ld, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x i32> %ret
+}
+
+define <8 x i32> @load_splat_8i32_4i32_33333333(<4 x i32>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_8i32_4i32_33333333:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vpermilps {{.*#+}} xmm0 = mem[3,3,3,3]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <4 x i32>, <4 x i32>* %ptr
+  %ret = shufflevector <4 x i32> %ld, <4 x i32> undef, <8 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>
+  ret <8 x i32> %ret
+}
+
+define <8 x i32> @load_splat_8i32_8i32_55555555(<8 x i32>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_8i32_8i32_55555555:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovaps (%rdi), %ymm0
+; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; CHECK-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[1,1,1,1]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <8 x i32>, <8 x i32>* %ptr
+  %ret = shufflevector <8 x i32> %ld, <8 x i32> undef, <8 x i32> <i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
+  ret <8 x i32> %ret
+}
+
+define <4 x float> @load_splat_4f32_4f32_1111(<4 x float>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_4f32_4f32_1111:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vpermilps {{.*#+}} xmm0 = mem[1,1,1,1]
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <4 x float>, <4 x float>* %ptr
+  %ret = shufflevector <4 x float> %ld, <4 x float> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x float> %ret
+}
+
+define <8 x float> @load_splat_8f32_4f32_33333333(<4 x float>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_8f32_4f32_33333333:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vpermilps {{.*#+}} xmm0 = mem[3,3,3,3]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <4 x float>, <4 x float>* %ptr
+  %ret = shufflevector <4 x float> %ld, <4 x float> undef, <8 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>
+  ret <8 x float> %ret
+}
+
+define <8 x float> @load_splat_8f32_8f32_55555555(<8 x float>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_8f32_8f32_55555555:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovaps (%rdi), %ymm0
+; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; CHECK-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[1,1,1,1]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <8 x float>, <8 x float>* %ptr
+  %ret = shufflevector <8 x float> %ld, <8 x float> undef, <8 x i32> <i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
+  ret <8 x float> %ret
+}
+
+define <2 x i64> @load_splat_2i64_2i64_1111(<2 x i64>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_2i64_2i64_1111:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm0 = mem[2,3,2,3]
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <2 x i64>, <2 x i64>* %ptr
+  %ret = shufflevector <2 x i64> %ld, <2 x i64> undef, <2 x i32> <i32 1, i32 1>
+  ret <2 x i64> %ret
+}
+
+define <4 x i64> @load_splat_4i64_2i64_1111(<2 x i64>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_4i64_2i64_1111:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovaps (%rdi), %xmm0
+; CHECK-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <2 x i64>, <2 x i64>* %ptr
+  %ret = shufflevector <2 x i64> %ld, <2 x i64> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x i64> %ret
+}
+
+define <4 x i64> @load_splat_4i64_4i64_2222(<4 x i64>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_4i64_4i64_2222:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovapd (%rdi), %ymm0
+; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <4 x i64>, <4 x i64>* %ptr
+  %ret = shufflevector <4 x i64> %ld, <4 x i64> undef, <4 x i32> <i32 2, i32 2, i32 2, i32 2>
+  ret <4 x i64> %ret
+}
+
+define <2 x double> @load_splat_2f64_2f64_1111(<2 x double>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_2f64_2f64_1111:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovaps (%rdi), %xmm0
+; CHECK-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <2 x double>, <2 x double>* %ptr
+  %ret = shufflevector <2 x double> %ld, <2 x double> undef, <2 x i32> <i32 1, i32 1>
+  ret <2 x double> %ret
+}
+
+define <4 x double> @load_splat_4f64_2f64_1111(<2 x double>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_4f64_2f64_1111:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovaps (%rdi), %xmm0
+; CHECK-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <2 x double>, <2 x double>* %ptr
+  %ret = shufflevector <2 x double> %ld, <2 x double> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x double> %ret
+}
+
+define <4 x double> @load_splat_4f64_4f64_2222(<4 x double>* %ptr) nounwind uwtable readnone ssp {
+; CHECK-LABEL: load_splat_4f64_4f64_2222:
+; CHECK:       ## BB#0: ## %entry
+; CHECK-NEXT:    vmovapd (%rdi), %ymm0
+; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+entry:
+  %ld = load <4 x double>, <4 x double>* %ptr
+  %ret = shufflevector <4 x double> %ld, <4 x double> undef, <4 x i32> <i32 2, i32 2, i32 2, i32 2>
+  ret <4 x double> %ret
+}
+
 ; Unsupported vbroadcasts
 
 define <2 x i64> @G(i64* %ptr) nounwind uwtable readnone ssp {
