@@ -93,7 +93,7 @@ public:
 
   /// This enum indicates whether a types are legal for a target, and if not,
   /// what action should be used to make them valid.
-  enum LegalizeTypeAction {
+  enum LegalizeTypeAction : uint8_t {
     TypeLegal,           // The target natively supports this type.
     TypePromoteInteger,  // Replace this integer with a larger one.
     TypeExpandInteger,   // Split this integer into two of half the size.
@@ -413,20 +413,20 @@ public:
   class ValueTypeActionImpl {
     /// ValueTypeActions - For each value type, keep a LegalizeTypeAction enum
     /// that indicates how instruction selection should deal with the type.
-    uint8_t ValueTypeActions[MVT::LAST_VALUETYPE];
+    LegalizeTypeAction ValueTypeActions[MVT::LAST_VALUETYPE];
 
   public:
     ValueTypeActionImpl() {
-      std::fill(std::begin(ValueTypeActions), std::end(ValueTypeActions), 0);
+      std::fill(std::begin(ValueTypeActions), std::end(ValueTypeActions),
+                TypeLegal);
     }
 
     LegalizeTypeAction getTypeAction(MVT VT) const {
-      return (LegalizeTypeAction)ValueTypeActions[VT.SimpleTy];
+      return ValueTypeActions[VT.SimpleTy];
     }
 
     void setTypeAction(MVT VT, LegalizeTypeAction Action) {
-      unsigned I = VT.SimpleTy;
-      ValueTypeActions[I] = Action;
+      ValueTypeActions[VT.SimpleTy] = Action;
     }
   };
 
