@@ -9,6 +9,11 @@ normal LLDB test run output when no other option is specified.
 """
 from __future__ import print_function
 
+# Python system includes
+import os
+
+# Our imports
+
 from . import test_results
 
 
@@ -200,14 +205,18 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
         print_matching_tests = category[2]
         detail_label = category[3]
 
+        test_base_dir = os.path.realpath(os.path.dirname(__file__))
+
         if print_matching_tests:
             # Sort by test name
             for (_, event) in result_events_by_status[result_status_id]:
-                self.out_file.write("{}: {}.{} ({})\n".format(
+                test_relative_path = os.path.relpath(
+                    os.path.realpath(event["test_filename"]),
+                    test_base_dir)
+                self.out_file.write("{}: {} ({})\n".format(
                     detail_label,
-                    event["test_class"],
                     event["test_name"],
-                    event["test_filename"]))
+                    test_relative_path))
 
     def _finish_output_no_lock(self):
         """Writes the test result report to the output file."""
@@ -236,9 +245,6 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
         result_events_by_status = self._partition_results_by_status(
             categories)
 
-        # Print the summary
-        self._print_summary_counts(categories, result_events_by_status)
-
         # Print the details
         have_details = self._has_printable_details(
             categories, result_events_by_status)
@@ -247,6 +253,10 @@ class BasicResultsFormatter(test_results.ResultsFormatter):
             for category in categories:
                 self._report_category_details(
                     category, result_events_by_status)
+
+        # Print the summary
+        self._print_summary_counts(categories, result_events_by_status)
+
 
     def _finish_output(self):
         """Prepare and write the results report as all incoming events have
