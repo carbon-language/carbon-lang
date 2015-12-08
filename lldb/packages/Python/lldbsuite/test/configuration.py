@@ -72,26 +72,12 @@ failuresPerCategory = {}
 # The path to LLDB.framework is optional.
 lldbFrameworkPath = None
 
-# The config file is optional.
-configFile = None
-
 # Test suite repeat count.  Can be overwritten with '-# count'.
 count = 1
 
-# The dictionary as a result of sourcing configFile.
-config = {}
-# The pre_flight and post_flight functions come from reading a config file.
-pre_flight = None
-post_flight = None
-# So do the lldbtest_remote_sandbox and lldbtest_remote_shell_template variables.
-test_remote = False
-lldbtest_remote_sandbox = None
-lldbtest_remote_shell_template = None
-
-# The 'archs' and 'compilers' can be specified via either command line or configFile,
-# with the command line overriding the configFile.  The corresponding options can be
-# specified more than once. For example, "-A x86_64 -A i386" => archs=['x86_64', 'i386']
-# and "-C gcc -C clang" => compilers=['gcc', 'clang'].
+# The 'archs' and 'compilers' can be specified via command line.  The corresponding
+# options can be specified more than once. For example, "-A x86_64 -A i386"
+# => archs=['x86_64', 'i386'] and "-C gcc -C clang" => compilers=['gcc', 'clang'].
 archs = None        # Must be initialized after option parsing
 compilers = None    # Must be initialized after option parsing
 

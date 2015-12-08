@@ -68,7 +68,6 @@ def create_parser():
 
     # Configuration options
     group = parser.add_argument_group('Configuration options')
-    group.add_argument('-c', metavar='config-file', help='Read a config file specified after this option')  # FIXME: additional doc.
     group.add_argument('--framework', metavar='framework-path', help='The path to LLDB.framework')
     group.add_argument('--executable', metavar='executable-path', help='The path to the lldb executable')
     group.add_argument('--libcxx', metavar='directory', help='The path to custom libc++ library')
