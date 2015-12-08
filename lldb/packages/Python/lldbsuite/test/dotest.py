@@ -410,11 +410,6 @@ def parseOptionsAndInitTestdirs():
     if args.w:
         os.environ['LLDB_WAIT_BETWEEN_TEST_CASES'] = 'YES'
 
-    if args.X:
-        if args.X.startswith('-'):
-            usage(parser)
-        configuration.excluded.add(args.X)
-
     if args.x:
         if args.x.startswith('-'):
             usage(parser)
@@ -859,7 +854,9 @@ def setupSysPath():
 def visit(prefix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""
 
-    if set(dir.split(os.sep)).intersection(configuration.excluded):
+    dir_components = set(dir.split(os.sep))
+    excluded_components = set(['.svn', '.git'])
+    if dir_components.intersection(excluded_components):
         #print("Detected an excluded dir component: %s" % dir)
         return
 

@@ -107,9 +107,6 @@ bmBreakpointSpec = None
 # The benchmark iteration count, as specified by the '-y' option.
 bmIterationCount = -1
 
-# By default, don't exclude any directories.  Use '-X' to add one excluded directory.
-excluded = set(['.svn', '.git'])
-
 # By default, failfast is False.  Use '-F' to overwrite it.
 failfast = False
 

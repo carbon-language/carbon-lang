@@ -63,7 +63,6 @@ def create_parser():
     group.add_argument('-f', metavar='filterspec', action='append', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
     X('-l', "Don't skip long running tests")
     group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
-    group.add_argument('-X', metavar='directory', help="Exclude a directory from consideration for test discovery. -X types => if 'types' appear in the pathname components of a potential testfile, it will be ignored")
     group.add_argument('-G', '--category', metavar='category', action='append', dest='categoriesList', help=textwrap.dedent('''Specify categories of test cases of interest. Can be specified more than once.'''))
     group.add_argument('--skip-category', metavar='category', action='append', dest='skipCategories', help=textwrap.dedent('''Specify categories of test cases to skip. Takes precedence over -G. Can be specified more than once.'''))
 
