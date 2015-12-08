@@ -120,11 +120,6 @@ filters = []
 # Use '-k' to specify a runhook.
 runHooks = []
 
-# If '-g' is specified, the filterspec is not exclusive.  If a test module does
-# not contain testclass.testmethod which matches the filterspec, the whole test
-# module is still admitted into our test suite.  fs4all flag defaults to True.
-fs4all = True
-
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 

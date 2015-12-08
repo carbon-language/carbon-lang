@@ -339,9 +339,6 @@ def parseOptionsAndInitTestdirs():
         # output-on-success.
         configuration.no_multiprocess_test_runner = True
 
-    if args.g:
-        configuration.fs4all = False
-
     if args.i:
         configuration.ignore = True
 
@@ -915,8 +912,7 @@ def visit(prefix, dir, names):
                     continue
 
             # Forgo this module if the (base, filterspec) combo is invalid
-            # and no '-g' option is specified
-            if configuration.filters and configuration.fs4all and not filtered:
+            if configuration.filters and not filtered:
                 continue
 
             # Add either the filtered test case(s) (which is done before) or the entire test class.
