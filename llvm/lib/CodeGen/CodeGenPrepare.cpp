@@ -5251,16 +5251,12 @@ bool CodeGenPrepare::placeDbgValues(Function &F) {
 
       Instruction *VI = dyn_cast_or_null<Instruction>(DVI->getValue());
       if (VI && VI != PrevNonDbgInst && !VI->isTerminator()) {
-        BasicBlock::iterator IP;
-        if (isa<PHINode>(VI))
-          IP = VI->getParent()->getFirstInsertionPt();
-        else
-          IP = ++VI->getIterator();
-        if (IP == VI->getParent()->end())
-          continue;
         DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
         DVI->removeFromParent();
-        VI->getParent()->getInstList().insert(IP, DVI);
+        if (isa<PHINode>(VI))
+          DVI->insertBefore(&*VI->getParent()->getFirstInsertionPt());
+        else
+          DVI->insertAfter(VI);
         MadeChange = true;
         ++NumDbgValueMoved;
       }
