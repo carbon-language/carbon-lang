@@ -50,14 +50,6 @@ static std::unique_ptr<Module> loadFile(const std::string &FileName,
   return Result;
 }
 
-// Get a Module for \p FileName from the cache, or load it lazily.
-Module &ModuleLazyLoaderCache::operator()(StringRef FileName) {
-  auto &Module = ModuleMap[FileName];
-  if (!Module)
-    Module = loadFile(FileName, Context);
-  return *Module;
-}
-
 /// Walk through the instructions in \p F looking for external
 /// calls not already in the \p CalledFunctions set. If any are
 /// found they are added to the \p Worklist for importing.
@@ -86,7 +78,8 @@ static unsigned ProcessImportWorklist(
     Module &DestModule, SmallVector<StringRef, 64> &Worklist,
     StringSet<> &CalledFunctions, Linker &TheLinker,
     const FunctionInfoIndex &Index,
-    std::function<Module &(StringRef FileName)> &LazyModuleLoader) {
+    std::function<std::unique_ptr<Module>(StringRef FileName)> &
+        LazyModuleLoader) {
   unsigned ImportCount = 0;
   while (!Worklist.empty()) {
     auto CalledFunctionName = Worklist.pop_back_val();
@@ -125,18 +118,18 @@ static unsigned ProcessImportWorklist(
     DEBUG(dbgs() << "Importing " << CalledFunctionName << " from " << FileName
                  << "\n");
 
-    // Get the module for the import (potentially from the cache).
-    auto &Module = LazyModuleLoader(FileName);
-    assert(&Module.getContext() == &DestModule.getContext());
+    // Get the module for the import
+    auto SrcModule = LazyModuleLoader(FileName);
+    assert(&SrcModule->getContext() == &DestModule.getContext());
 
     // The function that we will import!
-    GlobalValue *SGV = Module.getNamedValue(CalledFunctionName);
+    GlobalValue *SGV = SrcModule->getNamedValue(CalledFunctionName);
     StringRef ImportFunctionName = CalledFunctionName;
     if (!SGV) {
       // Might be local in source Module, promoted/renamed in DestModule.
       std::pair<StringRef, StringRef> Split =
           CalledFunctionName.split(".llvm.");
-      SGV = Module.getNamedValue(Split.first);
+      SGV = SrcModule->getNamedValue(Split.first);
 #ifndef NDEBUG
       // Assert that Split.second is module id
       uint64_t ModuleId;
@@ -169,7 +162,7 @@ static unsigned ProcessImportWorklist(
     // Link in the specified function.
     DenseSet<const GlobalValue *> FunctionsToImport;
     FunctionsToImport.insert(F);
-    if (TheLinker.linkInModule(Module, Linker::Flags::None, &Index,
+    if (TheLinker.linkInModule(*SrcModule, Linker::Flags::None, &Index,
                                &FunctionsToImport))
       report_fatal_error("Function Import: link error");
 
@@ -211,7 +204,7 @@ bool FunctionImporter::importFunctions(Module &DestModule) {
   Linker TheLinker(DestModule, DiagnosticHandler);
 
   ImportedCount += ProcessImportWorklist(DestModule, Worklist, CalledFunctions,
-                                         TheLinker, Index, getLazyModule);
+                                         TheLinker, Index, ModuleLoader);
 
   DEBUG(errs() << "Imported " << ImportedCount << " functions for Module "
                << DestModule.getModuleIdentifier() << "\n");
@@ -291,10 +284,10 @@ public:
     }
 
     // Perform the import now.
-    ModuleLazyLoaderCache Loader(M.getContext());
-    FunctionImporter Importer(*Index, diagnosticHandler,
-                              [&](StringRef Name)
-                                  -> Module &{ return Loader(Name); });
+    auto ModuleLoader = [&M](StringRef Identifier) {
+      return loadFile(Identifier, M.getContext());
+    };
+    FunctionImporter Importer(*Index, diagnosticHandler, ModuleLoader);
     return Importer.importFunctions(M);
 
     return false;
