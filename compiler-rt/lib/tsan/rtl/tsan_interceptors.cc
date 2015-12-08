@@ -445,7 +445,9 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
 }
 
 static void LongJmp(ThreadState *thr, uptr *env) {
-#if SANITIZER_FREEBSD || SANITIZER_MAC
+#ifdef __powerpc__
+  uptr mangled_sp = env[0];
+#elif SANITIZER_FREEBSD || SANITIZER_MAC
   uptr mangled_sp = env[2];
 #elif defined(SANITIZER_LINUX)
 # ifdef __aarch64__
@@ -453,7 +455,7 @@ static void LongJmp(ThreadState *thr, uptr *env) {
 # else
   uptr mangled_sp = env[6];
 # endif
-#endif  // SANITIZER_FREEBSD
+#endif
   // Find the saved buf by mangled_sp.
   for (uptr i = 0; i < thr->jmp_bufs.Size(); i++) {
     JmpBuf *buf = &thr->jmp_bufs[i];

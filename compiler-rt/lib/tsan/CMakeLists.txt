@@ -151,6 +151,11 @@ else()
       # Pass ASM file directly to the C++ compiler.
       set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
         LANGUAGE C)
+   elseif(arch MATCHES "powerpc64|powerpc64le")
+     set(TSAN_ASM_SOURCES rtl/tsan_rtl_ppc64.S)
+     # Pass ASM file directly to the C++ compiler.
+     set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+       LANGUAGE C)
     else()
       set(TSAN_ASM_SOURCES)
     endif()
