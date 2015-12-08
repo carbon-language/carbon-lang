@@ -55,9 +55,11 @@ GDBRemoteCommunicationServerPlatform::GDBRemoteCommunicationServerPlatform(const
     m_spawned_pids_mutex (Mutex::eMutexTypeRecursive),
     m_platform_sp (Platform::GetHostPlatform ()),
     m_port_map (),
-    m_port_offset(0),
-    m_pending_gdb_server{ LLDB_INVALID_PROCESS_ID, 0, "" }
+    m_port_offset(0)
 {
+    m_pending_gdb_server.pid = LLDB_INVALID_PROCESS_ID;
+    m_pending_gdb_server.port = 0;
+
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qC,
                                   &GDBRemoteCommunicationServerPlatform::Handle_qC);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qGetWorkingDir,
