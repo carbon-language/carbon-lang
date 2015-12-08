@@ -2727,7 +2727,7 @@ def warn_impcast_pointer_to_bool : Warning<
     "'true'">,
     InGroup<PointerBoolConversion>;
 def warn_cast_nonnull_to_bool : Warning<
-    "nonnull parameter '%0' will evaluate to "
+    "nonnull %select{function call|parameter}0 '%1' will evaluate to "
     "'true' on first encounter">,
     InGroup<PointerBoolConversion>;
 def warn_this_bool_conversion : Warning<
@@ -2742,9 +2742,10 @@ def warn_null_pointer_compare : Warning<
     "comparison of %select{address of|function|array}0 '%1' %select{not |}2"
     "equal to a null pointer is always %select{true|false}2">,
     InGroup<TautologicalPointerCompare>;
-def warn_nonnull_parameter_compare : Warning<
-    "comparison of nonnull parameter '%0' %select{not |}1"
-    "equal to a null pointer is %select{true|false}1 on first encounter">,
+def warn_nonnull_expr_compare : Warning<
+    "comparison of nonnull %select{function call|parameter}0 '%1' "
+    "%select{not |}2equal to a null pointer is '%select{true|false}2' on first "
+    "encounter">,
     InGroup<TautologicalPointerCompare>;
 def warn_this_null_compare : Warning<
   "'this' pointer cannot be null in well-defined C++ code; comparison may be "
