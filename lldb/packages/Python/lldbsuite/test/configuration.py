@@ -56,9 +56,6 @@ def setupCrashInfoHook():
 # The test suite.
 suite = unittest2.TestSuite()
 
-# By default, benchmarks tests are not run.
-just_do_benchmarks_test = False
-
 dont_do_dsym_test = False
 dont_do_dwarf_test = False
 dont_do_dwo_test = False

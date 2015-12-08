@@ -300,9 +300,6 @@ def parseOptionsAndInitTestdirs():
               "functionality (-G lldb-mi, --skip-category lldb-mi) instead.")
         sys.exit(1)
 
-    if args.plus_b:
-        lldbsuite.test.just_do_benchmarks_test = True
-
     if args.b:
         if args.b.startswith('-'):
             usage(parser)

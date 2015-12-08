@@ -521,8 +521,7 @@ def benchmarks_test(func):
         raise Exception("@benchmarks_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if not configuration.just_do_benchmarks_test:
-            self.skipTest("benchmarks tests")
+        self.skipTest("benchmarks test")
         return func(self, *args, **kwargs)
 
     # Mark this function as such to separate them from the regular tests.
@@ -1456,19 +1455,6 @@ class Base(unittest2.TestCase):
         # module cacheing subsystem to be confused with executable name "a.out"
         # used for all the test cases.
         self.testMethodName = self._testMethodName
-
-        # Benchmarks test is decorated with @benchmarks_test,
-        # which also sets the "__benchmarks_test__" attribute of the
-        # function object to True.
-        try:
-            if configuration.just_do_benchmarks_test:
-                testMethod = getattr(self, self._testMethodName)
-                if getattr(testMethod, "__benchmarks_test__", False):
-                    pass
-                else:
-                    self.skipTest("non benchmarks test")
-        except AttributeError:
-            pass
 
         # This is for the case of directly spawning 'lldb'/'gdb' and interacting
         # with it using pexpect.
