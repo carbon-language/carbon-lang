@@ -1174,6 +1174,57 @@ public:
 class CommandObjectProcessLoad : public CommandObjectParsed
 {
 public:
+    class CommandOptions : public Options
+    {
+    public:
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
+        {
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
+        }
+
+        ~CommandOptions () override = default;
+
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+            switch (short_option)
+            {
+            case 'i':
+                do_install = true;
+                if (option_arg && option_arg[0])
+                    install_path.SetFile(option_arg, false);
+                break;
+            default:
+                error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+                break;
+            }
+            return error;
+        }
+
+        void
+        OptionParsingStarting () override
+        {
+            do_install = false;
+            install_path.Clear();
+        }
+
+        const OptionDefinition*
+        GetDefinitions () override
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+        bool do_install;
+        FileSpec install_path;
+    };
 
     CommandObjectProcessLoad (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -1183,12 +1234,17 @@ public:
                              eCommandRequiresProcess       |
                              eCommandTryTargetAPILock      |
                              eCommandProcessMustBeLaunched |
-                             eCommandProcessMustBePaused   )
+                             eCommandProcessMustBePaused   ),
+        m_options (interpreter)
     {
     }
 
-    ~CommandObjectProcessLoad () override
+    ~CommandObjectProcessLoad () override = default;
+
+    Options *
+    GetOptions () override
     {
+        return &m_options;
     }
 
 protected:
@@ -1198,18 +1254,34 @@ protected:
         Process *process = m_exe_ctx.GetProcessPtr();
 
         const size_t argc = command.GetArgumentCount();
-        
         for (uint32_t i=0; i<argc; ++i)
         {
             Error error;
-            const char *image_path = command.GetArgumentAtIndex(i);
-            FileSpec image_spec (image_path, false);
             PlatformSP platform = process->GetTarget().GetPlatform();
-            platform->ResolveRemotePath(image_spec, image_spec);
-            uint32_t image_token = platform->LoadImage(process, image_spec, error);
+            const char *image_path = command.GetArgumentAtIndex(i);
+            uint32_t image_token = LLDB_INVALID_IMAGE_TOKEN;
+
+            if (!m_options.do_install)
+            {
+                FileSpec image_spec (image_path, false);
+                platform->ResolveRemotePath(image_spec, image_spec);
+                image_token = platform->LoadImage(process, FileSpec(), image_spec, error);
+            }
+            else if (m_options.install_path)
+            {
+                FileSpec image_spec (image_path, true);
+                platform->ResolveRemotePath(m_options.install_path, m_options.install_path);
+                image_token = platform->LoadImage(process, image_spec, m_options.install_path, error);
+            }
+            else
+            {
+                FileSpec image_spec (image_path, true);
+                image_token = platform->LoadImage(process, image_spec, FileSpec(), error);
+            }
+
             if (image_token != LLDB_INVALID_IMAGE_TOKEN)
             {
-                result.AppendMessageWithFormat ("Loading \"%s\"...ok\nImage %u loaded.\n", image_path, image_token);  
+                result.AppendMessageWithFormat ("Loading \"%s\"...ok\nImage %u loaded.\n", image_path, image_token);
                 result.SetStatus (eReturnStatusSuccessFinishResult);
             }
             else
@@ -1220,8 +1292,16 @@ protected:
         }
         return result.Succeeded();
     }
+    
+    CommandOptions m_options;
 };
 
+OptionDefinition
+CommandObjectProcessLoad::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "install", 'i', OptionParser::eOptionalArgument, nullptr, nullptr, 0, eArgTypePath, "Install the shared library to the target. If specified without an argument then the library will installed in the current working directory."},
+    { 0,                false, nullptr,    0 , 0,                               nullptr, nullptr, 0, eArgTypeNone, nullptr }
+};
 
 //-------------------------------------------------------------------------
 // CommandObjectProcessUnload

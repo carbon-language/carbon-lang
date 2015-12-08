@@ -174,9 +174,9 @@ public:
     DisconnectRemote () override;
 
     uint32_t
-    LoadImage (lldb_private::Process* process,
-               const lldb_private::FileSpec& image_spec,
-               lldb_private::Error& error) override;
+    DoLoadImage (lldb_private::Process* process,
+                 const lldb_private::FileSpec& remote_file,
+                 lldb_private::Error& error) override;
 
     lldb_private::Error
     UnloadImage (lldb_private::Process* process, uint32_t image_token) override;

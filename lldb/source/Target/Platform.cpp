@@ -1985,7 +1985,51 @@ Platform::GetUnixSignals()
 }
 
 uint32_t
-Platform::LoadImage(lldb_private::Process* process, const FileSpec& image_spec, Error& error)
+Platform::LoadImage(lldb_private::Process* process,
+                    const lldb_private::FileSpec& local_file,
+                    const lldb_private::FileSpec& remote_file,
+                    lldb_private::Error& error)
+{
+    if (local_file && remote_file)
+    {
+        // Both local and remote file was specified. Install the local file to the given location.
+        if (IsRemote() || local_file != remote_file)
+        {
+            error = Install(local_file, remote_file);
+            if (error.Fail())
+                return LLDB_INVALID_IMAGE_TOKEN;
+        }
+        return DoLoadImage(process, remote_file, error);
+    }
+
+    if (local_file)
+    {
+        // Only local file was specified. Install it to the current working directory.
+        FileSpec target_file = GetWorkingDirectory();
+        target_file.AppendPathComponent(local_file.GetFilename().AsCString());
+        if (IsRemote() || local_file != target_file)
+        {
+            error = Install(local_file, target_file);
+            if (error.Fail())
+                return LLDB_INVALID_IMAGE_TOKEN;
+        }
+        return DoLoadImage(process, target_file, error);
+    }
+
+    if (remote_file)
+    {
+        // Only remote file was specified so we don't have to do any copying
+        return DoLoadImage(process, remote_file, error);
+    }
+
+    error.SetErrorString("Neither local nor remote file was specified");
+    return LLDB_INVALID_IMAGE_TOKEN;
+}
+
+uint32_t
+Platform::DoLoadImage (lldb_private::Process* process,
+                       const lldb_private::FileSpec& remote_file,
+                       lldb_private::Error& error)
 {
     error.SetErrorString("LoadImage is not supported on the current platform");
     return LLDB_INVALID_IMAGE_TOKEN;
@@ -1994,5 +2038,5 @@ Platform::LoadImage(lldb_private::Process* process, const FileSpec& image_spec, 
 Error
 Platform::UnloadImage(lldb_private::Process* process, uint32_t image_token)
 {
-    return Error("UnLoadImage is not supported on the current platform");
+    return Error("UnloadImage is not supported on the current platform");
 }

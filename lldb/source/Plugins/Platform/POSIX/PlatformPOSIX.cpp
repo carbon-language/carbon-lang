@@ -898,10 +898,12 @@ PlatformPOSIX::EvaluateLibdlExpression(lldb_private::Process* process,
 }
 
 uint32_t
-PlatformPOSIX::LoadImage(lldb_private::Process* process, const FileSpec& image_spec, Error& error)
+PlatformPOSIX::DoLoadImage(lldb_private::Process* process,
+                           const lldb_private::FileSpec& remote_file,
+                           lldb_private::Error& error)
 {
     char path[PATH_MAX];
-    image_spec.GetPath(path, sizeof(path));
+    remote_file.GetPath(path, sizeof(path));
 
     StreamString expr;
     expr.Printf(R"(

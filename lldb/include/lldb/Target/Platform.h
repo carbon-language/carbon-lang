@@ -997,9 +997,18 @@ class ModuleCache;
         /// @param[in] process
         ///     The process to load the image.
         ///
-        /// @param[in] image_spec
-        ///     The image file spec that points to the shared library that
-        ///     you want to load.
+        /// @param[in] local_file
+        ///     The file spec that points to the shared library that you want
+        ///     to load if the library is located on the host. The library will
+        ///     be copied over to the location specified by remote_file or into
+        ///     the current working directory with the same filename if the
+        ///     remote_file isn't specified.
+        ///
+        /// @param[in] remote_file
+        ///     If local_file is specified then the location where the library
+        ///     should be copied over from the host. If local_file isn't
+        ///     specified, then the path for the shared library on the target
+        ///     what you want to load.
         ///
         /// @param[out] error
         ///     An error object that gets filled in with any errors that
@@ -1011,10 +1020,16 @@ class ModuleCache;
         ///     LLDB_INVALID_IMAGE_TOKEN will be returned if the shared
         ///     library can't be opened.
         //------------------------------------------------------------------
-        virtual uint32_t
+        uint32_t
         LoadImage (lldb_private::Process* process,
-                   const lldb_private::FileSpec& image_spec,
+                   const lldb_private::FileSpec& local_file,
+                   const lldb_private::FileSpec& remote_file,
                    lldb_private::Error& error);
+
+        virtual uint32_t
+        DoLoadImage (lldb_private::Process* process,
+                     const lldb_private::FileSpec& remote_file,
+                     lldb_private::Error& error);
 
         virtual Error
         UnloadImage (lldb_private::Process* process, uint32_t image_token);
