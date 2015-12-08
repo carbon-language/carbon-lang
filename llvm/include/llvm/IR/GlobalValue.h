@@ -256,8 +256,7 @@ public:
   static bool isWeakForLinker(LinkageTypes Linkage)  {
     return Linkage == WeakAnyLinkage || Linkage == WeakODRLinkage ||
            Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage ||
-           Linkage == CommonLinkage || Linkage == ExternalWeakLinkage ||
-           Linkage == AvailableExternallyLinkage;
+           Linkage == CommonLinkage || Linkage == ExternalWeakLinkage;
   }
 
   bool hasExternalLinkage() const { return isExternalLinkage(Linkage); }
