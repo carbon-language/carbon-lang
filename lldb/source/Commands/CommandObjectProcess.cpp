@@ -1051,78 +1051,46 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result) override
     {
-        
-        TargetSP target_sp (m_interpreter.GetDebugger().GetSelectedTarget());
-        Error error;        
-        Process *process = m_exe_ctx.GetProcessPtr();
-        if (process)
+        if (command.GetArgumentCount() != 1)
         {
-            if (process->IsAlive())
-            {
-                result.AppendErrorWithFormat ("Process %" PRIu64 " is currently being debugged, kill the process before connecting.\n",
-                                              process->GetID());
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-        }
-        
-        if (!target_sp)
-        {
-            // If there isn't a current target create one.
-            
-            error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
-                                                                              NULL,
-                                                                              NULL, 
-                                                                              false,
-                                                                              NULL, // No platform options
-                                                                              target_sp);
-            if (!target_sp || error.Fail())
-            {
-                result.AppendError(error.AsCString("Error creating target"));
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            m_interpreter.GetDebugger().GetTargetList().SetSelectedTarget(target_sp.get());
-        }
-        
-        if (command.GetArgumentCount() == 1)
-        {
-            const char *plugin_name = NULL;
-            if (!m_options.plugin_name.empty())
-                plugin_name = m_options.plugin_name.c_str();
-
-            const char *remote_url = command.GetArgumentAtIndex(0);
-            process = target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name, NULL).get();
-            
-            if (process)
-            {
-                error = process->ConnectRemote (process->GetTarget().GetDebugger().GetOutputFile().get(), remote_url);
-
-                if (error.Fail())
-                {
-                    result.AppendError(error.AsCString("Remote connect failed"));
-                    result.SetStatus (eReturnStatusFailed);
-                    target_sp->DeleteCurrentProcess();
-                    return false;
-                }
-            }
-            else
-            {
-                result.AppendErrorWithFormat ("Unable to find process plug-in for remote URL '%s'.\nPlease specify a process plug-in name with the --plugin option, or specify an object file using the \"file\" command.\n", 
-                                              remote_url);
-                result.SetStatus (eReturnStatusFailed);
-            }
-        }
-        else
-        {
-            result.AppendErrorWithFormat ("'%s' takes exactly one argument:\nUsage: %s\n", 
+            result.AppendErrorWithFormat ("'%s' takes exactly one argument:\nUsage: %s\n",
                                           m_cmd_name.c_str(),
                                           m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
+            return false;
         }
-        return result.Succeeded();
+
+        
+        Process *process = m_exe_ctx.GetProcessPtr();
+        if (process && process->IsAlive())
+        {
+            result.AppendErrorWithFormat ("Process %" PRIu64 " is currently being debugged, kill the process before connecting.\n",
+                                          process->GetID());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const char *plugin_name = nullptr;
+        if (!m_options.plugin_name.empty())
+            plugin_name = m_options.plugin_name.c_str();
+
+        Error error;
+        Debugger& debugger = m_interpreter.GetDebugger();
+        PlatformSP platform_sp = m_interpreter.GetPlatform(true);
+        ProcessSP process_sp = platform_sp->ConnectProcess(command.GetArgumentAtIndex(0),
+                                                           plugin_name,
+                                                           debugger,
+                                                           debugger.GetSelectedTarget().get(),
+                                                           error);
+        if (error.Fail() || process_sp == nullptr)
+        {
+            result.AppendError(error.AsCString("Error connecting to the process"));
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        return true;
     }
-    
+
     CommandOptions m_options;
 };
 

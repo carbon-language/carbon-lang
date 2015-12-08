@@ -1115,7 +1115,7 @@ def skipIfLinuxClang(func):
 # @skipIf(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), skip for gcc>=4.9 on linux with i386
 
 # TODO: refactor current code, to make skipIfxxx functions to call this function
-def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None, swig_version=None, py_version=None):
+def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None, swig_version=None, py_version=None, remote=None):
     def fn(self):
         oslist_passes = oslist is None or self.getPlatform() in oslist
         compiler_passes = compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))
@@ -1123,13 +1123,15 @@ def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, ar
         debug_info_passes = debug_info is None or self.debug_info in debug_info
         swig_version_passes = (swig_version is None) or (not hasattr(lldb, 'swig_version')) or (check_expected_version(swig_version[0], swig_version[1], lldb.swig_version))
         py_version_passes = (py_version is None) or check_expected_version(py_version[0], py_version[1], sys.version_info)
+        remote_passes = (remote is None) or (remote == (lldb.remote_platform is not None))
 
         return (oslist_passes and
                 compiler_passes and
                 arch_passes and
                 debug_info_passes and
                 swig_version_passes and
-                py_version_passes)
+                py_version_passes and
+                remote_passes)
 
     local_vars = locals()
     args = [x for x in inspect.getargspec(skipIf).args]

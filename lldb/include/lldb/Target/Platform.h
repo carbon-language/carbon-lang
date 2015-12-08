@@ -487,6 +487,13 @@ class ModuleCache;
                       Target *target,       // Can be nullptr, if nullptr create a new target, else use existing one
                       Error &error);
 
+        virtual lldb::ProcessSP
+        ConnectProcess (const char* connect_url,
+                        const char* plugin_name,
+                        lldb_private::Debugger &debugger,
+                        lldb_private::Target *target,
+                        lldb_private::Error &error);
+
         //------------------------------------------------------------------
         /// Attach to an existing process using a process ID.
         ///
@@ -1033,6 +1040,25 @@ class ModuleCache;
 
         virtual Error
         UnloadImage (lldb_private::Process* process, uint32_t image_token);
+
+        //------------------------------------------------------------------
+        /// Connect to all processes waiting for a debugger to attach
+        ///
+        /// If the platform have a list of processes waiting for a debugger
+        /// to connect to them then connect to all of these pending processes.
+        ///
+        /// @param[in] debugger
+        ///     The debugger used for the connect.
+        ///
+        /// @param[out] error
+        ///     If an error occurred during the connect then this object will
+        ///     contain the error message.
+        ///
+        /// @return
+        ///     The number of processes we are succesfully connected to.
+        //------------------------------------------------------------------
+        virtual size_t
+        ConnectToWaitingProcesses(lldb_private::Debugger& debugger, lldb_private::Error& error);
 
     protected:
         bool m_is_host;

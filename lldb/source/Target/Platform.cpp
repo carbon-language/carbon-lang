@@ -26,6 +26,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
@@ -2039,4 +2040,50 @@ Error
 Platform::UnloadImage(lldb_private::Process* process, uint32_t image_token)
 {
     return Error("UnloadImage is not supported on the current platform");
+}
+
+lldb::ProcessSP
+Platform::ConnectProcess(const char* connect_url,
+                         const char* plugin_name,
+                         lldb_private::Debugger &debugger,
+                         lldb_private::Target *target,
+                         lldb_private::Error &error)
+{
+    error.Clear();
+
+    if (!target)
+    {
+        TargetSP new_target_sp;
+        error = debugger.GetTargetList().CreateTarget(debugger,
+                                                      nullptr,
+                                                      nullptr,
+                                                      false,
+                                                      nullptr,
+                                                      new_target_sp);
+        target = new_target_sp.get();
+    }
+
+    if (!target || error.Fail())
+        return nullptr;
+
+    debugger.GetTargetList().SetSelectedTarget(target);
+
+    lldb::ProcessSP process_sp = target->CreateProcess(debugger.GetListener(),
+                                                       plugin_name,
+                                                       nullptr);
+    if (!process_sp)
+        return nullptr;
+
+    error = process_sp->ConnectRemote(debugger.GetOutputFile().get(), connect_url);
+    if (error.Fail())
+        return nullptr;
+
+    return process_sp;
+}
+
+size_t
+Platform::ConnectToWaitingProcesses(lldb_private::Debugger& debugger, lldb_private::Error& error)
+{
+    error.Clear();
+    return 0;
 }

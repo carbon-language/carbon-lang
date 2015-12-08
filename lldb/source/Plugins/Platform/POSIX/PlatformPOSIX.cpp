@@ -986,6 +986,23 @@ PlatformPOSIX::UnloadImage (lldb_private::Process* process, uint32_t image_token
         process->ResetImageToken(image_token);
     }
     return Error();
+}   
+
+lldb::ProcessSP
+PlatformPOSIX::ConnectProcess (const char* connect_url,
+                               const char* plugin_name,
+                               lldb_private::Debugger &debugger,
+                               lldb_private::Target *target,
+                               lldb_private::Error &error)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->ConnectProcess(connect_url,
+                                                    plugin_name,
+                                                    debugger,
+                                                    target,
+                                                    error);
+
+    return Platform::ConnectProcess(connect_url, plugin_name, debugger, target, error);
 }
 
 const char*
@@ -997,4 +1014,12 @@ PlatformPOSIX::GetLibdlFunctionDeclarations() const
               extern "C" int   dlclose(void*);
               extern "C" char* dlerror(void);
              )";
+}
+
+size_t
+PlatformPOSIX::ConnectToWaitingProcesses(Debugger& debugger, Error& error)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->ConnectToWaitingProcesses(debugger, error);
+    return Platform::ConnectToWaitingProcesses(debugger, error);
 }
