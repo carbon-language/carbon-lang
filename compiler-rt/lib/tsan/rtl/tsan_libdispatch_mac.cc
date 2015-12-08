@@ -33,6 +33,7 @@ typedef struct {
   dispatch_queue_t queue;
   void *orig_context;
   dispatch_function_t orig_work;
+  uptr object_to_acquire;
 } tsan_block_context_t;
 
 // The offsets of different fields of the dispatch_queue_t structure, exported
@@ -73,13 +74,14 @@ static tsan_block_context_t *AllocContext(ThreadState *thr, uptr pc,
   new_context->queue = queue;
   new_context->orig_context = orig_context;
   new_context->orig_work = orig_work;
+  new_context->object_to_acquire = (uptr)new_context;
   return new_context;
 }
 
 static void dispatch_callback_wrap_acquire(void *param) {
   SCOPED_INTERCEPTOR_RAW(dispatch_async_f_callback_wrap);
   tsan_block_context_t *context = (tsan_block_context_t *)param;
-  Acquire(thr, pc, (uptr)context);
+  Acquire(thr, pc, context->object_to_acquire);
   // In serial queues, work items can be executed on different threads, we need
   // to explicitly synchronize on the queue itself.
   if (IsQueueSerial(context->queue)) Acquire(thr, pc, (uptr)context->queue);
@@ -181,6 +183,67 @@ TSAN_INTERCEPTOR(long_t, dispatch_semaphore_wait, dispatch_semaphore_t dsema,
   long_t result = REAL(dispatch_semaphore_wait)(dsema, timeout);
   if (result == 0) Acquire(thr, pc, (uptr)dsema);
   return result;
+}
+
+TSAN_INTERCEPTOR(long_t, dispatch_group_wait, dispatch_group_t group,
+                 dispatch_time_t timeout) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_group_wait, group, timeout);
+  long_t result = REAL(dispatch_group_wait)(group, timeout);
+  if (result == 0) Acquire(thr, pc, (uptr)group);
+  return result;
+}
+
+TSAN_INTERCEPTOR(void, dispatch_group_leave, dispatch_group_t group) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_group_leave, group);
+  Release(thr, pc, (uptr)group);
+  REAL(dispatch_group_leave)(group);
+}
+
+TSAN_INTERCEPTOR(void, dispatch_group_async, dispatch_group_t group,
+                 dispatch_queue_t queue, dispatch_block_t block) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_group_async, group, queue, block);
+  dispatch_retain(group);
+  dispatch_group_enter(group);
+  WRAP(dispatch_async)(queue, ^(void) {
+    block();
+    WRAP(dispatch_group_leave)(group);
+    dispatch_release(group);
+  });
+}
+
+TSAN_INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
+                 dispatch_queue_t queue, void *context,
+                 dispatch_function_t work) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_group_async_f, group, queue, context, work);
+  dispatch_retain(group);
+  dispatch_group_enter(group);
+  WRAP(dispatch_async)(queue, ^(void) {
+    work(context);
+    WRAP(dispatch_group_leave)(group);
+    dispatch_release(group);
+  });
+}
+
+TSAN_INTERCEPTOR(void, dispatch_group_notify, dispatch_group_t group,
+                 dispatch_queue_t q, dispatch_block_t block) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_group_notify, group, q, block);
+  dispatch_block_t heap_block = Block_copy(block);
+  tsan_block_context_t *new_context =
+      AllocContext(thr, pc, q, heap_block, &invoke_and_release_block);
+  new_context->object_to_acquire = (uptr)group;
+  Release(thr, pc, (uptr)group);
+  REAL(dispatch_group_notify_f)(group, q, new_context,
+                                dispatch_callback_wrap_acquire);
+}
+
+TSAN_INTERCEPTOR(void, dispatch_group_notify_f, dispatch_group_t group,
+                 dispatch_queue_t q, void *context, dispatch_function_t work) {
+  SCOPED_TSAN_INTERCEPTOR(dispatch_group_notify_f, group, q, context, work);
+  tsan_block_context_t *new_context = AllocContext(thr, pc, q, context, work);
+  new_context->object_to_acquire = (uptr)group;
+  Release(thr, pc, (uptr)group);
+  REAL(dispatch_group_notify_f)(group, q, new_context,
+                                dispatch_callback_wrap_acquire);
 }
 
 }  // namespace __tsan
