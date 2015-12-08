@@ -278,9 +278,6 @@ def parseOptionsAndInitTestdirs():
     if args.skipCategories:
         configuration.skipCategories = test_categories.validate(args.skipCategories, False)
 
-    if args.D:
-        configuration.dumpSysPath = True
-
     if args.E:
         cflags_extras = args.E
         os.environ['CFLAGS_EXTRAS'] = cflags_extras
@@ -875,8 +872,6 @@ def setupSysPath():
 
         # This is to locate the lldb.py module.  Insert it right after sys.path[0].
         sys.path[1:1] = [lldbPythonDir]
-        if configuration.dumpSysPath:
-            print("sys.path:", sys.path)
 
 def visit(prefix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""

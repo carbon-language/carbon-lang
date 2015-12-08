@@ -110,9 +110,6 @@ compilers = None    # Must be initialized after option parsing
 # just that.
 cflags_extras = ''
 
-# Dump the Python sys.path variable.  Use '-D' to dump sys.path.
-dumpSysPath = False
-
 # Full path of the benchmark executable, as specified by the '-e' option.
 bmExecutable = None
 # The breakpoint specification of bmExecutable, as specified by the '-x' option.

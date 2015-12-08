@@ -56,7 +56,6 @@ def create_parser():
     # FIXME? This won't work for different extra flags according to each arch.
     group.add_argument('-E', metavar='extra-flags', help=textwrap.dedent('''Specify the extra flags to be passed to the toolchain when building the inferior programs to be debugged
                                                            suggestions: do not lump the "-A arch1 -A arch2" together such that the -E option applies to only one of the architectures'''))
-    X('-D', 'Dump the Python sys.path variable')
 
     # Test filtering options
     group = parser.add_argument_group('Test filtering options')
