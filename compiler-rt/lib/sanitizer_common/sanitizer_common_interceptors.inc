@@ -403,10 +403,10 @@ DECLARE_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_memcmp, uptr called_pc,
                               const void *s1, const void *s2, uptr n)
 
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, memcmp, a1, a2, size);
   if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
     return internal_memcmp(a1, a2, size);
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, memcmp, a1, a2, size);
   CALL_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_memcmp, GET_CALLER_PC(), a1,
                              a2, size);
   if (common_flags()->intercept_memcmp) {
