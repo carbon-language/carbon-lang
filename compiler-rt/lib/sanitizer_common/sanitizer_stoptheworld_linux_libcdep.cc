@@ -15,7 +15,7 @@
 #include "sanitizer_platform.h"
 
 #if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__) || \
-                        defined(__aarch64__))
+                        defined(__aarch64__) || defined(__powerpc64__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -511,5 +511,5 @@ uptr SuspendedThreadsList::RegisterCount() {
 }
 } // namespace __sanitizer
 
-#endif // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
-       // || defined(__aarch64__)
+#endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
+        // || defined(__aarch64__) || defined(__powerpc64__)

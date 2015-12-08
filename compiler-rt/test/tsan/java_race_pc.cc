@@ -1,4 +1,8 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
+// This test fails on powerpc64 on both VMA (44 and 46).
+// The Tsan report is returning wrong information about
+// the location of the race.
+// XFAIL: powerpc64
 #include "java.h"
 
 void foobar() {

@@ -244,11 +244,19 @@ void InitializePlatformEarly() {
 #ifdef TSAN_RUNTIME_VMA
   vmaSize =
     (MostSignificantSetBitIndex(GET_CURRENT_FRAME()) + 1);
+#if defined(__aarch64__)
   if (vmaSize != 39 && vmaSize != 42) {
     Printf("FATAL: ThreadSanitizer: unsupported VMA range\n");
     Printf("FATAL: Found %d - Supported 39 and 42\n", vmaSize);
     Die();
   }
+#elif defined(__powerpc64__)
+  if (vmaSize != 44 && vmaSize != 46) {
+    Printf("FATAL: ThreadSanitizer: unsupported VMA range\n");
+    Printf("FATAL: Found %d - Supported 42 and 46\n", vmaSize);
+    Die();
+  }
+#endif
 #endif
 }
 

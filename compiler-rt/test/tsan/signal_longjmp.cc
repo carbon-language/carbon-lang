@@ -5,6 +5,10 @@
 
 // Longjmp assembly has not been implemented for mips64 yet
 // XFAIL: mips64
+// This test fails on powerpc64 (VMA=44), a segmentation fault
+// error happens at the second assignment
+// "((volatile int *volatile)mem)[1] = 1".
+// XFAIL: powerpc64
 
 #include <setjmp.h>
 #include <signal.h>
