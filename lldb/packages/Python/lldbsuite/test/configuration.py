@@ -221,3 +221,14 @@ all_tests = set()
 # safe default
 setCrashInfoHook = lambda x : None
 __setupCrashInfoHook()
+
+def shouldSkipBecauseOfCategories(test_categories):
+    if useCategories:
+        if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
+            return True
+
+    for category in skipCategories:
+        if category in test_categories:
+            return True
+
+    return False
