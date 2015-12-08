@@ -83,13 +83,14 @@ static unsigned ProcessImportWorklist(
   unsigned ImportCount = 0;
   while (!Worklist.empty()) {
     auto CalledFunctionName = Worklist.pop_back_val();
-    DEBUG(dbgs() << "Process import for " << CalledFunctionName << "\n");
+    DEBUG(dbgs() << DestModule.getModuleIdentifier() << "Process import for "
+                 << CalledFunctionName << "\n");
 
     // Try to get a summary for this function call.
     auto InfoList = Index.findFunctionInfoList(CalledFunctionName);
     if (InfoList == Index.end()) {
-      DEBUG(dbgs() << "No summary for " << CalledFunctionName
-                   << " Ignoring.\n");
+      DEBUG(dbgs() << DestModule.getModuleIdentifier() << "No summary for "
+                   << CalledFunctionName << " Ignoring.\n");
       continue;
     }
     assert(!InfoList->second.empty() && "No summary, error at import?");
@@ -101,15 +102,16 @@ static unsigned ProcessImportWorklist(
     auto *Summary = Info->functionSummary();
     if (!Summary) {
       // FIXME: in case we are lazyloading summaries, we can do it now.
-      DEBUG(dbgs() << "Missing summary for  " << CalledFunctionName
+      DEBUG(dbgs() << DestModule.getModuleIdentifier()
+                   << " Missing summary for  " << CalledFunctionName
                    << ", error at import?\n");
       llvm_unreachable("Missing summary");
     }
 
     if (Summary->instCount() > ImportInstrLimit) {
-      DEBUG(dbgs() << "Skip import of " << CalledFunctionName << " with "
-                   << Summary->instCount() << " instructions (limit "
-                   << ImportInstrLimit << ")\n");
+      DEBUG(dbgs() << DestModule.getModuleIdentifier() << " Skip import of "
+                   << CalledFunctionName << " with " << Summary->instCount()
+                   << " instructions (limit " << ImportInstrLimit << ")\n");
       continue;
     }
 
@@ -153,7 +155,8 @@ static unsigned ProcessImportWorklist(
     // the order they are seen and selected by the linker, changing program
     // semantics.
     if (SGV->hasWeakAnyLinkage()) {
-      DEBUG(dbgs() << "Ignoring import request for weak-any "
+      DEBUG(dbgs() << DestModule.getModuleIdentifier()
+                   << " Ignoring import request for weak-any "
                    << (isa<Function>(SGV) ? "function " : "alias ")
                    << CalledFunctionName << " from " << FileName << "\n");
       continue;
@@ -183,7 +186,7 @@ static unsigned ProcessImportWorklist(
 // The current implementation imports every called functions that exists in the
 // summaries index.
 bool FunctionImporter::importFunctions(Module &DestModule) {
-  DEBUG(errs() << "Starting import for Module "
+  DEBUG(dbgs() << "Starting import for Module "
                << DestModule.getModuleIdentifier() << "\n");
   unsigned ImportedCount = 0;
 
