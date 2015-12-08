@@ -238,9 +238,7 @@ class ScopedReport {
   ErrorType Type;
 
 public:
-  ScopedReport(ReportOptions Opts, Location SummaryLoc,
-               ErrorType Type = ErrorType::GenericUB);
-  void setErrorType(ErrorType T) { Type = T; }
+  ScopedReport(ReportOptions Opts, Location SummaryLoc, ErrorType Type);
   ~ScopedReport();
 };
 

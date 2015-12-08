@@ -51,24 +51,36 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
     Loc = FallbackLoc;
   }
 
-  ScopedReport R(Opts, Loc);
+  ErrorType ET;
+  if (!Pointer)
+    ET = ErrorType::NullPointerUse;
+  else if (Data->Alignment && (Pointer & (Data->Alignment - 1)))
+    ET = ErrorType::MisalignedPointerUse;
+  else
+    ET = ErrorType::InsufficientObjectSize;
 
-  if (!Pointer) {
-    R.setErrorType(ErrorType::NullPointerUse);
+  ScopedReport R(Opts, Loc, ET);
+
+  switch (ET) {
+  case ErrorType::NullPointerUse:
     Diag(Loc, DL_Error, "%0 null pointer of type %1")
-      << TypeCheckKinds[Data->TypeCheckKind] << Data->Type;
-  } else if (Data->Alignment && (Pointer & (Data->Alignment - 1))) {
-    R.setErrorType(ErrorType::MisalignedPointerUse);
+        << TypeCheckKinds[Data->TypeCheckKind] << Data->Type;
+    break;
+  case ErrorType::MisalignedPointerUse:
     Diag(Loc, DL_Error, "%0 misaligned address %1 for type %3, "
                         "which requires %2 byte alignment")
-      << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer
-      << Data->Alignment << Data->Type;
-  } else {
-    R.setErrorType(ErrorType::InsufficientObjectSize);
+        << TypeCheckKinds[Data->TypeCheckKind] << (void *)Pointer
+        << Data->Alignment << Data->Type;
+    break;
+  case ErrorType::InsufficientObjectSize:
     Diag(Loc, DL_Error, "%0 address %1 with insufficient space "
                         "for an object of type %2")
-      << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer << Data->Type;
+        << TypeCheckKinds[Data->TypeCheckKind] << (void *)Pointer << Data->Type;
+    break;
+  default:
+    UNREACHABLE("unexpected error type!");
   }
+
   if (Pointer)
     Diag(Pointer, DL_Note, "pointer points here");
 }
@@ -157,19 +169,27 @@ static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts, Loc);
-
   Value LHSVal(Data->Type, LHS);
   Value RHSVal(Data->Type, RHS);
-  if (RHSVal.isMinusOne()) {
-    R.setErrorType(ErrorType::SignedIntegerOverflow);
-    Diag(Loc, DL_Error,
-         "division of %0 by -1 cannot be represented in type %1")
-      << LHSVal << Data->Type;
-  } else {
-    R.setErrorType(Data->Type.isIntegerTy() ? ErrorType::IntegerDivideByZero
-                                            : ErrorType::FloatDivideByZero);
+
+  ErrorType ET;
+  if (RHSVal.isMinusOne())
+    ET = ErrorType::SignedIntegerOverflow;
+  else if (Data->Type.isIntegerTy())
+    ET = ErrorType::IntegerDivideByZero;
+  else
+    ET = ErrorType::FloatDivideByZero;
+
+  ScopedReport R(Opts, Loc, ET);
+
+  switch (ET) {
+  case ErrorType::SignedIntegerOverflow:
+    Diag(Loc, DL_Error, "division of %0 by -1 cannot be represented in type %1")
+        << LHSVal << Data->Type;
+    break;
+  default:
     Diag(Loc, DL_Error, "division by zero");
+    break;
   }
 }
 
@@ -193,26 +213,31 @@ static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts, Loc);
-
   Value LHSVal(Data->LHSType, LHS);
   Value RHSVal(Data->RHSType, RHS);
-  if (RHSVal.isNegative()) {
-    R.setErrorType(ErrorType::InvalidShiftExponent);
-    Diag(Loc, DL_Error, "shift exponent %0 is negative") << RHSVal;
-  } else if (RHSVal.getPositiveIntValue() >=
-             Data->LHSType.getIntegerBitWidth()) {
-    R.setErrorType(ErrorType::InvalidShiftExponent);
-    Diag(Loc, DL_Error, "shift exponent %0 is too large for %1-bit type %2")
-        << RHSVal << Data->LHSType.getIntegerBitWidth() << Data->LHSType;
-  } else if (LHSVal.isNegative()) {
-    R.setErrorType(ErrorType::InvalidShiftBase);
-    Diag(Loc, DL_Error, "left shift of negative value %0") << LHSVal;
+
+  ErrorType ET;
+  if (RHSVal.isNegative() ||
+      RHSVal.getPositiveIntValue() >= Data->LHSType.getIntegerBitWidth())
+    ET = ErrorType::InvalidShiftExponent;
+  else
+    ET = ErrorType::InvalidShiftBase;
+
+  ScopedReport R(Opts, Loc, ET);
+
+  if (ET == ErrorType::InvalidShiftExponent) {
+    if (RHSVal.isNegative())
+      Diag(Loc, DL_Error, "shift exponent %0 is negative") << RHSVal;
+    else
+      Diag(Loc, DL_Error, "shift exponent %0 is too large for %1-bit type %2")
+          << RHSVal << Data->LHSType.getIntegerBitWidth() << Data->LHSType;
   } else {
-    R.setErrorType(ErrorType::InvalidShiftBase);
-    Diag(Loc, DL_Error,
-         "left shift of %0 by %1 places cannot be represented in type %2")
-        << LHSVal << RHSVal << Data->LHSType;
+    if (LHSVal.isNegative())
+      Diag(Loc, DL_Error, "left shift of negative value %0") << LHSVal;
+    else
+      Diag(Loc, DL_Error,
+           "left shift of %0 by %1 places cannot be represented in type %2")
+          << LHSVal << RHSVal << Data->LHSType;
   }
 }
 
@@ -481,7 +506,7 @@ static void handleCFIBadIcall(CFIBadIcallData *Data, ValueHandle Function,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts, Loc);
+  ScopedReport R(Opts, Loc, ErrorType::CFIBadType);
 
   Diag(Loc, DL_Error, "control flow integrity check for type %0 failed during "
                       "indirect function call")
