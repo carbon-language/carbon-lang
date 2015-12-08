@@ -220,7 +220,7 @@ struct ReportOptions {
 };
 
 enum class ErrorType {
-#define UBSAN_CHECK(Name, SummaryKind, FlagName) Name,
+#define UBSAN_CHECK(Name, SummaryKind, FSanitizeFlagName) Name,
 #include "ubsan_checks.inc"
 #undef UBSAN_CHECK
 };

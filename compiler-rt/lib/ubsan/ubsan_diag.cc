@@ -45,7 +45,7 @@ static void MaybePrintStackTrace(uptr pc, uptr bp) {
 
 static const char *ConvertTypeToString(ErrorType Type) {
   switch (Type) {
-#define UBSAN_CHECK(Name, SummaryKind, FlagName)                               \
+#define UBSAN_CHECK(Name, SummaryKind, FSanitizeFlagName)                      \
   case ErrorType::Name:                                                        \
     return SummaryKind;
 #include "ubsan_checks.inc"
