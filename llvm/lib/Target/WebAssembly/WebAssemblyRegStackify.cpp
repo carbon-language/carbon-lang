@@ -15,7 +15,7 @@
 /// are then marked as "stackified", meaning references to them are replaced by
 /// "push" and "pop" from the stack.
 ///
-/// This is primarily a code size optimiation, since temporary values on the
+/// This is primarily a code size optimization, since temporary values on the
 /// expression don't need to be named.
 ///
 //===----------------------------------------------------------------------===//
