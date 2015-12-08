@@ -78,10 +78,6 @@ def uimm6_ptr : Operand<iPTR> {
   let PrintMethod = "printUnsignedImm8";
 }
 
-def uimm8 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm8";
-}
-
 def simm5 : Operand<i32>;
 
 def vsplat_uimm1 : Operand<vAny> {

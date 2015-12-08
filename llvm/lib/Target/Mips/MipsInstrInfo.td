@@ -394,8 +394,10 @@ class ConstantUImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = [],
   let DiagnosticType = "UImm" # Bits # "_" # Offset;
 }
 
+def ConstantUImm8AsmOperandClass
+    : ConstantUImmAsmOperandClass<8, []>;
 def ConstantUImm6AsmOperandClass
-    : ConstantUImmAsmOperandClass<6, []>;
+    : ConstantUImmAsmOperandClass<6, [ConstantUImm8AsmOperandClass]>;
 def ConstantUImm5Plus32AsmOperandClass
     : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass], 32>;
 def ConstantUImm5Plus32NormalizeAsmOperandClass
@@ -512,7 +514,7 @@ def uimmz       : Operand<i32> {
 }
 
 // Unsigned Operands
-foreach I = {1, 2, 3, 4, 5, 6} in
+foreach I = {1, 2, 3, 4, 5, 6, 8} in
   def uimm # I : Operand<i32> {
     let PrintMethod = "printUnsignedImm";
     let ParserMatchClass =
