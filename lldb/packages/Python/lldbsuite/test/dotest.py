@@ -1350,7 +1350,7 @@ def run_suite():
 
             # First, write out the number of collected test cases.
             if not configuration.parsable:
-                sys.stderr.write(separator + "\n")
+                sys.stderr.write(configuration.separator + "\n")
                 sys.stderr.write("Collected %d test%s\n\n"
                                  % (configuration.suite.countTestCases(),
                                     configuration.suite.countTestCases() != 1 and "s" or ""))
