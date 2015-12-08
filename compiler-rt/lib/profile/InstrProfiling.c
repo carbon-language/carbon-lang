@@ -203,7 +203,7 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
    threads may still be updating the value profile data and creating new
    value entries. To accommadate this, we need to add extra bytes to the
    data buffer. The size of the extra space is controlled by an environment
-   varaible. */
+   variable. */
 static unsigned getVprofExtraBytes() {
   const char *ExtraStr =
       GetEnvHook ? GetEnvHook("LLVM_VALUE_PROF_BUFFER_EXTRA") : 0;
