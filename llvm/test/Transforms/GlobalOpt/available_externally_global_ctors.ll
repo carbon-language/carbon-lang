@@ -7,11 +7,11 @@ target triple = "x86_64-apple-macosx10.11.0"
 ; CHECK: @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @foo_static_init, i8* null }]
 
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @foo_static_init, i8* null }]
-@foo_external = available_externally global void ()* null, align 8
+@foo_external = available_externally global void ()* null
 
 define internal void @foo_static_init() {
 entry:
-  store void ()* @foo_impl, void ()** @foo_external, align 8
+  store void ()* @foo_impl, void ()** @foo_external
   ret void
 }
 
