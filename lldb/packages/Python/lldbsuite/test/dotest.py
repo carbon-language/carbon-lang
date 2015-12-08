@@ -239,7 +239,6 @@ test_runner_name = None
 # Test results handling globals
 results_filename = None
 results_port = None
-results_file_object = None
 results_formatter_name = None
 results_formatter_object = None
 results_formatter_options = None
@@ -910,73 +909,24 @@ def createSocketToLocalPort(port):
 def setupTestResults():
     """Sets up test results-related objects based on arg settings."""
     global results_filename
-    global results_file_object
     global results_formatter_name
     global results_formatter_object
     global results_formatter_options
     global results_port
 
-    default_formatter_name = None
-    cleanup_func = None
+    # Setup the results formatter configuration.
+    config = result_formatter.FormatterConfig()
+    config.filename = results_filename
+    config.formatter_name = results_formatter_name
+    config.formatter_options = results_formatter_options
+    config.port = results_port
 
-    if results_filename:
-        # Open the results file for writing.
-        if results_filename == 'stdout':
-            results_file_object = sys.stdout
-            cleanup_func = None
-        elif results_filename == 'stderr':
-            results_file_object = sys.stderr
-            cleanup_func = None
-        else:
-            results_file_object = open(results_filename, "w")
-            cleanup_func = results_file_object.close
-        default_formatter_name = "lldbsuite.test.result_formatter.XunitFormatter"
-    elif results_port:
-        # Connect to the specified localhost port.
-        results_file_object, cleanup_func = createSocketToLocalPort(
-            results_port)
-        default_formatter_name = (
-            "lldbsuite.test.result_formatter.RawPickledFormatter")
+    # Create the results formatter.
+    formatter_spec = result_formatter.create_results_formatter(config)
+    if formatter_spec is not None and formatter_spec.formatter is not None:
+        results_formatter_object = formatter_spec.formatter
 
-    # If we have a results formatter name specified and we didn't specify
-    # a results file, we should use stdout.
-    if results_formatter_name is not None and results_file_object is None:
-        # Use stdout.
-        results_file_object = sys.stdout
-        cleanup_func = None
-
-    if results_file_object:
-        # We care about the formatter.  Choose user-specified or, if
-        # none specified, use the default for the output type.
-        if results_formatter_name:
-            formatter_name = results_formatter_name
-        else:
-            formatter_name = default_formatter_name
-
-        # Create an instance of the class.
-        # First figure out the package/module.
-        components = formatter_name.split(".")
-        module = importlib.import_module(".".join(components[:-1]))
-
-        # Create the class name we need to load.
-        clazz = getattr(module, components[-1])
-
-        # Handle formatter options for the results formatter class.
-        formatter_arg_parser = clazz.arg_parser()
-        if results_formatter_options and len(results_formatter_options) > 0:
-            command_line_options = results_formatter_options
-        else:
-            command_line_options = []
-
-        formatter_options = formatter_arg_parser.parse_args(
-            command_line_options)
-
-        # Create the TestResultsFormatter given the processed options.
-        results_formatter_object = clazz(
-            results_file_object, formatter_options)
-
-        # Start the results formatter session - we'll only have one
-        # during a given dotest process invocation.
+        # Send an intialize message to the formatter.
         initialize_event = EventBuilder.bare_event("initialize")
         if isMultiprocessTestRunner():
             if test_runner_name is not None and test_runner_name == "serial":
@@ -989,19 +939,11 @@ def setupTestResults():
             worker_count = 1
         initialize_event["worker_count"] = worker_count
 
-        results_formatter_object.handle_event(initialize_event)
+        formatter_spec.formatter.handle_event(initialize_event)
 
-        def shutdown_formatter():
-            # Tell the formatter to write out anything it may have
-            # been saving until the very end (e.g. xUnit results
-            # can't complete its output until this point).
-            results_formatter_object.send_terminate_as_needed()
-
-            # And now close out the output file-like object.
-            if cleanup_func is not None:
-                cleanup_func()
-
-        atexit.register(shutdown_formatter)
+        # Make sure we clean up the formatter on shutdown.
+        if formatter_spec.cleanup_func is not None:
+            atexit.register(formatter_spec.cleanup_func)
 
 
 def getOutputPaths(lldbRootDirectory):
