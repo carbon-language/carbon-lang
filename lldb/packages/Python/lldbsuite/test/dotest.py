@@ -300,17 +300,6 @@ def parseOptionsAndInitTestdirs():
               "functionality (-G lldb-mi, --skip-category lldb-mi) instead.")
         sys.exit(1)
 
-    if args.b:
-        if args.b.startswith('-'):
-            usage(parser)
-        blacklistFile = args.b
-        if not os.path.isfile(blacklistFile):
-            print('Blacklist file:', blacklistFile, 'does not exist!')
-            usage(parser)
-        # Now read the blacklist contents and assign it to blacklist.
-        execfile(blacklistFile, globals(), configuration.blacklistConfig)
-        configuration.blacklist = configuration.blacklistConfig.get('blacklist')
-
     if args.c:
         if args.c.startswith('-'):
             usage(parser)

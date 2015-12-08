@@ -2420,18 +2420,6 @@ class TestBase(Base):
         # Works with the test driver to conditionally skip tests via decorators.
         Base.setUp(self)
 
-        try:
-            blacklist = configuration.blacklist
-            if blacklist:
-                className = self.__class__.__name__
-                classAndMethodName = "%s.%s" % (className, self._testMethodName)
-                if className in blacklist:
-                    self.skipTest(blacklist.get(className))
-                elif classAndMethodName in blacklist:
-                    self.skipTest(blacklist.get(classAndMethodName))
-        except AttributeError:
-            pass
-
         # Insert some delay between successive test cases if specified.
         self.doDelay()
 

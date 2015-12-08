@@ -60,13 +60,6 @@ dont_do_dsym_test = False
 dont_do_dwarf_test = False
 dont_do_dwo_test = False
 
-# The blacklist is optional (-b blacklistFile) and allows a central place to skip
-# testclass's and/or testclass.testmethod's.
-blacklist = None
-
-# The dictionary as a result of sourcing blacklistFile.
-blacklistConfig = {}
-
 # The list of categories we said we care about
 categoriesList = None
 # set to true if we are going to use categories for cherry-picking test cases
