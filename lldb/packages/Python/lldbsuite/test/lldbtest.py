@@ -58,6 +58,7 @@ import six
 
 # LLDB modules
 import lldb
+from . import configuration
 from . import lldbtest_config
 from . import lldbutil
 from . import test_categories
@@ -460,9 +461,9 @@ def target_is_android():
 
 def android_device_api():
     if not hasattr(android_device_api, 'result'):
-        assert lldb.platform_url is not None
+        assert configuration.lldb_platform_url is not None
         device_id = None
-        parsed_url = urlparse.urlparse(lldb.platform_url)
+        parsed_url = urlparse.urlparse(configuration.lldb_platform_url)
         host_name = parsed_url.netloc.split(":")[0]
         if host_name != 'localhost':
             device_id = host_name
@@ -520,7 +521,7 @@ def benchmarks_test(func):
         raise Exception("@benchmarks_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if not lldb.just_do_benchmarks_test:
+        if not configuration.just_do_benchmarks_test:
             self.skipTest("benchmarks tests")
         return func(self, *args, **kwargs)
 
@@ -547,7 +548,7 @@ def dsym_test(func):
         raise Exception("@dsym_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_dsym_test:
+        if configuration.dont_do_dsym_test:
             self.skipTest("dsym tests")
         return func(self, *args, **kwargs)
 
@@ -561,7 +562,7 @@ def dwarf_test(func):
         raise Exception("@dwarf_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_dwarf_test:
+        if configuration.dont_do_dwarf_test:
             self.skipTest("dwarf tests")
         return func(self, *args, **kwargs)
 
@@ -575,7 +576,7 @@ def dwo_test(func):
         raise Exception("@dwo_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_dwo_test:
+        if configuration.dont_do_dwo_test:
             self.skipTest("dwo tests")
         return func(self, *args, **kwargs)
 
@@ -589,7 +590,7 @@ def debugserver_test(func):
         raise Exception("@debugserver_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_debugserver_test:
+        if configuration.dont_do_debugserver_test:
             self.skipTest("debugserver tests")
         return func(self, *args, **kwargs)
 
@@ -603,7 +604,7 @@ def llgs_test(func):
         raise Exception("@llgs_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_llgs_test:
+        if configuration.dont_do_llgs_test:
             self.skipTest("llgs tests")
         return func(self, *args, **kwargs)
 
@@ -617,7 +618,7 @@ def not_remote_testsuite_ready(func):
         raise Exception("@not_remote_testsuite_ready can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.lldbtest_remote_sandbox or lldb.remote_platform:
+        if configuration.lldbtest_remote_sandbox or lldb.remote_platform:
             self.skipTest("not ready for remote testsuite")
         return func(self, *args, **kwargs)
 
@@ -927,7 +928,7 @@ def skipIfNoSBHeaders(func):
 
 def skipIfiOSSimulator(func):
     """Decorate the item to skip tests that should be skipped on the iOS Simulator."""
-    return unittest2.skipIf(hasattr(lldb, 'remote_platform_name') and lldb.remote_platform_name == 'ios-simulator', 'skip on the iOS Simulator')(func)
+    return unittest2.skipIf(configuration.lldb_platform_name == 'ios-simulator', 'skip on the iOS Simulator')(func)
 
 def skipIfFreeBSD(func):
     """Decorate the item to skip tests that should be skipped on FreeBSD."""
@@ -1337,7 +1338,7 @@ class Base(unittest2.TestCase):
         Do class-wide cleanup.
         """
 
-        if doCleanup and not lldb.skip_build_and_cleanup:
+        if doCleanup and not configuration.skip_build_and_cleanup:
             # First, let's do the platform-specific cleanup.
             module = builder_module()
             module.cleanup()
@@ -1458,7 +1459,7 @@ class Base(unittest2.TestCase):
         # which also sets the "__benchmarks_test__" attribute of the
         # function object to True.
         try:
-            if lldb.just_do_benchmarks_test:
+            if configuration.just_do_benchmarks_test:
                 testMethod = getattr(self, self._testMethodName)
                 if getattr(testMethod, "__benchmarks_test__", False):
                     pass
@@ -1556,7 +1557,7 @@ class Base(unittest2.TestCase):
 
         See also dotest.py where lldb.runHooks are processed/populated.
         """
-        if not lldb.runHooks:
+        if not configuration.runHooks:
             self.skipTest("No runhooks specified for lldb, skip the test")
         if use_cmd_api:
             for hook in lldb.runhooks:
@@ -1853,16 +1854,16 @@ class Base(unittest2.TestCase):
         # output tracebacks into session
         pairs = []
         if self.__errored__:
-            pairs = lldb.test_result.errors
+            pairs = configuration.test_result.errors
             prefix = 'Error'
         elif self.__cleanup_errored__:
-            pairs = lldb.test_result.cleanup_errors
+            pairs = configuration.test_result.cleanup_errors
             prefix = 'CleanupError'
         elif self.__failed__:
-            pairs = lldb.test_result.failures
+            pairs = configuration.test_result.failures
             prefix = 'Failure'
         elif self.__expected__:
-            pairs = lldb.test_result.expectedFailures
+            pairs = configuration.test_result.expectedFailures
             prefix = 'ExpectedFailure'
         elif self.__skipped__:
             prefix = 'SkippedTest'
@@ -2158,7 +2159,7 @@ class Base(unittest2.TestCase):
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build the default binaries."""
-        if lldb.skip_build_and_cleanup:
+        if configuration.skip_build_and_cleanup:
             return
         module = builder_module()
         if target_is_android():
@@ -2168,7 +2169,7 @@ class Base(unittest2.TestCase):
 
     def buildDsym(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build binaries with dsym info."""
-        if lldb.skip_build_and_cleanup:
+        if configuration.skip_build_and_cleanup:
             return
         module = builder_module()
         if not module.buildDsym(self, architecture, compiler, dictionary, clean):
@@ -2176,7 +2177,7 @@ class Base(unittest2.TestCase):
 
     def buildDwarf(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build binaries with dwarf maps."""
-        if lldb.skip_build_and_cleanup:
+        if configuration.skip_build_and_cleanup:
             return
         module = builder_module()
         if target_is_android():
@@ -2186,7 +2187,7 @@ class Base(unittest2.TestCase):
 
     def buildDwo(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build binaries with dwarf maps."""
-        if lldb.skip_build_and_cleanup:
+        if configuration.skip_build_and_cleanup:
             return
         module = builder_module()
         if target_is_android():
@@ -2263,7 +2264,7 @@ class Base(unittest2.TestCase):
 
     def cleanup(self, dictionary=None):
         """Platform specific way to do cleanup after build."""
-        if lldb.skip_build_and_cleanup:
+        if configuration.skip_build_and_cleanup:
             return
         module = builder_module()
         if not module.cleanup(self, dictionary):
@@ -2432,13 +2433,14 @@ class TestBase(Base):
         Base.setUp(self)
 
         try:
-            if lldb.blacklist:
+            blacklist = configuration.blacklist
+            if blacklist:
                 className = self.__class__.__name__
                 classAndMethodName = "%s.%s" % (className, self._testMethodName)
-                if className in lldb.blacklist:
-                    self.skipTest(lldb.blacklist.get(className))
-                elif classAndMethodName in lldb.blacklist:
-                    self.skipTest(lldb.blacklist.get(classAndMethodName))
+                if className in blacklist:
+                    self.skipTest(blacklist.get(className))
+                elif classAndMethodName in blacklist:
+                    self.skipTest(blacklist.get(classAndMethodName))
         except AttributeError:
             pass
 
@@ -2458,7 +2460,7 @@ class TestBase(Base):
         # command, instead.  See also runCmd() where it decorates the "file filename" call
         # with additional functionality when running testsuite remotely.
         #
-        if lldb.lldbtest_remote_sandbox:
+        if configuration.lldbtest_remote_sandbox:
             def DecoratedCreateTarget(arg):
                 self.runCmd("file %s" % arg)
                 target = self.dbg.GetSelectedTarget()
@@ -2488,12 +2490,12 @@ class TestBase(Base):
         self.res = lldb.SBCommandReturnObject()
 
         # Run global pre-flight code, if defined via the config file.
-        if lldb.pre_flight:
-            lldb.pre_flight(self)
+        if configuration.pre_flight:
+            configuration.pre_flight(self)
 
-        if lldb.remote_platform and lldb.remote_platform_working_dir:
+        if lldb.remote_platform and configuration.lldb_platform_working_dir:
             remote_test_dir = lldbutil.join_remote_paths(
-                    lldb.remote_platform_working_dir,
+                    configuration.lldb_platform_working_dir,
                     self.getArchitecture(),
                     str(self.test_number),
                     self.mydir)
@@ -2617,8 +2619,8 @@ class TestBase(Base):
             self.dbg.DeleteTarget(target)
 
         # Run global post-flight code, if defined via the config file.
-        if lldb.post_flight:
-            lldb.post_flight(self)
+        if configuration.post_flight:
+            configuration.post_flight(self)
 
         # Do this last, to make sure it's in reverse order from how we setup.
         Base.tearDown(self)
@@ -2657,7 +2659,7 @@ class TestBase(Base):
         # via the settig of lldb.lldbtest_remote_sandbox.
         if cmd.startswith("target create "):
             cmd = cmd.replace("target create ", "file ")
-        if cmd.startswith("file ") and lldb.lldbtest_remote_sandbox:
+        if cmd.startswith("file ") and configuration.lldbtest_remote_sandbox:
             with recording(self, trace) as sbuf:
                 the_rest = cmd.split("file ")[1]
                 # Split the rest of the command line.
@@ -2672,7 +2674,7 @@ class TestBase(Base):
                 print("Found a file command, target (with absolute pathname)=%s" % abs_target, file=sbuf)
                 fpath, fname = os.path.split(abs_target)
                 parent_dir = os.path.split(fpath)[0]
-                platform_target_install_command = 'platform target-install %s %s' % (fpath, lldb.lldbtest_remote_sandbox)
+                platform_target_install_command = 'platform target-install %s %s' % (fpath, configuration.lldbtest_remote_sandbox)
                 print("Insert this command to be run first: %s" % platform_target_install_command, file=sbuf)
                 self.ci.HandleCommand(platform_target_install_command, self.res)
                 # And this is the file command we want to execute, instead.
@@ -2681,8 +2683,8 @@ class TestBase(Base):
                 # Populate the remote executable pathname into the lldb namespace,
                 # so that test cases can grab this thing out of the namespace.
                 #
-                lldb.lldbtest_remote_sandboxed_executable = abs_target.replace(parent_dir, lldb.lldbtest_remote_sandbox)
-                cmd = "file -P %s %s %s" % (lldb.lldbtest_remote_sandboxed_executable, the_rest.replace(target, ''), abs_target)
+                remote_sandboxed_executable = abs_target.replace(parent_dir, configuration.lldbtest_remote_sandbox)
+                cmd = "file -P %s %s %s" % (remote_sandboxed_executable, the_rest.replace(target, ''), abs_target)
                 print("And this is the replaced file command: %s" % cmd, file=sbuf)
 
         running = (cmd.startswith("run") or cmd.startswith("process launch"))
@@ -2865,7 +2867,7 @@ class TestBase(Base):
 
     def build(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build the default binaries."""
-        if lldb.skip_build_and_cleanup:
+        if configuration.skip_build_and_cleanup:
             return
         module = builder_module()
         if target_is_android():

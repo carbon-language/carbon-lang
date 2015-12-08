@@ -30,15 +30,7 @@ import six
 from six.moves import cPickle
 
 # LLDB modules
-
-
-class FormatterConfig(object):
-    def __init__(self):
-        self.filename = None
-        self.port = None
-        self.formatter_name = None
-        self.formatter_options = None
-
+from . import configuration
 
 class CreatedFormatter(object):
     def __init__(self, formatter, cleanup_func):
@@ -46,7 +38,7 @@ class CreatedFormatter(object):
         self.cleanup_func = cleanup_func
 
 
-def create_results_formatter(config):
+def create_results_formatter():
     """Sets up a test results formatter.
 
     @param config an instance of FormatterConfig
@@ -75,28 +67,28 @@ def create_results_formatter(config):
     results_file_object = None
     cleanup_func = None
 
-    if config.filename:
+    if configuration.results_filename:
         # Open the results file for writing.
-        if config.filename == 'stdout':
+        if configuration.results_filename == 'stdout':
             results_file_object = sys.stdout
             cleanup_func = None
-        elif config.filename == 'stderr':
+        elif configuration.results_filename == 'stderr':
             results_file_object = sys.stderr
             cleanup_func = None
         else:
-            results_file_object = open(config.filename, "w")
+            results_file_object = open(configuration.results_filename, "w")
             cleanup_func = results_file_object.close
         default_formatter_name = (
             "lldbsuite.test.result_formatter.XunitFormatter")
-    elif config.port:
+    elif configuration.results_port:
         # Connect to the specified localhost port.
-        results_file_object, cleanup_func = create_socket(config.port)
+        results_file_object, cleanup_func = create_socket(configuration.results_port)
         default_formatter_name = (
             "lldbsuite.test.result_formatter.RawPickledFormatter")
 
     # If we have a results formatter name specified and we didn't specify
     # a results file, we should use stdout.
-    if config.formatter_name is not None and results_file_object is None:
+    if configuration.results_formatter_name is not None and results_file_object is None:
         # Use stdout.
         results_file_object = sys.stdout
         cleanup_func = None
@@ -104,8 +96,8 @@ def create_results_formatter(config):
     if results_file_object:
         # We care about the formatter.  Choose user-specified or, if
         # none specified, use the default for the output type.
-        if config.formatter_name:
-            formatter_name = config.formatter_name
+        if configuration.results_formatter_name:
+            formatter_name = configuration.results_formatter_name
         else:
             formatter_name = default_formatter_name
 
@@ -119,8 +111,8 @@ def create_results_formatter(config):
 
         # Handle formatter options for the results formatter class.
         formatter_arg_parser = cls.arg_parser()
-        if config.formatter_options and len(config.formatter_options) > 0:
-            command_line_options = config.formatter_options
+        if configuration.results_formatter_options and len(configuration.results_formatter_options) > 0:
+            command_line_options = configuration.results_formatter_options
         else:
             command_line_options = []
 
