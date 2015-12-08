@@ -127,6 +127,8 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
   WebAssemblyFunctionInfo &MFI = *MF.getInfo<WebAssemblyFunctionInfo>();
   AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
 
+  assert(MRI.isSSA() && "RegStackify depends on SSA form");
+
   // Walk the instructions from the bottom up. Currently we don't look past
   // block boundaries, and the blocks aren't ordered so the block visitation
   // order isn't significant, but we may want to change this in the future.
