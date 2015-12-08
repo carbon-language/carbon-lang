@@ -7927,6 +7927,10 @@ def err_omp_firstprivate_and_lastprivate_in_distribute : Error<
   "lastprivate variable cannot be firstprivate in '#pragma omp distribute'">;
 def err_omp_firstprivate_distribute_in_teams_reduction : Error<
   "reduction variable in '#pragma omp teams' cannot be firstprivate in '#pragma omp distribute'">;
+def err_omp_grainsize_num_tasks_mutually_exclusive : Error<
+  "'%0' and '%1' clause are mutually exclusive and may not appear on the same directive">;
+def note_omp_previous_grainsize_num_tasks : Note<
+  "'%0' clause is specified here">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
