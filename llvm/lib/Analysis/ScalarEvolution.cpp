@@ -666,24 +666,22 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
   }
 }
 
-namespace {
-struct FindSCEVSize {
-  int Size;
-  FindSCEVSize() : Size(0) {}
-
-  bool follow(const SCEV *S) {
-    ++Size;
-    // Keep looking at all operands of S.
-    return true;
-  }
-  bool isDone() const {
-    return false;
-  }
-};
-}
-
 // Returns the size of the SCEV S.
 static inline int sizeOfSCEV(const SCEV *S) {
+  struct FindSCEVSize {
+    int Size;
+    FindSCEVSize() : Size(0) {}
+
+    bool follow(const SCEV *S) {
+      ++Size;
+      // Keep looking at all operands of S.
+      return true;
+    }
+    bool isDone() const {
+      return false;
+    }
+  };
+
   FindSCEVSize F;
   SCEVTraversal<FindSCEVSize> ST(F);
   ST.visitAll(S);
@@ -1929,14 +1927,6 @@ CollectAddOperandsWithScales(DenseMap<const SCEV *, APInt> &M,
   return Interesting;
 }
 
-namespace {
-  struct APIntCompare {
-    bool operator()(const APInt &LHS, const APInt &RHS) const {
-      return LHS.ult(RHS);
-    }
-  };
-}
-
 // We're trying to construct a SCEV of type `Type' with `Ops' as operands and
 // `OldFlags' as can't-wrap behavior.  Infer a more aggressive set of
 // can't-overflow flags for the operation if possible.
@@ -2149,6 +2139,12 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     if (CollectAddOperandsWithScales(M, NewOps, AccumulatedConstant,
                                      Ops.data(), Ops.size(),
                                      APInt(BitWidth, 1), *this)) {
+      struct APIntCompare {
+        bool operator()(const APInt &LHS, const APInt &RHS) const {
+          return LHS.ult(RHS);
+        }
+      };
+
       // Some interesting folding opportunity is present, so its worthwhile to
       // re-generate the operands list. Group the operands by constant scale,
       // to avoid multiplying by the same constant scale multiple times.
@@ -3289,7 +3285,8 @@ const SCEV *ScalarEvolution::getCouldNotCompute() {
   return CouldNotCompute.get();
 }
 
-namespace {
+
+bool ScalarEvolution::checkValidity(const SCEV *S) const {
   // Helper class working with SCEVTraversal to figure out if a SCEV contains
   // a SCEVUnknown with null value-pointer. FindInvalidSCEVUnknown::FindOne
   // is set iff if find such SCEVUnknown.
@@ -3311,9 +3308,7 @@ namespace {
     }
     bool isDone() const { return FindOne; }
   };
-}
 
-bool ScalarEvolution::checkValidity(const SCEV *S) const {
   FindInvalidSCEVUnknown F;
   SCEVTraversal<FindInvalidSCEVUnknown> ST(F);
   ST.visitAll(S);
@@ -8721,30 +8716,28 @@ static bool findArrayDimensionsRec(ScalarEvolution &SE,
   return true;
 }
 
-namespace {
-struct FindParameter {
-  bool FoundParameter;
-  FindParameter() : FoundParameter(false) {}
-
-  bool follow(const SCEV *S) {
-    if (isa<SCEVUnknown>(S)) {
-      FoundParameter = true;
-      // Stop recursion: we found a parameter.
-      return false;
-    }
-    // Keep looking.
-    return true;
-  }
-  bool isDone() const {
-    // Stop recursion if we have found a parameter.
-    return FoundParameter;
-  }
-};
-}
-
 // Returns true when S contains at least a SCEVUnknown parameter.
 static inline bool
 containsParameters(const SCEV *S) {
+  struct FindParameter {
+    bool FoundParameter;
+    FindParameter() : FoundParameter(false) {}
+
+    bool follow(const SCEV *S) {
+      if (isa<SCEVUnknown>(S)) {
+        FoundParameter = true;
+        // Stop recursion: we found a parameter.
+        return false;
+      }
+      // Keep looking.
+      return true;
+    }
+    bool isDone() const {
+      // Stop recursion if we have found a parameter.
+      return FoundParameter;
+    }
+  };
+
   FindParameter F;
   SCEVTraversal<FindParameter> ST(F);
   ST.visitAll(S);
@@ -9406,24 +9399,22 @@ bool ScalarEvolution::properlyDominates(const SCEV *S, const BasicBlock *BB) {
   return getBlockDisposition(S, BB) == ProperlyDominatesBlock;
 }
 
-namespace {
-// Search for a SCEV expression node within an expression tree.
-// Implements SCEVTraversal::Visitor.
-struct SCEVSearch {
-  const SCEV *Node;
-  bool IsFound;
-
-  SCEVSearch(const SCEV *N): Node(N), IsFound(false) {}
-
-  bool follow(const SCEV *S) {
-    IsFound |= (S == Node);
-    return !IsFound;
-  }
-  bool isDone() const { return IsFound; }
-};
-}
-
 bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
+  // Search for a SCEV expression node within an expression tree.
+  // Implements SCEVTraversal::Visitor.
+  struct SCEVSearch {
+    const SCEV *Node;
+    bool IsFound;
+
+    SCEVSearch(const SCEV *N): Node(N), IsFound(false) {}
+
+    bool follow(const SCEV *S) {
+      IsFound |= (S == Node);
+      return !IsFound;
+    }
+    bool isDone() const { return IsFound; }
+  };
+
   SCEVSearch Search(Op);
   visitAll(S, Search);
   return Search.IsFound;
