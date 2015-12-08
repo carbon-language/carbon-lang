@@ -27,7 +27,7 @@ def __setCrashInfoHook_Mac(text):
     from . import crashinfo
     crashinfo.setCrashReporterDescription(text)
 
-def __setupCrashInfoHook():
+def setupCrashInfoHook():
     if platform.system() == "Darwin":
         from . import lock
         test_dir = os.environ['LLDB_TEST']
@@ -48,7 +48,7 @@ def __setupCrashInfoHook():
             compile_lock.release()
             del compile_lock
 
-        setCrashInfoHook = setCrashInfoHook_Mac
+        setCrashInfoHook = __setCrashInfoHook_Mac
 
     else:
         pass
@@ -220,7 +220,6 @@ all_tests = set()
 
 # safe default
 setCrashInfoHook = lambda x : None
-__setupCrashInfoHook()
 
 def shouldSkipBecauseOfCategories(test_categories):
     if useCategories:
