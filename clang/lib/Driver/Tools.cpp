@@ -6109,7 +6109,7 @@ void hexagon::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(II.getFilename());
     else
       // Don't render as input, we need gcc to do the translations.
-      // FIXME: Pranav: What is this ?
+      // FIXME: What is this?
       II.getInputArg().render(Args, CmdArgs);
   }
 
