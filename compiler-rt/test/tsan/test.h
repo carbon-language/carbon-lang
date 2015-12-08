@@ -14,27 +14,24 @@
 // TSan-invisible barrier.
 // Tests use it to establish necessary execution order in a way that does not
 // interfere with tsan (does not establish synchronization between threads).
-// 8 lsb is thread count, the remaining are count of entered threads.
 typedef unsigned long long invisible_barrier_t;
 
-void barrier_init(invisible_barrier_t *barrier, unsigned count) {
-  if (count >= (1 << 8))
-      exit(fprintf(stderr, "barrier_init: count is too large (%d)\n", count));
-  *barrier = count;
+#ifdef __cplusplus
+extern "C" {
+#endif
+void __tsan_testonly_barrier_init(invisible_barrier_t *barrier,
+    unsigned count);
+void __tsan_testonly_barrier_wait(invisible_barrier_t *barrier);
+#ifdef __cplusplus
+}
+#endif
+
+static inline void barrier_init(invisible_barrier_t *barrier, unsigned count) {
+  __tsan_testonly_barrier_init(barrier, count);
 }
 
-void barrier_wait(invisible_barrier_t *barrier) {
-  unsigned old = __atomic_fetch_add(barrier, 1 << 8, __ATOMIC_RELAXED);
-  unsigned old_epoch = (old >> 8) / (old & 0xff);
-  for (;;) {
-    unsigned cur = __atomic_load_n(barrier, __ATOMIC_RELAXED);
-    unsigned cur_epoch = (cur >> 8) / (cur & 0xff);
-    if (cur_epoch != old_epoch)
-      return;
-    // Can't use usleep, because it leads to spurious "As if synchronized via
-    // sleep" messages which fail some output tests.
-    sched_yield();
-  }
+static inline void barrier_wait(invisible_barrier_t *barrier) {
+  __tsan_testonly_barrier_wait(barrier);
 }
 
 // Default instance of the barrier, but a test can declare more manually.

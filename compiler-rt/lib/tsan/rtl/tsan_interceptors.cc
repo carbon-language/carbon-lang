@@ -2683,3 +2683,39 @@ void InitializeInterceptors() {
 }
 
 }  // namespace __tsan
+
+// Invisible barrier for tests.
+// There were several unsuccessful iterations for this functionality:
+// 1. Initially it was implemented in user code using
+//    REAL(pthread_barrier_wait). But pthread_barrier_wait is not supported on
+//    MacOS. Futexes are linux-specific for this matter.
+// 2. Then we switched to atomics+usleep(10). But usleep produced parasitic
+//    "as-if synchronized via sleep" messages in reports which failed some
+//    output tests.
+// 3. Then we switched to atomics+sched_yield. But this produced tons of tsan-
+//    visible events, which lead to "failed to restore stack trace" failures.
+// Note that no_sanitize_thread attribute does not turn off atomic interception
+// so attaching it to the function defined in user code does not help.
+// That's why we now have what we have.
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __tsan_testonly_barrier_init(u64 *barrier, u32 count) {
+  if (count >= (1 << 8)) {
+      Printf("barrier_init: count is too large (%d)\n", count);
+      Die();
+  }
+  // 8 lsb is thread count, the remaining are count of entered threads.
+  *barrier = count;
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __tsan_testonly_barrier_wait(u64 *barrier) {
+  unsigned old = __atomic_fetch_add(barrier, 1 << 8, __ATOMIC_RELAXED);
+  unsigned old_epoch = (old >> 8) / (old & 0xff);
+  for (;;) {
+    unsigned cur = __atomic_load_n(barrier, __ATOMIC_RELAXED);
+    unsigned cur_epoch = (cur >> 8) / (cur & 0xff);
+    if (cur_epoch != old_epoch)
+      return;
+    internal_sched_yield();
+  }
+}
