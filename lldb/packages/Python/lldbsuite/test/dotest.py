@@ -27,7 +27,6 @@ import importlib
 import os
 import errno
 import platform
-import progress
 import signal
 import socket
 import subprocess
@@ -337,10 +336,6 @@ def parseOptionsAndInitTestdirs():
 
     if args.q:
         configuration.parsable = True
-
-    if args.P and not args.v:
-        configuration.progress_bar = True
-        configuration.verbose = 0
 
     if args.R:
         if args.R.startswith('-'):
@@ -1239,8 +1234,6 @@ def run_suite():
 
             if configuration.parsable:
                 v = 0
-            elif configuration.progress_bar:
-                v = 1
             else:
                 v = configuration.verbose
 

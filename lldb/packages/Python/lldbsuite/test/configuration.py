@@ -130,9 +130,6 @@ svn_silent = True
 # Default verbosity is 0.
 verbose = 1
 
-# Set to True only if verbose is 0 and LLDB trace mode is off.
-progress_bar = False
-
 # By default, search from the script directory.
 # We can't use sys.path[0] to determine the script directory
 # because it doesn't work under a debugger
