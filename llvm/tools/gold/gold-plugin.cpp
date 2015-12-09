@@ -900,9 +900,6 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
   if (Modules.empty())
     return LDPS_OK;
 
-  LLVMContext Context;
-  Context.setDiagnosticHandler(diagnosticHandlerForContext, nullptr, true);
-
   // If we are doing ThinLTO compilation, simply build the combined
   // function index/summary and emit it. We don't need to parse the modules
   // and link them in this case.
@@ -936,6 +933,9 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     cleanup_hook();
     exit(0);
   }
+
+  LLVMContext Context;
+  Context.setDiagnosticHandler(diagnosticHandlerForContext, nullptr, true);
 
   std::unique_ptr<Module> Combined(new Module("ld-temp.o", Context));
   Linker L(*Combined, diagnosticHandler);
