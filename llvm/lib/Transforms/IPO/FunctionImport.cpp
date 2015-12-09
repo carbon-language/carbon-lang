@@ -344,7 +344,7 @@ getFunctionIndexForFile(StringRef Path, std::string &Error,
 class FunctionImportPass : public ModulePass {
   /// Optional function summary index to use for importing, otherwise
   /// the summary-file option must be specified.
-  FunctionInfoIndex *Index;
+  const FunctionInfoIndex *Index;
 
 public:
   /// Pass identification, replacement for typeid
@@ -355,7 +355,7 @@ public:
     return "Function Importing";
   }
 
-  explicit FunctionImportPass(FunctionInfoIndex *Index = nullptr)
+  explicit FunctionImportPass(const FunctionInfoIndex *Index = nullptr)
       : ModulePass(ID), Index(Index) {}
 
   bool runOnModule(Module &M) override {
@@ -394,7 +394,7 @@ INITIALIZE_PASS_END(FunctionImportPass, "function-import",
                     "Summary Based Function Import", false, false)
 
 namespace llvm {
-Pass *createFunctionImportPass(FunctionInfoIndex *Index = nullptr) {
+Pass *createFunctionImportPass(const FunctionInfoIndex *Index = nullptr) {
   return new FunctionImportPass(Index);
 }
 }
