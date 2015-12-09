@@ -91,9 +91,6 @@ bmBreakpointSpec = None
 # The benchmark iteration count, as specified by the '-y' option.
 bmIterationCount = -1
 
-# By default, failfast is False.  Use '-F' to overwrite it.
-failfast = False
-
 # The filters (testclass.testmethod) used to admit tests into our test suite.
 filters = []
 

@@ -305,9 +305,6 @@ def parseOptionsAndInitTestdirs():
         sys.stdout.flush()
         os.kill(os.getpid(), signal.SIGSTOP)
 
-    if args.F:
-        configuration.failfast = True
-
     if args.f:
         if any([x.startswith('-') for x in args.f]):
             usage(parser)
@@ -1265,7 +1262,6 @@ def run_suite():
             if configuration.count == 1:
                 result = unittest2.TextTestRunner(stream=sys.stderr,
                                                   verbosity=v,
-                                                  failfast=configuration.failfast,
                                                   resultclass=test_result.LLDBTestResult).run(configuration.suite)
             else:
                 # We are invoking the same test suite more than once.  In this case,
@@ -1276,7 +1272,6 @@ def run_suite():
                
                     result = unittest2.TextTestRunner(stream=sys.stderr,
                                                       verbosity=v,
-                                                      failfast=configuration.failfast,
                                                       resultclass=test_result.LLDBTestResult).run(configuration.suite)
 
             configuration.failed = configuration.failed or not result.wasSuccessful()
