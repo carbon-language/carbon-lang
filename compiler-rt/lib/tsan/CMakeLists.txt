@@ -213,3 +213,5 @@ endif()
 if(COMPILER_RT_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
+
+add_subdirectory(dd)

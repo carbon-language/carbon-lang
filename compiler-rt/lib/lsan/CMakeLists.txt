@@ -24,6 +24,7 @@ add_compiler_rt_object_libraries(RTLSanCommon
     SOURCES ${LSAN_COMMON_SOURCES}
     CFLAGS ${LSAN_CFLAGS})
 
+check_list_contains(COMPILER_RT_HAS_LSAN COMPILER_RT_RUNTIMES_TO_BUILD lsan)
 if(COMPILER_RT_HAS_LSAN)
   foreach(arch ${LSAN_SUPPORTED_ARCH})
     add_compiler_rt_runtime(clang_rt.lsan
