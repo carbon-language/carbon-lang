@@ -309,7 +309,7 @@ bool IsGlobalVar(uptr addr) {
 // This is required to properly "close" the fds, because we do not see internal
 // closes within glibc. The code is a pure hack.
 int ExtractResolvFDs(void *state, int *fds, int nfd) {
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   int cnt = 0;
   __res_state *statp = (__res_state*)state;
   for (int i = 0; i < MAXNS && cnt < nfd; i++) {

@@ -367,6 +367,7 @@ static void at_exit_wrapper(void *arg) {
 static int setup_at_exit_wrapper(ThreadState *thr, uptr pc, void(*f)(),
       void *arg, void *dso);
 
+#if !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   if (cur_thread()->in_symbolizer)
     return 0;
@@ -375,6 +376,7 @@ TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   SCOPED_INTERCEPTOR_RAW(atexit, f);
   return setup_at_exit_wrapper(thr, pc, (void(*)())f, 0, 0);
 }
+#endif
 
 TSAN_INTERCEPTOR(int, __cxa_atexit, void (*f)(void *a), void *arg, void *dso) {
   if (cur_thread()->in_symbolizer)
@@ -1366,7 +1368,7 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
   return 0;
 }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __xstat, int version, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__xstat, version, path, buf);
   READ_STRING(thr, pc, path, 0);
@@ -1378,7 +1380,7 @@ TSAN_INTERCEPTOR(int, __xstat, int version, const char *path, void *buf) {
 #endif
 
 TSAN_INTERCEPTOR(int, stat, const char *path, void *buf) {
-#if SANITIZER_FREEBSD || SANITIZER_MAC
+#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_ANDROID
   SCOPED_TSAN_INTERCEPTOR(stat, path, buf);
   READ_STRING(thr, pc, path, 0);
   return REAL(stat)(path, buf);
@@ -1389,7 +1391,7 @@ TSAN_INTERCEPTOR(int, stat, const char *path, void *buf) {
 #endif
 }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __xstat64, int version, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__xstat64, version, path, buf);
   READ_STRING(thr, pc, path, 0);
@@ -1400,7 +1402,7 @@ TSAN_INTERCEPTOR(int, __xstat64, int version, const char *path, void *buf) {
 #define TSAN_MAYBE_INTERCEPT___XSTAT64
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, stat64, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__xstat64, 0, path, buf);
   READ_STRING(thr, pc, path, 0);
@@ -1411,7 +1413,7 @@ TSAN_INTERCEPTOR(int, stat64, const char *path, void *buf) {
 #define TSAN_MAYBE_INTERCEPT_STAT64
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __lxstat, int version, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__lxstat, version, path, buf);
   READ_STRING(thr, pc, path, 0);
@@ -1423,7 +1425,7 @@ TSAN_INTERCEPTOR(int, __lxstat, int version, const char *path, void *buf) {
 #endif
 
 TSAN_INTERCEPTOR(int, lstat, const char *path, void *buf) {
-#if SANITIZER_FREEBSD || SANITIZER_MAC
+#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_ANDROID
   SCOPED_TSAN_INTERCEPTOR(lstat, path, buf);
   READ_STRING(thr, pc, path, 0);
   return REAL(lstat)(path, buf);
@@ -1434,7 +1436,7 @@ TSAN_INTERCEPTOR(int, lstat, const char *path, void *buf) {
 #endif
 }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __lxstat64, int version, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__lxstat64, version, path, buf);
   READ_STRING(thr, pc, path, 0);
@@ -1445,7 +1447,7 @@ TSAN_INTERCEPTOR(int, __lxstat64, int version, const char *path, void *buf) {
 #define TSAN_MAYBE_INTERCEPT___LXSTAT64
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, lstat64, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__lxstat64, 0, path, buf);
   READ_STRING(thr, pc, path, 0);
@@ -1456,7 +1458,7 @@ TSAN_INTERCEPTOR(int, lstat64, const char *path, void *buf) {
 #define TSAN_MAYBE_INTERCEPT_LSTAT64
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat, version, fd, buf);
   if (fd > 0)
@@ -1469,7 +1471,7 @@ TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
 #endif
 
 TSAN_INTERCEPTOR(int, fstat, int fd, void *buf) {
-#if SANITIZER_FREEBSD || SANITIZER_MAC
+#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_ANDROID
   SCOPED_TSAN_INTERCEPTOR(fstat, fd, buf);
   if (fd > 0)
     FdAccess(thr, pc, fd);
@@ -1482,7 +1484,7 @@ TSAN_INTERCEPTOR(int, fstat, int fd, void *buf) {
 #endif
 }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __fxstat64, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat64, version, fd, buf);
   if (fd > 0)
@@ -1494,7 +1496,7 @@ TSAN_INTERCEPTOR(int, __fxstat64, int version, int fd, void *buf) {
 #define TSAN_MAYBE_INTERCEPT___FXSTAT64
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, fstat64, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat64, 0, fd, buf);
   if (fd > 0)
@@ -1719,7 +1721,7 @@ TSAN_INTERCEPTOR(int, __close, int fd) {
 #endif
 
 // glibc guts
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(void, __res_iclose, void *state, bool free_addr) {
   SCOPED_TSAN_INTERCEPTOR(__res_iclose, state, free_addr);
   int fds[64];
@@ -2185,7 +2187,7 @@ TSAN_INTERCEPTOR(int, vfork, int fake) {
   return WRAP(fork)(fake);
 }
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_ANDROID
 typedef int (*dl_iterate_phdr_cb_t)(__sanitizer_dl_phdr_info *info, SIZE_T size,
                                     void *data);
 struct dl_iterate_phdr_data {
@@ -2507,7 +2509,7 @@ static void finalize(void *arg) {
     Die();
 }
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_ANDROID
 static void unreachable() {
   Report("FATAL: ThreadSanitizer: unreachable called\n");
   Die();
@@ -2672,12 +2674,14 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(fork);
   TSAN_INTERCEPT(vfork);
+#if !SANITIZER_ANDROID
   TSAN_INTERCEPT(dl_iterate_phdr);
+#endif
   TSAN_INTERCEPT(on_exit);
   TSAN_INTERCEPT(__cxa_atexit);
   TSAN_INTERCEPT(_exit);
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_ANDROID
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.
   REAL(atexit) = (int(*)(void(*)()))unreachable;
