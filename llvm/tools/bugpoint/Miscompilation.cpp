@@ -280,8 +280,8 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   // Split the module into the two halves of the program we want.
   VMap.clear();
   Module *ToNotOptimize = CloneModule(BD.getProgram(), VMap).release();
-  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, FuncsOnClone,
-                                                 VMap);
+  Module *ToOptimize =
+      SplitFunctionsOutOfModule(ToNotOptimize, FuncsOnClone, VMap).release();
 
   // Run the predicate, note that the predicate will delete both input modules.
   bool Broken = TestFn(BD, ToOptimize, ToNotOptimize, Error);
@@ -319,8 +319,8 @@ static bool ExtractLoops(BugDriver &BD,
     ValueToValueMapTy VMap;
     std::unique_ptr<Module> ToNotOptimize = CloneModule(BD.getProgram(), VMap);
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize.get(),
-                                                   MiscompiledFunctions,
-                                                   VMap);
+                                                   MiscompiledFunctions, VMap)
+                             .release();
     std::unique_ptr<Module> ToOptimizeLoopExtracted =
         BD.extractLoop(ToOptimize);
     if (!ToOptimizeLoopExtracted) {
@@ -519,9 +519,8 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs,
   VMap.clear();
 
   Module *ToNotOptimize = CloneModule(BD.getProgram(), VMap).release();
-  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
-                                                 FuncsOnClone,
-                                                 VMap);
+  Module *ToOptimize =
+      SplitFunctionsOutOfModule(ToNotOptimize, FuncsOnClone, VMap).release();
 
   // Try the extraction.  If it doesn't work, then the block extractor crashed
   // or something, in which case bugpoint can't chase down this possibility.
@@ -580,9 +579,9 @@ static bool ExtractBlocks(BugDriver &BD,
 
   ValueToValueMapTy VMap;
   Module *ProgClone = CloneModule(BD.getProgram(), VMap).release();
-  Module *ToExtract = SplitFunctionsOutOfModule(ProgClone,
-                                                MiscompiledFunctions,
-                                                VMap);
+  Module *ToExtract =
+      SplitFunctionsOutOfModule(ProgClone, MiscompiledFunctions, VMap)
+          .release();
   std::unique_ptr<Module> Extracted =
       BD.extractMappedBlocksFromModule(Blocks, ToExtract);
   if (!Extracted) {
@@ -762,9 +761,9 @@ void BugDriver::debugMiscompilation(std::string *Error) {
   outs() << "Outputting reduced bitcode files which expose the problem:\n";
   ValueToValueMapTy VMap;
   Module *ToNotOptimize = CloneModule(getProgram(), VMap).release();
-  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
-                                                 MiscompiledFunctions,
-                                                 VMap);
+  Module *ToOptimize =
+      SplitFunctionsOutOfModule(ToNotOptimize, MiscompiledFunctions, VMap)
+          .release();
 
   outs() << "  Non-optimized portion: ";
   EmitProgressBitcode(ToNotOptimize, "tonotoptimize", true);
@@ -1038,7 +1037,8 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   // Split the module into the two halves of the program we want.
   ValueToValueMapTy VMap;
   Module *ToNotCodeGen = CloneModule(getProgram(), VMap).release();
-  Module *ToCodeGen = SplitFunctionsOutOfModule(ToNotCodeGen, Funcs, VMap);
+  Module *ToCodeGen =
+      SplitFunctionsOutOfModule(ToNotCodeGen, Funcs, VMap).release();
 
   // Condition the modules
   CleanupAndPrepareModules(*this, ToCodeGen, ToNotCodeGen);
