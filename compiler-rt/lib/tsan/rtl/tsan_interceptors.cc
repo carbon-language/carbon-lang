@@ -48,6 +48,13 @@ using namespace __tsan;  // NOLINT
 #define __libc_realloc REAL(realloc)
 #define __libc_calloc REAL(calloc)
 #define __libc_free REAL(free)
+#elif SANITIZER_ANDROID
+#define __errno_location __errno
+#define __libc_malloc REAL(malloc)
+#define __libc_realloc REAL(realloc)
+#define __libc_calloc REAL(calloc)
+#define __libc_free REAL(free)
+#define mallopt(a, b)
 #endif
 
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
@@ -105,10 +112,12 @@ extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int *__errno_location();
 extern "C" int fileno_unlocked(void *stream);
+#if !SANITIZER_ANDROID
 extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
+#endif
 extern "C" int dirfd(void *dirp);
-#if !SANITIZER_FREEBSD
+#if !SANITIZER_FREEBSD && !SANITIZER_ANDROID
 extern "C" int mallopt(int param, int value);
 #endif
 extern __sanitizer_FILE *stdout, *stderr;

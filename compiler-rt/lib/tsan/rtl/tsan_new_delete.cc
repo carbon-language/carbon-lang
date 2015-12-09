@@ -23,7 +23,7 @@ struct nothrow_t {};
 
 DECLARE_REAL(void *, malloc, uptr size)
 DECLARE_REAL(void, free, void *ptr)
-#if SANITIZER_MAC
+#if SANITIZER_MAC || SANITIZER_ANDROID
 #define __libc_malloc REAL(malloc)
 #define __libc_free REAL(free)
 #endif
