@@ -459,18 +459,17 @@ public:
       return false;
     }
 
-    if (LAI.PSE.getUnionPredicate().getComplexity() >
-        LoadElimSCEVCheckThreshold) {
+    if (LAI.Preds.getComplexity() > LoadElimSCEVCheckThreshold) {
       DEBUG(dbgs() << "Too many SCEV run-time checks needed.\n");
       return false;
     }
 
     // Point of no-return, start the transformation.  First, version the loop if
     // necessary.
-    if (!Checks.empty() || !LAI.PSE.getUnionPredicate().isAlwaysTrue()) {
+    if (!Checks.empty() || !LAI.Preds.isAlwaysTrue()) {
       LoopVersioning LV(LAI, L, LI, DT, SE, false);
       LV.setAliasChecks(std::move(Checks));
-      LV.setSCEVChecks(LAI.PSE.getUnionPredicate());
+      LV.setSCEVChecks(LAI.Preds);
       LV.versionLoop();
     }
 
