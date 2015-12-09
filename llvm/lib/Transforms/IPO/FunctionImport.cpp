@@ -91,7 +91,7 @@ static void findExternalCalls(const Module &DestModule, Function &F,
                               SmallVector<StringRef, 64> &Worklist) {
   // We need to suffix internal function calls imported from other modules,
   // prepare the suffix ahead of time.
-  StringRef Suffix;
+  std::string Suffix;
   if (F.getParent() != &DestModule)
     Suffix =
         (Twine(".llvm.") +
