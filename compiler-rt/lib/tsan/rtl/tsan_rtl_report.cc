@@ -186,7 +186,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx, bool suppressable) {
       return;
   }
   void *mem = internal_alloc(MBlockReportThread, sizeof(ReportThread));
-  ReportThread *rt = new(mem) ReportThread();
+  ReportThread *rt = new(mem) ReportThread;
   rep_->threads.PushBack(rt);
   rt->id = tctx->tid;
   rt->pid = tctx->os_id;
@@ -256,7 +256,7 @@ void ScopedReport::AddMutex(const SyncVar *s) {
       return;
   }
   void *mem = internal_alloc(MBlockReportMutex, sizeof(ReportMutex));
-  ReportMutex *rm = new(mem) ReportMutex();
+  ReportMutex *rm = new(mem) ReportMutex;
   rep_->mutexes.PushBack(rm);
   rm->id = s->uid;
   rm->addr = s->addr;
@@ -289,7 +289,7 @@ void ScopedReport::AddDeadMutex(u64 id) {
       return;
   }
   void *mem = internal_alloc(MBlockReportMutex, sizeof(ReportMutex));
-  ReportMutex *rm = new(mem) ReportMutex();
+  ReportMutex *rm = new(mem) ReportMutex;
   rep_->mutexes.PushBack(rm);
   rm->id = id;
   rm->addr = 0;

@@ -20,6 +20,7 @@
 namespace __sanitizer {
 
 struct Suppression {
+  Suppression() { internal_memset(this, 0, sizeof(*this)); }
   const char *type;
   char *templ;
   atomic_uint32_t hit_count;
