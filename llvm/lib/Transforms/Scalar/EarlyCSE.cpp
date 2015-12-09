@@ -724,7 +724,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
         // Remember that this was the last normal store we saw for DSE.
         // Note that we can't delete an earlier atomic or volatile store in
-        // favor of a later one which isn't.  We could in principal remove an
+        // favor of a later one which isn't.  We could in principle remove an
         // earlier unordered store if the later one is also unordered.
         if (MemInst.isSimple())
           LastStore = Inst;
