@@ -151,6 +151,17 @@ typedef long long_t;  // NOLINT
 typedef void (*sighandler_t)(int sig);
 typedef void (*sigactionhandler_t)(int sig, my_siginfo_t *siginfo, void *uctx);
 
+#if SANITIZER_ANDROID
+struct sigaction_t {
+  u32 sa_flags;
+  union {
+    sighandler_t sa_handler;
+    sigactionhandler_t sa_sgiaction;
+  };
+  __sanitizer_sigset_t sa_mask;
+  void (*sa_restorer)();
+};
+#else
 struct sigaction_t {
 #ifdef __mips__
   u32 sa_flags;
@@ -173,6 +184,7 @@ struct sigaction_t {
   void (*sa_restorer)();
 #endif
 };
+#endif
 
 const sighandler_t SIG_DFL = (sighandler_t)0;
 const sighandler_t SIG_IGN = (sighandler_t)1;
