@@ -99,7 +99,7 @@ _setjmp:
         std     r31,160(r3)
         stfd    f31,312(r3)
         addi    r5,r3,320
-        mfvrsave r0
+        mfspr   r0,256
         stw     r0,168(r3)  // VRSAVE
         addi    r6,r5,16
         stvx    v20,0,r5
@@ -244,7 +244,7 @@ __sigsetjmp:
         std     r31,160(r3)
         stfd    f31,312(r3)
         addi    r5,r3,320
-        mfvrsave r0
+        mfspr   r0,256
         stw     r0,168(r3) // VRSAVE
         addi    r6,r5,16
         stvx    v20,0,r5
