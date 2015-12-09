@@ -97,10 +97,6 @@ failfast = False
 # The filters (testclass.testmethod) used to admit tests into our test suite.
 filters = []
 
-# The runhooks is a list of lldb commands specifically for the debugger.
-# Use '-k' to specify a runhook.
-runHooks = []
-
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 

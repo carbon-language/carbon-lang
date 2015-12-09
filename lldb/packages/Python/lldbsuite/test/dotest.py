@@ -327,9 +327,6 @@ def parseOptionsAndInitTestdirs():
     if args.i:
         configuration.ignore = True
 
-    if args.k:
-        configuration.runHooks.extend(args.k)
-
     if args.l:
         configuration.skip_long_running_test = False
 
