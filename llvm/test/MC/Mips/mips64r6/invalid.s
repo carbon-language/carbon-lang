@@ -13,10 +13,12 @@ local_label:
         jalr.hb $31 # CHECK: :[[@LINE]]:9: error: source and destination must be different
         jalr.hb $31, $31 # CHECK: :[[@LINE]]:9: error: source and destination must be different
         ldc2    $8,-21181($at)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
-        break 1024        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        break 1024, 5     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        break 7, 1024     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        break 1024, 1024  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break -1          # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break 1024        # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break -1, 5       # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break 1024, 5     # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break 7, -1       # CHECK: :[[@LINE]]:18: error: expected 10-bit unsigned immediate
+        break 7, 1024     # CHECK: :[[@LINE]]:18: error: expected 10-bit unsigned immediate
         // FIXME: Following tests are temporarely disabled, until "PredicateControl not in hierarchy" problem is resolved
         bltl  $7, $8, local_label  # -CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         bltul $7, $8, local_label  # -CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled

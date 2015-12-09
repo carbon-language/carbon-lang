@@ -15,10 +15,12 @@ local_label:
         ldc2    $8,-21181($at)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         sdc2    $20,23157($s2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         swc2    $25,24880($s0)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
-        break 1024        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        break 1024, 5     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        break 7, 1024     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        break 1024, 1024  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break -1          # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break 1024        # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break -1, 5       # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break 1024, 5     # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
+        break 7, -1       # CHECK: :[[@LINE]]:18: error: expected 10-bit unsigned immediate
+        break 7, 1024     # CHECK: :[[@LINE]]:18: error: expected 10-bit unsigned immediate
         // FIXME: Following tests are temporarely disabled, until "PredicateControl not in hierarchy" problem is resolved
         bltl  $7, $8, local_label  # -CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         bltul $7, $8, local_label  # -CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
