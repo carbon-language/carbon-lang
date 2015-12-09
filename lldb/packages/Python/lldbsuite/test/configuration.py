@@ -100,10 +100,6 @@ skip_build_and_cleanup = False
 # By default, we skip long running test case.  Use '-l' option to override.
 skip_long_running_test = True
 
-# By default, we print the build dir, lldb version, and svn info.  Use '-n' option to
-# turn it off.
-noHeaders = False
-
 # Parsable mode silences headers, and any other output this script might generate, and instead
 # prints machine-readable output similar to what clang tests produce.
 parsable = False

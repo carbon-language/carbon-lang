@@ -330,16 +330,12 @@ def parseOptionsAndInitTestdirs():
     if args.executable:
         lldbtest_config.lldbExec = args.executable
 
-    if args.n:
-        configuration.noHeaders = True
-
     if args.p:
         if args.p.startswith('-'):
             usage(parser)
         configuration.regexp = args.p
 
     if args.q:
-        configuration.noHeaders = True
         configuration.parsable = True
 
     if args.P and not args.v:
@@ -697,10 +693,9 @@ def setupSysPath():
     os.environ["LLDB_LIB_DIR"] = lldbLibDir
     lldbImpLibDir = os.path.join(lldbLibDir, '..', 'lib') if sys.platform.startswith('win32') else lldbLibDir
     os.environ["LLDB_IMPLIB_DIR"] = lldbImpLibDir
-    if not configuration.noHeaders:
-        print("LLDB library dir:", os.environ["LLDB_LIB_DIR"])
-        print("LLDB import library dir:", os.environ["LLDB_IMPLIB_DIR"])
-        os.system('%s -v' % lldbtest_config.lldbExec)
+    print("LLDB library dir:", os.environ["LLDB_LIB_DIR"])
+    print("LLDB import library dir:", os.environ["LLDB_IMPLIB_DIR"])
+    os.system('%s -v' % lldbtest_config.lldbExec)
 
     # Assume lldb-mi is in same place as lldb
     # If not found, disable the lldb-mi tests
@@ -722,8 +717,7 @@ def setupSysPath():
         elif os.path.isdir(os.path.join(lldbRootDirectory, '.git')) and which("git") is not None:
             pipe = subprocess.Popen([which("git"), "svn", "info", lldbRootDirectory], stdout = subprocess.PIPE)
             configuration.svn_info = pipe.stdout.read()
-        if not configuration.noHeaders:
-            print(configuration.svn_info)
+        print(configuration.svn_info)
 
     lldbPythonDir = None # The directory that contains 'lldb/__init__.py'
     if configuration.lldbFrameworkPath:
@@ -1112,10 +1106,9 @@ def run_suite():
         configuration.sdir_name = timestamp_started
     os.environ["LLDB_SESSION_DIRNAME"] = os.path.join(os.getcwd(), configuration.sdir_name)
 
-    if not configuration.noHeaders:
-        sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
-                         " will go into directory '%s'\n" % configuration.sdir_name)
-        sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
+    sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
+                        " will go into directory '%s'\n" % configuration.sdir_name)
+    sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
 
     if not os.path.isdir(configuration.sdir_name):
         try:

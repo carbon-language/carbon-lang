@@ -88,7 +88,6 @@ def create_parser():
     # Test-suite behaviour
     group = parser.add_argument_group('Runtime behaviour options')
     X('-d', 'Suspend the process after launch to wait indefinitely for a debugger to attach')
-    X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
     X('-P', "Use the graphic progress bar.")
     X('-q', "Don't print extra output from this script.")
     X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
