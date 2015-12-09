@@ -27,7 +27,7 @@ check_cxx_compiler_flag("-Werror -fno-function-sections" COMPILER_RT_HAS_FNO_FUN
 check_cxx_compiler_flag(-std=c++11           COMPILER_RT_HAS_STD_CXX11_FLAG)
 check_cxx_compiler_flag(-ftls-model=initial-exec COMPILER_RT_HAS_FTLS_MODEL_INITIAL_EXEC)
 check_cxx_compiler_flag(-fno-lto             COMPILER_RT_HAS_FNO_LTO_FLAG)
-check_cxx_compiler_flag(-msse3               COMPILER_RT_HAS_MSSE3_FLAG)
+check_cxx_compiler_flag("-Werror -msse3" COMPILER_RT_HAS_MSSE3_FLAG)
 check_cxx_compiler_flag(-std=c99             COMPILER_RT_HAS_STD_C99_FLAG)
 check_cxx_compiler_flag(--sysroot=.          COMPILER_RT_HAS_SYSROOT_FLAG)
 
@@ -572,14 +572,6 @@ if (COMPILER_RT_HAS_SANITIZER_COMMON AND UBSAN_SUPPORTED_ARCH AND
   set(COMPILER_RT_HAS_UBSAN TRUE)
 else()
   set(COMPILER_RT_HAS_UBSAN FALSE)
-endif()
-
-# -msse3 flag is not valid for Mips therefore clang gives a warning
-# message with -msse3. But check_c_compiler_flags() checks only for
-# compiler error messages. Therefore COMPILER_RT_HAS_MSSE3_FLAG turns out to be
-# true on Mips, so we make it false here.
-if("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mips")
-  set(COMPILER_RT_HAS_MSSE3_FLAG FALSE)
 endif()
 
 if (COMPILER_RT_HAS_SANITIZER_COMMON AND SAFESTACK_SUPPORTED_ARCH AND
