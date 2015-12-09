@@ -219,32 +219,24 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
     exit(1);
 }
 
-/// TestMergedProgram - Given two modules, link them together and run the
-/// program, checking to see if the program matches the diff. If there is
-/// an error, return NULL. If not, return the merged module. The Broken argument
-/// will be set to true if the output is different. If the DeleteInputs
-/// argument is set to true then this function deletes both input
-/// modules before it returns.
+/// Given two modules, link them together and run the program, checking to see
+/// if the program matches the diff. If there is an error, return NULL. If not,
+/// return the merged module. The Broken argument will be set to true if the
+/// output is different. If the DeleteInputs argument is set to true then this
+/// function deletes both input modules before it returns.
 ///
-static Module *TestMergedProgram(const BugDriver &BD, Module *M1, Module *M2,
-                                 bool DeleteInputs, std::string &Error,
-                                 bool &Broken) {
-  // Link the two portions of the program back to together.
-  if (!DeleteInputs) {
-    M1 = CloneModule(M1).release();
-    M2 = CloneModule(M2).release();
-  }
+static std::unique_ptr<Module> testMergedProgram(const BugDriver &BD,
+                                                 std::unique_ptr<Module> M1,
+                                                 std::unique_ptr<Module> M2,
+                                                 std::string &Error,
+                                                 bool &Broken) {
   if (Linker::linkModules(*M1, *M2, diagnosticHandler))
     exit(1);
-  delete M2;   // We are done with this module.
 
   // Execute the program.
-  Broken = BD.diffProgram(M1, "", "", false, &Error);
-  if (!Error.empty()) {
-    // Delete the linked module
-    delete M1;
+  Broken = BD.diffProgram(M1.get(), "", "", false, &Error);
+  if (!Error.empty())
     return nullptr;
-  }
   return M1;
 }
 
@@ -342,13 +334,14 @@ static bool ExtractLoops(BugDriver &BD,
     // extraction.
     AbstractInterpreter *AI = BD.switchToSafeInterpreter();
     bool Failure;
-    Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted.get(),
-                                    ToNotOptimize.get(), false, Error, Failure);
+    std::unique_ptr<Module> New =
+        testMergedProgram(BD, std::move(ToOptimizeLoopExtracted),
+                          std::move(ToNotOptimize), Error, Failure);
     if (!New)
       return false;
 
     // Delete the original and set the new program.
-    Module *Old = BD.swapProgramIn(New);
+    Module *Old = BD.swapProgramIn(New.release());
     for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
       MiscompiledFunctions[i] = cast<Function>(VMap[MiscompiledFunctions[i]]);
     delete Old;
@@ -719,12 +712,12 @@ static bool TestOptimizer(BugDriver &BD, std::unique_ptr<Module> Test,
 
   outs() << "  Checking to see if the merged program executes correctly: ";
   bool Broken;
-  Module *New =
-      TestMergedProgram(BD, Optimized.get(), Safe.get(), true, Error, Broken);
+  std::unique_ptr<Module> New = testMergedProgram(
+      BD, std::move(Optimized), std::move(Safe), Error, Broken);
   if (New) {
     outs() << (Broken ? " nope.\n" : " yup.\n");
     // Delete the original and set the new program.
-    delete BD.swapProgramIn(New);
+    delete BD.swapProgramIn(New.release());
   }
   return Broken;
 }
