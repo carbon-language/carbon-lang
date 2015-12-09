@@ -602,11 +602,6 @@ void StmtProfiler::VisitOMPTaskLoopSimdDirective(
   VisitOMPLoopDirective(S);
 }
 
-void StmtProfiler::VisitOMPDistributeDirective(
-    const OMPDistributeDirective *S) {
-  VisitOMPLoopDirective(S);
-}
-
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }
