@@ -321,9 +321,6 @@ def parseOptionsAndInitTestdirs():
         # output-on-success.
         configuration.no_multiprocess_test_runner = True
 
-    if args.i:
-        configuration.ignore = True
-
     if args.l:
         configuration.skip_long_running_test = False
 
@@ -737,10 +734,6 @@ def setupSysPath():
             print('Resources/Python/lldb/__init__.py was not found in ' + configuration.lldbFrameworkPath)
             sys.exit(-1)
     else:
-        # The '-i' option is used to skip looking for lldb.py in the build tree.
-        if configuration.ignore:
-            return
-        
         # If our lldb supports the -P option, use it to find the python path:
         init_in_python_dir = os.path.join('lldb', '__init__.py')
 

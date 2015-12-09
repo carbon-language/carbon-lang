@@ -88,7 +88,6 @@ def create_parser():
     # Test-suite behaviour
     group = parser.add_argument_group('Runtime behaviour options')
     X('-d', 'Suspend the process after launch to wait indefinitely for a debugger to attach')
-    X('-i', "Ignore (don't bailout) if 'lldb.py' module cannot be located in the build tree relative to this script; use PYTHONPATH to locate the module")
     X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
     X('-P', "Use the graphic progress bar.")
     X('-q', "Don't print extra output from this script.")

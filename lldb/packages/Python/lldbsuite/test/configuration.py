@@ -94,9 +94,6 @@ bmIterationCount = -1
 # The filters (testclass.testmethod) used to admit tests into our test suite.
 filters = []
 
-# Ignore the build search path relative to this script to locate the lldb.py module.
-ignore = False
-
 # By default, we do not skip build and cleanup.  Use '-S' option to override.
 skip_build_and_cleanup = False
 
