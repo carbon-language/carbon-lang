@@ -21,17 +21,20 @@
 using namespace __sanitizer;
 using namespace __ubsan;
 
-static bool ignoreReport(SourceLocation SLoc, ReportOptions Opts) {
-  // If source location is already acquired, we don't need to print an error
-  // report for the second time. However, if we're in an unrecoverable handler,
-  // it's possible that location was required by concurrently running thread.
-  // In this case, we should continue the execution to ensure that any of
-  // threads will grab the report mutex and print the report before
-  // crashing the program.
-  return SLoc.isDisabled() && !Opts.DieAfterReport;
+namespace __ubsan {
+bool ignoreReport(SourceLocation SLoc, ReportOptions Opts) {
+  // We are not allowed to skip error report: if we are in unrecoverable
+  // handler, we have to terminate the program right now, and therefore
+  // have to print some diagnostic.
+  //
+  // Even if source location is disabled, it doesn't mean that we have
+  // already report an error to the user: some concurrently running
+  // thread could have acquired it, but not yet printed the report.
+  if (Opts.FromUnrecoverableHandler)
+    return false;
+  return SLoc.isDisabled();
 }
 
-namespace __ubsan {
 const char *TypeCheckKinds[] = {
     "load of", "store to", "reference binding to", "member access within",
     "member call on", "constructor call on", "downcast of", "downcast of",
@@ -116,12 +119,13 @@ static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
     << Value(Data->Type, LHS) << Operator << RHS << Data->Type;
 }
 
-#define UBSAN_OVERFLOW_HANDLER(handler_name, op, abort)                        \
+#define UBSAN_OVERFLOW_HANDLER(handler_name, op, unrecoverable)                \
   void __ubsan::handler_name(OverflowData *Data, ValueHandle LHS,              \
                              ValueHandle RHS) {                                \
-    GET_REPORT_OPTIONS(abort);                                                 \
+    GET_REPORT_OPTIONS(unrecoverable);                                         \
     handleIntegerOverflowImpl(Data, LHS, op, Value(Data->Type, RHS), Opts);    \
-    if (abort) Die();                                                          \
+    if (unrecoverable)                                                         \
+      Die();                                                                   \
   }
 
 UBSAN_OVERFLOW_HANDLER(__ubsan_handle_add_overflow, "+", false)

@@ -211,9 +211,9 @@ public:
 };
 
 struct ReportOptions {
-  /// If DieAfterReport is specified, UBSan will terminate the program after the
-  /// report is printed.
-  bool DieAfterReport;
+  // If FromUnrecoverableHandler is specified, UBSan runtime handler is not
+  // expected to return.
+  bool FromUnrecoverableHandler;
   /// pc/bp are used to unwind the stack trace.
   uptr pc;
   uptr bp;
@@ -225,9 +225,11 @@ enum class ErrorType {
 #undef UBSAN_CHECK
 };
 
-#define GET_REPORT_OPTIONS(die_after_report) \
+bool ignoreReport(SourceLocation SLoc, ReportOptions Opts);
+
+#define GET_REPORT_OPTIONS(unrecoverable_handler) \
     GET_CALLER_PC_BP; \
-    ReportOptions Opts = {die_after_report, pc, bp}
+    ReportOptions Opts = {unrecoverable_handler, pc, bp}
 
 /// \brief Instantiate this class before printing diagnostics in the error
 /// report. This class ensures that reports from different threads and from

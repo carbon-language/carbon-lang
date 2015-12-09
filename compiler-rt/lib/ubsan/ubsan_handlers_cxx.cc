@@ -29,21 +29,22 @@ namespace __ubsan {
   extern const char *TypeCheckKinds[];
 }
 
-static void HandleDynamicTypeCacheMiss(
+// Returns true if UBSan has printed an error report.
+static bool HandleDynamicTypeCacheMiss(
     DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash,
     ReportOptions Opts) {
   if (checkDynamicType((void*)Pointer, Data->TypeInfo, Hash))
     // Just a cache miss. The type matches after all.
-    return;
+    return false;
 
   // Check if error report should be suppressed.
   DynamicTypeInfo DTI = getDynamicTypeInfoFromObject((void*)Pointer);
   if (DTI.isValid() && IsVptrCheckSuppressed(DTI.getMostDerivedTypeName()))
-    return;
+    return false;
 
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
-    return;
+    return false;
 
   ScopedReport R(Opts, Loc, ErrorType::DynamicTypeMismatch);
 
@@ -69,6 +70,7 @@ static void HandleDynamicTypeCacheMiss(
         << TypeName(DTI.getSubobjectTypeName())
         << Range(Pointer, Pointer + sizeof(uptr),
                  "vptr for %2 base class of %1");
+  return true;
 }
 
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
@@ -78,13 +80,18 @@ void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
 }
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
     DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
-  GET_REPORT_OPTIONS(true);
-  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, Opts);
+  // Note: -fsanitize=vptr is always recoverable.
+  GET_REPORT_OPTIONS(false);
+  if (HandleDynamicTypeCacheMiss(Data, Pointer, Hash, Opts))
+    Die();
 }
 
 static void HandleCFIBadType(CFIBadTypeData *Data, ValueHandle Vtable,
                              ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
+
+  if (ignoreReport(Loc, Opts))
+    return;
   ScopedReport R(Opts, Loc, ErrorType::CFIBadType);
   DynamicTypeInfo DTI = getDynamicTypeInfoFromVtable((void*)Vtable);
 
@@ -117,6 +124,7 @@ void __ubsan::__ubsan_handle_cfi_bad_type_abort(CFIBadTypeData *Data,
                                                 ValueHandle Vtable) {
   GET_REPORT_OPTIONS(true);
   HandleCFIBadType(Data, Vtable, Opts);
+  Die();
 }
 
 #endif  // CAN_SANITIZE_UB
