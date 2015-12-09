@@ -919,6 +919,9 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
         continue;
 
       CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
+
+      if (release_input_file(F.handle) != LDPS_OK)
+        message(LDPL_FATAL, "Failed to release file information");
     }
 
     std::error_code EC;
