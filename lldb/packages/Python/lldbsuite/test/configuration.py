@@ -86,9 +86,7 @@ compilers = None    # Must be initialized after option parsing
 # just that.
 cflags_extras = ''
 
-# Full path of the benchmark executable, as specified by the '-e' option.
-bmExecutable = None
-# The breakpoint specification of bmExecutable, as specified by the '-x' option.
+# The breakpoint specification of the benchmark exe, as specified by the '-x' option.
 bmBreakpointSpec = None
 # The benchmark iteration count, as specified by the '-y' option.
 bmIterationCount = -1

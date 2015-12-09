@@ -305,13 +305,6 @@ def parseOptionsAndInitTestdirs():
         sys.stdout.flush()
         os.kill(os.getpid(), signal.SIGSTOP)
 
-    if args.e:
-        if args.e.startswith('-'):
-            usage(parser)
-        configuration.bmExecutable = args.e
-        if not is_exe(configuration.bmExecutable):
-            usage(parser)
-
     if args.F:
         configuration.failfast = True
 
