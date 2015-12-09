@@ -346,9 +346,6 @@ def parseOptionsAndInitTestdirs():
     if args.executable:
         lldbtest_config.lldbExec = args.executable
 
-    if args.libcxx:
-        os.environ["LIBCXX_PATH"] = args.libcxx
-
     if args.n:
         configuration.noHeaders = True
 
