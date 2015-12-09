@@ -597,6 +597,7 @@ void TargetPassConfig::addMachinePasses() {
   addPass(&FuncletLayoutID, false);
 
   addPass(&StackMapLivenessID, false);
+  addPass(&LiveDebugValuesID);
 
   AddingMachinePasses = false;
 }
