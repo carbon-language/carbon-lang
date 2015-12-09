@@ -317,8 +317,8 @@ static bool ExtractLoops(BugDriver &BD,
     if (BugpointIsInterrupted) return MadeChange;
 
     ValueToValueMapTy VMap;
-    Module *ToNotOptimize = CloneModule(BD.getProgram(), VMap).release();
-    Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
+    std::unique_ptr<Module> ToNotOptimize = CloneModule(BD.getProgram(), VMap);
+    Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize.get(),
                                                    MiscompiledFunctions,
                                                    VMap);
     std::unique_ptr<Module> ToOptimizeLoopExtracted =
@@ -326,7 +326,6 @@ static bool ExtractLoops(BugDriver &BD,
     if (!ToOptimizeLoopExtracted) {
       // If the loop extractor crashed or if there were no extractible loops,
       // then this chapter of our odyssey is over with.
-      delete ToNotOptimize;
       delete ToOptimize;
       return MadeChange;
     }
@@ -341,7 +340,7 @@ static bool ExtractLoops(BugDriver &BD,
     AbstractInterpreter *AI = BD.switchToSafeInterpreter();
     bool Failure;
     Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted.get(),
-                                    ToNotOptimize, false, Error, Failure);
+                                    ToNotOptimize.get(), false, Error, Failure);
     if (!New)
       return false;
 
@@ -360,7 +359,7 @@ static bool ExtractLoops(BugDriver &BD,
       errs() << "      Continuing on with un-loop-extracted version.\n";
 
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-tno.bc",
-                            ToNotOptimize);
+                            ToNotOptimize.get());
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to.bc",
                             ToOptimize);
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to-le.bc",
@@ -369,7 +368,6 @@ static bool ExtractLoops(BugDriver &BD,
       errs() << "Please submit the "
              << OutputPrefix << "-loop-extract-fail-*.bc files.\n";
       delete ToOptimize;
-      delete ToNotOptimize;
       return MadeChange;
     }
     delete ToOptimize;
@@ -379,17 +377,18 @@ static bool ExtractLoops(BugDriver &BD,
     // Clone modules, the tester function will free them.
     std::unique_ptr<Module> TOLEBackup =
         CloneModule(ToOptimizeLoopExtracted.get(), VMap);
-    Module *TNOBackup = CloneModule(ToNotOptimize, VMap).release();
+    std::unique_ptr<Module> TNOBackup = CloneModule(ToNotOptimize.get(), VMap);
 
     for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
       MiscompiledFunctions[i] = cast<Function>(VMap[MiscompiledFunctions[i]]);
 
-    Failure = TestFn(BD, ToOptimizeLoopExtracted.get(), ToNotOptimize, Error);
+    Failure =
+        TestFn(BD, ToOptimizeLoopExtracted.get(), ToNotOptimize.get(), Error);
     if (!Error.empty())
       return false;
 
     ToOptimizeLoopExtracted = std::move(TOLEBackup);
-    ToNotOptimize = TNOBackup;
+    ToNotOptimize = std::move(TNOBackup);
 
     if (!Failure) {
       outs() << "*** Loop extraction masked the problem.  Undoing.\n";
@@ -413,7 +412,7 @@ static bool ExtractLoops(BugDriver &BD,
         MiscompiledFunctions.push_back(NewF);
       }
 
-      BD.setNewProgram(ToNotOptimize);
+      BD.setNewProgram(ToNotOptimize.release());
       return MadeChange;
     }
 
@@ -444,7 +443,7 @@ static bool ExtractLoops(BugDriver &BD,
       MiscompiledFunctions.push_back(NewF);
     }
 
-    BD.setNewProgram(ToNotOptimize);
+    BD.setNewProgram(ToNotOptimize.release());
     MadeChange = true;
   }
 }
