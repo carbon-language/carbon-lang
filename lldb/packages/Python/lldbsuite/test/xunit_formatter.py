@@ -189,8 +189,16 @@ class XunitFormatter(ResultsFormatter):
             EventBuilder.STATUS_EXPECTED_FAILURE:
                 self._handle_expected_failure,
             EventBuilder.STATUS_UNEXPECTED_SUCCESS:
-                self._handle_unexpected_success
+                self._handle_unexpected_success,
+            EventBuilder.STATUS_EXCEPTIONAL_EXIT:
+                self._handle_exceptional_exit,
+            EventBuilder.STATUS_TIMEOUT:
+                self._handle_timeout
             }
+
+    RESULT_TYPES = set(
+        [EventBuilder.TYPE_TEST_RESULT,
+         EventBuilder.TYPE_JOB_RESULT])
 
     def handle_event(self, test_event):
         super(XunitFormatter, self).handle_event(test_event)
@@ -206,7 +214,7 @@ class XunitFormatter(ResultsFormatter):
                 test_event["test_class"],
                 test_event["test_name"],
                 test_event["event_time"])
-        elif event_type == EventBuilder.TYPE_TEST_RESULT:
+        elif event_type in self.RESULT_TYPES:
             self._process_test_result(test_event)
         else:
             # This is an unknown event.
@@ -256,6 +264,53 @@ class XunitFormatter(ResultsFormatter):
                     XunitFormatter._quote_attribute(test_event["issue_class"]),
                     XunitFormatter._quote_attribute(message),
                     backtrace)
+            ))
+        with self.lock:
+            self.elements["errors"].append(result)
+
+    def _handle_exceptional_exit(self, test_event):
+        """Handles an exceptional exit.
+        @param test_event the test method or job result event to handle.
+        """
+        if "test_name" in test_event:
+            name = test_event["test_name"]
+        else:
+            name = test_event.get("test_filename", "<unknown test/filename>")
+
+        message_text = "ERROR: {} ({}): {}".format(
+            test_event.get("exception_code", 0),
+            test_event.get("exception_description", ""),
+            name)
+        message = self._replace_invalid_xml(message_text)
+
+        result = self._common_add_testcase_entry(
+            test_event,
+            inner_content=(
+                '<error type={} message={}></error>'.format(
+                    "exceptional_exit",
+                    XunitFormatter._quote_attribute(message))
+            ))
+        with self.lock:
+            self.elements["errors"].append(result)
+
+    def _handle_timeout(self, test_event):
+        """Handles a test method or job timeout.
+        @param test_event the test method or job result event to handle.
+        """
+        if "test_name" in test_event:
+            name = test_event["test_name"]
+        else:
+            name = test_event.get("test_filename", "<unknown test/filename>")
+
+        message_text = "TIMEOUT: {}".format(name)
+        message = self._replace_invalid_xml(message_text)
+
+        result = self._common_add_testcase_entry(
+            test_event,
+            inner_content=(
+                '<error type={} message={}></error>'.format(
+                    "timeout",
+                    XunitFormatter._quote_attribute(message))
             ))
         with self.lock:
             self.elements["errors"].append(result)
