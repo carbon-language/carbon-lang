@@ -321,7 +321,8 @@ static bool ExtractLoops(BugDriver &BD,
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                    MiscompiledFunctions,
                                                    VMap);
-    Module *ToOptimizeLoopExtracted = BD.extractLoop(ToOptimize).release();
+    std::unique_ptr<Module> ToOptimizeLoopExtracted =
+        BD.extractLoop(ToOptimize);
     if (!ToOptimizeLoopExtracted) {
       // If the loop extractor crashed or if there were no extractible loops,
       // then this chapter of our odyssey is over with.
@@ -339,7 +340,7 @@ static bool ExtractLoops(BugDriver &BD,
     // extraction.
     AbstractInterpreter *AI = BD.switchToSafeInterpreter();
     bool Failure;
-    Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted,
+    Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted.get(),
                                     ToNotOptimize, false, Error, Failure);
     if (!New)
       return false;
@@ -363,7 +364,7 @@ static bool ExtractLoops(BugDriver &BD,
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to.bc",
                             ToOptimize);
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to-le.bc",
-                            ToOptimizeLoopExtracted);
+                            ToOptimizeLoopExtracted.get());
 
       errs() << "Please submit the "
              << OutputPrefix << "-loop-extract-fail-*.bc files.\n";
@@ -376,17 +377,18 @@ static bool ExtractLoops(BugDriver &BD,
 
     outs() << "  Testing after loop extraction:\n";
     // Clone modules, the tester function will free them.
-    Module *TOLEBackup = CloneModule(ToOptimizeLoopExtracted, VMap).release();
+    std::unique_ptr<Module> TOLEBackup =
+        CloneModule(ToOptimizeLoopExtracted.get(), VMap);
     Module *TNOBackup = CloneModule(ToNotOptimize, VMap).release();
 
     for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
       MiscompiledFunctions[i] = cast<Function>(VMap[MiscompiledFunctions[i]]);
 
-    Failure = TestFn(BD, ToOptimizeLoopExtracted, ToNotOptimize, Error);
+    Failure = TestFn(BD, ToOptimizeLoopExtracted.get(), ToNotOptimize, Error);
     if (!Error.empty())
       return false;
 
-    ToOptimizeLoopExtracted = TOLEBackup;
+    ToOptimizeLoopExtracted = std::move(TOLEBackup);
     ToNotOptimize = TNOBackup;
 
     if (!Failure) {
@@ -411,7 +413,6 @@ static bool ExtractLoops(BugDriver &BD,
         MiscompiledFunctions.push_back(NewF);
       }
 
-      delete ToOptimizeLoopExtracted;
       BD.setNewProgram(ToNotOptimize);
       return MadeChange;
     }
@@ -431,8 +432,6 @@ static bool ExtractLoops(BugDriver &BD,
     if (Linker::linkModules(*ToNotOptimize, *ToOptimizeLoopExtracted,
                             diagnosticHandler))
       exit(1);
-
-    delete ToOptimizeLoopExtracted;
 
     // All of the Function*'s in the MiscompiledFunctions list are in the old
     // module.  Update this list to include all of the functions in the
