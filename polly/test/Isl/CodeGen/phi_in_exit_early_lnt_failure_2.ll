@@ -13,7 +13,7 @@
 ; CHECK-NEXT:    store double %eps1, double* %eps1.s2a
 ;
 ; CHECK-LABEL: polly.stmt.if.end.47.region_exiting.exit:
-; CEHCK-NEXT:     %eps1.addr.0.ph.final_reload = load double, double* %eps1.addr.0.s2a
+; CHECK-NEXT:     %eps1.addr.0.ph.final_reload = load double, double* %eps1.addr.0.s2a
 ;
 define void @dbisect(double* %c, double* %b, double %eps1, double* %eps2) {
 entry:
