@@ -289,7 +289,6 @@ void initializeBBVectorizePass(PassRegistry&);
 void initializeMachineFunctionPrinterPassPass(PassRegistry&);
 void initializeMIRPrintingPassPass(PassRegistry&);
 void initializeStackMapLivenessPass(PassRegistry&);
-void initializeLiveDebugValuesPass(PassRegistry&);
 void initializeMachineCombinerPass(PassRegistry &);
 void initializeLoadCombinePass(PassRegistry&);
 void initializeRewriteSymbolsPass(PassRegistry&);
