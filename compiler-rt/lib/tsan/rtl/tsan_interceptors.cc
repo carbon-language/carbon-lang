@@ -227,6 +227,9 @@ struct ThreadSignalContext {
   atomic_uintptr_t in_blocking_func;
   atomic_uintptr_t have_pending_signals;
   SignalDesc pending_signals[kSigCount];
+  // emptyset and oldset are too big for stack.
+  __sanitizer_sigset_t emptyset;
+  __sanitizer_sigset_t oldset;
 };
 
 // The object is 64-byte aligned, because we want hot data to be located in
@@ -1962,10 +1965,8 @@ void ProcessPendingSignals(ThreadState *thr) {
     return;
   atomic_store(&sctx->have_pending_signals, 0, memory_order_relaxed);
   atomic_fetch_add(&thr->in_signal_handler, 1, memory_order_relaxed);
-  // These are too big for stack.
-  static THREADLOCAL __sanitizer_sigset_t emptyset, oldset;
-  CHECK_EQ(0, REAL(sigfillset)(&emptyset));
-  CHECK_EQ(0, pthread_sigmask(SIG_SETMASK, &emptyset, &oldset));
+  CHECK_EQ(0, REAL(sigfillset)(&sctx->emptyset));
+  CHECK_EQ(0, pthread_sigmask(SIG_SETMASK, &sctx->emptyset, &sctx->oldset));
   for (int sig = 0; sig < kSigCount; sig++) {
     SignalDesc *signal = &sctx->pending_signals[sig];
     if (signal->armed) {
@@ -1974,7 +1975,7 @@ void ProcessPendingSignals(ThreadState *thr) {
           &signal->siginfo, &signal->ctx);
     }
   }
-  CHECK_EQ(0, pthread_sigmask(SIG_SETMASK, &oldset, 0));
+  CHECK_EQ(0, pthread_sigmask(SIG_SETMASK, &sctx->oldset, 0));
   atomic_fetch_add(&thr->in_signal_handler, -1, memory_order_relaxed);
 }
 
