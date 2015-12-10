@@ -86,8 +86,6 @@ compilers = None    # Must be initialized after option parsing
 # just that.
 cflags_extras = ''
 
-# The breakpoint specification of the benchmark exe, as specified by the '-x' option.
-bmBreakpointSpec = None
 # The benchmark iteration count, as specified by the '-y' option.
 bmIterationCount = -1
 

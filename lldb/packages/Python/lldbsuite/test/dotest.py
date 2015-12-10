@@ -358,11 +358,6 @@ def parseOptionsAndInitTestdirs():
     if args.v:
         configuration.verbose = 2
 
-    if args.x:
-        if args.x.startswith('-'):
-            usage(parser)
-        configuration.bmBreakpointSpec = args.x
-
     # argparse makes sure we have a number
     if args.y:
         configuration.bmIterationCount = args.y
