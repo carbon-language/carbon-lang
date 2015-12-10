@@ -855,10 +855,8 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
           getFunctionIndexForFile(F, File);
 
       // Skip files without a function summary.
-      if (!Index)
-        continue;
-
-      CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
+      if (Index)
+        CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
 
       if (release_input_file(F.handle) != LDPS_OK)
         message(LDPL_FATAL, "Failed to release file information");
