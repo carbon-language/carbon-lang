@@ -545,8 +545,8 @@ other patch.
 
 * Including new things into the API: If an LLVM subcomponent has a C API already
 included, then expanding that C API is acceptable. Adding C API for subcomponents
-that don't currently have one is fine, and the details of how best to design that
-API should be discussed on the mailing list.
+that don't currently have one need to be discussed on the mailing list for design
+and maintainability feedback prior to implementation.
 
 * Documentation: Any changes to the C API are required to be documented in the
 release notes so that it’s clear to external users who do not follow the project
