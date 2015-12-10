@@ -159,7 +159,7 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
 
   // As a special case, these operators use the type to mean the type to
   // sign-extend from.
-  for (auto T : {MVT::i1, MVT::i8, MVT::i16})
+  for (auto T : {MVT::i1, MVT::i8, MVT::i16, MVT::i32})
     setOperationAction(ISD::SIGN_EXTEND_INREG, T, Expand);
 
   // Dynamic stack allocation: use the default expansion.

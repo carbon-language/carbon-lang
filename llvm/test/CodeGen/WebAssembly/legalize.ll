@@ -22,3 +22,12 @@ define i53 @shl_i53(i53 %a, i53 %b, i53* %p) {
   %t = shl i53 %a, %b
   ret i53 %t
 }
+
+; CHECK-LABEL: sext_in_reg_i32_i64:
+; CHECK: i64.shl
+; CHECK: i64.shr_s
+define i64 @sext_in_reg_i32_i64(i64 %a) {
+  %b = shl i64 %a, 32
+  %c = ashr i64 %b, 32
+  ret i64 %c
+}
