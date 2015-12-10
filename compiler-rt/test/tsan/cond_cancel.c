@@ -7,8 +7,8 @@
 // of the thread to "ThreadStatusFinished" failing a check in "SetJoined" 
 // (defined in sanitizer_thread_registry.cc). It might seem a bug on glibc,
 // however the same version GLIBC-2.17 will not make fail the test on 
-// powerpc64 (VMA=46)
-// XFAIL: powerpc64
+// powerpc64 BE (VMA=46)
+// XFAIL: powerpc64-unknown-linux-gnu
 
 #include "test.h"
 
