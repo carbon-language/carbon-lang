@@ -831,7 +831,7 @@ static bool useExistingDest(GlobalValue &SGV, GlobalValue *DGV,
   if (SGV.isDeclaration())
     return true;
 
-  if (DGV->isDeclarationForLinker())
+  if (DGV->isDeclarationForLinker() && !SGV.isDeclarationForLinker())
     return false;
 
   if (ShouldLink)
