@@ -78,6 +78,10 @@ function(darwin_test_archs os valid_archs)
                 OUTPUT_VARIABLE TEST_OUTPUT)
     if(${CAN_TARGET_${os}_${arch}})
       list(APPEND working_archs ${arch})
+    else()
+      file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+        "Testing compiler for supporting ${os}-${arch}:\n"
+        "${TEST_OUTPUT}\n")
     endif()
   endforeach()
   set(${valid_archs} ${working_archs}
