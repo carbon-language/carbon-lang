@@ -23,7 +23,10 @@
     return 0;                                                                  \
   }
 
-#ifdef _MIPS_ARCH
+#if COMPILER_RT_HAS_ATOMICS == 1
+#define BOOL_CMPXCHG(Ptr, OldV, NewV)                                          \
+  __sync_bool_compare_and_swap(Ptr, OldV, NewV)
+#else
 LLVM_LIBRARY_VISIBILITY
 uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
   void *R = *Ptr;
@@ -34,9 +37,6 @@ uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
   return 0;
 }
 #define BOOL_CMPXCHG(Ptr, OldV, NewV) BoolCmpXchg((void **)Ptr, OldV, NewV)
-#else
-#define BOOL_CMPXCHG(Ptr, OldV, NewV)                                          \
-  __sync_bool_compare_and_swap(Ptr, OldV, NewV)
 #endif
 
 char *(*GetEnvHook)(const char *) = 0;
