@@ -12121,10 +12121,12 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
     // In C++, we need to do a redeclaration lookup to properly
     // diagnose some problems.
-    if (getLangOpts().CPlusPlus) {
-      Previous.setRedeclarationKind(ForRedeclaration);
-      LookupQualifiedName(Previous, SearchDC);
-    }
+    // FIXME: this lookup is also used (with and without C++) to find a hidden
+    // declaration so that we don't get ambiguity errors when using a type
+    // declared by an elaborated-type-specifier.  In C that is not correct and
+    // we should instead merge compatible types found by lookup.
+    Previous.setRedeclarationKind(ForRedeclaration);
+    LookupQualifiedName(Previous, SearchDC);
   }
 
   // If we have a known previous declaration to use, then use it.
