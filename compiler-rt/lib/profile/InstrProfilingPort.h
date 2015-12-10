@@ -23,6 +23,14 @@
   if (GetEnvHook && GetEnvHook("LLVM_PROFILE_VERBOSE_ERRORS"))                 \
     fprintf(stderr, Format, __VA_ARGS__);
 
+#if COMPILER_RT_HAS_ATOMICS == 1
+#define BOOL_CMPXCHG(Ptr, OldV, NewV)                                          \
+  __sync_bool_compare_and_swap(Ptr, OldV, NewV)
+#else
+#define BOOL_CMPXCHG(Ptr, OldV, NewV) BoolCmpXchg((void **)Ptr, OldV, NewV)
+#endif
+
+
 extern char *(*GetEnvHook)(const char *);
 
 #if defined(__FreeBSD__) && defined(__i386__)
