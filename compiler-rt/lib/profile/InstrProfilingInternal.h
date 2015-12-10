@@ -61,4 +61,6 @@ int llvmWriteProfDataImpl(WriterCallback Writer, void *WriterCtx,
                           const uint64_t ValueDataSize, const char *NamesBegin,
                           const char *NamesEnd);
 
+extern char *(*GetEnvHook)(const char *);
+
 #endif

@@ -8,6 +8,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+#include "InstrProfilingInternal.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>

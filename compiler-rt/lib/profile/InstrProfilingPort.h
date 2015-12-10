@@ -30,9 +30,6 @@
 #define BOOL_CMPXCHG(Ptr, OldV, NewV) BoolCmpXchg((void **)Ptr, OldV, NewV)
 #endif
 
-
-extern char *(*GetEnvHook)(const char *);
-
 #if defined(__FreeBSD__) && defined(__i386__)
 
 /* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
