@@ -3246,8 +3246,8 @@ DeduceFromInitializerList(Sema &S, TemplateParameterList *TemplateParams,
   // Deduction only needs to be done for dependent types.
   if (ElTy->isDependentType()) {
     for (Expr *E : ILE->inits()) {
-      if (Result = DeduceTemplateArgumentByListElement(S, TemplateParams, ElTy,
-                                                       E, Info, Deduced, TDF))
+      if ((Result = DeduceTemplateArgumentByListElement(S, TemplateParams, ElTy,
+                                                        E, Info, Deduced, TDF)))
         return true;
     }
   }
