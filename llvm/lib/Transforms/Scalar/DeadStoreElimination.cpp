@@ -678,8 +678,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 static void findSafePreds(SmallVectorImpl<BasicBlock *> &PredBlocks,
                           SmallSetVector<BasicBlock *, 8> &SafeBlocks,
                           BasicBlock *BB, DominatorTree *DT) {
-  for (auto I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
-    BasicBlock *Pred = *I;
+  for (auto *Pred : predecessors(BB)) {
     if (Pred == BB)
       continue;
     // The second check below prevents adding blocks that form a cycle with BB
@@ -689,8 +688,7 @@ static void findSafePreds(SmallVectorImpl<BasicBlock *> &PredBlocks,
       continue;
 
     bool PredIsSafe = true;
-    for (auto II = succ_begin(Pred), EE = succ_end(Pred); II != EE; ++II) {
-      BasicBlock *Succ = *II;
+    for (auto *Succ : successors(Pred)) {
       if (Succ == BB || Succ == Pred) // shortcut, BB should be in SafeBlocks
         continue;
       if (!SafeBlocks.count(Succ)) {
@@ -710,8 +708,7 @@ static bool underlyingObjectsDoNotAlias(StoreInst *SI, LoadInst *LI,
   SmallVector<Value *, 4> Pointers;
   GetUnderlyingObjects(LI->getPointerOperand(), Pointers, DL);
 
-  for (auto I = Pointers.begin(), E = Pointers.end(); I != E; ++I) {
-    Value *BObj = *I;
+  for (auto *BObj : Pointers) {
     if (!AA.isNoAlias(AObj, DL.getTypeStoreSize(AObj->getType()), BObj,
                       DL.getTypeStoreSize(BObj->getType())))
       return false;
@@ -858,10 +855,10 @@ bool DSE::MemoryIsNotModifiedBetween(Instruction *FirstI,
     if (B != FirstBB) {
       assert(B != &FirstBB->getParent()->getEntryBlock() &&
           "Should not hit the entry block because SI must be dominated by LI");
-      for (auto PredI = pred_begin(B), PE = pred_end(B); PredI != PE; ++PredI) {
-        if (!Visited.insert(*PredI).second)
+      for (auto *PredI : predecessors(B)) {
+        if (!Visited.insert(PredI).second)
           continue;
-        WorkList.push_back(*PredI);
+        WorkList.push_back(PredI);
       }
     }
   }
