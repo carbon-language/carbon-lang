@@ -179,7 +179,7 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   //  - Floating-point extending loads.
   //  - Floating-point truncating stores.
   //  - i1 extending loads.
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, MVT::f64, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::f64, MVT::f32, Expand);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   for (auto T : MVT::integer_valuetypes())
     for (auto Ext : {ISD::EXTLOAD, ISD::ZEXTLOAD, ISD::SEXTLOAD})
