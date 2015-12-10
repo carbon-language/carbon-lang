@@ -6,13 +6,9 @@ pr38151.c
 va-arg-22.c
 
 # ValueTypes.h:222: llvm::MVT llvm::EVT::getSimpleVT() const: Assertion `isSimple() && "Expected a SimpleValueType!"' failed.
-inst-check.c
 loop-12.c
-pr57344-1.c
-pr57344-2.c
-pr57344-3.c
-pr57344-4.c
-pr58570.c
+
+
 
 # TargetRegisterInfo.h:315: static unsigned int llvm::TargetRegisterInfo::virtReg2Index(unsigned int): Assertion `isVirtualRegister(Reg) && "Not a virtual register"' failed.
 20021120-3.c
@@ -34,10 +30,6 @@ va-arg-trap-1.c
 # LiveInterval.cpp:1092: void llvm::LiveRange::verify() const: Assertion `I->end <= std::next(I)->start' failed.
 20020406-1.c
 
-# PeepholeOptimizer.cpp:1706: {anonymous}::ValueTrackerResult {anonymous}::ValueTracker::getNextSourceFromBitcast(): Assertion `!MO.isDef() && "We should have skipped all the definitions by now"' failed.
-20020227-1.c
-pr35456.c
-strct-pack-1.c
 
 # WebAssemblyCFGStackify.cpp:211: void SortBlocks(llvm::MachineFunction&, const llvm::MachineLoopInfo&): Assertion `L->contains( MLI.getLoopFor(&*prev(MachineFunction::iterator(&MBB)))) && "Loop isn't contiguous"' failed.
 20000815-1.c
@@ -156,6 +148,7 @@ pr57130.c
 20131127-1.c
 20140425-1.c
 920411-1.c
+920501-6.c
 920501-8.c
 920726-1.c
 930518-1.c
@@ -309,24 +302,9 @@ vprintf-chk-1.c
 20060110-2.c
 pr33992.c
 
-# Cannot select any_extend.
-20040709-1.c
-20040709-2.c
-20050111-1.c
-20050316-2.c
-20050316-3.c
-20050604-1.c
-920501-6.c
-921029-1.c
-961122-1.c
-comp-goto-1.c
-mode-dependent-address.c
-pr23135.c
-pr42269-2.c
-pr59747.c
-restrict-1.c
-simd-1.c
-simd-2.c
+
+
+
 
 # Cannot select callseq_end.
 20040811-1.c
@@ -339,6 +317,7 @@ vla-dealloc-1.c
 920501-5.c
 
 # Cannot select BlockAddress.
+comp-goto-1.c
 980526-1.c
 990208-1.c
 
@@ -357,6 +336,8 @@ vla-dealloc-1.c
 20020810-1.c
 20021118-1.c
 20040707-1.c
+20040709-1.c
+20040709-2.c
 20041201-1.c
 20050713-1.c
 20070614-1.c
@@ -379,6 +360,7 @@ complex-1.c
 complex-2.c
 pr15262-2.c
 pr20621-1.c
+pr23135.c
 pr30185.c
 pr42248.c
 
