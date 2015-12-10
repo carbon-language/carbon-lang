@@ -362,9 +362,11 @@ template <class ELFT> static bool isRelroSection(OutputSectionBase<ELFT> *Sec) {
   typename OutputSectionBase<ELFT>::uintX_t Flags = Sec->getFlags();
   if (!(Flags & SHF_ALLOC) || !(Flags & SHF_WRITE))
     return false;
+  if (Flags & SHF_TLS)
+    return true;
   uint32_t Type = Sec->getType();
-  if ((Flags & SHF_TLS) || (Type == SHT_INIT_ARRAY || Type == SHT_FINI_ARRAY ||
-                            Type == SHT_PREINIT_ARRAY))
+  if (Type == SHT_INIT_ARRAY || Type == SHT_FINI_ARRAY ||
+      Type == SHT_PREINIT_ARRAY)
     return true;
   if (Sec == Out<ELFT>::GotPlt)
     return Config->ZNow;
