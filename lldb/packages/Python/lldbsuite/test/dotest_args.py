@@ -94,7 +94,6 @@ def create_parser():
     group.add_argument('-u', dest='unset_env_varnames', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
     group.add_argument('--env', dest='set_env_vars', metavar='variable', action='append', help='Specify an environment variable to set to the given value before running the test cases e.g.: --env CXXFLAGS=-O3 --env DYLD_INSERT_LIBRARIES')
     X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
-    X('-w', 'Insert some wait time (currently 0.5 sec) between consecutive test cases')
     X('-T', 'Obtain and dump svn information for this checkout of LLDB (off by default)')
     group.add_argument('--enable-crash-dialog', dest='disable_crash_dialog', action='store_false', help='(Windows only) When LLDB crashes, display the Windows crash dialog.')
     group.add_argument('--show-inferior-console', dest='hide_inferior_console', action='store_false', help='(Windows only) When launching an inferior, dont hide its console window.')

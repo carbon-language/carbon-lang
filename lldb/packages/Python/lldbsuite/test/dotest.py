@@ -371,9 +371,6 @@ def parseOptionsAndInitTestdirs():
     if args.v:
         configuration.verbose = 2
 
-    if args.w:
-        os.environ['LLDB_WAIT_BETWEEN_TEST_CASES'] = 'YES'
-
     if args.x:
         if args.x.startswith('-'):
             usage(parser)
