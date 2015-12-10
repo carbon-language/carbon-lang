@@ -204,6 +204,9 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// given function and the largest index passed to llvm.localrecover.
   DenseMap<Function *, std::pair<unsigned, unsigned>> FrameEscapeInfo;
 
+  /// Cache of constants visited in search of ConstantExprs.
+  SmallPtrSet<const Constant *, 32> ConstantExprVisited;
+
 public:
   explicit Verifier(raw_ostream &OS)
       : VerifierSupport(OS), Context(nullptr), LandingPadResultTy(nullptr),
@@ -420,7 +423,8 @@ private:
   void VerifyFunctionMetadata(
       const SmallVector<std::pair<unsigned, MDNode *>, 4> MDs);
 
-  void VerifyConstantExprBitcastType(const ConstantExpr *CE);
+  void visitConstantExprsRecursively(const Constant *EntryC);
+  void visitConstantExpr(const ConstantExpr *CE);
   void VerifyStatepoint(ImmutableCallSite CS);
   void verifyFrameRecoverIndices();
 
@@ -545,25 +549,7 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
   }
 
   // Walk any aggregate initializers looking for bitcasts between address spaces
-  SmallPtrSet<const Value *, 4> Visited;
-  SmallVector<const Value *, 4> WorkStack;
-  WorkStack.push_back(cast<Value>(GV.getInitializer()));
-
-  while (!WorkStack.empty()) {
-    const Value *V = WorkStack.pop_back_val();
-    if (!Visited.insert(V).second)
-      continue;
-
-    if (const User *U = dyn_cast<User>(V)) {
-      WorkStack.append(U->op_begin(), U->op_end());
-    }
-
-    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-      VerifyConstantExprBitcastType(CE);
-      if (Broken)
-        return;
-    }
-  }
+  visitConstantExprsRecursively(GV.getInitializer());
 
   visitGlobalValue(GV);
 }
@@ -593,7 +579,7 @@ void Verifier::visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias*> &Visited,
   }
 
   if (const auto *CE = dyn_cast<ConstantExpr>(&C))
-    VerifyConstantExprBitcastType(CE);
+    visitConstantExprsRecursively(CE);
 
   for (const Use &U : C.operands()) {
     Value *V = &*U;
@@ -1493,7 +1479,35 @@ void Verifier::VerifyFunctionMetadata(
   }
 }
 
-void Verifier::VerifyConstantExprBitcastType(const ConstantExpr *CE) {
+void Verifier::visitConstantExprsRecursively(const Constant *EntryC) {
+  if (!ConstantExprVisited.insert(EntryC).second)
+    return;
+
+  SmallVector<const Constant *, 16> Stack;
+  Stack.push_back(EntryC);
+
+  while (!Stack.empty()) {
+    const Constant *C = Stack.pop_back_val();
+
+    // Check this constant expression.
+    if (const auto *CE = dyn_cast<ConstantExpr>(C))
+      visitConstantExpr(CE);
+
+    // Visit all sub-expressions.
+    for (const Use &U : C->operands()) {
+      const auto *OpC = dyn_cast<Constant>(U);
+      if (!OpC)
+        continue;
+      if (isa<GlobalValue>(OpC))
+        continue; // Global values get visited separately.
+      if (!ConstantExprVisited.insert(OpC).second)
+        continue;
+      Stack.push_back(OpC);
+    }
+  }
+}
+
+void Verifier::visitConstantExpr(const ConstantExpr *CE) {
   if (CE->getOpcode() != Instruction::BitCast)
     return;
 
@@ -3219,22 +3233,7 @@ void Verifier::visitInstruction(Instruction &I) {
       if (CE->getType()->isPtrOrPtrVectorTy()) {
         // If we have a ConstantExpr pointer, we need to see if it came from an
         // illegal bitcast (inttoptr <constant int> )
-        SmallVector<const ConstantExpr *, 4> Stack;
-        SmallPtrSet<const ConstantExpr *, 4> Visited;
-        Stack.push_back(CE);
-
-        while (!Stack.empty()) {
-          const ConstantExpr *V = Stack.pop_back_val();
-          if (!Visited.insert(V).second)
-            continue;
-
-          VerifyConstantExprBitcastType(V);
-
-          for (unsigned I = 0, N = V->getNumOperands(); I != N; ++I) {
-            if (ConstantExpr *Op = dyn_cast<ConstantExpr>(V->getOperand(I)))
-              Stack.push_back(Op);
-          }
-        }
+        visitConstantExprsRecursively(CE);
       }
     }
   }
