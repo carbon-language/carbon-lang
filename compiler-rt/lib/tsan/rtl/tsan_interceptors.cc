@@ -444,7 +444,7 @@ static void JmpBufGarbageCollect(ThreadState *thr, uptr sp) {
     JmpBuf *buf = &thr->jmp_bufs[i];
     if (buf->sp <= sp) {
       uptr sz = thr->jmp_bufs.Size();
-      thr->jmp_bufs[i] = thr->jmp_bufs[sz - 1];
+      internal_memcpy(buf, &thr->jmp_bufs[sz - 1], sizeof(*buf));
       thr->jmp_bufs.PopBack();
       i--;
     }

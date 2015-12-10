@@ -1691,16 +1691,19 @@ static int wrapped_gl_stat(const char *s, void *st) {
   return pglob_copy->gl_stat(s, st);
 }
 
+static const __sanitizer_glob_t kGlobCopy = {
+      0,                  0,                   0,
+      0,                  wrapped_gl_closedir, wrapped_gl_readdir,
+      wrapped_gl_opendir, wrapped_gl_lstat,    wrapped_gl_stat};
+
 INTERCEPTOR(int, glob, const char *pattern, int flags,
             int (*errfunc)(const char *epath, int eerrno),
             __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob, pattern, flags, errfunc, pglob);
   COMMON_INTERCEPTOR_READ_STRING(ctx, pattern, 0);
-  __sanitizer_glob_t glob_copy = {
-      0,                  0,                   0,
-      0,                  wrapped_gl_closedir, wrapped_gl_readdir,
-      wrapped_gl_opendir, wrapped_gl_lstat,    wrapped_gl_stat};
+  __sanitizer_glob_t glob_copy;
+  internal_memcpy(&glob_copy, &kGlobCopy, sizeof(glob_copy));
   if (flags & glob_altdirfunc) {
     Swap(pglob->gl_closedir, glob_copy.gl_closedir);
     Swap(pglob->gl_readdir, glob_copy.gl_readdir);
@@ -1728,10 +1731,8 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob64, pattern, flags, errfunc, pglob);
   COMMON_INTERCEPTOR_READ_STRING(ctx, pattern, 0);
-  __sanitizer_glob_t glob_copy = {
-      0,                  0,                   0,
-      0,                  wrapped_gl_closedir, wrapped_gl_readdir,
-      wrapped_gl_opendir, wrapped_gl_lstat,    wrapped_gl_stat};
+  __sanitizer_glob_t glob_copy;
+  internal_memcpy(&glob_copy, &kGlobCopy, sizeof(glob_copy));
   if (flags & glob_altdirfunc) {
     Swap(pglob->gl_closedir, glob_copy.gl_closedir);
     Swap(pglob->gl_readdir, glob_copy.gl_readdir);

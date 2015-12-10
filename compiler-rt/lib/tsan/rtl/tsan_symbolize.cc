@@ -71,7 +71,7 @@ ReportLocation *SymbolizeData(uptr addr) {
   if (!Symbolizer::GetOrInit()->SymbolizeData(addr, &info))
     return 0;
   ReportLocation *ent = ReportLocation::New(ReportLocationGlobal);
-  ent->global = info;
+  internal_memcpy(&ent->global, &info, sizeof(info));
   return ent;
 }
 
