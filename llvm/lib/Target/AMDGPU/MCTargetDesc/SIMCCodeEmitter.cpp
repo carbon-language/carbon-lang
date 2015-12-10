@@ -250,17 +250,7 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
   if (MO.isExpr()) {
     const MCSymbolRefExpr *Expr = cast<MCSymbolRefExpr>(MO.getExpr());
-    MCFixupKind Kind;
-    const MCSymbol *Sym =
-        Ctx.getOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
-
-    if (&Expr->getSymbol() == Sym) {
-      // Add the offset to the beginning of the constant values.
-      Kind = (MCFixupKind)AMDGPU::fixup_si_end_of_text;
-    } else {
-      // This is used for constant data stored in .rodata.
-     Kind = (MCFixupKind)AMDGPU::fixup_si_rodata;
-    }
+    MCFixupKind Kind = (MCFixupKind)AMDGPU::fixup_si_rodata;
     Fixups.push_back(MCFixup::create(4, Expr, Kind, MI.getLoc()));
   }
 

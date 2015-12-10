@@ -1094,20 +1094,8 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
   const GlobalValue *GV = GSD->getGlobal();
   MVT PtrVT = getPointerTy(DAG.getDataLayout(), GSD->getAddressSpace());
 
-  SDValue Ptr = DAG.getNode(AMDGPUISD::CONST_DATA_PTR, DL, PtrVT);
   SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
-
-  SDValue PtrLo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, Ptr,
-                              DAG.getConstant(0, DL, MVT::i32));
-  SDValue PtrHi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, Ptr,
-                              DAG.getConstant(1, DL, MVT::i32));
-
-  SDValue Lo = DAG.getNode(ISD::ADDC, DL, DAG.getVTList(MVT::i32, MVT::Glue),
-                           PtrLo, GA);
-  SDValue Hi = DAG.getNode(ISD::ADDE, DL, DAG.getVTList(MVT::i32, MVT::Glue),
-                           PtrHi, DAG.getConstant(0, DL, MVT::i32),
-                           SDValue(Lo.getNode(), 1));
-  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Lo, Hi);
+  return DAG.getNode(AMDGPUISD::CONST_DATA_PTR, DL, PtrVT, GA);
 }
 
 SDValue SITargetLowering::copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL,
