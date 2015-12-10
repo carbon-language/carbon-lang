@@ -10,47 +10,7 @@
 #ifndef PROFILE_INSTRPROFILING_H_
 #define PROFILE_INSTRPROFILING_H_
 
-#ifdef _MSC_VER
-# define LLVM_ALIGNAS(x) __declspec(align(x))
-#elif __GNUC__
-#define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
-#endif
-
-#define LLVM_LIBRARY_VISIBILITY __attribute__((visibility("hidden")))
-#define LLVM_SECTION(Sect) __attribute__((section(Sect)))
-
-#define PROF_ERR(Format, ...)                                                  \
-  if (GetEnvHook && GetEnvHook("LLVM_PROFILE_VERBOSE_ERRORS"))                 \
-    fprintf(stderr, Format, __VA_ARGS__);
-
-extern char *(*GetEnvHook)(const char *);
-
-#if defined(__FreeBSD__) && defined(__i386__)
-
-/* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
- * FreeBSD 10, r232261) when compiled in 32-bit mode.
- */
-#define PRIu64 "llu"
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-typedef uint32_t uintptr_t;
-#elif defined(__FreeBSD__) && defined(__x86_64__)
-#define PRIu64 "lu"
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-typedef unsigned long int uintptr_t;
-
-#else /* defined(__FreeBSD__) && defined(__i386__) */
-
-#include <inttypes.h>
-#include <stdint.h>
-
-#endif /* defined(__FreeBSD__) && defined(__i386__) */
-
+#include "InstrProfilingPort.h"
 #include "InstrProfData.inc"
 
 enum ValueKind {
