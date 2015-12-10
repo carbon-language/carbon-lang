@@ -1825,8 +1825,8 @@ directives, ``depend`` clause for ``#pragma omp task`` directive (except for
 array sections), ``#pragma omp cancel`` and ``#pragma omp cancellation point``
 directives, and ``#pragma omp taskgroup`` directive.
 
-OpenMP support is disabled by default. Use :option:`-fopenmp=libomp` to enable
-it. Support for OpenMP can be disabled with :option:`-fno-openmp`.
+Use :option:`-fopenmp` to enable OpenMP. Support for OpenMP can be disabled with
+:option:`-fno-openmp`.
 
 Controlling implementation limits
 ---------------------------------
