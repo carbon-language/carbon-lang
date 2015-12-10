@@ -214,3 +214,14 @@ define float @f32_demote_f64(double %x) {
   %a = fptrunc double %x to float
   ret float %a
 }
+
+; If the high its are unused, LLVM will optimize sext/zext into anyext, which
+; we need to patterm-match back to a specific instruction.
+
+; CHECK-LABEL: anyext:
+; CHECK: i64.extend_u/i32 $push0=, $0{{$}}
+define i64 @anyext(i32 %x) {
+    %y = sext i32 %x to i64
+    %w = shl i64 %y, 32
+    ret i64 %w
+}
