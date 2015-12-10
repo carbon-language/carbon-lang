@@ -167,15 +167,6 @@ def create_parser():
     # Remove the reference to our helper function
     del X
 
-    D = lambda optstr, **kwargs: group.add_argument(optstr, action='store_true', **kwargs)
-    group = parser.add_argument_group('Deprecated options (do not use)')
-    # Deprecated on 23.10.2015. Remove completely after a grace period.
-    D('-a')
-    D('+a', dest='plus_a')
-    D('-m')
-    D('+m', dest='plus_m')
-    del D
-
     group = parser.add_argument_group('Test directories')
     group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')
 

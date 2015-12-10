@@ -289,16 +289,6 @@ def parseOptionsAndInitTestdirs():
     elif args.N == 'dsym':
         configuration.dont_do_dsym_test = True
 
-    if args.a or args.plus_a:
-        print("Options '-a' and '+a' have been deprecated. Please use the test category\n"
-              "functionality (-G pyapi, --skip-category pyapi) instead.")
-        sys.exit(1)
-
-    if args.m or args.plus_m:
-        print("Options '-m' and '+m' have been deprecated. Please use the test category\n"
-              "functionality (-G lldb-mi, --skip-category lldb-mi) instead.")
-        sys.exit(1)
-
     if args.d:
         sys.stdout.write("Suspending the process %d to wait for debugger to attach...\n" % os.getpid())
         sys.stdout.flush()
