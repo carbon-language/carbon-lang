@@ -383,7 +383,7 @@ def parseOptionsAndInitTestdirs():
 
     if sys.platform.startswith('win32'):
         os.environ['LLDB_DISABLE_CRASH_DIALOG'] = str(args.disable_crash_dialog)
-        os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(args.hide_inferior_console)
+        os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
 
     if do_help == True:
         usage(parser)
@@ -393,10 +393,6 @@ def parseOptionsAndInitTestdirs():
 
     if args.inferior:
         configuration.is_inferior_test_runner = True
-
-    # Turn on output_on_sucess if either explicitly added or -v specified.
-    if args.output_on_success or args.v:
-        configuration.output_on_success = True
 
     if args.num_threads:
         configuration.num_threads = args.num_threads
@@ -975,8 +971,7 @@ def run_suite():
     # multiprocess test runner here.
     if isMultiprocessTestRunner():
         from . import dosep
-        dosep.main(configuration.output_on_success, configuration.num_threads,
-                   configuration.multiprocess_test_subdir,
+        dosep.main(configuration.num_threads, configuration.multiprocess_test_subdir,
                    configuration.test_runner_name, configuration.results_formatter_object)
         raise Exception("should never get here")
     elif configuration.is_inferior_test_runner:

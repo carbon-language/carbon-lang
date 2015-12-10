@@ -95,9 +95,7 @@ def create_parser():
     group.add_argument('--env', dest='set_env_vars', metavar='variable', action='append', help='Specify an environment variable to set to the given value before running the test cases e.g.: --env CXXFLAGS=-O3 --env DYLD_INSERT_LIBRARIES')
     X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
     group.add_argument('--enable-crash-dialog', dest='disable_crash_dialog', action='store_false', help='(Windows only) When LLDB crashes, display the Windows crash dialog.')
-    group.add_argument('--show-inferior-console', dest='hide_inferior_console', action='store_false', help='(Windows only) When launching an inferior, dont hide its console window.')
     group.set_defaults(disable_crash_dialog=True)
-    group.set_defaults(hide_inferior_console=True)
 
     group = parser.add_argument_group('Parallel execution options')
     group.add_argument(
@@ -109,11 +107,6 @@ def create_parser():
         '--no-multiprocess',
         action='store_true',
         help='skip running the multiprocess test runner')
-    group.add_argument(
-        '--output-on-success',
-        action='store_true',
-        help=('print full output of the dotest.py inferior, '
-              'even when all tests succeed'))
     group.add_argument(
         '--threads',
         type=int,

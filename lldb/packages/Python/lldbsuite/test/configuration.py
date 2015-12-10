@@ -146,7 +146,6 @@ lldb_platform_working_dir = None
 is_inferior_test_runner = False
 multiprocess_test_subdir = None
 num_threads = None
-output_on_success = False
 no_multiprocess_test_runner = False
 test_runner_name = None
 
