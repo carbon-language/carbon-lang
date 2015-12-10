@@ -501,9 +501,10 @@ void Writer<ELFT>::addSharedCopySymbols(
     const Elf_Sym &Sym = C->Sym;
     const Elf_Shdr *Sec = C->File->getSection(Sym);
     uintX_t SecAlign = Sec->sh_addralign;
-    uintX_t Align = Sym.st_value % SecAlign;
-    if (Align == 0)
-      Align = SecAlign;
+    unsigned TrailingZeros =
+        std::min(countTrailingZeros(SecAlign),
+                 countTrailingZeros((uintX_t)Sym.st_value));
+    uintX_t Align = 1 << TrailingZeros;
     Out<ELFT>::Bss->updateAlign(Align);
     Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
