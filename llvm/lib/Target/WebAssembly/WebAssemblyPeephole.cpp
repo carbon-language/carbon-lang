@@ -26,6 +26,11 @@ class WebAssemblyPeephole final : public MachineFunctionPass {
     return "WebAssembly late peephole optimizer";
   }
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesCFG();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
   bool runOnMachineFunction(MachineFunction &MF) override;
 
 public:
