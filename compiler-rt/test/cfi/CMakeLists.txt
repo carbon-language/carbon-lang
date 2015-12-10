@@ -1,9 +1,3 @@
-check_list_contains(HAS_UBSAN COMPILER_RT_RUNTIMES_TO_BUILD ubsan)
-# CFI tests require diagnostic mode, which is implemented in UBSan.
-if(NOT HAS_UBSAN)
-  return()
-endif()
-
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg

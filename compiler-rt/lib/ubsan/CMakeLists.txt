@@ -1,7 +1,5 @@
 # Build for the undefined behavior sanitizer runtime support library.
 
-check_list_contains(COMPILER_RT_HAS_UBSAN COMPILER_RT_RUNTIMES_TO_BUILD ubsan)
-
 set(UBSAN_SOURCES
   ubsan_diag.cc
   ubsan_init.cc

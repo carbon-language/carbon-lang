@@ -9,9 +9,40 @@ if(COMPILER_RT_BUILD_BUILTINS)
 endif()
 
 if(COMPILER_RT_BUILD_SANITIZERS)
-  message(STATUS "Adding runtimes...")
-  foreach(runtime ${COMPILER_RT_RUNTIMES_TO_BUILD})
-    message(STATUS "Adding runtime: ${runtime}")
-    add_subdirectory(${runtime})
-  endforeach()
+  if(COMPILER_RT_HAS_INTERCEPTION)
+    add_subdirectory(interception)
+  endif()
+
+  if(COMPILER_RT_HAS_SANITIZER_COMMON)
+    add_subdirectory(sanitizer_common)
+    add_subdirectory(lsan)
+    add_subdirectory(ubsan)
+  endif()
+
+  add_subdirectory(cfi)
+
+  if(COMPILER_RT_HAS_ASAN)
+    add_subdirectory(asan)
+  endif()
+
+  if(COMPILER_RT_HAS_DFSAN)
+    add_subdirectory(dfsan)
+  endif()
+
+  if(COMPILER_RT_HAS_MSAN)
+    add_subdirectory(msan)
+  endif()
+
+  if(COMPILER_RT_HAS_PROFILE)
+    add_subdirectory(profile)
+  endif()
+
+  if(COMPILER_RT_HAS_TSAN)
+    add_subdirectory(tsan)
+    add_subdirectory(tsan/dd)
+  endif()
+
+  if(COMPILER_RT_HAS_SAFESTACK)
+    add_subdirectory(safestack)
+  endif()
 endif()
