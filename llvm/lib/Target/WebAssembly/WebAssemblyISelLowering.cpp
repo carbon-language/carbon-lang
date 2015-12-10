@@ -202,7 +202,13 @@ bool WebAssemblyTargetLowering::isOffsetFoldingLegal(
 
 MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout & /*DL*/,
                                                       EVT VT) const {
-  return VT.getSimpleVT();
+  unsigned BitWidth = NextPowerOf2(VT.getSizeInBits() - 1);
+  if (BitWidth > 1 && BitWidth < 8)
+    BitWidth = 8;
+  MVT Result = MVT::getIntegerVT(BitWidth);
+  assert(Result != MVT::INVALID_SIMPLE_VALUE_TYPE &&
+         "Unable to represent scalar shift amount type");
+  return Result;
 }
 
 const char *
