@@ -778,6 +778,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   DWKEYWORD(VIRTUALITY, DwarfVirtuality);
   DWKEYWORD(LANG, DwarfLang);
   DWKEYWORD(OP, DwarfOp);
+  DWKEYWORD(MACINFO, DwarfMacinfo);
 #undef DWKEYWORD
 
   if (Keyword.startswith("DIFlag")) {

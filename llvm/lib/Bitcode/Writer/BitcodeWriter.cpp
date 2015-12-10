@@ -1017,6 +1017,7 @@ static void WriteDICompileUnit(const DICompileUnit *N,
   Record.push_back(VE.getMetadataOrNullID(N->getGlobalVariables().get()));
   Record.push_back(VE.getMetadataOrNullID(N->getImportedEntities().get()));
   Record.push_back(N->getDWOId());
+  Record.push_back(VE.getMetadataOrNullID(N->getMacros().get()));
 
   Stream.EmitRecord(bitc::METADATA_COMPILE_UNIT, Record, Abbrev);
   Record.clear();
@@ -1089,6 +1090,33 @@ static void WriteDINamespace(const DINamespace *N, const ValueEnumerator &VE,
   Record.push_back(N->getLine());
 
   Stream.EmitRecord(bitc::METADATA_NAMESPACE, Record, Abbrev);
+  Record.clear();
+}
+
+static void WriteDIMacro(const DIMacro *N, const ValueEnumerator &VE,
+                         BitstreamWriter &Stream,
+                         SmallVectorImpl<uint64_t> &Record, unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getMacinfoType());
+  Record.push_back(N->getLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawValue()));
+
+  Stream.EmitRecord(bitc::METADATA_MACRO, Record, Abbrev);
+  Record.clear();
+}
+
+static void WriteDIMacroFile(const DIMacroFile *N, const ValueEnumerator &VE,
+                             BitstreamWriter &Stream,
+                             SmallVectorImpl<uint64_t> &Record,
+                             unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getMacinfoType());
+  Record.push_back(N->getLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
+  Record.push_back(VE.getMetadataOrNullID(N->getElements().get()));
+
+  Stream.EmitRecord(bitc::METADATA_MACRO_FILE, Record, Abbrev);
   Record.clear();
 }
 

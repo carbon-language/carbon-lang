@@ -860,8 +860,6 @@ void Verifier::visitDICompositeType(const DICompositeType &N) {
          "invalid composite elements", &N, N.getRawElements());
   Assert(isTypeRef(N, N.getRawVTableHolder()), "invalid vtable holder", &N,
          N.getRawVTableHolder());
-  Assert(!N.getRawElements() || isa<MDTuple>(N.getRawElements()),
-         "invalid composite elements", &N, N.getRawElements());
   Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
          &N);
   if (auto *Params = N.getRawTemplateParams())
@@ -935,6 +933,12 @@ void Verifier::visitDICompileUnit(const DICompileUnit &N) {
              Op);
     }
   }
+  if (auto *Array = N.getRawMacros()) {
+    Assert(isa<MDTuple>(Array), "invalid macro list", &N, Array);
+    for (Metadata *Op : N.getMacros()->operands()) {
+      Assert(Op && isa<DIMacroNode>(Op), "invalid macro ref", &N, Op);
+    }
+  }
 }
 
 void Verifier::visitDISubprogram(const DISubprogram &N) {
@@ -986,6 +990,27 @@ void Verifier::visitDINamespace(const DINamespace &N) {
   Assert(N.getTag() == dwarf::DW_TAG_namespace, "invalid tag", &N);
   if (auto *S = N.getRawScope())
     Assert(isa<DIScope>(S), "invalid scope ref", &N, S);
+}
+
+void Verifier::visitDIMacro(const DIMacro &N) {
+  Assert(N.getMacinfoType() == dwarf::DW_MACINFO_define ||
+         N.getMacinfoType() == dwarf::DW_MACINFO_undef,
+         "invalid macinfo type", &N);
+  Assert(!N.getName().empty(), "anonymous macro", &N);
+}
+
+void Verifier::visitDIMacroFile(const DIMacroFile &N) {
+  Assert(N.getMacinfoType() == dwarf::DW_MACINFO_start_file,
+         "invalid macinfo type", &N);
+  if (auto *F = N.getRawFile())
+    Assert(isa<DIFile>(F), "invalid file", &N, F);
+
+  if (auto *Array = N.getRawElements()) {
+    Assert(isa<MDTuple>(Array), "invalid macro list", &N, Array);
+    for (Metadata *Op : N.getElements()->operands()) {
+      Assert(Op && isa<DIMacroNode>(Op), "invalid macro ref", &N, Op);
+    }
+  }
 }
 
 void Verifier::visitDIModule(const DIModule &N) {
