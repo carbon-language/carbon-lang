@@ -528,12 +528,12 @@ for llvm users and not imposing a big burden on llvm developers:
 C API Changes
 ----------------
 
-* Stability Guarantees: The C API is, in general, a “best effort” for stability.
+* Stability Guarantees: The C API is, in general, a "best effort" for stability.
 This means that we make every attempt to keep the C API stable, but that
 stability will be limited by the abstractness of the interface and the stability
-of the C++ API that it wraps. In practice, this means that things like “create
-debug info” or “create this type of instruction” are likely to be less stable
-than “take this IR file and JIT it for my current machine”.
+of the C++ API that it wraps. In practice, this means that things like "create
+debug info" or "create this type of instruction" are likely to be less stable
+than "take this IR file and JIT it for my current machine".
 
 * Release stability: We won’t break the C API on the release branch with patches
 that go on that branch, with the exception that if we will fix an unintentional
