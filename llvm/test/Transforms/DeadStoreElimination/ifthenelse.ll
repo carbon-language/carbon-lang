@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -dse -S | FileCheck %s
+; RUN: opt < %s -basicaa -dse -enable-nonlocal-dse -S | FileCheck %s
 
 ; The add and store in entry block should be removed by non-local DSE.
 ; CHECK-NOT: %stval = add

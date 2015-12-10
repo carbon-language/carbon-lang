@@ -43,7 +43,7 @@ STATISTIC(NumFastStores, "Number of stores deleted");
 STATISTIC(NumFastOther , "Number of other instrs removed");
 STATISTIC(NumNonLocalStores, "Number of non-local stores deleted");
 
-static cl::opt<bool> EnableNonLocalDSE("enable-nonlocal-dse", cl::init(true));
+static cl::opt<bool> EnableNonLocalDSE("enable-nonlocal-dse", cl::init(false));
 
 /// MaxNonLocalAttempts is an arbitrary threshold that provides
 /// an early opportunitiy for bail out to control compile time.

@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -dse -S | FileCheck %s
+; RUN: opt < %s -basicaa -dse -enable-nonlocal-dse -S | FileCheck %s
 
 ; The store in for.body block should be removed by non-local DSE.
 ; CHECK-NOT: store i32 0, i32* %arrayidx
