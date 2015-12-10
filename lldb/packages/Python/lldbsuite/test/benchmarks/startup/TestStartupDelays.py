@@ -23,10 +23,7 @@ class StartupDelaysBench(BenchBase):
         self.stopwatch3 = Stopwatch()
         self.exe = lldbtest_config.lldbExec
         self.break_spec = '-n main'
-
-        self.count = configuration.bmIterationCount
-        if self.count <= 0:
-            self.count = 30
+        self.count = 30
 
     @benchmarks_test
     @no_debug_info_test

@@ -359,10 +359,6 @@ def parseOptionsAndInitTestdirs():
         configuration.verbose = 2
 
     # argparse makes sure we have a number
-    if args.y:
-        configuration.bmIterationCount = args.y
-
-    # argparse makes sure we have a number
     if args.sharp:
         configuration.count = args.sharp
 

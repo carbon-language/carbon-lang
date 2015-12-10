@@ -86,9 +86,6 @@ compilers = None    # Must be initialized after option parsing
 # just that.
 cflags_extras = ''
 
-# The benchmark iteration count, as specified by the '-y' option.
-bmIterationCount = -1
-
 # The filters (testclass.testmethod) used to admit tests into our test suite.
 filters = []
 
