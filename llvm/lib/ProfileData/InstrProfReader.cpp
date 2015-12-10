@@ -335,7 +335,8 @@ RawInstrProfReader<IntPtrT>::readNextRecord(InstrProfRecord &Record) {
     return EC;
 
   // Read value data and set Record.
-  if (std::error_code EC = readValueProfilingData(Record)) return EC;
+  if (std::error_code EC = readValueProfilingData(Record))
+    return EC;
 
   // Iterate.
   advanceData();
@@ -436,7 +437,8 @@ std::error_code InstrProfReaderIndex<HashTableImpl>::getRecords(
 
   Data = *RecordIterator;
 
-  if (Data.empty()) return instrprof_error::malformed;
+  if (Data.empty())
+    return instrprof_error::malformed;
 
   return instrprof_error::success;
 }
