@@ -372,12 +372,9 @@ template <class ELFT> static bool isRelroSection(OutputSectionBase<ELFT> *Sec) {
     return Config->ZNow;
   if (Sec == Out<ELFT>::Dynamic || Sec == Out<ELFT>::Got)
     return true;
-
-  StringRef Name = Sec->getName();
-  StringRef WhiteList[] = {".data.rel.ro", ".ctors", ".dtors", ".jcr",
-                           ".eh_frame"};
-  return (std::find(std::begin(WhiteList), std::end(WhiteList), Name) !=
-          std::end(WhiteList));
+  StringRef S = Sec->getName();
+  return S == ".data.rel.ro" || S == ".ctors" || S == ".dtors" || S == ".jcr" ||
+         S == ".eh_frame";
 }
 
 // Output section ordering is determined by this function.
