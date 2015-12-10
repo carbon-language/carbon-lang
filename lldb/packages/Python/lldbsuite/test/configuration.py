@@ -120,7 +120,7 @@ sdir_has_content = False
 svn_info = ''
 
 # Default verbosity is 0.
-verbose = 1
+verbose = 0
 
 # By default, search from the script directory.
 # We can't use sys.path[0] to determine the script directory
