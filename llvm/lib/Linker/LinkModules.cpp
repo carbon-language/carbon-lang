@@ -772,8 +772,7 @@ bool ModuleLinker::run() {
       Internalize.insert(GV->getName());
   }
 
-  if (Mover.move(SrcM,
-                 makeArrayRef(&*ValuesToLink.begin(), ValuesToLink.size()),
+  if (Mover.move(SrcM, ValuesToLink.getArrayRef(),
                  [this](GlobalValue &GV, IRMover::ValueAdder Add) {
                    addLazyFor(GV, Add);
                  }))
