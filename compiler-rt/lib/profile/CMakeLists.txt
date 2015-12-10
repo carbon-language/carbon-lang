@@ -27,6 +27,7 @@ add_custom_target(profile)
 set(PROFILE_SOURCES
   GCDAProfiling.c
   InstrProfiling.c
+  InstrProfilingValue.c
   InstrProfilingBuffer.c
   InstrProfilingFile.c
   InstrProfilingWriter.c
