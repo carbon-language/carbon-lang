@@ -365,9 +365,6 @@ def parseOptionsAndInitTestdirs():
     if args.t:
         os.environ['LLDB_COMMAND_TRACE'] = 'YES'
 
-    if args.T:
-        configuration.svn_silent = False
-
     if args.v:
         configuration.verbose = 2
 
@@ -700,16 +697,6 @@ def setupSysPath():
             configuration.skipCategories.append("lldb-mi")
     else:
         os.environ["LLDBMI_EXEC"] = lldbMiExec
-
-    # Skip printing svn/git information when running in parsable (lit-test compatibility) mode
-    if not configuration.svn_silent and not configuration.parsable:
-        if os.path.isdir(os.path.join(lldbRootDirectory, '.svn')) and which("svn") is not None:
-            pipe = subprocess.Popen([which("svn"), "info", lldbRootDirectory], stdout = subprocess.PIPE)
-            configuration.svn_info = pipe.stdout.read()
-        elif os.path.isdir(os.path.join(lldbRootDirectory, '.git')) and which("git") is not None:
-            pipe = subprocess.Popen([which("git"), "svn", "info", lldbRootDirectory], stdout = subprocess.PIPE)
-            configuration.svn_info = pipe.stdout.read()
-        print(configuration.svn_info)
 
     lldbPythonDir = None # The directory that contains 'lldb/__init__.py'
     if configuration.lldbFrameworkPath:

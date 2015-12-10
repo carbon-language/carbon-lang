@@ -124,9 +124,6 @@ sdir_has_content = False
 # svn_info stores the output from 'svn info lldb.base.dir'.
 svn_info = ''
 
-# svn_silent means do not try to obtain svn status
-svn_silent = True
-
 # Default verbosity is 0.
 verbose = 1
 
