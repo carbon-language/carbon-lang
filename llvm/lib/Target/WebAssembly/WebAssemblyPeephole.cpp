@@ -70,6 +70,7 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
         MachineOperand &MO = MI.getOperand(0);
         unsigned OldReg = MO.getReg();
         if (OldReg == MI.getOperand(3).getReg()) {
+          Changed = true;
           unsigned NewReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
           MO.setReg(NewReg);
           MO.setIsDead();
