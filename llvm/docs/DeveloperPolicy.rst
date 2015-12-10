@@ -535,7 +535,7 @@ of the C++ API that it wraps. In practice, this means that things like "create
 debug info" or "create this type of instruction" are likely to be less stable
 than "take this IR file and JIT it for my current machine".
 
-* Release stability: We won’t break the C API on the release branch with patches
+* Release stability: We won't break the C API on the release branch with patches
 that go on that branch, with the exception that if we will fix an unintentional
 C API break that will keep the release consistent with both the previous and next
 release.
@@ -549,7 +549,7 @@ that don't currently have one need to be discussed on the mailing list for desig
 and maintainability feedback prior to implementation.
 
 * Documentation: Any changes to the C API are required to be documented in the
-release notes so that it’s clear to external users who do not follow the project
+release notes so that it's clear to external users who do not follow the project
 how the C API is changing and evolving.
 
 .. _copyright-license-patents:
