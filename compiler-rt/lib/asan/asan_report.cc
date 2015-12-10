@@ -32,7 +32,7 @@ static char *error_message_buffer = nullptr;
 static uptr error_message_buffer_pos = 0;
 static BlockingMutex error_message_buf_mutex(LINKER_INITIALIZED);
 static const unsigned kAsanBuggyPcPoolSize = 25;
-static __sanitizer::atomic_uint64_t AsanBuggyPcPool[kAsanBuggyPcPoolSize];
+static __sanitizer::atomic_uintptr_t AsanBuggyPcPool[kAsanBuggyPcPoolSize];
 
 struct ReportData {
   uptr pc;
@@ -1007,7 +1007,7 @@ void ReportMacMzReallocUnknown(uptr addr, uptr zone_ptr, const char *zone_name,
 static bool SuppressErrorReport(uptr pc) {
   if (!common_flags()->suppress_equal_pcs) return false;
   for (unsigned i = 0; i < kAsanBuggyPcPoolSize; i++) {
-    u64 cmp = atomic_load_relaxed(&AsanBuggyPcPool[i]);
+    uptr cmp = atomic_load_relaxed(&AsanBuggyPcPool[i]);
     if (cmp == 0 && atomic_compare_exchange_strong(&AsanBuggyPcPool[i], &cmp,
                                                    pc, memory_order_relaxed))
       return false;
