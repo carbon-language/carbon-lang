@@ -8806,8 +8806,7 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
       diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS, /*isError*/false);
     }
     if (LCanPointeeTy != RCanPointeeTy) {
-      // Treat NULL constant as a special case in OpenCL.
-      if (getLangOpts().OpenCL && !LHSIsNull && !RHSIsNull) {
+      if (getLangOpts().OpenCL) {
         const PointerType *LHSPtr = LHSType->getAs<PointerType>();
         if (!LHSPtr->isAddressSpaceOverlapping(*RHSType->getAs<PointerType>())) {
           Diag(Loc,
