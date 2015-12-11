@@ -536,7 +536,7 @@ C API Changes
   less stable than "take this IR file and JIT it for my current machine".
 
 * Release stability: We won't break the C API on the release branch with patches
-  that go on that branch, with the exception that if we will fix an unintentional
+  that go on that branch, with the exception that we will fix an unintentional
   C API break that will keep the release consistent with both the previous and
   next release.
 
