@@ -89,9 +89,6 @@ cflags_extras = ''
 # The filters (testclass.testmethod) used to admit tests into our test suite.
 filters = []
 
-# By default, we do not skip build and cleanup.  Use '-S' option to override.
-skip_build_and_cleanup = False
-
 # By default, we skip long running test case.  Use '-l' option to override.
 skip_long_running_test = True
 

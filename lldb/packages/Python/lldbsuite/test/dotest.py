@@ -327,9 +327,6 @@ def parseOptionsAndInitTestdirs():
     if args.q:
         configuration.parsable = True
 
-    if args.S:
-        configuration.skip_build_and_cleanup = True
-
     if args.s:
         if args.s.startswith('-'):
             usage(parser)

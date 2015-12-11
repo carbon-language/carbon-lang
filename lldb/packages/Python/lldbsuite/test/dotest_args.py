@@ -86,7 +86,6 @@ def create_parser():
     group = parser.add_argument_group('Runtime behaviour options')
     X('-d', 'Suspend the process after launch to wait indefinitely for a debugger to attach')
     X('-q', "Don't print extra output from this script.")
-    X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
     X('-t', 'Turn on tracing of lldb command and other detailed test executions')
     group.add_argument('-u', dest='unset_env_varnames', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
     group.add_argument('--env', dest='set_env_vars', metavar='variable', action='append', help='Specify an environment variable to set to the given value before running the test cases e.g.: --env CXXFLAGS=-O3 --env DYLD_INSERT_LIBRARIES')
