@@ -104,8 +104,9 @@ bool TextInstrProfReader::hasFormat(const MemoryBuffer &Buffer) {
   // 'reasonable' number of characters (up to profile magic size).
   size_t count = std::min(Buffer.getBufferSize(), sizeof(uint64_t));
   StringRef buffer = Buffer.getBufferStart();
-  return count == 0 || std::all_of(buffer.begin(), buffer.begin() + count,
-    [](char c) { return ::isprint(c) || ::isspace(c); });
+  return count == 0 ||
+         std::all_of(buffer.begin(), buffer.begin() + count,
+                     [](char c) { return ::isprint(c) || ::isspace(c); });
 }
 
 std::error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
