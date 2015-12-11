@@ -4259,6 +4259,9 @@ def err_tag_definition_of_typedef : Error<
 def err_conflicting_types : Error<"conflicting types for %0">;
 def err_different_pass_object_size_params : Error<
   "conflicting pass_object_size attributes on parameters">;
+def err_late_asm_label_name : Error<
+  "cannot apply asm label to %select{variable|function}0 after its first use">;
+def err_different_asm_label : Error<"conflicting asm label">;
 def err_nested_redefinition : Error<"nested redefinition of %0">;
 def err_use_with_wrong_tag : Error<
   "use of %0 with tag type that does not match previous declaration">;

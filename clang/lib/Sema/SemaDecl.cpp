@@ -2379,8 +2379,23 @@ void Sema::mergeDeclAttributes(NamedDecl *New, Decl *Old,
   if (!Old->hasAttrs() && !New->hasAttrs())
     return;
 
-  // attributes declared post-definition are currently ignored
+  // Attributes declared post-definition are currently ignored.
   checkNewAttributesAfterDef(*this, New, Old);
+
+  if (AsmLabelAttr *NewA = New->getAttr<AsmLabelAttr>()) {
+    if (AsmLabelAttr *OldA = Old->getAttr<AsmLabelAttr>()) {
+      if (OldA->getLabel() != NewA->getLabel()) {
+        // This redeclaration changes __asm__ label.
+        Diag(New->getLocation(), diag::err_different_asm_label);
+        Diag(OldA->getLocation(), diag::note_previous_declaration);
+      }
+    } else if (Old->isUsed()) {
+      // This redeclaration adds an __asm__ label to a declaration that has
+      // already been ODR-used.
+      Diag(New->getLocation(), diag::err_late_asm_label_name)
+        << isa<FunctionDecl>(Old) << New->getAttr<AsmLabelAttr>()->getRange();
+    }
+  }
 
   if (!Old->hasAttrs())
     return;
