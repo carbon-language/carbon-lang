@@ -1128,6 +1128,7 @@ def getExpectedTimeouts(platform_name):
         target = m.group(1)
 
     expected_timeout = set()
+    expected_timeout.add("TestExpectedTimeout.py")
 
     if target.startswith("linux"):
         expected_timeout |= {
@@ -1475,6 +1476,12 @@ def main(num_threads, test_subdir, test_runner_name, results_formatter):
 
     system_info = " ".join(platform.uname())
 
+    # Figure out which test files should be enabled for expected
+    # timeout
+    expected_timeout = getExpectedTimeouts(dotest_options.lldb_platform_name)
+    if results_formatter is not None:
+        results_formatter.set_expected_timeouts_by_basename(expected_timeout)
+
     # Figure out which testrunner strategy we'll use.
     runner_strategies_by_name = get_test_runner_strategies(num_threads)
 
@@ -1514,7 +1521,6 @@ def main(num_threads, test_subdir, test_runner_name, results_formatter):
         os.rename(core, os.path.join(session_dir, dst))
 
     # remove expected timeouts from failures
-    expected_timeout = getExpectedTimeouts(dotest_options.lldb_platform_name)
     for xtime in expected_timeout:
         if xtime in timed_out:
             timed_out.remove(xtime)
