@@ -683,9 +683,8 @@ class ResultsFormatter(object):
 
             if event_type == "terminate":
                 self.terminate_called = True
-            elif event_type in [
-                    EventBuilder.TYPE_TEST_RESULT,
-                    EventBuilder.TYPE_JOB_RESULT]:
+            elif (event_type == EventBuilder.TYPE_TEST_RESULT or
+                    event_type == EventBuilder.TYPE_JOB_RESULT):
                 # Keep track of event counts per test/job result status type.
                 # The only job (i.e. inferior process) results that make it
                 # here are ones that cannot be remapped to the most recently
