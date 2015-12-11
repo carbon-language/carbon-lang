@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/user.h>
@@ -67,6 +68,9 @@ const unsigned kStackAlign = 16;
 /// Default size of the unsafe stack. This value is only used if the stack
 /// size rlimit is set to infinity.
 const unsigned kDefaultUnsafeStackSize = 0x2800000;
+
+/// Runtime page size obtained through sysconf
+static unsigned pageSize;
 
 // TODO: To make accessing the unsafe stack pointer faster, we plan to
 // eventually store it directly in the thread control block data structure on
@@ -185,7 +189,7 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
 
   CHECK_NE(size, 0);
   CHECK_EQ((size & (kStackAlign - 1)), 0);
-  CHECK_EQ((guard & (PAGE_SIZE - 1)), 0);
+  CHECK_EQ((guard & (pageSize - 1)), 0);
 
   void *addr = unsafe_stack_alloc(size, guard);
   struct tinfo *tinfo =
@@ -217,6 +221,7 @@ void __safestack_init() {
   void *addr = unsafe_stack_alloc(size, guard);
 
   unsafe_stack_setup(addr, size, guard);
+  pageSize = sysconf(_SC_PAGESIZE);
 
   // Initialize pthread interceptors for thread allocation
   INTERCEPT_FUNCTION(pthread_create);
