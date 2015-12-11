@@ -693,6 +693,14 @@ typedef void    (*microtask_t)( int *gtid, int *npr, ... );
 # define KMP_USE_DYNAMIC_LOCK 0
 #endif
 
+// Enable TSX if dynamic user lock is turned on
+#if KMP_USE_DYNAMIC_LOCK
+# define KMP_USE_TSX             (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+# ifndef KMP_USE_ADAPTIVE_LOCKS
+#  define KMP_USE_ADAPTIVE_LOCKS KMP_USE_TSX
+# endif
+#endif
+
 // Warning levels
 enum kmp_warnings_level {
     kmp_warnings_off = 0,		/* No warnings */

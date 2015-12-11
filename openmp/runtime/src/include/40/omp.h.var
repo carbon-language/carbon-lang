@@ -88,11 +88,13 @@
     /* lock hint type for dynamic user lock */
     typedef enum kmp_lock_hint_t {
         kmp_lock_hint_none = 0,
-        kmp_lock_hint_contended,
         kmp_lock_hint_uncontended,
+        kmp_lock_hint_contended,
         kmp_lock_hint_nonspeculative,
         kmp_lock_hint_speculative,
-        kmp_lock_hint_adaptive,
+        kmp_lock_hint_hle,
+        kmp_lock_hint_rtm,
+        kmp_lock_hint_adaptive
     } kmp_lock_hint_t;
 
     /* hinted lock initializers */

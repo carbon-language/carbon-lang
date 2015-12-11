@@ -916,38 +916,30 @@ __kmpc_end_ordered( ident_t * loc, kmp_int32 gtid )
 
 #if KMP_USE_DYNAMIC_LOCK
 
-static __forceinline kmp_indirect_lock_t *
-__kmp_get_indirect_csptr(kmp_critical_name * crit, ident_t const * loc, kmp_int32 gtid, kmp_dyna_lockseq_t seq)
+static __forceinline void
+__kmp_init_indirect_csptr(kmp_critical_name * crit, ident_t const * loc, kmp_int32 gtid, kmp_indirect_locktag_t tag)
 {
-    // Code from __kmp_get_critical_section_ptr
-    // This function returns an indirect lock object instead of a user lock.
-    kmp_indirect_lock_t **lck, *ret;
+    // Pointer to the allocated indirect lock is written to crit, while indexing is ignored.
+    void *idx;
+    kmp_indirect_lock_t **lck;
     lck = (kmp_indirect_lock_t **)crit;
-    ret = (kmp_indirect_lock_t *)TCR_PTR(*lck);
-    if (ret == NULL) {
-        void *idx;
-        kmp_indirect_locktag_t tag = KMP_GET_I_TAG(seq);
-        kmp_indirect_lock_t *ilk = __kmp_allocate_indirect_lock(&idx, gtid, tag);
-        ret = ilk;
-        KMP_I_LOCK_FUNC(ilk, init)(ilk->lock);
-        KMP_SET_I_LOCK_LOCATION(ilk, loc);
-        KMP_SET_I_LOCK_FLAGS(ilk, kmp_lf_critical_section);
-        KA_TRACE(20, ("__kmp_get_indirect_csptr: initialized indirect lock #%d\n", tag));
+    kmp_indirect_lock_t *ilk = __kmp_allocate_indirect_lock(&idx, gtid, tag);
+    KMP_I_LOCK_FUNC(ilk, init)(ilk->lock);
+    KMP_SET_I_LOCK_LOCATION(ilk, loc);
+    KMP_SET_I_LOCK_FLAGS(ilk, kmp_lf_critical_section);
+    KA_TRACE(20, ("__kmp_init_indirect_csptr: initialized indirect lock #%d\n", tag));
 #if USE_ITT_BUILD
-        __kmp_itt_critical_creating(ilk->lock, loc);
+    __kmp_itt_critical_creating(ilk->lock, loc);
 #endif
-        int status = KMP_COMPARE_AND_STORE_PTR(lck, 0, ilk);
-        if (status == 0) {
+    int status = KMP_COMPARE_AND_STORE_PTR(lck, 0, ilk);
+    if (status == 0) {
 #if USE_ITT_BUILD
-            __kmp_itt_critical_destroyed(ilk->lock);
+        __kmp_itt_critical_destroyed(ilk->lock);
 #endif
-            // Postponing destroy, to avoid costly dispatch here.
-            //KMP_D_LOCK_FUNC(&idx, destroy)((kmp_dyna_lock_t *)&idx);
-            ret = (kmp_indirect_lock_t *)TCR_PTR(*lck);
-            KMP_DEBUG_ASSERT(ret != NULL);
-        }
+        // We don't really need to destroy the unclaimed lock here since it will be cleaned up at program exit.
+        //KMP_D_LOCK_FUNC(&idx, destroy)((kmp_dyna_lock_t *)&idx);
     }
-    return ret;
+    KMP_DEBUG_ASSERT(*lck != NULL);
 }
 
 // Fast-path acquire tas lock
@@ -988,7 +980,7 @@ __kmp_get_indirect_csptr(kmp_critical_name * crit, ident_t const * loc, kmp_int3
     KMP_MB();                                                       \
 }
 
-#if KMP_HAS_FUTEX
+#if KMP_USE_FUTEX
 
 # include <unistd.h>
 # include <sys/syscall.h>
@@ -1048,7 +1040,7 @@ __kmp_get_indirect_csptr(kmp_critical_name * crit, ident_t const * loc, kmp_int3
     KMP_YIELD(TCR_4(__kmp_nth) > (__kmp_avail_proc ? __kmp_avail_proc : __kmp_xproc));              \
 }
 
-#endif // KMP_HAS_FUTEX
+#endif // KMP_USE_FUTEX
 
 #else // KMP_USE_DYNAMIC_LOCK
 
@@ -1124,34 +1116,41 @@ __kmpc_critical( ident_t * loc, kmp_int32 global_tid, kmp_critical_name * crit )
     KC_TRACE( 10, ("__kmpc_critical: called T#%d\n", global_tid ) );
 
 #if KMP_USE_DYNAMIC_LOCK
-    // Assumption: all direct locks fit in OMP_CRITICAL_SIZE.
-    // The global sequence __kmp_user_lock_seq is used unless compiler pushes a value.
-    if (KMP_IS_D_LOCK(__kmp_user_lock_seq)) {
-        lck = (kmp_user_lock_p)crit;
-        // The thread that reaches here first needs to tag the lock word.
-        if (*((kmp_dyna_lock_t *)lck) == 0) {
-            KMP_COMPARE_AND_STORE_ACQ32((volatile kmp_int32 *)lck, 0, KMP_GET_D_TAG(__kmp_user_lock_seq));
+
+    kmp_dyna_lock_t *lk = (kmp_dyna_lock_t *)crit;
+    // Check if it is initialized.
+    if (*lk == 0) {
+        kmp_dyna_lockseq_t lckseq = __kmp_user_lock_seq;
+        if (KMP_IS_D_LOCK(lckseq)) {
+            KMP_COMPARE_AND_STORE_ACQ32((volatile kmp_int32 *)crit, 0, KMP_GET_D_TAG(lckseq));
+        } else {
+            __kmp_init_indirect_csptr(crit, loc, global_tid, KMP_GET_I_TAG(lckseq));
         }
+    }
+    // Branch for accessing the actual lock object and set operation. This branching is inevitable since
+    // this lock initialization does not follow the normal dispatch path (lock table is not used).
+    if (KMP_EXTRACT_D_TAG(lk) != 0) {
+        lck = (kmp_user_lock_p)lk;
         if (__kmp_env_consistency_check) {
             __kmp_push_sync(global_tid, ct_critical, loc, lck, __kmp_user_lock_seq);
         }
 # if USE_ITT_BUILD
         __kmp_itt_critical_acquiring(lck);
 # endif
-# if KMP_USE_FAST_TAS
+# if KMP_USE_INLINED_TAS
         if (__kmp_user_lock_seq == lockseq_tas && !__kmp_env_consistency_check) {
             KMP_ACQUIRE_TAS_LOCK(lck, global_tid);
         } else
-# elif KMP_USE_FAST_FUTEX
+# elif KMP_USE_INLINED_FUTEX
         if (__kmp_user_lock_seq == lockseq_futex && !__kmp_env_consistency_check) {
             KMP_ACQUIRE_FUTEX_LOCK(lck, global_tid);
         } else
 # endif
         {
-            KMP_D_LOCK_FUNC(lck, set)((kmp_dyna_lock_t *)lck, global_tid);
+            KMP_D_LOCK_FUNC(lk, set)(lk, global_tid);
         }
     } else {
-        kmp_indirect_lock_t *ilk = __kmp_get_indirect_csptr(crit, loc, global_tid, __kmp_user_lock_seq);
+        kmp_indirect_lock_t *ilk = *((kmp_indirect_lock_t **)lk);
         lck = ilk->lock;
         if (__kmp_env_consistency_check) {
             __kmp_push_sync(global_tid, ct_critical, loc, lck, __kmp_user_lock_seq);
@@ -1232,11 +1231,11 @@ __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
 # if USE_ITT_BUILD
         __kmp_itt_critical_releasing( lck );
 # endif
-# if KMP_USE_FAST_TAS
+# if KMP_USE_INLINED_TAS
         if (__kmp_user_lock_seq == lockseq_tas && !__kmp_env_consistency_check) {
             KMP_RELEASE_TAS_LOCK(lck, global_tid);
         } else
-# elif KMP_USE_FAST_FUTEX
+# elif KMP_USE_INLINED_FUTEX
         if (__kmp_user_lock_seq == lockseq_futex && !__kmp_env_consistency_check) {
             KMP_RELEASE_FUTEX_LOCK(lck, global_tid);
         } else
@@ -1828,7 +1827,7 @@ __kmpc_init_nest_lock( ident_t * loc, kmp_int32 gtid, void ** user_lock ) {
     kmp_dyna_lockseq_t nested_seq;
     switch (__kmp_user_lock_seq) {
         case lockseq_tas:       nested_seq = lockseq_nested_tas;        break;
-#if KMP_HAS_FUTEX
+#if KMP_USE_FUTEX
         case lockseq_futex:     nested_seq = lockseq_nested_futex;      break;
 #endif
         case lockseq_ticket:    nested_seq = lockseq_nested_ticket;     break;
@@ -2018,11 +2017,11 @@ __kmpc_set_lock( ident_t * loc, kmp_int32 gtid, void ** user_lock ) {
 # if USE_ITT_BUILD
    __kmp_itt_lock_acquiring((kmp_user_lock_p)user_lock); // itt function will get to the right lock object.
 # endif
-# if KMP_USE_FAST_TAS
+# if KMP_USE_INLINED_TAS
     if (tag == locktag_tas && !__kmp_env_consistency_check) {
         KMP_ACQUIRE_TAS_LOCK(user_lock, gtid);
     } else
-# elif KMP_USE_FAST_FUTEX
+# elif KMP_USE_INLINED_FUTEX
     if (tag == locktag_futex && !__kmp_env_consistency_check) {
         KMP_ACQUIRE_FUTEX_LOCK(user_lock, gtid);
     } else
@@ -2136,11 +2135,11 @@ __kmpc_unset_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
 # if USE_ITT_BUILD
     __kmp_itt_lock_releasing((kmp_user_lock_p)user_lock);
 # endif
-# if KMP_USE_FAST_TAS
+# if KMP_USE_INLINED_TAS
     if (tag == locktag_tas && !__kmp_env_consistency_check) {
         KMP_RELEASE_TAS_LOCK(user_lock, gtid);
     } else
-# elif KMP_USE_FAST_FUTEX
+# elif KMP_USE_INLINED_FUTEX
     if (tag == locktag_futex && !__kmp_env_consistency_check) {
         KMP_RELEASE_FUTEX_LOCK(user_lock, gtid);
     } else
@@ -2276,11 +2275,11 @@ __kmpc_test_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
 # if USE_ITT_BUILD
     __kmp_itt_lock_acquiring((kmp_user_lock_p)user_lock);
 # endif
-# if KMP_USE_FAST_TAS
+# if KMP_USE_INLINED_TAS
     if (tag == locktag_tas && !__kmp_env_consistency_check) {
         KMP_TEST_TAS_LOCK(user_lock, gtid, rc);
     } else
-# elif KMP_USE_FAST_FUTEX
+# elif KMP_USE_INLINED_FUTEX
     if (tag == locktag_futex && !__kmp_env_consistency_check) {
         KMP_TEST_FUTEX_LOCK(user_lock, gtid, rc);
     } else
@@ -2427,23 +2426,32 @@ __kmp_enter_critical_section_reduce_block( ident_t * loc, kmp_int32 global_tid, 
 
 #if KMP_USE_DYNAMIC_LOCK
 
-    if (KMP_IS_D_LOCK(__kmp_user_lock_seq)) {
-        lck = (kmp_user_lock_p)crit;
-        if (*((kmp_dyna_lock_t *)lck) == 0) {
-            KMP_COMPARE_AND_STORE_ACQ32((volatile kmp_int32 *)lck, 0, KMP_GET_D_TAG(__kmp_user_lock_seq));
+    kmp_dyna_lock_t *lk = (kmp_dyna_lock_t *)crit;
+    // Check if it is initialized.
+    if (*lk == 0) {
+        if (KMP_IS_D_LOCK(__kmp_user_lock_seq)) {
+            KMP_COMPARE_AND_STORE_ACQ32((volatile kmp_int32 *)crit, 0, KMP_GET_D_TAG(__kmp_user_lock_seq));
+        } else {
+            __kmp_init_indirect_csptr(crit, loc, global_tid, KMP_GET_I_TAG(__kmp_user_lock_seq));
         }
+    }
+    // Branch for accessing the actual lock object and set operation. This branching is inevitable since
+    // this lock initialization does not follow the normal dispatch path (lock table is not used).
+    if (KMP_EXTRACT_D_TAG(lk) != 0) {
+        lck = (kmp_user_lock_p)lk;
         KMP_DEBUG_ASSERT(lck != NULL);
         if (__kmp_env_consistency_check) {
             __kmp_push_sync(global_tid, ct_critical, loc, lck, __kmp_user_lock_seq);
         }
-        KMP_D_LOCK_FUNC(lck, set)((kmp_dyna_lock_t *)lck, global_tid);
+        KMP_D_LOCK_FUNC(lk, set)(lk, global_tid);
     } else {
-        kmp_indirect_lock_t *ilk = __kmp_get_indirect_csptr(crit, loc, global_tid, __kmp_user_lock_seq);
-        KMP_DEBUG_ASSERT(ilk != NULL);
+        kmp_indirect_lock_t *ilk = *((kmp_indirect_lock_t **)lk);
+        lck = ilk->lock;
+        KMP_DEBUG_ASSERT(lck != NULL);
         if (__kmp_env_consistency_check) {
-            __kmp_push_sync(global_tid, ct_critical, loc, ilk->lock, __kmp_user_lock_seq);
+            __kmp_push_sync(global_tid, ct_critical, loc, lck, __kmp_user_lock_seq);
         }
-        KMP_I_LOCK_FUNC(ilk, set)(ilk->lock, global_tid);
+        KMP_I_LOCK_FUNC(ilk, set)(lck, global_tid);
     }
 
 #else // KMP_USE_DYNAMIC_LOCK

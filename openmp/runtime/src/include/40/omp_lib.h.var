@@ -53,7 +53,9 @@
       integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_contended      = 2
       integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_nonspeculative = 3
       integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_speculative    = 4
-      integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_adaptive       = 5
+      integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_hle            = 5
+      integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_rtm            = 6
+      integer (kind=kmp_lock_hint_kind), parameter :: kmp_lock_hint_adaptive       = 7
 
       interface
 
