@@ -2470,8 +2470,17 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
     EVT VT = ValueVTs[0];
     LLVMContext &Ctx = *DAG.getContext();
     auto &TLI = DAG.getTargetLoweringInfo();
-    while (TLI.getTypeAction(Ctx, VT) == TargetLoweringBase::TypeSplitVector)
+
+    // We care about the legality of the operation after it has been type
+    // legalized.
+    while (TLI.getTypeAction(Ctx, VT) != TargetLoweringBase::TypeLegal)
       VT = TLI.getTypeToTransformTo(Ctx, VT);
+
+    // If the vselect is legal, assume we want to leave this as a vector setcc +
+    // vselect. Otherwise, if this is going to be scalarized, we want to see if
+    // min/max is legal on the scalar type.
+    bool UseScalarMinMax = VT.isVector() &&
+      !TLI.isOperationLegalOrCustom(ISD::VSELECT, VT);
 
     Value *LHS, *RHS;
     auto SPR = matchSelectPattern(const_cast<User*>(&I), LHS, RHS);
@@ -2486,10 +2495,16 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
       case SPNB_NA: llvm_unreachable("No NaN behavior for FP op?");
       case SPNB_RETURNS_NAN:   Opc = ISD::FMINNAN; break;
       case SPNB_RETURNS_OTHER: Opc = ISD::FMINNUM; break;
-      case SPNB_RETURNS_ANY:
-        Opc = TLI.isOperationLegalOrCustom(ISD::FMINNUM, VT) ? ISD::FMINNUM
-          : ISD::FMINNAN;
+      case SPNB_RETURNS_ANY: {
+        if (TLI.isOperationLegalOrCustom(ISD::FMINNUM, VT))
+          Opc = ISD::FMINNUM;
+        else if (TLI.isOperationLegalOrCustom(ISD::FMINNAN, VT))
+          Opc = ISD::FMINNAN;
+        else if (UseScalarMinMax)
+          Opc = TLI.isOperationLegalOrCustom(ISD::FMINNUM, VT.getScalarType()) ?
+            ISD::FMINNUM : ISD::FMINNAN;
         break;
+      }
       }
       break;
     case SPF_FMAXNUM:
@@ -2498,18 +2513,27 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
       case SPNB_RETURNS_NAN:   Opc = ISD::FMAXNAN; break;
       case SPNB_RETURNS_OTHER: Opc = ISD::FMAXNUM; break;
       case SPNB_RETURNS_ANY:
-        Opc = TLI.isOperationLegalOrCustom(ISD::FMAXNUM, VT) ? ISD::FMAXNUM
-          : ISD::FMAXNAN;
+
+        if (TLI.isOperationLegalOrCustom(ISD::FMAXNUM, VT))
+          Opc = ISD::FMAXNUM;
+        else if (TLI.isOperationLegalOrCustom(ISD::FMAXNAN, VT))
+          Opc = ISD::FMAXNAN;
+        else if (UseScalarMinMax)
+          Opc = TLI.isOperationLegalOrCustom(ISD::FMAXNUM, VT.getScalarType()) ?
+            ISD::FMAXNUM : ISD::FMAXNAN;
         break;
       }
       break;
     default: break;
     }
 
-    if (Opc != ISD::DELETED_NODE && TLI.isOperationLegalOrCustom(Opc, VT) &&
-        // If the underlying comparison instruction is used by any other instruction,
-        // the consumed instructions won't be destroyed, so it is not profitable
-        // to convert to a min/max.
+    if (Opc != ISD::DELETED_NODE &&
+        (TLI.isOperationLegalOrCustom(Opc, VT) ||
+         (UseScalarMinMax &&
+          TLI.isOperationLegalOrCustom(Opc, VT.getScalarType()))) &&
+        // If the underlying comparison instruction is used by any other
+        // instruction, the consumed instructions won't be destroyed, so it is
+        // not profitable to convert to a min/max.
         cast<SelectInst>(&I)->getCondition()->hasOneUse()) {
       OpCode = Opc;
       LHSVal = getValue(LHS);
