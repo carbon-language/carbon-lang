@@ -30,7 +30,7 @@
 #include <system_error>
 #include <vector>
 
-#define INSTR_PROF_INDEX_VERSION 4
+#define INSTR_PROF_INDEX_VERSION 3
 namespace llvm {
 
 class Function;

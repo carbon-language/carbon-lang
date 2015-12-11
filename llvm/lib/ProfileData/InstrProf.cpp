@@ -74,15 +74,14 @@ namespace llvm {
 
 std::string getPGOFuncName(StringRef RawFuncName,
                            GlobalValue::LinkageTypes Linkage,
-                           StringRef FileName, uint64_t Version) {
+                           StringRef FileName,
+                           uint64_t Version LLVM_ATTRIBUTE_UNUSED) {
 
   // Function names may be prefixed with a binary '1' to indicate
   // that the backend should not modify the symbols due to any platform
   // naming convention. Do not include that '1' in the PGO profile name.
   if (RawFuncName[0] == '\1')
     RawFuncName = RawFuncName.substr(1);
-  const char *Unknown = (Version <= 3 ? "<unknown>:" : "__unknown__");
-  const char *Sep = (Version <= 3 ? ":" : "__");
 
   std::string FuncName = RawFuncName;
   if (llvm::GlobalValue::isLocalLinkage(Linkage)) {
@@ -91,9 +90,9 @@ std::string getPGOFuncName(StringRef RawFuncName,
     // that it will stay the same, e.g., if the files are checked out from
     // version control in different locations.
     if (FileName.empty())
-      FuncName = FuncName.insert(0, Unknown);
+      FuncName = FuncName.insert(0, "<unknown>:");
     else
-      FuncName = FuncName.insert(0, FileName.str() + Sep);
+      FuncName = FuncName.insert(0, FileName.str() + ":");
   }
   return FuncName;
 }

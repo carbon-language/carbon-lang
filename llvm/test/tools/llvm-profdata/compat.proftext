@@ -65,10 +65,3 @@ large_numbers
 # FORMATV2-NEXT: Maximum internal block count: 1000000
 
 
-# RUN: llvm-profdata show %S/Inputs/compat.profdata.v4 -all-functions --counts | FileCheck %s -check-prefix=FORMATV4
-# FORMATV4:  instrprof.c__foo_static:
-# FORMATV4-NEXT:    Hash: 0x000000000000000a
-# FORMATV4-NEXT:    Counters: 2
-# FORMATV4-NEXT:    Function count: 500500
-# FORMATV4-NEXT:    Block counts: [180100]
-
