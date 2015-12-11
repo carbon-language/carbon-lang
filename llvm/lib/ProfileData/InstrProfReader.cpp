@@ -207,7 +207,6 @@ std::error_code RawInstrProfReader<IntPtrT>::readHeader(
 
   CountersDelta = swap(Header.CountersDelta);
   NamesDelta = swap(Header.NamesDelta);
-  ValueDataDelta = swap(Header.ValueDataDelta);
   auto DataSize = swap(Header.DataSize);
   auto CountersSize = swap(Header.CountersSize);
   auto NamesSize = swap(Header.NamesSize);
@@ -301,11 +300,17 @@ std::error_code
 RawInstrProfReader<IntPtrT>::readValueProfilingData(InstrProfRecord &Record) {
 
   Record.clearValueData();
-  if (!Data->Values || (ValueDataDelta == 0))
+  CurValueDataSize = 0;
+  // Need to match the logic in value profile dumper code in compiler-rt:
+  uint32_t NumValueKinds = 0;
+  for (uint32_t I = 0; I < IPVK_Last + 1; I++)
+    NumValueKinds += (Data->NumValueSites[I] != 0);
+
+  if (!NumValueKinds)
     return success();
 
   ErrorOr<std::unique_ptr<ValueProfData>> VDataPtrOrErr =
-      ValueProfData::getValueProfData(getValueDataCounts(Data->Values),
+      ValueProfData::getValueProfData(ValueDataStart,
                                       (const unsigned char *)ProfileEnd,
                                       getDataEndianness());
 
@@ -313,6 +318,7 @@ RawInstrProfReader<IntPtrT>::readValueProfilingData(InstrProfRecord &Record) {
     return VDataPtrOrErr.getError();
 
   VDataPtrOrErr.get()->deserializeTo(Record, &FunctionPtrToNameMap);
+  CurValueDataSize = VDataPtrOrErr.get()->getSize();
   return success();
 }
 
