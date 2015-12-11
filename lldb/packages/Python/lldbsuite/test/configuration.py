@@ -102,12 +102,6 @@ parsable = False
 # The regular expression pattern to match against eligible filenames as our test cases.
 regexp = None
 
-# By default, tests are executed in place and cleanups are performed afterwards.
-# Use '-r dir' option to relocate the tests and their intermediate files to a
-# different directory and to forgo any cleanups.  The directory specified must
-# not exist yet.
-rdir = None
-
 # By default, recorded session info for errored/failed test are dumped into its
 # own file under a session directory named after the timestamp of the test suite
 # run.  Use '-s session-dir-name' to specify a specific dir name.
