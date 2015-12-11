@@ -359,8 +359,11 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   unsigned NumBytes = CCInfo.getAlignedCallFrameSize();
 
-  auto NB = DAG.getConstant(NumBytes, DL, PtrVT, true);
-  Chain = DAG.getCALLSEQ_START(Chain, NB, DL);
+  SDValue NB;
+  if (NumBytes) {
+    NB = DAG.getConstant(NumBytes, DL, PtrVT, true);
+    Chain = DAG.getCALLSEQ_START(Chain, NB, DL);
+  }
 
   if (IsVarArg) {
     // For non-fixed arguments, next emit stores to store the argument values
@@ -420,8 +423,10 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Chain = Res.getValue(1);
   }
 
-  SDValue Unused = DAG.getUNDEF(PtrVT);
-  Chain = DAG.getCALLSEQ_END(Chain, NB, Unused, SDValue(), DL);
+  if (NumBytes) {
+    SDValue Unused = DAG.getUNDEF(PtrVT);
+    Chain = DAG.getCALLSEQ_END(Chain, NB, Unused, SDValue(), DL);
+  }
 
   return Chain;
 }
