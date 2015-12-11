@@ -161,6 +161,7 @@ class EventBuilder(object):
     TYPE_JOB_RESULT = "job_result"
     TYPE_TEST_RESULT = "test_result"
     TYPE_TEST_START = "test_start"
+    TYPE_MARK_TEST_RERUN_ELIGIBLE = "test_eligible_for_rerun"
 
     # Test/Job Status Tags
     STATUS_EXCEPTIONAL_EXIT = "exceptional_exit"
@@ -226,6 +227,7 @@ class EventBuilder(object):
             "test_name": test_name,
             "test_filename": inspect.getfile(test.__class__)
         })
+
         return event
 
     @staticmethod
@@ -483,6 +485,26 @@ class EventBuilder(object):
             event["test_filename"] = test_filename
         if command_line is not None:
             event["command_line"] = command_line
+        return event
+
+    @staticmethod
+    def event_for_mark_test_rerun_eligible(test):
+        """Creates an event that indicates the specified test is explicitly
+        eligible for rerun.
+
+        Note there is a mode that will enable test rerun eligibility at the
+        global level.  These markings for explicit rerun eligibility are
+        intended for the mode of running where only explicitly rerunnable
+        tests are rerun upon hitting an issue.
+
+        @param test the TestCase instance to which this pertains.
+
+        @return an event that specifies the given test as being eligible to
+        be rerun.
+        """
+        event = EventBuilder._event_dictionary_common(
+            test,
+            EventBuilder.TYPE_MARK_TEST_RERUN_ELIGIBLE)
         return event
 
     @staticmethod
