@@ -684,8 +684,6 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SMAX:
   case ISD::UMIN:
   case ISD::UMAX:
-  case ISD::UABSDIFF:
-  case ISD::SABSDIFF:
     SplitVecRes_BinOp(N, Lo, Hi);
     break;
   case ISD::FMA:
