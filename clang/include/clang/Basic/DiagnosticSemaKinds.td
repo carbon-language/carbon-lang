@@ -1172,6 +1172,8 @@ def err_type_defined_in_param_type : Error<
   "%0 cannot be defined in a parameter type">;
 def err_type_defined_in_alias_template : Error<
   "%0 cannot be defined in a type alias template">;
+def err_type_defined_in_condition : Error<
+  "%0 cannot be defined in a condition">;
 
 def note_pure_virtual_function : Note<
   "unimplemented pure virtual method %0 in %1">;
@@ -5961,8 +5963,6 @@ def err_pseudo_dtor_destructor_non_type : Error<
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
 def err_invalid_use_of_array_type : Error<"an array type is not allowed here">;
-def err_type_defined_in_condition : Error<
-  "types may not be defined in conditions">;
 def err_typecheck_bool_condition : Error<
   "value of type %0 is not contextually convertible to 'bool'">;
 def err_typecheck_ambiguous_condition : Error<
