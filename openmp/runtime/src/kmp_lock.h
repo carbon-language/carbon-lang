@@ -1034,6 +1034,39 @@ extern void __kmp_cleanup_user_locks();
 
 #if KMP_USE_DYNAMIC_LOCK
 
+//
+// KMP_USE_DYNAMIC_LOCK enables dynamic dispatch of lock functions without breaking the current
+// compatibility. Essential functionality of this new code is dynamic dispatch, but it also
+// implements (or enables implementation of) hinted user lock and critical section which will be
+// part of OMP 4.1 soon.
+//
+// Lock type can be decided at creation time (i.e., lock initialization), and subsequent lock
+// function call on the created lock object requires type extraction and call through jump table
+// using the extracted type. This type information is stored in two different ways depending on
+// the size of the lock object, and we differentiate lock types by this size requirement - direct
+// and indirect locks.
+//
+// Direct locks:
+// A direct lock object fits into the space created by the compiler for an omp_lock_t object, and
+// TAS/Futex lock falls into this category. We use low one byte of the lock object as the storage
+// for the lock type, and appropriate bit operation is required to access the data meaningful to
+// the lock algorithms. Also, to differentiate direct lock from indirect lock, 1 is written to LSB
+// of the lock object. The newly introduced "hle" lock is also a direct lock.
+//
+// Indirect locks:
+// An indirect lock object requires more space than the compiler-generated space, and it should be
+// allocated from heap. Depending on the size of the compiler-generated space for the lock (i.e.,
+// size of omp_lock_t), this omp_lock_t object stores either the address of the heap-allocated
+// indirect lock (void * fits in the object) or an index to the indirect lock table entry that
+// holds the address. Ticket/Queuing/DRDPA/Adaptive lock falls into this category, and the newly
+// introduced "rtm" lock is also an indirect lock which was implemented on top of the Queuing lock.
+// When the omp_lock_t object holds an index (not lock address), 0 is written to LSB to
+// differentiate the lock from a direct lock, and the remaining part is the actual index to the
+// indirect lock table.
+//
+
+#include <stdint.h> // for uintptr_t
+
 // Shortcuts
 #define KMP_USE_FUTEX          (KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64))
 #define KMP_USE_INLINED_TAS    (KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)) && 1
@@ -1157,10 +1190,6 @@ extern int  (*(*__kmp_indirect_test))(kmp_user_lock_p, kmp_int32);
 
 // Returns lock value after removing (shifting) lock tag.
 #define KMP_LOCK_STRIP(v)        ((v)>>KMP_LOCK_SHIFT)
-
-// Internal entries for hinted lock initializers.
-extern void __kmp_init_lock_hinted(void **, int);
-extern void __kmp_init_nest_lock_hinted(void **, int);
 
 // Initializes global states and data structures for managing dynamic user locks.
 extern void __kmp_init_dynamic_user_locks();

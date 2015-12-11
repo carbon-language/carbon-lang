@@ -3010,20 +3010,6 @@ __kmp_set_drdpa_lock_flags( kmp_drdpa_lock_t *lck, kmp_lock_flags_t flags )
 
 #if KMP_USE_DYNAMIC_LOCK
 
-// Definitions of lock hints - can't include omp.h because of other name clashes.
-# ifndef __OMP_H 
-typedef enum kmp_lock_hint_t {
-    kmp_lock_hint_none = 0,
-    kmp_lock_hint_uncontended,
-    kmp_lock_hint_contended,
-    kmp_lock_hint_nonspeculative,
-    kmp_lock_hint_speculative,
-    kmp_lock_hint_hle,
-    kmp_lock_hint_rtm,
-    kmp_lock_hint_adaptive
-} kmp_lock_hint_t;
-# endif
-
 // Direct lock initializers. It simply writes a tag to the low 8 bits of the lock word.
 static void __kmp_init_direct_lock(kmp_dyna_lock_t *lck, kmp_dyna_lockseq_t seq)
 {
@@ -3358,7 +3344,7 @@ __kmp_lookup_indirect_lock(void **user_lock, const char *func)
         }
         if (OMP_LOCK_T_SIZE < sizeof(void *)) {
             kmp_lock_index_t idx = KMP_EXTRACT_I_INDEX(user_lock);
-            if (idx < 0 || idx >= __kmp_i_lock_table.size) {
+            if (idx >= __kmp_i_lock_table.size) {
                 KMP_FATAL(LockIsUninitialized, func);
             }
             lck = KMP_GET_I_LOCK(idx);
@@ -3462,58 +3448,6 @@ __kmp_test_indirect_lock_with_checks(kmp_dyna_lock_t * lock, kmp_int32 gtid)
 
 kmp_dyna_lockseq_t __kmp_user_lock_seq = lockseq_queuing;
 
-// Initialize a hinted lock.
-void
-__kmp_init_lock_hinted(void **lock, int hint)
-{
-    kmp_dyna_lockseq_t seq;
-    switch (hint) {
-        case kmp_lock_hint_uncontended:
-            seq = lockseq_tas;
-            break;
-        case kmp_lock_hint_speculative:
-#if KMP_USE_TSX
-            seq = lockseq_hle;
-#else
-            seq = lockseq_tas;
-#endif
-            break;
-        case kmp_lock_hint_adaptive:
-#if KMP_USE_ADAPTIVE_LOCKS
-            seq = lockseq_adaptive;
-#else
-            seq = lockseq_queuing;
-#endif
-            break;
-#if KMP_USE_TSX
-        case kmp_lock_hint_hle:
-            seq = lockseq_hle;
-            break;
-        case kmp_lock_hint_rtm:
-            seq = lockseq_rtm;
-            break;
-#endif
-        // Defaults to queuing locks.
-        case kmp_lock_hint_contended:
-        case kmp_lock_hint_nonspeculative:
-        default:
-            seq = lockseq_queuing;
-            break;
-    }
-    if (KMP_IS_D_LOCK(seq)) {
-        KMP_INIT_D_LOCK(lock, seq);
-#if USE_ITT_BUILD
-        __kmp_itt_lock_creating((kmp_user_lock_p)lock, NULL);
-#endif
-    } else {
-        KMP_INIT_I_LOCK(lock, seq);
-#if USE_ITT_BUILD
-        kmp_indirect_lock_t *ilk = KMP_LOOKUP_I_LOCK(lock);
-        __kmp_itt_lock_creating(ilk->lock, NULL);
-#endif
-    }
-}
-
 // This is used only in kmp_error.c when consistency checking is on.
 kmp_int32
 __kmp_get_user_lock_owner(kmp_user_lock_p lck, kmp_uint32 seq)
@@ -3542,29 +3476,6 @@ __kmp_get_user_lock_owner(kmp_user_lock_p lck, kmp_uint32 seq)
         default:
             return 0;
     }
-}
-
-// The value initialized from KMP_LOCK_KIND needs to be translated to its
-// nested version.
-void
-__kmp_init_nest_lock_hinted(void **lock, int hint)
-{
-    kmp_dyna_lockseq_t seq;
-    switch (hint) {
-        case kmp_lock_hint_uncontended:
-            seq = lockseq_nested_tas;
-            break;
-        // Defaults to queuing locks.
-        case kmp_lock_hint_contended:
-        case kmp_lock_hint_nonspeculative:
-        default:
-            seq = lockseq_nested_queuing;
-    }
-    KMP_INIT_I_LOCK(lock, seq);
-#if USE_ITT_BUILD
-    kmp_indirect_lock_t *ilk = KMP_LOOKUP_I_LOCK(lock);
-    __kmp_itt_lock_creating(ilk->lock, NULL);
-#endif
 }
 
 // Initializes data for dynamic user locks.
