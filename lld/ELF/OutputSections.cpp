@@ -1181,7 +1181,7 @@ bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
   // * --discard-locals is used.
   // * The symbol is in a SHF_MERGE section, which is normally the reason for
   //   the assembler keeping the .L symbol.
-  if (!SymName.startswith(".L"))
+  if (!SymName.startswith(".L") && !SymName.empty())
     return true;
 
   if (Config->DiscardLocals)
