@@ -3508,8 +3508,8 @@ defm : Neon_mulacc_widen_patterns<
 // Patterns for 64-bit pmull
 def : Pat<(int_aarch64_neon_pmull64 V64:$Rn, V64:$Rm),
           (PMULLv1i64 V64:$Rn, V64:$Rm)>;
-def : Pat<(int_aarch64_neon_pmull64 (vector_extract (v2i64 V128:$Rn), (i64 1)),
-                                  (vector_extract (v2i64 V128:$Rm), (i64 1))),
+def : Pat<(int_aarch64_neon_pmull64 (extractelt (v2i64 V128:$Rn), (i64 1)),
+                                    (extractelt (v2i64 V128:$Rm), (i64 1))),
           (PMULLv2i64 V128:$Rn, V128:$Rm)>;
 
 // CodeGen patterns for addhn and subhn instructions, which can actually be
@@ -3772,12 +3772,12 @@ defm : DUPWithTruncPats<v8i16,  v2i32, v4i32, i32, DUPv8i16lane, VecIndex_x2>;
 
 multiclass DUPWithTrunci64Pats<ValueType ResVT, Instruction DUP,
                                SDNodeXForm IdxXFORM> {
-  def : Pat<(ResVT (AArch64dup (i32 (trunc (vector_extract (v2i64 V128:$Rn),
+  def : Pat<(ResVT (AArch64dup (i32 (trunc (extractelt (v2i64 V128:$Rn),
                                                          imm:$idx))))),
             (DUP V128:$Rn, (IdxXFORM imm:$idx))>;
 
-  def : Pat<(ResVT (AArch64dup (i32 (trunc (vector_extract (v1i64 V64:$Rn),
-                                                         imm:$idx))))),
+  def : Pat<(ResVT (AArch64dup (i32 (trunc (extractelt (v1i64 V64:$Rn),
+                                                       imm:$idx))))),
             (DUP (SUBREG_TO_REG (i64 0), V64:$Rn, dsub), (IdxXFORM imm:$idx))>;
 }
 
