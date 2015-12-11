@@ -180,6 +180,7 @@ class LoadUnloadTestCase(TestBase):
         # This time, the hidden library should be picked up.
         self.expect("run", substrs=["return", "12345"])
 
+    @expectedFailureAll(bugnumber="llvm.org/pr25805", hostoslist=["windows"], compiler="gcc", archs=["i386"], triple='.*-android')
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
     @skipUnlessListedRemote(['android'])
     @skipIfWindows # Windows doesn't have dlopen and friends, dynamic libraries work differently
