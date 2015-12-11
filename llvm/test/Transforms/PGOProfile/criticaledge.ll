@@ -5,7 +5,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; GEN: @__llvm_profile_name_test_criticalEdge = private constant [17 x i8] c"test_criticalEdge"
-; GEN: @"__llvm_profile_name_<stdin>:bar" = private constant [11 x i8] c"<stdin>:bar"
+; GEN: @"__llvm_profile_name_<stdin>__bar" = private constant [12 x i8] c"<stdin>__bar"
 
 define i32 @test_criticalEdge(i32 %i, i32 %j) {
 entry:
@@ -99,7 +99,7 @@ return:
 
 define internal i32 @bar(i32 %i) {
 entry:
-; GEN: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @"__llvm_profile_name_<stdin>:bar", i32 0, i32 0), i64 12884901887, i32 1, i32 0)
+; GEN: call void @llvm.instrprof.increment(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @"__llvm_profile_name_<stdin>__bar", i32 0, i32 0), i64 12884901887, i32 1, i32 0)
   ret i32 %i
 }
 
