@@ -2028,7 +2028,7 @@ __kmpc_set_lock( ident_t * loc, kmp_int32 gtid, void ** user_lock ) {
     } else
 # endif
     {
-        __kmp_direct_set_ops[tag]((kmp_dyna_lock_t *)user_lock, gtid);
+        __kmp_direct_set[tag]((kmp_dyna_lock_t *)user_lock, gtid);
     }
 # if USE_ITT_BUILD
     __kmp_itt_lock_acquired((kmp_user_lock_p)user_lock);
@@ -2146,7 +2146,7 @@ __kmpc_unset_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
     } else
 # endif
     {
-        __kmp_direct_unset_ops[tag]((kmp_dyna_lock_t *)user_lock, gtid);
+        __kmp_direct_unset[tag]((kmp_dyna_lock_t *)user_lock, gtid);
     }
 
 #else // KMP_USE_DYNAMIC_LOCK
@@ -2286,7 +2286,7 @@ __kmpc_test_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
     } else
 # endif
     {
-        rc = __kmp_direct_test_ops[tag]((kmp_dyna_lock_t *)user_lock, gtid);
+        rc = __kmp_direct_test[tag]((kmp_dyna_lock_t *)user_lock, gtid);
     }
     if (rc) {
 # if USE_ITT_BUILD
