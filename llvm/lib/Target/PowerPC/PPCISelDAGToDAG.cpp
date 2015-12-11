@@ -4195,7 +4195,7 @@ void PPCDAGToDAGISel::PeepholePPC64() {
     // opportunity, unless a) it results in another fusion opportunity or
     // b) optimizing for size.
     if (PPCSubTarget->hasFusion() &&
-        (!MF->getFunction()->optForSize() && !Base.hasOneUse())
+        (!MF->getFunction()->optForSize() && !Base.hasOneUse()))
       continue;
 
     unsigned Flags = 0;
