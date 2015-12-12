@@ -1570,13 +1570,12 @@ int TargetLoweringBase::InstructionOpcodeToISD(unsigned Opcode) const {
   case Invoke:         return 0;
   case Resume:         return 0;
   case Unreachable:    return 0;
-  case CleanupEndPad:  return 0;
   case CleanupRet:     return 0;
-  case CatchEndPad:  return 0;
   case CatchRet:       return 0;
-  case CatchPad:     return 0;
-  case TerminatePad: return 0;
-  case CleanupPad:   return 0;
+  case CatchPad:       return 0;
+  case CatchSwitch:    return 0;
+  case TerminatePad:   return 0;
+  case CleanupPad:     return 0;
   case Add:            return ISD::ADD;
   case FAdd:           return ISD::FADD;
   case Sub:            return ISD::SUB;
