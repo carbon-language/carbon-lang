@@ -4374,14 +4374,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::longjmp:
     return &"_longjmp"[!TLI.usesUnderscoreLongJmp()];
   case Intrinsic::memcpy: {
-    // FIXME: this definition of "user defined address space" is x86-specific
-    // Assert for address < 256 since we support only user defined address
-    // spaces.
-    assert(cast<PointerType>(I.getArgOperand(0)->getType())->getAddressSpace()
-           < 256 &&
-           cast<PointerType>(I.getArgOperand(1)->getType())->getAddressSpace()
-           < 256 &&
-           "Unknown address space");
     SDValue Op1 = getValue(I.getArgOperand(0));
     SDValue Op2 = getValue(I.getArgOperand(1));
     SDValue Op3 = getValue(I.getArgOperand(2));
@@ -4398,12 +4390,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return nullptr;
   }
   case Intrinsic::memset: {
-    // FIXME: this definition of "user defined address space" is x86-specific
-    // Assert for address < 256 since we support only user defined address
-    // spaces.
-    assert(cast<PointerType>(I.getArgOperand(0)->getType())->getAddressSpace()
-           < 256 &&
-           "Unknown address space");
     SDValue Op1 = getValue(I.getArgOperand(0));
     SDValue Op2 = getValue(I.getArgOperand(1));
     SDValue Op3 = getValue(I.getArgOperand(2));
@@ -4418,14 +4404,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return nullptr;
   }
   case Intrinsic::memmove: {
-    // FIXME: this definition of "user defined address space" is x86-specific
-    // Assert for address < 256 since we support only user defined address
-    // spaces.
-    assert(cast<PointerType>(I.getArgOperand(0)->getType())->getAddressSpace()
-           < 256 &&
-           cast<PointerType>(I.getArgOperand(1)->getType())->getAddressSpace()
-           < 256 &&
-           "Unknown address space");
     SDValue Op1 = getValue(I.getArgOperand(0));
     SDValue Op2 = getValue(I.getArgOperand(1));
     SDValue Op3 = getValue(I.getArgOperand(2));
