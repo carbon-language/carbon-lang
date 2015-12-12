@@ -376,9 +376,6 @@ void CodeGenModule::Release() {
   }
   if (PGOReader && PGOStats.hasDiagnostics())
     PGOStats.reportDiagnostics(getDiags(), getCodeGenOpts().MainFileName);
-  // In PGO mode, attach maximum function count to the module.
-  if (PGOReader)
-    getModule().setMaximumFunctionCount(PGOReader->getMaximumFunctionCount());
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
