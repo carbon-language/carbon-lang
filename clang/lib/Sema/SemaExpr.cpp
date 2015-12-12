@@ -10591,7 +10591,7 @@ static void DiagnoseLogicalAndInLogicalOrRHS(Sema &S, SourceLocation OpLoc,
 
 /// \brief Look for '&' in the left or right hand of a '|' expr.
 static void DiagnoseBitwiseAndInBitwiseOr(Sema &S, SourceLocation OpLoc,
-                                             Expr *OrArg) {
+                                          Expr *OrArg) {
   if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(OrArg)) {
     if (Bop->getOpcode() == BO_And)
       return EmitDiagnosticForBitwiseAndInBitwiseOr(S, OpLoc, Bop);
