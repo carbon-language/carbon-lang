@@ -745,6 +745,7 @@ C++ code:
   }
 
 .. code-block:: llvm
+
   define void @f() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
   entry:
     invoke void @_CxxThrowException(i8* null, %eh.ThrowInfo* null) #1
