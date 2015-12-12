@@ -2516,17 +2516,19 @@ unsigned CastInst::isEliminableCastPair(
     {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,13,12}, // AddrSpaceCast -+
   };
 
+  // TODO: This logic could be encoded into the table above and handled in the
+  // switch below.
   // If either of the casts are a bitcast from scalar to vector, disallow the
-  // merging. However, bitcast of A->B->A are allowed.
-  bool isFirstBitcast  = (firstOp == Instruction::BitCast);
-  bool isSecondBitcast = (secondOp == Instruction::BitCast);
-  bool chainedBitcast  = (SrcTy == DstTy && isFirstBitcast && isSecondBitcast);
+  // merging. However, any pair of bitcasts are allowed.
+  bool IsFirstBitcast  = (firstOp == Instruction::BitCast);
+  bool IsSecondBitcast = (secondOp == Instruction::BitCast);
+  bool AreBothBitcasts = IsFirstBitcast && IsSecondBitcast;
 
-  // Check if any of the bitcasts convert scalars<->vectors.
-  if ((isFirstBitcast  && isa<VectorType>(SrcTy) != isa<VectorType>(MidTy)) ||
-      (isSecondBitcast && isa<VectorType>(MidTy) != isa<VectorType>(DstTy)))
-    // Unless we are bitcasting to the original type, disallow optimizations.
-    if (!chainedBitcast) return 0;
+  // Check if any of the casts convert scalars <-> vectors.
+  if ((IsFirstBitcast  && isa<VectorType>(SrcTy) != isa<VectorType>(MidTy)) ||
+      (IsSecondBitcast && isa<VectorType>(MidTy) != isa<VectorType>(DstTy)))
+    if (!AreBothBitcasts)
+      return 0;
 
   int ElimCase = CastResults[firstOp-Instruction::CastOpsBegin]
                             [secondOp-Instruction::CastOpsBegin];
