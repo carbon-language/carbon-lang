@@ -2270,6 +2270,7 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
     MachineBasicBlock *Succ = FuncInfo.MBBMap[BB];
     addSuccessorWithProb(IndirectBrMBB, Succ);
   }
+  IndirectBrMBB->normalizeSuccProbs();
 
   DAG.setRoot(DAG.getNode(ISD::BRIND, getCurSDLoc(),
                           MVT::Other, getControlRoot(),
