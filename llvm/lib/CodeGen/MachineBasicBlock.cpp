@@ -27,6 +27,7 @@
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -34,7 +35,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
-#include <cstdint>
 using namespace llvm;
 
 #define DEBUG_TYPE "codegen"
