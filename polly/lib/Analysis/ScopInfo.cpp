@@ -3318,15 +3318,14 @@ ScalarEvolution *Scop::getSE() const { return SE; }
 
 bool Scop::isIgnored(RegionNode *RN) {
   BasicBlock *BB = getRegionNodeBasicBlock(RN);
+  ScopStmt *Stmt = getStmtForRegionNode(RN);
+
+  // If there is no stmt, then it already has been removed.
+  if (!Stmt)
+    return true;
 
   // Check if there are accesses contained.
-  bool ContainsAccesses = false;
-  if (!RN->isSubRegion())
-    ContainsAccesses = getAccessFunctions(BB);
-  else
-    for (BasicBlock *RBB : RN->getNodeAs<Region>()->blocks())
-      ContainsAccesses |= (getAccessFunctions(RBB) != nullptr);
-  if (!ContainsAccesses)
+  if (Stmt->isEmpty())
     return true;
 
   // Check for reachability via non-error blocks.
@@ -3489,6 +3488,10 @@ ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
   if (StmtMapIt == StmtMap.end())
     return nullptr;
   return StmtMapIt->second;
+}
+
+ScopStmt *Scop::getStmtForRegionNode(RegionNode *RN) const {
+  return getStmtForBasicBlock(getRegionNodeBasicBlock(RN));
 }
 
 int Scop::getRelativeLoopDepth(const Loop *L) const {

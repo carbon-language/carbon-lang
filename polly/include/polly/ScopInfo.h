@@ -1575,6 +1575,11 @@ public:
   /// @brief Return the stmt for the given @p BB or nullptr if none.
   ScopStmt *getStmtForBasicBlock(BasicBlock *BB) const;
 
+  /// @brief Return the ScopStmt that represents @p RN; can return nullptr if
+  /// the RegionNode is not within the SCoP or has been removed due to
+  /// simplifications.
+  ScopStmt *getStmtForRegionNode(RegionNode *RN) const;
+
   /// @brief Return the number of statements in the SCoP.
   size_t getSize() const { return Stmts.size(); }
 
