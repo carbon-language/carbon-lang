@@ -747,8 +747,7 @@ void MemoryAccess::print(raw_ostream &OS) const {
   }
   OS << "[Reduction Type: " << getReductionType() << "] ";
   OS << "[Scalar: " << isImplicit() << "]\n";
-  if (AccessRelation)
-    OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
+  OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
   if (hasNewAccessRelation())
     OS.indent(11) << "new: " << getNewAccessRelationStr() << ";\n";
 }
