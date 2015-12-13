@@ -1302,6 +1302,31 @@ private:
   /// invariant location.
   void buildInvariantEquivalenceClasses();
 
+  /// @brief Check if a memory access can be hoisted.
+  ///
+  /// @param Access The access to verify.
+  /// @param Writes The set of all memory writes in the scop.
+  ///
+  /// @return Return true if a memory access can be hoisted.
+  bool isHoistableAccess(MemoryAccess *Access,
+                         __isl_keep isl_union_map *Writes);
+
+  /// @brief Verify that all required invariant loads have been hoisted.
+  ///
+  /// Invariant load hoisting is not guaranteed to hoist all loads that were
+  /// assumed to be scop invariant during scop detection. This function checks
+  /// for cases where the hoisting failed, but where it would have been
+  /// necessary for our scop modeling to be correct. In case of insufficent
+  /// hoisting the scop is marked as invalid.
+  ///
+  /// In the example below Bound[1] is required to be invariant:
+  ///
+  /// for (int i = 1; i < Bound[0]; i++)
+  ///   for (int j = 1; j < Bound[1]; j++)
+  ///     ...
+  ///
+  void verifyInvariantLoads();
+
   /// @brief Hoist invariant memory loads and check for required ones.
   ///
   /// We first identify "common" invariant loads, thus loads that are invariant

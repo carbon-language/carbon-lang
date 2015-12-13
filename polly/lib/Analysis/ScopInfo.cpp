@@ -2851,107 +2851,109 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   isl_set_free(DomainCtx);
 }
 
+bool Scop::isHoistableAccess(MemoryAccess *Access,
+                             __isl_keep isl_union_map *Writes) {
+  // TODO: Loads that are not loop carried, hence are in a statement with
+  //       zero iterators, are by construction invariant, though we
+  //       currently "hoist" them anyway. This is necessary because we allow
+  //       them to be treated as parameters (e.g., in conditions) and our code
+  //       generation would otherwise use the old value.
+
+  auto &Stmt = *Access->getStatement();
+  BasicBlock *BB =
+      Stmt.isBlockStmt() ? Stmt.getBasicBlock() : Stmt.getRegion()->getEntry();
+
+  if (Access->isScalarKind() || Access->isWrite() || !Access->isAffine())
+    return false;
+
+  // Skip accesses that have an invariant base pointer which is defined but
+  // not loaded inside the SCoP. This can happened e.g., if a readnone call
+  // returns a pointer that is used as a base address. However, as we want
+  // to hoist indirect pointers, we allow the base pointer to be defined in
+  // the region if it is also a memory access. Each ScopArrayInfo object
+  // that has a base pointer origin has a base pointer that is loaded and
+  // that it is invariant, thus it will be hoisted too. However, if there is
+  // no base pointer origin we check that the base pointer is defined
+  // outside the region.
+  const ScopArrayInfo *SAI = Access->getScopArrayInfo();
+  while (auto *BasePtrOriginSAI = SAI->getBasePtrOriginSAI())
+    SAI = BasePtrOriginSAI;
+
+  if (auto *BasePtrInst = dyn_cast<Instruction>(SAI->getBasePtr()))
+    if (R.contains(BasePtrInst))
+      return false;
+
+  // Skip accesses in non-affine subregions as they might not be executed
+  // under the same condition as the entry of the non-affine subregion.
+  if (BB != Access->getAccessInstruction()->getParent())
+    return false;
+
+  isl_map *AccessRelation = Access->getAccessRelation();
+
+  // Skip accesses that have an empty access relation. These can be caused
+  // by multiple offsets with a type cast in-between that cause the overall
+  // byte offset to be not divisible by the new types sizes.
+  if (isl_map_is_empty(AccessRelation)) {
+    isl_map_free(AccessRelation);
+    return false;
+  }
+
+  if (isl_map_involves_dims(AccessRelation, isl_dim_in, 0,
+                            Stmt.getNumIterators())) {
+    isl_map_free(AccessRelation);
+    return false;
+  }
+
+  AccessRelation = isl_map_intersect_domain(AccessRelation, Stmt.getDomain());
+  isl_set *AccessRange = isl_map_range(AccessRelation);
+
+  isl_union_map *Written = isl_union_map_intersect_range(
+      isl_union_map_copy(Writes), isl_union_set_from_set(AccessRange));
+  bool IsWritten = !isl_union_map_is_empty(Written);
+  isl_union_map_free(Written);
+
+  if (IsWritten)
+    return false;
+
+  return true;
+}
+
+void Scop::verifyInvariantLoads() {
+  auto &RIL = *SD.getRequiredInvariantLoads(&getRegion());
+  for (LoadInst *LI : RIL) {
+    assert(LI && getRegion().contains(LI));
+    ScopStmt *Stmt = getStmtForBasicBlock(LI->getParent());
+    if (Stmt && Stmt->lookupAccessesFor(LI)) {
+      invalidate(INVARIANTLOAD, LI->getDebugLoc());
+      return;
+    }
+  }
+}
+
 void Scop::hoistInvariantLoads() {
   isl_union_map *Writes = getWrites();
   for (ScopStmt &Stmt : *this) {
 
-    // TODO: Loads that are not loop carried, hence are in a statement with
-    //       zero iterators, are by construction invariant, though we
-    //       currently "hoist" them anyway. This is necessary because we allow
-    //       them to be treated as parameters (e.g., in conditions) and our code
-    //       generation would otherwise use the old value.
+    MemoryAccessList InvariantAccesses;
 
-    BasicBlock *BB = Stmt.isBlockStmt() ? Stmt.getBasicBlock()
-                                        : Stmt.getRegion()->getEntry();
-    isl_set *Domain = Stmt.getDomain();
-    MemoryAccessList InvMAs;
-
-    for (MemoryAccess *MA : Stmt) {
-      if (MA->isScalarKind() || MA->isWrite() || !MA->isAffine())
-        continue;
-
-      // Skip accesses that have an invariant base pointer which is defined but
-      // not loaded inside the SCoP. This can happened e.g., if a readnone call
-      // returns a pointer that is used as a base address. However, as we want
-      // to hoist indirect pointers, we allow the base pointer to be defined in
-      // the region if it is also a memory access. Each ScopArrayInfo object
-      // that has a base pointer origin has a base pointer that is loaded and
-      // that it is invariant, thus it will be hoisted too. However, if there is
-      // no base pointer origin we check that the base pointer is defined
-      // outside the region.
-      const ScopArrayInfo *SAI = MA->getScopArrayInfo();
-      while (auto *BasePtrOriginSAI = SAI->getBasePtrOriginSAI())
-        SAI = BasePtrOriginSAI;
-
-      if (auto *BasePtrInst = dyn_cast<Instruction>(SAI->getBasePtr()))
-        if (R.contains(BasePtrInst))
-          continue;
-
-      // Skip accesses in non-affine subregions as they might not be executed
-      // under the same condition as the entry of the non-affine subregion.
-      if (BB != MA->getAccessInstruction()->getParent())
-        continue;
-
-      isl_map *AccessRelation = MA->getAccessRelation();
-
-      // Skip accesses that have an empty access relation. These can be caused
-      // by multiple offsets with a type cast in-between that cause the overall
-      // byte offset to be not divisible by the new types sizes.
-      if (isl_map_is_empty(AccessRelation)) {
-        isl_map_free(AccessRelation);
-        continue;
-      }
-
-      if (isl_map_involves_dims(AccessRelation, isl_dim_in, 0,
-                                Stmt.getNumIterators())) {
-        isl_map_free(AccessRelation);
-        continue;
-      }
-
-      AccessRelation =
-          isl_map_intersect_domain(AccessRelation, isl_set_copy(Domain));
-      isl_set *AccessRange = isl_map_range(AccessRelation);
-
-      isl_union_map *Written = isl_union_map_intersect_range(
-          isl_union_map_copy(Writes), isl_union_set_from_set(AccessRange));
-      bool IsWritten = !isl_union_map_is_empty(Written);
-      isl_union_map_free(Written);
-
-      if (IsWritten)
-        continue;
-
-      InvMAs.push_front(MA);
-    }
+    for (MemoryAccess *Access : Stmt)
+      if (isHoistableAccess(Access, Writes))
+        InvariantAccesses.push_front(Access);
 
     // We inserted invariant accesses always in the front but need them to be
     // sorted in a "natural order". The statements are already sorted in reverse
     // post order and that suffices for the accesses too. The reason we require
     // an order in the first place is the dependences between invariant loads
     // that can be caused by indirect loads.
-    InvMAs.reverse();
+    InvariantAccesses.reverse();
 
     // Transfer the memory access from the statement to the SCoP.
-    Stmt.removeMemoryAccesses(InvMAs);
-    addInvariantLoads(Stmt, InvMAs);
-
-    isl_set_free(Domain);
+    Stmt.removeMemoryAccesses(InvariantAccesses);
+    addInvariantLoads(Stmt, InvariantAccesses);
   }
   isl_union_map_free(Writes);
 
-  auto &ScopRIL = *SD.getRequiredInvariantLoads(&getRegion());
-  // Check required invariant loads that were tagged during SCoP detection.
-  for (LoadInst *LI : ScopRIL) {
-    assert(LI && getRegion().contains(LI));
-    ScopStmt *Stmt = getStmtForBasicBlock(LI->getParent());
-    if (Stmt && Stmt->lookupAccessesFor(LI) != nullptr) {
-      DEBUG(dbgs() << "\n\nWARNING: Load (" << *LI
-                   << ") is required to be invariant but was not marked as "
-                      "such. SCoP for "
-                   << getRegion() << " will be dropped\n\n");
-      invalidate(INVARIANTLOAD, LI->getDebugLoc());
-      return;
-    }
-  }
+  verifyInvariantLoads();
 }
 
 const ScopArrayInfo *
