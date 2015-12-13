@@ -1905,9 +1905,9 @@ class ScopInfo : public RegionPass {
   /// The access will be created at the @p Value's definition.
   ///
   /// @param Value The value to be written.
-  /// @see addScalarReadAccess()
+  /// @see addValueReadAccess()
   /// @see ScopArrayInfo::MemoryKind
-  void addScalarWriteAccess(Instruction *Value);
+  void addValueWriteAccess(Instruction *Value);
 
   /// @brief Create a MemoryAccess for reloading an llvm::Value.
   ///
@@ -1915,9 +1915,9 @@ class ScopInfo : public RegionPass {
   ///
   /// @param Value The scalar expected to be loaded.
   /// @param User  User of the scalar; this is where the access is added.
-  /// @see addScalarWriteAccess()
+  /// @see addValueWriteAccess()
   /// @see ScopArrayInfo::MemoryKind
-  void addScalarReadAccess(Value *Value, Instruction *User);
+  void addValueReadAccess(Value *Value, Instruction *User);
 
   /// @brief Create a MemoryAccess for reloading an llvm::Value.
   ///
@@ -1929,9 +1929,9 @@ class ScopInfo : public RegionPass {
   /// @param User   The PHI node referencing @p Value.
   /// @param UserBB Incoming block for the incoming @p Value.
   /// @see addPHIWriteAccess()
-  /// @see addScalarWriteAccess()
+  /// @see addValueWriteAccess()
   /// @see ScopArrayInfo::MemoryKind
-  void addScalarReadAccess(Value *Value, PHINode *User, BasicBlock *UserBB);
+  void addValueReadAccess(Value *Value, PHINode *User, BasicBlock *UserBB);
 
   /// @brief Create a write MemoryAccess for the incoming block of a phi node.
   ///

@@ -3542,11 +3542,11 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // OpBB if the definition is not in OpBB.
       if (scop->getStmtForBasicBlock(OpIBB) !=
           scop->getStmtForBasicBlock(OpBB)) {
-        addScalarReadAccess(OpI, PHI, OpBB);
-        addScalarWriteAccess(OpI);
+        addValueReadAccess(OpI, PHI, OpBB);
+        addValueWriteAccess(OpI);
       }
     } else if (ModelReadOnlyScalars && !isa<Constant>(Op)) {
-      addScalarReadAccess(Op, PHI, OpBB);
+      addValueReadAccess(Op, PHI, OpBB);
     }
 
     addPHIWriteAccess(PHI, OpBB, Op, IsExitBlock);
@@ -3646,7 +3646,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     // Do not build a read access that is not in the current SCoP
     // Use the def instruction as base address of the MemoryAccess, so that it
     // will become the name of the scalar access in the polyhedral form.
-    addScalarReadAccess(Inst, UI);
+    addValueReadAccess(Inst, UI);
   }
 
   if (ModelReadOnlyScalars && !isa<PHINode>(Inst)) {
@@ -3661,7 +3661,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       if (isa<Constant>(Op))
         continue;
 
-      addScalarReadAccess(Op, Inst);
+      addValueReadAccess(Op, Inst);
     }
   }
 
@@ -3862,7 +3862,7 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       if (!isa<StoreInst>(Inst))
-        addScalarWriteAccess(Inst);
+        addValueWriteAccess(Inst);
     }
   }
 }
@@ -3912,19 +3912,19 @@ void ScopInfo::addArrayAccess(Instruction *MemAccInst,
                   ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
                   ScopArrayInfo::MK_Array);
 }
-void ScopInfo::addScalarWriteAccess(Instruction *Value) {
+void ScopInfo::addValueWriteAccess(Instruction *Value) {
   addMemoryAccess(Value->getParent(), Value, MemoryAccess::MUST_WRITE, Value, 1,
                   true, Value, ArrayRef<const SCEV *>(),
                   ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
 }
-void ScopInfo::addScalarReadAccess(Value *Value, Instruction *User) {
+void ScopInfo::addValueReadAccess(Value *Value, Instruction *User) {
   assert(!isa<PHINode>(User));
   addMemoryAccess(User->getParent(), User, MemoryAccess::READ, Value, 1, true,
                   Value, ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
                   ScopArrayInfo::MK_Value);
 }
-void ScopInfo::addScalarReadAccess(Value *Value, PHINode *User,
-                                   BasicBlock *UserBB) {
+void ScopInfo::addValueReadAccess(Value *Value, PHINode *User,
+                                  BasicBlock *UserBB) {
   addMemoryAccess(UserBB, User, MemoryAccess::READ, Value, 1, true, Value,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
                   ScopArrayInfo::MK_Value);
