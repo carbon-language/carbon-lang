@@ -3885,8 +3885,12 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
   Value *BaseAddr = BaseAddress;
   std::string BaseName = getIslCompatibleName("MemRef_", BaseAddr, "");
 
-  bool isApproximated =
-      Stmt->isRegionStmt() && (Stmt->getRegion()->getEntry() != BB);
+  // The execution of a store is not guaranteed if not in the entry block of a
+  // subregion. However, scalar writes (llvm::Value definitions or one of a
+  // PHI's incoming values) must occur in well-formed IR code.
+  bool isApproximated = (Kind == ScopArrayInfo::MK_Array) &&
+                        Stmt->isRegionStmt() &&
+                        (Stmt->getRegion()->getEntry() != BB);
   if (isApproximated && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
