@@ -3942,9 +3942,9 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
                   ScopArrayInfo::MK_PHI);
 }
 
-void ScopInfo::buildScop(Region &R, DominatorTree &DT, AssumptionCache &AC) {
+void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  scop = new Scop(R, AccFuncMap, *SD, *SE, DT, *LI, ctx, MaxLoopDepth);
+  scop = new Scop(R, AccFuncMap, *SD, *SE, *DT, *LI, ctx, MaxLoopDepth);
 
   buildStmts(R);
   buildAccessFunctions(R, R);
@@ -4012,7 +4012,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   TD = &F->getParent()->getDataLayout();
-  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(*F);
 
   DebugLoc Beg, End;
@@ -4020,7 +4020,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   std::string Msg = "SCoP begins here.";
   emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F, Beg, Msg);
 
-  buildScop(*R, DT, AC);
+  buildScop(*R, AC);
 
   DEBUG(scop->print(dbgs()));
 

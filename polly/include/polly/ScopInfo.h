@@ -1783,6 +1783,9 @@ class ScopInfo : public RegionPass {
   // Target data for element size computing.
   const DataLayout *TD;
 
+  // DominatorTree to reason about guaranteed execution.
+  DominatorTree *DT;
+
   // Access function of statements (currently BasicBlocks) .
   //
   // This owns all the MemoryAccess objects of the Scop created in this pass. It
@@ -1804,7 +1807,7 @@ class ScopInfo : public RegionPass {
   void clear();
 
   // Build the SCoP for Region @p R.
-  void buildScop(Region &R, DominatorTree &DT, AssumptionCache &AC);
+  void buildScop(Region &R, AssumptionCache &AC);
 
   /// @brief Build an instance of MemoryAccess from the Load/Store instruction.
   ///
