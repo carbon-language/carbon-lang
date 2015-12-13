@@ -166,15 +166,15 @@ static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
     return nullptr;
 
   return S->getScopArrayInfo(OriginBaseSCEVUnknown->getValue(),
-                             ScopArrayInfo::KIND_ARRAY);
+                             ScopArrayInfo::MK_Array);
 }
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
-                             ArrayRef<const SCEV *> Sizes, enum ARRAYKIND Kind,
+                             ArrayRef<const SCEV *> Sizes, enum MemoryKind Kind,
                              const DataLayout &DL, Scop *S)
     : BasePtr(BasePtr), ElementType(ElementType), Kind(Kind), DL(DL), S(*S) {
   std::string BasePtrName =
-      getIslCompatibleName("MemRef_", BasePtr, Kind == KIND_PHI ? "__phi" : "");
+      getIslCompatibleName("MemRef_", BasePtr, Kind == MK_PHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
 
   updateSizes(Sizes);
@@ -701,8 +701,8 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
                            unsigned ElemBytes, bool Affine,
                            ArrayRef<const SCEV *> Subscripts,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
-                           AccessOrigin Origin, StringRef BaseName)
-    : Origin(Origin), AccType(Type), RedType(RT_NONE), Statement(Stmt),
+                           ScopArrayInfo::MemoryKind Kind, StringRef BaseName)
+    : Kind(Kind), AccType(Type), RedType(RT_NONE), Statement(Stmt),
       BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
       Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
       AccessValue(AccessValue), IsAffine(Affine),
@@ -746,7 +746,7 @@ void MemoryAccess::print(raw_ostream &OS) const {
     break;
   }
   OS << "[Reduction Type: " << getReductionType() << "] ";
-  OS << "[Scalar: " << isImplicit() << "]\n";
+  OS << "[Scalar: " << isScalarKind() << "]\n";
   OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
   if (hasNewAccessRelation())
     OS.indent(11) << "new: " << getNewAccessRelationStr() << ";\n";
@@ -879,15 +879,15 @@ void ScopStmt::buildAccessRelations() {
   for (MemoryAccess *Access : MemAccs) {
     Type *ElementType = Access->getAccessValue()->getType();
 
-    ScopArrayInfo::ARRAYKIND Ty;
-    if (Access->isPHI())
-      Ty = ScopArrayInfo::KIND_PHI;
-    else if (Access->isExitPHI())
-      Ty = ScopArrayInfo::KIND_EXIT_PHI;
-    else if (Access->isScalar())
-      Ty = ScopArrayInfo::KIND_SCALAR;
+    ScopArrayInfo::MemoryKind Ty;
+    if (Access->isPHIKind())
+      Ty = ScopArrayInfo::MK_PHI;
+    else if (Access->isExitPHIKind())
+      Ty = ScopArrayInfo::MK_ExitPHI;
+    else if (Access->isValueKind())
+      Ty = ScopArrayInfo::MK_Value;
     else
-      Ty = ScopArrayInfo::KIND_ARRAY;
+      Ty = ScopArrayInfo::MK_Array;
 
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
         Access->getBaseAddr(), ElementType, Access->Sizes, Ty);
@@ -2466,7 +2466,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       continue;
 
     for (MemoryAccess *MA : Stmt) {
-      if (MA->isImplicit())
+      if (MA->isScalarKind())
         continue;
       if (!MA->isRead())
         HasWriteAccess.insert(MA->getBaseAddr());
@@ -2867,7 +2867,7 @@ void Scop::hoistInvariantLoads() {
     MemoryAccessList InvMAs;
 
     for (MemoryAccess *MA : Stmt) {
-      if (MA->isImplicit() || MA->isWrite() || !MA->isAffine())
+      if (MA->isScalarKind() || MA->isWrite() || !MA->isAffine())
         continue;
 
       // Skip accesses that have an invariant base pointer which is defined but
@@ -2957,7 +2957,7 @@ void Scop::hoistInvariantLoads() {
 const ScopArrayInfo *
 Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
                                ArrayRef<const SCEV *> Sizes,
-                               ScopArrayInfo::ARRAYKIND Kind) {
+                               ScopArrayInfo::MemoryKind Kind) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, Kind)];
   if (!SAI) {
     auto &DL = getRegion().getEntry()->getModule()->getDataLayout();
@@ -2973,7 +2973,7 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
 }
 
 const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr,
-                                            ScopArrayInfo::ARRAYKIND Kind) {
+                                            ScopArrayInfo::MemoryKind Kind) {
   auto *SAI = ScopArrayInfoMap[std::make_pair(BasePtr, Kind)].get();
   assert(SAI && "No ScopArrayInfo available for this base pointer");
   return SAI;
@@ -3738,8 +3738,8 @@ void ScopInfo::buildMemoryAccess(
         SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
             IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
 
-        addExplicitAccess(Inst, Type, BasePointer->getValue(), Size, true,
-                          Subscripts, SizesSCEV, Val);
+        addArrayAccess(Inst, Type, BasePointer->getValue(), Size, true,
+                       Subscripts, SizesSCEV, Val);
         return;
       }
     }
@@ -3747,9 +3747,9 @@ void ScopInfo::buildMemoryAccess(
 
   auto AccItr = InsnToMemAcc.find(Inst);
   if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
-    addExplicitAccess(Inst, Type, BasePointer->getValue(), Size, true,
-                      AccItr->second.DelinearizedSubscripts,
-                      AccItr->second.Shape->DelinearizedSizes, Val);
+    addArrayAccess(Inst, Type, BasePointer->getValue(), Size, true,
+                   AccItr->second.DelinearizedSubscripts,
+                   AccItr->second.Shape->DelinearizedSizes, Val);
     return;
   }
 
@@ -3780,9 +3780,9 @@ void ScopInfo::buildMemoryAccess(
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
-  addExplicitAccess(Inst, Type, BasePointer->getValue(), Size, IsAffine,
-                    ArrayRef<const SCEV *>(AccessFunction),
-                    ArrayRef<const SCEV *>(SizeSCEV), Val);
+  addArrayAccess(Inst, Type, BasePointer->getValue(), Size, IsAffine,
+                 ArrayRef<const SCEV *>(AccessFunction),
+                 ArrayRef<const SCEV *>(SizeSCEV), Val);
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
@@ -3871,7 +3871,7 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                                bool Affine, Value *AccessValue,
                                ArrayRef<const SCEV *> Subscripts,
                                ArrayRef<const SCEV *> Sizes,
-                               MemoryAccess::AccessOrigin Origin) {
+                               ScopArrayInfo::MemoryKind Kind) {
   ScopStmt *Stmt = scop->getStmtForBasicBlock(BB);
 
   // Do not create a memory access for anything not in the SCoP. It would be
@@ -3889,48 +3889,51 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
     Type = MemoryAccess::MAY_WRITE;
 
   AccList.emplace_back(Stmt, Inst, Type, BaseAddress, ElemBytes, Affine,
-                       Subscripts, Sizes, AccessValue, Origin, BaseName);
+                       Subscripts, Sizes, AccessValue, Kind, BaseName);
   Stmt->addAccess(&AccList.back());
 }
 
-void ScopInfo::addExplicitAccess(
-    Instruction *MemAccInst, MemoryAccess::AccessType Type, Value *BaseAddress,
-    unsigned ElemBytes, bool IsAffine, ArrayRef<const SCEV *> Subscripts,
-    ArrayRef<const SCEV *> Sizes, Value *AccessValue) {
+void ScopInfo::addArrayAccess(Instruction *MemAccInst,
+                              MemoryAccess::AccessType Type, Value *BaseAddress,
+                              unsigned ElemBytes, bool IsAffine,
+                              ArrayRef<const SCEV *> Subscripts,
+                              ArrayRef<const SCEV *> Sizes,
+                              Value *AccessValue) {
   assert(isa<LoadInst>(MemAccInst) || isa<StoreInst>(MemAccInst));
   assert(isa<LoadInst>(MemAccInst) == (Type == MemoryAccess::READ));
   addMemoryAccess(MemAccInst->getParent(), MemAccInst, Type, BaseAddress,
                   ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
-                  MemoryAccess::EXPLICIT);
+                  ScopArrayInfo::MK_Array);
 }
 void ScopInfo::addScalarWriteAccess(Instruction *Value) {
   addMemoryAccess(Value->getParent(), Value, MemoryAccess::MUST_WRITE, Value, 1,
                   true, Value, ArrayRef<const SCEV *>(),
-                  ArrayRef<const SCEV *>(), MemoryAccess::SCALAR);
+                  ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
 }
 void ScopInfo::addScalarReadAccess(Value *Value, Instruction *User) {
   assert(!isa<PHINode>(User));
   addMemoryAccess(User->getParent(), User, MemoryAccess::READ, Value, 1, true,
                   Value, ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  MemoryAccess::SCALAR);
+                  ScopArrayInfo::MK_Value);
 }
 void ScopInfo::addScalarReadAccess(Value *Value, PHINode *User,
                                    BasicBlock *UserBB) {
   addMemoryAccess(UserBB, User, MemoryAccess::READ, Value, 1, true, Value,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  MemoryAccess::SCALAR);
+                  ScopArrayInfo::MK_Value);
 }
 void ScopInfo::addPHIWriteAccess(PHINode *PHI, BasicBlock *IncomingBlock,
                                  Value *IncomingValue, bool IsExitBlock) {
   addMemoryAccess(IncomingBlock, IncomingBlock->getTerminator(),
                   MemoryAccess::MUST_WRITE, PHI, 1, true, IncomingValue,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  IsExitBlock ? MemoryAccess::EXIT_PHI : MemoryAccess::PHI);
+                  IsExitBlock ? ScopArrayInfo::MK_ExitPHI
+                              : ScopArrayInfo::MK_PHI);
 }
 void ScopInfo::addPHIReadAccess(PHINode *PHI) {
   addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true, PHI,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  MemoryAccess::PHI);
+                  ScopArrayInfo::MK_PHI);
 }
 
 void ScopInfo::buildScop(Region &R, DominatorTree &DT, AssumptionCache &AC) {
