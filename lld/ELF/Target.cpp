@@ -1318,6 +1318,9 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     }
     break;
   }
+  case R_MIPS_JALR:
+    // Ignore this optimization relocation for now
+    break;
   case R_MIPS_LO16: {
     uint32_t Instr = read32<E>(Loc);
     int64_t AHL = SignExtend64<16>(Instr & 0xffff);
