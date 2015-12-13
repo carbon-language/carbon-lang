@@ -6523,7 +6523,9 @@ static void SuggestParentheses(Sema &Self, SourceLocation Loc,
 }
 
 static bool IsArithmeticOp(BinaryOperatorKind Opc) {
-  return Opc >= BO_Mul && Opc <= BO_Shr;
+  return BinaryOperator::isAdditiveOp(Opc) ||
+         BinaryOperator::isMultiplicativeOp(Opc) ||
+         BinaryOperator::isShiftOp(Opc);
 }
 
 /// IsArithmeticBinaryExpr - Returns true if E is an arithmetic binary
@@ -6569,10 +6571,6 @@ static bool IsArithmeticBinaryExpr(Expr *E, BinaryOperatorKind *Opcode,
   return false;
 }
 
-static bool IsLogicOp(BinaryOperatorKind Opc) {
-  return (Opc >= BO_LT && Opc <= BO_NE) || (Opc >= BO_LAnd && Opc <= BO_LOr);
-}
-
 /// ExprLooksBoolean - Returns true if E looks boolean, i.e. it has boolean type
 /// or is a logical expression such as (x==y) which has int type, but is
 /// commonly interpreted as boolean.
@@ -6582,7 +6580,7 @@ static bool ExprLooksBoolean(Expr *E) {
   if (E->getType()->isBooleanType())
     return true;
   if (BinaryOperator *OP = dyn_cast<BinaryOperator>(E))
-    return IsLogicOp(OP->getOpcode());
+    return OP->isComparisonOp() || OP->isLogicalOp();
   if (UnaryOperator *OP = dyn_cast<UnaryOperator>(E))
     return OP->getOpcode() == UO_LNot;
   if (E->getType()->isPointerType())
