@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
+#include <cstdint>
 using namespace llvm;
 
 #define DEBUG_TYPE "codegen"
