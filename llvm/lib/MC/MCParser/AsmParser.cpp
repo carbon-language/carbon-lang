@@ -1714,6 +1714,8 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
   if (ParsingInlineAsm && (IDVal == "align" || IDVal == "ALIGN"))
     return parseDirectiveMSAlign(IDLoc, Info);
 
+  if (ParsingInlineAsm && (IDVal == "even"))
+    Info.AsmRewrites->emplace_back(AOK_EVEN, IDLoc, 4);
   checkForValidSection();
 
   // Canonicalize the opcode to lower case.
@@ -4863,6 +4865,9 @@ bool AsmParser::parseMSInlineAsm(
       AdditionalSkip = (Val < 4) ? 2 : Val < 7 ? 3 : 4;
       break;
     }
+    case AOK_EVEN:
+      OS << ".even";
+      break;
     case AOK_DotOperator:
       // Insert the dot if the user omitted it.
       OS.flush();
