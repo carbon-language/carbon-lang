@@ -3885,12 +3885,13 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
   Value *BaseAddr = BaseAddress;
   std::string BaseName = getIslCompatibleName("MemRef_", BaseAddr, "");
 
-  // The execution of a store is not guaranteed if not in the entry block of a
-  // subregion. However, scalar writes (llvm::Value definitions or one of a
+  // The execution of a store is not guaranteed if its parent block is not
+  // guaranteed to executed, here tested by checking whether it dominates the
+  // exit block. However, implicit writes (llvm::Value definitions or one of a
   // PHI's incoming values) must occur in well-formed IR code.
   bool isApproximated = (Kind == ScopArrayInfo::MK_Array) &&
                         Stmt->isRegionStmt() &&
-                        (Stmt->getRegion()->getEntry() != BB);
+                        !DT->dominates(BB, Stmt->getRegion()->getExit());
   if (isApproximated && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
