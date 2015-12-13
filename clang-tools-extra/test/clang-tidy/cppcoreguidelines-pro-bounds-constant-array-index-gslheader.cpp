@@ -1,7 +1,7 @@
 // RUN: %check_clang_tidy %s cppcoreguidelines-pro-bounds-constant-array-index %t -- -config='{CheckOptions: [{key: cppcoreguidelines-pro-bounds-constant-array-index.GslHeader, value: "dir1/gslheader.h"}]}' -- -std=c++11
 // CHECK-FIXES: #include "dir1/gslheader.h"
 
-typedef unsigned int size_t;
+typedef __SIZE_TYPE__ size_t;
 
 namespace std {
   template<typename T, size_t N>

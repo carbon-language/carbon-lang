@@ -1,6 +1,6 @@
 // RUN: %check_clang_tidy %s cppcoreguidelines-pro-bounds-constant-array-index %t
 
-typedef unsigned int size_t;
+typedef __SIZE_TYPE__ size_t;
 
 namespace std {
   template<typename T, size_t N>
