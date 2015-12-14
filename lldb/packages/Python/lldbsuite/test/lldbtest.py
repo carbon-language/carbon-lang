@@ -2241,15 +2241,35 @@ class LLDBTestCaseFactory(type):
 
                 supported_categories = [x for x in categories 
                                         if test_categories.is_supported_on_platform(x, target_platform)]
-                for category in supported_categories:
-                    @add_test_categories([category])
+                if "dsym" in supported_categories:
+                    @add_test_categories(["dsym"])
                     @wraps(attrvalue)
-                    def test_method(self, attrvalue=attrvalue):
-                        self.debug_info = category
+                    def dsym_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "dsym"
                         return attrvalue(self)
-                    method_name = attrname + "_" + category
-                    test_method.__name__ = method_name
-                    newattrs[method_name] = test_method
+                    dsym_method_name = attrname + "_dsym"
+                    dsym_test_method.__name__ = dsym_method_name
+                    newattrs[dsym_method_name] = dsym_test_method
+
+                if "dwarf" in supported_categories:
+                    @add_test_categories(["dwarf"])
+                    @wraps(attrvalue)
+                    def dwarf_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "dwarf"
+                        return attrvalue(self)
+                    dwarf_method_name = attrname + "_dwarf"
+                    dwarf_test_method.__name__ = dwarf_method_name
+                    newattrs[dwarf_method_name] = dwarf_test_method
+
+                if "dwo" in supported_categories:
+                    @add_test_categories(["dwo"])
+                    @wraps(attrvalue)
+                    def dwo_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "dwo"
+                        return attrvalue(self)
+                    dwo_method_name = attrname + "_dwo"
+                    dwo_test_method.__name__ = dwo_method_name
+                    newattrs[dwo_method_name] = dwo_test_method
             else:
                 newattrs[attrname] = attrvalue
         return super(LLDBTestCaseFactory, cls).__new__(cls, name, bases, newattrs)
