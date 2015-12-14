@@ -20,13 +20,13 @@ Bar bar;
 
 // Profile data for complete constructors and destructors must absent.
 
-// CHECK-NOT: @__llvm_profile_name__ZN3FooC1Ev
-// CHECK-NOT: @__llvm_profile_name__ZN3FooC1Ei
-// CHECK-NOT: @__llvm_profile_name__ZN3FooD1Ev
-// CHECK-NOT: @__llvm_profile_name__ZN3BarC1Ev
-// CHECK-NOT: @__llvm_profile_name__ZN3BarD1Ev
-// CHECK-NOT: @__llvm_profile_counters__ZN3FooD1Ev
-// CHECK-NOT: @__llvm_profile_data__ZN3FooD1Ev
+// CHECK-NOT: @__prf_nm__ZN3FooC1Ev
+// CHECK-NOT: @__prf_nm__ZN3FooC1Ei
+// CHECK-NOT: @__prf_nm__ZN3FooD1Ev
+// CHECK-NOT: @__prf_nm__ZN3BarC1Ev
+// CHECK-NOT: @__prf_nm__ZN3BarD1Ev
+// CHECK-NOT: @__prf_cn__ZN3FooD1Ev
+// CHECK-NOT: @__prf_dt__ZN3FooD1Ev
 
 int main() {
 }

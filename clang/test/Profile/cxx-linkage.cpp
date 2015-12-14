@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9.0 -emit-llvm -main-file-name cxx-linkage.cpp %s -o - -fprofile-instr-generate | FileCheck %s
 
-// CHECK: @__llvm_profile_name__Z3foov = private constant [7 x i8] c"_Z3foov"
-// CHECK: @__llvm_profile_name__Z8foo_weakv = weak hidden constant [12 x i8] c"_Z8foo_weakv"
-// CHECK: @__llvm_profile_name_main = private constant [4 x i8] c"main"
-// CHECK: @__llvm_profile_name__Z10foo_inlinev = linkonce_odr hidden constant [15 x i8] c"_Z10foo_inlinev"
+// CHECK: @__prf_nm__Z3foov = private constant [7 x i8] c"_Z3foov"
+// CHECK: @__prf_nm__Z8foo_weakv = weak hidden constant [12 x i8] c"_Z8foo_weakv"
+// CHECK: @__prf_nm_main = private constant [4 x i8] c"main"
+// CHECK: @__prf_nm__Z10foo_inlinev = linkonce_odr hidden constant [15 x i8] c"_Z10foo_inlinev"
 
 void foo(void) { }
 
