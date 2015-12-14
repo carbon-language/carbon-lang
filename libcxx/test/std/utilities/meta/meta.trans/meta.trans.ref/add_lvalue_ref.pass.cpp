@@ -52,8 +52,8 @@ int main()
     test_add_lvalue_reference<int*, int*&>();
     test_add_lvalue_reference<const int*, const int*&>();
 
-//	LWG 2101 specifically talks about add_lvalue_reference and functions.
-//	The term of art is "a referenceable type", which a cv- or ref-qualified function is not.
+//  LWG 2101 specifically talks about add_lvalue_reference and functions.
+//  The term of art is "a referenceable type", which a cv- or ref-qualified function is not.
     test_function0<void()>();
 //     test_function1<void() const>();
 //     test_function1<void() &>();
@@ -62,9 +62,9 @@ int main()
 //     test_function1<void() const &&>();
 
     test_function0<void (Foo::*)()>();
-//     test_function1<void (Foo::*)() const>();
-//     test_function1<void (Foo::*)() &>();
-//     test_function1<void (Foo::*)() &&>();
-//     test_function1<void (Foo::*)() const &>();
-//     test_function1<void (Foo::*)() const &&>();
+    test_function0<void (Foo::*)() const>();
+    test_function0<void (Foo::*)() &>();
+    test_function0<void (Foo::*)() &&>();
+    test_function0<void (Foo::*)() const &>();
+    test_function0<void (Foo::*)() const &&>();
 }
