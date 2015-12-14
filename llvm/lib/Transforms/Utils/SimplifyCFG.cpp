@@ -3498,7 +3498,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         }
     } else if ((isa<InvokeInst>(TI) &&
                 cast<InvokeInst>(TI)->getUnwindDest() == BB) ||
-               isa<TerminatePadInst>(TI) || isa<CatchSwitchInst>(TI)) {
+               isa<CatchSwitchInst>(TI)) {
       removeUnwindEdge(TI->getParent());
       Changed = true;
     } else if (isa<CleanupReturnInst>(TI)) {

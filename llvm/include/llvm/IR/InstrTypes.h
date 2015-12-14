@@ -87,7 +87,6 @@ public:
     case Instruction::CleanupRet:
     case Instruction::Invoke:
     case Instruction::Resume:
-    case Instruction::TerminatePad:
       return true;
     default:
       return false;

@@ -763,7 +763,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(catchret,       CatchRet);
   INSTKEYWORD(catchswitch,  CatchSwitch);
   INSTKEYWORD(catchpad,     CatchPad);
-  INSTKEYWORD(terminatepad, TerminatePad);
   INSTKEYWORD(cleanuppad,   CleanupPad);
 #undef INSTKEYWORD
 

@@ -2695,11 +2695,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setOrigin(&I, getCleanOrigin());
   }
 
-  void visitTerminatePad(TerminatePadInst &I) {
-    DEBUG(dbgs() << "TerminatePad: " << I << "\n");
-    // Nothing to do here.
-  }
-
   void visitGetElementPtrInst(GetElementPtrInst &I) {
     handleShadowOr(I);
   }

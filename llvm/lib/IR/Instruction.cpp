@@ -206,7 +206,6 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case CatchRet: return "catchret";
   case CatchPad: return "catchpad";
   case CatchSwitch: return "catchswitch";
-  case TerminatePad: return "terminatepad";
 
   // Standard binary operators...
   case Add: return "add";
@@ -421,7 +420,6 @@ bool Instruction::mayReadFromMemory() const {
   case Instruction::AtomicRMW:
   case Instruction::CatchPad:
   case Instruction::CatchRet:
-  case Instruction::TerminatePad:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->doesNotAccessMemory();
@@ -444,7 +442,6 @@ bool Instruction::mayWriteToMemory() const {
   case Instruction::AtomicRMW:
   case Instruction::CatchPad:
   case Instruction::CatchRet:
-  case Instruction::TerminatePad:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->onlyReadsMemory();
@@ -477,8 +474,6 @@ bool Instruction::mayThrow() const {
     return CRI->unwindsToCaller();
   if (const auto *CatchSwitch = dyn_cast<CatchSwitchInst>(this))
     return CatchSwitch->unwindsToCaller();
-  if (const auto *TPI = dyn_cast<TerminatePadInst>(this))
-    return TPI->unwindsToCaller();
   return isa<ResumeInst>(this);
 }
 
