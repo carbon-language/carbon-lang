@@ -407,6 +407,7 @@ private:
   int cmpMem(StringRef L, StringRef R) const;
   int cmpAttrs(const AttributeSet L, const AttributeSet R) const;
   int cmpRangeMetadata(const MDNode* L, const MDNode* R) const;
+  int cmpOperandBundlesSchema(const Instruction *L, const Instruction *R) const;
 
   // The two functions undergoing comparison.
   const Function *FnL, *FnR;
@@ -561,6 +562,32 @@ int FunctionComparator::cmpRangeMetadata(const MDNode* L,
     if (int Res = cmpAPInts(LLow->getValue(), RLow->getValue()))
       return Res;
   }
+  return 0;
+}
+
+int FunctionComparator::cmpOperandBundlesSchema(const Instruction *L,
+                                                const Instruction *R) const {
+  ImmutableCallSite LCS(L);
+  ImmutableCallSite RCS(R);
+
+  assert(LCS && RCS && "Must be calls or invokes!");
+  assert(LCS.isCall() == RCS.isCall() && "Can't compare otherwise!");
+
+  if (int Res =
+          cmpNumbers(LCS.getNumOperandBundles(), RCS.getNumOperandBundles()))
+    return Res;
+
+  for (unsigned i = 0, e = LCS.getNumOperandBundles(); i != e; ++i) {
+    auto OBL = LCS.getOperandBundleAt(i);
+    auto OBR = RCS.getOperandBundleAt(i);
+
+    if (int Res = OBL.getTagName().compare(OBR.getTagName()))
+      return Res;
+
+    if (int Res = cmpNumbers(OBL.Inputs.size(), OBR.Inputs.size()))
+      return Res;
+  }
+
   return 0;
 }
 
@@ -941,6 +968,8 @@ int FunctionComparator::cmpOperations(const Instruction *L,
     if (int Res =
             cmpAttrs(CI->getAttributes(), cast<CallInst>(R)->getAttributes()))
       return Res;
+    if (int Res = cmpOperandBundlesSchema(CI, R))
+      return Res;
     return cmpRangeMetadata(
         CI->getMetadata(LLVMContext::MD_range),
         cast<CallInst>(R)->getMetadata(LLVMContext::MD_range));
@@ -951,6 +980,8 @@ int FunctionComparator::cmpOperations(const Instruction *L,
       return Res;
     if (int Res =
             cmpAttrs(CI->getAttributes(), cast<InvokeInst>(R)->getAttributes()))
+      return Res;
+    if (int Res = cmpOperandBundlesSchema(CI, R))
       return Res;
     return cmpRangeMetadata(
         CI->getMetadata(LLVMContext::MD_range),
