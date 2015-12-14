@@ -5006,13 +5006,20 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       break;
     }
     case bitc::FUNC_CODE_INST_CALL: {
-      // CALL: [paramattrs, cc, fnty, fnid, arg0, arg1...]
+      // CALL: [paramattrs, cc, fmf, fnty, fnid, arg0, arg1...]
       if (Record.size() < 3)
         return error("Invalid record");
 
       unsigned OpNum = 0;
       AttributeSet PAL = getAttributes(Record[OpNum++]);
       unsigned CCInfo = Record[OpNum++];
+
+      FastMathFlags FMF;
+      if ((CCInfo >> bitc::CALL_FMF) & 1) {
+        FMF = getDecodedFastMathFlags(Record[OpNum++]);
+        if (!FMF.any())
+          return error("Fast math flags indicator set for call with no FMF");
+      }
 
       FunctionType *FTy = nullptr;
       if (CCInfo >> bitc::CALL_EXPLICIT_TYPE & 1 &&
@@ -5075,6 +5082,12 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
         TCK = CallInst::TCK_NoTail;
       cast<CallInst>(I)->setTailCallKind(TCK);
       cast<CallInst>(I)->setAttributes(PAL);
+      if (FMF.any()) {
+        if (!isa<FPMathOperator>(I))
+          return error("Fast-math-flags specified for call without "
+                       "floating-point scalar or vector return type");
+        I->setFastMathFlags(FMF);
+      }
       break;
     }
     case bitc::FUNC_CODE_INST_VAARG: { // VAARG: [valistty, valist, instty]
