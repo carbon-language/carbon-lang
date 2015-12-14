@@ -55,7 +55,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u32 __msan_retval_origin_tls;
 
 SANITIZER_INTERFACE_ATTRIBUTE
-THREADLOCAL u64 __msan_va_arg_tls[kMsanParamTlsSize / sizeof(u64)];
+ALIGNED(16) THREADLOCAL u64 __msan_va_arg_tls[kMsanParamTlsSize / sizeof(u64)];
 
 SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u64 __msan_va_arg_overflow_size_tls;
