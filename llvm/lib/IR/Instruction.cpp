@@ -296,11 +296,12 @@ static bool haveSameSpecialState(const Instruction *I1, const Instruction *I2,
   if (const CallInst *CI = dyn_cast<CallInst>(I1))
     return CI->isTailCall() == cast<CallInst>(I2)->isTailCall() &&
            CI->getCallingConv() == cast<CallInst>(I2)->getCallingConv() &&
-           CI->getAttributes() == cast<CallInst>(I2)->getAttributes();
+           CI->getAttributes() == cast<CallInst>(I2)->getAttributes() &&
+           CI->hasIdenticalOperandBundleSchema(*cast<CallInst>(I2));
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(I1))
     return CI->getCallingConv() == cast<InvokeInst>(I2)->getCallingConv() &&
-           CI->getAttributes() ==
-             cast<InvokeInst>(I2)->getAttributes();
+           CI->getAttributes() == cast<InvokeInst>(I2)->getAttributes() &&
+           CI->hasIdenticalOperandBundleSchema(*cast<InvokeInst>(I2));
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(I1))
     return IVI->getIndices() == cast<InsertValueInst>(I2)->getIndices();
   if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(I1))
