@@ -1397,9 +1397,8 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         Value *InnerTrunc = Builder->CreateFPTrunc(II->getArgOperand(0),
                                                    CI.getType());
         Type *IntrinsicType[] = { CI.getType() };
-        Function *Overload =
-          Intrinsic::getDeclaration(CI.getParent()->getParent()->getParent(),
-                                    II->getIntrinsicID(), IntrinsicType);
+        Function *Overload = Intrinsic::getDeclaration(
+            CI.getModule(), II->getIntrinsicID(), IntrinsicType);
 
         Value *Args[] = { InnerTrunc };
         return CallInst::Create(Overload, Args, II->getName());
