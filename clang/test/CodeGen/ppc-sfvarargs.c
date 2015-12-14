@@ -12,6 +12,6 @@ void foo() {
   double a;
   test("test",a);
 }
-// CHECK: %{{[0-9]+}} = add i8 %{{[0-9]+}}, 1
+// CHECK: %{{[0-9]+}} = add i8 %{{[0-9]+|numUsedRegs}}, 1
 // CHECK: %{{[0-9]+}} = and i8 %{{[0-9]+}}, -2
 // CHECK: %{{[0-9]+}} = mul i8 %{{[0-9]+}}, 4
