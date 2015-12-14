@@ -38,23 +38,23 @@
 
 // check -mfloat-abi=x option
 // RUN: %clang -target powerpc-unknown-linux-gnu %s -mfloat-abi=x -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-ERRMSG %s
-// CHECK-ERRMSG: clang: error: invalid float ABI '-mfloat-abi=x'
+// CHECK-ERRMSG: error: invalid float ABI '-mfloat-abi=x'
 
 // check -msoft-float option for ppc64
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -msoft-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTFLOAT64 %s
-// CHECK-SOFTFLOAT64: clang: error: invalid float ABI 'soft float is not supported for ppc64'
+// CHECK-SOFTFLOAT64: error: invalid float ABI 'soft float is not supported for ppc64'
 
 // check -mfloat-abi=soft option for ppc64
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mfloat-abi=soft -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-FLOATABISOFT64 %s
-// CHECK-FLOATABISOFT64: clang: error: invalid float ABI 'soft float is not supported for ppc64'
+// CHECK-FLOATABISOFT64: error: invalid float ABI 'soft float is not supported for ppc64'
 
 // check -msoft-float option for ppc64
 // RUN: %clang -target powerpc64le-unknown-linux-gnu %s -msoft-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTFLOAT64le %s
-// CHECK-SOFTFLOAT64le: clang: error: invalid float ABI 'soft float is not supported for ppc64'
+// CHECK-SOFTFLOAT64le: error: invalid float ABI 'soft float is not supported for ppc64'
 
 // check -mfloat-abi=soft option for ppc64
 // RUN: %clang -target powerpc64le-unknown-linux-gnu %s -mfloat-abi=soft -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-FLOATABISOFT64le %s
-// CHECK-FLOATABISOFT64le: clang: error: invalid float ABI 'soft float is not supported for ppc64'
+// CHECK-FLOATABISOFT64le: error: invalid float ABI 'soft float is not supported for ppc64'
 
 // CHECK: invalid argument '-faltivec' only allowed with 'ppc/ppc64/ppc64le'
 
