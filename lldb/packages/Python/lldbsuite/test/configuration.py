@@ -141,6 +141,7 @@ test_result = None
 
 # Test rerun configuration vars
 rerun_all_issues = False
+rerun_max_file_threhold = 0
 
 # The names of all tests. Used to assert we don't have two tests with the same base name.
 all_tests = set()
