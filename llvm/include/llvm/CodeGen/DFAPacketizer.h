@@ -170,14 +170,14 @@ public:
   virtual void initPacketizerState() { return; }
 
   // ignorePseudoInstruction - Ignore bundling of pseudo instructions.
-  virtual bool ignorePseudoInstruction(MachineInstr *I,
-                                       MachineBasicBlock *MBB) {
+  virtual bool ignorePseudoInstruction(const MachineInstr *I,
+                                       const MachineBasicBlock *MBB) {
     return false;
   }
 
   // isSoloInstruction - return true if instruction MI can not be packetized
   // with any other instruction, which means that MI itself is a packet.
-  virtual bool isSoloInstruction(MachineInstr *MI) {
+  virtual bool isSoloInstruction(const MachineInstr *MI) {
     return true;
   }
 
