@@ -32,3 +32,33 @@ define i32 @g() {
 
   ret i32 %v2
 }
+
+define i32 @f.invoke() personality i8 3 {
+; CHECK-LABEL: @f.invoke(
+ entry:
+; CHECK: %v0 = invoke i32 (...) @foo(i32 10) [ "foo"(i32 20) ]
+  %v0 = invoke i32 (...) @foo(i32 10) [ "foo"(i32 20) ]
+    to label %normal unwind label %exception
+
+ normal:
+  ret i32 %v0
+
+ exception:
+  %cleanup = landingpad i8 cleanup
+  ret i32 0
+}
+
+define i32 @g.invoke() personality i8 3 {
+; CHECK-LABEL: @g.invoke(
+ entry:
+; CHECK: %v0 = invoke i32 (...) @foo() [ "foo"(i32 10, i32 20) ]
+  %v0 = invoke i32 (...) @foo() [ "foo"(i32 10, i32 20) ]
+    to label %normal unwind label %exception
+
+ normal:
+  ret i32 %v0
+
+ exception:
+  %cleanup = landingpad i8 cleanup
+  ret i32 0
+}

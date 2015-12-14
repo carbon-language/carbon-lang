@@ -974,17 +974,17 @@ int FunctionComparator::cmpOperations(const Instruction *L,
         CI->getMetadata(LLVMContext::MD_range),
         cast<CallInst>(R)->getMetadata(LLVMContext::MD_range));
   }
-  if (const InvokeInst *CI = dyn_cast<InvokeInst>(L)) {
-    if (int Res = cmpNumbers(CI->getCallingConv(),
+  if (const InvokeInst *II = dyn_cast<InvokeInst>(L)) {
+    if (int Res = cmpNumbers(II->getCallingConv(),
                              cast<InvokeInst>(R)->getCallingConv()))
       return Res;
     if (int Res =
-            cmpAttrs(CI->getAttributes(), cast<InvokeInst>(R)->getAttributes()))
+            cmpAttrs(II->getAttributes(), cast<InvokeInst>(R)->getAttributes()))
       return Res;
-    if (int Res = cmpOperandBundlesSchema(CI, R))
+    if (int Res = cmpOperandBundlesSchema(II, R))
       return Res;
     return cmpRangeMetadata(
-        CI->getMetadata(LLVMContext::MD_range),
+        II->getMetadata(LLVMContext::MD_range),
         cast<InvokeInst>(R)->getMetadata(LLVMContext::MD_range));
   }
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(L)) {
