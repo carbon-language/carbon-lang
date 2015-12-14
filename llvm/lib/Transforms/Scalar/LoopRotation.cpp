@@ -45,65 +45,6 @@ DefaultRotationThreshold("rotation-max-header-size", cl::init(16), cl::Hidden,
        cl::desc("The default maximum header size for automatic loop rotation"));
 
 STATISTIC(NumRotated, "Number of loops rotated");
-namespace {
-
-  class LoopRotate : public LoopPass {
-  public:
-    static char ID; // Pass ID, replacement for typeid
-    LoopRotate(int SpecifiedMaxHeaderSize = -1) : LoopPass(ID) {
-      initializeLoopRotatePass(*PassRegistry::getPassRegistry());
-      if (SpecifiedMaxHeaderSize == -1)
-        MaxHeaderSize = DefaultRotationThreshold;
-      else
-        MaxHeaderSize = unsigned(SpecifiedMaxHeaderSize);
-    }
-
-    // LCSSA form makes instruction renaming easier.
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addPreserved<AAResultsWrapperPass>();
-      AU.addRequired<AssumptionCacheTracker>();
-      AU.addPreserved<DominatorTreeWrapperPass>();
-      AU.addRequired<LoopInfoWrapperPass>();
-      AU.addPreserved<LoopInfoWrapperPass>();
-      AU.addRequiredID(LoopSimplifyID);
-      AU.addPreservedID(LoopSimplifyID);
-      AU.addRequiredID(LCSSAID);
-      AU.addPreservedID(LCSSAID);
-      AU.addPreserved<ScalarEvolutionWrapperPass>();
-      AU.addPreserved<SCEVAAWrapperPass>();
-      AU.addRequired<TargetTransformInfoWrapperPass>();
-      AU.addPreserved<BasicAAWrapperPass>();
-      AU.addPreserved<GlobalsAAWrapperPass>();
-    }
-
-    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
-    bool simplifyLoopLatch(Loop *L);
-    bool rotateLoop(Loop *L, bool SimplifiedLatch);
-
-  private:
-    unsigned MaxHeaderSize;
-    LoopInfo *LI;
-    const TargetTransformInfo *TTI;
-    AssumptionCache *AC;
-    DominatorTree *DT;
-  };
-}
-
-char LoopRotate::ID = 0;
-INITIALIZE_PASS_BEGIN(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
-INITIALIZE_PASS_DEPENDENCY(LCSSA)
-INITIALIZE_PASS_DEPENDENCY(SCEVAAWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(BasicAAWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
-INITIALIZE_PASS_END(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
-
-Pass *llvm::createLoopRotatePass(int MaxHeaderSize) {
-  return new LoopRotate(MaxHeaderSize);
-}
 
 /// RewriteUsesOfClonedInstructions - We just cloned the instructions from the
 /// old header into the preheader.  If there were uses of the values produced by
@@ -180,7 +121,10 @@ static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
 /// rotation. LoopRotate should be repeatable and converge to a canonical
 /// form. This property is satisfied because simplifying the loop latch can only
 /// happen once across multiple invocations of the LoopRotate pass.
-bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
+static bool rotateLoop(Loop *L, unsigned MaxHeaderSize, LoopInfo *LI,
+                       const TargetTransformInfo *TTI, AssumptionCache *AC,
+                       DominatorTree *DT, ScalarEvolution *SE,
+                       bool SimplifiedLatch) {
   // If the loop has only one block then there is not much to rotate.
   if (L->getBlocks().size() == 1)
     return false;
@@ -235,8 +179,8 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
 
   // Anything ScalarEvolution may know about this loop or the PHI nodes
   // in its header will soon be invalidated.
-  if (auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>())
-    SEWP->getSE().forgetLoop(L);
+  if (SE)
+    SE->forgetLoop(L);
 
   DEBUG(dbgs() << "LoopRotation: rotating "; L->dump());
 
@@ -538,7 +482,7 @@ static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
 /// canonical form so downstream passes can handle it.
 ///
 /// I don't believe this invalidates SCEV.
-bool LoopRotate::simplifyLoopLatch(Loop *L) {
+static bool simplifyLoopLatch(Loop *L, LoopInfo *LI, DominatorTree *DT) {
   BasicBlock *Latch = L->getLoopLatch();
   if (!Latch || Latch->hasAddressTaken())
     return false;
@@ -583,31 +527,23 @@ bool LoopRotate::simplifyLoopLatch(Loop *L) {
   return true;
 }
 
-/// Rotate Loop L as many times as possible. Return true if
-/// the loop is rotated at least once.
-bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
-  if (skipOptnoneFunction(L))
-    return false;
-
+/// Rotate \c L as many times as possible. Return true if the loop is rotated
+/// at least once.
+static bool iterativelyRotateLoop(Loop *L, unsigned MaxHeaderSize, LoopInfo *LI,
+                                  const TargetTransformInfo *TTI,
+                                  AssumptionCache *AC, DominatorTree *DT,
+                                  ScalarEvolution *SE) {
   // Save the loop metadata.
   MDNode *LoopMD = L->getLoopID();
-
-  Function &F = *L->getHeader()->getParent();
-
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  auto *DTWP = getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  DT = DTWP ? &DTWP->getDomTree() : nullptr;
 
   // Simplify the loop latch before attempting to rotate the header
   // upward. Rotation may not be needed if the loop tail can be folded into the
   // loop exit.
-  bool SimplifiedLatch = simplifyLoopLatch(L);
+  bool SimplifiedLatch = simplifyLoopLatch(L, LI, DT);
 
   // One loop can be rotated multiple times.
   bool MadeChange = false;
-  while (rotateLoop(L, SimplifiedLatch)) {
+  while (rotateLoop(L, MaxHeaderSize, LI, TTI, AC, DT, SE, SimplifiedLatch)) {
     MadeChange = true;
     SimplifiedLatch = false;
   }
@@ -618,4 +554,71 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
     L->setLoopID(LoopMD);
 
   return MadeChange;
+}
+
+namespace {
+
+class LoopRotate : public LoopPass {
+  unsigned MaxHeaderSize;
+
+public:
+  static char ID; // Pass ID, replacement for typeid
+  LoopRotate(int SpecifiedMaxHeaderSize = -1) : LoopPass(ID) {
+    initializeLoopRotatePass(*PassRegistry::getPassRegistry());
+    if (SpecifiedMaxHeaderSize == -1)
+      MaxHeaderSize = DefaultRotationThreshold;
+    else
+      MaxHeaderSize = unsigned(SpecifiedMaxHeaderSize);
+  }
+
+  // LCSSA form makes instruction renaming easier.
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addPreserved<AAResultsWrapperPass>();
+    AU.addRequired<AssumptionCacheTracker>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
+    AU.addRequired<LoopInfoWrapperPass>();
+    AU.addPreserved<LoopInfoWrapperPass>();
+    AU.addRequiredID(LoopSimplifyID);
+    AU.addPreservedID(LoopSimplifyID);
+    AU.addRequiredID(LCSSAID);
+    AU.addPreservedID(LCSSAID);
+    AU.addPreserved<ScalarEvolutionWrapperPass>();
+    AU.addPreserved<SCEVAAWrapperPass>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
+    AU.addPreserved<BasicAAWrapperPass>();
+    AU.addPreserved<GlobalsAAWrapperPass>();
+  }
+
+  bool runOnLoop(Loop *L, LPPassManager &LPM) override {
+    if (skipOptnoneFunction(L))
+      return false;
+    Function &F = *L->getHeader()->getParent();
+
+    auto *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+    const auto *TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+    auto *AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+    auto *DTWP = getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+    auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+    auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
+    auto *SE = SEWP ? &SEWP->getSE() : nullptr;
+
+    return iterativelyRotateLoop(L, MaxHeaderSize, LI, TTI, AC, DT, SE);
+  }
+};
+}
+
+char LoopRotate::ID = 0;
+INITIALIZE_PASS_BEGIN(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(LCSSA)
+INITIALIZE_PASS_DEPENDENCY(SCEVAAWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(BasicAAWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
+INITIALIZE_PASS_END(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
+
+Pass *llvm::createLoopRotatePass(int MaxHeaderSize) {
+  return new LoopRotate(MaxHeaderSize);
 }
