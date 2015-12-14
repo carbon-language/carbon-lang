@@ -1407,7 +1407,8 @@ static std::string getPPCTargetCPU(const ArgList &Args) {
   return "";
 }
 
-static void getPPCTargetFeatures(const ArgList &Args,
+static void getPPCTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+                                 const ArgList &Args,
                                  std::vector<const char *> &Features) {
   for (const Arg *A : Args.filtered(options::OPT_m_ppc_Features_Group)) {
     StringRef Name = A->getOption().getName();
@@ -1431,9 +1432,49 @@ static void getPPCTargetFeatures(const ArgList &Args,
     Features.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
   }
 
+  ppc::FloatABI FloatABI = ppc::getPPCFloatABI(D, Args);
+  if (FloatABI == ppc::FloatABI::Soft &&
+      !(Triple.getArch() == llvm::Triple::ppc64 ||
+        Triple.getArch() == llvm::Triple::ppc64le))
+    Features.push_back("+soft-float");
+  else if (FloatABI == ppc::FloatABI::Soft &&
+           (Triple.getArch() == llvm::Triple::ppc64 ||
+            Triple.getArch() == llvm::Triple::ppc64le))
+    D.Diag(diag::err_drv_invalid_mfloat_abi) 
+        << "soft float is not supported for ppc64";
+
   // Altivec is a bit weird, allow overriding of the Altivec feature here.
   AddTargetFeature(Args, Features, options::OPT_faltivec,
                    options::OPT_fno_altivec, "altivec");
+}
+
+ppc::FloatABI ppc::getPPCFloatABI(const Driver &D, const ArgList &Args) {
+  ppc::FloatABI ABI = ppc::FloatABI::Invalid;
+  if (Arg *A =
+          Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float,
+                          options::OPT_mfloat_abi_EQ)) {
+    if (A->getOption().matches(options::OPT_msoft_float))
+      ABI = ppc::FloatABI::Soft;
+    else if (A->getOption().matches(options::OPT_mhard_float))
+      ABI = ppc::FloatABI::Hard;
+    else {
+      ABI = llvm::StringSwitch<ppc::FloatABI>(A->getValue())
+                .Case("soft", ppc::FloatABI::Soft)
+                .Case("hard", ppc::FloatABI::Hard)
+                .Default(ppc::FloatABI::Invalid);
+      if (ABI == ppc::FloatABI::Invalid && !StringRef(A->getValue()).empty()) {
+        D.Diag(diag::err_drv_invalid_mfloat_abi) << A->getAsString(Args);
+        ABI = ppc::FloatABI::Hard;
+      }
+    }
+  }
+
+  // If unspecified, choose the default based on the platform.
+  if (ABI == ppc::FloatABI::Invalid) {
+    ABI = ppc::FloatABI::Hard;
+  }
+
+  return ABI;
 }
 
 void Clang::AddPPCTargetArgs(const ArgList &Args,
@@ -1471,6 +1512,21 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
     // that don't use the altivec abi.
     if (StringRef(A->getValue()) != "altivec")
       ABIName = A->getValue();
+
+  ppc::FloatABI FloatABI =
+      ppc::getPPCFloatABI(getToolChain().getDriver(), Args);
+
+  if (FloatABI == ppc::FloatABI::Soft) {
+    // Floating point operations and argument passing are soft.
+    CmdArgs.push_back("-msoft-float");
+    CmdArgs.push_back("-mfloat-abi");
+    CmdArgs.push_back("soft");
+  } else {
+    // Floating point operations and argument passing are hard.
+    assert(FloatABI == ppc::FloatABI::Hard && "Invalid float abi!");
+    CmdArgs.push_back("-mfloat-abi");
+    CmdArgs.push_back("hard");
+  }
 
   if (ABIName) {
     CmdArgs.push_back("-target-abi");
@@ -2248,7 +2304,7 @@ static void getTargetFeatures(const ToolChain &TC, const llvm::Triple &Triple,
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
   case llvm::Triple::ppc64le:
-    getPPCTargetFeatures(Args, Features);
+    getPPCTargetFeatures(D, Triple, Args, Features);
     break;
   case llvm::Triple::systemz:
     getSystemZTargetFeatures(Args, Features);
