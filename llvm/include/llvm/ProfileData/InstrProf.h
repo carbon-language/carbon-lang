@@ -70,15 +70,13 @@ inline StringRef getInstrProfCoverageSectionName(bool AddSegment) {
 }
 
 /// Return the name prefix of variables containing instrumented function names.
-inline StringRef getInstrProfNameVarPrefix() { return "__llvm_profile_name_"; }
+inline StringRef getInstrProfNameVarPrefix() { return "__prf_nm_"; }
 
 /// Return the name prefix of variables containing per-function control data.
-inline StringRef getInstrProfDataVarPrefix() { return "__llvm_profile_data_"; }
+inline StringRef getInstrProfDataVarPrefix() { return "__prf_dt_"; }
 
 /// Return the name prefix of profile counter variables.
-inline StringRef getInstrProfCountersVarPrefix() {
-  return "__llvm_profile_counters_";
-}
+inline StringRef getInstrProfCountersVarPrefix() { return "__prf_cn_"; }
 
 /// Return the name prefix of the COMDAT group for instrumentation variables
 /// associated with a COMDAT function.

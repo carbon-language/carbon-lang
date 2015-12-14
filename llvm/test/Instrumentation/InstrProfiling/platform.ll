@@ -5,20 +5,20 @@
 ; RUN: opt < %s -mtriple=x86_64-unknown-freebsd -instrprof -S | FileCheck %s -check-prefix=FREEBSD
 ; RUN: opt < %s -mtriple=x86_64-pc-solaris -instrprof -S | FileCheck %s -check-prefix=SOLARIS
 
-@__llvm_profile_name_foo = hidden constant [3 x i8] c"foo"
-; MACHO: @__llvm_profile_name_foo = hidden constant [3 x i8] c"foo", section "__DATA,__llvm_prf_names", align 1
-; ELF: @__llvm_profile_name_foo = hidden constant [3 x i8] c"foo", section "__llvm_prf_names", align 1
+@__prf_nm_foo = hidden constant [3 x i8] c"foo"
+; MACHO: @__prf_nm_foo = hidden constant [3 x i8] c"foo", section "__DATA,__llvm_prf_names", align 1
+; ELF: @__prf_nm_foo = hidden constant [3 x i8] c"foo", section "__llvm_prf_names", align 1
 
-; MACHO: @__llvm_profile_counters_foo = hidden global [1 x i64] zeroinitializer, section "__DATA,__llvm_prf_cnts", align 8
-; ELF: @__llvm_profile_counters_foo = hidden global [1 x i64] zeroinitializer, section "__llvm_prf_cnts", align 8
+; MACHO: @__prf_cn_foo = hidden global [1 x i64] zeroinitializer, section "__DATA,__llvm_prf_cnts", align 8
+; ELF: @__prf_cn_foo = hidden global [1 x i64] zeroinitializer, section "__llvm_prf_cnts", align 8
 
-; MACHO: @__llvm_profile_data_foo = hidden {{.*}}, section "__DATA,__llvm_prf_data", align 8
-; LINUX: @__llvm_profile_data_foo = hidden {{.*}}, section "__llvm_prf_data", align 8
-; FREEBSD: @__llvm_profile_data_foo = hidden {{.*}}, section "__llvm_prf_data", align 8
-; SOLARIS: @__llvm_profile_data_foo = hidden {{.*}}, section "__llvm_prf_data", align 8
+; MACHO: @__prf_dt_foo = hidden {{.*}}, section "__DATA,__llvm_prf_data", align 8
+; LINUX: @__prf_dt_foo = hidden {{.*}}, section "__llvm_prf_data", align 8
+; FREEBSD: @__prf_dt_foo = hidden {{.*}}, section "__llvm_prf_data", align 8
+; SOLARIS: @__prf_dt_foo = hidden {{.*}}, section "__llvm_prf_data", align 8
 
 define void @foo() {
-  call void @llvm.instrprof.increment(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @__llvm_profile_name_foo, i32 0, i32 0), i64 0, i32 1, i32 0)
+  call void @llvm.instrprof.increment(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @__prf_nm_foo, i32 0, i32 0), i64 0, i32 1, i32 0)
   ret void
 }
 
