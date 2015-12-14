@@ -549,48 +549,6 @@ def no_debug_info_test(func):
     wrapper.__no_debug_info_test__ = True
     return wrapper
 
-def dsym_test(func):
-    """Decorate the item as a dsym test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@dsym_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if configuration.dont_do_dsym_test:
-            self.skipTest("dsym tests")
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from the regular tests.
-    wrapper.__dsym_test__ = True
-    return wrapper
-
-def dwarf_test(func):
-    """Decorate the item as a dwarf test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@dwarf_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if configuration.dont_do_dwarf_test:
-            self.skipTest("dwarf tests")
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from the regular tests.
-    wrapper.__dwarf_test__ = True
-    return wrapper
-
-def dwo_test(func):
-    """Decorate the item as a dwo test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@dwo_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if configuration.dont_do_dwo_test:
-            self.skipTest("dwo tests")
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from the regular tests.
-    wrapper.__dwo_test__ = True
-    return wrapper
-
 def debugserver_test(func):
     """Decorate the item as a debugserver test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -2270,32 +2228,26 @@ class LLDBTestCaseFactory(type):
         newattrs = {}
         for attrname, attrvalue in attrs.items():
             if attrname.startswith("test") and not getattr(attrvalue, "__no_debug_info_test__", False):
-                @dsym_test
-                @wraps(attrvalue)
-                def dsym_test_method(self, attrvalue=attrvalue):
-                    self.debug_info = "dsym"
-                    return attrvalue(self)
-                dsym_method_name = attrname + "_dsym"
-                dsym_test_method.__name__ = dsym_method_name
-                newattrs[dsym_method_name] = dsym_test_method
+                target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
 
-                @dwarf_test
-                @wraps(attrvalue)
-                def dwarf_test_method(self, attrvalue=attrvalue):
-                    self.debug_info = "dwarf"
-                    return attrvalue(self)
-                dwarf_method_name = attrname + "_dwarf"
-                dwarf_test_method.__name__ = dwarf_method_name
-                newattrs[dwarf_method_name] = dwarf_test_method
-                
-                @dwo_test
-                @wraps(attrvalue)
-                def dwo_test_method(self, attrvalue=attrvalue):
-                    self.debug_info = "dwo"
-                    return attrvalue(self)
-                dwo_method_name = attrname + "_dwo"
-                dwo_test_method.__name__ = dwo_method_name
-                newattrs[dwo_method_name] = dwo_test_method
+                # If any debug info categories were explicitly tagged, assume that list to be
+                # authoritative.  If none were specified, try with all debug info formats.
+                all_dbginfo_categories = set(test_categories.debug_info_categories)
+                categories = set(getattr(attrvalue, "categories", [])) & all_dbginfo_categories
+                if not categories:
+                    categories = all_dbginfo_categories
+
+                supported_categories = [x for x in categories 
+                                        if test_categories.is_supported_on_platform(x, target_platform)]
+                for category in supported_categories:
+                    @add_test_categories([category])
+                    @wraps(attrvalue)
+                    def test_method(self, attrvalue=attrvalue):
+                        self.debug_info = category
+                        return attrvalue(self)
+                    method_name = attrname + "_" + category
+                    test_method.__name__ = method_name
+                    newattrs[method_name] = test_method
             else:
                 newattrs[attrname] = attrvalue
         return super(LLDBTestCaseFactory, cls).__new__(cls, name, bases, newattrs)

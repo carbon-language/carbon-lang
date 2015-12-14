@@ -59,7 +59,6 @@ def create_parser():
 
     # Test filtering options
     group = parser.add_argument_group('Test filtering options')
-    group.add_argument('-N', choices=['dwarf', 'dwo', 'dsym'], help="Don't do test cases marked with the @dsym_test/@dwarf_test/@dwo_test decorator by passing dsym/dwarf/dwo as the option arg")
     group.add_argument('-f', metavar='filterspec', action='append', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
     X('-l', "Don't skip long running tests")
     group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
