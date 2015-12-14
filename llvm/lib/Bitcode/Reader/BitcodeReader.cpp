@@ -132,7 +132,6 @@ public:
 
 class BitcodeReader : public GVMaterializer {
   LLVMContext &Context;
-  DiagnosticHandlerFunction DiagnosticHandler;
   Module *TheModule = nullptr;
   std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
@@ -239,10 +238,8 @@ public:
   std::error_code error(BitcodeError E);
   std::error_code error(const Twine &Message);
 
-  BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
-                DiagnosticHandlerFunction DiagnosticHandler);
-  BitcodeReader(LLVMContext &Context,
-                DiagnosticHandlerFunction DiagnosticHandler);
+  BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context);
+  BitcodeReader(LLVMContext &Context);
   ~BitcodeReader() override { freeState(); }
 
   std::error_code materializeForwardReferencedFunctions();
@@ -518,54 +515,51 @@ static std::error_code error(DiagnosticHandlerFunction DiagnosticHandler,
   return error(DiagnosticHandler, EC, EC.message());
 }
 
-static std::error_code error(DiagnosticHandlerFunction DiagnosticHandler,
+static std::error_code error(LLVMContext &Context, std::error_code EC,
                              const Twine &Message) {
-  return error(DiagnosticHandler,
-               make_error_code(BitcodeError::CorruptedBitcode), Message);
+  return error([&](const DiagnosticInfo &DI) { Context.diagnose(DI); }, EC,
+               Message);
+}
+
+static std::error_code error(LLVMContext &Context, std::error_code EC) {
+  return error(Context, EC, EC.message());
+}
+
+static std::error_code error(LLVMContext &Context, const Twine &Message) {
+  return error(Context, make_error_code(BitcodeError::CorruptedBitcode),
+               Message);
 }
 
 std::error_code BitcodeReader::error(BitcodeError E, const Twine &Message) {
   if (!ProducerIdentification.empty()) {
-    return ::error(DiagnosticHandler, make_error_code(E),
+    return ::error(Context, make_error_code(E),
                    Message + " (Producer: '" + ProducerIdentification +
                        "' Reader: 'LLVM " + LLVM_VERSION_STRING "')");
   }
-  return ::error(DiagnosticHandler, make_error_code(E), Message);
+  return ::error(Context, make_error_code(E), Message);
 }
 
 std::error_code BitcodeReader::error(const Twine &Message) {
   if (!ProducerIdentification.empty()) {
-    return ::error(DiagnosticHandler,
-                   make_error_code(BitcodeError::CorruptedBitcode),
+    return ::error(Context, make_error_code(BitcodeError::CorruptedBitcode),
                    Message + " (Producer: '" + ProducerIdentification +
                        "' Reader: 'LLVM " + LLVM_VERSION_STRING "')");
   }
-  return ::error(DiagnosticHandler,
-                 make_error_code(BitcodeError::CorruptedBitcode), Message);
+  return ::error(Context, make_error_code(BitcodeError::CorruptedBitcode),
+                 Message);
 }
 
 std::error_code BitcodeReader::error(BitcodeError E) {
-  return ::error(DiagnosticHandler, make_error_code(E));
+  return ::error(Context, make_error_code(E));
 }
 
-static DiagnosticHandlerFunction getDiagHandler(DiagnosticHandlerFunction F,
-                                                LLVMContext &C) {
-  if (F)
-    return F;
-  return [&C](const DiagnosticInfo &DI) { C.diagnose(DI); };
-}
+BitcodeReader::BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context)
+    : Context(Context), Buffer(Buffer), ValueList(Context),
+      MDValueList(Context) {}
 
-BitcodeReader::BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
-                             DiagnosticHandlerFunction DiagnosticHandler)
-    : Context(Context),
-      DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
-      Buffer(Buffer), ValueList(Context), MDValueList(Context) {}
-
-BitcodeReader::BitcodeReader(LLVMContext &Context,
-                             DiagnosticHandlerFunction DiagnosticHandler)
-    : Context(Context),
-      DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
-      Buffer(nullptr), ValueList(Context), MDValueList(Context) {}
+BitcodeReader::BitcodeReader(LLVMContext &Context)
+    : Context(Context), Buffer(nullptr), ValueList(Context),
+      MDValueList(Context) {}
 
 std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
   if (WillMaterializeAllForwardRefs)
@@ -3898,17 +3892,17 @@ std::error_code BitcodeReader::parseMetadataAttachment(Function &F) {
   }
 }
 
-static std::error_code typeCheckLoadStoreInst(DiagnosticHandlerFunction DH,
-                                              Type *ValType, Type *PtrType) {
+static std::error_code typeCheckLoadStoreInst(Type *ValType, Type *PtrType) {
+  LLVMContext &Context = PtrType->getContext();
   if (!isa<PointerType>(PtrType))
-    return error(DH, "Load/Store operand is not a pointer type");
+    return error(Context, "Load/Store operand is not a pointer type");
   Type *ElemType = cast<PointerType>(PtrType)->getElementType();
 
   if (ValType && ValType != ElemType)
-    return error(DH, "Explicit load/store type does not match pointee type of "
-                     "pointer operand");
+    return error(Context, "Explicit load/store type does not match pointee "
+                          "type of pointer operand");
   if (!PointerType::isLoadableOrStorableType(ElemType))
-    return error(DH, "Cannot load/store from pointer");
+    return error(Context, "Cannot load/store from pointer");
   return std::error_code();
 }
 
@@ -4822,8 +4816,7 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       Type *Ty = nullptr;
       if (OpNum + 3 == Record.size())
         Ty = getTypeByID(Record[OpNum++]);
-      if (std::error_code EC =
-              typeCheckLoadStoreInst(DiagnosticHandler, Ty, Op->getType()))
+      if (std::error_code EC = typeCheckLoadStoreInst(Ty, Op->getType()))
         return EC;
       if (!Ty)
         Ty = cast<PointerType>(Op->getType())->getElementType();
@@ -4847,8 +4840,7 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       Type *Ty = nullptr;
       if (OpNum + 5 == Record.size())
         Ty = getTypeByID(Record[OpNum++]);
-      if (std::error_code EC =
-              typeCheckLoadStoreInst(DiagnosticHandler, Ty, Op->getType()))
+      if (std::error_code EC = typeCheckLoadStoreInst(Ty, Op->getType()))
         return EC;
       if (!Ty)
         Ty = cast<PointerType>(Op->getType())->getElementType();
@@ -4882,8 +4874,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
           OpNum + 2 != Record.size())
         return error("Invalid record");
 
-      if (std::error_code EC = typeCheckLoadStoreInst(
-              DiagnosticHandler, Val->getType(), Ptr->getType()))
+      if (std::error_code EC =
+              typeCheckLoadStoreInst(Val->getType(), Ptr->getType()))
         return EC;
       unsigned Align;
       if (std::error_code EC = parseAlignmentValue(Record[OpNum], Align))
@@ -4906,8 +4898,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
           OpNum + 4 != Record.size())
         return error("Invalid record");
 
-      if (std::error_code EC = typeCheckLoadStoreInst(
-              DiagnosticHandler, Val->getType(), Ptr->getType()))
+      if (std::error_code EC =
+              typeCheckLoadStoreInst(Val->getType(), Ptr->getType()))
         return EC;
       AtomicOrdering Ordering = getDecodedOrdering(Record[OpNum + 2]);
       if (Ordering == NotAtomic || Ordering == Acquire ||
@@ -4944,8 +4936,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
         return error("Invalid record");
       SynchronizationScope SynchScope = getDecodedSynchScope(Record[OpNum + 2]);
 
-      if (std::error_code EC = typeCheckLoadStoreInst(
-              DiagnosticHandler, Cmp->getType(), Ptr->getType()))
+      if (std::error_code EC =
+              typeCheckLoadStoreInst(Cmp->getType(), Ptr->getType()))
         return EC;
       AtomicOrdering FailureOrdering;
       if (Record.size() < 7)
@@ -5863,10 +5855,8 @@ getBitcodeModuleImpl(std::unique_ptr<DataStreamer> Streamer, StringRef Name,
 static ErrorOr<std::unique_ptr<Module>>
 getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
                          LLVMContext &Context, bool MaterializeAll,
-                         DiagnosticHandlerFunction DiagnosticHandler,
                          bool ShouldLazyLoadMetadata = false) {
-  BitcodeReader *R =
-      new BitcodeReader(Buffer.get(), Context, DiagnosticHandler);
+  BitcodeReader *R = new BitcodeReader(Buffer.get(), Context);
 
   ErrorOr<std::unique_ptr<Module>> Ret =
       getBitcodeModuleImpl(nullptr, Buffer->getBufferIdentifier(), R, Context,
@@ -5878,50 +5868,46 @@ getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
   return Ret;
 }
 
-ErrorOr<std::unique_ptr<Module>> llvm::getLazyBitcodeModule(
-    std::unique_ptr<MemoryBuffer> &&Buffer, LLVMContext &Context,
-    DiagnosticHandlerFunction DiagnosticHandler, bool ShouldLazyLoadMetadata) {
+ErrorOr<std::unique_ptr<Module>>
+llvm::getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
+                           LLVMContext &Context, bool ShouldLazyLoadMetadata) {
   return getLazyBitcodeModuleImpl(std::move(Buffer), Context, false,
-                                  DiagnosticHandler, ShouldLazyLoadMetadata);
+                                  ShouldLazyLoadMetadata);
 }
 
-ErrorOr<std::unique_ptr<Module>> llvm::getStreamedBitcodeModule(
-    StringRef Name, std::unique_ptr<DataStreamer> Streamer,
-    LLVMContext &Context, DiagnosticHandlerFunction DiagnosticHandler) {
+ErrorOr<std::unique_ptr<Module>>
+llvm::getStreamedBitcodeModule(StringRef Name,
+                               std::unique_ptr<DataStreamer> Streamer,
+                               LLVMContext &Context) {
   std::unique_ptr<Module> M = make_unique<Module>(Name, Context);
-  BitcodeReader *R = new BitcodeReader(Context, DiagnosticHandler);
+  BitcodeReader *R = new BitcodeReader(Context);
 
   return getBitcodeModuleImpl(std::move(Streamer), Name, R, Context, false,
                               false);
 }
 
-ErrorOr<std::unique_ptr<Module>>
-llvm::parseBitcodeFile(MemoryBufferRef Buffer, LLVMContext &Context,
-                       DiagnosticHandlerFunction DiagnosticHandler) {
+ErrorOr<std::unique_ptr<Module>> llvm::parseBitcodeFile(MemoryBufferRef Buffer,
+                                                        LLVMContext &Context) {
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  return getLazyBitcodeModuleImpl(std::move(Buf), Context, true,
-                                  DiagnosticHandler);
+  return getLazyBitcodeModuleImpl(std::move(Buf), Context, true);
   // TODO: Restore the use-lists to the in-memory state when the bitcode was
   // written.  We must defer until the Module has been fully materialized.
 }
 
-std::string
-llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer, LLVMContext &Context,
-                             DiagnosticHandlerFunction DiagnosticHandler) {
+std::string llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer,
+                                         LLVMContext &Context) {
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  auto R = llvm::make_unique<BitcodeReader>(Buf.release(), Context,
-                                            DiagnosticHandler);
+  auto R = llvm::make_unique<BitcodeReader>(Buf.release(), Context);
   ErrorOr<std::string> Triple = R->parseTriple();
   if (Triple.getError())
     return "";
   return Triple.get();
 }
 
-std::string
-llvm::getBitcodeProducerString(MemoryBufferRef Buffer, LLVMContext &Context,
-                               DiagnosticHandlerFunction DiagnosticHandler) {
+std::string llvm::getBitcodeProducerString(MemoryBufferRef Buffer,
+                                           LLVMContext &Context) {
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  BitcodeReader R(Buf.release(), Context, DiagnosticHandler);
+  BitcodeReader R(Buf.release(), Context);
   ErrorOr<std::string> ProducerString = R.parseIdentificationBlock();
   if (ProducerString.getError())
     return "";
