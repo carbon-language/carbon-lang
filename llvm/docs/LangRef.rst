@@ -204,14 +204,15 @@ linkage:
     (``STB_LOCAL`` in the case of ELF) in the object file. This
     corresponds to the notion of the '``static``' keyword in C.
 ``available_externally``
-    Globals with "``available_externally``" linkage are never emitted
-    into the object file corresponding to the LLVM module. They exist to
-    allow inlining and other optimizations to take place given knowledge
-    of the definition of the global, which is known to be somewhere
-    outside the module. Globals with ``available_externally`` linkage
-    are allowed to be discarded at will, and are otherwise the same as
-    ``linkonce_odr``. This linkage type is only allowed on definitions,
-    not declarations.
+    Globals with "``available_externally``" linkage are never emitted into
+    the object file corresponding to the LLVM module. From the linker's
+    perspective, an ``available_externally`` global is equivalent to
+    an external declaration. They exist to allow inlining and other
+    optimizations to take place given knowledge of the definition of the
+    global, which is known to be somewhere outside the module. Globals
+    with ``available_externally`` linkage are allowed to be discarded at
+    will, and allow inlining and other optimizations. This linkage type is
+    only allowed on definitions, not declarations.
 ``linkonce``
     Globals with "``linkonce``" linkage are merged with other globals of
     the same name when linkage occurs. This can be used to implement
