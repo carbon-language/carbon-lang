@@ -7808,7 +7808,8 @@ def err_omp_prohibited_region : Error<
   "region cannot be%select{| closely}0 nested inside '%1' region"
   "%select{|; perhaps you forget to enclose 'omp %3' directive into a parallel region?|"
   "; perhaps you forget to enclose 'omp %3' directive into a for or a parallel for region with 'ordered' clause?|"
-  "; perhaps you forget to enclose 'omp %3' directive into a target region?}2">;
+  "; perhaps you forget to enclose 'omp %3' directive into a target region?|"
+  "; perhaps you forget to enclose 'omp %3' directive into a teams region?}2">;
 def err_omp_prohibited_region_simd : Error<
   "OpenMP constructs may not be nested inside a simd region">;
 def err_omp_prohibited_region_atomic : Error<
@@ -7931,6 +7932,12 @@ def err_omp_grainsize_num_tasks_mutually_exclusive : Error<
   "'%0' and '%1' clause are mutually exclusive and may not appear on the same directive">;
 def note_omp_previous_grainsize_num_tasks : Note<
   "'%0' clause is specified here">;
+def err_omp_firstprivate_distribute_private_teams : Error<
+  "private variable in '#pragma omp teams' cannot be firstprivate in '#pragma omp distribute'">;
+def err_omp_firstprivate_and_lastprivate_in_distribute : Error<
+  "lastprivate variable cannot be firstprivate in '#pragma omp distribute'">;
+def err_omp_firstprivate_distribute_in_teams_reduction : Error<
+  "reduction variable in '#pragma omp teams' cannot be firstprivate in '#pragma omp distribute'">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

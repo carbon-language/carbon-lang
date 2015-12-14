@@ -1063,6 +1063,11 @@ void StmtPrinter::VisitOMPTaskLoopSimdDirective(
   PrintOMPExecutableDirective(Node);
 }
 
+void StmtPrinter::VisitOMPDistributeDirective(OMPDistributeDirective *Node) {
+  Indent() << "#pragma omp distribute ";
+  PrintOMPExecutableDirective(Node);
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//
