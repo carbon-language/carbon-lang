@@ -204,6 +204,14 @@ static unsigned getRelaxedOpcodeArith(unsigned Op) {
   case X86::ADD64ri8: return X86::ADD64ri32;
   case X86::ADD64mi8: return X86::ADD64mi32;
 
+   // ADC
+  case X86::ADC16ri8: return X86::ADC16ri;
+  case X86::ADC16mi8: return X86::ADC16mi;
+  case X86::ADC32ri8: return X86::ADC32ri;
+  case X86::ADC32mi8: return X86::ADC32mi;
+  case X86::ADC64ri8: return X86::ADC64ri32;
+  case X86::ADC64mi8: return X86::ADC64mi32;
+
     // SUB
   case X86::SUB16ri8: return X86::SUB16ri;
   case X86::SUB16mi8: return X86::SUB16mi;
