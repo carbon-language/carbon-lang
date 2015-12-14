@@ -92,7 +92,7 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, Value *Old,
 Value *BlockGenerator::getNewValue(ScopStmt &Stmt, Value *Old, ValueMapT &BBMap,
                                    LoopToScevMapT &LTS, Loop *L) const {
   // Constants that do not reference any named value can always remain
-  // unchanged. Handle them early to avoid expensive map loopups. We do not take
+  // unchanged. Handle them early to avoid expensive map lookups. We do not take
   // the fast-path for external constants which are referenced through globals
   // as these may need to be rewritten when distributing code accross different
   // LLVM modules.
