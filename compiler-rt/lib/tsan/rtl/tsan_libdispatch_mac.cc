@@ -34,6 +34,7 @@ typedef struct {
   void *orig_context;
   dispatch_function_t orig_work;
   uptr object_to_acquire;
+  dispatch_object_t object_to_release;
 } tsan_block_context_t;
 
 // The offsets of different fields of the dispatch_queue_t structure, exported
@@ -75,6 +76,7 @@ static tsan_block_context_t *AllocContext(ThreadState *thr, uptr pc,
   new_context->orig_context = orig_context;
   new_context->orig_work = orig_work;
   new_context->object_to_acquire = (uptr)new_context;
+  new_context->object_to_release = nullptr;
   return new_context;
 }
 
@@ -82,6 +84,13 @@ static void dispatch_callback_wrap_acquire(void *param) {
   SCOPED_INTERCEPTOR_RAW(dispatch_async_f_callback_wrap);
   tsan_block_context_t *context = (tsan_block_context_t *)param;
   Acquire(thr, pc, context->object_to_acquire);
+
+  // Extra retain/release is required for dispatch groups. We use the group
+  // itself to synchronize, but in a notification (dispatch_group_notify
+  // callback), it may be disposed already. To solve this, we retain the group
+  // and release it here.
+  if (context->object_to_release) dispatch_release(context->object_to_release);
+
   // In serial queues, work items can be executed on different threads, we need
   // to explicitly synchronize on the queue itself.
   if (IsQueueSerial(context->queue)) Acquire(thr, pc, (uptr)context->queue);
@@ -231,6 +240,11 @@ TSAN_INTERCEPTOR(void, dispatch_group_notify, dispatch_group_t group,
   tsan_block_context_t *new_context =
       AllocContext(thr, pc, q, heap_block, &invoke_and_release_block);
   new_context->object_to_acquire = (uptr)group;
+
+  // Will be released in dispatch_callback_wrap_acquire.
+  new_context->object_to_release = group;
+  dispatch_retain(group);
+
   Release(thr, pc, (uptr)group);
   REAL(dispatch_group_notify_f)(group, q, new_context,
                                 dispatch_callback_wrap_acquire);
@@ -241,6 +255,11 @@ TSAN_INTERCEPTOR(void, dispatch_group_notify_f, dispatch_group_t group,
   SCOPED_TSAN_INTERCEPTOR(dispatch_group_notify_f, group, q, context, work);
   tsan_block_context_t *new_context = AllocContext(thr, pc, q, context, work);
   new_context->object_to_acquire = (uptr)group;
+
+  // Will be released in dispatch_callback_wrap_acquire.
+  new_context->object_to_release = group;
+  dispatch_retain(group);
+
   Release(thr, pc, (uptr)group);
   REAL(dispatch_group_notify_f)(group, q, new_context,
                                 dispatch_callback_wrap_acquire);
