@@ -509,12 +509,18 @@ def check_expected_version(comparison, expected, actual):
 # Decorators for categorizing test cases.
 #
 from functools import wraps
+
 def add_test_categories(cat):
-    """Decorate an item with test categories"""
+    """Add test categories to a TestCase method"""
     cat = test_categories.validate(cat, True)
     def impl(func):
-        func.getCategories = lambda test: cat
+        if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+            raise Exception("@add_test_categories can only be used to decorate a test method")
+        if hasattr(func, "categories"):
+            cat.extend(func.categories)
+        func.categories = cat
         return func
+
     return impl
 
 def benchmarks_test(func):
