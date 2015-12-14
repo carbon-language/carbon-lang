@@ -613,14 +613,16 @@ def expectedFailure(expected_fn, bugnumber=None):
 # You can also pass not_in(list) to reverse the sense of the test for the arguments that
 # are simple lists, namely oslist, compiler, and debug_info.
 
-def not_in (iterable):
+def not_in(iterable):
     return lambda x : x not in iterable
 
-def check_list_or_lambda (list_or_lambda, value):
+def check_list_or_lambda(list_or_lambda, value):
     if six.callable(list_or_lambda):
         return list_or_lambda(value)
-    else:
+    elif isinstance(list_or_lambda, list):
         return list_or_lambda is None or value is None or value in list_or_lambda
+    else:
+        return list_or_lambda == value
 
 # provide a function to xfail on defined oslist, compiler version, and archs
 # if none is specified for any argument, that argument won't be checked and thus means for all
@@ -1090,10 +1092,10 @@ def skipIfLinuxClang(func):
 # TODO: refactor current code, to make skipIfxxx functions to call this function
 def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None, swig_version=None, py_version=None, remote=None):
     def fn(self):
-        oslist_passes = oslist is None or self.getPlatform() in oslist
-        compiler_passes = compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))
+        oslist_passes = check_list_or_lambda(oslist, self.getPlatform())
+        compiler_passes = check_list_or_lambda(self.getCompiler(), compiler) and self.expectedCompilerVersion(compiler_version)
         arch_passes = self.expectedArch(archs)
-        debug_info_passes = debug_info is None or self.debug_info in debug_info
+        debug_info_passes = check_list_or_lambda(debug_info, self.debug_info)
         swig_version_passes = (swig_version is None) or (not hasattr(lldb, 'swig_version')) or (check_expected_version(swig_version[0], swig_version[1], lldb.swig_version))
         py_version_passes = (py_version is None) or check_expected_version(py_version[0], py_version[1], sys.version_info)
         remote_passes = (remote is None) or (remote == (lldb.remote_platform is not None))
