@@ -25,6 +25,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/SourceMgr.h"
 
+#include <functional>
 #include <map>
 
 using namespace llvm;
