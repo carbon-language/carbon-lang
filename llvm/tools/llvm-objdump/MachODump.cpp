@@ -6771,6 +6771,22 @@ static unsigned getSizeForEncoding(bool is64Bit,
   }
 }
 
+static uint64_t readPointer(const char *&Pos, bool is64Bit, unsigned Encoding) {
+  switch (getSizeForEncoding(is64Bit, Encoding)) {
+    case 2:
+      return readNext<uint16_t>(Pos);
+      break;
+    case 4:
+      return readNext<uint32_t>(Pos);
+      break;
+    case 8:
+      return readNext<uint64_t>(Pos);
+      break;
+    default:
+      llvm_unreachable("Illegal data size");
+  }
+}
+
 static void printMachOEHFrameSection(const MachOObjectFile *Obj,
                                      std::map<uint64_t, SymbolRef> &Symbols,
                                      const SectionRef &EHFrame) {
@@ -6867,19 +6883,7 @@ static void printMachOEHFrameSection(const MachOObjectFile *Obj,
             case 'P': {
               assert(!Personality && "Duplicate personality");
               PersonalityEncoding = readNext<uint8_t>(Pos);
-              switch (getSizeForEncoding(is64Bit, *PersonalityEncoding)) {
-                case 2:
-                  Personality = readNext<uint16_t>(Pos);
-                  break;
-                case 4:
-                  Personality = readNext<uint32_t>(Pos);
-                  break;
-                case 8:
-                  Personality = readNext<uint64_t>(Pos);
-                  break;
-                default:
-                  llvm_unreachable("Illegal data size");
-              }
+              Personality = readPointer(Pos, is64Bit, *PersonalityEncoding);
               break;
             }
             case 'R':
@@ -6953,24 +6957,8 @@ static void printMachOEHFrameSection(const MachOObjectFile *Obj,
     uint64_t PCPointerSize = getSizeForEncoding(is64Bit,
                                                 *CIE.FDEPointerEncoding);
 
-    uint64_t PCBegin;
-    uint64_t PCRange;
-    switch (PCPointerSize) {
-      case 2:
-        PCBegin = readNext<uint16_t>(Pos);
-        PCRange = readNext<uint16_t>(Pos);
-        break;
-      case 4:
-        PCBegin = readNext<uint32_t>(Pos);
-        PCRange = readNext<uint32_t>(Pos);
-        break;
-      case 8:
-        PCBegin = readNext<uint64_t>(Pos);
-        PCRange = readNext<uint64_t>(Pos);
-        break;
-      default:
-        llvm_unreachable("Illegal data size");
-    }
+    uint64_t PCBegin = readPointer(Pos, is64Bit, *CIE.FDEPointerEncoding);
+    uint64_t PCRange = readPointer(Pos, is64Bit, *CIE.FDEPointerEncoding);
 
     Optional<uint64_t> AugmentationLength;
     uint32_t LSDAPointerSize;
@@ -6984,19 +6972,7 @@ static void printMachOEHFrameSection(const MachOObjectFile *Obj,
       // Decode the LSDA if the CIE augmentation string said we should.
       if (CIE.LSDAPointerEncoding) {
         LSDAPointerSize = getSizeForEncoding(is64Bit, *CIE.LSDAPointerEncoding);
-        switch (LSDAPointerSize) {
-          case 2:
-            LSDAPointer = readNext<uint16_t>(Pos);
-            break;
-          case 4:
-            LSDAPointer = readNext<uint32_t>(Pos);
-            break;
-          case 8:
-            LSDAPointer = readNext<uint64_t>(Pos);
-            break;
-          default:
-            llvm_unreachable("Illegal data size");
-        }
+        LSDAPointer = readPointer(Pos, is64Bit, *CIE.LSDAPointerEncoding);
       }
     }
 
