@@ -5285,6 +5285,36 @@ INTERCEPTOR(SSIZE_T, process_vm_writev, int pid, __sanitizer_iovec *local_iov,
 #define INIT_PROCESS_VM_READV
 #endif
 
+#if SANITIZER_INTERCEPT_CTERMID
+INTERCEPTOR(char *, ctermid, char *s) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ctermid, s);
+  char *res = REAL(ctermid)(s);
+  if (res) {
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+#define INIT_CTERMID COMMON_INTERCEPT_FUNCTION(ctermid);
+#else
+#define INIT_CTERMID
+#endif
+
+#if SANITIZER_INTERCEPT_CTERMID_R
+INTERCEPTOR(char *, ctermid_r, char *s) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ctermid_r, s);
+  char *res = REAL(ctermid_r)(s);
+  if (res) {
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+#define INIT_CTERMID_R COMMON_INTERCEPT_FUNCTION(ctermid_r);
+#else
+#define INIT_CTERMID_R
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -5459,4 +5489,6 @@ static void InitializeCommonInterceptors() {
   INIT_PTHREAD_SETCANCEL;
   INIT_MINCORE;
   INIT_PROCESS_VM_READV;
+  INIT_CTERMID;
+  INIT_CTERMID_R;
 }
