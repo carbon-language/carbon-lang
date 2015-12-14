@@ -161,8 +161,10 @@ public:
     return MII;
   }
 
-  // endPacket - End the current packet.
-  void endPacket(MachineBasicBlock *MBB, MachineInstr *MI);
+  // End the current packet and reset the state of the packetizer.
+  // Overriding this function allows the target-specific packetizer
+  // to perform custom finalization.
+  virtual void endPacket(MachineBasicBlock *MBB, MachineInstr *MI);
 
   // initPacketizerState - perform initialization before packetizing
   // an instruction. This function is supposed to be overrided by
