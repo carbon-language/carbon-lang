@@ -42,10 +42,6 @@
 
 using namespace llvm;
 
-// FIXME: Remove this once soft-float is supported.
-static cl::opt<bool> DisablePPCFloatInVariadic("disable-ppc-float-in-variadic",
-cl::desc("disable saving float registers for va_start on PPC"), cl::Hidden);
-
 static cl::opt<bool> DisablePPCPreinc("disable-ppc-preinc",
 cl::desc("disable preincrement load/store generation on PPC"), cl::Hidden);
 
@@ -72,8 +68,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &PPC::GPRCRegClass);
-  addRegisterClass(MVT::f32, &PPC::F4RCRegClass);
-  addRegisterClass(MVT::f64, &PPC::F8RCRegClass);
+  if (!Subtarget.useSoftFloat()) {
+    addRegisterClass(MVT::f32, &PPC::F4RCRegClass);
+    addRegisterClass(MVT::f64, &PPC::F8RCRegClass);
+  }
 
   // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
   for (MVT VT : MVT::integer_valuetypes()) {
@@ -977,6 +975,10 @@ unsigned PPCTargetLowering::getByValTypeAlignment(Type *Ty,
   if (Subtarget.hasAltivec() || Subtarget.hasQPX())
     getMaxByValAlign(Ty, Align, Subtarget.hasQPX() ? 32 : 16);
   return Align;
+}
+
+bool PPCTargetLowering::useSoftFloat() const {
+  return Subtarget.useSoftFloat();
 }
 
 const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -2945,8 +2947,9 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
       PPC::F8
     };
     unsigned NumFPArgRegs = array_lengthof(FPArgRegs);
-    if (DisablePPCFloatInVariadic)
-      NumFPArgRegs = 0;
+
+    if (Subtarget.useSoftFloat())
+       NumFPArgRegs = 0;
 
     FuncInfo->setVarArgsNumGPR(CCInfo.getFirstUnallocated(GPArgRegs));
     FuncInfo->setVarArgsNumFPR(CCInfo.getFirstUnallocated(FPArgRegs));
