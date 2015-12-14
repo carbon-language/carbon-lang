@@ -296,6 +296,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::BR_CC            , MVT::f32,   Expand);
   setOperationAction(ISD::BR_CC            , MVT::f64,   Expand);
   setOperationAction(ISD::BR_CC            , MVT::f80,   Expand);
+  setOperationAction(ISD::BR_CC            , MVT::f128,  Expand);
   setOperationAction(ISD::BR_CC            , MVT::i8,    Expand);
   setOperationAction(ISD::BR_CC            , MVT::i16,   Expand);
   setOperationAction(ISD::BR_CC            , MVT::i32,   Expand);
@@ -303,6 +304,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::SELECT_CC        , MVT::f32,   Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::f64,   Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::f80,   Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::f128,  Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::i8,    Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::i16,   Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::i32,   Expand);
@@ -415,12 +417,14 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::SELECT          , MVT::f32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f64  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f80  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::f128 , Custom);
   setOperationAction(ISD::SETCC           , MVT::i8   , Custom);
   setOperationAction(ISD::SETCC           , MVT::i16  , Custom);
   setOperationAction(ISD::SETCC           , MVT::i32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f64  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f80  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::f128 , Custom);
   setOperationAction(ISD::SETCCE          , MVT::i8   , Custom);
   setOperationAction(ISD::SETCCE          , MVT::i16  , Custom);
   setOperationAction(ISD::SETCCE          , MVT::i32  , Custom);
@@ -619,8 +623,16 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::FMA, MVT::f64, Expand);
   setOperationAction(ISD::FMA, MVT::f32, Expand);
 
-  // Long double always uses X87.
+  // Long double always uses X87, except f128 in MMX.
   if (!Subtarget->useSoftFloat()) {
+    if (Subtarget->is64Bit() && Subtarget->hasMMX()) {
+      addRegisterClass(MVT::f128, &X86::FR128RegClass);
+      ValueTypeActions.setTypeAction(MVT::f128, TypeSoftenFloat);
+      setOperationAction(ISD::FABS , MVT::f128, Custom);
+      setOperationAction(ISD::FNEG , MVT::f128, Custom);
+      setOperationAction(ISD::FCOPYSIGN, MVT::f128, Custom);
+    }
+
     addRegisterClass(MVT::f80, &X86::RFP80RegClass);
     setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
@@ -2363,7 +2375,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     EVT CopyVT = VA.getLocVT();
 
     // If this is x86-64, and we disabled SSE, we can't return FP values
-    if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) &&
+    if ((CopyVT == MVT::f32 || CopyVT == MVT::f64 || CopyVT == MVT::f128) &&
         ((Is64Bit || Ins[i].Flags.isInReg()) && !Subtarget->hasSSE1())) {
       report_fatal_error("SSE register return with SSE disabled");
     }
@@ -2647,6 +2659,8 @@ SDValue X86TargetLowering::LowerFormalArguments(
         RC = &X86::FR32RegClass;
       else if (RegVT == MVT::f64)
         RC = &X86::FR64RegClass;
+      else if (RegVT == MVT::f128)
+        RC = &X86::FR128RegClass;
       else if (RegVT.is512BitVector())
         RC = &X86::VR512RegClass;
       else if (RegVT.is256BitVector())
@@ -13410,6 +13424,8 @@ static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
 
+  bool IsF128 = (VT == MVT::f128);
+
   // FIXME: Use function attribute "OptimizeForSize" and/or CodeGenOpt::Level to
   // decide if we should generate a 16-byte constant mask when we only need 4 or
   // 8 bytes for the scalar case.
@@ -13422,6 +13438,11 @@ static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
     LogicVT = VT;
     EltVT = VT.getVectorElementType();
     NumElts = VT.getVectorNumElements();
+  } else if (IsF128) {
+    // SSE instructions are used for optimized f128 logical operations.
+    LogicVT = MVT::f128;
+    EltVT = VT;
+    NumElts = 1;
   } else {
     // There are no scalar bitwise logical SSE/AVX instructions, so we
     // generate a 16-byte vector constant and logic op even for the scalar case.
@@ -13453,7 +13474,7 @@ static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
     IsFABS ? X86ISD::FAND : IsFNABS ? X86ISD::FOR : X86ISD::FXOR;
   SDValue Operand = IsFNABS ? Op0.getOperand(0) : Op0;
 
-  if (VT.isVector())
+  if (VT.isVector() || IsF128)
     return DAG.getNode(LogicOp, dl, LogicVT, Operand, Mask);
 
   // For the scalar case extend to a 128-bit vector, perform the logic op,
@@ -13472,6 +13493,7 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
   MVT SrcVT = Op1.getSimpleValueType();
+  bool IsF128 = (VT == MVT::f128);
 
   // If second operand is smaller, extend it first.
   if (SrcVT.bitsLT(VT)) {
@@ -13486,13 +13508,16 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
 
   // At this point the operands and the result should have the same
   // type, and that won't be f80 since that is not custom lowered.
+  assert((VT == MVT::f64 || VT == MVT::f32 || IsF128) &&
+         "Unexpected type in LowerFCOPYSIGN");
 
   const fltSemantics &Sem =
-      VT == MVT::f64 ? APFloat::IEEEdouble : APFloat::IEEEsingle;
+      VT == MVT::f64 ? APFloat::IEEEdouble :
+          (IsF128 ? APFloat::IEEEquad : APFloat::IEEEsingle);
   const unsigned SizeInBits = VT.getSizeInBits();
 
   SmallVector<Constant *, 4> CV(
-      VT == MVT::f64 ? 2 : 4,
+      VT == MVT::f64 ? 2 : (IsF128 ? 1 : 4),
       ConstantFP::get(*Context, APFloat(Sem, APInt(SizeInBits, 0))));
 
   // First, clear all bits but the sign bit from the second operand (sign).
@@ -13505,12 +13530,13 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   // Perform all logic operations as 16-byte vectors because there are no
   // scalar FP logic instructions in SSE. This allows load folding of the
   // constants into the logic instructions.
-  MVT LogicVT = (VT == MVT::f64) ? MVT::v2f64 : MVT::v4f32;
+  MVT LogicVT = (VT == MVT::f64) ? MVT::v2f64 : (IsF128 ? MVT::f128 : MVT::v4f32);
   SDValue Mask1 =
       DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
                   MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
                   false, false, false, 16);
-  Op1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LogicVT, Op1);
+  if (!IsF128)
+    Op1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LogicVT, Op1);
   SDValue SignBit = DAG.getNode(X86ISD::FAND, dl, LogicVT, Op1, Mask1);
 
   // Next, clear the sign bit from the first operand (magnitude).
@@ -13519,8 +13545,9 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
     APFloat APF = Op0CN->getValueAPF();
     // If the magnitude is a positive zero, the sign bit alone is enough.
     if (APF.isPosZero())
-      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SrcVT, SignBit,
-                         DAG.getIntPtrConstant(0, dl));
+      return IsF128 ? SignBit :
+          DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SrcVT, SignBit,
+                      DAG.getIntPtrConstant(0, dl));
     APF.clearSign();
     CV[0] = ConstantFP::get(*Context, APF);
   } else {
@@ -13536,13 +13563,15 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
                   false, false, false, 16);
   // If the magnitude operand wasn't a constant, we need to AND out the sign.
   if (!isa<ConstantFPSDNode>(Op0)) {
-    Op0 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LogicVT, Op0);
+    if (!IsF128)
+      Op0 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LogicVT, Op0);
     Val = DAG.getNode(X86ISD::FAND, dl, LogicVT, Op0, Val);
   }
   // OR the magnitude value with the sign bit.
   Val = DAG.getNode(X86ISD::FOR, dl, LogicVT, Val, SignBit);
-  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SrcVT, Val,
-                     DAG.getIntPtrConstant(0, dl));
+  return IsF128 ? Val :
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SrcVT, Val,
+                  DAG.getIntPtrConstant(0, dl));
 }
 
 static SDValue LowerFGETSIGN(SDValue Op, SelectionDAG &DAG) {
@@ -22158,6 +22187,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitLoweredTLSCall(MI, BB);
   case X86::CMOV_FR32:
   case X86::CMOV_FR64:
+  case X86::CMOV_FR128:
   case X86::CMOV_GR8:
   case X86::CMOV_GR16:
   case X86::CMOV_GR32:
@@ -23821,7 +23851,8 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // ignored in unsafe-math mode).
   // We also try to create v2f32 min/max nodes, which we later widen to v4f32.
   if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
-      VT != MVT::f80 && (TLI.isTypeLegal(VT) || VT == MVT::v2f32) &&
+      VT != MVT::f80 && VT != MVT::f128 &&
+      (TLI.isTypeLegal(VT) || VT == MVT::v2f32) &&
       (Subtarget->hasSSE2() ||
        (Subtarget->hasSSE1() && VT.getScalarType() == MVT::f32))) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
@@ -27946,6 +27977,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       case MVT::f64:
       case MVT::i64:
         return std::make_pair(0U, &X86::FR64RegClass);
+      // TODO: Handle f128 and i128 in FR128RegClass after it is tested well.
       // Vector types.
       case MVT::v16i8:
       case MVT::v8i16:
@@ -28058,6 +28090,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     // target independent register mapper will just pick the first match it can
     // find, ignoring the required type.
 
+    // TODO: Handle f128 and i128 in FR128RegClass after it is tested well.
     if (VT == MVT::f32 || VT == MVT::i32)
       Res.second = &X86::FR32RegClass;
     else if (VT == MVT::f64 || VT == MVT::i64)
