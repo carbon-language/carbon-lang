@@ -7,6 +7,8 @@
 // Test that buffer overflows on the unsafe stack do not affect variables on the
 // safe stack.
 
+// REQUIRES: stable-runtime
+
 __attribute__((noinline))
 void fct(volatile int *buffer)
 {
