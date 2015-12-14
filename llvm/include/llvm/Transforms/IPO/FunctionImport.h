@@ -11,6 +11,7 @@
 #define LLVM_FUNCTIONIMPORT_H
 
 #include "llvm/ADT/StringMap.h"
+#include <functional>
 
 namespace llvm {
 class LLVMContext;
