@@ -1215,7 +1215,8 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
   EVT PtrVT = BasePtr.getValueType();
   EVT MemVT = Load->getMemoryVT();
   SDLoc SL(Op);
-  MachinePointerInfo SrcValue(Load->getMemOperand()->getValue());
+
+  const MachinePointerInfo &SrcValue = Load->getMemOperand()->getPointerInfo();
 
   EVT LoVT, HiVT;
   EVT LoMemVT, HiMemVT;
@@ -1224,23 +1225,27 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
   std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(VT);
   std::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemVT);
   std::tie(Lo, Hi) = DAG.SplitVector(Op, SL, LoVT, HiVT);
+
+  unsigned Size = LoMemVT.getStoreSize();
+  unsigned BaseAlign = Load->getAlignment();
+  unsigned HiAlign = MinAlign(BaseAlign, Size);
+
   SDValue LoLoad
     = DAG.getExtLoad(Load->getExtensionType(), SL, LoVT,
                      Load->getChain(), BasePtr,
                      SrcValue,
                      LoMemVT, Load->isVolatile(), Load->isNonTemporal(),
-                     Load->isInvariant(), Load->getAlignment());
+                     Load->isInvariant(), BaseAlign);
 
   SDValue HiPtr = DAG.getNode(ISD::ADD, SL, PtrVT, BasePtr,
-                              DAG.getConstant(LoMemVT.getStoreSize(), SL,
-                                              PtrVT));
+                              DAG.getConstant(Size, SL, PtrVT));
 
   SDValue HiLoad
     = DAG.getExtLoad(Load->getExtensionType(), SL, HiVT,
                      Load->getChain(), HiPtr,
                      SrcValue.getWithOffset(LoMemVT.getStoreSize()),
                      HiMemVT, Load->isVolatile(), Load->isNonTemporal(),
-                     Load->isInvariant(), Load->getAlignment());
+                     Load->isInvariant(), HiAlign);
 
   SDValue Ops[] = {
     DAG.getNode(ISD::CONCAT_VECTORS, SL, VT, LoLoad, HiLoad),
@@ -1370,7 +1375,11 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                               DAG.getConstant(LoMemVT.getStoreSize(), SL,
                                               PtrVT));
 
-  MachinePointerInfo SrcValue(Store->getMemOperand()->getValue());
+  const MachinePointerInfo &SrcValue = Store->getMemOperand()->getPointerInfo();
+  unsigned BaseAlign = Store->getAlignment();
+  unsigned Size = LoMemVT.getStoreSize();
+  unsigned HiAlign = MinAlign(BaseAlign, Size);
+
   SDValue LoStore
     = DAG.getTruncStore(Chain, SL, Lo,
                         BasePtr,
@@ -1378,15 +1387,15 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                         LoMemVT,
                         Store->isNonTemporal(),
                         Store->isVolatile(),
-                        Store->getAlignment());
+                        BaseAlign);
   SDValue HiStore
     = DAG.getTruncStore(Chain, SL, Hi,
                         HiPtr,
-                        SrcValue.getWithOffset(LoMemVT.getStoreSize()),
+                        SrcValue.getWithOffset(Size),
                         HiMemVT,
                         Store->isNonTemporal(),
                         Store->isVolatile(),
-                        Store->getAlignment());
+                        HiAlign);
 
   return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, LoStore, HiStore);
 }
