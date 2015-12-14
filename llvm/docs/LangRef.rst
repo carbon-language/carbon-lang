@@ -5363,7 +5363,7 @@ Example:
 .. _i_catchswitch:
 
 '``catchswitch``' Instruction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -5418,7 +5418,7 @@ Example:
 .. _i_catchpad:
 
 '``catchpad``' Instruction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -5592,7 +5592,7 @@ Example:
 .. _i_terminatepad:
 
 '``terminatepad``' Instruction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
