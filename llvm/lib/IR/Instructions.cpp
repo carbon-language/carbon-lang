@@ -87,6 +87,8 @@ const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 
+void PHINode::anchor() {}
+
 PHINode::PHINode(const PHINode &PN)
     : Instruction(PN.getType(), Instruction::PHI, nullptr, PN.getNumOperands()),
       ReservedSpace(PN.getNumOperands()) {
@@ -1502,6 +1504,8 @@ FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering,
 //===----------------------------------------------------------------------===//
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
+
+void GetElementPtrInst::anchor() {}
 
 void GetElementPtrInst::init(Value *Ptr, ArrayRef<Value *> IdxList,
                              const Twine &Name) {
@@ -3388,6 +3392,8 @@ CmpInst::Predicate CmpInst::getInversePredicate(Predicate pred) {
     case FCMP_FALSE: return FCMP_TRUE;
   }
 }
+
+void ICmpInst::anchor() {}
 
 ICmpInst::Predicate ICmpInst::getSignedPredicate(Predicate pred) {
   switch (pred) {

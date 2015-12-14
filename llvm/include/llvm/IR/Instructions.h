@@ -839,6 +839,8 @@ class GetElementPtrInst : public Instruction {
   Type *SourceElementType;
   Type *ResultElementType;
 
+  void anchor() override;
+
   GetElementPtrInst(const GetElementPtrInst &GEPI);
   void init(Value *Ptr, ArrayRef<Value *> IdxList, const Twine &NameStr);
 
@@ -1097,6 +1099,8 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrInst, Value)
 /// must be identical types.
 /// \brief Represent an integer comparison operator.
 class ICmpInst: public CmpInst {
+  void anchor() override;
+
   void AssertOK() {
     assert(getPredicate() >= CmpInst::FIRST_ICMP_PREDICATE &&
            getPredicate() <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -2426,6 +2430,8 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertValueInst, Value)
 // scientist's overactive imagination.
 //
 class PHINode : public Instruction {
+  void anchor() override;
+
   void *operator new(size_t, unsigned) = delete;
   /// ReservedSpace - The number of operands actually allocated.  NumOperands is
   /// the number actually in use.
