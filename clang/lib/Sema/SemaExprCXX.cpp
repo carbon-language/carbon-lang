@@ -3118,6 +3118,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     ToType = ToAtomic->getValueType();
   }
 
+  QualType InitialFromType = FromType;
   // Perform the first implicit conversion.
   switch (SCS.First) {
   case ICK_Identity:
@@ -3487,6 +3488,12 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     From = ImpCastExprToType(From, ToAtomicType, CK_NonAtomicToAtomic,
                              VK_RValue, nullptr, CCK).get();
   }
+
+  // If this conversion sequence succeeded and involved implicitly converting a
+  // _Nullable type to a _Nonnull one, complain.
+  if (CCK == CCK_ImplicitConversion)
+    diagnoseNullableToNonnullConversion(ToType, InitialFromType,
+                                        From->getLocStart());
 
   return From;
 }
