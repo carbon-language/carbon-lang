@@ -46,7 +46,7 @@ static int writeFileWithName(const char *OutputName) {
     return -1;
 
   /* Append to the file to support profiling multiple shared objects. */
-  OutputFile = fopen(OutputName, "a");
+  OutputFile = fopen(OutputName, "ab");
   if (!OutputFile)
     return -1;
 
