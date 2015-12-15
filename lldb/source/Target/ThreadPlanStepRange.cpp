@@ -162,7 +162,7 @@ ThreadPlanStepRange::InRange ()
                 if (m_addr_context.line_entry.line == new_context.line_entry.line)
                 {
                     m_addr_context = new_context;
-                    AddRange(m_addr_context.line_entry.range);
+                    AddRange(m_addr_context.line_entry.GetSameLineContiguousAddressRange());
                     ret_value = true;
                     if (log)
                     {
@@ -181,7 +181,7 @@ ThreadPlanStepRange::InRange ()
                 {
                     new_context.line_entry.line = m_addr_context.line_entry.line;
                     m_addr_context = new_context;
-                    AddRange(m_addr_context.line_entry.range);
+                    AddRange(m_addr_context.line_entry.GetSameLineContiguousAddressRange());
                     ret_value = true;
                     if (log)
                     {

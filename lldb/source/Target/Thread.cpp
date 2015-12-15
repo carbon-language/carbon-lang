@@ -1535,6 +1535,21 @@ Thread::QueueThreadPlanForStepOverRange(bool abort_other_plans,
     return thread_plan_sp;
 }
 
+// Call the QueueThreadPlanForStepOverRange method which takes an address range.
+ThreadPlanSP
+Thread::QueueThreadPlanForStepOverRange(bool abort_other_plans,
+                                        const LineEntry &line_entry,
+                                        const SymbolContext &addr_context,
+                                        lldb::RunMode stop_other_threads,
+                                        LazyBool step_out_avoids_code_withoug_debug_info)
+{
+    return QueueThreadPlanForStepOverRange (abort_other_plans, 
+                                            line_entry.GetSameLineContiguousAddressRange(), 
+                                            addr_context, 
+                                            stop_other_threads, 
+                                            step_out_avoids_code_withoug_debug_info);
+}
+
 ThreadPlanSP
 Thread::QueueThreadPlanForStepInRange(bool abort_other_plans,
                                       const AddressRange &range,
@@ -1558,6 +1573,26 @@ Thread::QueueThreadPlanForStepInRange(bool abort_other_plans,
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp;
 }
+
+// Call the QueueThreadPlanForStepInRange method which takes an address range.
+ThreadPlanSP
+Thread::QueueThreadPlanForStepInRange(bool abort_other_plans,
+                                      const LineEntry &line_entry,
+                                      const SymbolContext &addr_context,
+                                      const char *step_in_target,
+                                      lldb::RunMode stop_other_threads,
+                                      LazyBool step_in_avoids_code_without_debug_info,
+                                      LazyBool step_out_avoids_code_without_debug_info)
+{
+    return QueueThreadPlanForStepInRange (abort_other_plans, 
+                                          line_entry.GetSameLineContiguousAddressRange(), 
+                                          addr_context, 
+                                          step_in_target, 
+                                          stop_other_threads, 
+                                          step_in_avoids_code_without_debug_info, 
+                                          step_out_avoids_code_without_debug_info);
+}
+
 
 ThreadPlanSP
 Thread::QueueThreadPlanForStepOut(bool abort_other_plans,
@@ -2374,7 +2409,7 @@ Thread::StepIn (bool source_step,
         {
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
             new_plan_sp = QueueThreadPlanForStepInRange (abort_other_plans,
-                                                         sc.line_entry.range,
+                                                         sc.line_entry,
                                                          sc,
                                                          NULL,
                                                          run_mode,
@@ -2420,7 +2455,7 @@ Thread::StepOver (bool source_step,
         {
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
             new_plan_sp = QueueThreadPlanForStepOverRange (abort_other_plans,
-                                                           sc.line_entry.range,
+                                                           sc.line_entry,
                                                            sc,
                                                            run_mode,
                                                            step_out_avoids_code_without_debug_info);
