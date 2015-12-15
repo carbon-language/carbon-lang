@@ -190,6 +190,7 @@ void InstallDeadlySignalHandlers(SignalHandlerType handler) {
   MaybeInstallSigaction(SIGBUS, handler);
   MaybeInstallSigaction(SIGABRT, handler);
   MaybeInstallSigaction(SIGFPE, handler);
+  MaybeInstallSigaction(SIGILL, handler);
 }
 #endif  // SANITIZER_GO
 

@@ -79,6 +79,8 @@ COMMON_FLAG(bool, handle_segv, SANITIZER_NEEDS_SEGV,
             "If set, registers the tool's custom SIGSEGV/SIGBUS handler.")
 COMMON_FLAG(bool, handle_abort, false,
             "If set, registers the tool's custom SIGABRT handler.")
+COMMON_FLAG(bool, handle_sigill, false,
+            "If set, registers the tool's custom SIGILL handler.")
 COMMON_FLAG(bool, handle_sigfpe, true,
             "If set, registers the tool's custom SIGFPE handler.")
 COMMON_FLAG(bool, allow_user_segv_handler, false,

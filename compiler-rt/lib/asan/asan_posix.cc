@@ -77,6 +77,8 @@ void AsanOnDeadlySignal(int signo, void *siginfo, void *context) {
     ReportStackOverflow(sig);
   else if (signo == SIGFPE)
     ReportDeadlySignal("FPE", sig);
+  else if (signo == SIGILL)
+    ReportDeadlySignal("ILL", sig);
   else
     ReportDeadlySignal("SEGV", sig);
 }
