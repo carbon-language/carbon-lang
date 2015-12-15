@@ -1200,7 +1200,15 @@ enum CXTranslationUnit_Flags {
    * included into the set of code completions returned from this translation
    * unit.
    */
-  CXTranslationUnit_IncludeBriefCommentsInCodeCompletion = 0x80
+  CXTranslationUnit_IncludeBriefCommentsInCodeCompletion = 0x80,
+
+  /**
+   * \brief Used to indicate that the precompiled preamble should be created on
+   * the first parse. Otherwise it will be created on the first reparse. This
+   * trades runtime on the first parse (serializing the preamble takes time) for
+   * reduced runtime on the second parse (can now reuse the preamble).
+   */
+  CXTranslationUnit_CreatePreambleOnFirstParse = 0x100
 };
 
 /**
