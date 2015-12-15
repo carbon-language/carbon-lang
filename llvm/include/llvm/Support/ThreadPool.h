@@ -70,7 +70,12 @@ public:
 #ifndef _MSC_VER
     return asyncImpl(std::move(Task));
 #else
-    return asyncImpl([Task] (VoidTy) -> VoidTy { Task(); return VoidTy(); });
+    // This lambda has to be marked mutable because MSVC 2013's std::bind call
+    // operator isn't const qualified.
+    return asyncImpl([Task](VoidTy) mutable -> VoidTy {
+      Task();
+      return VoidTy();
+    });
 #endif
   }
 
