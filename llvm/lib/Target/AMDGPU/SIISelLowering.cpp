@@ -504,6 +504,21 @@ bool SITargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
   return isFlatGlobalAddrSpace(SrcAS) &&  isFlatGlobalAddrSpace(DestAS);
 }
 
+
+bool SITargetLowering::isMemOpUniform(const SDNode *N) const {
+  const MemSDNode *MemNode = cast<MemSDNode>(N);
+  const Value *Ptr = MemNode->getMemOperand()->getValue();
+
+  // UndefValue means this is a load of a kernel input.  These are uniform.
+  // Sometimes LDS instructions have constant pointers
+  if (isa<UndefValue>(Ptr) || isa<Argument>(Ptr) || isa<Constant>(Ptr) ||
+      isa<GlobalValue>(Ptr))
+    return true;
+
+  const Instruction *I = dyn_cast_or_null<Instruction>(Ptr);
+  return I && I->getMetadata("amdgpu.uniform");
+}
+
 TargetLoweringBase::LegalizeTypeAction
 SITargetLowering::getPreferredVectorAction(EVT VT) const {
   if (VT.getVectorNumElements() != 1 && VT.getScalarType().bitsLE(MVT::i16))
@@ -1328,6 +1343,14 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 
     switch (Load->getAddressSpace()) {
       default: break;
+      case AMDGPUAS::CONSTANT_ADDRESS:
+      if (isMemOpUniform(Load))
+        break;
+        // Non-uniform loads will be selected to MUBUF instructions, so they
+        // have the same legalization requires ments as global and private
+        // loads.
+        //
+        // Fall-through
       case AMDGPUAS::GLOBAL_ADDRESS:
       case AMDGPUAS::PRIVATE_ADDRESS:
         if (NumElements >= 8)

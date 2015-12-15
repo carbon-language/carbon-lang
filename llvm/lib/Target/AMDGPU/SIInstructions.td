@@ -953,13 +953,13 @@ defm BUFFER_LOAD_SSHORT : MUBUF_Load_Helper <
   mubuf<0x0b, 0x13>, "buffer_load_sshort", VGPR_32, i32, sextloadi16_global
 >;
 defm BUFFER_LOAD_DWORD : MUBUF_Load_Helper <
-  mubuf<0x0c, 0x14>, "buffer_load_dword", VGPR_32, i32, global_load
+  mubuf<0x0c, 0x14>, "buffer_load_dword", VGPR_32, i32, mubuf_load
 >;
 defm BUFFER_LOAD_DWORDX2 : MUBUF_Load_Helper <
-  mubuf<0x0d, 0x15>, "buffer_load_dwordx2", VReg_64, v2i32, global_load
+  mubuf<0x0d, 0x15>, "buffer_load_dwordx2", VReg_64, v2i32, mubuf_load
 >;
 defm BUFFER_LOAD_DWORDX4 : MUBUF_Load_Helper <
-  mubuf<0x0e, 0x17>, "buffer_load_dwordx4", VReg_128, v4i32, global_load
+  mubuf<0x0e, 0x17>, "buffer_load_dwordx4", VReg_128, v4i32, mubuf_load
 >;
 
 defm BUFFER_STORE_BYTE : MUBUF_Store_Helper <
@@ -2087,23 +2087,28 @@ multiclass SMRD_Pattern <string Instr, ValueType vt> {
 
   // 1. IMM offset
   def : Pat <
-    (constant_load (SMRDImm i64:$sbase, i32:$offset)),
+    (smrd_load (SMRDImm i64:$sbase, i32:$offset)),
     (vt (!cast<SMRD>(Instr#"_IMM") $sbase, $offset))
   >;
 
   // 2. SGPR offset
   def : Pat <
-    (constant_load (SMRDSgpr i64:$sbase, i32:$offset)),
+    (smrd_load (SMRDSgpr i64:$sbase, i32:$offset)),
     (vt (!cast<SMRD>(Instr#"_SGPR") $sbase, $offset))
   >;
 
   def : Pat <
-    (constant_load (SMRDImm32 i64:$sbase, i32:$offset)),
+    (smrd_load (SMRDImm32 i64:$sbase, i32:$offset)),
     (vt (!cast<SMRD>(Instr#"_IMM_ci") $sbase, $offset))
   > {
     let Predicates = [isCIOnly];
   }
 }
+
+// Global and constant loads can be selected to either MUBUF or SMRD
+// instructions, but SMRD instructions are faster so we want the instruction
+// selector to prefer those.
+let AddedComplexity = 100 in {
 
 defm : SMRD_Pattern <"S_LOAD_DWORD", i32>;
 defm : SMRD_Pattern <"S_LOAD_DWORDX2", v2i32>;
@@ -2132,6 +2137,8 @@ def : Pat <
 >;
 
 } // End Predicates = [isCI]
+
+} // End let AddedComplexity = 10000
 
 //===----------------------------------------------------------------------===//
 // SOP1 Patterns
