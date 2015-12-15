@@ -89,7 +89,6 @@ ConstantInt *CrossDSOCFI::extractBitSetTypeId(MDNode *MD) {
   // Can be null if a function was removed by an optimization.
   if (FM) {
     auto F = dyn_cast<Function>(FM->getValue());
-    (void)F;
     // But can never be a function declaration.
     assert(!F || !F->isDeclaration());
     (void)F; // Suppress unused variable warning in the no-asserts build.
