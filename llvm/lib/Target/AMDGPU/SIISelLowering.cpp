@@ -1252,6 +1252,19 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getNode(AMDGPUISD::INTERP_P2, DL, MVT::f32, P1, J,
                              Op.getOperand(1), Op.getOperand(2), Glue);
   }
+  case Intrinsic::amdgcn_interp_p1: {
+    SDValue M0 = copyToM0(DAG, DAG.getEntryNode(), DL, Op.getOperand(4));
+    SDValue Glue = M0.getValue(1);
+    return DAG.getNode(AMDGPUISD::INTERP_P1, DL, MVT::f32, Op.getOperand(1),
+                       Op.getOperand(2), Op.getOperand(3), Glue);
+  }
+  case Intrinsic::amdgcn_interp_p2: {
+    SDValue M0 = copyToM0(DAG, DAG.getEntryNode(), DL, Op.getOperand(5));
+    SDValue Glue = SDValue(M0.getNode(), 1);
+    return DAG.getNode(AMDGPUISD::INTERP_P2, DL, MVT::f32, Op.getOperand(1),
+                       Op.getOperand(2), Op.getOperand(3), Op.getOperand(4),
+                       Glue);
+  }
   default:
     return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   }
