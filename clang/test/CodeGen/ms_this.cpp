@@ -1,6 +1,4 @@
-// Hexagon build bot defines hexagon-unknown-elf as the default target triple,
-// which seems to trump the -triple argument for some reason.
-// UNSUPPORTED: hexagon
+// REQUIRES: x86-registered-target
 
 // RUN: %clang_cc1 -triple x86_64-pc-win32 -fasm-blocks -emit-llvm %s -o - | FileCheck %s
 class t1 {
