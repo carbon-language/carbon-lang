@@ -9,9 +9,9 @@
 // RUN: FileCheck --input-file=%tuse -check-prefix=PGOUSE %s
 // RUN: FileCheck --input-file=%tuse -check-prefix=LMBUSE %s
 
-// PGOGEN: @[[LWC:__prf_cn__Z7lambdasv]] = private global [4 x i64] zeroinitializer
-// PGOGEN: @[[MAC:__prf_cn_main]] = private global [1 x i64] zeroinitializer
-// LMBGEN: @[[LFC:"__prf_cn_cxx_lambda.cpp__ZZ7lambdasvENK3\$_0clEi"]] = private global [3 x i64] zeroinitializer
+// PGOGEN: @[[LWC:__profc__Z7lambdasv]] = private global [4 x i64] zeroinitializer
+// PGOGEN: @[[MAC:__profc_main]] = private global [1 x i64] zeroinitializer
+// LMBGEN: @[[LFC:"__profc_cxx_lambda.cpp__ZZ7lambdasvENK3\$_0clEi"]] = private global [3 x i64] zeroinitializer
 
 // PGOGEN-LABEL: define {{.*}}void @_Z7lambdasv()
 // PGOUSE-LABEL: define {{.*}}void @_Z7lambdasv()

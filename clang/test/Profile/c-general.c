@@ -8,18 +8,18 @@
 // Also check compatibility with older profiles.
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/c-general.profdata.v1 | FileCheck -check-prefix=PGOUSE %s
 
-// PGOGEN: @[[SLC:__prf_cn_simple_loops]] = private global [4 x i64] zeroinitializer
-// PGOGEN: @[[IFC:__prf_cn_conditionals]] = private global [11 x i64] zeroinitializer
-// PGOGEN: @[[EEC:__prf_cn_early_exits]] = private global [9 x i64] zeroinitializer
-// PGOGEN: @[[JMC:__prf_cn_jumps]] = private global [22 x i64] zeroinitializer
-// PGOGEN: @[[SWC:__prf_cn_switches]] = private global [19 x i64] zeroinitializer
-// PGOGEN: @[[BSC:__prf_cn_big_switch]] = private global [17 x i64] zeroinitializer
-// PGOGEN: @[[BOC:__prf_cn_boolean_operators]] = private global [8 x i64] zeroinitializer
-// PGOGEN: @[[BLC:__prf_cn_boolop_loops]] = private global [9 x i64] zeroinitializer
-// PGOGEN: @[[COC:__prf_cn_conditional_operator]] = private global [3 x i64] zeroinitializer
-// PGOGEN: @[[DFC:__prf_cn_do_fallthrough]] = private global [4 x i64] zeroinitializer
-// PGOGEN: @[[MAC:__prf_cn_main]] = private global [1 x i64] zeroinitializer
-// PGOGEN: @[[STC:__prf_cn_c_general.c_static_func]] = private global [2 x i64] zeroinitializer
+// PGOGEN: @[[SLC:__profc_simple_loops]] = private global [4 x i64] zeroinitializer
+// PGOGEN: @[[IFC:__profc_conditionals]] = private global [11 x i64] zeroinitializer
+// PGOGEN: @[[EEC:__profc_early_exits]] = private global [9 x i64] zeroinitializer
+// PGOGEN: @[[JMC:__profc_jumps]] = private global [22 x i64] zeroinitializer
+// PGOGEN: @[[SWC:__profc_switches]] = private global [19 x i64] zeroinitializer
+// PGOGEN: @[[BSC:__profc_big_switch]] = private global [17 x i64] zeroinitializer
+// PGOGEN: @[[BOC:__profc_boolean_operators]] = private global [8 x i64] zeroinitializer
+// PGOGEN: @[[BLC:__profc_boolop_loops]] = private global [9 x i64] zeroinitializer
+// PGOGEN: @[[COC:__profc_conditional_operator]] = private global [3 x i64] zeroinitializer
+// PGOGEN: @[[DFC:__profc_do_fallthrough]] = private global [4 x i64] zeroinitializer
+// PGOGEN: @[[MAC:__profc_main]] = private global [1 x i64] zeroinitializer
+// PGOGEN: @[[STC:__profc_c_general.c_static_func]] = private global [2 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @simple_loops()
 // PGOUSE-LABEL: @simple_loops()
