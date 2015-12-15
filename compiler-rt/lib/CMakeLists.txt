@@ -19,8 +19,6 @@ if(COMPILER_RT_BUILD_SANITIZERS)
     add_subdirectory(ubsan)
   endif()
 
-  add_subdirectory(cfi)
-
   if(COMPILER_RT_HAS_ASAN)
     add_subdirectory(asan)
   endif()
@@ -44,5 +42,9 @@ if(COMPILER_RT_BUILD_SANITIZERS)
 
   if(COMPILER_RT_HAS_SAFESTACK)
     add_subdirectory(safestack)
+  endif()
+
+  if(COMPILER_RT_HAS_CFI)
+    add_subdirectory(cfi)
   endif()
 endif()

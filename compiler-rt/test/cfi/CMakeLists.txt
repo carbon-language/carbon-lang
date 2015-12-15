@@ -6,6 +6,7 @@ configure_lit_site_cfg(
 set(CFI_TEST_DEPS ${SANITIZER_COMMON_LIT_TEST_DEPS})
 if(NOT COMPILER_RT_STANDALONE_BUILD)
   list(APPEND CFI_TEST_DEPS
+    cfi
     opt
     ubsan
   )
