@@ -126,8 +126,12 @@ static bool isModuleLinkage(const GlobalValue *GV) {
 
 void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
-  if (TM.getTargetTriple().getOS() != Triple::AMDHSA ||
-      GV->isDeclaration()) {
+  if (TM.getTargetTriple().getOS() != Triple::AMDHSA) {
+    AsmPrinter::EmitGlobalVariable(GV);
+    return;
+  }
+
+  if (GV->isDeclaration() || GV->getLinkage() == GlobalValue::PrivateLinkage) {
     AsmPrinter::EmitGlobalVariable(GV);
     return;
   }
