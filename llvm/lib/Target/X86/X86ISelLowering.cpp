@@ -1799,6 +1799,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::FSUB);
   setTargetDAGCombine(ISD::FNEG);
   setTargetDAGCombine(ISD::FMA);
+  setTargetDAGCombine(ISD::FMAXNUM);
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::MLOAD);
@@ -26533,6 +26534,56 @@ static SDValue PerformFMinFMaxCombine(SDNode *N, SelectionDAG &DAG) {
                      N->getOperand(0), N->getOperand(1));
 }
 
+static SDValue performFMaxNumCombine(SDNode *N, SelectionDAG &DAG,
+                                     const X86Subtarget *Subtarget) {
+  // This takes at least 3 instructions, so favor a library call when
+  // minimizing code size.
+  if (DAG.getMachineFunction().getFunction()->optForMinSize())
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+
+  // TODO: Check for global or instruction-level "nnan". In that case, we
+  //       should be able to lower to FMAX/FMIN alone.
+  // TODO: If an operand is already known to be a NaN or not a NaN, this
+  //       should be an optional swap and FMAX/FMIN.
+  // TODO: Allow f64, vectors, and fminnum.
+
+  if (VT != MVT::f32 || !Subtarget->hasSSE1() || Subtarget->useSoftFloat())
+    return SDValue();
+
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+  SDLoc DL(N);
+  EVT SetCCType = DAG.getTargetLoweringInfo().getSetCCResultType(
+      DAG.getDataLayout(), *DAG.getContext(), VT);
+
+  // There are 4 possibilities involving NaN inputs, and these are the required
+  // outputs:
+  //                   Op1
+  //               Num     NaN
+  //            ----------------
+  //       Num  |  Max  |  Op0 |
+  // Op0        ----------------
+  //       NaN  |  Op1  |  NaN |
+  //            ----------------
+  //
+  // The SSE FP max/min instructions were not designed for this case, but rather
+  // to implement:
+  //   Max = Op1 > Op0 ? Op1 : Op0
+  //
+  // So they always return Op0 if either input is a NaN. However, we can still
+  // use those instructions for fmaxnum by selecting away a NaN input.
+
+  // If either operand is NaN, the 2nd source operand (Op0) is passed through.
+  SDValue Max = DAG.getNode(X86ISD::FMAX, DL, VT, Op1, Op0);
+  SDValue IsOp0Nan = DAG.getSetCC(DL, SetCCType , Op0, Op0, ISD::SETUO);
+
+  // If Op0 is a NaN, select Op1. Otherwise, select the max. If both operands
+  // are NaN, the NaN value of Op1 is the result.
+  return DAG.getNode(ISD::SELECT, DL, VT, IsOp0Nan, Op1, Max);
+}
+
 /// Do target-specific dag combines on X86ISD::FAND nodes.
 static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG,
                                   const X86Subtarget *Subtarget) {
@@ -27392,6 +27443,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FOR:         return PerformFORCombine(N, DAG, Subtarget);
   case X86ISD::FMIN:
   case X86ISD::FMAX:        return PerformFMinFMaxCombine(N, DAG);
+  case ISD::FMAXNUM:        return performFMaxNumCombine(N, DAG, Subtarget);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG, Subtarget);
   case X86ISD::FANDN:       return PerformFANDNCombine(N, DAG, Subtarget);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
