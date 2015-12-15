@@ -208,7 +208,7 @@ LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
 LDFLAGS += $(LD_EXTRAS)
 ifeq (,$(filter $(OS), Windows_NT Android))
-	ifneq (,$(filter YES,$(ENABLE_THREADS) $(ENABLE_STD_THREADS)))
+	ifneq (,$(filter YES,$(ENABLE_THREADS)))
 		LDFLAGS += -pthread
 	endif
 endif
