@@ -16168,7 +16168,8 @@ static int getSEHRegistrationNodeSize(const Function *Fn) {
   case EHPersonality::MSVC_CXX: return 16;
   default: break;
   }
-  report_fatal_error("can only recover FP for MSVC EH personality functions");
+  report_fatal_error(
+      "can only recover FP for 32-bit MSVC EH personality functions");
 }
 
 /// When the 32-bit MSVC runtime transfers control to us, either to an outlined
@@ -17077,66 +17078,6 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getMergeValues(Results, DL);
 }
 
-static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
-                                    SelectionDAG &DAG) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  const Function *Fn = MF.getFunction();
-  SDLoc dl(Op);
-  SDValue Chain = Op.getOperand(0);
-
-  assert(Subtarget->getFrameLowering()->hasFP(MF) &&
-         "using llvm.x86.seh.restoreframe requires a frame pointer");
-
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  MVT VT = TLI.getPointerTy(DAG.getDataLayout());
-
-  const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
-  unsigned FrameReg =
-      RegInfo->getPtrSizedFrameRegister(DAG.getMachineFunction());
-  unsigned SPReg = RegInfo->getStackRegister();
-  unsigned SlotSize = RegInfo->getSlotSize();
-
-  // Get incoming EBP.
-  SDValue IncomingEBP =
-      DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
-
-  // SP is saved in the first field of every registration node, so load
-  // [EBP-RegNodeSize] into SP.
-  int RegNodeSize = getSEHRegistrationNodeSize(Fn);
-  SDValue SPAddr = DAG.getNode(ISD::ADD, dl, VT, IncomingEBP,
-                               DAG.getConstant(-RegNodeSize, dl, VT));
-  SDValue NewSP =
-      DAG.getLoad(VT, dl, Chain, SPAddr, MachinePointerInfo(), false, false,
-                  false, VT.getScalarSizeInBits() / 8);
-  Chain = DAG.getCopyToReg(Chain, dl, SPReg, NewSP);
-
-  if (!RegInfo->needsStackRealignment(MF)) {
-    // Adjust EBP to point back to the original frame position.
-    SDValue NewFP = recoverFramePointer(DAG, Fn, IncomingEBP);
-    Chain = DAG.getCopyToReg(Chain, dl, FrameReg, NewFP);
-  } else {
-    assert(RegInfo->hasBasePointer(MF) &&
-           "functions with Win32 EH must use frame or base pointer register");
-
-    // Reload the base pointer (ESI) with the adjusted incoming EBP.
-    SDValue NewBP = recoverFramePointer(DAG, Fn, IncomingEBP);
-    Chain = DAG.getCopyToReg(Chain, dl, RegInfo->getBaseRegister(), NewBP);
-
-    // Reload the spilled EBP value, now that the stack and base pointers are
-    // set up.
-    X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-    X86FI->setHasSEHFramePtrSave(true);
-    int FI = MF.getFrameInfo()->CreateSpillStackObject(SlotSize, SlotSize);
-    X86FI->setSEHFramePtrSaveIndex(FI);
-    SDValue NewFP = DAG.getLoad(VT, dl, Chain, DAG.getFrameIndex(FI, VT),
-                                MachinePointerInfo(), false, false, false,
-                                VT.getScalarSizeInBits() / 8);
-    Chain = DAG.getCopyToReg(NewFP, dl, FrameReg, NewFP);
-  }
-
-  return Chain;
-}
-
 static SDValue MarkEHRegistrationNode(SDValue Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   SDValue Chain = Op.getOperand(0);
@@ -17198,9 +17139,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
 
   const IntrinsicData* IntrData = getIntrinsicWithChain(IntNo);
   if (!IntrData) {
-    if (IntNo == llvm::Intrinsic::x86_seh_restoreframe)
-      return LowerSEHRESTOREFRAME(Op, Subtarget, DAG);
-    else if (IntNo == llvm::Intrinsic::x86_seh_ehregnode)
+    if (IntNo == llvm::Intrinsic::x86_seh_ehregnode)
       return MarkEHRegistrationNode(Op, DAG);
     return SDValue();
   }
