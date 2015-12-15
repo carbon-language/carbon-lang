@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombineInternal.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/IR/DataLayout.h"
@@ -540,8 +541,10 @@ static Instruction *unpackLoadToAggregate(InstCombiner &IC, LoadInst &LI) {
       return nullptr;
 
     auto Name = LI.getName();
-    auto LoadName = LI.getName() + ".unpack";
-    auto EltName = Name + ".elt";
+    SmallString<16> LoadName = Name;
+    LoadName += ".unpack";
+    SmallString<16> EltName = Name;
+    EltName += ".elt";
     auto *Addr = LI.getPointerOperand();
     Value *V = UndefValue::get(T);
     auto *IdxType = Type::getInt32Ty(ST->getContext());
@@ -944,9 +947,11 @@ static bool unpackStoreToAggregate(InstCombiner &IC, StoreInst &SI) {
     if (SL->hasPadding())
       return false;
 
-    auto EltName = V->getName() + ".elt";
+    SmallString<16> EltName = V->getName();
+    EltName += ".elt";
     auto *Addr = SI.getPointerOperand();
-    auto AddrName = Addr->getName() + ".repack";
+    SmallString<16> AddrName = Addr->getName();
+    AddrName += ".repack";
     auto *IdxType = Type::getInt32Ty(ST->getContext());
     auto *Zero = ConstantInt::get(IdxType, 0);
     for (unsigned i = 0; i < Count; i++) {
