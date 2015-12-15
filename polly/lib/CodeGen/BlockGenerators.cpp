@@ -164,7 +164,7 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
 Value *BlockGenerator::generateLocationAccessed(
     ScopStmt &Stmt, const Instruction *Inst, Value *Pointer, ValueMapT &BBMap,
     LoopToScevMapT &LTS, isl_id_to_ast_expr *NewAccesses) {
-  const MemoryAccess &MA = Stmt.getAccessFor(Inst);
+  const MemoryAccess &MA = Stmt.getArrayAccessFor(Inst);
 
   isl_ast_expr *AccessExpr = isl_id_to_ast_expr_get(NewAccesses, MA.getId());
 

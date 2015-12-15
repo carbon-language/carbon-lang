@@ -979,6 +979,33 @@ public:
     return *MA;
   }
 
+  /// @brief Return the only array access for @p Inst.
+  ///
+  /// @param Inst The instruction for which to look up the access.
+  /// @returns The unique array memory access related to Inst.
+  MemoryAccess &getArrayAccessFor(const Instruction *Inst) const {
+    auto It = InstructionToAccess.find(Inst);
+    assert(It != InstructionToAccess.end() &&
+           "No memory accesses found for instruction");
+    auto *Accesses = It->getSecond();
+
+    assert(Accesses && "No memory accesses found for instruction");
+
+    MemoryAccess *ArrayAccess = nullptr;
+
+    for (auto Access : *Accesses) {
+      if (!Access->isArrayKind())
+        continue;
+
+      assert(!ArrayAccess && "More then one array access for instruction");
+
+      ArrayAccess = Access;
+    }
+
+    assert(ArrayAccess && "No array access found for instruction!");
+    return *ArrayAccess;
+  }
+
   /// @brief Return the __first__ (scalar) memory access for @p Inst if any.
   MemoryAccess *lookupAccessFor(const Instruction *Inst) const {
     auto It = InstructionToAccess.find(Inst);
