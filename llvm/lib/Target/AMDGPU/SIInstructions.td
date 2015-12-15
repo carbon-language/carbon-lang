@@ -1590,10 +1590,10 @@ defm V_BCNT_U32_B32 : VOP2_VI3_Inst <vop23<0x22, 0x28b>, "v_bcnt_u32_b32",
   VOP_I32_I32_I32
 >;
 defm V_MBCNT_LO_U32_B32 : VOP2_VI3_Inst <vop23<0x23, 0x28c>, "v_mbcnt_lo_u32_b32",
-  VOP_I32_I32_I32
+  VOP_I32_I32_I32, int_amdgcn_mbcnt_lo
 >;
 defm V_MBCNT_HI_U32_B32 : VOP2_VI3_Inst <vop23<0x24, 0x28d>, "v_mbcnt_hi_u32_b32",
-  VOP_I32_I32_I32
+  VOP_I32_I32_I32, int_amdgcn_mbcnt_hi
 >;
 defm V_LDEXP_F32 : VOP2_VI3_Inst <vop23<0x2b, 0x288>, "v_ldexp_f32",
   VOP_F32_F32_I32, AMDGPUldexp

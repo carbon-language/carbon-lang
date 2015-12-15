@@ -146,4 +146,12 @@ def int_amdgcn_interp_p2 :
             [llvm_float_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrNoMem]>;  // See int_amdgcn_v_interp_p1 for why this is
                            // IntrNoMem.
+
+def int_amdgcn_mbcnt_lo :
+  GCCBuiltin<"__builtin_amdgcn_mbcnt_lo">,
+  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+
+def int_amdgcn_mbcnt_hi :
+  GCCBuiltin<"__builtin_amdgcn_mbcnt_hi">,
+  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 }
