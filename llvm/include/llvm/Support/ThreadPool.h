@@ -16,6 +16,12 @@
 
 #include "llvm/Support/thread.h"
 
+#ifdef _MSC_VER
+// concrt.h depends on eh.h for __uncaught_exception declaration
+// even if we disable exceptions.
+#include <eh.h>
+#endif
+
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -23,12 +29,6 @@
 #include <mutex>
 #include <queue>
 #include <utility>
-
-#ifdef _MSC_VER
-// concrt.h depends on eh.h for __uncaught_exception declaration
-// even if we disable exceptions.
-#include <eh.h>
-#endif
 
 namespace llvm {
 
