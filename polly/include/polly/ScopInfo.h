@@ -957,26 +957,12 @@ public:
   /// @brief Return true if this statement does not contain any accesses.
   bool isEmpty() const { return MemAccs.empty(); }
 
-  /// @brief Return the (scalar) memory accesses for @p Inst.
-  const MemoryAccessList &getAccessesFor(const Instruction *Inst) const {
-    MemoryAccessList *MAL = lookupAccessesFor(Inst);
-    assert(MAL && "Cannot get memory accesses because they do not exist!");
-    return *MAL;
-  }
-
   /// @brief Return the (scalar) memory accesses for @p Inst if any.
   MemoryAccessList *lookupAccessesFor(const Instruction *Inst) const {
     auto It = InstructionToAccess.find(Inst);
     if (It == InstructionToAccess.end())
       return nullptr;
     return It->getSecond()->empty() ? nullptr : It->getSecond();
-  }
-
-  /// @brief Return the __first__ (scalar) memory access for @p Inst.
-  const MemoryAccess &getAccessFor(const Instruction *Inst) const {
-    MemoryAccess *MA = lookupAccessFor(Inst);
-    assert(MA && "Cannot get memory access because it does not exist!");
-    return *MA;
   }
 
   /// @brief Return the only array access for @p Inst.
