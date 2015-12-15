@@ -10,6 +10,10 @@
 #include "llvm/Support/ThreadPool.h"
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/TargetSelect.h"
 
 #include "gtest/gtest.h"
 
@@ -27,7 +31,47 @@ static void yield() {
 #endif
 }
 
-TEST(ThreadPoolTest, AsyncBarrier) {
+// Fixture for the unittests, allowing to *temporarily* disable the unittests
+// on a particular platform
+class ThreadPoolTest : public testing::Test {
+  Triple Host;
+  SmallVector<Triple::ArchType, 4> UnsupportedArchs;
+  SmallVector<Triple::OSType, 4> UnsupportedOSs;
+  SmallVector<Triple::EnvironmentType, 1> UnsupportedEnvironments;
+protected:
+  // This is intended for platform as a temporary "XFAIL"
+  bool isUnsupportedOSOrEnvironment() {
+    Triple Host(Triple::normalize(sys::getProcessTriple()));
+
+    if (std::find(UnsupportedEnvironments.begin(), UnsupportedEnvironments.end(),
+                  Host.getEnvironment()) != UnsupportedEnvironments.end())
+      return true;
+
+    if (std::find(UnsupportedOSs.begin(), UnsupportedOSs.end(), Host.getOS())
+        != UnsupportedOSs.end())
+      return true;
+
+    if (std::find(UnsupportedArchs.begin(), UnsupportedArchs.end(), Host.getArch())
+        != UnsupportedArchs.end())
+      return true;
+
+    return false;
+  }
+
+  ThreadPoolTest() {
+    // Add unsupported configuration here, example:
+    //   UnsupportedArchs.push_back(Triple::x86_64);
+  }
+};
+
+#define CHECK_UNSUPPORTED() \
+  do { \
+    if (isUnsupportedOSOrEnvironment()) \
+      return; \
+  } while (0); \
+
+TEST_F(ThreadPoolTest, AsyncBarrier) {
+  CHECK_UNSUPPORTED();
   // test that async & barrier work together properly.
 
   std::atomic_int checked_in{0};
@@ -46,7 +90,8 @@ TEST(ThreadPoolTest, AsyncBarrier) {
 
 static void TestFunc(std::atomic_int &checked_in, int i) { checked_in += i; }
 
-TEST(ThreadPoolTest, AsyncBarrierArgs) {
+TEST_F(ThreadPoolTest, AsyncBarrierArgs) {
+  CHECK_UNSUPPORTED();
   // Test that async works with a function requiring multiple parameters.
   std::atomic_int checked_in{0};
 
@@ -58,7 +103,8 @@ TEST(ThreadPoolTest, AsyncBarrierArgs) {
   ASSERT_EQ(10, checked_in);
 }
 
-TEST(ThreadPoolTest, Async) {
+TEST_F(ThreadPoolTest, Async) {
+  CHECK_UNSUPPORTED();
   ThreadPool Pool;
   std::atomic_int i{0};
   // sleep here just to ensure that the not-equal is correct.
@@ -72,7 +118,8 @@ TEST(ThreadPoolTest, Async) {
   ASSERT_EQ(2, i.load());
 }
 
-TEST(ThreadPoolTest, GetFuture) {
+TEST_F(ThreadPoolTest, GetFuture) {
+  CHECK_UNSUPPORTED();
   ThreadPool Pool;
   std::atomic_int i{0};
   // sleep here just to ensure that the not-equal is correct.
@@ -87,7 +134,8 @@ TEST(ThreadPoolTest, GetFuture) {
   ASSERT_EQ(2, i.load());
 }
 
-TEST(ThreadPoolTest, PoolDestruction) {
+TEST_F(ThreadPoolTest, PoolDestruction) {
+  CHECK_UNSUPPORTED();
   // Test that we are waiting on destruction
   std::atomic_int checked_in{0};
 
