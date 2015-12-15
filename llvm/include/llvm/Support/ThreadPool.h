@@ -20,11 +20,21 @@
 // concrt.h depends on eh.h for __uncaught_exception declaration
 // even if we disable exceptions.
 #include <eh.h>
+
+// Disable warnings from ppltasks.h transitively included by <future>.
+#pragma warning(push)
+#pragma warning(disable:4530)
+#pragma warning(disable:4062)
+#endif
+
+#include <future>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif
 
 #include <condition_variable>
 #include <functional>
-#include <future>
 #include <memory>
 #include <mutex>
 #include <queue>
