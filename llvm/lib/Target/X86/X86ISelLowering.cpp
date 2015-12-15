@@ -1579,7 +1579,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::OR,  VT, Legal);
         setOperationAction(ISD::XOR,  VT, Legal);
       }
-      if (EltSize >= 32 && VT.getSizeInBits() <= 512) {
+      if ((VT.is128BitVector() || VT.is256BitVector()) && EltSize >= 32) {
         setOperationAction(ISD::MGATHER,  VT, Custom);
         setOperationAction(ISD::MSCATTER, VT, Custom);
       }
@@ -1605,6 +1605,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::INSERT_SUBVECTOR,    VT, Custom);
         setOperationAction(ISD::MLOAD,               VT, Legal);
         setOperationAction(ISD::MSTORE,              VT, Legal);
+        setOperationAction(ISD::MGATHER,  VT, Legal);
+        setOperationAction(ISD::MSCATTER, VT, Custom);
       }
     }
     for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v16i32 }) {
@@ -1813,6 +1815,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::BUILD_VECTOR);
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::XOR);
+  setTargetDAGCombine(ISD::MSCATTER);
+  setTargetDAGCombine(ISD::MGATHER);
 
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
@@ -19760,6 +19764,16 @@ static SDValue ExtendToType(SDValue InOp, MVT NVT, SelectionDAG &DAG,
   EVT EltVT = NVT.getVectorElementType();
 
   SDLoc dl(InOp);
+  if (InOp.getOpcode() == ISD::CONCAT_VECTORS &&
+      InOp.getNumOperands() == 2) {
+    SDValue N1 = InOp.getOperand(1);
+    if ((ISD::isBuildVectorAllZeros(N1.getNode()) && FillWithZeroes) ||
+        N1.isUndef()) {
+      InOp = InOp.getOperand(0);
+      InVT = InOp.getSimpleValueType();
+      InNumElts = InVT.getVectorNumElements();
+    }
+  }
   if (ISD::isBuildVectorOfConstantSDNodes(InOp.getNode()) ||
       ISD::isBuildVectorOfConstantFPSDNodes(InOp.getNode())) {
     SmallVector<SDValue, 16> Ops;
@@ -19783,28 +19797,93 @@ static SDValue LowerMSCATTER(SDValue Op, const X86Subtarget *Subtarget,
   assert(Subtarget->hasAVX512() &&
          "MGATHER/MSCATTER are supported on AVX-512 arch only");
 
+  // X86 scatter kills mask register, so its type should be added to
+  // the list of return values.
+  // If the "scatter" has 2 return values, it is already handled.
+  if (Op.getNode()->getNumValues() == 2)
+    return Op;
+
   MaskedScatterSDNode *N = cast<MaskedScatterSDNode>(Op.getNode());
-  MVT VT = N->getValue().getSimpleValueType();
+  SDValue Src = N->getValue();
+  MVT VT = Src.getSimpleValueType();
   assert(VT.getScalarSizeInBits() >= 32 && "Unsupported scatter op");
   SDLoc dl(Op);
 
-  // X86 scatter kills mask register, so its type should be added to
-  // the list of return values
-  if (N->getNumValues() == 1) {
-    SDValue Index = N->getIndex();
-    if (!Subtarget->hasVLX() && !VT.is512BitVector() &&
-        !Index.getSimpleValueType().is512BitVector())
-      Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+  SDValue NewScatter;
+  SDValue Index = N->getIndex();
+  SDValue Mask = N->getMask();
+  SDValue Chain = N->getChain();
+  SDValue BasePtr = N->getBasePtr();
+  MVT MemVT = N->getMemoryVT().getSimpleVT();
+  MVT IndexVT = Index.getSimpleValueType();
+  MVT MaskVT = Mask.getSimpleValueType();
 
-    SDVTList VTs = DAG.getVTList(N->getMask().getValueType(), MVT::Other);
-    SDValue Ops[] = { N->getOperand(0), N->getOperand(1),  N->getOperand(2),
-                      N->getOperand(3), Index };
+  if (MemVT.getScalarSizeInBits() < VT.getScalarSizeInBits()) {
+    // The v2i32 value was promoted to v2i64.
+    // Now we "redo" the type legalizer's work and widen the original
+    // v2i32 value to v4i32. The original v2i32 is retrieved from v2i64
+    // with a shuffle.
+    assert((MemVT == MVT::v2i32 && VT == MVT::v2i64) &&
+           "Unexpected memory type");
+    int ShuffleMask[] = {0, 2, -1, -1};
+    Src = DAG.getVectorShuffle(MVT::v4i32, dl, DAG.getBitcast(MVT::v4i32, Src),
+                               DAG.getUNDEF(MVT::v4i32), ShuffleMask);
+    // Now we have 4 elements instead of 2.
+    // Expand the index.
+    MVT NewIndexVT = MVT::getVectorVT(IndexVT.getScalarType(), 4);
+    Index = ExtendToType(Index, NewIndexVT, DAG);
 
-    SDValue NewScatter = DAG.getMaskedScatter(VTs, VT, dl, Ops, N->getMemOperand());
-    DAG.ReplaceAllUsesWith(Op, SDValue(NewScatter.getNode(), 1));
-    return SDValue(NewScatter.getNode(), 0);
+    // Expand the mask with zeroes
+    // Mask may be <2 x i64> or <2 x i1> at this moment
+    assert((MaskVT == MVT::v2i1 || MaskVT == MVT::v2i64) &&
+           "Unexpected mask type");
+    MVT ExtMaskVT = MVT::getVectorVT(MaskVT.getScalarType(), 4);
+    Mask = ExtendToType(Mask, ExtMaskVT, DAG, true);
+    VT = MVT::v4i32;
   }
-  return Op;
+
+  unsigned NumElts = VT.getVectorNumElements();
+  if (!Subtarget->hasVLX() && !VT.is512BitVector() &&
+      !Index.getSimpleValueType().is512BitVector()) {
+    // AVX512F supports only 512-bit vectors. Or data or index should
+    // be 512 bit wide. If now the both index and data are 256-bit, but
+    // the vector contains 8 elements, we just sign-extend the index
+    if (IndexVT == MVT::v8i32)
+      // Just extend index
+      Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+    else {
+      // The minimal number of elts in scatter is 8
+      NumElts = 8;
+      // Index
+      MVT NewIndexVT = MVT::getVectorVT(IndexVT.getScalarType(), NumElts);
+      // Use original index here, do not modify the index twice
+      Index = ExtendToType(N->getIndex(), NewIndexVT, DAG);
+      if (IndexVT.getScalarType() == MVT::i32)
+        Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+
+      // Mask
+      // At this point we have promoted mask operand
+      assert(MaskVT.getScalarSizeInBits() >= 32 && "unexpected mask type");
+      MVT ExtMaskVT = MVT::getVectorVT(MaskVT.getScalarType(), NumElts);
+      // Use the original mask here, do not modify the mask twice
+      Mask = ExtendToType(N->getMask(), ExtMaskVT, DAG, true); 
+
+      // The value that should be stored
+      MVT NewVT = MVT::getVectorVT(VT.getScalarType(), NumElts);
+      Src = ExtendToType(Src, NewVT, DAG);
+    }
+  }
+  // If the mask is "wide" at this point - truncate it to i1 vector
+  MVT BitMaskVT = MVT::getVectorVT(MVT::i1, NumElts);
+  Mask = DAG.getNode(ISD::TRUNCATE, dl, BitMaskVT, Mask);
+
+  // The mask is killed by scatter, add it to the values
+  SDVTList VTs = DAG.getVTList(BitMaskVT, MVT::Other);
+  SDValue Ops[] = {Chain, Src, Mask, BasePtr, Index};
+  NewScatter = DAG.getMaskedScatter(VTs, N->getMemoryVT(), dl, Ops,
+                                    N->getMemOperand());
+  DAG.ReplaceAllUsesWith(Op, SDValue(NewScatter.getNode(), 1));
+  return SDValue(NewScatter.getNode(), 0);
 }
 
 static SDValue LowerMLOAD(SDValue Op, const X86Subtarget *Subtarget,
@@ -19869,17 +19948,59 @@ static SDValue LowerMGATHER(SDValue Op, const X86Subtarget *Subtarget,
          "MGATHER/MSCATTER are supported on AVX-512 arch only");
 
   MaskedGatherSDNode *N = cast<MaskedGatherSDNode>(Op.getNode());
-  MVT VT = Op.getSimpleValueType();
-  assert(VT.getScalarSizeInBits() >= 32 && "Unsupported gather op");
   SDLoc dl(Op);
-
+  MVT VT = Op.getSimpleValueType();
   SDValue Index = N->getIndex();
+  SDValue Mask = N->getMask();
+  SDValue Src0 = N->getValue();
+  MVT IndexVT = Index.getSimpleValueType();
+  MVT MaskVT = Mask.getSimpleValueType();
+
+  unsigned NumElts = VT.getVectorNumElements();
+  assert(VT.getScalarSizeInBits() >= 32 && "Unsupported gather op");
+
   if (!Subtarget->hasVLX() && !VT.is512BitVector() &&
       !Index.getSimpleValueType().is512BitVector()) {
-    Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
-    SDValue Ops[] = { N->getOperand(0), N->getOperand(1),  N->getOperand(2),
-                      N->getOperand(3), Index };
-    DAG.UpdateNodeOperands(N, Ops);
+    // AVX512F supports only 512-bit vectors. Or data or index should
+    // be 512 bit wide. If now the both index and data are 256-bit, but
+    // the vector contains 8 elements, we just sign-extend the index
+    if (NumElts == 8) {
+      Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+      SDValue Ops[] = { N->getOperand(0), N->getOperand(1),  N->getOperand(2),
+                        N->getOperand(3), Index };
+      DAG.UpdateNodeOperands(N, Ops);
+      return Op;
+    }
+
+    // Minimal number of elements in Gather
+    NumElts = 8;
+    // Index
+    MVT NewIndexVT = MVT::getVectorVT(IndexVT.getScalarType(), NumElts);
+    Index = ExtendToType(Index, NewIndexVT, DAG);
+    if (IndexVT.getScalarType() == MVT::i32)
+      Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+
+    // Mask
+    MVT MaskBitVT = MVT::getVectorVT(MVT::i1, NumElts);
+    // At this point we have promoted mask operand
+    assert(MaskVT.getScalarSizeInBits() >= 32 && "unexpected mask type");
+    MVT ExtMaskVT = MVT::getVectorVT(MaskVT.getScalarType(), NumElts);
+    Mask = ExtendToType(Mask, ExtMaskVT, DAG, true);
+    Mask = DAG.getNode(ISD::TRUNCATE, dl, MaskBitVT, Mask);
+
+    // The pass-thru value
+    MVT NewVT = MVT::getVectorVT(VT.getScalarType(), NumElts);
+    Src0 = ExtendToType(Src0, NewVT, DAG);
+
+    SDValue Ops[] = { N->getChain(), Src0, Mask, N->getBasePtr(), Index };
+    SDValue NewGather = DAG.getMaskedGather(DAG.getVTList(NewVT, MVT::Other),
+                                            N->getMemoryVT(), dl, Ops,
+                                            N->getMemOperand());
+    SDValue Exract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT,
+                                 NewGather.getValue(0),
+                                 DAG.getIntPtrConstant(0, dl));
+    SDValue RetOps[] = {Exract, NewGather.getValue(1)};
+    return DAG.getMergeValues(RetOps, dl);
   }
   return Op;
 }
@@ -26907,6 +27028,20 @@ static SDValue PerformBLENDICombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+static SDValue PerformGatherScatterCombine(SDNode *N, SelectionDAG &DAG) {
+  SDLoc DL(N);
+  // Gather and Scatter instructions use k-registers for masks. The type of
+  // the masks is v*i1. So the mask will be truncated anyway.
+  // The SIGN_EXTEND_INREG my be dropped.
+  SDValue Mask = N->getOperand(2);
+  if (Mask.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+    SmallVector<SDValue, 5> NewOps(N->op_begin(), N->op_end());
+    NewOps[2] = Mask.getOperand(0);
+    DAG.UpdateNodeOperands(N, NewOps);
+  }
+  return SDValue();
+}
+
 // Helper function of PerformSETCCCombine. It is to materialize "setb reg"
 // as "sbb reg,reg", since it can be extended without zext and produces
 // an all-ones bit which is more useful than 0/1 in some cases.
@@ -27348,6 +27483,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
   case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);
   case X86ISD::BLENDI:    return PerformBLENDICombine(N, DAG);
+  case ISD::MGATHER:
+  case ISD::MSCATTER:       return PerformGatherScatterCombine(N, DAG);
   }
 
   return SDValue();
