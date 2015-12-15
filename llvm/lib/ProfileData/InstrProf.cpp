@@ -211,8 +211,10 @@ uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
 }
 
 ValueProfData *allocValueProfDataInstrProf(size_t TotalSizeInBytes) {
-  return (ValueProfData *)(new (::operator new(TotalSizeInBytes))
-                               ValueProfData());
+  ValueProfData *VD =
+      (ValueProfData *)(new (::operator new(TotalSizeInBytes)) ValueProfData());
+  memset(VD, 0, TotalSizeInBytes);
+  return VD;
 }
 
 static ValueProfRecordClosure InstrProfRecordClosure = {
@@ -223,8 +225,7 @@ static ValueProfRecordClosure InstrProfRecordClosure = {
     getNumValueDataForSiteInstrProf,
     stringToHash,
     getValueForSiteInstrProf,
-    allocValueProfDataInstrProf
-};
+    allocValueProfDataInstrProf};
 
 // Wrapper implementation using the closure mechanism.
 uint32_t ValueProfData::getSize(const InstrProfRecord &Record) {
