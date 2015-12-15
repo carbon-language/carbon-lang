@@ -264,19 +264,21 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     bool LazyReloc = Body && Target->supportsLazyRelocations() &&
                      Target->relocNeedsPlt(Type, *Body);
 
-    unsigned Sym = CanBePreempted ? Body->getDynamicSymbolTableIndex() : 0;
-    unsigned Rel;
-    if (!CanBePreempted)
-      Rel = Target->getRelativeReloc();
-    else if (LazyReloc)
-      Rel = Target->getPltReloc();
-    else if (NeedsGot)
-      Rel = Body->isTLS() ? Target->getTlsGotReloc() : Target->getGotReloc();
-    else if (NeedsCopy)
-      Rel = Target->getCopyReloc();
-    else
-      Rel = Target->getDynReloc(Type);
-    P->setSymbolAndType(Sym, Rel, Config->Mips64EL);
+    if (CanBePreempted) {
+      unsigned GotReloc =
+          Body->isTLS() ? Target->getTlsGotReloc() : Target->getGotReloc();
+      if (NeedsGot)
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                            LazyReloc ? Target->getPltReloc() : GotReloc,
+                            Config->Mips64EL);
+      else
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                            NeedsCopy ? Target->getCopyReloc()
+                                      : Target->getDynReloc(Type),
+                            Config->Mips64EL);
+    } else {
+      P->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);
+    }
 
     if (NeedsGot) {
       if (LazyReloc)
