@@ -733,8 +733,12 @@ class ResultsFormatter(object):
     def _maybe_add_test_to_rerun_list(self, result_event):
         key = self._make_key(result_event)
         if key is not None:
-            if (key in self.rerun_eligible_tests or
-                    configuration.rerun_all_issues):
+            test_is_directly_eligible = (
+                key in self.rerun_eligible_tests and
+                # llvm.org/pr25844 workaround: temporarily prevent
+                # rerun eligibility when building for Android.
+                "aarch64" not in configuration.archs)
+            if (test_is_directly_eligible or configuration.rerun_all_issues):
                 test_filename = result_event.get("test_filename", None)
                 if test_filename is not None:
                     test_name = result_event.get("test_name", None)
