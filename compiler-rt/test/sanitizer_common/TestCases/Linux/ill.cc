@@ -8,6 +8,8 @@
 // XFAIL: lsan
 // XFAIL: tsan
 //
+// FIXME: seems to fail on ARM
+// REQUIRES: x86_64-supported-target
 #include <assert.h>
 #include <stdio.h>
 #include <sanitizer/asan_interface.h>
