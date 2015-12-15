@@ -44,6 +44,20 @@ TEST(ThreadPoolTest, AsyncBarrier) {
   ASSERT_EQ(5, checked_in);
 }
 
+static void TestFunc(std::atomic_int &checked_in, int i) { checked_in += i; }
+
+TEST(ThreadPoolTest, AsyncBarrierArgs) {
+  // Test that async works with a function requiring multiple parameters.
+  std::atomic_int checked_in{0};
+
+  ThreadPool Pool;
+  for (size_t i = 0; i < 5; ++i) {
+    Pool.async(TestFunc, std::ref(checked_in), i);
+  }
+  Pool.wait();
+  ASSERT_EQ(10, checked_in);
+}
+
 TEST(ThreadPoolTest, Async) {
   ThreadPool Pool;
   std::atomic_int i{0};

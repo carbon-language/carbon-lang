@@ -66,7 +66,7 @@ public:
   template <typename Function, typename... Args>
   inline std::shared_future<VoidTy> async(Function &&F, Args &&... ArgList) {
     auto Task =
-        std::bind(std::forward<Function>(F), std::forward<Args...>(ArgList...));
+        std::bind(std::forward<Function>(F), std::forward<Args>(ArgList)...);
 #ifndef _MSC_VER
     return asyncImpl(std::move(Task));
 #else
