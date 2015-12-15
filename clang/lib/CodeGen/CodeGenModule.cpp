@@ -2495,6 +2495,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
 
   llvm::Type *newRetTy = newFn->getReturnType();
   SmallVector<llvm::Value*, 4> newArgs;
+  SmallVector<llvm::OperandBundleDef, 1> newBundles;
 
   for (llvm::Value::use_iterator ui = old->use_begin(), ue = old->use_end();
          ui != ue; ) {
@@ -2562,16 +2563,19 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
     // over the required information.
     newArgs.append(callSite.arg_begin(), callSite.arg_begin() + argNo);
 
+    // Copy over any operand bundles.
+    callSite.getOperandBundlesAsDefs(newBundles);
+
     llvm::CallSite newCall;
     if (callSite.isCall()) {
-      newCall = llvm::CallInst::Create(newFn, newArgs, "",
+      newCall = llvm::CallInst::Create(newFn, newArgs, newBundles, "",
                                        callSite.getInstruction());
     } else {
       auto *oldInvoke = cast<llvm::InvokeInst>(callSite.getInstruction());
       newCall = llvm::InvokeInst::Create(newFn,
                                          oldInvoke->getNormalDest(),
                                          oldInvoke->getUnwindDest(),
-                                         newArgs, "",
+                                         newArgs, newBundles, "",
                                          callSite.getInstruction());
     }
     newArgs.clear(); // for the next iteration
@@ -2589,6 +2593,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
     // Copy debug location attached to CI.
     if (callSite->getDebugLoc())
       newCall->setDebugLoc(callSite->getDebugLoc());
+
     callSite->eraseFromParent();
   }
 }
