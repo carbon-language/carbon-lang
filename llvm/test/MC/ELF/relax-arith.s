@@ -139,3 +139,19 @@ bar:
         adcl $foo, bar
         adc  $foo, %rbx
         adcq $foo, bar
+
+// CHECK:      Disassembly of section sbb:
+// CHECK-NEXT: sbb:
+// CHECK-NEXT:   0: 66 81 db 00 00                       sbbw $0, %bx
+// CHECK-NEXT:   5: 66 81 1c 25 00 00 00 00 00 00        sbbw $0, 0
+// CHECK-NEXT:   f: 81 db 00 00 00 00                    sbbl $0, %ebx
+// CHECK-NEXT:  15: 81 1c 25 00 00 00 00 00 00 00 00     sbbl $0, 0
+// CHECK-NEXT:  20: 48 81 db 00 00 00 00                 sbbq $0, %rbx
+// CHECK-NEXT:  27: 48 81 1c 25 00 00 00 00 00 00 00 00  sbbq $0, 0
+        .section sbb,"x"
+        sbb  $foo, %bx
+        sbbw $foo, bar
+        sbb  $foo, %ebx
+        sbbl $foo, bar
+        sbb  $foo, %rbx
+        sbbq $foo, bar
