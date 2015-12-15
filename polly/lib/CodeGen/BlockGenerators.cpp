@@ -776,7 +776,7 @@ void VectorBlockGenerator::generateLoad(
     return;
   }
 
-  const MemoryAccess &Access = Stmt.getAccessFor(Load);
+  const MemoryAccess &Access = Stmt.getArrayAccessFor(Load);
 
   // Make sure we have scalar values available to access the pointer to
   // the data location.
@@ -828,7 +828,7 @@ void VectorBlockGenerator::copyBinaryInst(ScopStmt &Stmt, BinaryOperator *Inst,
 void VectorBlockGenerator::copyStore(
     ScopStmt &Stmt, StoreInst *Store, ValueMapT &VectorMap,
     VectorValueMapT &ScalarMaps, __isl_keep isl_id_to_ast_expr *NewAccesses) {
-  const MemoryAccess &Access = Stmt.getAccessFor(Store);
+  const MemoryAccess &Access = Stmt.getArrayAccessFor(Store);
 
   auto *Pointer = Store->getPointerOperand();
   Value *Vector = getVectorValue(Stmt, Store->getValueOperand(), VectorMap,
