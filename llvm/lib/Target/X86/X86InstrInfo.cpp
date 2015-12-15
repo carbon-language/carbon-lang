@@ -4417,7 +4417,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     int AX = is64 ? X86::RAX : X86::EAX;
 
     if (!Subtarget.hasLAHFSAHF()) {
-      assert(is64 && "Not having LAHF/SAHF only happens on 64-bit.");
+      assert(Subtarget.is64Bit() &&
+             "Not having LAHF/SAHF only happens on 64-bit.");
       // Moving EFLAGS to / from another register requires a push and a pop.
       // Notice that we have to adjust the stack if we don't want to clobber the
       // first frame index. See X86FrameLowering.cpp - clobbersTheStack.
