@@ -125,16 +125,25 @@ void ThreadPool::wait() {
   while (!Tasks.empty()) {
     auto Task = std::move(Tasks.front());
     Tasks.pop();
-    Task();
+#ifndef _MSC_VER
+        Task();
+#else
+        Task(/* unused */ false);
+#endif
   }
 }
 
 std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
+#ifndef _MSC_VER
   // Get a Future with launch::deferred execution using std::async
   auto Future = std::async(std::launch::deferred, std::move(Task)).share();
   // Wrap the future so that both ThreadPool::wait() can operate and the
   // returned future can be sync'ed on.
   PackagedTaskTy PackagedTask([Future]() { Future.get(); });
+#else
+  auto Future = std::async(std::launch::deferred, std::move(Task), false).share();
+  PackagedTaskTy PackagedTask([Future](bool) -> bool { Future.get(); return false; });
+#endif
   Tasks.push(std::move(PackagedTask));
   return Future;
 }
