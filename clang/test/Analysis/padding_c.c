@@ -190,13 +190,6 @@ void anonStructFunc() {
   } obj;
 }
 
-// expected-warning@+1{{Excessive padding in 'struct DefaultAttrAlign'}}
-struct DefaultAttrAlign {
-  char c1;
-  long long i;
-  char c2;
-} __attribute__((aligned));
-
 struct CorrectDefaultAttrAlign { // no-warning
   long long i;
   char c1;
