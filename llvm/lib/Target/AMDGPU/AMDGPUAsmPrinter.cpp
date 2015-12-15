@@ -620,6 +620,7 @@ void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
   header.wavefront_sgpr_count = KernelInfo.NumSGPR;
   header.workitem_vgpr_count = KernelInfo.NumVGPR;
   header.workitem_private_segment_byte_size = KernelInfo.ScratchSize;
+  header.workgroup_group_segment_byte_size = KernelInfo.LDSSize;
 
   AMDGPUTargetStreamer *TS =
       static_cast<AMDGPUTargetStreamer *>(OutStreamer->getTargetStreamer());
