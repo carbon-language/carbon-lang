@@ -61,6 +61,10 @@ protected:
   ThreadPoolTest() {
     // Add unsupported configuration here, example:
     //   UnsupportedArchs.push_back(Triple::x86_64);
+
+    // See https://llvm.org/bugs/show_bug.cgi?id=25829
+    UnsupportedArchs.push_back(Triple::ppc64le);
+    UnsupportedArchs.push_back(Triple::ppc64);
   }
 };
 
