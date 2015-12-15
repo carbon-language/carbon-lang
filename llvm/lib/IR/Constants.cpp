@@ -1154,8 +1154,7 @@ ArrayRef<unsigned> ConstantExpr::getIndices() const {
 }
 
 unsigned ConstantExpr::getPredicate() const {
-  assert(isCompare());
-  return ((const CompareConstantExpr*)this)->predicate;
+  return cast<CompareConstantExpr>(this)->predicate;
 }
 
 /// getWithOperandReplaced - Return a constant expression identical to this
