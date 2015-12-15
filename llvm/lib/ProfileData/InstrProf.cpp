@@ -102,6 +102,15 @@ std::string getPGOFuncName(const Function &F, uint64_t Version) {
                         Version);
 }
 
+StringRef getFuncNameWithoutPrefix(StringRef PGOFuncName, StringRef FileName) {
+  if (FileName.empty())
+    return PGOFuncName;
+  // Drop the file name including ':'. See also getPGOFuncName.
+  if (PGOFuncName.startswith(FileName))
+    PGOFuncName = PGOFuncName.drop_front(FileName.size() + 1);
+  return PGOFuncName;
+}
+
 // \p FuncName is the string used as profile lookup key for the function. A
 // symbol is created to hold the name. Return the legalized symbol name.
 static std::string getPGOFuncNameVarName(StringRef FuncName,

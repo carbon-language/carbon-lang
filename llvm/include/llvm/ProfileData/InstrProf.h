@@ -156,6 +156,10 @@ GlobalVariable *createPGOFuncNameVar(Module &M,
                                      GlobalValue::LinkageTypes Linkage,
                                      StringRef FuncName);
 
+/// Given a PGO function name, remove the filename prefix and return
+/// the original (static) function name.
+StringRef getFuncNameWithoutPrefix(StringRef PGOFuncName, StringRef FileName);
+
 const std::error_category &instrprof_category();
 
 enum class instrprof_error {
