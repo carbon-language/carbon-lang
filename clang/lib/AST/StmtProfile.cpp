@@ -472,6 +472,9 @@ void OMPClauseProfiler::VisitOMPGrainsizeClause(const OMPGrainsizeClause *C) {
 void OMPClauseProfiler::VisitOMPNumTasksClause(const OMPNumTasksClause *C) {
   Profiler->VisitStmt(C->getNumTasks());
 }
+void OMPClauseProfiler::VisitOMPHintClause(const OMPHintClause *C) {
+  Profiler->VisitStmt(C->getHint());
+}
 }
 
 void

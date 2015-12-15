@@ -1153,18 +1153,22 @@ class OMPCriticalDirective : public OMPExecutableDirective {
   /// \param Name Name of the directive.
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending location of the directive.
+  /// \param NumClauses Number of clauses.
   ///
   OMPCriticalDirective(const DeclarationNameInfo &Name, SourceLocation StartLoc,
-                       SourceLocation EndLoc)
+                       SourceLocation EndLoc, unsigned NumClauses)
       : OMPExecutableDirective(this, OMPCriticalDirectiveClass, OMPD_critical,
-                               StartLoc, EndLoc, 0, 1),
+                               StartLoc, EndLoc, NumClauses, 1),
         DirName(Name) {}
 
   /// \brief Build an empty directive.
   ///
-  explicit OMPCriticalDirective()
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPCriticalDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPCriticalDirectiveClass, OMPD_critical,
-                               SourceLocation(), SourceLocation(), 0, 1),
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1),
         DirName() {}
 
   /// \brief Set name of the directive.
@@ -1180,17 +1184,21 @@ public:
   /// \param Name Name of the directive.
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
+  /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
   ///
   static OMPCriticalDirective *
   Create(const ASTContext &C, const DeclarationNameInfo &Name,
-         SourceLocation StartLoc, SourceLocation EndLoc, Stmt *AssociatedStmt);
+         SourceLocation StartLoc, SourceLocation EndLoc,
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
 
   /// \brief Creates an empty directive.
   ///
   /// \param C AST context.
+  /// \param NumClauses Number of clauses.
   ///
-  static OMPCriticalDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+  static OMPCriticalDirective *CreateEmpty(const ASTContext &C,
+                                           unsigned NumClauses, EmptyShell);
 
   /// \brief Return name of the directive.
   ///

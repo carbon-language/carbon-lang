@@ -312,22 +312,27 @@ OMPMasterDirective *OMPMasterDirective::CreateEmpty(const ASTContext &C,
 
 OMPCriticalDirective *OMPCriticalDirective::Create(
     const ASTContext &C, const DeclarationNameInfo &Name,
-    SourceLocation StartLoc, SourceLocation EndLoc, Stmt *AssociatedStmt) {
+    SourceLocation StartLoc, SourceLocation EndLoc,
+    ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt) {
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCriticalDirective),
-                                           llvm::alignOf<Stmt *>());
-  void *Mem = C.Allocate(Size + sizeof(Stmt *));
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem =
+      C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() + sizeof(Stmt *));
   OMPCriticalDirective *Dir =
-      new (Mem) OMPCriticalDirective(Name, StartLoc, EndLoc);
+      new (Mem) OMPCriticalDirective(Name, StartLoc, EndLoc, Clauses.size());
+  Dir->setClauses(Clauses);
   Dir->setAssociatedStmt(AssociatedStmt);
   return Dir;
 }
 
 OMPCriticalDirective *OMPCriticalDirective::CreateEmpty(const ASTContext &C,
+                                                        unsigned NumClauses,
                                                         EmptyShell) {
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCriticalDirective),
-                                           llvm::alignOf<Stmt *>());
-  void *Mem = C.Allocate(Size + sizeof(Stmt *));
-  return new (Mem) OMPCriticalDirective();
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem =
+      C.Allocate(Size + sizeof(OMPClause *) * NumClauses + sizeof(Stmt *));
+  return new (Mem) OMPCriticalDirective(NumClauses);
 }
 
 OMPParallelForDirective *OMPParallelForDirective::Create(

@@ -7932,6 +7932,14 @@ def err_omp_grainsize_num_tasks_mutually_exclusive : Error<
   "'%0' and '%1' clause are mutually exclusive and may not appear on the same directive">;
 def note_omp_previous_grainsize_num_tasks : Note<
   "'%0' clause is specified here">;
+def err_omp_hint_clause_no_name : Error<
+  "the name of the construct must be specified in presence of 'hint' clause">;
+def err_omp_critical_with_hint : Error<
+  "constructs with the same name must have a 'hint' clause with the same value">;
+def note_omp_critical_hint_here : Note<
+  "%select{|previous }0'hint' clause with value '%1'">;
+def note_omp_critical_no_hint : Note<
+  "%select{|previous }0directive with no 'hint' clause specified">;
 def err_omp_firstprivate_distribute_private_teams : Error<
   "private variable in '#pragma omp teams' cannot be firstprivate in '#pragma omp distribute'">;
 def err_omp_firstprivate_and_lastprivate_in_distribute : Error<

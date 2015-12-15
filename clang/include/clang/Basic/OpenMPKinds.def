@@ -75,6 +75,9 @@
 #ifndef OPENMP_TASKLOOP_SIMD_CLAUSE
 #  define OPENMP_TASKLOOP_SIMD_CLAUSE(Name)
 #endif
+#ifndef OPENMP_CRITICAL_CLAUSE
+#  define OPENMP_CRITICAL_CLAUSE(Name)
+#endif
 #ifndef OPENMP_DISTRIBUTE_CLAUSE
 #define OPENMP_DISTRIBUTE_CLAUSE(Name)
 #endif
@@ -168,6 +171,7 @@ OPENMP_CLAUSE(priority, OMPPriorityClause)
 OPENMP_CLAUSE(grainsize, OMPGrainsizeClause)
 OPENMP_CLAUSE(nogroup, OMPNogroupClause)
 OPENMP_CLAUSE(num_tasks, OMPNumTasksClause)
+OPENMP_CLAUSE(hint, OMPHintClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -393,6 +397,9 @@ OPENMP_TASKLOOP_SIMD_CLAUSE(grainsize)
 OPENMP_TASKLOOP_SIMD_CLAUSE(nogroup)
 OPENMP_TASKLOOP_SIMD_CLAUSE(num_tasks)
 
+// Clauses allowed for OpenMP directive 'critical'.
+OPENMP_CRITICAL_CLAUSE(hint)
+
 // Clauses allowed for OpenMP directive 'distribute'
 OPENMP_DISTRIBUTE_CLAUSE(private)
 OPENMP_DISTRIBUTE_CLAUSE(firstprivate)
@@ -409,6 +416,7 @@ OPENMP_DISTRIBUTE_CLAUSE(collapse)
 #undef OPENMP_DIRECTIVE
 #undef OPENMP_DIRECTIVE_EXT
 #undef OPENMP_CLAUSE
+#undef OPENMP_CRITICAL_CLAUSE
 #undef OPENMP_ORDERED_CLAUSE
 #undef OPENMP_CANCEL_CLAUSE
 #undef OPENMP_SINGLE_CLAUSE

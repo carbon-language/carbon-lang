@@ -91,6 +91,8 @@ private:
   typedef llvm::SmallDenseMap<VarDecl *, DeclRefExpr *, 64> AlignedMapTy;
   typedef llvm::DenseSet<VarDecl *> LoopControlVariablesSetTy;
   typedef llvm::SmallDenseMap<VarDecl *, MapInfo, 64> MappedDeclsTy;
+  typedef llvm::StringMap<std::pair<OMPCriticalDirective *, llvm::APSInt>>
+      CriticalsWithHintsTy;
 
   struct SharingMapTy {
     DeclSAMapTy SharingMap;
@@ -133,6 +135,7 @@ private:
   OpenMPClauseKind ClauseKindMode;
   Sema &SemaRef;
   bool ForceCapturing;
+  CriticalsWithHintsTy Criticals;
 
   typedef SmallVector<SharingMapTy, 8>::reverse_iterator reverse_iterator;
 
@@ -163,6 +166,16 @@ public:
     Stack.pop_back();
   }
 
+  void addCriticalWithHint(OMPCriticalDirective *D, llvm::APSInt Hint) {
+    Criticals[D->getDirectiveName().getAsString()] = std::make_pair(D, Hint);
+  }
+  const std::pair<OMPCriticalDirective *, llvm::APSInt>
+  getCriticalWithHint(const DeclarationNameInfo &Name) const {
+    auto I = Criticals.find(Name.getAsString());
+    if (I != Criticals.end())
+      return I->second;
+    return std::make_pair(nullptr, llvm::APSInt());
+  }
   /// \brief If 'aligned' declaration for given variable \a D was not seen yet,
   /// add it and return NULL; otherwise return previous occurrence's expression
   /// for diagnostics.
@@ -2521,9 +2534,8 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
     Res = ActOnOpenMPMasterDirective(AStmt, StartLoc, EndLoc);
     break;
   case OMPD_critical:
-    assert(ClausesWithImplicit.empty() &&
-           "No clauses are allowed for 'omp critical' directive");
-    Res = ActOnOpenMPCriticalDirective(DirName, AStmt, StartLoc, EndLoc);
+    Res = ActOnOpenMPCriticalDirective(DirName, ClausesWithImplicit, AStmt,
+                                       StartLoc, EndLoc);
     break;
   case OMPD_parallel_for:
     Res = ActOnOpenMPParallelForDirective(ClausesWithImplicit, AStmt, StartLoc,
@@ -4301,19 +4313,62 @@ StmtResult Sema::ActOnOpenMPMasterDirective(Stmt *AStmt,
   return OMPMasterDirective::Create(Context, StartLoc, EndLoc, AStmt);
 }
 
-StmtResult
-Sema::ActOnOpenMPCriticalDirective(const DeclarationNameInfo &DirName,
-                                   Stmt *AStmt, SourceLocation StartLoc,
-                                   SourceLocation EndLoc) {
+StmtResult Sema::ActOnOpenMPCriticalDirective(
+    const DeclarationNameInfo &DirName, ArrayRef<OMPClause *> Clauses,
+    Stmt *AStmt, SourceLocation StartLoc, SourceLocation EndLoc) {
   if (!AStmt)
     return StmtError();
 
   assert(isa<CapturedStmt>(AStmt) && "Captured statement expected");
 
+  bool ErrorFound = false;
+  llvm::APSInt Hint;
+  SourceLocation HintLoc;
+  bool DependentHint = false;
+  for (auto *C : Clauses) {
+    if (C->getClauseKind() == OMPC_hint) {
+      if (!DirName.getName()) {
+        Diag(C->getLocStart(), diag::err_omp_hint_clause_no_name);
+        ErrorFound = true;
+      }
+      Expr *E = cast<OMPHintClause>(C)->getHint();
+      if (E->isTypeDependent() || E->isValueDependent() ||
+          E->isInstantiationDependent())
+        DependentHint = true;
+      else {
+        Hint = E->EvaluateKnownConstInt(Context);
+        HintLoc = C->getLocStart();
+      }
+    }
+  }
+  if (ErrorFound)
+    return StmtError();
+  auto Pair = DSAStack->getCriticalWithHint(DirName);
+  if (Pair.first && DirName.getName() && !DependentHint) {
+    if (llvm::APSInt::compareValues(Hint, Pair.second) != 0) {
+      Diag(StartLoc, diag::err_omp_critical_with_hint);
+      if (HintLoc.isValid()) {
+        Diag(HintLoc, diag::note_omp_critical_hint_here)
+            << 0 << Hint.toString(/*Radix=*/10, /*Signed=*/false);
+      } else
+        Diag(StartLoc, diag::note_omp_critical_no_hint) << 0;
+      if (auto *C = Pair.first->getSingleClause<OMPHintClause>()) {
+        Diag(C->getLocStart(), diag::note_omp_critical_hint_here)
+            << 1
+            << C->getHint()->EvaluateKnownConstInt(Context).toString(
+                   /*Radix=*/10, /*Signed=*/false);
+      } else
+        Diag(Pair.first->getLocStart(), diag::note_omp_critical_no_hint) << 1;
+    }
+  }
+
   getCurFunction()->setHasBranchProtectedScope();
 
-  return OMPCriticalDirective::Create(Context, DirName, StartLoc, EndLoc,
-                                      AStmt);
+  auto *Dir = OMPCriticalDirective::Create(Context, DirName, StartLoc, EndLoc,
+                                           Clauses, AStmt);
+  if (!Pair.first && DirName.getName() && !DependentHint)
+    DSAStack->addCriticalWithHint(Dir, Hint);
+  return Dir;
 }
 
 StmtResult Sema::ActOnOpenMPParallelForDirective(
@@ -5507,6 +5562,9 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_num_tasks:
     Res = ActOnOpenMPNumTasksClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_hint:
+    Res = ActOnOpenMPHintClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_default:
   case OMPC_proc_bind:
@@ -5814,6 +5872,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_num_tasks:
+  case OMPC_hint:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5950,6 +6009,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_num_tasks:
+  case OMPC_hint:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6090,6 +6150,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_priority:
   case OMPC_grainsize:
   case OMPC_num_tasks:
+  case OMPC_hint:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6230,6 +6291,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_num_tasks:
+  case OMPC_hint:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -8226,5 +8288,18 @@ OMPClause *Sema::ActOnOpenMPNumTasksClause(Expr *NumTasks,
     return nullptr;
 
   return new (Context) OMPNumTasksClause(ValExpr, StartLoc, LParenLoc, EndLoc);
+}
+
+OMPClause *Sema::ActOnOpenMPHintClause(Expr *Hint, SourceLocation StartLoc,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation EndLoc) {
+  // OpenMP [2.13.2, critical construct, Description]
+  // ... where hint-expression is an integer constant expression that evaluates
+  // to a valid lock hint.
+  ExprResult HintExpr = VerifyPositiveIntegerConstantInClause(Hint, OMPC_hint);
+  if (HintExpr.isInvalid())
+    return nullptr;
+  return new (Context)
+      OMPHintClause(HintExpr.get(), StartLoc, LParenLoc, EndLoc);
 }
 

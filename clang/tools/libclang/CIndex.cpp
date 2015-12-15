@@ -2100,6 +2100,10 @@ void OMPClauseEnqueue::VisitOMPNumTasksClause(const OMPNumTasksClause *C) {
   Visitor->AddStmt(C->getNumTasks());
 }
 
+void OMPClauseEnqueue::VisitOMPHintClause(const OMPHintClause *C) {
+  Visitor->AddStmt(C->getHint());
+}
+
 template<typename T>
 void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
   for (const auto *I : Node->varlists()) {
