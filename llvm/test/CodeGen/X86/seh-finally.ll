@@ -18,7 +18,7 @@ invoke.cont:                                      ; preds = %entry
 
 lpad:                                             ; preds = %entry
   %p = cleanuppad within none []
-  %call2 = call i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str_recovered, i64 0, i64 0))
+  %call2 = call i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str_recovered, i64 0, i64 0)) [ "funclet"(token %p) ]
   cleanupret from %p unwind to caller
 }
 

@@ -1571,6 +1571,15 @@ caller's deoptimization state to the callee's deoptimization state is
 semantically equivalent to composing the caller's deoptimization
 continuation after the callee's deoptimization continuation.
 
+Funclet Operand Bundles
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Funclet operand bundles are characterized by the ``"funclet"``
+operand bundle tag.  These operand bundles indicate that a call site
+is within a particular funclet.  There can be at most one
+``"funclet"`` operand bundle attached to a call site and it must have
+exactly one bundle operand.
+
 .. _moduleasm:
 
 Module-Level Inline Assembly

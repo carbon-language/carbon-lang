@@ -69,7 +69,7 @@ __except:                                         ; preds = %catch.dispatch
 
 ehcleanup:                                        ; preds = %__except.2
   %cp2 = cleanuppad within none []
-  invoke fastcc void @"\01?fin$0@0@main@@"() #4
+  invoke fastcc void @"\01?fin$0@0@main@@"() #4 [ "funclet"(token %cp2) ]
           to label %invoke.cont.6 unwind label %catch.dispatch.7
 
 invoke.cont.6:                                    ; preds = %ehcleanup
