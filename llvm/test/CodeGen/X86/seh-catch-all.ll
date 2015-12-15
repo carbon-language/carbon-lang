@@ -36,6 +36,7 @@ catchall:
 ; CHECK: callq printf
 
 ; CHECK: .seh_handlerdata
+; CHECK-NEXT: .Lmain$parent_frame_offset
 ; CHECK-NEXT: .long (.Llsda_end0-.Llsda_begin0)/16
 ; CHECK-NEXT: .Llsda_begin0:
 ; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL

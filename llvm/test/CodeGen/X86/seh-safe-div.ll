@@ -78,6 +78,7 @@ __try.cont:
 ; CHECK: jmp [[cont_bb]]
 
 ; CHECK: .seh_handlerdata
+; CHECK-NEXT: .Lsafe_div$parent_frame_offset
 ; CHECK-NEXT: .long (.Llsda_end0-.Llsda_begin0)/16
 ; CHECK-NEXT: .Llsda_begin0:
 ; CHECK-NEXT: .long .Ltmp0@IMGREL+1

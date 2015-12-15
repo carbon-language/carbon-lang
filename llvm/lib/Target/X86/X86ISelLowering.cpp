@@ -16173,12 +16173,12 @@ static int getSEHRegistrationNodeSize(const Function *Fn) {
       "can only recover FP for 32-bit MSVC EH personality functions");
 }
 
-/// When the 32-bit MSVC runtime transfers control to us, either to an outlined
+/// When the MSVC runtime transfers control to us, either to an outlined
 /// function or when returning to a parent frame after catching an exception, we
 /// recover the parent frame pointer by doing arithmetic on the incoming EBP.
 /// Here's the math:
 ///   RegNodeBase = EntryEBP - RegNodeSize
-///   ParentFP = RegNodeBase - RegNodeFrameOffset
+///   ParentFP = RegNodeBase - ParentFrameOffset
 /// Subtracting RegNodeSize takes us to the offset of the registration node, and
 /// subtracting the offset (negative on x86) takes us back to the parent FP.
 static SDValue recoverFramePointer(SelectionDAG &DAG, const Function *Fn,
@@ -16195,22 +16195,28 @@ static SDValue recoverFramePointer(SelectionDAG &DAG, const Function *Fn,
   if (!Fn->hasPersonalityFn())
     return EntryEBP;
 
-  int RegNodeSize = getSEHRegistrationNodeSize(Fn);
-
   // Get an MCSymbol that will ultimately resolve to the frame offset of the EH
-  // registration.
+  // registration, or the .set_setframe offset.
   MCSymbol *OffsetSym =
       MF.getMMI().getContext().getOrCreateParentFrameOffsetSymbol(
           GlobalValue::getRealLinkageName(Fn->getName()));
   SDValue OffsetSymVal = DAG.getMCSymbol(OffsetSym, PtrVT);
-  SDValue RegNodeFrameOffset =
+  SDValue ParentFrameOffset =
       DAG.getNode(ISD::LOCAL_RECOVER, dl, PtrVT, OffsetSymVal);
 
+  // Return EntryEBP + ParentFrameOffset for x64. This adjusts from RSP after
+  // prologue to RBP in the parent function.
+  const X86Subtarget &Subtarget =
+      static_cast<const X86Subtarget &>(DAG.getSubtarget());
+  if (Subtarget.is64Bit())
+    return DAG.getNode(ISD::ADD, dl, PtrVT, EntryEBP, ParentFrameOffset);
+
+  int RegNodeSize = getSEHRegistrationNodeSize(Fn);
   // RegNodeBase = EntryEBP - RegNodeSize
-  // ParentFP = RegNodeBase - RegNodeFrameOffset
+  // ParentFP = RegNodeBase - ParentFrameOffset
   SDValue RegNodeBase = DAG.getNode(ISD::SUB, dl, PtrVT, EntryEBP,
                                     DAG.getConstant(RegNodeSize, dl, PtrVT));
-  return DAG.getNode(ISD::SUB, dl, PtrVT, RegNodeBase, RegNodeFrameOffset);
+  return DAG.getNode(ISD::SUB, dl, PtrVT, RegNodeBase, ParentFrameOffset);
 }
 
 static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
