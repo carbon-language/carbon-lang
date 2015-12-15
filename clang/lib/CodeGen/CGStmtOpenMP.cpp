@@ -1831,8 +1831,12 @@ void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &S) {
     CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     CGF.EnsureInsertPoint();
   };
-  CGM.getOpenMPRuntime().emitCriticalRegion(
-      *this, S.getDirectiveName().getAsString(), CodeGen, S.getLocStart());
+  Expr *Hint = nullptr;
+  if (auto *HintClause = S.getSingleClause<OMPHintClause>())
+    Hint = HintClause->getHint();
+  CGM.getOpenMPRuntime().emitCriticalRegion(*this,
+                                            S.getDirectiveName().getAsString(),
+                                            CodeGen, S.getLocStart(), Hint);
 }
 
 void CodeGenFunction::EmitOMPParallelForDirective(
