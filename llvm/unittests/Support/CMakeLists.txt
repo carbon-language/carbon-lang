@@ -41,7 +41,6 @@ add_llvm_unittest(SupportTests
   SwapByteOrderTest.cpp
   TargetRegistry.cpp
   ThreadLocalTest.cpp
-  ThreadPool.cpp
   TimeValueTest.cpp
   TrailingObjectsTest.cpp
   UnicodeTest.cpp
