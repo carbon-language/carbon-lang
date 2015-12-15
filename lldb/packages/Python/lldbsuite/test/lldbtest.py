@@ -619,10 +619,10 @@ def not_in(iterable):
 def check_list_or_lambda(list_or_lambda, value):
     if six.callable(list_or_lambda):
         return list_or_lambda(value)
-    elif isinstance(list_or_lambda, list):
-        return list_or_lambda is None or value is None or value in list_or_lambda
+    elif isinstance(list_or_lambda, list) or isinstance(list_or_lambda, str):
+        return value is None or value in list_or_lambda
     else:
-        return list_or_lambda == value
+        return list_or_lambda is None or value is None or list_or_lambda == value
 
 # provide a function to xfail on defined oslist, compiler version, and archs
 # if none is specified for any argument, that argument won't be checked and thus means for all
