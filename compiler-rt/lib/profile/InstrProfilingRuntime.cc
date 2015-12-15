@@ -11,8 +11,7 @@ extern "C" {
 
 #include "InstrProfiling.h"
 
-__attribute__((visibility("hidden"))) int __llvm_profile_runtime;
-
+LLVM_LIBRARY_VISIBILITY int __llvm_profile_runtime;
 }
 
 namespace {

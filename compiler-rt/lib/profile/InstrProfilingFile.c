@@ -56,8 +56,8 @@ static int writeFileWithName(const char *OutputName) {
   return RetVal;
 }
 
-__attribute__((weak)) int __llvm_profile_OwnsFilename = 0;
-__attribute__((weak)) const char *__llvm_profile_CurrentFilename = NULL;
+LLVM_LIBRARY_WEAK int __llvm_profile_OwnsFilename = 0;
+LLVM_LIBRARY_WEAK const char *__llvm_profile_CurrentFilename = NULL;
 
 static void truncateCurrentFile(void) {
   const char *Filename;

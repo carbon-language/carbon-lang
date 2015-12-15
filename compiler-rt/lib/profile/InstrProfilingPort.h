@@ -11,12 +11,15 @@
 #define PROFILE_INSTRPROFILING_PORT_H_
 
 #ifdef _MSC_VER
-# define LLVM_ALIGNAS(x) __declspec(align(x))
+#define LLVM_ALIGNAS(x) __declspec(align(x))
+#define LLVM_LIBRARY_VISIBILITY
+#define LLVM_LIBRARY_WEAK __declspec(selectany)
 #elif __GNUC__
 #define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
+#define LLVM_LIBRARY_VISIBILITY __attribute__((visibility("hidden")))
+#define LLVM_LIBRARY_WEAK __attribute__((weak))
 #endif
 
-#define LLVM_LIBRARY_VISIBILITY __attribute__((visibility("hidden")))
 #define LLVM_SECTION(Sect) __attribute__((section(Sect)))
 
 #define PROF_ERR(Format, ...)                                                  \
