@@ -1023,7 +1023,7 @@ template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
       StringRef FdeData = F.data();
-      memcpy(Buf + Offset, FdeData.data(), 4);              // Legnth
+      memcpy(Buf + Offset, FdeData.data(), 4);              // Length
       write32<E>(Buf + Offset + 4, Offset + 4 - CieOffset); // Pointer
       memcpy(Buf + Offset + 8, FdeData.data() + 8, FdeData.size() - 8);
       F.S->Offsets[F.Index].second = Offset;
