@@ -5468,6 +5468,7 @@ instructions is described in the
 
 Executing a ``catchpad`` instruction constitutes "entering" that pad.
 The pad may then be "exited" in one of three ways:
+
 1)  explicitly via a ``catchret`` that consumes it.  Executing such a ``catchret``
     is undefined behavior if any descendant pads have been entered but not yet
     exited.
@@ -8630,6 +8631,7 @@ The ``cleanuppad`` instruction has several restrictions:
 
 Executing a ``cleanuppad`` instruction constitutes "entering" that pad.
 The pad may then be "exited" in one of three ways:
+
 1)  explicitly via a ``cleanupret`` that consumes it.  Executing such a ``cleanupret``
     is undefined behavior if any descendant pads have been entered but not yet
     exited.
