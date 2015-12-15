@@ -33,11 +33,11 @@ void g() {
 // ITANIUM:   %[[TEST:.*]] = call i1 @llvm.bitset.test(i8* %[[VT2]], metadata !"_ZTS1A"), !nosanitize
 // MS:   %[[TEST:.*]] = call i1 @llvm.bitset.test(i8* %[[VT2]], metadata !"?AUA@@"), !nosanitize
 // CHECK:   br i1 %[[TEST]], label %[[CONT:.*]], label %[[SLOW:.*]], {{.*}} !nosanitize
-// CHECK: [[SLOW]]:
+// CHECK: [[SLOW]]
 // ITANIUM:   call void @__cfi_slowpath(i64 7004155349499253778, i8* %[[VT2]]) {{.*}} !nosanitize
 // MS:   call void @__cfi_slowpath(i64 -8005289897957287421, i8* %[[VT2]]) {{.*}} !nosanitize
 // CHECK:   br label %[[CONT]], !nosanitize
-// CHECK: [[CONT]]:
+// CHECK: [[CONT]]
 // CHECK:   call void %{{.*}}(%struct.A* %{{.*}})
 
 // No hash-based bit set entry for (anonymous namespace)::B
