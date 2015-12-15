@@ -527,7 +527,7 @@ LowerFormalArguments_32(SDValue Chain,
                          "pass indirectly");
     } else {
       // We shouldn't see any other value types here.
-      assert(false && "Unexpected ValVT encountered in frame lowering.");
+      llvm_unreachable("Unexpected ValVT encountered in frame lowering.");
     }
     InVals.push_back(Load);
   }
