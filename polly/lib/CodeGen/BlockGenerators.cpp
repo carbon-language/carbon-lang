@@ -966,6 +966,36 @@ void VectorBlockGenerator::copyInstruction(
   copyInstScalarized(Stmt, Inst, VectorMap, ScalarMaps, NewAccesses);
 }
 
+void VectorBlockGenerator::generateScalarVectorLoads(
+    ScopStmt &Stmt, ValueMapT &VectorBlockMap) {
+  for (MemoryAccess *MA : Stmt) {
+    if (MA->isArrayKind() || MA->isWrite())
+      continue;
+
+    auto *Address = getOrCreateAlloca(*MA);
+    Type *VectorPtrType = getVectorPtrTy(Address, 1);
+    Value *VectorPtr = Builder.CreateBitCast(Address, VectorPtrType,
+                                             Address->getName() + "_p_vec_p");
+    auto *Val = Builder.CreateLoad(VectorPtr, Address->getName() + ".reload");
+    Constant *SplatVector = Constant::getNullValue(
+        VectorType::get(Builder.getInt32Ty(), getVectorWidth()));
+
+    Value *VectorVal = Builder.CreateShuffleVector(
+        Val, Val, SplatVector, Address->getName() + "_p_splat");
+    VectorBlockMap[MA->getBaseAddr()] = VectorVal;
+    VectorVal->dump();
+  }
+}
+
+void VectorBlockGenerator::verifyNoScalarStores(ScopStmt &Stmt) {
+  for (MemoryAccess *MA : Stmt) {
+    if (MA->isArrayKind() || MA->isRead())
+      continue;
+
+    llvm_unreachable("Scalar stores not expected in vector loop");
+  }
+}
+
 void VectorBlockGenerator::copyStmt(
     ScopStmt &Stmt, __isl_keep isl_id_to_ast_expr *NewAccesses) {
   assert(Stmt.isBlockStmt() && "TODO: Only block statements can be copied by "
@@ -994,8 +1024,12 @@ void VectorBlockGenerator::copyStmt(
   VectorValueMapT ScalarBlockMap(getVectorWidth());
   ValueMapT VectorBlockMap;
 
+  generateScalarVectorLoads(Stmt, VectorBlockMap);
+
   for (Instruction &Inst : *BB)
     copyInstruction(Stmt, &Inst, VectorBlockMap, ScalarBlockMap, NewAccesses);
+
+  verifyNoScalarStores(Stmt);
 }
 
 BasicBlock *RegionGenerator::repairDominance(BasicBlock *BB,
