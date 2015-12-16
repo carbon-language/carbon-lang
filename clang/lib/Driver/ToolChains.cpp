@@ -4116,7 +4116,7 @@ void Linux::AddCudaIncludeArgs(const ArgList &DriverArgs,
   if (CudaInstallation.isValid()) {
     addSystemInclude(DriverArgs, CC1Args, CudaInstallation.getIncludePath());
     CC1Args.push_back("-include");
-    CC1Args.push_back("cuda_runtime.h");
+    CC1Args.push_back("__clang_cuda_runtime_wrapper.h");
   }
 }
 
