@@ -3,7 +3,7 @@
 ; This test verifies that SelectionDAG can handle landingPad of token type.
 
 define void @test() personality i32 (...)* @dummy_personality {
-; CHECK: .cfi_personality 155, _dummy_personality
+; CHECK: dummy_personality
 entry:
   invoke void @dummy()
           to label %return unwind label %unwind
