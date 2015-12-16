@@ -72,6 +72,21 @@ define void @X_ptr(i16 ** %t) {
   ret void
 }
 
+; CHECK-LABEL: funcname:
+; CHECK: foo funcname{{$}}
+define void @funcname() {
+  tail call void asm sideeffect "foo $0", "i"(void ()* nonnull @funcname) #0, !srcloc !0
+  ret void
+}
+
+; CHECK-LABEL: varname:
+; CHECK: foo gv+37{{$}}
+@gv = global [0 x i8] zeroinitializer
+define void @varname() {
+  tail call void asm sideeffect "foo $0", "i"(i8* getelementptr inbounds ([0 x i8], [0 x i8]* @gv, i64 0, i64 37)) #0, !srcloc !0
+  ret void
+}
+
 attributes #0 = { nounwind }
 
 !0 = !{i32 47}

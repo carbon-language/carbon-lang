@@ -219,16 +219,36 @@ bool WebAssemblyAsmPrinter::PrintAsmOperand(const MachineInstr *MI,
   if (AsmVariant != 0)
     report_fatal_error("There are no defined alternate asm variants");
 
+  // First try the generic code, which knows about modifiers like 'c' and 'n'.
+  if (!AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, OS))
+    return false;
+
   if (!ExtraCode) {
     const MachineOperand &MO = MI->getOperand(OpNo);
-    if (MO.isImm())
+    switch (MO.getType()) {
+    case MachineOperand::MO_Immediate:
       OS << MO.getImm();
-    else
+      return false;
+    case MachineOperand::MO_Register:
       OS << regToString(MO);
-    return false;
+      return false;
+    case MachineOperand::MO_GlobalAddress:
+      getSymbol(MO.getGlobal())->print(OS, MAI);
+      printOffset(MO.getOffset(), OS);
+      return false;
+    case MachineOperand::MO_ExternalSymbol:
+      GetExternalSymbolSymbol(MO.getSymbolName())->print(OS, MAI);
+      printOffset(MO.getOffset(), OS);
+      return false;
+    case MachineOperand::MO_MachineBasicBlock:
+      MO.getMBB()->getSymbol()->print(OS, MAI);
+      return false;
+    default:
+      break;
+    }
   }
 
-  return AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, OS);
+  return true;
 }
 
 bool WebAssemblyAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
