@@ -631,7 +631,7 @@ LoopInfo::LoopInfo(const DominatorTreeBase<BasicBlock> &DomTree) {
 }
 
 void LoopInfo::updateUnloop(Loop *Unloop) {
-  Unloop->markAsUnloop();
+  Unloop->markUnlooped();
 
   // First handle the special case of no parent loop to simplify the algorithm.
   if (!Unloop->getParentLoop()) {
