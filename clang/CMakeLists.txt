@@ -716,9 +716,10 @@ if (CLANG_ENABLE_BOOTSTRAP)
   ExternalProject_Add_StepTargets(bootstrap really-install)
   add_custom_target(bootstrap-install DEPENDS bootstrap-really-install)
 
-
-  set(ADDITIONAL_TARGETS_TO_ADD check-llvm check-clang check-all)
-  foreach(target ${ADDITIONAL_TARGETS_TO_ADD})
+  if(NOT CLANG_BOOTSTRAP_TARGETS)
+    set(CLANG_BOOTSTRAP_TARGETS check-llvm check-clang check-all)
+  endif()
+  foreach(target ${CLANG_BOOTSTRAP_TARGETS})
     # exclude from main target
     set_target_properties(bootstrap PROPERTIES _EP_${target}_EXCLUDE_FROM_MAIN On)
 
