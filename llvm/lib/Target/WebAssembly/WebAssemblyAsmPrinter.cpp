@@ -91,7 +91,10 @@ private:
 //===----------------------------------------------------------------------===//
 
 MVT WebAssemblyAsmPrinter::getRegType(unsigned RegNo) const {
-  const TargetRegisterClass *TRC = MRI->getRegClass(RegNo);
+  const TargetRegisterClass *TRC =
+      TargetRegisterInfo::isVirtualRegister(RegNo) ?
+      MRI->getRegClass(RegNo) :
+      MRI->getTargetRegisterInfo()->getMinimalPhysRegClass(RegNo);
   for (MVT T : {MVT::i32, MVT::i64, MVT::f32, MVT::f64})
     if (TRC->hasType(T))
       return T;
@@ -182,9 +185,11 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
     Local.addOperand(MCOperand::createImm(getRegType(VReg).SimpleTy));
     AnyWARegs = true;
   }
-  if (MF->getFrameInfo()->getStackSize() > 0) {
-    // TODO: wasm64
-    Local.addOperand(MCOperand::createImm(MVT::i32));
+  auto &PhysRegs = MFI->getPhysRegs();
+  for (unsigned PReg = 0; PReg < PhysRegs.size(); ++PReg) {
+    if (PhysRegs[PReg] == -1U)
+      continue;
+    Local.addOperand(MCOperand::createImm(getRegType(PReg).SimpleTy));
     AnyWARegs = true;
   }
   if (AnyWARegs)
