@@ -66,8 +66,7 @@ private:
   void addMemberFile(Lazy *Body);
   void checkCompatibility(std::unique_ptr<InputFile> &File);
   void resolve(SymbolBody *Body);
-  void reportConflict(const Twine &Message, const SymbolBody &Old,
-                      const SymbolBody &New, bool Warning);
+  std::string conflictMsg(SymbolBody *Old, SymbolBody *New);
 
   std::vector<std::unique_ptr<InputFile>> ArchiveFiles;
 

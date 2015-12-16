@@ -121,14 +121,12 @@ void SymbolTable<ELFT>::addELFFile(ELFFileBase<ELFT> *File) {
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::reportConflict(const Twine &Message,
-                                       const SymbolBody &Old,
-                                       const SymbolBody &New, bool Warning) {
+std::string SymbolTable<ELFT>::conflictMsg(SymbolBody *Old, SymbolBody *New) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
-  const Elf_Sym &OldE = cast<ELFSymbolBody<ELFT>>(Old).Sym;
-  const Elf_Sym &NewE = cast<ELFSymbolBody<ELFT>>(New).Sym;
+  const Elf_Sym &OldE = cast<ELFSymbolBody<ELFT>>(*Old).Sym;
+  const Elf_Sym &NewE = cast<ELFSymbolBody<ELFT>>(*New).Sym;
   ELFFileBase<ELFT> *OldFile = nullptr;
   ELFFileBase<ELFT> *NewFile = nullptr;
 
@@ -140,14 +138,10 @@ void SymbolTable<ELFT>::reportConflict(const Twine &Message,
       NewFile = File.get();
   }
 
-  std::string Msg = (Message + ": " + Old.getName() + " in " +
-                     (OldFile ? OldFile->getName() : "(internal)") + " and " +
-                     (NewFile ? NewFile->getName() : "(internal)"))
-                        .str();
-  if (Warning)
-    warning(Msg);
-  else
-    error(Msg);
+  StringRef Sym = Old->getName();
+  StringRef F1 = OldFile ? OldFile->getName() : "(internal)";
+  StringRef F2 = NewFile ? NewFile->getName() : "(internal)";
+  return (Sym + " in " + F1 + " and " + F2).str();
 }
 
 // This function resolves conflicts if there's an existing symbol with
@@ -178,16 +172,20 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
   }
 
   if (New->isTLS() != Existing->isTLS())
-    reportConflict("TLS attribute mismatch for symbol", *Existing, *New, false);
+    error("TLS attribute mismatch for symbol: " + conflictMsg(Existing, New));
 
   // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
   // equivalent (conflicting), or more preferable, respectively.
   int comp = Existing->compare<ELFT>(New);
+  if (comp == 0) {
+    std::string S = "duplicate symbol: " + conflictMsg(Existing, New);
+    if (!Config->AllowMultipleDefinition)
+      error(S);
+    warning(S);
+    return;
+  }
   if (comp < 0)
     Sym->Body = New;
-  else if (comp == 0)
-    reportConflict("duplicate symbol", *Existing, *New,
-                   Config->AllowMultipleDefinition);
 }
 
 template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
