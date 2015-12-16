@@ -142,16 +142,17 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     if (BC.MIA->isCall(Instruction)) {
       if (BC.MIA->isTailCall(Instruction))
         OS << " # TAILCALL ";
-      // FIXME: Print EH handlers correctly in presence of indirect calls
-//      if (Instruction.getNumOperands() > 1) {
-//        OS << " # handler: ";
-//        if (Instruction.getOperand(1).isExpr())
-//          OS << cast<MCSymbolRefExpr>(Instruction.getOperand(1).getExpr())->
-//                                                                      getSymbol();
-//        else
-//          OS << '0';
-//        OS << "; action: " << Instruction.getOperand(2).getImm();
-//      }
+      if (BC.MIA->isInvoke(Instruction)) {
+        const MCSymbol *LP;
+        uint64_t Action;
+        std::tie(LP, Action) = BC.MIA->getEHInfo(Instruction);
+        OS << " # handler: ";
+        if (LP)
+          OS << *LP;
+        else
+          OS << '0';
+        OS << "; action: " << Action;
+      }
     }
     OS << "\n";
     // In case we need MCInst printer:

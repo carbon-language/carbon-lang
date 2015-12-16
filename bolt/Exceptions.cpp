@@ -126,14 +126,15 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
       errs() << "TType End = " << TTypeEnd << '\n';
     }
 
-    // Table to store list of indices in type table. Entries are uleb128s values.
+    // Table to store list of indices in type table. Entries are uleb128 values.
     auto TypeIndexTableStart = Ptr + TTypeEnd;
 
     // Offset past the last decoded index.
     intptr_t MaxTypeIndexTableOffset = 0;
 
-    // The actual type info table starts at the same location, but grows in
-    // different direction. Encoding is different too (TTypeEncoding).
+    // The actual type info table starts at the same location as index table,
+    // but grows in a different direction. It also uses a different encoding -
+    // specified by TTypeEncoding.
     auto TypeTableStart = reinterpret_cast<const uint32_t *>(Ptr + TTypeEnd);
 
     uint8_t       CallSiteEncoding = *Ptr++;
@@ -254,7 +255,7 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
 
 void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
                                uint64_t LSDASectionAddress) {
-  assert(CurrentState == State::Disassembled && "unexpecrted function state");
+  assert(CurrentState == State::Disassembled && "unexpected function state");
 
   if (!getLSDAAddress())
     return;
@@ -286,7 +287,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     errs() << "TType End = " << TTypeEnd << '\n';
   }
 
-  // Table to store list of indices in type table. Entries are uleb128s values.
+  // Table to store list of indices in type table. Entries are uleb128 values.
   auto TypeIndexTableStart = Ptr + TTypeEnd;
 
   // Offset past the last decoded index.
@@ -453,20 +454,16 @@ void BinaryFunction::updateEHRanges() {
         continue;
 
       // Instruction can throw an exception that should be handled.
-      bool Throws = Instr.getNumOperands() > 1;
+      bool Throws = BC.MIA->isInvoke(Instr);
 
       // Ignore the call if it's a continuation of a no-throw gap.
       if (!Throws && !StartRange)
         continue;
 
       // Extract exception handling information from the instruction.
-      const MCSymbol *LP =
-        Throws ? (Instr.getOperand(1).isExpr()
-                   ? &(cast<MCSymbolRefExpr>(
-                                    Instr.getOperand(1).getExpr())->getSymbol())
-                   : nullptr)
-               : nullptr;
-      uint64_t Action = Throws ? Instr.getOperand(2).getImm() : 0;
+      const MCSymbol *LP = nullptr;
+      uint64_t Action = 0;
+      std::tie(LP, Action) = BC.MIA->getEHInfo(Instr);
 
       // No action if the exception handler has not changed.
       if (Throws &&

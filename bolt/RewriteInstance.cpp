@@ -634,8 +634,6 @@ void RewriteInstance::disassembleFunctions() {
     // Fill in CFI information for this function
     if (EHFrame->ParseError.empty() && Function.isSimple()) {
       CFIRdWrt->fillCFIInfoFor(Function);
-      if (Function.getLSDAAddress() != 0)
-        Function.setSimple(false);
     }
 
     // Parse LSDA.
@@ -754,13 +752,18 @@ void RewriteInstance::runOptimizationPasses() {
     }
 
     // Post-processing passes.
-    // FIXME: Check EH handlers correctly in presence of indirect calls
-    //    Function.updateEHRanges();
-    //    if (opts::PrintAll || opts::PrintEHRanges) {
-    //      Function.print(errs(), "after updating EH ranges");
-    //    }
 
-    // After optimizations, fix the CFI state
+    // Update exception handling information.
+    Function.updateEHRanges();
+    if (opts::PrintAll || opts::PrintEHRanges) {
+      Function.print(errs(), "after updating EH ranges");
+    }
+
+    // TODO: add complete EH ranges support.
+    if (Function.hasEHRanges())
+      Function.setSimple(false);
+
+    // Fix the CFI state.
     if (!Function.fixCFIState())
       Function.setSimple(false);
   }

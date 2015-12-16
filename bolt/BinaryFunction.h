@@ -650,6 +650,9 @@ public:
   /// Update exception handling ranges for the function.
   void updateEHRanges();
 
+  /// Return true if the function has exception handling tables.
+  bool hasEHRanges() const { return !CallSites.empty(); }
+
   virtual ~BinaryFunction() {}
 };
 
