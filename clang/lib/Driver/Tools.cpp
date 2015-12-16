@@ -6439,6 +6439,34 @@ void amdgpu::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 }
 // AMDGPU tools end.
 
+wasm::Linker::Linker(const ToolChain &TC)
+  : GnuTool("wasm::Linker", "lld", TC) {}
+
+bool wasm::Linker::isLinkJob() const {
+  return true;
+}
+
+bool wasm::Linker::hasIntegratedCPP() const {
+  return false;
+}
+
+void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
+                                const InputInfo &Output,
+                                const InputInfoList &Inputs,
+                                const ArgList &Args,
+                                const char *LinkingOutput) const {
+  const char *Linker = Args.MakeArgString(getToolChain().GetLinkerPath());
+  ArgStringList CmdArgs;
+  CmdArgs.push_back("-flavor");
+  CmdArgs.push_back("ld");
+  CmdArgs.push_back("-target");
+  CmdArgs.push_back(Args.MakeArgString(getToolChain().getTripleString()));
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Linker, CmdArgs, Inputs));
+}
+
 const std::string arm::getARMArch(StringRef Arch, const llvm::Triple &Triple) {
   std::string MArch;
   if (!Arch.empty())
