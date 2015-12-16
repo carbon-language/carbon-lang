@@ -462,13 +462,13 @@ static const MachineOperand &getPostIncrementOperand(const MachineInstr *MI,
       return MO;
 #else
   if (MI->mayLoad()) {
-    MachineOperand &Op1 = MI->getOperand(1);
+    const MachineOperand &Op1 = MI->getOperand(1);
     // The 2nd operand is always the post increment operand in load.
     assert(Op1.isReg() && "Post increment operand has be to a register.");
     return Op1;
   }
   if (MI->getDesc().mayStore()) {
-    MachineOperand &Op0 = MI->getOperand(0);
+    const MachineOperand &Op0 = MI->getOperand(0);
     // The 1st operand is always the post increment operand in store.
     assert(Op0.isReg() && "Post increment operand has be to a register.");
     return Op0;
@@ -1162,16 +1162,11 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
     MachineInstr *NextMI = NextMII;
 
     bool secondRegMatch = false;
-    bool maintainNewValueJump = false;
     const MachineOperand &NOp0 = NextMI->getOperand(0);
     const MachineOperand &NOp1 = NextMI->getOperand(1);
 
-    if (NOp1.isReg() && I->getOperand(0).getReg() == NOp1.getReg()) {
+    if (NOp1.isReg() && I->getOperand(0).getReg() == NOp1.getReg())
       secondRegMatch = true;
-      maintainNewValueJump = true;
-    } else if (I->getOperand(0).getReg() == NOp0.getReg()) {
-      maintainNewValueJump = true;
-    }
 
     for (auto I : CurrentPacketMIs) {
       SUnit *PacketSU = MIToSUnit.find(I)->second;
