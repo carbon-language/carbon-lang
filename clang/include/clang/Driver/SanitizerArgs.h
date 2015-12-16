@@ -55,6 +55,7 @@ class SanitizerArgs {
     return Sanitizers.has(SanitizerKind::SafeStack);
   }
   bool needsCfiRt() const;
+  bool needsCfiDiagRt() const;
 
   bool requiresPIE() const;
   bool needsUnwindTables() const;

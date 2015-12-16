@@ -317,7 +317,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-CFI-CROSS-DSO-LINUX %s
 // CHECK-CFI-CROSS-DSO-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-CFI-CROSS-DSO-LINUX-NOT: libclang_rt.
-// CHECK-CFI-CROSS-DSO-LINUX: libclang_rt.cfi
+// CHECK-CFI-CROSS-DSO-LINUX: libclang_rt.cfi-
 // CHECK-CFI-CROSS-DSO-LINUX-NOT: libclang_rt.
 
 // Cross-DSO CFI with diagnostics links just the CFI runtime.
@@ -328,7 +328,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-CFI-CROSS-DSO-DIAG-LINUX %s
 // CHECK-CFI-CROSS-DSO-DIAG-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-CFI-CROSS-DSO-DIAG-LINUX-NOT: libclang_rt.
-// CHECK-CFI-CROSS-DSO-DIAG-LINUX: libclang_rt.cfi
+// CHECK-CFI-CROSS-DSO-DIAG-LINUX: libclang_rt.cfi_diag-
 // CHECK-CFI-CROSS-DSO-DIAG-LINUX-NOT: libclang_rt.
 
 // RUN: %clangxx -fsanitize=address %s -### -o %t.o 2>&1 \

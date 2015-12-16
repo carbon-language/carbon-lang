@@ -165,7 +165,11 @@ bool SanitizerArgs::needsUbsanRt() const {
 }
 
 bool SanitizerArgs::needsCfiRt() const {
-  return CfiCrossDso;
+  return !(Sanitizers.Mask & CFI & ~TrapSanitizers.Mask) && CfiCrossDso;
+}
+
+bool SanitizerArgs::needsCfiDiagRt() const {
+  return (Sanitizers.Mask & CFI & ~TrapSanitizers.Mask) && CfiCrossDso;
 }
 
 bool SanitizerArgs::requiresPIE() const {
