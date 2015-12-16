@@ -18,7 +18,7 @@
 
 char *(*GetEnvHook)(const char *) = 0;
 
-LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
+COMPILER_RT_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
   return sizeof(void *) == sizeof(uint64_t) ? (INSTR_PROF_RAW_MAGIC_64)
                                             : (INSTR_PROF_RAW_MAGIC_32);
 }
@@ -26,16 +26,16 @@ LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
 /* Return the number of bytes needed to add to SizeInBytes to make it
  *   the result a multiple of 8.
  */
-LLVM_LIBRARY_VISIBILITY uint8_t
+COMPILER_RT_VISIBILITY uint8_t
 __llvm_profile_get_num_padding_bytes(uint64_t SizeInBytes) {
   return 7 & (sizeof(uint64_t) - SizeInBytes % sizeof(uint64_t));
 }
 
-LLVM_LIBRARY_VISIBILITY uint64_t __llvm_profile_get_version(void) {
+COMPILER_RT_VISIBILITY uint64_t __llvm_profile_get_version(void) {
   return INSTR_PROF_RAW_VERSION;
 }
 
-LLVM_LIBRARY_VISIBILITY void __llvm_profile_reset_counters(void) {
+COMPILER_RT_VISIBILITY void __llvm_profile_reset_counters(void) {
   uint64_t *I = __llvm_profile_begin_counters();
   uint64_t *E = __llvm_profile_end_counters();
 

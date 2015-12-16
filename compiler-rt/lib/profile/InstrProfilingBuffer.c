@@ -12,7 +12,7 @@
 
 #include <string.h>
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 uint64_t __llvm_profile_get_size_for_buffer(void) {
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
   const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
@@ -27,7 +27,7 @@ uint64_t __llvm_profile_get_size_for_buffer(void) {
 
 #define PROFILE_RANGE_SIZE(Range) (Range##End - Range##Begin)
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 uint64_t __llvm_profile_get_size_for_buffer_internal(
     const __llvm_profile_data *DataBegin, const __llvm_profile_data *DataEnd,
     const uint64_t *CountersBegin, const uint64_t *CountersEnd,
@@ -55,12 +55,11 @@ static uint32_t bufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
   return 0;
 }
 
-LLVM_LIBRARY_VISIBILITY int
-__llvm_profile_write_buffer(char *Buffer) {
+COMPILER_RT_VISIBILITY int __llvm_profile_write_buffer(char *Buffer) {
   return llvmWriteProfData(bufferWriter, Buffer, 0, 0);
 }
 
-LLVM_LIBRARY_VISIBILITY int __llvm_profile_write_buffer_internal(
+COMPILER_RT_VISIBILITY int __llvm_profile_write_buffer_internal(
     char *Buffer, const __llvm_profile_data *DataBegin,
     const __llvm_profile_data *DataEnd, const uint64_t *CountersBegin,
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd) {

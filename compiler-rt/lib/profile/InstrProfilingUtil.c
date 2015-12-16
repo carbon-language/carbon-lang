@@ -19,7 +19,7 @@ int mkdir(const char*, unsigned short);
 #include <sys/types.h>
 #endif
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 void __llvm_profile_recursive_mkdir(char *path) {
   int i;
 

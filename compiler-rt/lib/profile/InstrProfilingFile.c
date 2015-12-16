@@ -56,8 +56,8 @@ static int writeFileWithName(const char *OutputName) {
   return RetVal;
 }
 
-LLVM_LIBRARY_WEAK int __llvm_profile_OwnsFilename = 0;
-LLVM_LIBRARY_WEAK const char *__llvm_profile_CurrentFilename = NULL;
+COMPILER_RT_WEAK int __llvm_profile_OwnsFilename = 0;
+COMPILER_RT_WEAK const char *__llvm_profile_CurrentFilename = NULL;
 
 static void truncateCurrentFile(void) {
   const char *Filename;
@@ -164,7 +164,7 @@ static void setFilenameAutomatically(void) {
   resetFilenameToDefault();
 }
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 void __llvm_profile_initialize_file(void) {
   /* Check if the filename has been initialized. */
   if (__llvm_profile_CurrentFilename)
@@ -174,12 +174,12 @@ void __llvm_profile_initialize_file(void) {
   setFilenameAutomatically();
 }
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 void __llvm_profile_set_filename(const char *Filename) {
   setFilenamePossiblyWithPid(Filename);
 }
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 void __llvm_profile_override_default_filename(const char *Filename) {
   /* If the env var is set, skip setting filename from argument. */
   const char *Env_Filename = getenv("LLVM_PROFILE_FILE");
@@ -188,7 +188,7 @@ void __llvm_profile_override_default_filename(const char *Filename) {
   setFilenamePossiblyWithPid(Filename);
 }
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 int __llvm_profile_write_file(void) {
   int rc;
 
@@ -209,7 +209,7 @@ int __llvm_profile_write_file(void) {
 
 static void writeFileWithoutReturn(void) { __llvm_profile_write_file(); }
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 int __llvm_profile_register_write_file_atexit(void) {
   static int HasBeenRegistered = 0;
 

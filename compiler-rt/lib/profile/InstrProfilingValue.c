@@ -25,7 +25,7 @@
   }
 
 #if COMPILER_RT_HAS_ATOMICS != 1
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
   void *R = *Ptr;
   if (R == OldV) {
@@ -37,20 +37,20 @@ uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
 #endif
 
 /* This method is only used in value profiler mock testing.  */
-LLVM_LIBRARY_VISIBILITY void
+COMPILER_RT_VISIBILITY void
 __llvm_profile_set_num_value_sites(__llvm_profile_data *Data,
                                    uint32_t ValueKind, uint16_t NumValueSites) {
   *((uint16_t *)&Data->NumValueSites[ValueKind]) = NumValueSites;
 }
 
 /* This method is only used in value profiler mock testing.  */
-LLVM_LIBRARY_VISIBILITY const __llvm_profile_data *
+COMPILER_RT_VISIBILITY const __llvm_profile_data *
 __llvm_profile_iterate_data(const __llvm_profile_data *Data) {
   return Data + 1;
 }
 
 /* This method is only used in value profiler mock testing.  */
-LLVM_LIBRARY_VISIBILITY void *
+COMPILER_RT_VISIBILITY void *
 __llvm_get_function_addr(const __llvm_profile_data *Data) {
   return Data->FunctionPointer;
 }
@@ -71,7 +71,7 @@ static int allocateValueProfileCounters(__llvm_profile_data *Data) {
       (ValueProfNode **)calloc(NumVSites, sizeof(ValueProfNode *));
   if (!Mem)
     return 0;
-  if (!BOOL_CMPXCHG(&Data->Values, 0, Mem)) {
+  if (!COMPILER_RT_BOOL_CMPXCHG(&Data->Values, 0, Mem)) {
     free(Mem);
     return 0;
   }
@@ -96,7 +96,7 @@ static void deallocateValueProfileCounters(__llvm_profile_data *Data) {
   free(Data->Values);
 }
 
-LLVM_LIBRARY_VISIBILITY void
+COMPILER_RT_VISIBILITY void
 __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
                                  uint32_t CounterIndex) {
 
@@ -136,9 +136,10 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
 
   uint32_t Success = 0;
   if (!ValueCounters[CounterIndex])
-    Success = BOOL_CMPXCHG(&ValueCounters[CounterIndex], 0, CurrentVNode);
+    Success =
+        COMPILER_RT_BOOL_CMPXCHG(&ValueCounters[CounterIndex], 0, CurrentVNode);
   else if (PrevVNode && !PrevVNode->Next)
-    Success = BOOL_CMPXCHG(&(PrevVNode->Next), 0, CurrentVNode);
+    Success = COMPILER_RT_BOOL_CMPXCHG(&(PrevVNode->Next), 0, CurrentVNode);
 
   if (!Success) {
     free(CurrentVNode);
@@ -167,7 +168,7 @@ static unsigned getVprofExtraBytes() {
 
 #define DTOR_VALUE_RECORD(R) finalizeValueProfRuntimeRecord(&R);
 
-LLVM_LIBRARY_VISIBILITY uint64_t
+COMPILER_RT_VISIBILITY uint64_t
 __llvm_profile_gather_value_data(uint8_t **VDataArray) {
   size_t S = 0, RealSize = 0, BufferCapacity = 0, Extra = 0;
   __llvm_profile_data *I;

@@ -26,7 +26,7 @@ static uint64_t *CountersLast = NULL;
  * calls are only required (and only emitted) on targets where we haven't
  * implemented linker magic to find the bounds of the sections.
  */
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 void __llvm_profile_register_function(void *Data_) {
   /* TODO: Only emit this function if we can't use linker magic. */
   const __llvm_profile_data *Data = (__llvm_profile_data *)Data_;
@@ -55,16 +55,16 @@ void __llvm_profile_register_function(void *Data_) {
 #undef UPDATE_LAST
 }
 
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 const __llvm_profile_data *__llvm_profile_begin_data(void) { return DataFirst; }
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 const __llvm_profile_data *__llvm_profile_end_data(void) { return DataLast; }
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 const char *__llvm_profile_begin_names(void) { return NamesFirst; }
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 const char *__llvm_profile_end_names(void) { return NamesLast; }
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 uint64_t *__llvm_profile_begin_counters(void) { return CountersFirst; }
-LLVM_LIBRARY_VISIBILITY
+COMPILER_RT_VISIBILITY
 uint64_t *__llvm_profile_end_counters(void) { return CountersLast; }
 #endif

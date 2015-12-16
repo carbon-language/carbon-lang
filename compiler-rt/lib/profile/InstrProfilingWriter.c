@@ -10,10 +10,10 @@
 #include "InstrProfiling.h"
 #include "InstrProfilingInternal.h"
 
-LLVM_LIBRARY_VISIBILITY int llvmWriteProfData(WriterCallback Writer,
-                                              void *WriterCtx,
-                                              const uint8_t *ValueDataBegin,
-                                              const uint64_t ValueDataSize) {
+COMPILER_RT_VISIBILITY int llvmWriteProfData(WriterCallback Writer,
+                                             void *WriterCtx,
+                                             const uint8_t *ValueDataBegin,
+                                             const uint64_t ValueDataSize) {
   /* Match logic in __llvm_profile_write_buffer(). */
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
   const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
@@ -26,7 +26,7 @@ LLVM_LIBRARY_VISIBILITY int llvmWriteProfData(WriterCallback Writer,
                                ValueDataSize, NamesBegin, NamesEnd);
 }
 
-LLVM_LIBRARY_VISIBILITY int llvmWriteProfDataImpl(
+COMPILER_RT_VISIBILITY int llvmWriteProfDataImpl(
     WriterCallback Writer, void *WriterCtx,
     const __llvm_profile_data *DataBegin, const __llvm_profile_data *DataEnd,
     const uint64_t *CountersBegin, const uint64_t *CountersEnd,

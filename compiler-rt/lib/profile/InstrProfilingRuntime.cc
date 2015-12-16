@@ -11,7 +11,7 @@ extern "C" {
 
 #include "InstrProfiling.h"
 
-LLVM_LIBRARY_VISIBILITY int __llvm_profile_runtime;
+COMPILER_RT_VISIBILITY int __llvm_profile_runtime;
 }
 
 namespace {

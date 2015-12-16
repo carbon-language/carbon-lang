@@ -11,27 +11,28 @@
 #define PROFILE_INSTRPROFILING_PORT_H_
 
 #ifdef _MSC_VER
-#define LLVM_ALIGNAS(x) __declspec(align(x))
-#define LLVM_LIBRARY_VISIBILITY
-#define LLVM_LIBRARY_WEAK __declspec(selectany)
+#define COMPILER_RTLIGNAS(x) __declspec(align(x))
+#define COMPILER_RT_VISIBILITY
+#define COMPILER_RT_WEAK __declspec(selectany)
 #elif __GNUC__
-#define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
-#define LLVM_LIBRARY_VISIBILITY __attribute__((visibility("hidden")))
-#define LLVM_LIBRARY_WEAK __attribute__((weak))
+#define COMPILER_RT_ALIGNAS(x) __attribute__((aligned(x)))
+#define COMPILER_RT_VISIBILITY __attribute__((visibility("hidden")))
+#define COMPILER_RT_WEAK __attribute__((weak))
 #endif
 
-#define LLVM_SECTION(Sect) __attribute__((section(Sect)))
+#define COMPILER_RT_SECTION(Sect) __attribute__((section(Sect)))
+
+#if COMPILER_RT_HAS_ATOMICS == 1
+#define COMPILER_RT_BOOL_CMPXCHG(Ptr, OldV, NewV)                              \
+  __sync_bool_compare_and_swap(Ptr, OldV, NewV)
+#else
+#define COMPILER_RT_BOOL_CMPXCHG(Ptr, OldV, NewV)                              \
+  BoolCmpXchg((void **)Ptr, OldV, NewV)
+#endif
 
 #define PROF_ERR(Format, ...)                                                  \
   if (GetEnvHook && GetEnvHook("LLVM_PROFILE_VERBOSE_ERRORS"))                 \
     fprintf(stderr, Format, __VA_ARGS__);
-
-#if COMPILER_RT_HAS_ATOMICS == 1
-#define BOOL_CMPXCHG(Ptr, OldV, NewV)                                          \
-  __sync_bool_compare_and_swap(Ptr, OldV, NewV)
-#else
-#define BOOL_CMPXCHG(Ptr, OldV, NewV) BoolCmpXchg((void **)Ptr, OldV, NewV)
-#endif
 
 #if defined(__FreeBSD__) && defined(__i386__)
 
