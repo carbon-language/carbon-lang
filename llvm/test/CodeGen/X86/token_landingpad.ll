@@ -1,9 +1,8 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc < %s
 
-; This test verifies that SelectionDAG can handle landingPad of token type.
+; This test verifies that SelectionDAG can handle landingPad of token type and not crash LLVM.
 
 define void @test() personality i32 (...)* @dummy_personality {
-; CHECK: dummy_personality
 entry:
   invoke void @dummy()
           to label %return unwind label %unwind
