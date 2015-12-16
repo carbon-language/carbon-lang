@@ -8,6 +8,10 @@ set(CFI_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}
 )
 
+set(CFI_DIAG_CFLAGS
+  -DCFI_ENABLE_DIAG=1
+)
+
 foreach(arch ${CFI_SUPPORTED_ARCH})
   add_compiler_rt_runtime(clang_rt.cfi
     STATIC
@@ -16,9 +20,18 @@ foreach(arch ${CFI_SUPPORTED_ARCH})
     OBJECT_LIBS RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc
+    CFLAGS ${CFI_CFLAGS}
+    PARENT_TARGET cfi)
+  add_compiler_rt_runtime(clang_rt.cfi_diag
+    STATIC
+    ARCHS ${arch}
+    SOURCES ${CFI_SOURCES}
+    OBJECT_LIBS RTInterception
+                RTSanitizerCommon
+                RTSanitizerCommonLibc
 		RTUbsan
 		RTUbsan_cxx
-    CFLAGS ${CFI_CFLAGS}
+    CFLAGS ${CFI_CFLAGS} ${CFI_DIAG_CFLAGS}
     PARENT_TARGET cfi)
 endforeach()
 

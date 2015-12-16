@@ -208,21 +208,24 @@ void __cfi_slowpath(uptr CallSiteTypeId, void *Ptr) {
 
 static void InitializeFlags() {
   SetCommonFlagsDefaults();
+#ifdef CFI_ENABLE_DIAG
   __ubsan::Flags *uf = __ubsan::flags();
   uf->SetDefaults();
+#endif
 
   FlagParser cfi_parser;
   RegisterCommonFlags(&cfi_parser);
+  cfi_parser.ParseString(GetEnv("CFI_OPTIONS"));
 
+#ifdef CFI_ENABLE_DIAG
   FlagParser ubsan_parser;
   __ubsan::RegisterUbsanFlags(&ubsan_parser, uf);
   RegisterCommonFlags(&ubsan_parser);
 
   const char *ubsan_default_options = __ubsan::MaybeCallUbsanDefaultOptions();
   ubsan_parser.ParseString(ubsan_default_options);
-
-  cfi_parser.ParseString(GetEnv("CFI_OPTIONS"));
   ubsan_parser.ParseString(GetEnv("UBSAN_OPTIONS"));
+#endif
 
   SetVerbosity(common_flags()->verbosity);
 
@@ -252,7 +255,9 @@ void __cfi_init() {
   __cfi_shadow = (uptr)shadow;
   init_shadow();
 
+#ifdef CFI_ENABLE_DIAG
   __ubsan::InitAsPlugin();
+#endif
 }
 
 #if SANITIZER_CAN_USE_PREINIT_ARRAY
