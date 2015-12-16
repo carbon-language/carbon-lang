@@ -662,6 +662,10 @@ if (CLANG_ENABLE_BOOTSTRAP)
     CLANG_REPOSITORY_STRING
     CMAKE_MAKE_PROGRAM)
 
+  if(TARGET compiler-rt)
+    set(RUNTIME_DEP compiler-rt)
+  endif()
+
   # Find all variables that start with BOOTSTRAP_ and populate a variable with
   # them.
   get_cmake_property(variableNames VARIABLES)
@@ -684,7 +688,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
   endforeach()
 
   ExternalProject_Add(bootstrap
-    DEPENDS clang ${LTO_DEP}
+    DEPENDS clang ${LTO_DEP} ${RUNTIME_DEP}
     PREFIX bootstrap
     SOURCE_DIR ${CMAKE_SOURCE_DIR}
     STAMP_DIR ${STAMP_DIR}
