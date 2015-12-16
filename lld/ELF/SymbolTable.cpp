@@ -120,23 +120,28 @@ void SymbolTable<ELFT>::addELFFile(ELFFileBase<ELFT> *File) {
   }
 }
 
+// Returns a file from which symbol B was created.
+// If B does not belong to any file in ObjectFiles, returns a nullptr.
 template <class ELFT>
-std::string SymbolTable<ELFT>::conflictMsg(SymbolBody *Old, SymbolBody *New) {
+static ELFFileBase<ELFT> *
+findFile(std::vector<std::unique_ptr<ObjectFile<ELFT>>> &ObjectFiles,
+         SymbolBody *B) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
-  const Elf_Sym &OldE = cast<ELFSymbolBody<ELFT>>(*Old).Sym;
-  const Elf_Sym &NewE = cast<ELFSymbolBody<ELFT>>(*New).Sym;
-  ELFFileBase<ELFT> *OldFile = nullptr;
-  ELFFileBase<ELFT> *NewFile = nullptr;
-
-  for (const std::unique_ptr<ObjectFile<ELFT>> &File : ObjectFiles) {
-    Elf_Sym_Range Syms = File->getObj().symbols(File->getSymbolTable());
-    if (&OldE > Syms.begin() && &OldE < Syms.end())
-      OldFile = File.get();
-    if (&NewE > Syms.begin() && &NewE < Syms.end())
-      NewFile = File.get();
+  const Elf_Sym *Sym = &cast<ELFSymbolBody<ELFT>>(*B).Sym;
+  for (const std::unique_ptr<ObjectFile<ELFT>> &F : ObjectFiles) {
+    Elf_Sym_Range R = F->getObj().symbols(F->getSymbolTable());
+    if (R.begin() <= Sym && Sym < R.end())
+      return F.get();
   }
+  return nullptr;
+}
+
+template <class ELFT>
+std::string SymbolTable<ELFT>::conflictMsg(SymbolBody *Old, SymbolBody *New) {
+  ELFFileBase<ELFT> *OldFile = findFile(ObjectFiles, Old);
+  ELFFileBase<ELFT> *NewFile = findFile(ObjectFiles, New);
 
   StringRef Sym = Old->getName();
   StringRef F1 = OldFile ? OldFile->getName() : "(internal)";
