@@ -179,6 +179,8 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
                     << atom.ordinal()
                     << ", name="
                     << atom.name()
+                    << ", type="
+                    << atom.contentType()
                     << "\n");
 
   // add to list of known atoms
@@ -525,12 +527,29 @@ bool Resolver::resolve() {
 void Resolver::MergedFile::addAtoms(std::vector<const Atom *> &all) {
   ScopedTask task(getDefaultDomain(), "addAtoms");
   DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");
+
   for (const Atom *atom : all) {
-    DEBUG_WITH_TYPE("resolver", llvm::dbgs()
-                    << llvm::format("    0x%09lX", atom)
-                    << ", name="
-                    << atom->name()
-                    << "\n");
+#ifndef NDEBUG
+    if (auto *definedAtom = dyn_cast<DefinedAtom>(atom)) {
+      DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                      << llvm::format("    0x%09lX", atom)
+                      << ", file=#"
+                      << definedAtom->file().ordinal()
+                      << ", atom=#"
+                      << definedAtom->ordinal()
+                      << ", name="
+                      << definedAtom->name()
+                      << ", type="
+                      << definedAtom->contentType()
+                      << "\n");
+    } else {
+      DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                      << llvm::format("    0x%09lX", atom)
+                      << ", name="
+                      << atom->name()
+                      << "\n");
+    }
+#endif
     addAtom(*atom);
   }
 }
