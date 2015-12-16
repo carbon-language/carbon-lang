@@ -36,24 +36,37 @@ template <class ELFT> bool SymbolTable<ELFT>::shouldUseRela() const {
 template <class ELFT>
 void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   checkCompatibility(File);
+  InputFile *FileP = File.release();
 
-  if (auto *AF = dyn_cast<ArchiveFile>(File.get())) {
-    ArchiveFiles.emplace_back(std::move(File));
-    AF->parse();
-    for (Lazy &Sym : AF->getLazySymbols())
+  // .a file
+  if (auto *F = dyn_cast<ArchiveFile>(FileP)) {
+    ArchiveFiles.emplace_back(F);
+    F->parse();
+    for (Lazy &Sym : F->getLazySymbols())
       addLazy(&Sym);
     return;
   }
 
-  if (auto *S = dyn_cast<SharedFile<ELFT>>(File.get())) {
-    S->parseSoName();
-    if (!IncludedSoNames.insert(S->getSoName()).second)
+  // .so file
+  if (auto *F = dyn_cast<SharedFile<ELFT>>(FileP)) {
+    // DSOs are uniquified not by filename but by soname.
+    F->parseSoName();
+    if (!IncludedSoNames.insert(F->getSoName()).second)
       return;
-    S->parse();
-  } else {
-    cast<ObjectFile<ELFT>>(File.get())->parse(Comdats);
+
+    SharedFiles.emplace_back(F);
+    F->parse();
+    for (SharedSymbol<ELFT> &B : F->getSharedSymbols())
+      resolve(&B);
+    return;
   }
-  addELFFile(cast<ELFFileBase<ELFT>>(File.release()));
+
+  // .o file
+  auto *F = cast<ObjectFile<ELFT>>(FileP);
+  ObjectFiles.emplace_back(F);
+  F->parse(Comdats);
+  for (SymbolBody *B : F->getSymbols())
+    resolve(B);
 }
 
 template <class ELFT>
@@ -100,24 +113,6 @@ template <class ELFT> bool SymbolTable<ELFT>::isUndefined(StringRef Name) {
   if (SymbolBody *Sym = find(Name))
     return Sym->isUndefined();
   return false;
-}
-
-template <class ELFT>
-void SymbolTable<ELFT>::addELFFile(ELFFileBase<ELFT> *File) {
-  if (auto *O = dyn_cast<ObjectFile<ELFT>>(File))
-    ObjectFiles.emplace_back(O);
-  else if (auto *S = dyn_cast<SharedFile<ELFT>>(File))
-    SharedFiles.emplace_back(S);
-
-  if (auto *O = dyn_cast<ObjectFile<ELFT>>(File)) {
-    for (SymbolBody *Body : O->getSymbols())
-      resolve(Body);
-  }
-
-  if (auto *S = dyn_cast<SharedFile<ELFT>>(File)) {
-    for (SharedSymbol<ELFT> &Body : S->getSharedSymbols())
-      resolve(&Body);
-  }
 }
 
 // Returns a file from which symbol B was created.

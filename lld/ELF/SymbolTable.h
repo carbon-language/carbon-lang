@@ -61,7 +61,6 @@ public:
 
 private:
   Symbol *insert(SymbolBody *New);
-  void addELFFile(ELFFileBase<ELFT> *File);
   void addLazy(Lazy *New);
   void addMemberFile(Lazy *Body);
   void checkCompatibility(std::unique_ptr<InputFile> &File);
