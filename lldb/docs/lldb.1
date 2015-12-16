@@ -1,4 +1,4 @@
-.Dd June 7, 2012     \" DATE
+.Dd December 16, 2015   \" DATE
 .Dt LLDB 1           \" Program name and manual section number
 .Os
 .Sh NAME             \" Section Header - required - do not modify
@@ -8,6 +8,7 @@
 .Nm lldb
 .Op Fl hvdexw
 .Op Fl a Ar arch
+.Op Fl c Ar core-file
 .Op Fl l Ar script-language
 .Op Fl s Ar lldb-commands
 .Op Fl n Ar process-name
@@ -59,6 +60,8 @@ to it as early in the process-launch as possible.
 Specifies a currently running process that
 .Nm
 should attach to.
+.It Fl c, -core Ar core-file
+Specifies the core file to examine.
 .It Fl l, -script-language Ar language
 Tells the debugger to use the specified scripting language for
 user-defined scripts, rather than the default.
