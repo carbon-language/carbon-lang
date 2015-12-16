@@ -81,16 +81,16 @@ void SymbolTable<ELFT>::addSynthetic(StringRef Name,
                                      OutputSectionBase<ELFT> &Section,
                                      typename ELFFile<ELFT>::uintX_t Value) {
   typedef typename DefinedSynthetic<ELFT>::Elf_Sym Elf_Sym;
-  auto ESym = new (Alloc) Elf_Sym;
+  auto *ESym = new (Alloc) Elf_Sym;
   memset(ESym, 0, sizeof(Elf_Sym));
   ESym->st_value = Value;
-  auto Sym = new (Alloc) DefinedSynthetic<ELFT>(Name, *ESym, Section);
+  auto *Sym = new (Alloc) DefinedSynthetic<ELFT>(Name, *ESym, Section);
   resolve(Sym);
 }
 
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addIgnored(StringRef Name) {
-  auto Sym = new (Alloc)
+  auto *Sym = new (Alloc)
       DefinedAbsolute<ELFT>(Name, DefinedAbsolute<ELFT>::IgnoreUndef);
   resolve(Sym);
   return Sym;
