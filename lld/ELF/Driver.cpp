@@ -260,7 +260,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
     // an undefined symbol in the .o files.
     // Given that the symbol is effectively unused, we just create a dummy
     // hidden one to avoid the undefined symbol error.
-    Symtab.addIgnoredSym("_GLOBAL_OFFSET_TABLE_");
+    Symtab.addIgnored("_GLOBAL_OFFSET_TABLE_");
   }
 
   if (!Config->Entry.empty()) {
@@ -273,13 +273,13 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (Config->EMachine == EM_MIPS) {
     // On MIPS O32 ABI, _gp_disp is a magic symbol designates offset between
     // start of function and gp pointer into GOT.
-    Config->MipsGpDisp = Symtab.addIgnoredSym("_gp_disp");
+    Config->MipsGpDisp = Symtab.addIgnored("_gp_disp");
 
     // Define _gp for MIPS. st_value of _gp symbol will be updated by Writer
     // so that it points to an absolute address which is relative to GOT.
     // See "Global Data Symbols" in Chapter 6 in the following document:
     // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-    Symtab.addAbsoluteSym("_gp", DefinedAbsolute<ELFT>::MipsGp);
+    Symtab.addAbsolute("_gp", DefinedAbsolute<ELFT>::MipsGp);
   }
 
   for (std::unique_ptr<InputFile> &F : Files)

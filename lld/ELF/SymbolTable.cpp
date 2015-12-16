@@ -71,15 +71,15 @@ SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addAbsoluteSym(StringRef Name,
-                                       typename ELFFile<ELFT>::Elf_Sym &ESym) {
+void SymbolTable<ELFT>::addAbsolute(StringRef Name,
+                                    typename ELFFile<ELFT>::Elf_Sym &ESym) {
   resolve(new (Alloc) DefinedAbsolute<ELFT>(Name, ESym));
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addSyntheticSym(StringRef Name,
-                                        OutputSectionBase<ELFT> &Section,
-                                        typename ELFFile<ELFT>::uintX_t Value) {
+void SymbolTable<ELFT>::addSynthetic(StringRef Name,
+                                     OutputSectionBase<ELFT> &Section,
+                                     typename ELFFile<ELFT>::uintX_t Value) {
   typedef typename DefinedSynthetic<ELFT>::Elf_Sym Elf_Sym;
   auto ESym = new (Alloc) Elf_Sym;
   memset(ESym, 0, sizeof(Elf_Sym));
@@ -89,7 +89,7 @@ void SymbolTable<ELFT>::addSyntheticSym(StringRef Name,
 }
 
 template <class ELFT>
-SymbolBody *SymbolTable<ELFT>::addIgnoredSym(StringRef Name) {
+SymbolBody *SymbolTable<ELFT>::addIgnored(StringRef Name) {
   auto Sym = new (Alloc)
       DefinedAbsolute<ELFT>(Name, DefinedAbsolute<ELFT>::IgnoreUndef);
   resolve(Sym);

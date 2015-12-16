@@ -640,11 +640,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   auto AddStartEnd = [&](StringRef Start, StringRef End,
                          OutputSectionBase<ELFT> *OS) {
     if (OS) {
-      Symtab.addSyntheticSym(Start, *OS, 0);
-      Symtab.addSyntheticSym(End, *OS, OS->getSize());
+      Symtab.addSynthetic(Start, *OS, 0);
+      Symtab.addSynthetic(End, *OS, OS->getSize());
     } else {
-      Symtab.addIgnoredSym(Start);
-      Symtab.addIgnoredSym(End);
+      Symtab.addIgnored(Start);
+      Symtab.addIgnored(End);
     }
   };
 
@@ -663,7 +663,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
   // to avoid the undefined symbol error.
   if (!isOutputDynamic())
-    Symtab.addIgnoredSym("__tls_get_addr");
+    Symtab.addIgnored("__tls_get_addr");
 
   // If the "_end" symbol is referenced, it is expected to point to the address
   // right after the data segment. Usually, this symbol points to the end
@@ -673,14 +673,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // So, if this symbol is referenced, we just add the placeholder here
   // and update its value later.
   if (Symtab.find("_end"))
-    Symtab.addAbsoluteSym("_end", DefinedAbsolute<ELFT>::End);
+    Symtab.addAbsolute("_end", DefinedAbsolute<ELFT>::End);
 
   // If there is an undefined symbol "end", we should initialize it
   // with the same value as "_end". In any other case it should stay intact,
   // because it is an allowable name for a user symbol.
   if (SymbolBody *B = Symtab.find("end"))
     if (B->isUndefined())
-      Symtab.addAbsoluteSym("end", DefinedAbsolute<ELFT>::End);
+      Symtab.addAbsolute("end", DefinedAbsolute<ELFT>::End);
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
@@ -819,9 +819,9 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
   StringRef Start = Saver.save("__start_" + S);
   StringRef Stop = Saver.save("__stop_" + S);
   if (Symtab.isUndefined(Start))
-    Symtab.addSyntheticSym(Start, *Sec, 0);
+    Symtab.addSynthetic(Start, *Sec, 0);
   if (Symtab.isUndefined(Stop))
-    Symtab.addSyntheticSym(Stop, *Sec, Sec->getSize());
+    Symtab.addSynthetic(Stop, *Sec, Sec->getSize());
 }
 
 template <class ELFT> static bool needsPhdr(OutputSectionBase<ELFT> *Sec) {
