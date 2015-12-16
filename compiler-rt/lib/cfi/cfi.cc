@@ -188,7 +188,7 @@ static void init_shadow() {
   dl_iterate_phdr(dl_iterate_phdr_cb, nullptr);
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE extern "C"
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 void __cfi_slowpath(uptr CallSiteTypeId, void *Ptr) {
   uptr Addr = (uptr)Ptr;
   VReport(3, "__cfi_slowpath: %zx, %p\n", CallSiteTypeId, Ptr);
@@ -233,7 +233,7 @@ static void InitializeFlags() {
   }
 }
 
-extern "C" __attribute__((visibility("default")))
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 #if !SANITIZER_CAN_USE_PREINIT_ARRAY
 // On ELF platforms, the constructor is invoked using .preinit_array (see below)
 __attribute__((constructor(0)))
