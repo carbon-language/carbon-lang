@@ -154,19 +154,12 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
   SymbolBody *Existing = Sym->Body;
 
   if (Lazy *L = dyn_cast<Lazy>(Existing)) {
-    if (New->isUndefined()) {
-      if (New->isWeak()) {
-        // See the explanation in SymbolTable::addLazy
-        L->setUsedInRegularObj();
-        L->setWeak();
-        return;
-      }
-      addMemberFile(L);
+    if (auto *Undef = dyn_cast<Undefined<ELFT>>(New)) {
+      addMemberFile(Undef, L);
       return;
     }
-
-    // Found a definition for something also in an archive. Ignore the archive
-    // definition.
+    // Found a definition for something also in an archive.
+    // Ignore the archive definition.
     Sym->Body = New;
     return;
   }
@@ -208,29 +201,14 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
   return It->second->Body;
 }
 
-template <class ELFT> void SymbolTable<ELFT>::addLazy(Lazy *New) {
-  Symbol *Sym = insert(New);
-  if (Sym->Body == New)
+template <class ELFT> void SymbolTable<ELFT>::addLazy(Lazy *L) {
+  Symbol *Sym = insert(L);
+  if (Sym->Body == L)
     return;
-  SymbolBody *Existing = Sym->Body;
-  if (Existing->isDefined() || Existing->isLazy())
-    return;
-  Sym->Body = New;
-  assert(Existing->isUndefined() && "Unexpected symbol kind.");
-
-  // Weak undefined symbols should not fetch members from archives.
-  // If we were to keep old symbol we would not know that an archive member was
-  // available if a strong undefined symbol shows up afterwards in the link.
-  // If a strong undefined symbol never shows up, this lazy symbol will
-  // get to the end of the link and must be treated as the weak undefined one.
-  // We set UsedInRegularObj in a similar way to what is done with shared
-  // symbols and mark it as weak to reduce how many special cases are needed.
-  if (Existing->isWeak()) {
-    New->setUsedInRegularObj();
-    New->setWeak();
-    return;
+  if (auto *Undef = dyn_cast<Undefined<ELFT>>(Sym->Body)) {
+    Sym->Body = L;
+    addMemberFile(Undef, L);
   }
-  addMemberFile(New);
 }
 
 template <class ELFT>
@@ -247,9 +225,24 @@ void SymbolTable<ELFT>::checkCompatibility(std::unique_ptr<InputFile> &File) {
   error(A + " is incompatible with " + B);
 }
 
-template <class ELFT> void SymbolTable<ELFT>::addMemberFile(Lazy *Body) {
+template <class ELFT>
+void SymbolTable<ELFT>::addMemberFile(Undefined<ELFT> *Undef, Lazy *L) {
+  // Weak undefined symbols should not fetch members from archives.
+  // If we were to keep old symbol we would not know that an archive member was
+  // available if a strong undefined symbol shows up afterwards in the link.
+  // If a strong undefined symbol never shows up, this lazy symbol will
+  // get to the end of the link and must be treated as the weak undefined one.
+  // We set UsedInRegularObj in a similar way to what is done with shared
+  // symbols and mark it as weak to reduce how many special cases are needed.
+  if (Undef->isWeak()) {
+    L->setUsedInRegularObj();
+    L->setWeak();
+    return;
+  }
+
+  // Fetch a member file that has the definition for L.
   // getMember returns nullptr if the member was already read from the library.
-  if (std::unique_ptr<InputFile> File = Body->getMember())
+  if (std::unique_ptr<InputFile> File = L->getMember())
     addFile(std::move(File));
 }
 
