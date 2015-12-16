@@ -198,6 +198,10 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "byval";
   if (hasAttribute(Attribute::Convergent))
     return "convergent";
+  if (hasAttribute(Attribute::InaccessibleMemOnly))
+    return "inaccessiblememonly";
+  if (hasAttribute(Attribute::InaccessibleMemOrArgMemOnly))
+    return "inaccessiblemem_or_argmemonly";
   if (hasAttribute(Attribute::InAlloca))
     return "inalloca";
   if (hasAttribute(Attribute::InlineHint))
@@ -445,6 +449,8 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::Convergent:      return 1ULL << 46;
   case Attribute::SafeStack:       return 1ULL << 47;
   case Attribute::NoRecurse:       return 1ULL << 48;
+  case Attribute::InaccessibleMemOnly:         return 1ULL << 49;
+  case Attribute::InaccessibleMemOrArgMemOnly: return 1ULL << 50;
   case Attribute::Dereferenceable:
     llvm_unreachable("dereferenceable attribute not supported in raw format");
     break;
