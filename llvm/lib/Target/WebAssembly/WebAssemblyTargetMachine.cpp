@@ -169,6 +169,9 @@ void WebAssemblyPassConfig::addPreRegAlloc() {
 
   // Mark registers as representing wasm's expression stack.
   addPass(createWebAssemblyRegStackify());
+  // The register coalescing pass has a bad interaction with COPY MIs which have
+  // EXPR_STACK as an extra operand
+  //disablePass(&RegisterCoalescerID);
 }
 
 void WebAssemblyPassConfig::addPostRegAlloc() {

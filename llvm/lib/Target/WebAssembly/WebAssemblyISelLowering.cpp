@@ -445,7 +445,7 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   }
 
   if (NumBytes) {
-    SDValue Unused = DAG.getUNDEF(PtrVT);
+    SDValue Unused = DAG.getTargetConstant(0, DL, PtrVT);
     Chain = DAG.getCALLSEQ_END(Chain, NB, Unused, SDValue(), DL);
   }
 
