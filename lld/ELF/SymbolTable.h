@@ -65,7 +65,6 @@ private:
   Symbol *insert(SymbolBody *New);
   void addLazy(Lazy *New);
   void addMemberFile(Undefined<ELFT> *Undef, Lazy *L);
-  void checkCompatibility(std::unique_ptr<InputFile> &File);
   void resolve(SymbolBody *Body);
   std::string conflictMsg(SymbolBody *Old, SymbolBody *New);
 
