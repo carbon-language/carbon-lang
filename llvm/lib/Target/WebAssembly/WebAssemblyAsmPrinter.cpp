@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCContext.h"
@@ -179,6 +180,11 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
     if (int(WAReg) < 0)
       continue;
     Local.addOperand(MCOperand::createImm(getRegType(VReg).SimpleTy));
+    AnyWARegs = true;
+  }
+  if (MF->getFrameInfo()->getStackSize() > 0) {
+    // TODO: wasm64
+    Local.addOperand(MCOperand::createImm(MVT::i32));
     AnyWARegs = true;
   }
   if (AnyWARegs)
