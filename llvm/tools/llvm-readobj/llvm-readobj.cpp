@@ -354,8 +354,6 @@ static void dumpObject(const ObjectFile *Obj) {
       Dumper->printCOFFDirectives();
     if (opts::COFFBaseRelocs)
       Dumper->printCOFFBaseReloc();
-    if (opts::CodeView)
-      Dumper->printCodeViewDebugInfo();
   }
   if (Obj->isMachO()) {
     if (opts::MachODataInCode)
