@@ -1548,32 +1548,27 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
     return;
   }
 
-  llvm::Value *EntryFP = nullptr;
-  CGBuilderTy Builder(CGM, AllocaInsertPt);
+  llvm::Value *EntryEBP = nullptr;
+  llvm::Value *ParentFP;
   if (IsFilter && CGM.getTarget().getTriple().getArch() == llvm::Triple::x86) {
     // 32-bit SEH filters need to be careful about FP recovery.  The end of the
     // EH registration is passed in as the EBP physical register.  We can
-    // recover that with llvm.frameaddress(1).
-    EntryFP = Builder.CreateCall(
+    // recover that with llvm.frameaddress(1), and adjust that to recover the
+    // parent's true frame pointer.
+    CGBuilderTy Builder(CGM, AllocaInsertPt);
+    EntryEBP = Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::frameaddress), {Builder.getInt32(1)});
+    llvm::Function *RecoverFPIntrin =
+        CGM.getIntrinsic(llvm::Intrinsic::x86_seh_recoverfp);
+    llvm::Constant *ParentI8Fn =
+        llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
+    ParentFP = Builder.CreateCall(RecoverFPIntrin, {ParentI8Fn, EntryEBP});
   } else {
     // Otherwise, for x64 and 32-bit finally functions, the parent FP is the
     // second parameter.
     auto AI = CurFn->arg_begin();
     ++AI;
-    EntryFP = &*AI;
-  }
-
-  llvm::Value *ParentFP;
-  if (IsFilter) {
-    // Given whatever FP the runtime provided us in EntryFP, recover the true
-    // frame pointer of the parent function. We only need to do this in filters,
-    // since finally funclets recover the parent FP for us.
-    llvm::Function *RecoverFPIntrin =
-        CGM.getIntrinsic(llvm::Intrinsic::x86_seh_recoverfp);
-    llvm::Constant *ParentI8Fn =
-        llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
-    ParentFP = Builder.CreateCall(RecoverFPIntrin, {ParentI8Fn, EntryFP});
+    ParentFP = &*AI;
   }
 
   // Create llvm.localrecover calls for all captures.
@@ -1607,7 +1602,7 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
   }
 
   if (IsFilter)
-    EmitSEHExceptionCodeSave(ParentCGF, ParentFP, EntryFP);
+    EmitSEHExceptionCodeSave(ParentCGF, ParentFP, EntryEBP);
 }
 
 /// Arrange a function prototype that can be called by Windows exception
@@ -1723,7 +1718,7 @@ CodeGenFunction::GenerateSEHFinallyFunction(CodeGenFunction &ParentCGF,
 
 void CodeGenFunction::EmitSEHExceptionCodeSave(CodeGenFunction &ParentCGF,
                                                llvm::Value *ParentFP,
-                                               llvm::Value *EntryFP) {
+                                               llvm::Value *EntryEBP) {
   // Get the pointer to the EXCEPTION_POINTERS struct. This is returned by the
   // __exception_info intrinsic.
   if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
@@ -1736,7 +1731,7 @@ void CodeGenFunction::EmitSEHExceptionCodeSave(CodeGenFunction &ParentCGF,
     // exception registration object. It contains 6 32-bit fields, and the info
     // pointer is stored in the second field. So, GEP 20 bytes backwards and
     // load the pointer.
-    SEHInfo = Builder.CreateConstInBoundsGEP1_32(Int8Ty, EntryFP, -20);
+    SEHInfo = Builder.CreateConstInBoundsGEP1_32(Int8Ty, EntryEBP, -20);
     SEHInfo = Builder.CreateBitCast(SEHInfo, Int8PtrTy->getPointerTo());
     SEHInfo = Builder.CreateAlignedLoad(Int8PtrTy, SEHInfo, getPointerAlign());
     SEHCodeSlotStack.push_back(recoverAddrOfEscapedLocal(
