@@ -207,6 +207,13 @@ MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout & /*DL*/,
   unsigned BitWidth = NextPowerOf2(VT.getSizeInBits() - 1);
   if (BitWidth > 1 && BitWidth < 8)
     BitWidth = 8;
+
+  if (BitWidth > 64) {
+    BitWidth = 64;
+    assert(BitWidth >= Log2_32_Ceil(VT.getSizeInBits()) &&
+           "64-bit shift counts ought to be enough for anyone");
+  }
+
   MVT Result = MVT::getIntegerVT(BitWidth);
   assert(Result != MVT::INVALID_SIMPLE_VALUE_TYPE &&
          "Unable to represent scalar shift amount type");
