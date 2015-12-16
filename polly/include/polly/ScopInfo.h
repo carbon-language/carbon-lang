@@ -992,6 +992,29 @@ public:
     return *ArrayAccess;
   }
 
+  /// @brief Get the number of array accesses associated with an instruction.
+  ///
+  /// @param Inst The instruction for which to obtain the access count.
+  /// @returns The number of array accesses associated with this instruction.
+  size_t getNumberOfArrayAccessesFor(const Instruction *Inst) const {
+    size_t NumAccesses = 0;
+    auto It = InstructionToAccess.find(Inst);
+    if (It == InstructionToAccess.end())
+      return 0;
+
+    auto *Accesses = It->getSecond();
+
+    if (!Accesses)
+      return 0;
+
+    for (auto Access : *Accesses) {
+      if (Access->isArrayKind())
+        NumAccesses++;
+    }
+
+    return NumAccesses;
+  }
+
   /// @brief Return the __first__ (scalar) memory access for @p Inst if any.
   MemoryAccess *lookupAccessFor(const Instruction *Inst) const {
     auto It = InstructionToAccess.find(Inst);

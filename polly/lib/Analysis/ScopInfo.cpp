@@ -2923,7 +2923,7 @@ void Scop::verifyInvariantLoads() {
   for (LoadInst *LI : RIL) {
     assert(LI && getRegion().contains(LI));
     ScopStmt *Stmt = getStmtForBasicBlock(LI->getParent());
-    if (Stmt && Stmt->lookupAccessesFor(LI)) {
+    if (Stmt && Stmt->getNumberOfArrayAccessesFor(LI) > 0) {
       invalidate(INVARIANTLOAD, LI->getDebugLoc());
       return;
     }
