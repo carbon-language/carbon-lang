@@ -88,11 +88,12 @@ static void fill_shadow(uptr begin, uptr end, uptr cfi_check) {
     *s = sv;
 
   // Sanity checks.
-  for (; p < end; p += kShadowAlign) {
-    assert((uptr)ShadowValue::load(p).get_cfi_check() == cfi_check);
-    assert((uptr)ShadowValue::load(p + kShadowAlign / 2).get_cfi_check() ==
+  uptr q = p & ~(kShadowAlign - 1);
+  for (; q < end; q += kShadowAlign) {
+    assert((uptr)ShadowValue::load(q).get_cfi_check() == cfi_check);
+    assert((uptr)ShadowValue::load(q + kShadowAlign / 2).get_cfi_check() ==
            cfi_check);
-    assert((uptr)ShadowValue::load(p + kShadowAlign - 1).get_cfi_check() ==
+    assert((uptr)ShadowValue::load(q + kShadowAlign - 1).get_cfi_check() ==
            cfi_check);
   }
 }
