@@ -36,8 +36,6 @@ public:
 
   void addFile(std::unique_ptr<InputFile> File);
 
-  bool shouldUseRela() const;
-
   const llvm::MapVector<StringRef, Symbol *> &getSymbols() const {
     return Symtab;
   }

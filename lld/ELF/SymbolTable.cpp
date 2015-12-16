@@ -28,11 +28,6 @@ using namespace lld::elf2;
 
 template <class ELFT> SymbolTable<ELFT>::SymbolTable() {}
 
-template <class ELFT> bool SymbolTable<ELFT>::shouldUseRela() const {
-  ELFKind K = cast<ELFFileBase<ELFT>>(Config->FirstElf)->getELFKind();
-  return K == ELF64LEKind || K == ELF64BEKind;
-}
-
 template <class ELFT>
 static void checkCompatibility(InputFile *FileP) {
   auto *F = dyn_cast<ELFFileBase<ELFT>>(FileP);

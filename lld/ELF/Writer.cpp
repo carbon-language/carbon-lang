@@ -95,6 +95,11 @@ private:
 };
 } // anonymous namespace
 
+template <class ELFT> static bool shouldUseRela() {
+  ELFKind K = cast<ELFFileBase<ELFT>>(Config->FirstElf)->getELFKind();
+  return K == ELF64LEKind || K == ELF64BEKind;
+}
+
 template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   // Initialize output sections that are handled by Writer specially.
   // Don't reorder because the order of initialization matters.
@@ -127,7 +132,7 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   GnuHashTableSection<ELFT> GnuHashTab;
   if (Config->GnuHash)
     Out<ELFT>::GnuHashTab = &GnuHashTab;
-  bool IsRela = Symtab->shouldUseRela();
+  bool IsRela = shouldUseRela<ELFT>();
   RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
   Out<ELFT>::RelaDyn = &RelaDyn;
   RelocationSection<ELFT> RelaPlt(IsRela ? ".rela.plt" : ".rel.plt", IsRela);
