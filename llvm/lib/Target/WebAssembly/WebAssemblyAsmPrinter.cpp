@@ -260,7 +260,9 @@ bool WebAssemblyAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
     report_fatal_error("There are no defined alternate asm variants");
 
   if (!ExtraCode) {
-    OS << regToString(MI->getOperand(OpNo));
+    // TODO: For now, we just hard-code 0 as the constant offset; teach
+    // SelectInlineAsmMemoryOperand how to do address mode matching.
+    OS << "0(" + regToString(MI->getOperand(OpNo)) + ')';
     return false;
   }
 

@@ -21,7 +21,7 @@ entry:
 ; CHECK-LABEL: bar:
 ; CHECK-NEXT: .param i32, i32{{$}}
 ; CHECK-NEXT: #APP{{$}}
-; CHECK-NEXT: # $1 = bbb($0){{$}}
+; CHECK-NEXT: # 0($1) = bbb(0($0)){{$}}
 ; CHECK-NEXT: #NO_APP{{$}}
 ; CHECK-NEXT: return{{$}}
 define void @bar(i32* %r, i32* %s) {
