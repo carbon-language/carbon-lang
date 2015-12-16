@@ -2732,7 +2732,8 @@ void Verifier::visitLoadInst(LoadInst &LI) {
     Assert(LI.getAlignment() != 0,
            "Atomic load must specify explicit alignment", &LI);
     if (!ElTy->isPointerTy()) {
-      Assert(ElTy->isIntegerTy(), "atomic load operand must have integer type!",
+      Assert(ElTy->isIntegerTy() || ElTy->isFloatingPointTy(),
+             "atomic load operand must have integer or floating point type!",
              &LI, ElTy);
       unsigned Size = ElTy->getPrimitiveSizeInBits();
       Assert(Size >= 8 && !(Size & (Size - 1)),
@@ -2761,8 +2762,9 @@ void Verifier::visitStoreInst(StoreInst &SI) {
     Assert(SI.getAlignment() != 0,
            "Atomic store must specify explicit alignment", &SI);
     if (!ElTy->isPointerTy()) {
-      Assert(ElTy->isIntegerTy(),
-             "atomic store operand must have integer type!", &SI, ElTy);
+      Assert(ElTy->isIntegerTy() || ElTy->isFloatingPointTy(),
+             "atomic store operand must have integer or floating point type!",
+             &SI, ElTy);
       unsigned Size = ElTy->getPrimitiveSizeInBits();
       Assert(Size >= 8 && !(Size & (Size - 1)),
              "atomic store operand must be power-of-two byte-sized integer",
