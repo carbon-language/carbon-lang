@@ -28,14 +28,12 @@ using namespace llvm;
 
 namespace {
 class WebAssemblyMCCodeEmitter final : public MCCodeEmitter {
-  const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
-  const MCContext &Ctx;
 
 public:
-  WebAssemblyMCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri,
-                           MCContext &ctx)
-      : MCII(mcii), MRI(mri), Ctx(ctx) {}
+  WebAssemblyMCCodeEmitter(const MCInstrInfo &, const MCRegisterInfo &mri,
+                           MCContext &)
+      : MRI(mri) {}
 
   ~WebAssemblyMCCodeEmitter() override {}
 
