@@ -113,8 +113,8 @@ class ModuleLinker {
 
   /// Helper methods to check if we are importing from or potentially
   /// exporting from the current source module.
-  bool isPerformingImport() { return ImportFunction != nullptr; }
-  bool isModuleExporting() { return HasExportedFunctions; }
+  bool isPerformingImport() const { return ImportFunction != nullptr; }
+  bool isModuleExporting() const { return HasExportedFunctions; }
 
   /// If we are importing from the source module, checks if we should
   /// import SGV as a definition, otherwise import as a declaration.
