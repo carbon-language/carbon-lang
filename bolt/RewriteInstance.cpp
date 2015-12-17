@@ -540,7 +540,6 @@ void RewriteInstance::readSpecialSections() {
         Section.getSize());
 
     if (SectionName == ".gcc_except_table") {
-      readLSDA(SectionData, *BC);
       LSDAData = SectionData;
       LSDAAddress = Section.getAddress();
     }
@@ -579,13 +578,14 @@ void RewriteInstance::disassembleFunctions() {
     }
 
     SectionRef Section = Function.getSection();
-    assert(Section.containsSymbol(Function.getSymbol()) &&
-           "symbol not in section");
-
-    // When could it happen?
+    assert(Section.getAddress() <= Function.getAddress() &&
+           Section.getAddress() + Section.getSize() 
+             >= Function.getAddress() + Function.getSize() &&
+          "wrong section for function");
     if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
-      DEBUG(dbgs() << "FLO: corresponding section non-executable or empty "
-                   << "for function " << Function.getName());
+      // When could it happen?
+      errs() << "FLO: corresponding section is non-executable or empty "
+             << "for function " << Function.getName();
       continue;
     }
 
@@ -845,11 +845,13 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     MCSymbol *FunctionSymbol = BC.Ctx->getOrCreateSymbol(Function.getName());
     Streamer.EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
     Streamer.EmitLabel(FunctionSymbol);
+    Function.setOutputSymbol(FunctionSymbol);
   } else {
     MCSymbol *FunctionSymbol =
       BC.Ctx->getOrCreateSymbol(Twine(Function.getName()).concat(".cold"));
     Streamer.EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
     Streamer.EmitLabel(FunctionSymbol);
+    Function.cold().setOutputSymbol(FunctionSymbol);
   }
 
   // Emit CFI start
@@ -1068,10 +1070,10 @@ void RewriteInstance::emitFunctions() {
       OLT.mapSectionAddress(ObjectsHandle,
           reinterpret_cast<const void*>(SAI->second.first),
           ExtraStorage.BumpPtr);
-      Function.setColdImageAddress(SAI->second.first);
-      Function.setColdImageSize(SAI->second.second);
-      Function.setColdFileOffset(ExtraStorage.BumpPtr - ExtraStorage.Addr +
-                                 ExtraStorage.FileOffset);
+      Function.cold().setImageAddress(SAI->second.first);
+      Function.cold().setImageSize(SAI->second.second);
+      Function.cold().setFileOffset(ExtraStorage.BumpPtr - ExtraStorage.Addr +
+                                    ExtraStorage.FileOffset);
       ExtraStorage.BumpPtr += SAI->second.second;
     } else {
       errs() << "FLO: cannot remap function " << Function.getName() << "\n";
@@ -1194,8 +1196,8 @@ void RewriteInstance::rewriteFile() {
 
     if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
       continue;
-    if (Function.isSplit() && (Function.getColdImageAddress() == 0 ||
-                               Function.getColdImageSize() == 0))
+    if (Function.isSplit() && (Function.cold().getImageAddress() == 0 ||
+                               Function.cold().getImageSize() == 0))
       continue;
 
     if (Function.getImageSize() > Function.getMaxSize()) {
@@ -1234,8 +1236,9 @@ void RewriteInstance::rewriteFile() {
     // Write cold part
     outs() << "FLO: rewriting function \"" << Function.getName()
            << "\" (cold part)\n";
-    Out->os().pwrite(reinterpret_cast<char *>(Function.getColdImageAddress()),
-                     Function.getColdImageSize(), Function.getColdFileOffset());
+    Out->os().pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
+                     Function.cold().getImageSize(),
+                     Function.cold().getFileOffset());
 
     ++CountOverwrittenFunctions;
     if (opts::MaxFunctions && CountOverwrittenFunctions == opts::MaxFunctions) {

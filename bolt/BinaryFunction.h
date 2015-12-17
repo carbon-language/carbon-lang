@@ -80,7 +80,7 @@ private:
   /// Name of the function as we know it.
   std::string Name;
 
-  /// Symbol associated with this function.
+  /// Symbol associated with this function in the input.
   SymbolRef Symbol;
 
   /// Containing section
@@ -95,7 +95,6 @@ private:
 
   /// Offset in the file.
   uint64_t FileOffset{0};
-  uint64_t ColdFileOffset{0};
 
   /// Maximum size this function is allowed to have.
   uint64_t MaxSize{std::numeric_limits<uint64_t>::max()};
@@ -114,11 +113,9 @@ private:
 
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
-  uint64_t ColdImageAddress{0};
 
   /// The size of the code in memory.
   uint64_t ImageSize{0};
-  uint64_t ColdImageSize{0};
 
   /// Name for the section this function code should reside in.
   std::string CodeSectionName;
@@ -133,6 +130,9 @@ private:
   /// Binary blob reprsenting action, type, and type index tables for this
   /// function' LSDA (exception handling).
   ArrayRef<uint8_t> LSDATables;
+
+  /// Offset into LSDATables where type tables start.
+  uint64_t LSDATablesTypeOffset{0};
 
   /// Original LSDA address for the function.
   uint64_t LSDAAddress{0};
@@ -240,6 +240,9 @@ private:
   // This vector is indexed by BB index.
   std::vector<uint32_t> BBCFIState;
 
+  /// Symbol in the output.
+  const MCSymbol *OutputSymbol;
+
 public:
 
   typedef BasicBlockListType::iterator iterator;
@@ -321,11 +324,6 @@ public:
     return Name;
   }
 
-  /// Return symbol associated with the function start.
-  SymbolRef getSymbol() const {
-    return Symbol;
-  }
-
   /// Return containing file section.
   SectionRef getSection() const {
     return Section;
@@ -341,10 +339,6 @@ public:
     return FileOffset;
   }
 
-  uint64_t getColdFileOffset() const {
-    return ColdFileOffset;
-  }
-
   /// Return (original) size of the function.
   uint64_t getSize() const {
     return Size;
@@ -353,6 +347,11 @@ public:
   /// Return the maximum size the body of the function could have.
   uint64_t getMaxSize() const {
     return MaxSize;
+  }
+
+  /// Return MC symbol associtated with the function in the output object.
+  const MCSymbol *getOutputSymbol() const {
+    return OutputSymbol;
   }
 
   /// Return internal section name for this function.
@@ -492,13 +491,13 @@ public:
     return *this;
   }
 
-  BinaryFunction &setColdFileOffset(uint64_t Offset) {
-    ColdFileOffset = Offset;
+  BinaryFunction &setMaxSize(uint64_t Size) {
+    MaxSize = Size;
     return *this;
   }
 
-  BinaryFunction &setMaxSize(uint64_t Size) {
-    MaxSize = Size;
+  BinaryFunction &setOutputSymbol(const MCSymbol *Symbol) {
+    OutputSymbol = Symbol;
     return *this;
   }
 
@@ -531,18 +530,9 @@ public:
     return *this;
   }
 
-  BinaryFunction &setColdImageAddress(uint64_t Address) {
-    ColdImageAddress = Address;
-    return *this;
-  }
-
   /// Return the address of this function' image in memory.
   uint64_t getImageAddress() const {
     return ImageAddress;
-  }
-
-  uint64_t getColdImageAddress() const {
-    return ColdImageAddress;
   }
 
   BinaryFunction &setImageSize(uint64_t Size) {
@@ -550,18 +540,9 @@ public:
     return *this;
   }
 
-  BinaryFunction &setColdImageSize(uint64_t Size) {
-    ColdImageSize = Size;
-    return *this;
-  }
-
   /// Return the size of this function' image in memory.
   uint64_t getImageSize() const {
     return ImageSize;
-  }
-
-  uint64_t getColdImageSize() const {
-    return ColdImageSize;
   }
 
   /// Set the profile data for the number of times the function was called.
@@ -653,7 +634,34 @@ public:
   /// Return true if the function has exception handling tables.
   bool hasEHRanges() const { return !CallSites.empty(); }
 
+  /// Emit exception handling ranges for the function.
+  void emitLSDA();
+
   virtual ~BinaryFunction() {}
+
+  /// Info for fragmented functions.
+  class FragmentInfo {
+  private:
+    uint64_t ImageAddress{0};
+    uint64_t ImageSize{0};
+    uint64_t FileOffset{0};
+    const MCSymbol *OutputSymbol{nullptr};
+  public:
+    uint64_t getImageAddress() const { return ImageAddress; }
+    uint64_t getImageSize() const { return ImageSize; }
+    uint64_t getFileOffset() const { return FileOffset; }
+    const MCSymbol *getOutputSymbol() const { return OutputSymbol; }
+
+    void setImageAddress(uint64_t Address) { ImageAddress = Address; }
+    void setImageSize(uint64_t Size) { ImageSize = Size; }
+    void setFileOffset(uint64_t Offset) { FileOffset = Offset; }
+    void setOutputSymbol(const MCSymbol *Symbol) { OutputSymbol = Symbol; }
+  };
+
+  /// Cold fragment of the function.
+  FragmentInfo ColdFragment;
+
+  FragmentInfo &cold() { return ColdFragment; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,
