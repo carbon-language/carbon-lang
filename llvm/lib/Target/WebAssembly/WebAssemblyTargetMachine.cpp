@@ -15,7 +15,6 @@
 #include "WebAssembly.h"
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
 #include "WebAssemblyTargetMachine.h"
-#include "WebAssemblyTargetObjectFile.h"
 #include "WebAssemblyTargetTransformInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/Passes.h"
@@ -49,7 +48,7 @@ WebAssemblyTargetMachine::WebAssemblyTargetMachine(
     : LLVMTargetMachine(T, TT.isArch64Bit() ? "e-p:64:64-i64:64-n32:64-S128"
                                             : "e-p:32:32-i64:64-n32:64-S128",
                         TT, CPU, FS, Options, RM, CM, OL),
-      TLOF(make_unique<WebAssemblyTargetObjectFile>()) {
+      TLOF(make_unique<TargetLoweringObjectFileELF>()) {
   // WebAssembly type-checks expressions, but a noreturn function with a return
   // type that doesn't match the context will cause a check failure. So we lower
   // LLVM 'unreachable' to ISD::TRAP and then lower that to WebAssembly's
@@ -171,7 +170,7 @@ void WebAssemblyPassConfig::addPreRegAlloc() {
   addPass(createWebAssemblyRegStackify());
   // The register coalescing pass has a bad interaction with COPY MIs which have
   // EXPR_STACK as an extra operand
-  //disablePass(&RegisterCoalescerID);
+  // disablePass(&RegisterCoalescerID);
 }
 
 void WebAssemblyPassConfig::addPostRegAlloc() {
@@ -198,7 +197,7 @@ void WebAssemblyPassConfig::addPostRegAlloc() {
 
 void WebAssemblyPassConfig::addPreEmitPass() {
   TargetPassConfig::addPreEmitPass();
-    
+
   // Put the CFG in structured form; insert BLOCK and LOOP markers.
   addPass(createWebAssemblyCFGStackify());
 

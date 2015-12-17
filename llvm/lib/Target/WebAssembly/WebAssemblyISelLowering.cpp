@@ -17,7 +17,6 @@
 #include "WebAssemblyMachineFunctionInfo.h"
 #include "WebAssemblySubtarget.h"
 #include "WebAssemblyTargetMachine.h"
-#include "WebAssemblyTargetObjectFile.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -650,10 +649,3 @@ SDValue WebAssemblyTargetLowering::LowerVASTART(SDValue Op,
 //===----------------------------------------------------------------------===//
 //                          WebAssembly Optimization Hooks
 //===----------------------------------------------------------------------===//
-
-MCSection *WebAssemblyTargetObjectFile::SelectSectionForGlobal(
-    const GlobalValue *GV, SectionKind /*Kind*/, Mangler & /*Mang*/,
-    const TargetMachine & /*TM*/) const {
-  // TODO: Be more sophisticated than this.
-  return isa<Function>(GV) ? getTextSection() : getDataSection();
-}
