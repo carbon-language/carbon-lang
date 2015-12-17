@@ -29,10 +29,9 @@ static cl::opt<std::string>
                cl::desc("Only view functions that match this pattern"),
                cl::Hidden, cl::init(""), cl::ZeroOrMore);
 
-static cl::opt<bool>
-    ViewAll("polly-view-all",
-            cl::desc("Also show functions without any scops"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool> ViewAll("polly-view-all",
+                             cl::desc("Also show functions without any scops"),
+                             cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
 namespace llvm {
 template <>
