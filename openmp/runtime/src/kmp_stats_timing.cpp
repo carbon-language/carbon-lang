@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "kmp.h"
 #include "kmp_stats_timing.h"
 
 using namespace std;
@@ -40,15 +41,15 @@ double tsc_tick_count::tick_time()
 
     if (result == 0.0)
     {
-        int cpuinfo[4];
+        kmp_cpuid_t cpuinfo;
         char brand[256];
 
-        __cpuid(cpuinfo, 0x80000000);
+        __kmp_x86_cpuid(0x80000000, 0, &cpuinfo);
         memset(brand, 0, sizeof(brand));
-        int ids = cpuinfo[0];
+        int ids = cpuinfo.eax;
 
         for (unsigned int i=2; i<(ids^0x80000000)+2; i++)
-            __cpuid(brand+(i-2)*sizeof(cpuinfo), i | 0x80000000);
+            __kmp_x86_cpuid(i | 0x80000000, 0, (kmp_cpuid_t*)(brand+(i-2)*sizeof(kmp_cpuid_t)));
 
         char * start = &brand[0];
         for (;*start == ' '; start++)
