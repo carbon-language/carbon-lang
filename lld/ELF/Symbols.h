@@ -77,7 +77,7 @@ public:
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
   bool isUsedInDynamicReloc() const { return IsUsedInDynamicReloc; }
   void setUsedInDynamicReloc() { IsUsedInDynamicReloc = true; }
-  bool isTLS() const { return IsTLS; }
+  bool isTls() const { return IsTLS; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }

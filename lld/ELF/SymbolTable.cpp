@@ -173,7 +173,7 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     return;
   }
 
-  if (New->isTLS() != Existing->isTLS())
+  if (New->isTls() != Existing->isTls())
     error("TLS attribute mismatch for symbol: " + conflictMsg(Existing, New));
 
   // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,

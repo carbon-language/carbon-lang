@@ -271,7 +271,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     else if (LazyReloc)
       Reloc = Target->getPltReloc();
     else if (NeedsGot)
-      Reloc = Body->isTLS() ? Target->getTlsGotReloc() : Target->getGotReloc();
+      Reloc = Body->isTls() ? Target->getTlsGotReloc() : Target->getGotReloc();
     else if (NeedsCopy)
       Reloc = Target->getCopyReloc();
     else

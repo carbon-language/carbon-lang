@@ -335,7 +335,7 @@ bool X86TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
 }
 
 bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  if (S.isTLS() && Type == R_386_TLS_GD)
+  if (S.isTls() && Type == R_386_TLS_GD)
     return Target->isTlsOptimized(Type, &S) && canBePreempted(&S, true);
   if (Type == R_386_TLS_GOTIE)
     return !isTlsOptimized(Type, &S);
@@ -388,7 +388,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 bool X86TargetInfo::isTlsOptimized(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTLS()))
+  if (Config->Shared || (S && !S->isTls()))
     return false;
   return Type == R_386_TLS_LDO_32 || Type == R_386_TLS_LDM ||
          Type == R_386_TLS_GD ||
@@ -647,7 +647,7 @@ bool X86_64TargetInfo::isSizeDynReloc(uint32_t Type,
 
 bool X86_64TargetInfo::isTlsOptimized(unsigned Type,
                                       const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTLS()))
+  if (Config->Shared || (S && !S->isTls()))
     return false;
   return Type == R_X86_64_TLSGD || Type == R_X86_64_TLSLD ||
          Type == R_X86_64_DTPOFF32 ||
