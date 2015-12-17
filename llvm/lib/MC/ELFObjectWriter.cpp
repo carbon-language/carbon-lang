@@ -1046,28 +1046,17 @@ void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
   WriteWord(EntrySize); // sh_entsize
 }
 
-// ELF doesn't require relocations to be in any order. We sort by the Offset,
-// just to match gnu as for easier comparison. The use type is an arbitrary way
-// of making the sort deterministic.
-static int cmpRel(const ELFRelocationEntry *AP, const ELFRelocationEntry *BP) {
-  const ELFRelocationEntry &A = *AP;
-  const ELFRelocationEntry &B = *BP;
-  if (A.Offset != B.Offset)
-    return B.Offset - A.Offset;
-  if (B.Type != A.Type)
-    return A.Type - B.Type;
-  llvm_unreachable("ELFRelocs might be unstable!");
-  return 0;
-}
-
 void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
                                        const MCSectionELF &Sec) {
   std::vector<ELFRelocationEntry> &Relocs = Relocations[&Sec];
 
-  array_pod_sort(Relocs.begin(), Relocs.end(), cmpRel);
+  // We record relocations by pushing to the end of a vector. Reverse the vector
+  // to get the relocations in the order they were created.
+  // In most cases that is not important, but it can be for special sections
+  // (.eh_frame) or specific relocations (TLS optimizations on SystemZ).
+  std::reverse(Relocs.begin(), Relocs.end());
 
-  // Sort the relocation entries. Most targets just sort by Offset, but some
-  // (e.g., MIPS) have additional constraints.
+  // Sort the relocation entries. MIPS needs this.
   TargetObjectWriter->sortRelocs(Asm, Relocs);
 
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
