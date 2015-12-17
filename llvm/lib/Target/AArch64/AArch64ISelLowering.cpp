@@ -8450,25 +8450,6 @@ static SDValue performExtendCombine(SDNode *N,
     }
   }
 
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-
-  // If we see (any_extend (extract_vector_element v, i)), we can potentially
-  // remove the extend and promote the extract. We can do this if the vector
-  // type is legal and if the result is sign extended from the element type.
-  if (DCI.isAfterLegalizeVectorOps() && N->getOpcode() == ISD::ANY_EXTEND &&
-      N->hasOneUse() && N->use_begin()->getOpcode() == ISD::SIGN_EXTEND_INREG) {
-    const SDValue &M = N->getOperand(0);
-    if (M.getNode()->hasOneUse() && M.getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
-      EVT DstTy = N->getValueType(0);
-      EVT SrcTy = cast<VTSDNode>(N->use_begin()->getOperand(1))->getVT();
-      EVT VecTy = M.getOperand(0).getValueType();
-      EVT ElmTy = VecTy.getScalarType();
-      if (TLI.isTypeLegal(VecTy) && SrcTy == ElmTy)
-        return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N), DstTy,
-                           M.getOperand(0), M.getOperand(1));
-    }
-  }
-
   // This is effectively a custom type legalization for AArch64.
   //
   // Type legalization will split an extend of a small, legal, type to a larger
@@ -8499,6 +8480,7 @@ static SDValue performExtendCombine(SDNode *N,
   // We're only interested in cleaning things up for non-legal vector types
   // here. If both the source and destination are legal, things will just
   // work naturally without any fiddling.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   EVT ResVT = N->getValueType(0);
   if (!ResVT.isVector() || TLI.isTypeLegal(ResVT))
     return SDValue();
