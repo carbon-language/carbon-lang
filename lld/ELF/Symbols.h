@@ -84,11 +84,7 @@ public:
 
   uint8_t getVisibility() const { return Visibility; }
 
-  unsigned getDynamicSymbolTableIndex() const {
-    return DynamicSymbolTableIndex;
-  }
-  void setDynamicSymbolTableIndex(unsigned V) { DynamicSymbolTableIndex = V; }
-
+  unsigned DynamicSymbolTableIndex = 0;
   uint32_t GlobalDynIndex = -1;
   uint32_t GotIndex = -1;
   uint32_t GotPltIndex = -1;
@@ -127,7 +123,6 @@ protected:
   unsigned IsUsedInRegularObj : 1;
   unsigned IsUsedInDynamicReloc : 1;
   unsigned IsTls : 1;
-  unsigned DynamicSymbolTableIndex = 0;
   StringRef Name;
   Symbol *Backref = nullptr;
 };
