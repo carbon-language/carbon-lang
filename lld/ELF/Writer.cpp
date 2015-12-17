@@ -243,10 +243,10 @@ void Writer<ELFT>::scanRelocs(
     bool NeedsPlt = false;
     if (Body) {
       if (auto *E = dyn_cast<SharedSymbol<ELFT>>(Body)) {
-        if (E->needsCopy())
+        if (E->NeedsCopy)
           continue;
         if (Target->relocNeedsCopy(Type, *Body))
-          E->OffsetInBSS = 0;
+          E->NeedsCopy = true;
       }
       NeedsPlt = Target->relocNeedsPlt(Type, *Body);
       if (NeedsPlt) {
@@ -712,7 +712,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
     if (auto *SC = dyn_cast<SharedSymbol<ELFT>>(Body))
-      if (SC->needsCopy())
+      if (SC->NeedsCopy)
         SharedCopySymbols.push_back(SC);
 
     if (!includeInSymtab<ELFT>(*Body))
