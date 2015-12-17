@@ -15,11 +15,11 @@
 #include "WebAssembly.h"
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
 #include "WebAssemblyTargetMachine.h"
+#include "WebAssemblyTargetObjectFile.h"
 #include "WebAssemblyTargetTransformInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
-#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -48,7 +48,7 @@ WebAssemblyTargetMachine::WebAssemblyTargetMachine(
     : LLVMTargetMachine(T, TT.isArch64Bit() ? "e-p:64:64-i64:64-n32:64-S128"
                                             : "e-p:32:32-i64:64-n32:64-S128",
                         TT, CPU, FS, Options, RM, CM, OL),
-      TLOF(make_unique<TargetLoweringObjectFileELF>()) {
+      TLOF(make_unique<WebAssemblyTargetObjectFile>()) {
   // WebAssembly type-checks expressions, but a noreturn function with a return
   // type that doesn't match the context will cause a check failure. So we lower
   // LLVM 'unreachable' to ISD::TRAP and then lower that to WebAssembly's
