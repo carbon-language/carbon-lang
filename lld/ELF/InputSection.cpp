@@ -199,7 +199,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       SymVA = Out<ELFT>::Got->getEntryAddr(Body);
       if (Body.isTls())
         Type = Target->getTlsGotReloc();
-    } else if (!Target->relocNeedsCopy(Type, Body) &&
+    } else if (!Target->needsCopyRel(Type, Body) &&
                isa<SharedSymbol<ELFT>>(Body)) {
       continue;
     } else if (Target->isTlsDynReloc(Type) ||

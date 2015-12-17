@@ -245,7 +245,7 @@ void Writer<ELFT>::scanRelocs(
       if (auto *E = dyn_cast<SharedSymbol<ELFT>>(Body)) {
         if (E->NeedsCopy)
           continue;
-        if (Target->relocNeedsCopy(Type, *Body))
+        if (Target->needsCopyRel(Type, *Body))
           E->NeedsCopy = true;
       }
       NeedsPlt = Target->relocNeedsPlt(Type, *Body);

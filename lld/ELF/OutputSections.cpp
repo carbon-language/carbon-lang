@@ -258,7 +258,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t Type = RI.getType(Config->Mips64EL);
     if (applyTlsDynamicReloc(Body, Type, P, reinterpret_cast<Elf_Rel *>(Buf)))
       continue;
-    bool NeedsCopy = Body && Target->relocNeedsCopy(Type, *Body);
+    bool NeedsCopy = Body && Target->needsCopyRel(Type, *Body);
     bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
     bool CanBePreempted = canBePreempted(Body, NeedsGot);
     bool LazyReloc = Body && Target->supportsLazyRelocations() &&
