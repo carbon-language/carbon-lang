@@ -195,7 +195,7 @@ template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
   StringRef Name = New->getName();
   Symbol *&Sym = Symtab[Name];
   if (!Sym)
-    Sym = new (Alloc) Symbol(New);
+    Sym = new (Alloc) Symbol{New};
   New->setBackref(Sym);
   return Sym;
 }

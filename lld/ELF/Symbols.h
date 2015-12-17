@@ -48,7 +48,6 @@ void initSymbols();
 // through a Symbol. There's always one Symbol for each symbol name.
 // The resolver updates SymbolBody pointers as it resolves symbols.
 struct Symbol {
-  explicit Symbol(SymbolBody *P) : Body(P) {}
   SymbolBody *Body;
 };
 
