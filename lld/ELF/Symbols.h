@@ -77,7 +77,7 @@ public:
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
   bool isUsedInDynamicReloc() const { return IsUsedInDynamicReloc; }
   void setUsedInDynamicReloc() { IsUsedInDynamicReloc = true; }
-  bool isTls() const { return IsTLS; }
+  bool isTls() const { return IsTls; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -114,8 +114,8 @@ public:
 
 protected:
   SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
-             bool IsTLS)
-      : SymbolKind(K), IsWeak(IsWeak), Visibility(Visibility), IsTLS(IsTLS),
+             bool IsTls)
+      : SymbolKind(K), IsWeak(IsWeak), Visibility(Visibility), IsTls(IsTls),
         Name(Name) {
     IsUsedInRegularObj = K != SharedKind && K != LazyKind;
     IsUsedInDynamicReloc = 0;
@@ -126,7 +126,7 @@ protected:
   unsigned Visibility : 2;
   unsigned IsUsedInRegularObj : 1;
   unsigned IsUsedInDynamicReloc : 1;
-  unsigned IsTLS : 1;
+  unsigned IsTls : 1;
   unsigned DynamicSymbolTableIndex = 0;
   StringRef Name;
   Symbol *Backref = nullptr;
