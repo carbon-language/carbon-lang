@@ -75,6 +75,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Offset      : 0x" << Twine::utohexstr(FileOffset)
      << "\n  Section     : "   << SectionName
      << "\n  Orc Section : "   << getCodeSectionName()
+     << "\n  LSDA        : 0x" << Twine::utohexstr(getLSDAAddress())
      << "\n  IsSimple    : "   << IsSimple
      << "\n  IsSplit     : "   << IsSplit
      << "\n  BB Count    : "   << BasicBlocksLayout.size();
@@ -289,7 +290,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   Labels[0] = Ctx->createTempSymbol("BB0", false);
 
   auto handleRIPOperand =
-      [this](MCInst &Instruction, uint64_t Address, uint64_t Size) -> bool {
+      [&](MCInst &Instruction, uint64_t Address, uint64_t Size) -> bool {
         uint64_t TargetAddress{0};
         MCSymbol *TargetSymbol{nullptr};
         if (!BC.MIA->evaluateRIPOperand(Instruction, Address, Size,
@@ -302,6 +303,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           return false;
         }
         // FIXME: check that the address is in data, not in code.
+        if (TargetAddress == 0) {
+          errs() << "FLO-WARNING: rip-relative operand is zero in function "
+                 << getName() << ". Ignoring function.\n";
+          return false;
+        }
         TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
         BC.MIA->replaceRIPOperandDisp(
             Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
@@ -392,8 +398,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = BC.getOrCreateGlobalSymbol(InstructionTarget,
                                                       "FUNCat");
             if (InstructionTarget == 0) {
-              errs() << "FLO-WARNING: Function \":" << getName()
-                     << "\" has call to address zero. Ignoring it.\n";
+              // We actually see calls to address 0 because of the weak symbols
+              // from the libraries. In reality more often than not it is
+              // unreachable code, but we don't know it and have to emit calls
+              // to 0 which make LLVM JIT unhappy.
+              errs() << "FLO-WARNING: Function " << getName()
+                     << " has a call to address zero. Ignoring function.\n";
               IsSimple = false;
             }
           }
