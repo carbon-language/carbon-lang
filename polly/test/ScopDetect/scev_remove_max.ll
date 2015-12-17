@@ -1,7 +1,7 @@
 ; RUN: opt %loadPolly -polly-detect < %s
 
 ; This test case helps to determine wether SCEVRemoveMax::remove produces
-; an infinite loop and a segmentation fault, if it processes, for exmaple,
+; an infinite loop and a segmentation fault, if it processes, for example,
 ; '((-1 + (-1 * %b1)) umax {(-1 + (-1 * %yStart)),+,-1}<%.preheader>)'.
 ;
 ; In this case, the SCoP is invalid. However, SCoP detection failed when
