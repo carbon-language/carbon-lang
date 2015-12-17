@@ -11,7 +11,7 @@
 #define PROFILE_INSTRPROFILING_PORT_H_
 
 #ifdef _MSC_VER
-#define COMPILER_RTLIGNAS(x) __declspec(align(x))
+#define COMPILER_RT_ALIGNAS(x) __declspec(align(x))
 #define COMPILER_RT_VISIBILITY
 #define COMPILER_RT_WEAK __declspec(selectany)
 #elif __GNUC__
