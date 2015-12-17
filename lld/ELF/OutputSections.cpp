@@ -263,10 +263,11 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     bool CanBePreempted = canBePreempted(Body, NeedsGot);
     bool LazyReloc = Body && Target->supportsLazyRelocations() &&
                      Target->relocNeedsPlt(Type, *Body);
+    bool IsDynRelative = Type == Target->getRelativeReloc();
 
     unsigned Sym = CanBePreempted ? Body->DynamicSymbolTableIndex : 0;
     unsigned Reloc;
-    if (!CanBePreempted)
+    if (!CanBePreempted || IsDynRelative)
       Reloc = Target->getRelativeReloc();
     else if (LazyReloc)
       Reloc = Target->getPltReloc();
@@ -297,7 +298,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uintX_t Addend;
     if (NeedsCopy)
       Addend = 0;
-    else if (CanBePreempted)
+    else if (CanBePreempted || IsDynRelative)
       Addend = OrigAddend;
     else if (Body)
       Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
