@@ -362,6 +362,9 @@ Mangled::NameMatches (const RegularExpression& regex, lldb::LanguageType languag
 ConstString
 Mangled::GetName (lldb::LanguageType language, Mangled::NamePreference preference) const
 {
+    if (preference == ePreferMangled && m_mangled)
+        return m_mangled;
+
     ConstString demangled = GetDemangledName(language);
 
     if (preference == ePreferDemangledWithoutArguments)
@@ -376,12 +379,7 @@ Mangled::GetName (lldb::LanguageType language, Mangled::NamePreference preferenc
             return demangled;
         return m_mangled;
     }
-    else
-    {
-        if (m_mangled)
-            return m_mangled;
-        return demangled;
-    }
+    return demangled;
 }
 
 //----------------------------------------------------------------------
