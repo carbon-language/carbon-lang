@@ -53,18 +53,6 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
 LLVMBool LLVMGetBitcodeModule(LLVMMemoryBufferRef MemBuf, LLVMModuleRef *OutM,
                               char **OutMessage);
 
-
-/** Deprecated: Use LLVMGetBitcodeModuleInContext instead. */
-LLVMBool LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
-                                               LLVMMemoryBufferRef MemBuf,
-                                               LLVMModuleProviderRef *OutMP,
-                                               char **OutMessage);
-
-/** Deprecated: Use LLVMGetBitcodeModule instead. */
-LLVMBool LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
-                                      LLVMModuleProviderRef *OutMP,
-                                      char **OutMessage);
-
 /**
  * @}
  */

@@ -95,21 +95,3 @@ LLVMBool LLVMGetBitcodeModule(LLVMMemoryBufferRef MemBuf, LLVMModuleRef *OutM,
   return LLVMGetBitcodeModuleInContext(LLVMGetGlobalContext(), MemBuf, OutM,
                                        OutMessage);
 }
-
-/* Deprecated: Use LLVMGetBitcodeModuleInContext instead. */
-LLVMBool LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
-                                               LLVMMemoryBufferRef MemBuf,
-                                               LLVMModuleProviderRef *OutMP,
-                                               char **OutMessage) {
-  return LLVMGetBitcodeModuleInContext(ContextRef, MemBuf,
-                                       reinterpret_cast<LLVMModuleRef*>(OutMP),
-                                       OutMessage);
-}
-
-/* Deprecated: Use LLVMGetBitcodeModule instead. */
-LLVMBool LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
-                                      LLVMModuleProviderRef *OutMP,
-                                      char **OutMessage) {
-  return LLVMGetBitcodeModuleProviderInContext(LLVMGetGlobalContext(), MemBuf,
-                                               OutMP, OutMessage);
-}
