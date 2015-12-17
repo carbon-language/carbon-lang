@@ -9628,8 +9628,6 @@ SCEVPredicate::SCEVPredicate(const FoldingSetNodeIDRef ID,
                              SCEVPredicateKind Kind)
     : FastID(ID), Kind(Kind) {}
 
-SCEVPredicate::~SCEVPredicate() {}
-
 SCEVEqualPredicate::SCEVEqualPredicate(const FoldingSetNodeIDRef ID,
                                        const SCEVUnknown *LHS,
                                        const SCEVConstant *RHS)
