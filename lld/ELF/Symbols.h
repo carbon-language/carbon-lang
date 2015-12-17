@@ -240,6 +240,10 @@ public:
   InputSectionBase<ELFT> &Section;
 };
 
+// DefinedSynthetic is a class to represent linker-generated ELF symbols.
+// The difference from the regular symbol is that DefinedSynthetic symbols
+// don't belong to any input files or sections. Thus, its constructor
+// takes an output section to calculate output VA, etc.
 template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {
   typedef Defined<ELFT> Base;
 
