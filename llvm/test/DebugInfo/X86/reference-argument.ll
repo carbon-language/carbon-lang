@@ -1,4 +1,4 @@
-; RUN: %llc_dwarf -filetype=obj -O0 < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-macosx10.9.0 -filetype=obj -O0 < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 ; ModuleID = 'aggregate-indirect-arg.cpp'
 ; extracted from debuginfo-tests/aggregate-indirect-arg.cpp
 
