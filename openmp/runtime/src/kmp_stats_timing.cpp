@@ -25,14 +25,14 @@
 
 using namespace std;
 
-#if KMP_OS_LINUX
+#if KMP_HAVE_TICK_TIME
 # if KMP_MIC
 double tsc_tick_count::tick_time()
 {
     // pretty bad assumption of 1GHz clock for MIC
     return 1/((double)1000*1.e6);
 }
-# else
+# elif KMP_ARCH_X86 || KMP_ARCH_X86_64
 #  include <string.h>
 // Extract the value from the CPUID information
 double tsc_tick_count::tick_time()
