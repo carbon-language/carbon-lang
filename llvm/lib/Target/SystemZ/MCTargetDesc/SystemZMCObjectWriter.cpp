@@ -156,9 +156,6 @@ unsigned SystemZObjectWriter::GetRelocType(const MCValue &Target,
 
 void SystemZObjectWriter::sortRelocs(const MCAssembler &Asm,
                                      std::vector<ELFRelocationEntry> &Relocs) {
-  // The default function sorts entries by Offset in descending order.
-  MCELFObjectTargetWriter::sortRelocs(Asm, Relocs);
-
   // This is OK for SystemZ, except for R_390_TLS_GDCALL/LDCALL relocs.
   // There is typically another reloc, a R_390_PLT32DBL, on the same
   // instruction.  This other reloc must come *before* the GDCALL reloc,

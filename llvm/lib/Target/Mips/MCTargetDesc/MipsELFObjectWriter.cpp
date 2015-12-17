@@ -332,9 +332,6 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
   if (Relocs.size() < 2)
     return;
 
-  // The default function sorts entries by Offset in descending order.
-  MCELFObjectTargetWriter::sortRelocs(Asm, Relocs);
-
   // Init MipsRelocs from Relocs.
   std::vector<MipsRelocationEntry> MipsRelocs;
   for (unsigned I = 0, E = Relocs.size(); I != E; ++I)
