@@ -379,7 +379,7 @@ const DataLayout &Module::getDataLayout() const { return DL; }
 //
 void Module::setMaterializer(GVMaterializer *GVM) {
   assert(!Materializer &&
-         "Module already has a GVMaterializer.  Call MaterializeAllPermanently"
+         "Module already has a GVMaterializer.  Call materializeAll"
          " to clear it out before setting another one.");
   Materializer.reset(GVM);
 }
@@ -394,13 +394,8 @@ std::error_code Module::materialize(GlobalValue *GV) {
 std::error_code Module::materializeAll() {
   if (!Materializer)
     return std::error_code();
-  return Materializer->materializeModule(this);
-}
-
-std::error_code Module::materializeAllPermanently() {
-  if (std::error_code EC = materializeAll())
+  if (std::error_code EC = Materializer->materializeModule(this))
     return EC;
-
   Materializer.reset();
   return std::error_code();
 }

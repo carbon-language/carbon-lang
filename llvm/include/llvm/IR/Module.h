@@ -431,7 +431,7 @@ public:
 
   /// Sets the GVMaterializer to GVM. This module must not yet have a
   /// Materializer. To reset the materializer for a module that already has one,
-  /// call MaterializeAllPermanently first. Destroying this module will destroy
+  /// call materializeAll first. Destroying this module will destroy
   /// its materializer without materializing any more GlobalValues. Without
   /// destroying the Module, there is no way to detach or destroy a materializer
   /// without materializing all the GVs it controls, to avoid leaving orphan
@@ -445,13 +445,10 @@ public:
   /// problem. If successful, this returns false.
   std::error_code materialize(GlobalValue *GV);
 
-  /// Make sure all GlobalValues in this Module are fully read.
-  std::error_code materializeAll();
-
   /// Make sure all GlobalValues in this Module are fully read and clear the
   /// Materializer. If the module is corrupt, this DOES NOT clear the old
   /// Materializer.
-  std::error_code materializeAllPermanently();
+  std::error_code materializeAll();
 
   std::error_code materializeMetadata();
 

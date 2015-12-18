@@ -5847,7 +5847,7 @@ getBitcodeModuleImpl(std::unique_ptr<DataStreamer> Streamer, StringRef Name,
 
   if (MaterializeAll) {
     // Read in the entire module, and destroy the BitcodeReader.
-    if (std::error_code EC = M->materializeAllPermanently())
+    if (std::error_code EC = M->materializeAll())
       return cleanupOnError(EC);
   } else {
     // Resolve forward references from blockaddresses.
