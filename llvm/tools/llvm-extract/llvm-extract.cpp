@@ -236,10 +236,6 @@ int main(int argc, char **argv) {
   } else {
     // Deleting. Materialize every GV that's *not* in GVs.
     SmallPtrSet<GlobalValue *, 8> GVSet(GVs.begin(), GVs.end());
-    for (auto &G : M->globals()) {
-      if (!GVSet.count(&G))
-        Materialize(G);
-    }
     for (auto &F : *M) {
       if (!GVSet.count(&F))
         Materialize(F);
