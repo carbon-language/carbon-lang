@@ -12,7 +12,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace llvm::opt;
@@ -43,21 +43,24 @@ Arg::~Arg() {
   }
 }
 
-void Arg::dump() const {
-  llvm::errs() << "<";
+void Arg::print(raw_ostream &OS) const {
+  OS << "<";
 
-  llvm::errs() << " Opt:";
+  OS << " Opt:";
   Opt.dump();
 
-  llvm::errs() << " Index:" << Index;
+  OS << " Index:" << Index;
 
-  llvm::errs() << " Values: [";
+  OS << " Values: [";
   for (unsigned i = 0, e = Values.size(); i != e; ++i) {
-    if (i) llvm::errs() << ", ";
-    llvm::errs() << "'" << Values[i] << "'";
+    OS << "'" << Values[i] << "'";
+    if (i != e - 1) llvm::errs() << ", ";
   }
+  OS << "]>\n";
+}
 
-  llvm::errs() << "]>\n";
+void Arg::dump() const {
+  print(llvm::dbgs());
 }
 
 std::string Arg::getAsString(const ArgList &Args) const {
