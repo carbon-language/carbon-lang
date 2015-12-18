@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/raw_ostream.h"
 #include <string>
 
 namespace llvm {
@@ -113,8 +112,6 @@ public:
   /// The distinction is that some options only render their values
   /// when rendered as a input (e.g., Xlinker).
   void renderAsInput(const ArgList &Args, ArgStringList &Output) const;
-
-  void print(raw_ostream &OS) const;
 
   void dump() const;
 
