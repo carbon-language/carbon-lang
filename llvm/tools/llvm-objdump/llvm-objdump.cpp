@@ -22,7 +22,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/FaultMaps.h"
-#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -176,11 +175,6 @@ cl::opt<bool>
 
 cl::opt<bool> PrintFaultMaps("fault-map-section",
                              cl::desc("Display contents of faultmap section"));
-
-cl::opt<DIDumpType> llvm::DwarfDumpType(
-    "dwarf", cl::init(DIDT_Null), cl::desc("Dump of dwarf debug sections:"),
-    cl::values(clEnumValN(DIDT_Frames, "frames", ".debug_frame"),
-               clEnumValEnd));
 
 static StringRef ToolName;
 
@@ -1578,11 +1572,6 @@ static void DumpObject(const ObjectFile *o) {
     printRawClangAST(o);
   if (PrintFaultMaps)
     printFaultMaps(o);
-  if (DwarfDumpType != DIDT_Null) {
-    std::unique_ptr<DIContext> DICtx(new DWARFContextInMemory(*o));
-    // Dump the complete DWARF structure.
-    DICtx->dump(outs(), DwarfDumpType, true /* DumpEH */);
-  }
 }
 
 /// @brief Dump each object file in \a a;
@@ -1675,8 +1664,7 @@ int main(int argc, char **argv) {
       && !(DylibId && MachOOpt)
       && !(ObjcMetaData && MachOOpt)
       && !(FilterSections.size() != 0 && MachOOpt)
-      && !PrintFaultMaps
-      && DwarfDumpType == DIDT_Null) {
+      && !PrintFaultMaps) {
     cl::PrintHelpMessage();
     return 2;
   }
