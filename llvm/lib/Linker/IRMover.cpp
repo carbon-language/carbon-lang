@@ -335,7 +335,7 @@ LinkDiagnosticInfo::LinkDiagnosticInfo(DiagnosticSeverity Severity,
 void LinkDiagnosticInfo::print(DiagnosticPrinter &DP) const { DP << Msg; }
 
 //===----------------------------------------------------------------------===//
-// ModuleLinker implementation.
+// IRLinker implementation.
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -345,10 +345,10 @@ class IRLinker;
 /// speeds up linking for modules with many/ lazily linked functions of which
 /// few get used.
 class GlobalValueMaterializer final : public ValueMaterializer {
-  IRLinker *ModLinker;
+  IRLinker *TheIRLinker;
 
 public:
-  GlobalValueMaterializer(IRLinker *ModLinker) : ModLinker(ModLinker) {}
+  GlobalValueMaterializer(IRLinker *TheIRLinker) : TheIRLinker(TheIRLinker) {}
   Value *materializeDeclFor(Value *V) override;
   void materializeInitFor(GlobalValue *New, GlobalValue *Old) override;
   Metadata *mapTemporaryMetadata(Metadata *MD) override;
@@ -358,10 +358,10 @@ public:
 };
 
 class LocalValueMaterializer final : public ValueMaterializer {
-  IRLinker *ModLinker;
+  IRLinker *TheIRLinker;
 
 public:
-  LocalValueMaterializer(IRLinker *ModLinker) : ModLinker(ModLinker) {}
+  LocalValueMaterializer(IRLinker *TheIRLinker) : TheIRLinker(TheIRLinker) {}
   Value *materializeDeclFor(Value *V) override;
   void materializeInitFor(GlobalValue *New, GlobalValue *Old) override;
   Metadata *mapTemporaryMetadata(Metadata *MD) override;
@@ -567,47 +567,47 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
 }
 
 Value *GlobalValueMaterializer::materializeDeclFor(Value *V) {
-  return ModLinker->materializeDeclFor(V, false);
+  return TheIRLinker->materializeDeclFor(V, false);
 }
 
 void GlobalValueMaterializer::materializeInitFor(GlobalValue *New,
                                                  GlobalValue *Old) {
-  ModLinker->materializeInitFor(New, Old, false);
+  TheIRLinker->materializeInitFor(New, Old, false);
 }
 
 Metadata *GlobalValueMaterializer::mapTemporaryMetadata(Metadata *MD) {
-  return ModLinker->mapTemporaryMetadata(MD);
+  return TheIRLinker->mapTemporaryMetadata(MD);
 }
 
 void GlobalValueMaterializer::replaceTemporaryMetadata(const Metadata *OrigMD,
                                                        Metadata *NewMD) {
-  ModLinker->replaceTemporaryMetadata(OrigMD, NewMD);
+  TheIRLinker->replaceTemporaryMetadata(OrigMD, NewMD);
 }
 
 bool GlobalValueMaterializer::isMetadataNeeded(Metadata *MD) {
-  return ModLinker->isMetadataNeeded(MD);
+  return TheIRLinker->isMetadataNeeded(MD);
 }
 
 Value *LocalValueMaterializer::materializeDeclFor(Value *V) {
-  return ModLinker->materializeDeclFor(V, true);
+  return TheIRLinker->materializeDeclFor(V, true);
 }
 
 void LocalValueMaterializer::materializeInitFor(GlobalValue *New,
                                                 GlobalValue *Old) {
-  ModLinker->materializeInitFor(New, Old, true);
+  TheIRLinker->materializeInitFor(New, Old, true);
 }
 
 Metadata *LocalValueMaterializer::mapTemporaryMetadata(Metadata *MD) {
-  return ModLinker->mapTemporaryMetadata(MD);
+  return TheIRLinker->mapTemporaryMetadata(MD);
 }
 
 void LocalValueMaterializer::replaceTemporaryMetadata(const Metadata *OrigMD,
                                                       Metadata *NewMD) {
-  ModLinker->replaceTemporaryMetadata(OrigMD, NewMD);
+  TheIRLinker->replaceTemporaryMetadata(OrigMD, NewMD);
 }
 
 bool LocalValueMaterializer::isMetadataNeeded(Metadata *MD) {
-  return ModLinker->isMetadataNeeded(MD);
+  return TheIRLinker->isMetadataNeeded(MD);
 }
 
 Value *IRLinker::materializeDeclFor(Value *V, bool ForAlias) {
@@ -1650,9 +1650,9 @@ bool IRMover::move(
     std::function<void(GlobalValue &, ValueAdder Add)> AddLazyFor,
     DenseMap<unsigned, MDNode *> *ValIDToTempMDMap,
     bool IsMetadataLinkingPostpass) {
-  IRLinker TheLinker(Composite, IdentifiedStructTypes, Src, ValuesToLink,
-                     AddLazyFor, ValIDToTempMDMap, IsMetadataLinkingPostpass);
-  bool RetCode = TheLinker.run();
+  IRLinker TheIRLinker(Composite, IdentifiedStructTypes, Src, ValuesToLink,
+                       AddLazyFor, ValIDToTempMDMap, IsMetadataLinkingPostpass);
+  bool RetCode = TheIRLinker.run();
   Composite.dropTriviallyDeadConstantArrays();
   return RetCode;
 }
