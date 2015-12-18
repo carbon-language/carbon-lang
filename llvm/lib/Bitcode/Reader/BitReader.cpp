@@ -29,6 +29,12 @@ LLVMBool LLVMParseBitcode(LLVMMemoryBufferRef MemBuf, LLVMModuleRef *OutModule,
                                    OutMessage);
 }
 
+LLVMBool LLVMParseBitcode2(LLVMMemoryBufferRef MemBuf,
+                           LLVMModuleRef *OutModule) {
+  return LLVMParseBitcodeInContext2(wrap(&getGlobalContext()), MemBuf,
+                                    OutModule);
+}
+
 static void diagnosticHandler(const DiagnosticInfo &DI, void *C) {
   auto *Message = reinterpret_cast<std::string *>(C);
   raw_string_ostream Stream(*Message);
@@ -56,6 +62,22 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
   if (ModuleOrErr.getError()) {
     if (OutMessage)
       *OutMessage = strdup(Message.c_str());
+    *OutModule = wrap((Module *)nullptr);
+    return 1;
+  }
+
+  *OutModule = wrap(ModuleOrErr.get().release());
+  return 0;
+}
+
+LLVMBool LLVMParseBitcodeInContext2(LLVMContextRef ContextRef,
+                                    LLVMMemoryBufferRef MemBuf,
+                                    LLVMModuleRef *OutModule) {
+  MemoryBufferRef Buf = unwrap(MemBuf)->getMemBufferRef();
+  LLVMContext &Ctx = *unwrap(ContextRef);
+
+  ErrorOr<std::unique_ptr<Module>> ModuleOrErr = parseBitcodeFile(Buf, Ctx);
+  if (ModuleOrErr.getError()) {
     *OutModule = wrap((Module *)nullptr);
     return 1;
   }
@@ -96,8 +118,32 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
   return 0;
 }
 
+LLVMBool LLVMGetBitcodeModuleInContext2(LLVMContextRef ContextRef,
+                                        LLVMMemoryBufferRef MemBuf,
+                                        LLVMModuleRef *OutM) {
+  LLVMContext &Ctx = *unwrap(ContextRef);
+  std::unique_ptr<MemoryBuffer> Owner(unwrap(MemBuf));
+
+  ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
+      getLazyBitcodeModule(std::move(Owner), Ctx);
+  Owner.release();
+
+  if (ModuleOrErr.getError()) {
+    *OutM = wrap((Module *)nullptr);
+    return 1;
+  }
+
+  *OutM = wrap(ModuleOrErr.get().release());
+  return 0;
+}
+
 LLVMBool LLVMGetBitcodeModule(LLVMMemoryBufferRef MemBuf, LLVMModuleRef *OutM,
                               char **OutMessage) {
   return LLVMGetBitcodeModuleInContext(LLVMGetGlobalContext(), MemBuf, OutM,
                                        OutMessage);
+}
+
+LLVMBool LLVMGetBitcodeModule2(LLVMMemoryBufferRef MemBuf,
+                               LLVMModuleRef *OutM) {
+  return LLVMGetBitcodeModuleInContext2(LLVMGetGlobalContext(), MemBuf, OutM);
 }
