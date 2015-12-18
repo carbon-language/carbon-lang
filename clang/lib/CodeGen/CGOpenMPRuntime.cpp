@@ -2519,6 +2519,7 @@ void CGOpenMPRuntime::emitTaskCall(
       case OMPC_DEPEND_inout:
         DepKind = DepInOut;
         break;
+      case OMPC_DEPEND_source:
       case OMPC_DEPEND_unknown:
         llvm_unreachable("Unknown task dependence type");
       }
