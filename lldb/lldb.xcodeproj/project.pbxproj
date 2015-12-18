@@ -5928,7 +5928,7 @@
 /* Begin PBXLegacyTarget section */
 		2387551E1C24974600CCE8C3 /* lldb-python-test-suite */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-u $(SRCROOT)/test/dotest.py --apple-sdk $(PLATFORM_NAME) --executable=$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/lldb --results-formatter lldbsuite.test.xunit_formatter.XunitFormatter --results-file $(BUILD_DIR)/test-results.xml --rerun-all-issues";
+			buildArgumentsString = "-u $(SRCROOT)/test/dotest.py --apple-sdk $(PLATFORM_NAME) --executable=$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/lldb --results-formatter lldbsuite.test.xunit_formatter.XunitFormatter --results-file $(BUILD_DIR)/test-results.xml --rerun-all-issues --test-subdir lang/c --env TERM=vt100";
 			buildConfigurationList = 238755241C24974600CCE8C3 /* Build configuration list for PBXLegacyTarget "lldb-python-test-suite" */;
 			buildPhases = (
 			);
@@ -6153,14 +6153,14 @@
 				26CEF3BC14FD596A007286B2 /* ios */,
 				26F5C26910F3D9A4009D5894 /* lldb-tool */,
 				26680206115FD0ED008E1FE4 /* LLDB */,
+				239504D31BDD451400963CEA /* lldb-gtest */,
+				2387551E1C24974600CCE8C3 /* lldb-python-test-suite */,
 				26579F67126A25920007C5CB /* darwin-debug */,
 				2689FFC913353D7A00698AC0 /* lldb-core */,
 				26DC6A0F1337FE6900FF7998 /* lldb-server */,
 				2687EAC51508110B00DD8C2E /* install-headers */,
 				2690CD161A6DC0D000E717C8 /* lldb-mi */,
 				942829BF1A89835300521B30 /* lldb-argdumper */,
-				239504D31BDD451400963CEA /* lldb-gtest */,
-				2387551E1C24974600CCE8C3 /* lldb-python-test-suite */,
 			);
 		};
 /* End PBXProject section */
