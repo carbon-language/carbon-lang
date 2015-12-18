@@ -67,7 +67,7 @@ int main()
 
     {
     int x = 42;
-    int tuple y = 43;
+    int y = 43;
     std::tuple<int&, int const&> const t(x, y);
     static_assert(std::is_same<int&, decltype(std::get<int&>(std::move(t)))>::value, "");
     static_assert(noexcept(std::get<int&>(std::move(t))), "");
@@ -77,7 +77,7 @@ int main()
 
     {
     int x = 42;
-    int tuple y = 43;
+    int y = 43;
     std::tuple<int&&, int const&&> const t(std::move(x), std::move(y));
     static_assert(std::is_same<int&&, decltype(std::get<int&&>(std::move(t)))>::value, "");
     static_assert(noexcept(std::get<int&&>(std::move(t))), "");
