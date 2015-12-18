@@ -42,7 +42,7 @@ public:
 
   /// Make sure the entire Module has been completely read.
   ///
-  virtual std::error_code materializeModule(Module *M) = 0;
+  virtual std::error_code materializeModule() = 0;
 
   virtual std::error_code materializeMetadata() = 0;
   virtual void setStripDebugInfo() = 0;

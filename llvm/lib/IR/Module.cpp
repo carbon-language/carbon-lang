@@ -394,7 +394,7 @@ std::error_code Module::materialize(GlobalValue *GV) {
 std::error_code Module::materializeAll() {
   if (!Materializer)
     return std::error_code();
-  if (std::error_code EC = Materializer->materializeModule(this))
+  if (std::error_code EC = Materializer->materializeModule())
     return EC;
   Materializer.reset();
   return std::error_code();

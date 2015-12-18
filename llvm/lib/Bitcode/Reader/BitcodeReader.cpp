@@ -254,7 +254,7 @@ public:
   void releaseBuffer();
 
   std::error_code materialize(GlobalValue *GV) override;
-  std::error_code materializeModule(Module *M) override;
+  std::error_code materializeModule() override;
   std::vector<StructType *> getIdentifiedStructTypes() const override;
 
   /// \brief Main interface to parsing a bitcode buffer.
@@ -5283,10 +5283,7 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   return materializeForwardReferencedFunctions();
 }
 
-std::error_code BitcodeReader::materializeModule(Module *M) {
-  assert(M == TheModule &&
-         "Can only Materialize the Module this BitcodeReader is attached to.");
-
+std::error_code BitcodeReader::materializeModule() {
   if (std::error_code EC = materializeMetadata())
     return EC;
 
@@ -5329,7 +5326,7 @@ std::error_code BitcodeReader::materializeModule(Module *M) {
   for (unsigned I = 0, E = InstsWithTBAATag.size(); I < E; I++)
     UpgradeInstWithTBAATag(InstsWithTBAATag[I]);
 
-  UpgradeDebugInfo(*M);
+  UpgradeDebugInfo(*TheModule);
   return std::error_code();
 }
 
