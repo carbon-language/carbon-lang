@@ -164,6 +164,12 @@ int main() {
     vec[0] = t_var;
     s_arr[0] = var;
   }
+  if (var1)
+#pragma omp parallel reduction(+ : t_var) reduction(& : var) reduction(&& : var1) reduction(min : t_var1)
+    while (1) {
+      vec[0] = t_var;
+      s_arr[0] = var;
+    }
   return tmain<int>();
 #endif
 }
@@ -172,6 +178,7 @@ int main() {
 // CHECK: [[TEST:%.+]] = alloca [[S_FLOAT_TY]],
 // CHECK: call {{.*}} [[S_FLOAT_TY_CONSTR:@.+]]([[S_FLOAT_TY]]* [[TEST]])
 // CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 6, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, [2 x i32]*, float*, [2 x [[S_FLOAT_TY]]]*, [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]*, float*)* [[MAIN_MICROTASK:@.+]] to void
+// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 6, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, [2 x i32]*, float*, [2 x [[S_FLOAT_TY]]]*, [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]*, float*)* [[MAIN_MICROTASK1:@.+]] to void
 // CHECK: = call {{.*}}i{{.+}} [[TMAIN_INT:@.+]]()
 // CHECK: call {{.*}} [[S_FLOAT_TY_DESTR:@.+]]([[S_FLOAT_TY]]*
 // CHECK: ret
@@ -425,6 +432,35 @@ int main() {
 // CHECK: br i1 [[CMP]]
 // CHECK: [[UP:%.+]] = phi float
 // CHECK: store float [[UP]], float* [[T_VAR1_LHS]],
+// CHECK: ret void
+
+// CHECK: define internal void [[MAIN_MICROTASK1]](i{{[0-9]+}}* noalias [[GTID_ADDR:%.+]], i{{[0-9]+}}* noalias %{{.+}},
+// CHECK: [[T_VAR_PRIV:%.+]] = alloca float,
+// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_FLOAT_TY]],
+// CHECK: [[VAR1_PRIV:%.+]] = alloca [[S_FLOAT_TY]],
+// CHECK: [[T_VAR1_PRIV:%.+]] = alloca float,
+
+// CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_ADDR:%.+]],
+
+// CHECK: [[T_VAR_REF:%.+]] = load float*, float** %
+// CHECK: [[VAR_REF:%.+]] = load [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]** %
+// CHECK: [[VAR1_REF:%.+]] = load [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]** %
+// CHECK: [[T_VAR1_REF:%.+]] = load float*, float** %
+
+// For + reduction operation initial value of private variable is 0.
+// CHECK: store float 0.0{{.+}}, float* [[T_VAR_PRIV]],
+
+// For & reduction operation initial value of private variable is ones in all bits.
+// CHECK: call {{.*}} [[S_FLOAT_TY_CONSTR:@.+]]([[S_FLOAT_TY]]* [[VAR_PRIV]])
+
+// For && reduction operation initial value of private variable is 1.0.
+// CHECK: call {{.*}} [[S_FLOAT_TY_CONSTR:@.+]]([[S_FLOAT_TY]]* [[VAR1_PRIV]])
+
+// For min reduction operation initial value of private variable is largest repesentable value.
+// CHECK: store float 0x47EFFFFFE0000000, float* [[T_VAR1_PRIV]],
+
+// CHECK-NOT: call i32 @__kmpc_reduce
+
 // CHECK: ret void
 
 // CHECK: define {{.*}} i{{[0-9]+}} [[TMAIN_INT]]()
