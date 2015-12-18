@@ -22,7 +22,7 @@ using namespace __sanitizer;
 using namespace __ubsan;
 
 namespace __ubsan {
-bool ignoreReport(SourceLocation SLoc, ReportOptions Opts) {
+bool ignoreReport(SourceLocation SLoc, ReportOptions Opts, ErrorType ET) {
   // We are not allowed to skip error report: if we are in unrecoverable
   // handler, we have to terminate the program right now, and therefore
   // have to print some diagnostic.
@@ -32,7 +32,7 @@ bool ignoreReport(SourceLocation SLoc, ReportOptions Opts) {
   // thread could have acquired it, but not yet printed the report.
   if (Opts.FromUnrecoverableHandler)
     return false;
-  return SLoc.isDisabled();
+  return SLoc.isDisabled() || IsPCSuppressed(ET, Opts.pc, SLoc.getFilename());
 }
 
 const char *TypeCheckKinds[] = {
@@ -44,15 +44,6 @@ const char *TypeCheckKinds[] = {
 static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
                                    ReportOptions Opts) {
   Location Loc = Data->Loc.acquire();
-  // Use the SourceLocation from Data to track deduplication, even if 'invalid'
-  if (ignoreReport(Loc.getSourceLocation(), Opts))
-    return;
-
-  SymbolizedStackHolder FallbackLoc;
-  if (Data->Loc.isInvalid()) {
-    FallbackLoc.reset(getCallerLocation(Opts.pc));
-    Loc = FallbackLoc;
-  }
 
   ErrorType ET;
   if (!Pointer)
@@ -61,6 +52,17 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
     ET = ErrorType::MisalignedPointerUse;
   else
     ET = ErrorType::InsufficientObjectSize;
+
+  // Use the SourceLocation from Data to track deduplication, even if it's
+  // invalid.
+  if (ignoreReport(Loc.getSourceLocation(), Opts, ET))
+    return;
+
+  SymbolizedStackHolder FallbackLoc;
+  if (Data->Loc.isInvalid()) {
+    FallbackLoc.reset(getCallerLocation(Opts.pc));
+    Loc = FallbackLoc;
+  }
 
   ScopedReport R(Opts, Loc, ET);
 
@@ -106,12 +108,14 @@ static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
                                       const char *Operator, T RHS,
                                       ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  bool IsSigned = Data->Type.isSignedIntegerTy();
+  ErrorType ET = IsSigned ? ErrorType::SignedIntegerOverflow
+                          : ErrorType::UnsignedIntegerOverflow;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  bool IsSigned = Data->Type.isSignedIntegerTy();
-  ScopedReport R(Opts, Loc, IsSigned ? ErrorType::SignedIntegerOverflow
-                                     : ErrorType::UnsignedIntegerOverflow);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error, "%0 integer overflow: "
                       "%1 %2 %3 cannot be represented in type %4")
@@ -138,12 +142,14 @@ UBSAN_OVERFLOW_HANDLER(__ubsan_handle_mul_overflow_abort, "*", true)
 static void handleNegateOverflowImpl(OverflowData *Data, ValueHandle OldVal,
                                      ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  bool IsSigned = Data->Type.isSignedIntegerTy();
+  ErrorType ET = IsSigned ? ErrorType::SignedIntegerOverflow
+                          : ErrorType::UnsignedIntegerOverflow;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  bool IsSigned = Data->Type.isSignedIntegerTy();
-  ScopedReport R(Opts, Loc, IsSigned ? ErrorType::SignedIntegerOverflow
-                                     : ErrorType::UnsignedIntegerOverflow);
+  ScopedReport R(Opts, Loc, ET);
 
   if (IsSigned)
     Diag(Loc, DL_Error,
@@ -170,9 +176,6 @@ void __ubsan::__ubsan_handle_negate_overflow_abort(OverflowData *Data,
 static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
                                      ValueHandle RHS, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
-    return;
-
   Value LHSVal(Data->Type, LHS);
   Value RHSVal(Data->Type, RHS);
 
@@ -183,6 +186,9 @@ static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
     ET = ErrorType::IntegerDivideByZero;
   else
     ET = ErrorType::FloatDivideByZero;
+
+  if (ignoreReport(Loc, Opts, ET))
+    return;
 
   ScopedReport R(Opts, Loc, ET);
 
@@ -214,9 +220,6 @@ static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
                                        ValueHandle LHS, ValueHandle RHS,
                                        ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
-    return;
-
   Value LHSVal(Data->LHSType, LHS);
   Value RHSVal(Data->RHSType, RHS);
 
@@ -226,6 +229,9 @@ static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
     ET = ErrorType::InvalidShiftExponent;
   else
     ET = ErrorType::InvalidShiftBase;
+
+  if (ignoreReport(Loc, Opts, ET))
+    return;
 
   ScopedReport R(Opts, Loc, ET);
 
@@ -263,10 +269,12 @@ void __ubsan::__ubsan_handle_shift_out_of_bounds_abort(
 static void handleOutOfBoundsImpl(OutOfBoundsData *Data, ValueHandle Index,
                                   ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  ErrorType ET = ErrorType::OutOfBoundsIndex;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  ScopedReport R(Opts, Loc, ErrorType::OutOfBoundsIndex);
+  ScopedReport R(Opts, Loc, ET);
 
   Value IndexVal(Data->IndexType, Index);
   Diag(Loc, DL_Error, "index %0 out of bounds for type %1")
@@ -313,10 +321,12 @@ void __ubsan::__ubsan_handle_missing_return(UnreachableData *Data) {
 static void handleVLABoundNotPositive(VLABoundData *Data, ValueHandle Bound,
                                       ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  ErrorType ET = ErrorType::NonPositiveVLAIndex;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  ScopedReport R(Opts, Loc, ErrorType::NonPositiveVLAIndex);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error, "variable length array bound evaluates to "
                       "non-positive value %0")
@@ -358,6 +368,7 @@ static void handleFloatCastOverflow(void *DataPtr, ValueHandle From,
   SymbolizedStackHolder CallerLoc;
   Location Loc;
   const TypeDescriptor *FromType, *ToType;
+  ErrorType ET = ErrorType::FloatCastOverflow;
 
   if (looksLikeFloatCastOverflowDataV1(DataPtr)) {
     auto Data = reinterpret_cast<FloatCastOverflowData *>(DataPtr);
@@ -368,14 +379,14 @@ static void handleFloatCastOverflow(void *DataPtr, ValueHandle From,
   } else {
     auto Data = reinterpret_cast<FloatCastOverflowDataV2 *>(DataPtr);
     SourceLocation SLoc = Data->Loc.acquire();
-    if (ignoreReport(SLoc, Opts))
+    if (ignoreReport(SLoc, Opts, ET))
       return;
     Loc = SLoc;
     FromType = &Data->FromType;
     ToType = &Data->ToType;
   }
 
-  ScopedReport R(Opts, Loc, ErrorType::FloatCastOverflow);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error,
        "value %0 is outside the range of representable values of type %2")
@@ -396,14 +407,16 @@ void __ubsan::__ubsan_handle_float_cast_overflow_abort(void *Data,
 static void handleLoadInvalidValue(InvalidValueData *Data, ValueHandle Val,
                                    ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
-    return;
-
   // This check could be more precise if we used different handlers for
   // -fsanitize=bool and -fsanitize=enum.
   bool IsBool = (0 == internal_strcmp(Data->Type.getTypeName(), "'bool'"));
-  ScopedReport R(Opts, Loc, IsBool ? ErrorType::InvalidBoolLoad
-                                   : ErrorType::InvalidEnumLoad);
+  ErrorType ET =
+      IsBool ? ErrorType::InvalidBoolLoad : ErrorType::InvalidEnumLoad;
+
+  if (ignoreReport(Loc, Opts, ET))
+    return;
+
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error,
        "load of value %0, which is not a valid value for type %1")
@@ -426,10 +439,12 @@ static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
                                        ValueHandle Function,
                                        ReportOptions Opts) {
   SourceLocation CallLoc = Data->Loc.acquire();
-  if (ignoreReport(CallLoc, Opts))
+  ErrorType ET = ErrorType::FunctionTypeMismatch;
+
+  if (ignoreReport(CallLoc, Opts, ET))
     return;
 
-  ScopedReport R(Opts, CallLoc, ErrorType::FunctionTypeMismatch);
+  ScopedReport R(Opts, CallLoc, ET);
 
   SymbolizedStackHolder FLoc(getSymbolizedLocation(Function));
   const char *FName = FLoc.get()->info.function;
@@ -458,10 +473,12 @@ void __ubsan::__ubsan_handle_function_type_mismatch_abort(
 
 static void handleNonNullReturn(NonNullReturnData *Data, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  ErrorType ET = ErrorType::InvalidNullReturn;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  ScopedReport R(Opts, Loc, ErrorType::InvalidNullReturn);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error, "null pointer returned from function declared to never "
                       "return null");
@@ -482,10 +499,12 @@ void __ubsan::__ubsan_handle_nonnull_return_abort(NonNullReturnData *Data) {
 
 static void handleNonNullArg(NonNullArgData *Data, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  ErrorType ET = ErrorType::InvalidNullArgument;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  ScopedReport R(Opts, Loc, ErrorType::InvalidNullArgument);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error, "null pointer passed as argument %0, which is declared to "
        "never be null") << Data->ArgIndex;
@@ -507,10 +526,12 @@ void __ubsan::__ubsan_handle_nonnull_arg_abort(NonNullArgData *Data) {
 static void handleCFIBadIcall(CFIBadIcallData *Data, ValueHandle Function,
                               ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (ignoreReport(Loc, Opts))
+  ErrorType ET = ErrorType::CFIBadType;
+
+  if (ignoreReport(Loc, Opts, ET))
     return;
 
-  ScopedReport R(Opts, Loc, ErrorType::CFIBadType);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error, "control flow integrity check for type %0 failed during "
                       "indirect function call")

@@ -225,7 +225,7 @@ enum class ErrorType {
 #undef UBSAN_CHECK
 };
 
-bool ignoreReport(SourceLocation SLoc, ReportOptions Opts);
+bool ignoreReport(SourceLocation SLoc, ReportOptions Opts, ErrorType ET);
 
 #define GET_REPORT_OPTIONS(unrecoverable_handler) \
     GET_CALLER_PC_BP; \
@@ -246,6 +246,9 @@ public:
 
 void InitializeSuppressions();
 bool IsVptrCheckSuppressed(const char *TypeName);
+// Sometimes UBSan runtime can know filename from handlers arguments, even if
+// debug info is missing.
+bool IsPCSuppressed(ErrorType ET, uptr PC, const char *Filename);
 
 } // namespace __ubsan
 

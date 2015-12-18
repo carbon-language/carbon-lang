@@ -43,10 +43,11 @@ static bool HandleDynamicTypeCacheMiss(
     return false;
 
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  ErrorType ET = ErrorType::DynamicTypeMismatch;
+  if (ignoreReport(Loc, Opts, ET))
     return false;
 
-  ScopedReport R(Opts, Loc, ErrorType::DynamicTypeMismatch);
+  ScopedReport R(Opts, Loc, ET);
 
   Diag(Loc, DL_Error,
        "%0 address %1 which does not point to an object of type %2")
@@ -89,10 +90,12 @@ void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
 static void HandleCFIBadType(CFIBadTypeData *Data, ValueHandle Vtable,
                              ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
+  ErrorType ET = ErrorType::CFIBadType;
 
-  if (ignoreReport(Loc, Opts))
+  if (ignoreReport(Loc, Opts, ET))
     return;
-  ScopedReport R(Opts, Loc, ErrorType::CFIBadType);
+
+  ScopedReport R(Opts, Loc, ET);
   DynamicTypeInfo DTI = getDynamicTypeInfoFromVtable((void*)Vtable);
 
   static const char *TypeCheckKinds[] = {
