@@ -3444,7 +3444,7 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
 
 void CGDebugInfo::EmitImportDecl(const ImportDecl &ID) {
   if (Module *M = ID.getImportedModule()) {
-    auto Info = ExternalASTSource::ASTSourceDescriptor(*ID.getImportedModule());
+    auto Info = ExternalASTSource::ASTSourceDescriptor(*M);
     DBuilder.createImportedDeclaration(
         getCurrentContextDescriptor(cast<Decl>(ID.getDeclContext())),
         getOrCreateModuleRef(Info, DebugTypeExtRefs),
