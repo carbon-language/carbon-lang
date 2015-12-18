@@ -201,8 +201,7 @@ void getValueForSiteInstrProf(const void *R, InstrProfValueData *Dst,
 uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
   switch (ValueKind) {
   case IPVK_IndirectCallTarget:
-    return IndexedInstrProf::ComputeHash(IndexedInstrProf::HashType,
-                                         (const char *)Value);
+    return IndexedInstrProf::ComputeHash((const char *)Value);
     break;
   default:
     llvm_unreachable("value kind not handled !");

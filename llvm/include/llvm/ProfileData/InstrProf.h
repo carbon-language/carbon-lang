@@ -575,6 +575,10 @@ const uint64_t Magic = 0x8169666f72706cff; // "\xfflprofi\x81"
 const uint64_t Version = INSTR_PROF_INDEX_VERSION;
 const HashT HashType = HashT::MD5;
 
+static inline uint64_t ComputeHash(StringRef K) {
+  return ComputeHash(HashType, K);
+}
+
 // This structure defines the file header of the LLVM profile
 // data file in indexed-format.
 struct Header {
