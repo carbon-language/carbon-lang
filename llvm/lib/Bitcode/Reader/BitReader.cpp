@@ -23,8 +23,8 @@ using namespace llvm;
 /* Builds a module from the bitcode in the specified memory buffer, returning a
    reference to the module via the OutModule parameter. Returns 0 on success.
    Optionally returns a human-readable error message via OutMessage. */
-LLVMBool LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
-                          LLVMModuleRef *OutModule, char **OutMessage) {
+LLVMBool LLVMParseBitcode(LLVMMemoryBufferRef MemBuf, LLVMModuleRef *OutModule,
+                          char **OutMessage) {
   return LLVMParseBitcodeInContext(wrap(&getGlobalContext()), MemBuf, OutModule,
                                    OutMessage);
 }
@@ -56,7 +56,7 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
   if (ModuleOrErr.getError()) {
     if (OutMessage)
       *OutMessage = strdup(Message.c_str());
-    *OutModule = wrap((Module*)nullptr);
+    *OutModule = wrap((Module *)nullptr);
     return 1;
   }
 
@@ -69,8 +69,7 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
    Optionally returns a human-readable error message via OutMessage. */
 LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
                                        LLVMMemoryBufferRef MemBuf,
-                                       LLVMModuleRef *OutM,
-                                       char **OutMessage) {
+                                       LLVMModuleRef *OutM, char **OutMessage) {
   LLVMContext &Ctx = *unwrap(ContextRef);
   LLVMContext::DiagnosticHandlerTy OldDiagnosticHandler =
       Ctx.getDiagnosticHandler();
@@ -95,7 +94,6 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
   *OutM = wrap(ModuleOrErr.get().release());
 
   return 0;
-
 }
 
 LLVMBool LLVMGetBitcodeModule(LLVMMemoryBufferRef MemBuf, LLVMModuleRef *OutM,
