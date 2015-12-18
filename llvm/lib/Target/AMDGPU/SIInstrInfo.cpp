@@ -1433,7 +1433,7 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
      return false;
   }
 
-  // Make sure the register classes are correct
+  // Make sure the register classes are correct.
   for (int i = 0, e = Desc.getNumOperands(); i != e; ++i) {
     if (MI->getOperand(i).isFPImm()) {
       ErrInfo = "FPImm Machine Operands are not supported. ISel should bitcast "
