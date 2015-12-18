@@ -1163,7 +1163,6 @@ bool IRLinker::linkFunctionBody(Function &Dst, Function &Src) {
   for (Argument &Arg : Src.args())
     ValueMap.erase(&Arg);
 
-  Src.dematerialize();
   return false;
 }
 

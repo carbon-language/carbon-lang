@@ -384,22 +384,11 @@ void Module::setMaterializer(GVMaterializer *GVM) {
   Materializer.reset(GVM);
 }
 
-bool Module::isDematerializable(const GlobalValue *GV) const {
-  if (Materializer)
-    return Materializer->isDematerializable(GV);
-  return false;
-}
-
 std::error_code Module::materialize(GlobalValue *GV) {
   if (!Materializer)
     return std::error_code();
 
   return Materializer->materialize(GV);
-}
-
-void Module::dematerialize(GlobalValue *GV) {
-  if (Materializer)
-    return Materializer->dematerialize(GV);
 }
 
 std::error_code Module::materializeAll() {

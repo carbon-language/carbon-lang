@@ -440,18 +440,10 @@ public:
   /// Retrieves the GVMaterializer, if any, for this Module.
   GVMaterializer *getMaterializer() const { return Materializer.get(); }
 
-  /// Returns true if this GV was loaded from this Module's GVMaterializer and
-  /// the GVMaterializer knows how to dematerialize the GV.
-  bool isDematerializable(const GlobalValue *GV) const;
-
   /// Make sure the GlobalValue is fully read. If the module is corrupt, this
   /// returns true and fills in the optional string with information about the
   /// problem. If successful, this returns false.
   std::error_code materialize(GlobalValue *GV);
-  /// If the GlobalValue is read in, and if the GVMaterializer supports it,
-  /// release the memory for the function, and set it up to be materialized
-  /// lazily. If !isDematerializable(), this method is a no-op.
-  void dematerialize(GlobalValue *GV);
 
   /// Make sure all GlobalValues in this Module are fully read.
   std::error_code materializeAll();
