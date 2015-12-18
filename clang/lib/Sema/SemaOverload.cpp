@@ -3085,11 +3085,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
          S.IsDerivedFrom(From->getLocStart(), From->getType(), ToType)))
       ConstructorsOnly = true;
 
-    S.RequireCompleteType(From->getExprLoc(), ToType, 0);
-    // RequireCompleteType may have returned true due to some invalid decl
-    // during template instantiation, but ToType may be complete enough now
-    // to try to recover.
-    if (ToType->isIncompleteType()) {
+    if (S.RequireCompleteType(From->getExprLoc(), ToType, 0)) {
       // We're not going to find any constructors.
     } else if (CXXRecordDecl *ToRecordDecl
                  = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
@@ -6685,7 +6681,8 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //        the set of member candidates is empty.
   if (const RecordType *T1Rec = T1->getAs<RecordType>()) {
     // Complete the type if it can be completed.
-    RequireCompleteType(OpLoc, T1, 0);
+    if (RequireCompleteType(OpLoc, T1, 0) && !T1Rec->isBeingDefined())
+      return;
     // If the type is neither complete nor being defined, bail out now.
     if (!T1Rec->getDecl()->getDefinition())
       return;

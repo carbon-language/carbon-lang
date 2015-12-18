@@ -1348,7 +1348,7 @@ public:
     void emit(const SemaDiagnosticBuilder &DB,
               llvm::index_sequence<Is...>) const {
       // Apply all tuple elements to the builder in order.
-      bool Dummy[] = {(DB << getPrintable(std::get<Is>(Args)))...};
+      bool Dummy[] = {false, (DB << getPrintable(std::get<Is>(Args)))...};
       (void)Dummy;
     }
 
@@ -1425,6 +1425,7 @@ public:
     return RequireCompleteType(Loc, T, Diagnoser);
   }
 
+  void completeExprArrayBound(Expr *E);
   bool RequireCompleteExprType(Expr *E, TypeDiagnoser &Diagnoser);
   bool RequireCompleteExprType(Expr *E, unsigned DiagID);
 
