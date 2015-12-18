@@ -22,7 +22,6 @@ struct S {
 
 // CHECK-DAG: [[S_FLOAT_TY:%.+]] = type { float }
 // CHECK-DAG: [[S_INT_TY:%.+]] = type { i{{[0-9]+}} }
-// CHECK-DAG: [[IMPLICIT_BARRIER_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 66, i32 0, i32 0, i8*
 // CHECK-DAG: [[REDUCTION_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 18, i32 0, i32 0, i8*
 // CHECK-DAG: [[REDUCTION_LOCK:@.+]] = common global [8 x i32] zeroinitializer
 
@@ -348,7 +347,6 @@ int main() {
 // break;
 // CHECK: br label %[[RED_DONE]]
 // CHECK: [[RED_DONE]]
-// CHECK: call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
 
 // CHECK-DAG: call {{.*}} [[S_FLOAT_TY_DESTR]]([[S_FLOAT_TY]]* [[VAR_PRIV]])
 // CHECK-DAG: call {{.*}} [[S_FLOAT_TY_DESTR]]([[S_FLOAT_TY]]*
@@ -608,7 +606,6 @@ int main() {
 // break;
 // CHECK: br label %[[RED_DONE]]
 // CHECK: [[RED_DONE]]
-// CHECK: call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
 
 // CHECK-DAG: call {{.*}} [[S_INT_TY_DESTR]]([[S_INT_TY]]* [[VAR_PRIV]])
 // CHECK-DAG: call {{.*}} [[S_INT_TY_DESTR]]([[S_INT_TY]]*

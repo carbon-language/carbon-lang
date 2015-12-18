@@ -893,10 +893,6 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
     (void)PrivateScope.Privatize();
     CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     CGF.EmitOMPReductionClauseFinal(S);
-    // Emit implicit barrier at the end of the 'parallel' directive.
-    CGF.CGM.getOpenMPRuntime().emitBarrierCall(
-        CGF, S.getLocStart(), OMPD_unknown, /*EmitChecks=*/false,
-        /*ForceSimpleCall=*/true);
   };
   emitCommonOMPParallelDirective(*this, S, OMPD_parallel, CodeGen);
 }
@@ -1873,12 +1869,6 @@ void CodeGenFunction::EmitOMPParallelForDirective(
   (void)emitScheduleClause(*this, S, /*OuterRegion=*/true);
   auto &&CodeGen = [&S](CodeGenFunction &CGF) {
     CGF.EmitOMPWorksharingLoop(S);
-    // Emit implicit barrier at the end of parallel region, but this barrier
-    // is at the end of 'for' directive, so emit it as the implicit barrier for
-    // this 'for' directive.
-    CGF.CGM.getOpenMPRuntime().emitBarrierCall(
-        CGF, S.getLocStart(), OMPD_parallel, /*EmitChecks=*/false,
-        /*ForceSimpleCall=*/true);
   };
   emitCommonOMPParallelDirective(*this, S, OMPD_for, CodeGen);
 }
@@ -1891,12 +1881,6 @@ void CodeGenFunction::EmitOMPParallelForSimdDirective(
   (void)emitScheduleClause(*this, S, /*OuterRegion=*/true);
   auto &&CodeGen = [&S](CodeGenFunction &CGF) {
     CGF.EmitOMPWorksharingLoop(S);
-    // Emit implicit barrier at the end of parallel region, but this barrier
-    // is at the end of 'for' directive, so emit it as the implicit barrier for
-    // this 'for' directive.
-    CGF.CGM.getOpenMPRuntime().emitBarrierCall(
-        CGF, S.getLocStart(), OMPD_parallel, /*EmitChecks=*/false,
-        /*ForceSimpleCall=*/true);
   };
   emitCommonOMPParallelDirective(*this, S, OMPD_simd, CodeGen);
 }
@@ -1908,10 +1892,6 @@ void CodeGenFunction::EmitOMPParallelSectionsDirective(
   LexicalScope Scope(*this, S.getSourceRange());
   auto &&CodeGen = [&S](CodeGenFunction &CGF) {
     (void)CGF.EmitSections(S);
-    // Emit implicit barrier at the end of parallel region.
-    CGF.CGM.getOpenMPRuntime().emitBarrierCall(
-        CGF, S.getLocStart(), OMPD_parallel, /*EmitChecks=*/false,
-        /*ForceSimpleCall=*/true);
   };
   emitCommonOMPParallelDirective(*this, S, OMPD_sections, CodeGen);
 }
