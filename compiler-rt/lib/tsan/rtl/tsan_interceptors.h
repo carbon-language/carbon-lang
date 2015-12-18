@@ -10,6 +10,8 @@ class ScopedInterceptor {
  public:
   ScopedInterceptor(ThreadState *thr, const char *fname, uptr pc);
   ~ScopedInterceptor();
+  void UserCallbackStart();
+  void UserCallbackEnd();
  private:
   ThreadState *const thr_;
   const uptr pc_;
@@ -35,6 +37,12 @@ class ScopedInterceptor {
     if (thr->ignore_interceptors || thr->in_ignored_lib) \
       return REAL(func)(__VA_ARGS__); \
 /**/
+
+#define SCOPED_TSAN_INTERCEPTOR_USER_CALLBACK_START() \
+    si.UserCallbackStart();
+
+#define SCOPED_TSAN_INTERCEPTOR_USER_CALLBACK_END() \
+    si.UserCallbackEnd();
 
 #define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
 

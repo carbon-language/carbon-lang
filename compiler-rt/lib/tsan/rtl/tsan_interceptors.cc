@@ -295,6 +295,20 @@ ScopedInterceptor::~ScopedInterceptor() {
   }
 }
 
+void ScopedInterceptor::UserCallbackStart() {
+  if (in_ignored_lib_) {
+    thr_->in_ignored_lib = false;
+    ThreadIgnoreEnd(thr_, pc_);
+  }
+}
+
+void ScopedInterceptor::UserCallbackEnd() {
+  if (in_ignored_lib_) {
+    thr_->in_ignored_lib = true;
+    ThreadIgnoreBegin(thr_, pc_);
+  }
+}
+
 #define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
 #if SANITIZER_FREEBSD
 # define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION(func)
