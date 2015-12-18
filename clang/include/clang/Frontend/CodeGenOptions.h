@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Sanitizers.h"
 #include "llvm/Support/Regex.h"
+#include "llvm/Target/TargetOptions.h"
 #include <map>
 #include <memory>
 #include <string>
