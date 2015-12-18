@@ -281,9 +281,15 @@ ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
     thr_->in_ignored_lib = true;
     ThreadIgnoreBegin(thr_, pc_);
   }
+#if SANITIZER_DEBUG
+  thr_->in_interceptor_count++;
+#endif
 }
 
 ScopedInterceptor::~ScopedInterceptor() {
+#if SANITIZER_DEBUG
+  thr_->in_interceptor_count--;
+#endif
   if (in_ignored_lib_) {
     thr_->in_ignored_lib = false;
     ThreadIgnoreEnd(thr_, pc_);
@@ -296,6 +302,9 @@ ScopedInterceptor::~ScopedInterceptor() {
 }
 
 void ScopedInterceptor::UserCallbackStart() {
+#if SANITIZER_DEBUG
+  thr_->in_interceptor_count--;
+#endif
   if (in_ignored_lib_) {
     thr_->in_ignored_lib = false;
     ThreadIgnoreEnd(thr_, pc_);
@@ -307,6 +316,9 @@ void ScopedInterceptor::UserCallbackEnd() {
     thr_->in_ignored_lib = true;
     ThreadIgnoreBegin(thr_, pc_);
   }
+#if SANITIZER_DEBUG
+  thr_->in_interceptor_count++;
+#endif
 }
 
 #define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
@@ -2108,7 +2120,9 @@ TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
 }
 
 TSAN_INTERCEPTOR(int, sigsuspend, const __sanitizer_sigset_t *mask) {
-  SCOPED_TSAN_INTERCEPTOR(sigsuspend, mask);
+  {
+    SCOPED_TSAN_INTERCEPTOR(sigsuspend, mask);
+  }
   return REAL(sigsuspend)(mask);
 }
 

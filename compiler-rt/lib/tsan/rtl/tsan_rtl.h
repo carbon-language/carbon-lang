@@ -372,6 +372,9 @@ struct ThreadState {
   const int unique_id;
   bool in_symbolizer;
   bool in_ignored_lib;
+#if SANITIZER_DEBUG
+  int in_interceptor_count;
+#endif
   bool is_inited;
   bool is_dead;
   bool is_freeing;

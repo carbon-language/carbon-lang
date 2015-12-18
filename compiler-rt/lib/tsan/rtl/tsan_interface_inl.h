@@ -18,69 +18,36 @@
 
 using namespace __tsan;  // NOLINT
 
-void __tsan_read1(void *addr) {
-  MemoryRead(cur_thread(), CALLERPC, (uptr)addr, kSizeLog1);
-}
+#define TSAN_MEM_ACCESS_FUNC(type, func, size) \
+  void __tsan_##type(void *addr) {             \
+    ThreadState *thr = cur_thread();           \
+    DCHECK_EQ(thr->in_interceptor_count, 0);   \
+    func(thr, CALLERPC, (uptr)addr, size);     \
+  }
 
-void __tsan_read2(void *addr) {
-  MemoryRead(cur_thread(), CALLERPC, (uptr)addr, kSizeLog2);
-}
+#define TSAN_MEM_ACCESS_FUNC_PC(type, func, size) \
+  void __tsan_##type(void *addr, void *pc) {      \
+    ThreadState *thr = cur_thread();              \
+    DCHECK_EQ(thr->in_interceptor_count, 0);      \
+    func(thr, (uptr)pc, (uptr)addr, size);        \
+  }
 
-void __tsan_read4(void *addr) {
-  MemoryRead(cur_thread(), CALLERPC, (uptr)addr, kSizeLog4);
-}
-
-void __tsan_read8(void *addr) {
-  MemoryRead(cur_thread(), CALLERPC, (uptr)addr, kSizeLog8);
-}
-
-void __tsan_write1(void *addr) {
-  MemoryWrite(cur_thread(), CALLERPC, (uptr)addr, kSizeLog1);
-}
-
-void __tsan_write2(void *addr) {
-  MemoryWrite(cur_thread(), CALLERPC, (uptr)addr, kSizeLog2);
-}
-
-void __tsan_write4(void *addr) {
-  MemoryWrite(cur_thread(), CALLERPC, (uptr)addr, kSizeLog4);
-}
-
-void __tsan_write8(void *addr) {
-  MemoryWrite(cur_thread(), CALLERPC, (uptr)addr, kSizeLog8);
-}
-
-void __tsan_read1_pc(void *addr, void *pc) {
-  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog1);
-}
-
-void __tsan_read2_pc(void *addr, void *pc) {
-  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog2);
-}
-
-void __tsan_read4_pc(void *addr, void *pc) {
-  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog4);
-}
-
-void __tsan_read8_pc(void *addr, void *pc) {
-  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog8);
-}
-
-void __tsan_write1_pc(void *addr, void *pc) {
-  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog1);
-}
-
-void __tsan_write2_pc(void *addr, void *pc) {
-  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog2);
-}
-
-void __tsan_write4_pc(void *addr, void *pc) {
-  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog4);
-}
-
-void __tsan_write8_pc(void *addr, void *pc) {
-  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog8);
-}
+TSAN_MEM_ACCESS_FUNC(read1, MemoryRead, kSizeLog1)
+TSAN_MEM_ACCESS_FUNC(read2, MemoryRead, kSizeLog2)
+TSAN_MEM_ACCESS_FUNC(read4, MemoryRead, kSizeLog4)
+TSAN_MEM_ACCESS_FUNC(read8, MemoryRead, kSizeLog8)
+TSAN_MEM_ACCESS_FUNC(write1, MemoryWrite, kSizeLog1)
+TSAN_MEM_ACCESS_FUNC(write2, MemoryWrite, kSizeLog2)
+TSAN_MEM_ACCESS_FUNC(write4, MemoryWrite, kSizeLog4)
+TSAN_MEM_ACCESS_FUNC(write8, MemoryWrite, kSizeLog8)
+TSAN_MEM_ACCESS_FUNC_PC(read1_pc, MemoryRead, kSizeLog1)
+TSAN_MEM_ACCESS_FUNC_PC(read2_pc, MemoryRead, kSizeLog2)
+TSAN_MEM_ACCESS_FUNC_PC(read4_pc, MemoryRead, kSizeLog4)
+TSAN_MEM_ACCESS_FUNC_PC(read8_pc, MemoryRead, kSizeLog8)
+TSAN_MEM_ACCESS_FUNC_PC(write1_pc, MemoryWrite, kSizeLog1)
+TSAN_MEM_ACCESS_FUNC_PC(write2_pc, MemoryWrite, kSizeLog2)
+TSAN_MEM_ACCESS_FUNC_PC(write4_pc, MemoryWrite, kSizeLog4)
+TSAN_MEM_ACCESS_FUNC_PC(write8_pc, MemoryWrite, kSizeLog8)
 
 void __tsan_vptr_update(void **vptr_p, void *new_val) {
   CHECK_EQ(sizeof(vptr_p), 8);
