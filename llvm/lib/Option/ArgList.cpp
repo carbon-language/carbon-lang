@@ -328,6 +328,13 @@ const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
   return MakeArgString(LHS + RHS);
 }
 
+LLVM_DUMP_METHOD void ArgList::dump() const {
+  for (Arg *A : *this) {
+    llvm::errs() << "* ";
+    A->dump();
+  }
+}
+
 //
 
 void InputArgList::releaseMemory() {

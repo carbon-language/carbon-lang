@@ -306,6 +306,8 @@ public:
   const char *GetOrMakeJoinedArgString(unsigned Index, StringRef LHS,
                                         StringRef RHS) const;
 
+  void dump() const;
+
   /// @}
 };
 
