@@ -2428,8 +2428,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
   }
 
   // Only recurse into base classes for complete types.
-  if (Result.S.RequireCompleteType(Result.InstantiationLoc,
-                                   Result.S.Context.getRecordType(Class), 0))
+  if (!Result.S.isCompleteType(Result.InstantiationLoc,
+                               Result.S.Context.getRecordType(Class)))
     return;
 
   // Add direct and indirect base classes along with their associated

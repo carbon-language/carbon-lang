@@ -1822,7 +1822,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
 
     // We have already pre-calculated the promotion type, so this is trivial.
     if (ToType->isIntegerType() &&
-        !RequireCompleteType(From->getLocStart(), FromType, 0))
+        isCompleteType(From->getLocStart(), FromType))
       return Context.hasSameUnqualifiedType(
           ToType, FromEnumType->getDecl()->getPromotionType());
   }
@@ -3085,7 +3085,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
          S.IsDerivedFrom(From->getLocStart(), From->getType(), ToType)))
       ConstructorsOnly = true;
 
-    if (S.RequireCompleteType(From->getExprLoc(), ToType, 0)) {
+    if (!S.isCompleteType(From->getExprLoc(), ToType)) {
       // We're not going to find any constructors.
     } else if (CXXRecordDecl *ToRecordDecl
                  = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
@@ -3159,7 +3159,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
 
   // Enumerate conversion functions, if we're allowed to.
   if (ConstructorsOnly || isa<InitListExpr>(From)) {
-  } else if (S.RequireCompleteType(From->getLocStart(), From->getType(), 0)) {
+  } else if (!S.isCompleteType(From->getLocStart(), From->getType())) {
     // No conversion functions from incomplete types.
   } else if (const RecordType *FromRecordType
                                    = From->getType()->getAs<RecordType>()) {
@@ -4047,7 +4047,7 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   ObjCLifetimeConversion = false;
   if (UnqualT1 == UnqualT2) {
     // Nothing to do.
-  } else if (!RequireCompleteType(Loc, OrigT2, 0) &&
+  } else if (isCompleteType(Loc, OrigT2) &&
              isTypeValid(UnqualT1) && isTypeValid(UnqualT2) &&
              IsDerivedFrom(Loc, UnqualT2, UnqualT1))
     DerivedToBase = true;
@@ -4314,7 +4314,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     //          conversion functions (13.3.1.6) and choosing the best
     //          one through overload resolution (13.3)),
     if (!SuppressUserConversions && T2->isRecordType() &&
-        !S.RequireCompleteType(DeclLoc, T2, 0) &&
+        S.isCompleteType(DeclLoc, T2) &&
         RefRelationship == Sema::Ref_Incompatible) {
       if (FindConversionForRefInit(S, ICS, DeclType, DeclLoc,
                                    Init, T2, /*AllowRvalues=*/false,
@@ -4377,7 +4377,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
   //          in the second case (or, in either case, to an appropriate base
   //          class subobject).
   if (!SuppressUserConversions && RefRelationship == Sema::Ref_Incompatible &&
-      T2->isRecordType() && !S.RequireCompleteType(DeclLoc, T2, 0) &&
+      T2->isRecordType() && S.isCompleteType(DeclLoc, T2) &&
       FindConversionForRefInit(S, ICS, DeclType, DeclLoc,
                                Init, T2, /*AllowRvalues=*/true,
                                AllowExplicit)) {
@@ -4515,7 +4515,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
 
   // We need a complete type for what follows. Incomplete types can never be
   // initialized from init lists.
-  if (S.RequireCompleteType(From->getLocStart(), ToType, 0))
+  if (!S.isCompleteType(From->getLocStart(), ToType))
     return Result;
 
   // Per DR1467:
@@ -5449,14 +5449,15 @@ ExprResult Sema::PerformContextualImplicitConversion(
     Expr *From;
 
     TypeDiagnoserPartialDiag(ContextualImplicitConverter &Converter, Expr *From)
-        : TypeDiagnoser(Converter.Suppress), Converter(Converter), From(From) {}
+        : Converter(Converter), From(From) {}
 
     void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
       Converter.diagnoseIncomplete(S, Loc, T) << From->getSourceRange();
     }
   } IncompleteDiagnoser(Converter, From);
 
-  if (RequireCompleteType(Loc, T, IncompleteDiagnoser))
+  if (Converter.Suppress ? !isCompleteType(Loc, T)
+                         : RequireCompleteType(Loc, T, IncompleteDiagnoser))
     return From;
 
   // Look for a conversion to an integral or enumeration type.
@@ -6432,7 +6433,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                                 &ConversionRef, VK_RValue);
 
   QualType ConversionType = Conversion->getConversionType();
-  if (RequireCompleteType(From->getLocStart(), ConversionType, 0)) {
+  if (!isCompleteType(From->getLocStart(), ConversionType)) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_bad_final_conversion;
     return;
@@ -6681,7 +6682,7 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //        the set of member candidates is empty.
   if (const RecordType *T1Rec = T1->getAs<RecordType>()) {
     // Complete the type if it can be completed.
-    if (RequireCompleteType(OpLoc, T1, 0) && !T1Rec->isBeingDefined())
+    if (!isCompleteType(OpLoc, T1) && !T1Rec->isBeingDefined())
       return;
     // If the type is neither complete nor being defined, bail out now.
     if (!T1Rec->getDecl()->getDefinition())
@@ -7031,7 +7032,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     HasNullPtrType = true;
   } else if (AllowUserConversions && TyRec) {
     // No conversion functions in incomplete types.
-    if (SemaRef.RequireCompleteType(Loc, Ty, 0))
+    if (!SemaRef.isCompleteType(Loc, Ty))
       return;
 
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());

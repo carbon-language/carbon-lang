@@ -1673,11 +1673,6 @@ bool Sema::IsDerivedFrom(SourceLocation Loc, QualType Derived, QualType Base) {
   if (!DerivedRD)
     return false;
   
-  // FIXME: In a modules build, do we need the entire path to be visible for us
-  // to be able to use the inheritance relationship?
-  if (RequireCompleteType(Loc, Derived, 0) && !DerivedRD->isBeingDefined())
-    return false;
-  
   CXXRecordDecl *BaseRD = Base->getAsCXXRecordDecl();
   if (!BaseRD)
     return false;
@@ -1687,6 +1682,11 @@ bool Sema::IsDerivedFrom(SourceLocation Loc, QualType Derived, QualType Base) {
   if (BaseRD->isInvalidDecl() || DerivedRD->isInvalidDecl())
     return false;
 
+  // FIXME: In a modules build, do we need the entire path to be visible for us
+  // to be able to use the inheritance relationship?
+  if (!isCompleteType(Loc, Derived) && !DerivedRD->isBeingDefined())
+    return false;
+  
   return DerivedRD->isDerivedFrom(BaseRD);
 }
 
@@ -1701,11 +1701,11 @@ bool Sema::IsDerivedFrom(SourceLocation Loc, QualType Derived, QualType Base,
   if (!DerivedRD)
     return false;
   
-  if (RequireCompleteType(Loc, Derived, 0) && !DerivedRD->isBeingDefined())
-    return false;
-  
   CXXRecordDecl *BaseRD = Base->getAsCXXRecordDecl();
   if (!BaseRD)
+    return false;
+  
+  if (!isCompleteType(Loc, Derived) && !DerivedRD->isBeingDefined())
     return false;
   
   return DerivedRD->isDerivedFrom(BaseRD, Paths);
@@ -4420,64 +4420,35 @@ void Sema::ActOnDefaultCtorInitializers(Decl *CDtorDecl) {
   }
 }
 
-bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
-                                  unsigned DiagID, AbstractDiagSelID SelID) {
-  class NonAbstractTypeDiagnoser : public TypeDiagnoser {
-    unsigned DiagID;
-    AbstractDiagSelID SelID;
-    
-  public:
-    NonAbstractTypeDiagnoser(unsigned DiagID, AbstractDiagSelID SelID)
-      : TypeDiagnoser(DiagID == 0), DiagID(DiagID), SelID(SelID) { }
-
-    void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
-      if (Suppressed) return;
-      if (SelID == -1)
-        S.Diag(Loc, DiagID) << T;
-      else
-        S.Diag(Loc, DiagID) << SelID << T;
-    }
-  } Diagnoser(DiagID, SelID);
-  
-  return RequireNonAbstractType(Loc, T, Diagnoser);
-}
-
-bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
-                                  TypeDiagnoser &Diagnoser) {
+bool Sema::isAbstractType(SourceLocation Loc, QualType T) {
   if (!getLangOpts().CPlusPlus)
     return false;
 
-  if (const ArrayType *AT = Context.getAsArrayType(T))
-    return RequireNonAbstractType(Loc, AT->getElementType(), Diagnoser);
-
-  if (const PointerType *PT = T->getAs<PointerType>()) {
-    // Find the innermost pointer type.
-    while (const PointerType *T = PT->getPointeeType()->getAs<PointerType>())
-      PT = T;
-
-    if (const ArrayType *AT = Context.getAsArrayType(PT->getPointeeType()))
-      return RequireNonAbstractType(Loc, AT->getElementType(), Diagnoser);
-  }
-
-  const RecordType *RT = T->getAs<RecordType>();
-  if (!RT)
+  const auto *RD = Context.getBaseElementType(T)->getAsCXXRecordDecl();
+  if (!RD)
     return false;
 
-  const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  // FIXME: Per [temp.inst]p1, we are supposed to trigger instantiation of a
+  // class template specialization here, but doing so breaks a lot of code.
 
   // We can't answer whether something is abstract until it has a
-  // definition.  If it's currently being defined, we'll walk back
+  // definition. If it's currently being defined, we'll walk back
   // over all the declarations when we have a full definition.
   const CXXRecordDecl *Def = RD->getDefinition();
   if (!Def || Def->isBeingDefined())
     return false;
 
-  if (!RD->isAbstract())
+  return RD->isAbstract();
+}
+
+bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
+                                  TypeDiagnoser &Diagnoser) {
+  if (!isAbstractType(Loc, T))
     return false;
 
+  T = Context.getBaseElementType(T);
   Diagnoser.diagnose(*this, Loc, T);
-  DiagnoseAbstractType(RD);
-
+  DiagnoseAbstractType(T->getAsCXXRecordDecl());
   return true;
 }
 

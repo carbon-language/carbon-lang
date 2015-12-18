@@ -2717,6 +2717,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       return ExprError(Diag(StartLoc, diag::err_delete_operand)
         << Type << Ex.get()->getSourceRange());
     } else if (!Pointee->isDependentType()) {
+      // FIXME: This can result in errors if the definition was imported from a
+      // module but is hidden.
       if (!RequireCompleteType(StartLoc, Pointee,
                                diag::warn_delete_incomplete, Ex.get())) {
         if (const RecordType *RT = PointeeElem->getAs<RecordType>())
@@ -2792,7 +2794,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     if (!OperatorDelete)
       // Look for a global declaration.
       OperatorDelete = FindUsualDeallocationFunction(
-          StartLoc, !RequireCompleteType(StartLoc, Pointee, 0) &&
+          StartLoc, isCompleteType(StartLoc, Pointee) &&
                     (!ArrayForm || UsualArrayDeleteWantsSize ||
                      Pointee.isDestructedType()),
           DeleteName);
@@ -3309,8 +3311,8 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     // We may not have been able to figure out what this member pointer resolved
     // to up until this exact point.  Attempt to lock-in it's inheritance model.
     if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
-      RequireCompleteType(From->getExprLoc(), From->getType(), 0);
-      RequireCompleteType(From->getExprLoc(), ToType, 0);
+      (void)isCompleteType(From->getExprLoc(), From->getType());
+      (void)isCompleteType(From->getExprLoc(), ToType);
     }
 
     From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
@@ -4291,8 +4293,7 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, TypeTrait BTT, QualType LhsT,
       return LhsT->isVoidType();
 
     // A function definition requires a complete, non-abstract return type.
-    if (Self.RequireCompleteType(KeyLoc, RhsT, 0) ||
-        Self.RequireNonAbstractType(KeyLoc, RhsT, 0))
+    if (!Self.isCompleteType(KeyLoc, RhsT) || Self.isAbstractType(KeyLoc, RhsT))
       return false;
 
     // Compute the result of add_rvalue_reference.

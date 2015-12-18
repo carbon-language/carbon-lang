@@ -1316,9 +1316,7 @@ public:
 
   /// \brief Abstract class used to diagnose incomplete types.
   struct TypeDiagnoser {
-    bool Suppressed;
-
-    TypeDiagnoser(bool Suppressed = false) : Suppressed(Suppressed) { }
+    TypeDiagnoser() {}
 
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) = 0;
     virtual ~TypeDiagnoser() {}
@@ -1354,11 +1352,11 @@ public:
 
   public:
     BoundTypeDiagnoser(unsigned DiagID, const Ts &...Args)
-        : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Args(Args...) {}
+        : TypeDiagnoser(), DiagID(DiagID), Args(Args...) {
+      assert(DiagID != 0 && "no diagnostic for type diagnoser");
+    }
 
     void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
-      if (Suppressed)
-        return;
       const SemaDiagnosticBuilder &DB = S.Diag(Loc, DiagID);
       emit(DB, llvm::index_sequence_for<Ts...>());
       DB << T;
@@ -1367,7 +1365,7 @@ public:
 
 private:
   bool RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
-                           TypeDiagnoser &Diagnoser);
+                               TypeDiagnoser *Diagnoser);
 
   VisibleModuleSet VisibleModules;
   llvm::SmallVector<VisibleModuleSet, 16> VisibleModulesStack;
@@ -1413,6 +1411,9 @@ public:
       SourceLocation Loc, const NamedDecl *D,
       ArrayRef<const NamedDecl *> Equiv);
 
+  bool isCompleteType(SourceLocation Loc, QualType T) {
+    return !RequireCompleteTypeImpl(Loc, T, nullptr);
+  }
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            TypeDiagnoser &Diagnoser);
   bool RequireCompleteType(SourceLocation Loc, QualType T,
@@ -5502,6 +5503,7 @@ public:
     AbstractArrayType
   };
 
+  bool isAbstractType(SourceLocation Loc, QualType T);
   bool RequireNonAbstractType(SourceLocation Loc, QualType T,
                               TypeDiagnoser &Diagnoser);
   template <typename... Ts>
@@ -5512,9 +5514,6 @@ public:
   }
 
   void DiagnoseAbstractType(const CXXRecordDecl *RD);
-
-  bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned DiagID,
-                              AbstractDiagSelID SelID = AbstractNone);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]

@@ -1262,8 +1262,8 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
                   QualType OrigDestType, unsigned &msg, 
                   CastKind &Kind, CXXCastPath &BasePath) {
   // We can only work with complete types. But don't complain if it doesn't work
-  if (Self.RequireCompleteType(OpRange.getBegin(), SrcType, 0) ||
-      Self.RequireCompleteType(OpRange.getBegin(), DestType, 0))
+  if (!Self.isCompleteType(OpRange.getBegin(), SrcType) ||
+      !Self.isCompleteType(OpRange.getBegin(), DestType))
     return TC_NotApplicable;
 
   // Downcast can only happen in class hierarchies, so we need classes.
@@ -1399,8 +1399,11 @@ TryStaticMemberPointerUpcast(Sema &Self, ExprResult &SrcExpr, QualType SrcType,
     msg = diag::err_bad_static_cast_member_pointer_nonmp;
     return TC_NotApplicable;
   }
+
+  // Lock down the inheritance model right now in MS ABI, whether or not the
+  // pointee types are the same.
   if (Self.Context.getTargetInfo().getCXXABI().isMicrosoft())
-    Self.RequireCompleteType(OpRange.getBegin(), SrcType, 0);
+    (void)Self.isCompleteType(OpRange.getBegin(), SrcType);
 
   // T == T, modulo cv
   if (!Self.Context.hasSameUnqualifiedType(SrcMemPtr->getPointeeType(),
@@ -1844,8 +1847,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     if (Self.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
       // We need to determine the inheritance model that the class will use if
       // haven't yet.
-      Self.RequireCompleteType(OpRange.getBegin(), SrcType, 0);
-      Self.RequireCompleteType(OpRange.getBegin(), DestType, 0);
+      (void)Self.isCompleteType(OpRange.getBegin(), SrcType);
+      (void)Self.isCompleteType(OpRange.getBegin(), DestType);
     }
 
     // Don't allow casting between member pointers of different sizes.

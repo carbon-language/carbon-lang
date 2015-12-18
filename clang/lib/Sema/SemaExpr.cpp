@@ -686,9 +686,10 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   if (T.hasQualifiers())
     T = T.getUnqualifiedType();
 
+  // Under the MS ABI, lock down the inheritance model now.
   if (T->isMemberPointerType() &&
       Context.getTargetInfo().getCXXABI().isMicrosoft())
-    RequireCompleteType(E->getExprLoc(), T, 0);
+    (void)isCompleteType(E->getExprLoc(), T);
 
   UpdateMarkingForLValueToRValue(E);
   
@@ -9947,8 +9948,9 @@ QualType Sema::CheckAddressOfOperand(ExprResult &OrigOp, SourceLocation OpLoc) {
 
     QualType MPTy = Context.getMemberPointerType(
         op->getType(), Context.getTypeDeclType(MD->getParent()).getTypePtr());
+    // Under the MS ABI, lock down the inheritance model now.
     if (Context.getTargetInfo().getCXXABI().isMicrosoft())
-      RequireCompleteType(OpLoc, MPTy, 0);
+      (void)isCompleteType(OpLoc, MPTy);
     return MPTy;
   } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
@@ -10003,8 +10005,9 @@ QualType Sema::CheckAddressOfOperand(ExprResult &OrigOp, SourceLocation OpLoc) {
           QualType MPTy = Context.getMemberPointerType(
               op->getType(),
               Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
+          // Under the MS ABI, lock down the inheritance model now.
           if (Context.getTargetInfo().getCXXABI().isMicrosoft())
-            RequireCompleteType(OpLoc, MPTy, 0);
+            (void)isCompleteType(OpLoc, MPTy);
           return MPTy;
         }
       }

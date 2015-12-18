@@ -1998,7 +1998,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     if (Context.getTargetInfo().getCXXABI().isMicrosoft())
       if (const MemberPointerType *MPTy = T->getAs<MemberPointerType>())
         if (!MPTy->getClass()->isDependentType())
-          RequireCompleteType(Loc, T, 0);
+          (void)isCompleteType(Loc, T);
 
   } else {
     // C99 6.7.5.2p1: If the element type is an incomplete or function type,
@@ -2126,12 +2126,9 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     if (T->isVariableArrayType()) {
       // Prohibit the use of non-POD types in VLAs.
       QualType BaseT = Context.getBaseElementType(T);
-      if (!T->isDependentType() &&
-          !RequireCompleteType(Loc, BaseT, 0) &&
-          !BaseT.isPODType(Context) &&
-          !BaseT->isObjCLifetimeType()) {
-        Diag(Loc, diag::err_vla_non_pod)
-          << BaseT;
+      if (!T->isDependentType() && isCompleteType(Loc, BaseT) &&
+          !BaseT.isPODType(Context) && !BaseT->isObjCLifetimeType()) {
+        Diag(Loc, diag::err_vla_non_pod) << BaseT;
         return QualType();
       }
       // Prohibit the use of VLAs during template argument deduction.
@@ -6466,7 +6463,7 @@ bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
 /// @c false otherwise.
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                                TypeDiagnoser &Diagnoser) {
-  if (RequireCompleteTypeImpl(Loc, T, Diagnoser))
+  if (RequireCompleteTypeImpl(Loc, T, &Diagnoser))
     return true;
   if (const TagType *Tag = T->getAs<TagType>()) {
     if (!Tag->getDecl()->isCompleteDefinitionRequired()) {
@@ -6570,7 +6567,7 @@ static void assignInheritanceModel(Sema &S, CXXRecordDecl *RD) {
 
 /// \brief The implementation of RequireCompleteType
 bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
-                                   TypeDiagnoser &Diagnoser) {
+                                   TypeDiagnoser *Diagnoser) {
   // FIXME: Add this assertion to make sure we always get instantiation points.
   //  assert(!Loc.isInvalid() && "Invalid location in RequireCompleteType");
   // FIXME: Add this assertion to help us flush out problems with
@@ -6584,7 +6581,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
   if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
     if (const MemberPointerType *MPTy = T->getAs<MemberPointerType>()) {
       if (!MPTy->getClass()->isDependentType()) {
-        RequireCompleteType(Loc, QualType(MPTy->getClass(), 0), 0);
+        (void)isCompleteType(Loc, QualType(MPTy->getClass(), 0));
         assignInheritanceModel(*this, MPTy->getMostRecentCXXRecordDecl());
       }
     }
@@ -6599,8 +6596,8 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
         !hasVisibleDefinition(Def, &SuggestedDef, /*OnlyNeedComplete*/true)) {
       // If the user is going to see an error here, recover by making the
       // definition visible.
-      bool TreatAsComplete = !Diagnoser.Suppressed && !isSFINAEContext();
-      if (!Diagnoser.Suppressed)
+      bool TreatAsComplete = Diagnoser && !isSFINAEContext();
+      if (Diagnoser)
         diagnoseMissingImport(Loc, SuggestedDef, /*NeedDefinition*/true,
                               /*Recover*/TreatAsComplete);
       return !TreatAsComplete;
@@ -6660,7 +6657,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
         Diagnosed = InstantiateClassTemplateSpecialization(
             Loc, ClassTemplateSpec, TSK_ImplicitInstantiation,
-            /*Complain=*/!Diagnoser.Suppressed);
+            /*Complain=*/Diagnoser);
         Instantiated = true;
       }
     } else if (CXXRecordDecl *Rec
@@ -6675,7 +6672,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
           Diagnosed = InstantiateClass(Loc, Rec, Pattern,
                                        getTemplateInstantiationArgs(Rec),
                                        TSK_ImplicitInstantiation,
-                                       /*Complain=*/!Diagnoser.Suppressed);
+                                       /*Complain=*/Diagnoser);
           Instantiated = true;
         }
       }
@@ -6684,7 +6681,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
     if (Instantiated) {
       // Instantiate* might have already complained that the template is not
       // defined, if we asked it to.
-      if (!Diagnoser.Suppressed && Diagnosed)
+      if (Diagnoser && Diagnosed)
         return true;
       // If we instantiated a definition, check that it's usable, even if
       // instantiation produced an error, so that repeated calls to this
@@ -6694,7 +6691,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
     }
   }
 
-  if (Diagnoser.Suppressed)
+  if (!Diagnoser)
     return true;
 
   // We have an incomplete type. Produce a diagnostic.
@@ -6704,7 +6701,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
     return true;
   }
 
-  Diagnoser.diagnose(*this, Loc, T);
+  Diagnoser->diagnose(*this, Loc, T);
 
   // If the type was a forward declaration of a class/struct/union
   // type, produce a note.
@@ -6769,7 +6766,7 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
   assert(!T->isDependentType() && "type should not be dependent");
 
   QualType ElemType = Context.getBaseElementType(T);
-  if ((!RequireCompleteType(Loc, ElemType, 0) || ElemType->isVoidType()) &&
+  if ((isCompleteType(Loc, ElemType) || ElemType->isVoidType()) &&
       T->isLiteralType(Context))
     return false;
 
