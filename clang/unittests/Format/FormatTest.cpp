@@ -9889,7 +9889,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("AlwaysBreakAfterReturnType: All", AlwaysBreakAfterReturnType,
               FormatStyle::RTBS_All);
   CHECK_PARSE("AlwaysBreakAfterReturnType: TopLevel",
-              AlwaysBreakAfterReturnType, FormatStyle::DRTBS_TopLevel);
+              AlwaysBreakAfterReturnType, FormatStyle::RTBS_TopLevel);
   CHECK_PARSE("AlwaysBreakAfterReturnType: AllDefinitions",
               AlwaysBreakAfterReturnType, FormatStyle::RTBS_AllDefinitions);
   CHECK_PARSE("AlwaysBreakAfterReturnType: TopLevelDefinitions",
