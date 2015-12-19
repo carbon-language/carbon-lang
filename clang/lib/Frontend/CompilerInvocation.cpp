@@ -405,13 +405,6 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
             .Case("limited", CodeGenOptions::LimitedDebugInfo)
             .Case("standalone", CodeGenOptions::FullDebugInfo));
   }
-  if (Arg *A = Args.getLastArg(OPT_debugger_tuning_EQ)) {
-    Opts.setDebuggerTuning(
-        llvm::StringSwitch<llvm::DebuggerKind>(A->getValue())
-            .Case("gdb", llvm::DebuggerKind::GDB)
-            .Case("lldb", llvm::DebuggerKind::LLDB)
-            .Case("sce", llvm::DebuggerKind::SCE));
-  }
   Opts.DwarfVersion = getLastArgIntValue(Args, OPT_dwarf_version_EQ, 0, Diags);
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
   Opts.EmitCodeView = Args.hasArg(OPT_gcodeview);
