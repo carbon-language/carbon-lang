@@ -41,10 +41,10 @@ RUN: rm -rf FourIndependentBranchesTestCORPUS
 
 RUN: not LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
 
-RUN: not LLVMFuzzer-CallerCalleeTest                     -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
-RUN:     LLVMFuzzer-CallerCalleeTest  -use_indir_calls=0 -max_len=6 -seed=1 -runs=1000000 2>&1 | FileCheck %s  --check-prefix=Done1000000
+RUN: not LLVMFuzzer-CallerCalleeTest                     -cross_over=0 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
+RUN:     LLVMFuzzer-CallerCalleeTest  -use_indir_calls=0 -cross_over=0 -max_len=6 -seed=1 -runs=1000000 2>&1 | FileCheck %s  --check-prefix=Done1000000
 
-RUN: not LLVMFuzzer-SimpleCmpTest -use_traces=1 -seed=1 -runs=1000000 -timeout=5 2>&1 | FileCheck %s
+RUN: not LLVMFuzzer-SimpleCmpTest -use_traces=1 -seed=1 -runs=1000001 -timeout=5 2>&1 | FileCheck %s
 
 RUN: not LLVMFuzzer-UserSuppliedFuzzerTest -seed=1 -timeout=15 2>&1 | FileCheck %s
 
@@ -55,13 +55,13 @@ Done1000000: Done 1000000 runs in
 RUN: not LLVMFuzzer-StrncmpTest -use_traces=1 -seed=1 -runs=100000   2>&1 | FileCheck %s
 RUN:     LLVMFuzzer-StrncmpTest               -seed=1 -runs=1000000  2>&1 | FileCheck %s --check-prefix=Done1000000
 
-RUN: not LLVMFuzzer-StrcmpTest -use_traces=1 -seed=1 -runs=100000   2>&1 | FileCheck %s
+RUN: not LLVMFuzzer-StrcmpTest -use_traces=1 -seed=1 -runs=200000   2>&1 | FileCheck %s
 RUN:     LLVMFuzzer-StrcmpTest               -seed=1 -runs=1000000  2>&1 | FileCheck %s --check-prefix=Done1000000
 
-RUN: not LLVMFuzzer-SwitchTest -use_traces=1 -seed=1 -runs=1000000  2>&1 | FileCheck %s
+RUN: not LLVMFuzzer-SwitchTest -use_traces=1 -seed=1 -runs=1000002  2>&1 | FileCheck %s
 RUN:     LLVMFuzzer-SwitchTest               -seed=1 -runs=1000000  2>&1 | FileCheck %s --check-prefix=Done1000000
 
-RUN: not LLVMFuzzer-SimpleDictionaryTest -dict=%S/dict1.txt -seed=1 -runs=1000000  2>&1 | FileCheck %s
+RUN: not LLVMFuzzer-SimpleDictionaryTest -dict=%S/dict1.txt -seed=1 -runs=1000003  2>&1 | FileCheck %s
 RUN:     LLVMFuzzer-SimpleDictionaryTest                    -seed=1 -runs=1000000  2>&1 | FileCheck %s --check-prefix=Done1000000
 
 RUN: not LLVMFuzzer-SimpleHashTest -use_traces=1 -seed=1 -runs=100000  2>&1 | FileCheck %s

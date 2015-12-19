@@ -26,6 +26,7 @@ struct MutationDispatcher::Impl {
   std::vector<Unit> Dictionary;
   std::vector<Mutator> Mutators;
   std::vector<Mutator> CurrentMutatorSequence;
+  const std::vector<Unit> *Corpus = nullptr;
 
   void Add(Mutator M) { Mutators.push_back(M); }
   Impl() {
@@ -35,6 +36,7 @@ struct MutationDispatcher::Impl {
     Add({&MutationDispatcher::Mutate_ChangeBit, "ChangeBit"});
     Add({&MutationDispatcher::Mutate_ShuffleBytes, "ShuffleBytes"});
     Add({&MutationDispatcher::Mutate_ChangeASCIIInteger, "ChangeASCIIInt"});
+    Add({&MutationDispatcher::Mutate_CrossOver, "CrossOver"});
   }
   void AddWordToDictionary(const uint8_t *Word, size_t Size) {
     if (Dictionary.empty()) {
@@ -42,6 +44,7 @@ struct MutationDispatcher::Impl {
     }
     Dictionary.push_back(Unit(Word, Word + Size));
   }
+  void SetCorpus(const std::vector<Unit> *Corpus) { this->Corpus = Corpus; }
 };
 
 static char FlipRandomBit(char X, FuzzerRandomBase &Rand) {
@@ -154,6 +157,22 @@ size_t MutationDispatcher::Mutate_ChangeASCIIInteger(uint8_t *Data, size_t Size,
   return Size;
 }
 
+size_t MutationDispatcher::Mutate_CrossOver(uint8_t *Data, size_t Size,
+                                            size_t MaxSize) {
+  auto Corpus = MDImpl->Corpus;
+  if (!Corpus || Corpus->size() < 2 || Size == 0) return 0;
+  size_t Idx = Rand(Corpus->size());
+  const Unit &Other = (*Corpus)[Idx];
+  if (Other.empty()) return 0;
+  Unit U(MaxSize);
+  size_t NewSize =
+      CrossOver(Data, Size, Other.data(), Other.size(), U.data(), U.size());
+  assert(NewSize > 0 && "CrossOver returned empty unit");
+  assert(NewSize <= MaxSize && "CrossOver returned overisized unit");
+  memcpy(Data, U.data(), NewSize);
+  return NewSize;
+}
+
 void MutationDispatcher::StartMutationSequence() {
   MDImpl->CurrentMutatorSequence.clear();
 }
@@ -187,6 +206,10 @@ size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
     }
   }
   return Size;
+}
+
+void MutationDispatcher::SetCorpus(const std::vector<Unit> *Corpus) {
+  MDImpl->SetCorpus(Corpus);
 }
 
 void MutationDispatcher::AddWordToDictionary(const uint8_t *Word, size_t Size) {
