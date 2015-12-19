@@ -162,6 +162,42 @@ define i32 @caller_7() {
   ret i32 %x
 }
 
+define i32 @callee_8(i1 %val) alwaysinline personality i8 3 {
+; We want something that PruningFunctionCloner is not smart enough to
+; recognize, but can be recognized by recursivelySimplifyInstruction.
+
+ entry:
+  br i1 %val, label %check, label %precheck
+
+ precheck:
+  br label %check
+
+ check:
+  %p = phi i1 [ %val, %entry ], [ true, %precheck ]
+  br i1 %p, label %do.not, label %do
+
+ do.not:
+  ret i32 0
+
+ do:
+  %phi = phi i32 [ 0, %check ], [ %v, %do ]
+  %v = call fastcc i32 @g.fastcc() [ "deopt"(i32 0, i32 1), "foo"(double 0.0) ]
+  %ic = icmp eq i32 %v, 42
+  br i1 %ic, label %do, label %done
+
+ done:
+  ret i32 %phi
+}
+
+define i32 @caller_8() {
+; CHECK-LABEL: @caller_8(
+ entry:
+; CHECK-NOT: call fastcc i32 @g.fastcc()
+; CHECK: ret i32 0
+  %x = call i32 @callee_8(i1 true) [ "deopt"(i32 7) ]
+  ret i32 %x
+}
+
 attributes #0 = { "foo"="bar" }
 
 ; CHECK: attributes #[[FOO_BAR_ATTR_IDX]] = { "foo"="bar" }
