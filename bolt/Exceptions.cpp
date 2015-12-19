@@ -447,8 +447,8 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
               Offset, MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
           break;
         case DW_CFA_set_loc:
-          assert(Instr.Ops[0] < Address && "set_loc out of function bounds");
-          assert(Instr.Ops[0] > Address + Function.getSize() &&
+          assert(Instr.Ops[0] >= Address && "set_loc out of function bounds");
+          assert(Instr.Ops[0] <= Address + Function.getSize() &&
                  "set_loc out of function bounds");
           Offset = Instr.Ops[0] - Address;
           break;
@@ -500,6 +500,11 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
               Offset, MCCFIInstruction::createDefCfaOffset(
                           nullptr, -(DataAlignment * int64_t(Instr.Ops[0]))));
           break;
+        case DW_CFA_GNU_args_size:
+          Function.addCFIInstruction(
+              Offset,
+              MCCFIInstruction::createGnuArgsSize(nullptr, Instr.Ops[0]));
+          break;
         case DW_CFA_val_offset_sf:
         case DW_CFA_val_offset:
           llvm_unreachable("DWARF val_offset() unimplemented");
@@ -512,11 +517,10 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_MIPS_advance_loc8:
           llvm_unreachable("DW_CFA_MIPS_advance_loc unimplemented");
           break;
-        case DW_CFA_GNU_args_size:
         case DW_CFA_GNU_window_save:
         case DW_CFA_lo_user:
         case DW_CFA_hi_user:
-          llvm_unreachable("DW_CFA_GNU_* and DW_CFA_*_use unimplemented");
+          llvm_unreachable("DW_CFA_GNU_* and DW_CFA_*_user unimplemented");
           break;
         default:
           llvm_unreachable("Unrecognized CFI instruction");

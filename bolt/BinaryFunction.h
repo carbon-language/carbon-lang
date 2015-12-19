@@ -450,6 +450,12 @@ public:
     // with NOPs and then reorder it away.
     // We fix this by moving the CFI instruction just before any NOPs.
     auto I = Instructions.lower_bound(Offset);
+    if (I == Instructions.end() && Offset == getSize()) {
+      // Sometimes compiler issues restore_state after all instructions
+      // in the function (even after nop).
+      --I;
+      Offset = I->first;
+    }
     assert(I->first == Offset && "CFI pointing to unknown instruction");
     if (I == Instructions.begin()) {
       CIEFrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
