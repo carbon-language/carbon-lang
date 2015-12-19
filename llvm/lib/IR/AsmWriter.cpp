@@ -103,9 +103,17 @@ static OrderMap orderModule(const Module *M) {
     orderValue(&A, OM);
   }
   for (const Function &F : *M) {
-    for (const Use &U : F.operands())
-      if (!isa<GlobalValue>(U.get()))
-        orderValue(U.get(), OM);
+    if (F.hasPrefixData())
+      if (!isa<GlobalValue>(F.getPrefixData()))
+        orderValue(F.getPrefixData(), OM);
+
+    if (F.hasPrologueData())
+      if (!isa<GlobalValue>(F.getPrologueData()))
+        orderValue(F.getPrologueData(), OM);
+
+    if (F.hasPersonalityFn())
+      if (!isa<GlobalValue>(F.getPersonalityFn()))
+        orderValue(F.getPersonalityFn(), OM);
 
     orderValue(&F, OM);
 
@@ -255,8 +263,8 @@ static UseListOrderStack predictUseListOrder(const Module *M) {
   for (const GlobalAlias &A : M->aliases())
     predictValueUseListOrder(A.getAliasee(), nullptr, OM, Stack);
   for (const Function &F : *M)
-    for (const Use &U : F.operands())
-      predictValueUseListOrder(U.get(), nullptr, OM, Stack);
+    if (F.hasPrefixData())
+      predictValueUseListOrder(F.getPrefixData(), nullptr, OM, Stack);
 
   return Stack;
 }

@@ -279,6 +279,9 @@ Function::~Function() {
 
   // Remove the function from the on-the-side GC table.
   clearGC();
+
+  // FIXME: needed by operator delete
+  setFunctionNumOperands(1);
 }
 
 void Function::BuildLazyArguments() const {
@@ -325,14 +328,14 @@ void Function::dropAllReferences() {
   while (!BasicBlocks.empty())
     BasicBlocks.begin()->eraseFromParent();
 
-  // Drop uses of any optional data (real or placeholder).
-  if (getNumOperands()) {
-    User::dropAllReferences();
-    setNumHungOffUseOperands(0);
-  }
+  // Prefix and prologue data are stored in a side table.
+  setPrefixData(nullptr);
+  setPrologueData(nullptr);
 
   // Metadata is stored in a side-table.
   clearMetadata();
+
+  setPersonalityFn(nullptr);
 }
 
 void Function::addAttribute(unsigned i, Attribute::AttrKind attr) {
@@ -422,12 +425,18 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
     setGC(SrcF->getGC());
   else
     clearGC();
-  if (SrcF->hasPersonalityFn())
-    setPersonalityFn(SrcF->getPersonalityFn());
   if (SrcF->hasPrefixData())
     setPrefixData(SrcF->getPrefixData());
+  else
+    setPrefixData(nullptr);
   if (SrcF->hasPrologueData())
     setPrologueData(SrcF->getPrologueData());
+  else
+    setPrologueData(nullptr);
+  if (SrcF->hasPersonalityFn())
+    setPersonalityFn(SrcF->getPersonalityFn());
+  else
+    setPersonalityFn(nullptr);
 }
 
 /// \brief This does the actual lookup of an intrinsic ID which
@@ -935,67 +944,61 @@ bool Function::callsFunctionThatReturnsTwice() const {
   return false;
 }
 
-Constant *Function::getPersonalityFn() const {
-  assert(hasPersonalityFn() && getNumOperands());
-  return cast<Constant>(Op<0>());
+static Constant *
+getFunctionData(const Function *F,
+                const LLVMContextImpl::FunctionDataMapTy &Map) {
+  const auto &Entry = Map.find(F);
+  assert(Entry != Map.end());
+  return cast<Constant>(Entry->second->getReturnValue());
 }
 
-void Function::setPersonalityFn(Constant *Fn) {
-  if (Fn)
-    setHungoffOperand<0>(Fn);
-  setValueSubclassDataBit(3, Fn != nullptr);
+/// setFunctionData - Set "Map[F] = Data". Return an updated SubclassData value
+/// in which Bit is low iff Data is null.
+static unsigned setFunctionData(Function *F,
+                                LLVMContextImpl::FunctionDataMapTy &Map,
+                                Constant *Data, unsigned SCData, unsigned Bit) {
+  ReturnInst *&Holder = Map[F];
+  if (Data) {
+    if (Holder)
+      Holder->setOperand(0, Data);
+    else
+      Holder = ReturnInst::Create(F->getContext(), Data);
+    return SCData | (1 << Bit);
+  } else {
+    delete Holder;
+    Map.erase(F);
+    return SCData & ~(1 << Bit);
+  }
 }
 
 Constant *Function::getPrefixData() const {
-  assert(hasPrefixData() && getNumOperands());
-  return cast<Constant>(Op<1>());
+  assert(hasPrefixData());
+  return getFunctionData(this, getContext().pImpl->PrefixDataMap);
 }
 
 void Function::setPrefixData(Constant *PrefixData) {
-  if (PrefixData)
-    setHungoffOperand<1>(PrefixData);
-  setValueSubclassDataBit(1, PrefixData != nullptr);
+  if (!PrefixData && !hasPrefixData())
+    return;
+
+  unsigned SCData = getSubclassDataFromValue();
+  SCData = setFunctionData(this, getContext().pImpl->PrefixDataMap, PrefixData,
+                           SCData, /*Bit=*/1);
+  setValueSubclassData(SCData);
 }
 
 Constant *Function::getPrologueData() const {
-  assert(hasPrologueData() && getNumOperands());
-  return cast<Constant>(Op<2>());
+  assert(hasPrologueData());
+  return getFunctionData(this, getContext().pImpl->PrologueDataMap);
 }
 
 void Function::setPrologueData(Constant *PrologueData) {
-  if (PrologueData)
-    setHungoffOperand<2>(PrologueData);
-  setValueSubclassDataBit(2, PrologueData != nullptr);
-}
-
-void Function::allocHungoffUselist() {
-  // If we've already allocated a uselist, stop here.
-  if (getNumOperands())
+  if (!PrologueData && !hasPrologueData())
     return;
 
-  allocHungoffUses(3, /*IsPhi=*/ false);
-  setNumHungOffUseOperands(3);
-
-  // Initialize the uselist with placeholder operands to allow traversal.
-  auto *CPN = ConstantPointerNull::get(Type::getInt1PtrTy(getContext(), 0));
-  Op<0>().set(CPN);
-  Op<1>().set(CPN);
-  Op<2>().set(CPN);
-}
-
-template <int Idx>
-void Function::setHungoffOperand(Constant *C) {
-  assert(C && "Cannot set hungoff operand to nullptr");
-  allocHungoffUselist();
-  Op<Idx>().set(C);
-}
-
-void Function::setValueSubclassDataBit(unsigned Bit, bool On) {
-  assert(Bit < 16 && "SubclassData contains only 16 bits");
-  if (On)
-    setValueSubclassData(getSubclassDataFromValue() | (1 << Bit));
-  else
-    setValueSubclassData(getSubclassDataFromValue() & ~(1 << Bit));
+  unsigned SCData = getSubclassDataFromValue();
+  SCData = setFunctionData(this, getContext().pImpl->PrologueDataMap,
+                           PrologueData, SCData, /*Bit=*/2);
+  setValueSubclassData(SCData);
 }
 
 void Function::setEntryCount(uint64_t Count) {
@@ -1012,4 +1015,23 @@ Optional<uint64_t> Function::getEntryCount() const {
         return CI->getValue().getZExtValue();
       }
   return None;
+}
+
+void Function::setPersonalityFn(Constant *C) {
+  if (!C) {
+    if (hasPersonalityFn()) {
+      // Note, the num operands is used to compute the offset of the operand, so
+      // the order here matters.  Clearing the operand then clearing the num
+      // operands ensures we have the correct offset to the operand.
+      Op<0>().set(nullptr);
+      setFunctionNumOperands(0);
+    }
+  } else {
+    // Note, the num operands is used to compute the offset of the operand, so
+    // the order here matters.  We need to set num operands to 1 first so that
+    // we get the correct offset to the first operand when we set it.
+    if (!hasPersonalityFn())
+      setFunctionNumOperands(1);
+    Op<0>().set(C);
+  }
 }
