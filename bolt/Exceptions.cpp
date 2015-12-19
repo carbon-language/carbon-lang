@@ -18,10 +18,12 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -170,14 +172,20 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     // Create a handler entry if necessary.
     MCSymbol *LPSymbol{nullptr};
     if (LandingPad) {
-      auto Label = Labels.find(LandingPad);
-      if (Label != Labels.end()) {
-        LPSymbol = Label->second;
+      if (Instructions.find(LandingPad) == Instructions.end()) {
+        errs() << "FLO-WARNING: landing pad " << Twine::utohexstr(LandingPad)
+               << " not pointing to an instruction in function "
+               << getName() << " - ignoring.\n";
       } else {
-        LPSymbol = BC.Ctx->createTempSymbol("LP", true);
-        Labels[LandingPad] = LPSymbol;
+        auto Label = Labels.find(LandingPad);
+        if (Label != Labels.end()) {
+          LPSymbol = Label->second;
+        } else {
+          LPSymbol = BC.Ctx->createTempSymbol("LP", true);
+          Labels[LandingPad] = LPSymbol;
+        }
+        LandingPads.insert(LPSymbol);
       }
-      LandingPads.insert(LPSymbol);
     }
 
     // Mark all call instructions in the range.
@@ -246,7 +254,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           if (opts::PrintExceptions)
             errs() << "filter exception types ";
           auto TSep = "";
-          // ActionType is a negative byte offset into uleb128-encoded table
+          // ActionType is a negative *byte* offset into *uleb128-encoded* table
           // of indices with base 1.
           // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
           // encoded using uleb128 thus we cannot directly dereference them.
@@ -274,15 +282,18 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   if (opts::PrintExceptions)
     errs() << '\n';
 
-  assert(reinterpret_cast<uint8_t *>(MaxTypeIndexTableOffset) <=
+  assert(TypeIndexTableStart + MaxTypeIndexTableOffset <=
          LSDASectionData.data() + LSDASectionData.size() &&
          "LSDA entry has crossed section boundary");
 
-  LSDATables =
-    ArrayRef<uint8_t>(ActionTableStart,
-                      reinterpret_cast<uint8_t *>(MaxTypeIndexTableOffset));
-  LSDATablesTypeOffset =
-    reinterpret_cast<const uint8_t *>(TypeTableStart) - ActionTableStart;
+  if (TTypeEnd) {
+    // TypeIndexTableStart is a <uint8_t *> alias for TypeTableStart.
+    LSDAActionAndTypeTables =
+      ArrayRef<uint8_t>(ActionTableStart,
+                        TypeIndexTableStart - ActionTableStart);
+    LSDATypeIndexTable =
+      ArrayRef<uint8_t>(TypeIndexTableStart, MaxTypeIndexTableOffset);
+  }
 }
 
 void BinaryFunction::updateEHRanges() {
@@ -380,6 +391,102 @@ void BinaryFunction::updateEHRanges() {
 
     CallSites.emplace_back(CallSite{StartRange, EndRange,
                                     PreviousEH.LP, PreviousEH.Action});
+  }
+}
+
+// The code is based on EHStreamer::emitExceptionTable(). 
+void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
+  if (CallSites.empty()) {
+    return;
+  }
+
+  assert(!isSplit() && "split functions are not supported yet");
+
+  // Calculate callsite table size. Size of each callsite entry is:
+  //
+  //  sizeof(start) + sizeof(length) + sizeof(LP) + sizeof(uleb128(action))
+  //
+  // or
+  //
+  //  sizeof(dwarf::DW_EH_PE_udata4) * 3 + sizeof(uleb128(action))
+  uint64_t CallSiteTableLength = CallSites.size() * 4 * 3;
+  for(const auto &CallSite : CallSites) {
+    CallSiteTableLength+= getULEB128Size(CallSite.Action);
+  }
+
+  Streamer->SwitchSection(BC.MOFI->getLSDASection());
+
+  // When we read we make sure only the following encoding is supported.
+  constexpr unsigned TTypeEncoding = dwarf::DW_EH_PE_udata4;
+
+  // Type tables have to be aligned at 4 bytes.
+  Streamer->EmitValueToAlignment(4);
+
+  // Emit the LSDA label.
+  auto LSDASymbol = getLSDASymbol();
+  assert(LSDASymbol && "no LSDA symbol set");
+  Streamer->EmitLabel(LSDASymbol);
+
+  // Emit the LSDA header.
+  Streamer->EmitIntValue(dwarf::DW_EH_PE_omit, 1); // LPStart format
+  Streamer->EmitIntValue(TTypeEncoding, 1);        // TType format
+
+  // See the comment in EHStreamer::emitExceptionTable() on how we use
+  // uleb128 encoding (which can use variable number of bytes to encode the same
+  // value) to ensure type info table is properly aligned at 4 bytes without
+  // iteratively messing with sizes of the tables.
+  unsigned CallSiteTableLengthSize = getULEB128Size(CallSiteTableLength);
+  unsigned TTypeBaseOffset =
+    sizeof(int8_t) +                            // Call site format
+    CallSiteTableLengthSize +                   // Call site table length size
+    CallSiteTableLength +                       // Call site table length
+    LSDAActionAndTypeTables.size();             // Actions + Types size
+  unsigned TTypeBaseOffsetSize = getULEB128Size(TTypeBaseOffset);
+  unsigned TotalSize =
+    sizeof(int8_t) +                            // LPStart format
+    sizeof(int8_t) +                            // TType format
+    TTypeBaseOffsetSize +                       // TType base offset size
+    TTypeBaseOffset;                            // TType base offset
+  unsigned SizeAlign = (4 - TotalSize) & 3;
+
+  // Account for any extra padding that will be added to the call site table
+  // length.
+  Streamer->EmitULEB128IntValue(TTypeBaseOffset, SizeAlign);
+
+  // Emit the landing pad call site table.
+  Streamer->EmitIntValue(dwarf::DW_EH_PE_udata4, 1);
+  Streamer->EmitULEB128IntValue(CallSiteTableLength);
+
+  for (const auto &CallSite : CallSites) {
+
+    const MCSymbol *BeginLabel = CallSite.Start;
+    const MCSymbol *EndLabel = CallSite.End;
+
+    assert(BeginLabel && "start EH label expected");
+    assert(EndLabel && "end EH label expected");
+
+    Streamer->emitAbsoluteSymbolDiff(BeginLabel, getOutputSymbol(), 4);
+    Streamer->emitAbsoluteSymbolDiff(EndLabel, BeginLabel, 4);
+
+    if (!CallSite.LP) {
+      Streamer->EmitIntValue(0, 4);
+    } else {
+      Streamer->emitAbsoluteSymbolDiff(CallSite.LP, getOutputSymbol(), 4);
+    }
+
+    Streamer->EmitULEB128IntValue(CallSite.Action);
+  }
+
+  // Write out action, type, and type index tables at the end.
+  //
+  // There's no need to change the original format we saw on input
+  // unless we are doing a function splitting in which case we can
+  // perhaps split and optimize the tables.
+  for(auto const &Byte : LSDAActionAndTypeTables) {
+    Streamer->EmitIntValue(Byte, 1);
+  }
+  for(auto const &Byte : LSDATypeIndexTable) {
+    Streamer->EmitIntValue(Byte, 1);
   }
 }
 

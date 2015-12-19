@@ -10,12 +10,12 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "RewriteInstance.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
 #include "Exceptions.h"
+#include "RewriteInstance.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
@@ -133,12 +133,15 @@ PrintReordered("print-reordered",
 
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
-bool shouldProcess(StringRef FunctionName) {
+bool shouldProcess(const BinaryFunction &Function) {
+  if (MaxFunctions && Function.getFunctionNumber() > MaxFunctions)
+    return false;
+
   bool IsValid = true;
   if (!FunctionNames.empty()) {
     IsValid = false;
     for (auto &Name : FunctionNames) {
-      if (FunctionName == Name) {
+      if (Function.getName() == Name) {
         IsValid = true;
         break;
       }
@@ -149,7 +152,7 @@ bool shouldProcess(StringRef FunctionName) {
 
   if (!SkipFunctionNames.empty()) {
     for (auto &Name : SkipFunctionNames) {
-      if (FunctionName == Name) {
+      if (Function.getName() == Name) {
         IsValid = false;
         break;
       }
@@ -174,52 +177,39 @@ static void check_error(std::error_code EC, StringRef Message) {
   report_error(Message, EC);
 }
 
-/// Class responsible for allocating and managing code and data sections.
-class ExecutableFileMemoryManager : public SectionMemoryManager {
-public:
-
-  // Keep [section name] -> [allocated address, size] map for later remapping.
-  std::map<std::string, std::pair<uint64_t,uint64_t>> SectionAddressInfo;
-
-  ExecutableFileMemoryManager() {}
-
-  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID,
-                               StringRef SectionName) override {
-    auto ret =
-      SectionMemoryManager::allocateCodeSection(Size, Alignment, SectionID,
-                                                SectionName);
-    DEBUG(dbgs() << "FLO: allocating code section : " << SectionName
-                 << " with size " << Size << ", alignment " << Alignment
-                 << " at 0x" << ret << "\n");
-
-    SectionAddressInfo[SectionName] = {reinterpret_cast<uint64_t>(ret), Size};
-
-    return ret;
+uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
+                                                      unsigned Alignment,
+                                                      unsigned SectionID,
+                                                      StringRef SectionName,
+                                                      bool IsCode,
+                                                      bool IsReadOnly) {
+  uint8_t *ret;
+  if (IsCode) {
+    ret = SectionMemoryManager::allocateCodeSection(Size, Alignment,
+                                                    SectionID, SectionName);
+  } else {
+    ret = SectionMemoryManager::allocateDataSection(Size, Alignment,
+                                                    SectionID, SectionName,
+                                                    IsReadOnly);
   }
 
-  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID, StringRef SectionName,
-                               bool IsReadOnly) override {
-    DEBUG(dbgs() << "FLO: allocating data section : " << SectionName
-                 << " with size " << Size << ", alignment "
-                 << Alignment << "\n");
-    auto ret = SectionMemoryManager::allocateDataSection(
-        Size, Alignment, SectionID, SectionName, IsReadOnly);
+  DEBUG(dbgs() << "FLO: allocating " << (IsCode ? "code" : "data")
+               << " section : " << SectionName
+               << " with size " << Size << ", alignment " << Alignment
+               << " at 0x" << ret << "\n");
 
-    SectionAddressInfo[SectionName] = {reinterpret_cast<uint64_t>(ret), Size};
+  SectionMapInfo[SectionName] = SectionInfo(reinterpret_cast<uint64_t>(ret),
+                                            Size,
+                                            Alignment,
+                                            IsCode);
 
-    return ret;
-  }
+  return ret;
+}
 
-  // Tell EE that we guarantee we don't need stubs.
-  bool allowStubAllocation() const override { return false; }
-
-  bool finalizeMemory(std::string *ErrMsg = nullptr) override {
-    DEBUG(dbgs() << "FLO: finalizeMemory()\n");
-    return SectionMemoryManager::finalizeMemory(ErrMsg);
-  }
-};
+bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
+  DEBUG(dbgs() << "FLO: finalizeMemory()\n");
+  return SectionMemoryManager::finalizeMemory(ErrMsg);
+}
 
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
@@ -571,7 +561,7 @@ void RewriteInstance::disassembleFunctions() {
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
-    if (!opts::shouldProcess(Function.getName())) {
+    if (!opts::shouldProcess(Function)) {
       DEBUG(dbgs() << "FLO: skipping processing function " << Function.getName()
                    << " per user request.\n");
       continue;
@@ -687,7 +677,7 @@ void RewriteInstance::runOptimizationPasses() {
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
-    if (!opts::shouldProcess(Function.getName()))
+    if (!opts::shouldProcess(Function))
       continue;
 
     if (!Function.isSimple())
@@ -759,10 +749,6 @@ void RewriteInstance::runOptimizationPasses() {
       Function.print(errs(), "after updating EH ranges");
     }
 
-    // TODO: add complete EH ranges support.
-    if (Function.hasEHRanges())
-      Function.setSimple(false);
-
     // Fix the CFI state.
     if (!Function.fixCFIState())
       Function.setSimple(false);
@@ -817,6 +803,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     case MCCFIInstruction::OpSameValue:
       Streamer.EmitCFISameValue(CFIInstr.getRegister());
       break;
+    case MCCFIInstruction::OpGnuArgsSize:
+      Streamer.EmitCFIGnuArgsSize(CFIInstr.getOffset());
+      break;
     }
   };
 
@@ -860,6 +849,12 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     if (Function.getPersonalityFunction() != nullptr) {
       Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
                                   Function.getPersonalityEncoding());
+    }
+    if (Function.getLSDASymbol()) {
+      Streamer.EmitCFILsda(Function.getLSDASymbol(),
+                           BC.MOFI->getLSDAEncoding());
+    } else {
+      Streamer.EmitCFILsda(0, dwarf::DW_EH_PE_omit);
     }
     // Emit CFI instructions relative to the CIE
     for (auto &CFIInstr : Function.cie()) {
@@ -910,6 +905,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   if (Function.hasCFI() && HasExtraStorage)
     Streamer.EmitCFIEndProc();
 
+  // Emit LSDA before anything else?
+  Function.emitLSDA(&Streamer);
+
   // TODO: is there any use in emiting end of function?
   //       Perhaps once we have a support for C++ exceptions.
   // auto FunctionEndLabel = Ctx.createTempSymbol("func_end");
@@ -957,7 +955,6 @@ void RewriteInstance::emitFunctions() {
 
   Streamer->InitSections(false);
 
-  bool HasEHFrame = false;
   bool NoSpaceWarning = false;
   // Output functions one by one.
   for (auto &BFI : BinaryFunctions) {
@@ -966,16 +963,14 @@ void RewriteInstance::emitFunctions() {
     if (!Function.isSimple())
       continue;
 
-    if (!opts::shouldProcess(Function.getName()))
+    if (!opts::shouldProcess(Function))
       continue;
 
     DEBUG(dbgs() << "FLO: generating code for function \"" << Function.getName()
-          << "\"\n");
+                 << "\" : " << Function.getFunctionNumber() << '\n');
 
     if (Function.hasCFI()) {
-      if (ExtraStorage.Size != 0)
-        HasEHFrame = true;
-      else
+      if (ExtraStorage.Size == 0)
         NoSpaceWarning = true;
     }
 
@@ -1039,16 +1034,17 @@ void RewriteInstance::emitFunctions() {
     if (!Function.isSimple())
       continue;
 
-    auto SAI = EFMM->SectionAddressInfo.find(Function.getCodeSectionName());
-    if (SAI != EFMM->SectionAddressInfo.end()) {
-      DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
+    auto SMII = EFMM->SectionMapInfo.find(Function.getCodeSectionName());
+    if (SMII != EFMM->SectionMapInfo.end()) {
+      DEBUG(dbgs() << "FLO: mapping 0x"
+                   << Twine::utohexstr(SMII->second.AllocAddress)
                    << " to 0x" << Twine::utohexstr(Function.getAddress())
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
-          reinterpret_cast<const void*>(SAI->second.first),
+          reinterpret_cast<const void*>(SMII->second.AllocAddress),
           Function.getAddress());
-      Function.setImageAddress(SAI->second.first);
-      Function.setImageSize(SAI->second.second);
+      Function.setImageAddress(SMII->second.AllocAddress);
+      Function.setImageSize(SMII->second.Size);
     } else {
       errs() << "FLO: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
@@ -1057,54 +1053,59 @@ void RewriteInstance::emitFunctions() {
     if (!Function.isSplit())
       continue;
 
-    SAI = EFMM->SectionAddressInfo.find(
+    SMII = EFMM->SectionMapInfo.find(
         Function.getCodeSectionName().str().append(".cold"));
-    if (SAI != EFMM->SectionAddressInfo.end()) {
+    if (SMII != EFMM->SectionMapInfo.end()) {
       // Align at a 16-byte boundary
-      ExtraStorage.BumpPtr = (ExtraStorage.BumpPtr + 15) & ~(15ULL);
-
-      DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
+      ExtraStorage.BumpPtr = RoundUpToAlignment(ExtraStorage.BumpPtr, 16);
+      DEBUG(dbgs() << "FLO: mapping 0x"
+                   << Twine::utohexstr(SMII->second.AllocAddress)
                    << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
-                   << " with size " << Twine::utohexstr(SAI->second.second)
+                   << " with size " << Twine::utohexstr(SMII->second.Size)
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
-          reinterpret_cast<const void*>(SAI->second.first),
+          reinterpret_cast<const void*>(SMII->second.AllocAddress),
           ExtraStorage.BumpPtr);
-      Function.cold().setImageAddress(SAI->second.first);
-      Function.cold().setImageSize(SAI->second.second);
+      Function.cold().setImageAddress(SMII->second.AllocAddress);
+      Function.cold().setImageSize(SMII->second.Size);
       Function.cold().setFileOffset(ExtraStorage.BumpPtr - ExtraStorage.Addr +
                                     ExtraStorage.FileOffset);
-      ExtraStorage.BumpPtr += SAI->second.second;
+      ExtraStorage.BumpPtr += SMII->second.Size;
     } else {
       errs() << "FLO: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
-  // Map .eh_frame
-  NewEhFrameAddress = 0;
-  NewEhFrameOffset = 0;
-  if (HasEHFrame) {
-    auto SAI = EFMM->SectionAddressInfo.find(".eh_frame");
-    if (SAI != EFMM->SectionAddressInfo.end()) {
-      // Align at an 8-byte boundary
-      ExtraStorage.BumpPtr = (ExtraStorage.BumpPtr + 7) & ~(7ULL);
-      DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
+
+  // Map special sections to their addresses in the output image.
+  //
+  // TODO: perhaps we should process all the allocated sections here?
+  std::vector<std::string> Sections = { ".eh_frame", ".gcc_except_table" };
+  for(auto &SectionName : Sections) {
+    auto SMII = EFMM->SectionMapInfo.find(SectionName);
+    if (SMII != EFMM->SectionMapInfo.end()) {
+      SectionInfo &SI = SMII->second;
+      ExtraStorage.BumpPtr = RoundUpToAlignment(ExtraStorage.BumpPtr,
+                                                SI.Alignment);
+      DEBUG(dbgs() << "FLO: mapping 0x"
+                   << Twine::utohexstr(SI.AllocAddress)
                    << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
                    << '\n');
-      NewEhFrameAddress = ExtraStorage.BumpPtr;
-      NewEhFrameOffset =
-          ExtraStorage.BumpPtr - ExtraStorage.Addr + ExtraStorage.FileOffset;
+
       OLT.mapSectionAddress(ObjectsHandle,
-                            reinterpret_cast<const void *>(SAI->second.first),
+                            reinterpret_cast<const void *>(SI.AllocAddress),
                             ExtraStorage.BumpPtr);
-      ExtraStorage.BumpPtr += SAI->second.second;
-      NewEhFrameContents =
-          StringRef(reinterpret_cast<const char *>(SAI->second.first),
-                    SAI->second.second);
+
+      SI.FileAddress = ExtraStorage.BumpPtr;
+      SI.FileOffset = ExtraStorage.BumpPtr - ExtraStorage.Addr +
+                      ExtraStorage.FileOffset;
+
+      ExtraStorage.BumpPtr += SI.Size;
     } else {
-      errs() << "FLO: cannot remap .eh_frame\n";
+      errs() << "FLO: cannot remap " << SectionName << '\n';
     }
   }
+
   if (ExtraStorage.BumpPtr - ExtraStorage.Addr > ExtraStorage.Size) {
     errs() << format(
         "FLO fatal error: __flo_storage in this binary has not enough free "
@@ -1127,6 +1128,10 @@ bool RewriteInstance::splitLargeFunctions() {
       continue;
 
     if (Function.getImageSize() <= Function.getMaxSize())
+      continue;
+
+    // Don't split functions with exception ranges.
+    if (Function.hasEHRanges())
       continue;
 
     ToSplit.insert(BFI.first);
@@ -1246,14 +1251,27 @@ void RewriteInstance::rewriteFile() {
       break;
     }
   }
-  if (NewEhFrameContents.size()) {
+
+  outs() << "FLO: " << CountOverwrittenFunctions
+         << " out of " << BinaryFunctions.size()
+         << " functions were overwritten.\n";
+
+  // If .eh_frame is present it requires special handling.
+  auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
+  if (SMII != SectionMM->SectionMapInfo.end()) {
+    auto &EHFrameSI = SMII->second;
     outs() << "FLO: writing a new .eh_frame_hdr\n";
-    if (FrameHdrAlign > 1)
+    if (FrameHdrAlign > 1) {
       ExtraStorage.BumpPtr =
-          (ExtraStorage.BumpPtr + FrameHdrAlign - 1) & ~(FrameHdrAlign - 1);
+        RoundUpToAlignment(ExtraStorage.BumpPtr, FrameHdrAlign);
+    }
     std::sort(FailedAddresses.begin(), FailedAddresses.end());
-    CFIRdWrt->rewriteHeaderFor(NewEhFrameContents, NewEhFrameAddress,
-                               ExtraStorage.BumpPtr, FailedAddresses);
+    CFIRdWrt->rewriteHeaderFor(
+        StringRef(reinterpret_cast<const char *>(EHFrameSI.AllocAddress),
+                  EHFrameSI.Size),
+        EHFrameSI.FileAddress,
+        ExtraStorage.BumpPtr,
+        FailedAddresses);
     if (ExtraStorage.BumpPtr - ExtraStorage.Addr - ExtraStorage.Size <
         FrameHdrCopy.size()) {
       errs() << "FLO fatal error: __flo_storage in this binary has not enough "
@@ -1276,14 +1294,20 @@ void RewriteInstance::rewriteFile() {
       outs() << "FLO-ERROR: program segment NOT patched -- I don't know how to "
                 "handle this object file!\n";
     }
-    outs() << "FLO: writing a new .eh_frame\n";
-    Out->os().pwrite(NewEhFrameContents.data(), NewEhFrameContents.size(),
-                     NewEhFrameOffset);
   }
 
-  outs() << "FLO: " << CountOverwrittenFunctions
-         << " out of " << BinaryFunctions.size()
-         << " functions were overwritten.\n";
+  // Write all non-code sections.
+  for(auto &SMII : SectionMM->SectionMapInfo) {
+    SectionInfo &SI = SMII.second;
+    if (SI.IsCode)
+      continue;
+    outs() << "FLO: writing new section " << SMII.first << '\n';
+    Out->os().pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
+                     SI.Size,
+                     SI.FileOffset);
+
+    // Update ELF section header.
+  }
 
   if (TotalScore != 0) {
     double Coverage = OverwrittenScore / (double)TotalScore * 100.0;

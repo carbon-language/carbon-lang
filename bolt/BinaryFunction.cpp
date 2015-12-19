@@ -32,6 +32,8 @@
 namespace llvm {
 namespace flo {
 
+uint64_t BinaryFunction::Count = 0;
+
 BinaryBasicBlock *
 BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (Offset > Size)
@@ -68,6 +70,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   StringRef SectionName;
   Section.getName(SectionName);
   OS << "Binary Function \"" << getName() << "\" " << Annotation << " {"
+     << "\n  Number      : "   << FunctionNumber
      << "\n  State       : "   << CurrentState
      << "\n  Address     : 0x" << Twine::utohexstr(Address)
      << "\n  Size        : 0x" << Twine::utohexstr(Size)
@@ -119,6 +122,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
     case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
     case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
+    case MCCFIInstruction::OpGnuArgsSize:      OS << "OpGnuArgsSize";     break;
+    default:                                   OS << "Op#" << Operation; break;
     }
   };
 

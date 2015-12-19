@@ -127,13 +127,6 @@ private:
   /// according to profile data). -1 if the score has not been calculated yet.
   int64_t FunctionScore{-1};
 
-  /// Binary blob reprsenting action, type, and type index tables for this
-  /// function' LSDA (exception handling).
-  ArrayRef<uint8_t> LSDATables;
-
-  /// Offset into LSDATables where type tables start.
-  uint64_t LSDATablesTypeOffset{0};
-
   /// Original LSDA address for the function.
   uint64_t LSDAAddress{0};
 
@@ -217,6 +210,14 @@ private:
   };
   std::vector<CallSite> CallSites;
 
+  /// Binary blobs reprsenting action, type, and type index tables for this
+  /// function' LSDA (exception handling).
+  ArrayRef<uint8_t> LSDAActionAndTypeTables;
+  ArrayRef<uint8_t> LSDATypeIndexTable;
+
+  /// Marking for the beginning of language-specific data area for the function.
+  MCSymbol *LSDASymbol{nullptr};
+
   /// Map to discover which CFIs are attached to a given instruction offset.
   /// Maps an instruction offset into a FrameInstructions offset.
   /// This is only relevant to the buildCFG phase and is discarded afterwards.
@@ -242,6 +243,12 @@ private:
 
   /// Symbol in the output.
   const MCSymbol *OutputSymbol;
+
+  /// Unique number associated with the function.
+  uint64_t  FunctionNumber;
+
+  /// Count the number of functions created.
+  static uint64_t Count;
 
 public:
 
@@ -300,7 +307,9 @@ public:
   BinaryFunction(std::string Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC) :
       Name(Name), Symbol(Symbol), Section(Section), Address(Address),
-      Size(Size), BC(BC), CodeSectionName(".text." + Name) {}
+      Size(Size), BC(BC), CodeSectionName(".text." + Name),
+      FunctionNumber(++Count)
+  {}
 
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
@@ -380,6 +389,11 @@ public:
   /// Return true if the function has CFI instructions
   bool hasCFI() const {
     return !FrameInstructions.empty() || !CIEFrameInstructions.empty();
+  }
+
+  /// Return unique number associated with the function.
+  uint64_t getFunctionNumber() const {
+    return FunctionNumber;
   }
 
   /// Return true if the given address \p PC is inside the function body.
@@ -563,6 +577,12 @@ public:
     return *this;
   }
 
+  /// Set LSDA symbol for the function.
+  BinaryFunction &setLSDASymbol(MCSymbol *Symbol) {
+    LSDASymbol = Symbol;
+    return *this;
+  }
+
   /// Return the profile information about the number of times
   /// the function was executed.
   ///
@@ -574,6 +594,20 @@ public:
   /// Return original LSDA address for the function or NULL.
   uint64_t getLSDAAddress() const {
     return LSDAAddress;
+  }
+
+  /// Return symbol pointing to function's LSDA.
+  MCSymbol *getLSDASymbol() {
+    if (LSDASymbol)
+      return LSDASymbol;
+    if (CallSites.empty())
+      return nullptr;
+
+    LSDASymbol =
+      BC.Ctx->getOrCreateSymbol(Twine("GCC_except_table") +
+                                Twine::utohexstr(getFunctionNumber()));
+
+    return LSDASymbol;
   }
 
   /// Disassemble function from raw data \p FunctionData.
@@ -641,7 +675,7 @@ public:
   bool hasEHRanges() const { return !CallSites.empty(); }
 
   /// Emit exception handling ranges for the function.
-  void emitLSDA();
+  void emitLSDA(MCStreamer *Streamer);
 
   virtual ~BinaryFunction() {}
 
