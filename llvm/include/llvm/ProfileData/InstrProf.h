@@ -202,6 +202,11 @@ enum InstrProfValueKind : uint32_t {
 namespace object {
 class SectionRef;
 }
+
+namespace IndexedInstrProf {
+uint64_t ComputeHash(StringRef K);
+}
+
 /// A symbol table used for function PGO name look-up with keys
 /// (such as pointers, md5hash values) to the function. A function's
 /// PGO name or name's md5hash are used in retrieving the profile
@@ -211,6 +216,7 @@ class InstrProfSymtab {
 private:
   StringRef Data;
   uint64_t Address;
+  std::vector<std::pair<uint64_t, std::string>> HashNameMap;
 
 public:
   InstrProfSymtab() : Data(), Address(0) {}
@@ -223,11 +229,45 @@ public:
     Address = BaseAddr;
     return std::error_code();
   }
+  template <typename NameIterRange> void create(NameIterRange &IterRange) {
+    for (auto Name : IterRange)
+      HashNameMap.push_back(
+          std::make_pair(IndexedInstrProf::ComputeHash(Name), Name.str()));
+    finalizeSymtab();
+  }
+
+  // If the symtab is created by a series calls to \c addFuncName, \c
+  // finalizeSymtab needs to
+  // be called before function name/symbol lookup using MD5 hash. This is
+  // required because
+  // the underlying map is vector (for space efficiency) which needs to be
+  // sorted.
+  void finalizeSymtab() {
+    std::sort(HashNameMap.begin(), HashNameMap.end(), less_first());
+    HashNameMap.erase(std::unique(HashNameMap.begin(), HashNameMap.end()),
+                      HashNameMap.end());
+  }
+
+  void addFuncName(StringRef FuncName) {
+    HashNameMap.push_back(std::make_pair(
+        IndexedInstrProf::ComputeHash(FuncName), FuncName.str()));
+  }
 
   /// Return function's PGO name from the function name's symabol
   /// address in the object file. If an error occurs, Return
   /// an empty string.
   StringRef getFuncName(uint64_t FuncNameAddress, size_t NameSize);
+  /// Return function's PGO name from the name's md5 hash value.
+  /// If not found, return an empty string.
+  StringRef getFuncName(uint64_t FuncMD5Hash) {
+    auto Result =
+        std::lower_bound(HashNameMap.begin(), HashNameMap.end(), FuncMD5Hash,
+                         [](const std::pair<uint64_t, std::string> &LHS,
+                            uint64_t RHS) { return LHS.first < RHS; });
+    if (Result != HashNameMap.end())
+      return Result->second;
+    return StringRef();
+  }
 };
 
 struct InstrProfStringTable {
@@ -481,7 +521,7 @@ static inline uint64_t MD5Hash(StringRef Str) {
   return endian::read<uint64_t, little, unaligned>(Result);
 }
 
-static inline uint64_t ComputeHash(HashT Type, StringRef K) {
+inline uint64_t ComputeHash(HashT Type, StringRef K) {
   switch (Type) {
   case HashT::MD5:
     return IndexedInstrProf::MD5Hash(K);
@@ -493,9 +533,7 @@ const uint64_t Magic = 0x8169666f72706cff; // "\xfflprofi\x81"
 const uint64_t Version = INSTR_PROF_INDEX_VERSION;
 const HashT HashType = HashT::MD5;
 
-static inline uint64_t ComputeHash(StringRef K) {
-  return ComputeHash(HashType, K);
-}
+inline uint64_t ComputeHash(StringRef K) { return ComputeHash(HashType, K); }
 
 // This structure defines the file header of the LLVM profile
 // data file in indexed-format.
