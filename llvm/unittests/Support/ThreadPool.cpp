@@ -54,6 +54,18 @@ protected:
     UnsupportedArchs.push_back(Triple::ppc64le);
     UnsupportedArchs.push_back(Triple::ppc64);
   }
+
+  /// Make sure this thread not progress faster than the main thread.
+  void waitForMainThread() {
+    while (!MainThreadReady) {
+      std::unique_lock<std::mutex> LockGuard(WaitMainThreadMutex);
+      WaitMainThread.wait(LockGuard, [&] { return MainThreadReady; });
+    }
+  }
+  std::condition_variable WaitMainThread;
+  std::mutex WaitMainThreadMutex;
+  bool MainThreadReady;
+
 };
 
 #define CHECK_UNSUPPORTED() \
@@ -68,12 +80,17 @@ TEST_F(ThreadPoolTest, AsyncBarrier) {
 
   std::atomic_int checked_in{0};
 
+  MainThreadReady = false;
   ThreadPool Pool;
   for (size_t i = 0; i < 5; ++i) {
-    Pool.async([&checked_in, i] {
+    Pool.async([this, &checked_in, i] {
+      waitForMainThread();
       ++checked_in;
     });
   }
+  ASSERT_EQ(0, checked_in);
+  MainThreadReady = true;
+  WaitMainThread.notify_all();
   Pool.wait();
   ASSERT_EQ(5, checked_in);
 }
@@ -97,10 +114,15 @@ TEST_F(ThreadPoolTest, Async) {
   CHECK_UNSUPPORTED();
   ThreadPool Pool;
   std::atomic_int i{0};
-  Pool.async([&i] {
+  MainThreadReady = false;
+  Pool.async([this, &i] {
+    waitForMainThread();
     ++i;
   });
   Pool.async([&i] { ++i; });
+  ASSERT_NE(2, i.load());
+  MainThreadReady = true;
+  WaitMainThread.notify_all();
   Pool.wait();
   ASSERT_EQ(2, i.load());
 }
@@ -109,11 +131,16 @@ TEST_F(ThreadPoolTest, GetFuture) {
   CHECK_UNSUPPORTED();
   ThreadPool Pool;
   std::atomic_int i{0};
-  Pool.async([&i] {
+  MainThreadReady = false;
+  Pool.async([this, &i] {
+    waitForMainThread();
     ++i;
   });
   // Force the future using get()
   Pool.async([&i] { ++i; }).get();
+  ASSERT_NE(2, i.load());
+  MainThreadReady = true;
+  WaitMainThread.notify_all();
   Pool.wait();
   ASSERT_EQ(2, i.load());
 }
@@ -122,14 +149,18 @@ TEST_F(ThreadPoolTest, PoolDestruction) {
   CHECK_UNSUPPORTED();
   // Test that we are waiting on destruction
   std::atomic_int checked_in{0};
-
   {
+    MainThreadReady = false;
     ThreadPool Pool;
     for (size_t i = 0; i < 5; ++i) {
-      Pool.async([&checked_in, i] {
+      Pool.async([this, &checked_in, i] {
+        waitForMainThread();
         ++checked_in;
       });
     }
+    ASSERT_EQ(0, checked_in);
+    MainThreadReady = true;
+    WaitMainThread.notify_all();
   }
   ASSERT_EQ(5, checked_in);
 }
