@@ -1527,13 +1527,14 @@ static void printFaultMaps(const ObjectFile *Obj) {
 }
 
 static void printPrivateFileHeader(const ObjectFile *o) {
-  if (o->isELF()) {
+  if (o->isELF())
     printELFFileHeader(o);
-  } else if (o->isCOFF()) {
+  else if (o->isCOFF())
     printCOFFFileHeader(o);
-  } else if (o->isMachO()) {
+  else if (o->isMachO())
     printMachOFileHeader(o);
-  }
+  else
+    report_fatal_error("Invalid/Unsupported object file format");
 }
 
 static void DumpObject(const ObjectFile *o) {
