@@ -283,7 +283,7 @@ class TrailingObjects : private trailing_objects_internal::TrailingObjectsImpl<
 
 public:
   // make this (privately inherited) class public.
-  using TrailingObjectsBase::OverloadToken;
+  using ParentType::OverloadToken;
 
   /// Returns a pointer to the trailing object array of the given type
   /// (which must be one of those specified in the class template). The
