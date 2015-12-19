@@ -34,24 +34,22 @@ void __llvm_profile_register_function(void *Data_) {
     DataFirst = Data;
     DataLast = Data + 1;
     NamesFirst = Data->NamePtr;
-    NamesLast = Data->NamePtr + Data->NameSize;
+    NamesLast = (const char *)Data->NamePtr + Data->NameSize;
     CountersFirst = Data->CounterPtr;
-    CountersLast = Data->CounterPtr + Data->NumCounters;
+    CountersLast = (uint64_t *)Data->CounterPtr + Data->NumCounters;
     return;
   }
 
-#define UPDATE_FIRST(First, New) \
-  First = New < First ? New : First
+#define UPDATE_FIRST(First, New) First = New < First ? New : First
   UPDATE_FIRST(DataFirst, Data);
-  UPDATE_FIRST(NamesFirst, Data->NamePtr);
-  UPDATE_FIRST(CountersFirst, Data->CounterPtr);
+  UPDATE_FIRST(NamesFirst, (const char *)Data->NamePtr);
+  UPDATE_FIRST(CountersFirst, (uint64_t *)Data->CounterPtr);
 #undef UPDATE_FIRST
 
-#define UPDATE_LAST(Last, New) \
-  Last = New > Last ? New : Last
+#define UPDATE_LAST(Last, New) Last = New > Last ? New : Last
   UPDATE_LAST(DataLast, Data + 1);
-  UPDATE_LAST(NamesLast, Data->NamePtr + Data->NameSize);
-  UPDATE_LAST(CountersLast, Data->CounterPtr + Data->NumCounters);
+  UPDATE_LAST(NamesLast, (const char *)Data->NamePtr + Data->NameSize);
+  UPDATE_LAST(CountersLast, (uint64_t *)Data->CounterPtr + Data->NumCounters);
 #undef UPDATE_LAST
 }
 
