@@ -1012,6 +1012,17 @@ template <class ELFT> int Writer<ELFT>::getPhdrsNum() const {
   return I;
 }
 
+static uint32_t getELFFlags() {
+  if (Config->EMachine != EM_MIPS)
+    return 0;
+  // FIXME: In fact ELF flags depends on ELF flags of input object files
+  // and selected emulation. For now just use hadr coded values.
+  uint32_t V = EF_MIPS_ABI_O32 | EF_MIPS_CPIC | EF_MIPS_ARCH_32R2;
+  if (Config->Shared)
+    V |= EF_MIPS_PIC;
+  return V;
+}
+
 template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   memcpy(Buf, "\177ELF", 4);
@@ -1033,6 +1044,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_entry = getEntryAddr();
   EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
+  EHdr->e_flags = getELFFlags();
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
   EHdr->e_phentsize = sizeof(Elf_Phdr);
   EHdr->e_phnum = Phdrs.size();
