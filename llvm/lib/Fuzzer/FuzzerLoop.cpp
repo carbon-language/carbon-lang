@@ -320,12 +320,8 @@ void Fuzzer::PrintStatusForNewUnit(const Unit &U) {
     return;
   PrintStats("NEW   ", "");
   if (Options.Verbosity) {
-    Printf(" L: %zd", U.size());
-    if (U.size() < 30) {
-      Printf(" ");
-      PrintUnitInASCII(U, "\t");
-      Print(U);
-    }
+    Printf(" L: %zd ", U.size());
+    USF.PrintMutationSequence();
     Printf("\n");
   }
 }
@@ -483,6 +479,7 @@ void Fuzzer::Loop() {
         secondsSinceProcessStartUp() >
         static_cast<size_t>(Options.MaxTotalTimeSec))
       break;
+    USF.StartMutationSequence();
     CurrentUnit = Corpus[J1];
     // Optionally, cross with another unit.
     if (Options.DoCrossOver && USF.GetRand().RandBool()) {

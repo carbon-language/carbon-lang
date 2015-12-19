@@ -17,28 +17,32 @@
 
 namespace fuzzer {
 
-typedef size_t (MutationDispatcher::*Mutator)(uint8_t *Data, size_t Size,
-                                              size_t Max);
+struct Mutator {
+  size_t (MutationDispatcher::*Fn)(uint8_t *Data, size_t Size, size_t Max);
+  const char *Name;
+};
 
 struct MutationDispatcher::Impl {
   std::vector<Unit> Dictionary;
   std::vector<Mutator> Mutators;
+  std::vector<Mutator> CurrentMutatorSequence;
+
+  void Add(Mutator M) { Mutators.push_back(M); }
   Impl() {
-    Mutators.push_back(&MutationDispatcher::Mutate_EraseByte);
-    Mutators.push_back(&MutationDispatcher::Mutate_InsertByte);
-    Mutators.push_back(&MutationDispatcher::Mutate_ChangeByte);
-    Mutators.push_back(&MutationDispatcher::Mutate_ChangeBit);
-    Mutators.push_back(&MutationDispatcher::Mutate_ShuffleBytes);
-    Mutators.push_back(&MutationDispatcher::Mutate_ChangeASCIIInteger);
+    Add({&MutationDispatcher::Mutate_EraseByte, "EraseByte"});
+    Add({&MutationDispatcher::Mutate_InsertByte, "InsertByte"});
+    Add({&MutationDispatcher::Mutate_ChangeByte, "ChangeByte"});
+    Add({&MutationDispatcher::Mutate_ChangeBit, "ChangeBit"});
+    Add({&MutationDispatcher::Mutate_ShuffleBytes, "ShuffleBytes"});
+    Add({&MutationDispatcher::Mutate_ChangeASCIIInteger, "ChangeASCIIInt"});
   }
   void AddWordToDictionary(const uint8_t *Word, size_t Size) {
     if (Dictionary.empty()) {
-      Mutators.push_back(&MutationDispatcher::Mutate_AddWordFromDictionary);
+      Add({&MutationDispatcher::Mutate_AddWordFromDictionary, "AddFromDict"});
     }
     Dictionary.push_back(Unit(Word, Word + Size));
   }
 };
-
 
 static char FlipRandomBit(char X, FuzzerRandomBase &Rand) {
   int Bit = Rand(8);
@@ -150,6 +154,16 @@ size_t MutationDispatcher::Mutate_ChangeASCIIInteger(uint8_t *Data, size_t Size,
   return Size;
 }
 
+void MutationDispatcher::StartMutationSequence() {
+  MDImpl->CurrentMutatorSequence.clear();
+}
+
+void MutationDispatcher::PrintMutationSequence() {
+  Printf("MS: %zd ", MDImpl->CurrentMutatorSequence.size());
+  for (auto M : MDImpl->CurrentMutatorSequence)
+    Printf("%s-", M.Name);
+}
+
 // Mutates Data in place, returns new size.
 size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
   assert(MaxSize > 0);
@@ -165,9 +179,12 @@ size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
   // Try several times before returning un-mutated data.
   for (int Iter = 0; Iter < 10; Iter++) {
     size_t MutatorIdx = Rand(MDImpl->Mutators.size());
-    size_t NewSize =
-        (this->*(MDImpl->Mutators[MutatorIdx]))(Data, Size, MaxSize);
-    if (NewSize) return NewSize;
+    auto M = MDImpl->Mutators[MutatorIdx];
+    size_t NewSize = (this->*(M.Fn))(Data, Size, MaxSize);
+    if (NewSize) {
+      MDImpl->CurrentMutatorSequence.push_back(M);
+      return NewSize;
+    }
   }
   return Size;
 }

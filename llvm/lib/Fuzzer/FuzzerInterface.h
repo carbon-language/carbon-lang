@@ -70,6 +70,10 @@ class MutationDispatcher {
  public:
   MutationDispatcher(FuzzerRandomBase &Rand);
   ~MutationDispatcher();
+  /// Indicate that we are about to start a new sequence of mutations.
+  void StartMutationSequence();
+  /// Print the current sequence of mutations.
+  void PrintMutationSequence();
   /// Mutates data by shuffling bytes.
   size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize);
   /// Mutates data by erasing a byte.
@@ -138,6 +142,8 @@ class UserSuppliedFuzzer {
   UserSuppliedFuzzer(FuzzerRandomBase *Rand);
   /// Executes the target function on 'Size' bytes of 'Data'.
   virtual int TargetFunction(const uint8_t *Data, size_t Size) = 0;
+  virtual void StartMutationSequence() { MD.StartMutationSequence(); }
+  virtual void PrintMutationSequence() { MD.PrintMutationSequence(); }
   /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
   /// returns the new size of the data, which should be positive.
   virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
