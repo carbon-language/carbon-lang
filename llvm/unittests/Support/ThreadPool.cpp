@@ -57,10 +57,8 @@ protected:
 
   /// Make sure this thread not progress faster than the main thread.
   void waitForMainThread() {
-    while (!MainThreadReady) {
-      std::unique_lock<std::mutex> LockGuard(WaitMainThreadMutex);
-      WaitMainThread.wait(LockGuard, [&] { return MainThreadReady; });
-    }
+    std::unique_lock<std::mutex> LockGuard(WaitMainThreadMutex);
+    WaitMainThread.wait(LockGuard, [&] { return MainThreadReady; });
   }
 
   /// Set the readiness of the main thread.
