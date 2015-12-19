@@ -156,7 +156,7 @@ define i32 @callee_7(i1 %val) alwaysinline personality i8 3 {
 define i32 @caller_7() {
 ; CHECK-LABEL: @caller_7(
  entry:
-; CHECK-NOT: call fastcc i32 @g.fastcc() #[[FOO_BAR_ATTR_IDX]] [ "deopt"(i32 7, i32 0, i32 1), "foo"(double 0.000000e+00) ]
+; CHECK-NOT: call fastcc i32 @g.fastcc()
 ; CHECK: ret i32 0
   %x = call i32 @callee_7(i1 true) [ "deopt"(i32 7) ]
   ret i32 %x
