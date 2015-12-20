@@ -522,7 +522,7 @@ include "AVRRegisterInfo.td"
 // Calling Conventions
 //===---------------------------------------------------------------------===//
 
-//include "AVRCallingConv.td"
+include "AVRCallingConv.td"
 
 //===---------------------------------------------------------------------===//
 // Assembly Printers
