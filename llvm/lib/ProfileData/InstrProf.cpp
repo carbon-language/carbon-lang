@@ -240,18 +240,19 @@ instrprof_error InstrProfRecord::merge(InstrProfRecord &Other,
 
   return Result;
 }
+
 // Map indirect call target name hash to name string.
 uint64_t InstrProfRecord::remapValue(uint64_t Value, uint32_t ValueKind,
-                                     ValueMapType *HashKeys) {
-  if (!HashKeys)
+                                     ValueMapType *ValueMap) {
+  if (!ValueMap)
     return Value;
   switch (ValueKind) {
   case IPVK_IndirectCallTarget: {
     auto Result =
-        std::lower_bound(HashKeys->begin(), HashKeys->end(), Value,
-                         [](const std::pair<uint64_t, const char *> &LHS,
+        std::lower_bound(ValueMap->begin(), ValueMap->end(), Value,
+                         [](const std::pair<uint64_t, uint64_t> &LHS,
                             uint64_t RHS) { return LHS.first < RHS; });
-    if (Result != HashKeys->end())
+    if (Result != ValueMap->end())
       Value = (uint64_t)Result->second;
     break;
   }
@@ -259,21 +260,11 @@ uint64_t InstrProfRecord::remapValue(uint64_t Value, uint32_t ValueKind,
   return Value;
 }
 
-void InstrProfRecord::updateStrings(InstrProfStringTable *StrTab) {
-  if (!StrTab)
-    return;
-
-  Name = StrTab->insertString(Name);
-  for (auto &VSite : IndirectCallSites)
-    for (auto &VData : VSite.ValueData)
-      VData.Value = (uint64_t)StrTab->insertString((const char *)VData.Value);
-}
-
 void InstrProfRecord::addValueData(uint32_t ValueKind, uint32_t Site,
                                    InstrProfValueData *VData, uint32_t N,
-                                   ValueMapType *HashKeys) {
+                                   ValueMapType *ValueMap) {
   for (uint32_t I = 0; I < N; I++) {
-    VData[I].Value = remapValue(VData[I].Value, ValueKind, HashKeys);
+    VData[I].Value = remapValue(VData[I].Value, ValueKind, ValueMap);
   }
   std::vector<InstrProfValueSiteRecord> &ValueSites =
       getValueSitesForKind(ValueKind);
@@ -314,19 +305,8 @@ uint32_t getNumValueDataForSiteInstrProf(const void *R, uint32_t VK,
 void getValueForSiteInstrProf(const void *R, InstrProfValueData *Dst,
                               uint32_t K, uint32_t S,
                               uint64_t (*Mapper)(uint32_t, uint64_t)) {
-  return reinterpret_cast<const InstrProfRecord *>(R)
-      ->getValueForSite(Dst, K, S, Mapper);
-}
-
-uint64_t stringToHash(uint32_t ValueKind, uint64_t Value) {
-  switch (ValueKind) {
-  case IPVK_IndirectCallTarget:
-    return IndexedInstrProf::ComputeHash((const char *)Value);
-    break;
-  default:
-    llvm_unreachable("value kind not handled !");
-  }
-  return Value;
+  return reinterpret_cast<const InstrProfRecord *>(R)->getValueForSite(
+      Dst, K, S, Mapper);
 }
 
 ValueProfData *allocValueProfDataInstrProf(size_t TotalSizeInBytes) {
@@ -342,7 +322,7 @@ static ValueProfRecordClosure InstrProfRecordClosure = {
     getNumValueSitesInstrProf,
     getNumValueDataInstrProf,
     getNumValueDataForSiteInstrProf,
-    stringToHash,
+    0,
     getValueForSiteInstrProf,
     allocValueProfDataInstrProf};
 
