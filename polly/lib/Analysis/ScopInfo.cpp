@@ -62,6 +62,11 @@ using namespace polly;
 STATISTIC(ScopFound, "Number of valid Scops");
 STATISTIC(RichScopFound, "Number of Scops containing a loop");
 
+// The maximal number of basic sets we allow during domain construction to
+// be created. More complex scops will result in very high compile time and
+// are also unlikely to result in good code
+static int const MaxConjunctsInDomain = 20;
+
 static cl::opt<bool> ModelReadOnlyScalars(
     "polly-analyze-read-only-scalars",
     cl::desc("Model read-only scalar values in the scop description"),
@@ -2176,6 +2181,12 @@ void Scop::buildDomainsWithBranchConstraints(Region *R) {
         SuccDomain = isl_set_union(SuccDomain, CondSet);
 
       SuccDomain = isl_set_coalesce(SuccDomain);
+      if (isl_set_n_basic_set(SuccDomain) > MaxConjunctsInDomain) {
+        auto *Empty = isl_set_empty(isl_set_get_space(SuccDomain));
+        isl_set_free(SuccDomain);
+        SuccDomain = Empty;
+        invalidate(ERROR_DOMAINCONJUNCTS, DebugLoc());
+      }
       DEBUG(dbgs() << "\tSet SuccBB: " << SuccBB->getName() << " : "
                    << SuccDomain << "\n");
     }
@@ -3043,6 +3054,8 @@ static std::string toString(AssumptionKind Kind) {
     return "Invariant load";
   case DELINEARIZATION:
     return "Delinearization";
+  case ERROR_DOMAINCONJUNCTS:
+    return "Low number of domain conjuncts";
   }
   llvm_unreachable("Unknown AssumptionKind!");
 }

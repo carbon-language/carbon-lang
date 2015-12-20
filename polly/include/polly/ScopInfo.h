@@ -77,6 +77,7 @@ enum AssumptionKind {
   INFINITELOOP,
   INVARIANTLOAD,
   DELINEARIZATION,
+  ERROR_DOMAINCONJUNCTS,
 };
 
 /// Maps from a loop to the affine function expressing its backedge taken count.
