@@ -51,6 +51,8 @@ InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
     return cast<EHInputSection<ELFT>>(this)->getOffset(Offset);
   case Merge:
     return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
+  case MipsReginfo:
+    return cast<MipsReginfoInputSection<ELFT>>(this)->getOffset(Offset);
   }
   llvm_unreachable("Invalid section kind");
 }
@@ -320,6 +322,24 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
   return Base + Addend;
 }
 
+template <class ELFT>
+MipsReginfoInputSection<ELFT>::MipsReginfoInputSection(ObjectFile<ELFT> *F,
+                                                       const Elf_Shdr *Header)
+    : InputSectionBase<ELFT>(F, Header, InputSectionBase<ELFT>::MipsReginfo) {}
+
+template <class ELFT>
+uint32_t MipsReginfoInputSection<ELFT>::getGeneralMask() const {
+  ArrayRef<uint8_t> D = this->getSectionData();
+  if (D.size() != sizeof(Elf_Mips_RegInfo))
+    error("Invalid size of .reginfo section");
+  return reinterpret_cast<const Elf_Mips_RegInfo *>(D.data())->ri_gprmask;
+}
+
+template <class ELFT>
+bool MipsReginfoInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
+  return S->SectionKind == InputSectionBase<ELFT>::MipsReginfo;
+}
+
 namespace lld {
 namespace elf2 {
 template class InputSectionBase<object::ELF32LE>;
@@ -341,5 +361,10 @@ template class MergeInputSection<object::ELF32LE>;
 template class MergeInputSection<object::ELF32BE>;
 template class MergeInputSection<object::ELF64LE>;
 template class MergeInputSection<object::ELF64BE>;
+
+template class MipsReginfoInputSection<object::ELF32LE>;
+template class MipsReginfoInputSection<object::ELF32BE>;
+template class MipsReginfoInputSection<object::ELF64LE>;
+template class MipsReginfoInputSection<object::ELF64BE>;
 }
 }

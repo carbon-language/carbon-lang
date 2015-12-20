@@ -75,6 +75,7 @@ private:
   SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
   SpecificBumpPtrAllocator<MergeOutputSection<ELFT>> MSecAlloc;
   SpecificBumpPtrAllocator<EHOutputSection<ELFT>> EHSecAlloc;
+  SpecificBumpPtrAllocator<MipsReginfoOutputSection<ELFT>> MReginfoSecAlloc;
   BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
@@ -618,6 +619,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
           Sec = new (MSecAlloc.Allocate())
               MergeOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
           break;
+        case InputSectionBase<ELFT>::MipsReginfo:
+          Sec = new (MReginfoSecAlloc.Allocate())
+              MipsReginfoOutputSection<ELFT>();
+          break;
         }
         OutputSections.push_back(Sec);
         RegularSections.push_back(Sec);
@@ -634,6 +639,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       case InputSectionBase<ELFT>::Merge:
         static_cast<MergeOutputSection<ELFT> *>(Sec)
             ->addSection(cast<MergeInputSection<ELFT>>(C));
+        break;
+      case InputSectionBase<ELFT>::MipsReginfo:
+        static_cast<MipsReginfoOutputSection<ELFT> *>(Sec)
+            ->addSection(cast<MipsReginfoInputSection<ELFT>>(C));
         break;
       }
     }

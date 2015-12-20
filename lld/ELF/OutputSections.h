@@ -31,6 +31,7 @@ template <class ELFT> class EHInputSection;
 template <class ELFT> class InputSection;
 template <class ELFT> class InputSectionBase;
 template <class ELFT> class MergeInputSection;
+template <class ELFT> class MipsReginfoInputSection;
 template <class ELFT> class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class DefinedRegular;
@@ -410,6 +411,20 @@ private:
   const ELFSymbolBody<ELFT> *FiniSym = nullptr;
   uint32_t DtFlags = 0;
   uint32_t DtFlags1 = 0;
+};
+
+template <class ELFT>
+class MipsReginfoOutputSection final : public OutputSectionBase<ELFT> {
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+
+public:
+  MipsReginfoOutputSection();
+  void writeTo(uint8_t *Buf) override;
+
+  void addSection(MipsReginfoInputSection<ELFT> *S);
+
+private:
+  uint32_t GeneralMask = 0;
 };
 
 // All output sections that are hadnled by the linker specially are

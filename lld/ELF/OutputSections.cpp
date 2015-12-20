@@ -1389,6 +1389,27 @@ uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
   return Body->isWeak() ? STB_WEAK : STB_GLOBAL;
 }
 
+template <class ELFT>
+MipsReginfoOutputSection<ELFT>::MipsReginfoOutputSection()
+    : OutputSectionBase<ELFT>(".reginfo", SHT_MIPS_REGINFO, SHF_ALLOC) {
+  this->Header.sh_addralign = 4;
+  this->Header.sh_entsize = sizeof(Elf_Mips_RegInfo);
+  this->Header.sh_size = sizeof(Elf_Mips_RegInfo);
+}
+
+template <class ELFT>
+void MipsReginfoOutputSection<ELFT>::writeTo(uint8_t *Buf) {
+  auto *R = reinterpret_cast<Elf_Mips_RegInfo *>(Buf);
+  R->ri_gp_value = getMipsGpAddr<ELFT>();
+  R->ri_gprmask = GeneralMask;
+}
+
+template <class ELFT>
+void MipsReginfoOutputSection<ELFT>::addSection(
+    MipsReginfoInputSection<ELFT> *S) {
+  GeneralMask |= S->getGeneralMask();
+}
+
 namespace lld {
 namespace elf2 {
 template class OutputSectionBase<ELF32LE>;
@@ -1445,6 +1466,11 @@ template class EHOutputSection<ELF32LE>;
 template class EHOutputSection<ELF32BE>;
 template class EHOutputSection<ELF64LE>;
 template class EHOutputSection<ELF64BE>;
+
+template class MipsReginfoOutputSection<ELF32LE>;
+template class MipsReginfoOutputSection<ELF32BE>;
+template class MipsReginfoOutputSection<ELF64LE>;
+template class MipsReginfoOutputSection<ELF64BE>;
 
 template class MergeOutputSection<ELF32LE>;
 template class MergeOutputSection<ELF32BE>;
