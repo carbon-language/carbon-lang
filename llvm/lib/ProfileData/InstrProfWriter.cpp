@@ -108,6 +108,8 @@ std::error_code InstrProfWriter::addRecord(InstrProfRecord &&I,
   if (NewFunc) {
     // We've never seen a function with this name and hash, add it.
     Dest = std::move(I);
+    // Fix up the name to avoid dangling reference.
+    Dest.Name = FunctionData.find(Dest.Name)->getKey();
     Result = instrprof_error::success;
     if (Weight > 1) {
       for (auto &Count : Dest.Counts) {
