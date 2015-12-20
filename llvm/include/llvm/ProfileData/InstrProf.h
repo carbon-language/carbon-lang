@@ -306,34 +306,7 @@ struct InstrProfValueSiteRecord {
   /// Merge data from another InstrProfValueSiteRecord
   /// Optionally scale merged counts by \p Weight.
   instrprof_error mergeValueData(InstrProfValueSiteRecord &Input,
-                                 uint64_t Weight = 1) {
-    this->sortByTargetValues();
-    Input.sortByTargetValues();
-    auto I = ValueData.begin();
-    auto IE = ValueData.end();
-    instrprof_error Result = instrprof_error::success;
-    for (auto J = Input.ValueData.begin(), JE = Input.ValueData.end(); J != JE;
-         ++J) {
-      while (I != IE && I->Value < J->Value)
-        ++I;
-      if (I != IE && I->Value == J->Value) {
-        uint64_t JCount = J->Count;
-        bool Overflowed;
-        if (Weight > 1) {
-          JCount = SaturatingMultiply(JCount, Weight, &Overflowed);
-          if (Overflowed)
-            Result = instrprof_error::counter_overflow;
-        }
-        I->Count = SaturatingAdd(I->Count, JCount, &Overflowed);
-        if (Overflowed)
-          Result = instrprof_error::counter_overflow;
-        ++I;
-        continue;
-      }
-      ValueData.insert(I, *J);
-    }
-    return Result;
-  }
+                                 uint64_t Weight = 1);
 };
 
 /// Profiling information for a single function.

@@ -162,6 +162,37 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
   return createPGOFuncNameVar(*F.getParent(), F.getLinkage(), FuncName);
 }
 
+instrprof_error
+InstrProfValueSiteRecord::mergeValueData(InstrProfValueSiteRecord &Input,
+                                         uint64_t Weight) {
+  this->sortByTargetValues();
+  Input.sortByTargetValues();
+  auto I = ValueData.begin();
+  auto IE = ValueData.end();
+  instrprof_error Result = instrprof_error::success;
+  for (auto J = Input.ValueData.begin(), JE = Input.ValueData.end(); J != JE;
+       ++J) {
+    while (I != IE && I->Value < J->Value)
+      ++I;
+    if (I != IE && I->Value == J->Value) {
+      uint64_t JCount = J->Count;
+      bool Overflowed;
+      if (Weight > 1) {
+        JCount = SaturatingMultiply(JCount, Weight, &Overflowed);
+        if (Overflowed)
+          Result = instrprof_error::counter_overflow;
+      }
+      I->Count = SaturatingAdd(I->Count, JCount, &Overflowed);
+      if (Overflowed)
+        Result = instrprof_error::counter_overflow;
+      ++I;
+      continue;
+    }
+    ValueData.insert(I, *J);
+  }
+  return Result;
+}
+
 // Merge Value Profile data from Src record to this record for ValueKind.
 // Scale merged value counts by \p Weight.
 instrprof_error InstrProfRecord::mergeValueProfData(uint32_t ValueKind,
