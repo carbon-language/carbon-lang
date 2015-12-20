@@ -23,8 +23,21 @@
 #define COMPILER_RT_SECTION(Sect) __attribute__((section(Sect)))
 
 #if COMPILER_RT_HAS_ATOMICS == 1
+#ifdef _MSC_VER
+#include <windows.h>
+#if defined(_WIN32)
+#define COMPILER_RT_BOOL_CMPXCHG(Ptr, OldV, NewV)                              \
+  (InterlockedCompareExchange((LONG volatile *)Ptr, (LONG)NewV, (LONG)OldV) == \
+   (LONG)OldV)
+#else
+#define COMPILER_RT_BOOL_CMPXCHG(Ptr, OldV, NewV)                              \
+  (InterlockedCompareExchange64((LONGLONG volatile *)Ptr, (LONGLONG)NewV,      \
+                                (LONGLONG)OldV) == (LONGLONG)OldV)
+#endif
+#else
 #define COMPILER_RT_BOOL_CMPXCHG(Ptr, OldV, NewV)                              \
   __sync_bool_compare_and_swap(Ptr, OldV, NewV)
+#endif
 #else
 #define COMPILER_RT_BOOL_CMPXCHG(Ptr, OldV, NewV)                              \
   BoolCmpXchg((void **)Ptr, OldV, NewV)
