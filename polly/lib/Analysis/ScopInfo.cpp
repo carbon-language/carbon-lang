@@ -3462,12 +3462,12 @@ void Scop::buildSchedule(
           combineInSequence(LSchedulePair.first, StmtSchedule);
     }
 
+    isl_schedule *LSchedule = LSchedulePair.first;
     unsigned NumVisited = LSchedulePair.second;
     while (L && NumVisited == L->getNumBlocks()) {
-      auto *LDomain = isl_schedule_get_domain(LSchedulePair.first);
+      auto *LDomain = isl_schedule_get_domain(LSchedule);
       if (auto *MUPA = mapToDimension(LDomain, LD + 1))
-        LSchedulePair.first =
-            isl_schedule_insert_partial_schedule(LSchedulePair.first, MUPA);
+        LSchedule = isl_schedule_insert_partial_schedule(LSchedule, MUPA);
 
       auto *PL = L->getParentLoop();
 
@@ -3476,17 +3476,18 @@ void Scop::buildSchedule(
       // parent loop. In the former case this conditional will be skipped, in
       // the latter case however we will break here as we do not build a domain
       // nor a schedule for a infinite loop.
-      assert(LoopSchedules.count(PL) || LSchedulePair.first == nullptr);
+      assert(LoopSchedules.count(PL) || LSchedule == nullptr);
       if (!LoopSchedules.count(PL))
         break;
 
       auto &PSchedulePair = LoopSchedules[PL];
-      PSchedulePair.first =
-          combineInSequence(PSchedulePair.first, LSchedulePair.first);
+      PSchedulePair.first = combineInSequence(PSchedulePair.first, LSchedule);
       PSchedulePair.second += NumVisited;
 
       L = PL;
+      LD--;
       NumVisited = PSchedulePair.second;
+      LSchedule = PSchedulePair.first;
     }
   }
 }
