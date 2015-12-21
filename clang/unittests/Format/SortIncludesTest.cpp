@@ -191,6 +191,19 @@ TEST_F(SortIncludesTest, LeavesMainHeaderFirst) {
                  "#include \"c.h\"\n"
                  "#include \"b.h\"\n",
                  "a.h"));
+
+  // Only do this in the first #include block.
+  EXPECT_EQ("#include <a>\n"
+            "\n"
+            "#include \"b.h\"\n"
+            "#include \"c.h\"\n"
+            "#include \"llvm/a.h\"\n",
+            sort("#include <a>\n"
+                 "\n"
+                 "#include \"llvm/a.h\"\n"
+                 "#include \"c.h\"\n"
+                 "#include \"b.h\"\n",
+                 "a.cc"));
 }
 
 TEST_F(SortIncludesTest, NegativePriorities) {
