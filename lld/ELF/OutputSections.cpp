@@ -307,9 +307,11 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     else if (Body)
       Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
     else if (IsRela)
-      Addend = getLocalRelTarget(File, static_cast<const Elf_Rela &>(RI));
+      Addend =
+          getLocalRelTarget(File, static_cast<const Elf_Rela &>(RI),
+                            getAddend<ELFT>(static_cast<const Elf_Rela &>(RI)));
     else
-      Addend = getLocalRelTarget(File, RI);
+      Addend = getLocalRelTarget(File, RI, 0);
 
     if (IsRela)
       static_cast<Elf_Rela *>(P)->r_addend = Addend;
@@ -819,11 +821,10 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
 template <class ELFT, bool IsRela>
 typename ELFFile<ELFT>::uintX_t
 lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
-                             const Elf_Rel_Impl<ELFT, IsRela> &RI) {
+                             const Elf_Rel_Impl<ELFT, IsRela> &RI,
+                             typename ELFFile<ELFT>::uintX_t Addend) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
-
-  uintX_t Addend = getAddend<ELFT>(RI);
 
   // PPC64 has a special relocation representing the TOC base pointer
   // that does not have a corresponding symbol.
@@ -1500,29 +1501,20 @@ template ELFFile<ELF64BE>::uintX_t getSymVA<ELF64BE>(const SymbolBody &);
 
 template ELFFile<ELF32LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32LE> &,
-                  const ELFFile<ELF32LE>::Elf_Rel &);
+                  const ELFFile<ELF32LE>::Elf_Rel &,
+                  ELFFile<ELF32LE>::uintX_t Addend);
 template ELFFile<ELF32BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32BE> &,
-                  const ELFFile<ELF32BE>::Elf_Rel &);
+                  const ELFFile<ELF32BE>::Elf_Rel &,
+                  ELFFile<ELF32BE>::uintX_t Addend);
 template ELFFile<ELF64LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64LE> &,
-                  const ELFFile<ELF64LE>::Elf_Rel &);
+                  const ELFFile<ELF64LE>::Elf_Rel &,
+                  ELFFile<ELF64LE>::uintX_t Addend);
 template ELFFile<ELF64BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64BE> &,
-                  const ELFFile<ELF64BE>::Elf_Rel &);
-
-template ELFFile<ELF32LE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF32LE> &,
-                  const ELFFile<ELF32LE>::Elf_Rela &);
-template ELFFile<ELF32BE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF32BE> &,
-                  const ELFFile<ELF32BE>::Elf_Rela &);
-template ELFFile<ELF64LE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF64LE> &,
-                  const ELFFile<ELF64LE>::Elf_Rela &);
-template ELFFile<ELF64BE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF64BE> &,
-                  const ELFFile<ELF64BE>::Elf_Rela &);
+                  const ELFFile<ELF64BE>::Elf_Rel &,
+                  ELFFile<ELF64BE>::uintX_t Addend);
 
 template bool includeInSymtab<ELF32LE>(const SymbolBody &);
 template bool includeInSymtab<ELF32BE>(const SymbolBody &);
