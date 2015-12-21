@@ -2567,6 +2567,15 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   if (UseRelaxAll(C, Args))
     CmdArgs.push_back("-mrelax-all");
 
+  // Only default to -mincremental-linker-compatible if we think we are
+  // targeting the MSVC linker.
+  bool DefaultIncrementalLinkerCompatible =
+      C.getDefaultToolChain().getTriple().isWindowsMSVCEnvironment();
+  if (Args.hasFlag(options::OPT_mincremental_linker_compatible,
+                   options::OPT_mno_incremental_linker_compatible,
+                   DefaultIncrementalLinkerCompatible))
+    CmdArgs.push_back("-mincremental-linker-compatible");
+
   // When passing -I arguments to the assembler we sometimes need to
   // unconditionally take the next argument.  For example, when parsing
   // '-Wa,-I -Wa,foo' we need to accept the -Wa,foo arg after seeing the
