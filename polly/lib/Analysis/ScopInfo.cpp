@@ -3396,10 +3396,7 @@ static isl_stat mapToDimension_AddSet(__isl_take isl_set *Set, void *User) {
 static __isl_give isl_multi_union_pw_aff *
 mapToDimension(__isl_take isl_union_set *USet, int N) {
   assert(N >= 0);
-
-  if (!USet)
-    return nullptr;
-
+  assert(USet);
   assert(!isl_union_set_is_empty(USet));
 
   struct MapToDimensionDataTy Data;
@@ -3477,10 +3474,6 @@ void Scop::buildSchedule(
     isl_schedule *LSchedule = LSchedulePair.first;
     unsigned NumVisited = LSchedulePair.second;
     while (L && NumVisited == L->getNumBlocks()) {
-      auto *LDomain = isl_schedule_get_domain(LSchedule);
-      if (auto *MUPA = mapToDimension(LDomain, LD + 1))
-        LSchedule = isl_schedule_insert_partial_schedule(LSchedule, MUPA);
-
       auto *PL = L->getParentLoop();
 
       // Either we have a proper loop and we also build a schedule for the
@@ -3493,7 +3486,14 @@ void Scop::buildSchedule(
         break;
 
       auto &PSchedulePair = LoopSchedules[PL];
-      PSchedulePair.first = combineInSequence(PSchedulePair.first, LSchedule);
+
+      if (LSchedule) {
+        auto *LDomain = isl_schedule_get_domain(LSchedule);
+        auto *MUPA = mapToDimension(LDomain, LD + 1);
+        LSchedule = isl_schedule_insert_partial_schedule(LSchedule, MUPA);
+        PSchedulePair.first = combineInSequence(PSchedulePair.first, LSchedule);
+      }
+
       PSchedulePair.second += NumVisited;
 
       L = PL;
