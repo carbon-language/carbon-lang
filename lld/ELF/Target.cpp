@@ -206,6 +206,7 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
+  bool isRelRelative(uint32_t Type) const override;
 };
 } // anonymous namespace
 
@@ -1352,6 +1353,18 @@ bool MipsTargetInfo<ELFT>::relocNeedsPlt(uint32_t Type,
 
 static uint16_t mipsHigh(uint64_t V) { return (V + 0x8000) >> 16; }
 
+template <endianness E, uint8_t BSIZE>
+static void applyMipsPcReloc(uint8_t *Loc, uint32_t Type, uint64_t P,
+                             uint64_t SA) {
+  uint32_t Mask = ~(0xffffffff << BSIZE);
+  uint32_t Instr = read32<E>(Loc);
+  int64_t A = SignExtend64<BSIZE + 2>((Instr & Mask) << 2);
+  checkAlignment<4>(SA + A, Type);
+  int64_t V = SA + A - P;
+  checkInt<BSIZE + 2>(V, Type);
+  write32<E>(Loc, (Instr & ~Mask) | ((V >> 2) & Mask));
+}
+
 template <class ELFT>
 void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
                                        uint32_t Type, uint64_t P, uint64_t SA,
@@ -1390,8 +1403,53 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     write32<E>(Loc, (Instr & 0xffff0000) | ((SA + AHL) & 0xffff));
     break;
   }
+  case R_MIPS_PC16:
+    applyMipsPcReloc<E, 16>(Loc, Type, P, SA);
+    break;
+  case R_MIPS_PC19_S2:
+    applyMipsPcReloc<E, 19>(Loc, Type, P, SA);
+    break;
+  case R_MIPS_PC21_S2:
+    applyMipsPcReloc<E, 21>(Loc, Type, P, SA);
+    break;
+  case R_MIPS_PC26_S2:
+    applyMipsPcReloc<E, 26>(Loc, Type, P, SA);
+    break;
+  case R_MIPS_PCHI16: {
+    uint32_t Instr = read32<E>(Loc);
+    if (PairedLoc) {
+      uint64_t AHL = ((Instr & 0xffff) << 16) +
+                     SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
+      write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(SA + AHL - P));
+    } else {
+      warning("Can't find matching R_MIPS_PCLO16 relocation for R_MIPS_PCHI16");
+      write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(SA - P));
+    }
+    break;
+  }
+  case R_MIPS_PCLO16: {
+    uint32_t Instr = read32<E>(Loc);
+    int64_t AHL = SignExtend64<16>(Instr & 0xffff);
+    write32<E>(Loc, (Instr & 0xffff0000) | ((SA + AHL - P) & 0xffff));
+    break;
+  }
   default:
     error("unrecognized reloc " + Twine(Type));
+  }
+}
+
+template <class ELFT>
+bool MipsTargetInfo<ELFT>::isRelRelative(uint32_t Type) const {
+  switch (Type) {
+  default:
+    return false;
+  case R_MIPS_PC16:
+  case R_MIPS_PC19_S2:
+  case R_MIPS_PC21_S2:
+  case R_MIPS_PC26_S2:
+  case R_MIPS_PCHI16:
+  case R_MIPS_PCLO16:
+    return true;
   }
 }
 
