@@ -153,11 +153,9 @@ public:
 
 // The base class for any defined symbols, including absolute symbols, etc.
 template <class ELFT> class Defined : public ELFSymbolBody<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
-
 protected:
   typedef typename SymbolBody::Kind Kind;
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
   Defined(Kind K, StringRef N, const Elf_Sym &Sym)
@@ -167,8 +165,7 @@ public:
 };
 
 template <class ELFT> class DefinedAbsolute : public Defined<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
   static Elf_Sym IgnoreUndef;
@@ -212,8 +209,7 @@ template <class ELFT>
 typename DefinedAbsolute<ELFT>::Elf_Sym DefinedAbsolute<ELFT>::RelaIpltEnd;
 
 template <class ELFT> class DefinedCommon : public Defined<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
@@ -236,8 +232,7 @@ public:
 
 // Regular defined symbols read from object file symbol tables.
 template <class ELFT> class DefinedRegular : public Defined<ELFT> {
-  typedef Defined<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
   DefinedRegular(StringRef N, const Elf_Sym &Sym,
@@ -257,10 +252,8 @@ public:
 // don't belong to any input files or sections. Thus, its constructor
 // takes an output section to calculate output VA, etc.
 template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {
-  typedef Defined<ELFT> Base;
-
 public:
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   DefinedSynthetic(StringRef N, const Elf_Sym &Sym,
                    OutputSectionBase<ELFT> &Section)
       : Defined<ELFT>(SymbolBody::DefinedSyntheticKind, N, Sym),
@@ -275,8 +268,7 @@ public:
 
 // Undefined symbol.
 template <class ELFT> class Undefined : public ELFSymbolBody<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
   static Elf_Sym Required;
@@ -298,8 +290,7 @@ template <class ELFT>
 typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Optional;
 
 template <class ELFT> class SharedSymbol : public Defined<ELFT> {
-  typedef Defined<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
