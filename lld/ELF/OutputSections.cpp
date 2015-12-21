@@ -305,7 +305,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     else if (CanBePreempted || IsDynRelative)
       Addend = OrigAddend;
     else if (Body)
-      Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
+      Addend = getSymVA<ELFT>(*Body) + OrigAddend;
     else if (IsRela)
       Addend =
           getLocalRelTarget(File, static_cast<const Elf_Rela &>(RI),
