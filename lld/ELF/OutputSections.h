@@ -37,6 +37,10 @@ template <class ELFT> class ObjectFile;
 template <class ELFT> class DefinedRegular;
 template <class ELFT> class ELFSymbolBody;
 
+// Flag to force GOT to be in output if we have relocations
+// that relies on its address.
+extern bool HasGotOffRel;
+
 template <class ELFT>
 static inline typename llvm::object::ELFFile<ELFT>::uintX_t
 getAddend(const typename llvm::object::ELFFile<ELFT>::Elf_Rel &Rel) {

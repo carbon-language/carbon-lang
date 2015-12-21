@@ -209,6 +209,9 @@ void Writer<ELFT>::scanRelocs(
     SymbolBody *Body = File.getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(Config->Mips64EL);
 
+    if (Target->isGotRelative(Type))
+      HasGotOffRel = true;
+
     if (Target->isTlsLocalDynamicReloc(Type)) {
       if (Target->isTlsOptimized(Type, nullptr))
         continue;
@@ -774,10 +777,17 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
+  bool needsGot = !Out<ELFT>::Got->empty();
   // We add the .got section to the result for dynamic MIPS target because
   // its address and properties are mentioned in the .dynamic section.
-  if (!Out<ELFT>::Got->empty() ||
-      (isOutputDynamic() && Config->EMachine == EM_MIPS))
+  if (Config->EMachine == EM_MIPS)
+    needsGot |= isOutputDynamic();
+  // If we have a relocation that is relative to GOT (such as GOTOFFREL),
+  // we need to emit a GOT even if it's empty.
+  if (HasGotOffRel)
+    needsGot = true;
+
+  if (needsGot)
     OutputSections.push_back(Out<ELFT>::Got);
   if (Out<ELFT>::GotPlt && !Out<ELFT>::GotPlt->empty())
     OutputSections.push_back(Out<ELFT>::GotPlt);

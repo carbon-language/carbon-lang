@@ -95,6 +95,7 @@ public:
   unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                uint64_t P, uint64_t SA,
                                const SymbolBody &S) const override;
+  bool isGotRelative(uint32_t Type) const override;
 
 private:
   void relocateTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
@@ -232,6 +233,8 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
+bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
+
 unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
@@ -358,6 +361,13 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
          (Type == R_386_PC32 && S.isShared());
 }
 
+bool X86TargetInfo::isGotRelative(uint32_t Type) const {
+  // This relocation does not require got entry,
+  // but it is relative to got and needs it to be created.
+  // Here we request for that.
+  return Type == R_386_GOTOFF;
+}
+
 void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                 uint64_t P, uint64_t SA, uint64_t ZA,
                                 uint8_t *PairedLoc) const {
@@ -366,6 +376,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     add32le(Loc, SA);
     break;
   case R_386_GOT32:
+  case R_386_GOTOFF:
     add32le(Loc, SA - Out<ELF32LE>::Got->getVA());
     break;
   case R_386_GOTPC:

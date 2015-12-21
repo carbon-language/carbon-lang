@@ -21,6 +21,8 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf2;
 
+bool lld::elf2::HasGotOffRel = false;
+
 template <class ELFT>
 OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t sh_type,
                                            uintX_t sh_flags)
