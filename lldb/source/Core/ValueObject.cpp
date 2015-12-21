@@ -601,40 +601,16 @@ ValueObjectSP
 ValueObject::GetChildAtIndexPath (const std::initializer_list<size_t>& idxs,
                                   size_t* index_of_error)
 {
-    if (idxs.size() == 0)
-        return GetSP();
-    ValueObjectSP root(GetSP());
-    for (size_t idx : idxs)
-    {
-        root = root->GetChildAtIndex(idx, true);
-        if (!root)
-        {
-            if (index_of_error)
-                *index_of_error = idx;
-            return root;
-        }
-    }
-    return root;
+    return GetChildAtIndexPath( std::vector<size_t>(idxs),
+                               index_of_error );
 }
 
 ValueObjectSP
 ValueObject::GetChildAtIndexPath (const std::initializer_list< std::pair<size_t, bool> >& idxs,
                                   size_t* index_of_error)
 {
-    if (idxs.size() == 0)
-        return GetSP();
-    ValueObjectSP root(GetSP());
-    for (std::pair<size_t, bool> idx : idxs)
-    {
-        root = root->GetChildAtIndex(idx.first, idx.second);
-        if (!root)
-        {
-            if (index_of_error)
-                *index_of_error = idx.first;
-            return root;
-        }
-    }
-    return root;
+    return GetChildAtIndexPath( std::vector<std::pair<size_t,bool>>(idxs),
+                               index_of_error );
 }
 
 lldb::ValueObjectSP
@@ -681,20 +657,16 @@ lldb::ValueObjectSP
 ValueObject::GetChildAtNamePath (const std::initializer_list<ConstString> &names,
                                  ConstString* name_of_error)
 {
-    if (names.size() == 0)
-        return GetSP();
-    ValueObjectSP root(GetSP());
-    for (ConstString name : names)
-    {
-        root = root->GetChildMemberWithName(name, true);
-        if (!root)
-        {
-            if (name_of_error)
-                *name_of_error = name;
-            return root;
-        }
-    }
-    return root;
+    return GetChildAtNamePath( std::vector<ConstString>(names),
+                              name_of_error );
+}
+
+lldb::ValueObjectSP
+ValueObject::GetChildAtNamePath (const std::initializer_list< std::pair<ConstString, bool> > &names,
+                                 ConstString* name_of_error)
+{
+    return GetChildAtNamePath( std::vector<std::pair<ConstString,bool>>(names),
+                              name_of_error );
 }
 
 lldb::ValueObjectSP
@@ -718,7 +690,7 @@ ValueObject::GetChildAtNamePath (const std::vector<ConstString> &names,
 }
 
 lldb::ValueObjectSP
-ValueObject::GetChildAtNamePath (const std::initializer_list< std::pair<ConstString, bool> > &names,
+ValueObject::GetChildAtNamePath (const std::vector< std::pair<ConstString, bool> > &names,
                                  ConstString* name_of_error)
 {
     if (names.size() == 0)
@@ -731,29 +703,9 @@ ValueObject::GetChildAtNamePath (const std::initializer_list< std::pair<ConstStr
         {
             if (name_of_error)
                 *name_of_error = name.first;
-            return root;
+                return root;
         }
     }
-    return root;
-}
-
-lldb::ValueObjectSP
-ValueObject::GetChildAtNamePath (const std::vector< std::pair<ConstString, bool> > &names,
-                                 ConstString* name_of_error)
-{
-    if (names.size() == 0)
-        return GetSP();
-        ValueObjectSP root(GetSP());
-        for (std::pair<ConstString, bool> name : names)
-        {
-            root = root->GetChildMemberWithName(name.first, name.second);
-            if (!root)
-            {
-                if (name_of_error)
-                    *name_of_error = name.first;
-                    return root;
-            }
-        }
     return root;
 }
 
