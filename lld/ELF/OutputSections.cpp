@@ -616,9 +616,9 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   }
 
   if (Symbol *S = SymTab.getSymbols().lookup(Config->Init))
-    InitSym = dyn_cast<ELFSymbolBody<ELFT>>(S->Body);
+    InitSym = S->Body;
   if (Symbol *S = SymTab.getSymbols().lookup(Config->Fini))
-    FiniSym = dyn_cast<ELFSymbolBody<ELFT>>(S->Body);
+    FiniSym = S->Body;
   if (InitSym)
     ++NumEntries; // DT_INIT
   if (FiniSym)
