@@ -142,16 +142,6 @@ class ModuleLinker {
   /// to be adjusted.
   GlobalValue::LinkageTypes getLinkage(const GlobalValue *SGV);
 
-  /// Copies the necessary global value attributes and name from the source
-  /// to the newly cloned global value.
-  void copyGVAttributes(GlobalValue *NewGV, const GlobalValue *SrcGV);
-
-  /// Updates the visibility for the new global cloned from the source
-  /// and, if applicable, linked with an existing destination global.
-  /// Handles visibility change required for promoted locals.
-  void setVisibility(GlobalValue *NewGV, const GlobalValue *SGV,
-                     const GlobalValue *DGV = nullptr);
-
 public:
   ModuleLinker(IRMover &Mover, Module &SrcM, unsigned Flags,
                const FunctionInfoIndex *Index = nullptr,
@@ -173,38 +163,6 @@ public:
 
   bool run();
 };
-}
-
-/// The LLVM SymbolTable class autorenames globals that conflict in the symbol
-/// table. This is good for all clients except for us. Go through the trouble
-/// to force this back.
-static void forceRenaming(GlobalValue *GV, StringRef Name) {
-  // If the global doesn't force its name or if it already has the right name,
-  // there is nothing for us to do.
-  // Note that any required local to global promotion should already be done,
-  // so promoted locals will not skip this handling as their linkage is no
-  // longer local.
-  if (GV->hasLocalLinkage() || GV->getName() == Name)
-    return;
-
-  Module *M = GV->getParent();
-
-  // If there is a conflict, rename the conflict.
-  if (GlobalValue *ConflictGV = M->getNamedValue(Name)) {
-    GV->takeName(ConflictGV);
-    ConflictGV->setName(Name); // This will cause ConflictGV to get renamed
-    assert(ConflictGV->getName() != Name && "forceRenaming didn't work");
-  } else {
-    GV->setName(Name); // Force the name back
-  }
-}
-
-/// copy additional attributes (those not needed to construct a GlobalValue)
-/// from the SrcGV to the DestGV.
-void ModuleLinker::copyGVAttributes(GlobalValue *NewGV,
-                                    const GlobalValue *SrcGV) {
-  NewGV->copyAttributesFrom(SrcGV);
-  forceRenaming(NewGV, getName(SrcGV));
 }
 
 bool ModuleLinker::doImportAsDefinition(const GlobalValue *SGV) {
@@ -381,18 +339,6 @@ getMinVisibility(GlobalValue::VisibilityTypes A,
       B == GlobalValue::ProtectedVisibility)
     return GlobalValue::ProtectedVisibility;
   return GlobalValue::DefaultVisibility;
-}
-
-void ModuleLinker::setVisibility(GlobalValue *NewGV, const GlobalValue *SGV,
-                                 const GlobalValue *DGV) {
-  GlobalValue::VisibilityTypes Visibility = SGV->getVisibility();
-  if (DGV)
-    Visibility = getMinVisibility(DGV->getVisibility(), Visibility);
-  // For promoted locals, mark them hidden so that they can later be
-  // stripped from the symbol table to reduce bloat.
-  if (SGV->hasLocalLinkage() && doPromoteLocalToGlobal(SGV))
-    Visibility = GlobalValue::HiddenVisibility;
-  NewGV->setVisibility(Visibility);
 }
 
 bool ModuleLinker::getComdatLeader(Module &M, StringRef ComdatName,
