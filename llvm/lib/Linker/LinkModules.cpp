@@ -38,9 +38,9 @@ class ModuleLinker {
   /// importing/exporting handling.
   const FunctionInfoIndex *ImportIndex;
 
-  /// Function to import from source module, all other functions are
+  /// Functions to import from source module, all other functions are
   /// imported as declarations instead of definitions.
-  DenseSet<const GlobalValue *> *ImportFunction;
+  DenseSet<const GlobalValue *> *FunctionsToImport;
 
   /// Set to true if the given FunctionInfoIndex contains any functions
   /// from this source module, in which case we must conservatively assume
@@ -118,7 +118,7 @@ class ModuleLinker {
 
   /// Helper methods to check if we are importing from or potentially
   /// exporting from the current source module.
-  bool isPerformingImport() const { return ImportFunction != nullptr; }
+  bool isPerformingImport() const { return FunctionsToImport != nullptr; }
   bool isModuleExporting() const { return HasExportedFunctions; }
 
   /// If we are importing from the source module, checks if we should
@@ -148,16 +148,17 @@ public:
                DenseSet<const GlobalValue *> *FunctionsToImport = nullptr,
                DenseMap<unsigned, MDNode *> *ValIDToTempMDMap = nullptr)
       : Mover(Mover), SrcM(SrcM), Flags(Flags), ImportIndex(Index),
-        ImportFunction(FunctionsToImport), ValIDToTempMDMap(ValIDToTempMDMap) {
-    assert((ImportIndex || !ImportFunction) &&
+        FunctionsToImport(FunctionsToImport),
+        ValIDToTempMDMap(ValIDToTempMDMap) {
+    assert((ImportIndex || !FunctionsToImport) &&
            "Expect a FunctionInfoIndex when importing");
     // If we have a FunctionInfoIndex but no function to import,
     // then this is the primary module being compiled in a ThinLTO
     // backend compilation, and we need to see if it has functions that
     // may be exported to another backend compilation.
-    if (ImportIndex && !ImportFunction)
+    if (ImportIndex && !FunctionsToImport)
       HasExportedFunctions = ImportIndex->hasExportedFunctions(SrcM);
-    assert((ValIDToTempMDMap || !ImportFunction) &&
+    assert((ValIDToTempMDMap || !FunctionsToImport) &&
            "Function importing must provide a ValIDToTempMDMap");
   }
 
@@ -189,7 +190,7 @@ bool ModuleLinker::doImportAsDefinition(const GlobalValue *SGV) {
     return true;
   // Only import the function requested for importing.
   auto *SF = dyn_cast<Function>(SGV);
-  if (SF && ImportFunction->count(SF))
+  if (SF && FunctionsToImport->count(SF))
     return true;
   // Otherwise no.
   return false;
@@ -476,9 +477,9 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
 
   if (isPerformingImport()) {
     if (isa<Function>(&Src)) {
-      // For functions, LinkFromSrc iff this is the function requested
+      // For functions, LinkFromSrc iff this is a function requested
       // for importing. For variables, decide below normally.
-      LinkFromSrc = ImportFunction->count(&Src);
+      LinkFromSrc = FunctionsToImport->count(&Src);
       return false;
     }
 
