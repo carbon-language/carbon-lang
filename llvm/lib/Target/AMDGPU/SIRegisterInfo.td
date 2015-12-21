@@ -44,11 +44,11 @@ def EXEC : RegisterWithSubRegs<"EXEC", [EXEC_LO, EXEC_HI]>,
 def SCC : SIReg<"scc", 253>;
 def M0 : SIReg <"m0", 124>;
 
-def FLAT_SCR_LO : SIReg<"flat_scr_lo", 104>; // Offset in units of 256-bytes.
-def FLAT_SCR_HI : SIReg<"flat_scr_hi", 105>; // Size is the per-thread scratch size, in bytes.
+def FLAT_SCR_LO : SIReg<"flat_scratch_lo", 104>; // Offset in units of 256-bytes.
+def FLAT_SCR_HI : SIReg<"flat_scratch_hi", 105>; // Size is the per-thread scratch size, in bytes.
 
 // Pair to indicate location of scratch space for flat accesses.
-def FLAT_SCR : RegisterWithSubRegs <"flat_scr", [FLAT_SCR_LO, FLAT_SCR_HI]>,
+def FLAT_SCR : RegisterWithSubRegs <"flat_scratch", [FLAT_SCR_LO, FLAT_SCR_HI]>,
                DwarfRegAlias<FLAT_SCR_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
