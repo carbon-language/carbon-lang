@@ -643,7 +643,7 @@ bool ScopDetection::hasValidArraySizes(DetectionContext &Context,
       }
     }
     if (hasScalarDepsInsideRegion(DelinearizedSize, &CurRegion))
-      invalid<ReportNonAffineAccess>(
+      return invalid<ReportNonAffineAccess>(
           Context, /*Assert=*/true, DelinearizedSize,
           Context.Accesses[BasePointer].front().first, BaseValue);
   }
