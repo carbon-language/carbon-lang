@@ -1141,7 +1141,7 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t Writer<ELFT>::getEntryAddr() const {
   if (Config->EntrySym) {
-    if (auto *E = dyn_cast<ELFSymbolBody<ELFT>>(Config->EntrySym->repl()))
+    if (SymbolBody *E = Config->EntrySym->repl())
       return getSymVA<ELFT>(*E);
     return 0;
   }
