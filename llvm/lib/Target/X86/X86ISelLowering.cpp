@@ -2188,6 +2188,9 @@ X86TargetLowering::LowerReturn(SDValue Chain,
   MachineFunction &MF = DAG.getMachineFunction();
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
 
+  if (CallConv == CallingConv::X86_INTR && !Outs.empty())
+    report_fatal_error("X86 interrupts may not return any value");
+
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, MF, RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Outs, RetCC_X86);
@@ -2301,7 +2304,10 @@ X86TargetLowering::LowerReturn(SDValue Chain,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
-  return DAG.getNode(X86ISD::RET_FLAG, dl, MVT::Other, RetOps);
+  X86ISD::NodeType opcode = X86ISD::RET_FLAG;
+  if (CallConv == CallingConv::X86_INTR)
+    opcode = X86ISD::IRET;
+  return DAG.getNode(opcode, dl, MVT::Other, RetOps);
 }
 
 bool X86TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
@@ -2541,6 +2547,19 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
   else
     ValVT = VA.getValVT();
 
+  // Calculate SP offset of interrupt parameter, re-arrange the slot normally
+  // taken by a return address.
+  int Offset = 0;
+  if (CallConv == CallingConv::X86_INTR) {
+    const X86Subtarget& Subtarget =
+        static_cast<const X86Subtarget&>(DAG.getSubtarget());
+    // X86 interrupts may take one or two arguments.
+    // On the stack there will be no return address as in regular call.
+    // Offset of last argument need to be set to -4/-8 bytes.
+    // Where offset of the first argument out of two, should be set to 0 bytes.
+    Offset = (Subtarget.is64Bit() ? 8 : 4) * ((i + 1) % Ins.size() - 1);
+  }
+
   // FIXME: For now, all byval parameter objects are marked mutable. This can be
   // changed with more analysis.
   // In case of tail call optimization mark all arguments mutable. Since they
@@ -2549,10 +2568,19 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
     unsigned Bytes = Flags.getByValSize();
     if (Bytes == 0) Bytes = 1; // Don't create zero-sized stack objects.
     int FI = MFI->CreateFixedObject(Bytes, VA.getLocMemOffset(), isImmutable);
+    // Adjust SP offset of interrupt parameter.
+    if (CallConv == CallingConv::X86_INTR) {
+      MFI->setObjectOffset(FI, Offset);
+    }
     return DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
   } else {
     int FI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
                                     VA.getLocMemOffset(), isImmutable);
+    // Adjust SP offset of interrupt parameter.
+    if (CallConv == CallingConv::X86_INTR) {
+      MFI->setObjectOffset(FI, Offset);
+    }
+
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
     SDValue Val = DAG.getLoad(
         ValVT, dl, Chain, FIN,
@@ -2631,6 +2659,14 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   assert(!(isVarArg && canGuaranteeTCO(CallConv)) &&
          "Var args not supported with calling convention fastcc, ghc or hipe");
+
+  if (CallConv == CallingConv::X86_INTR) {
+    bool isLegal = Ins.size() == 1 ||
+                   (Ins.size() == 2 && ((Is64Bit && Ins[1].VT == MVT::i64) ||
+                                        (!Is64Bit && Ins[1].VT == MVT::i32)));
+    if (!isLegal)
+      report_fatal_error("X86 interrupts may take one or two arguments");
+  }
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -2891,6 +2927,9 @@ SDValue X86TargetLowering::LowerFormalArguments(
   if (X86::isCalleePop(CallConv, Is64Bit, isVarArg,
                        MF.getTarget().Options.GuaranteedTailCallOpt)) {
     FuncInfo->setBytesToPopOnReturn(StackSize); // Callee pops everything.
+  } else if (CallConv == CallingConv::X86_INTR && Ins.size() == 2) {
+    // X86 interrupts must pop the error code if present
+    FuncInfo->setBytesToPopOnReturn(Is64Bit ? 8 : 4);
   } else {
     FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
@@ -3020,6 +3059,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool IsSibcall      = false;
   X86MachineFunctionInfo *X86Info = MF.getInfo<X86MachineFunctionInfo>();
   auto Attr = MF.getFunction()->getFnAttribute("disable-tail-calls");
+
+  if (CallConv == CallingConv::X86_INTR)
+    report_fatal_error("X86 interrupts may not be called directly");
 
   if (Attr.getValueAsString() == "true")
     isTailCall = false;
@@ -20392,6 +20434,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
+  case X86ISD::IRET:               return "X86ISD::IRET";
   case X86ISD::REP_STOS:           return "X86ISD::REP_STOS";
   case X86ISD::REP_MOVS:           return "X86ISD::REP_MOVS";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
