@@ -1809,13 +1809,11 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
   //
   // FIXME: Do some sanity checking, e.g. edit distance of the base name, to fix
   // cases where the first #include is unlikely to be the main header.
-  bool LookForMainHeader = FileName.endswith(".c") ||
-                           FileName.endswith(".cc") ||
-                           FileName.endswith(".cpp")||
-                           FileName.endswith(".c++")||
-                           FileName.endswith(".cxx") ||
-                           FileName.endswith(".m")||
-                           FileName.endswith(".mm");
+  bool IsSource = FileName.endswith(".c") || FileName.endswith(".cc") ||
+                  FileName.endswith(".cpp") || FileName.endswith(".c++") ||
+                  FileName.endswith(".cxx") || FileName.endswith(".m") ||
+                  FileName.endswith(".mm");
+  StringRef FileStem = llvm::sys::path::stem(FileName);
 
   // Create pre-compiled regular expressions for the #include categories.
   SmallVector<llvm::Regex, 4> CategoryRegexs;
@@ -1838,19 +1836,19 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
     if (!FormattingOff && !Line.endswith("\\")) {
       if (IncludeRegex.match(Line, &Matches)) {
         StringRef IncludeName = Matches[2];
-        int Category;
-        if (LookForMainHeader && !IncludeName.startswith("<")) {
-          Category = 0;
-        } else {
-          Category = INT_MAX;
-          for (unsigned i = 0, e = CategoryRegexs.size(); i != e; ++i) {
-            if (CategoryRegexs[i].match(IncludeName)) {
-              Category = Style.IncludeCategories[i].Priority;
-              break;
-            }
+        int Category = INT_MAX;
+        for (unsigned i = 0, e = CategoryRegexs.size(); i != e; ++i) {
+          if (CategoryRegexs[i].match(IncludeName)) {
+            Category = Style.IncludeCategories[i].Priority;
+            break;
           }
         }
-        LookForMainHeader = false;
+        if (IsSource && Category > 0 && IncludeName.startswith("\"")) {
+          StringRef HeaderStem =
+              llvm::sys::path::stem(IncludeName.drop_front(1).drop_back(1));
+          if (FileStem.startswith(HeaderStem))
+            Category = 0;
+        }
         IncludesInBlock.push_back({IncludeName, Line, Prev, Category});
       } else if (!IncludesInBlock.empty()) {
         sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces,
