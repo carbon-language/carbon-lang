@@ -101,10 +101,12 @@ struct Mapping {
 C/C++ on linux/aarch64 (39-bit VMA)
 0000 0010 00 - 0100 0000 00: main binary
 0100 0000 00 - 0800 0000 00: -
-0800 0000 00 - 1F00 0000 00: shadow memory
-1C00 0000 00 - 3100 0000 00: -
+0800 0000 00 - 2000 0000 00: shadow memory
+2000 0000 00 - 3100 0000 00: -
 3100 0000 00 - 3400 0000 00: metainfo
-3400 0000 00 - 6000 0000 00: -
+3400 0000 00 - 5500 0000 00: -
+5500 0000 00 - 5600 0000 00: main binary (PIE)
+5600 0000 00 - 6000 0000 00: -
 6000 0000 00 - 6200 0000 00: traces
 6200 0000 00 - 7d00 0000 00: -
 7c00 0000 00 - 7d00 0000 00: heap
@@ -114,14 +116,17 @@ struct Mapping39 {
   static const uptr kLoAppMemBeg   = 0x0000001000ull;
   static const uptr kLoAppMemEnd   = 0x0100000000ull;
   static const uptr kShadowBeg     = 0x0800000000ull;
-  static const uptr kShadowEnd     = 0x1F00000000ull;
+  static const uptr kShadowEnd     = 0x2000000000ull;
   static const uptr kMetaShadowBeg = 0x3100000000ull;
   static const uptr kMetaShadowEnd = 0x3400000000ull;
+  static const uptr kMidAppMemBeg  = 0x5500000000ull;
+  static const uptr kMidAppMemEnd  = 0x5600000000ull;
+  static const uptr kMidShadowOff  = 0x5000000000ull;
   static const uptr kTraceMemBeg   = 0x6000000000ull;
   static const uptr kTraceMemEnd   = 0x6200000000ull;
   static const uptr kHeapMemBeg    = 0x7c00000000ull;
   static const uptr kHeapMemEnd    = 0x7d00000000ull;
-  static const uptr kHiAppMemBeg   = 0x7d00000000ull;
+  static const uptr kHiAppMemBeg   = 0x7e00000000ull;
   static const uptr kHiAppMemEnd   = 0x7fffffffffull;
   static const uptr kAppMemMsk     = 0x7800000000ull;
   static const uptr kAppMemXor     = 0x0200000000ull;
@@ -135,7 +140,9 @@ C/C++ on linux/aarch64 (42-bit VMA)
 10000 0000 00 - 20000 0000 00: shadow memory
 20000 0000 00 - 26000 0000 00: -
 26000 0000 00 - 28000 0000 00: metainfo
-28000 0000 00 - 36200 0000 00: -
+28000 0000 00 - 2aa00 0000 00: -
+2aa00 0000 00 - 2ab00 0000 00: main binary (PIE)
+2ab00 0000 00 - 36200 0000 00: -
 36200 0000 00 - 36240 0000 00: traces
 36240 0000 00 - 3e000 0000 00: -
 3e000 0000 00 - 3f000 0000 00: heap
@@ -148,6 +155,9 @@ struct Mapping42 {
   static const uptr kShadowEnd     = 0x20000000000ull;
   static const uptr kMetaShadowBeg = 0x26000000000ull;
   static const uptr kMetaShadowEnd = 0x28000000000ull;
+  static const uptr kMidAppMemBeg  = 0x2aa00000000ull;
+  static const uptr kMidAppMemEnd  = 0x2ab00000000ull;
+  static const uptr kMidShadowOff  = 0x28000000000ull;
   static const uptr kTraceMemBeg   = 0x36200000000ull;
   static const uptr kTraceMemEnd   = 0x36400000000ull;
   static const uptr kHeapMemBeg    = 0x3e000000000ull;
@@ -161,6 +171,8 @@ struct Mapping42 {
 
 // Indicates the runtime will define the memory regions at runtime.
 #define TSAN_RUNTIME_VMA 1
+// Indicates that mapping defines a mid range memory segment.
+#define TSAN_MID_APP_RANGE 1
 #elif defined(__powerpc64__)
 // PPC64 supports multiple VMA which leads to multiple address transformation
 // functions.  To support these multiple VMAS transformations and mappings TSAN
@@ -302,6 +314,10 @@ enum MappingType {
   MAPPING_LO_APP_END,
   MAPPING_HI_APP_BEG,
   MAPPING_HI_APP_END,
+#ifdef TSAN_MID_APP_RANGE
+  MAPPING_MID_APP_BEG,
+  MAPPING_MID_APP_END,
+#endif
   MAPPING_HEAP_BEG,
   MAPPING_HEAP_END,
   MAPPING_APP_BEG,
@@ -321,6 +337,10 @@ uptr MappingImpl(void) {
 #ifndef SANITIZER_GO
     case MAPPING_LO_APP_BEG: return Mapping::kLoAppMemBeg;
     case MAPPING_LO_APP_END: return Mapping::kLoAppMemEnd;
+# ifdef TSAN_MID_APP_RANGE
+    case MAPPING_MID_APP_BEG: return Mapping::kMidAppMemBeg;
+    case MAPPING_MID_APP_END: return Mapping::kMidAppMemEnd;
+# endif
     case MAPPING_HI_APP_BEG: return Mapping::kHiAppMemBeg;
     case MAPPING_HI_APP_END: return Mapping::kHiAppMemEnd;
     case MAPPING_HEAP_BEG: return Mapping::kHeapMemBeg;
@@ -367,6 +387,17 @@ ALWAYS_INLINE
 uptr LoAppMemEnd(void) {
   return MappingArchImpl<MAPPING_LO_APP_END>();
 }
+
+#ifdef TSAN_MID_APP_RANGE
+ALWAYS_INLINE
+uptr MidAppMemBeg(void) {
+  return MappingArchImpl<MAPPING_MID_APP_BEG>();
+}
+ALWAYS_INLINE
+uptr MidAppMemEnd(void) {
+  return MappingArchImpl<MAPPING_MID_APP_END>();
+}
+#endif
 
 ALWAYS_INLINE
 uptr HeapMemBeg(void) {
@@ -422,6 +453,12 @@ bool GetUserRegion(int i, uptr *start, uptr *end) {
     *start = HeapMemBeg();
     *end = HeapMemEnd();
     return true;
+# ifdef TSAN_MID_APP_RANGE
+  case 3:
+    *start = MidAppMemBeg();
+    *end = MidAppMemEnd();
+    return true;
+# endif
 #else
   case 0:
     *start = AppMemBeg();
@@ -463,6 +500,9 @@ template<typename Mapping>
 bool IsAppMemImpl(uptr mem) {
 #ifndef SANITIZER_GO
   return (mem >= Mapping::kHeapMemBeg && mem < Mapping::kHeapMemEnd) ||
+# ifdef TSAN_MID_APP_RANGE
+         (mem >= Mapping::kMidAppMemBeg && mem < Mapping::kMidAppMemEnd) ||
+# endif
          (mem >= Mapping::kLoAppMemBeg && mem < Mapping::kLoAppMemEnd) ||
          (mem >= Mapping::kHiAppMemBeg && mem < Mapping::kHiAppMemEnd);
 #else
@@ -611,6 +651,11 @@ uptr ShadowToMemImpl(uptr s) {
   if (s >= MemToShadow(Mapping::kLoAppMemBeg)
       && s <= MemToShadow(Mapping::kLoAppMemEnd - 1))
     return (s / kShadowCnt) ^ Mapping::kAppMemXor;
+# ifdef TSAN_MID_APP_RANGE
+  if (s >= MemToShadow(Mapping::kMidAppMemBeg)
+      && s <= MemToShadow(Mapping::kMidAppMemEnd - 1))
+    return ((s / kShadowCnt) ^ Mapping::kAppMemXor) + Mapping::kMidShadowOff;
+# endif
   else
     return ((s / kShadowCnt) ^ Mapping::kAppMemXor) | Mapping::kAppMemMsk;
 #else
