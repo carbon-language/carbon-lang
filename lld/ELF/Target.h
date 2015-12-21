@@ -27,6 +27,7 @@ public:
   unsigned getGotReloc() const { return GotReloc; }
   unsigned getPltReloc() const { return PltReloc; }
   unsigned getRelativeReloc() const { return RelativeReloc; }
+  unsigned getIRelativeReloc() const { return IRelativeReloc; }
   bool isTlsLocalDynamicReloc(unsigned Type) const {
     return Type == TlsLocalDynamicReloc;
   }
@@ -88,6 +89,7 @@ protected:
   unsigned GotReloc;
   unsigned PltReloc;
   unsigned RelativeReloc;
+  unsigned IRelativeReloc;
   unsigned TlsGotReloc = 0;
   unsigned TlsLocalDynamicReloc = 0;
   unsigned TlsGlobalDynamicReloc = 0;
@@ -104,6 +106,8 @@ uint64_t getPPC64TocBase();
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t getMipsGpAddr();
+
+template <class ELFT> bool isGnuIFunc(const SymbolBody &S);
 
 extern std::unique_ptr<TargetInfo> Target;
 TargetInfo *createTarget();

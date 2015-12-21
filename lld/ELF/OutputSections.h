@@ -232,6 +232,8 @@ public:
   bool hasRelocs() const { return !Relocs.empty(); }
   bool isRela() const { return IsRela; }
 
+  bool Static = false;
+
 private:
   bool applyTlsDynamicReloc(SymbolBody *Body, uint32_t Type, Elf_Rel *P,
                             Elf_Rel *N);

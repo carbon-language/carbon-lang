@@ -269,7 +269,9 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 
     unsigned Sym = CanBePreempted ? Body->DynamicSymbolTableIndex : 0;
     unsigned Reloc;
-    if (!CanBePreempted || IsDynRelative)
+    if (!CanBePreempted && Body && isGnuIFunc<ELFT>(*Body))
+      Reloc = Target->getIRelativeReloc();
+    else if (!CanBePreempted || IsDynRelative)
       Reloc = Target->getRelativeReloc();
     else if (LazyReloc)
       Reloc = Target->getPltReloc();
@@ -320,7 +322,8 @@ template <class ELFT> unsigned RelocationSection<ELFT>::getRelocOffset() {
 }
 
 template <class ELFT> void RelocationSection<ELFT>::finalize() {
-  this->Header.sh_link = Out<ELFT>::DynSymTab->SectionIndex;
+  this->Header.sh_link = Static ? Out<ELFT>::SymTab->SectionIndex
+                                : Out<ELFT>::DynSymTab->SectionIndex;
   this->Header.sh_size = Relocs.size() * this->Header.sh_entsize;
 }
 

@@ -183,6 +183,11 @@ public:
   // The content for _gp symbol for MIPS target.
   static Elf_Sym MipsGp;
 
+  // __rel_iplt_start/__rel_iplt_end for signaling
+  // where R_[*]_IRELATIVE relocations do live.
+  static Elf_Sym RelaIpltStart;
+  static Elf_Sym RelaIpltEnd;
+
   DefinedAbsolute(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedAbsoluteKind, N, Sym) {}
 
@@ -199,6 +204,12 @@ typename DefinedAbsolute<ELFT>::Elf_Sym DefinedAbsolute<ELFT>::End;
 
 template <class ELFT>
 typename DefinedAbsolute<ELFT>::Elf_Sym DefinedAbsolute<ELFT>::MipsGp;
+
+template <class ELFT>
+typename DefinedAbsolute<ELFT>::Elf_Sym DefinedAbsolute<ELFT>::RelaIpltStart;
+
+template <class ELFT>
+typename DefinedAbsolute<ELFT>::Elf_Sym DefinedAbsolute<ELFT>::RelaIpltEnd;
 
 template <class ELFT> class DefinedCommon : public Defined<ELFT> {
   typedef ELFSymbolBody<ELFT> Base;

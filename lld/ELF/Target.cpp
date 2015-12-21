@@ -70,6 +70,17 @@ template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
   error("Improper alignment for relocation " + S);
 }
 
+template <class ELFT> bool isGnuIFunc(const SymbolBody &S) {
+  if (auto *SS = dyn_cast<Defined<ELFT>>(&S))
+    return SS->Sym.getType() == STT_GNU_IFUNC;
+  return false;
+}
+
+template bool isGnuIFunc<ELF32LE>(const SymbolBody &S);
+template bool isGnuIFunc<ELF32BE>(const SymbolBody &S);
+template bool isGnuIFunc<ELF64LE>(const SymbolBody &S);
+template bool isGnuIFunc<ELF64BE>(const SymbolBody &S);
+
 namespace {
 class X86TargetInfo final : public TargetInfo {
 public:
@@ -258,6 +269,7 @@ X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
   PltReloc = R_386_JUMP_SLOT;
+  IRelativeReloc = R_386_IRELATIVE;
   RelativeReloc = R_386_RELATIVE;
   TlsGotReloc = R_386_TLS_TPOFF;
   TlsGlobalDynamicReloc = R_386_TLS_GD;
@@ -357,7 +369,8 @@ bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
 }
 
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  return (Type == R_386_PLT32 && canBePreempted(&S, true)) ||
+  return isGnuIFunc<ELF32LE>(S) ||
+         (Type == R_386_PLT32 && canBePreempted(&S, true)) ||
          (Type == R_386_PC32 && S.isShared());
 }
 
@@ -557,6 +570,7 @@ X86_64TargetInfo::X86_64TargetInfo() {
   GotReloc = R_X86_64_GLOB_DAT;
   PltReloc = R_X86_64_JUMP_SLOT;
   RelativeReloc = R_X86_64_RELATIVE;
+  IRelativeReloc = R_X86_64_IRELATIVE;
   TlsGotReloc = R_X86_64_TPOFF64;
   TlsLocalDynamicReloc = R_X86_64_TLSLD;
   TlsGlobalDynamicReloc = R_X86_64_TLSGD;
@@ -633,6 +647,8 @@ unsigned X86_64TargetInfo::getPltRefReloc(unsigned Type) const {
 bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   if (needsCopyRel(Type, S))
     return false;
+  if (isGnuIFunc<ELF64LE>(S))
+    return true;
 
   switch (Type) {
   default:
