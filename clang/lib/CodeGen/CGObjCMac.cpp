@@ -2517,8 +2517,7 @@ llvm::Constant *CGObjCCommonMac::getBitmapBlockLayout(bool ComputeByrefLayout) {
         printf(", BL_WEAK:%d", (int) numWeak);
       printf(", BL_OPERATOR:0\n");
     }
-    return llvm::ConstantExpr::getIntToPtr(
-        llvm::ConstantInt::get(CGM.IntPtrTy, Result), CGM.Int8PtrTy);
+    return llvm::ConstantInt::get(CGM.IntPtrTy, Result);
   }
   
   unsigned char inst = (BLOCK_LAYOUT_OPERATOR << 4) | 0;
