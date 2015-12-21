@@ -1160,7 +1160,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 
   int NumLoops = countBeneficialLoops(&CurRegion);
   if (!PollyProcessUnprofitable && NumLoops < 2)
-    invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
+    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   if (!allBlocksValid(Context))
     return false;
@@ -1168,12 +1168,12 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   // We can probably not do a lot on scops that only write or only read
   // data.
   if (!PollyProcessUnprofitable && (!Context.hasStores || !Context.hasLoads))
-    invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
+    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   // Check if there are sufficent non-overapproximated loops.
   int NumAffineLoops = NumLoops - Context.BoxedLoopsSet.size();
   if (!PollyProcessUnprofitable && NumAffineLoops < 2)
-    invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
+    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   DEBUG(dbgs() << "OK\n");
   return true;
