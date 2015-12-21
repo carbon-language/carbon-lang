@@ -1134,6 +1134,26 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
   return true;
 }
 
+bool ScopDetection::isProfitableRegion(DetectionContext &Context) const {
+  Region &CurRegion = Context.CurRegion;
+
+  if (PollyProcessUnprofitable)
+    return true;
+
+  // We can probably not do a lot on scops that only write or only read
+  // data.
+  if (!Context.hasStores || !Context.hasLoads)
+    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
+
+  // Check if there are sufficent non-overapproximated loops.
+  int NumLoops = countBeneficialLoops(&CurRegion);
+  int NumAffineLoops = NumLoops - Context.BoxedLoopsSet.size();
+  if (NumAffineLoops < 2)
+    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
+
+  return true;
+}
+
 bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   Region &CurRegion = Context.CurRegion;
 
@@ -1158,22 +1178,11 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
       &(CurRegion.getEntry()->getParent()->getEntryBlock()))
     return invalid<ReportEntry>(Context, /*Assert=*/true, CurRegion.getEntry());
 
-  int NumLoops = countBeneficialLoops(&CurRegion);
-  if (!PollyProcessUnprofitable && NumLoops < 2)
-    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
-
   if (!allBlocksValid(Context))
     return false;
 
-  // We can probably not do a lot on scops that only write or only read
-  // data.
-  if (!PollyProcessUnprofitable && (!Context.hasStores || !Context.hasLoads))
-    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
-
-  // Check if there are sufficent non-overapproximated loops.
-  int NumAffineLoops = NumLoops - Context.BoxedLoopsSet.size();
-  if (!PollyProcessUnprofitable && NumAffineLoops < 2)
-    return invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
+  if (!isProfitableRegion(Context))
+    return false;
 
   DEBUG(dbgs() << "OK\n");
   return true;

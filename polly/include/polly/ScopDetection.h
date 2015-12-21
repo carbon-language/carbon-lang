@@ -287,6 +287,16 @@ private:
   /// @return True if all blocks in R are valid, false otherwise.
   bool allBlocksValid(DetectionContext &Context) const;
 
+  /// @brief Check if a region is profitable to optimize.
+  ///
+  /// Regions that are unlikely to expose interesting optimization opportunities
+  /// are called 'unprofitable' and may be skipped during scop detection.
+  ///
+  /// @param Context The context of scop detection.
+  ///
+  /// @return True if region is profitable to optimize, false otherwise.
+  bool isProfitableRegion(DetectionContext &Context) const;
+
   /// @brief Check if a region is a Scop.
   ///
   /// @param Context The context of scop detection.
