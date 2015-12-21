@@ -1,5 +1,5 @@
-;; Check that data associated with linkonce odr functions are placed in
-;; the same comdat section as their associated function.
+;; Check that PGO instrumented variables associated with linkonce odr
+;; functions are placed in the same comdat section.
 
 
 ; RUN: opt < %s -mtriple=x86_64-apple-macosx10.10.0 -instrprof -S | FileCheck %s
