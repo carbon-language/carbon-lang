@@ -971,7 +971,7 @@ void EHOutputSection<ELFT>::addSectionAux(
       auto P = CieMap.insert(std::make_pair(CieInfo, Cies.size()));
       if (P.second) {
         Cies.push_back(C);
-        this->Header.sh_size += Length;
+        this->Header.sh_size += RoundUpToAlignment(Length, sizeof(uintX_t));
       }
       OffsetToIndex[Offset] = P.first->second;
     } else {
@@ -984,7 +984,7 @@ void EHOutputSection<ELFT>::addSectionAux(
         if (I == OffsetToIndex.end())
           error("Invalid CIE reference");
         Cies[I->second].Fdes.push_back(EHRegion<ELFT>(S, Index));
-        this->Header.sh_size += Length;
+        this->Header.sh_size += RoundUpToAlignment(Length, sizeof(uintX_t));
       }
     }
 
@@ -1040,15 +1040,16 @@ template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
     StringRef CieData = C.data();
     memcpy(Buf + Offset, CieData.data(), CieData.size());
     C.S->Offsets[C.Index].second = Offset;
-    Offset += CieData.size();
+    Offset += RoundUpToAlignment(CieData.size(), sizeof(uintX_t));
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
       StringRef FdeData = F.data();
-      memcpy(Buf + Offset, FdeData.data(), 4);              // Length
+      uintX_t Len = RoundUpToAlignment(FdeData.size(), sizeof(uintX_t));
+      write32<E>(Buf + Offset, Len - 4);                    // Length
       write32<E>(Buf + Offset + 4, Offset + 4 - CieOffset); // Pointer
       memcpy(Buf + Offset + 8, FdeData.data() + 8, FdeData.size() - 8);
       F.S->Offsets[F.Index].second = Offset;
-      Offset += FdeData.size();
+      Offset += Len;
     }
   }
 
