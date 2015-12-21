@@ -204,6 +204,17 @@ TEST_F(SortIncludesTest, LeavesMainHeaderFirst) {
                  "#include \"c.h\"\n"
                  "#include \"b.h\"\n",
                  "a.cc"));
+
+  // Only recognize the first #include with a matching basename as main include.
+  EXPECT_EQ("#include \"a.h\"\n"
+            "#include \"b.h\"\n"
+            "#include \"c.h\"\n"
+            "#include \"llvm/a.h\"\n",
+            sort("#include \"b.h\"\n"
+                 "#include \"a.h\"\n"
+                 "#include \"c.h\"\n"
+                 "#include \"llvm/a.h\"\n",
+                 "a.cc"));
 }
 
 TEST_F(SortIncludesTest, NegativePriorities) {

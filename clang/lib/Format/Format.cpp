@@ -1816,6 +1816,7 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
                   FileName.endswith(".mm");
   StringRef FileStem = llvm::sys::path::stem(FileName);
   bool FirstIncludeBlock = true;
+  bool MainIncludeFound = false;
 
   // Create pre-compiled regular expressions for the #include categories.
   SmallVector<llvm::Regex, 4> CategoryRegexs;
@@ -1845,12 +1846,14 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
             break;
           }
         }
-        if (IsSource && Category > 0 && FirstIncludeBlock &&
-            IncludeName.startswith("\"")) {
+        if (IsSource && !MainIncludeFound && Category > 0 &&
+            FirstIncludeBlock && IncludeName.startswith("\"")) {
           StringRef HeaderStem =
               llvm::sys::path::stem(IncludeName.drop_front(1).drop_back(1));
-          if (FileStem.startswith(HeaderStem))
+          if (FileStem.startswith(HeaderStem)) {
             Category = 0;
+            MainIncludeFound = true;
+          }
         }
         IncludesInBlock.push_back({IncludeName, Line, Prev, Category});
       } else if (!IncludesInBlock.empty()) {
