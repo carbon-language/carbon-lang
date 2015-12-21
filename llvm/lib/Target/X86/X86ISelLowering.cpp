@@ -1689,6 +1689,13 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     for (auto VT : { MVT::v64i8, MVT::v32i16 }) {
       setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
       setOperationAction(ISD::VSELECT,             VT, Legal);
+
+      setOperationAction(ISD::AND,    VT, Promote);
+      AddPromotedToType (ISD::AND,    VT, MVT::v8i64);
+      setOperationAction(ISD::OR,     VT, Promote);
+      AddPromotedToType (ISD::OR,     VT, MVT::v8i64);
+      setOperationAction(ISD::XOR,    VT, Promote);
+      AddPromotedToType (ISD::XOR,    VT, MVT::v8i64);
     }
   }
 
@@ -13284,7 +13291,7 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
         && InVT.getScalarSizeInBits() >= 32 &&
         Subtarget->hasDQI() && Subtarget->hasVLX())
       return Op; // legal, will go to VPMOVB2M, VPMOVQ2M
-  }
+    }
 
   if (VT.getVectorElementType() == MVT::i1) {
     assert(VT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
