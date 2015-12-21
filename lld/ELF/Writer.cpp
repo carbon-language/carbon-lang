@@ -327,9 +327,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &S,
 
 template <class ELFT>
 static void reportUndefined(const SymbolTable<ELFT> &S, const SymbolBody &Sym) {
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
-
   if (Config->Shared && !Config->NoUndefined)
     return;
 
