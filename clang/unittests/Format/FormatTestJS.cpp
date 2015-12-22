@@ -115,6 +115,11 @@ TEST_F(FormatTestJS, ReservedWords) {
   verifyFormat("var union = 2;");
 }
 
+TEST_F(FormatTestJS, CppKeywords) {
+  // Make sure we don't mess stuff up because of C++ keywords.
+  verifyFormat("return operator && (aa);");
+}
+
 TEST_F(FormatTestJS, ES6DestructuringAssignment) {
   verifyFormat("var [a, b, c] = [1, 2, 3];");
   verifyFormat("let [a, b, c] = [1, 2, 3];");
