@@ -55,7 +55,6 @@ STATISTIC(NumSRA       , "Number of aggregate globals broken into scalars");
 STATISTIC(NumHeapSRA   , "Number of heap objects SRA'd");
 STATISTIC(NumSubstitute,"Number of globals with initializers stored into them");
 STATISTIC(NumDeleted   , "Number of globals deleted");
-STATISTIC(NumFnDeleted , "Number of functions deleted");
 STATISTIC(NumGlobUses  , "Number of global uses devirtualized");
 STATISTIC(NumLocalized , "Number of globals localized");
 STATISTIC(NumShrunkToBool  , "Number of global vars shrunk to booleans");
@@ -83,6 +82,7 @@ namespace {
     bool OptimizeFunctions(Module &M);
     bool OptimizeGlobalVars(Module &M);
     bool OptimizeGlobalAliases(Module &M);
+    bool deleteIfDead(GlobalValue &GV);
     bool processGlobal(GlobalVariable *GV);
     bool processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS);
     bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
@@ -1679,20 +1679,37 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   return true;
 }
 
+bool GlobalOpt::deleteIfDead(GlobalValue &GV) {
+  GV.removeDeadConstantUsers();
+
+  if (!GV.isDiscardableIfUnused())
+    return false;
+
+  if (const Comdat *C = GV.getComdat())
+    if (!GV.hasLocalLinkage() && NotDiscardableComdats.count(C))
+      return false;
+
+  bool Dead;
+  if (auto *F = dyn_cast<Function>(&GV))
+    Dead = F->isDefTriviallyDead();
+  else
+    Dead = GV.use_empty();
+  if (!Dead)
+    return false;
+
+  DEBUG(dbgs() << "GLOBAL DEAD: " << GV << "\n");
+  GV.eraseFromParent();
+  ++NumDeleted;
+  return true;
+}
 
 /// Analyze the specified global variable and optimize it if possible.  If we
 /// make a change, return true.
 bool GlobalOpt::processGlobal(GlobalVariable *GV) {
-  // Do more involved optimizations if the global is internal.
-  GV->removeDeadConstantUsers();
-
-  if (GV->use_empty()) {
-    DEBUG(dbgs() << "GLOBAL DEAD: " << *GV << "\n");
-    GV->eraseFromParent();
-    ++NumDeleted;
+  if (deleteIfDead(*GV))
     return true;
-  }
 
+  // Do more involved optimizations if the global is internal.
   if (!GV->hasLocalLinkage())
     return false;
 
@@ -2023,13 +2040,8 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
     if (!F->hasName() && !F->isDeclaration() && !F->hasLocalLinkage())
       F->setLinkage(GlobalValue::InternalLinkage);
 
-    const Comdat *C = F->getComdat();
-    bool inComdat = C && NotDiscardableComdats.count(C);
-    F->removeDeadConstantUsers();
-    if ((!inComdat || F->hasLocalLinkage()) && F->isDefTriviallyDead()) {
-      F->eraseFromParent();
+    if (deleteIfDead(*F)) {
       Changed = true;
-      ++NumFnDeleted;
       continue;
     }
     if (!F->hasLocalLinkage())
@@ -2075,12 +2087,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
           GV->setInitializer(New);
       }
 
-    if (GV->isDiscardableIfUnused()) {
-      if (const Comdat *C = GV->getComdat())
-        if (NotDiscardableComdats.count(C) && !GV->hasLocalLinkage())
-          continue;
-      Changed |= processGlobal(GV);
-    }
+    Changed |= processGlobal(GV);
   }
   return Changed;
 }
