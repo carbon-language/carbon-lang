@@ -83,9 +83,8 @@ namespace {
     bool OptimizeFunctions(Module &M);
     bool OptimizeGlobalVars(Module &M);
     bool OptimizeGlobalAliases(Module &M);
-    bool ProcessGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
-    bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI,
-                               const GlobalStatus &GS);
+    bool processGlobal(GlobalVariable *GV);
+    bool processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS);
     bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
 
     bool isPointerValueDeadOnEntryToFunction(const Function *F,
@@ -500,7 +499,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
                                                GV->getThreadLocalMode(),
                                               GV->getType()->getAddressSpace());
       NGV->setExternallyInitialized(GV->isExternallyInitialized());
-      Globals.insert(GV->getIterator(), NGV);
+      Globals.push_back(NGV);
       NewGlobals.push_back(NGV);
 
       // Calculate the known alignment of the field.  If the original aggregate
@@ -534,7 +533,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
                                                GV->getThreadLocalMode(),
                                               GV->getType()->getAddressSpace());
       NGV->setExternallyInitialized(GV->isExternallyInitialized());
-      Globals.insert(GV->getIterator(), NGV);
+      Globals.push_back(NGV);
       NewGlobals.push_back(NGV);
 
       // Calculate the known alignment of the field.  If the original aggregate
@@ -842,13 +841,10 @@ OptimizeGlobalAddressOfMalloc(GlobalVariable *GV, CallInst *CI, Type *AllocTy,
 
   // Create the new global variable.  The contents of the malloc'd memory is
   // undefined, so initialize with an undef value.
-  GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(),
-                                             GlobalType, false,
-                                             GlobalValue::InternalLinkage,
-                                             UndefValue::get(GlobalType),
-                                             GV->getName()+".body",
-                                             GV,
-                                             GV->getThreadLocalMode());
+  GlobalVariable *NewGV = new GlobalVariable(
+      *GV->getParent(), GlobalType, false, GlobalValue::InternalLinkage,
+      UndefValue::get(GlobalType), GV->getName() + ".body", nullptr,
+      GV->getThreadLocalMode());
 
   // If there are bitcast users of the malloc (which is typical, usually we have
   // a malloc + bitcast) then replace them with uses of the new global.  Update
@@ -1292,12 +1288,10 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
     Type *FieldTy = STy->getElementType(FieldNo);
     PointerType *PFieldTy = PointerType::get(FieldTy, AS);
 
-    GlobalVariable *NGV =
-      new GlobalVariable(*GV->getParent(),
-                         PFieldTy, false, GlobalValue::InternalLinkage,
-                         Constant::getNullValue(PFieldTy),
-                         GV->getName() + ".f" + Twine(FieldNo), GV,
-                         GV->getThreadLocalMode());
+    GlobalVariable *NGV = new GlobalVariable(
+        *GV->getParent(), PFieldTy, false, GlobalValue::InternalLinkage,
+        Constant::getNullValue(PFieldTy), GV->getName() + ".f" + Twine(FieldNo),
+        nullptr, GV->getThreadLocalMode());
     FieldGlobals.push_back(NGV);
 
     unsigned TypeSize = DL.getTypeAllocSize(FieldTy);
@@ -1457,10 +1451,9 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
 
 /// This function is called when we see a pointer global variable with a single
 /// value stored it that is a malloc or cast of malloc.
-static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
+static bool tryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
                                                Type *AllocTy,
                                                AtomicOrdering Ordering,
-                                               Module::global_iterator &GVI,
                                                const DataLayout &DL,
                                                TargetLibraryInfo *TLI) {
   // If this is a malloc of an abstract type, don't touch it.
@@ -1499,8 +1492,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
     // (2048 bytes currently), as we don't want to introduce a 16M global or
     // something.
     if (NElements->getZExtValue() * DL.getTypeAllocSize(AllocTy) < 2048) {
-      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, DL, TLI)
-                ->getIterator();
+      OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, DL, TLI);
       return true;
     }
 
@@ -1545,20 +1537,18 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
         CI = cast<CallInst>(Malloc);
     }
 
-    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, DL, TLI, true),
-                               DL, TLI)
-              ->getIterator();
+    PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, DL, TLI, true), DL,
+                         TLI);
     return true;
   }
 
   return false;
 }
 
-// OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
-// that only one value (besides its initializer) is ever stored to the global.
-static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
+// Try to optimize globals based on the knowledge that only one value (besides
+// its initializer) is ever stored to the global.
+static bool optimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
                                      AtomicOrdering Ordering,
-                                     Module::global_iterator &GVI,
                                      const DataLayout &DL,
                                      TargetLibraryInfo *TLI) {
   // Ignore no-op GEPs and bitcasts.
@@ -1579,9 +1569,8 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
         return true;
     } else if (CallInst *CI = extractMallocCall(StoredOnceVal, TLI)) {
       Type *MallocType = getMallocAllocatedType(CI, TLI);
-      if (MallocType &&
-          TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType, Ordering, GVI,
-                                             DL, TLI))
+      if (MallocType && tryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType,
+                                                           Ordering, DL, TLI))
         return true;
     }
   }
@@ -1693,8 +1682,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 
 /// Analyze the specified global variable and optimize it if possible.  If we
 /// make a change, return true.
-bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
-                              Module::global_iterator &GVI) {
+bool GlobalOpt::processGlobal(GlobalVariable *GV) {
   // Do more involved optimizations if the global is internal.
   GV->removeDeadConstantUsers();
 
@@ -1721,7 +1709,7 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
   if (GV->isConstant() || !GV->hasInitializer())
     return false;
 
-  return ProcessInternalGlobal(GV, GVI, GS);
+  return processInternalGlobal(GV, GS);
 }
 
 bool GlobalOpt::isPointerValueDeadOnEntryToFunction(const Function *F, GlobalValue *GV) {
@@ -1858,8 +1846,7 @@ static void makeAllConstantUsesInstructions(Constant *C) {
 
 /// Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
-bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
-                                      Module::global_iterator &GVI,
+bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
                                       const GlobalStatus &GS) {
   auto &DL = GV->getParent()->getDataLayout();
   // If this is a first class global and has only one accessing function and
@@ -1938,10 +1925,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     return true;
   } else if (!GV->getInitializer()->getType()->isSingleValueType()) {
     const DataLayout &DL = GV->getParent()->getDataLayout();
-    if (GlobalVariable *FirstNewGV = SRAGlobal(GV, DL)) {
-      GVI = FirstNewGV->getIterator(); // Don't skip the newly produced globals!
+    if (SRAGlobal(GV, DL))
       return true;
-    }
   } else if (GS.StoredType == GlobalStatus::StoredOnce && GS.StoredOnceValue) {
     // If the initial value for the global was an undef value, and if only
     // one other value was stored into it, we can just change the
@@ -1960,8 +1945,6 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                        << "simplify all users and delete global!\n");
           GV->eraseFromParent();
           ++NumDeleted;
-        } else {
-          GVI = GV->getIterator();
         }
         ++NumSubstitute;
         return true;
@@ -1969,8 +1952,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
     // Try to optimize globals based on the knowledge that only one value
     // (besides its initializer) is ever stored to the global.
-    if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GS.Ordering, GVI,
-                                 DL, TLI))
+    if (optimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GS.Ordering, DL, TLI))
       return true;
 
     // Otherwise, if the global was not a boolean, we can shrink it to be a
@@ -2095,7 +2077,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
       if (const Comdat *C = GV->getComdat())
         if (NotDiscardableComdats.count(C) && !GV->hasLocalLinkage())
           continue;
-      Changed |= ProcessGlobal(GV, GVI);
+      Changed |= processGlobal(GV);
     }
   }
   return Changed;
