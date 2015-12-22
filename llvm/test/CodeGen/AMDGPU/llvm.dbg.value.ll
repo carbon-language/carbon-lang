@@ -3,7 +3,7 @@
 ; CHECK-LABEL: {{^}}test_debug_value:
 ; CHECK: s_load_dwordx2 s[4:5]
 ; CHECK: DEBUG_VALUE: test_debug_value:globalptr_arg <- %SGPR4_SGPR5
-; CHECK: flat_store_dword
+; CHECK: buffer_store_dword
 ; CHECK: s_endpgm
 define void @test_debug_value(i32 addrspace(1)* nocapture %globalptr_arg) #0 !dbg !4 {
 entry:
