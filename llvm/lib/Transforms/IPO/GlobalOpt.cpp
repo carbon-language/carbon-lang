@@ -2993,10 +2993,17 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
 
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E;) {
-    Module::alias_iterator J = I++;
+    GlobalAlias *J = &*I++;
+
     // Aliases without names cannot be referenced outside this module.
     if (!J->hasName() && !J->isDeclaration() && !J->hasLocalLinkage())
       J->setLinkage(GlobalValue::InternalLinkage);
+
+    if (deleteIfDead(*J)) {
+      Changed = true;
+      continue;
+    }
+
     // If the aliasee may change at link time, nothing can be done - bail out.
     if (J->mayBeOverridden())
       continue;
