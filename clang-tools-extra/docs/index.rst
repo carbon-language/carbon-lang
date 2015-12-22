@@ -14,7 +14,7 @@ Clang's tooling API's.
 Contents
 ========
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    clang-tidy/index
    modularize

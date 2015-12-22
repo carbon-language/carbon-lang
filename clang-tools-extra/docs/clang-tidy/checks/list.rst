@@ -1,4 +1,6 @@
-List of clang-tidy Checks
+.. title:: clang-tidy - Clang-Tidy Checks
+
+Clang-Tidy Checks
 =========================
 
 .. toctree::   
