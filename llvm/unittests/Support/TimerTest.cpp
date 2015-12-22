@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Timer.h"
-#include "llvm/Support/Thread.h"
+#include "llvm/Support/thread.h"
 #include "gtest/gtest.h"
 #include <chrono>
 
