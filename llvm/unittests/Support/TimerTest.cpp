@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/Thread.h"
 #include "gtest/gtest.h"
 #include <chrono>
-#include <thread>
 
 using namespace llvm;
 
