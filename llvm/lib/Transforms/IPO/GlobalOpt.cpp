@@ -83,7 +83,7 @@ namespace {
     bool OptimizeGlobalVars(Module &M);
     bool OptimizeGlobalAliases(Module &M);
     bool deleteIfDead(GlobalValue &GV);
-    bool processGlobal(GlobalVariable *GV);
+    bool processGlobal(GlobalValue &GV);
     bool processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS);
     bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
 
@@ -1705,28 +1705,31 @@ bool GlobalOpt::deleteIfDead(GlobalValue &GV) {
 
 /// Analyze the specified global variable and optimize it if possible.  If we
 /// make a change, return true.
-bool GlobalOpt::processGlobal(GlobalVariable *GV) {
-  if (deleteIfDead(*GV))
-    return true;
-
+bool GlobalOpt::processGlobal(GlobalValue &GV) {
   // Do more involved optimizations if the global is internal.
-  if (!GV->hasLocalLinkage())
+  if (!GV.hasLocalLinkage())
     return false;
 
   GlobalStatus GS;
 
-  if (GlobalStatus::analyzeGlobal(GV, GS))
+  if (GlobalStatus::analyzeGlobal(&GV, GS))
     return false;
 
-  if (!GS.IsCompared && !GV->hasUnnamedAddr()) {
-    GV->setUnnamedAddr(true);
+  bool Changed = false;
+  if (!GS.IsCompared && !GV.hasUnnamedAddr()) {
+    GV.setUnnamedAddr(true);
     NumUnnamed++;
+    Changed = true;
   }
 
-  if (GV->isConstant() || !GV->hasInitializer())
-    return false;
+  auto *GVar = dyn_cast<GlobalVariable>(&GV);
+  if (!GVar)
+    return Changed;
 
-  return processInternalGlobal(GV, GS);
+  if (GVar->isConstant() || !GVar->hasInitializer())
+    return Changed;
+
+  return processInternalGlobal(GVar, GS) || Changed;
 }
 
 bool GlobalOpt::isPointerValueDeadOnEntryToFunction(const Function *F, GlobalValue *GV) {
@@ -2044,6 +2047,9 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       Changed = true;
       continue;
     }
+
+    Changed |= processGlobal(*F);
+
     if (!F->hasLocalLinkage())
       continue;
     if (isProfitableToMakeFastCC(F) && !F->isVarArg() &&
@@ -2087,7 +2093,12 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
           GV->setInitializer(New);
       }
 
-    Changed |= processGlobal(GV);
+    if (deleteIfDead(*GV)) {
+      Changed = true;
+      continue;
+    }
+
+    Changed |= processGlobal(*GV);
   }
   return Changed;
 }
