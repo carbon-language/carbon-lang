@@ -275,7 +275,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case SHN_ABS:
     return new (this->Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
   case SHN_UNDEF:
-    return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
+    return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
   case SHN_COMMON:
     return new (this->Alloc) DefinedCommon<ELFT>(Name, *Sym);
   }
@@ -288,7 +288,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GNU_UNIQUE: {
     InputSectionBase<ELFT> *Sec = getSection(*Sym);
     if (Sec == &InputSection<ELFT>::Discarded)
-      return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
+      return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
     return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);
   }
   }
