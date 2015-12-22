@@ -3446,8 +3446,8 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
 
 /// sse1_fp_unop_p - SSE1 unops in packed form.
 multiclass sse1_fp_unop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                          OpndItins itins> {
-let Predicates = [HasAVX] in {
+                          OpndItins itins, list<Predicate> prds> {
+let Predicates = prds in {
   def V#NAME#PSr : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        !strconcat("v", OpcodeStr,
                                   "ps\t{$src, $dst|$dst, $src}"),
@@ -3543,16 +3543,16 @@ multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
 // Square root.
 defm SQRT  : sse1_fp_unop_s<0x51, "sqrt", fsqrt, SSE_SQRTSS>,
-             sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTPS>,
+             sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTPS, [HasAVX]>,
              sse2_fp_unop_s<0x51, "sqrt", fsqrt, SSE_SQRTSD>,
              sse2_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTPD>;
 
 // Reciprocal approximations. Note that these typically require refinement
 // in order to obtain suitable precision.
 defm RSQRT : sse1_fp_unop_s<0x52, "rsqrt", X86frsqrt, SSE_RSQRTSS>,
-             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_RSQRTPS>;
+             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_RSQRTPS, [HasAVX, NoVLX] >;
 defm RCP   : sse1_fp_unop_s<0x53, "rcp", X86frcp, SSE_RCPS>,
-             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>;
+             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP, [HasAVX, NoVLX]>;
 
 // There is no f64 version of the reciprocal approximation instructions.
 

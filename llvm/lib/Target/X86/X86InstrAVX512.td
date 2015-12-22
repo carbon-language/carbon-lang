@@ -5712,20 +5712,6 @@ multiclass avx512_fp14_p_vl_all<bits<8> opc, string OpcodeStr, SDNode OpNode> {
 defm VRSQRT14 : avx512_fp14_p_vl_all<0x4E, "vrsqrt14", X86frsqrt>;
 defm VRCP14 : avx512_fp14_p_vl_all<0x4C, "vrcp14", X86frcp>;
 
-def : Pat <(v16f32 (int_x86_avx512_rsqrt14_ps_512 (v16f32 VR512:$src),
-              (bc_v16f32 (v16i32 immAllZerosV)), (i16 -1))),
-           (VRSQRT14PSZr VR512:$src)>;
-def : Pat <(v8f64 (int_x86_avx512_rsqrt14_pd_512 (v8f64 VR512:$src),
-              (bc_v8f64 (v16i32 immAllZerosV)), (i8 -1))),
-           (VRSQRT14PDZr VR512:$src)>;
-
-def : Pat <(v16f32 (int_x86_avx512_rcp14_ps_512 (v16f32 VR512:$src),
-              (bc_v16f32 (v16i32 immAllZerosV)), (i16 -1))),
-           (VRCP14PSZr VR512:$src)>;
-def : Pat <(v8f64 (int_x86_avx512_rcp14_pd_512 (v8f64 VR512:$src),
-              (bc_v8f64 (v16i32 immAllZerosV)), (i8 -1))),
-           (VRCP14PDZr VR512:$src)>;
-
 /// avx512_fp28_s rcp28ss, rcp28sd, rsqrt28ss, rsqrt28sd
 multiclass avx512_fp28_s<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
                          SDNode OpNode> {
