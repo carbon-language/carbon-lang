@@ -768,6 +768,11 @@ TEST_F(FormatTestJS, InterfaceDeclarations) {
   verifyFormat("interface a {}\n"
                "export function b() {}\n"
                "var x;");
+
+  // Arrays of object type literals.
+  verifyFormat("interface I {\n"
+               "  o: {}[];\n"
+               "}");
 }
 
 TEST_F(FormatTestJS, EnumDeclarations) {
