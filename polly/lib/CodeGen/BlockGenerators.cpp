@@ -102,6 +102,10 @@ Value *BlockGenerator::getNewValue(ScopStmt &Stmt, Value *Old, ValueMapT &BBMap,
   if (isa<Constant>(Old) && !isa<GlobalValue>(Old))
     return Old;
 
+  // Inline asm is like a constant to us.
+  if (isa<InlineAsm>(Old))
+    return Old;
+
   if (Value *New = GlobalMap.lookup(Old)) {
     if (Value *NewRemapped = GlobalMap.lookup(New))
       New = NewRemapped;
