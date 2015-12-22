@@ -238,6 +238,12 @@ void BlockGenerator::generateScalarStore(ScopStmt &Stmt, StoreInst *Store,
   Builder.CreateAlignedStore(ValueOperand, NewPointer, Store->getAlignment());
 }
 
+bool BlockGenerator::canSyntheziseInStmt(ScopStmt &Stmt, Instruction *Inst) {
+  Loop *L = getLoopForInst(Inst);
+  return (Stmt.isBlockStmt() || !Stmt.getRegion()->contains(L)) &&
+         canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion());
+}
+
 void BlockGenerator::copyInstruction(ScopStmt &Stmt, Instruction *Inst,
                                      ValueMapT &BBMap, LoopToScevMapT &LTS,
                                      isl_id_to_ast_expr *NewAccesses) {
@@ -246,12 +252,9 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, Instruction *Inst,
   if (Inst->isTerminator())
     return;
 
-  Loop *L = getLoopForInst(Inst);
-  if ((Stmt.isBlockStmt() || !Stmt.getRegion()->contains(L)) &&
-      canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion())) {
-    // Synthesizable statements will be generated on-demand.
+  // Synthesizable statements will be generated on-demand.
+  if (canSyntheziseInStmt(Stmt, Inst))
     return;
-  }
 
   if (auto *Load = dyn_cast<LoadInst>(Inst)) {
     Value *NewLoad = generateScalarLoad(Stmt, Load, BBMap, LTS, NewAccesses);
@@ -942,7 +945,7 @@ void VectorBlockGenerator::copyInstruction(
   if (Inst->isTerminator())
     return;
 
-  if (canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion()))
+  if (canSyntheziseInStmt(Stmt, Inst))
     return;
 
   if (auto *Load = dyn_cast<LoadInst>(Inst)) {
