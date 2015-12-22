@@ -63,30 +63,33 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, Value *Old,
                                              ValueMapT &BBMap,
                                              LoopToScevMapT &LTS,
                                              Loop *L) const {
-  if (SE.isSCEVable(Old->getType()))
-    if (const SCEV *Scev = SE.getSCEVAtScope(Old, L)) {
-      if (!isa<SCEVCouldNotCompute>(Scev)) {
-        const SCEV *NewScev = apply(Scev, LTS, SE);
-        ValueMapT VTV;
-        VTV.insert(BBMap.begin(), BBMap.end());
-        VTV.insert(GlobalMap.begin(), GlobalMap.end());
+  if (!SE.isSCEVable(Old->getType()))
+    return nullptr;
 
-        Scop &S = *Stmt.getParent();
-        const DataLayout &DL =
-            S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
-        auto IP = Builder.GetInsertPoint();
+  const SCEV *Scev = SE.getSCEVAtScope(Old, L);
+  if (!Scev)
+    return nullptr;
 
-        assert(IP != Builder.GetInsertBlock()->end() &&
-               "Only instructions can be insert points for SCEVExpander");
-        Value *Expanded = expandCodeFor(S, SE, DL, "polly", NewScev,
-                                        Old->getType(), &*IP, &VTV);
+  if (isa<SCEVCouldNotCompute>(Scev))
+    return nullptr;
 
-        BBMap[Old] = Expanded;
-        return Expanded;
-      }
-    }
+  const SCEV *NewScev = apply(Scev, LTS, SE);
+  ValueMapT VTV;
+  VTV.insert(BBMap.begin(), BBMap.end());
+  VTV.insert(GlobalMap.begin(), GlobalMap.end());
 
-  return nullptr;
+  Scop &S = *Stmt.getParent();
+  const DataLayout &DL =
+      S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
+  auto IP = Builder.GetInsertPoint();
+
+  assert(IP != Builder.GetInsertBlock()->end() &&
+         "Only instructions can be insert points for SCEVExpander");
+  Value *Expanded =
+      expandCodeFor(S, SE, DL, "polly", NewScev, Old->getType(), &*IP, &VTV);
+
+  BBMap[Old] = Expanded;
+  return Expanded;
 }
 
 Value *BlockGenerator::getNewValue(ScopStmt &Stmt, Value *Old, ValueMapT &BBMap,
