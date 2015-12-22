@@ -314,6 +314,17 @@ TEST_F(FormatTestJS, ArrayLiterals) {
   verifyFormat("someFunction([], {a: a});");
 }
 
+TEST_F(FormatTestJS, ColumnLayoutForArrayLiterals) {
+  verifyFormat("var array = [\n"
+               "  a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,\n"
+               "  a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,\n"
+               "];");
+  verifyFormat("var array = someFunction([\n"
+               "  a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,\n"
+               "  a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,\n"
+               "]);");
+}
+
 TEST_F(FormatTestJS, FunctionLiterals) {
   verifyFormat("doFoo(function() {});");
   verifyFormat("doFoo(function() { return 1; });");
