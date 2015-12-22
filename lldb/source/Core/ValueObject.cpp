@@ -1178,31 +1178,6 @@ ValueObject::SetData (DataExtractor &data, Error &error)
     return true;
 }
 
-// will compute strlen(str), but without consuming more than
-// maxlen bytes out of str (this serves the purpose of reading
-// chunks of a string without having to worry about
-// missing NULL terminators in the chunk)
-// of course, if strlen(str) > maxlen, the function will return
-// maxlen_value (which should be != maxlen, because that allows you
-// to know whether strlen(str) == maxlen or strlen(str) > maxlen)
-static uint32_t
-strlen_or_inf (const char* str,
-               uint32_t maxlen,
-               uint32_t maxlen_value)
-{
-    uint32_t len = 0;
-    if (str)
-    {
-        while(*str)
-        {
-            len++;str++;
-            if (len >= maxlen)
-                return maxlen_value;
-        }
-    }
-    return len;
-}
-
 static bool
 CopyStringDataToBufferSP(const StreamString& source,
                          lldb::DataBufferSP& destination)
@@ -1310,10 +1285,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
             {
                 total_bytes_read += bytes_read;
                 const char *cstr = data.PeekCStr(0);
-                size_t len = strlen_or_inf (cstr, k_max_buf_size, k_max_buf_size+1);
-                if (len > k_max_buf_size)
-                    len = k_max_buf_size;
-                
+                size_t len = strnlen (cstr, k_max_buf_size);
                 if (cstr_len_displayed < 0)
                     cstr_len_displayed = len;
                 
