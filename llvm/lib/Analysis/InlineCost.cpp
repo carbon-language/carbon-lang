@@ -1362,7 +1362,9 @@ static bool functionsHaveCompatibleAttributes(Function *Caller,
                                               Function *Callee,
                                               TargetTransformInfo &TTI) {
   return TTI.areInlineCompatible(Caller, Callee) &&
-         AttributeFuncs::areInlineCompatible(*Caller, *Callee);
+         attributeMatches(Caller, Callee, Attribute::SanitizeAddress) &&
+         attributeMatches(Caller, Callee, Attribute::SanitizeMemory) &&
+         attributeMatches(Caller, Callee, Attribute::SanitizeThread);
 }
 
 InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
