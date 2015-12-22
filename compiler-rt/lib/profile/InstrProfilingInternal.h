@@ -49,6 +49,8 @@ typedef struct ProfDataIOVec {
 
 typedef uint32_t (*WriterCallback)(ProfDataIOVec *, uint32_t NumIOVecs,
                                    void **WriterCtx);
+uint32_t llvmBufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
+                          void **WriterCtx);
 int llvmWriteProfData(WriterCallback Writer, void *WriterCtx,
                       const uint8_t *ValueDataBegin,
                       const uint64_t ValueDataSize);

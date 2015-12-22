@@ -10,8 +10,6 @@
 #include "InstrProfiling.h"
 #include "InstrProfilingInternal.h"
 
-#include <string.h>
-
 COMPILER_RT_VISIBILITY
 uint64_t __llvm_profile_get_size_for_buffer(void) {
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
@@ -40,30 +38,15 @@ uint64_t __llvm_profile_get_size_for_buffer_internal(
          PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) + NamesSize + Padding;
 }
 
-/* The buffer writer is reponsponsible in keeping writer state
- * across the call.
- */
-static uint32_t bufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
-                             void **WriterCtx) {
-  uint32_t I;
-  char **Buffer = (char **)WriterCtx;
-  for (I = 0; I < NumIOVecs; I++) {
-    size_t Length = IOVecs[I].ElmSize * IOVecs[I].NumElm;
-    memcpy(*Buffer, IOVecs[I].Data, Length);
-    *Buffer += Length;
-  }
-  return 0;
-}
-
 COMPILER_RT_VISIBILITY int __llvm_profile_write_buffer(char *Buffer) {
-  return llvmWriteProfData(bufferWriter, Buffer, 0, 0);
+  return llvmWriteProfData(llvmBufferWriter, Buffer, 0, 0);
 }
 
 COMPILER_RT_VISIBILITY int __llvm_profile_write_buffer_internal(
     char *Buffer, const __llvm_profile_data *DataBegin,
     const __llvm_profile_data *DataEnd, const uint64_t *CountersBegin,
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd) {
-  return llvmWriteProfDataImpl(bufferWriter, Buffer, DataBegin, DataEnd,
+  return llvmWriteProfDataImpl(llvmBufferWriter, Buffer, DataBegin, DataEnd,
                                CountersBegin, CountersEnd, 0, 0, NamesBegin,
                                NamesEnd);
 }

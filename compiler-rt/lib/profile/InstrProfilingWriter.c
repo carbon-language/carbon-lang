@@ -9,6 +9,23 @@
 
 #include "InstrProfiling.h"
 #include "InstrProfilingInternal.h"
+#include <string.h>
+
+/* The buffer writer is reponsponsible in keeping writer state
+ * across the call.
+ */
+COMPILER_RT_VISIBILITY uint32_t llvmBufferWriter(ProfDataIOVec *IOVecs,
+                                                 uint32_t NumIOVecs,
+                                                 void **WriterCtx) {
+  uint32_t I;
+  char **Buffer = (char **)WriterCtx;
+  for (I = 0; I < NumIOVecs; I++) {
+    size_t Length = IOVecs[I].ElmSize * IOVecs[I].NumElm;
+    memcpy(*Buffer, IOVecs[I].Data, Length);
+    *Buffer += Length;
+  }
+  return 0;
+}
 
 COMPILER_RT_VISIBILITY int llvmWriteProfData(WriterCallback Writer,
                                              void *WriterCtx,
