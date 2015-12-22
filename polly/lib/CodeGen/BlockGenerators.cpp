@@ -64,7 +64,7 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, Value *Old,
                                              LoopToScevMapT &LTS,
                                              Loop *L) const {
   if (SE.isSCEVable(Old->getType()))
-    if (const SCEV *Scev = SE.getSCEVAtScope(const_cast<Value *>(Old), L)) {
+    if (const SCEV *Scev = SE.getSCEVAtScope(Old, L)) {
       if (!isa<SCEVCouldNotCompute>(Scev)) {
         const SCEV *NewScev = apply(Scev, LTS, SE);
         ValueMapT VTV;
