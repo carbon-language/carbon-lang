@@ -1647,14 +1647,19 @@ void JumpThreading::UpdateBlockFreqAndEdgeWeight(BasicBlock *PredBB,
 
   uint64_t MaxBBSuccFreq =
       *std::max_element(BBSuccFreq.begin(), BBSuccFreq.end());
-  SmallVector<BranchProbability, 4> BBSuccProbs;
-  for (uint64_t Freq : BBSuccFreq)
-    BBSuccProbs.push_back(
-        BranchProbability::getBranchProbability(Freq, MaxBBSuccFreq));
 
-  // Normalize edge probabilities so that they sum up to one.
-  BranchProbability::normalizeProbabilities(BBSuccProbs.begin(),
-                                            BBSuccProbs.end());
+  SmallVector<BranchProbability, 4> BBSuccProbs;
+  if (MaxBBSuccFreq == 0)
+    BBSuccProbs.assign(BBSuccFreq.size(),
+                       {1, static_cast<unsigned>(BBSuccFreq.size())});
+  else {
+    for (uint64_t Freq : BBSuccFreq)
+      BBSuccProbs.push_back(
+          BranchProbability::getBranchProbability(Freq, MaxBBSuccFreq));
+    // Normalize edge probabilities so that they sum up to one.
+    BranchProbability::normalizeProbabilities(BBSuccProbs.begin(),
+                                              BBSuccProbs.end());
+  }
 
   // Update edge probabilities in BPI.
   for (int I = 0, E = BBSuccProbs.size(); I < E; I++)

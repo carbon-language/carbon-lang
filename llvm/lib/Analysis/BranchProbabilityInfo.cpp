@@ -221,8 +221,14 @@ bool BranchProbabilityInfo::calcMetadataWeights(BasicBlock *BB) {
     Weights[i] /= ScalingFactor;
     WeightSum += Weights[i];
   }
-  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-    setEdgeProbability(BB, i, {Weights[i], static_cast<uint32_t>(WeightSum)});
+
+  if (WeightSum == 0) {
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+      setEdgeProbability(BB, i, {1, e});
+  } else {
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+      setEdgeProbability(BB, i, {Weights[i], static_cast<uint32_t>(WeightSum)});
+  }
 
   assert(WeightSum <= UINT32_MAX &&
          "Expected weights to scale down to 32 bits");
