@@ -128,6 +128,6 @@ uint32_t __inline __builtin_clzll(uint64_t value) {
 #endif
 
 #define __builtin_clzl __builtin_clzll
-#endif // defined(_MSC_VER) && !defined(__clang__)
+#endif /* defined(_MSC_VER) && !defined(__clang__) */
 
 #endif /* INT_LIB_H */
