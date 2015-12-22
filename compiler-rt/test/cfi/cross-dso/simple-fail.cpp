@@ -23,6 +23,11 @@
 // RUN: %t5 2>&1 | FileCheck --check-prefix=NCFI %s
 // RUN: %t5 x 2>&1 | FileCheck --check-prefix=NCFI %s
 
+// RUN: %clangxx -DBM -DSHARED_LIB %s -fPIC -shared -o %t6-so.so
+// RUN: %clangxx_cfi_dso -DBM %s -o %t6 %t6-so.so
+// RUN: %t6 2>&1 | FileCheck --check-prefix=NCFI %s
+// RUN: %t6 x 2>&1 | FileCheck --check-prefix=NCFI %s
+
 // Tests that the CFI mechanism crashes the program when making a virtual call
 // to an object of the wrong class but with a compatible vtable, by casting a
 // pointer to such an object and attempting to make a call through it.

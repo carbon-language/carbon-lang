@@ -176,7 +176,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *data) {
         VReport(1, "   %zx .. %zx\n", cur_beg, cur_end);
         fill_shadow(cur_beg, cur_end, cfi_check ? cfi_check : (uptr)(-1));
       } else {
-        fill_shadow_constant(cur_beg, cur_end, kInvalidShadow);
+        fill_shadow_constant(cur_beg, cur_end, kUncheckedShadow);
       }
     }
   }
