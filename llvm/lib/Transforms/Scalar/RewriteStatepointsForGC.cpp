@@ -2387,6 +2387,19 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     }
   }
 
+  // It is possible that non-constant live variables have a constant base.  For
+  // example, a GEP with a variable offset from a global.  In this case we can
+  // remove it from the liveset.  We already don't add constants to the liveset
+  // because we assume they won't move at runtime and the GC doesn't need to be
+  // informed about them.  The same reasoning applies if the base is constant.
+  // Note that the relocation placement code relies on this filtering for
+  // correctness as it expects the base to be in the liveset, which isn't true
+  // if the base is constant.
+  for (auto &Info : Records)
+    for (auto &BasePair : Info.PointerToBase)
+      if (isa<Constant>(BasePair.second))
+        Info.LiveSet.erase(BasePair.first);
+
   for (CallInst *CI : Holders)
     CI->eraseFromParent();
 
