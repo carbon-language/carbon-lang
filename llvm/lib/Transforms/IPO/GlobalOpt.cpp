@@ -2030,26 +2030,28 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       F->eraseFromParent();
       Changed = true;
       ++NumFnDeleted;
-    } else if (F->hasLocalLinkage()) {
-      if (isProfitableToMakeFastCC(F) && !F->isVarArg() &&
-          !F->hasAddressTaken()) {
-        // If this function has a calling convention worth changing, is not a
-        // varargs function, and is only called directly, promote it to use the
-        // Fast calling convention.
-        F->setCallingConv(CallingConv::Fast);
-        ChangeCalleesToFastCall(F);
-        ++NumFastCallFns;
-        Changed = true;
-      }
+      continue;
+    }
+    if (!F->hasLocalLinkage())
+      continue;
+    if (isProfitableToMakeFastCC(F) && !F->isVarArg() &&
+        !F->hasAddressTaken()) {
+      // If this function has a calling convention worth changing, is not a
+      // varargs function, and is only called directly, promote it to use the
+      // Fast calling convention.
+      F->setCallingConv(CallingConv::Fast);
+      ChangeCalleesToFastCall(F);
+      ++NumFastCallFns;
+      Changed = true;
+    }
 
-      if (F->getAttributes().hasAttrSomewhere(Attribute::Nest) &&
-          !F->hasAddressTaken()) {
-        // The function is not used by a trampoline intrinsic, so it is safe
-        // to remove the 'nest' attribute.
-        RemoveNestAttribute(F);
-        ++NumNestRemoved;
-        Changed = true;
-      }
+    if (F->getAttributes().hasAttrSomewhere(Attribute::Nest) &&
+        !F->hasAddressTaken()) {
+      // The function is not used by a trampoline intrinsic, so it is safe
+      // to remove the 'nest' attribute.
+      RemoveNestAttribute(F);
+      ++NumNestRemoved;
+      Changed = true;
     }
   }
   return Changed;
