@@ -143,6 +143,16 @@ public:
            OperandNo < getBundleOperandsEndIndex();
   }
 
+  /// \brief Determine whether the passed iterator points to a data operand.
+  bool isDataOperand(Value::const_user_iterator UI) const {
+    return isDataOperand(&UI.getUse());
+  }
+
+  /// \brief Determine whether the passed use points to a data operand.
+  bool isDataOperand(const Use *U) const {
+    return data_operands_begin() <= U && U < data_operands_end();
+  }
+
   ValTy *getArgument(unsigned ArgNo) const {
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
     return *(arg_begin() + ArgNo);
@@ -177,6 +187,21 @@ public:
   }
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
+
+  /// Given a value use iterator, returns the data operand that corresponds to
+  /// it.
+  /// Iterator must actually correspond to a data operand.
+  unsigned getDataOperandNo(Value::const_user_iterator UI) const {
+    return getDataOperandNo(&UI.getUse());
+  }
+
+  /// Given a use for a data operand, get the data operand number that
+  /// corresponds to it.
+  unsigned getDataOperandNo(const Use *U) const {
+    assert(getInstruction() && "Not a call or invoke instruction!");
+    assert(isDataOperand(U) && "Data operand # out of range!");
+    return U - data_operands_begin();
+  }
 
   /// Type of iterator to use when looping over data operands at this call site
   /// (see below).
