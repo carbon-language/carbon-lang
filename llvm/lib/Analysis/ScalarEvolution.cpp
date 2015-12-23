@@ -9453,8 +9453,8 @@ getLoopBackedgeTakenCounts(Loop *L, VerifyMap &Map, ScalarEvolution &SE) {
     replaceSubString(OS.str(), "<nuw>", "");
   }
 
-  for (auto *L : reverse(*L))
-    getLoopBackedgeTakenCounts(L, Map, SE); // recurse.
+  for (auto *R : reverse(*L))
+    getLoopBackedgeTakenCounts(R, Map, SE); // recurse.
 }
 
 void ScalarEvolution::verify() const {
