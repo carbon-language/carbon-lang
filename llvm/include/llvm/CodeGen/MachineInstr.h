@@ -1185,8 +1185,11 @@ public:
     assert(NumMemRefs == NewMemRefsEnd - NewMemRefs && "Too many memrefs");
   }
 
-  /// Clear this MachineInstr's memory reference descriptor list.
-  void clearMemRefs() {
+  /// Clear this MachineInstr's memory reference descriptor list.  This resets
+  /// the memrefs to their most conservative state.  This should be used only
+  /// as a last resort since it greatly pessimizes our knowledge of the memory
+  /// access performed by the instruction.
+  void dropMemRefs() {
     MemRefs = nullptr;
     NumMemRefs = 0;
   }
