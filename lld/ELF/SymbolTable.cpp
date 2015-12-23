@@ -44,12 +44,12 @@ static void checkCompatibility(InputFile *FileP) {
 
 template <class ELFT>
 void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
-  InputFile *FileP = File.release();
+  InputFile *FileP = File.get();
   checkCompatibility<ELFT>(FileP);
 
   // .a file
   if (auto *F = dyn_cast<ArchiveFile>(FileP)) {
-    ArchiveFiles.emplace_back(F);
+    ArchiveFiles.emplace_back(cast<ArchiveFile>(File.release()));
     F->parse();
     for (Lazy &Sym : F->getLazySymbols())
       addLazy(&Sym);
@@ -60,12 +60,10 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   if (auto *F = dyn_cast<SharedFile<ELFT>>(FileP)) {
     // DSOs are uniquified not by filename but by soname.
     F->parseSoName();
-    if (!IncludedSoNames.insert(F->getSoName()).second) {
-      delete FileP;
+    if (!IncludedSoNames.insert(F->getSoName()).second)
       return;
-    }
 
-    SharedFiles.emplace_back(F);
+    SharedFiles.emplace_back(cast<SharedFile<ELFT>>(File.release()));
     F->parse();
     for (SharedSymbol<ELFT> &B : F->getSharedSymbols())
       resolve(&B);
@@ -74,7 +72,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
 
   // .o file
   auto *F = cast<ObjectFile<ELFT>>(FileP);
-  ObjectFiles.emplace_back(F);
+  ObjectFiles.emplace_back(cast<ObjectFile<ELFT>>(File.release()));
   F->parse(Comdats);
   for (SymbolBody *B : F->getSymbols())
     resolve(B);
