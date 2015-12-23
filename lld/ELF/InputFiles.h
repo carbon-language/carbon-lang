@@ -35,6 +35,7 @@ class InputFile {
 public:
   enum Kind { ObjectKind, SharedKind, ArchiveKind };
   Kind kind() const { return FileKind; }
+  virtual ~InputFile();
 
   StringRef getName() const { return MB.getBufferIdentifier(); }
 

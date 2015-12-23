@@ -31,6 +31,8 @@ public:
 };
 }
 
+InputFile::~InputFile() {}
+
 template <class ELFT>
 ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef M)
     : InputFile(K, M), ELFObj(MB.getBuffer(), ECRAII().getEC()) {}

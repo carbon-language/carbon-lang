@@ -270,6 +270,10 @@ template <class ELFT> class UndefinedElf : public Undefined {
 public:
   UndefinedElf(StringRef N, const Elf_Sym &Sym);
   const Elf_Sym &Sym;
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == SymbolBody::UndefinedElfKind;
+  }
 };
 
 template <class ELFT> class SharedSymbol : public Defined<ELFT> {
