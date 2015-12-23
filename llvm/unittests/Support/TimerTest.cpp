@@ -8,13 +8,29 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Timer.h"
-#include "llvm/Support/thread.h"
 #include "gtest/gtest.h"
-#include <chrono>
+
+#if LLVM_ON_WIN32
+#include <windows.h>
+#else
+#include <time.h>
+#endif
 
 using namespace llvm;
 
 namespace {
+
+// FIXME: Put this somewhere in Support, it's also used in LockFileManager.
+void SleepMS() {
+#if LLVM_ON_WIN32
+  Sleep(1);
+#else
+  struct timespec Interval;
+  Interval.tv_sec = 0;
+  Interval.tv_nsec = 1000000;
+  nanosleep(&Interval, nullptr);
+#endif
+}
 
 TEST(Timer, Additivity) {
   Timer T1("T1");
@@ -26,7 +42,7 @@ TEST(Timer, Additivity) {
   auto TR1 = T1.getTotalTime();
 
   T1.startTimer();
-  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  SleepMS();
   T1.stopTimer();
   auto TR2 = T1.getTotalTime();
 
