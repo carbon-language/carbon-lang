@@ -48,8 +48,7 @@ private:
                   iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
   void scanRelocs(InputSection<ELFT> &C);
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
-  void updateRelro(Elf_Phdr *Cur, Elf_Phdr *GnuRelroPhdr,
-                   OutputSectionBase<ELFT> *Sec, uintX_t VA);
+  void updateRelro(Elf_Phdr *Cur, Elf_Phdr *GnuRelroPhdr, uintX_t VA);
   void assignAddresses();
   void buildSectionMap();
   void openFile(StringRef OutputPath);
@@ -896,9 +895,7 @@ static uint32_t toPhdrFlags(uint64_t Flags) {
 
 template <class ELFT>
 void Writer<ELFT>::updateRelro(Elf_Phdr *Cur, Elf_Phdr *GnuRelroPhdr,
-                               OutputSectionBase<ELFT> *Sec, uintX_t VA) {
-  if (!Config->ZRelro || !(Cur->p_flags & PF_W) || !isRelroSection(Sec))
-    return;
+                               uintX_t VA) {
   if (!GnuRelroPhdr->p_type)
     setPhdr(GnuRelroPhdr, PT_GNU_RELRO, PF_R, Cur->p_offset, Cur->p_vaddr,
             VA - Cur->p_vaddr, 1 /*p_align*/);
@@ -934,16 +931,25 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
   Elf_Phdr GnuRelroPhdr = {};
   Elf_Phdr TlsPhdr{};
+  bool RelroAligned = false;
   uintX_t ThreadBSSOffset = 0;
   // Create phdrs as we assign VAs and file offsets to all output sections.
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
+    Elf_Phdr *PH = &Phdrs[PhdrIdx];
     if (needsPhdr<ELFT>(Sec)) {
       uintX_t Flags = toPhdrFlags(Sec->getFlags());
-      if (Phdrs[PhdrIdx].p_flags != Flags) {
-        // Flags changed. Create a new PT_LOAD.
+      bool InRelRo = Config->ZRelro && (Flags & PF_W) && isRelroSection(Sec);
+      bool FirstNonRelRo = GnuRelroPhdr.p_type && !InRelRo && !RelroAligned;
+      if (FirstNonRelRo || PH->p_flags != Flags) {
         VA = RoundUpToAlignment(VA, Target->getPageSize());
         FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
-        Elf_Phdr *PH = &Phdrs[++PhdrIdx];
+        if (FirstNonRelRo)
+          RelroAligned = true;
+      }
+
+      if (PH->p_flags != Flags) {
+        // Flags changed. Create a new PT_LOAD.
+        PH = &Phdrs[++PhdrIdx];
         setPhdr(PH, PT_LOAD, Flags, FileOff, VA, 0, Target->getPageSize());
       }
 
@@ -966,7 +972,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         VA = RoundUpToAlignment(VA, Sec->getAlign());
         Sec->setVA(VA);
         VA += Sec->getSize();
-        updateRelro(&Phdrs[PhdrIdx], &GnuRelroPhdr, Sec, VA);
+        if (InRelRo)
+          updateRelro(PH, &GnuRelroPhdr, VA);
       }
     }
 
@@ -975,9 +982,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     if (Sec->getType() != SHT_NOBITS)
       FileOff += Sec->getSize();
     if (needsPhdr<ELFT>(Sec)) {
-      Elf_Phdr *Cur = &Phdrs[PhdrIdx];
-      Cur->p_filesz = FileOff - Cur->p_offset;
-      Cur->p_memsz = VA - Cur->p_vaddr;
+      PH->p_filesz = FileOff - PH->p_offset;
+      PH->p_memsz = VA - PH->p_vaddr;
     }
   }
 
