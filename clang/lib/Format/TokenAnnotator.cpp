@@ -831,7 +831,7 @@ private:
 
   void modifyContext(const FormatToken &Current) {
     if (Current.getPrecedence() == prec::Assignment &&
-        !Line.First->isOneOf(tok::kw_template, tok::kw_using) &&
+        !Line.First->isOneOf(tok::kw_template, tok::kw_using, tok::kw_return) &&
         (!Current.Previous || Current.Previous->isNot(tok::kw_operator))) {
       Contexts.back().IsExpression = true;
       if (!Line.startsWith(TT_UnaryOperator)) {

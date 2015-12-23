@@ -5613,6 +5613,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   Left.PointerAlignment = FormatStyle::PAS_Left;
   verifyFormat("x = *a(x) = *a(y);", Left);
   verifyFormat("for (;; * = b) {\n}", Left);
+  verifyFormat("return *this += 1;", Left);
 
   verifyIndependentOfContext("a = *(x + y);");
   verifyIndependentOfContext("a = &(x + y);");
