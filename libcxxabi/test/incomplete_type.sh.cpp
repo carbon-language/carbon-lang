@@ -14,9 +14,9 @@
 // incomplete flags set, equality can be tested by comparing the type_info
 // addresses.
 
-// RUN: %cxx %compile_flags -c %s -o %t.one.o
-// RUN: %cxx %compile_flags -c %s -o %t.two.o -DTU_ONE
-// RUN: %cxx %link_flags -o %t.exe %t.one.o %t.two.o
+// RUN: %cxx %flags %compile_flags -c %s -o %t.one.o
+// RUN: %cxx %flags %compile_flags -c %s -o %t.two.o -DTU_ONE
+// RUN: %cxx %flags %link_flags -o %t.exe %t.one.o %t.two.o
 // RUN: %t.exe
 
 #include <stdio.h>
@@ -24,28 +24,42 @@
 #include <typeinfo>
 
 struct NeverDefined;
-void ThrowNeverDefined();
+void ThrowNeverDefinedMP();
 
 struct IncompleteAtThrow;
-void ThrowIncomplete();
-std::type_info const& ReturnTypeInfoIncomplete();
+void ThrowIncompleteMP();
+void ThrowIncompletePP();
+void ThrowIncompletePMP();
+std::type_info const& ReturnTypeInfoIncompleteMP();
+std::type_info const& ReturnTypeInfoIncompletePP();
 
 struct CompleteAtThrow;
-void ThrowComplete();
-std::type_info const& ReturnTypeInfoComplete();
+void ThrowCompleteMP();
+void ThrowCompletePP();
+void ThrowCompletePMP();
+std::type_info const& ReturnTypeInfoCompleteMP();
+std::type_info const& ReturnTypeInfoCompletePP();
 
 void ThrowNullptr();
 
 #ifndef TU_ONE
 
-void ThrowNeverDefined() { throw (int NeverDefined::*)nullptr; }
+void ThrowNeverDefinedMP() { throw (int NeverDefined::*)nullptr; }
 
-void ThrowIncomplete() { throw (int IncompleteAtThrow::*)nullptr; }
-std::type_info const& ReturnTypeInfoIncomplete() { return typeid(int IncompleteAtThrow::*); }
+void ThrowIncompleteMP() { throw (int IncompleteAtThrow::*)nullptr; }
+void ThrowIncompletePP() { throw (IncompleteAtThrow**)nullptr; }
+void ThrowIncompletePMP() { throw (int IncompleteAtThrow::**)nullptr; }
+
+std::type_info const& ReturnTypeInfoIncompleteMP() { return typeid(int IncompleteAtThrow::*); }
+std::type_info const& ReturnTypeInfoIncompletePP() { return typeid(IncompleteAtThrow**); }
 
 struct CompleteAtThrow {};
-void ThrowComplete() { throw (int CompleteAtThrow::*)nullptr; }
-std::type_info const& ReturnTypeInfoComplete() { return typeid(int CompleteAtThrow::*); }
+void ThrowCompleteMP() { throw (int CompleteAtThrow::*)nullptr; }
+void ThrowCompletePP() { throw (CompleteAtThrow**)nullptr; }
+void ThrowCompletePMP() { throw (int CompleteAtThrow::**)nullptr; }
+
+std::type_info const& ReturnTypeInfoCompleteMP() { return typeid(int CompleteAtThrow::*); }
+std::type_info const& ReturnTypeInfoCompletePP() { return typeid(CompleteAtThrow**); }
 
 void ThrowNullptr() { throw nullptr; }
 
@@ -54,15 +68,80 @@ void ThrowNullptr() { throw nullptr; }
 struct IncompleteAtThrow {};
 
 int main() {
-  assert(ReturnTypeInfoIncomplete() != typeid(int IncompleteAtThrow::*));
   try {
-    ThrowIncomplete();
+    ThrowNeverDefinedMP();
+    assert(false);
+  } catch (int IncompleteAtThrow::*) {
+    assert(false);
+  } catch (int CompleteAtThrow::*) {
+    assert(false);
+  } catch (int NeverDefined::*) {}
+
+  assert(ReturnTypeInfoIncompleteMP() != typeid(int IncompleteAtThrow::*));
+  try {
+    ThrowIncompleteMP();
+    assert(false);
+  } catch (CompleteAtThrow**) {
+    assert(false);
+  } catch (int CompleteAtThrow::*) {
+    assert(false);
+  } catch (IncompleteAtThrow**) {
+    assert(false);
   } catch (int IncompleteAtThrow::*) {}
 
-  assert(ReturnTypeInfoComplete() != typeid(int CompleteAtThrow::*));
+  assert(ReturnTypeInfoIncompletePP() != typeid(IncompleteAtThrow**));
   try {
-    ThrowComplete();
+    ThrowIncompletePP();
+    assert(false);
+  } catch (int IncompleteAtThrow::*) {
+    assert(false);
+  } catch (IncompleteAtThrow**) {}
+
+  try {
+    ThrowIncompletePMP();
+    assert(false);
+  } catch (int IncompleteAtThrow::*) {
+    assert(false);
+  } catch (IncompleteAtThrow**) {
+    assert(false);
+  } catch (int IncompleteAtThrow::**) {}
+
+  assert(ReturnTypeInfoCompleteMP() != typeid(int CompleteAtThrow::*));
+  try {
+    ThrowCompleteMP();
+    assert(false);
+  } catch (IncompleteAtThrow**) {
+    assert(false);
+  } catch (int IncompleteAtThrow::*) {
+    assert(false);
+  } catch (CompleteAtThrow**) {
+    assert(false);
   } catch (int CompleteAtThrow::*) {}
+
+  assert(ReturnTypeInfoCompletePP() != typeid(CompleteAtThrow**));
+  try {
+    ThrowCompletePP();
+    assert(false);
+  } catch (IncompleteAtThrow**) {
+    assert(false);
+  } catch (int IncompleteAtThrow::*) {
+    assert(false);
+  } catch (int CompleteAtThrow::*) {
+    assert(false);
+  } catch (CompleteAtThrow**) {}
+
+  try {
+    ThrowCompletePMP();
+    assert(false);
+  } catch (IncompleteAtThrow**) {
+    assert(false);
+  } catch (int IncompleteAtThrow::*) {
+    assert(false);
+  } catch (int CompleteAtThrow::*) {
+    assert(false);
+  } catch (CompleteAtThrow**) {
+    assert(false);
+  } catch (int CompleteAtThrow::**) {}
 
 #if __cplusplus >= 201103L
   // Catch nullptr as complete type
@@ -76,7 +155,7 @@ int main() {
   } catch (int CompleteAtThrow::*) {}
   // Catch nullptr as a type that is never complete.
   try {
-    ThrowNeverDefined();
+    ThrowNullptr();
   } catch (int NeverDefined::*) {}
 #endif
 }
