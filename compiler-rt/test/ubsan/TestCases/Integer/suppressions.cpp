@@ -1,3 +1,11 @@
+// XFAIL: win32
+// On Windows, %t starts with c:\. lit's ShLexer helpfully strips the
+// quotes in the suppressions="%t..." lines below, so the UBSAN_OPTIONS
+// env var that ubsan effectively sees is halt_on_error=1:suppressions=c:\...
+// without any quotes.  Since : is ubsan's UBSAN_OPTIONS separator, this
+// confuses sanitizer_flag_parser.
+// FIXME: Figure out how to make this test go on Windows.
+
 // RUN: %clangxx -fsanitize=integer -g0 %s -o %t
 
 // Fails without any suppression.
