@@ -1166,18 +1166,6 @@ template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Data.data(), Data.size());
 }
 
-template <class ELFT> bool lld::elf2::includeInSymtab(const SymbolBody &B) {
-  if (!B.isUsedInRegularObj())
-    return false;
-
-  // Don't include synthetic symbols like __init_array_start in every output.
-  if (auto *U = dyn_cast<DefinedAbsolute<ELFT>>(&B))
-    if (&U->Sym == &DefinedAbsolute<ELFT>::IgnoreUndef)
-      return false;
-
-  return true;
-}
-
 bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   uint8_t V = B.getVisibility();
   if (V != STV_DEFAULT && V != STV_PROTECTED)
@@ -1526,11 +1514,6 @@ template ELFFile<ELF64BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64BE> &,
                   const ELFFile<ELF64BE>::Elf_Rel &,
                   ELFFile<ELF64BE>::uintX_t Addend);
-
-template bool includeInSymtab<ELF32LE>(const SymbolBody &);
-template bool includeInSymtab<ELF32BE>(const SymbolBody &);
-template bool includeInSymtab<ELF64LE>(const SymbolBody &);
-template bool includeInSymtab<ELF64BE>(const SymbolBody &);
 
 template bool shouldKeepInSymtab<ELF32LE>(const ObjectFile<ELF32LE> &,
                                           StringRef,

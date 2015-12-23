@@ -596,6 +596,18 @@ static void addIRelocMarkers(SymbolTable<ELFT> &Symtab, bool IsDynamic) {
             DefinedAbsolute<ELFT>::RelaIpltEnd);
 }
 
+template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
+  if (!B.isUsedInRegularObj())
+    return false;
+
+  // Don't include synthetic symbols like __init_array_start in every output.
+  if (auto *U = dyn_cast<DefinedAbsolute<ELFT>>(&B))
+    if (&U->Sym == &DefinedAbsolute<ELFT>::IgnoreUndef)
+      return false;
+
+  return true;
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   // .interp needs to be on the first page in the output file.
