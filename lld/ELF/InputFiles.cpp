@@ -238,7 +238,7 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
         Sections[I] =
             new (this->Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
       else if (shouldMerge<ELFT>(Sec))
-        Sections[I] = new (this->Alloc) MergeInputSection<ELFT>(this, &Sec);
+        Sections[I] = new (this->MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
       else
         Sections[I] = new (this->Alloc) InputSection<ELFT>(this, &Sec);
       break;

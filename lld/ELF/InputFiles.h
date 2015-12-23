@@ -135,6 +135,7 @@ private:
   std::vector<SymbolBody *> SymbolBodies;
 
   llvm::BumpPtrAllocator Alloc;
+  llvm::SpecificBumpPtrAllocator<MergeInputSection<ELFT>> MAlloc;
 };
 
 class ArchiveFile : public InputFile {
