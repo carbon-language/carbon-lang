@@ -1208,8 +1208,11 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
     std::sort(Temp.begin(), Temp.end(), order_by_name);
     for (Value *Ptr : Temp) {
       Value *Base = PointerToBase[Ptr];
-      errs() << " derived %" << Ptr->getName() << " base %" << Base->getName()
-             << "\n";
+      errs() << " derived ";
+      Ptr->printAsOperand(errs(), false);
+      errs() << " base ";
+      Base->printAsOperand(errs(), false);
+      errs() << "\n";;
     }
   }
 
@@ -2378,9 +2381,13 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
   if (PrintBasePointers) {
     for (auto &Info : Records) {
       errs() << "Base Pairs: (w/Relocation)\n";
-      for (auto Pair : Info.PointerToBase)
-        errs() << " derived %" << Pair.first->getName() << " base %"
-               << Pair.second->getName() << "\n";
+      for (auto Pair : Info.PointerToBase) {
+        errs() << " derived ";
+        Pair.first->printAsOperand(errs(), false);
+        errs() << " base ";
+        Pair.second->printAsOperand(errs(), false);
+        errs() << "\n";
+      }
     }
   }
 
