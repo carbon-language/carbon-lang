@@ -6044,6 +6044,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
 TEST_F(FormatTest, FormatsArrays) {
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaa[aaaaaaaaaaaaaaaaaaaaaaaaa]\n"
                "                         [bbbbbbbbbbbbbbbbbbbbbbbbb] = c;");
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaa[aaaaaaaaaaa(aaaaaaaaaaaa)]\n"
+               "                         [bbbbbbbbbbb(bbbbbbbbbbbb)] = c;");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "    [bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] = ccccccccccc;");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
