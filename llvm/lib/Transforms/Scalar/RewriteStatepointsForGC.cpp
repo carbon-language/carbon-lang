@@ -215,7 +215,7 @@ static void findLiveSetAtInst(Instruction *inst, GCPtrLivenessData &Data,
                               StatepointLiveSetTy &out);
 
 // TODO: Once we can get to the GCStrategy, this becomes
-// Optional<bool> isGCManagedPointer(const Value *V) const override {
+// Optional<bool> isGCManagedPointer(const Type *Ty) const override {
 
 static bool isGCPointerType(Type *T) {
   if (auto *PT = dyn_cast<PointerType>(T))
