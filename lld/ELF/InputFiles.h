@@ -136,6 +136,7 @@ private:
 
   llvm::BumpPtrAllocator Alloc;
   llvm::SpecificBumpPtrAllocator<MergeInputSection<ELFT>> MAlloc;
+  llvm::SpecificBumpPtrAllocator<EHInputSection<ELFT>> EHAlloc;
 };
 
 class ArchiveFile : public InputFile {

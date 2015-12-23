@@ -233,12 +233,14 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
       if (Name == ".note.GNU-stack")
         Sections[I] = &InputSection<ELFT>::Discarded;
       else if (Name == ".eh_frame")
-        Sections[I] = new (this->Alloc) EHInputSection<ELFT>(this, &Sec);
+        Sections[I] =
+            new (this->EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
       else if (Name == ".reginfo")
         Sections[I] =
             new (this->Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
       else if (shouldMerge<ELFT>(Sec))
-        Sections[I] = new (this->MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
+        Sections[I] =
+            new (this->MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
       else
         Sections[I] = new (this->Alloc) InputSection<ELFT>(this, &Sec);
       break;
