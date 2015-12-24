@@ -61,16 +61,13 @@ ELFFileBase<ELFT>::getSymbolsHelper(bool Local) {
 
 template <class ELFT>
 uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
-  uint32_t Index = Sym.st_shndx;
-  if (Index == ELF::SHN_XINDEX)
-    Index = this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
-                                                     SymtabSHNDX);
-  else if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
+  uint32_t I = Sym.st_shndx;
+  if (I == ELF::SHN_XINDEX)
+    return this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
+                                                    SymtabSHNDX);
+  if (I >= ELF::SHN_LORESERVE)
     return 0;
-
-  if (!Index)
-    error("Invalid section index");
-  return Index;
+  return I;
 }
 
 template <class ELFT> void ELFFileBase<ELFT>::initStringTable() {
