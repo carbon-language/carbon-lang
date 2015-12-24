@@ -1,4 +1,4 @@
-add_llvm_library(LLVMCodeView
+add_llvm_library(LLVMDebugInfoCodeView
   FieldListRecordBuilder.cpp
   Line.cpp
   ListRecordBuilder.cpp
@@ -6,4 +6,7 @@ add_llvm_library(LLVMCodeView
   MethodListRecordBuilder.cpp
   TypeRecordBuilder.cpp
   TypeTableBuilder.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/DebugInfo/CodeView
   )
