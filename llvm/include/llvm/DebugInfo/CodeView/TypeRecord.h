@@ -241,8 +241,8 @@ private:
 class BitFieldRecord : TypeRecord {
 public:
   BitFieldRecord(TypeIndex Type, uint8_t BitSize, uint8_t BitOffset)
-      : TypeRecord(TypeRecordKind::BitField), Type(Type), BitOffset(BitOffset),
-        BitSize(BitSize) {}
+      : TypeRecord(TypeRecordKind::BitField), Type(Type), BitSize(BitSize),
+        BitOffset(BitOffset) {}
 
   TypeIndex getType() const { return Type; }
   uint8_t getBitOffset() const { return BitOffset; }
