@@ -1,0 +1,9 @@
+add_llvm_library(LLVMCodeView
+  FieldListRecordBuilder.cpp
+  Line.cpp
+  ListRecordBuilder.cpp
+  MemoryTypeTableBuilder.cpp
+  MethodListRecordBuilder.cpp
+  TypeRecordBuilder.cpp
+  TypeTableBuilder.cpp
+  )
