@@ -110,6 +110,9 @@ void elf2::ObjectFile<ELFT>::parse(DenseSet<StringRef> &Comdats) {
   initializeSymbols();
 }
 
+// Sections with SHT_GROUP and comdat bits define comdat section groups.
+// They are identified and deduplicated by group name. This function
+// returns a group name.
 template <class ELFT>
 StringRef ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
@@ -222,25 +225,34 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
       break;
     }
     default:
-      ErrorOr<StringRef> NameOrErr = this->ELFObj.getSectionName(&Sec);
-      error(NameOrErr);
-      StringRef Name = *NameOrErr;
-      if (Name == ".note.GNU-stack")
-        Sections[I] = &InputSection<ELFT>::Discarded;
-      else if (Name == ".eh_frame")
-        Sections[I] =
-            new (this->EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
-      else if (Config->EMachine == EM_MIPS && Name == ".reginfo")
-        Sections[I] =
-            new (this->Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
-      else if (shouldMerge<ELFT>(Sec))
-        Sections[I] =
-            new (this->MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
-      else
-        Sections[I] = new (this->Alloc) InputSection<ELFT>(this, &Sec);
-      break;
+      Sections[I] = createInputSection(Sec);
     }
   }
+}
+
+template <class ELFT> InputSectionBase<ELFT> *
+elf2::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
+  ErrorOr<StringRef> NameOrErr = this->ELFObj.getSectionName(&Sec);
+  error(NameOrErr);
+  StringRef Name = *NameOrErr;
+
+  // .note.GNU-stack is a marker section to control the presence of
+  // PT_GNU_STACK segment in outputs. Since the presence of the segment
+  // is controlled only by the command line option (-z execstack) in LLD,
+  // .note.GNU-stack is ignored.
+  if (Name == ".note.GNU-stack")
+    return &InputSection<ELFT>::Discarded;
+
+  // A MIPS object file has a special section that contains register
+  // usage info, which needs to be handled by the linker specially.
+  if (Config->EMachine == EM_MIPS && Name == ".reginfo")
+    return new (this->Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
+
+  if (Name == ".eh_frame")
+    return new (this->EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
+  if (shouldMerge<ELFT>(Sec))
+    return new (this->MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
+  return new (this->Alloc) InputSection<ELFT>(this, &Sec);
 }
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
