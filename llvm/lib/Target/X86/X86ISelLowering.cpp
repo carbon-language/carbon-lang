@@ -16848,6 +16848,12 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                 Src2, Src1);
       return DAG.getBitcast(VT, Res);
     }
+    case CONVERT_MASK_TO_VEC: {
+      SDValue Mask = Op.getOperand(1);
+      MVT MaskVT = MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
+      SDValue VMask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
+      return DAG.getNode(IntrData->Opc0, dl, VT, VMask);
+    }
     default:
       break;
     }
