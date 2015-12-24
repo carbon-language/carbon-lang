@@ -800,7 +800,7 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     return SC->OutSec->getVA() + SC->getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:
-    return Out<ELFT>::Bss->getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
+    return Out<ELFT>::Bss->getVA() + cast<DefinedCommon>(S).OffsetInBSS;
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(S);
     if (SS.NeedsCopy)
@@ -1370,6 +1370,9 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     if (const Elf_Sym *InputSym = getElfSym<ELFT>(*Body)) {
       Type = InputSym->getType();
       Size = InputSym->st_size;
+    } else if (auto *C = dyn_cast<DefinedCommon>(Body)) {
+      Type = STT_OBJECT;
+      Size = C->Size;
     }
 
     ESym->setBindingAndType(getSymbolBinding(Body), Type);

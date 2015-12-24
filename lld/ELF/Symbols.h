@@ -57,9 +57,9 @@ public:
   enum Kind {
     DefinedFirst,
     DefinedRegularKind = DefinedFirst,
-    DefinedCommonKind,
     SharedKind,
     DefinedElfLast = SharedKind,
+    DefinedCommonKind,
     DefinedSyntheticKind,
     DefinedLast = DefinedSyntheticKind,
     UndefinedElfKind,
@@ -154,15 +154,10 @@ public:
   }
 };
 
-template <class ELFT> class DefinedCommon : public DefinedElf<ELFT> {
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-
+class DefinedCommon : public Defined {
 public:
-  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
-  DefinedCommon(StringRef N, const Elf_Sym &Sym)
-      : DefinedElf<ELFT>(SymbolBody::DefinedCommonKind, N, Sym) {
-    MaxAlignment = Sym.st_value;
-  }
+  DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment, bool IsWeak,
+                uint8_t Visibility);
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == SymbolBody::DefinedCommonKind;
@@ -170,10 +165,12 @@ public:
 
   // The output offset of this common symbol in the output bss. Computed by the
   // writer.
-  uintX_t OffsetInBSS;
+  uint64_t OffsetInBSS;
 
   // The maximum alignment we have seen for this symbol.
-  uintX_t MaxAlignment;
+  uint64_t MaxAlignment;
+
+  uint64_t Size;
 };
 
 // Regular defined symbols read from object file symbol tables.

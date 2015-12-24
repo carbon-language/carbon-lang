@@ -65,7 +65,7 @@ private:
   int getPhdrsNum() const;
 
   OutputSection<ELFT> *getBSS();
-  void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms);
+  void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
   void addSharedCopySymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
@@ -472,27 +472,24 @@ template <class ELFT> OutputSection<ELFT> *Writer<ELFT>::getBSS() {
 // Until this function is called, common symbols do not belong to any section.
 // This function adds them to end of BSS section.
 template <class ELFT>
-void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
+void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
   if (Syms.empty())
     return;
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
-  std::stable_sort(
-    Syms.begin(), Syms.end(),
-    [](const DefinedCommon<ELFT> *A, const DefinedCommon<ELFT> *B) {
-      return A->MaxAlignment > B->MaxAlignment;
-    });
+  std::stable_sort(Syms.begin(), Syms.end(),
+                   [](const DefinedCommon *A, const DefinedCommon *B) {
+                     return A->MaxAlignment > B->MaxAlignment;
+                   });
 
   uintX_t Off = getBSS()->getSize();
-  for (DefinedCommon<ELFT> *C : Syms) {
-    const Elf_Sym &Sym = C->Sym;
+  for (DefinedCommon *C : Syms) {
     uintX_t Align = C->MaxAlignment;
     Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
-    Off += Sym.st_size;
+    Off += C->Size;
   }
 
   Out<ELFT>::Bss->setSize(Off);
@@ -751,7 +748,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   addIRelocMarkers<ELFT>(Symtab, isOutputDynamic());
 
-  std::vector<DefinedCommon<ELFT> *> CommonSymbols;
+  std::vector<DefinedCommon *> CommonSymbols;
   std::vector<SharedSymbol<ELFT> *> SharedCopySymbols;
   for (auto &P : Symtab.getSymbols()) {
     SymbolBody *Body = P.second->Body;
@@ -759,7 +756,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       if (!U->isWeak() && !U->canKeepUndefined())
         reportUndefined<ELFT>(Symtab, *Body);
 
-    if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
+    if (auto *C = dyn_cast<DefinedCommon>(Body))
       CommonSymbols.push_back(C);
     if (auto *SC = dyn_cast<SharedSymbol<ELFT>>(Body))
       if (SC->NeedsCopy)

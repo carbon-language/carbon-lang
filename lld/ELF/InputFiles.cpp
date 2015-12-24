@@ -286,7 +286,9 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case SHN_UNDEF:
     return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
   case SHN_COMMON:
-    return new (this->Alloc) DefinedCommon<ELFT>(Name, *Sym);
+    return new (this->Alloc) DefinedCommon(
+        Name, Sym->st_size, Sym->st_value,
+        Sym->getBinding() == llvm::ELF::STB_WEAK, Sym->getVisibility());
   }
 
   switch (Sym->getBinding()) {
