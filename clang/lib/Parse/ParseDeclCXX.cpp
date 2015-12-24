@@ -65,7 +65,7 @@ Parser::DeclGroupPtrTy Parser::ParseNamespace(unsigned Context,
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteNamespaceDecl(getCurScope());
     cutOffParsing();
-    return DeclGroupPtrTy();;
+    return DeclGroupPtrTy();
   }
 
   SourceLocation IdentLoc;
