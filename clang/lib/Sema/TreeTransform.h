@@ -2765,9 +2765,8 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildObjCDictionaryLiteral(SourceRange Range,
-                                          ObjCDictionaryElement *Elements,
-                                          unsigned NumElements) {
-    return getSema().BuildObjCDictionaryLiteral(Range, Elements, NumElements);
+                              MutableArrayRef<ObjCDictionaryElement> Elements) {
+    return getSema().BuildObjCDictionaryLiteral(Range, Elements);
   }
 
   /// \brief Build a new Objective-C \@encode expression.
@@ -10728,8 +10727,7 @@ TreeTransform<Derived>::TransformObjCDictionaryLiteral(
     return SemaRef.MaybeBindToTemporary(E);
 
   return getDerived().RebuildObjCDictionaryLiteral(E->getSourceRange(),
-                                                   Elements.data(),
-                                                   Elements.size());
+                                                   Elements);
 }
 
 template<typename Derived>

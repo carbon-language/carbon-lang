@@ -3435,7 +3435,7 @@ ExprResult Parser::ParseObjCDictionaryLiteral(SourceLocation AtLoc) {
   
   // Create the ObjCDictionaryLiteral.
   return Actions.BuildObjCDictionaryLiteral(SourceRange(AtLoc, EndLoc),
-                                            Elements.data(), Elements.size());
+                                            Elements);
 }
 
 ///    objc-encode-expression:
