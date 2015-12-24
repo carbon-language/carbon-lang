@@ -701,7 +701,7 @@ public:
   }
 
   /// \brief Sets the base classes of this struct or class.
-  void setBases(CXXBaseSpecifier const * const *Bases, unsigned NumBases);
+  void setBases(ArrayRef<const CXXBaseSpecifier *> Bases);
 
   /// \brief Retrieves the number of base classes of this class.
   unsigned getNumBases() const { return data().NumBases; }

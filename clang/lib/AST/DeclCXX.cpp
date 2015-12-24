@@ -135,14 +135,13 @@ CXXRecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
 }
 
 void
-CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
-                        unsigned NumBases) {
+CXXRecordDecl::setBases(ArrayRef<const CXXBaseSpecifier *> Bases) {
   ASTContext &C = getASTContext();
 
   if (!data().Bases.isOffset() && data().NumBases > 0)
     C.Deallocate(data().getBases());
 
-  if (NumBases) {
+  if (!Bases.empty()) {
     // C++ [dcl.init.aggr]p1:
     //   An aggregate is [...] a class with [...] no base classes [...].
     data().Aggregate = false;
@@ -158,9 +157,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   // The virtual bases of this class.
   SmallVector<const CXXBaseSpecifier *, 8> VBases;
 
-  data().Bases = new(C) CXXBaseSpecifier [NumBases];
-  data().NumBases = NumBases;
-  for (unsigned i = 0; i < NumBases; ++i) {
+  data().Bases = new(C) CXXBaseSpecifier [Bases.size()];
+  data().NumBases = Bases.size();
+  for (unsigned i = 0; i < Bases.size(); ++i) {
     data().getBases()[i] = *Bases[i];
     // Keep track of inherited vbases for this base class.
     const CXXBaseSpecifier *Base = Bases[i];
