@@ -1147,7 +1147,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Path, FileSize, FileOutputBuffer::F_executable);
-  error(BufferOrErr, Twine("failed to open ") + Path);
+  error(BufferOrErr, "failed to open " + Path);
   Buffer = std::move(*BufferOrErr);
 }
 
