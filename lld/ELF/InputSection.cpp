@@ -71,7 +71,7 @@ InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) {
   uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
   if (SymbolBody *B = File->getSymbolBody(SymIndex))
     if (auto *D = dyn_cast<DefinedRegular<ELFT>>(B->repl()))
-      return &D->Section;
+      return D->Section;
   // Local symbol
   if (const Elf_Sym *Sym = File->getLocalSymbol(SymIndex))
     if (InputSectionBase<ELFT> *Sec = File->getSection(*Sym))

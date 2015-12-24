@@ -789,15 +789,15 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     auto &D = cast<DefinedSynthetic<ELFT>>(S);
     return D.Section.getVA() + D.Value;
   }
-  case SymbolBody::DefinedAbsoluteKind:
-    return cast<DefinedAbsolute<ELFT>>(S).Sym.st_value;
   case SymbolBody::DefinedRegularKind: {
     const auto &DR = cast<DefinedRegular<ELFT>>(S);
-    InputSectionBase<ELFT> &SC = DR.Section;
+    InputSectionBase<ELFT> *SC = DR.Section;
+    if (!SC)
+      return DR.Sym.st_value;
     if (DR.Sym.getType() == STT_TLS)
-      return SC.OutSec->getVA() + SC.getOffset(DR.Sym) -
+      return SC->OutSec->getVA() + SC->getOffset(DR.Sym) -
              Out<ELFT>::TlsPhdr->p_vaddr;
-    return SC.OutSec->getVA() + SC.getOffset(DR.Sym);
+    return SC->OutSec->getVA() + SC->getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:
     return Out<ELFT>::Bss->getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
@@ -1341,9 +1341,11 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
       break;
     case SymbolBody::DefinedRegularKind: {
       auto *Sym = cast<DefinedRegular<ELFT>>(Body->repl());
-      if (!Sym->Section.isLive())
-        continue;
-      OutSec = Sym->Section.OutSec;
+      if (InputSectionBase<ELFT> *Sec = Sym->Section) {
+        if (!Sec->isLive())
+          continue;
+        OutSec = Sec->OutSec;
+      }
       break;
     }
     case SymbolBody::DefinedCommonKind:
@@ -1356,7 +1358,6 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     }
     case SymbolBody::UndefinedElfKind:
     case SymbolBody::UndefinedKind:
-    case SymbolBody::DefinedAbsoluteKind:
     case SymbolBody::LazyKind:
       break;
     }
@@ -1376,10 +1377,10 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     ESym->setVisibility(Body->getVisibility());
     ESym->st_value = getSymVA<ELFT>(*Body);
 
-    if (isa<DefinedAbsolute<ELFT>>(Body))
-      ESym->st_shndx = SHN_ABS;
-    else if (OutSec)
+    if (OutSec)
       ESym->st_shndx = OutSec->SectionIndex;
+    else if (isa<DefinedRegular<ELFT>>(Body))
+      ESym->st_shndx = SHN_ABS;
 
     ++ESym;
   }

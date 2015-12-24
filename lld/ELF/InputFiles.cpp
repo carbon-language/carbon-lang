@@ -65,7 +65,7 @@ uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
   if (I == ELF::SHN_XINDEX)
     return this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
                                                     SymtabSHNDX);
-  if (I >= ELF::SHN_LORESERVE)
+  if (I >= ELF::SHN_LORESERVE || I == ELF::SHN_ABS)
     return 0;
   return I;
 }
@@ -283,8 +283,6 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   StringRef Name = *NameOrErr;
 
   switch (Sym->st_shndx) {
-  case SHN_ABS:
-    return new (this->Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
   case SHN_UNDEF:
     return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
   case SHN_COMMON:
@@ -300,7 +298,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     InputSectionBase<ELFT> *Sec = getSection(*Sym);
     if (Sec == &InputSection<ELFT>::Discarded)
       return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
-    return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);
+    return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, Sec);
   }
   }
 }

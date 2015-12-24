@@ -98,7 +98,7 @@ SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
 template <class ELFT>
 void SymbolTable<ELFT>::addAbsolute(StringRef Name,
                                     typename ELFFile<ELFT>::Elf_Sym &ESym) {
-  resolve(new (Alloc) DefinedAbsolute<ELFT>(Name, ESym));
+  resolve(new (Alloc) DefinedRegular<ELFT>(Name, ESym, nullptr));
 }
 
 template <class ELFT>
@@ -112,7 +112,7 @@ void SymbolTable<ELFT>::addSynthetic(StringRef Name,
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addIgnored(StringRef Name) {
   auto *Sym = new (Alloc)
-      DefinedAbsolute<ELFT>(Name, DefinedAbsolute<ELFT>::IgnoreUndef);
+      DefinedRegular<ELFT>(Name, DefinedRegular<ELFT>::IgnoreUndef, nullptr);
   resolve(Sym);
   return Sym;
 }

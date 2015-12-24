@@ -93,7 +93,7 @@ template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
   auto MarkSymbol = [&](SymbolBody *Sym) {
     if (Sym)
       if (auto *D = dyn_cast<DefinedRegular<ELFT>>(Sym->repl()))
-        Enqueue(&D->Section);
+        Enqueue(D->Section);
   };
 
   // Add GC root symbols.
