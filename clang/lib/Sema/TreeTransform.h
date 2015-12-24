@@ -391,7 +391,7 @@ public:
   /// due to transformation.
   ///
   /// \returns true if an error occurred, false otherwise.
-  bool TransformExprs(Expr **Inputs, unsigned NumInputs, bool IsCall,
+  bool TransformExprs(Expr *const *Inputs, unsigned NumInputs, bool IsCall,
                       SmallVectorImpl<Expr *> &Outputs,
                       bool *ArgChanged = nullptr);
 
@@ -3200,7 +3200,7 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
 }
 
 template<typename Derived>
-bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
+bool TreeTransform<Derived>::TransformExprs(Expr *const *Inputs,
                                             unsigned NumInputs,
                                             bool IsCall,
                                       SmallVectorImpl<Expr *> &Outputs,
