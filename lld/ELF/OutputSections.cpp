@@ -1038,23 +1038,30 @@ void EHOutputSection<ELFT>::addSection(EHInputSection<ELFT> *S) {
   return addSectionAux(S, Obj.rels(RelSec));
 }
 
+template <class ELFT>
+static typename ELFFile<ELFT>::uintX_t writeAlignedCieOrFde(StringRef Data,
+                                                            uint8_t *Buf) {
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  const endianness E = ELFT::TargetEndianness;
+  uint64_t Len = RoundUpToAlignment(Data.size(), sizeof(uintX_t));
+  write32<E>(Buf, Len - 4);
+  memcpy(Buf + 4, Data.data() + 4, Data.size() - 4);
+  return Len;
+}
+
 template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
   size_t Offset = 0;
   for (const Cie<ELFT> &C : Cies) {
     size_t CieOffset = Offset;
 
-    StringRef CieData = C.data();
-    memcpy(Buf + Offset, CieData.data(), CieData.size());
+    uintX_t CIELen = writeAlignedCieOrFde<ELFT>(C.data(), Buf + Offset);
     C.S->Offsets[C.Index].second = Offset;
-    Offset += RoundUpToAlignment(CieData.size(), sizeof(uintX_t));
+    Offset += CIELen;
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
-      StringRef FdeData = F.data();
-      uintX_t Len = RoundUpToAlignment(FdeData.size(), sizeof(uintX_t));
-      write32<E>(Buf + Offset, Len - 4);                    // Length
+      uintX_t Len = writeAlignedCieOrFde<ELFT>(F.data(), Buf + Offset);
       write32<E>(Buf + Offset + 4, Offset + 4 - CieOffset); // Pointer
-      memcpy(Buf + Offset + 8, FdeData.data() + 8, FdeData.size() - 8);
       F.S->Offsets[F.Index].second = Offset;
       Offset += Len;
     }
