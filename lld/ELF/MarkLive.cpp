@@ -120,10 +120,6 @@ template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
         continue;
       if (isReserved(Sec))
         Enqueue(Sec);
-      else if (Sec->getSectionName() == ".eh_frame")
-        // .eh_frame is special. It should be marked live so that we don't
-        // drop it, but it should not keep any section alive.
-        Sec->Live = true;
     }
   }
 
