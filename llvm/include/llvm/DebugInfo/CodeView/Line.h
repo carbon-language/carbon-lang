@@ -17,8 +17,8 @@ namespace codeview {
 
 class LineInfo {
 public:
-  static const int32_t AlwaysStepIntoLineNumber = 0xfeefee;
-  static const int32_t NeverStepIntoLineNumber = 0xf00f00;
+  static const uint32_t AlwaysStepIntoLineNumber = 0xfeefee;
+  static const uint32_t NeverStepIntoLineNumber = 0xf00f00;
 
 private:
   static const uint32_t StartLineMask = 0x00ffffff;
