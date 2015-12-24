@@ -20,13 +20,9 @@ using namespace codeview;
 
 namespace {
 
-const uint32_t PointerKindMask = 0x0000001f;
 const int PointerKindShift = 0;
-const uint32_t PointerModeMask = 0x000000e0;
 const int PointerModeShift = 5;
-const uint32_t PointerSizeMask = 0x0007e000;
 const int PointerSizeShift = 13;
-const uint32_t PointerOptionsMask = 0x00081f00;
 
 const int ClassHfaKindShift = 11;
 const int ClassWindowsRTClassKindShift = 14;
