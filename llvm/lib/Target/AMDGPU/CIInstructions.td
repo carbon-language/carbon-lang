@@ -142,7 +142,6 @@ defm FLAT_ATOMIC_CMPSWAP : FLAT_ATOMIC <
 >;
 defm FLAT_ATOMIC_ADD : FLAT_ATOMIC <0x32, "flat_atomic_add", VGPR_32>;
 defm FLAT_ATOMIC_SUB : FLAT_ATOMIC <0x33, "flat_atomic_sub", VGPR_32>;
-defm FLAT_ATOMIC_RSUB : FLAT_ATOMIC <0x34, "flat_atomic_rsub", VGPR_32>;
 defm FLAT_ATOMIC_SMIN : FLAT_ATOMIC <0x35, "flat_atomic_smin", VGPR_32>;
 defm FLAT_ATOMIC_UMIN : FLAT_ATOMIC <0x36, "flat_atomic_umin", VGPR_32>;
 defm FLAT_ATOMIC_SMAX : FLAT_ATOMIC <0x37, "flat_atomic_smax", VGPR_32>;
@@ -163,7 +162,6 @@ defm FLAT_ATOMIC_CMPSWAP_X2 : FLAT_ATOMIC <
 >;
 defm FLAT_ATOMIC_ADD_X2 : FLAT_ATOMIC <0x52, "flat_atomic_add_x2", VReg_64>;
 defm FLAT_ATOMIC_SUB_X2 : FLAT_ATOMIC <0x53, "flat_atomic_sub_x2", VReg_64>;
-defm FLAT_ATOMIC_RSUB_X2 : FLAT_ATOMIC <0x54, "flat_atomic_rsub_x2", VReg_64>;
 defm FLAT_ATOMIC_SMIN_X2 : FLAT_ATOMIC <0x55, "flat_atomic_smin_x2", VReg_64>;
 defm FLAT_ATOMIC_UMIN_X2 : FLAT_ATOMIC <0x56, "flat_atomic_umin_x2", VReg_64>;
 defm FLAT_ATOMIC_SMAX_X2 : FLAT_ATOMIC <0x57, "flat_atomic_smax_x2", VReg_64>;
