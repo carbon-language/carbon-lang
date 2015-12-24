@@ -114,14 +114,11 @@ template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
   }
 
   // Preserve special sections.
-  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab->getObjectFiles()) {
-    for (InputSectionBase<ELFT> *Sec : F->getSections()) {
-      if (!Sec || Sec == &InputSection<ELFT>::Discarded)
-        continue;
-      if (isReserved(Sec))
-        Enqueue(Sec);
-    }
-  }
+  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab->getObjectFiles())
+    for (InputSectionBase<ELFT> *Sec : F->getSections())
+      if (Sec && Sec != &InputSection<ELFT>::Discarded)
+        if (isReserved(Sec))
+          Enqueue(Sec);
 
   // Mark all reachable sections.
   while (!Q.empty())
