@@ -503,8 +503,7 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
       if (Tok.is(tok::code_completion)) {
         // FIXME: If these aren't protocol references, we'll need different
         // completions.
-        Actions.CodeCompleteObjCProtocolReferences(protocolIdents.data(),
-                                                   protocolIdents.size());
+        Actions.CodeCompleteObjCProtocolReferences(protocolIdents);
         cutOffParsing();
 
         // FIXME: Better recovery here?.
@@ -1566,8 +1565,7 @@ ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &Protocols,
 
   while (1) {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCProtocolReferences(ProtocolIdents.data(), 
-                                                 ProtocolIdents.size());
+      Actions.CodeCompleteObjCProtocolReferences(ProtocolIdents);
       cutOffParsing();
       return true;
     }
@@ -1670,8 +1668,7 @@ void Parser::parseObjCTypeArgsOrProtocolQualifiers(
       if (!BaseT.isNull() && BaseT->acceptsObjCTypeParams()) {
         Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Type);
       } else {
-        Actions.CodeCompleteObjCProtocolReferences(identifierLocPairs.data(),
-                                                   identifierLocPairs.size());
+        Actions.CodeCompleteObjCProtocolReferences(identifierLocPairs);
       }
       cutOffParsing();
       return;
@@ -3287,8 +3284,7 @@ ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
     AtStrings.push_back(Lit.get());
   }
 
-  return Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.data(),
-                                        AtStrings.size());
+  return Actions.ParseObjCStringLiteral(AtLocs.data(), AtStrings);
 }
 
 /// ParseObjCBooleanLiteral -
