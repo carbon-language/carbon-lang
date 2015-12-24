@@ -73,6 +73,10 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   return 0;
 }
 
+Defined::Defined(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
+                 bool IsTls)
+    : SymbolBody(K, Name, IsWeak, Visibility, IsTls) {}
+
 Undefined::Undefined(SymbolBody::Kind K, StringRef N, bool IsWeak,
                      uint8_t Visibility, bool IsTls)
     : SymbolBody(K, N, IsWeak, Visibility, IsTls), CanKeepUndefined(false) {}
@@ -90,6 +94,12 @@ UndefinedElf<ELFT>::UndefinedElf(StringRef N, const Elf_Sym &Sym)
                 Sym.getBinding() == llvm::ELF::STB_WEAK, Sym.getVisibility(),
                 Sym.getType() == llvm::ELF::STT_TLS),
       Sym(Sym) {}
+
+template <typename ELFT>
+DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
+                                         OutputSectionBase<ELFT> &Section)
+    : Defined(SymbolBody::DefinedSyntheticKind, N, false, STV_DEFAULT, false),
+      Value(Value), Section(Section) {}
 
 std::unique_ptr<InputFile> Lazy::getMember() {
   MemoryBufferRef MBRef = File->getMember(&Sym);
@@ -124,3 +134,8 @@ template class lld::elf2::UndefinedElf<ELF32LE>;
 template class lld::elf2::UndefinedElf<ELF32BE>;
 template class lld::elf2::UndefinedElf<ELF64LE>;
 template class lld::elf2::UndefinedElf<ELF64BE>;
+
+template class lld::elf2::DefinedSynthetic<ELF32LE>;
+template class lld::elf2::DefinedSynthetic<ELF32BE>;
+template class lld::elf2::DefinedSynthetic<ELF64LE>;
+template class lld::elf2::DefinedSynthetic<ELF64BE>;

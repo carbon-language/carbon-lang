@@ -787,7 +787,7 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
   switch (S.kind()) {
   case SymbolBody::DefinedSyntheticKind: {
     auto &D = cast<DefinedSynthetic<ELFT>>(S);
-    return D.Section.getVA() + D.Sym.st_value;
+    return D.Section.getVA() + D.Value;
   }
   case SymbolBody::DefinedAbsoluteKind:
     return cast<DefinedAbsolute<ELFT>>(S).Sym.st_value;
@@ -1320,7 +1320,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
 template <class ELFT>
 static const typename llvm::object::ELFFile<ELFT>::Elf_Sym *
 getElfSym(SymbolBody &Body) {
-  if (auto *EBody = dyn_cast<Defined<ELFT>>(&Body))
+  if (auto *EBody = dyn_cast<DefinedElf<ELFT>>(&Body))
     return &EBody->Sym;
   if (auto *EBody = dyn_cast<UndefinedElf<ELFT>>(&Body))
     return &EBody->Sym;
@@ -1392,6 +1392,8 @@ uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
     return STB_LOCAL;
   if (const Elf_Sym *ESym = getElfSym<ELFT>(*Body))
     return ESym->getBinding();
+  if (isa<DefinedSynthetic<ELFT>>(Body))
+    return STB_LOCAL;
   return Body->isWeak() ? STB_WEAK : STB_GLOBAL;
 }
 

@@ -130,7 +130,7 @@ InputSectionBase<ELFT>::findMipsPairedReloc(uint8_t *Buf, uint32_t SymIndex,
 template <class ELFT>
 static typename llvm::object::ELFFile<ELFT>::uintX_t
 getSymSize(SymbolBody &Body) {
-  if (auto *SS = dyn_cast<Defined<ELFT>>(&Body))
+  if (auto *SS = dyn_cast<DefinedElf<ELFT>>(&Body))
     return SS->Sym.st_size;
   return 0;
 }

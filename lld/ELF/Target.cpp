@@ -71,7 +71,7 @@ template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
 }
 
 template <class ELFT> bool isGnuIFunc(const SymbolBody &S) {
-  if (auto *SS = dyn_cast<Defined<ELFT>>(&S))
+  if (auto *SS = dyn_cast<DefinedElf<ELFT>>(&S))
     return SS->Sym.getType() == STT_GNU_IFUNC;
   return false;
 }
