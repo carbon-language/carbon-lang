@@ -233,7 +233,7 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
       else if (Name == ".eh_frame")
         Sections[I] =
             new (this->EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
-      else if (Name == ".reginfo")
+      else if (Config->EMachine == EM_MIPS && Name == ".reginfo")
         Sections[I] =
             new (this->Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
       else if (shouldMerge<ELFT>(Sec))
