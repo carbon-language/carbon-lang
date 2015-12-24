@@ -78,6 +78,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
     resolve(B);
 }
 
+// Add an undefined symbol.
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addUndefined(StringRef Name) {
   auto *Sym = new (Alloc) Undefined(Name, false, STV_DEFAULT, false);
@@ -85,6 +86,8 @@ SymbolBody *SymbolTable<ELFT>::addUndefined(StringRef Name) {
   return Sym;
 }
 
+// Add an undefined symbol. Unlike addUndefined, that symbol
+// doesn't have to be resolved, thus "opt" (optional).
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
   auto *Sym = new (Alloc) Undefined(Name, false, STV_HIDDEN, true);
