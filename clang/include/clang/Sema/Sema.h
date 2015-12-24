@@ -5583,7 +5583,7 @@ public:
                              SourceLocation ExportLoc,
                              SourceLocation TemplateLoc,
                              SourceLocation LAngleLoc,
-                             Decl **Params, unsigned NumParams,
+                             ArrayRef<Decl *> Params,
                              SourceLocation RAngleLoc);
 
   /// \brief The context in which we are checking a template parameter list.
