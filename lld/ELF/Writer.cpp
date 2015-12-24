@@ -62,7 +62,6 @@ private:
   bool isOutputDynamic() const {
     return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
-  uintX_t getEntryAddr() const;
   int getPhdrsNum() const;
 
   OutputSection<ELFT> *getBSS();
@@ -1095,6 +1094,18 @@ static uint32_t getELFFlags() {
   return V;
 }
 
+template <class ELFT>
+static typename ELFFile<ELFT>::uintX_t getEntryAddr() {
+  if (Config->EntrySym) {
+    if (SymbolBody *E = Config->EntrySym->repl())
+      return getSymVA<ELFT>(*E);
+    return 0;
+  }
+  if (Config->EntryAddr != uint64_t(-1))
+    return Config->EntryAddr;
+  return 0;
+}
+
 template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   memcpy(Buf, "\177ELF", 4);
@@ -1113,7 +1124,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  EHdr->e_entry = getEntryAddr();
+  EHdr->e_entry = getEntryAddr<ELFT>();
   EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_flags = getELFFlags();
@@ -1154,18 +1165,6 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
     if (Sec != Out<ELFT>::Opd)
       Sec->writeTo(Buf + Sec->getFileOff());
-}
-
-template <class ELFT>
-typename ELFFile<ELFT>::uintX_t Writer<ELFT>::getEntryAddr() const {
-  if (Config->EntrySym) {
-    if (SymbolBody *E = Config->EntrySym->repl())
-      return getSymVA<ELFT>(*E);
-    return 0;
-  }
-  if (Config->EntryAddr != uint64_t(-1))
-    return Config->EntryAddr;
-  return 0;
 }
 
 template <class ELFT>
