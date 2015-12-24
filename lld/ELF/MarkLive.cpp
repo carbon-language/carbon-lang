@@ -75,6 +75,9 @@ template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
   }
 }
 
+// This is the main function of the garbage collector.
+// Starting from GC-root sections, this function visits all reachable
+// sections to set their "Live" bits.
 template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
   SmallVector<InputSection<ELFT> *, 256> Q;
 
