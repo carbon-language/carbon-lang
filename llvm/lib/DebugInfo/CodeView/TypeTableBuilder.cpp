@@ -13,7 +13,7 @@
 #include "llvm/DebugInfo/CodeView/MethodListRecordBuilder.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecordBuilder.h"
-#include "llvm/support/raw_ostream.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace codeview;
