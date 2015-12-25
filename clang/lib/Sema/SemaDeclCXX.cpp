@@ -1553,9 +1553,9 @@ NoteIndirectBases(ASTContext &Context, IndirectBaseSet &Set,
 
 /// \brief Performs the actual work of attaching the given base class
 /// specifiers to a C++ class.
-bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
-                                MutableArrayRef<CXXBaseSpecifier *> Bases) {
- if (Bases.empty())
+bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
+                                unsigned NumBases) {
+ if (NumBases == 0)
     return false;
 
   // Used to keep track of which base types we have already seen, so
@@ -1571,7 +1571,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
   // Copy non-redundant base specifiers into permanent storage.
   unsigned NumGoodBases = 0;
   bool Invalid = false;
-  for (unsigned idx = 0; idx < Bases.size(); ++idx) {
+  for (unsigned idx = 0; idx < NumBases; ++idx) {
     QualType NewBaseType
       = Context.getCanonicalType(Bases[idx]->getType());
     NewBaseType = NewBaseType.getLocalUnqualifiedType();
@@ -1597,7 +1597,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
       Bases[NumGoodBases++] = Bases[idx];
 
       // Note this base's direct & indirect bases, if there could be ambiguity.
-      if (Bases.size() > 1)
+      if (NumBases > 1)
         NoteIndirectBases(Context, IndirectBaseTypes, NewBaseType);
       
       if (const RecordType *Record = NewBaseType->getAs<RecordType>()) {
@@ -1619,7 +1619,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
   }
 
   // Attach the remaining base class specifiers to the derived class.
-  Class->setBases(Bases.slice(0, NumGoodBases));
+  Class->setBases(Bases, NumGoodBases);
   
   for (unsigned idx = 0; idx < NumGoodBases; ++idx) {
     // Check whether this direct base is inaccessible due to ambiguity.
@@ -1654,13 +1654,13 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
 /// ActOnBaseSpecifiers - Attach the given base specifiers to the
 /// class, after checking whether there are any duplicate base
 /// classes.
-void Sema::ActOnBaseSpecifiers(Decl *ClassDecl,
-                               MutableArrayRef<CXXBaseSpecifier *> Bases) {
-  if (!ClassDecl || Bases.empty())
+void Sema::ActOnBaseSpecifiers(Decl *ClassDecl, CXXBaseSpecifier **Bases,
+                               unsigned NumBases) {
+  if (!ClassDecl || !Bases || !NumBases)
     return;
 
   AdjustDeclIfTemplate(ClassDecl);
-  AttachBaseSpecifiers(cast<CXXRecordDecl>(ClassDecl), Bases);
+  AttachBaseSpecifiers(cast<CXXRecordDecl>(ClassDecl), Bases, NumBases);
 }
 
 /// \brief Determine whether the type \p Derived is a C++ class that is

@@ -1837,7 +1837,9 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       Invalid = true;
   }
 
-  if (!Invalid && AttachBaseSpecifiers(Instantiation, InstantiatedBases))
+  if (!Invalid &&
+      AttachBaseSpecifiers(Instantiation, InstantiatedBases.data(),
+                           InstantiatedBases.size()))
     Invalid = true;
 
   return Invalid;

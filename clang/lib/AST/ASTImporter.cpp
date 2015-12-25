@@ -2073,7 +2073,7 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
                                        EllipsisLoc));
     }
     if (!Bases.empty())
-      ToCXX->setBases(Bases);
+      ToCXX->setBases(Bases.data(), Bases.size());
   }
   
   if (shouldForceImportDeclContext(Kind))

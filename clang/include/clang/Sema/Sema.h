@@ -5365,10 +5365,10 @@ public:
                                 SourceLocation BaseLoc,
                                 SourceLocation EllipsisLoc);
 
-  bool AttachBaseSpecifiers(CXXRecordDecl *Class,
-                            MutableArrayRef<CXXBaseSpecifier *> Bases);
-  void ActOnBaseSpecifiers(Decl *ClassDecl,
-                           MutableArrayRef<CXXBaseSpecifier *> Bases);
+  bool AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
+                            unsigned NumBases);
+  void ActOnBaseSpecifiers(Decl *ClassDecl, CXXBaseSpecifier **Bases,
+                           unsigned NumBases);
 
   bool IsDerivedFrom(SourceLocation Loc, QualType Derived, QualType Base);
   bool IsDerivedFrom(SourceLocation Loc, QualType Derived, QualType Base,

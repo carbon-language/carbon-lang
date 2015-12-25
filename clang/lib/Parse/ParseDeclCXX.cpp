@@ -1844,7 +1844,7 @@ void Parser::ParseBaseClause(Decl *ClassDecl) {
   }
 
   // Attach the base specifiers
-  Actions.ActOnBaseSpecifiers(ClassDecl, BaseInfo);
+  Actions.ActOnBaseSpecifiers(ClassDecl, BaseInfo.data(), BaseInfo.size());
 }
 
 /// ParseBaseSpecifier - Parse a C++ base-specifier. A base-specifier is
