@@ -587,9 +587,9 @@ static void addIRelocMarkers(SymbolTable<ELFT> &Symtab, bool IsDynamic) {
         Symtab.addAbsolute(Name, Sym);
   };
   AddMarker(IsRela ? "__rela_iplt_start" : "__rel_iplt_start",
-            DefinedRegular<ELFT>::RelaIpltStart);
+            ElfSym<ELFT>::RelaIpltStart);
   AddMarker(IsRela ? "__rela_iplt_end" : "__rel_iplt_end",
-            DefinedRegular<ELFT>::RelaIpltEnd);
+            ElfSym<ELFT>::RelaIpltEnd);
 }
 
 template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
@@ -598,7 +598,7 @@ template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
 
   // Don't include synthetic symbols like __init_array_start in every output.
   if (auto *U = dyn_cast<DefinedRegular<ELFT>>(&B))
-    if (&U->Sym == &DefinedRegular<ELFT>::IgnoreUndef)
+    if (&U->Sym == &ElfSym<ELFT>::IgnoreUndef)
       return false;
 
   return true;
@@ -723,14 +723,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // So, if this symbol is referenced, we just add the placeholder here
   // and update its value later.
   if (Symtab.find("_end"))
-    Symtab.addAbsolute("_end", DefinedRegular<ELFT>::End);
+    Symtab.addAbsolute("_end", ElfSym<ELFT>::End);
 
   // If there is an undefined symbol "end", we should initialize it
   // with the same value as "_end". In any other case it should stay intact,
   // because it is an allowable name for a user symbol.
   if (SymbolBody *B = Symtab.find("end"))
     if (B->isUndefined())
-      Symtab.addAbsolute("end", DefinedRegular<ELFT>::End);
+      Symtab.addAbsolute("end", ElfSym<ELFT>::End);
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
@@ -1035,20 +1035,19 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
   // Update "_end" and "end" symbols so that they
   // point to the end of the data segment.
-  DefinedRegular<ELFT>::End.st_value = VA;
+  ElfSym<ELFT>::End.st_value = VA;
 
   // Update __rel_iplt_start/__rel_iplt_end to wrap the
   // rela.plt section.
   if (Out<ELFT>::RelaPlt) {
     uintX_t Start = Out<ELFT>::RelaPlt->getVA();
-    DefinedRegular<ELFT>::RelaIpltStart.st_value = Start;
-    DefinedRegular<ELFT>::RelaIpltEnd.st_value =
-        Start + Out<ELFT>::RelaPlt->getSize();
+    ElfSym<ELFT>::RelaIpltStart.st_value = Start;
+    ElfSym<ELFT>::RelaIpltEnd.st_value = Start + Out<ELFT>::RelaPlt->getSize();
   }
 
   // Update MIPS _gp absolute symbol so that it points to the static data.
   if (Config->EMachine == EM_MIPS)
-    DefinedRegular<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
+    ElfSym<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
 }
 
 // Returns the number of PHDR entries.
