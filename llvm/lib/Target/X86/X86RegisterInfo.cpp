@@ -807,8 +807,7 @@ unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
 unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
                                 bool High) {
   unsigned Res = getX86SubSuperRegisterOrZero(Reg, VT, High);
-  if (Res == 0)
-    llvm_unreachable("Unexpected register or VT");
+  assert(Res != 0 && "Unexpected register or VT");
   return Res;
 }
 
