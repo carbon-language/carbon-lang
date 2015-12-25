@@ -41,6 +41,16 @@ namespace X86 {
     /// AddrNumOperands - Total number of operands in a memory reference.
     AddrNumOperands = 5
   };
+
+  /// AVX512 static rounding constants.  These need to match the values in
+  /// avx512fintrin.h.
+  enum STATIC_ROUNDING {
+    TO_NEAREST_INT = 0,
+    TO_NEG_INF = 1,
+    TO_POS_INF = 2,
+    TO_ZERO = 3,
+    CUR_DIRECTION = 4
+  };
 } // end namespace X86;
 
 /// X86II - This namespace holds all of the target specific flags that
