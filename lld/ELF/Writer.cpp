@@ -43,9 +43,15 @@ public:
 private:
   void copyLocalSymbols();
   void createSections();
+
+  OutputSectionBase<ELFT> *createOutputSection(InputSectionBase<ELFT> *C,
+                                               StringRef Name, uintX_t Type,
+                                               uintX_t Flags);
+
   template <bool isRela>
   void scanRelocs(InputSectionBase<ELFT> &C,
                   iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
+
   void scanRelocs(InputSection<ELFT> &C);
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
   void updateRelro(Elf_Phdr *Cur, Elf_Phdr *GnuRelroPhdr, uintX_t VA);
@@ -613,6 +619,23 @@ static bool includeInDynamicSymtab(const SymbolBody &B) {
   return B.isUsedInDynamicReloc();
 }
 
+template <class ELFT>
+OutputSectionBase<ELFT> *
+Writer<ELFT>::createOutputSection(InputSectionBase<ELFT> *C, StringRef Name,
+                                  uintX_t Type, uintX_t Flags) {
+  switch (C->SectionKind) {
+  case InputSectionBase<ELFT>::Regular:
+    return new (SecAlloc.Allocate()) OutputSection<ELFT>(Name, Type, Flags);
+  case InputSectionBase<ELFT>::EHFrame:
+    return new (EHSecAlloc.Allocate()) EHOutputSection<ELFT>(Name, Type, Flags);
+  case InputSectionBase<ELFT>::Merge:
+    return new (MSecAlloc.Allocate())
+        MergeOutputSection<ELFT>(Name, Type, Flags);
+  case InputSectionBase<ELFT>::MipsReginfo:
+    return new (MReginfoSecAlloc.Allocate()) MipsReginfoOutputSection<ELFT>();
+  }
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   // .interp needs to be on the first page in the output file.
@@ -634,8 +657,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       // For SHF_MERGE we create different output sections for each sh_entsize.
       // This makes each output section simple and keeps a single level
       // mapping from input to output.
-      typename InputSectionBase<ELFT>::Kind K = C->SectionKind;
-      uintX_t EntSize = K != InputSectionBase<ELFT>::Merge ? 0 : H->sh_entsize;
+      uintX_t EntSize = isa<MergeInputSection<ELFT>>(C) ? H->sh_entsize : 0;
       uint32_t OutType = H->sh_type;
       if (OutType == SHT_PROGBITS && C->getSectionName() == ".eh_frame" &&
           Config->EMachine == EM_X86_64)
@@ -644,28 +666,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
                                      OutType, OutFlags, EntSize};
       OutputSectionBase<ELFT> *&Sec = Map[Key];
       if (!Sec) {
-        switch (K) {
-        case InputSectionBase<ELFT>::Regular:
-          Sec = new (SecAlloc.Allocate())
-              OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
-          break;
-        case InputSectionBase<ELFT>::EHFrame:
-          Sec = new (EHSecAlloc.Allocate())
-              EHOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
-          break;
-        case InputSectionBase<ELFT>::Merge:
-          Sec = new (MSecAlloc.Allocate())
-              MergeOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
-          break;
-        case InputSectionBase<ELFT>::MipsReginfo:
-          Sec = new (MReginfoSecAlloc.Allocate())
-              MipsReginfoOutputSection<ELFT>();
-          break;
-        }
+        Sec = createOutputSection(C, Key.Name, Key.Type, Key.Flags);
         OutputSections.push_back(Sec);
         RegularSections.push_back(Sec);
       }
-      switch (K) {
+      switch (C->SectionKind) {
       case InputSectionBase<ELFT>::Regular:
         static_cast<OutputSection<ELFT> *>(Sec)
             ->addSection(cast<InputSection<ELFT>>(C));
