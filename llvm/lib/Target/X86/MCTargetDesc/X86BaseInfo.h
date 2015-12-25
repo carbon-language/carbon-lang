@@ -675,7 +675,7 @@ namespace X86II {
     case X86II::RawFrmSrc:
     case X86II::RawFrmDst:
     case X86II::RawFrmDstSrc:
-       return -1;
+      return -1;
     case X86II::MRMDestMem:
       return 0;
     case X86II::MRMSrcMem:
@@ -740,7 +740,7 @@ namespace X86II {
     case X86::R12B:  case X86::R13B:  case X86::R14B:  case X86::R15B:
     case X86::CR8:   case X86::CR9:   case X86::CR10:  case X86::CR11:
     case X86::CR12:  case X86::CR13:  case X86::CR14:  case X86::CR15:
-        return true;
+      return true;
     }
     return false;
   }
