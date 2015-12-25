@@ -634,6 +634,7 @@ Writer<ELFT>::createOutputSection(InputSectionBase<ELFT> *C, StringRef Name,
   case InputSectionBase<ELFT>::MipsReginfo:
     return new (MReginfoSecAlloc.Allocate()) MipsReginfoOutputSection<ELFT>();
   }
+  llvm_unreachable("Unknown output section type");
 }
 
 // Create output section objects and add them to OutputSections.
