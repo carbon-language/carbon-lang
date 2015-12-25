@@ -604,6 +604,15 @@ template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
   return true;
 }
 
+static bool includeInDynamicSymtab(const SymbolBody &B) {
+  uint8_t V = B.getVisibility();
+  if (V != STV_DEFAULT && V != STV_PROTECTED)
+    return false;
+  if (Config->ExportDynamic || Config->Shared)
+    return true;
+  return B.isUsedInDynamicReloc();
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   // .interp needs to be on the first page in the output file.

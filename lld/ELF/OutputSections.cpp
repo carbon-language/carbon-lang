@@ -1172,16 +1172,6 @@ template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Data.data(), Data.size());
 }
 
-bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
-  uint8_t V = B.getVisibility();
-  if (V != STV_DEFAULT && V != STV_PROTECTED)
-    return false;
-
-  if (Config->ExportDynamic || Config->Shared)
-    return true;
-  return B.isUsedInDynamicReloc();
-}
-
 template <class ELFT>
 bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
                                    StringRef SymName,
