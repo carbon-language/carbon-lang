@@ -638,7 +638,7 @@ unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
   case MVT::i8:
     if (High) {
       switch (Reg) {
-      default: return getX86SubSuperRegister(Reg, MVT::i64);
+      default: return getX86SubSuperRegisterOrZero(Reg, MVT::i64);
       case X86::SIL: case X86::SI: case X86::ESI: case X86::RSI:
         return X86::SI;
       case X86::DIL: case X86::DI: case X86::EDI: case X86::RDI:
