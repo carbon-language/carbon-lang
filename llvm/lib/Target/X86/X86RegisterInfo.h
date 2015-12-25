@@ -136,13 +136,13 @@ public:
 };
 
 /// Returns the sub or super register of a specific X86 register.
-/// e.g. getX86SubSuperRegister(X86::EAX, MVT::i16) returns X86::AX.
+/// e.g. getX86SubSuperRegister(X86::EAX, 16) returns X86::AX.
 /// Aborts on error.
-unsigned getX86SubSuperRegister(unsigned, MVT::SimpleValueType, bool High=false);
+unsigned getX86SubSuperRegister(unsigned, unsigned, bool High=false);
 
 /// Returns the sub or super register of a specific X86 register.
 /// Like getX86SubSuperRegister() but returns 0 on error.
-unsigned getX86SubSuperRegisterOrZero(unsigned, MVT::SimpleValueType,
+unsigned getX86SubSuperRegisterOrZero(unsigned, unsigned,
                                       bool High = false);
 
 //get512BitRegister - X86 utility - returns 512-bit super register

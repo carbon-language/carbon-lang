@@ -27,7 +27,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
@@ -420,7 +419,7 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         "Stack realignment in presence of dynamic allocas is not supported with"
         "this calling convention.");
 
-    unsigned BasePtr = getX86SubSuperRegister(getBaseRegister(), MVT::i64);
+    unsigned BasePtr = getX86SubSuperRegister(getBaseRegister(), 64);
     for (MCSubRegIterator I(BasePtr, this, /*IncludeSelf=*/true);
          I.isValid(); ++I)
       Reserved.set(*I);
@@ -573,7 +572,7 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // register as source operand, semantic is the same and destination is
   // 32-bits. It saves one byte per lea in code since 0x67 prefix is avoided.
   if (Opc == X86::LEA64_32r && X86::GR32RegClass.contains(BasePtr))
-    BasePtr = getX86SubSuperRegister(BasePtr, MVT::i64);
+    BasePtr = getX86SubSuperRegister(BasePtr, 64);
 
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add an offset to the offset.
@@ -625,19 +624,18 @@ X86RegisterInfo::getPtrSizedFrameRegister(const MachineFunction &MF) const {
   const X86Subtarget &Subtarget = MF.getSubtarget<X86Subtarget>();
   unsigned FrameReg = getFrameRegister(MF);
   if (Subtarget.isTarget64BitILP32())
-    FrameReg = getX86SubSuperRegister(FrameReg, MVT::i32);
+    FrameReg = getX86SubSuperRegister(FrameReg, 32);
   return FrameReg;
 }
 
 namespace llvm {
-unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
-                                      bool High) {
-  switch (VT) {
+unsigned getX86SubSuperRegisterOrZero(unsigned Reg, unsigned Size, bool High) {
+  switch (Size) {
   default: return 0;
-  case MVT::i8:
+  case 8:
     if (High) {
       switch (Reg) {
-      default: return getX86SubSuperRegisterOrZero(Reg, MVT::i64);
+      default: return getX86SubSuperRegisterOrZero(Reg, 64);
       case X86::SIL: case X86::SI: case X86::ESI: case X86::RSI:
         return X86::SI;
       case X86::DIL: case X86::DI: case X86::EDI: case X86::RDI:
@@ -692,7 +690,7 @@ unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
         return X86::R15B;
       }
     }
-  case MVT::i16:
+  case 16:
     switch (Reg) {
     default: return 0;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
@@ -728,7 +726,7 @@ unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
     case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
       return X86::R15W;
     }
-  case MVT::i32:
+  case 32:
     switch (Reg) {
     default: return 0;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
@@ -764,7 +762,7 @@ unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
     case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
       return X86::R15D;
     }
-  case MVT::i64:
+  case 64:
     switch (Reg) {
     default: return 0;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
@@ -803,9 +801,8 @@ unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
   }
 }
 
-unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
-                                bool High) {
-  unsigned Res = getX86SubSuperRegisterOrZero(Reg, VT, High);
+unsigned getX86SubSuperRegister(unsigned Reg, unsigned Size, bool High) {
+  unsigned Res = getX86SubSuperRegisterOrZero(Reg, Size, High);
   assert(Res != 0 && "Unexpected register or VT");
   return Res;
 }
