@@ -860,8 +860,7 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
     Offset += Addend;
     Addend = 0;
   }
-  return VA + cast<MergeInputSection<ELFT>>(Section)->getOffset(Offset) +
-         Addend;
+  return VA + Section->getOffset(Offset) + Addend;
 }
 
 // Returns true if a symbol can be replaced at load-time by a symbol
