@@ -268,6 +268,11 @@ bool EHInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 template <class ELFT>
 typename EHInputSection<ELFT>::uintX_t
 EHInputSection<ELFT>::getOffset(uintX_t Offset) {
+  // The file crtbeginT.o has relocations pointing to the start of an empty
+  // .eh_frame that is known to be the first in the link. It does that to
+  // identify the start of the output .eh_frame. Handle this special case.
+  if (this->getSectionHdr()->sh_size == 0)
+    return Offset;
   std::pair<uintX_t, uintX_t> *I = this->getRangeAndSize(Offset).first;
   uintX_t Base = I->second;
   if (Base == uintX_t(-1))
