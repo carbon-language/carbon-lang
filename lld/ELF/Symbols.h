@@ -123,8 +123,16 @@ protected:
   const unsigned SymbolKind : 8;
   unsigned IsWeak : 1;
   unsigned Visibility : 2;
+
+  // True if the symbol was used for linking and thus need to be
+  // added to the output file's symbol table. It is usually true,
+  // but if it is a shared symbol that were not referenced by anyone,
+  // it can be false.
   unsigned IsUsedInRegularObj : 1;
+
+  // If true, the symbol is added to .dynsym symbol table.
   unsigned IsUsedInDynamicReloc : 1;
+
   unsigned IsTls : 1;
   StringRef Name;
   Symbol *Backref = nullptr;
