@@ -10,7 +10,6 @@
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "X86AsmInstrumentation.h"
 #include "X86Operand.h"
-#include "X86RegisterInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmInfo.h"
