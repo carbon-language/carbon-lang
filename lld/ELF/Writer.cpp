@@ -79,6 +79,7 @@ private:
   std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> OwningSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
+  void addRelIpltSymbols();
   void addStartStopSymbols(OutputSectionBase<ELFT> *Sec);
   void setPhdr(Elf_Phdr *PH, uint32_t Type, uint32_t Flags, uintX_t FileOff,
                uintX_t VA, uintX_t Size, uintX_t Align);
@@ -574,25 +575,25 @@ static bool compareSections(OutputSectionBase<ELFT> *A,
   return std::distance(ItA, ItB) > 0;
 }
 
-// A statically linked executable will have rel[a].plt section
-// to hold R_[*]_IRELATIVE relocations.
-// The multi-arch libc will use these symbols to locate
-// these relocations at program startup time.
-// If RelaPlt is empty then there is no reason to create this symbols.
+// The beginning and the ending of .rel[a].plt section are marked
+// with __rel[a]_iplt_{start,end} symbols if it is a statically linked
+// executable. The runtime needs these symbols in order to resolve
+// all IRELATIVE relocs on startup. For dynamic executables, we don't
+// need these symbols, since IRELATIVE relocs are resolved through GOT
+// and PLT. For details, see http://www.airs.com/blog/archives/403.
 template <class ELFT>
-static void addIRelocMarkers(SymbolTable<ELFT> &Symtab, bool IsDynamic) {
-  if (IsDynamic || !Out<ELFT>::RelaPlt || !Out<ELFT>::RelaPlt->hasRelocs())
+void Writer<ELFT>::addRelIpltSymbols() {
+  if (isOutputDynamic() || !Out<ELFT>::RelaPlt)
     return;
   bool IsRela = shouldUseRela<ELFT>();
-  auto AddMarker = [&](StringRef Name, typename Writer<ELFT>::Elf_Sym &Sym) {
-    if (SymbolBody *B = Symtab.find(Name))
-      if (B->isUndefined())
-        Symtab.addAbsolute(Name, Sym);
-  };
-  AddMarker(IsRela ? "__rela_iplt_start" : "__rel_iplt_start",
-            ElfSym<ELFT>::RelaIpltStart);
-  AddMarker(IsRela ? "__rela_iplt_end" : "__rel_iplt_end",
-            ElfSym<ELFT>::RelaIpltEnd);
+
+  StringRef S = IsRela ? "__rela_iplt_start" : "__rel_iplt_start";
+  if (Symtab.find(S))
+    Symtab.addAbsolute(S, ElfSym<ELFT>::RelaIpltStart);
+
+  S = IsRela ? "__rela_iplt_end" : "__rel_iplt_end";
+  if (Symtab.find(S))
+    Symtab.addAbsolute(S, ElfSym<ELFT>::RelaIpltEnd);
 }
 
 template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
@@ -806,7 +807,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  addIRelocMarkers<ELFT>(Symtab, isOutputDynamic());
+  // Define __rel[a]_iplt_{start,end} symbols if needed.
+  addRelIpltSymbols();
 
   std::vector<DefinedCommon *> CommonSymbols;
   std::vector<SharedSymbol<ELFT> *> SharedCopySymbols;
