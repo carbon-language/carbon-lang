@@ -850,23 +850,25 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
 // This function add Out<ELFT>::* sections to OutputSections.
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
+  auto Add = [&](OutputSectionBase<ELFT> *C) {
+    if (C)
+      OutputSections.push_back(C);
+  };
+
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.
-  if (Out<ELFT>::SymTab)
-    OutputSections.push_back(Out<ELFT>::SymTab);
-  OutputSections.push_back(Out<ELFT>::ShStrTab);
-  if (Out<ELFT>::StrTab)
-    OutputSections.push_back(Out<ELFT>::StrTab);
+  Add(Out<ELFT>::SymTab);
+  Add(Out<ELFT>::ShStrTab);
+  Add(Out<ELFT>::StrTab);
   if (isOutputDynamic()) {
-    OutputSections.push_back(Out<ELFT>::DynSymTab);
-    if (Out<ELFT>::GnuHashTab)
-      OutputSections.push_back(Out<ELFT>::GnuHashTab);
-    if (Out<ELFT>::HashTab)
-      OutputSections.push_back(Out<ELFT>::HashTab);
-    OutputSections.push_back(Out<ELFT>::Dynamic);
-    OutputSections.push_back(Out<ELFT>::DynStrTab);
+    Add(Out<ELFT>::DynSymTab);
+    Add(Out<ELFT>::GnuHashTab);
+    Add(Out<ELFT>::HashTab);
+    Add(Out<ELFT>::Dynamic);
+    Add(Out<ELFT>::DynStrTab);
     if (Out<ELFT>::RelaDyn->hasRelocs())
-      OutputSections.push_back(Out<ELFT>::RelaDyn);
+      Add(Out<ELFT>::RelaDyn);
+
     // This is a MIPS specific section to hold a space within the data segment
     // of executable file which is pointed to by the DT_MIPS_RLD_MAP entry.
     // See "Dynamic section" in Chapter 5 in the following document:
@@ -877,14 +879,14 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
       Out<ELFT>::MipsRldMap->setSize(ELFT::Is64Bits ? 8 : 4);
       Out<ELFT>::MipsRldMap->updateAlign(ELFT::Is64Bits ? 8 : 4);
       OwningSections.emplace_back(Out<ELFT>::MipsRldMap);
-      OutputSections.push_back(Out<ELFT>::MipsRldMap);
+      Add(Out<ELFT>::MipsRldMap);
     }
   }
 
   // We always need to add rel[a].plt to output if it has entries.
   // Even during static linking it can contain R_[*]_IRELATIVE relocations.
   if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs()) {
-    OutputSections.push_back(Out<ELFT>::RelaPlt);
+    Add(Out<ELFT>::RelaPlt);
     Out<ELFT>::RelaPlt->Static = !isOutputDynamic();
   }
 
@@ -899,11 +901,11 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     needsGot = true;
 
   if (needsGot)
-    OutputSections.push_back(Out<ELFT>::Got);
+    Add(Out<ELFT>::Got);
   if (Out<ELFT>::GotPlt && !Out<ELFT>::GotPlt->empty())
-    OutputSections.push_back(Out<ELFT>::GotPlt);
+    Add(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
-    OutputSections.push_back(Out<ELFT>::Plt);
+    Add(Out<ELFT>::Plt);
 }
 
 // The linker is expected to define SECNAME_start and SECNAME_end
