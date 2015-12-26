@@ -308,8 +308,10 @@ void DecodePSHUFBMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
   //   <4 x i32> <i32 -2147483648, i32 -2147483648,
   //              i32 -2147483648, i32 -2147483648>
 
+#ifndef NDEBUG
   unsigned MaskTySize = MaskTy->getPrimitiveSizeInBits();
   assert(MaskTySize == 128 || MaskTySize == 256 || MaskTySize == 512);
+#endif
 
   // This is a straightforward byte vector.
   if (MaskTy->isVectorTy() && MaskTy->getVectorElementType()->isIntegerTy(8)) {
