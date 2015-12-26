@@ -42,6 +42,7 @@ public:
 
 private:
   void copyLocalSymbols();
+  void addReservedSymbols();
   void createSections();
 
   template <bool isRela>
@@ -147,6 +148,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   buildSectionMap();
   if (!Config->DiscardAll)
     copyLocalSymbols();
+  addReservedSymbols();
   createSections();
   assignAddresses();
   openFile(Config->OutputFile);
@@ -697,6 +699,34 @@ OutputSectionFactory<ELFT>::createKey(InputSectionBase<ELFT> *C,
   return SectionKey<ELFT::Is64Bits>{OutsecName, Type, Flags, EntSize};
 }
 
+// The linker is expected to define some symbols depending on
+// the linking result. This function defines such symbols.
+template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
+  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
+  // static linking the linker is required to optimize away any references to
+  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
+  // to avoid the undefined symbol error.
+  if (!isOutputDynamic())
+    Symtab.addIgnored("__tls_get_addr");
+
+  // If the "_end" symbol is referenced, it is expected to point to the address
+  // right after the data segment. Usually, this symbol points to the end
+  // of .bss section or to the end of .data section if .bss section is absent.
+  // The order of the sections can be affected by linker script,
+  // so it is hard to predict which section will be the last one.
+  // So, if this symbol is referenced, we just add the placeholder here
+  // and update its value later.
+  if (Symtab.find("_end"))
+    Symtab.addAbsolute("_end", ElfSym<ELFT>::End);
+
+  // If there is an undefined symbol "end", we should initialize it
+  // with the same value as "_end". In any other case it should stay intact,
+  // because it is an allowable name for a user symbol.
+  if (SymbolBody *B = Symtab.find("end"))
+    if (B->isUndefined())
+      Symtab.addAbsolute("end", ElfSym<ELFT>::End);
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   // .interp needs to be on the first page in the output file.
@@ -755,30 +785,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   for (OutputSectionBase<ELFT> *Sec : RegularSections)
     addStartStopSymbols(Sec);
-
-  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
-  // static linking the linker is required to optimize away any references to
-  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
-  // to avoid the undefined symbol error.
-  if (!isOutputDynamic())
-    Symtab.addIgnored("__tls_get_addr");
-
-  // If the "_end" symbol is referenced, it is expected to point to the address
-  // right after the data segment. Usually, this symbol points to the end
-  // of .bss section or to the end of .data section if .bss section is absent.
-  // The order of the sections can be affected by linker script,
-  // so it is hard to predict which section will be the last one.
-  // So, if this symbol is referenced, we just add the placeholder here
-  // and update its value later.
-  if (Symtab.find("_end"))
-    Symtab.addAbsolute("_end", ElfSym<ELFT>::End);
-
-  // If there is an undefined symbol "end", we should initialize it
-  // with the same value as "_end". In any other case it should stay intact,
-  // because it is an allowable name for a user symbol.
-  if (SymbolBody *B = Symtab.find("end"))
-    if (B->isUndefined())
-      Symtab.addAbsolute("end", ElfSym<ELFT>::End);
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
