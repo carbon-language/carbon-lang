@@ -703,8 +703,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (needsInterpSection())
     OutputSections.push_back(Out<ELFT>::Interp);
 
-  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSectionBase<ELFT> *> Map;
-
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
 
   OutputSectionFactory<ELFT> Factory;
