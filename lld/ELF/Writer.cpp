@@ -70,7 +70,7 @@ private:
 
   OutputSection<ELFT> *getBSS();
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
-  void addSharedCopySymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
+  void addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
@@ -500,16 +500,11 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   Out<ELFT>::Bss->setSize(Off);
 }
 
+// Reserve space in .bss for copy relocations.
 template <class ELFT>
-void Writer<ELFT>::addSharedCopySymbols(
-    std::vector<SharedSymbol<ELFT> *> &Syms) {
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
-
+void Writer<ELFT>::addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
   if (Syms.empty())
     return;
-
   uintX_t Off = getBSS()->getSize();
   for (SharedSymbol<ELFT> *C : Syms) {
     const Elf_Sym &Sym = C->Sym;
@@ -798,7 +793,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   addRelIpltSymbols();
 
   std::vector<DefinedCommon *> CommonSymbols;
-  std::vector<SharedSymbol<ELFT> *> SharedCopySymbols;
+  std::vector<SharedSymbol<ELFT> *> CopyRelSymbols;
   for (auto &P : Symtab.getSymbols()) {
     SymbolBody *Body = P.second->Body;
     if (auto *U = dyn_cast<Undefined>(Body))
@@ -809,7 +804,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       CommonSymbols.push_back(C);
     if (auto *SC = dyn_cast<SharedSymbol<ELFT>>(Body))
       if (SC->NeedsCopy)
-        SharedCopySymbols.push_back(SC);
+        CopyRelSymbols.push_back(SC);
 
     if (!includeInSymtab<ELFT>(*Body))
       continue;
@@ -820,7 +815,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Out<ELFT>::DynSymTab->addSymbol(Body);
   }
   addCommonSymbols(CommonSymbols);
-  addSharedCopySymbols(SharedCopySymbols);
+  addCopyRelSymbols(CopyRelSymbols);
 
   // So far we have added sections from input object files.
   // This function adds linker-created Out<ELFT>::* sections.
