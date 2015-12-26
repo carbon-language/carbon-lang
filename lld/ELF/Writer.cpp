@@ -80,6 +80,7 @@ private:
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   void addRelIpltSymbols();
+  void addStartEndSymbols();
   void addStartStopSymbols(OutputSectionBase<ELFT> *Sec);
   void setPhdr(Elf_Phdr *PH, uint32_t Type, uint32_t Flags, uintX_t FileOff,
                uintX_t VA, uintX_t Size, uintX_t Align);
@@ -772,24 +773,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Out<ELFT>::Dynamic->FiniArraySec =
       Factory.lookup(".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC);
 
-  auto AddStartEnd = [&](StringRef Start, StringRef End,
-                         OutputSectionBase<ELFT> *OS) {
-    if (OS) {
-      Symtab.addSynthetic(Start, *OS, 0);
-      Symtab.addSynthetic(End, *OS, OS->getSize());
-    } else {
-      Symtab.addIgnored(Start);
-      Symtab.addIgnored(End);
-    }
-  };
-
-  AddStartEnd("__preinit_array_start", "__preinit_array_end",
-              Out<ELFT>::Dynamic->PreInitArraySec);
-  AddStartEnd("__init_array_start", "__init_array_end",
-              Out<ELFT>::Dynamic->InitArraySec);
-  AddStartEnd("__fini_array_start", "__fini_array_end",
-              Out<ELFT>::Dynamic->FiniArraySec);
-
+  // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
+  // symbols for sections, so that the runtime can get the start and end
+  // addresses of each section by section name. Add such symbols.
+  addStartEndSymbols();
   for (OutputSectionBase<ELFT> *Sec : RegularSections)
     addStartStopSymbols(Sec);
 
@@ -919,6 +906,28 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     OutputSections.push_back(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     OutputSections.push_back(Out<ELFT>::Plt);
+}
+
+// The linker is expected to define SECNAME_start and SECNAME_end
+// symbols for a few sections. This function defines them.
+template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
+  auto Define = [&](StringRef Start, StringRef End,
+                    OutputSectionBase<ELFT> *OS) {
+    if (OS) {
+      Symtab.addSynthetic(Start, *OS, 0);
+      Symtab.addSynthetic(End, *OS, OS->getSize());
+    } else {
+      Symtab.addIgnored(Start);
+      Symtab.addIgnored(End);
+    }
+  };
+
+  Define("__preinit_array_start", "__preinit_array_end",
+         Out<ELFT>::Dynamic->PreInitArraySec);
+  Define("__init_array_start", "__init_array_end",
+         Out<ELFT>::Dynamic->InitArraySec);
+  Define("__fini_array_start", "__fini_array_end",
+         Out<ELFT>::Dynamic->FiniArraySec);
 }
 
 static bool isAlpha(char C) {
