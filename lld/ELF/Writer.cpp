@@ -679,17 +679,22 @@ SectionKey<ELFT::Is64Bits>
 OutputSectionFactory<ELFT>::createKey(InputSectionBase<ELFT> *C,
                                       StringRef OutsecName) {
   const Elf_Shdr *H = C->getSectionHdr();
-  uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
+  uintX_t Flags = H->sh_flags & ~SHF_GROUP;
 
   // For SHF_MERGE we create different output sections for each sh_entsize.
   // This makes each output section simple and keeps a single level
   // mapping from input to output.
   uintX_t EntSize = isa<MergeInputSection<ELFT>>(C) ? H->sh_entsize : 0;
-  uint32_t OutType = H->sh_type;
-  if (OutType == SHT_PROGBITS && C->getSectionName() == ".eh_frame" &&
-      Config->EMachine == EM_X86_64)
-    OutType = SHT_X86_64_UNWIND;
-  return SectionKey<ELFT::Is64Bits>{OutsecName, OutType, OutFlags, EntSize};
+
+  // GNU as can give .eh_frame secion type SHT_PROGBITS or SHT_X86_64_UNWIND
+  // depending on the construct. We want to canonicalize it so that
+  // there is only one .eh_frame in the end.
+  uint32_t Type = H->sh_type;
+  if (Type == SHT_PROGBITS && Config->EMachine == EM_X86_64 &&
+      isa<EHInputSection<ELFT>>(C))
+    Type = SHT_X86_64_UNWIND;
+
+  return SectionKey<ELFT::Is64Bits>{OutsecName, Type, Flags, EntSize};
 }
 
 // Create output section objects and add them to OutputSections.
