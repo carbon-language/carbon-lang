@@ -727,12 +727,13 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
-  // .interp needs to be on the first page in the output file.
+  // Add .interp first because some loaders want to see that section
+  // on the first page of the executable file when loaded into memory.
   if (needsInterpSection())
     OutputSections.push_back(Out<ELFT>::Interp);
 
+  // Create output sections for input object file sections.
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
-
   OutputSectionFactory<ELFT> Factory;
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
@@ -792,6 +793,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // Define __rel[a]_iplt_{start,end} symbols if needed.
   addRelIpltSymbols();
 
+  // Now that we have defined all possible symbols including linker-
+  // synthesized ones. Visit all symbols to give the finishing touches.
   std::vector<DefinedCommon *> CommonSymbols;
   std::vector<SharedSymbol<ELFT> *> CopyRelSymbols;
   for (auto &P : Symtab.getSymbols()) {
