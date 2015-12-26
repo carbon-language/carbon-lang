@@ -55,6 +55,7 @@ private:
   void updateRelro(Elf_Phdr *Cur, Elf_Phdr *GnuRelroPhdr, uintX_t VA);
   void assignAddresses();
   void buildSectionMap();
+  void fixAbsoluteSymbols();
   void openFile(StringRef OutputPath);
   void writeHeader();
   void writeSections();
@@ -154,6 +155,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   addReservedSymbols();
   createSections();
   assignAddresses();
+  fixAbsoluteSymbols();
   openFile(Config->OutputFile);
   writeHeader();
   writeSections();
@@ -1110,18 +1112,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   // Update "_end" and "end" symbols so that they
   // point to the end of the data segment.
   ElfSym<ELFT>::End.st_value = VA;
-
-  // Update __rel_iplt_start/__rel_iplt_end to wrap the
-  // rela.plt section.
-  if (Out<ELFT>::RelaPlt) {
-    uintX_t Start = Out<ELFT>::RelaPlt->getVA();
-    ElfSym<ELFT>::RelaIpltStart.st_value = Start;
-    ElfSym<ELFT>::RelaIpltEnd.st_value = Start + Out<ELFT>::RelaPlt->getSize();
-  }
-
-  // Update MIPS _gp absolute symbol so that it points to the static data.
-  if (Config->EMachine == EM_MIPS)
-    ElfSym<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
 }
 
 // Returns the number of PHDR entries.
@@ -1174,6 +1164,23 @@ static typename ELFFile<ELFT>::uintX_t getEntryAddr() {
   if (Config->EntryAddr != uint64_t(-1))
     return Config->EntryAddr;
   return 0;
+}
+
+// This function is called after we have assigned address and size
+// to each section. This function fixes some predefined absolute
+// symbol values that depend on section address and size.
+template <class ELFT> void Writer<ELFT>::fixAbsoluteSymbols() {
+  // Update __rel[a]_iplt_{start,end} symbols so that they point
+  // to beginning or ending of .rela.plt section, respectively.
+  if (Out<ELFT>::RelaPlt) {
+    uintX_t Start = Out<ELFT>::RelaPlt->getVA();
+    ElfSym<ELFT>::RelaIpltStart.st_value = Start;
+    ElfSym<ELFT>::RelaIpltEnd.st_value = Start + Out<ELFT>::RelaPlt->getSize();
+  }
+
+  // Update MIPS _gp absolute symbol so that it points to the static data.
+  if (Config->EMachine == EM_MIPS)
+    ElfSym<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
 }
 
 template <class ELFT> void Writer<ELFT>::writeHeader() {
