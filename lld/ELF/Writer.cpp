@@ -76,12 +76,9 @@ private:
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
-  SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
-  SpecificBumpPtrAllocator<MergeOutputSection<ELFT>> MSecAlloc;
-  SpecificBumpPtrAllocator<EHOutputSection<ELFT>> EHSecAlloc;
-  SpecificBumpPtrAllocator<MipsReginfoOutputSection<ELFT>> MReginfoSecAlloc;
   BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT> *> OutputSections;
+  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> OwningSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   void addStartStopSymbols(OutputSectionBase<ELFT> *Sec);
@@ -468,8 +465,9 @@ static bool compareOutputSections(OutputSectionBase<ELFT> *A,
 
 template <class ELFT> OutputSection<ELFT> *Writer<ELFT>::getBSS() {
   if (!Out<ELFT>::Bss) {
-    Out<ELFT>::Bss = new (SecAlloc.Allocate())
-        OutputSection<ELFT>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+    Out<ELFT>::Bss =
+        new OutputSection<ELFT>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+    OwningSections.emplace_back(Out<ELFT>::Bss);
     OutputSections.push_back(Out<ELFT>::Bss);
   }
   return Out<ELFT>::Bss;
@@ -625,14 +623,13 @@ Writer<ELFT>::createOutputSection(InputSectionBase<ELFT> *C, StringRef Name,
                                   uintX_t Type, uintX_t Flags) {
   switch (C->SectionKind) {
   case InputSectionBase<ELFT>::Regular:
-    return new (SecAlloc.Allocate()) OutputSection<ELFT>(Name, Type, Flags);
+    return new OutputSection<ELFT>(Name, Type, Flags);
   case InputSectionBase<ELFT>::EHFrame:
-    return new (EHSecAlloc.Allocate()) EHOutputSection<ELFT>(Name, Type, Flags);
+    return new EHOutputSection<ELFT>(Name, Type, Flags);
   case InputSectionBase<ELFT>::Merge:
-    return new (MSecAlloc.Allocate())
-        MergeOutputSection<ELFT>(Name, Type, Flags);
+    return new MergeOutputSection<ELFT>(Name, Type, Flags);
   case InputSectionBase<ELFT>::MipsReginfo:
-    return new (MReginfoSecAlloc.Allocate()) MipsReginfoOutputSection<ELFT>();
+    return new MipsReginfoOutputSection<ELFT>();
   }
   llvm_unreachable("Unknown output section type");
 }
@@ -668,6 +665,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSectionBase<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         Sec = createOutputSection(C, Key.Name, Key.Type, Key.Flags);
+        OwningSections.emplace_back(Sec);
         OutputSections.push_back(Sec);
         RegularSections.push_back(Sec);
       }
@@ -793,10 +791,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     // See "Dynamic section" in Chapter 5 in the following document:
     // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
     if (Config->EMachine == EM_MIPS && !Config->Shared) {
-      Out<ELFT>::MipsRldMap = new (SecAlloc.Allocate())
-          OutputSection<ELFT>(".rld_map", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE);
+      Out<ELFT>::MipsRldMap = new OutputSection<ELFT>(".rld_map", SHT_PROGBITS,
+                                                      SHF_ALLOC | SHF_WRITE);
       Out<ELFT>::MipsRldMap->setSize(ELFT::Is64Bits ? 8 : 4);
       Out<ELFT>::MipsRldMap->updateAlign(ELFT::Is64Bits ? 8 : 4);
+      OwningSections.emplace_back(Out<ELFT>::MipsRldMap);
       OutputSections.push_back(Out<ELFT>::MipsRldMap);
     }
   }

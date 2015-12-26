@@ -107,11 +107,11 @@ public:
 
   virtual void finalize() {}
   virtual void writeTo(uint8_t *Buf) = 0;
+  virtual ~OutputSectionBase() = default;
 
 protected:
   StringRef Name;
   Elf_Shdr Header;
-  ~OutputSectionBase() = default;
 };
 
 template <class ELFT> class GotSection final : public OutputSectionBase<ELFT> {
