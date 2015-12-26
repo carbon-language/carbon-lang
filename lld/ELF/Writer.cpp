@@ -44,10 +44,6 @@ private:
   void copyLocalSymbols();
   void createSections();
 
-  OutputSectionBase<ELFT> *createOutputSection(InputSectionBase<ELFT> *C,
-                                               StringRef Name, uintX_t Type,
-                                               uintX_t Flags);
-
   template <bool isRela>
   void scanRelocs(InputSectionBase<ELFT> &C,
                   iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
@@ -617,21 +613,83 @@ static bool includeInDynamicSymtab(const SymbolBody &B) {
   return B.isUsedInDynamicReloc();
 }
 
+// This class knows how to create an output section for a given
+// input section. Output section type is determined by various
+// factors, including input section's sh_flags, sh_type and
+// linker scripts.
+namespace {
+template <class ELFT> class OutputSectionFactory {
+  typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+
+public:
+  std::pair<OutputSectionBase<ELFT> *, bool> create(InputSectionBase<ELFT> *C,
+                                                    StringRef OutsecName);
+
+  OutputSectionBase<ELFT> *lookup(StringRef Name, uint32_t Type, uintX_t Flags);
+
+private:
+  SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
+                                       StringRef OutsecName);
+  OutputSectionBase<ELFT> *createAux(InputSectionBase<ELFT> *C,
+                                     const SectionKey<ELFT::Is64Bits> &Key);
+
+  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSectionBase<ELFT> *> Map;
+};
+}
+
+template <class ELFT>
+std::pair<OutputSectionBase<ELFT> *, bool>
+OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
+                                   StringRef OutsecName) {
+  SectionKey<ELFT::Is64Bits> Key = createKey(C, OutsecName);
+  OutputSectionBase<ELFT> *&Sec = Map[Key];
+  if (Sec)
+    return {Sec, false};
+  Sec = createAux(C, Key);
+  return {Sec, true};
+}
+
 template <class ELFT>
 OutputSectionBase<ELFT> *
-Writer<ELFT>::createOutputSection(InputSectionBase<ELFT> *C, StringRef Name,
-                                  uintX_t Type, uintX_t Flags) {
+OutputSectionFactory<ELFT>::createAux(InputSectionBase<ELFT> *C,
+                                      const SectionKey<ELFT::Is64Bits> &Key) {
   switch (C->SectionKind) {
   case InputSectionBase<ELFT>::Regular:
-    return new OutputSection<ELFT>(Name, Type, Flags);
+    return new OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
   case InputSectionBase<ELFT>::EHFrame:
-    return new EHOutputSection<ELFT>(Name, Type, Flags);
+    return new EHOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
   case InputSectionBase<ELFT>::Merge:
-    return new MergeOutputSection<ELFT>(Name, Type, Flags);
+    return new MergeOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
   case InputSectionBase<ELFT>::MipsReginfo:
     return new MipsReginfoOutputSection<ELFT>();
   }
   llvm_unreachable("Unknown output section type");
+}
+
+template <class ELFT>
+OutputSectionBase<ELFT> *OutputSectionFactory<ELFT>::lookup(StringRef Name,
+                                                            uint32_t Type,
+                                                            uintX_t Flags) {
+  return Map.lookup({Name, Type, Flags, 0});
+}
+
+template <class ELFT>
+SectionKey<ELFT::Is64Bits>
+OutputSectionFactory<ELFT>::createKey(InputSectionBase<ELFT> *C,
+                                      StringRef OutsecName) {
+  const Elf_Shdr *H = C->getSectionHdr();
+  uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
+
+  // For SHF_MERGE we create different output sections for each sh_entsize.
+  // This makes each output section simple and keeps a single level
+  // mapping from input to output.
+  uintX_t EntSize = isa<MergeInputSection<ELFT>>(C) ? H->sh_entsize : 0;
+  uint32_t OutType = H->sh_type;
+  if (OutType == SHT_PROGBITS && C->getSectionName() == ".eh_frame" &&
+      Config->EMachine == EM_X86_64)
+    OutType = SHT_X86_64_UNWIND;
+  return SectionKey<ELFT::Is64Bits>{OutsecName, OutType, OutFlags, EntSize};
 }
 
 // Create output section objects and add them to OutputSections.
@@ -644,27 +702,18 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
 
+  OutputSectionFactory<ELFT> Factory;
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
       if (isDiscarded(C)) {
         reportDiscarded(C, F);
         continue;
       }
-      const Elf_Shdr *H = C->getSectionHdr();
-      uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
-      // For SHF_MERGE we create different output sections for each sh_entsize.
-      // This makes each output section simple and keeps a single level
-      // mapping from input to output.
-      uintX_t EntSize = isa<MergeInputSection<ELFT>>(C) ? H->sh_entsize : 0;
-      uint32_t OutType = H->sh_type;
-      if (OutType == SHT_PROGBITS && C->getSectionName() == ".eh_frame" &&
-          Config->EMachine == EM_X86_64)
-        OutType = SHT_X86_64_UNWIND;
-      SectionKey<ELFT::Is64Bits> Key{getOutputSectionName(C->getSectionName()),
-                                     OutType, OutFlags, EntSize};
-      OutputSectionBase<ELFT> *&Sec = Map[Key];
-      if (!Sec) {
-        Sec = createOutputSection(C, Key.Name, Key.Type, Key.Flags);
+      OutputSectionBase<ELFT> *Sec;
+      bool IsNew;
+      std::tie(Sec, IsNew) =
+          Factory.create(C, getOutputSectionName(C->getSectionName()));
+      if (IsNew) {
         OwningSections.emplace_back(Sec);
         OutputSections.push_back(Sec);
         RegularSections.push_back(Sec);
@@ -674,14 +723,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 
   Out<ELFT>::Bss = static_cast<OutputSection<ELFT> *>(
-      Map[{".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE, 0}]);
+      Factory.lookup(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE));
 
-  Out<ELFT>::Dynamic->PreInitArraySec = Map.lookup(
-      {".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC, 0});
+  Out<ELFT>::Dynamic->PreInitArraySec = Factory.lookup(
+      ".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC);
   Out<ELFT>::Dynamic->InitArraySec =
-      Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC, 0});
+      Factory.lookup(".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC);
   Out<ELFT>::Dynamic->FiniArraySec =
-      Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC, 0});
+      Factory.lookup(".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC);
 
   auto AddStartEnd = [&](StringRef Start, StringRef End,
                          OutputSectionBase<ELFT> *OS) {
@@ -850,7 +899,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // If we have a .opd section (used under PPC64 for function descriptors),
   // store a pointer to it here so that we can use it later when processing
   // relocations.
-  Out<ELFT>::Opd = Map.lookup({".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC, 0});
+  Out<ELFT>::Opd = Factory.lookup(".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC);
 }
 
 static bool isAlpha(char C) {
