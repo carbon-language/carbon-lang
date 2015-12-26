@@ -4922,8 +4922,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     if (MaskNode->getOpcode() == X86ISD::VBROADCAST) {
       unsigned NumEltsInMask = MaskNode->getNumOperands();
       MaskNode = MaskNode->getOperand(0);
-      auto *CN = dyn_cast<ConstantSDNode>(MaskNode);
-      if (CN) {
+      if (auto *CN = dyn_cast<ConstantSDNode>(MaskNode)) {
         APInt MaskEltValue = CN->getAPIntValue();
         for (unsigned i = 0; i < NumEltsInMask; ++i)
           RawMask.push_back(MaskEltValue.getLoBits(MaskLoBits).getZExtValue());
@@ -4946,8 +4945,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     if (!MaskCP || MaskCP->isMachineConstantPoolEntry())
       return false;
 
-    auto *C = dyn_cast<Constant>(MaskCP->getConstVal());
-    if (C) {
+    if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
       DecodeVPERMVMask(C, VT, Mask);
       if (Mask.empty())
         return false;
@@ -4999,8 +4997,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     if (!MaskCP || MaskCP->isMachineConstantPoolEntry())
       return false;
 
-    auto *C = dyn_cast<Constant>(MaskCP->getConstVal());
-    if (C) {
+    if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
       DecodeVPERMV3Mask(C, VT, Mask);
       if (Mask.empty())
         return false;
