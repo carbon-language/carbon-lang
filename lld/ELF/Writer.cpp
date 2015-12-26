@@ -44,6 +44,7 @@ private:
   void copyLocalSymbols();
   void addReservedSymbols();
   void createSections();
+  void addPredefinedSections();
 
   template <bool isRela>
   void scanRelocs(InputSectionBase<ELFT> &C,
@@ -758,6 +759,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Out<ELFT>::Bss = static_cast<OutputSection<ELFT> *>(
       Factory.lookup(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE));
 
+  // If we have a .opd section (used under PPC64 for function descriptors),
+  // store a pointer to it here so that we can use it later when processing
+  // relocations.
+  Out<ELFT>::Opd = Factory.lookup(".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC);
+
   Out<ELFT>::Dynamic->PreInitArraySec = Factory.lookup(
       ".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC);
   Out<ELFT>::Dynamic->InitArraySec =
@@ -827,6 +833,36 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   addCommonSymbols(CommonSymbols);
   addSharedCopySymbols(SharedCopySymbols);
 
+  // So far we have added sections from input object files.
+  // This function adds linker-created Out<ELFT>::* sections.
+  addPredefinedSections();
+
+  std::stable_sort(OutputSections.begin(), OutputSections.end(),
+                   compareSections<ELFT>);
+
+  for (unsigned I = 0, N = OutputSections.size(); I < N; ++I) {
+    OutputSections[I]->SectionIndex = I + 1;
+    HasRelro |= (Config->ZRelro && isRelroSection(OutputSections[I]));
+  }
+
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
+    Out<ELFT>::ShStrTab->add(Sec->getName());
+
+  // Finalizers fix each section's size.
+  // .dynamic section's finalizer may add strings to .dynstr,
+  // so finalize that early.
+  // Likewise, .dynsym is finalized early since that may fill up .gnu.hash.
+  Out<ELFT>::Dynamic->finalize();
+  if (isOutputDynamic())
+    Out<ELFT>::DynSymTab->finalize();
+
+  // Fill other section headers.
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
+    Sec->finalize();
+}
+
+// This function add Out<ELFT>::* sections to OutputSections.
+template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.
   if (Out<ELFT>::SymTab)
@@ -881,34 +917,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     OutputSections.push_back(Out<ELFT>::Plt);
-
-  std::stable_sort(OutputSections.begin(), OutputSections.end(),
-                   compareSections<ELFT>);
-
-  for (unsigned I = 0, N = OutputSections.size(); I < N; ++I) {
-    OutputSections[I]->SectionIndex = I + 1;
-    HasRelro |= (Config->ZRelro && isRelroSection(OutputSections[I]));
-  }
-
-  for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    Out<ELFT>::ShStrTab->add(Sec->getName());
-
-  // Finalizers fix each section's size.
-  // .dynamic section's finalizer may add strings to .dynstr,
-  // so finalize that early.
-  // Likewise, .dynsym is finalized early since that may fill up .gnu.hash.
-  Out<ELFT>::Dynamic->finalize();
-  if (isOutputDynamic())
-    Out<ELFT>::DynSymTab->finalize();
-
-  // Fill other section headers.
-  for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    Sec->finalize();
-
-  // If we have a .opd section (used under PPC64 for function descriptors),
-  // store a pointer to it here so that we can use it later when processing
-  // relocations.
-  Out<ELFT>::Opd = Factory.lookup(".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC);
 }
 
 static bool isAlpha(char C) {
