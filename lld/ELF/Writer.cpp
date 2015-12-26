@@ -671,24 +671,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
         OutputSections.push_back(Sec);
         RegularSections.push_back(Sec);
       }
-      switch (C->SectionKind) {
-      case InputSectionBase<ELFT>::Regular:
-        static_cast<OutputSection<ELFT> *>(Sec)
-            ->addSection(cast<InputSection<ELFT>>(C));
-        break;
-      case InputSectionBase<ELFT>::EHFrame:
-        static_cast<EHOutputSection<ELFT> *>(Sec)
-            ->addSection(cast<EHInputSection<ELFT>>(C));
-        break;
-      case InputSectionBase<ELFT>::Merge:
-        static_cast<MergeOutputSection<ELFT> *>(Sec)
-            ->addSection(cast<MergeInputSection<ELFT>>(C));
-        break;
-      case InputSectionBase<ELFT>::MipsReginfo:
-        static_cast<MipsReginfoOutputSection<ELFT> *>(Sec)
-            ->addSection(cast<MipsReginfoInputSection<ELFT>>(C));
-        break;
-      }
+      Sec->addSection(C);
     }
   }
 
