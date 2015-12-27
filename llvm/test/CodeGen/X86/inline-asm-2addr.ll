@@ -14,5 +14,5 @@ entry:
 	%0 = add i64 %asmtmp1, %asmtmp		; <i64> [#uses=1]
 ; CHECK-NEXT: leaq    (%[[REG2]],%[[REG1]]), %rax
 	ret i64 %0
-; CHECK-NEXT: retq
+; CHECK:      retq
 }
