@@ -7057,19 +7057,14 @@ defm VSHUFI32X4 : avx512_shuff_packed_128<"vshufi32x4",avx512vl_i32_info, 0x43>,
 defm VSHUFI64X2 : avx512_shuff_packed_128<"vshufi64x2",avx512vl_i64_info, 0x43>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<64, CD8VF>, VEX_W;
 
-multiclass avx512_valign<string OpcodeStr, AVX512VLVectorVTInfo VTInfo_I,
-                                                AVX512VLVectorVTInfo VTInfo_FP>{
+multiclass avx512_valign<string OpcodeStr, AVX512VLVectorVTInfo VTInfo_I> {
   defm NAME:       avx512_common_3Op_imm8<OpcodeStr, VTInfo_I, 0x03, X86VAlign>,
                            AVX512AIi8Base, EVEX_4V;
-  let isCodeGenOnly = 1 in {
-    defm NAME#_FP: avx512_common_3Op_imm8<OpcodeStr, VTInfo_FP, 0x03, X86VAlign>,
-                           AVX512AIi8Base, EVEX_4V;
-  }
 }
 
-defm VALIGND: avx512_valign<"valignd", avx512vl_i32_info, avx512vl_f32_info>,
+defm VALIGND: avx512_valign<"valignd", avx512vl_i32_info>,
                                                   EVEX_CD8<32, CD8VF>;
-defm VALIGNQ: avx512_valign<"valignq", avx512vl_i64_info, avx512vl_f64_info>,
+defm VALIGNQ: avx512_valign<"valignq", avx512vl_i64_info>,
                                                   EVEX_CD8<64, CD8VF>, VEX_W;
 
 multiclass avx512_vpalign_lowering<X86VectorVTInfo _ , list<Predicate> p>{
@@ -7203,9 +7198,6 @@ defm VPCONFLICT : avx512_unary_rm_vl_dq<0xC4, 0xC4, "vpconflict", X86Conflict, H
 multiclass avx512_replicate<bits<8> opc, string OpcodeStr, SDNode OpNode>{
   defm NAME:       avx512_unary_rm_vl<opc, OpcodeStr, OpNode, avx512vl_f32_info,
                                       HasAVX512>, XS;
-  let isCodeGenOnly = 1 in
-    defm NAME#_I: avx512_unary_rm_vl<opc, OpcodeStr, OpNode, avx512vl_i32_info,
-                                     HasAVX512>, XS;
 }
 
 defm VMOVSHDUP : avx512_replicate<0x16, "vmovshdup", X86Movshdup>;
@@ -7244,9 +7236,6 @@ multiclass avx512_movddup_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
 multiclass avx512_movddup<bits<8> opc, string OpcodeStr, SDNode OpNode>{
   defm NAME:      avx512_movddup_common<opc, OpcodeStr, OpNode,
                                         avx512vl_f64_info>, XD, VEX_W;
-  let isCodeGenOnly = 1 in
-    defm NAME#_I: avx512_movddup_common<opc, OpcodeStr, OpNode,
-                                        avx512vl_i64_info>;
 }
 
 defm VMOVDDUP : avx512_movddup<0x12, "vmovddup", X86Movddup>;
@@ -7404,11 +7393,6 @@ multiclass avx512_shufp<string OpcodeStr, AVX512VLVectorVTInfo VTInfo_I,
   defm NAME:     avx512_common_3Op_imm8<OpcodeStr, VTInfo_FP, 0xC6, X86Shufp>,
                                    EVEX_CD8<VTInfo_FP.info512.EltSize, CD8VF>,
                                    AVX512AIi8Base, EVEX_4V;
-  let isCodeGenOnly = 1 in {
-    defm NAME#_I: avx512_common_3Op_imm8<OpcodeStr, VTInfo_I, 0xC6, X86Shufp>,
-                                   EVEX_CD8<VTInfo_I.info512.EltSize, CD8VF>,
-                                   AVX512AIi8Base, EVEX_4V;
-  }
 }
 
 defm VSHUFPS: avx512_shufp<"vshufps", avx512vl_i32_info, avx512vl_f32_info>, PS;
