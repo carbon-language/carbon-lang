@@ -145,6 +145,7 @@ void initializeIVUsersPass(PassRegistry&);
 void initializeIfConverterPass(PassRegistry&);
 void initializeInductiveRangeCheckEliminationPass(PassRegistry&);
 void initializeIndVarSimplifyPass(PassRegistry&);
+void initializeInferFunctionAttrsLegacyPassPass(PassRegistry&);
 void initializeInlineCostAnalysisPass(PassRegistry&);
 void initializeInstructionCombiningPassPass(PassRegistry&);
 void initializeInstCountPass(PassRegistry&);

@@ -13,6 +13,7 @@ add_llvm_library(LLVMipo
   GlobalOpt.cpp
   IPConstantPropagation.cpp
   IPO.cpp
+  InferFunctionAttrs.cpp
   InlineAlways.cpp
   InlineSimple.cpp
   Inliner.cpp
