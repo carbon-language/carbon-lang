@@ -6619,7 +6619,7 @@ defm VPMOVM2 : avx512_convert_mask_to_vector<"vpmovm2">;
 multiclass convert_vector_to_mask_common<bits<8> opc, X86VectorVTInfo _, string OpcodeStr > {
 def rr : AVX512XS8I<opc, MRMSrcReg, (outs _.KRC:$dst), (ins _.RC:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                  [(set _.KRC:$dst, (trunc (_.VT _.RC:$src)))]>, EVEX;
+                  [(set _.KRC:$dst, (X86cvt2mask (_.VT _.RC:$src)))]>, EVEX;
 }
 
 multiclass avx512_convert_vector_to_mask<bits<8> opc, string OpcodeStr,

@@ -13365,6 +13365,62 @@ static SDValue LowerZERO_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
   return SDValue();
 }
 
+static SDValue LowerTruncateVecI1(SDValue Op, SelectionDAG &DAG,
+                                  const X86Subtarget *Subtarget) {
+
+  SDLoc DL(Op);
+  MVT VT = Op.getSimpleValueType();
+  SDValue In = Op.getOperand(0);
+  MVT InVT = In.getSimpleValueType();
+
+  assert(VT.getVectorElementType() == MVT::i1 && "Unexected vector type.");
+
+  // Shift LSB to MSB and use VPMOVB2M - SKX.
+  unsigned ShiftInx = InVT.getScalarSizeInBits() - 1;
+  if ((InVT.is512BitVector() && InVT.getScalarSizeInBits() <= 16 &&
+         Subtarget->hasBWI()) ||     // legal, will go to VPMOVB2M, VPMOVW2M
+      ((InVT.is256BitVector() || InVT.is128BitVector()) &&
+             InVT.getScalarSizeInBits() <= 16 && Subtarget->hasBWI() &&
+             Subtarget->hasVLX())) { // legal, will go to VPMOVB2M, VPMOVW2M
+    // Shift packed bytes not supported natively, bitcast to dword
+    MVT ExtVT = MVT::getVectorVT(MVT::i16, InVT.getSizeInBits()/16);
+    SDValue  ShiftNode = DAG.getNode(ISD::SHL, DL, ExtVT,
+                                     DAG.getBitcast(ExtVT, In),
+                                     DAG.getConstant(ShiftInx, DL, ExtVT));
+    ShiftNode = DAG.getBitcast(InVT, ShiftNode);
+    return DAG.getNode(X86ISD::CVT2MASK, DL, VT, ShiftNode);
+  }
+  if ((InVT.is512BitVector() && InVT.getScalarSizeInBits() >= 32 &&
+         Subtarget->hasDQI()) ||  // legal, will go to VPMOVD2M, VPMOVQ2M
+      ((InVT.is256BitVector() || InVT.is128BitVector()) &&
+         InVT.getScalarSizeInBits() >= 32 && Subtarget->hasDQI() &&
+         Subtarget->hasVLX())) {  // legal, will go to VPMOVD2M, VPMOVQ2M
+
+    SDValue  ShiftNode = DAG.getNode(ISD::SHL, DL, InVT, In,
+                                     DAG.getConstant(ShiftInx, DL, InVT));
+    return DAG.getNode(X86ISD::CVT2MASK, DL, VT, ShiftNode);
+  }
+
+  // Shift LSB to MSB, extend if necessary and use TESTM.
+  unsigned NumElts = InVT.getVectorNumElements();
+  if (InVT.getSizeInBits() < 512 &&
+      (InVT.getScalarType() == MVT::i8 || InVT.getScalarType() == MVT::i16 ||
+       !Subtarget->hasVLX())) {
+    assert((NumElts == 8 || NumElts == 16) && "Unexected vector type.");
+
+    // TESTD/Q should be used (if BW supported we use CVT2MASK above),
+    // so vector should be extended to packed dword/qword.
+    MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
+    In = DAG.getNode(ISD::SIGN_EXTEND, DL, ExtVT, In);
+    InVT = ExtVT;
+    ShiftInx = InVT.getScalarSizeInBits() - 1;
+  }
+
+  SDValue  ShiftNode = DAG.getNode(ISD::SHL, DL, InVT, In,
+                                   DAG.getConstant(ShiftInx, DL, InVT));
+  return DAG.getNode(X86ISD::TESTM, DL, VT, ShiftNode, ShiftNode);
+}
+
 SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   MVT VT = Op.getSimpleValueType();
@@ -13382,39 +13438,8 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
 
-  // move vector to mask - truncate solution for SKX
-  if (VT.getVectorElementType() == MVT::i1) {
-    if (InVT.is512BitVector() && InVT.getScalarSizeInBits() <= 16 &&
-        Subtarget->hasBWI())
-      return Op; // legal, will go to VPMOVB2M, VPMOVW2M
-    if ((InVT.is256BitVector() || InVT.is128BitVector())
-        && InVT.getScalarSizeInBits() <= 16 &&
-        Subtarget->hasBWI() && Subtarget->hasVLX())
-      return Op; // legal, will go to VPMOVB2M, VPMOVW2M
-    if (InVT.is512BitVector() && InVT.getScalarSizeInBits() >= 32 &&
-        Subtarget->hasDQI())
-      return Op; // legal, will go to VPMOVD2M, VPMOVQ2M
-    if ((InVT.is256BitVector() || InVT.is128BitVector())
-        && InVT.getScalarSizeInBits() >= 32 &&
-        Subtarget->hasDQI() && Subtarget->hasVLX())
-      return Op; // legal, will go to VPMOVB2M, VPMOVQ2M
-    }
-
-  if (VT.getVectorElementType() == MVT::i1) {
-    assert(VT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
-    unsigned NumElts = InVT.getVectorNumElements();
-    assert ((NumElts == 8 || NumElts == 16) && "Unexpected vector type");
-    if (InVT.getSizeInBits() < 512) {
-      MVT ExtVT = (NumElts == 16)? MVT::v16i32 : MVT::v8i64;
-      In = DAG.getNode(ISD::SIGN_EXTEND, DL, ExtVT, In);
-      InVT = ExtVT;
-    }
-
-    SDValue OneV =
-     DAG.getConstant(APInt::getSignBit(InVT.getScalarSizeInBits()), DL, InVT);
-    SDValue And = DAG.getNode(ISD::AND, DL, InVT, OneV, In);
-    return DAG.getNode(X86ISD::TESTM, DL, VT, And, And);
-  }
+  if (VT.getVectorElementType() == MVT::i1)
+    return LowerTruncateVecI1(Op, DAG, Subtarget);
 
   // vpmovqb/w/d, vpmovdb/w, vpmovwb
   if (Subtarget->hasAVX512()) {
@@ -16821,7 +16846,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     }
     case BROADCASTM: {
       SDValue Mask = Op.getOperand(1);
-      MVT MaskVT = MVT::getVectorVT(MVT::i1, Mask.getSimpleValueType().getSizeInBits());
+      MVT MaskVT = MVT::getVectorVT(MVT::i1,
+                                    Mask.getSimpleValueType().getSizeInBits());
       Mask = DAG.getBitcast(MaskVT, Mask);
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Mask);
     }
@@ -16844,6 +16870,18 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                 MVT::getVectorVT(MVT::i1, VT.getSizeInBits()),
                                 Src2, Src1);
       return DAG.getBitcast(VT, Res);
+    }
+    case CONVERT_TO_MASK: {
+      MVT SrcVT = Op.getOperand(1).getSimpleValueType();
+      MVT MaskVT = MVT::getVectorVT(MVT::i1, SrcVT.getVectorNumElements());
+      MVT BitcastVT = MVT::getVectorVT(MVT::i1, VT.getSizeInBits());
+
+      SDValue CvtMask = DAG.getNode(IntrData->Opc0, dl, MaskVT,
+                                    Op.getOperand(1));
+      SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, BitcastVT,
+                                DAG.getUNDEF(BitcastVT), CvtMask,
+                                DAG.getIntPtrConstant(0, dl));
+      return DAG.getBitcast(Op.getValueType(), Res);
     }
     case CONVERT_MASK_TO_VEC: {
       SDValue Mask = Op.getOperand(1);
@@ -20612,6 +20650,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VFPROUND:           return "X86ISD::VFPROUND";
   case X86ISD::CVTDQ2PD:           return "X86ISD::CVTDQ2PD";
   case X86ISD::CVTUDQ2PD:          return "X86ISD::CVTUDQ2PD";
+  case X86ISD::CVT2MASK:           return "X86ISD::CVT2MASK";
   case X86ISD::VSHLDQ:             return "X86ISD::VSHLDQ";
   case X86ISD::VSRLDQ:             return "X86ISD::VSRLDQ";
   case X86ISD::VSHL:               return "X86ISD::VSHL";

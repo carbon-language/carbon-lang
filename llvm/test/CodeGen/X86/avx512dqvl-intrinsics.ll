@@ -1833,6 +1833,54 @@ define <4 x i32>@test_int_x86_avx512_mask_broadcasti32x2_128(<4 x i32> %x0, <4 x
   ret <4 x i32> %res4
 }
 
+declare i8 @llvm.x86.avx512.cvtd2mask.128(<4 x i32>)
+
+define i8@test_int_x86_avx512_cvtd2mask_128(<4 x i32> %x0) {
+; CHECK-LABEL: test_int_x86_avx512_cvtd2mask_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpmovd2m %xmm0, %k0
+; CHECK-NEXT:    kmovb %k0, %eax
+; CHECK-NEXT:    retq
+    %res = call i8 @llvm.x86.avx512.cvtd2mask.128(<4 x i32> %x0)
+    ret i8 %res
+}
+
+declare i8 @llvm.x86.avx512.cvtd2mask.256(<8 x i32>)
+
+define i8@test_int_x86_avx512_cvtd2mask_256(<8 x i32> %x0) {
+; CHECK-LABEL: test_int_x86_avx512_cvtd2mask_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpmovd2m %ymm0, %k0
+; CHECK-NEXT:    kmovb %k0, %eax
+; CHECK-NEXT:    retq
+    %res = call i8 @llvm.x86.avx512.cvtd2mask.256(<8 x i32> %x0)
+    ret i8 %res
+}
+
+declare i8 @llvm.x86.avx512.cvtq2mask.128(<2 x i64>)
+
+define i8@test_int_x86_avx512_cvtq2mask_128(<2 x i64> %x0) {
+; CHECK-LABEL: test_int_x86_avx512_cvtq2mask_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpmovq2m %xmm0, %k0
+; CHECK-NEXT:    kmovb %k0, %eax
+; CHECK-NEXT:    retq
+    %res = call i8 @llvm.x86.avx512.cvtq2mask.128(<2 x i64> %x0)
+    ret i8 %res
+}
+
+declare i8 @llvm.x86.avx512.cvtq2mask.256(<4 x i64>)
+
+define i8@test_int_x86_avx512_cvtq2mask_256(<4 x i64> %x0) {
+; CHECK-LABEL: test_int_x86_avx512_cvtq2mask_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpmovq2m %ymm0, %k0
+; CHECK-NEXT:    kmovb %k0, %eax
+; CHECK-NEXT:    retq
+    %res = call i8 @llvm.x86.avx512.cvtq2mask.256(<4 x i64> %x0)
+    ret i8 %res
+}
+
 declare <4 x i32> @llvm.x86.avx512.cvtmask2d.128(i8)
 
 define <4 x i32>@test_int_x86_avx512_cvtmask2d_128(i8 %x0) {
