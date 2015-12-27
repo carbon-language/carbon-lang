@@ -1525,17 +1525,17 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (Subtarget->hasCDI()) {
       setOperationAction(ISD::CTLZ,             MVT::v8i64,  Legal);
       setOperationAction(ISD::CTLZ,             MVT::v16i32, Legal);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i64,  Legal);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i32, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i64,  Expand);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i32, Expand);
 
       setOperationAction(ISD::CTLZ,             MVT::v8i16,  Custom);
       setOperationAction(ISD::CTLZ,             MVT::v16i8,  Custom);
       setOperationAction(ISD::CTLZ,             MVT::v16i16, Custom);
       setOperationAction(ISD::CTLZ,             MVT::v32i8,  Custom);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i16,  Custom);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i8,  Custom);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i16, Custom);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v32i8,  Custom);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i16,  Expand);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i8,  Expand);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i16, Expand);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v32i8,  Expand);
 
       setOperationAction(ISD::CTTZ_ZERO_UNDEF,  MVT::v8i64,  Custom);
       setOperationAction(ISD::CTTZ_ZERO_UNDEF,  MVT::v16i32, Custom);
@@ -1545,10 +1545,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::CTLZ,             MVT::v8i32, Legal);
         setOperationAction(ISD::CTLZ,             MVT::v2i64, Legal);
         setOperationAction(ISD::CTLZ,             MVT::v4i32, Legal);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i64, Legal);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i32, Legal);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v2i64, Legal);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i32, Legal);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i64, Expand);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i32, Expand);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v2i64, Expand);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i32, Expand);
 
         setOperationAction(ISD::CTTZ_ZERO_UNDEF,  MVT::v4i64, Custom);
         setOperationAction(ISD::CTTZ_ZERO_UNDEF,  MVT::v8i32, Custom);
@@ -1559,10 +1559,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::CTLZ,             MVT::v8i32, Custom);
         setOperationAction(ISD::CTLZ,             MVT::v2i64, Custom);
         setOperationAction(ISD::CTLZ,             MVT::v4i32, Custom);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i64, Custom);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i32, Custom);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v2i64, Custom);
-        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i32, Custom);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i64, Expand);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i32, Expand);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v2i64, Expand);
+        setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i32, Expand);
       }
     } // Subtarget->hasCDI()
 
@@ -1682,8 +1682,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (Subtarget->hasCDI()) {
       setOperationAction(ISD::CTLZ,            MVT::v32i16, Custom);
       setOperationAction(ISD::CTLZ,            MVT::v64i8,  Custom);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v32i16, Custom);
-      setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v64i8,  Custom);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v32i16, Expand);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v64i8,  Expand);
     }
 
     for (auto VT : { MVT::v64i8, MVT::v32i16 }) {
@@ -18000,9 +18000,6 @@ static SDValue LowerCTLZ_ZERO_UNDEF(SDValue Op, const X86Subtarget *Subtarget,
   EVT OpVT = VT;
   unsigned NumBits = VT.getSizeInBits();
   SDLoc dl(Op);
-
-  if (VT.isVector() && Subtarget->hasAVX512())
-    return LowerVectorCTLZ_AVX512(Op, DAG);
 
   Op = Op.getOperand(0);
   if (VT == MVT::i8) {

@@ -7184,9 +7184,6 @@ def : Pat<(xor
 multiclass avx512_ctlz<bits<8> opc, string OpcodeStr, Predicate prd>{
 
   defm NAME :          avx512_unary_rm_vl_dq<opc, opc, OpcodeStr, ctlz, prd>;
-  let isCodeGenOnly = 1 in
-    defm NAME#_UNDEF : avx512_unary_rm_vl_dq<opc, opc, OpcodeStr,
-                                             ctlz_zero_undef, prd>;
 }
 
 defm VPLZCNT    : avx512_ctlz<0x44, "vplzcnt", HasCDI>;
