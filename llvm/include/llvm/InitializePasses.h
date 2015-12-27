@@ -131,6 +131,7 @@ void initializeScalarizerPass(PassRegistry&);
 void initializeEarlyCSELegacyPassPass(PassRegistry &);
 void initializeEliminateAvailableExternallyPass(PassRegistry&);
 void initializeExpandISelPseudosPass(PassRegistry&);
+void initializeForceFunctionAttrsLegacyPassPass(PassRegistry&);
 void initializeFunctionAttrsPass(PassRegistry&);
 void initializeGCMachineCodeAnalysisPass(PassRegistry&);
 void initializeGCModuleInfoPass(PassRegistry&);
