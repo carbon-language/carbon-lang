@@ -1928,3 +1928,40 @@ define <4 x i64>@test_int_x86_avx512_cvtmask2q_256(i8 %x0) {
   %res = call <4 x i64> @llvm.x86.avx512.cvtmask2q.256(i8 %x0)
   ret <4 x i64> %res
 }
+declare <4 x double> @llvm.x86.avx512.mask.broadcastf64x2.256(<2 x double>, <4 x double>, i8)
+
+define <4 x double>@test_int_x86_avx512_mask_broadcastf64x2_256(<2 x double> %x0, <4 x double> %x2, i8 %mask) {
+; CHECK-LABEL: test_int_x86_avx512_mask_broadcastf64x2_256:
+; CHECK: kmovb %edi, %k1
+; CHECK: vshuff64x2 $0, %ymm0, %ymm0, %ymm2 {%k1} {z}
+; CHECK: vshuff64x2 $0, %ymm0, %ymm0, %ymm1 {%k1}
+; CHECK: vshuff64x2 $0, %ymm0, %ymm0, %ymm0
+; CHECK: vaddpd %ymm1, %ymm0, %ymm0
+; CHECK: vaddpd %ymm0, %ymm2, %ymm0
+
+  %res1 = call <4 x double> @llvm.x86.avx512.mask.broadcastf64x2.256(<2 x double> %x0, <4 x double> %x2, i8 -1)
+  %res2 = call <4 x double> @llvm.x86.avx512.mask.broadcastf64x2.256(<2 x double> %x0, <4 x double> %x2, i8 %mask)
+  %res3 = call <4 x double> @llvm.x86.avx512.mask.broadcastf64x2.256(<2 x double> %x0, <4 x double> zeroinitializer, i8 %mask)
+  %res4 = fadd <4 x double> %res1, %res2
+  %res5 = fadd <4 x double> %res3, %res4
+  ret <4 x double> %res5
+}
+
+declare <4 x i64> @llvm.x86.avx512.mask.broadcasti64x2.256(<2 x i64>, <4 x i64>, i8)
+
+define <4 x i64>@test_int_x86_avx512_mask_broadcasti64x2_256(<2 x i64> %x0, <4 x i64> %x2, i8 %mask) {
+; CHECK-LABEL: test_int_x86_avx512_mask_broadcasti64x2_256:
+; CHECK: kmovb %edi, %k1
+; CHECK: vshufi64x2 $0, %ymm0, %ymm0, %ymm2 {%k1} {z}
+; CHECK: vshufi64x2 $0, %ymm0, %ymm0, %ymm1 {%k1}
+; CHECK: vshufi64x2 $0, %ymm0, %ymm0, %ymm0
+; CHECK: vpaddq %ymm1, %ymm0, %ymm0
+; CHECK: vpaddq %ymm0, %ymm2, %ymm0
+
+  %res1 = call <4 x i64> @llvm.x86.avx512.mask.broadcasti64x2.256(<2 x i64> %x0, <4 x i64> %x2, i8 -1)
+  %res2 = call <4 x i64> @llvm.x86.avx512.mask.broadcasti64x2.256(<2 x i64> %x0, <4 x i64> %x2, i8 %mask)
+  %res3 = call <4 x i64> @llvm.x86.avx512.mask.broadcasti64x2.256(<2 x i64> %x0, <4 x i64> zeroinitializer, i8 %mask)
+  %res4 = add <4 x i64> %res1, %res2
+  %res5 = add <4 x i64> %res3, %res4
+  ret <4 x i64> %res5
+}

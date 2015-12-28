@@ -5763,3 +5763,41 @@ define <4 x float> @test_x86_vbroadcast_ss_ps_128(<4 x float> %a0, <4 x float> %
 }
 declare <4 x float> @llvm.x86.avx512.mask.broadcast.ss.ps.128(<4 x float>, <4 x float>, i8) nounwind readonly
 
+
+declare <8 x float> @llvm.x86.avx512.mask.broadcastf32x4.256(<4 x float>, <8 x float>, i8)
+
+define <8 x float>@test_int_x86_avx512_mask_broadcastf32x4_256(<4 x float> %x0, <8 x float> %x2, i8 %mask) {
+; CHECK-LABEL: test_int_x86_avx512_mask_broadcastf32x4_256:
+; CHECK: kmovw %eax, %k1
+; CHECK: vshuff32x4 $0, %ymm0, %ymm0, %ymm2 {%k1} {z}
+; CHECK: vshuff32x4 $0, %ymm0, %ymm0, %ymm1 {%k1}
+; CHECK: vshuff32x4 $0, %ymm0, %ymm0, %ymm0
+; CHECK: vaddps %ymm1, %ymm0, %ymm0
+; CHECK: vaddps %ymm0, %ymm2, %ymm0
+
+  %res1 = call <8 x float> @llvm.x86.avx512.mask.broadcastf32x4.256(<4 x float> %x0, <8 x float> %x2, i8 -1)
+  %res2 = call <8 x float> @llvm.x86.avx512.mask.broadcastf32x4.256(<4 x float> %x0, <8 x float> %x2, i8 %mask)
+  %res3 = call <8 x float> @llvm.x86.avx512.mask.broadcastf32x4.256(<4 x float> %x0, <8 x float> zeroinitializer, i8 %mask)
+  %res4 = fadd <8 x float> %res1, %res2
+  %res5 = fadd <8 x float> %res3, %res4
+  ret <8 x float> %res5
+}
+
+declare <8 x i32> @llvm.x86.avx512.mask.broadcasti32x4.256(<4 x i32>, <8 x i32>, i8)
+
+define <8 x i32>@test_int_x86_avx512_mask_broadcasti32x4_256(<4 x i32> %x0, <8 x i32> %x2, i8 %mask) {
+; CHECK-LABEL: test_int_x86_avx512_mask_broadcasti32x4_256:
+; CHECK: kmovw %eax, %k1
+; CHECK: vshufi32x4 $0, %ymm0, %ymm0, %ymm2 {%k1} {z}
+; CHECK: vshufi32x4 $0, %ymm0, %ymm0, %ymm1 {%k1}
+; CHECK: vshufi32x4 $0, %ymm0, %ymm0, %ymm0
+; CHECK: vpaddd %ymm1, %ymm0, %ymm0
+; CHECK: vpaddd %ymm0, %ymm2, %ymm0
+
+  %res1 = call <8 x i32> @llvm.x86.avx512.mask.broadcasti32x4.256(<4 x i32> %x0, <8 x i32> %x2, i8 -1)
+  %res2 = call <8 x i32> @llvm.x86.avx512.mask.broadcasti32x4.256(<4 x i32> %x0, <8 x i32> %x2, i8 %mask)
+  %res3 = call <8 x i32> @llvm.x86.avx512.mask.broadcasti32x4.256(<4 x i32> %x0, <8 x i32> zeroinitializer, i8 %mask)
+  %res4 = add <8 x i32> %res1, %res2
+  %res5 = add <8 x i32> %res3, %res4
+  ret <8 x i32> %res5
+}
