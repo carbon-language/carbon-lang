@@ -514,25 +514,40 @@ define <8 x double> @test_x86_vbroadcast_sd_512(i8* %a0) {
 }
 declare <8 x double> @llvm.x86.avx512.vbroadcast.sd.512(i8*) nounwind readonly
 
-define <16 x float> @test_x86_vbroadcast_ss_ps_512(<4 x float> %a0) {
+define <16 x float> @test_x86_vbroadcast_ss_ps_512(<4 x float> %a0, <16 x float> %a1, i16 %mask ) {
 ; CHECK-LABEL: test_x86_vbroadcast_ss_ps_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vbroadcastss %xmm0, %zmm0
-; CHECK-NEXT:    retq
-  %res = call <16 x float> @llvm.x86.avx512.vbroadcast.ss.ps.512(<4 x float> %a0) ; <<16 x float>> [#uses=1]
-  ret <16 x float> %res
-}
-declare <16 x float> @llvm.x86.avx512.vbroadcast.ss.ps.512(<4 x float>) nounwind readonly
+; CHECK: kmovw   %edi, %k1
+; CHECK-NEXT: vbroadcastss %xmm0, %zmm1 {%k1}
+; CHECK-NEXT: vbroadcastss %xmm0, %zmm2 {%k1} {z}
+; CHECK-NEXT: vbroadcastss %xmm0, %zmm0
+; CHECK-NEXT: vaddps %zmm1, %zmm0, %zmm0
 
-define <8 x double> @test_x86_vbroadcast_sd_pd_512(<2 x double> %a0) {
-; CHECK-LABEL: test_x86_vbroadcast_sd_pd_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vbroadcastsd %xmm0, %zmm0
-; CHECK-NEXT:    retq
-  %res = call <8 x double> @llvm.x86.avx512.vbroadcast.sd.pd.512(<2 x double> %a0) ; <<8 x double>> [#uses=1]
-  ret <8 x double> %res
+  %res = call <16 x float> @llvm.x86.avx512.mask.broadcast.ss.ps.512(<4 x float> %a0, <16 x float> zeroinitializer, i16 -1) 
+  %res1 = call <16 x float> @llvm.x86.avx512.mask.broadcast.ss.ps.512(<4 x float> %a0, <16 x float> %a1, i16 %mask) 
+  %res2 = call <16 x float> @llvm.x86.avx512.mask.broadcast.ss.ps.512(<4 x float> %a0, <16 x float> zeroinitializer, i16 %mask) 
+  %res3 = fadd <16 x float> %res, %res1
+  %res4 = fadd <16 x float> %res2, %res3
+  ret <16 x float> %res4
 }
-declare <8 x double> @llvm.x86.avx512.vbroadcast.sd.pd.512(<2 x double>) nounwind readonly
+declare <16 x float> @llvm.x86.avx512.mask.broadcast.ss.ps.512(<4 x float>, <16 x float>, i16) nounwind readonly
+
+
+define <8 x double> @test_x86_vbroadcast_sd_pd_512(<2 x double> %a0, <8 x double> %a1, i8 %mask ) {
+; CHECK-LABEL: test_x86_vbroadcast_sd_pd_512:
+; CHECK: kmovw   %eax, %k1
+; CHECK-NEXT: vbroadcastsd %xmm0, %zmm1 {%k1}
+; CHECK-NEXT: vbroadcastsd %xmm0, %zmm2 {%k1} {z}
+; CHECK-NEXT: vbroadcastsd %xmm0, %zmm0
+; CHECK-NEXT: vaddpd %zmm1, %zmm0, %zmm0
+
+  %res = call <8 x double> @llvm.x86.avx512.mask.broadcast.sd.pd.512(<2 x double> %a0, <8 x double> zeroinitializer, i8 -1) 
+  %res1 = call <8 x double> @llvm.x86.avx512.mask.broadcast.sd.pd.512(<2 x double> %a0, <8 x double> %a1, i8 %mask) 
+  %res2 = call <8 x double> @llvm.x86.avx512.mask.broadcast.sd.pd.512(<2 x double> %a0, <8 x double> zeroinitializer, i8 %mask) 
+  %res3 = fadd <8 x double> %res, %res1
+  %res4 = fadd <8 x double> %res2, %res3
+  ret <8 x double> %res4
+}
+declare <8 x double> @llvm.x86.avx512.mask.broadcast.sd.pd.512(<2 x double>, <8 x double>, i8) nounwind readonly
 
 define <16 x i32>@test_int_x86_avx512_pbroadcastd_512(<4 x i32> %x0, <16 x i32> %x1, i16 %mask) {
 ; CHECK-LABEL: test_int_x86_avx512_pbroadcastd_512:
