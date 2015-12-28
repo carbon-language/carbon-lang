@@ -2505,6 +2505,7 @@ static unsigned DwarfVersionNum(StringRef ArgValue) {
       .Case("-gdwarf-2", 2)
       .Case("-gdwarf-3", 3)
       .Case("-gdwarf-4", 4)
+      .Case("-gdwarf-5", 5)
       .Default(0);
 }
 
@@ -4098,7 +4099,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // If a -gdwarf argument appeared, remember it.
   if (Arg *A = Args.getLastArg(options::OPT_gdwarf_2, options::OPT_gdwarf_3,
-                               options::OPT_gdwarf_4))
+                               options::OPT_gdwarf_4, options::OPT_gdwarf_5))
     DwarfVersion = DwarfVersionNum(A->getSpelling());
 
   // Forward -gcodeview.

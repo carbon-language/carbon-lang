@@ -1164,6 +1164,8 @@ def gdwarf_3 : Flag<["-"], "gdwarf-3">, Group<g_Group>,
   HelpText<"Generate source-level debug information with dwarf version 3">;
 def gdwarf_4 : Flag<["-"], "gdwarf-4">, Group<g_Group>,
   HelpText<"Generate source-level debug information with dwarf version 4">;
+def gdwarf_5 : Flag<["-"], "gdwarf-5">, Group<g_Group>,
+  HelpText<"Generate source-level debug information with dwarf version 5">;
 def gcodeview : Flag<["-"], "gcodeview">,
   HelpText<"Generate CodeView debug information">,
   Flags<[CC1Option, CC1AsOption, CoreOption]>;
