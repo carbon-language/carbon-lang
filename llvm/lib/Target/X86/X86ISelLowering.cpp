@@ -26926,10 +26926,12 @@ static SDValue performFMaxNumCombine(SDNode *N, SelectionDAG &DAG,
   //       should be able to lower to FMAX/FMIN alone.
   // TODO: If an operand is already known to be a NaN or not a NaN, this
   //       should be an optional swap and FMAX/FMIN.
-  // TODO: Allow f64, vectors, and fminnum.
+  // TODO: Allow fminnum.
 
   EVT VT = N->getValueType(0);
-  if (!(Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)))
+  if (!((Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) ||
+        (Subtarget->hasSSE2() && (VT == MVT::f64 || VT == MVT::v2f64)) ||
+        (Subtarget->hasAVX() && (VT == MVT::v8f32 || VT == MVT::v4f64))))
     return SDValue();
 
   // This takes at least 3 instructions, so favor a library call when operating
