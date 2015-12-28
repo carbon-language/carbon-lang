@@ -1622,6 +1622,9 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
     ActOnCapturedRegionError();
     return StmtError();
   }
+
+  OMPOrderedClause *OC = nullptr;
+  SmallVector<OMPLinearClause *, 4> LCs;
   // This is required for proper codegen.
   for (auto *Clause : Clauses) {
     if (isOpenMPPrivate(Clause->getClauseKind()) ||
@@ -1647,6 +1650,18 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
           MarkDeclarationsReferencedInExpr(E);
         }
     }
+    if (Clause->getClauseKind() == OMPC_ordered)
+      OC = cast<OMPOrderedClause>(Clause);
+    else if (Clause->getClauseKind() == OMPC_linear)
+      LCs.push_back(cast<OMPLinearClause>(Clause));
+  }
+  if (!LCs.empty() && OC && OC->getNumForLoops()) {
+    for (auto *C : LCs) {
+      Diag(C->getLocStart(), diag::err_omp_linear_ordered)
+          << SourceRange(OC->getLocStart(), OC->getLocEnd());
+    }
+    ActOnCapturedRegionError();
+    return StmtError();
   }
   return ActOnCapturedRegionEnd(S.get());
 }
