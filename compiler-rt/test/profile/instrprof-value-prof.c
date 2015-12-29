@@ -9,6 +9,22 @@
 // value profile merging current do sorting based on target values -- this will destroy the order of the target
 // in the list leading to comparison problem. For now just check a small subset of output.
 // RUN: llvm-profdata show --all-functions -ic-targets  %t-merged.profdata | FileCheck  %s -check-prefix=MERGE
+//
+// RUN: env LLVM_PROFILE_FILE=%t-3.profraw LLVM_VP_BUFFER_SIZE=1 %run %t 1
+// RUN: env LLVM_PROFILE_FILE=%t-4.profraw LLVM_VP_BUFFER_SIZE=8 %run %t 1
+// RUN: env LLVM_PROFILE_FILE=%t-5.profraw LLVM_VP_BUFFER_SIZE=128 %run %t 1
+// RUN: env LLVM_PROFILE_FILE=%t-6.profraw LLVM_VP_BUFFER_SIZE=1024 %run %t 1
+// RUN: env LLVM_PROFILE_FILE=%t-7.profraw LLVM_VP_BUFFER_SIZE=102400 %run %t 1
+// RUN: llvm-profdata merge -o %t-3.profdata %t-3.profraw
+// RUN: llvm-profdata merge -o %t-4.profdata %t-4.profraw
+// RUN: llvm-profdata merge -o %t-5.profdata %t-5.profraw
+// RUN: llvm-profdata merge -o %t-6.profdata %t-6.profraw
+// RUN: llvm-profdata merge -o %t-7.profdata %t-7.profraw
+// RUN: llvm-profdata show --all-functions -ic-targets  %t-3.profdata | FileCheck  %s
+// RUN: llvm-profdata show --all-functions -ic-targets  %t-4.profdata | FileCheck  %s
+// RUN: llvm-profdata show --all-functions -ic-targets  %t-5.profdata | FileCheck  %s
+// RUN: llvm-profdata show --all-functions -ic-targets  %t-6.profdata | FileCheck  %s
+// RUN: llvm-profdata show --all-functions -ic-targets  %t-7.profdata | FileCheck  %s
 
 #include <stdint.h>
 #include <stdio.h>

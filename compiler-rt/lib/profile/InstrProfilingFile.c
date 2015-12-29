@@ -31,12 +31,16 @@ static uint32_t fileWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
 }
 
 static int writeFile(FILE *File) {
-  uint8_t *ValueDataBegin = NULL;
-  const uint64_t ValueDataSize =
-      __llvm_profile_gather_value_data(&ValueDataBegin);
-  int r = llvmWriteProfData(fileWriter, File, ValueDataBegin, ValueDataSize);
-  free(ValueDataBegin);
-  return r;
+  const char *BufferSzStr = 0;
+  uint64_t ValueDataSize = 0;
+  struct ValueProfData **ValueDataArray =
+      __llvm_profile_gather_value_data(&ValueDataSize);
+  FreeHook = &free;
+  CallocHook = &calloc;
+  BufferSzStr = getenv("LLVM_VP_BUFFER_SIZE");
+  if (BufferSzStr && BufferSzStr[0])
+    VPBufferSize = atoi(BufferSzStr);
+  return llvmWriteProfData(fileWriter, File, ValueDataArray, ValueDataSize);
 }
 
 static int writeFileWithName(const char *OutputName) {

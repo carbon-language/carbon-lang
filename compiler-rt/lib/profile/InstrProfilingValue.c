@@ -21,7 +21,8 @@
 #define PROF_OOM_RETURN(Msg)                                                   \
   {                                                                            \
     PROF_OOM(Msg)                                                              \
-    return 0;                                                                  \
+    free(ValueDataArray);                                                      \
+    return NULL;                                                               \
   }
 
 #if COMPILER_RT_HAS_ATOMICS != 1
@@ -78,24 +79,6 @@ static int allocateValueProfileCounters(__llvm_profile_data *Data) {
   return 1;
 }
 
-static void deallocateValueProfileCounters(__llvm_profile_data *Data) {
-  uint64_t NumVSites = 0, I;
-  uint32_t VKI;
-  if (!Data->Values)
-    return;
-  for (VKI = IPVK_First; VKI <= IPVK_Last; ++VKI)
-    NumVSites += Data->NumValueSites[VKI];
-  for (I = 0; I < NumVSites; I++) {
-    ValueProfNode *Node = ((ValueProfNode **)Data->Values)[I];
-    while (Node) {
-      ValueProfNode *Next = Node->Next;
-      free(Node);
-      Node = Next;
-    }
-  }
-  free(Data->Values);
-}
-
 COMPILER_RT_VISIBILITY void
 __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
                                  uint32_t CounterIndex) {
@@ -147,92 +130,51 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
   }
 }
 
-/* For multi-threaded programs, while the profile is being dumped, other
-   threads may still be updating the value profile data and creating new
-   value entries. To accommadate this, we need to add extra bytes to the
-   data buffer. The size of the extra space is controlled by an environment
-   variable. */
-static unsigned getVprofExtraBytes() {
-  const char *ExtraStr =
-      GetEnvHook ? GetEnvHook("LLVM_VALUE_PROF_BUFFER_EXTRA") : 0;
-  if (!ExtraStr || !ExtraStr[0])
-    return 1024;
-  return (unsigned)atoi(ExtraStr);
-}
-
-/* Extract the value profile data info from the runtime. */
-#define DEF_VALUE_RECORD(R, NS, V)                                             \
-  ValueProfRuntimeRecord R;                                                    \
-  if (initializeValueProfRuntimeRecord(&R, NS, V))                             \
-    PROF_OOM_RETURN("Failed to write value profile data ");
-
-#define DTOR_VALUE_RECORD(R) finalizeValueProfRuntimeRecord(&R);
-
-COMPILER_RT_VISIBILITY uint64_t
-__llvm_profile_gather_value_data(uint8_t **VDataArray) {
-  size_t S = 0, RealSize = 0, BufferCapacity = 0, Extra = 0;
+COMPILER_RT_VISIBILITY ValueProfData **
+__llvm_profile_gather_value_data(uint64_t *ValueDataSize) {
+  size_t S = 0;
   __llvm_profile_data *I;
-  if (!VDataArray)
-    PROF_OOM_RETURN("Failed to write value profile data ");
+  ValueProfData **ValueDataArray;
 
   const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
   const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
+
+  if (!ValueDataSize)
+    return NULL;
+
+  ValueDataArray =
+      (ValueProfData **)calloc(DataEnd - DataBegin, sizeof(void *));
+  if (!ValueDataArray)
+    PROF_OOM_RETURN("Failed to write value profile data ");
 
   /*
    * Compute the total Size of the buffer to hold ValueProfData
    * structures for functions with value profile data.
    */
   for (I = (__llvm_profile_data *)DataBegin; I != DataEnd; ++I) {
-
-    DEF_VALUE_RECORD(R, I->NumValueSites, I->Values);
+    ValueProfRuntimeRecord R;
+    if (initializeValueProfRuntimeRecord(&R, I->NumValueSites, I->Values))
+      PROF_OOM_RETURN("Failed to write value profile data ");
 
     /* Compute the size of ValueProfData from this runtime record.  */
-    if (getNumValueKindsRT(&R) != 0)
-      S += getValueProfDataSizeRT(&R);
-
-    DTOR_VALUE_RECORD(R);
-  }
-  /* No value sites or no value profile data is collected. */
-  if (!S)
-    return 0;
-
-  Extra = getVprofExtraBytes();
-  BufferCapacity = S + Extra;
-  *VDataArray = calloc(BufferCapacity, sizeof(uint8_t));
-  if (!*VDataArray)
-    PROF_OOM_RETURN("Failed to write value profile data ");
-
-  ValueProfData *VD = (ValueProfData *)(*VDataArray);
-  /*
-   * Extract value profile data and write into ValueProfData structure
-   * one by one. Note that new value profile data added to any value
-   * site (from another thread) after the ValueProfRuntimeRecord is
-   * initialized (when the profile data snapshot is taken) won't be
-   * collected. This is not a problem as those dropped value will have
-   * very low taken count.
-   */
-  for (I = (__llvm_profile_data *)DataBegin; I != DataEnd; ++I) {
-    DEF_VALUE_RECORD(R, I->NumValueSites, I->Values);
-    if (getNumValueKindsRT(&R) == 0)
-      continue;
-
-    /* Record R has taken a snapshot of the VP data at this point. Newly
-       added VP data for this function will be dropped.  */
-    /* Check if there is enough space.  */
-    if (BufferCapacity - RealSize < getValueProfDataSizeRT(&R)) {
-      PROF_ERR("Value profile data is dropped :%s \n",
-               "Out of buffer space. Use environment "
-               " LLVM_VALUE_PROF_BUFFER_EXTRA to allocate more");
-      I->Values = 0;
+    if (getNumValueKindsRT(&R) != 0) {
+      ValueProfData *VD = NULL;
+      uint32_t VS = getValueProfDataSizeRT(&R);
+      VD = (ValueProfData *)calloc(VS, sizeof(uint8_t));
+      if (!VD)
+        PROF_OOM_RETURN("Failed to write value profile data ");
+      serializeValueProfDataFromRT(&R, VD);
+      ValueDataArray[I - DataBegin] = VD;
+      S += VS;
     }
-
-    serializeValueProfDataFromRT(&R, VD);
-    deallocateValueProfileCounters(I);
-    I->Values = VD;
-    RealSize += VD->TotalSize;
-    VD = (ValueProfData *)((char *)VD + VD->TotalSize);
-    DTOR_VALUE_RECORD(R);
+    finalizeValueProfRuntimeRecord(&R);
   }
 
-  return RealSize;
+  if (!S) {
+    free(ValueDataArray);
+    ValueDataArray = NULL;
+  }
+
+  *ValueDataSize = S;
+  return ValueDataArray;
 }

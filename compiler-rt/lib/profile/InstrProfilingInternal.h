@@ -52,17 +52,20 @@ typedef uint32_t (*WriterCallback)(ProfDataIOVec *, uint32_t NumIOVecs,
 uint32_t llvmBufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
                           void **WriterCtx);
 int llvmWriteProfData(WriterCallback Writer, void *WriterCtx,
-                      const uint8_t *ValueDataBegin,
+                      struct ValueProfData **ValueDataArray,
                       const uint64_t ValueDataSize);
 int llvmWriteProfDataImpl(WriterCallback Writer, void *WriterCtx,
                           const __llvm_profile_data *DataBegin,
                           const __llvm_profile_data *DataEnd,
                           const uint64_t *CountersBegin,
                           const uint64_t *CountersEnd,
-                          const uint8_t *ValueDataBegin,
+                          struct ValueProfData **ValueDataBeginArray,
                           const uint64_t ValueDataSize, const char *NamesBegin,
                           const char *NamesEnd);
 
 extern char *(*GetEnvHook)(const char *);
+extern void (*FreeHook)(void *);
+extern void* (*CallocHook)(size_t, size_t);
+extern uint32_t VPBufferSize;
 
 #endif
