@@ -157,3 +157,14 @@ namespace MultipleUnambiguousLookupResults {
   int x2 = X::x; // ok, unambiguous
   int y2 = Y::y; // ok, unambiguous
 }
+
+namespace RedeclOfNonNamespace {
+  int a; // expected-note {{previous}}
+  namespace X { int b; }
+  using X::b; // expected-note {{previous}}
+  namespace c {} // expected-note {{previous}}
+
+  namespace a = X; // expected-error {{different kind}}
+  namespace b = X; // expected-error {{different kind}}
+  namespace c = X; // expected-error-re {{redefinition of 'c'{{$}}}}
+}

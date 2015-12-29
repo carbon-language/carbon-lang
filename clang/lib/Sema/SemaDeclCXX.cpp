@@ -8688,9 +8688,9 @@ Decl *Sema::ActOnNamespaceAliasDef(Scope *S, SourceLocation NamespaceLoc,
 
   // Find the previous declaration and check that we can redeclare it.
   NamespaceAliasDecl *Prev = nullptr; 
-  if (NamedDecl *PrevDecl = PrevR.getAsSingle<NamedDecl>()) {
-    if (NamespaceAliasDecl *AD =
-            dyn_cast<NamespaceAliasDecl>(PrevR.getRepresentativeDecl())) {
+  if (PrevR.isSingleResult()) {
+    NamedDecl *PrevDecl = PrevR.getRepresentativeDecl();
+    if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace; check that it matches.
       if (AD->getNamespace()->Equals(getNamespaceDecl(ND))) {
@@ -8703,7 +8703,7 @@ Decl *Sema::ActOnNamespaceAliasDef(Scope *S, SourceLocation NamespaceLoc,
         return nullptr;
       }
     } else if (isVisible(PrevDecl)) {
-      unsigned DiagID = isa<NamespaceDecl>(PrevDecl)
+      unsigned DiagID = isa<NamespaceDecl>(PrevDecl->getUnderlyingDecl())
                             ? diag::err_redefinition
                             : diag::err_redefinition_different_kind;
       Diag(AliasLoc, DiagID) << Alias;
