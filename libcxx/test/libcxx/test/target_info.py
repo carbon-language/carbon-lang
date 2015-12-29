@@ -142,7 +142,8 @@ class LinuxLocalTI(DefaultTargetInfo):
             flags += ['-lunwind', '-ldl']
         else:
             flags += ['-lgcc_s', '-lgcc']
-        if self.full_config.get_lit_bool('use_sanitizer', False):
+        san = self.get_lit_conf('use_sanitizer', '').strip()
+        if san:
             # The libraries and their order are taken from the
             # linkSanitizerRuntimeDeps function in
             # clang/lib/Driver/Tools.cpp
