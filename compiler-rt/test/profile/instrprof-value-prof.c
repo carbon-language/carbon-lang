@@ -48,23 +48,32 @@ DEF_8_FUNCS(callee)
 DEF_128_FUNCS(caller)
 
 void *CallerAddrs[] = {FUNC_128_ADDRS(caller)};
-
 void *CalleeAddrs[] = {FUNC_8_ADDRS(callee)};
+typedef struct CallerInfo {
+    void *CallerAddr;
+    uint32_t NS; /* Number value sites. */
+} CallerInfo;
+
+CallerInfo CallerInfos[128];
 
 int cmpaddr(const void *p1, const void *p2) {
-  void *addr1 = *(void **)p1;
-  void *addr2 = *(void **)p2;
-  return (intptr_t)addr2 - (intptr_t)addr1;
+  CallerInfo *addr1 = (CallerInfo *)p1;
+  CallerInfo *addr2 = (CallerInfo *)p2;
+  return (intptr_t)addr2->CallerAddr - (intptr_t)addr1->CallerAddr;
 }
 
 int main(int argc, const char *argv[]) {
-  unsigned S, NS = 0, V, doInstrument = 1;
+  unsigned S, NS = 0, I, V, doInstrument = 1;
   const __llvm_profile_data *Data, *DataEnd;
 
   if (argc < 2)
     doInstrument = 0;
 
-  qsort(CallerAddrs, sizeof(CallerAddrs) / sizeof(void *), sizeof(void *),
+  for (I = 0; I < 128; I++) {
+     CallerInfos[I].CallerAddr = CallerAddrs[I];
+     CallerInfos[I].NS = I;
+  }
+  qsort(CallerInfos, sizeof(CallerInfos) / sizeof(CallerInfo), sizeof(CallerInfo),
         cmpaddr);
 
   /* We will synthesis value profile data for 128 callers functions.
@@ -76,12 +85,15 @@ int main(int argc, const char *argv[]) {
 
   for (; Data < DataEnd; Data = __llvm_profile_iterate_data(Data)) {
     void *func = __llvm_get_function_addr(Data);
-    if (bsearch(&func, CallerAddrs, sizeof(CallerAddrs) / sizeof(void *),
-                sizeof(void *), cmpaddr)) {
+    CallerInfo Key, *Res;
+    Key.CallerAddr = func;
+    Res = (CallerInfo *) bsearch(&Key, CallerInfos, sizeof(CallerInfos) / sizeof(CallerInfo),
+                                 sizeof(CallerInfo), cmpaddr);
+    if (Res) {
+      NS = Res->NS;
       __llvm_profile_set_num_value_sites((__llvm_profile_data *)Data,
                                          0 /*IPVK_IndirectCallTarget */, NS);
       if (!doInstrument) {
-        NS++;
         continue;
       }
       for (S = 0; S < NS; S++) {
@@ -92,7 +104,6 @@ int main(int argc, const char *argv[]) {
                                              (void *)Data, S);
         }
       }
-      NS++;
     }
   }
 }
