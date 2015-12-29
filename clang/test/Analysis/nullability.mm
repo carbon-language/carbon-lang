@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,nullability -verify %s
+// RUN: %clang_cc1 -fobjc-arc -analyze -analyzer-checker=core,nullability -verify %s
 
 #define nil 0
 #define BOOL int
@@ -277,4 +277,13 @@ Dummy *_Nonnull testDefensiveInlineChecks(Dummy * p) {
   }
 
   return p;
+}
+
+void testObjCARCImplicitZeroInitialization() {
+  TestObject * _Nonnull implicitlyZeroInitialized; // no-warning
+  implicitlyZeroInitialized = getNonnullTestObject();
+}
+
+void testObjCARCExplicitZeroInitialization() {
+  TestObject * _Nonnull explicitlyZeroInitialized = nil; // expected-warning {{Null is assigned to a pointer which is expected to have non-null value}}
 }

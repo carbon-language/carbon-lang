@@ -897,6 +897,48 @@ static const Expr * matchValueExprForBind(const Stmt *S) {
   return nullptr;
 }
 
+/// Returns true if \param S is a DeclStmt for a local variable that
+/// ObjC automated reference counting initialized with zero.
+static bool isARCNilInitializedLocal(CheckerContext &C, const Stmt *S) {
+  // We suppress diagnostics for ARC zero-initialized _Nonnull locals. This
+  // prevents false positives when a _Nonnull local variable cannot be
+  // initialized with an initialization expression:
+  //    NSString * _Nonnull s; // no-warning
+  //    @autoreleasepool {
+  //      s = ...
+  //    }
+  //
+  // FIXME: We should treat implicitly zero-initialized _Nonnull locals as
+  // uninitialized in Sema's UninitializedValues analysis to warn when a use of
+  // the zero-initialized definition will unexpectedly yield nil.
+
+  // Locals are only zero-initialized when automated reference counting
+  // is turned on.
+  if (!C.getASTContext().getLangOpts().ObjCAutoRefCount)
+    return false;
+
+  auto *DS = dyn_cast<DeclStmt>(S);
+  if (!DS || !DS->isSingleDecl())
+    return false;
+
+  auto *VD = dyn_cast<VarDecl>(DS->getSingleDecl());
+  if (!VD)
+    return false;
+
+  // Sema only zero-initializes locals with ObjCLifetimes.
+  if(!VD->getType().getQualifiers().hasObjCLifetime())
+    return false;
+
+  const Expr *Init = VD->getInit();
+  assert(Init && "ObjC local under ARC without initializer");
+
+  // Return false if the local is explicitly initialized (e.g., with '= nil').
+  if (!isa<ImplicitValueInitExpr>(Init))
+    return false;
+
+  return true;
+}
+
 /// Propagate the nullability information through binds and warn when nullable
 /// pointer or null symbol is assigned to a pointer with a nonnull type.
 void NullabilityChecker::checkBind(SVal L, SVal V, const Stmt *S,
@@ -928,7 +970,8 @@ void NullabilityChecker::checkBind(SVal L, SVal V, const Stmt *S,
   if (Filter.CheckNullPassedToNonnull &&
       RhsNullness == NullConstraint::IsNull &&
       ValNullability != Nullability::Nonnull &&
-      LocNullability == Nullability::Nonnull) {
+      LocNullability == Nullability::Nonnull &&
+      !isARCNilInitializedLocal(C, S)) {
     static CheckerProgramPointTag Tag(this, "NullPassedToNonnull");
     ExplodedNode *N = C.generateErrorNode(State, &Tag);
     if (!N)
