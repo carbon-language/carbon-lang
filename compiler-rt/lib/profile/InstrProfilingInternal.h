@@ -39,7 +39,8 @@ int __llvm_profile_write_buffer_internal(
     const uint64_t *CountersEnd, const char *NamesBegin, const char *NamesEnd);
 
 /*!
- * This is an internal function not intended to be used externally.
+ * The data structure describing the data to be written by the
+ * low level writer callback function.
  */
 typedef struct ProfDataIOVec {
   const void *Data;
@@ -49,8 +50,54 @@ typedef struct ProfDataIOVec {
 
 typedef uint32_t (*WriterCallback)(ProfDataIOVec *, uint32_t NumIOVecs,
                                    void **WriterCtx);
+
+/*!
+ * The data structure for buffered IO of profile data.
+ */
+typedef struct ProfBufferIO {
+  /* File handle.  */
+  void *File;
+  /* Low level IO callback. */
+  WriterCallback FileWriter;
+  /* The start of the buffer. */
+  uint8_t *BufferStart;
+  /* Total size of the buffer. */
+  uint32_t BufferSz;
+  /* Current byte offset from the start of the buffer. */
+  uint32_t CurOffset;
+} ProfBufferIO;
+
+/* The creator interface used by testing.  */
+ProfBufferIO *llvmCreateBufferIOInternal(void *File, uint32_t DefaultBufferSz);
+/*!
+ * This is the interface to create a handle for buffered IO.
+ */
+ProfBufferIO *llvmCreateBufferIO(WriterCallback FileWriter, void *File,
+                                 uint32_t DefaultBufferSz);
+/*!
+ * The interface to destroy the bufferIO handle and reclaim
+ * the memory.
+ */
+void llvmDeleteBufferIO(ProfBufferIO *BufferIO);
+
+/*!
+ * This is the interface to write \c Data of \c Size bytes through
+ * \c BufferIO. Returns 0 if successful, otherwise return -1.
+ */
+int llvmBufferIOWrite(ProfBufferIO *BufferIO, const uint8_t *Data,
+                      uint32_t Size);
+/*!
+ * The interface to flush the remaining data in the buffer.
+ * through the low level writer callback.
+ */
+int llvmBufferIOFlush(ProfBufferIO *BufferIO);
+
+/* The low level interface to write data into a buffer. It is used as the
+ * callback by other high level writer methods such as buffered IO writer
+ * and profile data writer.  */
 uint32_t llvmBufferWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
                           void **WriterCtx);
+
 int llvmWriteProfData(WriterCallback Writer, void *WriterCtx,
                       struct ValueProfData **ValueDataArray,
                       const uint64_t ValueDataSize);

@@ -30,6 +30,13 @@ static uint32_t fileWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
   return 0;
 }
 
+COMPILER_RT_VISIBILITY ProfBufferIO *
+llvmCreateBufferIOInternal(void *File, uint32_t BufferSz) {
+  CallocHook = calloc;
+  FreeHook = free;
+  return llvmCreateBufferIO(fileWriter, File, BufferSz);
+}
+
 static int writeFile(FILE *File) {
   const char *BufferSzStr = 0;
   uint64_t ValueDataSize = 0;

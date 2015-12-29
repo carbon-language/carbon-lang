@@ -33,6 +33,64 @@ COMPILER_RT_VISIBILITY uint32_t llvmBufferWriter(ProfDataIOVec *IOVecs,
   return 0;
 }
 
+static void llvmInitBufferIO(ProfBufferIO *BufferIO, WriterCallback FileWriter,
+                             void *File, uint8_t *Buffer, uint32_t BufferSz) {
+  BufferIO->File = File;
+  BufferIO->FileWriter = FileWriter;
+  BufferIO->BufferStart = Buffer;
+  BufferIO->BufferSz = BufferSz;
+  BufferIO->CurOffset = 0;
+}
+
+COMPILER_RT_VISIBILITY ProfBufferIO *
+llvmCreateBufferIO(WriterCallback FileWriter, void *File, uint32_t BufferSz) {
+  ProfBufferIO *BufferIO = (ProfBufferIO *)CallocHook(1, sizeof(ProfBufferIO));
+  uint8_t *Buffer = (uint8_t *)CallocHook(1, BufferSz);
+  if (!Buffer) {
+    FreeHook(BufferIO);
+    return 0;
+  }
+  llvmInitBufferIO(BufferIO, FileWriter, File, Buffer, BufferSz);
+  return BufferIO;
+}
+
+COMPILER_RT_VISIBILITY void llvmDeleteBufferIO(ProfBufferIO *BufferIO) {
+  FreeHook(BufferIO->BufferStart);
+  FreeHook(BufferIO);
+}
+
+COMPILER_RT_VISIBILITY int
+llvmBufferIOWrite(ProfBufferIO *BufferIO, const uint8_t *Data, uint32_t Size) {
+  /* Buffer is not large enough, it is time to flush.  */
+  if (Size + BufferIO->CurOffset > BufferIO->BufferSz) {
+     if (llvmBufferIOFlush(BufferIO) != 0)
+       return -1;
+  }
+  /* Special case, bypass the buffer completely. */
+  ProfDataIOVec IO[] = {{Data, sizeof(uint8_t), Size}};
+  if (Size > BufferIO->BufferSz) {
+    if (BufferIO->FileWriter(IO, 1, &BufferIO->File))
+      return -1;
+  } else {
+    /* Write the data to buffer */
+    uint8_t *Buffer = BufferIO->BufferStart + BufferIO->CurOffset;
+    llvmBufferWriter(IO, 1, (void **)&Buffer);
+    BufferIO->CurOffset = Buffer - BufferIO->BufferStart;
+  }
+  return 0;
+}
+
+COMPILER_RT_VISIBILITY int llvmBufferIOFlush(ProfBufferIO *BufferIO) {
+  if (BufferIO->CurOffset) {
+    ProfDataIOVec IO[] = {
+        {BufferIO->BufferStart, sizeof(uint8_t), BufferIO->CurOffset}};
+    if (BufferIO->FileWriter(IO, 1, &BufferIO->File))
+      return -1;
+    BufferIO->CurOffset = 0;
+  }
+  return 0;
+}
+
 COMPILER_RT_VISIBILITY int llvmWriteProfData(WriterCallback Writer,
                                              void *WriterCtx,
                                              ValueProfData **ValueDataArray,
@@ -53,64 +111,28 @@ COMPILER_RT_VISIBILITY int llvmWriteProfData(WriterCallback Writer,
 static int writeValueProfData(WriterCallback Writer, void *WriterCtx,
                               ValueProfData **ValueDataBegin,
                               uint64_t NumVData) {
-  ValueProfData **ValueDataArray = ValueDataBegin;
-  char *BufferStart = 0, *Buffer;
-  ValueProfData *CurVData;
+  ProfBufferIO *BufferIO;
   uint32_t I = 0, BufferSz;
 
   if (!ValueDataBegin)
     return 0;
 
   BufferSz = VPBufferSize ? VPBufferSize : VP_BUFFER_SIZE;
-  BufferStart = (char *)CallocHook(BufferSz, sizeof(uint8_t));
-  if (!BufferStart)
-    return -1;
+  BufferIO = llvmCreateBufferIO(Writer, WriterCtx, BufferSz);
 
-  uint32_t WriteSize = 0;
-  Buffer = BufferStart;
-  do {
-    CurVData = ValueDataArray[I];
-    if (!CurVData) {
-      I++;
+  for (I = 0; I < NumVData; I++) {
+    ValueProfData *CurVData = ValueDataBegin[I];
+    if (!CurVData)
       continue;
-    }
-
-    /* Buffer is full or not large enough, it is time to flush.  */
-    if (CurVData->TotalSize + WriteSize > BufferSz) {
-      if (WriteSize) {
-        ProfDataIOVec IO[] = {{BufferStart, sizeof(uint8_t), WriteSize}};
-        if (Writer(IO, 1, &WriterCtx))
-          return -1;
-        WriteSize = 0;
-        Buffer = BufferStart;
-      }
-      /* Special case, bypass the buffer completely. */
-      if (CurVData->TotalSize > BufferSz) {
-        ProfDataIOVec IO[] = {{CurVData, sizeof(uint8_t), CurVData->TotalSize}};
-        if (Writer(IO, 1, &WriterCtx))
-          return -1;
-        FreeHook(ValueDataArray[I]);
-        I++;
-      }
-    } else {
-      /* Write the data to buffer */
-      ProfDataIOVec IO[] = {{CurVData, sizeof(uint8_t), CurVData->TotalSize}};
-      llvmBufferWriter(IO, 1, (void **)&Buffer);
-      WriteSize += CurVData->TotalSize;
-      FreeHook(ValueDataArray[I]);
-      I++;
-    }
-  } while (I < NumVData);
-
-  /* Final flush. */
-  if (WriteSize) {
-    ProfDataIOVec IO[] = {{BufferStart, sizeof(uint8_t), WriteSize}};
-    if (Writer(IO, 1, &WriterCtx))
+    if (llvmBufferIOWrite(BufferIO, (const uint8_t *)CurVData,
+                          CurVData->TotalSize) != 0)
       return -1;
   }
 
-  FreeHook(ValueDataBegin);
-  FreeHook(BufferStart);
+  if (llvmBufferIOFlush(BufferIO) != 0)
+    return -1;
+  llvmDeleteBufferIO(BufferIO);
+
   return 0;
 }
 
