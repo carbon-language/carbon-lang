@@ -442,3 +442,7 @@ namespace Atomic {
 // CHECK-DAG: define void @"\01?f@Atomic@@YAXU?$_Atomic@H@__clang@@@Z"(
 void f(_Atomic(int)) {}
 }
+namespace Complex {
+// CHECK-DAG: define void @"\01?f@Complex@@YAXU?$_Complex@H@__clang@@@Z"(
+void f(_Complex int) {}
+}
