@@ -1675,8 +1675,8 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
     LParenLoc(L), RParenLoc(R), IsDelegating(false), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(NumIndices)
 {
-  VarDecl **MyIndices = reinterpret_cast<VarDecl **> (this + 1);
-  memcpy(MyIndices, Indices, NumIndices * sizeof(VarDecl *));
+  std::uninitialized_copy(Indices, Indices + NumIndices,
+                          getTrailingObjects<VarDecl *>());
 }
 
 CXXCtorInitializer *CXXCtorInitializer::Create(ASTContext &Context,
@@ -1686,8 +1686,7 @@ CXXCtorInitializer *CXXCtorInitializer::Create(ASTContext &Context,
                                                SourceLocation R,
                                                VarDecl **Indices,
                                                unsigned NumIndices) {
-  void *Mem = Context.Allocate(sizeof(CXXCtorInitializer) +
-                               sizeof(VarDecl *) * NumIndices,
+  void *Mem = Context.Allocate(totalSizeToAlloc<VarDecl *>(NumIndices),
                                llvm::alignOf<CXXCtorInitializer>());
   return new (Mem) CXXCtorInitializer(Context, Member, MemberLoc, L, Init, R,
                                       Indices, NumIndices);

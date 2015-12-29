@@ -1888,7 +1888,8 @@ public:
 ///   B(A& a) : A(a), f(3.14159) { }
 /// };
 /// \endcode
-class CXXCtorInitializer {
+class CXXCtorInitializer final
+    : private llvm::TrailingObjects<CXXCtorInitializer, VarDecl *> {
   /// \brief Either the base class name/delegating constructor type (stored as
   /// a TypeSourceInfo*), an normal field (FieldDecl), or an anonymous field
   /// (IndirectFieldDecl*) being initialized.
@@ -2104,24 +2105,26 @@ public:
   /// describe an array member initialization.
   VarDecl *getArrayIndex(unsigned I) {
     assert(I < getNumArrayIndices() && "Out of bounds member array index");
-    return reinterpret_cast<VarDecl **>(this + 1)[I];
+    return getTrailingObjects<VarDecl *>()[I];
   }
   const VarDecl *getArrayIndex(unsigned I) const {
     assert(I < getNumArrayIndices() && "Out of bounds member array index");
-    return reinterpret_cast<const VarDecl * const *>(this + 1)[I];
+    return getTrailingObjects<VarDecl *>()[I];
   }
   void setArrayIndex(unsigned I, VarDecl *Index) {
     assert(I < getNumArrayIndices() && "Out of bounds member array index");
-    reinterpret_cast<VarDecl **>(this + 1)[I] = Index;
+    getTrailingObjects<VarDecl *>()[I] = Index;
   }
   ArrayRef<VarDecl *> getArrayIndexes() {
     assert(getNumArrayIndices() != 0 && "Getting indexes for non-array init");
-    return llvm::makeArrayRef(reinterpret_cast<VarDecl **>(this + 1),
+    return llvm::makeArrayRef(getTrailingObjects<VarDecl *>(),
                               getNumArrayIndices());
   }
 
   /// \brief Get the initializer.
   Expr *getInit() const { return static_cast<Expr*>(Init); }
+
+  friend TrailingObjects;
 };
 
 /// \brief Represents a C++ constructor within a class.
