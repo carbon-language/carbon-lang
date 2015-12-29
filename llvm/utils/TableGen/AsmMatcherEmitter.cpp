@@ -2952,7 +2952,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   }
   OS << "  }\n";
   OS << "  // Search the table.\n";
-  OS << "  std::pair<const MatchEntry*, const MatchEntry*>"
+  OS << "  std::pair<const MatchEntry*, const MatchEntry*> "
         "MnemonicRange(Start, End);\n";
   OS << "  unsigned SIndex = Mnemonic.empty() ? 0 : 1;\n";
   OS << "  if (!Mnemonic.empty())\n";
