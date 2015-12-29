@@ -57,13 +57,13 @@ int main(int argc, const char *argv[]) {
   }
 }
 
-// CHECK:  caller_with_value_site_never_called2:
+// CHECK-LABEL:   caller_with_value_site_never_called2:
 // CHECK-NEXT:    Hash: 0x0000000000000000
 // CHECK-NEXT:    Counters:
 // CHECK-NEXT:    Function count
 // CHECK-NEXT:    Indirect Call Site Count: 10
 // CHECK-NEXT:    Indirect Target Results: 
-// CHECK:       caller_with_vp2:
+// CHECK-LABEL:   caller_with_vp2:
 // CHECK-NEXT:    Hash: 0x0000000000000000
 // CHECK-NEXT:    Counters:
 // CHECK-NEXT:    Function count:
@@ -89,7 +89,7 @@ int main(int argc, const char *argv[]) {
 // CHECK-NEXT:	[ 8, callee2, 5 ]
 // CHECK-NEXT:	[ 9, callee1, 10 ]
 // CHECK-NEXT:	[ 9, callee2, 5 ]
-// CHECK:       caller_with_vp1:
+// CHECK-LABEL:   caller_with_vp1:
 // CHECK-NEXT:    Hash: 0x0000000000000000
 // CHECK-NEXT:    Counters:
 // CHECK-NEXT:    Function count
@@ -115,19 +115,19 @@ int main(int argc, const char *argv[]) {
 // CHECK-NEXT:	[ 8, callee2, 5 ]
 // CHECK-NEXT:	[ 9, callee1, 10 ]
 // CHECK-NEXT:	[ 9, callee2, 5 ]
-// CHECK:       caller_with_value_site_never_called1:
+// CHECK-LABEL:   caller_with_value_site_never_called1:
 // CHECK-NEXT:    Hash: 0x0000000000000000
 // CHECK-NEXT:    Counters:
 // CHECK-NEXT:    Function count:
 // CHECK-NEXT:    Indirect Call Site Count: 10
 // CHECK-NEXT:    Indirect Target Results: 
-// CHECK:       caller_without_value_site2:
+// CHECK-LABEL:   caller_without_value_site2:
 // CHECK-NEXT:    Hash: 0x0000000000000000
 // CHECK-NEXT:    Counters:
 // CHECK-NEXT:    Function count:
 // CHECK-NEXT:    Indirect Call Site Count: 0
 // CHECK-NEXT:    Indirect Target Results: 
-// CHECK:       caller_without_value_site1:
+// CHECK-LABEL:   caller_without_value_site1:
 // CHECK-NEXT:    Hash: 0x0000000000000000
 // CHECK-NEXT:    Counters:
 // CHECK-NEXT:    Function count:
