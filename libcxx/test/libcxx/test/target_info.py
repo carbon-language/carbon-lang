@@ -1,4 +1,5 @@
 import importlib
+import lit.util  # pylint: disable=import-error,no-name-in-module
 import locale
 import os
 import platform
