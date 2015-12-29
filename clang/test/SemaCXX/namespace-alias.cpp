@@ -133,3 +133,27 @@ namespace PR25731 {
     X::f();
   }
 }
+
+namespace MultipleUnambiguousLookupResults {
+  namespace A { int y; }
+  namespace B {
+    namespace X { int x; }
+    namespace Y = A;
+    namespace Z = A; // expected-note {{candidate}}
+  }
+  namespace C {
+    namespace X = B::X;
+    namespace Y = A;
+    namespace Z = X; // expected-note {{candidate}}
+  }
+  using namespace B;
+  using namespace C;
+  int x1 = X::x; // ok, unambiguous
+  int y1 = Y::y; // ok, unambiguous
+  int z1 = Z::x; // expected-error {{ambiguous}}
+
+  namespace X = C::X;
+  namespace Y = A;
+  int x2 = X::x; // ok, unambiguous
+  int y2 = Y::y; // ok, unambiguous
+}

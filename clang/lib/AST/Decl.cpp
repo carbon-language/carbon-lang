@@ -1607,6 +1607,9 @@ NamedDecl *NamedDecl::getUnderlyingDeclImpl() {
   if (auto *AD = dyn_cast<ObjCCompatibleAliasDecl>(ND))
     return AD->getClassInterface();
 
+  if (auto *AD = dyn_cast<NamespaceAliasDecl>(ND))
+    return AD->getNamespace();
+
   return ND;
 }
 

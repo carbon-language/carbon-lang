@@ -319,7 +319,8 @@ public:
   NamedDecl *getUnderlyingDecl() {
     // Fast-path the common case.
     if (this->getKind() != UsingShadow &&
-        this->getKind() != ObjCCompatibleAlias)
+        this->getKind() != ObjCCompatibleAlias &&
+        this->getKind() != NamespaceAlias)
       return this;
 
     return getUnderlyingDeclImpl();
