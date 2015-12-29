@@ -1489,9 +1489,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = &*I;
-
+  for (MachineBasicBlock &MBB : MF) {
     bool SeenMoveImm = false;
 
     // During this forward scan, at some point it needs to answer the question
@@ -1516,8 +1514,8 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     SmallSet<unsigned, 4> CopySrcRegs;
     DenseMap<unsigned, MachineInstr *> CopySrcMIs;
 
-    for (MachineBasicBlock::iterator
-           MII = I->begin(), MIE = I->end(); MII != MIE; ) {
+    for (MachineBasicBlock::iterator MII = MBB.begin(), MIE = MBB.end();
+         MII != MIE; ) {
       MachineInstr *MI = &*MII;
       // We may be erasing MI below, increment MII now.
       ++MII;
@@ -1580,7 +1578,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       if ((isUncoalescableCopy(*MI) &&
            optimizeUncoalescableCopy(MI, LocalMIs)) ||
-          (MI->isCompare() && optimizeCmpInstr(MI, MBB)) ||
+          (MI->isCompare() && optimizeCmpInstr(MI, &MBB)) ||
           (MI->isSelect() && optimizeSelect(MI, LocalMIs))) {
         // MI is deleted.
         LocalMIs.erase(MI);
@@ -1611,14 +1609,14 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (isMoveImmediate(MI, ImmDefRegs, ImmDefMIs)) {
         SeenMoveImm = true;
       } else {
-        Changed |= optimizeExtInstr(MI, MBB, LocalMIs);
+        Changed |= optimizeExtInstr(MI, &MBB, LocalMIs);
         // optimizeExtInstr might have created new instructions after MI
         // and before the already incremented MII. Adjust MII so that the
         // next iteration sees the new instructions.
         MII = MI;
         ++MII;
         if (SeenMoveImm)
-          Changed |= foldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
+          Changed |= foldImmediate(MI, &MBB, ImmDefRegs, ImmDefMIs);
       }
 
       // Check whether MI is a load candidate for folding into a later
