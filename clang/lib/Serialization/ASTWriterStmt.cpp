@@ -484,24 +484,24 @@ void ASTStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Writer.AddTypeSourceInfo(E->getTypeSourceInfo(), Record);
   for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
-    const OffsetOfExpr::OffsetOfNode &ON = E->getComponent(I);
+    const OffsetOfNode &ON = E->getComponent(I);
     Record.push_back(ON.getKind()); // FIXME: Stable encoding
     Writer.AddSourceLocation(ON.getSourceRange().getBegin(), Record);
     Writer.AddSourceLocation(ON.getSourceRange().getEnd(), Record);
     switch (ON.getKind()) {
-    case OffsetOfExpr::OffsetOfNode::Array:
+    case OffsetOfNode::Array:
       Record.push_back(ON.getArrayExprIndex());
       break;
-        
-    case OffsetOfExpr::OffsetOfNode::Field:
+
+    case OffsetOfNode::Field:
       Writer.AddDeclRef(ON.getField(), Record);
       break;
-        
-    case OffsetOfExpr::OffsetOfNode::Identifier:
+
+    case OffsetOfNode::Identifier:
       Writer.AddIdentifierRef(ON.getFieldName(), Record);
       break;
-        
-    case OffsetOfExpr::OffsetOfNode::Base:
+
+    case OffsetOfNode::Base:
       Writer.AddCXXBaseSpecifier(*ON.getBase(), Record);
       break;
     }

@@ -11189,7 +11189,6 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
   
   bool DidWarnAboutNonPOD = false;
   QualType CurrentType = ArgTy;
-  typedef OffsetOfExpr::OffsetOfNode OffsetOfNode;
   SmallVector<OffsetOfNode, 4> Comps;
   SmallVector<Expr*, 4> Exprs;
   for (const OffsetOfComponent &OC : Components) {

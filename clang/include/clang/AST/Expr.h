@@ -1749,6 +1749,99 @@ public:
   child_range children() { return child_range(&Val, &Val+1); }
 };
 
+/// Helper class for OffsetOfExpr.
+
+// __builtin_offsetof(type, identifier(.identifier|[expr])*)
+class OffsetOfNode {
+public:
+  /// \brief The kind of offsetof node we have.
+  enum Kind {
+    /// \brief An index into an array.
+    Array = 0x00,
+    /// \brief A field.
+    Field = 0x01,
+    /// \brief A field in a dependent type, known only by its name.
+    Identifier = 0x02,
+    /// \brief An implicit indirection through a C++ base class, when the
+    /// field found is in a base class.
+    Base = 0x03
+  };
+
+private:
+  enum { MaskBits = 2, Mask = 0x03 };
+
+  /// \brief The source range that covers this part of the designator.
+  SourceRange Range;
+
+  /// \brief The data describing the designator, which comes in three
+  /// different forms, depending on the lower two bits.
+  ///   - An unsigned index into the array of Expr*'s stored after this node
+  ///     in memory, for [constant-expression] designators.
+  ///   - A FieldDecl*, for references to a known field.
+  ///   - An IdentifierInfo*, for references to a field with a given name
+  ///     when the class type is dependent.
+  ///   - A CXXBaseSpecifier*, for references that look at a field in a
+  ///     base class.
+  uintptr_t Data;
+
+public:
+  /// \brief Create an offsetof node that refers to an array element.
+  OffsetOfNode(SourceLocation LBracketLoc, unsigned Index,
+               SourceLocation RBracketLoc)
+      : Range(LBracketLoc, RBracketLoc), Data((Index << 2) | Array) {}
+
+  /// \brief Create an offsetof node that refers to a field.
+  OffsetOfNode(SourceLocation DotLoc, FieldDecl *Field, SourceLocation NameLoc)
+      : Range(DotLoc.isValid() ? DotLoc : NameLoc, NameLoc),
+        Data(reinterpret_cast<uintptr_t>(Field) | OffsetOfNode::Field) {}
+
+  /// \brief Create an offsetof node that refers to an identifier.
+  OffsetOfNode(SourceLocation DotLoc, IdentifierInfo *Name,
+               SourceLocation NameLoc)
+      : Range(DotLoc.isValid() ? DotLoc : NameLoc, NameLoc),
+        Data(reinterpret_cast<uintptr_t>(Name) | Identifier) {}
+
+  /// \brief Create an offsetof node that refers into a C++ base class.
+  explicit OffsetOfNode(const CXXBaseSpecifier *Base)
+      : Range(), Data(reinterpret_cast<uintptr_t>(Base) | OffsetOfNode::Base) {}
+
+  /// \brief Determine what kind of offsetof node this is.
+  Kind getKind() const { return static_cast<Kind>(Data & Mask); }
+
+  /// \brief For an array element node, returns the index into the array
+  /// of expressions.
+  unsigned getArrayExprIndex() const {
+    assert(getKind() == Array);
+    return Data >> 2;
+  }
+
+  /// \brief For a field offsetof node, returns the field.
+  FieldDecl *getField() const {
+    assert(getKind() == Field);
+    return reinterpret_cast<FieldDecl *>(Data & ~(uintptr_t)Mask);
+  }
+
+  /// \brief For a field or identifier offsetof node, returns the name of
+  /// the field.
+  IdentifierInfo *getFieldName() const;
+
+  /// \brief For a base class node, returns the base specifier.
+  CXXBaseSpecifier *getBase() const {
+    assert(getKind() == Base);
+    return reinterpret_cast<CXXBaseSpecifier *>(Data & ~(uintptr_t)Mask);
+  }
+
+  /// \brief Retrieve the source range that covers this offsetof node.
+  ///
+  /// For an array element node, the source range contains the locations of
+  /// the square brackets. For a field or identifier node, the source range
+  /// contains the location of the period (if there is one) and the
+  /// identifier.
+  SourceRange getSourceRange() const LLVM_READONLY { return Range; }
+  SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
+};
+
 /// OffsetOfExpr - [C99 7.17] - This represents an expression of the form
 /// offsetof(record-type, member-designator). For example, given:
 /// @code
@@ -1763,104 +1856,9 @@ public:
 /// @endcode
 /// we can represent and evaluate the expression @c offsetof(struct T, s[2].d).
 
-class OffsetOfExpr : public Expr {
-public:
-  // __builtin_offsetof(type, identifier(.identifier|[expr])*)
-  class OffsetOfNode {
-  public:
-    /// \brief The kind of offsetof node we have.
-    enum Kind {
-      /// \brief An index into an array.
-      Array = 0x00,
-      /// \brief A field.
-      Field = 0x01,
-      /// \brief A field in a dependent type, known only by its name.
-      Identifier = 0x02,
-      /// \brief An implicit indirection through a C++ base class, when the
-      /// field found is in a base class.
-      Base = 0x03
-    };
-
-  private:
-    enum { MaskBits = 2, Mask = 0x03 };
-
-    /// \brief The source range that covers this part of the designator.
-    SourceRange Range;
-
-    /// \brief The data describing the designator, which comes in three
-    /// different forms, depending on the lower two bits.
-    ///   - An unsigned index into the array of Expr*'s stored after this node
-    ///     in memory, for [constant-expression] designators.
-    ///   - A FieldDecl*, for references to a known field.
-    ///   - An IdentifierInfo*, for references to a field with a given name
-    ///     when the class type is dependent.
-    ///   - A CXXBaseSpecifier*, for references that look at a field in a
-    ///     base class.
-    uintptr_t Data;
-
-  public:
-    /// \brief Create an offsetof node that refers to an array element.
-    OffsetOfNode(SourceLocation LBracketLoc, unsigned Index,
-                 SourceLocation RBracketLoc)
-      : Range(LBracketLoc, RBracketLoc), Data((Index << 2) | Array) { }
-
-    /// \brief Create an offsetof node that refers to a field.
-    OffsetOfNode(SourceLocation DotLoc, FieldDecl *Field,
-                 SourceLocation NameLoc)
-      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc),
-        Data(reinterpret_cast<uintptr_t>(Field) | OffsetOfNode::Field) { }
-
-    /// \brief Create an offsetof node that refers to an identifier.
-    OffsetOfNode(SourceLocation DotLoc, IdentifierInfo *Name,
-                 SourceLocation NameLoc)
-      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc),
-        Data(reinterpret_cast<uintptr_t>(Name) | Identifier) { }
-
-    /// \brief Create an offsetof node that refers into a C++ base class.
-    explicit OffsetOfNode(const CXXBaseSpecifier *Base)
-      : Range(), Data(reinterpret_cast<uintptr_t>(Base) | OffsetOfNode::Base) {}
-
-    /// \brief Determine what kind of offsetof node this is.
-    Kind getKind() const {
-      return static_cast<Kind>(Data & Mask);
-    }
-
-    /// \brief For an array element node, returns the index into the array
-    /// of expressions.
-    unsigned getArrayExprIndex() const {
-      assert(getKind() == Array);
-      return Data >> 2;
-    }
-
-    /// \brief For a field offsetof node, returns the field.
-    FieldDecl *getField() const {
-      assert(getKind() == Field);
-      return reinterpret_cast<FieldDecl *>(Data & ~(uintptr_t)Mask);
-    }
-
-    /// \brief For a field or identifier offsetof node, returns the name of
-    /// the field.
-    IdentifierInfo *getFieldName() const;
-
-    /// \brief For a base class node, returns the base specifier.
-    CXXBaseSpecifier *getBase() const {
-      assert(getKind() == Base);
-      return reinterpret_cast<CXXBaseSpecifier *>(Data & ~(uintptr_t)Mask);
-    }
-
-    /// \brief Retrieve the source range that covers this offsetof node.
-    ///
-    /// For an array element node, the source range contains the locations of
-    /// the square brackets. For a field or identifier node, the source range
-    /// contains the location of the period (if there is one) and the
-    /// identifier.
-    SourceRange getSourceRange() const LLVM_READONLY { return Range; }
-    SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
-    SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
-  };
-
-private:
-
+class OffsetOfExpr final
+    : public Expr,
+      private llvm::TrailingObjects<OffsetOfExpr, OffsetOfNode, Expr *> {
   SourceLocation OperatorLoc, RParenLoc;
   // Base type;
   TypeSourceInfo *TSInfo;
@@ -1868,6 +1866,10 @@ private:
   unsigned NumComps;
   // Number of sub-expressions (i.e. array subscript expressions).
   unsigned NumExprs;
+
+  size_t numTrailingObjects(OverloadToken<OffsetOfNode>) const {
+    return NumComps;
+  }
 
   OffsetOfExpr(const ASTContext &C, QualType type,
                SourceLocation OperatorLoc, TypeSourceInfo *tsi,
@@ -1905,12 +1907,12 @@ public:
 
   const OffsetOfNode &getComponent(unsigned Idx) const {
     assert(Idx < NumComps && "Subscript out of range");
-    return reinterpret_cast<const OffsetOfNode *> (this + 1)[Idx];
+    return getTrailingObjects<OffsetOfNode>()[Idx];
   }
 
   void setComponent(unsigned Idx, OffsetOfNode ON) {
     assert(Idx < NumComps && "Subscript out of range");
-    reinterpret_cast<OffsetOfNode *> (this + 1)[Idx] = ON;
+    getTrailingObjects<OffsetOfNode>()[Idx] = ON;
   }
 
   unsigned getNumComponents() const {
@@ -1919,17 +1921,17 @@ public:
 
   Expr* getIndexExpr(unsigned Idx) {
     assert(Idx < NumExprs && "Subscript out of range");
-    return reinterpret_cast<Expr **>(
-                    reinterpret_cast<OffsetOfNode *>(this+1) + NumComps)[Idx];
+    return getTrailingObjects<Expr *>()[Idx];
   }
+
   const Expr *getIndexExpr(unsigned Idx) const {
-    return const_cast<OffsetOfExpr*>(this)->getIndexExpr(Idx);
+    assert(Idx < NumExprs && "Subscript out of range");
+    return getTrailingObjects<Expr *>()[Idx];
   }
 
   void setIndexExpr(unsigned Idx, Expr* E) {
     assert(Idx < NumComps && "Subscript out of range");
-    reinterpret_cast<Expr **>(
-                reinterpret_cast<OffsetOfNode *>(this+1) + NumComps)[Idx] = E;
+    getTrailingObjects<Expr *>()[Idx] = E;
   }
 
   unsigned getNumExpressions() const {
@@ -1945,11 +1947,10 @@ public:
 
   // Iterators
   child_range children() {
-    Stmt **begin =
-      reinterpret_cast<Stmt**>(reinterpret_cast<OffsetOfNode*>(this + 1)
-                               + NumComps);
+    Stmt **begin = reinterpret_cast<Stmt **>(getTrailingObjects<Expr *>());
     return child_range(begin, begin + NumExprs);
   }
+  friend TrailingObjects;
 };
 
 /// UnaryExprOrTypeTraitExpr - expression with either a type or (unevaluated)

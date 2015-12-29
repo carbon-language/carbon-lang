@@ -550,7 +550,6 @@ void ASTStmtReader::VisitUnaryOperator(UnaryOperator *E) {
 }
 
 void ASTStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
-  typedef OffsetOfExpr::OffsetOfNode Node;
   VisitExpr(E);
   assert(E->getNumComponents() == Record[Idx]);
   ++Idx;
@@ -560,29 +559,29 @@ void ASTStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
   E->setRParenLoc(ReadSourceLocation(Record, Idx));
   E->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
   for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
-    Node::Kind Kind = static_cast<Node::Kind>(Record[Idx++]);
+    OffsetOfNode::Kind Kind = static_cast<OffsetOfNode::Kind>(Record[Idx++]);
     SourceLocation Start = ReadSourceLocation(Record, Idx);
     SourceLocation End = ReadSourceLocation(Record, Idx);
     switch (Kind) {
-    case Node::Array:
-      E->setComponent(I, Node(Start, Record[Idx++], End));
-      break;
-        
-    case Node::Field:
-      E->setComponent(I, Node(Start, ReadDeclAs<FieldDecl>(Record, Idx), End));
+    case OffsetOfNode::Array:
+      E->setComponent(I, OffsetOfNode(Start, Record[Idx++], End));
       break;
 
-    case Node::Identifier:
-      E->setComponent(I, 
-                      Node(Start, 
-                           Reader.GetIdentifierInfo(F, Record, Idx),
-                           End));
+    case OffsetOfNode::Field:
+      E->setComponent(
+          I, OffsetOfNode(Start, ReadDeclAs<FieldDecl>(Record, Idx), End));
       break;
-        
-    case Node::Base: {
+
+    case OffsetOfNode::Identifier:
+      E->setComponent(
+          I,
+          OffsetOfNode(Start, Reader.GetIdentifierInfo(F, Record, Idx), End));
+      break;
+
+    case OffsetOfNode::Base: {
       CXXBaseSpecifier *Base = new (Reader.getContext()) CXXBaseSpecifier();
       *Base = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
-      E->setComponent(I, Node(Base));
+      E->setComponent(I, OffsetOfNode(Base));
       break;
     }
     }

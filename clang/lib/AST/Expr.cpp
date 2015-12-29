@@ -1314,9 +1314,8 @@ OffsetOfExpr *OffsetOfExpr::Create(const ASTContext &C, QualType type,
                                    ArrayRef<OffsetOfNode> comps,
                                    ArrayRef<Expr*> exprs,
                                    SourceLocation RParenLoc) {
-  void *Mem = C.Allocate(sizeof(OffsetOfExpr) +
-                         sizeof(OffsetOfNode) * comps.size() +
-                         sizeof(Expr*) * exprs.size());
+  void *Mem = C.Allocate(
+      totalSizeToAlloc<OffsetOfNode, Expr *>(comps.size(), exprs.size()));
 
   return new (Mem) OffsetOfExpr(C, type, OperatorLoc, tsi, comps, exprs,
                                 RParenLoc);
@@ -1324,9 +1323,8 @@ OffsetOfExpr *OffsetOfExpr::Create(const ASTContext &C, QualType type,
 
 OffsetOfExpr *OffsetOfExpr::CreateEmpty(const ASTContext &C,
                                         unsigned numComps, unsigned numExprs) {
-  void *Mem = C.Allocate(sizeof(OffsetOfExpr) +
-                         sizeof(OffsetOfNode) * numComps +
-                         sizeof(Expr*) * numExprs);
+  void *Mem =
+      C.Allocate(totalSizeToAlloc<OffsetOfNode, Expr *>(numComps, numExprs));
   return new (Mem) OffsetOfExpr(numComps, numExprs);
 }
 
@@ -1356,7 +1354,7 @@ OffsetOfExpr::OffsetOfExpr(const ASTContext &C, QualType type,
   }
 }
 
-IdentifierInfo *OffsetOfExpr::OffsetOfNode::getFieldName() const {
+IdentifierInfo *OffsetOfNode::getFieldName() const {
   assert(getKind() == Field || getKind() == Identifier);
   if (getKind() == Field)
     return getField()->getIdentifier();
