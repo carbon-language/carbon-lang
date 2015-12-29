@@ -110,9 +110,52 @@ int main(int argc, const char *argv[]) {
 
 // NO-VALUE: Indirect Call Site Count: 127
 // NO-VALUE-NEXT: Indirect Target Results:
+// MERGE-LABEL: caller_1_1_1_1_2_2_1:
+// MERGE: Indirect Call Site Count: 6
+// MERGE: Indirect Target Results:
+// MERGE: [ 1, callee_1_1_1, 1 ]
+// MERGE: [ 2, callee_1_1_1, 1 ]
+// MERGE: [ 2, callee_1_1_2, 2 ]
+// MERGE: [ 3, callee_1_1_1, 1 ]
+// MERGE: [ 3, callee_1_1_2, 2 ]
+// MERGE: [ 3, callee_1_2_1, 3 ]
+// MERGE: [ 4, callee_1_1_1, 1 ]
+// MERGE: [ 4, callee_1_1_2, 2 ]
+// MERGE: [ 4, callee_1_2_1, 3 ]
+// MERGE: [ 4, callee_1_2_2, 4 ]
+// MERGE: [ 5, callee_1_1_1, 1 ]
+// MERGE: [ 5, callee_1_1_2, 2 ]
+// MERGE: [ 5, callee_1_2_1, 3 ]
+// MERGE: [ 5, callee_1_2_2, 4 ]
+// MERGE: [ 5, callee_2_1_1, 5 ]
+// MERGE-LABEL: caller_2_2_2_2_2_2_2:
 // MERGE: Indirect Call Site Count: 127
 // MERGE-NEXT: Indirect Target Results:
 // MERGE-NEXT:  [ 1, callee_1_1_1, 1 ]
+// MERGE:  [ 2, callee_1_1_1, 1 ]
+// MERGE:  [ 2, callee_1_1_2, 2 ]
+// MERGE:  [ 3, callee_1_1_1, 1 ]
+// MERGE:  [ 3, callee_1_1_2, 2 ]
+// MERGE:  [ 3, callee_1_2_1, 3 ]
+// CHECK-LABEL: caller_1_1_1_1_2_2_1:
+// CHECK: Indirect Call Site Count: 6
+// CHECK-NEXT: Indirect Target Results:
+// CHECK-NEXT: [ 1, callee_1_1_1, 1 ]
+// CHECK-NEXT: [ 2, callee_1_1_1, 1 ]
+// CHECK-NEXT: [ 2, callee_1_1_2, 2 ]
+// CHECK-NEXT: [ 3, callee_1_1_1, 1 ]
+// CHECK-NEXT: [ 3, callee_1_1_2, 2 ]
+// CHECK-NEXT: [ 3, callee_1_2_1, 3 ]
+// CHECK-NEXT: [ 4, callee_1_1_1, 1 ]
+// CHECK-NEXT: [ 4, callee_1_1_2, 2 ]
+// CHECK-NEXT: [ 4, callee_1_2_1, 3 ]
+// CHECK-NEXT: [ 4, callee_1_2_2, 4 ]
+// CHECK-NEXT: [ 5, callee_1_1_1, 1 ]
+// CHECK-NEXT: [ 5, callee_1_1_2, 2 ]
+// CHECK-NEXT: [ 5, callee_1_2_1, 3 ]
+// CHECK-NEXT: [ 5, callee_1_2_2, 4 ]
+// CHECK-NEXT: [ 5, callee_2_1_1, 5 ]
+// CHECK-LABEL: caller_2_2_2_2_2_2_2:
 // CHECK: Indirect Call Site Count: 127
 // CHECK-NEXT: Indirect Target Results:
 // CHECK-NEXT:  [ 1, callee_1_1_1, 1 ]
