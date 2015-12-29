@@ -492,12 +492,21 @@ void NullabilityChecker::checkPreStmt(const ReturnStmt *S,
 
   NullConstraint Nullness = getNullConstraint(*RetSVal, State);
 
-  Nullability StaticNullability =
+  Nullability RequiredNullability =
       getNullabilityAnnotation(FuncType->getReturnType());
+
+  // If the returned value is null but the type of the expression
+  // generating it is nonnull then we will suppress the diagnostic.
+  // This enables explicit suppression when returning a nil literal in a
+  // function with a _Nonnull return type:
+  //    return (NSString * _Nonnull)0;
+  Nullability RetExprTypeLevelNullability =
+        getNullabilityAnnotation(RetExpr->getType());
 
   if (Filter.CheckNullReturnedFromNonnull &&
       Nullness == NullConstraint::IsNull &&
-      StaticNullability == Nullability::Nonnull) {
+      RetExprTypeLevelNullability != Nullability::Nonnull &&
+      RequiredNullability == Nullability::Nonnull) {
     static CheckerProgramPointTag Tag(this, "NullReturnedFromNonnull");
     ExplodedNode *N = C.generateErrorNode(State, &Tag);
     if (!N)
@@ -518,7 +527,7 @@ void NullabilityChecker::checkPreStmt(const ReturnStmt *S,
     if (Filter.CheckNullableReturnedFromNonnull &&
         Nullness != NullConstraint::IsNotNull &&
         TrackedNullabValue == Nullability::Nullable &&
-        StaticNullability == Nullability::Nonnull) {
+        RequiredNullability == Nullability::Nonnull) {
       static CheckerProgramPointTag Tag(this, "NullableReturnedFromNonnull");
       ExplodedNode *N = C.addTransition(State, C.getPredecessor(), &Tag);
       reportBugIfPreconditionHolds(ErrorKind::NullableReturnedToNonnull, N,
@@ -526,9 +535,10 @@ void NullabilityChecker::checkPreStmt(const ReturnStmt *S,
     }
     return;
   }
-  if (StaticNullability == Nullability::Nullable) {
+  if (RequiredNullability == Nullability::Nullable) {
     State = State->set<NullabilityMap>(Region,
-                                       NullabilityState(StaticNullability, S));
+                                       NullabilityState(RequiredNullability,
+                                                        S));
     C.addTransition(State);
   }
 }
@@ -564,13 +574,14 @@ void NullabilityChecker::checkPreCall(const CallEvent &Call,
 
     NullConstraint Nullness = getNullConstraint(*ArgSVal, State);
 
-    Nullability ParamNullability = getNullabilityAnnotation(Param->getType());
-    Nullability ArgStaticNullability =
+    Nullability RequiredNullability =
+        getNullabilityAnnotation(Param->getType());
+    Nullability ArgExprTypeLevelNullability =
         getNullabilityAnnotation(ArgExpr->getType());
 
     if (Filter.CheckNullPassedToNonnull && Nullness == NullConstraint::IsNull &&
-        ArgStaticNullability != Nullability::Nonnull &&
-        ParamNullability == Nullability::Nonnull) {
+        ArgExprTypeLevelNullability != Nullability::Nonnull &&
+        RequiredNullability == Nullability::Nonnull) {
       ExplodedNode *N = C.generateErrorNode(State);
       if (!N)
         return;
@@ -592,7 +603,7 @@ void NullabilityChecker::checkPreCall(const CallEvent &Call,
         continue;
 
       if (Filter.CheckNullablePassedToNonnull &&
-          ParamNullability == Nullability::Nonnull) {
+          RequiredNullability == Nullability::Nonnull) {
         ExplodedNode *N = C.addTransition(State);
         reportBugIfPreconditionHolds(ErrorKind::NullablePassedToNonnull, N,
                                      Region, C, ArgExpr, /*SuppressPath=*/true);
@@ -608,10 +619,10 @@ void NullabilityChecker::checkPreCall(const CallEvent &Call,
       continue;
     }
     // No tracked nullability yet.
-    if (ArgStaticNullability != Nullability::Nullable)
+    if (ArgExprTypeLevelNullability != Nullability::Nullable)
       continue;
     State = State->set<NullabilityMap>(
-        Region, NullabilityState(ArgStaticNullability, ArgExpr));
+        Region, NullabilityState(ArgExprTypeLevelNullability, ArgExpr));
   }
   if (State != OrigState)
     C.addTransition(State);
