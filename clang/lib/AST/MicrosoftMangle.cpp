@@ -2227,7 +2227,7 @@ void MicrosoftCXXNameMangler::mangleType(const VectorType *T, Qualifiers Quals,
   uint64_t Width = getASTContext().getTypeSize(T);
   // Pattern match exactly the typedefs in our intrinsic headers.  Anything that
   // doesn't match the Intel types uses a custom mangling below.
-  bool IsBuiltin = true;
+  size_t OutSizeBefore = Out.tell();
   llvm::Triple::ArchType AT =
       getASTContext().getTargetInfo().getTriple().getArch();
   if (AT == llvm::Triple::x86 || AT == llvm::Triple::x86_64) {
@@ -2240,22 +2240,25 @@ void MicrosoftCXXNameMangler::mangleType(const VectorType *T, Qualifiers Quals,
         mangleArtificalTagType(TTK_Union, "__m" + llvm::utostr(Width) + 'i');
       else if (ET->getKind() == BuiltinType::Double)
         mangleArtificalTagType(TTK_Struct, "__m" + llvm::utostr(Width) + 'd');
-      else
-        IsBuiltin = false;
-    } else {
-      IsBuiltin = false;
     }
-  } else {
-    IsBuiltin = false;
   }
 
+  bool IsBuiltin = Out.tell() != OutSizeBefore;
   if (!IsBuiltin) {
     // The MS ABI doesn't have a special mangling for vector types, so we define
     // our own mangling to handle uses of __vector_size__ on user-specified
     // types, and for extensions like __v4sf.
-    Out << "T__clang_vec" << T->getNumElements() << '_';
-    mangleType(ET, Quals, Range);
-    Out << "@@";
+
+    llvm::SmallString<64> TemplateMangling;
+    llvm::raw_svector_ostream Stream(TemplateMangling);
+    MicrosoftCXXNameMangler Extra(Context, Stream);
+    Stream << "?$";
+    Extra.mangleSourceName("__vector");
+    Extra.mangleType(QualType(ET, 0), Range, QMM_Escape);
+    Extra.mangleIntegerLiteral(llvm::APSInt::getUnsigned(T->getNumElements()),
+                               /*IsBoolean=*/false);
+
+    mangleArtificalTagType(TTK_Union, TemplateMangling, {"__clang"});
   }
 }
 
