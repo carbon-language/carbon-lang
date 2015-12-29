@@ -60,7 +60,7 @@ def ext_charize_microsoft : Extension<
   "charizing operator #@ is a Microsoft extension">,
   InGroup<MicrosoftCharize>;
 def ext_comment_paste_microsoft : Extension<
-  "pasting two '/' tokens into a '//' comment token is a Microsoft extension">,
+  "pasting two '/' tokens into a '//' comment is a Microsoft extension">,
   InGroup<MicrosoftCommentPaste>;
 def ext_ctrl_z_eof_microsoft : Extension<
   "treating Ctrl-Z as end-of-file is a Microsoft extension">,
