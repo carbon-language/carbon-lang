@@ -16,6 +16,7 @@ namespace {
 
 TEST(PointerIntPairTest, GetSet) {
   struct S {
+    int i;
   };
   S s;
 
