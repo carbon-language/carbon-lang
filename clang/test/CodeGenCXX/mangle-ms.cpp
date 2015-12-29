@@ -21,6 +21,10 @@ int _c(void) {return N::anonymous + c;}
 // CHECK-DAG: @"\01?_c@@YAHXZ"
 // X64-DAG:   @"\01?_c@@YAHXZ"
 
+const int &NeedsReferenceTemporary = 2;
+// CHECK-DAG: @"\01?NeedsReferenceTemporary@@3ABHB" = constant i32* @"\01?$RT1@NeedsReferenceTemporary@@3ABHB"
+// X64-DAG: @"\01?NeedsReferenceTemporary@@3AEBHEB" = constant i32* @"\01?$RT1@NeedsReferenceTemporary@@3AEBHEB"
+
 class foo {
   static const short d;
 // CHECK-DAG: @"\01?d@foo@@0FB"
