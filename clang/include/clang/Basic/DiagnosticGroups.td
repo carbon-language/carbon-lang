@@ -765,6 +765,7 @@ def MicrosoftCast : DiagGroup<"microsoft-cast">;
 def MicrosoftConstInit : DiagGroup<"microsoft-const-init">;
 def MicrosoftVoidPseudoDtor : DiagGroup<"microsoft-void-pseudo-dtor">;
 def MicrosoftAnonTag : DiagGroup<"microsoft-anon-tag">;
+def MicrosoftCommentPaste : DiagGroup<"microsoft-comment-paste">;
 // Aliases.
 def : DiagGroup<"msvc-include", [MicrosoftInclude]>;
                 // -Wmsvc-include = -Wmicrosoft-include
@@ -778,7 +779,8 @@ def Microsoft : DiagGroup<"microsoft",
      MicrosoftEnumValue, MicrosoftDefaultArgRedefinition, MicrosoftTemplate,
      MicrosoftRedeclareStatic, MicrosoftEnumForwardReference, MicrosoftGoto,
      MicrosoftFlexibleArray, MicrosoftExtraQualification, MicrosoftCast,
-     MicrosoftConstInit, MicrosoftVoidPseudoDtor, MicrosoftAnonTag]>;
+     MicrosoftConstInit, MicrosoftVoidPseudoDtor, MicrosoftAnonTag,
+     MicrosoftCommentPaste]>;
 
 def ObjCNonUnifiedException : DiagGroup<"objc-nonunified-exceptions">;
 
