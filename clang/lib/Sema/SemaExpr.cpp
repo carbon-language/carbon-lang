@@ -4772,7 +4772,7 @@ static bool checkArgsForPlaceholders(Sema &S, MultiExprArg args) {
 }
 
 /// If a builtin function has a pointer argument with no explicit address
-/// space, than it should be able to accept a pointer to any address
+/// space, then it should be able to accept a pointer to any address
 /// space as input.  In order to do this, we need to replace the
 /// standard builtin declaration with one that uses the same address space
 /// as the call.
@@ -4953,7 +4953,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
 
     FunctionDecl *FDecl = dyn_cast<FunctionDecl>(NDecl);
     if (FDecl && FDecl->getBuiltinID()) {
-      // Rewrite the function decl for this builtin by replacing paramaters
+      // Rewrite the function decl for this builtin by replacing parameters
       // with no explicit address space with the address space of the arguments
       // in ArgExprs.
       if ((FDecl = rewriteBuiltinFunctionDecl(this, Context, FDecl, ArgExprs))) {
