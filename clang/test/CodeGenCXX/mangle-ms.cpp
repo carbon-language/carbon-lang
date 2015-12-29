@@ -437,3 +437,8 @@ int foo(int *const i __attribute__((pass_object_size(0)))) { return 0; }
 // CHECK-DAG: define i32 @"\01?bar@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@@Z"
 int bar(int *const i __attribute__((pass_object_size(1)))) { return 0; }
 }
+
+namespace Atomic {
+// CHECK-DAG: define void @"\01?f@Atomic@@YAXU?$_Atomic@H@__clang@@@Z"(
+void f(_Atomic(int)) {}
+}

@@ -2391,11 +2391,16 @@ void MicrosoftCXXNameMangler::mangleType(const AutoType *T, Qualifiers,
 
 void MicrosoftCXXNameMangler::mangleType(const AtomicType *T, Qualifiers,
                                          SourceRange Range) {
-  DiagnosticsEngine &Diags = Context.getDiags();
-  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle this C11 atomic type yet");
-  Diags.Report(Range.getBegin(), DiagID)
-    << Range;
+  QualType ValueType = T->getValueType();
+
+  llvm::SmallString<64> TemplateMangling;
+  llvm::raw_svector_ostream Stream(TemplateMangling);
+  MicrosoftCXXNameMangler Extra(Context, Stream);
+  Stream << "?$";
+  Extra.mangleSourceName("_Atomic");
+  Extra.mangleType(ValueType, Range, QMM_Escape);
+
+  mangleArtificalTagType(TTK_Struct, TemplateMangling, {"__clang"});
 }
 
 void MicrosoftMangleContextImpl::mangleCXXName(const NamedDecl *D,
