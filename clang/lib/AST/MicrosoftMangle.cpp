@@ -395,14 +395,8 @@ void MicrosoftCXXNameMangler::mangle(const NamedDecl *D, StringRef Prefix) {
     mangleFunctionEncoding(FD, Context.shouldMangleDeclName(FD));
   else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     mangleVariableEncoding(VD);
-  else {
-    // TODO: Fields? Can MSVC even mangle them?
-    // Issue a diagnostic for now.
-    DiagnosticsEngine &Diags = Context.getDiags();
-    unsigned DiagID = Diags.getCustomDiagID(
-        DiagnosticsEngine::Error, "cannot mangle this declaration yet");
-    Diags.Report(D->getLocation(), DiagID) << D->getSourceRange();
-  }
+  else
+    llvm_unreachable("Tried to mangle unexpected NamedDecl!");
 }
 
 void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD,
