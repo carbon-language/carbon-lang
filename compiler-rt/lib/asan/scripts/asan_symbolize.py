@@ -271,7 +271,7 @@ def BreakpadSymbolizerFactory(binary):
 def SystemSymbolizerFactory(system, addr, binary):
   if system == 'Darwin':
     return DarwinSymbolizer(addr, binary)
-  elif system == 'Linux':
+  elif system == 'Linux' or system == 'FreeBSD':
     return Addr2LineSymbolizer(binary)
 
 
