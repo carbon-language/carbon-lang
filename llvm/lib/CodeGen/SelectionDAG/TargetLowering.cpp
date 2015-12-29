@@ -1281,7 +1281,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
        isCondCodeLegal(SwappedCC, N0.getSimpleValueType())))
     return DAG.getSetCC(dl, VT, N1, N0, SwappedCC);
 
-  if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
+  if (auto *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
     const APInt &C1 = N1C->getAPIntValue();
 
     // If the LHS is '(srl (ctlz x), 5)', the RHS is 0/1, and this is an
@@ -1346,7 +1346,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         PreExt = N0->getOperand(0);
       } else if (N0->getOpcode() == ISD::AND) {
         // DAGCombine turns costly ZExts into ANDs
-        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0->getOperand(1)))
+        if (auto *C = dyn_cast<ConstantSDNode>(N0->getOperand(1)))
           if ((C->getAPIntValue()+1).isPowerOf2()) {
             MinBits = C->getAPIntValue().countTrailingOnes();
             PreExt = N0->getOperand(0);
@@ -1356,7 +1356,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         MinBits = N0->getOperand(0).getValueSizeInBits();
         PreExt = N0->getOperand(0);
         Signed = true;
-      } else if (LoadSDNode *LN0 = dyn_cast<LoadSDNode>(N0)) {
+      } else if (auto *LN0 = dyn_cast<LoadSDNode>(N0)) {
         // ZEXTLOAD / SEXTLOAD
         if (LN0->getExtensionType() == ISD::ZEXTLOAD) {
           MinBits = LN0->getMemoryVT().getSizeInBits();
@@ -1708,8 +1708,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
          (isTypeLegal(VT) && VT.bitsLE(N0.getValueType()))) &&
         N0.getOpcode() == ISD::AND) {
       auto &DL = DAG.getDataLayout();
-      if (ConstantSDNode *AndRHS =
-                  dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      if (auto *AndRHS = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
         EVT ShiftTy = DCI.isBeforeLegalize()
                           ? getPointerTy(DL)
                           : getShiftAmountTy(N0.getValueType(), DL);
@@ -1739,8 +1738,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       // (X & -256) == 256 -> (X >> 8) == 1
       if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
           N0.getOpcode() == ISD::AND && N0.hasOneUse()) {
-        if (ConstantSDNode *AndRHS =
-            dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+        if (auto *AndRHS = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
           const APInt &AndRHSC = AndRHS->getAPIntValue();
           if ((-AndRHSC).isPowerOf2() && (AndRHSC & C1) == C1) {
             unsigned ShiftBits = AndRHSC.countTrailingZeros();
@@ -1794,7 +1792,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     // Constant fold or commute setcc.
     SDValue O = DAG.FoldSetCC(VT, N0, N1, Cond, dl);
     if (O.getNode()) return O;
-  } else if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1.getNode())) {
+  } else if (auto *CFP = dyn_cast<ConstantFPSDNode>(N1.getNode())) {
     // If the RHS of an FP comparison is a constant, simplify it away in
     // some cases.
     if (CFP->getValueAPF().isNaN()) {
@@ -1911,8 +1909,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       // to be careful about increasing register pressure needlessly.
       bool LegalRHSImm = false;
 
-      if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N1)) {
-        if (ConstantSDNode *LHSR = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      if (auto *RHSC = dyn_cast<ConstantSDNode>(N1)) {
+        if (auto *LHSR = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
           // Turn (X+C1) == C2 --> X == C2-C1
           if (N0.getOpcode() == ISD::ADD && N0.getNode()->hasOneUse()) {
             return DAG.getSetCC(dl, VT, N0.getOperand(0),
@@ -1935,7 +1933,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
 
         // Turn (C1-X) == C2 --> X == C1-C2
-        if (ConstantSDNode *SUBC = dyn_cast<ConstantSDNode>(N0.getOperand(0))) {
+        if (auto *SUBC = dyn_cast<ConstantSDNode>(N0.getOperand(0))) {
           if (N0.getOpcode() == ISD::SUB && N0.getNode()->hasOneUse()) {
             return
               DAG.getSetCC(dl, VT, N0.getOperand(1),
