@@ -1558,25 +1558,25 @@ private:
 
   LazyDeclStmtPtr Body;
 
-  // FIXME: This can be packed into the bitfields in Decl.
-  // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
+  // FIXME: This can be packed into the bitfields in DeclContext.
+  // NOTE: VC++ packs bitfields poorly if the types differ.
   unsigned SClass : 2;
-  bool IsInline : 1;
-  bool IsInlineSpecified : 1;
-  bool IsVirtualAsWritten : 1;
-  bool IsPure : 1;
-  bool HasInheritedPrototype : 1;
-  bool HasWrittenPrototype : 1;
-  bool IsDeleted : 1;
-  bool IsTrivial : 1; // sunk from CXXMethodDecl
-  bool IsDefaulted : 1; // sunk from CXXMethoDecl
-  bool IsExplicitlyDefaulted : 1; //sunk from CXXMethodDecl
-  bool HasImplicitReturnZero : 1;
-  bool IsLateTemplateParsed : 1;
-  bool IsConstexpr : 1;
+  unsigned IsInline : 1;
+  unsigned IsInlineSpecified : 1;
+  unsigned IsVirtualAsWritten : 1;
+  unsigned IsPure : 1;
+  unsigned HasInheritedPrototype : 1;
+  unsigned HasWrittenPrototype : 1;
+  unsigned IsDeleted : 1;
+  unsigned IsTrivial : 1; // sunk from CXXMethodDecl
+  unsigned IsDefaulted : 1; // sunk from CXXMethoDecl
+  unsigned IsExplicitlyDefaulted : 1; //sunk from CXXMethodDecl
+  unsigned HasImplicitReturnZero : 1;
+  unsigned IsLateTemplateParsed : 1;
+  unsigned IsConstexpr : 1;
 
   /// \brief Indicates if the function uses __try.
-  bool UsesSEHTry : 1;
+  unsigned UsesSEHTry : 1;
 
   /// \brief Indicates if the function was a definition but its body was
   /// skipped.
