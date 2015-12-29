@@ -919,7 +919,11 @@ public:
 ///   DeclRefExprBits.RefersToEnclosingVariableOrCapture
 ///       Specifies when this declaration reference expression (validly)
 ///       refers to an enclosed local or a captured variable.
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DeclRefExpr : public Expr {
+class DeclRefExpr final
+    : public Expr,
+      private llvm::TrailingObjects<DeclRefExpr, NestedNameSpecifierLoc,
+                                    NamedDecl *, ASTTemplateKWAndArgsInfo,
+                                    TemplateArgumentLoc> {
   /// \brief The declaration that we are referencing.
   ValueDecl *D;
 
@@ -930,35 +934,21 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DeclRefExpr : public Expr {
   /// embedded in D.
   DeclarationNameLoc DNLoc;
 
-  /// \brief Helper to retrieve the optional NestedNameSpecifierLoc.
-  NestedNameSpecifierLoc &getInternalQualifierLoc() {
-    assert(hasQualifier());
-    return *reinterpret_cast<NestedNameSpecifierLoc *>(this + 1);
+  size_t numTrailingObjects(OverloadToken<NestedNameSpecifierLoc>) const {
+    return hasQualifier() ? 1 : 0;
   }
 
-  /// \brief Helper to retrieve the optional NestedNameSpecifierLoc.
-  const NestedNameSpecifierLoc &getInternalQualifierLoc() const {
-    return const_cast<DeclRefExpr *>(this)->getInternalQualifierLoc();
+  size_t numTrailingObjects(OverloadToken<NamedDecl *>) const {
+    return hasFoundDecl() ? 1 : 0;
+  }
+
+  size_t numTrailingObjects(OverloadToken<ASTTemplateKWAndArgsInfo>) const {
+    return hasTemplateKWAndArgsInfo() ? 1 : 0;
   }
 
   /// \brief Test whether there is a distinct FoundDecl attached to the end of
   /// this DRE.
   bool hasFoundDecl() const { return DeclRefExprBits.HasFoundDecl; }
-
-  /// \brief Helper to retrieve the optional NamedDecl through which this
-  /// reference occurred.
-  NamedDecl *&getInternalFoundDecl() {
-    assert(hasFoundDecl());
-    if (hasQualifier())
-      return *reinterpret_cast<NamedDecl **>(&getInternalQualifierLoc() + 1);
-    return *reinterpret_cast<NamedDecl **>(this + 1);
-  }
-
-  /// \brief Helper to retrieve the optional NamedDecl through which this
-  /// reference occurred.
-  NamedDecl *getInternalFoundDecl() const {
-    return const_cast<DeclRefExpr *>(this)->getInternalFoundDecl();
-  }
 
   DeclRefExpr(const ASTContext &Ctx,
               NestedNameSpecifierLoc QualifierLoc,
@@ -1032,21 +1022,17 @@ public:
   bool hasQualifier() const { return DeclRefExprBits.HasQualifier; }
 
   /// \brief If the name was qualified, retrieves the nested-name-specifier
-  /// that precedes the name. Otherwise, returns NULL.
-  NestedNameSpecifier *getQualifier() const {
-    if (!hasQualifier())
-      return nullptr;
-
-    return getInternalQualifierLoc().getNestedNameSpecifier();
-  }
-
-  /// \brief If the name was qualified, retrieves the nested-name-specifier
   /// that precedes the name, with source-location information.
   NestedNameSpecifierLoc getQualifierLoc() const {
     if (!hasQualifier())
       return NestedNameSpecifierLoc();
+    return *getTrailingObjects<NestedNameSpecifierLoc>();
+  }
 
-    return getInternalQualifierLoc();
+  /// \brief If the name was qualified, retrieves the nested-name-specifier
+  /// that precedes the name. Otherwise, returns NULL.
+  NestedNameSpecifier *getQualifier() const {
+    return getQualifierLoc().getNestedNameSpecifier();
   }
 
   /// \brief Get the NamedDecl through which this reference occurred.
@@ -1054,64 +1040,40 @@ public:
   /// This Decl may be different from the ValueDecl actually referred to in the
   /// presence of using declarations, etc. It always returns non-NULL, and may
   /// simple return the ValueDecl when appropriate.
+
   NamedDecl *getFoundDecl() {
-    return hasFoundDecl() ? getInternalFoundDecl() : D;
+    return hasFoundDecl() ? *getTrailingObjects<NamedDecl *>() : D;
   }
 
   /// \brief Get the NamedDecl through which this reference occurred.
   /// See non-const variant.
   const NamedDecl *getFoundDecl() const {
-    return hasFoundDecl() ? getInternalFoundDecl() : D;
+    return hasFoundDecl() ? *getTrailingObjects<NamedDecl *>() : D;
   }
 
   bool hasTemplateKWAndArgsInfo() const {
     return DeclRefExprBits.HasTemplateKWAndArgsInfo;
   }
 
-  /// \brief Return the optional template keyword and arguments info.
-  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
-    if (!hasTemplateKWAndArgsInfo())
-      return nullptr;
-
-    if (hasFoundDecl()) {
-      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-          llvm::alignAddr(&getInternalFoundDecl() + 1,
-                          llvm::alignOf<ASTTemplateKWAndArgsInfo>()));
-    }
-
-    if (hasQualifier()) {
-      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-          llvm::alignAddr(&getInternalQualifierLoc() + 1,
-                          llvm::alignOf<ASTTemplateKWAndArgsInfo>()));
-    }
-
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
-  }
-
-  /// \brief Return the optional template keyword and arguments info.
-  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
-    return const_cast<DeclRefExpr*>(this)->getTemplateKWAndArgsInfo();
-  }
-
   /// \brief Retrieve the location of the template keyword preceding
   /// this name, if any.
   SourceLocation getTemplateKeywordLoc() const {
     if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->TemplateKWLoc;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->TemplateKWLoc;
   }
 
   /// \brief Retrieve the location of the left angle bracket starting the
   /// explicit template argument list following the name, if any.
   SourceLocation getLAngleLoc() const {
     if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->LAngleLoc;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->LAngleLoc;
   }
 
   /// \brief Retrieve the location of the right angle bracket ending the
   /// explicit template argument list following the name, if any.
   SourceLocation getRAngleLoc() const {
     if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->RAngleLoc;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->RAngleLoc;
   }
 
   /// \brief Determines whether the name in this declaration reference
@@ -1126,7 +1088,8 @@ public:
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
     if (hasExplicitTemplateArgs())
-      getTemplateKWAndArgsInfo()->copyInto(List);
+      getTrailingObjects<ASTTemplateKWAndArgsInfo>()->copyInto(
+          getTrailingObjects<TemplateArgumentLoc>(), List);
   }
 
   /// \brief Retrieve the template arguments provided as part of this
@@ -1135,7 +1098,7 @@ public:
     if (!hasExplicitTemplateArgs())
       return nullptr;
 
-    return getTemplateKWAndArgsInfo()->getTemplateArgs();
+    return getTrailingObjects<TemplateArgumentLoc>();
   }
 
   /// \brief Retrieve the number of template arguments provided as part of this
@@ -1144,7 +1107,7 @@ public:
     if (!hasExplicitTemplateArgs())
       return 0;
 
-    return getTemplateKWAndArgsInfo()->NumTemplateArgs;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->NumTemplateArgs;
   }
 
   /// \brief Returns true if this expression refers to a function that
@@ -1174,6 +1137,7 @@ public:
     return child_range(child_iterator(), child_iterator());
   }
 
+  friend TrailingObjects;
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
@@ -2314,20 +2278,24 @@ public:
   }
 };
 
+/// Extra data stored in some MemberExpr objects.
+struct MemberExprNameQualifier {
+  /// \brief The nested-name-specifier that qualifies the name, including
+  /// source-location information.
+  NestedNameSpecifierLoc QualifierLoc;
+
+  /// \brief The DeclAccessPair through which the MemberDecl was found due to
+  /// name qualifiers.
+  DeclAccessPair FoundDecl;
+};
+
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
-  /// Extra data stored in some member expressions.
-  struct LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberNameQualifier {
-    /// \brief The nested-name-specifier that qualifies the name, including
-    /// source-location information.
-    NestedNameSpecifierLoc QualifierLoc;
-
-    /// \brief The DeclAccessPair through which the MemberDecl was found due to
-    /// name qualifiers.
-    DeclAccessPair FoundDecl;
-  };
-
+class MemberExpr final
+    : public Expr,
+      private llvm::TrailingObjects<MemberExpr, MemberExprNameQualifier,
+                                    ASTTemplateKWAndArgsInfo,
+                                    TemplateArgumentLoc> {
   /// Base - the expression for the base pointer or structure references.  In
   /// X.F, this is "X".
   Stmt *Base;
@@ -2351,7 +2319,7 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
 
   /// \brief True if this member expression used a nested-name-specifier to
   /// refer to the member, e.g., "x->Base::f", or found its member via a using
-  /// declaration.  When true, a MemberNameQualifier
+  /// declaration.  When true, a MemberExprNameQualifier
   /// structure is allocated immediately after the MemberExpr.
   bool HasQualifierOrFoundDecl : 1;
 
@@ -2359,24 +2327,19 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
   /// and/or a template argument list explicitly, e.g., x->f<int>,
   /// x->template f, x->template f<int>.
   /// When true, an ASTTemplateKWAndArgsInfo structure and its
-  /// TemplateArguments (if any) are allocated immediately after
-  /// the MemberExpr or, if the member expression also has a qualifier,
-  /// after the MemberNameQualifier structure.
+  /// TemplateArguments (if any) are present.
   bool HasTemplateKWAndArgsInfo : 1;
 
   /// \brief True if this member expression refers to a method that
   /// was resolved from an overloaded set having size greater than 1.
   bool HadMultipleCandidates : 1;
 
-  /// \brief Retrieve the qualifier that preceded the member name, if any.
-  MemberNameQualifier *getMemberQualifier() {
-    assert(HasQualifierOrFoundDecl);
-    return reinterpret_cast<MemberNameQualifier *> (this + 1);
+  size_t numTrailingObjects(OverloadToken<MemberExprNameQualifier>) const {
+    return HasQualifierOrFoundDecl ? 1 : 0;
   }
 
-  /// \brief Retrieve the qualifier that preceded the member name, if any.
-  const MemberNameQualifier *getMemberQualifier() const {
-    return const_cast<MemberExpr *>(this)->getMemberQualifier();
+  size_t numTrailingObjects(OverloadToken<ASTTemplateKWAndArgsInfo>) const {
+    return HasTemplateKWAndArgsInfo ? 1 : 0;
   }
 
 public:
@@ -2432,7 +2395,7 @@ public:
     if (!HasQualifierOrFoundDecl)
       return DeclAccessPair::make(getMemberDecl(),
                                   getMemberDecl()->getAccess());
-    return getMemberQualifier()->FoundDecl;
+    return getTrailingObjects<MemberExprNameQualifier>()->FoundDecl;
   }
 
   /// \brief Determines whether this member expression actually had
@@ -2441,61 +2404,41 @@ public:
   bool hasQualifier() const { return getQualifier() != nullptr; }
 
   /// \brief If the member name was qualified, retrieves the
-  /// nested-name-specifier that precedes the member name. Otherwise, returns
-  /// NULL.
-  NestedNameSpecifier *getQualifier() const {
-    if (!HasQualifierOrFoundDecl)
-      return nullptr;
-
-    return getMemberQualifier()->QualifierLoc.getNestedNameSpecifier();
-  }
-
-  /// \brief If the member name was qualified, retrieves the
   /// nested-name-specifier that precedes the member name, with source-location
   /// information.
   NestedNameSpecifierLoc getQualifierLoc() const {
-    if (!hasQualifier())
+    if (!HasQualifierOrFoundDecl)
       return NestedNameSpecifierLoc();
 
-    return getMemberQualifier()->QualifierLoc;
+    return getTrailingObjects<MemberExprNameQualifier>()->QualifierLoc;
   }
 
-  /// \brief Return the optional template keyword and arguments info.
-  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
-    if (!HasTemplateKWAndArgsInfo)
-      return nullptr;
-
-    if (!HasQualifierOrFoundDecl)
-      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
-
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-                                                      getMemberQualifier() + 1);
-  }
-
-  /// \brief Return the optional template keyword and arguments info.
-  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
-    return const_cast<MemberExpr*>(this)->getTemplateKWAndArgsInfo();
+  /// \brief If the member name was qualified, retrieves the
+  /// nested-name-specifier that precedes the member name. Otherwise, returns
+  /// NULL.
+  NestedNameSpecifier *getQualifier() const {
+    return getQualifierLoc().getNestedNameSpecifier();
   }
 
   /// \brief Retrieve the location of the template keyword preceding
   /// the member name, if any.
   SourceLocation getTemplateKeywordLoc() const {
     if (!HasTemplateKWAndArgsInfo) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->TemplateKWLoc;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->TemplateKWLoc;
   }
 
   /// \brief Retrieve the location of the left angle bracket starting the
   /// explicit template argument list following the member name, if any.
   SourceLocation getLAngleLoc() const {
     if (!HasTemplateKWAndArgsInfo) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->LAngleLoc;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->LAngleLoc;
   }
 
   /// \brief Retrieve the location of the right angle bracket ending the
   /// explicit template argument list following the member name, if any.
   SourceLocation getRAngleLoc() const {
     if (!HasTemplateKWAndArgsInfo) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->RAngleLoc;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->RAngleLoc;
   }
 
   /// Determines whether the member name was preceded by the template keyword.
@@ -2509,7 +2452,8 @@ public:
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
     if (hasExplicitTemplateArgs())
-      getTemplateKWAndArgsInfo()->copyInto(List);
+      getTrailingObjects<ASTTemplateKWAndArgsInfo>()->copyInto(
+          getTrailingObjects<TemplateArgumentLoc>(), List);
   }
 
   /// \brief Retrieve the template arguments provided as part of this
@@ -2518,7 +2462,7 @@ public:
     if (!hasExplicitTemplateArgs())
       return nullptr;
 
-    return getTemplateKWAndArgsInfo()->getTemplateArgs();
+    return getTrailingObjects<TemplateArgumentLoc>();
   }
 
   /// \brief Retrieve the number of template arguments provided as part of this
@@ -2527,7 +2471,7 @@ public:
     if (!hasExplicitTemplateArgs())
       return 0;
 
-    return getTemplateKWAndArgsInfo()->NumTemplateArgs;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->NumTemplateArgs;
   }
 
   /// \brief Retrieve the member declaration name info.
@@ -2583,6 +2527,7 @@ public:
   // Iterators
   child_range children() { return child_range(&Base, &Base+1); }
 
+  friend TrailingObjects;
   friend class ASTReader;
   friend class ASTStmtWriter;
 };

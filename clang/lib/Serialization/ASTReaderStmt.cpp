@@ -93,6 +93,7 @@ namespace clang {
 
     /// \brief Read and initialize a ExplicitTemplateArgumentList structure.
     void ReadTemplateKWAndArgsInfo(ASTTemplateKWAndArgsInfo &Args,
+                                   TemplateArgumentLoc *ArgsLocArray,
                                    unsigned NumTemplateArgs);
     /// \brief Read and initialize a ExplicitTemplateArgumentList structure.
     void ReadExplicitTemplateArgumentList(ASTTemplateArgumentListInfo &ArgList,
@@ -105,9 +106,9 @@ namespace clang {
   };
 }
 
-void ASTStmtReader::
-ReadTemplateKWAndArgsInfo(ASTTemplateKWAndArgsInfo &Args,
-                          unsigned NumTemplateArgs) {
+void ASTStmtReader::ReadTemplateKWAndArgsInfo(ASTTemplateKWAndArgsInfo &Args,
+                                              TemplateArgumentLoc *ArgsLocArray,
+                                              unsigned NumTemplateArgs) {
   SourceLocation TemplateKWLoc = ReadSourceLocation(Record, Idx);
   TemplateArgumentListInfo ArgInfo;
   ArgInfo.setLAngleLoc(ReadSourceLocation(Record, Idx));
@@ -115,7 +116,7 @@ ReadTemplateKWAndArgsInfo(ASTTemplateKWAndArgsInfo &Args,
   for (unsigned i = 0; i != NumTemplateArgs; ++i)
     ArgInfo.addArgument(
         Reader.ReadTemplateArgumentLoc(F, Record, Idx));
-  Args.initializeFrom(TemplateKWLoc, ArgInfo);
+  Args.initializeFrom(TemplateKWLoc, ArgInfo, ArgsLocArray);
 }
 
 void ASTStmtReader::VisitStmt(Stmt *S) {
@@ -459,15 +460,17 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
     NumTemplateArgs = Record[Idx++];
 
   if (E->hasQualifier())
-    E->getInternalQualifierLoc()
-      = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
+    new (E->getTrailingObjects<NestedNameSpecifierLoc>())
+        NestedNameSpecifierLoc(
+            Reader.ReadNestedNameSpecifierLoc(F, Record, Idx));
 
   if (E->hasFoundDecl())
-    E->getInternalFoundDecl() = ReadDeclAs<NamedDecl>(Record, Idx);
+    *E->getTrailingObjects<NamedDecl *>() = ReadDeclAs<NamedDecl>(Record, Idx);
 
   if (E->hasTemplateKWAndArgsInfo())
-    ReadTemplateKWAndArgsInfo(*E->getTemplateKWAndArgsInfo(),
-                              NumTemplateArgs);
+    ReadTemplateKWAndArgsInfo(
+        *E->getTrailingObjects<ASTTemplateKWAndArgsInfo>(),
+        E->getTrailingObjects<TemplateArgumentLoc>(), NumTemplateArgs);
 
   E->setDecl(ReadDeclAs<ValueDecl>(Record, Idx));
   E->setLocation(ReadSourceLocation(Record, Idx));
@@ -1453,8 +1456,10 @@ ASTStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
 
   if (Record[Idx++]) // HasTemplateKWAndArgsInfo
-    ReadTemplateKWAndArgsInfo(*E->getTemplateKWAndArgsInfo(),
-                              /*NumTemplateArgs=*/Record[Idx++]);
+    ReadTemplateKWAndArgsInfo(
+        *E->getTrailingObjects<ASTTemplateKWAndArgsInfo>(),
+        E->getTrailingObjects<TemplateArgumentLoc>(),
+        /*NumTemplateArgs=*/Record[Idx++]);
 
   E->Base = Reader.ReadSubExpr();
   E->BaseType = Reader.readType(F, Record, Idx);
@@ -1470,8 +1475,10 @@ ASTStmtReader::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   VisitExpr(E);
 
   if (Record[Idx++]) // HasTemplateKWAndArgsInfo
-    ReadTemplateKWAndArgsInfo(*E->getTemplateKWAndArgsInfo(),
-                              /*NumTemplateArgs=*/Record[Idx++]);
+    ReadTemplateKWAndArgsInfo(
+        *E->getTrailingObjects<ASTTemplateKWAndArgsInfo>(),
+        E->getTrailingObjects<TemplateArgumentLoc>(),
+        /*NumTemplateArgs=*/Record[Idx++]);
 
   E->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   ReadDeclarationNameInfo(E->NameInfo, Record, Idx);
@@ -1493,7 +1500,8 @@ void ASTStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   VisitExpr(E);
 
   if (Record[Idx++]) // HasTemplateKWAndArgsInfo
-    ReadTemplateKWAndArgsInfo(*E->getTemplateKWAndArgsInfo(),
+    ReadTemplateKWAndArgsInfo(*E->getTrailingASTTemplateKWAndArgsInfo(),
+                              E->getTrailingTemplateArgumentLoc(),
                               /*NumTemplateArgs=*/Record[Idx++]);
 
   unsigned NumDecls = Record[Idx++];

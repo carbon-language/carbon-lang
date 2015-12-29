@@ -295,8 +295,11 @@ UnresolvedLookupExpr::Create(const ASTContext &C,
 {
   assert(Args || TemplateKWLoc.isValid());
   unsigned num_args = Args ? Args->size() : 0;
-  void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) +
-                         ASTTemplateKWAndArgsInfo::sizeFor(num_args));
+
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(1,
+                                                                      num_args);
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedLookupExpr>());
   return new (Mem) UnresolvedLookupExpr(C, NamingClass, QualifierLoc,
                                         TemplateKWLoc, NameInfo,
                                         ADL, /*Overload*/ true, Args,
@@ -307,11 +310,11 @@ UnresolvedLookupExpr *
 UnresolvedLookupExpr::CreateEmpty(const ASTContext &C,
                                   bool HasTemplateKWAndArgsInfo,
                                   unsigned NumTemplateArgs) {
-  std::size_t size = sizeof(UnresolvedLookupExpr);
-  if (HasTemplateKWAndArgsInfo)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
-
-  void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedLookupExpr>());
+  assert(NumTemplateArgs == 0 || HasTemplateKWAndArgsInfo);
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, NumTemplateArgs);
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedLookupExpr>());
   UnresolvedLookupExpr *E = new (Mem) UnresolvedLookupExpr(EmptyShell());
   E->HasTemplateKWAndArgsInfo = HasTemplateKWAndArgsInfo;
   return E;
@@ -367,10 +370,9 @@ OverloadExpr::OverloadExpr(StmtClass K, const ASTContext &C,
     bool Dependent = false;
     bool InstantiationDependent = false;
     bool ContainsUnexpandedParameterPack = false;
-    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc, *TemplateArgs,
-                                               Dependent,
-                                               InstantiationDependent,
-                                               ContainsUnexpandedParameterPack);
+    getTrailingASTTemplateKWAndArgsInfo()->initializeFrom(
+        TemplateKWLoc, *TemplateArgs, getTrailingTemplateArgumentLoc(),
+        Dependent, InstantiationDependent, ContainsUnexpandedParameterPack);
 
     if (Dependent) {
       ExprBits.TypeDependent = true;
@@ -381,7 +383,7 @@ OverloadExpr::OverloadExpr(StmtClass K, const ASTContext &C,
     if (ContainsUnexpandedParameterPack)
       ExprBits.ContainsUnexpandedParameterPack = true;
   } else if (TemplateKWLoc.isValid()) {
-    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
+    getTrailingASTTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
   }
 
   if (isTypeDependent())
@@ -432,13 +434,13 @@ DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
     bool InstantiationDependent = true;
     bool ContainsUnexpandedParameterPack
       = ExprBits.ContainsUnexpandedParameterPack;
-    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc, *Args,
-                                               Dependent,
-                                               InstantiationDependent,
-                                               ContainsUnexpandedParameterPack);
+    getTrailingObjects<ASTTemplateKWAndArgsInfo>()->initializeFrom(
+        TemplateKWLoc, *Args, getTrailingObjects<TemplateArgumentLoc>(),
+        Dependent, InstantiationDependent, ContainsUnexpandedParameterPack);
     ExprBits.ContainsUnexpandedParameterPack = ContainsUnexpandedParameterPack;
   } else if (TemplateKWLoc.isValid()) {
-    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
+    getTrailingObjects<ASTTemplateKWAndArgsInfo>()->initializeFrom(
+        TemplateKWLoc);
   }
 }
 
@@ -449,12 +451,11 @@ DependentScopeDeclRefExpr::Create(const ASTContext &C,
                                   const DeclarationNameInfo &NameInfo,
                                   const TemplateArgumentListInfo *Args) {
   assert(QualifierLoc && "should be created for dependent qualifiers");
-  std::size_t size = sizeof(DependentScopeDeclRefExpr);
-  if (Args)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(Args->size());
-  else if (TemplateKWLoc.isValid())
-    size += ASTTemplateKWAndArgsInfo::sizeFor(0);
-  void *Mem = C.Allocate(size);
+  bool HasTemplateKWAndArgsInfo = Args || TemplateKWLoc.isValid();
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, Args ? Args->size() : 0);
+  void *Mem = C.Allocate(Size);
   return new (Mem) DependentScopeDeclRefExpr(C.DependentTy, QualifierLoc,
                                              TemplateKWLoc, NameInfo, Args);
 }
@@ -463,10 +464,11 @@ DependentScopeDeclRefExpr *
 DependentScopeDeclRefExpr::CreateEmpty(const ASTContext &C,
                                        bool HasTemplateKWAndArgsInfo,
                                        unsigned NumTemplateArgs) {
-  std::size_t size = sizeof(DependentScopeDeclRefExpr);
-  if (HasTemplateKWAndArgsInfo)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
-  void *Mem = C.Allocate(size);
+  assert(NumTemplateArgs == 0 || HasTemplateKWAndArgsInfo);
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, NumTemplateArgs);
+  void *Mem = C.Allocate(Size);
   DependentScopeDeclRefExpr *E
     = new (Mem) DependentScopeDeclRefExpr(QualType(), NestedNameSpecifierLoc(),
                                           SourceLocation(),
@@ -1195,62 +1197,39 @@ SourceLocation CXXUnresolvedConstructExpr::getLocStart() const {
   return Type->getTypeLoc().getBeginLoc();
 }
 
-CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(const ASTContext &C,
-                                                 Expr *Base, QualType BaseType,
-                                                 bool IsArrow,
-                                                 SourceLocation OperatorLoc,
-                                          NestedNameSpecifierLoc QualifierLoc,
-                                          SourceLocation TemplateKWLoc,
-                                          NamedDecl *FirstQualifierFoundInScope,
-                                          DeclarationNameInfo MemberNameInfo,
-                                   const TemplateArgumentListInfo *TemplateArgs)
-  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
-         VK_LValue, OK_Ordinary, true, true, true,
-         ((Base && Base->containsUnexpandedParameterPack()) ||
-          (QualifierLoc && 
-           QualifierLoc.getNestedNameSpecifier()
-                                       ->containsUnexpandedParameterPack()) ||
-          MemberNameInfo.containsUnexpandedParameterPack())),
-    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
-    HasTemplateKWAndArgsInfo(TemplateArgs != nullptr ||
-                             TemplateKWLoc.isValid()),
-    OperatorLoc(OperatorLoc), QualifierLoc(QualifierLoc), 
-    FirstQualifierFoundInScope(FirstQualifierFoundInScope),
-    MemberNameInfo(MemberNameInfo) {
+CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(
+    const ASTContext &C, Expr *Base, QualType BaseType, bool IsArrow,
+    SourceLocation OperatorLoc, NestedNameSpecifierLoc QualifierLoc,
+    SourceLocation TemplateKWLoc, NamedDecl *FirstQualifierFoundInScope,
+    DeclarationNameInfo MemberNameInfo,
+    const TemplateArgumentListInfo *TemplateArgs)
+    : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, VK_LValue,
+           OK_Ordinary, true, true, true,
+           ((Base && Base->containsUnexpandedParameterPack()) ||
+            (QualifierLoc &&
+             QualifierLoc.getNestedNameSpecifier()
+                 ->containsUnexpandedParameterPack()) ||
+            MemberNameInfo.containsUnexpandedParameterPack())),
+      Base(Base), BaseType(BaseType), IsArrow(IsArrow),
+      HasTemplateKWAndArgsInfo(TemplateArgs != nullptr ||
+                               TemplateKWLoc.isValid()),
+      OperatorLoc(OperatorLoc), QualifierLoc(QualifierLoc),
+      FirstQualifierFoundInScope(FirstQualifierFoundInScope),
+      MemberNameInfo(MemberNameInfo) {
   if (TemplateArgs) {
     bool Dependent = true;
     bool InstantiationDependent = true;
     bool ContainsUnexpandedParameterPack = false;
-    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc, *TemplateArgs,
-                                               Dependent,
-                                               InstantiationDependent,
-                                               ContainsUnexpandedParameterPack);
+    getTrailingObjects<ASTTemplateKWAndArgsInfo>()->initializeFrom(
+        TemplateKWLoc, *TemplateArgs, getTrailingObjects<TemplateArgumentLoc>(),
+        Dependent, InstantiationDependent, ContainsUnexpandedParameterPack);
     if (ContainsUnexpandedParameterPack)
       ExprBits.ContainsUnexpandedParameterPack = true;
   } else if (TemplateKWLoc.isValid()) {
-    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
+    getTrailingObjects<ASTTemplateKWAndArgsInfo>()->initializeFrom(
+        TemplateKWLoc);
   }
 }
-
-CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(const ASTContext &C,
-                          Expr *Base, QualType BaseType,
-                          bool IsArrow,
-                          SourceLocation OperatorLoc,
-                          NestedNameSpecifierLoc QualifierLoc,
-                          NamedDecl *FirstQualifierFoundInScope,
-                          DeclarationNameInfo MemberNameInfo)
-  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
-         VK_LValue, OK_Ordinary, true, true, true,
-         ((Base && Base->containsUnexpandedParameterPack()) ||
-          (QualifierLoc && 
-           QualifierLoc.getNestedNameSpecifier()->
-                                         containsUnexpandedParameterPack()) ||
-          MemberNameInfo.containsUnexpandedParameterPack())),
-    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
-    HasTemplateKWAndArgsInfo(false),
-    OperatorLoc(OperatorLoc), QualifierLoc(QualifierLoc),
-    FirstQualifierFoundInScope(FirstQualifierFoundInScope),
-    MemberNameInfo(MemberNameInfo) { }
 
 CXXDependentScopeMemberExpr *
 CXXDependentScopeMemberExpr::Create(const ASTContext &C,
@@ -1261,18 +1240,13 @@ CXXDependentScopeMemberExpr::Create(const ASTContext &C,
                                 NamedDecl *FirstQualifierFoundInScope,
                                 DeclarationNameInfo MemberNameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
-  if (!TemplateArgs && !TemplateKWLoc.isValid())
-    return new (C) CXXDependentScopeMemberExpr(C, Base, BaseType,
-                                               IsArrow, OperatorLoc,
-                                               QualifierLoc,
-                                               FirstQualifierFoundInScope,
-                                               MemberNameInfo);
-
+  bool HasTemplateKWAndArgsInfo = TemplateArgs || TemplateKWLoc.isValid();
   unsigned NumTemplateArgs = TemplateArgs ? TemplateArgs->size() : 0;
-  std::size_t size = sizeof(CXXDependentScopeMemberExpr)
-    + ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, NumTemplateArgs);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<CXXDependentScopeMemberExpr>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<CXXDependentScopeMemberExpr>());
   return new (Mem) CXXDependentScopeMemberExpr(C, Base, BaseType,
                                                IsArrow, OperatorLoc,
                                                QualifierLoc,
@@ -1285,22 +1259,18 @@ CXXDependentScopeMemberExpr *
 CXXDependentScopeMemberExpr::CreateEmpty(const ASTContext &C,
                                          bool HasTemplateKWAndArgsInfo,
                                          unsigned NumTemplateArgs) {
-  if (!HasTemplateKWAndArgsInfo)
-    return new (C) CXXDependentScopeMemberExpr(C, nullptr, QualType(),
-                                               0, SourceLocation(),
-                                               NestedNameSpecifierLoc(),
-                                               nullptr, DeclarationNameInfo());
-
-  std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
-                     ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
-  void *Mem = C.Allocate(size, llvm::alignOf<CXXDependentScopeMemberExpr>());
+  assert(NumTemplateArgs == 0 || HasTemplateKWAndArgsInfo);
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, NumTemplateArgs);
+  void *Mem = C.Allocate(Size, llvm::alignOf<CXXDependentScopeMemberExpr>());
   CXXDependentScopeMemberExpr *E
     =  new (Mem) CXXDependentScopeMemberExpr(C, nullptr, QualType(),
                                              0, SourceLocation(),
                                              NestedNameSpecifierLoc(),
                                              SourceLocation(), nullptr,
                                              DeclarationNameInfo(), nullptr);
-  E->HasTemplateKWAndArgsInfo = true;
+  E->HasTemplateKWAndArgsInfo = HasTemplateKWAndArgsInfo;
   return E;
 }
 
@@ -1365,38 +1335,34 @@ bool UnresolvedMemberExpr::isImplicitAccess() const {
   return cast<Expr>(Base)->isImplicitCXXThis();
 }
 
-UnresolvedMemberExpr *
-UnresolvedMemberExpr::Create(const ASTContext &C, bool HasUnresolvedUsing,
-                             Expr *Base, QualType BaseType, bool IsArrow,
-                             SourceLocation OperatorLoc,
-                             NestedNameSpecifierLoc QualifierLoc,
-                             SourceLocation TemplateKWLoc,
-                             const DeclarationNameInfo &MemberNameInfo,
-                             const TemplateArgumentListInfo *TemplateArgs,
-                             UnresolvedSetIterator Begin, 
-                             UnresolvedSetIterator End) {
-  std::size_t size = sizeof(UnresolvedMemberExpr);
-  if (TemplateArgs)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
-  else if (TemplateKWLoc.isValid())
-    size += ASTTemplateKWAndArgsInfo::sizeFor(0);
+UnresolvedMemberExpr *UnresolvedMemberExpr::Create(
+    const ASTContext &C, bool HasUnresolvedUsing, Expr *Base, QualType BaseType,
+    bool IsArrow, SourceLocation OperatorLoc,
+    NestedNameSpecifierLoc QualifierLoc, SourceLocation TemplateKWLoc,
+    const DeclarationNameInfo &MemberNameInfo,
+    const TemplateArgumentListInfo *TemplateArgs, UnresolvedSetIterator Begin,
+    UnresolvedSetIterator End) {
+  bool HasTemplateKWAndArgsInfo = TemplateArgs || TemplateKWLoc.isValid();
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, TemplateArgs ? TemplateArgs->size() : 0);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedMemberExpr>());
-  return new (Mem) UnresolvedMemberExpr(C, 
-                             HasUnresolvedUsing, Base, BaseType,
-                             IsArrow, OperatorLoc, QualifierLoc, TemplateKWLoc,
-                             MemberNameInfo, TemplateArgs, Begin, End);
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedMemberExpr>());
+  return new (Mem) UnresolvedMemberExpr(
+      C, HasUnresolvedUsing, Base, BaseType, IsArrow, OperatorLoc, QualifierLoc,
+      TemplateKWLoc, MemberNameInfo, TemplateArgs, Begin, End);
 }
 
 UnresolvedMemberExpr *
 UnresolvedMemberExpr::CreateEmpty(const ASTContext &C,
                                   bool HasTemplateKWAndArgsInfo,
                                   unsigned NumTemplateArgs) {
-  std::size_t size = sizeof(UnresolvedMemberExpr);
-  if (HasTemplateKWAndArgsInfo)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+  assert(NumTemplateArgs == 0 || HasTemplateKWAndArgsInfo);
+  std::size_t Size =
+      totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
+          HasTemplateKWAndArgsInfo, NumTemplateArgs);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedMemberExpr>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedMemberExpr>());
   UnresolvedMemberExpr *E = new (Mem) UnresolvedMemberExpr(EmptyShell());
   E->HasTemplateKWAndArgsInfo = HasTemplateKWAndArgsInfo;
   return E;
