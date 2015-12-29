@@ -558,22 +558,19 @@ bool matchesFirstInPointerRange(const MatcherT &Matcher, IteratorT Start,
   return false;
 }
 
-/// \brief Metafunction to determine if type T has a member called getDecl.
-template <typename T> struct has_getDecl {
-  struct Default { int getDecl; };
-  struct Derived : T, Default { };
-
-  template<typename C, C> struct CheckT;
-
-  // If T::getDecl exists, an ambiguity arises and CheckT will
-  // not be instantiable. This makes f(...) the only available
-  // overload.
-  template<typename C>
-  static char (&f(CheckT<int Default::*, &C::getDecl>*))[1];
-  template<typename C> static char (&f(...))[2];
-
-  static bool const value = sizeof(f<Derived>(nullptr)) == 2;
-};
+/// Metafunction to determine if type T has a member called
+/// getDecl.
+///
+/// There is a default template inheriting from "false_type". Then, a
+/// partial specialization inherits from "true_type". However, this
+/// specialization will only exist when the call to getDecl() isn't an
+/// error -- it vanishes by SFINAE when the member doesn't exist.
+template <typename> struct type_sink_to_void { typedef void type; };
+template <typename T, typename = void> struct has_getDecl : std::false_type {};
+template <typename T>
+struct has_getDecl<
+    T, typename type_sink_to_void<decltype(std::declval<T>().getDecl())>::type>
+    : std::true_type {};
 
 /// \brief Matches overloaded operators with a specific name.
 ///
