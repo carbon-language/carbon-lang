@@ -263,6 +263,9 @@ public:
       const CXXMethodDecl *MD,
       const MicrosoftVTableContext::MethodVFTableLocation &ML);
   void mangleNumber(int64_t Number);
+  void mangleTagTypeKind(TagTypeKind TK);
+  void mangleArtificalTagType(TagTypeKind TK, StringRef UnqualifiedName,
+                              ArrayRef<StringRef> NestedNames = None);
   void mangleType(QualType T, SourceRange Range,
                   QualifierMangleMode QMM = QMM_Mangle);
   void mangleFunctionType(const FunctionType *T,
@@ -1136,12 +1139,6 @@ void MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
     UE = dyn_cast<CXXUuidofExpr>(E);
 
   if (UE) {
-    // This CXXUuidofExpr is mangled as-if it were actually a VarDecl from
-    // const __s_GUID _GUID_{lower case UUID with underscores}
-    StringRef Uuid = UE->getUuidAsStringRef(Context.getASTContext());
-    std::string Name = "_GUID_" + Uuid.lower();
-    std::replace(Name.begin(), Name.end(), '-', '_');
-
     // If we had to peek through an address-of operator, treat this like we are
     // dealing with a pointer type.  Otherwise, treat it like a const reference.
     //
@@ -1151,7 +1148,22 @@ void MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
       Out << "$E?";
     else
       Out << "$1?";
-    Out << Name << "@@3U__s_GUID@@B";
+
+    // This CXXUuidofExpr is mangled as-if it were actually a VarDecl from
+    // const __s_GUID _GUID_{lower case UUID with underscores}
+    StringRef Uuid = UE->getUuidAsStringRef(Context.getASTContext());
+    std::string Name = "_GUID_" + Uuid.lower();
+    std::replace(Name.begin(), Name.end(), '-', '_');
+
+    mangleSourceName(Name);
+    // Terminate the whole name with an '@'.
+    Out << '@';
+    // It's a global variable.
+    Out << '3';
+    // It's a struct called __s_GUID.
+    mangleArtificalTagType(TTK_Struct, "__s_GUID");
+    // It's const.
+    Out << 'B';
     return;
   }
 
@@ -1637,68 +1649,89 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
     llvm_unreachable("placeholder types shouldn't get to name mangling");
 
   case BuiltinType::ObjCId:
-    Out << "PAUobjc_object@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "objc_object");
     break;
   case BuiltinType::ObjCClass:
-    Out << "PAUobjc_class@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "objc_class");
     break;
   case BuiltinType::ObjCSel:
-    Out << "PAUobjc_selector@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "objc_selector");
     break;
 
   case BuiltinType::OCLImage1d:
-    Out << "PAUocl_image1d@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image1d");
     break;
   case BuiltinType::OCLImage1dArray:
-    Out << "PAUocl_image1darray@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image1darray");
     break;
   case BuiltinType::OCLImage1dBuffer:
-    Out << "PAUocl_image1dbuffer@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image1dbuffer");
     break;
   case BuiltinType::OCLImage2d:
-    Out << "PAUocl_image2d@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2d");
     break;
   case BuiltinType::OCLImage2dArray:
-    Out << "PAUocl_image2darray@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2darray");
     break;
   case BuiltinType::OCLImage2dDepth:
-    Out << "PAUocl_image2ddepth@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2ddepth");
     break;
   case BuiltinType::OCLImage2dArrayDepth:
-    Out << "PAUocl_image2darraydepth@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2darraydepth");
     break;
   case BuiltinType::OCLImage2dMSAA:
-    Out << "PAUocl_image2dmsaa@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2dmsaa");
     break;
   case BuiltinType::OCLImage2dArrayMSAA:
-    Out << "PAUocl_image2darraymsaa@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2darraymsaa");
     break;
   case BuiltinType::OCLImage2dMSAADepth:
-    Out << "PAUocl_image2dmsaadepth@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2dmsaadepth");
     break;
   case BuiltinType::OCLImage2dArrayMSAADepth:
-    Out << "PAUocl_image2darraymsaadepth@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image2darraymsaadepth");
     break;
   case BuiltinType::OCLImage3d:
-    Out << "PAUocl_image3d@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_image3d");
     break;
   case BuiltinType::OCLSampler:
-    Out << "PAUocl_sampler@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_sampler");
     break;
   case BuiltinType::OCLEvent:
-    Out << "PAUocl_event@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_event");
     break;
   case BuiltinType::OCLClkEvent:
-    Out << "PAUocl_clkevent@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_clkevent");
     break;
   case BuiltinType::OCLQueue:
-    Out << "PAUocl_queue@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_queue");
     break;
   case BuiltinType::OCLNDRange:
-    Out << "PAUocl_ndrange@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_ndrange");
     break;
   case BuiltinType::OCLReserveID:
-    Out << "PAUocl_reserveid@@";
+    Out << "PA";
+    mangleArtificalTagType(TTK_Struct, "ocl_reserveid");
     break;
 
   case BuiltinType::NullPtr:
@@ -1853,7 +1886,9 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
       // combination doesn't conflict with anything?
       if (D)
         if (auto *P = D->getParamDecl(I)->getAttr<PassObjectSizeAttr>())
-          Out << "W4__pass_object_size" << P->getType() << "@__clang@@";
+          mangleArtificalTagType(TTK_Enum, "__pass_object_size" +
+                                               llvm::utostr(P->getType()),
+                                 {"__clang"});
     }
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
@@ -1983,16 +2018,8 @@ void MicrosoftCXXNameMangler::mangleType(const UnresolvedUsingType *T,
 // <struct-type> ::= U <name>
 // <class-type>  ::= V <name>
 // <enum-type>   ::= W4 <name>
-void MicrosoftCXXNameMangler::mangleType(const EnumType *T, Qualifiers,
-                                         SourceRange) {
-  mangleType(cast<TagType>(T)->getDecl());
-}
-void MicrosoftCXXNameMangler::mangleType(const RecordType *T, Qualifiers,
-                                         SourceRange) {
-  mangleType(cast<TagType>(T)->getDecl());
-}
-void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
-  switch (TD->getTagKind()) {
+void MicrosoftCXXNameMangler::mangleTagTypeKind(TagTypeKind TTK) {
+  switch (TTK) {
     case TTK_Union:
       Out << 'T';
       break;
@@ -2007,7 +2034,32 @@ void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
       Out << "W4";
       break;
   }
+}
+void MicrosoftCXXNameMangler::mangleType(const EnumType *T, Qualifiers,
+                                         SourceRange) {
+  mangleType(cast<TagType>(T)->getDecl());
+}
+void MicrosoftCXXNameMangler::mangleType(const RecordType *T, Qualifiers,
+                                         SourceRange) {
+  mangleType(cast<TagType>(T)->getDecl());
+}
+void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
+  mangleTagTypeKind(TD->getTagKind());
   mangleName(TD);
+}
+void MicrosoftCXXNameMangler::mangleArtificalTagType(
+    TagTypeKind TK, StringRef UnqualifiedName, ArrayRef<StringRef> NestedNames) {
+  // <name> ::= <unscoped-name> {[<named-scope>]+ | [<nested-name>]}? @
+  mangleTagTypeKind(TK);
+
+  // Always start with the unqualified name.
+  mangleSourceName(UnqualifiedName);
+
+  for (auto I = NestedNames.rbegin(), E = NestedNames.rend(); I != E; ++I)
+    mangleSourceName(*I);
+
+  // Terminate the whole name with an '@'.
+  Out << '@';
 }
 
 // <type>       ::= <array-type>
@@ -2180,14 +2232,14 @@ void MicrosoftCXXNameMangler::mangleType(const VectorType *T, Qualifiers Quals,
       getASTContext().getTargetInfo().getTriple().getArch();
   if (AT == llvm::Triple::x86 || AT == llvm::Triple::x86_64) {
     if (Width == 64 && ET->getKind() == BuiltinType::LongLong) {
-      Out << "T__m64";
+      mangleArtificalTagType(TTK_Union, "__m64");
     } else if (Width >= 128) {
       if (ET->getKind() == BuiltinType::Float)
-        Out << "T__m" << Width;
+        mangleArtificalTagType(TTK_Union, "__m" + llvm::utostr(Width));
       else if (ET->getKind() == BuiltinType::LongLong)
-        Out << "T__m" << Width << 'i';
+        mangleArtificalTagType(TTK_Union, "__m" + llvm::utostr(Width) + 'i');
       else if (ET->getKind() == BuiltinType::Double)
-        Out << "U__m" << Width << 'd';
+        mangleArtificalTagType(TTK_Struct, "__m" + llvm::utostr(Width) + 'd');
       else
         IsBuiltin = false;
     } else {
@@ -2203,9 +2255,8 @@ void MicrosoftCXXNameMangler::mangleType(const VectorType *T, Qualifiers Quals,
     // types, and for extensions like __v4sf.
     Out << "T__clang_vec" << T->getNumElements() << '_';
     mangleType(ET, Quals, Range);
+    Out << "@@";
   }
-
-  Out << "@@";
 }
 
 void MicrosoftCXXNameMangler::mangleType(const ExtVectorType *T,
@@ -2224,7 +2275,7 @@ void MicrosoftCXXNameMangler::mangleType(const DependentSizedExtVectorType *T,
 void MicrosoftCXXNameMangler::mangleType(const ObjCInterfaceType *T, Qualifiers,
                                          SourceRange) {
   // ObjC interfaces have structs underlying them.
-  Out << 'U';
+  mangleTagTypeKind(TTK_Struct);
   mangleName(T->getDecl());
 }
 
