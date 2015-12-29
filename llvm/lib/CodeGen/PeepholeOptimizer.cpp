@@ -1293,8 +1293,7 @@ bool PeepholeOptimizer::optimizeUncoalescableCopy(
 /// We only fold loads to virtual registers and the virtual register defined
 /// has a single use.
 bool PeepholeOptimizer::isLoadFoldable(
-                              MachineInstr *MI,
-                              SmallSet<unsigned, 16> &FoldAsLoadDefCandidates) {
+    MachineInstr *MI, SmallSet<unsigned, 16> &FoldAsLoadDefCandidates) {
   if (!MI->canFoldAsLoad() || !MI->mayLoad())
     return false;
   const MCInstrDesc &MCID = MI->getDesc();
@@ -1314,9 +1313,9 @@ bool PeepholeOptimizer::isLoadFoldable(
   return false;
 }
 
-bool PeepholeOptimizer::isMoveImmediate(MachineInstr *MI,
-                                        SmallSet<unsigned, 4> &ImmDefRegs,
-                                 DenseMap<unsigned, MachineInstr*> &ImmDefMIs) {
+bool PeepholeOptimizer::isMoveImmediate(
+    MachineInstr *MI, SmallSet<unsigned, 4> &ImmDefRegs,
+    DenseMap<unsigned, MachineInstr *> &ImmDefMIs) {
   const MCInstrDesc &MCID = MI->getDesc();
   if (!MI->isMoveImmediate())
     return false;
@@ -1335,9 +1334,9 @@ bool PeepholeOptimizer::isMoveImmediate(MachineInstr *MI,
 /// Try folding register operands that are defined by move immediate
 /// instructions, i.e. a trivial constant folding optimization, if
 /// and only if the def and use are in the same BB.
-bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
-                                      SmallSet<unsigned, 4> &ImmDefRegs,
-                                 DenseMap<unsigned, MachineInstr*> &ImmDefMIs) {
+bool PeepholeOptimizer::foldImmediate(
+    MachineInstr *MI, MachineBasicBlock *MBB, SmallSet<unsigned, 4> &ImmDefRegs,
+    DenseMap<unsigned, MachineInstr *> &ImmDefMIs) {
   for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || MO.isDef())
@@ -1375,8 +1374,7 @@ bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
 //
 // Should replace %vreg2 uses with %vreg1:sub1
 bool PeepholeOptimizer::foldRedundantCopy(
-    MachineInstr *MI,
-    SmallSet<unsigned, 4> &CopySrcRegs,
+    MachineInstr *MI, SmallSet<unsigned, 4> &CopySrcRegs,
     DenseMap<unsigned, MachineInstr *> &CopyMIs) {
   assert(MI->isCopy() && "expected a COPY machine instruction");
 
@@ -1843,7 +1841,8 @@ ValueTrackerResult ValueTracker::getNextSourceFromExtractSubreg() {
   if (ExtractSubregInputReg.SubReg)
     return ValueTrackerResult();
   // Otherwise, the value is available in the v0.sub0.
-  return ValueTrackerResult(ExtractSubregInputReg.Reg, ExtractSubregInputReg.SubIdx);
+  return ValueTrackerResult(ExtractSubregInputReg.Reg,
+                            ExtractSubregInputReg.SubIdx);
 }
 
 ValueTrackerResult ValueTracker::getNextSourceFromSubregToReg() {
