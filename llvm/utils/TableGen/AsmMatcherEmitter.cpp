@@ -882,11 +882,11 @@ void MatchableInfo::addAsmOperand(size_t Start, size_t End,
 void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info,
                                       AsmVariantInfo const &Variant) {
   StringRef String = AsmString;
-  unsigned Prev = 0;
+  size_t Prev = 0;
   bool InTok = false;
   std::string Separators = Variant.TokenizingCharacters +
                            Variant.SeparatorCharacters;
-  for (unsigned i = 0, e = String.size(); i != e; ++i) {
+  for (size_t i = 0, e = String.size(); i != e; ++i) {
     if(Variant.BreakCharacters.find(String[i]) != std::string::npos) {
       if(InTok) {
         addAsmOperand(Prev, i, Separators);
@@ -936,9 +936,9 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info,
         break;
       }
 
-      StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
-      assert(End != String.end() && "Missing brace in operand reference!");
-      size_t EndPos = End - String.begin();
+      size_t EndPos = String.find('}', i);
+      assert(EndPos != StringRef::npos &&
+             "Missing brace in operand reference!");
       addAsmOperand(i, EndPos+1, Separators);
       Prev = EndPos + 1;
       i = EndPos;
