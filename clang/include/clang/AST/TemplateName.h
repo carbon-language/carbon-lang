@@ -180,9 +180,7 @@ class TemplateName {
 
   StorageType Storage;
 
-  explicit TemplateName(void *Ptr) {
-    Storage = StorageType::getFromOpaqueValue(Ptr);
-  }
+  explicit TemplateName(void *Ptr);
 
 public:
   // \brief Kind of name that is actually stored.

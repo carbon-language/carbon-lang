@@ -51,6 +51,10 @@ void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID,
   ArgPack.Profile(ID, Context);
 }
 
+TemplateName::TemplateName(void *Ptr) {
+  Storage = StorageType::getFromOpaqueValue(Ptr);
+}
+
 TemplateName::TemplateName(TemplateDecl *Template) : Storage(Template) {}
 TemplateName::TemplateName(OverloadedTemplateStorage *Storage)
     : Storage(Storage) {}
