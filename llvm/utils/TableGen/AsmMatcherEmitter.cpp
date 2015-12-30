@@ -2132,7 +2132,7 @@ static void emitIsSubclass(CodeGenTarget &Target,
 
     // If this is the first SuperClass, emit the switch header.
     if (!EmittedSwitch) {
-      OS << "  switch (A) {\n"
+      OS << "  switch (A) {\n";
       OS << "  default:\n";
       OS << "    return false;\n";
       EmittedSwitch = true;
@@ -2141,7 +2141,7 @@ static void emitIsSubclass(CodeGenTarget &Target,
     OS << "\n  case " << A.Name << ":\n";
 
     if (SuperClasses.size() == 1) {
-      OS << "    return B == " << SuperClasses.back().str() << ";\n";
+      OS << "    return B == " << SuperClasses.back() << ";\n";
       continue;
     }
 
