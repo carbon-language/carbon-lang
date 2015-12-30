@@ -26,7 +26,8 @@ namespace performance {
 // const references, and const pointers to const.
 class UnnecessaryCopyInitialization : public ClangTidyCheck {
 public:
-  using ClangTidyCheck::ClangTidyCheck;
+  UnnecessaryCopyInitialization(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
