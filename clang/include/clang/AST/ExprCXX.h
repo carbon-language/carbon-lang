@@ -235,7 +235,9 @@ public:
 ///
 /// This expression node represents a C++ static cast, e.g.,
 /// \c static_cast<int>(1.0).
-class CXXStaticCastExpr : public CXXNamedCastExpr {
+class CXXStaticCastExpr final
+    : public CXXNamedCastExpr,
+      private llvm::TrailingObjects<CXXStaticCastExpr, CXXBaseSpecifier *> {
   CXXStaticCastExpr(QualType ty, ExprValueKind vk, CastKind kind, Expr *op,
                     unsigned pathSize, TypeSourceInfo *writtenTy,
                     SourceLocation l, SourceLocation RParenLoc,
@@ -259,6 +261,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXStaticCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 /// \brief A C++ @c dynamic_cast expression (C++ [expr.dynamic.cast]).
@@ -266,7 +271,9 @@ public:
 /// This expression node represents a dynamic cast, e.g.,
 /// \c dynamic_cast<Derived*>(BasePtr). Such a cast may perform a run-time
 /// check to determine how to perform the type conversion.
-class CXXDynamicCastExpr : public CXXNamedCastExpr {
+class CXXDynamicCastExpr final
+    : public CXXNamedCastExpr,
+      private llvm::TrailingObjects<CXXDynamicCastExpr, CXXBaseSpecifier *> {
   CXXDynamicCastExpr(QualType ty, ExprValueKind VK, CastKind kind,
                      Expr *op, unsigned pathSize, TypeSourceInfo *writtenTy,
                      SourceLocation l, SourceLocation RParenLoc,
@@ -293,6 +300,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDynamicCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 /// \brief A C++ @c reinterpret_cast expression (C++ [expr.reinterpret.cast]).
@@ -303,7 +313,10 @@ public:
 /// A reinterpret_cast provides a differently-typed view of a value but
 /// (in Clang, as in most C++ implementations) performs no actual work at
 /// run time.
-class CXXReinterpretCastExpr : public CXXNamedCastExpr {
+class CXXReinterpretCastExpr final
+    : public CXXNamedCastExpr,
+      private llvm::TrailingObjects<CXXReinterpretCastExpr,
+                                    CXXBaseSpecifier *> {
   CXXReinterpretCastExpr(QualType ty, ExprValueKind vk, CastKind kind,
                          Expr *op, unsigned pathSize,
                          TypeSourceInfo *writtenTy, SourceLocation l,
@@ -328,6 +341,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXReinterpretCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 /// \brief A C++ \c const_cast expression (C++ [expr.const.cast]).
@@ -337,7 +353,9 @@ public:
 ///
 /// A const_cast can remove type qualifiers but does not change the underlying
 /// value.
-class CXXConstCastExpr : public CXXNamedCastExpr {
+class CXXConstCastExpr final
+    : public CXXNamedCastExpr,
+      private llvm::TrailingObjects<CXXConstCastExpr, CXXBaseSpecifier *> {
   CXXConstCastExpr(QualType ty, ExprValueKind VK, Expr *op,
                    TypeSourceInfo *writtenTy, SourceLocation l,
                    SourceLocation RParenLoc, SourceRange AngleBrackets)
@@ -358,6 +376,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 /// \brief A call to a literal operator (C++11 [over.literal])
@@ -1313,7 +1334,9 @@ public:
 /// \code
 ///   x = int(0.5);
 /// \endcode
-class CXXFunctionalCastExpr : public ExplicitCastExpr {
+class CXXFunctionalCastExpr final
+    : public ExplicitCastExpr,
+      private llvm::TrailingObjects<CXXFunctionalCastExpr, CXXBaseSpecifier *> {
   SourceLocation LParenLoc;
   SourceLocation RParenLoc;
 
@@ -1350,6 +1373,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXFunctionalCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 /// @brief Represents a C++ functional cast expression that builds a

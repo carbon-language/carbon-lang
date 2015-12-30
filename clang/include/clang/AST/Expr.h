@@ -2678,8 +2678,6 @@ public:
   path_const_iterator path_begin() const { return path_buffer(); }
   path_const_iterator path_end() const { return path_buffer() + path_size(); }
 
-  void setCastPath(const CXXCastPath &Path);
-
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstCastExprConstant &&
            T->getStmtClass() <= lastCastExprConstant;
@@ -2709,7 +2707,9 @@ public:
 ///                     // to an xvalue of type Base
 /// }
 /// @endcode
-class ImplicitCastExpr : public CastExpr {
+class ImplicitCastExpr final
+    : public CastExpr,
+      private llvm::TrailingObjects<ImplicitCastExpr, CXXBaseSpecifier *> {
 private:
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op,
                    unsigned BasePathLength, ExprValueKind VK)
@@ -2745,6 +2745,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImplicitCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 inline Expr *Expr::IgnoreImpCasts() {
@@ -2804,7 +2807,9 @@ public:
 /// CStyleCastExpr - An explicit cast in C (C99 6.5.4) or a C-style
 /// cast in C++ (C++ [expr.cast]), which uses the syntax
 /// (Type)expr. For example: @c (int)f.
-class CStyleCastExpr : public ExplicitCastExpr {
+class CStyleCastExpr final
+    : public ExplicitCastExpr,
+      private llvm::TrailingObjects<CStyleCastExpr, CXXBaseSpecifier *> {
   SourceLocation LPLoc; // the location of the left paren
   SourceLocation RPLoc; // the location of the right paren
 
@@ -2842,6 +2847,9 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CStyleCastExprClass;
   }
+
+  friend TrailingObjects;
+  friend class CastExpr;
 };
 
 /// \brief A builtin binary operation expression such as "x + y" or "x <= y".
