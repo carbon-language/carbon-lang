@@ -989,8 +989,8 @@ bool MatchableInfo::validate(StringRef CommentDelimiter, bool Hack) const {
   // Also, check for instructions which reference the operand multiple times;
   // this implies a constraint we would not honor.
   std::set<std::string> OperandNames;
-  for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
-    StringRef Tok = AsmOperands[i].Token;
+  for (const AsmOperand &Op : AsmOperands) {
+    StringRef Tok = Op.Token;
     if (Tok[0] == '$' && Tok.find(':') != StringRef::npos)
       PrintFatalError(TheDef->getLoc(),
                       "matchable with operand modifier '" + Tok +
@@ -2146,8 +2146,8 @@ static void emitIsSubclass(CodeGenTarget &Target,
     if (!SuperClasses.empty()) {
       SS << "    switch (B) {\n";
       SS << "    default: return false;\n";
-      for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-        SS << "    case " << SuperClasses[i].str() << ": return true;\n";
+      for (StringRef SC : SuperClasses)
+        SS << "    case " << SC << ": return true;\n";
       SS << "    }\n";
     } else {
       // No case statement to emit
