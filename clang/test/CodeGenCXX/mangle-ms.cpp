@@ -440,6 +440,10 @@ namespace PassObjectSize {
 int foo(int *const i __attribute__((pass_object_size(0)))) { return 0; }
 // CHECK-DAG: define i32 @"\01?bar@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@@Z"
 int bar(int *const i __attribute__((pass_object_size(1)))) { return 0; }
+// CHECK-DAG: define i32 @"\01?qux@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@0W4__pass_object_size0@3@@Z"
+int qux(int *const i __attribute__((pass_object_size(1))), int *const j __attribute__((pass_object_size(0)))) { return 0; }
+// CHECK-DAG: define i32 @"\01?zot@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@01@Z"
+int zot(int *const i __attribute__((pass_object_size(1))), int *const j __attribute__((pass_object_size(1)))) { return 0; }
 }
 
 namespace Atomic {
