@@ -464,25 +464,15 @@ public:
   }
 
   /// \brief Get the original (first) namespace declaration.
-  NamespaceDecl *getOriginalNamespace() {
-    if (isFirstDecl())
-      return this;
-
-    return AnonOrFirstNamespaceAndInline.getPointer();
-  }
+  NamespaceDecl *getOriginalNamespace();
 
   /// \brief Get the original (first) namespace declaration.
-  const NamespaceDecl *getOriginalNamespace() const {
-    if (isFirstDecl())
-      return this;
-
-    return AnonOrFirstNamespaceAndInline.getPointer();
-  }
+  const NamespaceDecl *getOriginalNamespace() const;
 
   /// \brief Return true if this declaration is an original (first) declaration
   /// of the namespace. This is false for non-original (subsequent) namespace
   /// declarations and anonymous namespaces.
-  bool isOriginalNamespace() const { return isFirstDecl(); }
+  bool isOriginalNamespace() const;
 
   /// \brief Retrieve the anonymous namespace nested inside this namespace,
   /// if any.
@@ -2053,9 +2043,7 @@ public:
   /// \brief If this function is an instantiation of a member function of a
   /// class template specialization, retrieves the member specialization
   /// information.
-  MemberSpecializationInfo *getMemberSpecializationInfo() const {
-    return TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>();
-  }
+  MemberSpecializationInfo *getMemberSpecializationInfo() const;
 
   /// \brief Specify that this record is an instantiation of the
   /// member function FD.
@@ -2076,13 +2064,9 @@ public:
   /// FunctionDecl that describes the function template,
   /// getDescribedFunctionTemplate() retrieves the
   /// FunctionTemplateDecl from a FunctionDecl.
-  FunctionTemplateDecl *getDescribedFunctionTemplate() const {
-    return TemplateOrSpecialization.dyn_cast<FunctionTemplateDecl*>();
-  }
+  FunctionTemplateDecl *getDescribedFunctionTemplate() const;
 
-  void setDescribedFunctionTemplate(FunctionTemplateDecl *Template) {
-    TemplateOrSpecialization = Template;
-  }
+  void setDescribedFunctionTemplate(FunctionTemplateDecl *Template);
 
   /// \brief Determine whether this function is a function template
   /// specialization.
@@ -2097,10 +2081,7 @@ public:
   /// \brief If this function is actually a function template specialization,
   /// retrieve information about this function template specialization.
   /// Otherwise, returns NULL.
-  FunctionTemplateSpecializationInfo *getTemplateSpecializationInfo() const {
-    return TemplateOrSpecialization.
-             dyn_cast<FunctionTemplateSpecializationInfo*>();
-  }
+  FunctionTemplateSpecializationInfo *getTemplateSpecializationInfo() const;
 
   /// \brief Determines whether this function is a function template
   /// specialization or a member of a class template specialization that can
@@ -2177,10 +2158,7 @@ public:
                       const TemplateArgumentListInfo &TemplateArgs);
 
   DependentFunctionTemplateSpecializationInfo *
-  getDependentSpecializationInfo() const {
-    return TemplateOrSpecialization.
-             dyn_cast<DependentFunctionTemplateSpecializationInfo*>();
-  }
+  getDependentSpecializationInfo() const;
 
   /// \brief Determine what kind of template instantiation this function
   /// represents.
@@ -3597,9 +3575,7 @@ private:
   /// \brief The body of the outlined function.
   llvm::PointerIntPair<Stmt *, 1, bool> BodyAndNothrow;
 
-  explicit CapturedDecl(DeclContext *DC, unsigned NumParams)
-    : Decl(Captured, DC, SourceLocation()), DeclContext(Captured),
-      NumParams(NumParams), ContextParam(0), BodyAndNothrow(nullptr, false) { }
+  explicit CapturedDecl(DeclContext *DC, unsigned NumParams);
 
   ImplicitParamDecl *const *getParams() const {
     return getTrailingObjects<ImplicitParamDecl *>();
@@ -3615,11 +3591,11 @@ public:
   static CapturedDecl *CreateDeserialized(ASTContext &C, unsigned ID,
                                           unsigned NumParams);
 
-  Stmt *getBody() const override { return BodyAndNothrow.getPointer(); }
-  void setBody(Stmt *B) { BodyAndNothrow.setPointer(B); }
+  Stmt *getBody() const override;
+  void setBody(Stmt *B);
 
-  bool isNothrow() const { return BodyAndNothrow.getInt(); }
-  void setNothrow(bool Nothrow = true) { BodyAndNothrow.setInt(Nothrow); }
+  bool isNothrow() const;
+  void setNothrow(bool Nothrow = true);
 
   unsigned getNumParams() const { return NumParams; }
 

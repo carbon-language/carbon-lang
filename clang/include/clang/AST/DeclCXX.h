@@ -1344,9 +1344,7 @@ public:
   /// \brief If this class is an instantiation of a member class of a
   /// class template specialization, retrieves the member specialization
   /// information.
-  MemberSpecializationInfo *getMemberSpecializationInfo() const {
-    return TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>();
-  }
+  MemberSpecializationInfo *getMemberSpecializationInfo() const;
 
   /// \brief Specify that this record is an instantiation of the
   /// member class \p RD.
@@ -1364,13 +1362,9 @@ public:
   /// CXXRecordDecl that from a ClassTemplateDecl, while
   /// getDescribedClassTemplate() retrieves the ClassTemplateDecl from
   /// a CXXRecordDecl.
-  ClassTemplateDecl *getDescribedClassTemplate() const {
-    return TemplateOrInstantiation.dyn_cast<ClassTemplateDecl*>();
-  }
+  ClassTemplateDecl *getDescribedClassTemplate() const;
 
-  void setDescribedClassTemplate(ClassTemplateDecl *Template) {
-    TemplateOrInstantiation = Template;
-  }
+  void setDescribedClassTemplate(ClassTemplateDecl *Template);
 
   /// \brief Determine whether this particular class is a specialization or
   /// instantiation of a class template or member class of a class template,

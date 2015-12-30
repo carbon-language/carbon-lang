@@ -3045,6 +3045,10 @@ FunctionDecl *FunctionDecl::getInstantiatedFromMemberFunction() const {
   return nullptr;
 }
 
+MemberSpecializationInfo *FunctionDecl::getMemberSpecializationInfo() const {
+  return TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo *>();
+}
+
 void 
 FunctionDecl::setInstantiationOfMemberFunction(ASTContext &C,
                                                FunctionDecl *FD,
@@ -3054,6 +3058,14 @@ FunctionDecl::setInstantiationOfMemberFunction(ASTContext &C,
   MemberSpecializationInfo *Info 
     = new (C) MemberSpecializationInfo(FD, TSK);
   TemplateOrSpecialization = Info;
+}
+
+FunctionTemplateDecl *FunctionDecl::getDescribedFunctionTemplate() const {
+  return TemplateOrSpecialization.dyn_cast<FunctionTemplateDecl *>();
+}
+
+void FunctionDecl::setDescribedFunctionTemplate(FunctionTemplateDecl *Template) {
+  TemplateOrSpecialization = Template;
 }
 
 bool FunctionDecl::isImplicitlyInstantiable() const {
@@ -3162,6 +3174,12 @@ FunctionDecl *FunctionDecl::getClassScopeSpecializationPattern() const {
     return getASTContext().getClassScopeSpecializationPattern(this);
 }
 
+FunctionTemplateSpecializationInfo *
+FunctionDecl::getTemplateSpecializationInfo() const {
+  return TemplateOrSpecialization
+      .dyn_cast<FunctionTemplateSpecializationInfo *>();
+}
+
 const TemplateArgumentList *
 FunctionDecl::getTemplateSpecializationArgs() const {
   if (FunctionTemplateSpecializationInfo *Info
@@ -3212,6 +3230,12 @@ FunctionDecl::setDependentTemplateSpecialization(ASTContext &Context,
       DependentFunctionTemplateSpecializationInfo::Create(Context, Templates,
                                                           TemplateArgs);
   TemplateOrSpecialization = Info;
+}
+
+DependentFunctionTemplateSpecializationInfo *
+FunctionDecl::getDependentSpecializationInfo() const {
+  return TemplateOrSpecialization
+      .dyn_cast<DependentFunctionTemplateSpecializationInfo *>();
 }
 
 DependentFunctionTemplateSpecializationInfo *
@@ -3963,6 +3987,10 @@ BlockDecl *BlockDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (C, ID) BlockDecl(nullptr, SourceLocation());
 }
 
+CapturedDecl::CapturedDecl(DeclContext *DC, unsigned NumParams)
+    : Decl(Captured, DC, SourceLocation()), DeclContext(Captured),
+      NumParams(NumParams), ContextParam(0), BodyAndNothrow(nullptr, false) {}
+
 CapturedDecl *CapturedDecl::Create(ASTContext &C, DeclContext *DC,
                                    unsigned NumParams) {
   return new (C, DC, additionalSizeToAlloc<ImplicitParamDecl *>(NumParams))
@@ -3974,6 +4002,12 @@ CapturedDecl *CapturedDecl::CreateDeserialized(ASTContext &C, unsigned ID,
   return new (C, ID, additionalSizeToAlloc<ImplicitParamDecl *>(NumParams))
       CapturedDecl(nullptr, NumParams);
 }
+
+Stmt *CapturedDecl::getBody() const { return BodyAndNothrow.getPointer(); }
+void CapturedDecl::setBody(Stmt *B) { BodyAndNothrow.setPointer(B); }
+
+bool CapturedDecl::isNothrow() const { return BodyAndNothrow.getInt(); }
+void CapturedDecl::setNothrow(bool Nothrow) { BodyAndNothrow.setInt(Nothrow); }
 
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            SourceLocation L,
