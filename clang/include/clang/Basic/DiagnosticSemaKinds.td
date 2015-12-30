@@ -7969,6 +7969,8 @@ def err_omp_schedule_nonmonotonic_static : Error<
   "'nonmonotonic' modifier can only be specified with 'dynamic' or 'guided' schedule kind">;
 def err_omp_schedule_nonmonotonic_ordered : Error<
   "'schedule' clause with 'nonmonotonic' modifier cannot be specified if an 'ordered' clause is specified">;
+def err_omp_ordered_simd : Error<
+  "'ordered' clause with a parameter can not be specified in '#pragma omp %0' directive">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
