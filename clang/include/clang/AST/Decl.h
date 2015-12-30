@@ -729,17 +729,14 @@ public:
   };
 
 protected:
-  /// \brief Placeholder type used in Init to denote an unparsed C++ default
-  /// argument.
-  struct UnparsedDefaultArgument;
-
-  /// \brief Placeholder type used in Init to denote an uninstantiated C++
-  /// default argument.
-  struct UninstantiatedDefaultArgument;
-
-  typedef llvm::PointerUnion4<Stmt *, EvaluatedStmt *,
-                              UnparsedDefaultArgument *,
-                              UninstantiatedDefaultArgument *> InitType;
+  // A pointer union of Stmt * and EvaluatedStmt *. When an EvaluatedStmt, we
+  // have allocated the auxilliary struct of information there.
+  //
+  // TODO: It is a bit unfortunate to use a PointerUnion inside the VarDecl for
+  // this as *many* VarDecls are ParmVarDecls that don't have default
+  // arguments. We could save some space by moving this pointer union to be
+  // allocated in trailing space when necessary.
+  typedef llvm::PointerUnion<Stmt *, EvaluatedStmt *> InitType;
 
   /// \brief The initializer for this variable or, for a ParmVarDecl, the
   /// C++ default argument.
@@ -763,6 +760,13 @@ private:
 protected:
   enum { NumParameterIndexBits = 8 };
 
+  enum DefaultArgKind {
+    DAK_None,
+    DAK_Unparsed,
+    DAK_Uninstantiated,
+    DAK_Normal
+  };
+
   class ParmVarDeclBitfields {
     friend class ParmVarDecl;
     friend class ASTDeclReader;
@@ -772,6 +776,12 @@ protected:
     /// Whether this parameter inherits a default argument from a
     /// prior declaration.
     unsigned HasInheritedDefaultArg : 1;
+
+    /// Describes the kind of default argument for this parameter. By default
+    /// this is none. If this is normal, then the default argument is stored in
+    /// the \c VarDecl initalizer expression unless we were unble to parse
+    /// (even an invalid) expression for the default argument.
+    unsigned DefaultArgKind : 2;
 
     /// Whether this parameter undergoes K&R argument promotion.
     unsigned IsKNRPromoted : 1;
@@ -1066,47 +1076,14 @@ public:
   /// declaration it is attached to. Also get that declaration.
   const Expr *getAnyInitializer(const VarDecl *&D) const;
 
-  bool hasInit() const {
-    return !Init.isNull() && (Init.is<Stmt *>() || Init.is<EvaluatedStmt *>());
-  }
+  bool hasInit() const;
   const Expr *getInit() const {
-    if (Init.isNull())
-      return nullptr;
-
-    const Stmt *S = Init.dyn_cast<Stmt *>();
-    if (!S) {
-      if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
-        S = ES->Value;
-    }
-    return (const Expr*) S;
+    return const_cast<VarDecl *>(this)->getInit();
   }
-  Expr *getInit() {
-    if (Init.isNull())
-      return nullptr;
-
-    Stmt *S = Init.dyn_cast<Stmt *>();
-    if (!S) {
-      if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
-        S = ES->Value;
-    }
-
-    return (Expr*) S;
-  }
+  Expr *getInit();
 
   /// \brief Retrieve the address of the initializer expression.
-  Stmt **getInitAddress() {
-    if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
-      return &ES->Value;
-
-    // This union hack tip-toes around strict-aliasing rules.
-    union {
-      InitType *InitPtr;
-      Stmt **StmtPtr;
-    };
-
-    InitPtr = &Init;
-    return StmtPtr;
-  }
+  Stmt **getInitAddress();
 
   void setInit(Expr *I);
 
@@ -1128,33 +1105,18 @@ public:
   /// \brief Return the already-evaluated value of this variable's
   /// initializer, or NULL if the value is not yet known. Returns pointer
   /// to untyped APValue if the value could not be evaluated.
-  APValue *getEvaluatedValue() const {
-    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
-      if (Eval->WasEvaluated)
-        return &Eval->Evaluated;
-
-    return nullptr;
-  }
+  APValue *getEvaluatedValue() const;
 
   /// \brief Determines whether it is already known whether the
   /// initializer is an integral constant expression or not.
-  bool isInitKnownICE() const {
-    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
-      return Eval->CheckedICE;
-
-    return false;
-  }
+  bool isInitKnownICE() const;
 
   /// \brief Determines whether the initializer is an integral constant
   /// expression, or in C++11, whether the initializer is a constant
   /// expression.
   ///
   /// \pre isInitKnownICE()
-  bool isInitICE() const {
-    assert(isInitKnownICE() &&
-           "Check whether we already know that the initializer is an ICE");
-    return Init.get<EvaluatedStmt *>()->IsICE;
-  }
+  bool isInitICE() const;
 
   /// \brief Determine whether the value of the initializer attached to this
   /// declaration is an integral constant expression.
@@ -1355,6 +1317,7 @@ protected:
               TypeSourceInfo *TInfo, StorageClass S, Expr *DefArg)
       : VarDecl(DK, C, DC, StartLoc, IdLoc, Id, T, TInfo, S) {
     assert(ParmVarDeclBits.HasInheritedDefaultArg == false);
+    assert(ParmVarDeclBits.DefaultArgKind == DAK_None);
     assert(ParmVarDeclBits.IsKNRPromoted == false);
     assert(ParmVarDeclBits.IsObjCMethodParam == false);
     setDefaultArg(DefArg);
@@ -1429,29 +1392,20 @@ public:
     return const_cast<ParmVarDecl *>(this)->getDefaultArg();
   }
 
-  void setDefaultArg(Expr *defarg) {
-    Init = reinterpret_cast<Stmt *>(defarg);
-  }
+  void setDefaultArg(Expr *defarg);
 
   /// \brief Retrieve the source range that covers the entire default
   /// argument.
   SourceRange getDefaultArgRange() const;
-  void setUninstantiatedDefaultArg(Expr *arg) {
-    Init = reinterpret_cast<UninstantiatedDefaultArgument *>(arg);
-  }
-  Expr *getUninstantiatedDefaultArg() {
-    return (Expr *)Init.get<UninstantiatedDefaultArgument *>();
-  }
+  void setUninstantiatedDefaultArg(Expr *arg);
+  Expr *getUninstantiatedDefaultArg();
   const Expr *getUninstantiatedDefaultArg() const {
-    return (const Expr *)Init.get<UninstantiatedDefaultArgument *>();
+    return const_cast<ParmVarDecl *>(this)->getUninstantiatedDefaultArg();
   }
 
   /// hasDefaultArg - Determines whether this parameter has a default argument,
   /// either parsed or not.
-  bool hasDefaultArg() const {
-    return getInit() || hasUnparsedDefaultArg() ||
-      hasUninstantiatedDefaultArg();
-  }
+  bool hasDefaultArg() const;
 
   /// hasUnparsedDefaultArg - Determines whether this parameter has a
   /// default argument that has not yet been parsed. This will occur
@@ -1464,11 +1418,11 @@ public:
   ///   }; // x has a regular default argument now
   /// @endcode
   bool hasUnparsedDefaultArg() const {
-    return Init.is<UnparsedDefaultArgument*>();
+    return ParmVarDeclBits.DefaultArgKind == DAK_Unparsed;
   }
 
   bool hasUninstantiatedDefaultArg() const {
-    return Init.is<UninstantiatedDefaultArgument*>();
+    return ParmVarDeclBits.DefaultArgKind == DAK_Uninstantiated;
   }
 
   /// setUnparsedDefaultArg - Specify that this parameter has an
@@ -1476,7 +1430,9 @@ public:
   /// real default argument via setDefaultArg when the class
   /// definition enclosing the function declaration that owns this
   /// default argument is completed.
-  void setUnparsedDefaultArg() { Init = (UnparsedDefaultArgument *)nullptr; }
+  void setUnparsedDefaultArg() {
+    ParmVarDeclBits.DefaultArgKind = DAK_Unparsed;
+  }
 
   bool hasInheritedDefaultArg() const {
     return ParmVarDeclBits.HasInheritedDefaultArg;

@@ -2031,6 +2031,31 @@ const Expr *VarDecl::getAnyInitializer(const VarDecl *&D) const {
   return nullptr;
 }
 
+bool VarDecl::hasInit() const {
+  if (auto *P = dyn_cast<ParmVarDecl>(this))
+    if (P->hasUnparsedDefaultArg() || P->hasUninstantiatedDefaultArg())
+      return false;
+
+  return !Init.isNull();
+}
+
+Expr *VarDecl::getInit() {
+  if (!hasInit())
+    return nullptr;
+
+  if (auto *S = Init.dyn_cast<Stmt *>())
+    return cast<Expr>(S);
+
+  return cast_or_null<Expr>(Init.get<EvaluatedStmt *>()->Value);
+}
+
+Stmt **VarDecl::getInitAddress() {
+  if (auto *ES = Init.dyn_cast<EvaluatedStmt *>())
+    return &ES->Value;
+
+  return Init.getAddrOfPtr1();
+}
+
 bool VarDecl::isOutOfLine() const {
   if (Decl::isOutOfLine())
     return true;
@@ -2101,13 +2126,12 @@ bool VarDecl::isUsableInConstantExpressions(ASTContext &C) const {
 EvaluatedStmt *VarDecl::ensureEvaluatedStmt() const {
   auto *Eval = Init.dyn_cast<EvaluatedStmt *>();
   if (!Eval) {
-    auto *S = Init.get<Stmt *>();
     // Note: EvaluatedStmt contains an APValue, which usually holds
     // resources not allocated from the ASTContext.  We need to do some
     // work to avoid leaking those, but we do so in VarDecl::evaluateValue
     // where we can detect whether there's anything to clean up or not.
     Eval = new (getASTContext()) EvaluatedStmt;
-    Eval->Value = S;
+    Eval->Value = Init.get<Stmt *>();
     Init = Eval;
   }
   return Eval;
@@ -2169,6 +2193,27 @@ APValue *VarDecl::evaluateValue(
   }
 
   return Result ? &Eval->Evaluated : nullptr;
+}
+
+APValue *VarDecl::getEvaluatedValue() const {
+  if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
+    if (Eval->WasEvaluated)
+      return &Eval->Evaluated;
+
+  return nullptr;
+}
+
+bool VarDecl::isInitKnownICE() const {
+  if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
+    return Eval->CheckedICE;
+
+  return false;
+}
+
+bool VarDecl::isInitICE() const {
+  assert(isInitKnownICE() &&
+         "Check whether we already know that the initializer is an ICE");
+  return Init.get<EvaluatedStmt *>()->IsICE;
 }
 
 bool VarDecl::checkInitIsICE() const {
@@ -2336,14 +2381,48 @@ Expr *ParmVarDecl::getDefaultArg() {
   return Arg;
 }
 
-SourceRange ParmVarDecl::getDefaultArgRange() const {
-  if (const Expr *E = getInit())
-    return E->getSourceRange();
+void ParmVarDecl::setDefaultArg(Expr *defarg) {
+  ParmVarDeclBits.DefaultArgKind = DAK_Normal;
+  Init = defarg;
+}
 
-  if (hasUninstantiatedDefaultArg())
+SourceRange ParmVarDecl::getDefaultArgRange() const {
+  switch (ParmVarDeclBits.DefaultArgKind) {
+  case DAK_None:
+  case DAK_Unparsed:
+    // Nothing we can do here.
+    return SourceRange();
+
+  case DAK_Uninstantiated:
     return getUninstantiatedDefaultArg()->getSourceRange();
 
-  return SourceRange();
+  case DAK_Normal:
+    if (const Expr *E = getInit())
+      return E->getSourceRange();
+
+    // Missing an actual expression, may be invalid.
+    return SourceRange();
+  }
+  llvm_unreachable("Invalid default argument kind.");
+}
+
+void ParmVarDecl::setUninstantiatedDefaultArg(Expr *arg) {
+  ParmVarDeclBits.DefaultArgKind = DAK_Uninstantiated;
+  Init = arg;
+}
+
+Expr *ParmVarDecl::getUninstantiatedDefaultArg() {
+  assert(hasUninstantiatedDefaultArg() &&
+         "Wrong kind of initialization expression!");
+  return cast_or_null<Expr>(Init.get<Stmt *>());
+}
+
+bool ParmVarDecl::hasDefaultArg() const {
+  // FIXME: We should just return false for DAK_None here once callers are
+  // prepared for the case that we encountered an invalid default argument and
+  // were unable to even build an invalid expression.
+  return hasUnparsedDefaultArg() || hasUninstantiatedDefaultArg() ||
+         !Init.isNull();
 }
 
 bool ParmVarDecl::isParameterPack() const {
