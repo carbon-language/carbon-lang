@@ -19,7 +19,6 @@ namespace performance {
 using namespace ::clang::ast_matchers;
 
 namespace {
-AST_MATCHER(VarDecl, isLocalVarDecl) { return Node.isLocalVarDecl(); }
 AST_MATCHER(QualType, isPointerType) { return Node->isPointerType(); }
 } // namespace
 
@@ -43,7 +42,7 @@ void UnnecessaryCopyInitialization::registerMatchers(
                unless(callee(cxxMethodDecl())));
   Finder->addMatcher(
       varDecl(
-          isLocalVarDecl(), hasType(isConstQualified()),
+          hasLocalStorage(), hasType(isConstQualified()),
           hasType(matchers::isExpensiveToCopy()),
           hasInitializer(cxxConstructExpr(
               hasDeclaration(cxxConstructorDecl(isCopyConstructor())),

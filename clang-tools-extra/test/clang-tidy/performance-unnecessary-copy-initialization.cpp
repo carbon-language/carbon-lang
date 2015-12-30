@@ -110,6 +110,10 @@ void NegativeFunctionCallTrivialType() {
   const TrivialToCopyType VarCopyConstructed(TrivialTypeReference());
 }
 
+void NegativeStaticLocalVar(const ExpensiveToCopyType &Obj) {
+  static const auto StaticVar = Obj.reference();
+}
+
 void NegativeFunctionCallExpensiveTypeNonConstVariable() {
   auto AutoAssigned = ExpensiveTypeReference();
   auto AutoCopyConstructed(ExpensiveTypeReference());
