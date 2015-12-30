@@ -2119,12 +2119,7 @@ static void emitIsSubclass(CodeGenTarget &Target,
   OS << "  if (A == B)\n";
   OS << "    return true;\n\n";
 
-  std::string OStr;
-  raw_string_ostream SS(OStr);
-  unsigned Count = 0;
-  SS << "  switch (A) {\n";
-  SS << "  default:\n";
-  SS << "    return false;\n";
+  bool EmittedSwitch = false;
   for (const auto &A : Infos) {
     std::vector<StringRef> SuperClasses;
     for (const auto &B : Infos) {
@@ -2134,33 +2129,38 @@ static void emitIsSubclass(CodeGenTarget &Target,
 
     if (SuperClasses.empty())
       continue;
-    ++Count;
 
-    SS << "\n  case " << A.Name << ":\n";
+    // If this is the first SuperClass, emit the switch header.
+    if (!EmittedSwitch) {
+      OS << "  switch (A) {\n"
+      OS << "  default:\n";
+      OS << "    return false;\n";
+      EmittedSwitch = true;
+    }
+
+    OS << "\n  case " << A.Name << ":\n";
 
     if (SuperClasses.size() == 1) {
-      SS << "    return B == " << SuperClasses.back().str() << ";\n";
+      OS << "    return B == " << SuperClasses.back().str() << ";\n";
       continue;
     }
 
     if (!SuperClasses.empty()) {
-      SS << "    switch (B) {\n";
-      SS << "    default: return false;\n";
+      OS << "    switch (B) {\n";
+      OS << "    default: return false;\n";
       for (StringRef SC : SuperClasses)
-        SS << "    case " << SC << ": return true;\n";
-      SS << "    }\n";
+        OS << "    case " << SC << ": return true;\n";
+      OS << "    }\n";
     } else {
       // No case statement to emit
-      SS << "    return false;\n";
+      OS << "    return false;\n";
     }
   }
-  SS << "  }\n";
+  OS << "  }\n";
 
-  // If there were case statements emitted into the string stream, write them
-  // to the output stream, otherwise write the default.
-  if (Count)
-    OS << SS.str();
-  else
+  // If there were case statements emitted into the string stream write the
+  // default.
+  if (!EmittedSwitch)
     OS << "  return false;\n";
 
   OS << "}\n\n";
