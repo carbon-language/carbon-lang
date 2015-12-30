@@ -1128,7 +1128,8 @@ bool IRLinker::linkFunctionBody(Function &Dst, Function &Src) {
     // a function and before remapping metadata on instructions below
     // in RemapInstruction, as the saved mapping is used to handle
     // the temporary metadata hanging off instructions.
-    SrcM.getMaterializer()->saveMetadataList(MetadataToIDs, true);
+    SrcM.getMaterializer()->saveMetadataList(MetadataToIDs,
+                                             /* OnlyTempMD = */ true);
 
   // Link in the prefix data.
   if (Src.hasPrefixData())
@@ -1531,7 +1532,8 @@ bool IRLinker::run() {
       // Ensure metadata materialized
       if (SrcM.getMaterializer()->materializeMetadata())
         return true;
-      SrcM.getMaterializer()->saveMetadataList(MetadataToIDs, false);
+      SrcM.getMaterializer()->saveMetadataList(MetadataToIDs,
+                                               /* OnlyTempMD = */ false);
     }
 
     linkNamedMDNodes();
