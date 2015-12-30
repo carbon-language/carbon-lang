@@ -21,6 +21,7 @@
 #include "clang/AST/Redeclarable.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Linkage.h"
+#include "clang/Basic/Module.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -38,7 +39,6 @@ class FunctionTemplateDecl;
 class FunctionTemplateSpecializationInfo;
 class LabelStmt;
 class MemberSpecializationInfo;
-class Module;
 class NestedNameSpecifier;
 class ParmVarDecl;
 class Stmt;
