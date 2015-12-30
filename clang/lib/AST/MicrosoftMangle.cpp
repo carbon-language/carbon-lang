@@ -1489,7 +1489,7 @@ void MicrosoftCXXNameMangler::manglePassObjectSizeArg(
   int Type = POSA->getType();
 
   auto Iter = PassObjectSizeArgs.insert(Type).first;
-  void *TypePtr = (void *)&*Iter;
+  void *TypePtr = const_cast<void *>((const void *)&*Iter);
   ArgBackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
 
   if (Found == TypeBackReferences.end()) {
