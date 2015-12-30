@@ -3071,7 +3071,12 @@ void BitcodeReader::saveMetadataList(
   for (unsigned ID = 0; ID < MetadataList.size(); ++ID) {
     Metadata *MD = MetadataList[ID];
     auto *N = dyn_cast_or_null<MDNode>(MD);
+    assert((!N || (N->isResolved() || N->isTemporary())) &&
+           "Found non-resolved non-temp MDNode while saving metadata");
     // Save all values if !OnlyTempMD, otherwise just the temporary metadata.
+    // Note that in the !OnlyTempMD case we need to save all Metadata, not
+    // just MDNode, as we may have references to other types of module-level
+    // metadata (e.g. ValueAsMetadata) from instructions.
     if (!OnlyTempMD || (N && N->isTemporary())) {
       // Will call this after materializing each function, in order to
       // handle remapping of the function's instructions/metadata.
