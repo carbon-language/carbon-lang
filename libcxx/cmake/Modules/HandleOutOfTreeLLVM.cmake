@@ -1,4 +1,6 @@
-macro(find_llvm_parts)
+
+
+macro(internal_find_llvm_parts)
 # Rely on llvm-config.
   set(CONFIG_OUTPUT)
   find_program(LLVM_CONFIG "llvm-config")
@@ -57,16 +59,13 @@ macro(find_llvm_parts)
   list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
 
   set(LLVM_FOUND ON)
-endmacro(find_llvm_parts)
+endmacro(internal_find_llvm_parts)
 
 
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  set(LIBCXX_BUILT_STANDALONE 1)
-  message(STATUS "Configuring for standalone build.")
-
-  find_llvm_parts()
-
+macro(internal_simulate_llvm_options)
   # LLVM Options --------------------------------------------------------------
+  # Configure the LLVM CMake options expected by libc++.
+
   include(FindPythonInterp)
   if( NOT PYTHONINTERP_FOUND )
     message(WARNING "Failed to find python interpreter. "
@@ -132,7 +131,29 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
       MESSAGE(SEND_ERROR "Unable to determine platform")
     endif(UNIX)
   endif(WIN32)
+endmacro(internal_simulate_llvm_options)
 
-  # Add LLVM Functions --------------------------------------------------------
+
+macro(handle_out_of_tree_llvm)
+  # This macro should not be called unless we are building out of tree.
+  # Enforce that.
+  if (NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    message(FATAL_ERROR "libc++ incorrectly configured for out-of-tree LLVM")
+  endif()
+
+  # Attempt to find an LLVM installation and source directory. Warn if they
+  # are not found.
+  internal_find_llvm_parts()
+  if (NOT LLVM_FOUND)
+    message(WARNING "UNSUPPORTED LIBCXX CONFIGURATION DETECTED: "
+                    "llvm-config not found and LLVM_PATH not defined.\n"
+                    "Reconfigure with -DLLVM_CONFIG=path/to/llvm-config "
+                    "or -DLLVM_PATH=path/to/llvm-source-root.")
+  endif()
+
+  # Simulate the LLVM CMake options and variables provided by an in-tree LLVM.
+  internal_simulate_llvm_options()
+
+  # Additionally include the LLVM CMake functions if we can find the module.
   include(AddLLVM OPTIONAL)
-endif()
+endmacro()
