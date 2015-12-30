@@ -11,6 +11,6 @@ CLANG_LEVEL := ../../..
 LIBRARYNAME := clangTidy
 include $(CLANG_LEVEL)/../../Makefile.config
 
-DIRS = utils cert cppcoreguidelines readability llvm google misc modernize tool
+DIRS = utils cert cppcoreguidelines readability llvm google misc modernize performance tool
 
 include $(CLANG_LEVEL)/Makefile
