@@ -283,13 +283,19 @@ private:
   LLVMContext &Context;
   uint64_t NextIndex;
   SmallDenseMap<void *, std::pair<OwnerTy, uint64_t>, 4> UseMap;
+  /// Flag that can be set to false if this metadata should not be
+  /// RAUW'ed, e.g. if it is used as the key of a map.
+  bool CanReplace;
 
 public:
   ReplaceableMetadataImpl(LLVMContext &Context)
-      : Context(Context), NextIndex(0) {}
+      : Context(Context), NextIndex(0), CanReplace(true) {}
   ~ReplaceableMetadataImpl() {
     assert(UseMap.empty() && "Cannot destroy in-use replaceable metadata");
   }
+
+  /// Set the CanReplace flag to the given value.
+  void setCanReplace(bool Replaceable) { CanReplace = Replaceable; }
 
   LLVMContext &getContext() const { return Context; }
 
@@ -899,6 +905,11 @@ public:
     assert(isTemporary() && "Expected temporary node");
     assert(!isResolved() && "Expected RAUW support");
     Context.getReplaceableUses()->replaceAllUsesWith(MD);
+  }
+
+  /// Set the CanReplace flag to the given value.
+  void setCanReplace(bool Replaceable) {
+    Context.getReplaceableUses()->setCanReplace(Replaceable);
   }
 
   /// \brief Resolve cycles.

@@ -3085,6 +3085,11 @@ void BitcodeReader::saveMetadataList(
         assert(MetadataToIDs[MD] == ID && "Inconsistent metadata value id");
         continue;
       }
+      if (N && N->isTemporary())
+        // Ensure that we assert if someone tries to RAUW this temporary
+        // metadata while it is the key of a map. The flag will be set back
+        // to true when the saved metadata list is destroyed.
+        N->setCanReplace(false);
       MetadataToIDs[MD] = ID;
     }
   }
