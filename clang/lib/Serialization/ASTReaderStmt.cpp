@@ -1445,7 +1445,8 @@ void ASTStmtReader::VisitExprWithCleanups(ExprWithCleanups *E) {
   unsigned NumObjects = Record[Idx++];
   assert(NumObjects == E->getNumObjects());
   for (unsigned i = 0; i != NumObjects; ++i)
-    E->getObjectsBuffer()[i] = ReadDeclAs<BlockDecl>(Record, Idx);
+    E->getTrailingObjects<BlockDecl *>()[i] =
+        ReadDeclAs<BlockDecl>(Record, Idx);
 
   E->SubExpr = Reader.ReadSubExpr();
 }
@@ -1541,7 +1542,7 @@ void ASTStmtReader::VisitTypeTraitExpr(TypeTraitExpr *E) {
   E->Loc = Range.getBegin();
   E->RParenLoc = Range.getEnd();
 
-  TypeSourceInfo **Args = E->getTypeSourceInfos();
+  TypeSourceInfo **Args = E->getTrailingObjects<TypeSourceInfo *>();
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     Args[I] = GetTypeSourceInfo(Record, Idx);
 }
@@ -1589,7 +1590,7 @@ void ASTStmtReader::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   E->Pack = Reader.ReadDeclAs<NamedDecl>(F, Record, Idx);
   if (E->isPartiallySubstituted()) {
     assert(E->Length == NumPartialArgs);
-    for (auto *I = reinterpret_cast<TemplateArgument *>(E + 1),
+    for (auto *I = E->getTrailingObjects<TemplateArgument>(),
               *E = I + NumPartialArgs;
          I != E; ++I)
       new (I) TemplateArgument(Reader.ReadTemplateArgument(F, Record, Idx));
@@ -1624,7 +1625,7 @@ void ASTStmtReader::VisitFunctionParmPackExpr(FunctionParmPackExpr *E) {
   E->NumParameters = Record[Idx++];
   E->ParamPack = ReadDeclAs<ParmVarDecl>(Record, Idx);
   E->NameLoc = ReadSourceLocation(Record, Idx);
-  ParmVarDecl **Parms = reinterpret_cast<ParmVarDecl**>(E+1);
+  ParmVarDecl **Parms = E->getTrailingObjects<ParmVarDecl *>();
   for (unsigned i = 0, n = E->NumParameters; i != n; ++i)
     Parms[i] = ReadDeclAs<ParmVarDecl>(Record, Idx);
 }
