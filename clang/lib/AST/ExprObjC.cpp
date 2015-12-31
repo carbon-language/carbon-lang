@@ -59,7 +59,8 @@ ObjCDictionaryLiteral::ObjCDictionaryLiteral(ArrayRef<ObjCDictionaryElement> VK,
       NumElements(VK.size()), HasPackExpansions(HasPackExpansions), Range(SR),
       DictWithObjectsMethod(method) {
   KeyValuePair *KeyValues = getTrailingObjects<KeyValuePair>();
-  ExpansionData *Expansions = getTrailingObjects<ExpansionData>();
+  ExpansionData *Expansions =
+      HasPackExpansions ? getTrailingObjects<ExpansionData>() : nullptr;
   for (unsigned I = 0; I < NumElements; I++) {
     if (VK[I].Key->isTypeDependent() || VK[I].Key->isValueDependent() ||
         VK[I].Value->isTypeDependent() || VK[I].Value->isValueDependent())
