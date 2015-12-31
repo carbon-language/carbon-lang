@@ -2954,8 +2954,12 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
         continue;
       
       QualType DeducedA = Specialization->getParamDecl(ParamIdx)->getType();
-      if (CheckOriginalCallArgDeduction(*this, OriginalArg, DeducedA))
-        return Sema::TDK_SubstitutionFailure;
+      if (CheckOriginalCallArgDeduction(*this, OriginalArg, DeducedA)) {
+        Info.FirstArg = TemplateArgument(DeducedA);
+        Info.SecondArg = TemplateArgument(OriginalArg.OriginalArgType);
+        Info.CallArgIndex = OriginalArg.ArgIdx;
+        return TDK_DeducedMismatch;
+      }
     }
   }
   
