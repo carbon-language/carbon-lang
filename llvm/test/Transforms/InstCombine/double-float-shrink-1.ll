@@ -11,12 +11,12 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; FIXME: For all tests where the call shrinks, the 'fast' attribute on the call inst should be propagated to the new call.
 
-define float @acos_test(float %f)   {
+define float @acos_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @acos(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: acos_test
+; CHECK-LABEL: acos_test1
 ; CHECK: call float @acosf(float %f)
 }
 
@@ -28,12 +28,12 @@ define double @acos_test2(float %f)   {
 ; CHECK: call fast double @acos(double %conv)
 }
 
-define float @acosh_test(float %f)   {
+define float @acosh_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @acosh(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: acosh_test
+; CHECK-LABEL: acosh_test1
 ; CHECK: call float @acoshf(float %f)
 }
 
@@ -45,12 +45,12 @@ define double @acosh_test2(float %f)   {
 ; CHECK: call fast double @acosh(double %conv)
 }
 
-define float @asin_test(float %f)   {
+define float @asin_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @asin(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: asin_test
+; CHECK-LABEL: asin_test1
 ; CHECK: call float @asinf(float %f)
 }
 
@@ -62,12 +62,12 @@ define double @asin_test2(float %f)   {
 ; CHECK: call fast double @asin(double %conv)
 }
 
-define float @asinh_test(float %f)   {
+define float @asinh_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @asinh(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: asinh_test
+; CHECK-LABEL: asinh_test1
 ; CHECK: call float @asinhf(float %f)
 }
 
@@ -79,12 +79,12 @@ define double @asinh_test2(float %f)   {
 ; CHECK: call fast double @asinh(double %conv)
 }
 
-define float @atan_test(float %f)   {
+define float @atan_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @atan(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: atan_test
+; CHECK-LABEL: atan_test1
 ; CHECK: call float @atanf(float %f)
 }
 
@@ -95,12 +95,13 @@ define double @atan_test2(float %f)   {
 ; CHECK-LABEL: atan_test2
 ; CHECK: call fast double @atan(double %conv)
 }
-define float @atanh_test(float %f)   {
+
+define float @atanh_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @atanh(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: atanh_test
+; CHECK-LABEL: atanh_test1
 ; CHECK: call float @atanhf(float %f)
 }
 
@@ -111,12 +112,13 @@ define double @atanh_test2(float %f)   {
 ; CHECK-LABEL: atanh_test2
 ; CHECK: call fast double @atanh(double %conv)
 }
-define float @cbrt_test(float %f)   {
+
+define float @cbrt_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @cbrt(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: cbrt_test
+; CHECK-LABEL: cbrt_test1
 ; CHECK: call float @cbrtf(float %f)
 }
 
@@ -127,12 +129,13 @@ define double @cbrt_test2(float %f)   {
 ; CHECK-LABEL: cbrt_test2
 ; CHECK: call fast double @cbrt(double %conv)
 }
-define float @exp_test(float %f)   {
+
+define float @exp_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @exp(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: exp_test
+; CHECK-LABEL: exp_test1
 ; CHECK: call float @expf(float %f)
 }
 
@@ -143,12 +146,13 @@ define double @exp_test2(float %f)   {
 ; CHECK-LABEL: exp_test2
 ; CHECK: call fast double @exp(double %conv)
 }
-define float @expm1_test(float %f)   {
+
+define float @expm1_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @expm1(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: expm1_test
+; CHECK-LABEL: expm1_test1
 ; CHECK: call float @expm1f(float %f)
 }
 
@@ -159,12 +163,15 @@ define double @expm1_test2(float %f)   {
 ; CHECK-LABEL: expm1_test2
 ; CHECK: call fast double @expm1(double %conv)
 }
-define float @exp10_test(float %f)   {
+
+; exp10f() doesn't exist for this triple, so it doesn't shrink.
+
+define float @exp10_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @exp10(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: exp10_test
+; CHECK-LABEL: exp10_test1
 ; CHECK: call fast double @exp10(double %conv)
 }
 
@@ -175,12 +182,13 @@ define double @exp10_test2(float %f)   {
 ; CHECK-LABEL: exp10_test2
 ; CHECK: call fast double @exp10(double %conv)
 }
-define float @log_test(float %f)   {
+
+define float @log_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @log(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: log_test
+; CHECK-LABEL: log_test1
 ; CHECK: call float @logf(float %f)
 }
 
@@ -191,12 +199,13 @@ define double @log_test2(float %f)   {
 ; CHECK-LABEL: log_test2
 ; CHECK: call fast double @log(double %conv)
 }
-define float @log10_test(float %f)   {
+
+define float @log10_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @log10(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: log10_test
+; CHECK-LABEL: log10_test1
 ; CHECK: call float @log10f(float %f)
 }
 
@@ -207,12 +216,13 @@ define double @log10_test2(float %f) {
 ; CHECK-LABEL: log10_test2
 ; CHECK: call fast double @log10(double %conv)
 }
-define float @log1p_test(float %f)   {
+
+define float @log1p_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @log1p(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: log1p_test
+; CHECK-LABEL: log1p_test1
 ; CHECK: call float @log1pf(float %f)
 }
 
@@ -223,12 +233,13 @@ define double @log1p_test2(float %f)   {
 ; CHECK-LABEL: log1p_test2
 ; CHECK: call fast double @log1p(double %conv)
 }
-define float @log2_test(float %f)   {
+
+define float @log2_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @log2(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: log2_test
+; CHECK-LABEL: log2_test1
 ; CHECK: call float @log2f(float %f)
 }
 
@@ -239,12 +250,13 @@ define double @log2_test2(float %f)   {
 ; CHECK-LABEL: log2_test2
 ; CHECK: call fast double @log2(double %conv)
 }
-define float @logb_test(float %f)   {
+
+define float @logb_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @logb(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: logb_test
+; CHECK-LABEL: logb_test1
 ; CHECK: call float @logbf(float %f)
 }
 
@@ -255,12 +267,13 @@ define double @logb_test2(float %f)   {
 ; CHECK-LABEL: logb_test2
 ; CHECK: call fast double @logb(double %conv)
 }
-define float @sin_test(float %f)   {
+
+define float @sin_test1(float %f)   {
    %conv = fpext float %f to double
    %call = call fast double @sin(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: sin_test
+; CHECK-LABEL: sin_test1
 ; CHECK: call float @sinf(float %f)
 }
 
@@ -272,12 +285,12 @@ define double @sin_test2(float %f) {
 ; CHECK: call fast double @sin(double %conv)
 }
 
-define float @sqrt_test(float %f) {
+define float @sqrt_test1(float %f) {
    %conv = fpext float %f to double
    %call = call double @sqrt(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: sqrt_test
+; CHECK-LABEL: sqrt_test1
 ; CHECK: call float @sqrtf(float %f)
 }
 
@@ -289,12 +302,12 @@ define double @sqrt_test2(float %f) {
 ; CHECK: call double @sqrt(double %conv)
 }
 
-define float @sqrt_int_test(float %f) {
+define float @sqrt_int_test1(float %f) {
    %conv = fpext float %f to double
    %call = call double @llvm.sqrt.f64(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: sqrt_int_test
+; CHECK-LABEL: sqrt_int_test1
 ; CHECK: call float @llvm.sqrt.f32(float %f)
 }
 
@@ -306,12 +319,12 @@ define double @sqrt_int_test2(float %f) {
 ; CHECK: call double @llvm.sqrt.f64(double %conv)
 }
 
-define float @tan_test(float %f) {
+define float @tan_test1(float %f) {
    %conv = fpext float %f to double
    %call = call fast double @tan(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: tan_test
+; CHECK-LABEL: tan_test1
 ; CHECK: call float @tanf(float %f)
 }
 
@@ -322,12 +335,12 @@ define double @tan_test2(float %f) {
 ; CHECK-LABEL: tan_test2
 ; CHECK: call fast double @tan(double %conv)
 }
-define float @tanh_test(float %f) {
+define float @tanh_test1(float %f) {
    %conv = fpext float %f to double
    %call = call fast double @tanh(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK-LABEL: tanh_test
+; CHECK-LABEL: tanh_test1
 ; CHECK: call float @tanhf(float %f)
 }
 
