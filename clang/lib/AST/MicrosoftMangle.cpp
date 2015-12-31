@@ -127,8 +127,6 @@ public:
                               CXXCtorType CT, uint32_t Size, uint32_t NVOffset,
                               int32_t VBPtrOffset, uint32_t VBIndex,
                               raw_ostream &Out) override;
-  void mangleCXXCatchHandlerType(QualType T, uint32_t Flags,
-                                 raw_ostream &Out) override;
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
@@ -2620,15 +2618,6 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIName(QualType T,
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << '.';
   Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
-}
-
-void MicrosoftMangleContextImpl::mangleCXXCatchHandlerType(QualType T,
-                                                           uint32_t Flags,
-                                                           raw_ostream &Out) {
-  MicrosoftCXXNameMangler Mangler(*this, Out);
-  Mangler.getStream() << "llvm.eh.handlertype.";
-  Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
-  Mangler.getStream() << '.' << Flags;
 }
 
 void MicrosoftMangleContextImpl::mangleCXXVirtualDisplacementMap(
