@@ -1119,7 +1119,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
                                   Callee->getAttributes());
   }
 
-  bool unsafeFPMath = canUseUnsafeFPMath(CI->getParent()->getParent());
+  bool UnsafeFPMath = canUseUnsafeFPMath(CI->getParent()->getParent());
 
   // pow(exp(x), y) -> exp(x*y)
   // pow(exp2(x), y) -> exp2(x * y)
@@ -1128,7 +1128,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
   // underflow behavior quite dramatically.
   // Example: x = 1000, y = 0.001.
   // pow(exp(x), y) = pow(inf, 0.001) = inf, whereas exp(x*y) = exp(1).
-  if (unsafeFPMath) {
+  if (UnsafeFPMath) {
     if (auto *OpC = dyn_cast<CallInst>(Op1)) {
       IRBuilder<>::FastMathFlagGuard Guard(B);
       FastMathFlags FMF;
@@ -1159,7 +1159,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
                       LibFunc::fabsl)) {
 
     // In -ffast-math, pow(x, 0.5) -> sqrt(x).
-    if (unsafeFPMath)
+    if (UnsafeFPMath)
       return EmitUnaryFloatFnCall(Op1, TLI->getName(LibFunc::sqrt), B,
                                   Callee->getAttributes());
 
@@ -1185,7 +1185,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
     return B.CreateFDiv(ConstantFP::get(CI->getType(), 1.0), Op1, "powrecip");
 
   // In -ffast-math, generate repeated fmul instead of generating pow(x, n).
-  if (unsafeFPMath) {
+  if (UnsafeFPMath) {
     APFloat V = abs(Op2C->getValueAPF());
     // We limit to a max of 7 fmul(s). Thus max exponent is 32.
     // This transformation applies to integer exponents only.
