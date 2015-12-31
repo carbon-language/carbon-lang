@@ -917,6 +917,9 @@ TARGET_BUILTIN(__builtin_ia32_xtest, "i", "", "rtm")
 BUILTIN(__builtin_ia32_rdpmc, "ULLii", "")
 BUILTIN(__builtin_ia32_rdtsc, "ULLi", "")
 BUILTIN(__builtin_ia32_rdtscp, "ULLiUi*", "")
+// PKU
+TARGET_BUILTIN(__builtin_ia32_rdpkru, "Ui", "", "pku")
+TARGET_BUILTIN(__builtin_ia32_wrpkru, "vUi", "", "pku")
 
 // AVX-512
 TARGET_BUILTIN(__builtin_ia32_sqrtpd512_mask, "V8dV8dV8dUcIi", "", "avx512f")
