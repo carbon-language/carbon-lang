@@ -2215,7 +2215,8 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
 void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
                                          Qualifiers Quals, SourceRange Range) {
   QualType PointeeType = T->getPointeeType();
-  Out << (Quals.hasVolatile() ? 'B' : 'A');
+  assert(!Quals.hasConst() && !Quals.hasVolatile() && "unexpected qualifier!");
+  Out << 'A';
   manglePointerExtQualifiers(Quals, PointeeType);
   mangleType(PointeeType, Range);
 }
@@ -2226,7 +2227,8 @@ void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
 void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T,
                                          Qualifiers Quals, SourceRange Range) {
   QualType PointeeType = T->getPointeeType();
-  Out << (Quals.hasVolatile() ? "$$R" : "$$Q");
+  assert(!Quals.hasConst() && !Quals.hasVolatile() && "unexpected qualifier!");
+  Out << "$$Q";
   manglePointerExtQualifiers(Quals, PointeeType);
   mangleType(PointeeType, Range);
 }
