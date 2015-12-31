@@ -595,8 +595,7 @@ struct MatchableInfo {
 private:
   void tokenizeAsmString(AsmMatcherInfo const &Info,
                          AsmVariantInfo const &Variant);
-  void addAsmOperand(size_t Start, size_t End,
-                     std::string const &SeparatorCharacters);
+  void addAsmOperand(StringRef Token, bool IsIsolatedToken = false);
 };
 
 /// SubtargetFeatureInfo - Helper class for storing information on a subtarget
@@ -867,16 +866,8 @@ void MatchableInfo::initialize(const AsmMatcherInfo &Info,
 }
 
 /// Append an AsmOperand for the given substring of AsmString.
-void MatchableInfo::addAsmOperand(size_t Start, size_t End,
-                                  std::string const &Separators) {
-  StringRef String = AsmString;
-  // Look for separators before and after to figure out is this token is
-  // isolated.  Accept '$$' as that's how we escape '$'.
-  bool IsIsolatedToken =
-      (!Start || Separators.find(String[Start - 1]) != StringRef::npos ||
-       String.substr(Start - 1, 2) == "$$") &&
-      (End >= String.size() || Separators.find(String[End]) != StringRef::npos);
-  AsmOperands.push_back(AsmOperand(IsIsolatedToken, String.slice(Start, End)));
+void MatchableInfo::addAsmOperand(StringRef Token, bool IsIsolatedToken) {
+  AsmOperands.push_back(AsmOperand(IsIsolatedToken, Token));
 }
 
 /// tokenizeAsmString - Tokenize a simplified assembly string.
@@ -885,50 +876,58 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info,
   StringRef String = AsmString;
   size_t Prev = 0;
   bool InTok = false;
-  std::string Separators = Variant.TokenizingCharacters +
-                           Variant.SeparatorCharacters;
+  bool IsIsolatedToken = true;
   for (size_t i = 0, e = String.size(); i != e; ++i) {
-    if(Variant.BreakCharacters.find(String[i]) != std::string::npos) {
-      if(InTok) {
-        addAsmOperand(Prev, i, Separators);
+    char Char = String[i];
+    if (Variant.BreakCharacters.find(Char) != std::string::npos) {
+      if (InTok) {
+        addAsmOperand(String.slice(Prev, i), false);
         Prev = i;
+        IsIsolatedToken = false;
       }
       InTok = true;
       continue;
     }
-    if(Variant.TokenizingCharacters.find(String[i]) != std::string::npos) {
-      if(InTok) {
-        addAsmOperand(Prev, i, Separators);
+    if (Variant.TokenizingCharacters.find(Char) != std::string::npos) {
+      if (InTok) {
+        addAsmOperand(String.slice(Prev, i), IsIsolatedToken);
         InTok = false;
+        IsIsolatedToken = false;
       }
-      addAsmOperand(i, i + 1, Separators);
+      addAsmOperand(String.slice(i, i + 1), IsIsolatedToken);
       Prev = i + 1;
+      IsIsolatedToken = true;
       continue;
     }
-    if(Variant.SeparatorCharacters.find(String[i]) != std::string::npos) {
-      if(InTok) {
-        addAsmOperand(Prev, i, Separators);
+    if (Variant.SeparatorCharacters.find(Char) != std::string::npos) {
+      if (InTok) {
+        addAsmOperand(String.slice(Prev, i), IsIsolatedToken);
         InTok = false;
       }
       Prev = i + 1;
+      IsIsolatedToken = true;
       continue;
     }
-    switch (String[i]) {
+
+    switch (Char) {
     case '\\':
       if (InTok) {
-        addAsmOperand(Prev, i, Separators);
+        addAsmOperand(String.slice(Prev, i), false);
         InTok = false;
+        IsIsolatedToken = false;
       }
       ++i;
       assert(i != String.size() && "Invalid quoted character");
-      addAsmOperand(i, i + 1, Separators);
+      addAsmOperand(String.slice(i, i + 1), IsIsolatedToken);
       Prev = i + 1;
+      IsIsolatedToken = false;
       break;
 
     case '$': {
-      if (InTok && Prev != i) {
-        addAsmOperand(Prev, i, Separators);
+      if (InTok) {
+        addAsmOperand(String.slice(Prev, i), false);
         InTok = false;
+        IsIsolatedToken = false;
       }
 
       // If this isn't "${", start new identifier looking like "$xxx"
@@ -940,17 +939,20 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info,
       size_t EndPos = String.find('}', i);
       assert(EndPos != StringRef::npos &&
              "Missing brace in operand reference!");
-      addAsmOperand(i, EndPos+1, Separators);
+      addAsmOperand(String.slice(i, EndPos+1), IsIsolatedToken);
       Prev = EndPos + 1;
       i = EndPos;
+      IsIsolatedToken = false;
       break;
     }
+
     default:
       InTok = true;
+      break;
     }
   }
   if (InTok && Prev != String.size())
-    addAsmOperand(Prev, StringRef::npos, Separators);
+    addAsmOperand(String.substr(Prev), IsIsolatedToken);
 
   // The first token of the instruction is the mnemonic, which must be a
   // simple string, not a $foo variable or a singleton register.
