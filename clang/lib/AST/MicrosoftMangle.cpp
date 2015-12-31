@@ -221,7 +221,7 @@ class MicrosoftCXXNameMangler {
   typedef llvm::SmallVector<std::string, 10> BackRefVec;
   BackRefVec NameBackReferences;
 
-  typedef llvm::DenseMap<void *, unsigned> ArgBackRefMap;
+  typedef llvm::DenseMap<const void *, unsigned> ArgBackRefMap;
   ArgBackRefMap TypeBackReferences;
 
   typedef std::set<int> PassObjectSizeArgsSet;
@@ -1489,7 +1489,7 @@ void MicrosoftCXXNameMangler::manglePassObjectSizeArg(
   int Type = POSA->getType();
 
   auto Iter = PassObjectSizeArgs.insert(Type).first;
-  void *TypePtr = const_cast<void *>((const void *)&*Iter);
+  auto *TypePtr = (const void *)&*Iter;
   ArgBackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
 
   if (Found == TypeBackReferences.end()) {
