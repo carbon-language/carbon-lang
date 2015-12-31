@@ -987,8 +987,10 @@ void ASTStmtReader::VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
   assert(NumElements == E->getNumElements() && "Wrong number of elements");
   bool HasPackExpansions = Record[Idx++];
   assert(HasPackExpansions == E->HasPackExpansions &&"Pack expansion mismatch");
-  ObjCDictionaryLiteral::KeyValuePair *KeyValues = E->getKeyValues();
-  ObjCDictionaryLiteral::ExpansionData *Expansions = E->getExpansionData();
+  ObjCDictionaryLiteral::KeyValuePair *KeyValues =
+      E->getTrailingObjects<ObjCDictionaryLiteral::KeyValuePair>();
+  ObjCDictionaryLiteral::ExpansionData *Expansions =
+      E->getTrailingObjects<ObjCDictionaryLiteral::ExpansionData>();
   for (unsigned I = 0; I != NumElements; ++I) {
     KeyValues[I].Key = Reader.ReadSubExpr();
     KeyValues[I].Value = Reader.ReadSubExpr();
