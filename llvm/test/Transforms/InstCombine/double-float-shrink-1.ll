@@ -350,6 +350,22 @@ define double @tanh_test2(float %f) {
 ; CHECK: call fast double @tanh(double %conv)
 }
 
+; 'arcp' on an fmax() is meaningless. This test just proves that
+; flags are propagated for shrunken *binary* double FP calls.
+define float @max1(float %a, float %b) {
+  %c = fpext float %a to double
+  %d = fpext float %b to double
+  %e = call arcp double @fmax(double %c, double %d)
+  %f = fptrunc double %e to float
+  ret float %f
+
+; CHECK-LABEL: max1(
+; CHECK-NEXT:  call arcp float @fmaxf(float %a, float %b)
+; CHECK-NEXT:  ret
+}
+
+declare double @fmax(double, double)
+
 declare double @tanh(double) #1
 declare double @tan(double) #1
 
