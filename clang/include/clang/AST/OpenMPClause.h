@@ -1156,7 +1156,7 @@ class OMPPrivateClause final
     : public OMPVarListClause<OMPPrivateClause>,
       private llvm::TrailingObjects<OMPPrivateClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Build clause with number of variables \a N.
   ///
@@ -1252,7 +1252,7 @@ class OMPFirstprivateClause final
     : public OMPVarListClause<OMPFirstprivateClause>,
       private llvm::TrailingObjects<OMPFirstprivateClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
 
   /// \brief Build clause with number of variables \a N.
@@ -1393,7 +1393,7 @@ class OMPLastprivateClause final
   // lastprivate clause.
   //
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
 
   /// \brief Build clause with number of variables \a N.
@@ -1565,7 +1565,7 @@ class OMPSharedClause final
     : public OMPVarListClause<OMPSharedClause>,
       private llvm::TrailingObjects<OMPSharedClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   /// \brief Build clause with number of variables \a N.
   ///
   /// \param StartLoc Starting location of the clause.
@@ -1629,7 +1629,7 @@ class OMPReductionClause final
     : public OMPVarListClause<OMPReductionClause>,
       private llvm::TrailingObjects<OMPReductionClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Location of ':'.
   SourceLocation ColonLoc;
@@ -1835,7 +1835,7 @@ class OMPLinearClause final
     : public OMPVarListClause<OMPLinearClause>,
       private llvm::TrailingObjects<OMPLinearClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Modifier of 'linear' clause.
   OpenMPLinearClauseKind Modifier;
@@ -2059,7 +2059,7 @@ class OMPAlignedClause final
     : public OMPVarListClause<OMPAlignedClause>,
       private llvm::TrailingObjects<OMPAlignedClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Location of ':'.
   SourceLocation ColonLoc;
@@ -2160,7 +2160,7 @@ class OMPCopyinClause final
   // implicit threads.
 
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Build clause with number of variables \a N.
   ///
@@ -2310,7 +2310,7 @@ class OMPCopyprivateClause final
     : public OMPVarListClause<OMPCopyprivateClause>,
       private llvm::TrailingObjects<OMPCopyprivateClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Build clause with number of variables \a N.
   ///
@@ -2463,7 +2463,7 @@ class OMPFlushClause final
     : public OMPVarListClause<OMPFlushClause>,
       private llvm::TrailingObjects<OMPFlushClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   /// \brief Build clause with number of variables \a N.
   ///
   /// \param StartLoc Starting location of the clause.
@@ -2527,7 +2527,7 @@ class OMPDependClause final
     : public OMPVarListClause<OMPDependClause>,
       private llvm::TrailingObjects<OMPDependClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
   /// \brief Dependency type (one of in, out, inout).
   OpenMPDependClauseKind DepKind;
@@ -2734,7 +2734,7 @@ public:
 class OMPMapClause final : public OMPVarListClause<OMPMapClause>,
                            private llvm::TrailingObjects<OMPMapClause, Expr *> {
   friend TrailingObjects;
-  friend class OMPVarListClause;
+  friend OMPVarListClause;
   friend class OMPClauseReader;
 
   /// \brief Map type modifier for the 'map' clause.
