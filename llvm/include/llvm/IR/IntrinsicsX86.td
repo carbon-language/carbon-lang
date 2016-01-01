@@ -33,6 +33,19 @@ let TargetPrefix = "x86" in {
 }
 
 //===----------------------------------------------------------------------===//
+// FLAGS.
+let TargetPrefix = "x86" in {
+  def int_x86_flags_read_u32 : GCCBuiltin<"__builtin_ia32_readeflags_u32">,
+        Intrinsic<[llvm_i32_ty], [], []>;
+  def int_x86_flags_read_u64 : GCCBuiltin<"__builtin_ia32_readeflags_u64">,
+        Intrinsic<[llvm_i64_ty], [], []>;
+  def int_x86_flags_write_u32 : GCCBuiltin<"__builtin_ia32_writeeflags_u32">,
+        Intrinsic<[], [llvm_i32_ty], []>;
+  def int_x86_flags_write_u64 : GCCBuiltin<"__builtin_ia32_writeeflags_u64">,
+        Intrinsic<[], [llvm_i64_ty], []>;
+}
+
+//===----------------------------------------------------------------------===//
 // Read Time Stamp Counter.
 let TargetPrefix = "x86" in {
   def int_x86_rdtsc : GCCBuiltin<"__builtin_ia32_rdtsc">,
