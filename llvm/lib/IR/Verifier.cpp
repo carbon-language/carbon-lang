@@ -3082,9 +3082,10 @@ void Verifier::visitCatchSwitchInst(CatchSwitchInst &CatchSwitch) {
   Assert(CatchSwitch.getNumHandlers() != 0,
          "CatchSwitchInst cannot have empty handler list", &CatchSwitch);
 
-  for (BasicBlock *Handler : CatchSwitch.handlers())
+  for (BasicBlock *Handler : CatchSwitch.handlers()) {
     Assert(isa<CatchPadInst>(Handler->getFirstNonPHI()),
            "CatchSwitchInst handlers must be catchpads", &CatchSwitch, Handler);
+  }
 
   visitTerminatorInst(CatchSwitch);
 }
