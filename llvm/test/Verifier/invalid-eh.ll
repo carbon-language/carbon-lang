@@ -5,6 +5,7 @@
 ; RUN: sed -e s/.T5:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK5 %s
 ; RUN: sed -e s/.T6:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK6 %s
 ; RUN: sed -e s/.T7:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK7 %s
+; RUN: sed -e s/.T8:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK8 %s
 
 declare void @g()
 
@@ -87,3 +88,11 @@ declare void @g()
 ;T7:     catchpad within %cs2 []
 ;T7:     unreachable
 ;T7: }
+
+;T8: define void @f() personality void ()* @g {
+;T8:   entry:
+;T8:     ret void
+;T8:   switch1:
+;T8:     %cs1 = catchswitch within none [ label %switch1 ] unwind to caller
+;T8:     ; CHECK8: CatchSwitchInst handlers must be catchpads
+;T8: }
