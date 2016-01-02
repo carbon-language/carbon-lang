@@ -947,8 +947,7 @@ void EHOutputSection<ELFT>::addSectionAux(
   auto RelI = Rels.begin();
   auto RelE = Rels.end();
 
-  // Maps offset to Index/Length pair.
-  DenseMap<unsigned, std::pair<unsigned, uint32_t>> OffsetToData;
+  DenseMap<unsigned, unsigned> OffsetToIndex;
   while (!D.empty()) {
     unsigned Index = S->Offsets.size();
     S->Offsets.push_back(std::make_pair(Offset, -1));
@@ -975,24 +974,21 @@ void EHOutputSection<ELFT>::addSectionAux(
 
       std::pair<StringRef, StringRef> CieInfo(Entry, Personality);
       auto P = CieMap.insert(std::make_pair(CieInfo, Cies.size()));
-      if (P.second)
+      if (P.second) {
         Cies.push_back(C);
-      OffsetToData[Offset] = std::make_pair(P.first->second, Length);
+        this->Header.sh_size += RoundUpToAlignment(Length, sizeof(uintX_t));
+      }
+      OffsetToIndex[Offset] = P.first->second;
     } else {
       if (!HasReloc)
         error("FDE doesn't reference another section");
       InputSectionBase<ELFT> *Target = S->getRelocTarget(*RelI);
       if (Target != &InputSection<ELFT>::Discarded && Target->isLive()) {
         uint32_t CieOffset = Offset + 4 - ID;
-        auto I = OffsetToData.find(CieOffset);
-        if (I == OffsetToData.end())
+        auto I = OffsetToIndex.find(CieOffset);
+        if (I == OffsetToIndex.end())
           error("Invalid CIE reference");
-        std::pair<unsigned, uint32_t> &IndLen = I->second;
-        Cie<ELFT> &Cie = Cies[IndLen.first];
-        if (Cie.Fdes.empty())
-          this->Header.sh_size +=
-              RoundUpToAlignment(IndLen.second, sizeof(uintX_t));
-        Cie.Fdes.push_back(EHRegion<ELFT>(S, Index));
+        Cies[I->second].Fdes.push_back(EHRegion<ELFT>(S, Index));
         this->Header.sh_size += RoundUpToAlignment(Length, sizeof(uintX_t));
       }
     }
