@@ -167,6 +167,25 @@ COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
 #undef COVMAP_FUNC_RECORD
 /* COVMAP_FUNC_RECORD end.  */
 
+/* COVMAP_HEADER start */
+/* Definition of member fields of coverage map header.
+ */
+#ifndef COVMAP_HEADER
+#define COVMAP_HEADER(Type, LLVMType, Name, Initializer)
+#else
+#define INSTR_PROF_DATA_DEFINED
+#endif
+COVMAP_HEADER(uint32_t, Int32Ty, NRecords, \
+              llvm::ConstantInt::get(Int32Ty,  FunctionRecords.size()))
+COVMAP_HEADER(uint32_t, Int32Ty, FilenamesSize, \
+              llvm::ConstantInt::get(Int32Ty, FilenamesSize))
+COVMAP_HEADER(uint32_t, Int32Ty, CoverageSize, \
+              llvm::ConstantInt::get(Int32Ty, CoverageMappingSize))
+COVMAP_HEADER(uint32_t, Int32Ty, Version, \
+              llvm::ConstantInt::get(Int32Ty, CoverageMappingVersion1))
+#undef COVMAP_HEADER
+/* COVMAP_HEADER end.  */
+
 
 #ifdef INSTR_PROF_VALUE_PROF_DATA
 #define INSTR_PROF_DATA_DEFINED
