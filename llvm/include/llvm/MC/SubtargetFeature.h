@@ -39,8 +39,8 @@ public:
   FeatureBitset(const bitset<MAX_SUBTARGET_FEATURES>& B) : bitset(B) {}
 
   FeatureBitset(std::initializer_list<unsigned> Init) : bitset() {
-    for (auto I = Init.begin() , E = Init.end(); I != E; ++I)
-      set(*I);
+    for (auto I : Init)
+      set(I);
   }
 };
 
