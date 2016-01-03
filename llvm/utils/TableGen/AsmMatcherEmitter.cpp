@@ -503,20 +503,21 @@ struct MatchableInfo {
   /// findAsmOperand - Find the AsmOperand with the specified name and
   /// suboperand index.
   int findAsmOperand(StringRef N, int SubOpIdx) const {
-    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i)
-      if (N == AsmOperands[i].SrcOpName &&
-          SubOpIdx == AsmOperands[i].SubOpIdx)
-        return i;
-    return -1;
+    auto I = std::find_if(AsmOperands.begin(), AsmOperands.end(),
+                          [&](const AsmOperand &Op) {
+                            return Op.SrcOpName == N && Op.SubOpIdx == SubOpIdx;
+                          });
+    return (I != AsmOperands.end()) ? I - AsmOperands.begin() : -1;
   }
 
   /// findAsmOperandNamed - Find the first AsmOperand with the specified name.
   /// This does not check the suboperand index.
   int findAsmOperandNamed(StringRef N) const {
-    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i)
-      if (N == AsmOperands[i].SrcOpName)
-        return i;
-    return -1;
+    auto I = std::find_if(AsmOperands.begin(), AsmOperands.end(),
+                          [&](const AsmOperand &Op) {
+                            return Op.SrcOpName == N;
+                          });
+    return (I != AsmOperands.end()) ? I - AsmOperands.begin() : -1;
   }
 
   void buildInstructionResultOperands();
