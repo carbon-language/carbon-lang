@@ -589,7 +589,7 @@ struct MatchableInfo {
         HasGT = true;
     }
 
-    return !(HasLT ^ HasGT);
+    return HasLT == HasGT;
   }
 
   void dump() const;
