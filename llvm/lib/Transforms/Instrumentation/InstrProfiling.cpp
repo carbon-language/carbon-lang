@@ -234,8 +234,6 @@ void InstrProfiling::lowerIncrement(InstrProfIncrementInst *Inc) {
 }
 
 void InstrProfiling::lowerCoverageData(GlobalVariable *CoverageData) {
-  CoverageData->setSection(getCoverageSection());
-  CoverageData->setAlignment(8);
 
   Constant *Init = CoverageData->getInitializer();
   // We're expecting { [4 x 32], [n x { i8*, i32, i32 }], [m x i8] }
