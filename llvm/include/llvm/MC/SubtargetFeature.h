@@ -59,6 +59,11 @@ struct SubtargetFeatureKV {
   bool operator<(StringRef S) const {
     return StringRef(Key) < S;
   }
+
+  // Compare routine for std::is_sorted.
+  bool operator<(const SubtargetFeatureKV &Other) const {
+    return StringRef(Key) < StringRef(Other.Key);
+  }
 };
 
 //===----------------------------------------------------------------------===//
