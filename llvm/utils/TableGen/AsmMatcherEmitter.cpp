@@ -1365,8 +1365,7 @@ void AsmMatcherInfo::buildInfo() {
   // Build information about all of the AssemblerPredicates.
   std::vector<Record*> AllPredicates =
     Records.getAllDerivedDefinitions("Predicate");
-  for (unsigned i = 0, e = AllPredicates.size(); i != e; ++i) {
-    Record *Pred = AllPredicates[i];
+  for (Record *Pred : AllPredicates) {
     // Ignore predicates that are not intended for the assembler.
     if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
       continue;
@@ -2003,8 +2002,8 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
   // Output the operand conversion kind enum.
   OS << "enum OperatorConversionKind {\n";
-  for (unsigned i = 0, e = OperandConversionKinds.size(); i != e; ++i)
-    OS << "  " << OperandConversionKinds[i] << ",\n";
+  for (const std::string &Converter : OperandConversionKinds)
+    OS << "  " << Converter << ",\n";
   OS << "  CVT_NUM_CONVERTERS\n";
   OS << "};\n\n";
 
@@ -2262,19 +2261,16 @@ static void emitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
 static void emitOperandDiagnosticTypes(AsmMatcherInfo &Info, raw_ostream &OS) {
   // Get the set of diagnostic types from all of the operand classes.
   std::set<StringRef> Types;
-  for (std::map<Record*, ClassInfo*>::const_iterator
-       I = Info.AsmOperandClasses.begin(),
-       E = Info.AsmOperandClasses.end(); I != E; ++I) {
-    if (!I->second->DiagnosticType.empty())
-      Types.insert(I->second->DiagnosticType);
+  for (const auto &OpClassEntry : Info.AsmOperandClasses) {
+    if (!OpClassEntry.second->DiagnosticType.empty())
+      Types.insert(OpClassEntry.second->DiagnosticType);
   }
 
   if (Types.empty()) return;
 
   // Now emit the enum entries.
-  for (std::set<StringRef>::const_iterator I = Types.begin(), E = Types.end();
-       I != E; ++I)
-    OS << "  Match_" << *I << ",\n";
+  for (StringRef Type : Types)
+    OS << "  Match_" << Type << ",\n";
   OS << "  END_OPERAND_DIAGNOSTIC_TYPES\n";
 }
 
@@ -2382,8 +2378,7 @@ static void emitMnemonicAliasVariant(raw_ostream &OS,const AsmMatcherInfo &Info,
   // iteration order of the map is stable.
   std::map<std::string, std::vector<Record*> > AliasesFromMnemonic;
 
-  for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
-    Record *R = Aliases[i];
+  for (Record *R : Aliases) {
     // FIXME: Allow AssemblerVariantName to be a comma separated list.
     std::string AsmVariantName = R->getValueAsString("AsmVariantName");
     if (AsmVariantName != AsmParserVariantName)
@@ -2396,10 +2391,8 @@ static void emitMnemonicAliasVariant(raw_ostream &OS,const AsmMatcherInfo &Info,
   // Process each alias a "from" mnemonic at a time, building the code executed
   // by the string remapper.
   std::vector<StringMatcher::StringPair> Cases;
-  for (std::map<std::string, std::vector<Record*> >::iterator
-       I = AliasesFromMnemonic.begin(), E = AliasesFromMnemonic.end();
-       I != E; ++I) {
-    const std::vector<Record*> &ToVec = I->second;
+  for (const auto &AliasEntry : AliasesFromMnemonic) {
+    const std::vector<Record*> &ToVec = AliasEntry.second;
 
     // Loop through each alias and emit code that handles each case.  If there
     // are two instructions without predicates, emit an error.  If there is one,
@@ -2424,7 +2417,7 @@ static void emitMnemonicAliasVariant(raw_ostream &OS,const AsmMatcherInfo &Info,
         AliasWithNoPredicate = i;
         continue;
       }
-      if (R->getValueAsString("ToMnemonic") == I->first)
+      if (R->getValueAsString("ToMnemonic") == AliasEntry.first)
         PrintFatalError(R->getLoc(), "MnemonicAlias to the same string");
 
       if (!MatchCode.empty())
@@ -2442,7 +2435,7 @@ static void emitMnemonicAliasVariant(raw_ostream &OS,const AsmMatcherInfo &Info,
 
     MatchCode += "return;";
 
-    Cases.push_back(std::make_pair(I->first, MatchCode));
+    Cases.push_back(std::make_pair(AliasEntry.first, MatchCode));
   }
   StringMatcher("Mnemonic", Cases, OS).Emit(Indent);
 }
