@@ -1147,7 +1147,6 @@ def getExpectedTimeouts(platform_name):
     if target.startswith("linux"):
         expected_timeout |= {
             "TestEvents.py",
-            "TestExitDuringStep.py",
 
             # Times out in ~10% of the times on the build bot
             "TestHelloWorld.py",
