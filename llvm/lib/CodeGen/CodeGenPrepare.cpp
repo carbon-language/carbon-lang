@@ -225,8 +225,14 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (!OptSize && TLI && TLI->isSlowDivBypassed()) {
     const DenseMap<unsigned int, unsigned int> &BypassWidths =
        TLI->getBypassSlowDivWidths();
-    for (Function::iterator I = F.begin(); I != F.end(); I++)
-      EverMadeChange |= bypassSlowDivision(F, I, BypassWidths);
+    BasicBlock* BB = &*F.begin();
+    while (BB != nullptr) {
+      // bypassSlowDivision may create new BBs, but we don't want to reapply the
+      // optimization to those blocks.
+      BasicBlock* Next = BB->getNextNode();
+      EverMadeChange |= bypassSlowDivision(BB, BypassWidths);
+      BB = Next;
+    }
   }
 
   // Eliminate blocks that contain only PHI nodes and an
