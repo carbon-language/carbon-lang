@@ -589,10 +589,8 @@ ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
 
   QualType T = Result.get()->getType();
 
-  // For now, reject dependent types.
   if (T->isDependentType()) {
-    Diag(Id.getLocStart(), diag::err_asm_incomplete_type) << T;
-    return ExprError();
+    return Result;
   }
 
   // Any sort of function type is fine.
@@ -679,7 +677,18 @@ Sema::LookupInlineAsmVarDeclField(Expr *E, StringRef Member, unsigned &Offset,
                                   SourceLocation AsmLoc) {
   Info.clear();
 
-  const RecordType *RT = E->getType()->getAs<RecordType>();
+  QualType T = E->getType();
+  if (T->isDependentType()) {
+    DeclarationNameInfo NameInfo;
+    NameInfo.setLoc(AsmLoc);
+    NameInfo.setName(&Context.Idents.get(Member));
+    return CXXDependentScopeMemberExpr::Create(
+        Context, E, T, /*IsArrow=*/false, AsmLoc, NestedNameSpecifierLoc(),
+        SourceLocation(),
+        /*FirstQualifierInScope=*/nullptr, NameInfo, /*TemplateArgs=*/nullptr);
+  }
+
+  const RecordType *RT = T->getAs<RecordType>();
   // FIXME: Diagnose this as field access into a scalar type.
   if (!RT)
     return ExprResult();
