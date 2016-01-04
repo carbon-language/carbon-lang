@@ -3480,10 +3480,6 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
     if (CS.isReturnNonNull())
       return true;
 
-  // operator new never returns null.
-  if (isOperatorNewLikeFn(V, TLI, /*LookThroughBitCast=*/true))
-    return true;
-
   return false;
 }
 
