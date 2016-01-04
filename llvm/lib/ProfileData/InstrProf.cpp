@@ -168,6 +168,12 @@ int collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
                               bool doCompression, std::string &Result) {
   uint8_t Header[16], *P = Header;
   std::string UncompressedNameStrings;
+  size_t UncompressedStringLen = 0;
+
+  for (auto NameStr : NameStrs)
+    UncompressedStringLen += (NameStr.length() + 1);
+
+  UncompressedNameStrings.reserve(UncompressedStringLen + 1);
 
   for (auto NameStr : NameStrs) {
     UncompressedNameStrings += NameStr;
