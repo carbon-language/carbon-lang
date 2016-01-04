@@ -2001,8 +2001,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     if (Left.isOneOf(Keywords.kw_let, Keywords.kw_var, TT_JsFatArrow,
                      Keywords.kw_in))
       return true;
-    if (Left.is(tok::kw_default) && Right.is(TT_ArrayInitializerLSquare))
-      return true; // For "export default [];".
+    if (Left.is(tok::kw_default) && Left.Previous &&
+        Left.Previous->is(tok::kw_export))
+      return true;
     if (Left.is(Keywords.kw_is) && Right.is(tok::l_brace))
       return true;
     if (Right.isOneOf(TT_JsTypeColon, TT_JsTypeOptionalQuestion))

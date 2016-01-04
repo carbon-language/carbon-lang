@@ -870,6 +870,7 @@ TEST_F(FormatTestJS, Modules) {
                "  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
                "];");
   verifyFormat("export default [];");
+  verifyFormat("export default () => {};");
 }
 
 TEST_F(FormatTestJS, TemplateStrings) {
