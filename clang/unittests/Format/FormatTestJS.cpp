@@ -310,6 +310,8 @@ TEST_F(FormatTestJS, ArrayLiterals) {
                "      ccccccccccccccccccccccccccc\n"
                "    ],\n"
                "    aaaa);");
+  verifyFormat("var aaaa = aaaaa ||  // wrap\n"
+               "    [];");
 
   verifyFormat("someFunction([], {a: a});");
 }
