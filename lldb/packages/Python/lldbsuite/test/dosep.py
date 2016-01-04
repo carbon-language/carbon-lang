@@ -1149,7 +1149,6 @@ def getExpectedTimeouts(platform_name):
             "TestEvents.py",
             "TestMultithreaded.py",
             "TestRegisters.py",  # ~12/600 dosep runs (build 3120-3122)
-            "TestThreadStepOut.py",
         }
     elif target.startswith("android"):
         expected_timeout |= {
