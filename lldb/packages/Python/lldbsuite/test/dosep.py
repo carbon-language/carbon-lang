@@ -1146,7 +1146,6 @@ def getExpectedTimeouts(platform_name):
 
     if target.startswith("linux"):
         expected_timeout |= {
-            "TestConnectRemote.py",
             "TestCreateAfterAttach.py",
             "TestEvents.py",
             "TestExitDuringStep.py",
