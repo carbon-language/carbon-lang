@@ -4557,6 +4557,7 @@ static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
     MVT CastVT = Subtarget.hasAVX2() ? MVT::v8i32 : MVT::v8f32;
 
     SDValue Mask = DAG.getConstant(0x0f, dl, MVT::i8);
+    Result = DAG.getBitcast(CastVT, Result);
     Vec256 = DAG.getBitcast(CastVT, Vec256);
     Vec256 = DAG.getNode(X86ISD::BLENDI, dl, CastVT, Result, Vec256, Mask);
     return DAG.getBitcast(ResultVT, Vec256);
@@ -27467,6 +27468,8 @@ static SDValue PerformBLENDICombine(SDNode *N, SelectionDAG &DAG) {
   SDValue V1 = N->getOperand(1);
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
+  assert(VT == V0.getValueType() && VT == V1.getValueType() &&
+         "Unexpected input vector types");
 
   // Canonicalize a v2f64 blend with a mask of 2 by swapping the vector
   // operands and changing the mask to 1. This saves us a bunch of
