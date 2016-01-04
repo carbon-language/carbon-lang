@@ -1,4 +1,4 @@
-/*===-- InstrProfData.inc - instr profiling runtime structures -----------=== *\
+/*===-- InstrProfData.inc - instr profiling runtime structures -*- C++ -*-=== *\
 |*
 |*                     The LLVM Compiler Infrastructure
 |*
