@@ -7281,6 +7281,11 @@ TEST_F(FormatTest, FormatObjCMethodDeclarations) {
                "               interval:(float)theInterval {\n"
                "}");
   verifyFormat("- (void)shortf:(GTMFoo *)theFoo\n"
+               "      longKeyword:(NSRect)theRect\n"
+               "    longerKeyword:(float)theInterval\n"
+               "            error:(NSError **)theError {\n"
+               "}");
+  verifyFormat("- (void)shortf:(GTMFoo *)theFoo\n"
                "          longKeyword:(NSRect)theRect\n"
                "    evenLongerKeyword:(float)theInterval\n"
                "                error:(NSError **)theError {\n"

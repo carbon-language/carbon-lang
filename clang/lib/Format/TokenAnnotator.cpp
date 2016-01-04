@@ -467,9 +467,8 @@ private:
         Tok->Type = TT_ObjCMethodExpr;
         Tok->Previous->Type = TT_SelectorName;
         if (Tok->Previous->ColumnWidth >
-            Contexts.back().LongestObjCSelectorName) {
+            Contexts.back().LongestObjCSelectorName)
           Contexts.back().LongestObjCSelectorName = Tok->Previous->ColumnWidth;
-        }
         if (!Contexts.back().FirstObjCSelectorName)
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
       } else if (Contexts.back().ColonIsForRangeExpr) {

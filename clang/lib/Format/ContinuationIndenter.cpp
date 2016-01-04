@@ -317,16 +317,16 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
 
   if (Current.is(TT_SelectorName) &&
       !State.Stack.back().ObjCSelectorNameFound) {
+    unsigned MinIndent =
+        std::max(State.FirstIndent + Style.ContinuationIndentWidth,
+                 State.Stack.back().Indent);
+    unsigned FirstColonPos = State.Column + Spaces + Current.ColumnWidth;
     if (Current.LongestObjCSelectorName == 0)
       State.Stack.back().AlignColons = false;
-    else if (State.Stack.back().Indent + Current.LongestObjCSelectorName >
-             State.Column + Spaces + Current.ColumnWidth)
-      State.Stack.back().ColonPos =
-          std::max(State.FirstIndent + Style.ContinuationIndentWidth,
-                   State.Stack.back().Indent) +
-          Current.LongestObjCSelectorName;
+    else if (MinIndent + Current.LongestObjCSelectorName > FirstColonPos)
+      State.Stack.back().ColonPos = MinIndent + Current.LongestObjCSelectorName;
     else
-      State.Stack.back().ColonPos = State.Column + Spaces + Current.ColumnWidth;
+      State.Stack.back().ColonPos = FirstColonPos;
   }
 
   // In "AlwaysBreak" mode, enforce wrapping directly after the parenthesis by
