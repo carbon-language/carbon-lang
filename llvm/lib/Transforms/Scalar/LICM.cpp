@@ -1015,14 +1015,14 @@ bool llvm::promoteLoopAccessesToScalars(AliasSet &AS,
     CurLoop->getUniqueExitBlocks(ExitBlocks);
     InsertPts.clear();
     InsertPts.reserve(ExitBlocks.size());
-    for (BasicBlock *ExitBlock : ExitBlocks) {
-      // Can't insert into a catchswitch.
-      if (isa<CatchSwitchInst>(ExitBlock->getTerminator()))
-        return Changed;
-
+    for (BasicBlock *ExitBlock : ExitBlocks)
       InsertPts.push_back(&*ExitBlock->getFirstInsertionPt());
-    }
   }
+
+  // Can't insert into a catchswitch.
+  for (BasicBlock *ExitBlock : ExitBlocks)
+    if (isa<CatchSwitchInst>(ExitBlock->getTerminator()))
+      return Changed;
 
   // Otherwise, this is safe to promote, lets do it!
   DEBUG(dbgs() << "LICM: Promoting value stored to in loop: " <<*SomePtr<<'\n');

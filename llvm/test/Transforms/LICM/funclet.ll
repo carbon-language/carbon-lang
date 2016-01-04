@@ -63,7 +63,9 @@ try.cont:                                         ; preds = %catch, %while.cond
 define void @test3(i1 %a, i1 %b, i1 %c) personality i32 (...)* @__CxxFrameHandler3 {
 entry:
   %.frame = alloca i8, align 4
+  %.frame2 = alloca i8, align 4
   %bc = bitcast i8* %.frame to i32*
+  %bc2 = bitcast i8* %.frame2 to i32*
   br i1 %a, label %try.success.or.caught, label %forbody
 
 catch.object.Throwable:                           ; preds = %catch.dispatch
@@ -84,6 +86,7 @@ catch.dispatch:                                   ; preds = %else, %forbody
 
 forbody:                                          ; preds = %forcond.backedge, %0
   store i32 1, i32* %bc, align 4
+  store i32 2, i32* %bc2, align 4
   invoke void @may_throw()
           to label %postinvoke unwind label %catch.dispatch
 
@@ -95,6 +98,7 @@ else:                                             ; preds = %postinvoke
 ; CHECK-LABEL: define void @test3(
 ; CHECK:      catchswitch within none
 ; CHECK:      store i32 1, i32* %bc, align 4
+; CHECK:      store i32 2, i32* %bc2, align 4
 
 declare void @may_throw()
 
