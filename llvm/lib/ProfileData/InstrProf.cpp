@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProf.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -167,18 +168,9 @@ GlobalVariable *createPGOFuncNameVar(Function &F, StringRef FuncName) {
 int collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
                               bool doCompression, std::string &Result) {
   uint8_t Header[16], *P = Header;
-  std::string UncompressedNameStrings;
-  size_t UncompressedStringLen = 0;
+  std::string UncompressedNameStrings =
+      join(NameStrs.begin(), NameStrs.end(), StringRef(" "));
 
-  for (auto NameStr : NameStrs)
-    UncompressedStringLen += (NameStr.length() + 1);
-
-  UncompressedNameStrings.reserve(UncompressedStringLen + 1);
-
-  for (auto NameStr : NameStrs) {
-    UncompressedNameStrings += NameStr;
-    UncompressedNameStrings.append(" ");
-  }
   unsigned EncLen = encodeULEB128(UncompressedNameStrings.length(), P);
   P += EncLen;
   if (!doCompression) {
@@ -252,8 +244,8 @@ int readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
     do {
       size_t NameStop = NameStrings.find(' ', NameStart);
       if (NameStop == StringRef::npos)
-        return 1;
-      if (NameStop == NameStrings.size() - 1)
+        NameStop = NameStrings.size();
+      if (NameStop >= NameStrings.size() - 1)
         isLast = true;
       StringRef Name = NameStrings.substr(NameStart, NameStop - NameStart);
       Symtab.addFuncName(Name);
