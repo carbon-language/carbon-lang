@@ -207,6 +207,22 @@ struct __list_node_pointer_traits {
   >::type __link_pointer;
 #endif
 
+  typedef typename conditional<
+          is_same<__link_pointer, __node_pointer>::value,
+          __base_pointer,
+          __node_pointer
+  >::type __non_link_pointer;
+
+  static _LIBCPP_INLINE_VISIBILITY
+  __link_pointer __unsafe_link_pointer_cast(__link_pointer __p) {
+      return __p;
+  }
+
+  static _LIBCPP_INLINE_VISIBILITY
+  __link_pointer __unsafe_link_pointer_cast(__non_link_pointer __p) {
+      return static_cast<__link_pointer>(static_cast<_VoidPtr>(__p));
+  }
+
 };
 
 template <class _Tp, class _VoidPtr>
@@ -221,22 +237,17 @@ struct __list_node_base
     __link_pointer __next_;
 
     _LIBCPP_INLINE_VISIBILITY
-    __list_node_base() : __prev_(__as_link()), __next_(__as_link()) {}
+    __list_node_base() : __prev_(_NodeTraits::__unsafe_link_pointer_cast(__self())),
+                         __next_(_NodeTraits::__unsafe_link_pointer_cast(__self())) {}
 
     _LIBCPP_INLINE_VISIBILITY
-    __base_pointer __as_base() {
+    __base_pointer __self() {
         return pointer_traits<__base_pointer>::pointer_to(*this);
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    __link_pointer __as_link() {
-        return static_cast<__link_pointer>(static_cast<_VoidPtr>(
-                __as_base()));
-    }
-
-    _LIBCPP_INLINE_VISIBILITY
     __node_pointer __as_node() {
-        return static_cast<__node_pointer>(__as_base());
+        return static_cast<__node_pointer>(__self());
     }
 };
 
@@ -245,6 +256,14 @@ struct __list_node
     : public __list_node_base<_Tp, _VoidPtr>
 {
     _Tp __value_;
+
+    typedef __list_node_base<_Tp, _VoidPtr> __base;
+    typedef typename __base::__link_pointer __link_pointer;
+
+    _LIBCPP_INLINE_VISIBILITY
+    __link_pointer __as_link() {
+        return static_cast<__link_pointer>(__base::__self());
+    }
 };
 
 template <class _Tp, class _Alloc = allocator<_Tp> > class _LIBCPP_TYPE_VIS_ONLY list;
@@ -520,7 +539,8 @@ protected:
     typedef allocator_traits<__node_allocator>                       __node_alloc_traits;
     typedef typename __node_alloc_traits::pointer                    __node_pointer;
     typedef typename __node_alloc_traits::pointer                    __node_const_pointer;
-    typedef typename __list_node_pointer_traits<value_type, __void_pointer>::__link_pointer __link_pointer;
+    typedef __list_node_pointer_traits<value_type, __void_pointer> __node_pointer_traits;
+    typedef typename __node_pointer_traits::__link_pointer __link_pointer;
     typedef __link_pointer __link_const_pointer;
     typedef typename __alloc_traits::pointer                         pointer;
     typedef typename __alloc_traits::const_pointer                   const_pointer;
@@ -531,6 +551,12 @@ protected:
 
     __node_base __end_;
     __compressed_pair<size_type, __node_allocator> __size_alloc_;
+
+    _LIBCPP_INLINE_VISIBILITY
+    __link_pointer __end_as_link() const _NOEXCEPT {
+        return __node_pointer_traits::__unsafe_link_pointer_cast(
+                const_cast<__node_base&>(__end_).__self());
+    }
 
     _LIBCPP_INLINE_VISIBILITY
           size_type& __sz() _NOEXCEPT {return __size_alloc_.first();}
@@ -576,18 +602,18 @@ protected:
     iterator end() _NOEXCEPT
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
-        return iterator(__end_.__as_link(), this);
+        return iterator(__end_as_link(), this);
 #else
-        return iterator(__end_.__as_link());
+        return iterator(__end_as_link());
 #endif
     }
     _LIBCPP_INLINE_VISIBILITY
     const_iterator end() const _NOEXCEPT
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
-        return const_iterator(const_cast<__node_base&>(__end_).__as_link(), this);
+        return const_iterator(__end_as_link(), this);
 #else
-        return const_iterator(const_cast<__node_base&>(__end_).__as_link());
+        return const_iterator(__end_as_link());
 #endif
     }
 
@@ -681,7 +707,7 @@ __list_imp<_Tp, _Alloc>::clear() _NOEXCEPT
     {
         __node_allocator& __na = __node_alloc();
         __link_pointer __f = __end_.__next_;
-        __link_pointer __l = __end_.__as_link();
+        __link_pointer __l = __end_as_link();
         __unlink_nodes(__f, __l->__prev_);
         __sz() = 0;
         while (__f != __l)
@@ -728,13 +754,13 @@ __list_imp<_Tp, _Alloc>::swap(__list_imp& __c)
     swap(__sz(), __c.__sz());
     swap(__end_, __c.__end_);
     if (__sz() == 0)
-        __end_.__next_ = __end_.__prev_ = __end_.__as_link();
+        __end_.__next_ = __end_.__prev_ = __end_as_link();
     else
-        __end_.__prev_->__next_ = __end_.__next_->__prev_ = __end_.__as_link();
+        __end_.__prev_->__next_ = __end_.__next_->__prev_ = __end_as_link();
     if (__c.__sz() == 0)
-        __c.__end_.__next_ = __c.__end_.__prev_ = __c.__end_.__as_link();
+        __c.__end_.__next_ = __c.__end_.__prev_ = __c.__end_as_link();
     else
-        __c.__end_.__prev_->__next_ = __c.__end_.__next_->__prev_ = __c.__end_.__as_link();
+        __c.__end_.__prev_->__next_ = __c.__end_.__next_->__prev_ = __c.__end_as_link();
 
 #if _LIBCPP_DEBUG_LEVEL >= 2
     __libcpp_db* __db = __get_db();
@@ -747,7 +773,7 @@ __list_imp<_Tp, _Alloc>::swap(__list_imp& __c)
     {
         --__p;
         const_iterator* __i = static_cast<const_iterator*>((*__p)->__i_);
-        if (__i->__ptr_ == __c.__end_.__as_link())
+        if (__i->__ptr_ == __c.__end_as_link())
         {
             __cn2->__add(*__p);
             if (--__cn1->end_ != __p)
@@ -760,7 +786,7 @@ __list_imp<_Tp, _Alloc>::swap(__list_imp& __c)
     {
         --__p;
         const_iterator* __i = static_cast<const_iterator*>((*__p)->__i_);
-        if (__i->__ptr_ == __end_.__as_link())
+        if (__i->__ptr_ == __end_as_link())
         {
             __cn1->__add(*__p);
             if (--__cn2->end_ != __p)
@@ -1061,7 +1087,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::__link_nodes_at_front(__link_pointer __f, __link_pointer __l)
 {
-    __f->__prev_ = base::__end_.__as_link();
+    __f->__prev_ = base::__end_as_link();
     __l->__next_ = base::__end_.__next_;
     __l->__next_->__prev_ = __l;
     base::__end_.__next_ = __f;
@@ -1073,7 +1099,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::__link_nodes_at_back(__link_pointer __f, __link_pointer __l)
 {
-    __l->__next_ = base::__end_.__as_link();
+    __l->__next_ = base::__end_as_link();
     __f->__prev_ = base::__end_.__prev_;
     __f->__prev_->__next_ = __f;
     base::__end_.__prev_ = __l;
@@ -1892,7 +1918,7 @@ list<_Tp, _Alloc>::resize(size_type __n, const value_type& __x)
             throw;
         }
 #endif  // _LIBCPP_NO_EXCEPTIONS
-        __link_nodes(base::__end_.__as_link(), __r.__ptr_, __e.__ptr_);
+        __link_nodes(base::__end_as_link(), __r.__ptr_, __e.__ptr_);
         base::__sz() += __ds;
     }
 }
@@ -1924,7 +1950,7 @@ list<_Tp, _Alloc>::splice(const_iterator __p, list& __c)
         {
             --__p;
             iterator* __i = static_cast<iterator*>((*__p)->__i_);
-            if (__i->__ptr_ != __c.__end_.__as_link())
+            if (__i->__ptr_ != __c.__end_as_link())
             {
                 __cn1->__add(*__p);
                 (*__p)->__c_ = __cn1;
@@ -2153,7 +2179,7 @@ list<_Tp, _Alloc>::merge(list& __c, _Comp __comp)
         {
             --__p;
             iterator* __i = static_cast<iterator*>((*__p)->__i_);
-            if (__i->__ptr_ != __c.__end_.__as_link())
+            if (__i->__ptr_ != __c.__end_as_link())
             {
                 __cn1->__add(*__p);
                 (*__p)->__c_ = __cn1;
@@ -2275,7 +2301,7 @@ template <class _Tp, class _Alloc>
 bool
 list<_Tp, _Alloc>::__dereferenceable(const const_iterator* __i) const
 {
-    return __i->__ptr_ != const_cast<__node_base&>(this->__end_).__as_link();
+    return __i->__ptr_ != this->__end_as_link();
 }
 
 template <class _Tp, class _Alloc>
