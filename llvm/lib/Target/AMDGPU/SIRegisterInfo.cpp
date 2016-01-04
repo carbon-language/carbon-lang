@@ -282,11 +282,6 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
         struct SIMachineFunctionInfo::SpilledReg Spill =
             MFI->getSpilledReg(MF, Index, i);
 
-        if (Spill.VGPR == AMDGPU::NoRegister) {
-           LLVMContext &Ctx = MF->getFunction()->getContext();
-           Ctx.emitError("Ran out of VGPRs for spilling SGPR");
-        }
-
         BuildMI(*MBB, MI, DL,
                 TII->getMCOpcodeFromPseudo(AMDGPU::V_WRITELANE_B32),
                 Spill.VGPR)
@@ -314,11 +309,6 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            &AMDGPU::SGPR_32RegClass, i);
         struct SIMachineFunctionInfo::SpilledReg Spill =
             MFI->getSpilledReg(MF, Index, i);
-
-        if (Spill.VGPR == AMDGPU::NoRegister) {
-           LLVMContext &Ctx = MF->getFunction()->getContext();
-           Ctx.emitError("Ran out of VGPRs for spilling SGPR");
-        }
 
         BuildMI(*MBB, MI, DL,
                 TII->getMCOpcodeFromPseudo(AMDGPU::V_READLANE_B32),
