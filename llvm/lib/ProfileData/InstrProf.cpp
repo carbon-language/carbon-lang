@@ -173,26 +173,32 @@ int collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
 
   unsigned EncLen = encodeULEB128(UncompressedNameStrings.length(), P);
   P += EncLen;
-  if (!doCompression) {
-    EncLen = encodeULEB128(0, P);
+
+  auto WriteStringToResult = [&](size_t CompressedLen,
+                                 const std::string &InputStr) {
+    EncLen = encodeULEB128(CompressedLen, P);
     P += EncLen;
-    Result.append(reinterpret_cast<char *>(&Header[0]), P - &Header[0]);
-    Result += UncompressedNameStrings;
+    char *HeaderStr = reinterpret_cast<char *>(&Header[0]);
+    unsigned HeaderLen = P - &Header[0];
+    Result.append(HeaderStr, HeaderLen);
+    Result += InputStr;
     return 0;
-  }
+  };
+
+  if (!doCompression)
+    return WriteStringToResult(0, UncompressedNameStrings);
+
   SmallVector<char, 128> CompressedNameStrings;
   zlib::Status Success =
       zlib::compress(StringRef(UncompressedNameStrings), CompressedNameStrings,
                      zlib::BestSizeCompression);
-  assert(Success == zlib::StatusOK);
+
   if (Success != zlib::StatusOK)
     return 1;
-  EncLen = encodeULEB128(CompressedNameStrings.size(), P);
-  P += EncLen;
-  Result.append(reinterpret_cast<char *>(&Header[0]), P - &Header[0]);
-  Result +=
-      std::string(CompressedNameStrings.data(), CompressedNameStrings.size());
-  return 0;
+
+  return WriteStringToResult(
+      CompressedNameStrings.size(),
+      std::string(CompressedNameStrings.data(), CompressedNameStrings.size()));
 }
 
 StringRef getPGOFuncNameInitializer(GlobalVariable *NameVar) {
