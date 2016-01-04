@@ -77,7 +77,7 @@ bool TGParser::AddValue(Record *CurRec, SMLoc Loc, const RecordVal &RV) {
 /// SetValue -
 /// Return true on error, false on success.
 bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
-                        const std::vector<unsigned> &BitList, Init *V,
+                        ArrayRef<unsigned> BitList, Init *V,
                         bool AllowSelfAssignment) {
   if (!V) return false;
 
@@ -166,7 +166,7 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
     if (i < SubClass.TemplateArgs.size()) {
       // If a value is specified for this template arg, set it now.
       if (SetValue(CurRec, SubClass.RefRange.Start, TArgs[i],
-                   std::vector<unsigned>(), SubClass.TemplateArgs[i]))
+                   None, SubClass.TemplateArgs[i]))
         return true;
 
       // Resolve it next.
@@ -244,8 +244,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
       // If a value is specified for this template arg, set it in the
       // superclass now.
       if (SetValue(CurRec, SubMultiClass.RefRange.Start, SMCTArgs[i],
-                   std::vector<unsigned>(),
-                   SubMultiClass.TemplateArgs[i]))
+                   None, SubMultiClass.TemplateArgs[i]))
         return true;
 
       // Resolve it next.
@@ -259,8 +258,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
       for (const auto &Def :
              makeArrayRef(CurMC->DefPrototypes).slice(newDefStart)) {
         if (SetValue(Def.get(), SubMultiClass.RefRange.Start, SMCTArgs[i],
-                     std::vector<unsigned>(),
-                     SubMultiClass.TemplateArgs[i]))
+                     None, SubMultiClass.TemplateArgs[i]))
           return true;
 
         // Resolve it next.
@@ -333,8 +331,7 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
 
     IterRec->addValue(RecordVal(IterVar->getName(), IVal->getType(), false));
 
-    if (SetValue(IterRec.get(), Loc, IterVar->getName(),
-                 std::vector<unsigned>(), IVal))
+    if (SetValue(IterRec.get(), Loc, IterVar->getName(), None, IVal))
       return Error(Loc, "when instantiating this def");
 
     // Resolve it next.
@@ -1729,7 +1726,7 @@ Init *TGParser::ParseDeclaration(Record *CurRec,
     SMLoc ValLoc = Lex.getLoc();
     Init *Val = ParseValue(CurRec, Type);
     if (!Val ||
-        SetValue(CurRec, ValLoc, DeclName, std::vector<unsigned>(), Val))
+        SetValue(CurRec, ValLoc, DeclName, None, Val))
       // Return the name, even if an error is thrown.  This is so that we can
       // continue to make some progress, even without the value having been
       // initialized.
@@ -2359,8 +2356,7 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
   // Set the value for NAME. We don't resolve references to it 'til later,
   // though, so that uses in nested multiclass names don't get
   // confused.
-  if (SetValue(CurRec.get(), Ref.RefRange.Start, "NAME",
-               std::vector<unsigned>(), DefmPrefix,
+  if (SetValue(CurRec.get(), Ref.RefRange.Start, "NAME", None, DefmPrefix,
                /*AllowSelfAssignment*/true)) {
     Error(DefmPrefixRange.Start, "Could not resolve " +
           CurRec->getNameInitAsString() + ":NAME to '" +
@@ -2448,8 +2444,7 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC, Record *CurRec,
     // Check if a value is specified for this temp-arg.
     if (i < TemplateVals.size()) {
       // Set it now.
-      if (SetValue(CurRec, DefmPrefixLoc, TArgs[i], std::vector<unsigned>(),
-                   TemplateVals[i]))
+      if (SetValue(CurRec, DefmPrefixLoc, TArgs[i], None, TemplateVals[i]))
         return true;
 
       // Resolve it next.
