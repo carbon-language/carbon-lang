@@ -1671,9 +1671,9 @@ typedef struct kmp_disp {
 #define KMP_BARRIER_UNUSED_BIT  1       /* bit that must never be set for valid state */
 #define KMP_BARRIER_BUMP_BIT    2       /* lsb used for bump of go/arrived state */
 
-#define KMP_BARRIER_SLEEP_STATE         ((kmp_uint) (1 << KMP_BARRIER_SLEEP_BIT))
-#define KMP_BARRIER_UNUSED_STATE        ((kmp_uint) (1 << KMP_BARRIER_UNUSED_BIT))
-#define KMP_BARRIER_STATE_BUMP          ((kmp_uint) (1 << KMP_BARRIER_BUMP_BIT))
+#define KMP_BARRIER_SLEEP_STATE         (1 << KMP_BARRIER_SLEEP_BIT)
+#define KMP_BARRIER_UNUSED_STATE        (1 << KMP_BARRIER_UNUSED_BIT)
+#define KMP_BARRIER_STATE_BUMP          (1 << KMP_BARRIER_BUMP_BIT)
 
 #if (KMP_BARRIER_SLEEP_BIT >= KMP_BARRIER_BUMP_BIT)
 # error "Barrier sleep bit must be smaller than barrier bump bit"
