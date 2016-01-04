@@ -153,7 +153,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       !Current.isOneOf(tok::r_paren, tok::r_brace))
     return true;
   if (((Previous.is(TT_DictLiteral) && Previous.is(tok::l_brace)) ||
-       Previous.is(TT_ArrayInitializerLSquare)) &&
+       (Previous.is(TT_ArrayInitializerLSquare) &&
+        Previous.ParameterCount > 1)) &&
       Style.ColumnLimit > 0 &&
       getLengthToMatchingParen(Previous) + State.Column - 1 >
           getColumnLimit(State))
@@ -728,7 +729,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   //   }, a, b, c);
   if (Current.isNot(tok::comment) && Previous &&
       Previous->isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) &&
-      State.Stack.size() > 1) {
+      !Previous->is(TT_DictLiteral) && State.Stack.size() > 1) {
     if (State.Stack[State.Stack.size() - 2].NestedBlockInlined && Newline)
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i)
         State.Stack[i].NoLineBreak = true;

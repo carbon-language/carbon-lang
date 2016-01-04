@@ -285,10 +285,11 @@ private:
                  Contexts.back().ContextKind == tok::l_brace &&
                  Parent->isOneOf(tok::l_brace, tok::comma)) {
         Left->Type = TT_JsComputedPropertyName;
-      } else if (Parent &&
-                 Parent->isOneOf(tok::at, tok::equal, tok::comma, tok::l_paren,
-                                 tok::l_square, tok::question, tok::colon,
-                                 tok::kw_return)) {
+      } else if (Style.Language == FormatStyle::LK_Proto ||
+                 (Parent &&
+                  Parent->isOneOf(tok::at, tok::equal, tok::comma, tok::l_paren,
+                                  tok::l_square, tok::question, tok::colon,
+                                  tok::kw_return))) {
         Left->Type = TT_ArrayInitializerLSquare;
       } else {
         BindingIncrease = 10;
