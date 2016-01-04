@@ -1769,7 +1769,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     // which might otherwise be blown up onto many lines. Here, clang-format
     // won't produce "hanging" indents anyway as there is no other trailing
     // call.
-    return Right.LastOperator ? 150 : 40;
+    return Right.LastOperator ? 150 : 35;
   }
 
   if (Right.is(TT_TrailingAnnotation) &&
