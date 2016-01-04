@@ -289,7 +289,9 @@ private:
                  (Parent &&
                   Parent->isOneOf(TT_BinaryOperator, tok::at, tok::comma,
                                   tok::l_paren, tok::l_square, tok::question,
-                                  tok::colon, tok::kw_return))) {
+                                  tok::colon, tok::kw_return,
+                                  // Should only be relevant to JavaScript:
+                                  tok::kw_default))) {
         Left->Type = TT_ArrayInitializerLSquare;
       } else {
         BindingIncrease = 10;
@@ -1999,6 +2001,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     if (Left.isOneOf(Keywords.kw_let, Keywords.kw_var, TT_JsFatArrow,
                      Keywords.kw_in))
       return true;
+    if (Left.is(tok::kw_default) && Right.is(TT_ArrayInitializerLSquare))
+      return true; // For "export default [];".
     if (Left.is(Keywords.kw_is) && Right.is(tok::l_brace))
       return true;
     if (Right.isOneOf(TT_JsTypeColon, TT_JsTypeOptionalQuestion))

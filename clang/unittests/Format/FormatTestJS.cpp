@@ -865,6 +865,11 @@ TEST_F(FormatTestJS, Modules) {
                "  // adsdasd\n"
                "  BAZ\n"
                "}");
+  verifyFormat("export default [\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+               "];");
+  verifyFormat("export default [];");
 }
 
 TEST_F(FormatTestJS, TemplateStrings) {
