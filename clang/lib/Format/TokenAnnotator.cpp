@@ -459,7 +459,8 @@ private:
           break;
         }
       }
-      if (Contexts.back().ColonIsDictLiteral) {
+      if (Contexts.back().ColonIsDictLiteral ||
+          Style.Language == FormatStyle::LK_Proto) {
         Tok->Type = TT_DictLiteral;
       } else if (Contexts.back().ColonIsObjCMethodExpr ||
                  Line.startsWith(TT_ObjCMethodSpecifier)) {
@@ -1878,6 +1879,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                     tok::numeric_constant, tok::l_paren, tok::l_brace,
                     tok::kw_true, tok::kw_false))
     return false;
+  if (Left.is(tok::colon))
+    return !Left.is(TT_ObjCMethodExpr);
   if (Left.is(tok::coloncolon))
     return false;
   if (Left.is(tok::less) || Right.isOneOf(tok::greater, tok::less))
@@ -1928,8 +1931,6 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       !Right.isOneOf(TT_ObjCMethodExpr, TT_LambdaLSquare) &&
       !Left.isOneOf(tok::numeric_constant, TT_DictLiteral))
     return false;
-  if (Left.is(tok::colon))
-    return !Left.is(TT_ObjCMethodExpr);
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
     return !Left.Children.empty(); // No spaces in "{}".
   if ((Left.is(tok::l_brace) && Left.BlockKind != BK_Block) ||

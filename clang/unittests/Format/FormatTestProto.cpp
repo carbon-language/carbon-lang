@@ -168,6 +168,12 @@ TEST_F(FormatTestProto, FormatsOptions) {
                "  field_c: \"OK\"\n"
                "  msg_field{field_d: 123}\n"
                "};");
+
+  // Support syntax with <> instead of {}.
+  verifyFormat("option (MyProto.options) = {\n"
+               "  field_c: \"OK\",\n"
+               "  msg_field: <field_d: 123>\n"
+               "};");
 }
 
 TEST_F(FormatTestProto, FormatsService) {
