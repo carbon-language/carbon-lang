@@ -2998,15 +2998,7 @@ extern kmp_uint32 __kmp_neq_4( kmp_uint32 value, kmp_uint32 checker );
 extern kmp_uint32 __kmp_lt_4(  kmp_uint32 value, kmp_uint32 checker );
 extern kmp_uint32 __kmp_ge_4(  kmp_uint32 value, kmp_uint32 checker );
 extern kmp_uint32 __kmp_le_4(  kmp_uint32 value, kmp_uint32 checker );
-
-extern kmp_uint32 __kmp_eq_8(  kmp_uint64 value, kmp_uint64 checker );
-extern kmp_uint32 __kmp_neq_8( kmp_uint64 value, kmp_uint64 checker );
-extern kmp_uint32 __kmp_lt_8(  kmp_uint64 value, kmp_uint64 checker );
-extern kmp_uint32 __kmp_ge_8(  kmp_uint64 value, kmp_uint64 checker );
-extern kmp_uint32 __kmp_le_8(  kmp_uint64 value, kmp_uint64 checker );
-
 extern kmp_uint32 __kmp_wait_yield_4( kmp_uint32 volatile * spinner, kmp_uint32 checker, kmp_uint32 (*pred) (kmp_uint32, kmp_uint32), void * obj );
-extern kmp_uint64 __kmp_wait_yield_8( kmp_uint64 volatile * spinner, kmp_uint64 checker, kmp_uint32 (*pred) (kmp_uint64, kmp_uint64), void * obj );
 
 class kmp_flag_32;
 class kmp_flag_64;
