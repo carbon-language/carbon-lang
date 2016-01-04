@@ -245,20 +245,10 @@ int readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
       P += UncompressedSize;
     }
     // Now parse the name strings.
-    size_t NameStart = 0;
-    bool isLast = false;
-    do {
-      size_t NameStop = NameStrings.find(' ', NameStart);
-      if (NameStop == StringRef::npos)
-        NameStop = NameStrings.size();
-      if (NameStop >= NameStrings.size() - 1)
-        isLast = true;
-      StringRef Name = NameStrings.substr(NameStart, NameStop - NameStart);
+    SmallVector<StringRef, 0> Names;
+    NameStrings.split(Names, ' ');
+    for (StringRef &Name : Names)
       Symtab.addFuncName(Name);
-      if (isLast)
-        break;
-      NameStart = NameStop + 1;
-    } while (true);
 
     while (P < EndP && *P == 0)
       P++;
