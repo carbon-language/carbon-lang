@@ -329,12 +329,6 @@ def useFlatForGlobal : Predicate <
 
 let Predicates = [useFlatForGlobal] in {
 
-// 1. Offset as 20bit DWORD immediate
-def : Pat <
-  (SIload_constant v4i32:$sbase, IMM20bit:$offset),
-  (S_BUFFER_LOAD_DWORD_IMM $sbase, (as_i32imm $offset))
->;
-
 // Patterns for global loads with no offset
 class FlatLoadPat <FLAT inst, SDPatternOperator node, ValueType vt> : Pat <
   (vt (node i64:$addr)),
