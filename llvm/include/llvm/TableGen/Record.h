@@ -267,7 +267,7 @@ public:
   InitKind getKind() const { return Kind; }
 
 protected:
-  explicit Init(InitKind K, uint8_t Opc = 0) : Kind(K), Opc(Opoc) {}
+  explicit Init(InitKind K, uint8_t Opc = 0) : Kind(K), Opc(Opc) {}
 
 public:
   virtual ~Init() {}
