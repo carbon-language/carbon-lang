@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Symbol table is a bag of all known symbols. We put all symbols of
-// all input files to the symbol table. The symbol Table is basically
+// all input files to the symbol table. The symbol table is basically
 // a hash table with the logic to resolve symbol name conflicts using
 // the symbol types.
 //
@@ -28,6 +28,9 @@ using namespace lld::elf2;
 
 template <class ELFT> SymbolTable<ELFT>::SymbolTable() {}
 
+// All input object files must be for the same architecture
+// (e.g. it does not make sense to link x86 object files with
+// MIPS object files.) This function checks for that error.
 template <class ELFT>
 static void checkCompatibility(InputFile *FileP) {
   auto *F = dyn_cast<ELFFileBase<ELFT>>(FileP);
@@ -42,6 +45,7 @@ static void checkCompatibility(InputFile *FileP) {
   error(A + " is incompatible with " + B);
 }
 
+// Add symbols in File to the symbol table.
 template <class ELFT>
 void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   InputFile *FileP = File.get();
@@ -109,6 +113,9 @@ void SymbolTable<ELFT>::addSynthetic(StringRef Name,
   resolve(Sym);
 }
 
+// Add Name as an "ignored" symbol. An ignored symbol is a regular
+// linker-synthesized defined symbol, but it is not recorded to the output
+// file's symbol table. Such symbols are useful for some linker-defined symbols.
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addIgnored(StringRef Name) {
   auto *Sym = new (Alloc)
