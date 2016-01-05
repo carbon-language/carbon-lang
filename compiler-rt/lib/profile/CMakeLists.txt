@@ -35,7 +35,8 @@ set(PROFILE_SOURCES
   InstrProfilingPlatformLinux.c
   InstrProfilingPlatformOther.c
   InstrProfilingRuntime.cc
-  InstrProfilingUtil.c)
+  InstrProfilingUtil.c
+  WindowsMMap.c)
 
 if(UNIX)
  set(EXTRA_FLAGS
