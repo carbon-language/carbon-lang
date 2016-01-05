@@ -5369,7 +5369,10 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case X86::TEST8ri_NOREX:
     MI->setDesc(get(X86::TEST8ri));
     return true;
- 
+  case X86::MOV32ri64:
+    MI->setDesc(get(X86::MOV32ri));
+    return true;
+
   // KNL does not recognize dependency-breaking idioms for mask registers,
   // so kxnor %k1, %k1, %k2 has a RAW dependence on %k1.
   // Using %k0 as the undef input register is a performance heuristic based

@@ -281,10 +281,9 @@ let Predicates = [OptForSize, NotSlowIncDec, Not64BitMode],
 // Materialize i64 constant where top 32-bits are zero. This could theoretically
 // use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
 // that would make it more difficult to rematerialize.
-let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1,
-    isCodeGenOnly = 1, hasSideEffects = 0 in
-def MOV32ri64 : Ii32<0xb8, AddRegFrm, (outs GR32:$dst), (ins i64i32imm:$src),
-                     "", [], IIC_ALU_NONMEM>, Sched<[WriteALU]>;
+let isReMaterializable = 1, isAsCheapAsAMove = 1,
+    isPseudo = 1, hasSideEffects = 0 in
+def MOV32ri64 : I<0, Pseudo, (outs GR32:$dst), (ins i64i32imm:$src), "", []>;
 
 // This 64-bit pseudo-move can be used for both a 64-bit constant that is
 // actually the zero-extension of a 32-bit constant and for labels in the
