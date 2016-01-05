@@ -35,29 +35,6 @@ public:
     bool operator< (const MoveOnly& x) const {return data_ <  x.data_;}
 };
 
-class MoveOnly2
-{
-    MoveOnly2(const MoveOnly&);
-    MoveOnly2& operator=(const MoveOnly2&);
-
-    int data_;
-public:
-    MoveOnly2(int data = 1) : data_(data) {}
-    MoveOnly2(MoveOnly2&& x)
-        : data_(x.data_) {x.data_ = 0;}
-    MoveOnly2& operator=(MoveOnly2&& x)
-        {data_ = x.data_; x.data_ = 0; return *this;}
-    MoveOnly2(MoveOnly&& x)
-        : data_(x.data_) {x.data_ = 0;}
-    MoveOnly2& operator=(MoveOnly&& x)
-        {data_ = x.data_; x.data_ = 0; return *this;}
-
-    int get() const {return data_;}
-
-    bool operator==(const MoveOnly2& x) const {return data_ == x.data_;}
-    bool operator< (const MoveOnly2& x) const {return data_ <  x.data_;}
-};
-
 namespace std {
 
 template <>
@@ -67,12 +44,6 @@ struct hash<MoveOnly>
     std::size_t operator()(const MoveOnly& x) const {return x.get();}
 };
 
-template <>
-struct hash<MoveOnly2>
-    : public std::unary_function<MoveOnly, std::size_t>
-{
-    std::size_t operator()(const MoveOnly2& x) const {return x.get();}
-};
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
