@@ -1305,8 +1305,9 @@ static bool markAliveBlocks(Function &F,
       }
     }
 
-    // Turn invokes that call 'nounwind' functions into ordinary calls.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
+    TerminatorInst *Terminator = BB->getTerminator();
+    if (auto *II = dyn_cast<InvokeInst>(Terminator)) {
+      // Turn invokes that call 'nounwind' functions into ordinary calls.
       Value *Callee = II->getCalledValue();
       if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
         changeToUnreachable(II, true);
@@ -1320,6 +1321,20 @@ static bool markAliveBlocks(Function &F,
         } else
           changeToCall(II);
         Changed = true;
+      }
+    } else if (auto *CatchSwitch = dyn_cast<CatchSwitchInst>(Terminator)) {
+      // Remove catchpads which cannot be reached.
+      SmallPtrSet<BasicBlock *, 4> HandlersSeen;
+      for (CatchSwitchInst::handler_iterator I = CatchSwitch->handler_begin(),
+                                             E = CatchSwitch->handler_end();
+           I != E; ++I) {
+        BasicBlock *HandlerBB = *I;
+        if (!HandlersSeen.insert(HandlerBB).second) {
+          CatchSwitch->removeHandler(I);
+          --I;
+          --E;
+          Changed = true;
+        }
       }
     }
 
