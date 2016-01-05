@@ -141,7 +141,8 @@ def SIconstdata_ptr : SDNode<
 class flat_ld <SDPatternOperator ld> : PatFrag<(ops node:$ptr),
                                                (ld node:$ptr), [{
   return isFlatLoad(dyn_cast<LoadSDNode>(N)) ||
-         isGlobalLoad(dyn_cast<LoadSDNode>(N));
+         isGlobalLoad(dyn_cast<LoadSDNode>(N)) ||
+         isConstantLoad(cast<LoadSDNode>(N), -1);
 }]>;
 
 def flat_load : flat_ld <load>;
