@@ -3966,6 +3966,8 @@ public:
   /// point to the added handler.
   void addHandler(BasicBlock *Dest);
 
+  void removeHandler(handler_iterator HI);
+
   unsigned getNumSuccessors() const { return getNumOperands() - 1; }
   BasicBlock *getSuccessor(unsigned Idx) const {
     assert(Idx < getNumSuccessors() &&
