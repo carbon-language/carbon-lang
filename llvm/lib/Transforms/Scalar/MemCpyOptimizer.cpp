@@ -481,6 +481,17 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
   return AMemSet;
 }
 
+static unsigned findCommonAlignment(const DataLayout &DL, const StoreInst *SI,
+                                     const LoadInst *LI) {
+  unsigned StoreAlign = SI->getAlignment();
+  if (!StoreAlign)
+    StoreAlign = DL.getABITypeAlignment(SI->getOperand(0)->getType());
+  unsigned LoadAlign = LI->getAlignment();
+  if (!LoadAlign)
+    LoadAlign = DL.getABITypeAlignment(LI->getType());
+
+  return std::min(StoreAlign, LoadAlign);
+}
 
 bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   if (!SI->isSimple()) return false;
@@ -496,12 +507,70 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
 
   const DataLayout &DL = SI->getModule()->getDataLayout();
 
-  // Detect cases where we're performing call slot forwarding, but
-  // happen to be using a load-store pair to implement it, rather than
-  // a memcpy.
+  // Load to store forwarding can be interpreted as memcpy.
   if (LoadInst *LI = dyn_cast<LoadInst>(SI->getOperand(0))) {
     if (LI->isSimple() && LI->hasOneUse() &&
         LI->getParent() == SI->getParent()) {
+
+      auto *T = LI->getType();
+      if (T->isAggregateType()) {
+        AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
+        MemoryLocation LoadLoc = MemoryLocation::get(LI);
+
+        // We use alias analysis to check if an instruction may store to
+        // the memory we load from in between the load and the store. If
+        // such an instruction is found, we store it in AI.
+        Instruction *AI = nullptr;
+        for (BasicBlock::iterator I = ++LI->getIterator(), E = SI->getIterator();
+             I != E; ++I) {
+          if (AA.getModRefInfo(&*I, LoadLoc) & MRI_Mod) {
+            AI = &*I;
+            break;
+          }
+        }
+
+        // If no aliasing instruction is found, then we can promote the
+        // load/store pair to a memcpy at the store loaction.
+        if (!AI) {
+          // If we load from memory that may alias the memory we store to,
+          // memmove must be used to preserve semantic. If not, memcpy can
+          // be used.
+          bool UseMemMove = false;
+          if (!AA.isNoAlias(MemoryLocation::get(SI), LoadLoc))
+            UseMemMove = true;
+
+          unsigned Align = findCommonAlignment(DL, SI, LI);
+          uint64_t Size = DL.getTypeStoreSize(T);
+
+          IRBuilder<> Builder(SI);
+          Instruction *M;
+          if (UseMemMove)
+            M = Builder.CreateMemMove(SI->getPointerOperand(),
+                                      LI->getPointerOperand(), Size,
+                                      Align, SI->isVolatile());
+          else
+            M = Builder.CreateMemCpy(SI->getPointerOperand(),
+                                     LI->getPointerOperand(), Size,
+                                     Align, SI->isVolatile());
+
+          DEBUG(dbgs() << "Promoting " << *LI << " to " << *SI
+                       << " => " << *M << "\n");
+
+          MD->removeInstruction(SI);
+          SI->eraseFromParent();
+          MD->removeInstruction(LI);
+          LI->eraseFromParent();
+          ++NumMemCpyInstr;
+
+          // Make sure we do not invalidate the iterator.
+          BBI = M->getIterator();
+          return true;
+        }
+      }
+
+      // Detect cases where we're performing call slot forwarding, but
+      // happen to be using a load-store pair to implement it, rather than
+      // a memcpy.
       MemDepResult ldep = MD->getDependency(LI);
       CallInst *C = nullptr;
       if (ldep.isClobber() && !isa<MemCpyInst>(ldep.getInst()))
@@ -522,18 +591,11 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       }
 
       if (C) {
-        unsigned storeAlign = SI->getAlignment();
-        if (!storeAlign)
-          storeAlign = DL.getABITypeAlignment(SI->getOperand(0)->getType());
-        unsigned loadAlign = LI->getAlignment();
-        if (!loadAlign)
-          loadAlign = DL.getABITypeAlignment(LI->getType());
-
         bool changed = performCallSlotOptzn(
             LI, SI->getPointerOperand()->stripPointerCasts(),
             LI->getPointerOperand()->stripPointerCasts(),
             DL.getTypeStoreSize(SI->getOperand(0)->getType()),
-            std::min(storeAlign, loadAlign), C);
+            findCommonAlignment(DL, SI, LI), C);
         if (changed) {
           MD->removeInstruction(SI);
           SI->eraseFromParent();
