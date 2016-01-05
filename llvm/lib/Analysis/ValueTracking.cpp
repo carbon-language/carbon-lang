@@ -3274,12 +3274,9 @@ static bool isDereferenceableAndAlignedPointer(
   }
 
   // For gc.relocate, look through relocations
-  if (const IntrinsicInst *I = dyn_cast<IntrinsicInst>(V))
-    if (I->getIntrinsicID() == Intrinsic::experimental_gc_relocate) {
-      GCRelocateOperands RelocateInst(I);
-      return isDereferenceableAndAlignedPointer(
-          RelocateInst.getDerivedPtr(), Align, DL, CtxI, DT, TLI, Visited);
-    }
+  if (const GCRelocateInst *RelocateInst = dyn_cast<GCRelocateInst>(V))
+    return isDereferenceableAndAlignedPointer(
+        RelocateInst->getDerivedPtr(), Align, DL, CtxI, DT, TLI, Visited);
 
   if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))
     return isDereferenceableAndAlignedPointer(ASC->getOperand(0), Align, DL,

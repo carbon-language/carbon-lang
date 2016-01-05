@@ -1642,33 +1642,24 @@ insertRelocationStores(iterator_range<Value::user_iterator> GCRelocs,
                        DenseSet<Value *> &VisitedLiveValues) {
 
   for (User *U : GCRelocs) {
-    if (!isa<IntrinsicInst>(U))
+    GCRelocateInst *Relocate = dyn_cast<GCRelocateInst>(U);
+    if (!Relocate)
       continue;
 
-    IntrinsicInst *RelocatedValue = cast<IntrinsicInst>(U);
-
-    // We only care about relocates
-    if (RelocatedValue->getIntrinsicID() !=
-        Intrinsic::experimental_gc_relocate) {
-      continue;
-    }
-
-    GCRelocateOperands RelocateOperands(RelocatedValue);
-    Value *OriginalValue =
-        const_cast<Value *>(RelocateOperands.getDerivedPtr());
+    Value *OriginalValue = const_cast<Value *>(Relocate->getDerivedPtr());
     assert(AllocaMap.count(OriginalValue));
     Value *Alloca = AllocaMap[OriginalValue];
 
     // Emit store into the related alloca
     // All gc_relocates are i8 addrspace(1)* typed, and it must be bitcasted to
     // the correct type according to alloca.
-    assert(RelocatedValue->getNextNode() &&
+    assert(Relocate->getNextNode() &&
            "Should always have one since it's not a terminator");
-    IRBuilder<> Builder(RelocatedValue->getNextNode());
+    IRBuilder<> Builder(Relocate->getNextNode());
     Value *CastedRelocatedValue =
-      Builder.CreateBitCast(RelocatedValue,
+      Builder.CreateBitCast(Relocate,
                             cast<AllocaInst>(Alloca)->getAllocatedType(),
-                            suffixed_name_or(RelocatedValue, ".casted", ""));
+                            suffixed_name_or(Relocate, ".casted", ""));
 
     StoreInst *Store = new StoreInst(CastedRelocatedValue, Alloca);
     Store->insertAfter(cast<Instruction>(CastedRelocatedValue));
