@@ -38,6 +38,12 @@ static unsigned getLengthToMatchingParen(const FormatToken &Tok) {
   return End->TotalLength - Tok.TotalLength + 1;
 }
 
+static unsigned getLengthToNextOperator(const FormatToken &Tok) {
+  if (!Tok.NextOperator)
+    return 0;
+  return Tok.NextOperator->TotalLength - Tok.TotalLength;
+}
+
 // Returns \c true if \c Tok is the "." or "->" of a call and starts the next
 // segment of a builder type call.
 static bool startsSegmentOfBuilderTypeCall(const FormatToken &Tok) {
@@ -173,6 +179,10 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   unsigned NewLineColumn = getNewLineColumn(State);
   if (State.Column < NewLineColumn)
     return false;
+
+  if (Current.isMemberAccess() &&
+      State.Column + getLengthToNextOperator(Current) > Style.ColumnLimit)
+    return true;
 
   if (Style.AlwaysBreakBeforeMultilineStrings &&
       (NewLineColumn == State.FirstIndent + Style.ContinuationIndentWidth ||
