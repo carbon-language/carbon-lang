@@ -19,6 +19,7 @@
 
 #include "MoveOnly.h"
 #include "min_allocator.h"
+#include "test_macros.h"
 
 int main()
 {
