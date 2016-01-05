@@ -117,12 +117,6 @@ SymbolBody *SymbolTable<ELFT>::addIgnored(StringRef Name) {
   return Sym;
 }
 
-template <class ELFT> bool SymbolTable<ELFT>::isUndefined(StringRef Name) {
-  if (SymbolBody *Sym = find(Name))
-    return Sym->isUndefined();
-  return false;
-}
-
 // Returns a file from which symbol B was created.
 // If B does not belong to any file, returns a nullptr.
 template <class ELFT>

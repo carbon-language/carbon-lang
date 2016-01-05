@@ -55,7 +55,6 @@ public:
   void addSynthetic(StringRef Name, OutputSectionBase<ELFT> &Section,
                     typename llvm::object::ELFFile<ELFT>::uintX_t Value);
   SymbolBody *addIgnored(StringRef Name);
-  bool isUndefined(StringRef Name);
   void scanShlibUndefined();
   SymbolBody *find(StringRef Name);
   ELFFileBase<ELFT> *findFile(SymbolBody *B);

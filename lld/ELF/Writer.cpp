@@ -955,10 +955,12 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
   StringSaver Saver(Alloc);
   StringRef Start = Saver.save("__start_" + S);
   StringRef Stop = Saver.save("__stop_" + S);
-  if (Symtab.isUndefined(Start))
-    Symtab.addSynthetic(Start, *Sec, 0);
-  if (Symtab.isUndefined(Stop))
-    Symtab.addSynthetic(Stop, *Sec, Sec->getSize());
+  if (SymbolBody *B = Symtab.find(Start))
+    if (B->isUndefined())
+      Symtab.addSynthetic(Start, *Sec, 0);
+  if (SymbolBody *B = Symtab.find(Stop))
+    if (B->isUndefined())
+      Symtab.addSynthetic(Stop, *Sec, Sec->getSize());
 }
 
 template <class ELFT> static bool needsPhdr(OutputSectionBase<ELFT> *Sec) {
