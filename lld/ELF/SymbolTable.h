@@ -58,6 +58,7 @@ public:
   bool isUndefined(StringRef Name);
   void scanShlibUndefined();
   SymbolBody *find(StringRef Name);
+  ELFFileBase<ELFT> *findFile(SymbolBody *B);
 
 private:
   Symbol *insert(SymbolBody *New);
@@ -86,11 +87,6 @@ private:
   std::vector<std::unique_ptr<SharedFile<ELFT>>> SharedFiles;
   llvm::DenseSet<StringRef> IncludedSoNames;
 };
-
-template <class ELFT>
-ELFFileBase<ELFT> *
-findFile(ArrayRef<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles,
-         const SymbolBody *B);
 
 } // namespace elf2
 } // namespace lld
