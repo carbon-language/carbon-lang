@@ -428,29 +428,14 @@ static BaseDefiningValueResult findBaseDefiningValue(Value *I) {
     // We should have never reached here if this argument isn't an gc value
     return BaseDefiningValueResult(I, true);
 
-  if (isa<GlobalVariable>(I))
-    // base case
+  if (isa<Constant>(I))
+    // We assume that objects with a constant base (e.g. a global) can't move
+    // and don't need to be reported to the collector because they are always
+    // live.  All constants have constant bases.  Besides global references, all
+    // kinds of constants (e.g. undef, constant expressions, null pointers) can
+    // be introduced by the inliner or the optimizer, especially on dynamically
+    // dead paths.  See e.g. test4 in constants.ll.
     return BaseDefiningValueResult(I, true);
-
-  // inlining could possibly introduce phi node that contains
-  // undef if callee has multiple returns
-  if (isa<UndefValue>(I))
-    // utterly meaningless, but useful for dealing with
-    // partially optimized code.
-    return BaseDefiningValueResult(I, true);
-
-  // Due to inheritance, this must be _after_ the global variable and undef
-  // checks
-  if (isa<Constant>(I)) {
-    assert(!isa<GlobalVariable>(I) && !isa<UndefValue>(I) &&
-           "order of checks wrong!");
-    // Note: Even for frontends which don't have constant references, we can
-    // see constants appearing after optimizations.  A simple example is
-    // specialization of an address computation on null feeding into a merge
-    // point where the actual use of the now-constant input is protected by
-    // another null check.  (e.g. test4 in constants.ll)
-    return BaseDefiningValueResult(I, true);
-  }
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
     Value *Def = CI->stripPointerCasts();
