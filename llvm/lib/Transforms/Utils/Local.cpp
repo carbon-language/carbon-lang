@@ -1324,12 +1324,36 @@ static bool markAliveBlocks(Function &F,
       }
     } else if (auto *CatchSwitch = dyn_cast<CatchSwitchInst>(Terminator)) {
       // Remove catchpads which cannot be reached.
-      SmallPtrSet<BasicBlock *, 4> HandlersSeen;
+      struct CatchPadDenseMapInfo {
+        static CatchPadInst *getEmptyKey() {
+          return DenseMapInfo<CatchPadInst *>::getEmptyKey();
+        }
+        static CatchPadInst *getTombstoneKey() {
+          return DenseMapInfo<CatchPadInst *>::getTombstoneKey();
+        }
+        static unsigned getHashValue(CatchPadInst *CatchPad) {
+          return static_cast<unsigned>(hash_combine_range(
+              CatchPad->value_op_begin(), CatchPad->value_op_end()));
+        }
+        static bool isEqual(CatchPadInst *LHS, CatchPadInst *RHS) {
+          if (LHS == getEmptyKey() || LHS == getTombstoneKey() ||
+              RHS == getEmptyKey() || RHS == getTombstoneKey())
+            return LHS == RHS;
+          return LHS->isIdenticalTo(RHS);
+        }
+      };
+
+      // Set of unique CatchPads.
+      SmallDenseMap<CatchPadInst *, detail::DenseSetEmpty, 4,
+                    CatchPadDenseMapInfo, detail::DenseSetPair<CatchPadInst *>>
+          HandlerSet;
+      detail::DenseSetEmpty Empty;
       for (CatchSwitchInst::handler_iterator I = CatchSwitch->handler_begin(),
                                              E = CatchSwitch->handler_end();
            I != E; ++I) {
         BasicBlock *HandlerBB = *I;
-        if (!HandlersSeen.insert(HandlerBB).second) {
+        auto *CatchPad = cast<CatchPadInst>(HandlerBB->getFirstNonPHI());
+        if (!HandlerSet.insert({CatchPad, Empty}).second) {
           CatchSwitch->removeHandler(I);
           --I;
           --E;
