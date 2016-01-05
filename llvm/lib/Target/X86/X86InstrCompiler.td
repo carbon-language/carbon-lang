@@ -555,8 +555,8 @@ let usesCustomInserter = 1, Uses = [EFLAGS] in {
 // TODO: Get this to fold the constant into the instruction.
 let isCodeGenOnly = 1, Defs = [EFLAGS] in
 def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
-                      "or{l}\t{$zero, $dst|$dst, $zero}",
-                      [], IIC_ALU_MEM>, Requires<[Not64BitMode]>, LOCK,
+                      "or{l}\t{$zero, $dst|$dst, $zero}", [],
+                      IIC_ALU_MEM>, Requires<[Not64BitMode]>, OpSize32, LOCK,
                     Sched<[WriteALULd, WriteRMW]>;
 
 let hasSideEffects = 1 in
