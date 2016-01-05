@@ -2426,7 +2426,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
 
       continue;
     }
-    
+
     if (VA.isRegLoc()) {
       // Arguments stored in registers.
       EVT RegVT = VA.getLocVT();
@@ -5074,7 +5074,7 @@ static bool isEXTMask(ArrayRef<int> M, EVT VT, bool &ReverseEXT,
 
   // The index of an EXT is the first element if it is not UNDEF.
   // Watch out for the beginning UNDEFs. The EXT index should be the expected
-  // value of the first element.  E.g. 
+  // value of the first element.  E.g.
   // <-1, -1, 3, ...> is treated as <1, 2, 3, ...>.
   // <-1, -1, 0, 1, ...> is treated as <2*NumElts-2, 2*NumElts-1, 0, 1, ...>.
   // ExpectedElt is the last mask index plus 1.
