@@ -289,7 +289,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
     else if (NeedsCopy)
       P->r_offset = Out<ELFT>::Bss->getVA() +
-                    dyn_cast<SharedSymbol<ELFT>>(Body)->OffsetInBSS;
+                    dyn_cast<SharedSymbol<ELFT>>(Body)->OffsetInBss;
     else
       P->r_offset = C.getOffset(RI.r_offset) + C.OutSec->getVA();
 
@@ -799,11 +799,11 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     return SC->OutSec->getVA() + SC->getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:
-    return Out<ELFT>::Bss->getVA() + cast<DefinedCommon>(S).OffsetInBSS;
+    return Out<ELFT>::Bss->getVA() + cast<DefinedCommon>(S).OffsetInBss;
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(S);
     if (SS.NeedsCopy)
-      return Out<ELFT>::Bss->getVA() + SS.OffsetInBSS;
+      return Out<ELFT>::Bss->getVA() + SS.OffsetInBss;
     return 0;
   }
   case SymbolBody::UndefinedElfKind:
