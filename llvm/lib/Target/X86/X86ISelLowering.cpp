@@ -17374,6 +17374,18 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   if (!IntrData) {
     if (IntNo == llvm::Intrinsic::x86_seh_ehregnode)
       return MarkEHRegistrationNode(Op, DAG);
+    if (IntNo == llvm::Intrinsic::x86_flags_read_u32 ||
+        IntNo == llvm::Intrinsic::x86_flags_read_u64 ||
+        IntNo == llvm::Intrinsic::x86_flags_write_u32 ||
+        IntNo == llvm::Intrinsic::x86_flags_write_u64) {
+      // We need a frame pointer because this will get lowered to a PUSH/POP
+      // sequence.
+      MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+      MFI->setHasOpaqueSPAdjustment(true);
+      // Don't do anything here, we will expand these intrinsics out later
+      // during ExpandISelPseudos in EmitInstrWithCustomInserter.
+      return SDValue();
+    }
     return SDValue();
   }
 
@@ -22541,8 +22553,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::RDFLAGS32:
   case X86::RDFLAGS64: {
     DebugLoc DL = MI->getDebugLoc();
-    MachineFunction *MF = BB->getParent();
-    MF->getFrameInfo()->setHasOpaqueSPAdjustment(true);
     const TargetInstrInfo *TII = Subtarget->getInstrInfo();
     unsigned PushF =
         MI->getOpcode() == X86::RDFLAGS32 ? X86::PUSHF32 : X86::PUSHF64;
@@ -22558,8 +22568,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::WRFLAGS32:
   case X86::WRFLAGS64: {
     DebugLoc DL = MI->getDebugLoc();
-    MachineFunction *MF = BB->getParent();
-    MF->getFrameInfo()->setHasOpaqueSPAdjustment(true);
     const TargetInstrInfo *TII = Subtarget->getInstrInfo();
     unsigned Push =
         MI->getOpcode() == X86::WRFLAGS32 ? X86::PUSH32r : X86::PUSH64r;
