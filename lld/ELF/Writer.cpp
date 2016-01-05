@@ -480,8 +480,6 @@ template <class ELFT> OutputSection<ELFT> *Writer<ELFT>::getBSS() {
 // This function adds them to end of BSS section.
 template <class ELFT>
 void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
-
   if (Syms.empty())
     return;
 
