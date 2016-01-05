@@ -48,11 +48,18 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
         eline = line_number('symbol_list_lines_inline_test2.cpp', '// END_gfunc2')
         self.runCmd("-symbol-list-lines symbol_list_lines_inline_test2.cpp")
         self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*\]" % (sline, eline))
-        ##FIXME: This doesn't work for symbol_list_lines_inline_test.cpp due to clang bug llvm.org/pr24716
+        ##FIXME: This doesn't work for symbol_list_lines_inline_test.cpp due to clang bug llvm.org/pr24716 (fixed in newer versions of clang)
         ##sline = line_number('symbol_list_lines_inline_test.cpp', '// FUNC_gfunc')
         ##eline = line_number('symbol_list_lines_inline_test.cpp', '// STRUCT_s')
         ##self.runCmd("-symbol-list-lines symbol_list_lines_inline_test.cpp")
         ##self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}\]" % (sline, eline))
+
+        # Test that -symbol-list-lines works on header files by checking the first
+        # and last line, and making sure the other lines are under 29.
+        sline = line_number('symbol_list_lines_inline_test.h', '// FUNC_ifunc')
+        eline = line_number('symbol_list_lines_inline_test.h', '// FUNC_mfunc')
+        self.runCmd("-symbol-list-lines symbol_list_lines_inline_test.h")
+        self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"\d\"\})*(,\{pc=\"0x[0-9a-f]+\",line=\"1\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"2\d\"\})*\]" % (sline, eline))
 
         # Test that -symbol-list-lines fails when file doesn't exist
         self.runCmd("-symbol-list-lines unknown_file")
