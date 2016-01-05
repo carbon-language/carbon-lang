@@ -4466,6 +4466,10 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       // (unnecessarily) saving+restoring a dead register. However the
       // MachineVerifier expects operands that read from dead registers
       // to be marked with the "undef" flag.
+      // An example of this can be found in
+      // test/CodeGen/X86/peephole-na-phys-copy-folding.ll and
+      // test/CodeGen/X86/cmpxchg-clobber-flags.ll when using
+      // -verify-machineinstrs.
       BuildMI(MBB, MI, DL, get(Push)).addReg(AX, getKillRegState(true));
     }
     if (FromEFLAGS) {
