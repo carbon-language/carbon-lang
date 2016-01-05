@@ -1317,14 +1317,12 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
 
   IRBuilder<>::FastMathFlagGuard Guard(B);
   FastMathFlags FMF;
-  Function *F = CI->getParent()->getParent();
-  if (canUseUnsafeFPMath(F)) {
+  if (CI->hasUnsafeAlgebra()) {
     // Unsafe algebra sets all fast-math-flags to true.
     FMF.setUnsafeAlgebra();
   } else {
     // At a minimum, no-nans-fp-math must be true.
-    Attribute Attr = F->getFnAttribute("no-nans-fp-math");
-    if (Attr.getValueAsString() != "true")
+    if (!CI->hasNoNaNs())
       return nullptr;
     // No-signed-zeros is implied by the definitions of fmax/fmin themselves:
     // "Ideally, fmax would be sensitive to the sign of zero, for example
