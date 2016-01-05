@@ -672,7 +672,7 @@ bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
 }
 
 ExprResult
-Sema::LookupInlineAsmVarDeclField(Expr *E, StringRef Member, unsigned &Offset,
+Sema::LookupInlineAsmVarDeclField(Expr *E, StringRef Member,
                                   llvm::InlineAsmIdentifierInfo &Info,
                                   SourceLocation AsmLoc) {
   Info.clear();
@@ -705,9 +705,6 @@ Sema::LookupInlineAsmVarDeclField(Expr *E, StringRef Member, unsigned &Offset,
     FD = dyn_cast<IndirectFieldDecl>(FieldResult.getFoundDecl());
   if (!FD)
     return ExprResult();
-
-  Offset = (unsigned)Context.toCharUnitsFromBits(Context.getFieldOffset(FD))
-               .getQuantity();
 
   // Make an Expr to thread through OpDecl.
   ExprResult Result = BuildMemberReferenceExpr(
