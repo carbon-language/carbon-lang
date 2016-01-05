@@ -625,19 +625,47 @@ void Util::buildAtomToAddressMap() {
         _entryAtom = info.atom;
       }
       DEBUG_WITH_TYPE("WriterMachO-address", llvm::dbgs()
-              << "   address="
-              << llvm::format("0x%016X", _atomToAddress[info.atom])
-              << " atom=" << info.atom
-              << " name=" << info.atom->name() << "\n");
+                      << "   address="
+                      << llvm::format("0x%016X", _atomToAddress[info.atom])
+                      << llvm::format("    0x%09lX", info.atom)
+                      << ", file=#"
+                      << info.atom->file().ordinal()
+                      << ", atom=#"
+                      << info.atom->ordinal()
+                      << ", name="
+                      << info.atom->name()
+                      << ", type="
+                      << info.atom->contentType()
+                      << "\n");
     }
   }
+  DEBUG_WITH_TYPE("WriterMachO-address", llvm::dbgs()
+                  << "assign header alias atom addresses:\n");
   for (const Atom *atom : _machHeaderAliasAtoms) {
     _atomToAddress[atom] = _ctx.baseAddress();
-    DEBUG_WITH_TYPE("WriterMachO-address", llvm::dbgs()
-              << "   address="
-              << llvm::format("0x%016X", _atomToAddress[atom])
-              << " atom=" << atom
-              << " name=" << atom->name() << "\n");
+#ifndef NDEBUG
+    if (auto *definedAtom = dyn_cast<DefinedAtom>(atom)) {
+      DEBUG_WITH_TYPE("WriterMachO-address", llvm::dbgs()
+                      << "   address="
+                      << llvm::format("0x%016X", _atomToAddress[atom])
+                      << llvm::format("    0x%09lX", atom)
+                      << ", file=#"
+                      << definedAtom->file().ordinal()
+                      << ", atom=#"
+                      << definedAtom->ordinal()
+                      << ", name="
+                      << definedAtom->name()
+                      << ", type="
+                      << definedAtom->contentType()
+                      << "\n");
+    } else {
+      DEBUG_WITH_TYPE("WriterMachO-address", llvm::dbgs()
+                      << "   address="
+                      << llvm::format("0x%016X", _atomToAddress[atom])
+                      << " atom=" << atom
+                      << " name=" << atom->name() << "\n");
+    }
+#endif
   }
 }
 
