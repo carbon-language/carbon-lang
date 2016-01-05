@@ -257,8 +257,10 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       Previous.is(tok::l_brace) && !Current.isOneOf(tok::r_brace, tok::comment))
     return true;
 
-  if (Current.is(tok::lessless) && Previous.is(tok::identifier) &&
-      Previous.TokenText == "endl")
+  if (Current.is(tok::lessless) &&
+      ((Previous.is(tok::identifier) && Previous.TokenText == "endl") ||
+       (Previous.Tok.isLiteral() && (Previous.TokenText.endswith("\\n\"") ||
+                                     Previous.TokenText == "\'\\n\'"))))
     return true;
 
   return false;
