@@ -685,13 +685,13 @@ MemDepResult MemoryDependenceAnalysis::getSimplePointerDependencyFrom(
         return MemDepResult::getDef(Inst);
       if (isInvariantLoad)
         continue;
-      // Be conservative if the accessed pointer may alias the allocation.
-      if (AA->alias(Inst, AccessPtr) != NoAlias)
-        return MemDepResult::getClobber(Inst);
-      // If the allocation is not aliased and does not read memory (like
-      // strdup), it is safe to ignore.
-      if (isa<AllocaInst>(Inst) ||
-          isMallocLikeFn(Inst, TLI) || isCallocLikeFn(Inst, TLI))
+      // Be conservative if the accessed pointer may alias the allocation -
+      // fallback to the generic handling below.
+      if ((AA->alias(Inst, AccessPtr) == NoAlias) &&
+          // If the allocation is not aliased and does not read memory (like
+          // strdup), it is safe to ignore.
+          (isa<AllocaInst>(Inst) || isMallocLikeFn(Inst, TLI) ||
+           isCallocLikeFn(Inst, TLI)))
         continue;
     }
 
