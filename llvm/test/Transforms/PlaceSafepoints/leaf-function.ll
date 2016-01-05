@@ -2,8 +2,8 @@
 
 declare void @foo() "gc-leaf-function"
 
-; Calls of functions with the "gc-leaf-function" attribute shouldn't get
-; safepoints.  An entry safepoint should get inserted, though.
+; Calls of functions with the "gc-leaf-function" attribute shouldn't be turned
+; into a safepoint.  An entry safepoint should get inserted, though.
 define void @test_leaf_function() gc "statepoint-example" {
 ; CHECK-LABEL: test_leaf_function
 ; CHECK: gc.statepoint.p0f_isVoidf
