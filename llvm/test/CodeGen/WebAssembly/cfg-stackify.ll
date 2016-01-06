@@ -93,6 +93,7 @@ back:
 ; Test that a simple loop is handled as expected.
 
 ; CHECK-LABEL: test2:
+; CHECK-NOT: local
 ; CHECK: block BB2_2{{$}}
 ; CHECK: br_if {{[^,]*}}, BB2_2{{$}}
 ; CHECK: BB2_1:
