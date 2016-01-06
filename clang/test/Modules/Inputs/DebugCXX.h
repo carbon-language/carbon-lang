@@ -50,3 +50,9 @@ namespace DebugCXX {
   typedef A<void> B;
   void foo(B) {}
 }
+
+// Virtual class with a forward declaration.
+class FwdVirtual;
+class FwdVirtual {
+  virtual ~FwdVirtual() {}
+};
