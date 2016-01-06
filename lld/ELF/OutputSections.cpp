@@ -21,7 +21,7 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf2;
 
-bool lld::elf2::HasGotOffRel = false;
+bool elf2::HasGotOffRel = false;
 
 template <class ELFT>
 OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t sh_type,
@@ -786,7 +786,7 @@ void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
+typename ELFFile<ELFT>::uintX_t elf2::getSymVA(const SymbolBody &S) {
   switch (S.kind()) {
   case SymbolBody::DefinedSyntheticKind: {
     auto &D = cast<DefinedSynthetic<ELFT>>(S);
@@ -824,9 +824,9 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
 // For non-local symbols, use getSymVA instead.
 template <class ELFT, bool IsRela>
 typename ELFFile<ELFT>::uintX_t
-lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
-                             const Elf_Rel_Impl<ELFT, IsRela> &RI,
-                             typename ELFFile<ELFT>::uintX_t Addend) {
+elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
+                        const Elf_Rel_Impl<ELFT, IsRela> &RI,
+                        typename ELFFile<ELFT>::uintX_t Addend) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
 
@@ -868,7 +868,7 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
 
 // Returns true if a symbol can be replaced at load-time by a symbol
 // with the same name defined in other ELF executable or DSO.
-bool lld::elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
+bool elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
   if (!Body)
     return false;  // Body is a local symbol.
   if (Body->isShared())
@@ -1177,9 +1177,8 @@ template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
-                                   StringRef SymName,
-                                   const typename ELFFile<ELFT>::Elf_Sym &Sym) {
+bool elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File, StringRef SymName,
+                              const typename ELFFile<ELFT>::Elf_Sym &Sym) {
   if (Sym.getType() == STT_SECTION)
     return false;
 

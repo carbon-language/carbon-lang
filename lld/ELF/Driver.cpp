@@ -26,10 +26,10 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
-Configuration *lld::elf2::Config;
-LinkerDriver *lld::elf2::Driver;
+Configuration *elf2::Config;
+LinkerDriver *elf2::Driver;
 
-void lld::elf2::link(ArrayRef<const char *> Args) {
+void elf2::link(ArrayRef<const char *> Args) {
   Configuration C;
   LinkerDriver D;
   Config = &C;

@@ -103,7 +103,7 @@ template <class ELFT> static bool shouldUseRela() {
   return K == ELF64LEKind || K == ELF64BEKind;
 }
 
-template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
+template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   // Initialize output sections that are handled by Writer specially.
   // Don't reorder because the order of initialization matters.
   InterpSection<ELFT> Interp;
@@ -1275,7 +1275,7 @@ template <class ELFT> void Writer<ELFT>::buildSectionMap() {
       InputToOutputSection[Name] = OutSec.first;
 }
 
-template void lld::elf2::writeResult<ELF32LE>(SymbolTable<ELF32LE> *Symtab);
-template void lld::elf2::writeResult<ELF32BE>(SymbolTable<ELF32BE> *Symtab);
-template void lld::elf2::writeResult<ELF64LE>(SymbolTable<ELF64LE> *Symtab);
-template void lld::elf2::writeResult<ELF64BE>(SymbolTable<ELF64BE> *Symtab);
+template void elf2::writeResult<ELF32LE>(SymbolTable<ELF32LE> *Symtab);
+template void elf2::writeResult<ELF32BE>(SymbolTable<ELF32BE> *Symtab);
+template void elf2::writeResult<ELF64LE>(SymbolTable<ELF64LE> *Symtab);
+template void elf2::writeResult<ELF64BE>(SymbolTable<ELF64BE> *Symtab);
