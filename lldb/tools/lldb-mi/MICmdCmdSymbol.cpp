@@ -106,8 +106,8 @@ ParseLLDBLineAddressHeader(const char *input, CMIUtilString &file)
 {
     // Match LineEntry using regex.
     static MIUtilParse::CRegexParser g_lineentry_header_regex( 
-        "^ *Lines for file (.+) in compilation unit (.+) in `(.+)$");
-        //                 ^1=file                  ^2=cu    ^3=module
+        "^ *Lines found for file (.+) in compilation unit (.+) in `(.+)$");
+        //                       ^1=file                  ^2=cu    ^3=module
 
     MIUtilParse::CRegexParser::Match match(4);
 
