@@ -4853,8 +4853,6 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
 
     if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
       DecodePSHUFBMask(C, Mask);
-      if (Mask.empty())
-        return false;
       break;
     }
 
@@ -4872,7 +4870,6 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
   case X86ISD::VPERM2X128:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
-    if (Mask.empty()) return false;
     // Mask only contains negative index if an element is zero.
     if (std::any_of(Mask.begin(), Mask.end(),
                     [](int M){ return M == SM_SentinelZero; }))
@@ -4950,8 +4947,6 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
 
     if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
       DecodeVPERMVMask(C, VT, Mask);
-      if (Mask.empty())
-        return false;
       break;
     }
     return false;
@@ -5002,14 +4997,16 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
 
     if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
       DecodeVPERMV3Mask(C, VT, Mask);
-      if (Mask.empty())
-        return false;
       break;
     }
     return false;
   }
   default: llvm_unreachable("unknown target shuffle node");
   }
+
+  // Empty mask indicates the decode failed.
+  if (Mask.empty())
+    return false;
 
   // If we have a fake unary shuffle, the shuffle mask is spread across two
   // inputs that are actually the same node. Re-map the mask to always point
