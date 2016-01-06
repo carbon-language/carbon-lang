@@ -27419,7 +27419,7 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
   // from AH (which we otherwise need to do contortions to access).
   if (N0.getOpcode() == ISD::UDIVREM &&
       N0.getResNo() == 1 && N0.getValueType() == MVT::i8 &&
-      (VT == MVT::i32 || VT == MVT::i64)) {
+      VT == MVT::i32) {
     SDVTList NodeTys = DAG.getVTList(MVT::i8, VT);
     SDValue R = DAG.getNode(X86ISD::UDIVREM8_ZEXT_HREG, dl, NodeTys,
                             N0.getOperand(0), N0.getOperand(1));
@@ -27923,6 +27923,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FANDN:       return PerformFANDNCombine(N, DAG, Subtarget);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
+// TODO: refactor the [SU]DIVREM8_[SZ]EXT_HREG code so that it's not duplicated.
   case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND:    return PerformSExtCombine(N, DAG, DCI, Subtarget);
