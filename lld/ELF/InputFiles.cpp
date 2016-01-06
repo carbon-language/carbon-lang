@@ -453,7 +453,7 @@ static std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
 }
 
 template <template <class> class T>
-std::unique_ptr<InputFile> elf2::createELFFile(MemoryBufferRef MB) {
+static std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB) {
   std::pair<unsigned char, unsigned char> Type = getElfArchType(MB.getBuffer());
   if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
     error("Invalid data encoding: " + MB.getBufferIdentifier());
@@ -471,6 +471,14 @@ std::unique_ptr<InputFile> elf2::createELFFile(MemoryBufferRef MB) {
   error("Invalid file class: " + MB.getBufferIdentifier());
 }
 
+std::unique_ptr<InputFile> elf2::createObjectFile(MemoryBufferRef MB) {
+  return createELFFile<ObjectFile>(MB);
+}
+
+std::unique_ptr<InputFile> elf2::createSharedFile(MemoryBufferRef MB) {
+  return createELFFile<SharedFile>(MB);
+}
+
 template class elf2::ELFFileBase<ELF32LE>;
 template class elf2::ELFFileBase<ELF32BE>;
 template class elf2::ELFFileBase<ELF64LE>;
@@ -485,9 +493,3 @@ template class elf2::SharedFile<ELF32LE>;
 template class elf2::SharedFile<ELF32BE>;
 template class elf2::SharedFile<ELF64LE>;
 template class elf2::SharedFile<ELF64BE>;
-
-template std::unique_ptr<InputFile>
-elf2::createELFFile<ObjectFile>(MemoryBufferRef);
-
-template std::unique_ptr<InputFile>
-elf2::createELFFile<SharedFile>(MemoryBufferRef);

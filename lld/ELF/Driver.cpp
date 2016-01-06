@@ -77,17 +77,17 @@ void LinkerDriver::addFile(StringRef Path) {
     if (WholeArchive) {
       auto File = make_unique<ArchiveFile>(MBRef);
       for (MemoryBufferRef &MB : File->getMembers())
-        Files.push_back(createELFFile<ObjectFile>(MB));
+        Files.push_back(createObjectFile(MB));
       OwningArchives.emplace_back(std::move(File));
       return;
     }
     Files.push_back(make_unique<ArchiveFile>(MBRef));
     return;
   case file_magic::elf_shared_object:
-    Files.push_back(createELFFile<SharedFile>(MBRef));
+    Files.push_back(createSharedFile(MBRef));
     return;
   default:
-    Files.push_back(createELFFile<ObjectFile>(MBRef));
+    Files.push_back(createObjectFile(MBRef));
   }
 }
 

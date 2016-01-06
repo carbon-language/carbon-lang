@@ -202,8 +202,8 @@ public:
   bool isNeeded() const { return !AsNeeded || IsUsed; }
 };
 
-template <template <class> class T>
-std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB);
+std::unique_ptr<InputFile> createObjectFile(MemoryBufferRef MB);
+std::unique_ptr<InputFile> createSharedFile(MemoryBufferRef MB);
 
 } // namespace elf2
 } // namespace lld
