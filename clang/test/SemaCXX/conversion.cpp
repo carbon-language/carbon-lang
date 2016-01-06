@@ -77,30 +77,8 @@ void test3() {
   // CHECK: note: expanded from macro 'FINIT'
 #define FINIT int a3 = NULL;
   FINIT // expected-warning {{implicit conversion of NULL constant to 'int'}}
-
-  // we don't catch the case of #define FOO NULL ... int i = FOO; but that seems a bit narrow anyway
-  // and avoiding that helps us skip these cases:
-#define NULL_COND(cond) ((cond) ? &a : NULL)
-  bool bl2 = NULL_COND(true); // don't warn on NULL conversion through the conditional operator across a macro boundary
-  if (NULL_COND(true))
-    ;
-  while (NULL_COND(true))
-    ;
-  for (; NULL_COND(true); )
-    ;
-  do ;
-  while(NULL_COND(true));
-
-#define NULL_WRAPPER NULL_COND(false)
-  if (NULL_WRAPPER)
-    ;
-  while (NULL_WRAPPER)
-    ;
-  for (; NULL_WRAPPER;)
-    ;
-  do
-    ;
-  while (NULL_WRAPPER);
+  // we don't catch the case of #define FOO NULL ... int i = FOO; but that
+  // seems a bit narrow anyway and avoiding that helps us skip other cases.
 
   int *ip = NULL;
   int (*fp)() = NULL;
@@ -155,5 +133,68 @@ namespace test7 {
     bool x = nullptr; // expected-warning {{implicit conversion of nullptr constant to 'bool'}}
     if (nullptr) {} // expected-warning {{implicit conversion of nullptr constant to 'bool'}}
     return nullptr; // expected-warning {{implicit conversion of nullptr constant to 'bool'}}
+  }
+}
+
+namespace test8 {
+  #define NULL_COND(cond) ((cond) ? &num : NULL)
+  #define NULL_WRAPPER NULL_COND(false)
+
+  // don't warn on NULL conversion through the conditional operator across a
+  // macro boundary
+  void macro() {
+    int num;
+    bool b = NULL_COND(true);
+    if (NULL_COND(true)) {}
+    while (NULL_COND(true)) {}
+    for (;NULL_COND(true);) {}
+    do {} while (NULL_COND(true));
+
+    if (NULL_WRAPPER) {}
+    while (NULL_WRAPPER) {}
+    for (;NULL_WRAPPER;) {}
+    do {} while (NULL_WRAPPER);
+  }
+
+  // Identical to the previous function except with a template argument.
+  // This ensures that template instantiation does not introduce any new
+  // warnings.
+  template <typename X>
+  void template_and_macro() {
+    int num;
+    bool b = NULL_COND(true);
+    if (NULL_COND(true)) {}
+    while (NULL_COND(true)) {}
+    for (;NULL_COND(true);) {}
+    do {} while (NULL_COND(true));
+
+    if (NULL_WRAPPER) {}
+    while (NULL_WRAPPER) {}
+    for (;NULL_WRAPPER;) {}
+    do {} while (NULL_WRAPPER);
+  }
+
+  // Identical to the previous function except the template argument affects
+  // the conditional statement.
+  template <typename X>
+  void template_and_macro2() {
+    X num;
+    bool b = NULL_COND(true);
+    if (NULL_COND(true)) {}
+    while (NULL_COND(true)) {}
+    for (;NULL_COND(true);) {}
+    do {} while (NULL_COND(true));
+
+    if (NULL_WRAPPER) {}
+    while (NULL_WRAPPER) {}
+    for (;NULL_WRAPPER;) {}
+    do {} while (NULL_WRAPPER);
+  }
+
+  void run() {
+    template_and_macro<int>();
+    template_and_macro<double>();
+    template_and_macro2<int>();
+    template_and_macro2<double>();
   }
 }
