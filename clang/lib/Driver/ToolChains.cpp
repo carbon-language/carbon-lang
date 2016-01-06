@@ -2716,13 +2716,8 @@ const StringRef HexagonToolChain::GetDefaultCPU() {
 
 const StringRef HexagonToolChain::GetTargetCPUVersion(const ArgList &Args) {
   Arg *CpuArg = nullptr;
-
-  for (auto &A : Args) {
-    if (A->getOption().matches(options::OPT_mcpu_EQ)) {
-      CpuArg = A;
-      A->claim();
-    }
-  }
+  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ, options::OPT_march_EQ))
+    CpuArg = A;
 
   StringRef CPU = CpuArg ? CpuArg->getValue() : GetDefaultCPU();
   if (CPU.startswith("hexagon"))
