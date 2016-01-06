@@ -6179,6 +6179,11 @@ void gcc::Compiler::RenderExtraToolArgs(const JobAction &JA,
   case types::TY_LTO_BC:
     CmdArgs.push_back("-c");
     break;
+  // We assume we've got an "integrated" assembler in that gcc will produce an
+  // object file itself.
+  case types::TY_Object:
+    CmdArgs.push_back("-c");
+    break;
   case types::TY_PP_Asm:
     CmdArgs.push_back("-S");
     break;
