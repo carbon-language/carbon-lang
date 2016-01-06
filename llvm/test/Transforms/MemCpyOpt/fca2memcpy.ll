@@ -7,6 +7,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @copy(%S* %src, %S* %dst) {
 ; CHECK-LABEL: copy
+; CHECK-NOT: load
 ; CHECK: call void @llvm.memmove.p0i8.p0i8.i64
 ; CHECK-NEXT: ret void
   %1 = load %S, %S* %src
@@ -16,6 +17,7 @@ define void @copy(%S* %src, %S* %dst) {
 
 define void @noaliassrc(%S* noalias %src, %S* %dst) {
 ; CHECK-LABEL: noaliassrc
+; CHECK-NOT: load
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
 ; CHECK-NEXT: ret void
   %1 = load %S, %S* %src
@@ -25,9 +27,32 @@ define void @noaliassrc(%S* noalias %src, %S* %dst) {
 
 define void @noaliasdst(%S* %src, %S* noalias %dst) {
 ; CHECK-LABEL: noaliasdst
+; CHECK-NOT: load
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
 ; CHECK-NEXT: ret void
   %1 = load %S, %S* %src
+  store %S %1, %S* %dst
+  ret void
+}
+
+define void @destroysrc(%S* %src, %S* %dst) {
+; CHECK-LABEL: destroysrc
+; CHECK-NOT: call
+; CHECK: ret void
+  %1 = load %S, %S* %src
+  store %S zeroinitializer, %S* %src
+  store %S %1, %S* %dst
+  ret void
+}
+
+define void @destroynoaliassrc(%S* noalias %src, %S* %dst) {
+; CHECK-LABEL: destroynoaliassrc
+; CHECK-NOT: load
+; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+; CHECK-NEXT: store %S zeroinitializer, %S* %src
+; CHECK-NEXT: ret void
+  %1 = load %S, %S* %src
+  store %S zeroinitializer, %S* %src
   store %S %1, %S* %dst
   ret void
 }
