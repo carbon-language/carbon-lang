@@ -48,13 +48,11 @@
 #include <string>
 #include <vector>
 
-#if !defined(__CYGWIN__) && \
-    !(defined(__MINGW32__) && defined(__MINGW64_VERSION_MAJOR) && \
-      __MINGW64_VERSION_MAJOR < 3)
+#if !defined(__CYGWIN__) && !defined(__MINGW32__)
 #include <VersionHelpers.h>
 #else
 // Cygwin does not have the IsWindows8OrGreater() API.
-// Older version of mingw-w64 does not have the API either.
+// Some version of mingw does not have the API either.
 inline bool IsWindows8OrGreater() {
   OSVERSIONINFO osvi = {};
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
