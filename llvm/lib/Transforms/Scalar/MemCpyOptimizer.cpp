@@ -534,7 +534,6 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
           for (; I != E; ++I) {
             MemoryLocation StoreLoc = MemoryLocation::get(SI);
             if (AA.getModRefInfo(&*I, StoreLoc) != MRI_NoModRef) {
-              DEBUG(dbgs() << "Alias " << *I << "\n");
               P = nullptr;
               break;
             }
