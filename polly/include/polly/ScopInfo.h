@@ -1408,12 +1408,12 @@ private:
   ///
   void buildSchedule();
 
-  /// @brief Build Schedule for the region @p R.
+  /// @brief Build Schedule for the region @p RN.
   ///
-  /// @param R              The current region traversed.
+  /// @param RN             The current region traversed.
   /// @param LoopSchedules  Map from loops to their schedule and progress.
   void buildSchedule(
-      Region *R,
+      RegionNode *RN,
       DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
 
   /// @brief Collect all memory access relations of a given type.
