@@ -42,11 +42,7 @@ public:
   }
 
   bool runOnLoop(Loop *L, LPPassManager &) override {
-    auto BBI = find_if(L->blocks().begin(), L->blocks().end(),
-                       [](BasicBlock *BB) { return BB; });
-    if (BBI != L->blocks().end() &&
-        isFunctionInPrintList((*BBI)->getParent()->getName()))
-      P.run(*L);
+    P.run(*L);
     return false;
   }
 };
