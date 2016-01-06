@@ -878,4 +878,48 @@ for.end:                                          ; preds = %for.cond.for.end_cr
 
 declare i32 @varfunc(i8* nocapture readonly)
 
+@sum1 = external hidden thread_local global i32, align 4
+
+
+; Function Attrs: nounwind
+; Make sure the TLS call used to access @sum1 happens after the prologue
+; and before the epilogue.
+; TLS calls used to be wrongly model and shrink-wrapping would have inserted
+; the prologue and epilogue just around the call to doSomething.
+; PR25820.
+;
+; CHECK-LABEL: tlsCall:
+; CHECK: pushq
+; CHECK: testb $1, %dil
+; CHECK: je [[ELSE_LABEL:LBB[0-9_]+]]
+;
+; master bb
+; CHECK: movq _sum1@TLVP(%rip), %rdi
+; CHECK-NEXT: callq *(%rdi)
+; CHECK: jmp [[EXIT_LABEL:LBB[0-9_]+]]
+;
+; [[ELSE_LABEL]]:
+; CHECK: callq _doSomething
+;
+; [[EXIT_LABEL]]:
+; CHECK: popq
+; CHECK-NEXT: retq
+define i32 @tlsCall(i1 %bool1, i32 %arg, i32* readonly dereferenceable(4) %sum1) #3 {
+entry:
+  br i1 %bool1, label %master, label %else
+
+master:
+  %tmp1 = load i32, i32* %sum1, align 4
+  store i32 %tmp1, i32* @sum1, align 4
+  br label %exit
+
+else:
+  %call = call i32 @doSomething(i32 0, i32* null)
+  br label %exit
+
+exit:
+  %res = phi i32 [ %arg, %master], [ %call, %else ]
+  ret i32 %res
+}
+
 attributes #3 = { nounwind }
