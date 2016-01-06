@@ -92,7 +92,9 @@ typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
 }
 
 template <class ELFT> uint32_t ObjectFile<ELFT>::getMipsGp0() const {
-  return MipsReginfo ? MipsReginfo->getGp0() : 0;
+  if (MipsReginfo)
+    return MipsReginfo->Reginfo->ri_gp_value;
+  return 0;
 }
 
 template <class ELFT>

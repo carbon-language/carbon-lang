@@ -1412,13 +1412,14 @@ template <class ELFT>
 void MipsReginfoOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *R = reinterpret_cast<Elf_Mips_RegInfo *>(Buf);
   R->ri_gp_value = getMipsGpAddr<ELFT>();
-  R->ri_gprmask = GeneralMask;
+  R->ri_gprmask = GprMask;
 }
 
 template <class ELFT>
 void MipsReginfoOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
+  // Copy input object file's .reginfo gprmask to output.
   auto *S = cast<MipsReginfoInputSection<ELFT>>(C);
-  GeneralMask |= S->getGeneralMask();
+  GprMask |= S->Reginfo->ri_gprmask;
 }
 
 namespace lld {

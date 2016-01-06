@@ -429,7 +429,7 @@ public:
   void addSection(InputSectionBase<ELFT> *S) override;
 
 private:
-  uint32_t GeneralMask = 0;
+  uint32_t GprMask = 0;
 };
 
 // All output sections that are hadnled by the linker specially are
