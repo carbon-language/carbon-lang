@@ -72,3 +72,17 @@ define void @copyalias(%S* %src, %S* %dst) {
   store %S %2, %S* %dst
   ret void
 }
+
+
+; The GEP is present after the aliasing store, preventing to move the memcpy before
+; (without further analysis/transformation)
+define void @copyaliaswithproducerinbetween(%S* %src, %S* %dst) {
+; CHECK-LABEL: copyalias
+; CHECK-NEXT: [[LOAD:%[a-z0-9\.]+]] = load %S, %S* %src
+; CHECK-NOT: call
+  %1 = load %S, %S* %src
+  store %S undef, %S* %dst
+  %dst2 = getelementptr %S , %S* %dst, i64 1
+  store %S %1, %S* %dst2
+  ret void
+}

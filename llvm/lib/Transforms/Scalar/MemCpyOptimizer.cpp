@@ -529,11 +529,13 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
 
           // We found an instruction that may write to the loaded memory.
           // We can try to promote at this position instead of the store
-          // position if nothing alias the store memory after this.
+          // position if nothing alias the store memory after this and the store
+          // destination is not in the range.
           P = &*I;
           for (; I != E; ++I) {
             MemoryLocation StoreLoc = MemoryLocation::get(SI);
-            if (AA.getModRefInfo(&*I, StoreLoc) != MRI_NoModRef) {
+            if (&*I == SI->getOperand(1) ||
+                AA.getModRefInfo(&*I, StoreLoc) != MRI_NoModRef) {
               P = nullptr;
               break;
             }
