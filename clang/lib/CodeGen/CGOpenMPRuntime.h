@@ -955,7 +955,7 @@ public:
   /// \brief Emit the target regions enclosed in \a GD function definition or
   /// the function itself in case it is a valid device function. Returns true if
   /// \a GD was dealt with successfully.
-  /// \param FD Function to scan.
+  /// \param GD Function to scan.
   virtual bool emitTargetFunctions(GlobalDecl GD);
 
   /// \brief Emit the global variable if it is a valid device global variable.
