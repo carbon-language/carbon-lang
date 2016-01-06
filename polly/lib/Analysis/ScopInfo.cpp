@@ -2676,11 +2676,7 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC) {
   for (ScopStmt &Stmt : Stmts)
     Stmt.init();
 
-  DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> LoopSchedules;
-  Loop *L = getLoopSurroundingRegion(R, LI);
-  LoopSchedules[L];
-  buildSchedule(&R, LoopSchedules);
-  Schedule = LoopSchedules[L].first;
+  buildSchedule();
 
   if (isl_set_is_empty(AssumedContext))
     return;
@@ -3431,20 +3427,27 @@ void Scop::addScopStmt(BasicBlock *BB, Region *R) {
   }
 }
 
+void Scop::buildSchedule() {
+
+  // Special case for SCoPs that consist only of one non-affine region.
+  if (SD.isNonAffineSubRegion(&getRegion(), &getRegion())) {
+    ScopStmt *Stmt = getStmtForBasicBlock(getRegion().getEntry());
+    isl_set *Domain = Stmt->getDomain();
+    Schedule = isl_schedule_from_domain(isl_union_set_from_set(Domain));
+    return;
+  }
+
+  // For general SCoPs invoke the recursive schedule generation.
+  DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> LoopSchedules;
+  Loop *L = getLoopSurroundingRegion(getRegion(), LI);
+  LoopSchedules[L];
+  buildSchedule(&getRegion(), LoopSchedules);
+  Schedule = LoopSchedules[L].first;
+}
+
 void Scop::buildSchedule(
     Region *R,
     DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules) {
-
-  if (SD.isNonAffineSubRegion(R, &getRegion())) {
-    Loop *L = getLoopSurroundingRegion(*R, LI);
-    auto &LSchedulePair = LoopSchedules[L];
-    ScopStmt *Stmt = getStmtForBasicBlock(R->getEntry());
-    isl_set *Domain = Stmt->getDomain();
-    auto *UDomain = isl_union_set_from_set(Domain);
-    auto *StmtSchedule = isl_schedule_from_domain(UDomain);
-    LSchedulePair.first = StmtSchedule;
-    return;
-  }
 
   ReversePostOrderTraversal<Region *> RTraversal(R);
   for (auto *RN : RTraversal) {

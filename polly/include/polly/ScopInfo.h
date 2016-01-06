@@ -1404,7 +1404,11 @@ private:
   /// the dimensionality of the underlying ScopArrayInfo object.
   void updateAccessDimensionality();
 
-  /// @brief Build Schedule and ScopStmts.
+  /// @brief Build Schedule for the SCoP region.
+  ///
+  void buildSchedule();
+
+  /// @brief Build Schedule for the region @p R.
   ///
   /// @param R              The current region traversed.
   /// @param LoopSchedules  Map from loops to their schedule and progress.
