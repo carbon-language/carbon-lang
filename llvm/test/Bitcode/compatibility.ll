@@ -47,10 +47,6 @@ $comdat.samesize = comdat samesize
 ; CHECK: @const.struct = constant %const.struct.type { i32 -1, i8 undef }
 @const.struct.packed = constant %const.struct.type.packed <{ i32 -1, i8 1 }>
 ; CHECK: @const.struct.packed = constant %const.struct.type.packed <{ i32 -1, i8 1 }>
-@const.array = constant [2 x i32] [i32 -3, i32 -4]
-; CHECK: @const.array = constant [2 x i32] [i32 -3, i32 -4]
-@const.vector = constant <2 x i32> <i32 -5, i32 -6>
-; CHECK: @const.vector = constant <2 x i32> <i32 -5, i32 -6>
 
 ; CHECK: @constant.array.i8  = constant [3 x i8] c"\00\01\00"
 @constant.array.i8  = constant [3 x i8] [i8 -0, i8 1, i8 0]
