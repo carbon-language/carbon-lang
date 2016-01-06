@@ -172,15 +172,15 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
 
   // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
   // equivalent (conflicting), or more preferable, respectively.
-  int comp = Existing->compare<ELFT>(New);
-  if (comp == 0) {
+  int Comp = Existing->compare<ELFT>(New);
+  if (Comp == 0) {
     std::string S = "duplicate symbol: " + conflictMsg(Existing, New);
     if (!Config->AllowMultipleDefinition)
       error(S);
     warning(S);
     return;
   }
-  if (comp < 0)
+  if (Comp < 0)
     Sym->Body = New;
 }
 
