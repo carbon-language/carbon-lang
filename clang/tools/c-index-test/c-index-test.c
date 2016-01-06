@@ -1593,6 +1593,8 @@ int perform_test_load_source(int argc, const char **argv,
   int num_unsaved_files = 0;
   enum CXErrorCode Err;
   int result;
+  unsigned Repeats = 0;
+  unsigned I;
 
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           (!strcmp(filter, "local") || 
@@ -1609,6 +1611,9 @@ int perform_test_load_source(int argc, const char **argv,
     return -1;
   }
 
+  if (getenv("CINDEXTEST_EDITING"))
+    Repeats = 5;
+
   Err = clang_parseTranslationUnit2(Idx, 0,
                                     argv + num_unsaved_files,
                                     argc - num_unsaved_files,
@@ -1620,6 +1625,22 @@ int perform_test_load_source(int argc, const char **argv,
     free_remapped_files(unsaved_files, num_unsaved_files);
     clang_disposeIndex(Idx);
     return 1;
+  }
+
+  for (I = 0; I != Repeats; ++I) {
+    if (checkForErrors(TU) != 0)
+      return -1;
+
+    if (Repeats > 1) {
+      Err = clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
+                                         clang_defaultReparseOptions(TU));
+      if (Err != CXError_Success) {
+        describeLibclangFailure(Err);
+        free_remapped_files(unsaved_files, num_unsaved_files);
+        clang_disposeIndex(Idx);
+        return 1;
+      }
+    }
   }
 
   result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV,
