@@ -2611,7 +2611,8 @@ void HexagonToolChain::getHexagonLibraryPaths(const ArgList &Args,
   // Other standard paths
   //----------------------------------------------------------------------------
   std::vector<std::string> RootDirs;
-  std::copy(D.PrefixDirs.begin(), D.PrefixDirs.end(), RootDirs.begin());
+  std::copy(D.PrefixDirs.begin(), D.PrefixDirs.end(),
+            std::back_inserter(RootDirs));
 
   std::string TargetDir = getHexagonTargetDir(D.getInstalledDir(),
                                               D.PrefixDirs);
