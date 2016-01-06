@@ -263,6 +263,8 @@ MachineBasicBlock *FindIDom(MachineBasicBlock &Block, ListOfBBs BBs,
     if (!IDom)
       break;
   }
+  if (IDom == &Block)
+    return nullptr;
   return IDom;
 }
 
@@ -352,13 +354,9 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB,
       if (MLI->getLoopDepth(Save) > MLI->getLoopDepth(Restore)) {
         // Push Save outside of this loop if immediate dominator is different
         // from save block. If immediate dominator is not different, bail out.
-        MachineBasicBlock *IDom = FindIDom<>(*Save, Save->predecessors(), *MDT);
-        if (IDom != Save)
-          Save = IDom;
-        else {
-          Save = nullptr;
+        Save = FindIDom<>(*Save, Save->predecessors(), *MDT);
+        if (!Save)
           break;
-        }
       } else {
         // If the loop does not exit, there is no point in looking
         // for a post-dominator outside the loop.
