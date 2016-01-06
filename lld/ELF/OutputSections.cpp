@@ -34,8 +34,7 @@ OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t sh_type,
 
 template <class ELFT>
 GotPltSection<ELFT>::GotPltSection()
-    : OutputSectionBase<ELFT>(".got.plt", llvm::ELF::SHT_PROGBITS,
-                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE) {
+    : OutputSectionBase<ELFT>(".got.plt", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
   this->Header.sh_addralign = sizeof(uintX_t);
 }
 
@@ -70,10 +69,9 @@ template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 GotSection<ELFT>::GotSection()
-    : OutputSectionBase<ELFT>(".got", llvm::ELF::SHT_PROGBITS,
-                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE) {
+    : OutputSectionBase<ELFT>(".got", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
   if (Config->EMachine == EM_MIPS)
-    this->Header.sh_flags |= llvm::ELF::SHF_MIPS_GPREL;
+    this->Header.sh_flags |= SHF_MIPS_GPREL;
   this->Header.sh_addralign = sizeof(uintX_t);
 }
 
@@ -151,8 +149,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 PltSection<ELFT>::PltSection()
-    : OutputSectionBase<ELFT>(".plt", llvm::ELF::SHT_PROGBITS,
-                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR) {
+    : OutputSectionBase<ELFT>(".plt", SHT_PROGBITS, SHF_ALLOC | SHF_EXECINSTR) {
   this->Header.sh_addralign = 16;
 }
 
@@ -199,9 +196,7 @@ template <class ELFT> void PltSection<ELFT>::finalize() {
 
 template <class ELFT>
 RelocationSection<ELFT>::RelocationSection(StringRef Name, bool IsRela)
-    : OutputSectionBase<ELFT>(Name,
-                              IsRela ? llvm::ELF::SHT_RELA : llvm::ELF::SHT_REL,
-                              llvm::ELF::SHF_ALLOC),
+    : OutputSectionBase<ELFT>(Name, IsRela ? SHT_RELA : SHT_REL, SHF_ALLOC),
       IsRela(IsRela) {
   this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
@@ -328,8 +323,7 @@ template <class ELFT> void RelocationSection<ELFT>::finalize() {
 
 template <class ELFT>
 InterpSection<ELFT>::InterpSection()
-    : OutputSectionBase<ELFT>(".interp", llvm::ELF::SHT_PROGBITS,
-                              llvm::ELF::SHF_ALLOC) {
+    : OutputSectionBase<ELFT>(".interp", SHT_PROGBITS, SHF_ALLOC) {
   this->Header.sh_size = Config->DynamicLinker.size() + 1;
   this->Header.sh_addralign = 1;
 }
@@ -346,8 +340,7 @@ template <class ELFT> void InterpSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 HashTableSection<ELFT>::HashTableSection()
-    : OutputSectionBase<ELFT>(".hash", llvm::ELF::SHT_HASH,
-                              llvm::ELF::SHF_ALLOC) {
+    : OutputSectionBase<ELFT>(".hash", SHT_HASH, SHF_ALLOC) {
   this->Header.sh_entsize = sizeof(Elf_Word);
   this->Header.sh_addralign = sizeof(Elf_Word);
 }
@@ -404,8 +397,7 @@ static uint32_t hashGnu(StringRef Name) {
 
 template <class ELFT>
 GnuHashTableSection<ELFT>::GnuHashTableSection()
-    : OutputSectionBase<ELFT>(".gnu.hash", llvm::ELF::SHT_GNU_HASH,
-                              llvm::ELF::SHF_ALLOC) {
+    : OutputSectionBase<ELFT>(".gnu.hash", SHT_GNU_HASH, SHF_ALLOC) {
   this->Header.sh_entsize = ELFT::Is64Bits ? 0 : 4;
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
@@ -545,8 +537,7 @@ void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolBody *> &Symbols) {
 
 template <class ELFT>
 DynamicSection<ELFT>::DynamicSection(SymbolTable<ELFT> &SymTab)
-    : OutputSectionBase<ELFT>(".dynamic", llvm::ELF::SHT_DYNAMIC,
-                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE),
+    : OutputSectionBase<ELFT>(".dynamic", SHT_DYNAMIC, SHF_ALLOC | SHF_WRITE),
       SymTab(SymTab) {
   Elf_Shdr &Header = this->Header;
   Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
@@ -556,7 +547,7 @@ DynamicSection<ELFT>::DynamicSection(SymbolTable<ELFT> &SymTab)
   // See "Special Section" in Chapter 4 in the following document:
   // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
   if (Config->EMachine == EM_MIPS)
-    Header.sh_flags = llvm::ELF::SHF_ALLOC;
+    Header.sh_flags = SHF_ALLOC;
 }
 
 template <class ELFT> void DynamicSection<ELFT>::finalize() {
@@ -1165,8 +1156,8 @@ template <class ELFT> void MergeOutputSection<ELFT>::finalize() {
 
 template <class ELFT>
 StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
-    : OutputSectionBase<ELFT>(Name, llvm::ELF::SHT_STRTAB,
-                              Dynamic ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
+    : OutputSectionBase<ELFT>(Name, SHT_STRTAB,
+                              Dynamic ? (uintX_t)SHF_ALLOC : 0),
       Dynamic(Dynamic) {
   this->Header.sh_addralign = 1;
 }
@@ -1207,10 +1198,9 @@ bool elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File, StringRef SymName,
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
     SymbolTable<ELFT> &Table, StringTableSection<ELFT> &StrTabSec)
-    : OutputSectionBase<ELFT>(
-          StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
-          StrTabSec.isDynamic() ? llvm::ELF::SHT_DYNSYM : llvm::ELF::SHT_SYMTAB,
-          StrTabSec.isDynamic() ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
+    : OutputSectionBase<ELFT>(StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
+                              StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
+                              StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
       Table(Table), StrTabSec(StrTabSec) {
   typedef OutputSectionBase<ELFT> Base;
   typename Base::Elf_Shdr &Header = this->Header;
