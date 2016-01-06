@@ -354,6 +354,8 @@ SharedFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   return *Ret;
 }
 
+// Partially parse the shared object file so that we can call
+// getSoName on this object.
 template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
@@ -399,7 +401,8 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   }
 }
 
-template <class ELFT> void SharedFile<ELFT>::parse() {
+// Fully parse the shared object file. This must be called after parseSoName().
+template <class ELFT> void SharedFile<ELFT>::parseRest() {
   Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);

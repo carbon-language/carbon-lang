@@ -193,7 +193,7 @@ public:
   explicit SharedFile(MemoryBufferRef M);
 
   void parseSoName();
-  void parse();
+  void parseRest();
 
   // Used for --as-needed
   bool AsNeeded = false;

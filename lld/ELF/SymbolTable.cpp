@@ -68,7 +68,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
       return;
 
     SharedFiles.emplace_back(cast<SharedFile<ELFT>>(File.release()));
-    F->parse();
+    F->parseRest();
     for (SharedSymbol<ELFT> &B : F->getSharedSymbols())
       resolve(&B);
     return;
