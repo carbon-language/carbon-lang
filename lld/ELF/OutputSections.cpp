@@ -770,7 +770,7 @@ void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
     this->Header.sh_addralign = Align;
 
   uintX_t Off = this->Header.sh_size;
-  Off = RoundUpToAlignment(Off, Align);
+  Off = align(Off, Align);
   S->OutSecOff = Off;
   Off += S->getSize();
   this->Header.sh_size = Off;
@@ -971,7 +971,7 @@ void EHOutputSection<ELFT>::addSectionAux(
       auto P = CieMap.insert(std::make_pair(CieInfo, Cies.size()));
       if (P.second) {
         Cies.push_back(C);
-        this->Header.sh_size += RoundUpToAlignment(Length, sizeof(uintX_t));
+        this->Header.sh_size += align(Length, sizeof(uintX_t));
       }
       OffsetToIndex[Offset] = P.first->second;
     } else {
@@ -984,7 +984,7 @@ void EHOutputSection<ELFT>::addSectionAux(
         if (I == OffsetToIndex.end())
           error("Invalid CIE reference");
         Cies[I->second].Fdes.push_back(EHRegion<ELFT>(S, Index));
-        this->Header.sh_size += RoundUpToAlignment(Length, sizeof(uintX_t));
+        this->Header.sh_size += align(Length, sizeof(uintX_t));
       }
     }
 
@@ -1037,7 +1037,7 @@ static typename ELFFile<ELFT>::uintX_t writeAlignedCieOrFde(StringRef Data,
                                                             uint8_t *Buf) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
   const endianness E = ELFT::TargetEndianness;
-  uint64_t Len = RoundUpToAlignment(Data.size(), sizeof(uintX_t));
+  uint64_t Len = align(Data.size(), sizeof(uintX_t));
   write32<E>(Buf, Len - 4);
   memcpy(Buf + 4, Data.data() + 4, Data.size() - 4);
   return Len;
