@@ -452,7 +452,7 @@ RenderScriptRuntime::GetPluginNameStatic()
     return g_name;
 }
 
-RenderScriptRuntime::ModuleKind 
+RenderScriptRuntime::ModuleKind
 RenderScriptRuntime::GetModuleKind(const lldb::ModuleSP &module_sp)
 {
     if (module_sp)
@@ -493,7 +493,7 @@ RenderScriptRuntime::IsRenderScriptModule(const lldb::ModuleSP &module_sp)
     return GetModuleKind(module_sp) != eModuleKindIgnored;
 }
 
-void 
+void
 RenderScriptRuntime::ModulesDidLoad(const ModuleList &module_list )
 {
     Mutex::Locker locker (module_list.GetMutex ());
@@ -640,11 +640,11 @@ RenderScriptRuntime::HookCallback(void *baton, StoppointCallbackContext *ctx, ll
     RenderScriptRuntime *lang_rt = (RenderScriptRuntime *)context.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
 
     lang_rt->HookCallback(hook_info, context);
-    
+
     return false;
 }
 
-void 
+void
 RenderScriptRuntime::HookCallback(RuntimeHook* hook_info, ExecutionContext& context)
 {
     Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
@@ -652,7 +652,7 @@ RenderScriptRuntime::HookCallback(RuntimeHook* hook_info, ExecutionContext& cont
     if (log)
         log->Printf ("RenderScriptRuntime::HookCallback - '%s' .", hook_info->defn->name);
 
-    if (hook_info->defn->grabber) 
+    if (hook_info->defn->grabber)
     {
         (this->*(hook_info->defn->grabber))(hook_info, context);
     }
@@ -706,7 +706,6 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
                 *data = result;
                 success = true;
             }
-
             break;
         }
         case llvm::Triple::ArchType::x86_64:
@@ -741,6 +740,7 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
         case llvm::Triple::ArchType::arm:
         {
             // arm 32 bit
+            // first 4 arguments are passed via registers
             if (arg < 4)
             {
                 const RegisterInfo* rArg = reg_ctx->GetRegisterInfoAtIndex(arg);
@@ -760,18 +760,19 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
             {
                 uint64_t sp = reg_ctx->GetSP();
                 uint32_t offset = (arg-4) * sizeof(uint32_t);
-                process->ReadMemory(sp + offset, &data, sizeof(uint32_t), error);
-                if (error.Fail())
+                uint32_t value = 0;
+                size_t bytes_read = process->ReadMemory(sp + offset, &value, sizeof(value), error);
+                if (error.Fail() || bytes_read != sizeof(value))
                 {
                     if (log)
                         log->Printf("RenderScriptRuntime::GetArgSimple - error reading ARM stack: %s.", error.AsCString());
                 }
                 else
                 {
+                    *data = value;
                     success = true;
                 }
             }
-
             break;
         }
         case llvm::Triple::ArchType::aarch64:
@@ -803,8 +804,8 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
         }
         case llvm::Triple::ArchType::mipsel:
         {
-
             // read from the registers
+            // first 4 arguments are passed in registers
             if (arg < 4){
                 const RegisterInfo* rArg = reg_ctx->GetRegisterInfoAtIndex(arg + 4);
                 RegisterValue rVal;
@@ -818,26 +819,25 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
                     if (log)
                         log->Printf("RenderScriptRuntime::GetArgSimple() - Mips - Error while reading the argument #%d", arg);
                 }
-
             }
-
-            // read from the stack
+            // arguments > 4 are read from the stack
             else
             {
                 uint64_t sp = reg_ctx->GetSP();
                 uint32_t offset = arg * sizeof(uint32_t);
-                process->ReadMemory(sp + offset, &data, sizeof(uint32_t), error);
-                if (error.Fail())
+                uint32_t value = 0;
+                size_t bytes_read = process->ReadMemory(sp + offset, &value, sizeof(value), error);
+                if (error.Fail() || bytes_read != sizeof(value))
                 {
                     if (log)
                         log->Printf("RenderScriptRuntime::GetArgSimple - error reading Mips stack: %s.", error.AsCString());
                 }
                 else
                 {
+                    *data = value;
                     success = true;
                 }
             }
-
             break;
         }
         case llvm::Triple::ArchType::mips64el:
@@ -858,24 +858,24 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
                         log->Printf("RenderScriptRuntime::GetArgSimple - Mips64 - Error reading the argument #%d", arg);
                 }
             }
-
-            // read from the stack
+            // arguments > 8 are read from the stack
             else
             {
                 uint64_t sp = reg_ctx->GetSP();
                 uint32_t offset = (arg - 8) * sizeof(uint64_t);
-                process->ReadMemory(sp + offset, &data, sizeof(uint64_t), error);
-                if (error.Fail())
+                uint64_t value = 0;
+                size_t bytes_read = process->ReadMemory(sp + offset, &value, sizeof(value), error);
+                if (error.Fail() || bytes_read != sizeof(value))
                 {
                     if (log)
                         log->Printf("RenderScriptRuntime::GetArgSimple - Mips64 - Error reading Mips64 stack: %s.", error.AsCString());
                 }
                 else
                 {
+                    *data = value;
                     success = true;
                 }
             }
-
             break;
         }
         default:
@@ -883,7 +883,6 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
             // invalid architecture
             if (log)
                 log->Printf("RenderScriptRuntime::GetArgSimple - Architecture not supported");
-
         }
     }
 
@@ -895,11 +894,11 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
     return success;
 }
 
-void 
+void
 RenderScriptRuntime::CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionContext& context)
 {
     Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
-    
+
     //Context, Script, int, data, length
 
     uint64_t rs_context_u64 = 0U;
@@ -921,7 +920,7 @@ RenderScriptRuntime::CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionConte
             log->Printf("RenderScriptRuntime::CaptureSetGlobalVar1 - Error while reading the function parameters");
         return;
     }
-    
+
     if (log)
     {
         log->Printf ("RenderScriptRuntime::CaptureSetGlobalVar1 - 0x%" PRIx64 ",0x%" PRIx64 " slot %" PRIu64 " = 0x%" PRIx64 ":%" PRIu64 "bytes.",
@@ -934,18 +933,18 @@ RenderScriptRuntime::CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionConte
             if (rs_id_u64 < rsm->m_globals.size())
             {
                 auto rsg = rsm->m_globals[rs_id_u64];
-                log->Printf ("RenderScriptRuntime::CaptureSetGlobalVar1 - Setting of '%s' within '%s' inferred", rsg.m_name.AsCString(), 
+                log->Printf ("RenderScriptRuntime::CaptureSetGlobalVar1 - Setting of '%s' within '%s' inferred", rsg.m_name.AsCString(),
                                 rsm->m_module->GetFileSpec().GetFilename().AsCString());
             }
         }
     }
 }
 
-void 
+void
 RenderScriptRuntime::CaptureAllocationInit1(RuntimeHook* hook_info, ExecutionContext& context)
 {
     Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
-    
+
     //Context, Alloc, bool
 
     uint64_t rs_context_u64 = 0U;
@@ -1009,7 +1008,7 @@ RenderScriptRuntime::CaptureAllocationDestroy(RuntimeHook* hook_info, ExecutionC
         log->Printf("RenderScriptRuntime::CaptureAllocationDestroy - Couldn't find destroyed allocation");
 }
 
-void 
+void
 RenderScriptRuntime::CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext& context)
 {
     Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
@@ -1045,16 +1044,16 @@ RenderScriptRuntime::CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext
     {
         if (log)
             log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - error reading resname: %s.", error.AsCString());
-                   
+
     }
 
     process->ReadCStringFromMemory((lldb::addr_t)rs_cachedirptr_u64, cachedir, error);
     if (error.Fail())
     {
         if (log)
-            log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - error reading cachedir: %s.", error.AsCString());     
+            log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - error reading cachedir: %s.", error.AsCString());
     }
-    
+
     if (log)
         log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - 0x%" PRIx64 ",0x%" PRIx64 " => '%s' at '%s' .",
                      rs_context_u64, rs_script_u64, resname.c_str(), cachedir.c_str());
@@ -1077,7 +1076,7 @@ RenderScriptRuntime::CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext
         if (log)
             log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - '%s' tagged with context 0x%" PRIx64 " and script 0x%" PRIx64 ".",
                          strm.GetData(), rs_context_u64, rs_script_u64);
-    } 
+    }
     else if (log)
     {
         log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - resource name invalid, Script not tagged");
@@ -1134,7 +1133,7 @@ RenderScriptRuntime::LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind)
         if (addr == LLDB_INVALID_ADDRESS)
         {
             if (log)
-                log->Printf ("RenderScriptRuntime::LoadRuntimeHooks - Unable to resolve the address of hook function '%s' with symbol '%s'.", 
+                log->Printf ("RenderScriptRuntime::LoadRuntimeHooks - Unable to resolve the address of hook function '%s' with symbol '%s'.",
                              hook_defn->name, symbol_name);
             continue;
         }
@@ -1152,7 +1151,7 @@ RenderScriptRuntime::LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind)
         m_runtimeHooks[addr] = hook;
         if (log)
         {
-            log->Printf ("RenderScriptRuntime::LoadRuntimeHooks - Successfully hooked '%s' in '%s' version %" PRIu64 " at 0x%" PRIx64 ".", 
+            log->Printf ("RenderScriptRuntime::LoadRuntimeHooks - Successfully hooked '%s' in '%s' version %" PRIu64 " at 0x%" PRIx64 ".",
                 hook_defn->name, module->GetFileSpec().GetFilename().AsCString(), (uint64_t)hook_defn->version, (uint64_t)addr);
         }
     }
@@ -2299,7 +2298,7 @@ RenderScriptRuntime::LoadModule(const lldb::ModuleSP &module_sp)
             }
             case eModuleKindLibRS:
             {
-                if (!m_libRS) 
+                if (!m_libRS)
                 {
                     m_libRS = module_sp;
                     static ConstString gDbgPresentStr("gDebuggerPresent");
@@ -2334,7 +2333,7 @@ RenderScriptRuntime::LoadModule(const lldb::ModuleSP &module_sp)
                 break;
         }
         if (module_loaded)
-            Update();  
+            Update();
         return module_loaded;
     }
     return false;
@@ -2408,7 +2407,7 @@ RSModuleDescriptor::ParseRSInfo()
                         m_kernels.push_back(RSKernelDescriptor(this, name, slot));
                     }
                 }
-            } 
+            }
             else if (sscanf(line.c_str(), "pragmaCount: %u", &numDefns) == 1)
             {
                 char name[MAXLINE];
@@ -2417,7 +2416,7 @@ RSModuleDescriptor::ParseRSInfo()
                 {
                     name[0] = '\0';
                     value[0] = '\0';
-                    if (sscanf(info_lines[++offset].c_str(), "%s - %s", &name[0], &value[0]) != 0 
+                    if (sscanf(info_lines[++offset].c_str(), "%s - %s", &name[0], &value[0]) != 0
                         && (name[0] != '\0'))
                     {
                         m_pragmas[std::string(name)] = value;
@@ -2466,7 +2465,7 @@ RenderScriptRuntime::Status(Stream &strm) const
         strm.Printf("CPU Reference Implementation discovered.");
         strm.EOL();
     }
-    
+
     if (m_runtimeHooks.size())
     {
         strm.Printf("Runtime functions hooked:");
@@ -2476,7 +2475,7 @@ RenderScriptRuntime::Status(Stream &strm) const
             strm.Indent(b.second->defn->name);
             strm.EOL();
         }
-    } 
+    }
     else
     {
         strm.Printf("Runtime is not hooked.");
@@ -2484,7 +2483,7 @@ RenderScriptRuntime::Status(Stream &strm) const
     }
 }
 
-void 
+void
 RenderScriptRuntime::DumpContexts(Stream &strm) const
 {
     strm.Printf("Inferred RenderScript Contexts:");
@@ -2519,7 +2518,7 @@ RenderScriptRuntime::DumpContexts(Stream &strm) const
     strm.IndentLess();
 }
 
-void 
+void
 RenderScriptRuntime::DumpKernels(Stream &strm) const
 {
     strm.Printf("RenderScript Kernels:");
