@@ -696,9 +696,6 @@ class ScopedInErrorReport {
                       error_message_buffer, kErrorMessageBufferSize);
     }
 
-    // Remove color sequences since logs cannot print them.
-    RemoveANSIEscapeSequencesFromString(buffer_copy.data());
-
     LogFullErrorReport(buffer_copy.data());
 
     if (error_report_callback) {

@@ -278,9 +278,12 @@ static void SharedPrintfCode(bool append_pid, const char *format,
 #   undef CHECK_NEEDED_LENGTH
   }
   RawWrite(buffer);
-  if (common_flags()->log_to_syslog && ShouldLogAfterPrintf())
-    WriteToSyslog(buffer);
+
+  // Remove color sequences from the message.
+  RemoveANSIEscapeSequencesFromString(buffer);
   CallPrintfAndReportCallback(buffer);
+  LogMessageOnPrintf(buffer);
+
   // If we had mapped any memory, clean up.
   if (buffer != local_buffer)
     UnmapOrDie((void *)buffer, buffer_size);

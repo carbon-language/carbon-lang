@@ -665,17 +665,17 @@ INLINE void LogFullErrorReport(const char *buffer) {}
 
 #if SANITIZER_LINUX || SANITIZER_MAC
 void WriteOneLineToSyslog(const char *s);
+void LogMessageOnPrintf(const char *str);
 #else
 INLINE void WriteOneLineToSyslog(const char *s) {}
+INLINE void LogMessageOnPrintf(const char *str) {}
 #endif
 
 #if SANITIZER_LINUX
 // Initialize Android logging. Any writes before this are silently lost.
 void AndroidLogInit();
-bool ShouldLogAfterPrintf();
 #else
 INLINE void AndroidLogInit() {}
-INLINE bool ShouldLogAfterPrintf() { return false; }
 #endif
 
 #if SANITIZER_ANDROID

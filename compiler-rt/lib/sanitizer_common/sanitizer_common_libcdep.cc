@@ -125,9 +125,6 @@ void WriteToSyslog(const char *msg) {
   char *p = msg_copy.data();
   char *q;
 
-  // Remove color sequences since syslogs cannot print them.
-  RemoveANSIEscapeSequencesFromString(p);
-
   // Print one line at a time.
   // syslog, at least on Android, has an implicit message length limit.
   do {

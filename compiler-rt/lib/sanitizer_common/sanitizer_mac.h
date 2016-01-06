@@ -44,9 +44,11 @@ static const char *__crashreporter_info__ __attribute__((__used__)) =
   &__crashreporter_info_buff__[0];
 asm(".desc ___crashreporter_info__, 0x10");
 } // extern "C"
+static BlockingMutex crashreporter_info_mutex(LINKER_INITIALIZED);
 
-INLINE void CRSetCrashLogMessage(const char *msg) {
-  internal_strlcpy(__crashreporter_info_buff__, msg,
+INLINE void CRAppendCrashLogMessage(const char *msg) {
+  BlockingMutexLock l(&crashreporter_info_mutex);
+  internal_strlcat(__crashreporter_info_buff__, msg,
                    sizeof(__crashreporter_info_buff__)); }
 
 #endif  // SANITIZER_MAC
