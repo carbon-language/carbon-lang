@@ -52,7 +52,9 @@ InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
   case Merge:
     return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
   case MipsReginfo:
-    return cast<MipsReginfoInputSection<ELFT>>(this)->getOffset(Offset);
+    // MIPS .reginfo sections are consumed by the linker,
+    // so it should never be copied to output.
+    llvm_unreachable("MIPS .reginfo reached writeTo().");
   }
   llvm_unreachable("Invalid section kind");
 }
