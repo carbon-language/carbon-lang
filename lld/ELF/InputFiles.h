@@ -104,7 +104,7 @@ public:
   ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
 
   explicit ObjectFile(MemoryBufferRef M);
-  void parse(llvm::DenseSet<StringRef> &Comdats);
+  void parse(llvm::DenseSet<StringRef> &ComdatGroups);
 
   ArrayRef<InputSectionBase<ELFT> *> getSections() const { return Sections; }
   InputSectionBase<ELFT> *getSection(const Elf_Sym &Sym) const;
@@ -127,7 +127,7 @@ public:
   uint32_t getMipsGp0() const;
 
 private:
-  void initializeSections(llvm::DenseSet<StringRef> &Comdats);
+  void initializeSections(llvm::DenseSet<StringRef> &ComdatGroups);
   void initializeSymbols();
   InputSectionBase<ELFT> *createInputSection(const Elf_Shdr &Sec);
 

@@ -106,9 +106,9 @@ ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
 }
 
 template <class ELFT>
-void ObjectFile<ELFT>::parse(DenseSet<StringRef> &Comdats) {
+void ObjectFile<ELFT>::parse(DenseSet<StringRef> &ComdatGroups) {
   // Read section and symbol tables.
-  initializeSections(Comdats);
+  initializeSections(ComdatGroups);
   initializeSymbols();
 }
 
@@ -172,7 +172,7 @@ static bool shouldMerge(const typename ELFFile<ELFT>::Elf_Shdr &Sec) {
 }
 
 template <class ELFT>
-void ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
+void ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &ComdatGroups) {
   uint64_t Size = this->ELFObj.getNumSections();
   Sections.resize(Size);
   unsigned I = -1;
@@ -185,7 +185,7 @@ void ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
     switch (Sec.sh_type) {
     case SHT_GROUP:
       Sections[I] = &InputSection<ELFT>::Discarded;
-      if (Comdats.insert(getShtGroupSignature(Sec)).second)
+      if (ComdatGroups.insert(getShtGroupSignature(Sec)).second)
         continue;
       for (GroupEntryType E : getShtGroupEntries(Sec)) {
         uint32_t SecIndex = E;

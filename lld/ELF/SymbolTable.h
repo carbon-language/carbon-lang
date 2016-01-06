@@ -78,7 +78,7 @@ private:
   llvm::MapVector<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;
 
-  llvm::DenseSet<StringRef> Comdats;
+  llvm::DenseSet<StringRef> ComdatGroups;
 
   // The writer needs to infer the machine type from the object files.
   std::vector<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles;

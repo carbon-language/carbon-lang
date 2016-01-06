@@ -77,7 +77,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   // .o file
   auto *F = cast<ObjectFile<ELFT>>(FileP);
   ObjectFiles.emplace_back(cast<ObjectFile<ELFT>>(File.release()));
-  F->parse(Comdats);
+  F->parse(ComdatGroups);
   for (SymbolBody *B : F->getSymbols())
     resolve(B);
 }
