@@ -17,7 +17,7 @@ namespace DebugCXX {
     e2 = '2'
   };
 
-  // Templates (instatiations).
+  // Templates (instantiations).
   template<typename T> struct traits {};
   template<typename T,
            typename Traits = traits<T>
