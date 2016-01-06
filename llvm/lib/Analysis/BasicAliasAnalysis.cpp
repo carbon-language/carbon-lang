@@ -599,9 +599,11 @@ ModRefInfo BasicAAResult::getArgModRefInfo(ImmutableCallSite CS,
     case Intrinsic::memset:
     case Intrinsic::memcpy:
     case Intrinsic::memmove:
-      assert((ArgIdx == 0 || ArgIdx == 1) &&
-             "Invalid argument index for memory intrinsic");
-      return ArgIdx ? MRI_Ref : MRI_Mod;
+      // We don't currently have a writeonly attribute.  All other properties
+      // of these intrinsics are nicely described via attributes in
+      // Intrinsics.td and handled generically below.
+      if (ArgIdx == 0)
+        return MRI_Mod;
     }
 
   // We can bound the aliasing properties of memset_pattern16 just as we can
