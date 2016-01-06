@@ -62,8 +62,7 @@ template <class ELFT>
 uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
   uint32_t I = Sym.st_shndx;
   if (I == ELF::SHN_XINDEX)
-    return this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
-                                                    SymtabSHNDX);
+    return ELFObj.getExtendedSymbolTableIndex(&Sym, Symtab, SymtabSHNDX);
   if (I >= ELF::SHN_LORESERVE || I == ELF::SHN_ABS)
     return 0;
   return I;
@@ -249,24 +248,24 @@ ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   // A MIPS object file has a special section that contains register
   // usage info, which needs to be handled by the linker specially.
   if (Config->EMachine == EM_MIPS && Name == ".reginfo") {
-    MipsReginfo = new (this->Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
+    MipsReginfo = new (Alloc) MipsReginfoInputSection<ELFT>(this, &Sec);
     return MipsReginfo;
   }
 
   if (Name == ".eh_frame")
-    return new (this->EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
+    return new (EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
   if (shouldMerge<ELFT>(Sec))
-    return new (this->MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
-  return new (this->Alloc) InputSection<ELFT>(this, &Sec);
+    return new (MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
+  return new (Alloc) InputSection<ELFT>(this, &Sec);
 }
 
 template <class ELFT> void ObjectFile<ELFT>::initializeSymbols() {
   this->initStringTable();
   Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
-  this->SymbolBodies.reserve(NumSymbols);
+  SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms)
-    this->SymbolBodies.push_back(createSymbolBody(this->StringTable, &Sym));
+    SymbolBodies.push_back(createSymbolBody(this->StringTable, &Sym));
 }
 
 template <class ELFT>
@@ -289,11 +288,11 @@ SymbolBody *ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
 
   switch (Sym->st_shndx) {
   case SHN_UNDEF:
-    return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
+    return new (Alloc) UndefinedElf<ELFT>(Name, *Sym);
   case SHN_COMMON:
-    return new (this->Alloc) DefinedCommon(
-        Name, Sym->st_size, Sym->st_value,
-        Sym->getBinding() == llvm::ELF::STB_WEAK, Sym->getVisibility());
+    return new (Alloc) DefinedCommon(Name, Sym->st_size, Sym->st_value,
+                                     Sym->getBinding() == llvm::ELF::STB_WEAK,
+                                     Sym->getVisibility());
   }
 
   switch (Sym->getBinding()) {
@@ -304,8 +303,8 @@ SymbolBody *ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GNU_UNIQUE: {
     InputSectionBase<ELFT> *Sec = getSection(*Sym);
     if (Sec == &InputSection<ELFT>::Discarded)
-      return new (this->Alloc) UndefinedElf<ELFT>(Name, *Sym);
-    return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, Sec);
+      return new (Alloc) UndefinedElf<ELFT>(Name, *Sym);
+    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, Sec);
   }
   }
 }
@@ -381,7 +380,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   }
 
   this->initStringTable();
-  this->SoName = this->getName();
+  SoName = this->getName();
 
   if (!DynamicSec)
     return;
@@ -394,7 +393,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
       uintX_t Val = Dyn.getVal();
       if (Val >= this->StringTable.size())
         error("Invalid DT_SONAME entry");
-      this->SoName = StringRef(this->StringTable.data() + Val);
+      SoName = StringRef(this->StringTable.data() + Val);
       return;
     }
   }

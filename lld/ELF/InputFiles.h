@@ -101,7 +101,7 @@ public:
     return F->kind() == Base::ObjectKind;
   }
 
-  ArrayRef<SymbolBody *> getSymbols() { return this->SymbolBodies; }
+  ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
 
   explicit ObjectFile(MemoryBufferRef M);
   void parse(llvm::DenseSet<StringRef> &Comdats);
@@ -113,7 +113,7 @@ public:
     uint32_t FirstNonLocal = this->Symtab->sh_info;
     if (SymbolIndex < FirstNonLocal)
       return nullptr;
-    return this->SymbolBodies[SymbolIndex - FirstNonLocal];
+    return SymbolBodies[SymbolIndex - FirstNonLocal];
   }
 
   Elf_Sym_Range getLocalSymbols();
