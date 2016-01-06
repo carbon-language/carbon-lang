@@ -2654,8 +2654,6 @@ std::error_code BitcodeReader::parseConstants() {
         return error("Invalid record");
 
       Type *EltTy = cast<SequentialType>(CurTy)->getElementType();
-      unsigned Size = Record.size();
-
       if (EltTy->isIntegerTy(8)) {
         SmallVector<uint8_t, 16> Elts(Record.begin(), Record.end());
         if (isa<VectorType>(CurTy))
@@ -2680,21 +2678,24 @@ std::error_code BitcodeReader::parseConstants() {
           V = ConstantDataVector::get(Context, Elts);
         else
           V = ConstantDataArray::get(Context, Elts);
+      } else if (EltTy->isHalfTy()) {
+        SmallVector<uint16_t, 16> Elts(Record.begin(), Record.end());
+        if (isa<VectorType>(CurTy))
+          V = ConstantDataVector::getFP(Context, Elts);
+        else
+          V = ConstantDataArray::getFP(Context, Elts);
       } else if (EltTy->isFloatTy()) {
-        SmallVector<float, 16> Elts(Size);
-        std::transform(Record.begin(), Record.end(), Elts.begin(), BitsToFloat);
+        SmallVector<uint32_t, 16> Elts(Record.begin(), Record.end());
         if (isa<VectorType>(CurTy))
-          V = ConstantDataVector::get(Context, Elts);
+          V = ConstantDataVector::getFP(Context, Elts);
         else
-          V = ConstantDataArray::get(Context, Elts);
+          V = ConstantDataArray::getFP(Context, Elts);
       } else if (EltTy->isDoubleTy()) {
-        SmallVector<double, 16> Elts(Size);
-        std::transform(Record.begin(), Record.end(), Elts.begin(),
-                       BitsToDouble);
+        SmallVector<uint64_t, 16> Elts(Record.begin(), Record.end());
         if (isa<VectorType>(CurTy))
-          V = ConstantDataVector::get(Context, Elts);
+          V = ConstantDataVector::getFP(Context, Elts);
         else
-          V = ConstantDataArray::get(Context, Elts);
+          V = ConstantDataArray::getFP(Context, Elts);
       } else {
         return error("Invalid type for value");
       }
