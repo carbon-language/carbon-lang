@@ -881,7 +881,8 @@ MachineInstr::mergeMemRefsWith(const MachineInstr& Other) {
                                   MemBegin);
   MemEnd = std::copy(Other.memoperands_begin(), Other.memoperands_end(),
                      MemEnd);
-  assert(MemEnd - MemBegin == CombinedNumMemRefs && "missing memrefs");
+  assert(MemEnd - MemBegin == (ptrdiff_t)CombinedNumMemRefs &&
+         "missing memrefs");
   
   return std::make_pair(MemBegin, CombinedNumMemRefs);
 }
