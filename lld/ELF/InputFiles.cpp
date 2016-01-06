@@ -310,14 +310,10 @@ SymbolBody *ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   }
 }
 
-static std::unique_ptr<Archive> openArchive(MemoryBufferRef MB) {
-  ErrorOr<std::unique_ptr<Archive>> ArchiveOrErr = Archive::create(MB);
-  error(ArchiveOrErr, "Failed to parse archive");
-  return std::move(*ArchiveOrErr);
-}
-
 void ArchiveFile::parse() {
-  File = openArchive(MB);
+  ErrorOr<std::unique_ptr<Archive>> FileOrErr = Archive::create(MB);
+  error(FileOrErr, "Failed to parse archive");
+  File = std::move(*FileOrErr);
 
   // Allocate a buffer for Lazy objects.
   size_t NumSyms = File->getNumberOfSymbols();
@@ -342,23 +338,6 @@ MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
     error(RefOrErr, "Could not get the buffer for the member defining symbol " +
           Sym->getName());
   return *RefOrErr;
-}
-
-std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
-  File = openArchive(MB);
-
-  std::vector<MemoryBufferRef> Result;
-  for (auto &ChildOrErr : File->children()) {
-    error(ChildOrErr,
-          "Could not get the child of the archive " + File->getFileName());
-    const Archive::Child Child(*ChildOrErr);
-    ErrorOr<MemoryBufferRef> MbOrErr = Child.getMemoryBufferRef();
-    if (!MbOrErr)
-      error(MbOrErr, "Could not get the buffer for a child of the archive " +
-            File->getFileName());
-    Result.push_back(MbOrErr.get());
-  }
-  return Result;
 }
 
 template <class ELFT>

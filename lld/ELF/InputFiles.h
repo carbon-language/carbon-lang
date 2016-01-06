@@ -159,7 +159,6 @@ public:
   MemoryBufferRef getMember(const Archive::Symbol *Sym);
 
   llvm::MutableArrayRef<Lazy> getLazySymbols() { return LazySymbols; }
-  std::vector<MemoryBufferRef> getMembers();
 
 private:
   std::unique_ptr<Archive> File;
