@@ -399,18 +399,29 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   }
 
   if (Arg *A = Args.getLastArg(OPT_debug_info_kind_EQ)) {
-    Opts.setDebugInfo(
-        llvm::StringSwitch<CodeGenOptions::DebugInfoKind>(A->getValue())
+    unsigned Val =
+        llvm::StringSwitch<unsigned>(A->getValue())
             .Case("line-tables-only", CodeGenOptions::DebugLineTablesOnly)
             .Case("limited", CodeGenOptions::LimitedDebugInfo)
-            .Case("standalone", CodeGenOptions::FullDebugInfo));
+            .Case("standalone", CodeGenOptions::FullDebugInfo)
+            .Default(~0U);
+    if (Val == ~0U)
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args)
+                                                << A->getValue();
+    else
+      Opts.setDebugInfo(static_cast<CodeGenOptions::DebugInfoKind>(Val));
   }
   if (Arg *A = Args.getLastArg(OPT_debugger_tuning_EQ)) {
-    Opts.setDebuggerTuning(
-        llvm::StringSwitch<CodeGenOptions::DebuggerKind>(A->getValue())
-            .Case("gdb", CodeGenOptions::DebuggerKindGDB)
-            .Case("lldb", CodeGenOptions::DebuggerKindLLDB)
-            .Case("sce", CodeGenOptions::DebuggerKindSCE));
+    unsigned Val = llvm::StringSwitch<unsigned>(A->getValue())
+                       .Case("gdb", CodeGenOptions::DebuggerKindGDB)
+                       .Case("lldb", CodeGenOptions::DebuggerKindLLDB)
+                       .Case("sce", CodeGenOptions::DebuggerKindSCE)
+                       .Default(~0U);
+    if (Val == ~0U)
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args)
+                                                << A->getValue();
+    else
+      Opts.setDebuggerTuning(static_cast<CodeGenOptions::DebuggerKind>(Val));
   }
   Opts.DwarfVersion = getLastArgIntValue(Args, OPT_dwarf_version_EQ, 0, Diags);
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
