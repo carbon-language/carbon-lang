@@ -4315,8 +4315,15 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
     Expr *Arg = Result.getAs<Expr>();
     CheckCompletedExpr(Arg, Param->getOuterLocStart());
+
+    // Remember the instantiated default argument.
+    Param->setDefaultArg(Arg);
+    if (ASTMutationListener *L = getASTMutationListener()) {
+      L->DefaultArgumentInstantiated(Param);
+    }
+
     // Build the default argument expression.
-    return CXXDefaultArgExpr::Create(Context, CallLoc, Param, Arg);
+    return CXXDefaultArgExpr::Create(Context, CallLoc, Param);
   }
 
   // If the default expression creates temporaries, we need to
