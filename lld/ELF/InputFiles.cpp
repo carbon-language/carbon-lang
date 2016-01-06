@@ -37,10 +37,9 @@ ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef M)
 
 template <class ELFT>
 ELFKind ELFFileBase<ELFT>::getELFKind() {
-  using llvm::support::little;
-  if (ELFT::Is64Bits)
-    return ELFT::TargetEndianness == little ? ELF64LEKind : ELF64BEKind;
-  return ELFT::TargetEndianness == little ? ELF32LEKind : ELF32BEKind;
+  if (ELFT::TargetEndianness == support::little)
+    return ELFT::Is64Bits ? ELF64LEKind : ELF32LEKind;
+  return ELFT::Is64Bits ? ELF64BEKind : ELF32BEKind;
 }
 
 template <class ELFT>
@@ -74,7 +73,7 @@ template <class ELFT> void ELFFileBase<ELFT>::initStringTable() {
   if (!Symtab)
     return;
   ErrorOr<StringRef> StringTableOrErr = ELFObj.getStringTableForSymtab(*Symtab);
-  error(StringTableOrErr.getError());
+  error(StringTableOrErr);
   StringTable = *StringTableOrErr;
 }
 
@@ -108,7 +107,7 @@ ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
 }
 
 template <class ELFT>
-void elf2::ObjectFile<ELFT>::parse(DenseSet<StringRef> &Comdats) {
+void ObjectFile<ELFT>::parse(DenseSet<StringRef> &Comdats) {
   // Read section and symbol tables.
   initializeSections(Comdats);
   initializeSymbols();
@@ -139,7 +138,7 @@ ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
   ErrorOr<ArrayRef<GroupEntryType>> EntriesOrErr =
       Obj.template getSectionContentsAsArray<GroupEntryType>(&Sec);
-  error(EntriesOrErr.getError());
+  error(EntriesOrErr);
   ArrayRef<GroupEntryType> Entries = *EntriesOrErr;
   if (Entries.empty() || Entries[0] != GRP_COMDAT)
     error("Unsupported SHT_GROUP format");
@@ -174,7 +173,7 @@ static bool shouldMerge(const typename ELFFile<ELFT>::Elf_Shdr &Sec) {
 }
 
 template <class ELFT>
-void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
+void ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
   uint64_t Size = this->ELFObj.getNumSections();
   Sections.resize(Size);
   unsigned I = -1;
@@ -235,7 +234,7 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
 }
 
 template <class ELFT> InputSectionBase<ELFT> *
-elf2::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
+ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   ErrorOr<StringRef> NameOrErr = this->ELFObj.getSectionName(&Sec);
   error(NameOrErr);
   StringRef Name = *NameOrErr;
@@ -261,7 +260,7 @@ elf2::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   return new (this->Alloc) InputSection<ELFT>(this, &Sec);
 }
 
-template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
+template <class ELFT> void ObjectFile<ELFT>::initializeSymbols() {
   this->initStringTable();
   Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
@@ -272,7 +271,7 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
 
 template <class ELFT>
 InputSectionBase<ELFT> *
-elf2::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
+ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   uint32_t Index = this->getSectionIndex(Sym);
   if (Index == 0)
     return nullptr;
@@ -282,10 +281,10 @@ elf2::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 }
 
 template <class ELFT>
-SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
+SymbolBody *ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
                                                      const Elf_Sym *Sym) {
   ErrorOr<StringRef> NameOrErr = Sym->getName(StringTable);
-  error(NameOrErr.getError());
+  error(NameOrErr);
   StringRef Name = *NameOrErr;
 
   switch (Sym->st_shndx) {
@@ -364,9 +363,7 @@ std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
 
 template <class ELFT>
 SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
-    : ELFFileBase<ELFT>(Base::SharedKind, M) {
-  AsNeeded = Config->AsNeeded;
-}
+    : ELFFileBase<ELFT>(Base::SharedKind, M), AsNeeded(Config->AsNeeded) {}
 
 template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Shdr *
@@ -456,7 +453,7 @@ static std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
 }
 
 template <template <class> class T>
-std::unique_ptr<InputFile> lld::elf2::createELFFile(MemoryBufferRef MB) {
+std::unique_ptr<InputFile> elf2::createELFFile(MemoryBufferRef MB) {
   std::pair<unsigned char, unsigned char> Type = getElfArchType(MB.getBuffer());
   if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
     error("Invalid data encoding: " + MB.getBufferIdentifier());

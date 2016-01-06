@@ -247,7 +247,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanShlibUndefined() {
           Sym->setUsedInDynamicReloc();
 }
 
-template class lld::elf2::SymbolTable<ELF32LE>;
-template class lld::elf2::SymbolTable<ELF32BE>;
-template class lld::elf2::SymbolTable<ELF64LE>;
-template class lld::elf2::SymbolTable<ELF64BE>;
+template class elf2::SymbolTable<ELF32LE>;
+template class elf2::SymbolTable<ELF32BE>;
+template class elf2::SymbolTable<ELF64LE>;
+template class elf2::SymbolTable<ELF64BE>;
