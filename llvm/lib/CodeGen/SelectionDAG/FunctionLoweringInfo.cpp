@@ -271,6 +271,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     }
   }
 
+  WinEHFuncInfo &EHInfo = *MF->getWinEHFuncInfo();
+
   // Mark landing pad blocks.
   SmallVector<const LandingPadInst *, 4> LPads;
   for (BB = Fn->begin(); BB != EB; ++BB) {
@@ -289,15 +291,12 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     return;
 
   // Calculate state numbers if we haven't already.
-  WinEHFuncInfo &EHInfo = *MF->getWinEHFuncInfo();
   if (Personality == EHPersonality::MSVC_CXX)
     calculateWinCXXEHStateNumbers(&fn, EHInfo);
   else if (isAsynchronousEHPersonality(Personality))
     calculateSEHStateNumbers(&fn, EHInfo);
   else if (Personality == EHPersonality::CoreCLR)
     calculateClrEHStateNumbers(&fn, EHInfo);
-
-  calculateCatchReturnSuccessorColors(&fn, EHInfo);
 
   // Map all BB references in the WinEH data to MBBs.
   for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap) {
