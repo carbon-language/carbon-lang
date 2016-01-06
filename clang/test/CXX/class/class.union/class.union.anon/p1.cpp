@@ -13,14 +13,12 @@ struct X {
     int d; // expected-error {{member of anonymous union redeclares}}
     int e; // expected-note {{previous}}
     int f; // expected-note {{previous}}
-    int g;
+    int g; // expected-note {{previous}}
     int h; // expected-note {{previous}}
   };
 
   int e; // expected-error {{duplicate member}}
   void f(); // expected-error {{redefinition}}
-  // FIXME: This is ill-formed, even though one name is a tag and the other is
-  // an anonymous union member. Reject this.
-  struct g;
+  struct g; // expected-error {{redefinition}}
   typedef int h; // expected-error {{redefinition}}
 };
