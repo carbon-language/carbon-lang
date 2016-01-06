@@ -1301,12 +1301,9 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
   // function, do that first.
   Function *Callee = CI->getCalledFunction();
   StringRef Name = Callee->getName();
-  if ((Name == "fmin" && hasFloatVersion(Name)) ||
-      (Name == "fmax" && hasFloatVersion(Name))) {
-    Value *Ret = optimizeBinaryDoubleFP(CI, B);
-    if (Ret)
+  if ((Name == "fmin" || Name == "fmax") && hasFloatVersion(Name))
+    if (Value *Ret = optimizeBinaryDoubleFP(CI, B))
       return Ret;
-  }
 
   // Make sure this has 2 arguments of FP type which match the result type.
   FunctionType *FT = Callee->getFunctionType();
