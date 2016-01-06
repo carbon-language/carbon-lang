@@ -433,7 +433,7 @@ private:
 };
 
 inline uint64_t align(uint64_t Value, uint64_t Align) {
-  return (Value + Align - 1) & ~(Align - 1);
+  return llvm::RoundUpToAlignment(Value, Align);
 }
 
 // All output sections that are hadnled by the linker specially are
