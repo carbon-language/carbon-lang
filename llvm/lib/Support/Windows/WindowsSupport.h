@@ -30,6 +30,8 @@
 #define _WIN32_WINNT 0x0601
 #define _WIN32_IE    0x0800 // MinGW at it again. FIXME: verify if still needed.
 #define WIN32_LEAN_AND_MEAN
+#define NOGDI
+#define NOMINMAX
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -43,6 +45,20 @@
 #include <cassert>
 #include <string>
 #include <vector>
+
+#ifndef __CYGWIN__
+#include <VersionHelpers.h>
+#else
+// Cygwin does not have the IsWindows8OrGreater() API.
+inline bool IsWindows8OrGreater() {
+  OSVERSIONINFO osvi = {};
+  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+  if (!::GetVersionEx(&osvi))
+    return false;
+  return (osvi.dwMajorVersion > 6 ||
+          (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion >= 2));
+}
+#endif // __CYGWIN__
 
 inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   if (!ErrMsg)
