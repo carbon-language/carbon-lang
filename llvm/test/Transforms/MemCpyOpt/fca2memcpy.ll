@@ -3,7 +3,7 @@
 target datalayout = "e-i64:64-f80:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
 
-%S = type { i8*, i32 }
+%S = type { i8*, i8, i32 }
 
 define void @copy(%S* %src, %S* %dst) {
 ; CHECK-LABEL: copy
@@ -37,8 +37,10 @@ define void @noaliasdst(%S* %src, %S* noalias %dst) {
 
 define void @destroysrc(%S* %src, %S* %dst) {
 ; CHECK-LABEL: destroysrc
-; CHECK-NOT: call
-; CHECK: ret void
+; CHECK: load %S, %S* %src
+; CHECK: call void @llvm.memset.p0i8.i64
+; CHECK-NEXT: store %S %1, %S* %dst
+; CHECK-NEXT: ret void
   %1 = load %S, %S* %src
   store %S zeroinitializer, %S* %src
   store %S %1, %S* %dst
@@ -49,7 +51,7 @@ define void @destroynoaliassrc(%S* noalias %src, %S* %dst) {
 ; CHECK-LABEL: destroynoaliassrc
 ; CHECK-NOT: load
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
-; CHECK-NEXT: store %S zeroinitializer, %S* %src
+; CHECK-NEXT: call void @llvm.memset.p0i8.i64
 ; CHECK-NEXT: ret void
   %1 = load %S, %S* %src
   store %S zeroinitializer, %S* %src
