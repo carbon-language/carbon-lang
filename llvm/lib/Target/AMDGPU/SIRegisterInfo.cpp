@@ -464,12 +464,38 @@ const TargetRegisterClass *SIRegisterInfo::getSubRegClass(
   if (SubIdx == AMDGPU::NoSubRegister)
     return RC;
 
-  // If this register has a sub-register, we can safely assume it is a 32-bit
-  // register, because all of SI's sub-registers are 32-bit.
+  // We can assume that each lane corresponds to one 32-bit register.
+  unsigned Count = countPopulation(getSubRegIndexLaneMask(SubIdx));
   if (isSGPRClass(RC)) {
-    return &AMDGPU::SGPR_32RegClass;
+    switch (Count) {
+    case 1:
+      return &AMDGPU::SGPR_32RegClass;
+    case 2:
+      return &AMDGPU::SReg_64RegClass;
+    case 4:
+      return &AMDGPU::SReg_128RegClass;
+    case 8:
+      return &AMDGPU::SReg_256RegClass;
+    case 16: /* fall-through */
+    default:
+      llvm_unreachable("Invalid sub-register class size");
+    }
   } else {
-    return &AMDGPU::VGPR_32RegClass;
+    switch (Count) {
+    case 1:
+      return &AMDGPU::VGPR_32RegClass;
+    case 2:
+      return &AMDGPU::VReg_64RegClass;
+    case 3:
+      return &AMDGPU::VReg_96RegClass;
+    case 4:
+      return &AMDGPU::VReg_128RegClass;
+    case 8:
+      return &AMDGPU::VReg_256RegClass;
+    case 16: /* fall-through */
+    default:
+      llvm_unreachable("Invalid sub-register class size");
+    }
   }
 }
 
