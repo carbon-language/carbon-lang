@@ -1,7 +1,9 @@
-// A basic clang -cc1 command-line.
+// A basic clang -cc1 command-line. WebAssembly is somewhat special in
+// enabling -ffunction-sections, -fdata-sections, and -fvisibility=hidden by
+// default.
 
 // RUN: %clang %s -### -target wasm32-unknown-unknown 2>&1 | FileCheck -check-prefix=CC1 %s
-// CC1: clang{{.*}} "-cc1" "-triple" "wasm32-unknown-unknown" {{.*}} "-ffunction-sections" "-fdata-sections"
+// CC1: clang{{.*}} "-cc1" "-triple" "wasm32-unknown-unknown" {{.*}} "-fvisibility" "hidden" {{.*}} "-ffunction-sections" "-fdata-sections"
 
 // Ditto, but ensure that a user -fno-function-sections disables the
 // default -ffunction-sections.
@@ -21,7 +23,8 @@
 // LINK: clang{{.*}}" "-cc1" {{.*}} "-o" "[[temp:[^"]*]]"
 // LINK: lld{{.*}}" "-flavor" "ld" "[[temp]]" "-o" "a.out"
 
-// A basic C link command-line with optimization.
+// A basic C link command-line with optimization. WebAssembly is somewhat
+// special in enabling --gc-sections by default.
 
 // RUN: %clang -### -O2 -no-canonical-prefixes -target wasm32-unknown-unknown %s 2>&1 | FileCheck -check-prefix=LINK_OPT %s
 // LINK_OPT: clang{{.*}}" "-cc1" {{.*}} "-o" "[[temp:[^"]*]]"
