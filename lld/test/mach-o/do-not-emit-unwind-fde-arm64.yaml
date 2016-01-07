@@ -1,7 +1,7 @@
 # RUN: lld -flavor darwin -arch arm64 -r -print_atoms %s -o %t | FileCheck %s
 # RUN: lld -flavor darwin -arch arm64 -r -print_atoms %t -o %t2 | FileCheck %s
-# RUN: llvm-objdump -r -macho %t | FileCheck -check-prefix=CODE %s
-# RUN: llvm-objdump -r -macho %t2 | FileCheck -check-prefix=CODE %s
+# RUN: llvm-objdump -r -s -section="__eh_frame" -macho %t | FileCheck -check-prefix=CODE %s
+# RUN: llvm-objdump -r -s -section="__eh_frame" -macho %t2 | FileCheck -check-prefix=CODE %s
 
 
 --- !mach-o
@@ -77,10 +77,16 @@ sections:
                        0x1E, 0x0B, 0x00, 0xED, 0xFF, 0xFF, 0xFF, 0xFF,
                        0xFF, 0xFF, 0xFF, 0x00, 0x10, 0x0C, 0x1F, 0x00,
                        0x24, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x88, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                        0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x08, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x48, 0x0E, 0x10, 0x9E, 0x01, 0x9D, 0x02 ]
+  - segment:         __TEXT
+    section:         __gcc_except_tab
+    type:            S_REGULAR
+    attributes:      [  ]
+    address:         0x00000000000000A0
+    content:         [ 0x00, 0x00, 0x00, 0x00 ]
 local-symbols:
   - name:            ltmp0
     type:            N_SECT
@@ -133,18 +139,29 @@ page-size:       0x00000000
 # CHECK:     type:            c-string
 # CHECK:     content:         [ 48, 65, 6C, 6C, 6F, 20, 77, 6F, 72, 6C, 64, 00 ]
 # CHECK:     merge:           by-content
+# CHECK:   - ref-name:        L{{[0-9]*}}
 # CHECK:     type:            unwind-cfi
 # CHECK:     content:         [ 1C, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 50, 4C,
 # CHECK:                        52, 00, 01, 78, 1E, 0B, 00, ED, FF, FF, FF, FF,
 # CHECK:                        FF, FF, FF, 00, 10, 0C, 1F, 00 ]
-# CHECK:     alignment:       8
-# CHECK:   - ref-name:        L{{[0-9]*}}
-# CHECK:     type:            unwind-cfi
-# CHECK:     content:         [ 24, 00, 00, 00, 24, 00, 00, 00, 00, 00, 00, 00,
-# CHECK:                        00, 00, 00, 00, 20, 00, 00, 00, 00, 00, 00, 00,
-# CHECK:                        08, 00, 00, 00, 00, 00, 00, 00, 00, 48, 0E, 10,
+# CHECK:   - type:            unwind-cfi
+# CHECK:     content:         [ 24, 00, 00, 00, 24, 00, 00, 00, {{..}}, {{..}}, {{..}}, {{..}},
+# CHECK:                        {{..}}, {{..}}, {{..}}, {{..}}, 20, 00, 00, 00, 00, 00, 00, 00,
+# CHECK:                        08, {{..}}, {{..}}, {{..}}, {{..}}, {{..}}, {{..}}, {{..}}, {{..}}, 48, 0E, 10,
 # CHECK:                        9E, 01, 9D, 02 ]
-# CHECK:     alignment:       8
+# CHECK:     references:
+# CHECK:       - kind:            negDelta32
+# CHECK:         offset:          4
+# CHECK:         target:          L{{[0-9]*}}
+# CHECK:       - kind:            unwindFDEToFunction
+# CHECK:         offset:          8
+# CHECK:         target:          __Z3fooi
+# CHECK:       - kind:            unwindFDEToFunction
+# CHECK:         offset:          25
+# CHECK:         target:          L{{[0-9]*}}
+# CHECK:   - ref-name:        L{{[0-9]*}}
+# CHECK:     type:            unwind-lsda
+# CHECK:     content:         [ 00, 00, 00, 00 ]
 # CHECK:   - type:            compact-unwind
 # CHECK:     content:         [ 00, 00, 00, 00, 00, 00, 00, 00, 20, 00, 00, 00,
 # CHECK:                        00, 00, 00, 03, 00, 00, 00, 00, 00, 00, 00, 00,
@@ -172,4 +189,20 @@ page-size:       0x00000000
 # CHECK:         target:          _puts
 
 # Make sure we don't have any relocations in the __eh_frame section
-# CODE-NOT: __eh_frame
+# CODE-NOT: RELOCATION RECORDS FOR [__eh_frame]
+
+# Also make sure the reloc for the FDE->function is the correct offset
+# It should be the offset from the fixup location back to the address
+# of the function we are referencing
+# CODE: Contents of section __eh_frame:
+# This is the CIE:
+# CODE-NEXT: {{[0-9abcdef]*}} 1c000000 00000000 017a504c 52000178
+# CODE-NEXT: {{[0-9abcdef]*}} 1e0b00ed ffffffff ffffff00 100c1f00
+# This is the FDE:
+# CODE-NEXT: {{[0-9abcdef]*}} 24000000 24000000 a8ffffff ffffffff
+# This is the important offset for FDE->func    ^~~~~~~~ ~~~~~~~~
+
+# CODE-NEXT: {{[0-9abcdef]*}} 20000000 00000000 08c3ffff ffffffff
+# And this is the offset for FDE->lsda            ^~~~~~~~ ~~~~~~
+# CODE-NEXT: {{[0-9abcdef]*}} ff480e10 9e019d02
+# And this byte               ^~
