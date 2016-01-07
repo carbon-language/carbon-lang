@@ -1,4 +1,4 @@
-; RUN: llc -debug-only=stackmaps < %s | FileCheck %s
+; RUN: llc -mcpu=core-avx -debug-only=stackmaps < %s | FileCheck %s
 
 target triple = "x86_64-pc-linux-gnu"
 
