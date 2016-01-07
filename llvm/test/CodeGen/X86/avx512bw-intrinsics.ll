@@ -3006,3 +3006,23 @@ define <32 x i16>@test_int_x86_avx512_mask_pshufl_w_512(<32 x i16> %x0, i8 %x1, 
   %res4 = add <32 x i16> %res3, %res2
   ret <32 x i16> %res4
 }
+
+declare <32 x i16> @llvm.x86.avx512.mask.psrav32_hi(<32 x i16>, <32 x i16>, <32 x i16>, i32)
+
+define <32 x i16>@test_int_x86_avx512_mask_psrav32_hi(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_psrav32_hi:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovd %edi, %k1
+; CHECK-NEXT:    vpsravw %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vpsravw %zmm1, %zmm0, %zmm3 {%k1} {z}
+; CHECK-NEXT:    vpsravw %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddw %zmm3, %zmm2, %zmm1
+; CHECK-NEXT:    vpaddw %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psrav32_hi(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3)
+  %res1 = call <32 x i16> @llvm.x86.avx512.mask.psrav32_hi(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> zeroinitializer, i32 %x3)
+  %res2 = call <32 x i16> @llvm.x86.avx512.mask.psrav32_hi(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 -1)
+  %res3 = add <32 x i16> %res, %res1
+  %res4 = add <32 x i16> %res3, %res2
+  ret <32 x i16> %res4
+}
