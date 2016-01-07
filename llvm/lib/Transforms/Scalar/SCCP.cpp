@@ -1047,7 +1047,7 @@ void SCCPSolver::visitStoreInst(StoreInst &SI) {
 // global, we can replace the load with the loaded constant value!
 void SCCPSolver::visitLoadInst(LoadInst &I) {
   // If this load is of a struct, just mark the result overdefined.
-  if (I.getType()->isStructTy() || I.getType()->isMMXTy())
+  if (I.getType()->isStructTy())
     return markAnythingOverdefined(&I);
 
   LatticeVal PtrVal = getValueState(I.getOperand(0));
