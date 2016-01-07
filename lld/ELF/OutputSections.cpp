@@ -1161,8 +1161,7 @@ template <class ELFT> void MergeOutputSection<ELFT>::finalize() {
 
 template <class ELFT>
 StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
-    : OutputSectionBase<ELFT>(Name, SHT_STRTAB,
-                              Dynamic ? (uintX_t)SHF_ALLOC : 0),
+    : OutputSectionBase<ELFT>(Name, SHT_STRTAB, Dynamic ? SHF_ALLOC : 0),
       Dynamic(Dynamic) {
   this->Header.sh_addralign = 1;
 }
@@ -1235,7 +1234,7 @@ SymbolTableSection<ELFT>::SymbolTableSection(
     SymbolTable<ELFT> &Table, StringTableSection<ELFT> &StrTabSec)
     : OutputSectionBase<ELFT>(StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
                               StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
-                              StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
+                              StrTabSec.isDynamic() ? SHF_ALLOC : 0),
       Table(Table), StrTabSec(StrTabSec) {
   typedef OutputSectionBase<ELFT> Base;
   typename Base::Elf_Shdr &Header = this->Header;
