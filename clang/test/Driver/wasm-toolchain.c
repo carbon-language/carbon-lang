@@ -17,6 +17,12 @@
 // RUN: %clang %s -### -target wasm32-unknown-unknown -fno-data-sections 2>&1 | FileCheck -check-prefix=NO_DATA_SECTIONS %s
 // NO_DATA_SECTIONS-NOT: data-sections
 
+// Ditto, but ensure that a user -fvisibility=default disables the default
+// -fvisibilt=hidden.
+
+// RUN: %clang %s -### -target wasm32-unknown-unknown -fvisibility=default 2>&1 | FileCheck -check-prefix=FVISIBILITY_DEFAULT %s
+// FVISIBILITY_DEFAULT-NOT: hidden
+
 // A basic C link command-line.
 
 // RUN: %clang -### -no-canonical-prefixes -target wasm32-unknown-unknown %s 2>&1 | FileCheck -check-prefix=LINK %s
