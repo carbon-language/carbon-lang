@@ -636,7 +636,7 @@ static bool canRewriteGEPAsOffset(Value *Start, Value *Base,
       if (isa<IntToPtrInst>(V) || isa<PtrToIntInst>(V)) {
         auto *CI = dyn_cast<CastInst>(V);
         if (!CI->isNoopCast(DL))
-          return nullptr;
+          return false;
 
         if (Explored.count(CI->getOperand(0)) == 0)
           WorkList.push_back(CI->getOperand(0));
@@ -647,7 +647,7 @@ static bool canRewriteGEPAsOffset(Value *Start, Value *Base,
         // the original pointer type. We could handle more cases in the
         // future.
         if (GEP->getNumIndices() != 1 || !GEP->isInBounds())
-          return nullptr;
+          return false;
 
         if (Explored.count(GEP->getOperand(0)) == 0)
           WorkList.push_back(GEP->getOperand(0));
