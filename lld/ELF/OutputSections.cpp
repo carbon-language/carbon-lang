@@ -24,12 +24,12 @@ using namespace lld::elf2;
 bool elf2::HasGotOffRel = false;
 
 template <class ELFT>
-OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t sh_type,
-                                           uintX_t sh_flags)
+OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t Type,
+                                           uintX_t Flags)
     : Name(Name) {
   memset(&Header, 0, sizeof(Elf_Shdr));
-  Header.sh_type = sh_type;
-  Header.sh_flags = sh_flags;
+  Header.sh_type = Type;
+  Header.sh_flags = Flags;
 }
 
 template <class ELFT>
@@ -756,9 +756,9 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t sh_type,
-                                   uintX_t sh_flags)
-    : OutputSectionBase<ELFT>(Name, sh_type, sh_flags) {}
+OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type,
+                                   uintX_t Flags)
+    : OutputSectionBase<ELFT>(Name, Type, Flags) {}
 
 template <class ELFT>
 void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
@@ -906,9 +906,9 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-EHOutputSection<ELFT>::EHOutputSection(StringRef Name, uint32_t sh_type,
-                                       uintX_t sh_flags)
-    : OutputSectionBase<ELFT>(Name, sh_type, sh_flags) {}
+EHOutputSection<ELFT>::EHOutputSection(StringRef Name, uint32_t Type,
+                                       uintX_t Flags)
+    : OutputSectionBase<ELFT>(Name, Type, Flags) {}
 
 template <class ELFT>
 EHRegion<ELFT>::EHRegion(EHInputSection<ELFT> *S, unsigned Index)
@@ -1079,9 +1079,9 @@ template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-MergeOutputSection<ELFT>::MergeOutputSection(StringRef Name, uint32_t sh_type,
-                                             uintX_t sh_flags)
-    : OutputSectionBase<ELFT>(Name, sh_type, sh_flags) {}
+MergeOutputSection<ELFT>::MergeOutputSection(StringRef Name, uint32_t Type,
+                                             uintX_t Flags)
+    : OutputSectionBase<ELFT>(Name, Type, Flags) {}
 
 template <class ELFT> void MergeOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   if (shouldTailMerge()) {
