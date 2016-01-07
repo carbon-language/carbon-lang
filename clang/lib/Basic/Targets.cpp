@@ -223,7 +223,24 @@ protected:
 
 public:
   DarwinTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
-    this->TLSSupported = Triple.isMacOSX() && !Triple.isMacOSXVersionLT(10, 7);
+    // By default, no TLS, and we whitelist permitted architecture/OS
+    // combinations.
+    this->TLSSupported = false;
+
+    if (Triple.isMacOSX())
+      this->TLSSupported = !Triple.isMacOSXVersionLT(10, 7);
+    else if (Triple.isiOS()) {
+      // 64-bit iOS supported it from 8 onwards, 32-bit from 9 onwards.
+      if (Triple.getArch() == llvm::Triple::x86_64 ||
+          Triple.getArch() == llvm::Triple::aarch64)
+        this->TLSSupported = !Triple.isOSVersionLT(8);
+      else if (Triple.getArch() == llvm::Triple::x86 ||
+               Triple.getArch() == llvm::Triple::arm ||
+               Triple.getArch() == llvm::Triple::thumb)
+        this->TLSSupported = !Triple.isOSVersionLT(9);
+    } else if (Triple.isWatchOS())
+      this->TLSSupported = !Triple.isOSVersionLT(2);
+
     this->MCountName = "\01mcount";
   }
 
