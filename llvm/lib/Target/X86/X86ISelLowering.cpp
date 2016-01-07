@@ -3907,6 +3907,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
   case X86ISD::SHUFP:
+  case X86ISD::INSERTPS:
   case X86ISD::PALIGNR:
   case X86ISD::MOVLHPS:
   case X86ISD::MOVLHPD:
@@ -4758,6 +4759,11 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
   case X86ISD::SHUFP:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeSHUFPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
+    break;
+  case X86ISD::INSERTPS:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodeINSERTPSMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::UNPCKH:
@@ -23860,6 +23866,7 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
   SDValue InVec = N->getOperand(0);
   SDValue EltNo = N->getOperand(1);
+  EVT EltVT = N->getValueType(0);
 
   if (!isa<ConstantSDNode>(EltNo))
     return SDValue();
@@ -23888,14 +23895,22 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
   SmallVector<int, 16> ShuffleMask;
   bool UnaryShuffle;
-  if (!getTargetShuffleMask(InVec.getNode(), CurrentVT.getSimpleVT(),
-                            false, ShuffleMask, UnaryShuffle))
+  if (!getTargetShuffleMask(InVec.getNode(), CurrentVT.getSimpleVT(), true,
+                            ShuffleMask, UnaryShuffle))
     return SDValue();
 
   // Select the input vector, guarding against out of range extract vector.
   unsigned NumElems = CurrentVT.getVectorNumElements();
   int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
   int Idx = (Elt > (int)NumElems) ? SM_SentinelUndef : ShuffleMask[Elt];
+
+  if (Idx == SM_SentinelZero)
+    return EltVT.isInteger() ? DAG.getConstant(0, SDLoc(N), EltVT)
+                             : DAG.getConstantFP(+0.0, SDLoc(N), EltVT);
+  if (Idx == SM_SentinelUndef)
+    return DAG.getUNDEF(EltVT);
+
+  assert(0 <= Idx && Idx < (int)(2 * NumElems) && "Shuffle index out of range");
   SDValue LdNode = (Idx < (int)NumElems) ? InVec.getOperand(0)
                                          : InVec.getOperand(1);
 
@@ -23920,7 +23935,6 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
   if (!LN0 ||!LN0->hasNUsesOfValue(AllowedUses, 0) || LN0->isVolatile())
     return SDValue();
 
-  EVT EltVT = N->getValueType(0);
   // If there's a bitcast before the shuffle, check if the load type and
   // alignment is valid.
   unsigned Align = LN0->getAlignment();
