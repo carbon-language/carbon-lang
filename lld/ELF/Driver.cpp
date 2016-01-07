@@ -107,6 +107,24 @@ void LinkerDriver::addFile(StringRef Path) {
   }
 }
 
+// Some command line options or some combinations of them are not allowed.
+// This function checks for such errors.
+static void checkOptions(opt::InputArgList &Args) {
+  // Traditional linkers can generate re-linkable object files instead
+  // of executables or DSOs. We don't support that since the feature
+  // does not seem to provide more value than the static archiver.
+  if (Args.hasArg(OPT_relocatable))
+    error("-r option is not supported. Use 'ar' command instead.");
+
+  // The MIPS ABI as of 2016 does not support the GNU-style symbol lookup
+  // table which is a relatively new feature.
+  if (Config->EMachine == EM_MIPS && Config->GnuHash)
+    error("The .gnu.hash section is not compatible with the MIPS target.");
+
+  if (Config->EMachine == EM_AMDGPU && !Config->Entry.empty())
+    error("-e option is not valid for AMDGPU.");
+}
+
 static StringRef
 getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
   if (auto *Arg = Args.getLastArg(Key))
@@ -126,12 +144,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
 
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
   createFiles(Args);
-
-  // Traditional linkers can generate re-linkable object files instead
-  // of executables or DSOs. We don't support that since the feature
-  // does not seem to provide more value than the static archiver.
-  if (Args.hasArg(OPT_relocatable))
-    error("-r option is not supported. Use 'ar' command instead.");
+  checkOptions(Args);
 
   switch (Config->EKind) {
   case ELF32LEKind:
@@ -250,12 +263,6 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   if (Files.empty())
     error("no input files.");
-
-  if (Config->GnuHash && Config->EMachine == EM_MIPS)
-    error("The .gnu.hash section is not compatible with the MIPS target.");
-
-  if (!Config->Entry.empty() && Config->EMachine == EM_AMDGPU)
-    error("-e option is not valid for AMDGPU.");
 }
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
