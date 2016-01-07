@@ -461,7 +461,9 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
     // If the original value was a constant, make sure it gets recorded as
     // such in the stackmap.  This is required so that the consumer can
     // parse any internal format to the deopt state.  It also handles null
-    // pointers and other constant pointers in GC states
+    // pointers and other constant pointers in GC states.  Note the constant
+    // vectors do not appear to actually hit this path and that anything larger
+    // than an i64 value (not type!) will fail asserts here.
     pushStackMapConstant(Ops, Builder, C->getSExtValue());
   } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Incoming)) {
     // This handles allocas as arguments to the statepoint (this is only
