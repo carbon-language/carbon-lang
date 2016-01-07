@@ -19,6 +19,7 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX
 bool ShouldLogAfterPrintf() { return false; }
+void LogMessageOnPrintf(const char *str) {}
 #endif
 void WriteToSyslog(const char *buffer) {}
 void Abort() { internal__exit(1); }
