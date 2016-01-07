@@ -1,7 +1,19 @@
 // A basic clang -cc1 command-line.
 
 // RUN: %clang %s -### -target wasm32-unknown-unknown 2>&1 | FileCheck -check-prefix=CC1 %s
-// CC1: clang{{.*}} "-cc1" "-triple" "wasm32-unknown-unknown" {{.*}}
+// CC1: clang{{.*}} "-cc1" "-triple" "wasm32-unknown-unknown" {{.*}} "-ffunction-sections" "-fdata-sections"
+
+// Ditto, but ensure that a user -fno-function-sections disables the
+// default -ffunction-sections.
+
+// RUN: %clang %s -### -target wasm32-unknown-unknown -fno-function-sections 2>&1 | FileCheck -check-prefix=NO_FUNCTION_SECTIONS %s
+// NO_FUNCTION_SECTIONS-NOT: function-sections
+
+// Ditto, but ensure that a user -fno-data-sections disables the
+// default -fdata-sections.
+
+// RUN: %clang %s -### -target wasm32-unknown-unknown -fno-data-sections 2>&1 | FileCheck -check-prefix=NO_DATA_SECTIONS %s
+// NO_DATA_SECTIONS-NOT: data-sections
 
 // A basic C link command-line.
 
