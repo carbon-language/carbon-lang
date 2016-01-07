@@ -1,4 +1,5 @@
 ; RUN: llc -mcpu=core-avx -debug-only=stackmaps < %s | FileCheck %s
+; REQUIRES: asserts
 
 target triple = "x86_64-pc-linux-gnu"
 
