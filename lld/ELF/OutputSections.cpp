@@ -1182,7 +1182,7 @@ template <class ELFT> void StringTableSection<ELFT>::reserve(StringRef S) {
   Reserved += S.size() + 1; // +1 for NUL
 }
 
-// Adds a string to the string table. You must call reverse() with the
+// Adds a string to the string table. You must call reserve() with the
 // same string before calling addString().
 template <class ELFT> size_t StringTableSection<ELFT>::addString(StringRef S) {
   size_t Pos = Used;
