@@ -1236,11 +1236,8 @@ SymbolTableSection<ELFT>::SymbolTableSection(
                               StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
                               StrTabSec.isDynamic() ? SHF_ALLOC : 0),
       Table(Table), StrTabSec(StrTabSec) {
-  typedef OutputSectionBase<ELFT> Base;
-  typename Base::Elf_Shdr &Header = this->Header;
-
-  Header.sh_entsize = sizeof(Elf_Sym);
-  Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  this->Header.sh_entsize = sizeof(Elf_Sym);
+  this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
 
 // Orders symbols according to their positions in the GOT,
