@@ -831,7 +831,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    Out<ELFT>::ShStrTab->add(Sec->getName());
+    Out<ELFT>::ShStrTab->reserve(Sec->getName());
 
   // Finalizers fix each section's size.
   // .dynamic section's finalizer may add strings to .dynstr,
@@ -1237,8 +1237,17 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
     Sec->writeTo(Buf + Sec->getFileOff());
   }
 
+  // Write all sections but string table sections. We know the sizes of the
+  // string tables already, but they may not have actual strings yet (only
+  // room may be reserved), because writeTo() is allowed to add actual
+  // strings to the string tables.
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    if (Sec != Out<ELFT>::Opd)
+    if (Sec != Out<ELFT>::Opd && Sec->getType() != SHT_STRTAB)
+      Sec->writeTo(Buf + Sec->getFileOff());
+
+  // Write string table sections.
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
+    if (Sec != Out<ELFT>::Opd && Sec->getType() == SHT_STRTAB)
       Sec->writeTo(Buf + Sec->getFileOff());
 }
 

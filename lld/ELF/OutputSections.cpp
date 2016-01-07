@@ -330,7 +330,7 @@ InterpSection<ELFT>::InterpSection()
 
 template <class ELFT>
 void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
-  Header.sh_name = Out<ELFT>::ShStrTab->getOffset(Name);
+  Header.sh_name = Out<ELFT>::ShStrTab->addString(Name);
   *SHdr = Header;
 }
 
@@ -581,12 +581,12 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
 
   if (!Config->RPath.empty()) {
     ++NumEntries; // DT_RUNPATH / DT_RPATH
-    Out<ELFT>::DynStrTab->add(Config->RPath);
+    Out<ELFT>::DynStrTab->reserve(Config->RPath);
   }
 
   if (!Config->SoName.empty()) {
     ++NumEntries; // DT_SONAME
-    Out<ELFT>::DynStrTab->add(Config->SoName);
+    Out<ELFT>::DynStrTab->reserve(Config->SoName);
   }
 
   if (PreInitArraySec)
@@ -599,7 +599,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles()) {
     if (!F->isNeeded())
       continue;
-    Out<ELFT>::DynStrTab->add(F->getSoName());
+    Out<ELFT>::DynStrTab->reserve(F->getSoName());
     ++NumEntries;
   }
 
@@ -687,7 +687,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   WritePtr(DT_SYMTAB, Out<ELFT>::DynSymTab->getVA());
   WritePtr(DT_SYMENT, sizeof(Elf_Sym));
   WritePtr(DT_STRTAB, Out<ELFT>::DynStrTab->getVA());
-  WriteVal(DT_STRSZ, Out<ELFT>::DynStrTab->data().size());
+  WriteVal(DT_STRSZ, Out<ELFT>::DynStrTab->getSize());
   if (Out<ELFT>::GnuHashTab)
     WritePtr(DT_GNU_HASH, Out<ELFT>::GnuHashTab->getVA());
   if (Out<ELFT>::HashTab)
@@ -703,10 +703,10 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   //   DT_RPATH is used for indirect dependencies as well.
   if (!Config->RPath.empty())
     WriteVal(Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
-             Out<ELFT>::DynStrTab->getOffset(Config->RPath));
+             Out<ELFT>::DynStrTab->addString(Config->RPath));
 
   if (!Config->SoName.empty())
-    WriteVal(DT_SONAME, Out<ELFT>::DynStrTab->getOffset(Config->SoName));
+    WriteVal(DT_SONAME, Out<ELFT>::DynStrTab->addString(Config->SoName));
 
   auto WriteArray = [&](int32_t T1, int32_t T2,
                         const OutputSectionBase<ELFT> *Sec) {
@@ -721,7 +721,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
   for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
     if (F->isNeeded())
-      WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getOffset(F->getSoName()));
+      WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->addString(F->getSoName()));
 
   if (InitSym)
     WritePtr(DT_INIT, getSymVA<ELFT>(*InitSym));
@@ -1162,9 +1162,39 @@ StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
   this->Header.sh_addralign = 1;
 }
 
+// String tables are created in two phases. First you call reserve()
+// to reserve room in the string table, and then call addString() to actually
+// add that string.
+//
+// Why two phases? We want to know the size of the string table as early as
+// possible to fix file layout. So we have separated finalize(), which
+// determines the size of the section, from writeTo(), which writes the section
+// contents to the output buffer. If we merge reserve() with addString(),
+// we need a plumbing work for finalize() and writeTo() so that offsets
+// we obtained in the former function can be written in the latter.
+// This design eliminated that need.
+template <class ELFT> void StringTableSection<ELFT>::reserve(StringRef S) {
+  Reserved += S.size() + 1; // +1 for NUL
+}
+
+// Adds a string to the string table. You must call reverse() with the
+// same string before calling addString().
+template <class ELFT> size_t StringTableSection<ELFT>::addString(StringRef S) {
+  size_t Pos = Used;
+  Strings.push_back(S);
+  Used += S.size() + 1;
+  Reserved -= S.size() + 1;
+  assert((int64_t)Reserved >= 0);
+  return Pos;
+}
+
 template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
-  StringRef Data = StrTabBuilder.data();
-  memcpy(Buf, Data.data(), Data.size());
+  // ELF string tables start with NUL byte, so advance the pointer by one.
+  ++Buf;
+  for (StringRef S : Strings) {
+    memcpy(Buf, S.data(), S.size());
+    Buf += S.size() + 1;
+  }
 }
 
 template <class ELFT>
@@ -1248,14 +1278,14 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
 
 template <class ELFT>
 void SymbolTableSection<ELFT>::addLocalSymbol(StringRef Name) {
-  StrTabSec.add(Name);
+  StrTabSec.reserve(Name);
   ++NumVisible;
   ++NumLocals;
 }
 
 template <class ELFT>
 void SymbolTableSection<ELFT>::addSymbol(SymbolBody *Body) {
-  StrTabSec.add(Body->getName());
+  StrTabSec.reserve(Body->getName());
   Symbols.push_back(Body);
   ++NumVisible;
 }
@@ -1297,7 +1327,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         ESym->st_shndx = OutSec->SectionIndex;
         VA += OutSec->getVA() + Section->getOffset(Sym);
       }
-      ESym->st_name = StrTabSec.getOffset(SymName);
+      ESym->st_name = StrTabSec.addString(SymName);
       ESym->st_size = Sym.st_size;
       ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
       ESym->st_value = VA;
@@ -1352,7 +1382,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     }
 
     StringRef Name = Body->getName();
-    ESym->st_name = StrTabSec.getOffset(Name);
+    ESym->st_name = StrTabSec.addString(Name);
 
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;
