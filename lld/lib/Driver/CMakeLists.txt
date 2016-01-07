@@ -14,6 +14,10 @@ add_lld_library(lldDriver
   Driver.cpp
   GnuLdDriver.cpp
   UniversalDriver.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLD_INCLUDE_DIR}/lld/Driver
+
   LINK_LIBS
     lldConfig
     lldMachO

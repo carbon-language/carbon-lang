@@ -1,4 +1,5 @@
 set(LLD_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(LLD_INCLUDE_DIR ${LLD_SOURCE_DIR}/include )
 set(LLD_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # Compute the LLD version from the LLVM version.
