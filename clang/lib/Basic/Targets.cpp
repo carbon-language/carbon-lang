@@ -7281,7 +7281,7 @@ public:
   explicit WebAssembly32TargetInfo(const llvm::Triple &T)
       : WebAssemblyTargetInfo(T) {
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 32;
-    DataLayoutString = "e-p:32:32-i64:64-n32:64-S128";
+    DataLayoutString = "e-m:e-p:32:32-i64:64-n32:64-S128";
   }
 
 protected:
@@ -7299,7 +7299,7 @@ public:
     LongAlign = LongWidth = 64;
     PointerAlign = PointerWidth = 64;
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
-    DataLayoutString = "e-p:64:64-i64:64-n32:64-S128";
+    DataLayoutString = "e-m:e-p:64:64-i64:64-n32:64-S128";
   }
 
 protected:
