@@ -1508,6 +1508,22 @@ static enum CXChildVisitResult PrintBitWidth(CXCursor cursor, CXCursor p,
 }
 
 /******************************************************************************/
+/* Type declaration testing                                                   */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintTypeDeclaration(CXCursor cursor, CXCursor p,
+                                             CXClientData d) {
+  CXCursor typeDeclaration = clang_getTypeDeclaration(clang_getCursorType(cursor));
+
+  if (clang_isDeclaration(typeDeclaration.kind)) {
+    PrintCursor(cursor, NULL);
+    PrintTypeAndTypeKind(clang_getCursorType(typeDeclaration), " [typedeclaration=%s] [typekind=%s]\n");
+  }
+
+  return CXChildVisit_Recurse;
+}
+
+/******************************************************************************/
 /* Loading ASTs/source.                                                       */
 /******************************************************************************/
 
@@ -4137,6 +4153,7 @@ static void print_usage(void) {
     "       c-index-test -test-print-type {<args>}*\n"
     "       c-index-test -test-print-type-size {<args>}*\n"
     "       c-index-test -test-print-bitwidth {<args>}*\n"
+    "       c-index-test -test-print-type-declaration {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
     "       c-index-test -print-usr-file <file>\n"
     "       c-index-test -write-pch <file> <compiler arguments>\n");
@@ -4230,6 +4247,9 @@ int cindextest_main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-type-size") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintTypeSize, 0);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-type-declaration") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all",
+                                    PrintTypeDeclaration, 0);
   else if (argc > 2 && strcmp(argv[1], "-test-print-bitwidth") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintBitWidth, 0);
