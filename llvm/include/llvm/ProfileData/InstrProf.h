@@ -30,7 +30,6 @@
 #include <system_error>
 #include <vector>
 
-#define INSTR_PROF_INDEX_VERSION 3
 namespace llvm {
 
 class Function;
@@ -66,7 +65,8 @@ inline StringRef getInstrProfValueProfFuncName() {
 /// Return the name of the section containing function coverage mapping
 /// data.
 inline StringRef getInstrProfCoverageSectionName(bool AddSegment) {
-  return AddSegment ? "__DATA,__llvm_covmap" : "__llvm_covmap";
+  return AddSegment ? "__DATA," INSTR_PROF_COVMAP_SECT_NAME_STR
+                    : INSTR_PROF_COVMAP_SECT_NAME_STR;
 }
 
 /// Return the name prefix of variables containing instrumented function names.
@@ -626,6 +626,12 @@ struct CovMapHeader {
 };
 
 LLVM_PACKED_END
+
+enum CoverageMappingVersion {
+  CoverageMappingVersion1 = 0,
+  // The current versin is Version1
+  CoverageMappingCurrentVersion = INSTR_PROF_COVMAP_VERSION
+};
 }
 
 } // end namespace llvm

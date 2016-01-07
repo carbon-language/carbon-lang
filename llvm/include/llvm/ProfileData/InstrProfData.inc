@@ -696,18 +696,23 @@ serializeValueProfDataFromRT(const ValueProfRuntimeRecord *Record,
 
 /* Raw profile format version. */
 #define INSTR_PROF_RAW_VERSION 2
+#define INSTR_PROF_INDEX_VERSION 3
+#define INSTR_PROF_COVMAP_VERSION 0
 
 /* Runtime section names and name strings.  */
 #define INSTR_PROF_DATA_SECT_NAME __llvm_prf_data
 #define INSTR_PROF_NAME_SECT_NAME __llvm_prf_names
 #define INSTR_PROF_CNTS_SECT_NAME __llvm_prf_cnts
+#define INSTR_PROF_COVMAP_SECT_NAME __llvm_covmap
 
-#define INSTR_PROF_DATA_SECT_NAME_STR \
-        INSTR_PROF_QUOTE(INSTR_PROF_DATA_SECT_NAME)
-#define INSTR_PROF_NAME_SECT_NAME_STR \
-        INSTR_PROF_QUOTE(INSTR_PROF_NAME_SECT_NAME)
-#define INSTR_PROF_CNTS_SECT_NAME_STR \
-        INSTR_PROF_QUOTE(INSTR_PROF_CNTS_SECT_NAME)
+#define INSTR_PROF_DATA_SECT_NAME_STR                                          \
+  INSTR_PROF_QUOTE(INSTR_PROF_DATA_SECT_NAME)
+#define INSTR_PROF_NAME_SECT_NAME_STR                                          \
+  INSTR_PROF_QUOTE(INSTR_PROF_NAME_SECT_NAME)
+#define INSTR_PROF_CNTS_SECT_NAME_STR                                          \
+  INSTR_PROF_QUOTE(INSTR_PROF_CNTS_SECT_NAME)
+#define INSTR_PROF_COVMAP_SECT_NAME_STR                                        \
+  INSTR_PROF_QUOTE(INSTR_PROF_COVMAP_SECT_NAME)
 
 /* Macros to define start/stop section symbol for a given
  * section on Linux. For instance
