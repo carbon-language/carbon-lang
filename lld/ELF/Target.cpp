@@ -1359,6 +1359,10 @@ bool AMDGPUTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
+// Implementing relocations for AMDGPU is low priority since most
+// programs don't use relocations now. Thus, this function is not
+// actually called (relocateOne is called for each relocation).
+// That's why the AMDGPU port works without implementing this function.
 void AMDGPUTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                    uint64_t P, uint64_t SA, uint64_t ZA,
                                    uint8_t *PairedLoc) const {
