@@ -1273,7 +1273,7 @@ def STOSW : I<0xAB, RawFrmDst, (outs dstidx16:$dst), (ins),
 let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
 def STOSL : I<0xAB, RawFrmDst, (outs dstidx32:$dst), (ins),
               "stos{l|d}\t{%eax, $dst|$dst, eax}", [], IIC_STOS>, OpSize32;
-let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
+let Defs = [RDI], Uses = [RAX,RDI,EFLAGS] in
 def STOSQ : RI<0xAB, RawFrmDst, (outs dstidx64:$dst), (ins),
                "stosq\t{%rax, $dst|$dst, rax}", [], IIC_STOS>;
 
