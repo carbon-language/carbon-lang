@@ -6537,7 +6537,8 @@ void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Enable garbage collection of unused input sections by default, since code
   // size is of particular importance.
-  CmdArgs.push_back("--gc-sections");
+  if (areOptimizationsEnabled(Args))
+    CmdArgs.push_back("--gc-sections");
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
   CmdArgs.push_back("-o");
