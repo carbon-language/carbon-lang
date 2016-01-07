@@ -4758,3 +4758,89 @@ define <8 x i32>@test_int_x86_avx512_mask_pshuf_d_256(<8 x i32> %x0, i16 %x1, <8
 	%res4 = add <8 x i32> %res3, %res2
 	ret <8 x i32> %res4
 }
+
+declare <8 x i16> @llvm.x86.avx512.mask.pshufh.w.128(<8 x i16>, i8, <8 x i16>, i8)
+
+define <8 x i16>@test_int_x86_avx512_mask_pshufh_w_128(<8 x i16> %x0, i8 %x1, <8 x i16> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pshufh_w_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movzbl %sil, %eax
+; CHECK-NEXT:    kmovw %eax, %k1
+; CHECK-NEXT:    vpshufhw $3, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vpshufhw $3, %xmm0, %xmm2 {%k1} {z}
+; CHECK-NEXT:    vpshufhw $3, %xmm0, %xmm0
+; CHECK-NEXT:    ## xmm0 = xmm0[0,1,2,3,7,4,4,4]
+; CHECK-NEXT:    vpaddw %xmm2, %xmm1, %xmm1
+; CHECK-NEXT:    vpaddw %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pshufh.w.128(<8 x i16> %x0, i8 3, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pshufh.w.128(<8 x i16> %x0, i8 3, <8 x i16> zeroinitializer, i8 %x3)
+  %res2 = call <8 x i16> @llvm.x86.avx512.mask.pshufh.w.128(<8 x i16> %x0, i8 3, <8 x i16> %x2, i8 -1)
+  %res3 = add <8 x i16> %res, %res1
+  %res4 = add <8 x i16> %res3, %res2
+  ret <8 x i16> %res4
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pshufh.w.256(<16 x i16>, i8, <16 x i16>, i16)
+
+define <16 x i16>@test_int_x86_avx512_mask_pshufh_w_256(<16 x i16> %x0, i8 %x1, <16 x i16> %x2, i16 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pshufh_w_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpshufhw $3, %ymm0, %ymm1 {%k1} 
+; CHECK-NEXT:    vpshufhw $3, %ymm0, %ymm2 {%k1} {z} 
+; CHECK-NEXT:    vpshufhw $3, %ymm0, %ymm0 
+; CHECK-NEXT:    ## ymm0 = ymm0[0,1,2,3,7,4,4,4,8,9,10,11,15,12,12,12]
+; CHECK-NEXT:    vpaddw %ymm2, %ymm1, %ymm1 
+; CHECK-NEXT:    vpaddw %ymm0, %ymm1, %ymm0 
+; CHECK-NEXT:    retq 
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pshufh.w.256(<16 x i16> %x0, i8 3, <16 x i16> %x2, i16 %x3)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pshufh.w.256(<16 x i16> %x0, i8 3, <16 x i16> zeroinitializer, i16 %x3)
+  %res2 = call <16 x i16> @llvm.x86.avx512.mask.pshufh.w.256(<16 x i16> %x0, i8 3, <16 x i16> %x2, i16 -1)
+  %res3 = add <16 x i16> %res, %res1
+  %res4 = add <16 x i16> %res3, %res2
+  ret <16 x i16> %res4
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pshufl.w.128(<8 x i16>, i8, <8 x i16>, i8)
+
+define <8 x i16>@test_int_x86_avx512_mask_pshufl_w_128(<8 x i16> %x0, i8 %x1, <8 x i16> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pshufl_w_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movzbl %sil, %eax 
+; CHECK-NEXT:    kmovw %eax, %k1 
+; CHECK-NEXT:    vpshuflw $3, %xmm0, %xmm1 {%k1} 
+; CHECK-NEXT:    vpshuflw $3, %xmm0, %xmm2 {%k1} {z} 
+; CHECK-NEXT:    vpshuflw $3, %xmm0, %xmm0 
+; CHECK-NEXT:    ## xmm0 = xmm0[3,0,0,0,4,5,6,7]
+; CHECK-NEXT:    vpaddw %xmm2, %xmm1, %xmm1 
+; CHECK-NEXT:    vpaddw %xmm0, %xmm1, %xmm0 
+; CHECK-NEXT:    retq 
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pshufl.w.128(<8 x i16> %x0, i8 3, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pshufl.w.128(<8 x i16> %x0, i8 3, <8 x i16> zeroinitializer, i8 %x3)
+  %res2 = call <8 x i16> @llvm.x86.avx512.mask.pshufl.w.128(<8 x i16> %x0, i8 3, <8 x i16> %x2, i8 -1)
+  %res3 = add <8 x i16> %res, %res1
+  %res4 = add <8 x i16> %res3, %res2
+  ret <8 x i16> %res4
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pshufl.w.256(<16 x i16>, i8, <16 x i16>, i16)
+
+define <16 x i16>@test_int_x86_avx512_mask_pshufl_w_256(<16 x i16> %x0, i8 %x1, <16 x i16> %x2, i16 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pshufl_w_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1 
+; CHECK-NEXT:    vpshuflw $3, %ymm0, %ymm1 {%k1} 
+; CHECK-NEXT:    vpshuflw $3, %ymm0, %ymm2 {%k1} {z} 
+; CHECK-NEXT:    vpshuflw $3, %ymm0, %ymm0 
+; CHECK-NEXT:    ## ymm0 = ymm0[3,0,0,0,4,5,6,7,11,8,8,8,12,13,14,15]
+; CHECK-NEXT:    vpaddw %ymm2, %ymm1, %ymm1 
+; CHECK-NEXT:    vpaddw %ymm0, %ymm1, %ymm0 
+; CHECK-NEXT:    retq 
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pshufl.w.256(<16 x i16> %x0, i8 3, <16 x i16> %x2, i16 %x3)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pshufl.w.256(<16 x i16> %x0, i8 3, <16 x i16> zeroinitializer, i16 %x3)
+  %res2 = call <16 x i16> @llvm.x86.avx512.mask.pshufl.w.256(<16 x i16> %x0, i8 3, <16 x i16> %x2, i16 -1)
+  %res3 = add <16 x i16> %res, %res1
+  %res4 = add <16 x i16> %res3, %res2
+  ret <16 x i16> %res4
+}
