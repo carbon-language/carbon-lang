@@ -788,6 +788,11 @@ typename ELFFile<ELFT>::uintX_t elf2::getSymVA(const SymbolBody &S) {
     InputSectionBase<ELFT> *SC = DR.Section;
     if (!SC)
       return DR.Sym.st_value;
+
+    // Symbol offsets for AMDGPU need to be the offset in bytes of the symbol
+    // from the beginning of the section.
+    if (Config->EMachine == EM_AMDGPU)
+      return SC->getOffset(DR.Sym);
     if (DR.Sym.getType() == STT_TLS)
       return SC->OutSec->getVA() + SC->getOffset(DR.Sym) -
              Out<ELFT>::TlsPhdr->p_vaddr;
@@ -1325,7 +1330,11 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
           continue;
         const OutputSectionBase<ELFT> *OutSec = Section->OutSec;
         ESym->st_shndx = OutSec->SectionIndex;
-        VA += OutSec->getVA() + Section->getOffset(Sym);
+        VA = Section->getOffset(Sym);
+        // Symbol offsets for AMDGPU need to be the offset in bytes of the
+        // symbol from the beginning of the section.
+        if (Config->EMachine != EM_AMDGPU)
+          VA += OutSec->getVA();
       }
       ESym->st_name = StrTabSec.addString(SymName);
       ESym->st_size = Sym.st_size;

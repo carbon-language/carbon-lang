@@ -975,6 +975,18 @@ static uint32_t toPhdrFlags(uint64_t Flags) {
   return Ret;
 }
 
+/// For AMDGPU we need to use custom segment kinds in order to specify which
+/// address space data should be loaded into.
+template <class ELFT>
+static uint32_t getAmdgpuPhdr(OutputSectionBase<ELFT> *Sec) {
+  uint32_t Flags = Sec->getFlags();
+  if (Flags & SHF_AMDGPU_HSA_CODE)
+    return PT_AMDGPU_HSA_LOAD_CODE_AGENT;
+  if ((Flags & SHF_AMDGPU_HSA_GLOBAL) && !(Flags & SHF_AMDGPU_HSA_AGENT))
+    return PT_AMDGPU_HSA_LOAD_GLOBAL_PROGRAM;
+  return PT_LOAD;
+}
+
 template <class ELFT>
 void Writer<ELFT>::updateRelro(Elf_Phdr *Cur, Elf_Phdr *GnuRelroPhdr,
                                uintX_t VA) {
@@ -1032,7 +1044,9 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       if (PH->p_flags != Flags) {
         // Flags changed. Create a new PT_LOAD.
         PH = &Phdrs[++PhdrIdx];
-        setPhdr(PH, PT_LOAD, Flags, FileOff, VA, 0, Target->getPageSize());
+        uint32_t PTType = (Config->EMachine != EM_AMDGPU) ? (uint32_t)PT_LOAD
+                                                          : getAmdgpuPhdr(Sec);
+        setPhdr(PH, PTType, Flags, FileOff, VA, 0, Target->getPageSize());
       }
 
       if (Sec->getFlags() & SHF_TLS) {
