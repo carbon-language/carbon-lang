@@ -310,6 +310,9 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (StringRef S : Config->Undefined)
     Symtab.addUndefinedOpt(S);
 
+  for (auto *Arg : Args.filtered(OPT_wrap))
+    Symtab.wrap(Arg->getValue());
+
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
