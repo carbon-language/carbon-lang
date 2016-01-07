@@ -282,7 +282,8 @@ macro(darwin_add_builtin_libraries)
 
   set(PROFILE_SOURCES ../profile/InstrProfiling 
                       ../profile/InstrProfilingBuffer
-                      ../profile/InstrProfilingPlatformDarwin)
+                      ../profile/InstrProfilingPlatformDarwin
+		      ../profile/InstrProfilingWriter)
   foreach (os ${ARGN})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
     foreach (arch ${DARWIN_BUILTIN_ARCHS})
