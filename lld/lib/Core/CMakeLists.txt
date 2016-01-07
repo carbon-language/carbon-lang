@@ -1,4 +1,4 @@
-add_llvm_library(lldCore
+add_lld_library(lldCore
   DefinedAtom.cpp
   Error.cpp
   File.cpp

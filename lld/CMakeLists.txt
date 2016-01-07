@@ -86,6 +86,12 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     )
 endif()
 
+macro(add_lld_library name)
+  add_llvm_library(${name} ${ARGN})
+  set_target_properties(${name} PROPERTIES FOLDER "lld libraries")
+endmacro(add_lld_library)
+
+
 add_subdirectory(lib)
 add_subdirectory(tools)
 
