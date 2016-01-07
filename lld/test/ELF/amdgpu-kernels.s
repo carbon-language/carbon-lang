@@ -2,6 +2,8 @@
 # RUN: lld -flavor gnu %t.o -o %t
 # RUN: llvm-readobj -sections -symbols -program-headers %t | FileCheck %s
 
+# REQUIRES: amdgpu
+
 .hsa_code_object_version 1,0
 .hsa_code_object_isa 7,0,0,"AMD","AMDGPU"
 

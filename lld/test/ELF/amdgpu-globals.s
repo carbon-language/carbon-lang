@@ -2,7 +2,7 @@
 # RUN: lld -flavor gnu %t.o -o %t
 # RUN: llvm-readobj -sections -symbols -program-headers %t | FileCheck %s
 
-# Requires: amdgpu
+# REQUIRES: amdgpu
 
 	.amdgpu_hsa_module_global module_global_program
 	.size	module_global_program, 4

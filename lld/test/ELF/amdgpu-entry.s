@@ -1,7 +1,7 @@
 # RUN: llvm-mc -filetype=obj -triple amdgcn--amdhsa -mcpu=kaveri %s -o %t.o
 # RUN: not lld -e kernel0 -flavor gnu %t.o -o %t
 
-# Requires: amdgpu
+# REQUIRES: amdgpu
 
 .hsa_code_object_version 1,0
 .hsa_code_object_isa 7,0,0,"AMD","AMDGPU"
