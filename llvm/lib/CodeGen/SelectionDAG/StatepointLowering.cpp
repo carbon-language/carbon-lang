@@ -505,27 +505,27 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
 
 #ifndef NDEBUG
   // Check that each of the gc pointer and bases we've gotten out of the
-  // safepoint is something the strategy thinks might be a pointer into the GC
-  // heap.  This is basically just here to help catch errors during statepoint
-  // insertion. TODO: This should actually be in the Verifier, but we can't get
-  // to the GCStrategy from there (yet).
+  // safepoint is something the strategy thinks might be a pointer (or vector
+  // of pointers) into the GC heap.  This is basically just here to help catch
+  // errors during statepoint insertion. TODO: This should actually be in the
+  // Verifier, but we can't get to the GCStrategy from there (yet).
   GCStrategy &S = Builder.GFI->getStrategy();
   for (const Value *V : Bases) {
-    auto Opt = S.isGCManagedPointer(V->getType());
+    auto Opt = S.isGCManagedPointer(V->getType()->getScalarType());
     if (Opt.hasValue()) {
       assert(Opt.getValue() &&
              "non gc managed base pointer found in statepoint");
     }
   }
   for (const Value *V : Ptrs) {
-    auto Opt = S.isGCManagedPointer(V->getType());
+    auto Opt = S.isGCManagedPointer(V->getType()->getScalarType());
     if (Opt.hasValue()) {
       assert(Opt.getValue() &&
              "non gc managed derived pointer found in statepoint");
     }
   }
   for (const Value *V : Relocations) {
-    auto Opt = S.isGCManagedPointer(V->getType());
+    auto Opt = S.isGCManagedPointer(V->getType()->getScalarType());
     if (Opt.hasValue()) {
       assert(Opt.getValue() && "non gc managed pointer relocated");
     }
