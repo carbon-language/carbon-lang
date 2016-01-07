@@ -26,6 +26,7 @@ void link(ArrayRef<const char *> Args);
 class LinkerDriver {
 public:
   void main(ArrayRef<const char *> Args);
+  void readConfigs(llvm::opt::InputArgList &Args);
   void createFiles(llvm::opt::InputArgList &Args);
   template <class ELFT> void link(llvm::opt::InputArgList &Args);
 

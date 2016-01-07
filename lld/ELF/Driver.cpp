@@ -143,6 +143,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initSymbols();
 
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
+  readConfigs(Args);
   createFiles(Args);
   checkOptions(Args);
 
@@ -164,7 +165,8 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   }
 }
 
-void LinkerDriver::createFiles(opt::InputArgList &Args) {
+// Initializes Config members by the command line options.
+void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_L))
     Config->SearchPaths.push_back(Arg->getValue());
 
@@ -230,7 +232,9 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
+}
 
+void LinkerDriver::createFiles(opt::InputArgList &Args) {
   for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
     case OPT_l:
