@@ -740,6 +740,9 @@ TEST_F(FormatTestJS, TypeAnnotations) {
   verifyFormat("var x: P<string, (a: number) => string>;");
   verifyFormat("var x = {y: function(): z { return 1; }};");
   verifyFormat("var x = {y: function(): {a: number} { return 1; }};");
+  verifyFormat("function someFunc(args: string[]):\n"
+               "    {longReturnValue: string[]} {}",
+               getGoogleJSStyleWithColumns(60));
 }
 
 TEST_F(FormatTestJS, ClassDeclarations) {
