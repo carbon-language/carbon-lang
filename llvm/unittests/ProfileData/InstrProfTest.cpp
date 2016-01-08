@@ -476,7 +476,7 @@ TEST_F(InstrProfTest, get_icall_data_merge_site_trunc) {
       R.get().getValueForSite(IPVK_IndirectCallTarget, 0));
   ASSERT_EQ(2U, R.get().getNumValueSites(IPVK_IndirectCallTarget));
   ASSERT_EQ(255U, R.get().getNumValueDataForSite(IPVK_IndirectCallTarget, 0));
-  for (int I = 0; I < 255; I++) {
+  for (unsigned I = 0; I < 255; I++) {
     ASSERT_EQ(VD[I].Value, 509 - I);
     ASSERT_EQ(VD[I].Count, 1509 - I);
   }
