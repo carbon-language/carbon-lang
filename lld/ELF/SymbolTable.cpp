@@ -63,7 +63,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   if (auto *F = dyn_cast<SharedFile<ELFT>>(FileP)) {
     // DSOs are uniquified not by filename but by soname.
     F->parseSoName();
-    if (!IncludedSoNames.insert(F->getSoName()).second)
+    if (!SoNames.insert(F->getSoName()).second)
       return;
 
     SharedFiles.emplace_back(cast<SharedFile<ELFT>>(File.release()));

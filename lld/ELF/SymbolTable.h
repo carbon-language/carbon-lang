@@ -90,7 +90,7 @@ private:
   std::vector<std::unique_ptr<SharedFile<ELFT>>> SharedFiles;
 
   // Set of .so files to not link the same shared object file more than once.
-  llvm::DenseSet<StringRef> IncludedSoNames;
+  llvm::DenseSet<StringRef> SoNames;
 };
 
 } // namespace elf2
