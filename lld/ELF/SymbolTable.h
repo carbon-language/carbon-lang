@@ -31,6 +31,9 @@ class Undefined;
 // undefined, it'll read an archive member to read a real definition
 // to replace the lazy symbol. The logic is implemented in resolve().
 template <class ELFT> class SymbolTable {
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+
 public:
   SymbolTable();
 
@@ -50,11 +53,11 @@ public:
 
   SymbolBody *addUndefined(StringRef Name);
   SymbolBody *addUndefinedOpt(StringRef Name);
-  void addAbsolute(StringRef Name,
-                   typename llvm::object::ELFFile<ELFT>::Elf_Sym &ESym);
-  void addSynthetic(StringRef Name, OutputSectionBase<ELFT> &Section,
-                    typename llvm::object::ELFFile<ELFT>::uintX_t Value);
+  SymbolBody *addAbsolute(StringRef Name, Elf_Sym &ESym);
+  SymbolBody *addSynthetic(StringRef Name, OutputSectionBase<ELFT> &Section,
+                           uintX_t Value);
   SymbolBody *addIgnored(StringRef Name);
+
   void scanShlibUndefined();
   SymbolBody *find(StringRef Name);
   void wrap(StringRef Name);

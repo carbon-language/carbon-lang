@@ -101,17 +101,20 @@ SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addAbsolute(StringRef Name,
-                                    typename ELFFile<ELFT>::Elf_Sym &ESym) {
-  resolve(new (Alloc) DefinedRegular<ELFT>(Name, ESym, nullptr));
+SymbolBody *SymbolTable<ELFT>::addAbsolute(StringRef Name, Elf_Sym &ESym) {
+  // Pass nullptr because absolute symbols have no corresponding input sections.
+  auto *Sym = new (Alloc) DefinedRegular<ELFT>(Name, ESym, nullptr);
+  resolve(Sym);
+  return Sym;
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addSynthetic(StringRef Name,
-                                     OutputSectionBase<ELFT> &Section,
-                                     typename ELFFile<ELFT>::uintX_t Value) {
+SymbolBody *SymbolTable<ELFT>::addSynthetic(StringRef Name,
+                                            OutputSectionBase<ELFT> &Section,
+                                            uintX_t Value) {
   auto *Sym = new (Alloc) DefinedSynthetic<ELFT>(Name, Value, Section);
   resolve(Sym);
+  return Sym;
 }
 
 // Add Name as an "ignored" symbol. An ignored symbol is a regular
@@ -119,10 +122,7 @@ void SymbolTable<ELFT>::addSynthetic(StringRef Name,
 // file's symbol table. Such symbols are useful for some linker-defined symbols.
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addIgnored(StringRef Name) {
-  auto *Sym = new (Alloc)
-      DefinedRegular<ELFT>(Name, ElfSym<ELFT>::IgnoreUndef, nullptr);
-  resolve(Sym);
-  return Sym;
+  return addAbsolute(Name, ElfSym<ELFT>::IgnoreUndef);
 }
 
 // Rename SYM as __wrap_SYM. The original symbol is preserved as __real_SYM.
