@@ -68,8 +68,6 @@ private:
   void resolve(SymbolBody *Body);
   std::string conflictMsg(SymbolBody *Old, SymbolBody *New);
 
-  std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
-
   // The order the global symbols are in is not defined. We can use an arbitrary
   // order, but it has to be reproducible. That is true even when cross linking.
   // The default hashing of StringRef produces different results on 32 and 64
@@ -85,7 +83,8 @@ private:
   // is used to uniquify them.
   llvm::DenseSet<StringRef> ComdatGroups;
 
-  // The symbol table owns all object and DSO files.
+  // The symbol table owns all file objects.
+  std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
   std::vector<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles;
   std::vector<std::unique_ptr<SharedFile<ELFT>>> SharedFiles;
 
