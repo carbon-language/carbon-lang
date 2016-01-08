@@ -107,7 +107,7 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
     ++VDataCount;
   }
 
-  if (VDataCount >= UCHAR_MAX)
+  if (VDataCount >= INSTR_PROF_MAX_NUM_VAL_PER_SITE)
     return;
 
   CurrentVNode = (ValueProfNode *)calloc(1, sizeof(ValueProfNode));
