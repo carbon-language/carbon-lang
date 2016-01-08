@@ -1892,8 +1892,10 @@ TSAN_INTERCEPTOR(int, rmdir, char *path) {
 
 TSAN_INTERCEPTOR(int, closedir, void *dirp) {
   SCOPED_TSAN_INTERCEPTOR(closedir, dirp);
-  int fd = dirfd(dirp);
-  FdClose(thr, pc, fd);
+  if (dirp) {
+    int fd = dirfd(dirp);
+    FdClose(thr, pc, fd);
+  }
   return REAL(closedir)(dirp);
 }
 
