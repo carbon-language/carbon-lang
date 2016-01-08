@@ -42,7 +42,7 @@ static uint16_t *mem_to_shadow(uptr x) {
   return (uint16_t *)(__cfi_shadow + ((x >> kShadowGranularity) << 1));
 }
 
-typedef int (*CFICheckFn)(uptr, void *);
+typedef int (*CFICheckFn)(u64, void *);
 
 class ShadowValue {
   uptr addr;
@@ -189,9 +189,9 @@ static void init_shadow() {
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void __cfi_slowpath(uptr CallSiteTypeId, void *Ptr) {
+void __cfi_slowpath(u64 CallSiteTypeId, void *Ptr) {
   uptr Addr = (uptr)Ptr;
-  VReport(3, "__cfi_slowpath: %zx, %p\n", CallSiteTypeId, Ptr);
+  VReport(3, "__cfi_slowpath: %llx, %p\n", CallSiteTypeId, Ptr);
   ShadowValue sv = ShadowValue::load(Addr);
   if (sv.is_invalid()) {
     VReport(2, "CFI: invalid memory region for a function pointer (shadow==0): %p\n", Ptr);
