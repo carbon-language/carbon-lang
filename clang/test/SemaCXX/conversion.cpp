@@ -197,3 +197,14 @@ namespace test8 {
     template_and_macro2<double>();
   }
 }
+
+// Don't warn on a nullptr to bool conversion when the nullptr is the return
+// type of a function.
+namespace test9 {
+  typedef decltype(nullptr) nullptr_t;
+  nullptr_t EXIT();
+
+  bool test() {
+    return EXIT();
+  }
+}

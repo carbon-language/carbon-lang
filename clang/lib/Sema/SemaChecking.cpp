@@ -7047,6 +7047,10 @@ static void DiagnoseNullConversion(Sema &S, Expr *E, QualType T,
                         E->getExprLoc()))
     return;
 
+  // Don't warn on functions which have return type nullptr_t.
+  if (isa<CallExpr>(E))
+    return;
+
   // Check for NULL (GNUNull) or nullptr (CXX11_nullptr).
   const Expr::NullPointerConstantKind NullKind =
       E->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull);
