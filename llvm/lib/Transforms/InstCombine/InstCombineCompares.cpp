@@ -821,7 +821,7 @@ static Value *rewriteGEPAsOffset(Value *Start, Value *Base,
 
     Value *GEP =
         Builder.CreateInBoundsGEP(Start->getType()->getPointerElementType(),
-                                  NewBase, {NewInsts[Val]},
+                                  NewBase, makeArrayRef(NewInsts[Val]),
                                   Val->getName() + ".ptr");
 
     if (!Val->getType()->isPointerTy()) {
