@@ -1030,5 +1030,15 @@ TEST_F(FormatTestJS, WrapAfterParen) {
                "       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {\n}");
 }
 
+TEST_F(FormatTestJS, JSDocAnnotations) {
+  EXPECT_EQ("/**\n"
+            " * @export {this.is.a.long.path.to.a.Type}\n"
+            " */",
+            format("/**\n"
+                   " * @export {this.is.a.long.path.to.a.Type}\n"
+                   " */",
+                   getGoogleJSStyleWithColumns(20)));
+}
+
 } // end namespace tooling
 } // end namespace clang
