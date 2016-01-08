@@ -82,16 +82,16 @@ extern "C" void LLVMInitializeWebAssemblyTargetMC() {
     // Register the MC instruction info.
     TargetRegistry::RegisterMCInstrInfo(*T, createMCInstrInfo);
 
-    // Register the object streamer
+    // Register the object streamer.
     TargetRegistry::RegisterELFStreamer(*T, createMCStreamer);
 
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createMCInstPrinter);
 
-    // Register the MC code emitter
+    // Register the MC code emitter.
     TargetRegistry::RegisterMCCodeEmitter(*T, createCodeEmitter);
 
-    // Register the ASM Backend
+    // Register the ASM Backend.
     TargetRegistry::RegisterMCAsmBackend(*T, createAsmBackend);
   }
 }

@@ -31,8 +31,6 @@ class WebAssemblyMCCodeEmitter final : public MCCodeEmitter {
 public:
   WebAssemblyMCCodeEmitter(const MCInstrInfo &, MCContext &) {}
 
-  ~WebAssemblyMCCodeEmitter() override {}
-
   /// TableGen'erated function for getting the binary encoding for an
   /// instruction.
   uint64_t getBinaryCodeForInstr(const MCInst &MI,
