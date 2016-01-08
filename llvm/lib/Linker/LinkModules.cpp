@@ -863,13 +863,9 @@ bool Linker::linkModules(Module &Dest, std::unique_ptr<Module> Src,
   return L.linkInModule(std::move(Src), Flags);
 }
 
-std::unique_ptr<Module>
-llvm::renameModuleForThinLTO(std::unique_ptr<Module> M,
-                             const FunctionInfoIndex *Index) {
-  ThinLTOGlobalProcessing ThinLTOProcessing(*M, Index);
-  if (ThinLTOProcessing.run())
-    return nullptr;
-  return M;
+bool llvm::renameModuleForThinLTO(Module &M, const FunctionInfoIndex *Index) {
+  ThinLTOGlobalProcessing ThinLTOProcessing(M, Index);
+  return ThinLTOProcessing.run();
 }
 
 //===----------------------------------------------------------------------===//

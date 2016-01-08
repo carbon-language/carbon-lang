@@ -413,14 +413,19 @@ public:
       Index = IndexPtr.get();
     }
 
+    // First we need to promote to global scope and rename any local values that
+    // are potentially exported to other modules.
+    if (renameModuleForThinLTO(M, Index)) {
+      errs() << "Error renaming module\n";
+      return false;
+    }
+
     // Perform the import now.
     auto ModuleLoader = [&M](StringRef Identifier) {
       return loadFile(Identifier, M.getContext());
     };
     FunctionImporter Importer(*Index, ModuleLoader);
     return Importer.importFunctions(M);
-
-    return false;
   }
 };
 } // anonymous namespace
