@@ -7325,6 +7325,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   // fold (bitcast (fneg x)) ->
   //     flipbit = signbit
   //     (xor (bitcast x) (build_pair flipbit, flipbit))
+  //
   // fold (bitcast (fabs x)) ->
   //     flipbit = (and (extract_element (bitcast x), 0), signbit)
   //     (xor (bitcast x) (build_pair flipbit, flipbit))
