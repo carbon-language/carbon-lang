@@ -28,12 +28,8 @@ using namespace llvm;
 
 namespace {
 class WebAssemblyMCCodeEmitter final : public MCCodeEmitter {
-  const MCRegisterInfo &MRI;
-
 public:
-  WebAssemblyMCCodeEmitter(const MCInstrInfo &, const MCRegisterInfo &mri,
-                           MCContext &)
-      : MRI(mri) {}
+  WebAssemblyMCCodeEmitter(const MCInstrInfo &, MCContext &) {}
 
   ~WebAssemblyMCCodeEmitter() override {}
 
@@ -60,26 +56,8 @@ public:
 } // end anonymous namespace
 
 MCCodeEmitter *llvm::createWebAssemblyMCCodeEmitter(const MCInstrInfo &MCII,
-                                                    const MCRegisterInfo &MRI,
                                                     MCContext &Ctx) {
-  return new WebAssemblyMCCodeEmitter(MCII, MRI, Ctx);
-}
-
-unsigned WebAssemblyMCCodeEmitter::getMachineOpValue(
-    const MCInst &MI, const MCOperand &MO, SmallVectorImpl<MCFixup> &Fixups,
-    const MCSubtargetInfo &STI) const {
-  if (MO.isReg())
-    return MRI.getEncodingValue(MO.getReg());
-  if (MO.isImm())
-    return static_cast<unsigned>(MO.getImm());
-
-  assert(MO.isExpr());
-
-  assert(MO.getExpr()->getKind() == MCExpr::SymbolRef);
-
-  assert(false && "FIXME: not implemented yet");
-
-  return 0;
+  return new WebAssemblyMCCodeEmitter(MCII, Ctx);
 }
 
 void WebAssemblyMCCodeEmitter::encodeInstruction(
