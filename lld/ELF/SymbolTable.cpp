@@ -27,8 +27,6 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf2;
 
-template <class ELFT> SymbolTable<ELFT>::SymbolTable() {}
-
 // All input object files must be for the same architecture
 // (e.g. it does not make sense to link x86 object files with
 // MIPS object files.) This function checks for that error.

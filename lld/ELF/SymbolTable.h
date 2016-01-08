@@ -35,8 +35,6 @@ template <class ELFT> class SymbolTable {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  SymbolTable();
-
   void addFile(std::unique_ptr<InputFile> File);
 
   const llvm::MapVector<StringRef, Symbol *> &getSymbols() const {
