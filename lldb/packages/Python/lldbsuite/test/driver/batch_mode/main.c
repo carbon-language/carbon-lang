@@ -25,7 +25,8 @@ main (int argc, char **argv)
     int do_crash = 0;
     int do_wait = 0;
 
-    for (int idx = 1; idx < argc; idx++)
+    int idx;
+    for (idx = 1; idx < argc; idx++)
     {
         if (strcmp(argv[idx], "CRASH") == 0)
             do_crash = 1;
