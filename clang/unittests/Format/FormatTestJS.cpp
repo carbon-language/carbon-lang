@@ -755,6 +755,12 @@ TEST_F(FormatTestJS, ClassDeclarations) {
                "  aaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa: aaaaaaaaaaaaaaaaaaaa):\n"
                "      aaaaaaaaaaaaaaaaaaaaaa {}\n"
                "}");
+  verifyFormat("foo = class Name {\n"
+               "  constructor() {}\n"
+               "};");
+  verifyFormat("foo = class {\n"
+               "  constructor() {}\n"
+               "};");
 
   // ':' is not a type declaration here.
   verifyFormat("class X {\n"
