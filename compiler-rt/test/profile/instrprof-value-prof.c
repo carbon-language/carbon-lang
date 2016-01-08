@@ -6,9 +6,7 @@
 // RUN: llvm-profdata merge -o %t-merged.profdata %t.profraw %t-2.profdata
 // RUN: llvm-profdata show --all-functions -ic-targets  %t-2.profdata | FileCheck  %s -check-prefix=NO-VALUE
 // RUN: llvm-profdata show --all-functions -ic-targets  %t.profdata | FileCheck  %s
-// value profile merging current do sorting based on target values -- this will destroy the order of the target
-// in the list leading to comparison problem. For now just check a small subset of output.
-// RUN: llvm-profdata show --all-functions -ic-targets  %t-merged.profdata | FileCheck  %s -check-prefix=MERGE
+// RUN: llvm-profdata show --all-functions -ic-targets  %t-merged.profdata | FileCheck  %s
 //
 // RUN: env LLVM_PROFILE_FILE=%t-3.profraw LLVM_VP_BUFFER_SIZE=1 %run %t 1
 // RUN: env LLVM_PROFILE_FILE=%t-4.profraw LLVM_VP_BUFFER_SIZE=8 %run %t 1
@@ -126,33 +124,6 @@ int main(int argc, const char *argv[]) {
 
 // NO-VALUE: Indirect Call Site Count: 127
 // NO-VALUE-NEXT: Indirect Target Results:
-// MERGE-LABEL: caller_1_1_1_1_2_2_1:
-// MERGE: Indirect Call Site Count: 6
-// MERGE: Indirect Target Results:
-// MERGE: [ 1, callee_1_1_1, 1 ]
-// MERGE: [ 2, callee_1_1_1, 1 ]
-// MERGE: [ 2, callee_1_1_2, 2 ]
-// MERGE: [ 3, callee_1_1_1, 1 ]
-// MERGE: [ 3, callee_1_1_2, 2 ]
-// MERGE: [ 3, callee_1_2_1, 3 ]
-// MERGE: [ 4, callee_1_1_1, 1 ]
-// MERGE: [ 4, callee_1_1_2, 2 ]
-// MERGE: [ 4, callee_1_2_1, 3 ]
-// MERGE: [ 4, callee_1_2_2, 4 ]
-// MERGE: [ 5, callee_1_1_1, 1 ]
-// MERGE: [ 5, callee_1_1_2, 2 ]
-// MERGE: [ 5, callee_1_2_1, 3 ]
-// MERGE: [ 5, callee_1_2_2, 4 ]
-// MERGE: [ 5, callee_2_1_1, 5 ]
-// MERGE-LABEL: caller_2_2_2_2_2_2_2:
-// MERGE: Indirect Call Site Count: 127
-// MERGE-NEXT: Indirect Target Results:
-// MERGE-NEXT:  [ 1, callee_1_1_1, 1 ]
-// MERGE:  [ 2, callee_1_1_1, 1 ]
-// MERGE:  [ 2, callee_1_1_2, 2 ]
-// MERGE:  [ 3, callee_1_1_1, 1 ]
-// MERGE:  [ 3, callee_1_1_2, 2 ]
-// MERGE:  [ 3, callee_1_2_1, 3 ]
 // CHECK-LABEL: caller_1_1_1_1_2_2_1:
 // CHECK: Indirect Call Site Count: 6
 // CHECK-NEXT: Indirect Target Results:
