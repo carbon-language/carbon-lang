@@ -135,8 +135,7 @@ ThreadPlanShouldStopHere::DefaultStepFromHereCallback (ThreadPlan *current_plan,
                                                                                          stop_others,
                                                                                          eVoteNo,
                                                                                          eVoteNoOpinion,
-                                                                                         frame_index,
-                                                                                         true);
+                                                                                         frame_index);
     return return_plan_sp;
 }
 

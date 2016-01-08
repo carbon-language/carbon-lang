@@ -185,8 +185,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                                                                              stop_others,
                                                                              eVoteNo,
                                                                              eVoteNoOpinion,
-                                                                             0,
-                                                                             true);
+                                                                             0);
                 break;
             }
             else
