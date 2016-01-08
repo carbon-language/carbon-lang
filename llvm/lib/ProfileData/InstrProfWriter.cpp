@@ -117,6 +117,8 @@ std::error_code InstrProfWriter::addRecord(InstrProfRecord &&I,
     Result = Dest.merge(I, Weight);
   }
 
+  Dest.sortValueData();
+
   // We keep track of the max function count as we go for simplicity.
   // Update this statistic no matter the result of the merge.
   if (Dest.Counts[0] > MaxFunctionCount)

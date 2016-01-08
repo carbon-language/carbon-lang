@@ -159,11 +159,6 @@ TEST_F(InstrProfTest, get_icall_data_read_write) {
 
   std::unique_ptr<InstrProfValueData[]> VD =
       R.get().getValueForSite(IPVK_IndirectCallTarget, 0);
-  // Now sort the target acording to frequency.
-  std::sort(&VD[0], &VD[3],
-            [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
-              return VD1.Count > VD2.Count;
-            });
 
   ASSERT_EQ(3U, VD[0].Count);
   ASSERT_EQ(2U, VD[1].Count);
@@ -211,11 +206,6 @@ TEST_F(InstrProfTest, get_icall_data_read_write_with_weight) {
 
   std::unique_ptr<InstrProfValueData[]> VD =
       R.get().getValueForSite(IPVK_IndirectCallTarget, 0);
-  // Now sort the target acording to frequency.
-  std::sort(&VD[0], &VD[3],
-            [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
-              return VD1.Count > VD2.Count;
-            });
   ASSERT_EQ(30U, VD[0].Count);
   ASSERT_EQ(20U, VD[1].Count);
   ASSERT_EQ(10U, VD[2].Count);
@@ -269,11 +259,6 @@ TEST_F(InstrProfTest, get_icall_data_read_write_big_endian) {
 
   std::unique_ptr<InstrProfValueData[]> VD =
       R.get().getValueForSite(IPVK_IndirectCallTarget, 0);
-  // Now sort the target acording to frequency.
-  std::sort(&VD[0], &VD[3],
-            [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
-              return VD1.Count > VD2.Count;
-            });
   ASSERT_EQ(StringRef((const char *)VD[0].Value, 7), StringRef("callee3"));
   ASSERT_EQ(StringRef((const char *)VD[1].Value, 7), StringRef("callee2"));
   ASSERT_EQ(StringRef((const char *)VD[2].Value, 7), StringRef("callee1"));
@@ -365,11 +350,6 @@ TEST_F(InstrProfTest, get_icall_data_merge1) {
 
   std::unique_ptr<InstrProfValueData[]> VD =
       R.get().getValueForSite(IPVK_IndirectCallTarget, 0);
-  // Now sort the target acording to frequency.
-  std::sort(&VD[0], &VD[4],
-            [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
-              return VD1.Count > VD2.Count;
-            });
   ASSERT_EQ(StringRef((const char *)VD[0].Value, 7), StringRef("callee2"));
   ASSERT_EQ(7U, VD[0].Count);
   ASSERT_EQ(StringRef((const char *)VD[1].Value, 7), StringRef("callee3"));
@@ -381,10 +361,6 @@ TEST_F(InstrProfTest, get_icall_data_merge1) {
 
   std::unique_ptr<InstrProfValueData[]> VD_2(
       R.get().getValueForSite(IPVK_IndirectCallTarget, 2));
-  std::sort(&VD_2[0], &VD_2[4],
-            [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
-              return VD1.Count > VD2.Count;
-            });
   ASSERT_EQ(StringRef((const char *)VD_2[0].Value, 7), StringRef("callee3"));
   ASSERT_EQ(6U, VD_2[0].Count);
   ASSERT_EQ(StringRef((const char *)VD_2[1].Value, 7), StringRef("callee4"));
@@ -401,10 +377,6 @@ TEST_F(InstrProfTest, get_icall_data_merge1) {
 
   std::unique_ptr<InstrProfValueData[]> VD_4(
       R.get().getValueForSite(IPVK_IndirectCallTarget, 4));
-  std::sort(&VD_4[0], &VD_4[3],
-            [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
-              return VD1.Count > VD2.Count;
-            });
   ASSERT_EQ(StringRef((const char *)VD_4[0].Value, 7), StringRef("callee3"));
   ASSERT_EQ(6U, VD_4[0].Count);
   ASSERT_EQ(StringRef((const char *)VD_4[1].Value, 7), StringRef("callee2"));
