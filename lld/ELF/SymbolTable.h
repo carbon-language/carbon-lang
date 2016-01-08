@@ -80,12 +80,16 @@ private:
   llvm::MapVector<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;
 
+  // Comdat groups define "link once" sections. If two comdat groups have the
+  // same name, only one of them is linked, and the other is ignored. This set
+  // is used to uniquify them.
   llvm::DenseSet<StringRef> ComdatGroups;
 
-  // The writer needs to infer the machine type from the object files.
+  // The symbol table owns all object and DSO files.
   std::vector<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles;
-
   std::vector<std::unique_ptr<SharedFile<ELFT>>> SharedFiles;
+
+  // Set of .so files to not link the same shared object file more than once.
   llvm::DenseSet<StringRef> IncludedSoNames;
 };
 
