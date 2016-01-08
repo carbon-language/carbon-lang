@@ -19,20 +19,14 @@
 
 namespace llvm {
 
-class formatted_raw_ostream;
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
-class MCRegisterInfo;
 class MCObjectWriter;
-class MCStreamer;
 class MCSubtargetInfo;
-class MCTargetStreamer;
-class StringRef;
 class Target;
 class Triple;
-class raw_ostream;
 class raw_pwrite_stream;
 
 extern Target TheWebAssemblyTarget32;
