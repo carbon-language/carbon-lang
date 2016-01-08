@@ -159,11 +159,10 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
     if (!Inst)
       continue; // PHI, INLINEASM, CFI_INSTRUCTION, etc.
 
-    std::string Command;
     if (Inst->Operands.empty())
       continue;   // Instruction already done.
 
-    Command = "    " + Inst->Operands[0].getCode() + "\n";
+    std::string Command = "    " + Inst->Operands[0].getCode() + "\n";
 
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
@@ -178,7 +177,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       }
     if (!FoundIt) {
       InstIdxs[i] = UniqueOperandCommands.size();
-      UniqueOperandCommands.push_back(Command);
+      UniqueOperandCommands.push_back(std::move(Command));
       InstrsForCase.push_back(Inst->CGI->TheDef->getName());
 
       // This command matches one operand so far.
