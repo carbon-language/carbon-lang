@@ -214,6 +214,15 @@ int __llvm_profile_write_file(void) {
     return -1;
   }
 
+  /* Check if there is llvm/runtime versino mismatch.  */
+  if (GET_VERSION(__llvm_profile_get_version()) != INSTR_PROF_RAW_VERSION) {
+    PROF_ERR("LLVM Profile: runtime and instrumentation version mismatch : "
+             "expected %d, but get %d\n",
+             INSTR_PROF_RAW_VERSION,
+             (int)GET_VERSION(__llvm_profile_get_version()));
+    return -1;
+  }
+
   /* Write the file. */
   rc = writeFileWithName(__llvm_profile_CurrentFilename);
   if (rc)
