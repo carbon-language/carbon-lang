@@ -150,6 +150,8 @@ ELFFileBase<ELFT> *SymbolTable<ELFT>::findFile(SymbolBody *B) {
   return nullptr;
 }
 
+// Construct a string in the form of "Sym in File1 and File2".
+// Used to construct an error message.
 template <class ELFT>
 std::string SymbolTable<ELFT>::conflictMsg(SymbolBody *Old, SymbolBody *New) {
   ELFFileBase<ELFT> *OldFile = findFile(Old);
@@ -198,8 +200,8 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     Sym->Body = New;
 }
 
+// Find an existing symbol or create and insert a new one.
 template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
-  // Find an existing Symbol or create and insert a new one.
   StringRef Name = New->getName();
   Symbol *&Sym = Symtab[Name];
   if (!Sym)
