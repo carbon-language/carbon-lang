@@ -139,7 +139,7 @@ public:
                    uint8_t *PairedLoc = nullptr) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool isTlsOptimized(unsigned Type, const SymbolBody *S) const override;
-  bool isSizeDynReloc(uint32_t Type, const SymbolBody &S) const override;
+  bool isSizeReloc(uint32_t Type) const override;
   unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                uint64_t P, uint64_t SA,
                                const SymbolBody &S) const override;
@@ -269,9 +269,7 @@ unsigned TargetInfo::getPltRefReloc(unsigned Type) const { return PCRelReloc; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
-bool TargetInfo::isSizeDynReloc(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
+bool TargetInfo::isSizeReloc(uint32_t Type) const { return false; }
 
 unsigned TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
                                          uint32_t Type, uint64_t P, uint64_t SA,
@@ -722,10 +720,8 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   }
 }
 
-bool X86_64TargetInfo::isSizeDynReloc(uint32_t Type,
-                                      const SymbolBody &S) const {
-  return (Type == R_X86_64_SIZE32 || Type == R_X86_64_SIZE64) &&
-         canBePreempted(&S, false);
+bool X86_64TargetInfo::isSizeReloc(uint32_t Type) const {
+  return Type == R_X86_64_SIZE32 || Type == R_X86_64_SIZE64;
 }
 
 bool X86_64TargetInfo::isTlsOptimized(unsigned Type,

@@ -58,7 +58,7 @@ public:
                              uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                              int32_t Index, unsigned RelOff) const = 0;
   virtual bool isRelRelative(uint32_t Type) const;
-  virtual bool isSizeDynReloc(uint32_t Type, const SymbolBody &S) const;
+  virtual bool isSizeReloc(uint32_t Type) const;
   virtual bool relocNeedsDynRelative(unsigned Type) const { return false; }
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
   virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
