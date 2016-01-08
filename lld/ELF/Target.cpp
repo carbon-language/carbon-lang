@@ -714,8 +714,6 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   case R_X86_64_PC32:
   case R_X86_64_PC64:
   case R_X86_64_PLT32:
-  case R_X86_64_SIZE32:
-  case R_X86_64_SIZE64:
     return true;
   }
 }
