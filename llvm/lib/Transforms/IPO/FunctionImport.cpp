@@ -41,14 +41,15 @@ static std::unique_ptr<Module> loadFile(const std::string &FileName,
                                         LLVMContext &Context) {
   SMDiagnostic Err;
   DEBUG(dbgs() << "Loading '" << FileName << "'\n");
-  std::unique_ptr<Module> Result = getLazyIRFileModule(FileName, Err, Context);
+  // Metadata isn't loaded or linked until after all functions are
+  // imported, after which it will be materialized and linked.
+  std::unique_ptr<Module> Result =
+      getLazyIRFileModule(FileName, Err, Context,
+                          /* ShouldLazyLoadMetadata = */ true);
   if (!Result) {
     Err.print("function-import", errs());
     return nullptr;
   }
-
-  Result->materializeMetadata();
-  UpgradeDebugInfo(*Result);
 
   return Result;
 }
@@ -324,6 +325,10 @@ bool FunctionImporter::importFunctions(Module &DestModule) {
        ModuleToTempMDValsMap) {
     // Load the specified source module.
     auto &SrcModule = ModuleLoaderCache(SME.getKey());
+    // The modules were created with lazy metadata loading. Materialize it
+    // now, before linking it.
+    SrcModule.materializeMetadata();
+    UpgradeDebugInfo(SrcModule);
 
     // Link in all necessary metadata from this module.
     if (TheLinker.linkInMetadata(SrcModule, SME.getValue().get()))
