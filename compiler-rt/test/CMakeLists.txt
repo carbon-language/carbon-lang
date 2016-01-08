@@ -61,7 +61,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
     add_subdirectory(ubsan)
   endif()
   # CFI tests require diagnostic mode, which is implemented in UBSan.
-  if(COMPILER_RT_HAS_CFI AND COMPILER_RT_HAS_UBSAN)
+  if(COMPILER_RT_HAS_UBSAN)
     add_subdirectory(cfi)
   endif()
   if(COMPILER_RT_HAS_SAFESTACK)
