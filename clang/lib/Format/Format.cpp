@@ -1239,6 +1239,8 @@ private:
           FormatTok->Type = TT_ImplicitStringLiteral;
           break;
         }
+        if (FormatTok->Type == TT_ImplicitStringLiteral)
+          break;
       }
 
       if (FormatTok->is(TT_ImplicitStringLiteral))

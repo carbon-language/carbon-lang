@@ -956,6 +956,9 @@ TEST_F(FormatTestJS, TemplateStrings) {
                "var y;");
   verifyFormat("var x = `\"`;  // comment with matching quote \"\n"
                "var y;");
+  EXPECT_EQ("it(`'aaaaaaaaaaaaaaa   `, aaaaaaaaa);",
+            format("it(`'aaaaaaaaaaaaaaa   `,   aaaaaaaaa) ;",
+                   getGoogleJSStyleWithColumns(40)));
   // Backticks in a comment - not a template string.
   EXPECT_EQ("var x = 1  // `/*a`;\n"
             "    ;",
