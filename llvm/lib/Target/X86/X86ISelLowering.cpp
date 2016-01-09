@@ -8175,6 +8175,11 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
 
   MVT BroadcastVT = VT;
 
+  // Peek through any bitcast (only useful for loads).
+  SDValue BC = V;
+  while (BC.getOpcode() == ISD::BITCAST)
+    BC = BC.getOperand(0);
+
   // Also check the simpler case, where we can directly reuse the scalar.
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
       (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
@@ -8184,14 +8189,14 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
     // Only AVX2 has register broadcasts.
     if (!Subtarget->hasAVX2() && !isShuffleFoldableLoad(V))
       return SDValue();
-  } else if (MayFoldLoad(V) && !cast<LoadSDNode>(V)->isVolatile()) {
+  } else if (MayFoldLoad(BC) && !cast<LoadSDNode>(BC)->isVolatile()) {
     // 32-bit targets need to load i64 as a f64 and then bitcast the result.
     if (!Subtarget->is64Bit() && VT.getScalarType() == MVT::i64)
       BroadcastVT = MVT::getVectorVT(MVT::f64, VT.getVectorNumElements());
 
     // If we are broadcasting a load that is only used by the shuffle
     // then we can reduce the vector load to the broadcasted scalar load.
-    LoadSDNode *Ld = cast<LoadSDNode>(V);
+    LoadSDNode *Ld = cast<LoadSDNode>(BC);
     SDValue BaseAddr = Ld->getOperand(1);
     EVT AddrVT = BaseAddr.getValueType();
     EVT SVT = BroadcastVT.getScalarType();
