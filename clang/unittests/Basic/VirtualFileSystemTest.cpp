@@ -657,6 +657,12 @@ TEST_F(InMemoryFileSystemTest, WorkingDirectory) {
 
   Stat = FS.status("c");
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << "\n" << FS.toString();
+
+  NormalizedFS.setCurrentWorkingDirectory("/b/c");
+  NormalizedFS.setCurrentWorkingDirectory(".");
+  ASSERT_EQ("/b/c", NormalizedFS.getCurrentWorkingDirectory().get());
+  NormalizedFS.setCurrentWorkingDirectory("..");
+  ASSERT_EQ("/b", NormalizedFS.getCurrentWorkingDirectory().get());
 }
 
 // NOTE: in the tests below, we use '//root/' as our root directory, since it is
