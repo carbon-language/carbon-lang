@@ -128,6 +128,22 @@ private:
                             std::unique_ptr<RuntimeDyld::SymbolResolver>)>
       ModuleAdderFtor;
 
+    LogicalDylibResources() = default;
+
+    // Explicit move constructor to make MSVC happy.
+    LogicalDylibResources(LogicalDylibResources &&Other)
+      : ExternalSymbolResolver(std::move(Other.ExternalSymbolResolver)),
+        MemMgr(std::move(Other.MemMgr)),
+        ModuleAdder(std::move(Other.ModuleAdder)) {}
+
+    // Explicit move assignment operator to make MSVC happy.
+    LogicalDylibResources& operator=(LogicalDylibResources &&Other) {
+      ExternalSymbolResolver = std::move(Other.ExternalSymbolResolver);
+      MemMgr = std::move(Other.MemMgr);
+      ModuleAdder = std::move(Other.ModuleAdder);
+      return *this;
+    }
+
     SymbolResolverFtor ExternalSymbolResolver;
     std::unique_ptr<ResourceOwner<RuntimeDyld::MemoryManager>> MemMgr;
     ModuleAdderFtor ModuleAdder;
