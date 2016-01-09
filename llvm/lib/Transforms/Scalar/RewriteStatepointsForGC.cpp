@@ -371,26 +371,10 @@ findBaseDefiningValueOfVector(Value *I) {
     // An incoming argument to the function is a base pointer
     return BaseDefiningValueResult(I, true);
 
-  // We shouldn't see the address of a global as a vector value?
-  assert(!isa<GlobalVariable>(I) &&
-         "unexpected global variable found in base of vector");
-
-  // inlining could possibly introduce phi node that contains
-  // undef if callee has multiple returns
-  if (isa<UndefValue>(I))
-    // utterly meaningless, but useful for dealing with partially optimized
-    // code.
+  if (isa<Constant>(I))
+    // Constant vectors consist only of constant pointers.
     return BaseDefiningValueResult(I, true);
 
-  // Due to inheritance, this must be _after_ the global variable and undef
-  // checks
-  if (Constant *Con = dyn_cast<Constant>(I)) {
-    assert(!isa<GlobalVariable>(I) && !isa<UndefValue>(I) &&
-           "order of checks wrong!");
-    assert(Con->isNullValue() && "null is the only case which makes sense");
-    return BaseDefiningValueResult(Con, true);
-  }
-  
   if (isa<LoadInst>(I))
     return BaseDefiningValueResult(I, true);
 
