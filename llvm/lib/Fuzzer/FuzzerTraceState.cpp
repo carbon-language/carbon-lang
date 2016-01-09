@@ -166,9 +166,10 @@ struct LabelRange {
 
 // For now, very simple: put Size bytes of Data at position Pos.
 struct TraceBasedMutation {
-  size_t Pos;
-  size_t Size;
-  uint64_t Data;
+  static const size_t kMaxSize = 28;
+  uint32_t Pos : 24;
+  uint32_t Size : 8;
+  uint8_t  Data[kMaxSize];
 };
 
 class TraceState {
@@ -198,15 +199,23 @@ class TraceState {
   void StartTraceRecording() {
     if (!Options.UseTraces) return;
     RecordingTraces = true;
-    Mutations.clear();
+    NumMutations = 0;
   }
 
   size_t StopTraceRecording(FuzzerRandomBase &Rand) {
     RecordingTraces = false;
-    return Mutations.size();
+    return NumMutations;
   }
 
   void ApplyTraceBasedMutation(size_t Idx, fuzzer::Unit *U);
+
+  void AddMutation(uint32_t Pos, uint32_t Size, uint64_t Data) {
+    if (NumMutations >= kMaxMutations) return;
+    auto &M = Mutations[NumMutations++];
+    M.Pos = Pos;
+    M.Size = Size;
+    memcpy(M.Data, &Data, sizeof(Data));
+  }
 
  private:
   bool IsTwoByteData(uint64_t Data) {
@@ -215,7 +224,9 @@ class TraceState {
     return Signed == 0 || Signed == -1L;
   }
   bool RecordingTraces = false;
-  std::vector<TraceBasedMutation> Mutations;
+  static const size_t kMaxMutations = 1 << 16;
+  size_t NumMutations;
+  TraceBasedMutation Mutations[kMaxMutations];
   LabelRange LabelRanges[1 << (sizeof(dfsan_label) * 8)];
   const Fuzzer::FuzzingOptions &Options;
   const Unit &CurrentUnit;
@@ -235,12 +246,16 @@ LabelRange TraceState::GetLabelRange(dfsan_label L) {
 }
 
 void TraceState::ApplyTraceBasedMutation(size_t Idx, fuzzer::Unit *U) {
-  assert(Idx < Mutations.size());
+  assert(Idx < NumMutations);
   auto &M = Mutations[Idx];
-  if (Options.Verbosity >= 3)
-    Printf("TBM %zd %zd %zd\n", M.Pos, M.Size, M.Data);
+  if (Options.Verbosity >= 3) {
+    Printf("TBM Pos %u Size %u ", M.Pos, M.Size);
+    for (uint32_t i = 0; i < M.Size; i++)
+      Printf("%02x", M.Data[i]);
+    Printf("\n");
+  }
   if (M.Pos + M.Size > U->size()) return;
-  memcpy(U->data() + M.Pos, &M.Data, M.Size);
+  memcpy(U->data() + M.Pos, &M.Data[0], M.Size);
 }
 
 void TraceState::DFSanCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
@@ -257,19 +272,19 @@ void TraceState::DFSanCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
   LabelRange LR = L1 ? GetLabelRange(L1) : GetLabelRange(L2);
 
   for (size_t Pos = LR.Beg; Pos + CmpSize <= LR.End; Pos++) {
-    Mutations.push_back({Pos, CmpSize, Data});
-    Mutations.push_back({Pos, CmpSize, Data + 1});
-    Mutations.push_back({Pos, CmpSize, Data - 1});
+    AddMutation(Pos, CmpSize, Data);
+    AddMutation(Pos, CmpSize, Data + 1);
+    AddMutation(Pos, CmpSize, Data - 1);
   }
 
   if (CmpSize > LR.End - LR.Beg)
-    Mutations.push_back({LR.Beg, (unsigned)(LR.End - LR.Beg), Data});
+    AddMutation(LR.Beg, (unsigned)(LR.End - LR.Beg), Data);
 
 
   if (Options.Verbosity >= 3)
     Printf("DFSanCmpCallback: PC %lx S %zd T %zd A1 %llx A2 %llx R %d L1 %d L2 "
            "%d MU %zd\n",
-           PC, CmpSize, CmpType, Arg1, Arg2, Res, L1, L2, Mutations.size());
+           PC, CmpSize, CmpType, Arg1, Arg2, Res, L1, L2, NumMutations);
 }
 
 void TraceState::DFSanSwitchCallback(uint64_t PC, size_t ValSizeInBits,
@@ -286,12 +301,12 @@ void TraceState::DFSanSwitchCallback(uint64_t PC, size_t ValSizeInBits,
 
   for (size_t Pos = LR.Beg; Pos + ValSize <= LR.End; Pos++)
     for (size_t i = 0; i < NumCases; i++)
-      Mutations.push_back({Pos, ValSize, Cases[i]});
+      AddMutation(Pos, ValSize, Cases[i]);
 
   if (TryShort)
     for (size_t Pos = LR.Beg; Pos + 2 <= LR.End; Pos++)
       for (size_t i = 0; i < NumCases; i++)
-        Mutations.push_back({Pos, 2, Cases[i]});
+        AddMutation(Pos, 2, Cases[i]);
 
   if (Options.Verbosity >= 3)
     Printf("DFSanSwitchCallback: PC %lx Val %zd SZ %zd # %zd L %d: {%d, %d} "
@@ -310,10 +325,9 @@ int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
       break;
     size_t Pos = Cur - Beg;
     assert(Pos < CurrentUnit.size());
-    if (Mutations.size() > 100000U) return Res;  // Just in case.
-    Mutations.push_back({Pos, DataSize, DesiredData});
-    Mutations.push_back({Pos, DataSize, DesiredData + 1});
-    Mutations.push_back({Pos, DataSize, DesiredData - 1});
+    AddMutation(Pos, DataSize, DesiredData);
+    AddMutation(Pos, DataSize, DesiredData + 1);
+    AddMutation(Pos, DataSize, DesiredData - 1);
     Res++;
   }
   return Res;
@@ -351,7 +365,6 @@ void TraceState::TraceSwitchCallback(uintptr_t PC, size_t ValSizeInBits,
     if (TryShort)
       TryToAddDesiredData(Val, Cases[i], 2);
   }
-
 }
 
 static TraceState *TS;
