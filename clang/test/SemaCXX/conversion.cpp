@@ -208,3 +208,23 @@ namespace test9 {
     return EXIT();
   }
 }
+
+// Test NULL macro inside a macro has same warnings nullptr inside a macro.
+namespace test10 {
+#define test1(cond) \
+      ((cond) ? nullptr : NULL)
+#define test2(cond) \
+      ((cond) ? NULL : nullptr)
+
+#define assert(cond) \
+      ((cond) ? foo() : bar())
+  void foo();
+  void bar();
+
+  void run(int x) {
+    if (test1(x)) {}
+    if (test2(x)) {}
+    assert(test1(x));
+    assert(test2(x));
+  }
+}
