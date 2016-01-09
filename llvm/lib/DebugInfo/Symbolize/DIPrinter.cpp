@@ -36,7 +36,7 @@ void DIPrinter::printContext(std::string FileName, int64_t Line) {
     return;
 
   std::unique_ptr<MemoryBuffer> Buf = std::move(BufOrErr.get());
-  int64_t FirstLine = std::max(1l, Line - PrintSourceContext / 2);
+  int64_t FirstLine = std::max((int64_t)1, Line - PrintSourceContext / 2);
   int64_t LastLine = FirstLine + PrintSourceContext;
   size_t MaxLineNumberWidth = std::ceil(std::log10(LastLine));
 
