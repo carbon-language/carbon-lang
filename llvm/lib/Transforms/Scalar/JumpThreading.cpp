@@ -211,11 +211,12 @@ bool JumpThreading::runOnFunction(Function &F) {
   // we will loop forever. We take care of this issue by not jump threading for
   // back edges. This works for normal cases but not for unreachable blocks as
   // they may have cycle with no back edge.
-  removeUnreachableBlocks(F);
+  bool EverChanged = false;
+  EverChanged |= removeUnreachableBlocks(F, LVI);
 
   FindLoopHeaders(F);
 
-  bool Changed, EverChanged = false;
+  bool Changed;
   do {
     Changed = false;
     for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
