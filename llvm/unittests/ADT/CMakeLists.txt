@@ -26,6 +26,7 @@ set(ADTSources
   OptionalTest.cpp
   PackedVectorTest.cpp
   PointerIntPairTest.cpp
+  PointerSumTypeTest.cpp
   PointerUnionTest.cpp
   PostOrderIteratorTest.cpp
   RangeAdapterTest.cpp
