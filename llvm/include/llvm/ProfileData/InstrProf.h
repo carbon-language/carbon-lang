@@ -634,6 +634,22 @@ struct Header {
 
 namespace coverage {
 
+const std::error_category &coveragemap_category();
+
+enum class coveragemap_error {
+  success = 0,
+  eof,
+  no_data_found,
+  unsupported_version,
+  truncated,
+  malformed
+};
+
+inline std::error_code make_error_code(coveragemap_error E) {
+  return std::error_code(static_cast<int>(E), coveragemap_category());
+}
+
+
 // Profile coverage map has the following layout:
 // [CoverageMapFileHeader]
 // [ArrayStart]
@@ -668,6 +684,8 @@ enum CoverageMappingVersion {
 namespace std {
 template <>
 struct is_error_code_enum<llvm::instrprof_error> : std::true_type {};
+template <>
+struct is_error_code_enum<llvm::coverage::coveragemap_error> : std::true_type {};
 }
 
 #endif // LLVM_PROFILEDATA_INSTRPROF_H_
