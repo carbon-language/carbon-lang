@@ -15,6 +15,8 @@
 ; RUN: sed -e s/.T15:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK15 %s
 ; RUN: sed -e s/.T16:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK16 %s
 ; RUN: sed -e s/.T17:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK17 %s
+; RUN: sed -e s/.T18:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK18 %s
+; RUN: sed -e s/.T19:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK19 %s
 
 declare void @g()
 
@@ -282,3 +284,58 @@ declare void @g()
 ;T17:     cleanuppad within none []
 ;T17:     unreachable
 ;T17: }
+
+;T18: define void @f() personality void ()* @g {
+;T18:   entry:
+;T18:     invoke void @g()
+;T18:       to label %invoke.cont unwind label %left
+;T18:   invoke.cont:
+;T18:     invoke void @g()
+;T18:       to label %unreachable unwind label %right
+;T18:   left:
+;T18:     %cp.left = cleanuppad within none []
+;T18:     invoke void @g() [ "funclet"(token %cp.left) ]
+;T18:       to label %unreachable unwind label %right
+;T18:   right:
+;T18:     %cp.right = cleanuppad within none []
+;T18:     invoke void @g() [ "funclet"(token %cp.right) ]
+;T18:       to label %unreachable unwind label %left
+;T18:     ; CHECK18: EH pads can't handle each other's exceptions
+;T18:     ; CHECK18-NEXT: %cp.left = cleanuppad within none []
+;T18:     ; CHECK18-NEXT:  invoke void @g() [ "funclet"(token %cp.left) ]
+;T18:     ; CHECK18-NEXT:          to label %unreachable unwind label %right
+;T18:     ; CHECK18-NEXT:  %cp.right = cleanuppad within none []
+;T18:     ; CHECK18-NEXT:  invoke void @g() [ "funclet"(token %cp.right) ]
+;T18:     ; CHECK18-NEXT:          to label %unreachable unwind label %left
+;T18:   unreachable:
+;T18:     unreachable
+;T18: }
+
+;T19: define void @f() personality void ()* @g {
+;T19:   entry:
+;T19:     ret void
+;T19:   red:
+;T19:     %redpad = cleanuppad within none []
+;T19:     unreachable
+;T19:   red.inner:
+;T19:     %innerpad = cleanuppad within %redpad []
+;T19:     invoke void @g() [ "funclet"(token %innerpad) ]
+;T19:       to label %unreachable unwind label %green
+;T19:   green:
+;T19:     %greenswitch = catchswitch within none [label %catch] unwind label %blue
+;T19:   catch:
+;T19:     catchpad within %greenswitch [i32 42]
+;T19:     unreachable
+;T19:   blue:
+;T19:     %bluepad = cleanuppad within none []
+;T19:     cleanupret from %bluepad unwind label %red
+;T19:     ; CHECK19: EH pads can't handle each other's exceptions
+;T19:     ; CHECK19-NEXT: %redpad = cleanuppad within none []
+;T19:     ; CHECK19-NEXT: invoke void @g() [ "funclet"(token %innerpad) ]
+;T19:     ; CHECK19-NEXT:         to label %unreachable unwind label %green
+;T19:     ; CHECK19-NEXT: %greenswitch = catchswitch within none [label %catch] unwind label %blue
+;T19:     ; CHECK19-NEXT: %bluepad = cleanuppad within none []
+;T19:     ; CHECK19-NEXT: cleanupret from %bluepad unwind label %red
+;T19:   unreachable:
+;T19:     unreachable
+;T19: }

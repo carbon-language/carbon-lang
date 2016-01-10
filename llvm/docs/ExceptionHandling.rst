@@ -835,3 +835,7 @@ unwind as ``nounwind``, it is legal to nest a ``call`` or an "``unwind to
 caller``\ " ``catchswitch`` within a funclet pad that has an unwind
 destination other than caller; it is undefined behavior for such a ``call``
 or ``catchswitch`` to unwind.
+
+Finally, the funclet pads' unwind destinations cannot form a cycle.  This
+ensures that EH lowering can construct "try regions" with a tree-like
+structure, which funclet-based personalities may require.
