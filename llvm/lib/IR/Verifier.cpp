@@ -2895,6 +2895,13 @@ void Verifier::visitInsertValueInst(InsertValueInst &IVI) {
   visitInstruction(IVI);
 }
 
+static Value *getParentPad(Value *EHPad) {
+  if (auto *FPI = dyn_cast<FuncletPadInst>(EHPad))
+    return FPI->getParentPad();
+
+  return cast<CatchSwitchInst>(EHPad)->getParentPad();
+}
+
 void Verifier::visitEHPadPredecessors(Instruction &I) {
   assert(I.isEHPad());
 
@@ -2925,13 +2932,39 @@ void Verifier::visitEHPadPredecessors(Instruction &I) {
     return;
   }
 
+  // Verify that each pred has a legal terminator with a legal to/from EH
+  // pad relationship.
+  Instruction *ToPad = &I;
+  Value *ToPadParent = getParentPad(ToPad);
   for (BasicBlock *PredBB : predecessors(BB)) {
     TerminatorInst *TI = PredBB->getTerminator();
+    Value *FromPad;
     if (auto *II = dyn_cast<InvokeInst>(TI)) {
       Assert(II->getUnwindDest() == BB && II->getNormalDest() != BB,
-             "EH pad must be jumped to via an unwind edge", &I, II);
-    } else if (!isa<CleanupReturnInst>(TI) && !isa<CatchSwitchInst>(TI)) {
-      Assert(false, "EH pad must be jumped to via an unwind edge", &I, TI);
+             "EH pad must be jumped to via an unwind edge", ToPad, II);
+      if (auto Bundle = II->getOperandBundle(LLVMContext::OB_funclet))
+        FromPad = Bundle->Inputs[0];
+      else
+        FromPad = ConstantTokenNone::get(II->getContext());
+    } else if (auto *CRI = dyn_cast<CleanupReturnInst>(TI)) {
+      FromPad = CRI->getCleanupPad();
+      Assert(FromPad != ToPadParent, "A cleanupret must exit its cleanup", CRI);
+    } else if (auto *CSI = dyn_cast<CatchSwitchInst>(TI)) {
+      FromPad = CSI;
+    } else {
+      Assert(false, "EH pad must be jumped to via an unwind edge", ToPad, TI);
+    }
+
+    // The edge may exit from zero or more nested pads.
+    for (;; FromPad = getParentPad(FromPad)) {
+      Assert(FromPad != ToPad,
+             "EH pad cannot handle exceptions raised within it", FromPad, TI);
+      if (FromPad == ToPadParent) {
+        // This is a legal unwind edge.
+        break;
+      }
+      Assert(!isa<ConstantTokenNone>(FromPad),
+             "A single unwind edge may only enter one EH pad", TI);
     }
   }
 }
