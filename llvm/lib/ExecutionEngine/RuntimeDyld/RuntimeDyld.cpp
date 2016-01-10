@@ -940,7 +940,9 @@ RuntimeDyld::loadObject(const ObjectFile &Obj) {
   if (!Dyld->isCompatibleFile(Obj))
     report_fatal_error("Incompatible object format!");
 
-  return Dyld->loadObject(Obj);
+  auto LoadedObjInfo = Dyld->loadObject(Obj);
+  MemMgr.notifyObjectLoaded(*this, Obj);
+  return LoadedObjInfo;
 }
 
 void *RuntimeDyld::getSymbolLocalAddress(StringRef Name) const {
