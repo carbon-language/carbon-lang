@@ -17,6 +17,8 @@
 ; RUN: sed -e s/.T17:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK17 %s
 ; RUN: sed -e s/.T18:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK18 %s
 ; RUN: sed -e s/.T19:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK19 %s
+; RUN: sed -e s/.T20:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK20 %s
+; RUN: sed -e s/.T21:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK21 %s
 
 declare void @g()
 
@@ -339,3 +341,32 @@ declare void @g()
 ;T19:   unreachable:
 ;T19:     unreachable
 ;T19: }
+
+;T20: define void @f() personality void ()* @g {
+;T20:   entry:
+;T20:     ret void
+;T20:   switch:
+;T20:     %cs = catchswitch within none [label %catch] unwind label %catch
+;T20:     ; CHECK20: Catchswitch cannot unwind to one of its catchpads
+;T20:     ; CHECK20-NEXT: %cs = catchswitch within none [label %catch] unwind label %catch
+;T20:     ; CHECK20-NEXT: %cp = catchpad within %cs [i32 4]
+;T20:   catch:
+;T20:     %cp = catchpad within %cs [i32 4]
+;T20:     unreachable
+;T20: }
+
+;T21: define void @f() personality void ()* @g {
+;T21:   entry:
+;T21:     ret void
+;T21:   switch:
+;T21:     %cs = catchswitch within none [label %catch1] unwind label %catch2
+;T21:     ; CHECK21: Catchswitch cannot unwind to one of its catchpads
+;T21:     ; CHECK21-NEXT: %cs = catchswitch within none [label %catch1] unwind label %catch2
+;T21:     ; CHECK21-NEXT: %cp2 = catchpad within %cs [i32 2]
+;T21:   catch1:
+;T21:     %cp1 = catchpad within %cs [i32 1]
+;T21:     unreachable
+;T21:   catch2:
+;T21:     %cp2 = catchpad within %cs [i32 2]
+;T21:     unreachable
+;T21: }

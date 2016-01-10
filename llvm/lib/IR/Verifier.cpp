@@ -2996,6 +2996,9 @@ void Verifier::visitEHPadPredecessors(Instruction &I) {
              "Block containg CatchPadInst must be jumped to "
              "only by its catchswitch.",
              CPI);
+    Assert(BB != CPI->getCatchSwitch()->getUnwindDest(),
+           "Catchswitch cannot unwind to one of its catchpads",
+           CPI->getCatchSwitch(), CPI);
     return;
   }
 
