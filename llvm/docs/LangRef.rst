@@ -5447,74 +5447,6 @@ Example:
     dispatch2:
       %cs2 = catchswitch within %parenthandler [label %handler0] unwind label %cleanup
 
-.. _i_catchpad:
-
-'``catchpad``' Instruction
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Syntax:
-"""""""
-
-::
-
-      <resultval> = catchpad within <catchswitch> [<args>*]
-
-Overview:
-"""""""""
-
-The '``catchpad``' instruction is used by `LLVM's exception handling
-system <ExceptionHandling.html#overview>`_ to specify that a basic block
-begins a catch handler --- one where a personality routine attempts to transfer
-control to catch an exception.
-
-Arguments:
-""""""""""
-
-The ``catchswitch`` operand must always be a token produced by a
-:ref:`catchswitch <i_catchswitch>` instruction in a predecessor block. This
-ensures that each ``catchpad`` has exactly one predecessor block, and it always
-terminates in a ``catchswitch``.
-
-The ``args`` correspond to whatever information the personality routine
-requires to know if this is an appropriate handler for the exception. Control
-will transfer to the ``catchpad`` if this is the first appropriate handler for
-the exception.
-
-The ``resultval`` has the type :ref:`token <t_token>` and is used to match the
-``catchpad`` to corresponding :ref:`catchrets <i_catchret>` and other nested EH
-pads.
-
-Semantics:
-""""""""""
-
-When the call stack is being unwound due to an exception being thrown, the
-exception is compared against the ``args``. If it doesn't match, control will
-not reach the ``catchpad`` instruction.  The representation of ``args`` is
-entirely target and personality function-specific.
-
-Like the :ref:`landingpad <i_landingpad>` instruction, the ``catchpad``
-instruction must be the first non-phi of its parent basic block.
-
-The meaning of the tokens produced and consumed by ``catchpad`` and other "pad"
-instructions is described in the
-`Windows exception handling documentation\ <ExceptionHandling.html#wineh>`_.
-
-When a ``catchpad`` has been "entered" but not yet "exited" (as
-described in the `EH documentation\ <ExceptionHandling.html#wineh-constraints>`_),
-it is undefined behavior to execute a :ref:`call <i_call>` or :ref:`invoke <i_invoke>`
-that does not carry an appropriate :ref:`"funclet" bundle <ob_funclet>`.
-
-Example:
-""""""""
-
-.. code-block:: llvm
-
-    dispatch:
-      %cs = catchswitch within none [label %handler0] unwind to caller
-      ;; A catch block which can catch an integer.
-    handler0:
-      %tok = catchpad within %cs [i8** @_ZTIi]
-
 .. _i_catchret:
 
 '``catchret``' Instruction
@@ -8597,6 +8529,74 @@ Example:
       %res = landingpad { i8*, i32 }
                catch i8** @_ZTIi
                filter [1 x i8**] [@_ZTId]
+
+.. _i_catchpad:
+
+'``catchpad``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      <resultval> = catchpad within <catchswitch> [<args>*]
+
+Overview:
+"""""""""
+
+The '``catchpad``' instruction is used by `LLVM's exception handling
+system <ExceptionHandling.html#overview>`_ to specify that a basic block
+begins a catch handler --- one where a personality routine attempts to transfer
+control to catch an exception.
+
+Arguments:
+""""""""""
+
+The ``catchswitch`` operand must always be a token produced by a
+:ref:`catchswitch <i_catchswitch>` instruction in a predecessor block. This
+ensures that each ``catchpad`` has exactly one predecessor block, and it always
+terminates in a ``catchswitch``.
+
+The ``args`` correspond to whatever information the personality routine
+requires to know if this is an appropriate handler for the exception. Control
+will transfer to the ``catchpad`` if this is the first appropriate handler for
+the exception.
+
+The ``resultval`` has the type :ref:`token <t_token>` and is used to match the
+``catchpad`` to corresponding :ref:`catchrets <i_catchret>` and other nested EH
+pads.
+
+Semantics:
+""""""""""
+
+When the call stack is being unwound due to an exception being thrown, the
+exception is compared against the ``args``. If it doesn't match, control will
+not reach the ``catchpad`` instruction.  The representation of ``args`` is
+entirely target and personality function-specific.
+
+Like the :ref:`landingpad <i_landingpad>` instruction, the ``catchpad``
+instruction must be the first non-phi of its parent basic block.
+
+The meaning of the tokens produced and consumed by ``catchpad`` and other "pad"
+instructions is described in the
+`Windows exception handling documentation\ <ExceptionHandling.html#wineh>`_.
+
+When a ``catchpad`` has been "entered" but not yet "exited" (as
+described in the `EH documentation\ <ExceptionHandling.html#wineh-constraints>`_),
+it is undefined behavior to execute a :ref:`call <i_call>` or :ref:`invoke <i_invoke>`
+that does not carry an appropriate :ref:`"funclet" bundle <ob_funclet>`.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+    dispatch:
+      %cs = catchswitch within none [label %handler0] unwind to caller
+      ;; A catch block which can catch an integer.
+    handler0:
+      %tok = catchpad within %cs [i8** @_ZTIi]
 
 .. _i_cleanuppad:
 
