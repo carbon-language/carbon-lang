@@ -818,3 +818,20 @@ not-yet-exited pad (after exiting from any pads that the unwind edge exits),
 or "none" if there is no such pad.  This ensures that the stack of executing
 funclets at run-time always corresponds to some path in the funclet pad tree
 that the parent tokens encode.
+
+All unwind edges which exit any given funclet pad (including ``cleanupret``
+edges exiting their ``cleanuppad`` and ``catchswitch`` edges exiting their
+``catchswitch``) must share the same unwind destination.  Similarly, any
+funclet pad which may be exited by unwind to caller must not be exited by
+any exception edges which unwind anywhere other than the caller.  This
+ensures that each funclet as a whole has only one unwind destination, which
+EH tables for funclet personalities may require.  Note that any unwind edge
+which exits a ``catchpad`` also exits its parent ``catchswitch``, so this
+implies that for any given ``catchswitch``, its unwind destination must also
+be the unwind destination of any unwind edge that exits any of its constituent
+``catchpad``\s.  Because ``catchswitch`` has no ``nounwind`` variant, and
+because IR producers are not *required* to annotate calls which will not
+unwind as ``nounwind``, it is legal to nest a ``call`` or an "``unwind to
+caller``\ " ``catchswitch`` within a funclet pad that has an unwind
+destination other than caller; it is undefined behavior for such a ``call``
+or ``catchswitch`` to unwind.

@@ -8657,10 +8657,6 @@ described in the `EH documentation\ <ExceptionHandling.html#wineh-constraints>`_
 it is undefined behavior to execute a :ref:`call <i_call>` or :ref:`invoke <i_invoke>`
 that does not carry an appropriate :ref:`"funclet" bundle <ob_funclet>`.
 
-It is undefined behavior for the ``cleanuppad`` to exit via an unwind edge which
-does not transitively unwind to the same destination as a constituent
-``cleanupret``.
-
 Example:
 """"""""
 

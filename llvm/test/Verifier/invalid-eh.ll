@@ -11,6 +11,10 @@
 ; RUN: sed -e s/.T11:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK11 %s
 ; RUN: sed -e s/.T12:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK12 %s
 ; RUN: sed -e s/.T13:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK13 %s
+; RUN: sed -e s/.T14:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK14 %s
+; RUN: sed -e s/.T15:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK15 %s
+; RUN: sed -e s/.T16:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK16 %s
+; RUN: sed -e s/.T17:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK17 %s
 
 declare void @g()
 
@@ -183,3 +187,98 @@ declare void @g()
 ;T13:     unreachable
 ;T13: }
 
+;T14: define void @f() personality void ()* @g {
+;T14:   entry:
+;T14:     ret void
+;T14:   cleanup:
+;T14:     %cp = cleanuppad within none []
+;T14:     unreachable
+;T14:   left:
+;T14:     cleanupret from %cp unwind label %switch
+;T14:   right:
+;T14:     cleanupret from %cp unwind to caller
+;T14:     ; CHECK14: Unwind edges out of a funclet pad must have the same unwind dest
+;T14:     ; CHECK14-NEXT: %cp = cleanuppad within none []
+;T14:     ; CHECK14-NEXT: cleanupret from %cp unwind label %switch
+;T14:     ; CHECK14-NEXT: cleanupret from %cp unwind to caller
+;T14:   switch:
+;T14:     %cs = catchswitch within none [label %catch] unwind to caller
+;T14:   catch:
+;T14:     catchpad within %cs [i32 1]
+;T14:     unreachable
+;T14: }
+
+;T15: define void @f() personality void ()* @g {
+;T15:   entry:
+;T15:     ret void
+;T15:   switch:
+;T15:     %cs = catchswitch within none [label %catch] unwind to caller
+;T15:   catch:
+;T15:     %catch.pad = catchpad within %cs [i32 1]
+;T15:     invoke void @g() [ "funclet"(token %catch.pad) ]
+;T15:       to label %unreachable unwind label %target1
+;T15:   unreachable:
+;T15:     unreachable
+;T15:   target1:
+;T15:     cleanuppad within none []
+;T15:     unreachable
+;T15:   target2:
+;T15:     cleanuppad within none []
+;T15:     unreachable
+;T15:   nested.1:
+;T15:     %nested.pad.1 = cleanuppad within %catch.pad []
+;T15:     unreachable
+;T15:   nested.2:
+;T15:     %nested.pad.2 = cleanuppad within %nested.pad.1 []
+;T15:     cleanupret from %nested.pad.2 unwind label %target2
+;T15:     ; CHECK15: Unwind edges out of a funclet pad must have the same unwind dest
+;T15:     ; CHECK15-NEXT: %catch.pad = catchpad within %cs [i32 1]
+;T15:     ; CHECK15-NEXT: cleanupret from %nested.pad.2 unwind label %target2
+;T15:     ; CHECK15-NEXT: invoke void @g() [ "funclet"(token %catch.pad) ]
+;T15:     ; CHECK15-NEXT:   to label %unreachable unwind label %target1
+;T15: }
+
+;T16: define void @f() personality void ()* @g {
+;T16:   entry:
+;T16:     ret void
+;T16:   switch:
+;T16:     %cs = catchswitch within none [label %catch] unwind to caller
+;T16:   catch:
+;T16:     %catch.pad = catchpad within %cs [i32 1]
+;T16:     invoke void @g() [ "funclet"(token %catch.pad) ]
+;T16:       to label %unreachable unwind label %target1
+;T16:     ; CHECK16: Unwind edges out of a catch must have the same unwind dest as the parent catchswitch
+;T16:     ; CHECK16-NEXT:   %catch.pad = catchpad within %cs [i32 1]
+;T16:     ; CHECK16-NEXT:  invoke void @g() [ "funclet"(token %catch.pad) ]
+;T16:     ; CHECK16-NEXT:          to label %unreachable unwind label %target1
+;T16:     ; CHECK16-NEXT:  %cs = catchswitch within none [label %catch] unwind to caller
+;T16:   unreachable:
+;T16:     unreachable
+;T16:   target1:
+;T16:     cleanuppad within none []
+;T16:     unreachable
+;T16: }
+
+;T17: define void @f() personality void ()* @g {
+;T17:   entry:
+;T17:     ret void
+;T17:   switch:
+;T17:     %cs = catchswitch within none [label %catch] unwind label %target1
+;T17:   catch:
+;T17:     %catch.pad = catchpad within %cs [i32 1]
+;T17:     invoke void @g() [ "funclet"(token %catch.pad) ]
+;T17:       to label %unreachable unwind label %target2
+;T17:     ; CHECK17: Unwind edges out of a catch must have the same unwind dest as the parent catchswitch
+;T17:     ; CHECK17-NEXT:  %catch.pad = catchpad within %cs [i32 1]
+;T17:     ; CHECK17-NEXT:  invoke void @g() [ "funclet"(token %catch.pad) ]
+;T17:     ; CHECK17-NEXT:          to label %unreachable unwind label %target2
+;T17:     ; CHECK17-NEXT:  %cs = catchswitch within none [label %catch] unwind label %target1
+;T17:   unreachable:
+;T17:     unreachable
+;T17:   target1:
+;T17:     cleanuppad within none []
+;T17:     unreachable
+;T17:   target2:
+;T17:     cleanuppad within none []
+;T17:     unreachable
+;T17: }

@@ -403,6 +403,7 @@ private:
   void visitCatchPadInst(CatchPadInst &CPI);
   void visitCatchReturnInst(CatchReturnInst &CatchReturn);
   void visitCleanupPadInst(CleanupPadInst &CPI);
+  void visitFuncletPadInst(FuncletPadInst &FPI);
   void visitCatchSwitchInst(CatchSwitchInst &CatchSwitch);
   void visitCleanupReturnInst(CleanupReturnInst &CRI);
 
@@ -3028,7 +3029,7 @@ void Verifier::visitCatchPadInst(CatchPadInst &CPI) {
   Assert(BB->getFirstNonPHI() == &CPI,
          "CatchPadInst not the first non-PHI instruction in the block.", &CPI);
 
-  visitInstruction(CPI);
+  visitFuncletPadInst(CPI);
 }
 
 void Verifier::visitCatchReturnInst(CatchReturnInst &CatchReturn) {
@@ -3058,33 +3059,156 @@ void Verifier::visitCleanupPadInst(CleanupPadInst &CPI) {
   Assert(isa<ConstantTokenNone>(ParentPad) || isa<FuncletPadInst>(ParentPad),
          "CleanupPadInst has an invalid parent.", &CPI);
 
-  User *FirstUser = nullptr;
-  BasicBlock *FirstUnwindDest = nullptr;
-  for (User *U : CPI.users()) {
-    BasicBlock *UnwindDest;
-    if (CleanupReturnInst *CRI = dyn_cast<CleanupReturnInst>(U)) {
-      UnwindDest = CRI->getUnwindDest();
-    } else if (isa<CleanupPadInst>(U) || isa<CatchSwitchInst>(U)) {
-      continue;
-    } else if (CallSite(U)) {
-      continue;
-    } else {
-      Assert(false, "bogus cleanuppad use", &CPI);
-    }
+  visitFuncletPadInst(CPI);
+}
 
-    if (!FirstUser) {
-      FirstUser = U;
-      FirstUnwindDest = UnwindDest;
-    } else {
-      Assert(
-          UnwindDest == FirstUnwindDest,
-          "cleanupret instructions from the same cleanuppad must have the same "
-          "unwind destination",
-          FirstUser, U);
+void Verifier::visitFuncletPadInst(FuncletPadInst &FPI) {
+  User *FirstUser = nullptr;
+  Value *FirstUnwindPad = nullptr;
+  SmallVector<FuncletPadInst *, 8> Worklist({&FPI});
+  while (!Worklist.empty()) {
+    FuncletPadInst *CurrentPad = Worklist.pop_back_val();
+    Value *UnresolvedAncestorPad = nullptr;
+    for (User *U : CurrentPad->users()) {
+      BasicBlock *UnwindDest;
+      if (auto *CRI = dyn_cast<CleanupReturnInst>(U)) {
+        UnwindDest = CRI->getUnwindDest();
+      } else if (auto *CSI = dyn_cast<CatchSwitchInst>(U)) {
+        // We allow catchswitch unwind to caller to nest
+        // within an outer pad that unwinds somewhere else,
+        // because catchswitch doesn't have a nounwind variant.
+        // See e.g. SimplifyCFGOpt::SimplifyUnreachable.
+        if (CSI->unwindsToCaller())
+          continue;
+        UnwindDest = CSI->getUnwindDest();
+      } else if (auto *II = dyn_cast<InvokeInst>(U)) {
+        UnwindDest = II->getUnwindDest();
+      } else if (isa<CallInst>(U)) {
+        // Calls which don't unwind may be found inside funclet
+        // pads that unwind somewhere else.  We don't *require*
+        // such calls to be annotated nounwind.
+        continue;
+      } else if (auto *CPI = dyn_cast<CleanupPadInst>(U)) {
+        // The unwind dest for a cleanup can only be found by
+        // recursive search.  Add it to the worklist, and we'll
+        // search for its first use that determines where it unwinds.
+        Worklist.push_back(CPI);
+        continue;
+      } else {
+        Assert(isa<CatchReturnInst>(U), "Bogus funclet pad use", U);
+        continue;
+      }
+
+      Value *UnwindPad;
+      bool ExitsFPI;
+      if (UnwindDest) {
+        UnwindPad = UnwindDest->getFirstNonPHI();
+        Value *UnwindParent = getParentPad(UnwindPad);
+        // Ignore unwind edges that don't exit CurrentPad.
+        if (UnwindParent == CurrentPad)
+          continue;
+        // Determine whether the original funclet pad is exited,
+        // and if we are scanning nested pads determine how many
+        // of them are exited so we can stop searching their
+        // children.
+        Value *ExitedPad = CurrentPad;
+        ExitsFPI = false;
+        do {
+          if (ExitedPad == &FPI) {
+            ExitsFPI = true;
+            // Now we can resolve any ancestors of CurrentPad up to
+            // FPI, but not including FPI since we need to make sure
+            // to check all direct users of FPI for consistency.
+            UnresolvedAncestorPad = &FPI;
+            break;
+          }
+          Value *ExitedParent = getParentPad(ExitedPad);
+          if (ExitedParent == UnwindParent) {
+            // ExitedPad is the ancestor-most pad which this unwind
+            // edge exits, so we can resolve up to it, meaning that
+            // ExitedParent is the first ancestor still unresolved.
+            UnresolvedAncestorPad = ExitedParent;
+            break;
+          }
+          ExitedPad = ExitedParent;
+        } while (!isa<ConstantTokenNone>(ExitedPad));
+      } else {
+        // Unwinding to caller exits all pads.
+        UnwindPad = ConstantTokenNone::get(FPI.getContext());
+        ExitsFPI = true;
+        UnresolvedAncestorPad = &FPI;
+      }
+
+      if (ExitsFPI) {
+        // This unwind edge exits FPI.  Make sure it agrees with other
+        // such edges.
+        if (FirstUser) {
+          Assert(UnwindPad == FirstUnwindPad, "Unwind edges out of a funclet "
+                                              "pad must have the same unwind "
+                                              "dest",
+                 &FPI, U, FirstUser);
+        } else {
+          FirstUser = U;
+          FirstUnwindPad = UnwindPad;
+        }
+      }
+      // Make sure we visit all uses of FPI, but for nested pads stop as
+      // soon as we know where they unwind to.
+      if (CurrentPad != &FPI)
+        break;
+    }
+    if (UnresolvedAncestorPad) {
+      if (CurrentPad == UnresolvedAncestorPad) {
+        // When CurrentPad is FPI itself, we don't mark it as resolved even if
+        // we've found an unwind edge that exits it, because we need to verify
+        // all direct uses of FPI.
+        assert(CurrentPad == &FPI);
+        continue;
+      }
+      // Pop off the worklist any nested pads that we've found an unwind
+      // destination for.  The pads on the worklist are the uncles,
+      // great-uncles, etc. of CurrentPad.  We've found an unwind destination
+      // for all ancestors of CurrentPad up to but not including
+      // UnresolvedAncestorPad.
+      Value *ResolvedPad = CurrentPad;
+      while (!Worklist.empty()) {
+        Value *UnclePad = Worklist.back();
+        Value *AncestorPad = getParentPad(UnclePad);
+        // Walk ResolvedPad up the ancestor list until we either find the
+        // uncle's parent or the last resolved ancestor.
+        while (ResolvedPad != AncestorPad) {
+          Value *ResolvedParent = getParentPad(ResolvedPad);
+          if (ResolvedParent == UnresolvedAncestorPad) {
+            break;
+          }
+          ResolvedPad = ResolvedParent;
+        }
+        // If the resolved ancestor search didn't find the uncle's parent,
+        // then the uncle is not yet resolved.
+        if (ResolvedPad != AncestorPad)
+          break;
+        // This uncle is resolved, so pop it from the worklist.
+        Worklist.pop_back();
+      }
     }
   }
 
-  visitInstruction(CPI);
+  if (FirstUnwindPad) {
+    if (auto *CatchSwitch = dyn_cast<CatchSwitchInst>(FPI.getParentPad())) {
+      BasicBlock *SwitchUnwindDest = CatchSwitch->getUnwindDest();
+      Value *SwitchUnwindPad;
+      if (SwitchUnwindDest)
+        SwitchUnwindPad = SwitchUnwindDest->getFirstNonPHI();
+      else
+        SwitchUnwindPad = ConstantTokenNone::get(FPI.getContext());
+      Assert(SwitchUnwindPad == FirstUnwindPad,
+             "Unwind edges out of a catch must have the same unwind dest as "
+             "the parent catchswitch",
+             &FPI, FirstUser, CatchSwitch);
+    }
+  }
+
+  visitInstruction(FPI);
 }
 
 void Verifier::visitCatchSwitchInst(CatchSwitchInst &CatchSwitch) {
