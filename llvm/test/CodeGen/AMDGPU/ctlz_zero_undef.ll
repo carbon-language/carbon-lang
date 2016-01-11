@@ -2,6 +2,8 @@
 ; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=cypress -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
+declare i8 @llvm.ctlz.i8(i8, i1) nounwind readnone
+
 declare i32 @llvm.ctlz.i32(i32, i1) nounwind readnone
 declare <2 x i32> @llvm.ctlz.v2i32(<2 x i32>, i1) nounwind readnone
 declare <4 x i32> @llvm.ctlz.v4i32(<4 x i32>, i1) nounwind readnone
@@ -129,5 +131,125 @@ define void @v_ctlz_zero_undef_i64_trunc(i32 addrspace(1)* noalias %out, i64 add
   %ctlz = call i64 @llvm.ctlz.i64(i64 %val, i1 true)
   %trunc = trunc i64 %ctlz to i32
   store i32 %trunc, i32 addrspace(1)* %out.gep
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_eq_neg1:
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[RESULT:v[0-9]+]], [[VAL]]
+; SI-NEXT: buffer_store_dword [[RESULT]],
+ define void @v_ctlz_zero_undef_i32_sel_eq_neg1(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp eq i32 %val, 0
+  %sel = select i1 %cmp, i32 -1, i32 %ctlz
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_ne_neg1:
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[RESULT:v[0-9]+]], [[VAL]]
+; SI-NEXT: buffer_store_dword [[RESULT]],
+define void @v_ctlz_zero_undef_i32_sel_ne_neg1(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp ne i32 %val, 0
+  %sel = select i1 %cmp, i32 %ctlz, i32 -1
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_eq_neg1_two_use:
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI-DAG: v_ffbh_u32_e32 [[RESULT0:v[0-9]+]], [[VAL]]
+; SI-DAG: v_cmp_eq_i32_e32 vcc, 0, [[VAL]]
+; SI-DAG: v_cndmask_b32_e64 [[RESULT1:v[0-9]+]], 0, 1, vcc
+; SI-DAG: buffer_store_dword [[RESULT0]]
+; SI-DAG: buffer_store_byte [[RESULT1]]
+; SI: s_endpgm
+ define void @v_ctlz_zero_undef_i32_sel_eq_neg1_two_use(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp eq i32 %val, 0
+  %sel = select i1 %cmp, i32 -1, i32 %ctlz
+  store volatile i32 %sel, i32 addrspace(1)* %out
+  store volatile i1 %cmp, i1 addrspace(1)* undef
+  ret void
+}
+
+; Selected on wrong constant
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_eq_0:
+; SI: buffer_load_dword
+; SI: v_ffbh_u32_e32
+; SI: v_cmp
+; SI: v_cndmask
+; SI: buffer_store_dword
+ define void @v_ctlz_zero_undef_i32_sel_eq_0(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp eq i32 %val, 0
+  %sel = select i1 %cmp, i32 0, i32 %ctlz
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; Selected on wrong constant
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_ne_0:
+; SI: buffer_load_dword
+; SI: v_ffbh_u32_e32
+; SI: v_cmp
+; SI: v_cndmask
+; SI: buffer_store_dword
+define void @v_ctlz_zero_undef_i32_sel_ne_0(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp ne i32 %val, 0
+  %sel = select i1 %cmp, i32 %ctlz, i32 0
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; Compare on wrong constant
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_eq_cmp_non0:
+; SI: buffer_load_dword
+; SI: v_ffbh_u32_e32
+; SI: v_cmp
+; SI: v_cndmask
+; SI: buffer_store_dword
+ define void @v_ctlz_zero_undef_i32_sel_eq_cmp_non0(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp eq i32 %val, 1
+  %sel = select i1 %cmp, i32 0, i32 %ctlz
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; Selected on wrong constant
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_ne_cmp_non0:
+; SI: buffer_load_dword
+; SI: v_ffbh_u32_e32
+; SI: v_cmp
+; SI: v_cndmask
+; SI: buffer_store_dword
+define void @v_ctlz_zero_undef_i32_sel_ne_cmp_non0(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 true) nounwind readnone
+  %cmp = icmp ne i32 %val, 1
+  %sel = select i1 %cmp, i32 %ctlz, i32 0
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i8:
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI: v_add_i32_e32 [[RESULT:v[0-9]+]], vcc, 0xffffffe8, [[FFBH]]
+; SI: buffer_store_dword [[RESULT]],
+define void @v_ctlz_zero_undef_i8(i8 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i8, i8 addrspace(1)* %valptr
+  %ctlz = call i8 @llvm.ctlz.i8(i8 %val, i1 true) nounwind readnone
+  store i8 %ctlz, i8 addrspace(1)* %out
   ret void
 }

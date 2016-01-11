@@ -282,7 +282,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setOperationAction(ISD::SMAX, MVT::i32, Legal);
   setOperationAction(ISD::UMAX, MVT::i32, Legal);
 
-  if (!Subtarget->hasFFBH())
+  if (Subtarget->hasFFBH())
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Custom);
+  else
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
 
   if (!Subtarget->hasFFBL())
@@ -2170,9 +2172,11 @@ SDValue AMDGPUTargetLowering::LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const {
 SDValue AMDGPUTargetLowering::LowerCTLZ(SDValue Op, SelectionDAG &DAG) const {
   SDLoc SL(Op);
   SDValue Src = Op.getOperand(0);
-  assert(Src.getValueType() == MVT::i64);
-
   bool ZeroUndef = Op.getOpcode() == ISD::CTLZ_ZERO_UNDEF;
+
+  if (ZeroUndef && Src.getValueType() == MVT::i32)
+    return DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, Src);
+
   SDValue Vec = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, Src);
 
   const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
@@ -2507,6 +2511,79 @@ SDValue AMDGPUTargetLowering::performMulCombine(SDNode *N,
   return DAG.getSExtOrTrunc(Mul, DL, VT);
 }
 
+static bool isNegativeOne(SDValue Val) {
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Val))
+    return C->isAllOnesValue();
+  return false;
+}
+
+static bool isCtlzOpc(unsigned Opc) {
+  return Opc == ISD::CTLZ || Opc == ISD::CTLZ_ZERO_UNDEF;
+}
+
+// The native instructions return -1 on 0 input. Optimize out a select that
+// produces -1 on 0.
+//
+// TODO: If zero is not undef, we could also do this if the output is compared
+// against the bitwidth.
+//
+// TODO: Should probably combine against FFBH_U32 instead of ctlz directly.
+SDValue AMDGPUTargetLowering::performCtlzCombine(SDLoc SL,
+                                                 SDValue Cond,
+                                                 SDValue LHS,
+                                                 SDValue RHS,
+                                                 DAGCombinerInfo &DCI) const {
+  ConstantSDNode *CmpRhs = dyn_cast<ConstantSDNode>(Cond.getOperand(1));
+  if (!CmpRhs || !CmpRhs->isNullValue())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  ISD::CondCode CCOpcode = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+  SDValue CmpLHS = Cond.getOperand(0);
+
+  // select (setcc x, 0, eq), -1, (ctlz_zero_undef x) -> ffbh_u32 x
+  if (CCOpcode == ISD::SETEQ &&
+      isCtlzOpc(RHS.getOpcode()) &&
+      RHS.getOperand(0) == CmpLHS &&
+      isNegativeOne(LHS)) {
+    return DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, CmpLHS);
+  }
+
+  // select (setcc x, 0, ne), (ctlz_zero_undef x), -1 -> ffbh_u32 x
+  if (CCOpcode == ISD::SETNE &&
+      isCtlzOpc(LHS.getOpcode()) &&
+      LHS.getOperand(0) == CmpLHS &&
+      isNegativeOne(RHS)) {
+    return DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, CmpLHS);
+  }
+
+  return SDValue();
+}
+
+SDValue AMDGPUTargetLowering::performSelectCombine(SDNode *N,
+                                                   DAGCombinerInfo &DCI) const {
+  SDValue Cond = N->getOperand(0);
+  if (Cond.getOpcode() != ISD::SETCC)
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+  SDValue LHS = Cond.getOperand(0);
+  SDValue RHS = Cond.getOperand(1);
+  SDValue CC = Cond.getOperand(2);
+
+  SDValue True = N->getOperand(1);
+  SDValue False = N->getOperand(2);
+
+  if (VT == MVT::f32 && Cond.hasOneUse())
+    return CombineFMinMaxLegacy(SDLoc(N), VT, LHS, RHS, True, False, CC, DCI);
+
+  // There's no reason to not do this if the condition has other uses.
+  if (VT == MVT::i32)
+    return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
+
+  return SDValue();
+}
+
 SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
                                                 DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -2531,23 +2608,8 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
     simplifyI24(N1, DCI);
     return SDValue();
   }
-  case ISD::SELECT: {
-    SDValue Cond = N->getOperand(0);
-    if (Cond.getOpcode() == ISD::SETCC && Cond.hasOneUse()) {
-      EVT VT = N->getValueType(0);
-      SDValue LHS = Cond.getOperand(0);
-      SDValue RHS = Cond.getOperand(1);
-      SDValue CC = Cond.getOperand(2);
-
-      SDValue True = N->getOperand(1);
-      SDValue False = N->getOperand(2);
-
-      if (VT == MVT::f32)
-        return CombineFMinMaxLegacy(DL, VT, LHS, RHS, True, False, CC, DCI);
-    }
-
-    break;
-  }
+  case ISD::SELECT:
+    return performSelectCombine(N, DCI);
   case AMDGPUISD::BFE_I32:
   case AMDGPUISD::BFE_U32: {
     assert(!N->getValueType(0).isVector() &&
@@ -2759,6 +2821,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(BFE_I32)
   NODE_NAME_CASE(BFI)
   NODE_NAME_CASE(BFM)
+  NODE_NAME_CASE(FFBH_U32)
   NODE_NAME_CASE(MUL_U24)
   NODE_NAME_CASE(MUL_I24)
   NODE_NAME_CASE(MAD_U24)

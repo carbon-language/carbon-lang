@@ -150,3 +150,62 @@ define void @v_ctlz_i64_trunc(i32 addrspace(1)* noalias %out, i64 addrspace(1)* 
   store i32 %trunc, i32 addrspace(1)* %out.gep
   ret void
 }
+
+; FUNC-LABEL: {{^}}v_ctlz_i32_sel_eq_neg1:
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[RESULT:v[0-9]+]], [[VAL]]
+; SI: buffer_store_dword [[RESULT]],
+; SI: s_endpgm
+ define void @v_ctlz_i32_sel_eq_neg1(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 false) nounwind readnone
+  %cmp = icmp eq i32 %val, 0
+  %sel = select i1 %cmp, i32 -1, i32 %ctlz
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_i32_sel_ne_neg1:
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[RESULT:v[0-9]+]], [[VAL]]
+; SI: buffer_store_dword [[RESULT]],
+; SI: s_endpgm
+define void @v_ctlz_i32_sel_ne_neg1(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 false) nounwind readnone
+  %cmp = icmp ne i32 %val, 0
+  %sel = select i1 %cmp, i32 %ctlz, i32 -1
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; TODO: Should be able to eliminate select here as well.
+; FUNC-LABEL: {{^}}v_ctlz_i32_sel_eq_bitwidth:
+; SI: buffer_load_dword
+; SI: v_ffbh_u32_e32
+; SI: v_cmp
+; SI: v_cndmask
+; SI: s_endpgm
+define void @v_ctlz_i32_sel_eq_bitwidth(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 false) nounwind readnone
+  %cmp = icmp eq i32 %ctlz, 32
+  %sel = select i1 %cmp, i32 -1, i32 %ctlz
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_i32_sel_ne_bitwidth:
+; SI: buffer_load_dword
+; SI: v_ffbh_u32_e32
+; SI: v_cmp
+; SI: v_cndmask
+; SI: s_endpgm
+define void @v_ctlz_i32_sel_ne_bitwidth(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i32, i32 addrspace(1)* %valptr
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %val, i1 false) nounwind readnone
+  %cmp = icmp ne i32 %ctlz, 32
+  %sel = select i1 %cmp, i32 %ctlz, i32 -1
+  store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}

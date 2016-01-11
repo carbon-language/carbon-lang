@@ -2026,7 +2026,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
   case ISD::UINT_TO_FP: {
     return performUCharToFloatCombine(N, DCI);
-
+  }
   case ISD::FADD: {
     if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
       break;
@@ -2107,7 +2107,6 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     }
 
     break;
-  }
   }
   case ISD::LOAD:
   case ISD::STORE:
