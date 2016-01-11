@@ -16,6 +16,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_ORCREMOTETARGETCLIENT_H
 #define LLVM_EXECUTIONENGINE_ORC_ORCREMOTETARGETCLIENT_H
 
+#include "IndirectionUtils.h"
 #include "OrcRemoteTargetRPCAPI.h"
 
 #define DEBUG_TYPE "orc-remote"
