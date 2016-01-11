@@ -20,6 +20,76 @@ namespace llvm {
 namespace orc {
 namespace remote {
 
+// Base class containing utilities that require partial specialization.
+// These cannot be included in RPC, as template class members cannot be
+// partially specialized.
+class RPCBase {
+protected:
+  template <typename ProcedureIdT, ProcedureIdT ProcId, typename... Ts>
+  class ProcedureHelper {
+  public:
+    static const ProcedureIdT Id = ProcId;
+  };
+
+  template <typename ChannelT, typename Proc> class CallHelper;
+
+  template <typename ChannelT, typename ProcedureIdT, ProcedureIdT ProcId,
+            typename... ArgTs>
+  class CallHelper<ChannelT, ProcedureHelper<ProcedureIdT, ProcId, ArgTs...>> {
+  public:
+    static std::error_code call(ChannelT &C, const ArgTs &... Args) {
+      if (auto EC = serialize(C, ProcId))
+        return EC;
+      // If you see a compile-error on this line you're probably calling a
+      // function with the wrong signature.
+      return serialize_seq(C, Args...);
+    }
+  };
+
+  template <typename ChannelT, typename Proc> class HandlerHelper;
+
+  template <typename ChannelT, typename ProcedureIdT, ProcedureIdT ProcId,
+            typename... ArgTs>
+  class HandlerHelper<ChannelT,
+                      ProcedureHelper<ProcedureIdT, ProcId, ArgTs...>> {
+  public:
+    template <typename HandlerT>
+    static std::error_code handle(ChannelT &C, HandlerT Handler) {
+      return readAndHandle(C, Handler, llvm::index_sequence_for<ArgTs...>());
+    }
+
+  private:
+    template <typename HandlerT, size_t... Is>
+    static std::error_code readAndHandle(ChannelT &C, HandlerT Handler,
+                                         llvm::index_sequence<Is...> _) {
+      std::tuple<ArgTs...> RPCArgs;
+      if (auto EC = deserialize_seq(C, std::get<Is>(RPCArgs)...))
+        return EC;
+      return Handler(std::get<Is>(RPCArgs)...);
+    }
+  };
+
+  template <typename... ArgTs> class ReadArgs {
+  public:
+    std::error_code operator()() { return std::error_code(); }
+  };
+
+  template <typename ArgT, typename... ArgTs>
+  class ReadArgs<ArgT, ArgTs...> : public ReadArgs<ArgTs...> {
+  public:
+    ReadArgs(ArgT &Arg, ArgTs &... Args)
+        : ReadArgs<ArgTs...>(Args...), Arg(Arg) {}
+
+    std::error_code operator()(ArgT &ArgVal, ArgTs &... ArgVals) {
+      this->Arg = std::move(ArgVal);
+      return ReadArgs<ArgTs...>::operator()(ArgVals...);
+    }
+
+  private:
+    ArgT &Arg;
+  };
+};
+
 /// Contains primitive utilities for defining, calling and handling calls to
 /// remote procedures. ChannelT is a bidirectional stream conforming to the
 /// RPCChannel interface (see RPCChannel.h), and ProcedureIdT is a procedure
@@ -62,7 +132,8 @@ namespace remote {
 /// read yet. Expect will deserialize the id and assert that it matches Proc's
 /// id. If it does not, and unexpected RPC call error is returned.
 
-template <typename ChannelT, typename ProcedureIdT = uint32_t> class RPC {
+template <typename ChannelT, typename ProcedureIdT = uint32_t>
+class RPC : public RPCBase {
 public:
   /// Utility class for defining/referring to RPC procedures.
   ///
@@ -89,75 +160,16 @@ public:
   ///         })
   ///     /* handle EC */;
   ///
-  template <ProcedureIdT ProcId, typename... Ts> class Procedure {
-  public:
-    static const ProcedureIdT Id = ProcId;
-  };
+  template <ProcedureIdT ProcId, typename... Ts>
+  using Procedure = ProcedureHelper<ProcedureIdT, ProcId, Ts...>;
 
-private:
-  template <typename Proc> class CallHelper;
-
-  template <ProcedureIdT ProcId, typename... ArgTs>
-  class CallHelper<Procedure<ProcId, ArgTs...>> {
-  public:
-    static std::error_code call(ChannelT &C, const ArgTs &... Args) {
-      if (auto EC = serialize(C, ProcId))
-        return EC;
-      // If you see a compile-error on this line you're probably calling a
-      // function with the wrong signature.
-      return serialize_seq(C, Args...);
-    }
-  };
-
-  template <typename Proc> class HandlerHelper;
-
-  template <ProcedureIdT ProcId, typename... ArgTs>
-  class HandlerHelper<Procedure<ProcId, ArgTs...>> {
-  public:
-    template <typename HandlerT>
-    static std::error_code handle(ChannelT &C, HandlerT Handler) {
-      return readAndHandle(C, Handler, llvm::index_sequence_for<ArgTs...>());
-    }
-
-  private:
-    template <typename HandlerT, size_t... Is>
-    static std::error_code readAndHandle(ChannelT &C, HandlerT Handler,
-                                         llvm::index_sequence<Is...> _) {
-      std::tuple<ArgTs...> RPCArgs;
-      if (auto EC = deserialize_seq(C, std::get<Is>(RPCArgs)...))
-        return EC;
-      return Handler(std::get<Is>(RPCArgs)...);
-    }
-  };
-
-  template <typename... ArgTs> class ReadArgs {
-  public:
-    std::error_code operator()() { return std::error_code(); }
-  };
-
-  template <typename ArgT, typename... ArgTs>
-  class ReadArgs<ArgT, ArgTs...> : public ReadArgs<ArgTs...> {
-  public:
-    ReadArgs(ArgT &Arg, ArgTs &... Args)
-        : ReadArgs<ArgTs...>(Args...), Arg(Arg) {}
-
-    std::error_code operator()(ArgT &ArgVal, ArgTs &... ArgVals) {
-      this->Arg = std::move(ArgVal);
-      return ReadArgs<ArgTs...>::operator()(ArgVals...);
-    }
-
-  private:
-    ArgT &Arg;
-  };
-
-public:
   /// Serialize Args... to channel C, but do not call C.send().
   ///
   /// For buffered channels, this can be used to queue up several calls before
   /// flushing the channel.
   template <typename Proc, typename... ArgTs>
   static std::error_code appendCall(ChannelT &C, const ArgTs &... Args) {
-    return CallHelper<Proc>::call(C, Args...);
+    return CallHelper<ChannelT, Proc>::call(C, Args...);
   }
 
   /// Serialize Args... to channel C and call C.send().
@@ -178,7 +190,7 @@ public:
   /// the arguments used in the Proc typedef.
   template <typename Proc, typename HandlerT>
   static std::error_code handle(ChannelT &C, HandlerT Handler) {
-    return HandlerHelper<Proc>::handle(C, Handler);
+    return HandlerHelper<ChannelT, Proc>::handle(C, Handler);
   }
 
   /// Deserialize a ProcedureIdT from C and verify it matches the id for Proc.
