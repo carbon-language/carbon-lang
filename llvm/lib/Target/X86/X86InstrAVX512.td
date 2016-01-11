@@ -1426,7 +1426,7 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
                      (outs _.KRC:$dst),
                      (ins _.RC:$src1, _.RC:$src2, AVXCC:$cc),
                      "vcmp${cc}"#_.Suffix,
-                     "{sae}, $src2, $src1", "$src1, $src2,{sae}",
+                     "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                      (OpNodeRnd (_.VT _.RC:$src1),
                                 (_.VT _.RC:$src2),
                                 imm:$cc,
@@ -1449,7 +1449,7 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
                        (outs _.KRC:$dst),
                        (ins _.RC:$src1, _.RC:$src2, u8imm:$cc),
                        "vcmp"#_.Suffix,
-                       "$cc,{sae}, $src2, $src1","$src1, $src2,{sae}, $cc">,
+                       "$cc, {sae}, $src2, $src1","$src1, $src2, {sae}, $cc">,
                        EVEX_4V, EVEX_B;
   }// let isAsmParserOnly = 1, hasSideEffects = 0
 
@@ -1831,7 +1831,7 @@ multiclass avx512_vcmp_sae<X86VectorVTInfo _> {
   defm  rrib  : AVX512_maskable_cmp<0xC2, MRMSrcReg, _,
                      (outs _.KRC:$dst),(ins _.RC:$src1, _.RC:$src2, AVXCC:$cc),
                      "vcmp${cc}"#_.Suffix,
-                     "{sae}, $src2, $src1", "$src1, $src2,{sae}",
+                     "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                      (X86cmpmRnd (_.VT _.RC:$src1),
                                     (_.VT _.RC:$src2),
                                     imm:$cc,
@@ -1842,8 +1842,8 @@ multiclass avx512_vcmp_sae<X86VectorVTInfo _> {
                          (outs _.KRC:$dst),
                          (ins _.RC:$src1, _.RC:$src2, u8imm:$cc),
                          "vcmp"#_.Suffix,
-                         "$cc,{sae}, $src2, $src1",
-                         "$src1, $src2,{sae}, $cc">, EVEX_B;
+                         "$cc, {sae}, $src2, $src1",
+                         "$src1, $src2, {sae}, $cc">, EVEX_B;
    }
 }
 
@@ -6766,7 +6766,7 @@ multiclass avx512_unary_fp_sae_packed_imm<bits<8> opc, string OpcodeStr,
                                              SDNode OpNode, X86VectorVTInfo _>{
   defm rrib : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                       (ins _.RC:$src1, i32u8imm:$src2),
-                      OpcodeStr##_.Suffix, "$src2,{sae}, $src1",
+                      OpcodeStr##_.Suffix, "$src2, {sae}, $src1",
                       "$src1, {sae}, $src2",
                       (OpNode (_.VT _.RC:$src1),
                               (i32 imm:$src2),
@@ -6895,8 +6895,8 @@ multiclass avx512_fp_sae_packed_imm<bits<8> opc, string OpcodeStr,
                                              SDNode OpNode, X86VectorVTInfo _>{
   defm rrib : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                       (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3),
-                      OpcodeStr, "$src3,{sae}, $src2, $src1",
-                      "$src1, $src2,{sae}, $src3",
+                      OpcodeStr, "$src3, {sae}, $src2, $src1",
+                      "$src1, $src2, {sae}, $src3",
                       (OpNode (_.VT _.RC:$src1),
                               (_.VT _.RC:$src2),
                               (i32 imm:$src3),
@@ -6907,8 +6907,8 @@ multiclass avx512_fp_sae_scalar_imm<bits<8> opc, string OpcodeStr,
                                              SDNode OpNode, X86VectorVTInfo _> {
   defm NAME#rrib : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                       (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3),
-                      OpcodeStr, "$src3,{sae}, $src2, $src1",
-                      "$src1, $src2,{sae}, $src3",
+                      OpcodeStr, "$src3, {sae}, $src2, $src1",
+                      "$src1, $src2, {sae}, $src3",
                       (OpNode (_.VT _.RC:$src1),
                               (_.VT _.RC:$src2),
                               (i32 imm:$src3),
