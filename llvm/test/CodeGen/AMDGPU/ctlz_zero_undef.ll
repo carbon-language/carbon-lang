@@ -78,6 +78,18 @@ define void @v_ctlz_zero_undef_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x 
   ret void
 }
 
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i8:
+; SI: buffer_load_ubyte [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI: v_add_i32_e32 [[RESULT:v[0-9]+]], vcc, 0xffffffe8, [[FFBH]]
+; SI: buffer_store_byte [[RESULT]],
+define void @v_ctlz_zero_undef_i8(i8 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i8, i8 addrspace(1)* %valptr
+  %ctlz = call i8 @llvm.ctlz.i8(i8 %val, i1 true) nounwind readnone
+  store i8 %ctlz, i8 addrspace(1)* %out
+  ret void
+}
+
 ; FUNC-LABEL: {{^}}s_ctlz_zero_undef_i64:
 ; SI: s_load_dwordx2 s{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, {{0xb|0x2c}}
 ; SI-DAG: v_cmp_eq_i32_e64 vcc, 0, s[[HI]]
@@ -160,6 +172,19 @@ define void @v_ctlz_zero_undef_i32_sel_ne_neg1(i32 addrspace(1)* noalias %out, i
   ret void
 }
 
+; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i8_sel_eq_neg1:
+; SI: buffer_load_ubyte [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI: buffer_store_byte [[FFBH]],
+ define void @v_ctlz_zero_undef_i8_sel_eq_neg1(i8 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i8, i8 addrspace(1)* %valptr
+  %ctlz = call i8 @llvm.ctlz.i8(i8 %val, i1 true) nounwind readnone
+  %cmp = icmp eq i8 %val, 0
+  %sel = select i1 %cmp, i8 -1, i8 %ctlz
+  store i8 %sel, i8 addrspace(1)* %out
+  ret void
+}
+
 ; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i32_sel_eq_neg1_two_use:
 ; SI: buffer_load_dword [[VAL:v[0-9]+]],
 ; SI-DAG: v_ffbh_u32_e32 [[RESULT0:v[0-9]+]], [[VAL]]
@@ -239,17 +264,5 @@ define void @v_ctlz_zero_undef_i32_sel_ne_cmp_non0(i32 addrspace(1)* noalias %ou
   %cmp = icmp ne i32 %val, 1
   %sel = select i1 %cmp, i32 %ctlz, i32 0
   store i32 %sel, i32 addrspace(1)* %out
-  ret void
-}
-
-; FUNC-LABEL: {{^}}v_ctlz_zero_undef_i8:
-; SI: buffer_load_dword [[VAL:v[0-9]+]],
-; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
-; SI: v_add_i32_e32 [[RESULT:v[0-9]+]], vcc, 0xffffffe8, [[FFBH]]
-; SI: buffer_store_dword [[RESULT]],
-define void @v_ctlz_zero_undef_i8(i8 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %valptr) nounwind {
-  %val = load i8, i8 addrspace(1)* %valptr
-  %ctlz = call i8 @llvm.ctlz.i8(i8 %val, i1 true) nounwind readnone
-  store i8 %ctlz, i8 addrspace(1)* %out
   ret void
 }

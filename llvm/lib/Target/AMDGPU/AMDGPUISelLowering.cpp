@@ -2521,6 +2521,27 @@ static bool isCtlzOpc(unsigned Opc) {
   return Opc == ISD::CTLZ || Opc == ISD::CTLZ_ZERO_UNDEF;
 }
 
+// Get FFBH node if the incoming op may have been type legalized from a smaller
+// type VT.
+// Need to match pre-legalized type because the generic legalization inserts the
+// add/sub between the select and compare.
+static SDValue getFFBH_U32(const TargetLowering &TLI,
+                           SelectionDAG &DAG, SDLoc SL, SDValue Op) {
+  EVT VT = Op.getValueType();
+  EVT LegalVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
+  if (LegalVT != MVT::i32)
+    return SDValue();
+
+  if (VT != MVT::i32)
+    Op = DAG.getNode(ISD::ZERO_EXTEND, SL, MVT::i32, Op);
+
+  SDValue FFBH = DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, Op);
+  if (VT != MVT::i32)
+    FFBH = DAG.getNode(ISD::TRUNCATE, SL, VT, FFBH);
+
+  return FFBH;
+}
+
 // The native instructions return -1 on 0 input. Optimize out a select that
 // produces -1 on 0.
 //
@@ -2546,7 +2567,7 @@ SDValue AMDGPUTargetLowering::performCtlzCombine(SDLoc SL,
       isCtlzOpc(RHS.getOpcode()) &&
       RHS.getOperand(0) == CmpLHS &&
       isNegativeOne(LHS)) {
-    return DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, CmpLHS);
+    return getFFBH_U32(*this, DAG, SL, CmpLHS);
   }
 
   // select (setcc x, 0, ne), (ctlz_zero_undef x), -1 -> ffbh_u32 x
@@ -2554,7 +2575,7 @@ SDValue AMDGPUTargetLowering::performCtlzCombine(SDLoc SL,
       isCtlzOpc(LHS.getOpcode()) &&
       LHS.getOperand(0) == CmpLHS &&
       isNegativeOne(RHS)) {
-    return DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, CmpLHS);
+    return getFFBH_U32(*this, DAG, SL, CmpLHS);
   }
 
   return SDValue();
@@ -2578,10 +2599,7 @@ SDValue AMDGPUTargetLowering::performSelectCombine(SDNode *N,
     return CombineFMinMaxLegacy(SDLoc(N), VT, LHS, RHS, True, False, CC, DCI);
 
   // There's no reason to not do this if the condition has other uses.
-  if (VT == MVT::i32)
-    return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
-
-  return SDValue();
+  return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
 }
 
 SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,

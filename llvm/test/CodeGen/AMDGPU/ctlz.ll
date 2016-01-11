@@ -2,6 +2,10 @@
 ; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=cypress -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
+declare i7 @llvm.ctlz.i7(i7, i1) nounwind readnone
+declare i8 @llvm.ctlz.i8(i8, i1) nounwind readnone
+declare i16 @llvm.ctlz.i16(i16, i1) nounwind readnone
+
 declare i32 @llvm.ctlz.i32(i32, i1) nounwind readnone
 declare <2 x i32> @llvm.ctlz.v2i32(<2 x i32>, i1) nounwind readnone
 declare <4 x i32> @llvm.ctlz.v4i32(<4 x i32>, i1) nounwind readnone
@@ -89,6 +93,20 @@ define void @v_ctlz_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> addrsp
   %val = load <4 x i32>, <4 x i32> addrspace(1)* %valptr, align 16
   %ctlz = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %val, i1 false) nounwind readnone
   store <4 x i32> %ctlz, <4 x i32> addrspace(1)* %out, align 16
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_i8:
+; SI: buffer_load_ubyte [[VAL:v[0-9]+]],
+; SI-DAG: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI-DAG: v_cmp_eq_i32_e32 vcc, 0, [[CTLZ]]
+; SI-DAG: v_cndmask_b32_e64 [[CORRECTED_FFBH:v[0-9]+]], [[FFBH]], 32, vcc
+; SI: v_add_i32_e32 [[RESULT:v[0-9]+]], vcc, 0xffffffe8, [[CORRECTED_FFBH]]
+; SI: buffer_store_byte [[RESULT]],
+define void @v_ctlz_i8(i8 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i8, i8 addrspace(1)* %valptr
+  %ctlz = call i8 @llvm.ctlz.i8(i8 %val, i1 false) nounwind readnone
+  store i8 %ctlz, i8 addrspace(1)* %out
   ret void
 }
 
@@ -207,5 +225,45 @@ define void @v_ctlz_i32_sel_ne_bitwidth(i32 addrspace(1)* noalias %out, i32 addr
   %cmp = icmp ne i32 %ctlz, 32
   %sel = select i1 %cmp, i32 %ctlz, i32 -1
   store i32 %sel, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_i8_sel_eq_neg1:
+; SI: buffer_load_ubyte [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI: buffer_store_byte [[FFBH]],
+ define void @v_ctlz_i8_sel_eq_neg1(i8 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i8, i8 addrspace(1)* %valptr
+  %ctlz = call i8 @llvm.ctlz.i8(i8 %val, i1 false) nounwind readnone
+  %cmp = icmp eq i8 %val, 0
+  %sel = select i1 %cmp, i8 -1, i8 %ctlz
+  store i8 %sel, i8 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_i16_sel_eq_neg1:
+; SI: buffer_load_ushort [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI: buffer_store_short [[FFBH]],
+ define void @v_ctlz_i16_sel_eq_neg1(i16 addrspace(1)* noalias %out, i16 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i16, i16 addrspace(1)* %valptr
+  %ctlz = call i16 @llvm.ctlz.i16(i16 %val, i1 false) nounwind readnone
+  %cmp = icmp eq i16 %val, 0
+  %sel = select i1 %cmp, i16 -1, i16 %ctlz
+  store i16 %sel, i16 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_ctlz_i7_sel_eq_neg1:
+; SI: buffer_load_ubyte [[VAL:v[0-9]+]],
+; SI: v_ffbh_u32_e32 [[FFBH:v[0-9]+]], [[VAL]]
+; SI: v_and_b32_e32 [[TRUNC:v[0-9]+]], 0x7f, [[FFBH]]
+; SI: buffer_store_byte [[TRUNC]],
+ define void @v_ctlz_i7_sel_eq_neg1(i7 addrspace(1)* noalias %out, i7 addrspace(1)* noalias %valptr) nounwind {
+  %val = load i7, i7 addrspace(1)* %valptr
+  %ctlz = call i7 @llvm.ctlz.i7(i7 %val, i1 false) nounwind readnone
+  %cmp = icmp eq i7 %val, 0
+  %sel = select i1 %cmp, i7 -1, i7 %ctlz
+  store i7 %sel, i7 addrspace(1)* %out
   ret void
 }
