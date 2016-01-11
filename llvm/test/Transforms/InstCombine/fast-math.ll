@@ -649,6 +649,21 @@ define double @sqrt_intrinsic_three_args6(double %x, double %y) {
 ; CHECK-NEXT: ret double %1
 }
 
+; If any operation is not 'fast', we can't simplify.
+
+define double @sqrt_intrinsic_not_so_fast(double %x, double %y) {
+  %mul = fmul double %x, %x
+  %mul2 = fmul fast double %mul, %y
+  %sqrt = call fast double @llvm.sqrt.f64(double %mul2)
+  ret double %sqrt
+
+; CHECK-LABEL: sqrt_intrinsic_not_so_fast(
+; CHECK-NEXT:  %mul = fmul double %x, %x
+; CHECK-NEXT:  %mul2 = fmul fast double %mul, %y
+; CHECK-NEXT:  %sqrt = call fast double @llvm.sqrt.f64(double %mul2)
+; CHECK-NEXT:  ret double %sqrt
+}
+
 define double @sqrt_intrinsic_arg_4th(double %x) {
   %mul = fmul fast double %x, %x
   %mul2 = fmul fast double %mul, %mul

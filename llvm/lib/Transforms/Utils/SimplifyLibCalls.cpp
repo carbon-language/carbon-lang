@@ -1422,10 +1422,10 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
     // variations of this pattern because instcombine's visitFMUL and/or the
     // reassociation pass should give us this form.
     Value *OtherMul0, *OtherMul1;
-    // FIXME: This multiply must be unsafe to allow this transform.
     if (match(Op0, m_FMul(m_Value(OtherMul0), m_Value(OtherMul1)))) {
       // Pattern: sqrt((x * y) * z)
-      if (OtherMul0 == OtherMul1) {
+      if (OtherMul0 == OtherMul1 &&
+          cast<Instruction>(Op0)->hasUnsafeAlgebra()) {
         // Matched: sqrt((x * x) * z)
         RepeatOp = OtherMul0;
         OtherOp = Op1;
