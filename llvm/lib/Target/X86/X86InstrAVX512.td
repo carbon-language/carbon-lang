@@ -188,7 +188,7 @@ multiclass AVX512_maskable_custom<bits<8> O, Format F,
   let isCommutable = IsCommutable in
     def NAME: AVX512<O, F, Outs, Ins,
                        OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
-                                     "$dst , "#IntelSrcAsm#"}",
+                                     "$dst, "#IntelSrcAsm#"}",
                        Pattern, itin>;
 
   // Prefer over VMOV*rrk Pat<>

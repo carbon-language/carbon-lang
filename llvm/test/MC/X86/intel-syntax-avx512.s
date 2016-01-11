@@ -1,10 +1,10 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -x86-asm-syntax=intel -output-asm-variant=1 -mcpu=knl --show-encoding %s | FileCheck %s
 
-// CHECK: vaddps  zmm1 , zmm1, zmmword ptr [rax]
+// CHECK: vaddps  zmm1, zmm1, zmmword ptr [rax]
 // CHECK: encoding: [0x62,0xf1,0x74,0x48,0x58,0x08]
 vaddps zmm1, zmm1, zmmword ptr [rax]
 
-// CHECK: vaddpd  zmm1 , zmm1, zmm2
+// CHECK: vaddpd  zmm1, zmm1, zmm2
 // CHECK:  encoding: [0x62,0xf1,0xf5,0x48,0x58,0xca]
 vaddpd zmm1,zmm1,zmm2
 
@@ -16,19 +16,19 @@ vaddpd zmm1{k5},zmm1,zmm2
 // CHECK:  encoding: [0x62,0xf1,0xf5,0xcd,0x58,0xca]
 vaddpd zmm1{k5} {z},zmm1,zmm2
 
-// CHECK: vaddpd zmm1 , zmm1, zmm2, {rn-sae}
+// CHECK: vaddpd zmm1, zmm1, zmm2, {rn-sae}
 // CHECK:  encoding: [0x62,0xf1,0xf5,0x18,0x58,0xca]
 vaddpd zmm1,zmm1,zmm2,{rn-sae}
 
-// CHECK: vaddpd zmm1 , zmm1, zmm2, {ru-sae}
+// CHECK: vaddpd zmm1, zmm1, zmm2, {ru-sae}
 // CHECK:  encoding: [0x62,0xf1,0xf5,0x58,0x58,0xca]
 vaddpd zmm1,zmm1,zmm2,{ru-sae}
 
-// CHECK:  vaddpd zmm1 , zmm1, zmm2, {rd-sae}
+// CHECK:  vaddpd zmm1, zmm1, zmm2, {rd-sae}
 // CHECK:  encoding: [0x62,0xf1,0xf5,0x38,0x58,0xca]
 vaddpd zmm1,zmm1,zmm2,{rd-sae}
 
-// CHECK: vaddpd zmm1 , zmm1, zmm2, {rz-sae}
+// CHECK: vaddpd zmm1, zmm1, zmm2, {rz-sae}
 // CHECK:  encoding: [0x62,0xf1,0xf5,0x78,0x58,0xca]
 vaddpd zmm1,zmm1,zmm2,{rz-sae}
 
@@ -161,7 +161,7 @@ vaddpd zmm1,zmm1,zmm2,{rz-sae}
           vcmpps k2,zmm17,DWORD PTR [rdx-0x204]{1to16},0x7b
 
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, xmm28, 171
+// CHECK:  vfixupimmss  xmm15, xmm18, xmm28, 171
 // CHECK:  encoding: [0x62,0x13,0x6d,0x00,0x55,0xfc,0xab]
           vfixupimmss xmm15,xmm18,xmm28,0xab
 
@@ -173,43 +173,43 @@ vaddpd zmm1,zmm1,zmm2,{rz-sae}
 // CHECK:  encoding: [0x62,0x13,0x6d,0x85,0x55,0xfc,0xab]
           vfixupimmss xmm15{k5} {z},xmm18,xmm28,0xab
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, xmm28, {sae}, 171
+// CHECK:  vfixupimmss  xmm15, xmm18, xmm28, {sae}, 171
 // CHECK:  encoding: [0x62,0x13,0x6d,0x10,0x55,0xfc,0xab]
           vfixupimmss xmm15,xmm18,xmm28,{sae},0xab
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, xmm28, 123
+// CHECK:  vfixupimmss  xmm15, xmm18, xmm28, 123
 // CHECK:  encoding: [0x62,0x13,0x6d,0x00,0x55,0xfc,0x7b]
           vfixupimmss xmm15,xmm18,xmm28,0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, xmm28, {sae}, 123
+// CHECK:  vfixupimmss  xmm15, xmm18, xmm28, {sae}, 123
 // CHECK:  encoding: [0x62,0x13,0x6d,0x10,0x55,0xfc,0x7b]
           vfixupimmss xmm15,xmm18,xmm28,{sae},0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, dword ptr [rcx], 123
+// CHECK:  vfixupimmss  xmm15, xmm18, dword ptr [rcx], 123
 // CHECK:  encoding: [0x62,0x73,0x6d,0x00,0x55,0x39,0x7b]
           vfixupimmss xmm15,xmm18,DWORD PTR [rcx],0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, dword ptr [rax + 8*r14 + 291], 123
+// CHECK:  vfixupimmss  xmm15, xmm18, dword ptr [rax + 8*r14 + 291], 123
 // CHECK:  encoding: [0x62,0x33,0x6d,0x00,0x55,0xbc,0xf0,0x23,0x01,0x00,0x00,0x7b]
           vfixupimmss xmm15,xmm18,DWORD PTR [rax+r14*8+0x123],0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, dword ptr [rdx + 508], 123
+// CHECK:  vfixupimmss  xmm15, xmm18, dword ptr [rdx + 508], 123
 // CHECK:  encoding: [0x62,0x73,0x6d,0x00,0x55,0x7a,0x7f,0x7b]
           vfixupimmss xmm15,xmm18,DWORD PTR [rdx+0x1fc],0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, dword ptr [rdx + 512], 123
+// CHECK:  vfixupimmss  xmm15, xmm18, dword ptr [rdx + 512], 123
 // CHECK:  encoding: [0x62,0x73,0x6d,0x00,0x55,0xba,0x00,0x02,0x00,0x00,0x7b]
           vfixupimmss xmm15,xmm18,DWORD PTR [rdx+0x200],0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, dword ptr [rdx - 512], 123
+// CHECK:  vfixupimmss  xmm15, xmm18, dword ptr [rdx - 512], 123
 // CHECK:  encoding: [0x62,0x73,0x6d,0x00,0x55,0x7a,0x80,0x7b]
           vfixupimmss xmm15,xmm18,DWORD PTR [rdx-0x200],0x7b
 
-// CHECK:  vfixupimmss  xmm15 , xmm18, dword ptr [rdx - 516], 123
+// CHECK:  vfixupimmss  xmm15, xmm18, dword ptr [rdx - 516], 123
 // CHECK:  encoding: [0x62,0x73,0x6d,0x00,0x55,0xba,0xfc,0xfd,0xff,0xff,0x7b]
           vfixupimmss xmm15,xmm18,DWORD PTR [rdx-0x204],0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, xmm5, 171
+// CHECK:  vfixupimmsd  xmm13, xmm26, xmm5, 171
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0xed,0xab]
           vfixupimmsd xmm13,xmm26,xmm5,0xab
 
@@ -221,39 +221,39 @@ vaddpd zmm1,zmm1,zmm2,{rz-sae}
 // CHECK:  encoding: [0x62,0x73,0xad,0x86,0x55,0xed,0xab]
           vfixupimmsd xmm13{k6} {z},xmm26,xmm5,0xab
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, xmm5, {sae}, 171
+// CHECK:  vfixupimmsd  xmm13, xmm26, xmm5, {sae}, 171
 // CHECK:  encoding: [0x62,0x73,0xad,0x10,0x55,0xed,0xab]
           vfixupimmsd xmm13,xmm26,xmm5,{sae},0xab
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, xmm5, 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, xmm5, 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0xed,0x7b]
           vfixupimmsd xmm13,xmm26,xmm5,0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, xmm5, {sae}, 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, xmm5, {sae}, 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x10,0x55,0xed,0x7b]
           vfixupimmsd xmm13,xmm26,xmm5,{sae},0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rcx], 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, qword ptr [rcx], 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0x29,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rcx],0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rax + 8*r14 + 291], 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, qword ptr [rax + 8*r14 + 291], 123
 // CHECK:  encoding: [0x62,0x33,0xad,0x00,0x55,0xac,0xf0,0x23,0x01,0x00,0x00,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rax+r14*8+0x123],0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rdx + 1016], 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, qword ptr [rdx + 1016], 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0x6a,0x7f,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rdx+0x3f8],0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rdx + 1024], 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, qword ptr [rdx + 1024], 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0xaa,0x00,0x04,0x00,0x00,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rdx+0x400],0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rdx - 1024], 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, qword ptr [rdx - 1024], 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0x6a,0x80,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rdx-0x400],0x7b
 
-// CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rdx - 1032], 123
+// CHECK:  vfixupimmsd  xmm13, xmm26, qword ptr [rdx - 1032], 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0xaa,0xf8,0xfb,0xff,0xff,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rdx-0x408],0x7b
 
@@ -321,7 +321,7 @@ vaddpd zmm1,zmm1,zmm2,{rz-sae}
 // CHECK:  encoding: [0x62,0xf1,0x7e,0x8c,0x10,0x11]
           vmovss xmm2{k4} {z}, dword ptr [rcx]
 
-// CHECK: vmovsd xmm25 , qword ptr [rcx]
+// CHECK: vmovsd xmm25, qword ptr [rcx]
 // CHECK:  encoding: [0x62,0x61,0xff,0x08,0x10,0x09]
           vmovsd xmm25, qword ptr [rcx]
 
@@ -333,22 +333,22 @@ vaddpd zmm1,zmm1,zmm2,{rz-sae}
 // CHECK:  encoding: [0x62,0x61,0xff,0x8b,0x10,0x09]
           vmovsd xmm25{k3} {z}, qword ptr [rcx]
 
-// CHECK: vmovsd xmm25 , qword ptr [rax + 8*r14 + 291]
+// CHECK: vmovsd xmm25, qword ptr [rax + 8*r14 + 291]
 // CHECK:  encoding: [0x62,0x21,0xff,0x08,0x10,0x8c,0xf0,0x23,0x01,0x00,0x00]
           vmovsd xmm25, qword ptr [rax+r14*8+0x123]
 
-// CHECK: vmovsd xmm25 , qword ptr [rdx + 1016]
+// CHECK: vmovsd xmm25, qword ptr [rdx + 1016]
 // CHECK:  encoding: [0x62,0x61,0xff,0x08,0x10,0x4a,0x7f]
           vmovsd xmm25, qword ptr [rdx+0x3f8]
 
-// CHECK: vmovsd xmm25 , qword ptr [rdx + 1024]
+// CHECK: vmovsd xmm25, qword ptr [rdx + 1024]
 // CHECK:  encoding: [0x62,0x61,0xff,0x08,0x10,0x8a,0x00,0x04,0x00,0x00]
           vmovsd xmm25, qword ptr [rdx+0x400]
 
-// CHECK: vmovsd xmm25 , qword ptr [rdx - 1024]
+// CHECK: vmovsd xmm25, qword ptr [rdx - 1024]
 // CHECK:  encoding: [0x62,0x61,0xff,0x08,0x10,0x4a,0x80]
           vmovsd xmm25, qword ptr [rdx-0x400]
 
-// CHECK: vmovsd xmm25 , qword ptr [rdx - 1032]
+// CHECK: vmovsd xmm25, qword ptr [rdx - 1032]
 // CHECK:  encoding: [0x62,0x61,0xff,0x08,0x10,0x8a,0xf8,0xfb,0xff,0xff]
           vmovsd xmm25, qword ptr [rdx-0x408]
