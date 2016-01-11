@@ -5492,7 +5492,7 @@ TEST_F(FormatTest, UnderstandsOverloadedOperators) {
   verifyFormat("template <typename AAAAAAA, typename BBBBBBB>\n"
                "AAAAAAA operator/(const AAAAAAA &a, BBBBBBB &b);");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaa operator,(\n"
-               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const;");
+               "    aaaaaaaaaaaaaaaaaaaaa &aaaaaaaaaaaaaaaaaaaaaaaaaa) const;");
 
   verifyFormat(
       "ostream &operator<<(ostream &OutputStream,\n"
