@@ -1126,6 +1126,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 
 AArch64TargetInfo::AArch64TargetInfo() {
   CopyReloc = R_AARCH64_COPY;
+  IRelativeReloc = R_AARCH64_IRELATIVE;
   GotReloc = R_AARCH64_GLOB_DAT;
   PltReloc = R_AARCH64_JUMP_SLOT;
   LazyRelocations = true;
@@ -1216,6 +1217,8 @@ bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
 
 bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
                                       const SymbolBody &S) const {
+  if (isGnuIFunc<ELF64LE>(S))
+    return true;
   switch (Type) {
   default:
     return false;
