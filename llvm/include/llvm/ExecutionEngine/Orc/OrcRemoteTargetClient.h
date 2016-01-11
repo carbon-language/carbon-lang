@@ -91,8 +91,9 @@ public:
       DEBUG(dbgs() << "Allocator " << Id << " reserved:\n");
 
       if (CodeSize != 0) {
-        if (auto EC = Client.reserveMem(Unmapped.back().RemoteCodeAddr, Id,
-                                        CodeSize, CodeAlign)) {
+        if (std::error_code EC = Client.reserveMem(
+                Unmapped.back().RemoteCodeAddr, Id, CodeSize, CodeAlign)) {
+          (void)EC;
           // FIXME; Add error to poll.
           llvm_unreachable("Failed reserving remote memory.");
         }
