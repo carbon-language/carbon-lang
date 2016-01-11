@@ -240,8 +240,8 @@ private:
   virtual void anchor();
 };
 
-/// @brief IndirectStubsManager implementation for a concrete target, e.g.
-///        OrcX86_64. (See OrcTargetSupport.h).
+/// @brief IndirectStubsManager implementation for the host architecture, e.g.
+///        OrcX86_64. (See OrcArchitectureSupport.h).
 template <typename TargetT>
 class LocalIndirectStubsManager : public IndirectStubsManager {
 public:
