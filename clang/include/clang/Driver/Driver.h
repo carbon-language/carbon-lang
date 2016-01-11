@@ -375,9 +375,9 @@ public:
   /// ConstructAction - Construct the appropriate action to do for
   /// \p Phase on the \p Input, taking in to account arguments
   /// like -fsyntax-only or --analyze.
-  std::unique_ptr<Action>
-  ConstructPhaseAction(const ToolChain &TC, const llvm::opt::ArgList &Args,
-                       phases::ID Phase, std::unique_ptr<Action> Input) const;
+  Action *ConstructPhaseAction(Compilation &C, const ToolChain &TC,
+                               const llvm::opt::ArgList &Args, phases::ID Phase,
+                               Action *Input) const;
 
   /// BuildJobsForAction - Construct the jobs to perform for the
   /// action \p A.
