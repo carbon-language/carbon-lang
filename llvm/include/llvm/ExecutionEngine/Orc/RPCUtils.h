@@ -95,7 +95,7 @@ public:
   };
 
 private:
-  template <typename Proc> class CallHelper {};
+  template <typename Proc> class CallHelper;
 
   template <ProcedureIdT ProcId, typename... ArgTs>
   class CallHelper<Procedure<ProcId, ArgTs...>> {
@@ -109,7 +109,7 @@ private:
     }
   };
 
-  template <typename Proc> class HandlerHelper {};
+  template <typename Proc> class HandlerHelper;
 
   template <ProcedureIdT ProcId, typename... ArgTs>
   class HandlerHelper<Procedure<ProcId, ArgTs...>> {
