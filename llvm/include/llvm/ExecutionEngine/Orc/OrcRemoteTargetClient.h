@@ -18,6 +18,7 @@
 
 #include "IndirectionUtils.h"
 #include "OrcRemoteTargetRPCAPI.h"
+#include <system_error>
 
 #define DEBUG_TYPE "orc-remote"
 
