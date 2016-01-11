@@ -44,6 +44,19 @@ public:
       DEBUG(dbgs() << "Created remote allocator " << Id << "\n");
     }
 
+    RCMemoryManager(RCMemoryManager &&Other)
+        : Client(std::move(Other.Client)), Id(std::move(Other.Id)),
+          Unmapped(std::move(Other.Unmapped)),
+          Unfinalized(std::move(Other.Unfinalized)) {}
+
+    RCMemoryManager operator=(RCMemoryManager &&Other) {
+      Client = std::move(Other.Client);
+      Id = std::move(Other.Id);
+      Unmapped = std::move(Other.Unmapped);
+      Unfinalized = std::move(Other.Unfinalized);
+      return *this;
+    }
+
     ~RCMemoryManager() {
       Client.destroyRemoteAllocator(Id);
       DEBUG(dbgs() << "Destroyed remote allocator " << Id << "\n");
@@ -252,9 +265,6 @@ public:
       Alloc(uint64_t Size, unsigned Align)
           : Size(Size), Align(Align), Contents(new char[Size + Align - 1]),
             RemoteAddr(0) {}
-
-      Alloc(const Alloc&) = delete;
-      Alloc& operator=(const Alloc&) = delete;
 
       Alloc(Alloc &&Other)
           : Size(std::move(Other.Size)), Align(std::move(Other.Align)),
