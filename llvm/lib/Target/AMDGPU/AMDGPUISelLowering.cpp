@@ -288,8 +288,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   if (!Subtarget->hasFFBL())
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
 
-  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
+
+  setOperationAction(ISD::CTLZ, MVT::i64, Custom);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
 
   static const MVT::SimpleValueType VectorIntTypes[] = {
     MVT::v2i32, MVT::v4i32
@@ -636,6 +638,9 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT: return LowerFP_TO_SINT(Op, DAG);
   case ISD::FP_TO_UINT: return LowerFP_TO_UINT(Op, DAG);
+  case ISD::CTLZ:
+  case ISD::CTLZ_ZERO_UNDEF:
+    return LowerCTLZ(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   }
   return Op;
@@ -2160,6 +2165,58 @@ SDValue AMDGPUTargetLowering::LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const {
   SDValue Add = DAG.getNode(ISD::SELECT, SL, MVT::f64, And, NegOne, Zero);
   // TODO: Should this propagate fast-math-flags?
   return DAG.getNode(ISD::FADD, SL, MVT::f64, Trunc, Add);
+}
+
+SDValue AMDGPUTargetLowering::LowerCTLZ(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue Src = Op.getOperand(0);
+  assert(Src.getValueType() == MVT::i64);
+
+  bool ZeroUndef = Op.getOpcode() == ISD::CTLZ_ZERO_UNDEF;
+  SDValue Vec = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, Src);
+
+  const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
+  const SDValue One = DAG.getConstant(1, SL, MVT::i32);
+
+  SDValue Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, Zero);
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, One);
+
+  EVT SetCCVT = getSetCCResultType(DAG.getDataLayout(),
+                                   *DAG.getContext(), MVT::i32);
+
+  SDValue Hi0 = DAG.getSetCC(SL, SetCCVT, Hi, Zero, ISD::SETEQ);
+
+  SDValue CtlzLo = DAG.getNode(ISD::CTLZ_ZERO_UNDEF, SL, MVT::i32, Lo);
+  SDValue CtlzHi = DAG.getNode(ISD::CTLZ_ZERO_UNDEF, SL, MVT::i32, Hi);
+
+  const SDValue Bits32 = DAG.getConstant(32, SL, MVT::i32);
+  SDValue Add = DAG.getNode(ISD::ADD, SL, MVT::i32, CtlzLo, Bits32);
+
+  // ctlz(x) = hi_32(x) == 0 ? ctlz(lo_32(x)) + 32 : ctlz(hi_32(x))
+  SDValue NewCtlz = DAG.getNode(ISD::SELECT, SL, MVT::i32, Hi0, Add, CtlzHi);
+
+  if (!ZeroUndef) {
+    // Test if the full 64-bit input is zero.
+
+    // FIXME: DAG combines turn what should be an s_and_b64 into a v_or_b32,
+    // which we probably don't want.
+    SDValue Lo0 = DAG.getSetCC(SL, SetCCVT, Lo, Zero, ISD::SETEQ);
+    SDValue SrcIsZero = DAG.getNode(ISD::AND, SL, SetCCVT, Lo0, Hi0);
+
+    // TODO: If i64 setcc is half rate, it can result in 1 fewer instruction
+    // with the same cycles, otherwise it is slower.
+    // SDValue SrcIsZero = DAG.getSetCC(SL, SetCCVT, Src,
+    // DAG.getConstant(0, SL, MVT::i64), ISD::SETEQ);
+
+    const SDValue Bits32 = DAG.getConstant(64, SL, MVT::i32);
+
+    // The instruction returns -1 for 0 input, but the defined intrinsic
+    // behavior is to return the number of bits.
+    NewCtlz = DAG.getNode(ISD::SELECT, SL, MVT::i32,
+                          SrcIsZero, Bits32, NewCtlz);
+  }
+
+  return DAG.getNode(ISD::ZERO_EXTEND, SL, MVT::i64, NewCtlz);
 }
 
 SDValue AMDGPUTargetLowering::LowerINT_TO_FP64(SDValue Op, SelectionDAG &DAG,
