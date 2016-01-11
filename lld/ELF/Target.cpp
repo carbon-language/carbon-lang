@@ -1225,6 +1225,7 @@ bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
+  case R_AARCH64_TSTBR14:
     return canBePreempted(&S, true);
   }
 }
@@ -1320,6 +1321,12 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_AARCH64_PREL64:
     write64le(Loc, SA - P);
     break;
+  case R_AARCH64_TSTBR14: {
+    uint64_t X = SA - P;
+    checkInt<16>(X, Type);
+    or32le(Loc, (X & 0xFFFC) << 3);
+    break;
+  }
   default:
     error("unrecognized reloc " + Twine(Type));
   }
