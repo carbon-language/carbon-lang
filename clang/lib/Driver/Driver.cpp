@@ -1801,9 +1801,9 @@ InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
     Input.claim();
     if (Input.getOption().matches(options::OPT_INPUT)) {
       const char *Name = Input.getValue();
-      return InputInfo(Name, A->getType(), Name);
+      return InputInfo(A, Name, /* BaseInput = */ Name);
     }
-    return InputInfo(&Input, A->getType(), "");
+    return InputInfo(A, &Input, /* BaseInput = */ "");
   }
 
   if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
@@ -1877,11 +1877,11 @@ InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
   // Determine the place to write output to, if any.
   InputInfo Result;
   if (JA->getType() == types::TY_Nothing)
-    Result = InputInfo(A->getType(), BaseInput);
+    Result = InputInfo(A, BaseInput);
   else
-    Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, BoundArch,
-                                          AtTopLevel, MultipleArchs),
-                       A->getType(), BaseInput);
+    Result = InputInfo(A, GetNamedOutputPath(C, *JA, BaseInput, BoundArch,
+                                             AtTopLevel, MultipleArchs),
+                       BaseInput);
 
   if (CCCPrintBindings && !CCGenDiagnostics) {
     llvm::errs() << "# \"" << T->getToolChain().getTripleString() << '"'
