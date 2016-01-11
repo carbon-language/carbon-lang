@@ -178,12 +178,14 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return true;
 
   unsigned NewLineColumn = getNewLineColumn(State);
+  if (Current.isMemberAccess() &&
+      State.Column + getLengthToNextOperator(Current) > Style.ColumnLimit &&
+      (State.Column > NewLineColumn ||
+       Current.NestingLevel < State.StartOfLineLevel))
+    return true;
+
   if (State.Column <= NewLineColumn)
     return false;
-
-  if (Current.isMemberAccess() &&
-      State.Column + getLengthToNextOperator(Current) > Style.ColumnLimit)
-    return true;
 
   if (Style.AlwaysBreakBeforeMultilineStrings &&
       (NewLineColumn == State.FirstIndent + Style.ContinuationIndentWidth ||
