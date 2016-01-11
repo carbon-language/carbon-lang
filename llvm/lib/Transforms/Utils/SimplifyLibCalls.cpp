@@ -1439,6 +1439,7 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
   // and multiply.
   IRBuilder<>::FastMathFlagGuard Guard(B);
   B.SetFastMathFlags(I->getFastMathFlags());
+
   // If we found a repeated factor, hoist it out of the square root and
   // replace it with the fabs of that factor.
   Module *M = Callee->getParent();
