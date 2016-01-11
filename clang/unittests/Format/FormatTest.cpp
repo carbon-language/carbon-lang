@@ -4062,10 +4062,23 @@ TEST_F(FormatTest, FormatsDeclarationsOnePerLine) {
                "       int aaaaaaaaaaaaaaaaaaaa,\n"
                "       int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}",
                NoBinPacking);
+
   NoBinPacking.AllowAllParametersOfDeclarationOnNextLine = false;
   verifyFormat("void aaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "                        vector<int> bbbbbbbbbbbbbbb);",
                NoBinPacking);
+  // FIXME: This behavior difference is probably not wanted. However, currently
+  // we cannot distinguish BreakBeforeParameter being set because of the wrapped
+  // template arguments from BreakBeforeParameter being set because of the
+  // one-per-line formatting.
+  verifyFormat(
+      "void fffffffffff(aaaaaaaaaaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "                                             aaaaaaaaaa> aaaaaaaaaa);",
+      NoBinPacking);
+  verifyFormat(
+      "void fffffffffff(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaa>\n"
+      "        aaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
