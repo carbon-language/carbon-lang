@@ -380,15 +380,11 @@ public:
                                Action *Input) const;
 
   /// BuildJobsForAction - Construct the jobs to perform for the
-  /// action \p A.
-  void BuildJobsForAction(Compilation &C,
-                          const Action *A,
-                          const ToolChain *TC,
-                          const char *BoundArch,
-                          bool AtTopLevel,
-                          bool MultipleArchs,
-                          const char *LinkingOutput,
-                          InputInfo &Result) const;
+  /// action \p A and return an InputInfo for the result of running \p A.
+  InputInfo BuildJobsForAction(Compilation &C, const Action *A,
+                               const ToolChain *TC, const char *BoundArch,
+                               bool AtTopLevel, bool MultipleArchs,
+                               const char *LinkingOutput) const;
 
   /// Returns the default name for linked images (e.g., "a.out").
   const char *getDefaultImageName() const;

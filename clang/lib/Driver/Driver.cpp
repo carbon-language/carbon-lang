@@ -1643,12 +1643,11 @@ void Driver::BuildJobs(Compilation &C) const {
         LinkingOutput = getDefaultImageName();
     }
 
-    InputInfo II;
     BuildJobsForAction(C, A, &C.getDefaultToolChain(),
                        /*BoundArch*/ nullptr,
                        /*AtTopLevel*/ true,
                        /*MultipleArchs*/ ArchNames.size() > 1,
-                       /*LinkingOutput*/ LinkingOutput, II);
+                       /*LinkingOutput*/ LinkingOutput);
   }
 
   // If the user passed -Qunused-arguments or there were errors, don't warn
@@ -1776,21 +1775,19 @@ static const Tool *selectToolForJob(Compilation &C, bool SaveTemps,
   return ToolForJob;
 }
 
-void Driver::BuildJobsForAction(Compilation &C, const Action *A,
-                                const ToolChain *TC, const char *BoundArch,
-                                bool AtTopLevel, bool MultipleArchs,
-                                const char *LinkingOutput,
-                                InputInfo &Result) const {
+InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
+                                     const ToolChain *TC, const char *BoundArch,
+                                     bool AtTopLevel, bool MultipleArchs,
+                                     const char *LinkingOutput) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
 
   InputInfoList CudaDeviceInputInfos;
   if (const CudaHostAction *CHA = dyn_cast<CudaHostAction>(A)) {
-    InputInfo II;
     // Append outputs of device jobs to the input list.
     for (const Action *DA : CHA->getDeviceActions()) {
-      BuildJobsForAction(C, DA, TC, nullptr, AtTopLevel,
-                         /*MultipleArchs*/ false, LinkingOutput, II);
-      CudaDeviceInputInfos.push_back(II);
+      CudaDeviceInputInfos.push_back(
+          BuildJobsForAction(C, DA, TC, nullptr, AtTopLevel,
+                             /*MultipleArchs*/ false, LinkingOutput));
     }
     // Override current action with a real host compile action and continue
     // processing it.
@@ -1804,11 +1801,9 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
     Input.claim();
     if (Input.getOption().matches(options::OPT_INPUT)) {
       const char *Name = Input.getValue();
-      Result = InputInfo(Name, A->getType(), Name);
-    } else {
-      Result = InputInfo(&Input, A->getType(), "");
+      return InputInfo(Name, A->getType(), Name);
     }
-    return;
+    return InputInfo(&Input, A->getType(), "");
   }
 
   if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
@@ -1822,19 +1817,17 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
     else
       TC = &C.getDefaultToolChain();
 
-    BuildJobsForAction(C, *BAA->begin(), TC, ArchName, AtTopLevel,
-                       MultipleArchs, LinkingOutput, Result);
-    return;
+    return BuildJobsForAction(C, *BAA->begin(), TC, ArchName, AtTopLevel,
+                              MultipleArchs, LinkingOutput);
   }
 
   if (const CudaDeviceAction *CDA = dyn_cast<CudaDeviceAction>(A)) {
     // Initial processing of CudaDeviceAction carries host params.
     // Call BuildJobsForAction() again, now with correct device parameters.
     assert(CDA->getGpuArchName() && "No GPU name in device action.");
-    BuildJobsForAction(C, *CDA->begin(), C.getCudaDeviceToolChain(),
-                       CDA->getGpuArchName(), CDA->isAtTopLevel(),
-                       /*MultipleArchs*/ true, LinkingOutput, Result);
-    return;
+    return BuildJobsForAction(C, *CDA->begin(), C.getCudaDeviceToolChain(),
+                              CDA->getGpuArchName(), CDA->isAtTopLevel(),
+                              /*MultipleArchs*/ true, LinkingOutput);
   }
 
   const ActionList *Inputs = &A->getInputs();
@@ -1844,16 +1837,15 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
   const Tool *T =
       selectToolForJob(C, isSaveTempsEnabled(), TC, JA, Inputs, CollapsedCHA);
   if (!T)
-    return;
+    return InputInfo();
 
   // If we've collapsed action list that contained CudaHostAction we
   // need to build jobs for device-side inputs it may have held.
   if (CollapsedCHA) {
-    InputInfo II;
     for (const Action *DA : CollapsedCHA->getDeviceActions()) {
-      BuildJobsForAction(C, DA, TC, "", AtTopLevel,
-                         /*MultipleArchs*/ false, LinkingOutput, II);
-      CudaDeviceInputInfos.push_back(II);
+      CudaDeviceInputInfos.push_back(
+          BuildJobsForAction(C, DA, TC, "", AtTopLevel,
+                             /*MultipleArchs*/ false, LinkingOutput));
     }
   }
 
@@ -1863,14 +1855,11 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
     // Treat dsymutil and verify sub-jobs as being at the top-level too, they
     // shouldn't get temporary output names.
     // FIXME: Clean this up.
-    bool SubJobAtTopLevel = false;
-    if (AtTopLevel && (isa<DsymutilJobAction>(A) || isa<VerifyJobAction>(A)))
-      SubJobAtTopLevel = true;
-
-    InputInfo II;
-    BuildJobsForAction(C, Input, TC, BoundArch, SubJobAtTopLevel, MultipleArchs,
-                       LinkingOutput, II);
-    InputInfos.push_back(II);
+    bool SubJobAtTopLevel =
+        AtTopLevel && (isa<DsymutilJobAction>(A) || isa<VerifyJobAction>(A));
+    InputInfos.push_back(BuildJobsForAction(C, Input, TC, BoundArch,
+                                            SubJobAtTopLevel, MultipleArchs,
+                                            LinkingOutput));
   }
 
   // Always use the first input as the base input.
@@ -1886,6 +1875,7 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
     InputInfos.append(CudaDeviceInputInfos.begin(), CudaDeviceInputInfos.end());
 
   // Determine the place to write output to, if any.
+  InputInfo Result;
   if (JA->getType() == types::TY_Nothing)
     Result = InputInfo(A->getType(), BaseInput);
   else
@@ -1906,6 +1896,7 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
     T->ConstructJob(C, *JA, Result, InputInfos,
                     C.getArgsForToolChain(TC, BoundArch), LinkingOutput);
   }
+  return Result;
 }
 
 const char *Driver::getDefaultImageName() const {
