@@ -398,8 +398,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     O << "    " << (OpcodeInfo[i] & 0xffffffff) << "U,\t// "
       << NumberedInstructions->at(i)->TheDef->getName() << "\n";
   }
-  // Add a dummy entry so the array init doesn't end with a comma.
-  O << "    0U\n";
   O << "  };\n\n";
 
   if (BitsLeft < 32) {
@@ -412,8 +410,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
       O << "    " << (OpcodeInfo[i] >> 32) << "U,\t// "
         << NumberedInstructions->at(i)->TheDef->getName() << "\n";
     }
-    // Add a dummy entry so the array init doesn't end with a comma.
-    O << "    0U\n";
     O << "  };\n\n";
   }
 
