@@ -74,11 +74,7 @@ enum class PyObjectType
     Dictionary,
     List,
     String,
-#if PY_MAJOR_VERSION >= 3
     Bytes,
-#else
-    Bytes = String,
-#endif
     Module,
     Callable,
     Tuple,
