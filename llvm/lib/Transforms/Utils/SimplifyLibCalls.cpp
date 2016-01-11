@@ -1397,7 +1397,8 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
   if (TLI->has(LibFunc::sqrtf) && (Callee->getName() == "sqrt" ||
                                    Callee->getIntrinsicID() == Intrinsic::sqrt))
     Ret = optimizeUnaryDoubleFP(CI, B, true);
-  if (!canUseUnsafeFPMath(CI->getParent()->getParent()))
+
+  if (!CI->hasUnsafeAlgebra())
     return Ret;
 
   Instruction *I = dyn_cast<Instruction>(CI->getArgOperand(0));
@@ -1406,7 +1407,7 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
 
   // We're looking for a repeated factor in a multiplication tree,
   // so we can do this fold: sqrt(x * x) -> fabs(x);
-  // or this fold: sqrt(x * x * y) -> fabs(x) * sqrt(y).
+  // or this fold: sqrt((x * x) * y) -> fabs(x) * sqrt(y).
   Value *Op0 = I->getOperand(0);
   Value *Op1 = I->getOperand(1);
   Value *RepeatOp = nullptr;
@@ -1421,6 +1422,7 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
     // variations of this pattern because instcombine's visitFMUL and/or the
     // reassociation pass should give us this form.
     Value *OtherMul0, *OtherMul1;
+    // FIXME: This multiply must be unsafe to allow this transform.
     if (match(Op0, m_FMul(m_Value(OtherMul0), m_Value(OtherMul1)))) {
       // Pattern: sqrt((x * y) * z)
       if (OtherMul0 == OtherMul1) {
@@ -1435,8 +1437,6 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
 
   // Fast math flags for any created instructions should match the sqrt
   // and multiply.
-  // FIXME: We're not checking the sqrt because it doesn't have
-  // fast-math-flags (see earlier comment).
   IRBuilder<>::FastMathFlagGuard Guard(B);
   B.SetFastMathFlags(I->getFastMathFlags());
   // If we found a repeated factor, hoist it out of the square root and
