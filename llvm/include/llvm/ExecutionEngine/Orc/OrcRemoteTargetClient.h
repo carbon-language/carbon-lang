@@ -252,6 +252,19 @@ public:
           : Size(Size), Align(Align), Contents(new char[Size + Align - 1]),
             RemoteAddr(0) {}
 
+      Alloc(Alloc &&Other)
+          : Size(std::move(Other.Size)), Align(std::move(Other.Align)),
+            Contents(std::move(Other.Contents)),
+            RemoteAddr(std::move(Other.RemoteAddr)) {}
+
+      Alloc &operator=(Alloc &&Other) {
+        Size = std::move(Other.Size);
+        Align = std::move(Other.Align);
+        Contents = std::move(Other.Contents);
+        RemoteAddr = std::move(Other.RemoteAddr);
+        return *this;
+      }
+
       uint64_t getSize() const { return Size; }
 
       unsigned getAlign() const { return Align; }
