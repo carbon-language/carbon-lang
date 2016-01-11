@@ -1286,7 +1286,7 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
   def rr : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
-             "\t{$src2, $src1, ${dst} |${dst}, $src1, $src2}"),
+             "\t{$src2, $src1, ${dst}|${dst}, $src1, $src2}"),
              []>, EVEX_4V;
   def rrk : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
@@ -1303,7 +1303,7 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
   def rm  : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
-             "\t{$src2, $src1, ${dst} |${dst},  $src1, $src2}"),
+             "\t{$src2, $src1, ${dst}|${dst}, $src1, $src2}"),
              []>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>;
   def rmk : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.MemOp:$src2),
@@ -6049,12 +6049,12 @@ multiclass avx512_trunc_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
   let mayStore = 1 in {
     def mr : AVX512XS8I<opc, MRMDestMem, (outs),
                (ins x86memop:$dst, SrcInfo.RC:$src),
-               OpcodeStr # "\t{$src, $dst |$dst, $src}",
+               OpcodeStr # "\t{$src, $dst|$dst, $src}",
                []>, EVEX;
 
     def mrk : AVX512XS8I<opc, MRMDestMem, (outs),
                (ins x86memop:$dst, SrcInfo.KRCWM:$mask, SrcInfo.RC:$src),
-               OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
+               OpcodeStr # "\t{$src, $dst {${mask}}|$dst {${mask}}, $src}",
                []>, EVEX, EVEX_K;
   }//mayStore = 1
 }
@@ -6658,12 +6658,12 @@ multiclass compress_by_vec_width<bits<8> opc, X86VectorVTInfo _,
   let mayStore = 1 in {
   def mr : AVX5128I<opc, MRMDestMem, (outs),
               (ins _.MemOp:$dst, _.RC:$src),
-              OpcodeStr # "\t{$src, $dst |$dst, $src}",
+              OpcodeStr # "\t{$src, $dst|$dst, $src}",
               []>, EVEX_CD8<_.EltSize, CD8VT1>;
 
   def mrk : AVX5128I<opc, MRMDestMem, (outs),
               (ins _.MemOp:$dst, _.KRCWM:$mask, _.RC:$src),
-              OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
+              OpcodeStr # "\t{$src, $dst {${mask}}|$dst {${mask}}, $src}",
               [(store (_.VT (vselect _.KRCWM:$mask,
                              (_.VT (X86compress  _.RC:$src)), _.ImmAllZerosV)),
                 addr:$dst)]>,
