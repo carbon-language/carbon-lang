@@ -8,7 +8,6 @@
 #include "llvm/Support/Endian.h"
 
 #include <system_error>
-#include <unistd.h>
 
 namespace llvm {
 namespace orc {
