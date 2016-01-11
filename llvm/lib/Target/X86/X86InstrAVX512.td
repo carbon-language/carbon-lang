@@ -323,18 +323,16 @@ multiclass AVX512_maskable_custom_cmp<bits<8> O, Format F,
                                   string OpcodeStr,
                                   string AttSrcAsm, string IntelSrcAsm,
                                   list<dag> Pattern,
-                                  list<dag> MaskingPattern,
-                                  string Round = "",
-                                  InstrItinClass itin = NoItinerary> {
+                                  list<dag> MaskingPattern> {
     def NAME: AVX512<O, F, Outs, Ins,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst "#Round#"|"#
-                                     "$dst "#Round#", "#IntelSrcAsm#"}",
-                       Pattern, itin>;
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
+                                     "$dst, "#IntelSrcAsm#"}",
+                       Pattern, NoItinerary>;
 
     def NAME#k: AVX512<O, F, Outs, MaskingIns,
-                       OpcodeStr#"\t{"#Round#AttSrcAsm#", $dst {${mask}}|"#
-                                     "$dst {${mask}}, "#IntelSrcAsm#Round#"}",
-                       MaskingPattern, itin>, EVEX_K;
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}|"#
+                                     "$dst {${mask}}, "#IntelSrcAsm#"}",
+                       MaskingPattern, NoItinerary>, EVEX_K;
 }
 
 multiclass AVX512_maskable_common_cmp<bits<8> O, Format F, X86VectorVTInfo _,
@@ -342,33 +340,27 @@ multiclass AVX512_maskable_common_cmp<bits<8> O, Format F, X86VectorVTInfo _,
                                   dag Ins, dag MaskingIns,
                                   string OpcodeStr,
                                   string AttSrcAsm, string IntelSrcAsm,
-                                  dag RHS, dag MaskingRHS,
-                                  string Round = "",
-                                  InstrItinClass itin = NoItinerary> :
+                                  dag RHS, dag MaskingRHS> :
   AVX512_maskable_custom_cmp<O, F, Outs, Ins, MaskingIns, OpcodeStr,
                          AttSrcAsm, IntelSrcAsm,
                          [(set _.KRC:$dst, RHS)],
-                         [(set _.KRC:$dst, MaskingRHS)],
-                         Round, NoItinerary>;
+                         [(set _.KRC:$dst, MaskingRHS)]>;
 
 multiclass AVX512_maskable_cmp<bits<8> O, Format F, X86VectorVTInfo _,
                            dag Outs, dag Ins, string OpcodeStr,
                            string AttSrcAsm, string IntelSrcAsm,
-                           dag RHS, string Round = "",
-                           InstrItinClass itin = NoItinerary> :
+                           dag RHS> :
    AVX512_maskable_common_cmp<O, F, _, Outs, Ins,
                           !con((ins _.KRCWM:$mask), Ins),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                          (and _.KRCWM:$mask, RHS),
-                          Round, itin>;
+                          (and _.KRCWM:$mask, RHS)>;
 
 multiclass AVX512_maskable_cmp_alt<bits<8> O, Format F, X86VectorVTInfo _,
                            dag Outs, dag Ins, string OpcodeStr,
                            string AttSrcAsm, string IntelSrcAsm> :
    AVX512_maskable_custom_cmp<O, F, Outs,
                              Ins, !con((ins _.KRCWM:$mask),Ins), OpcodeStr,
-                             AttSrcAsm, IntelSrcAsm,
-                             [],[],"", NoItinerary>;
+                             AttSrcAsm, IntelSrcAsm, [],[]>;
 
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
