@@ -1223,6 +1223,7 @@ bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
   default:
     return false;
   case R_AARCH64_CALL26:
+  case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
     return canBePreempted(&S, true);
   }
@@ -1287,6 +1288,12 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     uint64_t X = SA - P;
     checkInt<28>(X, Type);
     or32le(Loc, (X & 0x0FFFFFFC) >> 2);
+    break;
+  }
+  case R_AARCH64_CONDBR19: {
+    uint64_t X = SA - P;
+    checkInt<21>(X, Type);
+    or32le(Loc, (X & 0x1FFFFC) << 3);
     break;
   }
   case R_AARCH64_LD64_GOT_LO12_NC:
