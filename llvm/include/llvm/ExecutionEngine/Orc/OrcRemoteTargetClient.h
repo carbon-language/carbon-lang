@@ -266,6 +266,9 @@ public:
           : Size(Size), Align(Align), Contents(new char[Size + Align - 1]),
             RemoteAddr(0) {}
 
+      Alloc(const Alloc&) = delete;
+      Alloc& operator=(const Alloc&) = delete;
+
       Alloc(Alloc &&Other)
           : Size(std::move(Other.Size)), Align(std::move(Other.Align)),
             Contents(std::move(Other.Contents)),
