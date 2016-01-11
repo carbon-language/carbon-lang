@@ -288,6 +288,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   if (!Subtarget->hasFFBL())
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
 
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
+
   static const MVT::SimpleValueType VectorIntTypes[] = {
     MVT::v2i32, MVT::v4i32
   };
