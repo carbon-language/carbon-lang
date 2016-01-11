@@ -28,33 +28,6 @@ public:
   virtual std::error_code send() = 0;
 };
 
-/// RPC channel that reads from and writes from file descriptors.
-class FDRPCChannel : public RPCChannel {
-public:
-  FDRPCChannel(int InFD, int OutFD) : InFD(InFD), OutFD(OutFD) {}
-
-  std::error_code readBytes(char *Dst, unsigned Size) override {
-    assert(Dst && "Attempt to read into null.");
-    ssize_t ReadResult = ::read(InFD, Dst, Size);
-    if (ReadResult != Size)
-      return std::error_code(errno, std::generic_category());
-    return std::error_code();
-  }
-
-  std::error_code appendBytes(const char *Src, unsigned Size) override {
-    assert(Src && "Attempt to append from null.");
-    ssize_t WriteResult = ::write(OutFD, Src, Size);
-    if (WriteResult != Size)
-      std::error_code(errno, std::generic_category());
-    return std::error_code();
-  }
-
-  std::error_code send() override { return std::error_code(); }
-
-private:
-  int InFD, OutFD;
-};
-
 /// RPC channel serialization for a variadic list of arguments.
 template <typename T, typename... Ts>
 std::error_code serialize_seq(RPCChannel &C, const T &Arg, const Ts &... Args) {
