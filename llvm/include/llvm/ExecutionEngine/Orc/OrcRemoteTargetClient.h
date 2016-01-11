@@ -701,10 +701,11 @@ private:
     if (auto EC = call<ReserveMem>(Channel, Id, Size, Align))
       return EC;
 
-    if (auto EC = expect<ReserveMemResponse>(Channel, [&](TargetAddress Addr) {
-          RemoteAddr = Addr;
-          return std::error_code();
-        }))
+    if (std::error_code EC =
+            expect<ReserveMemResponse>(Channel, [&](TargetAddress Addr) {
+              RemoteAddr = Addr;
+              return std::error_code();
+            }))
       return EC;
 
     return std::error_code();
