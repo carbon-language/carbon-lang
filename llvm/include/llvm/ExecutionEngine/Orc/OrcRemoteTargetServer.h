@@ -325,13 +325,14 @@ private:
 
     auto TrampolineBlock =
         sys::OwningMemoryBlock(sys::Memory::allocateMappedMemory(
-            TargetT::PageSize, nullptr,
+            sys::Process::getPageSize(), nullptr,
             sys::Memory::MF_READ | sys::Memory::MF_WRITE, EC));
     if (EC)
       return EC;
 
     unsigned NumTrampolines =
-        (TargetT::PageSize - TargetT::PointerSize) / TargetT::TrampolineSize;
+        (sys::Process::getPageSize() - TargetT::PointerSize) /
+        TargetT::TrampolineSize;
 
     uint8_t *TrampolineMem = static_cast<uint8_t *>(TrampolineBlock.base());
     TargetT::writeTrampolines(TrampolineMem, ResolverBlock.base(),

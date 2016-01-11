@@ -20,13 +20,13 @@
 
 #include "IndirectionUtils.h"
 #include "llvm/Support/Memory.h"
+#include "llvm/Support/Process.h"
 
 namespace llvm {
 namespace orc {
 
 class OrcX86_64 {
 public:
-  static const unsigned PageSize = 4096;
   static const unsigned PointerSize = 8;
   static const unsigned TrampolineSize = 8;
   static const unsigned ResolverCodeSize = 0x78;
@@ -51,7 +51,6 @@ public:
     friend class OrcX86_64;
   public:
     const static unsigned StubSize = 8;
-    const static unsigned PtrSize = 8;
 
     IndirectStubsInfo() : NumStubs(0) {}
     IndirectStubsInfo(IndirectStubsInfo &&Other)
