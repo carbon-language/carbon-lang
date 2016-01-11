@@ -266,9 +266,6 @@ public:
           : Size(Size), Align(Align), Contents(new char[Size + Align - 1]),
             RemoteAddr(0) {}
 
-      Alloc(const Alloc&) = delete;
-      Alloc& operator=(const Alloc&) = delete;
-
       Alloc(Alloc &&Other)
           : Size(std::move(Other.Size)), Align(std::move(Other.Align)),
             Contents(std::move(Other.Contents)),
@@ -308,6 +305,25 @@ public:
     struct ObjectAllocs {
       ObjectAllocs()
           : RemoteCodeAddr(0), RemoteRODataAddr(0), RemoteRWDataAddr(0) {}
+
+      ObjectAllocs(ObjectAllocs &&Other)
+          : RemoteCodeAddr(std::move(Other.RemoteCodeAddr)),
+            RemoteRODataAddr(std::move(Other.RemoteRODataAddr)),
+            RemoteRWDataAddr(std::move(Other.RemoteRWDataAddr)),
+            CodeAllocs(std::move(Other.CodeAllocs)),
+            RODataAllocs(std::move(Other.RODataAllocs)),
+            RWDataAllocs(std::move(Other.RWDataAllocs)) {}
+
+      ObjectAllocs &operator=(ObjectAllocs &&Other) {
+        RemoteCodeAddr = std::move(Other.RemoteCodeAddr);
+        RemoteRODataAddr = std::move(Other.RemoteRODataAddr);
+        RemoteRWDataAddr = std::move(Other.RemoteRWDataAddr);
+        CodeAllocs = std::move(Other.CodeAllocs);
+        RODataAllocs = std::move(Other.RODataAllocs);
+        RWDataAllocs = std::move(Other.RWDataAllocs);
+        return *this;
+      }
+
       TargetAddress RemoteCodeAddr;
       TargetAddress RemoteRODataAddr;
       TargetAddress RemoteRWDataAddr;
