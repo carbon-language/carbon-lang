@@ -1297,8 +1297,12 @@ static Action *buildCudaActions(Compilation &C, DerivedArgList &Args,
     if (!A->getOption().matches(options::OPT_cuda_gpu_arch_EQ))
       continue;
     A->claim();
-    if (GpuArchNames.insert(A->getValue()).second)
-      GpuArchList.push_back(A->getValue());
+
+    const auto& Arch = A->getValue();
+    if (!CudaDeviceAction::IsValidGpuArchName(Arch))
+      C.getDriver().Diag(clang::diag::err_drv_cuda_bad_gpu_arch) << Arch;
+    else if (GpuArchNames.insert(Arch).second)
+      GpuArchList.push_back(Arch);
   }
 
   // Default to sm_20 which is the lowest common denominator for supported GPUs.

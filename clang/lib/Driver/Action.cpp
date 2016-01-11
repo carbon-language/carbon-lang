@@ -9,6 +9,7 @@
 
 #include "clang/Driver/Action.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Regex.h"
 #include <cassert>
 using namespace clang::driver;
 using namespace llvm::opt;
@@ -54,7 +55,14 @@ void CudaDeviceAction::anchor() {}
 CudaDeviceAction::CudaDeviceAction(Action *Input, const char *ArchName,
                                    bool AtTopLevel)
     : Action(CudaDeviceClass, Input), GpuArchName(ArchName),
-      AtTopLevel(AtTopLevel) {}
+      AtTopLevel(AtTopLevel) {
+  assert(IsValidGpuArchName(GpuArchName));
+}
+
+bool CudaDeviceAction::IsValidGpuArchName(llvm::StringRef ArchName) {
+  static llvm::Regex RE("^sm_[0-9]+$");
+  return RE.match(ArchName);
+}
 
 void CudaHostAction::anchor() {}
 

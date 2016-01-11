@@ -15,6 +15,9 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
+
+class StringRef;
+
 namespace opt {
   class Arg;
 }
@@ -133,7 +136,7 @@ public:
 
 class CudaDeviceAction : public Action {
   virtual void anchor();
-  /// GPU architecture to bind -- e.g 'sm_35'.
+  /// GPU architecture to bind.  Always of the form /sm_\d+/.
   const char *GpuArchName;
   /// True when action results are not consumed by the host action (e.g when
   /// -fsyntax-only or --cuda-device-only options are used).
@@ -144,6 +147,8 @@ public:
 
   const char *getGpuArchName() const { return GpuArchName; }
   bool isAtTopLevel() const { return AtTopLevel; }
+
+  static bool IsValidGpuArchName(llvm::StringRef ArchName);
 
   static bool classof(const Action *A) {
     return A->getKind() == CudaDeviceClass;
