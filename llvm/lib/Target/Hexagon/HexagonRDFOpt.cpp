@@ -72,8 +72,8 @@ INITIALIZE_PASS_END(HexagonRDFOpt, "rdfopt", "Hexagon RDF opt", false, false)
 
 
 struct HexagonDCE : public DeadCodeElimination {
-  using DeadCodeElimination::DeadCodeElimination;
-
+  HexagonDCE(DataFlowGraph &G, MachineRegisterInfo &MRI)
+    : DeadCodeElimination(G, MRI) {}
   bool rewrite(NodeAddr<InstrNode*> IA, SetVector<NodeId> &Remove);
   void removeOperand(NodeAddr<InstrNode*> IA, unsigned OpNum);
 
