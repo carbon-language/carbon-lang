@@ -1,14 +1,11 @@
 # Check that even if _gp_disp symbol is defined in the shared library
 # we use our own value.
 
-# RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux \
-# RUN:         %S/Inputs/mips-gp-disp-def.s -o %t-ext.o
-# RUN: ld.lld -shared -o %t-ext-int.so %t-ext.o
-# RUN: sed -e 's/XXXXXXXX/_gp_disp/g' %t-ext-int.so > %t-ext.so
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %t.o
-# RUN: ld.lld -shared -o %t.so %t.o %t-ext.so
+# RUN: ld.lld -shared -o %t.so %t.o %S/Inputs/mips-gp-disp.so
 # RUN: llvm-readobj -symbols %t.so | FileCheck -check-prefix=INT-SO %s
-# RUN: llvm-readobj -symbols %t-ext.so | FileCheck -check-prefix=EXT-SO %s
+# RUN: llvm-readobj -symbols %S/Inputs/mips-gp-disp.so \
+# RUN:   | FileCheck -check-prefix=EXT-SO %s
 # RUN: llvm-objdump -d -t %t.so | FileCheck -check-prefix=DIS %s
 
 # REQUIRES: mips
