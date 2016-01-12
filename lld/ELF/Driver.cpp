@@ -42,9 +42,9 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
     return {ELF32BEKind, EM_MIPS};
   if (S == "elf32ltsmip")
     return {ELF32LEKind, EM_MIPS};
-  if (S == "elf32ppc")
+  if (S == "elf32ppc" || S == "elf32ppc_fbsd")
     return {ELF32BEKind, EM_PPC};
-  if (S == "elf64ppc")
+  if (S == "elf64ppc" || S == "elf64ppc_fbsd")
     return {ELF64BEKind, EM_PPC64};
   if (S == "elf_i386")
     return {ELF32LEKind, EM_386};
