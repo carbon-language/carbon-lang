@@ -3,7 +3,7 @@ This test produces three shared libraries:
 
 1. libt-instr.so is instrumented
 2. libt-no-instr1.so is not instrumented
-3. libt-no-instr2.so is compiled with instrumentation enabled, but the object file is built
+3. libt-no-instr2.so is built with profile rt linked in (via -u<hook>), but the object file is built
    with instrumentation turned off.
 
 After the libraries are built, the main program is then built with/without instrumentation and linked
