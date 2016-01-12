@@ -39,6 +39,8 @@ add_llvm_target(HexagonCodeGen
   HexagonNewValueJump.cpp
   HexagonOptimizeSZextends.cpp
   HexagonPeephole.cpp
+  HexagonRDF.cpp
+  HexagonRDFOpt.cpp
   HexagonRegisterInfo.cpp
   HexagonSelectionDAGInfo.cpp
   HexagonSplitConst32AndConst64.cpp
