@@ -997,7 +997,7 @@ Value *LibCallSimplifier::optimizeUnaryDoubleFP(CallInst *CI, IRBuilder<> &B,
   
   // Propagate fast-math flags from the existing call to the new call.
   IRBuilder<>::FastMathFlagGuard Guard(B);
-  B.SetFastMathFlags(CI->getFastMathFlags());
+  B.setFastMathFlags(CI->getFastMathFlags());
 
   // floor((double)floatval) -> (double)floorf(floatval)
   if (Callee->isIntrinsic()) {
@@ -1035,7 +1035,7 @@ Value *LibCallSimplifier::optimizeBinaryDoubleFP(CallInst *CI, IRBuilder<> &B) {
 
   // Propagate fast-math flags from the existing call to the new call.
   IRBuilder<>::FastMathFlagGuard Guard(B);
-  B.SetFastMathFlags(CI->getFastMathFlags());
+  B.setFastMathFlags(CI->getFastMathFlags());
 
   // fmin((double)floatval1, (double)floatval2)
   //                      -> (double)fminf(floatval1, floatval2)
@@ -1143,7 +1143,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
     if (OpCCallee && TLI->getLibFunc(OpCCallee->getName(), Func) &&
         TLI->has(Func) && (Func == LibFunc::exp || Func == LibFunc::exp2)) {
       IRBuilder<>::FastMathFlagGuard Guard(B);
-      B.SetFastMathFlags(CI->getFastMathFlags());
+      B.setFastMathFlags(CI->getFastMathFlags());
       Value *FMul = B.CreateFMul(OpC->getArgOperand(0), Op2, "mul");
       return EmitUnaryFloatFnCall(FMul, OpCCallee->getName(), B,
                                   OpCCallee->getAttributes());
@@ -1325,7 +1325,7 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
     FMF.setNoSignedZeros();
     FMF.setNoNaNs();
   }
-  B.SetFastMathFlags(FMF);
+  B.setFastMathFlags(FMF);
 
   // We have a relaxed floating-point environment. We can ignore NaN-handling
   // and transform to a compare and select. We do not have to consider errno or
@@ -1368,7 +1368,7 @@ Value *LibCallSimplifier::optimizeLog(CallInst *CI, IRBuilder<> &B) {
   IRBuilder<>::FastMathFlagGuard Guard(B);
   FastMathFlags FMF;
   FMF.setUnsafeAlgebra();
-  B.SetFastMathFlags(FMF);
+  B.setFastMathFlags(FMF);
 
   LibFunc::Func Func;
   Function *F = OpC->getCalledFunction();
@@ -1437,7 +1437,7 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
   // Fast math flags for any created instructions should match the sqrt
   // and multiply.
   IRBuilder<>::FastMathFlagGuard Guard(B);
-  B.SetFastMathFlags(I->getFastMathFlags());
+  B.setFastMathFlags(I->getFastMathFlags());
 
   // If we found a repeated factor, hoist it out of the square root and
   // replace it with the fabs of that factor.

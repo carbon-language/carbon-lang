@@ -3775,7 +3775,7 @@ public:
     IRBuilder<> Builder(ReductionRoot);
     FastMathFlags Unsafe;
     Unsafe.setUnsafeAlgebra();
-    Builder.SetFastMathFlags(Unsafe);
+    Builder.setFastMathFlags(Unsafe);
     unsigned i = 0;
 
     for (; i < NumReducedVals - ReduxWidth + 1; i += ReduxWidth) {
