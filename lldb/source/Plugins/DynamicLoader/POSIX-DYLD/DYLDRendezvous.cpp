@@ -349,7 +349,7 @@ DYLDRendezvous::RemoveSOEntriesFromRemote(LoadedModuleInfoList &module_list)
         // Only add shared libraries and not the executable.
         if (!SOEntryIsMainExecutable(entry))
         {
-            iterator pos = std::find(m_soentries.begin(), m_soentries.end(), entry);
+            auto pos = std::find(m_soentries.begin(), m_soentries.end(), entry);
             if (pos == m_soentries.end())
                 return false;
 
