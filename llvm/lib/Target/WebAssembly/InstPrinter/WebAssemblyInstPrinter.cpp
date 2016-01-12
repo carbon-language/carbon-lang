@@ -151,12 +151,11 @@ void WebAssemblyInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
              WebAssemblyII::VariableOpIsImmediate)) &&
            "WebAssemblyII::VariableOpIsImmediate should be set for "
            "variable_ops immediate ops");
-    if (MII.get(MI->getOpcode()).TSFlags &
-        WebAssemblyII::VariableOpImmediateIsType)
-      // The immediates represent types.
-      O << WebAssembly::TypeToString(MVT::SimpleValueType(Op.getImm()));
-    else
-      O << Op.getImm();
+    // TODO: (MII.get(MI->getOpcode()).TSFlags &
+    //        WebAssemblyII::VariableOpImmediateIsLabel)
+    // can tell us whether this is an immediate referencing a label in the
+    // control flow stack, and it may be nice to pretty-print.
+    O << Op.getImm();
   } else if (Op.isFPImm()) {
     assert((OpNo < MII.get(MI->getOpcode()).getNumOperands() ||
             MII.get(MI->getOpcode()).TSFlags == 0) &&
