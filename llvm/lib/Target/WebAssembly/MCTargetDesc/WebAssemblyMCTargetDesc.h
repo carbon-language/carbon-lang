@@ -58,6 +58,9 @@ enum {
   // For immediate values in the variable_ops range, this flag indicates
   // whether the value represents a type.
   VariableOpImmediateIsType   = (1 << 1),
+  // For immediate values in the variable_ops range, this flag indicates
+  // whether the value represents a control-flow label.
+  VariableOpImmediateIsLabel  = (1 << 2),
 };
 } // end namespace WebAssemblyII
 
