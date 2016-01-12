@@ -1158,7 +1158,7 @@ static uint32_t getELFFlags() {
   if (Config->EMachine != EM_MIPS)
     return 0;
   // FIXME: In fact ELF flags depends on ELF flags of input object files
-  // and selected emulation. For now just use hadr coded values.
+  // and selected emulation. For now just use hard coded values.
   uint32_t V = EF_MIPS_ABI_O32 | EF_MIPS_CPIC | EF_MIPS_ARCH_32R2;
   if (Config->Shared)
     V |= EF_MIPS_PIC;
