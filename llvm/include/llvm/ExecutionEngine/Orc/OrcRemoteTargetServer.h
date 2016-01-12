@@ -169,7 +169,7 @@ private:
         CompiledFnAddr, static_cast<TargetAddress>(
                             reinterpret_cast<uintptr_t>(TrampolineAddr)));
     assert(!EC && "Compile request failed");
-    (void)&EC;
+    (void)EC;
     return CompiledFnAddr;
   }
 
