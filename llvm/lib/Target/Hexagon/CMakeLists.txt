@@ -49,6 +49,7 @@ add_llvm_target(HexagonCodeGen
   HexagonTargetObjectFile.cpp
   HexagonTargetTransformInfo.cpp
   HexagonVLIWPacketizer.cpp
+  RDFGraph.cpp
 )
 
 add_subdirectory(AsmParser)
