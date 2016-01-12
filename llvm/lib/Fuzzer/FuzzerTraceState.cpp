@@ -76,7 +76,7 @@
 #include <algorithm>
 #include <cstring>
 #include <thread>
-#include <unordered_map>
+#include <map>
 
 #if !LLVM_FUZZER_SUPPORTS_DFSAN
 // Stubs for dfsan for platforms where dfsan does not exist and weak
@@ -178,7 +178,7 @@ static void PrintDataByte(uint8_t Byte) {
   else if (Byte >= 32 && Byte < 127)
     Printf("%c", Byte);
   else
-    Printf("\\x02x", Byte);
+    Printf("\\x%02x", Byte);
 }
 
 static void PrintData(const uint8_t *Data, size_t Size) {
@@ -235,7 +235,26 @@ class TraceState {
     RecordingTraces = false;
     for (size_t i = 0; i < NumMutations; i++) {
       auto &M = Mutations[i];
-      USF.GetMD().AddWordToAutoDictionary(Unit(M.Data, M.Data + M.Size), M.Pos);
+      Unit U(M.Data, M.Data + M.Size);
+      if (Options.Verbosity >= 2) {
+        AutoDictUnitCounts[U]++;
+        AutoDictAdds++;
+        if ((AutoDictAdds & (AutoDictAdds - 1)) == 0) {
+          typedef std::pair<size_t, Unit> CU;
+          std::vector<CU> CountedUnits;
+          for (auto &I : AutoDictUnitCounts)
+            CountedUnits.push_back(std::make_pair(I.second, I.first));
+          std::sort(CountedUnits.begin(), CountedUnits.end(),
+                    [](const CU &a, const CU &b) { return a.first > b.first; });
+          Printf("AutoDict:\n");
+          for (auto &I : CountedUnits) {
+            Printf("   %zd ", I.first);
+            PrintData(I.second.data(), I.second.size());
+            Printf("\n");
+          }
+        }
+      }
+      USF.GetMD().AddWordToAutoDictionary(U, M.Pos);
     }
   }
 
@@ -267,6 +286,8 @@ class TraceState {
   UserSuppliedFuzzer &USF;
   const Fuzzer::FuzzingOptions &Options;
   const Unit &CurrentUnit;
+  std::map<Unit, size_t> AutoDictUnitCounts;
+  size_t AutoDictAdds = 0;
   static thread_local bool IsMyThread;
 };
 
@@ -398,15 +419,17 @@ int TraceState::TryToAddDesiredData(const uint8_t *PresentData,
 void TraceState::TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
                                   uint64_t Arg1, uint64_t Arg2) {
   if (!RecordingTraces || !IsMyThread) return;
+  if ((CmpType == ICMP_EQ || CmpType == ICMP_NE) && Arg1 == Arg2)
+    return;  // No reason to mutate.
   int Added = 0;
-  if (Options.Verbosity >= 3)
-    Printf("TraceCmp %zd/%zd: %p %zd %zd\n", CmpSize, CmpType, PC, Arg1, Arg2);
   Added += TryToAddDesiredData(Arg1, Arg2, CmpSize);
   Added += TryToAddDesiredData(Arg2, Arg1, CmpSize);
   if (!Added && CmpSize == 4 && IsTwoByteData(Arg1) && IsTwoByteData(Arg2)) {
     Added += TryToAddDesiredData(Arg1, Arg2, 2);
     Added += TryToAddDesiredData(Arg2, Arg1, 2);
   }
+  if (Options.Verbosity >= 3 && Added)
+    Printf("TraceCmp %zd/%zd: %p %zd %zd\n", CmpSize, CmpType, PC, Arg1, Arg2);
 }
 
 void TraceState::TraceMemcmpCallback(size_t CmpSize, const uint8_t *Data1,
