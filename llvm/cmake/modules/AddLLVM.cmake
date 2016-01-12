@@ -308,6 +308,8 @@ endfunction(set_windows_version_resource_properties)
 #   SHARED;STATIC
 #     STATIC by default w/o BUILD_SHARED_LIBS.
 #     SHARED by default w/  BUILD_SHARED_LIBS.
+#   OBJECT
+#     Also create an OBJECT library target. Default if STATIC && SHARED.
 #   MODULE
 #     Target ${name} might not be created on unsupported platforms.
 #     Check with "if(TARGET ${name})".
@@ -329,7 +331,7 @@ endfunction(set_windows_version_resource_properties)
 #   )
 function(llvm_add_library name)
   cmake_parse_arguments(ARG
-    "MODULE;SHARED;STATIC;DISABLE_LLVM_LINK_LLVM_DYLIB;SONAME"
+    "MODULE;SHARED;STATIC;OBJECT;DISABLE_LLVM_LINK_LLVM_DYLIB;SONAME"
     "OUTPUT_NAME"
     "ADDITIONAL_HEADERS;DEPENDS;LINK_COMPONENTS;LINK_LIBS;OBJLIBS"
     ${ARGN})
@@ -362,7 +364,7 @@ function(llvm_add_library name)
   endif()
 
   # Generate objlib
-  if(ARG_SHARED AND ARG_STATIC)
+  if((ARG_SHARED AND ARG_STATIC) OR ARG_OBJECT)
     # Generate an obj library for both targets.
     set(obj_name "obj.${name}")
     add_library(${obj_name} OBJECT EXCLUDE_FROM_ALL
