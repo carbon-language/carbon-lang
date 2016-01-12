@@ -1127,29 +1127,26 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
                                   Callee->getAttributes());
   }
 
+  // FIXME: Use instruction-level FMF.
   bool UnsafeFPMath = canUseUnsafeFPMath(CI->getParent()->getParent());
 
-  // pow(exp(x), y) -> exp(x*y)
+  // pow(exp(x), y) -> exp(x * y)
   // pow(exp2(x), y) -> exp2(x * y)
-  // We enable these only under fast-math. Besides rounding
-  // differences the transformation changes overflow and
-  // underflow behavior quite dramatically.
+  // We enable these only with fast-math. Besides rounding differences, the
+  // transformation changes overflow and underflow behavior quite dramatically.
   // Example: x = 1000, y = 0.001.
   // pow(exp(x), y) = pow(inf, 0.001) = inf, whereas exp(x*y) = exp(1).
-  if (UnsafeFPMath) {
-    if (auto *OpC = dyn_cast<CallInst>(Op1)) {
+  auto *OpC = dyn_cast<CallInst>(Op1);
+  if (OpC && OpC->hasUnsafeAlgebra() && CI->hasUnsafeAlgebra()) {
+    LibFunc::Func Func;
+    Function *OpCCallee = OpC->getCalledFunction();
+    if (OpCCallee && TLI->getLibFunc(OpCCallee->getName(), Func) &&
+        TLI->has(Func) && (Func == LibFunc::exp || Func == LibFunc::exp2)) {
       IRBuilder<>::FastMathFlagGuard Guard(B);
-      FastMathFlags FMF;
-      FMF.setUnsafeAlgebra();
-      B.SetFastMathFlags(FMF);
-
-      LibFunc::Func Func;
-      Function *OpCCallee = OpC->getCalledFunction();
-      if (OpCCallee && TLI->getLibFunc(OpCCallee->getName(), Func) &&
-          TLI->has(Func) && (Func == LibFunc::exp || Func == LibFunc::exp2))
-        return EmitUnaryFloatFnCall(
-            B.CreateFMul(OpC->getArgOperand(0), Op2, "mul"),
-            OpCCallee->getName(), B, OpCCallee->getAttributes());
+      B.SetFastMathFlags(CI->getFastMathFlags());
+      Value *FMul = B.CreateFMul(OpC->getArgOperand(0), Op2, "mul");
+      return EmitUnaryFloatFnCall(FMul, OpCCallee->getName(), B,
+                                  OpCCallee->getAttributes());
     }
   }
 
