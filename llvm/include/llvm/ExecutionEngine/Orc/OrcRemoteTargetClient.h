@@ -102,7 +102,7 @@ public:
                                 uint32_t RWDataAlign) override {
       Unmapped.push_back(ObjectAllocs());
 
-      DEBUG(dbgs() << "Allocator " << Id << " reserved:\n");
+//      DEBUG(dbgs() << "Allocator " << Id << " reserved:\n");
 
       if (CodeSize != 0) {
         if (std::error_code EC = Client.reserveMem(
@@ -111,10 +111,10 @@ public:
           // FIXME; Add error to poll.
           llvm_unreachable("Failed reserving remote memory.");
         }
-        DEBUG(dbgs() << "  code: "
-                     << format("0x%016x", Unmapped.back().RemoteCodeAddr)
-                     << " (" << CodeSize << " bytes, alignment " << CodeAlign
-                     << ")\n");
+//         DEBUG(dbgs() << "  code: "
+//                      << format("0x%016x", Unmapped.back().RemoteCodeAddr)
+//                      << " (" << CodeSize << " bytes, alignment " << CodeAlign
+//                      << ")\n");
       }
 
       if (RODataSize != 0) {
@@ -125,10 +125,10 @@ public:
           // FIXME; Add error to poll.
           llvm_unreachable("Failed reserving remote memory.");
         }
-        DEBUG(dbgs() << "  ro-data: "
-                     << format("0x%016x", Unmapped.back().RemoteRODataAddr)
-                     << " (" << RODataSize << " bytes, alignment "
-                     << RODataAlign << ")\n");
+//         DEBUG(dbgs() << "  ro-data: "
+//                      << format("0x%016x", Unmapped.back().RemoteRODataAddr)
+//                      << " (" << RODataSize << " bytes, alignment "
+//                      << RODataAlign << ")\n");
       }
 
       if (RWDataSize != 0) {
@@ -139,10 +139,10 @@ public:
           // FIXME; Add error to poll.
           llvm_unreachable("Failed reserving remote memory.");
         }
-        DEBUG(dbgs() << "  rw-data: "
-                     << format("0x%016x", Unmapped.back().RemoteRWDataAddr)
-                     << " (" << RWDataSize << " bytes, alignment "
-                     << RWDataAlign << ")\n");
+//         DEBUG(dbgs() << "  rw-data: "
+//                      << format("0x%016x", Unmapped.back().RemoteRWDataAddr)
+//                      << " (" << RWDataSize << " bytes, alignment "
+//                      << RWDataAlign << ")\n");
       }
     }
 
