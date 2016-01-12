@@ -125,9 +125,11 @@ extern "C" {
   // to know what is being passed to libc functions, e.g. memcmp.
   // FIXME: implement more hooks.
   void __sanitizer_weak_hook_memcmp(void *called_pc, const void *s1,
-                                    const void *s2, size_t n);
+                                    const void *s2, size_t n, int result);
   void __sanitizer_weak_hook_strncmp(void *called_pc, const char *s1,
-                                    const char *s2, size_t n);
+                                    const char *s2, size_t n, int result);
+  void __sanitizer_weak_hook_strcmp(void *called_pc, const char *s1,
+                                    const char *s2, int result);
 #ifdef __cplusplus
 }  // extern "C"
 #endif
