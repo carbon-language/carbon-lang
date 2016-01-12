@@ -635,8 +635,6 @@ public:
 private:
   SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
                                        StringRef OutsecName);
-  OutputSectionBase<ELFT> *createAux(InputSectionBase<ELFT> *C,
-                                     const SectionKey<ELFT::Is64Bits> &Key);
 
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSectionBase<ELFT> *> Map;
 };
