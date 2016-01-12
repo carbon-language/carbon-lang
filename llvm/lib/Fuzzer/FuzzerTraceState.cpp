@@ -170,25 +170,6 @@ struct TraceBasedMutation {
   uint8_t  Data[kMaxSize];
 };
 
-static void PrintDataByte(uint8_t Byte) {
-  if (Byte == '\\')
-    Printf("\\\\");
-  else if (Byte == '"')
-    Printf("\\\"");
-  else if (Byte >= 32 && Byte < 127)
-    Printf("%c", Byte);
-  else
-    Printf("\\x%02x", Byte);
-}
-
-static void PrintData(const uint8_t *Data, size_t Size) {
-  Printf("\"");
-  for (size_t i = 0; i < Size; i++) {
-    PrintDataByte(Data[i]);
-  }
-  Printf("\"");
-}
-
 const size_t TraceBasedMutation::kMaxSize;
 
 class TraceState {
@@ -249,7 +230,7 @@ class TraceState {
           Printf("AutoDict:\n");
           for (auto &I : CountedUnits) {
             Printf("   %zd ", I.first);
-            PrintData(I.second.data(), I.second.size());
+            PrintASCII(I.second);
             Printf("\n");
           }
         }
@@ -440,8 +421,8 @@ void TraceState::TraceMemcmpCallback(size_t CmpSize, const uint8_t *Data1,
   int Added1 = TryToAddDesiredData(Data2, Data1, CmpSize);
   if ((Added1 || Added2) && Options.Verbosity >= 3) {
     Printf("MemCmp Added %d%d: ", Added1, Added2);
-    if (Added1) PrintData(Data1, CmpSize);
-    if (Added2) PrintData(Data2, CmpSize);
+    if (Added1) PrintASCII(Data1, CmpSize);
+    if (Added2) PrintASCII(Data2, CmpSize);
     Printf("\n");
   }
 }
