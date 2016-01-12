@@ -73,6 +73,16 @@ void f7(long foo)
     clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
 }
 
+void f8(long foo)
+{
+  unsigned index = -1;
+  if (index < foo) index = foo;
+  if (index + 1L == 0L)
+    clang_analyzer_warnIfReached(); // no-warning
+  else
+    clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
+}
+
 void f9(long foo)
 {
   unsigned index = -1;
@@ -93,12 +103,32 @@ void f10(long foo)
     clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
 }
 
+void f11(long foo)
+{
+  unsigned index = -1;
+  if (index < foo) index = foo;
+  if (index + 1UL == 0L)
+    clang_analyzer_warnIfReached(); // no-warning
+  else
+    clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
+}
+
 void f12(long foo)
 {
   unsigned index = -1;
   if (index < foo) index = foo;
   if (index - 1UL == 0L) // Was not reached prior fix.
     clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
+  else
+    clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
+}
+
+void f13(int foo)
+{
+  unsigned short index = -1;
+  if (index < foo) index = foo;
+  if (index + 1 == 0)
+    clang_analyzer_warnIfReached(); // no-warning
   else
     clang_analyzer_warnIfReached(); // expected-warning{{REACHABLE}}
 }
