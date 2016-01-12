@@ -28,17 +28,19 @@ __tls_init.exit:
 }
 
 ; CHECK-LABEL: _ZTW2sg
-; CHECK: push {r1, r2, r3, r4, r7, lr}
-; CHECK: push {r9, r12}
-; CHECK: vpush {d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31}
-; CHECK: vpush {d0, d1, d2, d3, d4, d5, d6, d7}
+; CHECK: push {lr}
+; CHECK-NOT: push {r1, r2, r3, r4, r7, lr}
+; CHECK-NOT: push {r9, r12}
+; CHECK-NOT: vpush {d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31}
+; CHECK-NOT: vpush {d0, d1, d2, d3, d4, d5, d6, d7}
 ; CHECK: blx
 ; CHECK: bne [[BB_end:.?LBB0_[0-9]+]]
 ; CHECK; blx
 ; CHECK: tlv_atexit
 ; CHECK: [[BB_end]]:
 ; CHECK: blx
-; CHECK: vpop {d0, d1, d2, d3, d4, d5, d6, d7}
-; CHECK: vpop {d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31}
-; CHECK: pop {r9, r12}
-; CHECK: pop {r1, r2, r3, r4, r7, pc}
+; CHECK-NOT: vpop {d0, d1, d2, d3, d4, d5, d6, d7}
+; CHECK-NOT: vpop {d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31}
+; CHECK-NOT: pop {r9, r12}
+; CHECK-NOT: pop {r1, r2, r3, r4, r7, pc}
+; CHECK: pop {lr}
