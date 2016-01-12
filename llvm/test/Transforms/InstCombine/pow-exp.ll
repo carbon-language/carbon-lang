@@ -11,6 +11,17 @@ define double @pow_exp(double %x, double %y) #0 {
 ; CHECK-NEXT:  %exp = call fast double @exp(double %mul)
 ; CHECK-NEXT:  ret double %exp
 
+define double @pow_exp2(double %x, double %y) #0 {
+  %call = call fast double @exp2(double %x) #0
+  %pow = call fast double @llvm.pow.f64(double %call, double %y)
+  ret double %pow
+}
+
+; CHECK-LABEL: define double @pow_exp2(
+; CHECK-NEXT:  %mul = fmul fast double %x, %y
+; CHECK-NEXT:  %exp2 = call fast double @exp2(double %mul)
+; CHECK-NEXT:  ret double %exp2
+
 ; FIXME: This should not be transformed because the 'exp' call is not fast.
 define double @pow_exp_not_fast(double %x, double %y) #0 {
   %call = call double @exp(double %x)
@@ -35,6 +46,7 @@ define double @function_pointer(double ()* %fptr, double %p1) #0 {
 ; CHECK-NEXT:  %pow = call fast double @llvm.pow.f64(double %call1, double %p1)
 
 declare double @exp(double)
+declare double @exp2(double)
 declare double @llvm.pow.f64(double, double)
 attributes #0 = { "unsafe-fp-math"="true" nounwind readnone }
 
