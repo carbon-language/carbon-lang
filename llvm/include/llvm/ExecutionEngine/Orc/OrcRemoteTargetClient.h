@@ -118,8 +118,10 @@ public:
       }
 
       if (RODataSize != 0) {
-        if (auto EC = Client.reserveMem(Unmapped.back().RemoteRODataAddr, Id,
-                                        RODataSize, RODataAlign)) {
+        if (std::error_code EC =
+                Client.reserveMem(Unmapped.back().RemoteRODataAddr, Id,
+                                  RODataSize, RODataAlign)) {
+          (void)EC;
           // FIXME; Add error to poll.
           llvm_unreachable("Failed reserving remote memory.");
         }
@@ -130,8 +132,10 @@ public:
       }
 
       if (RWDataSize != 0) {
-        if (auto EC = Client.reserveMem(Unmapped.back().RemoteRWDataAddr, Id,
-                                        RWDataSize, RWDataAlign)) {
+        if (std::error_code EC =
+                Client.reserveMem(Unmapped.back().RemoteRWDataAddr, Id,
+                                  RWDataSize, RWDataAlign)) {
+          (void)EC;
           // FIXME; Add error to poll.
           llvm_unreachable("Failed reserving remote memory.");
         }
