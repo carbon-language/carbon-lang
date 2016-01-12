@@ -1,7 +1,7 @@
 ; Do setup work for all below tests: generate bitcode and combined index
 ; RUN: llvm-as -function-summary %s -o %t.bc
 ; RUN: llvm-as -function-summary %p/Inputs/funcimport_alias.ll -o %t2.bc
-; RUN: llvm-lto -thinlto -o %t3 %t.bc %t2.bc %t3.bc
+; RUN: llvm-lto -thinlto -o %t3 %t.bc %t2.bc
 
 ; Do the import now. Ensures that the importer handles an external call
 ; from imported callanalias() to a function that is defined already in
