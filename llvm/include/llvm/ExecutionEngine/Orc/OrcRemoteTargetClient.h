@@ -105,8 +105,8 @@ public:
       DEBUG(dbgs() << "Allocator " << Id << " reserved:\n");
 
       if (CodeSize != 0) {
-        std::error_code EC = Client.reserveMem(
-          Unmapped.back().RemoteCodeAddr, Id, CodeSize, CodeAlign);
+        std::error_code EC = Client.reserveMem(Unmapped.back().RemoteCodeAddr,
+                                               Id, CodeSize, CodeAlign);
         // FIXME; Add error to poll.
         assert(!EC && "Failed reserving remote memory.");
         (void)EC;
@@ -117,9 +117,8 @@ public:
       }
 
       if (RODataSize != 0) {
-        std::error_code EC =
-                Client.reserveMem(Unmapped.back().RemoteRODataAddr, Id,
-                                  RODataSize, RODataAlign);
+        std::error_code EC = Client.reserveMem(Unmapped.back().RemoteRODataAddr,
+                                               Id, RODataSize, RODataAlign);
         // FIXME; Add error to poll.
         assert(!EC && "Failed reserving remote memory.");
         (void)EC;
@@ -130,9 +129,8 @@ public:
       }
 
       if (RWDataSize != 0) {
-        std::error_code EC =
-          Client.reserveMem(Unmapped.back().RemoteRWDataAddr, Id,
-                            RWDataSize, RWDataAlign);
+        std::error_code EC = Client.reserveMem(Unmapped.back().RemoteRWDataAddr,
+                                               Id, RWDataSize, RWDataAlign);
         // FIXME; Add error to poll.
         assert(!EC && "Failed reserving remote memory.");
         (void)EC;
