@@ -98,10 +98,7 @@ private:
 };
 } // anonymous namespace
 
-template <class ELFT> static bool shouldUseRela() {
-  ELFKind K = cast<ELFFileBase<ELFT>>(Config->FirstElf)->getELFKind();
-  return K == ELF64LEKind || K == ELF64BEKind;
-}
+template <class ELFT> static bool shouldUseRela() { return ELFT::Is64Bits; }
 
 template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   // Initialize output sections that are handled by Writer specially.

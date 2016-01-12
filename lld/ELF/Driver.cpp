@@ -177,10 +177,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
   if (auto *Arg = Args.getLastArg(OPT_m)) {
+    // Parse ELF{32,64}{LE,BE} and CPU type.
     StringRef S = Arg->getValue();
-    std::pair<ELFKind, uint16_t> P = parseEmulation(S);
-    Config->EKind = P.first;
-    Config->EMachine = P.second;
+    std::tie(Config->EKind, Config->EMachine) = parseEmulation(S);
     Config->Emulation = S;
   }
 
