@@ -726,14 +726,10 @@ private:
     if (ExistingError)
       return ExistingError;
 
-    if (auto EC = call<ReserveMem>(Channel, Id, Size, Align))
+    if (std::error_code EC = call<ReserveMem>(Channel, Id, Size, Align))
       return EC;
 
-    if (std::error_code EC =
-            expect<ReserveMemResponse>(Channel, readArgs(RemoteAddr)))
-      return EC;
-
-    return std::error_code();
+    return expect<ReserveMemResponse>(Channel, readArgs(RemoteAddr));
   }
 
   std::error_code setProtections(ResourceIdMgr::ResourceId Id,
