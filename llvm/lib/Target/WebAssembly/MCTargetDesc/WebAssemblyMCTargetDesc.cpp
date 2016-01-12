@@ -46,6 +46,12 @@ static MCInstrInfo *createMCInstrInfo() {
   return X;
 }
 
+static MCRegisterInfo *createMCRegisterInfo(const Triple & /*T*/) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitWebAssemblyMCRegisterInfo(X, 0);
+  return X;
+}
+
 static MCInstPrinter *createMCInstPrinter(const Triple & /*T*/,
                                           unsigned SyntaxVariant,
                                           const MCAsmInfo &MAI,
@@ -92,6 +98,9 @@ extern "C" void LLVMInitializeWebAssemblyTargetMC() {
 
     // Register the MC instruction info.
     TargetRegistry::RegisterMCInstrInfo(*T, createMCInstrInfo);
+
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createMCRegisterInfo);
 
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createMCInstPrinter);
