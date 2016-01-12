@@ -730,10 +730,7 @@ private:
       return EC;
 
     if (std::error_code EC =
-            expect<ReserveMemResponse>(Channel, [&](TargetAddress Addr) {
-              RemoteAddr = Addr;
-              return std::error_code();
-            }))
+            expect<ReserveMemResponse>(Channel, readArgs(RemoteAddr)))
       return EC;
 
     return std::error_code();
