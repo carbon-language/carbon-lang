@@ -3363,7 +3363,8 @@ Parser::tryParseExceptionSpecification(bool Delayed,
     ConsumeAndStoreUntil(tok::r_paren, *ExceptionSpecTokens,
                          /*StopAtSemi=*/true,
                          /*ConsumeFinalToken=*/true);
-    SpecificationRange.setEnd(Tok.getLocation());
+    SpecificationRange.setEnd(ExceptionSpecTokens->back().getLocation());
+
     return EST_Unparsed;
   }
   
