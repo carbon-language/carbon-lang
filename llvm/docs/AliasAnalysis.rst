@@ -190,7 +190,7 @@ this property are side-effect free, only depending on their input arguments and
 the state of memory when they are called.  This property allows calls to these
 functions to be eliminated and moved around, as long as there is no store
 instruction that changes the contents of memory.  Note that all functions that
-satisfy the ``doesNotAccessMemory`` method also satisfies ``onlyReadsMemory``.
+satisfy the ``doesNotAccessMemory`` method also satisfy ``onlyReadsMemory``.
 
 Writing a new ``AliasAnalysis`` Implementation
 ==============================================
