@@ -165,10 +165,7 @@ function(add_compiler_rt_runtime name type)
   endif()
 endfunction()
 
-# when cross compiling, COMPILER_RT_TEST_COMPILER_CFLAGS help
-# in compilation and linking of unittests.
-string(REPLACE " " ";" COMPILER_RT_UNITTEST_CFLAGS ${COMPILER_RT_TEST_COMPILER_CFLAGS})
-set(COMPILER_RT_UNITTEST_LINKFLAGS ${COMPILER_RT_UNITTEST_CFLAGS})
+set(COMPILER_RT_TEST_CFLAGS)
 
 # Unittests support.
 set(COMPILER_RT_GTEST_PATH ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest)
@@ -180,14 +177,14 @@ set(COMPILER_RT_GTEST_CFLAGS
   -I${COMPILER_RT_GTEST_PATH}
 )
 
-append_list_if(COMPILER_RT_DEBUG -DSANITIZER_DEBUG=1 COMPILER_RT_UNITTEST_CFLAGS)
+append_list_if(COMPILER_RT_DEBUG -DSANITIZER_DEBUG=1 COMPILER_RT_TEST_CFLAGS)
 
 if(MSVC)
   # clang doesn't support exceptions on Windows yet.
-  list(APPEND COMPILER_RT_UNITTEST_CFLAGS -D_HAS_EXCEPTIONS=0)
+  list(APPEND COMPILER_RT_TEST_CFLAGS -D_HAS_EXCEPTIONS=0)
 
   # We should teach clang to understand "#pragma intrinsic", see PR19898.
-  list(APPEND COMPILER_RT_UNITTEST_CFLAGS -Wno-undefined-inline)
+  list(APPEND COMPILER_RT_TEST_CFLAGS -Wno-undefined-inline)
 
   # Clang doesn't support SEH on Windows yet.
   list(APPEND COMPILER_RT_GTEST_CFLAGS -DGTEST_HAS_SEH=0)

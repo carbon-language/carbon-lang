@@ -21,7 +21,7 @@ set(ASAN_UNITTEST_HEADERS
   asan_test_utils.h)
 
 set(ASAN_UNITTEST_COMMON_CFLAGS
-  ${COMPILER_RT_UNITTEST_CFLAGS}
+  ${COMPILER_RT_TEST_CFLAGS}
   ${COMPILER_RT_GTEST_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
@@ -33,11 +33,6 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -Werror=sign-compare
   -Wno-non-virtual-dtor)
 append_list_if(COMPILER_RT_HAS_WVARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
-
-# This will ensure the target linker is used
-# during cross compilation
-set(ASAN_UNITTEST_COMMON_LINKFLAGS
-  ${COMPILER_RT_UNITTEST_LINKFLAGS})
 
 # -gline-tables-only must be enough for ASan, so use it if possible.
 if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
