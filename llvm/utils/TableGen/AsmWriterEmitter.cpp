@@ -292,6 +292,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   /// OpcodeInfo - This encodes the index of the string to use for the first
   /// chunk of the output as well as indices used for operand printing.
   std::vector<uint64_t> OpcodeInfo;
+  const unsigned OpcodeInfoBits = 64;
 
   // Add all strings to the string table upfront so it can generate an optimized
   // representation.
@@ -340,7 +341,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
   // To reduce code size, we compactify common instructions into a few bits
   // in the opcode-indexed table.
-  unsigned BitsLeft = 64-AsmStrBits;
+  unsigned BitsLeft = OpcodeInfoBits-AsmStrBits;
 
   std::vector<std::vector<std::string>> TableDrivenOperandPrinters;
 
@@ -368,7 +369,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     // Otherwise, we can include this in the initial lookup table.  Add it in.
     for (unsigned i = 0, e = InstIdxs.size(); i != e; ++i)
       if (InstIdxs[i] != ~0U) {
-        OpcodeInfo[i] |= (uint64_t)InstIdxs[i] << (64-BitsLeft);
+        OpcodeInfo[i] |= (uint64_t)InstIdxs[i] << (OpcodeInfoBits-BitsLeft);
       }
     BitsLeft -= NumBits;
 
@@ -394,12 +395,13 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "  };\n\n";
 
   // Emit the lookup tables in pieces to minimize wasted bytes.
-  unsigned BytesNeeded = ((64 - BitsLeft) + 7) / 8;
+  unsigned BytesNeeded = ((OpcodeInfoBits - BitsLeft) + 7) / 8;
   unsigned Table = 0, Shift = 0;
   SmallString<128> BitsString;
   raw_svector_ostream BitsOS(BitsString);
   // If the total bits is more than 32-bits we need to use a 64-bit type.
-  BitsOS << "  uint" << ((BitsLeft < 32) ? 64 : 32) << "_t Bits = 0;\n";
+  BitsOS << "  uint" << ((BitsLeft < (OpcodeInfoBits - 32)) ? 64 : 32)
+         << "_t Bits = 0;\n";
   while (BytesNeeded != 0) {
     // Figure out how big this table section needs to be, but no bigger than 4.
     unsigned TableSize = std::min(1 << Log2_32(BytesNeeded), 4);
@@ -416,7 +418,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     // Emit string to combine the individual table lookups.
     BitsOS << "  Bits |= ";
     // If the total bits is more than 32-bits we need to use a 64-bit type.
-    if (BitsLeft < 32)
+    if (BitsLeft < (OpcodeInfoBits - 32))
       BitsOS << "(uint64_t)";
     BitsOS << "OpInfo" << Table << "[MI->getOpcode()] << " << Shift << ";\n";
     // Prepare the shift for the next iteration and increment the table count.
@@ -435,7 +437,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ")-1;\n\n";
 
   // Output the table driven operand information.
-  BitsLeft = 64-AsmStrBits;
+  BitsLeft = OpcodeInfoBits-AsmStrBits;
   for (unsigned i = 0, e = TableDrivenOperandPrinters.size(); i != e; ++i) {
     std::vector<std::string> &Commands = TableDrivenOperandPrinters[i];
 
@@ -451,7 +453,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     if (Commands.size() == 2) {
       // Emit two possibilitys with if/else.
       O << "  if ((Bits >> "
-        << (64-BitsLeft) << ") & "
+        << (OpcodeInfoBits-BitsLeft) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
         << Commands[1]
         << "  } else {\n"
@@ -462,7 +464,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
       O << Commands[0] << "\n\n";
     } else {
       O << "  switch ((Bits >> "
-        << (64-BitsLeft) << ") & "
+        << (OpcodeInfoBits-BitsLeft) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
         << "  default: llvm_unreachable(\"Invalid command number.\");\n";
 
