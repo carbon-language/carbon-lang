@@ -634,7 +634,7 @@ transformations:
 * It uses mod/ref information to hoist function calls out of loops that do not
   write to memory and are loop-invariant.
 
-* If uses alias information to promote memory objects that are loaded and stored
+* It uses alias information to promote memory objects that are loaded and stored
   to in loops to live in a register instead.  It can do this if there are no may
   aliases to the loaded/stored memory location.
 
