@@ -131,8 +131,8 @@ ModRefInfo ScopedNoAliasAAResult::getModRefInfo(ImmutableCallSite CS1,
 void ScopedNoAliasAAResult::collectMDInDomain(
     const MDNode *List, const MDNode *Domain,
     SmallPtrSetImpl<const MDNode *> &Nodes) const {
-  for (unsigned i = 0, ie = List->getNumOperands(); i != ie; ++i)
-    if (const MDNode *MD = dyn_cast<MDNode>(List->getOperand(i)))
+  for (const MDOperand &MDOp : List->operands())
+    if (const MDNode *MD = dyn_cast<MDNode>(MDOp))
       if (AliasScopeNode(MD).getDomain() == Domain)
         Nodes.insert(MD);
 }
@@ -144,8 +144,8 @@ bool ScopedNoAliasAAResult::mayAliasInScopes(const MDNode *Scopes,
 
   // Collect the set of scope domains relevant to the noalias scopes.
   SmallPtrSet<const MDNode *, 16> Domains;
-  for (unsigned i = 0, ie = NoAlias->getNumOperands(); i != ie; ++i)
-    if (const MDNode *NAMD = dyn_cast<MDNode>(NoAlias->getOperand(i)))
+  for (const MDOperand &MDOp : NoAlias->operands())
+    if (const MDNode *NAMD = dyn_cast<MDNode>(MDOp))
       if (const MDNode *Domain = AliasScopeNode(NAMD).getDomain())
         Domains.insert(Domain);
 
