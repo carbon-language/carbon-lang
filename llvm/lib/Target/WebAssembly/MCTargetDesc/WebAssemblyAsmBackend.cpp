@@ -73,8 +73,8 @@ void WebAssemblyAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                        unsigned DataSize, uint64_t Value,
                                        bool IsPCRel) const {
   const MCFixupKindInfo &Info = getFixupKindInfo(Fixup.getKind());
-  unsigned NumBytes = RoundUpToAlignment(Info.TargetSize, 8);
-  if (!Value)
+  unsigned NumBytes = (Info.TargetSize + 7) / 8;
+  if (Value == 0)
     return; // Doesn't change encoding.
 
   // Shift the value into position.
