@@ -26,7 +26,7 @@
 // ... = load %ptr2, !alias.scope !{ !scope1, !scope2 }, !noalias !{ !scope1 }
 //
 // When evaluating an aliasing query, if one of the instructions is associated
-// has a set of noalias scopes in some domain that is superset of the alias
+// has a set of noalias scopes in some domain that is a superset of the alias
 // scopes in that domain of some other instruction, then the two memory
 // accesses are assumed not to alias.
 //
