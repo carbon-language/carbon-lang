@@ -1,4 +1,4 @@
-// RUN: not llvm-mc %s -o %t.o -filetype=obj 2>&1 | FileCheck %s
+// RUN: not llvm-mc -triple x86_64-pc-linux %s -o %t.o -filetype=obj 2>&1 | FileCheck %s
 
         .quad foo@gotpcrel
 // CHECK:      32 bit reloc applied to a field with a different size
