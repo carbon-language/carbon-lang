@@ -880,6 +880,95 @@ SDValue SITargetLowering::LowerFormalArguments(
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
 }
 
+SDValue SITargetLowering::LowerReturn(SDValue Chain,
+                                      CallingConv::ID CallConv,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                      const SmallVectorImpl<SDValue> &OutVals,
+                                      SDLoc DL, SelectionDAG &DAG) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
+
+  if (Info->getShaderType() == ShaderType::COMPUTE)
+    return AMDGPUTargetLowering::LowerReturn(Chain, CallConv, isVarArg, Outs,
+                                             OutVals, DL, DAG);
+
+  SmallVector<ISD::OutputArg, 48> Splits;
+  SmallVector<SDValue, 48> SplitVals;
+
+  // Split vectors into their elements.
+  for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
+    const ISD::OutputArg &Out = Outs[i];
+
+    if (Out.VT.isVector()) {
+      MVT VT = Out.VT.getVectorElementType();
+      ISD::OutputArg NewOut = Out;
+      NewOut.Flags.setSplit();
+      NewOut.VT = VT;
+
+      // We want the original number of vector elements here, e.g.
+      // three or five, not four or eight.
+      unsigned NumElements = Out.ArgVT.getVectorNumElements();
+
+      for (unsigned j = 0; j != NumElements; ++j) {
+        SDValue Elem = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT, OutVals[i],
+                                   DAG.getConstant(j, DL, MVT::i32));
+        SplitVals.push_back(Elem);
+        Splits.push_back(NewOut);
+        NewOut.PartOffset += NewOut.VT.getStoreSize();
+      }
+    } else {
+      SplitVals.push_back(OutVals[i]);
+      Splits.push_back(Out);
+    }
+  }
+
+  // CCValAssign - represent the assignment of the return value to a location.
+  SmallVector<CCValAssign, 48> RVLocs;
+
+  // CCState - Info about the registers and stack slots.
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
+
+  // Analyze outgoing return values.
+  AnalyzeReturn(CCInfo, Splits);
+
+  SDValue Flag;
+  SmallVector<SDValue, 48> RetOps;
+  RetOps.push_back(Chain); // Operand #0 = Chain (updated below)
+
+  // Copy the result values into the output registers.
+  for (unsigned i = 0, realRVLocIdx = 0;
+       i != RVLocs.size();
+       ++i, ++realRVLocIdx) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+
+    SDValue Arg = SplitVals[realRVLocIdx];
+
+    // Copied from other backends.
+    switch (VA.getLocInfo()) {
+    default: llvm_unreachable("Unknown loc info!");
+    case CCValAssign::Full:
+      break;
+    case CCValAssign::BCvt:
+      Arg = DAG.getNode(ISD::BITCAST, DL, VA.getLocVT(), Arg);
+      break;
+    }
+
+    Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), Arg, Flag);
+    Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
+  }
+
+  // Update chain and glue.
+  RetOps[0] = Chain;
+  if (Flag.getNode())
+    RetOps.push_back(Flag);
+
+  return DAG.getNode(AMDGPUISD::RET_FLAG, DL, MVT::Other, RetOps);
+}
+
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
 
