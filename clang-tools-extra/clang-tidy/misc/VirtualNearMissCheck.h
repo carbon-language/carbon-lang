@@ -36,13 +36,13 @@ private:
   /// Check if the given method is possible to be overridden by some other
   /// method.
   ///
-  /// It should look up the PossibleMap or update it.
+  /// Results are memoized in PossibleMap.
   bool isPossibleToBeOverridden(const CXXMethodDecl *BaseMD);
 
   /// Check if the given base method is overridden by some methods in the given
   /// derived class.
   ///
-  /// It should look up the OverriddenMap or update it.
+  /// Results are memoized in OverriddenMap.
   bool isOverriddenByDerivedClass(const CXXMethodDecl *BaseMD,
                                   const CXXRecordDecl *DerivedRD);
 
