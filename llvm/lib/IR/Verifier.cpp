@@ -4155,9 +4155,9 @@ void Verifier::verifyDIExpression(const DbgInfoIntrinsic &I,
     // argument. Doing this in the general case would require looking through
     // any dereferences that may be in the expression.
     Assert(ArgumentTypeSizeInBits == VarSize,
-           "size of passed value (" + std::to_string(ArgumentTypeSizeInBits) +
+           "size of passed value (" + utostr(ArgumentTypeSizeInBits) +
                ") does not match size of declared variable (" +
-               std::to_string(VarSize) + ")",
+               utostr(VarSize) + ")",
            &I, Arg, V, V->getType(), E);
   } else if (E->getElement(0) == dwarf::DW_OP_deref) {
     Assert(ArgumentTypeSizeInBits == M->getDataLayout().getPointerSizeInBits(),
