@@ -65,7 +65,7 @@ private:
 
 static void PrintCases(std::vector<std::pair<std::string,
                        AsmWriterOperand> > &OpsToPrint, raw_ostream &O) {
-  O << "    case " << OpsToPrint.back().first << ": ";
+  O << "    case " << OpsToPrint.back().first << ":";
   AsmWriterOperand TheOp = OpsToPrint.back().second;
   OpsToPrint.pop_back();
 
@@ -73,13 +73,13 @@ static void PrintCases(std::vector<std::pair<std::string,
   // emit a case label for them.
   for (unsigned i = OpsToPrint.size(); i != 0; --i)
     if (OpsToPrint[i-1].second == TheOp) {
-      O << "\n    case " << OpsToPrint[i-1].first << ": ";
+      O << "\n    case " << OpsToPrint[i-1].first << ":";
       OpsToPrint.erase(OpsToPrint.begin()+i-1);
     }
 
   // Finally, emit the code.
-  O << TheOp.getCode();
-  O << "break;\n";
+  O << "\n      " << TheOp.getCode();
+  O << "\n      break;\n";
 }
 
 
@@ -120,6 +120,7 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
       // If this is the operand that varies between all of the instructions,
       // emit a switch for just this operand now.
       O << "    switch (MI->getOpcode()) {\n";
+      O << "    default: llvm_unreachable(\"Unexpected opcode.\");\n";
       std::vector<std::pair<std::string, AsmWriterOperand> > OpsToPrint;
       OpsToPrint.push_back(std::make_pair(FirstInst.CGI->Namespace + "::" +
                                           FirstInst.CGI->TheDef->getName(),
@@ -499,11 +500,11 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   if (!Instructions.empty()) {
     // Find the opcode # of inline asm.
     O << "  switch (MI->getOpcode()) {\n";
+    O << "  default: llvm_unreachable(\"Unexpected opcode.\");\n";
     while (!Instructions.empty())
       EmitInstructions(Instructions, O);
 
     O << "  }\n";
-    O << "  return;\n";
   }
 
   O << "}\n";
