@@ -67,8 +67,6 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_CallingConv &Conv) {
     CASE_OUTPUT_ENUM_CLASS_STR(PDB_CallingConv, ClrCall    , "clrcall", OS)
     CASE_OUTPUT_ENUM_CLASS_STR(PDB_CallingConv, Inline     , "inlinecall", OS)
     CASE_OUTPUT_ENUM_CLASS_STR(PDB_CallingConv, NearVector , "vectorcall", OS)
-  default:
-    OS << "unknowncall";
   }
   return OS;
 }
