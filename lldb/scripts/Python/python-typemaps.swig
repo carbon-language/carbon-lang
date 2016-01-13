@@ -1,20 +1,22 @@
 /* Typemap definitions, to allow SWIG to properly handle 'char**' data types. */
 
 %typemap(in) char ** {
+  using namespace lldb_private;
   /* Check if is a list  */
-  if (PyList_Check($input)) {
-    int size = PyList_Size($input);
+  if (PythonList::Check($input)) {
+    PythonList list(PyRefType::Borrowed, $input);
+    int size = list.GetSize();
     int i = 0;
-    $1 = (char **) malloc((size+1) * sizeof(char*));
+    $1 = (char**)malloc((size+1)*sizeof(char*));
     for (i = 0; i < size; i++) {
-      PyObject *o = PyList_GetItem($input,i);
-      if (PyString_Check(o))
-        $1[i] = PyString_AsString(o);
-      else {
+      PythonString py_str = list.GetItemAtIndex(i).AsType<PythonString>();
+      if (!py_str.IsAllocated()) {
         PyErr_SetString(PyExc_TypeError,"list must contain strings");
         free($1);
-        return NULL;
+        return nullptr;
       }
+
+      $1[i] = const_cast<char*>(py_str.GetString().data());
     }
     $1[i] = 0;
   } else if ($input == Py_None) {
@@ -42,12 +44,14 @@
 %typemap(typecheck) char ** {
   /* Check if is a list  */
   $1 = 1;
-  if (PyList_Check($input)) {
-    int size = PyList_Size($input);
+  using namespace lldb_private;
+  if (PythonList::Check($input)) {
+    PythonList list(PyRefType::Borrowed, $input);
+    int size = list.GetSize();
     int i = 0;
     for (i = 0; i < size; i++) {
-      PyObject *o = PyList_GetItem($input,i);
-      if (!PyString_Check(o)) { $1 = 0; }
+      PythonString s = list.GetItemAtIndex(i).AsType<PythonString>();
+      if (!s.IsAllocated()) { $1 = 0; }
     }
   }
   else
@@ -81,13 +85,12 @@
 
     $1 = (char**)malloc((size+1)*sizeof(char*));
     for (int i = 0; i < size; i++) {
-      PythonObject o = py_list.GetItemAtIndex(i);
-      if (!PythonString::Check(o.get())) {
+      auto py_str = py_list.GetItemAtIndex(i).AsType<PythonString>();
+      if (!py_str.IsAllocated()) {
         PyErr_SetString(PyExc_TypeError,"list must contain strings");
         free($1);
         return nullptr;
       }
-      auto py_str = o.AsType<PythonString>();
       $1[i] = const_cast<char*>(py_str.GetString().data());
     }
 
@@ -101,14 +104,16 @@
 }
 
 %typemap(typecheck) char const ** {
+  using namespace lldb_private;
   /* Check if is a list  */
   $1 = 1;
-  if (PyList_Check($input)) {
-    int size = PyList_Size($input);
+  if (PythonList::Check($input)) {
+    PythonList list(PyRefType::Borrowed, $input);
+    int size = list.GetSize();
     int i = 0;
     for (i = 0; i < size; i++) {
-      PyObject *o = PyList_GetItem($input,i);
-      if (!PyString_Check(o)) { $1 = 0; }
+      PythonString s = list.GetItemAtIndex(i).AsType<PythonString>();
+      if (!s.IsAllocated()) { $1 = 0; }
     }
   }
   else
@@ -126,10 +131,13 @@
   int i;
   len = 0;
   while ($1[len]) len++;
-  $result = PyList_New(len);
+  using namespace lldb_private;
+  PythonList list(len);
   for (i = 0; i < len; i++) {
-    PyList_SetItem($result, i, PyString_FromString($1[i]));
+    PythonString str($1[i]);
+    list.SetItemAtIndex(i, str);
   }
+  $result = list.release();
 }
 
 /* Typemap definitions to allow SWIG to properly handle char buffer. */
