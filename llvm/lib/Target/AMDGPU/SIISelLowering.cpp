@@ -601,14 +601,18 @@ SDValue SITargetLowering::LowerFormalArguments(
 
       assert((PSInputNum <= 15) && "Too many PS inputs!");
 
-      if (!Arg.Used) {
+      if (!Arg.Used && !Info->isPSInputAllocated(PSInputNum)) {
         // We can safely skip PS inputs
         Skipped.set(i);
         ++PSInputNum;
         continue;
       }
 
-      Info->PSInputAddr |= 1 << PSInputNum++;
+      Info->markPSInputAllocated(PSInputNum);
+      if (Arg.Used)
+        Info->PSInputEna |= 1 << PSInputNum;
+
+      ++PSInputNum;
     }
 
     // Second split vertices into their elements
@@ -638,11 +642,18 @@ SDValue SITargetLowering::LowerFormalArguments(
                  *DAG.getContext());
 
   // At least one interpolation mode must be enabled or else the GPU will hang.
+  //
+  // Check PSInputAddr instead of PSInputEna. The idea is that if the user set
+  // PSInputAddr, the user wants to enable some bits after the compilation
+  // based on run-time states. Since we can't know what the final PSInputEna
+  // will look like, so we shouldn't do anything here and the user should take
+  // responsibility for the correct programming.
   if (Info->getShaderType() == ShaderType::PIXEL &&
-      (Info->PSInputAddr & 0x7F) == 0) {
-    Info->PSInputAddr |= 1;
+      (Info->getPSInputAddr() & 0x7F) == 0) {
     CCInfo.AllocateReg(AMDGPU::VGPR0);
     CCInfo.AllocateReg(AMDGPU::VGPR1);
+    Info->markPSInputAllocated(0);
+    Info->PSInputEna |= 1;
   }
 
   if (Info->getShaderType() == ShaderType::COMPUTE) {

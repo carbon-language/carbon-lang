@@ -57,10 +57,13 @@ class SIMachineFunctionInfo : public AMDGPUMachineFunction {
   unsigned WorkGroupInfoSystemSGPR;
   unsigned PrivateSegmentWaveByteOffsetSystemSGPR;
 
+  // Graphics info.
+  unsigned PSInputAddr;
+
 public:
   // FIXME: Make private
   unsigned LDSWaveSpillSize;
-  unsigned PSInputAddr;
+  unsigned PSInputEna;
   std::map<unsigned, unsigned> LaneVGPRs;
   unsigned ScratchOffsetReg;
   unsigned NumUserSGPRs;
@@ -271,6 +274,18 @@ public:
 
   void setHasSpilledVGPRs(bool Spill = true) {
     HasSpilledVGPRs = Spill;
+  }
+
+  unsigned getPSInputAddr() const {
+    return PSInputAddr;
+  }
+
+  bool isPSInputAllocated(unsigned Index) const {
+    return PSInputAddr & (1 << Index);
+  }
+
+  void markPSInputAllocated(unsigned Index) {
+    PSInputAddr |= 1 << Index;
   }
 
   unsigned getMaximumWorkGroupSize(const MachineFunction &MF) const;
