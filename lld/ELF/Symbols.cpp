@@ -146,10 +146,11 @@ std::string elf2::demangle(StringRef Name) {
   if (!Config->Demangle)
     return Name;
 
-  // Don't call __cxa_demangle if the name does not look like a C++
-  // symbol name. We need this check because some implementations of the
-  // function try to demangle a name as something different (e.g. type name)
-  // if it is not a mangled symbol name.
+  // __cxa_demangle can be used to demangle strings other than symbol
+  // names which do not necessarily start with "_Z". Name can be
+  // either a C or C++ symbol. Don't call __cxa_demangle if the name
+  // does not look like a C++ symbol name to avoid getting unexpected
+  // result for a C symbol that happens to match a mangled type name.
   if (!Name.startswith("_Z"))
     return Name;
 
