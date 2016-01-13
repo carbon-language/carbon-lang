@@ -8,5 +8,6 @@ RUN: llvm-dsymutil -f -oso-prepend-path=%t.dir -y \
 RUN:   %p/dummy-debug-map.map -o %t 2>&1 | FileCheck %s
 
 Module-not-found should be reported only once.
-CHECK:     warning: {{.*}}Bar.pcm: No such file or directory
-CHECK-NOT: warning: {{.*}}Bar.pcm: No such file or directory
+The exact error message deoends on the OS so we don't check for it.
+CHECK:     warning: {{.*}}Bar.pcm:
+CHECK-NOT: warning: {{.*}}Bar.pcm:
