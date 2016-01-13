@@ -13,6 +13,11 @@
 #include "InputFiles.h"
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/config.h"
+
+#ifdef HAVE_CXXABI_H
+#include <cxxabi.h>
+#endif
 
 using namespace llvm;
 using namespace llvm::object;
@@ -131,6 +136,23 @@ void elf2::initSymbols() {
   doInitSymbols<ELF32BE>();
   doInitSymbols<ELF64LE>();
   doInitSymbols<ELF64BE>();
+}
+
+// Returns the demangled C++ symbol name for Name.
+std::string elf2::demangle(StringRef Name) {
+#if !defined(HAVE_CXXABI_H)
+  return Name;
+#else
+  if (!Config->Demangle)
+    return Name;
+  char *Buf =
+      abi::__cxa_demangle(Name.str().c_str(), nullptr, nullptr, nullptr);
+  if (!Buf)
+    return Name;
+  std::string S(Buf);
+  free(Buf);
+  return S;
+#endif
 }
 
 template int SymbolBody::compare<ELF32LE>(SymbolBody *Other);
