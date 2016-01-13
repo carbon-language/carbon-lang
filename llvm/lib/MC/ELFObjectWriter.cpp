@@ -129,9 +129,9 @@ class ELFObjectWriter : public MCObjectWriter {
     bool hasRelocationAddend() const {
       return TargetObjectWriter->hasRelocationAddend();
     }
-    unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                          bool IsPCRel) const {
-      return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel);
+    unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
+                          const MCFixup &Fixup, bool IsPCRel) const {
+      return TargetObjectWriter->getRelocType(Ctx, Target, Fixup, IsPCRel);
     }
 
     void align(unsigned Alignment);
@@ -682,7 +682,7 @@ void ELFObjectWriter::recordRelocation(MCAssembler &Asm,
     }
   }
 
-  unsigned Type = GetRelocType(Target, Fixup, IsPCRel);
+  unsigned Type = getRelocType(Ctx, Target, Fixup, IsPCRel);
   bool RelocateWithSymbol = shouldRelocateWithSymbol(Asm, RefA, SymA, C, Type);
   if (!RelocateWithSymbol && SymA && !SymA->isUndefined())
     C += Layout.getSymbolOffset(*SymA);
