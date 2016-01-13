@@ -27,20 +27,6 @@
   }
 }
 
-%typemap(in) lldb::tid_t {
-  using namespace lldb_private;
-  if (PythonInteger::Check($input))
-  {
-    PythonInteger py_int(PyRefType::Borrowed, $input);
-    $1 = static_cast<lldb::tid_t>(py_int.GetInteger());
-  }
-  else
-  {
-    PyErr_SetString(PyExc_ValueError, "Expecting an integer");
-    return nullptr;
-  }
-}
-
 %typemap(typecheck) char ** {
   /* Check if is a list  */
   $1 = 1;
@@ -76,68 +62,19 @@
   $result = list.release();
 }
 
-%typemap(in) char const ** {
-  /* Check if is a list  */
+
+%typemap(in) lldb::tid_t {
   using namespace lldb_private;
-  if (PythonList::Check($input)) {
-    PythonList py_list(PyRefType::Borrowed, $input);
-    int size = py_list.GetSize();
-
-    $1 = (char**)malloc((size+1)*sizeof(char*));
-    for (int i = 0; i < size; i++) {
-      auto py_str = py_list.GetItemAtIndex(i).AsType<PythonString>();
-      if (!py_str.IsAllocated()) {
-        PyErr_SetString(PyExc_TypeError,"list must contain strings");
-        free($1);
-        return nullptr;
-      }
-      $1[i] = const_cast<char*>(py_str.GetString().data());
-    }
-
-    $1[size] = 0;
-  } else if ($input == Py_None) {
-    $1 = nullptr;
-  } else {
-    PyErr_SetString(PyExc_TypeError,"not a list");
-    return nullptr;
-  }
-}
-
-%typemap(typecheck) char const ** {
-  using namespace lldb_private;
-  /* Check if is a list  */
-  $1 = 1;
-  if (PythonList::Check($input)) {
-    PythonList list(PyRefType::Borrowed, $input);
-    int size = list.GetSize();
-    int i = 0;
-    for (i = 0; i < size; i++) {
-      PythonString s = list.GetItemAtIndex(i).AsType<PythonString>();
-      if (!s.IsAllocated()) { $1 = 0; }
-    }
+  if (PythonInteger::Check($input))
+  {
+    PythonInteger py_int(PyRefType::Borrowed, $input);
+    $1 = static_cast<lldb::tid_t>(py_int.GetInteger());
   }
   else
   {
-    $1 = ( ($input == Py_None) ? 1 : 0);
+    PyErr_SetString(PyExc_ValueError, "Expecting an integer");
+    return nullptr;
   }
-}
-
-%typemap(freearg) char const ** {
-  free((char *) $1);
-}
-
-%typemap(out) char const ** {
-  int len;
-  int i;
-  len = 0;
-  while ($1[len]) len++;
-  using namespace lldb_private;
-  PythonList list(len);
-  for (i = 0; i < len; i++) {
-    PythonString str($1[i]);
-    list.SetItemAtIndex(i, str);
-  }
-  $result = list.release();
 }
 
 /* Typemap definitions to allow SWIG to properly handle char buffer. */
