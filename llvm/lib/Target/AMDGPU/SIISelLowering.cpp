@@ -597,9 +597,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
     // First check if it's a PS input addr
     if (Info->getShaderType() == ShaderType::PIXEL && !Arg.Flags.isInReg() &&
-        !Arg.Flags.isByVal()) {
-
-      assert((PSInputNum <= 15) && "Too many PS inputs!");
+        !Arg.Flags.isByVal() && PSInputNum <= 15) {
 
       if (!Arg.Used && !Info->isPSInputAllocated(PSInputNum)) {
         // We can safely skip PS inputs
