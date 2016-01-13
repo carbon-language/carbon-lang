@@ -145,6 +145,11 @@ std::string elf2::demangle(StringRef Name) {
 #else
   if (!Config->Demangle)
     return Name;
+
+  // Return if it does not look like a C++ symbol.
+  if (!Name.startswith("_Z"))
+    return Name;
+
   char *Buf =
       abi::__cxa_demangle(Name.str().c_str(), nullptr, nullptr, nullptr);
   if (!Buf)
