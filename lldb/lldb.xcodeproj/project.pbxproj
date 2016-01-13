@@ -6300,7 +6300,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "sh $SRCROOT/scripts/finish-swig-wrapper-classes.sh $SRCROOT $TARGET_BUILD_DIR $CONFIGURATION_BUILD_DIR \"\"";
+			shellScript = "sh $SRCROOT/scripts/finish-swig-wrapper-classes.sh $SRCROOT $TARGET_BUILD_DIR $BUILT_PRODUCTS_DIR \"\"";
 		};
 		AF3059151B4B390800E25622 /* Run Script - remove unneeded Resources and Swift dirs from iOS LLDB.framework bundle */ = {
 			isa = PBXShellScriptBuildPhase;
