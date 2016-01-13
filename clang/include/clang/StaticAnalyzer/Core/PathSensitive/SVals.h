@@ -45,9 +45,11 @@ class SVal {
 public:
   enum BaseKind {
     // The enumerators must be representable using 2 bits.
-#define BASIC_SVAL(Id, Parent) Id ## Kind,
-#define ABSTRACT_SVAL_WITH_KIND(Id, Parent) Id ## Kind,
-#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.def"
+    UndefinedValKind = 0,  // for subclass UndefinedVal (an uninitialized value)
+    UnknownValKind = 1,    // for subclass UnknownVal (a void value)
+    LocKind = 2,        // for subclass Loc (an L-value)
+    NonLocKind = 3      // for subclass NonLoc (an R-value that's not
+                        //   an L-value)
   };
   enum { BaseBits = 2, BaseMask = 0x3 };
 
@@ -304,10 +306,8 @@ private:
 
 namespace nonloc {
 
-enum Kind {
-#define NONLOC_SVAL(Id, Parent) Id ## Kind,
-#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.def"
-};
+enum Kind { ConcreteIntKind, SymbolValKind,
+            LocAsIntegerKind, CompoundValKind, LazyCompoundValKind };
 
 /// \brief Represents symbolic expression.
 class SymbolVal : public NonLoc {
@@ -465,10 +465,7 @@ private:
 
 namespace loc {
 
-enum Kind {
-#define LOC_SVAL(Id, Parent) Id ## Kind,
-#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.def"
-};
+enum Kind { GotoLabelKind, MemRegionValKind, ConcreteIntKind };
 
 class GotoLabel : public Loc {
 public:
