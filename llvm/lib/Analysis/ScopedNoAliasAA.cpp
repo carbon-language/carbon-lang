@@ -51,9 +51,9 @@ static cl::opt<bool> EnableScopedNoAlias("enable-scoped-noalias",
                                          cl::init(true));
 
 namespace {
-/// AliasScopeNode - This is a simple wrapper around an MDNode which provides
-/// a higher-level interface by hiding the details of how alias analysis
-/// information is encoded in its operands.
+/// This is a simple wrapper around an MDNode which provides a higher-level
+/// interface by hiding the details of how alias analysis information is encoded
+/// in its operands.
 class AliasScopeNode {
   const MDNode *Node;
 
@@ -61,10 +61,10 @@ public:
   AliasScopeNode() : Node(nullptr) {}
   explicit AliasScopeNode(const MDNode *N) : Node(N) {}
 
-  /// getNode - Get the MDNode for this AliasScopeNode.
+  /// Get the MDNode for this AliasScopeNode.
   const MDNode *getNode() const { return Node; }
 
-  /// getDomain - Get the MDNode for this AliasScopeNode's domain.
+  /// Get the MDNode for this AliasScopeNode's domain.
   const MDNode *getDomain() const {
     if (Node->getNumOperands() < 2)
       return nullptr;
