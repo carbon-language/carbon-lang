@@ -84,6 +84,9 @@ private:
 
   bool LastInstWritesM0;
 
+  /// \brief Whether the machine function returns void
+  bool ReturnsVoid;
+
   /// \brief Get increment/decrement amount for this instruction.
   Counters getHwCounts(MachineInstr &MI);
 
@@ -322,7 +325,9 @@ bool SIInsertWaits::insertWait(MachineBasicBlock &MBB,
                                const Counters &Required) {
 
   // End of program? No need to wait on anything
-  if (I != MBB.end() && I->getOpcode() == AMDGPU::S_ENDPGM)
+  // A function not returning void needs to wait, because other bytecode will
+  // be appended after it and we don't know what it will be.
+  if (I != MBB.end() && I->getOpcode() == AMDGPU::S_ENDPGM && ReturnsVoid)
     return false;
 
   // Figure out if the async instructions execute in order
@@ -465,6 +470,7 @@ bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
   LastIssued = ZeroCounts;
   LastOpcodeType = OTHER;
   LastInstWritesM0 = false;
+  ReturnsVoid = MF.getInfo<SIMachineFunctionInfo>()->returnsVoid();
 
   memset(&UsedRegs, 0, sizeof(UsedRegs));
   memset(&DefinedRegs, 0, sizeof(DefinedRegs));

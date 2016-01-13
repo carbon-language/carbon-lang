@@ -47,6 +47,7 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     WorkGroupInfoSystemSGPR(AMDGPU::NoRegister),
     PrivateSegmentWaveByteOffsetSystemSGPR(AMDGPU::NoRegister),
     PSInputAddr(0),
+    ReturnsVoid(true),
     LDSWaveSpillSize(0),
     PSInputEna(0),
     NumUserSGPRs(0),

@@ -59,6 +59,7 @@ class SIMachineFunctionInfo : public AMDGPUMachineFunction {
 
   // Graphics info.
   unsigned PSInputAddr;
+  bool ReturnsVoid;
 
 public:
   // FIXME: Make private
@@ -286,6 +287,14 @@ public:
 
   void markPSInputAllocated(unsigned Index) {
     PSInputAddr |= 1 << Index;
+  }
+
+  bool returnsVoid() const {
+    return ReturnsVoid;
+  }
+
+  void setIfReturnsVoid(bool Value) {
+    ReturnsVoid = Value;
   }
 
   unsigned getMaximumWorkGroupSize(const MachineFunction &MF) const;

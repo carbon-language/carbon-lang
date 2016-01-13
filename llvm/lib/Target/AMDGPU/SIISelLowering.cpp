@@ -893,6 +893,8 @@ SDValue SITargetLowering::LowerReturn(SDValue Chain,
     return AMDGPUTargetLowering::LowerReturn(Chain, CallConv, isVarArg, Outs,
                                              OutVals, DL, DAG);
 
+  Info->setIfReturnsVoid(Outs.size() == 0);
+
   SmallVector<ISD::OutputArg, 48> Splits;
   SmallVector<SDValue, 48> SplitVals;
 
