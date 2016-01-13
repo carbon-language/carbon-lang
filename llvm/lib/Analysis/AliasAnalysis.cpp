@@ -544,8 +544,7 @@ bool llvm::isNoAliasCall(const Value *V) {
   return false;
 }
 
-bool llvm::isNoAliasArgument(const Value *V)
-{
+bool llvm::isNoAliasArgument(const Value *V) {
   if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasNoAliasAttr();
   return false;
@@ -563,7 +562,6 @@ bool llvm::isIdentifiedObject(const Value *V) {
   return false;
 }
 
-bool llvm::isIdentifiedFunctionLocal(const Value *V)
-{
+bool llvm::isIdentifiedFunctionLocal(const Value *V) {
   return isa<AllocaInst>(V) || isNoAliasCall(V) || isNoAliasArgument(V);
 }
