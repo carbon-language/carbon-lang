@@ -451,9 +451,6 @@ static TraceState *TS;
 
 void Fuzzer::StartTraceRecording() {
   if (!TS) return;
-  if (ReallyHaveDFSan())
-    for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++)
-      dfsan_set_label(i + 1, &CurrentUnit[i], 1);
   TS->StartTraceRecording();
 }
 
@@ -462,18 +459,24 @@ void Fuzzer::StopTraceRecording() {
   TS->StopTraceRecording();
 }
 
+void Fuzzer::AssignTaintLabels(uint8_t *Data, size_t Size) {
+  if (!Options.UseTraces) return;
+  if (!ReallyHaveDFSan()) return;
+  for (size_t i = 0; i < Size; i++)
+    dfsan_set_label(i + 1, &Data[i], 1);
+}
+
 void Fuzzer::InitializeTraceState() {
   if (!Options.UseTraces) return;
   TS = new TraceState(USF, Options, CurrentUnit);
-  CurrentUnit.resize(Options.MaxLen);
-  // The rest really requires DFSan.
-  if (!ReallyHaveDFSan()) return;
-  for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++) {
-    dfsan_label L = dfsan_create_label("input", (void*)(i + 1));
-    // We assume that no one else has called dfsan_create_label before.
-    if (L != i + 1) {
-      Printf("DFSan labels are not starting from 1, exiting\n");
-      exit(1);
+  if (ReallyHaveDFSan()) {
+    for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++) {
+      dfsan_label L = dfsan_create_label("input", (void *)(i + 1));
+      // We assume that no one else has called dfsan_create_label before.
+      if (L != i + 1) {
+        Printf("DFSan labels are not starting from 1, exiting\n");
+        exit(1);
+      }
     }
   }
 }

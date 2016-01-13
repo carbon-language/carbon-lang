@@ -106,6 +106,7 @@ class Fuzzer {
   void Drill();
   void ShuffleAndMinimize();
   void InitializeTraceState();
+  void AssignTaintLabels(uint8_t *Data, size_t Size);
   size_t CorpusSize() const { return Corpus.size(); }
   void ReadDir(const std::string &Path, long *Epoch) {
     Printf("Loading corpus: %s\n", Path.c_str());

@@ -11,6 +11,8 @@
 
 #include "FuzzerInternal.h"
 #include <algorithm>
+#include <cstring>
+#include <memory>
 
 #if defined(__has_include)
 # if __has_include(<sanitizer/coverage_interface.h>)
@@ -240,11 +242,12 @@ void Fuzzer::RunOneAndUpdateCorpus(Unit &U) {
 }
 
 void Fuzzer::ExecuteCallback(const Unit &U) {
-  const uint8_t *Data = U.data();
-  uint8_t EmptyData;
-  if (!Data) 
-    Data = &EmptyData;
-  int Res = USF.TargetFunction(Data, U.size());
+  // We copy the contents of Unit into a separate heap buffer
+  // so that we reliably find buffer overflows in it.
+  std::unique_ptr<uint8_t[]> Data(new uint8_t[U.size()]);
+  memcpy(Data.get(), U.data(), U.size());
+  AssignTaintLabels(Data.get(), U.size());
+  int Res = USF.TargetFunction(Data.get(), U.size());
   (void)Res;
   assert(Res == 0);
 }
