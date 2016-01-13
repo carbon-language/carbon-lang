@@ -434,7 +434,7 @@ namespace std {
 #endif
 
 // Allow for build-time disabling of unsigned integer sanitization
-#ifndef _LIBCPP_DISABLE_UBSAN_UNSIGNED_INTEGER_CHECK
+#if !defined(_LIBCPP_DISABLE_UBSAN_UNSIGNED_INTEGER_CHECK) && __has_attribute(no_sanitize)
 #define _LIBCPP_DISABLE_UBSAN_UNSIGNED_INTEGER_CHECK __attribute((no_sanitize("unsigned-integer-overflow")))
 #endif 
 
