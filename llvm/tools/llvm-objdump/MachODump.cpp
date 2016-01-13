@@ -1651,8 +1651,9 @@ void llvm::ParseInputMachO(StringRef Filename) {
     } else
       errs() << "llvm-objdump: '" << Filename << "': "
              << "Object is not a Mach-O file type.\n";
-  } else
-    report_error(Filename, object_error::invalid_file_type);
+    return;
+  }
+  llvm_unreachable("Input object can't be invalid at this point");
 }
 
 typedef std::pair<uint64_t, const char *> BindInfoEntry;
