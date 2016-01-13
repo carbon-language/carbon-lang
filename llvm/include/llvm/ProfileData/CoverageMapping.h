@@ -543,11 +543,6 @@ enum CoverageMappingVersion {
   CoverageMappingCurrentVersion = INSTR_PROF_COVMAP_VERSION
 };
 
-template <int CovMapVersion, class IntPtrT> struct CovMapTraits {
-  typedef CovMapFunctionRecord<IntPtrT> CovMapFuncRecordType;
-  typedef IntPtrT NameRefType;
-};
-
 } // end namespace coverage
 
 /// \brief Provide DenseMapInfo for CounterExpression
