@@ -41,8 +41,8 @@
 //     __dfsw_HOOK(a, b, label(a), label(b)) so that __dfsw_HOOK
 //     gets all the taint labels for the arguments.
 //   * At the Fuzzer startup we assign a unique DFSan label
-//     to every byte of the input string (Fuzzer::CurrentUnit) so that for any
-//     chunk of data we know which input bytes it has derived from.
+//     to every byte of the input string (Fuzzer::CurrentUnitData) so that
+//     for any chunk of data we know which input bytes it has derived from.
 //   * The __dfsw_* functions (implemented in this file) record the
 //     parameters (i.e. the application data and the corresponding taint labels)
 //     in a global state.
@@ -174,13 +174,14 @@ const size_t TraceBasedMutation::kMaxSize;
 
 class TraceState {
  public:
-  TraceState(UserSuppliedFuzzer &USF,
-             const Fuzzer::FuzzingOptions &Options, const Unit &CurrentUnit)
-       : USF(USF), Options(Options), CurrentUnit(CurrentUnit) {
-    // Current trace collection is not thread-friendly and it probably
-    // does not have to be such, but at least we should not crash in presence
-    // of threads. So, just ignore all traces coming from all threads but one.
-    IsMyThread = true;
+   TraceState(UserSuppliedFuzzer &USF, const Fuzzer::FuzzingOptions &Options,
+              uint8_t **CurrentUnitData, size_t *CurrentUnitSize)
+       : USF(USF), Options(Options), CurrentUnitData(CurrentUnitData),
+         CurrentUnitSize(CurrentUnitSize) {
+     // Current trace collection is not thread-friendly and it probably
+     // does not have to be such, but at least we should not crash in presence
+     // of threads. So, just ignore all traces coming from all threads but one.
+     IsMyThread = true;
   }
 
   LabelRange GetLabelRange(dfsan_label L);
@@ -266,7 +267,8 @@ class TraceState {
   LabelRange LabelRanges[1 << (sizeof(dfsan_label) * 8)];
   UserSuppliedFuzzer &USF;
   const Fuzzer::FuzzingOptions &Options;
-  const Unit &CurrentUnit;
+  uint8_t **CurrentUnitData;
+  size_t *CurrentUnitSize;
   std::map<Unit, size_t> AutoDictUnitCounts;
   size_t AutoDictAdds = 0;
   static thread_local bool IsMyThread;
@@ -363,14 +365,14 @@ void TraceState::DFSanSwitchCallback(uint64_t PC, size_t ValSizeInBits,
 int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
                                     size_t DataSize) {
   int Res = 0;
-  const uint8_t *Beg = CurrentUnit.data();
-  const uint8_t *End = Beg + CurrentUnit.size();
+  const uint8_t *Beg = *CurrentUnitData;
+  const uint8_t *End = Beg + *CurrentUnitSize;
   for (const uint8_t *Cur = Beg; Cur < End; Cur++) {
     Cur = (uint8_t *)memmem(Cur, End - Cur, &PresentData, DataSize);
     if (!Cur)
       break;
     size_t Pos = Cur - Beg;
-    assert(Pos < CurrentUnit.size());
+    assert(Pos < *CurrentUnitSize);
     AddMutation(Pos, DataSize, DesiredData);
     AddMutation(Pos, DataSize, DesiredData + 1);
     AddMutation(Pos, DataSize, DesiredData - 1);
@@ -383,14 +385,14 @@ int TraceState::TryToAddDesiredData(const uint8_t *PresentData,
                                     const uint8_t *DesiredData,
                                     size_t DataSize) {
   int Res = 0;
-  const uint8_t *Beg = CurrentUnit.data();
-  const uint8_t *End = Beg + CurrentUnit.size();
+  const uint8_t *Beg = *CurrentUnitData;
+  const uint8_t *End = Beg + *CurrentUnitSize;
   for (const uint8_t *Cur = Beg; Cur < End; Cur++) {
     Cur = (uint8_t *)memmem(Cur, End - Cur, PresentData, DataSize);
     if (!Cur)
       break;
     size_t Pos = Cur - Beg;
-    assert(Pos < CurrentUnit.size());
+    assert(Pos < *CurrentUnitSize);
     AddMutation(Pos, DataSize, DesiredData);
     Res++;
   }
@@ -468,7 +470,7 @@ void Fuzzer::AssignTaintLabels(uint8_t *Data, size_t Size) {
 
 void Fuzzer::InitializeTraceState() {
   if (!Options.UseTraces) return;
-  TS = new TraceState(USF, Options, CurrentUnit);
+  TS = new TraceState(USF, Options, &CurrentUnitData, &CurrentUnitSize);
   if (ReallyHaveDFSan()) {
     for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++) {
       dfsan_label L = dfsan_create_label("input", (void *)(i + 1));
