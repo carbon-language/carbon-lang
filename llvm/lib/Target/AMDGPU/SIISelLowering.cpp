@@ -646,8 +646,15 @@ SDValue SITargetLowering::LowerFormalArguments(
   // based on run-time states. Since we can't know what the final PSInputEna
   // will look like, so we shouldn't do anything here and the user should take
   // responsibility for the correct programming.
+  //
+  // Otherwise, the following restrictions apply:
+  // - At least one of PERSP_* (0xF) or LINEAR_* (0x70) must be enabled.
+  // - If POS_W_FLOAT (11) is enabled, at least one of PERSP_* must be
+  //   enabled too.
   if (Info->getShaderType() == ShaderType::PIXEL &&
-      (Info->getPSInputAddr() & 0x7F) == 0) {
+      ((Info->getPSInputAddr() & 0x7F) == 0 ||
+       ((Info->getPSInputAddr() & 0xF) == 0 &&
+	Info->isPSInputAllocated(11)))) {
     CCInfo.AllocateReg(AMDGPU::VGPR0);
     CCInfo.AllocateReg(AMDGPU::VGPR1);
     Info->markPSInputAllocated(0);

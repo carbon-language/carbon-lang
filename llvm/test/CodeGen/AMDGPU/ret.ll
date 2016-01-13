@@ -77,6 +77,23 @@ define float @ps_input_ena_no_inputs([9 x <16 x i8>] addrspace(2)* byval, i32 in
 
 
 ; GCN: .long 165580
+; GCN-NEXT: .long 2081
+; GCN-NEXT: .long 165584
+; GCN-NEXT: .long 2081
+; GCN-LABEL: {{^}}ps_input_ena_pos_w:
+; GCN-DAG: v_mov_b32_e32 v0, v4
+; GCN-DAG: v_mov_b32_e32 v1, v2
+; GCN: v_mov_b32_e32 v2, v3
+; GCN-NOT: s_endpgm
+define {float, <2 x float>} @ps_input_ena_pos_w([9 x <16 x i8>] addrspace(2)* byval, i32 inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #1 {
+  %f = bitcast <2 x i32> %8 to <2 x float>
+  %s = insertvalue {float, <2 x float>} undef, float %14, 0
+  %s1 = insertvalue {float, <2 x float>} %s, <2 x float> %f, 1
+  ret {float, <2 x float>} %s1
+}
+
+
+; GCN: .long 165580
 ; GCN-NEXT: .long 562
 ; GCN-NEXT: .long 165584
 ; GCN-NEXT: .long 563
