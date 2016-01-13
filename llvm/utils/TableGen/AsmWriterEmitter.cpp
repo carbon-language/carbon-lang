@@ -291,8 +291,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
   /// OpcodeInfo - This encodes the index of the string to use for the first
   /// chunk of the output as well as indices used for operand printing.
-  /// To reduce the number of unhandled cases, we expand the size from 32-bit
-  /// to 32+16 = 48-bit.
   std::vector<uint64_t> OpcodeInfo;
 
   // Add all strings to the string table upfront so it can generate an optimized
@@ -495,9 +493,9 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   std::reverse(Instructions.begin(), Instructions.end());
 
 
-  // Now that we've emitted all of the operand info that fit into 32 bits, emit
+  // Now that we've emitted all of the operand info that fit into 64 bits, emit
   // information for those instructions that are left.  This is a less dense
-  // encoding, but we expect the main 32-bit table to handle the majority of
+  // encoding, but we expect the main 64-bit table to handle the majority of
   // instructions.
   if (!Instructions.empty()) {
     // Find the opcode # of inline asm.
