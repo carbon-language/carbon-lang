@@ -10,6 +10,7 @@
 #ifndef LLVM_DEBUGINFO_CODEVIEW_TYPEINDEX_H
 #define LLVM_DEBUGINFO_CODEVIEW_TYPEINDEX_H
 
+#include "llvm/Support/Endian.h"
 #include <cassert>
 #include <cinttypes>
 
@@ -149,7 +150,7 @@ public:
   static TypeIndex Float64() { return TypeIndex(SimpleTypeKind::Float64); }
 
 private:
-  ulittle32_t Index;
+  support::ulittle32_t Index;
 };
 
 inline bool operator==(const TypeIndex &A, const TypeIndex &B) {
