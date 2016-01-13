@@ -478,14 +478,11 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   }
 
   // Okay, delete instructions with no operand info left.
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
-    // Entire instruction has been emitted?
-    AsmWriterInst &Inst = Instructions[i];
-    if (Inst.Operands.empty()) {
-      Instructions.erase(Instructions.begin()+i);
-      --i; --e;
-    }
-  }
+  auto I = std::remove_if(Instructions.begin(), Instructions.end(),
+                          [](AsmWriterInst &Inst) {
+                            return Inst.Operands.empty();
+                          });
+  Instructions.erase(I, Instructions.end());
 
 
   // Because this is a vector, we want to emit from the end.  Reverse all of the
