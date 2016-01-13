@@ -12,9 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "WinCodeViewLineTables.h"
+#include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/COFF.h"
+
+using namespace llvm::codeview;
 
 namespace llvm {
 
@@ -129,6 +133,9 @@ void WinCodeViewLineTables::endModule() {
   if (FnDebugInfo.empty())
     return;
 
+  // FIXME: For functions that are comdat, we should emit separate .debug$S
+  // sections that are comdat associative with the main function instead of
+  // having one big .debug$S section.
   assert(Asm != nullptr);
   Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getCOFFDebugSymbolsSection());
@@ -146,7 +153,7 @@ void WinCodeViewLineTables::endModule() {
 
   // This subsection holds a file index to offset in string table table.
   Asm->OutStreamer->AddComment("File index to string table offset subsection");
-  Asm->EmitInt32(COFF::DEBUG_INDEX_SUBSECTION);
+  Asm->EmitInt32(unsigned(ModuleSubstreamKind::FileChecksums));
   size_t NumFilenames = FileNameRegistry.Infos.size();
   Asm->EmitInt32(8 * NumFilenames);
   for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
@@ -159,7 +166,7 @@ void WinCodeViewLineTables::endModule() {
 
   // This subsection holds the string table.
   Asm->OutStreamer->AddComment("String table");
-  Asm->EmitInt32(COFF::DEBUG_STRING_TABLE_SUBSECTION);
+  Asm->EmitInt32(unsigned(ModuleSubstreamKind::StringTable));
   Asm->EmitInt32(FileNameRegistry.LastOffset);
   // The payload starts with a null character.
   Asm->EmitInt8(0);
@@ -213,7 +220,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   MCSymbol *SymbolsBegin = Asm->MMI->getContext().createTempSymbol(),
            *SymbolsEnd = Asm->MMI->getContext().createTempSymbol();
   Asm->OutStreamer->AddComment("Symbol subsection for " + Twine(FuncName));
-  Asm->EmitInt32(COFF::DEBUG_SYMBOL_SUBSECTION);
+  Asm->EmitInt32(unsigned(ModuleSubstreamKind::Symbols));
   EmitLabelDiff(*Asm->OutStreamer, SymbolsBegin, SymbolsEnd);
   Asm->OutStreamer->EmitLabel(SymbolsBegin);
   {
@@ -222,7 +229,8 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
     EmitLabelDiff(*Asm->OutStreamer, ProcSegmentBegin, ProcSegmentEnd, 2);
     Asm->OutStreamer->EmitLabel(ProcSegmentBegin);
 
-    Asm->EmitInt16(COFF::DEBUG_SYMBOL_TYPE_PROC_START);
+    Asm->EmitInt16(unsigned(SymbolRecordKind::S_GPROC32_ID));
+
     // Some bytes of this segment don't seem to be required for basic debugging,
     // so just fill them with zeroes.
     Asm->OutStreamer->EmitFill(12, 0);
@@ -240,7 +248,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
 
     // We're done with this function.
     Asm->EmitInt16(0x0002);
-    Asm->EmitInt16(COFF::DEBUG_SYMBOL_TYPE_PROC_END);
+    Asm->EmitInt16(unsigned(SymbolRecordKind::S_PROC_ID_END));
   }
   Asm->OutStreamer->EmitLabel(SymbolsEnd);
   // Every subsection must be aligned to a 4-byte boundary.
@@ -264,7 +272,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
 
   // Emit a line table subsection, required to do PC-to-file:line lookup.
   Asm->OutStreamer->AddComment("Line table subsection for " + Twine(FuncName));
-  Asm->EmitInt32(COFF::DEBUG_LINE_TABLE_SUBSECTION);
+  Asm->EmitInt32(unsigned(ModuleSubstreamKind::Lines));
   MCSymbol *LineTableBegin = Asm->MMI->getContext().createTempSymbol(),
            *LineTableEnd = Asm->MMI->getContext().createTempSymbol();
   EmitLabelDiff(*Asm->OutStreamer, LineTableBegin, LineTableEnd);

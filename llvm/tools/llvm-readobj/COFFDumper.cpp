@@ -24,6 +24,10 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/TypeIndex.h"
+#include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/COFF.h"
@@ -42,6 +46,7 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::codeview;
+using namespace llvm::support;
 using namespace llvm::Win64EH;
 
 namespace {
@@ -608,9 +613,9 @@ static const EnumEntry<SimpleTypeKind> SimpleTypeNames[] = {
     {"__bool64*", SimpleTypeKind::Boolean64},
 };
 
-static const EnumEntry<LeafType> LeafTypeNames[] = {
-#define LEAF_TYPE(name, val) LLVM_READOBJ_ENUM_ENT(LeafType, name),
-#include "CVLeafTypes.def"
+static const EnumEntry<TypeLeafKind> LeafTypeNames[] = {
+#define LEAF_TYPE(name, val) LLVM_READOBJ_ENUM_ENT(TypeLeafKind, name),
+#include "llvm/DebugInfo/CodeView/CVLeafTypes.def"
 };
 
 static const EnumEntry<uint8_t> PtrKindNames[] = {
@@ -1205,8 +1210,8 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
 
     Data = Data.drop_front(Rec->RecordLength - 2);
 
-    SymType Type = static_cast<SymType>(uint16_t(Rec->RecordType));
-    switch (Type) {
+    SymbolRecordKind Kind = Rec->getKind();
+    switch (Kind) {
     case S_LPROC32:
     case S_GPROC32:
     case S_GPROC32_ID:
@@ -1555,7 +1560,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
 
     default: {
       DictScope S(W, "UnknownSym");
-      W.printHex("Type", unsigned(Type));
+      W.printHex("Kind", unsigned(Kind));
       W.printHex("Size", Rec->RecordLength);
       W.printBinaryBlock("SymData", SymData);
       break;
@@ -1564,7 +1569,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
   }
 }
 
-StringRef getRemainingTypeBytes(const TypeRecord *Rec, const char *Start) {
+StringRef getRemainingTypeBytes(const TypeRecordPrefix *Rec, const char *Start) {
   ptrdiff_t StartOffset = Start - reinterpret_cast<const char *>(Rec);
   size_t RecSize = Rec->Len + 2;
   assert(StartOffset >= 0 && "negative start-offset!");
@@ -1573,7 +1578,7 @@ StringRef getRemainingTypeBytes(const TypeRecord *Rec, const char *Start) {
   return StringRef(Start, RecSize - StartOffset);
 }
 
-StringRef getRemainingBytesAsString(const TypeRecord *Rec, const char *Start) {
+StringRef getRemainingBytesAsString(const TypeRecordPrefix *Rec, const char *Start) {
   StringRef Remaining = getRemainingTypeBytes(Rec, Start);
   StringRef Leading, Trailing;
   std::tie(Leading, Trailing) = Remaining.split('\0');
@@ -1617,7 +1622,7 @@ void COFFDumper::printTypeIndex(StringRef FieldName, TypeIndex TI) {
     W.printHex(FieldName, TI.getIndex());
 }
 
-static StringRef getLeafTypeName(LeafType LT) {
+static StringRef getLeafTypeName(TypeLeafKind LT) {
   switch (LT) {
   case LF_STRING_ID: return "StringId";
   case LF_FIELDLIST: return "FieldList";
@@ -1660,9 +1665,9 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   Data = Data.drop_front(4);
 
   while (!Data.empty()) {
-    const TypeRecord *Rec;
+    const TypeRecordPrefix *Rec;
     error(consumeObject(Data, Rec));
-    auto Leaf = static_cast<LeafType>(uint16_t(Rec->Leaf));
+    auto Leaf = static_cast<TypeLeafKind>(uint16_t(Rec->Leaf));
 
     // This record is 'Len - 2' bytes, and the next one starts immediately
     // afterwards.
@@ -1673,7 +1678,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
     StringRef LeafName = getLeafTypeName(Leaf);
     DictScope S(W, LeafName);
     unsigned NextTypeIndex = 0x1000 + CVUDTNames.size();
-    W.printEnum("LeafType", unsigned(Leaf), makeArrayRef(LeafTypeNames));
+    W.printEnum("TypeLeafKind", unsigned(Leaf), makeArrayRef(LeafTypeNames));
     W.printHex("TypeIndex", NextTypeIndex);
 
     // Fill this in inside the switch to get something in CVUDTNames.
