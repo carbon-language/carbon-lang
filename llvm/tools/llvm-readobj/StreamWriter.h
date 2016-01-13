@@ -10,6 +10,7 @@
 #ifndef LLVM_TOOLS_LLVM_READOBJ_STREAMWRITER_H
 #define LLVM_TOOLS_LLVM_READOBJ_STREAMWRITER_H
 
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -180,6 +181,10 @@ public:
     startLine() << Label << ": " << int(Value) << "\n";
   }
 
+  void printNumber(StringRef Label, APSInt Value) {
+    startLine() << Label << ": " << Value << "\n";
+  }
+
   void printBoolean(StringRef Label, bool Value) {
     startLine() << Label << ": " << (Value ? "Yes" : "No") << '\n';
   }
@@ -286,6 +291,12 @@ private:
   raw_ostream &OS;
   int IndentLevel;
 };
+
+template <>
+inline void StreamWriter::printHex<ulittle16_t>(StringRef Label,
+                                                ulittle16_t Value) {
+  startLine() << Label << ": " << hex(Value) << "\n";
+}
 
 struct DictScope {
   DictScope(StreamWriter& W, StringRef N) : W(W) {

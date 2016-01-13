@@ -674,6 +674,7 @@ namespace COFF {
     DEBUG_INDEX_SUBSECTION = 0xF4,
 
     // Symbol subsections are split into records of different types.
+    DEBUG_SYMBOL_TYPE_LOCAL_PROC_START = 0x1146,
     DEBUG_SYMBOL_TYPE_PROC_START = 0x1147,
     DEBUG_SYMBOL_TYPE_PROC_END = 0x114F
   };

@@ -74,6 +74,9 @@ enum class SimpleTypeMode : uint32_t {
   NearPointer128 = 0x00000700 // 128 bit near pointer
 };
 
+/// A 32-bit type reference. Types are indexed by their order of appearance in
+/// .debug$T plus 0x1000. Type indices less than 0x1000 are "simple" types,
+/// composed of a SimpleTypeMode byte followed by a SimpleTypeKind byte.
 class TypeIndex {
 public:
   static const uint32_t FirstNonSimpleIndex = 0x1000;
@@ -90,6 +93,8 @@ public:
 
   uint32_t getIndex() const { return Index; }
   bool isSimple() const { return Index < FirstNonSimpleIndex; }
+
+  bool isNoType() const { return Index == 0; }
 
   SimpleTypeKind getSimpleKind() const {
     assert(isSimple());
@@ -144,7 +149,7 @@ public:
   static TypeIndex Float64() { return TypeIndex(SimpleTypeKind::Float64); }
 
 private:
-  uint32_t Index;
+  ulittle32_t Index;
 };
 
 inline bool operator==(const TypeIndex &A, const TypeIndex &B) {

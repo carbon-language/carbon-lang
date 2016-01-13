@@ -199,7 +199,6 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
     return;
   assert(FI.End && "Don't know where the function ends?");
 
-  StringRef GVName = GV->getName();
   StringRef FuncName;
   if (auto *SP = getDISubprogram(GV))
     FuncName = SP->getDisplayName();
@@ -208,8 +207,8 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   // "namespace_foo::bar" function, see PR21528.  Luckily, dbghelp.dll is trying
   // to demangle display names anyways, so let's just put a mangled name into
   // the symbols subsection until Clang gives us what we need.
-  if (GVName.startswith("\01?"))
-    FuncName = GVName.substr(1);
+  if (FuncName.empty())
+    FuncName = GlobalValue::getRealLinkageName(GV->getName());
   // Emit a symbol subsection, required by VS2012+ to find function boundaries.
   MCSymbol *SymbolsBegin = Asm->MMI->getContext().createTempSymbol(),
            *SymbolsEnd = Asm->MMI->getContext().createTempSymbol();
