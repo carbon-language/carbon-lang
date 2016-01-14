@@ -313,6 +313,7 @@ struct CovMapFuncRecordReader {
   // the module.
   virtual std::error_code readFunctionRecords(const char *&Buf,
                                               const char *End) = 0;
+  virtual ~CovMapFuncRecordReader() {}
   template <class IntPtrT, support::endianness Endian>
   static std::unique_ptr<CovMapFuncRecordReader>
   get(coverage::CoverageMappingVersion Version, InstrProfSymtab &P,
@@ -340,6 +341,7 @@ public:
       std::vector<BinaryCoverageReader::ProfileMappingRecord> &R,
       std::vector<StringRef> &F)
       : ProfileNames(P), Filenames(F), Records(R) {}
+  ~VersionedCovMapFuncRecordReader() override {}
 
   std::error_code readFunctionRecords(const char *&Buf,
                                       const char *End) override {
