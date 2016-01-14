@@ -5063,6 +5063,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::gcroot: {
     MachineFunction &MF = DAG.getMachineFunction();
     const Function *F = MF.getFunction();
+    (void)F;
     assert(F->hasGC() &&
            "only valid in functions with gc specified, enforced by Verifier");
     assert(GFI && "implied by previous");
