@@ -17,4 +17,4 @@ sections:
     content:         [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]
 ...
 
-# CHECK: error: __DATA/__objc_imageinfo in file /Volumes/Data/llvm/tools/lld/test/mach-o/objc-image-info-invalid-size.yaml should be 8 bytes in size
+# CHECK: error: __DATA/__objc_imageinfo in file {{.*}} should be 8 bytes in size
