@@ -570,7 +570,7 @@ TEST(InstructionsTest, AlterInvokeBundles) {
   EXPECT_EQ(Invoke->getCallingConv(), Clone->getCallingConv());
   EXPECT_TRUE(Clone->hasFnAttr(Attribute::AttrKind::Cold));
   EXPECT_EQ(Invoke->getDebugLoc(), Clone->getDebugLoc());
-  EXPECT_EQ(Clone->getNumOperandBundles(), 1);
+  EXPECT_EQ(Clone->getNumOperandBundles(), 1U);
   EXPECT_TRUE(Clone->getOperandBundle("after").hasValue());
 
   delete Invoke;
