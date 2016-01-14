@@ -429,10 +429,6 @@ private:
   uint32_t GprMask = 0;
 };
 
-inline uint64_t align(uint64_t Value, uint64_t Align) {
-  return llvm::RoundUpToAlignment(Value, Align);
-}
-
 // All output sections that are hadnled by the linker specially are
 // globally accessible. Writer initializes them, so don't use them
 // until Writer is initialized.

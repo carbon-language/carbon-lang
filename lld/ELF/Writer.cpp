@@ -504,7 +504,7 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
 
   uintX_t Off = getBss()->getSize();
   for (DefinedCommon *C : Syms) {
-    Off = align(Off, C->MaxAlignment);
+    Off = alignTo(Off, C->MaxAlignment);
     C->OffsetInBss = Off;
     Off += C->Size;
   }
@@ -527,7 +527,7 @@ void Writer<ELFT>::addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
                  countTrailingZeros((uintX_t)Sym.st_value));
     uintX_t Align = 1 << TrailingZeros;
     Out<ELFT>::Bss->updateAlign(Align);
-    Off = align(Off, Align);
+    Off = alignTo(Off, Align);
     C->OffsetInBss = Off;
     Off += Sym.st_size;
   }
@@ -1045,8 +1045,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       bool InRelRo = Config->ZRelro && (Flags & PF_W) && isRelroSection(Sec);
       bool FirstNonRelRo = GnuRelroPhdr.p_type && !InRelRo && !RelroAligned;
       if (FirstNonRelRo || PH->p_flags != Flags) {
-        VA = align(VA, Target->getPageSize());
-        FileOff = align(FileOff, Target->getPageSize());
+        VA = alignTo(VA, Target->getPageSize());
+        FileOff = alignTo(FileOff, Target->getPageSize());
         if (FirstNonRelRo)
           RelroAligned = true;
       }
@@ -1063,8 +1063,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         if (!TlsPhdr.p_vaddr)
           setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
         if (Sec->getType() != SHT_NOBITS)
-          VA = align(VA, Sec->getAlign());
-        uintX_t TVA = align(VA + ThreadBssOffset, Sec->getAlign());
+          VA = alignTo(VA, Sec->getAlign());
+        uintX_t TVA = alignTo(VA + ThreadBssOffset, Sec->getAlign());
         Sec->setVA(TVA);
         TlsPhdr.p_memsz += Sec->getSize();
         if (Sec->getType() == SHT_NOBITS) {
@@ -1075,7 +1075,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         }
         TlsPhdr.p_align = std::max<uintX_t>(TlsPhdr.p_align, Sec->getAlign());
       } else {
-        VA = align(VA, Sec->getAlign());
+        VA = alignTo(VA, Sec->getAlign());
         Sec->setVA(VA);
         VA += Sec->getSize();
         if (InRelRo)
@@ -1083,7 +1083,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       }
     }
 
-    FileOff = align(FileOff, Sec->getAlign());
+    FileOff = alignTo(FileOff, Sec->getAlign());
     Sec->setFileOffset(FileOff);
     if (Sec->getType() != SHT_NOBITS)
       FileOff += Sec->getSize();
@@ -1096,7 +1096,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   if (TlsPhdr.p_vaddr) {
     // The TLS pointer goes after PT_TLS. At least glibc will align it,
     // so round up the size to make sure the offsets are correct.
-    TlsPhdr.p_memsz = align(TlsPhdr.p_memsz, TlsPhdr.p_align);
+    TlsPhdr.p_memsz = alignTo(TlsPhdr.p_memsz, TlsPhdr.p_align);
     Phdrs[++PhdrIdx] = TlsPhdr;
     Out<ELFT>::TlsPhdr = &Phdrs[PhdrIdx];
   }
@@ -1128,7 +1128,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   }
 
   // Add space for section headers.
-  SectionHeaderOff = align(FileOff, ELFT::Is64Bits ? 8 : 4);
+  SectionHeaderOff = alignTo(FileOff, ELFT::Is64Bits ? 8 : 4);
   FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
 
   // Update "_end" and "end" symbols so that they
