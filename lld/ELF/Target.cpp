@@ -239,6 +239,7 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
+  bool isHintReloc(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 } // anonymous namespace
@@ -283,6 +284,8 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 }
 
 bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
+
+bool TargetInfo::isHintReloc(uint32_t Type) const { return false; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
@@ -1578,6 +1581,11 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   default:
     error("unrecognized reloc " + Twine(Type));
   }
+}
+
+template <class ELFT>
+bool MipsTargetInfo<ELFT>::isHintReloc(uint32_t Type) const {
+  return Type == R_MIPS_JALR;
 }
 
 template <class ELFT>

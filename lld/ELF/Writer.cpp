@@ -210,6 +210,10 @@ void Writer<ELFT>::scanRelocs(
     SymbolBody *Body = File.getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(Config->Mips64EL);
 
+    // Ignore "hint" relocation because it is for optional code optimization.
+    if (Target->isHintReloc(Type))
+      continue;
+
     if (Target->isGotRelative(Type))
       HasGotOffRel = true;
 
