@@ -586,14 +586,14 @@ enum ProfVersion {
   // Version 1 is the first version. In this version, the value of
   // a key/value pair can only include profile data of a single function.
   // Due to this restriction, the number of block counters for a given
-  // function is not recorded by derived from the length of the value.
+  // function is not recorded but derived from the length of the value.
   Version1 = 1,
-  // In version 2, the format supports recording profile data of multiple
-  // functions which share the same key in one value field. To suppor this,
-  // the number block counters is recorded as an uint64_t right after the
+  // The version 2 format supports recording profile data of multiple
+  // functions which share the same key in one value field. To support this,
+  // the number block counters is recorded as an uint64_t field right after the
   // function structural hash.
   Version2 = 2,
-  // Version 3 supports value profile data. Value profile data is expected
+  // Version 3 supports value profile data. The value profile data is expected
   // to follow the block counter profile data.
   Version3 = 3,
   // The current version is 3.
