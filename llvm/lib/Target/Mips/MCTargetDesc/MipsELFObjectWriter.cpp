@@ -334,9 +334,8 @@ static int cmpRel(const ELFRelocationEntry *AP, const ELFRelocationEntry *BP) {
   const ELFRelocationEntry &B = *BP;
   if (A.Offset != B.Offset)
     return B.Offset - A.Offset;
-  if (B.Type != A.Type)
-    return A.Type - B.Type;
-  return 0;
+  assert(B.Type != A.Type && "We don't have a total order");
+  return A.Type - B.Type;
 }
 
 void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
