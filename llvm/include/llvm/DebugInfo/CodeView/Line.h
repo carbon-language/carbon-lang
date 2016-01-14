@@ -10,6 +10,7 @@
 #ifndef LLVM_DEBUGINFO_CODEVIEW_LINE_H
 #define LLVM_DEBUGINFO_CODEVIEW_LINE_H
 
+#include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/Support/Endian.h"
 #include <cinttypes>
 
