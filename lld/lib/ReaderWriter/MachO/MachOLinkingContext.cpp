@@ -990,4 +990,8 @@ void MachOLinkingContext::finalizeInputFiles() {
   elements.push_back(llvm::make_unique<GroupEnd>(numLibs));
 }
 
+std::error_code MachOLinkingContext::handleLoadedFile(File &file) {
+  return std::error_code();
+}
+
 } // end namespace lld
