@@ -37,29 +37,13 @@ namespace llvm {
     std::unique_ptr<T> instantiate() const { return Ctor(); }
   };
 
-  /// Traits for registry entries. If using other than SimpleRegistryEntry, it
-  /// is necessary to define an alternate traits class.
-  template <typename T>
-  class RegistryTraits {
-    RegistryTraits() = delete;
-
-  public:
-    typedef SimpleRegistryEntry<T> entry;
-
-    /// nameof/descof - Accessors for name and description of entries. These are
-    //                  used to generate help for command-line options.
-    static const char *nameof(const entry &Entry) { return Entry.getName(); }
-    static const char *descof(const entry &Entry) { return Entry.getDesc(); }
-  };
-
   /// A global registry used in conjunction with static constructors to make
   /// pluggable components (like targets or garbage collectors) "just work" when
   /// linked with an executable.
-  template <typename T, typename U = RegistryTraits<T> >
+  template <typename T>
   class Registry {
   public:
-    typedef U traits;
-    typedef typename U::entry entry;
+    typedef SimpleRegistryEntry<T> entry;
 
     class node;
     class iterator;
@@ -119,14 +103,6 @@ namespace llvm {
     /// Use of this template requires that:
     ///
     ///  1. The registered subclass has a default constructor.
-    //
-    ///  2. The registry entry type has a constructor compatible with this
-    ///     signature:
-    ///
-    ///       entry(const char *Name, const char *ShortDesc, T *(*Ctor)());
-    ///
-    /// If you have more elaborate requirements, then copy and modify.
-    ///
     template <typename V>
     class Add {
       entry Entry;
@@ -140,14 +116,14 @@ namespace llvm {
     };
   };
 
+  
   // Since these are defined in a header file, plugins must be sure to export
   // these symbols.
+  template <typename T>
+  typename Registry<T>::node *Registry<T>::Head;
 
-  template <typename T, typename U>
-  typename Registry<T,U>::node *Registry<T,U>::Head;
-
-  template <typename T, typename U>
-  typename Registry<T,U>::node *Registry<T,U>::Tail;
+  template <typename T>
+  typename Registry<T>::node *Registry<T>::Tail;
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_REGISTRY_H
