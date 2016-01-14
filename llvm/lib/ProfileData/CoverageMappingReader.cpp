@@ -322,12 +322,12 @@ struct CovMapFuncRecordReader {
 };
 
 // A class for reading coverage mapping function records for a module.
-template <coverage::CovMapVersion CovMapVersion, class IntPtrT,
+template <coverage::CovMapVersion Version, class IntPtrT,
           support::endianness Endian>
 class VersionedCovMapFuncRecordReader : public CovMapFuncRecordReader {
   typedef typename coverage::CovMapTraits<
-      CovMapVersion, IntPtrT>::CovMapFuncRecordType FuncRecordType;
-  typedef typename coverage::CovMapTraits<CovMapVersion, IntPtrT>::NameRefType
+      Version, IntPtrT>::CovMapFuncRecordType FuncRecordType;
+  typedef typename coverage::CovMapTraits<Version, IntPtrT>::NameRefType
       NameRefType;
 
   llvm::DenseSet<NameRefType> UniqueFunctionMappingData;
@@ -352,7 +352,7 @@ public:
     uint32_t NRecords = CovHeader->getNRecords<Endian>();
     uint32_t FilenamesSize = CovHeader->getFilenamesSize<Endian>();
     uint32_t CoverageSize = CovHeader->getCoverageSize<Endian>();
-    assert((CovMapVersion)CovHeader->getVersion<Endian>() == CovMapVersion);
+    assert((CovMapVersion)CovHeader->getVersion<Endian>() == Version);
     Buf = reinterpret_cast<const char *>(CovHeader + 1);
 
     // Skip past the function records, saving the start and end for later.
@@ -404,7 +404,7 @@ public:
               CFR->template getFuncName<Endian>(ProfileNames, FuncName))
         return EC;
       Records.push_back(BinaryCoverageReader::ProfileMappingRecord(
-          CovMapVersion, FuncName, FuncHash, Mapping, FilenamesBegin,
+          Version, FuncName, FuncHash, Mapping, FilenamesBegin,
           Filenames.size() - FilenamesBegin));
       CFR++;
     }
