@@ -876,6 +876,12 @@ const TargetRegisterClass *HexagonBitSimplify::getFinalVRegClass(
     case Hexagon::DoubleRegsRegClassID:
       VerifySR(RR.Sub);
       return &Hexagon::IntRegsRegClass;
+    case Hexagon::VecDblRegsRegClassID:
+      VerifySR(RR.Sub);
+      return &Hexagon::VectorRegsRegClass;
+    case Hexagon::VecDblRegs128BRegClassID:
+      VerifySR(RR.Sub);
+      return &Hexagon::VectorRegs128BRegClass;
   }
   return nullptr;
 }
