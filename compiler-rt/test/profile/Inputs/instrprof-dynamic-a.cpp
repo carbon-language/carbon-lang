@@ -1,7 +1,7 @@
 #include "instrprof-dynamic-header.h"
-void a() {
-  if (true) {
-    bar<void>(1);
-    bar<char>(1);
-  }
+void a() {                             // COV: 1| [[@LINE]]|void a
+  if (true) {                          // COV: 1| [[@LINE]]|  if
+    bar<void>(1);                      // COV: 1| [[@LINE]]|    bar
+    bar<char>(1);                      // COV: 1| [[@LINE]]|    bar
+  }                                    // COV: 1| [[@LINE]]|  }
 }
