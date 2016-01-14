@@ -210,12 +210,10 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   if (auto *SP = getDISubprogram(GV))
     FuncName = SP->getDisplayName();
 
-  // FIXME Clang currently sets DisplayName to "bar" for a C++
-  // "namespace_foo::bar" function, see PR21528.  Luckily, dbghelp.dll is trying
-  // to demangle display names anyways, so let's just put a mangled name into
-  // the symbols subsection until Clang gives us what we need.
+  // If our DISubprogram name is empty, use the mangled name.
   if (FuncName.empty())
     FuncName = GlobalValue::getRealLinkageName(GV->getName());
+
   // Emit a symbol subsection, required by VS2012+ to find function boundaries.
   MCSymbol *SymbolsBegin = Asm->MMI->getContext().createTempSymbol(),
            *SymbolsEnd = Asm->MMI->getContext().createTempSymbol();
