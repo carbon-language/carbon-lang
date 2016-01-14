@@ -949,8 +949,9 @@ static unsigned PrintActions1(const Compilation &C, Action *A,
     os << '"' << BIA->getArchName() << '"' << ", {"
        << PrintActions1(C, *BIA->begin(), Ids) << "}";
   } else if (CudaDeviceAction *CDA = dyn_cast<CudaDeviceAction>(A)) {
-    os << '"' << CDA->getGpuArchName() << '"' << ", {"
-       << PrintActions1(C, *CDA->begin(), Ids) << "}";
+    os << '"'
+       << (CDA->getGpuArchName() ? CDA->getGpuArchName() : "(multiple archs)")
+       << '"' << ", {" << PrintActions1(C, *CDA->begin(), Ids) << "}";
   } else {
     const ActionList *AL;
     if (CudaHostAction *CHA = dyn_cast<CudaHostAction>(A)) {
@@ -1327,7 +1328,7 @@ static Action *buildCudaActions(Compilation &C, DerivedArgList &Args,
   // Check whether any of device actions stopped before they could generate PTX.
   bool PartialCompilation =
       llvm::any_of(CudaDeviceActions, [](const Action *a) {
-        return a->getKind() != Action::BackendJobClass;
+        return a->getKind() != Action::AssembleJobClass;
       });
 
   // Figure out what to do with device actions -- pass them as inputs to the
@@ -1356,16 +1357,32 @@ static Action *buildCudaActions(Compilation &C, DerivedArgList &Args,
     return HostAction;
   }
 
-  // Outputs of device actions during complete CUDA compilation get created
-  // with AtTopLevel=false and become inputs for the host action.
+  // If we're not a partial or device-only compilation, we compile each arch to
+  // ptx and assemble to cubin, then feed the cubin *and* the ptx into a device
+  // "link" action, which uses fatbinary to combine these cubins into one
+  // fatbin.  The fatbin is then an input to the host compilation.
   ActionList DeviceActions;
-  for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I)
-    DeviceActions.push_back(
-        C.MakeAction<CudaDeviceAction>(CudaDeviceActions[I], GpuArchList[I],
-                                       /* AtTopLevel */ false));
+  for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
+    Action* AssembleAction = CudaDeviceActions[I];
+    assert(AssembleAction->getType() == types::TY_Object);
+    assert(AssembleAction->getInputs().size() == 1);
+
+    Action* BackendAction = AssembleAction->getInputs()[0];
+    assert(BackendAction->getType() == types::TY_PP_Asm);
+
+    for (const auto& A : {AssembleAction, BackendAction}) {
+      DeviceActions.push_back(C.MakeAction<CudaDeviceAction>(
+          A, GpuArchList[I], /* AtTopLevel */ false));
+    }
+  }
+  auto FatbinAction = C.MakeAction<CudaDeviceAction>(
+      C.MakeAction<LinkJobAction>(DeviceActions, types::TY_CUDA_FATBIN),
+      /* GpuArchName = */ nullptr,
+      /* AtTopLevel = */ false);
   // Return a new host action that incorporates original host action and all
   // device actions.
-  return C.MakeAction<CudaHostAction>(HostAction, DeviceActions);
+  return C.MakeAction<CudaHostAction>(std::move(HostAction),
+                                      ActionList({FatbinAction}));
 }
 
 void Driver::BuildActions(Compilation &C, const ToolChain &TC,
@@ -1600,7 +1617,7 @@ Action *Driver::ConstructPhaseAction(Compilation &C, const ToolChain &TC,
     return C.MakeAction<BackendJobAction>(Input, types::TY_PP_Asm);
   }
   case phases::Assemble:
-    return C.MakeAction<AssembleJobAction>(Input, types::TY_Object);
+    return C.MakeAction<AssembleJobAction>(std::move(Input), types::TY_Object);
   }
 
   llvm_unreachable("invalid phase in ConstructPhaseAction");
@@ -1849,11 +1866,14 @@ InputInfo Driver::BuildJobsForActionNoCache(
   if (const CudaDeviceAction *CDA = dyn_cast<CudaDeviceAction>(A)) {
     // Initial processing of CudaDeviceAction carries host params.
     // Call BuildJobsForAction() again, now with correct device parameters.
-    assert(CDA->getGpuArchName() && "No GPU name in device action.");
-    return BuildJobsForAction(C, *CDA->begin(), C.getCudaDeviceToolChain(),
-                              CDA->getGpuArchName(), CDA->isAtTopLevel(),
-                              /*MultipleArchs*/ true, LinkingOutput,
-                              CachedResults);
+    InputInfo II = BuildJobsForAction(
+        C, *CDA->begin(), C.getCudaDeviceToolChain(), CDA->getGpuArchName(),
+        CDA->isAtTopLevel(), /*MultipleArchs*/ true, LinkingOutput,
+        CachedResults);
+    // Currently II's Action is *CDA->begin().  Set it to CDA instead, so that
+    // one can retrieve II's GPU arch.
+    II.setAction(A);
+    return II;
   }
 
   const ActionList *Inputs = &A->getInputs();
