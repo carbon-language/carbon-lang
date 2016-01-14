@@ -1420,19 +1420,19 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
         case Invalid:
           return error(object_error::parse_failed);
         case CodeOffset:
-          W.printNumber("CodeOffset", GetCompressedAnnotation());
+          W.printHex("CodeOffset", GetCompressedAnnotation());
           break;
         case ChangeCodeOffsetBase:
           W.printNumber("ChangeCodeOffsetBase", GetCompressedAnnotation());
           break;
         case ChangeCodeOffset:
-          W.printNumber("ChangeCodeOffset", GetCompressedAnnotation());
+          W.printHex("ChangeCodeOffset", GetCompressedAnnotation());
           break;
         case ChangeCodeLength:
           W.printNumber("ChangeCodeLength", GetCompressedAnnotation());
           break;
         case ChangeFile:
-          W.printNumber("ChangeFile", GetCompressedAnnotation());
+          W.printHex("ChangeFile", GetCompressedAnnotation());
           break;
         case ChangeLineOffset:
           W.printNumber("ChangeLineOffset",
@@ -1453,14 +1453,19 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
           break;
         case ChangeCodeOffsetAndLineOffset: {
           uint32_t Annotation = GetCompressedAnnotation();
-          uint32_t Operands[] = {Annotation >> 4, Annotation & 0xf};
-          W.printList("ChangeCodeOffsetAndLineOffset", Operands);
+          uint32_t SourceDelta = Annotation >> 4;
+          uint32_t CodeOffset = Annotation & 0xf;
+          W.startLine() << "ChangeCodeOffsetAndLineOffset: {SourceDelta: "
+                        << SourceDelta << ", CodeOffset: " << W.hex(CodeOffset)
+                        << "}\n";
           break;
         }
         case ChangeCodeLengthAndCodeOffset: {
-          uint32_t Operands[] = {GetCompressedAnnotation(),
-                                 GetCompressedAnnotation()};
-          W.printList("ChangeCodeLengthAndCodeOffset", Operands);
+          uint32_t Length = GetCompressedAnnotation();
+          uint32_t CodeOffset = GetCompressedAnnotation();
+          W.startLine() << "ChangeCodeLengthAndCodeOffset: {Length: "
+                        << W.hex(Length)
+                        << ", CodeOffset: " << W.hex(CodeOffset) << "}\n";
           break;
         }
         case ChangeColumnEnd:
@@ -1473,6 +1478,19 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
 
     case S_INLINESITE_END: {
       DictScope S(W, "InlineSiteEnd");
+      break;
+    }
+
+    case S_CALLERS:
+    case S_CALLEES: {
+      ListScope S(W, Kind == S_CALLEES ? "Callees" : "Callers");
+      uint32_t Count;
+      error(consumeUInt32(SymData, Count));
+      for (uint32_t I = 0; I < Count; ++I) {
+        const TypeIndex *FuncID;
+        error(consumeObject(SymData, FuncID));
+        printTypeIndex("FuncID", *FuncID);
+      }
       break;
     }
 
