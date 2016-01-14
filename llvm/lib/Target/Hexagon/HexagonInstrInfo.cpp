@@ -377,6 +377,9 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   bool LastOpcodeHasJMP_c = PredOpcodeHasJMP_c(LastOpcode);
   bool LastOpcodeHasNVJump = isNewValueJump(LastInst);
 
+  if (LastOpcodeHasJMP_c && !LastInst->getOperand(1).isMBB())
+    return true;
+
   // If there is only one terminator instruction, process it.
   if (LastInst && !SecondLastInst) {
     if (LastOpcode == Hexagon::J2_jump) {
@@ -412,6 +415,8 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   bool SecLastOpcodeHasJMP_c = PredOpcodeHasJMP_c(SecLastOpcode);
   bool SecLastOpcodeHasNVJump = isNewValueJump(SecondLastInst);
   if (SecLastOpcodeHasJMP_c && (LastOpcode == Hexagon::J2_jump)) {
+    if (!SecondLastInst->getOperand(1).isMBB())
+      return true;
     TBB =  SecondLastInst->getOperand(1).getMBB();
     Cond.push_back(MachineOperand::CreateImm(SecondLastInst->getOpcode()));
     Cond.push_back(SecondLastInst->getOperand(0));
