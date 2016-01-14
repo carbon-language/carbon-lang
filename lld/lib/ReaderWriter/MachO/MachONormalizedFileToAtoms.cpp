@@ -867,6 +867,45 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
   return ehFrameErr;
 }
 
+std::error_code parseObjCImageInfo(const NormalizedFile &normalizedFile,
+                                   MachOFile &file) {
+
+  const Section *imageInfoSection = nullptr;
+  for (auto &section : normalizedFile.sections) {
+    if (section.segmentName == "__OBJC" &&
+        section.sectionName == "__image_info") {
+      imageInfoSection = &section;
+      break;
+    }
+    if (section.segmentName == "__DATA" &&
+        section.sectionName == "__objc_imageinfo") {
+      imageInfoSection = &section;
+      break;
+    }
+  }
+
+  // No image info section so nothing to do.
+  if (!imageInfoSection)
+    return std::error_code();
+
+  //	struct objc_image_info  {
+  //		uint32_t	version;	// initially 0
+  //		uint32_t	flags;
+  //	};
+  // #define OBJC_IMAGE_SUPPORTS_GC   2
+  // #define OBJC_IMAGE_GC_ONLY       4
+  // #define OBJC_IMAGE_IS_SIMULATED  32
+  //
+  ArrayRef<uint8_t> content = imageInfoSection->content;
+  if (content.size() != 8)
+    return make_dynamic_error_code(imageInfoSection->segmentName + "/" +
+                                   imageInfoSection->sectionName +
+                                   " in file " + file.path() +
+                                   " should be 8 bytes in size");
+
+  return std::error_code();
+}
+
 
 /// Converts normalized mach-o file into an lld::File and lld::Atoms.
 ErrorOr<std::unique_ptr<lld::File>>
@@ -946,6 +985,11 @@ normalizedObjectToAtoms(MachOFile *file,
   // represented in the relocations on some architectures, so we have to add
   // them back in manually there.
   if (std::error_code ec = addEHFrameReferences(normalizedFile, *file, *handler))
+    return ec;
+
+  // If the file contains an objc_image_info struct, then we should parse the
+  // ObjC flags and Swift version.
+  if (std::error_code ec = parseObjCImageInfo(normalizedFile, *file))
     return ec;
 
   // Process mach-o data-in-code regions array. That information is encoded in
