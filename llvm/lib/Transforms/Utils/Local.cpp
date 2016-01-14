@@ -1133,12 +1133,14 @@ bool llvm::LowerDbgDeclare(Function &F) {
     // the stack slot (and at a lexical-scope granularity). Later
     // passes will attempt to elide the stack slot.
     if (AI && !isArray(AI)) {
-      for (User *U : AI->users())
-        if (StoreInst *SI = dyn_cast<StoreInst>(U))
-          ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
-        else if (LoadInst *LI = dyn_cast<LoadInst>(U))
+      for (auto &AIUse : AI->uses()) {
+        User *U = AIUse.getUser();
+        if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+          if (AIUse.getOperandNo() == 1)
+            ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
+        } else if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
           ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
-        else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+        } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
           // This is a call by-value or some other instruction that
           // takes a pointer to the variable. Insert a *value*
           // intrinsic that describes the alloca.
@@ -1150,6 +1152,7 @@ bool llvm::LowerDbgDeclare(Function &F) {
                                       DIB.createExpression(NewDIExpr),
                                       DDI->getDebugLoc(), CI);
         }
+      }
       DDI->eraseFromParent();
     }
   }
