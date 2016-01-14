@@ -100,6 +100,7 @@ static uptr GetCallerPC(u32 stack_id, StackDepotReverseMap *map) {
 struct ProcessPlatformAllocParam {
   Frontier *frontier;
   StackDepotReverseMap *stack_depot_reverse_map;
+  bool skip_linker_allocations;
 };
 
 // ForEachChunk callback. Identifies unreachable chunks which must be treated as
@@ -117,7 +118,8 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
       caller_pc = GetCallerPC(stack_id, param->stack_depot_reverse_map);
     // If caller_pc is unknown, this chunk may be allocated in a coroutine. Mark
     // it as reachable, as we can't properly report its allocation stack anyway.
-    if (caller_pc == 0 || linker->containsAddress(caller_pc)) {
+    if (caller_pc == 0 || (param->skip_linker_allocations &&
+                           linker->containsAddress(caller_pc))) {
       m.set_tag(kReachable);
       param->frontier->push_back(chunk);
     }
@@ -142,10 +144,12 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
 // guaranteed to include all dynamic TLS blocks (and possibly other allocations
 // which we don't care about).
 void ProcessPlatformSpecificAllocations(Frontier *frontier) {
-  if (!flags()->use_tls) return;
-  if (!linker) return;
   StackDepotReverseMap stack_depot_reverse_map;
-  ProcessPlatformAllocParam arg = {frontier, &stack_depot_reverse_map};
+  ProcessPlatformAllocParam arg;
+  arg.frontier = frontier;
+  arg.stack_depot_reverse_map = &stack_depot_reverse_map;
+  arg.skip_linker_allocations =
+      flags()->use_tls && flags()->use_ld_allocations && linker != nullptr;
   ForEachChunk(ProcessPlatformSpecificAllocationsCb, &arg);
 }
 
