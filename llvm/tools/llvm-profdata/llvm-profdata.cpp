@@ -42,9 +42,9 @@ enum ProfileFormat { PF_None = 0, PF_Text, PF_Binary, PF_GCC };
 // target execution count percentile, we compute the minimum number of blocks
 // needed to reach this target and the minimum execution count of these blocks.
 struct ProfileSummaryEntry {
-  uint32_t Cutoff;        //< The required percentile of total execution count.
-  uint64_t MinBlockCount; //< The minimum execution count for this percentile.
-  uint64_t NumBlocks;     //< Number of blocks >= the minumum execution count.
+  uint32_t Cutoff;        ///< The required percentile of total execution count.
+  uint64_t MinBlockCount; ///< The minimum execution count for this percentile.
+  uint64_t NumBlocks;     ///< Number of blocks >= the minumum execution count.
 };
 
 class ProfileSummary {
