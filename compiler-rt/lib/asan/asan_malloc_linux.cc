@@ -92,7 +92,7 @@ INTERCEPTOR(void*, aligned_alloc, uptr boundary, uptr size) {
 INTERCEPTOR(void*, __libc_memalign, uptr boundary, uptr size) {
   GET_STACK_TRACE_MALLOC;
   void *res = asan_memalign(boundary, size, &stack, FROM_MALLOC);
-  DTLS_on_libc_memalign(res, size * boundary);
+  DTLS_on_libc_memalign(res, size);
   return res;
 }
 
