@@ -54,29 +54,16 @@ static const char *const LoopMDName = "llvm.loop";
 // Loop implementation
 //
 
-/// isLoopInvariant - Return true if the specified value is loop invariant
-///
 bool Loop::isLoopInvariant(const Value *V) const {
   if (const Instruction *I = dyn_cast<Instruction>(V))
     return !contains(I);
   return true;  // All non-instructions are loop invariant
 }
 
-/// hasLoopInvariantOperands - Return true if all the operands of the
-/// specified instruction are loop invariant.
 bool Loop::hasLoopInvariantOperands(const Instruction *I) const {
   return all_of(I->operands(), [this](Value *V) { return isLoopInvariant(V); });
 }
 
-/// makeLoopInvariant - If the given value is an instruciton inside of the
-/// loop and it can be hoisted, do so to make it trivially loop-invariant.
-/// Return true if the value after any hoisting is loop invariant. This
-/// function can be used as a slightly more aggressive replacement for
-/// isLoopInvariant.
-///
-/// If InsertPt is specified, it is the point to hoist instructions to.
-/// If null, the terminator of the loop preheader is used.
-///
 bool Loop::makeLoopInvariant(Value *V, bool &Changed,
                              Instruction *InsertPt) const {
   if (Instruction *I = dyn_cast<Instruction>(V))
@@ -84,15 +71,6 @@ bool Loop::makeLoopInvariant(Value *V, bool &Changed,
   return true;  // All non-instructions are loop-invariant.
 }
 
-/// makeLoopInvariant - If the given instruction is inside of the
-/// loop and it can be hoisted, do so to make it trivially loop-invariant.
-/// Return true if the instruction after any hoisting is loop invariant. This
-/// function can be used as a slightly more aggressive replacement for
-/// isLoopInvariant.
-///
-/// If InsertPt is specified, it is the point to hoist instructions to.
-/// If null, the terminator of the loop preheader is used.
-///
 bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
                              Instruction *InsertPt) const {
   // Test if the value is already loop-invariant.
@@ -131,14 +109,6 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
   return true;
 }
 
-/// getCanonicalInductionVariable - Check to see if the loop has a canonical
-/// induction variable: an integer recurrence that starts at 0 and increments
-/// by one each time through the loop.  If so, return the phi node that
-/// corresponds to it.
-///
-/// The IndVarSimplify pass transforms loops to have a canonical induction
-/// variable.
-///
 PHINode *Loop::getCanonicalInductionVariable() const {
   BasicBlock *H = getHeader();
 
@@ -175,7 +145,6 @@ PHINode *Loop::getCanonicalInductionVariable() const {
   return nullptr;
 }
 
-/// isLCSSAForm - Return true if the Loop is in LCSSA form
 bool Loop::isLCSSAForm(DominatorTree &DT) const {
   for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
     BasicBlock *BB = *BI;
@@ -216,17 +185,13 @@ bool Loop::isRecursivelyLCSSAForm(DominatorTree &DT) const {
   });
 }
 
-/// isLoopSimplifyForm - Return true if the Loop is in the form that
-/// the LoopSimplify form transforms loops to, which is sometimes called
-/// normal form.
 bool Loop::isLoopSimplifyForm() const {
   // Normal-form loops have a preheader, a single backedge, and all of their
   // exits have all their predecessors inside the loop.
   return getLoopPreheader() && getLoopLatch() && hasDedicatedExits();
 }
 
-/// isSafeToClone - Return true if the loop body is safe to clone in practice.
-/// Routines that reform the loop CFG and split edges often fail on indirectbr.
+// Routines that reform the loop CFG and split edges often fail on indirectbr.
 bool Loop::isSafeToClone() const {
   // Return false if any loop blocks contain indirectbrs, or there are any calls
   // to noduplicate functions.
@@ -353,9 +318,6 @@ bool Loop::isAnnotatedParallel() const {
   return true;
 }
 
-
-/// hasDedicatedExits - Return true if no exit block for the loop
-/// has a predecessor that is outside the loop.
 bool Loop::hasDedicatedExits() const {
   // Each predecessor of each exit block of a normal loop is contained
   // within the loop.
@@ -370,10 +332,6 @@ bool Loop::hasDedicatedExits() const {
   return true;
 }
 
-/// getUniqueExitBlocks - Return all unique successor blocks of this loop.
-/// These are the blocks _outside of the current loop_ which are branched to.
-/// This assumes that loop exits are in canonical form.
-///
 void
 Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
   assert(hasDedicatedExits() &&
@@ -421,8 +379,6 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
   }
 }
 
-/// getUniqueExitBlock - If getUniqueExitBlocks would return exactly one
-/// block, return that block. Otherwise return null.
 BasicBlock *Loop::getUniqueExitBlock() const {
   SmallVector<BasicBlock *, 8> UniqueExitBlocks;
   getUniqueExitBlocks(UniqueExitBlocks);
@@ -475,8 +431,8 @@ protected:
 };
 } // end anonymous namespace
 
-/// updateBlockParents - Update the parent loop for all blocks that are directly
-/// contained within the original "unloop".
+/// Update the parent loop for all blocks that are directly contained within the
+/// original "unloop".
 void UnloopUpdater::updateBlockParents() {
   if (Unloop->getNumBlocks()) {
     // Perform a post order CFG traversal of all blocks within this loop,
@@ -525,8 +481,7 @@ void UnloopUpdater::updateBlockParents() {
   }
 }
 
-/// removeBlocksFromAncestors - Remove unloop's blocks from all ancestors below
-/// their new parents.
+/// Remove unloop's blocks from all ancestors below their new parents.
 void UnloopUpdater::removeBlocksFromAncestors() {
   // Remove all unloop's blocks (including those in nested subloops) from
   // ancestors below the new parent loop.
@@ -548,8 +503,7 @@ void UnloopUpdater::removeBlocksFromAncestors() {
   }
 }
 
-/// updateSubloopParents - Update the parent loop for all subloops directly
-/// nested within unloop.
+/// Update the parent loop for all subloops directly nested within unloop.
 void UnloopUpdater::updateSubloopParents() {
   while (!Unloop->empty()) {
     Loop *Subloop = *std::prev(Unloop->end());
@@ -563,9 +517,9 @@ void UnloopUpdater::updateSubloopParents() {
   }
 }
 
-/// getNearestLoop - Return the nearest parent loop among this block's
-/// successors. If a successor is a subloop header, consider its parent to be
-/// the nearest parent of the subloop's exits.
+/// Return the nearest parent loop among this block's successors. If a successor
+/// is a subloop header, consider its parent to be the nearest parent of the
+/// subloop's exits.
 ///
 /// For subloop blocks, simply update SubloopParents and return NULL.
 Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
