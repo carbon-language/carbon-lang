@@ -9,6 +9,7 @@
 
 #include "llvm/IR/Verifier.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -119,7 +120,28 @@ TEST(VerifierTest, CrossModuleRef) {
   F3->eraseFromParent();
 }
 
+TEST(VerifierTest, CrossModuleMetadataRef) {
+  LLVMContext &C = getGlobalContext();
+  Module M1("M1", C);
+  Module M2("M2", C);
+  GlobalVariable *newGV =
+      new GlobalVariable(M1, Type::getInt8Ty(C), false,
+                         GlobalVariable::ExternalLinkage, NULL, "Some Global");
 
+  DIBuilder dbuilder(M2);
+  auto CU = dbuilder.createCompileUnit(dwarf::DW_LANG_Julia, "test.jl", ".",
+                                       "unittest", false, "", 0);
+  auto File = dbuilder.createFile("test.jl", ".");
+  auto Ty = dbuilder.createBasicType("Int8", 8, 8, dwarf::DW_ATE_signed);
+  dbuilder.createGlobalVariable(CU, "_SOME_GLOBAL", "_SOME_GLOBAL", File, 1, Ty,
+                                false, newGV);
+  dbuilder.finalize();
 
+  std::string Error;
+  raw_string_ostream ErrorOS(Error);
+  EXPECT_TRUE(verifyModule(M2, &ErrorOS));
+  EXPECT_TRUE(StringRef(ErrorOS.str())
+                  .startswith("Referencing global in another module!"));
+}
 }
 }

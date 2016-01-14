@@ -1097,6 +1097,7 @@ void Verifier::visitDIGlobalVariable(const DIGlobalVariable &N) {
     Assert(isa<ConstantAsMetadata>(V) &&
                !isa<Function>(cast<ConstantAsMetadata>(V)->getValue()),
            "invalid global varaible ref", &N, V);
+    visitConstantExprsRecursively(cast<ConstantAsMetadata>(V)->getValue());
   }
   if (auto *Member = N.getRawStaticDataMemberDeclaration()) {
     Assert(isa<DIDerivedType>(Member), "invalid static data member declaration",
@@ -1561,13 +1562,19 @@ void Verifier::visitConstantExprsRecursively(const Constant *EntryC) {
     if (const auto *CE = dyn_cast<ConstantExpr>(C))
       visitConstantExpr(CE);
 
+    if (const auto *GV = dyn_cast<GlobalValue>(C)) {
+      // Global Values get visited separately, but we do need to make sure
+      // that the global value is in the correct module
+      Assert(GV->getParent() == M, "Referencing global in another module!",
+             EntryC, M, GV, GV->getParent());
+      continue;
+    }
+
     // Visit all sub-expressions.
     for (const Use &U : C->operands()) {
       const auto *OpC = dyn_cast<Constant>(U);
       if (!OpC)
         continue;
-      if (isa<GlobalValue>(OpC))
-        continue; // Global values get visited separately.
       if (!ConstantExprVisited.insert(OpC).second)
         continue;
       Stack.push_back(OpC);
