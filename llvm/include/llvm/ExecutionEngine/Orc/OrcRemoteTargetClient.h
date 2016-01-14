@@ -156,7 +156,7 @@ public:
         {
           TargetAddress NextCodeAddr = ObjAllocs.RemoteCodeAddr;
           for (auto &Alloc : ObjAllocs.CodeAllocs) {
-            NextCodeAddr = RoundUpToAlignment(NextCodeAddr, Alloc.getAlign());
+            NextCodeAddr = alignTo(NextCodeAddr, Alloc.getAlign());
             Dyld.mapSectionAddress(Alloc.getLocalAddress(), NextCodeAddr);
             DEBUG(dbgs() << "     code: "
                          << static_cast<void *>(Alloc.getLocalAddress())
@@ -168,8 +168,7 @@ public:
         {
           TargetAddress NextRODataAddr = ObjAllocs.RemoteRODataAddr;
           for (auto &Alloc : ObjAllocs.RODataAllocs) {
-            NextRODataAddr =
-                RoundUpToAlignment(NextRODataAddr, Alloc.getAlign());
+            NextRODataAddr = alignTo(NextRODataAddr, Alloc.getAlign());
             Dyld.mapSectionAddress(Alloc.getLocalAddress(), NextRODataAddr);
             DEBUG(dbgs() << "  ro-data: "
                          << static_cast<void *>(Alloc.getLocalAddress())
@@ -182,8 +181,7 @@ public:
         {
           TargetAddress NextRWDataAddr = ObjAllocs.RemoteRWDataAddr;
           for (auto &Alloc : ObjAllocs.RWDataAllocs) {
-            NextRWDataAddr =
-                RoundUpToAlignment(NextRWDataAddr, Alloc.getAlign());
+            NextRWDataAddr = alignTo(NextRWDataAddr, Alloc.getAlign());
             Dyld.mapSectionAddress(Alloc.getLocalAddress(), NextRWDataAddr);
             DEBUG(dbgs() << "  rw-data: "
                          << static_cast<void *>(Alloc.getLocalAddress())
@@ -284,7 +282,7 @@ public:
 
       char *getLocalAddress() const {
         uintptr_t LocalAddr = reinterpret_cast<uintptr_t>(Contents.get());
-        LocalAddr = RoundUpToAlignment(LocalAddr, Align);
+        LocalAddr = alignTo(LocalAddr, Align);
         return reinterpret_cast<char *>(LocalAddr);
       }
 
