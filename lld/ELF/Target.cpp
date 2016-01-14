@@ -227,6 +227,7 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
+  unsigned getDynReloc(unsigned Type) const override;
   void writeGotHeaderEntries(uint8_t *Buf) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -1453,6 +1454,16 @@ void AMDGPUTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   PageSize = 65536;
   GotHeaderEntriesNum = 2;
+  RelativeReloc = R_MIPS_REL32;
+}
+
+template <class ELFT>
+unsigned MipsTargetInfo<ELFT>::getDynReloc(unsigned Type) const {
+  if (Type == R_MIPS_32 || Type == R_MIPS_64)
+    return R_MIPS_REL32;
+  StringRef S = getELFRelocationTypeName(EM_MIPS, Type);
+  error("Relocation " + S + " cannot be used when making a shared object; "
+                            "recompile with -fPIC.");
 }
 
 template <class ELFT>
