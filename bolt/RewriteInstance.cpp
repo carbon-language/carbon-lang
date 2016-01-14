@@ -89,11 +89,29 @@ SplitFunctions("split-functions",
                cl::desc("split functions into hot and cold distinct regions"),
                cl::Optional);
 
-static cl::opt<std::string> ReorderBlocks(
+static cl::opt<BinaryFunction::LayoutType> ReorderBlocks(
     "reorder-blocks",
-    cl::desc("redo basic block layout based on profiling data with a specific "
-             "priority (none, branch-predictor or cache)"),
-    cl::value_desc("priority"), cl::init("disable"));
+    cl::desc("change layout of basic blocks in a function"),
+    cl::init(BinaryFunction::LT_NONE),
+    cl::values(clEnumValN(BinaryFunction::LT_NONE,
+                          "none",
+                          "do not reorder basic blocks"),
+               clEnumValN(BinaryFunction::LT_REVERSE,
+                          "reverse",
+                          "layout blocks in reverse order"),
+               clEnumValN(BinaryFunction::LT_OPTIMIZE,
+                          "normal",
+                          "perform optimal layout based on profile"),
+               clEnumValN(BinaryFunction::LT_OPTIMIZE_BRANCH,
+                          "branch-predictor",
+                          "perform optimal layout prioritizing branch "
+                            "predictions"),
+               clEnumValN(BinaryFunction::LT_OPTIMIZE_CACHE,
+                          "cache",
+                          "perform optimal layout prioritizing I-cache "
+                            "behavior"),
+               clEnumValEnd));
+
 
 static cl::opt<bool> AlignBlocks("align-blocks",
                                  cl::desc("try to align BBs inserting nops"),
@@ -665,15 +683,6 @@ void RewriteInstance::runOptimizationPasses() {
   //
   // FIXME: use real optimization passes.
   bool NagUser = true;
-  if (opts::ReorderBlocks != "" &&
-      opts::ReorderBlocks != "disable" &&
-      opts::ReorderBlocks != "none" &&
-      opts::ReorderBlocks != "branch-predictor" &&
-      opts::ReorderBlocks != "cache") {
-    errs() << "FLO: Unrecognized block reordering priority \""
-           << opts::ReorderBlocks << "\".\n";
-    exit(1);
-  }
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
@@ -725,18 +734,9 @@ void RewriteInstance::runOptimizationPasses() {
         Function.print(errs(), "after unreachable code elimination");
     }
 
-    if (opts::ReorderBlocks != "disable") {
+    if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
       bool ShouldSplit = ToSplit.find(BFI.first) != ToSplit.end();
-
-      if (opts::ReorderBlocks == "branch-predictor") {
-        BFI.second.optimizeLayout(BinaryFunction::HP_BRANCH_PREDICTOR,
-                                  ShouldSplit);
-      } else if (opts::ReorderBlocks == "cache") {
-        BFI.second.optimizeLayout(BinaryFunction::HP_CACHE_UTILIZATION,
-                                  ShouldSplit);
-      } else {
-        BFI.second.optimizeLayout(BinaryFunction::HP_NONE, ShouldSplit);
-      }
+      BFI.second.modifyLayout(opts::ReorderBlocks, ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks");
     }

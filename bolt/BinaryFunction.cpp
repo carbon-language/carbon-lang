@@ -933,12 +933,29 @@ bool BinaryFunction::fixCFIState() {
   return true;
 }
 
-void BinaryFunction::optimizeLayout(HeuristicPriority Priority, bool Split) {
-  // Bail if no profiling information or if empty
-  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE ||
-      BasicBlocksLayout.empty()) {
+void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
+  if (BasicBlocksLayout.empty() || Type == LT_NONE)
+    return;
+
+  if (Type == LT_REVERSE) {
+    BasicBlockOrderType ReverseOrder;
+    auto FirstBB = BasicBlocksLayout.front();
+    ReverseOrder.push_back(FirstBB);
+    for(auto RBBI = BasicBlocksLayout.rbegin(); *RBBI != FirstBB; ++RBBI)
+      ReverseOrder.push_back(*RBBI);
+    BasicBlocksLayout.swap(ReverseOrder);
+
+    if (Split)
+      splitFunction();
+
+    fixBranches();
+
     return;
   }
+
+  // Cannot do optimal layout without profile.
+  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
+    return;
 
   // Work on optimal solution if problem is small enough
   if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD)
@@ -1062,14 +1079,14 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority, bool Split) {
     AvgFreq[I] = Freq;
   }
 
-  switch(Priority) {
-  case HP_NONE: {
+  switch(Type) {
+  case LT_OPTIMIZE: {
     for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
       if (!Clusters[I].empty())
         Order.push_back(I);
     break;
   }
-  case HP_BRANCH_PREDICTOR: {
+  case LT_OPTIMIZE_BRANCH: {
     // Do a topological sort for clusters, prioritizing frequently-executed BBs
     // during the traversal.
     std::stack<uint32_t> Stack;
@@ -1137,7 +1154,7 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority, bool Split) {
                      });
     break;
   }
-  case HP_CACHE_UTILIZATION: {
+  case LT_OPTIMIZE_CACHE: {
     // Order clusters based on average instruction execution frequency
     for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
       if (!Clusters[I].empty())
@@ -1151,6 +1168,8 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority, bool Split) {
 
     break;
   }
+  default:
+    llvm_unreachable("unexpected layout type");
   }
 
   BasicBlocksLayout.clear();
@@ -1349,6 +1368,10 @@ void BinaryFunction::fixBranches() {
       // Case 3a: If the taken branch goes to the next block in the new layout,
       // invert this conditional branch logic so we can make this a fallthrough.
       if (TBB == FT && !HotColdBorder) {
+        if (OldFT == nullptr) {
+          errs() << "FLO-ERROR: malfromed CFG for function " << getName()
+                 << " in basic block " << BB->getName() << '\n';
+        }
         assert(OldFT != nullptr && "malformed CFG");
         if (!MIA->reverseBranchCondition(*CondBranch, OldFT, BC.Ctx.get()))
           llvm_unreachable("Target does not support reversing branches");
