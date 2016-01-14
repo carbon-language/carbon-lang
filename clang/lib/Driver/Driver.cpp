@@ -1632,6 +1632,8 @@ void Driver::BuildJobs(Compilation &C) const {
       if (A->getOption().matches(options::OPT_arch))
         ArchNames.insert(A->getValue());
 
+  // Set of (Action, canonical ToolChain triple) pairs we've built jobs for.
+  std::map<std::pair<const Action *, std::string>, InputInfo> CachedResults;
   for (Action *A : C.getActions()) {
     // If we are linking an image for multiple archs then the linker wants
     // -arch_multiple and -final_output <final image name>. Unfortunately, this
@@ -1651,7 +1653,7 @@ void Driver::BuildJobs(Compilation &C) const {
                        /*BoundArch*/ nullptr,
                        /*AtTopLevel*/ true,
                        /*MultipleArchs*/ ArchNames.size() > 1,
-                       /*LinkingOutput*/ LinkingOutput);
+                       /*LinkingOutput*/ LinkingOutput, CachedResults);
   }
 
   // If the user passed -Qunused-arguments or there were errors, don't warn
@@ -1779,19 +1781,38 @@ static const Tool *selectToolForJob(Compilation &C, bool SaveTemps,
   return ToolForJob;
 }
 
-InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
-                                     const ToolChain *TC, const char *BoundArch,
-                                     bool AtTopLevel, bool MultipleArchs,
-                                     const char *LinkingOutput) const {
+InputInfo Driver::BuildJobsForAction(
+    Compilation &C, const Action *A, const ToolChain *TC, const char *BoundArch,
+    bool AtTopLevel, bool MultipleArchs, const char *LinkingOutput,
+    std::map<std::pair<const Action *, std::string>, InputInfo> &CachedResults)
+    const {
+  std::pair<const Action *, std::string> ActionTC = {
+      A, TC->getTriple().normalize()};
+  auto CachedResult = CachedResults.find(ActionTC);
+  if (CachedResult != CachedResults.end()) {
+    return CachedResult->second;
+  }
+  InputInfo Result =
+      BuildJobsForActionNoCache(C, A, TC, BoundArch, AtTopLevel, MultipleArchs,
+                                LinkingOutput, CachedResults);
+  CachedResults[ActionTC] = Result;
+  return Result;
+}
+
+InputInfo Driver::BuildJobsForActionNoCache(
+    Compilation &C, const Action *A, const ToolChain *TC, const char *BoundArch,
+    bool AtTopLevel, bool MultipleArchs, const char *LinkingOutput,
+    std::map<std::pair<const Action *, std::string>, InputInfo> &CachedResults)
+    const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
 
   InputInfoList CudaDeviceInputInfos;
   if (const CudaHostAction *CHA = dyn_cast<CudaHostAction>(A)) {
     // Append outputs of device jobs to the input list.
     for (const Action *DA : CHA->getDeviceActions()) {
-      CudaDeviceInputInfos.push_back(
-          BuildJobsForAction(C, DA, TC, nullptr, AtTopLevel,
-                             /*MultipleArchs*/ false, LinkingOutput));
+      CudaDeviceInputInfos.push_back(BuildJobsForAction(
+          C, DA, TC, nullptr, AtTopLevel,
+          /*MultipleArchs*/ false, LinkingOutput, CachedResults));
     }
     // Override current action with a real host compile action and continue
     // processing it.
@@ -1822,7 +1843,7 @@ InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
       TC = &C.getDefaultToolChain();
 
     return BuildJobsForAction(C, *BAA->begin(), TC, ArchName, AtTopLevel,
-                              MultipleArchs, LinkingOutput);
+                              MultipleArchs, LinkingOutput, CachedResults);
   }
 
   if (const CudaDeviceAction *CDA = dyn_cast<CudaDeviceAction>(A)) {
@@ -1831,7 +1852,8 @@ InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
     assert(CDA->getGpuArchName() && "No GPU name in device action.");
     return BuildJobsForAction(C, *CDA->begin(), C.getCudaDeviceToolChain(),
                               CDA->getGpuArchName(), CDA->isAtTopLevel(),
-                              /*MultipleArchs*/ true, LinkingOutput);
+                              /*MultipleArchs*/ true, LinkingOutput,
+                              CachedResults);
   }
 
   const ActionList *Inputs = &A->getInputs();
@@ -1847,9 +1869,9 @@ InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
   // need to build jobs for device-side inputs it may have held.
   if (CollapsedCHA) {
     for (const Action *DA : CollapsedCHA->getDeviceActions()) {
-      CudaDeviceInputInfos.push_back(
-          BuildJobsForAction(C, DA, TC, "", AtTopLevel,
-                             /*MultipleArchs*/ false, LinkingOutput));
+      CudaDeviceInputInfos.push_back(BuildJobsForAction(
+          C, DA, TC, "", AtTopLevel,
+          /*MultipleArchs*/ false, LinkingOutput, CachedResults));
     }
   }
 
@@ -1863,7 +1885,7 @@ InputInfo Driver::BuildJobsForAction(Compilation &C, const Action *A,
         AtTopLevel && (isa<DsymutilJobAction>(A) || isa<VerifyJobAction>(A));
     InputInfos.push_back(BuildJobsForAction(C, Input, TC, BoundArch,
                                             SubJobAtTopLevel, MultipleArchs,
-                                            LinkingOutput));
+                                            LinkingOutput, CachedResults));
   }
 
   // Always use the first input as the base input.
