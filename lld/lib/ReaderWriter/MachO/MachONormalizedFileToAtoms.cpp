@@ -992,6 +992,10 @@ normalizedObjectToAtoms(MachOFile *file,
                        handler->kindArch());
   }
 
+  // Cache some attributes on the file for use later.
+  file->setArch(normalizedFile.arch);
+  file->setOS(normalizedFile.os);
+
   // Sort references in each atom to their canonical order.
   for (const DefinedAtom* defAtom : file->defined()) {
     reinterpret_cast<const SimpleDefinedAtom*>(defAtom)->sortReferences();

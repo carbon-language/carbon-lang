@@ -188,6 +188,12 @@ public:
       visitor(offAndAtom.atom, offAndAtom.offset);
   }
 
+  MachOLinkingContext::Arch arch() const { return _arch; }
+  void setArch(MachOLinkingContext::Arch arch) { _arch = arch; }
+
+  MachOLinkingContext::OS OS() const { return _os; }
+  void setOS(MachOLinkingContext::OS os) { _os = os; }
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const File *F) {
     return F->kind() == File::kindMachObject;
@@ -226,6 +232,8 @@ private:
   MachOLinkingContext          *_ctx;
   SectionToAtoms                _sectionAtoms;
   NameToAtom                     _undefAtoms;
+  MachOLinkingContext::Arch      _arch = MachOLinkingContext::arch_unknown;
+  MachOLinkingContext::OS        _os = MachOLinkingContext::OS::unknown;
 };
 
 class MachODylibFile : public SharedLibraryFile {
