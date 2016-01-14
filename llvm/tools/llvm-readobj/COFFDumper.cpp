@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/Line.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
@@ -90,6 +91,8 @@ private:
   void printCodeViewSymbolsSubsection(StringRef Subsection,
                                       const SectionRef &Section,
                                       StringRef SectionContents);
+
+  void printCodeViewInlineeLines(StringRef Subsection);
 
   void printMemberAttributes(MemberAttributes Attrs);
 
@@ -991,6 +994,11 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
     case ModuleSubstreamKind::Symbols:
       printCodeViewSymbolsSubsection(Contents, Section, SectionContents);
       break;
+
+    case ModuleSubstreamKind::InlineeLines:
+      printCodeViewInlineeLines(Contents);
+      break;
+
     case ModuleSubstreamKind::Lines: {
       // Holds a PC to file:line table.  Some data to parse this subsection is
       // stored in the other subsections, so just check sanity and store the
@@ -1682,6 +1690,34 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
     if (opts::CodeViewSubsectionBytes)
       printBinaryBlockWithRelocs("SymData", Section, SectionContents,
                                  OrigSymData);
+  }
+}
+
+void COFFDumper::printCodeViewInlineeLines(StringRef Subsection) {
+  StringRef Data = Subsection;
+  uint32_t Signature;
+  error(consumeUInt32(Data, Signature));
+  bool HasExtraFiles = Signature == unsigned(InlineeLinesSignature::ExtraFiles);
+
+  while (!Data.empty()) {
+    const InlineeSourceLine *ISL;
+    error(consumeObject(Data, ISL));
+    DictScope S(W, "InlineeSourceLine");
+    printTypeIndex("Inlinee", ISL->Inlinee);
+    W.printHex("FileID", ISL->FileID);
+    W.printNumber("SourceLineNum", ISL->SourceLineNum);
+
+    if (HasExtraFiles) {
+      uint32_t ExtraFileCount;
+      error(consumeUInt32(Data, ExtraFileCount));
+      W.printNumber("ExtraFileCount", ExtraFileCount);
+      ListScope ExtraFiles(W, "ExtraFiles");
+      for (unsigned I = 0; I < ExtraFileCount; ++I) {
+        uint32_t FileID;
+        error(consumeUInt32(Data, FileID));
+        W.printHex("FileID", FileID);
+      }
+    }
   }
 }
 
