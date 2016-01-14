@@ -29,7 +29,6 @@ protected:
   class ResourceIdMgr {
   public:
     typedef uint64_t ResourceId;
-    ResourceIdMgr() : NextId(0) {}
     ResourceId getNext() {
       if (!FreeIds.empty()) {
         ResourceId I = FreeIds.back();
@@ -41,7 +40,7 @@ protected:
     void release(ResourceId I) { FreeIds.push_back(I); }
 
   private:
-    ResourceId NextId;
+    ResourceId NextId = 0;
     std::vector<ResourceId> FreeIds;
   };
 

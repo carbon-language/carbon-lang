@@ -276,8 +276,7 @@ public:
     class Alloc {
     public:
       Alloc(uint64_t Size, unsigned Align)
-          : Size(Size), Align(Align), Contents(new char[Size + Align - 1]),
-            RemoteAddr(0) {}
+          : Size(Size), Align(Align), Contents(new char[Size + Align - 1]) {}
 
       Alloc(Alloc &&Other)
           : Size(std::move(Other.Size)), Align(std::move(Other.Align)),
@@ -312,12 +311,11 @@ public:
       uint64_t Size;
       unsigned Align;
       std::unique_ptr<char[]> Contents;
-      TargetAddress RemoteAddr;
+      TargetAddress RemoteAddr = 0;
     };
 
     struct ObjectAllocs {
-      ObjectAllocs()
-          : RemoteCodeAddr(0), RemoteRODataAddr(0), RemoteRWDataAddr(0) {}
+      ObjectAllocs() = default;
 
       ObjectAllocs(ObjectAllocs &&Other)
           : RemoteCodeAddr(std::move(Other.RemoteCodeAddr)),
@@ -337,9 +335,9 @@ public:
         return *this;
       }
 
-      TargetAddress RemoteCodeAddr;
-      TargetAddress RemoteRODataAddr;
-      TargetAddress RemoteRWDataAddr;
+      TargetAddress RemoteCodeAddr = 0;
+      TargetAddress RemoteRODataAddr = 0;
+      TargetAddress RemoteRWDataAddr = 0;
       std::vector<Alloc> CodeAllocs, RODataAllocs, RWDataAllocs;
     };
 
@@ -410,9 +408,6 @@ public:
 
   private:
     struct RemoteIndirectStubsInfo {
-      RemoteIndirectStubsInfo(TargetAddress StubBase, TargetAddress PtrBase,
-                              unsigned NumStubs)
-          : StubBase(StubBase), PtrBase(PtrBase), NumStubs(NumStubs) {}
       TargetAddress StubBase;
       TargetAddress PtrBase;
       unsigned NumStubs;
@@ -438,8 +433,7 @@ public:
                                NewStubsRequired);
 
       unsigned NewBlockId = RemoteIndirectStubsInfos.size();
-      RemoteIndirectStubsInfos.push_back(
-          RemoteIndirectStubsInfo(StubBase, PtrBase, NumStubsEmitted));
+      RemoteIndirectStubsInfos.push_back({StubBase, PtrBase, NumStubsEmitted});
 
       for (unsigned I = 0; I < NumStubsEmitted; ++I)
         FreeStubs.push_back(std::make_pair(NewBlockId, I));
@@ -627,8 +621,7 @@ public:
 
 private:
   OrcRemoteTargetClient(ChannelT &Channel, std::error_code &EC)
-      : Channel(Channel), RemotePointerSize(0), RemotePageSize(0),
-        RemoteTrampolineSize(0), RemoteIndirectStubSize(0) {
+      : Channel(Channel) {
     if ((EC = call<GetRemoteInfo>(Channel)))
       return;
 
@@ -790,10 +783,10 @@ private:
   ChannelT &Channel;
   std::error_code ExistingError;
   std::string RemoteTargetTriple;
-  uint32_t RemotePointerSize;
-  uint32_t RemotePageSize;
-  uint32_t RemoteTrampolineSize;
-  uint32_t RemoteIndirectStubSize;
+  uint32_t RemotePointerSize = 0;
+  uint32_t RemotePageSize = 0;
+  uint32_t RemoteTrampolineSize = 0;
+  uint32_t RemoteIndirectStubSize = 0;
   ResourceIdMgr AllocatorIds, IndirectStubOwnerIds;
   std::function<TargetAddress(TargetAddress)> CompileCallback;
 };
