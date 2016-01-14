@@ -140,8 +140,6 @@ template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
     Out<ELFT>::RelaPlt = &RelaPlt;
   DynamicSection<ELFT> Dynamic(*Symtab);
   Out<ELFT>::Dynamic = &Dynamic;
-  EhFrameHeader<ELFT> EhFrameHdr;
-  Out<ELFT>::EhFrameHdr = &EhFrameHdr;
 
   Writer<ELFT>(*Symtab).run();
 }
@@ -912,9 +910,6 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     Add(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     Add(Out<ELFT>::Plt);
-
-  if (Out<ELFT>::EhFrameHdr->Live)
-    Add(Out<ELFT>::EhFrameHdr);
 }
 
 // The linker is expected to define SECNAME_start and SECNAME_end
@@ -1114,12 +1109,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     *PH = GnuRelroPhdr;
   }
 
-  if (Out<ELFT>::EhFrameHdr->Live) {
-    Elf_Phdr *PH = &Phdrs[++PhdrIdx];
-    PH->p_type = PT_GNU_EH_FRAME;
-    copyPhdr(PH, Out<ELFT>::EhFrameHdr);
-  }
-
   // PT_GNU_STACK is a special section to tell the loader to make the
   // pages for the stack non-executable.
   if (!Config->ZExecStack) {
@@ -1168,8 +1157,6 @@ template <class ELFT> int Writer<ELFT>::getPhdrsNum() const {
   if (Tls)
     ++I;
   if (HasRelro)
-    ++I;
-  if (Out<ELFT>::EhFrameHdr->Live)
     ++I;
   return I;
 }
