@@ -62,22 +62,13 @@ namespace llvm {
     typedef typename U::entry entry;
 
     class node;
-    class listener;
     class iterator;
 
   private:
     Registry() = delete;
 
-    static void Announce(const entry &E) {
-      for (listener *Cur = ListenerHead; Cur; Cur = Cur->Next)
-        Cur->registered(E);
-    }
-
     friend class node;
     static node *Head, *Tail;
-
-    friend class listener;
-    static listener *ListenerHead, *ListenerTail;
 
   public:
     /// Node in linked list of entries.
@@ -95,8 +86,6 @@ namespace llvm {
         else
           Head = this;
         Tail = this;
-
-        Announce(V);
       }
     };
 
@@ -121,60 +110,6 @@ namespace llvm {
     static iterator_range<iterator> entries() {
       return make_range(begin(), end());
     }
-
-    /// Abstract base class for registry listeners, which are informed when new
-    /// entries are added to the registry. Simply subclass and instantiate:
-    ///
-    /// \code
-    ///   class CollectorPrinter : public Registry<Collector>::listener {
-    ///   protected:
-    ///     void registered(const Registry<Collector>::entry &e) {
-    ///       cerr << "collector now available: " << e->getName() << "\n";
-    ///     }
-    ///
-    ///   public:
-    ///     CollectorPrinter() { init(); }  // Print those already registered.
-    ///   };
-    ///
-    ///   CollectorPrinter Printer;
-    /// \endcode
-    class listener {
-      listener *Prev, *Next;
-
-      friend void Registry::Announce(const entry &E);
-
-    protected:
-      /// Called when an entry is added to the registry.
-      ///
-      virtual void registered(const entry &) = 0;
-
-      /// Calls 'registered' for each pre-existing entry.
-      ///
-      void init() {
-        for (iterator I = begin(), E = end(); I != E; ++I)
-          registered(*I);
-      }
-
-    public:
-      listener() : Prev(ListenerTail), Next(nullptr) {
-        if (Prev)
-          Prev->Next = this;
-        else
-          ListenerHead = this;
-        ListenerTail = this;
-      }
-
-      virtual ~listener() {
-        if (Next)
-          Next->Prev = Prev;
-        else
-          ListenerTail = Prev;
-        if (Prev)
-          Prev->Next = Next;
-        else
-          ListenerHead = Next;
-      }
-    };
 
     /// A static registration template. Use like such:
     ///
@@ -203,8 +138,6 @@ namespace llvm {
       Add(const char *Name, const char *Desc)
         : Entry(Name, Desc, CtorFn), Node(Entry) {}
     };
-
-    /// Registry::Parser now lives in llvm/Support/RegistryParser.h.
   };
 
   // Since these are defined in a header file, plugins must be sure to export
@@ -215,13 +148,6 @@ namespace llvm {
 
   template <typename T, typename U>
   typename Registry<T,U>::node *Registry<T,U>::Tail;
-
-  template <typename T, typename U>
-  typename Registry<T,U>::listener *Registry<T,U>::ListenerHead;
-
-  template <typename T, typename U>
-  typename Registry<T,U>::listener *Registry<T,U>::ListenerTail;
-
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_REGISTRY_H
