@@ -1966,11 +1966,10 @@ bool BitSimplification::genExtractHalf(MachineInstr *MI,
     NewR = MRI.createVirtualRegister(&Hexagon::IntRegsRegClass);
     BuildMI(B, At, DL, HII.get(Hexagon::A2_zxth), NewR)
         .addReg(L.Reg, 0, L.Sub);
-  } else if (!L.Low && Opc != Hexagon::S2_extractu) {
+  } else if (!L.Low && Opc != Hexagon::S2_lsr_i_r) {
     NewR = MRI.createVirtualRegister(&Hexagon::IntRegsRegClass);
-    BuildMI(B, MI, DL, HII.get(Hexagon::S2_extractu), NewR)
+    BuildMI(B, MI, DL, HII.get(Hexagon::S2_lsr_i_r), NewR)
         .addReg(L.Reg, 0, L.Sub)
-        .addImm(16)
         .addImm(16);
   }
   if (NewR == 0)
