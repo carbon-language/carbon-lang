@@ -462,6 +462,18 @@ void Verifier::visit(Instruction &I) {
   InstVisitor<Verifier>::visit(I);
 }
 
+// Helper to recursively iterate over indirect users. By
+// returning false, the callback can ask to stop recursing
+// further.
+static void forEachUser(const Value *User,
+                        SmallPtrSet<const Value *, 32> &Visited,
+                        llvm::function_ref<bool(const Value *)> Callback) {
+  if (!Visited.insert(User).second)
+    return;
+  for (const Value *TheNextUser : User->users())
+    if (Callback(TheNextUser))
+      forEachUser(TheNextUser, Visited, Callback);
+}
 
 void Verifier::visitGlobalValue(const GlobalValue &GV) {
   Assert(!GV.isDeclaration() || GV.hasExternalLinkage() ||
@@ -481,6 +493,30 @@ void Verifier::visitGlobalValue(const GlobalValue &GV) {
 
   if (GV.isDeclarationForLinker())
     Assert(!GV.hasComdat(), "Declaration may not be in a Comdat!", &GV);
+
+  // Verify that this GlobalValue is only used in this module.
+  // This map is used to avoid visiting uses twice. We can arrive at a user
+  // twice, if they have multiple operands. In particular for very large
+  // constant expressions, we can arrive at a particular user many times.
+  SmallPtrSet<const Value *, 32> Visited;
+  forEachUser(&GV, Visited, [&](const Value *V) -> bool {
+    if (const Instruction *I = dyn_cast<Instruction>(V)) {
+      if (!I->getParent() || !I->getParent()->getParent())
+        CheckFailed("Global is referenced by parentless instruction!", &GV,
+                    M, I);
+      else if (I->getParent()->getParent()->getParent() != M)
+        CheckFailed("Global is referenced in a different module!", &GV,
+                    M, I, I->getParent()->getParent(),
+                    I->getParent()->getParent()->getParent());
+      return false;
+    } else if (const Function *F = dyn_cast<Function>(V)) {
+      if (F->getParent() != M)
+        CheckFailed("Global is used by function in a different module", &GV,
+                    M, F, F->getParent());
+      return false;
+    }
+    return true;
+  });
 }
 
 void Verifier::visitGlobalVariable(const GlobalVariable &GV) {

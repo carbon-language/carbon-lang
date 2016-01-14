@@ -64,7 +64,7 @@ TEST(VerifierTest, CrossModuleRef) {
   LLVMContext &C = getGlobalContext();
   Module M1("M1", C);
   Module M2("M2", C);
-  Module M3("M2", C);
+  Module M3("M3", C);
   FunctionType *FTy = FunctionType::get(Type::getInt32Ty(C), /*isVarArg=*/false);
   Function *F1 = cast<Function>(M1.getOrInsertFunction("foo1", FTy));
   Function *F2 = cast<Function>(M2.getOrInsertFunction("foo2", FTy));
@@ -86,7 +86,21 @@ TEST(VerifierTest, CrossModuleRef) {
 
   std::string Error;
   raw_string_ostream ErrorOS(Error);
-  EXPECT_FALSE(verifyModule(M2, &ErrorOS));
+  EXPECT_TRUE(verifyModule(M2, &ErrorOS));
+  EXPECT_TRUE(StringRef(ErrorOS.str())
+                  .equals("Global is used by function in a different module\n"
+                          "i32 ()* @foo2\n"
+                          "; ModuleID = 'M2'\n"
+                          "i32 ()* @foo3\n"
+                          "; ModuleID = 'M3'\n"
+                          "Global is referenced in a different module!\n"
+                          "i32 ()* @foo2\n"
+                          "; ModuleID = 'M2'\n"
+                          "  %call = call i32 @foo2()\n"
+                          "i32 ()* @foo1\n"
+                          "; ModuleID = 'M1'\n"));
+
+  Error.clear();
   EXPECT_TRUE(verifyModule(M1, &ErrorOS));
   EXPECT_TRUE(StringRef(ErrorOS.str()).equals(
       "Referencing function in another module!\n"
