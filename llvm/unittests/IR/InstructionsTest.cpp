@@ -541,7 +541,7 @@ TEST(InstructionsTest, AlterCallBundles) {
   EXPECT_EQ(Call->getTailCallKind(), Clone->getTailCallKind());
   EXPECT_TRUE(Clone->hasFnAttr(Attribute::AttrKind::Cold));
   EXPECT_EQ(Call->getDebugLoc(), Clone->getDebugLoc());
-  EXPECT_EQ(Clone->getNumOperandBundles(), 1);
+  EXPECT_EQ(Clone->getNumOperandBundles(), 1U);
   EXPECT_TRUE(Clone->getOperandBundle("after").hasValue());
 }
 
