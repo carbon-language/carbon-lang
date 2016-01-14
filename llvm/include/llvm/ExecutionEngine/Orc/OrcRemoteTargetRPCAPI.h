@@ -56,6 +56,7 @@ public:
     CallVoidVoidResponseId,
     CreateRemoteAllocatorId,
     CreateIndirectStubsOwnerId,
+    DeregisterEHFramesId,
     DestroyRemoteAllocatorId,
     DestroyIndirectStubsOwnerId,
     EmitIndirectStubsId,
@@ -69,6 +70,7 @@ public:
     GetRemoteInfoResponseId,
     ReadMemId,
     ReadMemResponseId,
+    RegisterEHFramesId,
     ReserveMemId,
     ReserveMemResponseId,
     RequestCompileId,
@@ -103,6 +105,10 @@ public:
   typedef Procedure<CreateIndirectStubsOwnerId,
                     ResourceIdMgr::ResourceId /* StubsOwner ID */>
       CreateIndirectStubsOwner;
+
+  typedef Procedure<DeregisterEHFramesId, TargetAddress /* Addr */,
+                    uint32_t /* Size */>
+      DeregisterEHFrames;
 
   typedef Procedure<DestroyRemoteAllocatorId,
                     ResourceIdMgr::ResourceId /* Allocator ID */>
@@ -149,6 +155,10 @@ public:
       ReadMem;
 
   typedef Procedure<ReadMemResponseId> ReadMemResponse;
+
+  typedef Procedure<RegisterEHFramesId, TargetAddress /* Addr */,
+                    uint32_t /* Size */>
+      RegisterEHFrames;
 
   typedef Procedure<ReserveMemId, ResourceIdMgr::ResourceId /* Id */,
                     uint64_t /* Size */, uint32_t /* Align */>

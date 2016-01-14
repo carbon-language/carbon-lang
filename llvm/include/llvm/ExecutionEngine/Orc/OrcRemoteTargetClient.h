@@ -144,10 +144,18 @@ public:
     bool needsToReserveAllocationSpace() override { return true; }
 
     void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr,
-                          size_t Size) override {}
+                          size_t Size) override {
+      UnfinalizedEHFrames.push_back(
+          std::make_pair(LoadAddr, static_cast<uint32_t>(Size)));
+    }
 
-    void deregisterEHFrames(uint8_t *addr, uint64_t LoadAddr,
-                            size_t Size) override {}
+    void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr,
+                            size_t Size) override {
+      auto EC = Client.deregisterEHFrames(LoadAddr, Size);
+      // FIXME: Add error poll.
+      assert(!EC && "Failed to register remote EH frames.");
+      (void)EC;
+    }
 
     void notifyObjectLoaded(RuntimeDyld &Dyld,
                             const object::ObjectFile &Obj) override {
@@ -253,6 +261,14 @@ public:
       }
       Unfinalized.clear();
 
+      for (auto &EHFrame : UnfinalizedEHFrames) {
+        auto EC = Client.registerEHFrames(EHFrame.first, EHFrame.second);
+        // FIXME: Add error poll.
+        assert(!EC && "Failed to register remote EH frames.");
+        (void)EC;
+      }
+      UnfinalizedEHFrames.clear();
+
       return false;
     }
 
@@ -331,6 +347,7 @@ public:
     ResourceIdMgr::ResourceId Id;
     std::vector<ObjectAllocs> Unmapped;
     std::vector<ObjectAllocs> Unfinalized;
+    std::vector<std::pair<uint64_t, uint32_t>> UnfinalizedEHFrames;
   };
 
   /// Remote indirect stubs manager.
@@ -620,6 +637,10 @@ private:
                           RemoteTrampolineSize, RemoteIndirectStubSize));
   }
 
+  std::error_code deregisterEHFrames(TargetAddress Addr, uint32_t Size) {
+    return call<RegisterEHFrames>(Channel, Addr, Size);
+  }
+
   void destroyRemoteAllocator(ResourceIdMgr::ResourceId Id) {
     if (auto EC = call<DestroyRemoteAllocator>(Channel, Id)) {
       // FIXME: This will be triggered by a removeModuleSet call: Propagate
@@ -714,6 +735,10 @@ private:
       return EC;
 
     return std::error_code();
+  }
+
+  std::error_code registerEHFrames(TargetAddress &RAddr, uint32_t Size) {
+    return call<RegisterEHFrames>(Channel, RAddr, Size);
   }
 
   std::error_code reserveMem(TargetAddress &RemoteAddr,
