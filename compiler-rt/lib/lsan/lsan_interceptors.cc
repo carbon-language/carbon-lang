@@ -20,6 +20,7 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_linux.h"
 #include "sanitizer_common/sanitizer_platform_limits_posix.h"
+#include "sanitizer_common/sanitizer_tls_get_addr.h"
 #include "lsan.h"
 #include "lsan_allocator.h"
 #include "lsan_thread.h"
@@ -104,6 +105,14 @@ INTERCEPTOR(int, posix_memalign, void **memptr, uptr alignment, uptr size) {
   return 0;
 }
 
+INTERCEPTOR(void *, __libc_memalign, uptr alignment, uptr size) {
+  ENSURE_LSAN_INITED;
+  GET_STACK_TRACE_MALLOC;
+  void *res = Allocate(stack, size, alignment, kAlwaysClearMemory);
+  DTLS_on_libc_memalign(res, size);
+  return res;
+}
+
 INTERCEPTOR(void*, valloc, uptr size) {
   ENSURE_LSAN_INITED;
   GET_STACK_TRACE_MALLOC;
@@ -173,11 +182,6 @@ INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const &) {
   OPERATOR_DELETE_BODY;
 }
-
-// We need this to intercept the __libc_memalign calls that are used to
-// allocate dynamic TLS space in ld-linux.so.
-INTERCEPTOR(void *, __libc_memalign, uptr align, uptr s)
-    ALIAS(WRAPPER_NAME(memalign));
 
 ///// Thread initialization and finalization. /////
 

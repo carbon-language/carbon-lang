@@ -43,6 +43,7 @@ static void InitializeFlags() {
     cf.CopyFrom(*common_flags());
     cf.external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
     cf.malloc_context_size = 30;
+    cf.intercept_tls_get_addr = true;
     cf.detect_leaks = true;
     cf.exitcode = 23;
     OverrideCommonFlags(cf);

@@ -31,6 +31,7 @@
 
 namespace __sanitizer {
 class FlagParser;
+struct DTLS;
 }
 
 namespace __lsan {
@@ -141,8 +142,8 @@ bool WordIsPoisoned(uptr addr);
 void LockThreadRegistry();
 void UnlockThreadRegistry();
 bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
-                           uptr *tls_begin, uptr *tls_end,
-                           uptr *cache_begin, uptr *cache_end);
+                           uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
+                           uptr *cache_end, DTLS **dtls);
 void ForEachExtraStackRange(uptr os_id, RangeIteratorCallback callback,
                             void *arg);
 // If called from the main thread, updates the main thread's TID in the thread

@@ -23,6 +23,10 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_thread_registry.h"
 
+namespace __sanitizer {
+struct DTLS;
+}  // namespace __sanitizer
+
 namespace __asan {
 
 const u32 kInvalidTid = 0xffffff;  // Must fit into 24 bits.
@@ -67,6 +71,7 @@ class AsanThread {
   uptr stack_size() { return stack_size_; }
   uptr tls_begin() { return tls_begin_; }
   uptr tls_end() { return tls_end_; }
+  DTLS *dtls() { return dtls_; }
   u32 tid() { return context_->tid; }
   AsanThreadContext *context() { return context_; }
   void set_context(AsanThreadContext *context) { context_ = context; }
@@ -132,6 +137,7 @@ class AsanThread {
   uptr stack_size_;
   uptr tls_begin_;
   uptr tls_end_;
+  DTLS *dtls_;
 
   FakeStack *fake_stack_;
   AsanThreadLocalMallocStorage malloc_storage_;

@@ -199,6 +199,7 @@ void AsanThread::SetThreadStackAndTls() {
                        &tls_size);
   stack_top_ = stack_bottom_ + stack_size_;
   tls_end_ = tls_begin_ + tls_size;
+  dtls_ = DTLS_Get();
 
   int local;
   CHECK(AddrIsInStack((uptr)&local));
@@ -322,8 +323,8 @@ __asan::AsanThread *GetAsanThreadByOsIDLocked(uptr os_id) {
 // --- Implementation of LSan-specific functions --- {{{1
 namespace __lsan {
 bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
-                           uptr *tls_begin, uptr *tls_end,
-                           uptr *cache_begin, uptr *cache_end) {
+                           uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
+                           uptr *cache_end, DTLS **dtls) {
   __asan::AsanThread *t = __asan::GetAsanThreadByOsIDLocked(os_id);
   if (!t) return false;
   *stack_begin = t->stack_bottom();
@@ -333,6 +334,7 @@ bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
   // ASan doesn't keep allocator caches in TLS, so these are unused.
   *cache_begin = 0;
   *cache_end = 0;
+  *dtls = t->dtls();
   return true;
 }
 
