@@ -72,7 +72,8 @@ public:
   void printStackMap() const override;
 private:
   void printSymbol(const SymbolRef &Sym);
-  void printRelocation(const SectionRef &Section, const RelocationRef &Reloc);
+  void printRelocation(const SectionRef &Section, const RelocationRef &Reloc,
+                       uint64_t Bias = 0);
   void printDataDirectory(uint32_t Index, const std::string &FieldName);
 
   void printDOSHeader(const dos_header *DH);
@@ -95,6 +96,9 @@ private:
   void printRelocatedField(StringRef Label, const coff_section *Sec,
                            StringRef SectionContents, const ulittle32_t *Field,
                            StringRef *RelocSym = nullptr);
+
+  void printBinaryBlockWithRelocs(StringRef Label, const SectionRef &Sec,
+                                  StringRef SectionContents, StringRef Block);
 
   void cacheRelocations();
 
@@ -200,6 +204,29 @@ void COFFDumper::printRelocatedField(StringRef Label, const coff_section *Sec,
     W.printSymbolOffset(Label, Symbol, *Field);
   else
     W.printHex(Label, *Field);
+}
+
+void COFFDumper::printBinaryBlockWithRelocs(StringRef Label,
+                                            const SectionRef &Sec,
+                                            StringRef SectionContents,
+                                            StringRef Block) {
+  W.printBinaryBlock(Label, Block);
+
+  assert(SectionContents.begin() < Block.begin() &&
+         SectionContents.end() >= Block.end() &&
+         "Block is not contained in SectionContents");
+  uint64_t OffsetStart = Block.data() - SectionContents.data();
+  uint64_t OffsetEnd = OffsetStart + Block.size();
+
+  cacheRelocations();
+  ListScope D(W, "BlockRelocations");
+  const coff_section *Section = Obj->getCOFFSection(Sec);
+  const auto &Relocations = RelocMap[Section];
+  for (const auto &Relocation : Relocations) {
+    uint64_t RelocationOffset = Relocation.getOffset();
+    if (OffsetStart <= RelocationOffset && RelocationOffset < OffsetEnd)
+      printRelocation(Sec, Relocation, OffsetStart);
+  }
 }
 
 static const EnumEntry<COFF::MachineTypes> ImageFileMachineType[] = {
@@ -1242,6 +1269,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
     error(consumeObject(Data, Rec));
 
     StringRef SymData = Data.substr(0, Rec->RecordLength - 2);
+    StringRef OrigSymData = SymData;
 
     Data = Data.drop_front(Rec->RecordLength - 2);
 
@@ -1647,10 +1675,13 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       DictScope S(W, "UnknownSym");
       W.printHex("Kind", unsigned(Kind));
       W.printHex("Size", Rec->RecordLength);
-      W.printBinaryBlock("SymData", SymData);
       break;
     }
     }
+
+    if (opts::CodeViewSubsectionBytes)
+      printBinaryBlockWithRelocs("SymData", Section, SectionContents,
+                                 OrigSymData);
   }
 }
 
@@ -1772,8 +1803,6 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
     switch (Leaf) {
     default: {
       W.printHex("Size", Rec->Len);
-      if (opts::CodeViewSubsectionBytes)
-        W.printBinaryBlock("LeafData", LeafData);
       break;
     }
 
@@ -2108,6 +2137,9 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
     }
     }
 
+    if (opts::CodeViewSubsectionBytes)
+      W.printBinaryBlock("LeafData", LeafData);
+
     CVUDTNames.push_back(Name);
 
     Data = RemainingData;
@@ -2356,8 +2388,8 @@ void COFFDumper::printRelocations() {
 }
 
 void COFFDumper::printRelocation(const SectionRef &Section,
-                                 const RelocationRef &Reloc) {
-  uint64_t Offset = Reloc.getOffset();
+                                 const RelocationRef &Reloc, uint64_t Bias) {
+  uint64_t Offset = Reloc.getOffset() - Bias;
   uint64_t RelocType = Reloc.getType();
   SmallString<32> RelocName;
   StringRef SymbolName;
