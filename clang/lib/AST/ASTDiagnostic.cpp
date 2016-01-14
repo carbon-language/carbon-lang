@@ -808,102 +808,128 @@ class TemplateDiff {
 
   DiffTree Tree;
 
-  /// TSTiterator - an iterator that is used to enter a
-  /// TemplateSpecializationType and read TemplateArguments inside template
-  /// parameter packs in order with the rest of the TemplateArguments.
-  struct TSTiterator {
+  /// TSTiterator - a pair of iterators that walks the
+  /// TemplateSpecializationType and the desugared TemplateSpecializationType.
+  /// The deseguared TemplateArgument should provide the canonical argument
+  /// for comparisons.
+  class TSTiterator {
     typedef const TemplateArgument& reference;
     typedef const TemplateArgument* pointer;
 
-    /// TST - the template specialization whose arguments this iterator
-    /// traverse over.
-    const TemplateSpecializationType *TST;
+    /// InternalIterator - an iterator that is used to enter a
+    /// TemplateSpecializationType and read TemplateArguments inside template
+    /// parameter packs in order with the rest of the TemplateArguments.
+    struct InternalIterator {
+      /// TST - the template specialization whose arguments this iterator
+      /// traverse over.
+      const TemplateSpecializationType *TST;
 
-    /// DesugarTST - desugared template specialization used to extract
-    /// default argument information
-    const TemplateSpecializationType *DesugarTST;
+      /// Index - the index of the template argument in TST.
+      unsigned Index;
 
-    /// Index - the index of the template argument in TST.
-    unsigned Index;
+      /// CurrentTA - if CurrentTA is not the same as EndTA, then CurrentTA
+      /// points to a TemplateArgument within a parameter pack.
+      TemplateArgument::pack_iterator CurrentTA;
 
-    /// CurrentTA - if CurrentTA is not the same as EndTA, then CurrentTA
-    /// points to a TemplateArgument within a parameter pack.
-    TemplateArgument::pack_iterator CurrentTA;
+      /// EndTA - the end iterator of a parameter pack
+      TemplateArgument::pack_iterator EndTA;
 
-    /// EndTA - the end iterator of a parameter pack
-    TemplateArgument::pack_iterator EndTA;
+      /// InternalIterator - Constructs an iterator and sets it to the first
+      /// template argument.
+      InternalIterator(const TemplateSpecializationType *TST)
+          : TST(TST), Index(0), CurrentTA(nullptr), EndTA(nullptr) {
+        if (isEnd()) return;
 
-    /// TSTiterator - Constructs an iterator and sets it to the first template
-    /// argument.
-    TSTiterator(ASTContext &Context, const TemplateSpecializationType *TST)
-        : TST(TST),
-          DesugarTST(GetTemplateSpecializationType(Context, TST->desugar())),
-          Index(0), CurrentTA(nullptr), EndTA(nullptr) {
-      if (isEnd()) return;
+        // Set to first template argument.  If not a parameter pack, done.
+        TemplateArgument TA = TST->getArg(0);
+        if (TA.getKind() != TemplateArgument::Pack) return;
 
-      // Set to first template argument.  If not a parameter pack, done.
-      TemplateArgument TA = TST->getArg(0);
-      if (TA.getKind() != TemplateArgument::Pack) return;
-
-      // Start looking into the parameter pack.
-      CurrentTA = TA.pack_begin();
-      EndTA = TA.pack_end();
-
-      // Found a valid template argument.
-      if (CurrentTA != EndTA) return;
-
-      // Parameter pack is empty, use the increment to get to a valid
-      // template argument.
-      ++(*this);
-    }
-
-    /// isEnd - Returns true if the iterator is one past the end.
-    bool isEnd() const {
-      return Index >= TST->getNumArgs();
-    }
-
-    /// &operator++ - Increment the iterator to the next template argument.
-    TSTiterator &operator++() {
-      // After the end, Index should be the default argument position in
-      // DesugarTST, if it exists.
-      if (isEnd()) {
-        ++Index;
-        return *this;
-      }
-
-      // If in a parameter pack, advance in the parameter pack.
-      if (CurrentTA != EndTA) {
-        ++CurrentTA;
-        if (CurrentTA != EndTA)
-          return *this;
-      }
-
-      // Loop until a template argument is found, or the end is reached.
-      while (true) {
-        // Advance to the next template argument.  Break if reached the end.
-        if (++Index == TST->getNumArgs()) break;
-
-        // If the TemplateArgument is not a parameter pack, done.
-        TemplateArgument TA = TST->getArg(Index);
-        if (TA.getKind() != TemplateArgument::Pack) break;
-
-        // Handle parameter packs.
+        // Start looking into the parameter pack.
         CurrentTA = TA.pack_begin();
         EndTA = TA.pack_end();
 
-        // If the parameter pack is empty, try to advance again.
-        if (CurrentTA != EndTA) break;
+        // Found a valid template argument.
+        if (CurrentTA != EndTA) return;
+
+        // Parameter pack is empty, use the increment to get to a valid
+        // template argument.
+        ++(*this);
       }
+
+      /// isEnd - Returns true if the iterator is one past the end.
+      bool isEnd() const {
+        return Index >= TST->getNumArgs();
+      }
+
+      /// &operator++ - Increment the iterator to the next template argument.
+      InternalIterator &operator++() {
+        if (isEnd()) {
+          return *this;
+        }
+
+        // If in a parameter pack, advance in the parameter pack.
+        if (CurrentTA != EndTA) {
+          ++CurrentTA;
+          if (CurrentTA != EndTA)
+            return *this;
+        }
+
+        // Loop until a template argument is found, or the end is reached.
+        while (true) {
+          // Advance to the next template argument.  Break if reached the end.
+          if (++Index == TST->getNumArgs())
+            break;
+
+          // If the TemplateArgument is not a parameter pack, done.
+          TemplateArgument TA = TST->getArg(Index);
+          if (TA.getKind() != TemplateArgument::Pack)
+            break;
+
+          // Handle parameter packs.
+          CurrentTA = TA.pack_begin();
+          EndTA = TA.pack_end();
+
+          // If the parameter pack is empty, try to advance again.
+          if (CurrentTA != EndTA)
+            break;
+        }
+        return *this;
+      }
+
+      /// operator* - Returns the appropriate TemplateArgument.
+      reference operator*() const {
+        assert(!isEnd() && "Index exceeds number of arguments.");
+        if (CurrentTA == EndTA)
+          return TST->getArg(Index);
+        else
+          return *CurrentTA;
+      }
+
+      /// operator-> - Allow access to the underlying TemplateArgument.
+      pointer operator->() const {
+        return &operator*();
+      }
+    };
+
+    InternalIterator SugaredIterator;
+    InternalIterator DesugaredIterator;
+
+  public:
+    TSTiterator(ASTContext &Context, const TemplateSpecializationType *TST)
+        : SugaredIterator(TST),
+          DesugaredIterator(
+              GetTemplateSpecializationType(Context, TST->desugar())) {}
+
+    /// &operator++ - Increment the iterator to the next template argument.
+    TSTiterator &operator++() {
+      ++SugaredIterator;
+      ++DesugaredIterator;
       return *this;
     }
 
     /// operator* - Returns the appropriate TemplateArgument.
     reference operator*() const {
-      assert(!isEnd() && "Index exceeds number of arguments.");
-      if (CurrentTA == EndTA)
-        return TST->getArg(Index);
-      else
-        return *CurrentTA;
+      return *SugaredIterator;
     }
 
     /// operator-> - Allow access to the underlying TemplateArgument.
@@ -911,14 +937,25 @@ class TemplateDiff {
       return &operator*();
     }
 
-    /// getDesugar - Returns the deduced template argument from DesguarTST
-    reference getDesugar() const {
-      return DesugarTST->getArg(Index);
+    /// isEnd - Returns true if no more TemplateArguments are available.
+    bool isEnd() const {
+      return SugaredIterator.isEnd();
+    }
+
+    /// hasDesugaredTA - Returns true if there is another TemplateArgument
+    /// available.
+    bool hasDesugaredTA() const {
+      return !DesugaredIterator.isEnd();
+    }
+
+    /// getDesugaredTA - Returns the desugared TemplateArgument.
+    reference getDesugaredTA() const {
+      return *DesugaredIterator;
     }
   };
 
   // These functions build up the template diff tree, including functions to
-  // retrieve and compare template arguments. 
+  // retrieve and compare template arguments.
 
   static const TemplateSpecializationType * GetTemplateSpecializationType(
       ASTContext &Context, QualType Ty) {
@@ -1269,7 +1306,7 @@ class TemplateDiff {
 
     QualType ArgType = DefaultTTPD->getDefaultArgument();
     if (ArgType->isDependentType())
-      return Iter.getDesugar().getAsType();
+      return Iter.getDesugaredTA().getAsType();
 
     return ArgType;
   }
@@ -1304,12 +1341,12 @@ class TemplateDiff {
     // from the desugared TemplateArgument, otherwise expression needs to
     // be evaluatable.
     if (Iter.isEnd() && ArgExpr->isValueDependent()) {
-      switch (Iter.getDesugar().getKind()) {
+      switch (Iter.getDesugaredTA().getKind()) {
         case TemplateArgument::Integral:
-          Int = Iter.getDesugar().getAsIntegral();
+          Int = Iter.getDesugaredTA().getAsIntegral();
           return true;
         case TemplateArgument::Expression:
-          ArgExpr = Iter.getDesugar().getAsExpr();
+          ArgExpr = Iter.getDesugaredTA().getAsExpr();
           Int = ArgExpr->EvaluateKnownConstInt(Context);
           Int = Int.extOrTrunc(Context.getTypeSize(IntegerType));
           return true;
@@ -1331,11 +1368,11 @@ class TemplateDiff {
     // Default, value-depenedent expressions require fetching
     // from the desugared TemplateArgument
     if (Iter.isEnd() && ArgExpr->isValueDependent())
-      switch (Iter.getDesugar().getKind()) {
+      switch (Iter.getDesugaredTA().getKind()) {
         case TemplateArgument::Declaration:
-          return Iter.getDesugar().getAsDecl();
+          return Iter.getDesugaredTA().getAsDecl();
         case TemplateArgument::Expression:
-          ArgExpr = Iter.getDesugar().getAsExpr();
+          ArgExpr = Iter.getDesugaredTA().getAsExpr();
           return cast<DeclRefExpr>(ArgExpr)->getDecl();
         default:
           llvm_unreachable("Unexpected template argument kind");
