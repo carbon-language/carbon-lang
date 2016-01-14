@@ -491,82 +491,67 @@ class TemplateDiff {
   /// DiffTree - A tree representation the differences between two types.
   class DiffTree {
   public:
-    /// DiffKind - The difference in a DiffNode and which fields are used.
+    /// DiffKind - The difference in a DiffNode.  Fields of
+    /// TemplateArgumentInfo needed by each difference can be found in the
+    /// Set* and Get* functions.
     enum DiffKind {
       /// Incomplete or invalid node.
       Invalid,
-      /// Another level of templates, uses TemplateDecl and Qualifiers
+      /// Another level of templates, requires that
       Template,
-      /// Type difference, uses QualType
+      /// Type difference, all type differences except those falling under
+      /// the Template difference.
       Type,
-      /// Expression difference, uses Expr
+      /// Expression difference, this is only when both arguments are
+      /// expressions.  If one argument is an expression and the other is
+      /// Integer or Declaration, then use that diff type instead.
       Expression,
-      /// Template argument difference, uses TemplateDecl
+      /// Template argument difference
       TemplateTemplate,
-      /// Integer difference, uses APSInt and Expr
+      /// Integer difference
       Integer,
-      /// Declaration difference, uses ValueDecl
+      /// Declaration difference, nullptr arguments are included here
       Declaration
     };
+
   private:
+    /// TemplateArgumentInfo - All the information needed to pretty print
+    /// a template argument.  See the Set* and Get* functions to see which
+    /// fields are used for each DiffKind.
+    struct TemplateArgumentInfo {
+      QualType ArgType;
+      Qualifiers Qual;
+      llvm::APSInt Val;
+      bool IsValidInt = false;
+      Expr *ArgExpr = nullptr;
+      TemplateDecl *TD = nullptr;
+      ValueDecl *VD = nullptr;
+      bool NeedAddressOf = false;
+      bool IsNullPtr = false;
+      bool IsDefault = false;
+    };
+
     /// DiffNode - The root node stores the original type.  Each child node
     /// stores template arguments of their parents.  For templated types, the
     /// template decl is also stored.
     struct DiffNode {
-      DiffKind Kind;
+      DiffKind Kind = Invalid;
 
       /// NextNode - The index of the next sibling node or 0.
-      unsigned NextNode;
+      unsigned NextNode = 0;
 
       /// ChildNode - The index of the first child node or 0.
-      unsigned ChildNode;
+      unsigned ChildNode = 0;
 
       /// ParentNode - The index of the parent node.
-      unsigned ParentNode;
+      unsigned ParentNode = 0;
 
-      /// FromType, ToType - The type arguments.
-      QualType FromType, ToType;
-
-      /// FromExpr, ToExpr - The expression arguments.
-      Expr *FromExpr, *ToExpr;
-
-      /// FromNullPtr, ToNullPtr - If the template argument is a nullptr
-      bool FromNullPtr, ToNullPtr;
-
-      /// FromTD, ToTD - The template decl for template template
-      /// arguments or the type arguments that are templates.
-      TemplateDecl *FromTD, *ToTD;
-
-      /// FromQual, ToQual - Qualifiers for template types.
-      Qualifiers FromQual, ToQual;
-
-      /// FromInt, ToInt - APSInt's for integral arguments.
-      llvm::APSInt FromInt, ToInt;
-
-      /// IsValidFromInt, IsValidToInt - Whether the APSInt's are valid.
-      bool IsValidFromInt, IsValidToInt;
-
-      /// FromValueDecl, ToValueDecl - Whether the argument is a decl.
-      ValueDecl *FromValueDecl, *ToValueDecl;
-
-      /// FromAddressOf, ToAddressOf - Whether the ValueDecl needs an address of
-      /// operator before it.
-      bool FromAddressOf, ToAddressOf;
-
-      /// FromDefault, ToDefault - Whether the argument is a default argument.
-      bool FromDefault, ToDefault;
+      TemplateArgumentInfo FromArgInfo, ToArgInfo;
 
       /// Same - Whether the two arguments evaluate to the same value.
-      bool Same;
+      bool Same = false;
 
-      DiffNode(unsigned ParentNode = 0)
-        : Kind(Invalid), NextNode(0), ChildNode(0), ParentNode(ParentNode),
-          FromType(), ToType(), FromExpr(nullptr), ToExpr(nullptr),
-          FromNullPtr(false), ToNullPtr(false),
-          FromTD(nullptr), ToTD(nullptr), IsValidFromInt(false),
-          IsValidToInt(false), FromValueDecl(nullptr), ToValueDecl(nullptr),
-          FromAddressOf(false), ToAddressOf(false), FromDefault(false),
-          ToDefault(false), Same(false) {}
+      DiffNode(unsigned ParentNode = 0) : ParentNode(ParentNode) {}
     };
 
     /// FlatTree - A flattened tree used to store the DiffNodes.
@@ -581,71 +566,95 @@ class TemplateDiff {
 
     /// ReadNode - The index of the current node being read.
     unsigned ReadNode;
-  
+
   public:
     DiffTree() :
         CurrentNode(0), NextFreeNode(1) {
       FlatTree.push_back(DiffNode());
     }
 
-    // Node writing functions.
-    /// SetNode - Sets FromTD and ToTD of the current node.
-    void SetNode(TemplateDecl *FromTD, TemplateDecl *ToTD) {
-      FlatTree[CurrentNode].FromTD = FromTD;
-      FlatTree[CurrentNode].ToTD = ToTD;
+    // Node writing functions, one for each valid DiffKind element.
+    void SetTemplateDiff(TemplateDecl *FromTD, TemplateDecl *ToTD,
+                         Qualifiers FromQual, Qualifiers ToQual,
+                         bool FromDefault, bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = Template;
+      FlatTree[CurrentNode].FromArgInfo.TD = FromTD;
+      FlatTree[CurrentNode].ToArgInfo.TD = ToTD;
+      FlatTree[CurrentNode].FromArgInfo.Qual = FromQual;
+      FlatTree[CurrentNode].ToArgInfo.Qual = ToQual;
+      SetDefault(FromDefault, ToDefault);
     }
 
-    /// SetNode - Sets FromType and ToType of the current node.
-    void SetNode(QualType FromType, QualType ToType) {
-      FlatTree[CurrentNode].FromType = FromType;
-      FlatTree[CurrentNode].ToType = ToType;
+    void SetTypeDiff(QualType FromType, QualType ToType, bool FromDefault,
+                     bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = Type;
+      FlatTree[CurrentNode].FromArgInfo.ArgType = FromType;
+      FlatTree[CurrentNode].ToArgInfo.ArgType = ToType;
+      SetDefault(FromDefault, ToDefault);
     }
 
-    /// SetNode - Set FromExpr and ToExpr of the current node.
-    void SetNode(Expr *FromExpr, Expr *ToExpr) {
-      FlatTree[CurrentNode].FromExpr = FromExpr;
-      FlatTree[CurrentNode].ToExpr = ToExpr;
+    void SetExpressionDiff(Expr *FromExpr, Expr *ToExpr, bool IsFromNullPtr,
+                           bool IsToNullPtr, bool FromDefault, bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = Expression;
+      FlatTree[CurrentNode].FromArgInfo.ArgExpr = FromExpr;
+      FlatTree[CurrentNode].ToArgInfo.ArgExpr = ToExpr;
+      FlatTree[CurrentNode].FromArgInfo.IsNullPtr = IsFromNullPtr;
+      FlatTree[CurrentNode].ToArgInfo.IsNullPtr = IsToNullPtr;
+      SetDefault(FromDefault, ToDefault);
     }
 
-    /// SetNode - Set FromInt and ToInt of the current node.
-    void SetNode(llvm::APSInt FromInt, llvm::APSInt ToInt,
-                 bool IsValidFromInt, bool IsValidToInt) {
-      FlatTree[CurrentNode].FromInt = FromInt;
-      FlatTree[CurrentNode].ToInt = ToInt;
-      FlatTree[CurrentNode].IsValidFromInt = IsValidFromInt;
-      FlatTree[CurrentNode].IsValidToInt = IsValidToInt;
+    void SetTemplateTemplateDiff(TemplateDecl *FromTD, TemplateDecl *ToTD,
+                                 bool FromDefault, bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = TemplateTemplate;
+      FlatTree[CurrentNode].FromArgInfo.TD = FromTD;
+      FlatTree[CurrentNode].ToArgInfo.TD = ToTD;
+      SetDefault(FromDefault, ToDefault);
     }
 
-    /// SetNode - Set FromQual and ToQual of the current node.
-    void SetNode(Qualifiers FromQual, Qualifiers ToQual) {
-      FlatTree[CurrentNode].FromQual = FromQual;
-      FlatTree[CurrentNode].ToQual = ToQual;
+    void SetIntegerDiff(llvm::APSInt FromInt, llvm::APSInt ToInt,
+                        bool IsValidFromInt, bool IsValidToInt,
+                        Expr *FromExpr, Expr *ToExpr, bool FromDefault,
+                        bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = Integer;
+      FlatTree[CurrentNode].FromArgInfo.Val = FromInt;
+      FlatTree[CurrentNode].ToArgInfo.Val = ToInt;
+      FlatTree[CurrentNode].FromArgInfo.IsValidInt = IsValidFromInt;
+      FlatTree[CurrentNode].ToArgInfo.IsValidInt = IsValidToInt;
+      FlatTree[CurrentNode].FromArgInfo.ArgExpr = FromExpr;
+      FlatTree[CurrentNode].ToArgInfo.ArgExpr = ToExpr;
+      SetDefault(FromDefault, ToDefault);
     }
 
-    /// SetNode - Set FromValueDecl and ToValueDecl of the current node.
-    void SetNode(ValueDecl *FromValueDecl, ValueDecl *ToValueDecl,
-                 bool FromAddressOf, bool ToAddressOf) {
-      FlatTree[CurrentNode].FromValueDecl = FromValueDecl;
-      FlatTree[CurrentNode].ToValueDecl = ToValueDecl;
-      FlatTree[CurrentNode].FromAddressOf = FromAddressOf;
-      FlatTree[CurrentNode].ToAddressOf = ToAddressOf;
+    void SetDeclarationDiff(ValueDecl *FromValueDecl, ValueDecl *ToValueDecl,
+                            bool FromAddressOf, bool ToAddressOf,
+                            bool FromNullPtr, bool ToNullPtr, bool FromDefault,
+                            bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = Declaration;
+      FlatTree[CurrentNode].FromArgInfo.VD = FromValueDecl;
+      FlatTree[CurrentNode].ToArgInfo.VD = ToValueDecl;
+      FlatTree[CurrentNode].FromArgInfo.NeedAddressOf = FromAddressOf;
+      FlatTree[CurrentNode].ToArgInfo.NeedAddressOf = ToAddressOf;
+      FlatTree[CurrentNode].FromArgInfo.IsNullPtr = FromNullPtr;
+      FlatTree[CurrentNode].ToArgInfo.IsNullPtr = ToNullPtr;
+      SetDefault(FromDefault, ToDefault);
+    }
+
+    /// SetDefault - Sets FromDefault and ToDefault flags of the current node.
+    void SetDefault(bool FromDefault, bool ToDefault) {
+      assert(!FromDefault || !ToDefault && "Both arguments cannot be default.");
+      FlatTree[CurrentNode].FromArgInfo.IsDefault = FromDefault;
+      FlatTree[CurrentNode].ToArgInfo.IsDefault = ToDefault;
     }
 
     /// SetSame - Sets the same flag of the current node.
     void SetSame(bool Same) {
       FlatTree[CurrentNode].Same = Same;
-    }
-
-    /// SetNullPtr - Sets the NullPtr flags of the current node.
-    void SetNullPtr(bool FromNullPtr, bool ToNullPtr) {
-      FlatTree[CurrentNode].FromNullPtr = FromNullPtr;
-      FlatTree[CurrentNode].ToNullPtr = ToNullPtr;
-    }
-
-    /// SetDefault - Sets FromDefault and ToDefault flags of the current node.
-    void SetDefault(bool FromDefault, bool ToDefault) {
-      FlatTree[CurrentNode].FromDefault = FromDefault;
-      FlatTree[CurrentNode].ToDefault = ToDefault;
     }
 
     /// SetKind - Sets the current node's type.
@@ -692,46 +701,68 @@ class TemplateDiff {
       ReadNode = FlatTree[ReadNode].ParentNode;
     }
 
-    /// GetNode - Gets the FromType and ToType.
-    void GetNode(QualType &FromType, QualType &ToType) {
-      FromType = FlatTree[ReadNode].FromType;
-      ToType = FlatTree[ReadNode].ToType;
+    void GetTemplateDiff(TemplateDecl *&FromTD, TemplateDecl *&ToTD,
+                         Qualifiers &FromQual, Qualifiers &ToQual) {
+      assert(FlatTree[ReadNode].Kind == Template && "Unexpected kind.");
+      FromTD = FlatTree[ReadNode].FromArgInfo.TD;
+      ToTD = FlatTree[ReadNode].ToArgInfo.TD;
+      FromQual = FlatTree[ReadNode].FromArgInfo.Qual;
+      ToQual = FlatTree[ReadNode].ToArgInfo.Qual;
     }
 
-    /// GetNode - Gets the FromExpr and ToExpr.
-    void GetNode(Expr *&FromExpr, Expr *&ToExpr) {
-      FromExpr = FlatTree[ReadNode].FromExpr;
-      ToExpr = FlatTree[ReadNode].ToExpr;
+    void GetTypeDiff(QualType &FromType, QualType &ToType) {
+      assert(FlatTree[ReadNode].Kind == Type && "Unexpected kind");
+      FromType = FlatTree[ReadNode].FromArgInfo.ArgType;
+      ToType = FlatTree[ReadNode].ToArgInfo.ArgType;
     }
 
-    /// GetNode - Gets the FromTD and ToTD.
-    void GetNode(TemplateDecl *&FromTD, TemplateDecl *&ToTD) {
-      FromTD = FlatTree[ReadNode].FromTD;
-      ToTD = FlatTree[ReadNode].ToTD;
+    void GetExpressionDiff(Expr *&FromExpr, Expr *&ToExpr, bool &FromNullPtr,
+                           bool &ToNullPtr) {
+      assert(FlatTree[ReadNode].Kind == Expression && "Unexpected kind");
+      FromExpr = FlatTree[ReadNode].FromArgInfo.ArgExpr;
+      ToExpr = FlatTree[ReadNode].ToArgInfo.ArgExpr;
+      FromNullPtr = FlatTree[ReadNode].FromArgInfo.IsNullPtr;
+      ToNullPtr = FlatTree[ReadNode].ToArgInfo.IsNullPtr;
     }
 
-    /// GetNode - Gets the FromInt and ToInt.
-    void GetNode(llvm::APSInt &FromInt, llvm::APSInt &ToInt,
-                 bool &IsValidFromInt, bool &IsValidToInt) {
-      FromInt = FlatTree[ReadNode].FromInt;
-      ToInt = FlatTree[ReadNode].ToInt;
-      IsValidFromInt = FlatTree[ReadNode].IsValidFromInt;
-      IsValidToInt = FlatTree[ReadNode].IsValidToInt;
+    void GetTemplateTemplateDiff(TemplateDecl *&FromTD, TemplateDecl *&ToTD) {
+      assert(FlatTree[ReadNode].Kind == TemplateTemplate && "Unexpected kind.");
+      FromTD = FlatTree[ReadNode].FromArgInfo.TD;
+      ToTD = FlatTree[ReadNode].ToArgInfo.TD;
     }
 
-    /// GetNode - Gets the FromQual and ToQual.
-    void GetNode(Qualifiers &FromQual, Qualifiers &ToQual) {
-      FromQual = FlatTree[ReadNode].FromQual;
-      ToQual = FlatTree[ReadNode].ToQual;
+    void GetIntegerDiff(llvm::APSInt &FromInt, llvm::APSInt &ToInt,
+                        bool &IsValidFromInt, bool &IsValidToInt,
+                        Expr *&FromExpr, Expr *&ToExpr) {
+      assert(FlatTree[ReadNode].Kind == Integer && "Unexpected kind.");
+      FromInt = FlatTree[ReadNode].FromArgInfo.Val;
+      ToInt = FlatTree[ReadNode].ToArgInfo.Val;
+      IsValidFromInt = FlatTree[ReadNode].FromArgInfo.IsValidInt;
+      IsValidToInt = FlatTree[ReadNode].ToArgInfo.IsValidInt;
+      FromExpr = FlatTree[ReadNode].FromArgInfo.ArgExpr;
+      ToExpr = FlatTree[ReadNode].ToArgInfo.ArgExpr;
     }
 
-    /// GetNode - Gets the FromValueDecl and ToValueDecl.
-    void GetNode(ValueDecl *&FromValueDecl, ValueDecl *&ToValueDecl,
-                 bool &FromAddressOf, bool &ToAddressOf) {
-      FromValueDecl = FlatTree[ReadNode].FromValueDecl;
-      ToValueDecl = FlatTree[ReadNode].ToValueDecl;
-      FromAddressOf = FlatTree[ReadNode].FromAddressOf;
-      ToAddressOf = FlatTree[ReadNode].ToAddressOf;
+    void GetDeclarationDiff(ValueDecl *&FromValueDecl, ValueDecl *&ToValueDecl,
+                            bool &FromAddressOf, bool &ToAddressOf,
+                            bool &FromNullPtr, bool &ToNullPtr) {
+      assert(FlatTree[ReadNode].Kind == Declaration && "Unexpected kind.");
+      FromValueDecl = FlatTree[ReadNode].FromArgInfo.VD;
+      ToValueDecl = FlatTree[ReadNode].ToArgInfo.VD;
+      FromAddressOf = FlatTree[ReadNode].FromArgInfo.NeedAddressOf;
+      ToAddressOf = FlatTree[ReadNode].ToArgInfo.NeedAddressOf;
+      FromNullPtr = FlatTree[ReadNode].FromArgInfo.IsNullPtr;
+      ToNullPtr = FlatTree[ReadNode].ToArgInfo.IsNullPtr;
+    }
+
+    /// FromDefault - Return true if the from argument is the default.
+    bool FromDefault() {
+      return FlatTree[ReadNode].FromArgInfo.IsDefault;
+    }
+
+    /// ToDefault - Return true if the to argument is the default.
+    bool ToDefault() {
+      return FlatTree[ReadNode].ToArgInfo.IsDefault;
     }
 
     /// NodeIsSame - Returns true the arguments are the same.
@@ -762,26 +793,6 @@ class TemplateDiff {
     /// HasNextSibling - Return true if the node has a next sibling.
     bool HasNextSibling() {
       return FlatTree[ReadNode].NextNode != 0;
-    }
-
-    /// FromNullPtr - Returns true if the from argument is null.
-    bool FromNullPtr() {
-      return FlatTree[ReadNode].FromNullPtr;
-    }
-
-    /// ToNullPtr - Returns true if the to argument is null.
-    bool ToNullPtr() {
-      return FlatTree[ReadNode].ToNullPtr;
-    }
-
-    /// FromDefault - Return true if the from argument is the default.
-    bool FromDefault() {
-      return FlatTree[ReadNode].FromDefault;
-    }
-
-    /// ToDefault - Return true if the to argument is the default.
-    bool ToDefault() {
-      return FlatTree[ReadNode].ToDefault;
     }
 
     /// Empty - Returns true if the tree has no information.
@@ -935,6 +946,29 @@ class TemplateDiff {
     return Ty->getAs<TemplateSpecializationType>();
   }
 
+  /// Returns true if the DiffType is Type and false for Template.
+  static bool OnlyPerformTypeDiff(ASTContext &Context, QualType FromType,
+                                  QualType ToType,
+                                  const TemplateSpecializationType *&FromArgTST,
+                                  const TemplateSpecializationType *&ToArgTST) {
+    if (FromType.isNull() || ToType.isNull())
+      return true;
+
+    if (Context.hasSameType(FromType, ToType))
+      return true;
+
+    FromArgTST = GetTemplateSpecializationType(Context, FromType);
+    ToArgTST = GetTemplateSpecializationType(Context, ToType);
+
+    if (!FromArgTST || !ToArgTST)
+      return true;
+
+    if (!hasSameTemplate(FromArgTST, ToArgTST))
+      return true;
+
+    return false;
+  }
+
   /// DiffTypes - Fills a DiffNode with information about a type difference.
   void DiffTypes(const TSTiterator &FromIter, const TSTiterator &ToIter,
                  TemplateTypeParmDecl *FromDefaultTypeDecl,
@@ -942,40 +976,27 @@ class TemplateDiff {
     QualType FromType = GetType(FromIter, FromDefaultTypeDecl);
     QualType ToType = GetType(ToIter, ToDefaultTypeDecl);
 
-    Tree.SetNode(FromType, ToType);
-    Tree.SetDefault(FromIter.isEnd() && !FromType.isNull(),
-                    ToIter.isEnd() && !ToType.isNull());
-    Tree.SetKind(DiffTree::Type);
-    if (FromType.isNull() || ToType.isNull())
-      return;
+    bool FromDefault = FromIter.isEnd() && !FromType.isNull();
+    bool ToDefault = ToIter.isEnd() && !ToType.isNull();
 
-    if (Context.hasSameType(FromType, ToType)) {
-      Tree.SetSame(true);
-      return;
+    const TemplateSpecializationType *FromArgTST = nullptr;
+    const TemplateSpecializationType *ToArgTST = nullptr;
+    if (OnlyPerformTypeDiff(Context, FromType, ToType, FromArgTST, ToArgTST)) {
+      Tree.SetTypeDiff(FromType, ToType, FromDefault, ToDefault);
+      Tree.SetSame(!FromType.isNull() && !ToType.isNull() &&
+                   Context.hasSameType(FromType, ToType));
+    } else {
+      assert(FromArgTST && ToArgTST &&
+             "Both template specializations need to be valid.");
+      Qualifiers FromQual = FromType.getQualifiers(),
+                 ToQual = ToType.getQualifiers();
+      FromQual -= QualType(FromArgTST, 0).getQualifiers();
+      ToQual -= QualType(ToArgTST, 0).getQualifiers();
+      Tree.SetTemplateDiff(FromArgTST->getTemplateName().getAsTemplateDecl(),
+                           ToArgTST->getTemplateName().getAsTemplateDecl(),
+                           FromQual, ToQual, FromDefault, ToDefault);
+      DiffTemplate(FromArgTST, ToArgTST);
     }
-
-    const TemplateSpecializationType *FromArgTST =
-        GetTemplateSpecializationType(Context, FromType);
-    if (!FromArgTST)
-      return;
-
-    const TemplateSpecializationType *ToArgTST =
-        GetTemplateSpecializationType(Context, ToType);
-    if (!ToArgTST)
-      return;
-
-    if (!hasSameTemplate(FromArgTST, ToArgTST))
-      return;
-
-    Qualifiers FromQual = FromType.getQualifiers(),
-               ToQual = ToType.getQualifiers();
-    FromQual -= QualType(FromArgTST, 0).getQualifiers();
-    ToQual -= QualType(ToArgTST, 0).getQualifiers();
-    Tree.SetNode(FromArgTST->getTemplateName().getAsTemplateDecl(),
-                 ToArgTST->getTemplateName().getAsTemplateDecl());
-    Tree.SetNode(FromQual, ToQual);
-    Tree.SetKind(DiffTree::Template);
-    DiffTemplate(FromArgTST, ToArgTST);
   }
 
   /// DiffTemplateTemplates - Fills a DiffNode with information about a
@@ -986,11 +1007,10 @@ class TemplateDiff {
                              TemplateTemplateParmDecl *ToDefaultTemplateDecl) {
     TemplateDecl *FromDecl = GetTemplateDecl(FromIter, FromDefaultTemplateDecl);
     TemplateDecl *ToDecl = GetTemplateDecl(ToIter, ToDefaultTemplateDecl);
-    Tree.SetNode(FromDecl, ToDecl);
+    Tree.SetTemplateTemplateDiff(FromDecl, ToDecl, FromIter.isEnd() && FromDecl,
+                                 ToIter.isEnd() && ToDecl);
     Tree.SetSame(FromDecl && ToDecl &&
                  FromDecl->getCanonicalDecl() == ToDecl->getCanonicalDecl());
-    Tree.SetDefault(FromIter.isEnd() && FromDecl, ToIter.isEnd() && ToDecl);
-    Tree.SetKind(DiffTree::TemplateTemplate);
   }
 
   /// InitializeNonTypeDiffVariables - Helper function for DiffNonTypes
@@ -1060,9 +1080,12 @@ class TemplateDiff {
             (!HasFromValueDecl && !HasToValueDecl)) &&
            "Template argument cannot be both integer and declaration");
 
+    bool FromDefault = FromIter.isEnd() &&
+                       (FromExpr || FromValueDecl || HasFromInt || FromNullPtr);
+    bool ToDefault = ToIter.isEnd() &&
+                     (ToExpr || ToValueDecl || HasToInt || ToNullPtr);
+
     if (!HasFromInt && !HasToInt && !HasFromValueDecl && !HasToValueDecl) {
-      Tree.SetNode(FromExpr, ToExpr);
-      Tree.SetDefault(FromIter.isEnd() && FromExpr, ToIter.isEnd() && ToExpr);
       if (FromDefaultNonTypeDecl->getType()->isIntegralOrEnumerationType()) {
         if (FromExpr)
           HasFromInt = GetInt(Context, FromIter, FromExpr, FromInt,
@@ -1072,18 +1095,18 @@ class TemplateDiff {
                             ToDefaultNonTypeDecl->getType());
       }
       if (HasFromInt && HasToInt) {
-        Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
+        Tree.SetIntegerDiff(FromInt, ToInt, HasFromInt, HasToInt, FromExpr,
+                            ToExpr, FromDefault, ToDefault);
         Tree.SetSame(FromInt == ToInt);
-        Tree.SetKind(DiffTree::Integer);
       } else if (HasFromInt || HasToInt) {
-        Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
+        Tree.SetIntegerDiff(FromInt, ToInt, HasFromInt, HasToInt, FromExpr,
+                            ToExpr, FromDefault, ToDefault);
         Tree.SetSame(false);
-        Tree.SetKind(DiffTree::Integer);
       } else {
         Tree.SetSame(IsEqualExpr(Context, FromExpr, ToExpr) ||
                      (FromNullPtr && ToNullPtr));
-        Tree.SetNullPtr(FromNullPtr, ToNullPtr);
-        Tree.SetKind(DiffTree::Expression);
+        Tree.SetExpressionDiff(FromExpr, ToExpr, FromNullPtr, ToNullPtr,
+                               FromDefault, ToDefault);
       }
       return;
     }
@@ -1095,15 +1118,13 @@ class TemplateDiff {
       if (!HasToInt && ToExpr)
         HasToInt = GetInt(Context, ToIter, ToExpr, ToInt,
                           ToDefaultNonTypeDecl->getType());
-      Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
+      Tree.SetIntegerDiff(FromInt, ToInt, HasFromInt, HasToInt, FromExpr,
+                          ToExpr, FromDefault, ToDefault);
       if (HasFromInt && HasToInt) {
         Tree.SetSame(FromInt == ToInt);
       } else {
         Tree.SetSame(false);
       }
-      Tree.SetDefault(FromIter.isEnd() && HasFromInt,
-                      ToIter.isEnd() && HasToInt);
-      Tree.SetKind(DiffTree::Integer);
       return;
     }
 
@@ -1117,14 +1138,12 @@ class TemplateDiff {
     bool ToAddressOf =
         NeedsAddressOf(ToValueDecl, ToExpr, ToDefaultNonTypeDecl);
 
-    Tree.SetNullPtr(FromNullPtr, ToNullPtr);
-    Tree.SetNode(FromValueDecl, ToValueDecl, FromAddressOf, ToAddressOf);
+    Tree.SetDeclarationDiff(FromValueDecl, ToValueDecl, FromAddressOf,
+                            ToAddressOf, FromNullPtr, ToNullPtr, FromDefault,
+                            ToDefault);
     Tree.SetSame(FromValueDecl && ToValueDecl &&
                  FromValueDecl->getCanonicalDecl() ==
                      ToValueDecl->getCanonicalDecl());
-    Tree.SetDefault(FromIter.isEnd() && FromValueDecl,
-                    ToIter.isEnd() && ToValueDecl);
-    Tree.SetKind(DiffTree::Declaration);
   }
 
   /// DiffTemplate - recursively visits template arguments and stores the
@@ -1442,21 +1461,22 @@ class TemplateDiff {
         llvm_unreachable("Template diffing failed with bad DiffNode");
       case DiffTree::Type: {
         QualType FromType, ToType;
-        Tree.GetNode(FromType, ToType);
+        Tree.GetTypeDiff(FromType, ToType);
         PrintTypeNames(FromType, ToType, Tree.FromDefault(), Tree.ToDefault(),
                        Tree.NodeIsSame());
         return;
       }
       case DiffTree::Expression: {
         Expr *FromExpr, *ToExpr;
-        Tree.GetNode(FromExpr, ToExpr);
-        PrintExpr(FromExpr, ToExpr, Tree.FromNullPtr(), Tree.ToNullPtr(),
-                  Tree.FromDefault(), Tree.ToDefault(), Tree.NodeIsSame());
+        bool FromNullPtr, ToNullPtr;
+        Tree.GetExpressionDiff(FromExpr, ToExpr, FromNullPtr, ToNullPtr);
+        PrintExpr(FromExpr, ToExpr, FromNullPtr, ToNullPtr, Tree.FromDefault(),
+                  Tree.ToDefault(), Tree.NodeIsSame());
         return;
       }
       case DiffTree::TemplateTemplate: {
         TemplateDecl *FromTD, *ToTD;
-        Tree.GetNode(FromTD, ToTD);
+        Tree.GetTemplateTemplateDiff(FromTD, ToTD);
         PrintTemplateTemplate(FromTD, ToTD, Tree.FromDefault(),
                               Tree.ToDefault(), Tree.NodeIsSame());
         return;
@@ -1465,8 +1485,8 @@ class TemplateDiff {
         llvm::APSInt FromInt, ToInt;
         Expr *FromExpr, *ToExpr;
         bool IsValidFromInt, IsValidToInt;
-        Tree.GetNode(FromExpr, ToExpr);
-        Tree.GetNode(FromInt, ToInt, IsValidFromInt, IsValidToInt);
+        Tree.GetIntegerDiff(FromInt, ToInt, IsValidFromInt, IsValidToInt,
+                            FromExpr, ToExpr);
         PrintAPSInt(FromInt, ToInt, IsValidFromInt, IsValidToInt,
                     FromExpr, ToExpr, Tree.FromDefault(), Tree.ToDefault(),
                     Tree.NodeIsSame());
@@ -1475,16 +1495,19 @@ class TemplateDiff {
       case DiffTree::Declaration: {
         ValueDecl *FromValueDecl, *ToValueDecl;
         bool FromAddressOf, ToAddressOf;
-        Tree.GetNode(FromValueDecl, ToValueDecl, FromAddressOf, ToAddressOf);
+        bool FromNullPtr, ToNullPtr;
+        Tree.GetDeclarationDiff(FromValueDecl, ToValueDecl, FromAddressOf,
+                                ToAddressOf, FromNullPtr, ToNullPtr);
         PrintValueDecl(FromValueDecl, ToValueDecl, FromAddressOf, ToAddressOf,
-                       Tree.FromNullPtr(), Tree.ToNullPtr(), Tree.FromDefault(),
+                       FromNullPtr, ToNullPtr, Tree.FromDefault(),
                        Tree.ToDefault(), Tree.NodeIsSame());
         return;
       }
       case DiffTree::Template: {
         // Node is root of template.  Recurse on children.
         TemplateDecl *FromTD, *ToTD;
-        Tree.GetNode(FromTD, ToTD);
+        Qualifiers FromQual, ToQual;
+        Tree.GetTemplateDiff(FromTD, ToTD, FromQual, ToQual);
 
         if (!Tree.HasChildren()) {
           // If we're dealing with a template specialization with zero
@@ -1493,11 +1516,9 @@ class TemplateDiff {
           return;
         }
 
-        Qualifiers FromQual, ToQual;
-        Tree.GetNode(FromQual, ToQual);
         PrintQualifiers(FromQual, ToQual);
 
-        OS << FromTD->getNameAsString() << '<'; 
+        OS << FromTD->getNameAsString() << '<';
         Tree.MoveToChild();
         unsigned NumElideArgs = 0;
         do {
@@ -1716,8 +1737,8 @@ class TemplateDiff {
     Unbold();
   }
 
-  /// HasExtraInfo - Returns true if E is not an integer literal or the
-  /// negation of an integer literal
+  /// HasExtraInfo - Returns true if E is not an integer literal, the
+  /// negation of an integer literal, or a boolean literal.
   bool HasExtraInfo(Expr *E) {
     if (!E) return false;
 
@@ -1729,6 +1750,9 @@ class TemplateDiff {
       if (UO->getOpcode() == UO_Minus)
         if (isa<IntegerLiteral>(UO->getSubExpr()))
           return false;
+
+    if (isa<CXXBoolLiteralExpr>(E))
+      return false;
 
     return true;
   }
@@ -1893,13 +1917,12 @@ public:
 
     FromQual -= QualType(FromOrigTST, 0).getQualifiers();
     ToQual -= QualType(ToOrigTST, 0).getQualifiers();
-    Tree.SetNode(FromType, ToType);
-    Tree.SetNode(FromQual, ToQual);
-    Tree.SetKind(DiffTree::Template);
 
     // Same base template, but different arguments.
-    Tree.SetNode(FromOrigTST->getTemplateName().getAsTemplateDecl(),
-                 ToOrigTST->getTemplateName().getAsTemplateDecl());
+    Tree.SetTemplateDiff(FromOrigTST->getTemplateName().getAsTemplateDecl(),
+                         ToOrigTST->getTemplateName().getAsTemplateDecl(),
+                         FromQual, ToQual, false /*FromDefault*/,
+                         false /*ToDefault*/);
 
     DiffTemplate(FromOrigTST, ToOrigTST);
   }

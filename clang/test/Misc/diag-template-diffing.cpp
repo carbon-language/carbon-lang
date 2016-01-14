@@ -925,7 +925,7 @@ namespace DependentDefault {
     // CHECK-ELIDE-NOTREE: no known conversion from 'A<char, [...]>' to 'A<int, [...]>'
     a3 = a1;
     // CHECK-ELIDE-NOTREE: no viable overloaded '='
-    // CHECK-ELIDE-NOTREE: no known conversion from 'A<[...], (default) 40>' to 'A<[...], 10>'
+    // CHECK-ELIDE-NOTREE: no known conversion from 'A<[...], (default) Trait<T>::V aka 40>' to 'A<[...], 10>'
     a2 = a3;
     // CHECK-ELIDE-NOTREE: no viable overloaded '='
     // CHECK-ELIDE-NOTREE: no known conversion from 'A<int, 10>' to 'A<char, 40>'
