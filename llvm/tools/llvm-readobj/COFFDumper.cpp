@@ -2014,7 +2014,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
       error(consumeObject(LeafData, Func));
       printTypeIndex("ParentScope", Func->ParentScope);
       printTypeIndex("FunctionType", Func->FunctionType);
-      StringRef Name, Null;
+      StringRef Null;
       std::tie(Name, Null) = LeafData.split('\0');
       W.printString("Name", Name);
       break;
