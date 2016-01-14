@@ -1140,14 +1140,52 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
     KnownZero = APInt::getHighBitsSet(BitWidth, LeadZ);
     break;
   }
-  case Instruction::Select:
+  case Instruction::Select: {
     computeKnownBits(I->getOperand(2), KnownZero, KnownOne, DL, Depth + 1, Q);
     computeKnownBits(I->getOperand(1), KnownZero2, KnownOne2, DL, Depth + 1, Q);
 
     // Only known if known in both the LHS and RHS.
     KnownOne &= KnownOne2;
     KnownZero &= KnownZero2;
+
+    // There are several cmp+select patterns that ensure their result will be no
+    // greater than a constant. Detect a number of these.
+    Value *X, *Y;
+    ConstantInt *C1, *C2;
+    ICmpInst::Predicate Pred;
+
+    auto IsLessThanOrEqualTo = [](Value *X, Value *Y) {
+      if (X == Y)
+        return true;
+      Value *M1, *M2;
+      ConstantInt *C1, *C2;
+      if (!match(X, m_NSWAdd(m_Value(M1), m_ConstantInt(C1))))
+        C1 = nullptr;
+      if (!match(Y, m_NSWAdd(m_Value(M2), m_ConstantInt(C2))))
+        C2 = nullptr;
+      if (C1 && M1 == Y && C1->isNegative())
+        return true;
+      if (C2 && M2 == X && !C2->isNegative())
+        return true;
+      if (C1 && C2 && M1 == M2 && !C1->isNegative() && !C2->isNegative() &&
+          C1->getValue().ule(C2->getValue()))
+        return true;
+      return false;
+    };
+
+    // (select (icmp ugt X, C1), C2, Y)
+    //   if Y <= X and C2 <= C1
+    //   then maximum value = C1.
+    if (match(I, m_Select(m_ICmp(Pred, m_Value(X), m_ConstantInt(C1)),
+                          m_ConstantInt(C2), m_Value(Y)))) {
+      if (Pred == ICmpInst::ICMP_UGT && IsLessThanOrEqualTo(Y, X) &&
+          C2->getValue().ule(C1->getValue())) {
+        auto V = cast<ConstantInt>(C1)->getValue() - 1;
+        KnownZero = ~APInt::getLowBitsSet(V.getBitWidth(), V.getActiveBits());
+      }
+    }
     break;
+  }
   case Instruction::FPTrunc:
   case Instruction::FPExt:
   case Instruction::FPToUI:
