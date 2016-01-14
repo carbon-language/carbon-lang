@@ -25,9 +25,10 @@ using lld::mach_o::normalized::Section;
 class MachOFile : public SimpleFile {
 public:
   MachOFile(std::unique_ptr<MemoryBuffer> mb, MachOLinkingContext *ctx)
-      : SimpleFile(mb->getBufferIdentifier()), _mb(std::move(mb)), _ctx(ctx) {}
+    : SimpleFile(mb->getBufferIdentifier(), File::kindMachObject),
+      _mb(std::move(mb)), _ctx(ctx) {}
 
-  MachOFile(StringRef path) : SimpleFile(path) {}
+  MachOFile(StringRef path) : SimpleFile(path, File::kindMachObject) {}
 
   void addDefinedAtom(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
@@ -185,6 +186,11 @@ public:
 
     for (auto &offAndAtom : vec)
       visitor(offAndAtom.atom, offAndAtom.offset);
+  }
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const File *F) {
+    return F->kind() == File::kindMachObject;
   }
 
 protected:

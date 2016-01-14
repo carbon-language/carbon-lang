@@ -83,7 +83,7 @@ private:
 
   class MergedFile : public SimpleFile {
   public:
-    MergedFile() : SimpleFile("<linker-internal>") {}
+    MergedFile() : SimpleFile("<linker-internal>", kindResolverMergedObject) {}
     void addAtoms(std::vector<const Atom*>& atoms);
   };
 

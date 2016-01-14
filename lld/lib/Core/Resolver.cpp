@@ -338,7 +338,17 @@ bool Resolver::resolveUndefines() {
     file->beforeLink();
     updatePreloadArchiveMap();
     switch (file->kind()) {
-    case File::kindObject: {
+    case File::kindErrorObject:
+    case File::kindNormalizedObject:
+    case File::kindMachObject:
+    case File::kindELFObject:
+    case File::kindCEntryObject:
+    case File::kindEntryObject:
+    case File::kindUndefinedSymsObject:
+    case File::kindAliasSymsObject:
+    case File::kindStubHelperObject:
+    case File::kindResolverMergedObject:
+    case File::kindSectCreateObject: {
       // The same file may be visited more than once if the file is
       // in --start-group and --end-group. Only library files should
       // be processed more than once.
