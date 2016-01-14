@@ -1053,7 +1053,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       StringRef LinkageName;
       error(resolveSymbolName(Obj->getCOFFSection(Section), SectionOffset,
                               LinkageName));
-      if (!FunctionFrameData.emplace(LinkageName, FD).second) {
+      if (!FunctionFrameData.insert(std::make_pair(LinkageName, FD)).second) {
         error(object_error::parse_failed);
         return;
       }
