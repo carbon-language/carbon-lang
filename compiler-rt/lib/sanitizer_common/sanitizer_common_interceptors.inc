@@ -143,6 +143,14 @@
 #define COMMON_INTERCEPTOR_RELEASE(ctx, u) {}
 #endif
 
+#ifndef COMMON_INTERCEPTOR_USER_CALLBACK_START
+#define COMMON_INTERCEPTOR_USER_CALLBACK_START() {}
+#endif
+
+#ifndef COMMON_INTERCEPTOR_USER_CALLBACK_END
+#define COMMON_INTERCEPTOR_USER_CALLBACK_END() {}
+#endif
+
 struct FileMetadata {
   // For open_memstream().
   char **addr;
@@ -3304,7 +3312,9 @@ INTERCEPTOR(char **, backtrace_symbols, void **buffer, int size) {
 INTERCEPTOR(void, _exit, int status) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, _exit, status);
+  COMMON_INTERCEPTOR_USER_CALLBACK_START();
   int status1 = COMMON_INTERCEPTOR_ON_EXIT(ctx);
+  COMMON_INTERCEPTOR_USER_CALLBACK_END();
   if (status == 0) status = status1;
   REAL(_exit)(status);
 }
