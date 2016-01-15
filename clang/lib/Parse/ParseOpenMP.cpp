@@ -146,7 +146,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
     break;
   }
   SkipUntil(tok::annot_pragma_openmp_end);
-  return DeclGroupPtrTy();
+  return nullptr;
 }
 
 /// \brief Parsing of declarative or executable OpenMP directives.

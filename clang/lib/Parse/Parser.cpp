@@ -545,7 +545,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
   if (PP.isIncrementalProcessingEnabled() && Tok.is(tok::eof))
     ConsumeToken();
 
-  Result = DeclGroupPtrTy();
+  Result = nullptr;
   switch (Tok.getKind()) {
   case tok::annot_pragma_unused:
     HandlePragmaUnused();
@@ -625,52 +625,52 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
 
   if (PP.isCodeCompletionReached()) {
     cutOffParsing();
-    return DeclGroupPtrTy();
+    return nullptr;
   }
 
   Decl *SingleDecl = nullptr;
   switch (Tok.getKind()) {
   case tok::annot_pragma_vis:
     HandlePragmaVisibility();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_pack:
     HandlePragmaPack();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_msstruct:
     HandlePragmaMSStruct();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_align:
     HandlePragmaAlign();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_weak:
     HandlePragmaWeak();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_weakalias:
     HandlePragmaWeakAlias();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_redefine_extname:
     HandlePragmaRedefineExtname();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_fp_contract:
     HandlePragmaFPContract();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_opencl_extension:
     HandlePragmaOpenCLExtension();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_openmp:
     return ParseOpenMPDeclarativeDirective();
   case tok::annot_pragma_ms_pointers_to_members:
     HandlePragmaMSPointersToMembers();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_ms_vtordisp:
     HandlePragmaMSVtorDisp();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_ms_pragma:
     HandlePragmaMSPragma();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::annot_pragma_dump:
     HandlePragmaDump();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::semi:
     // Either a C++11 empty-declaration or attribute-declaration.
     SingleDecl = Actions.ActOnEmptyDeclaration(getCurScope(),
@@ -681,10 +681,10 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   case tok::r_brace:
     Diag(Tok, diag::err_extraneous_closing_brace);
     ConsumeBrace();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::eof:
     Diag(Tok, diag::err_expected_external_declaration);
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::kw___extension__: {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
@@ -712,7 +712,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
                      "top-level asm block");
 
     if (Result.isInvalid())
-      return DeclGroupPtrTy();
+      return nullptr;
     SingleDecl = Actions.ActOnFileScopeAsmDecl(Result.get(), StartLoc, EndLoc);
     break;
   }
@@ -723,7 +723,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     if (!getLangOpts().ObjC1) {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();
-      return DeclGroupPtrTy();
+      return nullptr;
     }
     SingleDecl = ParseObjCMethodDefinition();
     break;
@@ -732,7 +732,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
                              CurParsedObjCImpl? Sema::PCC_ObjCImplementation
                                               : Sema::PCC_Namespace);
     cutOffParsing();
-    return DeclGroupPtrTy();
+    return nullptr;
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:
@@ -796,8 +796,8 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   case tok::kw___if_exists:
   case tok::kw___if_not_exists:
     ParseMicrosoftIfExistsExternalDeclaration();
-    return DeclGroupPtrTy();
-      
+    return nullptr;
+
   default:
   dont_know:
     // We can't tell whether this is a function-definition or declaration yet.
@@ -876,7 +876,7 @@ Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
   // may get this far before the problem becomes obvious.
   if (DS.hasTagDefinition() &&
       DiagnoseMissingSemiAfterTagDefinition(DS, AS, DSC_top_level))
-    return DeclGroupPtrTy();
+    return nullptr;
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
@@ -899,7 +899,7 @@ Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
         !Tok.isObjCAtKeyword(tok::objc_protocol)) {
       Diag(Tok, diag::err_objc_unexpected_attr);
       SkipUntil(tok::semi); // FIXME: better skip?
-      return DeclGroupPtrTy();
+      return nullptr;
     }
 
     DS.abort();
@@ -1990,12 +1990,12 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteModuleImport(ImportLoc, Path);
         cutOffParsing();
-        return DeclGroupPtrTy();
+        return nullptr;
       }
       
       Diag(Tok, diag::err_module_expected_ident);
       SkipUntil(tok::semi);
-      return DeclGroupPtrTy();
+      return nullptr;
     }
     
     // Record this part of the module path.
@@ -2013,14 +2013,14 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
   if (PP.hadModuleLoaderFatalFailure()) {
     // With a fatal failure in the module loader, we abort parsing.
     cutOffParsing();
-    return DeclGroupPtrTy();
+    return nullptr;
   }
 
   DeclResult Import = Actions.ActOnModuleImport(AtLoc, ImportLoc, Path);
   ExpectAndConsumeSemi(diag::err_module_expected_semi);
   if (Import.isInvalid())
-    return DeclGroupPtrTy();
-  
+    return nullptr;
+
   return Actions.ConvertDeclToDeclGroup(Import.get());
 }
 

@@ -1522,7 +1522,7 @@ Parser::ParseSimpleDeclaration(unsigned Context,
   // may get this far before the problem becomes obvious.
   if (DS.hasTagDefinition() &&
       DiagnoseMissingSemiAfterTagDefinition(DS, AS_none, DSContext))
-    return DeclGroupPtrTy();
+    return nullptr;
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
@@ -1701,7 +1701,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // Bail out if the first declarator didn't seem well-formed.
   if (!D.hasName() && !D.mayOmitIdentifier()) {
     SkipMalformedDecl();
-    return DeclGroupPtrTy();
+    return nullptr;
   }
 
   // Save late-parsed attributes for now; they need to be parsed in the
@@ -1766,19 +1766,19 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       } else {
         Diag(Tok, diag::err_expected_fn_body);
         SkipUntil(tok::semi);
-        return DeclGroupPtrTy();
+        return nullptr;
       }
     } else {
       if (Tok.is(tok::l_brace)) {
         Diag(Tok, diag::err_function_definition_not_allowed);
         SkipMalformedDecl();
-        return DeclGroupPtrTy();
+        return nullptr;
       }
     }
   }
 
   if (ParseAsmAttributesAfterDeclarator(D))
-    return DeclGroupPtrTy();
+    return nullptr;
 
   // C++0x [stmt.iter]p1: Check if we have a for-range-declarator. If so, we
   // must parse and analyze the for-range-initializer before the declaration is

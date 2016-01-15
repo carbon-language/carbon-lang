@@ -50,7 +50,7 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtDirective(getCurScope());
     cutOffParsing();
-    return DeclGroupPtrTy();
+    return nullptr;
   }
 
   Decl *SingleDecl = nullptr;
@@ -2005,14 +2005,14 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCProtocolDecl(getCurScope());
     cutOffParsing();
-    return DeclGroupPtrTy();
+    return nullptr;
   }
 
   MaybeSkipAttributes(tok::objc_protocol);
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected) << tok::identifier; // missing protocol name.
-    return DeclGroupPtrTy();
+    return nullptr;
   }
   // Save the protocol name, then consume it.
   IdentifierInfo *protocolName = Tok.getIdentifierInfo();
@@ -2036,7 +2036,7 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected) << tok::identifier;
         SkipUntil(tok::semi);
-        return DeclGroupPtrTy();
+        return nullptr;
       }
       ProtocolRefs.push_back(IdentifierLocPair(Tok.getIdentifierInfo(),
                                                Tok.getLocation()));
@@ -2047,7 +2047,7 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     }
     // Consume the ';'.
     if (ExpectAndConsume(tok::semi, diag::err_expected_after, "@protocol"))
-      return DeclGroupPtrTy();
+      return nullptr;
 
     return Actions.ActOnForwardProtocolDeclaration(AtLoc, ProtocolRefs,
                                                    attrs.getList());
@@ -2062,7 +2062,7 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
       ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, false, true,
                                   LAngleLoc, EndProtoLoc,
                                   /*consumeLastToken=*/true))
-    return DeclGroupPtrTy();
+    return nullptr;
 
   Decl *ProtoType =
     Actions.ActOnStartProtocolInterface(AtLoc, protocolName, nameLoc,
@@ -2096,7 +2096,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCImplementationDecl(getCurScope());
     cutOffParsing();
-    return DeclGroupPtrTy();
+    return nullptr;
   }
 
   MaybeSkipAttributes(tok::objc_implementation);
@@ -2104,7 +2104,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected)
         << tok::identifier; // missing class or category name.
-    return DeclGroupPtrTy();
+    return nullptr;
   }
   // We have a class or category name - consume it.
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
@@ -2137,7 +2137,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCImplementationCategory(getCurScope(), nameId, nameLoc);
       cutOffParsing();
-      return DeclGroupPtrTy();
+      return nullptr;
     }
     
     if (Tok.is(tok::identifier)) {
@@ -2146,12 +2146,12 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
     } else {
       Diag(Tok, diag::err_expected)
           << tok::identifier; // missing category name.
-      return DeclGroupPtrTy();
+      return nullptr;
     }
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected) << tok::r_paren;
       SkipUntil(tok::r_paren); // don't stop at ';'
-      return DeclGroupPtrTy();
+      return nullptr;
     }
     rparenLoc = ConsumeParen();
     if (Tok.is(tok::less)) { // we have illegal '<' try to recover
@@ -2178,7 +2178,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected)
             << tok::identifier; // missing super class name.
-        return DeclGroupPtrTy();
+        return nullptr;
       }
       superClassId = Tok.getIdentifierInfo();
       superClassLoc = ConsumeToken(); // Consume super class name
@@ -2232,7 +2232,7 @@ Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   else
     // missing @implementation
     Diag(atEnd.getBegin(), diag::err_expected_objc_container);
-  return DeclGroupPtrTy();
+  return nullptr;
 }
 
 Parser::ObjCImplParsingDataRAII::~ObjCImplParsingDataRAII() {

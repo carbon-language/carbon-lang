@@ -1141,7 +1141,7 @@ Sema::ActOnOpenMPThreadprivateDirective(SourceLocation Loc,
     CurContext->addDecl(D);
     return DeclGroupPtrTy::make(DeclGroupRef(D));
   }
-  return DeclGroupPtrTy();
+  return nullptr;
 }
 
 namespace {
