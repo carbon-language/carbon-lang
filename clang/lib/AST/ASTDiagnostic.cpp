@@ -473,14 +473,14 @@ class TemplateDiff {
   /// ShowColor - Diagnostics support color, so bolding will be used.
   bool ShowColor;
 
-  /// FromType - When single type printing is selected, this is the type to be
-  /// be printed.  When tree printing is selected, this type will show up first
-  /// in the tree.
-  QualType FromType;
+  /// FromTemplateType - When single type printing is selected, this is the
+  /// type to be be printed.  When tree printing is selected, this type will
+  /// show up first in the tree.
+  QualType FromTemplateType;
 
-  /// ToType - The type that FromType is compared to.  Only in tree printing
-  /// will this type be outputed.
-  QualType ToType;
+  /// ToTemplateType - The type that FromType is compared to.  Only in tree
+  /// printing will this type be outputed.
+  QualType ToTemplateType;
 
   /// OS - The stream used to construct the output strings.
   raw_ostream &OS;
@@ -704,12 +704,16 @@ class TemplateDiff {
 
     /// Up - Changes the node to the parent of the current node.
     void Up() {
+      assert(FlatTree[CurrentNode].Kind != Invalid &&
+             "Cannot exit node before setting node information.");
       CurrentNode = FlatTree[CurrentNode].ParentNode;
     }
 
     /// AddNode - Adds a child node to the current node, then sets that node
     /// node as the current node.
     void AddNode() {
+      assert(FlatTree[CurrentNode].Kind == Template &&
+             "Only Template nodes can have children nodes.");
       FlatTree.push_back(DiffNode(CurrentNode));
       DiffNode &Node = FlatTree[CurrentNode];
       if (Node.ChildNode == 0) {
@@ -1032,7 +1036,7 @@ class TemplateDiff {
   // These functions build up the template diff tree, including functions to
   // retrieve and compare template arguments.
 
-  static const TemplateSpecializationType * GetTemplateSpecializationType(
+  static const TemplateSpecializationType *GetTemplateSpecializationType(
       ASTContext &Context, QualType Ty) {
     if (const TemplateSpecializationType *TST =
             Ty->getAs<TemplateSpecializationType>())
@@ -1507,14 +1511,14 @@ class TemplateDiff {
         Qualifiers FromQual, ToQual;
         Tree.GetTemplateDiff(FromTD, ToTD, FromQual, ToQual);
 
+        PrintQualifiers(FromQual, ToQual);
+
         if (!Tree.HasChildren()) {
           // If we're dealing with a template specialization with zero
           // arguments, there are no children; special-case this.
           OS << FromTD->getNameAsString() << "<>";
           return;
         }
-
-        PrintQualifiers(FromQual, ToQual);
 
         OS << FromTD->getNameAsString() << '<';
         Tree.MoveToChild();
@@ -1962,21 +1966,21 @@ public:
       PrintTree(PrintTree),
       ShowColor(ShowColor),
       // When printing a single type, the FromType is the one printed.
-      FromType(PrintFromType ? FromType : ToType),
-      ToType(PrintFromType ? ToType : FromType),
+      FromTemplateType(PrintFromType ? FromType : ToType),
+      ToTemplateType(PrintFromType ? ToType : FromType),
       OS(OS),
       IsBold(false) {
   }
 
   /// DiffTemplate - Start the template type diffing.
   void DiffTemplate() {
-    Qualifiers FromQual = FromType.getQualifiers(),
-               ToQual = ToType.getQualifiers();
+    Qualifiers FromQual = FromTemplateType.getQualifiers(),
+               ToQual = ToTemplateType.getQualifiers();
 
     const TemplateSpecializationType *FromOrigTST =
-        GetTemplateSpecializationType(Context, FromType);
+        GetTemplateSpecializationType(Context, FromTemplateType);
     const TemplateSpecializationType *ToOrigTST =
-        GetTemplateSpecializationType(Context, ToType);
+        GetTemplateSpecializationType(Context, ToTemplateType);
 
     // Only checking templates.
     if (!FromOrigTST || !ToOrigTST)

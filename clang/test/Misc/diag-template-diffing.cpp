@@ -1371,6 +1371,62 @@ C<int &, x> c2 = C<int>();
 // CHECK-ELIDE-TREE:     [(default) 11 != x]>
 }
 
+namespace default_args {
+  template <int x, int y = 1+1, int z = 2>
+  class A {};
+
+  void foo(A<0> &M) {
+    // CHECK-ELIDE-NOTREE: no viable conversion from 'A<[...], (default) 1 + 1 aka 2, (default) 2>' to 'A<[...], 0, 0>'
+    A<0, 0, 0> N = M;
+
+    // CHECK-ELIDE-NOTREE: no viable conversion from 'A<[2 * ...], (default) 2>' to 'A<[2 * ...], 0>'
+    A<0, 2, 0> N2 = M;
+  }
+}
+
+namespace DefaultNonTypeArgWithDependentType {
+// We used to crash diffing integer template arguments when the argument type
+// is dependent and default arguments were used.
+template <typename SizeType = int, SizeType = 0> struct A {};
+template <typename R = A<>> R bar();
+A<> &foo() { return bar(); }
+// CHECK-ELIDE-NOTREE: error: non-const lvalue reference to type 'A<[2 * ...]>' cannot bind to a temporary of type 'A<[2 * ...]>'
+// CHECK-NOELIDE-NOTREE: error: non-const lvalue reference to type 'A<int, 0>' cannot bind to a temporary of type 'A<int, 0>'
+}
+
+namespace PR24587 {
+template <typename T, T v>
+struct integral_constant {};
+
+auto false_ = integral_constant<bool, false> {};
+
+template <typename T>
+void f(T, decltype(false_));
+
+void run() {
+  f(1, integral_constant<bool, true>{});
+}
+// CHECK-ELIDE-NOTREE: error: no matching function for call to 'f'
+// CHECK-ELIDE-NOTREE: note: candidate function [with T = int] not viable: no known conversion from 'integral_constant<[...], true>' to 'integral_constant<[...], false>' for 2nd argument
+}
+
+namespace ZeroArgs {
+template <int N = 0> class A {};
+template <class T = A<>> class B {};
+A<1> a1 = A<>();
+A<> a2 = A<1>();
+B<> b1 = B<int>();
+B<int> b2 = B<>();
+B<> b3 = B<const A<>>();
+B<const A<>> b4 = B<>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<(default) 0>' to 'A<1>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<1>' to 'A<(default) 0>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'B<int>' to 'B<(default) ZeroArgs::A<0>>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'B<(default) ZeroArgs::A<0>>' to 'B<int>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'B<const A<[...]>>' to 'B<A<[...]>>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'B<A<[...]>>' to 'B<const A<[...]>>'
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
