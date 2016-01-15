@@ -34,7 +34,6 @@ uptr internal_sigaltstack(const struct sigaltstack* ss,
                           struct sigaltstack* oss);
 uptr internal_sigprocmask(int how, __sanitizer_sigset_t *set,
     __sanitizer_sigset_t *oldset);
-void internal_sigfillset(__sanitizer_sigset_t *set);
 
 // Linux-only syscalls.
 #if SANITIZER_LINUX

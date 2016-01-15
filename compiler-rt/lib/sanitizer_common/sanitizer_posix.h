@@ -16,6 +16,7 @@
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers from sanitizer runtime.
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_platform_limits_posix.h"
 
 #if !SANITIZER_POSIX
 // Make it hard to accidentally use any of functions declared in this file:
@@ -78,6 +79,7 @@ int real_pthread_join(void *th, void **ret);
 int my_pthread_attr_getstack(void *attr, void **addr, uptr *size);
 
 int internal_sigaction(int signum, const void *act, void *oldact);
+void internal_sigfillset(__sanitizer_sigset_t *set);
 
 }  // namespace __sanitizer
 
