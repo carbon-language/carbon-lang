@@ -7,6 +7,8 @@
 #
 #===------------------------------------------------------------------------===#
 
+from __future__ import print_function
+
 import sys
 import os
 import subprocess
@@ -24,8 +26,8 @@ def findFilesWithExtension(path, extension):
 
 def clean(args):
   if len(args) != 2:
-    print 'Usage: %s clean <path> <extension>' % __file__
-    print '\tRemoves all files with extension from <path>.'
+    print('Usage: %s clean <path> <extension>\n' % __file__ +
+      '\tRemoves all files with extension from <path>.')
     return 1
   for filename in findFilesWithExtension(args[0], args[1]):
     os.remove(filename)
@@ -33,8 +35,8 @@ def clean(args):
 
 def merge(args):
   if len(args) != 3:
-    print 'Usage: %s clean <llvm-profdata> <output> <path>\n' % __file__
-    print '\tMerges all profraw files from path into output.'
+    print('Usage: %s clean <llvm-profdata> <output> <path>\n' % __file__ +
+      '\tMerges all profraw files from path into output.')
     return 1
   cmd = [args[0], 'merge', '-o', args[1]]
   cmd.extend(findFilesWithExtension(args[2], "profraw"))
@@ -74,8 +76,9 @@ def dtrace(args):
 
   dtrace_args = []
   if not os.geteuid() == 0:
-    print 'Script must be run as root, or you must add the following to your sudoers:'
-    print '%%admin ALL=(ALL) NOPASSWD: /usr/sbin/dtrace'
+    print(
+      'Script must be run as root, or you must add the following to your sudoers:'
+      + '%%admin ALL=(ALL) NOPASSWD: /usr/sbin/dtrace')
     dtrace_args.append("sudo")
 
   dtrace_args.extend((
@@ -91,7 +94,7 @@ def dtrace(args):
   start_time = time.time()
   subprocess.check_call(dtrace_args, stdout=f, stderr=subprocess.PIPE)
   elapsed = time.time() - start_time
-  print "... data collection took %.4fs" % elapsed
+  print("... data collection took %.4fs" % elapsed)
 
   return 0
 
@@ -127,8 +130,8 @@ def parse_dtrace_symbol_file(path, all_symbols, all_symbols_set,
       if ln.startswith("dtrace-TS: "):
         _,data = ln.split(': ', 1)
         if not data.isdigit():
-          print >>sys.stderr, (
-            "warning: unrecognized timestamp line %r, ignoring" % ln)
+          print("warning: unrecognized timestamp line %r, ignoring" % ln,
+            file=sys.stderr)
           continue
         current_timestamp = int(data)
         continue
@@ -167,14 +170,13 @@ def parse_dtrace_symbol_file(path, all_symbols, all_symbols_set,
 
         # If we found too many possible symbols, ignore this as a prefix.
         if len(possible_symbols) > 100:
-          print >>sys.stderr, (
-            "warning: ignoring symbol %r " % symbol +
-            "(no match and too many possible suffixes)") 
+          print( "warning: ignoring symbol %r " % symbol +
+            "(no match and too many possible suffixes)", file=sys.stderr) 
           continue
 
         # Report that we resolved a missing symbol.
         if opts.show_missing_symbols and symbol not in missing_symbols:
-          print >>sys.stderr, ( "warning: resolved missing symbol %r" % symbol)
+          print("warning: resolved missing symbol %r" % symbol, file=sys.stderr)
           missing_symbols.add(symbol)
 
         # Otherwise, treat all the possible matches as having occurred. This
@@ -287,7 +289,7 @@ def genOrderFile(args):
      all_symbols = [ln.split(' ',1)[0]
                     for ln in lines
                     if ln.strip()]
-     print "found %d symbols in binary" % len(all_symbols)
+     print("found %d symbols in binary" % len(all_symbols))
      all_symbols.sort()
   else:
      all_symbols = []
@@ -299,7 +301,7 @@ def genOrderFile(args):
     input_files.extend(findFilesWithExtension(dirname, "dtrace"))
 
   # Load all of the input files.
-  print "loading from %d data files" % len(input_files)
+  print("loading from %d data files" % len(input_files))
   missing_symbols = set()
   timestamped_symbol_lists = [
       list(parse_dtrace_symbol_file(path, all_symbols, all_symbols_set,
@@ -320,9 +322,9 @@ def genOrderFile(args):
   # file.
   num_ordered_symbols = len(result)
   if all_symbols:
-    print >>sys.stderr, "note: order file contains %d/%d symbols (%.2f%%)" % (
+    print("note: order file contains %d/%d symbols (%.2f%%)" % (
       num_ordered_symbols, len(all_symbols),
-      100.*num_ordered_symbols/len(all_symbols))
+      100.*num_ordered_symbols/len(all_symbols)), file=sys.stderr)
 
   if opts.output_unordered_symbols_path:
     ordered_symbols_set = set(result)
