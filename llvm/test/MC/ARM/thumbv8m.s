@@ -21,6 +21,14 @@ mov.w r0, r0
 // CHECK: isb	sy              @ encoding: [0xbf,0xf3,0x6f,0x8f]
 isb sy
 
+// 'Code optimization'
+
+// CHECK: sdiv r1, r2, r3     @ encoding: [0x92,0xfb,0xf3,0xf1]
+sdiv r1, r2, r3
+
+// CHECK: udiv r1, r2, r3     @ encoding: [0xb2,0xfb,0xf3,0xf1]
+udiv r1, r2, r3
+
 // 'XO generation'
 
 // CHECK: movw r1, #65535            @ encoding: [0x4f,0xf6,0xff,0x71]
