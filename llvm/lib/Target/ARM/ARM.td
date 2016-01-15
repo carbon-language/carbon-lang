@@ -393,7 +393,7 @@ def ARMv8mBaseline : Architecture<"armv8-m.base", "ARMv8mBaseline",
                                                        FeatureNoARM,
                                                        FeatureDB,
                                                        FeatureHWDiv,
-                                                       FeatureV7Exclusives,
+                                                       FeatureV7Clrex,
                                                        FeatureAcquireRelease,
                                                        FeatureMClass]>;
 

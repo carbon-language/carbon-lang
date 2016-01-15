@@ -336,7 +336,7 @@ bool ARMSubtarget::enablePostRAScheduler() const {
 }
 
 bool ARMSubtarget::enableAtomicExpand() const {
-  return hasAnyDataBarrier() && !isThumb1Only();
+  return hasAnyDataBarrier() && (!isThumb() || hasV8MBaselineOps());
 }
 
 bool ARMSubtarget::useStride4VFPs(const MachineFunction &MF) const {

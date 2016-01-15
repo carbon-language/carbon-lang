@@ -839,7 +839,8 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   // non-atomic form.
   if (TM.Options.ThreadModel == ThreadModel::Single)
     setOperationAction(ISD::ATOMIC_FENCE,   MVT::Other, Expand);
-  else if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only()) {
+  else if (Subtarget->hasAnyDataBarrier() && (!Subtarget->isThumb() ||
+                                              Subtarget->hasV8MBaselineOps())) {
     // ATOMIC_FENCE needs custom lowering; the others should have been expanded
     // to ldrex/strex loops already.
     setOperationAction(ISD::ATOMIC_FENCE,     MVT::Other, Custom);

@@ -3056,7 +3056,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       SDLoc dl(N);
       SDValue Chain = N->getOperand(0);
       SDValue MemAddr = N->getOperand(2);
-      bool isThumb = Subtarget->isThumb() && Subtarget->hasThumb2();
+      bool isThumb = Subtarget->isThumb() && Subtarget->hasV8MBaselineOps();
 
       bool IsAcquire = IntNo == Intrinsic::arm_ldaexd;
       unsigned NewOpc = isThumb ? (IsAcquire ? ARM::t2LDAEXD : ARM::t2LDREXD)
