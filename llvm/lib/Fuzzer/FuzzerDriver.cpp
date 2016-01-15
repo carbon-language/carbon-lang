@@ -23,6 +23,10 @@
 #include <algorithm>
 #include <iterator>
 
+// This function should be present in the libFuzzer so that the client
+// binary can test for its existence.
+extern "C" __attribute__((used)) void __libfuzzer_is_present() {}
+
 namespace fuzzer {
 
 // Program arguments.
@@ -93,6 +97,18 @@ static const char *FlagValue(const char *Param, const char *Name) {
   return nullptr;
 }
 
+// Avoid calling stol as it triggers a bug in clang/glibc build.
+static long MyStol(const char *Str) {
+  long Res = 0;
+  for (size_t i = 0; Str[i]; i++) {
+    char Ch = Str[i];
+    if (Ch < '0' || Ch > '9')
+      return Res;
+    Res = Res * 10 + (Ch - '0');
+  }
+  return Res;
+}
+
 static bool ParseOneFlag(const char *Param) {
   if (Param[0] != '-') return false;
   if (Param[1] == '-') {
@@ -108,7 +124,7 @@ static bool ParseOneFlag(const char *Param) {
     const char *Str = FlagValue(Param, Name);
     if (Str)  {
       if (FlagDescriptions[F].IntFlag) {
-        int Val = std::stol(Str);
+        int Val = MyStol(Str);
         *FlagDescriptions[F].IntFlag = Val;
         if (Flags.verbosity >= 2)
           Printf("Flag: %s %d\n", Name, Val);;
