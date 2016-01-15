@@ -367,9 +367,11 @@ void ReplaceSystemMalloc() { }
 #if SANITIZER_ANDROID
 
 #if defined(__aarch64__)
-# define __get_tls() ({ void** __val; __asm__("mrs %0, tpidr_el0" : "=r"(__val)); __val; })
+# define __get_tls() \
+    ({ void** __val; __asm__("mrs %0, tpidr_el0" : "=r"(__val)); __val; })
 #elif defined(__x86_64__)
-# define __get_tls() ({ void** __val; __asm__("mov %%fs:0, %0" : "=r"(__val)); __val; })
+# define __get_tls() \
+    ({ void** __val; __asm__("mov %%fs:0, %0" : "=r"(__val)); __val; })
 #else
 #error unsupported architecture
 #endif
@@ -377,8 +379,8 @@ void ReplaceSystemMalloc() { }
 // On Android, __thread is not supported. So we store the pointer to ThreadState
 // in TLS_SLOT_TSAN, which is the tls slot allocated by Android bionic for tsan.
 static const int TLS_SLOT_TSAN = 8;
-// On Android, one thread can call intercepted functions after DestroyThreadState(),
-// so add a fake thread state for "dead" threads.
+// On Android, one thread can call intercepted functions after
+// DestroyThreadState(), so add a fake thread state for "dead" threads.
 static ThreadState *dead_thread_state = nullptr;
 
 ThreadState *cur_thread() {

@@ -168,7 +168,7 @@ struct sigaction_t {
   u32 sa_flags;
   union {
     sighandler_t sa_handler;
-    sigactionhandler_t sa_sgiaction;
+    sigactionhandler_t sa_sigaction;
   };
   __sanitizer_sigset_t sa_mask;
   void (*sa_restorer)();
