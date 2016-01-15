@@ -94,6 +94,8 @@ private:
                                       const SectionRef &Section,
                                       StringRef SectionContents);
 
+  void printCodeViewFileChecksums(StringRef Subsection);
+
   void printCodeViewInlineeLines(StringRef Subsection);
 
   void printMemberAttributes(MemberAttributes Attrs);
@@ -767,6 +769,13 @@ static const EnumEntry<uint8_t> FunctionOptionEnum[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(FunctionOptions, ConstructorWithVirtualBases),
 };
 
+static const EnumEntry<uint8_t> FileChecksumKindNames[] = {
+  LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, None),
+  LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, MD5),
+  LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, SHA1),
+  LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, SHA256),
+};
+
 template <typename T>
 static std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
                                         COFFSymbolRef Symbol,
@@ -1028,6 +1037,10 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
 
     case ModuleSubstreamKind::InlineeLines:
       printCodeViewInlineeLines(Contents);
+      break;
+
+    case ModuleSubstreamKind::FileChecksums:
+      printCodeViewFileChecksums(Contents);
       break;
 
     case ModuleSubstreamKind::Lines: {
@@ -1698,6 +1711,31 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
     if (opts::CodeViewSubsectionBytes)
       printBinaryBlockWithRelocs("SymData", Section, SectionContents,
                                  OrigSymData);
+  }
+}
+
+void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
+  StringRef Data = Subsection;
+  while (!Data.empty()) {
+    DictScope S(W, "FileChecksum");
+    const FileChecksum *FC;
+    error(consumeObject(Data, FC));
+    if (FC->FileNameOffset >= CVStringTable.size())
+      error(object_error::parse_failed);
+    StringRef Filename =
+        CVStringTable.drop_front(FC->FileNameOffset).split('\0').first;
+    W.printHex("Filename", Filename, FC->FileNameOffset);
+    W.printHex("ChecksumSize", FC->ChecksumSize);
+    W.printEnum("ChecksumKind", uint8_t(FC->ChecksumKind),
+                makeArrayRef(FileChecksumKindNames));
+    if (FC->ChecksumSize >= Data.size())
+      error(object_error::parse_failed);
+    StringRef ChecksumBytes = Data.substr(0, FC->ChecksumSize);
+    W.printBinary("ChecksumBytes", ChecksumBytes);
+    unsigned PaddedSize =
+        RoundUpToAlignment(FC->ChecksumSize + sizeof(FileChecksum), 4) -
+        sizeof(FileChecksum);
+    Data = Data.drop_front(PaddedSize);
   }
 }
 
