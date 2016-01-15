@@ -4698,6 +4698,10 @@ public:
   ExprResult ActOnCXXDelete(SourceLocation StartLoc,
                             bool UseGlobal, bool ArrayForm,
                             Expr *Operand);
+  void CheckVirtualDtorCall(CXXDestructorDecl *dtor, SourceLocation Loc,
+                            bool IsDelete, bool CallCanBeVirtual,
+                            bool WarnOnNonAbstractTypes,
+                            SourceLocation DtorLoc);
 
   DeclResult ActOnCXXConditionDeclaration(Scope *S, Declarator &D);
   ExprResult CheckConditionVariable(VarDecl *ConditionVar,

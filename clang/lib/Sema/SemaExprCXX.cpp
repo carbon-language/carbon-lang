@@ -2765,30 +2765,10 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
             return ExprError();
         }
 
-      // C++ [expr.delete]p3:
-      //   In the first alternative (delete object), if the static type of the
-      //   object to be deleted is different from its dynamic type, the static
-      //   type shall be a base class of the dynamic type of the object to be
-      //   deleted and the static type shall have a virtual destructor or the
-      //   behavior is undefined.
-      //
-      // Note: a final class cannot be derived from, no issue there
-      if (PointeeRD->isPolymorphic() && !PointeeRD->hasAttr<FinalAttr>()) {
-        CXXDestructorDecl *dtor = PointeeRD->getDestructor();
-        if (dtor && !dtor->isVirtual()) {
-          if (PointeeRD->isAbstract()) {
-            // If the class is abstract, we warn by default, because we're
-            // sure the code has undefined behavior.
-            Diag(StartLoc, diag::warn_delete_abstract_non_virtual_dtor)
-                << PointeeElem;
-          } else if (!ArrayForm) {
-            // Otherwise, if this is not an array delete, it's a bit suspect,
-            // but not necessarily wrong.
-            Diag(StartLoc, diag::warn_delete_non_virtual_dtor) << PointeeElem;
-          }
-        }
-      }
-
+      CheckVirtualDtorCall(PointeeRD->getDestructor(), StartLoc,
+                           /*IsDelete=*/true, /*CallCanBeVirtual=*/true,
+                           /*WarnOnNonAbstractTypes=*/!ArrayForm,
+                           SourceLocation());
     }
 
     if (!OperatorDelete)
@@ -2815,6 +2795,45 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       UsualArrayDeleteWantsSize, OperatorDelete, Ex.get(), StartLoc);
   AnalyzeDeleteExprMismatch(Result);
   return Result;
+}
+
+void Sema::CheckVirtualDtorCall(CXXDestructorDecl *dtor, SourceLocation Loc,
+                                bool IsDelete, bool CallCanBeVirtual,
+                                bool WarnOnNonAbstractTypes,
+                                SourceLocation DtorLoc) {
+  if (!dtor || dtor->isVirtual() || !CallCanBeVirtual)
+    return;
+
+  // C++ [expr.delete]p3:
+  //   In the first alternative (delete object), if the static type of the
+  //   object to be deleted is different from its dynamic type, the static
+  //   type shall be a base class of the dynamic type of the object to be
+  //   deleted and the static type shall have a virtual destructor or the
+  //   behavior is undefined.
+  //
+  const CXXRecordDecl *PointeeRD = dtor->getParent();
+  // Note: a final class cannot be derived from, no issue there
+  if (!PointeeRD->isPolymorphic() || PointeeRD->hasAttr<FinalAttr>())
+    return;
+
+  QualType ClassType = dtor->getThisType(Context)->getPointeeType();
+  if (PointeeRD->isAbstract()) {
+    // If the class is abstract, we warn by default, because we're
+    // sure the code has undefined behavior.
+    Diag(Loc, diag::warn_delete_abstract_non_virtual_dtor) << (IsDelete ? 0 : 1)
+                                                           << ClassType;
+  } else if (WarnOnNonAbstractTypes) {
+    // Otherwise, if this is not an array delete, it's a bit suspect,
+    // but not necessarily wrong.
+    Diag(Loc, diag::warn_delete_non_virtual_dtor) << (IsDelete ? 0 : 1)
+                                                  << ClassType;
+  }
+  if (!IsDelete) {
+    std::string TypeStr;
+    ClassType.getAsStringInternal(TypeStr, getPrintingPolicy());
+    Diag(DtorLoc, diag::note_delete_non_virtual)
+        << FixItHint::CreateInsertion(DtorLoc, TypeStr + "::");
+  }
 }
 
 /// \brief Check the use of the given variable as a C++ condition in an if,
