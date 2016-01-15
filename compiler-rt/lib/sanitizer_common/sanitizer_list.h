@@ -71,7 +71,9 @@ struct IntrusiveList {
   }
 
   Item *front() { return first_; }
+  const Item *front() const { return first_; }
   Item *back() { return last_; }
+  const Item *back() const { return last_; }
 
   void append_front(IntrusiveList<Item> *l) {
     CHECK_NE(this, l);
