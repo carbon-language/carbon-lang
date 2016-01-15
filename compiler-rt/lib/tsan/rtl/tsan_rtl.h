@@ -411,7 +411,7 @@ struct ThreadState {
 };
 
 #ifndef SANITIZER_GO
-#if SANITIZER_MAC
+#if SANITIZER_MAC || SANITIZER_ANDROID
 ThreadState *cur_thread();
 void cur_thread_finalize();
 #else
@@ -421,7 +421,7 @@ INLINE ThreadState *cur_thread() {
   return reinterpret_cast<ThreadState *>(&cur_thread_placeholder);
 }
 INLINE void cur_thread_finalize() { }
-#endif  // SANITIZER_MAC
+#endif  // SANITIZER_MAC || SANITIZER_ANDROID
 #endif  // SANITIZER_GO
 
 class ThreadContext : public ThreadContextBase {

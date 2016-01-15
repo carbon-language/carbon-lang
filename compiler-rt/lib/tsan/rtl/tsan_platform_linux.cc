@@ -18,6 +18,8 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_linux.h"
+#include "sanitizer_common/sanitizer_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_posix.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stoptheworld.h"
@@ -360,6 +362,67 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
 #ifndef SANITIZER_GO
 void ReplaceSystemMalloc() { }
 #endif
+
+#ifndef SANITIZER_GO
+#if SANITIZER_ANDROID
+
+#if defined(__aarch64__)
+# define __get_tls() ({ void** __val; __asm__("mrs %0, tpidr_el0" : "=r"(__val)); __val; })
+#elif defined(__x86_64__)
+# define __get_tls() ({ void** __val; __asm__("mov %%fs:0, %0" : "=r"(__val)); __val; })
+#else
+#error unsupported architecture
+#endif
+
+// On Android, __thread is not supported. So we store the pointer to ThreadState
+// in TLS_SLOT_TSAN, which is the tls slot allocated by Android bionic for tsan.
+static const int TLS_SLOT_TSAN = 8;
+// On Android, one thread can call intercepted functions after DestroyThreadState(),
+// so add a fake thread state for "dead" threads.
+static ThreadState *dead_thread_state = nullptr;
+
+ThreadState *cur_thread() {
+  ThreadState* thr = (ThreadState*)__get_tls()[TLS_SLOT_TSAN];
+  if (thr == nullptr) {
+    __sanitizer_sigset_t emptyset;
+    internal_sigfillset(&emptyset);
+    __sanitizer_sigset_t oldset;
+    CHECK_EQ(0, internal_sigprocmask(SIG_SETMASK, &emptyset, &oldset));
+    thr = reinterpret_cast<ThreadState*>(__get_tls()[TLS_SLOT_TSAN]);
+    if (thr == nullptr) {
+      thr = reinterpret_cast<ThreadState*>(MmapOrDie(sizeof(ThreadState),
+                                                     "ThreadState"));
+      __get_tls()[TLS_SLOT_TSAN] = thr;
+      if (dead_thread_state == nullptr) {
+        dead_thread_state = reinterpret_cast<ThreadState*>(
+            MmapOrDie(sizeof(ThreadState), "ThreadState"));
+        dead_thread_state->fast_state.SetIgnoreBit();
+        dead_thread_state->ignore_interceptors = 1;
+        dead_thread_state->is_dead = true;
+        *const_cast<int*>(&dead_thread_state->tid) = -1;
+        CHECK_EQ(0, internal_mprotect(dead_thread_state, sizeof(ThreadState),
+                                      PROT_READ));
+      }
+    }
+    CHECK_EQ(0, internal_sigprocmask(SIG_SETMASK, &oldset, nullptr));
+  }
+  return thr;
+}
+
+void cur_thread_finalize() {
+  __sanitizer_sigset_t emptyset;
+  internal_sigfillset(&emptyset);
+  __sanitizer_sigset_t oldset;
+  CHECK_EQ(0, internal_sigprocmask(SIG_SETMASK, &emptyset, &oldset));
+  ThreadState* thr = (ThreadState*)__get_tls()[TLS_SLOT_TSAN];
+  if (thr != dead_thread_state) {
+    __get_tls()[TLS_SLOT_TSAN] = dead_thread_state;
+    UnmapOrDie(thr, sizeof(ThreadState));
+  }
+  CHECK_EQ(0, internal_sigprocmask(SIG_SETMASK, &oldset, nullptr));
+}
+#endif  // SANITIZER_ANDROID
+#endif  // ifndef SANITIZER_GO
 
 }  // namespace __tsan
 

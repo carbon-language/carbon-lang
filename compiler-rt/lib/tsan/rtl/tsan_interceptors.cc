@@ -274,10 +274,11 @@ ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
     : thr_(thr)
     , pc_(pc)
     , in_ignored_lib_(false) {
-  if (!thr_->ignore_interceptors) {
-    Initialize(thr);
+  Initialize(thr);
+  if (!thr_->is_inited)
+    return;
+  if (!thr_->ignore_interceptors)
     FuncEntry(thr, pc);
-  }
   DPrintf("#%d: intercept %s()\n", thr_->tid, fname);
   if (!thr_->in_ignored_lib && libignore()->IsIgnored(pc)) {
     in_ignored_lib_ = true;

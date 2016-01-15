@@ -34,7 +34,7 @@ class ScopedInterceptor {
       Report("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
       Die(); \
     }                                                    \
-    if (thr->ignore_interceptors || thr->in_ignored_lib) \
+    if (!thr->is_inited || thr->ignore_interceptors || thr->in_ignored_lib) \
       return REAL(func)(__VA_ARGS__); \
 /**/
 
