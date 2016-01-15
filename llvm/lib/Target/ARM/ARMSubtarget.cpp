@@ -113,6 +113,8 @@ void ARMSubtarget::initializeEnvironment() {
   HasV8Ops = false;
   HasV8_1aOps = false;
   HasV8_2aOps = false;
+  HasV8MBaselineOps = false;
+  HasV8MMainlineOps = false;
   HasVFPv2 = false;
   HasVFPv3 = false;
   HasVFPv4 = false;

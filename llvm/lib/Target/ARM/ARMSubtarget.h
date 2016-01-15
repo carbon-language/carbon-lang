@@ -52,7 +52,7 @@ protected:
   enum ARMArchEnum {
     ARMv2, ARMv2a, ARMv3, ARMv3m, ARMv4, ARMv4t, ARMv5, ARMv5t, ARMv5te,
     ARMv5tej, ARMv6, ARMv6k, ARMv6kz, ARMv6t2, ARMv6m, ARMv6sm, ARMv7a, ARMv7r,
-    ARMv7m, ARMv7em, ARMv8a, ARMv81a, ARMv82a
+    ARMv7m, ARMv7em, ARMv8a, ARMv81a, ARMv82a, ARMv8mMainline, ARMv8mBaseline
   };
 
   /// ARMProcFamily - ARM processor family: Cortex-A8, Cortex-A9, and others.
@@ -78,6 +78,8 @@ protected:
   bool HasV8Ops;
   bool HasV8_1aOps;
   bool HasV8_2aOps;
+  bool HasV8MBaselineOps;
+  bool HasV8MMainlineOps;
 
   /// HasVFPv2, HasVFPv3, HasVFPv4, HasFPARMv8, HasNEON - Specify what
   /// floating point ISAs are supported.
@@ -320,6 +322,8 @@ public:
   bool hasV8Ops()   const { return HasV8Ops;  }
   bool hasV8_1aOps() const { return HasV8_1aOps; }
   bool hasV8_2aOps() const { return HasV8_2aOps; }
+  bool hasV8MBaselineOps() const { return HasV8MBaselineOps; }
+  bool hasV8MMainlineOps() const { return HasV8MMainlineOps; }
 
   bool isCortexA5() const { return ARMProcFamily == CortexA5; }
   bool isCortexA7() const { return ARMProcFamily == CortexA7; }

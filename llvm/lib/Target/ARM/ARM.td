@@ -205,12 +205,15 @@ def HasV6Ops    : SubtargetFeature<"v6", "HasV6Ops", "true",
 def HasV6MOps   : SubtargetFeature<"v6m", "HasV6MOps", "true",
                                    "Support ARM v6M instructions",
                                    [HasV6Ops]>;
+def HasV8MBaselineOps : SubtargetFeature<"v8m", "HasV8MBaselineOps", "true",
+                                         "Support ARM v8M Baseline instructions",
+                                         [HasV6MOps]>;
 def HasV6KOps   : SubtargetFeature<"v6k", "HasV6KOps", "true",
                                    "Support ARM v6k instructions",
                                    [HasV6Ops]>;
 def HasV6T2Ops  : SubtargetFeature<"v6t2", "HasV6T2Ops", "true",
                                    "Support ARM v6t2 instructions",
-                                   [HasV6MOps, HasV6KOps, FeatureThumb2]>;
+                                   [HasV8MBaselineOps, HasV6KOps, FeatureThumb2]>;
 def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
                                    "Support ARM v7 instructions",
                                    [HasV6T2Ops, FeaturePerfMon,
@@ -224,6 +227,9 @@ def HasV8_1aOps : SubtargetFeature<"v8.1a", "HasV8_1aOps", "true",
 def HasV8_2aOps   : SubtargetFeature<"v8.2a", "HasV8_2aOps", "true",
                                    "Support ARM v8.2a instructions",
                                    [HasV8_1aOps]>;
+def HasV8MMainlineOps : SubtargetFeature<"v8m.main", "HasV8MMainlineOps", "true",
+                                         "Support ARM v8M Mainline instructions",
+                                         [HasV7Ops]>;
 
 
 //===----------------------------------------------------------------------===//
@@ -381,6 +387,23 @@ def ARMv82a   : Architecture<"armv8.2-a", "ARMv82a",  [HasV8_2aOps,
                                                        FeatureVirtualization,
                                                        FeatureCrypto,
                                                        FeatureCRC]>;
+
+def ARMv8mBaseline : Architecture<"armv8-m.base", "ARMv8mBaseline",
+                                                      [HasV8MBaselineOps,
+                                                       FeatureNoARM,
+                                                       FeatureDB,
+                                                       FeatureHWDiv,
+                                                       FeatureV7Exclusives,
+                                                       FeatureAcquireRelease,
+                                                       FeatureMClass]>;
+
+def ARMv8mMainline : Architecture<"armv8-m.main", "ARMv8mMainline",
+                                                      [HasV8MMainlineOps,
+                                                       FeatureNoARM,
+                                                       FeatureDB,
+                                                       FeatureHWDiv,
+                                                       FeatureAcquireRelease,
+                                                       FeatureMClass]>;
 
 // Aliases
 def IWMMXT   : Architecture<"iwmmxt",      "ARMv5te",  [ARMv5te]>;

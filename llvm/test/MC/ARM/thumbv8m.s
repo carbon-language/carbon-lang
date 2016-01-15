@@ -1,0 +1,22 @@
+// RUN: not llvm-mc -triple=thumbv8m.base -show-encoding < %s 2>%t \
+// RUN:   | FileCheck --check-prefix=CHECK %s
+// RUN:     FileCheck --check-prefix=UNDEF-BASELINE --check-prefix=UNDEF < %t %s
+// RUN: not llvm-mc -triple=thumbv8m.main -show-encoding < %s 2>%t \
+// RUN:   | FileCheck --check-prefix=CHECK %s
+// RUN:     FileCheck --check-prefix=UNDEF-MAINLINE --check-prefix=UNDEF < %t %s
+
+// Simple check that baseline is v6M and mainline is v7M
+// UNDEF-BASELINE: error: instruction requires: thumb2
+// UNDEF-MAINLINE-NOT: error: instruction requires:
+mov.w r0, r0
+
+// Check that .arm is invalid
+// UNDEF: target does not support ARM mode
+.arm
+
+// Instruction availibility checks
+
+// 'Barrier instructions'
+
+// CHECK: isb	sy              @ encoding: [0xbf,0xf3,0x6f,0x8f]
+isb sy
