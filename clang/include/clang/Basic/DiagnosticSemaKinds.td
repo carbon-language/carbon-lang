@@ -254,6 +254,13 @@ def err_bad_variable_name : Error<
 def err_bad_parameter_name : Error<
   "%0 cannot be the name of a parameter">;
 def err_parameter_name_omitted : Error<"parameter name omitted">;
+def err_anyx86_interrupt_attribute : Error<
+  "%select{x86|x86-64}0 'interrupt' attribute only applies to functions that "
+  "have %select{a 'void' return type|"
+  "only a pointer parameter optionally followed by an integer parameter|"
+  "a pointer as the first parameter|a %2 type as the second parameter}1">;
+def err_anyx86_interrupt_called : Error<
+  "interrupt service routine cannot be called directly">;
 def warn_mips_interrupt_attribute : Warning<
    "MIPS 'interrupt' attribute only applies to functions that have "
    "%select{no parameters|a 'void' return type}0">,

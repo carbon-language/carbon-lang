@@ -1609,6 +1609,10 @@ void X86_32TargetCodeGenInfo::setTargetAttributes(const Decl *D,
                                               llvm::AttributeSet::FunctionIndex,
                                               B));
     }
+    if (FD->hasAttr<AnyX86InterruptAttr>()) {
+      llvm::Function *Fn = cast<llvm::Function>(GV);
+      Fn->setCallingConv(llvm::CallingConv::X86_INTR);
+    }
   }
 }
 
@@ -1914,6 +1918,16 @@ public:
             ('T' << 24);
     return llvm::ConstantInt::get(CGM.Int32Ty, Sig);
   }
+
+  void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &CGM) const override {
+    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+      if (FD->hasAttr<AnyX86InterruptAttr>()) {
+        llvm::Function *Fn = cast<llvm::Function>(GV);
+        Fn->setCallingConv(llvm::CallingConv::X86_INTR);
+      }
+    }
+  }
 };
 
 class PS4TargetCodeGenInfo : public X86_64TargetCodeGenInfo {
@@ -2030,6 +2044,13 @@ void WinX86_64TargetCodeGenInfo::setTargetAttributes(const Decl *D,
                                                      llvm::GlobalValue *GV,
                                             CodeGen::CodeGenModule &CGM) const {
   TargetCodeGenInfo::setTargetAttributes(D, GV, CGM);
+
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+    if (FD->hasAttr<AnyX86InterruptAttr>()) {
+      llvm::Function *Fn = cast<llvm::Function>(GV);
+      Fn->setCallingConv(llvm::CallingConv::X86_INTR);
+    }
+  }
 
   addStackProbeSizeTargetAttribute(D, GV, CGM);
 }
