@@ -5268,7 +5268,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
       Mnemonic == "vcvta" || Mnemonic == "vcvtn"  || Mnemonic == "vcvtp" ||
       Mnemonic == "vcvtm" || Mnemonic == "vrinta" || Mnemonic == "vrintn" ||
       Mnemonic == "vrintp" || Mnemonic == "vrintm" || Mnemonic == "hvc" ||
-      Mnemonic.startswith("vsel"))
+      Mnemonic == "bxns"  || Mnemonic == "blxns" || Mnemonic.startswith("vsel"))
     return Mnemonic;
 
   // First, split out any predication code. Ignore mnemonics we know aren't
