@@ -92,8 +92,8 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
     InsertPt = Preheader->getTerminator();
   }
   // Don't hoist instructions with loop-variant operands.
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-    if (!makeLoopInvariant(I->getOperand(i), Changed, InsertPt))
+  for (Value *Operand : I->operands())
+    if (!makeLoopInvariant(Operand, Changed, InsertPt))
       return false;
 
   // Hoist.
@@ -146,16 +146,15 @@ PHINode *Loop::getCanonicalInductionVariable() const {
 }
 
 bool Loop::isLCSSAForm(DominatorTree &DT) const {
-  for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
-    BasicBlock *BB = *BI;
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;++I) {
+  for (BasicBlock *BB : this->blocks()) {
+    for (Instruction &I : *BB) {
       // Tokens can't be used in PHI nodes and live-out tokens prevent loop
       // optimizations, so for the purposes of considered LCSSA form, we
       // can ignore them.
-      if (I->getType()->isTokenTy())
+      if (I.getType()->isTokenTy())
         continue;
 
-      for (Use &U : I->uses()) {
+      for (Use &U : I.uses()) {
         Instruction *UI = cast<Instruction>(U.getUser());
         BasicBlock *UserBB = UI->getParent();
         if (PHINode *P = dyn_cast<PHINode>(UI))
@@ -195,11 +194,11 @@ bool Loop::isLoopSimplifyForm() const {
 bool Loop::isSafeToClone() const {
   // Return false if any loop blocks contain indirectbrs, or there are any calls
   // to noduplicate functions.
-  for (Loop::block_iterator I = block_begin(), E = block_end(); I != E; ++I) {
-    if (isa<IndirectBrInst>((*I)->getTerminator()))
+  for (BasicBlock *BB : this->blocks()) {
+    if (isa<IndirectBrInst>(BB->getTerminator()))
       return false;
 
-    if (const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator())) {
+    if (const InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       if (II->cannotDuplicate())
         return false;
       // Return false if any loop blocks contain invokes to EH-pads other than
@@ -208,13 +207,12 @@ bool Loop::isSafeToClone() const {
       if (FirstNonPHI->isEHPad() && !isa<LandingPadInst>(FirstNonPHI))
         return false;
     }
-
-    for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end(); BI != BE; ++BI) {
-      if (const CallInst *CI = dyn_cast<CallInst>(BI)) {
+    for (Instruction &I : *BB) {
+      if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
         if (CI->cannotDuplicate())
           return false;
       }
-      if (BI->getType()->isTokenTy() && BI->isUsedOutsideOfBlock(*I))
+      if (I.getType()->isTokenTy() && I.isUsedOutsideOfBlock(BB))
         return false;
     }
   }
@@ -229,13 +227,13 @@ MDNode *Loop::getLoopID() const {
     // Go through each predecessor of the loop header and check the
     // terminator for the metadata.
     BasicBlock *H = getHeader();
-    for (block_iterator I = block_begin(), IE = block_end(); I != IE; ++I) {
-      TerminatorInst *TI = (*I)->getTerminator();
+    for (BasicBlock *BB : this->blocks()) {
+      TerminatorInst *TI = BB->getTerminator();
       MDNode *MD = nullptr;
 
       // Check if this terminator branches to the loop header.
-      for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i) {
-        if (TI->getSuccessor(i) == H) {
+      for (BasicBlock *Successor : TI->successors()) {
+        if (Successor == H) {
           MD = TI->getMetadata(LoopMDName);
           break;
         }
@@ -266,10 +264,10 @@ void Loop::setLoopID(MDNode *LoopID) const {
   }
 
   BasicBlock *H = getHeader();
-  for (block_iterator I = block_begin(), IE = block_end(); I != IE; ++I) {
-    TerminatorInst *TI = (*I)->getTerminator();
-    for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i) {
-      if (TI->getSuccessor(i) == H)
+  for (BasicBlock *BB : this->blocks()) {
+    TerminatorInst *TI = BB->getTerminator();
+    for (BasicBlock *Successor : TI->successors()) {
+      if (Successor == H)
         TI->setMetadata(LoopMDName, LoopID);
     }
   }
@@ -286,11 +284,9 @@ bool Loop::isAnnotatedParallel() const {
   // dependencies (thus converted the loop back to a sequential loop), check
   // that all the memory instructions in the loop contain parallelism metadata
   // that point to the same unique "loop id metadata" the loop branch does.
-  for (block_iterator BB = block_begin(), BE = block_end(); BB != BE; ++BB) {
-    for (BasicBlock::iterator II = (*BB)->begin(), EE = (*BB)->end();
-         II != EE; II++) {
-
-      if (!II->mayReadOrWriteMemory())
+  for (BasicBlock *BB : this->blocks()) {
+    for (Instruction &I : *BB) {
+      if (!I.mayReadOrWriteMemory())
         continue;
 
       // The memory instruction can refer to the loop identifier metadata
@@ -298,14 +294,14 @@ bool Loop::isAnnotatedParallel() const {
       // nested parallel loops). The loop identifier metadata refers to
       // itself so we can check both cases with the same routine.
       MDNode *loopIdMD =
-          II->getMetadata(LLVMContext::MD_mem_parallel_loop_access);
+          I.getMetadata(LLVMContext::MD_mem_parallel_loop_access);
 
       if (!loopIdMD)
         return false;
 
       bool loopIdMDFound = false;
-      for (unsigned i = 0, e = loopIdMD->getNumOperands(); i < e; ++i) {
-        if (loopIdMD->getOperand(i) == desiredLoopIdMetadata) {
+      for (const MDOperand &MDOp : loopIdMD->operands()) {
+        if (MDOp == desiredLoopIdMetadata) {
           loopIdMDFound = true;
           break;
         }
@@ -323,10 +319,9 @@ bool Loop::hasDedicatedExits() const {
   // within the loop.
   SmallVector<BasicBlock *, 4> ExitBlocks;
   getExitBlocks(ExitBlocks);
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    for (pred_iterator PI = pred_begin(ExitBlocks[i]),
-         PE = pred_end(ExitBlocks[i]); PI != PE; ++PI)
-      if (!contains(*PI))
+  for (BasicBlock *BB : ExitBlocks)
+    for (BasicBlock *Predecessor : predecessors(BB))
+      if (!contains(Predecessor))
         return false;
   // All the requirements are met.
   return true;
@@ -338,42 +333,38 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
          "getUniqueExitBlocks assumes the loop has canonical form exits!");
 
   SmallVector<BasicBlock *, 32> switchExitBlocks;
-
-  for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI) {
-
-    BasicBlock *current = *BI;
+  for (BasicBlock *BB : this->blocks()) {
     switchExitBlocks.clear();
-
-    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I) {
-      // If block is inside the loop then it is not a exit block.
-      if (contains(*I))
+    for (BasicBlock *Successor : successors(BB)) {
+      // If block is inside the loop then it is not an exit block.
+      if (contains(Successor))
         continue;
 
-      pred_iterator PI = pred_begin(*I);
+      pred_iterator PI = pred_begin(Successor);
       BasicBlock *firstPred = *PI;
 
       // If current basic block is this exit block's first predecessor
       // then only insert exit block in to the output ExitBlocks vector.
       // This ensures that same exit block is not inserted twice into
       // ExitBlocks vector.
-      if (current != firstPred)
+      if (BB != firstPred)
         continue;
 
       // If a terminator has more then two successors, for example SwitchInst,
       // then it is possible that there are multiple edges from current block
       // to one exit block.
-      if (std::distance(succ_begin(current), succ_end(current)) <= 2) {
-        ExitBlocks.push_back(*I);
+      if (std::distance(succ_begin(BB), succ_end(BB)) <= 2) {
+        ExitBlocks.push_back(Successor);
         continue;
       }
 
       // In case of multiple edges from current block to exit block, collect
       // only one edge in ExitBlocks. Use switchExitBlocks to keep track of
       // duplicate edges.
-      if (std::find(switchExitBlocks.begin(), switchExitBlocks.end(), *I)
+      if (std::find(switchExitBlocks.begin(), switchExitBlocks.end(), Successor)
           == switchExitBlocks.end()) {
-        switchExitBlocks.push_back(*I);
-        ExitBlocks.push_back(*I);
+        switchExitBlocks.push_back(Successor);
+        ExitBlocks.push_back(Successor);
       }
     }
   }
