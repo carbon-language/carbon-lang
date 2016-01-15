@@ -1271,8 +1271,22 @@ void test() {
   foo<BoolT<true>>(X);
 }
 // CHECK-ELIDE-NOTREE: no matching function for call to 'foo'
-// CHECK-ELIDE-NOTREE: candidate function [with T = BoolArgumentBitExtended::BoolT<true>] not viable: no known conversion from 'BoolT<0>' to 'BoolT<1>' for 1st argument
+// CHECK-ELIDE-NOTREE: candidate function [with T = BoolArgumentBitExtended::BoolT<true>] not viable: no known conversion from 'BoolT<false>' to 'BoolT<true>' for 1st argument
 }
+
+namespace DifferentIntegralTypes {
+template<typename T, T n>
+class A{};
+void foo() {
+  A<int, 1> a1 = A<long long, 1>();
+  A<unsigned int, 1> a2 = A<int, 5>();
+  A<bool, true> a3 = A<signed char, true>();
+}
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<long long, (long long) 1>' to 'A<int, (int) 1>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int, (int) 5>' to 'A<unsigned int, (unsigned int) 1>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<signed char, (signed char) 1>' to 'A<bool, (bool) true>'
+}
+
 
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.

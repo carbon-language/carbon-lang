@@ -615,6 +615,7 @@ class TemplateDiff {
 
     void SetIntegerDiff(llvm::APSInt FromInt, llvm::APSInt ToInt,
                         bool IsValidFromInt, bool IsValidToInt,
+                        QualType FromIntType, QualType ToIntType,
                         Expr *FromExpr, Expr *ToExpr, bool FromDefault,
                         bool ToDefault) {
       assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
@@ -623,6 +624,8 @@ class TemplateDiff {
       FlatTree[CurrentNode].ToArgInfo.Val = ToInt;
       FlatTree[CurrentNode].FromArgInfo.IsValidInt = IsValidFromInt;
       FlatTree[CurrentNode].ToArgInfo.IsValidInt = IsValidToInt;
+      FlatTree[CurrentNode].FromArgInfo.ArgType = FromIntType;
+      FlatTree[CurrentNode].ToArgInfo.ArgType = ToIntType;
       FlatTree[CurrentNode].FromArgInfo.ArgExpr = FromExpr;
       FlatTree[CurrentNode].ToArgInfo.ArgExpr = ToExpr;
       SetDefault(FromDefault, ToDefault);
@@ -730,12 +733,15 @@ class TemplateDiff {
 
     void GetIntegerDiff(llvm::APSInt &FromInt, llvm::APSInt &ToInt,
                         bool &IsValidFromInt, bool &IsValidToInt,
+                        QualType &FromIntType, QualType &ToIntType,
                         Expr *&FromExpr, Expr *&ToExpr) {
       assert(FlatTree[ReadNode].Kind == Integer && "Unexpected kind.");
       FromInt = FlatTree[ReadNode].FromArgInfo.Val;
       ToInt = FlatTree[ReadNode].ToArgInfo.Val;
       IsValidFromInt = FlatTree[ReadNode].FromArgInfo.IsValidInt;
       IsValidToInt = FlatTree[ReadNode].ToArgInfo.IsValidInt;
+      FromIntType = FlatTree[ReadNode].FromArgInfo.ArgType;
+      ToIntType = FlatTree[ReadNode].ToArgInfo.ArgType;
       FromExpr = FlatTree[ReadNode].FromArgInfo.ArgExpr;
       ToExpr = FlatTree[ReadNode].ToArgInfo.ArgExpr;
     }
@@ -1047,10 +1053,13 @@ class TemplateDiff {
   }
 
   /// InitializeNonTypeDiffVariables - Helper function for DiffNonTypes
-  static void InitializeNonTypeDiffVariables(
-      ASTContext &Context, const TSTiterator &Iter,
-      NonTypeTemplateParmDecl *Default, llvm::APSInt &Value, bool &HasInt,
-      bool &IsNullPtr, Expr *&E, ValueDecl *&VD, bool &NeedAddressOf) {
+  static void InitializeNonTypeDiffVariables(ASTContext &Context,
+                                             const TSTiterator &Iter,
+                                             NonTypeTemplateParmDecl *Default,
+                                             llvm::APSInt &Value, bool &HasInt,
+                                             QualType &IntType, bool &IsNullPtr,
+                                             Expr *&E, ValueDecl *&VD,
+                                             bool &NeedAddressOf) {
     if (!Iter.isEnd()) {
       switch (Iter->getKind()) {
         default:
@@ -1058,6 +1067,7 @@ class TemplateDiff {
         case TemplateArgument::Integral:
           Value = Iter->getAsIntegral();
           HasInt = true;
+          IntType = Iter->getIntegralType();
           return;
         case TemplateArgument::Declaration: {
           VD = Iter->getAsDecl();
@@ -1087,6 +1097,7 @@ class TemplateDiff {
       case TemplateArgument::Integral:
         Value = TA.getAsIntegral();
         HasInt = true;
+        IntType = TA.getIntegralType();
         return;
       case TemplateArgument::Declaration: {
         VD = TA.getAsDecl();
@@ -1117,15 +1128,16 @@ class TemplateDiff {
                     NonTypeTemplateParmDecl *ToDefaultNonTypeDecl) {
     Expr *FromExpr = nullptr, *ToExpr = nullptr;
     llvm::APSInt FromInt, ToInt;
+    QualType FromIntType, ToIntType;
     ValueDecl *FromValueDecl = nullptr, *ToValueDecl = nullptr;
     bool HasFromInt = false, HasToInt = false, FromNullPtr = false,
          ToNullPtr = false, NeedFromAddressOf = false, NeedToAddressOf = false;
-    InitializeNonTypeDiffVariables(Context, FromIter, FromDefaultNonTypeDecl,
-                                   FromInt, HasFromInt, FromNullPtr, FromExpr,
-                                   FromValueDecl, NeedFromAddressOf);
+    InitializeNonTypeDiffVariables(
+        Context, FromIter, FromDefaultNonTypeDecl, FromInt, HasFromInt,
+        FromIntType, FromNullPtr, FromExpr, FromValueDecl, NeedFromAddressOf);
     InitializeNonTypeDiffVariables(Context, ToIter, ToDefaultNonTypeDecl, ToInt,
-                                   HasToInt, ToNullPtr, ToExpr, ToValueDecl,
-                                   NeedToAddressOf);
+                                   HasToInt, ToIntType, ToNullPtr, ToExpr,
+                                   ToValueDecl, NeedToAddressOf);
 
     bool FromDeclaration = FromValueDecl || FromNullPtr;
     bool ToDeclaration = ToValueDecl || ToNullPtr;
@@ -1140,10 +1152,11 @@ class TemplateDiff {
                      (ToExpr || ToValueDecl || HasToInt || ToNullPtr);
 
     if (HasFromInt || HasToInt) {
-      Tree.SetIntegerDiff(FromInt, ToInt, HasFromInt, HasToInt, FromExpr,
-                          ToExpr, FromDefault, ToDefault);
+      Tree.SetIntegerDiff(FromInt, ToInt, HasFromInt, HasToInt, FromIntType,
+                          ToIntType, FromExpr, ToExpr, FromDefault, ToDefault);
       if (HasFromInt && HasToInt) {
-        Tree.SetSame(FromInt == ToInt);
+        Tree.SetSame(Context.hasSameType(FromIntType, ToIntType) &&
+                     FromInt == ToInt);
       }
       return;
     }
@@ -1349,11 +1362,12 @@ class TemplateDiff {
         llvm::APSInt FromInt, ToInt;
         Expr *FromExpr, *ToExpr;
         bool IsValidFromInt, IsValidToInt;
+        QualType FromIntType, ToIntType;
         Tree.GetIntegerDiff(FromInt, ToInt, IsValidFromInt, IsValidToInt,
-                            FromExpr, ToExpr);
-        PrintAPSInt(FromInt, ToInt, IsValidFromInt, IsValidToInt,
-                    FromExpr, ToExpr, Tree.FromDefault(), Tree.ToDefault(),
-                    Tree.NodeIsSame());
+                            FromIntType, ToIntType, FromExpr, ToExpr);
+        PrintAPSInt(FromInt, ToInt, IsValidFromInt, IsValidToInt, FromIntType,
+                    ToIntType, FromExpr, ToExpr, Tree.FromDefault(),
+                    Tree.ToDefault(), Tree.NodeIsSame());
         return;
       }
       case DiffTree::Declaration: {
@@ -1560,28 +1574,40 @@ class TemplateDiff {
   /// PrintAPSInt - Handles printing of integral arguments, highlighting
   /// argument differences.
   void PrintAPSInt(llvm::APSInt FromInt, llvm::APSInt ToInt,
-                   bool IsValidFromInt, bool IsValidToInt, Expr *FromExpr,
-                   Expr *ToExpr, bool FromDefault, bool ToDefault, bool Same) {
+                   bool IsValidFromInt, bool IsValidToInt, QualType FromIntType,
+                   QualType ToIntType, Expr *FromExpr, Expr *ToExpr,
+                   bool FromDefault, bool ToDefault, bool Same) {
     assert((IsValidFromInt || IsValidToInt) &&
            "Only one integral argument may be missing.");
 
     if (Same) {
-      OS << FromInt.toString(10);
-    } else if (!PrintTree) {
+      if (FromIntType->isBooleanType()) {
+        OS << ((FromInt == 0) ? "false" : "true");
+      } else {
+        OS << FromInt.toString(10);
+      }
+      return;
+    }
+
+    bool PrintType = IsValidFromInt && IsValidToInt &&
+                     !Context.hasSameType(FromIntType, ToIntType);
+
+    if (!PrintTree) {
       OS << (FromDefault ? "(default) " : "");
-      PrintAPSInt(FromInt, FromExpr, IsValidFromInt);
+      PrintAPSInt(FromInt, FromExpr, IsValidFromInt, FromIntType, PrintType);
     } else {
       OS << (FromDefault ? "[(default) " : "[");
-      PrintAPSInt(FromInt, FromExpr, IsValidFromInt);
+      PrintAPSInt(FromInt, FromExpr, IsValidFromInt, FromIntType, PrintType);
       OS << " != " << (ToDefault ? "(default) " : "");
-      PrintAPSInt(ToInt, ToExpr, IsValidToInt);
+      PrintAPSInt(ToInt, ToExpr, IsValidToInt, ToIntType, PrintType);
       OS << ']';
     }
   }
 
   /// PrintAPSInt - If valid, print the APSInt.  If the expression is
   /// gives more information, print it too.
-  void PrintAPSInt(llvm::APSInt Val, Expr *E, bool Valid) {
+  void PrintAPSInt(llvm::APSInt Val, Expr *E, bool Valid, QualType IntType,
+                   bool PrintType) {
     Bold();
     if (Valid) {
       if (HasExtraInfo(E)) {
@@ -1590,7 +1616,20 @@ class TemplateDiff {
         OS << " aka ";
         Bold();
       }
-      OS << Val.toString(10);
+      if (PrintType) {
+        Unbold();
+        OS << "(";
+        Bold();
+        IntType.print(OS, Context.getPrintingPolicy());
+        Unbold();
+        OS << ") ";
+        Bold();
+      }
+      if (IntType->isBooleanType()) {
+        OS << ((Val == 0) ? "false" : "true");
+      } else {
+        OS << Val.toString(10);
+      }
     } else if (E) {
       PrintExpr(E);
     } else {
