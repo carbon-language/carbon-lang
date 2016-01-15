@@ -42,6 +42,11 @@ cl::opt<bool> IsCombinesDisabled("disable-merge-into-combines",
                                  cl::init(false),
                                  cl::desc("Disable merging into combines"));
 static
+cl::opt<bool> IsConst64Disabled("disable-const64",
+                                 cl::Hidden, cl::ZeroOrMore,
+                                 cl::init(false),
+                                 cl::desc("Disable generation of const64"));
+static
 cl::opt<unsigned>
 MaxNumOfInstsBetweenNewValueStoreAndTFR("max-num-inst-between-tfr-and-nv-store",
                    cl::Hidden, cl::init(4),
@@ -82,12 +87,14 @@ public:
   bool runOnMachineFunction(MachineFunction &Fn) override;
 
 private:
-  MachineInstr *findPairable(MachineInstr *I1, bool &DoInsertAtI1);
+  MachineInstr *findPairable(MachineInstr *I1, bool &DoInsertAtI1,
+                             bool AllowC64);
 
   void findPotentialNewifiableTFRs(MachineBasicBlock &);
 
   void combine(MachineInstr *I1, MachineInstr *I2,
-               MachineBasicBlock::iterator &MI, bool DoInsertAtI1);
+               MachineBasicBlock::iterator &MI, bool DoInsertAtI1,
+               bool OptForSize);
 
   bool isSafeToMoveTogether(MachineInstr *I1, MachineInstr *I2,
                             unsigned I1DestReg, unsigned I2DestReg,
@@ -104,6 +111,9 @@ private:
 
   void emitCombineII(MachineBasicBlock::iterator &Before, unsigned DestReg,
                      MachineOperand &HiOperand, MachineOperand &LoOperand);
+
+  void emitConst64(MachineBasicBlock::iterator &Before, unsigned DestReg,
+                   MachineOperand &HiOperand, MachineOperand &LoOperand);
 };
 
 } // End anonymous namespace.
@@ -170,7 +180,7 @@ static bool isGreaterThanNBitTFRI(const MachineInstr *I) {
 /// into a combine (ignoring register constraints).
 static bool areCombinableOperations(const TargetRegisterInfo *TRI,
                                     MachineInstr *HighRegInst,
-                                    MachineInstr *LowRegInst) {
+                                    MachineInstr *LowRegInst, bool AllowC64) {
   unsigned HiOpc = HighRegInst->getOpcode();
   unsigned LoOpc = LowRegInst->getOpcode();
   (void)HiOpc; // Fix compiler warning
@@ -179,9 +189,24 @@ static bool areCombinableOperations(const TargetRegisterInfo *TRI,
          (LoOpc == Hexagon::A2_tfr || LoOpc == Hexagon::A2_tfrsi) &&
          "Assume individual instructions are of a combinable type");
 
-  // There is no combine of two constant extended values.
+  if (!AllowC64) {
+    // There is no combine of two constant extended values.
+    if (isGreaterThanNBitTFRI<8>(HighRegInst) &&
+        isGreaterThanNBitTFRI<6>(LowRegInst))
+      return false;
+  }
+
+  // There is a combine of two constant extended values into CONST64,
+  // provided both constants are true immediates.
+  if (isGreaterThanNBitTFRI<16>(HighRegInst) &&
+      isGreaterThanNBitTFRI<16>(LowRegInst))
+    return (HighRegInst->getOperand(1).isImm() &&
+            LowRegInst->getOperand(1).isImm());
+
+  // There is no combine of two constant extended values, unless handled above
+  // Make both 8-bit size checks to allow both combine (#,##) and combine(##,#)
   if (isGreaterThanNBitTFRI<8>(HighRegInst) &&
-      isGreaterThanNBitTFRI<6>(LowRegInst))
+      isGreaterThanNBitTFRI<8>(LowRegInst))
     return false;
 
   return true;
@@ -423,6 +448,9 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
   TRI = MF.getSubtarget().getRegisterInfo();
   TII = MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
 
+  const Function *F = MF.getFunction();
+  bool OptForSize = F->hasFnAttribute(Attribute::OptimizeForSize);
+
   // Combine aggressively (for code size)
   ShouldCombineAggressively =
     MF.getTarget().getOptLevel() <= CodeGenOpt::Default;
@@ -456,10 +484,10 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
       // need to be moved along with it.
       bool DoInsertAtI1 = false;
       DbgMItoMove.clear();
-      MachineInstr *I2 = findPairable(I1, DoInsertAtI1);
+      MachineInstr *I2 = findPairable(I1, DoInsertAtI1, OptForSize);
       if (I2) {
         HasChanged = true;
-        combine(I1, I2, MI, DoInsertAtI1);
+        combine(I1, I2, MI, DoInsertAtI1, OptForSize);
       }
     }
   }
@@ -472,7 +500,8 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
 /// in \p DoInsertAtI1 if the combine must be inserted at instruction \p I1
 /// false if the combine must be inserted at the returned instruction.
 MachineInstr *HexagonCopyToCombine::findPairable(MachineInstr *I1,
-                                                 bool &DoInsertAtI1) {
+                                                 bool &DoInsertAtI1,
+                                                 bool AllowC64) {
   MachineBasicBlock::iterator I2 = std::next(MachineBasicBlock::iterator(I1));
 
   while (I2->isDebugValue())
@@ -508,8 +537,8 @@ MachineInstr *HexagonCopyToCombine::findPairable(MachineInstr *I1,
     // instructions to be merged into a combine.
     // The order matters because in a A2_tfrsi we might can encode a int8 as
     // the hi reg operand but only a uint6 as the low reg operand.
-    if ((IsI2LowReg && !areCombinableOperations(TRI, I1, I2)) ||
-        (IsI1LowReg && !areCombinableOperations(TRI, I2, I1)))
+    if ((IsI2LowReg && !areCombinableOperations(TRI, I1, I2, AllowC64)) ||
+        (IsI1LowReg && !areCombinableOperations(TRI, I2, I1, AllowC64)))
       break;
 
     if (isSafeToMoveTogether(I1, I2, I1DestReg, I2DestReg,
@@ -524,7 +553,7 @@ MachineInstr *HexagonCopyToCombine::findPairable(MachineInstr *I1,
 
 void HexagonCopyToCombine::combine(MachineInstr *I1, MachineInstr *I2,
                                    MachineBasicBlock::iterator &MI,
-                                   bool DoInsertAtI1) {
+                                   bool DoInsertAtI1, bool OptForSize) {
   // We are going to delete I2. If MI points to I2 advance it to the next
   // instruction.
   if ((MachineInstr *)MI == I2) ++MI;
@@ -552,6 +581,10 @@ void HexagonCopyToCombine::combine(MachineInstr *I1, MachineInstr *I2,
   bool IsHiReg = HiOperand.isReg();
   bool IsLoReg = LoOperand.isReg();
 
+  // There is a combine of two constant extended values into CONST64.
+  bool IsC64 = OptForSize && LoOperand.isImm() && HiOperand.isImm() &&
+               isGreaterThanNBitTFRI<16>(I1) && isGreaterThanNBitTFRI<16>(I2);
+
   MachineBasicBlock::iterator InsertPt(DoInsertAtI1 ? I1 : I2);
   // Emit combine.
   if (IsHiReg && IsLoReg)
@@ -560,6 +593,8 @@ void HexagonCopyToCombine::combine(MachineInstr *I1, MachineInstr *I2,
     emitCombineRI(InsertPt, DoubleRegDest, HiOperand, LoOperand);
   else if (IsLoReg)
     emitCombineIR(InsertPt, DoubleRegDest, HiOperand, LoOperand);
+  else if (IsC64 && !IsConst64Disabled)
+    emitConst64(InsertPt, DoubleRegDest, HiOperand, LoOperand);
   else
     emitCombineII(InsertPt, DoubleRegDest, HiOperand, LoOperand);
 
@@ -579,6 +614,24 @@ void HexagonCopyToCombine::combine(MachineInstr *I1, MachineInstr *I2,
 
   I1->eraseFromParent();
   I2->eraseFromParent();
+}
+
+void HexagonCopyToCombine::emitConst64(MachineBasicBlock::iterator &InsertPt,
+                                       unsigned DoubleDestReg,
+                                       MachineOperand &HiOperand,
+                                       MachineOperand &LoOperand) {
+  DEBUG(dbgs() << "Found a CONST64\n");
+
+  DebugLoc DL = InsertPt->getDebugLoc();
+  MachineBasicBlock *BB = InsertPt->getParent();
+  assert(LoOperand.isImm() && HiOperand.isImm() &&
+         "Both operands must be immediate");
+
+  int64_t V = HiOperand.getImm();
+  V = (V << 32) | (0x0ffffffffLL & LoOperand.getImm());
+  BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::CONST64_Int_Real),
+    DoubleDestReg)
+    .addImm(V);
 }
 
 void HexagonCopyToCombine::emitCombineII(MachineBasicBlock::iterator &InsertPt,
