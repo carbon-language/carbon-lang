@@ -267,7 +267,7 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+  ParseOptionalCXXScopeSpecifier(SS, nullptr, /*EnteringContext=*/false);
 
   if (SS.isInvalid() || Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_namespace_name);
@@ -442,7 +442,7 @@ Decl *Parser::ParseUsingDirective(unsigned Context,
 
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+  ParseOptionalCXXScopeSpecifier(SS, nullptr, /*EnteringContext=*/false);
 
   IdentifierInfo *NamespcName = nullptr;
   SourceLocation IdentLoc = SourceLocation();
@@ -517,7 +517,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
 
   // Parse nested-name-specifier.
   IdentifierInfo *LastII = nullptr;
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false,
+  ParseOptionalCXXScopeSpecifier(SS, nullptr, /*EnteringContext=*/false,
                                  /*MayBePseudoDtor=*/nullptr,
                                  /*IsTypename=*/false,
                                  /*LastII=*/&LastII);
@@ -554,7 +554,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                  /*AllowDestructorName=*/true,
                  /*AllowConstructorName=*/!(Tok.is(tok::identifier) &&
                                             NextToken().is(tok::equal)),
-                 ParsedType(), TemplateKWLoc, Name)) {
+                 nullptr, TemplateKWLoc, Name)) {
     SkipUntil(tok::semi);
     return nullptr;
   }
@@ -944,7 +944,7 @@ TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
 
   // Parse optional nested-name-specifier
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+  ParseOptionalCXXScopeSpecifier(SS, nullptr, /*EnteringContext=*/false);
 
   BaseLoc = Tok.getLocation();
 
@@ -1037,11 +1037,10 @@ TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
 
   // We have an identifier; check whether it is actually a type.
   IdentifierInfo *CorrectedII = nullptr;
-  ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), &SS, true,
-                                        false, ParsedType(),
-                                        /*IsCtorOrDtorName=*/false,
-                                        /*NonTrivialTypeSourceInfo=*/true,
-                                        &CorrectedII);
+  ParsedType Type =
+      Actions.getTypeName(*Id, IdLoc, getCurScope(), &SS, true, false, nullptr,
+                          /*IsCtorOrDtorName=*/false,
+                          /*NonTrivialTypeSourceInfo=*/true, &CorrectedII);
   if (!Type) {
     Diag(IdLoc, diag::err_expected_class_name);
     return true;
@@ -1352,7 +1351,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
     CXXScopeSpec Spec;
     bool HasValidSpec = true;
-    if (ParseOptionalCXXScopeSpecifier(Spec, ParsedType(), EnteringContext)) {
+    if (ParseOptionalCXXScopeSpecifier(Spec, nullptr, EnteringContext)) {
       DS.SetTypeSpecError();
       HasValidSpec = false;
     }
@@ -2281,7 +2280,7 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (isAccessDecl) {
       // Collect the scope specifier token we annotated earlier.
       CXXScopeSpec SS;
-      ParseOptionalCXXScopeSpecifier(SS, ParsedType(), 
+      ParseOptionalCXXScopeSpecifier(SS, nullptr,
                                      /*EnteringContext=*/false);
 
       if (SS.isInvalid()) {
@@ -2292,8 +2291,8 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       // Try to parse an unqualified-id.
       SourceLocation TemplateKWLoc;
       UnqualifiedId Name;
-      if (ParseUnqualifiedId(SS, false, true, true, ParsedType(),
-                             TemplateKWLoc, Name)) {
+      if (ParseUnqualifiedId(SS, false, true, true, nullptr, TemplateKWLoc,
+                             Name)) {
         SkipUntil(tok::semi);
         return nullptr;
       }
@@ -3234,7 +3233,7 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
 MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   // parse '::'[opt] nested-name-specifier[opt]
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+  ParseOptionalCXXScopeSpecifier(SS, nullptr, /*EnteringContext=*/false);
   ParsedType TemplateTypeTy;
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);

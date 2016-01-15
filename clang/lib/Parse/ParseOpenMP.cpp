@@ -367,11 +367,11 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
     NoIdentIsFound = false;
 
     if (AllowScopeSpecifier && getLangOpts().CPlusPlus &&
-        ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false)) {
+        ParseOptionalCXXScopeSpecifier(SS, nullptr, false)) {
       IsCorrect = false;
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
                 StopBeforeMatch);
-    } else if (ParseUnqualifiedId(SS, false, false, false, ParsedType(),
+    } else if (ParseUnqualifiedId(SS, false, false, false, nullptr,
                                   TemplateKWLoc, Name)) {
       IsCorrect = false;
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
@@ -831,7 +831,7 @@ static bool ParseReductionId(Parser &P, CXXScopeSpec &ReductionIdScopeSpec,
   }
   return P.ParseUnqualifiedId(ReductionIdScopeSpec, /*EnteringContext*/ false,
                               /*AllowDestructorName*/ false,
-                              /*AllowConstructorName*/ false, ParsedType(),
+                              /*AllowConstructorName*/ false, nullptr,
                               TemplateKWLoc, ReductionId);
 }
 
@@ -898,7 +898,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPDirectiveKind DKind,
   if (Kind == OMPC_reduction) {
     ColonProtectionRAIIObject ColonRAII(*this);
     if (getLangOpts().CPlusPlus) {
-      ParseOptionalCXXScopeSpecifier(ReductionIdScopeSpec, ParsedType(), false);
+      ParseOptionalCXXScopeSpecifier(ReductionIdScopeSpec, nullptr, false);
     }
     InvalidReductionId =
         ParseReductionId(*this, ReductionIdScopeSpec, ReductionId);

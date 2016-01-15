@@ -113,7 +113,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
   bool LookInScope = false;
 
   if (SS.isInvalid())
-    return ParsedType();
+    return nullptr;
 
   // If we have an object type, it's because we are in a
   // pseudo-destructor-expression or a member access expression, and
@@ -198,7 +198,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 
     // FIXME: Should we be suppressing ambiguities here?
     if (Found.isAmbiguous())
-      return ParsedType();
+      return nullptr;
 
     if (TypeDecl *Type = Found.getAsSingle<TypeDecl>()) {
       QualType T = Context.getTypeDeclType(Type);
@@ -320,12 +320,12 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
     }
   }
 
-  return ParsedType();
+  return nullptr;
 }
 
 ParsedType Sema::getDestructorType(const DeclSpec& DS, ParsedType ObjectType) {
     if (DS.getTypeSpecType() == DeclSpec::TST_error || !ObjectType)
-      return ParsedType();
+      return nullptr;
     assert(DS.getTypeSpecType() == DeclSpec::TST_decltype 
            && "only get destructor types from declspecs");
     QualType T = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
@@ -336,7 +336,7 @@ ParsedType Sema::getDestructorType(const DeclSpec& DS, ParsedType ObjectType) {
       
     Diag(DS.getTypeSpecTypeLoc(), diag::err_destructor_expr_type_mismatch)
       << T << SearchType;
-    return ParsedType();
+    return nullptr;
 }
 
 bool Sema::checkLiteralOperatorId(const CXXScopeSpec &SS,
@@ -5765,7 +5765,7 @@ ExprResult Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base,
     MayBePseudoDestructor = true;
     return Base;
   } else if (!BaseType->isRecordType()) {
-    ObjectType = ParsedType();
+    ObjectType = nullptr;
     MayBePseudoDestructor = true;
     return Base;
   }

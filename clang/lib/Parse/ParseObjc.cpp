@@ -334,16 +334,11 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
 
     // Type arguments for the superclass or protocol conformances.
     if (Tok.is(tok::less)) {
-      parseObjCTypeArgsOrProtocolQualifiers(ParsedType(),
-                                            typeArgsLAngleLoc,
-                                            typeArgs,
-                                            typeArgsRAngleLoc,
-                                            LAngleLoc,
-                                            protocols,
-                                            protocolLocs,
-                                            EndProtoLoc,
-                                            /*consumeLastToken=*/true,
-                                            /*warnOnIncompleteProtocols=*/true);
+      parseObjCTypeArgsOrProtocolQualifiers(
+          nullptr, typeArgsLAngleLoc, typeArgs, typeArgsRAngleLoc, LAngleLoc,
+          protocols, protocolLocs, EndProtoLoc,
+          /*consumeLastToken=*/true,
+          /*warnOnIncompleteProtocols=*/true);
     }
   }
   
@@ -459,14 +454,8 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
     unsigned index = 0;
     for (const auto &pair : protocolIdents) {
       DeclResult typeParam = Actions.actOnObjCTypeParam(
-                               getCurScope(),
-                               ObjCTypeParamVariance::Invariant,
-                               SourceLocation(),
-                               index++,
-                               pair.first,
-                               pair.second,
-                               SourceLocation(),
-                               ParsedType());
+          getCurScope(), ObjCTypeParamVariance::Invariant, SourceLocation(),
+          index++, pair.first, pair.second, SourceLocation(), nullptr);
       if (typeParam.isUsable())
         typeParams.push_back(typeParam.get());
     }
@@ -542,16 +531,9 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
     }
 
     // Create the type parameter.
-    DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
-                                                      variance,
-                                                      varianceLoc,
-                                                      typeParams.size(),
-                                                      paramName,
-                                                      paramLoc,
-                                                      colonLoc,
-                                                      boundType.isUsable()
-                                                        ? boundType.get()
-                                                        : ParsedType());
+    DeclResult typeParam = Actions.actOnObjCTypeParam(
+        getCurScope(), variance, varianceLoc, typeParams.size(), paramName,
+        paramLoc, colonLoc, boundType.isUsable() ? boundType.get() : nullptr);
     if (typeParam.isUsable())
       typeParams.push_back(typeParam.get());
   } while (TryConsumeToken(tok::comma));
@@ -1361,8 +1343,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   ParsingDeclRAIIObject PD(*this, ParsingDeclRAIIObject::NoParent);
 
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteObjCMethodDecl(getCurScope(), mType == tok::minus, 
-                                       /*ReturnType=*/ ParsedType());
+    Actions.CodeCompleteObjCMethodDecl(getCurScope(), mType == tok::minus,
+                                       /*ReturnType=*/nullptr);
     cutOffParsing();
     return nullptr;
   }
@@ -1432,7 +1414,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     if (ExpectAndConsume(tok::colon))
       break;
 
-    ArgInfo.Type = ParsedType();
+    ArgInfo.Type = nullptr;
     if (Tok.is(tok::l_paren)) // Parse the argument type if present.
       ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec,
                                        Declarator::ObjCParameterContext,
@@ -2977,8 +2959,8 @@ ExprResult Parser::ParseObjCMessageExpression() {
     // get in Objective-C.
     if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
         NextToken().isNot(tok::period) && getCurScope()->isInObjcMethodScope())
-      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(),
-                                            ParsedType(), nullptr);
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), nullptr,
+                                            nullptr);
 
     // Parse the receiver, which is either a type or an expression.
     bool IsExpr;
@@ -2989,9 +2971,8 @@ ExprResult Parser::ParseObjCMessageExpression() {
     }
 
     if (IsExpr)
-      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                            ParsedType(),
-                                            static_cast<Expr*>(TypeOrExpr));
+      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), nullptr,
+                                            static_cast<Expr *>(TypeOrExpr));
 
     return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
                               ParsedType::getFromOpaquePtr(TypeOrExpr),
@@ -3007,8 +2988,8 @@ ExprResult Parser::ParseObjCMessageExpression() {
                                        NextToken().is(tok::period),
                                        ReceiverType)) {
     case Sema::ObjCSuperMessage:
-      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(),
-                                            ParsedType(), nullptr);
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), nullptr,
+                                            nullptr);
 
     case Sema::ObjCClassMessage:
       if (!ReceiverType) {
@@ -3049,8 +3030,8 @@ ExprResult Parser::ParseObjCMessageExpression() {
     return Res;
   }
 
-  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                        ParsedType(), Res.get());
+  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), nullptr,
+                                        Res.get());
 }
 
 /// \brief Parse the remainder of an Objective-C message following the

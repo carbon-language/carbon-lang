@@ -1400,7 +1400,7 @@ Parser::TryAnnotateName(bool IsAddressOfOperand,
 
   CXXScopeSpec SS;
   if (getLangOpts().CPlusPlus &&
-      ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
+      ParseOptionalCXXScopeSpecifier(SS, nullptr, EnteringContext))
     return ANK_Error;
 
   if (Tok.isNot(tok::identifier) || SS.isInvalid()) {
@@ -1588,9 +1588,9 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/ParsedType(), 
-                                       /*EnteringContext=*/false,
-                                       nullptr, /*IsTypename*/ true))
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
+                                       /*EnteringContext=*/false, nullptr,
+                                       /*IsTypename*/ true))
       return true;
     if (!SS.isSet()) {
       if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id) ||
@@ -1646,7 +1646,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
 
     SourceLocation EndLoc = Tok.getLastLoc();
     Tok.setKind(tok::annot_typename);
-    setTypeAnnotation(Tok, Ty.isInvalid() ? ParsedType() : Ty.get());
+    setTypeAnnotation(Tok, Ty.isInvalid() ? nullptr : Ty.get());
     Tok.setAnnotationEndLoc(EndLoc);
     Tok.setLocation(TypenameLoc);
     PP.AnnotateCachedTokens(Tok);
@@ -1658,7 +1658,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
 
   CXXScopeSpec SS;
   if (getLangOpts().CPlusPlus)
-    if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
+    if (ParseOptionalCXXScopeSpecifier(SS, nullptr, EnteringContext))
       return true;
 
   return TryAnnotateTypeOrScopeTokenAfterScopeSpec(EnteringContext, NeedType,
@@ -1675,15 +1675,12 @@ bool Parser::TryAnnotateTypeOrScopeTokenAfterScopeSpec(bool EnteringContext,
   if (Tok.is(tok::identifier)) {
     IdentifierInfo *CorrectedII = nullptr;
     // Determine whether the identifier is a type name.
-    if (ParsedType Ty = Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                            Tok.getLocation(), getCurScope(),
-                                            &SS, false, 
-                                            NextToken().is(tok::period),
-                                            ParsedType(),
-                                            /*IsCtorOrDtorName=*/false,
-                                            /*NonTrivialTypeSourceInfo*/ true,
-                                            NeedType ? &CorrectedII
-                                                     : nullptr)) {
+    if (ParsedType Ty = Actions.getTypeName(
+            *Tok.getIdentifierInfo(), Tok.getLocation(), getCurScope(), &SS,
+            false, NextToken().is(tok::period), nullptr,
+            /*IsCtorOrDtorName=*/false,
+            /*NonTrivialTypeSourceInfo*/ true,
+            NeedType ? &CorrectedII : nullptr)) {
       // A FixIt was applied as a result of typo correction
       if (CorrectedII)
         Tok.setIdentifierInfo(CorrectedII);
@@ -1734,12 +1731,11 @@ bool Parser::TryAnnotateTypeOrScopeTokenAfterScopeSpec(bool EnteringContext,
       UnqualifiedId TemplateName;
       TemplateName.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
       bool MemberOfUnknownSpecialization;
-      if (TemplateNameKind TNK
-          = Actions.isTemplateName(getCurScope(), SS,
-                                   /*hasTemplateKeyword=*/false, TemplateName,
-                                   /*ObjectType=*/ ParsedType(),
-                                   EnteringContext,
-                                   Template, MemberOfUnknownSpecialization)) {
+      if (TemplateNameKind TNK =
+              Actions.isTemplateName(getCurScope(), SS,
+                                     /*hasTemplateKeyword=*/false, TemplateName,
+                                     /*ObjectType=*/nullptr, EnteringContext,
+                                     Template, MemberOfUnknownSpecialization)) {
         // Consume the identifier.
         ConsumeToken();
         if (AnnotateTemplateIdToken(Template, TNK, SS, SourceLocation(),
@@ -1793,7 +1789,7 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
-  if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
+  if (ParseOptionalCXXScopeSpecifier(SS, nullptr, EnteringContext))
     return true;
   if (SS.isEmpty())
     return false;
@@ -1897,7 +1893,7 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
   
   // Parse nested-name-specifier.
   if (getLangOpts().CPlusPlus)
-    ParseOptionalCXXScopeSpecifier(Result.SS, ParsedType(),
+    ParseOptionalCXXScopeSpecifier(Result.SS, nullptr,
                                    /*EnteringContext=*/false);
 
   // Check nested-name specifier.
@@ -1908,8 +1904,8 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
 
   // Parse the unqualified-id.
   SourceLocation TemplateKWLoc; // FIXME: parsed, but unused.
-  if (ParseUnqualifiedId(Result.SS, false, true, true, ParsedType(),
-                         TemplateKWLoc, Result.Name)) {
+  if (ParseUnqualifiedId(Result.SS, false, true, true, nullptr, TemplateKWLoc,
+                         Result.Name)) {
     T.skipToEnd();
     return true;
   }
