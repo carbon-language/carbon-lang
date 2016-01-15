@@ -1,3 +1,7 @@
+
+# All test suites added here should be excuded from check-all
+set(EXCLUDE_FROM_ALL On)
+
 if (CMAKE_CFG_INTDIR STREQUAL ".")
   set(LLVM_BUILD_MODE ".")
 else ()
