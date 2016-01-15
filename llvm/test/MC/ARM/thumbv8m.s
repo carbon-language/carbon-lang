@@ -163,6 +163,42 @@ vlldm r5
 // CHECK-MAINLINE: vlstm r10         @ encoding: [0x2a,0xec,0x00,0x0a]
 vlstm r10
 
+// New SYSm's
+
+MRS r1, MSP_NS
+// CHECK: mrs r1, msp_ns             @ encoding: [0xef,0xf3,0x88,0x81]
+MSR PSP_NS, r2
+// CHECK: msr psp_ns, r2             @ encoding: [0x82,0xf3,0x89,0x88]
+MRS r3, PRIMASK_NS
+// CHECK: mrs r3, primask_ns         @ encoding: [0xef,0xf3,0x90,0x83]
+MSR CONTROL_NS, r4
+// CHECK: msr control_ns, r4         @ encoding: [0x84,0xf3,0x94,0x88]
+MRS r5, SP_NS
+// CHECK: mrs r5, sp_ns              @ encoding: [0xef,0xf3,0x98,0x85]
+MRS r6,MSPLIM
+// CHECK: mrs r6, msplim             @ encoding: [0xef,0xf3,0x0a,0x86]
+MRS r7,PSPLIM
+// CHECK: mrs r7, psplim             @ encoding: [0xef,0xf3,0x0b,0x87]
+MSR MSPLIM,r8
+// CHECK: msr msplim, r8             @ encoding: [0x88,0xf3,0x0a,0x88]
+MSR PSPLIM,r9
+// CHECK: msr psplim, r9             @ encoding: [0x89,0xf3,0x0b,0x88]
+
+MRS r10, MSPLIM_NS
+// CHECK-MAINLINE: mrs r10, msplim_ns    @ encoding: [0xef,0xf3,0x8a,0x8a]
+// UNDEF-BASELINE: error: invalid operand for instruction
+MSR PSPLIM_NS, r11
+// CHECK-MAINLINE: msr psplim_ns, r11    @ encoding: [0x8b,0xf3,0x8b,0x88]
+// UNDEF-BASELINE: error: invalid operand for instruction
+MRS r12, BASEPRI_NS
+// CHECK-MAINLINE: mrs r12, basepri_ns   @ encoding: [0xef,0xf3,0x91,0x8c]
+// UNDEF-BASELINE: error: invalid operand for instruction
+MRS r12, BASEPRI_MAX_NS
+// CHECK-MAINLINE: mrs r12, basepri_max_ns @ encoding: [0xef,0xf3,0x92,0x8c]
+// UNDEF-BASELINE: error: invalid operand for instruction
+MSR FAULTMASK_NS, r14
+// CHECK-MAINLINE: msr faultmask_ns, lr  @ encoding: [0x8e,0xf3,0x93,0x88]
+// UNDEF-BASELINE: error: invalid operand for instruction
 
 // Invalid operand tests
 // UNDEF: error: invalid operand for instruction
