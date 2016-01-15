@@ -687,7 +687,7 @@ class TemplateDiff {
 
     /// SetDefault - Sets FromDefault and ToDefault flags of the current node.
     void SetDefault(bool FromDefault, bool ToDefault) {
-      assert(!FromDefault || !ToDefault && "Both arguments cannot be default.");
+      assert((!FromDefault || !ToDefault) && "Both arguments cannot be default.");
       FlatTree[CurrentNode].FromArgInfo.IsDefault = FromDefault;
       FlatTree[CurrentNode].ToArgInfo.IsDefault = ToDefault;
     }
