@@ -2222,6 +2222,11 @@ void OMPClauseEnqueue::VisitOMPDependClause(const OMPDependClause *C) {
 void OMPClauseEnqueue::VisitOMPMapClause(const OMPMapClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseEnqueue::VisitOMPDistScheduleClause(
+    const OMPDistScheduleClause *C) {
+  Visitor->AddStmt(C->getChunkSize());
+  Visitor->AddStmt(C->getHelperChunkSize());
+}
 }
 
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {

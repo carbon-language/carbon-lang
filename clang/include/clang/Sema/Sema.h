@@ -8192,6 +8192,11 @@ public:
   OMPClause *ActOnOpenMPPriorityClause(Expr *Priority, SourceLocation StartLoc,
                                        SourceLocation LParenLoc,
                                        SourceLocation EndLoc);
+  /// \brief Called on well-formed 'dist_schedule' clause.
+  OMPClause *ActOnOpenMPDistScheduleClause(
+      OpenMPDistScheduleClauseKind Kind, Expr *ChunkSize,
+      SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation KindLoc,
+      SourceLocation CommaLoc, SourceLocation EndLoc);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {
