@@ -511,7 +511,10 @@ class TemplateDiff {
       /// Integer difference
       Integer,
       /// Declaration difference, nullptr arguments are included here
-      Declaration
+      Declaration,
+      /// One argument being integer and the other being declaration
+      FromIntegerAndToDeclaration,
+      FromDeclarationAndToInteger
     };
 
   private:
@@ -648,6 +651,40 @@ class TemplateDiff {
       SetDefault(FromDefault, ToDefault);
     }
 
+    void SetFromDeclarationAndToIntegerDiff(
+        ValueDecl *FromValueDecl, bool FromAddressOf, bool FromNullPtr,
+        Expr *FromExpr, llvm::APSInt ToInt, bool IsValidToInt,
+        QualType ToIntType, Expr *ToExpr, bool FromDefault, bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = FromDeclarationAndToInteger;
+      FlatTree[CurrentNode].FromArgInfo.VD = FromValueDecl;
+      FlatTree[CurrentNode].FromArgInfo.NeedAddressOf = FromAddressOf;
+      FlatTree[CurrentNode].FromArgInfo.IsNullPtr = FromNullPtr;
+      FlatTree[CurrentNode].FromArgInfo.ArgExpr = FromExpr;
+      FlatTree[CurrentNode].ToArgInfo.Val = ToInt;
+      FlatTree[CurrentNode].ToArgInfo.IsValidInt = IsValidToInt;
+      FlatTree[CurrentNode].ToArgInfo.ArgType = ToIntType;
+      FlatTree[CurrentNode].ToArgInfo.ArgExpr = ToExpr;
+      SetDefault(FromDefault, ToDefault);
+    }
+
+    void SetFromIntegerAndToDeclarationDiff(
+        llvm::APSInt FromInt, bool IsValidFromInt, QualType FromIntType,
+        Expr *FromExpr, ValueDecl *ToValueDecl, bool ToAddressOf,
+        bool ToNullPtr, Expr *ToExpr, bool FromDefault, bool ToDefault) {
+      assert(FlatTree[CurrentNode].Kind == Invalid && "Node is not empty.");
+      FlatTree[CurrentNode].Kind = FromIntegerAndToDeclaration;
+      FlatTree[CurrentNode].FromArgInfo.Val = FromInt;
+      FlatTree[CurrentNode].FromArgInfo.IsValidInt = IsValidFromInt;
+      FlatTree[CurrentNode].FromArgInfo.ArgType = FromIntType;
+      FlatTree[CurrentNode].FromArgInfo.ArgExpr = FromExpr;
+      FlatTree[CurrentNode].ToArgInfo.VD = ToValueDecl;
+      FlatTree[CurrentNode].ToArgInfo.NeedAddressOf = ToAddressOf;
+      FlatTree[CurrentNode].ToArgInfo.IsNullPtr = ToNullPtr;
+      FlatTree[CurrentNode].ToArgInfo.ArgExpr = ToExpr;
+      SetDefault(FromDefault, ToDefault);
+    }
+
     /// SetDefault - Sets FromDefault and ToDefault flags of the current node.
     void SetDefault(bool FromDefault, bool ToDefault) {
       assert(!FromDefault || !ToDefault && "Both arguments cannot be default.");
@@ -758,6 +795,38 @@ class TemplateDiff {
       FromNullPtr = FlatTree[ReadNode].FromArgInfo.IsNullPtr;
       ToNullPtr = FlatTree[ReadNode].ToArgInfo.IsNullPtr;
       FromExpr = FlatTree[ReadNode].FromArgInfo.ArgExpr;
+      ToExpr = FlatTree[ReadNode].ToArgInfo.ArgExpr;
+    }
+
+    void GetFromDeclarationAndToIntegerDiff(
+        ValueDecl *&FromValueDecl, bool &FromAddressOf, bool &FromNullPtr,
+        Expr *&FromExpr, llvm::APSInt &ToInt, bool &IsValidToInt,
+        QualType &ToIntType, Expr *&ToExpr) {
+      assert(FlatTree[ReadNode].Kind == FromDeclarationAndToInteger &&
+             "Unexpected kind.");
+      FromValueDecl = FlatTree[ReadNode].FromArgInfo.VD;
+      FromAddressOf = FlatTree[ReadNode].FromArgInfo.NeedAddressOf;
+      FromNullPtr = FlatTree[ReadNode].FromArgInfo.IsNullPtr;
+      FromExpr = FlatTree[ReadNode].FromArgInfo.ArgExpr;
+      ToInt = FlatTree[ReadNode].ToArgInfo.Val;
+      IsValidToInt = FlatTree[ReadNode].ToArgInfo.IsValidInt;
+      ToIntType = FlatTree[ReadNode].ToArgInfo.ArgType;
+      ToExpr = FlatTree[ReadNode].ToArgInfo.ArgExpr;
+    }
+
+    void GetFromIntegerAndToDeclarationDiff(
+        llvm::APSInt &FromInt, bool &IsValidFromInt, QualType &FromIntType,
+        Expr *&FromExpr, ValueDecl *&ToValueDecl, bool &ToAddressOf,
+        bool &ToNullPtr, Expr *&ToExpr) {
+      assert(FlatTree[ReadNode].Kind == FromIntegerAndToDeclaration &&
+             "Unexpected kind.");
+      FromInt = FlatTree[ReadNode].FromArgInfo.Val;
+      IsValidFromInt = FlatTree[ReadNode].FromArgInfo.IsValidInt;
+      FromIntType = FlatTree[ReadNode].FromArgInfo.ArgType;
+      FromExpr = FlatTree[ReadNode].FromArgInfo.ArgExpr;
+      ToValueDecl = FlatTree[ReadNode].ToArgInfo.VD;
+      ToAddressOf = FlatTree[ReadNode].ToArgInfo.NeedAddressOf;
+      ToNullPtr = FlatTree[ReadNode].ToArgInfo.IsNullPtr;
       ToExpr = FlatTree[ReadNode].ToArgInfo.ArgExpr;
     }
 
@@ -1139,17 +1208,30 @@ class TemplateDiff {
                                    HasToInt, ToIntType, ToNullPtr, ToExpr,
                                    ToValueDecl, NeedToAddressOf);
 
-    bool FromDeclaration = FromValueDecl || FromNullPtr;
-    bool ToDeclaration = ToValueDecl || ToNullPtr;
-
-    assert(((!HasFromInt && !HasToInt) ||
-            (!FromDeclaration && !ToDeclaration)) &&
-           "Template argument cannot be both integer and declaration");
-
     bool FromDefault = FromIter.isEnd() &&
                        (FromExpr || FromValueDecl || HasFromInt || FromNullPtr);
     bool ToDefault = ToIter.isEnd() &&
                      (ToExpr || ToValueDecl || HasToInt || ToNullPtr);
+
+    bool FromDeclaration = FromValueDecl || FromNullPtr;
+    bool ToDeclaration = ToValueDecl || ToNullPtr;
+
+    if (FromDeclaration && HasToInt) {
+      Tree.SetFromDeclarationAndToIntegerDiff(
+          FromValueDecl, NeedFromAddressOf, FromNullPtr, FromExpr, ToInt,
+          HasToInt, ToIntType, ToExpr, FromDefault, ToDefault);
+      Tree.SetSame(false);
+      return;
+
+    }
+
+    if (HasFromInt && ToDeclaration) {
+      Tree.SetFromIntegerAndToDeclarationDiff(
+          FromInt, HasFromInt, FromIntType, FromExpr, ToValueDecl,
+          NeedToAddressOf, ToNullPtr, ToExpr, FromDefault, ToDefault);
+      Tree.SetSame(false);
+      return;
+    }
 
     if (HasFromInt || HasToInt) {
       Tree.SetIntegerDiff(FromInt, ToInt, HasFromInt, HasToInt, FromIntType,
@@ -1381,6 +1463,42 @@ class TemplateDiff {
         PrintValueDecl(FromValueDecl, ToValueDecl, FromAddressOf, ToAddressOf,
                        FromNullPtr, ToNullPtr, FromExpr, ToExpr,
                        Tree.FromDefault(), Tree.ToDefault(), Tree.NodeIsSame());
+        return;
+      }
+      case DiffTree::FromDeclarationAndToInteger: {
+        ValueDecl *FromValueDecl;
+        bool FromAddressOf;
+        bool FromNullPtr;
+        Expr *FromExpr;
+        llvm::APSInt ToInt;
+        bool IsValidToInt;
+        QualType ToIntType;
+        Expr *ToExpr;
+        Tree.GetFromDeclarationAndToIntegerDiff(
+            FromValueDecl, FromAddressOf, FromNullPtr, FromExpr, ToInt,
+            IsValidToInt, ToIntType, ToExpr);
+        assert((FromValueDecl || FromNullPtr) && IsValidToInt);
+        PrintValueDeclAndInteger(FromValueDecl, FromAddressOf, FromNullPtr,
+                                 FromExpr, Tree.FromDefault(), ToInt, ToIntType,
+                                 ToExpr, Tree.ToDefault());
+        return;
+      }
+      case DiffTree::FromIntegerAndToDeclaration: {
+        llvm::APSInt FromInt;
+        bool IsValidFromInt;
+        QualType FromIntType;
+        Expr *FromExpr;
+        ValueDecl *ToValueDecl;
+        bool ToAddressOf;
+        bool ToNullPtr;
+        Expr *ToExpr;
+        Tree.GetFromIntegerAndToDeclarationDiff(
+            FromInt, IsValidFromInt, FromIntType, FromExpr, ToValueDecl,
+            ToAddressOf, ToNullPtr, ToExpr);
+        assert(IsValidFromInt && (ToValueDecl || ToNullPtr));
+        PrintIntegerAndValueDecl(FromInt, FromIntType, FromExpr,
+                                 Tree.FromDefault(), ToValueDecl, ToAddressOf,
+                                 ToNullPtr, ToExpr, Tree.ToDefault());
         return;
       }
       case DiffTree::Template: {
@@ -1713,6 +1831,48 @@ class TemplateDiff {
       OS << ']';
     }
 
+  }
+
+  /// PrintValueDeclAndInteger - Uses the print functions for ValueDecl and
+  /// APSInt to print a mixed difference.
+  void PrintValueDeclAndInteger(ValueDecl *VD, bool NeedAddressOf,
+                                bool IsNullPtr, Expr *VDExpr, bool DefaultDecl,
+                                llvm::APSInt Val, QualType IntType,
+                                Expr *IntExpr, bool DefaultInt) {
+    if (!PrintTree) {
+      OS << (DefaultDecl ? "(default) " : "");
+      Bold();
+      PrintValueDecl(VD, NeedAddressOf, VDExpr, IsNullPtr);
+      Unbold();
+    } else {
+      OS << (DefaultDecl ? "[(default) " : "[");
+      Bold();
+      PrintValueDecl(VD, NeedAddressOf, VDExpr, IsNullPtr);
+      Unbold();
+      OS << " != " << (DefaultInt ? "(default) " : "");
+      PrintAPSInt(Val, IntExpr, true /*Valid*/, IntType, false /*PrintType*/);
+      OS << ']';
+    }
+  }
+
+  /// PrintIntegerAndValueDecl - Uses the print functions for APSInt and
+  /// ValueDecl to print a mixed difference.
+  void PrintIntegerAndValueDecl(llvm::APSInt Val, QualType IntType,
+                                Expr *IntExpr, bool DefaultInt, ValueDecl *VD,
+                                bool NeedAddressOf, bool IsNullPtr,
+                                Expr *VDExpr, bool DefaultDecl) {
+    if (!PrintTree) {
+      OS << (DefaultInt ? "(default) " : "");
+      PrintAPSInt(Val, IntExpr, true /*Valid*/, IntType, false /*PrintType*/);
+    } else {
+      OS << (DefaultInt ? "[(default) " : "[");
+      PrintAPSInt(Val, IntExpr, true /*Valid*/, IntType, false /*PrintType*/);
+      OS << " != " << (DefaultDecl ? "(default) " : "");
+      Bold();
+      PrintValueDecl(VD, NeedAddressOf, VDExpr, IsNullPtr);
+      Unbold();
+      OS << ']';
+    }
   }
 
   // Prints the appropriate placeholder for elided template arguments.

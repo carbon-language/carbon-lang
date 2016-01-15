@@ -1287,6 +1287,89 @@ void foo() {
 // CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<signed char, (signed char) 1>' to 'A<bool, (bool) true>'
 }
 
+namespace MixedDeclarationIntegerArgument {
+template<typename T, T n> class A{};
+int x;
+int y[5];
+
+A<int, 5> a1 = A<int&, x>();
+A<int, 5 - 1> a2 = A<int*, &x>();
+A<int, 5 + 1> a3 = A<int*, y>();
+A<int, 0> a4 = A<int**, nullptr>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int &, x>' to 'A<int, 5>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int *, &x>' to 'A<int, 5 - 1 aka 4>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int *, y>' to 'A<int, 5 + 1 aka 6>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int **, nullptr>' to 'A<int, 0>'
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int & != int],
+// CHECK-ELIDE-TREE:     [x != 5]>
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int * != int],
+// CHECK-ELIDE-TREE:     [&x != 5 - 1 aka 4]>
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int * != int],
+// CHECK-ELIDE-TREE:     [y != 5 + 1 aka 6]>
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int ** != int],
+// CHECK-ELIDE-TREE:     [nullptr != 0]>
+
+A<int&, x> a5 = A<int, 3>();
+A<int*, &x> a6 = A<int, 3 - 1>();
+A<int*, y> a7 = A<int, 3 + 1>();
+A<int**, nullptr> a8 = A<int, 3>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int, 3>' to 'A<int &, x>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int, 3 - 1 aka 2>' to 'A<int *, &x>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int, 3 + 1 aka 4>' to 'A<int *, y>'
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'A<int, 3>' to 'A<int **, nullptr>'
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int != int &],
+// CHECK-ELIDE-TREE:     [3 != x]>
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int != int *],
+// CHECK-ELIDE-TREE:     [3 - 1 aka 2 != &x]>
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int != int *],
+// CHECK-ELIDE-TREE:     [3 + 1 aka 4 != y]>
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   A<
+// CHECK-ELIDE-TREE:     [int != int **],
+// CHECK-ELIDE-TREE:     [3 != nullptr]>
+
+template<class T, T n = x> class B{} ;
+B<int, 5> b1 = B<int&>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'B<int &, (default) x>' to 'B<int, 5>'
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   B<
+// CHECK-ELIDE-TREE:     [int & != int],
+// CHECK-ELIDE-TREE:     [(default) x != 5]>
+
+B<int &> b2 = B<int, 2>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'B<int, 2>' to 'B<int &, (default) x>'
+// CHECK-ELIDE-TREE:   B<
+// CHECK-ELIDE-TREE:     [int != int &],
+// CHECK-ELIDE-TREE:     [2 != (default) x]>
+
+template<class T, T n = 11> class C {};
+C<int> c1 = C<int&, x>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'C<int &, x>' to 'C<int, (default) 11>'
+// CHECK-ELIDE-TREE: error: no viable conversion
+// CHECK-ELIDE-TREE:   C<
+// CHECK-ELIDE-TREE:     [int & != int],
+// CHECK-ELIDE-TREE:     [x != (default) 11]>
+
+C<int &, x> c2 = C<int>();
+// CHECK-ELIDE-NOTREE: error: no viable conversion from 'C<int, (default) 11>' to 'C<int &, x>'
+// CHECK-ELIDE-TREE:   C<
+// CHECK-ELIDE-TREE:     [int != int &],
+// CHECK-ELIDE-TREE:     [(default) 11 != x]>
+}
 
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
