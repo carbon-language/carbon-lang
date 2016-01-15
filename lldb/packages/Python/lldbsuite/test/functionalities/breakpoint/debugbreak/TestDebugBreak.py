@@ -26,13 +26,14 @@ class DebugBreakTestCase(TestBase):
 
         # We've hit the first stop, so grab the frame.
         self.assertEqual(process.GetState(), lldb.eStateStopped)
-        thread = process.GetThreadAtIndex(0)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonException)
+        self.assertIsNotNone(thread, "Unable to find thread stopped at the __debugbreak()")
         frame = thread.GetFrameAtIndex(0)
 
         # We should be in funciton 'bar'.
         self.assertTrue(frame.IsValid())
         function_name = frame.GetFunctionName()
-        self.assertTrue('bar' in function_name)
+        self.assertTrue('bar' in function_name, "Unexpected function name {}".format(function_name))
 
         # We should be able to evaluate the parameter foo.
         value = frame.EvaluateExpression('*foo')
