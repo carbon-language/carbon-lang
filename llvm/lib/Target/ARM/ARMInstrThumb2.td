@@ -1414,7 +1414,7 @@ def t2LDRSHT : T2IldT<1, 0b01, "ldrsht", IIC_iLoad_bh_i>;
 class T2Ildacq<bits<4> bits23_20, bits<2> bit54, dag oops, dag iops,
                string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary,
-            opc, asm, "", pattern>, Requires<[IsThumb, HasV8]> {
+            opc, asm, "", pattern>, Requires<[IsThumb, HasAcquireRelease]> {
   bits<4> Rt;
   bits<4> addr;
 
@@ -1586,7 +1586,7 @@ def t2STRD_POST : T2Ii8s4post<0, 1, 0, (outs GPR:$wb),
 class T2Istrrel<bits<2> bit54, dag oops, dag iops,
                 string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary, opc,
-            asm, "", pattern>, Requires<[IsThumb, HasV8]> {
+            asm, "", pattern>, Requires<[IsThumb, HasAcquireRelease]> {
   bits<4> Rt;
   bits<4> addr;
 
@@ -3320,17 +3320,17 @@ def t2LDAEXB : T2I_ldrex<0b1100, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldaexb", "\t$Rt, $addr", "",
                          [(set rGPR:$Rt, (ldaex_1 addr_offset_none:$addr))]>,
-               Requires<[IsThumb, HasV8]>;
+               Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]>;
 def t2LDAEXH : T2I_ldrex<0b1101, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldaexh", "\t$Rt, $addr", "",
                          [(set rGPR:$Rt, (ldaex_2 addr_offset_none:$addr))]>,
-               Requires<[IsThumb, HasV8]>;
+               Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]>;
 def t2LDAEX  : Thumb2I<(outs rGPR:$Rt), (ins addr_offset_none:$addr),
                        AddrModeNone, 4, NoItinerary,
                        "ldaex", "\t$Rt, $addr", "",
                          [(set rGPR:$Rt, (ldaex_4 addr_offset_none:$addr))]>,
-               Requires<[IsThumb, HasV8]> {
+               Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]> {
   bits<4> Rt;
   bits<4> addr;
   let Inst{31-27} = 0b11101;
@@ -3345,7 +3345,8 @@ def t2LDAEXD : T2I_ldrex<0b1111, (outs rGPR:$Rt, rGPR:$Rt2),
                          (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldaexd", "\t$Rt, $Rt2, $addr", "",
-                         [], {?, ?, ?, ?}>, Requires<[IsThumb, HasV8]> {
+                         [], {?, ?, ?, ?}>, Requires<[IsThumb,
+                         HasAcquireRelease, HasV7Clrex, IsNotMClass]> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 
@@ -3399,7 +3400,8 @@ def t2STLEXB : T2I_strex<0b1100, (outs rGPR:$Rd),
                          "stlexb", "\t$Rd, $Rt, $addr", "",
                          [(set rGPR:$Rd,
                                (stlex_1 rGPR:$Rt, addr_offset_none:$addr))]>,
-                         Requires<[IsThumb, HasV8]>;
+                         Requires<[IsThumb, HasAcquireRelease,
+                                   HasV7Clrex]>;
 
 def t2STLEXH : T2I_strex<0b1101, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, addr_offset_none:$addr),
@@ -3407,7 +3409,8 @@ def t2STLEXH : T2I_strex<0b1101, (outs rGPR:$Rd),
                          "stlexh", "\t$Rd, $Rt, $addr", "",
                          [(set rGPR:$Rd,
                                (stlex_2 rGPR:$Rt, addr_offset_none:$addr))]>,
-                         Requires<[IsThumb, HasV8]>;
+                         Requires<[IsThumb, HasAcquireRelease,
+                                   HasV7Clrex]>;
 
 def t2STLEX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt,
                              addr_offset_none:$addr),
@@ -3415,7 +3418,7 @@ def t2STLEX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt,
                   "stlex", "\t$Rd, $Rt, $addr", "",
                   [(set rGPR:$Rd,
                         (stlex_4 rGPR:$Rt, addr_offset_none:$addr))]>,
-                  Requires<[IsThumb, HasV8]> {
+                  Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]> {
   bits<4> Rd;
   bits<4> Rt;
   bits<4> addr;
@@ -3431,14 +3434,15 @@ def t2STLEXD : T2I_strex<0b1111, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "stlexd", "\t$Rd, $Rt, $Rt2, $addr", "", [],
-                         {?, ?, ?, ?}>, Requires<[IsThumb, HasV8]> {
+                         {?, ?, ?, ?}>, Requires<[IsThumb, HasAcquireRelease,
+                         HasV7Clrex, IsNotMClass]> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 }
 }
 
 def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", [(int_arm_clrex)]>,
-            Requires<[IsThumb2, HasV7]>  {
+            Requires<[IsThumb, HasV7Clrex]>  {
   let Inst{31-16} = 0xf3bf;
   let Inst{15-14} = 0b10;
   let Inst{13} = 0;
@@ -3458,13 +3462,17 @@ def : T2Pat<(strex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),
             (t2STREXH GPR:$Rt, addr_offset_none:$addr)>;
 
 def : T2Pat<(and (ldaex_1 addr_offset_none:$addr), 0xff),
-            (t2LDAEXB addr_offset_none:$addr)>;
+            (t2LDAEXB addr_offset_none:$addr)>,
+            Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]>;
 def : T2Pat<(and (ldaex_2 addr_offset_none:$addr), 0xffff),
-            (t2LDAEXH addr_offset_none:$addr)>;
+            (t2LDAEXH addr_offset_none:$addr)>,
+            Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]>;
 def : T2Pat<(stlex_1 (and GPR:$Rt, 0xff), addr_offset_none:$addr),
-            (t2STLEXB GPR:$Rt, addr_offset_none:$addr)>;
+            (t2STLEXB GPR:$Rt, addr_offset_none:$addr)>,
+            Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]>;
 def : T2Pat<(stlex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),
-            (t2STLEXH GPR:$Rt, addr_offset_none:$addr)>;
+            (t2STLEXH GPR:$Rt, addr_offset_none:$addr)>,
+            Requires<[IsThumb, HasAcquireRelease, HasV7Clrex]>;
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics

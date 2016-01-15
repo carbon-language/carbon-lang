@@ -76,6 +76,11 @@ def FeatureT2XtPk : SubtargetFeature<"t2xtpk", "HasT2ExtractPack", "true",
                                  "Enable Thumb2 extract and pack instructions">;
 def FeatureDB     : SubtargetFeature<"db", "HasDataBarrier", "true",
                                    "Has data barrier (dmb / dsb) instructions">;
+def FeatureV7Clrex : SubtargetFeature<"v7clrex", "HasV7Clrex", "true",
+                                      "Has v7 clrex instruction">;
+def FeatureAcquireRelease : SubtargetFeature<"acquire-release",
+                                             "HasAcquireRelease", "true",
+                         "Has v8 acquire/release (lda/ldaex etc) instructions">;
 def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
                                          "FP compare + branch is slow">;
 def FeatureVFPOnlySP : SubtargetFeature<"fp-only-sp", "FPOnlySP", "true",
@@ -208,10 +213,11 @@ def HasV6T2Ops  : SubtargetFeature<"v6t2", "HasV6T2Ops", "true",
                                    [HasV6MOps, HasV6KOps, FeatureThumb2]>;
 def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
                                    "Support ARM v7 instructions",
-                                   [HasV6T2Ops, FeaturePerfMon]>;
+                                   [HasV6T2Ops, FeaturePerfMon,
+                                    FeatureV7Clrex]>;
 def HasV8Ops    : SubtargetFeature<"v8", "HasV8Ops", "true",
                                    "Support ARM v8 instructions",
-                                   [HasV7Ops]>;
+                                   [HasV7Ops, FeatureAcquireRelease]>;
 def HasV8_1aOps : SubtargetFeature<"v8.1a", "HasV8_1aOps", "true",
                                    "Support ARM v8.1a instructions",
                                    [HasV8Ops]>;
@@ -256,7 +262,7 @@ def ProcExynosM1 : SubtargetFeature<"exynosm1", "ARMProcFamily", "ExynosM1",
                                     "Samsung Exynos-M1 processors", []>;
 
 def ProcR4      : SubtargetFeature<"r4", "ARMProcFamily", "CortexR4",
-                                    "Cortex-R4 ARM processors", []>;
+                                   "Cortex-R4 ARM processors", []>;
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
                                    "Cortex-R5 ARM processors", []>;
 def ProcR7      : SubtargetFeature<"r7", "ARMProcFamily", "CortexR7",

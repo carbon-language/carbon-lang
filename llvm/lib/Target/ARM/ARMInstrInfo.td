@@ -251,6 +251,12 @@ def HasDSP           : Predicate<"Subtarget->hasDSP()">,
 def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
                                  AssemblerPredicate<"FeatureDB",
                                                     "data-barriers">;
+def HasV7Clrex  : Predicate<"Subtarget->hasV7Clrex()">,
+                            AssemblerPredicate<"FeatureV7Clrex",
+                                               "v7 clrex">;
+def HasAcquireRelease : Predicate<"Subtarget->hasAcquireRelease()">,
+                                  AssemblerPredicate<"FeatureAcquireRelease",
+                                                     "acquire/release">;
 def HasMP            : Predicate<"Subtarget->hasMPExtension()">,
                                  AssemblerPredicate<"FeatureMP",
                                                     "mp-extensions">;

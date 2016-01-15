@@ -155,6 +155,13 @@ protected:
   /// instructions.
   bool HasDataBarrier;
 
+  /// HasV7Clrex - True if the subtarget supports CLREX instructions
+  bool HasV7Clrex;
+
+  /// HasAcquireRelease - True if the subtarget supports v8 atomics (LDA/LDAEX etc)
+  /// instructions
+  bool HasAcquireRelease;
+
   /// Pref32BitThumb - If true, codegen would prefer 32-bit Thumb instructions
   /// over 16-bit ones.
   bool Pref32BitThumb;
@@ -343,6 +350,8 @@ public:
   bool hasDivideInARMMode() const { return HasHardwareDivideInARM; }
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool hasDataBarrier() const { return HasDataBarrier; }
+  bool hasV7Clrex() const { return HasV7Clrex; }
+  bool hasAcquireRelease() const { return HasAcquireRelease; }
   bool hasAnyDataBarrier() const {
     return HasDataBarrier || (hasV6Ops() && !isThumb());
   }
