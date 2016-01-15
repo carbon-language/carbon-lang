@@ -31,8 +31,9 @@ struct PatchItem {
 namespace llvm {
 // A wrapper class to abstract writer stream with support of bytes
 // back patching.
-struct ProfOStream {
+class ProfOStream {
 
+public:
   ProfOStream(llvm::raw_fd_ostream &FD) : IsFDOStream(true), OS(FD), LE(FD) {}
   ProfOStream(llvm::raw_string_ostream &STR)
       : IsFDOStream(false), OS(STR), LE(STR) {}
