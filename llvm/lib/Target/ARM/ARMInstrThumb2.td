@@ -1906,7 +1906,8 @@ def : t2InstAlias<"mov${p} $Rd, $imm", (t2MOVi rGPR:$Rd, t2_so_imm:$imm,
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins imm0_65535_expr:$imm), IIC_iMOVi,
                    "movw", "\t$Rd, $imm",
-                   [(set rGPR:$Rd, imm0_65535:$imm)]>, Sched<[WriteALU]> {
+                   [(set rGPR:$Rd, imm0_65535:$imm)]>, Sched<[WriteALU]>,
+                   Requires<[IsThumb, HasV8MBaseline]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0010;
@@ -1924,8 +1925,9 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins imm0_65535_expr:$imm), IIC_iMOVi,
   let DecoderMethod = "DecodeT2MOVTWInstruction";
 }
 
-def : t2InstAlias<"mov${p} $Rd, $imm",
-                  (t2MOVi16 rGPR:$Rd, imm256_65535_expr:$imm, pred:$p)>;
+def : InstAlias<"mov${p} $Rd, $imm",
+                (t2MOVi16 rGPR:$Rd, imm256_65535_expr:$imm, pred:$p)>,
+                Requires<[IsThumb, HasV8MBaseline]>;
 
 def t2MOVi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
                                 (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
@@ -1936,7 +1938,8 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd),
                     "movt", "\t$Rd, $imm",
                     [(set rGPR:$Rd,
                           (or (and rGPR:$src, 0xffff), lo16AllZero:$imm))]>,
-                          Sched<[WriteALU]> {
+                          Sched<[WriteALU]>,
+                          Requires<[IsThumb, HasV8MBaseline]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0110;
@@ -1956,7 +1959,7 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd),
 
 def t2MOVTi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
                      (ins rGPR:$src, i32imm:$addr, pclabel:$id), IIC_iMOVi, []>,
-                     Sched<[WriteALU]>;
+                     Sched<[WriteALU]>, Requires<[IsThumb, HasV8MBaseline]>;
 } // Constraints
 
 def : T2Pat<(or rGPR:$src, 0xffff0000), (t2MOVTi16 rGPR:$src, 0xffff)>;
@@ -3879,7 +3882,7 @@ let isReMaterializable = 1 in {
 def t2MOV_ga_pcrel : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
                                 IIC_iMOVix2addpc,
                           [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
-                          Requires<[IsThumb2, UseMovt]>;
+                          Requires<[IsThumb, HasV8MBaseline, UseMovt]>;
 
 }
 
@@ -3893,7 +3896,7 @@ def : T2Pat<(ARMWrapper tglobaltlsaddr:$dst),
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2MOVi32imm tglobaladdr :$dst)>,
-           Requires<[IsThumb2, UseMovt]>;
+           Requires<[IsThumb, HasV8MBaseline, UseMovt]>;
 
 def : T2Pat<(ARMWrapperJT tjumptable:$dst),
             (t2LEApcrelJT tjumptable:$dst)>;

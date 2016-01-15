@@ -350,7 +350,7 @@ bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
   // NOTE Windows on ARM needs to use mov.w/mov.t pairs to materialise 32-bit
   // immediates as it is inherently position independent, and may be out of
   // range otherwise.
-  return !NoMovt && hasV6T2Ops() &&
+  return !NoMovt && hasV8MBaselineOps() &&
          (isTargetWindows() || !MF.getFunction()->optForMinSize());
 }
 

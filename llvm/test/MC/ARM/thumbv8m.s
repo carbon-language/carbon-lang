@@ -20,3 +20,11 @@ mov.w r0, r0
 
 // CHECK: isb	sy              @ encoding: [0xbf,0xf3,0x6f,0x8f]
 isb sy
+
+// 'XO generation'
+
+// CHECK: movw r1, #65535            @ encoding: [0x4f,0xf6,0xff,0x71]
+movw r1, #0xffff
+
+// CHECK: movt r1, #65535            @ encoding: [0xcf,0xf6,0xff,0x71]
+movt r1, #0xffff
