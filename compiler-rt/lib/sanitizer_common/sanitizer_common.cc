@@ -355,9 +355,8 @@ void LoadedModule::addAddressRange(uptr beg, uptr end, bool executable) {
 }
 
 bool LoadedModule::containsAddress(uptr address) const {
-  for (Iterator iter = ranges(); iter.hasNext();) {
-    const AddressRange *r = iter.next();
-    if (r->beg <= address && address < r->end)
+  for (const AddressRange &r : ranges()) {
+    if (r.beg <= address && address < r.end)
       return true;
   }
   return false;

@@ -157,7 +157,6 @@ class Symbolizer final {
   // always synchronized.
   BlockingMutex mu_;
 
-  typedef IntrusiveList<SymbolizerTool>::Iterator Iterator;
   IntrusiveList<SymbolizerTool> tools_;
 
   explicit Symbolizer(IntrusiveList<SymbolizerTool> tools);
