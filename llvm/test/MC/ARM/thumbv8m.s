@@ -1,8 +1,8 @@
 // RUN: not llvm-mc -triple=thumbv8m.base -show-encoding < %s 2>%t \
-// RUN:   | FileCheck --check-prefix=CHECK-BASELINE --check-prefix=CHECK %s
+// RUN:   | FileCheck --check-prefix=CHECK %s
 // RUN:     FileCheck --check-prefix=UNDEF-BASELINE --check-prefix=UNDEF < %t %s
 // RUN: not llvm-mc -triple=thumbv8m.main -show-encoding < %s 2>%t \
-// RUN:   | FileCheck --check-prefix=CHECK-MAINLINE --check-prefix=CHECK %s
+// RUN:   | FileCheck --check-prefix=CHECK %s
 // RUN:     FileCheck --check-prefix=UNDEF-MAINLINE --check-prefix=UNDEF < %t %s
 
 // Simple check that baseline is v6M and mainline is v7M
@@ -123,94 +123,3 @@ stlexh r1, r2, [r3]
 
 // UNDEF: error: instruction requires: !armv*m
 stlexd r0, r1, r2, [r2]
-
-// ARMv8-M Security Extensions
-
-// CHECK: sg                         @ encoding: [0x7f,0xe9,0x7f,0xe9]
-sg
-
-// CHECK: bxns r0                    @ encoding: [0x04,0x47]
-bxns r0
-
-// CHECK: bxns lr                    @ encoding: [0x74,0x47]
-bxns lr
-
-// CHECK: blxns r0                   @ encoding: [0x84,0x47]
-blxns r0
-
-// CHECK: tt r0, r1                  @ encoding: [0x41,0xe8,0x00,0xf0]
-tt r0, r1
-
-// CHECK: tt r0, sp                  @ encoding: [0x4d,0xe8,0x00,0xf0]
-tt r0, sp
-
-// CHECK: tta r0, r1                 @ encoding: [0x41,0xe8,0x80,0xf0]
-tta r0, r1
-
-// CHECK: ttt r0, r1                 @ encoding: [0x41,0xe8,0x40,0xf0]
-ttt r0, r1
-
-// CHECK: ttat r0, r1                @ encoding: [0x41,0xe8,0xc0,0xf0]
-ttat r0, r1
-
-// 'Lazy Load/Store Multiple'
-
-// UNDEF-BASELINE: error: instruction requires: armv8m.main
-// CHECK-MAINLINE: vlldm r5          @ encoding: [0x35,0xec,0x00,0x0a]
-vlldm r5
-
-// UNDEF-BASELINE: error: instruction requires: armv8m.main
-// CHECK-MAINLINE: vlstm r10         @ encoding: [0x2a,0xec,0x00,0x0a]
-vlstm r10
-
-
-// Invalid operand tests
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     sg #0
-sg #0
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     sg r0
-sg r0
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     bxns r0, r1
-bxns r0, r1
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     blxns r0, #0
-blxns r0, #0
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     blxns label
-blxns label
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt r0, r1, r2
-tt r0, r1, r2
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt r0, [r1]
-tt r0, [r1]
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt r0, r1, #4
-tt r0, r1, #4
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt r0, #4
-tt r0, #4
-
-// Unpredictable operands
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     blxns pc
-blxns pc
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt sp, r0
-tt sp, r0
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt pc, r0
-tt pc, r0
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     tt r0, pc
-tt r0, pc
-
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     vlldm pc
-vlldm pc
-
-// UNDEF: error: invalid operand for instruction
-// UNDEF:     vlstm pc
-vlstm pc
