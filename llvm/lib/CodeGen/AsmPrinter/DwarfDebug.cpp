@@ -813,7 +813,8 @@ bool DebugLocEntry::MergeValues(const DebugLocEntry &Next) {
   if (Begin == Next.Begin) {
     auto *Expr = cast_or_null<DIExpression>(Values[0].Expression);
     auto *NextExpr = cast_or_null<DIExpression>(Next.Values[0].Expression);
-    if (Expr->isBitPiece() && NextExpr->isBitPiece()) {
+    if (Expr->isBitPiece() && NextExpr->isBitPiece() &&
+        !piecesOverlap(Expr, NextExpr)) {
       addValues(Next.Values);
       End = Next.End;
       return true;
