@@ -70,6 +70,67 @@ bool ParseOneDictionaryEntry(const std::string &Str, Unit *U);
 // were parsed succesfully.
 bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units);
 
+class MutationDispatcher {
+ public:
+  MutationDispatcher(FuzzerRandomBase &Rand);
+  ~MutationDispatcher();
+  /// Indicate that we are about to start a new sequence of mutations.
+  void StartMutationSequence();
+  /// Print the current sequence of mutations.
+  void PrintMutationSequence();
+  /// Indicate that the current sequence of mutations was successfull.
+  void RecordSuccessfulMutationSequence();
+  /// Mutates data by shuffling bytes.
+  size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by erasing a byte.
+  size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by inserting a byte.
+  size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by chanding one byte.
+  size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by chanding one bit.
+  size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize);
+
+  /// Mutates data by adding a word from the manual dictionary.
+  size_t Mutate_AddWordFromManualDictionary(uint8_t *Data, size_t Size,
+                                            size_t MaxSize);
+
+  /// Mutates data by adding a word from the temporary automatic dictionary.
+  size_t Mutate_AddWordFromTemporaryAutoDictionary(uint8_t *Data, size_t Size,
+                                                   size_t MaxSize);
+
+  /// Mutates data by adding a word from the persistent automatic dictionary.
+  size_t Mutate_AddWordFromPersistentAutoDictionary(uint8_t *Data, size_t Size,
+                                                    size_t MaxSize);
+
+  /// Tries to find an ASCII integer in Data, changes it to another ASCII int.
+  size_t Mutate_ChangeASCIIInteger(uint8_t *Data, size_t Size, size_t MaxSize);
+
+  /// CrossOver Data with some other element of the corpus.
+  size_t Mutate_CrossOver(uint8_t *Data, size_t Size, size_t MaxSize);
+
+  /// Applies one of the above mutations.
+  /// Returns the new size of data which could be up to MaxSize.
+  size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
+
+  /// Creates a cross-over of two pieces of Data, returns its size.
+  size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
+                   size_t Size2, uint8_t *Out, size_t MaxOutSize);
+
+  void AddWordToManualDictionary(const Unit &Word);
+
+  void AddWordToAutoDictionary(const Unit &Word, size_t PositionHint);
+  void ClearAutoDictionary();
+  void PrintRecommendedDictionary();
+
+  void SetCorpus(const std::vector<Unit> *Corpus);
+
+ private:
+  FuzzerRandomBase &Rand;
+  struct Impl;
+  Impl *MDImpl;
+};
+
 class Fuzzer {
  public:
   struct FuzzingOptions {
