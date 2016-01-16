@@ -911,6 +911,9 @@ std::error_code parseObjCImageInfo(const NormalizedFile &normalizedFile,
                                    " in file " + file.path() +
                                    " should have version=0");
 
+  uint32_t flags = read32(content.data() + 4, isBig);
+  file.setSwiftVersion((flags >> 8) & 0xFF);
+
   return std::error_code();
 }
 
