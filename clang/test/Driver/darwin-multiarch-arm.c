@@ -5,10 +5,10 @@
 
 // CHECK: "-cc1" "-triple" "thumbv7-apple-ios5.0.0"
 // CHECK-SAME: "-o" "[[CC_OUT1:[^"]*]]"
-// CHECK:ld" {{.*}} "-o" "[[LD_OUT1:[^"]*]]" {{.*}} "[[CC_OUT1]]"
+// CHECK:ld{{(\.exe)?}}" {{.*}} "-o" "[[LD_OUT1:[^"]*]]" {{.*}} "[[CC_OUT1]]"
 // CHECK:"-cc1" "-triple" "thumbv7s-apple-ios5.0.0"
 // CHECK-SAME: "-o" "[[CC_OUT2:[^"]*]]"
-// CHECK:ld" {{.*}} "-o" "[[LD_OUT2:[^"]*]]" {{.*}} "[[CC_OUT2]]"
+// CHECK:ld{{(\.exe)?}}" {{.*}} "-o" "[[LD_OUT2:[^"]*]]" {{.*}} "[[CC_OUT2]]"
 // CHECK:lipo"
 // CHECK-DAG: "[[LD_OUT1]]"
 // CHECK-DAG: "[[LD_OUT2]]"
