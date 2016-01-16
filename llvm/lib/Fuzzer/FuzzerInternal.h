@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <string>
+#include <string.h>
 #include <vector>
 #include <unordered_set>
 
@@ -26,6 +27,40 @@
 namespace fuzzer {
 using namespace std::chrono;
 typedef std::vector<uint8_t> Unit;
+
+// A simple POD sized array of bytes.
+template<size_t kMaxSize>
+class FixedWord {
+ public:
+
+  FixedWord() : Size(0) {}
+  FixedWord(const uint8_t *B, uint8_t S) { Set(B, S); }
+
+  void Set(const uint8_t *B, uint8_t S) {
+    assert(S <= kMaxSize);
+    memcpy(Data, B, S);
+    Size = S;
+  }
+
+  bool operator == (const FixedWord<kMaxSize> &w) const {
+    return Size == w.Size && 0 == memcmp(Data, w.Data, Size);
+  }
+
+  bool operator < (const FixedWord<kMaxSize> &w) const {
+    if (Size != w.Size) return Size < w.Size;
+    return memcmp(Data, w.Data, Size) < 0;
+  }
+
+  static size_t GetMaxSize() { return kMaxSize; }
+  const uint8_t *data() const { return Data; }
+  uint8_t size() const { return Size; }
+
+ private:
+  uint8_t Size;
+  uint8_t Data[kMaxSize];
+};
+
+typedef FixedWord<27> Word;  // 28 bytes.
 
 std::string FileToString(const std::string &Path);
 Unit FileToVector(const std::string &Path);
@@ -43,6 +78,7 @@ void PrintHexArray(const uint8_t *Data, size_t Size,
                    const char *PrintAfter = "");
 void PrintASCII(const uint8_t *Data, size_t Size, const char *PrintAfter = "");
 void PrintASCII(const Unit &U, const char *PrintAfter = "");
+void PrintASCII(const Word &W, const char *PrintAfter = "");
 std::string Hash(const Unit &U);
 void SetTimer(int Seconds);
 std::string Base64(const Unit &U);
@@ -118,9 +154,9 @@ class MutationDispatcher {
   size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
                    size_t Size2, uint8_t *Out, size_t MaxOutSize);
 
-  void AddWordToManualDictionary(const Unit &Word);
+  void AddWordToManualDictionary(const Word &W);
 
-  void AddWordToAutoDictionary(const Unit &Word, size_t PositionHint);
+  void AddWordToAutoDictionary(const Word &W, size_t PositionHint);
   void ClearAutoDictionary();
   void PrintRecommendedDictionary();
 
