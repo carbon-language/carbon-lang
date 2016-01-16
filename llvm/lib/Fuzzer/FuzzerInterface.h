@@ -23,7 +23,6 @@
 #include <string>
 
 namespace fuzzer {
-typedef std::vector<uint8_t> Unit;
 
 /// Returns an int 0. Values other than zero are reserved for future.
 typedef int (*UserCallback)(const uint8_t *Data, size_t Size);
@@ -36,6 +35,15 @@ Usage:
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   DoStuffWithData(Data, Size);
+  return 0;
+}
+
+// Optional.
+// Define this only if you need to read/modify argc/argv at startup
+// and you are using libFuzzer's main().
+// Must return 0.
+int LLVMFuzzerInitialize(int *argc, char ***argv) {
+  ReadAndMaybeModify(argc, argv);
   return 0;
 }
 

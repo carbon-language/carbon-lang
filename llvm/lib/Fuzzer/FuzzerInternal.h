@@ -25,6 +25,7 @@
 
 namespace fuzzer {
 using namespace std::chrono;
+typedef std::vector<uint8_t> Unit;
 
 std::string FileToString(const std::string &Path);
 Unit FileToVector(const std::string &Path);
