@@ -46,6 +46,8 @@ inline void OverrideCommonFlags(const CommonFlags &cf) {
   common_flags_dont_use.CopyFrom(cf);
 }
 
+void SubstituteForFlagValue(const char *s, char *out, uptr out_size);
+
 class FlagParser;
 void RegisterCommonFlags(FlagParser *parser,
                          CommonFlags *cf = &common_flags_dont_use);

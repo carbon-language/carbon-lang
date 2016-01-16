@@ -8,6 +8,8 @@ if(NOT COMPILER_RT_STANDALONE_BUILD)
   list(APPEND CFI_TEST_DEPS
     opt
     ubsan
+    stats
+    sanstats
   )
   if(COMPILER_RT_HAS_CFI)
     list(APPEND CFI_TEST_DEPS cfi)

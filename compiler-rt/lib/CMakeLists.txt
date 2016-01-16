@@ -15,6 +15,7 @@ if(COMPILER_RT_BUILD_SANITIZERS)
 
   if(COMPILER_RT_HAS_SANITIZER_COMMON)
     add_subdirectory(sanitizer_common)
+    add_subdirectory(stats)
     add_subdirectory(lsan)
     add_subdirectory(ubsan)
   endif()

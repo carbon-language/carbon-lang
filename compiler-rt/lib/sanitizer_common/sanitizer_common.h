@@ -522,6 +522,19 @@ class InternalMmapVectorNoCtor {
   void clear() { size_ = 0; }
   bool empty() const { return size() == 0; }
 
+  const T *begin() const {
+    return data();
+  }
+  T *begin() {
+    return data();
+  }
+  const T *end() const {
+    return data() + size();
+  }
+  T *end() {
+    return data() + size();
+  }
+
  private:
   void Resize(uptr new_capacity) {
     CHECK_GT(new_capacity, 0);
