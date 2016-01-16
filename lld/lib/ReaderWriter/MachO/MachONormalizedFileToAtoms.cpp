@@ -1056,6 +1056,7 @@ normalizedObjectToAtoms(MachOFile *file,
   }
 
   // Cache some attributes on the file for use later.
+  file->setFlags(normalizedFile.flags);
   file->setArch(normalizedFile.arch);
   file->setOS(normalizedFile.os);
 
