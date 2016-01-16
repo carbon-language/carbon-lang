@@ -176,7 +176,9 @@ typedef ALIGNED(1) s32 us32;
 typedef ALIGNED(1) s64 us64;
 
 #if SANITIZER_WINDOWS
+}  // namespace __sanitizer
 typedef unsigned long DWORD;  // NOLINT
+namespace __sanitizer {
 typedef DWORD thread_return_t;
 # define THREAD_CALLING_CONV __stdcall
 #else  // _WIN32
