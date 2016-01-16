@@ -5132,19 +5132,19 @@ CINDEX_LINKAGE CXEvalResult clang_Cursor_Evaluate(CXCursor C);
 /**
  * \brief Returns the kind of the evaluated result.
  */
-CXEvalResultKind clang_EvalResult_getKind(CXEvalResult E);
+CINDEX_LINKAGE CXEvalResultKind clang_EvalResult_getKind(CXEvalResult E);
 
 /**
  * \brief Returns the evaluation result as integer if the
  * kind is Int.
  */
-int clang_EvalResult_getAsInt(CXEvalResult E);
+CINDEX_LINKAGE int clang_EvalResult_getAsInt(CXEvalResult E);
 
 /**
  * \brief Returns the evaluation result as double if the
  * kind is double.
  */
-double clang_EvalResult_getAsDouble(CXEvalResult E);
+CINDEX_LINKAGE double clang_EvalResult_getAsDouble(CXEvalResult E);
 
 /**
  * \brief Returns the evaluation result as a constant string if the
@@ -5152,12 +5152,12 @@ double clang_EvalResult_getAsDouble(CXEvalResult E);
  * instead call clang_EvalResult_dispose on the CXEvalResult returned
  * by clang_Cursor_Evaluate.
  */
-const char* clang_EvalResult_getAsStr(CXEvalResult E);
+CINDEX_LINKAGE const char* clang_EvalResult_getAsStr(CXEvalResult E);
 
 /**
  * \brief Disposes the created Eval memory.
  */
-void clang_EvalResult_dispose(CXEvalResult E);
+CINDEX_LINKAGE void clang_EvalResult_dispose(CXEvalResult E);
 /**
  * @}
  */
