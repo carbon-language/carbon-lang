@@ -12477,17 +12477,13 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
 
-  // Cygwin uses emutls.
-  // FIXME: It may be EmulatedTLS-generic also for X86-Android.
-  if (Subtarget->isTargetWindowsCygwin())
+  if (DAG.getTarget().Options.EmulatedTLS)
     return LowerToTLSEmulatedModel(GA, DAG);
 
   const GlobalValue *GV = GA->getGlobal();
   auto PtrVT = getPointerTy(DAG.getDataLayout());
 
   if (Subtarget->isTargetELF()) {
-    if (DAG.getTarget().Options.EmulatedTLS)
-      return LowerToTLSEmulatedModel(GA, DAG);
     TLSModel::Model model = DAG.getTarget().getTLSModel(GV);
     switch (model) {
       case TLSModel::GeneralDynamic:
