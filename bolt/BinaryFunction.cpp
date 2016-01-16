@@ -197,6 +197,10 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
       OS << "  Exec Count : " << BBExecCount << "\n";
     }
+    if (!BBCFIState.empty()) {
+      unsigned BBIndex = BB - &*BasicBlocks.begin();
+      OS << "  CFI State : " << BBCFIState[BBIndex] << '\n';
+    }
     if (!BB->Predecessors.empty()) {
       OS << "  Predecessors: ";
       auto Sep = "";
@@ -331,13 +335,19 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                    nulls(),
                                    nulls())) {
       // Ignore this function. Skip to the next one.
+      errs() << "FLO-WARNING: unable to disassemble instruction at offset 0x"
+             << Twine::utohexstr(Offset) << " (address 0x"
+             << Twine::utohexstr(getAddress() + Offset) << ") in function "
+             << getName() << '\n';
       IsSimple = false;
       break;
     }
 
     if (MIA->isUnsupported(Instruction)) {
-      DEBUG(dbgs() << "FLO: unsupported instruction seen. Skipping function "
-                   << getName() << ".\n");
+      errs() << "FLO-WARNING: unsupported instruction seen at offset 0x"
+             << Twine::utohexstr(Offset) << " (address 0x"
+             << Twine::utohexstr(getAddress() + Offset) << ") in function "
+             << getName() << '\n';
       IsSimple = false;
       break;
     }
@@ -365,9 +375,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = Ctx->getOrCreateSymbol(getName());
           } else {
             // Possibly an old-style PIC code
-            DEBUG(dbgs() << "FLO: internal call detected at 0x"
-                         << Twine::utohexstr(AbsoluteInstrAddr)
-                         << " in function " << getName() << "\n");
+            errs() << "FLO: internal call detected at 0x"
+                   << Twine::utohexstr(AbsoluteInstrAddr)
+                   << " in function " << getName() << ". Skipping.\n";
             IsSimple = false;
           }
         }
@@ -433,11 +443,17 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Should be an indirect call or an indirect branch. Bail out on the
         // latter case.
         if (MIA->isIndirectBranch(Instruction)) {
+          DEBUG(dbgs() << "FLO-WARNING: indirect branch detected at 0x"
+                 << Twine::utohexstr(AbsoluteInstrAddr)
+                 << ". Skipping function " << getName() << ".\n");
           IsSimple = false;
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
+            errs() << "FLO-WARNING: cannot handle RIP operand at 0x"
+                   << Twine::utohexstr(AbsoluteInstrAddr)
+                   << ". Skipping function " << getName() << ".\n";
             IsSimple = false;
           }
         }
@@ -445,6 +461,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     } else {
       if (MIA->hasRIPOperand(Instruction)) {
         if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
+          errs() << "FLO-WARNING: cannot handle RIP operand at 0x"
+                 << Twine::utohexstr(AbsoluteInstrAddr)
+                 << ". Skipping function " << getName() << ".\n";
           IsSimple = false;
         }
       }
@@ -829,22 +848,32 @@ bool BinaryFunction::fixCFIState() {
           return true;
         assert(FromState < ToState);
 
+        std::vector<uint32_t> NewCFIs;
+        uint32_t NestedLevel = 0;
         for (uint32_t CurState = FromState; CurState < ToState; ++CurState) {
           MCCFIInstruction *Instr = &FrameInstructions[CurState];
-          if (Instr->getOperation() == MCCFIInstruction::OpRememberState ||
-              Instr->getOperation() == MCCFIInstruction::OpRestoreState) {
-            // TODO: If in replaying the CFI instructions to reach this state we
-            // have state stack instructions, we could still work out the logic
-            // to extract only the necessary instructions to reach this state
-            // without using the state stack. Not sure if it is worth the effort
-            // because this happens rarely.
-            errs() << "FLO-WARNING: CFI rewriter expected state " << ToState
-                   << " but found " << FromState << " instead (@ " << getName()
-                   << "). Giving up this function.\n";
-            return false;
-          }
-          InsertIt =
-              addCFIPseudo(InBB, InsertIt, Instr - &*FrameInstructions.begin());
+          if (Instr->getOperation() == MCCFIInstruction::OpRememberState)
+            ++NestedLevel;
+          if (!NestedLevel)
+            NewCFIs.push_back(CurState);
+          if (Instr->getOperation() == MCCFIInstruction::OpRestoreState)
+            --NestedLevel;
+        }
+
+        // TODO: If in replaying the CFI instructions to reach this state we
+        // have state stack instructions, we could still work out the logic
+        // to extract only the necessary instructions to reach this state
+        // without using the state stack. Not sure if it is worth the effort
+        // because this happens rarely.
+        if (NestedLevel != 0) {
+          errs() << "FLO-WARNING: CFI rewriter detected nested CFI state while "
+                 << " replaying CFI instructions for BB " << InBB->getName()
+                 << " in function " << getName() << '\n';
+          return false;
+        }
+
+        for(auto CFI : NewCFIs) {
+          InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
           ++InsertIt;
         }
 
@@ -863,66 +892,64 @@ bool BinaryFunction::fixCFIState() {
         BB->IsCold != BasicBlocksLayout[I - 1]->IsCold)
       State = 0;
 
-    // Check if state is what this BB expect it to be at its entry point
-    if (BBCFIState[BBIndex] != State) {
-      // Need to recover the correct state
-      if (BBCFIState[BBIndex] < State) {
-        // In this case, State is currently higher than what this BB expect it
-        // to be. To solve this, we need to insert a CFI instruction to remember
-        // the old state at function entry, then another CFI instruction to
-        // restore it at the entry of this BB and replay CFI instructions to
-        // reach the desired state.
-        uint32_t OldState = BBCFIState[BBIndex];
-        // Remember state at function entry point (our reference state).
-        BinaryBasicBlock::const_iterator InsertIt = EntryBB->begin();
-        while (InsertIt != EntryBB->end() && BC.MIA->isCFI(*InsertIt))
-          ++InsertIt;
-        addCFIPseudo(EntryBB, InsertIt, FrameInstructions.size());
-        FrameInstructions.emplace_back(
-            MCCFIInstruction::createRememberState(nullptr));
-        // Restore state
-        InsertIt = addCFIPseudo(BB, BB->begin(), FrameInstructions.size());
+    // We need to recover the correct state if it doesn't match expected
+    // state at BB entry point.
+    if (BBCFIState[BBIndex] < State) {
+      // In this case, State is currently higher than what this BB expect it
+      // to be. To solve this, we need to insert a CFI instruction to remember
+      // the old state at function entry, then another CFI instruction to
+      // restore it at the entry of this BB and replay CFI instructions to
+      // reach the desired state.
+      uint32_t OldState = BBCFIState[BBIndex];
+      // Remember state at function entry point (our reference state).
+      BinaryBasicBlock::const_iterator InsertIt = EntryBB->begin();
+      while (InsertIt != EntryBB->end() && BC.MIA->isCFI(*InsertIt))
         ++InsertIt;
-        FrameInstructions.emplace_back(
-            MCCFIInstruction::createRestoreState(nullptr));
-        if (!replayCFIInstrs(0, OldState, BB, InsertIt))
-          return false;
-        // Check if we messed up the stack in this process
-        int StackOffset = 0;
-        for (BinaryBasicBlock *CurBB : BasicBlocksLayout) {
-          if (CurBB == BB)
-            break;
-          for (auto &Instr : *CurBB) {
-            if (MCCFIInstruction *CFI = getCFIFor(Instr)) {
-              if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
-                ++StackOffset;
-              if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
-                --StackOffset;
-            }
+      addCFIPseudo(EntryBB, InsertIt, FrameInstructions.size());
+      FrameInstructions.emplace_back(
+          MCCFIInstruction::createRememberState(nullptr));
+      // Restore state
+      InsertIt = addCFIPseudo(BB, BB->begin(), FrameInstructions.size());
+      ++InsertIt;
+      FrameInstructions.emplace_back(
+          MCCFIInstruction::createRestoreState(nullptr));
+      if (!replayCFIInstrs(0, OldState, BB, InsertIt))
+        return false;
+      // Check if we messed up the stack in this process
+      int StackOffset = 0;
+      for (BinaryBasicBlock *CurBB : BasicBlocksLayout) {
+        if (CurBB == BB)
+          break;
+        for (auto &Instr : *CurBB) {
+          if (MCCFIInstruction *CFI = getCFIFor(Instr)) {
+            if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
+              ++StackOffset;
+            if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
+              --StackOffset;
           }
         }
-        auto Pos = BB->begin();
-        while (MCCFIInstruction *CFI = getCFIFor(*Pos++)) {
-          if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
-            ++StackOffset;
-          if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
-            --StackOffset;
-        }
-
-        if (StackOffset != 0) {
-          errs() << " FLO-WARNING: not possible to remember/recover state"
-                 << "without corrupting CFI state stack in function "
-                 << getName() << "\n";
-          return false;
-        }
-      } else {
-        // If BBCFIState[BBIndex] > State, it means we are behind in the
-        // state. Just emit all instructions to reach this state at the
-        // beginning of this BB. If this sequence of instructions involve
-        // remember state or restore state, bail out.
-        if (!replayCFIInstrs(State, BBCFIState[BBIndex], BB, BB->begin()))
-          return false;
       }
+      auto Pos = BB->begin();
+      while (MCCFIInstruction *CFI = getCFIFor(*Pos++)) {
+        if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
+          ++StackOffset;
+        if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
+          --StackOffset;
+      }
+
+      if (StackOffset != 0) {
+        errs() << " FLO-WARNING: not possible to remember/recover state"
+               << "without corrupting CFI state stack in function "
+               << getName() << "\n";
+        return false;
+      }
+    } else if (BBCFIState[BBIndex] > State) {
+      // If BBCFIState[BBIndex] > State, it means we are behind in the
+      // state. Just emit all instructions to reach this state at the
+      // beginning of this BB. If this sequence of instructions involve
+      // remember state or restore state, bail out.
+      if (!replayCFIInstrs(State, BBCFIState[BBIndex], BB, BB->begin()))
+        return false;
     }
 
     State = BBCFIState[BBIndex + 1];

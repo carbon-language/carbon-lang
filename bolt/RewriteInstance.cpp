@@ -603,8 +603,8 @@ void RewriteInstance::disassembleFunctions() {
     if (SymRefI != FileSymRefs.end()) {
       auto MaxSize = SymRefI->first - Function.getAddress();
       if (MaxSize < Function.getSize()) {
-        DEBUG(dbgs() << "FLO: symbol seen in the middle of the function "
-                     << Function.getName() << ". Skipping.\n");
+        errs() << "FLO-WARNING: symbol seen in the middle of the function "
+               << Function.getName() << ". Skipping.\n";
         Function.setSimple(false);
         continue;
       }
@@ -676,6 +676,38 @@ void RewriteInstance::disassembleFunctions() {
               "another function. We will not process this function.\n";
     Func.setSimple(false);
   }
+
+  uint64_t NumSimpleFunctions{0};
+  std::vector<BinaryFunction *> ProfiledFunctions;
+  for (auto &BFI : BinaryFunctions) {
+    if (!BFI.second.isSimple())
+      continue;
+    ++NumSimpleFunctions;
+    if (BFI.second.getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE)
+      ProfiledFunctions.push_back(&BFI.second);
+  }
+
+  errs() << "FLO-INFO: " << ProfiledFunctions.size() << " functions out of "
+         << NumSimpleFunctions
+         << " simple functions ("
+         << format("%.f",
+                   ProfiledFunctions.size() /
+                   (float) NumSimpleFunctions * 100.0)
+         << "%) have non-empty execution profile.\n";
+
+  if (ProfiledFunctions.size() > 10) {
+    errs() << "FLO-INFO: top called functions are:\n";
+    std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
+              [](BinaryFunction *A, BinaryFunction *B) {
+                return B->getExecutionCount() < A->getExecutionCount();
+              }
+    );
+    auto SFI = ProfiledFunctions.begin();
+    for(int i = 0; i < 50 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
+      errs() << "  " << (*SFI)->getName() << " : "
+             << (*SFI)->getExecutionCount() << '\n';
+    }
+  }
 }
 
 void RewriteInstance::runOptimizationPasses() {
@@ -745,13 +777,15 @@ void RewriteInstance::runOptimizationPasses() {
 
     // Update exception handling information.
     Function.updateEHRanges();
-    if (opts::PrintAll || opts::PrintEHRanges) {
+    if (opts::PrintAll || opts::PrintEHRanges)
       Function.print(errs(), "after updating EH ranges");
-    }
 
     // Fix the CFI state.
-    if (!Function.fixCFIState())
+    if (!Function.fixCFIState()) {
+      errs() << "FLO-WARNING: unable to fix CFI state for function "
+             << Function.getName() << ". Skipping.\n";
       Function.setSimple(false);
+    }
   }
 }
 
