@@ -23,6 +23,7 @@
 #include "sanitizer_common/sanitizer_tls_get_addr.h"
 #include "lsan.h"
 #include "lsan_allocator.h"
+#include "lsan_common.h"
 #include "lsan_thread.h"
 
 using namespace __lsan;
@@ -241,7 +242,15 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr,
   p.callback = callback;
   p.param = param;
   atomic_store(&p.tid, 0, memory_order_relaxed);
-  int res = REAL(pthread_create)(th, attr, __lsan_thread_start_func, &p);
+  int res;
+  {
+    // Ignore all allocations made by pthread_create: thread stack/TLS may be
+    // stored by pthread for future reuse even after thread destruction, and
+    // the linked list it's stored in doesn't even hold valid pointers to the
+    // objects, the latter are calculated by obscure pointer arithmetic.
+    ScopedInterceptorDisabler disabler;
+    res = REAL(pthread_create)(th, attr, __lsan_thread_start_func, &p);
+  }
   if (res == 0) {
     int tid = ThreadCreate(GetCurrentThread(), *(uptr *)th, detached);
     CHECK_NE(tid, 0);

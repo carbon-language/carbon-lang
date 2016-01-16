@@ -34,6 +34,14 @@ BlockingMutex global_mutex(LINKER_INITIALIZED);
 
 THREADLOCAL int disable_counter;
 bool DisabledInThisThread() { return disable_counter > 0; }
+void DisableInThisThread() { disable_counter++; }
+void EnableInThisThread() {
+  if (!disable_counter && common_flags()->detect_leaks) {
+    Report("Unmatched call to __lsan_enable().\n");
+    Die();
+  }
+  disable_counter--;
+}
 
 Flags lsan_flags;
 
@@ -695,18 +703,14 @@ void __lsan_unregister_root_region(const void *begin, uptr size) {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_disable() {
 #if CAN_SANITIZE_LEAKS
-  __lsan::disable_counter++;
+  __lsan::DisableInThisThread();
 #endif
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_enable() {
 #if CAN_SANITIZE_LEAKS
-  if (!__lsan::disable_counter && common_flags()->detect_leaks) {
-    Report("Unmatched call to __lsan_enable().\n");
-    Die();
-  }
-  __lsan::disable_counter--;
+  __lsan::EnableInThisThread();
 #endif
 }
 
