@@ -170,9 +170,6 @@ public:
   typedef ArrayRef<const CodeGenInstruction *>::const_iterator inst_iterator;
   inst_iterator inst_begin() const{return getInstructionsByEnumValue().begin();}
   inst_iterator inst_end() const { return getInstructionsByEnumValue().end(); }
-  iterator_range<inst_iterator> instructions() const {
-    return make_range(inst_begin(), inst_end());
-  }
 
 
   /// isLittleEndianEncoding - are instruction bit patterns defined as  [0..n]?
