@@ -161,13 +161,13 @@ public:
 
   /// getInstructionsByEnumValue - Return all of the instructions defined by the
   /// target, ordered by their enum value.
-  const std::vector<const CodeGenInstruction*> &
+  ArrayRef<const CodeGenInstruction *>
   getInstructionsByEnumValue() const {
     if (InstrsByEnum.empty()) ComputeInstrsByEnum();
     return InstrsByEnum;
   }
 
-  typedef std::vector<const CodeGenInstruction*>::const_iterator inst_iterator;
+  typedef ArrayRef<const CodeGenInstruction *>::const_iterator inst_iterator;
   inst_iterator inst_begin() const{return getInstructionsByEnumValue().begin();}
   inst_iterator inst_end() const { return getInstructionsByEnumValue().end(); }
   iterator_range<inst_iterator> instructions() const {
