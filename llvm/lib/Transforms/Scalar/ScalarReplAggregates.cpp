@@ -1140,8 +1140,6 @@ public:
 /// We can do this to a select if its only uses are loads and if the operand to
 /// the select can be loaded unconditionally.
 static bool isSafeSelectToSpeculate(SelectInst *SI) {
-  const DataLayout &DL = SI->getModule()->getDataLayout();
-
   for (User *U : SI->users()) {
     LoadInst *LI = dyn_cast<LoadInst>(U);
     if (!LI || !LI->isSimple()) return false;
@@ -1198,8 +1196,6 @@ static bool isSafePHIToSpeculate(PHINode *PN) {
 
     MaxAlign = std::max(MaxAlign, LI->getAlignment());
   }
-
-  const DataLayout &DL = PN->getModule()->getDataLayout();
 
   // Okay, we know that we have one or more loads in the same block as the PHI.
   // We can transform this if it is safe to push the loads into the predecessor

@@ -1169,8 +1169,6 @@ static bool isSafePHIToSpeculate(PHINode &PN) {
   if (!HaveLoad)
     return false;
 
-  const DataLayout &DL = PN.getModule()->getDataLayout();
-
   // We can only transform this if it is safe to push the loads into the
   // predecessor blocks. The only thing to watch out for is that we can't put
   // a possibly trapping load in the predecessor if it is a critical edge.
@@ -1260,7 +1258,6 @@ static void speculatePHINodeLoads(PHINode &PN) {
 static bool isSafeSelectToSpeculate(SelectInst &SI) {
   Value *TValue = SI.getTrueValue();
   Value *FValue = SI.getFalseValue();
-  const DataLayout &DL = SI.getModule()->getDataLayout();
 
   for (User *U : SI.users()) {
     LoadInst *LI = dyn_cast<LoadInst>(U);
