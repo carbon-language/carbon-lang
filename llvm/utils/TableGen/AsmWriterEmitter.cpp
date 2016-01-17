@@ -169,16 +169,14 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
 
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
-    bool FoundIt = false;
-    for (unsigned idx = 0, e = UniqueOperandCommands.size(); idx != e; ++idx)
-      if (UniqueOperandCommands[idx] == Command) {
-        InstIdxs[i] = idx;
-        InstrsForCase[idx] += ", ";
-        InstrsForCase[idx] += Inst->CGI->TheDef->getName();
-        FoundIt = true;
-        break;
-      }
-    if (!FoundIt) {
+    auto I = std::find(UniqueOperandCommands.begin(),
+                       UniqueOperandCommands.end(), Command);
+    if (I != UniqueOperandCommands.end()) {
+      size_t idx = I - UniqueOperandCommands.begin();
+      InstIdxs[i] = idx;
+      InstrsForCase[idx] += ", ";
+      InstrsForCase[idx] += Inst->CGI->TheDef->getName();
+    } else {
       InstIdxs[i] = UniqueOperandCommands.size();
       UniqueOperandCommands.push_back(std::move(Command));
       InstrsForCase.push_back(Inst->CGI->TheDef->getName());
