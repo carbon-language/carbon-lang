@@ -139,9 +139,7 @@ public:
   /// supported by the target (i.e. there are registers that directly hold it).
   bool isLegalValueType(MVT::SimpleValueType VT) const {
     ArrayRef<MVT::SimpleValueType> LegalVTs = getLegalValueTypes();
-    for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
-      if (LegalVTs[i] == VT) return true;
-    return false;
+    return std::find(LegalVTs.begin(), LegalVTs.end(), VT) != LegalVTs.end();
   }
 
   CodeGenSchedModels &getSchedModels() const;
