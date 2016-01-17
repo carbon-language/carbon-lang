@@ -50,8 +50,9 @@ std::string AsmWriterOperand::getCode(bool PassSubtarget) const {
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
-  this->CGI = &CGI;
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned CGIIndex,
+                             unsigned Variant)
+    : CGI(&CGI), CGIIndex(CGIIndex) {
 
   // NOTE: Any extensions to this code need to be mirrored in the
   // AsmPrinter::printInlineAsm code that executes as compile time (assuming
