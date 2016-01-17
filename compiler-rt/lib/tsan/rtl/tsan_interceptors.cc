@@ -289,6 +289,8 @@ ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
 }
 
 ScopedInterceptor::~ScopedInterceptor() {
+  if (!thr_->is_inited)
+    return;
   if (flags()->ignore_interceptors_accesses) ThreadIgnoreEnd(thr_, pc_);
   if (in_ignored_lib_) {
     thr_->in_ignored_lib = false;
