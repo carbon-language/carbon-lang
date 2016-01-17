@@ -880,9 +880,8 @@ bool FastISel::lowerCallTo(const CallInst *CI, MCSymbol *Symbol,
                            unsigned NumArgs) {
   ImmutableCallSite CS(CI);
 
-  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
-  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  Type *RetTy = FTy->getReturnType();
+  FunctionType *FTy = CS.getFunctionType();
+  Type *RetTy = CS.getType();
 
   ArgListTy Args;
   Args.reserve(NumArgs);
@@ -1010,9 +1009,8 @@ bool FastISel::lowerCallTo(CallLoweringInfo &CLI) {
 bool FastISel::lowerCall(const CallInst *CI) {
   ImmutableCallSite CS(CI);
 
-  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
-  FunctionType *FuncTy = cast<FunctionType>(PT->getElementType());
-  Type *RetTy = FuncTy->getReturnType();
+  FunctionType *FuncTy = CS.getFunctionType();
+  Type *RetTy = CS.getType();
 
   ArgListTy Args;
   ArgListEntry Entry;
