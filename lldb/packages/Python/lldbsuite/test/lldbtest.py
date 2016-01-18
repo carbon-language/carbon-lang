@@ -1056,24 +1056,6 @@ def skipUnlessPlatform(oslist):
     return unittest2.skipUnless(getPlatform() in oslist,
                                 "requires on of %s" % (", ".join(oslist)))
 
-def skipIfLinuxClang(func):
-    """Decorate the item to skip tests that should be skipped if building on 
-       Linux with clang.
-    """
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfLinuxClang can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        compiler = self.getCompiler()
-        platform = self.getPlatform()
-        if "clang" in compiler and platform == "linux":
-            self.skipTest("skipping because Clang is used on Linux")
-        else:
-            func(*args, **kwargs)
-    return wrapper
-
 # provide a function to skip on defined oslist, compiler version, and archs
 # if none is specified for any argument, that argument won't be checked and thus means for all
 # for example,
