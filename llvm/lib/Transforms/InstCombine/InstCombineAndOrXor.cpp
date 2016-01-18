@@ -1399,8 +1399,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     {
       Value *tmpOp0 = Op0;
       Value *tmpOp1 = Op1;
-      if (Op0->hasOneUse() &&
-          match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
+      if (match(Op0, m_OneUse(m_Xor(m_Value(A), m_Value(B))))) {
         if (A == Op1 || B == Op1 ) {
           tmpOp1 = Op0;
           tmpOp0 = Op1;
@@ -1408,8 +1407,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         }
       }
 
-      if (tmpOp1->hasOneUse() &&
-          match(tmpOp1, m_Xor(m_Value(A), m_Value(B)))) {
+      if (match(tmpOp1, m_OneUse(m_Xor(m_Value(A), m_Value(B))))) {
         if (B == tmpOp0) {
           std::swap(A, B);
         }
