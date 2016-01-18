@@ -1157,8 +1157,7 @@ class Record {
   SmallVector<SMLoc, 4> Locs;
   std::vector<Init *> TemplateArgs;
   std::vector<RecordVal> Values;
-  std::vector<Record *> SuperClasses;
-  std::vector<SMRange> SuperClassRanges;
+  std::vector<std::pair<Record *, SMRange>> SuperClasses;
 
   // Tracks Record instances. Not owned by Record.
   RecordKeeper &TrackedRecords;
@@ -1204,8 +1203,8 @@ public:
   Record(const Record &O) :
     Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
-    SuperClassRanges(O.SuperClassRanges), TrackedRecords(O.TrackedRecords),
-    ID(LastID++), IsAnonymous(O.IsAnonymous), ResolveFirst(O.ResolveFirst) { }
+    TrackedRecords(O.TrackedRecords), ID(LastID++),
+    IsAnonymous(O.IsAnonymous), ResolveFirst(O.ResolveFirst) { }
 
   static unsigned getNewUID() { return LastID++; }
 
@@ -1231,8 +1230,9 @@ public:
     return TemplateArgs;
   }
   ArrayRef<RecordVal> getValues() const { return Values; }
-  ArrayRef<Record *>  getSuperClasses() const { return SuperClasses; }
-  ArrayRef<SMRange> getSuperClassRanges() const { return SuperClassRanges; }
+  ArrayRef<std::pair<Record *, SMRange>>  getSuperClasses() const {
+    return SuperClasses;
+  }
 
   bool isTemplateArg(Init *Name) const {
     for (Init *TA : TemplateArgs)
@@ -1294,23 +1294,22 @@ public:
   }
 
   bool isSubClassOf(const Record *R) const {
-    for (const Record *SC : SuperClasses)
-      if (SC == R)
+    for (const auto &SCPair : SuperClasses)
+      if (SCPair.first == R)
         return true;
     return false;
   }
 
   bool isSubClassOf(StringRef Name) const {
-    for (const Record *SC : SuperClasses)
-      if (SC->getNameInitAsString() == Name)
+    for (const auto &SCPair : SuperClasses)
+      if (SCPair.first->getNameInitAsString() == Name)
         return true;
     return false;
   }
 
   void addSuperClass(Record *R, SMRange Range) {
     assert(!isSubClassOf(R) && "Already subclassing record!");
-    SuperClasses.push_back(R);
-    SuperClassRanges.push_back(Range);
+    SuperClasses.push_back(std::make_pair(R, Range));
   }
 
   /// resolveReferences - If there are any field references that refer to fields

@@ -167,8 +167,8 @@ bool RecordRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   if (RTy->getRecord() == Rec || Rec->isSubClassOf(RTy->getRecord()))
     return true;
 
-  for (Record *SC : RTy->getRecord()->getSuperClasses())
-    if (Rec->isSubClassOf(SC))
+  for (const auto &SCPair : RTy->getRecord()->getSuperClasses())
+    if (Rec->isSubClassOf(SCPair.first))
       return true;
 
   return false;
@@ -186,8 +186,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
   // If one is a Record type, check superclasses
   if (RecordRecTy *RecTy1 = dyn_cast<RecordRecTy>(T1)) {
     // See if T2 inherits from a type T1 also inherits from
-    for (Record *SuperRec1 : RecTy1->getRecord()->getSuperClasses()) {
-      RecordRecTy *SuperRecTy1 = RecordRecTy::get(SuperRec1);
+    for (const auto &SuperPair1 : RecTy1->getRecord()->getSuperClasses()) {
+      RecordRecTy *SuperRecTy1 = RecordRecTy::get(SuperPair1.first);
       RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
       if (NewType1)
         return NewType1;
@@ -195,8 +195,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
   }
   if (RecordRecTy *RecTy2 = dyn_cast<RecordRecTy>(T2)) {
     // See if T1 inherits from a type T2 also inherits from
-    for (Record *SuperRec2 : RecTy2->getRecord()->getSuperClasses()) {
-      RecordRecTy *SuperRecTy2 = RecordRecTy::get(SuperRec2);
+    for (const auto &SuperPair2 : RecTy2->getRecord()->getSuperClasses()) {
+      RecordRecTy *SuperRecTy2 = RecordRecTy::get(SuperPair2.first);
       RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
       if (NewType2)
         return NewType2;
@@ -1662,11 +1662,11 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
   }
 
   OS << " {";
-  ArrayRef<Record *> SC = R.getSuperClasses();
+  ArrayRef<std::pair<Record *, SMRange>> SC = R.getSuperClasses();
   if (!SC.empty()) {
     OS << "\t//";
-    for (const Record *Super : SC)
-      OS << " " << Super->getNameInitAsString();
+    for (const auto &SuperPair : SC)
+      OS << " " << SuperPair.first->getNameInitAsString();
   }
   OS << "\n";
 
