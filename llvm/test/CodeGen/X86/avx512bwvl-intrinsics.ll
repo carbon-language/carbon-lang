@@ -5107,3 +5107,59 @@ define <16 x i16>@test_int_x86_avx512_mask_permvar_hi_256(<16 x i16> %x0, <16 x 
   %res4 = add <16 x i16> %res3, %res2
   ret <16 x i16> %res4
 }
+
+declare void @llvm.x86.avx512.mask.storeu.b.128(i8*, <16 x i8>, i16)
+
+define void@test_int_x86_avx512_mask_storeu_b_128(i8* %ptr1, i8* %ptr2, <16 x i8> %x1, i16 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_storeu_b_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vmovdqu8 %xmm0, (%rdi) {%k1}
+; CHECK-NEXT:    vmovdqu8 %xmm0, (%rsi)
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.mask.storeu.b.128(i8* %ptr1, <16 x i8> %x1, i16 %x2)
+  call void @llvm.x86.avx512.mask.storeu.b.128(i8* %ptr2, <16 x i8> %x1, i16 -1)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.storeu.b.256(i8*, <32 x i8>, i32)
+
+define void@test_int_x86_avx512_mask_storeu_b_256(i8* %ptr1, i8* %ptr2, <32 x i8> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_storeu_b_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovd %edx, %k1
+; CHECK-NEXT:    vmovdqu8 %ymm0, (%rdi) {%k1}
+; CHECK-NEXT:    vmovdqu8 %ymm0, (%rsi)
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.mask.storeu.b.256(i8* %ptr1, <32 x i8> %x1, i32 %x2)
+  call void @llvm.x86.avx512.mask.storeu.b.256(i8* %ptr2, <32 x i8> %x1, i32 -1)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.storeu.w.128(i8*, <8 x i16>, i8)
+
+define void@test_int_x86_avx512_mask_storeu_w_128(i8* %ptr1, i8* %ptr2, <8 x i16> %x1, i8 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_storeu_w_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vmovdqu16 %xmm0, (%rdi) {%k1}
+; CHECK-NEXT:    vmovdqu16 %xmm0, (%rsi)
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.mask.storeu.w.128(i8* %ptr1, <8 x i16> %x1, i8 %x2)
+  call void @llvm.x86.avx512.mask.storeu.w.128(i8* %ptr2, <8 x i16> %x1, i8 -1)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.storeu.w.256(i8*, <16 x i16>, i16)
+
+define void@test_int_x86_avx512_mask_storeu_w_256(i8* %ptr1, i8* %ptr2, <16 x i16> %x1, i16 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_storeu_w_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vmovdqu16 %ymm0, (%rdi) {%k1}
+; CHECK-NEXT:    vmovdqu16 %ymm0, (%rsi)
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.mask.storeu.w.256(i8* %ptr1, <16 x i16> %x1, i16 %x2)
+  call void @llvm.x86.avx512.mask.storeu.w.256(i8* %ptr2, <16 x i16> %x1, i16 -1)
+  ret void
+}

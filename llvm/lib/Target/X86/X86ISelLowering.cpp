@@ -4227,6 +4227,14 @@ bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.writeMem = true;
     break;
   }
+  case STOREA:
+  case STOREU: {
+    Info.ptrVal = I.getArgOperand(0);
+    Info.memVT = MVT::getVT(I.getArgOperand(1)->getType());
+    Info.align = (IntrData->Type == STOREA ? Info.memVT.getSizeInBits()/8 : 1);
+    Info.writeMem = true;
+    break;
+  }
   default:
     return false;
   }
@@ -17658,6 +17666,26 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue VMask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
     return DAG.getMaskedLoad(VT, dl, Chain, Addr, VMask, PassThru, VT,
                              MemIntr->getMemOperand(), ISD::NON_EXTLOAD);
+  }
+  case STOREU:
+  case STOREA: {
+    SDValue Mask = Op.getOperand(4);
+    SDValue Data = Op.getOperand(3);
+    SDValue Addr = Op.getOperand(2);
+    SDValue Chain = Op.getOperand(0);
+
+    MemIntrinsicSDNode *MemIntr = dyn_cast<MemIntrinsicSDNode>(Op);
+    assert(MemIntr && "Expected MemIntrinsicSDNode!");
+
+    if (isAllOnesConstant(Mask)) // return just a store
+      return DAG.getStore(Chain, dl, Data, Addr, MemIntr->getMemOperand());
+
+    EVT VT  = MemIntr->getMemoryVT();
+    MVT MaskVT = MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
+    SDValue VMask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
+
+    return DAG.getMaskedStore(Chain, dl, Data, Addr, VMask, VT,
+                              MemIntr->getMemOperand(), false);
   }
   }
 }
