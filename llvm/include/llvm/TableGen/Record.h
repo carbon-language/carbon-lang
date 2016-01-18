@@ -1151,8 +1151,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const RecordVal &RV) {
 class Record {
   static unsigned LastID;
 
-  // Unique record ID.
-  unsigned ID;
   Init *Name;
   // Location where record was instantiated, followed by the location of
   // multiclass prototypes used.
@@ -1166,6 +1164,10 @@ class Record {
   RecordKeeper &TrackedRecords;
 
   std::unique_ptr<DefInit> TheInit;
+
+  // Unique record ID.
+  unsigned ID;
+
   bool IsAnonymous;
 
   // Class-instance values can be used by other defs.  For example, Struct<i>
@@ -1187,8 +1189,8 @@ public:
   // Constructs a record.
   explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records,
                   bool Anonymous = false) :
-    ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), IsAnonymous(Anonymous), ResolveFirst(false) {
+    Name(N), Locs(locs.begin(), locs.end()), TrackedRecords(records),
+    ID(LastID++), IsAnonymous(Anonymous), ResolveFirst(false) {
     init();
   }
   explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
@@ -1200,11 +1202,10 @@ public:
   // ID number.  Don't copy TheInit either since it's owned by the original
   // record. All other fields can be copied normally.
   Record(const Record &O) :
-    ID(LastID++), Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
+    Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
     SuperClassRanges(O.SuperClassRanges), TrackedRecords(O.TrackedRecords),
-    IsAnonymous(O.IsAnonymous),
-    ResolveFirst(O.ResolveFirst) { }
+    ID(LastID++), IsAnonymous(O.IsAnonymous), ResolveFirst(O.ResolveFirst) { }
 
   static unsigned getNewUID() { return LastID++; }
 
