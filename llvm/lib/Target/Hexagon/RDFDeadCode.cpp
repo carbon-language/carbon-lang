@@ -183,9 +183,9 @@ bool DeadCodeElimination::erase(const SetVector<NodeId> &Nodes) {
     if (trace())
       dbgs() << "  " << PrintNode<RefNode*>(RA, DFG) << '\n';
     if (DFG.IsUse(RA))
-      DFG.unlinkUse(RA);
+      DFG.unlinkUse(RA, true);
     else if (DFG.IsDef(RA))
-      DFG.unlinkDef(RA);
+      DFG.unlinkDef(RA, true);
   }
 
   // Now, remove all dead instruction nodes.
