@@ -2234,7 +2234,6 @@ SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                               OtherPtr->getName()+"."+Twine(i),
                                                    MI);
       uint64_t EltOffset;
-      assert(AI->getType() == OtherPtr->getType());
       Type *OtherTy = AI->getAllocatedType();
       if (StructType *ST = dyn_cast<StructType>(OtherTy)) {
         EltOffset = DL.getStructLayout(ST)->getElementOffset(i);
