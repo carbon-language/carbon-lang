@@ -2544,14 +2544,17 @@ SDValue AMDGPUTargetLowering::performShlCombine(SDNode *N,
   if (N->getValueType(0) != MVT::i64)
     return SDValue();
 
-  // i64 (shl x, 32) -> (build_pair 0, x)
+  // i64 (shl x, C) -> (build_pair 0, (shl x, C -32))
 
-  // Doing this with moves theoretically helps MI optimizations that understand
-  // copies. 2 v_mov_b32_e32 will have the same code size / cycle count as
-  // v_lshl_b64. In the SALU case, I think this is slightly worse since it
-  // doubles the code size and I'm unsure about cycle count.
+  // On some subtargets, 64-bit shift is a quarter rate instruction. In the
+  // common case, splitting this into a move and a 32-bit shift is faster and
+  // the same code size.
   const ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
-  if (!RHS || RHS->getZExtValue() != 32)
+  if (!RHS)
+    return SDValue();
+
+  unsigned RHSVal = RHS->getZExtValue();
+  if (RHSVal < 32)
     return SDValue();
 
   SDValue LHS = N->getOperand(0);
@@ -2559,12 +2562,15 @@ SDValue AMDGPUTargetLowering::performShlCombine(SDNode *N,
   SDLoc SL(N);
   SelectionDAG &DAG = DCI.DAG;
 
-  // Extract low 32-bits.
+  SDValue ShiftAmt = DAG.getConstant(RHSVal - 32, SL, MVT::i32);
+
   SDValue Lo = DAG.getNode(ISD::TRUNCATE, SL, MVT::i32, LHS);
+  SDValue NewShift = DAG.getNode(ISD::SHL, SL, MVT::i32, Lo, ShiftAmt);
 
   const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
 
-  return DAG.getNode(ISD::BUILD_PAIR, SL, MVT::i64, Zero, Lo);
+  SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32, Zero, NewShift);
+  return DAG.getNode(ISD::BITCAST, SL, MVT::i64, Vec);
 }
 
 SDValue AMDGPUTargetLowering::performSrlCombine(SDNode *N,
