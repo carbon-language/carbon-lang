@@ -274,14 +274,17 @@ BitsInit *BitsInit::get(ArrayRef<Init *> Range) {
   if (BitsInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
     return I;
 
-  BitsInit *I = new BitsInit(Range);
+  void *Mem = ::operator new (totalSizeToAlloc<Init *>(Range.size()));
+  BitsInit *I = new (Mem) BitsInit(Range.size());
+  std::uninitialized_copy(Range.begin(), Range.end(),
+                          I->getTrailingObjects<Init *>());
   ThePool.InsertNode(I, IP);
   TheActualPool.push_back(std::unique_ptr<BitsInit>(I));
   return I;
 }
 
 void BitsInit::Profile(FoldingSetNodeID &ID) const {
-  ProfileBitsInit(ID, Bits);
+  ProfileBitsInit(ID, makeArrayRef(getTrailingObjects<Init *>(), NumBits));
 }
 
 Init *BitsInit::convertInitializerTo(RecTy *Ty) const {
@@ -355,7 +358,7 @@ Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) const {
   bool CachedBitVarChanged = false;
 
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
-    Init *CurBit = Bits[i];
+    Init *CurBit = getBit(i);
     Init *CurBitVar = CurBit->getBitVar();
 
     NewBits[i] = CurBit;
@@ -486,7 +489,10 @@ ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
   if (ListInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
     return I;
 
-  ListInit *I = new ListInit(Range, EltTy);
+  void *Mem = ::operator new (totalSizeToAlloc<Init *>(Range.size()));
+  ListInit *I = new (Mem) ListInit(Range.size(), EltTy);
+  std::uninitialized_copy(Range.begin(), Range.end(),
+                          I->getTrailingObjects<Init *>());
   ThePool.InsertNode(I, IP);
   TheActualPool.push_back(std::unique_ptr<ListInit>(I));
   return I;
@@ -495,7 +501,7 @@ ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
 void ListInit::Profile(FoldingSetNodeID &ID) const {
   RecTy *EltTy = cast<ListRecTy>(getType())->getElementType();
 
-  ProfileListInit(ID, Values, EltTy);
+  ProfileListInit(ID, getValues(), EltTy);
 }
 
 Init *ListInit::convertInitializerTo(RecTy *Ty) const {
@@ -530,7 +536,7 @@ ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
 
 Record *ListInit::getElementAsRecord(unsigned i) const {
   assert(i < Values.size() && "List element index out of range!");
-  DefInit *DI = dyn_cast<DefInit>(Values[i]);
+  DefInit *DI = dyn_cast<DefInit>(getElement(i));
   if (!DI)
     PrintFatalError("Expected record in list!");
   return DI->getDef();
@@ -572,9 +578,9 @@ Init *ListInit::resolveListElementReference(Record &R, const RecordVal *IRV,
 
 std::string ListInit::getAsString() const {
   std::string Result = "[";
-  for (unsigned i = 0, e = Values.size(); i != e; ++i) {
+  for (unsigned i = 0, e = NumValues; i != e; ++i) {
     if (i) Result += ", ";
-    Result += Values[i]->getAsString();
+    Result += getElement(i)->getAsString();
   }
   return Result + "]";
 }

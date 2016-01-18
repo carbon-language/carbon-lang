@@ -22,6 +22,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SMLoc.h"
+#include "llvm/Support/TrailingObjects.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 
@@ -456,12 +457,12 @@ public:
 /// BitsInit - { a, b, c } - Represents an initializer for a BitsRecTy value.
 /// It contains a vector of bits, whose size is determined by the type.
 ///
-class BitsInit : public TypedInit, public FoldingSetNode {
-  std::vector<Init*> Bits;
+class BitsInit final : public TypedInit, public FoldingSetNode,
+                       public TrailingObjects<BitsInit, Init *> {
+  unsigned NumBits;
 
-  BitsInit(ArrayRef<Init *> Range)
-    : TypedInit(IK_BitsInit, BitsRecTy::get(Range.size())),
-      Bits(Range.begin(), Range.end()) {}
+  BitsInit(unsigned N)
+    : TypedInit(IK_BitsInit, BitsRecTy::get(N)), NumBits(N) {}
 
   BitsInit(const BitsInit &Other) = delete;
   BitsInit &operator=(const BitsInit &Other) = delete;
@@ -474,7 +475,7 @@ public:
 
   void Profile(FoldingSetNodeID &ID) const;
 
-  unsigned getNumBits() const { return Bits.size(); }
+  unsigned getNumBits() const { return NumBits; }
 
   Init *convertInitializerTo(RecTy *Ty) const override;
   Init *
@@ -503,8 +504,8 @@ public:
   Init *resolveReferences(Record &R, const RecordVal *RV) const override;
 
   Init *getBit(unsigned Bit) const override {
-    assert(Bit < Bits.size() && "Bit index out of range!");
-    return Bits[Bit];
+    assert(Bit < NumBits && "Bit index out of range!");
+    return getTrailingObjects<Init *>()[Bit];
   }
 };
 
@@ -585,16 +586,16 @@ public:
 
 /// ListInit - [AL, AH, CL] - Represent a list of defs
 ///
-class ListInit : public TypedInit, public FoldingSetNode {
-  std::vector<Init*> Values;
+class ListInit final : public TypedInit, public FoldingSetNode,
+                       public TrailingObjects<BitsInit, Init *> {
+  unsigned NumValues;
 
 public:
-  typedef std::vector<Init*>::const_iterator const_iterator;
+  typedef Init *const *const_iterator;
 
 private:
-  explicit ListInit(ArrayRef<Init *> Range, RecTy *EltTy)
-    : TypedInit(IK_ListInit, ListRecTy::get(EltTy)),
-      Values(Range.begin(), Range.end()) {}
+  explicit ListInit(unsigned N, RecTy *EltTy)
+    : TypedInit(IK_ListInit, ListRecTy::get(EltTy)), NumValues(N) {}
 
   ListInit(const ListInit &Other) = delete;
   ListInit &operator=(const ListInit &Other) = delete;
@@ -608,8 +609,8 @@ public:
   void Profile(FoldingSetNodeID &ID) const;
 
   Init *getElement(unsigned i) const {
-    assert(i < Values.size() && "List element index out of range!");
-    return Values[i];
+    assert(i < NumValues && "List element index out of range!");
+    return getTrailingObjects<Init *>()[i];
   }
 
   Record *getElementAsRecord(unsigned i) const;
@@ -628,13 +629,15 @@ public:
 
   std::string getAsString() const override;
 
-  ArrayRef<Init*> getValues() const { return Values; }
+  ArrayRef<Init*> getValues() const {
+    return makeArrayRef(getTrailingObjects<Init *>(), NumValues);
+  }
 
-  const_iterator begin() const { return Values.begin(); }
-  const_iterator end  () const { return Values.end();   }
+  const_iterator begin() const { return getTrailingObjects<Init *>(); }
+  const_iterator end  () const { return begin() + NumValues; }
 
-  size_t         size () const { return Values.size();  }
-  bool           empty() const { return Values.empty(); }
+  size_t         size () const { return NumValues;  }
+  bool           empty() const { return NumValues == 0; }
 
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
