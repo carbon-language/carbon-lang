@@ -535,7 +535,7 @@ ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
 }
 
 Record *ListInit::getElementAsRecord(unsigned i) const {
-  assert(i < Values.size() && "List element index out of range!");
+  assert(i < NumValues && "List element index out of range!");
   DefInit *DI = dyn_cast<DefInit>(getElement(i));
   if (!DI)
     PrintFatalError("Expected record in list!");
