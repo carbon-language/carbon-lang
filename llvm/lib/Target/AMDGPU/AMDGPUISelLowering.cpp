@@ -28,7 +28,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/DataLayout.h"
-
+#include "SIInstrInfo.h"
 using namespace llvm;
 
 static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
@@ -376,6 +376,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setOperationAction(ISD::FNEARBYINT, MVT::f32, Custom);
   setOperationAction(ISD::FNEARBYINT, MVT::f64, Custom);
 
+  setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::SHL);
   setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::MUL);
@@ -1175,6 +1176,21 @@ SDValue AMDGPUTargetLowering::CombineFMinMaxLegacy(SDLoc DL,
     llvm_unreachable("Invalid setcc condcode!");
   }
   return SDValue();
+}
+
+std::pair<SDValue, SDValue>
+AMDGPUTargetLowering::split64BitValue(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+
+  SDValue Vec = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, Op);
+
+  const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
+  const SDValue One = DAG.getConstant(1, SL, MVT::i32);
+
+  SDValue Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, Zero);
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, One);
+
+  return std::make_pair(Lo, Hi);
 }
 
 SDValue AMDGPUTargetLowering::ScalarizeVectorLoad(const SDValue Op,
@@ -2539,6 +2555,43 @@ SDValue AMDGPUTargetLowering::performStoreCombine(SDNode *N,
                       SN->getBasePtr(), SN->getMemOperand());
 }
 
+// TODO: Should repeat for other bit ops.
+SDValue AMDGPUTargetLowering::performAndCombine(SDNode *N,
+                                                DAGCombinerInfo &DCI) const {
+  if (N->getValueType(0) != MVT::i64)
+    return SDValue();
+
+  // Break up 64-bit and of a constant into two 32-bit ands. This will typically
+  // happen anyway for a VALU 64-bit and. This exposes other 32-bit integer
+  // combine opportunities since most 64-bit operations are decomposed this way.
+  // TODO: We won't want this for SALU especially if it is an inline immediate.
+  const ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!RHS)
+    return SDValue();
+
+  uint64_t Val = RHS->getZExtValue();
+  if (Lo_32(Val) != 0 && Hi_32(Val) != 0 && !RHS->hasOneUse()) {
+    // If either half of the constant is 0, this is really a 32-bit and, so
+    // split it. If we can re-use the full materialized constant, keep it.
+    return SDValue();
+  }
+
+  SDLoc SL(N);
+  SelectionDAG &DAG = DCI.DAG;
+
+  SDValue Lo, Hi;
+  std::tie(Lo, Hi) = split64BitValue(N->getOperand(0), DAG);
+
+  SDValue LoRHS = DAG.getConstant(Lo_32(Val), SL, MVT::i32);
+  SDValue HiRHS = DAG.getConstant(Hi_32(Val), SL, MVT::i32);
+
+  SDValue LoAnd = DAG.getNode(ISD::AND, SL, MVT::i32, Lo, LoRHS);
+  SDValue HiAnd = DAG.getNode(ISD::AND, SL, MVT::i32, Hi, HiRHS);
+
+  SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32, LoAnd, HiAnd);
+  return DAG.getNode(ISD::BITCAST, SL, MVT::i64, Vec);
+}
+
 SDValue AMDGPUTargetLowering::performShlCombine(SDNode *N,
                                                 DAGCombinerInfo &DCI) const {
   if (N->getValueType(0) != MVT::i64)
@@ -2750,6 +2803,12 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       break;
 
     return performSrlCombine(N, DCI);
+  }
+  case ISD::AND: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
+      break;
+
+    return performAndCombine(N, DCI);
   }
   case ISD::MUL:
     return performMulCombine(N, DCI);

@@ -50,15 +50,18 @@ define void @lshr_i64_32(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   ret void
 }
 
+; Make sure the and of the constant doesn't prevent bfe from forming
+; after 64-bit shift is split.
+
 ; GCN-LABEL: {{^}}lshr_and_i64_35:
-; XGCN: buffer_load_dword [[VAL:v[0-9]+]]
-; XGCN: v_lshlrev_b32_e32 v[[LO:[0-9]+]], 3, [[VAL]]
-; XGCN: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
-; XGCN: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
+; GCN: buffer_load_dwordx2 v{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}}
+; GCN: v_bfe_u32 v[[BFE:[0-9]+]], v[[HI]], 8, 23
+; GCN: v_mov_b32_e32 v[[ZERO:[0-9]+]], 0{{$}}
+; GCN: buffer_store_dwordx2 v{{\[}}[[BFE]]:[[ZERO]]{{\]}}
 define void @lshr_and_i64_35(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %val = load i64, i64 addrspace(1)* %in
-  %and = and i64 %val, 2147483647 ; 0x7fffffff
-  %shl = lshr i64 %and, 35
+  %and = and i64 %val, 9223372036854775807 ; 0x7fffffffffffffff
+  %shl = lshr i64 %and, 40
   store i64 %shl, i64 addrspace(1)* %out
   ret void
 }
