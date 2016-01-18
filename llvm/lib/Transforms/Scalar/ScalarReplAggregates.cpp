@@ -710,7 +710,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
         PointerType* SPTy = cast<PointerType>(SrcPtr->getType());
         PointerType* AIPTy = cast<PointerType>(NewAI->getType());
         if (SPTy->getAddressSpace() != AIPTy->getAddressSpace()) {
-          AIPTy = PointerType::get(AIPTy->getElementType(),
+          AIPTy = PointerType::get(NewAI->getAllocatedType(),
                                    SPTy->getAddressSpace());
         }
         SrcPtr = Builder.CreateBitCast(SrcPtr, AIPTy);
@@ -727,7 +727,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
         PointerType* DPTy = cast<PointerType>(MTI->getDest()->getType());
         PointerType* AIPTy = cast<PointerType>(NewAI->getType());
         if (DPTy->getAddressSpace() != AIPTy->getAddressSpace()) {
-          AIPTy = PointerType::get(AIPTy->getElementType(),
+          AIPTy = PointerType::get(NewAI->getAllocatedType(),
                                    DPTy->getAddressSpace());
         }
         Value *DstPtr = Builder.CreateBitCast(MTI->getDest(), AIPTy);
@@ -1357,7 +1357,7 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout &DL) {
       continue;
     }
 
-    Type *LoadTy = cast<PointerType>(PN->getType())->getElementType();
+    Type *LoadTy = AI->getAllocatedType();
     PHINode *NewPN = PHINode::Create(LoadTy, PN->getNumIncomingValues(),
                                      PN->getName()+".ld", PN);
 
@@ -2210,8 +2210,7 @@ SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
 
     // If the pointer is not the right type, insert a bitcast to the right
     // type.
-    Type *NewTy =
-      PointerType::get(AI->getType()->getElementType(), AddrSpace);
+    Type *NewTy = PointerType::get(AI->getAllocatedType(), AddrSpace);
 
     if (OtherPtr->getType() != NewTy)
       OtherPtr = new BitCastInst(OtherPtr, NewTy, OtherPtr->getName(), MI);
@@ -2235,8 +2234,8 @@ SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                               OtherPtr->getName()+"."+Twine(i),
                                                    MI);
       uint64_t EltOffset;
-      PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
-      Type *OtherTy = OtherPtrTy->getElementType();
+      assert(AI->getType() == OtherPtr->getType());
+      Type *OtherTy = AI->getAllocatedType();
       if (StructType *ST = dyn_cast<StructType>(OtherTy)) {
         EltOffset = DL.getStructLayout(ST)->getElementOffset(i);
       } else {
@@ -2252,8 +2251,8 @@ SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       OtherEltAlign = (unsigned)MinAlign(OtherEltAlign, EltOffset);
     }
 
-    Value *EltPtr = NewElts[i];
-    Type *EltTy = cast<PointerType>(EltPtr->getType())->getElementType();
+    AllocaInst *EltPtr = NewElts[i];
+    Type *EltTy = EltPtr->getAllocatedType();
 
     // If we got down to a scalar, insert a load or store as appropriate.
     if (EltTy->isSingleValueType()) {
@@ -2485,8 +2484,7 @@ SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
     // the pointer to an integer of the same size before doing the load.
     Value *SrcField = NewElts[i];
-    Type *FieldTy =
-      cast<PointerType>(SrcField->getType())->getElementType();
+    Type *FieldTy = NewElts[i]->getAllocatedType();
     uint64_t FieldSizeBits = DL.getTypeSizeInBits(FieldTy);
 
     // Ignore zero sized fields like {}, they obviously contain no data.
