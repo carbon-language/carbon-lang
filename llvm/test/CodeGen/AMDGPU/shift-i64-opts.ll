@@ -105,10 +105,18 @@ define void @shl_i64_const_63(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 
 ; ashr (i64 x), 63 => (ashr lo(x), 31), lo(x)
 
-; GCN-LABEL: {{^}}ashr_i64_const_gt_32:
-define void @ashr_i64_const_gt_32(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
+; GCN-LABEL: {{^}}ashr_i64_const_32:
+define void @ashr_i64_const_32(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %val = load i64, i64 addrspace(1)* %in
-  %shl = ashr i64 %val, 35
+  %shl = ashr i64 %val, 32
+  store i64 %shl, i64 addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}ashr_i64_const_63:
+define void @ashr_i64_const_63(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
+  %val = load i64, i64 addrspace(1)* %in
+  %shl = ashr i64 %val, 63
   store i64 %shl, i64 addrspace(1)* %out
   ret void
 }

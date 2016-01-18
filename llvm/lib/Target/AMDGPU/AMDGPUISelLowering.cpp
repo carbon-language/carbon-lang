@@ -378,6 +378,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
 
   setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::SHL);
+  setTargetDAGCombine(ISD::SRA);
   setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::SELECT);
@@ -1191,6 +1192,22 @@ AMDGPUTargetLowering::split64BitValue(SDValue Op, SelectionDAG &DAG) const {
   SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, One);
 
   return std::make_pair(Lo, Hi);
+}
+
+SDValue AMDGPUTargetLowering::getLoHalf64(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+
+  SDValue Vec = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, Op);
+  const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, Zero);
+}
+
+SDValue AMDGPUTargetLowering::getHiHalf64(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+
+  SDValue Vec = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, Op);
+  const SDValue One = DAG.getConstant(1, SL, MVT::i32);
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, One);
 }
 
 SDValue AMDGPUTargetLowering::ScalarizeVectorLoad(const SDValue Op,
@@ -2626,6 +2643,43 @@ SDValue AMDGPUTargetLowering::performShlCombine(SDNode *N,
   return DAG.getNode(ISD::BITCAST, SL, MVT::i64, Vec);
 }
 
+SDValue AMDGPUTargetLowering::performSraCombine(SDNode *N,
+                                                DAGCombinerInfo &DCI) const {
+  if (N->getValueType(0) != MVT::i64)
+    return SDValue();
+
+  const ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!RHS)
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc SL(N);
+  unsigned RHSVal = RHS->getZExtValue();
+
+  // (sra i64:x, 32) -> build_pair x, (sra hi_32(x), 31)
+  if (RHSVal == 32) {
+    SDValue Hi = getHiHalf64(N->getOperand(0), DAG);
+    SDValue NewShift = DAG.getNode(ISD::SRA, SL, MVT::i32, Hi,
+                                   DAG.getConstant(31, SL, MVT::i32));
+
+    SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32,
+                                   Hi, NewShift);
+    return DAG.getNode(ISD::BITCAST, SL, MVT::i64, BuildVec);
+  }
+
+  // (sra i64:x, 63) -> build_pair (sra hi_32(x), 31), (sra hi_32(x), 31)
+  if (RHSVal == 63) {
+    SDValue Hi = getHiHalf64(N->getOperand(0), DAG);
+    SDValue NewShift = DAG.getNode(ISD::SRA, SL, MVT::i32, Hi,
+                                   DAG.getConstant(31, SL, MVT::i32));
+    SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32,
+                                   NewShift, NewShift);
+    return DAG.getNode(ISD::BITCAST, SL, MVT::i64, BuildVec);
+  }
+
+  return SDValue();
+}
+
 SDValue AMDGPUTargetLowering::performSrlCombine(SDNode *N,
                                                 DAGCombinerInfo &DCI) const {
   if (N->getValueType(0) != MVT::i64)
@@ -2803,6 +2857,12 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       break;
 
     return performSrlCombine(N, DCI);
+  }
+  case ISD::SRA: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
+      break;
+
+    return performSraCombine(N, DCI);
   }
   case ISD::AND: {
     if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)

@@ -87,6 +87,8 @@ protected:
   /// Return 64-bit value Op as two 32-bit integers.
   std::pair<SDValue, SDValue> split64BitValue(SDValue Op,
                                               SelectionDAG &DAG) const;
+  SDValue getLoHalf64(SDValue Op, SelectionDAG &DAG) const;
+  SDValue getHiHalf64(SDValue Op, SelectionDAG &DAG) const;
 
   /// \brief Split a vector load into a scalar load of each component.
   SDValue ScalarizeVectorLoad(SDValue Op, SelectionDAG &DAG) const;
