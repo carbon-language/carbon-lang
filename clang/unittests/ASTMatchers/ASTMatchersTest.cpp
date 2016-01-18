@@ -1616,9 +1616,9 @@ TEST(ForEachArgumentWithParam, ReportsNoFalsePositives) {
       callExpr(forEachArgumentWithParam(ArgumentY, IntParam));
 
   // IntParam does not match.
-  EXPECT_FALSE(matches("void f(int* i) { int* y; f(y); }", CallExpr));
+  EXPECT_TRUE(notMatches("void f(int* i) { int* y; f(y); }", CallExpr));
   // ArgumentY does not match.
-  EXPECT_FALSE(matches("void f(int i) { int x; f(x); }", CallExpr));
+  EXPECT_TRUE(notMatches("void f(int i) { int x; f(x); }", CallExpr));
 }
 
 TEST(ForEachArgumentWithParam, MatchesCXXMemberCallExpr) {
@@ -1636,6 +1636,18 @@ TEST(ForEachArgumentWithParam, MatchesCXXMemberCallExpr) {
       "  S1[y];"
       "}",
       CallExpr, new VerifyIdIsBoundTo<ParmVarDecl>("param", 1)));
+
+  StatementMatcher CallExpr2 =
+      callExpr(forEachArgumentWithParam(ArgumentY, IntParam));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "struct S {"
+      "  static void g(int i);"
+      "};"
+      "void f() {"
+      "  int y = 1;"
+      "  S::g(y);"
+      "}",
+      CallExpr2, new VerifyIdIsBoundTo<ParmVarDecl>("param", 1)));
 }
 
 TEST(ForEachArgumentWithParam, MatchesCallExpr) {
