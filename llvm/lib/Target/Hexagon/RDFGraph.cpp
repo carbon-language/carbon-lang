@@ -315,7 +315,7 @@ void NodeAllocator::startNewBlock() {
   // Check if the block index is still within the allowed range, i.e. less
   // than 2^N, where N is the number of bits in NodeId for the block index.
   // BitsPerIndex is the number of bits per node index.
-  assert((Blocks.size() < (1U << (8*sizeof(NodeId)-BitsPerIndex))) &&
+  assert((Blocks.size() < ((size_t)1 << (8*sizeof(NodeId)-BitsPerIndex))) &&
          "Out of bits for block index");
   ActiveEnd = P;
 }
