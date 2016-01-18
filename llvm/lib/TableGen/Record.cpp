@@ -609,15 +609,32 @@ Init *OpInit::getBit(unsigned Bit) const {
   return VarBitInit::get(const_cast<OpInit*>(this), Bit);
 }
 
-UnOpInit *UnOpInit::get(UnaryOp opc, Init *lhs, RecTy *Type) {
-  typedef std::pair<std::pair<unsigned, Init *>, RecTy *> Key;
-  static DenseMap<Key, std::unique_ptr<UnOpInit>> ThePool;
+static void
+ProfileUnOpInit(FoldingSetNodeID &ID, unsigned Opcode, Init *Op, RecTy *Type) {
+  ID.AddInteger(Opcode);
+  ID.AddPointer(Op);
+  ID.AddPointer(Type);
+}
 
-  Key TheKey(std::make_pair(std::make_pair(opc, lhs), Type));
+UnOpInit *UnOpInit::get(UnaryOp Opc, Init *LHS, RecTy *Type) {
+  static FoldingSet<UnOpInit> ThePool;
+  static std::vector<std::unique_ptr<UnOpInit>> TheActualPool;
 
-  std::unique_ptr<UnOpInit> &I = ThePool[TheKey];
-  if (!I) I.reset(new UnOpInit(opc, lhs, Type));
-  return I.get();
+  FoldingSetNodeID ID;
+  ProfileUnOpInit(ID, Opc, LHS, Type);
+
+  void *IP = nullptr;
+  if (UnOpInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  UnOpInit *I = new UnOpInit(Opc, LHS, Type);
+  ThePool.InsertNode(I, IP);
+  TheActualPool.push_back(std::unique_ptr<UnOpInit>(I));
+  return I;
+}
+
+void UnOpInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileUnOpInit(ID, getOpcode(), getOperand(), getType());
 }
 
 Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
@@ -737,21 +754,35 @@ std::string UnOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ")";
 }
 
-BinOpInit *BinOpInit::get(BinaryOp opc, Init *lhs,
-                          Init *rhs, RecTy *Type) {
-  typedef std::pair<
-    std::pair<std::pair<unsigned, Init *>, Init *>,
-    RecTy *
-    > Key;
+static void
+ProfileBinOpInit(FoldingSetNodeID &ID, unsigned Opcode, Init *LHS, Init *RHS,
+                 RecTy *Type) {
+  ID.AddInteger(Opcode);
+  ID.AddPointer(LHS);
+  ID.AddPointer(RHS);
+  ID.AddPointer(Type);
+}
 
-  static DenseMap<Key, std::unique_ptr<BinOpInit>> ThePool;
+BinOpInit *BinOpInit::get(BinaryOp Opc, Init *LHS,
+                          Init *RHS, RecTy *Type) {
+  static FoldingSet<BinOpInit> ThePool;
+  static std::vector<std::unique_ptr<BinOpInit>> TheActualPool;
 
-  Key TheKey(std::make_pair(std::make_pair(std::make_pair(opc, lhs), rhs),
-                            Type));
+  FoldingSetNodeID ID;
+  ProfileBinOpInit(ID, Opc, LHS, RHS, Type);
 
-  std::unique_ptr<BinOpInit> &I = ThePool[TheKey];
-  if (!I) I.reset(new BinOpInit(opc, lhs, rhs, Type));
-  return I.get();
+  void *IP = nullptr;
+  if (BinOpInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  BinOpInit *I = new BinOpInit(Opc, LHS, RHS, Type);
+  ThePool.InsertNode(I, IP);
+  TheActualPool.push_back(std::unique_ptr<BinOpInit>(I));
+  return I;
+}
+
+void BinOpInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileBinOpInit(ID, getOpcode(), getLHS(), getRHS(), getType());
 }
 
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
@@ -870,27 +901,36 @@ std::string BinOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
 }
 
-TernOpInit *TernOpInit::get(TernaryOp opc, Init *lhs, Init *mhs, Init *rhs,
+static void
+ProfileTernOpInit(FoldingSetNodeID &ID, unsigned Opcode, Init *LHS, Init *MHS,
+                  Init *RHS, RecTy *Type) {
+  ID.AddInteger(Opcode);
+  ID.AddPointer(LHS);
+  ID.AddPointer(MHS);
+  ID.AddPointer(RHS);
+  ID.AddPointer(Type);
+}
+
+TernOpInit *TernOpInit::get(TernaryOp Opc, Init *LHS, Init *MHS, Init *RHS,
                             RecTy *Type) {
-  typedef std::pair<
-    std::pair<
-      std::pair<std::pair<unsigned, RecTy *>, Init *>,
-      Init *
-      >,
-    Init *
-    > Key;
+  static FoldingSet<TernOpInit> ThePool;
+  static std::vector<std::unique_ptr<TernOpInit>> TheActualPool;
 
-  static DenseMap<Key, std::unique_ptr<TernOpInit>> ThePool;
+  FoldingSetNodeID ID;
+  ProfileTernOpInit(ID, Opc, LHS, MHS, RHS, Type);
 
-  Key TheKey(std::make_pair(std::make_pair(std::make_pair(std::make_pair(opc,
-                                                                         Type),
-                                                          lhs),
-                                           mhs),
-                            rhs));
+  void *IP = nullptr;
+  if (TernOpInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
 
-  std::unique_ptr<TernOpInit> &I = ThePool[TheKey];
-  if (!I) I.reset(new TernOpInit(opc, lhs, mhs, rhs, Type));
-  return I.get();
+  TernOpInit *I = new TernOpInit(Opc, LHS, MHS, RHS, Type);
+  ThePool.InsertNode(I, IP);
+  TheActualPool.push_back(std::unique_ptr<TernOpInit>(I));
+  return I;
+}
+
+void TernOpInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileTernOpInit(ID, getOpcode(), getLHS(), getMHS(), getRHS(), getType());
 }
 
 static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,

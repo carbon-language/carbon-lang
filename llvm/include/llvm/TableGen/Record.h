@@ -683,7 +683,7 @@ public:
 
 /// UnOpInit - !op (X) - Transform an init.
 ///
-class UnOpInit : public OpInit {
+class UnOpInit : public OpInit, public FoldingSetNode {
 public:
   enum UnaryOp : uint8_t { CAST, HEAD, TAIL, EMPTY };
 
@@ -701,6 +701,8 @@ public:
     return I->getKind() == IK_UnOpInit;
   }
   static UnOpInit *get(UnaryOp opc, Init *lhs, RecTy *Type);
+
+  void Profile(FoldingSetNodeID &ID) const;
 
   // Clone - Clone this operator, replacing arguments with the new list
   OpInit *clone(std::vector<Init *> &Operands) const override {
@@ -729,7 +731,7 @@ public:
 
 /// BinOpInit - !op (X, Y) - Combine two inits.
 ///
-class BinOpInit : public OpInit {
+class BinOpInit : public OpInit, public FoldingSetNode {
 public:
   enum BinaryOp : uint8_t { ADD, AND, SHL, SRA, SRL, LISTCONCAT,
                             STRCONCAT, CONCAT, EQ };
@@ -749,6 +751,8 @@ public:
   }
   static BinOpInit *get(BinaryOp opc, Init *lhs, Init *rhs,
                         RecTy *Type);
+
+  void Profile(FoldingSetNodeID &ID) const;
 
   // Clone - Clone this operator, replacing arguments with the new list
   OpInit *clone(std::vector<Init *> &Operands) const override {
@@ -781,7 +785,7 @@ public:
 
 /// TernOpInit - !op (X, Y, Z) - Combine two inits.
 ///
-class TernOpInit : public OpInit {
+class TernOpInit : public OpInit, public FoldingSetNode {
 public:
   enum TernaryOp : uint8_t { SUBST, FOREACH, IF };
 
@@ -802,6 +806,8 @@ public:
   static TernOpInit *get(TernaryOp opc, Init *lhs,
                          Init *mhs, Init *rhs,
                          RecTy *Type);
+
+  void Profile(FoldingSetNodeID &ID) const;
 
   // Clone - Clone this operator, replacing arguments with the new list
   OpInit *clone(std::vector<Init *> &Operands) const override {
