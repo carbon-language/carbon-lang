@@ -1413,7 +1413,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         if (B == tmpOp0) {
           std::swap(A, B);
         }
-        // Notice that the patten (A&(~B)) is actually (A&(-1^B)), so if
+        // Notice that the pattern (A&(~B)) is actually (A&(-1^B)), so if
         // A is originally -1 (or a vector of -1 and undefs), then we enter
         // an endless loop. By checking that A is non-constant we ensure that
         // we will never get to the loop.
