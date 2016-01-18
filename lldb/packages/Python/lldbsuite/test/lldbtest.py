@@ -593,6 +593,8 @@ def not_remote_testsuite_ready(func):
 
 def expectedFailure(expected_fn, bugnumber=None):
     def expectedFailure_impl(func):
+        if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+            raise Exception("Decorator can only be used to decorate a test method")
         @wraps(func)
         def wrapper(*args, **kwargs):
             from unittest2 import case
