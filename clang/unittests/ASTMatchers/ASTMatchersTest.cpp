@@ -1815,10 +1815,10 @@ TEST(IsExternC, MatchesExternCFunctionDeclarations) {
 }
 
 TEST(IsDefaulted, MatchesDefaultedFunctionDeclarations) {
-  EXPECT_TRUE(
-      notMatches("class A { ~A(); };", functionDecl(hasName("A"), isDefaulted())));
+  EXPECT_TRUE(notMatches("class A { ~A(); };",
+                         functionDecl(hasName("~A"), isDefaulted())));
   EXPECT_TRUE(matches("class B { ~B() = default; };",
-                      functionDecl(hasName("B"), isDefaulted())));
+                      functionDecl(hasName("~B"), isDefaulted())));
 }
 
 TEST(IsDeleted, MatchesDeletedFunctionDeclarations) {
