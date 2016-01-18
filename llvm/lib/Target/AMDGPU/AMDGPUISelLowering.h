@@ -69,6 +69,7 @@ private:
 
   SDValue performStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performShlCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue performSrlCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performMulCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performCtlzCombine(SDLoc SL, SDValue Cond, SDValue LHS, SDValue RHS,
                              DAGCombinerInfo &DCI) const;

@@ -377,6 +377,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setOperationAction(ISD::FNEARBYINT, MVT::f64, Custom);
 
   setTargetDAGCombine(ISD::SHL);
+  setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::SELECT_CC);
@@ -2562,7 +2563,44 @@ SDValue AMDGPUTargetLowering::performShlCombine(SDNode *N,
   SDValue Lo = DAG.getNode(ISD::TRUNCATE, SL, MVT::i32, LHS);
 
   const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
+
   return DAG.getNode(ISD::BUILD_PAIR, SL, MVT::i64, Zero, Lo);
+}
+
+SDValue AMDGPUTargetLowering::performSrlCombine(SDNode *N,
+                                                DAGCombinerInfo &DCI) const {
+  if (N->getValueType(0) != MVT::i64)
+    return SDValue();
+
+  const ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!RHS)
+    return SDValue();
+
+  unsigned ShiftAmt = RHS->getZExtValue();
+  if (ShiftAmt < 32)
+    return SDValue();
+
+  // srl i64:x, C for C >= 32
+  // =>
+  //   build_pair (srl hi_32(x), C - 32), 0
+
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc SL(N);
+
+  SDValue One = DAG.getConstant(1, SL, MVT::i32);
+  SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
+
+  SDValue VecOp = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, N->getOperand(0));
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32,
+                           VecOp, One);
+
+  SDValue NewConst = DAG.getConstant(ShiftAmt - 32, SL, MVT::i32);
+  SDValue NewShift = DAG.getNode(ISD::SRL, SL, MVT::i32, Hi, NewConst);
+
+  SDValue BuildPair = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32,
+                                  NewShift, Zero);
+
+  return DAG.getNode(ISD::BITCAST, SL, MVT::i64, BuildPair);
 }
 
 SDValue AMDGPUTargetLowering::performMulCombine(SDNode *N,
@@ -2700,6 +2738,12 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       break;
 
     return performShlCombine(N, DCI);
+  }
+  case ISD::SRL: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
+      break;
+
+    return performSrlCombine(N, DCI);
   }
   case ISD::MUL:
     return performMulCombine(N, DCI);
