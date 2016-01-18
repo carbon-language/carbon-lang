@@ -1257,6 +1257,7 @@ bool TargetLowering::isExtendedTrueVal(const ConstantSDNode *N, EVT VT,
   case TargetLowering::ZeroOrNegativeOneBooleanContent:
     return N->isAllOnesValue() && SExt;
   }
+  llvm_unreachable("Unexpected enumeration.");
 }
 
 /// Try to simplify a setcc built with the specified operands and cc. If it is
