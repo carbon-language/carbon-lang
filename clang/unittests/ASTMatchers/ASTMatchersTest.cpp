@@ -1814,6 +1814,13 @@ TEST(IsExternC, MatchesExternCFunctionDeclarations) {
   EXPECT_TRUE(notMatches("void f() {}", functionDecl(isExternC())));
 }
 
+TEST(IsDefaulted, MatchesDefaultedFunctionDeclarations) {
+  EXPECT_TRUE(
+      notMatches("class A { ~A(); };", functionDecl(hasName("A"), isDefaulted())));
+  EXPECT_TRUE(matches("class B { ~B() = default; };",
+                      functionDecl(hasName("B"), isDefaulted())));
+}
+
 TEST(IsDeleted, MatchesDeletedFunctionDeclarations) {
   EXPECT_TRUE(
       notMatches("void Func();", functionDecl(hasName("Func"), isDeleted())));

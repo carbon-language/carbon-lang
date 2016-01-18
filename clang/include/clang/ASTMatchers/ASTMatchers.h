@@ -2993,6 +2993,19 @@ AST_MATCHER(FunctionDecl, isDeleted) {
   return Node.isDeleted();
 }
 
+/// \brief Matches defaulted function declarations.
+///
+/// Given:
+/// \code
+///   class A { ~A(); };
+///   class B { ~B() = default; };
+/// \endcode
+/// functionDecl(isDefaulted())
+///   matches the declaration of ~B, but not ~A.
+AST_MATCHER(FunctionDecl, isDefaulted) {
+  return Node.isDefaulted();
+}
+
 /// \brief Matches functions that have a non-throwing exception specification.
 ///
 /// Given:
