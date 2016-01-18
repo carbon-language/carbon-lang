@@ -687,6 +687,9 @@ class ScopedInErrorReport {
     if (flags()->print_stats)
       __asan_print_accumulated_stats();
 
+    if (common_flags()->print_cmdline)
+      PrintCmdline();
+
     // Copy the message buffer so that we could start logging without holding a
     // lock that gets aquired during printing.
     InternalScopedBuffer<char> buffer_copy(kErrorMessageBufferSize);

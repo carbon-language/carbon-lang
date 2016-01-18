@@ -770,6 +770,11 @@ void MaybeReexec() {
   // No need to re-exec on Windows.
 }
 
+char **GetArgv() {
+  // FIXME: Actually implement this function.
+  return 0;
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

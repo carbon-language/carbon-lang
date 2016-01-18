@@ -200,3 +200,5 @@ COMMON_FLAG(
 COMMON_FLAG(bool, suppress_equal_pcs, true,
             "Deduplicate multiple reports for single source location in "
             "halt_on_error=false mode (asan only).")
+COMMON_FLAG(bool, print_cmdline, false, "Print command line on crash "
+            "(asan only).")

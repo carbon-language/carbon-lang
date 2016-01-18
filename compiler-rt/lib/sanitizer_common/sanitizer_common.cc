@@ -487,6 +487,15 @@ uptr ReadBinaryNameCached(/*out*/char *buf, uptr buf_len) {
   return name_len;
 }
 
+void PrintCmdline() {
+  char **argv = GetArgv();
+  if (!argv) return;
+  Printf("\nCommand: ");
+  for (uptr i = 0; argv[i]; ++i)
+    Printf("%s ", argv[i]);
+  Printf("\n\n");
+}
+
 } // namespace __sanitizer
 
 using namespace __sanitizer;  // NOLINT

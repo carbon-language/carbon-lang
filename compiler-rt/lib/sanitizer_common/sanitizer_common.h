@@ -282,6 +282,8 @@ bool IsAbsolutePath(const char *path);
 
 u32 GetUid();
 void ReExec();
+char **GetArgv();
+void PrintCmdline();
 bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
 bool AddressSpaceIsUnlimited();
