@@ -1016,6 +1016,41 @@ std::error_code MachOLinkingContext::handleLoadedFile(File &file) {
               Twine(" cannot be linked due to incompatible operating systems"));
   }
 
+  // Check that if the objc info exists, that it is compatible with the target
+  // OS.
+  switch (machoFile->objcConstraint()) {
+    case objc_unknown:
+      // The file is not compiled with objc, so skip the checks.
+      break;
+    case objc_gc_only:
+    case objc_supports_gc:
+      llvm_unreachable("GC support should already have thrown an error");
+    case objc_retainReleaseForSimulator:
+      // The file is built with simulator objc, so make sure that the context
+      // is also building with simulator support.
+      if (_os != OS::iOS_simulator)
+        return make_dynamic_error_code(file.path() +
+          Twine(" cannot be linked.  It contains ObjC built for the simulator"
+                " while we are linking a non-simulator target"));
+      assert((_objcConstraint == objc_unknown ||
+              _objcConstraint == objc_retainReleaseForSimulator) &&
+             "Must be linking with retain/release for the simulator");
+      _objcConstraint = objc_retainReleaseForSimulator;
+      break;
+    case objc_retainRelease:
+      // The file is built without simulator objc, so make sure that the
+      // context is also building without simulator support.
+      if (_os == OS::iOS_simulator)
+        return make_dynamic_error_code(file.path() +
+          Twine(" cannot be linked.  It contains ObjC built for a non-simulator"
+                " target while we are linking a simulator target"));
+      assert((_objcConstraint == objc_unknown ||
+              _objcConstraint == objc_retainRelease) &&
+             "Must be linking with retain/release for a non-simulator target");
+      _objcConstraint = objc_retainRelease;
+      break;
+  }
+
   // Check that the swift version of the context matches that of the file.
   // Also set the swift version of the context if it didn't have one.
   if (!_swiftVersion) {
