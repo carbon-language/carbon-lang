@@ -17024,6 +17024,35 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                 Src2, Src1);
       return DAG.getBitcast(VT, Res);
     }
+    case FIXUPIMMS:
+    case FIXUPIMMS_MASKZ:
+    case FIXUPIMM:
+    case FIXUPIMM_MASKZ:{
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+      SDValue Imm = Op.getOperand(4);
+      SDValue Mask = Op.getOperand(5);
+      SDValue Passthru = (IntrData->Type == FIXUPIMM || IntrData->Type == FIXUPIMMS ) ?
+                                         Src1 : getZeroVector(VT, Subtarget, DAG, dl);
+      // We specify 2 possible modes for intrinsics, with/without rounding
+      // modes.
+      // First, we check if the intrinsic have rounding mode (7 operands),
+      // if not, we set rounding mode to "current".
+      SDValue Rnd;
+      if (Op.getNumOperands() == 7)
+        Rnd = Op.getOperand(6);
+      else
+        Rnd = DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
+      if (IntrData->Type == FIXUPIMM || IntrData->Type == FIXUPIMM_MASKZ) 
+        return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
+                                                Src1, Src2, Src3, Imm, Rnd),
+                                    Mask, Passthru, Subtarget, DAG);
+      else // Scalar - FIXUPIMMS, FIXUPIMMS_MASKZ
+        return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
+                                       Src1, Src2, Src3, Imm, Rnd),
+                                    Mask, Passthru, Subtarget, DAG);
+    }
     case CONVERT_TO_MASK: {
       MVT SrcVT = Op.getOperand(1).getSimpleValueType();
       MVT MaskVT = MVT::getVectorVT(MVT::i1, SrcVT.getVectorNumElements());
@@ -20934,6 +20963,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VPERMI:             return "X86ISD::VPERMI";
   case X86ISD::VPTERNLOG:          return "X86ISD::VPTERNLOG";
   case X86ISD::VFIXUPIMM:          return "X86ISD::VFIXUPIMM";
+  case X86ISD::VFIXUPIMMS:          return "X86ISD::VFIXUPIMMS";
   case X86ISD::VRANGE:             return "X86ISD::VRANGE";
   case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";
   case X86ISD::PMULDQ:             return "X86ISD::PMULDQ";
