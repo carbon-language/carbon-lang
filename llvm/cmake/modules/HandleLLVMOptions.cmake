@@ -403,9 +403,6 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
     append("-Wall -W -Wno-unused-parameter -Wwrite-strings" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
     append("-Wcast-qual" CMAKE_CXX_FLAGS)
 
-    # FIXME: Clean up the codebase, then remove this flag.
-    add_flag_if_supported("-Wno-expansion-to-defined" EXPANSION_TO_DEFINED_FLAG)
-
     # Turn off missing field initializer warnings for gcc to avoid noise from
     # false positives with empty {}. Turn them on otherwise (they're off by
     # default for clang).
