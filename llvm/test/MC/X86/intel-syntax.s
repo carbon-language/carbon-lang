@@ -775,3 +775,7 @@ movs dword ptr [eax], dword ptr [ebx]
 // CHECK: movsl (%esi), %es:(%edi)
 // CHECK-STDERR: memory operand is only for determining the size, ES:(R|E)DI will be used for the location
 // CHECK-STDERR: memory operand is only for determining the size, ES:(R|E)SI will be used for the location
+
+xlat byte ptr [eax]
+// CHECK: xlatb
+// CHECK-STDERR: memory operand is only for determining the size, (R|E)BX will be used for the location

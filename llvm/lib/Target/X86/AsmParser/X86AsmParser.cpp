@@ -2475,6 +2475,17 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
         }
   }
 
+  // Transforms "xlat mem8" into "xlatb"
+  if ((Name == "xlat" || Name == "xlatb") && Operands.size() == 2) {
+    X86Operand &Op1 = static_cast<X86Operand &>(*Operands[1]);
+    if (Op1.isMem8()) {
+      Warning(Op1.getStartLoc(), "memory operand is only for determining the "
+                                 "size, (R|E)BX will be used for the location");
+      Operands.pop_back();
+      static_cast<X86Operand &>(*Operands[0]).setTokenValue("xlatb");
+    }
+  }
+
   return false;
 }
 
