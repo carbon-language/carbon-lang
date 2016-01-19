@@ -116,15 +116,14 @@ namespace llvm {
     };
   };
 
-  // Use this macro to stamp out definitions for required static symbols in an
-  // appropriate source file.  This is required to avoid getting multiple
-  // definitions of the Registry's fields in different translation or linkage
-  // units.   
-#define DEFINE_REGISTRY(T)                      \
-  template <>                                    \
-  typename Registry<T>::node *Registry<T>::Head = nullptr; \
-  template <>                          \
-  typename Registry<T>::node *Registry<T>::Tail = nullptr;
+  
+  // Since these are defined in a header file, plugins must be sure to export
+  // these symbols.
+  template <typename T>
+  typename Registry<T>::node *Registry<T>::Head;
+
+  template <typename T>
+  typename Registry<T>::node *Registry<T>::Tail;
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_REGISTRY_H

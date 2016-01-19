@@ -17,7 +17,3 @@ using namespace llvm;
 GCMetadataPrinter::GCMetadataPrinter() {}
 
 GCMetadataPrinter::~GCMetadataPrinter() {}
-
-// Stamp out the registry of GCMetadataPrinter objects so that pulgins can load
-// new Strategies.  
-DEFINE_REGISTRY(GCMetadataPrinter)

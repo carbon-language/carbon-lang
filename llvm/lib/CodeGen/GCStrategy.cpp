@@ -20,7 +20,3 @@ GCStrategy::GCStrategy()
     : UseStatepoints(false), NeededSafePoints(0), CustomReadBarriers(false),
       CustomWriteBarriers(false), CustomRoots(false), InitRoots(true),
       UsesMetadata(false) {}
-
-// Stamp out the registry of GCStrategy objects so that pulgins can load new
-// Strategies.  
-DEFINE_REGISTRY(GCStrategy)
