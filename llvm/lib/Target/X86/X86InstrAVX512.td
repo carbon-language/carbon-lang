@@ -4172,8 +4172,24 @@ multiclass avx512_vpermi_dq_sizes<bits<8> opc, Format ImmFormR, Format ImmFormM,
                               VTInfo.info256>, EVEX_V256;
 }
 
+multiclass avx512_vperm_bw<bits<8> opc, string OpcodeStr,
+                              Predicate prd, SDNode OpNode,
+                              AVX512VLVectorVTInfo _> {
+  let Predicates = [prd] in
+  defm Z:    avx512_var_shift<opc, OpcodeStr, OpNode, _.info512>,
+              EVEX_V512 ;
+  let Predicates = [HasVLX, prd] in {
+  defm Z256: avx512_var_shift<opc, OpcodeStr, OpNode, _.info256>,
+              EVEX_V256 ;
+  defm Z128: avx512_var_shift<opc, OpcodeStr, OpNode, _.info128>,
+              EVEX_V128 ;
+  }
+}
 
-defm VPERM  : avx512_var_shift_w<0x8D, "vpermw", X86VPermv>;
+defm VPERMW  : avx512_vperm_bw<0x8D, "vpermw", HasBWI, X86VPermv,
+                                  avx512vl_i16_info>, VEX_W;
+defm VPERMB  : avx512_vperm_bw<0x8D, "vpermb", HasVBMI, X86VPermv,
+                                  avx512vl_i8_info>;
 
 defm VPERMD : avx512_vperm_dq_sizes<0x36, "vpermd", X86VPermv,
                                     avx512vl_i32_info>;
