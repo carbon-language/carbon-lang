@@ -690,7 +690,7 @@ void RewriteInstance::disassembleFunctions() {
   errs() << "FLO-INFO: " << ProfiledFunctions.size() << " functions out of "
          << NumSimpleFunctions
          << " simple functions ("
-         << format("%.f",
+         << format("%.1f",
                    ProfiledFunctions.size() /
                    (float) NumSimpleFunctions * 100.0)
          << "%) have non-empty execution profile.\n";
@@ -775,17 +775,19 @@ void RewriteInstance::runOptimizationPasses() {
 
     // Post-processing passes.
 
-    // Update exception handling information.
-    Function.updateEHRanges();
-    if (opts::PrintAll || opts::PrintEHRanges)
-      Function.print(errs(), "after updating EH ranges");
-
     // Fix the CFI state.
     if (!Function.fixCFIState()) {
       errs() << "FLO-WARNING: unable to fix CFI state for function "
              << Function.getName() << ". Skipping.\n";
       Function.setSimple(false);
+      continue;
     }
+
+    // Update exception handling information.
+    Function.updateEHRanges();
+    if (opts::PrintAll || opts::PrintEHRanges)
+      Function.print(errs(), "after updating EH ranges");
+
   }
 }
 

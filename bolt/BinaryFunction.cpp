@@ -542,6 +542,13 @@ bool BinaryFunction::buildCFG() {
       InsertBB = addBasicBlock(LI->first, LI->second,
                                /* DeriveAlignment = */ IsLastInstrNop);
     }
+    // Ignore nops. We use nops to derive alignment of the next basic block.
+    // It will not always work, as some blocks are naturally aligned, but
+    // it's just part of heuristic for block alignment.
+    if (MIA->isNoop(InstrInfo.second)) {
+      IsLastInstrNop = true;
+      continue;
+    }
     if (!InsertBB) {
       // It must be a fallthrough or unreachable code. Create a new block unless
       // we see an unconditional branch following a conditional one.
@@ -560,13 +567,6 @@ bool BinaryFunction::buildCFG() {
     if (InstrInfo.first == 0) {
       // Add associated CFI pseudos in the first offset (0)
       addCFIPlaceholders(0, InsertBB);
-    }
-    // Ignore nops. We use nops to derive alignment of the next basic block.
-    // It will not always work, as some blocks are naturally aligned, but
-    // it's just part of heuristic for block alignment.
-    if (MIA->isNoop(InstrInfo.second)) {
-      IsLastInstrNop = true;
-      continue;
     }
 
     IsLastInstrNop = false;
@@ -930,16 +930,18 @@ bool BinaryFunction::fixCFIState() {
         }
       }
       auto Pos = BB->begin();
-      while (MCCFIInstruction *CFI = getCFIFor(*Pos++)) {
+      while (Pos != BB->end() && BC.MIA->isCFI(*Pos)) {
+        auto CFI = getCFIFor(*Pos);
         if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
           ++StackOffset;
         if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
           --StackOffset;
+        ++Pos;
       }
 
       if (StackOffset != 0) {
         errs() << " FLO-WARNING: not possible to remember/recover state"
-               << "without corrupting CFI state stack in function "
+               << " without corrupting CFI state stack in function "
                << getName() << "\n";
         return false;
       }
