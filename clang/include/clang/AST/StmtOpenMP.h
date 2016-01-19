@@ -2078,7 +2078,6 @@ public:
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
-  /// \param AssociatedStmt Statement, associated with the directive.
   ///
   static OMPTargetEnterDataDirective *Create(const ASTContext &C,
                                              SourceLocation StartLoc,
