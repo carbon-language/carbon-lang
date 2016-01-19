@@ -892,11 +892,6 @@ std::error_code parseObjCImageInfo(const NormalizedFile &normalizedFile,
   //		uint32_t	version;	// initially 0
   //		uint32_t	flags;
   //	};
-  enum {
-    OBJC_IMAGE_SUPPORTS_GC=2,
-    OBJC_IMAGE_GC_ONLY=4,
-    OBJC_IMAGE_IS_SIMULATED=32,
-  };
 
   ArrayRef<uint8_t> content = imageInfoSection->content;
   if (content.size() != 8)
@@ -914,11 +909,17 @@ std::error_code parseObjCImageInfo(const NormalizedFile &normalizedFile,
                                    " should have version=0");
 
   uint32_t flags = read32(content.data() + 4, isBig);
-  if (flags & (OBJC_IMAGE_SUPPORTS_GC|OBJC_IMAGE_GC_ONLY))
+  if (flags & (MachOLinkingContext::objc_supports_gc |
+               MachOLinkingContext::objc_gc_only))
     return make_dynamic_error_code(imageInfoSection->segmentName + "/" +
                                    imageInfoSection->sectionName +
                                    " in file " + file.path() +
                                    " uses GC.  This is not supported");
+
+  if (flags & MachOLinkingContext::objc_retainReleaseForSimulator)
+    file.setObjcConstraint(MachOLinkingContext::objc_retainReleaseForSimulator);
+  else
+    file.setObjcConstraint(MachOLinkingContext::objc_retainRelease);
 
   file.setSwiftVersion((flags >> 8) & 0xFF);
 
