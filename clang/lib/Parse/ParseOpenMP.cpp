@@ -34,6 +34,10 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
       {OMPD_unknown /*cancellation*/, OMPD_unknown /*point*/,
        OMPD_cancellation_point},
       {OMPD_target, OMPD_unknown /*data*/, OMPD_target_data},
+      {OMPD_target, OMPD_unknown /*enter/exit*/,
+       OMPD_unknown /*target enter/exit*/},
+      {OMPD_unknown /*target enter*/, OMPD_unknown /*data*/,
+       OMPD_target_enter_data},
       {OMPD_for, OMPD_simd, OMPD_for_simd},
       {OMPD_parallel, OMPD_for, OMPD_parallel_for},
       {OMPD_parallel_for, OMPD_simd, OMPD_parallel_for_simd},
@@ -49,8 +53,9 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
   for (unsigned i = 0; i < llvm::array_lengthof(F); ++i) {
     if (!Tok.isAnnotation() && DKind == OMPD_unknown) {
       TokenMatched =
-          (i == 0) &&
-          !P.getPreprocessor().getSpelling(Tok).compare("cancellation");
+          ((i == 0) &&
+           !P.getPreprocessor().getSpelling(Tok).compare("cancellation")) ||
+          ((i == 3) && !P.getPreprocessor().getSpelling(Tok).compare("enter"));
     } else {
       TokenMatched = DKind == F[i][0] && DKind != OMPD_unknown;
     }
@@ -67,7 +72,10 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
         TokenMatched =
             ((i == 0) &&
              !P.getPreprocessor().getSpelling(Tok).compare("point")) ||
-            ((i == 1) && !P.getPreprocessor().getSpelling(Tok).compare("data"));
+            ((i == 1 || i == 3) &&
+             !P.getPreprocessor().getSpelling(Tok).compare("data")) ||
+            ((i == 2) &&
+             !P.getPreprocessor().getSpelling(Tok).compare("enter"));
       } else {
         TokenMatched = SDKind == F[i][1] && SDKind != OMPD_unknown;
       }
@@ -138,6 +146,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_cancellation_point:
   case OMPD_cancel:
   case OMPD_target_data:
+  case OMPD_target_enter_data:
   case OMPD_taskloop:
   case OMPD_taskloop_simd:
   case OMPD_distribute:
@@ -162,8 +171,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///         'barrier' | 'taskwait' | 'flush' | 'ordered' | 'atomic' |
 ///         'for simd' | 'parallel for simd' | 'target' | 'target data' |
 ///         'taskgroup' | 'teams' | 'taskloop' | 'taskloop simd' {clause} |
-///         'distribute'
-///         annot_pragma_openmp_end
+///         'distribute' | 'target enter data' | annot_pragma_openmp_end
 ///
 StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective(
     AllowedContsructsKind Allowed) {
@@ -217,6 +225,7 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective(
   case OMPD_taskwait:
   case OMPD_cancellation_point:
   case OMPD_cancel:
+  case OMPD_target_enter_data:
     if (Allowed == ACK_StatementsOpenMPNonStandalone) {
       Diag(Tok, diag::err_omp_immediate_directive)
           << getOpenMPDirectiveName(DKind) << 0;

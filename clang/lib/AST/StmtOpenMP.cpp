@@ -716,6 +716,27 @@ OMPTargetDataDirective *OMPTargetDataDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPTargetDataDirective(N);
 }
 
+OMPTargetEnterDataDirective *OMPTargetEnterDataDirective::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+    ArrayRef<OMPClause *> Clauses) {
+  void *Mem = C.Allocate(llvm::alignTo(sizeof(OMPTargetEnterDataDirective),
+                                       llvm::alignOf<OMPClause *>()) +
+                         sizeof(OMPClause *) * Clauses.size());
+  OMPTargetEnterDataDirective *Dir =
+      new (Mem) OMPTargetEnterDataDirective(StartLoc, EndLoc, Clauses.size());
+  Dir->setClauses(Clauses);
+  return Dir;
+}
+
+OMPTargetEnterDataDirective *
+OMPTargetEnterDataDirective::CreateEmpty(const ASTContext &C, unsigned N,
+                                         EmptyShell) {
+  void *Mem = C.Allocate(llvm::alignTo(sizeof(OMPTargetEnterDataDirective),
+                                       llvm::alignOf<OMPClause *>()) +
+                         sizeof(OMPClause *) * N);
+  return new (Mem) OMPTargetEnterDataDirective(N);
+}
+
 OMPTeamsDirective *OMPTeamsDirective::Create(const ASTContext &C,
                                              SourceLocation StartLoc,
                                              SourceLocation EndLoc,

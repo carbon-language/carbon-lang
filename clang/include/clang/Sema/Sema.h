@@ -7950,6 +7950,11 @@ public:
   StmtResult ActOnOpenMPTargetDataDirective(ArrayRef<OMPClause *> Clauses,
                                             Stmt *AStmt, SourceLocation StartLoc,
                                             SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp target enter data' after
+  /// parsing of the associated statement.
+  StmtResult ActOnOpenMPTargetEnterDataDirective(ArrayRef<OMPClause *> Clauses,
+                                                 SourceLocation StartLoc,
+                                                 SourceLocation EndLoc);
   /// \brief Called on well-formed '\#pragma omp teams' after parsing of the
   /// associated statement.
   StmtResult ActOnOpenMPTeamsDirective(ArrayRef<OMPClause *> Clauses,

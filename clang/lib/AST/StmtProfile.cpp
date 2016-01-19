@@ -584,6 +584,11 @@ void StmtProfiler::VisitOMPTargetDataDirective(const OMPTargetDataDirective *S) 
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTargetEnterDataDirective(
+    const OMPTargetEnterDataDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitOMPTeamsDirective(const OMPTeamsDirective *S) {
   VisitOMPExecutableDirective(S);
 }

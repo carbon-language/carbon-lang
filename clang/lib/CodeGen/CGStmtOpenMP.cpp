@@ -2661,6 +2661,11 @@ void CodeGenFunction::EmitOMPTargetDataDirective(
       [&CS](CodeGenFunction &CGF) { CGF.EmitStmt(CS->getCapturedStmt()); });
 }
 
+void CodeGenFunction::EmitOMPTargetEnterDataDirective(
+    const OMPTargetEnterDataDirective &S) {
+  // TODO: codegen for target enter data.
+}
+
 void CodeGenFunction::EmitOMPTaskLoopDirective(const OMPTaskLoopDirective &S) {
   // emit the code inside the construct for now
   auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
