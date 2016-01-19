@@ -4825,7 +4825,13 @@ bool AArch64FastISel::selectGetElementPtr(const Instruction *I) {
         TotalOffs += DL.getStructLayout(StTy)->getElementOffset(Field);
       Ty = StTy->getElementType(Field);
     } else {
-      Ty = cast<SequentialType>(Ty)->getElementType();
+      if (Ty->isPointerTy()) {
+        // The only pointer type is for the very first index,
+        // therefore the next type is the source element type.
+        Ty = cast<GEPOperator>(I)->getSourceElementType();
+      } else {
+        Ty = cast<SequentialType>(Ty)->getElementType();
+      }
       // If this is a constant subscript, handle it quickly.
       if (const auto *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->isZero())

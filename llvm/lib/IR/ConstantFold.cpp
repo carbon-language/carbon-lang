@@ -2041,7 +2041,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Type *PointeeTy, Constant *C,
 
   if (isa<UndefValue>(C)) {
     PointerType *PtrTy = cast<PointerType>(C->getType()->getScalarType());
-    Type *Ty = GetElementPtrInst::getIndexedType(PtrTy->getElementType(), Idxs);
+    Type *Ty = GetElementPtrInst::getIndexedType(PointeeTy, Idxs);
     assert(Ty && "Invalid indices for GEP!");
     Type *GEPTy = PointerType::get(Ty, PtrTy->getAddressSpace());
     if (VectorType *VT = dyn_cast<VectorType>(C->getType()))
@@ -2058,8 +2058,8 @@ static Constant *ConstantFoldGetElementPtrImpl(Type *PointeeTy, Constant *C,
       }
     if (isNull) {
       PointerType *PtrTy = cast<PointerType>(C->getType()->getScalarType());
-      Type *Ty =
-          GetElementPtrInst::getIndexedType(PtrTy->getElementType(), Idxs);
+      Type *Ty = GetElementPtrInst::getIndexedType(PointeeTy, Idxs);
+
       assert(Ty && "Invalid indices for GEP!");
       Type *GEPTy = PointerType::get(Ty, PtrTy->getAddressSpace());
       if (VectorType *VT = dyn_cast<VectorType>(C->getType()))
@@ -2239,22 +2239,6 @@ static Constant *ConstantFoldGetElementPtrImpl(Type *PointeeTy, Constant *C,
         return ConstantExpr::getInBoundsGetElementPtr(PointeeTy, C, Idxs);
 
   return nullptr;
-}
-
-Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
-                                          bool inBounds,
-                                          ArrayRef<Constant *> Idxs) {
-  return ConstantFoldGetElementPtrImpl(
-      cast<PointerType>(C->getType()->getScalarType())->getElementType(), C,
-      inBounds, Idxs);
-}
-
-Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
-                                          bool inBounds,
-                                          ArrayRef<Value *> Idxs) {
-  return ConstantFoldGetElementPtrImpl(
-      cast<PointerType>(C->getType()->getScalarType())->getElementType(), C,
-      inBounds, Idxs);
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(Type *Ty, Constant *C,

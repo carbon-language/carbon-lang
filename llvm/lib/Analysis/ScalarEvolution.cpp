@@ -4087,16 +4087,16 @@ const SCEV *ScalarEvolution::createNodeForSelectOrPHI(Instruction *I,
 /// operations. This allows them to be analyzed by regular SCEV code.
 ///
 const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
-  Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
-  if (!Base->getType()->getPointerElementType()->isSized())
+  if (!GEP->getSourceElementType()->isSized())
     return getUnknown(GEP);
 
   SmallVector<const SCEV *, 4> IndexExprs;
   for (auto Index = GEP->idx_begin(); Index != GEP->idx_end(); ++Index)
     IndexExprs.push_back(getSCEV(*Index));
-  return getGEPExpr(GEP->getSourceElementType(), getSCEV(Base), IndexExprs,
-                    GEP->isInBounds());
+  return getGEPExpr(GEP->getSourceElementType(),
+                    getSCEV(GEP->getPointerOperand()),
+                    IndexExprs, GEP->isInBounds());
 }
 
 /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
