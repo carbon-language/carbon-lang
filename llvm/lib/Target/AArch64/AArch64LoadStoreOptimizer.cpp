@@ -1578,7 +1578,6 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       ++MBBI;
       break;
     }
-      // FIXME: Do the other instructions.
     }
   }
 
@@ -1611,7 +1610,6 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       ++MBBI;
       break;
     }
-      // FIXME: Do the other instructions.
     }
   }
 
@@ -1654,7 +1652,6 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       ++MBBI;
       break;
     }
-      // FIXME: Do the other instructions.
     }
   }
 
@@ -1769,7 +1766,6 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       ++MBBI;
       break;
     }
-      // FIXME: Do the other instructions.
     }
   }
 
