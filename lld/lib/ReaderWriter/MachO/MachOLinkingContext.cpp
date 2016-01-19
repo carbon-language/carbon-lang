@@ -326,6 +326,11 @@ bool MachOLinkingContext::needsCompactUnwindPass() const {
   }
 }
 
+bool MachOLinkingContext::needsObjCPass() const {
+  // ObjC pass is only needed if any of the inputs were ObjC.
+  return _objcConstraint != objc_unknown;
+}
+
 bool MachOLinkingContext::needsShimPass() const {
   // Shim pass only used in final executables.
   if (_outputMachOType == MH_OBJECT)
@@ -590,6 +595,10 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 void MachOLinkingContext::addPasses(PassManager &pm) {
+  // objc pass should be before layout pass.  Otherwise test cases may contain
+  // no atoms which confuses the layout pass.
+  if (needsObjCPass())
+    mach_o::addObjCPass(pm, *this);
   mach_o::addLayoutPass(pm, *this);
   if (needsStubsPass())
     mach_o::addStubsPass(pm, *this);
@@ -1060,6 +1069,7 @@ std::error_code MachOLinkingContext::handleLoadedFile(File &file) {
     // Swift versions are different.
     return make_dynamic_error_code("different swift versions");
   }
+
   return std::error_code();
 }
 

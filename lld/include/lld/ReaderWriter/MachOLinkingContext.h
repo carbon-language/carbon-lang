@@ -154,7 +154,8 @@ public:
   void setBaseAddress(uint64_t baseAddress) { _baseAddress = baseAddress; }
 
   ObjCConstraint objcConstraint() const { return _objcConstraint; }
-  void setObjcConstraint(ObjCConstraint v) { _objcConstraint = v; }
+
+  uint32_t swiftVersion() const { return _swiftVersion; }
 
   /// \brief Checks whether a given path on the filesystem exists.
   ///
@@ -309,6 +310,9 @@ public:
 
   /// Pass to add shims switching between thumb and arm mode.
   bool needsShimPass() const;
+
+  /// Pass to add objc image info and optimized objc data.
+  bool needsObjCPass() const;
 
   /// Magic symbol name stubs will need to help lazy bind.
   StringRef binderSymbolName() const;
