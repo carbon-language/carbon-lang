@@ -8121,7 +8121,8 @@ public:
       CXXScopeSpec &ReductionIdScopeSpec,
       const DeclarationNameInfo &ReductionId, OpenMPDependClauseKind DepKind,
       OpenMPLinearClauseKind LinKind, OpenMPMapClauseKind MapTypeModifier,
-      OpenMPMapClauseKind MapType, SourceLocation DepLinMapLoc);
+      OpenMPMapClauseKind MapType, bool IsMapTypeImplicit,
+      SourceLocation DepLinMapLoc);
   /// \brief Called on well-formed 'private' clause.
   OMPClause *ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
                                       SourceLocation StartLoc,
@@ -8188,10 +8189,12 @@ public:
                                      SourceLocation LParenLoc,
                                      SourceLocation EndLoc);
   /// \brief Called on well-formed 'map' clause.
-  OMPClause *ActOnOpenMPMapClause(
-      OpenMPMapClauseKind MapTypeModifier, OpenMPMapClauseKind MapType,
-      SourceLocation MapLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VarList,
-      SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation EndLoc);
+  OMPClause *
+  ActOnOpenMPMapClause(OpenMPMapClauseKind MapTypeModifier,
+                       OpenMPMapClauseKind MapType, bool IsMapTypeImplicit,
+                       SourceLocation MapLoc, SourceLocation ColonLoc,
+                       ArrayRef<Expr *> VarList, SourceLocation StartLoc,
+                       SourceLocation LParenLoc, SourceLocation EndLoc);
   /// \brief Called on well-formed 'num_teams' clause.
   OMPClause *ActOnOpenMPNumTeamsClause(Expr *NumTeams, SourceLocation StartLoc,
                                        SourceLocation LParenLoc,

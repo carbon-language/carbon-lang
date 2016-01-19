@@ -6513,8 +6513,9 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
     SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation ColonLoc,
     SourceLocation EndLoc, CXXScopeSpec &ReductionIdScopeSpec,
     const DeclarationNameInfo &ReductionId, OpenMPDependClauseKind DepKind,
-    OpenMPLinearClauseKind LinKind, OpenMPMapClauseKind MapTypeModifier, 
-    OpenMPMapClauseKind MapType, SourceLocation DepLinMapLoc) {
+    OpenMPLinearClauseKind LinKind, OpenMPMapClauseKind MapTypeModifier,
+    OpenMPMapClauseKind MapType, bool IsMapTypeImplicit,
+    SourceLocation DepLinMapLoc) {
   OMPClause *Res = nullptr;
   switch (Kind) {
   case OMPC_private:
@@ -6555,8 +6556,9 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
                                   StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_map:
-    Res = ActOnOpenMPMapClause(MapTypeModifier, MapType, DepLinMapLoc, ColonLoc,
-                               VarList, StartLoc, LParenLoc, EndLoc);
+    Res = ActOnOpenMPMapClause(MapTypeModifier, MapType, IsMapTypeImplicit,
+                               DepLinMapLoc, ColonLoc, VarList, StartLoc,
+                               LParenLoc, EndLoc);
     break;
   case OMPC_if:
   case OMPC_final:
@@ -8474,10 +8476,12 @@ static bool CheckTypeMappable(SourceLocation SL, SourceRange SR, Sema &SemaRef,
   return true;
 }
 
-OMPClause *Sema::ActOnOpenMPMapClause(
-    OpenMPMapClauseKind MapTypeModifier, OpenMPMapClauseKind MapType,
-    SourceLocation MapLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VarList,
-    SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation EndLoc) {
+OMPClause *
+Sema::ActOnOpenMPMapClause(OpenMPMapClauseKind MapTypeModifier,
+                           OpenMPMapClauseKind MapType, bool IsMapTypeImplicit,
+                           SourceLocation MapLoc, SourceLocation ColonLoc,
+                           ArrayRef<Expr *> VarList, SourceLocation StartLoc,
+                           SourceLocation LParenLoc, SourceLocation EndLoc) {
   SmallVector<Expr *, 4> Vars;
 
   for (auto &RE : VarList) {
@@ -8592,9 +8596,8 @@ OMPClause *Sema::ActOnOpenMPMapClause(
     if (DKind == OMPD_target_enter_data &&
         !(MapType == OMPC_MAP_to || MapType == OMPC_MAP_alloc)) {
       Diag(StartLoc, diag::err_omp_invalid_map_type_for_directive)
-          <<
-          // TODO: Need to determine if map type is implicitly determined
-          0 << getOpenMPSimpleClauseTypeName(OMPC_map, MapType)
+          << (IsMapTypeImplicit ? 1 : 0)
+          << getOpenMPSimpleClauseTypeName(OMPC_map, MapType)
           << getOpenMPDirectiveName(DKind);
       // Proceed to add the variable in a map clause anyway, to prevent
       // further spurious messages
@@ -8609,9 +8612,8 @@ OMPClause *Sema::ActOnOpenMPMapClause(
         !(MapType == OMPC_MAP_from || MapType == OMPC_MAP_release ||
           MapType == OMPC_MAP_delete)) {
       Diag(StartLoc, diag::err_omp_invalid_map_type_for_directive)
-          <<
-          // TODO: Need to determine if map type is implicitly determined
-          0 << getOpenMPSimpleClauseTypeName(OMPC_map, MapType)
+          << (IsMapTypeImplicit ? 1 : 0)
+          << getOpenMPSimpleClauseTypeName(OMPC_map, MapType)
           << getOpenMPDirectiveName(DKind);
       // Proceed to add the variable in a map clause anyway, to prevent
       // further spurious messages
@@ -8625,7 +8627,8 @@ OMPClause *Sema::ActOnOpenMPMapClause(
     return nullptr;
 
   return OMPMapClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars,
-                              MapTypeModifier, MapType, MapLoc);
+                              MapTypeModifier, MapType, IsMapTypeImplicit,
+                              MapLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPNumTeamsClause(Expr *NumTeams, 

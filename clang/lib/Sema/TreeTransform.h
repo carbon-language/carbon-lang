@@ -1658,14 +1658,15 @@ public:
   ///
   /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
-  OMPClause *RebuildOMPMapClause(
-      OpenMPMapClauseKind MapTypeModifier, OpenMPMapClauseKind MapType,
-      SourceLocation MapLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VarList,
-      SourceLocation StartLoc, SourceLocation LParenLoc,
-      SourceLocation EndLoc) {
-    return getSema().ActOnOpenMPMapClause(MapTypeModifier, MapType, MapLoc,
-                                          ColonLoc, VarList,StartLoc,
-                                          LParenLoc, EndLoc);
+  OMPClause *
+  RebuildOMPMapClause(OpenMPMapClauseKind MapTypeModifier,
+                      OpenMPMapClauseKind MapType, bool IsMapTypeImplicit,
+                      SourceLocation MapLoc, SourceLocation ColonLoc,
+                      ArrayRef<Expr *> VarList, SourceLocation StartLoc,
+                      SourceLocation LParenLoc, SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPMapClause(MapTypeModifier, MapType,
+                                          IsMapTypeImplicit, MapLoc, ColonLoc,
+                                          VarList, StartLoc, LParenLoc, EndLoc);
   }
 
   /// \brief Build a new OpenMP 'num_teams' clause.
@@ -7860,9 +7861,9 @@ OMPClause *TreeTransform<Derived>::TransformOMPMapClause(OMPMapClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPMapClause(
-      C->getMapTypeModifier(), C->getMapType(), C->getMapLoc(),
-      C->getColonLoc(), Vars, C->getLocStart(), C->getLParenLoc(),
-      C->getLocEnd());
+      C->getMapTypeModifier(), C->getMapType(), C->isImplicitMapType(),
+      C->getMapLoc(), C->getColonLoc(), Vars, C->getLocStart(),
+      C->getLParenLoc(), C->getLocEnd());
 }
 
 template <typename Derived>
