@@ -52,24 +52,27 @@ define i32 @yes1(i32* %q) {
 ; CHECK-LABEL: stack_uses:
 ; CHECK-NEXT: .param i32, i32, i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
-; CHECK-NEXT: .local i32, i32{{$}}
-; CHECK-NEXT: i32.const   $5=, 2{{$}}
-; CHECK-NEXT: i32.const   $4=, 1{{$}}
 ; CHECK-NEXT: block{{$}}
-; CHECK-NEXT: i32.lt_s    $push0=, $0, $4{{$}}
-; CHECK-NEXT: i32.lt_s    $push1=, $1, $5{{$}}
-; CHECK-NEXT: i32.xor     $push4=, $pop0, $pop1{{$}}
-; CHECK-NEXT: i32.lt_s    $push2=, $2, $4{{$}}
-; CHECK-NEXT: i32.lt_s    $push3=, $3, $5{{$}}
-; CHECK-NEXT: i32.xor     $push5=, $pop2, $pop3{{$}}
-; CHECK-NEXT: i32.xor     $push6=, $pop4, $pop5{{$}}
-; CHECK-NEXT: i32.ne      $push7=, $pop6, $4{{$}}
-; CHECK-NEXT: br_if       $pop7, 0{{$}}
-; CHECK-NEXT: i32.const   $push8=, 0{{$}}
-; CHECK-NEXT: return      $pop8{{$}}
+; CHECK-NEXT: i32.const   $push13=, 1{{$}}
+; CHECK-NEXT: i32.lt_s    $push0=, $0, $pop13{{$}}
+; CHECK-NEXT: i32.const   $push1=, 2{{$}}
+; CHECK-NEXT: i32.lt_s    $push2=, $1, $pop1{{$}}
+; CHECK-NEXT: i32.xor     $push5=, $pop0, $pop2{{$}}
+; CHECK-NEXT: i32.const   $push12=, 1{{$}}
+; CHECK-NEXT: i32.lt_s    $push3=, $2, $pop12{{$}}
+; CHECK-NEXT: i32.const   $push11=, 2{{$}}
+; CHECK-NEXT: i32.lt_s    $push4=, $3, $pop11{{$}}
+; CHECK-NEXT: i32.xor     $push6=, $pop3, $pop4{{$}}
+; CHECK-NEXT: i32.xor     $push7=, $pop5, $pop6{{$}}
+; CHECK-NEXT: i32.const   $push10=, 1{{$}}
+; CHECK-NEXT: i32.ne      $push8=, $pop7, $pop10{{$}}
+; CHECK-NEXT: br_if       $pop8, 0{{$}}
+; CHECK-NEXT: i32.const   $push9=, 0{{$}}
+; CHECK-NEXT: return      $pop9{{$}}
 ; CHECK-NEXT: .LBB4_2:
 ; CHECK-NEXT: end_block{{$}}
-; CHECK-NEXT: return      $4{{$}}
+; CHECK-NEXT: i32.const   $push14=, 1{{$}}
+; CHECK-NEXT: return      $pop14{{$}}
 define i32 @stack_uses(i32 %x, i32 %y, i32 %z, i32 %w) {
 entry:
   %c = icmp sle i32 %x, 0
