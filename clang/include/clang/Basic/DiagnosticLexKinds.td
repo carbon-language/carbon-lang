@@ -660,10 +660,10 @@ def note_header_guard : Note<
 
 def warn_defined_in_object_type_macro : Warning<
   "macro expansion producing 'defined' has undefined behavior">,
-  InGroup<ExpansionToUndefined>;
+  InGroup<ExpansionToDefined>;
 def warn_defined_in_function_type_macro : Extension<
   "macro expansion producing 'defined' has undefined behavior">,
-  InGroup<ExpansionToUndefined>;
+  InGroup<ExpansionToDefined>;
 
 let CategoryName = "Nullability Issue" in {
 
