@@ -6475,7 +6475,7 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     }
 
     SourceLocation ELoc = RefExpr->getExprLoc();
-    // OpenMP [2.1, C/C++]
+    // OpenMP [3.1, C/C++]
     //  A list item is a variable name.
     // OpenMP  [2.9.3.3, Restrictions, p.1]
     //  A variable that is part of another variable (as an array or
