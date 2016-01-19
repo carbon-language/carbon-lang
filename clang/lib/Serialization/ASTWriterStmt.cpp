@@ -2222,6 +2222,14 @@ void ASTStmtWriter::VisitOMPTargetEnterDataDirective(
   Code = serialization::STMT_OMP_TARGET_ENTER_DATA_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPTargetExitDataDirective(
+    OMPTargetExitDataDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_TARGET_EXIT_DATA_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPTaskyieldDirective(OMPTaskyieldDirective *D) {
   VisitStmt(D);
   VisitOMPExecutableDirective(D);

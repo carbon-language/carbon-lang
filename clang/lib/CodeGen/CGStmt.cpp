@@ -259,6 +259,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPTargetEnterDataDirectiveClass:
     EmitOMPTargetEnterDataDirective(cast<OMPTargetEnterDataDirective>(*S));
     break;
+  case Stmt::OMPTargetExitDataDirectiveClass:
+    EmitOMPTargetExitDataDirective(cast<OMPTargetExitDataDirective>(*S));
+    break;
   case Stmt::OMPTaskLoopDirectiveClass:
     EmitOMPTaskLoopDirective(cast<OMPTaskLoopDirective>(*S));
     break;
