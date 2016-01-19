@@ -1380,15 +1380,11 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnForward(
   ModifiedRegs.resize(TRI->getNumRegs());
   UsedRegs.resize(TRI->getNumRegs());
   ++MBBI;
-  for (unsigned Count = 0; MBBI != E; ++MBBI) {
+  for (; MBBI != E; ++MBBI) {
     MachineInstr *MI = MBBI;
-    // Skip DBG_VALUE instructions. Otherwise debug info can affect the
-    // optimization by changing how far we scan.
+    // Skip DBG_VALUE instructions.
     if (MI->isDebugValue())
       continue;
-
-    // Now that we know this is a real instruction, count it.
-    ++Count;
 
     // If we found a match, return it.
     if (isMatchingUpdateInsn(I, MI, BaseReg, UnscaledOffset))
@@ -1434,15 +1430,11 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
   ModifiedRegs.resize(TRI->getNumRegs());
   UsedRegs.resize(TRI->getNumRegs());
   --MBBI;
-  for (unsigned Count = 0; MBBI != B; --MBBI) {
+  for (; MBBI != B; --MBBI) {
     MachineInstr *MI = MBBI;
-    // Skip DBG_VALUE instructions. Otherwise debug info can affect the
-    // optimization by changing how far we scan.
+    // Skip DBG_VALUE instructions.
     if (MI->isDebugValue())
       continue;
-
-    // Now that we know this is a real instruction, count it.
-    ++Count;
 
     // If we found a match, return it.
     if (isMatchingUpdateInsn(I, MI, BaseReg, Offset))
