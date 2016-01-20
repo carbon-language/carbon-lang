@@ -917,9 +917,6 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntrinsicID) {
     default: return Op;
-    case AMDGPUIntrinsic::AMDGPU_abs:
-    case AMDGPUIntrinsic::AMDIL_abs: // Legacy name.
-      return LowerIntrinsicIABS(Op, DAG);
     case AMDGPUIntrinsic::AMDGPU_lrp:
       return LowerIntrinsicLRP(Op, DAG);
 
@@ -1056,17 +1053,6 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case AMDGPUIntrinsic::AMDGPU_brev: // Legacy name
       return DAG.getNode(ISD::BITREVERSE, DL, VT, Op.getOperand(1));
   }
-}
-
-///IABS(a) = SMAX(sub(0, a), a)
-SDValue AMDGPUTargetLowering::LowerIntrinsicIABS(SDValue Op,
-                                                 SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  EVT VT = Op.getValueType();
-  SDValue Neg = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT),
-                            Op.getOperand(1));
-
-  return DAG.getNode(ISD::SMAX, DL, VT, Neg, Op.getOperand(1));
 }
 
 /// Linear Interpolation
