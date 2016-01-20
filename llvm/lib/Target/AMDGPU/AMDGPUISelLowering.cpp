@@ -1046,8 +1046,6 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case AMDGPUIntrinsic::AMDIL_exp: // Legacy name.
       return DAG.getNode(ISD::FEXP2, DL, VT, Op.getOperand(1));
 
-    case AMDGPUIntrinsic::AMDGPU_trunc: // Legacy name.
-      return DAG.getNode(ISD::FTRUNC, DL, VT, Op.getOperand(1));
     case AMDGPUIntrinsic::AMDGPU_brev: // Legacy name
       return DAG.getNode(ISD::BITREVERSE, DL, VT, Op.getOperand(1));
   }
