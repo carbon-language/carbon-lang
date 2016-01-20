@@ -6403,6 +6403,8 @@ def err_deleted_function_use : Error<"attempt to use a deleted function">;
 
 def err_kern_type_not_void_return : Error<
   "kernel function type %0 must have void return type">;
+def err_kern_is_nonstatic_method : Error<
+  "kernel function %0 must be a free function or static member function">;
 def err_config_scalar_return : Error<
   "CUDA special function 'cudaConfigureCall' must have scalar return type">;
 def err_kern_call_not_global_function : Error<
@@ -6414,6 +6416,12 @@ def err_ref_bad_target : Error<
   "function %1 in %select{__device__|__global__|__host__|__host__ __device__}2 function">;
 def warn_host_calls_from_host_device : Warning<
   "calling __host__ function %0 from __host__ __device__ function %1 can lead to runtime errors">,
+  InGroup<CudaCompat>;
+def warn_kern_is_method : Extension<
+  "kernel function %0 is a member function; this may not be accepted by nvcc">,
+  InGroup<CudaCompat>;
+def warn_kern_is_inline : Warning<
+  "ignored 'inline' attribute on kernel function %0">,
   InGroup<CudaCompat>;
 
 def warn_non_pod_vararg_with_format_string : Warning<

@@ -3617,11 +3617,21 @@ static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                               : FixItHint());
     return;
   }
+  if (const auto *Method = dyn_cast<CXXMethodDecl>(FD)) {
+    if (Method->isInstance()) {
+      S.Diag(Method->getLocStart(), diag::err_kern_is_nonstatic_method)
+          << Method;
+      return;
+    }
+    S.Diag(Method->getLocStart(), diag::warn_kern_is_method) << Method;
+  }
+  // Only warn for "inline" when compiling for host, to cut down on noise.
+  if (FD->isInlineSpecified() && !S.getLangOpts().CUDAIsDevice)
+    S.Diag(FD->getLocStart(), diag::warn_kern_is_inline) << FD;
 
   D->addAttr(::new (S.Context)
               CUDAGlobalAttr(Attr.getRange(), S.Context,
                              Attr.getAttributeSpellingListIndex()));
-
 }
 
 static void handleGNUInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
