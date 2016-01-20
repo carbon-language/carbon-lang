@@ -1048,6 +1048,17 @@ const internal::VariadicDynCastAllOfMatcher<
   Decl,
   UnresolvedUsingTypenameDecl> unresolvedUsingTypenameDecl;
 
+/// \brief Matches parentheses used in expressions.
+///
+/// Example matches (foo() + 1)
+/// \code
+///   int foo() { return 1; }
+///   int a = (foo() + 1);
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  ParenExpr> parenExpr;
+
 /// \brief Matches constructor call expressions (including implicit ones).
 ///
 /// Example matches string(ptr, n) and ptr within arguments of f

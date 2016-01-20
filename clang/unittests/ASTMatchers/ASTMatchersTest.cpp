@@ -3667,6 +3667,14 @@ TEST(ExceptionHandling, SimpleCases) {
                          varDecl(isExceptionVariable())));
 }
 
+TEST(ParenExpression, SimpleCases) {
+  EXPECT_TRUE(matches("int i = (3);", parenExpr()));
+  EXPECT_TRUE(matches("int i = (3 + 7);", parenExpr()));
+  EXPECT_TRUE(notMatches("int i = 3;", parenExpr()));
+  EXPECT_TRUE(notMatches("int foo() { return 1; }; int a = foo();",
+                         parenExpr()));
+}
+
 TEST(HasConditionVariableStatement, DoesNotMatchCondition) {
   EXPECT_TRUE(notMatches(
       "void x() { if(true) {} }",

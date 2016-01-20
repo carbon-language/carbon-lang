@@ -328,6 +328,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(on);
   REGISTER_MATCHER(onImplicitObjectArgument);
   REGISTER_MATCHER(parameterCountIs);
+  REGISTER_MATCHER(parenExpr);
   REGISTER_MATCHER(parenType);
   REGISTER_MATCHER(parmVarDecl);
   REGISTER_MATCHER(pointee);
