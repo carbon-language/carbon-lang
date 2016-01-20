@@ -57,7 +57,7 @@ static MCInstPrinter *createMCInstPrinter(const Triple & /*T*/,
                                           const MCAsmInfo &MAI,
                                           const MCInstrInfo &MII,
                                           const MCRegisterInfo &MRI) {
-  assert(SyntaxVariant == 0);
+  assert(SyntaxVariant == 0 && "WebAssembly only has one syntax variant");
   return new WebAssemblyInstPrinter(MAI, MII, MRI);
 }
 

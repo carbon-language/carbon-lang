@@ -44,8 +44,7 @@ class WebAssemblyMCCodeEmitter final : public MCCodeEmitter {
                          const MCSubtargetInfo &STI) const override;
 
 public:
-  WebAssemblyMCCodeEmitter(const MCInstrInfo &mcii)
-      : MCII(mcii) {}
+  WebAssemblyMCCodeEmitter(const MCInstrInfo &mcii) : MCII(mcii) {}
 };
 } // end anonymous namespace
 
@@ -76,7 +75,8 @@ void WebAssemblyMCCodeEmitter::encodeInstruction(
       support::endian::Writer<support::little>(OS).write<uint64_t>(0);
       Fixups.push_back(MCFixup::create(
           (1 + MCII.get(MI.getOpcode()).isVariadic() + i) * sizeof(uint64_t),
-          MO.getExpr(), STI.getTargetTriple().isArch64Bit() ? FK_Data_8 : FK_Data_4,
+          MO.getExpr(),
+          STI.getTargetTriple().isArch64Bit() ? FK_Data_8 : FK_Data_4,
           MI.getLoc()));
       ++MCNumFixups;
     } else {
