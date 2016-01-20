@@ -1,4 +1,4 @@
-;===- ./lib/CodeGen/LLVMBuild.txt ------------------------------*- Conf -*--===;
+;===- ./lib/CodeGen/GlobalISel/LLVMBuild.txt -----------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,11 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = AsmPrinter SelectionDAG MIRParser GlobalISel
-
 [component_0]
 type = Library
-name = CodeGen
-parent = Libraries
-required_libraries = Analysis BitReader BitWriter Core Instrumentation MC Scalar Support Target TransformUtils
+name = GlobalISel
+parent = CodeGen
+required_libraries = Analysis CodeGen Core MC Support Target TransformUtils
