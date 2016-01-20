@@ -754,8 +754,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (Changed) return II;
   }
 
-  auto SimplifyDemandedVectorEltsLow = [this](Value *Op, unsigned Width, unsigned DemandedWidth)
-  {
+  auto SimplifyDemandedVectorEltsLow = [this](Value *Op, unsigned Width,
+                                              unsigned DemandedWidth) {
     APInt UndefElts(Width, 0);
     APInt DemandedElts = APInt::getLowBitsSet(Width, DemandedWidth);
     return SimplifyDemandedVectorElts(Op, DemandedElts, UndefElts);
