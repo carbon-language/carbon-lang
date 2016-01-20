@@ -128,4 +128,21 @@ return:
   ret void
 }
 
+; Don't stackify stores effects across other instructions with side effects.
+
+; CHECK:      side_effects:
+; CHECK:      store
+; CHECK-NEXT: call
+; CHECK-NEXT: store
+; CHECK-NEXT: call
+declare void @evoke_side_effects()
+define hidden void @stackify_store_across_side_effects(double* nocapture %d) {
+entry:
+  store double 2.0, double* %d
+  call void @evoke_side_effects()
+  store double 2.0, double* %d
+  call void @evoke_side_effects()
+  ret void
+}
+
 !0 = !{}
