@@ -2030,6 +2030,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   [IntrReadWriteArgMem]>;
 }
 
+// Store ops using non-temporal hint
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_avx512_storent_q_512 :
+        GCCBuiltin<"__builtin_ia32_movntdq512">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v8i64_ty], [IntrReadWriteArgMem]>;
+  def int_x86_avx512_storent_pd_512 :
+        GCCBuiltin<"__builtin_ia32_movntpd512">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v8f64_ty], [IntrReadWriteArgMem]>;  
+  def int_x86_avx512_storent_ps_512 :
+        GCCBuiltin<"__builtin_ia32_movntps512">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v16f32_ty], [IntrReadWriteArgMem]>;
+}
 //===----------------------------------------------------------------------===//
 // AVX2
 
