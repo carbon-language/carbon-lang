@@ -913,6 +913,17 @@ def FAULTING_LOAD_OP : Instruction {
   let usesCustomInserter = 1;
   let mayLoad = 1;
 }
+
+// Generic opcode used by the IRTranslator.
+// After ISel, this opcode should not appear.
+def G_ADD : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let AsmString = "";
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+// TODO: Add the other generic opcodes.
 }
 
 //===----------------------------------------------------------------------===//
