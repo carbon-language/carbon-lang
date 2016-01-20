@@ -349,7 +349,12 @@ struct ThrowingIterator {
 	if (action_ == TAAssignment)
 	{
 		if (index_ == 0)
+#ifndef TEST_HAS_NO_EXCEPTIONS
+			assert(false);
+#else
 			throw std::runtime_error ("throw from iterator assignment");
+#endif
+
 		else
 			--index_;
 	}
@@ -367,7 +372,11 @@ struct ThrowingIterator {
 	if (action_ == TADereference)
 	{
 		if (index_ == 0)
+#ifndef TEST_HAS_NO_EXCEPTIONS
+			assert(false);
+#else
 			throw std::runtime_error ("throw from iterator dereference");
+#endif
 		else
 			--index_;
 	}
@@ -379,7 +388,11 @@ struct ThrowingIterator {
 	if (action_ == TAIncrement)
 	{
 		if (index_ == 0)
+#ifndef TEST_HAS_NO_EXCEPTIONS
+			assert(false);
+#else
 			throw std::runtime_error ("throw from iterator increment");
+#endif
 		else
 			--index_;
 	}
@@ -399,7 +412,11 @@ struct ThrowingIterator {
 	if (action_ == TADecrement)
 	{
 		if (index_ == 0)
+#ifndef TEST_HAS_NO_EXCEPTIONS
+			assert(false);
+#else
 			throw std::runtime_error ("throw from iterator decrement");
+#endif
 		else
 			--index_;
 	}
@@ -418,7 +435,11 @@ struct ThrowingIterator {
 	if (action_ == TAComparison)
 	{
 		if (index_ == 0)
+#ifndef TEST_HAS_NO_EXCEPTIONS
+			assert(false);
+#else
 			throw std::runtime_error ("throw from iterator comparison");
+#endif
 		else
 			--index_;
 	}
