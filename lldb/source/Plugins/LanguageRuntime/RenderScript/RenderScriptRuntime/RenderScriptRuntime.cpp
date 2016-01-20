@@ -391,7 +391,7 @@ const unsigned int RenderScriptRuntime::AllocationDetails::RSTypeToFormat[][3] =
 };
 
 const std::string RenderScriptRuntime::s_runtimeExpandSuffix(".expand");
-const std::array<const char *, 3> RenderScriptRuntime::s_runtimeCoordVars{"rsIndex", "p->current.y", "p->current.z"};
+const std::array<const char *, 3> RenderScriptRuntime::s_runtimeCoordVars{{"rsIndex", "p->current.y", "p->current.z"}};
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
