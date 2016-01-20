@@ -1360,8 +1360,7 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                        Op.getOperand(2),
                        Op.getOperand(3));
 
-  case AMDGPUIntrinsic::AMDGPU_fract:
-  case AMDGPUIntrinsic::AMDIL_fraction: // Legacy name.
+  case AMDGPUIntrinsic::AMDGPU_fract: // Legacy name.
     return DAG.getNode(ISD::FSUB, DL, VT, Op.getOperand(1),
                        DAG.getNode(ISD::FFLOOR, DL, VT, Op.getOperand(1)));
   case AMDGPUIntrinsic::SI_fs_constant: {
