@@ -4093,7 +4093,7 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout &DL,
   return Result == I ? UndefValue::get(I->getType()) : Result;
 }
 
-/// \brief Implementation of recursive simplification through an instructions
+/// \brief Implementation of recursive simplification through an instruction's
 /// uses.
 ///
 /// This is the common implementation of the recursive simplification routines.
