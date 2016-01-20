@@ -3189,8 +3189,8 @@ AST_MATCHER_P(ArraySubscriptExpr, hasBase,
   return false;
 }
 
-/// \brief Matches a 'for', 'while', or 'do while' statement that has
-/// a given body.
+/// \brief Matches a 'for', 'while', 'do while' statement or a function
+/// definition that has a given body.
 ///
 /// Given
 /// \code
@@ -3203,9 +3203,10 @@ AST_MATCHER_P(ArraySubscriptExpr, hasBase,
 AST_POLYMORPHIC_MATCHER_P(hasBody,
                           AST_POLYMORPHIC_SUPPORTED_TYPES(DoStmt, ForStmt,
                                                           WhileStmt,
-                                                          CXXForRangeStmt),
+                                                          CXXForRangeStmt,
+                                                          FunctionDecl),
                           internal::Matcher<Stmt>, InnerMatcher) {
-  const Stmt *const Statement = Node.getBody();
+  const Stmt *const Statement = internal::GetBodyMatcher<NodeType>::get(Node);
   return (Statement != nullptr &&
           InnerMatcher.matches(*Statement, Finder, Builder));
 }

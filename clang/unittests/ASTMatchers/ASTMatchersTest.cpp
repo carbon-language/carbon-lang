@@ -2973,6 +2973,10 @@ TEST(HasBody, FindsBodyOfForWhileDoLoops) {
               doStmt(hasBody(compoundStmt()))));
   EXPECT_TRUE(matches("void f() { int p[2]; for (auto x : p) {} }",
               cxxForRangeStmt(hasBody(compoundStmt()))));
+  EXPECT_TRUE(matches("void f() {}", functionDecl(hasBody(compoundStmt()))));
+  EXPECT_TRUE(notMatches("void f();", functionDecl(hasBody(compoundStmt()))));
+  EXPECT_TRUE(matches("void f(); void f() {}",
+                         functionDecl(hasBody(compoundStmt()))));
 }
 
 TEST(HasAnySubstatement, MatchesForTopLevelCompoundStatement) {
