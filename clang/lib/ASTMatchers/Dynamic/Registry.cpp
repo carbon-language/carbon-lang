@@ -268,6 +268,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isClass);
   REGISTER_MATCHER(isConst);
   REGISTER_MATCHER(isConstQualified);
+  REGISTER_MATCHER(isCopyAssignmentOperator);
   REGISTER_MATCHER(isCopyConstructor);
   REGISTER_MATCHER(isDefaultConstructor);
   REGISTER_MATCHER(isDefaulted);
