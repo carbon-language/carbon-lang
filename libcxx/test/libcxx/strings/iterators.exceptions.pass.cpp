@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-
+// XFAIL: libcpp-no-exceptions
 // <iterator>
 
 // __libcpp_is_trivial_iterator<Tp>
