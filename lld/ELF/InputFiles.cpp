@@ -282,7 +282,7 @@ ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 
 template <class ELFT>
 SymbolBody *ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
-                                                     const Elf_Sym *Sym) {
+                                               const Elf_Sym *Sym) {
   ErrorOr<StringRef> NameOrErr = Sym->getName(StringTable);
   error(NameOrErr);
   StringRef Name = *NameOrErr;
