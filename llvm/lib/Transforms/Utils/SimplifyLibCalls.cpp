@@ -1255,10 +1255,10 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
         One = ConstantExpr::getFPExtend(One, Op->getType());
 
       Module *M = CI->getModule();
-      Value *Callee =
+      Value *NewCallee =
           M->getOrInsertFunction(TLI->getName(LdExp), Op->getType(),
                                  Op->getType(), B.getInt32Ty(), nullptr);
-      CallInst *CI = B.CreateCall(Callee, {One, LdExpArg});
+      CallInst *CI = B.CreateCall(NewCallee, {One, LdExpArg});
       if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
         CI->setCallingConv(F->getCallingConv());
 
