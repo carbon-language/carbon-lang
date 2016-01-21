@@ -25,6 +25,8 @@ T tmain(T argc, T *argv) {
   foo();
 #pragma omp target map(always,alloc: i)
   foo();
+#pragma omp target nowait
+  foo();
   return 0;
 }
 
@@ -44,6 +46,8 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp target map(always,alloc: i)
 // CHECK-NEXT: foo()
+// CHECK-NEXT: #pragma omp target nowait
+// CHECK-NEXT: foo()
 // CHECK: template <typename T = char, int C = 1> char tmain(char argc, char *argv) {
 // CHECK-NEXT: char i, j, a[20]
 // CHECK-NEXT: #pragma omp target
@@ -60,6 +64,8 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp target map(always,alloc: i)
 // CHECK-NEXT: foo()
+// CHECK-NEXT: #pragma omp target nowait
+// CHECK-NEXT: foo()
 // CHECK: template <typename T, int C> T tmain(T argc, T *argv) {
 // CHECK-NEXT: T i, j, a[20]
 // CHECK-NEXT: #pragma omp target
@@ -75,6 +81,8 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: #pragma omp target map(to: i) map(from: j)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp target map(always,alloc: i)
+// CHECK-NEXT: foo()
+// CHECK-NEXT: #pragma omp target nowait
 // CHECK-NEXT: foo()
 
 // CHECK-LABEL: int main(int argc, char **argv) {
@@ -112,6 +120,11 @@ int main (int argc, char **argv) {
 
 #pragma omp target map(always,alloc: i)
 // CHECK-NEXT: #pragma omp target map(always,alloc: i)
+  foo();
+// CHECK-NEXT: foo();
+
+#pragma omp target nowait
+// CHECK-NEXT: #pragma omp target nowait
   foo();
 // CHECK-NEXT: foo();
 

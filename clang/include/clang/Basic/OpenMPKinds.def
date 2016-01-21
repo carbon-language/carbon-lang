@@ -355,6 +355,7 @@ OPENMP_TARGET_CLAUSE(if)
 OPENMP_TARGET_CLAUSE(device)
 OPENMP_TARGET_CLAUSE(map)
 OPENMP_TARGET_CLAUSE(private)
+OPENMP_TARGET_CLAUSE(nowait)
 
 // Clauses allowed for OpenMP directive 'target data'.
 // TODO More clauses for 'target data' directive.
