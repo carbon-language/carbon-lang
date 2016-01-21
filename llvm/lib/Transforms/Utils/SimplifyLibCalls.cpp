@@ -1465,10 +1465,71 @@ Value *LibCallSimplifier::optimizeTan(CallInst *CI, IRBuilder<> &B) {
   return Ret;
 }
 
-static bool isTrigLibCall(CallInst *CI);
+static bool isTrigLibCall(CallInst *CI) {
+  Function *Callee = CI->getCalledFunction();
+  FunctionType *FT = Callee->getFunctionType();
+
+  // We can only hope to do anything useful if we can ignore things like errno
+  // and floating-point exceptions.
+  bool AttributesSafe =
+  CI->hasFnAttr(Attribute::NoUnwind) && CI->hasFnAttr(Attribute::ReadNone);
+
+  // Other than that we need float(float) or double(double)
+  return AttributesSafe && FT->getNumParams() == 1 &&
+  FT->getReturnType() == FT->getParamType(0) &&
+  (FT->getParamType(0)->isFloatTy() ||
+   FT->getParamType(0)->isDoubleTy());
+}
+
 static void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
                              bool UseFloat, Value *&Sin, Value *&Cos,
-                             Value *&SinCos);
+                             Value *&SinCos) {
+  Type *ArgTy = Arg->getType();
+  Type *ResTy;
+  StringRef Name;
+
+  Triple T(OrigCallee->getParent()->getTargetTriple());
+  if (UseFloat) {
+    Name = "__sincospif_stret";
+
+    assert(T.getArch() != Triple::x86 && "x86 messy and unsupported for now");
+    // x86_64 can't use {float, float} since that would be returned in both
+    // xmm0 and xmm1, which isn't what a real struct would do.
+    ResTy = T.getArch() == Triple::x86_64
+    ? static_cast<Type *>(VectorType::get(ArgTy, 2))
+    : static_cast<Type *>(StructType::get(ArgTy, ArgTy, nullptr));
+  } else {
+    Name = "__sincospi_stret";
+    ResTy = StructType::get(ArgTy, ArgTy, nullptr);
+  }
+
+  Module *M = OrigCallee->getParent();
+  Value *Callee = M->getOrInsertFunction(Name, OrigCallee->getAttributes(),
+                                         ResTy, ArgTy, nullptr);
+
+  if (Instruction *ArgInst = dyn_cast<Instruction>(Arg)) {
+    // If the argument is an instruction, it must dominate all uses so put our
+    // sincos call there.
+    B.SetInsertPoint(ArgInst->getParent(), ++ArgInst->getIterator());
+  } else {
+    // Otherwise (e.g. for a constant) the beginning of the function is as
+    // good a place as any.
+    BasicBlock &EntryBB = B.GetInsertBlock()->getParent()->getEntryBlock();
+    B.SetInsertPoint(&EntryBB, EntryBB.begin());
+  }
+
+  SinCos = B.CreateCall(Callee, Arg, "sincospi");
+
+  if (SinCos->getType()->isStructTy()) {
+    Sin = B.CreateExtractValue(SinCos, 0, "sinpi");
+    Cos = B.CreateExtractValue(SinCos, 1, "cospi");
+  } else {
+    Sin = B.CreateExtractElement(SinCos, ConstantInt::get(B.getInt32Ty(), 0),
+                                 "sinpi");
+    Cos = B.CreateExtractElement(SinCos, ConstantInt::get(B.getInt32Ty(), 1),
+                                 "cospi");
+  }
+}
 
 Value *LibCallSimplifier::optimizeSinCosPi(CallInst *CI, IRBuilder<> &B) {
   // Make sure the prototype is as expected, otherwise the rest of the
@@ -1502,22 +1563,6 @@ Value *LibCallSimplifier::optimizeSinCosPi(CallInst *CI, IRBuilder<> &B) {
   replaceTrigInsts(SinCosCalls, SinCos);
 
   return nullptr;
-}
-
-static bool isTrigLibCall(CallInst *CI) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-
-  // We can only hope to do anything useful if we can ignore things like errno
-  // and floating-point exceptions.
-  bool AttributesSafe =
-      CI->hasFnAttr(Attribute::NoUnwind) && CI->hasFnAttr(Attribute::ReadNone);
-
-  // Other than that we need float(float) or double(double)
-  return AttributesSafe && FT->getNumParams() == 1 &&
-         FT->getReturnType() == FT->getParamType(0) &&
-         (FT->getParamType(0)->isFloatTy() ||
-          FT->getParamType(0)->isDoubleTy());
 }
 
 void
@@ -1557,55 +1602,6 @@ void LibCallSimplifier::replaceTrigInsts(SmallVectorImpl<CallInst *> &Calls,
                                          Value *Res) {
   for (CallInst *C : Calls)
     replaceAllUsesWith(C, Res);
-}
-
-void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
-                      bool UseFloat, Value *&Sin, Value *&Cos, Value *&SinCos) {
-  Type *ArgTy = Arg->getType();
-  Type *ResTy;
-  StringRef Name;
-
-  Triple T(OrigCallee->getParent()->getTargetTriple());
-  if (UseFloat) {
-    Name = "__sincospif_stret";
-
-    assert(T.getArch() != Triple::x86 && "x86 messy and unsupported for now");
-    // x86_64 can't use {float, float} since that would be returned in both
-    // xmm0 and xmm1, which isn't what a real struct would do.
-    ResTy = T.getArch() == Triple::x86_64
-                ? static_cast<Type *>(VectorType::get(ArgTy, 2))
-                : static_cast<Type *>(StructType::get(ArgTy, ArgTy, nullptr));
-  } else {
-    Name = "__sincospi_stret";
-    ResTy = StructType::get(ArgTy, ArgTy, nullptr);
-  }
-
-  Module *M = OrigCallee->getParent();
-  Value *Callee = M->getOrInsertFunction(Name, OrigCallee->getAttributes(),
-                                         ResTy, ArgTy, nullptr);
-
-  if (Instruction *ArgInst = dyn_cast<Instruction>(Arg)) {
-    // If the argument is an instruction, it must dominate all uses so put our
-    // sincos call there.
-    B.SetInsertPoint(ArgInst->getParent(), ++ArgInst->getIterator());
-  } else {
-    // Otherwise (e.g. for a constant) the beginning of the function is as
-    // good a place as any.
-    BasicBlock &EntryBB = B.GetInsertBlock()->getParent()->getEntryBlock();
-    B.SetInsertPoint(&EntryBB, EntryBB.begin());
-  }
-
-  SinCos = B.CreateCall(Callee, Arg, "sincospi");
-
-  if (SinCos->getType()->isStructTy()) {
-    Sin = B.CreateExtractValue(SinCos, 0, "sinpi");
-    Cos = B.CreateExtractValue(SinCos, 1, "cospi");
-  } else {
-    Sin = B.CreateExtractElement(SinCos, ConstantInt::get(B.getInt32Ty(), 0),
-                                 "sinpi");
-    Cos = B.CreateExtractElement(SinCos, ConstantInt::get(B.getInt32Ty(), 1),
-                                 "cospi");
-  }
 }
 
 //===----------------------------------------------------------------------===//
