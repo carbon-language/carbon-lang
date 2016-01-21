@@ -881,6 +881,56 @@ static Constant *SymbolicallyEvaluateGEP(Type *SrcTy, ArrayRef<Constant *> Ops,
   return C;
 }
 
+/// Attempt to constant fold an instruction with the
+/// specified opcode and operands.  If successful, the constant result is
+/// returned, if not, null is returned.  Note that this function can fail when
+/// attempting to fold instructions like loads and stores, which have no
+/// constant expression form.
+///
+/// TODO: This function neither utilizes nor preserves nsw/nuw/inbounds/etc
+/// information, due to only being passed an opcode and operands. Constant
+/// folding using this function strips this information.
+///
+static Constant *ConstantFoldInstOperandsImpl(unsigned Opcode, Type *DestTy,
+                                              ArrayRef<Constant *> Ops,
+                                              const DataLayout &DL,
+                                              const TargetLibraryInfo *TLI) {
+  // Handle easy binops first.
+  if (Instruction::isBinaryOp(Opcode))
+    return ConstantFoldBinaryOpOperands(Opcode, Ops[0], Ops[1], DL);
+
+  if (Instruction::isCast(Opcode))
+    return ConstantFoldCastOperand(Opcode, Ops[0], DestTy, DL);
+
+  switch (Opcode) {
+  default: return nullptr;
+  case Instruction::ICmp:
+  case Instruction::FCmp: llvm_unreachable("Invalid for compares");
+  case Instruction::Call:
+    if (Function *F = dyn_cast<Function>(Ops.back()))
+      if (canConstantFoldCallTo(F))
+        return ConstantFoldCall(F, Ops.slice(0, Ops.size() - 1), TLI);
+    return nullptr;
+  case Instruction::Select:
+    return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
+  case Instruction::ExtractElement:
+    return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
+  case Instruction::InsertElement:
+    return ConstantExpr::getInsertElement(Ops[0], Ops[1], Ops[2]);
+  case Instruction::ShuffleVector:
+    return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
+  case Instruction::GetElementPtr: {
+    Type *SrcTy = nullptr;
+    if (Constant *C = CastGEPIndices(SrcTy, Ops, DestTy, DL, TLI))
+      return C;
+    if (Constant *C = SymbolicallyEvaluateGEP(SrcTy, Ops, DestTy, DL, TLI))
+      return C;
+
+    return ConstantExpr::getGetElementPtr(SrcTy, Ops[0], Ops.slice(1));
+  }
+  }
+}
+
 
 
 //===----------------------------------------------------------------------===//
@@ -925,7 +975,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const DataLayout &DL,
   }
 
   // Scan the operand list, checking to see if they are all constants, if so,
-  // hand off to ConstantFoldInstOperands.
+  // hand off to ConstantFoldInstOperandsImpl.
   SmallVector<Constant*, 8> Ops;
   for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
     Constant *Op = dyn_cast<Constant>(*i);
@@ -959,7 +1009,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const DataLayout &DL,
                                     EVI->getIndices());
   }
 
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Ops, DL, TLI);
+  return ConstantFoldInstOperandsImpl(I->getOpcode(), I->getType(), Ops, DL, TLI);
 }
 
 static Constant *
@@ -982,7 +1032,7 @@ ConstantFoldConstantExpressionImpl(const ConstantExpr *CE, const DataLayout &DL,
   if (CE->isCompare())
     return ConstantFoldCompareInstOperands(CE->getPredicate(), Ops[0], Ops[1],
                                            DL, TLI);
-  return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(), Ops, DL, TLI);
+  return ConstantFoldInstOperandsImpl(CE->getOpcode(), CE->getType(), Ops, DL, TLI);
 }
 
 /// Attempt to fold the constant expression
@@ -995,54 +1045,12 @@ Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
   return ConstantFoldConstantExpressionImpl(CE, DL, TLI, FoldedOps);
 }
 
-/// Attempt to constant fold an instruction with the
-/// specified opcode and operands.  If successful, the constant result is
-/// returned, if not, null is returned.  Note that this function can fail when
-/// attempting to fold instructions like loads and stores, which have no
-/// constant expression form.
-///
-/// TODO: This function neither utilizes nor preserves nsw/nuw/inbounds/etc
-/// information, due to only being passed an opcode and operands. Constant
-/// folding using this function strips this information.
-///
-Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
+Constant *llvm::ConstantFoldInstOperands(Instruction *I,
                                          ArrayRef<Constant *> Ops,
                                          const DataLayout &DL,
                                          const TargetLibraryInfo *TLI) {
-  // Handle easy binops first.
-  if (Instruction::isBinaryOp(Opcode))
-    return ConstantFoldBinaryOpOperands(Opcode, Ops[0], Ops[1], DL);
-
-  if (Instruction::isCast(Opcode))
-    return ConstantFoldCastOperand(Opcode, Ops[0], DestTy, DL);
-
-  switch (Opcode) {
-  default: return nullptr;
-  case Instruction::ICmp:
-  case Instruction::FCmp: llvm_unreachable("Invalid for compares");
-  case Instruction::Call:
-    if (Function *F = dyn_cast<Function>(Ops.back()))
-      if (canConstantFoldCallTo(F))
-        return ConstantFoldCall(F, Ops.slice(0, Ops.size() - 1), TLI);
-    return nullptr;
-  case Instruction::Select:
-    return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
-  case Instruction::ExtractElement:
-    return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
-  case Instruction::InsertElement:
-    return ConstantExpr::getInsertElement(Ops[0], Ops[1], Ops[2]);
-  case Instruction::ShuffleVector:
-    return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
-  case Instruction::GetElementPtr: {
-    Type *SrcTy = nullptr;
-    if (Constant *C = CastGEPIndices(SrcTy, Ops, DestTy, DL, TLI))
-      return C;
-    if (Constant *C = SymbolicallyEvaluateGEP(SrcTy, Ops, DestTy, DL, TLI))
-      return C;
-
-    return ConstantExpr::getGetElementPtr(SrcTy, Ops[0], Ops.slice(1));
-  }
-  }
+  return ConstantFoldInstOperandsImpl(I->getOpcode(), I->getType(), Ops, DL,
+                                      TLI);
 }
 
 /// Attempt to constant fold a compare

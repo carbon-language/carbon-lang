@@ -51,8 +51,7 @@ ConstantFoldConstantExpression(const ConstantExpr *CE, const DataLayout &DL,
 /// fold instructions like loads and stores, which have no constant expression
 /// form.
 ///
-Constant *ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
-                                   ArrayRef<Constant *> Ops,
+Constant *ConstantFoldInstOperands(Instruction *I, ArrayRef<Constant *> Ops,
                                    const DataLayout &DL,
                                    const TargetLibraryInfo *TLI = nullptr);
 

@@ -3261,8 +3261,7 @@ static const Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
         if (!LI->isVolatile())
           return ConstantFoldLoadFromConstPtr(ConstOps[0], Q.DL);
 
-      return ConstantFoldInstOperands(I->getOpcode(), I->getType(), ConstOps,
-                                      Q.DL, Q.TLI);
+      return ConstantFoldInstOperands(I, ConstOps, Q.DL, Q.TLI);
     }
   }
 
