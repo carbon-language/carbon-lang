@@ -148,6 +148,8 @@ public:
     const AMDGPUSubtarget &ST = *getAMDGPUTargetMachine().getSubtargetImpl();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       return createR600MachineScheduler(C);
+    else if (ST.enableSIScheduler())
+      return createSIMachineScheduler(C);
     return nullptr;
   }
 
