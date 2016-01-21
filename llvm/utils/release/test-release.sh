@@ -12,7 +12,8 @@
 #
 #===------------------------------------------------------------------------===#
 
-if [ `uname -s` = "FreeBSD" ]; then
+System=`uname -s`
+if [ "$System" = "FreeBSD" ]; then
     MAKE=gmake
 else
     MAKE=make
@@ -244,7 +245,7 @@ function check_program_exists() {
   fi
 }
 
-if [ `uname -s` != "Darwin" ]; then
+if [ "$System" != "Darwin" ]; then
   check_program_exists 'chrpath'
   check_program_exists 'file'
   check_program_exists 'objdump'
@@ -406,7 +407,7 @@ function test_llvmCore() {
 # Clean RPATH. Libtool adds the build directory to the search path, which is
 # not necessary --- and even harmful --- for the binary packages we release.
 function clean_RPATH() {
-  if [ `uname -s` = "Darwin" ]; then
+  if [ "$System" = "Darwin" ]; then
     return
   fi
   local InstallPath="$1"
