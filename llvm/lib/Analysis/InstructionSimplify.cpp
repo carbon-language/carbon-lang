@@ -3639,7 +3639,7 @@ static Value *SimplifyPHINode(PHINode *PN, const Query &Q) {
 
 static Value *SimplifyTruncInst(Value *Op, Type *Ty, const Query &Q, unsigned) {
   if (Constant *C = dyn_cast<Constant>(Op))
-    return ConstantFoldInstOperands(Instruction::Trunc, Ty, C, Q.DL, Q.TLI);
+    return ConstantFoldCastOperand(Instruction::Trunc, C, Ty, Q.DL);
 
   return nullptr;
 }

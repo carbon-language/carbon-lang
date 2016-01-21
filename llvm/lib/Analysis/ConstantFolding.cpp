@@ -1013,6 +1013,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
   if (Instruction::isBinaryOp(Opcode))
     return ConstantFoldBinaryOpOperands(Opcode, Ops[0], Ops[1], DL);
 
+  if (Instruction::isCast(Opcode))
+    return ConstantFoldCastOperand(Opcode, Ops[0], DestTy, DL);
+
   switch (Opcode) {
   default: return nullptr;
   case Instruction::ICmp:
@@ -1022,58 +1025,6 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
       if (canConstantFoldCallTo(F))
         return ConstantFoldCall(F, Ops.slice(0, Ops.size() - 1), TLI);
     return nullptr;
-  case Instruction::PtrToInt:
-    // If the input is a inttoptr, eliminate the pair.  This requires knowing
-    // the width of a pointer, so it can't be done in ConstantExpr::getCast.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
-      if (CE->getOpcode() == Instruction::IntToPtr) {
-        Constant *Input = CE->getOperand(0);
-        unsigned InWidth = Input->getType()->getScalarSizeInBits();
-        unsigned PtrWidth = DL.getPointerTypeSizeInBits(CE->getType());
-        if (PtrWidth < InWidth) {
-          Constant *Mask =
-            ConstantInt::get(CE->getContext(),
-                             APInt::getLowBitsSet(InWidth, PtrWidth));
-          Input = ConstantExpr::getAnd(Input, Mask);
-        }
-        // Do a zext or trunc to get to the dest size.
-        return ConstantExpr::getIntegerCast(Input, DestTy, false);
-      }
-    }
-    return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
-  case Instruction::IntToPtr:
-    // If the input is a ptrtoint, turn the pair into a ptr to ptr bitcast if
-    // the int size is >= the ptr size and the address spaces are the same.
-    // This requires knowing the width of a pointer, so it can't be done in
-    // ConstantExpr::getCast.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
-      if (CE->getOpcode() == Instruction::PtrToInt) {
-        Constant *SrcPtr = CE->getOperand(0);
-        unsigned SrcPtrSize = DL.getPointerTypeSizeInBits(SrcPtr->getType());
-        unsigned MidIntSize = CE->getType()->getScalarSizeInBits();
-
-        if (MidIntSize >= SrcPtrSize) {
-          unsigned SrcAS = SrcPtr->getType()->getPointerAddressSpace();
-          if (SrcAS == DestTy->getPointerAddressSpace())
-            return FoldBitCast(CE->getOperand(0), DestTy, DL);
-        }
-      }
-    }
-
-    return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
-  case Instruction::Trunc:
-  case Instruction::ZExt:
-  case Instruction::SExt:
-  case Instruction::FPTrunc:
-  case Instruction::FPExt:
-  case Instruction::UIToFP:
-  case Instruction::SIToFP:
-  case Instruction::FPToUI:
-  case Instruction::FPToSI:
-  case Instruction::AddrSpaceCast:
-      return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
-  case Instruction::BitCast:
-    return FoldBitCast(Ops[0], DestTy, DL);
   case Instruction::Select:
     return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
   case Instruction::ExtractElement:
@@ -1186,6 +1137,67 @@ Constant *llvm::ConstantFoldBinaryOpOperands(unsigned Opcode, Constant *LHS,
       return C;
 
   return ConstantExpr::get(Opcode, LHS, RHS);
+}
+
+Constant *llvm::ConstantFoldCastOperand(unsigned Opcode, Constant *C,
+                                        Type *DestTy, const DataLayout &DL) {
+  assert(Instruction::isCast(Opcode));
+  switch (Opcode) {
+  default:
+    llvm_unreachable("Missing case");
+  case Instruction::PtrToInt:
+    // If the input is a inttoptr, eliminate the pair.  This requires knowing
+    // the width of a pointer, so it can't be done in ConstantExpr::getCast.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::IntToPtr) {
+        Constant *Input = CE->getOperand(0);
+        unsigned InWidth = Input->getType()->getScalarSizeInBits();
+        unsigned PtrWidth = DL.getPointerTypeSizeInBits(CE->getType());
+        if (PtrWidth < InWidth) {
+          Constant *Mask =
+            ConstantInt::get(CE->getContext(),
+                             APInt::getLowBitsSet(InWidth, PtrWidth));
+          Input = ConstantExpr::getAnd(Input, Mask);
+        }
+        // Do a zext or trunc to get to the dest size.
+        return ConstantExpr::getIntegerCast(Input, DestTy, false);
+      }
+    }
+    return ConstantExpr::getCast(Opcode, C, DestTy);
+  case Instruction::IntToPtr:
+    // If the input is a ptrtoint, turn the pair into a ptr to ptr bitcast if
+    // the int size is >= the ptr size and the address spaces are the same.
+    // This requires knowing the width of a pointer, so it can't be done in
+    // ConstantExpr::getCast.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::PtrToInt) {
+        Constant *SrcPtr = CE->getOperand(0);
+        unsigned SrcPtrSize = DL.getPointerTypeSizeInBits(SrcPtr->getType());
+        unsigned MidIntSize = CE->getType()->getScalarSizeInBits();
+
+        if (MidIntSize >= SrcPtrSize) {
+          unsigned SrcAS = SrcPtr->getType()->getPointerAddressSpace();
+          if (SrcAS == DestTy->getPointerAddressSpace())
+            return FoldBitCast(CE->getOperand(0), DestTy, DL);
+        }
+      }
+    }
+
+    return ConstantExpr::getCast(Opcode, C, DestTy);
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::AddrSpaceCast:
+      return ConstantExpr::getCast(Opcode, C, DestTy);
+  case Instruction::BitCast:
+    return FoldBitCast(C, DestTy, DL);
+  }
 }
 
 /// Given a constant and a getelementptr constantexpr, return the constant value
