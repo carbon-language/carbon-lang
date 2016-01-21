@@ -65,6 +65,12 @@ ConstantFoldCompareInstOperands(unsigned Predicate, Constant *LHS,
                                 Constant *RHS, const DataLayout &DL,
                                 const TargetLibraryInfo *TLI = nullptr);
 
+/// \brief Attempt to constant fold a binary operation with the specified
+/// operands.  If it fails, it returns a constant expression of the specified
+/// operands.
+Constant *ConstantFoldBinaryOpOperands(unsigned Opcode, Constant *LHS,
+                                       Constant *RHS, const DataLayout &DL);
+
 /// ConstantFoldInsertValueInstruction - Attempt to constant fold an insertvalue
 /// instruction with the specified operands and indices.  The constant result is
 /// returned if successful; if not, null is returned.

@@ -1010,14 +1010,8 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
                                          const DataLayout &DL,
                                          const TargetLibraryInfo *TLI) {
   // Handle easy binops first.
-  if (Instruction::isBinaryOp(Opcode)) {
-    if (isa<ConstantExpr>(Ops[0]) || isa<ConstantExpr>(Ops[1])) {
-      if (Constant *C = SymbolicallyEvaluateBinop(Opcode, Ops[0], Ops[1], DL))
-        return C;
-    }
-
-    return ConstantExpr::get(Opcode, Ops[0], Ops[1]);
-  }
+  if (Instruction::isBinaryOp(Opcode))
+    return ConstantFoldBinaryOpOperands(Opcode, Ops[0], Ops[1], DL);
 
   switch (Opcode) {
   default: return nullptr;
@@ -1176,14 +1170,23 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
           Predicate, CE0->getOperand(1), Ops1, DL, TLI);
       unsigned OpC =
         Predicate == ICmpInst::ICMP_EQ ? Instruction::And : Instruction::Or;
-      Constant *Ops[] = { LHS, RHS };
-      return ConstantFoldInstOperands(OpC, LHS->getType(), Ops, DL, TLI);
+      return ConstantFoldBinaryOpOperands(OpC, LHS, RHS, DL);
     }
   }
 
   return ConstantExpr::getCompare(Predicate, Ops0, Ops1);
 }
 
+Constant *llvm::ConstantFoldBinaryOpOperands(unsigned Opcode, Constant *LHS,
+                                             Constant *RHS,
+                                             const DataLayout &DL) {
+  assert(Instruction::isBinaryOp(Opcode));
+  if (isa<ConstantExpr>(LHS) || isa<ConstantExpr>(RHS))
+    if (Constant *C = SymbolicallyEvaluateBinop(Opcode, LHS, RHS, DL))
+      return C;
+
+  return ConstantExpr::get(Opcode, LHS, RHS);
+}
 
 /// Given a constant and a getelementptr constantexpr, return the constant value
 /// being addressed by the constant expression, or null if something is funny
