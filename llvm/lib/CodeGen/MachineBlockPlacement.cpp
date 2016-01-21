@@ -62,6 +62,13 @@ static cl::opt<unsigned> AlignAllBlock("align-all-blocks",
                                                 "blocks in the function."),
                                        cl::init(0), cl::Hidden);
 
+static cl::opt<unsigned> AlignAllNonFallThruBlocks(
+    "align-all-nofallthru-blocks",
+    cl::desc("Force the alignment of all "
+             "blocks that have no fall-through predecessors (i.e. don't add "
+             "nops that are executed)."),
+    cl::init(0), cl::Hidden);
+
 static cl::opt<unsigned>
     AlignAllLoops("align-all-loops",
                   cl::desc("Force the alignment of all loops in the function."),
@@ -1405,6 +1412,15 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
     // Align all of the blocks in the function to a specific alignment.
     for (MachineBasicBlock &MBB : F)
       MBB.setAlignment(AlignAllBlock);
+  else if (AlignAllNonFallThruBlocks) {
+    // Align all of the blocks that have no fall-through predecessors to a
+    // specific alignment.
+    for (auto MBI = std::next(F.begin()), MBE = F.end(); MBI != MBE; ++MBI) {
+      auto LayoutPred = std::prev(MBI);
+      if (!LayoutPred->isSuccessor(&*MBI))
+        MBI->setAlignment(AlignAllNonFallThruBlocks);
+    }
+  }
 
   // We always return true as we have no way to track whether the final order
   // differs from the original order.
