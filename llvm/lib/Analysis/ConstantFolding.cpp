@@ -731,8 +731,8 @@ static Constant *SymbolicallyEvaluateGEP(Type *SrcTy, ArrayRef<Constant *> Ops,
                                          Type *ResultTy, const DataLayout &DL,
                                          const TargetLibraryInfo *TLI) {
   Constant *Ptr = Ops[0];
-  assert(Ptr->getType()->isPointerTy());
-  if (!Ptr->getType()->getPointerElementType()->isSized())
+  if (!Ptr->getType()->getPointerElementType()->isSized() ||
+      !Ptr->getType()->isPointerTy())
     return nullptr;
 
   Type *IntPtrTy = DL.getIntPtrType(Ptr->getType());
