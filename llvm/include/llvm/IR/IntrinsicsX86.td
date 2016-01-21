@@ -1417,6 +1417,60 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
           [llvm_v8i64_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i8_ty],
           [IntrNoMem]>;
 
+  def int_x86_avx512_mask_vpermi2var_qi_128 : 
+        GCCBuiltin<"__builtin_ia32_vpermi2varqi128_mask">,
+          Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
+          llvm_v16i8_ty, llvm_v16i8_ty, llvm_i16_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_mask_vpermt2var_qi_128 :
+        GCCBuiltin<"__builtin_ia32_vpermt2varqi128_mask">,
+          Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
+          llvm_v16i8_ty, llvm_v16i8_ty, llvm_i16_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_maskz_vpermt2var_qi_128 :
+        GCCBuiltin<"__builtin_ia32_vpermt2varqi128_maskz">,
+          Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
+          llvm_v16i8_ty, llvm_v16i8_ty, llvm_i16_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_mask_vpermi2var_qi_256 :
+        GCCBuiltin<"__builtin_ia32_vpermi2varqi256_mask">,
+          Intrinsic<[llvm_v32i8_ty], [llvm_v32i8_ty,
+          llvm_v32i8_ty, llvm_v32i8_ty, llvm_i32_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_mask_vpermt2var_qi_256 :
+        GCCBuiltin<"__builtin_ia32_vpermt2varqi256_mask">,
+          Intrinsic<[llvm_v32i8_ty], [llvm_v32i8_ty,
+          llvm_v32i8_ty, llvm_v32i8_ty, llvm_i32_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_maskz_vpermt2var_qi_256 :
+        GCCBuiltin<"__builtin_ia32_vpermt2varqi256_maskz">,
+          Intrinsic<[llvm_v32i8_ty], [llvm_v32i8_ty,
+          llvm_v32i8_ty, llvm_v32i8_ty, llvm_i32_ty], 
+          [IntrNoMem]>;
+
+  def int_x86_avx512_mask_vpermi2var_qi_512 :
+        GCCBuiltin<"__builtin_ia32_vpermi2varqi512_mask">,
+          Intrinsic<[llvm_v64i8_ty], [llvm_v64i8_ty,
+          llvm_v64i8_ty, llvm_v64i8_ty, llvm_i64_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_mask_vpermt2var_qi_512 :
+        GCCBuiltin<"__builtin_ia32_vpermt2varqi512_mask">,
+          Intrinsic<[llvm_v64i8_ty], [llvm_v64i8_ty,
+          llvm_v64i8_ty, llvm_v64i8_ty, llvm_i64_ty],
+          [IntrNoMem]>;
+
+  def int_x86_avx512_maskz_vpermt2var_qi_512 : 
+        GCCBuiltin<"__builtin_ia32_vpermt2varqi512_maskz">,
+          Intrinsic<[llvm_v64i8_ty], [llvm_v64i8_ty,
+          llvm_v64i8_ty, llvm_v64i8_ty, llvm_i64_ty],
+          [IntrNoMem]>;
+
   def int_x86_avx512_mask_vpermil_pd_128 :
         GCCBuiltin<"__builtin_ia32_vpermilpd_mask">,
           Intrinsic<[llvm_v2f64_ty],
