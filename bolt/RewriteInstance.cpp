@@ -157,7 +157,7 @@ PrintReordered("print-reordered",
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
-  if (MaxFunctions && Function.getFunctionNumber() > MaxFunctions)
+  if (opts::MaxFunctions && Function.getFunctionNumber() > opts::MaxFunctions)
     return false;
 
   if (!FunctionNamesFile.empty()) {

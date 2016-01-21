@@ -339,7 +339,14 @@ public:
   /// View CFG in graphviz program
   void viewGraph();
 
-  /// Basic block iterator
+  /// Get basic block index assuming it belongs to this function.
+  unsigned getIndex(const BinaryBasicBlock *BB) const {
+    assert(BB >= &BasicBlocks.front() && "wrong basic block");
+    unsigned I = BB - &BasicBlocks.front();
+    assert(I < BasicBlocks.size() && "wrong basic block");
+    return I;
+  }
+
 
   /// Return the name of the function as extracted from the binary file.
   StringRef getName() const {

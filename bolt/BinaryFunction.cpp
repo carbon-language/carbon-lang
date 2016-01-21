@@ -20,6 +20,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
@@ -31,6 +32,13 @@
 
 namespace llvm {
 namespace flo {
+
+namespace opts {
+
+static cl::opt<bool>
+PrintClusters("print-clusters", cl::desc("print clusters"), cl::Optional);
+
+} // namespace opts
 
 uint64_t BinaryFunction::Count = 0;
 
@@ -198,8 +206,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       OS << "  Exec Count : " << BBExecCount << "\n";
     }
     if (!BBCFIState.empty()) {
-      unsigned BBIndex = BB - &*BasicBlocks.begin();
-      OS << "  CFI State : " << BBCFIState[BBIndex] << '\n';
+      OS << "  CFI State : " << BBCFIState[getIndex(BB)] << '\n';
     }
     if (!BB->Predecessors.empty()) {
       OS << "  Predecessors: ";
@@ -884,7 +891,7 @@ bool BinaryFunction::fixCFIState() {
   BinaryBasicBlock *EntryBB = *BasicBlocksLayout.begin();
   for (uint32_t I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
     BinaryBasicBlock *BB = BasicBlocksLayout[I];
-    uint32_t BBIndex = BB - &*BasicBlocks.begin();
+    uint32_t BBIndex = getIndex(BB);
 
     // Hot-cold border: check if this is the first BB to be allocated in a cold
     // region (a different function). If yes, we need to reset the CFI state.
@@ -1001,7 +1008,19 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   std::map<EdgeTy, uint64_t> Weight;
 
   // Define a comparison function to establish SWO between edges
-  auto Comp = [&Weight](EdgeTy A, EdgeTy B) { return Weight[A] < Weight[B]; };
+  auto Comp = [&] (EdgeTy A, EdgeTy B) {
+    // With equal weights, prioritize branches with lower index
+    // source/destination. This helps to keep original block order for blocks
+    // when optimal order cannot be deducted from a profile.
+    if (Weight[A] == Weight[B]) {
+      uint32_t ASrcBBIndex = getIndex(A.first);
+      uint32_t BSrcBBIndex = getIndex(B.first);
+      if (ASrcBBIndex != BSrcBBIndex)
+        return ASrcBBIndex > BSrcBBIndex;
+      return getIndex(A.second) > getIndex(B.second);
+    }
+    return Weight[A] < Weight[B];
+  };
   std::priority_queue<EdgeTy, std::vector<EdgeTy>, decltype(Comp)> Queue(Comp);
 
   typedef std::vector<BinaryBasicBlock *> ClusterTy;
@@ -1089,7 +1108,7 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   // should put clusters in descending order of hotness.
   std::vector<double> AvgFreq;
   AvgFreq.resize(Clusters.size(), 0.0);
-  for (uint32_t I = 1, E = Clusters.size(); I < E; ++I) {
+  for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
     double Freq = 0.0;
     for (auto BB : Clusters[I]) {
       if (!BB->empty() && BB->size() != BB->getNumPseudos())
@@ -1099,17 +1118,18 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
     AvgFreq[I] = Freq;
   }
 
-  DEBUG(
-  for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
-    errs() << "Cluster number " << I << " (frequency: " << AvgFreq[I] << ") : ";
-    auto Sep = "";
-    for (auto BB : Clusters[I]) {
-      errs() << Sep << BB->getName();
-      Sep = ", ";
-    }
-    errs() << "\n";
-  };
-  );
+  if (opts::PrintClusters) {
+    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
+      errs() << "Cluster number " << I << " (frequency: " << AvgFreq[I]
+             << ") : ";
+      auto Sep = "";
+      for (auto BB : Clusters[I]) {
+        errs() << Sep << BB->getName();
+        Sep = ", ";
+      }
+      errs() << "\n";
+    };
+  }
 
   switch(Type) {
   case LT_OPTIMIZE: {
@@ -1204,16 +1224,15 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
     llvm_unreachable("unexpected layout type");
   }
 
-  DEBUG(
-  errs() << "New cluster order: ";
-  auto Sep = "";
-  for(auto O : Order) {
-    errs() << Sep << O;
-    Sep = ", ";
+  if (opts::PrintClusters) {
+    errs() << "New cluster order: ";
+    auto Sep = "";
+    for(auto O : Order) {
+      errs() << Sep << O;
+      Sep = ", ";
+    }
+    errs() << '\n';
   }
-  errs() << '\n';
-  );
-
 
   BasicBlocksLayout.clear();
   for (auto I : Order) {
