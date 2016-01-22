@@ -79,8 +79,8 @@ struct AlignOf {
       sizeof(detail::AlignmentCalcImpl<T>) - sizeof(T));
 #else
   enum {
-    Alignment = static_cast<unsigned int>(sizeof(detail::AlignmentCalcImpl<T>) -
-                                          sizeof(T))
+    Alignment = static_cast<unsigned int>(
+        sizeof(::llvm::detail::AlignmentCalcImpl<T>) - sizeof(T))
   };
 #endif
   enum { Alignment_GreaterEqual_2Bytes = Alignment >= 2 ? 1 : 0 };
@@ -249,10 +249,10 @@ template <typename T1,
           typename T5 = char, typename T6 = char, typename T7 = char,
           typename T8 = char, typename T9 = char, typename T10 = char>
 struct AlignedCharArrayUnion : llvm::AlignedCharArray<
-    AlignOf<detail::AlignerImpl<T1, T2, T3, T4, T5,
-                                T6, T7, T8, T9, T10> >::Alignment,
-    sizeof(detail::SizerImpl<T1, T2, T3, T4, T5,
-                             T6, T7, T8, T9, T10>)> {
+    AlignOf<::llvm::detail::AlignerImpl<T1, T2, T3, T4, T5,
+                                        T6, T7, T8, T9, T10> >::Alignment,
+    sizeof(::llvm::detail::SizerImpl<T1, T2, T3, T4, T5,
+                                     T6, T7, T8, T9, T10>)> {
 };
 } // end namespace llvm
 #endif
