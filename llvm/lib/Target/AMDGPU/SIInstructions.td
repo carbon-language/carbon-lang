@@ -481,7 +481,7 @@ def S_CBRANCH_EXECNZ : SOPP <
 
 let hasSideEffects = 1 in {
 def S_BARRIER : SOPP <0x0000000a, (ins), "s_barrier",
-  [(int_AMDGPU_barrier_local)]
+  [(int_amdgcn_s_barrier)]
 > {
   let SchedRW = [WriteBarrier];
   let simm16 = 0;
@@ -2167,8 +2167,14 @@ def : Pat <
 // SOPP Patterns
 //===----------------------------------------------------------------------===//
 
+// FIXME: These should be removed eventually
 def : Pat <
   (int_AMDGPU_barrier_global),
+  (S_BARRIER)
+>;
+
+def : Pat <
+  (int_AMDGPU_barrier_local),
   (S_BARRIER)
 >;
 
