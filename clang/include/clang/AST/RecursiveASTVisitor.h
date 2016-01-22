@@ -811,8 +811,9 @@ bool RecursiveASTVisitor<Derived>::TraverseConstructorInitializer(
     TRY_TO(TraverseStmt(Init->getInit()));
 
   if (Init->getNumArrayIndices() && getDerived().shouldVisitImplicitCode())
-    for (VarDecl *VD : Init->getArrayIndexes())
+    for (VarDecl *VD : Init->getArrayIndexes()) {
       TRY_TO(TraverseDecl(VD));
+    }
   return true;
 }
 
