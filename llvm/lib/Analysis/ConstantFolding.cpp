@@ -772,8 +772,8 @@ static Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
   unsigned BitWidth = DL.getTypeSizeInBits(IntPtrTy);
   APInt Offset =
       APInt(BitWidth,
-            DL.getIndexedOffset(
-                Ptr->getType(),
+            DL.getIndexedOffsetInType(
+                SrcElemTy,
                 makeArrayRef((Value * const *)Ops.data() + 1, Ops.size() - 1)));
   Ptr = StripPtrCastKeepAS(Ptr, SrcElemTy);
 
@@ -792,7 +792,8 @@ static Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
       break;
 
     Ptr = cast<Constant>(GEP->getOperand(0));
-    Offset += APInt(BitWidth, DL.getIndexedOffset(Ptr->getType(), NestedOps));
+    SrcElemTy = GEP->getSourceElementType();
+    Offset += APInt(BitWidth, DL.getIndexedOffsetInType(SrcElemTy, NestedOps));
     Ptr = StripPtrCastKeepAS(Ptr, SrcElemTy);
   }
 
