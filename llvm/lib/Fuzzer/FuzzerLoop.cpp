@@ -163,7 +163,6 @@ void Fuzzer::RereadOutputCorpus() {
     if (UnitHashesAddedToCorpus.insert(Hash(X)).second) {
       if (RunOne(X)) {
         Corpus.push_back(X);
-        UpdateCorpusDistribution();
         PrintStats("RELOAD");
       }
     }
@@ -201,7 +200,6 @@ void Fuzzer::ShuffleAndMinimize() {
     }
   }
   Corpus = NewCorpus;
-  UpdateCorpusDistribution();
   for (auto &X : Corpus)
     UnitHashesAddedToCorpus.insert(Hash(X));
   PrintStats("INITED");
@@ -349,7 +347,6 @@ void Fuzzer::PrintStatusForNewUnit(const Unit &U) {
 
 void Fuzzer::ReportNewCoverage(const Unit &U) {
   Corpus.push_back(U);
-  UpdateCorpusDistribution();
   UnitHashesAddedToCorpus.insert(Hash(U));
   USF.GetMD().RecordSuccessfulMutationSequence();
   PrintStatusForNewUnit(U);
@@ -412,11 +409,22 @@ void Fuzzer::MutateAndTestOne() {
 
 // Returns an index of random unit from the corpus to mutate.
 // Hypothesis: units added to the corpus last are more likely to be interesting.
-// This function gives more weight to the more recent units.
+// This function gives more wieght to the more recent units.
 size_t Fuzzer::ChooseUnitIdxToMutate() {
-    size_t Idx = static_cast<size_t>(CorpusDistribution(USF.GetRand()));
-    assert(Idx < Corpus.size());
-    return Idx;
+    size_t N = Corpus.size();
+    size_t Total = (N + 1) * N / 2;
+    size_t R = USF.GetRand()(Total);
+    size_t IdxBeg = 0, IdxEnd = N;
+    // Binary search.
+    while (IdxEnd - IdxBeg >= 2) {
+      size_t Idx = IdxBeg + (IdxEnd - IdxBeg) / 2;
+      if (R > (Idx + 1) * Idx / 2)
+        IdxBeg = Idx;
+      else
+        IdxEnd = Idx;
+    }
+    assert(IdxBeg < N);
+    return IdxBeg;
 }
 
 // Experimental search heuristic: drilling.
@@ -439,7 +447,6 @@ void Fuzzer::Drill() {
   std::vector<Unit> SavedCorpus;
   SavedCorpus.swap(Corpus);
   Corpus.push_back(U);
-  UpdateCorpusDistribution();
   assert(Corpus.size() == 1);
   RunOne(U);
   PrintStats("DRILL ");
@@ -501,16 +508,6 @@ void Fuzzer::SyncCorpus() {
     return;
   LastExternalSync = Now;
   ExecuteCommand(Options.SyncCommand + " " + Options.OutputCorpus);
-}
-
-void Fuzzer::UpdateCorpusDistribution() {
-  size_t N = Corpus.size();
-  std::vector<double> Intervals(N+1);
-  std::vector<double> Weights(N);
-  std::iota(Intervals.begin(), Intervals.end(), 0);
-  std::iota(Weights.begin(), Weights.end(), 1);
-  CorpusDistribution = std::piecewise_constant_distribution<double>(
-      Intervals.begin(), Intervals.end(), Weights.begin());
 }
 
 }  // namespace fuzzer
