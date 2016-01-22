@@ -667,47 +667,47 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       return DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v2f32,
           SDValue(interp, 0), SDValue(interp, 1));
     }
-    case AMDGPUIntrinsic::R600_tex:
-    case AMDGPUIntrinsic::R600_texc:
-    case AMDGPUIntrinsic::R600_txl:
-    case AMDGPUIntrinsic::R600_txlc:
-    case AMDGPUIntrinsic::R600_txb:
-    case AMDGPUIntrinsic::R600_txbc:
-    case AMDGPUIntrinsic::R600_txf:
-    case AMDGPUIntrinsic::R600_txq:
-    case AMDGPUIntrinsic::R600_ddx:
-    case AMDGPUIntrinsic::R600_ddy:
+    case AMDGPUIntrinsic::r600_tex:
+    case AMDGPUIntrinsic::r600_texc:
+    case AMDGPUIntrinsic::r600_txl:
+    case AMDGPUIntrinsic::r600_txlc:
+    case AMDGPUIntrinsic::r600_txb:
+    case AMDGPUIntrinsic::r600_txbc:
+    case AMDGPUIntrinsic::r600_txf:
+    case AMDGPUIntrinsic::r600_txq:
+    case AMDGPUIntrinsic::r600_ddx:
+    case AMDGPUIntrinsic::r600_ddy:
     case AMDGPUIntrinsic::R600_ldptr: {
       unsigned TextureOp;
       switch (IntrinsicID) {
-      case AMDGPUIntrinsic::R600_tex:
+      case AMDGPUIntrinsic::r600_tex:
         TextureOp = 0;
         break;
-      case AMDGPUIntrinsic::R600_texc:
+      case AMDGPUIntrinsic::r600_texc:
         TextureOp = 1;
         break;
-      case AMDGPUIntrinsic::R600_txl:
+      case AMDGPUIntrinsic::r600_txl:
         TextureOp = 2;
         break;
-      case AMDGPUIntrinsic::R600_txlc:
+      case AMDGPUIntrinsic::r600_txlc:
         TextureOp = 3;
         break;
-      case AMDGPUIntrinsic::R600_txb:
+      case AMDGPUIntrinsic::r600_txb:
         TextureOp = 4;
         break;
-      case AMDGPUIntrinsic::R600_txbc:
+      case AMDGPUIntrinsic::r600_txbc:
         TextureOp = 5;
         break;
-      case AMDGPUIntrinsic::R600_txf:
+      case AMDGPUIntrinsic::r600_txf:
         TextureOp = 6;
         break;
-      case AMDGPUIntrinsic::R600_txq:
+      case AMDGPUIntrinsic::r600_txq:
         TextureOp = 7;
         break;
-      case AMDGPUIntrinsic::R600_ddx:
+      case AMDGPUIntrinsic::r600_ddx:
         TextureOp = 8;
         break;
-      case AMDGPUIntrinsic::R600_ddy:
+      case AMDGPUIntrinsic::r600_ddy:
         TextureOp = 9;
         break;
       case AMDGPUIntrinsic::R600_ldptr:
