@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 %s
-#if 1
 template <typename T, int I>
 struct SA {
   static int ss;
@@ -175,7 +174,6 @@ void SAclient(int arg) {
   }
   }
 }
-#endif
 void foo() {
 }
 
@@ -238,7 +236,6 @@ T tmain(T argc) {
   T y;
   T to, tofrom, always;
   const T (&l)[5] = da;
-#if 1
 #pragma omp target map // expected-error {{expected '(' after 'map'}}
   {}
 #pragma omp target map( // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{expected expression}}
@@ -279,7 +276,6 @@ T tmain(T argc) {
   foo();
 #pragma omp target map(to, x)
   foo();
-#endif
 #pragma omp target data map(to x) // expected-error {{expected ',' or ')' in 'map' clause}}
 #pragma omp target data map(tofrom: argc > 0 ? x : y) // expected-error 2 {{expected expression containing only member accesses and/or array sections based on named variables}}
 #pragma omp target data map(argc)
@@ -295,7 +291,6 @@ T tmain(T argc) {
 #pragma omp target data map(k) map(k) // expected-error 2 {{variable already marked as mapped in current construct}} expected-note 2 {{used here}}
 #pragma omp target map(k), map(k[:5]) // expected-error 2 {{pointer cannot be mapped along with a section derived from itself}} expected-note 2 {{used here}}
   foo();
-#if 1
 #pragma omp target data map(da)
 #pragma omp target map(da[:4])
   foo();
@@ -316,7 +311,6 @@ T tmain(T argc) {
 #pragma omp target data map(always, tofrom: always, tofrom, x)
 #pragma omp target map(tofrom j) // expected-error {{expected ',' or ')' in 'map' clause}}
   foo();
-#endif
   return 0;
 }
 
@@ -332,7 +326,6 @@ int main(int argc, char **argv) {
   int y;
   int to, tofrom, always;
   const int (&l)[5] = da;
-#if 1
 #pragma omp target data map // expected-error {{expected '(' after 'map'}} expected-error {{expected at least one map clause for '#pragma omp target data'}}
 #pragma omp target data map( // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{expected expression}}
 #pragma omp target data map() // expected-error {{expected expression}}
@@ -387,7 +380,6 @@ int main(int argc, char **argv) {
 #pragma omp target data map(always, tofrom: always, tofrom, x)
 #pragma omp target map(tofrom j) // expected-error {{expected ',' or ')' in 'map' clause}}
   foo();
-#endif
   return tmain<int, 3>(argc)+tmain<from, 4>(argc); // expected-note {{in instantiation of function template specialization 'tmain<int, 3>' requested here}} expected-note {{in instantiation of function template specialization 'tmain<int, 4>' requested here}}
 }
 
