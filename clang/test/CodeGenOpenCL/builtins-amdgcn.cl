@@ -141,6 +141,12 @@ void test_class_f64(global double* out, double a, int b)
   *out = __builtin_amdgcn_class(a, b);
 }
 
+// CHECK-LABEL: @test_s_barrier
+// CHECK: call void @llvm.amdgcn.s.barrier(
+void test_s_barrier()
+{
+  __builtin_amdgcn_s_barrier();
+}
 
 // Legacy intrinsics with AMDGPU prefix
 
