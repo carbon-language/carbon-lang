@@ -32,7 +32,7 @@ typedef std::vector<uint8_t> Unit;
 // A simple POD sized array of bytes.
 template <size_t kMaxSize> class FixedWord {
 public:
-  FixedWord() : Size(0) {}
+  FixedWord() {}
   FixedWord(const uint8_t *B, uint8_t S) { Set(B, S); }
 
   void Set(const uint8_t *B, uint8_t S) {
@@ -56,7 +56,7 @@ public:
   uint8_t size() const { return Size; }
 
 private:
-  uint8_t Size;
+  uint8_t Size = 0;
   uint8_t Data[kMaxSize];
 };
 
