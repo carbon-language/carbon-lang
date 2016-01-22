@@ -649,50 +649,6 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     SDLoc DL(Op);
     switch(IntrinsicID) {
     default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
-    case AMDGPUIntrinsic::R600_load_input: {
-      int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-      unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
-      MachineFunction &MF = DAG.getMachineFunction();
-      MachineRegisterInfo &MRI = MF.getRegInfo();
-      MRI.addLiveIn(Reg);
-      return DAG.getCopyFromReg(DAG.getEntryNode(),
-          SDLoc(DAG.getEntryNode()), Reg, VT);
-    }
-
-    case AMDGPUIntrinsic::R600_interp_input: {
-      int slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-      int ijb = cast<ConstantSDNode>(Op.getOperand(2))->getSExtValue();
-      MachineSDNode *interp;
-      if (ijb < 0) {
-        const R600InstrInfo *TII =
-            static_cast<const R600InstrInfo *>(Subtarget->getInstrInfo());
-        interp = DAG.getMachineNode(AMDGPU::INTERP_VEC_LOAD, DL,
-            MVT::v4f32, DAG.getTargetConstant(slot / 4, DL, MVT::i32));
-        return DAG.getTargetExtractSubreg(
-            TII->getRegisterInfo().getSubRegFromChannel(slot % 4),
-            DL, MVT::f32, SDValue(interp, 0));
-      }
-      MachineFunction &MF = DAG.getMachineFunction();
-      MachineRegisterInfo &MRI = MF.getRegInfo();
-      unsigned RegisterI = AMDGPU::R600_TReg32RegClass.getRegister(2 * ijb);
-      unsigned RegisterJ = AMDGPU::R600_TReg32RegClass.getRegister(2 * ijb + 1);
-      MRI.addLiveIn(RegisterI);
-      MRI.addLiveIn(RegisterJ);
-      SDValue RegisterINode = DAG.getCopyFromReg(DAG.getEntryNode(),
-          SDLoc(DAG.getEntryNode()), RegisterI, MVT::f32);
-      SDValue RegisterJNode = DAG.getCopyFromReg(DAG.getEntryNode(),
-          SDLoc(DAG.getEntryNode()), RegisterJ, MVT::f32);
-
-      if (slot % 4 < 2)
-        interp = DAG.getMachineNode(AMDGPU::INTERP_PAIR_XY, DL,
-            MVT::f32, MVT::f32, DAG.getTargetConstant(slot / 4, DL, MVT::i32),
-            RegisterJNode, RegisterINode);
-      else
-        interp = DAG.getMachineNode(AMDGPU::INTERP_PAIR_ZW, DL,
-            MVT::f32, MVT::f32, DAG.getTargetConstant(slot / 4, DL, MVT::i32),
-            RegisterJNode, RegisterINode);
-      return SDValue(interp, slot % 2);
-    }
     case AMDGPUIntrinsic::R600_interp_xy:
     case AMDGPUIntrinsic::R600_interp_zw: {
       int slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
