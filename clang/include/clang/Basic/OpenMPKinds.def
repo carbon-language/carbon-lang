@@ -368,6 +368,7 @@ OPENMP_TARGET_DATA_CLAUSE(map)
 OPENMP_TARGET_ENTER_DATA_CLAUSE(if)
 OPENMP_TARGET_ENTER_DATA_CLAUSE(device)
 OPENMP_TARGET_ENTER_DATA_CLAUSE(map)
+OPENMP_TARGET_ENTER_DATA_CLAUSE(nowait)
 
 // Clauses allowed for OpenMP directive 'target exit data'.
 // TODO More clauses for 'target exit data' directive.
