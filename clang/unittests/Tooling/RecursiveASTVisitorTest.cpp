@@ -42,13 +42,13 @@ TEST(RecursiveASTVisitor, VisitsLambdaExpr) {
   LambdaExprVisitor Visitor;
   Visitor.ExpectMatch("", 1, 12);
   EXPECT_TRUE(Visitor.runOver("void f() { []{ return; }(); }",
-			      LambdaExprVisitor::Lang_CXX11));
+                              LambdaExprVisitor::Lang_CXX11));
 }
 
 TEST(RecursiveASTVisitor, TraverseLambdaBodyCanBeOverridden) {
   LambdaExprVisitor Visitor;
   EXPECT_TRUE(Visitor.runOver("void f() { []{ return; }(); }",
-			      LambdaExprVisitor::Lang_CXX11));
+                              LambdaExprVisitor::Lang_CXX11));
   EXPECT_TRUE(Visitor.allBodiesHaveBeenTraversed());
 }
 
@@ -92,8 +92,7 @@ private:
 
 TEST(RecursiveASTVisitor, LambdaClosureTypesAreImplicit) {
   ClassVisitor Visitor;
-  EXPECT_TRUE(Visitor.runOver("auto lambda = []{};",
-			      ClassVisitor::Lang_CXX11));
+  EXPECT_TRUE(Visitor.runOver("auto lambda = []{};", ClassVisitor::Lang_CXX11));
   EXPECT_TRUE(Visitor.sawOnlyImplicitLambdaClasses());
 }
 
