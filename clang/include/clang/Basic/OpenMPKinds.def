@@ -375,6 +375,7 @@ OPENMP_TARGET_ENTER_DATA_CLAUSE(nowait)
 OPENMP_TARGET_EXIT_DATA_CLAUSE(if)
 OPENMP_TARGET_EXIT_DATA_CLAUSE(device)
 OPENMP_TARGET_EXIT_DATA_CLAUSE(map)
+OPENMP_TARGET_EXIT_DATA_CLAUSE(nowait)
 
 // Clauses allowed for OpenMP directive 'teams'.
 // TODO More clauses for 'teams' directive.
