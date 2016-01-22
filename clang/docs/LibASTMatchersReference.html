@@ -1815,6 +1815,21 @@ matches A and C::f, but not B, C, or B::f
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;</td><td class="name" onclick="toggle('isMoveAssignmentOperator0')"><a name="isMoveAssignmentOperator0Anchor">isMoveAssignmentOperator</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isMoveAssignmentOperator0"><pre>Matches if the given method declaration declares a move assignment
+operator.
+
+Given
+struct A {
+  A &amp;operator=(const A &amp;);
+  A &amp;operator=(A &amp;&amp;);
+};
+
+cxxMethodDecl(isMoveAssignmentOperator()) matches the second method but not
+the first one.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;</td><td class="name" onclick="toggle('isOverride0')"><a name="isOverride0Anchor">isOverride</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isOverride0"><pre>Matches if the given method declaration overrides another method.
 

@@ -2059,6 +2059,21 @@ TEST(Matcher, MatchesCopyAssignmentOperator) {
                       cxxMethodDecl(isCopyAssignmentOperator())));
 }
 
+TEST(Matcher, MatchesMoveAssignmentOperator) {
+  EXPECT_TRUE(notMatches("class X { X &operator=(X); };",
+                         cxxMethodDecl(isMoveAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(X &&); };",
+                      cxxMethodDecl(isMoveAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(const X &&); };",
+                      cxxMethodDecl(isMoveAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(volatile X &&); };",
+                      cxxMethodDecl(isMoveAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(const volatile X &&); };",
+                      cxxMethodDecl(isMoveAssignmentOperator())));
+  EXPECT_TRUE(notMatches("class X { X &operator=(X &); };",
+                         cxxMethodDecl(isMoveAssignmentOperator())));
+}
+
 TEST(Matcher, MatchesConstMethod) {
   EXPECT_TRUE(
       matches("struct A { void foo() const; };", cxxMethodDecl(isConst())));
