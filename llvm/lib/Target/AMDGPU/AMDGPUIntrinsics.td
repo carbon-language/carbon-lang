@@ -73,9 +73,4 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
   def int_AMDIL_exp : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 }
 
-let TargetPrefix = "TGSI", isTarget = 1 in {
-
-  def int_TGSI_lit_z : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty, llvm_float_ty],[IntrNoMem]>;
-}
-
 include "SIIntrinsics.td"
