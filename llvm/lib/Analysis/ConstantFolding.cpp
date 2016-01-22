@@ -399,9 +399,9 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
 }
 
 static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
+                                                 Type *LoadTy,
                                                  const DataLayout &DL) {
   PointerType *PTy = cast<PointerType>(C->getType());
-  Type *LoadTy = PTy->getElementType();
   IntegerType *IntType = dyn_cast<IntegerType>(LoadTy);
 
   // If this isn't an integer load we can't fold it directly.
@@ -414,19 +414,19 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
     // an actual new load.
     Type *MapTy;
     if (LoadTy->isHalfTy())
-      MapTy = Type::getInt16PtrTy(C->getContext(), AS);
+      MapTy = Type::getInt16Ty(C->getContext());
     else if (LoadTy->isFloatTy())
-      MapTy = Type::getInt32PtrTy(C->getContext(), AS);
+      MapTy = Type::getInt32Ty(C->getContext());
     else if (LoadTy->isDoubleTy())
-      MapTy = Type::getInt64PtrTy(C->getContext(), AS);
+      MapTy = Type::getInt64Ty(C->getContext());
     else if (LoadTy->isVectorTy()) {
-      MapTy = PointerType::getIntNPtrTy(C->getContext(),
-                                        DL.getTypeAllocSizeInBits(LoadTy), AS);
+      MapTy = PointerType::getIntNTy(C->getContext(),
+                                     DL.getTypeAllocSizeInBits(LoadTy));
     } else
       return nullptr;
 
-    C = FoldBitCast(C, MapTy, DL);
-    if (Constant *Res = FoldReinterpretLoadFromConstPtr(C, DL))
+    C = FoldBitCast(C, MapTy->getPointerTo(AS), DL);
+    if (Constant *Res = FoldReinterpretLoadFromConstPtr(C, MapTy, DL))
       return FoldBitCast(Res, LoadTy, DL);
     return nullptr;
   }
@@ -479,13 +479,15 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
 }
 
 static Constant *ConstantFoldLoadThroughBitcast(ConstantExpr *CE,
+                                                Type *DestTy,
                                                 const DataLayout &DL) {
-  auto *DestPtrTy = dyn_cast<PointerType>(CE->getType());
-  if (!DestPtrTy)
+  auto *SrcPtr = CE->getOperand(0);
+  auto *SrcPtrTy = dyn_cast<PointerType>(SrcPtr->getType());
+  if (!SrcPtrTy)
     return nullptr;
-  Type *DestTy = DestPtrTy->getElementType();
+  Type *SrcTy = SrcPtrTy->getPointerElementType();
 
-  Constant *C = ConstantFoldLoadFromConstPtr(CE->getOperand(0), DL);
+  Constant *C = ConstantFoldLoadFromConstPtr(SrcPtr, SrcTy, DL);
   if (!C)
     return nullptr;
 
@@ -524,7 +526,7 @@ static Constant *ConstantFoldLoadThroughBitcast(ConstantExpr *CE,
 
 /// Return the value that a load from C would produce if it is constant and
 /// determinable. If this is not determinable, return null.
-Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
+Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C, Type *Ty,
                                              const DataLayout &DL) {
   // First, try the easy cases:
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
@@ -533,7 +535,7 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
 
   if (auto *GA = dyn_cast<GlobalAlias>(C))
     if (GA->getAliasee() && !GA->mayBeOverridden())
-      return ConstantFoldLoadFromConstPtr(GA->getAliasee(), DL);
+      return ConstantFoldLoadFromConstPtr(GA->getAliasee(), Ty, DL);
 
   // If the loaded value isn't a constant expr, we can't handle it.
   ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
@@ -551,7 +553,7 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
   }
 
   if (CE->getOpcode() == Instruction::BitCast)
-    if (Constant *LoadedC = ConstantFoldLoadThroughBitcast(CE, DL))
+    if (Constant *LoadedC = ConstantFoldLoadThroughBitcast(CE, Ty, DL))
       return LoadedC;
 
   // Instead of loading constant c string, use corresponding integer value
@@ -559,7 +561,6 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
   StringRef Str;
   if (getConstantStringInfo(CE, Str) && !Str.empty()) {
     unsigned StrLen = Str.size();
-    Type *Ty = cast<PointerType>(CE->getType())->getElementType();
     unsigned NumBits = Ty->getPrimitiveSizeInBits();
     // Replace load with immediate integer if the result is an integer or fp
     // value.
@@ -594,16 +595,15 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
   if (GlobalVariable *GV =
           dyn_cast<GlobalVariable>(GetUnderlyingObject(CE, DL))) {
     if (GV->isConstant() && GV->hasDefinitiveInitializer()) {
-      Type *ResTy = cast<PointerType>(C->getType())->getElementType();
       if (GV->getInitializer()->isNullValue())
-        return Constant::getNullValue(ResTy);
+        return Constant::getNullValue(Ty);
       if (isa<UndefValue>(GV->getInitializer()))
-        return UndefValue::get(ResTy);
+        return UndefValue::get(Ty);
     }
   }
 
   // Try hard to fold loads from bitcasted strange and non-type-safe things.
-  return FoldReinterpretLoadFromConstPtr(CE, DL);
+  return FoldReinterpretLoadFromConstPtr(CE, Ty, DL);
 }
 
 static Constant *ConstantFoldLoadInst(const LoadInst *LI,
@@ -611,7 +611,7 @@ static Constant *ConstantFoldLoadInst(const LoadInst *LI,
   if (LI->isVolatile()) return nullptr;
 
   if (Constant *C = dyn_cast<Constant>(LI->getOperand(0)))
-    return ConstantFoldLoadFromConstPtr(C, DL);
+    return ConstantFoldLoadFromConstPtr(C, LI->getType(), DL);
 
   return nullptr;
 }
