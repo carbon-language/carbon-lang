@@ -35,15 +35,15 @@ namespace llvm {
       isLiteralStatementOperand
     } OperandType;
 
+    /// MiOpNo - For isMachineInstrOperand, this is the operand number of the
+    /// machine instruction.
+    unsigned MIOpNo;
+
     /// Str - For isLiteralTextOperand, this IS the literal text.  For
     /// isMachineInstrOperand, this is the PrinterMethodName for the operand..
     /// For isLiteralStatementOperand, this is the code to insert verbatim
     /// into the asm writer.
     std::string Str;
-
-    /// MiOpNo - For isMachineInstrOperand, this is the operand number of the
-    /// machine instruction.
-    unsigned MIOpNo;
 
     /// MiModifier - For isMachineInstrOperand, this is the modifier string for
     /// an operand, specified with syntax like ${opname:modifier}.
@@ -60,8 +60,7 @@ namespace llvm {
                      unsigned _MIOpNo,
                      const std::string &Modifier,
                      OpType op = isMachineInstrOperand)
-    : OperandType(op), Str(Printer), MIOpNo(_MIOpNo),
-    MiModifier(Modifier) {}
+    : OperandType(op), MIOpNo(_MIOpNo), Str(Printer), MiModifier(Modifier) {}
 
     bool operator!=(const AsmWriterOperand &Other) const {
       if (OperandType != Other.OperandType || Str != Other.Str) return true;
