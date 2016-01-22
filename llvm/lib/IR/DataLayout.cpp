@@ -729,8 +729,11 @@ uint64_t DataLayout::getIndexedOffset(Type *ptrTy,
   assert(Ty->isPointerTy() && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
 
+  // We can use 0 as the address space as we don't need
+  // to get pointer types back from gep_type_iterator.
+  unsigned AS = 0;
   generic_gep_type_iterator<Value* const*>
-    TI = gep_type_begin(ptrTy, Indices);
+    TI = gep_type_begin(ptrTy->getPointerElementType(), AS, Indices);
   for (unsigned CurIDX = 0, EndIDX = Indices.size(); CurIDX != EndIDX;
        ++CurIDX, ++TI) {
     if (StructType *STy = dyn_cast<StructType>(*TI)) {

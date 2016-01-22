@@ -423,7 +423,7 @@ public:
     // Assumes the address space is 0 when Ptr is nullptr.
     unsigned AS =
         (Ptr == nullptr ? 0 : Ptr->getType()->getPointerAddressSpace());
-    auto GTI = gep_type_begin(PointerType::get(PointeeType, AS), Operands);
+    auto GTI = gep_type_begin(PointeeType, AS, Operands);
     for (auto I = Operands.begin(); I != Operands.end(); ++I, ++GTI) {
       // We assume that the cost of Scalar GEP with constant index and the
       // cost of Vector GEP with splat constant index are the same.
