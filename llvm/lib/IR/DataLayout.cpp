@@ -736,9 +736,7 @@ uint64_t DataLayout::getIndexedOffsetInType(Type *ElemTy,
   for (; GTI != GTE; ++GTI) {
     Value *Idx = GTI.getOperand();
     if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-      assert(Idx->getType() ==
-             Type::getInt32Ty(ElemTy->getContext()) &&
-             "Illegal struct idx");
+      assert(Idx->getType()->isIntegerTy(32) && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantInt>(Idx)->getZExtValue();
 
       // Get structure layout information...
