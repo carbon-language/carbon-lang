@@ -925,7 +925,7 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(AMDGPUISD::CLAMP, DL, VT,
                          Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
 
-    case Intrinsic::AMDGPU_div_scale: {
+    case Intrinsic::amdgcn_div_scale: {
       // 3rd parameter required to be a constant.
       const ConstantSDNode *Param = dyn_cast<ConstantSDNode>(Op.getOperand(3));
       if (!Param)
@@ -947,28 +947,29 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                          Denominator, Numerator);
     }
 
-    case Intrinsic::AMDGPU_div_fmas:
+    case Intrinsic::amdgcn_div_fmas:
       return DAG.getNode(AMDGPUISD::DIV_FMAS, DL, VT,
                          Op.getOperand(1), Op.getOperand(2), Op.getOperand(3),
                          Op.getOperand(4));
 
-    case Intrinsic::AMDGPU_div_fixup:
+    case Intrinsic::amdgcn_div_fixup:
       return DAG.getNode(AMDGPUISD::DIV_FIXUP, DL, VT,
                          Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
 
-    case Intrinsic::AMDGPU_trig_preop:
+    case Intrinsic::amdgcn_trig_preop:
       return DAG.getNode(AMDGPUISD::TRIG_PREOP, DL, VT,
                          Op.getOperand(1), Op.getOperand(2));
 
-    case Intrinsic::AMDGPU_rcp:
+    case Intrinsic::amdgcn_rcp:
       return DAG.getNode(AMDGPUISD::RCP, DL, VT, Op.getOperand(1));
 
-    case Intrinsic::AMDGPU_rsq:
+    case Intrinsic::amdgcn_rsq:
       return DAG.getNode(AMDGPUISD::RSQ, DL, VT, Op.getOperand(1));
 
     case AMDGPUIntrinsic::AMDGPU_legacy_rsq:
       return DAG.getNode(AMDGPUISD::RSQ_LEGACY, DL, VT, Op.getOperand(1));
 
+    case Intrinsic::amdgcn_rsq_clamped:
     case Intrinsic::AMDGPU_rsq_clamped:
       if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
         Type *Type = VT.getTypeForEVT(*DAG.getContext());
@@ -984,7 +985,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
         return DAG.getNode(AMDGPUISD::RSQ_CLAMPED, DL, VT, Op.getOperand(1));
       }
 
-    case Intrinsic::AMDGPU_ldexp:
+    case Intrinsic::amdgcn_ldexp:
+    case Intrinsic::AMDGPU_ldexp: // Legacy name
       return DAG.getNode(AMDGPUISD::LDEXP, DL, VT, Op.getOperand(1),
                                                    Op.getOperand(2));
 
@@ -1039,7 +1041,7 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                          Op.getOperand(1),
                          Op.getOperand(2));
 
-  case Intrinsic::AMDGPU_class:
+  case Intrinsic::amdgcn_class:
     return DAG.getNode(AMDGPUISD::FP_CLASS, DL, VT,
                        Op.getOperand(1), Op.getOperand(2));
 

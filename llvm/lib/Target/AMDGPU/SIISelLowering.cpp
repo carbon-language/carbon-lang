@@ -1312,7 +1312,8 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::r600_read_local_size_z:
     return lowerImplicitZextParam(DAG, Op, MVT::i16,
                                   SI::KernelInputOffsets::LOCAL_SIZE_Z);
-  case Intrinsic::AMDGPU_read_workdim:
+  case Intrinsic::amdgcn_read_workdim:
+  case AMDGPUIntrinsic::AMDGPU_read_workdim: // Legacy name.
     // Really only 2 bits.
     return lowerImplicitZextParam(DAG, Op, MVT::i8,
                                   getImplicitParameterOffset(MFI, GRID_DIM));

@@ -781,7 +781,8 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     case Intrinsic::r600_read_local_size_z:
       return LowerImplicitParameter(DAG, VT, DL, 8);
 
-    case Intrinsic::AMDGPU_read_workdim: {
+    case Intrinsic::r600_read_workdim:
+    case AMDGPUIntrinsic::AMDGPU_read_workdim: { // Legacy name.
       uint32_t ByteOffset = getImplicitParameterOffset(MFI, GRID_DIM);
       return LowerImplicitParameter(DAG, VT, DL, ByteOffset / 4);
     }
@@ -804,7 +805,12 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     case Intrinsic::r600_read_tidig_z:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T0_Z, VT);
-    case Intrinsic::AMDGPU_rsq:
+
+    // FIXME: Should be renamed to r600 prefix
+    case Intrinsic::AMDGPU_rsq_clamped:
+      return DAG.getNode(AMDGPUISD::RSQ_CLAMPED, DL, VT, Op.getOperand(1));
+
+    case Intrinsic::r600_rsq:
       // XXX - I'm assuming SI's RSQ_LEGACY matches R600's behavior.
       return DAG.getNode(AMDGPUISD::RSQ_LEGACY, DL, VT, Op.getOperand(1));
     }

@@ -61,10 +61,17 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_bfe_i32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_bfe_u32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_bfm : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
-  def int_AMDGPU_brev : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_flbit_i32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+
+  // Deprecated in favor of llvm.bitreverse
+  def int_AMDGPU_brev : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+
+  // Deprecated in favor of llvm.amdgcn.s.barrier
   def int_AMDGPU_barrier_local  : Intrinsic<[], [], [IntrConvergent]>;
-  def int_AMDGPU_barrier_global  : Intrinsic<[], [], [IntrConvergent]>;
+  def int_AMDGPU_barrier_global : Intrinsic<[], [], [IntrConvergent]>;
+
+  // Deprecated in favor of llvm.amdgcn.read.workdim
+  def int_AMDGPU_read_workdim : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 }
 
 // Legacy names for compatibility.

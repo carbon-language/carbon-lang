@@ -215,7 +215,7 @@ main_body:
   %198 = fadd float %197, %196
   %199 = fmul float %97, %97
   %200 = fadd float %198, %199
-  %201 = call float @llvm.AMDGPU.rsq.f32(float %200)
+  %201 = call float @llvm.amdgcn.rsq.f32(float %200)
   %202 = fmul float %95, %201
   %203 = fmul float %96, %201
   %204 = fmul float %202, %29
@@ -396,7 +396,7 @@ IF67:                                             ; preds = %LOOP65
   %355 = fadd float %354, %353
   %356 = fmul float %352, %352
   %357 = fadd float %355, %356
-  %358 = call float @llvm.AMDGPU.rsq.f32(float %357)
+  %358 = call float @llvm.amdgcn.rsq.f32(float %357)
   %359 = fmul float %350, %358
   %360 = fmul float %351, %358
   %361 = fmul float %352, %358
@@ -524,7 +524,7 @@ IF67:                                             ; preds = %LOOP65
   %483 = fadd float %482, %481
   %484 = fmul float %109, %109
   %485 = fadd float %483, %484
-  %486 = call float @llvm.AMDGPU.rsq.f32(float %485)
+  %486 = call float @llvm.amdgcn.rsq.f32(float %485)
   %487 = fmul float %107, %486
   %488 = fmul float %108, %486
   %489 = fmul float %109, %486
@@ -553,7 +553,7 @@ IF67:                                             ; preds = %LOOP65
   %512 = fadd float %511, %510
   %513 = fmul float %97, %97
   %514 = fadd float %512, %513
-  %515 = call float @llvm.AMDGPU.rsq.f32(float %514)
+  %515 = call float @llvm.amdgcn.rsq.f32(float %514)
   %516 = fmul float %95, %515
   %517 = fmul float %96, %515
   %518 = fmul float %97, %515
@@ -670,7 +670,7 @@ declare i32 @llvm.SI.tid() #2
 declare float @ceil(float) #3
 
 ; Function Attrs: readnone
-declare float @llvm.AMDGPU.rsq.f32(float) #2
+declare float @llvm.amdgcn.rsq.f32(float) #2
 
 ; Function Attrs: nounwind readnone
 declare <4 x float> @llvm.SI.sampled.v8i32(<8 x i32>, <32 x i8>, <16 x i8>, i32) #1
@@ -899,7 +899,7 @@ main_body:
   %212 = fadd float %211, %210
   %213 = fmul float %209, %209
   %214 = fadd float %212, %213
-  %215 = call float @llvm.AMDGPU.rsq.f32(float %214)
+  %215 = call float @llvm.amdgcn.rsq.f32(float %214)
   %216 = fmul float %205, %215
   %217 = fmul float %207, %215
   %218 = fmul float %209, %215
@@ -1135,7 +1135,7 @@ IF189:                                            ; preds = %LOOP
   %434 = fsub float -0.000000e+00, %433
   %435 = fadd float 0x3FF00068E0000000, %434
   %436 = call float @llvm.AMDIL.clamp.(float %435, float 0.000000e+00, float 1.000000e+00)
-  %437 = call float @llvm.AMDGPU.rsq.f32(float %436)
+  %437 = call float @llvm.amdgcn.rsq.f32(float %436)
   %438 = fmul float %437, %436
   %439 = fsub float -0.000000e+00, %436
   %440 = call float @llvm.AMDGPU.cndlt(float %439, float %438, float 0.000000e+00)
@@ -1159,7 +1159,7 @@ IF189:                                            ; preds = %LOOP
   %458 = fadd float %457, %456
   %459 = fmul float %455, %455
   %460 = fadd float %458, %459
-  %461 = call float @llvm.AMDGPU.rsq.f32(float %460)
+  %461 = call float @llvm.amdgcn.rsq.f32(float %460)
   %462 = fmul float %451, %461
   %463 = fmul float %453, %461
   %464 = fmul float %455, %461
@@ -1269,7 +1269,7 @@ ENDIF197:                                         ; preds = %IF189, %IF198
   %559 = fadd float %558, %557
   %560 = fmul float %556, %556
   %561 = fadd float %559, %560
-  %562 = call float @llvm.AMDGPU.rsq.f32(float %561)
+  %562 = call float @llvm.amdgcn.rsq.f32(float %561)
   %563 = fmul float %562, %561
   %564 = fsub float -0.000000e+00, %561
   %565 = call float @llvm.AMDGPU.cndlt(float %564, float %563, float 0.000000e+00)
