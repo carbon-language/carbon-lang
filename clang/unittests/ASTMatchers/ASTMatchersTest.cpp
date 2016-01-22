@@ -4217,6 +4217,14 @@ TEST(HasAncestor, MatchesAllAncestors) {
               hasAncestor(cxxRecordDecl(unless(isTemplateInstantiation())))))));
 }
 
+TEST(HasAncestor, ImplicitArrayCopyCtorDeclRefExpr) {
+  EXPECT_TRUE(matches("struct MyClass {\n"
+                      "  int c[1];\n"
+                      "  static MyClass Create() { return MyClass(); }\n"
+                      "};",
+                      declRefExpr(to(decl(hasAncestor(decl()))))));
+}
+
 TEST(HasParent, MatchesAllParents) {
   EXPECT_TRUE(matches(
       "template <typename T> struct C { static void f() { 42; } };"
