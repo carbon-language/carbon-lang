@@ -28,10 +28,8 @@ template <endianness endian> struct Writer {
   raw_ostream &OS;
   Writer(raw_ostream &OS) : OS(OS) {}
   template <typename value_type> void write(ArrayRef<value_type> Vals) {
-    for (value_type V : Vals) {
-      value_type Swaped = byte_swap<value_type, endian>(V);
-      OS.write((const char *)&Swaped, sizeof(value_type));
-    }
+    for (value_type V : Vals)
+      write(V);
   }
   template <typename value_type> void write(value_type Val) {
     Val = byte_swap<value_type, endian>(Val);
