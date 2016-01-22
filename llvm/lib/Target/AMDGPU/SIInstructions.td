@@ -1874,14 +1874,14 @@ def SI_IF: InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$vcc, brtarget:$target),
   "",
-  [(set i64:$dst, (int_SI_if i1:$vcc, bb:$target))]
+  [(set i64:$dst, (int_amdgcn_if i1:$vcc, bb:$target))]
 >;
 
 def SI_ELSE : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src, brtarget:$target),
   "",
-  [(set i64:$dst, (int_SI_else i64:$src, bb:$target))]
+  [(set i64:$dst, (int_amdgcn_else i64:$src, bb:$target))]
 > {
   let Constraints = "$src = $dst";
 }
@@ -1890,7 +1890,7 @@ def SI_LOOP : InstSI <
   (outs),
   (ins SReg_64:$saved, brtarget:$target),
   "si_loop $saved, $target",
-  [(int_SI_loop i64:$saved, bb:$target)]
+  [(int_amdgcn_loop i64:$saved, bb:$target)]
 >;
 
 } // end isBranch = 1, isTerminator = 1
@@ -1899,28 +1899,28 @@ def SI_BREAK : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src),
   "si_else $dst, $src",
-  [(set i64:$dst, (int_SI_break i64:$src))]
+  [(set i64:$dst, (int_amdgcn_break i64:$src))]
 >;
 
 def SI_IF_BREAK : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$vcc, SReg_64:$src),
   "si_if_break $dst, $vcc, $src",
-  [(set i64:$dst, (int_SI_if_break i1:$vcc, i64:$src))]
+  [(set i64:$dst, (int_amdgcn_if_break i1:$vcc, i64:$src))]
 >;
 
 def SI_ELSE_BREAK : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src0, SReg_64:$src1),
   "si_else_break $dst, $src0, $src1",
-  [(set i64:$dst, (int_SI_else_break i64:$src0, i64:$src1))]
+  [(set i64:$dst, (int_amdgcn_else_break i64:$src0, i64:$src1))]
 >;
 
 def SI_END_CF : InstSI <
   (outs),
   (ins SReg_64:$saved),
   "si_end_cf $saved",
-  [(int_SI_end_cf i64:$saved)]
+  [(int_amdgcn_end_cf i64:$saved)]
 >;
 
 } // End Uses = [EXEC], Defs = [EXEC]
