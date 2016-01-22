@@ -71,43 +71,48 @@ let TargetPrefix = "amdgcn" in {
 def int_amdgcn_s_barrier : GCCBuiltin<"__builtin_amdgcn_s_barrier">,
   Intrinsic<[], [], [IntrConvergent]>;
 
-def int_amdgcn_div_scale : GCCBuiltin<"__builtin_amdgcn_div_scale">,
+def int_amdgcn_div_scale : Intrinsic<
   // 1st parameter: Numerator
   // 2nd parameter: Denominator
   // 3rd parameter: Constant to select select between first and
   //                second. (0 = first, 1 = second).
-  Intrinsic<[llvm_anyfloat_ty, llvm_i1_ty],
-            [LLVMMatchType<0>, LLVMMatchType<0>, llvm_i1_ty],
-            [IntrNoMem]>;
+  [llvm_anyfloat_ty, llvm_i1_ty],
+  [LLVMMatchType<0>, LLVMMatchType<0>, llvm_i1_ty],
+  [IntrNoMem]
+>;
 
-def int_amdgcn_div_fmas : GCCBuiltin<"__builtin_amdgcn_div_fmas">,
-  Intrinsic<[llvm_anyfloat_ty],
-            [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>, llvm_i1_ty],
-            [IntrNoMem]>;
+def int_amdgcn_div_fmas : Intrinsic<[llvm_anyfloat_ty],
+  [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>, llvm_i1_ty],
+  [IntrNoMem]
+>;
 
-def int_amdgcn_div_fixup : GCCBuiltin<"__builtin_amdgcn_div_fixup">,
-  Intrinsic<[llvm_anyfloat_ty],
-            [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
-            [IntrNoMem]>;
+def int_amdgcn_div_fixup : Intrinsic<[llvm_anyfloat_ty],
+  [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
+  [IntrNoMem]
+>;
 
-def int_amdgcn_trig_preop : GCCBuiltin<"__builtin_amdgcn_trig_preop">,
-  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty],
-            [IntrNoMem]>;
+def int_amdgcn_trig_preop : Intrinsic<
+  [llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]
+>;
 
-def int_amdgcn_rcp : GCCBuiltin<"__builtin_amdgcn_rcp">,
-  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+def int_amdgcn_rcp : Intrinsic<
+  [llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]
+>;
 
-def int_amdgcn_rsq : GCCBuiltin<"__builtin_amdgcn_rsq">,
-  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+def int_amdgcn_rsq :  Intrinsic<
+  [llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]
+>;
 
-def int_amdgcn_rsq_clamped : GCCBuiltin<"__builtin_amdgcn_rsq_clamped">,
-  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+def int_amdgcn_rsq_clamped :  Intrinsic<
+  [llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-def int_amdgcn_ldexp : GCCBuiltin<"__builtin_amdgcn_ldexp">,
-  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]>;
+def int_amdgcn_ldexp : Intrinsic<
+  [llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]
+>;
 
-def int_amdgcn_class : GCCBuiltin<"__builtin_amdgcn_class">,
-  Intrinsic<[llvm_i1_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_amdgcn_class : Intrinsic<
+  [llvm_i1_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]
+>;
 
 def int_amdgcn_read_workdim : AMDGPUReadPreloadRegisterIntrinsic <
   "__builtin_amdgcn_read_workdim">;
