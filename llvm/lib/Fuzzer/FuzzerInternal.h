@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
+#include <random>
 #include <string>
 #include <string.h>
 #include <vector>
@@ -200,7 +201,7 @@ class Fuzzer {
     bool PrintNewCovPcs = false;
   };
   Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
-  void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
+  void AddToCorpus(const Unit &U) { Corpus.push_back(U); UpdateCorpusDistribution(); }
   size_t ChooseUnitIdxToMutate();
   const Unit &ChooseUnitToMutate() { return Corpus[ChooseUnitIdxToMutate()]; };
   void Loop();
@@ -241,6 +242,9 @@ class Fuzzer {
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
   void PrintStats(const char *Where, const char *End = "\n");
   void PrintStatusForNewUnit(const Unit &U);
+  // Updates the probability distribution for the units in the corpus.
+  // Must be called whenever the corpus or unit weights are changed.
+  void UpdateCorpusDistribution();
 
   void SyncCorpus();
 
@@ -280,6 +284,7 @@ class Fuzzer {
     return Res;
   }
 
+  std::piecewise_constant_distribution<double> CorpusDistribution;
   UserSuppliedFuzzer &USF;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
