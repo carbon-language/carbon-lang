@@ -703,7 +703,7 @@ void RewriteInstance::disassembleFunctions() {
               }
     );
     auto SFI = ProfiledFunctions.begin();
-    for(int i = 0; i < 50 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
+    for(int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
       errs() << "  " << (*SFI)->getName() << " : "
              << (*SFI)->getExecutionCount() << '\n';
     }
@@ -886,7 +886,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
                                   Function.getPersonalityEncoding());
     }
-    if (Function.getLSDASymbol()) {
+    if (!EmitColdPart && Function.getLSDASymbol()) {
       Streamer.EmitCFILsda(Function.getLSDASymbol(),
                            BC.MOFI->getLSDAEncoding());
     } else {
@@ -941,8 +941,12 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   if (Function.hasCFI() && HasExtraStorage)
     Streamer.EmitCFIEndProc();
 
+  if (!EmitColdPart && Function.getFunctionEndLabel())
+    Streamer.EmitLabel(Function.getFunctionEndLabel());
+
   // Emit LSDA before anything else?
-  Function.emitLSDA(&Streamer);
+  if (!EmitColdPart)
+    Function.emitLSDA(&Streamer);
 
   // TODO: is there any use in emiting end of function?
   //       Perhaps once we have a support for C++ exceptions.
@@ -1164,10 +1168,6 @@ bool RewriteInstance::splitLargeFunctions() {
       continue;
 
     if (Function.getImageSize() <= Function.getMaxSize())
-      continue;
-
-    // Don't split functions with exception ranges.
-    if (Function.hasEHRanges())
       continue;
 
     ToSplit.insert(BFI.first);

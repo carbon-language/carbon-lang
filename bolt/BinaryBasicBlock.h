@@ -55,6 +55,10 @@ class BinaryBasicBlock {
   /// this BB will be allocated outside its parent function.
   bool IsCold{false};
 
+  /// Indicates if any of instructions in this basic block could throw
+  /// an exception.
+  bool CanThrow{false};
+
   /// Vector of all instructions in the block.
   std::vector<MCInst> Instructions;
 
@@ -235,6 +239,12 @@ public:
 
   bool isCold() const {
     return IsCold;
+  }
+
+  /// Return true if any of instructions in this basic block can throw
+  /// an exception.
+  bool canThrow() const {
+    return CanThrow;
   }
 
   bool eraseInstruction(MCInst *Inst) {

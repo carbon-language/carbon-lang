@@ -1077,16 +1077,6 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
       ClusterEdges[I][J] += Weight[elmt];
     }
   }
-  DEBUG(for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
-    dbgs() << "Cluster number " << I << ": ";
-    auto Sep = "";
-    for (auto BB : Clusters[I]) {
-      dbgs() << Sep << BB->getName();
-      Sep = ", ";
-    }
-    dbgs() << "\n";
-  });
-
   std::vector<uint32_t> Order;  // Cluster layout order
 
   // Here we have 3 conflicting goals as to how to layout clusters. If we want
@@ -1103,10 +1093,23 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
     double Freq = 0.0;
     for (auto BB : Clusters[I]) {
       if (!BB->empty() && BB->size() != BB->getNumPseudos())
-        Freq += BB->getExecutionCount() / (BB->size() - BB->getNumPseudos());
+        Freq += ((double) BB->getExecutionCount()) /
+                (BB->size() - BB->getNumPseudos());
     }
     AvgFreq[I] = Freq;
   }
+
+  DEBUG(
+  for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
+    errs() << "Cluster number " << I << " (frequency: " << AvgFreq[I] << ") : ";
+    auto Sep = "";
+    for (auto BB : Clusters[I]) {
+      errs() << Sep << BB->getName();
+      Sep = ", ";
+    }
+    errs() << "\n";
+  };
+  );
 
   switch(Type) {
   case LT_OPTIMIZE: {
@@ -1200,6 +1203,17 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   default:
     llvm_unreachable("unexpected layout type");
   }
+
+  DEBUG(
+  errs() << "New cluster order: ";
+  auto Sep = "";
+  for(auto O : Order) {
+    errs() << Sep << O;
+    Sep = ", ";
+  }
+  errs() << '\n';
+  );
+
 
   BasicBlocksLayout.clear();
   for (auto I : Order) {
@@ -1454,14 +1468,56 @@ void BinaryFunction::splitFunction() {
     return;
 
   assert(BasicBlocksLayout.size() > 0);
+
   // Separate hot from cold
-  for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
-       I != E; ++I) {
-    BinaryBasicBlock *BB = *I;
-    if (BB->getExecutionCount() != 0)
-      break;
-    BB->IsCold = true;
-    IsSplit = true;
+  if (!hasEHRanges()) {
+    for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
+         I != E; ++I) {
+      BinaryBasicBlock *BB = *I;
+      if (BB->getExecutionCount() != 0)
+        break;
+      BB->IsCold = true;
+      IsSplit = true;
+    }
+  } else {
+    // We cannot move a block that can throw since exception-handling
+    // runtime cannot deal with split functions. However, if we can guarantee
+    // that the block never throws, it is safe to move the block to
+    // decrease the size of the function.
+    //
+    // We also cannot move landing pads (or rather entry points for landing
+    // pads) for the same reason.
+    for (auto &BB : BasicBlocks) {
+      if (LandingPads.find(BB.getLabel()) != LandingPads.end()) {
+        BB.CanThrow = true;
+        continue;
+      }
+      for (auto &Instr : BB) {
+        if (BC.MIA->isInvoke(Instr)) {
+          BB.CanThrow = true;
+          break;
+        }
+      }
+    }
+    std::stable_sort(BasicBlocksLayout.begin(), BasicBlocksLayout.end(),
+        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
+          if (A->getExecutionCount() != 0 || B->getExecutionCount() != 0)
+            return false;
+          bool CouldMoveA = !A->canThrow();
+          bool CouldMoveB = !B->canThrow();
+          return CouldMoveA < CouldMoveB;
+        });
+
+    for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
+         I != E; ++I) {
+      BinaryBasicBlock *BB = *I;
+      if (BB->getExecutionCount() != 0)
+        break;
+      if (BB->canThrow())
+        break;
+      BB->IsCold = true;
+      IsSplit = true;
+    }
   }
 }
 

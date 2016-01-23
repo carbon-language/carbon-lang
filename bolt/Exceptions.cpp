@@ -152,11 +152,9 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     errs() << '\n';
   }
 
-  unsigned NumCallSites = 0;
+  HasEHRanges = CallSitePtr < CallSiteTableEnd;
   uint64_t RangeBase = getAddress();
   while (CallSitePtr < CallSiteTableEnd) {
-    ++NumCallSites;
-
     uintptr_t Start = readEncodedPointer(CallSitePtr, CallSiteEncoding);
     uintptr_t Length = readEncodedPointer(CallSitePtr, CallSiteEncoding);
     uintptr_t LandingPad = readEncodedPointer(CallSitePtr, CallSiteEncoding);
@@ -339,11 +337,18 @@ void BinaryFunction::updateEHRanges() {
         continue;
 
       // Same symbol is used for the beginning and the end of the range.
-      const MCSymbol *EHSymbol = BC.Ctx->createTempSymbol("EH", true);
-      MCInst EHLabel;
-      BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
-      II = BB->Instructions.insert(II, EHLabel);
-      ++II;
+      MCSymbol *EHSymbol{nullptr};
+      if (BB->isCold()) {
+        // If we see a label in the cold block, it means we have to close
+        // the range using function end symbol.
+        EHSymbol = getFunctionEndLabel();
+      } else {
+        EHSymbol = BC.Ctx->createTempSymbol("EH", true);
+        MCInst EHLabel;
+        BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
+        II = BB->Instructions.insert(II, EHLabel);
+        ++II;
+      }
 
       // At this point we could be in the one of the following states:
       //
@@ -384,11 +389,7 @@ void BinaryFunction::updateEHRanges() {
   // Check if we need to close the range.
   if (StartRange) {
     assert(!EndRange && "unexpected end of range");
-    EndRange = BC.Ctx->createTempSymbol("EH", true);
-    MCInst EHLabel;
-    BC.MIA->createEHLabel(EHLabel, EndRange, BC.Ctx.get());
-    BasicBlocksLayout.back()->Instructions.emplace_back(EHLabel);
-
+    EndRange = getFunctionEndLabel();
     CallSites.emplace_back(CallSite{StartRange, EndRange,
                                     PreviousEH.LP, PreviousEH.Action});
   }
@@ -399,8 +400,6 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   if (CallSites.empty()) {
     return;
   }
-
-  assert(!isSplit() && "split functions are not supported yet");
 
   // Calculate callsite table size. Size of each callsite entry is:
   //

@@ -113,6 +113,13 @@ private:
   /// flow graph and re-assemble.
   bool IsSimple{true};
 
+  /// True if this function needs to be emitted in two separate parts, one for
+  /// the hot basic blocks and another for the cold basic blocks.
+  bool IsSplit{false};
+
+  /// Indicate if this function has associated exception handling metadata.
+  bool HasEHRanges{false};
+
   MCSymbol *PersonalityFunction{nullptr};
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
 
@@ -139,10 +146,6 @@ private:
 
   /// Landing pads for the function.
   std::set<MCSymbol *> LandingPads;
-
-  /// True if this function needs to be emitted in two separate parts, one for
-  /// the hot basic blocks and another for the cold basic blocks.
-  bool IsSplit{false};
 
   /// Release storage used by instructions.
   BinaryFunction &clearInstructions() {
@@ -250,6 +253,9 @@ private:
 
   /// Symbol in the output.
   const MCSymbol *OutputSymbol;
+
+  /// Symbol at the end of the function.
+  MCSymbol *FunctionEndLabel{nullptr};
 
   /// Unique number associated with the function.
   uint64_t  FunctionNumber;
@@ -370,6 +376,15 @@ public:
     return OutputSymbol;
   }
 
+  /// Return MC symbol associtated with the end of the function.
+  MCSymbol *getFunctionEndLabel() {
+    assert(BC.Ctx && "cannot be called with empty context");
+    if (!FunctionEndLabel) {
+      FunctionEndLabel = BC.Ctx->createTempSymbol("func_end", true);
+    }
+    return FunctionEndLabel;
+  }
+
   /// Return internal section name for this function.
   StringRef getCodeSectionName() const {
     assert(!CodeSectionName.empty() && "no section name for function");
@@ -417,6 +432,7 @@ public:
   BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
                                   bool DeriveAlignment = false) {
     assert(!getBasicBlockAtOffset(Offset) && "basic block already exists");
+    assert(BC.Ctx && "cannot be called with empty context");
     if (!Label)
       Label = BC.Ctx->createTempSymbol("BB", true);
     BasicBlocks.emplace_back(BinaryBasicBlock(Label, Offset));
@@ -679,7 +695,7 @@ public:
   void updateEHRanges();
 
   /// Return true if the function has exception handling tables.
-  bool hasEHRanges() const { return !CallSites.empty(); }
+  bool hasEHRanges() const { return HasEHRanges; }
 
   /// Emit exception handling ranges for the function.
   void emitLSDA(MCStreamer *Streamer);
