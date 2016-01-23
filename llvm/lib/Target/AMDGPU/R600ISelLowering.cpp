@@ -615,12 +615,6 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     unsigned IntrinsicID =
                          cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
     switch (IntrinsicID) {
-    case AMDGPUIntrinsic::AMDGPU_store_output: {
-      int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-      unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
-      MFI->LiveOuts.push_back(Reg);
-      return DAG.getCopyToReg(Chain, SDLoc(Op), Reg, Op.getOperand(2));
-    }
     case AMDGPUIntrinsic::R600_store_swizzle: {
       SDLoc DL(Op);
       const SDValue Args[8] = {

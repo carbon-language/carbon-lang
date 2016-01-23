@@ -4,6 +4,8 @@
 ; These tests check that the compiler won't crash when it needs to spill
 ; SGPRs.
 
+@ddxy_lds = external addrspace(3) global [64 x i32]
+
 ; CHECK-LABEL: {{^}}main:
 ; CHECK: s_wqm
 
@@ -19,9 +21,7 @@
 ; Writing to M0 from an SMRD instruction will hang the GPU.
 ; CHECK-NOT: s_buffer_load_dword m0
 ; CHECK: s_endpgm
-@ddxy_lds = external addrspace(3) global [64 x i32]
-
-define void @main([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
+define void @main([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #1 {
 main_body:
   %21 = getelementptr [17 x <16 x i8>], [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
   %22 = load <16 x i8>, <16 x i8> addrspace(2)* %21, !tbaa !0
@@ -657,52 +657,9 @@ ENDIF66:                                          ; preds = %LOOP65
   br label %LOOP65
 }
 
-; Function Attrs: nounwind readnone
-declare float @llvm.SI.load.const(<16 x i8>, i32) #1
-
-; Function Attrs: nounwind readnone
-declare float @llvm.SI.fs.interp(i32, i32, i32, <2 x i32>) #1
-
-; Function Attrs: readnone
-declare i32 @llvm.SI.tid() #2
-
-; Function Attrs: readonly
-declare float @ceil(float) #3
-
-; Function Attrs: readnone
-declare float @llvm.amdgcn.rsq.f32(float) #2
-
-; Function Attrs: nounwind readnone
-declare <4 x float> @llvm.SI.sampled.v8i32(<8 x i32>, <32 x i8>, <16 x i8>, i32) #1
-
-; Function Attrs: readnone
-declare <4 x float> @llvm.AMDGPU.cube(<4 x float>) #2
-
-; Function Attrs: readnone
-declare float @fabs(float) #2
-
-; Function Attrs: nounwind readnone
-declare <4 x float> @llvm.SI.sample.v4i32(<4 x i32>, <32 x i8>, <16 x i8>, i32) #1
-
-; Function Attrs: nounwind readonly
-declare float @llvm.pow.f32(float, float) #4
-
-; Function Attrs: nounwind readnone
-declare i32 @llvm.SI.packf16(float, float) #1
-
-declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
-
-attributes #0 = { "ShaderType"="0" }
-attributes #1 = { nounwind readnone }
-attributes #2 = { readnone }
-attributes #3 = { readonly }
-attributes #4 = { nounwind readonly }
-
-!0 = !{!"const", null, i32 1}
-
 ; CHECK-LABEL: {{^}}main1:
 ; CHECK: s_endpgm
-define void @main1([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
+define void @main1([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #1 {
 main_body:
   %21 = getelementptr [17 x <16 x i8>], [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
   %22 = load <16 x i8>, <16 x i8> addrspace(2)* %21, !tbaa !0
@@ -918,425 +875,439 @@ main_body:
   %231 = fmul float %227, 0x4012611180000000
   %232 = fmul float %228, 0x4012611180000000
   %233 = fmul float %229, 0x4012611180000000
-  %234 = call float @llvm.AMDGPU.lrp(float %27, float %231, float 1.000000e+00)
-  %235 = call float @llvm.AMDGPU.lrp(float %27, float %232, float 1.000000e+00)
-  %236 = call float @llvm.AMDGPU.lrp(float %27, float %233, float 1.000000e+00)
-  %237 = fmul float %216, %184
-  %238 = fmul float %217, %185
-  %239 = fadd float %238, %237
-  %240 = fmul float %218, %186
-  %241 = fadd float %239, %240
-  %242 = fmul float %216, %187
-  %243 = fmul float %217, %188
-  %244 = fadd float %243, %242
-  %245 = fmul float %218, %189
-  %246 = fadd float %244, %245
-  %247 = fmul float %216, %190
-  %248 = fmul float %217, %191
-  %249 = fadd float %248, %247
-  %250 = fmul float %218, %192
-  %251 = fadd float %249, %250
-  %252 = call float @llvm.AMDIL.clamp.(float %251, float 0.000000e+00, float 1.000000e+00)
-  %253 = fmul float %214, 0x3F5A36E2E0000000
-  %254 = call float @llvm.AMDIL.clamp.(float %253, float 0.000000e+00, float 1.000000e+00)
-  %255 = fsub float -0.000000e+00, %254
-  %256 = fadd float 1.000000e+00, %255
-  %257 = call float @llvm.pow.f32(float %252, float 2.500000e-01)
-  %258 = fmul float %39, %257
-  %259 = fmul float %241, %258
-  %260 = fmul float %246, %258
-  %261 = fmul float %259, %230
-  %262 = fmul float %260, %230
-  %263 = fadd float %252, 0x3EE4F8B580000000
-  %264 = fsub float -0.000000e+00, %252
-  %265 = fadd float 1.000000e+00, %264
-  %266 = fmul float 1.200000e+01, %265
-  %267 = fadd float %266, 4.000000e+00
-  %268 = fsub float -0.000000e+00, %267
-  %269 = fmul float %268, %263
-  %270 = fsub float -0.000000e+00, %267
-  %271 = fmul float %270, %263
-  %272 = fsub float -0.000000e+00, %267
-  %273 = fmul float %272, %263
-  %274 = fdiv float 1.000000e+00, %269
-  %275 = fdiv float 1.000000e+00, %271
-  %276 = fdiv float 1.000000e+00, %273
-  %277 = fmul float %261, %274
-  %278 = fmul float %262, %275
-  %279 = fmul float %263, %276
+  %one.sub.a.i = fsub float 1.000000e+00, %27
+  %result.i = fadd float %231, %one.sub.a.i
+  %one.sub.a.i43 = fsub float 1.000000e+00, %27
+  %result.i44 = fadd float %232, %one.sub.a.i43
+  %one.sub.a.i41 = fsub float 1.000000e+00, %27
+  %result.i42 = fadd float %233, %one.sub.a.i41
+  %234 = fmul float %216, %184
+  %235 = fmul float %217, %185
+  %236 = fadd float %235, %234
+  %237 = fmul float %218, %186
+  %238 = fadd float %236, %237
+  %239 = fmul float %216, %187
+  %240 = fmul float %217, %188
+  %241 = fadd float %240, %239
+  %242 = fmul float %218, %189
+  %243 = fadd float %241, %242
+  %244 = fmul float %216, %190
+  %245 = fmul float %217, %191
+  %246 = fadd float %245, %244
+  %247 = fmul float %218, %192
+  %248 = fadd float %246, %247
+  %249 = call float @llvm.AMDIL.clamp.(float %248, float 0.000000e+00, float 1.000000e+00)
+  %250 = fmul float %214, 0x3F5A36E2E0000000
+  %251 = call float @llvm.AMDIL.clamp.(float %250, float 0.000000e+00, float 1.000000e+00)
+  %252 = fsub float -0.000000e+00, %251
+  %253 = fadd float 1.000000e+00, %252
+  %254 = call float @llvm.pow.f32(float %249, float 2.500000e-01)
+  %255 = fmul float %39, %254
+  %256 = fmul float %238, %255
+  %257 = fmul float %243, %255
+  %258 = fmul float %256, %230
+  %259 = fmul float %257, %230
+  %260 = fadd float %249, 0x3EE4F8B580000000
+  %261 = fsub float -0.000000e+00, %249
+  %262 = fadd float 1.000000e+00, %261
+  %263 = fmul float 1.200000e+01, %262
+  %264 = fadd float %263, 4.000000e+00
+  %265 = fsub float -0.000000e+00, %264
+  %266 = fmul float %265, %260
+  %267 = fsub float -0.000000e+00, %264
+  %268 = fmul float %267, %260
+  %269 = fsub float -0.000000e+00, %264
+  %270 = fmul float %269, %260
+  %271 = fdiv float 1.000000e+00, %266
+  %272 = fdiv float 1.000000e+00, %268
+  %273 = fdiv float 1.000000e+00, %270
+  %274 = fmul float %258, %271
+  %275 = fmul float %259, %272
+  %276 = fmul float %260, %273
   br label %LOOP
 
 LOOP:                                             ; preds = %LOOP, %main_body
-  %temp144.0 = phi float [ 1.000000e+00, %main_body ], [ %292, %LOOP ]
-  %temp168.0 = phi float [ %176, %main_body ], [ %288, %LOOP ]
-  %temp169.0 = phi float [ %177, %main_body ], [ %289, %LOOP ]
-  %temp170.0 = phi float [ %256, %main_body ], [ %290, %LOOP ]
-  %280 = bitcast float %temp168.0 to i32
-  %281 = bitcast float %temp169.0 to i32
-  %282 = insertelement <4 x i32> undef, i32 %280, i32 0
-  %283 = insertelement <4 x i32> %282, i32 %281, i32 1
-  %284 = insertelement <4 x i32> %283, i32 0, i32 2
-  %285 = insertelement <4 x i32> %284, i32 undef, i32 3
-  %286 = call <4 x float> @llvm.SI.samplel.v4i32(<4 x i32> %285, <32 x i8> %147, <16 x i8> %149, i32 2)
-  %287 = extractelement <4 x float> %286, i32 3
-  %288 = fadd float %temp168.0, %277
-  %289 = fadd float %temp169.0, %278
-  %290 = fadd float %temp170.0, %279
-  %291 = fsub float -0.000000e+00, %287
-  %292 = fadd float %290, %291
-  %293 = fcmp oge float 0.000000e+00, %292
-  %294 = sext i1 %293 to i32
-  %295 = bitcast i32 %294 to float
-  %296 = bitcast float %295 to i32
-  %297 = icmp ne i32 %296, 0
-  br i1 %297, label %IF189, label %LOOP
+  %temp144.0 = phi float [ 1.000000e+00, %main_body ], [ %289, %LOOP ]
+  %temp168.0 = phi float [ %176, %main_body ], [ %285, %LOOP ]
+  %temp169.0 = phi float [ %177, %main_body ], [ %286, %LOOP ]
+  %temp170.0 = phi float [ %253, %main_body ], [ %287, %LOOP ]
+  %277 = bitcast float %temp168.0 to i32
+  %278 = bitcast float %temp169.0 to i32
+  %279 = insertelement <4 x i32> undef, i32 %277, i32 0
+  %280 = insertelement <4 x i32> %279, i32 %278, i32 1
+  %281 = insertelement <4 x i32> %280, i32 0, i32 2
+  %282 = insertelement <4 x i32> %281, i32 undef, i32 3
+  %283 = call <4 x float> @llvm.SI.samplel.v4i32(<4 x i32> %282, <32 x i8> %147, <16 x i8> %149, i32 2)
+  %284 = extractelement <4 x float> %283, i32 3
+  %285 = fadd float %temp168.0, %274
+  %286 = fadd float %temp169.0, %275
+  %287 = fadd float %temp170.0, %276
+  %288 = fsub float -0.000000e+00, %284
+  %289 = fadd float %287, %288
+  %290 = fcmp oge float 0.000000e+00, %289
+  %291 = sext i1 %290 to i32
+  %292 = bitcast i32 %291 to float
+  %293 = bitcast float %292 to i32
+  %294 = icmp ne i32 %293, 0
+  br i1 %294, label %IF189, label %LOOP
 
 IF189:                                            ; preds = %LOOP
-  %298 = extractelement <4 x float> %286, i32 0
-  %299 = extractelement <4 x float> %286, i32 1
-  %300 = extractelement <4 x float> %286, i32 2
-  %301 = fsub float -0.000000e+00, %292
-  %302 = fadd float %temp144.0, %301
-  %303 = fdiv float 1.000000e+00, %302
-  %304 = fmul float %292, %303
-  %305 = fadd float %304, -1.000000e+00
-  %306 = fmul float %305, %277
-  %307 = fadd float %306, %288
-  %308 = fmul float %305, %278
-  %309 = fadd float %308, %289
-  %310 = fsub float -0.000000e+00, %176
-  %311 = fadd float %307, %310
-  %312 = fsub float -0.000000e+00, %177
-  %313 = fadd float %309, %312
-  %314 = fadd float %176, %311
-  %315 = fadd float %177, %313
-  %316 = fmul float %311, %67
-  %317 = fmul float %313, %68
-  %318 = fmul float %316, %55
-  %319 = fmul float %316, %56
-  %320 = fmul float %317, %57
-  %321 = fadd float %320, %318
-  %322 = fmul float %317, %58
-  %323 = fadd float %322, %319
-  %324 = fadd float %178, %321
-  %325 = fadd float %179, %323
-  %326 = fmul float %316, %59
-  %327 = fmul float %316, %60
-  %328 = fmul float %316, %61
-  %329 = fmul float %316, %62
-  %330 = fmul float %317, %63
-  %331 = fadd float %330, %326
-  %332 = fmul float %317, %64
-  %333 = fadd float %332, %327
-  %334 = fmul float %317, %65
-  %335 = fadd float %334, %328
-  %336 = fmul float %317, %66
-  %337 = fadd float %336, %329
-  %338 = fadd float %168, %331
-  %339 = fadd float %169, %333
-  %340 = fadd float %170, %335
-  %341 = fadd float %171, %337
-  %342 = bitcast float %338 to i32
-  %343 = bitcast float %339 to i32
-  %344 = insertelement <2 x i32> undef, i32 %342, i32 0
-  %345 = insertelement <2 x i32> %344, i32 %343, i32 1
-  %346 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %345, <32 x i8> %135, <16 x i8> %137, i32 2)
-  %347 = extractelement <4 x float> %346, i32 0
-  %348 = extractelement <4 x float> %346, i32 1
-  %349 = extractelement <4 x float> %346, i32 2
-  %350 = extractelement <4 x float> %346, i32 3
-  %351 = fmul float %347, %23
-  %352 = fmul float %348, %24
-  %353 = fmul float %349, %25
-  %354 = fmul float %350, %26
-  %355 = fmul float %351, %180
-  %356 = fmul float %352, %181
-  %357 = fmul float %353, %182
-  %358 = fmul float %354, %183
-  %359 = fsub float -0.000000e+00, %350
-  %360 = fadd float 1.000000e+00, %359
-  %361 = fmul float %360, %49
-  %362 = call float @llvm.AMDGPU.lrp(float %361, float %347, float %355)
-  %363 = call float @llvm.AMDGPU.lrp(float %361, float %348, float %356)
-  %364 = call float @llvm.AMDGPU.lrp(float %361, float %349, float %357)
-  %365 = bitcast float %340 to i32
-  %366 = bitcast float %341 to i32
-  %367 = insertelement <2 x i32> undef, i32 %365, i32 0
-  %368 = insertelement <2 x i32> %367, i32 %366, i32 1
-  %369 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %368, <32 x i8> %151, <16 x i8> %153, i32 2)
-  %370 = extractelement <4 x float> %369, i32 2
-  %371 = fmul float %362, %234
-  %372 = fmul float %363, %235
-  %373 = fmul float %364, %236
-  %374 = fmul float %358, %230
-  %375 = bitcast float %314 to i32
-  %376 = bitcast float %315 to i32
-  %377 = insertelement <2 x i32> undef, i32 %375, i32 0
-  %378 = insertelement <2 x i32> %377, i32 %376, i32 1
-  %379 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %378, <32 x i8> %139, <16 x i8> %141, i32 2)
-  %380 = extractelement <4 x float> %379, i32 0
-  %381 = extractelement <4 x float> %379, i32 1
-  %382 = extractelement <4 x float> %379, i32 2
-  %383 = extractelement <4 x float> %379, i32 3
-  %384 = fcmp olt float 0.000000e+00, %382
-  %385 = sext i1 %384 to i32
-  %386 = bitcast i32 %385 to float
-  %387 = bitcast float %386 to i32
-  %388 = icmp ne i32 %387, 0
-  %.224 = select i1 %388, float %381, float %380
-  %.225 = select i1 %388, float %383, float %381
-  %389 = bitcast float %324 to i32
-  %390 = bitcast float %325 to i32
-  %391 = insertelement <2 x i32> undef, i32 %389, i32 0
-  %392 = insertelement <2 x i32> %391, i32 %390, i32 1
-  %393 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %392, <32 x i8> %143, <16 x i8> %145, i32 2)
-  %394 = extractelement <4 x float> %393, i32 0
-  %395 = extractelement <4 x float> %393, i32 1
-  %396 = extractelement <4 x float> %393, i32 2
-  %397 = extractelement <4 x float> %393, i32 3
-  %398 = fcmp olt float 0.000000e+00, %396
-  %399 = sext i1 %398 to i32
-  %400 = bitcast i32 %399 to float
-  %401 = bitcast float %400 to i32
-  %402 = icmp ne i32 %401, 0
-  %temp112.1 = select i1 %402, float %395, float %394
-  %temp113.1 = select i1 %402, float %397, float %395
-  %403 = fmul float %.224, 2.000000e+00
+  %295 = extractelement <4 x float> %283, i32 0
+  %296 = extractelement <4 x float> %283, i32 1
+  %297 = extractelement <4 x float> %283, i32 2
+  %298 = fsub float -0.000000e+00, %289
+  %299 = fadd float %temp144.0, %298
+  %300 = fdiv float 1.000000e+00, %299
+  %301 = fmul float %289, %300
+  %302 = fadd float %301, -1.000000e+00
+  %303 = fmul float %302, %274
+  %304 = fadd float %303, %285
+  %305 = fmul float %302, %275
+  %306 = fadd float %305, %286
+  %307 = fsub float -0.000000e+00, %176
+  %308 = fadd float %304, %307
+  %309 = fsub float -0.000000e+00, %177
+  %310 = fadd float %306, %309
+  %311 = fadd float %176, %308
+  %312 = fadd float %177, %310
+  %313 = fmul float %308, %67
+  %314 = fmul float %310, %68
+  %315 = fmul float %313, %55
+  %316 = fmul float %313, %56
+  %317 = fmul float %314, %57
+  %318 = fadd float %317, %315
+  %319 = fmul float %314, %58
+  %320 = fadd float %319, %316
+  %321 = fadd float %178, %318
+  %322 = fadd float %179, %320
+  %323 = fmul float %313, %59
+  %324 = fmul float %313, %60
+  %325 = fmul float %313, %61
+  %326 = fmul float %313, %62
+  %327 = fmul float %314, %63
+  %328 = fadd float %327, %323
+  %329 = fmul float %314, %64
+  %330 = fadd float %329, %324
+  %331 = fmul float %314, %65
+  %332 = fadd float %331, %325
+  %333 = fmul float %314, %66
+  %334 = fadd float %333, %326
+  %335 = fadd float %168, %328
+  %336 = fadd float %169, %330
+  %337 = fadd float %170, %332
+  %338 = fadd float %171, %334
+  %339 = bitcast float %335 to i32
+  %340 = bitcast float %336 to i32
+  %341 = insertelement <2 x i32> undef, i32 %339, i32 0
+  %342 = insertelement <2 x i32> %341, i32 %340, i32 1
+  %343 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %342, <32 x i8> %135, <16 x i8> %137, i32 2)
+  %344 = extractelement <4 x float> %343, i32 0
+  %345 = extractelement <4 x float> %343, i32 1
+  %346 = extractelement <4 x float> %343, i32 2
+  %347 = extractelement <4 x float> %343, i32 3
+  %348 = fmul float %344, %23
+  %349 = fmul float %345, %24
+  %350 = fmul float %346, %25
+  %351 = fmul float %347, %26
+  %352 = fmul float %348, %180
+  %353 = fmul float %349, %181
+  %354 = fmul float %350, %182
+  %355 = fmul float %351, %183
+  %356 = fsub float -0.000000e+00, %347
+  %357 = fadd float 1.000000e+00, %356
+  %358 = fmul float %357, %49
+  %one.sub.a.i37 = fsub float 1.000000e+00, %358
+  %one.sub.ac.i38 = fmul float %one.sub.a.i37, %352
+  %mul.i39 = fmul float %344, %352
+  %result.i40 = fadd float %mul.i39, %one.sub.ac.i38
+  %one.sub.a.i33 = fsub float 1.000000e+00, %358
+  %one.sub.ac.i34 = fmul float %one.sub.a.i33, %353
+  %mul.i35 = fmul float %345, %353
+  %result.i36 = fadd float %mul.i35, %one.sub.ac.i34
+  %one.sub.a.i29 = fsub float 1.000000e+00, %358
+  %one.sub.ac.i30 = fmul float %one.sub.a.i29, %354
+  %mul.i31 = fmul float %346, %354
+  %result.i32 = fadd float %mul.i31, %one.sub.ac.i30
+  %359 = bitcast float %337 to i32
+  %360 = bitcast float %338 to i32
+  %361 = insertelement <2 x i32> undef, i32 %359, i32 0
+  %362 = insertelement <2 x i32> %361, i32 %360, i32 1
+  %363 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %362, <32 x i8> %151, <16 x i8> %153, i32 2)
+  %364 = extractelement <4 x float> %363, i32 2
+  %365 = fmul float %result.i40, %result.i
+  %366 = fmul float %result.i36, %result.i44
+  %367 = fmul float %result.i32, %result.i42
+  %368 = fmul float %355, %230
+  %369 = bitcast float %311 to i32
+  %370 = bitcast float %312 to i32
+  %371 = insertelement <2 x i32> undef, i32 %369, i32 0
+  %372 = insertelement <2 x i32> %371, i32 %370, i32 1
+  %373 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %372, <32 x i8> %139, <16 x i8> %141, i32 2)
+  %374 = extractelement <4 x float> %373, i32 0
+  %375 = extractelement <4 x float> %373, i32 1
+  %376 = extractelement <4 x float> %373, i32 2
+  %377 = extractelement <4 x float> %373, i32 3
+  %378 = fcmp olt float 0.000000e+00, %376
+  %379 = sext i1 %378 to i32
+  %380 = bitcast i32 %379 to float
+  %381 = bitcast float %380 to i32
+  %382 = icmp ne i32 %381, 0
+  %.224 = select i1 %382, float %375, float %374
+  %.225 = select i1 %382, float %377, float %375
+  %383 = bitcast float %321 to i32
+  %384 = bitcast float %322 to i32
+  %385 = insertelement <2 x i32> undef, i32 %383, i32 0
+  %386 = insertelement <2 x i32> %385, i32 %384, i32 1
+  %387 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %386, <32 x i8> %143, <16 x i8> %145, i32 2)
+  %388 = extractelement <4 x float> %387, i32 0
+  %389 = extractelement <4 x float> %387, i32 1
+  %390 = extractelement <4 x float> %387, i32 2
+  %391 = extractelement <4 x float> %387, i32 3
+  %392 = fcmp olt float 0.000000e+00, %390
+  %393 = sext i1 %392 to i32
+  %394 = bitcast i32 %393 to float
+  %395 = bitcast float %394 to i32
+  %396 = icmp ne i32 %395, 0
+  %temp112.1 = select i1 %396, float %389, float %388
+  %temp113.1 = select i1 %396, float %391, float %389
+  %397 = fmul float %.224, 2.000000e+00
+  %398 = fadd float %397, -1.000000e+00
+  %399 = fmul float %.225, 2.000000e+00
+  %400 = fadd float %399, -1.000000e+00
+  %401 = fmul float %temp112.1, 2.000000e+00
+  %402 = fadd float %401, -1.000000e+00
+  %403 = fmul float %temp113.1, 2.000000e+00
   %404 = fadd float %403, -1.000000e+00
-  %405 = fmul float %.225, 2.000000e+00
-  %406 = fadd float %405, -1.000000e+00
-  %407 = fmul float %temp112.1, 2.000000e+00
-  %408 = fadd float %407, -1.000000e+00
-  %409 = fmul float %temp113.1, 2.000000e+00
-  %410 = fadd float %409, -1.000000e+00
+  %405 = fsub float -0.000000e+00, %398
+  %406 = fmul float %405, %35
+  %407 = fsub float -0.000000e+00, %400
+  %408 = fmul float %407, %35
+  %409 = fsub float -0.000000e+00, %402
+  %410 = fmul float %409, %36
   %411 = fsub float -0.000000e+00, %404
-  %412 = fmul float %411, %35
-  %413 = fsub float -0.000000e+00, %406
-  %414 = fmul float %413, %35
-  %415 = fsub float -0.000000e+00, %408
-  %416 = fmul float %415, %36
-  %417 = fsub float -0.000000e+00, %410
-  %418 = fmul float %417, %36
-  %419 = fmul float %416, %370
-  %420 = fmul float %418, %370
-  %421 = call float @fabs(float %412)
-  %422 = call float @fabs(float %414)
-  %423 = fsub float -0.000000e+00, %421
-  %424 = fadd float 1.000000e+00, %423
-  %425 = fsub float -0.000000e+00, %422
-  %426 = fadd float 1.000000e+00, %425
-  %427 = fmul float %424, %419
-  %428 = fadd float %427, %412
-  %429 = fmul float %426, %420
-  %430 = fadd float %429, %414
-  %431 = fmul float %428, %428
-  %432 = fmul float %430, %430
-  %433 = fadd float %431, %432
-  %434 = fsub float -0.000000e+00, %433
-  %435 = fadd float 0x3FF00068E0000000, %434
-  %436 = call float @llvm.AMDIL.clamp.(float %435, float 0.000000e+00, float 1.000000e+00)
-  %437 = call float @llvm.amdgcn.rsq.f32(float %436)
-  %438 = fmul float %437, %436
-  %439 = fsub float -0.000000e+00, %436
-  %440 = call float @llvm.AMDGPU.cndlt(float %439, float %438, float 0.000000e+00)
-  %441 = fmul float %184, %428
-  %442 = fmul float %185, %428
-  %443 = fmul float %186, %428
-  %444 = fmul float %187, %430
-  %445 = fadd float %444, %441
-  %446 = fmul float %188, %430
-  %447 = fadd float %446, %442
-  %448 = fmul float %189, %430
+  %412 = fmul float %411, %36
+  %413 = fmul float %410, %364
+  %414 = fmul float %412, %364
+  %415 = call float @fabs(float %406)
+  %416 = call float @fabs(float %408)
+  %417 = fsub float -0.000000e+00, %415
+  %418 = fadd float 1.000000e+00, %417
+  %419 = fsub float -0.000000e+00, %416
+  %420 = fadd float 1.000000e+00, %419
+  %421 = fmul float %418, %413
+  %422 = fadd float %421, %406
+  %423 = fmul float %420, %414
+  %424 = fadd float %423, %408
+  %425 = fmul float %422, %422
+  %426 = fmul float %424, %424
+  %427 = fadd float %425, %426
+  %428 = fsub float -0.000000e+00, %427
+  %429 = fadd float 0x3FF00068E0000000, %428
+  %430 = call float @llvm.AMDIL.clamp.(float %429, float 0.000000e+00, float 1.000000e+00)
+  %431 = call float @llvm.amdgcn.rsq.f32(float %430)
+  %432 = fmul float %431, %430
+  %433 = fsub float -0.000000e+00, %430
+  %cmp = fcmp ogt float 0.000000e+00, %433
+  %434 = select i1 %cmp, float %432, float 0.000000e+00
+  %435 = fmul float %184, %422
+  %436 = fmul float %185, %422
+  %437 = fmul float %186, %422
+  %438 = fmul float %187, %424
+  %439 = fadd float %438, %435
+  %440 = fmul float %188, %424
+  %441 = fadd float %440, %436
+  %442 = fmul float %189, %424
+  %443 = fadd float %442, %437
+  %444 = fmul float %190, %434
+  %445 = fadd float %444, %439
+  %446 = fmul float %191, %434
+  %447 = fadd float %446, %441
+  %448 = fmul float %192, %434
   %449 = fadd float %448, %443
-  %450 = fmul float %190, %440
-  %451 = fadd float %450, %445
-  %452 = fmul float %191, %440
-  %453 = fadd float %452, %447
-  %454 = fmul float %192, %440
-  %455 = fadd float %454, %449
-  %456 = fmul float %451, %451
-  %457 = fmul float %453, %453
-  %458 = fadd float %457, %456
-  %459 = fmul float %455, %455
-  %460 = fadd float %458, %459
-  %461 = call float @llvm.amdgcn.rsq.f32(float %460)
-  %462 = fmul float %451, %461
-  %463 = fmul float %453, %461
-  %464 = fmul float %455, %461
-  %465 = fcmp olt float 0.000000e+00, %219
-  %466 = sext i1 %465 to i32
-  %467 = bitcast i32 %466 to float
-  %468 = bitcast float %467 to i32
-  %469 = icmp ne i32 %468, 0
-  br i1 %469, label %IF198, label %ENDIF197
+  %450 = fmul float %445, %445
+  %451 = fmul float %447, %447
+  %452 = fadd float %451, %450
+  %453 = fmul float %449, %449
+  %454 = fadd float %452, %453
+  %455 = call float @llvm.amdgcn.rsq.f32(float %454)
+  %456 = fmul float %445, %455
+  %457 = fmul float %447, %455
+  %458 = fmul float %449, %455
+  %459 = fcmp olt float 0.000000e+00, %219
+  %460 = sext i1 %459 to i32
+  %461 = bitcast i32 %460 to float
+  %462 = bitcast float %461 to i32
+  %463 = icmp ne i32 %462, 0
+  br i1 %463, label %IF198, label %ENDIF197
 
 IF198:                                            ; preds = %IF189
-  %470 = fsub float -0.000000e+00, %462
-  %471 = fsub float -0.000000e+00, %463
-  %472 = fsub float -0.000000e+00, %464
+  %464 = fsub float -0.000000e+00, %456
+  %465 = fsub float -0.000000e+00, %457
+  %466 = fsub float -0.000000e+00, %458
   br label %ENDIF197
 
-ENDIF197:                                         ; preds = %IF189, %IF198
-  %temp14.0 = phi float [ %472, %IF198 ], [ %464, %IF189 ]
-  %temp13.0 = phi float [ %471, %IF198 ], [ %463, %IF189 ]
-  %temp12.0 = phi float [ %470, %IF198 ], [ %462, %IF189 ]
-  %473 = bitcast float %220 to i32
-  %474 = bitcast float %221 to i32
-  %475 = insertelement <2 x i32> undef, i32 %473, i32 0
-  %476 = insertelement <2 x i32> %475, i32 %474, i32 1
-  %477 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %476, <32 x i8> %159, <16 x i8> %161, i32 2)
-  %478 = extractelement <4 x float> %477, i32 0
-  %479 = extractelement <4 x float> %477, i32 1
-  %480 = extractelement <4 x float> %477, i32 2
-  %481 = extractelement <4 x float> %477, i32 3
-  %482 = fmul float %478, %40
-  %483 = fadd float %482, %41
-  %484 = fmul float %479, %40
-  %485 = fadd float %484, %41
-  %486 = fmul float %480, %40
-  %487 = fadd float %486, %41
-  %488 = fmul float %481, %42
-  %489 = fadd float %488, %43
-  %490 = bitcast float %172 to i32
-  %491 = bitcast float %173 to i32
-  %492 = insertelement <2 x i32> undef, i32 %490, i32 0
-  %493 = insertelement <2 x i32> %492, i32 %491, i32 1
-  %494 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %493, <32 x i8> %155, <16 x i8> %157, i32 2)
-  %495 = extractelement <4 x float> %494, i32 0
-  %496 = extractelement <4 x float> %494, i32 1
-  %497 = extractelement <4 x float> %494, i32 2
-  %498 = extractelement <4 x float> %494, i32 3
-  %499 = fmul float %498, 3.200000e+01
-  %500 = fadd float %499, -1.600000e+01
-  %501 = call float @llvm.AMDIL.exp.(float %500)
-  %502 = fmul float %495, %501
-  %503 = fmul float %496, %501
-  %504 = fmul float %497, %501
-  %505 = fmul float %28, %502
-  %506 = fadd float %505, %193
-  %507 = fmul float %29, %503
-  %508 = fadd float %507, %194
-  %509 = fmul float %30, %504
-  %510 = fadd float %509, %195
-  %511 = fmul float %506, %489
-  %512 = fmul float %508, %489
-  %513 = fmul float %510, %489
-  %514 = fmul float %489, 5.000000e-01
-  %515 = fadd float %514, 5.000000e-01
-  %516 = fmul float %483, %515
-  %517 = fadd float %516, %511
-  %518 = fmul float %485, %515
-  %519 = fadd float %518, %512
-  %520 = fmul float %487, %515
-  %521 = fadd float %520, %513
-  %522 = fmul float %517, %371
-  %523 = fmul float %519, %372
-  %524 = fmul float %521, %373
-  %525 = fmul float %428, 0x3FDB272440000000
-  %526 = fmul float %430, 0xBFDB272440000000
-  %527 = fadd float %526, %525
-  %528 = fmul float %440, 0x3FE99999A0000000
-  %529 = fadd float %527, %528
-  %530 = fmul float %529, 5.000000e-01
-  %531 = fadd float %530, 0x3FE3333340000000
-  %532 = fmul float %531, %531
-  %533 = fmul float %522, %532
-  %534 = fmul float %523, %532
-  %535 = fmul float %524, %532
-  %536 = fsub float -0.000000e+00, %72
-  %537 = fsub float -0.000000e+00, %73
-  %538 = fsub float -0.000000e+00, %74
-  %539 = fmul float %temp12.0, %536
-  %540 = fmul float %temp13.0, %537
-  %541 = fadd float %540, %539
-  %542 = fmul float %temp14.0, %538
-  %543 = fadd float %541, %542
-  %544 = call float @llvm.AMDIL.clamp.(float %543, float 0.000000e+00, float 1.000000e+00)
-  %545 = fmul float %371, %544
-  %546 = fmul float %372, %544
-  %547 = fmul float %373, %544
-  %548 = fmul float %545, %69
-  %549 = fmul float %546, %70
-  %550 = fmul float %547, %71
-  %551 = fsub float -0.000000e+00, %164
-  %552 = fadd float %97, %551
-  %553 = fsub float -0.000000e+00, %165
-  %554 = fadd float %98, %553
-  %555 = fsub float -0.000000e+00, %166
-  %556 = fadd float %99, %555
-  %557 = fmul float %552, %552
-  %558 = fmul float %554, %554
-  %559 = fadd float %558, %557
-  %560 = fmul float %556, %556
+ENDIF197:                                         ; preds = %IF198, %IF189
+  %temp14.0 = phi float [ %466, %IF198 ], [ %458, %IF189 ]
+  %temp13.0 = phi float [ %465, %IF198 ], [ %457, %IF189 ]
+  %temp12.0 = phi float [ %464, %IF198 ], [ %456, %IF189 ]
+  %467 = bitcast float %220 to i32
+  %468 = bitcast float %221 to i32
+  %469 = insertelement <2 x i32> undef, i32 %467, i32 0
+  %470 = insertelement <2 x i32> %469, i32 %468, i32 1
+  %471 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %470, <32 x i8> %159, <16 x i8> %161, i32 2)
+  %472 = extractelement <4 x float> %471, i32 0
+  %473 = extractelement <4 x float> %471, i32 1
+  %474 = extractelement <4 x float> %471, i32 2
+  %475 = extractelement <4 x float> %471, i32 3
+  %476 = fmul float %472, %40
+  %477 = fadd float %476, %41
+  %478 = fmul float %473, %40
+  %479 = fadd float %478, %41
+  %480 = fmul float %474, %40
+  %481 = fadd float %480, %41
+  %482 = fmul float %475, %42
+  %483 = fadd float %482, %43
+  %484 = bitcast float %172 to i32
+  %485 = bitcast float %173 to i32
+  %486 = insertelement <2 x i32> undef, i32 %484, i32 0
+  %487 = insertelement <2 x i32> %486, i32 %485, i32 1
+  %488 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %487, <32 x i8> %155, <16 x i8> %157, i32 2)
+  %489 = extractelement <4 x float> %488, i32 0
+  %490 = extractelement <4 x float> %488, i32 1
+  %491 = extractelement <4 x float> %488, i32 2
+  %492 = extractelement <4 x float> %488, i32 3
+  %493 = fmul float %492, 3.200000e+01
+  %494 = fadd float %493, -1.600000e+01
+  %495 = call float @llvm.AMDIL.exp.(float %494)
+  %496 = fmul float %489, %495
+  %497 = fmul float %490, %495
+  %498 = fmul float %491, %495
+  %499 = fmul float %28, %496
+  %500 = fadd float %499, %193
+  %501 = fmul float %29, %497
+  %502 = fadd float %501, %194
+  %503 = fmul float %30, %498
+  %504 = fadd float %503, %195
+  %505 = fmul float %500, %483
+  %506 = fmul float %502, %483
+  %507 = fmul float %504, %483
+  %508 = fmul float %483, 5.000000e-01
+  %509 = fadd float %508, 5.000000e-01
+  %510 = fmul float %477, %509
+  %511 = fadd float %510, %505
+  %512 = fmul float %479, %509
+  %513 = fadd float %512, %506
+  %514 = fmul float %481, %509
+  %515 = fadd float %514, %507
+  %516 = fmul float %511, %365
+  %517 = fmul float %513, %366
+  %518 = fmul float %515, %367
+  %519 = fmul float %422, 0x3FDB272440000000
+  %520 = fmul float %424, 0xBFDB272440000000
+  %521 = fadd float %520, %519
+  %522 = fmul float %434, 0x3FE99999A0000000
+  %523 = fadd float %521, %522
+  %524 = fmul float %523, 5.000000e-01
+  %525 = fadd float %524, 0x3FE3333340000000
+  %526 = fmul float %525, %525
+  %527 = fmul float %516, %526
+  %528 = fmul float %517, %526
+  %529 = fmul float %518, %526
+  %530 = fsub float -0.000000e+00, %72
+  %531 = fsub float -0.000000e+00, %73
+  %532 = fsub float -0.000000e+00, %74
+  %533 = fmul float %temp12.0, %530
+  %534 = fmul float %temp13.0, %531
+  %535 = fadd float %534, %533
+  %536 = fmul float %temp14.0, %532
+  %537 = fadd float %535, %536
+  %538 = call float @llvm.AMDIL.clamp.(float %537, float 0.000000e+00, float 1.000000e+00)
+  %539 = fmul float %365, %538
+  %540 = fmul float %366, %538
+  %541 = fmul float %367, %538
+  %542 = fmul float %539, %69
+  %543 = fmul float %540, %70
+  %544 = fmul float %541, %71
+  %545 = fsub float -0.000000e+00, %164
+  %546 = fadd float %97, %545
+  %547 = fsub float -0.000000e+00, %165
+  %548 = fadd float %98, %547
+  %549 = fsub float -0.000000e+00, %166
+  %550 = fadd float %99, %549
+  %551 = fmul float %546, %546
+  %552 = fmul float %548, %548
+  %553 = fadd float %552, %551
+  %554 = fmul float %550, %550
+  %555 = fadd float %553, %554
+  %556 = call float @llvm.amdgcn.rsq.f32(float %555)
+  %557 = fmul float %556, %555
+  %558 = fsub float -0.000000e+00, %555
+  %cmp1 = fcmp ogt float %558, 0.000000e+00
+  %559 = select i1 %cmp1, float %557, float 0.000000e+00
+  %560 = fsub float -0.000000e+00, %84
   %561 = fadd float %559, %560
-  %562 = call float @llvm.amdgcn.rsq.f32(float %561)
-  %563 = fmul float %562, %561
-  %564 = fsub float -0.000000e+00, %561
-  %565 = call float @llvm.AMDGPU.cndlt(float %564, float %563, float 0.000000e+00)
+  %562 = fsub float -0.000000e+00, %83
+  %563 = fadd float %559, %562
+  %564 = fsub float -0.000000e+00, %82
+  %565 = fadd float %559, %564
   %566 = fsub float -0.000000e+00, %84
-  %567 = fadd float %565, %566
+  %567 = fadd float %83, %566
   %568 = fsub float -0.000000e+00, %83
-  %569 = fadd float %565, %568
+  %569 = fadd float %82, %568
   %570 = fsub float -0.000000e+00, %82
-  %571 = fadd float %565, %570
-  %572 = fsub float -0.000000e+00, %84
-  %573 = fadd float %83, %572
-  %574 = fsub float -0.000000e+00, %83
-  %575 = fadd float %82, %574
-  %576 = fsub float -0.000000e+00, %82
-  %577 = fadd float %81, %576
-  %578 = fdiv float 1.000000e+00, %573
-  %579 = fdiv float 1.000000e+00, %575
-  %580 = fdiv float 1.000000e+00, %577
-  %581 = fmul float %567, %578
-  %582 = fmul float %569, %579
-  %583 = fmul float %571, %580
-  %584 = fcmp olt float %565, %83
-  %585 = sext i1 %584 to i32
-  %586 = bitcast i32 %585 to float
-  %587 = bitcast float %586 to i32
-  %588 = icmp ne i32 %587, 0
-  br i1 %588, label %ENDIF200, label %ELSE202
+  %571 = fadd float %81, %570
+  %572 = fdiv float 1.000000e+00, %567
+  %573 = fdiv float 1.000000e+00, %569
+  %574 = fdiv float 1.000000e+00, %571
+  %575 = fmul float %561, %572
+  %576 = fmul float %563, %573
+  %577 = fmul float %565, %574
+  %578 = fcmp olt float %559, %83
+  %579 = sext i1 %578 to i32
+  %580 = bitcast i32 %579 to float
+  %581 = bitcast float %580 to i32
+  %582 = icmp ne i32 %581, 0
+  br i1 %582, label %ENDIF200, label %ELSE202
 
 ELSE202:                                          ; preds = %ENDIF197
-  %589 = fcmp olt float %565, %82
-  %590 = sext i1 %589 to i32
-  %591 = bitcast i32 %590 to float
-  %592 = bitcast float %591 to i32
-  %593 = icmp ne i32 %592, 0
-  br i1 %593, label %ENDIF200, label %ELSE205
+  %583 = fcmp olt float %559, %82
+  %584 = sext i1 %583 to i32
+  %585 = bitcast i32 %584 to float
+  %586 = bitcast float %585 to i32
+  %587 = icmp ne i32 %586, 0
+  br i1 %587, label %ENDIF200, label %ELSE205
 
 ENDIF200:                                         ; preds = %ELSE205, %ELSE202, %ENDIF197
-  %temp80.0 = phi float [ %581, %ENDIF197 ], [ %.226, %ELSE205 ], [ %582, %ELSE202 ]
+  %temp80.0 = phi float [ %575, %ENDIF197 ], [ %.226, %ELSE205 ], [ %576, %ELSE202 ]
   %temp88.0 = phi float [ %122, %ENDIF197 ], [ %.227, %ELSE205 ], [ %120, %ELSE202 ]
   %temp89.0 = phi float [ %123, %ENDIF197 ], [ %.228, %ELSE205 ], [ %121, %ELSE202 ]
   %temp90.0 = phi float [ %120, %ENDIF197 ], [ %116, %ELSE205 ], [ %118, %ELSE202 ]
   %temp91.0 = phi float [ %121, %ENDIF197 ], [ %117, %ELSE205 ], [ %119, %ELSE202 ]
-  %594 = fcmp olt float %565, %83
-  %595 = sext i1 %594 to i32
-  %596 = bitcast i32 %595 to float
-  %597 = bitcast float %596 to i32
-  %598 = icmp ne i32 %597, 0
-  br i1 %598, label %ENDIF209, label %ELSE211
+  %588 = fcmp olt float %559, %83
+  %589 = sext i1 %588 to i32
+  %590 = bitcast i32 %589 to float
+  %591 = bitcast float %590 to i32
+  %592 = icmp ne i32 %591, 0
+  br i1 %592, label %ENDIF209, label %ELSE211
 
 ELSE205:                                          ; preds = %ELSE202
-  %599 = fcmp olt float %565, %81
-  %600 = sext i1 %599 to i32
-  %601 = bitcast i32 %600 to float
-  %602 = bitcast float %601 to i32
-  %603 = icmp ne i32 %602, 0
-  %.226 = select i1 %603, float %583, float 1.000000e+00
-  %.227 = select i1 %603, float %118, float %116
-  %.228 = select i1 %603, float %119, float %117
+  %593 = fcmp olt float %559, %81
+  %594 = sext i1 %593 to i32
+  %595 = bitcast i32 %594 to float
+  %596 = bitcast float %595 to i32
+  %597 = icmp ne i32 %596, 0
+  %.226 = select i1 %597, float %577, float 1.000000e+00
+  %.227 = select i1 %597, float %118, float %116
+  %.228 = select i1 %597, float %119, float %117
   br label %ENDIF200
 
 ELSE211:                                          ; preds = %ENDIF200
-  %604 = fcmp olt float %565, %82
-  %605 = sext i1 %604 to i32
-  %606 = bitcast i32 %605 to float
-  %607 = bitcast float %606 to i32
-  %608 = icmp ne i32 %607, 0
-  br i1 %608, label %ENDIF209, label %ELSE214
+  %598 = fcmp olt float %559, %82
+  %599 = sext i1 %598 to i32
+  %600 = bitcast i32 %599 to float
+  %601 = bitcast float %600 to i32
+  %602 = icmp ne i32 %601, 0
+  br i1 %602, label %ENDIF209, label %ELSE214
 
 ENDIF209:                                         ; preds = %ELSE214, %ELSE211, %ENDIF200
   %temp52.0 = phi float [ %108, %ENDIF200 ], [ %100, %ELSE214 ], [ %104, %ELSE211 ]
@@ -1347,232 +1318,286 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %temp69.0 = phi float [ %113, %ENDIF200 ], [ %.231, %ELSE214 ], [ %109, %ELSE211 ]
   %temp70.0 = phi float [ %114, %ENDIF200 ], [ %.232, %ELSE214 ], [ %110, %ELSE211 ]
   %temp71.0 = phi float [ %115, %ENDIF200 ], [ %.233, %ELSE214 ], [ %111, %ELSE211 ]
-  %609 = fmul float %164, %85
-  %610 = fmul float %165, %86
-  %611 = fadd float %609, %610
-  %612 = fmul float %166, %87
-  %613 = fadd float %611, %612
-  %614 = fmul float %167, %88
-  %615 = fadd float %613, %614
-  %616 = fmul float %164, %89
-  %617 = fmul float %165, %90
-  %618 = fadd float %616, %617
-  %619 = fmul float %166, %91
-  %620 = fadd float %618, %619
-  %621 = fmul float %167, %92
-  %622 = fadd float %620, %621
-  %623 = fmul float %164, %93
-  %624 = fmul float %165, %94
-  %625 = fadd float %623, %624
-  %626 = fmul float %166, %95
-  %627 = fadd float %625, %626
-  %628 = fmul float %167, %96
-  %629 = fadd float %627, %628
-  %630 = fsub float -0.000000e+00, %78
-  %631 = fadd float 1.000000e+00, %630
-  %632 = call float @fabs(float %615)
-  %633 = call float @fabs(float %622)
-  %634 = fcmp oge float %631, %632
+  %603 = fmul float %164, %85
+  %604 = fmul float %165, %86
+  %605 = fadd float %603, %604
+  %606 = fmul float %166, %87
+  %607 = fadd float %605, %606
+  %608 = fmul float %167, %88
+  %609 = fadd float %607, %608
+  %610 = fmul float %164, %89
+  %611 = fmul float %165, %90
+  %612 = fadd float %610, %611
+  %613 = fmul float %166, %91
+  %614 = fadd float %612, %613
+  %615 = fmul float %167, %92
+  %616 = fadd float %614, %615
+  %617 = fmul float %164, %93
+  %618 = fmul float %165, %94
+  %619 = fadd float %617, %618
+  %620 = fmul float %166, %95
+  %621 = fadd float %619, %620
+  %622 = fmul float %167, %96
+  %623 = fadd float %621, %622
+  %624 = fsub float -0.000000e+00, %78
+  %625 = fadd float 1.000000e+00, %624
+  %626 = call float @fabs(float %609)
+  %627 = call float @fabs(float %616)
+  %628 = fcmp oge float %625, %626
+  %629 = sext i1 %628 to i32
+  %630 = bitcast i32 %629 to float
+  %631 = bitcast float %630 to i32
+  %632 = and i32 %631, 1065353216
+  %633 = bitcast i32 %632 to float
+  %634 = fcmp oge float %625, %627
   %635 = sext i1 %634 to i32
   %636 = bitcast i32 %635 to float
   %637 = bitcast float %636 to i32
   %638 = and i32 %637, 1065353216
   %639 = bitcast i32 %638 to float
-  %640 = fcmp oge float %631, %633
-  %641 = sext i1 %640 to i32
-  %642 = bitcast i32 %641 to float
-  %643 = bitcast float %642 to i32
-  %644 = and i32 %643, 1065353216
-  %645 = bitcast i32 %644 to float
-  %646 = fmul float %639, %645
-  %647 = fmul float %629, %646
-  %648 = fmul float %615, %temp68.0
-  %649 = fadd float %648, %temp70.0
-  %650 = fmul float %622, %temp69.0
-  %651 = fadd float %650, %temp71.0
-  %652 = fmul float %615, %temp52.0
-  %653 = fadd float %652, %temp54.0
-  %654 = fmul float %622, %temp53.0
-  %655 = fadd float %654, %temp55.0
-  %656 = fadd float %temp80.0, -1.000000e+00
-  %657 = fmul float %656, %77
-  %658 = fadd float %657, 1.000000e+00
-  %659 = call float @llvm.AMDIL.clamp.(float %658, float 0.000000e+00, float 1.000000e+00)
-  %660 = bitcast float %649 to i32
-  %661 = bitcast float %651 to i32
-  %662 = bitcast float 0.000000e+00 to i32
-  %663 = insertelement <4 x i32> undef, i32 %660, i32 0
-  %664 = insertelement <4 x i32> %663, i32 %661, i32 1
-  %665 = insertelement <4 x i32> %664, i32 %662, i32 2
-  %666 = insertelement <4 x i32> %665, i32 undef, i32 3
-  %667 = call <4 x float> @llvm.SI.samplel.v4i32(<4 x i32> %666, <32 x i8> %127, <16 x i8> %129, i32 2)
-  %668 = extractelement <4 x float> %667, i32 0
-  %669 = extractelement <4 x float> %667, i32 1
-  %670 = bitcast float %653 to i32
-  %671 = bitcast float %655 to i32
-  %672 = bitcast float 0.000000e+00 to i32
-  %673 = insertelement <4 x i32> undef, i32 %670, i32 0
-  %674 = insertelement <4 x i32> %673, i32 %671, i32 1
-  %675 = insertelement <4 x i32> %674, i32 %672, i32 2
-  %676 = insertelement <4 x i32> %675, i32 undef, i32 3
-  %677 = call <4 x float> @llvm.SI.samplel.v4i32(<4 x i32> %676, <32 x i8> %127, <16 x i8> %129, i32 2)
-  %678 = extractelement <4 x float> %677, i32 0
-  %679 = extractelement <4 x float> %677, i32 1
-  %680 = fsub float -0.000000e+00, %669
-  %681 = fadd float 1.000000e+00, %680
+  %640 = fmul float %633, %639
+  %641 = fmul float %623, %640
+  %642 = fmul float %609, %temp68.0
+  %643 = fadd float %642, %temp70.0
+  %644 = fmul float %616, %temp69.0
+  %645 = fadd float %644, %temp71.0
+  %646 = fmul float %609, %temp52.0
+  %647 = fadd float %646, %temp54.0
+  %648 = fmul float %616, %temp53.0
+  %649 = fadd float %648, %temp55.0
+  %650 = fadd float %temp80.0, -1.000000e+00
+  %651 = fmul float %650, %77
+  %652 = fadd float %651, 1.000000e+00
+  %653 = call float @llvm.AMDIL.clamp.(float %652, float 0.000000e+00, float 1.000000e+00)
+  %654 = bitcast float %643 to i32
+  %655 = bitcast float %645 to i32
+  %656 = bitcast float 0.000000e+00 to i32
+  %657 = insertelement <4 x i32> undef, i32 %654, i32 0
+  %658 = insertelement <4 x i32> %657, i32 %655, i32 1
+  %659 = insertelement <4 x i32> %658, i32 %656, i32 2
+  %660 = insertelement <4 x i32> %659, i32 undef, i32 3
+  %661 = call <4 x float> @llvm.SI.samplel.v4i32(<4 x i32> %660, <32 x i8> %127, <16 x i8> %129, i32 2)
+  %662 = extractelement <4 x float> %661, i32 0
+  %663 = extractelement <4 x float> %661, i32 1
+  %664 = bitcast float %647 to i32
+  %665 = bitcast float %649 to i32
+  %666 = bitcast float 0.000000e+00 to i32
+  %667 = insertelement <4 x i32> undef, i32 %664, i32 0
+  %668 = insertelement <4 x i32> %667, i32 %665, i32 1
+  %669 = insertelement <4 x i32> %668, i32 %666, i32 2
+  %670 = insertelement <4 x i32> %669, i32 undef, i32 3
+  %671 = call <4 x float> @llvm.SI.samplel.v4i32(<4 x i32> %670, <32 x i8> %127, <16 x i8> %129, i32 2)
+  %672 = extractelement <4 x float> %671, i32 0
+  %673 = extractelement <4 x float> %671, i32 1
+  %674 = fsub float -0.000000e+00, %663
+  %675 = fadd float 1.000000e+00, %674
+  %676 = fsub float -0.000000e+00, %673
+  %677 = fadd float 1.000000e+00, %676
+  %678 = fmul float %675, 2.500000e-01
+  %679 = fmul float %677, 2.500000e-01
+  %680 = fsub float -0.000000e+00, %678
+  %681 = fadd float %662, %680
   %682 = fsub float -0.000000e+00, %679
-  %683 = fadd float 1.000000e+00, %682
-  %684 = fmul float %681, 2.500000e-01
-  %685 = fmul float %683, 2.500000e-01
-  %686 = fsub float -0.000000e+00, %684
-  %687 = fadd float %668, %686
-  %688 = fsub float -0.000000e+00, %685
-  %689 = fadd float %678, %688
-  %690 = fmul float %647, %temp88.0
-  %691 = fadd float %690, %temp89.0
-  %692 = fmul float %647, %temp90.0
-  %693 = fadd float %692, %temp91.0
-  %694 = call float @llvm.AMDIL.clamp.(float %691, float 0.000000e+00, float 1.000000e+00)
-  %695 = call float @llvm.AMDIL.clamp.(float %693, float 0.000000e+00, float 1.000000e+00)
+  %683 = fadd float %672, %682
+  %684 = fmul float %641, %temp88.0
+  %685 = fadd float %684, %temp89.0
+  %686 = fmul float %641, %temp90.0
+  %687 = fadd float %686, %temp91.0
+  %688 = call float @llvm.AMDIL.clamp.(float %685, float 0.000000e+00, float 1.000000e+00)
+  %689 = call float @llvm.AMDIL.clamp.(float %687, float 0.000000e+00, float 1.000000e+00)
+  %690 = fsub float -0.000000e+00, %688
+  %691 = fadd float %662, %690
+  %692 = fsub float -0.000000e+00, %689
+  %693 = fadd float %672, %692
+  %694 = fmul float %662, %662
+  %695 = fmul float %672, %672
   %696 = fsub float -0.000000e+00, %694
-  %697 = fadd float %668, %696
+  %697 = fadd float %681, %696
   %698 = fsub float -0.000000e+00, %695
-  %699 = fadd float %678, %698
-  %700 = fmul float %668, %668
-  %701 = fmul float %678, %678
-  %702 = fsub float -0.000000e+00, %700
-  %703 = fadd float %687, %702
-  %704 = fsub float -0.000000e+00, %701
-  %705 = fadd float %689, %704
-  %706 = fcmp uge float %703, %75
-  %707 = select i1 %706, float %703, float %75
-  %708 = fcmp uge float %705, %75
-  %709 = select i1 %708, float %705, float %75
-  %710 = fmul float %697, %697
-  %711 = fadd float %710, %707
-  %712 = fmul float %699, %699
-  %713 = fadd float %712, %709
-  %714 = fdiv float 1.000000e+00, %711
-  %715 = fdiv float 1.000000e+00, %713
-  %716 = fmul float %707, %714
-  %717 = fmul float %709, %715
-  %718 = fcmp oge float %697, 0.000000e+00
-  %719 = sext i1 %718 to i32
-  %720 = bitcast i32 %719 to float
-  %721 = bitcast float %720 to i32
-  %722 = icmp ne i32 %721, 0
-  %.229 = select i1 %722, float 1.000000e+00, float %716
-  %723 = fcmp oge float %699, 0.000000e+00
-  %724 = sext i1 %723 to i32
-  %725 = bitcast i32 %724 to float
-  %726 = bitcast float %725 to i32
-  %727 = icmp ne i32 %726, 0
-  %temp28.0 = select i1 %727, float 1.000000e+00, float %717
-  %728 = call float @llvm.AMDGPU.lrp(float %659, float %temp28.0, float %.229)
-  %729 = call float @llvm.pow.f32(float %728, float %76)
-  %730 = fmul float %729, %79
-  %731 = fadd float %730, %80
-  %732 = call float @llvm.AMDIL.clamp.(float %731, float 0.000000e+00, float 1.000000e+00)
-  %733 = fmul float %732, %732
-  %734 = fmul float 2.000000e+00, %732
-  %735 = fsub float -0.000000e+00, %734
-  %736 = fadd float 3.000000e+00, %735
-  %737 = fmul float %733, %736
-  %738 = fmul float %548, %737
-  %739 = fmul float %549, %737
-  %740 = fmul float %550, %737
-  %741 = fmul float %738, %515
-  %742 = fadd float %741, %533
-  %743 = fmul float %739, %515
-  %744 = fadd float %743, %534
-  %745 = fmul float %740, %515
-  %746 = fadd float %745, %535
-  %747 = call float @llvm.AMDGPU.lrp(float %230, float %287, float 1.000000e+00)
-  %748 = call float @llvm.AMDGPU.lrp(float %37, float %298, float 1.000000e+00)
-  %749 = call float @llvm.AMDGPU.lrp(float %37, float %299, float 1.000000e+00)
-  %750 = call float @llvm.AMDGPU.lrp(float %37, float %300, float 1.000000e+00)
-  %751 = call float @llvm.AMDGPU.lrp(float %38, float %747, float 1.000000e+00)
-  %752 = fmul float %748, %751
-  %753 = fmul float %749, %751
-  %754 = fmul float %750, %751
-  %755 = fmul float %742, %752
-  %756 = fmul float %744, %753
-  %757 = fmul float %746, %754
-  %758 = fmul float %temp12.0, %216
-  %759 = fmul float %temp13.0, %217
-  %760 = fadd float %759, %758
-  %761 = fmul float %temp14.0, %218
-  %762 = fadd float %760, %761
-  %763 = call float @fabs(float %762)
-  %764 = fmul float %763, %763
-  %765 = fmul float %764, %50
-  %766 = fadd float %765, %51
-  %767 = call float @llvm.AMDIL.clamp.(float %766, float 0.000000e+00, float 1.000000e+00)
-  %768 = fsub float -0.000000e+00, %767
-  %769 = fadd float 1.000000e+00, %768
-  %770 = fmul float %33, %769
-  %771 = fmul float %33, %769
-  %772 = fmul float %33, %769
-  %773 = fmul float %34, %769
-  %774 = call float @llvm.AMDGPU.lrp(float %770, float %31, float %755)
-  %775 = call float @llvm.AMDGPU.lrp(float %771, float %31, float %756)
-  %776 = call float @llvm.AMDGPU.lrp(float %772, float %31, float %757)
-  %777 = call float @llvm.AMDGPU.lrp(float %773, float %32, float %374)
-  %778 = fcmp uge float %774, 0x3E6FFFFE60000000
-  %779 = select i1 %778, float %774, float 0x3E6FFFFE60000000
-  %780 = fcmp uge float %775, 0x3E6FFFFE60000000
-  %781 = select i1 %780, float %775, float 0x3E6FFFFE60000000
-  %782 = fcmp uge float %776, 0x3E6FFFFE60000000
-  %783 = select i1 %782, float %776, float 0x3E6FFFFE60000000
-  %784 = fcmp uge float %779, 6.550400e+04
-  %785 = select i1 %784, float 6.550400e+04, float %779
-  %786 = fcmp uge float %781, 6.550400e+04
-  %787 = select i1 %786, float 6.550400e+04, float %781
-  %788 = fcmp uge float %783, 6.550400e+04
-  %789 = select i1 %788, float 6.550400e+04, float %783
-  %790 = fmul float %777, %52
-  %791 = fadd float %790, %53
-  %792 = call float @llvm.AMDIL.clamp.(float %791, float 0.000000e+00, float 1.000000e+00)
-  %793 = call i32 @llvm.SI.packf16(float %785, float %787)
-  %794 = bitcast i32 %793 to float
-  %795 = call i32 @llvm.SI.packf16(float %789, float %792)
-  %796 = bitcast i32 %795 to float
-  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %794, float %796, float %794, float %796)
+  %699 = fadd float %683, %698
+  %700 = fcmp uge float %697, %75
+  %701 = select i1 %700, float %697, float %75
+  %702 = fcmp uge float %699, %75
+  %703 = select i1 %702, float %699, float %75
+  %704 = fmul float %691, %691
+  %705 = fadd float %704, %701
+  %706 = fmul float %693, %693
+  %707 = fadd float %706, %703
+  %708 = fdiv float 1.000000e+00, %705
+  %709 = fdiv float 1.000000e+00, %707
+  %710 = fmul float %701, %708
+  %711 = fmul float %703, %709
+  %712 = fcmp oge float %691, 0.000000e+00
+  %713 = sext i1 %712 to i32
+  %714 = bitcast i32 %713 to float
+  %715 = bitcast float %714 to i32
+  %716 = icmp ne i32 %715, 0
+  %.229 = select i1 %716, float 1.000000e+00, float %710
+  %717 = fcmp oge float %693, 0.000000e+00
+  %718 = sext i1 %717 to i32
+  %719 = bitcast i32 %718 to float
+  %720 = bitcast float %719 to i32
+  %721 = icmp ne i32 %720, 0
+  %temp28.0 = select i1 %721, float 1.000000e+00, float %711
+  %one.sub.a.i25 = fsub float 1.000000e+00, %653
+  %one.sub.ac.i26 = fmul float %one.sub.a.i25, %.229
+  %mul.i27 = fmul float %temp28.0, %.229
+  %result.i28 = fadd float %mul.i27, %one.sub.ac.i26
+  %722 = call float @llvm.pow.f32(float %result.i28, float %76)
+  %723 = fmul float %722, %79
+  %724 = fadd float %723, %80
+  %725 = call float @llvm.AMDIL.clamp.(float %724, float 0.000000e+00, float 1.000000e+00)
+  %726 = fmul float %725, %725
+  %727 = fmul float 2.000000e+00, %725
+  %728 = fsub float -0.000000e+00, %727
+  %729 = fadd float 3.000000e+00, %728
+  %730 = fmul float %726, %729
+  %731 = fmul float %542, %730
+  %732 = fmul float %543, %730
+  %733 = fmul float %544, %730
+  %734 = fmul float %731, %509
+  %735 = fadd float %734, %527
+  %736 = fmul float %732, %509
+  %737 = fadd float %736, %528
+  %738 = fmul float %733, %509
+  %739 = fadd float %738, %529
+  %one.sub.a.i23 = fsub float 1.000000e+00, %230
+  %result.i24 = fadd float %284, %one.sub.a.i23
+  %one.sub.a.i21 = fsub float 1.000000e+00, %37
+  %result.i22 = fadd float %295, %one.sub.a.i21
+  %one.sub.a.i19 = fsub float 1.000000e+00, %37
+  %result.i20 = fadd float %296, %one.sub.a.i19
+  %one.sub.a.i17 = fsub float 1.000000e+00, %37
+  %result.i18 = fadd float %297, %one.sub.a.i17
+  %one.sub.a.i15 = fsub float 1.000000e+00, %38
+  %result.i16 = fadd float %result.i24, %one.sub.a.i15
+  %740 = fmul float %result.i22, %result.i16
+  %741 = fmul float %result.i20, %result.i16
+  %742 = fmul float %result.i18, %result.i16
+  %743 = fmul float %735, %740
+  %744 = fmul float %737, %741
+  %745 = fmul float %739, %742
+  %746 = fmul float %temp12.0, %216
+  %747 = fmul float %temp13.0, %217
+  %748 = fadd float %747, %746
+  %749 = fmul float %temp14.0, %218
+  %750 = fadd float %748, %749
+  %751 = call float @fabs(float %750)
+  %752 = fmul float %751, %751
+  %753 = fmul float %752, %50
+  %754 = fadd float %753, %51
+  %755 = call float @llvm.AMDIL.clamp.(float %754, float 0.000000e+00, float 1.000000e+00)
+  %756 = fsub float -0.000000e+00, %755
+  %757 = fadd float 1.000000e+00, %756
+  %758 = fmul float %33, %757
+  %759 = fmul float %33, %757
+  %760 = fmul float %33, %757
+  %761 = fmul float %34, %757
+  %one.sub.a.i11 = fsub float 1.000000e+00, %758
+  %one.sub.ac.i12 = fmul float %one.sub.a.i11, %743
+  %mul.i13 = fmul float %31, %743
+  %result.i14 = fadd float %mul.i13, %one.sub.ac.i12
+  %one.sub.a.i7 = fsub float 1.000000e+00, %759
+  %one.sub.ac.i8 = fmul float %one.sub.a.i7, %744
+  %mul.i9 = fmul float %31, %744
+  %result.i10 = fadd float %mul.i9, %one.sub.ac.i8
+  %one.sub.a.i3 = fsub float 1.000000e+00, %760
+  %one.sub.ac.i4 = fmul float %one.sub.a.i3, %745
+  %mul.i5 = fmul float %31, %745
+  %result.i6 = fadd float %mul.i5, %one.sub.ac.i4
+  %one.sub.a.i1 = fsub float 1.000000e+00, %761
+  %one.sub.ac.i = fmul float %one.sub.a.i1, %368
+  %mul.i = fmul float %32, %368
+  %result.i2 = fadd float %mul.i, %one.sub.ac.i
+  %762 = fcmp uge float %result.i14, 0x3E6FFFFE60000000
+  %763 = select i1 %762, float %result.i14, float 0x3E6FFFFE60000000
+  %764 = fcmp uge float %result.i10, 0x3E6FFFFE60000000
+  %765 = select i1 %764, float %result.i10, float 0x3E6FFFFE60000000
+  %766 = fcmp uge float %result.i6, 0x3E6FFFFE60000000
+  %767 = select i1 %766, float %result.i6, float 0x3E6FFFFE60000000
+  %768 = fcmp uge float %763, 6.550400e+04
+  %769 = select i1 %768, float 6.550400e+04, float %763
+  %770 = fcmp uge float %765, 6.550400e+04
+  %771 = select i1 %770, float 6.550400e+04, float %765
+  %772 = fcmp uge float %767, 6.550400e+04
+  %773 = select i1 %772, float 6.550400e+04, float %767
+  %774 = fmul float %result.i2, %52
+  %775 = fadd float %774, %53
+  %776 = call float @llvm.AMDIL.clamp.(float %775, float 0.000000e+00, float 1.000000e+00)
+  %777 = call i32 @llvm.SI.packf16(float %769, float %771)
+  %778 = bitcast i32 %777 to float
+  %779 = call i32 @llvm.SI.packf16(float %773, float %776)
+  %780 = bitcast i32 %779 to float
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %778, float %780, float %778, float %780)
   ret void
 
 ELSE214:                                          ; preds = %ELSE211
-  %797 = fcmp olt float %565, %81
-  %798 = sext i1 %797 to i32
-  %799 = bitcast i32 %798 to float
-  %800 = bitcast float %799 to i32
-  %801 = icmp ne i32 %800, 0
-  %.230 = select i1 %801, float %104, float %100
-  %.231 = select i1 %801, float %105, float %101
-  %.232 = select i1 %801, float %106, float %102
-  %.233 = select i1 %801, float %107, float %103
+  %781 = fcmp olt float %559, %81
+  %782 = sext i1 %781 to i32
+  %783 = bitcast i32 %782 to float
+  %784 = bitcast float %783 to i32
+  %785 = icmp ne i32 %784, 0
+  %.230 = select i1 %785, float %104, float %100
+  %.231 = select i1 %785, float %105, float %101
+  %.232 = select i1 %785, float %106, float %102
+  %.233 = select i1 %785, float %107, float %103
   br label %ENDIF209
 }
 
 ; Function Attrs: readnone
-declare float @llvm.AMDIL.clamp.(float, float, float) #2
+declare float @llvm.AMDIL.clamp.(float, float, float) #3
 
 ; Function Attrs: nounwind readnone
-declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) #1
-
-; Function Attrs: readnone
-declare float @llvm.AMDGPU.lrp(float, float, float) #2
+declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) #2
 
 ; Function Attrs: nounwind readnone
-declare <4 x float> @llvm.SI.samplel.v4i32(<4 x i32>, <32 x i8>, <16 x i8>, i32) #1
+declare <4 x float> @llvm.SI.samplel.v4i32(<4 x i32>, <32 x i8>, <16 x i8>, i32) #2
 
 ; Function Attrs: readnone
-declare float @llvm.AMDGPU.cndlt(float, float, float) #2
+declare float @llvm.AMDIL.exp.(float) #3
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const(<16 x i8>, i32) #2
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.fs.interp(i32, i32, i32, <2 x i32>) #2
 
 ; Function Attrs: readnone
-declare float @llvm.AMDIL.exp.(float) #2
+declare i32 @llvm.SI.tid() #3
 
-attributes #0 = { "ShaderType"="0" }
-attributes #1 = { nounwind readnone }
-attributes #2 = { readnone }
-attributes #3 = { nounwind readonly }
-attributes #4 = { readonly }
+; Function Attrs: nounwind readonly
+declare float @ceil(float) #4
+
+; Function Attrs: nounwind readnone
+declare float @llvm.amdgcn.rsq.f32(float) #2
+
+; Function Attrs: nounwind readnone
+declare <4 x float> @llvm.SI.sampled.v8i32(<8 x i32>, <32 x i8>, <16 x i8>, i32) #2
+
+; Function Attrs: readnone
+declare <4 x float> @llvm.AMDGPU.cube(<4 x float>) #3
+
+; Function Attrs: readnone
+declare float @fabs(float) #3
+
+; Function Attrs: nounwind readnone
+declare <4 x float> @llvm.SI.sample.v4i32(<4 x i32>, <32 x i8>, <16 x i8>, i32) #2
+
+; Function Attrs: nounwind readnone
+declare float @llvm.pow.f32(float, float) #2
+
+; Function Attrs: nounwind readnone
+declare i32 @llvm.SI.packf16(float, float) #2
+
+declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
+
+
+
+attributes #0 = { alwaysinline nounwind readnone }
+attributes #1 = { "ShaderType"="0" }
+attributes #2 = { nounwind readnone }
+attributes #3 = { readnone }
+attributes #4 = { nounwind readonly }
+
+!0 = !{!1, !1, i64 0, i32 1}
+!1 = !{!"const", null}

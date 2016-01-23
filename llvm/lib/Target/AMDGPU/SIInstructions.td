@@ -1450,7 +1450,7 @@ defm V_SUBREV_F32 : VOP2Inst <vop2<0x5, 0x3>, "v_subrev_f32",
 let isCommutable = 1 in {
 
 defm V_MUL_LEGACY_F32 : VOP2Inst <vop2<0x7, 0x4>, "v_mul_legacy_f32",
-  VOP_F32_F32_F32, int_AMDGPU_mul
+  VOP_F32_F32_F32
 >;
 
 defm V_MUL_F32 : VOP2Inst <vop2<0x8, 0x5>, "v_mul_f32",
@@ -2048,13 +2048,6 @@ def SI_CONSTDATA_PTR : InstSI <
 } // end SubtargetPredicate = isGCN
 
 let Predicates = [isGCN] in {
-
-def : Pat<
-  (int_AMDGPU_cndlt f32:$src0, f32:$src1, f32:$src2),
-  (V_CNDMASK_B32_e64 $src2, $src1,
-                     (V_CMP_GT_F32_e64 SRCMODS.NONE, 0, SRCMODS.NONE, $src0,
-                                       DSTCLAMP.NONE, DSTOMOD.NONE))
->;
 
 def : Pat <
   (int_AMDGPU_kilp),
@@ -2711,11 +2704,6 @@ def : Pat <
 
 /* llvm.AMDGPU.pow */
 def : POW_Common <V_LOG_F32_e32, V_EXP_F32_e32, V_MUL_LEGACY_F32_e32>;
-
-def : Pat <
-  (int_AMDGPU_div f32:$src0, f32:$src1),
-  (V_MUL_LEGACY_F32_e32 $src0, (V_RCP_LEGACY_F32_e32 $src1))
->;
 
 def : Pat <
   (int_AMDGPU_cube v4f32:$src),

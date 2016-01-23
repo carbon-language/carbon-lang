@@ -160,7 +160,8 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
   let Inst{63-32} = Word1;
 }
 
-class R600_2OP_Helper <bits<11> inst, string opName, SDPatternOperator node,
+class R600_2OP_Helper <bits<11> inst, string opName,
+                       SDPatternOperator node = null_frag,
                        InstrItinClass itin = AnyALU> :
     R600_2OP <inst, opName,
               [(set R600_Reg32:$dst, (node R600_Reg32:$src0,
@@ -678,7 +679,7 @@ let Predicates = [isR600toCayman] in {
 
 def ADD : R600_2OP_Helper <0x0, "ADD", fadd>;
 // Non-IEEE MUL: 0 * anything = 0
-def MUL : R600_2OP_Helper <0x1, "MUL NON-IEEE", int_AMDGPU_mul>;
+def MUL : R600_2OP_Helper <0x1, "MUL NON-IEEE">;
 def MUL_IEEE : R600_2OP_Helper <0x2, "MUL_IEEE", fmul>;
 // TODO: Do these actually match the regular fmin/fmax behavior?
 def MAX : R600_2OP_Helper <0x3, "MAX", AMDGPUfmax_legacy>;
@@ -1135,11 +1136,6 @@ def FNEG_R600 : FNEG<R600_Reg32>;
 
 // FIXME: Should be predicated on unsafe fp math.
 multiclass DIV_Common <InstR600 recip_ieee> {
-def : Pat<
-  (int_AMDGPU_div f32:$src0, f32:$src1),
-  (MUL_IEEE $src0, (recip_ieee $src1))
->;
-
 def : Pat<
   (fdiv f32:$src0, f32:$src1),
   (MUL_IEEE $src0, (recip_ieee $src1))
