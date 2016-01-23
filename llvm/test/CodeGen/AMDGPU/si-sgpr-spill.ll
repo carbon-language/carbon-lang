@@ -839,10 +839,10 @@ main_body:
   %tmp194 = call float @llvm.SI.fs.interp(i32 3, i32 7, i32 %arg4, <2 x i32> %arg6)
   %tmp195 = fmul float %arg14, %tmp123
   %tmp196 = fadd float %tmp195, %tmp124
-  %tmp197 = call float @llvm.AMDIL.clamp.(float %tmp162, float 0.000000e+00, float 1.000000e+00)
-  %tmp198 = call float @llvm.AMDIL.clamp.(float 0.000000e+00, float 0.000000e+00, float 1.000000e+00)
-  %tmp199 = call float @llvm.AMDIL.clamp.(float 0.000000e+00, float 0.000000e+00, float 1.000000e+00)
-  %tmp200 = call float @llvm.AMDIL.clamp.(float 1.000000e+00, float 0.000000e+00, float 1.000000e+00)
+  %tmp197 = call float @llvm.AMDGPU.clamp.f32(float %tmp162, float 0.000000e+00, float 1.000000e+00)
+  %tmp198 = call float @llvm.AMDGPU.clamp.f32(float 0.000000e+00, float 0.000000e+00, float 1.000000e+00)
+  %tmp199 = call float @llvm.AMDGPU.clamp.f32(float 0.000000e+00, float 0.000000e+00, float 1.000000e+00)
+  %tmp200 = call float @llvm.AMDGPU.clamp.f32(float 1.000000e+00, float 0.000000e+00, float 1.000000e+00)
   %tmp201 = bitcast float %tmp197 to i32
   %tmp202 = icmp ne i32 %tmp201, 0
   %. = select i1 %tmp202, float -1.000000e+00, float 1.000000e+00
@@ -897,9 +897,9 @@ main_body:
   %tmp245 = fadd float %tmp244, %tmp243
   %tmp246 = fmul float %tmp217, %tmp191
   %tmp247 = fadd float %tmp245, %tmp246
-  %tmp248 = call float @llvm.AMDIL.clamp.(float %tmp247, float 0.000000e+00, float 1.000000e+00)
+  %tmp248 = call float @llvm.AMDGPU.clamp.f32(float %tmp247, float 0.000000e+00, float 1.000000e+00)
   %tmp249 = fmul float %tmp213, 0x3F5A36E2E0000000
-  %tmp250 = call float @llvm.AMDIL.clamp.(float %tmp249, float 0.000000e+00, float 1.000000e+00)
+  %tmp250 = call float @llvm.AMDGPU.clamp.f32(float %tmp249, float 0.000000e+00, float 1.000000e+00)
   %tmp251 = fsub float -0.000000e+00, %tmp250
   %tmp252 = fadd float 1.000000e+00, %tmp251
   %tmp253 = call float @llvm.pow.f32(float %tmp248, float 2.500000e-01)
@@ -1104,7 +1104,7 @@ IF189:                                            ; preds = %LOOP
   %tmp426 = fadd float %tmp424, %tmp425
   %tmp427 = fsub float -0.000000e+00, %tmp426
   %tmp428 = fadd float 0x3FF00068E0000000, %tmp427
-  %tmp429 = call float @llvm.AMDIL.clamp.(float %tmp428, float 0.000000e+00, float 1.000000e+00)
+  %tmp429 = call float @llvm.AMDGPU.clamp.f32(float %tmp428, float 0.000000e+00, float 1.000000e+00)
   %tmp430 = call float @llvm.amdgcn.rsq.f32(float %tmp429)
   %tmp431 = fmul float %tmp430, %tmp429
   %tmp432 = fsub float -0.000000e+00, %tmp429
@@ -1179,7 +1179,7 @@ ENDIF197:                                         ; preds = %IF198, %IF189
   %tmp491 = extractelement <4 x float> %tmp487, i32 3
   %tmp492 = fmul float %tmp491, 3.200000e+01
   %tmp493 = fadd float %tmp492, -1.600000e+01
-  %tmp494 = call float @llvm.AMDIL.exp.(float %tmp493)
+  %tmp494 = call float @llvm.exp2.f32(float %tmp493)
   %tmp495 = fmul float %tmp488, %tmp494
   %tmp496 = fmul float %tmp489, %tmp494
   %tmp497 = fmul float %tmp490, %tmp494
@@ -1222,7 +1222,7 @@ ENDIF197:                                         ; preds = %IF198, %IF189
   %tmp534 = fadd float %tmp533, %tmp532
   %tmp535 = fmul float %temp14.0, %tmp531
   %tmp536 = fadd float %tmp534, %tmp535
-  %tmp537 = call float @llvm.AMDIL.clamp.(float %tmp536, float 0.000000e+00, float 1.000000e+00)
+  %tmp537 = call float @llvm.AMDGPU.clamp.f32(float %tmp536, float 0.000000e+00, float 1.000000e+00)
   %tmp538 = fmul float %tmp364, %tmp537
   %tmp539 = fmul float %tmp365, %tmp537
   %tmp540 = fmul float %tmp366, %tmp537
@@ -1369,7 +1369,7 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %tmp649 = fadd float %temp80.0, -1.000000e+00
   %tmp650 = fmul float %tmp649, %tmp76
   %tmp651 = fadd float %tmp650, 1.000000e+00
-  %tmp652 = call float @llvm.AMDIL.clamp.(float %tmp651, float 0.000000e+00, float 1.000000e+00)
+  %tmp652 = call float @llvm.AMDGPU.clamp.f32(float %tmp651, float 0.000000e+00, float 1.000000e+00)
   %tmp653 = bitcast float %tmp642 to i32
   %tmp654 = bitcast float %tmp644 to i32
   %tmp655 = bitcast float 0.000000e+00 to i32
@@ -1404,8 +1404,8 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %tmp684 = fadd float %tmp683, %temp89.0
   %tmp685 = fmul float %tmp640, %temp90.0
   %tmp686 = fadd float %tmp685, %temp91.0
-  %tmp687 = call float @llvm.AMDIL.clamp.(float %tmp684, float 0.000000e+00, float 1.000000e+00)
-  %tmp688 = call float @llvm.AMDIL.clamp.(float %tmp686, float 0.000000e+00, float 1.000000e+00)
+  %tmp687 = call float @llvm.AMDGPU.clamp.f32(float %tmp684, float 0.000000e+00, float 1.000000e+00)
+  %tmp688 = call float @llvm.AMDGPU.clamp.f32(float %tmp686, float 0.000000e+00, float 1.000000e+00)
   %tmp689 = fsub float -0.000000e+00, %tmp687
   %tmp690 = fadd float %tmp661, %tmp689
   %tmp691 = fsub float -0.000000e+00, %tmp688
@@ -1447,7 +1447,7 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %tmp721 = call float @llvm.pow.f32(float %result.i28, float %tmp75)
   %tmp722 = fmul float %tmp721, %tmp78
   %tmp723 = fadd float %tmp722, %tmp79
-  %tmp724 = call float @llvm.AMDIL.clamp.(float %tmp723, float 0.000000e+00, float 1.000000e+00)
+  %tmp724 = call float @llvm.AMDGPU.clamp.f32(float %tmp723, float 0.000000e+00, float 1.000000e+00)
   %tmp725 = fmul float %tmp724, %tmp724
   %tmp726 = fmul float 2.000000e+00, %tmp724
   %tmp727 = fsub float -0.000000e+00, %tmp726
@@ -1487,7 +1487,7 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %tmp751 = fmul float %tmp750, %tmp750
   %tmp752 = fmul float %tmp751, %tmp49
   %tmp753 = fadd float %tmp752, %tmp50
-  %tmp754 = call float @llvm.AMDIL.clamp.(float %tmp753, float 0.000000e+00, float 1.000000e+00)
+  %tmp754 = call float @llvm.AMDGPU.clamp.f32(float %tmp753, float 0.000000e+00, float 1.000000e+00)
   %tmp755 = fsub float -0.000000e+00, %tmp754
   %tmp756 = fadd float 1.000000e+00, %tmp755
   %tmp757 = fmul float %tmp32, %tmp756
@@ -1524,7 +1524,7 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %tmp772 = select i1 %tmp771, float 6.550400e+04, float %tmp766
   %tmp773 = fmul float %result.i2, %tmp51
   %tmp774 = fadd float %tmp773, %tmp52
-  %tmp775 = call float @llvm.AMDIL.clamp.(float %tmp774, float 0.000000e+00, float 1.000000e+00)
+  %tmp775 = call float @llvm.AMDGPU.clamp.f32(float %tmp774, float 0.000000e+00, float 1.000000e+00)
   %tmp776 = call i32 @llvm.SI.packf16(float %tmp768, float %tmp770)
   %tmp777 = bitcast i32 %tmp776 to float
   %tmp778 = call i32 @llvm.SI.packf16(float %tmp772, float %tmp775)
@@ -1546,7 +1546,7 @@ ELSE214:                                          ; preds = %ELSE211
 }
 
 ; Function Attrs: readnone
-declare float @llvm.AMDIL.clamp.(float, float, float) #1
+declare float @llvm.AMDGPU.clamp.f32(float, float, float) #1
 
 ; Function Attrs: nounwind readnone
 declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) #2
@@ -1554,8 +1554,7 @@ declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) 
 ; Function Attrs: nounwind readnone
 declare <4 x float> @llvm.SI.samplel.v4i32(<4 x i32>, <32 x i8>, <16 x i8>, i32) #2
 
-; Function Attrs: readnone
-declare float @llvm.AMDIL.exp.(float) #1
+declare float @llvm.exp2.f32(float) #2
 
 ; Function Attrs: nounwind readnone
 declare float @llvm.SI.load.const(<16 x i8>, i32) #2

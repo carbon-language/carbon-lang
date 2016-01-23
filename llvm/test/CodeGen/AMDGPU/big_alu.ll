@@ -216,20 +216,20 @@ ENDIF136:                                         ; preds = %ENDIF154, %main_bod
   %198 = fadd float %197, %196
   %199 = fmul float 0xBE5EFB4CC0000000, %182
   %200 = fmul float %199, %182
-  %201 = call float @llvm.AMDIL.exp.(float %200)
+  %201 = call float @llvm.exp2.f32(float %200)
   %one.sub.a.i = fsub float 1.000000e+00, %201
   %one.sub.ac.i = fmul float %one.sub.a.i, 0x3FA99999A0000000
   %mul.i = fmul float %198, 0x3FA99999A0000000
   %result.i = fadd float %mul.i, %one.sub.ac.i
   %202 = fadd float %result.i, 0x3FF4CCCCC0000000
   %203 = fmul float %202, 0x3FE1C71C80000000
-  %204 = call float @llvm.AMDIL.clamp.(float %203, float 0.000000e+00, float 1.000000e+00)
+  %204 = call float @llvm.AMDGPU.clamp.f32(float %203, float 0.000000e+00, float 1.000000e+00)
   %205 = fadd float %result.i, 0x3FF4CCCCC0000000
   %206 = fmul float %205, 0x3FE1C71C80000000
-  %207 = call float @llvm.AMDIL.clamp.(float %206, float 0.000000e+00, float 1.000000e+00)
+  %207 = call float @llvm.AMDGPU.clamp.f32(float %206, float 0.000000e+00, float 1.000000e+00)
   %208 = fadd float %result.i, 2.000000e+00
   %209 = fmul float %208, 0x3FD611A7A0000000
-  %210 = call float @llvm.AMDIL.clamp.(float %209, float 0.000000e+00, float 1.000000e+00)
+  %210 = call float @llvm.AMDGPU.clamp.f32(float %209, float 0.000000e+00, float 1.000000e+00)
   %211 = fmul float 2.000000e+00, %204
   %212 = fsub float -0.000000e+00, %211
   %213 = fadd float 3.000000e+00, %212
@@ -279,13 +279,13 @@ ENDIF136:                                         ; preds = %ENDIF154, %main_bod
   %257 = fmul float %253, 0.000000e+00
   %258 = fadd float %result.i, 0x3FF4CCCCC0000000
   %259 = fmul float %258, 0x3FE1C71C80000000
-  %260 = call float @llvm.AMDIL.clamp.(float %259, float 0.000000e+00, float 1.000000e+00)
+  %260 = call float @llvm.AMDGPU.clamp.f32(float %259, float 0.000000e+00, float 1.000000e+00)
   %261 = fadd float %result.i, 0x3FF4CCCCC0000000
   %262 = fmul float %261, 0x3FE1C71C80000000
-  %263 = call float @llvm.AMDIL.clamp.(float %262, float 0.000000e+00, float 1.000000e+00)
+  %263 = call float @llvm.AMDGPU.clamp.f32(float %262, float 0.000000e+00, float 1.000000e+00)
   %264 = fadd float %result.i, 2.000000e+00
   %265 = fmul float %264, 0x3FD611A7A0000000
-  %266 = call float @llvm.AMDIL.clamp.(float %265, float 0.000000e+00, float 1.000000e+00)
+  %266 = call float @llvm.AMDGPU.clamp.f32(float %265, float 0.000000e+00, float 1.000000e+00)
   %267 = fmul float 2.000000e+00, %260
   %268 = fsub float -0.000000e+00, %267
   %269 = fadd float 3.000000e+00, %268
@@ -386,7 +386,7 @@ ENDIF136:                                         ; preds = %ENDIF154, %main_bod
   %364 = fadd float %363, %362
   %365 = fadd float %364, 0xBFEFAE1480000000
   %366 = fmul float %365, 0xC023FFFFC0000000
-  %367 = call float @llvm.AMDIL.clamp.(float %366, float 0.000000e+00, float 1.000000e+00)
+  %367 = call float @llvm.AMDGPU.clamp.f32(float %366, float 0.000000e+00, float 1.000000e+00)
   %368 = fsub float -0.000000e+00, %334
   %369 = fadd float %result.i, %368
   %370 = fadd float %369, 0x3FBEB851E0000000
@@ -412,7 +412,7 @@ ENDIF136:                                         ; preds = %ENDIF154, %main_bod
   %390 = fadd float %389, %388
   %391 = fadd float %390, 0xBFEFAE1480000000
   %392 = fmul float %391, 0xC0490001A0000000
-  %393 = call float @llvm.AMDIL.clamp.(float %392, float 0.000000e+00, float 1.000000e+00)
+  %393 = call float @llvm.AMDGPU.clamp.f32(float %392, float 0.000000e+00, float 1.000000e+00)
   %394 = fmul float 2.000000e+00, %367
   %395 = fsub float -0.000000e+00, %394
   %396 = fadd float 3.000000e+00, %395
@@ -1146,7 +1146,7 @@ IF179:                                            ; preds = %ENDIF175
   %870 = fadd float %869, %868
   %871 = fadd float %870, 0xBFEFAE1480000000
   %872 = fmul float %871, 0xC043FFFE20000000
-  %873 = call float @llvm.AMDIL.clamp.(float %872, float 0.000000e+00, float 1.000000e+00)
+  %873 = call float @llvm.AMDGPU.clamp.f32(float %872, float 0.000000e+00, float 1.000000e+00)
   %874 = fmul float 2.000000e+00, %873
   %875 = fsub float -0.000000e+00, %874
   %876 = fadd float 3.000000e+00, %875
@@ -1250,7 +1250,7 @@ ENDIF178:                                         ; preds = %IF179, %ENDIF175
   %932 = fmul float %931, %929
   %933 = fmul float %932, %929
   %934 = fmul float %933, 0x3FF7154760000000
-  %935 = call float @llvm.AMDIL.exp.(float %934)
+  %935 = call float @llvm.exp2.f32(float %934)
   %936 = fcmp oeq float %53, 1.000000e+00
   %937 = sext i1 %936 to i32
   %938 = bitcast i32 %937 to float
@@ -1289,11 +1289,10 @@ declare <4 x float> @llvm.AMDGPU.tex(<4 x float>, i32, i32, i32) #2
 ; Function Attrs: readonly
 declare float @fabs(float) #4
 
-; Function Attrs: readnone
-declare float @llvm.AMDIL.exp.(float) #2
+declare float @llvm.exp2.f32(float) #3
 
 ; Function Attrs: readnone
-declare float @llvm.AMDIL.clamp.(float, float, float) #2
+declare float @llvm.AMDGPU.clamp.f32(float, float, float) #2
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 

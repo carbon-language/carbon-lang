@@ -95,7 +95,7 @@ main_body:
 
 IF:                                               ; preds = %main_body
   %tmp77 = fsub float -0.000000e+00, %tmp69
-  %tmp78 = call float @llvm.AMDIL.exp.(float %tmp77)
+  %tmp78 = call float @llvm.exp2.f32(float %tmp77)
   %tmp79 = fsub float -0.000000e+00, %tmp78
   %tmp80 = fadd float 1.000000e+00, %tmp79
   %tmp81 = fdiv float 1.000000e+00, %tmp69
@@ -115,7 +115,7 @@ ENDIF:                                            ; preds = %IF, %main_body
 
 IF25:                                             ; preds = %ENDIF
   %tmp90 = fsub float -0.000000e+00, %tmp70
-  %tmp91 = call float @llvm.AMDIL.exp.(float %tmp90)
+  %tmp91 = call float @llvm.exp2.f32(float %tmp90)
   %tmp92 = fsub float -0.000000e+00, %tmp91
   %tmp93 = fadd float 1.000000e+00, %tmp92
   %tmp94 = fdiv float 1.000000e+00, %tmp70
@@ -205,8 +205,7 @@ declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) 
 ; Function Attrs: readnone
 declare float @llvm.amdgcn.rsq.f32(float) #3
 
-; Function Attrs: readnone
-declare float @llvm.AMDIL.exp.(float) #3
+declare float @llvm.exp2.f32(float) #1
 
 ; Function Attrs: nounwind readnone
 declare float @llvm.pow.f32(float, float) #1
