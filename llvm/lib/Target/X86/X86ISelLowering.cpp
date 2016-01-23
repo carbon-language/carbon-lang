@@ -27190,13 +27190,11 @@ combineVectorTruncationWithPACKUS(SDNode *N, SelectionDAG &DAG,
   // First, use mask to unset all bits that won't appear in the result.
   assert((OutSVT == MVT::i8 || OutSVT == MVT::i16) &&
          "OutSVT can only be either i8 or i16.");
-  SDValue MaskVal =
-      DAG.getConstant(OutSVT == MVT::i8 ? 0xFF : 0xFFFF, DL, InSVT);
-  SDValue MaskVec = DAG.getNode(
-      ISD::BUILD_VECTOR, DL, InVT,
-      SmallVector<SDValue, 8>(InVT.getVectorNumElements(), MaskVal));
+  APInt Mask =
+      APInt::getLowBitsSet(InSVT.getSizeInBits(), OutSVT.getSizeInBits());
+  SDValue MaskVal = DAG.getConstant(Mask, DL, InVT);
   for (auto &Reg : Regs)
-    Reg = DAG.getNode(ISD::AND, DL, InVT, MaskVec, Reg);
+    Reg = DAG.getNode(ISD::AND, DL, InVT, MaskVal, Reg);
 
   MVT UnpackedVT, PackedVT;
   if (OutSVT == MVT::i8) {
@@ -27300,17 +27298,14 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
   // Split a long vector into vectors of legal type.
   unsigned RegNum = InVT.getSizeInBits() / 128;
   SmallVector<SDValue, 8> SubVec(RegNum);
-  if (InSVT == MVT::i32) {
-    for (unsigned i = 0; i < RegNum; i++)
-      SubVec[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, MVT::v4i32, In,
-                              DAG.getIntPtrConstant(i * 4, DL));
-  } else {
-    for (unsigned i = 0; i < RegNum; i++)
-      SubVec[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, MVT::v2i64, In,
-                              DAG.getIntPtrConstant(i * 2, DL));
-  }
+  unsigned NumSubRegElts = 128 / InSVT.getSizeInBits();
+  EVT SubRegVT = EVT::getVectorVT(*DAG.getContext(), InSVT, NumSubRegElts);
 
-  // SSE2 provides PACKUS for only 2 x v8i16 -> v16i8 and SSE4.1 provides PAKCUS
+  for (unsigned i = 0; i < RegNum; i++)
+    SubVec[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubRegVT, In,
+                            DAG.getIntPtrConstant(i * NumSubRegElts, DL));
+
+  // SSE2 provides PACKUS for only 2 x v8i16 -> v16i8 and SSE4.1 provides PACKUS
   // for 2 x v4i32 -> v8i16. For SSSE3 and below, we need to use PACKSS to
   // truncate 2 x v4i32 to v8i16.
   if (Subtarget->hasSSE41() || OutSVT == MVT::i8)
