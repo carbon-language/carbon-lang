@@ -10974,6 +10974,7 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           lowerVectorShuffleAsShift(DL, MVT::v8i32, V1, V2, Mask, DAG))
     return Shift;
 
+  // Try to use byte rotation instructions.
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
           DL, MVT::v8i32, V1, V2, Mask, Subtarget, DAG))
     return Rotate;
@@ -17070,7 +17071,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
         Rnd = Op.getOperand(6);
       else
         Rnd = DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
-      if (IntrData->Type == FIXUPIMM || IntrData->Type == FIXUPIMM_MASKZ) 
+      if (IntrData->Type == FIXUPIMM || IntrData->Type == FIXUPIMM_MASKZ)
         return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
                                                 Src1, Src2, Src3, Imm, Rnd),
                                     Mask, Passthru, Subtarget, DAG);
@@ -17761,7 +17762,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                               MemIntr->getMemOperand(), false);
   }
   case STOREANT: {
-    // Store (MOVNTPD, MOVNTPS, MOVNTDQ) using non-temporal hint intrinsic implementation. 
+    // Store (MOVNTPD, MOVNTPS, MOVNTDQ) using non-temporal hint intrinsic implementation.
     SDValue Data = Op.getOperand(3);
     SDValue Addr = Op.getOperand(2);
     SDValue Chain = Op.getOperand(0);
