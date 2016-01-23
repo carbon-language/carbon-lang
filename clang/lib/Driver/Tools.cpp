@@ -10660,8 +10660,7 @@ void NVPTX::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
                                     const char *LinkingOutput) const {
   const auto &TC =
       static_cast<const toolchains::CudaToolChain &>(getToolChain());
-  assert(TC.getArch() == llvm::Triple::nvptx ||
-         TC.getArch() == llvm::Triple::nvptx64);
+  assert(TC.getTriple().isNVPTX() && "Wrong platform");
 
   std::vector<std::string> gpu_archs =
       Args.getAllArgValues(options::OPT_march_EQ);
@@ -10729,8 +10728,7 @@ void NVPTX::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                  const char *LinkingOutput) const {
   const auto &TC =
       static_cast<const toolchains::CudaToolChain &>(getToolChain());
-  assert(TC.getArch() == llvm::Triple::nvptx ||
-         TC.getArch() == llvm::Triple::nvptx64);
+  assert(TC.getTriple().isNVPTX() && "Wrong platform");
 
   ArgStringList CmdArgs;
   CmdArgs.push_back("--cuda");
