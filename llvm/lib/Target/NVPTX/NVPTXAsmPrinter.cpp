@@ -812,6 +812,11 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   const NVPTXTargetMachine &NTM = static_cast<const NVPTXTargetMachine &>(TM);
   const NVPTXSubtarget STI(TT, CPU, FS, NTM);
 
+  if (M.alias_size()) {
+    report_fatal_error("Module has aliases, which NVPTX does not support.");
+    return true; // error
+  }
+
   SmallString<128> Str1;
   raw_svector_ostream OS1(Str1);
 
