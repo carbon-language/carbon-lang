@@ -579,7 +579,7 @@ def get_one_thread_stopped_at_breakpoint_id(process, bpid, require_exactly_one =
     return threads[0]
 
 def get_one_thread_stopped_at_breakpoint(process, bkpt, require_exactly_one = True):
-    return get_one_thread_stopped_at_breakpoint_id(bkpt.GetID(), require_exactly_one)
+    return get_one_thread_stopped_at_breakpoint_id(process, bkpt.GetID(), require_exactly_one)
 
 def is_thread_crashed (test, thread):
     """In the test suite we dereference a null pointer to simulate a crash. The way this is
