@@ -9007,6 +9007,7 @@ Sema::ActOnOpenMPMapClause(OpenMPMapClauseKind MapTypeModifier,
     auto *FD = dyn_cast<FieldDecl>(D);
 
     assert((VD || FD) && "Only variables or fields are expected here!");
+    (void)FD;
 
     // OpenMP 4.5 [2.15.5.1, map Clause, Restrictions, p.10]
     //  threadprivate variables cannot appear in a map clause.
