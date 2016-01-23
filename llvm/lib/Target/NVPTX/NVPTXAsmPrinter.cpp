@@ -1428,6 +1428,11 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
   bool isABI = (nvptxSubtarget->getSmVersion() >= 20);
   MVT thePointerTy = TLI->getPointerTy(DL);
 
+  if (F->arg_empty()) {
+    O << "()\n";
+    return;
+  }
+
   O << "(\n";
 
   for (I = F->arg_begin(), E = F->arg_end(); I != E; ++I, paramIndex++) {
