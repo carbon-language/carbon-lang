@@ -1603,7 +1603,7 @@ bool SCCP::runOnFunction(Function &F) {
       DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
 
       ++NumDeadBlocks;
-      NumInstRemoved += removeAllNonTerminatorAndEHPadInstructions(BB);
+      NumInstRemoved += removeAllNonTerminatorAndEHPadInstructions(&*BB);
 
       MadeChanges = true;
       continue;
