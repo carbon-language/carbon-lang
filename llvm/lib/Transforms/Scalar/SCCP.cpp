@@ -1564,14 +1564,6 @@ FunctionPass *llvm::createSCCPPass() {
   return new SCCP();
 }
 
-static void DeleteInstructionInBlock(BasicBlock *BB) {
-  DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
-  ++NumDeadBlocks;
-
-  unsigned NumRemovedInBB = removeAllNonTerminatorAndEHPadInstructions(BB);
-  NumInstRemoved += NumRemovedInBB;
-}
-
 // runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
 // and return true if the function was modified.
 //
@@ -1608,7 +1600,11 @@ bool SCCP::runOnFunction(Function &F) {
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!Solver.isBlockExecutable(&*BB)) {
-      DeleteInstructionInBlock(&*BB);
+      DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
+
+      ++NumDeadBlocks;
+      NumInstRemoved += removeAllNonTerminatorAndEHPadInstructions(BB);
+
       MadeChanges = true;
       continue;
     }
@@ -1806,18 +1802,13 @@ bool IPSCCP::runOnModule(Module &M) {
 
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       if (!Solver.isBlockExecutable(&*BB)) {
-        DeleteInstructionInBlock(&*BB);
-        MadeChanges = true;
+        DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
 
-        TerminatorInst *TI = BB->getTerminator();
-        for (BasicBlock *Succ : TI->successors()) {
-          if (!Succ->empty() && isa<PHINode>(Succ->begin()))
-            Succ->removePredecessor(&*BB);
-        }
-        if (!TI->use_empty())
-          TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
-        TI->eraseFromParent();
-        new UnreachableInst(M.getContext(), &*BB);
+        ++NumDeadBlocks;
+        NumInstRemoved +=
+            changeToUnreachable(&*BB->begin(), /*UseLLVMTrap=*/false);
+
+        MadeChanges = true;
 
         if (&*BB != &F->front())
           BlocksToErase.push_back(&*BB);

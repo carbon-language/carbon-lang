@@ -1243,7 +1243,7 @@ unsigned llvm::removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB) {
   return NumDeadInst;
 }
 
-void llvm::changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
+unsigned llvm::changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI
   // nodes.
@@ -1261,12 +1261,15 @@ void llvm::changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   new UnreachableInst(I->getContext(), I);
 
   // All instructions after this are dead.
+  unsigned NumInstrsRemoved = 0;
   BasicBlock::iterator BBI = I->getIterator(), BBE = BB->end();
   while (BBI != BBE) {
     if (!BBI->use_empty())
       BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
     BB->getInstList().erase(BBI++);
+    ++NumInstrsRemoved;
   }
+  return NumInstrsRemoved;
 }
 
 /// changeToCall - Convert the specified invoke into a normal call.
