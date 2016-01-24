@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <array>
 #include <memory>
 
 namespace clang {
@@ -33,7 +34,7 @@ private:
   std::string FuncName;
   llvm::GlobalVariable *FuncNameVar;
 
-  unsigned NumValueSites[llvm::IPVK_Last + 1];
+  std::array <unsigned, llvm::IPVK_Last + 1> NumValueSites;
   unsigned NumRegionCounters;
   uint64_t FunctionHash;
   std::unique_ptr<llvm::DenseMap<const Stmt *, unsigned>> RegionCounterMap;
@@ -47,7 +48,7 @@ private:
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
-      : CGM(CGM), NumValueSites{0}, NumRegionCounters(0),
+      : CGM(CGM), NumValueSites({{0}}), NumRegionCounters(0),
         FunctionHash(0), CurrentRegionCount(0), SkipCoverageMapping(false) {}
 
   /// Whether or not we have PGO region data for the current function. This is
