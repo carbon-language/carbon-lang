@@ -289,6 +289,10 @@ bool replaceDbgDeclare(Value *Address, Value *NewAddress,
 bool replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
                                 DIBuilder &Builder, bool Deref, int Offset = 0);
 
+/// \brief Remove all instructions from a basic block other than it's terminator
+/// and any present EH pad instructions.
+unsigned removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB);
+
 /// \brief Insert an unreachable instruction before the specified
 /// instruction, making it and the rest of the code in the block dead.
 void changeToUnreachable(Instruction *I, bool UseLLVMTrap);

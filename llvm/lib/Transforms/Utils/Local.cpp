@@ -1222,6 +1222,27 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
                            Deref, Offset);
 }
 
+unsigned llvm::removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB) {
+  unsigned NumDeadInst = 0;
+  // Delete the instructions backwards, as it has a reduced likelihood of
+  // having to update as many def-use and use-def chains.
+  Instruction *EndInst = BB->getTerminator(); // Last not to be deleted.
+  while (EndInst != BB->begin()) {
+    // Delete the next to last instruction.
+    Instruction *Inst = &*--EndInst->getIterator();
+    if (!Inst->use_empty() && !Inst->getType()->isTokenTy())
+      Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
+    if (Inst->isEHPad() || Inst->getType()->isTokenTy()) {
+      EndInst = Inst;
+      continue;
+    }
+    if (!isa<DbgInfoIntrinsic>(Inst))
+      ++NumDeadInst;
+    Inst->eraseFromParent();
+  }
+  return NumDeadInst;
+}
+
 void llvm::changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI

@@ -1568,25 +1568,8 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
   DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
   ++NumDeadBlocks;
 
-  // Check to see if there are non-terminating instructions to delete.
-  if (isa<TerminatorInst>(BB->begin()))
-    return;
-
-  // Delete the instructions backwards, as it has a reduced likelihood of having
-  // to update as many def-use and use-def chains.
-  Instruction *EndInst = BB->getTerminator(); // Last not to be deleted.
-  while (EndInst != BB->begin()) {
-    // Delete the next to last instruction.
-    Instruction *Inst = &*--EndInst->getIterator();
-    if (!Inst->use_empty())
-      Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
-    if (Inst->isEHPad()) {
-      EndInst = Inst;
-      continue;
-    }
-    BB->getInstList().erase(Inst);
-    ++NumInstRemoved;
-  }
+  unsigned NumRemovedInBB = removeAllNonTerminatorAndEHPadInstructions(BB);
+  NumInstRemoved += NumRemovedInBB;
 }
 
 // runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
