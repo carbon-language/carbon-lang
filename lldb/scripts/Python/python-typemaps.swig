@@ -93,6 +93,9 @@
    }
    $1 = (char *) malloc($2);
 }
+// SBProcess::ReadCStringFromMemory() uses a void*, but needs to be treated
+// as char data instead of byte data.
+%typemap(in) (void *char_buf, size_t size) = (char *dst, size_t dst_len);
 
 // Return the char buffer.  Discarding any previous return result
 // See also SBThread::GetStopDescription.
@@ -108,6 +111,9 @@
    }
    free($1);
 }
+// SBProcess::ReadCStringFromMemory() uses a void*, but needs to be treated
+// as char data instead of byte data.
+%typemap(argout) (void *char_buf, size_t size) = (char *dst, size_t dst_len);
 
 
 // typemap for an outgoing buffer
@@ -231,9 +237,8 @@
       $result = Py_None;
       Py_INCREF($result);
    } else {
-      llvm::StringRef ref(static_cast<const char*>($1), result);
-      lldb_private::PythonString string(ref);
-      $result = string.release();
+      lldb_private::PythonBytes bytes(static_cast<const uint8_t*>($1), result);
+      $result = bytes.release();
    }
    free($1);
 }
