@@ -4,15 +4,29 @@
 // RUN: not llvm-mc -triple=thumbv8m.main -show-encoding < %s 2>%t \
 // RUN:   | FileCheck --check-prefix=CHECK-MAINLINE --check-prefix=CHECK %s
 // RUN:     FileCheck --check-prefix=UNDEF-MAINLINE --check-prefix=UNDEF < %t %s
+// RUN: not llvm-mc -triple=thumbv8m.main -mattr=+dsp,+t2xtpk -show-encoding < %s 2>%t \
+// RUN:   | FileCheck --check-prefix=CHECK-MAINLINE_DSP --check-prefix=CHECK %s
+// RUN:     FileCheck --check-prefix=UNDEF-MAINLINE_DSP --check-prefix=UNDEF < %t %s
 
 // Simple check that baseline is v6M and mainline is v7M
 // UNDEF-BASELINE: error: instruction requires: thumb2
 // UNDEF-MAINLINE-NOT: error: instruction requires:
+// UNDEF-MAINLINE_DSP-NOT: error: instruction requires:
 mov.w r0, r0
 
 // Check that .arm is invalid
 // UNDEF: target does not support ARM mode
 .arm
+
+// And only +dsp,+t2xtpk has DSP and t2xtpk instructions
+// UNDEF-BASELINE: error: instruction requires: arm-mode
+// UNDEF-MAINLINE: error: instruction requires: arm-mode
+// UNDEF-MAINLINE_DSP-NOT: error: instruction requires:
+qadd16 r0, r0, r0
+// UNDEF-BASELINE: error: instruction requires: arm-mode
+// UNDEF-MAINLINE: error: instruction requires: arm-mode
+// UNDEF-MAINLINE_DSP-NOT: error: instruction requires:
+uxtab16 r0, r1, r2
 
 // Instruction availibility checks
 
@@ -157,10 +171,12 @@ ttat r0, r1
 
 // UNDEF-BASELINE: error: instruction requires: armv8m.main
 // CHECK-MAINLINE: vlldm r5          @ encoding: [0x35,0xec,0x00,0x0a]
+// CHECK-MAINLINE_DSP: vlldm r5      @ encoding: [0x35,0xec,0x00,0x0a]
 vlldm r5
 
 // UNDEF-BASELINE: error: instruction requires: armv8m.main
 // CHECK-MAINLINE: vlstm r10         @ encoding: [0x2a,0xec,0x00,0x0a]
+// CHECK-MAINLINE_DSP: vlstm r10     @ encoding: [0x2a,0xec,0x00,0x0a]
 vlstm r10
 
 // New SYSm's
