@@ -1895,6 +1895,23 @@ bool GVN::processLoad(LoadInst *L) {
   MemDepResult Dep = MD->getDependency(L);
   const DataLayout &DL = L->getModule()->getDataLayout();
 
+  // If it is defined in another block, try harder.
+  if (Dep.isNonLocal())
+    return processNonLocalLoad(L);
+
+  // Only handle the local case below
+  if (!Dep.isDef() && !Dep.isClobber()) {
+    // This might be a NonFuncLocal or an Unknown
+    DEBUG(
+      // fast print dep, using operator<< on instruction is too slow.
+      dbgs() << "GVN: load ";
+      L->printAsOperand(dbgs());
+      dbgs() << " has unknown dependence\n";
+    );
+    return false;
+  }
+
+
   // If we have a clobber and target data is around, see if this is a clobber
   // that we can fix up through code synthesis.
   if (Dep.isClobber()) {
@@ -1966,19 +1983,7 @@ bool GVN::processLoad(LoadInst *L) {
     return false;
   }
 
-  // If it is defined in another block, try harder.
-  if (Dep.isNonLocal())
-    return processNonLocalLoad(L);
-
-  if (!Dep.isDef()) {
-    DEBUG(
-      // fast print dep, using operator<< on instruction is too slow.
-      dbgs() << "GVN: load ";
-      L->printAsOperand(dbgs());
-      dbgs() << " has unknown dependence\n";
-    );
-    return false;
-  }
+  assert(Dep.isDef() && "expected from control flow");
 
   Instruction *DepInst = Dep.getInst();
   Value *AvailableValue = nullptr;
