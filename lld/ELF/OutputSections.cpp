@@ -656,10 +656,10 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
       Entries.push_back(
           {DT_NEEDED, Out<ELFT>::DynStrTab->addString(F->getSoName())});
 
-  if (Symbol *S = SymTab.getSymbols().lookup(Config->Init))
-    Entries.push_back({DT_INIT, S->Body});
-  if (Symbol *S = SymTab.getSymbols().lookup(Config->Fini))
-    Entries.push_back({DT_FINI, S->Body});
+  if (SymbolBody *B = SymTab.find(Config->Init))
+    Entries.push_back({DT_INIT, B});
+  if (SymbolBody *B = SymTab.find(Config->Fini))
+    Entries.push_back({DT_FINI, B});
 
   uint32_t DtFlags = 0;
   uint32_t DtFlags1 = 0;
