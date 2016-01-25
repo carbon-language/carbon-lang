@@ -9708,6 +9708,10 @@ std::unique_ptr<Command> visualstudio::Compiler::GetCommand(
                                options::OPT__SLASH_MT, options::OPT__SLASH_MTd))
     A->render(Args, CmdArgs);
 
+  // Pass through all unknown arguments so that the fallback command can see
+  // them too.
+  Args.AddAllArgs(CmdArgs, options::OPT_UNKNOWN);
+
   // Input filename.
   assert(Inputs.size() == 1);
   const InputInfo &II = Inputs[0];
