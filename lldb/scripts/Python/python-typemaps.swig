@@ -113,13 +113,21 @@
 // typemap for an outgoing buffer
 // See also SBEvent::SBEvent(uint32_t event, const char *cstr, uint32_t cstr_len).
 %typemap(in) (const char *cstr, uint32_t cstr_len) {
-   if (PyString_Check($input)) {
-      $1 = (char *) PyString_AsString($input);
-      $2 = PyString_Size($input);
+   using namespace lldb_private;
+   if (PythonString::Check($input)) {
+      PythonString str(PyRefType::Borrowed, $input);
+      $1 = (char*)str.GetString().data();
+      $2 = str.GetSize();
    }
-   else if(PyByteArray_Check($input)) {
-      $1 = (char *) PyByteArray_AsString($input);
-      $2 = PyByteArray_Size($input);
+   else if(PythonByteArray::Check($input)) {
+      PythonByteArray bytearray(PyRefType::Borrowed, $input);
+      $1 = (char*)bytearray.GetBytes().data();
+      $2 = bytearray.GetSize();
+   }
+   else if (PythonBytes::Check($input)) {
+      PythonBytes bytes(PyRefType::Borrowed, $input);
+      $1 = (char*)bytes.GetBytes().data();
+      $2 = bytes.GetSize();
    }
    else {
       PyErr_SetString(PyExc_ValueError, "Expecting a string");
