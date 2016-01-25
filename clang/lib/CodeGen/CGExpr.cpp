@@ -2636,7 +2636,7 @@ void CodeGenFunction::EmitCfiCheckFail() {
   Address CheckKindAddr(V, getIntAlign());
   llvm::Value *CheckKind = Builder.CreateLoad(CheckKindAddr);
 
-  constexpr std::pair<int, SanitizerMask> CheckKinds[] = {
+  const std::pair<int, SanitizerMask> CheckKinds[] = {
       {CFITCK_VCall, SanitizerKind::CFIVCall},
       {CFITCK_NVCall, SanitizerKind::CFINVCall},
       {CFITCK_DerivedCast, SanitizerKind::CFIDerivedCast},
