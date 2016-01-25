@@ -391,6 +391,8 @@ void CodeGenModule::Release() {
   EmitDeferredUnusedCoverageMappings();
   if (CoverageMapping)
     CoverageMapping->emit();
+  if (CodeGenOpts.SanitizeCfiCrossDso)
+    CodeGenFunction(*this).EmitCfiCheckFail();
   emitLLVMUsed();
   if (SanStats)
     SanStats->finish();
