@@ -1817,6 +1817,17 @@ static void AddGoldPlugin(const ToolChain &ToolChain, const ArgList &Args,
 
   if (IsThinLTO)
     CmdArgs.push_back("-plugin-opt=thinlto");
+
+  // If an explicit debugger tuning argument appeared, pass it along.
+  if (Arg *A = Args.getLastArg(options::OPT_gTune_Group,
+                               options::OPT_ggdbN_Group)) {
+    if (A->getOption().matches(options::OPT_glldb))
+      CmdArgs.push_back("-plugin-opt=-debugger-tune=lldb");
+    else if (A->getOption().matches(options::OPT_gsce))
+      CmdArgs.push_back("-plugin-opt=-debugger-tune=sce");
+    else
+      CmdArgs.push_back("-plugin-opt=-debugger-tune=gdb");
+  }
 }
 
 /// This is a helper function for validating the optional refinement step
