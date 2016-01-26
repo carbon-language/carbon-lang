@@ -9,3 +9,4 @@ double foo(double a, double b) {
   return pow(a, b);
 // CHECK: call {{.*}}double @pow
 }
+

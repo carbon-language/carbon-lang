@@ -5465,13 +5465,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_apple_pragma_pack, false))
     CmdArgs.push_back("-fapple-pragma-pack");
 
-  // Process -fno-math-builtin options.
   // le32-specific flags:
   //  -fno-math-builtin: clang should not convert math builtins to intrinsics
   //                     by default.
-  if (Args.hasArg(options::OPT_fno_math_builtin) ||
-      getToolChain().getArch() == llvm::Triple::le32)
+  if (getToolChain().getArch() == llvm::Triple::le32) {
     CmdArgs.push_back("-fno-math-builtin");
+  }
 
 // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
 //

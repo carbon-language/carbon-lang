@@ -191,9 +191,6 @@
 // RUN: %clang -### -S -fexec-charset=iso-8859-1 -o /dev/null %s 2>&1 | FileCheck -check-prefix=CHECK-INVALID-INPUT-CHARSET %s
 // CHECK-INVALID-INPUT-CHARSET: error: invalid value 'iso-8859-1' in '-fexec-charset=iso-8859-1'
 
-// RUN: %clang -### -S -fno-math-builtin %s 2>&1 | FileCheck -check-prefix=CHECK-NO-MATH-BUILTIN %s
-// CHECK-NO-MATH-BUILTIN: "-fno-math-builtin"
-
 // Test that we don't error on these.
 // RUN: %clang -### -S -Werror                                                \
 // RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
