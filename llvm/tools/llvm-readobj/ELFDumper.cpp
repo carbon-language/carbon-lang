@@ -2282,7 +2282,7 @@ template <class ELFT> void ELFDumper<ELFT>::printGroupSections() {
       W.startLine() << "Signature: " << StrTable.data() + Sym->st_name << "\n";
       {
         ListScope L(W, "Section(s) in group");
-        int Member = 1;
+        size_t Member = 1;
         while (Member < Data.size()) {
           auto Sec = errorOrDefault(Obj->getSection(Data[Member]));
           const StringRef Name = errorOrDefault(Obj->getSectionName(Sec));
