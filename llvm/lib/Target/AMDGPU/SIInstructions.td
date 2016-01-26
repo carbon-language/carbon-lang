@@ -2442,38 +2442,6 @@ class ImageLoadArrayMSAAPattern<Intrinsic name, MIMG opcode, ValueType addr_type
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc)
 >;
 
-multiclass ImageLoadPatterns<MIMG opcode, ValueType addr_type> {
-  def : ImageLoadPattern <int_SI_imageload, opcode, addr_type>;
-  def : ImageLoadArrayPattern <int_SI_imageload, opcode, addr_type>;
-}
-
-multiclass ImageLoadMSAAPatterns<MIMG opcode, ValueType addr_type> {
-  def : ImageLoadMSAAPattern <int_SI_imageload, opcode, addr_type>;
-  def : ImageLoadArrayMSAAPattern <int_SI_imageload, opcode, addr_type>;
-}
-
-defm : ImageLoadPatterns<IMAGE_LOAD_MIP_V4_V2, v2i32>;
-defm : ImageLoadPatterns<IMAGE_LOAD_MIP_V4_V4, v4i32>;
-
-defm : ImageLoadMSAAPatterns<IMAGE_LOAD_V4_V2, v2i32>;
-defm : ImageLoadMSAAPatterns<IMAGE_LOAD_V4_V4, v4i32>;
-
-/* Image resource information */
-def : Pat <
-  (int_SI_resinfo i32:$mipid, v32i8:$rsrc, imm),
-  (IMAGE_GET_RESINFO_V4_V1 0xf, 0, 0, 0, 0, 0, 0, 0, (V_MOV_B32_e32 $mipid), $rsrc)
->;
-
-def : Pat <
-  (int_SI_resinfo i32:$mipid, v32i8:$rsrc, TEX_ARRAY),
-  (IMAGE_GET_RESINFO_V4_V1 0xf, 0, 0, 1, 0, 0, 0, 0, (V_MOV_B32_e32 $mipid), $rsrc)
->;
-
-def : Pat <
-  (int_SI_resinfo i32:$mipid, v32i8:$rsrc, TEX_ARRAY_MSAA),
-  (IMAGE_GET_RESINFO_V4_V1 0xf, 0, 0, 1, 0, 0, 0, 0, (V_MOV_B32_e32 $mipid), $rsrc)
->;
-
 /********** ============================================ **********/
 /********** Extraction, Insertion, Building and Casting  **********/
 /********** ============================================ **********/

@@ -1414,14 +1414,6 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getMemIntrinsicNode(AMDGPUISD::LOAD_CONSTANT, DL,
                                    Op->getVTList(), Ops, VT, MMO);
   }
-  case AMDGPUIntrinsic::SI_sample:
-    return LowerSampleIntrinsic(AMDGPUISD::SAMPLE, Op, DAG);
-  case AMDGPUIntrinsic::SI_sampleb:
-    return LowerSampleIntrinsic(AMDGPUISD::SAMPLEB, Op, DAG);
-  case AMDGPUIntrinsic::SI_sampled:
-    return LowerSampleIntrinsic(AMDGPUISD::SAMPLED, Op, DAG);
-  case AMDGPUIntrinsic::SI_samplel:
-    return LowerSampleIntrinsic(AMDGPUISD::SAMPLEL, Op, DAG);
   case AMDGPUIntrinsic::SI_vs_load_input:
     return DAG.getNode(AMDGPUISD::LOAD_INPUT, DL, VT,
                        Op.getOperand(1),
@@ -1601,15 +1593,6 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   }
 
   return AMDGPUTargetLowering::LowerLOAD(Op, DAG);
-}
-
-SDValue SITargetLowering::LowerSampleIntrinsic(unsigned Opcode,
-                                               const SDValue &Op,
-                                               SelectionDAG &DAG) const {
-  return DAG.getNode(Opcode, SDLoc(Op), Op.getValueType(), Op.getOperand(1),
-                     Op.getOperand(2),
-                     Op.getOperand(3),
-                     Op.getOperand(4));
 }
 
 SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
