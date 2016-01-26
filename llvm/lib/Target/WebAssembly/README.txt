@@ -78,11 +78,6 @@ stores.
 
 //===---------------------------------------------------------------------===//
 
-Memset/memcpy/memmove should be marked with the "returned" attribute somehow,
-even when they are translated through intrinsics.
-
-//===---------------------------------------------------------------------===//
-
 Consider implementing optimizeSelect, optimizeCompareInstr, optimizeCondBranch,
 optimizeLoadInstr, and/or getMachineCombinerPatterns.
 
