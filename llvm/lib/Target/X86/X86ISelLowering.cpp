@@ -5135,16 +5135,20 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
   // Recurse into target specific vector shuffles to find scalars.
   if (isTargetShuffle(Opcode)) {
     MVT ShufVT = V.getSimpleValueType();
+    MVT ShufSVT = ShufVT.getVectorElementType();
     int NumElems = (int)ShufVT.getVectorNumElements();
     SmallVector<int, 16> ShuffleMask;
     bool IsUnary;
 
-    if (!getTargetShuffleMask(N, ShufVT, false, ShuffleMask, IsUnary))
+    if (!getTargetShuffleMask(N, ShufVT, true, ShuffleMask, IsUnary))
       return SDValue();
 
     int Elt = ShuffleMask[Index];
+    if (Elt == SM_SentinelZero)
+      return ShufSVT.isInteger() ? DAG.getConstant(0, SDLoc(N), ShufSVT)
+                                 : DAG.getConstantFP(+0.0, SDLoc(N), ShufSVT);
     if (Elt == SM_SentinelUndef)
-      return DAG.getUNDEF(ShufVT.getVectorElementType());
+      return DAG.getUNDEF(ShufSVT);
 
     assert(0 <= Elt && Elt < (2*NumElems) && "Shuffle index out of range");
     SDValue NewV = (Elt < NumElems) ? N->getOperand(0) : N->getOperand(1);
