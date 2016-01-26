@@ -2102,7 +2102,6 @@ let AddedComplexity = 100 in {
 defm : SMRD_Pattern <"S_LOAD_DWORD", i32>;
 defm : SMRD_Pattern <"S_LOAD_DWORDX2", v2i32>;
 defm : SMRD_Pattern <"S_LOAD_DWORDX4", v4i32>;
-defm : SMRD_Pattern <"S_LOAD_DWORDX8", v32i8>;
 defm : SMRD_Pattern <"S_LOAD_DWORDX8", v8i32>;
 defm : SMRD_Pattern <"S_LOAD_DWORDX16", v16i32>;
 
@@ -2343,34 +2342,34 @@ defm : ImagePatterns<int_SI_image_load_mip, "IMAGE_LOAD_MIP">;
 
 /* SIsample for simple 1D texture lookup */
 def : Pat <
-  (SIsample i32:$addr, v32i8:$rsrc, v4i32:$sampler, imm),
+  (SIsample i32:$addr, v8i32:$rsrc, v4i32:$sampler, imm),
   (IMAGE_SAMPLE_V4_V1 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SamplePattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, imm),
+    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, imm),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleRectPattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_RECT),
+    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_RECT),
     (opcode 0xf, 1, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleArrayPattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_ARRAY),
+    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleShadowPattern<SDNode name, MIMG opcode,
                           ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_SHADOW),
+    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_SHADOW),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleShadowArrayPattern<SDNode name, MIMG opcode,
                                ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_SHADOW_ARRAY),
+    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_SHADOW_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
@@ -2423,22 +2422,22 @@ defm : SamplePatterns<IMAGE_SAMPLE_V4_V16, IMAGE_SAMPLE_C_V4_V16,
 
 /* int_SI_imageload for texture fetches consuming varying address parameters */
 class ImageLoadPattern<Intrinsic name, MIMG opcode, ValueType addr_type> : Pat <
-    (name addr_type:$addr, v32i8:$rsrc, imm),
+    (name addr_type:$addr, v8i32:$rsrc, imm),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc)
 >;
 
 class ImageLoadArrayPattern<Intrinsic name, MIMG opcode, ValueType addr_type> : Pat <
-    (name addr_type:$addr, v32i8:$rsrc, TEX_ARRAY),
+    (name addr_type:$addr, v8i32:$rsrc, TEX_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc)
 >;
 
 class ImageLoadMSAAPattern<Intrinsic name, MIMG opcode, ValueType addr_type> : Pat <
-    (name addr_type:$addr, v32i8:$rsrc, TEX_MSAA),
+    (name addr_type:$addr, v8i32:$rsrc, TEX_MSAA),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc)
 >;
 
 class ImageLoadArrayMSAAPattern<Intrinsic name, MIMG opcode, ValueType addr_type> : Pat <
-    (name addr_type:$addr, v32i8:$rsrc, TEX_ARRAY_MSAA),
+    (name addr_type:$addr, v8i32:$rsrc, TEX_ARRAY_MSAA),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc)
 >;
 
@@ -2552,12 +2551,8 @@ def : BitConvert <v4i32, v2f64, VReg_128>;
 
 def : BitConvert <v8f32, v8i32, SReg_256>;
 def : BitConvert <v8i32, v8f32, SReg_256>;
-def : BitConvert <v8i32, v32i8, SReg_256>;
-def : BitConvert <v32i8, v8i32, SReg_256>;
-def : BitConvert <v8i32, v32i8, VReg_256>;
 def : BitConvert <v8i32, v8f32, VReg_256>;
 def : BitConvert <v8f32, v8i32, VReg_256>;
-def : BitConvert <v32i8, v8i32, VReg_256>;
 
 def : BitConvert <v16i32, v16f32, VReg_512>;
 def : BitConvert <v16f32, v16i32, VReg_512>;
