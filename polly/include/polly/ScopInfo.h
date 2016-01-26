@@ -830,6 +830,10 @@ private:
   /// @brief Mapping from instructions to (scalar) memory accesses.
   DenseMap<const Instruction *, MemoryAccessList> InstructionToAccess;
 
+  /// @brief The set of values defined in this ScopStmt that are required
+  ///        elsewhere, mapped to their MK_Value WRITE MemoryAccesses.
+  DenseMap<Instruction *, MemoryAccess *> ValueWrites;
+
   //@}
 
   /// @brief A SCoP statement represents either a basic block (affine/precise
@@ -991,6 +995,15 @@ public:
 
     assert(ArrayAccess && "No array access found for instruction!");
     return *ArrayAccess;
+  }
+
+  /// @brief Return the MemoryAccess that writes the value of an instruction
+  ///        defined in this statement, or nullptr if not existing, respectively
+  ///        not yet added.
+  MemoryAccess *lookupValueWriteOf(Instruction *Inst) const {
+    assert((isRegionStmt() && R->contains(Inst)) ||
+           (!isRegionStmt() && Inst->getParent() == BB));
+    return ValueWrites.lookup(Inst);
   }
 
   void setBasicBlock(BasicBlock *Block) {
@@ -1917,7 +1930,7 @@ class ScopInfo : public RegionPass {
   /// @param Value The value to be written.
   /// @see addValueReadAccess()
   /// @see ScopArrayInfo::MemoryKind
-  void addValueWriteAccess(Instruction *Value);
+  void ensureValueWrite(Instruction *Value);
 
   /// @brief Create a MemoryAccess for reloading an llvm::Value.
   ///
@@ -1925,7 +1938,7 @@ class ScopInfo : public RegionPass {
   ///
   /// @param Value The scalar expected to be loaded.
   /// @param User  User of the scalar; this is where the access is added.
-  /// @see addValueWriteAccess()
+  /// @see ensureValueWrite()
   /// @see ScopArrayInfo::MemoryKind
   void addValueReadAccess(Value *Value, Instruction *User);
 
@@ -1939,7 +1952,7 @@ class ScopInfo : public RegionPass {
   /// @param User   The PHI node referencing @p Value.
   /// @param UserBB Incoming block for the incoming @p Value.
   /// @see addPHIWriteAccess()
-  /// @see addValueWriteAccess()
+  /// @see ensureValueWrite()
   /// @see ScopArrayInfo::MemoryKind
   void addValueReadAccess(Value *Value, PHINode *User, BasicBlock *UserBB);
 

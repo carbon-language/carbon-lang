@@ -905,6 +905,12 @@ void ScopStmt::addAccess(MemoryAccess *Access) {
   if (Access->isArrayKind()) {
     MemoryAccessList &MAL = InstructionToAccess[AccessInst];
     MAL.emplace_front(Access);
+  } else if (Access->isValueKind() && Access->isWrite()) {
+    Instruction *AccessVal = cast<Instruction>(Access->getAccessValue());
+    assert(Parent.getStmtForBasicBlock(AccessVal->getParent()) == this);
+    assert(!ValueWrites.lookup(AccessVal));
+
+    ValueWrites[AccessVal] = Access;
   }
 
   MemAccs.push_back(Access);
@@ -3554,7 +3560,7 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       if (scop->getStmtForBasicBlock(OpIBB) !=
           scop->getStmtForBasicBlock(OpBB)) {
         addValueReadAccess(OpI, PHI, OpBB);
-        addValueWriteAccess(OpI);
+        ensureValueWrite(OpI);
       }
     } else if (ModelReadOnlyScalars && !isa<Constant>(Op)) {
       addValueReadAccess(Op, PHI, OpBB);
@@ -3873,7 +3879,7 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       if (!isa<StoreInst>(Inst))
-        addValueWriteAccess(Inst);
+        ensureValueWrite(Inst);
     }
   }
 }
@@ -3931,7 +3937,17 @@ void ScopInfo::addArrayAccess(Instruction *MemAccInst,
                   ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
                   ScopArrayInfo::MK_Array);
 }
-void ScopInfo::addValueWriteAccess(Instruction *Value) {
+void ScopInfo::ensureValueWrite(Instruction *Value) {
+  ScopStmt *Stmt = scop->getStmtForBasicBlock(Value->getParent());
+
+  // Value not defined within this SCoP.
+  if (!Stmt)
+    return;
+
+  // Do not process further if the value is already written.
+  if (Stmt->lookupValueWriteOf(Value))
+    return;
+
   addMemoryAccess(Value->getParent(), Value, MemoryAccess::MUST_WRITE, Value, 1,
                   true, Value, ArrayRef<const SCEV *>(),
                   ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
