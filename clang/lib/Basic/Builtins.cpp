@@ -69,8 +69,7 @@ bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
   bool MSModeUnsupported =
       !LangOpts.MicrosoftExt && (BuiltinInfo.Langs & MS_LANG);
   bool ObjCUnsupported = !LangOpts.ObjC1 && BuiltinInfo.Langs == OBJC_LANG;
-  bool OclCUnsupported = !LangOpts.OpenCL && BuiltinInfo.Langs == OCLC_LANG;
-  return !BuiltinsUnsupported && !MathBuiltinsUnsupported && !OclCUnsupported &&
+  return !BuiltinsUnsupported && !MathBuiltinsUnsupported &&
          !GnuModeUnsupported && !MSModeUnsupported && !ObjCUnsupported;
 }
 
