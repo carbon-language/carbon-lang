@@ -8290,9 +8290,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
 
     // Variadic functions, other than a *declaration* of printf, are not allowed
-    // in device-side CUDA code.
-    if (NewFD->isVariadic() && (NewFD->hasAttr<CUDADeviceAttr>() ||
-                                NewFD->hasAttr<CUDAGlobalAttr>()) &&
+    // in device-side CUDA code, unless someone passed
+    // -fcuda-allow-variadic-functions.
+    if (!getLangOpts().CUDAAllowVariadicFunctions && NewFD->isVariadic() &&
+        (NewFD->hasAttr<CUDADeviceAttr>() ||
+         NewFD->hasAttr<CUDAGlobalAttr>()) &&
         !(II && II->isStr("printf") && NewFD->isExternC() &&
           !D.isFunctionDefinition())) {
       Diag(NewFD->getLocation(), diag::err_variadic_device_fn);
