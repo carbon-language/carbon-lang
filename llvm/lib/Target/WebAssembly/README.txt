@@ -58,10 +58,6 @@ us too?
 
 //===---------------------------------------------------------------------===//
 
-When is it profitable to set isAsCheapAsAMove on instructions in WebAssembly?
-
-//===---------------------------------------------------------------------===//
-
 Register stackification uses the EXPR_STACK physical register to impose
 ordering dependencies on instructions with stack operands. This is pessimistic;
 we should consider alternate ways to model stack dependencies.
