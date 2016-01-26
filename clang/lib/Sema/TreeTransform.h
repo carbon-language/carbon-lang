@@ -7936,6 +7936,12 @@ OMPClause *TreeTransform<Derived>::TransformOMPDistScheduleClause(
       C->getDistScheduleKindLoc(), C->getCommaLoc(), C->getLocEnd());
 }
 
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPDefaultmapClause(OMPDefaultmapClause *C) {
+  return C;
+}
+
 //===----------------------------------------------------------------------===//
 // Expression transformation
 //===----------------------------------------------------------------------===//

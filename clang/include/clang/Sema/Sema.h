@@ -8213,6 +8213,11 @@ public:
       OpenMPDistScheduleClauseKind Kind, Expr *ChunkSize,
       SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation KindLoc,
       SourceLocation CommaLoc, SourceLocation EndLoc);
+  /// \brief Called on well-formed 'defaultmap' clause.
+  OMPClause *ActOnOpenMPDefaultmapClause(
+      OpenMPDefaultmapClauseModifier M, OpenMPDefaultmapClauseKind Kind,
+      SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation MLoc,
+      SourceLocation KindLoc, SourceLocation EndLoc);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

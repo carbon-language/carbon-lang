@@ -114,6 +114,14 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
 #define OPENMP_DIST_SCHEDULE_KIND(Name) .Case(#Name, OMPC_DIST_SCHEDULE_##Name)
 #include "clang/Basic/OpenMPKinds.def"
         .Default(OMPC_DIST_SCHEDULE_unknown);
+  case OMPC_defaultmap:
+    return llvm::StringSwitch<unsigned>(Str)
+#define OPENMP_DEFAULTMAP_KIND(Name)                                           \
+  .Case(#Name, static_cast<unsigned>(OMPC_DEFAULTMAP_##Name))
+#define OPENMP_DEFAULTMAP_MODIFIER(Name)                                       \
+  .Case(#Name, static_cast<unsigned>(OMPC_DEFAULTMAP_MODIFIER_##Name))
+#include "clang/Basic/OpenMPKinds.def"
+        .Default(OMPC_DEFAULTMAP_unknown);
   case OMPC_unknown:
   case OMPC_threadprivate:
   case OMPC_if:
@@ -234,6 +242,20 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
 #include "clang/Basic/OpenMPKinds.def"
     }
     llvm_unreachable("Invalid OpenMP 'dist_schedule' clause type");
+  case OMPC_defaultmap:
+    switch (Type) {
+    case OMPC_DEFAULTMAP_unknown:
+    case OMPC_DEFAULTMAP_MODIFIER_last:
+      return "unknown";
+#define OPENMP_DEFAULTMAP_KIND(Name)                                         \
+    case OMPC_DEFAULTMAP_##Name:                                             \
+      return #Name;
+#define OPENMP_DEFAULTMAP_MODIFIER(Name)                                     \
+    case OMPC_DEFAULTMAP_MODIFIER_##Name:                                    \
+      return #Name;
+#include "clang/Basic/OpenMPKinds.def"
+    }
+    llvm_unreachable("Invalid OpenMP 'schedule' clause type");
   case OMPC_unknown:
   case OMPC_threadprivate:
   case OMPC_if:

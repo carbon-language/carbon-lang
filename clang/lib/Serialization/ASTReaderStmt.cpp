@@ -1881,6 +1881,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_dist_schedule:
     C = new (Context) OMPDistScheduleClause();
     break;
+  case OMPC_defaultmap:
+    C = new (Context) OMPDefaultmapClause();
+    break;
   }
   Visit(C);
   C->setLocStart(Reader->ReadSourceLocation(Record, Idx));
@@ -2251,6 +2254,16 @@ void OMPClauseReader::VisitOMPDistScheduleClause(OMPDistScheduleClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
   C->setDistScheduleKindLoc(Reader->ReadSourceLocation(Record, Idx));
   C->setCommaLoc(Reader->ReadSourceLocation(Record, Idx));
+}
+
+void OMPClauseReader::VisitOMPDefaultmapClause(OMPDefaultmapClause *C) {
+  C->setDefaultmapKind(
+       static_cast<OpenMPDefaultmapClauseKind>(Record[Idx++]));
+  C->setDefaultmapModifier(
+      static_cast<OpenMPDefaultmapClauseModifier>(Record[Idx++]));
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setDefaultmapModifierLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setDefaultmapKindLoc(Reader->ReadSourceLocation(Record, Idx));
 }
 
 //===----------------------------------------------------------------------===//

@@ -2229,6 +2229,8 @@ void OMPClauseEnqueue::VisitOMPDistScheduleClause(
   Visitor->AddStmt(C->getChunkSize());
   Visitor->AddStmt(C->getHelperChunkSize());
 }
+void OMPClauseEnqueue::VisitOMPDefaultmapClause(const OMPDefaultmapClause *C) {
+}
 }
 
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {

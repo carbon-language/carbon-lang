@@ -5921,6 +5921,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_map:
   case OMPC_nogroup:
   case OMPC_dist_schedule:
+  case OMPC_defaultmap:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6205,6 +6206,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_dist_schedule:
+  case OMPC_defaultmap:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6307,6 +6309,14 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
     Res = ActOnOpenMPDistScheduleClause(
         static_cast<OpenMPDistScheduleClauseKind>(Argument.back()), Expr,
         StartLoc, LParenLoc, ArgumentLoc.back(), DelimLoc, EndLoc);
+    break;
+  case OMPC_defaultmap:
+    enum { Modifier, DefaultmapKind };
+    Res = ActOnOpenMPDefaultmapClause(
+        static_cast<OpenMPDefaultmapClauseModifier>(Argument[Modifier]),
+        static_cast<OpenMPDefaultmapClauseKind>(Argument[DefaultmapKind]),
+        StartLoc, LParenLoc, ArgumentLoc[Modifier],
+        ArgumentLoc[DefaultmapKind], EndLoc);
     break;
   case OMPC_final:
   case OMPC_num_threads:
@@ -6532,6 +6542,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_dist_schedule:
+  case OMPC_defaultmap:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6676,6 +6687,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_dist_schedule:
+  case OMPC_defaultmap:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -9221,4 +9233,33 @@ OMPClause *Sema::ActOnOpenMPDistScheduleClause(
   return new (Context)
       OMPDistScheduleClause(StartLoc, LParenLoc, KindLoc, CommaLoc, EndLoc,
                             Kind, ValExpr, HelperValExpr);
+}
+
+OMPClause *Sema::ActOnOpenMPDefaultmapClause(
+    OpenMPDefaultmapClauseModifier M, OpenMPDefaultmapClauseKind Kind,
+    SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation MLoc,
+    SourceLocation KindLoc, SourceLocation EndLoc) {
+  // OpenMP 4.5 only supports 'defaultmap(tofrom: scalar)'
+  if (M != OMPC_DEFAULTMAP_MODIFIER_tofrom ||
+      Kind != OMPC_DEFAULTMAP_scalar) {
+    std::string Value;
+    SourceLocation Loc;
+    Value += "'";
+    if (M != OMPC_DEFAULTMAP_MODIFIER_tofrom) {
+      Value += getOpenMPSimpleClauseTypeName(OMPC_defaultmap,
+                 OMPC_DEFAULTMAP_MODIFIER_tofrom);
+      Loc = MLoc;
+    } else {
+      Value += getOpenMPSimpleClauseTypeName(OMPC_defaultmap,
+                 OMPC_DEFAULTMAP_scalar);
+      Loc = KindLoc;
+    }
+    Value += "'";
+    Diag(Loc, diag::err_omp_unexpected_clause_value)
+        << Value << getOpenMPClauseName(OMPC_defaultmap);
+    return nullptr;
+  }
+
+  return new (Context)
+      OMPDefaultmapClause(StartLoc, LParenLoc, MLoc, KindLoc, EndLoc, Kind, M);
 }

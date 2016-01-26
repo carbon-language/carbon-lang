@@ -111,6 +111,12 @@
 #ifndef OPENMP_DIST_SCHEDULE_KIND
 #define OPENMP_DIST_SCHEDULE_KIND(Name)
 #endif
+#ifndef OPENMP_DEFAULTMAP_KIND
+#define OPENMP_DEFAULTMAP_KIND(Name)
+#endif
+#ifndef OPENMP_DEFAULTMAP_MODIFIER
+#define OPENMP_DEFAULTMAP_MODIFIER(Name)
+#endif
 
 // OpenMP directives.
 OPENMP_DIRECTIVE(threadprivate)
@@ -187,6 +193,7 @@ OPENMP_CLAUSE(nogroup, OMPNogroupClause)
 OPENMP_CLAUSE(num_tasks, OMPNumTasksClause)
 OPENMP_CLAUSE(hint, OMPHintClause)
 OPENMP_CLAUSE(dist_schedule, OMPDistScheduleClause)
+OPENMP_CLAUSE(defaultmap, OMPDefaultmapClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -270,6 +277,12 @@ OPENMP_SCHEDULE_KIND(runtime)
 OPENMP_SCHEDULE_MODIFIER(monotonic)
 OPENMP_SCHEDULE_MODIFIER(nonmonotonic)
 OPENMP_SCHEDULE_MODIFIER(simd)
+
+// Static attributes for 'defaultmap' clause.
+OPENMP_DEFAULTMAP_KIND(scalar)
+
+// Modifiers for 'defaultmap' clause.
+OPENMP_DEFAULTMAP_MODIFIER(tofrom)
 
 // Static attributes for 'depend' clause.
 OPENMP_DEPEND_KIND(in)
@@ -357,6 +370,7 @@ OPENMP_TARGET_CLAUSE(map)
 OPENMP_TARGET_CLAUSE(private)
 OPENMP_TARGET_CLAUSE(nowait)
 OPENMP_TARGET_CLAUSE(depend)
+OPENMP_TARGET_CLAUSE(defaultmap)
 
 // Clauses allowed for OpenMP directive 'target data'.
 // TODO More clauses for 'target data' directive.
@@ -485,3 +499,5 @@ OPENMP_DIST_SCHEDULE_KIND(static)
 #undef OPENMP_MAP_KIND
 #undef OPENMP_DISTRIBUTE_CLAUSE
 #undef OPENMP_DIST_SCHEDULE_KIND
+#undef OPENMP_DEFAULTMAP_KIND
+#undef OPENMP_DEFAULTMAP_MODIFIER

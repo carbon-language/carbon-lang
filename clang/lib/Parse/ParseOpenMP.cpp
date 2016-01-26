@@ -512,8 +512,11 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     break;
   case OMPC_schedule:
   case OMPC_dist_schedule:
+  case OMPC_defaultmap:
     // OpenMP [2.7.1, Restrictions, p. 3]
     //  Only one schedule clause can appear on a loop directive.
+    // OpenMP [2.10.4, Restrictions, p. 106]
+    //  At most one defaultmap clause can appear on the directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause)
           << getOpenMPDirectiveName(DKind) << getOpenMPClauseName(CKind) << 0;
@@ -703,6 +706,9 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPClauseKind Kind) {
 ///    if-clause:
 ///      'if' '(' [ directive-name-modifier ':' ] expression ')'
 ///
+///    defaultmap:
+///      'defaultmap' '(' modifier ':' kind ')'
+///
 OMPClause *Parser::ParseOpenMPSingleExprWithArgClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = ConsumeToken();
   SourceLocation DelimLoc;
@@ -771,6 +777,26 @@ OMPClause *Parser::ParseOpenMPSingleExprWithArgClause(OpenMPClauseKind Kind) {
       ConsumeAnyToken();
     if (Arg.back() == OMPC_DIST_SCHEDULE_static && Tok.is(tok::comma))
       DelimLoc = ConsumeAnyToken();
+  } else if (Kind == OMPC_defaultmap) {
+    // Get a defaultmap modifier
+    Arg.push_back(getOpenMPSimpleClauseType(
+        Kind, Tok.isAnnotation() ? "" : PP.getSpelling(Tok)));
+    KLoc.push_back(Tok.getLocation());
+    if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::comma) &&
+        Tok.isNot(tok::annot_pragma_openmp_end))
+      ConsumeAnyToken();
+    // Parse ':'
+    if (Tok.is(tok::colon))
+      ConsumeAnyToken();
+    else if (Arg.back() != OMPC_DEFAULTMAP_MODIFIER_unknown)
+      Diag(Tok, diag::warn_pragma_expected_colon) << "defaultmap modifier";
+    // Get a defaultmap kind
+    Arg.push_back(getOpenMPSimpleClauseType(
+        Kind, Tok.isAnnotation() ? "" : PP.getSpelling(Tok)));
+    KLoc.push_back(Tok.getLocation());
+    if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::comma) &&
+        Tok.isNot(tok::annot_pragma_openmp_end))
+      ConsumeAnyToken();
   } else {
     assert(Kind == OMPC_if);
     KLoc.push_back(Tok.getLocation());

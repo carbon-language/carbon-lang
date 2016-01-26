@@ -919,6 +919,16 @@ void OMPClausePrinter::VisitOMPDistScheduleClause(OMPDistScheduleClause *Node) {
   }
   OS << ")";
 }
+
+void OMPClausePrinter::VisitOMPDefaultmapClause(OMPDefaultmapClause *Node) {
+  OS << "defaultmap(";
+  OS << getOpenMPSimpleClauseTypeName(OMPC_defaultmap,
+                                      Node->getDefaultmapModifier());
+  OS << ": ";
+  OS << getOpenMPSimpleClauseTypeName(OMPC_defaultmap,
+    Node->getDefaultmapKind());
+  OS << ")";
+}
 }
 
 //===----------------------------------------------------------------------===//
