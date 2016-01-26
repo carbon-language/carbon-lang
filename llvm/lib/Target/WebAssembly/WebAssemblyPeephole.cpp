@@ -126,7 +126,8 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
                 break;
               } else {
                 report_fatal_error("Peephole: call to builtin function with "
-                                   "wrong signature, not consuming reg");
+                                   "wrong signature, not consuming reg or "
+                                   "frame index");
               }
             }
           }
