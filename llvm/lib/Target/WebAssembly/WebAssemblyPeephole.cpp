@@ -113,16 +113,21 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
               Name == TLI.getLibcallName(RTLIB::MEMSET)) {
             LibFunc::Func Func;
             if (LibInfo.getLibFunc(Name, Func)) {
-              if (!MI.getOperand(2).isReg())
-                report_fatal_error(
-                    "Call to builtin function with wrong signature");
-              MachineOperand &MO = MI.getOperand(0);
-              unsigned OldReg = MO.getReg();
-              unsigned NewReg = MI.getOperand(2).getReg();
-              if (MRI.getRegClass(NewReg) != MRI.getRegClass(OldReg))
-                report_fatal_error(
-                    "Call to builtin function with wrong signature");
-              Changed |= MaybeRewriteToDiscard(OldReg, NewReg, MO, MFI, MRI);
+              const auto &Op2 = MI.getOperand(2);
+              if (Op2.isReg()) {
+                MachineOperand &MO = MI.getOperand(0);
+                unsigned OldReg = MO.getReg();
+                unsigned NewReg = Op2.getReg();
+                if (MRI.getRegClass(NewReg) != MRI.getRegClass(OldReg))
+                  report_fatal_error("Peephole: call to builtin function with "
+                                     "wrong signature, from/to mismatch");
+                Changed |= MaybeRewriteToDiscard(OldReg, NewReg, MO, MFI, MRI);
+              } else if (Op2.isFI()) {
+                break;
+              } else {
+                report_fatal_error("Peephole: call to builtin function with "
+                                   "wrong signature, not consuming reg");
+              }
             }
           }
         }
