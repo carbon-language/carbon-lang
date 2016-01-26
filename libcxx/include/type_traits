@@ -1350,12 +1350,6 @@ struct __is_convertible_test<_From, _To,
     decltype(_VSTD::__is_convertible_imp::__test_convert<_To>(_VSTD::declval<_From>()))> : public true_type
 {};
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-template <class _Tp> _Tp&& __source();
-#else
-template <class _Tp> typename remove_reference<_Tp>::type& __source();
-#endif
-
 template <class _Tp, bool _IsArray =    is_array<_Tp>::value,
                      bool _IsFunction = is_function<_Tp>::value,
                      bool _IsVoid =     is_void<_Tp>::value>
