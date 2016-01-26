@@ -104,6 +104,9 @@ public:
                       const SmallVectorImpl<SDValue> &OutVals,
                       SDLoc DL, SelectionDAG &DAG) const override;
 
+  unsigned getRegisterByName(const char* RegName, EVT VT,
+                             SelectionDAG &DAG) const override;
+
   MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
                                       MachineBasicBlock * BB) const override;
   bool enableAggressiveFMAFusion(EVT VT) const override;

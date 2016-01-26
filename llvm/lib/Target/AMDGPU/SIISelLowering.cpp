@@ -27,6 +27,7 @@
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -987,6 +988,52 @@ SDValue SITargetLowering::LowerReturn(SDValue Chain,
     RetOps.push_back(Flag);
 
   return DAG.getNode(AMDGPUISD::RET_FLAG, DL, MVT::Other, RetOps);
+}
+
+unsigned SITargetLowering::getRegisterByName(const char* RegName, EVT VT,
+                                             SelectionDAG &DAG) const {
+  unsigned Reg = StringSwitch<unsigned>(RegName)
+    .Case("m0", AMDGPU::M0)
+    .Case("exec", AMDGPU::EXEC)
+    .Case("exec_lo", AMDGPU::EXEC_LO)
+    .Case("exec_hi", AMDGPU::EXEC_HI)
+    .Case("flat_scratch", AMDGPU::FLAT_SCR)
+    .Case("flat_scratch_lo", AMDGPU::FLAT_SCR_LO)
+    .Case("flat_scratch_hi", AMDGPU::FLAT_SCR_HI)
+    .Default(AMDGPU::NoRegister);
+
+  if (Reg == AMDGPU::NoRegister) {
+    report_fatal_error(Twine("invalid register name \""
+                             + StringRef(RegName)  + "\"."));
+
+  }
+
+  if (Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS &&
+      Subtarget->getRegisterInfo()->regsOverlap(Reg, AMDGPU::FLAT_SCR)) {
+    report_fatal_error(Twine("invalid register \""
+                             + StringRef(RegName)  + "\" for subtarget."));
+  }
+
+  switch (Reg) {
+  case AMDGPU::M0:
+  case AMDGPU::EXEC_LO:
+  case AMDGPU::EXEC_HI:
+  case AMDGPU::FLAT_SCR_LO:
+  case AMDGPU::FLAT_SCR_HI:
+    if (VT.getSizeInBits() == 32)
+      return Reg;
+    break;
+  case AMDGPU::EXEC:
+  case AMDGPU::FLAT_SCR:
+    if (VT.getSizeInBits() == 64)
+      return Reg;
+    break;
+  default:
+    llvm_unreachable("missing register type checking");
+  }
+
+  report_fatal_error(Twine("invalid type for register \""
+                           + StringRef(RegName) + "\"."));
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
