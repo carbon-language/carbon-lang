@@ -1552,7 +1552,7 @@ struct DeclaratorChunk {
     I.Kind          = Pipe;
     I.Loc           = Loc;
     I.Cls.TypeQuals = TypeQuals;
-    I.Cls.AttrList  = 0;
+    I.Cls.AttrList  = nullptr;
     return I;
   }
 
@@ -2341,4 +2341,4 @@ struct LambdaIntroducer {
 
 } // end namespace clang
 
-#endif
+#endif // LLVM_CLANG_SEMA_DECLSPEC_H

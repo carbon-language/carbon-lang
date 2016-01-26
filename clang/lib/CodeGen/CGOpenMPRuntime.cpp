@@ -2103,11 +2103,11 @@ CGOpenMPRuntime::createOffloadingBinaryDescriptorRegistration() {
       CGM.getTypes().ConvertTypeForMem(getTgtOffloadEntryQTy());
   llvm::GlobalVariable *HostEntriesBegin = new llvm::GlobalVariable(
       M, OffloadEntryTy, /*isConstant=*/true,
-      llvm::GlobalValue::ExternalLinkage, /*Initializer=*/0,
+      llvm::GlobalValue::ExternalLinkage, /*Initializer=*/nullptr,
       ".omp_offloading.entries_begin");
   llvm::GlobalVariable *HostEntriesEnd = new llvm::GlobalVariable(
       M, OffloadEntryTy, /*isConstant=*/true,
-      llvm::GlobalValue::ExternalLinkage, /*Initializer=*/0,
+      llvm::GlobalValue::ExternalLinkage, /*Initializer=*/nullptr,
       ".omp_offloading.entries_end");
 
   // Create all device images
@@ -2119,10 +2119,11 @@ CGOpenMPRuntime::createOffloadingBinaryDescriptorRegistration() {
     StringRef T = Devices[i].getTriple();
     auto *ImgBegin = new llvm::GlobalVariable(
         M, CGM.Int8Ty, /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage,
-        /*Initializer=*/0, Twine(".omp_offloading.img_start.") + Twine(T));
+        /*Initializer=*/nullptr,
+        Twine(".omp_offloading.img_start.") + Twine(T));
     auto *ImgEnd = new llvm::GlobalVariable(
         M, CGM.Int8Ty, /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage,
-        /*Initializer=*/0, Twine(".omp_offloading.img_end.") + Twine(T));
+        /*Initializer=*/nullptr, Twine(".omp_offloading.img_end.") + Twine(T));
 
     llvm::Constant *Dev =
         llvm::ConstantStruct::get(DeviceImageTy, ImgBegin, ImgEnd,
