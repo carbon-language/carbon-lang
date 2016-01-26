@@ -7469,7 +7469,7 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     if (DE) {
       auto D = DE->getDecl();
       VD = cast<VarDecl>(D);
-      Type = VD->getType();
+      Type = Context.getBaseElementType(VD->getType());
     } else if (ASE) {
       Type = ASE->getType();
       auto *Base = ASE->getBase()->IgnoreParenImpCasts();
@@ -7510,19 +7510,6 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     if (RequireCompleteType(ELoc, Type,
                             diag::err_omp_reduction_incomplete_type))
       continue;
-    // OpenMP [2.14.3.6, reduction clause, Restrictions]
-    // Arrays may not appear in a reduction clause.
-    if (Type.getNonReferenceType()->isArrayType()) {
-      Diag(ELoc, diag::err_omp_reduction_type_array) << Type << ERange;
-      if (!ASE && !OASE) {
-        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
-                      VarDecl::DeclarationOnly;
-        Diag(VD->getLocation(),
-             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-            << VD;
-      }
-      continue;
-    }
     // OpenMP [2.14.3.6, reduction clause, Restrictions]
     // A list item that appears in a reduction clause must not be
     // const-qualified.
@@ -7636,8 +7623,9 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     auto *RHSVD = buildVarDecl(*this, ELoc, Type, VD->getName(),
                                VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto PrivateTy = Type;
-    if (OASE) {
-      // For array sections only:
+    if (OASE ||
+        (DE && VD->getType().getNonReferenceType()->isVariablyModifiedType())) {
+      // For arays/array sections only:
       // Create pseudo array type for private copy. The size for this array will
       // be generated during codegen.
       // For array subscripts or single variables Private Ty is the same as Type
@@ -7646,7 +7634,9 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
           Type, new (Context) OpaqueValueExpr(SourceLocation(),
                                               Context.getSizeType(), VK_RValue),
           ArrayType::Normal, /*IndexTypeQuals=*/0, SourceRange());
-    }
+    } else if (DE &&
+               Context.getAsArrayType(VD->getType().getNonReferenceType()))
+      PrivateTy = VD->getType().getNonReferenceType();
     // Private copy.
     auto *PrivateVD = buildVarDecl(*this, ELoc, PrivateTy, VD->getName(),
                                    VD->hasAttrs() ? &VD->getAttrs() : nullptr);
