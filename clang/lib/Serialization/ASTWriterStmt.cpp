@@ -2238,6 +2238,14 @@ void ASTStmtWriter::VisitOMPTargetExitDataDirective(
   Code = serialization::STMT_OMP_TARGET_EXIT_DATA_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPTargetParallelDirective(
+    OMPTargetParallelDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_TARGET_PARALLEL_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPTaskyieldDirective(OMPTaskyieldDirective *D) {
   VisitStmt(D);
   VisitOMPExecutableDirective(D);

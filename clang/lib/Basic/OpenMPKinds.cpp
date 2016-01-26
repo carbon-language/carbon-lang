@@ -455,6 +455,16 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
       break;
     }
     break;
+  case OMPD_target_parallel:
+    switch (CKind) {
+#define OPENMP_TARGET_PARALLEL_CLAUSE(Name)                                    \
+  case OMPC_##Name:                                                            \
+    return true;
+#include "clang/Basic/OpenMPKinds.def"
+    default:
+      break;
+    }
+    break;
   case OMPD_teams:
     switch (CKind) {
 #define OPENMP_TEAMS_CLAUSE(Name)                                              \
@@ -562,7 +572,8 @@ bool clang::isOpenMPTaskLoopDirective(OpenMPDirectiveKind DKind) {
 bool clang::isOpenMPParallelDirective(OpenMPDirectiveKind DKind) {
   return DKind == OMPD_parallel || DKind == OMPD_parallel_for ||
          DKind == OMPD_parallel_for_simd ||
-         DKind == OMPD_parallel_sections; // TODO add next directives.
+         DKind == OMPD_parallel_sections || DKind == OMPD_target_parallel;
+         // TODO add next directives.
 }
 
 bool clang::isOpenMPTargetDirective(OpenMPDirectiveKind DKind) {

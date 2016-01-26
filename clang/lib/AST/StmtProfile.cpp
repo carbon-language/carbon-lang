@@ -594,6 +594,11 @@ void StmtProfiler::VisitOMPTargetExitDataDirective(
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTargetParallelDirective(
+    const OMPTargetParallelDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitOMPTeamsDirective(const OMPTeamsDirective *S) {
   VisitOMPExecutableDirective(S);
 }

@@ -66,6 +66,9 @@
 #ifndef OPENMP_TARGET_EXIT_DATA_CLAUSE
 #define OPENMP_TARGET_EXIT_DATA_CLAUSE(Name)
 #endif
+#ifndef OPENMP_TARGET_PARALLEL_CLAUSE
+#  define OPENMP_TARGET_PARALLEL_CLAUSE(Name)
+#endif
 #ifndef OPENMP_TEAMS_CLAUSE
 #  define OPENMP_TEAMS_CLAUSE(Name)
 #endif
@@ -142,6 +145,7 @@ OPENMP_DIRECTIVE(cancel)
 OPENMP_DIRECTIVE_EXT(target_data, "target data")
 OPENMP_DIRECTIVE_EXT(target_enter_data, "target enter data")
 OPENMP_DIRECTIVE_EXT(target_exit_data, "target exit data")
+OPENMP_DIRECTIVE_EXT(target_parallel, "target parallel")
 OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_for_simd, "parallel for simd")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
@@ -392,6 +396,22 @@ OPENMP_TARGET_EXIT_DATA_CLAUSE(map)
 OPENMP_TARGET_EXIT_DATA_CLAUSE(nowait)
 OPENMP_TARGET_EXIT_DATA_CLAUSE(depend)
 
+// Clauses allowed for OpenMP directive 'target parallel'.
+// TODO: add target clauses 'is_device_ptr'
+OPENMP_TARGET_PARALLEL_CLAUSE(if)
+OPENMP_TARGET_PARALLEL_CLAUSE(device)
+OPENMP_TARGET_PARALLEL_CLAUSE(map)
+OPENMP_TARGET_PARALLEL_CLAUSE(private)
+OPENMP_TARGET_PARALLEL_CLAUSE(firstprivate)
+OPENMP_TARGET_PARALLEL_CLAUSE(nowait)
+OPENMP_TARGET_PARALLEL_CLAUSE(depend)
+OPENMP_TARGET_PARALLEL_CLAUSE(defaultmap)
+OPENMP_TARGET_PARALLEL_CLAUSE(num_threads)
+OPENMP_TARGET_PARALLEL_CLAUSE(default)
+OPENMP_TARGET_PARALLEL_CLAUSE(proc_bind)
+OPENMP_TARGET_PARALLEL_CLAUSE(shared)
+OPENMP_TARGET_PARALLEL_CLAUSE(reduction)
+
 // Clauses allowed for OpenMP directive 'teams'.
 // TODO More clauses for 'teams' directive.
 OPENMP_TEAMS_CLAUSE(default)
@@ -492,6 +512,7 @@ OPENMP_DIST_SCHEDULE_KIND(static)
 #undef OPENMP_TARGET_DATA_CLAUSE
 #undef OPENMP_TARGET_ENTER_DATA_CLAUSE
 #undef OPENMP_TARGET_EXIT_DATA_CLAUSE
+#undef OPENMP_TARGET_PARALLEL_CLAUSE
 #undef OPENMP_TEAMS_CLAUSE
 #undef OPENMP_SIMD_CLAUSE
 #undef OPENMP_FOR_CLAUSE
