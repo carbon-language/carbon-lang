@@ -1721,22 +1721,30 @@ template ELFFile<ELF32BE>::uintX_t getSymVA<ELF32BE>(const SymbolBody &);
 template ELFFile<ELF64LE>::uintX_t getSymVA<ELF64LE>(const SymbolBody &);
 template ELFFile<ELF64BE>::uintX_t getSymVA<ELF64BE>(const SymbolBody &);
 
-template ELFFile<ELF32LE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF32LE> &,
-                  const ELFFile<ELF32LE>::Elf_Rel &,
-                  ELFFile<ELF32LE>::uintX_t Addend);
-template ELFFile<ELF32BE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF32BE> &,
-                  const ELFFile<ELF32BE>::Elf_Rel &,
-                  ELFFile<ELF32BE>::uintX_t Addend);
-template ELFFile<ELF64LE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF64LE> &,
-                  const ELFFile<ELF64LE>::Elf_Rel &,
-                  ELFFile<ELF64LE>::uintX_t Addend);
-template ELFFile<ELF64BE>::uintX_t
-getLocalRelTarget(const ObjectFile<ELF64BE> &,
-                  const ELFFile<ELF64BE>::Elf_Rel &,
-                  ELFFile<ELF64BE>::uintX_t Addend);
+template uint32_t getLocalRelTarget(const ObjectFile<ELF32LE> &,
+                                    const ELFFile<ELF32LE>::Elf_Rel &,
+                                    uint32_t);
+template uint32_t getLocalRelTarget(const ObjectFile<ELF32BE> &,
+                                    const ELFFile<ELF32BE>::Elf_Rel &,
+                                    uint32_t);
+template uint64_t getLocalRelTarget(const ObjectFile<ELF64LE> &,
+                                    const ELFFile<ELF64LE>::Elf_Rel &,
+                                    uint64_t);
+template uint64_t getLocalRelTarget(const ObjectFile<ELF64BE> &,
+                                    const ELFFile<ELF64BE>::Elf_Rel &,
+                                    uint64_t);
+template uint32_t getLocalRelTarget(const ObjectFile<ELF32LE> &,
+                                    const ELFFile<ELF32LE>::Elf_Rela &,
+                                    uint32_t);
+template uint32_t getLocalRelTarget(const ObjectFile<ELF32BE> &,
+                                    const ELFFile<ELF32BE>::Elf_Rela &,
+                                    uint32_t);
+template uint64_t getLocalRelTarget(const ObjectFile<ELF64LE> &,
+                                    const ELFFile<ELF64LE>::Elf_Rela &,
+                                    uint64_t);
+template uint64_t getLocalRelTarget(const ObjectFile<ELF64BE> &,
+                                    const ELFFile<ELF64BE>::Elf_Rela &,
+                                    uint64_t);
 
 template bool shouldKeepInSymtab<ELF32LE>(const ObjectFile<ELF32LE> &,
                                           StringRef,
