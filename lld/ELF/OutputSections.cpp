@@ -637,7 +637,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_PLTRELSZ, Out<ELFT>::RelaPlt->getSize()});
     Add({Config->EMachine == EM_MIPS ? DT_MIPS_PLTGOT : DT_PLTGOT,
          Out<ELFT>::GotPlt});
-    Add({DT_PLTREL, Out<ELFT>::RelaPlt->isRela() ? DT_RELA : DT_REL});
+    Add({DT_PLTREL, uint64_t(Out<ELFT>::RelaPlt->isRela() ? DT_RELA : DT_REL)});
   }
 
   Add({DT_SYMTAB, Out<ELFT>::DynSymTab});
@@ -699,7 +699,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_FLAGS_1, DtFlags1});
 
   if (!Config->Entry.empty())
-    Add({DT_DEBUG, (uintX_t)0});
+    Add({DT_DEBUG, (uint64_t)0});
 
   if (Config->EMachine == EM_MIPS) {
     Add({DT_MIPS_RLD_VERSION, 1});
