@@ -1636,16 +1636,16 @@ defm V_MAD_U32_U24 : VOP3Inst <vop3<0x143, 0x1c3>, "v_mad_u32_u24",
 } // End isCommutable = 1
 
 defm V_CUBEID_F32 : VOP3Inst <vop3<0x144, 0x1c4>, "v_cubeid_f32",
-  VOP_F32_F32_F32_F32
+  VOP_F32_F32_F32_F32, int_amdgcn_cubeid
 >;
 defm V_CUBESC_F32 : VOP3Inst <vop3<0x145, 0x1c5>, "v_cubesc_f32",
-  VOP_F32_F32_F32_F32
+  VOP_F32_F32_F32_F32, int_amdgcn_cubesc
 >;
 defm V_CUBETC_F32 : VOP3Inst <vop3<0x146, 0x1c6>, "v_cubetc_f32",
-  VOP_F32_F32_F32_F32
+  VOP_F32_F32_F32_F32, int_amdgcn_cubetc
 >;
 defm V_CUBEMA_F32 : VOP3Inst <vop3<0x147, 0x1c7>, "v_cubema_f32",
-  VOP_F32_F32_F32_F32
+  VOP_F32_F32_F32_F32, int_amdgcn_cubema
 >;
 
 defm V_BFE_U32 : VOP3Inst <vop3<0x148, 0x1c8>, "v_bfe_u32",
