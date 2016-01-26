@@ -2255,6 +2255,8 @@ static bool mergeDeclAttribute(Sema &S, NamedDecl *D,
   if (NewAttr) {
     NewAttr->setInherited(true);
     D->addAttr(NewAttr);
+    if (isa<MSInheritanceAttr>(NewAttr))
+      S.Consumer.AssignInheritanceModel(cast<CXXRecordDecl>(D));
     return true;
   }
 

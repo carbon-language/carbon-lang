@@ -6611,6 +6611,7 @@ static void assignInheritanceModel(Sema &S, CXXRecordDecl *RD) {
         S.ImplicitMSInheritanceAttrLoc.isValid()
             ? S.ImplicitMSInheritanceAttrLoc
             : RD->getSourceRange()));
+    S.Consumer.AssignInheritanceModel(RD);
   }
 }
 
