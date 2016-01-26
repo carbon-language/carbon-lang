@@ -1249,17 +1249,17 @@ SDValue SelectionDAG::getConstantFP(const ConstantFP& V, SDLoc DL, EVT VT,
 SDValue SelectionDAG::getConstantFP(double Val, SDLoc DL, EVT VT,
                                     bool isTarget) {
   EVT EltVT = VT.getScalarType();
-  if (EltVT==MVT::f32)
+  if (EltVT == MVT::f32)
     return getConstantFP(APFloat((float)Val), DL, VT, isTarget);
-  else if (EltVT==MVT::f64)
+  else if (EltVT == MVT::f64)
     return getConstantFP(APFloat(Val), DL, VT, isTarget);
-  else if (EltVT==MVT::f80 || EltVT==MVT::f128 || EltVT==MVT::ppcf128 ||
-           EltVT==MVT::f16) {
-    bool ignored;
-    APFloat apf = APFloat(Val);
-    apf.convert(EVTToAPFloatSemantics(EltVT), APFloat::rmNearestTiesToEven,
-                &ignored);
-    return getConstantFP(apf, DL, VT, isTarget);
+  else if (EltVT == MVT::f80 || EltVT == MVT::f128 || EltVT == MVT::ppcf128 ||
+           EltVT == MVT::f16) {
+    bool Ignored;
+    APFloat APF = APFloat(Val);
+    APF.convert(EVTToAPFloatSemantics(EltVT), APFloat::rmNearestTiesToEven,
+                &Ignored);
+    return getConstantFP(APF, DL, VT, isTarget);
   } else
     llvm_unreachable("Unsupported type in getConstantFP");
 }
