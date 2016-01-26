@@ -494,8 +494,9 @@ private:
   /// intruction.
   ///
   /// For memory accesses of kind MK_Value the access instruction of a load
-  /// access is the instruction that uses the load. The access instruction of
-  /// a write access is the instruction that defines the llvm::Value.
+  /// access is nullptr because generally there can be multiple instructions in
+  /// the statement using the same llvm::Value. The access instruction of a
+  /// write access is the instruction that defines the llvm::Value.
   Instruction *AccessInstruction;
 
   /// @brief The value associated with this memory access.
@@ -830,6 +831,10 @@ private:
   /// @brief Mapping from instructions to (scalar) memory accesses.
   DenseMap<const Instruction *, MemoryAccessList> InstructionToAccess;
 
+  /// @brief The set of values defined elsewhere required in this ScopStmt and
+  ///        their MK_Value READ MemoryAccesses.
+  DenseMap<Value *, MemoryAccess *> ValueReads;
+
   /// @brief The set of values defined in this ScopStmt that are required
   ///        elsewhere, mapped to their MK_Value WRITE MemoryAccesses.
   DenseMap<Instruction *, MemoryAccess *> ValueWrites;
@@ -1004,6 +1009,12 @@ public:
     assert((isRegionStmt() && R->contains(Inst)) ||
            (!isRegionStmt() && Inst->getParent() == BB));
     return ValueWrites.lookup(Inst);
+  }
+
+  /// @brief Return the MemoryAccess that reloads a value, or nullptr if not
+  ///        existing, respectively not yet added.
+  MemoryAccess *lookupValueReadOf(Value *Inst) const {
+    return ValueReads.lookup(Inst);
   }
 
   void setBasicBlock(BasicBlock *Block) {
@@ -1928,33 +1939,18 @@ class ScopInfo : public RegionPass {
   /// The access will be created at the @p Value's definition.
   ///
   /// @param Value The value to be written.
-  /// @see addValueReadAccess()
+  /// @see ensureValueRead()
   /// @see ScopArrayInfo::MemoryKind
   void ensureValueWrite(Instruction *Value);
 
-  /// @brief Create a MemoryAccess for reloading an llvm::Value.
+  /// @brief Ensure an llvm::Value is available in the BB's statement, creating
+  ///        a MemoryAccess for reloading it if necessary.
   ///
-  /// Use this overload only for non-PHI instructions.
-  ///
-  /// @param Value The scalar expected to be loaded.
-  /// @param User  User of the scalar; this is where the access is added.
-  /// @see ensureValueWrite()
+  /// @param Value  The value expected to be loaded.
+  /// @param UserBB Where to reload the value.
+  /// @see ensureValueStore()
   /// @see ScopArrayInfo::MemoryKind
-  void addValueReadAccess(Value *Value, Instruction *User);
-
-  /// @brief Create a MemoryAccess for reloading an llvm::Value.
-  ///
-  /// This is for PHINodes using the scalar. As we model it, the used value must
-  /// be available at the incoming block instead of when hitting the
-  /// instruction.
-  ///
-  /// @param Value  The scalar expected to be loaded.
-  /// @param User   The PHI node referencing @p Value.
-  /// @param UserBB Incoming block for the incoming @p Value.
-  /// @see addPHIWriteAccess()
-  /// @see ensureValueWrite()
-  /// @see ScopArrayInfo::MemoryKind
-  void addValueReadAccess(Value *Value, PHINode *User, BasicBlock *UserBB);
+  void ensureValueRead(Value *Value, BasicBlock *UserBB);
 
   /// @brief Create a write MemoryAccess for the incoming block of a phi node.
   ///

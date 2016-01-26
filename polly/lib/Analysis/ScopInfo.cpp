@@ -524,8 +524,9 @@ void MemoryAccess::assumeNoOutOfBound() {
   // bail out more often than strictly necessary.
   Outside = isl_set_remove_divs(Outside);
   Outside = isl_set_complement(Outside);
-  Statement->getParent()->addAssumption(INBOUNDS, Outside,
-                                        getAccessInstruction()->getDebugLoc());
+  Statement->getParent()->addAssumption(
+      INBOUNDS, Outside,
+      getAccessInstruction() ? getAccessInstruction()->getDebugLoc() : nullptr);
   isl_space_free(Space);
 }
 
@@ -911,6 +912,11 @@ void ScopStmt::addAccess(MemoryAccess *Access) {
     assert(!ValueWrites.lookup(AccessVal));
 
     ValueWrites[AccessVal] = Access;
+  } else if (Access->isValueKind() && Access->isRead()) {
+    Value *AccessVal = Access->getAccessValue();
+    assert(!ValueReads.lookup(AccessVal));
+
+    ValueReads[AccessVal] = Access;
   }
 
   MemAccs.push_back(Access);
@@ -1473,6 +1479,10 @@ void ScopStmt::dump() const { print(dbgs()); }
 void ScopStmt::removeMemoryAccesses(MemoryAccessList &InvMAs) {
   // Remove all memory accesses in @p InvMAs from this statement
   // together with all scalar accesses that were caused by them.
+  // MK_Value READs have no access instruction, hence would not be removed by
+  // this function. However, it is only used for invariant LoadInst accesses,
+  // its arguments are always affine, hence synthesizable, and therefore there
+  // are no MK_Value READ accesses to be removed.
   for (MemoryAccess *MA : InvMAs) {
     auto Predicate = [&](MemoryAccess *Acc) {
       return Acc->getAccessInstruction() == MA->getAccessInstruction();
@@ -3559,11 +3569,11 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // OpBB if the definition is not in OpBB.
       if (scop->getStmtForBasicBlock(OpIBB) !=
           scop->getStmtForBasicBlock(OpBB)) {
-        addValueReadAccess(OpI, PHI, OpBB);
+        ensureValueRead(OpI, OpBB);
         ensureValueWrite(OpI);
       }
     } else if (ModelReadOnlyScalars && !isa<Constant>(Op)) {
-      addValueReadAccess(Op, PHI, OpBB);
+      ensureValueRead(Op, OpBB);
     }
 
     addPHIWriteAccess(PHI, OpBB, Op, IsExitBlock);
@@ -3663,7 +3673,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     // Do not build a read access that is not in the current SCoP
     // Use the def instruction as base address of the MemoryAccess, so that it
     // will become the name of the scalar access in the polyhedral form.
-    addValueReadAccess(Inst, UI);
+    ensureValueRead(Inst, UI->getParent());
   }
 
   if (ModelReadOnlyScalars && !isa<PHINode>(Inst)) {
@@ -3678,7 +3688,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       if (isa<Constant>(Op))
         continue;
 
-      addValueReadAccess(Op, Inst);
+      ensureValueRead(Op, Inst->getParent());
     }
   }
 
@@ -3952,15 +3962,19 @@ void ScopInfo::ensureValueWrite(Instruction *Value) {
                   true, Value, ArrayRef<const SCEV *>(),
                   ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
 }
-void ScopInfo::addValueReadAccess(Value *Value, Instruction *User) {
-  assert(!isa<PHINode>(User));
-  addMemoryAccess(User->getParent(), User, MemoryAccess::READ, Value, 1, true,
-                  Value, ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  ScopArrayInfo::MK_Value);
-}
-void ScopInfo::addValueReadAccess(Value *Value, PHINode *User,
-                                  BasicBlock *UserBB) {
-  addMemoryAccess(UserBB, User, MemoryAccess::READ, Value, 1, true, Value,
+void ScopInfo::ensureValueRead(Value *Value, BasicBlock *UserBB) {
+  ScopStmt *UserStmt = scop->getStmtForBasicBlock(UserBB);
+
+  // We do not model uses outside the scop.
+  if (!UserStmt)
+    return;
+
+  // Do not create another MemoryAccess for reloading the value if one already
+  // exists.
+  if (UserStmt->lookupValueReadOf(Value))
+    return;
+
+  addMemoryAccess(UserBB, nullptr, MemoryAccess::READ, Value, 1, true, Value,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
                   ScopArrayInfo::MK_Value);
 }
