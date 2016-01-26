@@ -1347,10 +1347,9 @@ struct __is_convertible_test : public false_type {};
 
 template <class _From, class _To>
 struct __is_convertible_test<_From, _To,
-    decltype(__test_convert<_To>(_VSTD::declval<_From>()))> : public true_type
+    decltype(_VSTD::__is_convertible_imp::__test_convert<_To>(_VSTD::declval<_From>()))> : public true_type
 {};
 
-template <class _Tp> __two __test(...);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> _Tp&& __source();
 #else
