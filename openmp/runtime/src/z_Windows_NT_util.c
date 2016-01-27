@@ -1373,11 +1373,9 @@ __kmp_create_worker( int gtid, kmp_info_t *th, size_t stack_size )
                         (LPTHREAD_START_ROUTINE) & __kmp_launch_worker,
                         (LPVOID) th, &idThread ) );
 
-            {
-                handle = CreateThread( NULL, (SIZE_T) stack_size,
-                                       (LPTHREAD_START_ROUTINE) __kmp_launch_worker,
-                                       (LPVOID) th, STACK_SIZE_PARAM_IS_A_RESERVATION, &idThread );
-            }
+        handle = CreateThread( NULL, (SIZE_T) stack_size,
+                               (LPTHREAD_START_ROUTINE) __kmp_launch_worker,
+                               (LPVOID) th, STACK_SIZE_PARAM_IS_A_RESERVATION, &idThread );
 
         KA_TRACE( 10, ( "__kmp_create_worker: (after) stack_size = %"
                         KMP_SIZE_T_SPEC
@@ -1387,19 +1385,13 @@ __kmp_create_worker( int gtid, kmp_info_t *th, size_t stack_size )
                         (LPTHREAD_START_ROUTINE) & __kmp_launch_worker,
                         (LPVOID) th, idThread, handle ) );
 
-            {
-                if ( handle == 0 ) {
-                    DWORD error = GetLastError();
-                    __kmp_msg(
-                              kmp_ms_fatal,
-                              KMP_MSG( CantCreateThread ),
-                              KMP_ERR( error ),
-                              __kmp_msg_null
-                              );
-                } else {
-                    th->th.th_info.ds.ds_thread = handle;
-                }
-            }
+        if ( handle == 0 ) {
+            DWORD error = GetLastError();
+            __kmp_msg(kmp_ms_fatal, KMP_MSG( CantCreateThread ), KMP_ERR( error ), __kmp_msg_null);
+        } else {
+            th->th.th_info.ds.ds_thread = handle;
+        }
+
         KMP_MB();       /* Flush all pending memory write invalidates.  */
     }
 

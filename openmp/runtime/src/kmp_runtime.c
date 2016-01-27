@@ -6757,7 +6757,7 @@ __kmp_parallel_initialize( void )
 
     __kmp_suspend_initialize();
 
-#  if defined(USE_LOAD_BALANCE)
+#if defined(USE_LOAD_BALANCE)
     if ( __kmp_global.g.g_dynamic_mode == dynamic_default ) {
         __kmp_global.g.g_dynamic_mode = dynamic_load_balance;
     }
