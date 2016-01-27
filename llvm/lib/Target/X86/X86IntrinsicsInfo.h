@@ -14,6 +14,9 @@
 #ifndef LLVM_LIB_TARGET_X86_X86INTRINSICSINFO_H
 #define LLVM_LIB_TARGET_X86_X86INTRINSICSINFO_H
 
+#include "X86ISelLowering.h"
+#include "X86InstrInfo.h"
+
 namespace llvm {
 
 enum IntrinsicType {
