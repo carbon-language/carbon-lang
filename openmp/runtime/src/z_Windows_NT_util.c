@@ -228,7 +228,6 @@ __kmp_win32_cond_wait( kmp_win32_cond_t *cv, kmp_win32_mutex_t *mx, kmp_info_t *
     __kmp_win32_mutex_unlock( &cv->waiters_count_lock_ );
     __kmp_win32_mutex_unlock( mx );
 
-
     for (;;) {
         int wait_done;
 
@@ -394,7 +393,6 @@ static inline void __kmp_suspend_template( int th_gtid, C *flag )
                 }
                 deactivated = TRUE;
 
-
                 __kmp_win32_cond_wait( &th->th.th_suspend_cv, &th->th.th_suspend_mx, 0, 0 );
             }
             else {
@@ -419,7 +417,6 @@ static inline void __kmp_suspend_template( int th_gtid, C *flag )
             }
         }
     }
-
 
     __kmp_win32_mutex_unlock( &th->th.th_suspend_mx );
 
@@ -480,7 +477,6 @@ static inline void __kmp_resume_template( int target_gtid, C *flag )
 
     KF_TRACE( 5, ( "__kmp_resume_template: T#%d about to wakeup T#%d, reset sleep bit for flag's loc(%p)\n",
                    gtid, target_gtid, flag->get() ) );
-
 
     __kmp_win32_cond_signal(  &th->th.th_suspend_cv );
     __kmp_win32_mutex_unlock( &th->th.th_suspend_mx );
@@ -1141,7 +1137,6 @@ __kmp_elapsed_tick( double *t )
 void
 __kmp_read_system_time( double *delta )
 {
-
     if (delta != NULL) {
         BOOL status;
         LARGE_INTEGER now;
@@ -1210,7 +1205,6 @@ __kmp_launch_worker( void *arg )
     KMP_MB();
     return exit_val;
 }
-
 
 /* The monitor thread controls all of the threads in the complex */
 

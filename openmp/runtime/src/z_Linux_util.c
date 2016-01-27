@@ -54,7 +54,6 @@
 # include <pthread_np.h>
 #endif
 
-
 #include <dirent.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -753,7 +752,6 @@ __kmp_launch_worker( void *thr )
 
     return exit_val;
 }
-
 
 /* The monitor thread controls all of the threads in the complex */
 
@@ -1752,8 +1750,6 @@ static inline void __kmp_suspend_template( int th_gtid, C *flag )
                     KMP_DEBUG_ASSERT( TCR_4(__kmp_thread_pool_active_nth) >= 0 );
                 }
                 deactivated = TRUE;
-
-
             }
 
 #if USE_SUSPEND_TIMEOUT
@@ -1813,7 +1809,6 @@ static inline void __kmp_suspend_template( int th_gtid, C *flag )
     }
 #endif
 
-
     status = pthread_mutex_unlock( &th->th.th_suspend_mx.m_mutex );
     KMP_CHECK_SYSFAIL( "pthread_mutex_unlock", status );
 
@@ -1872,7 +1867,6 @@ static inline void __kmp_resume_template( int target_gtid, C *flag )
             KF_TRACE( 5, ( "__kmp_resume_template: T#%d exiting, thread T#%d already awake: flag(%p): "
                            "%u => %u\n",
                            gtid, target_gtid, flag->get(), old_spin, *flag->get() ) );
-
             status = pthread_mutex_unlock( &th->th.th_suspend_mx.m_mutex );
             KMP_CHECK_SYSFAIL( "pthread_mutex_unlock", status );
             return;
@@ -1891,7 +1885,6 @@ static inline void __kmp_resume_template( int target_gtid, C *flag )
         __kmp_printf( "__kmp_resume_template: T#%d resuming T#%d: %s\n", gtid, target_gtid, buffer );
     }
 #endif
-
 
     status = pthread_cond_signal( &th->th.th_suspend_cv.c_cond );
     KMP_CHECK_SYSFAIL( "pthread_cond_signal", status );

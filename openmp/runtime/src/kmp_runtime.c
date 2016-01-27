@@ -54,7 +54,6 @@ char const __kmp_version_omp_api[] = KMP_VERSION_PREFIX "API version: "
 char const __kmp_version_lock[] = KMP_VERSION_PREFIX "lock type: run time selectable";
 #endif /* KMP_DEBUG */
 
-
 #define KMP_MIN( x, y ) ( (x) < (y) ? (x) : (y) )
 
 /* ------------------------------------------------------------------------ */
@@ -611,8 +610,6 @@ __kmp_reset_locks_on_process_detach( int gtid_req ) {
     #ifdef KMP_DEBUG
     __kmp_reset_lock( &__kmp_stdio_lock );
     #endif // KMP_DEBUG
-
-
 }
 
 BOOL WINAPI
@@ -963,7 +960,6 @@ __kmp_reserve_threads( kmp_root_t *root, kmp_team_t *parent_team,
           master_tid, tl_nthreads ));
         new_nthreads = tl_nthreads;
     }
-
 
     //
     // Check if the threads array is large enough, or needs expanding.
@@ -2177,7 +2173,6 @@ __kmp_fork_call(
 
     __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
 
-
 #if USE_ITT_BUILD
     if ( team->t.t_active_level == 1 // only report frames at level 1
 # if OMP_40_ENABLED
@@ -2631,7 +2626,6 @@ __kmp_set_num_threads( int new_nth, int gtid )
 
         __kmp_acquire_bootstrap_lock( &__kmp_forkjoin_lock );
 
-
         // Release the extra threads we don't need any more.
         for ( f = new_nth;  f < hot_team->t.t_nproc; f++ ) {
             KMP_DEBUG_ASSERT( hot_team->t.t_threads[f] != NULL );
@@ -2649,7 +2643,6 @@ __kmp_set_num_threads( int new_nth, int gtid )
             thread->th.th_hot_teams[0].hot_team_nth = new_nth;
         }
 #endif
-
 
         __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
 
@@ -4194,7 +4187,6 @@ __kmp_allocate_thread( kmp_root_t *root, kmp_team_t *team, int new_tid )
         // Don't touch th_active_in_pool or th_active.
         // The worker thread adjusts those flags as it sleeps/awakens.
         //
-
         __kmp_thread_pool_nth--;
 
         KA_TRACE( 20, ("__kmp_allocate_thread: T#%d using thread T#%d\n",
@@ -4384,7 +4376,6 @@ __kmp_allocate_thread( kmp_root_t *root, kmp_team_t *team, int new_tid )
     KF_TRACE( 10, ("__kmp_allocate_thread: before __kmp_create_worker: %p\n", new_thr ));
     __kmp_create_worker( new_gtid, new_thr, __kmp_stksize );
     KF_TRACE( 10, ("__kmp_allocate_thread: after __kmp_create_worker: %p\n", new_thr ));
-
 
     KA_TRACE( 20, ("__kmp_allocate_thread: T#%d forked T#%d\n", __kmp_get_gtid(), new_gtid ));
     KMP_MB();
@@ -4956,7 +4947,6 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 
             team->t.t_size_changed = 1;
 
-
 #if KMP_NESTED_HOT_TEAMS
             int avail_threads = hot_teams[level].hot_team_nth;
             if( new_nproc < avail_threads )
@@ -5307,14 +5297,12 @@ __kmp_free_team( kmp_root_t *root, kmp_team_t *team  USE_NESTED_HOT_ARG(kmp_info
         // Reset pointer to parent team only for non-hot teams.
         team->t.t_parent = NULL;
 
-
         /* free the worker threads */
         for ( f = 1; f < team->t.t_nproc; ++ f ) {
             KMP_DEBUG_ASSERT( team->t.t_threads[ f ] );
             __kmp_free_thread( team->t.t_threads[ f ] );
             team->t.t_threads[ f ] = NULL;
         }
-
 
         /* put the team back in the team pool */
         /* TODO limit size of team pool, call reap_team if pool too large */
@@ -5398,7 +5386,6 @@ __kmp_free_thread( kmp_info_t *this_th )
         balign[b].bb.team = NULL;
     }
     this_th->th.th_task_state = 0;
-
 
     /* put thread back on the free pool */
     TCW_PTR(this_th->th.th_team, NULL);
@@ -5707,7 +5694,6 @@ __kmp_reap_thread(
             __kmp_release_64(&flag);
         }; // if
 
-
         // Terminate OS thread.
         __kmp_reap_worker( thread );
 
@@ -5913,7 +5899,6 @@ __kmp_internal_end(void)
     } /* else !__kmp_global.t_active */
     TCW_4(__kmp_init_gtid, FALSE);
     KMP_MB();       /* Flush all pending memory write invalidates.  */
-
 
     __kmp_cleanup();
 #if OMPT_SUPPORT
