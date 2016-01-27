@@ -240,7 +240,10 @@ public:
     return IsCold;
   }
 
-  /// Return true if the block could be outlined.
+  /// Return true if the block can be outlined. At the moment we disallow
+  /// outlining of blocks that can potentially throw exceptions or are
+  /// the beginning of a landing pad. The entry basic block also can
+  /// never be outlined.
   bool canOutline() const {
     return CanOutline;
   }
