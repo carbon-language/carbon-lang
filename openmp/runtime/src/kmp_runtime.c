@@ -637,8 +637,7 @@ DllMain( HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved ) {
                 // When the process terminates, worker threads disappear triggering
                 // the problem of unreleased forkjoin lock as described below.
 
-                // A worker thread can take the forkjoin lock
-                // in __kmp_suspend_template()->__kmp_rml_decrease_load_before_sleep().
+                // A worker thread can take the forkjoin lock.
                 // The problem comes up if that worker thread becomes dead
                 // before it releases the forkjoin lock.
                 // The forkjoin lock remains taken, while the thread
@@ -5699,7 +5698,7 @@ __kmp_reap_thread(
 
         //
         // The thread was killed asynchronously.  If it was actively
-        // spinning in the in the thread pool, decrement the global count.
+        // spinning in the thread pool, decrement the global count.
         //
         // There is a small timing hole here - if the worker thread was
         // just waking up after sleeping in the pool, had reset it's

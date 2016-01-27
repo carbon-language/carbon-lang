@@ -19,11 +19,6 @@
 #include "kmp_io.h"
 #include "kmp_wait_release.h"
 
-
-
-/* ----------------------------------------------------------------------------------- */
-/* ----------------------------------------------------------------------------------- */
-
 /* This code is related to NtQuerySystemInformation() function. This function
    is used in the Load balance algorithm for OMP_DYNAMIC=true to find the
    number of running threads in the system. */
