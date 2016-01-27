@@ -59,11 +59,6 @@ getLocalRelTarget(const ObjectFile<ELFT> &File,
 
 bool canBePreempted(const SymbolBody *Body, bool NeedsGot);
 
-template <class ELFT>
-bool shouldKeepInSymtab(
-    const ObjectFile<ELFT> &File, StringRef Name,
-    const typename llvm::object::ELFFile<ELFT>::Elf_Sym &Sym);
-
 // This represents a section in an output file.
 // Different sub classes represent different types of sections. Some contain
 // input sections, others are created by the linker.
