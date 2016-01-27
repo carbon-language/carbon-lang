@@ -29,12 +29,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Dominators.h"
 
 namespace llvm {
-
-template <class T> class DomTreeNodeBase;
-typedef DomTreeNodeBase<BasicBlock> DomTreeNode;
-template <class T> class DominatorTreeBase;
 
 /// \brief Determine the iterated dominance frontier, given a set of defining
 /// blocks, and optionally, a set of live-in blocks.
