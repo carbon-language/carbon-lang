@@ -564,8 +564,7 @@ void IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
       if (PN->use_empty())
         continue; // dead use, don't replace it
 
-      // SCEV only supports integer expressions for now.
-      if (!PN->getType()->isIntegerTy() && !PN->getType()->isPointerTy())
+      if (!SE->isSCEVable(PN->getType()))
         continue;
 
       // It's necessary to tell ScalarEvolution about this explicitly so that
