@@ -60,7 +60,8 @@ class AssertingInferiorTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
 
     def check_stop_reason(self):
-        if matchAndroid(api_levels=list(range(1, 16+1)))(self):
+        match_result, _ = matchAndroid(api_levels=list(range(1, 16+1)))(self)
+        if match_result:
             # On android until API-16 the abort() call ended in a sigsegv instead of in a sigabrt
             stop_reason = 'stop reason = signal SIGSEGV'
         else:
