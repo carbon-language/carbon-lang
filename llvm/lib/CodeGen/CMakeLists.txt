@@ -18,6 +18,7 @@ add_llvm_library(LLVMCodeGen
   CriticalAntiDepBreaker.cpp
   DeadMachineInstructionElim.cpp
   DFAPacketizer.cpp
+  DiagnosticInfoCodeGen.cpp
   DwarfEHPrepare.cpp
   EarlyIfConversion.cpp
   EdgeBundles.cpp
