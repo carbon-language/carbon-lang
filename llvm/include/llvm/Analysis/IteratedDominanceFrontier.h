@@ -28,10 +28,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/BasicBlock.h"
 
 namespace llvm {
 
-class BasicBlock;
 template <class T> class DomTreeNodeBase;
 typedef DomTreeNodeBase<BasicBlock> DomTreeNode;
 template <class T> class DominatorTreeBase;
