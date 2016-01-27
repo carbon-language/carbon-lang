@@ -550,9 +550,7 @@ void IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
   // Find all values that are computed inside the loop, but used outside of it.
   // Because of LCSSA, these values will only occur in LCSSA PHI Nodes.  Scan
   // the exit blocks of the loop to find them.
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-    BasicBlock *ExitBB = ExitBlocks[i];
-
+  for (BasicBlock *ExitBB : ExitBlocks) {
     // If there are no PHI nodes in this exit block, then no values defined
     // inside the loop are used on this path, skip it.
     PHINode *PN = dyn_cast<PHINode>(ExitBB->begin());
