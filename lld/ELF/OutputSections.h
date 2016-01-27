@@ -203,7 +203,7 @@ public:
   void addLocalSymbol(StringRef Name);
   void addSymbol(SymbolBody *Body);
   StringTableSection<ELFT> &getStrTabSec() const { return StrTabSec; }
-  unsigned getNumSymbols() const { return NumVisible + 1; }
+  unsigned getNumSymbols() const { return NumLocals + Symbols.size() + 1; }
 
   ArrayRef<SymbolBody *> getSymbols() const { return Symbols; }
 
@@ -216,7 +216,6 @@ private:
   SymbolTable<ELFT> &Table;
   StringTableSection<ELFT> &StrTabSec;
   std::vector<SymbolBody *> Symbols;
-  unsigned NumVisible = 0;
   unsigned NumLocals = 0;
 };
 

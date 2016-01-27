@@ -1461,7 +1461,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
 template <class ELFT>
 void SymbolTableSection<ELFT>::addLocalSymbol(StringRef Name) {
   StrTabSec.reserve(Name);
-  ++NumVisible;
   ++NumLocals;
 }
 
@@ -1469,7 +1468,6 @@ template <class ELFT>
 void SymbolTableSection<ELFT>::addSymbol(SymbolBody *Body) {
   StrTabSec.reserve(Body->getName());
   Symbols.push_back(Body);
-  ++NumVisible;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
