@@ -1487,14 +1487,19 @@ void BinaryFunction::splitFunction() {
     //
     // We also cannot move landing pads (or rather entry points for landing
     // pads) for the same reason.
+    //
+    // Never move the first basic block.
+    BasicBlocks.front().CanOutline = false;
     for (auto &BB : BasicBlocks) {
+      if (!BB.CanOutline)
+        continue;
       if (LandingPads.find(BB.getLabel()) != LandingPads.end()) {
-        BB.CanThrow = true;
+        BB.CanOutline = false;
         continue;
       }
       for (auto &Instr : BB) {
         if (BC.MIA->isInvoke(Instr)) {
-          BB.CanThrow = true;
+          BB.CanOutline = false;
           break;
         }
       }
@@ -1503,9 +1508,7 @@ void BinaryFunction::splitFunction() {
         [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
           if (A->getExecutionCount() != 0 || B->getExecutionCount() != 0)
             return false;
-          bool CouldMoveA = !A->canThrow();
-          bool CouldMoveB = !B->canThrow();
-          return CouldMoveA < CouldMoveB;
+          return A->canOutline() < B->canOutline();
         });
 
     for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
@@ -1513,7 +1516,7 @@ void BinaryFunction::splitFunction() {
       BinaryBasicBlock *BB = *I;
       if (BB->getExecutionCount() != 0)
         break;
-      if (BB->canThrow())
+      if (!BB->canOutline())
         break;
       BB->IsCold = true;
       IsSplit = true;

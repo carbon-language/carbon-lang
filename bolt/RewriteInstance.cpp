@@ -47,6 +47,7 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
+#include <fstream>
 #include <stack>
 #include <system_error>
 
@@ -67,6 +68,10 @@ FunctionNames("funcs",
               cl::CommaSeparated,
               cl::desc("list of functions to optimize"),
               cl::value_desc("func1,func2,func3,..."));
+
+static cl::opt<std::string>
+FunctionNamesFile("funcs_file",
+                  cl::desc("file with list of functions to optimize"));
 
 static cl::list<std::string>
 SkipFunctionNames("skip_funcs",
@@ -154,6 +159,15 @@ PrintReordered("print-reordered",
 bool shouldProcess(const BinaryFunction &Function) {
   if (MaxFunctions && Function.getFunctionNumber() > MaxFunctions)
     return false;
+
+  if (!FunctionNamesFile.empty()) {
+    std::ifstream FuncsFile(FunctionNamesFile, std::ios::in);
+    std::string FuncName;
+    while (std::getline(FuncsFile, FuncName)) {
+      FunctionNames.push_back(FuncName);
+    }
+    FunctionNamesFile = "";
+  }
 
   bool IsValid = true;
   if (!FunctionNames.empty()) {
@@ -910,6 +924,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       emitCFIInstr(CFIInstr);
     }
   }
+
+  assert(!Function.begin()->isCold() &&
+         "first basic block should never be cold");
 
   // Emit code.
   for (auto BB : Function.layout()) {
