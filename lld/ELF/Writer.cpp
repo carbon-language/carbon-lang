@@ -397,6 +397,11 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       StringRef SymName = *SymNameOrErr;
       if (!shouldKeepInSymtab<ELFT>(*F, SymName, Sym))
         continue;
+      if (Sym.st_shndx != SHN_ABS) {
+        InputSectionBase<ELFT> *Section = F->getSection(Sym);
+        if (!Section->isLive())
+          continue;
+      }
       Out<ELFT>::SymTab->addLocalSymbol(SymName);
     }
   }
