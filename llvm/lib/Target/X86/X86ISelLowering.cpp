@@ -13641,41 +13641,23 @@ static SDValue LowerTruncateVecI1(SDValue Op, SelectionDAG &DAG,
 
   assert(VT.getVectorElementType() == MVT::i1 && "Unexpected vector type.");
 
-  // Shift LSB to MSB and use VPMOVB2M - SKX.
+  // Shift LSB to MSB and use VPMOVB/W2M or TESTD/Q.
   unsigned ShiftInx = InVT.getScalarSizeInBits() - 1;
-  if ((InVT.is512BitVector() && InVT.getScalarSizeInBits() <= 16 &&
-         Subtarget.hasBWI()) ||     // legal, will go to VPMOVB2M, VPMOVW2M
-      ((InVT.is256BitVector() || InVT.is128BitVector()) &&
-             InVT.getScalarSizeInBits() <= 16 && Subtarget.hasBWI() &&
-             Subtarget.hasVLX())) { // legal, will go to VPMOVB2M, VPMOVW2M
-    // Shift packed bytes not supported natively, bitcast to dword
-    MVT ExtVT = MVT::getVectorVT(MVT::i16, InVT.getSizeInBits()/16);
-    SDValue  ShiftNode = DAG.getNode(ISD::SHL, DL, ExtVT,
-                                     DAG.getBitcast(ExtVT, In),
-                                     DAG.getConstant(ShiftInx, DL, ExtVT));
-    ShiftNode = DAG.getBitcast(InVT, ShiftNode);
-    return DAG.getNode(X86ISD::CVT2MASK, DL, VT, ShiftNode);
-  }
-  if ((InVT.is512BitVector() && InVT.getScalarSizeInBits() >= 32 &&
-         Subtarget.hasDQI()) ||  // legal, will go to VPMOVD2M, VPMOVQ2M
-      ((InVT.is256BitVector() || InVT.is128BitVector()) &&
-         InVT.getScalarSizeInBits() >= 32 && Subtarget.hasDQI() &&
-         Subtarget.hasVLX())) {  // legal, will go to VPMOVD2M, VPMOVQ2M
-
-    SDValue  ShiftNode = DAG.getNode(ISD::SHL, DL, InVT, In,
-                                     DAG.getConstant(ShiftInx, DL, InVT));
-    return DAG.getNode(X86ISD::CVT2MASK, DL, VT, ShiftNode);
-  }
-
-  // Shift LSB to MSB, extend if necessary and use TESTM.
-  unsigned NumElts = InVT.getVectorNumElements();
-  if (InVT.getSizeInBits() < 512 &&
-      (InVT.getScalarType() == MVT::i8 || InVT.getScalarType() == MVT::i16 ||
-       !Subtarget.hasVLX())) {
-    assert((NumElts == 8 || NumElts == 16) && "Unexpected vector type.");
-
-    // TESTD/Q should be used (if BW supported we use CVT2MASK above),
-    // so vector should be extended to packed dword/qword.
+  if (InVT.getScalarSizeInBits() <= 16) {
+    if (Subtarget.hasBWI()) {
+      // legal, will go to VPMOVB2M, VPMOVW2M
+      // Shift packed bytes not supported natively, bitcast to word
+      MVT ExtVT = MVT::getVectorVT(MVT::i16, InVT.getSizeInBits()/16);
+      SDValue  ShiftNode = DAG.getNode(ISD::SHL, DL, ExtVT,
+                                       DAG.getBitcast(ExtVT, In),
+                                       DAG.getConstant(ShiftInx, DL, ExtVT));
+      ShiftNode = DAG.getBitcast(InVT, ShiftNode);
+      return DAG.getNode(X86ISD::CVT2MASK, DL, VT, ShiftNode);
+    } 
+    // Use TESTD/Q, extended vector to packed dword/qword.
+    assert((InVT.is256BitVector() || InVT.is128BitVector()) &&
+           "Unexpected vector type.");
+    unsigned NumElts = InVT.getVectorNumElements();
     MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
     In = DAG.getNode(ISD::SIGN_EXTEND, DL, ExtVT, In);
     InVT = ExtVT;
