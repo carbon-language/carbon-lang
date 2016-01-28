@@ -397,7 +397,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   // SI at least has hardware support for floating point exceptions, but no way
   // of using or handling them is implemented. They are also optional in OpenCL
   // (Section 7.3)
-  setHasFloatingPointExceptions(false);
+  setHasFloatingPointExceptions(Subtarget->hasFPExceptions());
 
   setSelectIsExpensive(false);
   PredictableSelectIsExpensive = false;
@@ -2949,6 +2949,9 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(FMIN3)
   NODE_NAME_CASE(SMIN3)
   NODE_NAME_CASE(UMIN3)
+  NODE_NAME_CASE(FMED3)
+  NODE_NAME_CASE(SMED3)
+  NODE_NAME_CASE(UMED3)
   NODE_NAME_CASE(URECIP)
   NODE_NAME_CASE(DIV_SCALE)
   NODE_NAME_CASE(DIV_FMAS)
