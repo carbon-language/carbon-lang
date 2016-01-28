@@ -108,10 +108,7 @@ static cl::opt<int> CountedLoopTripWidth("spp-counted-loop-trip-width",
 static cl::opt<bool> SplitBackedge("spp-split-backedge", cl::Hidden,
                                    cl::init(false));
 
-// If true, don't wrap calls (the ones present in the IR, and the ones
-// introduced due to polls) in gc.statepoint.
-static cl::opt<bool> NoStatepoints("spp-no-statepoints", cl::Hidden,
-                                   cl::init(false));
+static const bool NoStatepoints = true;
 
 // Print tracing output
 static cl::opt<bool> TraceLSP("spp-trace", cl::Hidden, cl::init(false));

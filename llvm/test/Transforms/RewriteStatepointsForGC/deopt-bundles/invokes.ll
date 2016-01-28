@@ -1,4 +1,4 @@
-; RUN: opt < %s -S -place-safepoints | FileCheck %s
+; RUN: opt < %s -S -rewrite-statepoints-for-gc -rs4gc-use-deopt-bundles | FileCheck %s
 
 declare i64 addrspace(1)* @some_call(i64 addrspace(1)*)
 declare i32 @personality_function()
@@ -24,7 +24,7 @@ normal_return:
 ; CHECK: ret i64
 
 exceptional_return:
-  %landing_pad4 = landingpad {i8*, i32}
+  %landing_pad4 = landingpad token
           cleanup
   ret i64 addrspace(1)* %obj1
 }
@@ -56,7 +56,7 @@ normal_return:
 ; CHECK: ret i64
 
 exceptional_return:
-  %landing_pad4 = landingpad {i8*, i32}
+  %landing_pad4 = landingpad token
           cleanup
   ret i64 addrspace(1)* %obj1
 }
@@ -94,7 +94,7 @@ merge:
 ; CHECK: ret i64 addrspace(1)*
 
 exceptional_return:
-  %landing_pad4 = landingpad {i8*, i32}
+  %landing_pad4 = landingpad token
           cleanup
   ret i64 addrspace(1)* %obj
 }

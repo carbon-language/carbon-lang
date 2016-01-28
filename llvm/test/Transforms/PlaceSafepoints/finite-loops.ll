@@ -8,9 +8,9 @@
 define void @test1(i32) gc "statepoint-example" {
 ; CHECK-LABEL: test1
 ; CHECK-LABEL: entry
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: loop
-; CHECK-NOT: statepoint
+; CHECK-NOT: call void @do_safepoint
 ; CHECK-LABEL: exit
 
 entry:
@@ -30,9 +30,9 @@ exit:
 define void @test2(i32) gc "statepoint-example" {
 ; CHECK-LABEL: test2
 ; CHECK-LABEL: entry
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: loop
-; CHECK-NOT: statepoint
+; CHECK-NOT: call void @do_safepoint
 ; CHECK-LABEL: exit
 
 entry:
@@ -55,9 +55,9 @@ exit:
 define void @test3(i8 %upper) gc "statepoint-example" {
 ; CHECK-LABEL: test3
 ; CHECK-LABEL: entry
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: loop
-; CHECK-NOT: statepoint
+; CHECK-NOT: call void @do_safepoint
 ; CHECK-LABEL: exit
 
 entry:
@@ -77,16 +77,16 @@ exit:
 define void @test4(i64 %upper) gc "statepoint-example" {
 ; CHECK-LABEL: test4
 ; CHECK-LABEL: entry
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: loop
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: exit
 
 ; COUNTED-64-LABEL: test4
 ; COUNTED-64-LABEL: entry
-; COUNTED-64: statepoint
+; COUNTED-64: call void @do_safepoint
 ; COUNTED-64-LABEL: loop
-; COUNTED-64-NOT: statepoint
+; COUNTED-64-NOT: call void @do_safepoint
 ; COUNTED-64-LABEL: exit
 
 entry:
@@ -107,16 +107,16 @@ exit:
 define void @test5(i64 %upper) gc "statepoint-example" {
 ; CHECK-LABEL: test5
 ; CHECK-LABEL: entry
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: loop
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-LABEL: exit
 
 ; COUNTED-64-LABEL: test5
 ; COUNTED-64-LABEL: entry
-; COUNTED-64: statepoint
+; COUNTED-64: call void @do_safepoint
 ; COUNTED-64-LABEL: loop
-; COUNTED-64: statepoint
+; COUNTED-64: call void @do_safepoint
 ; COUNTED-64-LABEL: exit
 
 entry:

@@ -4,7 +4,7 @@
 define void @test(i32, i1 %cond) gc "statepoint-example" {
 ; CHECK-LABEL: @test
 ; CHECK-LABEL: loop.loop_crit_edge
-; CHECK: gc.statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-NEXT: br label %loop
 entry:
   br label %loop
@@ -23,10 +23,10 @@ exit:
 define void @test2(i32, i1 %cond) gc "statepoint-example" {
 ; CHECK-LABEL: @test2
 ; CHECK-LABEL: loop2.loop2_crit_edge:
-; CHECK: gc.statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-NEXT: br label %loop2
 ; CHECK-LABEL: loop2.loop_crit_edge:
-; CHECK: gc.statepoint
+; CHECK: call void @do_safepoint
 ; CHECK-NEXT: br label %loop
 entry:
   br label %loop

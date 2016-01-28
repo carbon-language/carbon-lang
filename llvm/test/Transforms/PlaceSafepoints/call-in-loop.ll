@@ -10,13 +10,12 @@ define void @test1() gc "statepoint-example" {
 
 entry:
 ; CHECK-LABEL: entry
-; CHECK: statepoint
+; CHECK: call void @do_safepoint
   br label %loop
 
 loop:
 ; CHECK-LABEL: loop
-; CHECK: @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 2882400000, i32 0, void ()* @foo
-; CHECK-NOT: statepoint
+; CHECK-NOT: call void @do_safepoint
   call void @foo()
   br label %loop
 }
