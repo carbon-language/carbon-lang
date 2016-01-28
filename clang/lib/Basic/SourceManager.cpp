@@ -2110,6 +2110,14 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     assert(LOffs.first == ROffs.first);
     return false;
   }
+  bool LIsScratch = strcmp("<scratch space>", LB) == 0;
+  bool RIsScratch = strcmp("<scratch space>", RB) == 0;
+  // Sort scratch after inline asm, but before the rest.
+  if (LIsScratch || RIsScratch) {
+    if (LIsScratch != RIsScratch)
+      return LIsScratch;
+    return LOffs.second < ROffs.second;
+  }
   llvm_unreachable("Unsortable locations found");
 }
 
