@@ -15,7 +15,7 @@
 
 #include "AMDGPUISelLowering.h"
 #include "AMDGPU.h"
-//#include "AMDGPUDiagnosticInfoUnsupported.h"
+#include "AMDGPUDiagnosticInfoUnsupported.h"
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUIntrinsicInfo.h"
 #include "AMDGPURegisterInfo.h"
@@ -28,7 +28,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DiagnosticInfo.h"
 #include "SIInstrInfo.h"
 using namespace llvm;
 
@@ -610,7 +609,7 @@ SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
   else if (const GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     FuncName = G->getGlobal()->getName();
 
-  DiagnosticInfoUnsupported NoCalls(Fn, "unsupported call to function " + FuncName, CLI.DL);
+  DiagnosticInfoUnsupported NoCalls(Fn, "call to function " + FuncName);
   DAG.getContext()->diagnose(NoCalls);
   return SDValue();
 }
@@ -619,7 +618,7 @@ SDValue AMDGPUTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                                       SelectionDAG &DAG) const {
   const Function &Fn = *DAG.getMachineFunction().getFunction();
 
-  DiagnosticInfoUnsupported NoDynamicAlloca(Fn, "unsupported dynamic alloca", SDLoc(Op));
+  DiagnosticInfoUnsupported NoDynamicAlloca(Fn, "dynamic alloca");
   DAG.getContext()->diagnose(NoDynamicAlloca);
   return SDValue();
 }
@@ -866,8 +865,8 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
   }
 
   const Function &Fn = *DAG.getMachineFunction().getFunction();
-  DiagnosticInfoUnsupported BadInit(
-      Fn, "unsupported initializer for address space", SDLoc(Op));
+  DiagnosticInfoUnsupported BadInit(Fn,
+                                    "initializer for address space");
   DAG.getContext()->diagnose(BadInit);
   return SDValue();
 }
