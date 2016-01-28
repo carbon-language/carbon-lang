@@ -1,15 +1,15 @@
 ; RUN: opt %s -S -place-safepoints | FileCheck %s
 
-declare i64 addrspace(1)* @"some_call"(i64 addrspace(1)*)
-declare i32 @"personality_function"()
+declare i64 addrspace(1)* @some_call(i64 addrspace(1)*)
+declare i32 @personality_function()
 
-define i64 addrspace(1)* @test_basic(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) gc "statepoint-example" personality i32 ()* @"personality_function" {
+define i64 addrspace(1)* @test_basic(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) gc "statepoint-example" personality i32 ()* @personality_function {
 ; CHECK-LABEL: entry:
 entry:
   ; CHECK: invoke
   ; CHECK: statepoint
   ; CHECK: some_call
-  %ret_val = invoke i64 addrspace(1)* @"some_call"(i64 addrspace(1)* %obj)
+  %ret_val = invoke i64 addrspace(1)* @some_call(i64 addrspace(1)* %obj)
                to label %normal_return unwind label %exceptional_return
 
 ; CHECK-LABEL: normal_return:
@@ -29,13 +29,13 @@ exceptional_return:
   ret i64 addrspace(1)* %obj1
 }
 
-define i64 addrspace(1)* @test_two_invokes(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) gc "statepoint-example" personality i32 ()* @"personality_function" {
+define i64 addrspace(1)* @test_two_invokes(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) gc "statepoint-example" personality i32 ()* @personality_function {
 ; CHECK-LABEL: entry:
 entry:
   ; CHECK: invoke 
   ; CHECK: statepoint
   ; CHECK: some_call
-  %ret_val1 = invoke i64 addrspace(1)* @"some_call"(i64 addrspace(1)* %obj)
+  %ret_val1 = invoke i64 addrspace(1)* @some_call(i64 addrspace(1)* %obj)
                to label %second_invoke unwind label %exceptional_return
 
 ; CHECK-LABEL: second_invoke:
@@ -43,7 +43,7 @@ second_invoke:
   ; CHECK: invoke
   ; CHECK: statepoint
   ; CHECK: some_call
-  %ret_val2 = invoke i64 addrspace(1)* @"some_call"(i64 addrspace(1)* %ret_val1)
+  %ret_val2 = invoke i64 addrspace(1)* @some_call(i64 addrspace(1)* %ret_val1)
                 to label %normal_return unwind label %exceptional_return
 
 ; CHECK-LABEL: normal_return:
@@ -61,18 +61,18 @@ exceptional_return:
   ret i64 addrspace(1)* %obj1
 }
 
-define i64 addrspace(1)* @test_phi_node(i1 %cond, i64 addrspace(1)* %obj) gc "statepoint-example" personality i32 ()* @"personality_function" {
+define i64 addrspace(1)* @test_phi_node(i1 %cond, i64 addrspace(1)* %obj) gc "statepoint-example" personality i32 ()* @personality_function {
 ; CHECK-LABEL: @test_phi_node
 ; CHECK-LABEL: entry:
 entry:
   br i1 %cond, label %left, label %right
 
 left:
-  %ret_val_left = invoke i64 addrspace(1)* @"some_call"(i64 addrspace(1)* %obj)
+  %ret_val_left = invoke i64 addrspace(1)* @some_call(i64 addrspace(1)* %obj)
                     to label %merge unwind label %exceptional_return
 
 right:
-  %ret_val_right = invoke i64 addrspace(1)* @"some_call"(i64 addrspace(1)* %obj)
+  %ret_val_right = invoke i64 addrspace(1)* @some_call(i64 addrspace(1)* %obj)
                      to label %merge unwind label %exceptional_return
 
 ; CHECK: merge[[A:[0-9]]]:
