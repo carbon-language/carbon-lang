@@ -326,6 +326,17 @@ public:
     const RangeTy &Range = Worklist.back();
     return Range.begin() != Range.end() && Range.begin()->getParent() == Instr;
   }
+
+  /// Test whether the given register is present on the stack, indicating an
+  /// operand in the tree that we haven't visited yet. Moving a definition of
+  /// Reg to a point in the tree after that would change its value.
+  bool IsOnStack(unsigned Reg) const {
+    for (const RangeTy &Range : Worklist)
+      for (const MachineOperand &MO : Range)
+        if (MO.isReg() && MO.getReg() == Reg)
+          return true;
+    return false;
+  }
 };
 
 /// State to keep track of whether commuting is in flight or whether it's been
@@ -467,7 +478,8 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
         // supports intra-block moves) and it's MachineSink's job to catch all
         // the sinking opportunities anyway.
         bool SameBlock = Def->getParent() == &MBB;
-        bool CanMove = SameBlock && IsSafeToMove(Def, Insert, AA, LIS, MRI);
+        bool CanMove = SameBlock && IsSafeToMove(Def, Insert, AA, LIS, MRI) &&
+                       !TreeWalker.IsOnStack(Reg);
         if (CanMove && MRI.hasOneUse(Reg)) {
           Insert = MoveForSingleUse(Reg, Def, MBB, Insert, LIS, MFI);
         } else if (Def->isAsCheapAsAMove() &&

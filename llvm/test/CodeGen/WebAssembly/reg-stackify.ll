@@ -244,4 +244,25 @@ define i32 @commute() {
   ret i32 %add3
 }
 
+; Don't stackify a register when it would move a the def of the register past
+; an implicit get_local for the register.
+
+; CHECK-LABEL: no_stackify_past_use:
+; CHECK: i32.call        $1=, callee@FUNCTION, $0
+; CHECK: i32.const       $push0=, 1
+; CHECK: i32.add         $push1=, $0, $pop0
+; CHECK: i32.call        $push2=, callee@FUNCTION, $pop1
+; CHECK: i32.add         $push3=, $1, $pop2
+; CHECK: i32.mul         $push4=, $1, $pop3
+; CHECK: return          $pop4
+declare i32 @callee(i32)
+define i32 @no_stackify_past_use(i32 %arg) {
+  %tmp1 = call i32 @callee(i32 %arg)
+  %tmp2 = add i32 %arg, 1
+  %tmp3 = call i32 @callee(i32 %tmp2)
+  %tmp5 = add i32 %tmp3, %tmp1
+  %tmp6 = mul i32 %tmp5, %tmp1
+  ret i32 %tmp6
+}
+
 !0 = !{}
