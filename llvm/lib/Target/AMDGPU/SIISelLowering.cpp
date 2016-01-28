@@ -20,6 +20,7 @@
 
 #include "SIISelLowering.h"
 #include "AMDGPU.h"
+#include "AMDGPUDiagnosticInfoUnsupported.h"
 #include "AMDGPUIntrinsicInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
@@ -28,7 +29,6 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/CodeGen/CallingConvLower.h"
-#include "llvm/CodeGen/DiagnosticInfoCodeGen.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -591,8 +591,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
   if (Subtarget->isAmdHsaOS() && Info->getShaderType() != ShaderType::COMPUTE) {
     const Function *Fn = MF.getFunction();
-    DiagnosticInfoUnsupported NoGraphicsHSA(
-        *Fn, "unsupported non-compute shaders with HSA", DL);
+    DiagnosticInfoUnsupported NoGraphicsHSA(*Fn, "non-compute shaders with HSA");
     DAG.getContext()->diagnose(NoGraphicsHSA);
     return SDValue();
   }
@@ -1321,9 +1320,8 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   switch (IntrinsicID) {
   case Intrinsic::amdgcn_dispatch_ptr:
     if (!Subtarget->isAmdHsaOS()) {
-      DiagnosticInfoUnsupported BadIntrin(
-          *MF.getFunction(), "unsupported hsa intrinsic without hsa target",
-          DL);
+      DiagnosticInfoUnsupported BadIntrin(*MF.getFunction(),
+                                          "hsa intrinsic without hsa target");
       DAG.getContext()->diagnose(BadIntrin);
       return DAG.getUNDEF(VT);
     }
