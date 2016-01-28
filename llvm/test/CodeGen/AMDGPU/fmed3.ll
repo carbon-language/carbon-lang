@@ -126,6 +126,29 @@ define void @v_test_fmed3_r_i_i_no_nans_f32(float addrspace(1)* %out, float addr
   ret void
 }
 
+; GCN-LABEL: {{^}}v_test_legacy_fmed3_r_i_i_f32:
+; NOSNAN: v_med3_f32 v{{[0-9]+}}, v{{[0-9]+}}, 2.0, 4.0
+
+; SNAN: v_max_f32_e32 v{{[0-9]+}}, 2.0, v{{[0-9]+}}
+; SNAN: v_min_f32_e32 v{{[0-9]+}}, 4.0, v{{[0-9]+}}
+define void @v_test_legacy_fmed3_r_i_i_f32(float addrspace(1)* %out, float addrspace(1)* %aptr) #1 {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %gep0 = getelementptr float, float addrspace(1)* %aptr, i32 %tid
+  %outgep = getelementptr float, float addrspace(1)* %out, i32 %tid
+  %a = load float, float addrspace(1)* %gep0
+
+  ; fmax_legacy
+  %cmp0 = fcmp ule float %a, 2.0
+  %max = select i1 %cmp0, float 2.0, float %a
+
+  ; fmin_legacy
+  %cmp1 = fcmp uge float %max, 4.0
+  %med = select i1 %cmp1, float 4.0, float %max
+
+  store float %med, float addrspace(1)* %outgep
+  ret void
+}
+
 attributes #0 = { nounwind readnone }
 attributes #1 = { nounwind "unsafe-fp-math"="false" "no-nans-fp-math"="false" }
 attributes #2 = { nounwind "unsafe-fp-math"="false" "no-nans-fp-math"="true" }

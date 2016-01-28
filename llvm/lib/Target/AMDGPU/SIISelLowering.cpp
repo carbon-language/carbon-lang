@@ -2204,29 +2204,31 @@ SDValue SITargetLowering::performMinMaxCombine(SDNode *N,
   // Only do this if the inner op has one use since this will just increases
   // register pressure for no benefit.
 
-  // max(max(a, b), c) -> max3(a, b, c)
-  // min(min(a, b), c) -> min3(a, b, c)
-  if (Op0.getOpcode() == Opc && Op0.hasOneUse()) {
-    SDLoc DL(N);
-    return DAG.getNode(minMaxOpcToMin3Max3Opc(Opc),
-                       DL,
-                       N->getValueType(0),
-                       Op0.getOperand(0),
-                       Op0.getOperand(1),
-                       Op1);
-  }
+  if (Opc != AMDGPUISD::FMIN_LEGACY && Opc != AMDGPUISD::FMAX_LEGACY) {
+    // max(max(a, b), c) -> max3(a, b, c)
+    // min(min(a, b), c) -> min3(a, b, c)
+    if (Op0.getOpcode() == Opc && Op0.hasOneUse()) {
+      SDLoc DL(N);
+      return DAG.getNode(minMaxOpcToMin3Max3Opc(Opc),
+                         DL,
+                         N->getValueType(0),
+                         Op0.getOperand(0),
+                         Op0.getOperand(1),
+                         Op1);
+    }
 
-  // Try commuted.
-  // max(a, max(b, c)) -> max3(a, b, c)
-  // min(a, min(b, c)) -> min3(a, b, c)
-  if (Op1.getOpcode() == Opc && Op1.hasOneUse()) {
-    SDLoc DL(N);
-    return DAG.getNode(minMaxOpcToMin3Max3Opc(Opc),
-                       DL,
-                       N->getValueType(0),
-                       Op0,
-                       Op1.getOperand(0),
-                       Op1.getOperand(1));
+    // Try commuted.
+    // max(a, max(b, c)) -> max3(a, b, c)
+    // min(a, min(b, c)) -> min3(a, b, c)
+    if (Op1.getOpcode() == Opc && Op1.hasOneUse()) {
+      SDLoc DL(N);
+      return DAG.getNode(minMaxOpcToMin3Max3Opc(Opc),
+                         DL,
+                         N->getValueType(0),
+                         Op0,
+                         Op1.getOperand(0),
+                         Op1.getOperand(1));
+    }
   }
 
   // min(max(x, K0), K1), K0 < K1 -> med3(x, K0, K1)
@@ -2241,7 +2243,9 @@ SDValue SITargetLowering::performMinMaxCombine(SDNode *N,
   }
 
   // fminnum(fmaxnum(x, K0), K1), K0 < K1 && !is_snan(x) -> fmed3(x, K0, K1)
-  if (Opc == ISD::FMINNUM && Op0.getOpcode() == ISD::FMAXNUM &&
+  if (((Opc == ISD::FMINNUM && Op0.getOpcode() == ISD::FMAXNUM) ||
+       (Opc == AMDGPUISD::FMIN_LEGACY &&
+        Op0.getOpcode() == AMDGPUISD::FMAX_LEGACY)) &&
       N->getValueType(0) == MVT::f32 && Op0.hasOneUse()) {
     if (SDValue Res = performFPMed3ImmCombine(DAG, SDLoc(N), Op0, Op1))
       return Res;
@@ -2291,12 +2295,14 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
   case ISD::SETCC:
     return performSetCCCombine(N, DCI);
-  case ISD::FMAXNUM: // TODO: What about fmax_legacy?
+  case ISD::FMAXNUM:
   case ISD::FMINNUM:
   case ISD::SMAX:
   case ISD::SMIN:
   case ISD::UMAX:
-  case ISD::UMIN: {
+  case ISD::UMIN:
+  case AMDGPUISD::FMIN_LEGACY:
+  case AMDGPUISD::FMAX_LEGACY: {
     if (DCI.getDAGCombineLevel() >= AfterLegalizeDAG &&
         N->getValueType(0) != MVT::f64 &&
         getTargetMachine().getOptLevel() > CodeGenOpt::None)

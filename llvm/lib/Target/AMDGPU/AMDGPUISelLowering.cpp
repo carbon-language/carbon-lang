@@ -2705,8 +2705,13 @@ SDValue AMDGPUTargetLowering::performSelectCombine(SDNode *N,
   SDValue True = N->getOperand(1);
   SDValue False = N->getOperand(2);
 
-  if (VT == MVT::f32 && Cond.hasOneUse())
-    return CombineFMinMaxLegacy(SDLoc(N), VT, LHS, RHS, True, False, CC, DCI);
+  if (VT == MVT::f32 && Cond.hasOneUse()) {
+    SDValue MinMax
+      = CombineFMinMaxLegacy(SDLoc(N), VT, LHS, RHS, True, False, CC, DCI);
+    // Revisit this node so we can catch min3/max3/med3 patterns.
+    //DCI.AddToWorklist(MinMax.getNode());
+    return MinMax;
+  }
 
   // There's no reason to not do this if the condition has other uses.
   return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
