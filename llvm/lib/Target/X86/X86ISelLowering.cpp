@@ -2985,7 +2985,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
       // offset from the bottom of this and each funclet's frame must be the
       // same, so the size of funclets' (mostly empty) frames is dictated by
       // how far this slot is from the bottom (since they allocate just enough
-      // space to accomodate holding this slot at the correct offset).
+      // space to accommodate holding this slot at the correct offset).
       int PSPSymFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
       EHInfo->PSPSymFrameIdx = PSPSymFI;
     }
@@ -23610,7 +23610,7 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
   }
 
   // Minor canonicalization of the accumulated shuffle mask to make it easier
-  // to match below. All this does is detect masks with squential pairs of
+  // to match below. All this does is detect masks with sequential pairs of
   // elements, and shrink them to the half-width mask. It does this in a loop
   // so it will reduce the size of the mask to the minimal width mask which
   // performs an equivalent shuffle.
