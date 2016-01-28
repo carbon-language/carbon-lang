@@ -5571,6 +5571,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     return VT.isInteger() ? DAG.getConstant(0, DL, VT)
                           : DAG.getConstantFP(0.0, DL, VT);
 
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   int FirstLoadedElt = LoadMask.find_first();
   SDValue EltBase = PeekThroughBitcast(Elts[FirstLoadedElt]);
   LoadSDNode *LDBase = cast<LoadSDNode>(EltBase);
@@ -5606,8 +5607,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     if (VT.getSizeInBits() != EltVT.getSizeInBits() * NumElems)
       return SDValue();
 
-    if (isAfterLegalize &&
-        !DAG.getTargetLoweringInfo().isOperationLegal(ISD::LOAD, VT))
+    if (isAfterLegalize && !TLI.isOperationLegal(ISD::LOAD, VT))
       return SDValue();
 
     SDValue NewLd = SDValue();
@@ -5635,8 +5635,8 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   // VZEXT_LOAD - consecutive load/undefs followed by zeros/undefs.
   // TODO: The code below fires only for for loading the low 64-bits of a
   // of a 128-bit vector. It's probably worth generalizing more.
-  if (IsConsecutiveLoad && FirstLoadedElt == 0 && VT.is128BitVector() &&
-      (LoadSize == 64 && DAG.getTargetLoweringInfo().isTypeLegal(MVT::v2i64))) {
+  if (IsConsecutiveLoad && FirstLoadedElt == 0 && LoadSize == 64 &&
+      (VT.is128BitVector() && TLI.isTypeLegal(MVT::v2i64))) {
     SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
     SDValue Ops[] = { LDBase->getChain(), LDBase->getBasePtr() };
     SDValue ResNode =
