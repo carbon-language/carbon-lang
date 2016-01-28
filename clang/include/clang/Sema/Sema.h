@@ -1861,12 +1861,12 @@ public:
   void ActOnPopScope(SourceLocation Loc, Scope *S);
   void ActOnTranslationUnitScope(Scope *S);
 
-  Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
-                                   DeclSpec &DS);
-  Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
-                                   DeclSpec &DS,
+  Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS, DeclSpec &DS,
+                                   RecordDecl *&AnonRecord);
+  Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS, DeclSpec &DS,
                                    MultiTemplateParamsArg TemplateParams,
-                                   bool IsExplicitInstantiation = false);
+                                   bool IsExplicitInstantiation,
+                                   RecordDecl *&AnonRecord);
 
   Decl *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                                     AccessSpecifier AS,
