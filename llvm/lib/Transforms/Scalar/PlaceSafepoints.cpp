@@ -83,7 +83,6 @@
 
 #define DEBUG_TYPE "safepoint-placement"
 STATISTIC(NumEntrySafepoints, "Number of entry safepoints inserted");
-STATISTIC(NumCallSafepoints, "Number of call safepoints inserted");
 STATISTIC(NumBackedgeSafepoints, "Number of backedge safepoints inserted");
 
 STATISTIC(CallInLoop, "Number of loops w/o safepoints due to calls in loop");
@@ -107,8 +106,6 @@ static cl::opt<int> CountedLoopTripWidth("spp-counted-loop-trip-width",
 // optimizes better.
 static cl::opt<bool> SplitBackedge("spp-split-backedge", cl::Hidden,
                                    cl::init(false));
-
-static const bool NoStatepoints = true;
 
 // Print tracing output
 static cl::opt<bool> TraceLSP("spp-trace", cl::Hidden, cl::init(false));
@@ -207,8 +204,6 @@ static bool needsStatepoint(const CallSite &CS) {
   }
   return true;
 }
-
-static Value *ReplaceWithStatepoint(const CallSite &CS);
 
 /// Returns true if this loop is known to contain a call safepoint which
 /// must unconditionally execute on any iteration of the loop which returns
@@ -455,25 +450,6 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   return cursor;
 }
 
-/// Identify the list of call sites which need to be have parseable state
-static void findCallSafepoints(Function &F,
-                               std::vector<CallSite> &Found /*rval*/) {
-  assert(Found.empty() && "must be empty!");
-  for (Instruction &I : instructions(F)) {
-    Instruction *inst = &I;
-    if (isa<CallInst>(inst) || isa<InvokeInst>(inst)) {
-      CallSite CS(inst);
-
-      // No safepoint needed or wanted
-      if (!needsStatepoint(CS)) {
-        continue;
-      }
-
-      Found.push_back(CS);
-    }
-  }
-}
-
 /// Implement a unique function which doesn't require we sort the input
 /// vector.  Doing so has the effect of changing the output of a couple of
 /// tests in ways which make them less useful in testing fused safepoints.
@@ -515,24 +491,6 @@ static bool shouldRewriteFunction(Function &F) {
 static bool enableEntrySafepoints(Function &F) { return !NoEntry; }
 static bool enableBackedgeSafepoints(Function &F) { return !NoBackedge; }
 static bool enableCallSafepoints(Function &F) { return !NoCall; }
-
-// Normalize basic block to make it ready to be target of invoke statepoint.
-// Ensure that 'BB' does not have phi nodes. It may require spliting it.
-static BasicBlock *normalizeForInvokeSafepoint(BasicBlock *BB,
-                                               BasicBlock *InvokeParent) {
-  BasicBlock *ret = BB;
-
-  if (!BB->getUniquePredecessor()) {
-    ret = SplitBlockPredecessors(BB, InvokeParent, "");
-  }
-
-  // Now that 'ret' has unique predecessor we can safely remove all phi nodes
-  // from it
-  FoldSingleEntryPHINodes(ret);
-  assert(!isa<PHINode>(ret->begin()));
-
-  return ret;
-}
 
 bool PlaceSafepoints::runOnFunction(Function &F) {
   if (F.isDeclaration() || F.empty()) {
@@ -664,78 +622,6 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
                             RuntimeCalls.end());
   }
 
-  // If we've been asked to not wrap the calls with gc.statepoint, then we're
-  // done.  In the near future, this option will be "constant folded" to true,
-  // and the code below that deals with insert gc.statepoint calls will be
-  // removed.  Wrapping potentially safepointing calls in gc.statepoint will
-  // then become the responsibility of the RewriteStatepointsForGC pass.
-  if (NoStatepoints)
-    return modified;
-
-  PollsNeeded.clear(); // make sure we don't accidentally use
-  // The dominator tree has been invalidated by the inlining performed in the
-  // above loop.  TODO: Teach the inliner how to update the dom tree?
-  DT.recalculate(F);
-
-  if (enableCallSafepoints(F)) {
-    std::vector<CallSite> Calls;
-    findCallSafepoints(F, Calls);
-    NumCallSafepoints += Calls.size();
-    ParsePointNeeded.insert(ParsePointNeeded.end(), Calls.begin(), Calls.end());
-  }
-
-  // Unique the vectors since we can end up with duplicates if we scan the call
-  // site for call safepoints after we add it for entry or backedge.  The
-  // only reason we need tracking at all is that some functions might have
-  // polls but not call safepoints and thus we might miss marking the runtime
-  // calls for the polls. (This is useful in test cases!)
-  unique_unsorted(ParsePointNeeded);
-
-  // Any parse point (no matter what source) will be handled here
-
-  // We're about to start modifying the function
-  if (!ParsePointNeeded.empty())
-    modified = true;
-
-  // Now run through and insert the safepoints, but do _NOT_ update or remove
-  // any existing uses.  We have references to live variables that need to
-  // survive to the last iteration of this loop.
-  std::vector<Value *> Results;
-  Results.reserve(ParsePointNeeded.size());
-  for (size_t i = 0; i < ParsePointNeeded.size(); i++) {
-    CallSite &CS = ParsePointNeeded[i];
-
-    // For invoke statepoints we need to remove all phi nodes at the normal
-    // destination block.
-    // Reason for this is that we can place gc_result only after last phi node
-    // in basic block. We will get malformed code after RAUW for the
-    // gc_result if one of this phi nodes uses result from the invoke.
-    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(CS.getInstruction())) {
-      normalizeForInvokeSafepoint(Invoke->getNormalDest(),
-                                  Invoke->getParent());
-    }
-
-    Value *GCResult = ReplaceWithStatepoint(CS);
-    Results.push_back(GCResult);
-  }
-  assert(Results.size() == ParsePointNeeded.size());
-
-  // Adjust all users of the old call sites to use the new ones instead
-  for (size_t i = 0; i < ParsePointNeeded.size(); i++) {
-    CallSite &CS = ParsePointNeeded[i];
-    Value *GCResult = Results[i];
-    if (GCResult) {
-      // Can not RAUW for the invoke gc result in case of phi nodes preset.
-      assert(CS.isCall() || !isa<PHINode>(cast<Instruction>(GCResult)->getParent()->begin()));
-
-      // Replace all uses with the new call
-      CS.getInstruction()->replaceAllUsesWith(GCResult);
-    }
-
-    // Now that we've handled all uses, remove the original call itself
-    // Note: The insert point can't be the deleted instruction!
-    CS.getInstruction()->eraseFromParent();
-  }
   return modified;
 }
 
@@ -837,128 +723,4 @@ InsertSafepointPoll(Instruction *InsertBefore,
     ParsePointsNeeded.push_back(CallSite(calls[i]));
   }
   assert(ParsePointsNeeded.size() <= calls.size());
-}
-
-/// Replaces the given call site (Call or Invoke) with a gc.statepoint
-/// intrinsic with an empty deoptimization arguments list.  This does
-/// NOT do explicit relocation for GC support.
-static Value *ReplaceWithStatepoint(const CallSite &CS /* to replace */) {
-  assert(CS.getInstruction()->getModule() && "must be set");
-
-  // TODO: technically, a pass is not allowed to get functions from within a
-  // function pass since it might trigger a new function addition.  Refactor
-  // this logic out to the initialization of the pass.  Doesn't appear to
-  // matter in practice.
-
-  // Then go ahead and use the builder do actually do the inserts.  We insert
-  // immediately before the previous instruction under the assumption that all
-  // arguments will be available here.  We can't insert afterwards since we may
-  // be replacing a terminator.
-  IRBuilder<> Builder(CS.getInstruction());
-
-  // Note: The gc args are not filled in at this time, that's handled by
-  // RewriteStatepointsForGC (which is currently under review).
-
-  // Create the statepoint given all the arguments
-  Instruction *Token = nullptr;
-
-  uint64_t ID;
-  uint32_t NumPatchBytes;
-
-  AttributeSet OriginalAttrs = CS.getAttributes();
-  Attribute AttrID =
-      OriginalAttrs.getAttribute(AttributeSet::FunctionIndex, "statepoint-id");
-  Attribute AttrNumPatchBytes = OriginalAttrs.getAttribute(
-      AttributeSet::FunctionIndex, "statepoint-num-patch-bytes");
-
-  AttrBuilder AttrsToRemove;
-  bool HasID = AttrID.isStringAttribute() &&
-               !AttrID.getValueAsString().getAsInteger(10, ID);
-
-  if (HasID)
-    AttrsToRemove.addAttribute("statepoint-id");
-  else
-    ID = 0xABCDEF00;
-
-  bool HasNumPatchBytes =
-      AttrNumPatchBytes.isStringAttribute() &&
-      !AttrNumPatchBytes.getValueAsString().getAsInteger(10, NumPatchBytes);
-
-  if (HasNumPatchBytes)
-    AttrsToRemove.addAttribute("statepoint-num-patch-bytes");
-  else
-    NumPatchBytes = 0;
-
-  OriginalAttrs = OriginalAttrs.removeAttributes(
-      CS.getInstruction()->getContext(), AttributeSet::FunctionIndex,
-      AttrsToRemove);
-
-  if (CS.isCall()) {
-    CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
-    CallInst *Call = Builder.CreateGCStatepointCall(
-        ID, NumPatchBytes, CS.getCalledValue(),
-        makeArrayRef(CS.arg_begin(), CS.arg_end()), None, None,
-        "safepoint_token");
-    Call->setTailCall(ToReplace->isTailCall());
-    Call->setCallingConv(ToReplace->getCallingConv());
-
-    // In case if we can handle this set of attributes - set up function
-    // attributes directly on statepoint and return attributes later for
-    // gc_result intrinsic.
-    Call->setAttributes(OriginalAttrs.getFnAttributes());
-
-    Token = Call;
-
-    // Put the following gc_result and gc_relocate calls immediately after
-    // the old call (which we're about to delete).
-    assert(ToReplace->getNextNode() && "not a terminator, must have next");
-    Builder.SetInsertPoint(ToReplace->getNextNode());
-    Builder.SetCurrentDebugLocation(ToReplace->getNextNode()->getDebugLoc());
-  } else if (CS.isInvoke()) {
-    InvokeInst *ToReplace = cast<InvokeInst>(CS.getInstruction());
-
-    // Insert the new invoke into the old block.  We'll remove the old one in a
-    // moment at which point this will become the new terminator for the
-    // original block.
-    Builder.SetInsertPoint(ToReplace->getParent());
-    InvokeInst *Invoke = Builder.CreateGCStatepointInvoke(
-        ID, NumPatchBytes, CS.getCalledValue(), ToReplace->getNormalDest(),
-        ToReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
-        None, None, "safepoint_token");
-
-    Invoke->setCallingConv(ToReplace->getCallingConv());
-
-    // In case if we can handle this set of attributes - set up function
-    // attributes directly on statepoint and return attributes later for
-    // gc_result intrinsic.
-    Invoke->setAttributes(OriginalAttrs.getFnAttributes());
-
-    Token = Invoke;
-
-    // We'll insert the gc.result into the normal block
-    BasicBlock *NormalDest = ToReplace->getNormalDest();
-    // Can not insert gc.result in case of phi nodes preset.
-    // Should have removed this cases prior to running this function
-    assert(!isa<PHINode>(NormalDest->begin()));
-    Instruction *IP = &*(NormalDest->getFirstInsertionPt());
-    Builder.SetInsertPoint(IP);
-  } else {
-    llvm_unreachable("unexpect type of CallSite");
-  }
-  assert(Token);
-
-  // Handle the return value of the original call - update all uses to use a
-  // gc_result hanging off the statepoint node we just inserted
-
-  // Only add the gc_result iff there is actually a used result
-  if (!CS.getType()->isVoidTy() && !CS.getInstruction()->use_empty()) {
-    std::string TakenName =
-        CS.getInstruction()->hasName() ? CS.getInstruction()->getName() : "";
-    CallInst *GCResult = Builder.CreateGCResult(Token, CS.getType(), TakenName);
-    GCResult->setAttributes(OriginalAttrs.getRetAttributes());
-    return GCResult;
-  } else {
-    // No return value for the call.
-    return nullptr;
-  }
 }
