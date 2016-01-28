@@ -67,11 +67,14 @@
 #include "llvm/Transforms/Utils/Local.h"
 
 #define DEBUG_TYPE "safepoint-placement"
+
 STATISTIC(NumEntrySafepoints, "Number of entry safepoints inserted");
 STATISTIC(NumBackedgeSafepoints, "Number of backedge safepoints inserted");
 
-STATISTIC(CallInLoop, "Number of loops w/o safepoints due to calls in loop");
-STATISTIC(FiniteExecution, "Number of loops w/o safepoints finite execution");
+STATISTIC(CallInLoop,
+          "Number of loops without safepoints due to calls in loop");
+STATISTIC(FiniteExecution,
+          "Number of loops without safepoints finite execution");
 
 using namespace llvm;
 
@@ -184,10 +187,8 @@ static bool needsStatepoint(const CallSite &CS) {
     if (call->isInlineAsm())
       return false;
   }
-  if (isStatepoint(CS) || isGCRelocate(CS) || isGCResult(CS)) {
-    return false;
-  }
-  return true;
+
+  return !(isStatepoint(CS) || isGCRelocate(CS) || isGCResult(CS));
 }
 
 /// Returns true if this loop is known to contain a call safepoint which
@@ -260,43 +261,45 @@ static bool mustBeFiniteCountedLoop(Loop *L, ScalarEvolution *SE,
   return /* not finite */ false;
 }
 
-static void scanOneBB(Instruction *start, Instruction *end,
-                      std::vector<CallInst *> &calls,
-                      std::set<BasicBlock *> &seen,
-                      std::vector<BasicBlock *> &worklist) {
-  for (BasicBlock::iterator itr(start);
-       itr != start->getParent()->end() && itr != BasicBlock::iterator(end);
-       itr++) {
-    if (CallInst *CI = dyn_cast<CallInst>(&*itr)) {
-      calls.push_back(CI);
-    }
+static void scanOneBB(Instruction *Start, Instruction *End,
+                      std::vector<CallInst *> &Calls,
+                      DenseSet<BasicBlock *> &Seen,
+                      std::vector<BasicBlock *> &Worklist) {
+  for (BasicBlock::iterator BBI(Start), BBE0 = Start->getParent()->end(),
+                                        BBE1 = BasicBlock::iterator(End);
+       BBI != BBE0 && BBI != BBE1; BBI++) {
+    if (CallInst *CI = dyn_cast<CallInst>(&*BBI))
+      Calls.push_back(CI);
+
     // FIXME: This code does not handle invokes
-    assert(!dyn_cast<InvokeInst>(&*itr) &&
+    assert(!isa<InvokeInst>(&*BBI) &&
            "support for invokes in poll code needed");
+
     // Only add the successor blocks if we reach the terminator instruction
     // without encountering end first
-    if (itr->isTerminator()) {
-      BasicBlock *BB = itr->getParent();
+    if (BBI->isTerminator()) {
+      BasicBlock *BB = BBI->getParent();
       for (BasicBlock *Succ : successors(BB)) {
-        if (seen.count(Succ) == 0) {
-          worklist.push_back(Succ);
-          seen.insert(Succ);
+        if (Seen.count(Succ) == 0) {
+          Worklist.push_back(Succ);
+          Seen.insert(Succ);
         }
       }
     }
   }
 }
-static void scanInlinedCode(Instruction *start, Instruction *end,
-                            std::vector<CallInst *> &calls,
-                            std::set<BasicBlock *> &seen) {
-  calls.clear();
-  std::vector<BasicBlock *> worklist;
-  seen.insert(start->getParent());
-  scanOneBB(start, end, calls, seen, worklist);
-  while (!worklist.empty()) {
-    BasicBlock *BB = worklist.back();
-    worklist.pop_back();
-    scanOneBB(&*BB->begin(), end, calls, seen, worklist);
+
+static void scanInlinedCode(Instruction *Start, Instruction *End,
+                            std::vector<CallInst *> &Calls,
+                            DenseSet<BasicBlock *> &Seen) {
+  Calls.clear();
+  std::vector<BasicBlock *> Worklist;
+  Seen.insert(Start->getParent());
+  scanOneBB(Start, End, Calls, Seen, Worklist);
+  while (!Worklist.empty()) {
+    BasicBlock *BB = Worklist.back();
+    Worklist.pop_back();
+    scanOneBB(&*BB->begin(), End, Calls, Seen, Worklist);
   }
 }
 
@@ -306,24 +309,24 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
   // Note: In common usage, there will be only one edge due to LoopSimplify
   // having run sometime earlier in the pipeline, but this code must be correct
   // w.r.t. loops with multiple backedges.
-  BasicBlock *header = L->getHeader();
+  BasicBlock *Header = L->getHeader();
   SmallVector<BasicBlock*, 16> LoopLatches;
   L->getLoopLatches(LoopLatches);
-  for (BasicBlock *pred : LoopLatches) {
-    assert(L->contains(pred));
+  for (BasicBlock *Pred : LoopLatches) {
+    assert(L->contains(Pred));
 
     // Make a policy decision about whether this loop needs a safepoint or
     // not.  Note that this is about unburdening the optimizer in loops, not
     // avoiding the runtime cost of the actual safepoint.
     if (!AllBackedges) {
-      if (mustBeFiniteCountedLoop(L, SE, pred)) {
+      if (mustBeFiniteCountedLoop(L, SE, Pred)) {
         if (TraceLSP)
           errs() << "skipping safepoint placement in finite loop\n";
         FiniteExecution++;
         continue;
       }
       if (CallSafepointsEnabled &&
-          containsUnconditionalCallSafepoint(L, header, pred, *DT)) {
+          containsUnconditionalCallSafepoint(L, Header, Pred, *DT)) {
         // Note: This is only semantically legal since we won't do any further
         // IPO or inlining before the actual call insertion..  If we hadn't, we
         // might latter loose this call safepoint.
@@ -342,14 +345,14 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
     // Safepoint insertion would involve creating a new basic block (as the
     // target of the current backedge) which does the safepoint (of all live
     // variables) and branches to the true header
-    TerminatorInst *term = pred->getTerminator();
+    TerminatorInst *Term = Pred->getTerminator();
 
     if (TraceLSP) {
       errs() << "[LSP] terminator instruction: ";
-      term->dump();
+      Term->dump();
     }
 
-    PollLocations.push_back(term);
+    PollLocations.push_back(Term);
   }
 
   return false;
@@ -393,27 +396,26 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   // hasNextInstruction and nextInstruction are used to iterate
   // through a "straight line" execution sequence.
 
-  auto hasNextInstruction = [](Instruction *I) {
-    if (!I->isTerminator()) {
+  auto HasNextInstruction = [](Instruction *I) {
+    if (!I->isTerminator())
       return true;
-    }
+
     BasicBlock *nextBB = I->getParent()->getUniqueSuccessor();
     return nextBB && (nextBB->getUniquePredecessor() != nullptr);
   };
 
-  auto nextInstruction = [&hasNextInstruction](Instruction *I) {
-    assert(hasNextInstruction(I) &&
+  auto NextInstruction = [&](Instruction *I) {
+    assert(HasNextInstruction(I) &&
            "first check if there is a next instruction!");
-    if (I->isTerminator()) {
+
+    if (I->isTerminator())
       return &I->getParent()->getUniqueSuccessor()->front();
-    } else {
-      return &*++I->getIterator();
-    }
+    return &*++I->getIterator();
   };
 
-  Instruction *cursor = nullptr;
-  for (cursor = &F.getEntryBlock().front(); hasNextInstruction(cursor);
-       cursor = nextInstruction(cursor)) {
+  Instruction *Cursor = nullptr;
+  for (Cursor = &F.getEntryBlock().front(); HasNextInstruction(Cursor);
+       Cursor = NextInstruction(Cursor)) {
 
     // We need to ensure a safepoint poll occurs before any 'real' call.  The
     // easiest way to ensure finite execution between safepoints in the face of
@@ -422,32 +424,17 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
     // which can grow the stack by an unbounded amount.  This isn't required
     // for GC semantics per se, but is a common requirement for languages
     // which detect stack overflow via guard pages and then throw exceptions.
-    if (auto CS = CallSite(cursor)) {
+    if (auto CS = CallSite(Cursor)) {
       if (doesNotRequireEntrySafepointBefore(CS))
         continue;
       break;
     }
   }
 
-  assert((hasNextInstruction(cursor) || cursor->isTerminator()) &&
+  assert((HasNextInstruction(Cursor) || Cursor->isTerminator()) &&
          "either we stopped because of a call, or because of terminator");
 
-  return cursor;
-}
-
-/// Implement a unique function which doesn't require we sort the input
-/// vector.  Doing so has the effect of changing the output of a couple of
-/// tests in ways which make them less useful in testing fused safepoints.
-template <typename T> static void unique_unsorted(std::vector<T> &vec) {
-  std::set<T> seen;
-  std::vector<T> tmp;
-  vec.reserve(vec.size());
-  std::swap(tmp, vec);
-  for (auto V : tmp) {
-    if (seen.insert(V).second) {
-      vec.push_back(V);
-    }
-  }
+  return Cursor;
 }
 
 static const char *const GCSafepointPollName = "gc.safepoint_poll";
@@ -494,13 +481,13 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   if (!shouldRewriteFunction(F))
     return false;
 
-  bool modified = false;
+  bool Modified = false;
 
   // In various bits below, we rely on the fact that uses are reachable from
   // defs.  When there are basic blocks unreachable from the entry, dominance
   // and reachablity queries return non-sensical results.  Thus, we preprocess
   // the function to ensure these properties hold.
-  modified |= removeUnreachableBlocks(F);
+  Modified |= removeUnreachableBlocks(F);
 
   // STEP 1 - Insert the safepoint polling locations.  We do not need to
   // actually insert parse points yet.  That will be done for all polls and
@@ -519,8 +506,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     // with for the moment.
     legacy::FunctionPassManager FPM(F.getParent());
     bool CanAssumeCallSafepoints = enableCallSafepoints(F);
-    PlaceBackedgeSafepointsImpl *PBS =
-      new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);
+    auto *PBS = new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);
     FPM.add(PBS);
     FPM.run(F);
 
@@ -548,7 +534,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     // The poll location must be the terminator of a loop latch block.
     for (TerminatorInst *Term : PollLocations) {
       // We are inserting a poll, the function is modified
-      modified = true;
+      Modified = true;
 
       if (SplitBackedge) {
         // Split the backedge of the loop and insert the poll within that new
@@ -588,14 +574,13 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   }
 
   if (enableEntrySafepoints(F)) {
-    Instruction *Location = findLocationForEntrySafepoint(F, DT);
-    if (!Location) {
-      // policy choice not to insert?
-    } else {
+    if (Instruction *Location = findLocationForEntrySafepoint(F, DT)) {
       PollsNeeded.push_back(Location);
-      modified = true;
+      Modified = true;
       NumEntrySafepoints++;
     }
+    // TODO: else we should assert that there was, in fact, a policy choice to
+    // not insert a entry safepoint poll.
   }
 
   // Now that we've identified all the needed safepoint poll locations, insert
@@ -607,7 +592,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
                             RuntimeCalls.end());
   }
 
-  return modified;
+  return Modified;
 }
 
 char PlaceBackedgeSafepointsImpl::ID = 0;
@@ -652,60 +637,53 @@ InsertSafepointPoll(Instruction *InsertBefore,
   CallInst *PollCall = CallInst::Create(F, "", InsertBefore);
 
   // Record some information about the call site we're replacing
-  BasicBlock::iterator before(PollCall), after(PollCall);
-  bool isBegin(false);
-  if (before == OrigBB->begin()) {
-    isBegin = true;
-  } else {
-    before--;
-  }
-  after++;
-  assert(after != OrigBB->end() && "must have successor");
+  BasicBlock::iterator Before(PollCall), After(PollCall);
+  bool IsBegin = false;
+  if (Before == OrigBB->begin())
+    IsBegin = true;
+  else
+    Before--;
 
-  // do the actual inlining
+  After++;
+  assert(After != OrigBB->end() && "must have successor");
+
+  // Do the actual inlining
   InlineFunctionInfo IFI;
   bool InlineStatus = InlineFunction(PollCall, IFI);
   assert(InlineStatus && "inline must succeed");
   (void)InlineStatus; // suppress warning in release-asserts
 
-  // Check post conditions
+  // Check post-conditions
   assert(IFI.StaticAllocas.empty() && "can't have allocs");
 
-  std::vector<CallInst *> calls; // new calls
-  std::set<BasicBlock *> BBs;    // new BBs + insertee
+  std::vector<CallInst *> Calls; // new calls
+  DenseSet<BasicBlock *> BBs;    // new BBs + insertee
+
   // Include only the newly inserted instructions, Note: begin may not be valid
   // if we inserted to the beginning of the basic block
-  BasicBlock::iterator start;
-  if (isBegin) {
-    start = OrigBB->begin();
-  } else {
-    start = before;
-    start++;
-  }
+  BasicBlock::iterator Start = IsBegin ? OrigBB->begin() : std::next(Before);
 
   // If your poll function includes an unreachable at the end, that's not
   // valid.  Bugpoint likes to create this, so check for it.
-  assert(isPotentiallyReachable(&*start, &*after, nullptr, nullptr) &&
+  assert(isPotentiallyReachable(&*Start, &*After) &&
          "malformed poll function");
 
-  scanInlinedCode(&*(start), &*(after), calls, BBs);
-  assert(!calls.empty() && "slow path not found for safepoint poll");
+  scanInlinedCode(&*Start, &*After, Calls, BBs);
+  assert(!Calls.empty() && "slow path not found for safepoint poll");
 
   // Record the fact we need a parsable state at the runtime call contained in
   // the poll function.  This is required so that the runtime knows how to
   // parse the last frame when we actually take  the safepoint (i.e. execute
   // the slow path)
   assert(ParsePointsNeeded.empty());
-  for (size_t i = 0; i < calls.size(); i++) {
-
+  for (auto *CI : Calls) {
     // No safepoint needed or wanted
-    if (!needsStatepoint(calls[i])) {
+    if (!needsStatepoint(CI))
       continue;
-    }
 
     // These are likely runtime calls.  Should we assert that via calling
     // convention or something?
-    ParsePointsNeeded.push_back(CallSite(calls[i]));
+    ParsePointsNeeded.push_back(CallSite(CI));
   }
-  assert(ParsePointsNeeded.size() <= calls.size());
+  assert(ParsePointsNeeded.size() <= Calls.size());
 }
