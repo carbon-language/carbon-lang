@@ -255,7 +255,7 @@ bool WebAssemblyTargetLowering::allowsMisalignedMemoryAccesses(
 static void fail(SDLoc DL, SelectionDAG &DAG, const char *msg) {
   MachineFunction &MF = DAG.getMachineFunction();
   DAG.getContext()->diagnose(
-      DiagnosticInfoUnsupported(DL, *MF.getFunction(), msg, SDValue()));
+      DiagnosticInfoUnsupported(*MF.getFunction(), msg, DL));
 }
 
 // Test whether the given calling convention is supported.
