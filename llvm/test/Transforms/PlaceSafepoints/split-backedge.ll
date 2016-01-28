@@ -1,5 +1,5 @@
 ;; A very basic test to make sure that splitting the backedge keeps working
-;; RUN: opt -place-safepoints -spp-split-backedge=1 -S %s | FileCheck %s
+;; RUN: opt < %s -place-safepoints -spp-split-backedge=1 -S | FileCheck %s
 
 define void @test(i32, i1 %cond) gc "statepoint-example" {
 ; CHECK-LABEL: @test

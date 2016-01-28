@@ -1,4 +1,4 @@
-; RUN: opt %s -S -place-safepoints | FileCheck %s
+; RUN: opt < %s -S -place-safepoints | FileCheck %s
 
 declare void @foo() "gc-leaf-function"
 declare void @bar()
