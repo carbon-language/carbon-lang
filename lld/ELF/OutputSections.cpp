@@ -379,7 +379,6 @@ InterpSection<ELFT>::InterpSection()
 
 template <class ELFT>
 void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
-  Header.sh_name = Out<ELFT>::ShStrTab->addString(Name);
   *SHdr = Header;
 }
 
@@ -428,7 +427,9 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
   Elf_Word *Buckets = P;
   Elf_Word *Chains = P + NumSymbols;
 
-  for (SymbolBody *Body : Out<ELFT>::DynSymTab->getSymbols()) {
+  for (const std::pair<SymbolBody *, unsigned> &P :
+       Out<ELFT>::DynSymTab->getSymbols()) {
+    SymbolBody *Body = P.first;
     StringRef Name = Body->getName();
     unsigned I = Body->DynamicSymbolTableIndex;
     uint32_t Hash = hashSysv(Name) % NumSymbols;
@@ -560,15 +561,18 @@ static bool includeInGnuHashTable(SymbolBody *B) {
 }
 
 template <class ELFT>
-void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolBody *> &Symbols) {
-  std::vector<SymbolBody *> NotHashed;
+void GnuHashTableSection<ELFT>::addSymbols(
+    std::vector<std::pair<SymbolBody *, unsigned>> &Symbols) {
+  std::vector<std::pair<SymbolBody *, unsigned>> NotHashed;
   NotHashed.reserve(Symbols.size());
   HashedSymbols.reserve(Symbols.size());
-  for (SymbolBody *B : Symbols) {
+  for (const std::pair<SymbolBody *, unsigned> &P : Symbols) {
+    SymbolBody *B = P.first;
     if (includeInGnuHashTable(B))
-      HashedSymbols.push_back(HashedSymbolData{B, hashGnu(B->getName())});
+      HashedSymbols.push_back(
+          HashedSymbolData{B, P.second, hashGnu(B->getName())});
     else
-      NotHashed.push_back(B);
+      NotHashed.push_back(P);
   }
   if (HashedSymbols.empty())
     return;
@@ -581,7 +585,7 @@ void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolBody *> &Symbols) {
 
   Symbols = std::move(NotHashed);
   for (const HashedSymbolData &Item : HashedSymbols)
-    Symbols.push_back(Item.Body);
+    Symbols.push_back(std::make_pair(Item.Body, Item.STName));
 }
 
 template <class ELFT>
@@ -606,18 +610,21 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   Elf_Shdr &Header = this->Header;
   Header.sh_link = Out<ELFT>::DynStrTab->SectionIndex;
 
-  // Reserve strings. We know that these are the last string to be added to
+  auto Add = [=](Entry E) { Entries.push_back(E); };
+
+  // Add strings. We know that these are the last strings to be added to
   // DynStrTab and doing this here allows this function to set DT_STRSZ.
   if (!Config->RPath.empty())
-    Out<ELFT>::DynStrTab->reserve(Config->RPath);
-  if (!Config->SoName.empty())
-    Out<ELFT>::DynStrTab->reserve(Config->SoName);
+    Add({Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
+         Out<ELFT>::DynStrTab->addString(Config->RPath)});
   for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
     if (F->isNeeded())
-      Out<ELFT>::DynStrTab->reserve(F->getSoName());
+      Add({DT_NEEDED, Out<ELFT>::DynStrTab->addString(F->getSoName())});
+  if (!Config->SoName.empty())
+    Add({DT_SONAME, Out<ELFT>::DynStrTab->addString(Config->SoName)});
+
   Out<ELFT>::DynStrTab->finalize();
 
-  auto Add = [=](Entry E) { Entries.push_back(E); };
 
   if (Out<ELFT>::RelaDyn->hasRelocs()) {
     bool IsRela = Out<ELFT>::RelaDyn->isRela();
@@ -643,13 +650,6 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (Out<ELFT>::HashTab)
     Add({DT_HASH, Out<ELFT>::HashTab});
 
-  if (!Config->RPath.empty())
-    Add({Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
-         Out<ELFT>::DynStrTab->addString(Config->RPath)});
-
-  if (!Config->SoName.empty())
-    Add({DT_SONAME, Out<ELFT>::DynStrTab->addString(Config->SoName)});
-
   if (PreInitArraySec) {
     Add({DT_PREINIT_ARRAY, PreInitArraySec});
     Add({DT_PREINIT_ARRAYSZ, PreInitArraySec->getSize()});
@@ -662,10 +662,6 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_FINI_ARRAY, FiniArraySec});
     Add({DT_FINI_ARRAYSZ, (uintX_t)FiniArraySec->getSize()});
   }
-
-  for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
-    if (F->isNeeded())
-      Add({DT_NEEDED, Out<ELFT>::DynStrTab->addString(F->getSoName())});
 
   if (SymbolBody *B = SymTab.find(Config->Init))
     Add({DT_INIT, B});
@@ -1349,30 +1345,21 @@ StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
   this->Header.sh_addralign = 1;
 }
 
-// String tables are created in two phases. First you call reserve()
-// to reserve room in the string table, and then call addString() to actually
-// add that string.
-//
-// Why two phases? We want to know the size of the string table as early as
-// possible to fix file layout. So we have separated finalize(), which
-// determines the size of the section, from writeTo(), which writes the section
-// contents to the output buffer. If we merge reserve() with addString(),
-// we need a plumbing work for finalize() and writeTo() so that offsets
-// we obtained in the former function can be written in the latter.
-// This design eliminated that need.
-template <class ELFT> void StringTableSection<ELFT>::reserve(StringRef S) {
-  Reserved += S.size() + 1; // +1 for NUL
-}
-
-// Adds a string to the string table. You must call reserve() with the
-// same string before calling addString().
-template <class ELFT> size_t StringTableSection<ELFT>::addString(StringRef S) {
-  size_t Pos = Used;
+// Adds a string to the string table. If HashIt is true we hash and check for
+// duplicates. It is optional because the name of global symbols are already
+// uniqued and hashing them again has a big cost for a small value: uniquing
+// them with some other string that happens to be the same.
+template <class ELFT>
+unsigned StringTableSection<ELFT>::addString(StringRef S, bool HashIt) {
+  if (HashIt) {
+    auto R = StringMap.insert(std::make_pair(S, Size));
+    if (!R.second)
+      return R.first->second;
+  }
+  unsigned Ret = Size;
+  Size += S.size() + 1;
   Strings.push_back(S);
-  Used += S.size() + 1;
-  Reserved -= S.size() + 1;
-  assert((int64_t)Reserved >= 0);
-  return Pos;
+  return Ret;
 }
 
 template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -1390,7 +1377,7 @@ SymbolTableSection<ELFT>::SymbolTableSection(
     : OutputSectionBase<ELFT>(StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
                               StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
                               StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
-      Table(Table), StrTabSec(StrTabSec) {
+      StrTabSec(StrTabSec), Table(Table) {
   this->Header.sh_entsize = sizeof(Elf_Sym);
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
@@ -1400,10 +1387,11 @@ SymbolTableSection<ELFT>::SymbolTableSection(
 // See "Global Offset Table" in Chapter 5 in the following document
 // for detailed description:
 // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-static bool sortMipsSymbols(SymbolBody *L, SymbolBody *R) {
-  if (!L->isInGot() || !R->isInGot())
-    return R->isInGot();
-  return L->GotIndex < R->GotIndex;
+static bool sortMipsSymbols(const std::pair<SymbolBody *, unsigned> &L,
+                            const std::pair<SymbolBody *, unsigned> &R) {
+  if (!L.first->isInGot() || !R.first->isInGot())
+    return R.first->isInGot();
+  return L.first->GotIndex < R.first->GotIndex;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
@@ -1416,9 +1404,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
 
   if (!StrTabSec.isDynamic()) {
     std::stable_sort(Symbols.begin(), Symbols.end(),
-                     [](SymbolBody *L, SymbolBody *R) {
-                       return getSymbolBinding(L) == STB_LOCAL &&
-                              getSymbolBinding(R) != STB_LOCAL;
+                     [](const std::pair<SymbolBody *, unsigned> &L,
+                        const std::pair<SymbolBody *, unsigned> &R) {
+                       return getSymbolBinding(L.first) == STB_LOCAL &&
+                              getSymbolBinding(R.first) != STB_LOCAL;
                      });
     return;
   }
@@ -1428,20 +1417,14 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   else if (Config->EMachine == EM_MIPS)
     std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
   size_t I = 0;
-  for (SymbolBody *B : Symbols)
-    B->DynamicSymbolTableIndex = ++I;
-}
-
-template <class ELFT>
-void SymbolTableSection<ELFT>::addLocalSymbol(StringRef Name) {
-  StrTabSec.reserve(Name);
-  ++NumLocals;
+  for (const std::pair<SymbolBody *, unsigned> &P : Symbols)
+    P.first->DynamicSymbolTableIndex = ++I;
 }
 
 template <class ELFT>
 void SymbolTableSection<ELFT>::addSymbol(SymbolBody *Body) {
-  StrTabSec.reserve(Body->getName());
-  Symbols.push_back(Body);
+  Symbols.push_back(
+      std::make_pair(Body, StrTabSec.addString(Body->getName(), false)));
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -1460,10 +1443,8 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   // Iterate over all input object files to copy their local symbols
   // to the output symbol table pointed by Buf.
   for (const std::unique_ptr<ObjectFile<ELFT>> &File : Table.getObjectFiles()) {
-    for (const Elf_Sym *Sym : File->KeptLocalSyms) {
-      ErrorOr<StringRef> SymNameOrErr = Sym->getName(File->getStringTable());
-      fatal(SymNameOrErr);
-      StringRef SymName = *SymNameOrErr;
+    for (const std::pair<const Elf_Sym *, unsigned> &P : File->KeptLocalSyms) {
+      const Elf_Sym *Sym = P.first;
 
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
       uintX_t VA = 0;
@@ -1480,7 +1461,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         if (Config->EMachine != EM_AMDGPU)
           VA += OutSec->getVA();
       }
-      ESym->st_name = StrTabSec.addString(SymName);
+      ESym->st_name = P.second;
       ESym->st_size = Sym->st_size;
       ESym->setBindingAndType(Sym->getBinding(), Sym->getType());
       ESym->st_value = VA;
@@ -1504,7 +1485,8 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-  for (SymbolBody *Body : Symbols) {
+  for (const std::pair<SymbolBody *, unsigned> &P : Symbols) {
+    SymbolBody *Body = P.first;
     const OutputSectionBase<ELFT> *OutSec = nullptr;
 
     switch (Body->kind()) {
@@ -1534,8 +1516,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
       break;
     }
 
-    StringRef Name = Body->getName();
-    ESym->st_name = StrTabSec.addString(Name);
+    ESym->st_name = P.second;
 
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;

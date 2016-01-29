@@ -431,8 +431,9 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
         if (!Section->isLive())
           continue;
       }
-      Out<ELFT>::SymTab->addLocalSymbol(SymName);
-      F->KeptLocalSyms.push_back(&Sym);
+      ++Out<ELFT>::SymTab->NumLocals;
+      F->KeptLocalSyms.push_back(std::make_pair(
+          &Sym, Out<ELFT>::SymTab->StrTabSec.addString(SymName)));
     }
   }
 }
@@ -907,7 +908,7 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   }
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    Out<ELFT>::ShStrTab->reserve(Sec->getName());
+    Sec->setSHName(Out<ELFT>::ShStrTab->addString(Sec->getName()));
 
   // Finalizers fix each section's size.
   // .dynsym is finalized early since that may fill up .gnu.hash.
