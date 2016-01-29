@@ -124,6 +124,45 @@ TEST_F(InstrProfTest, get_function_counts) {
   ASSERT_TRUE(ErrorEquals(instrprof_error::unknown_function, EC));
 }
 
+// Profile data is copied from general.proftext
+TEST_F(InstrProfTest, get_profile_summary) {
+  InstrProfRecord Record1("func1", 0x1234, {97531});
+  InstrProfRecord Record2("func2", 0x1234, {0, 0});
+  InstrProfRecord Record3("func3", 0x1234,
+                          {2305843009213693952, 1152921504606846976,
+                           576460752303423488, 288230376151711744,
+                           144115188075855872, 72057594037927936});
+  InstrProfRecord Record4("func4", 0x1234, {0});
+  Writer.addRecord(std::move(Record1));
+  Writer.addRecord(std::move(Record2));
+  Writer.addRecord(std::move(Record3));
+  Writer.addRecord(std::move(Record4));
+  auto Profile = Writer.writeBuffer();
+  readProfile(std::move(Profile));
+
+  ProfileSummary &PS = Reader->getSummary();
+  ASSERT_EQ(2305843009213693952U, PS.getMaxFunctionCount());
+  ASSERT_EQ(2305843009213693952U, PS.getMaxBlockCount());
+  ASSERT_EQ(10U, PS.getNumBlocks());
+  ASSERT_EQ(4539628424389557499U, PS.getTotalCount());
+  std::vector<ProfileSummaryEntry> &Details = PS.getDetailedSummary();
+  uint32_t Cutoff = 800000;
+  auto Predicate = [&Cutoff](const ProfileSummaryEntry &PE) {
+    return PE.Cutoff == Cutoff;
+  };
+  auto EightyPerc = std::find_if(Details.begin(), Details.end(), Predicate);
+  Cutoff = 900000;
+  auto NinetyPerc = std::find_if(Details.begin(), Details.end(), Predicate);
+  Cutoff = 950000;
+  auto NinetyFivePerc = std::find_if(Details.begin(), Details.end(), Predicate);
+  Cutoff = 990000;
+  auto NinetyNinePerc = std::find_if(Details.begin(), Details.end(), Predicate);
+  ASSERT_EQ(576460752303423488U, EightyPerc->MinBlockCount);
+  ASSERT_EQ(288230376151711744U, NinetyPerc->MinBlockCount);
+  ASSERT_EQ(288230376151711744U, NinetyFivePerc->MinBlockCount);
+  ASSERT_EQ(72057594037927936U, NinetyNinePerc->MinBlockCount);
+}
+
 TEST_F(InstrProfTest, get_icall_data_read_write) {
   InstrProfRecord Record1("caller", 0x1234, {1, 2});
   InstrProfRecord Record2("callee1", 0x1235, {3, 4});
@@ -716,20 +755,20 @@ TEST_F(InstrProfTest, instr_prof_symtab_compression_test) {
     FuncNames2.push_back(OS.str());
   }
 
-  for (int Padding = 0; Padding < 10; Padding++) {
-    for (int DoCompression = 0; DoCompression < 2; DoCompression++) {
-      // Compressing:
-      std::string FuncNameStrings1;
-      collectPGOFuncNameStrings(FuncNames1,
-                                (DoCompression != 0 && zlib::isAvailable()),
-                                FuncNameStrings1);
+  for (int DoCompression = 0; DoCompression < 2; DoCompression++) {
+    // Compressing:
+    std::string FuncNameStrings1;
+    collectPGOFuncNameStrings(FuncNames1,
+                              (DoCompression != 0 && zlib::isAvailable()),
+                              FuncNameStrings1);
 
-      // Compressing:
-      std::string FuncNameStrings2;
-      collectPGOFuncNameStrings(FuncNames2,
-                                (DoCompression != 0 && zlib::isAvailable()),
-                                FuncNameStrings2);
+    // Compressing:
+    std::string FuncNameStrings2;
+    collectPGOFuncNameStrings(FuncNames2,
+                              (DoCompression != 0 && zlib::isAvailable()),
+                              FuncNameStrings2);
 
+    for (int Padding = 0; Padding < 3; Padding++) {
       // Join with paddings:
       std::string FuncNameStrings = FuncNameStrings1;
       for (int P = 0; P < Padding; P++) {
@@ -743,7 +782,8 @@ TEST_F(InstrProfTest, instr_prof_symtab_compression_test) {
 
       // Now do the checks:
       // First sampling some data points:
-      StringRef R = Symtab.getFuncName(IndexedInstrProf::ComputeHash(FuncNames1[0]));
+      StringRef R =
+          Symtab.getFuncName(IndexedInstrProf::ComputeHash(FuncNames1[0]));
       ASSERT_EQ(StringRef("func_0"), R);
       R = Symtab.getFuncName(IndexedInstrProf::ComputeHash(FuncNames1[1]));
       ASSERT_EQ(StringRef("fooooooooooooooo_0"), R);
