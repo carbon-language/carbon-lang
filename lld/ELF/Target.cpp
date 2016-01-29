@@ -90,8 +90,8 @@ public:
   unsigned getTlsGotRel(unsigned Type) const override;
   bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -124,8 +124,8 @@ public:
   bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -156,8 +156,8 @@ class PPCTargetInfo final : public TargetInfo {
 public:
   PPCTargetInfo();
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -173,8 +173,8 @@ class PPC64TargetInfo final : public TargetInfo {
 public:
   PPC64TargetInfo();
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -191,8 +191,8 @@ public:
   AArch64TargetInfo();
   unsigned getDynRel(unsigned Type) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -210,8 +210,8 @@ class AMDGPUTargetInfo final : public TargetInfo {
 public:
   AMDGPUTargetInfo();
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -228,8 +228,8 @@ public:
   unsigned getDynRel(unsigned Type) const override;
   void writeGotHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                    uint64_t PltEntryAddr) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                    uint64_t PltAddr) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -313,7 +313,7 @@ X86TargetInfo::X86TargetInfo() {
   TlsOffsetRel = R_386_TLS_DTPOFF32;
   UseLazyBinding = true;
   PltEntrySize = 16;
-  PltZeroEntrySize = 16;
+  PltZeroSize = 16;
 }
 
 void X86TargetInfo::writeGotPltHeader(uint8_t *Buf) const {
@@ -348,8 +348,8 @@ bool X86TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
   return Type == R_386_TLS_GD;
 }
 
-void X86TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                 uint64_t PltEntryAddr) const {
+void X86TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                 uint64_t PltAddr) const {
   // Executable files and shared object files have
   // separate procedure linkage tables.
   if (Config->Shared) {
@@ -368,8 +368,8 @@ void X86TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
       0x90, 0x90, 0x90, 0x90              // nop;nop;nop;nop
   };
   memcpy(Buf, PltData, sizeof(PltData));
-  write32le(Buf + 2, GotEntryAddr + 4); // GOT+4
-  write32le(Buf + 8, GotEntryAddr + 8); // GOT+8
+  write32le(Buf + 2, GotAddr + 4); // GOT+4
+  write32le(Buf + 8, GotAddr + 8); // GOT+8
 }
 
 void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
@@ -385,7 +385,7 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
   Buf[1] = Config->Shared ? 0xa3 : 0x25;
   write32le(Buf + 2, Config->Shared ? (GotEntryAddr - GotAddr) : GotEntryAddr);
   write32le(Buf + 7, RelOff);
-  write32le(Buf + 12, -Index * PltEntrySize - PltZeroEntrySize - 16);
+  write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
 }
 
 bool X86TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
@@ -617,7 +617,7 @@ X86_64TargetInfo::X86_64TargetInfo() {
   TlsOffsetRel = R_X86_64_DTPOFF64;
   UseLazyBinding = true;
   PltEntrySize = 16;
-  PltZeroEntrySize = 16;
+  PltZeroSize = 16;
 }
 
 void X86_64TargetInfo::writeGotPltHeader(uint8_t *Buf) const {
@@ -629,16 +629,16 @@ void X86_64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   write32le(Buf, Plt + 6);
 }
 
-void X86_64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                    uint64_t PltEntryAddr) const {
+void X86_64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                    uint64_t PltAddr) const {
   const uint8_t PltData[] = {
       0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
       0x0f, 0x1f, 0x40, 0x00              // nopl 0x0(rax)
   };
   memcpy(Buf, PltData, sizeof(PltData));
-  write32le(Buf + 2, GotEntryAddr - PltEntryAddr + 2); // GOT+8
-  write32le(Buf + 8, GotEntryAddr - PltEntryAddr + 4); // GOT+16
+  write32le(Buf + 2, GotAddr - PltAddr + 2); // GOT+8
+  write32le(Buf + 8, GotAddr - PltAddr + 4); // GOT+16
 }
 
 void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
@@ -653,7 +653,7 @@ void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
 
   write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
   write32le(Buf + 7, Index);
-  write32le(Buf + 12, -Index * PltEntrySize - PltZeroEntrySize - 16);
+  write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
 }
 
 bool X86_64TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
@@ -936,8 +936,8 @@ static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPCTargetInfo::PPCTargetInfo() {}
 void PPCTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
-void PPCTargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                 uint64_t PltEntryAddr) const {}
+void PPCTargetInfo::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                 uint64_t PltAddr) const {}
 void PPCTargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
                              uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                              int32_t Index, unsigned RelOff) const {}
@@ -1002,8 +1002,8 @@ uint64_t getPPC64TocBase() {
 }
 
 void PPC64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
-void PPC64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                   uint64_t PltEntryAddr) const {}
+void PPC64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                   uint64_t PltAddr) const {}
 void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
                                uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                                int32_t Index, unsigned RelOff) const {
@@ -1183,7 +1183,7 @@ AArch64TargetInfo::AArch64TargetInfo() {
   TlsGotRel = R_AARCH64_TLS_TPREL64;
   UseLazyBinding = true;
   PltEntrySize = 16;
-  PltZeroEntrySize = 32;
+  PltZeroSize = 32;
 }
 
 unsigned AArch64TargetInfo::getDynRel(unsigned Type) const {
@@ -1198,8 +1198,8 @@ void AArch64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   write64le(Buf, Out<ELF64LE>::Plt->getVA());
 }
 
-void AArch64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                     uint64_t PltEntryAddr) const {
+void AArch64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                     uint64_t PltAddr) const {
   const uint8_t PltData[] = {
       0xf0, 0x7b, 0xbf, 0xa9, // stp	x16, x30, [sp,#-16]!
       0x10, 0x00, 0x00, 0x90, // adrp	x16, Page(&(.plt.got[2]))
@@ -1212,12 +1212,12 @@ void AArch64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
   };
   memcpy(Buf, PltData, sizeof(PltData));
 
-  relocateOne(Buf + 4, Buf + 8, R_AARCH64_ADR_PREL_PG_HI21, PltEntryAddr + 4,
-              GotEntryAddr + 16);
-  relocateOne(Buf + 8, Buf + 12, R_AARCH64_LDST64_ABS_LO12_NC, PltEntryAddr + 8,
-              GotEntryAddr + 16);
-  relocateOne(Buf + 12, Buf + 16, R_AARCH64_ADD_ABS_LO12_NC, PltEntryAddr + 12,
-              GotEntryAddr + 16);
+  relocateOne(Buf + 4, Buf + 8, R_AARCH64_ADR_PREL_PG_HI21, PltAddr + 4,
+              GotAddr + 16);
+  relocateOne(Buf + 8, Buf + 12, R_AARCH64_LDST64_ABS_LO12_NC, PltAddr + 8,
+              GotAddr + 16);
+  relocateOne(Buf + 12, Buf + 16, R_AARCH64_ADD_ABS_LO12_NC, PltAddr + 12,
+              GotAddr + 16);
 }
 
 void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
@@ -1416,8 +1416,8 @@ void AMDGPUTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   llvm_unreachable("not implemented");
 }
 
-void AMDGPUTargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                    uint64_t PltEntryAddr) const {
+void AMDGPUTargetInfo::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                    uint64_t PltAddr) const {
   llvm_unreachable("not implemented");
 }
 
@@ -1471,8 +1471,8 @@ void MipsTargetInfo<ELFT>::writeGotHeader(uint8_t *Buf) const {
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
-                                        uint64_t PltEntryAddr) const {}
+void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf, uint64_t GotAddr,
+                                        uint64_t PltAddr) const {}
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotAddr,
                                     uint64_t GotEntryAddr,

@@ -193,7 +193,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   if (LazyReloc) {
     // First write PLT[0] entry which is special.
     Target->writePltZero(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
-    Off += Target->PltZeroEntrySize;
+    Off += Target->PltZeroSize;
   }
   for (auto &I : Entries) {
     const SymbolBody *E = I.first;
@@ -219,13 +219,13 @@ template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody *Sym) {
 template <class ELFT>
 typename PltSection<ELFT>::uintX_t
 PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
-  return this->getVA() + Target->PltZeroEntrySize +
+  return this->getVA() + Target->PltZeroSize +
          B.PltIndex * Target->PltEntrySize;
 }
 
 template <class ELFT> void PltSection<ELFT>::finalize() {
   this->Header.sh_size =
-      Target->PltZeroEntrySize + Entries.size() * Target->PltEntrySize;
+      Target->PltZeroSize + Entries.size() * Target->PltEntrySize;
 }
 
 template <class ELFT>
