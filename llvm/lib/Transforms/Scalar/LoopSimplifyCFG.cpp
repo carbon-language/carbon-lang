@@ -80,7 +80,7 @@ static bool simplifyLoopCFG(Loop *L, DominatorTree *DT, LoopInfo *LI) {
   for (auto &Block : Blocks) {
     // Attempt to merge blocks in the trivial case. Don't modify blocks which
     // belong to other loops.
-    BasicBlock *Succ = cast<BasicBlock>(Block);
+    BasicBlock *Succ = cast_or_null<BasicBlock>(Block);
     if (!Succ)
       continue;
 
