@@ -168,9 +168,8 @@ static bool checkOverrideByDerivedMethod(const CXXMethodDecl *BaseMD,
                                       E = DerivedMD->end_overridden_methods();
        I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
-    if (BaseMD->getCanonicalDecl() == OverriddenMD->getCanonicalDecl()) {
+    if (BaseMD->getCanonicalDecl() == OverriddenMD->getCanonicalDecl())
       return true;
-    }
   }
 
   return false;

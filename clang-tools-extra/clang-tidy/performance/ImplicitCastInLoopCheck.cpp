@@ -27,8 +27,8 @@ namespace {
 // The subtelty is that in some cases (user defined conversions), we can
 // get to ImplicitCastExpr inside each other, with the outer one a NoOp. In this
 // case we skip the first cast expr.
-bool IsNonTrivialImplicitCast(const Stmt* ST) {
-  if (const auto* ICE = dyn_cast<ImplicitCastExpr>(ST)) {
+bool IsNonTrivialImplicitCast(const Stmt *ST) {
+  if (const auto *ICE = dyn_cast<ImplicitCastExpr>(ST)) {
     return (ICE->getCastKind() != CK_NoOp) ||
             IsNonTrivialImplicitCast(ICE->getSubExpr());
   }
@@ -57,15 +57,15 @@ void ImplicitCastInLoopCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ImplicitCastInLoopCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto* VD = Result.Nodes.getNodeAs<VarDecl>("faulty-var");
-  const auto* Init = Result.Nodes.getNodeAs<Expr>("init");
-  const auto* OperatorCall =
+  const auto *VD = Result.Nodes.getNodeAs<VarDecl>("faulty-var");
+  const auto *Init = Result.Nodes.getNodeAs<Expr>("init");
+  const auto *OperatorCall =
       Result.Nodes.getNodeAs<CXXOperatorCallExpr>("operator-call");
 
-  if (const auto* Cleanup = dyn_cast<ExprWithCleanups>(Init))
+  if (const auto *Cleanup = dyn_cast<ExprWithCleanups>(Init))
     Init = Cleanup->getSubExpr();
 
-  const auto* Materialized = dyn_cast<MaterializeTemporaryExpr>(Init);
+  const auto *Materialized = dyn_cast<MaterializeTemporaryExpr>(Init);
   if (!Materialized)
     return;
 
