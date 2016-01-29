@@ -1594,7 +1594,7 @@ insertRelocationStores(iterator_range<Value::user_iterator> GCRelocs,
     if (!Relocate)
       continue;
 
-    Value *OriginalValue = const_cast<Value *>(Relocate->getDerivedPtr());
+    Value *OriginalValue = Relocate->getDerivedPtr();
     assert(AllocaMap.count(OriginalValue));
     Value *Alloca = AllocaMap[OriginalValue];
 
