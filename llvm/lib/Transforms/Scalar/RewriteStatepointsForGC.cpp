@@ -1390,21 +1390,17 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   uint32_t NumPatchBytes = 0;
   uint32_t Flags = uint32_t(StatepointFlags::None);
 
-  ArrayRef<Use> CallArgs;
-  ArrayRef<Use> DeoptArgs;
+  ArrayRef<Use> CallArgs(CS.arg_begin(), CS.arg_end());
+  ArrayRef<Use> DeoptArgs = GetDeoptBundleOperands(CS);
   ArrayRef<Use> TransitionArgs;
-
-  Value *CallTarget = nullptr;
-
-  CallArgs = {CS.arg_begin(), CS.arg_end()};
-  DeoptArgs = GetDeoptBundleOperands(CS);
   if (auto TransitionBundle =
       CS.getOperandBundle(LLVMContext::OB_gc_transition)) {
     Flags |= uint32_t(StatepointFlags::GCTransition);
     TransitionArgs = TransitionBundle->Inputs;
   }
-  AttributeSet OriginalAttrs = CS.getAttributes();
 
+  Value *CallTarget = CS.getCalledValue();
+  AttributeSet OriginalAttrs = CS.getAttributes();
   Attribute AttrID = OriginalAttrs.getAttribute(AttributeSet::FunctionIndex,
                                                 "statepoint-id");
   if (AttrID.isStringAttribute())
@@ -1414,9 +1410,6 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
     AttributeSet::FunctionIndex, "statepoint-num-patch-bytes");
   if (AttrNumPatchBytes.isStringAttribute())
     AttrNumPatchBytes.getValueAsString().getAsInteger(10, NumPatchBytes);
-
-  CallTarget = CS.getCalledValue();
-
 
   // Create the statepoint given all the arguments
   Instruction *Token = nullptr;
@@ -2224,9 +2217,8 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
   Uniqued.insert(ToUpdate.begin(), ToUpdate.end());
   assert(Uniqued.size() == ToUpdate.size() && "no duplicates please!");
 
-  for (CallSite CS : ToUpdate) {
-    assert(CS.getInstruction()->getParent()->getParent() == &F);
-  }
+  for (CallSite CS : ToUpdate)
+    assert(CS.getInstruction()->getFunction() == &F);
 #endif
 
   // When inserting gc.relocates for invokes, we need to be able to insert at
