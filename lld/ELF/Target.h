@@ -96,7 +96,6 @@ protected:
   uint64_t VAStart = 0x10000;
 
   unsigned CopyReloc;
-  unsigned PCRelReloc;
   unsigned GotReloc;
   unsigned PltReloc;
   unsigned RelativeReloc;

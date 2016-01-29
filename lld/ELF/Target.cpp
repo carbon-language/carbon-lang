@@ -304,7 +304,6 @@ void TargetInfo::writeGotPltHeaderEntries(uint8_t *Buf) const {}
 
 X86TargetInfo::X86TargetInfo() {
   CopyReloc = R_386_COPY;
-  PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
   PltReloc = R_386_JUMP_SLOT;
   IRelativeReloc = R_386_IRELATIVE;
@@ -610,7 +609,6 @@ void X86TargetInfo::relocateTlsIeToLe(unsigned Type, uint8_t *Loc,
 
 X86_64TargetInfo::X86_64TargetInfo() {
   CopyReloc = R_X86_64_COPY;
-  PCRelReloc = R_X86_64_PC32;
   GotReloc = R_X86_64_GLOB_DAT;
   PltReloc = R_X86_64_JUMP_SLOT;
   RelativeReloc = R_X86_64_RELATIVE;
@@ -973,7 +971,6 @@ void PPCTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 PPC64TargetInfo::PPC64TargetInfo() {
-  PCRelReloc = R_PPC64_REL24;
   GotReloc = R_PPC64_GLOB_DAT;
   RelativeReloc = R_PPC64_RELATIVE;
   PltEntrySize = 32;
