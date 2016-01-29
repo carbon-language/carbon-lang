@@ -59,10 +59,10 @@ template <class ELFT> void GotPltSection<ELFT>::finalize() {
 }
 
 template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
-  Target->writeGotPltHeaderEntries(Buf);
+  Target->writeGotPltHeader(Buf);
   Buf += Target->GotPltHeaderEntriesNum * sizeof(uintX_t);
   for (const SymbolBody *B : Entries) {
-    Target->writeGotPltEntry(Buf, Out<ELFT>::Plt->getEntryAddr(*B));
+    Target->writeGotPlt(Buf, Out<ELFT>::Plt->getEntryAddr(*B));
     Buf += sizeof(uintX_t);
   }
 }
@@ -157,7 +157,7 @@ template <class ELFT> void GotSection<ELFT>::finalize() {
 }
 
 template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
-  Target->writeGotHeaderEntries(Buf);
+  Target->writeGotHeader(Buf);
   for (const auto &L : MipsLocalGotPos) {
     uint8_t *Entry = Buf + L.second * sizeof(uintX_t);
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, L.first);
@@ -192,7 +192,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   bool LazyReloc = Target->UseLazyBinding;
   if (LazyReloc) {
     // First write PLT[0] entry which is special.
-    Target->writePltZeroEntry(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
+    Target->writePltZero(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
     Off += Target->PltZeroEntrySize;
   }
   for (auto &I : Entries) {
@@ -203,7 +203,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
     uint64_t GotE = LazyReloc ? Out<ELFT>::GotPlt->getEntryAddr(*E)
                               : Out<ELFT>::Got->getEntryAddr(*E);
     uint64_t Plt = this->getVA() + Off;
-    Target->writePltEntry(Buf + Off, GotVA, GotE, Plt, E->PltIndex, RelOff);
+    Target->writePlt(Buf + Off, GotVA, GotE, Plt, E->PltIndex, RelOff);
     Off += Target->PltEntrySize;
   }
 }
@@ -242,13 +242,13 @@ template <class ELFT>
 bool RelocationSection<ELFT>::applyTlsDynamicReloc(SymbolBody *Body,
                                                    uint32_t Type, Elf_Rel *P,
                                                    Elf_Rel *N) {
-  if (Target->isTlsLocalDynamicReloc(Type)) {
+  if (Target->isTlsLocalDynamicRel(Type)) {
     P->setSymbolAndType(0, Target->TlsModuleIndexRel, Config->Mips64EL);
     P->r_offset = Out<ELFT>::Got->getLocalTlsIndexVA();
     return true;
   }
 
-  if (!Body || !Target->isTlsGlobalDynamicReloc(Type))
+  if (!Body || !Target->isTlsGlobalDynamicRel(Type))
     return false;
 
   if (Target->canRelaxTls(Type, Body)) {
@@ -305,7 +305,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       continue;
     }
 
-    bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
+    bool NeedsGot = Body && Target->needsGot(Type, *Body);
     bool CBP = canBePreempted(Body, NeedsGot);
 
     // For a symbol with STT_GNU_IFUNC type, we always create a PLT and
@@ -322,7 +322,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     }
 
     bool LazyReloc =
-        Body && Target->UseLazyBinding && Target->relocNeedsPlt(Type, *Body);
+        Body && Target->UseLazyBinding && Target->needsPlt(Type, *Body);
 
     unsigned Reloc;
     if (!CBP)
@@ -332,7 +332,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     else if (NeedsGot)
       Reloc = Body->isTls() ? Target->getTlsGotRel() : Target->GotRel;
     else
-      Reloc = Target->getDynReloc(Type);
+      Reloc = Target->getDynRel(Type);
     P->setSymbolAndType(CBP ? Body->DynsymIndex : 0, Reloc, Config->Mips64EL);
 
     if (LazyReloc)

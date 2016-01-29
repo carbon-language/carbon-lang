@@ -85,27 +85,26 @@ namespace {
 class X86TargetInfo final : public TargetInfo {
 public:
   X86TargetInfo();
-  void writeGotPltHeaderEntries(uint8_t *Buf) const override;
-  unsigned getDynReloc(unsigned Type) const override;
+  void writeGotPltHeader(uint8_t *Buf) const override;
+  unsigned getDynRel(unsigned Type) const override;
   unsigned getTlsGotRel(unsigned Type) const override;
-  bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const override;
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
+  bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsDynRelative(unsigned Type) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  bool needsDynRelative(unsigned Type) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
   bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
-  unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                               uint64_t P, uint64_t SA,
-                               const SymbolBody *S) const override;
+  unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
+                    uint64_t SA, const SymbolBody *S) const override;
   bool isGotRelative(uint32_t Type) const override;
 
 private:
@@ -122,26 +121,25 @@ private:
 class X86_64TargetInfo final : public TargetInfo {
 public:
   X86_64TargetInfo();
-  bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const override;
-  void writeGotPltHeaderEntries(uint8_t *Buf) const override;
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
+  bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
+  void writeGotPltHeader(uint8_t *Buf) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
-  bool isSizeReloc(uint32_t Type) const override;
-  unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                               uint64_t P, uint64_t SA,
-                               const SymbolBody *S) const override;
+  bool isSizeRel(uint32_t Type) const override;
+  unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
+                    uint64_t SA, const SymbolBody *S) const override;
 
 private:
   void relocateTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
@@ -157,14 +155,14 @@ private:
 class PPCTargetInfo final : public TargetInfo {
 public:
   PPCTargetInfo();
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
@@ -174,14 +172,14 @@ public:
 class PPC64TargetInfo final : public TargetInfo {
 public:
   PPC64TargetInfo();
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
@@ -191,18 +189,18 @@ public:
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();
-  unsigned getDynReloc(unsigned Type) const override;
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
+  unsigned getDynRel(unsigned Type) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
   unsigned getTlsGotRel(unsigned Type = -1) const override;
-  bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const override;
+  bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
@@ -211,14 +209,14 @@ public:
 class AMDGPUTargetInfo final : public TargetInfo {
 public:
   AMDGPUTargetInfo();
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
@@ -227,20 +225,20 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
-  unsigned getDynReloc(unsigned Type) const override;
-  void writeGotHeaderEntries(uint8_t *Buf) const override;
-  void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                         uint64_t PltEntryAddr) const override;
-  void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr, int32_t Index,
-                     unsigned RelOff) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  unsigned getDynRel(unsigned Type) const override;
+  void writeGotHeader(uint8_t *Buf) const override;
+  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                    uint64_t PltEntryAddr) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                uint64_t PltEntryAddr, int32_t Index,
+                unsigned RelOff) const override;
+  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
-  bool isHintReloc(uint32_t Type) const override;
+  bool isHintRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 } // anonymous namespace
@@ -286,21 +284,21 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 
 bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
 
-bool TargetInfo::isHintReloc(uint32_t Type) const { return false; }
+bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
-bool TargetInfo::isSizeReloc(uint32_t Type) const { return false; }
+bool TargetInfo::isSizeRel(uint32_t Type) const { return false; }
 
-unsigned TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
-                                         uint32_t Type, uint64_t P, uint64_t SA,
-                                         const SymbolBody *S) const {
+unsigned TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                              uint64_t P, uint64_t SA,
+                              const SymbolBody *S) const {
   return 0;
 }
 
-void TargetInfo::writeGotHeaderEntries(uint8_t *Buf) const {}
+void TargetInfo::writeGotHeader(uint8_t *Buf) const {}
 
-void TargetInfo::writeGotPltHeaderEntries(uint8_t *Buf) const {}
+void TargetInfo::writeGotPltHeader(uint8_t *Buf) const {}
 
 X86TargetInfo::X86TargetInfo() {
   CopyRel = R_386_COPY;
@@ -318,16 +316,16 @@ X86TargetInfo::X86TargetInfo() {
   PltZeroEntrySize = 16;
 }
 
-void X86TargetInfo::writeGotPltHeaderEntries(uint8_t *Buf) const {
+void X86TargetInfo::writeGotPltHeader(uint8_t *Buf) const {
   write32le(Buf, Out<ELF32LE>::Dynamic->getVA());
 }
 
-void X86TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
+void X86TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   // Skip 6 bytes of "pushl (GOT+4)"
   write32le(Buf, Plt + 6);
 }
 
-unsigned X86TargetInfo::getDynReloc(unsigned Type) const {
+unsigned X86TargetInfo::getDynRel(unsigned Type) const {
   if (Type == R_386_TLS_LE)
     return R_386_TLS_TPOFF;
   if (Type == R_386_TLS_LE_32)
@@ -341,7 +339,7 @@ unsigned X86TargetInfo::getTlsGotRel(unsigned Type) const {
   return TlsGotRel;
 }
 
-bool X86TargetInfo::isTlsDynReloc(unsigned Type, const SymbolBody &S) const {
+bool X86TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
   if (Type == R_386_TLS_LE || Type == R_386_TLS_LE_32 ||
       Type == R_386_TLS_GOTIE)
     return Config->Shared;
@@ -350,8 +348,8 @@ bool X86TargetInfo::isTlsDynReloc(unsigned Type, const SymbolBody &S) const {
   return Type == R_386_TLS_GD;
 }
 
-void X86TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr) const {
+void X86TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                 uint64_t PltEntryAddr) const {
   // Executable files and shared object files have
   // separate procedure linkage tables.
   if (Config->Shared) {
@@ -374,9 +372,9 @@ void X86TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 8, GotEntryAddr + 8); // GOT+8
 }
 
-void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                  uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                                  int32_t Index, unsigned RelOff) const {
+void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                             uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                             int32_t Index, unsigned RelOff) const {
   const uint8_t Inst[] = {
       0xff, 0x00, 0x00, 0x00, 0x00, 0x00, // jmp *foo_in_GOT|*foo@GOT(%ebx)
       0x68, 0x00, 0x00, 0x00, 0x00,       // pushl $reloc_offset
@@ -397,15 +395,15 @@ bool X86TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
-bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+bool X86TargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   if (S.isTls() && Type == R_386_TLS_GD)
     return Target->canRelaxTls(Type, &S) && canBePreempted(&S, true);
   if (Type == R_386_TLS_GOTIE || Type == R_386_TLS_IE)
     return !canRelaxTls(Type, &S);
-  return Type == R_386_GOT32 || relocNeedsPlt(Type, S);
+  return Type == R_386_GOT32 || needsPlt(Type, S);
 }
 
-bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+bool X86TargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
   return isGnuIFunc<ELF32LE>(S) ||
          (Type == R_386_PLT32 && canBePreempted(&S, true)) ||
          (Type == R_386_PC32 && S.isShared());
@@ -475,14 +473,13 @@ bool X86TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
          (Type == R_386_TLS_GOTIE && !canBePreempted(S, true));
 }
 
-bool X86TargetInfo::relocNeedsDynRelative(unsigned Type) const {
+bool X86TargetInfo::needsDynRelative(unsigned Type) const {
   return Config->Shared && Type == R_386_TLS_IE;
 }
 
-unsigned X86TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
-                                            uint32_t Type, uint64_t P,
-                                            uint64_t SA,
-                                            const SymbolBody *S) const {
+unsigned X86TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                                 uint64_t P, uint64_t SA,
+                                 const SymbolBody *S) const {
   switch (Type) {
   case R_386_TLS_GD:
     if (canBePreempted(S, true))
@@ -623,17 +620,17 @@ X86_64TargetInfo::X86_64TargetInfo() {
   PltZeroEntrySize = 16;
 }
 
-void X86_64TargetInfo::writeGotPltHeaderEntries(uint8_t *Buf) const {
+void X86_64TargetInfo::writeGotPltHeader(uint8_t *Buf) const {
   write64le(Buf, Out<ELF64LE>::Dynamic->getVA());
 }
 
-void X86_64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
+void X86_64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   // Skip 6 bytes of "jmpq *got(%rip)"
   write32le(Buf, Plt + 6);
 }
 
-void X86_64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                         uint64_t PltEntryAddr) const {
+void X86_64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                    uint64_t PltEntryAddr) const {
   const uint8_t PltData[] = {
       0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
@@ -644,10 +641,9 @@ void X86_64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 8, GotEntryAddr - PltEntryAddr + 4); // GOT+16
 }
 
-void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                     uint64_t GotEntryAddr,
-                                     uint64_t PltEntryAddr, int32_t Index,
-                                     unsigned RelOff) const {
+void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                                uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                                int32_t Index, unsigned RelOff) const {
   const uint8_t Inst[] = {
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *got(%rip)
       0x68, 0x00, 0x00, 0x00, 0x00,       // pushq <relocation index>
@@ -668,19 +664,19 @@ bool X86_64TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
-bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+bool X86_64TargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   if (Type == R_X86_64_TLSGD)
     return Target->canRelaxTls(Type, &S) && canBePreempted(&S, true);
   if (Type == R_X86_64_GOTTPOFF)
     return !canRelaxTls(Type, &S);
-  return Type == R_X86_64_GOTPCREL || relocNeedsPlt(Type, S);
+  return Type == R_X86_64_GOTPCREL || needsPlt(Type, S);
 }
 
-bool X86_64TargetInfo::isTlsDynReloc(unsigned Type, const SymbolBody &S) const {
+bool X86_64TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
   return Type == R_X86_64_GOTTPOFF || Type == R_X86_64_TLSGD;
 }
 
-bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+bool X86_64TargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
   if (needsCopyRel(Type, S))
     return false;
   if (isGnuIFunc<ELF64LE>(S))
@@ -737,7 +733,7 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   }
 }
 
-bool X86_64TargetInfo::isSizeReloc(uint32_t Type) const {
+bool X86_64TargetInfo::isSizeRel(uint32_t Type) const {
   return Type == R_X86_64_SIZE32 || Type == R_X86_64_SIZE64;
 }
 
@@ -852,10 +848,9 @@ void X86_64TargetInfo::relocateTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
 // relocation target, relocations immediately follow the TLS relocation (which
 // would be applied to rewritten instructions) may have to be skipped.
 // This function returns a number of relocations that need to be skipped.
-unsigned X86_64TargetInfo::relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
-                                               uint32_t Type, uint64_t P,
-                                               uint64_t SA,
-                                               const SymbolBody *S) const {
+unsigned X86_64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd,
+                                    uint32_t Type, uint64_t P, uint64_t SA,
+                                    const SymbolBody *S) const {
   switch (Type) {
   case R_X86_64_DTPOFF32:
     relocateOne(Loc, BufEnd, R_X86_64_TPOFF32, P, SA);
@@ -940,17 +935,16 @@ static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
 static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPCTargetInfo::PPCTargetInfo() {}
-void PPCTargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
-void PPCTargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                        uint64_t PltEntryAddr) const {}
-void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                  uint64_t GotEntryAddr,
-                                  uint64_t PltEntryAddr, int32_t Index,
-                                  unsigned RelOff) const {}
-bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+void PPCTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
+void PPCTargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                 uint64_t PltEntryAddr) const {}
+void PPCTargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                             uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                             int32_t Index, unsigned RelOff) const {}
+bool PPCTargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
-bool PPCTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+bool PPCTargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 bool PPCTargetInfo::isRelRelative(uint32_t Type) const { return false; }
@@ -1007,13 +1001,12 @@ uint64_t getPPC64TocBase() {
   return TocVA + 0x8000;
 }
 
-void PPC64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
-void PPC64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                        uint64_t PltEntryAddr) const {}
-void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                    uint64_t GotEntryAddr,
-                                    uint64_t PltEntryAddr, int32_t Index,
-                                    unsigned RelOff) const {
+void PPC64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
+void PPC64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                   uint64_t PltEntryAddr) const {}
+void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                               uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                               int32_t Index, unsigned RelOff) const {
   uint64_t Off = GotEntryAddr - getPPC64TocBase();
 
   // FIXME: What we should do, in theory, is get the offset of the function
@@ -1032,8 +1025,8 @@ void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
   write32be(Buf + 28, 0x4e800420);                   // bctr
 }
 
-bool PPC64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  if (relocNeedsPlt(Type, S))
+bool PPC64TargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
+  if (needsPlt(Type, S))
     return true;
 
   switch (Type) {
@@ -1048,7 +1041,7 @@ bool PPC64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   }
 }
 
-bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+bool PPC64TargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
   // These are function calls that need to be redirected through a PLT stub.
   return Type == R_PPC64_REL24 && canBePreempted(&S, false);
 }
@@ -1193,7 +1186,7 @@ AArch64TargetInfo::AArch64TargetInfo() {
   PltZeroEntrySize = 32;
 }
 
-unsigned AArch64TargetInfo::getDynReloc(unsigned Type) const {
+unsigned AArch64TargetInfo::getDynRel(unsigned Type) const {
   if (Type == R_AARCH64_ABS32 || Type == R_AARCH64_ABS64)
     return Type;
   StringRef S = getELFRelocationTypeName(EM_AARCH64, Type);
@@ -1201,12 +1194,12 @@ unsigned AArch64TargetInfo::getDynReloc(unsigned Type) const {
                             "recompile with -fPIC.");
 }
 
-void AArch64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
+void AArch64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   write64le(Buf, Out<ELF64LE>::Plt->getVA());
 }
 
-void AArch64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                          uint64_t PltEntryAddr) const {
+void AArch64TargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                     uint64_t PltEntryAddr) const {
   const uint8_t PltData[] = {
       0xf0, 0x7b, 0xbf, 0xa9, // stp	x16, x30, [sp,#-16]!
       0x10, 0x00, 0x00, 0x90, // adrp	x16, Page(&(.plt.got[2]))
@@ -1227,10 +1220,9 @@ void AArch64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
               GotEntryAddr + 16);
 }
 
-void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                      uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr, int32_t Index,
-                                      unsigned RelOff) const {
+void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                                 uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                                 int32_t Index, unsigned RelOff) const {
   const uint8_t Inst[] = {
       0x10, 0x00, 0x00, 0x90, // adrp x16, Page(&(.plt.got[n]))
       0x11, 0x02, 0x40, 0xf9, // ldr  x17, [x16, Offset(&(.plt.got[n]))]
@@ -1254,8 +1246,7 @@ unsigned AArch64TargetInfo::getTlsGotRel(unsigned Type) const {
   return TlsGotRel;
 }
 
-bool AArch64TargetInfo::isTlsDynReloc(unsigned Type,
-                                      const SymbolBody &S) const {
+bool AArch64TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
   return Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
          Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC;
 }
@@ -1283,8 +1274,7 @@ bool AArch64TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   }
 }
 
-bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
-                                      const SymbolBody &S) const {
+bool AArch64TargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
@@ -1292,12 +1282,11 @@ bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
   case R_AARCH64_LD64_GOT_LO12_NC:
     return true;
   default:
-    return relocNeedsPlt(Type, S);
+    return needsPlt(Type, S);
   }
 }
 
-bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
-                                      const SymbolBody &S) const {
+bool AArch64TargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
   if (isGnuIFunc<ELF64LE>(S))
     return true;
   switch (Type) {
@@ -1423,27 +1412,26 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 
 AMDGPUTargetInfo::AMDGPUTargetInfo() {}
 
-void AMDGPUTargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
+void AMDGPUTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   llvm_unreachable("not implemented");
 }
 
-void AMDGPUTargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                         uint64_t PltEntryAddr) const {
+void AMDGPUTargetInfo::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                    uint64_t PltEntryAddr) const {
   llvm_unreachable("not implemented");
 }
 
-void AMDGPUTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                     uint64_t GotEntryAddr,
-                                     uint64_t PltEntryAddr, int32_t Index,
-                                     unsigned RelOff) const {
+void AMDGPUTargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                                uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                                int32_t Index, unsigned RelOff) const {
   llvm_unreachable("not implemented");
 }
 
-bool AMDGPUTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+bool AMDGPUTargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
-bool AMDGPUTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+bool AMDGPUTargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
@@ -1464,7 +1452,7 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
 }
 
 template <class ELFT>
-unsigned MipsTargetInfo<ELFT>::getDynReloc(unsigned Type) const {
+unsigned MipsTargetInfo<ELFT>::getDynRel(unsigned Type) const {
   if (Type == R_MIPS_32 || Type == R_MIPS_64)
     return R_MIPS_REL32;
   StringRef S = getELFRelocationTypeName(EM_MIPS, Type);
@@ -1473,7 +1461,7 @@ unsigned MipsTargetInfo<ELFT>::getDynReloc(unsigned Type) const {
 }
 
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writeGotHeaderEntries(uint8_t *Buf) const {
+void MipsTargetInfo<ELFT>::writeGotHeader(uint8_t *Buf) const {
   typedef typename ELFFile<ELFT>::Elf_Off Elf_Off;
   auto *P = reinterpret_cast<Elf_Off *>(Buf);
   // Module pointer
@@ -1481,25 +1469,23 @@ void MipsTargetInfo<ELFT>::writeGotHeaderEntries(uint8_t *Buf) const {
 }
 
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
+void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                       uint64_t PltEntryAddr) const {}
+void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                                        uint64_t PltEntryAddr) const {}
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                                         uint64_t GotEntryAddr,
-                                         uint64_t PltEntryAddr, int32_t Index,
-                                         unsigned RelOff) const {}
+void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotAddr,
+                                    uint64_t GotEntryAddr,
+                                    uint64_t PltEntryAddr, int32_t Index,
+                                    unsigned RelOff) const {}
 
 template <class ELFT>
-bool MipsTargetInfo<ELFT>::relocNeedsGot(uint32_t Type,
-                                         const SymbolBody &S) const {
+bool MipsTargetInfo<ELFT>::needsGot(uint32_t Type, const SymbolBody &S) const {
   return Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16;
 }
 
 template <class ELFT>
-bool MipsTargetInfo<ELFT>::relocNeedsPlt(uint32_t Type,
-                                         const SymbolBody &S) const {
+bool MipsTargetInfo<ELFT>::needsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
@@ -1601,7 +1587,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 }
 
 template <class ELFT>
-bool MipsTargetInfo<ELFT>::isHintReloc(uint32_t Type) const {
+bool MipsTargetInfo<ELFT>::isHintRel(uint32_t Type) const {
   return Type == R_MIPS_JALR;
 }
 

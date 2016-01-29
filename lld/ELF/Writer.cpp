@@ -200,7 +200,7 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 template <class ELFT, class RelT>
 static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
                                 InputSectionBase<ELFT> &C, RelT &RI) {
-  if (Target->isTlsLocalDynamicReloc(Type)) {
+  if (Target->isTlsLocalDynamicRel(Type)) {
     if (Target->canRelaxTls(Type, nullptr))
       return true;
     if (Out<ELFT>::Got->addCurrentModuleTlsIndex())
@@ -211,7 +211,7 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
   if (!Body || !Body->isTls())
     return false;
 
-  if (Target->isTlsGlobalDynamicReloc(Type)) {
+  if (Target->isTlsGlobalDynamicRel(Type)) {
     bool Opt = Target->canRelaxTls(Type, Body);
     if (!Opt && Out<ELFT>::Got->addDynTlsEntry(Body)) {
       Out<ELFT>::RelaDyn->addReloc({&C, &RI});
@@ -222,7 +222,7 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
     if (!canBePreempted(Body, true))
       return true;
   }
-  return !Target->isTlsDynReloc(Type, *Body);
+  return !Target->isTlsDynRel(Type, *Body);
 }
 
 // The reason we have to do this early scan is as follows
@@ -246,7 +246,7 @@ void Writer<ELFT>::scanRelocs(
     uint32_t Type = RI.getType(Config->Mips64EL);
 
     // Ignore "hint" relocation because it is for optional code optimization.
-    if (Target->isHintReloc(Type))
+    if (Target->isHintRel(Type))
       continue;
 
     if (Target->isGotRelative(Type))
@@ -263,7 +263,7 @@ void Writer<ELFT>::scanRelocs(
     if (handleTlsRelocation<ELFT>(Type, Body, C, RI))
       continue;
 
-    if (Target->relocNeedsDynRelative(Type)) {
+    if (Target->needsDynRelative(Type)) {
       RelType *Rel = new (Alloc) RelType;
       Rel->setSymbolAndType(0, Target->RelativeRel, Config->Mips64EL);
       Rel->r_offset = RI.r_offset;
@@ -284,13 +284,13 @@ void Writer<ELFT>::scanRelocs(
         if (Target->needsCopyRel(Type, *Body))
           E->NeedsCopy = true;
       }
-      NeedsPlt = Target->relocNeedsPlt(Type, *Body);
+      NeedsPlt = Target->needsPlt(Type, *Body);
       if (NeedsPlt) {
         if (Body->isInPlt())
           continue;
         Out<ELFT>::Plt->addEntry(Body);
       }
-      NeedsGot = Target->relocNeedsGot(Type, *Body);
+      NeedsGot = Target->needsGot(Type, *Body);
       if (NeedsGot) {
         if (NeedsPlt && Target->UseLazyBinding) {
           Out<ELFT>::GotPlt->addEntry(Body);
@@ -342,7 +342,7 @@ void Writer<ELFT>::scanRelocs(
     // a relocation from an object file, but some relocations need no
     // load-time fixup when the final target is known. Skip such relocation.
     bool CBP = canBePreempted(Body, NeedsGot);
-    bool NoDynrel = Target->isRelRelative(Type) || Target->isSizeReloc(Type) ||
+    bool NoDynrel = Target->isRelRelative(Type) || Target->isSizeRel(Type) ||
                     !Config->Shared;
     if (!CBP && NoDynrel)
       continue;

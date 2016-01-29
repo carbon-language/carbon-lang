@@ -23,35 +23,35 @@ class TargetInfo {
 public:
   uint64_t getVAStart() const;
 
-  bool isTlsLocalDynamicReloc(unsigned Type) const {
+  bool isTlsLocalDynamicRel(unsigned Type) const {
     return Type == TlsLocalDynamicRel;
   }
 
-  bool isTlsGlobalDynamicReloc(unsigned Type) const {
+  bool isTlsGlobalDynamicRel(unsigned Type) const {
     return Type == TlsGlobalDynamicRel;
   }
 
-  virtual unsigned getDynReloc(unsigned Type) const { return Type; }
+  virtual unsigned getDynRel(unsigned Type) const { return Type; }
 
-  virtual bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const {
+  virtual bool isTlsDynRel(unsigned Type, const SymbolBody &S) const {
     return false;
   }
 
   virtual unsigned getTlsGotRel(unsigned Type = -1) const { return TlsGotRel; }
 
-  virtual void writeGotHeaderEntries(uint8_t *Buf) const;
-  virtual void writeGotPltHeaderEntries(uint8_t *Buf) const;
-  virtual void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const = 0;
-  virtual void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                 uint64_t PltEntryAddr) const = 0;
-  virtual void writePltEntry(uint8_t *Buf, uint64_t GotAddr,
-                             uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                             int32_t Index, unsigned RelOff) const = 0;
+  virtual void writeGotHeader(uint8_t *Buf) const;
+  virtual void writeGotPltHeader(uint8_t *Buf) const;
+  virtual void writeGotPlt(uint8_t *Buf, uint64_t Plt) const = 0;
+  virtual void writePltZero(uint8_t *Buf, uint64_t GotEntryAddr,
+                            uint64_t PltEntryAddr) const = 0;
+  virtual void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+                        uint64_t PltEntryAddr, int32_t Index,
+                        unsigned RelOff) const = 0;
 
   // Returns true if a relocation is just a hint for linker to make for example
   // some code optimization. Such relocations should not be handled as a regular
   // ones and lead to dynamic relocation creation etc.
-  virtual bool isHintReloc(uint32_t Type) const;
+  virtual bool isHintRel(uint32_t Type) const;
 
   // Returns true if a relocation is relative to the place being relocated,
   // such as relocations used for PC-relative instructions. Such relocations
@@ -60,19 +60,18 @@ public:
   // dynamic linker if isRelRelative returns true.
   virtual bool isRelRelative(uint32_t Type) const;
 
-  virtual bool isSizeReloc(uint32_t Type) const;
-  virtual bool relocNeedsDynRelative(unsigned Type) const { return false; }
-  virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
-  virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
+  virtual bool isSizeRel(uint32_t Type) const;
+  virtual bool needsDynRelative(unsigned Type) const { return false; }
+  virtual bool needsGot(uint32_t Type, const SymbolBody &S) const = 0;
+  virtual bool needsPlt(uint32_t Type, const SymbolBody &S) const = 0;
   virtual void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                            uint64_t P, uint64_t SA, uint64_t ZA = 0,
                            uint8_t *PairedLoc = nullptr) const = 0;
   virtual bool isGotRelative(uint32_t Type) const;
   virtual bool canRelaxTls(unsigned Type, const SymbolBody *S) const;
   virtual bool needsCopyRel(uint32_t Type, const SymbolBody &S) const;
-  virtual unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd,
-                                       uint32_t Type, uint64_t P, uint64_t SA,
-                                       const SymbolBody *S) const;
+  virtual unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                            uint64_t P, uint64_t SA, const SymbolBody *S) const;
   virtual ~TargetInfo();
 
   unsigned PageSize = 4096;
