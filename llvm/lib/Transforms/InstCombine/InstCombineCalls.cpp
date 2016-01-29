@@ -640,7 +640,8 @@ static Value *SimplifyX86vperm2(const IntrinsicInst &II,
 
 /// Decode XOP integer vector comparison intrinsics.
 static Value *SimplifyX86vpcom(const IntrinsicInst &II,
-                               InstCombiner::BuilderTy &Builder, bool IsSigned) {
+                               InstCombiner::BuilderTy &Builder,
+                               bool IsSigned) {
   if (auto *CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
     uint64_t Imm = CInt->getZExtValue() & 0x7;
     VectorType *VecTy = cast<VectorType>(II.getType());
@@ -669,7 +670,8 @@ static Value *SimplifyX86vpcom(const IntrinsicInst &II,
       return ConstantInt::getSigned(VecTy, -1); // TRUE
     }
 
-    if (Value *Cmp = Builder.CreateICmp(Pred, II.getArgOperand(0), II.getArgOperand(1)))
+    if (Value *Cmp = Builder.CreateICmp(Pred, II.getArgOperand(0),
+                                        II.getArgOperand(1)))
       return Builder.CreateSExtOrTrunc(Cmp, VecTy);
   }
   return nullptr;
@@ -1769,7 +1771,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // TODO: provide a hook for this in GCStrategy.  There might be some weird
     // collector this property does not hold for.
     if (isa<ConstantPointerNull>(DerivedPtr)) {
-      // gc_relocate is uncasted. Use null-pointer of gc_relocate's type to replace it.
+      // gc_relocate is uncasted. Use null-pointer of gc_relocate's type to
+      // replace it.
       return ReplaceInstUsesWith(*II, ConstantPointerNull::get(GCRelocateType));
     }
 
@@ -1941,7 +1944,8 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   unsigned ArgNo = 0;
 
   for (Value *V : CS.args()) {
-    if (V->getType()->isPointerTy() && !CS.paramHasAttr(ArgNo+1, Attribute::NonNull) &&
+    if (V->getType()->isPointerTy() &&
+        !CS.paramHasAttr(ArgNo + 1, Attribute::NonNull) &&
         isKnownNonNullAt(V, CS.getInstruction(), DT, TLI))
       Indices.push_back(ArgNo + 1);
     ArgNo++;
