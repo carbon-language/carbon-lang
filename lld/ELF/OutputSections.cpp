@@ -251,7 +251,7 @@ bool RelocationSection<ELFT>::applyTlsDynamicReloc(SymbolBody *Body,
   if (!Body || !Target->isTlsGlobalDynamicReloc(Type))
     return false;
 
-  if (Target->isTlsOptimized(Type, Body)) {
+  if (Target->canRelaxTls(Type, Body)) {
     P->setSymbolAndType(Body->DynamicSymbolTableIndex,
                         Target->getTlsGotReloc(), Config->Mips64EL);
     P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);

@@ -201,7 +201,7 @@ template <class ELFT, class RelT>
 static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
                                 InputSectionBase<ELFT> &C, RelT &RI) {
   if (Target->isTlsLocalDynamicReloc(Type)) {
-    if (Target->isTlsOptimized(Type, nullptr))
+    if (Target->canRelaxTls(Type, nullptr))
       return true;
     if (Out<ELFT>::Got->addCurrentModuleTlsIndex())
       Out<ELFT>::RelaDyn->addReloc({&C, &RI});
@@ -212,7 +212,7 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
     return false;
 
   if (Target->isTlsGlobalDynamicReloc(Type)) {
-    bool Opt = Target->isTlsOptimized(Type, Body);
+    bool Opt = Target->canRelaxTls(Type, Body);
     if (!Opt && Out<ELFT>::Got->addDynTlsEntry(Body)) {
       Out<ELFT>::RelaDyn->addReloc({&C, &RI});
       Out<ELFT>::RelaDyn->addReloc({nullptr, nullptr});

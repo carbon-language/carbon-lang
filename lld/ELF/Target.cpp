@@ -102,7 +102,7 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
-  bool isTlsOptimized(unsigned Type, const SymbolBody *S) const override;
+  bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
   unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                uint64_t P, uint64_t SA,
                                const SymbolBody *S) const override;
@@ -137,7 +137,7 @@ public:
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool isTlsOptimized(unsigned Type, const SymbolBody *S) const override;
+  bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
   bool isSizeReloc(uint32_t Type) const override;
   unsigned relocateTlsOptimize(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                uint64_t P, uint64_t SA,
@@ -274,7 +274,7 @@ TargetInfo *createTarget() {
 
 TargetInfo::~TargetInfo() {}
 
-bool TargetInfo::isTlsOptimized(unsigned Type, const SymbolBody *S) const {
+bool TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
   return false;
 }
 
@@ -400,9 +400,9 @@ bool X86TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 
 bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   if (S.isTls() && Type == R_386_TLS_GD)
-    return Target->isTlsOptimized(Type, &S) && canBePreempted(&S, true);
+    return Target->canRelaxTls(Type, &S) && canBePreempted(&S, true);
   if (Type == R_386_TLS_GOTIE || Type == R_386_TLS_IE)
-    return !isTlsOptimized(Type, &S);
+    return !canRelaxTls(Type, &S);
   return Type == R_386_GOT32 || relocNeedsPlt(Type, S);
 }
 
@@ -467,7 +467,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   }
 }
 
-bool X86TargetInfo::isTlsOptimized(unsigned Type, const SymbolBody *S) const {
+bool X86TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
   if (Config->Shared || (S && !S->isTls()))
     return false;
   return Type == R_386_TLS_LDO_32 || Type == R_386_TLS_LDM ||
@@ -672,9 +672,9 @@ bool X86_64TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   if (Type == R_X86_64_TLSGD)
-    return Target->isTlsOptimized(Type, &S) && canBePreempted(&S, true);
+    return Target->canRelaxTls(Type, &S) && canBePreempted(&S, true);
   if (Type == R_X86_64_GOTTPOFF)
-    return !isTlsOptimized(Type, &S);
+    return !canRelaxTls(Type, &S);
   return Type == R_X86_64_GOTPCREL || relocNeedsPlt(Type, S);
 }
 
@@ -743,8 +743,7 @@ bool X86_64TargetInfo::isSizeReloc(uint32_t Type) const {
   return Type == R_X86_64_SIZE32 || Type == R_X86_64_SIZE64;
 }
 
-bool X86_64TargetInfo::isTlsOptimized(unsigned Type,
-                                      const SymbolBody *S) const {
+bool X86_64TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
   if (Config->Shared || (S && !S->isTls()))
     return false;
   return Type == R_X86_64_TLSGD || Type == R_X86_64_TLSLD ||

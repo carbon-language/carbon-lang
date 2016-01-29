@@ -156,7 +156,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     auto NextRelocs = llvm::make_range(&RI, Rels.end());
 
     if (Target->isTlsLocalDynamicReloc(Type) &&
-        !Target->isTlsOptimized(Type, nullptr)) {
+        !Target->canRelaxTls(Type, nullptr)) {
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
                           Out<ELFT>::Got->getLocalTlsIndexVA() +
                               getAddend<ELFT>(RI));
@@ -168,7 +168,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     if (SymIndex >= SymTab->sh_info)
       Body = File->getSymbolBody(SymIndex)->repl();
 
-    if (Target->isTlsOptimized(Type, Body)) {
+    if (Target->canRelaxTls(Type, Body)) {
       uintX_t SymVA;
       if (!Body)
         SymVA = getLocalRelTarget(*File, RI, 0);
@@ -207,7 +207,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     }
 
     if (Target->isTlsGlobalDynamicReloc(Type) &&
-        !Target->isTlsOptimized(Type, Body)) {
+        !Target->canRelaxTls(Type, Body)) {
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
                           Out<ELFT>::Got->getGlobalDynAddr(*Body) +
                               getAddend<ELFT>(RI));
