@@ -335,6 +335,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   for (std::unique_ptr<InputFile> &F : Files)
     Symtab.addFile(std::move(F));
+  if (HasError)
+    return; // There were duplicate symbols or incompatible files
 
   for (StringRef S : Config->Undefined)
     Symtab.addUndefinedOpt(S);
