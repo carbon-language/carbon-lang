@@ -94,8 +94,8 @@ unsigned CodeViewContext::getStringTableOffset(StringRef S) {
 
 void CodeViewContext::emitStringTable(MCObjectStreamer &OS) {
   MCContext &Ctx = OS.getContext();
-  MCSymbol *StringBegin = Ctx.createTempSymbol("strtab_begin"),
-           *StringEnd = Ctx.createTempSymbol("strtab_end");
+  MCSymbol *StringBegin = Ctx.createTempSymbol("strtab_begin", false),
+           *StringEnd = Ctx.createTempSymbol("strtab_end", false);
 
   OS.EmitIntValue(unsigned(ModuleSubstreamKind::StringTable), 4);
   OS.emitAbsoluteSymbolDiff(StringEnd, StringBegin, 4);
@@ -116,8 +116,8 @@ void CodeViewContext::emitStringTable(MCObjectStreamer &OS) {
 
 void CodeViewContext::emitFileChecksums(MCObjectStreamer &OS) {
   MCContext &Ctx = OS.getContext();
-  MCSymbol *FileBegin = Ctx.createTempSymbol("filechecksums_begin"),
-           *FileEnd = Ctx.createTempSymbol("filechecksums_end");
+  MCSymbol *FileBegin = Ctx.createTempSymbol("filechecksums_begin", false),
+           *FileEnd = Ctx.createTempSymbol("filechecksums_end", false);
 
   OS.EmitIntValue(unsigned(ModuleSubstreamKind::FileChecksums), 4);
   OS.emitAbsoluteSymbolDiff(FileEnd, FileBegin, 4);
@@ -141,8 +141,8 @@ void CodeViewContext::emitLineTableForFunction(MCObjectStreamer &OS,
                                                const MCSymbol *FuncBegin,
                                                const MCSymbol *FuncEnd) {
   MCContext &Ctx = OS.getContext();
-  MCSymbol *LineBegin = Ctx.createTempSymbol("linetable_begin"),
-           *LineEnd = Ctx.createTempSymbol("linetable_end");
+  MCSymbol *LineBegin = Ctx.createTempSymbol("linetable_begin", false),
+           *LineEnd = Ctx.createTempSymbol("linetable_end", false);
 
   OS.EmitIntValue(unsigned(ModuleSubstreamKind::Lines), 4);
   OS.emitAbsoluteSymbolDiff(LineEnd, LineBegin, 4);
