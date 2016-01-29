@@ -37,38 +37,72 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public AsmPrinterHandler {
   // to the end of the function.
   struct FunctionInfo {
     DebugLoc LastLoc;
-    MCSymbol *End = nullptr;
-    unsigned FuncId = 0;
-    unsigned LastFileId;
-    bool HaveLineInfo = false;
+    SmallVector<MCSymbol *, 10> Instrs;
+    MCSymbol *End;
+    FunctionInfo() : End(nullptr) {}
   };
   FunctionInfo *CurFn;
 
-  unsigned NextFuncId = 0;
+  typedef DenseMap<const Function *, FunctionInfo> FnDebugInfoTy;
+  FnDebugInfoTy FnDebugInfo;
+  // Store the functions we've visited in a vector so we can maintain a stable
+  // order while emitting subsections.
+  SmallVector<const Function *, 10> VisitedFunctions;
 
-  /// Remember some debug info about each function. Keep it in a stable order to
-  /// emit at the end of the TU.
-  MapVector<const Function *, FunctionInfo> FnDebugInfo;
+  DenseMap<MCSymbol *, DebugLoc> LabelsAndLocs;
 
-  /// Map from DIFile to .cv_file id.
-  DenseMap<const DIFile *, unsigned> FileIdMap;
+  // FileNameRegistry - Manages filenames observed while generating debug info
+  // by filtering out duplicates and bookkeeping the offsets in the string
+  // table to be generated.
+  struct FileNameRegistryTy {
+    SmallVector<StringRef, 10> Filenames;
+    struct PerFileInfo {
+      size_t FilenameID, StartOffset;
+    };
+    StringMap<PerFileInfo> Infos;
+
+    // The offset in the string table where we'll write the next unique
+    // filename.
+    size_t LastOffset;
+
+    FileNameRegistryTy() {
+      clear();
+    }
+
+    // Add Filename to the registry, if it was not observed before.
+    size_t add(StringRef Filename) {
+      size_t OldSize = Infos.size();
+      bool Inserted;
+      StringMap<PerFileInfo>::iterator It;
+      std::tie(It, Inserted) = Infos.insert(
+          std::make_pair(Filename, PerFileInfo{OldSize, LastOffset}));
+      if (Inserted) {
+        LastOffset += Filename.size() + 1;
+        Filenames.push_back(Filename);
+      }
+      return It->second.FilenameID;
+    }
+
+    void clear() {
+      LastOffset = 1;
+      Infos.clear();
+      Filenames.clear();
+    }
+  } FileNameRegistry;
 
   typedef std::map<const DIFile *, std::string> FileToFilepathMapTy;
   FileToFilepathMapTy FileToFilepathMap;
   StringRef getFullFilepath(const DIFile *S);
 
-  unsigned maybeRecordFile(const DIFile *F);
-
   void maybeRecordLocation(DebugLoc DL, const MachineFunction *MF);
 
   void clear() {
     assert(CurFn == nullptr);
-    FileIdMap.clear();
-    FnDebugInfo.clear();
-    FileToFilepathMap.clear();
+    FileNameRegistry.clear();
+    LabelsAndLocs.clear();
   }
 
-  void emitDebugInfoForFunction(const Function *GV, FunctionInfo &FI);
+  void emitDebugInfoForFunction(const Function *GV);
 
 public:
   CodeViewDebug(AsmPrinter *Asm);

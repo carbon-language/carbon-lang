@@ -10,7 +10,6 @@ add_llvm_library(LLVMMC
   MCAssembler.cpp
   MCCodeEmitter.cpp
   MCCodeGenInfo.cpp
-  MCCodeView.cpp
   MCContext.cpp
   MCDwarf.cpp
   MCELFObjectTargetWriter.cpp
