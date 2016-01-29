@@ -826,8 +826,7 @@ void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   Sections.push_back(S);
   S->OutSec = this;
   uint32_t Align = S->getAlign();
-  if (Align > this->Header.sh_addralign)
-    this->Header.sh_addralign = Align;
+  this->updateAlign(Align);
 
   uintX_t Off = this->Header.sh_size;
   Off = alignTo(Off, Align);
@@ -1098,10 +1097,7 @@ void EHOutputSection<ELFT>::addSectionAux(
   const endianness E = ELFT::TargetEndianness;
 
   S->OutSec = this;
-  uint32_t Align = S->getAlign();
-  if (Align > this->Header.sh_addralign)
-    this->Header.sh_addralign = Align;
-
+  this->updateAlign(S->getAlign());
   Sections.push_back(S);
 
   ArrayRef<uint8_t> SecData = S->getSectionData();
@@ -1285,9 +1281,7 @@ template <class ELFT>
 void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *S = cast<MergeInputSection<ELFT>>(C);
   S->OutSec = this;
-  uint32_t Align = S->getAlign();
-  if (Align > this->Header.sh_addralign)
-    this->Header.sh_addralign = Align;
+  this->updateAlign(S->getAlign());
 
   ArrayRef<uint8_t> D = S->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
