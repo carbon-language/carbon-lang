@@ -21,9 +21,10 @@ namespace performance {
 // isn't any implicit conversion).
 class ImplicitCastInLoopCheck : public ClangTidyCheck {
  public:
-  using ClangTidyCheck::ClangTidyCheck;
-  void registerMatchers(ast_matchers::MatchFinder *Finder) override;
-  void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+   ImplicitCastInLoopCheck(StringRef Name, ClangTidyContext *Context)
+       : ClangTidyCheck(Name, Context) {}
+   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
+   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
  private:
   void ReportAndFix(const ASTContext *Context, const VarDecl *VD,
