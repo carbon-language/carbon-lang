@@ -46,8 +46,7 @@ public:
   // If lazy binding is supported, the first entry of the PLT has code
   // to call the dynamic linker to resolve PLT entries the first time
   // they are called. This function writes that code.
-  virtual void writePltZero(uint8_t *Buf, uint64_t GotAddr,
-                            uint64_t PltAddr) const = 0;
+  virtual void writePltZero(uint8_t *Buf) const = 0;
 
   virtual void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                         uint64_t PltEntryAddr, int32_t Index,

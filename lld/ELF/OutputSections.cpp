@@ -192,7 +192,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   bool LazyReloc = Target->UseLazyBinding;
   if (LazyReloc) {
     // First write PLT[0] entry which is special.
-    Target->writePltZero(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
+    Target->writePltZero(Buf);
     Off += Target->PltZeroSize;
   }
   for (auto &I : Entries) {
