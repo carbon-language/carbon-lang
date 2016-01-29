@@ -189,21 +189,18 @@ PltSection<ELFT>::PltSection()
 
 template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   size_t Off = 0;
-  bool LazyReloc = Target->UseLazyBinding;
-  if (LazyReloc) {
+  if (Target->UseLazyBinding) {
     // First write PLT[0] entry which is special.
     Target->writePltZero(Buf);
     Off += Target->PltZeroSize;
   }
   for (auto &I : Entries) {
-    const SymbolBody *E = I.first;
+    const SymbolBody *B = I.first;
     unsigned RelOff = I.second;
-    uint64_t GotVA =
-        LazyReloc ? Out<ELFT>::GotPlt->getVA() : Out<ELFT>::Got->getVA();
-    uint64_t GotE = LazyReloc ? Out<ELFT>::GotPlt->getEntryAddr(*E)
-                              : Out<ELFT>::Got->getEntryAddr(*E);
+    uint64_t Got = Target->UseLazyBinding ? Out<ELFT>::GotPlt->getEntryAddr(*B)
+                                          : Out<ELFT>::Got->getEntryAddr(*B);
     uint64_t Plt = this->getVA() + Off;
-    Target->writePlt(Buf + Off, GotVA, GotE, Plt, E->PltIndex, RelOff);
+    Target->writePlt(Buf + Off, Got, Plt, B->PltIndex, RelOff);
     Off += Target->PltEntrySize;
   }
 }

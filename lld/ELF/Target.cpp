@@ -91,9 +91,8 @@ public:
   bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                int32_t Index, unsigned RelOff) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
   bool needsDynRelative(unsigned Type) const override;
   bool needsGot(uint32_t Type, const SymbolBody &S) const override;
@@ -124,9 +123,8 @@ public:
   void writeGotPltHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                int32_t Index, unsigned RelOff) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
   bool needsGot(uint32_t Type, const SymbolBody &S) const override;
   bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
@@ -162,9 +160,8 @@ public:
 class PPC64TargetInfo final : public TargetInfo {
 public:
   PPC64TargetInfo();
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                int32_t Index, unsigned RelOff) const override;
   bool needsGot(uint32_t Type, const SymbolBody &S) const override;
   bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -179,9 +176,8 @@ public:
   unsigned getDynRel(unsigned Type) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
+  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+                int32_t Index, unsigned RelOff) const override;
   unsigned getTlsGotRel(unsigned Type = -1) const override;
   bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
@@ -357,18 +353,21 @@ void X86TargetInfo::writePltZero(uint8_t *Buf) const {
   write32le(Buf + 8, Got + 8); // GOT+8
 }
 
-void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                             uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                             int32_t Index, unsigned RelOff) const {
+void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+                             uint64_t PltEntryAddr, int32_t Index,
+                             unsigned RelOff) const {
   const uint8_t Inst[] = {
       0xff, 0x00, 0x00, 0x00, 0x00, 0x00, // jmp *foo_in_GOT|*foo@GOT(%ebx)
       0x68, 0x00, 0x00, 0x00, 0x00,       // pushl $reloc_offset
       0xe9, 0x00, 0x00, 0x00, 0x00        // jmp .PLT0@PC
   };
   memcpy(Buf, Inst, sizeof(Inst));
+
   // jmp *foo@GOT(%ebx) or jmp *foo_in_GOT
   Buf[1] = Config->Shared ? 0xa3 : 0x25;
-  write32le(Buf + 2, Config->Shared ? (GotEntryAddr - GotAddr) : GotEntryAddr);
+  uint32_t Got = UseLazyBinding ? Out<ELF32LE>::GotPlt->getVA()
+                                : Out<ELF32LE>::Got->getVA();
+  write32le(Buf + 2, Config->Shared ? GotEntryAddr - Got : GotEntryAddr);
   write32le(Buf + 7, RelOff);
   write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
 }
@@ -627,9 +626,9 @@ void X86_64TargetInfo::writePltZero(uint8_t *Buf) const {
   write32le(Buf + 8, Got - Plt + 4); // GOT+16
 }
 
-void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                                uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                                int32_t Index, unsigned RelOff) const {
+void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+                                uint64_t PltEntryAddr, int32_t Index,
+                                unsigned RelOff) const {
   const uint8_t Inst[] = {
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *got(%rip)
       0x68, 0x00, 0x00, 0x00, 0x00,       // pushq <relocation index>
@@ -975,9 +974,9 @@ uint64_t getPPC64TocBase() {
   return TocVA + 0x8000;
 }
 
-void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                               uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                               int32_t Index, unsigned RelOff) const {
+void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+                               uint64_t PltEntryAddr, int32_t Index,
+                               unsigned RelOff) const {
   uint64_t Off = GotEntryAddr - getPPC64TocBase();
 
   // FIXME: What we should do, in theory, is get the offset of the function
@@ -1191,9 +1190,9 @@ void AArch64TargetInfo::writePltZero(uint8_t *Buf) const {
               Got + 16);
 }
 
-void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                                 uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                                 int32_t Index, unsigned RelOff) const {
+void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+                                 uint64_t PltEntryAddr, int32_t Index,
+                                 unsigned RelOff) const {
   const uint8_t Inst[] = {
       0x10, 0x00, 0x00, 0x90, // adrp x16, Page(&(.plt.got[n]))
       0x11, 0x02, 0x40, 0xf9, // ldr  x17, [x16, Offset(&(.plt.got[n]))]

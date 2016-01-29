@@ -36,7 +36,7 @@ public:
   // they are called. This function writes that code.
   virtual void writePltZero(uint8_t *Buf) const {}
 
-  virtual void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
+  virtual void writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
                         uint64_t PltEntryAddr, int32_t Index,
                         unsigned RelOff) const {}
 
