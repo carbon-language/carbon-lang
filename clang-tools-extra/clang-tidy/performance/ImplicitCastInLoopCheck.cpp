@@ -36,8 +36,7 @@ bool IsNonTrivialImplicitCast(const Stmt* ST) {
 }
 } // namespace
 
-void ImplicitCastInLoopCheck::registerMatchers(
-    ast_matchers::MatchFinder* Finder) {
+void ImplicitCastInLoopCheck::registerMatchers(MatchFinder *Finder) {
   // We look for const ref loop variables that (optionally inside an
   // ExprWithCleanup) materialize a temporary, and contain a implicit cast. The
   // check on the implicit cast is done in check() because we can't access
@@ -57,28 +56,25 @@ void ImplicitCastInLoopCheck::registerMatchers(
       this);
 }
 
-void ImplicitCastInLoopCheck::check(
-    const ast_matchers::MatchFinder::MatchResult &Result) {
+void ImplicitCastInLoopCheck::check(const MatchFinder::MatchResult &Result) {
   const auto* VD = Result.Nodes.getNodeAs<VarDecl>("faulty-var");
   const auto* Init = Result.Nodes.getNodeAs<Expr>("init");
   const auto* OperatorCall =
       Result.Nodes.getNodeAs<CXXOperatorCallExpr>("operator-call");
 
-  if (const auto* Cleanup = dyn_cast<ExprWithCleanups>(Init)) {
+  if (const auto* Cleanup = dyn_cast<ExprWithCleanups>(Init))
     Init = Cleanup->getSubExpr();
-  }
+
   const auto* Materialized = dyn_cast<MaterializeTemporaryExpr>(Init);
-  if (!Materialized) {
+  if (!Materialized)
     return;
-  }
 
   // We ignore NoOp casts. Those are generated if the * operator on the
   // iterator returns a value instead of a reference, and the loop variable
   // is a reference. This situation is fine (it probably produces the same
   // code at the end).
-  if (IsNonTrivialImplicitCast(Materialized->getTemporary())) {
+  if (IsNonTrivialImplicitCast(Materialized->getTemporary()))
     ReportAndFix(Result.Context, VD, OperatorCall);
-  }
 }
 
 void ImplicitCastInLoopCheck::ReportAndFix(
