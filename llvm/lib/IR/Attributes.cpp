@@ -599,7 +599,7 @@ uint64_t AttributeSetImpl::Raw(unsigned Index) const {
   return 0;
 }
 
-void AttributeSetImpl::dump() const {
+LLVM_DUMP_METHOD void AttributeSetImpl::dump() const {
   AttributeSet(const_cast<AttributeSetImpl *>(this)).dump();
 }
 
@@ -1102,7 +1102,7 @@ uint64_t AttributeSet::Raw(unsigned Index) const {
   return pImpl ? pImpl->Raw(Index) : 0;
 }
 
-void AttributeSet::dump() const {
+LLVM_DUMP_METHOD void AttributeSet::dump() const {
   dbgs() << "PAL[\n";
 
   for (unsigned i = 0, e = getNumSlots(); i < e; ++i) {
