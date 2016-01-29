@@ -252,16 +252,16 @@ bool RelocationSection<ELFT>::applyTlsDynamicReloc(SymbolBody *Body,
     return false;
 
   if (Target->canRelaxTls(Type, Body)) {
-    P->setSymbolAndType(Body->DynamicSymbolTableIndex, Target->getTlsGotRel(),
+    P->setSymbolAndType(Body->DynsymIndex, Target->getTlsGotRel(),
                         Config->Mips64EL);
     P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
     return true;
   }
 
-  P->setSymbolAndType(Body->DynamicSymbolTableIndex, Target->TlsModuleIndexRel,
+  P->setSymbolAndType(Body->DynsymIndex, Target->TlsModuleIndexRel,
                       Config->Mips64EL);
   P->r_offset = Out<ELFT>::Got->getGlobalDynAddr(*Body);
-  N->setSymbolAndType(Body->DynamicSymbolTableIndex, Target->TlsOffsetRel,
+  N->setSymbolAndType(Body->DynsymIndex, Target->TlsOffsetRel,
                       Config->Mips64EL);
   N->r_offset = Out<ELFT>::Got->getGlobalDynAddr(*Body) + sizeof(uintX_t);
   return true;
@@ -300,8 +300,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     // Emit a copy relocation.
     auto *SS = dyn_cast_or_null<SharedSymbol<ELFT>>(Body);
     if (SS && SS->NeedsCopy) {
-      P->setSymbolAndType(Body->DynamicSymbolTableIndex, Target->CopyRel,
-                          Config->Mips64EL);
+      P->setSymbolAndType(Body->DynsymIndex, Target->CopyRel, Config->Mips64EL);
       P->r_offset = Out<ELFT>::Bss->getVA() + SS->OffsetInBss;
       continue;
     }
@@ -334,8 +333,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       Reloc = Body->isTls() ? Target->getTlsGotRel() : Target->GotRel;
     else
       Reloc = Target->getDynReloc(Type);
-    P->setSymbolAndType(CBP ? Body->DynamicSymbolTableIndex : 0, Reloc,
-                        Config->Mips64EL);
+    P->setSymbolAndType(CBP ? Body->DynsymIndex : 0, Reloc, Config->Mips64EL);
 
     if (LazyReloc)
       P->r_offset = Out<ELFT>::GotPlt->getEntryAddr(*Body);
@@ -431,7 +429,7 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
        Out<ELFT>::DynSymTab->getSymbols()) {
     SymbolBody *Body = P.first;
     StringRef Name = Body->getName();
-    unsigned I = Body->DynamicSymbolTableIndex;
+    unsigned I = Body->DynsymIndex;
     uint32_t Hash = hashSysv(Name) % NumSymbols;
     Chains[I] = Buckets[Hash];
     Buckets[Hash] = I;
@@ -543,7 +541,7 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
     int Bucket = Item.Hash % NBuckets;
     assert(PrevBucket <= Bucket);
     if (Bucket != PrevBucket) {
-      Buckets[Bucket] = Item.Body->DynamicSymbolTableIndex;
+      Buckets[Bucket] = Item.Body->DynsymIndex;
       PrevBucket = Bucket;
       if (I > 0)
         Values[I - 1] |= 1;
@@ -698,7 +696,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_MIPS_SYMTABNO, Out<ELFT>::DynSymTab->getNumSymbols()});
     Add({DT_MIPS_LOCAL_GOTNO, Out<ELFT>::Got->getMipsLocalEntriesNum()});
     if (const SymbolBody *B = Out<ELFT>::Got->getMipsFirstGlobalEntry())
-      Add({DT_MIPS_GOTSYM, B->DynamicSymbolTableIndex});
+      Add({DT_MIPS_GOTSYM, B->DynsymIndex});
     else
       Add({DT_MIPS_GOTSYM, Out<ELFT>::DynSymTab->getNumSymbols()});
     Add({DT_PLTGOT, Out<ELFT>::Got});
@@ -1418,7 +1416,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
     std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
   size_t I = 0;
   for (const std::pair<SymbolBody *, unsigned> &P : Symbols)
-    P.first->DynamicSymbolTableIndex = ++I;
+    P.first->DynsymIndex = ++I;
 }
 
 template <class ELFT>
