@@ -263,21 +263,20 @@ ScriptSummaryFormat::GetDescription ()
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
                  HideNames(nullptr) ? " (hide member names)" : "");
-    if (m_function_name.empty())
+    if (m_python_script.empty())
     {
-        if (m_python_script.empty())
+        if (m_function_name.empty())
         {
             sstr.PutCString("no backing script");
         }
         else
         {
-            sstr.PutCString(m_python_script.c_str());
+            sstr.PutCString(m_function_name.c_str());
         }
     }
     else
     {
-        sstr.PutCString(m_function_name.c_str());
+        sstr.PutCString(m_python_script.c_str());
     }
     return sstr.GetString();
-    
 }
