@@ -681,7 +681,7 @@ template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
   return true;
 }
 
-static bool includeInDynamicSymtab(const SymbolBody &B) {
+static bool includeInDynsym(const SymbolBody &B) {
   uint8_t V = B.getVisibility();
   if (V != STV_DEFAULT && V != STV_PROTECTED)
     return false;
@@ -884,7 +884,7 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
     if (Out<ELFT>::SymTab)
       Out<ELFT>::SymTab->addSymbol(Body);
 
-    if (isOutputDynamic() && includeInDynamicSymtab(*Body))
+    if (isOutputDynamic() && includeInDynsym(*Body))
       Out<ELFT>::DynSymTab->addSymbol(Body);
   }
 

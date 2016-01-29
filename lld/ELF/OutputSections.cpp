@@ -554,7 +554,7 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
 }
 
 static bool includeInGnuHashTable(SymbolBody *B) {
-  // Assume that includeInDynamicSymtab() is already checked.
+  // Assume that includeInDynsym() is already checked.
   return !B->isUndefined();
 }
 
