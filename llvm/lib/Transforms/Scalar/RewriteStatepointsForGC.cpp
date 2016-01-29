@@ -1523,21 +1523,18 @@ static void StabilizeOrder(SmallVectorImpl<Value *> &BaseVec,
   struct BaseDerivedPair {
     Value *Base;
     Value *Derived;
-
-    BaseDerivedPair(Value *B, Value *D) : Base(B), Derived(D) {}
   };
 
   SmallVector<BaseDerivedPair, 64> NameOrdering;
   NameOrdering.reserve(BaseVec.size());
 
   for (size_t i = 0, e = BaseVec.size(); i < e; i++)
-    NameOrdering.emplace_back(BaseVec[i], LiveVec[i]);
+    NameOrdering.push_back({BaseVec[i], LiveVec[i]});
 
-  auto Compare = [](BaseDerivedPair &L, BaseDerivedPair &R) {
-    return L.Derived->getName() < R.Derived->getName();
-  };
-
-  std::sort(NameOrdering.begin(), NameOrdering.end(), Compare);
+  std::sort(NameOrdering.begin(), NameOrdering.end(),
+            [](BaseDerivedPair &L, BaseDerivedPair &R) {
+              return L.Derived->getName() < R.Derived->getName();
+            });
 
   for (size_t i = 0; i < BaseVec.size(); i++) {
     BaseVec[i] = NameOrdering[i].Base;
