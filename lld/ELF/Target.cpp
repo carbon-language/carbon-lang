@@ -153,11 +153,6 @@ private:
 class PPCTargetInfo final : public TargetInfo {
 public:
   PPCTargetInfo();
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
   bool needsGot(uint32_t Type, const SymbolBody &S) const override;
   bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -169,8 +164,6 @@ public:
 class PPC64TargetInfo final : public TargetInfo {
 public:
   PPC64TargetInfo();
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                 uint64_t PltEntryAddr, int32_t Index,
                 unsigned RelOff) const override;
@@ -204,11 +197,6 @@ public:
 class AMDGPUTargetInfo final : public TargetInfo {
 public:
   AMDGPUTargetInfo();
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
   bool needsGot(uint32_t Type, const SymbolBody &S) const override;
   bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -221,11 +209,6 @@ public:
   MipsTargetInfo();
   unsigned getDynRel(unsigned Type) const override;
   void writeGotHeader(uint8_t *Buf) const override;
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
-  void writePltZero(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
-                uint64_t PltEntryAddr, int32_t Index,
-                unsigned RelOff) const override;
   bool needsGot(uint32_t Type, const SymbolBody &S) const override;
   bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -288,10 +271,6 @@ unsigned TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                               const SymbolBody *S) const {
   return 0;
 }
-
-void TargetInfo::writeGotHeader(uint8_t *Buf) const {}
-
-void TargetInfo::writeGotPltHeader(uint8_t *Buf) const {}
 
 X86TargetInfo::X86TargetInfo() {
   CopyRel = R_386_COPY;
@@ -929,11 +908,6 @@ static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
 static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPCTargetInfo::PPCTargetInfo() {}
-void PPCTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
-void PPCTargetInfo::writePltZero(uint8_t *Buf) const {}
-void PPCTargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                             uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                             int32_t Index, unsigned RelOff) const {}
 bool PPCTargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
@@ -994,8 +968,6 @@ uint64_t getPPC64TocBase() {
   return TocVA + 0x8000;
 }
 
-void PPC64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
-void PPC64TargetInfo::writePltZero(uint8_t *Buf) const {}
 void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
                                uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                                int32_t Index, unsigned RelOff) const {
@@ -1404,20 +1376,6 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 
 AMDGPUTargetInfo::AMDGPUTargetInfo() {}
 
-void AMDGPUTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
-  llvm_unreachable("not implemented");
-}
-
-void AMDGPUTargetInfo::writePltZero(uint8_t *Buf) const {
-  llvm_unreachable("not implemented");
-}
-
-void AMDGPUTargetInfo::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                                uint64_t GotEntryAddr, uint64_t PltEntryAddr,
-                                int32_t Index, unsigned RelOff) const {
-  llvm_unreachable("not implemented");
-}
-
 bool AMDGPUTargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
@@ -1458,16 +1416,6 @@ void MipsTargetInfo<ELFT>::writeGotHeader(uint8_t *Buf) const {
   // Module pointer
   P[1] = ELFT::Is64Bits ? 0x8000000000000000 : 0x80000000;
 }
-
-template <class ELFT>
-void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {}
-template <class ELFT>
-void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf) const {}
-template <class ELFT>
-void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotAddr,
-                                    uint64_t GotEntryAddr,
-                                    uint64_t PltEntryAddr, int32_t Index,
-                                    unsigned RelOff) const {}
 
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::needsGot(uint32_t Type, const SymbolBody &S) const {
