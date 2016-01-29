@@ -999,6 +999,10 @@ bool AttributeSet::hasAttributes(unsigned Index) const {
   return ASN && ASN->hasAttributes();
 }
 
+bool AttributeSet::hasFnAttribute(Attribute::AttrKind Kind) const {
+  return pImpl && pImpl->hasFnAttribute(Kind);
+}
+
 bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   if (!pImpl) return false;
 
