@@ -1287,6 +1287,7 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   StringRef Data((const char *)D.data(), D.size());
   uintX_t EntSize = S->getSectionHdr()->sh_entsize;
 
+  // If this is of type string, the contents are null-terminated strings.
   if (this->Header.sh_flags & SHF_STRINGS) {
     uintX_t Offset = 0;
     while (!Data.empty()) {
@@ -1302,12 +1303,14 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
       Data = Data.substr(Size);
       Offset += Size;
     }
-  } else {
-    for (unsigned I = 0, N = Data.size(); I != N; I += EntSize) {
-      StringRef Entry = Data.substr(I, EntSize);
-      size_t OutputOffset = Builder.add(Entry);
-      S->Offsets.push_back(std::make_pair(I, OutputOffset));
-    }
+    return;
+  }
+
+  // If this is not of type string, every entry has the same size.
+  for (unsigned I = 0, N = Data.size(); I != N; I += EntSize) {
+    StringRef Entry = Data.substr(I, EntSize);
+    size_t OutputOffset = Builder.add(Entry);
+    S->Offsets.push_back(std::make_pair(I, OutputOffset));
   }
 }
 
