@@ -1532,7 +1532,7 @@ static void StabilizeOrder(SmallVectorImpl<Value *> &BaseVec,
     NameOrdering.push_back({BaseVec[i], LiveVec[i]});
 
   std::sort(NameOrdering.begin(), NameOrdering.end(),
-            [](BaseDerivedPair &L, BaseDerivedPair &R) {
+            [](const BaseDerivedPair &L, const BaseDerivedPair &R) {
               return L.Derived->getName() < R.Derived->getName();
             });
 
