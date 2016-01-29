@@ -114,7 +114,7 @@ void LinkerDriver::addFile(StringRef Path) {
 
 // Add a given library by searching it from input search paths.
 void LinkerDriver::addLibrary(StringRef Name) {
-  StringRef Path = searchLibrary(Name);
+  std::string Path = searchLibrary(Name);
   if (Path.empty())
     error("Unable to find library -l" + Name);
   else
