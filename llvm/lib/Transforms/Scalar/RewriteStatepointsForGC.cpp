@@ -1516,33 +1516,32 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   CreateGCRelocates(LiveVariables, LiveStartIdx, BasePtrs, Token, Builder);
 }
 
-namespace {
-struct NameOrdering {
-  Value *Base;
-  Value *Derived;
-
-  bool operator()(NameOrdering const &a, NameOrdering const &b) {
-    return -1 == a.Derived->getName().compare(b.Derived->getName());
-  }
-};
-}
-
 static void StabilizeOrder(SmallVectorImpl<Value *> &BaseVec,
                            SmallVectorImpl<Value *> &LiveVec) {
   assert(BaseVec.size() == LiveVec.size());
 
-  SmallVector<NameOrdering, 64> Temp;
-  for (size_t i = 0; i < BaseVec.size(); i++) {
-    NameOrdering v;
-    v.Base = BaseVec[i];
-    v.Derived = LiveVec[i];
-    Temp.push_back(v);
-  }
+  struct BaseDerivedPair {
+    Value *Base;
+    Value *Derived;
 
-  std::sort(Temp.begin(), Temp.end(), NameOrdering());
+    BaseDerivedPair(Value *B, Value *D) : Base(B), Derived(D) {}
+  };
+
+  SmallVector<BaseDerivedPair, 64> NameOrdering;
+  NameOrdering.reserve(BaseVec.size());
+
+  for (size_t i = 0, e = BaseVec.size(); i < e; i++)
+    NameOrdering.emplace_back(BaseVec[i], LiveVec[i]);
+
+  auto Compare = [](BaseDerivedPair &L, BaseDerivedPair &R) {
+    return L.Derived->getName() < R.Derived->getName();
+  };
+
+  std::sort(NameOrdering.begin(), NameOrdering.end(), Compare);
+
   for (size_t i = 0; i < BaseVec.size(); i++) {
-    BaseVec[i] = Temp[i].Base;
-    LiveVec[i] = Temp[i].Derived;
+    BaseVec[i] = NameOrdering[i].Base;
+    LiveVec[i] = NameOrdering[i].Derived;
   }
 }
 
