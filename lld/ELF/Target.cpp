@@ -153,8 +153,6 @@ private:
 class PPCTargetInfo final : public TargetInfo {
 public:
   PPCTargetInfo();
-  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
@@ -196,9 +194,7 @@ public:
 
 class AMDGPUTargetInfo final : public TargetInfo {
 public:
-  AMDGPUTargetInfo();
-  bool needsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool needsPlt(uint32_t Type, const SymbolBody &S) const override;
+  AMDGPUTargetInfo() {}
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
@@ -258,13 +254,30 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
+bool TargetInfo::isTlsLocalDynamicRel(unsigned Type) const {
+  return Type == TlsLocalDynamicRel;
+}
+
+bool TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {
+  return Type == TlsGlobalDynamicRel;
+}
+
+bool TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
+  return false;
+}
+
 bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
-
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
-
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
-
 bool TargetInfo::isSizeRel(uint32_t Type) const { return false; }
+
+bool TargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
+
+bool TargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
 
 unsigned TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                               uint64_t P, uint64_t SA,
@@ -908,12 +921,6 @@ static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
 static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPCTargetInfo::PPCTargetInfo() {}
-bool PPCTargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-bool PPCTargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
 bool PPCTargetInfo::isRelRelative(uint32_t Type) const { return false; }
 
 void PPCTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
@@ -1372,16 +1379,6 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   default:
     fatal("unrecognized reloc " + Twine(Type));
   }
-}
-
-AMDGPUTargetInfo::AMDGPUTargetInfo() {}
-
-bool AMDGPUTargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-
-bool AMDGPUTargetInfo::needsPlt(uint32_t Type, const SymbolBody &S) const {
-  return false;
 }
 
 // Implementing relocations for AMDGPU is low priority since most

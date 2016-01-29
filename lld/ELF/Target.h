@@ -22,23 +22,11 @@ class SymbolBody;
 class TargetInfo {
 public:
   uint64_t getVAStart() const;
-
-  bool isTlsLocalDynamicRel(unsigned Type) const {
-    return Type == TlsLocalDynamicRel;
-  }
-
-  bool isTlsGlobalDynamicRel(unsigned Type) const {
-    return Type == TlsGlobalDynamicRel;
-  }
-
+  bool isTlsLocalDynamicRel(unsigned Type) const;
+  bool isTlsGlobalDynamicRel(unsigned Type) const;
   virtual unsigned getDynRel(unsigned Type) const { return Type; }
-
-  virtual bool isTlsDynRel(unsigned Type, const SymbolBody &S) const {
-    return false;
-  }
-
+  virtual bool isTlsDynRel(unsigned Type, const SymbolBody &S) const;
   virtual unsigned getTlsGotRel(unsigned Type = -1) const { return TlsGotRel; }
-
   virtual void writeGotHeader(uint8_t *Buf) const {}
   virtual void writeGotPltHeader(uint8_t *Buf) const {}
   virtual void writeGotPlt(uint8_t *Buf, uint64_t Plt) const {};
@@ -66,8 +54,8 @@ public:
 
   virtual bool isSizeRel(uint32_t Type) const;
   virtual bool needsDynRelative(unsigned Type) const { return false; }
-  virtual bool needsGot(uint32_t Type, const SymbolBody &S) const = 0;
-  virtual bool needsPlt(uint32_t Type, const SymbolBody &S) const = 0;
+  virtual bool needsGot(uint32_t Type, const SymbolBody &S) const;
+  virtual bool needsPlt(uint32_t Type, const SymbolBody &S) const;
   virtual void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                            uint64_t P, uint64_t SA, uint64_t ZA = 0,
                            uint8_t *PairedLoc = nullptr) const = 0;
