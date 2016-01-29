@@ -119,7 +119,7 @@ template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   GotSection<ELFT> Got;
   Out<ELFT>::Got = &Got;
   GotPltSection<ELFT> GotPlt;
-  if (Target->supportsLazyRelocations())
+  if (Target->UseLazyBinding)
     Out<ELFT>::GotPlt = &GotPlt;
   PltSection<ELFT> Plt;
   Out<ELFT>::Plt = &Plt;
@@ -140,7 +140,7 @@ template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
   Out<ELFT>::RelaDyn = &RelaDyn;
   RelocationSection<ELFT> RelaPlt(IsRela ? ".rela.plt" : ".rel.plt", IsRela);
-  if (Target->supportsLazyRelocations())
+  if (Target->UseLazyBinding)
     Out<ELFT>::RelaPlt = &RelaPlt;
   DynamicSection<ELFT> Dynamic(*Symtab);
   Out<ELFT>::Dynamic = &Dynamic;
@@ -265,7 +265,7 @@ void Writer<ELFT>::scanRelocs(
 
     if (Target->relocNeedsDynRelative(Type)) {
       RelType *Rel = new (Alloc) RelType;
-      Rel->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);
+      Rel->setSymbolAndType(0, Target->RelativeRel, Config->Mips64EL);
       Rel->r_offset = RI.r_offset;
       Out<ELFT>::RelaDyn->addReloc({&C, Rel});
     }
@@ -292,7 +292,7 @@ void Writer<ELFT>::scanRelocs(
       }
       NeedsGot = Target->relocNeedsGot(Type, *Body);
       if (NeedsGot) {
-        if (NeedsPlt && Target->supportsLazyRelocations()) {
+        if (NeedsPlt && Target->UseLazyBinding) {
           Out<ELFT>::GotPlt->addEntry(Body);
         } else {
           if (Body->isInGot())
@@ -349,7 +349,7 @@ void Writer<ELFT>::scanRelocs(
 
     if (CBP)
       Body->setUsedInDynamicReloc();
-    if (NeedsPlt && Target->supportsLazyRelocations())
+    if (NeedsPlt && Target->UseLazyBinding)
       Out<ELFT>::RelaPlt->addReloc({&C, &RI});
     else
       Out<ELFT>::RelaDyn->addReloc({&C, &RI});
@@ -1101,7 +1101,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
   // Add the first PT_LOAD segment for regular output sections.
   setPhdr(&Phdrs[++PhdrIdx], PT_LOAD, PF_R, 0, Target->getVAStart(), FileOff,
-          Target->getPageSize());
+          Target->PageSize);
 
   Elf_Phdr GnuRelroPhdr = {};
   Elf_Phdr TlsPhdr{};
@@ -1115,8 +1115,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       bool InRelRo = Config->ZRelro && (Flags & PF_W) && isRelroSection(Sec);
       bool FirstNonRelRo = GnuRelroPhdr.p_type && !InRelRo && !RelroAligned;
       if (FirstNonRelRo || PH->p_flags != Flags) {
-        VA = alignTo(VA, Target->getPageSize());
-        FileOff = alignTo(FileOff, Target->getPageSize());
+        VA = alignTo(VA, Target->PageSize);
+        FileOff = alignTo(FileOff, Target->PageSize);
         if (FirstNonRelRo)
           RelroAligned = true;
       }
@@ -1126,7 +1126,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         PH = &Phdrs[++PhdrIdx];
         uint32_t PTType = (Config->EMachine != EM_AMDGPU) ? (uint32_t)PT_LOAD
                                                           : getAmdgpuPhdr(Sec);
-        setPhdr(PH, PTType, Flags, FileOff, VA, 0, Target->getPageSize());
+        setPhdr(PH, PTType, Flags, FileOff, VA, 0, Target->PageSize);
       }
 
       if (Sec->getFlags() & SHF_TLS) {

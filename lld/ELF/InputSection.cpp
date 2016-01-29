@@ -226,7 +226,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       else
         SymVA = Out<ELFT>::Got->getEntryAddr(*Body);
       if (Body->isTls())
-        Type = Target->getTlsGotReloc(Type);
+        Type = Target->getTlsGotRel(Type);
     } else if (!Target->needsCopyRel(Type, *Body) &&
                isa<SharedSymbol<ELFT>>(*Body)) {
       continue;

@@ -87,7 +87,7 @@ public:
   X86TargetInfo();
   void writeGotPltHeaderEntries(uint8_t *Buf) const override;
   unsigned getDynReloc(unsigned Type) const override;
-  unsigned getTlsGotReloc(unsigned Type) const override;
+  unsigned getTlsGotRel(unsigned Type) const override;
   bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -198,7 +198,7 @@ public:
   void writePltEntry(uint8_t *Buf, uint64_t GotAddr, uint64_t GotEntryAddr,
                      uint64_t PltEntryAddr, int32_t Index,
                      unsigned RelOff) const override;
-  unsigned getTlsGotReloc(unsigned Type = -1) const override;
+  unsigned getTlsGotRel(unsigned Type = -1) const override;
   bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const override;
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
@@ -303,17 +303,17 @@ void TargetInfo::writeGotHeaderEntries(uint8_t *Buf) const {}
 void TargetInfo::writeGotPltHeaderEntries(uint8_t *Buf) const {}
 
 X86TargetInfo::X86TargetInfo() {
-  CopyReloc = R_386_COPY;
-  GotReloc = R_386_GLOB_DAT;
-  PltReloc = R_386_JUMP_SLOT;
-  IRelativeReloc = R_386_IRELATIVE;
-  RelativeReloc = R_386_RELATIVE;
-  TlsGotReloc = R_386_TLS_TPOFF;
-  TlsGlobalDynamicReloc = R_386_TLS_GD;
-  TlsLocalDynamicReloc = R_386_TLS_LDM;
-  TlsModuleIndexReloc = R_386_TLS_DTPMOD32;
-  TlsOffsetReloc = R_386_TLS_DTPOFF32;
-  LazyRelocations = true;
+  CopyRel = R_386_COPY;
+  GotRel = R_386_GLOB_DAT;
+  PltRel = R_386_JUMP_SLOT;
+  IRelativeRel = R_386_IRELATIVE;
+  RelativeRel = R_386_RELATIVE;
+  TlsGotRel = R_386_TLS_TPOFF;
+  TlsGlobalDynamicRel = R_386_TLS_GD;
+  TlsLocalDynamicRel = R_386_TLS_LDM;
+  TlsModuleIndexRel = R_386_TLS_DTPMOD32;
+  TlsOffsetRel = R_386_TLS_DTPOFF32;
+  UseLazyBinding = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 16;
 }
@@ -335,10 +335,10 @@ unsigned X86TargetInfo::getDynReloc(unsigned Type) const {
   return Type;
 }
 
-unsigned X86TargetInfo::getTlsGotReloc(unsigned Type) const {
+unsigned X86TargetInfo::getTlsGotRel(unsigned Type) const {
   if (Type == R_386_TLS_IE)
     return Type;
-  return TlsGotReloc;
+  return TlsGotRel;
 }
 
 bool X86TargetInfo::isTlsDynReloc(unsigned Type, const SymbolBody &S) const {
@@ -608,17 +608,17 @@ void X86TargetInfo::relocateTlsIeToLe(unsigned Type, uint8_t *Loc,
 }
 
 X86_64TargetInfo::X86_64TargetInfo() {
-  CopyReloc = R_X86_64_COPY;
-  GotReloc = R_X86_64_GLOB_DAT;
-  PltReloc = R_X86_64_JUMP_SLOT;
-  RelativeReloc = R_X86_64_RELATIVE;
-  IRelativeReloc = R_X86_64_IRELATIVE;
-  TlsGotReloc = R_X86_64_TPOFF64;
-  TlsLocalDynamicReloc = R_X86_64_TLSLD;
-  TlsGlobalDynamicReloc = R_X86_64_TLSGD;
-  TlsModuleIndexReloc = R_X86_64_DTPMOD64;
-  TlsOffsetReloc = R_X86_64_DTPOFF64;
-  LazyRelocations = true;
+  CopyRel = R_X86_64_COPY;
+  GotRel = R_X86_64_GLOB_DAT;
+  PltRel = R_X86_64_JUMP_SLOT;
+  RelativeRel = R_X86_64_RELATIVE;
+  IRelativeRel = R_X86_64_IRELATIVE;
+  TlsGotRel = R_X86_64_TPOFF64;
+  TlsLocalDynamicRel = R_X86_64_TLSLD;
+  TlsGlobalDynamicRel = R_X86_64_TLSGD;
+  TlsModuleIndexRel = R_X86_64_DTPMOD64;
+  TlsOffsetRel = R_X86_64_DTPOFF64;
+  UseLazyBinding = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 16;
 }
@@ -971,8 +971,8 @@ void PPCTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 PPC64TargetInfo::PPC64TargetInfo() {
-  GotReloc = R_PPC64_GLOB_DAT;
-  RelativeReloc = R_PPC64_RELATIVE;
+  GotRel = R_PPC64_GLOB_DAT;
+  RelativeRel = R_PPC64_RELATIVE;
   PltEntrySize = 32;
 
   // We need 64K pages (at least under glibc/Linux, the loader won't
@@ -1183,12 +1183,12 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 AArch64TargetInfo::AArch64TargetInfo() {
-  CopyReloc = R_AARCH64_COPY;
-  IRelativeReloc = R_AARCH64_IRELATIVE;
-  GotReloc = R_AARCH64_GLOB_DAT;
-  PltReloc = R_AARCH64_JUMP_SLOT;
-  TlsGotReloc = R_AARCH64_TLS_TPREL64;
-  LazyRelocations = true;
+  CopyRel = R_AARCH64_COPY;
+  IRelativeRel = R_AARCH64_IRELATIVE;
+  GotRel = R_AARCH64_GLOB_DAT;
+  PltRel = R_AARCH64_JUMP_SLOT;
+  TlsGotRel = R_AARCH64_TLS_TPREL64;
+  UseLazyBinding = true;
   PltEntrySize = 16;
   PltZeroEntrySize = 32;
 }
@@ -1247,11 +1247,11 @@ void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotAddr,
               GotEntryAddr);
 }
 
-unsigned AArch64TargetInfo::getTlsGotReloc(unsigned Type) const {
+unsigned AArch64TargetInfo::getTlsGotRel(unsigned Type) const {
   if (Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
       Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC)
     return Type;
-  return TlsGotReloc;
+  return TlsGotRel;
 }
 
 bool AArch64TargetInfo::isTlsDynReloc(unsigned Type,
@@ -1460,7 +1460,7 @@ void AMDGPUTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   PageSize = 65536;
   GotHeaderEntriesNum = 2;
-  RelativeReloc = R_MIPS_REL32;
+  RelativeRel = R_MIPS_REL32;
 }
 
 template <class ELFT>

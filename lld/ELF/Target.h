@@ -21,33 +21,24 @@ class SymbolBody;
 
 class TargetInfo {
 public:
-  unsigned getPageSize() const { return PageSize; }
   uint64_t getVAStart() const;
-  unsigned getCopyReloc() const { return CopyReloc; }
-  unsigned getGotReloc() const { return GotReloc; }
-  unsigned getPltReloc() const { return PltReloc; }
-  unsigned getRelativeReloc() const { return RelativeReloc; }
-  unsigned getIRelativeReloc() const { return IRelativeReloc; }
+
   bool isTlsLocalDynamicReloc(unsigned Type) const {
-    return Type == TlsLocalDynamicReloc;
+    return Type == TlsLocalDynamicRel;
   }
+
   bool isTlsGlobalDynamicReloc(unsigned Type) const {
-    return Type == TlsGlobalDynamicReloc;
+    return Type == TlsGlobalDynamicRel;
   }
-  unsigned getTlsModuleIndexReloc() const { return TlsModuleIndexReloc; }
-  unsigned getTlsOffsetReloc() const { return TlsOffsetReloc; }
-  unsigned getPltZeroEntrySize() const { return PltZeroEntrySize; }
-  unsigned getPltEntrySize() const { return PltEntrySize; }
-  bool supportsLazyRelocations() const { return LazyRelocations; }
-  unsigned getGotHeaderEntriesNum() const { return GotHeaderEntriesNum; }
-  unsigned getGotPltHeaderEntriesNum() const { return GotPltHeaderEntriesNum; }
+
   virtual unsigned getDynReloc(unsigned Type) const { return Type; }
+
   virtual bool isTlsDynReloc(unsigned Type, const SymbolBody &S) const {
     return false;
   }
-  virtual unsigned getTlsGotReloc(unsigned Type = -1) const {
-    return TlsGotReloc;
-  }
+
+  virtual unsigned getTlsGotRel(unsigned Type = -1) const { return TlsGotRel; }
+
   virtual void writeGotHeaderEntries(uint8_t *Buf) const;
   virtual void writeGotPltHeaderEntries(uint8_t *Buf) const;
   virtual void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const = 0;
@@ -84,7 +75,6 @@ public:
                                        const SymbolBody *S) const;
   virtual ~TargetInfo();
 
-protected:
   unsigned PageSize = 4096;
 
   // On freebsd x86_64 the first page cannot be mmaped.
@@ -95,21 +85,21 @@ protected:
   // 0x200000, but it looks like every OS uses 4k pages for executables.
   uint64_t VAStart = 0x10000;
 
-  unsigned CopyReloc;
-  unsigned GotReloc;
-  unsigned PltReloc;
-  unsigned RelativeReloc;
-  unsigned IRelativeReloc;
-  unsigned TlsGotReloc = 0;
-  unsigned TlsLocalDynamicReloc = 0;
-  unsigned TlsGlobalDynamicReloc = 0;
-  unsigned TlsModuleIndexReloc;
-  unsigned TlsOffsetReloc;
+  unsigned CopyRel;
+  unsigned GotRel;
+  unsigned PltRel;
+  unsigned RelativeRel;
+  unsigned IRelativeRel;
+  unsigned TlsGotRel = 0;
+  unsigned TlsLocalDynamicRel = 0;
+  unsigned TlsGlobalDynamicRel = 0;
+  unsigned TlsModuleIndexRel;
+  unsigned TlsOffsetRel;
   unsigned PltEntrySize = 8;
   unsigned PltZeroEntrySize = 0;
   unsigned GotHeaderEntriesNum = 0;
   unsigned GotPltHeaderEntriesNum = 3;
-  bool LazyRelocations = false;
+  bool UseLazyBinding = false;
 };
 
 uint64_t getPPC64TocBase();
