@@ -182,7 +182,6 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(forStmt);
   REGISTER_MATCHER(friendDecl);
   REGISTER_MATCHER(functionDecl);
-  REGISTER_MATCHER(functionProtoType);
   REGISTER_MATCHER(functionTemplateDecl);
   REGISTER_MATCHER(functionType);
   REGISTER_MATCHER(gotoStmt);
