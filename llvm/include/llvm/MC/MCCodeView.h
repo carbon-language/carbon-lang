@@ -174,7 +174,7 @@ private:
 
   /// The offset of the first and last .cv_loc directive for a given function
   /// id.
-  std::map<int, std::pair<size_t, size_t>> MCCVLineStartStop;
+  std::map<unsigned, std::pair<size_t, size_t>> MCCVLineStartStop;
 
   /// A collection of MCCVLineEntry for each section.
   std::vector<MCCVLineEntry> MCCVLines;
