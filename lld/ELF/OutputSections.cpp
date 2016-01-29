@@ -230,7 +230,7 @@ RelocationSection<ELFT>::RelocationSection(StringRef Name, bool IsRela)
     : OutputSectionBase<ELFT>(Name, IsRela ? SHT_RELA : SHT_REL, SHF_ALLOC),
       IsRela(IsRela) {
   this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
-  this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  this->Header.sh_addralign = sizeof(uintX_t);
 }
 
 // Applies corresponding symbol and type for dynamic tls relocation.
@@ -444,7 +444,7 @@ template <class ELFT>
 GnuHashTableSection<ELFT>::GnuHashTableSection()
     : OutputSectionBase<ELFT>(".gnu.hash", SHT_GNU_HASH, SHF_ALLOC) {
   this->Header.sh_entsize = ELFT::Is64Bits ? 0 : 4;
-  this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  this->Header.sh_addralign = sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -588,7 +588,7 @@ DynamicSection<ELFT>::DynamicSection(SymbolTable<ELFT> &SymTab)
     : OutputSectionBase<ELFT>(".dynamic", SHT_DYNAMIC, SHF_ALLOC | SHF_WRITE),
       SymTab(SymTab) {
   Elf_Shdr &Header = this->Header;
-  Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  Header.sh_addralign = sizeof(uintX_t);
   Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
 
   // .dynamic section is not writable on MIPS.
@@ -1371,7 +1371,7 @@ SymbolTableSection<ELFT>::SymbolTableSection(
                               StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
       StrTabSec(StrTabSec), Table(Table) {
   this->Header.sh_entsize = sizeof(Elf_Sym);
-  this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  this->Header.sh_addralign = sizeof(uintX_t);
 }
 
 // Orders symbols according to their positions in the GOT,
