@@ -781,16 +781,14 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   // If the "_end" symbol is referenced, it is expected to point to the address
   // right after the data segment. Usually, this symbol points to the end
   // of .bss section or to the end of .data section if .bss section is absent.
-  // The order of the sections can be affected by linker script,
-  // so it is hard to predict which section will be the last one.
-  // So, if this symbol is referenced, we just add the placeholder here
-  // and update its value later.
+  // We don't know the final address of _end yet, so just add a symbol here,
+  // and fix ElfSym<ELFT>::End.st_value later.
   if (Symtab.find("_end"))
     Symtab.addAbsolute("_end", ElfSym<ELFT>::End);
 
-  // If there is an undefined symbol "end", we should initialize it
-  // with the same value as "_end". In any other case it should stay intact,
-  // because it is an allowable name for a user symbol.
+  // Define "end" as an alias to "_end" if it is used but not defined.
+  // We don't want to define that unconditionally because we don't want to
+  // break programs that uses "end" as a regular symbol.
   if (SymbolBody *B = Symtab.find("end"))
     if (B->isUndefined())
       Symtab.addAbsolute("end", ElfSym<ELFT>::End);
