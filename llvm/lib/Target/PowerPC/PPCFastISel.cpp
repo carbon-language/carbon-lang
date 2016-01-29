@@ -2092,19 +2092,15 @@ unsigned PPCFastISel::PPCMaterializeInt(const ConstantInt *CI, MVT VT,
       ((VT == MVT::i64) ? &PPC::G8RCRegClass : &PPC::GPRCRegClass);
 
   // If the constant is in range, use a load-immediate.
-  if (UseSExt && isInt<16>(CI->getSExtValue())) {
+  // Since LI will sign extend the constant we need to make sure that for
+  // our zeroext constants that the sign extended constant fits into 16-bits -
+  // a range of 0..0x7fff.
+  if ((UseSExt && isInt<16>(CI->getSExtValue())) ||
+      (!UseSExt && isUInt<16>(CI->getSExtValue()))) {
     unsigned Opc = (VT == MVT::i64) ? PPC::LI8 : PPC::LI;
     unsigned ImmReg = createResultReg(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ImmReg)
         .addImm(CI->getSExtValue());
-    return ImmReg;
-  } else if (!UseSExt && isUInt<16>(CI->getSExtValue())) {
-    // Since LI will sign extend the constant we need to make sure that for
-    // our zeroext constants that the sign extended constant fits into 16-bits.
-    unsigned Opc = (VT == MVT::i64) ? PPC::LI8 : PPC::LI;
-    unsigned ImmReg = createResultReg(RC);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ImmReg)
-        .addImm(CI->getZExtValue());
     return ImmReg;
   }
 
