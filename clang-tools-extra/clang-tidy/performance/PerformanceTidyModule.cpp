@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 
+#include "ForRangeCopyCheck.h"
 #include "ImplicitCastInLoopCheck.h"
 #include "UnnecessaryCopyInitialization.h"
 
@@ -21,6 +22,8 @@ namespace performance {
 class PerformanceModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<ForRangeCopyCheck>(
+        "performance-for-range-copy");
     CheckFactories.registerCheck<ImplicitCastInLoopCheck>(
         "performance-implicit-cast-in-loop");
     CheckFactories.registerCheck<UnnecessaryCopyInitialization>(
