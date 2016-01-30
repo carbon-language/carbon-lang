@@ -1380,21 +1380,27 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     // Really only 2 bits.
     return lowerImplicitZextParam(DAG, Op, MVT::i8,
                                   getImplicitParameterOffset(MFI, GRID_DIM));
+  case Intrinsic::amdgcn_workgroup_id_x:
   case Intrinsic::r600_read_tgid_x:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::WORKGROUP_ID_X), VT);
+  case Intrinsic::amdgcn_workgroup_id_y:
   case Intrinsic::r600_read_tgid_y:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::WORKGROUP_ID_Y), VT);
+  case Intrinsic::amdgcn_workgroup_id_z:
   case Intrinsic::r600_read_tgid_z:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::WORKGROUP_ID_Z), VT);
+  case Intrinsic::amdgcn_workitem_id_x:
   case Intrinsic::r600_read_tidig_x:
     return CreateLiveInRegister(DAG, &AMDGPU::VGPR_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_X), VT);
+  case Intrinsic::amdgcn_workitem_id_y:
   case Intrinsic::r600_read_tidig_y:
     return CreateLiveInRegister(DAG, &AMDGPU::VGPR_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_Y), VT);
+  case Intrinsic::amdgcn_workitem_id_z:
   case Intrinsic::r600_read_tidig_z:
     return CreateLiveInRegister(DAG, &AMDGPU::VGPR_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_Z), VT);
