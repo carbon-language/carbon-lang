@@ -323,7 +323,7 @@ static bool isObjectSize(const Value *V, uint64_t Size, const DataLayout &DL,
 /// To ensure a pointer offset fits in an integer of size PointerSize
 /// (in bits) when that size is smaller than 64. This is an issue in
 /// particular for 32b programs with negative indices that rely on two's
-/// complement wrap-arounds for correct alias information.
+/// complement wrap-arounds for precise alias information.
 static int64_t adjustToPointerSize(int64_t Offset, unsigned PointerSize) {
   assert(PointerSize <= 64 && "Invalid PointerSize!");
   unsigned ShiftBits = 64 - PointerSize;
