@@ -74,8 +74,9 @@ void WebAssemblyRegisterInfo::eliminateFrameIndex(
       // generate broken code.
       report_fatal_error("Memory offset field overflow");
     }
-    MI.getOperand(1).setImm(Offset);
-    MI.getOperand(2).ChangeToRegister(WebAssembly::SP32, /*IsDef=*/false);
+    MI.getOperand(FIOperandNum - 1).setImm(Offset);
+    MI.getOperand(FIOperandNum)
+        .ChangeToRegister(WebAssembly::SP32, /*IsDef=*/false);
   } else {
     // Otherwise create an i32.add SP, offset and make it the operand.
     auto &MRI = MF.getRegInfo();
