@@ -36,19 +36,14 @@ va-arg-22.c
 20000801-4.c
 20011126-2.c
 
-20020529-1.c
 20021024-1.c
 
 20030828-1.c
 
 20040302-1.c
-20040625-1.c
 20040823-1.c
 
 20050826-2.c
-
-20080506-2.c
-20080519-1.c
 
 20090113-1.c
 20090113-2.c
@@ -77,7 +72,6 @@ frame-address.c
 loop-15.c
 loop-ivopts-2.c
 mayalias-3.c
-multi-ix.c
 pr20466-1.c
 pr28778.c
 pr28982b.c
@@ -91,15 +85,11 @@ pr38051.c
 
 pr39100.c
 
-pr39339.c
-
 pr43987.c
 
 pr44575.c
 
 pr46309.c
-pr47538.c
-pr47925.c
 
 pr49390.c
 pr49419.c
@@ -107,15 +97,9 @@ pr49419.c
 pr53645-2.c
 pr53645.c
 
-pr56866.c
-
 pr57876.c
-pr58277-1.c
-
 pr59643.c
 
-pta-field-1.c
-pta-field-2.c
 stdarg-1.c
 stdarg-3.c
 strct-stdarg-1.c
