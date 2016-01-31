@@ -166,7 +166,7 @@ raw_ostream &raw_ostream::write_hex(unsigned long long N) {
   if (N == 0)
     return *this << '0';
 
-  char NumberBuffer[20];
+  char NumberBuffer[16];
   char *EndPtr = std::end(NumberBuffer);
   char *CurPtr = EndPtr;
 
