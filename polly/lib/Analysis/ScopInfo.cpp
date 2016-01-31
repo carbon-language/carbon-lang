@@ -1620,7 +1620,7 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
 
   std::string ParameterName;
 
-  ParameterName = "p_" + utostr_32(IdIter->second);
+  ParameterName = "p_" + utostr(IdIter->second);
 
   if (const SCEVUnknown *ValueParameter = dyn_cast<SCEVUnknown>(Parameter)) {
     Value *Val = ValueParameter->getValue();
