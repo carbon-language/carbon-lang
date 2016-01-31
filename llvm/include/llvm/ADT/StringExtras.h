@@ -59,22 +59,6 @@ static inline std::string utohexstr(uint64_t X, bool LowerCase = false) {
   return std::string(BufPtr, std::end(Buffer));
 }
 
-static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
-  char Buffer[11];
-  char *BufPtr = std::end(Buffer);
-
-  if (X == 0) *--BufPtr = '0';  // Handle special case...
-
-  while (X) {
-    *--BufPtr = '0' + char(X % 10);
-    X /= 10;
-  }
-
-  if (isNeg) *--BufPtr = '-';   // Add negative sign...
-
-  return std::string(BufPtr, std::end(Buffer));
-}
-
 static inline std::string utostr(uint64_t X, bool isNeg = false) {
   char Buffer[21];
   char *BufPtr = std::end(Buffer);
