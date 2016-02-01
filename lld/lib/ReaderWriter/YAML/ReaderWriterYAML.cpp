@@ -887,6 +887,16 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
       it = reinterpret_cast<const void *>(index);
     }
 
+    void addReference(Reference::KindNamespace ns,
+                      Reference::KindArch arch,
+                      Reference::KindValue kindValue, uint64_t off,
+                      const Atom *target, Reference::Addend a) override {
+      assert(target && "trying to create reference to nothing");
+      auto node = new (file().allocator()) SimpleReference(ns, arch, kindValue,
+                                                           off, target, a);
+      _references.push_back(node);
+    }
+
     const lld::File                    &_file;
     StringRef                           _name;
     StringRef                           _refName;

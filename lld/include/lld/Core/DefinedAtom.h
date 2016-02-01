@@ -11,11 +11,12 @@
 #define LLD_CORE_DEFINED_ATOM_H
 
 #include "lld/Core/Atom.h"
+#include "lld/Core/Reference.h"
 #include "lld/Core/LLVM.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace lld {
 class File;
-class Reference;
 
 /// \brief The fundamental unit of linking.
 ///
@@ -330,6 +331,14 @@ public:
 
   /// \brief Returns an iterator to the end of this Atom's References.
   virtual reference_iterator end() const = 0;
+
+  /// Adds a reference to this atom.
+  virtual void addReference(Reference::KindNamespace ns,
+                            Reference::KindArch arch,
+                            Reference::KindValue kindValue, uint64_t off,
+                            const Atom *target, Reference::Addend a) {
+    llvm_unreachable("Subclass does not permit adding references");
+  }
 
   static bool classof(const Atom *a) {
     return a->definition() == definitionRegular;

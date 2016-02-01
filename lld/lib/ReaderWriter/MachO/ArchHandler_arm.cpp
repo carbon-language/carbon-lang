@@ -1384,7 +1384,8 @@ void ArchHandler_arm::appendSectionRelocations(
 
 void ArchHandler_arm::addAdditionalReferences(MachODefinedAtom &atom) {
   if (atom.isThumb()) {
-    atom.addReference(0, modeThumbCode, &atom, 0, Reference::KindArch::ARM);
+    atom.addReference(Reference::KindNamespace::mach_o,
+                      Reference::KindArch::ARM, modeThumbCode, 0, &atom, 0);
   }
 }
 
