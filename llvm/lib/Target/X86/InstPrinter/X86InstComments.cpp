@@ -278,10 +278,12 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::INSERTPSrr:
   case X86::VINSERTPSrr:
+  case X86::VINSERTPSzrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::INSERTPSrm:
   case X86::VINSERTPSrm:
+  case X86::VINSERTPSzrm:
     DestName = getRegName(MI->getOperand(0).getReg());
     Src1Name = getRegName(MI->getOperand(1).getReg());
     if (MI->getOperand(MI->getNumOperands() - 1).isImm())

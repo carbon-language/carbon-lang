@@ -188,23 +188,11 @@ define <4 x float> @merge_4f32_f32_012u(float* %ptr) nounwind uwtable noinline s
 ; SSE41-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
 ; SSE41-NEXT:    retq
 ;
-; AVX1-LABEL: merge_4f32_f32_012u:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX1-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: merge_4f32_f32_012u:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; AVX2-NEXT:    retq
-;
-; AVX512F-LABEL: merge_4f32_f32_012u:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vinsertps $32, 8(%rdi), %xmm0, %xmm0
-; AVX512F-NEXT:    retq
+; AVX-LABEL: merge_4f32_f32_012u:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
+; AVX-NEXT:    retq
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 0
   %ptr1 = getelementptr inbounds float, float* %ptr, i64 1
   %ptr2 = getelementptr inbounds float, float* %ptr, i64 2
@@ -234,23 +222,11 @@ define <4 x float> @merge_4f32_f32_019u(float* %ptr) nounwind uwtable noinline s
 ; SSE41-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
 ; SSE41-NEXT:    retq
 ;
-; AVX1-LABEL: merge_4f32_f32_019u:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX1-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: merge_4f32_f32_019u:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; AVX2-NEXT:    retq
-;
-; AVX512F-LABEL: merge_4f32_f32_019u:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vinsertps $32, 36(%rdi), %xmm0, %xmm0
-; AVX512F-NEXT:    retq
+; AVX-LABEL: merge_4f32_f32_019u:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
+; AVX-NEXT:    retq
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 0
   %ptr1 = getelementptr inbounds float, float* %ptr, i64 1
   %ptr2 = getelementptr inbounds float, float* %ptr, i64 9

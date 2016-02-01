@@ -319,7 +319,7 @@ define <8 x float> @merge_8f32_f32_1u3u5zu8(float* %ptr) nounwind uwtable noinli
 ; AVX512F-NEXT:    vmovss 20(%rdi), %xmm1
 ; AVX512F-NEXT:    vshufps {{.*#+}} xmm0 = xmm1[0,1],xmm0[1,0]
 ; AVX512F-NEXT:    vmovss 4(%rdi), %xmm1
-; AVX512F-NEXT:    vinsertps $32, 12(%rdi), %xmm1, %xmm1
+; AVX512F-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,1],mem[0],xmm1[3]
 ; AVX512F-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
 ; AVX512F-NEXT:    retq
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 1
