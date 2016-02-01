@@ -7268,70 +7268,27 @@ bool ScalarEvolution::isKnownPredicateViaConstantRanges(
 
   // This code is split out from isKnownPredicate because it is called from
   // within isLoopEntryGuardedByCond.
-  switch (Pred) {
-  default:
-    llvm_unreachable("Unexpected ICmpInst::Predicate value!");
-  case ICmpInst::ICMP_SGT:
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_SLT: {
-    ConstantRange LHSRange = getSignedRange(LHS);
-    ConstantRange RHSRange = getSignedRange(RHS);
-    if (LHSRange.getSignedMax().slt(RHSRange.getSignedMin()))
-      return true;
-    if (LHSRange.getSignedMin().sge(RHSRange.getSignedMax()))
-      return false;
-    break;
-  }
-  case ICmpInst::ICMP_SGE:
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_SLE: {
-    ConstantRange LHSRange = getSignedRange(LHS);
-    ConstantRange RHSRange = getSignedRange(RHS);
-    if (LHSRange.getSignedMax().sle(RHSRange.getSignedMin()))
-      return true;
-    if (LHSRange.getSignedMin().sgt(RHSRange.getSignedMax()))
-      return false;
-    break;
-  }
-  case ICmpInst::ICMP_UGT:
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_ULT: {
-    ConstantRange LHSRange = getUnsignedRange(LHS);
-    ConstantRange RHSRange = getUnsignedRange(RHS);
-    if (LHSRange.getUnsignedMax().ult(RHSRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().uge(RHSRange.getUnsignedMax()))
-      return false;
-    break;
-  }
-  case ICmpInst::ICMP_UGE:
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_ULE: {
-    ConstantRange LHSRange = getUnsignedRange(LHS);
-    ConstantRange RHSRange = getUnsignedRange(RHS);
-    if (LHSRange.getUnsignedMax().ule(RHSRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().ugt(RHSRange.getUnsignedMax()))
-      return false;
-    break;
-  }
-  case ICmpInst::ICMP_NE: {
-    if (getUnsignedRange(LHS).intersectWith(getUnsignedRange(RHS)).isEmptySet())
-      return true;
-    if (getSignedRange(LHS).intersectWith(getSignedRange(RHS)).isEmptySet())
-      return true;
 
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    if (isKnownNonZero(Diff))
-      return true;
-    break;
-  }
-  case ICmpInst::ICMP_EQ:
-    // The check at the top of the function catches the case where
-    // the values are known to be equal.
-    break;
-  }
-  return false;
+  auto CheckRanges =
+      [&](const ConstantRange &RangeLHS, const ConstantRange &RangeRHS) {
+    return ConstantRange::makeSatisfyingICmpRegion(Pred, RangeRHS)
+        .contains(RangeLHS);
+  };
+
+  // The check at the top of the function catches the case where the values are
+  // known to be equal.
+  if (Pred == CmpInst::ICMP_EQ)
+    return false;
+
+  if (Pred == CmpInst::ICMP_NE)
+    return CheckRanges(getSignedRange(LHS), getSignedRange(RHS)) ||
+           CheckRanges(getUnsignedRange(LHS), getUnsignedRange(RHS)) ||
+           isKnownNonZero(getMinusSCEV(LHS, RHS));
+
+  if (CmpInst::isSigned(Pred))
+    return CheckRanges(getSignedRange(LHS), getSignedRange(RHS));
+
+  return CheckRanges(getUnsignedRange(LHS), getUnsignedRange(RHS));
 }
 
 bool ScalarEvolution::isKnownPredicateViaNoOverflow(ICmpInst::Predicate Pred,
