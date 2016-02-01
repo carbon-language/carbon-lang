@@ -389,6 +389,8 @@ namespace {
                                  Value *Val, BasicBlock *BB);
     bool solveBlockValuePHINode(LVILatticeVal &BBLV,
                                 PHINode *PN, BasicBlock *BB);
+    bool solveBlockValueSelect(LVILatticeVal &BBLV,
+                               SelectInst *S, BasicBlock *BB);
     bool solveBlockValueConstantRange(LVILatticeVal &BBLV,
                                       Instruction *BBI, BasicBlock *BB);
     void mergeAssumeBlockValueConstantRange(Value *Val, LVILatticeVal &BBLV,
@@ -582,6 +584,13 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
 
   if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
     if (!solveBlockValuePHINode(Res, PN, BB))
+      return false;
+    insertResult(Val, BB, Res);
+    return true;
+  }
+
+  if (auto *SI = dyn_cast<SelectInst>(BBI)) {
+    if (!solveBlockValueSelect(Res, SI, BB))
       return false;
     insertResult(Val, BB, Res);
     return true;
@@ -807,6 +816,46 @@ void LazyValueInfoCache::mergeAssumeBlockValueConstantRange(Value *Val,
       }
     }
   }
+}
+
+bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
+                                               SelectInst *SI, BasicBlock *BB) {
+
+  // Recurse on our inputs if needed
+  if (!hasBlockValue(SI->getTrueValue(), BB)) {
+    if (pushBlockValue(std::make_pair(BB, SI->getTrueValue())))
+      return false;
+    BBLV.markOverdefined();
+    return true;
+  }
+  LVILatticeVal TrueVal = getBlockValue(SI->getTrueValue(), BB);
+  // If we hit overdefined, don't ask more queries.  We want to avoid poisoning
+  // extra slots in the table if we can.
+  if (TrueVal.isOverdefined()) {
+    BBLV.markOverdefined();
+    return true;
+  }
+
+  if (!hasBlockValue(SI->getFalseValue(), BB)) {
+    if (pushBlockValue(std::make_pair(BB, SI->getFalseValue())))
+      return false;
+    BBLV.markOverdefined();
+    return true;
+  }
+  LVILatticeVal FalseVal = getBlockValue(SI->getFalseValue(), BB);
+  // If we hit overdefined, don't ask more queries.  We want to avoid poisoning
+  // extra slots in the table if we can.
+  if (FalseVal.isOverdefined()) {
+    BBLV.markOverdefined();
+    return true;
+  }
+
+  LVILatticeVal Result;  // Start Undefined.
+  Result.mergeIn(TrueVal, DL);
+  Result.mergeIn(FalseVal, DL);
+  assert(!Result.isOverdefined() && "Should have exited previously");
+  BBLV = Result;
+  return true;
 }
 
 bool LazyValueInfoCache::solveBlockValueConstantRange(LVILatticeVal &BBLV,
