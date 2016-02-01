@@ -792,6 +792,24 @@ static Instruction *simplifyMaskedStore(IntrinsicInst &II, InstCombiner &IC) {
   return nullptr;
 }
 
+static Instruction *simplifyMaskedGather(IntrinsicInst &II, InstCombiner &IC) {
+  // If the mask is all zeros, return the "passthru" argument of the gather.
+  auto *ConstMask = dyn_cast<Constant>(II.getArgOperand(2));
+  if (ConstMask && ConstMask->isNullValue())
+    return IC.ReplaceInstUsesWith(II, II.getArgOperand(3));
+
+  return nullptr;
+}
+
+static Instruction *simplifyMaskedScatter(IntrinsicInst &II, InstCombiner &IC) {
+  // If the mask is all zeros, a scatter does nothing.
+  auto *ConstMask = dyn_cast<Constant>(II.getArgOperand(3));
+  if (ConstMask && ConstMask->isNullValue())
+    return IC.EraseInstFromFunction(II);
+
+  return nullptr;
+}
+
 /// CallInst simplification. This mostly only handles folding of intrinsic
 /// instructions. For normal calls, it allows visitCallSite to do the heavy
 /// lifting.
@@ -922,10 +940,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   case Intrinsic::masked_store:
     return simplifyMaskedStore(*II, *this);
-
-  // TODO: Handle the other masked ops.
-  // case Intrinsic::masked_gather:
-  // case Intrinsic::masked_scatter:
+  case Intrinsic::masked_gather:
+    return simplifyMaskedGather(*II, *this);
+  case Intrinsic::masked_scatter:
+    return simplifyMaskedScatter(*II, *this);
 
   case Intrinsic::powi:
     if (ConstantInt *Power = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
