@@ -668,20 +668,29 @@ static unsigned getPrologueDeath(MachineFunction &MF, unsigned Reg) {
   return getKillRegState(LRKill);
 }
 
-bool AArch64FrameLowering::spillCalleeSavedRegisters(
-    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-    const std::vector<CalleeSavedInfo> &CSI,
-    const TargetRegisterInfo *TRI) const {
-  MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+struct RegPairInfo {
+  RegPairInfo() : Reg1(AArch64::NoRegister), Reg2(AArch64::NoRegister) {}
+  unsigned Reg1;
+  unsigned Reg2;
+  int FrameIdx;
+  int Offset;
+  bool IsGPR;
+};
+
+static void
+computeCalleeSaveRegisterPairs(const std::vector<CalleeSavedInfo> &CSI,
+                               const TargetRegisterInfo *TRI,
+                               SmallVectorImpl<RegPairInfo> &RegPairs) {
+
   unsigned Count = CSI.size();
-  DebugLoc DL;
   assert((Count & 1) == 0 && "Odd number of callee-saved regs to spill!");
 
   for (unsigned i = 0; i < Count; i += 2) {
     unsigned idx = Count - i - 2;
-    unsigned Reg1 = CSI[idx].getReg();
-    unsigned Reg2 = CSI[idx + 1].getReg();
+    RegPairInfo RPI;
+    RPI.Reg1 = CSI[idx].getReg();
+    RPI.Reg2 = CSI[idx + 1].getReg();
+
     // GPRs and FPRs are saved in pairs of 64-bit regs. We expect the CSI
     // list to come in sorted by frame index so that we can issue the store
     // pair instructions directly. Assert if we see anything otherwise.
@@ -690,9 +699,44 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     // getCalleeSavedRegs(), so they will always be in-order, as well.
     assert(CSI[idx].getFrameIdx() + 1 == CSI[idx + 1].getFrameIdx() &&
            "Out of order callee saved regs!");
-    unsigned StrOpc;
     assert((Count & 1) == 0 && "Odd number of callee-saved regs to spill!");
     assert((i & 1) == 0 && "Odd index for callee-saved reg spill!");
+    RPI.FrameIdx = CSI[idx + 1].getFrameIdx();
+
+    if (AArch64::GPR64RegClass.contains(RPI.Reg1))
+      RPI.IsGPR = true;
+    else if (AArch64::FPR64RegClass.contains(RPI.Reg1))
+      RPI.IsGPR = false;
+    else
+      llvm_unreachable("Unexpected callee saved register!");
+    // Compute offset: i = 0 => offset = Count;
+    //                 i = 2 => offset = -(Count - 2) + Count = 2 = i; etc.
+    RPI.Offset = (i == 0) ? Count : i;
+    assert((RPI.Offset >= -64 && RPI.Offset <= 63) &&
+           "Offset out of bounds for LDP/STP immediate");
+
+    RegPairs.push_back(RPI);
+  }
+}
+
+bool AArch64FrameLowering::spillCalleeSavedRegisters(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+    const std::vector<CalleeSavedInfo> &CSI,
+    const TargetRegisterInfo *TRI) const {
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  DebugLoc DL;
+  SmallVector<RegPairInfo, 8> RegPairs;
+
+  computeCalleeSaveRegisterPairs(CSI, TRI, RegPairs);
+
+  for (auto RPII = RegPairs.begin(), RPIE = RegPairs.end(); RPII != RPIE;
+       ++RPII) {
+    RegPairInfo RPI = *RPII;
+    unsigned Reg1 = RPI.Reg1;
+    unsigned Reg2 = RPI.Reg2;
+    unsigned StrOpc;
+
     // Issue sequence of non-sp increment and pi sp spills for cs regs. The
     // first spill is a pre-increment that allocates the stack.
     // For example:
@@ -701,35 +745,28 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     //    stp     fp, lr, [sp, #32]      // addImm(+4)
     // Rationale: This sequence saves uop updates compared to a sequence of
     // pre-increment spills like stp xi,xj,[sp,#-16]!
-    // Note: Similar rational and sequence for restores in epilog.
-    if (AArch64::GPR64RegClass.contains(Reg1)) {
-      assert(AArch64::GPR64RegClass.contains(Reg2) &&
-             "Expected GPR64 callee-saved register pair!");
+    // Note: Similar rationale and sequence for restores in epilog.
+    bool BumpSP = RPII == RegPairs.begin();
+    if (RPI.IsGPR) {
       // For first spill use pre-increment store.
-      if (i == 0)
+      if (BumpSP)
         StrOpc = AArch64::STPXpre;
       else
         StrOpc = AArch64::STPXi;
-    } else if (AArch64::FPR64RegClass.contains(Reg1)) {
-      assert(AArch64::FPR64RegClass.contains(Reg2) &&
-             "Expected FPR64 callee-saved register pair!");
+    } else {
       // For first spill use pre-increment store.
-      if (i == 0)
+      if (BumpSP)
         StrOpc = AArch64::STPDpre;
       else
         StrOpc = AArch64::STPDi;
-    } else
-      llvm_unreachable("Unexpected callee saved register!");
+    }
     DEBUG(dbgs() << "CSR spill: (" << TRI->getName(Reg1) << ", "
-                 << TRI->getName(Reg2) << ") -> fi#(" << CSI[idx].getFrameIdx()
-                 << ", " << CSI[idx + 1].getFrameIdx() << ")\n");
-    // Compute offset: i = 0 => offset = -Count;
-    //                 i = 2 => offset = -(Count - 2) + Count = 2 = i; etc.
-    const int Offset = (i == 0) ? -Count : i;
-    assert((Offset >= -64 && Offset <= 63) &&
-           "Offset out of bounds for STP immediate");
+                 << TRI->getName(Reg2) << ") -> fi#(" << RPI.FrameIdx
+                 << ", " << RPI.FrameIdx+1 << ")\n");
+
+    const int Offset = BumpSP ? -RPI.Offset : RPI.Offset;
     MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(StrOpc));
-    if (StrOpc == AArch64::STPDpre || StrOpc == AArch64::STPXpre)
+    if (BumpSP)
       MIB.addReg(AArch64::SP, RegState::Define);
 
     MBB.addLiveIn(Reg1);
@@ -749,21 +786,20 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-  unsigned Count = CSI.size();
   DebugLoc DL;
-  assert((Count & 1) == 0 && "Odd number of callee-saved regs to spill!");
+  SmallVector<RegPairInfo, 8> RegPairs;
 
   if (MI != MBB.end())
     DL = MI->getDebugLoc();
 
-  for (unsigned i = 0; i < Count; i += 2) {
-    unsigned Reg1 = CSI[i].getReg();
-    unsigned Reg2 = CSI[i + 1].getReg();
-    // GPRs and FPRs are saved in pairs of 64-bit regs. We expect the CSI
-    // list to come in sorted by frame index so that we can issue the store
-    // pair instructions directly. Assert if we see anything otherwise.
-    assert(CSI[i].getFrameIdx() + 1 == CSI[i + 1].getFrameIdx() &&
-           "Out of order callee saved regs!");
+  computeCalleeSaveRegisterPairs(CSI, TRI, RegPairs);
+
+  for (auto RPII = RegPairs.rbegin(), RPIE = RegPairs.rend(); RPII != RPIE;
+       ++RPII) {
+    RegPairInfo RPI = *RPII;
+    unsigned Reg1 = RPI.Reg1;
+    unsigned Reg2 = RPI.Reg2;
+
     // Issue sequence of non-sp increment and sp-pi restores for cs regs. Only
     // the last load is sp-pi post-increment and de-allocates the stack:
     // For example:
@@ -772,36 +808,25 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
     //    ldp     x22, x21, [sp], #48     // addImm(+6)
     // Note: see comment in spillCalleeSavedRegisters()
     unsigned LdrOpc;
-
-    assert((Count & 1) == 0 && "Odd number of callee-saved regs to spill!");
-    assert((i & 1) == 0 && "Odd index for callee-saved reg spill!");
-    if (AArch64::GPR64RegClass.contains(Reg1)) {
-      assert(AArch64::GPR64RegClass.contains(Reg2) &&
-             "Expected GPR64 callee-saved register pair!");
-      if (i == Count - 2)
+    bool BumpSP = RPII == std::prev(RegPairs.rend());
+    if (RPI.IsGPR) {
+      if (BumpSP)
         LdrOpc = AArch64::LDPXpost;
       else
         LdrOpc = AArch64::LDPXi;
-    } else if (AArch64::FPR64RegClass.contains(Reg1)) {
-      assert(AArch64::FPR64RegClass.contains(Reg2) &&
-             "Expected FPR64 callee-saved register pair!");
-      if (i == Count - 2)
+    } else {
+      if (BumpSP)
         LdrOpc = AArch64::LDPDpost;
       else
         LdrOpc = AArch64::LDPDi;
-    } else
-      llvm_unreachable("Unexpected callee saved register!");
+    }
     DEBUG(dbgs() << "CSR restore: (" << TRI->getName(Reg1) << ", "
-                 << TRI->getName(Reg2) << ") -> fi#(" << CSI[i].getFrameIdx()
-                 << ", " << CSI[i + 1].getFrameIdx() << ")\n");
+                 << TRI->getName(Reg2) << ") -> fi#(" << RPI.FrameIdx
+                 << ", " << RPI.FrameIdx+1 << ")\n");
 
-    // Compute offset: i = 0 => offset = Count - 2; i = 2 => offset = Count - 4;
-    // etc.
-    const int Offset = (i == Count - 2) ? Count : Count - i - 2;
-    assert((Offset >= -64 && Offset <= 63) &&
-           "Offset out of bounds for LDP immediate");
+    const int Offset = RPI.Offset;
     MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(LdrOpc));
-    if (LdrOpc == AArch64::LDPXpost || LdrOpc == AArch64::LDPDpost)
+    if (BumpSP)
       MIB.addReg(AArch64::SP, RegState::Define);
 
     MIB.addReg(Reg2, getDefRegState(true))
@@ -908,6 +933,7 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
 
     CanEliminateFrame = false;
   }
+  DEBUG(dbgs() << "\n");
 
   // FIXME: Set BigStack if any stack slot references may be out of range.
   // For now, just conservatively guestimate based on unscaled indexing
