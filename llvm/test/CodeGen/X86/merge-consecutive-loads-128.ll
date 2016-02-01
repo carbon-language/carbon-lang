@@ -74,20 +74,10 @@ define <4 x float> @merge_4f32_f32_3zuu(float* %ptr) nounwind uwtable noinline s
 ; SSE-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: merge_4f32_f32_3zuu:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: merge_4f32_f32_3zuu:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    retq
-;
-; AVX512F-LABEL: merge_4f32_f32_3zuu:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovss 12(%rdi), %xmm0
-; AVX512F-NEXT:    retq
+; AVX-LABEL: merge_4f32_f32_3zuu:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX-NEXT:    retq
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 3
   %val0 = load float, float* %ptr0
   %res0 = insertelement <4 x float> undef, float %val0, i32 0
@@ -122,26 +112,12 @@ define <4 x float> @merge_4f32_f32_34z6(float* %ptr) nounwind uwtable noinline s
 ; SSE-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[1,0]
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: merge_4f32_f32_34z6:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX1-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX1-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[1,0]
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: merge_4f32_f32_34z6:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[1,0]
-; AVX2-NEXT:    retq
-;
-; AVX512F-LABEL: merge_4f32_f32_34z6:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vmovss 24(%rdi), %xmm1
-; AVX512F-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[1,0]
-; AVX512F-NEXT:    retq
+; AVX-LABEL: merge_4f32_f32_34z6:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; AVX-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[1,0]
+; AVX-NEXT:    retq
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 3
   %ptr1 = getelementptr inbounds float, float* %ptr, i64 4
   %ptr3 = getelementptr inbounds float, float* %ptr, i64 6
