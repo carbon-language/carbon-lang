@@ -696,6 +696,7 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::MOVDI2PDIrm:
   case X86::VMOVDI2PDIrm:
+  case X86::VMOVDI2PDIZrm:
     DecodeZeroMoveLowMask(MVT::v4i32, ShuffleMask);
     DestName = getRegName(MI->getOperand(0).getReg());
     break;

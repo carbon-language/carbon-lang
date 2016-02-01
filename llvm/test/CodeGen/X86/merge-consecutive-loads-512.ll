@@ -344,7 +344,7 @@ define <16 x i32> @merge_16i32_i32_0uu3zzuuuuuzCuEF(i32* %ptr) nounwind uwtable 
 ; ALL-LABEL: merge_16i32_i32_0uu3zzuuuuuzCuEF:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; ALL-NEXT:    vmovd 48(%rdi), %xmm1
+; ALL-NEXT:    vmovd {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; ALL-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
 ; ALL-NEXT:    vmovdqu (%rdi), %xmm1

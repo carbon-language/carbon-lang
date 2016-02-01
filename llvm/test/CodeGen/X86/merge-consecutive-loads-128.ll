@@ -244,20 +244,10 @@ define <4 x i32> @merge_4i32_i32_3zuu(i32* %ptr) nounwind uwtable noinline ssp {
 ; SSE-NEXT:    movd {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: merge_4i32_i32_3zuu:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: merge_4i32_i32_3zuu:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    retq
-;
-; AVX512F-LABEL: merge_4i32_i32_3zuu:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovd 12(%rdi), %xmm0
-; AVX512F-NEXT:    retq
+; AVX-LABEL: merge_4i32_i32_3zuu:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX-NEXT:    retq
   %ptr0 = getelementptr inbounds i32, i32* %ptr, i64 3
   %val0 = load i32, i32* %ptr0
   %res0 = insertelement <4 x i32> undef, i32 %val0, i32 0
