@@ -308,8 +308,12 @@ public:
       return _atom.derefIterator(_it);
     }
 
+    bool operator==(const reference_iterator &other) const {
+      return _it == other._it;
+    }
+
     bool operator!=(const reference_iterator &other) const {
-      return _it != other._it;
+      return !(*this == other);
     }
 
     reference_iterator &operator++() {
