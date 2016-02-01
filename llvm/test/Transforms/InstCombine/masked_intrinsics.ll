@@ -8,7 +8,7 @@ define <2 x double> @load_zeromask(<2 x double>* %ptr, <2 x double> %passthru)  
   ret <2 x double> %res
 
 ; CHECK-LABEL: @load_zeromask(
-; CHECK-NEXT   ret <2 x double> %passthru
+; CHECK-NEXT:  ret <2 x double> %passthru
 }
 
 define <2 x double> @load_onemask(<2 x double>* %ptr, <2 x double> %passthru)  {
@@ -17,6 +17,6 @@ define <2 x double> @load_onemask(<2 x double>* %ptr, <2 x double> %passthru)  {
 
 ; CHECK-LABEL: @load_onemask(
 ; CHECK-NEXT:  %unmaskedload = load <2 x double>, <2 x double>* %ptr, align 2
-; CHECK-NEXT   ret <2 x double> %res
+; CHECK-NEXT:  ret <2 x double> %unmaskedload
 }
 
