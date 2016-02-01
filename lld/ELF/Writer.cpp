@@ -163,6 +163,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   openFile(Config->OutputFile);
   writeHeader();
   writeSections();
+  if (HasError)
+    return;
   fatal(Buffer->commit());
 }
 
