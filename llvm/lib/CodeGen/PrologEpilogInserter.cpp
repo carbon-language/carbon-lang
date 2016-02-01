@@ -598,6 +598,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       // Adjust to alignment boundary
       Offset = alignTo(Offset, Align, Skew);
 
+      DEBUG(dbgs() << "alloc FI(" << i << ") at SP[" << -Offset << "]\n");
       MFI->setObjectOffset(i, -Offset);        // Set the computed offset
     }
   } else {
@@ -607,6 +608,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       // Adjust to alignment boundary
       Offset = alignTo(Offset, Align, Skew);
 
+      DEBUG(dbgs() << "alloc FI(" << i << ") at SP[" << Offset << "]\n");
       MFI->setObjectOffset(i, Offset);
       Offset += MFI->getObjectSize(i);
     }
