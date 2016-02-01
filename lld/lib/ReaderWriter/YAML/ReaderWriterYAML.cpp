@@ -420,6 +420,8 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                                           DefinedAtom::typeObjC2CategoryList);
     io.enumCase(value, "objc-image-info",
                                           DefinedAtom::typeObjCImageInfo);
+    io.enumCase(value, "objc-method-list",
+                                          DefinedAtom::typeObjCMethodList);
     io.enumCase(value, "objc-class1",     DefinedAtom::typeObjC1Class);
     io.enumCase(value, "dtraceDOF",       DefinedAtom::typeDTraceDOF);
     io.enumCase(value, "interposing-tuples",
