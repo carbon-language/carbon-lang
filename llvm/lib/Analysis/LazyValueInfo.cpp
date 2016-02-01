@@ -853,7 +853,6 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
   LVILatticeVal Result;  // Start Undefined.
   Result.mergeIn(TrueVal, DL);
   Result.mergeIn(FalseVal, DL);
-  assert(!Result.isOverdefined() && "Should have exited previously");
   BBLV = Result;
   return true;
 }
@@ -984,7 +983,8 @@ bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
 }
 
 /// \brief Compute the value of Val on the edge BBFrom -> BBTo. Returns false if
-/// Val is not constrained on the edge.
+/// Val is not constrained on the edge.  Result is unspecified if return value
+/// is false.
 static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
                               BasicBlock *BBTo, LVILatticeVal &Result) {
   // TODO: Handle more complex conditionals. If (v == 0 || v2 < 1) is false, we
