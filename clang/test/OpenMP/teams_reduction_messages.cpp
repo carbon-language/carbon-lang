@@ -175,7 +175,6 @@ T tmain(T argc) {
 #pragma omp teams
 #pragma omp parallel for private(fl)
   for (int i = 0; i < 10; ++i)
-  {}
 #pragma omp target
 #pragma omp teams reduction(+ : fl)
     foo();
@@ -183,7 +182,6 @@ T tmain(T argc) {
 #pragma omp teams
 #pragma omp parallel for reduction(- : fl)
   for (int i = 0; i < 10; ++i)
-  {}
 #pragma omp target
 #pragma omp teams reduction(+ : fl)
     foo();
@@ -308,7 +306,6 @@ int main(int argc, char **argv) {
 #pragma omp teams
 #pragma omp parallel for private(fl)
   for (int i = 0; i < 10; ++i)
-  {}
 #pragma omp target
 #pragma omp teams reduction(+ : fl)
     foo();
@@ -316,7 +313,6 @@ int main(int argc, char **argv) {
 #pragma omp teams
 #pragma omp parallel for reduction(- : fl)
   for (int i = 0; i < 10; ++i)
-  {}
 #pragma omp target
 #pragma omp teams reduction(+ : fl)
     foo();

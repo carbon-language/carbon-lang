@@ -21,7 +21,6 @@ int main(int argc, char **argv) {
   #pragma omp target } // expected-warning {{extra tokens at the end of '#pragma omp target' are ignored}}
   foo();
   #pragma omp target
-  foo();
   // expected-warning@+1 {{extra tokens at the end of '#pragma omp target' are ignored}}
   #pragma omp target unknown()
   foo();
