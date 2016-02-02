@@ -324,25 +324,36 @@ void Writer<ELFT>::scanRelocs(
       continue;
     }
 
+    // If a relocation needs PLT, we create a PLT and a GOT slot
+    // for the symbol.
+    if (Body && Target->needsPlt(Type, *Body)) {
+      if (Body->isInPlt())
+        continue;
+      Out<ELFT>::Plt->addEntry(Body);
+
+      if (Target->UseLazyBinding) {
+        Out<ELFT>::GotPlt->addEntry(Body);
+        Out<ELFT>::RelaPlt->addReloc({&C, &RI});
+      } else {
+        if (Body->isInGot())
+          continue;
+        Out<ELFT>::Got->addEntry(Body);
+        Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+      }
+
+      if (canBePreempted(Body, /*NeedsGot=*/true))
+        Body->setUsedInDynamicReloc();
+      continue;
+    }
+
     bool NeedsGot = false;
-    bool NeedsPlt = false;
 
     if (Body) {
-      NeedsPlt = Target->needsPlt(Type, *Body);
-      if (NeedsPlt) {
-        if (Body->isInPlt())
-          continue;
-        Out<ELFT>::Plt->addEntry(Body);
-      }
       NeedsGot = Target->needsGot(Type, *Body);
       if (NeedsGot) {
-        if (NeedsPlt && Target->UseLazyBinding) {
-          Out<ELFT>::GotPlt->addEntry(Body);
-        } else {
-          if (Body->isInGot())
-            continue;
-          Out<ELFT>::Got->addEntry(Body);
-        }
+        if (Body->isInGot())
+          continue;
+        Out<ELFT>::Got->addEntry(Body);
       }
     }
 
@@ -383,10 +394,7 @@ void Writer<ELFT>::scanRelocs(
 
     if (CBP)
       Body->setUsedInDynamicReloc();
-    if (NeedsPlt && Target->UseLazyBinding)
-      Out<ELFT>::RelaPlt->addReloc({&C, &RI});
-    else
-      Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+    Out<ELFT>::RelaDyn->addReloc({&C, &RI});
   }
 }
 
