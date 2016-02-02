@@ -306,6 +306,24 @@ void Writer<ELFT>::scanRelocs(
       }
     }
 
+    // An STT_GNU_IFUNC symbol always uses a PLT entry, and all references
+    // to the symbol go through the PLT. This is true even for a local
+    // symbol, although local symbols normally do not require PLT entries.
+    if (Body && isGnuIFunc<ELFT>(*Body)) {
+      Body->setUsedInDynamicReloc();
+      if (Body->isInGot())
+        continue;
+      Out<ELFT>::Plt->addEntry(Body);
+      if (Target->UseLazyBinding) {
+        Out<ELFT>::GotPlt->addEntry(Body);
+        Out<ELFT>::RelaPlt->addReloc({&C, &RI});
+      } else {
+        Out<ELFT>::Got->addEntry(Body);
+        Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+      }
+      continue;
+    }
+
     bool NeedsGot = false;
     bool NeedsPlt = false;
 
@@ -326,15 +344,6 @@ void Writer<ELFT>::scanRelocs(
           Out<ELFT>::Got->addEntry(Body);
         }
       }
-    }
-
-    // An STT_GNU_IFUNC symbol always uses a PLT entry, and all references
-    // to the symbol go through the PLT. This is true even for a local
-    // symbol, although local symbols normally do not require PLT entries.
-    if (Body && isGnuIFunc<ELFT>(*Body)) {
-      Body->setUsedInDynamicReloc();
-      Out<ELFT>::RelaPlt->addReloc({&C, &RI});
-      continue;
     }
 
     if (Config->EMachine == EM_MIPS) {
