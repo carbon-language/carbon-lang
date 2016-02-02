@@ -284,14 +284,19 @@ void Writer<ELFT>::scanRelocs(
       Out<ELFT>::RelaDyn->addReloc({&C, Rel});
     }
 
-    bool NeedsGot = false;
-    bool NeedsMipsLocalGot = false;
-    bool NeedsPlt = false;
+    // MIPS has a special rule to create GOTs for local symbols.
     if (Config->EMachine == EM_MIPS && needsMipsLocalGot(Type, Body)) {
-      NeedsMipsLocalGot = true;
       // FIXME (simon): Do not add so many redundant entries.
       Out<ELFT>::Got->addMipsLocalEntry();
-    } else if (Body) {
+      if (Body)
+        Body->setUsedInDynamicReloc();
+      continue;
+    }
+
+    bool NeedsGot = false;
+    bool NeedsPlt = false;
+
+    if (Body) {
       if (auto *E = dyn_cast<SharedSymbol<ELFT>>(Body)) {
         if (E->NeedsCopy)
           continue;
@@ -335,14 +340,13 @@ void Writer<ELFT>::scanRelocs(
         // relocation too because that case is possible for executable file
         // linking only.
         continue;
-      if (NeedsGot || NeedsMipsLocalGot) {
+      if (NeedsGot) {
         // MIPS ABI has special rules to process GOT entries
         // and doesn't require relocation entries for them.
         // See "Global Offset Table" in Chapter 5 in the following document
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-        if (NeedsGot)
-          Body->setUsedInDynamicReloc();
+        Body->setUsedInDynamicReloc();
         continue;
       }
       if (Body == Config->MipsGpDisp)
