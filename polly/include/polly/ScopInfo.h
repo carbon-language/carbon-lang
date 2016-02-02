@@ -1906,7 +1906,7 @@ class ScopInfo : public RegionPass {
   ScopDetection *SD;
 
   // Target data for element size computing.
-  const DataLayout *TD;
+  const DataLayout *DL;
 
   // DominatorTree to reason about guaranteed execution.
   DominatorTree *DT;

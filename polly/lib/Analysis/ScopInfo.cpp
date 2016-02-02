@@ -3764,7 +3764,7 @@ void ScopInfo::buildMemoryAccess(
   Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
   Type *SizeType = Val->getType();
-  unsigned Size = TD->getTypeAllocSize(SizeType);
+  unsigned Size = DL->getTypeAllocSize(SizeType);
   enum MemoryAccess::AccessType Type =
       Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
@@ -3851,7 +3851,7 @@ void ScopInfo::buildMemoryAccess(
   // FIXME: Size of the number of bytes of an array element, not the number of
   // elements as probably intended here.
   const SCEV *SizeSCEV =
-      SE->getConstant(TD->getIntPtrType(Inst.getContext()), Size);
+      SE->getConstant(DL->getIntPtrType(Inst.getContext()), Size);
 
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
@@ -4131,7 +4131,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-  TD = &F->getParent()->getDataLayout();
+  DL = &F->getParent()->getDataLayout();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(*F);
 
