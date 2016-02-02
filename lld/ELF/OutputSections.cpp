@@ -144,7 +144,7 @@ template <class ELFT> void GotSection<ELFT>::finalize() {
 
 template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
   Target->writeGotHeader(Buf);
-  for (const auto &L : MipsLocalGotPos) {
+  for (std::pair<uintX_t, size_t> &L : MipsLocalGotPos) {
     uint8_t *Entry = Buf + L.second * sizeof(uintX_t);
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, L.first);
   }
