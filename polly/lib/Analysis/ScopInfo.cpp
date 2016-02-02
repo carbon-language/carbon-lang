@@ -2975,13 +2975,13 @@ void Scop::hoistInvariantLoads() {
 }
 
 const ScopArrayInfo *
-Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
+Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,
                                ArrayRef<const SCEV *> Sizes,
                                ScopArrayInfo::MemoryKind Kind) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, Kind)];
   if (!SAI) {
     auto &DL = getRegion().getEntry()->getModule()->getDataLayout();
-    SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, Kind,
+    SAI.reset(new ScopArrayInfo(BasePtr, ElementType, getIslCtx(), Sizes, Kind,
                                 DL, this));
   } else {
     // In case of mismatching array sizes, we bail out by setting the run-time
