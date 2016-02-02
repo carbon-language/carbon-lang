@@ -387,15 +387,23 @@ void Writer<ELFT>::scanRelocs(
         continue;
     }
 
-    // Here we are creating a relocation for the dynamic linker based on
-    // a relocation from an object file, but some relocations need no
-    // load-time fixup when the final target is known. Skip such relocation.
-    bool CBP = canBePreempted(Body, /*NeedsGot=*/false);
-    bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
-                  !Target->isSizeRel(Type);
-    if (CBP)
+    // We get here if a program was not compiled as PIC.
+    if (canBePreempted(Body, /*NeedsGot=*/false)) {
       Body->setUsedInDynamicReloc();
-    if (CBP || Dynrel)
+      Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+      continue;
+    }
+
+    // If we get here, the code we are handling is not PIC. We need to copy
+    // relocations from object files to the output file, so that the
+    // dynamic linker can fix up addresses. But there are a few exceptions.
+    // If the relocation will not change at runtime, we don't need to copy
+    // them. For example, we don't copy PC-relative relocations because
+    // the distance between two symbols won't change whereever they are
+    // loaded. Likewise, if we are linking an executable, it will be loaded
+    // at a fixed address, so we don't copy relocations.
+    if (Config->Shared && !Target->isRelRelative(Type) &&
+        !Target->isSizeRel(Type))
       Out<ELFT>::RelaDyn->addReloc({&C, &RI});
   }
 }
