@@ -895,7 +895,11 @@ bool elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
   }
   if (!Config->Shared)
     return false;
-  return Body->getVisibility() == STV_DEFAULT;
+  if (Body->getVisibility() != STV_DEFAULT)
+    return false;
+  if (Config->Bsymbolic || (Config->BsymbolicFunctions && Body->isFunc()))
+    return false;
+  return true;
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
