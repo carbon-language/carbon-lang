@@ -576,7 +576,7 @@ void LazyValueInfoCache::solve() {
              "Result should be in cache!");
 
       DEBUG(dbgs() << "POP " << *e.second << " in " << e.first->getName()
-                   << " = " << lookup(e.second)[e.first] << "\n");
+                   << " = " << getCachedValueInfo(e.second, e.first) << "\n");
 
       BlockValueStack.pop();
       BlockValueSet.erase(e);
@@ -790,7 +790,7 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
     // to overdefined.
     if (Result.isOverdefined()) {
       DEBUG(dbgs() << " compute BB '" << BB->getName()
-            << "' - overdefined because of pred.\n");
+            << "' - overdefined because of pred (non local).\n");
       // If we previously determined that this is a pointer that can't be null
       // then return that rather than giving up entirely.
       if (NotNull) {
@@ -835,7 +835,7 @@ bool LazyValueInfoCache::solveBlockValuePHINode(LVILatticeVal &BBLV,
     // to overdefined.
     if (Result.isOverdefined()) {
       DEBUG(dbgs() << " compute BB '" << BB->getName()
-            << "' - overdefined because of pred.\n");
+            << "' - overdefined because of pred (local).\n");
 
       BBLV = Result;
       return true;
