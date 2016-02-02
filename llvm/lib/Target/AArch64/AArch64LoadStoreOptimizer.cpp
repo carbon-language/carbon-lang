@@ -1021,6 +1021,8 @@ bool AArch64LoadStoreOpt::findMatchingStore(
   ModifiedRegs.reset();
   UsedRegs.reset();
 
+  // FIXME: We miss the case where the matching store is the first instruction
+  // in the basic block.
   for (unsigned Count = 0; MBBI != E && Count < Limit;) {
     --MBBI;
     MachineInstr *MI = MBBI;
