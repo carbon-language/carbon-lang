@@ -1921,13 +1921,6 @@ class ScopInfo : public RegionPass {
   Scop *scop;
   isl_ctx *ctx;
 
-  /// @brief Return the SCoP region that is currently processed.
-  Region *getRegion() const {
-    if (!scop)
-      return nullptr;
-    return &scop->getRegion();
-  }
-
   // Clear the context.
   void clear();
 
@@ -1974,9 +1967,12 @@ class ScopInfo : public RegionPass {
 
   /// @brief Create ScopStmt for all BBs and non-affine subregions of @p SR.
   ///
+  /// @param R  The SCoP region.
+  /// @param SR A subregion of @p R.
+  ///
   /// Some of the statments might be optimized away later when they do not
   /// access any memory and thus have no effect.
-  void buildStmts(Region &SR);
+  void buildStmts(Region &R, Region &SR);
 
   /// @brief Build the access functions for the basic block @p BB
   ///

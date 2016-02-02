@@ -3876,17 +3876,16 @@ void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
       buildAccessFunctions(R, *I->getNodeAs<BasicBlock>());
 }
 
-void ScopInfo::buildStmts(Region &SR) {
-  Region *R = getRegion();
+void ScopInfo::buildStmts(Region &R, Region &SR) {
 
-  if (SD->isNonAffineSubRegion(&SR, R)) {
+  if (SD->isNonAffineSubRegion(&SR, &R)) {
     scop->addScopStmt(nullptr, &SR);
     return;
   }
 
   for (auto I = SR.element_begin(), E = SR.element_end(); I != E; ++I)
     if (I->isSubRegion())
-      buildStmts(*I->getNodeAs<Region>());
+      buildStmts(R, *I->getNodeAs<Region>());
     else
       scop->addScopStmt(I->getNodeAs<BasicBlock>(), nullptr);
 }
@@ -4067,7 +4066,7 @@ void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
   scop = new Scop(R, AccFuncMap, *SD, *SE, *DT, *LI, ctx, MaxLoopDepth);
 
-  buildStmts(R);
+  buildStmts(R, R);
   buildAccessFunctions(R, R);
 
   // In case the region does not have an exiting block we will later (during
