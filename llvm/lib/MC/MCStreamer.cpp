@@ -198,7 +198,7 @@ void MCStreamer::EmitCVLinetableDirective(unsigned FunctionId,
 
 void MCStreamer::EmitCVInlineLinetableDirective(
     unsigned PrimaryFunctionId, unsigned SourceFileId, unsigned SourceLineNum,
-    ArrayRef<unsigned> SecondaryFunctionIds) {}
+    const MCSymbol *FnStartSym, ArrayRef<unsigned> SecondaryFunctionIds) {}
 
 void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol) {

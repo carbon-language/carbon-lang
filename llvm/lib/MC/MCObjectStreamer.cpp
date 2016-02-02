@@ -386,12 +386,13 @@ void MCObjectStreamer::EmitCVLinetableDirective(unsigned FunctionId,
 
 void MCObjectStreamer::EmitCVInlineLinetableDirective(
     unsigned PrimaryFunctionId, unsigned SourceFileId, unsigned SourceLineNum,
-    ArrayRef<unsigned> SecondaryFunctionIds) {
+    const MCSymbol *FnStartSym, ArrayRef<unsigned> SecondaryFunctionIds) {
   getContext().getCVContext().emitInlineLineTableForFunction(
-      *this, PrimaryFunctionId, SourceFileId, SourceLineNum,
+      *this, PrimaryFunctionId, SourceFileId, SourceLineNum, FnStartSym,
       SecondaryFunctionIds);
   this->MCStreamer::EmitCVInlineLinetableDirective(
-      PrimaryFunctionId, SourceFileId, SourceLineNum, SecondaryFunctionIds);
+      PrimaryFunctionId, SourceFileId, SourceLineNum, FnStartSym,
+      SecondaryFunctionIds);
 }
 
 void MCObjectStreamer::EmitCVStringTableDirective() {
