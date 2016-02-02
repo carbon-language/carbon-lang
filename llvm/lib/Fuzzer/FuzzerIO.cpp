@@ -32,7 +32,7 @@ static std::vector<std::string> ListFilesInDir(const std::string &Dir,
   std::vector<std::string> V;
   if (Epoch) {
     auto E = GetEpoch(Dir);
-    if (*Epoch >= E) return V;
+    if (E && *Epoch >= E) return V;
     *Epoch = E;
   }
   DIR *D = opendir(Dir.c_str());
