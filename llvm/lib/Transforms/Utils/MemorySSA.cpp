@@ -379,7 +379,7 @@ bool MemorySSA::dominatesUse(const MemoryAccess *Replacer,
   // Since we may occur multiple times in the phi node, we have to check each
   // operand to ensure Replacer dominates each operand where Replacee occurs.
   for (const Use &Arg : MP->operands()) {
-    if (Arg != Replacee &&
+    if (Arg.get() != Replacee &&
         !DT->dominates(Replacer->getBlock(), MP->getIncomingBlock(Arg)))
       return false;
   }

@@ -840,7 +840,7 @@ public:
     return DefIterator == Other.DefIterator;
   }
 
-  typename BaseT::iterator::reference operator*() const {
+  BaseT::iterator::reference operator*() const {
     assert(DefIterator != OriginalAccess->defs_end() &&
            "Tried to access past the end of our iterator");
     return CurrentPair;
