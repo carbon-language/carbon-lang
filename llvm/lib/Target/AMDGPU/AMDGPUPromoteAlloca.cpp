@@ -106,10 +106,10 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
   // If the function has any arguments in the local address space, then it's
   // possible these arguments require the entire local memory space, so
   // we cannot use local memory in the pass.
-  for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
-    Type *ParamTy = FTy->getParamType(i);
-    if (ParamTy->isPointerTy() &&
-        ParamTy->getPointerAddressSpace() == AMDGPUAS::LOCAL_ADDRESS) {
+  for (Type *ParamTy : FTy->params()) {
+    PointerType *PtrTy = dyn_cast<PointerType>(ParamTy);
+    if (PtrTy && PtrTy->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS) {
+      LocalMemAvailable = 0;
       DEBUG(dbgs() << "Function has local memory argument.  Promoting to "
                       "local memory disabled.\n");
       return false;
@@ -121,26 +121,24 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
   if (LocalMemAvailable == 0)
     return false;
 
-
   // Check how much local memory is being used by global objects
-  for (Module::global_iterator I = Mod->global_begin(),
-         E = Mod->global_end(); I != E; ++I) {
-    GlobalVariable *GV = &*I;
-    if (GV->getType()->getAddressSpace() != AMDGPUAS::LOCAL_ADDRESS)
+  for (GlobalVariable &GV : Mod->globals()) {
+    if (GV.getType()->getAddressSpace() != AMDGPUAS::LOCAL_ADDRESS)
       continue;
-    for (Value::use_iterator U = GV->use_begin(),
-           UE = GV->use_end(); U != UE; ++U) {
-      Instruction *Use = dyn_cast<Instruction>(*U);
+
+    for (Use &U : GV.uses()) {
+      Instruction *Use = dyn_cast<Instruction>(U);
       if (!Use)
         continue;
+
       if (Use->getParent()->getParent() == &F)
         LocalMemAvailable -=
-          Mod->getDataLayout().getTypeAllocSize(GV->getValueType());
+          Mod->getDataLayout().getTypeAllocSize(GV.getValueType());
     }
   }
 
   LocalMemAvailable = std::max(0, LocalMemAvailable);
-  DEBUG(dbgs() << LocalMemAvailable << "bytes free in local memory.\n");
+  DEBUG(dbgs() << LocalMemAvailable << " bytes free in local memory.\n");
 
   visit(F);
 
@@ -310,17 +308,16 @@ static bool canVectorizeInst(Instruction *Inst, User *User) {
 }
 
 static bool tryPromoteAllocaToVector(AllocaInst *Alloca) {
-  Type *AllocaTy = Alloca->getAllocatedType();
+  ArrayType *AllocaTy = dyn_cast<ArrayType>(Alloca->getAllocatedType());
 
-  DEBUG(dbgs() << "Alloca Candidate for vectorization \n");
+  DEBUG(dbgs() << "Alloca candidate for vectorization\n");
 
   // FIXME: There is no reason why we can't support larger arrays, we
   // are just being conservative for now.
-  if (!AllocaTy->isArrayTy() ||
-      AllocaTy->getArrayElementType()->isVectorTy() ||
-      AllocaTy->getArrayNumElements() > 4) {
-
-    DEBUG(dbgs() << "  Cannot convert type to vector");
+  if (!AllocaTy ||
+      AllocaTy->getElementType()->isVectorTy() ||
+      AllocaTy->getNumElements() > 4) {
+    DEBUG(dbgs() << "  Cannot convert type to vector\n");
     return false;
   }
 
@@ -359,9 +356,8 @@ static bool tryPromoteAllocaToVector(AllocaInst *Alloca) {
   DEBUG(dbgs() << "  Converting alloca to vector "
         << *AllocaTy << " -> " << *VectorTy << '\n');
 
-  for (std::vector<Value*>::iterator I = WorkList.begin(),
-                                     E = WorkList.end(); I != E; ++I) {
-    Instruction *Inst = cast<Instruction>(*I);
+  for (Value *V : WorkList) {
+    Instruction *Inst = cast<Instruction>(V);
     IRBuilder<> Builder(Inst);
     switch (Inst->getOpcode()) {
     case Instruction::Load: {
@@ -523,9 +519,7 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   I.replaceAllUsesWith(Offset);
   I.eraseFromParent();
 
-  for (std::vector<Value*>::iterator i = WorkList.begin(),
-                                     e = WorkList.end(); i != e; ++i) {
-    Value *V = *i;
+  for (Value *V : WorkList) {
     CallInst *Call = dyn_cast<CallInst>(V);
     if (!Call) {
       Type *EltTy = V->getType()->getPointerElementType();
