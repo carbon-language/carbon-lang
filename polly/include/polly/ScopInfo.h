@@ -1893,23 +1893,23 @@ class ScopInfo : public RegionPass {
   ScopInfo(const ScopInfo &) = delete;
   const ScopInfo &operator=(const ScopInfo &) = delete;
 
-  // The ScalarEvolution to help building Scop.
-  ScalarEvolution *SE;
-
-  // LoopInfo for information about loops
-  LoopInfo *LI;
-
-  // The AliasAnalysis to build AliasSetTracker.
+  /// @brief The AliasAnalysis to build AliasSetTracker.
   AliasAnalysis *AA;
 
-  // Valid Regions for Scop
-  ScopDetection *SD;
-
-  // Target data for element size computing.
+  /// @brief Target data for element size computing.
   const DataLayout *DL;
 
-  // DominatorTree to reason about guaranteed execution.
+  /// @brief DominatorTree to reason about guaranteed execution.
   DominatorTree *DT;
+
+  /// @brief LoopInfo for information about loops
+  LoopInfo *LI;
+
+  /// @biref Valid Regions for Scop
+  ScopDetection *SD;
+
+  /// @brief The ScalarEvolution to help building Scop.
+  ScalarEvolution *SE;
 
   // Access function of statements (currently BasicBlocks) .
   //
