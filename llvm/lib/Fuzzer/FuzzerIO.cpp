@@ -20,6 +20,13 @@
 
 namespace fuzzer {
 
+bool IsFile(const std::string &Path) {
+  struct stat St;
+  if (stat(Path.c_str(), &St))
+    return false;
+  return S_ISREG(St.st_mode);
+}
+
 static long GetEpoch(const std::string &Path) {
   struct stat St;
   if (stat(Path.c_str(), &St))
