@@ -294,6 +294,8 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 }
 }
 
+static LVILatticeVal intersect(LVILatticeVal A, LVILatticeVal B);
+
 //===----------------------------------------------------------------------===//
 //                          LazyValueInfoCache Decl
 //===----------------------------------------------------------------------===//
@@ -395,7 +397,7 @@ namespace {
                                SelectInst *S, BasicBlock *BB);
     bool solveBlockValueConstantRange(LVILatticeVal &BBLV,
                                       Instruction *BBI, BasicBlock *BB);
-    void mergeAssumeBlockValueConstantRange(Value *Val, LVILatticeVal &BBLV,
+    void intersectAssumeBlockValueConstantRange(Value *Val, LVILatticeVal &BBLV,
                                             Instruction *BBI);
 
     void solve();
@@ -554,10 +556,8 @@ static LVILatticeVal getFromRangeMetadata(Instruction *BBI) {
       }
     break;
   };
-  // Nothing known - Note that we do not want overdefined here.  We may know
-  // something else about the value and not having range metadata shouldn't
-  // cause us to throw away those facts.
-  return LVILatticeVal();
+  // Nothing known - will be intersected with other facts
+  return LVILatticeVal::getOverdefined();
 }
 
 bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
@@ -609,9 +609,9 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     return true;
   }
 
-  // If this is an instruction which supports range metadata, return the
-  // implied range.  TODO: This should be an intersection, not a union.
-  Res.mergeIn(getFromRangeMetadata(BBI), DL);
+  // If this is an instruction which supports range metadata, intersect the
+  // implied range.
+  Res = intersect(Res, getFromRangeMetadata(BBI));
 
   // We can only analyze the definitions of certain classes of instructions
   // (integral binops and casts at the moment), so bail if this isn't one.
@@ -793,10 +793,9 @@ static bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
                                       LVILatticeVal &Result,
                                       bool isTrueDest = true);
 
-// If we can determine a constant range for the value Val in the context
-// provided by the instruction BBI, then merge it into BBLV. If we did find a
-// constant range, return true.
-void LazyValueInfoCache::mergeAssumeBlockValueConstantRange(Value *Val,
+// If we can determine a constraint on the value given conditions assumed by
+// the program, intersect those constraints with BBLV
+void LazyValueInfoCache::intersectAssumeBlockValueConstantRange(Value *Val,
                                                             LVILatticeVal &BBLV,
                                                             Instruction *BBI) {
   BBI = BBI ? BBI : dyn_cast<Instruction>(Val);
@@ -813,12 +812,8 @@ void LazyValueInfoCache::mergeAssumeBlockValueConstantRange(Value *Val,
     Value *C = I->getArgOperand(0);
     if (ICmpInst *ICI = dyn_cast<ICmpInst>(C)) {
       LVILatticeVal Result;
-      if (getValueFromFromCondition(Val, ICI, Result)) {
-        if (BBLV.isOverdefined())
-          BBLV = Result;
-        else
-          BBLV.mergeIn(Result, DL);
-      }
+      if (getValueFromFromCondition(Val, ICI, Result))
+        BBLV = intersect(BBLV, Result);
     }
   }
 }
@@ -874,7 +869,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(LVILatticeVal &BBLV,
   }
 
   LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
-  mergeAssumeBlockValueConstantRange(BBI->getOperand(0), LHSVal, BBI);
+  intersectAssumeBlockValueConstantRange(BBI->getOperand(0), LHSVal, BBI);
   if (!LHSVal.isConstantRange()) {
     BBLV.markOverdefined();
     return true;
@@ -1141,7 +1136,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
 
   // Try to intersect ranges of the BB and the constraint on the edge.
   LVILatticeVal InBlock = getBlockValue(Val, BBFrom);
-  mergeAssumeBlockValueConstantRange(Val, InBlock, BBFrom->getTerminator());
+  intersectAssumeBlockValueConstantRange(Val, InBlock, BBFrom->getTerminator());
   // We can use the context instruction (generically the ultimate instruction
   // the calling pass is trying to simplify) here, even though the result of
   // this function is generally cached when called from the solve* functions
@@ -1150,7 +1145,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
   // functions, the context instruction is not provided. When called from
   // LazyValueInfoCache::getValueOnEdge, the context instruction is provided,
   // but then the result is not cached.
-  mergeAssumeBlockValueConstantRange(Val, InBlock, CxtI);
+  intersectAssumeBlockValueConstantRange(Val, InBlock, CxtI);
 
   Result = intersect(LocalResult, InBlock);
   return true;
@@ -1166,7 +1161,7 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB,
 
   solve();
   LVILatticeVal Result = getBlockValue(V, BB);
-  mergeAssumeBlockValueConstantRange(V, Result, CxtI);
+  intersectAssumeBlockValueConstantRange(V, Result, CxtI);
 
   DEBUG(dbgs() << "  Result = " << Result << "\n");
   return Result;
@@ -1176,18 +1171,10 @@ LVILatticeVal LazyValueInfoCache::getValueAt(Value *V, Instruction *CxtI) {
   DEBUG(dbgs() << "LVI Getting value " << *V << " at '"
         << CxtI->getName() << "'\n");
 
-  LVILatticeVal Result;
+  LVILatticeVal Result = LVILatticeVal::getOverdefined();
   if (auto *I = dyn_cast<Instruction>(V))
     Result = getFromRangeMetadata(I);
-  mergeAssumeBlockValueConstantRange(V, Result, CxtI);
-
-  // Note: What's actually happening here is that we're starting at overdefined
-  // and then intersecting two different types of facts.  The code is not
-  // structured that way (FIXME), and we need to take particular care to not
-  // let the undefined state escape since we have *not* proven the particular
-  // value to be unreachable at the context instruction.
-  if (Result.isUndefined())
-    Result.markOverdefined();
+  intersectAssumeBlockValueConstantRange(V, Result, CxtI);
 
   DEBUG(dbgs() << "  Result = " << Result << "\n");
   return Result;
