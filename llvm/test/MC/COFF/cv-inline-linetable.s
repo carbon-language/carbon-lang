@@ -84,7 +84,7 @@ Ltmp3:
 Ltmp4:
 	.short	4429
 	.asciz	"\000\000\000\000\000\000\000\000\003\020\000"
-	.cv_inline_linetable	1 1 9 Lfunc_begin0 contains 2
+	.cv_inline_linetable	1 1 9 Lfunc_begin0 Lfunc_end0 contains 2
 # CHECK:    InlineSite {
 # CHECK:      PtrParent: 0x0
 # CHECK:      PtrEnd: 0x0
@@ -105,7 +105,7 @@ Ltmp5:
 Ltmp6:
 	.short	4429
 	.asciz	"\000\000\000\000\000\000\000\000\004\020\000"
-	.cv_inline_linetable	2 1 3 Lfunc_begin0
+	.cv_inline_linetable	2 1 3 Lfunc_begin0 Lfunc_end0
 # CHECK:    InlineSite {
 # CHECK:      PtrParent: 0x0
 # CHECK:      PtrEnd: 0x0

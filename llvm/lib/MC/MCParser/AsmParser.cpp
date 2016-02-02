@@ -3229,7 +3229,7 @@ bool AsmParser::parseDirectiveCVLinetable() {
 }
 
 /// parseDirectiveCVInlineLinetable
-/// ::= .cv_inline_linetable PrimaryFunctionId FileId LineNum FnStart
+/// ::= .cv_inline_linetable PrimaryFunctionId FileId LineNum FnStart FnEnd
 ///          ("contains" SecondaryFunctionId+)?
 bool AsmParser::parseDirectiveCVInlineLinetable() {
   int64_t PrimaryFunctionId = getTok().getIntVal();
@@ -3256,6 +3256,12 @@ bool AsmParser::parseDirectiveCVInlineLinetable() {
     return Error(Loc, "expected identifier in directive");
   MCSymbol *FnStartSym = getContext().getOrCreateSymbol(FnStartName);
 
+  Loc = getLexer().getLoc();
+  StringRef FnEndName;
+  if (parseIdentifier(FnEndName))
+    return Error(Loc, "expected identifier in directive");
+  MCSymbol *FnEndSym = getContext().getOrCreateSymbol(FnEndName);
+
   SmallVector<unsigned, 8> SecondaryFunctionIds;
   if (getLexer().is(AsmToken::Identifier)) {
     if (getTok().getIdentifier() != "contains")
@@ -3276,7 +3282,7 @@ bool AsmParser::parseDirectiveCVInlineLinetable() {
 
   getStreamer().EmitCVInlineLinetableDirective(PrimaryFunctionId, SourceFileId,
                                                SourceLineNum, FnStartSym,
-                                               SecondaryFunctionIds);
+                                               FnEndSym, SecondaryFunctionIds);
   return false;
 }
 

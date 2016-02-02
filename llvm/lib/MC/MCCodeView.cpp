@@ -228,11 +228,11 @@ static uint32_t encodeSignedNumber(uint32_t Data) {
 void CodeViewContext::emitInlineLineTableForFunction(
     MCObjectStreamer &OS, unsigned PrimaryFunctionId, unsigned SourceFileId,
     unsigned SourceLineNum, const MCSymbol *FnStartSym,
-    ArrayRef<unsigned> SecondaryFunctionIds) {
+    const MCSymbol *FnEndSym, ArrayRef<unsigned> SecondaryFunctionIds) {
   // Create and insert a fragment into the current section that will be encoded
   // later.
   new MCCVInlineLineTableFragment(
-      PrimaryFunctionId, SourceFileId, SourceLineNum, FnStartSym,
+      PrimaryFunctionId, SourceFileId, SourceLineNum, FnStartSym, FnEndSym,
       SecondaryFunctionIds, OS.getCurrentSectionOnly());
 }
 
@@ -265,7 +265,7 @@ void CodeViewContext::encodeInlineLineTable(MCAsmLayout &Layout,
   }
   if (LocBegin >= LocEnd)
     return;
-  ArrayRef<MCCVLineEntry> Locs = getLinesForExtent(LocBegin, LocEnd + 1);
+  ArrayRef<MCCVLineEntry> Locs = getLinesForExtent(LocBegin, LocEnd);
   if (Locs.empty())
     return;
 
@@ -331,6 +331,19 @@ void CodeViewContext::encodeInlineLineTable(MCAsmLayout &Layout,
 
     LastLoc = &Loc;
   }
+
+  assert(WithinFunction);
+
+  unsigned EndSymLength =
+      computeLabelDiff(Layout, LastLoc->getLabel(), Frag.getFnEndSym());
+  unsigned LocAfterLength = ~0U;
+  ArrayRef<MCCVLineEntry> LocAfter = getLinesForExtent(LocEnd, LocEnd + 1);
+  if (!LocAfter.empty())
+    LocAfterLength =
+        computeLabelDiff(Layout, LastLoc->getLabel(), LocAfter[0].getLabel());
+
+  compressAnnotation(ChangeCodeLength, Buffer);
+  compressAnnotation(std::min(EndSymLength, LocAfterLength), Buffer);
 }
 
 //

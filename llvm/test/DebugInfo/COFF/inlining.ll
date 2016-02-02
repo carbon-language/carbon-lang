@@ -56,10 +56,10 @@
 ; ASM: .long   Ltmp3-Ltmp2
 ; ASM: .short 4429
 ; ASM: .asciz
-; ASM: .cv_inline_linetable 1 1 8 Lfunc_begin0 contains 2
+; ASM: .cv_inline_linetable 1 1 8 Lfunc_begin0 Lfunc_end0 contains 2
 ; ASM: .short 4429
 ; ASM: .asciz
-; ASM: .cv_inline_linetable 2 1 2 Lfunc_begin0
+; ASM: .cv_inline_linetable 2 1 2 Lfunc_begin0 Lfunc_end0
 ; ASM: .short  4430
 ; ASM: .short  4430
 

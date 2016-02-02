@@ -492,6 +492,7 @@ class MCCVInlineLineTableFragment : public MCFragment {
   unsigned StartFileId;
   unsigned StartLineNum;
   const MCSymbol *FnStartSym;
+  const MCSymbol *FnEndSym;
   SmallVector<unsigned, 3> SecondaryFuncs;
   SmallString<8> Contents;
 
@@ -502,11 +503,12 @@ class MCCVInlineLineTableFragment : public MCFragment {
 public:
   MCCVInlineLineTableFragment(unsigned SiteFuncId, unsigned StartFileId,
                               unsigned StartLineNum, const MCSymbol *FnStartSym,
+                              const MCSymbol *FnEndSym,
                               ArrayRef<unsigned> SecondaryFuncs,
                               MCSection *Sec = nullptr)
       : MCFragment(FT_CVInlineLines, false, 0, Sec), SiteFuncId(SiteFuncId),
         StartFileId(StartFileId), StartLineNum(StartLineNum),
-        FnStartSym(FnStartSym),
+        FnStartSym(FnStartSym), FnEndSym(FnEndSym),
         SecondaryFuncs(SecondaryFuncs.begin(), SecondaryFuncs.end()) {
     Contents.push_back(0);
   }
@@ -515,6 +517,7 @@ public:
   /// @{
 
   const MCSymbol *getFnStartSym() const { return FnStartSym; }
+  const MCSymbol *getFnEndSym() const { return FnEndSym; }
 
   SmallString<8> &getContents() { return Contents; }
   const SmallString<8> &getContents() const { return Contents; }

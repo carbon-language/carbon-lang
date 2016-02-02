@@ -345,7 +345,7 @@ void CodeViewDebug::emitInlinedCallSite(const FunctionInfo &FI,
   collectInlineSiteChildren(SecondaryFuncIds, FI, Site);
 
   OS.EmitCVInlineLinetableDirective(Site.SiteFuncId, FileId, StartLineNum,
-                                    FI.Begin, SecondaryFuncIds);
+                                    FI.Begin, FI.End, SecondaryFuncIds);
 
   OS.EmitLabel(InlineEnd);
 

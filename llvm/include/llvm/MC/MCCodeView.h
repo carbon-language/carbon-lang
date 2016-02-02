@@ -145,8 +145,11 @@ public:
   }
 
   ArrayRef<MCCVLineEntry> getLinesForExtent(size_t L, size_t R) {
-    size_t S = std::min(R, MCCVLines.size()) - L;
-    return makeArrayRef(&MCCVLines[L], S);
+    if (R <= L)
+      return None;
+    if (L >= MCCVLines.size())
+      return None;
+    return makeArrayRef(&MCCVLines[L], R - L);
   }
 
   /// Emits a line table substream.
@@ -154,12 +157,10 @@ public:
                                 const MCSymbol *FuncBegin,
                                 const MCSymbol *FuncEnd);
 
-  void emitInlineLineTableForFunction(MCObjectStreamer &OS,
-                                      unsigned PrimaryFunctionId,
-                                      unsigned SourceFileId,
-                                      unsigned SourceLineNum,
-                                      const MCSymbol *FnStartSym,
-                                      ArrayRef<unsigned> SecondaryFunctionIds);
+  void emitInlineLineTableForFunction(
+      MCObjectStreamer &OS, unsigned PrimaryFunctionId, unsigned SourceFileId,
+      unsigned SourceLineNum, const MCSymbol *FnStartSym,
+      const MCSymbol *FnEndSym, ArrayRef<unsigned> SecondaryFunctionIds);
 
   /// Encodes the binary annotations once we have a layout.
   void encodeInlineLineTable(MCAsmLayout &Layout,
