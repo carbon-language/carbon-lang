@@ -98,7 +98,7 @@ bool AMDGPUPromoteAlloca::doInitialization(Module &M) {
 }
 
 bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
-  if (!TM)
+  if (!TM || F.hasFnAttribute(Attribute::OptimizeNone))
     return false;
 
   FunctionType *FTy = F.getFunctionType();
