@@ -176,7 +176,8 @@ PltSection<ELFT>::PltSection()
 template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   size_t Off = 0;
   if (Target->UseLazyBinding) {
-    // First write PLT[0] entry which is special.
+    // At beginning of PLT, we have code to call the dynamic linker
+    // to resolve dynsyms at runtime. Write such code.
     Target->writePltZero(Buf);
     Off += Target->PltZeroSize;
   }
