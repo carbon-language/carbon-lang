@@ -485,17 +485,18 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   Value *TIdY = getWorkitemID(Builder, 1);
   Value *TIdZ = getWorkitemID(Builder, 2);
 
-  Value *Tmp0 = Builder.CreateMul(TCntY, TCntZ);
+  Value *Tmp0 = Builder.CreateMul(TCntY, TCntZ, "", true, true);
   Tmp0 = Builder.CreateMul(Tmp0, TIdX);
-  Value *Tmp1 = Builder.CreateMul(TIdY, TCntZ);
+  Value *Tmp1 = Builder.CreateMul(TIdY, TCntZ, "", true, true);
   Value *TID = Builder.CreateAdd(Tmp0, Tmp1);
   TID = Builder.CreateAdd(TID, TIdZ);
 
-  std::vector<Value*> Indices;
-  Indices.push_back(Constant::getNullValue(Type::getInt32Ty(Mod->getContext())));
-  Indices.push_back(TID);
+  Value *Indices[] = {
+    Constant::getNullValue(Type::getInt32Ty(Mod->getContext())),
+    TID
+  };
 
-  Value *Offset = Builder.CreateGEP(GVTy, GV, Indices);
+  Value *Offset = Builder.CreateInBoundsGEP(GVTy, GV, Indices);
   I.mutateType(Offset->getType());
   I.replaceAllUsesWith(Offset);
   I.eraseFromParent();
