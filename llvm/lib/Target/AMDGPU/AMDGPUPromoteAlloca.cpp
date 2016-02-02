@@ -101,11 +101,7 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
   if (!TM)
     return false;
 
-  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>(F);
-
   FunctionType *FTy = F.getFunctionType();
-  LocalMemAvailable = ST.getLocalMemorySize();
-
 
   // If the function has any arguments in the local address space, then it's
   // possible these arguments require the entire local memory space, so
@@ -114,29 +110,32 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
     Type *ParamTy = FTy->getParamType(i);
     if (ParamTy->isPointerTy() &&
         ParamTy->getPointerAddressSpace() == AMDGPUAS::LOCAL_ADDRESS) {
-      LocalMemAvailable = 0;
       DEBUG(dbgs() << "Function has local memory argument.  Promoting to "
                       "local memory disabled.\n");
-      break;
+      return false;
     }
   }
 
-  if (LocalMemAvailable > 0) {
-    // Check how much local memory is being used by global objects
-    for (Module::global_iterator I = Mod->global_begin(),
-                                 E = Mod->global_end(); I != E; ++I) {
-      GlobalVariable *GV = &*I;
-      if (GV->getType()->getAddressSpace() != AMDGPUAS::LOCAL_ADDRESS)
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>(F);
+  LocalMemAvailable = ST.getLocalMemorySize();
+  if (LocalMemAvailable == 0)
+    return false;
+
+
+  // Check how much local memory is being used by global objects
+  for (Module::global_iterator I = Mod->global_begin(),
+         E = Mod->global_end(); I != E; ++I) {
+    GlobalVariable *GV = &*I;
+    if (GV->getType()->getAddressSpace() != AMDGPUAS::LOCAL_ADDRESS)
+      continue;
+    for (Value::use_iterator U = GV->use_begin(),
+           UE = GV->use_end(); U != UE; ++U) {
+      Instruction *Use = dyn_cast<Instruction>(*U);
+      if (!Use)
         continue;
-      for (Value::use_iterator U = GV->use_begin(),
-                               UE = GV->use_end(); U != UE; ++U) {
-        Instruction *Use = dyn_cast<Instruction>(*U);
-        if (!Use)
-          continue;
-        if (Use->getParent()->getParent() == &F)
-          LocalMemAvailable -=
-              Mod->getDataLayout().getTypeAllocSize(GV->getValueType());
-      }
+      if (Use->getParent()->getParent() == &F)
+        LocalMemAvailable -=
+          Mod->getDataLayout().getTypeAllocSize(GV->getValueType());
     }
   }
 
@@ -145,7 +144,7 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
 
   visit(F);
 
-  return false;
+  return true;
 }
 
 std::pair<Value *, Value *>
