@@ -346,15 +346,28 @@ void Writer<ELFT>::scanRelocs(
       continue;
     }
 
-    bool NeedsGot = false;
+    // If a relocation needs GOT, we create a GOT slot for the symbol.
+    if (Body && Target->needsGot(Type, *Body)) {
+      if (Body->isInGot())
+        continue;
+      Out<ELFT>::Got->addEntry(Body);
 
-    if (Body) {
-      NeedsGot = Target->needsGot(Type, *Body);
-      if (NeedsGot) {
-        if (Body->isInGot())
-          continue;
-        Out<ELFT>::Got->addEntry(Body);
-      }
+      if (Config->EMachine == EM_MIPS)
+        // MIPS ABI has special rules to process GOT entries
+        // and doesn't require relocation entries for them.
+        // See "Global Offset Table" in Chapter 5 in the following document
+        // for detailed description:
+        // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+        continue;
+
+      bool CBP = canBePreempted(Body, /*NeedsGot=*/true);
+      bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
+                    !Target->isSizeRel(Type);
+      if (CBP)
+        Body->setUsedInDynamicReloc();
+      if (CBP || Dynrel)
+        Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+      continue;
     }
 
     if (Config->EMachine == EM_MIPS) {
@@ -367,15 +380,6 @@ void Writer<ELFT>::scanRelocs(
         // relocation too because that case is possible for executable file
         // linking only.
         continue;
-      if (NeedsGot) {
-        // MIPS ABI has special rules to process GOT entries
-        // and doesn't require relocation entries for them.
-        // See "Global Offset Table" in Chapter 5 in the following document
-        // for detailed description:
-        // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-        Body->setUsedInDynamicReloc();
-        continue;
-      }
       if (Body == Config->MipsGpDisp)
         // MIPS _gp_disp designates offset between start of function and gp
         // pointer into GOT therefore any relocations against it do not require
@@ -386,7 +390,7 @@ void Writer<ELFT>::scanRelocs(
     // Here we are creating a relocation for the dynamic linker based on
     // a relocation from an object file, but some relocations need no
     // load-time fixup when the final target is known. Skip such relocation.
-    bool CBP = canBePreempted(Body, NeedsGot);
+    bool CBP = canBePreempted(Body, /*NeedsGot=*/false);
     bool NoDynrel = Target->isRelRelative(Type) || Target->isSizeRel(Type) ||
                     !Config->Shared;
     if (!CBP && NoDynrel)
