@@ -967,11 +967,17 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   if (isOutputDynamic())
     Out<ELFT>::DynSymTab->finalize();
 
-  // Fill other section headers. The dynamic string table in finalized
-  // once the .dynamic finalizer has added a few last strings.
+  // Fill other section headers. The dynamic table is finalized
+  // at the end because some tags like RELSZ depend on result
+  // of finalizing other sections. The dynamic string table is
+  // finalized once the .dynamic finalizer has added a few last
+  // strings. See DynamicSection::finalize()
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    if (Sec != Out<ELFT>::DynStrTab)
+    if (Sec != Out<ELFT>::DynStrTab && Sec != Out<ELFT>::Dynamic)
       Sec->finalize();
+
+  if (isOutputDynamic())
+    Out<ELFT>::Dynamic->finalize();
   return true;
 }
 
