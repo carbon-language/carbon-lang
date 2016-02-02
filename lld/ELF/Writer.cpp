@@ -293,16 +293,23 @@ void Writer<ELFT>::scanRelocs(
       continue;
     }
 
+    // If a symbol in a DSO is referenced directly instead of through GOT,
+    // we need to create a copy relocation for the symbol.
+    if (auto *B = dyn_cast_or_null<SharedSymbol<ELFT>>(Body)) {
+      if (B->NeedsCopy)
+        continue;
+      if (Target->needsCopyRel(Type, *B)) {
+        B->NeedsCopy = true;
+        B->setUsedInDynamicReloc();
+        Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+        continue;
+      }
+    }
+
     bool NeedsGot = false;
     bool NeedsPlt = false;
 
     if (Body) {
-      if (auto *E = dyn_cast<SharedSymbol<ELFT>>(Body)) {
-        if (E->NeedsCopy)
-          continue;
-        if (Target->needsCopyRel(Type, *Body))
-          E->NeedsCopy = true;
-      }
       NeedsPlt = Target->needsPlt(Type, *Body);
       if (NeedsPlt) {
         if (Body->isInPlt())
