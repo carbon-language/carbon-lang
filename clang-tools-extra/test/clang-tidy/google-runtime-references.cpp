@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s google-runtime-references %t -- -- -std=c++11
+// RUN: %check_clang_tidy %s google-runtime-references %t
 
 int a;
 int &b = a;
