@@ -3756,24 +3756,19 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
 
 extern MapInsnToMemAcc InsnToMemAcc;
 
-void ScopInfo::buildMemoryAccess(
+bool ScopInfo::buildAccessMultiDimFixed(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
     const InvariantLoadsSetTy &ScopRIL) {
-
-  Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
   Type *SizeType = Val->getType();
   unsigned ElementSize = DL->getTypeAllocSize(SizeType);
-  enum MemoryAccess::AccessType Type =
-      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
-
+  Value *Address = Inst.getPointerOperand();
   const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
   const SCEVUnknown *BasePointer =
       dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
-
-  assert(BasePointer && "Could not find base pointer");
-  AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+  enum MemoryAccess::AccessType Type =
+      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
   if (isa<GetElementPtrInst>(Address) || isa<BitCastInst>(Address)) {
     auto NewAddress = Address;
@@ -3793,31 +3788,47 @@ void ScopInfo::buildMemoryAccess(
 
       std::vector<const SCEV *> SizesSCEV;
 
-      bool AllAffineSubcripts = true;
       for (auto Subscript : Subscripts) {
         InvariantLoadsSetTy AccessILS;
-        AllAffineSubcripts =
-            isAffineExpr(R, Subscript, *SE, nullptr, &AccessILS);
+        if (!isAffineExpr(R, Subscript, *SE, nullptr, &AccessILS))
+          return false;
 
         for (LoadInst *LInst : AccessILS)
           if (!ScopRIL.count(LInst))
-            AllAffineSubcripts = false;
-
-        if (!AllAffineSubcripts)
-          break;
+            return false;
       }
 
-      if (AllAffineSubcripts && Sizes.size() > 0) {
+      if (Sizes.size() > 0) {
         for (auto V : Sizes)
           SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
               IntegerType::getInt64Ty(BasePtr->getContext()), V)));
 
         addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, true,
                        Subscripts, SizesSCEV, Val);
-        return;
+        return true;
       }
     }
   }
+  return false;
+}
+
+bool ScopInfo::buildAccessMultiDimParam(
+    MemAccInst Inst, Loop *L, Region *R,
+    const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
+    const InvariantLoadsSetTy &ScopRIL) {
+  Value *Address = Inst.getPointerOperand();
+  Value *Val = Inst.getValueOperand();
+  Type *SizeType = Val->getType();
+  unsigned ElementSize = DL->getTypeAllocSize(SizeType);
+  enum MemoryAccess::AccessType Type =
+      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
+
+  const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
+  const SCEVUnknown *BasePointer =
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
+
+  assert(BasePointer && "Could not find base pointer");
+  AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
   auto AccItr = InsnToMemAcc.find(Inst);
   if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
@@ -3832,8 +3843,28 @@ void ScopInfo::buildMemoryAccess(
 
     addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, true,
                    AccItr->second.DelinearizedSubscripts, Sizes, Val);
-    return;
+    return true;
   }
+  return false;
+}
+
+void ScopInfo::buildAccessSingleDim(
+    MemAccInst Inst, Loop *L, Region *R,
+    const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
+    const InvariantLoadsSetTy &ScopRIL) {
+  Value *Address = Inst.getPointerOperand();
+  Value *Val = Inst.getValueOperand();
+  Type *SizeType = Val->getType();
+  unsigned ElementSize = DL->getTypeAllocSize(SizeType);
+  enum MemoryAccess::AccessType Type =
+      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
+
+  const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
+  const SCEVUnknown *BasePointer =
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
+
+  assert(BasePointer && "Could not find base pointer");
+  AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
   // Check if the access depends on a loop contained in a non-affine subregion.
   bool isVariantInNonAffineLoop = false;
@@ -3859,6 +3890,20 @@ void ScopInfo::buildMemoryAccess(
 
   addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, IsAffine,
                  {AccessFunction}, {}, Val);
+}
+
+void ScopInfo::buildMemoryAccess(
+    MemAccInst Inst, Loop *L, Region *R,
+    const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
+    const InvariantLoadsSetTy &ScopRIL) {
+
+  if (buildAccessMultiDimFixed(Inst, L, R, BoxedLoops, ScopRIL))
+    return;
+
+  if (buildAccessMultiDimParam(Inst, L, R, BoxedLoops, ScopRIL))
+    return;
+
+  buildAccessSingleDim(Inst, L, R, BoxedLoops, ScopRIL);
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
