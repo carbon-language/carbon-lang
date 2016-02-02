@@ -63,6 +63,10 @@ public:
     return invalid;
   }
 
+  Reference::KindValue pointerKind() override {
+    return invalid;
+  }
+
   uint32_t dwarfCompactUnwindType() override {
     // FIXME
     return -1;
