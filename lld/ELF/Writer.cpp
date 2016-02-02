@@ -391,14 +391,12 @@ void Writer<ELFT>::scanRelocs(
     // a relocation from an object file, but some relocations need no
     // load-time fixup when the final target is known. Skip such relocation.
     bool CBP = canBePreempted(Body, /*NeedsGot=*/false);
-    bool NoDynrel = Target->isRelRelative(Type) || Target->isSizeRel(Type) ||
-                    !Config->Shared;
-    if (!CBP && NoDynrel)
-      continue;
-
+    bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
+                  !Target->isSizeRel(Type);
     if (CBP)
       Body->setUsedInDynamicReloc();
-    Out<ELFT>::RelaDyn->addReloc({&C, &RI});
+    if (CBP || Dynrel)
+      Out<ELFT>::RelaDyn->addReloc({&C, &RI});
   }
 }
 
