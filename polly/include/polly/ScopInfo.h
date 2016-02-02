@@ -263,7 +263,11 @@ public:
   };
 
   /// @brief Return the number of dimensions.
-  unsigned getNumberOfDimensions() const { return DimensionSizes.size(); }
+  unsigned getNumberOfDimensions() const {
+    if (Kind == MK_PHI || Kind == MK_ExitPHI || Kind == MK_Value)
+      return 0;
+    return DimensionSizes.size() + 1;
+  }
 
   /// @brief Return the size of dimension @p dim as SCEV*.
   //

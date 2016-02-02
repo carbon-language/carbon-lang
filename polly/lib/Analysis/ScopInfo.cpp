@@ -687,7 +687,7 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
     AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
   }
 
-  if (Sizes.size() > 1 && !isa<SCEVConstant>(Sizes[0]))
+  if (Sizes.size() >= 1 && !isa<SCEVConstant>(Sizes[0]))
     AccessRelation = foldAccess(AccessRelation, Statement);
 
   Space = Statement->getDomainSpace();
@@ -3764,7 +3764,7 @@ void ScopInfo::buildMemoryAccess(
   Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
   Type *SizeType = Val->getType();
-  unsigned Size = DL->getTypeAllocSize(SizeType);
+  unsigned ElementSize = DL->getTypeAllocSize(SizeType);
   enum MemoryAccess::AccessType Type =
       Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
@@ -3811,10 +3811,8 @@ void ScopInfo::buildMemoryAccess(
         for (auto V : Sizes)
           SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
               IntegerType::getInt64Ty(BasePtr->getContext()), V)));
-        SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
-            IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
 
-        addArrayAccess(Inst, Type, BasePointer->getValue(), Size, true,
+        addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, true,
                        Subscripts, SizesSCEV, Val);
         return;
       }
@@ -3823,9 +3821,17 @@ void ScopInfo::buildMemoryAccess(
 
   auto AccItr = InsnToMemAcc.find(Inst);
   if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
-    addArrayAccess(Inst, Type, BasePointer->getValue(), Size, true,
-                   AccItr->second.DelinearizedSubscripts,
-                   AccItr->second.Shape->DelinearizedSizes, Val);
+    std::vector<const SCEV *> Sizes(
+        AccItr->second.Shape->DelinearizedSizes.begin(),
+        AccItr->second.Shape->DelinearizedSizes.end());
+    assert(cast<const SCEVConstant>(Sizes.back())->getAPInt().getSExtValue() ==
+           ElementSize);
+    // Remove the element size. This information is already provided by the
+    // ElementSize parameter.
+    Sizes.pop_back();
+
+    addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, true,
+                   AccItr->second.DelinearizedSubscripts, Sizes, Val);
     return;
   }
 
@@ -3848,17 +3854,11 @@ void ScopInfo::buildMemoryAccess(
     if (!ScopRIL.count(LInst))
       IsAffine = false;
 
-  // FIXME: Size of the number of bytes of an array element, not the number of
-  // elements as probably intended here.
-  const SCEV *SizeSCEV =
-      SE->getConstant(DL->getIntPtrType(Inst.getContext()), Size);
-
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
-  addArrayAccess(Inst, Type, BasePointer->getValue(), Size, IsAffine,
-                 ArrayRef<const SCEV *>(AccessFunction),
-                 ArrayRef<const SCEV *>(SizeSCEV), Val);
+  addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, IsAffine,
+                 {AccessFunction}, {}, Val);
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
