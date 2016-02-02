@@ -600,7 +600,6 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
 
   Out<ELFT>::DynStrTab->finalize();
 
-
   if (Out<ELFT>::RelaDyn->hasRelocs()) {
     bool IsRela = Out<ELFT>::RelaDyn->isRela();
     Add({IsRela ? DT_RELA : DT_REL, Out<ELFT>::RelaDyn});
