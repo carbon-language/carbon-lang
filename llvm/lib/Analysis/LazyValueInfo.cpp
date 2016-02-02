@@ -294,7 +294,68 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 }
 }
 
-static LVILatticeVal intersect(LVILatticeVal A, LVILatticeVal B);
+/// Returns true if this lattice value represents at most one possible value.
+/// This is as precise as any lattice value can get while still representing
+/// reachable code.
+static bool hasSingleValue(LVILatticeVal Val) {
+  if (Val.isConstantRange() &&
+      Val.getConstantRange().isSingleElement())
+    // Integer constants are single element ranges
+    return true;
+  if (Val.isConstant())
+    // Non integer constants
+    return true;
+  return false;
+}
+
+/// Combine two sets of facts about the same value into a single set of
+/// facts.  Note that this method is not suitable for merging facts along
+/// different paths in a CFG; that's what the mergeIn function is for.  This
+/// is for merging facts gathered about the same value at the same location
+/// through two independent means.
+/// Notes:
+/// * This method does not promise to return the most precise possible lattice
+///   value implied by A and B.  It is allowed to return any lattice element
+///   which is at least as strong as *either* A or B (unless our facts
+///   conflict, see below).  
+/// * Due to unreachable code, the intersection of two lattice values could be
+///   contradictory.  If this happens, we return some valid lattice value so as
+///   not confuse the rest of LVI.  Ideally, we'd always return Undefined, but
+///   we do not make this guarantee.  TODO: This would be a useful enhancement.
+static LVILatticeVal intersect(LVILatticeVal A, LVILatticeVal B) {
+  // Undefined is the strongest state.  It means the value is known to be along
+  // an unreachable path.
+  if (A.isUndefined())
+    return A;
+  if (B.isUndefined())
+    return B;
+
+  // If we gave up for one, but got a useable fact from the other, use it.
+  if (A.isOverdefined())
+    return B;
+  if (B.isOverdefined())
+    return A;
+
+  // Can't get any more precise than constants.
+  if (hasSingleValue(A))
+    return A;
+  if (hasSingleValue(B))
+    return B;
+
+  // Could be either constant range or not constant here.
+  if (!A.isConstantRange() || !B.isConstantRange()) {
+    // TODO: Arbitrary choice, could be improved
+    return A;
+  }
+
+  // Intersect two constant ranges
+  ConstantRange Range =
+    A.getConstantRange().intersectWith(B.getConstantRange());
+  // Note: An empty range is implicitly converted to overdefined internally.
+  // TODO: We could instead use Undefined here since we've proven a conflict
+  // and thus know this path must be unreachable. 
+  return LVILatticeVal::getRange(Range);
+}
 
 //===----------------------------------------------------------------------===//
 //                          LazyValueInfoCache Decl
@@ -1038,69 +1099,6 @@ static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
     return true;
   }
   return false;
-}
-
-/// Returns true if this lattice value represents at most one possible value.
-/// This is as precise as any lattice value can get while still representing
-/// reachable code.
-static bool hasSingleValue(LVILatticeVal Val) {
-  if (Val.isConstantRange() &&
-      Val.getConstantRange().isSingleElement())
-    // Integer constants are single element ranges
-    return true;
-  if (Val.isConstant())
-    // Non integer constants
-    return true;
-  return false;
-}
-
-/// Combine two sets of facts about the same value into a single set of
-/// facts.  Note that this method is not suitable for merging facts along
-/// different paths in a CFG; that's what the mergeIn function is for.  This
-/// is for merging facts gathered about the same value at the same location
-/// through two independent means.
-/// Notes:
-/// * This method does not promise to return the most precise possible lattice
-///   value implied by A and B.  It is allowed to return any lattice element
-///   which is at least as strong as *either* A or B (unless our facts
-///   conflict, see below).  
-/// * Due to unreachable code, the intersection of two lattice values could be
-///   contradictory.  If this happens, we return some valid lattice value so as
-///   not confuse the rest of LVI.  Ideally, we'd always return Undefined, but
-///   we do not make this guarantee.  TODO: This would be a useful enhancement.
-static LVILatticeVal intersect(LVILatticeVal A, LVILatticeVal B) {
-  // Undefined is the strongest state.  It means the value is known to be along
-  // an unreachable path.
-  if (A.isUndefined())
-    return A;
-  if (B.isUndefined())
-    return B;
-
-  // If we gave up for one, but got a useable fact from the other, use it.
-  if (A.isOverdefined())
-    return B;
-  if (B.isOverdefined())
-    return A;
-
-  // Can't get any more precise than constants.
-  if (hasSingleValue(A))
-    return A;
-  if (hasSingleValue(B))
-    return B;
-
-  // Could be either constant range or not constant here.
-  if (!A.isConstantRange() || !B.isConstantRange()) {
-    // TODO: Arbitrary choice, could be improved
-    return A;
-  }
-
-  // Intersect two constant ranges
-  ConstantRange Range =
-    A.getConstantRange().intersectWith(B.getConstantRange());
-  // Note: An empty range is implicitly converted to overdefined internally.
-  // TODO: We could instead use Undefined here since we've proven a conflict
-  // and thus know this path must be unreachable. 
-  return LVILatticeVal::getRange(Range);
 }
 
 /// \brief Compute the value of Val on the edge BBFrom -> BBTo or the value at
