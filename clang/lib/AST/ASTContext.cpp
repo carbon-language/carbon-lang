@@ -4868,11 +4868,10 @@ int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) const {
   return 1;
 }
 
-TagDecl *ASTContext::getCFConstantStringDecl() const {
+// getCFConstantStringType - Return the type used for constant CFStrings.
+QualType ASTContext::getCFConstantStringType() const {
   if (!CFConstantStringTypeDecl) {
-    // This type is designed to be compatible with NSConstantString, but cannot
-    // use the same name, since NSConstantString is an interface.
-    CFConstantStringTypeDecl = buildImplicitRecord("__NSConstantString");
+    CFConstantStringTypeDecl = buildImplicitRecord("NSConstantString");
     CFConstantStringTypeDecl->startDefinition();
 
     QualType FieldTypes[4];
@@ -4902,12 +4901,7 @@ TagDecl *ASTContext::getCFConstantStringDecl() const {
     CFConstantStringTypeDecl->completeDefinition();
   }
 
-  return CFConstantStringTypeDecl;
-}
-
-// getCFConstantStringType - Return the type used for constant CFStrings.
-QualType ASTContext::getCFConstantStringType() const {
-  return getTagDeclType(getCFConstantStringDecl());
+  return getTagDeclType(CFConstantStringTypeDecl);
 }
 
 QualType ASTContext::getObjCSuperType() const {
