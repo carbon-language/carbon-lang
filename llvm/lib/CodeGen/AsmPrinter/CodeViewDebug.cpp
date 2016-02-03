@@ -312,18 +312,6 @@ void CodeViewDebug::emitInlineeLinesSubsection() {
   OS.EmitLabel(InlineEnd);
 }
 
-static void EmitLabelDiff(MCStreamer &Streamer,
-                          const MCSymbol *From, const MCSymbol *To,
-                          unsigned int Size = 4) {
-  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-  MCContext &Context = Streamer.getContext();
-  const MCExpr *FromRef = MCSymbolRefExpr::create(From, Variant, Context),
-               *ToRef   = MCSymbolRefExpr::create(To, Variant, Context);
-  const MCExpr *AddrDelta =
-      MCBinaryExpr::create(MCBinaryExpr::Sub, ToRef, FromRef, Context);
-  Streamer.EmitValue(AddrDelta, Size);
-}
-
 void CodeViewDebug::collectInlineSiteChildren(
     SmallVectorImpl<unsigned> &Children, const FunctionInfo &FI,
     const InlineSite &Site) {
@@ -339,8 +327,6 @@ void CodeViewDebug::collectInlineSiteChildren(
 void CodeViewDebug::emitInlinedCallSite(const FunctionInfo &FI,
                                         const DILocation *InlinedAt,
                                         const InlineSite &Site) {
-  MCStreamer &OS = *Asm->OutStreamer;
-
   MCSymbol *InlineBegin = Asm->MMI->getContext().createTempSymbol(),
            *InlineEnd = Asm->MMI->getContext().createTempSymbol();
 
@@ -349,7 +335,7 @@ void CodeViewDebug::emitInlinedCallSite(const FunctionInfo &FI,
 
   // SymbolRecord
   OS.AddComment("Record length");
-  EmitLabelDiff(OS, InlineBegin, InlineEnd, 2);   // RecordLength
+  OS.emitAbsoluteSymbolDiff(InlineEnd, InlineBegin, 2);   // RecordLength
   OS.EmitLabel(InlineBegin);
   OS.AddComment("Record kind: S_INLINESITE");
   OS.EmitIntValue(SymbolRecordKind::S_INLINESITE, 2); // RecordKind
@@ -407,13 +393,13 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
   OS.AddComment("Symbol subsection for " + Twine(FuncName));
   OS.EmitIntValue(unsigned(ModuleSubstreamKind::Symbols), 4);
   OS.AddComment("Subsection size");
-  EmitLabelDiff(*Asm->OutStreamer, SymbolsBegin, SymbolsEnd);
+  OS.emitAbsoluteSymbolDiff(SymbolsEnd, SymbolsBegin, 4);
   OS.EmitLabel(SymbolsBegin);
   {
     MCSymbol *ProcRecordBegin = Asm->MMI->getContext().createTempSymbol(),
              *ProcRecordEnd = Asm->MMI->getContext().createTempSymbol();
     OS.AddComment("Record length");
-    EmitLabelDiff(*Asm->OutStreamer, ProcRecordBegin, ProcRecordEnd, 2);
+    OS.emitAbsoluteSymbolDiff(ProcRecordEnd, ProcRecordBegin, 2);
     OS.EmitLabel(ProcRecordBegin);
 
     OS.AddComment("Record kind: S_GPROC32_ID");
@@ -429,7 +415,7 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
     // This is the important bit that tells the debugger where the function
     // code is located and what's its size:
     OS.AddComment("Code size");
-    EmitLabelDiff(*Asm->OutStreamer, Fn, FI.End);
+    OS.emitAbsoluteSymbolDiff(FI.End, Fn, 4);
     OS.AddComment("Offset after prologue");
     OS.EmitIntValue(0, 4);
     OS.AddComment("Offset before epilogue");
