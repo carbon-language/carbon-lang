@@ -235,7 +235,7 @@ void InstrProfWriter::writeImpl(ProfOStream &OS) {
   Header.HashOffset = 0;
   int N = sizeof(IndexedInstrProf::Header) / sizeof(uint64_t);
 
-  // Only write out all the fields execpt 'HashOffset'. We need
+  // Only write out all the fields except 'HashOffset'. We need
   // to remember the offset of that field to allow back patching
   // later.
   for (int I = 0; I < N - 1; I++)
