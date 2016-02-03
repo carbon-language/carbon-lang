@@ -89,7 +89,9 @@ private:
   StringRef getFileNameForFileOffset(uint32_t FileOffset);
   void printFileNameForOffset(StringRef Label, uint32_t FileOffset);
   void printTypeIndex(StringRef FieldName, TypeIndex TI);
-  void printLocalVariableAddrRange(const LocalVariableAddrRange &Range);
+  void printLocalVariableAddrRange(const LocalVariableAddrRange &Range,
+                                   const coff_section *Sec,
+                                   StringRef SectionContents);
   void printLocalVariableAddrGap(const LocalVariableAddrGap &Gap);
 
   void printCodeViewSymbolsSubsection(StringRef Subsection,
@@ -1507,7 +1509,8 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       error(consumeObject(SymData, DefRangeRegister));
       W.printNumber("Register", DefRangeRegister->Register);
       W.printNumber("MayHaveNoName", DefRangeRegister->MayHaveNoName);
-      printLocalVariableAddrRange(DefRangeRegister->Range);
+      printLocalVariableAddrRange(DefRangeRegister->Range, Sec,
+                                  SectionContents);
       while (!SymData.empty()) {
         const LocalVariableAddrGap *Gap;
         error(consumeObject(SymData, Gap));
@@ -1524,7 +1527,8 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
                     DefRangeSubfieldRegisterSym->MayHaveNoName);
       W.printNumber("OffsetInParent",
                     DefRangeSubfieldRegisterSym->OffsetInParent);
-      printLocalVariableAddrRange(DefRangeSubfieldRegisterSym->Range);
+      printLocalVariableAddrRange(DefRangeSubfieldRegisterSym->Range, Sec,
+                                  SectionContents);
       while (!SymData.empty()) {
         const LocalVariableAddrGap *Gap;
         error(consumeObject(SymData, Gap));
@@ -1537,7 +1541,8 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       const DefRangeFramePointerRelSym *DefRangeFramePointerRel;
       error(consumeObject(SymData, DefRangeFramePointerRel));
       W.printNumber("Offset", DefRangeFramePointerRel->Offset);
-      printLocalVariableAddrRange(DefRangeFramePointerRel->Range);
+      printLocalVariableAddrRange(DefRangeFramePointerRel->Range, Sec,
+                                  SectionContents);
       while (!SymData.empty()) {
         const LocalVariableAddrGap *Gap;
         error(consumeObject(SymData, Gap));
@@ -1561,7 +1566,8 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       W.printBoolean("HasSpilledUDTMember",
                      DefRangeRegisterRel->hasSpilledUDTMember());
       W.printNumber("OffsetInParent", DefRangeRegisterRel->offsetInParent());
-      printLocalVariableAddrRange(DefRangeRegisterRel->Range);
+      printLocalVariableAddrRange(DefRangeRegisterRel->Range, Sec,
+                                  SectionContents);
       while (!SymData.empty()) {
         const LocalVariableAddrGap *Gap;
         error(consumeObject(SymData, Gap));
@@ -1884,9 +1890,10 @@ void COFFDumper::printTypeIndex(StringRef FieldName, TypeIndex TI) {
 }
 
 void COFFDumper::printLocalVariableAddrRange(
-    const LocalVariableAddrRange &Range) {
-  W.printNumber("OffsetStart", Range.OffsetStart);
-  W.printNumber("ISectStart", Range.ISectStart);
+    const LocalVariableAddrRange &Range, const coff_section *Sec,
+    StringRef SectionContents) {
+  printRelocatedField("OffsetStart", Sec, SectionContents, &Range.OffsetStart);
+  W.printHex("ISectStart", Range.ISectStart);
   W.printNumber("Range", Range.Range);
 }
 
