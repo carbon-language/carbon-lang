@@ -792,6 +792,26 @@ bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
+  // Handle sdk_version
+  if (llvm::opt::Arg *arg = parsedArgs.getLastArg(OPT_sdk_version)) {
+    uint32_t sdkVersion = 0;
+    if (MachOLinkingContext::parsePackedVersion(arg->getValue(),
+                                                sdkVersion)) {
+      diagnostics << "error: malformed sdkVersion value\n";
+      return false;
+    }
+    ctx.setSdkVersion(sdkVersion);
+  } else if (ctx.generateVersionLoadCommand()) {
+    // If we don't have an sdk version, but were going to emit a load command
+    // with min_version, then we need to give an warning as we have no sdk
+    // version to put in that command.
+    // FIXME: We need to decide whether to make this an error.
+    diagnostics << "warning: -sdk_version is required when emitting "
+                   "min version load command.  "
+                   "Setting sdk version to match provided min version\n";
+    ctx.setSdkVersion(ctx.osMinVersion());
+  }
+
   // Handle stack_size
   if (llvm::opt::Arg *stackSize = parsedArgs.getLastArg(OPT_stack_size)) {
     uint64_t stackSizeVal;
