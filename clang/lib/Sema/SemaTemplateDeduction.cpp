@@ -2119,8 +2119,25 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
       PackedArgsBuilder.push_back(Output.pop_back_val());
     }
 
-    // FIXME: If the pack is empty and this is a template template parameter,
-    // we still need to substitute into the parameter itself.
+    // If the pack is empty, we still need to substitute into the parameter
+    // itself, in case that substitution fails. For non-type parameters, we did
+    // this above. For type parameters, no substitution is ever required.
+    auto *TTP = dyn_cast<TemplateTemplateParmDecl>(Param);
+    if (TTP && PackedArgsBuilder.empty()) {
+      // Set up a template instantiation context.
+      LocalInstantiationScope Scope(S);
+      Sema::InstantiatingTemplate Inst(S, Template->getLocation(), Template,
+                                       TTP, Output,
+                                       Template->getSourceRange());
+      if (Inst.isInvalid())
+        return true;
+
+      TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack,
+                                        Output.data(), Output.size());
+      if (!S.SubstDecl(TTP, S.CurContext,
+                       MultiLevelTemplateArgumentList(TemplateArgs)))
+        return true;
+    }
 
     // Create the resulting argument pack.
     Output.push_back(
@@ -2808,11 +2825,22 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
         Builder.push_back(TemplateArgument(
             llvm::makeArrayRef(ExplicitArgs, NumExplicitArgs)));
 
-        // Forget the partially-substituted pack; it's substitution is now
+        // Forget the partially-substituted pack; its substitution is now
         // complete.
         CurrentInstantiationScope->ResetPartiallySubstitutedPack();
       } else {
-        Builder.push_back(TemplateArgument::getEmptyPack());
+        // Go through the motions of checking the empty argument pack against
+        // the parameter pack.
+        DeducedTemplateArgument DeducedPack(TemplateArgument::getEmptyPack());
+        if (ConvertDeducedTemplateArgument(*this, Param, DeducedPack,
+                                           FunctionTemplate, Info, true,
+                                           Builder)) {
+          Info.Param = makeTemplateParameter(Param);
+          // FIXME: These template arguments are temporary. Free them!
+          Info.reset(TemplateArgumentList::CreateCopy(Context, Builder.data(),
+                                                      Builder.size()));
+          return TDK_SubstitutionFailure;
+        }
       }
       continue;
     }
