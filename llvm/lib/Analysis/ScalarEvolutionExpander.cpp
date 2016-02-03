@@ -1600,12 +1600,6 @@ Value *SCEVExpander::expandCodeFor(const SCEV *SH, Type *Ty) {
   return V;
 }
 
-// The expansion of SCEV will either reuse a previous Value in ExprValueMap,
-// or expand the SCEV literally. Specifically, if the expansion is in LSRMode,
-// and the SCEV contains any sub scAddRecExpr type SCEV, it will be expanded
-// literally, to prevent LSR's transformed SCEV from being reverted. Otherwise,
-// the expansion will try to reuse Value from ExprValueMap, and only when it
-// fails, expand the SCEV literally.
 Value *SCEVExpander::expand(const SCEV *S) {
   // Compute an insertion point for this SCEV object. Hoist the instructions
   // as far out in the loop nest as possible.
@@ -1645,25 +1639,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
   Builder.SetInsertPoint(InsertPt);
 
   // Expand the expression into instructions.
-  SetVector<Value *> *Set = SE.getSCEVValues(S);
-  Value *V = nullptr;
-  // If the expansion is in LSRMode, and the SCEV contains any sub scAddRecExpr
-  // type SCEV, it will be expanded literally, to prevent LSR's transformed SCEV
-  // from being reverted.
-  if (!(LSRMode && SE.containsAddRecurrence(S))) {
-    if (Set) {
-      // Choose a Value from the set which dominates the insertPt.
-      for (auto const &Ent : *Set) {
-        if (Ent && isa<Instruction>(Ent) && S->getType() == Ent->getType() &&
-            SE.DT.dominates(cast<Instruction>(Ent), InsertPt)) {
-          V = Ent;
-          break;
-        }
-      }
-    }
-  }
-  if (!V)
-    V = visit(S);
+  Value *V = visit(S);
 
   // Remember the expanded value for this SCEV at this location.
   //

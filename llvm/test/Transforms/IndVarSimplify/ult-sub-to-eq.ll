@@ -32,9 +32,15 @@ for.end:                                          ; preds = %for.body, %entry
 
 ; CHECK-LABEL: @test1(
 
-; check that we turn the IV test into an eq.
+; First check that we move the sub into the preheader, it doesn't have to be
+; executed if %cmp4 == false
+; CHECK: for.body.preheader:
+; CHECK: sub i32 %data_len, %sample
+; CHECK: br label %for.body
+
+; Second, check that we turn the IV test into an eq.
 ; CHECK: %lftr.wideiv = trunc i64 %indvars.iv.next to i32
-; CHECK: %exitcond = icmp ne i32 %lftr.wideiv, %sub
+; CHECK: %exitcond = icmp ne i32 %lftr.wideiv, %0
 ; CHECK: br i1 %exitcond, label %for.body, label %for.end.loopexit
 }
 
