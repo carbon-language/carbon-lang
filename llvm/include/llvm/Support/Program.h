@@ -44,6 +44,8 @@ struct ProcessInfo {
 #error "ProcessInfo is not defined for this platform!"
 #endif
 
+  static const ProcessId InvalidPid = 0;
+
   /// The process identifier.
   ProcessId Pid;
 
