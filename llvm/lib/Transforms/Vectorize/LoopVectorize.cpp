@@ -2718,6 +2718,10 @@ void InnerLoopVectorizer::emitMinimumIterationCountCheck(Loop *L,
   
   BasicBlock *NewBB = BB->splitBasicBlock(BB->getTerminator(),
                                           "min.iters.checked");
+  // Update dominator tree immediately if the generated block is a
+  // LoopBypassBlock because SCEV expansions to generate loop bypass
+  // checks may query it before the current function is finished.
+  DT->addNewBlock(NewBB, BB);
   if (L->getParentLoop())
     L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
   ReplaceInstWithInst(BB->getTerminator(),
@@ -2740,6 +2744,10 @@ void InnerLoopVectorizer::emitVectorLoopEnteredCheck(Loop *L,
   // adding one to the backedge-taken count will not overflow.
   BasicBlock *NewBB = BB->splitBasicBlock(BB->getTerminator(),
                                           "vector.ph");
+  // Update dominator tree immediately if the generated block is a
+  // LoopBypassBlock because SCEV expansions to generate loop bypass
+  // checks may query it before the current function is finished.
+  DT->addNewBlock(NewBB, BB);
   if (L->getParentLoop())
     L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
   ReplaceInstWithInst(BB->getTerminator(),
@@ -2765,6 +2773,10 @@ void InnerLoopVectorizer::emitSCEVChecks(Loop *L, BasicBlock *Bypass) {
   // Create a new block containing the stride check.
   BB->setName("vector.scevcheck");
   auto *NewBB = BB->splitBasicBlock(BB->getTerminator(), "vector.ph");
+  // Update dominator tree immediately if the generated block is a
+  // LoopBypassBlock because SCEV expansions to generate loop bypass
+  // checks may query it before the current function is finished.
+  DT->addNewBlock(NewBB, BB);
   if (L->getParentLoop())
     L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
   ReplaceInstWithInst(BB->getTerminator(),
@@ -2790,6 +2802,10 @@ void InnerLoopVectorizer::emitMemRuntimeChecks(Loop *L,
   // Create a new block containing the memory check.
   BB->setName("vector.memcheck");
   auto *NewBB = BB->splitBasicBlock(BB->getTerminator(), "vector.ph");
+  // Update dominator tree immediately if the generated block is a
+  // LoopBypassBlock because SCEV expansions to generate loop bypass
+  // checks may query it before the current function is finished.
+  DT->addNewBlock(NewBB, BB);
   if (L->getParentLoop())
     L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
   ReplaceInstWithInst(BB->getTerminator(),
@@ -3956,10 +3972,6 @@ void InnerLoopVectorizer::updateAnalysis() {
   // Update the dominator tree information.
   assert(DT->properlyDominates(LoopBypassBlocks.front(), LoopExitBlock) &&
          "Entry does not dominate exit.");
-
-  for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
-    DT->addNewBlock(LoopBypassBlocks[I], LoopBypassBlocks[I-1]);
-  DT->addNewBlock(LoopVectorPreHeader, LoopBypassBlocks.back());
 
   // We don't predicate stores by this point, so the vector body should be a
   // single loop.
