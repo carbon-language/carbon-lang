@@ -209,7 +209,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     if (Target->needsPlt(Type, *Body)) {
       SymVA = Body->getPltVA<ELFT>();
     } else if (Target->needsGot(Type, *Body)) {
-      if (Config->EMachine == EM_MIPS && needsMipsLocalGot(Type, Body))
+      if (Config->EMachine == EM_MIPS && !canBePreempted(Body, true))
         // Under some conditions relocations against non-local symbols require
         // entries in the local part of MIPS GOT. In that case we need an entry
         // initialized by full address of the symbol.

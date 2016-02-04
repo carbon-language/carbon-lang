@@ -1562,20 +1562,6 @@ template <class ELFT> typename ELFFile<ELFT>::uintX_t getMipsGpAddr() {
   return 0;
 }
 
-bool needsMipsLocalGot(uint32_t Type, SymbolBody *Body) {
-  // The R_MIPS_GOT16 relocation requires creation of entry in the local part
-  // of GOT if its target is a local symbol or non-local symbol with 'local'
-  // visibility.
-  if (Type != R_MIPS_GOT16)
-    return false;
-  if (!Body)
-    return true;
-  uint8_t V = Body->getVisibility();
-  if (V != STV_DEFAULT && V != STV_PROTECTED)
-    return true;
-  return !Config->Shared;
-}
-
 template bool isGnuIFunc<ELF32LE>(const SymbolBody &S);
 template bool isGnuIFunc<ELF32BE>(const SymbolBody &S);
 template bool isGnuIFunc<ELF64LE>(const SymbolBody &S);
