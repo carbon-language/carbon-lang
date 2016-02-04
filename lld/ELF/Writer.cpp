@@ -388,7 +388,7 @@ void Writer<ELFT>::scanRelocs(
         // relocation too because that case is possible for executable file
         // linking only.
         continue;
-      if (Body == Config->MipsGpDisp)
+      if (Body == Config->MipsGpDisp || Body == Config->MipsLocalGp)
         // MIPS _gp_disp designates offset between start of function and gp
         // pointer into GOT therefore any relocations against it do not require
         // dynamic relocation.

@@ -234,6 +234,8 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
         SymVA = getMipsGpAddr<ELFT>() - AddrLoc;
       else if (Type == R_MIPS_LO16 && Body == Config->MipsGpDisp)
         SymVA = getMipsGpAddr<ELFT>() - AddrLoc + 4;
+      else if (Body == Config->MipsLocalGp)
+        SymVA = getMipsGpAddr<ELFT>();
     }
     uintX_t Size = Body->getSize<ELFT>();
     Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA + A, Size + A,
