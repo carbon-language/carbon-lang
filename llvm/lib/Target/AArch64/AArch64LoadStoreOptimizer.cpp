@@ -45,8 +45,14 @@ STATISTIC(NumNarrowLoadsPromoted, "Number of narrow loads promoted");
 STATISTIC(NumZeroStoresPromoted, "Number of narrow zero stores promoted");
 STATISTIC(NumLoadsFromStoresPromoted, "Number of loads from stores promoted");
 
-static cl::opt<unsigned> ScanLimit("aarch64-load-store-scan-limit",
+// The LdStLimit limits how far we search for load/store pairs.
+static cl::opt<unsigned> LdStLimit("aarch64-load-store-scan-limit",
                                    cl::init(20), cl::Hidden);
+
+// The UpdateLimit limits how far we search for update instructions when we form
+// pre-/post-index instructions.
+static cl::opt<unsigned> UpdateLimit("aarch64-update-scan-limit", cl::init(100),
+                                     cl::Hidden);
 
 namespace llvm {
 void initializeAArch64LoadStoreOptPass(PassRegistry &);
@@ -122,13 +128,13 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   // pre or post indexed addressing with writeback. Scan forwards.
   MachineBasicBlock::iterator
   findMatchingUpdateInsnForward(MachineBasicBlock::iterator I,
-                                int UnscaledOffset);
+                                int UnscaledOffset, unsigned Limit);
 
   // Scan the instruction list to find a base register update that can
   // be combined with the current instruction (a load or store) using
   // pre or post indexed addressing with writeback. Scan backwards.
   MachineBasicBlock::iterator
-  findMatchingUpdateInsnBackward(MachineBasicBlock::iterator I);
+  findMatchingUpdateInsnBackward(MachineBasicBlock::iterator I, unsigned Limit);
 
   // Find an instruction that updates the base register of the ld/st
   // instruction.
@@ -1411,7 +1417,7 @@ bool AArch64LoadStoreOpt::isMatchingUpdateInsn(MachineInstr *MemMI,
 }
 
 MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnForward(
-    MachineBasicBlock::iterator I, int UnscaledOffset) {
+    MachineBasicBlock::iterator I, int UnscaledOffset, unsigned Limit) {
   MachineBasicBlock::iterator E = I->getParent()->end();
   MachineInstr *MemMI = I;
   MachineBasicBlock::iterator MBBI = I;
@@ -1439,11 +1445,14 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnForward(
   ModifiedRegs.reset();
   UsedRegs.reset();
   ++MBBI;
-  for (; MBBI != E; ++MBBI) {
+  for (unsigned Count = 0; MBBI != E && Count < Limit; ++MBBI) {
     MachineInstr *MI = MBBI;
     // Skip DBG_VALUE instructions.
     if (MI->isDebugValue())
       continue;
+
+    // Now that we know this is a real instruction, count it.
+    ++Count;
 
     // If we found a match, return it.
     if (isMatchingUpdateInsn(I, MI, BaseReg, UnscaledOffset))
@@ -1461,7 +1470,7 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnForward(
 }
 
 MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
-    MachineBasicBlock::iterator I) {
+    MachineBasicBlock::iterator I, unsigned Limit) {
   MachineBasicBlock::iterator B = I->getParent()->begin();
   MachineBasicBlock::iterator E = I->getParent()->end();
   MachineInstr *MemMI = I;
@@ -1488,11 +1497,14 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
   ModifiedRegs.reset();
   UsedRegs.reset();
   --MBBI;
-  for (; MBBI != B; --MBBI) {
+  for (unsigned Count = 0; MBBI != B && Count < Limit; --MBBI) {
     MachineInstr *MI = MBBI;
     // Skip DBG_VALUE instructions.
     if (MI->isDebugValue())
       continue;
+
+    // Now that we know this is a real instruction, count it.
+    ++Count;
 
     // If we found a match, return it.
     if (isMatchingUpdateInsn(I, MI, BaseReg, Offset))
@@ -1521,9 +1533,9 @@ bool AArch64LoadStoreOpt::tryToPromoteLoadFromStore(
   if (!getLdStOffsetOp(MI).isImm())
     return false;
 
-  // Look backward up to ScanLimit instructions.
+  // Look backward up to LdStLimit instructions.
   MachineBasicBlock::iterator StoreI;
-  if (findMatchingStore(MBBI, ScanLimit, StoreI)) {
+  if (findMatchingStore(MBBI, LdStLimit, StoreI)) {
     ++NumLoadsFromStoresPromoted;
     // Promote the load. Keeping the iterator straight is a
     // pain, so we let the merge routine tell us what the next instruction
@@ -1551,9 +1563,9 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
   if (TII->isLdStPairSuppressed(MI))
     return false;
 
-  // Look ahead up to ScanLimit instructions for a pairable instruction.
+  // Look ahead up to LdStLimit instructions for a pairable instruction.
   LdStPairFlags Flags;
-  MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, ScanLimit);
+  MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, LdStLimit);
   if (Paired != E) {
     if (isNarrowLoad(MI)) {
       ++NumNarrowLoadsPromoted;
@@ -1769,7 +1781,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       //   merged into:
       // ldr x0, [x20], #32
       MachineBasicBlock::iterator Update =
-          findMatchingUpdateInsnForward(MBBI, 0);
+          findMatchingUpdateInsnForward(MBBI, 0, UpdateLimit);
       if (Update != E) {
         // Merge the update into the ld/st.
         MBBI = mergeUpdateInsn(MBBI, Update, /*IsPreIdx=*/false);
@@ -1789,7 +1801,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       // ldr x1, [x0]
       //   merged into:
       // ldr x1, [x0, #8]!
-      Update = findMatchingUpdateInsnBackward(MBBI);
+      Update = findMatchingUpdateInsnBackward(MBBI, UpdateLimit);
       if (Update != E) {
         // Merge the update into the ld/st.
         MBBI = mergeUpdateInsn(MBBI, Update, /*IsPreIdx=*/true);
@@ -1807,7 +1819,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
       // add x0, x0, #64
       //   merged into:
       // ldr x1, [x0, #64]!
-      Update = findMatchingUpdateInsnForward(MBBI, UnscaledOffset);
+      Update = findMatchingUpdateInsnForward(MBBI, UnscaledOffset, UpdateLimit);
       if (Update != E) {
         // Merge the update into the ld/st.
         MBBI = mergeUpdateInsn(MBBI, Update, /*IsPreIdx=*/true);
