@@ -7,6 +7,14 @@
 .. toctree::
    :maxdepth: 1
 
+Using Polly
+===========
+
+.. toctree::
+   :maxdepth: 1
+
+   UsingPollyWithClang
+
 Indices and tables
 ==================
 
