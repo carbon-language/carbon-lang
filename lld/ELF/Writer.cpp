@@ -294,8 +294,6 @@ void Writer<ELFT>::scanRelocs(
     if (Config->EMachine == EM_MIPS && needsMipsLocalGot(Type, Body)) {
       // FIXME (simon): Do not add so many redundant entries.
       Out<ELFT>::Got->addMipsLocalEntry();
-      if (Body)
-        Body->setUsedInDynamicReloc();
       continue;
     }
 
@@ -358,13 +356,15 @@ void Writer<ELFT>::scanRelocs(
         continue;
       Out<ELFT>::Got->addEntry(Body);
 
-      if (Config->EMachine == EM_MIPS)
+      if (Config->EMachine == EM_MIPS) {
         // MIPS ABI has special rules to process GOT entries
         // and doesn't require relocation entries for them.
         // See "Global Offset Table" in Chapter 5 in the following document
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+        Body->setUsedInDynamicReloc();
         continue;
+      }
 
       bool CBP = canBePreempted(Body, /*NeedsGot=*/true);
       bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
