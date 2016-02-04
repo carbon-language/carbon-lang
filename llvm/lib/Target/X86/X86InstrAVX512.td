@@ -3046,6 +3046,18 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
                    (v2f64 (scalar_to_vector (loadf64 addr:$src))), (iPTR 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVSDZrm addr:$src), sub_xmm)>;
+
+  // Represent the same patterns above but in the form they appear for
+  // 512-bit types
+  def : Pat<(v16i32 (X86vzmovl (insert_subvector undef,
+                   (v4i32 (scalar_to_vector (loadi32 addr:$src))), (iPTR 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrm addr:$src), sub_xmm)>;
+  def : Pat<(v16f32 (X86vzmovl (insert_subvector undef,
+                   (v4f32 (scalar_to_vector (loadf32 addr:$src))), (iPTR 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVSSZrm addr:$src), sub_xmm)>;
+  def : Pat<(v8f64 (X86vzmovl (insert_subvector undef,
+                   (v2f64 (scalar_to_vector (loadf64 addr:$src))), (iPTR 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVSDZrm addr:$src), sub_xmm)>;
   }
   def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
                    (v4f32 (scalar_to_vector FR32X:$src)), (iPTR 0)))),

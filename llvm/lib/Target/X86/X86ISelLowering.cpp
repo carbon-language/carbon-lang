@@ -5601,6 +5601,24 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     }
   }
 
+  auto CreateLoad = [&DAG, &DL](EVT VT, LoadSDNode *LDBase) {
+    SDValue NewLd = DAG.getLoad(VT, DL, LDBase->getChain(),
+                                LDBase->getBasePtr(), LDBase->getPointerInfo(),
+                                LDBase->isVolatile(), LDBase->isNonTemporal(),
+                                LDBase->isInvariant(), LDBase->getAlignment());
+
+    if (LDBase->hasAnyUseOfValue(1)) {
+      SDValue NewChain =
+          DAG.getNode(ISD::TokenFactor, DL, MVT::Other, SDValue(LDBase, 1),
+                      SDValue(NewLd.getNode(), 1));
+      DAG.ReplaceAllUsesOfValueWith(SDValue(LDBase, 1), NewChain);
+      DAG.UpdateNodeOperands(NewChain.getNode(), SDValue(LDBase, 1),
+                             SDValue(NewLd.getNode(), 1));
+    }
+
+    return NewLd;
+  };
+
   // LOAD - all consecutive load/undefs (must start/end with a load).
   // If we have found an entire vector of loads and undefs, then return a large
   // load of the entire vector width starting at the base pointer.
@@ -5616,23 +5634,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     if (isAfterLegalize && !TLI.isOperationLegal(ISD::LOAD, VT))
       return SDValue();
 
-    SDValue NewLd = SDValue();
-
-    NewLd = DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
-                        LDBase->getPointerInfo(), LDBase->isVolatile(),
-                        LDBase->isNonTemporal(), LDBase->isInvariant(),
-                        LDBase->getAlignment());
-
-    if (LDBase->hasAnyUseOfValue(1)) {
-      SDValue NewChain =
-          DAG.getNode(ISD::TokenFactor, DL, MVT::Other, SDValue(LDBase, 1),
-                      SDValue(NewLd.getNode(), 1));
-      DAG.ReplaceAllUsesOfValueWith(SDValue(LDBase, 1), NewChain);
-      DAG.UpdateNodeOperands(NewChain.getNode(), SDValue(LDBase, 1),
-                             SDValue(NewLd.getNode(), 1));
-    }
-
-    return NewLd;
+    return CreateLoad(VT, LDBase);
   }
 
   int LoadSize =
@@ -5667,6 +5669,19 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
 
     return DAG.getBitcast(VT, ResNode);
   }
+
+  // VZEXT_MOVL - consecutive 32-bit load/undefs followed by zeros/undefs.
+  if (IsConsecutiveLoad && FirstLoadedElt == 0 && LoadSize == 32 &&
+      ((VT.is128BitVector() && TLI.isTypeLegal(MVT::v4i32)) ||
+       (VT.is256BitVector() && TLI.isTypeLegal(MVT::v8i32)) ||
+       (VT.is512BitVector() && TLI.isTypeLegal(MVT::v16i32)))) {
+    MVT VecVT = MVT::getVectorVT(MVT::i32, VT.getSizeInBits() / 32);
+    SDValue V = CreateLoad(MVT::i32, LDBase);
+    V = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VecVT, V);
+    V = DAG.getNode(X86ISD::VZEXT_MOVL, DL, VecVT, V);
+    return DAG.getBitcast(VT, V);
+  }
+
   return SDValue();
 }
 
