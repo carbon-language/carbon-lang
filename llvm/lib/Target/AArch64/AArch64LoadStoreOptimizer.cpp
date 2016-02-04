@@ -645,10 +645,24 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   const MachineOperand &BaseRegOp =
       MergeForward ? getLdStBaseOp(Paired) : getLdStBaseOp(I);
 
+  int Offset = getLdStOffsetOp(I).getImm();
+  int PairedOffset = getLdStOffsetOp(Paired).getImm();
+  bool PairedIsUnscaled = isUnscaledLdSt(Paired->getOpcode());
+
+  // We're trying to pair instructions that differ in how they are scaled.
+  // If I is scaled then scale the offset of Paired accordingly.
+  // Otherwise, do the opposite (i.e., make Paired's offset unscaled).
+  if (IsUnscaled != PairedIsUnscaled) {
+    int MemSize = getMemScale(Paired);
+    assert(!(PairedOffset % getMemScale(Paired)) &&
+           "Offset should be a multiple of the stride!");
+    PairedOffset =
+      PairedIsUnscaled ? PairedOffset / MemSize : PairedOffset * MemSize;
+  }
+
   // Which register is Rt and which is Rt2 depends on the offset order.
   MachineInstr *RtMI, *Rt2MI;
-  if (getLdStOffsetOp(I).getImm() ==
-      getLdStOffsetOp(Paired).getImm() + OffsetStride) {
+  if (Offset == PairedOffset + OffsetStride) {
     RtMI = Paired;
     Rt2MI = I;
     // Here we swapped the assumption made for SExtIdx.
@@ -775,9 +789,12 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
               .addImm(OffsetImm)
               .setMemRefs(I->mergeMemRefsWith(*Paired));
   } else {
-    // Handle Unscaled
-    if (IsUnscaled)
-      OffsetImm /= OffsetStride;
+    // Scale the immediate offset, if necessary.
+    if (isUnscaledLdSt(RtMI->getOpcode())) {
+      assert(!(OffsetImm % getMemScale(RtMI)) &&
+             "Offset should be a multiple of the stride!");
+      OffsetImm /= getMemScale(RtMI);
+    }
     MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
                   TII->get(NewOpc))
               .addOperand(getLdStRegOp(RtMI))
@@ -971,9 +988,13 @@ static void trackRegDefsUses(const MachineInstr *MI, BitVector &ModifiedRegs,
 static bool inBoundsForPair(bool IsUnscaled, int Offset, int OffsetStride) {
   // Convert the byte-offset used by unscaled into an "element" offset used
   // by the scaled pair load/store instructions.
-  if (IsUnscaled)
+  if (IsUnscaled) {
+    // If the byte-offset isn't a multiple of the stride, there's no point
+    // trying to match it.
+    if (Offset % OffsetStride)
+      return false;
     Offset /= OffsetStride;
-
+  }
   return Offset <= 63 && Offset >= -64;
 }
 
@@ -1063,6 +1084,34 @@ bool AArch64LoadStoreOpt::findMatchingStore(
   return false;
 }
 
+
+static bool canMergeOpc(unsigned Opc, unsigned PairOpc, LdStPairFlags &Flags) {
+  // Opcodes match: nothing more to check.
+  if (Opc == PairOpc)
+    return true;
+
+  // Try to match a sign-extended load/store with a zero-extended load/store.
+  Flags.setSExtIdx(-1);
+  bool IsValidLdStrOpc, PairIsValidLdStrOpc;
+  unsigned NonSExtOpc = getMatchingNonSExtOpcode(Opc, &IsValidLdStrOpc);
+  assert(IsValidLdStrOpc &&
+         "Given Opc should be a Load or Store with an immediate");
+  // Opc will be the first instruction in the pair.
+  if (NonSExtOpc == getMatchingNonSExtOpcode(PairOpc, &PairIsValidLdStrOpc)) {
+    Flags.setSExtIdx(NonSExtOpc == (unsigned)Opc ? 1 : 0);
+    return true;
+  }
+
+  // FIXME: Can we also match a mixed sext/zext unscaled/scaled pair?
+
+  // If the second instruction isn't even a load/store, bail out.
+  if (!PairIsValidLdStrOpc)
+    return false;
+
+  // Try to match an unscaled load/store with a scaled load/store.
+  return isUnscaledLdSt(Opc) != isUnscaledLdSt(PairOpc) &&
+    getMatchingPairOpcode(Opc) == getMatchingPairOpcode(PairOpc);
+}
 /// findMatchingInsn - Scan the instructions looking for a load/store that can
 /// be combined with the current instruction into a load/store pair.
 MachineBasicBlock::iterator
@@ -1116,19 +1165,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
     // Now that we know this is a real instruction, count it.
     ++Count;
 
-    bool CanMergeOpc = Opc == MI->getOpcode();
-    Flags.setSExtIdx(-1);
-    if (!CanMergeOpc) {
-      bool IsValidLdStrOpc;
-      unsigned NonSExtOpc = getMatchingNonSExtOpcode(Opc, &IsValidLdStrOpc);
-      assert(IsValidLdStrOpc &&
-             "Given Opc should be a Load or Store with an immediate");
-      // Opc will be the first instruction in the pair.
-      Flags.setSExtIdx(NonSExtOpc == (unsigned)Opc ? 1 : 0);
-      CanMergeOpc = NonSExtOpc == getMatchingNonSExtOpcode(MI->getOpcode());
-    }
-
-    if (CanMergeOpc && getLdStOffsetOp(MI).isImm()) {
+    if (canMergeOpc(Opc, MI->getOpcode(), Flags) &&
+        getLdStOffsetOp(MI).isImm()) {
       assert(MI->mayLoadOrStore() && "Expected memory operation.");
       // If we've found another instruction with the same opcode, check to see
       // if the base and offset are compatible with our starting instruction.
@@ -1142,6 +1180,24 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
       // final offset must be in range.
       unsigned MIBaseReg = getLdStBaseOp(MI).getReg();
       int MIOffset = getLdStOffsetOp(MI).getImm();
+
+      // We're trying to pair instructions that differ in how they are scaled.
+      // If FirstMI is scaled then scale the offset of MI accordingly.
+      // Otherwise, do the opposite (i.e., make MI's offset unscaled).
+      bool MIIsUnscaled = isUnscaledLdSt(MI);
+      if (IsUnscaled != MIIsUnscaled) {
+        int MemSize = getMemScale(MI);
+        if (MIIsUnscaled) {
+          // If the unscaled offset isn't a multiple of the MemSize, we can't
+          // pair the operations together: bail and keep looking.
+          if (MIOffset % MemSize)
+            continue;
+          MIOffset /= MemSize;
+        } else {
+          MIOffset *= MemSize;
+        }
+      }
+
       if (BaseReg == MIBaseReg && ((Offset == MIOffset + OffsetStride) ||
                                    (Offset + OffsetStride == MIOffset))) {
         int MinOffset = Offset < MIOffset ? Offset : MIOffset;
@@ -1152,10 +1208,9 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
           return E;
         // If the resultant immediate offset of merging these instructions
         // is out of range for a pairwise instruction, bail and keep looking.
-        bool MIIsUnscaled = isUnscaledLdSt(MI);
         bool IsNarrowLoad = isNarrowLoad(MI->getOpcode());
         if (!IsNarrowLoad &&
-            !inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
+            !inBoundsForPair(IsUnscaled, MinOffset, OffsetStride)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
           MemInsns.push_back(MI);
           continue;
