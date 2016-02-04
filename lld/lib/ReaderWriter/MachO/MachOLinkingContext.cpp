@@ -85,7 +85,7 @@ bool MachOLinkingContext::parsePackedVersion(StringRef str, uint64_t &result) {
   SmallVector<StringRef, 5> parts;
   llvm::SplitString(str, parts, ".");
 
-  uint64_t num;
+  unsigned long long num;
   if (llvm::getAsUnsignedInteger(parts[0], 10, num))
     return true;
   if (num > 0xFFFFFF)
