@@ -292,12 +292,11 @@ void Writer<ELFT>::scanRelocs(
                                     Body, getAddend<ELFT>(RI)});
 
     // MIPS has a special rule to create GOTs for local symbols.
-    if (Config->EMachine == EM_MIPS && !canBePreempted(Body, true)) {
-      if (Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16) {
-        // FIXME (simon): Do not add so many redundant entries.
-        Out<ELFT>::Got->addMipsLocalEntry();
-        continue;
-      }
+    if (Config->EMachine == EM_MIPS && !canBePreempted(Body, true) &&
+        (Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16)) {
+      // FIXME (simon): Do not add so many redundant entries.
+      Out<ELFT>::Got->addMipsLocalEntry();
+      continue;
     }
 
     // If a symbol in a DSO is referenced directly instead of through GOT,
