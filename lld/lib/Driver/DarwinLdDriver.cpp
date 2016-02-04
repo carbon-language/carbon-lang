@@ -352,7 +352,7 @@ bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
   }
 
   // Handle -macosx_version_min or -ios_version_min
-  MachOLinkingContext::OS os = MachOLinkingContext::OS::macOSX;
+  MachOLinkingContext::OS os = MachOLinkingContext::OS::unknown;
   uint32_t minOSVersion = 0;
   if (llvm::opt::Arg *minOS =
           parsedArgs.getLastArg(OPT_macosx_version_min, OPT_ios_version_min,
