@@ -91,9 +91,9 @@ template <class ELFT> bool GotSection<ELFT>::addDynTlsEntry(SymbolBody *Sym) {
 template <class ELFT> bool GotSection<ELFT>::addCurrentModuleTlsIndex() {
   if (LocalTlsIndexOff != uint32_t(-1))
     return false;
+  LocalTlsIndexOff = Entries.size() * sizeof(uintX_t);
   Entries.push_back(nullptr);
   Entries.push_back(nullptr);
-  LocalTlsIndexOff = (Entries.size() - 2) * sizeof(uintX_t);
   return true;
 }
 
