@@ -780,35 +780,11 @@ void CodeGenPGO::valueProfile(CGBuilderTy &Builder, uint32_t ValueKind,
     // pairs for each function.
     if (NumValueSites[ValueKind] >= ProfRecord->getNumValueSites(ValueKind))
       return;
-    uint32_t NV = ProfRecord->getNumValueDataForSite(ValueKind,
-                                                     NumValueSites[ValueKind]);
-    std::unique_ptr<InstrProfValueData[]> VD =
-        ProfRecord->getValueForSite(ValueKind, NumValueSites[ValueKind]);
 
-    uint64_t Sum = 0;
-    for (uint32_t I = 0; I < NV; ++I)
-      Sum += VD[I].Count;
+    llvm::annotateValueSite(CGM.getModule(), *ValueSite, *ProfRecord,
+                            (llvm::InstrProfValueKind)ValueKind,
+                            NumValueSites[ValueKind]);
 
-    llvm::LLVMContext &Ctx = CGM.getLLVMContext();
-    llvm::MDBuilder MDHelper(Ctx);
-    SmallVector<llvm::Metadata*, 3> Vals;
-    Vals.push_back(MDHelper.createString("VP"));
-    Vals.push_back(MDHelper.createConstant(
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), ValueKind)));
-    Vals.push_back(MDHelper.createConstant(
-        llvm::ConstantInt::get(llvm::Type::getInt64Ty(Ctx), Sum)));
-
-    uint32_t MDCount = 3;
-    for (uint32_t I = 0; I < NV; ++I) {
-      Vals.push_back(MDHelper.createConstant(
-          llvm::ConstantInt::get(llvm::Type::getInt64Ty(Ctx), VD[I].Value)));
-      Vals.push_back(MDHelper.createConstant(
-          llvm::ConstantInt::get(llvm::Type::getInt64Ty(Ctx), VD[I].Count)));
-      if (--MDCount == 0)
-        break;
-    }
-    ValueSite->setMetadata(
-        llvm::LLVMContext::MD_prof, llvm::MDNode::get(Ctx, Vals));
     NumValueSites[ValueKind]++;
   }
 }
