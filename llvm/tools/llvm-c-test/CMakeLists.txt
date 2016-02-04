@@ -37,6 +37,7 @@ endif ()
 add_llvm_tool(llvm-c-test
   calc.c
   disassemble.c
+  echo.cpp
   helpers.c
   include-all.c
   main.c
