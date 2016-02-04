@@ -7,6 +7,8 @@
 .. toctree::
    :maxdepth: 1
 
+   ReleaseNotes
+
 Using Polly
 ===========
 
