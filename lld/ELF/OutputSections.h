@@ -130,7 +130,7 @@ public:
   // the number of reserved entries. This method is MIPS-specific.
   unsigned getMipsLocalEntriesNum() const;
 
-  uint32_t getLocalTlsIndexVA() { return Base::getVA() + LocalTlsIndexOff; }
+  uintX_t getLocalTlsIndexVA() { return Base::getVA() + LocalTlsIndexOff; }
 
 private:
   std::vector<const SymbolBody *> Entries;
