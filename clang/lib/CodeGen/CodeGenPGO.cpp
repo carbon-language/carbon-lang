@@ -37,7 +37,7 @@ void CodeGenPGO::setFuncName(StringRef Name,
       PGOReader ? PGOReader->getVersion() : llvm::IndexedInstrProf::Version);
 
   // If we're generating a profile, create a variable for the name.
-  if (CGM.getCodeGenOpts().ProfileInstrGenerate)
+  if (CGM.getCodeGenOpts().hasProfileClangInstr())
     FuncNameVar = llvm::createPGOFuncNameVar(CGM.getModule(), Linkage, FuncName);
 }
 
@@ -610,7 +610,7 @@ uint64_t PGOHash::finalize() {
 
 void CodeGenPGO::assignRegionCounters(GlobalDecl GD, llvm::Function *Fn) {
   const Decl *D = GD.getDecl();
-  bool InstrumentRegions = CGM.getCodeGenOpts().ProfileInstrGenerate;
+  bool InstrumentRegions = CGM.getCodeGenOpts().hasProfileClangInstr();
   llvm::IndexedInstrProfReader *PGOReader = CGM.getPGOReader();
   if (!InstrumentRegions && !PGOReader)
     return;
@@ -729,7 +729,7 @@ CodeGenPGO::applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
 }
 
 void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, const Stmt *S) {
-  if (!CGM.getCodeGenOpts().ProfileInstrGenerate || !RegionCounterMap)
+  if (!CGM.getCodeGenOpts().hasProfileClangInstr() || !RegionCounterMap)
     return;
   if (!Builder.GetInsertBlock())
     return;
@@ -754,7 +754,7 @@ void CodeGenPGO::valueProfile(CGBuilderTy &Builder, uint32_t ValueKind,
   if (!ValuePtr || !ValueSite || !Builder.GetInsertBlock())
     return;
 
-  bool InstrumentValueSites = CGM.getCodeGenOpts().ProfileInstrGenerate;
+  bool InstrumentValueSites = CGM.getCodeGenOpts().hasProfileClangInstr();
   if (InstrumentValueSites && RegionCounterMap) {
     llvm::LLVMContext &Ctx = CGM.getLLVMContext();
     auto *I8PtrTy = llvm::Type::getInt8PtrTy(Ctx);

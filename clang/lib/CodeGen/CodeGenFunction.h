@@ -952,7 +952,7 @@ private:
 public:
   /// Increment the profiler's counter for the given statement.
   void incrementProfileCounter(const Stmt *S) {
-    if (CGM.getCodeGenOpts().ProfileInstrGenerate)
+    if (CGM.getCodeGenOpts().hasProfileClangInstr())
       PGO.emitCounterIncrement(Builder, S);
     PGO.setCurrentStmt(S);
   }
