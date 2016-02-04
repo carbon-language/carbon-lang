@@ -92,7 +92,7 @@ private:
   void printLocalVariableAddrRange(const LocalVariableAddrRange &Range,
                                    const coff_section *Sec,
                                    StringRef SectionContents);
-  void printLocalVariableAddrGap(StringRef SymData);
+  void printLocalVariableAddrGap(StringRef &SymData);
 
   void printCodeViewSymbolsSubsection(StringRef Subsection,
                                       const SectionRef &Section,
@@ -1503,6 +1503,31 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       break;
     }
 
+    case S_DEFRANGE: {
+      DictScope S(W, "DefRange");
+      const DefRangeSym *DefRange;
+      error(consumeObject(SymData, DefRange));
+      W.printString(
+          "Program",
+          CVStringTable.drop_front(DefRange->Program).split('\0').first);
+      printLocalVariableAddrRange(DefRange->Range, Sec, SectionContents);
+      printLocalVariableAddrGap(SymData);
+      break;
+    }
+    case S_DEFRANGE_SUBFIELD: {
+      DictScope S(W, "DefRangeSubfield");
+      const DefRangeSubfieldSym *DefRangeSubfield;
+      error(consumeObject(SymData, DefRangeSubfield));
+      W.printString("Program",
+                    CVStringTable.drop_front(DefRangeSubfield->Program)
+                        .split('\0')
+                        .first);
+      W.printNumber("OffsetInParent", DefRangeSubfield->OffsetInParent);
+      printLocalVariableAddrRange(DefRangeSubfield->Range, Sec,
+                                  SectionContents);
+      printLocalVariableAddrGap(SymData);
+      break;
+    }
     case S_DEFRANGE_REGISTER: {
       DictScope S(W, "DefRangeRegister");
       const DefRangeRegisterSym *DefRangeRegister;
@@ -1882,7 +1907,7 @@ void COFFDumper::printLocalVariableAddrRange(
   W.printNumber("Range", Range.Range);
 }
 
-void COFFDumper::printLocalVariableAddrGap(StringRef SymData) {
+void COFFDumper::printLocalVariableAddrGap(StringRef &SymData) {
   while (!SymData.empty()) {
     const LocalVariableAddrGap *Gap;
     error(consumeObject(SymData, Gap));
