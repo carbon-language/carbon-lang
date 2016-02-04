@@ -422,11 +422,6 @@ public:
     GetUniqueNamespaceDeclaration (const char *name,
                                    clang::DeclContext *decl_ctx);
 
-    static clang::NamespaceDecl *
-    GetUniqueNamespaceDeclaration (clang::ASTContext *ast,
-                                   const char *name,
-                                   clang::DeclContext *decl_ctx);
-
     //------------------------------------------------------------------
     // Function Types
     //------------------------------------------------------------------
@@ -570,9 +565,7 @@ public:
     //----------------------------------------------------------------------
     
     std::vector<CompilerDecl>
-    DeclContextFindDeclByName (void *opaque_decl_ctx,
-                               ConstString name,
-                               const bool ignore_using_decls) override;
+    DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name) override;
 
     bool
     DeclContextIsStructUnionOrClass (void *opaque_decl_ctx) override;

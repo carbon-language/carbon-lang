@@ -1885,17 +1885,6 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
     return namespace_decl;
 }
 
-NamespaceDecl *
-ClangASTContext::GetUniqueNamespaceDeclaration (clang::ASTContext *ast,
-                                                const char *name,
-                                                clang::DeclContext *decl_ctx)
-{
-    ClangASTContext *ast_ctx = ClangASTContext::GetASTContext(ast);
-    if (ast_ctx == nullptr)
-        return nullptr;
-
-    return ast_ctx->GetUniqueNamespaceDeclaration(name, decl_ctx);
-}
 
 clang::BlockDecl *
 ClangASTContext::CreateBlockDeclaration (clang::DeclContext *ctx)
@@ -9792,9 +9781,7 @@ ClangASTContext::DeclGetFunctionArgumentType (void *opaque_decl, size_t idx)
 //----------------------------------------------------------------------
 
 std::vector<CompilerDecl>
-ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx,
-                                           ConstString name,
-                                           const bool ignore_using_decls)
+ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx, ConstString name)
 {
     std::vector<CompilerDecl> found_decls;
     if (opaque_decl_ctx)
@@ -9818,16 +9805,12 @@ ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx,
                 {
                     if (clang::UsingDirectiveDecl *ud = llvm::dyn_cast<clang::UsingDirectiveDecl>(child))
                     {
-                        if (ignore_using_decls)
-                            continue;
                         clang::DeclContext *from = ud->getCommonAncestor();
                         if (searched.find(ud->getNominatedNamespace()) == searched.end())
                             search_queue.insert(std::make_pair(from, ud->getNominatedNamespace()));
                     }
                     else if (clang::UsingDecl *ud = llvm::dyn_cast<clang::UsingDecl>(child))
                     {
-                        if (ignore_using_decls)
-                            continue;
                         for (clang::UsingShadowDecl *usd : ud->shadows())
                         {
                             clang::Decl *target = usd->getTargetDecl();
