@@ -302,7 +302,7 @@ SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
     case DefinedAtom::typeCode:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeStubHelper:
-      sectionAttrs = S_ATTR_PURE_INSTRUCTIONS;
+      sectionAttrs = S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS;
       break;
     case DefinedAtom::typeThunkTLV:
       _hasTLVDescriptors = true;
