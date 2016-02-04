@@ -92,7 +92,7 @@ private:
   void printLocalVariableAddrRange(const LocalVariableAddrRange &Range,
                                    const coff_section *Sec,
                                    StringRef SectionContents);
-  void printLocalVariableAddrGap(const LocalVariableAddrGap &Gap);
+  void printLocalVariableAddrGap(StringRef SymData);
 
   void printCodeViewSymbolsSubsection(StringRef Subsection,
                                       const SectionRef &Section,
@@ -1511,11 +1511,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       W.printNumber("MayHaveNoName", DefRangeRegister->MayHaveNoName);
       printLocalVariableAddrRange(DefRangeRegister->Range, Sec,
                                   SectionContents);
-      while (!SymData.empty()) {
-        const LocalVariableAddrGap *Gap;
-        error(consumeObject(SymData, Gap));
-        printLocalVariableAddrGap(*Gap);
-      }
+      printLocalVariableAddrGap(SymData);
       break;
     }
     case S_DEFRANGE_SUBFIELD_REGISTER: {
@@ -1529,11 +1525,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
                     DefRangeSubfieldRegisterSym->OffsetInParent);
       printLocalVariableAddrRange(DefRangeSubfieldRegisterSym->Range, Sec,
                                   SectionContents);
-      while (!SymData.empty()) {
-        const LocalVariableAddrGap *Gap;
-        error(consumeObject(SymData, Gap));
-        printLocalVariableAddrGap(*Gap);
-      }
+      printLocalVariableAddrGap(SymData);
       break;
     }
     case S_DEFRANGE_FRAMEPOINTER_REL: {
@@ -1543,11 +1535,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       W.printNumber("Offset", DefRangeFramePointerRel->Offset);
       printLocalVariableAddrRange(DefRangeFramePointerRel->Range, Sec,
                                   SectionContents);
-      while (!SymData.empty()) {
-        const LocalVariableAddrGap *Gap;
-        error(consumeObject(SymData, Gap));
-        printLocalVariableAddrGap(*Gap);
-      }
+      printLocalVariableAddrGap(SymData);
       break;
     }
     case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE: {
@@ -1568,11 +1556,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       W.printNumber("OffsetInParent", DefRangeRegisterRel->offsetInParent());
       printLocalVariableAddrRange(DefRangeRegisterRel->Range, Sec,
                                   SectionContents);
-      while (!SymData.empty()) {
-        const LocalVariableAddrGap *Gap;
-        error(consumeObject(SymData, Gap));
-        printLocalVariableAddrGap(*Gap);
-      }
+      printLocalVariableAddrGap(SymData);
       break;
     }
 
@@ -1892,14 +1876,20 @@ void COFFDumper::printTypeIndex(StringRef FieldName, TypeIndex TI) {
 void COFFDumper::printLocalVariableAddrRange(
     const LocalVariableAddrRange &Range, const coff_section *Sec,
     StringRef SectionContents) {
+  DictScope S(W, "LocalVariableAddrRange");
   printRelocatedField("OffsetStart", Sec, SectionContents, &Range.OffsetStart);
   W.printHex("ISectStart", Range.ISectStart);
   W.printNumber("Range", Range.Range);
 }
 
-void COFFDumper::printLocalVariableAddrGap(const LocalVariableAddrGap &Gap) {
-  W.printNumber("GapStartOffset", Gap.GapStartOffset);
-  W.printNumber("Range", Gap.Range);
+void COFFDumper::printLocalVariableAddrGap(StringRef SymData) {
+  while (!SymData.empty()) {
+    const LocalVariableAddrGap *Gap;
+    error(consumeObject(SymData, Gap));
+    ListScope S(W, "LocalVariableAddrGap");
+    W.printNumber("GapStartOffset", Gap->GapStartOffset);
+    W.printNumber("Range", Gap->Range);
+  }
 }
 
 StringRef COFFDumper::getFileNameForFileOffset(uint32_t FileOffset) {
