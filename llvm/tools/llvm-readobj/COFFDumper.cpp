@@ -1154,14 +1154,15 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
         char Buffer[32];
         format("+0x%X", PC).snprint(Buffer, 32);
         ListScope PCScope(W, Buffer);
-        uint32_t LineNumberStart = LineData & codeview::LineInfo::StartLineMask;
-        uint32_t LineNumberEndDelta =
-            (LineData & codeview::LineInfo::EndLineDeltaMask) >>
-            codeview::LineInfo::EndLineDeltaShift;
-        bool IsStatement = LineData & codeview::LineInfo::StatementFlag;
-        W.printNumber("LineNumberStart", LineNumberStart);
-        W.printNumber("LineNumberEndDelta", LineNumberEndDelta);
-        W.printBoolean("IsStatement", IsStatement);
+        LineInfo LI(LineData);
+        if (LI.isAlwaysStepInto())
+          W.printString("StepInto", StringRef("Always"));
+        else if (LI.isNeverStepInto())
+          W.printString("StepInto", StringRef("Never"));
+        else
+          W.printNumber("LineNumberStart", LI.getStartLine());
+        W.printNumber("LineNumberEndDelta", LI.getLineDelta());
+        W.printBoolean("IsStatement", LI.isStatement());
         if (HasColumnInformation &&
             ColumnDE.isValidOffsetForDataOfSize(ColumnOffset, 4)) {
           uint16_t ColStart = ColumnDE.getU16(&ColumnOffset);
