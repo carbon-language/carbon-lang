@@ -271,13 +271,13 @@ define <8 x i64> @merge_8i64_i64_1u3u5zu8(i64* %ptr) nounwind uwtable noinline s
 define <16 x float> @merge_16f32_f32_89zzzuuuuuuuuuuuz(float* %ptr) nounwind uwtable noinline ssp {
 ; ALL-LABEL: merge_16f32_f32_89zzzuuuuuuuuuuuz:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    retq
 ;
 ; X32-AVX512F-LABEL: merge_16f32_f32_89zzzuuuuuuuuuuuz:
 ; X32-AVX512F:       # BB#0:
 ; X32-AVX512F-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; X32-AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; X32-AVX512F-NEXT:    retl
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 8
   %ptr1 = getelementptr inbounds float, float* %ptr, i64 9
@@ -347,7 +347,7 @@ define <16 x float> @merge_16f32_f32_0uu3uuuuuuuuCuEF(float* %ptr) nounwind uwta
 define <16 x float> @merge_16f32_f32_0uu3zzuuuuuzCuEF(float* %ptr) nounwind uwtable noinline ssp {
 ; ALL-LABEL: merge_16f32_f32_0uu3zzuuuuuzCuEF:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; ALL-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
@@ -360,7 +360,7 @@ define <16 x float> @merge_16f32_f32_0uu3zzuuuuuzCuEF(float* %ptr) nounwind uwta
 ; X32-AVX512F-LABEL: merge_16f32_f32_0uu3zzuuuuuzCuEF:
 ; X32-AVX512F:       # BB#0:
 ; X32-AVX512F-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; X32-AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; X32-AVX512F-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; X32-AVX512F-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; X32-AVX512F-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0

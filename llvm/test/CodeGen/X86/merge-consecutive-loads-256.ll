@@ -298,11 +298,11 @@ define <8 x float> @merge_8f32_2f32_23z5(<2 x float>* %ptr) nounwind uwtable noi
 ; X32-AVX-LABEL: merge_8f32_2f32_23z5:
 ; X32-AVX:       # BB#0:
 ; X32-AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; X32-AVX-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; X32-AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; X32-AVX-NEXT:    vmovupd 16(%eax), %xmm1
-; X32-AVX-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; X32-AVX-NEXT:    vmovupd 16(%eax), %xmm0
+; X32-AVX-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
+; X32-AVX-NEXT:    vxorpd %xmm2, %xmm2, %xmm2
+; X32-AVX-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; X32-AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; X32-AVX-NEXT:    retl
   %ptr0 = getelementptr inbounds <2 x float>, <2 x float>* %ptr, i64 2
   %ptr1 = getelementptr inbounds <2 x float>, <2 x float>* %ptr, i64 3
@@ -338,13 +338,13 @@ define <8 x float> @merge_8f32_4f32_z2(<4 x float>* %ptr) nounwind uwtable noinl
 define <8 x float> @merge_8f32_f32_12zzuuzz(float* %ptr) nounwind uwtable noinline ssp {
 ; AVX-LABEL: merge_8f32_f32_12zzuuzz:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX-NEXT:    retq
 ;
 ; X32-AVX-LABEL: merge_8f32_f32_12zzuuzz:
 ; X32-AVX:       # BB#0:
 ; X32-AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; X32-AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; X32-AVX-NEXT:    retl
   %ptr0 = getelementptr inbounds float, float* %ptr, i64 1
   %ptr1 = getelementptr inbounds float, float* %ptr, i64 2
