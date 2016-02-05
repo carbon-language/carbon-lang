@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_FLO_BINARY_CONTEXT_H
-#define LLVM_TOOLS_LLVM_FLO_BINARY_CONTEXT_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
+#define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -35,7 +35,7 @@
 #include <system_error>
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 class DataReader;
 
@@ -123,7 +123,7 @@ public:
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 };
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm
 
 #endif

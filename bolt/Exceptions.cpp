@@ -28,12 +28,12 @@
 #include "llvm/Support/raw_ostream.h"
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "flo-exceptions"
+#define DEBUG_TYPE "bolt-exceptions"
 
 using namespace llvm::dwarf;
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 namespace opts {
 
@@ -171,7 +171,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     MCSymbol *LPSymbol{nullptr};
     if (LandingPad) {
       if (Instructions.find(LandingPad) == Instructions.end()) {
-        errs() << "FLO-WARNING: landing pad " << Twine::utohexstr(LandingPad)
+        errs() << "BOLT-WARNING: landing pad " << Twine::utohexstr(LandingPad)
                << " not pointing to an instruction in function "
                << getName() << " - ignoring.\n";
       } else {
@@ -500,7 +500,7 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
 
   const FDE &CurFDE = *I->second;
   if (Function.getSize() != CurFDE.getAddressRange()) {
-    errs() << "FLO-WARNING: CFI information size mismatch for function \""
+    errs() << "BOLT-WARNING: CFI information size mismatch for function \""
            << Function.getName() << "\""
            << format(": Function size is %dB, CFI covers "
                      "%dB\n",
@@ -821,5 +821,5 @@ void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
   }
 }
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm

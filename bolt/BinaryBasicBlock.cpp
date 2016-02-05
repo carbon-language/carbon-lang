@@ -20,10 +20,10 @@
 #include <string>
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "flo"
+#define DEBUG_TYPE "bolt"
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Offset < RHS.Offset;
@@ -63,5 +63,5 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
   Predecessors.erase(I);
 }
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm

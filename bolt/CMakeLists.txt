@@ -11,8 +11,8 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_tool(llvm-flo
-  llvm-flo.cpp
+add_llvm_tool(llvm-bolt
+  llvm-bolt.cpp
   BinaryBasicBlock.cpp
   BinaryContext.cpp
   BinaryFunction.cpp

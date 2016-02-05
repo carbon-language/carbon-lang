@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_FLO_EXCEPTIONS_H
-#define LLVM_TOOLS_LLVM_FLO_EXCEPTIONS_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_EXCEPTIONS_H
+#define LLVM_TOOLS_LLVM_BOLT_EXCEPTIONS_H
 
 #include "BinaryContext.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -19,7 +19,7 @@
 #include <map>
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 class BinaryFunction;
 
@@ -58,7 +58,7 @@ private:
   FDEsMap FDEs;
 };
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm
 
 #endif

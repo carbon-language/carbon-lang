@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This family of functions reads profile data written by the perf2flo
-// utility and stores it in memory for llvm-flo consumption.
+// This family of functions reads profile data written by the perf2bolt
+// utility and stores it in memory for llvm-bolt consumption.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_FLO_DATA_READER_H
-#define LLVM_TOOLS_LLVM_FLO_DATA_READER_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
+#define LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -24,7 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 struct Location {
   bool IsSymbol;
@@ -75,7 +75,7 @@ public:
   static ErrorOr<std::unique_ptr<DataReader>> readPerfData(StringRef Path,
                                                            raw_ostream &Diag);
 
-  /// Parses the input flo data file into internal data structures. We expect
+  /// Parses the input bolt data file into internal data structures. We expect
   /// the file format to follow the syntax below.
   ///
   /// <is symbol?> <closest elf symbol or DSO name> <relative FROM address>

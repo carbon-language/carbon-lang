@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_FLO_BINARY_FUNCTION_H
-#define LLVM_TOOLS_LLVM_FLO_BINARY_FUNCTION_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_H
+#define LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_H
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
@@ -39,7 +39,7 @@
 using namespace llvm::object;
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 /// BinaryFunction is a representation of machine-level function.
 //
@@ -747,7 +747,7 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   return OS;
 }
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm
 
 #endif

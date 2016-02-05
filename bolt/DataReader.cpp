@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This family of functions reads profile data written by the perf2flo
-// utility and stores it in memory for llvm-flo consumption.
+// This family of functions reads profile data written by the perf2bolt
+// utility and stores it in memory for llvm-bolt consumption.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@
 #include "DataReader.h"
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
                                                       uint64_t To) const {
@@ -50,7 +50,7 @@ DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
 }
 
 void DataReader::reportError(StringRef ErrorMsg) {
-  Diag << "Error reading flo data input file: line " << Line << ", column "
+  Diag << "Error reading bolt data input file: line " << Line << ", column "
        << Col << ": " << ErrorMsg << '\n';
 }
 

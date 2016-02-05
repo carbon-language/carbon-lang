@@ -15,7 +15,7 @@
 #include "llvm/MC/MCSymbol.h"
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
                                                  Twine Prefix) {
@@ -43,5 +43,5 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   return Symbol;
 }
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm

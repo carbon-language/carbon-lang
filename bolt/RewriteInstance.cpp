@@ -52,11 +52,11 @@
 #include <system_error>
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "flo"
+#define DEBUG_TYPE "bolt"
 
 using namespace llvm;
 using namespace object;
-using namespace flo;
+using namespace bolt;
 
 namespace opts {
 
@@ -199,7 +199,7 @@ bool shouldProcess(const BinaryFunction &Function) {
 
 static void report_error(StringRef Message, std::error_code EC) {
   assert(EC);
-  errs() << "FLO: '" << Message << "': " << EC.message() << ".\n";
+  errs() << "BOLT-ERROR: '" << Message << "': " << EC.message() << ".\n";
   exit(1);
 }
 
@@ -225,7 +225,7 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                                     IsReadOnly);
   }
 
-  DEBUG(dbgs() << "FLO: allocating " << (IsCode ? "code" : "data")
+  DEBUG(dbgs() << "BOLT: allocating " << (IsCode ? "code" : "data")
                << " section : " << SectionName
                << " with size " << Size << ", alignment " << Alignment
                << " at 0x" << ret << "\n");
@@ -239,7 +239,7 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
 }
 
 bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
-  DEBUG(dbgs() << "FLO: finalizeMemory()\n");
+  DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
   return SectionMemoryManager::finalizeMemory(ErrMsg);
 }
 
@@ -256,7 +256,7 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
                                                          *TheTriple,
                                                          Error);
   if (!TheTarget) {
-    errs() << "FLO: " << Error;
+    errs() << "BOLT: " << Error;
     return nullptr;
   }
 
@@ -384,7 +384,7 @@ void RewriteInstance::run() {
 
   if (opts::SplitFunctions && splitLargeFunctions()) {
     // Emit again because now some functions have been split
-    outs() << "FLO: split-functions: starting pass 2...\n";
+    outs() << "BOLT: split-functions: starting pass 2...\n";
     reset();
     readSymbolTable();
     readSpecialSections();
@@ -470,7 +470,7 @@ void RewriteInstance::readSymbolTable() {
     uint64_t Address = *AddressOrErr;
     if (Address == 0) {
       if (Symbol.getType() == SymbolRef::ST_Function)
-        errs() << "FLO-WARNING: function with 0 address seen\n";
+        errs() << "BOLT-WARNING: function with 0 address seen\n";
       continue;
     }
 
@@ -581,7 +581,7 @@ void RewriteInstance::readSpecialSections() {
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame, FrameHdrAddress, FrameHdrCopy));
   if (!EHFrame->ParseError.empty()) {
-    errs() << "FLO-ERROR: EHFrame reader failed with message \""
+    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
            << EHFrame->ParseError << "\"\n";
     exit(1);
   }
@@ -594,7 +594,7 @@ void RewriteInstance::disassembleFunctions() {
     BinaryFunction &Function = BFI.second;
 
     if (!opts::shouldProcess(Function)) {
-      DEBUG(dbgs() << "FLO: skipping processing function " << Function.getName()
+      DEBUG(dbgs() << "BOLT: skipping processing function " << Function.getName()
                    << " per user request.\n");
       continue;
     }
@@ -606,7 +606,7 @@ void RewriteInstance::disassembleFunctions() {
           "wrong section for function");
     if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
       // When could it happen?
-      errs() << "FLO: corresponding section is non-executable or empty "
+      errs() << "BOLT: corresponding section is non-executable or empty "
              << "for function " << Function.getName();
       continue;
     }
@@ -617,7 +617,7 @@ void RewriteInstance::disassembleFunctions() {
     if (SymRefI != FileSymRefs.end()) {
       auto MaxSize = SymRefI->first - Function.getAddress();
       if (MaxSize < Function.getSize()) {
-        errs() << "FLO-WARNING: symbol seen in the middle of the function "
+        errs() << "BOLT-WARNING: symbol seen in the middle of the function "
                << Function.getName() << ". Skipping.\n";
         Function.setSimple(false);
         continue;
@@ -685,7 +685,7 @@ void RewriteInstance::disassembleFunctions() {
     uint64_t Offset = Addr - I->first;
     if (Offset == 0 || Offset >= Func.getSize())
       continue;
-    errs() << "FLO-WARNING: Function " << Func.getName()
+    errs() << "BOLT-WARNING: Function " << Func.getName()
            << " has internal BBs that are target of a branch located in "
               "another function. We will not process this function.\n";
     Func.setSimple(false);
@@ -701,7 +701,7 @@ void RewriteInstance::disassembleFunctions() {
       ProfiledFunctions.push_back(&BFI.second);
   }
 
-  errs() << "FLO-INFO: " << ProfiledFunctions.size() << " functions out of "
+  errs() << "BOLT-INFO: " << ProfiledFunctions.size() << " functions out of "
          << NumSimpleFunctions
          << " simple functions ("
          << format("%.1f",
@@ -710,7 +710,7 @@ void RewriteInstance::disassembleFunctions() {
          << "%) have non-empty execution profile.\n";
 
   if (ProfiledFunctions.size() > 10) {
-    errs() << "FLO-INFO: top called functions are:\n";
+    errs() << "BOLT-INFO: top called functions are:\n";
     std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
               [](BinaryFunction *A, BinaryFunction *B) {
                 return B->getExecutionCount() < A->getExecutionCount();
@@ -747,7 +747,7 @@ void RewriteInstance::runOptimizationPasses() {
     if (opts::EliminateUnreachable && Function.layout_size() > 0) {
       if (NagUser) {
         outs()
-            << "FLO-WARNING: Using -eliminate-unreachable is experimental and "
+            << "BOLT-WARNING: Using -eliminate-unreachable is experimental and "
                "unsafe for exceptions\n";
         NagUser = false;
       }
@@ -771,7 +771,7 @@ void RewriteInstance::runOptimizationPasses() {
 
       auto Count = Function.eraseDeadBBs(Reachable);
       if (Count) {
-        DEBUG(dbgs() << "FLO: Removed " << Count
+        DEBUG(dbgs() << "BOLT: Removed " << Count
                      << " dead basic block(s) in function "
                      << Function.getName() << '\n');
       }
@@ -791,7 +791,7 @@ void RewriteInstance::runOptimizationPasses() {
 
     // Fix the CFI state.
     if (!Function.fixCFIState()) {
-      errs() << "FLO-WARNING: unable to fix CFI state for function "
+      errs() << "BOLT-WARNING: unable to fix CFI state for function "
              << Function.getName() << ". Skipping.\n";
       Function.setSimple(false);
       continue;
@@ -1023,7 +1023,7 @@ void RewriteInstance::emitFunctions() {
     if (!opts::shouldProcess(Function))
       continue;
 
-    DEBUG(dbgs() << "FLO: generating code for function \"" << Function.getName()
+    DEBUG(dbgs() << "BOLT: generating code for function \"" << Function.getName()
                  << "\" : " << Function.getFunctionNumber() << '\n');
 
     if (Function.hasCFI()) {
@@ -1041,7 +1041,7 @@ void RewriteInstance::emitFunctions() {
                    /*HasExtraStorage=*/ExtraStorage.Size != 0);
   }
   if (NoSpaceWarning) {
-    errs() << "FLO-WARNING: missing __flo_storage in this binary. No "
+    errs() << "BOLT-WARNING: missing __flo_storage in this binary. No "
            << "extra space left to allocate the new .eh_frame\n";
   }
 
@@ -1065,7 +1065,7 @@ void RewriteInstance::emitFunctions() {
 
   auto Resolver = orc::createLambdaResolver(
           [&](const std::string &Name) {
-            DEBUG(dbgs() << "FLO: looking for " << Name << "\n");
+            DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
             auto I = BC->GlobalSymbols.find(Name);
             if (I == BC->GlobalSymbols.end())
               return RuntimeDyld::SymbolInfo(nullptr);
@@ -1073,7 +1073,7 @@ void RewriteInstance::emitFunctions() {
                                            JITSymbolFlags::None);
           },
           [](const std::string &S) {
-            DEBUG(dbgs() << "FLO: resolving " << S << "\n");
+            DEBUG(dbgs() << "BOLT: resolving " << S << "\n");
             return nullptr;
           }
       );
@@ -1093,7 +1093,7 @@ void RewriteInstance::emitFunctions() {
 
     auto SMII = EFMM->SectionMapInfo.find(Function.getCodeSectionName());
     if (SMII != EFMM->SectionMapInfo.end()) {
-      DEBUG(dbgs() << "FLO: mapping 0x"
+      DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(SMII->second.AllocAddress)
                    << " to 0x" << Twine::utohexstr(Function.getAddress())
                    << '\n');
@@ -1103,7 +1103,7 @@ void RewriteInstance::emitFunctions() {
       Function.setImageAddress(SMII->second.AllocAddress);
       Function.setImageSize(SMII->second.Size);
     } else {
-      errs() << "FLO: cannot remap function " << Function.getName() << "\n";
+      errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
 
@@ -1115,7 +1115,7 @@ void RewriteInstance::emitFunctions() {
     if (SMII != EFMM->SectionMapInfo.end()) {
       // Align at a 16-byte boundary
       ExtraStorage.BumpPtr = RoundUpToAlignment(ExtraStorage.BumpPtr, 16);
-      DEBUG(dbgs() << "FLO: mapping 0x"
+      DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(SMII->second.AllocAddress)
                    << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
                    << " with size " << Twine::utohexstr(SMII->second.Size)
@@ -1129,7 +1129,7 @@ void RewriteInstance::emitFunctions() {
                                     ExtraStorage.FileOffset);
       ExtraStorage.BumpPtr += SMII->second.Size;
     } else {
-      errs() << "FLO: cannot remap function " << Function.getName() << "\n";
+      errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
@@ -1144,7 +1144,7 @@ void RewriteInstance::emitFunctions() {
       SectionInfo &SI = SMII->second;
       ExtraStorage.BumpPtr = RoundUpToAlignment(ExtraStorage.BumpPtr,
                                                 SI.Alignment);
-      DEBUG(dbgs() << "FLO: mapping 0x"
+      DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(SI.AllocAddress)
                    << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
                    << '\n');
@@ -1159,13 +1159,13 @@ void RewriteInstance::emitFunctions() {
 
       ExtraStorage.BumpPtr += SI.Size;
     } else {
-      errs() << "FLO: cannot remap " << SectionName << '\n';
+      errs() << "BOLT: cannot remap " << SectionName << '\n';
     }
   }
 
   if (ExtraStorage.BumpPtr - ExtraStorage.Addr > ExtraStorage.Size) {
     errs() << format(
-        "FLO fatal error: __flo_storage in this binary has not enough free "
+        "BOLT fatal error: __flo_storage in this binary has not enough free "
         "space (required %d bytes, available %d bytes).\n",
         ExtraStorage.BumpPtr - ExtraStorage.Addr, ExtraStorage.Size);
     exit(1);
@@ -1259,7 +1259,7 @@ void RewriteInstance::rewriteFile() {
       continue;
 
     if (Function.getImageSize() > Function.getMaxSize()) {
-      errs() << "FLO-WARNING: new function size (0x"
+      errs() << "BOLT-WARNING: new function size (0x"
              << Twine::utohexstr(Function.getImageSize())
              << ") is larger than maximum allowed size (0x"
              << Twine::utohexstr(Function.getMaxSize())
@@ -1270,7 +1270,7 @@ void RewriteInstance::rewriteFile() {
 
     OverwrittenScore += Function.getFunctionScore();
     // Overwrite function in the output file.
-    outs() << "FLO: rewriting function \"" << Function.getName() << "\"\n";
+    outs() << "BOLT: rewriting function \"" << Function.getName() << "\"\n";
     Out->os().pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
                      Function.getImageSize(), Function.getFileOffset());
 
@@ -1285,14 +1285,14 @@ void RewriteInstance::rewriteFile() {
       ++CountOverwrittenFunctions;
       if (opts::MaxFunctions &&
           CountOverwrittenFunctions == opts::MaxFunctions) {
-        outs() << "FLO: maximum number of functions reached\n";
+        outs() << "BOLT: maximum number of functions reached\n";
         break;
       }
       continue;
     }
 
     // Write cold part
-    outs() << "FLO: rewriting function \"" << Function.getName()
+    outs() << "BOLT: rewriting function \"" << Function.getName()
            << "\" (cold part)\n";
     Out->os().pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
                      Function.cold().getImageSize(),
@@ -1300,12 +1300,12 @@ void RewriteInstance::rewriteFile() {
 
     ++CountOverwrittenFunctions;
     if (opts::MaxFunctions && CountOverwrittenFunctions == opts::MaxFunctions) {
-      outs() << "FLO: maximum number of functions reached\n";
+      outs() << "BOLT: maximum number of functions reached\n";
       break;
     }
   }
 
-  outs() << "FLO: " << CountOverwrittenFunctions
+  outs() << "BOLT: " << CountOverwrittenFunctions
          << " out of " << BinaryFunctions.size()
          << " functions were overwritten.\n";
 
@@ -1313,7 +1313,7 @@ void RewriteInstance::rewriteFile() {
   auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
   if (SMII != SectionMM->SectionMapInfo.end()) {
     auto &EHFrameSI = SMII->second;
-    outs() << "FLO: writing a new .eh_frame_hdr\n";
+    outs() << "BOLT: writing a new .eh_frame_hdr\n";
     if (FrameHdrAlign > 1) {
       ExtraStorage.BumpPtr =
         RoundUpToAlignment(ExtraStorage.BumpPtr, FrameHdrAlign);
@@ -1327,7 +1327,7 @@ void RewriteInstance::rewriteFile() {
         FailedAddresses);
     if (ExtraStorage.BumpPtr - ExtraStorage.Addr - ExtraStorage.Size <
         FrameHdrCopy.size()) {
-      errs() << "FLO fatal error: __flo_storage in this binary has not enough "
+      errs() << "BOLT fatal error: __flo_storage in this binary has not enough "
                 "free space\n";
       exit(1);
     }
@@ -1335,7 +1335,7 @@ void RewriteInstance::rewriteFile() {
     uint64_t HdrFileOffset =
         ExtraStorage.BumpPtr - ExtraStorage.Addr + ExtraStorage.FileOffset;
     Out->os().pwrite(FrameHdrCopy.data(), FrameHdrCopy.size(), HdrFileOffset);
-    outs() << "FLO: patching EH_FRAME program segment to reflect new "
+    outs() << "BOLT: patching EH_FRAME program segment to reflect new "
               ".eh_frame_hdr\n";
     if (auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(File)) {
       auto Obj = ELF64LEFile->getELFFile();
@@ -1344,7 +1344,7 @@ void RewriteInstance::rewriteFile() {
         outs() << "FAILED to patch program segment!\n";
       }
     } else {
-      outs() << "FLO-ERROR: program segment NOT patched -- I don't know how to "
+      outs() << "BOLT-ERROR: program segment NOT patched -- I don't know how to "
                 "handle this object file!\n";
     }
   }
@@ -1354,7 +1354,7 @@ void RewriteInstance::rewriteFile() {
     SectionInfo &SI = SMII.second;
     if (SI.IsCode)
       continue;
-    outs() << "FLO: writing new section " << SMII.first << '\n';
+    outs() << "BOLT: writing new section " << SMII.first << '\n';
     Out->os().pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
                      SI.Size,
                      SI.FileOffset);
@@ -1364,7 +1364,7 @@ void RewriteInstance::rewriteFile() {
 
   if (TotalScore != 0) {
     double Coverage = OverwrittenScore / (double)TotalScore * 100.0;
-    outs() << format("FLO: Rewritten functions cover %.2lf", Coverage)
+    outs() << format("BOLT: Rewritten functions cover %.2lf", Coverage)
            << "% of the execution count of simple functions of this binary.\n";
   }
 

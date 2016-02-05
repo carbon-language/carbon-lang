@@ -28,10 +28,10 @@
 #include <string>
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "flo"
+#define DEBUG_TYPE "bolt"
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 namespace opts {
 
@@ -311,7 +311,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         MCSymbol *TargetSymbol{nullptr};
         if (!BC.MIA->evaluateRIPOperand(Instruction, Address, Size,
                                         TargetAddress)) {
-          DEBUG(dbgs() << "FLO: rip-relative operand could not be evaluated:\n";
+          DEBUG(dbgs() << "BOLT: rip-relative operand could not be evaluated:\n";
                 BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
                 dbgs() << '\n';
                 Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
@@ -320,7 +320,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         }
         // FIXME: check that the address is in data, not in code.
         if (TargetAddress == 0) {
-          errs() << "FLO-WARNING: rip-relative operand is zero in function "
+          errs() << "BOLT-WARNING: rip-relative operand is zero in function "
                  << getName() << ". Ignoring function.\n";
           return false;
         }
@@ -342,7 +342,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                    nulls(),
                                    nulls())) {
       // Ignore this function. Skip to the next one.
-      errs() << "FLO-WARNING: unable to disassemble instruction at offset 0x"
+      errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
              << Twine::utohexstr(Offset) << " (address 0x"
              << Twine::utohexstr(getAddress() + Offset) << ") in function "
              << getName() << '\n';
@@ -351,7 +351,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
 
     if (MIA->isUnsupported(Instruction)) {
-      errs() << "FLO-WARNING: unsupported instruction seen at offset 0x"
+      errs() << "BOLT-WARNING: unsupported instruction seen at offset 0x"
              << Twine::utohexstr(Offset) << " (address 0x"
              << Twine::utohexstr(getAddress() + Offset) << ") in function "
              << getName() << '\n';
@@ -382,7 +382,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = Ctx->getOrCreateSymbol(getName());
           } else {
             // Possibly an old-style PIC code
-            errs() << "FLO: internal call detected at 0x"
+            errs() << "BOLT: internal call detected at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << " in function " << getName() << ". Skipping.\n";
             IsSimple = false;
@@ -404,7 +404,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           } else {
             BC.InterproceduralBranchTargets.insert(InstructionTarget);
             if (!IsCall && Size == 2) {
-              errs() << "FLO-WARNING: relaxed tail call detected at 0x"
+              errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
                      << Twine::utohexstr(AbsoluteInstrAddr)
                      << ". Code size will be increased.\n";
             }
@@ -424,7 +424,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               // from the libraries. In reality more often than not it is
               // unreachable code, but we don't know it and have to emit calls
               // to 0 which make LLVM JIT unhappy.
-              errs() << "FLO-WARNING: Function " << getName()
+              errs() << "BOLT-WARNING: Function " << getName()
                      << " has a call to address zero. Ignoring function.\n";
               IsSimple = false;
             }
@@ -450,7 +450,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Should be an indirect call or an indirect branch. Bail out on the
         // latter case.
         if (MIA->isIndirectBranch(Instruction)) {
-          DEBUG(dbgs() << "FLO-WARNING: indirect branch detected at 0x"
+          DEBUG(dbgs() << "BOLT-WARNING: indirect branch detected at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << getName() << ".\n");
           IsSimple = false;
@@ -458,7 +458,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
-            errs() << "FLO-WARNING: cannot handle RIP operand at 0x"
+            errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << ". Skipping function " << getName() << ".\n";
             IsSimple = false;
@@ -468,7 +468,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     } else {
       if (MIA->hasRIPOperand(Instruction)) {
         if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
-          errs() << "FLO-WARNING: cannot handle RIP operand at 0x"
+          errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << getName() << ".\n";
           IsSimple = false;
@@ -765,7 +765,7 @@ void BinaryFunction::inferFallThroughCounts() {
     DEBUG({
       if (BBExecCount < ReportedBranches)
         dbgs()
-            << "FLO-WARNING: Fall-through inference is slightly inconsistent. "
+            << "BOLT-WARNING: Fall-through inference is slightly inconsistent. "
                "exec frequency is less than the outgoing edges frequency ("
             << BBExecCount << " < " << ReportedBranches
             << ") for  BB at offset 0x"
@@ -873,7 +873,7 @@ bool BinaryFunction::fixCFIState() {
         // without using the state stack. Not sure if it is worth the effort
         // because this happens rarely.
         if (NestedLevel != 0) {
-          errs() << "FLO-WARNING: CFI rewriter detected nested CFI state while "
+          errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state while "
                  << " replaying CFI instructions for BB " << InBB->getName()
                  << " in function " << getName() << '\n';
           return false;
@@ -947,7 +947,7 @@ bool BinaryFunction::fixCFIState() {
       }
 
       if (StackOffset != 0) {
-        errs() << " FLO-WARNING: not possible to remember/recover state"
+        errs() << " BOLT-WARNING: not possible to remember/recover state"
                << " without corrupting CFI state stack in function "
                << getName() << "\n";
         return false;
@@ -1431,7 +1431,7 @@ void BinaryFunction::fixBranches() {
       // invert this conditional branch logic so we can make this a fallthrough.
       if (TBB == FT && !HotColdBorder) {
         if (OldFT == nullptr) {
-          errs() << "FLO-ERROR: malfromed CFG for function " << getName()
+          errs() << "BOLT-ERROR: malfromed CFG for function " << getName()
                  << " in basic block " << BB->getName() << '\n';
         }
         assert(OldFT != nullptr && "malformed CFG");
@@ -1543,5 +1543,5 @@ void BinaryFunction::splitFunction() {
   }
 }
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm

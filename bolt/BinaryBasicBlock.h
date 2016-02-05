@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_FLO_BINARY_BASIC_BLOCK_H
-#define LLVM_TOOLS_LLVM_FLO_BINARY_BASIC_BLOCK_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
+#define LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
@@ -28,7 +28,7 @@
 #include <limits>
 
 namespace llvm {
-namespace flo {
+namespace bolt {
 
 class BinaryFunction;
 
@@ -274,7 +274,7 @@ private:
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm
 
 #endif

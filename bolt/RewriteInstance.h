@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_FLO_REWRITE_INSTANCE_H
-#define LLVM_TOOLS_LLVM_FLO_REWRITE_INSTANCE_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
+#define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -27,7 +27,7 @@ class DWARFContext;
 class DWARFFrame;
 class tool_output_file;
 
-namespace flo {
+namespace bolt {
 
 class BinaryContext;
 class BinaryFunction;
@@ -203,7 +203,7 @@ private:
 
 };
 
-} // namespace flo
+} // namespace bolt
 } // namespace llvm
 
 #endif

@@ -1,4 +1,4 @@
-//===-- llvm-flo.cpp - Feedback-directed layout optimizer -----------------===//
+//===-- llvm-bolt.cpp - Feedback-directed layout optimizer ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,11 +24,11 @@
 #include "llvm/Support/TargetRegistry.h"
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "flo"
+#define DEBUG_TYPE "bolt"
 
 using namespace llvm;
 using namespace object;
-using namespace flo;
+using namespace bolt;
 
 namespace opts {
 
@@ -39,7 +39,7 @@ static cl::opt<std::string>
 InputDataFilename("data", cl::desc("<data file>"), cl::Optional);
 
 static cl::opt<bool>
-DumpData("dump-data", cl::desc("dump parsed flo data and exit (debugging)"),
+DumpData("dump-data", cl::desc("dump parsed bolt data and exit (debugging)"),
          cl::Hidden);
 
 } // namespace opts
@@ -79,14 +79,14 @@ int main(int argc, char **argv) {
   if (!sys::fs::exists(opts::InputFilename))
     report_error(opts::InputFilename, errc::no_such_file_or_directory);
 
-  std::unique_ptr<flo::DataReader> DR(new DataReader(errs()));
+  std::unique_ptr<bolt::DataReader> DR(new DataReader(errs()));
   if (!opts::InputDataFilename.empty()) {
     if (!sys::fs::exists(opts::InputDataFilename))
       report_error(opts::InputDataFilename, errc::no_such_file_or_directory);
 
-    // Attempt to read input flo data
+    // Attempt to read input bolt data
     auto ReaderOrErr =
-      flo::DataReader::readPerfData(opts::InputDataFilename, errs());
+      bolt::DataReader::readPerfData(opts::InputDataFilename, errs());
     if (std::error_code EC = ReaderOrErr.getError())
       report_error(opts::InputDataFilename, EC);
     DR.reset(ReaderOrErr.get().release());

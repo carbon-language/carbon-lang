@@ -1,4 +1,4 @@
-;===- ./tools/llvm-flo/LLVMBuild.txt ---------------------------*- Conf -*--===;
+;===- ./tools/llvm-bolt/LLVMBuild.txt ---------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,6 +17,6 @@
 
 [component_0]
 type = Tool
-name = llvm-flo
+name = llvm-bolt
 parent = Tools
 required_libraries = MC MCDisassembler MCParser Object all-targets
