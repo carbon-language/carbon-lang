@@ -337,7 +337,6 @@ public:
 
 private:
   uint8_t getFdeEncoding(ArrayRef<uint8_t> D);
-  uintX_t readEntryLength(ArrayRef<uint8_t> D);
 
   std::vector<EHInputSection<ELFT> *> Sections;
   std::vector<Cie<ELFT>> Cies;
