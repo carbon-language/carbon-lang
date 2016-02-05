@@ -215,6 +215,78 @@ static LLVMValueRef clone_value(LLVMValueRef Src, LLVMBuilderRef Builder, ValueM
       Dst = LLVMBuildAdd(Builder, LHS, RHS, Name);
       break;
     }
+    case LLVMSub: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildSub(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMMul: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildMul(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMUDiv: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildUDiv(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMSDiv: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildSDiv(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMURem: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildURem(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMSRem: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildSRem(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMShl: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildShl(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMLShr: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildLShr(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMAShr: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildAShr(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMAnd: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildAnd(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMOr: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildOr(Builder, LHS, RHS, Name);
+      break;
+    }
+    case LLVMXor: {
+      LLVMValueRef LHS = clone_value(LLVMGetOperand(Src, 0), Builder, VMap);
+      LLVMValueRef RHS = clone_value(LLVMGetOperand(Src, 1), Builder, VMap);
+      Dst = LLVMBuildXor(Builder, LHS, RHS, Name);
+      break;
+    }
     case LLVMAlloca: {
       LLVMTypeRef Ty = LLVMGetElementType(LLVMTypeOf(Src));
       Dst = LLVMBuildAlloca(Builder, Ty, Name);
