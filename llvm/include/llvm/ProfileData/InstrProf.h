@@ -310,10 +310,10 @@ public:
   /// Update the symtab by adding \p FuncName to the table. This interface
   /// is used by the raw and text profile readers.
   void addFuncName(StringRef FuncName) {
-    auto ins = NameTab.insert(FuncName);
-    if (ins.second)
+    auto Ins = NameTab.insert(FuncName);
+    if (Ins.second)
       MD5NameMap.push_back(std::make_pair(
-          IndexedInstrProf::ComputeHash(FuncName), ins.first->getKey()));
+          IndexedInstrProf::ComputeHash(FuncName), Ins.first->getKey()));
   }
   /// Map a function address to its name's MD5 hash. This interface
   /// is only used by the raw profiler reader.
