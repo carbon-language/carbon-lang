@@ -363,6 +363,33 @@ static unsigned getMatchingNonSExtOpcode(unsigned Opc,
   }
 }
 
+static unsigned getMatchingWideOpcode(unsigned Opc) {
+  switch (Opc) {
+  default:
+    llvm_unreachable("Opcode has no wide equivalent!");
+  case AArch64::STRBBui:
+    return AArch64::STRHHui;
+  case AArch64::STRHHui:
+    return AArch64::STRWui;
+  case AArch64::STURBBi:
+    return AArch64::STURHHi;
+  case AArch64::STURHHi:
+    return AArch64::STURWi;
+  case AArch64::LDRHHui:
+  case AArch64::LDRSHWui:
+    return AArch64::LDRWui;
+  case AArch64::LDURHHi:
+  case AArch64::LDURSHWi:
+    return AArch64::LDURWi;
+  case AArch64::LDRBBui:
+  case AArch64::LDRSBWui:
+    return AArch64::LDRHHui;
+  case AArch64::LDURBBi:
+  case AArch64::LDURSBWi:
+    return AArch64::LDURHHi;
+  }
+}
+
 static unsigned getMatchingPairOpcode(unsigned Opc) {
   switch (Opc) {
   default:
@@ -376,14 +403,6 @@ static unsigned getMatchingPairOpcode(unsigned Opc) {
   case AArch64::STRQui:
   case AArch64::STURQi:
     return AArch64::STPQi;
-  case AArch64::STRBBui:
-    return AArch64::STRHHui;
-  case AArch64::STRHHui:
-    return AArch64::STRWui;
-  case AArch64::STURBBi:
-    return AArch64::STURHHi;
-  case AArch64::STURHHi:
-    return AArch64::STURWi;
   case AArch64::STRWui:
   case AArch64::STURWi:
     return AArch64::STPWi;
@@ -408,18 +427,6 @@ static unsigned getMatchingPairOpcode(unsigned Opc) {
   case AArch64::LDRSWui:
   case AArch64::LDURSWi:
     return AArch64::LDPSWi;
-  case AArch64::LDRHHui:
-  case AArch64::LDRSHWui:
-    return AArch64::LDRWui;
-  case AArch64::LDURHHi:
-  case AArch64::LDURSHWi:
-    return AArch64::LDURWi;
-  case AArch64::LDRBBui:
-  case AArch64::LDRSBWui:
-    return AArch64::LDRHHui;
-  case AArch64::LDURBBi:
-  case AArch64::LDURSBWi:
-    return AArch64::LDURHHi;
   }
 }
 
@@ -642,7 +649,6 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   int OffsetStride = IsUnscaled ? getMemScale(I) : 1;
 
   bool MergeForward = Flags.getMergeForward();
-  unsigned NewOpc = getMatchingPairOpcode(Opc);
   // Insert our new paired instruction after whichever of the paired
   // instructions MergeForward indicates.
   MachineBasicBlock::iterator InsertionPoint = MergeForward ? Paired : I;
@@ -683,7 +689,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
     // Construct the new load instruction.
     MachineInstr *NewMemMI, *BitExtMI1, *BitExtMI2;
     NewMemMI = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                       TII->get(NewOpc))
+                       TII->get(getMatchingWideOpcode(Opc)))
                    .addOperand(getLdStRegOp(RtNewDest))
                    .addOperand(BaseRegOp)
                    .addImm(OffsetImm)
@@ -775,7 +781,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
       OffsetImm /= 2;
     }
     MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                  TII->get(NewOpc))
+                  TII->get(getMatchingWideOpcode(Opc)))
               .addOperand(getLdStRegOp(I))
               .addOperand(BaseRegOp)
               .addImm(OffsetImm)
@@ -785,7 +791,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
     if (IsUnscaled)
       OffsetImm /= OffsetStride;
     MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                  TII->get(NewOpc))
+                  TII->get(getMatchingPairOpcode(Opc)))
               .addOperand(getLdStRegOp(RtMI))
               .addOperand(getLdStRegOp(Rt2MI))
               .addOperand(BaseRegOp)
@@ -1096,7 +1102,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   if (FirstMI->modifiesRegister(BaseReg, TRI))
     return E;
 
-  // Early exit if the offset if not possible to match. (6 bits of positive
+  // Early exit if the offset is not possible to match. (6 bits of positive
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
   int OffsetStride = IsUnscaled ? getMemScale(FirstMI) : 1;
@@ -1580,6 +1586,13 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
   //        ldr w0, [x2]
   //        ubfx w1, w0, #16, #16
   //        and w0, w0, #ffff
+  //
+  //    Also merge adjacent zero stores into a wider store.
+  //      e.g.,
+  //        strh wzr, [x0]
+  //        strh wzr, [x0, #2]
+  //        ; becomes
+  //        str wzr, [x0]
   for (MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
        enableNarrowLdOpt && MBBI != E;) {
     MachineInstr *MI = MBBI;
