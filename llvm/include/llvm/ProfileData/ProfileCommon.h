@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <vector>
 
@@ -23,7 +24,7 @@ namespace llvm {
 namespace IndexedInstrProf {
 struct Summary;
 }
-class InstrProfRecord;
+struct InstrProfRecord;
 ///// Profile summary computation ////
 // The 'show' command displays richer summary of the profile data. The profile
 // summary is one or more (Cutoff, MinBlockCount, NumBlocks) triplets. Given a
