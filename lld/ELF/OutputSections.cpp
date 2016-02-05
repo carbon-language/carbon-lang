@@ -271,8 +271,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> unsigned RelocationSection<ELFT>::getRelocOffset() {
-  const unsigned EntrySize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
-  return EntrySize * Relocs.size();
+  return this->Header.sh_entsize * Relocs.size();
 }
 
 template <class ELFT> void RelocationSection<ELFT>::finalize() {
