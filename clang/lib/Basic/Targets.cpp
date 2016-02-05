@@ -606,6 +606,10 @@ public:
     this->MaxTLSAlign = 256;
     this->UserLabelPrefix = "";
 
+    // On PS4, do not honor explicit bit field alignment,
+    // as in "__attribute__((aligned(2))) int b : 1;".
+    this->UseExplicitBitFieldAlignment = false;
+
     switch (Triple.getArch()) {
     default:
     case llvm::Triple::x86_64:
