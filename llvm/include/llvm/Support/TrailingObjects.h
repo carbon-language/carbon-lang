@@ -79,6 +79,11 @@ public:
 
 /// The base class for TrailingObjects* classes.
 class TrailingObjectsBase {
+public:
+  /// Disable sized deallocation for all objects with trailing object storage;
+  /// the inferred size will typically not be correct.
+  void operator delete(void *P) { return ::operator delete(P); }
+
 protected:
   /// OverloadToken's purpose is to allow specifying function overloads
   /// for different types, without actually taking the types as
@@ -290,7 +295,8 @@ class TrailingObjects : private trailing_objects_internal::TrailingObjectsImpl<
   }
 
 public:
-  // make this (privately inherited) class public.
+  // Make these (privately inherited) members public.
+  using ParentType::operator delete;
   using ParentType::OverloadToken;
 
   /// Returns a pointer to the trailing object array of the given type
