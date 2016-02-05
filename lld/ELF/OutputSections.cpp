@@ -219,7 +219,7 @@ template <class ELFT>
 void RelocationSection<ELFT>::addReloc(const DynamicReloc<ELFT> &Reloc) {
   SymbolBody *Sym = Reloc.Sym;
   if (!Reloc.UseSymVA && Sym)
-    Sym->setUsedInDynamicReloc();
+    Sym->MustBeInDynSym = true;
   Relocs.push_back(Reloc);
 }
 

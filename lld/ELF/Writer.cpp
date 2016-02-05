@@ -366,8 +366,7 @@ void Writer<ELFT>::scanRelocs(
         // See "Global Offset Table" in Chapter 5 in the following document
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-        // FIXME: Why do we need to set this here?
-        Body->setUsedInDynamicReloc();
+        Body->MustBeInDynSym = true;
         continue;
       }
 
@@ -778,7 +777,7 @@ static bool includeInDynsym(const SymbolBody &B) {
     return false;
   if (Config->ExportDynamic || Config->Shared)
     return true;
-  return B.isUsedInDynamicReloc();
+  return B.MustBeInDynSym;
 }
 
 // This class knows how to create an output section for a given
