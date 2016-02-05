@@ -1267,15 +1267,10 @@ int main(int argc, char **argv) {
     PrintAddress = false;
   if (OutputFormat == sysv || SizeSort)
     PrintSize = true;
-
-  switch (InputFilenames.size()) {
-  case 0:
+  if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
-  case 1:
-    break;
-  default:
+  if (InputFilenames.size() > 1)
     MultipleFiles = true;
-  }
 
   for (unsigned i = 0; i < ArchFlags.size(); ++i) {
     if (ArchFlags[i] == "all") {
