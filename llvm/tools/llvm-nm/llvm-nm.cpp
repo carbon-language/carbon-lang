@@ -817,9 +817,7 @@ static char getNMTypeChar(SymbolicFile &Obj, basic_symbol_iterator I) {
   uint32_t Symflags = I->getFlags();
   if ((Symflags & object::SymbolRef::SF_Weak) && !isa<MachOObjectFile>(Obj)) {
     char Ret = isObject(Obj, I) ? 'v' : 'w';
-    if (!(Symflags & object::SymbolRef::SF_Undefined))
-      Ret = toupper(Ret);
-    return Ret;
+    return (!(Symflags & object::SymbolRef::SF_Undefined)) ? toupper(Ret) : Ret;
   }
 
   if (Symflags & object::SymbolRef::SF_Undefined)
@@ -834,10 +832,8 @@ static char getNMTypeChar(SymbolicFile &Obj, basic_symbol_iterator I) {
   else if (IRObjectFile *IR = dyn_cast<IRObjectFile>(&Obj)) {
     Ret = getSymbolNMTypeChar(*IR, I);
     Triple Host(sys::getDefaultTargetTriple());
-    if (Ret == 'd' && Host.isOSDarwin()) {
-      if(Symflags & SymbolRef::SF_Const)
-        Ret = 's';
-    }
+    if (Ret == 'd' && Host.isOSDarwin() && Symflags & SymbolRef::SF_Const)
+      Ret = 's';
   }
   else if (COFFObjectFile *COFF = dyn_cast<COFFObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*COFF, I);
