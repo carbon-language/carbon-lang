@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
   Core
   MCDisassembler
   Object
+  Support
   Target
   )
 
