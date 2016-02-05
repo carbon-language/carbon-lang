@@ -218,7 +218,7 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
   if (Target->isTlsLocalDynamicRel(Type)) {
     if (Target->canRelaxTls(Type, nullptr))
       return true;
-    if (Out<ELFT>::Got->addCurrentModuleTlsIndex())
+    if (Out<ELFT>::Got->addTlsIndex())
       Out<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel,
                                     DynamicReloc<ELFT>::Off_LTlsIndex,
                                     nullptr});
@@ -229,8 +229,8 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
     return false;
 
   if (Target->isTlsGlobalDynamicRel(Type)) {
-    bool Opt = Target->canRelaxTls(Type, Body);
-    if (!Opt && Out<ELFT>::Got->addDynTlsEntry(Body)) {
+    if (!Target->canRelaxTls(Type, Body) &&
+        Out<ELFT>::Got->addDynTlsEntry(Body)) {
       Out<ELFT>::RelaDyn->addReloc(
           {Target->TlsModuleIndexRel, DynamicReloc<ELFT>::Off_GTlsIndex, Body});
       Out<ELFT>::RelaDyn->addReloc(
