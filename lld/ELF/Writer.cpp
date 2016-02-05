@@ -1245,9 +1245,9 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         VA = alignTo(VA, Sec->getAlign());
         Sec->setVA(VA);
         VA += Sec->getSize();
-        if (InRelRo)
-          updateRelro(PH, &GnuRelroPhdr, VA);
       }
+      if (InRelRo)
+        updateRelro(PH, &GnuRelroPhdr, VA);
     }
 
     FileOff = alignTo(FileOff, Sec->getAlign());
