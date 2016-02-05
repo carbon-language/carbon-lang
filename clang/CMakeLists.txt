@@ -595,8 +595,8 @@ endif()
 set(CLANG_ORDER_FILE ${CMAKE_CURRENT_BINARY_DIR}/clang.order CACHE FILEPATH
   "Order file to use when compiling clang in order to improve startup time.")
 
-if(NOT EXISTS ${CLANG_ORDER_FILE})
-  execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${CLANG_ORDER_FILE})
+if(CLANG_ORDER_FILE AND NOT EXISTS ${CLANG_ORDER_FILE})
+  file(WRITE ${CLANG_ORDER_FILE} "\n")
 endif()
 
 if (CLANG_BUILT_STANDALONE OR CMAKE_VERSION VERSION_EQUAL 3 OR
