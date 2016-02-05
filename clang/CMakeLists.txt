@@ -595,6 +595,11 @@ endif()
 set(CLANG_ORDER_FILE ${CMAKE_CURRENT_BINARY_DIR}/clang.order CACHE FILEPATH
   "Order file to use when compiling clang in order to improve startup time.")
 
+file(READ ${CLANG_ORDER_FILE} order_file 20)
+if(order_file STREQUAL "")
+  file(REMOVE ${CLANG_ORDER_FILE})
+endif()
+
 if(CLANG_ORDER_FILE AND NOT EXISTS ${CLANG_ORDER_FILE})
   file(WRITE ${CLANG_ORDER_FILE} "\n")
 endif()
