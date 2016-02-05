@@ -123,6 +123,8 @@ struct LocalVariableAddrGap {
   ulittle16_t Range;
 };
 
+enum : uint16_t { MaxDefRange = 0xf000 };
+
 // S_DEFRANGE
 struct DefRangeSym {
   ulittle32_t Program;
