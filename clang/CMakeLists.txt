@@ -586,6 +586,10 @@ if( CLANG_INCLUDE_DOCS )
   add_subdirectory(docs)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/clang.order")
+  file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/clang.order")
+endif()
+
 if(CLANG_ORDER_FILE STREQUAL "${CMAKE_CURRENT_BINARY_DIR}/clang.order")
   unset(CLANG_ORDER_FILE CACHE)
   unset(CLANG_ORDER_FILE)
