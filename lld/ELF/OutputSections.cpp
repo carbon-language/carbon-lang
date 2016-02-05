@@ -216,6 +216,14 @@ RelocationSection<ELFT>::RelocationSection(StringRef Name, bool IsRela)
 }
 
 template <class ELFT>
+void RelocationSection<ELFT>::addReloc(const DynamicReloc<ELFT> &Reloc) {
+  SymbolBody *Sym = Reloc.Sym;
+  if (!Reloc.UseSymVA && Sym)
+    Sym->setUsedInDynamicReloc();
+  Relocs.push_back(Reloc);
+}
+
+template <class ELFT>
 static typename ELFFile<ELFT>::uintX_t
 getOffset(const DynamicReloc<ELFT> &Rel) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;

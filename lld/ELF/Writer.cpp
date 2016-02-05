@@ -235,7 +235,6 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
           {Target->TlsModuleIndexRel, DynamicReloc<ELFT>::Off_GTlsIndex, Body});
       Out<ELFT>::RelaDyn->addReloc(
           {Target->TlsOffsetRel, DynamicReloc<ELFT>::Off_GTlsOffset, Body});
-      Body->setUsedInDynamicReloc();
       return true;
     }
     if (!canBePreempted(Body, true))
@@ -306,7 +305,6 @@ void Writer<ELFT>::scanRelocs(
         continue;
       if (Target->needsCopyRel(Type, *B)) {
         B->NeedsCopy = true;
-        B->setUsedInDynamicReloc();
         Out<ELFT>::RelaDyn->addReloc(
             {Target->CopyRel, DynamicReloc<ELFT>::Off_Bss, B});
         continue;
@@ -317,7 +315,6 @@ void Writer<ELFT>::scanRelocs(
     // to the symbol go through the PLT. This is true even for a local
     // symbol, although local symbols normally do not require PLT entries.
     if (Body && isGnuIFunc<ELFT>(*Body)) {
-      Body->setUsedInDynamicReloc();
       if (Body->isInGot())
         continue;
       Out<ELFT>::Plt->addEntry(Body);
@@ -354,9 +351,6 @@ void Writer<ELFT>::scanRelocs(
         Out<ELFT>::RelaDyn->addReloc(
             {Target->GotRel, DynamicReloc<ELFT>::Off_Got, Body});
       }
-
-      if (canBePreempted(Body, /*NeedsGot=*/true))
-        Body->setUsedInDynamicReloc();
       continue;
     }
 
@@ -372,6 +366,7 @@ void Writer<ELFT>::scanRelocs(
         // See "Global Offset Table" in Chapter 5 in the following document
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+        // FIXME: Why do we need to set this here?
         Body->setUsedInDynamicReloc();
         continue;
       }
@@ -379,8 +374,6 @@ void Writer<ELFT>::scanRelocs(
       bool CBP = canBePreempted(Body, /*NeedsGot=*/true);
       bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
                     !Target->isSizeRel(Type);
-      if (CBP)
-        Body->setUsedInDynamicReloc();
       if (CBP || Dynrel) {
         uint32_t DynType;
         if (CBP)
@@ -413,7 +406,6 @@ void Writer<ELFT>::scanRelocs(
     if (canBePreempted(Body, /*NeedsGot=*/false)) {
       // We don't know anything about the finaly symbol. Just ask the dynamic
       // linker to handle the relocation for us.
-      Body->setUsedInDynamicReloc();
       Out<ELFT>::RelaDyn->addReloc({Target->getDynRel(Type), &C, RI.r_offset,
                                     false, Body, getAddend<ELFT>(RI)});
       continue;
