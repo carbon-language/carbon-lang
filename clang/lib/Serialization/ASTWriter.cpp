@@ -3162,6 +3162,8 @@ public:
         NeedDecls(!IsModule || !Writer.getLangOpts().CPlusPlus),
         InterestingIdentifierOffsets(InterestingIdentifierOffsets) {}
 
+  bool needDecls() const { return NeedDecls; }
+
   static hash_value_type ComputeHash(const IdentifierInfo* II) {
     return llvm::HashString(II->getName());
   }
@@ -3307,7 +3309,9 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
       auto *II = const_cast<IdentifierInfo *>(IdentIDPair.first);
       IdentID ID = IdentIDPair.second;
       assert(II && "NULL identifier in identifier table");
-      if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization())
+      if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization() ||
+          (Trait.needDecls() &&
+           II->hasFETokenInfoChangedSinceDeserialization()))
         Generator.insert(II, ID, Trait);
     }
 
