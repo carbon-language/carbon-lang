@@ -105,59 +105,60 @@ private:
 template <class ELFT> static bool shouldUseRela() { return ELFT::Is64Bits; }
 
 template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
-  // Initialize output sections that are handled by Writer specially.
-  // Don't reorder because the order of initialization matters.
-  InterpSection<ELFT> Interp;
-  Out<ELFT>::Interp = &Interp;
-  StringTableSection<ELFT> ShStrTab(".shstrtab", false);
-  Out<ELFT>::ShStrTab = &ShStrTab;
-  StringTableSection<ELFT> StrTab(".strtab", false);
-  if (!Config->StripAll)
-    Out<ELFT>::StrTab = &StrTab;
-  else
-    Out<ELFT>::StrTab = nullptr;
-  StringTableSection<ELFT> DynStrTab(".dynstr", true);
-  Out<ELFT>::DynStrTab = &DynStrTab;
-  GotSection<ELFT> Got;
-  Out<ELFT>::Got = &Got;
-  GotPltSection<ELFT> GotPlt;
-  if (Target->UseLazyBinding)
-    Out<ELFT>::GotPlt = &GotPlt;
-  else
-    Out<ELFT>::GotPlt = nullptr;
-  PltSection<ELFT> Plt;
-  Out<ELFT>::Plt = &Plt;
-  std::unique_ptr<SymbolTableSection<ELFT>> SymTab;
-  if (!Config->StripAll) {
-    SymTab.reset(new SymbolTableSection<ELFT>(*Symtab, *Out<ELFT>::StrTab));
-    Out<ELFT>::SymTab = SymTab.get();
-  } else {
-    Out<ELFT>::SymTab = nullptr;
-  }
-  SymbolTableSection<ELFT> DynSymTab(*Symtab, *Out<ELFT>::DynStrTab);
-  Out<ELFT>::DynSymTab = &DynSymTab;
-  HashTableSection<ELFT> HashTab;
-  if (Config->SysvHash)
-    Out<ELFT>::HashTab = &HashTab;
-  else
-    Out<ELFT>::HashTab = nullptr;
-  GnuHashTableSection<ELFT> GnuHashTab;
-  if (Config->GnuHash)
-    Out<ELFT>::GnuHashTab = &GnuHashTab;
-  else
-    Out<ELFT>::GnuHashTab = nullptr;
+  // Create singleton output sections.
   bool IsRela = shouldUseRela<ELFT>();
-  RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
-  Out<ELFT>::RelaDyn = &RelaDyn;
-  RelocationSection<ELFT> RelaPlt(IsRela ? ".rela.plt" : ".rel.plt", IsRela);
-  if (Target->UseLazyBinding)
-    Out<ELFT>::RelaPlt = &RelaPlt;
-  else
-    Out<ELFT>::RelaPlt = nullptr;
   DynamicSection<ELFT> Dynamic(*Symtab);
-  Out<ELFT>::Dynamic = &Dynamic;
   EhFrameHeader<ELFT> EhFrameHdr;
+  GotSection<ELFT> Got;
+  InterpSection<ELFT> Interp;
+  PltSection<ELFT> Plt;
+  RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
+  StringTableSection<ELFT> DynStrTab(".dynstr", true);
+  StringTableSection<ELFT> ShStrTab(".shstrtab", false);
+  SymbolTableSection<ELFT> DynSymTab(*Symtab, DynStrTab);
+
+  // Instantiate optional output sections if they are needed.
+  std::unique_ptr<GnuHashTableSection<ELFT>> GnuHashTab;
+  std::unique_ptr<GotPltSection<ELFT>> GotPlt;
+  std::unique_ptr<HashTableSection<ELFT>> HashTab;
+  std::unique_ptr<RelocationSection<ELFT>> RelaPlt;
+  std::unique_ptr<StringTableSection<ELFT>> StrTab;
+  std::unique_ptr<SymbolTableSection<ELFT>> SymTabSec;
+
+  if (Config->GnuHash)
+    GnuHashTab.reset(new GnuHashTableSection<ELFT>);
+  if (Config->SysvHash)
+    HashTab.reset(new HashTableSection<ELFT>);
+  if (Target->UseLazyBinding) {
+    StringRef S = IsRela ? ".rela.plt" : ".rel.plt";
+    GotPlt.reset(new GotPltSection<ELFT>);
+    RelaPlt.reset(new RelocationSection<ELFT>(S, IsRela));
+  }
+  if (!Config->StripAll) {
+    StrTab.reset(new StringTableSection<ELFT>(".strtab", false));
+    SymTabSec.reset(new SymbolTableSection<ELFT>(*Symtab, *StrTab));
+  }
+
+  Out<ELFT>::DynStrTab = &DynStrTab;
+  Out<ELFT>::DynSymTab = &DynSymTab;
+  Out<ELFT>::Dynamic = &Dynamic;
   Out<ELFT>::EhFrameHdr = &EhFrameHdr;
+  Out<ELFT>::GnuHashTab = GnuHashTab.get();
+  Out<ELFT>::Got = &Got;
+  Out<ELFT>::GotPlt = GotPlt.get();
+  Out<ELFT>::HashTab = HashTab.get();
+  Out<ELFT>::Interp = &Interp;
+  Out<ELFT>::Plt = &Plt;
+  Out<ELFT>::RelaDyn = &RelaDyn;
+  Out<ELFT>::RelaPlt = RelaPlt.get();
+  Out<ELFT>::ShStrTab = &ShStrTab;
+  Out<ELFT>::StrTab = StrTab.get();
+  Out<ELFT>::SymTab = SymTabSec.get();
+  Out<ELFT>::Bss = nullptr;
+  Out<ELFT>::MipsRldMap = nullptr;
+  Out<ELFT>::Opd = nullptr;
+  Out<ELFT>::OpdBuf = nullptr;
+  Out<ELFT>::TlsPhdr = nullptr;
 
   Writer<ELFT>(*Symtab).run();
 }
