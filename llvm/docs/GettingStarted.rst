@@ -123,6 +123,9 @@ Here's the short story for getting up and running quickly with LLVM:
      * CMake will generate build targets for each tool and library, and most
        LLVM sub-projects generate their own ``check-<project>`` target.
 
+     * Running a serial build will be *slow*.  Make sure you run a 
+       parallel build; for ``make``, use ``make -j``.  
+
    * For more information see `CMake <CMake.html>`_
 
    * If you get an "internal compiler error (ICE)" or test failures, see
