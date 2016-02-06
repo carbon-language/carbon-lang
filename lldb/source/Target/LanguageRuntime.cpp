@@ -339,7 +339,6 @@ LanguageRuntime::InitializeCommands (CommandObject* parent)
                 // the CommandObject vended by a Language plugin cannot be created once and cached because
                 // we may create multiple debuggers and need one instance of the command each - the implementing function
                 // is meant to create a new instance of the command each time it is invoked
-                assert(&command->GetCommandInterpreter() == &parent->GetCommandInterpreter() && "language plugin returned command for a mismatched CommandInterpreter");
                 parent->LoadSubCommand(command->GetCommandName(), command);
             }
         }
