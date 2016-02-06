@@ -16,8 +16,8 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileOutputBuffer.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/StringSaver.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
