@@ -169,16 +169,17 @@ Windows x64        x86-64                Visual Studio
   #. Code generation supported for Pentium processors and up
   #. Code generation supported for 32-bit ABI only
   #. To use LLVM modules on Win32-based system, you may configure LLVM
-     with ``-DBUILD_SHARED_LIBS=On`` for CMake builds or ``--enable-shared``
-     for configure builds.
+     with ``-DBUILD_SHARED_LIBS=On``.
   #. MCJIT not working well pre-v7, old JIT engine not supported any more.
 
-Note that you will need about 1-3 GB of space for a full LLVM build in Debug
-mode, depending on the system (it is so large because of all the debugging
-information and the fact that the libraries are statically linked into multiple
-tools).  If you do not need many of the tools and you are space-conscious, you
-can pass ``ONLY_TOOLS="tools you need"`` to make.  The Release build requires
-considerably less space.
+Note that Debug builds require a lot of time and disk space.  An LLVM-only build
+will need about 1-3 GB of space.  A full build of LLVM and Clang will need around
+15-20 GB of disk space.  The exact space requirements will vary by system.  (It
+is so large because of all the debugging information and the fact that the 
+libraries are statically linked into multiple tools).  
+
+If you you are space-constrained, you can build only selected tools or only 
+selected targets.  The Release build requires considerably less space.
 
 The LLVM suite *may* compile on other platforms, but it is not guaranteed to do
 so.  If compilation is successful, the LLVM utilities should be able to
