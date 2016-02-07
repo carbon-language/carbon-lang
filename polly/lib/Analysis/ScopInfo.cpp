@@ -612,11 +612,12 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
 
   bool isWrapping = Range.isSignWrappedSet();
   unsigned BW = Range.getBitWidth();
+  const auto One = APInt(BW, 1);
   const auto LB = isWrapping ? Range.getLower() : Range.getSignedMin();
-  const auto UB = isWrapping ? Range.getUpper() : Range.getSignedMax();
+  const auto UB = isWrapping ? (Range.getUpper() - One) : Range.getSignedMax();
 
   auto Min = LB.sdiv(APInt(BW, ElementSize));
-  auto Max = (UB - APInt(BW, 1)).sdiv(APInt(BW, ElementSize));
+  auto Max = UB.sdiv(APInt(BW, ElementSize)) + One;
 
   isl_set *AccessRange = isl_map_range(isl_map_copy(AccessRelation));
   AccessRange =
