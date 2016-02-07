@@ -21148,6 +21148,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VFPCLASS:           return "X86ISD::VFPCLASS";
   case X86ISD::VFPCLASSS:          return "X86ISD::VFPCLASSS";
   case X86ISD::MULTISHIFT:         return "X86ISD::MULTISHIFT";
+  case X86ISD::SCALAR_FP_TO_SINT_RND: return "X86ISD::SCALAR_FP_TO_SINT_RND";
+  case X86ISD::SCALAR_FP_TO_UINT_RND: return "X86ISD::SCALAR_FP_TO_UINT_RND";
   }
   return nullptr;
 }
