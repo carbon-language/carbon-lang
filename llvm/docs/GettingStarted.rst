@@ -132,9 +132,8 @@ Here's the short story for getting up and running quickly with LLVM:
      `below`_.
 
 Consult the `Getting Started with LLVM`_ section for detailed information on
-configuring and compiling LLVM.  See `Setting Up Your Environment`_ for tips
-that simplify working with the Clang front end and LLVM tools.  Go to `Program
-Layout`_ to learn about the layout of the source code tree.
+configuring and compiling LLVM.  Go to `Program Layout`_ to learn about the 
+layout of the source code tree.
 
 Requirements
 ============
@@ -429,22 +428,6 @@ appropriate pathname on your local system.  All these paths are absolute:
   This is the top level directory of the LLVM object tree (i.e. the tree where
   object files and compiled programs will be placed.  It can be the same as
   SRC_ROOT).
-
-.. _Setting Up Your Environment:
-
-Setting Up Your Environment
----------------------------
-
-In order to compile and use LLVM, you may need to set some environment
-variables.
-
-``LLVM_LIB_SEARCH_PATH=/path/to/your/bitcode/libs``
-
-  [Optional] This environment variable helps LLVM linking tools find the
-  locations of your bitcode libraries. It is provided only as a convenience
-  since you can specify the paths using the -L options of the tools and the
-  C/C++ front-end will automatically use the bitcode files installed in its
-  ``lib`` directory.
 
 Unpacking the LLVM Archives
 ---------------------------
