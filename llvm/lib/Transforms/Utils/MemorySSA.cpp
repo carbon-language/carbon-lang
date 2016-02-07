@@ -375,11 +375,11 @@ MemoryAccess *MemorySSA::createNewAccess(Instruction *I, bool IgnoreNonMemory) {
 
   MemoryUseOrDef *MA;
   if (Def)
-    MA = new MemoryDef(I->getModule()->getContext(), nullptr, I, I->getParent(),
+    MA = new MemoryDef(I->getContext(), nullptr, I, I->getParent(),
                        NextID++);
   else
     MA =
-        new MemoryUse(I->getModule()->getContext(), nullptr, I, I->getParent());
+        new MemoryUse(I->getContext(), nullptr, I, I->getParent());
   InstructionToMemoryAccess.insert(std::make_pair(I, MA));
   return MA;
 }
