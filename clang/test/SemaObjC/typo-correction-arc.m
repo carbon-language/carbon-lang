@@ -2,16 +2,21 @@
 
 typedef unsigned long NSUInteger;
 
+id nameless;                                  // expected-note{{'nameless' declared here}}
+
 @interface NSArray
 - (instancetype)initWithObjects:(const id[])objects count:(NSUInteger)count;
 @end
 
 @interface I
 @property NSArray *array;
+- (id)getArrayById:(id)name;
+- (void)setArrayValue:(id)array;
 @end
 
 @interface J
 - (void)setArray:(id)array;
+- (void)setIvarArray;
 @end
 
 @implementation J {
@@ -19,6 +24,9 @@ typedef unsigned long NSUInteger;
 }
 - (void)setArray:(id)array {  // expected-note{{'array' declared here}}
   i.array = aray;             // expected-error{{use of undeclared identifier 'aray'; did you mean 'array'}}
+}
+- (void)setIvarArray {
+  [i setArrayValue:[i getArrayById:nameles]]; // expected-error{{use of undeclared identifier 'nameles'; did you mean 'nameless'}}
 }
 @end
 
