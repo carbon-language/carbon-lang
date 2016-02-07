@@ -1,10 +1,6 @@
-// RUN: %clang_cc1 -x c++ -std=c++11 %s -triple x86_64-unknown-linux-gnu
-// -main-file-name def-dtors.cpp -o - -emit-llvm -fprofile-instrument=clang |
-// FileCheck --check-prefix=PGOGEN %s
+// RUN: %clang_cc1 -x c++ -std=c++11 %s -triple x86_64-unknown-linux-gnu -main-file-name def-dtors.cpp -o - -emit-llvm -fprofile-instrument=clang  | FileCheck --check-prefix=PGOGEN %s
 
-// RUN: %clang_cc1 -x c++ -std=c++11 %s -triple x86_64-unknown-linux-gnu
-// -main-file-name def-dtors.cpp -o - -emit-llvm -fprofile-instrument=clang
-// -fcoverage-mapping | FileCheck --check-prefix=COVMAP %s
+// RUN: %clang_cc1 -x c++ -std=c++11 %s -triple x86_64-unknown-linux-gnu -main-file-name def-dtors.cpp -o - -emit-llvm -fprofile-instrument=clang -fcoverage-mapping | FileCheck --check-prefix=COVMAP %s
 
 struct Base {
   int B;
