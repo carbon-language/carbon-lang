@@ -253,17 +253,20 @@ MemorySSAWalker *MemorySSA::buildMemorySSA(AliasAnalysis *AA,
   // Go through each block, figure out where defs occur, and chain together all
   // the accesses.
   for (BasicBlock &B : F) {
+    bool InsertIntoDef = false;
     AccessListType *Accesses = nullptr;
     for (Instruction &I : B) {
       MemoryAccess *MA = createNewAccess(&I, true);
       if (!MA)
         continue;
       if (isa<MemoryDef>(MA))
-        DefiningBlocks.insert(&B);
+        InsertIntoDef = true;
       if (!Accesses)
         Accesses = getOrCreateAccessList(&B);
       Accesses->push_back(MA);
     }
+    if (InsertIntoDef)
+      DefiningBlocks.insert(&B);
   }
 
   // Determine where our MemoryPhi's should go
