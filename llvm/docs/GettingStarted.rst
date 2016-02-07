@@ -202,9 +202,6 @@ Package                                                     Version      Notes
 `GNU Make <http://savannah.gnu.org/projects/make>`_         3.79, 3.79.1 Makefile/build processor
 `GCC <http://gcc.gnu.org/>`_                                >=4.7.0      C/C++ compiler\ :sup:`1`
 `python <http://www.python.org/>`_                          >=2.7        Automated test suite\ :sup:`2`
-`GNU M4 <http://savannah.gnu.org/projects/m4>`_             1.4          Macro processor for configuration\ :sup:`3`
-`GNU Autoconf <http://www.gnu.org/software/autoconf/>`_     2.60         Configuration script builder\ :sup:`3`
-`GNU Automake <http://www.gnu.org/software/automake/>`_     1.9.6        aclocal macro generator\ :sup:`3`
 `libtool <http://savannah.gnu.org/projects/libtool>`_       1.5.22       Shared library manager\ :sup:`3`
 `zlib <http://zlib.net>`_                                   >=1.2.3.4    Compression library\ :sup:`4`
 =========================================================== ============ ==========================================
@@ -216,9 +213,6 @@ Package                                                     Version      Notes
       info.
    #. Only needed if you want to run the automated test suite in the
       ``llvm/test`` directory.
-   #. If you want to make changes to the configure scripts, you will need GNU
-      autoconf (2.60), and consequently, GNU M4 (version 1.4 or higher). You
-      will also need automake (1.9.6). We only use aclocal from that package.
    #. Optional, adds compression / uncompression capabilities to selected LLVM
       tools.
 
@@ -506,8 +500,7 @@ get it from the Subversion repository:
   % svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 
 By placing it in the ``llvm/projects``, it will be automatically configured by
-the LLVM configure script as well as automatically updated when you run ``svn
-update``.
+the LLVM cmake configuration.
 
 Git Mirror
 ----------
@@ -881,8 +874,6 @@ The Location of LLVM Object Files
 The LLVM build system is capable of sharing a single LLVM source tree among
 several LLVM builds.  Hence, it is possible to build LLVM for several different
 platforms or configurations using the same source tree.
-
-This is accomplished in the typical autoconf manner:
 
 * Change directory to where the LLVM object files should live:
 
