@@ -167,6 +167,8 @@ def _decorateTest(mode,
                 reason_str = "{} due to the following parameter(s): {}".format(mode_str, reason_str)
             else:
                 reason_str = "{} unconditionally"
+            if bugnumber is not None and not six.callable(bugnumber):
+                reason_str = reason_str + " [" + str(bugnumber) + "]"
         return reason_str
 
     if mode == DecorateMode.Skip:
@@ -347,9 +349,6 @@ def expectedFailureLinux(bugnumber=None, compilers=None, debug_info=None, archs=
 
 def expectedFailureNetBSD(bugnumber=None, compilers=None, debug_info=None):
     return expectedFailureOS(['netbsd'], bugnumber, compilers, debug_info=debug_info)
-
-def expectedFailureWindows(bugnumber=None, compilers=None, debug_info=None):
-    return expectedFailureOS(['windows'], bugnumber, compilers, debug_info=debug_info)
 
 def expectedFailureHostWindows(bugnumber=None, compilers=None):
     return expectedFailureHostOS(['windows'], bugnumber, compilers)
