@@ -99,7 +99,7 @@ int main() {
 #ifdef LAMBDA
   // LAMBDA: [[G:@.+]] = global i{{[0-9]+}} 1212,
   // LAMBDA-LABEL: @main
-  // LAMBDA: call
+  // LAMBDA: call{{.*}} void
   // LAMBDA: call{{.*}} void [[OUTER_LAMBDA:@[^(]+]](
   [&]() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
