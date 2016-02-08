@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86                   | FileCheck %s -check-prefix=X86
-; RUN: llc < %s -march=x86-64                | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -mtriple=x86_64-linux-gnux32 | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mtriple=i686-unknown-linux-gnu   | FileCheck %s -check-prefix=X86
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-linux-gnux32      | FileCheck %s -check-prefix=X32
 
 define zeroext i8 @foo() nounwind ssp {
 entry:
