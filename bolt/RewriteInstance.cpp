@@ -237,7 +237,8 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   SectionMapInfo[SectionName] = SectionInfo(reinterpret_cast<uint64_t>(ret),
                                             Size,
                                             Alignment,
-                                            IsCode);
+                                            IsCode,
+                                            IsReadOnly);
 
   return ret;
 }
@@ -374,12 +375,86 @@ void RewriteInstance::reset() {
   TotalScore = 0;
 }
 
+void RewriteInstance::discoverStorage() {
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(File);
+  if (!ELF64LEFile) {
+    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
+    exit(1);
+  }
+
+  auto Obj = ELF64LEFile->getELFFile();
+
+  // Alignment should be the size of a page.
+  unsigned Align = 0x200000;
+
+  // Discover important addresses in the binary.
+
+  // This is where the first segment and ELF header were allocated.
+  uint64_t FirstAllocAddress = std::numeric_limits<uint64_t>::max();
+
+  NextAvailableAddress = 0;
+  for (const auto &Phdr : Obj->program_headers()) {
+    if (Phdr.p_type == ELF::PT_LOAD) {
+      FirstAllocAddress = std::min(FirstAllocAddress,
+                                   static_cast<uint64_t>(Phdr.p_vaddr));
+      NextAvailableAddress = std::max(NextAvailableAddress,
+                                      Phdr.p_vaddr + Phdr.p_memsz);
+    }
+  }
+
+  assert(NextAvailableAddress && "no PT_LOAD pheader seen");
+
+  errs() << "BOLT-INFO: first alloc address is 0x"
+         << Twine::utohexstr(FirstAllocAddress) << '\n';
+
+  NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, Align);
+
+  // Earliest available offset is the size of the input file.
+  uint64_t NextAvailableOffset = Obj->size();
+  NextAvailableOffset = RoundUpToAlignment(NextAvailableOffset, Align);
+
+  // This is where the black magic happens. Creating PHDR table in a segment
+  // other than that containing ELF header is tricky. Some loaders and/or
+  // parts of loaders will apply e_phoff from ELF header assuming both are in
+  // the same segment, while others will do the proper calculation.
+  // We create the new PHDR table in such a way that both of the methods
+  // of loading and locating the table work. There's a slight file size
+  // overhead because of that.
+
+  if (NextAvailableOffset <= NextAvailableAddress - FirstAllocAddress) {
+    NextAvailableOffset = NextAvailableAddress - FirstAllocAddress;
+  } else {
+    NextAvailableAddress = NextAvailableOffset + FirstAllocAddress;
+  }
+
+  assert(NextAvailableOffset == NextAvailableAddress - FirstAllocAddress &&
+         "PHDR table address calculation error");
+
+  errs() << "BOLT-INFO: creating new program header table at address 0x"
+         << Twine::utohexstr(NextAvailableAddress) << '\n';
+
+  PHDRTableAddress = NextAvailableAddress;
+  PHDRTableOffset = NextAvailableOffset;
+
+  // Reserve the space for 3 extra pheaders.
+  unsigned Phnum = Obj->getHeader()->e_phnum;
+  Phnum += 3;
+
+  NextAvailableAddress += Phnum * sizeof(ELFFile<ELF64LE>::Elf_Phdr);
+  NextAvailableOffset  += Phnum * sizeof(ELFFile<ELF64LE>::Elf_Phdr);
+
+  // TODO: insert alignment here if needed.
+  NewTextSegmentAddress = NextAvailableAddress;
+  NewTextSegmentOffset = NextAvailableOffset;
+}
+
 void RewriteInstance::run() {
   if (!BC) {
     errs() << "failed to create a binary context\n";
     return;
   }
 
+  discoverStorage();
   readSymbolTable();
   readSpecialSections();
   disassembleFunctions();
@@ -390,6 +465,7 @@ void RewriteInstance::run() {
     // Emit again because now some functions have been split
     outs() << "BOLT: split-functions: starting pass 2...\n";
     reset();
+    discoverStorage();
     readSymbolTable();
     readSpecialSections();
     disassembleFunctions();
@@ -408,30 +484,6 @@ void RewriteInstance::run() {
   rewriteFile();
 }
 
-namespace {
-
-// Helper function to map a random memory address to a file offset. Returns 0 if
-// this address cannot be mapped back to the file.
-uint64_t discoverFileOffset(ELFObjectFileBase *File, uint64_t MemAddr) {
-  for (const auto &Section : File->sections()) {
-    uint64_t SecAddress = Section.getAddress();
-    uint64_t Size = Section.getSize();
-    if (MemAddr < SecAddress ||
-        SecAddress + Size <= MemAddr)
-      continue;
-
-    StringRef SectionContents;
-    check_error(Section.getContents(SectionContents),
-                "cannot get section contents");
-    uint64_t SecFileOffset = SectionContents.data() - File->getData().data();
-    uint64_t MemAddrSecOffset = MemAddr - SecAddress;
-    return SecFileOffset + MemAddrSecOffset;
-  }
-  return 0ULL;
-}
-
-} // anonymous namespace
-
 void RewriteInstance::readSymbolTable() {
   std::string FileSymbolName;
 
@@ -448,20 +500,6 @@ void RewriteInstance::readSymbolTable() {
 
     ErrorOr<StringRef> Name = Symbol.getName();
     check_error(Name.getError(), "cannot get symbol name");
-
-    if (*Name == "__flo_storage") {
-      ExtraStorage.Addr = Symbol.getValue();
-      ExtraStorage.BumpPtr = ExtraStorage.Addr;
-      ExtraStorage.FileOffset = discoverFileOffset(File, ExtraStorage.Addr);
-      assert(ExtraStorage.FileOffset != 0 && "Corrupt __flo_storage symbol");
-
-      FileSymRefs[ExtraStorage.Addr] = Symbol;
-      continue;
-    }
-    if (*Name == "__flo_storage_end") {
-      ExtraStorage.AddrEnd = Symbol.getValue();
-      continue;
-    }
 
     if (Symbol.getType() == SymbolRef::ST_File) {
       // Could be used for local symbol disambiguation.
@@ -549,7 +587,6 @@ void RewriteInstance::readSymbolTable() {
                        SymbolSize, *BC)
     );
   }
-  ExtraStorage.Size = ExtraStorage.AddrEnd - ExtraStorage.Addr;
 }
 
 void RewriteInstance::readSpecialSections() {
@@ -605,7 +642,7 @@ void RewriteInstance::disassembleFunctions() {
 
     SectionRef Section = Function.getSection();
     assert(Section.getAddress() <= Function.getAddress() &&
-           Section.getAddress() + Section.getSize() 
+           Section.getAddress() + Section.getSize()
              >= Function.getAddress() + Function.getSize() &&
           "wrong section for function");
     if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
@@ -813,7 +850,7 @@ namespace {
 
 // Helper function to emit the contents of a function via a MCStreamer object.
 void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
-                  BinaryContext &BC, bool EmitColdPart, bool HasExtraStorage) {
+                  BinaryContext &BC, bool EmitColdPart) {
   // Define a helper to decode and emit CFI instructions at a given point in a
   // BB
   auto emitCFIInstr = [&Streamer](MCCFIInstruction &CFIInstr) {
@@ -898,7 +935,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   }
 
   // Emit CFI start
-  if (Function.hasCFI() && HasExtraStorage) {
+  if (Function.hasCFI()) {
     Streamer.EmitCFIStartProc(/*IsSimple=*/false);
     if (Function.getPersonalityFunction() != nullptr) {
       Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
@@ -953,13 +990,12 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
         Streamer.EmitInstruction(Instr, *BC.STI);
         continue;
       }
-      if (HasExtraStorage)
-        emitCFIInstr(*Function.getCFIFor(Instr));
+      emitCFIInstr(*Function.getCFIFor(Instr));
     }
   }
 
   // Emit CFI end
-  if (Function.hasCFI() && HasExtraStorage)
+  if (Function.hasCFI())
     Streamer.EmitCFIEndProc();
 
   if (!EmitColdPart && Function.getFunctionEndLabel())
@@ -991,7 +1027,7 @@ void RewriteInstance::emitFunctions() {
   // This is an object file, which we keep for debugging purposes.
   // Once we decide it's useless, we should create it in memory.
   std::unique_ptr<tool_output_file> TempOut =
-    llvm::make_unique<tool_output_file>(opts::OutputFilename + ".o",
+    llvm::make_unique<tool_output_file>(opts::OutputFilename + ".bolt.o",
                                         EC, sys::fs::F_None);
   check_error(EC, "cannot create output object file");
 
@@ -1016,7 +1052,6 @@ void RewriteInstance::emitFunctions() {
 
   Streamer->InitSections(false);
 
-  bool NoSpaceWarning = false;
   // Output functions one by one.
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
@@ -1027,29 +1062,21 @@ void RewriteInstance::emitFunctions() {
     if (!opts::shouldProcess(Function))
       continue;
 
-    DEBUG(dbgs() << "BOLT: generating code for function \"" << Function.getName()
-                 << "\" : " << Function.getFunctionNumber() << '\n');
+    DEBUG(dbgs() << "BOLT: generating code for function \""
+                 << Function.getName() << "\" : "
+                 << Function.getFunctionNumber() << '\n');
 
-    if (Function.hasCFI()) {
-      if (ExtraStorage.Size == 0)
-        NoSpaceWarning = true;
-    }
-
-    emitFunction(*Streamer, Function, *BC.get(),
-                 /*EmitColdPart=*/false,
-                 /*HasExtraStorage=*/ExtraStorage.Size != 0);
+    emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/false);
 
     if (Function.isSplit())
-      emitFunction(*Streamer, Function, *BC.get(),
-                   /*EmitColdPart=*/true,
-                   /*HasExtraStorage=*/ExtraStorage.Size != 0);
-  }
-  if (NoSpaceWarning) {
-    errs() << "BOLT-WARNING: missing __flo_storage in this binary. No "
-           << "extra space left to allocate the new .eh_frame\n";
+      emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/true);
   }
 
   Streamer->Finish();
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Assign addresses to new functions/sections.
+  //////////////////////////////////////////////////////////////////////////////
 
   // Get output object as ObjectFile.
   std::unique_ptr<MemoryBuffer> ObjectMemBuffer =
@@ -1061,9 +1088,7 @@ void RewriteInstance::emitFunctions() {
   auto EFMM = new ExecutableFileMemoryManager();
   SectionMM.reset(EFMM);
 
-  // FIXME: use notifyObjectLoaded() to remap sections.
 
-  DEBUG(dbgs() << "Creating OLT\n");
   // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
   orc::ObjectLinkingLayer<> OLT;
 
@@ -1081,12 +1106,12 @@ void RewriteInstance::emitFunctions() {
             return nullptr;
           }
       );
-  // FIXME:
   auto ObjectsHandle = OLT.addObjectSet(
         singletonSet(std::move(ObjOrErr.get())),
         SectionMM.get(),
         std::move(Resolver));
-  //OLT.takeOwnershipOfBuffers(ObjectsHandle, );
+
+  // FIXME: use notifyObjectLoaded() to remap sections.
 
   // Map every function/section current address in memory to that in
   // the output binary.
@@ -1117,21 +1142,20 @@ void RewriteInstance::emitFunctions() {
     SMII = EFMM->SectionMapInfo.find(
         Function.getCodeSectionName().str().append(".cold"));
     if (SMII != EFMM->SectionMapInfo.end()) {
-      // Align at a 16-byte boundary
-      ExtraStorage.BumpPtr = RoundUpToAlignment(ExtraStorage.BumpPtr, 16);
+      // Cold fragments are aligned at 16 bytes.
+      NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 16);
       DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(SMII->second.AllocAddress)
-                   << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
+                   << " to 0x" << Twine::utohexstr(NextAvailableAddress)
                    << " with size " << Twine::utohexstr(SMII->second.Size)
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
           reinterpret_cast<const void*>(SMII->second.AllocAddress),
-          ExtraStorage.BumpPtr);
+          NextAvailableAddress);
       Function.cold().setImageAddress(SMII->second.AllocAddress);
       Function.cold().setImageSize(SMII->second.Size);
-      Function.cold().setFileOffset(ExtraStorage.BumpPtr - ExtraStorage.Addr +
-                                    ExtraStorage.FileOffset);
-      ExtraStorage.BumpPtr += SMII->second.Size;
+      Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
+      NextAvailableAddress += SMII->second.Size;
     } else {
       errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
@@ -1146,33 +1170,24 @@ void RewriteInstance::emitFunctions() {
     auto SMII = EFMM->SectionMapInfo.find(SectionName);
     if (SMII != EFMM->SectionMapInfo.end()) {
       SectionInfo &SI = SMII->second;
-      ExtraStorage.BumpPtr = RoundUpToAlignment(ExtraStorage.BumpPtr,
+      NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress,
                                                 SI.Alignment);
       DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(SI.AllocAddress)
-                   << " to 0x" << Twine::utohexstr(ExtraStorage.BumpPtr)
+                   << " to 0x" << Twine::utohexstr(NextAvailableAddress)
                    << '\n');
 
       OLT.mapSectionAddress(ObjectsHandle,
                             reinterpret_cast<const void *>(SI.AllocAddress),
-                            ExtraStorage.BumpPtr);
+                            NextAvailableAddress);
 
-      SI.FileAddress = ExtraStorage.BumpPtr;
-      SI.FileOffset = ExtraStorage.BumpPtr - ExtraStorage.Addr +
-                      ExtraStorage.FileOffset;
+      SI.FileAddress = NextAvailableAddress;
+      SI.FileOffset = getFileOffsetFor(NextAvailableAddress);
 
-      ExtraStorage.BumpPtr += SI.Size;
+      NextAvailableAddress += SI.Size;
     } else {
       errs() << "BOLT: cannot remap " << SectionName << '\n';
     }
-  }
-
-  if (ExtraStorage.BumpPtr - ExtraStorage.Addr > ExtraStorage.Size) {
-    errs() << format(
-        "BOLT fatal error: __flo_storage in this binary has not enough free "
-        "space (required %d bytes, available %d bytes).\n",
-        ExtraStorage.BumpPtr - ExtraStorage.Addr, ExtraStorage.Size);
-    exit(1);
   }
 
   OLT.emitAndFinalize(ObjectsHandle);
@@ -1199,38 +1214,82 @@ bool RewriteInstance::splitLargeFunctions() {
   return Changed;
 }
 
-namespace {
-
-// Helper to locate EH_FRAME_HDR segment, specialized for 64-bit LE ELF
-bool patchEhFrameHdrSegment(const ELFFile<ELF64LE> *Obj, raw_pwrite_stream *OS,
-                            uint64_t Offset, uint64_t Addr, uint64_t Size) {
-  for (const auto &Phdr : Obj->program_headers()) {
-    if (Phdr.p_type != ELF::PT_GNU_EH_FRAME)
-      continue;
-    uint64_t OffsetLoc = (uintptr_t)&Phdr.p_offset - (uintptr_t)Obj->base();
-    uint64_t VAddrLoc = (uintptr_t)&Phdr.p_vaddr - (uintptr_t)Obj->base();
-    uint64_t PAddrLoc = (uintptr_t)&Phdr.p_paddr - (uintptr_t)Obj->base();
-    uint64_t FileSzLoc = (uintptr_t)&Phdr.p_filesz - (uintptr_t)Obj->base();
-    uint64_t MemSzLoc = (uintptr_t)&Phdr.p_memsz - (uintptr_t)Obj->base();
-    char Buffer[8];
-    // Update Offset
-    support::ulittle64_t::ref(Buffer + 0) = Offset;
-    OS->pwrite(Buffer, 8, OffsetLoc);
-    support::ulittle64_t::ref(Buffer + 0) = Addr;
-    OS->pwrite(Buffer, 8, VAddrLoc);
-    OS->pwrite(Buffer, 8, PAddrLoc);
-    support::ulittle64_t::ref(Buffer + 0) = Size;
-    OS->pwrite(Buffer, 8, FileSzLoc);
-    OS->pwrite(Buffer, 8, MemSzLoc);
-    return true;
+void RewriteInstance::patchELF() {
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(File);
+  if (!ELF64LEFile) {
+    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
+    exit(1);
   }
-  return false;
+  auto Obj = ELF64LEFile->getELFFile();
+  auto &OS = Out->os();
+  OS.seek(PHDRTableOffset);
+
+  errs() << "BOLT-INFO: writing new program headers at offset 0x"
+         << Twine::utohexstr(PHDRTableOffset) << '\n';
+
+  auto Ehdr = Obj->getHeader();
+  unsigned Phnum = Ehdr->e_phnum;
+
+  // FIXME: this will depend on the number of segements we plan to write.
+  Phnum += 1;
+
+  // Copy existing program headers with modifications.
+  for (auto &Phdr : Obj->program_headers()) {
+    if (Phdr.p_type == ELF::PT_PHDR) {
+      auto NewPhdr = Phdr;
+      NewPhdr.p_offset = PHDRTableOffset;
+      NewPhdr.p_vaddr = PHDRTableAddress;
+      NewPhdr.p_paddr = PHDRTableAddress;
+      NewPhdr.p_filesz = sizeof(NewPhdr) * Phnum;
+      NewPhdr.p_memsz = sizeof(NewPhdr) * Phnum;
+      OS.write(reinterpret_cast<const char *>(&NewPhdr), sizeof(NewPhdr));
+    } else if (Phdr.p_type == ELF::PT_GNU_EH_FRAME) {
+      auto NewPhdr = Phdr;
+      NewPhdr.p_offset = EHFrameHdrSecInfo.FileOffset;
+      NewPhdr.p_vaddr = EHFrameHdrSecInfo.FileAddress;
+      NewPhdr.p_paddr = EHFrameHdrSecInfo.FileAddress;
+      NewPhdr.p_filesz = EHFrameHdrSecInfo.Size;
+      NewPhdr.p_memsz = EHFrameHdrSecInfo.Size;
+      OS.write(reinterpret_cast<const char *>(&NewPhdr), sizeof(NewPhdr));
+    } else {
+      OS.write(reinterpret_cast<const char *>(&Phdr), sizeof(Phdr));
+    }
+  }
+
+  NewTextSegmentSize = NextAvailableAddress - NewTextSegmentAddress;
+
+  // Alignment should be the size of a page.
+  unsigned Align = 0x200000;
+
+  // Add new pheaders
+  ELFFile<ELF64LE>::Elf_Phdr NewTextPhdr;
+  NewTextPhdr.p_type = ELF::PT_LOAD;
+  NewTextPhdr.p_offset = PHDRTableOffset;
+  NewTextPhdr.p_vaddr = PHDRTableAddress;
+  NewTextPhdr.p_paddr = PHDRTableAddress;
+  NewTextPhdr.p_filesz = NewTextSegmentSize;
+  NewTextPhdr.p_memsz = NewTextSegmentSize;
+  NewTextPhdr.p_flags = ELF::PF_R | ELF::PF_X;
+  NewTextPhdr.p_align = Align;
+
+  OS.write(reinterpret_cast<const char *>(&NewTextPhdr), sizeof(NewTextPhdr));
+
+  // Fix ELF header.
+  uint64_t PhoffLoc = (uintptr_t)&Ehdr->e_phoff - (uintptr_t)Obj->base();
+  uint64_t PhnumLoc = (uintptr_t)&Ehdr->e_phnum - (uintptr_t)Obj->base();
+  char Buffer[8];
+  support::ulittle64_t::ref(Buffer + 0) = PHDRTableOffset;
+  OS.pwrite(Buffer, 8, PhoffLoc);
+  support::ulittle16_t::ref(Buffer + 0) = Phnum;
+  OS.pwrite(Buffer, 2, PhnumLoc);
+
+  // FIXME: Update _end in .dynamic
+
 }
 
-} // anonymous namespace
-
 void RewriteInstance::rewriteFile() {
-  // FIXME: is there a less painful way to obtain assembler/writer?
+  // We obtain an asm-specific writer so that we can emit nops in an
+  // architecture-specific way at the end of the function.
   auto MCE = BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
   auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
   std::unique_ptr<MCStreamer> Streamer(
@@ -1246,11 +1305,10 @@ void RewriteInstance::rewriteFile() {
                      ->getAssembler()
                      .getWriter();
 
-  // Print _flo_storage area stats for debug
-  DEBUG(dbgs() << format("INFO: __flo_storage address = 0x%x file offset = "
-                         "0x%x total size = 0x%x\n",
-                         ExtraStorage.Addr, ExtraStorage.FileOffset,
-                         ExtraStorage.Size));
+  // Make sure output stream has enough space.
+  auto Offset = Out->os().seek(getFileOffsetFor(NextAvailableAddress));
+  assert(Offset == getFileOffsetFor(NextAvailableAddress) &&
+         "error resizing output file");
 
   // Overwrite function in the output file.
   uint64_t CountOverwrittenFunctions = 0;
@@ -1304,6 +1362,8 @@ void RewriteInstance::rewriteFile() {
                      Function.cold().getImageSize(),
                      Function.cold().getFileOffset());
 
+    // FIXME: write nops after cold part too.
+
     ++CountOverwrittenFunctions;
     if (opts::MaxFunctions && CountOverwrittenFunctions == opts::MaxFunctions) {
       outs() << "BOLT: maximum number of functions reached\n";
@@ -1315,46 +1375,6 @@ void RewriteInstance::rewriteFile() {
          << " out of " << BinaryFunctions.size()
          << " functions were overwritten.\n";
 
-  // If .eh_frame is present it requires special handling.
-  auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
-  if (SMII != SectionMM->SectionMapInfo.end()) {
-    auto &EHFrameSI = SMII->second;
-    outs() << "BOLT: writing a new .eh_frame_hdr\n";
-    if (FrameHdrAlign > 1) {
-      ExtraStorage.BumpPtr =
-        RoundUpToAlignment(ExtraStorage.BumpPtr, FrameHdrAlign);
-    }
-    std::sort(FailedAddresses.begin(), FailedAddresses.end());
-    CFIRdWrt->rewriteHeaderFor(
-        StringRef(reinterpret_cast<const char *>(EHFrameSI.AllocAddress),
-                  EHFrameSI.Size),
-        EHFrameSI.FileAddress,
-        ExtraStorage.BumpPtr,
-        FailedAddresses);
-    if (ExtraStorage.BumpPtr - ExtraStorage.Addr - ExtraStorage.Size <
-        FrameHdrCopy.size()) {
-      errs() << "BOLT fatal error: __flo_storage in this binary has not enough "
-                "free space\n";
-      exit(1);
-    }
-
-    uint64_t HdrFileOffset =
-        ExtraStorage.BumpPtr - ExtraStorage.Addr + ExtraStorage.FileOffset;
-    Out->os().pwrite(FrameHdrCopy.data(), FrameHdrCopy.size(), HdrFileOffset);
-    outs() << "BOLT: patching EH_FRAME program segment to reflect new "
-              ".eh_frame_hdr\n";
-    if (auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(File)) {
-      auto Obj = ELF64LEFile->getELFFile();
-      if (!patchEhFrameHdrSegment(Obj, &Out->os(), HdrFileOffset,
-                                  ExtraStorage.BumpPtr, FrameHdrCopy.size())) {
-        outs() << "FAILED to patch program segment!\n";
-      }
-    } else {
-      outs() << "BOLT-ERROR: program segment NOT patched -- I don't know how to "
-                "handle this object file!\n";
-    }
-  }
-
   // Write all non-code sections.
   for(auto &SMII : SectionMM->SectionMapInfo) {
     SectionInfo &SI = SMII.second;
@@ -1364,9 +1384,40 @@ void RewriteInstance::rewriteFile() {
     Out->os().pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
                      SI.Size,
                      SI.FileOffset);
-
-    // Update ELF section header.
   }
+
+  // If .eh_frame is present it requires special handling.
+  auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
+  if (SMII != SectionMM->SectionMapInfo.end()) {
+    auto &EHFrameSecInfo = SMII->second;
+    outs() << "BOLT: writing a new .eh_frame_hdr\n";
+    if (FrameHdrAlign > 1) {
+      NextAvailableAddress =
+        RoundUpToAlignment(NextAvailableAddress, FrameHdrAlign);
+    }
+
+    EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
+    EHFrameHdrSecInfo.FileOffset = getFileOffsetFor(NextAvailableAddress);
+
+    std::sort(FailedAddresses.begin(), FailedAddresses.end());
+    CFIRdWrt->rewriteHeaderFor(
+        StringRef(reinterpret_cast<const char *>(EHFrameSecInfo.AllocAddress),
+                  EHFrameSecInfo.Size),
+        EHFrameSecInfo.FileAddress,
+        EHFrameHdrSecInfo.FileAddress,
+        FailedAddresses);
+
+    EHFrameHdrSecInfo.Size = FrameHdrCopy.size();
+
+    assert(Out->os().tell() == EHFrameHdrSecInfo.FileOffset &&
+           "offset mismatch");
+    Out->os().write(FrameHdrCopy.data(), EHFrameHdrSecInfo.Size);
+
+    NextAvailableAddress += EHFrameHdrSecInfo.Size;
+  }
+
+  // Update ELF book-keeping info.
+  patchELF();
 
   if (TotalScore != 0) {
     double Coverage = OverwrittenScore / (double)TotalScore * 100.0;

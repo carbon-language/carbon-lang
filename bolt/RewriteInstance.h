@@ -39,14 +39,15 @@ struct SectionInfo {
   uint64_t AllocAddress;      /// Current location of the section in memory.
   uint64_t Size;              /// Section size.
   unsigned Alignment;         /// Alignment of the section.
-  uint64_t FileAddress{0};    /// Address in the output file.
+  uint64_t FileAddress{0};    /// Address for the output file (final address).
   uint64_t FileOffset{0};     /// Offset in the output file.
-  bool     IsCode{false};     /// Does this section contain code.
+  bool     IsCode{false};     /// Does this section contain code?
+  bool     IsReadOnly{false}; /// Is the section read-only?
 
   SectionInfo(uint64_t Address = 0, uint64_t Size = 0, unsigned Alignment = 0,
-              bool IsCode = false)
+              bool IsCode = false, bool IsReadOnly = false)
     : AllocAddress(Address), Size(Size), Alignment(Alignment),
-      IsCode(IsCode) {}
+      IsCode(IsCode), IsReadOnly(IsReadOnly) {}
 };
 
 /// Class responsible for allocating and managing code and data sections.
@@ -138,6 +139,22 @@ public:
   void rewriteFile();
 
 private:
+
+  /// Detect storage available in the binary for allocating new sections.
+  void discoverStorage();
+
+  /// Patch ELF book-keeping info.
+  void patchELF();
+
+  /// Return file offset corresponding to a given virtual address.
+  uint64_t getFileOffsetFor(uint64_t Address) {
+    assert(Address >= NewTextSegmentAddress &&
+           "address in not in the new text segment");
+    return Address - NewTextSegmentAddress + NewTextSegmentOffset;
+  }
+
+
+private:
   /// An instance of the input binary we are processing, externally owned.
   llvm::object::ELFObjectFileBase *File;
 
@@ -151,28 +168,18 @@ private:
   /// optimized code for selected functions.
   std::unique_ptr<tool_output_file> Out;
 
-  /// Represent free space we have in the binary to write extra bytes. This free
-  /// space is pre-delimited in the binary via a linker script that allocates
-  /// space and inserts a new symbol __flo_storage in the binary. We also use
-  /// the symbol __flo_storage_end to delimit the end of the contiguous space in
-  /// the binary where it is safe for us to write new content. We use this extra
-  /// space for the following activities:
-  ///
-  ///   * Writing new .eh_frame entries for functions we changed the layout
-  ///   * Writing a new .eh_frame_hdr to allow us to expand the number of
-  ///     .eh_frame entries (FDEs). Note we also keep the old .eh_frame in the
-  ///     binary instact for functions we don't touch.
-  ///   * Writing cold basic blocks
-  ///
-  struct BlobTy {
-    uint64_t Addr;
-    uint64_t FileOffset;
-    uint64_t Size;
-    uint64_t AddrEnd;
-    /// BumpPtr is a trivial way to keep track of space utilization in this blob
-    uint64_t BumpPtr;
-  };
-  BlobTy ExtraStorage{0, 0, 0, 0, 0};
+  uint64_t PHDRTableAddress{0};
+  uint64_t PHDRTableOffset{0};
+
+  /// New code segment info.
+  uint64_t NewTextSegmentAddress{0};
+  uint64_t NewTextSegmentOffset{0};
+  uint64_t NewTextSegmentSize{0};
+
+  /// Track next available address in the new text segment.
+  uint64_t NextAvailableAddress{0};
+
+  SectionInfo EHFrameHdrSecInfo;
 
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
