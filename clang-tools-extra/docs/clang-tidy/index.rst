@@ -229,10 +229,19 @@ checks, but its power is in the ability to easily write custom checks.
 Checks are organized in modules, which can be linked into :program:`clang-tidy`
 with minimal or no code changes in clang-tidy.
 
+``add_new_check.py`` is a script to automate the process of adding a new check,
+it will create the check, update the CMake file and create a test.
+
+``rename_check.py`` does what the script name suggest, renames an existsing
+check.
+
 Checks can plug the analysis on the preprocessor level using `PPCallbacks`_ or
 on the AST level using `AST Matchers`_. When an error is found, checks can
 report them in a way similar to how Clang diagnostics work. A fix-it hint can be
 attached to a diagnostic message.
+
+To find out what matchers you can add, we recommend using :program:`clang-query`,
+it's a tool is for interactive exploration of the Clang AST using AST matchers.
 
 The interface provided by clang-tidy makes it easy to write useful and precise
 checks in just a few lines of code. If you have an idea for a good check, the
