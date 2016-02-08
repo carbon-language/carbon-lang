@@ -2374,15 +2374,14 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
   return true;
 }
 
-EVT
-X86TargetLowering::getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
-                                            ISD::NodeType ExtendKind) const {
-  MVT ReturnMVT;
-  // TODO: Is this also valid on 32-bit?
-  if (Subtarget.is64Bit() && VT == MVT::i1 && ExtendKind == ISD::ZERO_EXTEND)
+EVT X86TargetLowering::getTypeForExtReturn(LLVMContext &Context, EVT VT,
+                                           ISD::NodeType ExtendKind) const {
+  MVT ReturnMVT = MVT::i32;
+
+  if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16) {
+    // The ABI does not require i1, i8 or i16 to be extended.
     ReturnMVT = MVT::i8;
-  else
-    ReturnMVT = MVT::i32;
+  }
 
   EVT MinVT = getRegisterType(Context, ReturnMVT);
   return VT.bitsLT(MinVT) ? MinVT : VT;
