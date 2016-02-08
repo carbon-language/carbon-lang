@@ -9022,6 +9022,12 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         return BlendPerm;
   }
 
+  // Use low/high mov instructions.
+  if (isShuffleEquivalent(V1, V2, Mask, {0, 1, 4, 5}))
+    return DAG.getNode(X86ISD::MOVLHPS, DL, MVT::v4f32, V1, V2);
+  if (isShuffleEquivalent(V1, V2, Mask, {2, 3, 6, 7}))
+    return DAG.getNode(X86ISD::MOVHLPS, DL, MVT::v4f32, V2, V1);
+
   // Use dedicated unpack instructions for masks that match their pattern.
   if (SDValue V =
           lowerVectorShuffleWithUNPCK(DL, MVT::v4f32, Mask, V1, V2, DAG))
