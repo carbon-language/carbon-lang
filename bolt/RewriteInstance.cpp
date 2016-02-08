@@ -153,6 +153,10 @@ PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
                cl::Hidden);
 
+static cl::opt<bool>
+KeepTmp("keep-tmp",
+        cl::desc("preserve intermediate .o file"),
+        cl::Hidden);
 
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
@@ -1172,7 +1176,9 @@ void RewriteInstance::emitFunctions() {
   }
 
   OLT.emitAndFinalize(ObjectsHandle);
-  TempOut->keep();
+
+  if (opts::KeepTmp)
+    TempOut->keep();
 }
 
 bool RewriteInstance::splitLargeFunctions() {
