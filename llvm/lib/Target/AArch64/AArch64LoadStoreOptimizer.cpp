@@ -866,7 +866,6 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   DEBUG(dbgs() << "    ");
   DEBUG(Paired->print(dbgs()));
   DEBUG(dbgs() << "  with instruction:\n    ");
-
   if (SExtIdx != -1) {
     // Generate the sign extension for the proper result of the ldp.
     // I.e., with X1, that would be:
@@ -900,11 +899,10 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
     (void)MIBSXTW;
     DEBUG(dbgs() << "  Extend operand:\n    ");
     DEBUG(((MachineInstr *)MIBSXTW)->print(dbgs()));
-    DEBUG(dbgs() << "\n");
   } else {
     DEBUG(((MachineInstr *)MIB)->print(dbgs()));
-    DEBUG(dbgs() << "\n");
   }
+  DEBUG(dbgs() << "\n");
 
   // Erase the old instructions.
   I->eraseFromParent();
