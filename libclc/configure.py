@@ -92,16 +92,16 @@ if not cxx_compiler:
 available_targets = {
   'r600--' : { 'devices' :
                [{'gpu' : 'cedar',   'aliases' : ['palm', 'sumo', 'sumo2', 'redwood', 'juniper'],
-                 'defines' : {'LLVM3.6':['cl_khr_fp64'], 'LLVM3.7':['cl_khr_fp64']}},
+                 'defines' : {}},
                 {'gpu' : 'cypress', 'aliases' : ['hemlock'],
-                 'defines' : {'LLVM3.6':['cl_khr_fp64'], 'LLVM3.7':['cl_khr_fp64']}},
+                 'defines' : {'LLVM3.6':['cl_khr_fp64']}},
                 {'gpu' : 'barts',   'aliases' : ['turks', 'caicos'],
-                 'defines' : {'LLVM3.6':['cl_khr_fp64'], 'LLVM3.7':['cl_khr_fp64']}},
+                 'defines' : {}},
                 {'gpu' : 'cayman',  'aliases' : ['aruba'],
-                 'defines' : {'LLVM3.6':['cl_khr_fp64'], 'LLVM3.7':['cl_khr_fp64']}} ]},
+                 'defines' : {'LLVM3.6':['cl_khr_fp64']}} ]},
   'amdgcn--': { 'devices' :
                 [{'gpu' : 'tahiti', 'aliases' : ['pitcairn', 'verde', 'oland', 'hainan', 'bonaire', 'kabini', 'kaveri', 'hawaii','mullins','tonga','carrizo','iceland','fiji','stoney'],
-                 'defines' : {'LLVM3.6':['cl_khr_fp64'], 'LLVM3.7':['cl_khr_fp64']}} ]},
+                 'defines' : {'LLVM3.6':['cl_khr_fp64']}} ]},
   'nvptx--'   : { 'devices' : [{'gpu' : '', 'aliases' : [],
                                 'defines' : {'all' : ['cl_khr_fp64']}}]},
   'nvptx64--' : { 'devices' : [{'gpu' : '', 'aliases' : [],
