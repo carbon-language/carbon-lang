@@ -42,3 +42,11 @@ define i32 @call() {
   %1 = call i32 @iops(i32 23, i32 19)
   ret i32 %1
 }
+
+define i32 @bborder(i32 %a, i32 %b) {
+  br label %br
+unreachable:
+  unreachable
+br:
+  br label %unreachable
+}

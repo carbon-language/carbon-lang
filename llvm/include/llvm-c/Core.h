@@ -2106,6 +2106,11 @@ LLVMBool LLVMValueIsBasicBlock(LLVMValueRef Val);
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
 
 /**
+ * Obtain the string name of a basic block.
+ */
+const char *LLVMGetBasicBlockName(LLVMBasicBlockRef BB);
+
+/**
  * Obtain the function to which a basic block belongs.
  *
  * @see llvm::BasicBlock::getParent()
