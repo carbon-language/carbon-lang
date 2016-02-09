@@ -300,22 +300,6 @@ def expectedFailureDwo(bugnumber=None):
 def expectedFailureDsym(bugnumber=None):
     return expectedFailureAll(bugnumber=bugnumber, debug_info="dsym")
 
-def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
-    if compiler_version is None:
-        compiler_version=['=', None]
-    return expectedFailureAll(bugnumber=bugnumber, compiler=compiler, compiler_version=compiler_version)
-
-# to XFAIL a specific clang versions, try this
-# @expectedFailureClang('bugnumber', ['<=', '3.4'])
-def expectedFailureClang(bugnumber=None, compiler_version=None):
-    return expectedFailureCompiler('clang', compiler_version, bugnumber)
-
-def expectedFailureGcc(bugnumber=None, compiler_version=None):
-    return expectedFailureCompiler('gcc', compiler_version, bugnumber)
-
-def expectedFailureIcc(bugnumber=None):
-    return expectedFailureCompiler('icc', None, bugnumber)
-
 def expectedFailureOS(oslist, bugnumber=None, compilers=None, debug_info=None, archs=None):
     return expectedFailureAll(oslist=oslist, bugnumber=bugnumber, compiler=compilers, archs=archs, debug_info=debug_info)
 
