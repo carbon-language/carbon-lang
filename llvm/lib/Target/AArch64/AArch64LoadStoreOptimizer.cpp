@@ -143,8 +143,15 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   mergeUpdateInsn(MachineBasicBlock::iterator I,
                   MachineBasicBlock::iterator Update, bool IsPreIdx);
 
+  // Is this a candidate for ld/st merging or pairing?  For example, we don't
+  // touch volatiles or load/stores that have a hint to avoid pair formation.
+  bool isCandidateToMergeOrPair(MachineInstr *MI);
+
   // Find and merge foldable ldr/str instructions.
   bool tryToMergeLdStInst(MachineBasicBlock::iterator &MBBI);
+
+  // Find and pair ldr/str instructions.
+  bool tryToPairLdStInst(MachineBasicBlock::iterator &MBBI);
 
   // Find and promote load instructions which read directly from store.
   bool tryToPromoteLoadFromStore(MachineBasicBlock::iterator &MBBI);
@@ -1494,10 +1501,7 @@ bool AArch64LoadStoreOpt::tryToPromoteLoadFromStore(
   return false;
 }
 
-bool AArch64LoadStoreOpt::tryToMergeLdStInst(
-    MachineBasicBlock::iterator &MBBI) {
-  MachineInstr *MI = MBBI;
-  MachineBasicBlock::iterator E = MI->getParent()->end();
+bool AArch64LoadStoreOpt::isCandidateToMergeOrPair(MachineInstr *MI) {
   // If this is a volatile load/store, don't mess with it.
   if (MI->hasOrderedMemoryRef())
     return false;
@@ -1511,7 +1515,22 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
   if (TII->isLdStPairSuppressed(MI))
     return false;
 
-  // Look ahead up to LdStLimit instructions for a pairable instruction.
+  return true;
+}
+
+// Find narrow loads that can be converted into a single wider load with
+// bitfield extract instructions.  Also merge adjacent zero stores into a wider
+// store.
+bool AArch64LoadStoreOpt::tryToMergeLdStInst(
+    MachineBasicBlock::iterator &MBBI) {
+  assert((isNarrowLoad(MBBI) || isNarrowStore(MBBI)) && "Expected narrow op.");
+  MachineInstr *MI = MBBI;
+  MachineBasicBlock::iterator E = MI->getParent()->end();
+
+  if (!isCandidateToMergeOrPair(MI))
+    return false;
+
+  // Look ahead up to LdStLimit instructions for a mergable instruction.
   LdStPairFlags Flags;
   MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, LdStLimit);
   if (Paired != E) {
@@ -1519,15 +1538,33 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
       ++NumNarrowLoadsPromoted;
     } else if (isNarrowStore(MI)) {
       ++NumZeroStoresPromoted;
-    } else {
-      ++NumPairCreated;
-      if (isUnscaledLdSt(MI))
-        ++NumUnscaledPairCreated;
     }
+    // Keeping the iterator straight is a pain, so we let the merge routine tell
+    // us what the next instruction is after it's done mucking about.
+    MBBI = mergePairedInsns(MBBI, Paired, Flags);
+    return true;
+  }
+  return false;
+}
 
-    // Merge the loads into a pair. Keeping the iterator straight is a
-    // pain, so we let the merge routine tell us what the next instruction
-    // is after it's done mucking about.
+// Find loads and stores that can be merged into a single load or store pair
+// instruction.
+bool AArch64LoadStoreOpt::tryToPairLdStInst(MachineBasicBlock::iterator &MBBI) {
+  MachineInstr *MI = MBBI;
+  MachineBasicBlock::iterator E = MI->getParent()->end();
+
+  if (!isCandidateToMergeOrPair(MI))
+    return false;
+
+  // Look ahead up to LdStLimit instructions for a pairable instruction.
+  LdStPairFlags Flags;
+  MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, LdStLimit);
+  if (Paired != E) {
+    ++NumPairCreated;
+    if (isUnscaledLdSt(MI))
+      ++NumUnscaledPairCreated;
+    // Keeping the iterator straight is a pain, so we let the merge routine tell
+    // us what the next instruction is after it's done mucking about.
     MBBI = mergePairedInsns(MBBI, Paired, Flags);
     return true;
   }
@@ -1660,7 +1697,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
     case AArch64::LDURWi:
     case AArch64::LDURXi:
     case AArch64::LDURSWi: {
-      if (tryToMergeLdStInst(MBBI)) {
+      if (tryToPairLdStInst(MBBI)) {
         Modified = true;
         break;
       }
