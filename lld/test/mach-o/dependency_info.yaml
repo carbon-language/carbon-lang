@@ -1,8 +1,3 @@
-# XFAIL: win32
-# This test fails on Windows because the linker would use '\' instead
-# of '/' as a path separator when concatenating path components.
-# So the output from the linker would be different.
-
 # Test -dependency_info option
 #
 # RUN: lld -flavor darwin -arch x86_64 -test_file_usage  \
