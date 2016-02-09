@@ -1022,8 +1022,8 @@ bool AArch64LoadStoreOpt::findMatchingStore(
     MachineBasicBlock::iterator &StoreI) {
   MachineBasicBlock::iterator E = I->getParent()->begin();
   MachineBasicBlock::iterator MBBI = I;
-  MachineInstr *FirstMI = I;
-  unsigned BaseReg = getLdStBaseOp(FirstMI).getReg();
+  MachineInstr *LoadMI = I;
+  unsigned BaseReg = getLdStBaseOp(LoadMI).getReg();
 
   // Track which registers have been modified and used between the first insn
   // and the second insn.
@@ -1046,9 +1046,9 @@ bool AArch64LoadStoreOpt::findMatchingStore(
     // store instruction writes and the stored value is not modified, we can
     // promote the load. Since we do not handle stores with pre-/post-index,
     // it's unnecessary to check if BaseReg is modified by the store itself.
-    if (MI->mayStore() && isMatchingStore(FirstMI, MI) &&
+    if (MI->mayStore() && isMatchingStore(LoadMI, MI) &&
         BaseReg == getLdStBaseOp(MI).getReg() &&
-        isLdOffsetInRangeOfSt(FirstMI, MI) &&
+        isLdOffsetInRangeOfSt(LoadMI, MI) &&
         !ModifiedRegs[getLdStRegOp(MI).getReg()]) {
       StoreI = MBBI;
       return true;
@@ -1066,7 +1066,7 @@ bool AArch64LoadStoreOpt::findMatchingStore(
       return false;
 
     // If we encounter a store aliased with the load, return early.
-    if (MI->mayStore() && mayAlias(FirstMI, MI, TII))
+    if (MI->mayStore() && mayAlias(LoadMI, MI, TII))
       return false;
   }
   return false;
