@@ -216,6 +216,9 @@ const ArchHandler::StubInfo ArchHandler_x86::_sStubInfo = {
   { Reference::KindArch::x86, lazyImmediateLocation, 1, 0 },
   { Reference::KindArch::x86, branch32, 6, 0 },
 
+  // Stub helper image cache content type
+  DefinedAtom::typeNonLazyPointer,
+
   // Stub Helper-Common size and code
   12,
   // Stub helper alignment

@@ -283,6 +283,9 @@ const ArchHandler::StubInfo ArchHandler_arm64::_sStubInfo = {
   { Reference::KindArch::AArch64, lazyImmediateLocation, 8, 0 },
   { Reference::KindArch::AArch64, branch26, 4, 0 },
 
+  // Stub helper image cache content type
+  DefinedAtom::typeGOT,
+
   // Stub Helper-Common size and code
   24,
   // Stub helper alignment

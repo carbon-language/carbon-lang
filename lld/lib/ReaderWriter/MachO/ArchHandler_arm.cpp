@@ -260,6 +260,9 @@ const ArchHandler::StubInfo ArchHandler_arm::_sStubInfoArmPIC = {
   { Reference::KindArch::ARM, lazyImmediateLocation, 8, 0 },
   { Reference::KindArch::ARM, arm_b24, 4, 0 },
 
+  // Stub helper image cache content type
+  DefinedAtom::typeGOT,
+
   // Stub Helper-Common size and code
   36,
   // Stub helper alignment
