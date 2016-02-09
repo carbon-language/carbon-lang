@@ -1289,9 +1289,6 @@ Sema::CheckOMPThreadPrivateDecl(SourceLocation Loc, ArrayRef<Expr *> VarList) {
         continue;
     }
 
-    // Variable is marked already - no need to check.
-    if (DSAStack->isThreadPrivate(VD))
-      continue;
     Vars.push_back(RefExpr);
     DSAStack->addDSA(VD, DE, OMPC_threadprivate);
     VD->addAttr(OMPThreadPrivateDeclAttr::CreateImplicit(
