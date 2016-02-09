@@ -5030,7 +5030,6 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     return false;
   }
   case X86ISD::VPERMV3: {
-    IsUnary = false;
     SDValue MaskNode = N->getOperand(1);
 
     SmallVector<uint64_t, 32> RawMask;
