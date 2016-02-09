@@ -286,6 +286,8 @@ const ArchHandler::StubInfo ArchHandler_x86_64::_sStubInfo = {
 
   // Stub Helper-Common size and code
   16,
+  // Stub helper alignment
+  2,
   { 0x4C, 0x8D, 0x1D, 0x00, 0x00, 0x00, 0x00,   // leaq cache(%rip),%r11
     0x41, 0x53,                                 // push %r11
     0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,         // jmp *binder(%rip)

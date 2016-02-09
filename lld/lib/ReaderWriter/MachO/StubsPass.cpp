@@ -175,7 +175,7 @@ public:
   }
 
   Alignment alignment() const override {
-    return 1 << _stubInfo.codeAlignment;
+    return 1 << _stubInfo.stubHelperCommonAlignment;
   }
 
   uint64_t size() const override {
