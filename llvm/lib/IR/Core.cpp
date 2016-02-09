@@ -2134,6 +2134,12 @@ LLVMBasicBlockRef LLVMGetSwitchDefaultDest(LLVMValueRef Switch) {
   return wrap(unwrap<SwitchInst>(Switch)->getDefaultDest());
 }
 
+/*--.. Operations on alloca instructions (only) ............................--*/
+
+LLVMTypeRef LLVMGetAllocatedType(LLVMValueRef Alloca) {
+  return wrap(unwrap<AllocaInst>(Alloca)->getAllocatedType());
+}
+
 /*--.. Operations on phi nodes .............................................--*/
 
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,

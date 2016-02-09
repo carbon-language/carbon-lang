@@ -306,7 +306,8 @@ struct FunCloner {
         break;
       }
       case LLVMAlloca: {
-        LLVMTypeRef Ty = LLVMGetElementType(LLVMTypeOf(Src));
+        LLVMContextRef Ctx = LLVMGetModuleContext(get_module(Builder));
+        LLVMTypeRef Ty = clone_type(LLVMGetAllocatedType(Src), Ctx);
         Dst = LLVMBuildAlloca(Builder, Ty, Name);
         break;
       }

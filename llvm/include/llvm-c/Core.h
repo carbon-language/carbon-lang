@@ -2506,6 +2506,24 @@ LLVMBasicBlockRef LLVMGetSwitchDefaultDest(LLVMValueRef SwitchInstr);
  */
 
 /**
+ * @defgroup LLVMCCoreValueInstructionAlloca Allocas
+ *
+ * Functions in this group only apply to instructions that map to
+ * llvm::AllocaInst instances.
+ *
+ * @{
+ */
+
+/**
+ * Obtain the type that is being allocated by the alloca instruction.
+ */
+LLVMTypeRef LLVMGetAllocatedType(LLVMValueRef Alloca);
+
+/**
+ * @}
+ */
+
+/**
  * @defgroup LLVMCCoreValueInstructionPHINode PHI Nodes
  *
  * Functions in this group only apply to instructions that map to
