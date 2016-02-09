@@ -905,7 +905,7 @@ template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
   if ((Enc & 0xf0) == DW_EH_PE_aligned)
     fatal("DW_EH_PE_aligned encoding is not supported");
   size_t Size = getAugPSize<ELFT>(Enc);
-  if (Size < D.size())
+  if (Size >= D.size())
     fatal("corrupted CIE");
   D = D.slice(Size);
 }
