@@ -1205,6 +1205,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::UMIN,            MVT::v16i16, Legal);
       setOperationAction(ISD::UMIN,            MVT::v8i32,  Legal);
 
+      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v4i64,  Custom);
+      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v8i32,  Custom);
+      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v16i16, Custom);
+
       // The custom lowering for UINT_TO_FP for v8i32 becomes interesting
       // when we have a 256bit-wide blend with immediate.
       setOperationAction(ISD::UINT_TO_FP, MVT::v8i32, Custom);
@@ -15576,15 +15580,25 @@ static SDValue LowerSIGN_EXTEND_VECTOR_INREG(SDValue Op,
   MVT InVT = In.getSimpleValueType();
   assert(VT.getSizeInBits() == InVT.getSizeInBits());
 
+  MVT SVT = VT.getVectorElementType();
   MVT InSVT = InVT.getVectorElementType();
-  assert(VT.getVectorElementType().getSizeInBits() > InSVT.getSizeInBits());
+  assert(SVT.getSizeInBits() > InSVT.getSizeInBits());
 
-  if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
+  if (SVT != MVT::i64 && SVT != MVT::i32 && SVT != MVT::i16)
     return SDValue();
   if (InSVT != MVT::i32 && InSVT != MVT::i16 && InSVT != MVT::i8)
     return SDValue();
+  if (!(VT.is128BitVector() && Subtarget.hasSSE2()) &&
+      !(VT.is256BitVector() && Subtarget.hasInt256()))
+    return SDValue();
 
   SDLoc dl(Op);
+
+  // For 256-bit vectors, we only need the lower (128-bit) half of the input.
+  if (VT.is256BitVector())
+    In = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl,
+                     MVT::getVectorVT(InSVT, InVT.getVectorNumElements() / 2),
+                     In, DAG.getIntPtrConstant(0, dl));
 
   // SSE41 targets can use the pmovsx* instructions directly.
   if (Subtarget.hasSSE41())
@@ -27915,10 +27929,10 @@ static SDValue combineToExtendVectorInReg(SDNode *N, SelectionDAG &DAG,
                        DAG.getIntPtrConstant(0, DL));
   }
 
-  // If target-size is 128-bits, then convert to ISD::SIGN_EXTEND_VECTOR_INREG
-  // which ensures lowering to X86ISD::VSEXT (pmovsx*).
-  if (VT.getSizeInBits() == 128) {
-    SDValue ExOp = ExtendVecSize(DL, N0, 128);
+  // If target-size is 128-bits (or 256-bits on AVX2 target), then convert to
+  // ISD::SIGN_EXTEND_VECTOR_INREG which ensures lowering to X86ISD::VSEXT.
+  if (VT.is128BitVector() || (VT.is256BitVector() && Subtarget.hasInt256())) {
+    SDValue ExOp = ExtendVecSize(DL, N0, VT.getSizeInBits());
     return DAG.getSignExtendVectorInReg(ExOp, DL, VT);
   }
 
