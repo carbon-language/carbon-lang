@@ -291,15 +291,6 @@ def not_remote_testsuite_ready(func):
         return "Not ready for remote testsuite" if lldb.remote_platform else None
     return skipTestIfFn(is_remote)(func)
 
-def expectedFailureDwarf(bugnumber=None):
-    return expectedFailureAll(bugnumber=bugnumber, debug_info="dwarf")
-
-def expectedFailureDwo(bugnumber=None):
-    return expectedFailureAll(bugnumber=bugnumber, debug_info="dwo")
-
-def expectedFailureDsym(bugnumber=None):
-    return expectedFailureAll(bugnumber=bugnumber, debug_info="dsym")
-
 def expectedFailureOS(oslist, bugnumber=None, compilers=None, debug_info=None, archs=None):
     return expectedFailureAll(oslist=oslist, bugnumber=bugnumber, compiler=compilers, archs=archs, debug_info=debug_info)
 
@@ -518,18 +509,6 @@ def skipUnlessPlatform(oslist):
     return unittest2.skipUnless(lldbplatformutil.getPlatform() in oslist,
                                 "requires on of %s" % (", ".join(oslist)))
 
-
-def skipIfDebugInfo(bugnumber=None, debug_info=None):
-    return skipIf(bugnumber=bugnumber, debug_info=debug_info)
-
-def skipIfDWO(bugnumber=None):
-    return skipIfDebugInfo(bugnumber, ["dwo"])
-
-def skipIfDwarf(bugnumber=None):
-    return skipIfDebugInfo(bugnumber, ["dwarf"])
-
-def skipIfDsym(bugnumber=None):
-    return skipIfDebugInfo(bugnumber, ["dsym"])
 
 def skipIfGcc(func):
     """Decorate the item to skip tests that should be skipped if building with gcc ."""
