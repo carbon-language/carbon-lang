@@ -319,9 +319,6 @@ def expectedFailureIcc(bugnumber=None):
 def expectedFailureOS(oslist, bugnumber=None, compilers=None, debug_info=None, archs=None):
     return expectedFailureAll(oslist=oslist, bugnumber=bugnumber, compiler=compilers, archs=archs, debug_info=debug_info)
 
-def expectedFailureHostOS(oslist, bugnumber=None, compilers=None):
-    return expectedFailureAll(hostoslist=oslist, bugnumber=bugnumber)
-
 def expectedFailureDarwin(bugnumber=None, compilers=None, debug_info=None):
     # For legacy reasons, we support both "darwin" and "macosx" as OS X triples.
     return expectedFailureOS(lldbplatformutil.getDarwinOSTriples(), bugnumber, compilers, debug_info=debug_info)
@@ -334,9 +331,6 @@ def expectedFailureLinux(bugnumber=None, compilers=None, debug_info=None, archs=
 
 def expectedFailureNetBSD(bugnumber=None, compilers=None, debug_info=None):
     return expectedFailureOS(['netbsd'], bugnumber, compilers, debug_info=debug_info)
-
-def expectedFailureHostWindows(bugnumber=None, compilers=None):
-    return expectedFailureHostOS(['windows'], bugnumber, compilers)
 
 def expectedFailureAndroid(bugnumber=None, api_levels=None, archs=None):
     """ Mark a test as xfail for Android.
