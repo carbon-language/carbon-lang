@@ -216,8 +216,19 @@ struct FunCloner {
         break;
       }
       case LLVMBr: {
-        LLVMBasicBlockRef SrcBB = LLVMValueAsBasicBlock(LLVMGetOperand(Src, 0));
-        Dst = LLVMBuildBr(Builder, DeclareBB(SrcBB));
+        if (!LLVMIsConditional(Src)) {
+          LLVMValueRef SrcOp = LLVMGetOperand(Src, 0);
+          LLVMBasicBlockRef SrcBB = LLVMValueAsBasicBlock(SrcOp);
+          Dst = LLVMBuildBr(Builder, DeclareBB(SrcBB));
+          break;
+        }
+
+        LLVMValueRef Cond = LLVMGetCondition(Src);
+        LLVMValueRef Else = LLVMGetOperand(Src, 1);
+        LLVMBasicBlockRef ElseBB = DeclareBB(LLVMValueAsBasicBlock(Else));
+        LLVMValueRef Then = LLVMGetOperand(Src, 2);
+        LLVMBasicBlockRef ThenBB = DeclareBB(LLVMValueAsBasicBlock(Then));
+        Dst = LLVMBuildCondBr(Builder, Cond, ThenBB, ElseBB);
         break;
       }
       case LLVMSwitch:
@@ -309,6 +320,13 @@ struct FunCloner {
         LLVMContextRef Ctx = LLVMGetModuleContext(get_module(Builder));
         LLVMTypeRef Ty = clone_type(LLVMGetAllocatedType(Src), Ctx);
         Dst = LLVMBuildAlloca(Builder, Ty, Name);
+        break;
+      }
+      case LLVMICmp: {
+        LLVMIntPredicate Pred = LLVMGetICmpPredicate(Src);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        Dst = LLVMBuildICmp(Builder, Pred, LHS, RHS, Name);
         break;
       }
       case LLVMCall: {

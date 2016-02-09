@@ -43,10 +43,40 @@ define i32 @call() {
   ret i32 %1
 }
 
-define i32 @bborder(i32 %a, i32 %b) {
+define i32 @cond(i32 %a, i32 %b) {
   br label %br
 unreachable:
   unreachable
 br:
-  br label %unreachable
+  %1 = icmp eq i32 %a, %b
+  br i1 %1, label %next0, label %unreachable
+next0:
+  %2 = icmp ne i32 %a, %b
+  br i1 %2, label %next1, label %unreachable
+next1:
+  %3 = icmp ugt i32 %a, %b
+  br i1 %3, label %next2, label %unreachable
+next2:
+  %4 = icmp uge i32 %a, %b
+  br i1 %4, label %next3, label %unreachable
+next3:
+  %5 = icmp ult i32 %a, %b
+  br i1 %5, label %next4, label %unreachable
+next4:
+  %6 = icmp ule i32 %a, %b
+  br i1 %6, label %next5, label %unreachable
+next5:
+  %7 = icmp sgt i32 %a, %b
+  br i1 %7, label %next6, label %unreachable
+next6:
+  %8 = icmp sge i32 %a, %b
+  br i1 %8, label %next7, label %unreachable
+next7:
+  %9 = icmp slt i32 %a, %b
+  br i1 %9, label %next8, label %unreachable
+next8:
+  %10 = icmp sle i32 %a, %b
+  br i1 %10, label %next9, label %unreachable
+next9:
+  ret i32 0
 }
