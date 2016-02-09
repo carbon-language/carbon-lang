@@ -881,6 +881,34 @@ static void skipLeb128(ArrayRef<uint8_t> &D) {
   fatal("corrupted or unsupported CIE information");
 }
 
+template <class ELFT> static size_t getAugPSize(unsigned Enc) {
+  switch (Enc & 0x0f) {
+  case dwarf::DW_EH_PE_absptr:
+  case dwarf::DW_EH_PE_signed:
+    return ELFT::Is64Bits ? 8 : 4;
+  case dwarf::DW_EH_PE_udata2:
+  case dwarf::DW_EH_PE_sdata2:
+    return 2;
+  case dwarf::DW_EH_PE_udata4:
+  case dwarf::DW_EH_PE_sdata4:
+    return 4;
+  case dwarf::DW_EH_PE_udata8:
+  case dwarf::DW_EH_PE_sdata8:
+    return 8;
+  }
+  fatal("unknown FDE encoding");
+}
+
+template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
+  uint8_t Enc = readByte(D);
+  if ((Enc & 0xf0) == dwarf::DW_EH_PE_aligned)
+    fatal("DW_EH_PE_aligned encoding is not supported");
+  size_t Size = getAugPSize<ELFT>(Enc);
+  if (Size < D.size())
+    fatal("corrupted CIE");
+  D = D.slice(Size);
+}
+
 template <class ELFT>
 uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
   if (D.size() < 8)
@@ -911,13 +939,26 @@ uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
   else
     skipLeb128(D);
 
-  // We assume that the augmentation string always starts with 'z'
-  // (which specifies the size of the CIE field) and 'R' (which
-  // specifies the FDE encoding.)
-  if (!Aug.startswith("zR"))
-    fatal("unknown .eh_frame augmentation string: " + Aug);
-  skipLeb128(D);
-  return readByte(D);
+  // We only care about an 'R' value, but other records may precede an 'R'
+  // record. Records are not in TLV (type-length-value) format, so we need
+  // to teach the linker how to skip records for each type.
+  for (; !Aug.empty(); Aug = Aug.substr(1)) {
+    switch (Aug[0]) {
+    case 'z':
+      skipLeb128(D);
+      break;
+    case 'R':
+      return readByte(D);
+    case 'P':
+      skipAugP<ELFT>(D);
+      break;
+    case 'L':
+      break;
+    default:
+      fatal("unknown .eh_frame augmentation string: " + Aug);
+    }
+  }
+  return dwarf::DW_EH_PE_absptr;
 }
 
 template <class ELFT>
