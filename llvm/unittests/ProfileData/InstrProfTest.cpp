@@ -722,6 +722,7 @@ TEST_P(MaybeSparseInstrProfTest, get_weighted_function_counts) {
   ASSERT_EQ(20U, Counts[1]);
 }
 
+// Testing symtab creator interface used by indexed profile reader.
 TEST_P(MaybeSparseInstrProfTest, instr_prof_symtab_test) {
   std::vector<StringRef> FuncNames;
   FuncNames.push_back("func1");
@@ -773,6 +774,7 @@ TEST_P(MaybeSparseInstrProfTest, instr_prof_symtab_test) {
   ASSERT_EQ(StringRef("bar3"), R);
 }
 
+// Testing symtab creator interface used by value profile transformer.
 TEST_P(MaybeSparseInstrProfTest, instr_prof_symtab_module_test) {
   LLVMContext Ctx;
   std::unique_ptr<Module> M = llvm::make_unique<Module>("MyModule.cpp", Ctx);
@@ -808,6 +810,8 @@ TEST_P(MaybeSparseInstrProfTest, instr_prof_symtab_module_test) {
   }
 }
 
+// Testing symtab serialization and creator/deserialization interface
+// used by coverage map reader, and raw profile reader.
 TEST_P(MaybeSparseInstrProfTest, instr_prof_symtab_compression_test) {
   std::vector<std::string> FuncNames1;
   std::vector<std::string> FuncNames2;
