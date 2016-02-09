@@ -842,8 +842,10 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   }
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
   // Handle Unscaled.
-  if (IsUnscaled)
+  if (IsUnscaled) {
+    assert (!(OffsetImm % OffsetStride) && "Unscaled offset cannot be scaled.");
     OffsetImm /= OffsetStride;
+  }
 
   // Construct the new instruction.
   MachineInstrBuilder MIB;
