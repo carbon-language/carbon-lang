@@ -490,17 +490,9 @@ def skipIfLinux(func):
     """Decorate the item to skip tests that should be skipped on Linux."""
     return skipIfPlatform(["linux"])(func)
 
-def skipUnlessHostLinux(func):
-    """Decorate the item to skip tests that should be skipped on any non Linux host."""
-    return skipUnlessHostPlatform(["linux"])(func)
-
 def skipIfWindows(func):
     """Decorate the item to skip tests that should be skipped on Windows."""
     return skipIfPlatform(["windows"])(func)
-
-def skipIfHostWindows(func):
-    """Decorate the item to skip tests that should be skipped on Windows."""
-    return skipIfHostPlatform(["windows"])(func)
 
 def skipUnlessWindows(func):
     """Decorate the item to skip tests that should be skipped on any non-Windows platform."""
@@ -542,14 +534,6 @@ def skipIfHostIncompatibleWithRemote(func):
             return "skipping because target is %s but host is %s" % (target_platform, host_platform)
         return None
     return skipTestIfFn(is_host_incompatible_with_remote)(func)
-
-def skipIfHostPlatform(oslist):
-    """Decorate the item to skip tests if running on one of the listed host platforms."""
-    return skipIf(hostoslist=oslist)
-
-def skipUnlessHostPlatform(oslist):
-    """Decorate the item to skip tests unless running on one of the listed host platforms."""
-    return skipIf(hostoslist=no_match(oslist))
 
 def skipIfPlatform(oslist):
     """Decorate the item to skip tests if running on one of the listed platforms."""
