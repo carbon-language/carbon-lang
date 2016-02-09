@@ -109,7 +109,7 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   // Merge the two instructions indicated into a wider instruction.
   MachineBasicBlock::iterator
   mergeNarrowInsns(MachineBasicBlock::iterator I,
-                   MachineBasicBlock::iterator Paired,
+                   MachineBasicBlock::iterator MergeMI,
                    const LdStPairFlags &Flags);
 
   // Merge the two instructions indicated into a single pair-wise instruction.
@@ -638,7 +638,7 @@ static bool isLdOffsetInRangeOfSt(MachineInstr *LoadInst,
 
 MachineBasicBlock::iterator
 AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
-                                      MachineBasicBlock::iterator Paired,
+                                      MachineBasicBlock::iterator MergeMI,
                                       const LdStPairFlags &Flags) {
   MachineBasicBlock::iterator NextI = I;
   ++NextI;
@@ -646,7 +646,7 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
   // to skip one further. Either way we merge will invalidate the iterator,
   // and we don't need to scan the new instruction, as it's a pairwise
   // instruction, which we're not considering for further action anyway.
-  if (NextI == Paired)
+  if (NextI == MergeMI)
     ++NextI;
 
   unsigned Opc = I->getOpcode();
@@ -656,21 +656,21 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
   bool MergeForward = Flags.getMergeForward();
   // Insert our new paired instruction after whichever of the paired
   // instructions MergeForward indicates.
-  MachineBasicBlock::iterator InsertionPoint = MergeForward ? Paired : I;
+  MachineBasicBlock::iterator InsertionPoint = MergeForward ? MergeMI : I;
   // Also based on MergeForward is from where we copy the base register operand
   // so we get the flags compatible with the input code.
   const MachineOperand &BaseRegOp =
-      MergeForward ? getLdStBaseOp(Paired) : getLdStBaseOp(I);
+      MergeForward ? getLdStBaseOp(MergeMI) : getLdStBaseOp(I);
 
   // Which register is Rt and which is Rt2 depends on the offset order.
   MachineInstr *RtMI, *Rt2MI;
   if (getLdStOffsetOp(I).getImm() ==
-      getLdStOffsetOp(Paired).getImm() + OffsetStride) {
-    RtMI = Paired;
+      getLdStOffsetOp(MergeMI).getImm() + OffsetStride) {
+    RtMI = MergeMI;
     Rt2MI = I;
   } else {
     RtMI = I;
-    Rt2MI = Paired;
+    Rt2MI = MergeMI;
   }
 
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
@@ -680,7 +680,7 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
       assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
       OffsetImm /= 2;
     }
-    MachineInstr *RtNewDest = MergeForward ? I : Paired;
+    MachineInstr *RtNewDest = MergeForward ? I : MergeMI;
     // When merging small (< 32 bit) loads for big-endian targets, the order of
     // the component parts gets swapped.
     if (!Subtarget->isLittleEndian())
@@ -692,14 +692,14 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
                    .addOperand(getLdStRegOp(RtNewDest))
                    .addOperand(BaseRegOp)
                    .addImm(OffsetImm)
-                   .setMemRefs(I->mergeMemRefsWith(*Paired));
+                   .setMemRefs(I->mergeMemRefsWith(*MergeMI));
 
     DEBUG(
         dbgs()
         << "Creating the new load and extract. Replacing instructions:\n    ");
     DEBUG(I->print(dbgs()));
     DEBUG(dbgs() << "    ");
-    DEBUG(Paired->print(dbgs()));
+    DEBUG(MergeMI->print(dbgs()));
     DEBUG(dbgs() << "  with instructions:\n    ");
     DEBUG((NewMemMI)->print(dbgs()));
 
@@ -708,7 +708,7 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
     int LSBHigh = Width;
     int ImmsLow = LSBLow + Width - 1;
     int ImmsHigh = LSBHigh + Width - 1;
-    MachineInstr *ExtDestMI = MergeForward ? Paired : I;
+    MachineInstr *ExtDestMI = MergeForward ? MergeMI : I;
     if ((ExtDestMI == Rt2MI) == Subtarget->isLittleEndian()) {
       // Create the bitfield extract for high bits.
       BitExtMI1 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
@@ -767,7 +767,7 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
 
     // Erase the old instructions.
     I->eraseFromParent();
-    Paired->eraseFromParent();
+    MergeMI->eraseFromParent();
     return NextI;
   }
 
@@ -784,21 +784,21 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
             .addOperand(getLdStRegOp(I))
             .addOperand(BaseRegOp)
             .addImm(OffsetImm)
-            .setMemRefs(I->mergeMemRefsWith(*Paired));
+            .setMemRefs(I->mergeMemRefsWith(*MergeMI));
 
   (void)MIB;
 
   DEBUG(dbgs() << "Creating wider load/store. Replacing instructions:\n    ");
   DEBUG(I->print(dbgs()));
   DEBUG(dbgs() << "    ");
-  DEBUG(Paired->print(dbgs()));
+  DEBUG(MergeMI->print(dbgs()));
   DEBUG(dbgs() << "  with instruction:\n    ");
   DEBUG(((MachineInstr *)MIB)->print(dbgs()));
   DEBUG(dbgs() << "\n");
 
   // Erase the old instructions.
   I->eraseFromParent();
-  Paired->eraseFromParent();
+  MergeMI->eraseFromParent();
   return NextI;
 }
 
@@ -1588,8 +1588,8 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
 
   // Look ahead up to LdStLimit instructions for a mergable instruction.
   LdStPairFlags Flags;
-  MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, LdStLimit);
-  if (Paired != E) {
+  MachineBasicBlock::iterator MergeMI = findMatchingInsn(MBBI, Flags, LdStLimit);
+  if (MergeMI != E) {
     if (isNarrowLoad(MI)) {
       ++NumNarrowLoadsPromoted;
     } else if (isNarrowStore(MI)) {
@@ -1597,7 +1597,7 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
     }
     // Keeping the iterator straight is a pain, so we let the merge routine tell
     // us what the next instruction is after it's done mucking about.
-    MBBI = mergeNarrowInsns(MBBI, Paired, Flags);
+    MBBI = mergeNarrowInsns(MBBI, MergeMI, Flags);
     return true;
   }
   return false;
