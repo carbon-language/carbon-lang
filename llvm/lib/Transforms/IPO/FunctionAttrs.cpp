@@ -120,8 +120,12 @@ static MemoryAccessKind checkFunctionMemoryAccess(Function &F, AAResults &AAR,
     // Detect these now, skipping to the next instruction if one is found.
     CallSite CS(cast<Value>(I));
     if (CS) {
-      // Ignore calls to functions in the same SCC.
-      if (CS.getCalledFunction() && SCCNodes.count(CS.getCalledFunction()))
+      // Ignore calls to functions in the same SCC, as long as the call sites
+      // don't have operand bundles.  Calls with operand bundles are allowed to
+      // have memory effects not described by the memory effects of the call
+      // target.
+      if (!CS.hasOperandBundles() && CS.getCalledFunction() &&
+          SCCNodes.count(CS.getCalledFunction()))
         continue;
       FunctionModRefBehavior MRB = AAR.getModRefBehavior(CS);
 
