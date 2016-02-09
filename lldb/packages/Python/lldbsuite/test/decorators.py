@@ -316,15 +316,6 @@ def expectedFailureGcc(bugnumber=None, compiler_version=None):
 def expectedFailureIcc(bugnumber=None):
     return expectedFailureCompiler('icc', None, bugnumber)
 
-def expectedFailureArch(arch, bugnumber=None):
-    return expectedFailureAll(archs=arch, bugnumber=bugnumber)
-
-def expectedFailurei386(bugnumber=None):
-    return expectedFailureArch('i386', bugnumber)
-
-def expectedFailurex86_64(bugnumber=None):
-    return expectedFailureArch('x86_64', bugnumber)
-
 def expectedFailureOS(oslist, bugnumber=None, compilers=None, debug_info=None, archs=None):
     return expectedFailureAll(oslist=oslist, bugnumber=bugnumber, compiler=compilers, archs=archs, debug_info=debug_info)
 
@@ -569,10 +560,6 @@ def skipIfGcc(func):
 def skipIfIcc(func):
     """Decorate the item to skip tests that should be skipped if building with icc ."""
     return skipIf(compiler="icc")(func)
-
-def skipIfi386(func):
-    """Decorate the item to skip tests that should be skipped if building 32-bit."""
-    return skipIf(archs="i386")(func)
 
 def skipIfTargetAndroid(api_levels=None, archs=None):
     """Decorator to skip tests when the target is Android.
