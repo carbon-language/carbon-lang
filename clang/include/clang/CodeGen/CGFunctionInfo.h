@@ -402,7 +402,7 @@ public:
                                 CanQualType resultType,
                                 ArrayRef<CanQualType> argTypes,
                                 RequiredArgs required);
-  void operator delete(void *p) { TrailingObjects::operator delete(p); }
+  void operator delete(void *p) { ::operator delete(p); }
 
   typedef const ArgInfo *const_arg_iterator;
   typedef ArgInfo *arg_iterator;
