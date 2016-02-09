@@ -580,11 +580,10 @@ struct UnknownPragmaHandler : public PragmaHandler {
     if (ShouldExpandTokens) {
       // The first token does not have expanded macros. Expand them, if
       // required.
-      Token *Toks = new Token[1];
+      auto Toks = llvm::make_unique<Token[]>(1);
       Toks[0] = PragmaTok;
-      PP.EnterTokenStream(Toks, /*NumToks=*/1,
-                          /*DisableMacroExpansion=*/false,
-                          /*OwnsTokens=*/true);
+      PP.EnterTokenStream(std::move(Toks), /*NumToks=*/1,
+                          /*DisableMacroExpansion=*/false);
       PP.Lex(PragmaTok);
     }
     Token PrevToken;
