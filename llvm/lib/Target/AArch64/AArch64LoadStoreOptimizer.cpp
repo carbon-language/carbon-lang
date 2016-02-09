@@ -680,6 +680,8 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
     OffsetImm /= 2;
   }
 
+  DebugLoc DL = I->getDebugLoc();
+  MachineBasicBlock *MBB = I->getParent();
   if (isNarrowLoad(Opc)) {
     MachineInstr *RtNewDest = MergeForward ? I : MergeMI;
     // When merging small (< 32 bit) loads for big-endian targets, the order of
@@ -688,12 +690,12 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
       std::swap(RtMI, Rt2MI);
     // Construct the new load instruction.
     MachineInstr *NewMemMI, *BitExtMI1, *BitExtMI2;
-    NewMemMI = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                       TII->get(getMatchingWideOpcode(Opc)))
-                   .addOperand(getLdStRegOp(RtNewDest))
-                   .addOperand(BaseRegOp)
-                   .addImm(OffsetImm)
-                   .setMemRefs(I->mergeMemRefsWith(*MergeMI));
+    NewMemMI =
+        BuildMI(*MBB, InsertionPoint, DL, TII->get(getMatchingWideOpcode(Opc)))
+            .addOperand(getLdStRegOp(RtNewDest))
+            .addOperand(BaseRegOp)
+            .addImm(OffsetImm)
+            .setMemRefs(I->mergeMemRefsWith(*MergeMI));
 
     DEBUG(
         dbgs()
@@ -712,53 +714,51 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
     MachineInstr *ExtDestMI = MergeForward ? MergeMI : I;
     if ((ExtDestMI == Rt2MI) == Subtarget->isLittleEndian()) {
       // Create the bitfield extract for high bits.
-      BitExtMI1 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                          TII->get(getBitExtrOpcode(Rt2MI)))
-                      .addOperand(getLdStRegOp(Rt2MI))
-                      .addReg(getLdStRegOp(RtNewDest).getReg())
-                      .addImm(LSBHigh)
-                      .addImm(ImmsHigh);
+      BitExtMI1 =
+          BuildMI(*MBB, InsertionPoint, DL, TII->get(getBitExtrOpcode(Rt2MI)))
+              .addOperand(getLdStRegOp(Rt2MI))
+              .addReg(getLdStRegOp(RtNewDest).getReg())
+              .addImm(LSBHigh)
+              .addImm(ImmsHigh);
       // Create the bitfield extract for low bits.
       if (RtMI->getOpcode() == getMatchingNonSExtOpcode(RtMI->getOpcode())) {
         // For unsigned, prefer to use AND for low bits.
-        BitExtMI2 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                            TII->get(AArch64::ANDWri))
+        BitExtMI2 = BuildMI(*MBB, InsertionPoint, DL, TII->get(AArch64::ANDWri))
                         .addOperand(getLdStRegOp(RtMI))
                         .addReg(getLdStRegOp(RtNewDest).getReg())
                         .addImm(ImmsLow);
       } else {
-        BitExtMI2 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                            TII->get(getBitExtrOpcode(RtMI)))
-                        .addOperand(getLdStRegOp(RtMI))
-                        .addReg(getLdStRegOp(RtNewDest).getReg())
-                        .addImm(LSBLow)
-                        .addImm(ImmsLow);
+        BitExtMI2 =
+            BuildMI(*MBB, InsertionPoint, DL, TII->get(getBitExtrOpcode(RtMI)))
+                .addOperand(getLdStRegOp(RtMI))
+                .addReg(getLdStRegOp(RtNewDest).getReg())
+                .addImm(LSBLow)
+                .addImm(ImmsLow);
       }
     } else {
       // Create the bitfield extract for low bits.
       if (RtMI->getOpcode() == getMatchingNonSExtOpcode(RtMI->getOpcode())) {
         // For unsigned, prefer to use AND for low bits.
-        BitExtMI1 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                            TII->get(AArch64::ANDWri))
+        BitExtMI1 = BuildMI(*MBB, InsertionPoint, DL, TII->get(AArch64::ANDWri))
                         .addOperand(getLdStRegOp(RtMI))
                         .addReg(getLdStRegOp(RtNewDest).getReg())
                         .addImm(ImmsLow);
       } else {
-        BitExtMI1 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                            TII->get(getBitExtrOpcode(RtMI)))
-                        .addOperand(getLdStRegOp(RtMI))
-                        .addReg(getLdStRegOp(RtNewDest).getReg())
-                        .addImm(LSBLow)
-                        .addImm(ImmsLow);
+        BitExtMI1 =
+            BuildMI(*MBB, InsertionPoint, DL, TII->get(getBitExtrOpcode(RtMI)))
+                .addOperand(getLdStRegOp(RtMI))
+                .addReg(getLdStRegOp(RtNewDest).getReg())
+                .addImm(LSBLow)
+                .addImm(ImmsLow);
       }
 
       // Create the bitfield extract for high bits.
-      BitExtMI2 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                          TII->get(getBitExtrOpcode(Rt2MI)))
-                      .addOperand(getLdStRegOp(Rt2MI))
-                      .addReg(getLdStRegOp(RtNewDest).getReg())
-                      .addImm(LSBHigh)
-                      .addImm(ImmsHigh);
+      BitExtMI2 =
+          BuildMI(*MBB, InsertionPoint, DL, TII->get(getBitExtrOpcode(Rt2MI)))
+              .addOperand(getLdStRegOp(Rt2MI))
+              .addReg(getLdStRegOp(RtNewDest).getReg())
+              .addImm(LSBHigh)
+              .addImm(ImmsHigh);
     }
     DEBUG(dbgs() << "    ");
     DEBUG((BitExtMI1)->print(dbgs()));
@@ -775,8 +775,7 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
 
   // Construct the new instruction.
   MachineInstrBuilder MIB;
-  MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                TII->get(getMatchingWideOpcode(Opc)))
+  MIB = BuildMI(*MBB, InsertionPoint, DL, TII->get(getMatchingWideOpcode(Opc)))
             .addOperand(getLdStRegOp(I))
             .addOperand(BaseRegOp)
             .addImm(OffsetImm)
@@ -848,8 +847,9 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
 
   // Construct the new instruction.
   MachineInstrBuilder MIB;
-  MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                TII->get(getMatchingPairOpcode(Opc)))
+  DebugLoc DL = I->getDebugLoc();
+  MachineBasicBlock *MBB = I->getParent();
+  MIB = BuildMI(*MBB, InsertionPoint, DL, TII->get(getMatchingPairOpcode(Opc)))
             .addOperand(getLdStRegOp(RtMI))
             .addOperand(getLdStRegOp(Rt2MI))
             .addOperand(BaseRegOp)
@@ -885,15 +885,13 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
     // Insert this definition right after the generated LDP, i.e., before
     // InsertionPoint.
     MachineInstrBuilder MIBKill =
-        BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                TII->get(TargetOpcode::KILL), DstRegW)
+        BuildMI(*MBB, InsertionPoint, DL, TII->get(TargetOpcode::KILL), DstRegW)
             .addReg(DstRegW)
             .addReg(DstRegX, RegState::Define);
     MIBKill->getOperand(2).setImplicit();
     // Create the sign extension.
     MachineInstrBuilder MIBSXTW =
-        BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                TII->get(AArch64::SBFMXri), DstRegX)
+        BuildMI(*MBB, InsertionPoint, DL, TII->get(AArch64::SBFMXri), DstRegX)
             .addReg(DstRegX)
             .addImm(0)
             .addImm(31);
