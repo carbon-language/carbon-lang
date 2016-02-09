@@ -1151,11 +1151,6 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   if (IsNarrowStore && Reg != AArch64::WZR)
     return E;
 
-  // Early exit if the first instruction modifies the base register.
-  // e.g., ldr x0, [x0]
-  if (FirstMI->modifiesRegister(BaseReg, TRI))
-    return E;
-
   // Early exit if the offset is not possible to match. (6 bits of positive
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
@@ -1558,6 +1553,12 @@ bool AArch64LoadStoreOpt::isCandidateToMergeOrPair(MachineInstr *MI) {
 
   // Make sure this is a reg+imm (as opposed to an address reloc).
   if (!getLdStOffsetOp(MI).isImm())
+    return false;
+
+  // Can't merge/pair if the instruction modifies the base register.
+  // e.g., ldr x0, [x0]
+  unsigned BaseReg = getLdStBaseOp(MI).getReg();
+  if (MI->modifiesRegister(BaseReg, TRI))
     return false;
 
   // Check if this load/store has a hint to avoid pair formation.
