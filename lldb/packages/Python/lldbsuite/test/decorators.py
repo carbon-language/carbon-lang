@@ -291,14 +291,6 @@ def not_remote_testsuite_ready(func):
         return "Not ready for remote testsuite" if lldb.remote_platform else None
     return skipTestIfFn(is_remote)(func)
 
-def _match_architectures(archs, actual_arch):
-    retype = type(re.compile('hello, world'))
-    list_passes = isinstance(archs, list) and actual_arch in archs
-    basestring_passes = isinstance(archs, six.string_types) and actual_arch == archs
-    regex_passes = isinstance(archs, retype) and re.match(archs, actual_arch)
-
-    return (list_passes or basestring_passes or regex_passes)
-
 def expectedFailureDwarf(bugnumber=None):
     return expectedFailureAll(bugnumber=bugnumber, debug_info="dwarf")
 
@@ -558,25 +550,6 @@ def skipIfHostPlatform(oslist):
 def skipUnlessHostPlatform(oslist):
     """Decorate the item to skip tests unless running on one of the listed host platforms."""
     return skipIf(hostoslist=no_match(oslist))
-
-def skipUnlessArch(archs):
-    """Decorate the item to skip tests unless running on one of the listed architectures."""
-    # This decorator cannot be ported to `skipIf` yet because it is uused with regular
-    # expressions, which the common matcher does not yet support.
-    def myImpl(func):
-        if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-            raise Exception("@skipUnlessArch can only be used to decorate a test method")
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            self = args[0]
-            if not _match_architectures(archs, self.getArchitecture()):
-                self.skipTest("skipping for architecture %s" % (self.getArchitecture())) 
-            else:
-                func(*args, **kwargs)
-        return wrapper
-
-    return myImpl
 
 def skipIfPlatform(oslist):
     """Decorate the item to skip tests if running on one of the listed platforms."""
