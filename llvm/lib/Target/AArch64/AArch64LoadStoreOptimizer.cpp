@@ -1023,6 +1023,8 @@ static void trackRegDefsUses(const MachineInstr *MI, BitVector &ModifiedRegs,
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
+    if (!Reg)
+      continue;
     if (MO.isDef()) {
       for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
         ModifiedRegs.set(*AI);
@@ -1496,15 +1498,14 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
   // (inclusive) and the second insn.
   ModifiedRegs.reset();
   UsedRegs.reset();
-  --MBBI;
-  for (unsigned Count = 0; MBBI != B && Count < Limit; --MBBI) {
+  unsigned Count = 0;
+  do {
+    --MBBI;
     MachineInstr *MI = MBBI;
-    // Skip DBG_VALUE instructions.
-    if (MI->isDebugValue())
-      continue;
 
-    // Now that we know this is a real instruction, count it.
-    ++Count;
+    // Don't count DBG_VALUE instructions towards the search limit.
+    if (!MI->isDebugValue())
+      ++Count;
 
     // If we found a match, return it.
     if (isMatchingUpdateInsn(I, MI, BaseReg, Offset))
@@ -1517,7 +1518,7 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
     // return early.
     if (ModifiedRegs[BaseReg] || UsedRegs[BaseReg])
       return E;
-  }
+  } while (MBBI != B && Count < Limit);
   return E;
 }
 
