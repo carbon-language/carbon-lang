@@ -106,10 +106,13 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   bool findMatchingStore(MachineBasicBlock::iterator I, unsigned Limit,
                          MachineBasicBlock::iterator &StoreI);
 
+  // Merge the two instructions indicated into a wider instruction.
+  MachineBasicBlock::iterator
+  mergeNarrowInsns(MachineBasicBlock::iterator I,
+                   MachineBasicBlock::iterator Paired,
+                   const LdStPairFlags &Flags);
+
   // Merge the two instructions indicated into a single pair-wise instruction.
-  // If MergeForward is true, erase the first instruction and fold its
-  // operation into the second. If false, the reverse. Return the instruction
-  // following the first instruction (which may change during processing).
   MachineBasicBlock::iterator
   mergePairedInsns(MachineBasicBlock::iterator I,
                    MachineBasicBlock::iterator Paired,
@@ -634,7 +637,7 @@ static bool isLdOffsetInRangeOfSt(MachineInstr *LoadInst,
 }
 
 MachineBasicBlock::iterator
-AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
+AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
                                       MachineBasicBlock::iterator Paired,
                                       const LdStPairFlags &Flags) {
   MachineBasicBlock::iterator NextI = I;
@@ -646,9 +649,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   if (NextI == Paired)
     ++NextI;
 
-  int SExtIdx = Flags.getSExtIdx();
-  unsigned Opc =
-      SExtIdx == -1 ? I->getOpcode() : getMatchingNonSExtOpcode(I->getOpcode());
+  unsigned Opc = I->getOpcode();
   bool IsUnscaled = isUnscaledLdSt(Opc);
   int OffsetStride = IsUnscaled ? getMemScale(I) : 1;
 
@@ -667,18 +668,12 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
       getLdStOffsetOp(Paired).getImm() + OffsetStride) {
     RtMI = Paired;
     Rt2MI = I;
-    // Here we swapped the assumption made for SExtIdx.
-    // I.e., we turn ldp I, Paired into ldp Paired, I.
-    // Update the index accordingly.
-    if (SExtIdx != -1)
-      SExtIdx = (SExtIdx + 1) % 2;
   } else {
     RtMI = I;
     Rt2MI = Paired;
   }
 
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
-
   if (isNarrowLoad(Opc)) {
     // Change the scaled offset from small to large type.
     if (!IsUnscaled) {
@@ -778,34 +773,95 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
 
   // Construct the new instruction.
   MachineInstrBuilder MIB;
-  if (isNarrowStore(Opc)) {
-    // Change the scaled offset from small to large type.
-    if (!IsUnscaled) {
-      assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
-      OffsetImm /= 2;
-    }
-    MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                  TII->get(getMatchingWideOpcode(Opc)))
-              .addOperand(getLdStRegOp(I))
-              .addOperand(BaseRegOp)
-              .addImm(OffsetImm)
-              .setMemRefs(I->mergeMemRefsWith(*Paired));
-  } else {
-    // Handle Unscaled
-    if (IsUnscaled)
-      OffsetImm /= OffsetStride;
-    MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
-                  TII->get(getMatchingPairOpcode(Opc)))
-              .addOperand(getLdStRegOp(RtMI))
-              .addOperand(getLdStRegOp(Rt2MI))
-              .addOperand(BaseRegOp)
-              .addImm(OffsetImm);
+  assert(isNarrowStore(Opc) && "Expected narrow store");
+  // Change the scaled offset from small to large type.
+  if (!IsUnscaled) {
+    assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
+    OffsetImm /= 2;
   }
+  MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                TII->get(getMatchingWideOpcode(Opc)))
+            .addOperand(getLdStRegOp(I))
+            .addOperand(BaseRegOp)
+            .addImm(OffsetImm)
+            .setMemRefs(I->mergeMemRefsWith(*Paired));
 
   (void)MIB;
 
-  // FIXME: Do we need/want to copy the mem operands from the source
-  //        instructions? Probably. What uses them after this?
+  DEBUG(dbgs() << "Creating wider load/store. Replacing instructions:\n    ");
+  DEBUG(I->print(dbgs()));
+  DEBUG(dbgs() << "    ");
+  DEBUG(Paired->print(dbgs()));
+  DEBUG(dbgs() << "  with instruction:\n    ");
+  DEBUG(((MachineInstr *)MIB)->print(dbgs()));
+  DEBUG(dbgs() << "\n");
+
+  // Erase the old instructions.
+  I->eraseFromParent();
+  Paired->eraseFromParent();
+  return NextI;
+}
+
+MachineBasicBlock::iterator
+AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
+                                      MachineBasicBlock::iterator Paired,
+                                      const LdStPairFlags &Flags) {
+  MachineBasicBlock::iterator NextI = I;
+  ++NextI;
+  // If NextI is the second of the two instructions to be merged, we need
+  // to skip one further. Either way we merge will invalidate the iterator,
+  // and we don't need to scan the new instruction, as it's a pairwise
+  // instruction, which we're not considering for further action anyway.
+  if (NextI == Paired)
+    ++NextI;
+
+  int SExtIdx = Flags.getSExtIdx();
+  unsigned Opc =
+      SExtIdx == -1 ? I->getOpcode() : getMatchingNonSExtOpcode(I->getOpcode());
+  bool IsUnscaled = isUnscaledLdSt(Opc);
+  int OffsetStride = IsUnscaled ? getMemScale(I) : 1;
+
+  bool MergeForward = Flags.getMergeForward();
+  // Insert our new paired instruction after whichever of the paired
+  // instructions MergeForward indicates.
+  MachineBasicBlock::iterator InsertionPoint = MergeForward ? Paired : I;
+  // Also based on MergeForward is from where we copy the base register operand
+  // so we get the flags compatible with the input code.
+  const MachineOperand &BaseRegOp =
+      MergeForward ? getLdStBaseOp(Paired) : getLdStBaseOp(I);
+
+  // Which register is Rt and which is Rt2 depends on the offset order.
+  MachineInstr *RtMI, *Rt2MI;
+  if (getLdStOffsetOp(I).getImm() ==
+      getLdStOffsetOp(Paired).getImm() + OffsetStride) {
+    RtMI = Paired;
+    Rt2MI = I;
+    // Here we swapped the assumption made for SExtIdx.
+    // I.e., we turn ldp I, Paired into ldp Paired, I.
+    // Update the index accordingly.
+    if (SExtIdx != -1)
+      SExtIdx = (SExtIdx + 1) % 2;
+  } else {
+    RtMI = I;
+    Rt2MI = Paired;
+  }
+  int OffsetImm = getLdStOffsetOp(RtMI).getImm();
+  // Handle Unscaled.
+  if (IsUnscaled)
+    OffsetImm /= OffsetStride;
+
+  // Construct the new instruction.
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                TII->get(getMatchingPairOpcode(Opc)))
+            .addOperand(getLdStRegOp(RtMI))
+            .addOperand(getLdStRegOp(Rt2MI))
+            .addOperand(BaseRegOp)
+            .addImm(OffsetImm);
+  // FIXME: Copy the mem operands from the source instructions. The MI scheduler
+  // needs these to reason about loads/stores.
+
+  (void)MIB;
 
   DEBUG(dbgs() << "Creating pair load/store. Replacing instructions:\n    ");
   DEBUG(I->print(dbgs()));
@@ -1541,7 +1597,7 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
     }
     // Keeping the iterator straight is a pain, so we let the merge routine tell
     // us what the next instruction is after it's done mucking about.
-    MBBI = mergePairedInsns(MBBI, Paired, Flags);
+    MBBI = mergeNarrowInsns(MBBI, Paired, Flags);
     return true;
   }
   return false;
