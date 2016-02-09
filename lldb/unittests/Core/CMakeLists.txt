@@ -1,3 +1,3 @@
-add_lldb_unittest(CoreTests
+add_lldb_unittest(LLDBCoreTests
   ScalarTest.cpp
   )
