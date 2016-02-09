@@ -1149,10 +1149,6 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   int Offset = getLdStOffsetOp(FirstMI).getImm();
   bool IsNarrowStore = isNarrowStore(Opc);
 
-  // For narrow stores, find only the case where the stored value is WZR.
-  if (IsNarrowStore && Reg != AArch64::WZR)
-    return E;
-
   // Early exit if the offset is not possible to match. (6 bits of positive
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
@@ -1580,6 +1576,10 @@ bool AArch64LoadStoreOpt::tryToMergeLdStInst(
   MachineBasicBlock::iterator E = MI->getParent()->end();
 
   if (!isCandidateToMergeOrPair(MI))
+    return false;
+
+  // For narrow stores, find only the case where the stored value is WZR.
+  if (isNarrowStore(MI) && getLdStRegOp(MI).getReg() != AArch64::WZR)
     return false;
 
   // Look ahead up to LdStLimit instructions for a mergable instruction.
