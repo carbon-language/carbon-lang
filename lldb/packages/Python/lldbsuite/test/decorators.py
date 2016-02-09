@@ -509,15 +509,6 @@ def skipUnlessPlatform(oslist):
     return unittest2.skipUnless(lldbplatformutil.getPlatform() in oslist,
                                 "requires on of %s" % (", ".join(oslist)))
 
-
-def skipIfGcc(func):
-    """Decorate the item to skip tests that should be skipped if building with gcc ."""
-    return skipIf(compiler="gcc")(func)
-
-def skipIfIcc(func):
-    """Decorate the item to skip tests that should be skipped if building with icc ."""
-    return skipIf(compiler="icc")(func)
-
 def skipIfTargetAndroid(api_levels=None, archs=None):
     """Decorator to skip tests when the target is Android.
 
