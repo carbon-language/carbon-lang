@@ -49,8 +49,8 @@ static cl::opt<OutputFormatTy> OutputFormatShort(
                clEnumValN(darwin, "m", "Darwin -m format"), clEnumValEnd),
     cl::init(berkeley));
 
-static bool berkeleyHeaderPrinted = false;
-static bool moreThanOneFile = false;
+static bool BerkeleyHeaderPrinted = false;
+static bool MoreThanOneFile = false;
 
 cl::opt<bool>
 DarwinLongFormat("l", cl::desc("When format is darwin, use long format "
@@ -115,7 +115,7 @@ static const char *getRadixFmt() {
 ///
 /// This is when used when @c OutputFormat is darwin and produces the same
 /// output as darwin's size(1) -m output.
-static void PrintDarwinSectionSizes(MachOObjectFile *MachO) {
+static void printDarwinSectionSizes(MachOObjectFile *MachO) {
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
   const char *radix_fmt = getRadixFmt();
@@ -190,7 +190,7 @@ static void PrintDarwinSectionSizes(MachOObjectFile *MachO) {
 ///
 /// This is when used when @c OutputFormat is berkeley with a Mach-O file and
 /// produces the same output as darwin's size(1) default output.
-static void PrintDarwinSegmentSizes(MachOObjectFile *MachO) {
+static void printDarwinSegmentSizes(MachOObjectFile *MachO) {
   uint64_t total_text = 0;
   uint64_t total_data = 0;
   uint64_t total_objc = 0;
@@ -252,9 +252,9 @@ static void PrintDarwinSegmentSizes(MachOObjectFile *MachO) {
   }
   uint64_t total = total_text + total_data + total_objc + total_others;
 
-  if (!berkeleyHeaderPrinted) {
+  if (!BerkeleyHeaderPrinted) {
     outs() << "__TEXT\t__DATA\t__OBJC\tothers\tdec\thex\n";
-    berkeleyHeaderPrinted = true;
+    BerkeleyHeaderPrinted = true;
   }
   outs() << total_text << "\t" << total_data << "\t" << total_objc << "\t"
          << total_others << "\t" << total << "\t" << format("%" PRIx64, total)
@@ -264,7 +264,7 @@ static void PrintDarwinSegmentSizes(MachOObjectFile *MachO) {
 /// Print the size of each section in @p Obj.
 ///
 /// The format used is determined by @c OutputFormat and @c Radix.
-static void PrintObjectSectionSizes(ObjectFile *Obj) {
+static void printObjectSectionSizes(ObjectFile *Obj) {
   uint64_t total = 0;
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
@@ -275,11 +275,11 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
   // let it fall through to OutputFormat berkeley.
   MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj);
   if (OutputFormat == darwin && MachO)
-    PrintDarwinSectionSizes(MachO);
+    printDarwinSectionSizes(MachO);
   // If we have a MachOObjectFile and the OutputFormat is berkeley print as
   // darwin's default berkeley format for Mach-O files.
   else if (MachO && OutputFormat == berkeley)
-    PrintDarwinSegmentSizes(MachO);
+    printDarwinSegmentSizes(MachO);
   else if (OutputFormat == sysv) {
     // Run two passes over all sections. The first gets the lengths needed for
     // formatting the output. The second actually does the output.
@@ -361,10 +361,10 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
 
     total = total_text + total_data + total_bss;
 
-    if (!berkeleyHeaderPrinted) {
+    if (!BerkeleyHeaderPrinted) {
       outs() << "   text    data     bss     "
              << (Radix == octal ? "oct" : "dec") << "     hex filename\n";
-      berkeleyHeaderPrinted = true;
+      BerkeleyHeaderPrinted = true;
     }
 
     // Print result.
@@ -415,7 +415,7 @@ static bool checkMachOAndArchFlags(ObjectFile *o, StringRef file) {
 
 /// Print the section sizes for @p file. If @p file is an archive, print the
 /// section sizes for each archive member.
-static void PrintFileSectionSizes(StringRef file) {
+static void printFileSectionSizes(StringRef file) {
 
   // Attempt to open the binary.
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(file);
@@ -449,7 +449,7 @@ static void PrintFileSectionSizes(StringRef file) {
           outs() << o->getFileName() << "   (ex " << a->getFileName() << "):\n";
         else if (MachO && OutputFormat == darwin)
           outs() << a->getFileName() << "(" << o->getFileName() << "):\n";
-        PrintObjectSectionSizes(o);
+        printObjectSectionSizes(o);
         if (OutputFormat == berkeley) {
           if (MachO)
             outs() << a->getFileName() << "(" << o->getFileName() << ")\n";
@@ -478,13 +478,13 @@ static void PrintFileSectionSizes(StringRef file) {
                 if (OutputFormat == sysv)
                   outs() << o->getFileName() << "  :\n";
                 else if (MachO && OutputFormat == darwin) {
-                  if (moreThanOneFile || ArchFlags.size() > 1)
+                  if (MoreThanOneFile || ArchFlags.size() > 1)
                     outs() << o->getFileName() << " (for architecture "
                            << I->getArchTypeName() << "): \n";
                 }
-                PrintObjectSectionSizes(o);
+                printObjectSectionSizes(o);
                 if (OutputFormat == berkeley) {
-                  if (!MachO || moreThanOneFile || ArchFlags.size() > 1)
+                  if (!MachO || MoreThanOneFile || ArchFlags.size() > 1)
                     outs() << o->getFileName() << " (for architecture "
                            << I->getArchTypeName() << ")";
                   outs() << "\n";
@@ -520,7 +520,7 @@ static void PrintFileSectionSizes(StringRef file) {
                            << ")"
                            << " (for architecture " << I->getArchTypeName()
                            << "):\n";
-                  PrintObjectSectionSizes(o);
+                  printObjectSectionSizes(o);
                   if (OutputFormat == berkeley) {
                     if (MachO) {
                       outs() << UA->getFileName() << "(" << o->getFileName()
@@ -561,13 +561,13 @@ static void PrintFileSectionSizes(StringRef file) {
               if (OutputFormat == sysv)
                 outs() << o->getFileName() << "  :\n";
               else if (MachO && OutputFormat == darwin) {
-                if (moreThanOneFile)
+                if (MoreThanOneFile)
                   outs() << o->getFileName() << " (for architecture "
                          << I->getArchTypeName() << "):\n";
               }
-              PrintObjectSectionSizes(o);
+              printObjectSectionSizes(o);
               if (OutputFormat == berkeley) {
-                if (!MachO || moreThanOneFile)
+                if (!MachO || MoreThanOneFile)
                   outs() << o->getFileName() << " (for architecture "
                          << I->getArchTypeName() << ")";
                 outs() << "\n";
@@ -602,7 +602,7 @@ static void PrintFileSectionSizes(StringRef file) {
                   outs() << UA->getFileName() << "(" << o->getFileName() << ")"
                          << " (for architecture " << I->getArchTypeName()
                          << "):\n";
-                PrintObjectSectionSizes(o);
+                printObjectSectionSizes(o);
                 if (OutputFormat == berkeley) {
                   if (MachO)
                     outs() << UA->getFileName() << "(" << o->getFileName()
@@ -620,7 +620,7 @@ static void PrintFileSectionSizes(StringRef file) {
     }
     // Either all architectures have been specified or none have been specified
     // and this does not contain the host architecture so dump all the slices.
-    bool moreThanOneArch = UB->getNumberOfObjects() > 1;
+    bool MoreThanOneArch = UB->getNumberOfObjects() > 1;
     for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                E = UB->end_objects();
          I != E; ++I) {
@@ -631,14 +631,14 @@ static void PrintFileSectionSizes(StringRef file) {
           if (OutputFormat == sysv)
             outs() << o->getFileName() << "  :\n";
           else if (MachO && OutputFormat == darwin) {
-            if (moreThanOneFile || moreThanOneArch)
+            if (MoreThanOneFile || MoreThanOneArch)
               outs() << o->getFileName() << " (for architecture "
                      << I->getArchTypeName() << "):";
             outs() << "\n";
           }
-          PrintObjectSectionSizes(o);
+          printObjectSectionSizes(o);
           if (OutputFormat == berkeley) {
-            if (!MachO || moreThanOneFile || moreThanOneArch)
+            if (!MachO || MoreThanOneFile || MoreThanOneArch)
               outs() << o->getFileName() << " (for architecture "
                      << I->getArchTypeName() << ")";
             outs() << "\n";
@@ -669,7 +669,7 @@ static void PrintFileSectionSizes(StringRef file) {
             else if (MachO && OutputFormat == darwin)
               outs() << UA->getFileName() << "(" << o->getFileName() << ")"
                      << " (for architecture " << I->getArchTypeName() << "):\n";
-            PrintObjectSectionSizes(o);
+            printObjectSectionSizes(o);
             if (OutputFormat == berkeley) {
               if (MachO)
                 outs() << UA->getFileName() << "(" << o->getFileName() << ")"
@@ -688,10 +688,10 @@ static void PrintFileSectionSizes(StringRef file) {
       return;
     if (OutputFormat == sysv)
       outs() << o->getFileName() << "  :\n";
-    PrintObjectSectionSizes(o);
+    printObjectSectionSizes(o);
     if (OutputFormat == berkeley) {
       MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o);
-      if (!MachO || moreThanOneFile)
+      if (!MachO || MoreThanOneFile)
         outs() << o->getFileName();
       outs() << "\n";
     }
@@ -733,9 +733,9 @@ int main(int argc, char **argv) {
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
-  moreThanOneFile = InputFilenames.size() > 1;
+  MoreThanOneFile = InputFilenames.size() > 1;
   std::for_each(InputFilenames.begin(), InputFilenames.end(),
-                PrintFileSectionSizes);
+                printFileSectionSizes);
 
   return 0;
 }
