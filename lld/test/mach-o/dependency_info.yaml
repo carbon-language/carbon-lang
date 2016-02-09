@@ -18,7 +18,7 @@
 
 
 # CHECK: linker-vers: lld
-# CHECK: input-file:  /Custom/Frameworks/Bar.framework/Bar
-# CHECK: not-found:   /Custom/Frameworks/Foo.framework/Foo
-# CHECK: input-file:  /System/Library/Frameworks/Foo.framework/Foo
+# CHECK: input-file:  /Custom/Frameworks{{[/\\]}}Bar.framework{{[/\\]}}Bar
+# CHECK: not-found:   /Custom/Frameworks{{[/\\]}}Foo.framework{{[/\\]}}Foo
+# CHECK: input-file:  /System/Library/Frameworks{{[/\\]}}Foo.framework{{[/\\]}}Foo
 # CHECK: output-file: a.out
