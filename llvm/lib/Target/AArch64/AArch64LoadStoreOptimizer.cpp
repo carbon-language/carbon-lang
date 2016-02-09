@@ -33,9 +33,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aarch64-ldst-opt"
 
-/// AArch64AllocLoadStoreOpt - Post-register allocation pass to combine
-/// load / store instructions to form ldp / stp instructions.
-
 STATISTIC(NumPairCreated, "Number of load/store pair instructions generated");
 STATISTIC(NumPostFolded, "Number of post-index updates folded");
 STATISTIC(NumPreFolded, "Number of pre-index updates folded");
