@@ -943,21 +943,20 @@ uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
   // We only care about an 'R' value, but other records may precede an 'R'
   // record. Records are not in TLV (type-length-value) format, so we need
   // to teach the linker how to skip records for each type.
-  for (; !Aug.empty(); Aug = Aug.substr(1)) {
-    switch (Aug[0]) {
-    case 'z':
-      skipLeb128(D);
-      break;
-    case 'R':
+  for (char C : Aug) {
+    if (C == 'R')
       return readByte(D);
-    case 'P':
-      skipAugP<ELFT>(D);
-      break;
-    case 'L':
-      break;
-    default:
-      fatal("unknown .eh_frame augmentation string: " + Aug);
+    if (C == 'z') {
+      skipLeb128(D);
+      continue;
     }
+    if (C == 'P') {
+      skipAugP<ELFT>(D);
+      continue;
+    }
+    if (C == 'L')
+      continue;
+    fatal("unknown .eh_frame augmentation string: " + Aug);
   }
   return DW_EH_PE_absptr;
 }
