@@ -650,8 +650,8 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
     ++NextI;
 
   unsigned Opc = I->getOpcode();
-  bool IsUnscaled = isUnscaledLdSt(Opc);
-  int OffsetStride = IsUnscaled ? getMemScale(I) : 1;
+  bool IsScaled = !isUnscaledLdSt(Opc);
+  int OffsetStride = IsScaled ? 1 : getMemScale(I);
 
   bool MergeForward = Flags.getMergeForward();
   // Insert our new paired instruction after whichever of the paired
@@ -674,12 +674,13 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
   }
 
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
+  // Change the scaled offset from small to large type.
+  if (IsScaled) {
+    assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
+    OffsetImm /= 2;
+  }
+
   if (isNarrowLoad(Opc)) {
-    // Change the scaled offset from small to large type.
-    if (!IsUnscaled) {
-      assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
-      OffsetImm /= 2;
-    }
     MachineInstr *RtNewDest = MergeForward ? I : MergeMI;
     // When merging small (< 32 bit) loads for big-endian targets, the order of
     // the component parts gets swapped.
@@ -770,15 +771,10 @@ AArch64LoadStoreOpt::mergeNarrowInsns(MachineBasicBlock::iterator I,
     MergeMI->eraseFromParent();
     return NextI;
   }
+  assert(isNarrowStore(Opc) && "Expected narrow store");
 
   // Construct the new instruction.
   MachineInstrBuilder MIB;
-  assert(isNarrowStore(Opc) && "Expected narrow store");
-  // Change the scaled offset from small to large type.
-  if (!IsUnscaled) {
-    assert(((OffsetImm & 1) == 0) && "Unexpected offset to merge");
-    OffsetImm /= 2;
-  }
   MIB = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
                 TII->get(getMatchingWideOpcode(Opc)))
             .addOperand(getLdStRegOp(I))
