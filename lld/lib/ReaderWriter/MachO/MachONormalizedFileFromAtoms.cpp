@@ -301,6 +301,7 @@ SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
       continue;
     SectionAttr sectionAttrs = 0;
     switch (atomType) {
+    case DefinedAtom::typeMachHeader:
     case DefinedAtom::typeCode:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeStubHelper:
