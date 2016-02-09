@@ -1911,6 +1911,11 @@ bool AArch64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
 // FIXME: Do we need/want a pre-alloc pass like ARM has to try to keep
 // loads and stores near one another?
 
+// FIXME: When pairing store instructions it's very possible for this pass to
+// hoist a store with a KILL marker above another use (without a KILL marker).
+// The resulting IR is invalid, but nothing uses the KILL markers after this
+// pass, so it's never caused a problem in practice.
+
 /// createAArch64LoadStoreOptimizationPass - returns an instance of the
 /// load / store optimization pass.
 FunctionPass *llvm::createAArch64LoadStoreOptimizationPass() {
