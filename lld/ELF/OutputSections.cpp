@@ -16,6 +16,7 @@
 #include <map>
 
 using namespace llvm;
+using namespace llvm::dwarf;
 using namespace llvm::object;
 using namespace llvm::support::endian;
 using namespace llvm::ELF;
@@ -657,20 +658,20 @@ template <class ELFT>
 typename EhFrameHeader<ELFT>::uintX_t
 EhFrameHeader<ELFT>::getFdePc(uintX_t EhVA, const FdeData &F) {
   const endianness E = ELFT::TargetEndianness;
-  assert((F.Enc & 0xF0) != dwarf::DW_EH_PE_datarel);
+  assert((F.Enc & 0xF0) != DW_EH_PE_datarel);
 
   uintX_t FdeOff = EhVA + F.Off + 8;
   switch (F.Enc & 0xF) {
-  case dwarf::DW_EH_PE_udata2:
-  case dwarf::DW_EH_PE_sdata2:
+  case DW_EH_PE_udata2:
+  case DW_EH_PE_sdata2:
     return FdeOff + read16<E>(F.PCRel);
-  case dwarf::DW_EH_PE_udata4:
-  case dwarf::DW_EH_PE_sdata4:
+  case DW_EH_PE_udata4:
+  case DW_EH_PE_sdata4:
     return FdeOff + read32<E>(F.PCRel);
-  case dwarf::DW_EH_PE_udata8:
-  case dwarf::DW_EH_PE_sdata8:
+  case DW_EH_PE_udata8:
+  case DW_EH_PE_sdata8:
     return FdeOff + read64<E>(F.PCRel);
-  case dwarf::DW_EH_PE_absptr:
+  case DW_EH_PE_absptr:
     if (sizeof(uintX_t) == 8)
       return FdeOff + read64<E>(F.PCRel);
     return FdeOff + read32<E>(F.PCRel);
@@ -681,9 +682,9 @@ EhFrameHeader<ELFT>::getFdePc(uintX_t EhVA, const FdeData &F) {
 template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
 
-  const uint8_t Header[] = {1, dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4,
-                            dwarf::DW_EH_PE_udata4,
-                            dwarf::DW_EH_PE_datarel | dwarf::DW_EH_PE_sdata4};
+  const uint8_t Header[] = {1, DW_EH_PE_pcrel | DW_EH_PE_sdata4,
+                            DW_EH_PE_udata4,
+                            DW_EH_PE_datarel | DW_EH_PE_sdata4};
   memcpy(Buf, Header, sizeof(Header));
 
   uintX_t EhVA = Sec->getVA();
@@ -717,7 +718,7 @@ void EhFrameHeader<ELFT>::assignEhFrame(EHOutputSection<ELFT> *Sec) {
 
 template <class ELFT>
 void EhFrameHeader<ELFT>::addFde(uint8_t Enc, size_t Off, uint8_t *PCRel) {
-  if (Live && (Enc & 0xF0) == dwarf::DW_EH_PE_datarel)
+  if (Live && (Enc & 0xF0) == DW_EH_PE_datarel)
     fatal("DW_EH_PE_datarel encoding unsupported for FDEs by .eh_frame_hdr");
   FdeList.push_back(FdeData{Enc, Off, PCRel});
 }
@@ -883,17 +884,17 @@ static void skipLeb128(ArrayRef<uint8_t> &D) {
 
 template <class ELFT> static size_t getAugPSize(unsigned Enc) {
   switch (Enc & 0x0f) {
-  case dwarf::DW_EH_PE_absptr:
-  case dwarf::DW_EH_PE_signed:
+  case DW_EH_PE_absptr:
+  case DW_EH_PE_signed:
     return ELFT::Is64Bits ? 8 : 4;
-  case dwarf::DW_EH_PE_udata2:
-  case dwarf::DW_EH_PE_sdata2:
+  case DW_EH_PE_udata2:
+  case DW_EH_PE_sdata2:
     return 2;
-  case dwarf::DW_EH_PE_udata4:
-  case dwarf::DW_EH_PE_sdata4:
+  case DW_EH_PE_udata4:
+  case DW_EH_PE_sdata4:
     return 4;
-  case dwarf::DW_EH_PE_udata8:
-  case dwarf::DW_EH_PE_sdata8:
+  case DW_EH_PE_udata8:
+  case DW_EH_PE_sdata8:
     return 8;
   }
   fatal("unknown FDE encoding");
@@ -901,7 +902,7 @@ template <class ELFT> static size_t getAugPSize(unsigned Enc) {
 
 template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
   uint8_t Enc = readByte(D);
-  if ((Enc & 0xf0) == dwarf::DW_EH_PE_aligned)
+  if ((Enc & 0xf0) == DW_EH_PE_aligned)
     fatal("DW_EH_PE_aligned encoding is not supported");
   size_t Size = getAugPSize<ELFT>(Enc);
   if (Size < D.size())
@@ -958,7 +959,7 @@ uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
       fatal("unknown .eh_frame augmentation string: " + Aug);
     }
   }
-  return dwarf::DW_EH_PE_absptr;
+  return DW_EH_PE_absptr;
 }
 
 template <class ELFT>
