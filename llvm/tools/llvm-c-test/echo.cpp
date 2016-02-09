@@ -125,46 +125,26 @@ static LLVMTypeRef clone_type(LLVMTypeRef Src, LLVMContextRef Ctx) {
   exit(-1);
 }
 
-static LLVMValueRef clone_literal(LLVMValueRef Src, LLVMContextRef Ctx) {
-  LLVMTypeRef Ty = clone_type(LLVMTypeOf(Src), Ctx);
-
-  LLVMTypeKind Kind = LLVMGetTypeKind(Ty);
-  switch (Kind) {
-    case LLVMIntegerTypeKind:
-      return LLVMConstInt(Ty, LLVMConstIntGetZExtValue(Src), false);
-    default:
-      break;
-  }
-
-  fprintf(stderr, "%d is not a supported constant typekind\n", Kind);
-  exit(-1);
-}
-
-static LLVMModuleRef get_module(LLVMBuilderRef Builder) {
-  LLVMBasicBlockRef BB = LLVMGetInsertBlock(Builder);
-  LLVMValueRef Fn = LLVMGetBasicBlockParent(BB);
-  return LLVMGetGlobalParent(Fn);
-}
-
 static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst);
 
 struct FunCloner {
   LLVMValueRef Fun;
+  LLVMModuleRef M;
+  LLVMContextRef Ctx;
 
   ValueMap VMap;
   BasicBlockMap BBMap;
 
   FunCloner(LLVMValueRef Src, LLVMValueRef Dst)
-    : Fun(Dst), VMap(clone_params(Src, Dst)) {}
+    : Fun(Dst), M(LLVMGetGlobalParent(Fun)), Ctx(LLVMGetModuleContext(M)),
+      VMap(clone_params(Src, Dst)) {}
 
   // Try to clone everything in the llvm::Value hierarchy.
-  LLVMValueRef CloneValue(LLVMValueRef Src, LLVMBuilderRef Builder) {
+  LLVMValueRef CloneValue(LLVMValueRef Src) {
     const char *Name = LLVMGetValueName(Src);
 
     // First, the value may be constant.
     if (LLVMIsAConstant(Src)) {
-      LLVMModuleRef M = get_module(Builder);
-
       // Maybe it is a symbol
       if (LLVMIsAGlobalValue(Src)) {
         // Try function
@@ -182,16 +162,43 @@ struct FunCloner {
       }
 
       // Try literal
-      LLVMContextRef Ctx = LLVMGetModuleContext(M);
-      return clone_literal(Src, Ctx);
+      if (LLVMIsAConstantInt(Src)) {
+        LLVMTypeRef Ty = clone_type(LLVMTypeOf(Src), Ctx);
+        return LLVMConstInt(Ty, LLVMConstIntGetZExtValue(Src), false);
+      }
+
+      // Try undef
+      if (LLVMIsUndef(Src))
+        return LLVMGetUndef(clone_type(LLVMTypeOf(Src), Ctx));
+
+      // This kind of constant is not supported.
+      report_fatal_error("Unsupported contant type");
     }
 
-    // Try undef
-    if (LLVMIsUndef(Src)) {
-      LLVMContextRef Ctx = LLVMGetModuleContext(get_module(Builder));
-      LLVMTypeRef Ty = clone_type(LLVMTypeOf(Src), Ctx);
-      return LLVMGetUndef(Ty);
+    // Function argument should always be in the map already.
+    if (LLVMIsAArgument(Src)) {
+      auto i = VMap.find(Src);
+      if (i != VMap.end())
+        return i->second;
     }
+
+    if (LLVMIsAInstruction(Src)) {
+      auto Builder = LLVMCreateBuilderInContext(Ctx);
+      auto BB = DeclareBB(LLVMGetInstructionParent(Src));
+      LLVMPositionBuilderAtEnd(Builder, BB);
+      auto Dst = CloneInstruction(Src, Builder);
+      LLVMDisposeBuilder(Builder);
+      return Dst;
+    }
+
+    fprintf(stderr, "Could not determine the type of %s\n", Name);
+    exit(-1);
+  }
+
+  LLVMValueRef CloneInstruction(LLVMValueRef Src, LLVMBuilderRef Builder) {
+    const char *Name = LLVMGetValueName(Src);
+    if (!LLVMIsAInstruction(Src))
+      report_fatal_error("Expected an instruction");
 
     // Check if this is something we already computed.
     {
@@ -211,8 +218,7 @@ struct FunCloner {
         if (OpCount == 0)
           Dst = LLVMBuildRetVoid(Builder);
         else
-          Dst = LLVMBuildRet(Builder, CloneValue(LLVMGetOperand(Src, 0),
-                                                 Builder));
+          Dst = LLVMBuildRet(Builder, CloneValue(LLVMGetOperand(Src, 0)));
         break;
       }
       case LLVMBr: {
@@ -239,102 +245,101 @@ struct FunCloner {
         Dst = LLVMBuildUnreachable(Builder);
         break;
       case LLVMAdd: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildAdd(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMSub: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildSub(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMMul: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildMul(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMUDiv: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildUDiv(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMSDiv: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildSDiv(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMURem: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildURem(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMSRem: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildSRem(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMShl: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildShl(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMLShr: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildLShr(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMAShr: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildAShr(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMAnd: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildAnd(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMOr: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildOr(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMXor: {
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildXor(Builder, LHS, RHS, Name);
         break;
       }
       case LLVMAlloca: {
-        LLVMContextRef Ctx = LLVMGetModuleContext(get_module(Builder));
         LLVMTypeRef Ty = clone_type(LLVMGetAllocatedType(Src), Ctx);
         Dst = LLVMBuildAlloca(Builder, Ty, Name);
         break;
       }
       case LLVMICmp: {
         LLVMIntPredicate Pred = LLVMGetICmpPredicate(Src);
-        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0), Builder);
-        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1), Builder);
+        LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef RHS = CloneValue(LLVMGetOperand(Src, 1));
         Dst = LLVMBuildICmp(Builder, Pred, LHS, RHS, Name);
         break;
       }
       case LLVMCall: {
-        int ArgCount = LLVMGetNumOperands(Src) - 1;
         SmallVector<LLVMValueRef, 8> Args;
+        int ArgCount = LLVMGetNumOperands(Src) - 1;
         for (int i = 0; i < ArgCount; i++)
-          Args.push_back(CloneValue(LLVMGetOperand(Src, i), Builder));
-        LLVMValueRef Fn = CloneValue(LLVMGetOperand(Src, ArgCount), Builder);
+          Args.push_back(CloneValue(LLVMGetOperand(Src, i)));
+        LLVMValueRef Fn = CloneValue(LLVMGetOperand(Src, ArgCount));
         Dst = LLVMBuildCall(Builder, Fn, Args.data(), ArgCount, Name);
         break;
       }
@@ -363,7 +368,7 @@ struct FunCloner {
 
     LLVMValueRef V = LLVMBasicBlockAsValue(Src);
     if (!LLVMValueIsBasicBlock(V) || LLVMValueAsBasicBlock(V) != Src)
-      report_fatal_error("Basic block is not a basic block\n");
+      report_fatal_error("Basic block is not a basic block");
 
     const char *VName = LLVMGetValueName(V);
     if (Name != VName)
@@ -393,14 +398,13 @@ struct FunCloner {
       return BB;
     }
 
-    LLVMContextRef Ctx = LLVMGetModuleContext(LLVMGetGlobalParent(Fun));
     LLVMBuilderRef Builder = LLVMCreateBuilderInContext(Ctx);
     LLVMPositionBuilderAtEnd(Builder, BB);
 
     LLVMValueRef Cur = First;
     LLVMValueRef Next = nullptr;
     while(true) {
-      CloneValue(Cur, Builder);
+      CloneInstruction(Cur, Builder);
       Next = LLVMGetNextInstruction(Cur);
       if (Next == nullptr) {
         if (Cur != Last) {
@@ -540,17 +544,17 @@ static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
   return VMap;
 }
 
-static LLVMValueRef clone_function(LLVMValueRef Src, LLVMModuleRef Dst) {
+static LLVMValueRef clone_function(LLVMValueRef Src, LLVMModuleRef M) {
   const char *Name = LLVMGetValueName(Src);
-  LLVMValueRef Fun = LLVMGetNamedFunction(Dst, Name);
+  LLVMValueRef Fun = LLVMGetNamedFunction(M, Name);
   if (Fun != nullptr)
     return Fun;
 
   LLVMTypeRef SrcTy = LLVMTypeOf(Src);
-  LLVMTypeRef DstTy = clone_type(SrcTy, LLVMGetModuleContext(Dst));
+  LLVMTypeRef DstTy = clone_type(SrcTy, LLVMGetModuleContext(M));
   LLVMTypeRef FunTy = LLVMGetElementType(DstTy);
 
-  Fun = LLVMAddFunction(Dst, Name, FunTy);
+  Fun = LLVMAddFunction(M, Name, FunTy);
   FunCloner FC(Src, Fun);
   FC.CloneBBs(Src);
 
