@@ -15,6 +15,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
@@ -109,6 +110,21 @@ static const char *getRadixFmt() {
     return PRIx64;
   }
   return nullptr;
+}
+
+/// Remove unneeded ELF sections from calculation
+static bool considerForSize(ObjectFile *Obj, SectionRef Section) {
+  if (!Obj->isELF())
+    return true;
+  switch (static_cast<ELFSectionRef>(Section).getType()) {
+  case ELF::SHT_NULL:
+  case ELF::SHT_SYMTAB:
+  case ELF::SHT_STRTAB:
+  case ELF::SHT_REL:
+  case ELF::SHT_RELA:
+    return false;
+  }
+  return true;
 }
 
 /// Print the size of each Mach-O segment and section in @p MachO.
@@ -287,6 +303,8 @@ static void printObjectSectionSizes(ObjectFile *Obj) {
     std::size_t max_size_len = strlen("size");
     std::size_t max_addr_len = strlen("addr");
     for (const SectionRef &Section : Obj->sections()) {
+      if (!considerForSize(Obj, Section))
+        continue;
       uint64_t size = Section.getSize();
       total += size;
 
@@ -322,6 +340,8 @@ static void printObjectSectionSizes(ObjectFile *Obj) {
 
     // Print each section.
     for (const SectionRef &Section : Obj->sections()) {
+      if (!considerForSize(Obj, Section))
+        continue;
       StringRef name;
       if (error(Section.getName(name)))
         return;
