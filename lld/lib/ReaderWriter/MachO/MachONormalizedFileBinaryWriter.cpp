@@ -288,7 +288,7 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
       _endOfLoadCommands += sizeof(linkedit_data_command);
       _countOfLoadCommands++;
     }
-    if (!_file.dataInCode.empty()) {
+    if (_file.generateDataInCodeLoadCommand) {
       _endOfLoadCommands += sizeof(linkedit_data_command);
       _countOfLoadCommands++;
     }
@@ -463,8 +463,9 @@ uint32_t MachOFileLayout::loadCommandsSize(uint32_t &count) {
     ++count;
   }
 
-  // Add LC_DATA_IN_CODE if needed
-  if (!_file.dataInCode.empty()) {
+  // Add LC_DATA_IN_CODE if requested.  Note, we do encode zero length entries.
+  // FIXME: Zero length entries is only to match ld64.  Should we change this?
+  if (_file.generateDataInCodeLoadCommand) {
     size += sizeof(linkedit_data_command);
     ++count;
   }
@@ -810,8 +811,8 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       lc += sizeof(linkedit_data_command);
     }
 
-    // Add LC_DATA_IN_CODE if needed.
-    if (_dataInCodeSize != 0) {
+    // Add LC_DATA_IN_CODE if requested.
+    if (_file.generateDataInCodeLoadCommand) {
       linkedit_data_command* dl = reinterpret_cast<linkedit_data_command*>(lc);
       dl->cmd      = LC_DATA_IN_CODE;
       dl->cmdsize  = sizeof(linkedit_data_command);
@@ -993,8 +994,8 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       lc += sizeof(linkedit_data_command);
     }
 
-    // Add LC_DATA_IN_CODE if needed.
-    if (_dataInCodeSize != 0) {
+    // Add LC_DATA_IN_CODE if requested.
+    if (_file.generateDataInCodeLoadCommand) {
       linkedit_data_command* dl = reinterpret_cast<linkedit_data_command*>(lc);
       dl->cmd      = LC_DATA_IN_CODE;
       dl->cmdsize  = sizeof(linkedit_data_command);

@@ -1186,6 +1186,8 @@ void Util::addFunctionStarts(const lld::File &, NormalizedFile &file) {
 }
 
 void Util::buildDataInCodeArray(const lld::File &, NormalizedFile &file) {
+  if (!_ctx.generateDataInCodeLoadCommand())
+    return;
   for (SectionInfo *si : _sectionInfos) {
     for (const AtomInfo &info : si->atomsAndOffsets) {
       // Atoms that contain data-in-code have "transition" references
@@ -1377,6 +1379,8 @@ normalizedFromAtoms(const lld::File &atomFile,
     // source object files.
     normFile.hasMinVersionLoadCommand = true;
   }
+  normFile.generateDataInCodeLoadCommand =
+    context.generateDataInCodeLoadCommand();
   normFile.pageSize = context.pageSize();
   normFile.rpaths = context.rpaths();
   util.addDependentDylibs(atomFile, normFile);

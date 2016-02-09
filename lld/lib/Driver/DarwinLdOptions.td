@@ -49,6 +49,12 @@ def function_starts : Flag<["-"], "function_starts">,
 def no_function_starts : Flag<["-"], "no_function_starts">,
      HelpText<"Disable generation of a function starts load command">,
      Group<grp_opts>;
+def data_in_code_info : Flag<["-"], "data_in_code_info">,
+     HelpText<"Force generation of a data in code load command">,
+     Group<grp_opts>;
+def no_data_in_code_info : Flag<["-"], "no_data_in_code_info">,
+     HelpText<"Disable generation of a data in code load command">,
+     Group<grp_opts>;
 def mllvm : Separate<["-"], "mllvm">,
      MetaVarName<"<option>">,
      HelpText<"Options to pass to LLVM during LTO">, Group<grp_opts>;

@@ -163,6 +163,13 @@ public:
     _generateFunctionStartsLoadCommand = v;
   }
 
+  bool generateDataInCodeLoadCommand() const {
+    return _generateDataInCodeLoadCommand;
+  }
+  void setGenerateDataInCodeLoadCommand(bool v) {
+    _generateDataInCodeLoadCommand = v;
+  }
+
   uint64_t stackSize() const { return _stackSize; }
   void setStackSize(uint64_t stackSize) { _stackSize = stackSize; }
 
@@ -459,6 +466,7 @@ private:
   bool _mergeObjCCategories = true;
   bool _generateVersionLoadCommand = false;
   bool _generateFunctionStartsLoadCommand = false;
+  bool _generateDataInCodeLoadCommand = false;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
