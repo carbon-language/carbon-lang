@@ -26748,10 +26748,53 @@ static int getOneTrueElt(SDValue V) {
   return TrueIndex;
 };
 
+/// If exactly one element of the mask is set for a non-extending masked load,
+/// it is a scalar load and vector insert.
+/// Note: It is expected that the degenerate cases of an all-zeros or all-ones
+/// mask have already been optimized in IR, so we don't bother with those here.
+static SDValue
+reduceMaskedLoadToScalarLoad(MaskedLoadSDNode *ML, SelectionDAG &DAG,
+                             TargetLowering::DAGCombinerInfo &DCI) {
+  // FIXME: Refactor shared/similar logic with reduceMaskedStoreToScalarStore().
+
+  // TODO: This is not x86-specific, so it could be lifted to DAGCombiner.
+  // However, some target hooks may need to be added to know when the transform
+  // is profitable. Endianness would also have to be considered.
+
+  int TrueMaskElt = getOneTrueElt(ML->getMask());
+  if (TrueMaskElt < 0)
+    return SDValue();
+
+  SDLoc DL(ML);
+  EVT VT = ML->getValueType(0);
+  EVT EltVT = VT.getVectorElementType();
+
+  // Load the one scalar element that is specified by the mask using the
+  // appropriate offset from the base pointer.
+  SDValue Addr = ML->getBasePtr();
+  if (TrueMaskElt != 0) {
+    unsigned Offset = TrueMaskElt * EltVT.getStoreSize();
+    Addr = DAG.getMemBasePlusOffset(Addr, Offset, DL);
+  }
+  unsigned Alignment = MinAlign(ML->getAlignment(), EltVT.getStoreSize());
+  SDValue Load = DAG.getLoad(EltVT, DL, ML->getChain(), Addr,
+                             ML->getPointerInfo(), ML->isVolatile(),
+                             ML->isNonTemporal(), ML->isInvariant(), Alignment);
+
+  // Insert the loaded element into the appropriate place in the vector.
+  SDValue InsertIndex = DAG.getIntPtrConstant(TrueMaskElt, DL);
+  SDValue Insert = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, ML->getSrc0(),
+                               Load, InsertIndex);
+  return DCI.CombineTo(ML, Insert, Load.getValue(1), true);
+}
+
 static SDValue PerformMLOADCombine(SDNode *N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget &Subtarget) {
   MaskedLoadSDNode *Mld = cast<MaskedLoadSDNode>(N);
+  if (Mld->getExtensionType() == ISD::NON_EXTLOAD)
+    return reduceMaskedLoadToScalarLoad(Mld, DAG, DCI);
+
   if (Mld->getExtensionType() != ISD::SEXTLOAD)
     return SDValue();
 
