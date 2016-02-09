@@ -263,6 +263,7 @@ struct NormalizedFile {
   std::vector<BindLocation>   weakBindingInfo;
   std::vector<BindLocation>   lazyBindingInfo;
   std::vector<Export>         exportInfo;
+  std::vector<uint8_t>        functionStarts;
   std::vector<DataInCode>     dataInCode;
 
   // TODO:

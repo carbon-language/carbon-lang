@@ -792,6 +792,54 @@ bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
+  // Handle -function_starts or -no_function_starts
+  {
+    bool flagOn = false;
+    bool flagOff = false;
+    if (auto *arg = parsedArgs.getLastArg(OPT_function_starts,
+                                          OPT_no_function_starts)) {
+      flagOn = arg->getOption().getID() == OPT_function_starts;
+      flagOff = arg->getOption().getID() == OPT_no_function_starts;
+    }
+
+    // default to adding functions start for dynamic code, static code must
+    // opt-in
+    switch (ctx.outputMachOType()) {
+      case llvm::MachO::MH_OBJECT:
+        ctx.setGenerateFunctionStartsLoadCommand(false);
+        break;
+      case llvm::MachO::MH_EXECUTE:
+        // dynamic executables default to generating a version load command,
+        // while static exectuables only generate it if required.
+        if (isStaticExecutable) {
+          if (flagOn)
+            ctx.setGenerateFunctionStartsLoadCommand(true);
+        } else {
+          if (!flagOff)
+            ctx.setGenerateFunctionStartsLoadCommand(true);
+        }
+        break;
+      case llvm::MachO::MH_PRELOAD:
+      case llvm::MachO::MH_KEXT_BUNDLE:
+        if (flagOn)
+          ctx.setGenerateFunctionStartsLoadCommand(true);
+        break;
+      case llvm::MachO::MH_DYLINKER:
+      case llvm::MachO::MH_DYLIB:
+      case llvm::MachO::MH_BUNDLE:
+        if (!flagOff)
+          ctx.setGenerateFunctionStartsLoadCommand(true);
+        break;
+      case llvm::MachO::MH_FVMLIB:
+      case llvm::MachO::MH_DYLDLINK:
+      case llvm::MachO::MH_DYLIB_STUB:
+      case llvm::MachO::MH_DSYM:
+        // We don't generate load commands for these file types, even if
+        // forced on.
+        break;
+    }
+  }
+
   // Handle sdk_version
   if (llvm::opt::Arg *arg = parsedArgs.getLastArg(OPT_sdk_version)) {
     uint32_t sdkVersion = 0;
