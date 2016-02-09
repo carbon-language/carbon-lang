@@ -8422,12 +8422,9 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
     // then we can reduce the vector load to the broadcasted scalar load.
     LoadSDNode *Ld = cast<LoadSDNode>(BC);
     SDValue BaseAddr = Ld->getOperand(1);
-    EVT AddrVT = BaseAddr.getValueType();
     EVT SVT = BroadcastVT.getScalarType();
     unsigned Offset = BroadcastIdx * SVT.getStoreSize();
-    SDValue NewAddr = DAG.getNode(
-        ISD::ADD, DL, AddrVT, BaseAddr,
-        DAG.getConstant(Offset, DL, AddrVT));
+    SDValue NewAddr = DAG.getMemBasePlusOffset(BaseAddr, Offset, DL);
     V = DAG.getLoad(SVT, DL, Ld->getChain(), NewAddr,
                     DAG.getMachineFunction().getMachineMemOperand(
                         Ld->getMemOperand(), Offset, SVT.getStoreSize()));
@@ -13328,8 +13325,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   // Make a 64-bit buffer, and use it to build an FILD.
   SDValue StackSlot = DAG.CreateStackTemporary(MVT::i64);
   if (SrcVT == MVT::i32) {
-    SDValue WordOff = DAG.getConstant(4, dl, PtrVT);
-    SDValue OffsetSlot = DAG.getNode(ISD::ADD, dl, PtrVT, StackSlot, WordOff);
+    SDValue OffsetSlot = DAG.getMemBasePlusOffset(StackSlot, 4, dl);
     SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
                                   StackSlot, MachinePointerInfo(),
                                   false, false, 0);
@@ -13551,8 +13547,7 @@ X86TargetLowering::FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
     SDValue Low32 = DAG.getLoad(MVT::i32, DL, FIST, StackSlot,
                                 MachinePointerInfo(),
                                 false, false, false, 0);
-    SDValue HighAddr = DAG.getNode(ISD::ADD, DL, PtrVT, StackSlot,
-                                   DAG.getConstant(4, DL, PtrVT));
+    SDValue HighAddr = DAG.getMemBasePlusOffset(StackSlot, 4, DL);
 
     SDValue High32 = DAG.getLoad(MVT::i32, DL, FIST, HighAddr,
                                  MachinePointerInfo(),
@@ -16302,7 +16297,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   MemOps.push_back(Store);
 
   // Store fp_offset
-  FIN = DAG.getNode(ISD::ADD, DL, PtrVT, FIN, DAG.getIntPtrConstant(4, DL));
+  FIN = DAG.getMemBasePlusOffset(FIN, 4, DL);
   Store = DAG.getStore(Op.getOperand(0), DL,
                        DAG.getConstant(FuncInfo->getVarArgsFPOffset(), DL,
                                        MVT::i32),
@@ -26697,8 +26692,6 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
       return SDValue();
 
     SDValue Ptr = Ld->getBasePtr();
-    SDValue Increment =
-        DAG.getConstant(16, dl, TLI.getPointerTy(DAG.getDataLayout()));
 
     EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
                                   NumElems/2);
@@ -26706,7 +26699,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
                                 Ld->getPointerInfo(), Ld->isVolatile(),
                                 Ld->isNonTemporal(), Ld->isInvariant(),
                                 Alignment);
-    Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+
+    Ptr = DAG.getMemBasePlusOffset(Ptr, 16, dl);
     SDValue Load2 = DAG.getLoad(HalfVT, dl, Ld->getChain(), Ptr,
                                 Ld->getPointerInfo(), Ld->isVolatile(),
                                 Ld->isNonTemporal(), Ld->isInvariant(),
@@ -26862,18 +26856,14 @@ static SDValue reduceMaskedStoreToScalarStore(MaskedStoreSDNode *MS,
                                 MS->getValue(), ExtractIndex);
 
   // Store that element at the appropriate offset from the base pointer.
-  SDValue StoreAddr = MS->getBasePtr();
-  unsigned EltSize = EltVT.getStoreSize();
+  SDValue Addr = MS->getBasePtr();
   if (TrueMaskElt != 0) {
-    unsigned StoreOffset = TrueMaskElt * EltSize;
-    SDValue StoreOffsetVal = DAG.getIntPtrConstant(StoreOffset, DL);
-    StoreAddr = DAG.getNode(ISD::ADD, DL, StoreAddr.getValueType(), StoreAddr,
-                            StoreOffsetVal);
+    unsigned Offset = TrueMaskElt * EltVT.getStoreSize();
+    Addr = DAG.getMemBasePlusOffset(Addr, Offset, DL);
   }
-  unsigned Alignment = MinAlign(MS->getAlignment(), EltSize);
-  return DAG.getStore(MS->getChain(), DL, Extract, StoreAddr,
-                      MS->getPointerInfo(), MS->isVolatile(),
-                      MS->isNonTemporal(), Alignment);
+  unsigned Alignment = MinAlign(MS->getAlignment(), EltVT.getStoreSize());
+  return DAG.getStore(MS->getChain(), DL, Extract, Addr, MS->getPointerInfo(),
+                      MS->isVolatile(), MS->isNonTemporal(), Alignment);
 }
 
 static SDValue PerformMSTORECombine(SDNode *N, SelectionDAG &DAG,
@@ -26981,7 +26971,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   unsigned Alignment = St->getAlignment();
   if (VT.is256BitVector() && StVT == VT &&
       TLI.allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(), VT,
-                             AddressSpace, Alignment, &Fast) && !Fast) {
+                             AddressSpace, Alignment, &Fast) &&
+      !Fast) {
     unsigned NumElems = VT.getVectorNumElements();
     if (NumElems < 2)
       return SDValue();
@@ -26989,18 +26980,16 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     SDValue Value0 = Extract128BitVector(StoredVal, 0, DAG, dl);
     SDValue Value1 = Extract128BitVector(StoredVal, NumElems/2, DAG, dl);
 
-    SDValue Stride =
-        DAG.getConstant(16, dl, TLI.getPointerTy(DAG.getDataLayout()));
     SDValue Ptr0 = St->getBasePtr();
-    SDValue Ptr1 = DAG.getNode(ISD::ADD, dl, Ptr0.getValueType(), Ptr0, Stride);
+    SDValue Ptr1 = DAG.getMemBasePlusOffset(Ptr0, 16, dl);
 
     SDValue Ch0 = DAG.getStore(St->getChain(), dl, Value0, Ptr0,
-                                St->getPointerInfo(), St->isVolatile(),
-                                St->isNonTemporal(), Alignment);
+                               St->getPointerInfo(), St->isVolatile(),
+                               St->isNonTemporal(), Alignment);
     SDValue Ch1 = DAG.getStore(St->getChain(), dl, Value1, Ptr1,
-                                St->getPointerInfo(), St->isVolatile(),
-                                St->isNonTemporal(),
-                                std::min(16U, Alignment));
+                               St->getPointerInfo(), St->isVolatile(),
+                               St->isNonTemporal(),
+                               std::min(16U, Alignment));
     return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ch0, Ch1);
   }
 
@@ -27080,8 +27069,6 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     assert(StoreVecVT.getSizeInBits() == VT.getSizeInBits());
     SDValue ShuffWide = DAG.getBitcast(StoreVecVT, Shuff);
     SmallVector<SDValue, 8> Chains;
-    SDValue Increment = DAG.getConstant(StoreType.getSizeInBits() / 8, dl,
-                                        TLI.getPointerTy(DAG.getDataLayout()));
     SDValue Ptr = St->getBasePtr();
 
     // Perform one or more big stores into memory.
@@ -27092,7 +27079,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
       SDValue Ch = DAG.getStore(St->getChain(), dl, SubVec, Ptr,
                                 St->getPointerInfo(), St->isVolatile(),
                                 St->isNonTemporal(), St->getAlignment());
-      Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+      Ptr = DAG.getMemBasePlusOffset(Ptr, StoreType.getStoreSize(), dl);
       Chains.push_back(Ch);
     }
 
@@ -27171,8 +27158,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 
     // Otherwise, lower to two pairs of 32-bit loads / stores.
     SDValue LoAddr = Ld->getBasePtr();
-    SDValue HiAddr = DAG.getNode(ISD::ADD, LdDL, MVT::i32, LoAddr,
-                                 DAG.getConstant(4, LdDL, MVT::i32));
+    SDValue HiAddr = DAG.getMemBasePlusOffset(LoAddr, 4, LdDL);
 
     SDValue LoLd = DAG.getLoad(MVT::i32, LdDL, Ld->getChain(), LoAddr,
                                Ld->getPointerInfo(),
@@ -27192,8 +27178,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     }
 
     LoAddr = St->getBasePtr();
-    HiAddr = DAG.getNode(ISD::ADD, StDL, MVT::i32, LoAddr,
-                         DAG.getConstant(4, StDL, MVT::i32));
+    HiAddr = DAG.getMemBasePlusOffset(LoAddr, 4, StDL);
 
     SDValue LoSt = DAG.getStore(NewChain, StDL, LoLd, LoAddr,
                                 St->getPointerInfo(),
