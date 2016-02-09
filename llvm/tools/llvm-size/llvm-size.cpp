@@ -79,7 +79,7 @@ InputFilenames(cl::Positional, cl::desc("<input files>"), cl::ZeroOrMore);
 
 static std::string ToolName;
 
-///  @brief If ec is not success, print the error and return true.
+/// If ec is not success, print the error and return true.
 static bool error(std::error_code ec) {
   if (!ec)
     return false;
@@ -89,8 +89,8 @@ static bool error(std::error_code ec) {
   return true;
 }
 
-/// @brief Get the length of the string that represents @p num in Radix
-///        including the leading 0x or 0 for hexadecimal and octal respectively.
+/// Get the length of the string that represents @p num in Radix including the
+/// leading 0x or 0 for hexadecimal and octal respectively.
 static size_t getNumLengthAsString(uint64_t num) {
   APInt conv(64, num);
   SmallString<32> result;
@@ -98,7 +98,7 @@ static size_t getNumLengthAsString(uint64_t num) {
   return result.size();
 }
 
-/// @brief Return the printing format for the Radix.
+/// Return the printing format for the Radix.
 static const char *getRadixFmt() {
   switch (Radix) {
   case octal:
@@ -111,7 +111,7 @@ static const char *getRadixFmt() {
   return nullptr;
 }
 
-/// @brief Print the size of each Mach-O segment and section in @p MachO.
+/// Print the size of each Mach-O segment and section in @p MachO.
 ///
 /// This is when used when @c OutputFormat is darwin and produces the same
 /// output as darwin's size(1) -m output.
@@ -186,7 +186,7 @@ static void PrintDarwinSectionSizes(MachOObjectFile *MachO) {
   outs() << "total " << format(fmt.str().c_str(), total) << "\n";
 }
 
-/// @brief Print the summary sizes of the standard Mach-O segments in @p MachO.
+/// Print the summary sizes of the standard Mach-O segments in @p MachO.
 ///
 /// This is when used when @c OutputFormat is berkeley with a Mach-O file and
 /// produces the same output as darwin's size(1) default output.
@@ -261,7 +261,7 @@ static void PrintDarwinSegmentSizes(MachOObjectFile *MachO) {
          << "\t";
 }
 
-/// @brief Print the size of each section in @p Obj.
+/// Print the size of each section in @p Obj.
 ///
 /// The format used is determined by @c OutputFormat and @c Radix.
 static void PrintObjectSectionSizes(ObjectFile *Obj) {
@@ -379,11 +379,11 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
   }
 }
 
-/// @brief Checks to see if the @p o ObjectFile is a Mach-O file and if it is
-///        and there is a list of architecture flags specified then check to
-///        make sure this Mach-O file is one of those architectures or all
-///        architectures was specificed.  If not then an error is generated and
-///        this routine returns false.  Else it returns true.
+/// Checks to see if the @p o ObjectFile is a Mach-O file and if it is and there
+/// is a list of architecture flags specified then check to make sure this
+/// Mach-O file is one of those architectures or all architectures was
+/// specificed.  If not then an error is generated and this routine returns
+/// false.  Else it returns true.
 static bool checkMachOAndArchFlags(ObjectFile *o, StringRef file) {
   if (isa<MachOObjectFile>(o) && !ArchAll && ArchFlags.size() != 0) {
     MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o);
@@ -413,8 +413,8 @@ static bool checkMachOAndArchFlags(ObjectFile *o, StringRef file) {
   return true;
 }
 
-/// @brief Print the section sizes for @p file. If @p file is an archive, print
-///        the section sizes for each archive member.
+/// Print the section sizes for @p file. If @p file is an archive, print the
+/// section sizes for each archive member.
 static void PrintFileSectionSizes(StringRef file) {
 
   // Attempt to open the binary.
