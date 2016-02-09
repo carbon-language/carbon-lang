@@ -177,6 +177,8 @@ struct VTableSlot {
 
 }
 
+namespace llvm {
+
 template <> struct DenseMapInfo<VTableSlot> {
   static VTableSlot getEmptyKey() {
     return {DenseMapInfo<Metadata *>::getEmptyKey(),
@@ -195,6 +197,8 @@ template <> struct DenseMapInfo<VTableSlot> {
     return LHS.BitSetID == RHS.BitSetID && LHS.ByteOffset == RHS.ByteOffset;
   }
 };
+
+}
 
 namespace {
 
