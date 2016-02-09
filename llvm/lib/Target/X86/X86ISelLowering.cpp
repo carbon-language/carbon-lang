@@ -26724,6 +26724,40 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// If V is a build vector of boolean constants and exactly one of those
+/// constants is true, return the operand index of that true element.
+/// Otherwise, return -1.
+static int getOneTrueElt(SDValue V) {
+  // This needs to be a build vector of booleans.
+  // TODO: Checking for the i1 type matches the IR definition for the mask,
+  // but the mask check could be loosened to i8 or other types. That might
+  // also require checking more than 'allOnesValue'; eg, the x86 HW
+  // instructions only require that the MSB is set for each mask element.
+  // The ISD::MSTORE comments/definition do not specify how the mask operand
+  // is formatted.
+  auto *BV = dyn_cast<BuildVectorSDNode>(V);
+  if (!BV || BV->getValueType(0).getVectorElementType() != MVT::i1)
+    return -1;
+
+  int TrueIndex = -1;
+  unsigned NumElts = BV->getValueType(0).getVectorNumElements();
+  for (unsigned i = 0; i < NumElts; ++i) {
+    const SDValue &Op = BV->getOperand(i);
+    if (Op.getOpcode() == ISD::UNDEF)
+      continue;
+    auto *ConstNode = dyn_cast<ConstantSDNode>(Op);
+    if (!ConstNode)
+      return -1;
+    if (ConstNode->getAPIntValue().isAllOnesValue()) {
+      // If we already found a one, this is too many.
+      if (TrueIndex >= 0)
+        return -1;
+      TrueIndex = i;
+    }
+  }
+  return TrueIndex;
+};
+
 static SDValue PerformMLOADCombine(SDNode *N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget &Subtarget) {
@@ -26804,7 +26838,6 @@ static SDValue PerformMLOADCombine(SDNode *N, SelectionDAG &DAG,
   return DCI.CombineTo(N, NewVec, WideLd.getValue(1), true);
 }
 
-
 /// If exactly one element of the mask is set for a non-truncating masked store,
 /// it is a vector extract and scalar store.
 /// Note: It is expected that the degenerate cases of an all-zeros or all-ones
@@ -26814,40 +26847,6 @@ static SDValue reduceMaskedStoreToScalarStore(MaskedStoreSDNode *MS,
   // TODO: This is not x86-specific, so it could be lifted to DAGCombiner.
   // However, some target hooks may need to be added to know when the transform
   // is profitable. Endianness would also have to be considered.
-
-  // If V is a build vector of boolean constants and exactly one of those
-  // constants is true, return the operand index of that true element.
-  // Otherwise, return -1.
-  auto getOneTrueElt = [](SDValue V) {
-    // This needs to be a build vector of booleans.
-    // TODO: Checking for the i1 type matches the IR definition for the mask,
-    // but the mask check could be loosened to i8 or other types. That might
-    // also require checking more than 'allOnesValue'; eg, the x86 HW
-    // instructions only require that the MSB is set for each mask element.
-    // The ISD::MSTORE comments/definition do not specify how the mask operand
-    // is formatted.
-    auto *BV = dyn_cast<BuildVectorSDNode>(V);
-    if (!BV || BV->getValueType(0).getVectorElementType() != MVT::i1)
-      return -1;
-
-    int TrueIndex = -1;
-    unsigned NumElts = BV->getValueType(0).getVectorNumElements();
-    for (unsigned i = 0; i < NumElts; ++i) {
-      const SDValue &Op = BV->getOperand(i);
-      if (Op.getOpcode() == ISD::UNDEF)
-        continue;
-      auto *ConstNode = dyn_cast<ConstantSDNode>(Op);
-      if (!ConstNode)
-        return -1;
-      if (ConstNode->getAPIntValue().isAllOnesValue()) {
-        // If we already found a one, this is too many.
-        if (TrueIndex >= 0)
-          return -1;
-        TrueIndex = i;
-      }
-    }
-    return TrueIndex;
-  };
 
   int TrueMaskElt = getOneTrueElt(MS->getMask());
   if (TrueMaskElt < 0)
