@@ -14352,8 +14352,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     case ISD::AND: Opcode = X86ISD::AND; break;
     case ISD::OR: {
       if (!NeedTruncation && (X86CC == X86::COND_E || X86CC == X86::COND_NE)) {
-        SDValue EFLAGS = LowerVectorAllZeroTest(Op, Subtarget, DAG);
-        if (EFLAGS.getNode())
+        if (SDValue EFLAGS = LowerVectorAllZeroTest(Op, Subtarget, DAG))
           return EFLAGS;
       }
       Opcode = X86ISD::OR;
@@ -14992,8 +14991,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
       // Only do this pre-AVX since vpcmp* is no longer destructive.
       if (Subtarget.hasAVX())
         break;
-      SDValue ULEOp1 = ChangeVSETULTtoVSETULE(dl, Op1, DAG);
-      if (ULEOp1.getNode()) {
+      if (SDValue ULEOp1 = ChangeVSETULTtoVSETULE(dl, Op1, DAG)) {
         Op1 = ULEOp1;
         Subus = true; Invert = false; Swap = false;
       }
@@ -15337,8 +15335,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (Cond.getOpcode() == ISD::SETCC) {
-    SDValue NewCond = LowerSETCC(Cond, DAG);
-    if (NewCond.getNode())
+    if (SDValue NewCond = LowerSETCC(Cond, DAG))
       Cond = NewCond;
   }
 
@@ -15917,8 +15914,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
       Inverted = true;
       Cond = Cond.getOperand(0);
     } else {
-      SDValue NewCond = LowerSETCC(Cond, DAG);
-      if (NewCond.getNode())
+      if (SDValue NewCond = LowerSETCC(Cond, DAG))
         Cond = NewCond;
     }
   }
@@ -24363,9 +24359,8 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
     return LD;
 
   if (isTargetShuffle(N->getOpcode())) {
-    SDValue Shuffle =
-        PerformTargetShuffleCombine(SDValue(N, 0), DAG, DCI, Subtarget);
-    if (Shuffle.getNode())
+    if (SDValue Shuffle =
+            PerformTargetShuffleCombine(SDValue(N, 0), DAG, DCI, Subtarget))
       return Shuffle;
 
     // Try recursively combining arbitrary sequences of x86 shuffle
@@ -25155,8 +25150,8 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if ((N->getOpcode() == ISD::VSELECT ||
        N->getOpcode() == X86ISD::SHRUNKBLEND) &&
       !DCI.isBeforeLegalize() && !VT.is512BitVector()) {
-    SDValue Shuffle = transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
-    if (Shuffle.getNode())
+    if (SDValue Shuffle =
+            transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget))
       return Shuffle;
   }
 
@@ -27001,9 +26996,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     // Check if we can detect an AVG pattern from the truncation. If yes,
     // replace the trunc store by a normal store with the result of X86ISD::AVG
     // instruction.
-    SDValue Avg =
-        detectAVGPattern(St->getValue(), St->getMemoryVT(), DAG, Subtarget, dl);
-    if (Avg.getNode())
+    if (SDValue Avg = detectAVGPattern(St->getValue(), St->getMemoryVT(), DAG,
+                                       Subtarget, dl))
       return DAG.getStore(St->getChain(), dl, Avg, St->getBasePtr(),
                           St->getPointerInfo(), St->isVolatile(),
                           St->isNonTemporal(), St->getAlignment());
@@ -27516,9 +27510,8 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformTRUNCATECombine(SDNode *N, SelectionDAG &DAG,
                                       const X86Subtarget &Subtarget) {
   // Try to detect AVG pattern first.
-  SDValue Avg = detectAVGPattern(N->getOperand(0), N->getValueType(0), DAG,
-                                 Subtarget, SDLoc(N));
-  if (Avg.getNode())
+  if (SDValue Avg = detectAVGPattern(N->getOperand(0), N->getValueType(0), DAG,
+                                     Subtarget, SDLoc(N)))
     return Avg;
 
   return combineVectorTruncation(N, DAG, Subtarget);
