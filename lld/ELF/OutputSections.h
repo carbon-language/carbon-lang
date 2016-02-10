@@ -279,6 +279,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags);
   void addSection(InputSectionBase<ELFT> *C) override;
+  void sortByPriority();
   void writeTo(uint8_t *Buf) override;
 
 private:

@@ -735,6 +735,10 @@ StringRef Writer<ELFT>::getOutputSectionName(StringRef S) const {
     return ".data";
   if (S.startswith(".bss."))
     return ".bss";
+  if (S.startswith(".init_array."))
+    return ".init_array";
+  if (S.startswith(".fini_array."))
+    return ".fini_array";
   return S;
 }
 
@@ -915,6 +919,13 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
       Symtab.addAbsolute("end", ElfSym<ELFT>::End);
 }
 
+// Sort input sections by section name suffixes for
+// __attribute__((init_priority(N))).
+template <class ELFT> static void sortByPriority(OutputSectionBase<ELFT> *S) {
+  if (S)
+    reinterpret_cast<OutputSection<ELFT> *>(S)->sortByPriority();
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> bool Writer<ELFT>::createSections() {
   OutputSections.push_back(Out<ELFT>::ElfHeader);
@@ -961,6 +972,10 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
       Factory.lookup(".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC);
   Out<ELFT>::Dynamic->FiniArraySec =
       Factory.lookup(".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC);
+
+  // Sort section contents for __attribute__((init_priority(N)).
+  sortByPriority(Out<ELFT>::Dynamic->InitArraySec);
+  sortByPriority(Out<ELFT>::Dynamic->FiniArraySec);
 
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
