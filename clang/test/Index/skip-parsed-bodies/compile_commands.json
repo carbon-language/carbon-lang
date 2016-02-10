@@ -1,17 +1,17 @@
 [
 {
   "directory": ".",
-  "command": "/usr/bin/clang++ -fsyntax-only t1.cpp",
+  "command": "/usr/bin/clang++ -fsyntax-only -fno-ms-compatibility -fno-delayed-template-parsing t1.cpp",
   "file": "t1.cpp"
 },
 {
   "directory": ".",
-  "command": "/usr/bin/clang++ -fsyntax-only t2.cpp -DBLAH",
+  "command": "/usr/bin/clang++ -fsyntax-only -fno-ms-compatibility -fno-delayed-template-parsing t2.cpp -DBLAH",
   "file": "t2.cpp"
 },
 {
   "directory": ".",
-  "command": "/usr/bin/clang++ -fsyntax-only t3.cpp -DBLAH",
+  "command": "/usr/bin/clang++ -fsyntax-only -fno-ms-compatibility -fno-delayed-template-parsing t3.cpp -DBLAH",
   "file": "t2.cpp"
 }
 ]
