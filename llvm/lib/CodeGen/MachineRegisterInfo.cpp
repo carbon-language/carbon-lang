@@ -103,6 +103,15 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   return Reg;
 }
 
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+unsigned
+MachineRegisterInfo::getSize(unsigned VReg) const {
+  DenseMap<unsigned, unsigned>::const_iterator SizeIt =
+    VRegToSize.find(VReg);
+  return SizeIt != VRegToSize.end()? SizeIt->second: 0;
+}
+#endif // LLVM_BUILD_GLOBAL_ISEL
+
 /// clearVirtRegs - Remove all virtual registers (after physreg assignment).
 void MachineRegisterInfo::clearVirtRegs() {
 #ifndef NDEBUG
