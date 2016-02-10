@@ -391,10 +391,14 @@ def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
                         [SDNPOutGlue]>;
 def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
                         [SDNPOutGlue, SDNPInGlue]>;
-def smin       : SDNode<"ISD::SMIN"      , SDTIntBinOp>;
-def smax       : SDNode<"ISD::SMAX"      , SDTIntBinOp>;
-def umin       : SDNode<"ISD::UMIN"      , SDTIntBinOp>;
-def umax       : SDNode<"ISD::UMAX"      , SDTIntBinOp>;
+def smin       : SDNode<"ISD::SMIN"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def smax       : SDNode<"ISD::SMAX"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def umin       : SDNode<"ISD::UMIN"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def umax       : SDNode<"ISD::UMAX"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
 
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bitreverse : SDNode<"ISD::BITREVERSE" , SDTIntUnaryOp>;
@@ -421,8 +425,10 @@ def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
 def fma        : SDNode<"ISD::FMA"        , SDTFPTernaryOp>;
 def fmad       : SDNode<"ISD::FMAD"       , SDTFPTernaryOp>;
 def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
-def fminnum    : SDNode<"ISD::FMINNUM"    , SDTFPBinOp>;
-def fmaxnum    : SDNode<"ISD::FMAXNUM"    , SDTFPBinOp>;
+def fminnum    : SDNode<"ISD::FMINNUM"    , SDTFPBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def fmaxnum    : SDNode<"ISD::FMAXNUM"    , SDTFPBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
 def fminnan    : SDNode<"ISD::FMINNAN"    , SDTFPBinOp>;
 def fmaxnan    : SDNode<"ISD::FMAXNAN"    , SDTFPBinOp>;
 def fgetsign   : SDNode<"ISD::FGETSIGN"   , SDTFPToIntOp>;
