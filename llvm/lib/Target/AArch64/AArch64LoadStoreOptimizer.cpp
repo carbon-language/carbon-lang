@@ -1147,15 +1147,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   unsigned Reg = getLdStRegOp(FirstMI).getReg();
   unsigned BaseReg = getLdStBaseOp(FirstMI).getReg();
   int Offset = getLdStOffsetOp(FirstMI).getImm();
-  bool IsNarrowStore = isNarrowStore(Opc);
-
-  // Early exit if the offset is not possible to match. (6 bits of positive
-  // range, plus allow an extra one in case we find a later insn that matches
-  // with Offset-1)
   int OffsetStride = IsUnscaled ? getMemScale(FirstMI) : 1;
-  if (!(isNarrowLoad(Opc) || IsNarrowStore) &&
-      !inBoundsForPair(IsUnscaled, Offset, OffsetStride))
-    return E;
+  bool IsNarrowStore = isNarrowStore(Opc);
 
   // Track which registers have been modified and used between the first insn
   // (inclusive) and the second insn.
@@ -1606,6 +1599,15 @@ bool AArch64LoadStoreOpt::tryToPairLdStInst(MachineBasicBlock::iterator &MBBI) {
   MachineBasicBlock::iterator E = MI->getParent()->end();
 
   if (!isCandidateToMergeOrPair(MI))
+    return false;
+
+  // Early exit if the offset is not possible to match. (6 bits of positive
+  // range, plus allow an extra one in case we find a later insn that matches
+  // with Offset-1)
+  bool IsUnscaled = isUnscaledLdSt(MI);
+  int Offset = getLdStOffsetOp(MI).getImm();
+  int OffsetStride = IsUnscaled ? getMemScale(MI) : 1;
+  if (!inBoundsForPair(IsUnscaled, Offset, OffsetStride))
     return false;
 
   // Look ahead up to LdStLimit instructions for a pairable instruction.
