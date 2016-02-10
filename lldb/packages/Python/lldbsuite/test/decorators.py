@@ -301,12 +301,6 @@ def expectedFailureDarwin(bugnumber=None, compilers=None, debug_info=None):
 def expectedFailureFreeBSD(bugnumber=None, compilers=None, debug_info=None):
     return expectedFailureOS(['freebsd'], bugnumber, compilers, debug_info=debug_info)
 
-def expectedFailureLinux(bugnumber=None, compilers=None, debug_info=None, archs=None):
-    return expectedFailureOS(['linux'], bugnumber, compilers, debug_info=debug_info, archs=archs)
-
-def expectedFailureNetBSD(bugnumber=None, compilers=None, debug_info=None):
-    return expectedFailureOS(['netbsd'], bugnumber, compilers, debug_info=debug_info)
-
 def expectedFailureAndroid(bugnumber=None, api_levels=None, archs=None):
     """ Mark a test as xfail for Android.
 
