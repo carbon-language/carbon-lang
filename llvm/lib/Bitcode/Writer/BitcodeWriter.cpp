@@ -2250,7 +2250,7 @@ static void WriteValueSymbolTable(
   unsigned FnEntry7BitAbbrev;
   unsigned FnEntry6BitAbbrev;
   if (VSTOffsetPlaceholder > 0) {
-    // 8-bit fixed-width VST_FNENTRY function strings.
+    // 8-bit fixed-width VST_CODE_FNENTRY function strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_FNENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // value id
@@ -2259,7 +2259,7 @@ static void WriteValueSymbolTable(
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
     FnEntry8BitAbbrev = Stream.EmitAbbrev(Abbv);
 
-    // 7-bit fixed width VST_FNENTRY function strings.
+    // 7-bit fixed width VST_CODE_FNENTRY function strings.
     Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_FNENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // value id
@@ -2268,7 +2268,7 @@ static void WriteValueSymbolTable(
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
     FnEntry7BitAbbrev = Stream.EmitAbbrev(Abbv);
 
-    // 6-bit char6 VST_FNENTRY function strings.
+    // 6-bit char6 VST_CODE_FNENTRY function strings.
     Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_FNENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // value id
@@ -2299,9 +2299,9 @@ static void WriteValueSymbolTable(
         F = dyn_cast<Function>(GA->getBaseObject());
     }
 
-    // VST_ENTRY:   [valueid, namechar x N]
-    // VST_FNENTRY: [valueid, funcoffset, namechar x N]
-    // VST_BBENTRY: [bbid, namechar x N]
+    // VST_CODE_ENTRY:   [valueid, namechar x N]
+    // VST_CODE_FNENTRY: [valueid, funcoffset, namechar x N]
+    // VST_CODE_BBENTRY: [bbid, namechar x N]
     unsigned Code;
     if (isa<BasicBlock>(Name.getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
@@ -2352,7 +2352,7 @@ static void WriteCombinedValueSymbolTable(const FunctionInfoIndex &Index,
                                           BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 4);
 
-  // 8-bit fixed-width VST_COMBINED_FNENTRY function strings.
+  // 8-bit fixed-width VST_CODE_COMBINED_FNENTRY function strings.
   BitCodeAbbrev *Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_COMBINED_FNENTRY));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // funcoffset
@@ -2360,7 +2360,7 @@ static void WriteCombinedValueSymbolTable(const FunctionInfoIndex &Index,
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
   unsigned FnEntry8BitAbbrev = Stream.EmitAbbrev(Abbv);
 
-  // 7-bit fixed width VST_COMBINED_FNENTRY function strings.
+  // 7-bit fixed width VST_CODE_COMBINED_FNENTRY function strings.
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_COMBINED_FNENTRY));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // funcoffset
@@ -2368,7 +2368,7 @@ static void WriteCombinedValueSymbolTable(const FunctionInfoIndex &Index,
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
   unsigned FnEntry7BitAbbrev = Stream.EmitAbbrev(Abbv);
 
-  // 6-bit char6 VST_COMBINED_FNENTRY function strings.
+  // 6-bit char6 VST_CODE_COMBINED_FNENTRY function strings.
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_COMBINED_FNENTRY));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // funcoffset
@@ -2388,7 +2388,7 @@ static void WriteCombinedValueSymbolTable(const FunctionInfoIndex &Index,
       // Figure out the encoding to use for the name.
       StringEncoding Bits = getStringEncoding(FuncName.data(), FuncName.size());
 
-      // VST_COMBINED_FNENTRY: [funcsumoffset, namechar x N]
+      // VST_CODE_COMBINED_FNENTRY: [funcsumoffset, namechar x N]
       unsigned AbbrevToUse = FnEntry8BitAbbrev;
       if (Bits == SE_Char6)
         AbbrevToUse = FnEntry6BitAbbrev;
@@ -2552,7 +2552,7 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   // Other blocks can define their abbrevs inline.
   Stream.EnterBlockInfoBlock(2);
 
-  { // 8-bit fixed-width VST_ENTRY/VST_BBENTRY strings.
+  { // 8-bit fixed-width VST_CODE_ENTRY/VST_CODE_BBENTRY strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
@@ -2563,7 +2563,7 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       llvm_unreachable("Unexpected abbrev ordering!");
   }
 
-  { // 7-bit fixed width VST_ENTRY strings.
+  { // 7-bit fixed width VST_CODE_ENTRY strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
@@ -2573,7 +2573,7 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                                    Abbv) != VST_ENTRY_7_ABBREV)
       llvm_unreachable("Unexpected abbrev ordering!");
   }
-  { // 6-bit char6 VST_ENTRY strings.
+  { // 6-bit char6 VST_CODE_ENTRY strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
@@ -2583,7 +2583,7 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                                    Abbv) != VST_ENTRY_6_ABBREV)
       llvm_unreachable("Unexpected abbrev ordering!");
   }
-  { // 6-bit char6 VST_BBENTRY strings.
+  { // 6-bit char6 VST_CODE_BBENTRY strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_BBENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
