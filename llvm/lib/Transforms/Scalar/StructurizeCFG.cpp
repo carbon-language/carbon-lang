@@ -242,7 +242,7 @@ public:
   static char ID;
 
   StructurizeCFG() :
-    RegionPass(ID) {
+    RegionPass(ID), SkipUniformRegions(false) {
     initializeStructurizeCFGPass(*PassRegistry::getPassRegistry());
   }
 
