@@ -300,7 +300,9 @@ def SDNPWantParent  : SDNodeProperty;   // ComplexPattern gets the parent
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Operations
-class SDPatternOperator;
+class SDPatternOperator {
+  list<SDNodeProperty> Properties = [];
+}
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -310,7 +312,7 @@ class SDNode<string opcode, SDTypeProfile typeprof,
              : SDPatternOperator {
   string Opcode  = opcode;
   string SDClass = sdclass;
-  list<SDNodeProperty> Properties = props;
+  let Properties = props;
   SDTypeProfile TypeProfile = typeprof;
 }
 
