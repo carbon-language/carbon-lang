@@ -358,7 +358,7 @@ int main(int argc, char **argv) {
     SharedVersionedExt = LLVM_DYLIB_VERSION ".dll";
     if (HostTriple.isOSCygMing()) {
       StaticExt = "a";
-      StaticPrefix = SharedPrefix = "lib";
+      StaticPrefix = "lib";
     } else {
       StaticExt = "lib";
       DirSep = "\\";
