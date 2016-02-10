@@ -1600,10 +1600,10 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
   ISD::LoadExtType ExtType = Load->getExtensionType();
-  EVT VT = Load->getMemoryVT();
+  EVT MemVT = Load->getMemoryVT();
 
-  if (ExtType == ISD::NON_EXTLOAD && VT.getSizeInBits() < 32) {
-    assert(VT == MVT::i1 && "Only i1 non-extloads expected");
+  if (ExtType == ISD::NON_EXTLOAD && MemVT.getSizeInBits() < 32) {
+    assert(MemVT == MVT::i1 && "Only i1 non-extloads expected");
     // FIXME: Copied from PPC
     // First, load into 32 bits, then truncate to 1 bit.
 
@@ -1615,45 +1615,42 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                    BasePtr, MVT::i8, MMO);
 
     SDValue Ops[] = {
-      DAG.getNode(ISD::TRUNCATE, DL, VT, NewLD),
+      DAG.getNode(ISD::TRUNCATE, DL, MemVT, NewLD),
       NewLD.getValue(1)
     };
 
     return DAG.getMergeValues(Ops, DL);
   }
 
-  if (Op.getValueType().isVector()) {
-    assert(Op.getValueType().getVectorElementType() == MVT::i32 &&
-           "Custom lowering for non-i32 vectors hasn't been implemented.");
-    unsigned NumElements = Op.getValueType().getVectorNumElements();
-    assert(NumElements != 2 && "v2 loads are supported for all address spaces.");
+  if (!MemVT.isVector())
+    return SDValue();
 
-    switch (Load->getAddressSpace()) {
-      default: break;
-      case AMDGPUAS::CONSTANT_ADDRESS:
-      if (isMemOpUniform(Load))
-        break;
-        // Non-uniform loads will be selected to MUBUF instructions, so they
-        // have the same legalization requires ments as global and private
-        // loads.
-        //
-        // Fall-through
-      case AMDGPUAS::GLOBAL_ADDRESS:
-      case AMDGPUAS::PRIVATE_ADDRESS:
-        if (NumElements >= 8)
-          return SplitVectorLoad(Op, DAG);
+  assert(Op.getValueType().getVectorElementType() == MVT::i32 &&
+         "Custom lowering for non-i32 vectors hasn't been implemented.");
+  unsigned NumElements = MemVT.getVectorNumElements();
+  assert(NumElements != 2 && "v2 loads are supported for all address spaces.");
 
-        // v4 loads are supported for private and global memory.
-        if (NumElements <= 4)
-          break;
-        // fall-through
-      case AMDGPUAS::LOCAL_ADDRESS:
-        // If properly aligned, if we split we might be able to use ds_read_b64.
-        return SplitVectorLoad(Op, DAG);
-    }
+  switch (Load->getAddressSpace()) {
+  case AMDGPUAS::CONSTANT_ADDRESS:
+    if (isMemOpUniform(Load))
+      return SDValue();
+    // Non-uniform loads will be selected to MUBUF instructions, so they
+    // have the same legalization requires ments as global and private
+    // loads.
+    //
+    // Fall-through
+  case AMDGPUAS::GLOBAL_ADDRESS:
+  case AMDGPUAS::PRIVATE_ADDRESS:
+    if (NumElements >= 8)
+      return SplitVectorLoad(Op, DAG);
+    // v4 loads are supported for private and global memory.
+    return SDValue();
+  case AMDGPUAS::LOCAL_ADDRESS:
+    // If properly aligned, if we split we might be able to use ds_read_b64.
+    return SplitVectorLoad(Op, DAG);
+  default:
+    return SDValue();
   }
-
-  return SDValue();
 }
 
 SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
