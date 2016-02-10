@@ -44,6 +44,7 @@ using namespace llvm;
 /// register.
 bool WebAssemblyFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  assert(!MFI->isFrameAddressTaken());
   const auto *RegInfo =
       MF.getSubtarget<WebAssemblySubtarget>().getRegisterInfo();
   return MFI->hasVarSizedObjects() || MFI->hasStackMap() ||
@@ -75,7 +76,6 @@ void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
   auto *MFI = MF.getFrameInfo();
   assert(MFI->getCalleeSavedInfo().empty() &&
          "WebAssembly should not have callee-saved registers");
-  assert(!MFI->isFrameAddressTaken());
 
   uint64_t StackSize = MFI->getStackSize();
   if (!StackSize && !MFI->adjustsStack() && !hasFP(MF)) return;

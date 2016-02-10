@@ -279,6 +279,7 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SDValue Chain = CLI.Chain;
   SDValue Callee = CLI.Callee;
   MachineFunction &MF = DAG.getMachineFunction();
+  auto Layout = MF.getDataLayout();
 
   CallingConv::ID CallConv = CLI.CallConv;
   if (!CallingConvSupported(CallConv))
@@ -321,7 +322,7 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
                                       /*isSS=*/false);
       SDValue SizeNode =
           DAG.getConstant(Out.Flags.getByValSize(), DL, MVT::i32);
-      SDValue FINode = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+      SDValue FINode = DAG.getFrameIndex(FI, getPointerTy(Layout));
       Chain = DAG.getMemcpy(
           Chain, DL, FINode, OutVal, SizeNode, Out.Flags.getByValAlign(),
           /*isVolatile*/ false, /*AlwaysInline=*/true,
@@ -332,7 +333,8 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   bool IsVarArg = CLI.IsVarArg;
   unsigned NumFixedArgs = CLI.NumFixedArgs;
-  auto PtrVT = getPointerTy(MF.getDataLayout());
+
+  auto PtrVT = getPointerTy(Layout);
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -346,9 +348,8 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
       EVT VT = Arg.getValueType();
       assert(VT != MVT::iPTR && "Legalized args should be concrete");
       Type *Ty = VT.getTypeForEVT(*DAG.getContext());
-      unsigned Offset =
-          CCInfo.AllocateStack(MF.getDataLayout().getTypeAllocSize(Ty),
-                               MF.getDataLayout().getABITypeAlignment(Ty));
+      unsigned Offset = CCInfo.AllocateStack(Layout.getTypeAllocSize(Ty),
+                                             Layout.getABITypeAlignment(Ty));
       CCInfo.addLoc(CCValAssign::getMem(ArgLocs.size(), VT.getSimpleVT(),
                                         Offset, VT.getSimpleVT(),
                                         CCValAssign::Full));
@@ -361,7 +362,8 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   if (IsVarArg && NumBytes) {
     // For non-fixed arguments, next emit stores to store the argument values
     // to the stack buffer at the offsets computed above.
-    int FI = MF.getFrameInfo()->CreateStackObject(NumBytes, /*Alignment=*/16,
+    int FI = MF.getFrameInfo()->CreateStackObject(NumBytes,
+                                                  Layout.getStackAlignment(),
                                                   /*isSS=*/false);
     unsigned ValNo = 0;
     SmallVector<SDValue, 8> Chains;
@@ -370,7 +372,7 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
       assert(ArgLocs[ValNo].getValNo() == ValNo &&
              "ArgLocs should remain in order and only hold varargs args");
       unsigned Offset = ArgLocs[ValNo++].getLocMemOffset();
-      FINode = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+      FINode = DAG.getFrameIndex(FI, getPointerTy(Layout));
       SDValue Add = DAG.getNode(ISD::ADD, DL, PtrVT, FINode,
                                 DAG.getConstant(Offset, DL, PtrVT));
       Chains.push_back(DAG.getStore(
