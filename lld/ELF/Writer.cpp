@@ -1184,8 +1184,16 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
       Symtab.addSynthetic(Stop, *Sec, Sec->getSize());
 }
 
-template <class ELFT> static bool needsPhdr(OutputSectionBase<ELFT> *Sec) {
-  return Sec->getFlags() & SHF_ALLOC;
+template <class ELFT> static bool needsPtLoad(OutputSectionBase<ELFT> *Sec) {
+  if (!(Sec->getFlags() & SHF_ALLOC))
+    return false;
+
+  // Don't allocate VA space for TLS NOBITS sections. The PT_TLS PHDR is
+  // responsible for allocating space for them, not the PT_LOAD that
+  // contains the TLS initialization image.
+  if (Sec->getFlags() & SHF_TLS && Sec->getType() == SHT_NOBITS)
+    return false;
+  return true;
 }
 
 static uint32_t toPhdrFlags(uint64_t Flags) {
@@ -1241,8 +1249,17 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
   Phdr TlsHdr(PT_TLS, PF_R);
   Phdr RelRo(PT_GNU_RELRO, PF_R);
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    if (!needsPhdr<ELFT>(Sec))
+    if (!(Sec->getFlags() & SHF_ALLOC))
       break;
+
+    // If we meet TLS section then we create TLS header
+    // and put all TLS sections inside for futher use when
+    // assign addresses.
+    if (Sec->getFlags() & SHF_TLS)
+      AddSec(TlsHdr, Sec);
+
+    if (!needsPtLoad<ELFT>(Sec))
+      continue;
 
     // If flags changed then we want new load segment.
     uintX_t NewFlags = toPhdrFlags(Sec->getFlags());
@@ -1251,14 +1268,6 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
                                                           : (uint32_t)PT_LOAD;
       Load = AddHdr(LoadType, NewFlags);
       Flags = NewFlags;
-    }
-    // If we meet TLS section then we create TLS header
-    // and put all TLS sections inside for futher use when
-    // assign addresses.
-    if (Sec->getFlags() & SHF_TLS) {
-      AddSec(TlsHdr, Sec);
-      if (Sec->getType() == SHT_NOBITS)
-        continue;
     }
 
     AddSec(*Load, Sec);
@@ -1307,18 +1316,15 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   SmallPtrSet<OutputSectionBase<ELFT> *, 4> PageAlign;
   for (const Phdr &P : Phdrs) {
     if (P.H.p_type == PT_GNU_RELRO) {
-      // Find the first section after PT_GNU_RELRO. If it is in a PT_LOAD
-      // and is not tls, we have to align it to a page. We don't have to
-      // align tls since TLS NOBITS takes no space.
+      // Find the first section after PT_GNU_RELRO. If it is in a PT_LOAD we
+      // have to align it to a page.
       auto I = std::find(OutputSections.begin(), OutputSections.end(), P.Last);
       ++I;
-      if (I != OutputSections.end() && needsPhdr(*I) &&
-          !((*I)->getFlags() & SHF_TLS))
+      if (I != OutputSections.end() && needsPtLoad(*I))
         PageAlign.insert(*I);
     }
 
-    // FIXME: why create empty PT_LOAD?
-    if (P.H.p_type == PT_LOAD && P.First)
+    if (P.H.p_type == PT_LOAD)
       PageAlign.insert(P.First);
   }
 
@@ -1337,21 +1343,15 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       FileOff += Sec->getSize();
 
     // We only assign VAs to allocated sections.
-    if (needsPhdr<ELFT>(Sec)) {
-      // Don't allocate VA space for TLS NOBITS sections. The PT_TLS PHDR is
-      // responsible for allocating space for them, not the PT_LOAD that
-      // contains the TLS initialization image.
-      bool IsTls = Sec->getFlags() & SHF_TLS;
-      if (IsTls && Sec->getType() == SHT_NOBITS) {
-        uintX_t TVA = VA + ThreadBssOffset;
-        TVA = alignTo(TVA, Align);
-        Sec->setVA(TVA);
-        ThreadBssOffset = TVA - VA + Sec->getSize();
-      } else {
-        VA = alignTo(VA, Align);
-        Sec->setVA(VA);
-        VA += Sec->getSize();
-      }
+    if (needsPtLoad<ELFT>(Sec)) {
+      VA = alignTo(VA, Align);
+      Sec->setVA(VA);
+      VA += Sec->getSize();
+    } else if (Sec->getFlags() & SHF_TLS && Sec->getType() == SHT_NOBITS) {
+      uintX_t TVA = VA + ThreadBssOffset;
+      TVA = alignTo(TVA, Align);
+      Sec->setVA(TVA);
+      ThreadBssOffset = TVA - VA + Sec->getSize();
     }
   }
 
