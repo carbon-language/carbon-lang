@@ -61,6 +61,8 @@ private:
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const;
+
+  SDValue lowerPrivateExtLoad(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerTrig(SDValue Op, SelectionDAG &DAG) const;

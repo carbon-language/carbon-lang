@@ -102,7 +102,6 @@ protected:
   /// \brief Split a vector store into 2 stores of half the vector.
   SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
 
-  SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;

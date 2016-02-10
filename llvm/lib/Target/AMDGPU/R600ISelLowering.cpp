@@ -1413,17 +1413,77 @@ ConstantAddressBlock(unsigned AddressSpace) {
   }
 }
 
-SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
-{
-  EVT VT = Op.getValueType();
+SDValue R600TargetLowering::lowerPrivateExtLoad(SDValue Op,
+                                                SelectionDAG &DAG) const {
   SDLoc DL(Op);
-  LoadSDNode *LoadNode = cast<LoadSDNode>(Op);
-  SDValue Chain = Op.getOperand(0);
-  SDValue Ptr = Op.getOperand(1);
-  SDValue LoweredLoad;
+  LoadSDNode *Load = cast<LoadSDNode>(Op);
+  ISD::LoadExtType ExtType = Load->getExtensionType();
+  EVT MemVT = Load->getMemoryVT();
 
-  if (SDValue Ret = AMDGPUTargetLowering::LowerLOAD(Op, DAG))
-    return Ret;
+  // <SI && AS=PRIVATE && EXTLOAD && size < 32bit,
+  // register (2-)byte extract.
+
+  // Get Register holding the target.
+  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
+                            DAG.getConstant(2, DL, MVT::i32));
+  // Load the Register.
+  SDValue Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
+                            Load->getChain(),
+                            Ptr,
+                            DAG.getTargetConstant(0, DL, MVT::i32),
+                            Op.getOperand(2));
+
+  // Get offset within the register.
+  SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32,
+                                Load->getBasePtr(),
+                                DAG.getConstant(0x3, DL, MVT::i32));
+
+  // Bit offset of target byte (byteIdx * 8).
+  SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
+                                 DAG.getConstant(3, DL, MVT::i32));
+
+  // Shift to the right.
+  Ret = DAG.getNode(ISD::SRL, DL, MVT::i32, Ret, ShiftAmt);
+
+  // Eliminate the upper bits by setting them to ...
+  EVT MemEltVT = MemVT.getScalarType();
+
+  // ... ones.
+  if (ExtType == ISD::SEXTLOAD) {
+    SDValue MemEltVTNode = DAG.getValueType(MemEltVT);
+
+    SDValue Ops[] = {
+      DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, MVT::i32, Ret, MemEltVTNode),
+      Load->getChain()
+    };
+
+    return DAG.getMergeValues(Ops, DL);
+  }
+
+  // ... or zeros.
+  SDValue Ops[] = {
+    DAG.getZeroExtendInReg(Ret, DL, MemEltVT),
+    Load->getChain()
+  };
+
+  return DAG.getMergeValues(Ops, DL);
+}
+
+SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+  LoadSDNode *LoadNode = cast<LoadSDNode>(Op);
+  unsigned AS = LoadNode->getAddressSpace();
+  EVT MemVT = LoadNode->getMemoryVT();
+  ISD::LoadExtType ExtType = LoadNode->getExtensionType();
+
+  if (AS == AMDGPUAS::PRIVATE_ADDRESS &&
+      ExtType != ISD::NON_EXTLOAD && MemVT.bitsLT(MVT::i32)) {
+    return lowerPrivateExtLoad(Op, DAG);
+  }
+
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  SDValue Chain = LoadNode->getChain();
+  SDValue Ptr = LoadNode->getBasePtr();
 
   // Lower loads constant address space global variable loads
   if (LoadNode->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
@@ -1497,6 +1557,8 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     };
     return DAG.getMergeValues(MergedValues, DL);
   }
+
+  SDValue LoweredLoad;
 
   // For most operations returning SDValue() will result in the node being
   // expanded by the DAG Legalizer. This is not the case for ISD::LOAD, so we

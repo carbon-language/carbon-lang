@@ -1599,6 +1599,28 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
 SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
+  ISD::LoadExtType ExtType = Load->getExtensionType();
+  EVT VT = Load->getMemoryVT();
+
+  if (ExtType == ISD::NON_EXTLOAD && VT.getSizeInBits() < 32) {
+    assert(VT == MVT::i1 && "Only i1 non-extloads expected");
+    // FIXME: Copied from PPC
+    // First, load into 32 bits, then truncate to 1 bit.
+
+    SDValue Chain = Load->getChain();
+    SDValue BasePtr = Load->getBasePtr();
+    MachineMemOperand *MMO = Load->getMemOperand();
+
+    SDValue NewLD = DAG.getExtLoad(ISD::EXTLOAD, DL, MVT::i32, Chain,
+                                   BasePtr, MVT::i8, MMO);
+
+    SDValue Ops[] = {
+      DAG.getNode(ISD::TRUNCATE, DL, VT, NewLD),
+      NewLD.getValue(1)
+    };
+
+    return DAG.getMergeValues(Ops, DL);
+  }
 
   if (Op.getValueType().isVector()) {
     assert(Op.getValueType().getVectorElementType() == MVT::i32 &&
@@ -1631,7 +1653,7 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  return AMDGPUTargetLowering::LowerLOAD(Op, DAG);
+  return SDValue();
 }
 
 SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
