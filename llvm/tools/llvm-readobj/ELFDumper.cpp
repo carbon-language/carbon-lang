@@ -29,6 +29,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MipsABIFlags.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -37,7 +38,15 @@ using namespace ELF;
 #define LLVM_READOBJ_ENUM_CASE(ns, enum) \
   case ns::enum: return #enum;
 
+#define ENUM_ENT(enum, altName) \
+  { #enum, altName, ELF::enum }
+
+#define ENUM_ENT_1(enum) \
+  { #enum, #enum, ELF::enum }
+
 namespace {
+
+template <class ELFT> class DumpStyle;
 
 template<typename ELFT>
 class ELFDumper : public ObjDumper {
@@ -69,6 +78,7 @@ public:
   void printStackMap() const override;
 
 private:
+  std::unique_ptr<DumpStyle<ELFT>> ELFDumperStyle;
   typedef ELFFile<ELFT> ELFO;
   typedef typename ELFO::Elf_Shdr Elf_Shdr;
   typedef typename ELFO::Elf_Sym Elf_Sym;
@@ -186,6 +196,41 @@ public:
   const Elf_Shdr *getDotDynSymSec() const { return DotDynSymSec; }
   const Elf_Shdr *getDotSymtabSec() const { return DotSymtabSec; }
   ArrayRef<Elf_Word> getShndxTable() { return ShndxTable; }
+};
+
+template <typename ELFT> class DumpStyle {
+public:
+  virtual void printFileHeaders(const ELFFile<ELFT> *Obj) = 0;
+  virtual ~DumpStyle() { }
+};
+
+template <typename ELFT> class GNUStyle : public DumpStyle<ELFT> {
+  formatted_raw_ostream OS;
+
+public:
+  typedef typename ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  GNUStyle(StreamWriter &W) : OS(W.getOStream()) {}
+  void printFileHeaders(const ELFFile<ELFT> *Obj) override;
+
+private:
+  template <typename T, typename TEnum>
+  std::string printEnum(T Value, ArrayRef<EnumEntry<TEnum>> EnumValues) {
+    for (const auto &EnumItem : EnumValues)
+      if (EnumItem.Value == Value)
+        return EnumItem.AltName;
+    return to_hexString(Value);
+  }
+};
+
+template <typename ELFT> class LLVMStyle : public DumpStyle<ELFT> {
+public:
+  typedef typename ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  LLVMStyle(StreamWriter &W) : W(W) {}
+
+  void printFileHeaders(const ELFFile<ELFT> *Obj) override;
+
+private:
+  StreamWriter &W;
 };
 
 template <class T> T errorOrDefault(ErrorOr<T> Val, T Default = T()) {
@@ -516,226 +561,224 @@ static const typename ELFO::Elf_Shdr *findSectionByName(const ELFO &Obj,
 }
 
 static const EnumEntry<unsigned> ElfClass[] = {
-  { "None",   ELF::ELFCLASSNONE },
-  { "32-bit", ELF::ELFCLASS32   },
-  { "64-bit", ELF::ELFCLASS64   },
+  {"None",   "none",   ELF::ELFCLASSNONE},
+  {"32-bit", "ELF32",  ELF::ELFCLASS32},
+  {"64-bit", "ELF64",  ELF::ELFCLASS64},
 };
 
 static const EnumEntry<unsigned> ElfDataEncoding[] = {
-  { "None",         ELF::ELFDATANONE },
-  { "LittleEndian", ELF::ELFDATA2LSB },
-  { "BigEndian",    ELF::ELFDATA2MSB },
+  {"None",         "none",                          ELF::ELFDATANONE},
+  {"LittleEndian", "2's complement, little endian", ELF::ELFDATA2LSB},
+  {"BigEndian",    "2's complement, big endian",    ELF::ELFDATA2MSB},
 };
 
 static const EnumEntry<unsigned> ElfObjectFileType[] = {
-  { "None",         ELF::ET_NONE },
-  { "Relocatable",  ELF::ET_REL  },
-  { "Executable",   ELF::ET_EXEC },
-  { "SharedObject", ELF::ET_DYN  },
-  { "Core",         ELF::ET_CORE },
+  {"None",         "NONE (none)",              ELF::ET_NONE},
+  {"Relocatable",  "REL (Relocatable file)",   ELF::ET_REL},
+  {"Executable",   "EXEC (Executable file)",   ELF::ET_EXEC},
+  {"SharedObject", "DYN (Shared object file)", ELF::ET_DYN},
+  {"Core",         "CORE (Core file)",         ELF::ET_CORE},
 };
 
 static const EnumEntry<unsigned> ElfOSABI[] = {
-  { "SystemV",      ELF::ELFOSABI_NONE         },
-  { "HPUX",         ELF::ELFOSABI_HPUX         },
-  { "NetBSD",       ELF::ELFOSABI_NETBSD       },
-  { "GNU/Linux",    ELF::ELFOSABI_LINUX        },
-  { "GNU/Hurd",     ELF::ELFOSABI_HURD         },
-  { "Solaris",      ELF::ELFOSABI_SOLARIS      },
-  { "AIX",          ELF::ELFOSABI_AIX          },
-  { "IRIX",         ELF::ELFOSABI_IRIX         },
-  { "FreeBSD",      ELF::ELFOSABI_FREEBSD      },
-  { "TRU64",        ELF::ELFOSABI_TRU64        },
-  { "Modesto",      ELF::ELFOSABI_MODESTO      },
-  { "OpenBSD",      ELF::ELFOSABI_OPENBSD      },
-  { "OpenVMS",      ELF::ELFOSABI_OPENVMS      },
-  { "NSK",          ELF::ELFOSABI_NSK          },
-  { "AROS",         ELF::ELFOSABI_AROS         },
-  { "FenixOS",      ELF::ELFOSABI_FENIXOS      },
-  { "CloudABI",     ELF::ELFOSABI_CLOUDABI     },
-  { "C6000_ELFABI", ELF::ELFOSABI_C6000_ELFABI },
-  { "C6000_LINUX" , ELF::ELFOSABI_C6000_LINUX  },
-  { "ARM",          ELF::ELFOSABI_ARM          },
-  { "Standalone"  , ELF::ELFOSABI_STANDALONE   }
+  {"SystemV",      "UNIX - System V",      ELF::ELFOSABI_NONE},
+  {"HPUX",         "UNIX - HP-UX",         ELF::ELFOSABI_HPUX},
+  {"NetBSD",       "UNIX - NetBSD",        ELF::ELFOSABI_NETBSD},
+  {"GNU/Linux",    "UNIX - GNU",           ELF::ELFOSABI_LINUX},
+  {"GNU/Hurd",     "GNU/Hurd",             ELF::ELFOSABI_HURD},
+  {"Solaris",      "UNIX - Solaris",       ELF::ELFOSABI_SOLARIS},
+  {"AIX",          "UNIX - AIX",           ELF::ELFOSABI_AIX},
+  {"IRIX",         "UNIX - IRIX",          ELF::ELFOSABI_IRIX},
+  {"FreeBSD",      "UNIX - FreeBSD",       ELF::ELFOSABI_FREEBSD},
+  {"TRU64",        "UNIX - TRU64",         ELF::ELFOSABI_TRU64},
+  {"Modesto",      "Novell - Modesto",     ELF::ELFOSABI_MODESTO},
+  {"OpenBSD",      "UNIX - OpenBSD",       ELF::ELFOSABI_OPENBSD},
+  {"OpenVMS",      "VMS - OpenVMS",        ELF::ELFOSABI_OPENVMS},
+  {"NSK",          "HP - Non-Stop Kernel", ELF::ELFOSABI_NSK},
+  {"AROS",         "AROS",                 ELF::ELFOSABI_AROS},
+  {"FenixOS",      "FenixOS",              ELF::ELFOSABI_FENIXOS},
+  {"CloudABI",     "CloudABI",             ELF::ELFOSABI_CLOUDABI},
+  {"C6000_ELFABI", "Bare-metal C6000",     ELF::ELFOSABI_C6000_ELFABI},
+  {"C6000_LINUX",  "Linux C6000",          ELF::ELFOSABI_C6000_LINUX},
+  {"ARM",          "ARM",                  ELF::ELFOSABI_ARM},
+  {"Standalone",   "Standalone App",       ELF::ELFOSABI_STANDALONE}
 };
 
 static const EnumEntry<unsigned> ElfMachineType[] = {
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_NONE         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_M32          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SPARC        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_386          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_68K          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_88K          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_IAMCU        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_860          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MIPS         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_S370         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MIPS_RS3_LE  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PARISC       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_VPP500       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SPARC32PLUS  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_960          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PPC          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PPC64        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_S390         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SPU          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_V800         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_FR20         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_RH32         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_RCE          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ARM          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ALPHA        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SH           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SPARCV9      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TRICORE      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ARC          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_H8_300       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_H8_300H      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_H8S          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_H8_500       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_IA_64        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MIPS_X       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_COLDFIRE     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_68HC12       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MMA          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PCP          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_NCPU         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_NDR1         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_STARCORE     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ME16         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ST100        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TINYJ        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_X86_64       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PDSP         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PDP10        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PDP11        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_FX66         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ST9PLUS      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ST7          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_68HC16       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_68HC11       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_68HC08       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_68HC05       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SVX          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ST19         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_VAX          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CRIS         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_JAVELIN      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_FIREPATH     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ZSP          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MMIX         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_HUANY        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PRISM        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_AVR          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_FR30         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_D10V         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_D30V         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_V850         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_M32R         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MN10300      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MN10200      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_PJ           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_OPENRISC     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ARC_COMPACT  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_XTENSA       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_VIDEOCORE    ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TMM_GPP      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_NS32K        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TPC          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SNP1K        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ST200        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_IP2K         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MAX          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CR           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_F2MC16       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MSP430       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_BLACKFIN     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SE_C33       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SEP          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ARCA         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_UNICORE      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_EXCESS       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_DXP          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ALTERA_NIOS2 ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CRX          ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_XGATE        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_C166         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_M16C         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_DSPIC30F     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CE           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_M32C         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TSK3000      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_RS08         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SHARC        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ECOG2        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SCORE7       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_DSP24        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_VIDEOCORE3   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_LATTICEMICO32),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SE_C17       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TI_C6000     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TI_C2000     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TI_C5500     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MMDSP_PLUS   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CYPRESS_M8C  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_R32C         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TRIMEDIA     ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_HEXAGON      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_8051         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_STXP7X       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_NDS32        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ECOG1        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ECOG1X       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MAXQ30       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_XIMO16       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MANIK        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CRAYNV2      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_RX           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_METAG        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_MCST_ELBRUS  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ECOG16       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CR16         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ETPU         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_SLE9X        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_L10M         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_K10M         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_AARCH64      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_AVR32        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_STM8         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TILE64       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TILEPRO      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CUDA         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_TILEGX       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_CLOUDSHIELD  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_COREA_1ST    ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_COREA_2ND    ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_ARC_COMPACT2 ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_OPEN8        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_RL78         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_VIDEOCORE5   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_78KOR        ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_56800EX      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_AMDGPU       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, EM_WEBASSEMBLY  ),
+  ENUM_ENT(EM_NONE,          "None"),
+  ENUM_ENT(EM_M32,           "WE32100"),
+  ENUM_ENT(EM_SPARC,         "Sparc"),
+  ENUM_ENT(EM_386,           "Intel 80386"),
+  ENUM_ENT(EM_68K,           "MC68000"),
+  ENUM_ENT(EM_88K,           "MC88000"),
+  ENUM_ENT(EM_IAMCU,         "EM_IAMCU"),
+  ENUM_ENT(EM_860,           "Intel 80860"),
+  ENUM_ENT(EM_MIPS,          "MIPS R3000"),
+  ENUM_ENT(EM_S370,          "IBM System/370"),
+  ENUM_ENT(EM_MIPS_RS3_LE,   "MIPS R3000 little-endian"),
+  ENUM_ENT(EM_PARISC,        "HPPA"),
+  ENUM_ENT(EM_VPP500,        "Fujitsu VPP500"),
+  ENUM_ENT(EM_SPARC32PLUS,   "Sparc v8+"),
+  ENUM_ENT(EM_960,           "Intel 80960"),
+  ENUM_ENT(EM_PPC,           "PowerPC"),
+  ENUM_ENT(EM_PPC64,         "PowerPC64"),
+  ENUM_ENT(EM_S390,          "IBM S/390"),
+  ENUM_ENT(EM_SPU,           "SPU"),
+  ENUM_ENT(EM_V800,          "NEC V800 series"),
+  ENUM_ENT(EM_FR20,          "Fujistsu FR20"),
+  ENUM_ENT(EM_RH32,          "TRW RH-32"),
+  ENUM_ENT(EM_RCE,           "Motorola RCE"),
+  ENUM_ENT(EM_ARM,           "ARM"),
+  ENUM_ENT(EM_ALPHA,         "EM_ALPHA"),
+  ENUM_ENT(EM_SH,            "Hitachi SH"),
+  ENUM_ENT(EM_SPARCV9,       "Sparc v9"),
+  ENUM_ENT(EM_TRICORE,       "Siemens Tricore"),
+  ENUM_ENT(EM_ARC,           "ARC"),
+  ENUM_ENT(EM_H8_300,        "Hitachi H8/300"),
+  ENUM_ENT(EM_H8_300H,       "Hitachi H8/300H"),
+  ENUM_ENT(EM_H8S,           "Hitachi H8S"),
+  ENUM_ENT(EM_H8_500,        "Hitachi H8/500"),
+  ENUM_ENT(EM_IA_64,         "Intel IA-64"),
+  ENUM_ENT(EM_MIPS_X,        "Stanford MIPS-X"),
+  ENUM_ENT(EM_COLDFIRE,      "Motorola Coldfire"),
+  ENUM_ENT(EM_68HC12,        "Motorola MC68HC12 Microcontroller"),
+  ENUM_ENT(EM_MMA,           "Fujitsu Multimedia Accelerator"),
+  ENUM_ENT(EM_PCP,           "Siemens PCP"),
+  ENUM_ENT(EM_NCPU,          "Sony nCPU embedded RISC processor"),
+  ENUM_ENT(EM_NDR1,          "Denso NDR1 microprocesspr"),
+  ENUM_ENT(EM_STARCORE,      "Motorola Star*Core processor"),
+  ENUM_ENT(EM_ME16,          "Toyota ME16 processor"),
+  ENUM_ENT(EM_ST100,         "STMicroelectronics ST100 processor"),
+  ENUM_ENT(EM_TINYJ,         "Advanced Logic Corp. TinyJ embedded processor"),
+  ENUM_ENT(EM_X86_64,        "Advanced Micro Devices X86-64"),
+  ENUM_ENT(EM_PDSP,          "Sony DSP processor"),
+  ENUM_ENT(EM_PDP10,         "Digital Equipment Corp. PDP-10"),
+  ENUM_ENT(EM_PDP11,         "Digital Equipment Corp. PDP-11"),
+  ENUM_ENT(EM_FX66,          "Siemens FX66 microcontroller"),
+  ENUM_ENT(EM_ST9PLUS,       "STMicroelectronics ST9+ 8/16 bit microcontroller"),
+  ENUM_ENT(EM_ST7,           "STMicroelectronics ST7 8-bit microcontroller"),
+  ENUM_ENT(EM_68HC16,        "Motorola MC68HC16 Microcontroller"),
+  ENUM_ENT(EM_68HC11,        "Motorola MC68HC11 Microcontroller"),
+  ENUM_ENT(EM_68HC08,        "Motorola MC68HC08 Microcontroller"),
+  ENUM_ENT(EM_68HC05,        "Motorola MC68HC05 Microcontroller"),
+  ENUM_ENT(EM_SVX,           "Silicon Graphics SVx"),
+  ENUM_ENT(EM_ST19,          "STMicroelectronics ST19 8-bit microcontroller"),
+  ENUM_ENT(EM_VAX,           "Digital VAX"),
+  ENUM_ENT(EM_CRIS,          "Axis Communications 32-bit embedded processor"),
+  ENUM_ENT(EM_JAVELIN,       "Infineon Technologies 32-bit embedded cpu"),
+  ENUM_ENT(EM_FIREPATH,      "Element 14 64-bit DSP processor"),
+  ENUM_ENT(EM_ZSP,           "LSI Logic's 16-bit DSP processor"),
+  ENUM_ENT(EM_MMIX,          "Donald Knuth's educational 64-bit processor"),
+  ENUM_ENT(EM_HUANY,         "Harvard Universitys's machine-independent object format"),
+  ENUM_ENT(EM_PRISM,         "Vitesse Prism"),
+  ENUM_ENT(EM_AVR,           "Atmel AVR 8-bit microcontroller"),
+  ENUM_ENT(EM_FR30,          "Fujitsu FR30"),
+  ENUM_ENT(EM_D10V,          "Mitsubishi D10V"),
+  ENUM_ENT(EM_D30V,          "Mitsubishi D30V"),
+  ENUM_ENT(EM_V850,          "NEC v850"),
+  ENUM_ENT(EM_M32R,          "Renesas M32R (formerly Mitsubishi M32r)"),
+  ENUM_ENT(EM_MN10300,       "Matsushita MN10300"),
+  ENUM_ENT(EM_MN10200,       "Matsushita MN10200"),
+  ENUM_ENT(EM_PJ,            "picoJava"),
+  ENUM_ENT(EM_OPENRISC,      "OpenRISC 32-bit embedded processor"),
+  ENUM_ENT(EM_ARC_COMPACT,   "EM_ARC_COMPACT"),
+  ENUM_ENT(EM_XTENSA,        "Tensilica Xtensa Processor"),
+  ENUM_ENT(EM_VIDEOCORE,     "Alphamosaic VideoCore processor"),
+  ENUM_ENT(EM_TMM_GPP,       "Thompson Multimedia General Purpose Processor"),
+  ENUM_ENT(EM_NS32K,         "National Semiconductor 32000 series"),
+  ENUM_ENT(EM_TPC,           "Tenor Network TPC processor"),
+  ENUM_ENT(EM_SNP1K,         "EM_SNP1K"),
+  ENUM_ENT(EM_ST200,         "STMicroelectronics ST200 microcontroller"),
+  ENUM_ENT(EM_IP2K,          "Ubicom IP2xxx 8-bit microcontrollers"),
+  ENUM_ENT(EM_MAX,           "MAX Processor"),
+  ENUM_ENT(EM_CR,            "National Semiconductor CompactRISC"),
+  ENUM_ENT(EM_F2MC16,        "Fujitsu F2MC16"),
+  ENUM_ENT(EM_MSP430,        "Texas Instruments msp430 microcontroller"),
+  ENUM_ENT(EM_BLACKFIN,      "Analog Devices Blackfin"),
+  ENUM_ENT(EM_SE_C33,        "S1C33 Family of Seiko Epson processors"),
+  ENUM_ENT(EM_SEP,           "Sharp embedded microprocessor"),
+  ENUM_ENT(EM_ARCA,          "Arca RISC microprocessor"),
+  ENUM_ENT(EM_UNICORE,       "Unicore"),
+  ENUM_ENT(EM_EXCESS,        "eXcess 16/32/64-bit configurable embedded CPU"),
+  ENUM_ENT(EM_DXP,           "Icera Semiconductor Inc. Deep Execution Processor"),
+  ENUM_ENT(EM_ALTERA_NIOS2,  "Altera Nios"),
+  ENUM_ENT(EM_CRX,           "National Semiconductor CRX microprocessor"),
+  ENUM_ENT(EM_XGATE,         "Motorola XGATE embedded processor"),
+  ENUM_ENT(EM_C166,          "Infineon Technologies xc16x"),
+  ENUM_ENT(EM_M16C,          "Renesas M16C"),
+  ENUM_ENT(EM_DSPIC30F,      "Microchip Technology dsPIC30F Digital Signal Controller"),
+  ENUM_ENT(EM_CE,            "Freescale Communication Engine RISC core"),
+  ENUM_ENT(EM_M32C,          "Renesas M32C"),
+  ENUM_ENT(EM_TSK3000,       "Altium TSK3000 core"),
+  ENUM_ENT(EM_RS08,          "Freescale RS08 embedded processor"),
+  ENUM_ENT(EM_SHARC,         "EM_SHARC"),
+  ENUM_ENT(EM_ECOG2,         "Cyan Technology eCOG2 microprocessor"),
+  ENUM_ENT(EM_SCORE7,        "SUNPLUS S+Core"),
+  ENUM_ENT(EM_DSP24,         "New Japan Radio (NJR) 24-bit DSP Processor"),
+  ENUM_ENT(EM_VIDEOCORE3,    "Broadcom VideoCore III processor"),
+  ENUM_ENT(EM_LATTICEMICO32, "Lattice Mico32"),
+  ENUM_ENT(EM_SE_C17,        "Seiko Epson C17 family"),
+  ENUM_ENT(EM_TI_C6000,      "Texas Instruments TMS320C6000 DSP family"),
+  ENUM_ENT(EM_TI_C2000,      "Texas Instruments TMS320C2000 DSP family"),
+  ENUM_ENT(EM_TI_C5500,      "Texas Instruments TMS320C55x DSP family"),
+  ENUM_ENT(EM_MMDSP_PLUS,    "STMicroelectronics 64bit VLIW Data Signal Processor"),
+  ENUM_ENT(EM_CYPRESS_M8C,   "Cypress M8C microprocessor"),
+  ENUM_ENT(EM_R32C,          "Renesas R32C series microprocessors"),
+  ENUM_ENT(EM_TRIMEDIA,      "NXP Semiconductors TriMedia architecture family"),
+  ENUM_ENT(EM_HEXAGON,       "Qualcomm Hexagon"),
+  ENUM_ENT(EM_8051,          "Intel 8051 and variants"),
+  ENUM_ENT(EM_STXP7X,        "STMicroelectronics STxP7x family"),
+  ENUM_ENT(EM_NDS32,         "Andes Technology compact code size embedded RISC processor family"),
+  ENUM_ENT(EM_ECOG1,         "Cyan Technology eCOG1 microprocessor"),
+  ENUM_ENT(EM_ECOG1X,        "Cyan Technology eCOG1X family"),
+  ENUM_ENT(EM_MAXQ30,        "Dallas Semiconductor MAXQ30 Core microcontrollers"),
+  ENUM_ENT(EM_XIMO16,        "New Japan Radio (NJR) 16-bit DSP Processor"),
+  ENUM_ENT(EM_MANIK,         "M2000 Reconfigurable RISC Microprocessor"),
+  ENUM_ENT(EM_CRAYNV2,       "Cray Inc. NV2 vector architecture"),
+  ENUM_ENT(EM_RX,            "Renesas RX"),
+  ENUM_ENT(EM_METAG,         "Imagination Technologies Meta processor architecture"),
+  ENUM_ENT(EM_MCST_ELBRUS,   "MCST Elbrus general purpose hardware architecture"),
+  ENUM_ENT(EM_ECOG16,        "Cyan Technology eCOG16 family"),
+  ENUM_ENT(EM_CR16,          "Xilinx MicroBlaze"),
+  ENUM_ENT(EM_ETPU,          "Freescale Extended Time Processing Unit"),
+  ENUM_ENT(EM_SLE9X,         "Infineon Technologies SLE9X core"),
+  ENUM_ENT(EM_L10M,          "EM_L10M"),
+  ENUM_ENT(EM_K10M,          "EM_K10M"),
+  ENUM_ENT(EM_AARCH64,       "AArch64"),
+  ENUM_ENT(EM_AVR32,         "Atmel AVR 8-bit microcontroller"),
+  ENUM_ENT(EM_STM8,          "STMicroeletronics STM8 8-bit microcontroller"),
+  ENUM_ENT(EM_TILE64,        "Tilera TILE64 multicore architecture family"),
+  ENUM_ENT(EM_TILEPRO,       "Tilera TILEPro multicore architecture family"),
+  ENUM_ENT(EM_CUDA,          "NVIDIA CUDA architecture"),
+  ENUM_ENT(EM_TILEGX,        "Tilera TILE-Gx multicore architecture family"),
+  ENUM_ENT(EM_CLOUDSHIELD,   "EM_CLOUDSHIELD"),
+  ENUM_ENT(EM_COREA_1ST,     "EM_COREA_1ST"),
+  ENUM_ENT(EM_COREA_2ND,     "EM_COREA_2ND"),
+  ENUM_ENT(EM_ARC_COMPACT2,  "EM_ARC_COMPACT2"),
+  ENUM_ENT(EM_OPEN8,         "EM_OPEN8"),
+  ENUM_ENT(EM_RL78,          "Renesas RL78"),
+  ENUM_ENT(EM_VIDEOCORE5,    "Broadcom VideoCore V processor"),
+  ENUM_ENT(EM_78KOR,         "EM_78KOR"),
+  ENUM_ENT(EM_56800EX,       "EM_56800EX"),
+  ENUM_ENT(EM_AMDGPU,        "EM_AMDGPU"),
+  ENUM_ENT(EM_WEBASSEMBLY,   "EM_WEBASSEMBLY")
 };
 
 static const EnumEntry<unsigned> ElfSymbolBindings[] = {
-  { "Local",  ELF::STB_LOCAL        },
-  { "Global", ELF::STB_GLOBAL       },
-  { "Weak",   ELF::STB_WEAK         },
-  { "Unique", ELF::STB_GNU_UNIQUE   }
-};
+    {"Local",  "LOCAL",  ELF::STB_LOCAL},
+    {"Global", "GLOBAL", ELF::STB_GLOBAL},
+    {"Weak",   "WEAK",   ELF::STB_WEAK},
+    {"Unique", "UNIQUE", ELF::STB_GNU_UNIQUE}};
 
 static const EnumEntry<unsigned> ElfSymbolTypes[] = {
-  { "None",      ELF::STT_NOTYPE    },
-  { "Object",    ELF::STT_OBJECT    },
-  { "Function",  ELF::STT_FUNC      },
-  { "Section",   ELF::STT_SECTION   },
-  { "File",      ELF::STT_FILE      },
-  { "Common",    ELF::STT_COMMON    },
-  { "TLS",       ELF::STT_TLS       },
-  { "GNU_IFunc", ELF::STT_GNU_IFUNC }
-};
+    {"None",      "NOTYPE",   ELF::STT_NOTYPE},
+    {"Object",    "OBJECT",   ELF::STT_OBJECT},
+    {"Function",  "FUNCTION", ELF::STT_FUNC},
+    {"Section",   "SECTION",  ELF::STT_SECTION},
+    {"File",      "FILE",     ELF::STT_FILE},
+    {"Common",    "COMMON",   ELF::STT_COMMON},
+    {"TLS",       "TLS",      ELF::STT_TLS},
+    {"GNU_IFunc", "IFUNC",    ELF::STT_GNU_IFUNC}};
 
 static const EnumEntry<unsigned> AMDGPUSymbolTypes[] = {
   { "AMDGPU_HSA_KERNEL",            ELF::STT_AMDGPU_HSA_KERNEL },
@@ -801,19 +844,19 @@ static const char *getGroupType(uint32_t Flag) {
 }
 
 static const EnumEntry<unsigned> ElfSectionFlags[] = {
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_WRITE           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_ALLOC           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_EXCLUDE         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_EXECINSTR       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_MERGE           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_STRINGS         ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_INFO_LINK       ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_LINK_ORDER      ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_OS_NONCONFORMING),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_GROUP           ),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_TLS             ),
-  LLVM_READOBJ_ENUM_ENT(ELF, XCORE_SHF_CP_SECTION),
-  LLVM_READOBJ_ENUM_ENT(ELF, XCORE_SHF_DP_SECTION),
+  ENUM_ENT(SHF_WRITE,            "W"),
+  ENUM_ENT(SHF_ALLOC,            "A"),
+  ENUM_ENT(SHF_EXCLUDE,          "E"),
+  ENUM_ENT(SHF_EXECINSTR,        "X"),
+  ENUM_ENT(SHF_MERGE,            "M"),
+  ENUM_ENT(SHF_STRINGS,          "S"),
+  ENUM_ENT(SHF_INFO_LINK,        "I"),
+  ENUM_ENT(SHF_LINK_ORDER,       "L"),
+  ENUM_ENT(SHF_OS_NONCONFORMING, "o"),
+  ENUM_ENT(SHF_GROUP,            "G"),
+  ENUM_ENT(SHF_TLS,              "T"),
+  ENUM_ENT_1(XCORE_SHF_CP_SECTION),
+  ENUM_ENT_1(XCORE_SHF_DP_SECTION),
 };
 
 static const EnumEntry<unsigned> ElfAMDGPUSectionFlags[] = {
@@ -1052,6 +1095,10 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     }
     }
   }
+  if (opts::Output == opts::GNU)
+    ELFDumperStyle.reset(new GNUStyle<ELFT>(Writer));
+  else
+    ELFDumperStyle.reset(new LLVMStyle<ELFT>(Writer));
 }
 
 template <typename ELFT>
@@ -1085,50 +1132,7 @@ typename ELFDumper<ELFT>::Elf_Rela_Range ELFDumper<ELFT>::dyn_relas() const {
 
 template<class ELFT>
 void ELFDumper<ELFT>::printFileHeaders() {
-  const Elf_Ehdr *Header = Obj->getHeader();
-
-  {
-    DictScope D(W, "ElfHeader");
-    {
-      DictScope D(W, "Ident");
-      W.printBinary("Magic", makeArrayRef(Header->e_ident).slice(ELF::EI_MAG0,
-                                                                 4));
-      W.printEnum  ("Class", Header->e_ident[ELF::EI_CLASS],
-                      makeArrayRef(ElfClass));
-      W.printEnum  ("DataEncoding", Header->e_ident[ELF::EI_DATA],
-                      makeArrayRef(ElfDataEncoding));
-      W.printNumber("FileVersion", Header->e_ident[ELF::EI_VERSION]);
-
-      // Handle architecture specific OS/ABI values.
-      if (Header->e_machine == ELF::EM_AMDGPU &&
-          Header->e_ident[ELF::EI_OSABI] == ELF::ELFOSABI_AMDGPU_HSA)
-        W.printHex("OS/ABI", "AMDGPU_HSA", ELF::ELFOSABI_AMDGPU_HSA);
-      else
-        W.printEnum  ("OS/ABI", Header->e_ident[ELF::EI_OSABI],
-                      makeArrayRef(ElfOSABI));
-      W.printNumber("ABIVersion", Header->e_ident[ELF::EI_ABIVERSION]);
-      W.printBinary("Unused", makeArrayRef(Header->e_ident).slice(ELF::EI_PAD));
-    }
-
-    W.printEnum  ("Type", Header->e_type, makeArrayRef(ElfObjectFileType));
-    W.printEnum  ("Machine", Header->e_machine, makeArrayRef(ElfMachineType));
-    W.printNumber("Version", Header->e_version);
-    W.printHex   ("Entry", Header->e_entry);
-    W.printHex   ("ProgramHeaderOffset", Header->e_phoff);
-    W.printHex   ("SectionHeaderOffset", Header->e_shoff);
-    if (Header->e_machine == EM_MIPS)
-      W.printFlags("Flags", Header->e_flags, makeArrayRef(ElfHeaderMipsFlags),
-                   unsigned(ELF::EF_MIPS_ARCH), unsigned(ELF::EF_MIPS_ABI),
-                   unsigned(ELF::EF_MIPS_MACH));
-    else
-      W.printFlags("Flags", Header->e_flags);
-    W.printNumber("HeaderSize", Header->e_ehsize);
-    W.printNumber("ProgramHeaderEntrySize", Header->e_phentsize);
-    W.printNumber("ProgramHeaderCount", Header->e_phnum);
-    W.printNumber("SectionHeaderEntrySize", Header->e_shentsize);
-    W.printNumber("SectionHeaderCount", Header->e_shnum);
-    W.printNumber("StringTableSectionIndex", Header->e_shstrndx);
-  }
+  ELFDumperStyle->printFileHeaders(Obj);
 }
 
 template<class ELFT>
@@ -2243,6 +2247,7 @@ template <class ELFT> void ELFDumper<ELFT>::printStackMap() const {
               llvm::outs(),
               StackMapV1Parser<ELFT::TargetEndianness>(*StackMapContentsArray));
 }
+
 template <class ELFT> void ELFDumper<ELFT>::printGroupSections() {
   DictScope Lists(W, "Groups");
   uint32_t SectionIndex = 0;
@@ -2279,4 +2284,109 @@ template <class ELFT> void ELFDumper<ELFT>::printGroupSections() {
   }
   if (!HasGroups)
     W.startLine() << "There are no group sections in the file.\n";
+}
+
+template <class ELFT>
+void GNUStyle<ELFT>::printFileHeaders(const ELFFile<ELFT> *Obj) {
+  const Elf_Ehdr *e = Obj->getHeader();
+  OS << "ELF Header:\n";
+  OS << "  Magic:  ";
+  std::string Str;
+  auto printFields = [&](StringRef Str1, StringRef Str2) -> void {
+    OS.PadToColumn(2u);
+    OS << Str1;
+    OS.PadToColumn(37u);
+    OS << Str2 << "\n";
+    OS.flush();
+  };
+  for (int i = 0; i < ELF::EI_NIDENT; i++)
+    OS << format(" %02x", static_cast<int>(e->e_ident[i]));
+  OS << "\n";
+  Str = printEnum(e->e_ident[ELF::EI_CLASS], makeArrayRef(ElfClass));
+  printFields("Class:", Str);
+  Str = printEnum(e->e_ident[ELF::EI_DATA], makeArrayRef(ElfDataEncoding));
+  printFields("Data:", Str);
+  OS.PadToColumn(2u);
+  OS << "Version:";
+  OS.PadToColumn(37u);
+  OS << to_hexString(e->e_ident[ELF::EI_VERSION]);
+  if (e->e_version == ELF::EV_CURRENT)
+    OS << " (current)";
+  OS << "\n";
+  Str = printEnum(e->e_ident[ELF::EI_OSABI], makeArrayRef(ElfOSABI));
+  printFields("OS/ABI:", Str);
+  Str = "0x" + to_hexString(e->e_version);
+  Str = to_hexString(e->e_ident[ELF::EI_ABIVERSION]);
+  printFields("ABI Version:", Str);
+  Str = printEnum(e->e_type, makeArrayRef(ElfObjectFileType));
+  printFields("Type:", Str);
+  Str = printEnum(e->e_machine, makeArrayRef(ElfMachineType));
+  printFields("Machine:", Str);
+  Str = "0x" + to_hexString(e->e_version);
+  printFields("Version:", Str);
+  Str = "0x" + to_hexString(e->e_entry);
+  printFields("Entry point address:", Str);
+  Str = to_string(e->e_phoff) + " (bytes into file)";
+  printFields("Start of program headers:", Str);
+  Str = to_string(e->e_shoff) + " (bytes into file)";
+  printFields("Start of section headers:", Str);
+  Str = "0x" + to_hexString(e->e_flags);
+  printFields("Flags:", Str);
+  Str = to_string(e->e_ehsize) + " (bytes)";
+  printFields("Size of this header:", Str);
+  Str = to_string(e->e_phentsize) + " (bytes)";
+  printFields("Size of program headers:", Str);
+  Str = to_string(e->e_phnum);
+  printFields("Number of program headers:", Str);
+  Str = to_string(e->e_shentsize) + " (bytes)";
+  printFields("Size of section headers:", Str);
+  Str = to_string(e->e_shnum);
+  printFields("Number of section headers:", Str);
+  Str = to_string(e->e_shstrndx);
+  printFields("Section header string table index:", Str);
+}
+
+template <class ELFT>
+void LLVMStyle<ELFT>::printFileHeaders(const ELFFile<ELFT> *Obj) {
+  const Elf_Ehdr *e = Obj->getHeader();
+  {
+    DictScope D(W, "ElfHeader");
+    {
+      DictScope D(W, "Ident");
+      W.printBinary("Magic", makeArrayRef(e->e_ident).slice(ELF::EI_MAG0, 4));
+      W.printEnum("Class", e->e_ident[ELF::EI_CLASS], makeArrayRef(ElfClass));
+      W.printEnum("DataEncoding", e->e_ident[ELF::EI_DATA],
+                  makeArrayRef(ElfDataEncoding));
+      W.printNumber("FileVersion", e->e_ident[ELF::EI_VERSION]);
+
+      // Handle architecture specific OS/ABI values.
+      if (e->e_machine == ELF::EM_AMDGPU &&
+          e->e_ident[ELF::EI_OSABI] == ELF::ELFOSABI_AMDGPU_HSA)
+        W.printHex("OS/ABI", "AMDGPU_HSA", ELF::ELFOSABI_AMDGPU_HSA);
+      else
+        W.printEnum("OS/ABI", e->e_ident[ELF::EI_OSABI],
+                    makeArrayRef(ElfOSABI));
+      W.printNumber("ABIVersion", e->e_ident[ELF::EI_ABIVERSION]);
+      W.printBinary("Unused", makeArrayRef(e->e_ident).slice(ELF::EI_PAD));
+    }
+
+    W.printEnum("Type", e->e_type, makeArrayRef(ElfObjectFileType));
+    W.printEnum("Machine", e->e_machine, makeArrayRef(ElfMachineType));
+    W.printNumber("Version", e->e_version);
+    W.printHex("Entry", e->e_entry);
+    W.printHex("ProgramHeaderOffset", e->e_phoff);
+    W.printHex("SectionHeaderOffset", e->e_shoff);
+    if (e->e_machine == EM_MIPS)
+      W.printFlags("Flags", e->e_flags, makeArrayRef(ElfHeaderMipsFlags),
+                   unsigned(ELF::EF_MIPS_ARCH), unsigned(ELF::EF_MIPS_ABI),
+                   unsigned(ELF::EF_MIPS_MACH));
+    else
+      W.printFlags("Flags", e->e_flags);
+    W.printNumber("HeaderSize", e->e_ehsize);
+    W.printNumber("ProgramHeaderEntrySize", e->e_phentsize);
+    W.printNumber("ProgramHeaderCount", e->e_phnum);
+    W.printNumber("SectionHeaderEntrySize", e->e_shentsize);
+    W.printNumber("SectionHeaderCount", e->e_shnum);
+    W.printNumber("StringTableSectionIndex", e->e_shstrndx);
+  }
 }
