@@ -439,9 +439,14 @@ void MemorySSA::dump() const {
   F.print(dbgs(), &Writer);
 }
 
+void MemorySSA::verifyMemorySSA() const {
+  verifyDefUses(F);
+  verifyDomination(F);
+}
+
 /// \brief Verify the domination properties of MemorySSA by checking that each
 /// definition dominates all of its uses.
-void MemorySSA::verifyDomination(Function &F) {
+void MemorySSA::verifyDomination(Function &F) const {
   for (BasicBlock &B : F) {
     // Phi nodes are attached to basic blocks
     if (MemoryPhi *MP = getMemoryAccess(&B)) {
@@ -496,7 +501,7 @@ void MemorySSA::verifyDomination(Function &F) {
 /// llvm_unreachable is used instead of asserts because this may be called in
 /// a build without asserts. In that case, we don't want this to turn into a
 /// nop.
-void MemorySSA::verifyUseInDefs(MemoryAccess *Def, MemoryAccess *Use) {
+void MemorySSA::verifyUseInDefs(MemoryAccess *Def, MemoryAccess *Use) const {
   // The live on entry use may cause us to get a NULL def here
   if (!Def) {
     if (!isLiveOnEntryDef(Use))
@@ -510,7 +515,7 @@ void MemorySSA::verifyUseInDefs(MemoryAccess *Def, MemoryAccess *Use) {
 /// \brief Verify the immediate use information, by walking all the memory
 /// accesses and verifying that, for each use, it appears in the
 /// appropriate def's use list
-void MemorySSA::verifyDefUses(Function &F) {
+void MemorySSA::verifyDefUses(Function &F) const {
   for (BasicBlock &B : F) {
     // Phi nodes are attached to basic blocks
     if (MemoryPhi *Phi = getMemoryAccess(&B))
@@ -655,8 +660,7 @@ bool MemorySSAPrinterPass::runOnFunction(Function &F) {
   Walker.reset(MSSA->buildMemorySSA(AA, DT));
 
   if (VerifyMemorySSA) {
-    MSSA->verifyDefUses(F);
-    MSSA->verifyDomination(F);
+    MSSA->verifyMemorySSA();
   }
 
   return false;
