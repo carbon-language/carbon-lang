@@ -1131,8 +1131,8 @@ bool AArch64LoadStoreOpt::findMatchingStore(
   return false;
 }
 
-/// findMatchingInsn - Scan the instructions looking for a load/store that can
-/// be combined with the current instruction into a load/store pair.
+/// Scan the instructions looking for a load/store that can be combined with the
+/// current instruction into a wider equivalent or a load/store pair.
 MachineBasicBlock::iterator
 AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
                                       LdStPairFlags &Flags, unsigned Limit) {
