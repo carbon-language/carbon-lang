@@ -769,12 +769,12 @@ static int getPriority(StringRef S) {
 template <class ELFT> void OutputSection<ELFT>::sortByPriority() {
   // Sort sections by priority.
   typedef std::pair<int, InputSection<ELFT> *> Pair;
+  auto Comp = [](const Pair &A, const Pair &B) { return A.first < B.first; };
+
   std::vector<Pair> V;
   for (InputSection<ELFT> *S : Sections)
     V.push_back({getPriority(S->getSectionName()), S});
-  std::stable_sort(V.begin(), V.end(), [](const Pair &A, const Pair &B) {
-    return A.first < B.first;
-  });
+  std::stable_sort(V.begin(), V.end(), Comp);
   Sections.clear();
   for (Pair &P : V)
     Sections.push_back(P.second);
