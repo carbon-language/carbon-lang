@@ -830,10 +830,10 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the breakpoint on exceptions thrown by the specified language (without options, on throw but not catch.)" },
 
     { LLDB_OPT_SET_10, false, "on-throw", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
-        "Set the breakpoint on exception throw." },
+        "Set the breakpoint on exception throW." },
 
     { LLDB_OPT_SET_10, false, "on-catch", 'h', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
-        "Set the breakpoint on exception catch." },
+        "Set the breakpoint on exception catcH." },
 
 //  Don't add this option till it actually does something useful...
 //    { LLDB_OPT_SET_10, false, "exception-typename", 'O', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeTypeName,
