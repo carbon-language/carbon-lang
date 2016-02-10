@@ -352,7 +352,7 @@ int main(int argc, char **argv) {
 
   StringRef SharedExt, SharedVersionedExt, SharedDir, SharedPrefix, StaticExt,
       StaticPrefix, StaticDir = "lib", DirSep = "/";
-  const Triple HostTriple(Triple::normalize(LLVM_DEFAULT_TARGET_TRIPLE));
+  const Triple HostTriple(Triple::normalize(LLVM_HOST_TRIPLE));
   if (HostTriple.isOSWindows()) {
     SharedExt = "dll";
     SharedVersionedExt = LLVM_DYLIB_VERSION ".dll";
