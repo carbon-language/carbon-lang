@@ -3807,8 +3807,6 @@ public:
       : WindowsX86_32TargetInfo(Triple) {
     LongDoubleWidth = LongDoubleAlign = 64;
     LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-    DataLayoutString =
-        "e-m:e-p:32:32-i64:32-f64:32-f128:32-n8:16:32-a:0:32-S32";
   }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
@@ -3913,6 +3911,8 @@ public:
   MCUX86_32TargetInfo(const llvm::Triple &Triple) : X86_32TargetInfo(Triple) {
     LongDoubleWidth = 64;
     LongDoubleFormat = &llvm::APFloat::IEEEdouble;
+    DataLayoutString =
+        "e-m:e-p:32:32-i64:32-f64:32-f128:32-n8:16:32-a:0:32-S32";
     UserLabelPrefix = "";
     WIntType = UnsignedInt;
   }
