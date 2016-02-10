@@ -180,6 +180,12 @@
 # endif
 #endif  // !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 
+#if __has_attribute(__no_sanitize__)
+#define _LIBCPP_NO_CFI __attribute__((__no_sanitize__("cfi")))
+#else
+#define _LIBCPP_NO_CFI
+#endif
+
 #ifdef _WIN32
 
 // only really useful for a DLL
