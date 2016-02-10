@@ -1385,9 +1385,9 @@ void AMDGPUTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
-  CopyRel = R_MIPS_COPY;
-  PageSize = 65536;
   GotHeaderEntriesNum = 2;
+  PageSize = 65536;
+  CopyRel = R_MIPS_COPY;
   RelativeRel = R_MIPS_REL32;
 }
 
