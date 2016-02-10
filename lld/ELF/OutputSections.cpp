@@ -772,8 +772,9 @@ template <class ELFT> void OutputSection<ELFT>::sortByPriority() {
   std::vector<Pair> V;
   for (InputSection<ELFT> *S : Sections)
     V.push_back({getPriority(S->getSectionName()), S});
-  std::sort(V.begin(), V.end(),
-            [](const Pair &A, const Pair &B) { return A.first < B.first; });
+  std::stable_sort(V.begin(), V.end(), [](const Pair &A, const Pair &B) {
+    return A.first < B.first;
+  });
   Sections.clear();
   for (Pair &P : V)
     Sections.push_back(P.second);
