@@ -384,7 +384,6 @@ template <class _Key, class _Cp, class _Hash,
 class __unordered_map_hasher
     : private _Hash
 {
-  typedef typename __key_value_types<_Cp>::__map_value_type _PairT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_hasher()
@@ -414,8 +413,6 @@ template <class _Key, class _Cp, class _Hash>
 class __unordered_map_hasher<_Key, _Cp, _Hash, false>
 {
     _Hash __hash_;
-
-    typedef typename __key_value_types<_Cp>::__map_value_type _PairT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_hasher()
@@ -457,7 +454,6 @@ template <class _Key, class _Cp, class _Pred,
 class __unordered_map_equal
     : private _Pred
 {
-   typedef typename __key_value_types<_Cp>::__map_value_type _PairT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_equal()
@@ -490,8 +486,6 @@ template <class _Key, class _Cp, class _Pred>
 class __unordered_map_equal<_Key, _Cp, _Pred, false>
 {
     _Pred __pred_;
-
-    typedef typename __key_value_types<_Cp>::__map_value_type _PairT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_equal()
@@ -512,9 +506,6 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
         {return __pred_(__x, __y.__cc.first);}
-  _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _PairT& __y) const
-        {return __pred_(__x, __y.first);}
     void swap(__unordered_map_equal&__y)
         _NOEXCEPT_(__is_nothrow_swappable<_Pred>::value)
     {
