@@ -45,26 +45,6 @@ namespace {
 // Skip Parsed Bodies
 //===----------------------------------------------------------------------===//
 
-#ifdef LLVM_ON_WIN32
-
-// FIXME: On windows it is disabled since current implementation depends on
-// file inodes.
-
-class SessionSkipBodyData { };
-
-class TUSkipBodyControl {
-public:
-  TUSkipBodyControl(SessionSkipBodyData &sessionData,
-                    PPConditionalDirectiveRecord &ppRec,
-                    Preprocessor &pp) { }
-  bool isParsed(SourceLocation Loc, FileID FID, const FileEntry *FE) {
-    return false;
-  }
-  void finished() { }
-};
-
-#else
-
 /// \brief A "region" in source code identified by the file/offset of the
 /// preprocessor conditional directive that it belongs to.
 /// Multiple, non-consecutive ranges can be parts of the same region.
@@ -237,8 +217,6 @@ private:
     return PP.getHeaderSearchInfo().isFileMultipleIncludeGuarded(FE);
   }
 };
-
-#endif
 
 //===----------------------------------------------------------------------===//
 // IndexPPCallbacks
