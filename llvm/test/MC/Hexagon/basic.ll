@@ -4,4 +4,4 @@
 ; OBJ: Format: ELF32-hexagon
 ; OBJ: Arch: hexagon
 ; OBJ: AddressSize: 32bit
-; OBJ: Machine: EM_HEXAGON (0xA4)
+; OBJ: Machine: EM_HEXAGON
