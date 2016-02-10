@@ -2548,7 +2548,6 @@ public:
     // Only include the RTTI component if we know that we will provide a
     // definition of the vftable.
     HasRTTIComponent = Context.getLangOpts().RTTIData &&
-                       !MostDerivedClass->hasAttr<DLLImportAttr>() &&
                        MostDerivedClass->getTemplateSpecializationKind() !=
                            TSK_ExplicitInstantiationDeclaration;
 
