@@ -877,9 +877,8 @@ static char getNMTypeChar(SymbolicFile &Obj, basic_symbol_iterator I) {
 // file or zero it is not present.
 static unsigned getNsectForSegSect(MachOObjectFile *Obj) {
   unsigned Nsect = 1;
-  for (section_iterator I = Obj->section_begin(), E = Obj->section_end();
-       I != E; ++I) {
-    DataRefImpl Ref = I->getRawDataRefImpl();
+  for (auto &S : Obj->sections()) {
+    DataRefImpl Ref = S.getRawDataRefImpl();
     StringRef SectionName;
     Obj->getSectionName(Ref, SectionName);
     StringRef SegmentName = Obj->getSectionFinalSegmentName(Ref);
