@@ -54,90 +54,120 @@ struct CAPIDenseMap<T*> {
 typedef CAPIDenseMap<LLVMValueRef>::Map ValueMap;
 typedef CAPIDenseMap<LLVMBasicBlockRef>::Map BasicBlockMap;
 
-static LLVMTypeRef clone_type(LLVMTypeRef Src, LLVMContextRef Ctx) {
-  LLVMTypeKind Kind = LLVMGetTypeKind(Src);
-  switch (Kind) {
-    case LLVMVoidTypeKind:
-      return LLVMVoidTypeInContext(Ctx);
-    case LLVMHalfTypeKind:
-      return LLVMHalfTypeInContext(Ctx);
-    case LLVMFloatTypeKind:
-      return LLVMFloatTypeInContext(Ctx);
-    case LLVMDoubleTypeKind:
-      return LLVMDoubleTypeInContext(Ctx);
-    case LLVMX86_FP80TypeKind:
-      return LLVMX86FP80TypeInContext(Ctx);
-    case LLVMFP128TypeKind:
-      return LLVMFP128TypeInContext(Ctx);
-    case LLVMPPC_FP128TypeKind:
-      return LLVMPPCFP128TypeInContext(Ctx);
-    case LLVMLabelTypeKind:
-      return LLVMLabelTypeInContext(Ctx);
-    case LLVMIntegerTypeKind:
-      return LLVMIntTypeInContext(Ctx, LLVMGetIntTypeWidth(Src));
-    case LLVMFunctionTypeKind: {
-      unsigned ParamCount = LLVMCountParamTypes(Src);
-      LLVMTypeRef* Params = nullptr;
-      if (ParamCount > 0) {
-        Params = (LLVMTypeRef*) malloc(ParamCount * sizeof(LLVMTypeRef));
-        LLVMGetParamTypes(Src, Params);
-        for (unsigned i = 0; i < ParamCount; i++)
-          Params[i] = clone_type(Params[i], Ctx);
+struct TypeCloner {
+  LLVMModuleRef M;
+  LLVMContextRef Ctx;
+
+  TypeCloner(LLVMModuleRef M): M(M), Ctx(LLVMGetModuleContext(M)) {}
+
+  LLVMTypeRef Clone(LLVMTypeRef Src) {
+    LLVMTypeKind Kind = LLVMGetTypeKind(Src);
+    switch (Kind) {
+      case LLVMVoidTypeKind:
+        return LLVMVoidTypeInContext(Ctx);
+      case LLVMHalfTypeKind:
+        return LLVMHalfTypeInContext(Ctx);
+      case LLVMFloatTypeKind:
+        return LLVMFloatTypeInContext(Ctx);
+      case LLVMDoubleTypeKind:
+        return LLVMDoubleTypeInContext(Ctx);
+      case LLVMX86_FP80TypeKind:
+        return LLVMX86FP80TypeInContext(Ctx);
+      case LLVMFP128TypeKind:
+        return LLVMFP128TypeInContext(Ctx);
+      case LLVMPPC_FP128TypeKind:
+        return LLVMPPCFP128TypeInContext(Ctx);
+      case LLVMLabelTypeKind:
+        return LLVMLabelTypeInContext(Ctx);
+      case LLVMIntegerTypeKind:
+        return LLVMIntTypeInContext(Ctx, LLVMGetIntTypeWidth(Src));
+      case LLVMFunctionTypeKind: {
+        unsigned ParamCount = LLVMCountParamTypes(Src);
+        LLVMTypeRef* Params = nullptr;
+        if (ParamCount > 0) {
+          Params = (LLVMTypeRef*) malloc(ParamCount * sizeof(LLVMTypeRef));
+          LLVMGetParamTypes(Src, Params);
+          for (unsigned i = 0; i < ParamCount; i++)
+            Params[i] = Clone(Params[i]);
+        }
+
+        LLVMTypeRef FunTy = LLVMFunctionType(Clone(LLVMGetReturnType(Src)),
+                                             Params, ParamCount,
+                                             LLVMIsFunctionVarArg(Src));
+        if (ParamCount > 0)
+          free(Params);
+        return FunTy;
       }
+      case LLVMStructTypeKind: {
+        LLVMTypeRef S = nullptr;
+        const char *Name = LLVMGetStructName(Src);
+        if (Name) {
+          S = LLVMGetTypeByName(M, Name);
+          if (S)
+            return S;
+          S = LLVMStructCreateNamed(Ctx, Name);
+          if (LLVMIsOpaqueStruct(Src))
+            return S;
+        }
 
-      LLVMTypeRef FunTy = LLVMFunctionType(
-        clone_type(LLVMGetReturnType(Src), Ctx),
-        Params, ParamCount,
-        LLVMIsFunctionVarArg(Src)
-      );
-
-      if (ParamCount > 0)
-        free(Params);
-
-      return FunTy;
+        unsigned EltCount = LLVMCountStructElementTypes(Src);
+        SmallVector<LLVMTypeRef, 8> Elts;
+        for (unsigned i = 0; i < EltCount; i++)
+          Elts.push_back(Clone(LLVMStructGetTypeAtIndex(Src, i)));
+        if (Name)
+          LLVMStructSetBody(S, Elts.data(), EltCount, LLVMIsPackedStruct(Src));
+        else
+          S = LLVMStructTypeInContext(Ctx, Elts.data(), EltCount,
+                                      LLVMIsPackedStruct(Src));
+        return S;
+      }
+      case LLVMArrayTypeKind:
+        return LLVMArrayType(
+          Clone(LLVMGetElementType(Src)),
+          LLVMGetArrayLength(Src)
+        );
+      case LLVMPointerTypeKind:
+        return LLVMPointerType(
+          Clone(LLVMGetElementType(Src)),
+          LLVMGetPointerAddressSpace(Src)
+        );
+      case LLVMVectorTypeKind:
+        return LLVMVectorType(
+          Clone(LLVMGetElementType(Src)),
+          LLVMGetVectorSize(Src)
+        );
+      case LLVMMetadataTypeKind:
+        break;
+      case LLVMX86_MMXTypeKind:
+        return LLVMX86MMXTypeInContext(Ctx);
+      default:
+        break;
     }
-    case LLVMStructTypeKind:
-      break;
-    case LLVMArrayTypeKind:
-      return LLVMArrayType(
-        clone_type(LLVMGetElementType(Src), Ctx),
-        LLVMGetArrayLength(Src)
-      );
-    case LLVMPointerTypeKind:
-      return LLVMPointerType(
-        clone_type(LLVMGetElementType(Src), Ctx),
-        LLVMGetPointerAddressSpace(Src)
-      );
-    case LLVMVectorTypeKind:
-      return LLVMVectorType(
-        clone_type(LLVMGetElementType(Src), Ctx),
-        LLVMGetVectorSize(Src)
-      );
-    case LLVMMetadataTypeKind:
-      break;
-    case LLVMX86_MMXTypeKind:
-      return LLVMX86MMXTypeInContext(Ctx);
-    default:
-      break;
-  }
 
-  fprintf(stderr, "%d is not a supported typekind\n", Kind);
-  exit(-1);
-}
+    fprintf(stderr, "%d is not a supported typekind\n", Kind);
+    exit(-1);
+  }
+};
 
 static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst);
 
 struct FunCloner {
   LLVMValueRef Fun;
   LLVMModuleRef M;
-  LLVMContextRef Ctx;
 
   ValueMap VMap;
   BasicBlockMap BBMap;
 
-  FunCloner(LLVMValueRef Src, LLVMValueRef Dst)
-    : Fun(Dst), M(LLVMGetGlobalParent(Fun)), Ctx(LLVMGetModuleContext(M)),
-      VMap(clone_params(Src, Dst)) {}
+  FunCloner(LLVMValueRef Src, LLVMValueRef Dst): Fun(Dst),
+    M(LLVMGetGlobalParent(Fun)), VMap(clone_params(Src, Dst)) {}
+
+  LLVMTypeRef CloneType(LLVMTypeRef Src) {
+    return TypeCloner(M).Clone(Src);
+  }
+
+  LLVMTypeRef CloneType(LLVMValueRef Src) {
+    return CloneType(LLVMTypeOf(Src));
+  }
 
   // Try to clone everything in the llvm::Value hierarchy.
   LLVMValueRef CloneValue(LLVMValueRef Src) {
@@ -163,13 +193,13 @@ struct FunCloner {
 
       // Try literal
       if (LLVMIsAConstantInt(Src)) {
-        LLVMTypeRef Ty = clone_type(LLVMTypeOf(Src), Ctx);
+        LLVMTypeRef Ty = CloneType(Src);
         return LLVMConstInt(Ty, LLVMConstIntGetZExtValue(Src), false);
       }
 
       // Try undef
       if (LLVMIsUndef(Src))
-        return LLVMGetUndef(clone_type(LLVMTypeOf(Src), Ctx));
+        return LLVMGetUndef(CloneType(Src));
 
       // This kind of constant is not supported.
       report_fatal_error("Unsupported contant type");
@@ -183,6 +213,7 @@ struct FunCloner {
     }
 
     if (LLVMIsAInstruction(Src)) {
+      auto Ctx = LLVMGetModuleContext(M);
       auto Builder = LLVMCreateBuilderInContext(Ctx);
       auto BB = DeclareBB(LLVMGetInstructionParent(Src));
       LLVMPositionBuilderAtEnd(Builder, BB);
@@ -323,7 +354,7 @@ struct FunCloner {
         break;
       }
       case LLVMAlloca: {
-        LLVMTypeRef Ty = clone_type(LLVMGetAllocatedType(Src), Ctx);
+        LLVMTypeRef Ty = CloneType(LLVMGetAllocatedType(Src));
         Dst = LLVMBuildAlloca(Builder, Ty, Name);
         break;
       }
@@ -341,6 +372,23 @@ struct FunCloner {
           Args.push_back(CloneValue(LLVMGetOperand(Src, i)));
         LLVMValueRef Fn = CloneValue(LLVMGetCalledValue(Src));
         Dst = LLVMBuildCall(Builder, Fn, Args.data(), ArgCount, Name);
+        break;
+      }
+      case LLVMExtractValue: {
+        LLVMValueRef Agg = CloneValue(LLVMGetOperand(Src, 0));
+        if (LLVMGetNumIndices(Src) != 1)
+          report_fatal_error("Expected only one indice");
+        auto I = LLVMGetIndices(Src)[0];
+        Dst = LLVMBuildExtractValue(Builder, Agg, I, Name);
+        break;
+      }
+      case LLVMInsertValue: {
+        LLVMValueRef Agg = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef V = CloneValue(LLVMGetOperand(Src, 1));
+        if (LLVMGetNumIndices(Src) != 1)
+          report_fatal_error("Expected only one indice");
+        auto I = LLVMGetIndices(Src)[0];
+        Dst = LLVMBuildInsertValue(Builder, Agg, V, I, Name);
         break;
       }
       default:
@@ -398,6 +446,7 @@ struct FunCloner {
       return BB;
     }
 
+    auto Ctx = LLVMGetModuleContext(M);
     LLVMBuilderRef Builder = LLVMCreateBuilderInContext(Ctx);
     LLVMPositionBuilderAtEnd(Builder, BB);
 
@@ -550,8 +599,7 @@ static LLVMValueRef clone_function(LLVMValueRef Src, LLVMModuleRef M) {
   if (Fun != nullptr)
     return Fun;
 
-  LLVMTypeRef SrcTy = LLVMTypeOf(Src);
-  LLVMTypeRef DstTy = clone_type(SrcTy, LLVMGetModuleContext(M));
+  LLVMTypeRef DstTy = TypeCloner(M).Clone(LLVMTypeOf(Src));
   LLVMTypeRef FunTy = LLVMGetElementType(DstTy);
 
   Fun = LLVMAddFunction(M, Name, FunTy);

@@ -2,9 +2,19 @@
 ; RUN: llvm-as < %s | llvm-c-test --echo > %t.echo
 ; RUN: diff -w %t.orig %t.echo
 
+%S = type { i64, %S* }
+
+define { i64, %S* } @unpackrepack(%S %s) {
+  %1 = extractvalue %S %s, 0
+  %2 = extractvalue %S %s, 1
+  %3 = insertvalue { i64, %S* } undef, %S* %2, 1
+  %4 = insertvalue { i64, %S* } %3, i64 %1, 0
+  ret { i64, %S* } %4
+}
+
 declare void @decl()
 
-; TODO: label, struct and metadata types
+; TODO: label and metadata types
 define void @types() {
   %1 = alloca half
   %2 = alloca float
