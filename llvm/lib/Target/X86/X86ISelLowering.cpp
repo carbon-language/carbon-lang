@@ -26746,7 +26746,7 @@ static int getOneTrueElt(SDValue V) {
     }
   }
   return TrueIndex;
-};
+}
 
 /// If exactly one element of the mask is set for a non-extending masked load,
 /// it is a scalar load and vector insert.
