@@ -59,7 +59,6 @@
 // CHECK: ![[TD_STRUCT:.*]] = !DICompositeType(tag: DW_TAG_structure_type,
 // CHECK-NOT:              name:
 // CHECK-SAME:             elements:
-// CHECK-SAME:             )
 // CHECK: !DIDerivedType(tag: DW_TAG_typedef, name: "TypedefStruct",
 // CHECK-SAME:           baseType: ![[TD_STRUCT]])
 

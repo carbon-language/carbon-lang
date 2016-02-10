@@ -22,7 +22,6 @@
 // CHECK-SAME:                    isOptimized: false,
 // CHECK-NOT:                     splitDebugFilename:
 // CHECK-SAME:                    dwoId:
-// CHECK-SAME:                    )
 
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "Enum"
 // CHECK-SAME:             identifier: "_ZTSN8DebugCXX4EnumE")
