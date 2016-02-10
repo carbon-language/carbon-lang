@@ -1312,5 +1312,5 @@ int main(int argc, char **argv) {
   if (HadError)
     return 1;
 
-  return 0;
+  return EXIT_SUCCESS;
 }
