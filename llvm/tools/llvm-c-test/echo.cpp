@@ -336,10 +336,10 @@ struct FunCloner {
       }
       case LLVMCall: {
         SmallVector<LLVMValueRef, 8> Args;
-        int ArgCount = LLVMGetNumOperands(Src) - 1;
+        int ArgCount = LLVMGetNumArgOperands(Src);
         for (int i = 0; i < ArgCount; i++)
           Args.push_back(CloneValue(LLVMGetOperand(Src, i)));
-        LLVMValueRef Fn = CloneValue(LLVMGetOperand(Src, ArgCount));
+        LLVMValueRef Fn = CloneValue(LLVMGetCalledValue(Src));
         Dst = LLVMBuildCall(Builder, Fn, Args.data(), ArgCount, Name);
         break;
       }

@@ -2386,6 +2386,17 @@ LLVMValueRef LLVMInstructionClone(LLVMValueRef Inst);
  */
 
 /**
+ * Obtain the argument count for a call instruction.
+ *
+ * This expects an LLVMValueRef that corresponds to a llvm::CallInst or
+ * llvm::InvokeInst.
+ *
+ * @see llvm::CallInst::getNumArgOperands()
+ * @see llvm::InvokeInst::getNumArgOperands()
+ */
+unsigned LLVMGetNumArgOperands(LLVMValueRef Instr);
+
+/**
  * Set the calling convention for a call instruction.
  *
  * This expects an LLVMValueRef that corresponds to a llvm::CallInst or
@@ -2412,6 +2423,17 @@ void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
                               LLVMAttribute);
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
                                 unsigned align);
+
+/**
+ * Obtain the pointer to the function invoked by this instruction.
+ *
+ * This expects an LLVMValueRef that corresponds to a llvm::CallInst or
+ * llvm::InvokeInst.
+ *
+ * @see llvm::CallInst::getCalledValue()
+ * @see llvm::InvokeInst::getCalledValue()
+ */
+LLVMValueRef LLVMGetCalledValue(LLVMValueRef Instr);
 
 /**
  * Obtain whether a call instruction is a tail call.

@@ -2041,22 +2041,17 @@ LLVMValueRef LLVMInstructionClone(LLVMValueRef Inst) {
 
 /*--.. Call and invoke instructions ........................................--*/
 
+unsigned LLVMGetNumArgOperands(LLVMValueRef Instr) {
+  return CallSite(unwrap<Instruction>(Instr)).getNumArgOperands();
+}
+
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {
-  Value *V = unwrap(Instr);
-  if (CallInst *CI = dyn_cast<CallInst>(V))
-    return CI->getCallingConv();
-  if (InvokeInst *II = dyn_cast<InvokeInst>(V))
-    return II->getCallingConv();
-  llvm_unreachable("LLVMGetInstructionCallConv applies only to call and invoke!");
+  return CallSite(unwrap<Instruction>(Instr)).getCallingConv();
 }
 
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
-  Value *V = unwrap(Instr);
-  if (CallInst *CI = dyn_cast<CallInst>(V))
-    return CI->setCallingConv(static_cast<CallingConv::ID>(CC));
-  else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
-    return II->setCallingConv(static_cast<CallingConv::ID>(CC));
-  llvm_unreachable("LLVMSetInstructionCallConv applies only to call and invoke!");
+  return CallSite(unwrap<Instruction>(Instr))
+    .setCallingConv(static_cast<CallingConv::ID>(CC));
 }
 
 void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index,
@@ -2088,6 +2083,10 @@ void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
                        .addAttributes(Call->getContext(), index,
                                       AttributeSet::get(Call->getContext(),
                                                         index, B)));
+}
+
+LLVMValueRef LLVMGetCalledValue(LLVMValueRef Instr) {
+  return wrap(CallSite(unwrap<Instruction>(Instr)).getCalledValue());
 }
 
 /*--.. Operations on call instructions (only) ..............................--*/
