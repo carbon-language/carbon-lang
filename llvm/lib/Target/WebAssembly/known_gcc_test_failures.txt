@@ -54,7 +54,6 @@ va-arg-22.c
 
 980709-1.c
 990127-1.c
-991216-2.c
 
 frame-address.c
 loop-15.c
