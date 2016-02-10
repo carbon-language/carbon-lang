@@ -555,7 +555,7 @@ private:
   Function &F;
 
   // Memory SSA mappings
-  DenseMap<const Value *, MemoryAccess *> InstructionToMemoryAccess;
+  DenseMap<const Value *, MemoryAccess *> ValueToMemoryAccess;
   AccessMap PerBlockAccesses;
   std::unique_ptr<MemoryAccess> LiveOnEntryDef;
 

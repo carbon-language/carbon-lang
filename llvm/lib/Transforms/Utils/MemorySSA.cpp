@@ -320,7 +320,7 @@ MemorySSAWalker *MemorySSA::buildMemorySSA(AliasAnalysis *AA,
     // Insert phi node
     AccessListType *Accesses = getOrCreateAccessList(BB);
     MemoryPhi *Phi = new MemoryPhi(F.getContext(), BB, NextID++);
-    InstructionToMemoryAccess.insert(std::make_pair(BB, Phi));
+    ValueToMemoryAccess.insert(std::make_pair(BB, Phi));
     // Phi's always are placed at the front of the block.
     Accesses->push_front(Phi);
   }
@@ -375,12 +375,10 @@ MemoryAccess *MemorySSA::createNewAccess(Instruction *I, bool IgnoreNonMemory) {
 
   MemoryUseOrDef *MA;
   if (Def)
-    MA = new MemoryDef(I->getContext(), nullptr, I, I->getParent(),
-                       NextID++);
+    MA = new MemoryDef(I->getContext(), nullptr, I, I->getParent(), NextID++);
   else
-    MA =
-        new MemoryUse(I->getContext(), nullptr, I, I->getParent());
-  InstructionToMemoryAccess.insert(std::make_pair(I, MA));
+    MA = new MemoryUse(I->getContext(), nullptr, I, I->getParent());
+  ValueToMemoryAccess.insert(std::make_pair(I, MA));
   return MA;
 }
 
@@ -533,7 +531,7 @@ void MemorySSA::verifyDefUses(Function &F) const {
 }
 
 MemoryAccess *MemorySSA::getMemoryAccess(const Value *I) const {
-  return InstructionToMemoryAccess.lookup(I);
+  return ValueToMemoryAccess.lookup(I);
 }
 
 MemoryPhi *MemorySSA::getMemoryAccess(const BasicBlock *BB) const {
