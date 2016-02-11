@@ -33,6 +33,9 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+#  include "llvm/IR/Function.h"
+#endif
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
@@ -2515,6 +2518,22 @@ public:
 #ifdef LLVM_BUILD_GLOBAL_ISEL
   virtual bool LowerReturn(MachineIRBuilder &MIRBuilder, const Value *Val,
                            unsigned VReg) const {
+    return false;
+  }
+
+  /// This hook must be implemented to lower the incoming (formal)
+  /// arguments, described by \p Args, for GlobalISel. Each argument
+  /// must end up in the related virtual register described by VRegs.
+  /// In other words, the first argument should end up in VRegs[0],
+  /// the second in VRegs[1], and so on.
+  /// \p MIRBuilder is set to the proper insertion for the argument
+  /// lowering.
+  ///
+  /// \return True if the lowering succeeded, false otherwise.
+  virtual bool
+  LowerFormalArguments(MachineIRBuilder &MIRBuilder,
+                       const Function::ArgumentListType &Args,
+                       const SmallVectorImpl<unsigned> &VRegs) const {
     return false;
   }
 #endif

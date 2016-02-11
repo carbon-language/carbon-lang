@@ -12,6 +12,7 @@
 
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Constant.h"
@@ -103,9 +104,22 @@ void IRTranslator::finalize() {
 
 bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   const Function &F = *MF.getFunction();
+  if (F.empty())
+    return false;
   TLI = MF.getSubtarget().getTargetLowering();
   MIRBuilder.setFunction(MF);
   MRI = &MF.getRegInfo();
+  // Setup the arguments.
+  MachineBasicBlock &MBB = getOrCreateBB(&F.front());
+  MIRBuilder.setBasicBlock(MBB);
+  SmallVector<unsigned, 8> VRegArgs;
+  for (const Argument &Arg: F.args())
+    VRegArgs.push_back(*getOrCreateVRegs(&Arg).begin());
+  bool Succeeded = TLI->LowerFormalArguments(MIRBuilder, F.getArgumentList(),
+                                             VRegArgs);
+  if (!Succeeded)
+    report_fatal_error("Unable to lower arguments");
+
   for (const BasicBlock &BB: F) {
     MachineBasicBlock &MBB = getOrCreateBB(&BB);
     MIRBuilder.setBasicBlock(MBB);
