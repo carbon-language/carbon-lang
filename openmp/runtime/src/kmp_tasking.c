@@ -2704,7 +2704,7 @@ __kmp_tasking_barrier( kmp_team_t *team, kmp_info_t *thread, int gtid )
 #if OMP_41_ENABLED
 
 /* __kmp_give_task puts a task into a given thread queue if:
-    - the queue for that thread it was created
+    - the queue for that thread was created
     - there's space in that queue
 
     Because of this, __kmp_push_task needs to check if there's space after getting the lock
@@ -2854,7 +2854,7 @@ void __kmpc_proxy_task_completed_ooo ( kmp_task_t *ptask )
 
     __kmp_first_top_half_finish_proxy(taskdata);
 
-    // Enqueue task to complete bottom half completation from a thread within the corresponding team
+    // Enqueue task to complete bottom half completion from a thread within the corresponding team
     kmp_team_t * team = taskdata->td_team;
     kmp_int32 nthreads = team->t.t_nproc;
     kmp_info_t *thread;
