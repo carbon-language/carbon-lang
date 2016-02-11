@@ -3419,6 +3419,55 @@ bool AArch64TargetLowering::LowerReturn(MachineIRBuilder &MIRBuilder,
   }
   return true;
 }
+
+bool AArch64TargetLowering::LowerFormalArguments(
+    MachineIRBuilder &MIRBuilder, const Function::ArgumentListType &Args,
+    const SmallVectorImpl<unsigned> &VRegs) const {
+  MachineFunction &MF = MIRBuilder.getMF();
+  const Function &F = *MF.getFunction();
+
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(F.getCallingConv(), F.isVarArg(), MF, ArgLocs, F.getContext());
+
+  unsigned NumArgs = Args.size();
+  Function::const_arg_iterator CurOrigArg = Args.begin();
+  for (unsigned i = 0; i != NumArgs; ++i, ++CurOrigArg) {
+    MVT ValVT = MVT::getVT(CurOrigArg->getType());
+    CCAssignFn *AssignFn =
+        CCAssignFnForCall(F.getCallingConv(), /*IsVarArg=*/false);
+    bool Res =
+        AssignFn(i, ValVT, ValVT, CCValAssign::Full, ISD::ArgFlagsTy(), CCInfo);
+    assert(!Res && "Call operand has unhandled type");
+    (void)Res;
+  }
+  assert(ArgLocs.size() == Args.size() &&
+         "We have a different number of location and args?!");
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+
+    assert(VA.isRegLoc() && "Not yet implemented");
+    // Transform the arguments in physical registers into virtual ones.
+    MIRBuilder.getMBB().addLiveIn(VA.getLocReg());
+    MIRBuilder.buildInstr(TargetOpcode::COPY, VRegs[i], VA.getLocReg());
+
+    switch (VA.getLocInfo()) {
+    default:
+      llvm_unreachable("Unknown loc info!");
+    case CCValAssign::Full:
+      break;
+    case CCValAssign::BCvt:
+      // We don't care about bitcast.
+      break;
+    case CCValAssign::AExt:
+    case CCValAssign::SExt:
+    case CCValAssign::ZExt:
+      // Zero/Sign extend the register.
+      assert(0 && "Not yet implemented");
+      break;
+    }
+  }
+  return true;
+}
 #endif
 
 //===----------------------------------------------------------------------===//
