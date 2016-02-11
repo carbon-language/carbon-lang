@@ -12,7 +12,6 @@
 
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 
-#include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Constant.h"
@@ -25,6 +24,9 @@
 using namespace llvm;
 
 char IRTranslator::ID = 0;
+
+IRTranslator::IRTranslator() : MachineFunctionPass(ID), MRI(nullptr) {
+}
 
 const VRegsSequence &IRTranslator::getOrCreateVRegs(const Value *Val) {
   VRegsSequence &ValRegSequence = ValToVRegs[Val];
@@ -48,7 +50,7 @@ const VRegsSequence &IRTranslator::getOrCreateVRegs(const Value *Val) {
 MachineBasicBlock &IRTranslator::getOrCreateBB(const BasicBlock *BB) {
   MachineBasicBlock *&MBB = BBToMBB[BB];
   if (!MBB) {
-    MachineFunction &MF = MIRBuilder->getMF();
+    MachineFunction &MF = MIRBuilder.getMF();
     MBB = MF.CreateMachineBasicBlock();
     MF.push_back(MBB);
   }
@@ -63,12 +65,12 @@ bool IRTranslator::translateADD(const Instruction &Inst) {
   unsigned Op0 = *getOrCreateVRegs(Inst.getOperand(0)).begin();
   unsigned Op1 = *getOrCreateVRegs(Inst.getOperand(1)).begin();
   unsigned Res = *getOrCreateVRegs(&Inst).begin();
-  MIRBuilder->buildInstr(TargetOpcode::G_ADD, Res, Op0, Op1);
+  MIRBuilder.buildInstr(TargetOpcode::G_ADD, Res, Op0, Op1);
   return true;
 }
 
 bool IRTranslator::translate(const Instruction &Inst) {
-  MIRBuilder->setDebugLoc(Inst.getDebugLoc());
+  MIRBuilder.setDebugLoc(Inst.getDebugLoc());
   switch(Inst.getOpcode()) {
     case Instruction::Add: {
       return translateADD(Inst);
@@ -86,17 +88,13 @@ void IRTranslator::finalize() {
   Constants.clear();
 }
 
-IRTranslator::IRTranslator()
-  : MachineFunctionPass(ID) {
-}
-
 bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   const Function &F = *MF.getFunction();
-  MIRBuilder->setFunction(MF);
+  MIRBuilder.setFunction(MF);
   MRI = &MF.getRegInfo();
   for (const BasicBlock &BB: F) {
     MachineBasicBlock &MBB = getOrCreateBB(&BB);
-    MIRBuilder->setBasicBlock(MBB);
+    MIRBuilder.setBasicBlock(MBB);
     for (const Instruction &Inst: BB) {
       bool Succeeded = translate(Inst);
       if (!Succeeded) {

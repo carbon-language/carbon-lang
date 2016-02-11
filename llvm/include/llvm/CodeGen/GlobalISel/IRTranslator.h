@@ -22,6 +22,7 @@
 #include "Types.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {
@@ -32,7 +33,6 @@ class Instruction;
 class MachineBasicBlock;
 class MachineFunction;
 class MachineInstr;
-class MachineIRBuilder;
 class MachineRegisterInfo;
 
 // Technically the pass should run on an hypothetical MachineModule,
@@ -96,7 +96,7 @@ private:
   // I.e., compared to regular MIBuilder, this one also inserts the instruction
   // in the current block, it can creates block, etc., basically a kind of
   // IRBuilder, but for Machine IR.
-  MachineIRBuilder *MIRBuilder;
+  MachineIRBuilder MIRBuilder;
 
   /// MachineRegisterInfo used to create virtual registers.
   MachineRegisterInfo *MRI;
