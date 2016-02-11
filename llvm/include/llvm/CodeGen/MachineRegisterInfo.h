@@ -596,6 +596,10 @@ public:
   /// Get the size of \p VReg or 0 if VReg is not a generic
   /// (target independent) virtual register.
   unsigned getSize(unsigned VReg) const;
+
+  /// Create and return a new generic virtual register with a size of \p Size.
+  /// \pre Size > 0.
+  unsigned createGenericVirtualRegister(unsigned Size);
 #endif
 
   /// getNumVirtRegs - Return the number of virtual registers created.

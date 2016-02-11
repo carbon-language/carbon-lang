@@ -1838,6 +1838,11 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     }
     for (unsigned i = 0; i != VirtRegs.size(); ++i) {
       const TargetRegisterClass *RC = MRI->getRegClass(VirtRegs[i]);
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+      // Generic virtual registers do not have register classes.
+      if (!RC)
+        continue;
+#endif
       OS << " " << TRI->getRegClassName(RC)
          << ':' << PrintReg(VirtRegs[i]);
       for (unsigned j = i+1; j != VirtRegs.size();) {
