@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
@@ -62,14 +63,22 @@ MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty,
                                            unsigned Op1) {
   MachineInstr *NewMI =
       BuildMI(getMF(), DL, getTII().get(Opcode), Res).addReg(Op0).addReg(Op1);
-  if (Ty)
+  if (Ty) {
+    assert(isPreISelGenericOpcode(Opcode) &&
+           "Only generic instruction can have a type");
     NewMI->setType(Ty);
+  } else
+    assert(!isPreISelGenericOpcode(Opcode) &&
+           "Generic instruction must have a type");
   getMBB().insert(getInsertPt(), NewMI);
   return NewMI;
 }
 
 MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
                                            unsigned Op0) {
+  assert(!isPreISelGenericOpcode(Opcode) &&
+         "Generic instruction must have a type");
+
   MachineInstr *NewMI =
       BuildMI(getMF(), DL, getTII().get(Opcode), Res).addReg(Op0);
   getMBB().insert(getInsertPt(), NewMI);
@@ -77,6 +86,9 @@ MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
 }
 
 MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode) {
+  assert(!isPreISelGenericOpcode(Opcode) &&
+         "Generic instruction must have a type");
+
   MachineInstr *NewMI = BuildMI(getMF(), DL, getTII().get(Opcode));
   getMBB().insert(getInsertPt(), NewMI);
   return NewMI;

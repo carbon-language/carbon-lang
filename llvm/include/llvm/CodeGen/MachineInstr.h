@@ -190,10 +190,8 @@ public:
   /// Set the type of the instruction.
   /// \pre getOpcode() is in the range of the generic opcodes.
   void setType(Type *Ty) {
-    assert(
-        (!Ty || (getOpcode() >= TargetOpcode::PRE_ISEL_GENERIC_OPCODE_START &&
-                 getOpcode() <= TargetOpcode::PRE_ISEL_GENERIC_OPCODE_END)) &&
-        "Non generic instructions are not supposed to be typed");
+    assert((!Ty || isPreISelGenericOpcode(getOpcode())) &&
+           "Non generic instructions are not supposed to be typed");
     this->Ty = Ty;
   }
   Type *getType() const { return Ty; }

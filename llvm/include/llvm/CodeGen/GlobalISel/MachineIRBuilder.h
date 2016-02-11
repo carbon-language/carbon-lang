@@ -92,6 +92,7 @@ public:
   /// setBasicBlock or setMI.
   ///
   /// \pre setBasicBlock or setMI must have been called.
+  /// \pre Ty == nullptr or isPreISelGenericOpcode(Opcode)
   ///
   /// \return The newly created instruction.
   MachineInstr *buildInstr(unsigned Opcode, Type *Ty, unsigned Res,
@@ -109,6 +110,7 @@ public:
   /// Build and insert \p Res<def> = \p Opcode \p Op0.
   ///
   /// \pre setBasicBlock or setMI must have been called.
+  /// \pre not isPreISelGenericOpcode(\p Opcode)
   ///
   /// \return The newly created instruction.
   MachineInstr *buildInstr(unsigned Opcode, unsigned Res, unsigned Op0);
@@ -116,6 +118,7 @@ public:
   /// Build and insert = \p Opcode.
   ///
   /// \pre setBasicBlock or setMI must have been called.
+  /// \pre not isPreISelGenericOpcode(\p Opcode)
   ///
   /// \return The newly created instruction.
   MachineInstr *buildInstr(unsigned Opcode);
