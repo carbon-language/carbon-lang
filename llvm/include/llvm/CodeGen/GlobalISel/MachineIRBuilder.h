@@ -68,7 +68,7 @@ public:
 
   /// Setters for the insertion point.
   /// @{
-  /// Set MachineFunction where to build instructions.
+  /// Set the MachineFunction where to build instructions.
   void setFunction(MachineFunction &);
 
   /// Set the insertion point to the beginning (\p Beginning = true) or end
@@ -103,6 +103,7 @@ public:
   /// I.e., instruction with a non-generic opcode.
   ///
   /// \pre setBasicBlock or setMI must have been called.
+  /// \pre not isPreISelGenericOpcode(\p Opcode)
   ///
   /// \return The newly created instruction.
   MachineInstr *buildInstr(unsigned Opcode, unsigned Res, unsigned Op0,
