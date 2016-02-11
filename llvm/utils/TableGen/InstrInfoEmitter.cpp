@@ -577,22 +577,19 @@ void InstrInfoEmitter::emitEnums(raw_ostream &OS) {
   if (Namespace.empty())
     PrintFatalError("No instructions defined!");
 
-  ArrayRef<const CodeGenInstruction*> NumberedInstructions =
-    Target.getInstructionsByEnumValue();
-
   OS << "namespace " << Namespace << " {\n";
   OS << "  enum {\n";
   unsigned Num = 0;
-  for (const CodeGenInstruction *Inst : NumberedInstructions)
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue())
     OS << "    " << Inst->TheDef->getName() << "\t= " << Num++ << ",\n";
-  OS << "    INSTRUCTION_LIST_END = " << NumberedInstructions.size() << "\n";
+  OS << "    INSTRUCTION_LIST_END = " << Num << "\n";
   OS << "  };\n\n";
   OS << "namespace Sched {\n";
   OS << "  enum {\n";
   Num = 0;
   for (const auto &Class : SchedModels.explicit_classes())
     OS << "    " << Class.Name << "\t= " << Num++ << ",\n";
-  OS << "    SCHED_LIST_END = " << SchedModels.numInstrSchedClasses() << "\n";
+  OS << "    SCHED_LIST_END = " << Num << "\n";
   OS << "  };\n";
   OS << "} // end Sched namespace\n";
   OS << "} // end " << Namespace << " namespace\n";
