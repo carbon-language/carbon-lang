@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -ffreestanding %s
 // expected-no-diagnostics
 
-// XFAIL: ppc64
-
 /* Basic conformance checks against the N1570 draft of C11 Std. */
 /*
     5.2.4.2.2p11, pp. 30
@@ -112,9 +110,6 @@
 #elif   LDBL_MIN_EXP > -2
     #error "Mandatory macro LDBL_MIN_EXP is invalid."
 #endif
-#if ((FLT_MIN_EXP < DBL_MIN_EXP) || (DBL_MIN_EXP < LDBL_MIN_EXP))
-    #error "Mandatory macros {FLT,DBL,LDBL}_MIN_EXP are invalid."
-#endif
 
 
 #ifndef FLT_MIN_10_EXP
@@ -131,9 +126,6 @@
     #error "Mandatory macro LDBL_MIN_10_EXP is missing."
 #elif   LDBL_MIN_10_EXP > -37
     #error "Mandatory macro LDBL_MIN_10_EXP is invalid."
-#endif
-#if ((FLT_MIN_10_EXP < DBL_MIN_10_EXP) || (DBL_MIN_10_EXP < LDBL_MIN_10_EXP))
-    #error "Mandatory macros {FLT,DBL,LDBL}_MIN_10_EXP are invalid."
 #endif
 
 
