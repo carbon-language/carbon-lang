@@ -20,16 +20,20 @@
 #define LLVM_CODEGEN_GLOBALISEL_IRTRANSLATOR_H
 
 #include "Types.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/IR/Constants.h"
 
 namespace llvm {
 // Forward declarations.
+class BasicBlock;
 class Constant;
 class Instruction;
+class MachineBasicBlock;
+class MachineFunction;
 class MachineInstr;
 class MachineIRBuilder;
+class MachineRegisterInfo;
 
 // Technically the pass should run on an hypothetical MachineModule,
 // since it should translate Global into some sort of MachineGlobal.
@@ -63,6 +67,8 @@ private:
   // do not appear in that map.
   SmallSetVector<const Constant *, 8> Constants;
 
+  DenseMap<const BasicBlock *, MachineBasicBlock *> BBToMBB;
+
   /* A bunch of methods targeting ADD, SUB, etc. */
   // Return true if the translation was successful, false
   // otherwise.
@@ -92,6 +98,9 @@ private:
   // IRBuilder, but for Machine IR.
   MachineIRBuilder *MIRBuilder;
 
+  /// MachineRegisterInfo used to create virtual registers.
+  MachineRegisterInfo *MRI;
+
   // Return true if the translation from LLVM IR to Machine IR
   // suceeded.
   // See translateXXX for details.
@@ -102,6 +111,12 @@ private:
   // of each constant depending on how fancy we want to be.
   // * Clear the different maps.
   void finalize();
+
+  /// Get the sequence of VRegs for that \p Val.
+  const VRegsSequence &getOrCreateVRegs(const Value *Val);
+
+  MachineBasicBlock &getOrCreateBB(const BasicBlock *BB);
+
 public:
   // Ctor, nothing fancy.
   IRTranslator();

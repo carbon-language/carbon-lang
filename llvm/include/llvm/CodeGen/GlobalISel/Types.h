@@ -21,6 +21,8 @@
 
 namespace llvm {
 
+typedef SmallVector<unsigned, 1> VRegsSequence;
+
 /// Map a value to virtual registers.
 /// We must support several virtual registers for a value.
 /// Indeed each virtual register is mapped to one EVT, but a value
@@ -28,7 +30,7 @@ namespace llvm {
 /// In that case the value will be break into EVTs.
 /// Note: We need to expose this type to the target hooks for thing like
 /// ABI lowering that would be used during IRTranslation.
-typedef DenseMap<const Value *, SmallVector<unsigned, 1>> ValueToVRegs;
+typedef DenseMap<const Value *, VRegsSequence> ValueToVRegs;
 
 } // End namespace llvm.
 #endif
