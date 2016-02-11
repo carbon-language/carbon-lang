@@ -25,6 +25,9 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/DAGCombine.h"
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+#include "llvm/CodeGen/GlobalISel/Types.h"
+#endif
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/IR/Attributes.h"
@@ -50,6 +53,9 @@ namespace llvm {
   class MachineBasicBlock;
   class MachineFunction;
   class MachineInstr;
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+  class MachineIRBuilder;
+#endif
   class MachineJumpTableInfo;
   class MachineLoop;
   class Mangler;
@@ -2505,6 +2511,13 @@ public:
                 SDLoc /*dl*/, SelectionDAG &/*DAG*/) const {
     llvm_unreachable("Not Implemented");
   }
+
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+  virtual bool LowerReturn(MachineIRBuilder &MIRBuilder, const Value *Val,
+                           unsigned VReg) const {
+    return false;
+  }
+#endif
 
   /// Return true if result of the specified node is used by a return node
   /// only. It also compute and return the input chain for the tail call.

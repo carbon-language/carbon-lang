@@ -54,8 +54,30 @@ MachineBasicBlock::iterator MachineIRBuilder::getInsertPt() {
 
 MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
                                            unsigned Op0, unsigned Op1) {
+  return buildInstr(Opcode, nullptr, Res, Op0, Op1);
+}
+
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty,
+                                           unsigned Res, unsigned Op0,
+                                           unsigned Op1) {
   MachineInstr *NewMI =
       BuildMI(getMF(), DL, getTII().get(Opcode), Res).addReg(Op0).addReg(Op1);
+  if (Ty)
+    NewMI->setType(Ty);
+  getMBB().insert(getInsertPt(), NewMI);
+  return NewMI;
+}
+
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
+                                           unsigned Op0) {
+  MachineInstr *NewMI =
+      BuildMI(getMF(), DL, getTII().get(Opcode), Res).addReg(Op0);
+  getMBB().insert(getInsertPt(), NewMI);
+  return NewMI;
+}
+
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode) {
+  MachineInstr *NewMI = BuildMI(getMF(), DL, getTII().get(Opcode));
   getMBB().insert(getInsertPt(), NewMI);
   return NewMI;
 }

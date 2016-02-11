@@ -18,6 +18,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Target/TargetLowering.h"
 
 #define DEBUG_TYPE "irtranslator"
 
@@ -65,18 +66,30 @@ bool IRTranslator::translateADD(const Instruction &Inst) {
   unsigned Op0 = *getOrCreateVRegs(Inst.getOperand(0)).begin();
   unsigned Op1 = *getOrCreateVRegs(Inst.getOperand(1)).begin();
   unsigned Res = *getOrCreateVRegs(&Inst).begin();
-  MIRBuilder.buildInstr(TargetOpcode::G_ADD, Res, Op0, Op1);
+  MIRBuilder.buildInstr(TargetOpcode::G_ADD, Inst.getType(), Res, Op0, Op1);
   return true;
+}
+
+bool IRTranslator::translateReturn(const Instruction &Inst) {
+  assert(isa<ReturnInst>(Inst) && "Return expected");
+  const Value *Ret = cast<ReturnInst>(Inst).getReturnValue();
+  // The target may mess up with the insertion point, but
+  // this is not important as a return is the last instruction
+  // of the block anyway.
+  return TLI->LowerReturn(MIRBuilder, Ret,
+                          !Ret ? 0 : *getOrCreateVRegs(Ret).begin());
 }
 
 bool IRTranslator::translate(const Instruction &Inst) {
   MIRBuilder.setDebugLoc(Inst.getDebugLoc());
   switch(Inst.getOpcode()) {
-    case Instruction::Add: {
-      return translateADD(Inst);
-    default:
-      llvm_unreachable("Opcode not supported");
-    }
+  case Instruction::Add:
+    return translateADD(Inst);
+  case Instruction::Ret:
+    return translateReturn(Inst);
+
+  default:
+    llvm_unreachable("Opcode not supported");
   }
 }
 
@@ -90,6 +103,7 @@ void IRTranslator::finalize() {
 
 bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   const Function &F = *MF.getFunction();
+  TLI = MF.getSubtarget().getTargetLowering();
   MIRBuilder.setFunction(MF);
   MRI = &MF.getRegInfo();
   for (const BasicBlock &BB: F) {

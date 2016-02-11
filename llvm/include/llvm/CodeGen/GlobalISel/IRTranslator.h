@@ -34,6 +34,7 @@ class MachineBasicBlock;
 class MachineFunction;
 class MachineInstr;
 class MachineRegisterInfo;
+class TargetLowering;
 
 // Technically the pass should run on an hypothetical MachineModule,
 // since it should translate Global into some sort of MachineGlobal.
@@ -49,7 +50,7 @@ public:
 
 private:
   // Interface used to lower the everything related to calls.
-  //  TargetLowering *CallLowering;
+  const TargetLowering *TLI;
   // Mapping of the values of the current LLVM IR function
   // to the related virtual registers.
   // We need several virtual registers for the lowering of things
@@ -91,6 +92,8 @@ private:
   //       as constants.
   // 3. Create the generic instruction.
   bool translateADD(const Instruction &Inst);
+
+  bool translateReturn(const Instruction &Inst);
 
   // Builder for machine instruction a la IRBuilder.
   // I.e., compared to regular MIBuilder, this one also inserts the instruction
