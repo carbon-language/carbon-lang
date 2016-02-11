@@ -8483,10 +8483,10 @@
 // WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_SHORT_LOCK_FREE 2
 // WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1
 // WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_WCHAR_T_LOCK_FREE 2
-// WEBASSEMBLY32-NEXT:#define __GNUC_MINOR__ {{.}}
-// WEBASSEMBLY32-NEXT:#define __GNUC_PATCHLEVEL__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __GNUC_MINOR__ {{.*}}
+// WEBASSEMBLY32-NEXT:#define __GNUC_PATCHLEVEL__ {{.*}}
 // WEBASSEMBLY32-NEXT:#define __GNUC_STDC_INLINE__ 1
-// WEBASSEMBLY32-NEXT:#define __GNUC__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __GNUC__ {{.*}}
 // WEBASSEMBLY32-NEXT:#define __GXX_ABI_VERSION 1002
 // WEBASSEMBLY32-NEXT:#define __ILP32__ 1
 // WEBASSEMBLY32-NEXT:#define __INT16_C_SUFFIX__
@@ -8718,9 +8718,9 @@
 // WEBASSEMBLY32-NOT:#define __WINT_UNSIGNED__
 // WEBASSEMBLY32-NEXT:#define __WINT_WIDTH__ 32
 // WEBASSEMBLY32-NEXT:#define __clang__ 1
-// WEBASSEMBLY32-NEXT:#define __clang_major__ {{.}}
-// WEBASSEMBLY32-NEXT:#define __clang_minor__ {{.}}
-// WEBASSEMBLY32-NEXT:#define __clang_patchlevel__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __clang_major__ {{.*}}
+// WEBASSEMBLY32-NEXT:#define __clang_minor__ {{.*}}
+// WEBASSEMBLY32-NEXT:#define __clang_patchlevel__ {{.*}}
 // WEBASSEMBLY32-NEXT:#define __clang_version__ "{{.*}}"
 // WEBASSEMBLY32-NEXT:#define __llvm__ 1
 // WEBASSEMBLY32-NOT:#define __wasm_simd128__
@@ -8798,8 +8798,8 @@
 // WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_SHORT_LOCK_FREE 2
 // WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1
 // WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_WCHAR_T_LOCK_FREE 2
-// WEBASSEMBLY64-NEXT:#define __GNUC_MINOR__ {{.}}
-// WEBASSEMBLY64-NEXT:#define __GNUC_PATCHLEVEL__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __GNUC_MINOR__ {{.*}}
+// WEBASSEMBLY64-NEXT:#define __GNUC_PATCHLEVEL__ {{.*}}
 // WEBASSEMBLY64-NEXT:#define __GNUC_STDC_INLINE__ 1
 // WEBASSEMBLY64-NEXT:#define __GNUC__ {{.}}
 // WEBASSEMBLY64-NEXT:#define __GXX_ABI_VERSION 1002
@@ -9033,9 +9033,9 @@
 // WEBASSEMBLY64-NOT:#define __WINT_UNSIGNED__
 // WEBASSEMBLY64-NEXT:#define __WINT_WIDTH__ 32
 // WEBASSEMBLY64-NEXT:#define __clang__ 1
-// WEBASSEMBLY64-NEXT:#define __clang_major__ {{.}}
-// WEBASSEMBLY64-NEXT:#define __clang_minor__ {{.}}
-// WEBASSEMBLY64-NEXT:#define __clang_patchlevel__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __clang_major__ {{.*}}
+// WEBASSEMBLY64-NEXT:#define __clang_minor__ {{.*}}
+// WEBASSEMBLY64-NEXT:#define __clang_patchlevel__ {{.*}}
 // WEBASSEMBLY64-NEXT:#define __clang_version__ "{{.*}}"
 // WEBASSEMBLY64-NEXT:#define __llvm__ 1
 // WEBASSEMBLY64-NOT:#define __wasm_simd128__
