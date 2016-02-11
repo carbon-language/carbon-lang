@@ -58,6 +58,10 @@ size_t strlen(const char* s);
 #pragma GCC system_header
 #endif
 
+#ifdef __cplusplus
+#define __CORRECT_ISO_CPP_STRING_H_PROTO
+#endif
+
 #include_next <string.h>
 
 // MSVCRT, GNU libc and its derivates already have the correct prototype in
