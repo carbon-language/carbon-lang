@@ -998,6 +998,22 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
 
   for (const Elf_Shdr &Sec : Obj->sections()) {
     switch (Sec.sh_type) {
+    case ELF::SHT_SYMTAB:
+      if (DotSymtabSec != nullptr)
+        reportError("Multilpe SHT_SYMTAB");
+      DotSymtabSec = &Sec;
+      break;
+    case ELF::SHT_DYNSYM:
+      if (DotDynSymSec != nullptr)
+        reportError("Multilpe SHT_DYNSYM");
+      DotDynSymSec = &Sec;
+      break;
+    case ELF::SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> TableOrErr = Obj->getSHNDXTable(Sec);
+      error(TableOrErr.getError());
+      ShndxTable = *TableOrErr;
+      break;
+    }
     case ELF::SHT_GNU_versym:
       if (dot_gnu_version_sec != nullptr)
         reportError("Multiple SHT_GNU_versym");
@@ -1013,22 +1029,6 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
         reportError("Multilpe SHT_GNU_verneed");
       dot_gnu_version_r_sec = &Sec;
       break;
-    case ELF::SHT_DYNSYM:
-      if (DotDynSymSec != nullptr)
-        reportError("Multilpe SHT_DYNSYM");
-      DotDynSymSec = &Sec;
-      break;
-    case ELF::SHT_SYMTAB:
-      if (DotSymtabSec != nullptr)
-        reportError("Multilpe SHT_SYMTAB");
-      DotSymtabSec = &Sec;
-      break;
-    case ELF::SHT_SYMTAB_SHNDX: {
-      ErrorOr<ArrayRef<Elf_Word>> TableOrErr = Obj->getSHNDXTable(Sec);
-      error(TableOrErr.getError());
-      ShndxTable = *TableOrErr;
-      break;
-    }
     }
   }
 
@@ -1058,14 +1058,15 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
       GnuHashTable =
           reinterpret_cast<const Elf_GnuHash *>(toMappedAddr(Dyn.getPtr()));
       break;
-    case ELF::DT_REL:
-      DynRelRegion.Addr = toMappedAddr(Dyn.getPtr());
+    case ELF::DT_STRTAB:
+      StringTableBegin = (const char *)toMappedAddr(Dyn.getPtr());
       break;
-    case ELF::DT_RELSZ:
-      DynRelRegion.Size = Dyn.getVal();
+    case ELF::DT_STRSZ:
+      StringTableSize = Dyn.getVal();
       break;
-    case ELF::DT_RELENT:
-      DynRelRegion.EntSize = Dyn.getVal();
+    case ELF::DT_SYMTAB:
+      DynSymStart =
+          reinterpret_cast<const Elf_Sym *>(toMappedAddr(Dyn.getPtr()));
       break;
     case ELF::DT_RELA:
       DynRelaRegion.Addr = toMappedAddr(Dyn.getPtr());
@@ -1079,15 +1080,14 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     case ELF::DT_SONAME:
       SONameOffset = Dyn.getVal();
       break;
-    case ELF::DT_STRTAB:
-      StringTableBegin = (const char *)toMappedAddr(Dyn.getPtr());
+    case ELF::DT_REL:
+      DynRelRegion.Addr = toMappedAddr(Dyn.getPtr());
       break;
-    case ELF::DT_STRSZ:
-      StringTableSize = Dyn.getVal();
+    case ELF::DT_RELSZ:
+      DynRelRegion.Size = Dyn.getVal();
       break;
-    case ELF::DT_SYMTAB:
-      DynSymStart =
-          reinterpret_cast<const Elf_Sym *>(toMappedAddr(Dyn.getPtr()));
+    case ELF::DT_RELENT:
+      DynRelRegion.EntSize = Dyn.getVal();
       break;
     }
   }
