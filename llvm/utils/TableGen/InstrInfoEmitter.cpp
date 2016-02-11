@@ -339,10 +339,8 @@ void InstrInfoEmitter::emitOperandTypesEnum(raw_ostream &OS,
 
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(raw_ostream &OS) {
-  emitSourceFileHeader("Target Instruction Enum Values", OS);
+  emitSourceFileHeader("Target Instruction Enum Values and Descriptors", OS);
   emitEnums(OS);
-
-  emitSourceFileHeader("Target Instruction Descriptors", OS);
 
   OS << "#ifdef GET_INSTRINFO_MC_DESC\n";
   OS << "#undef GET_INSTRINFO_MC_DESC\n";
