@@ -774,18 +774,10 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
   return '?';
 }
 
-static uint8_t getNType(MachOObjectFile &Obj, DataRefImpl Symb) {
-  if (Obj.is64Bit()) {
-    MachO::nlist_64 STE = Obj.getSymbol64TableEntry(Symb);
-    return STE.n_type;
-  }
-  MachO::nlist STE = Obj.getSymbolTableEntry(Symb);
-  return STE.n_type;
-}
-
 static char getSymbolNMTypeChar(MachOObjectFile &Obj, basic_symbol_iterator I) {
   DataRefImpl Symb = I->getRawDataRefImpl();
-  uint8_t NType = getNType(Obj, Symb);
+  uint8_t NType = Obj.is64Bit() ? Obj.getSymbol64TableEntry(Symb).n_type
+                                : Obj.getSymbolTableEntry(Symb).n_type;
 
   if (NType & MachO::N_STAB)
     return '-';
@@ -898,14 +890,10 @@ static unsigned getNsectInMachO(MachOObjectFile &Obj, BasicSymbolRef Sym) {
   DataRefImpl Symb = Sym.getRawDataRefImpl();
   if (Obj.is64Bit()) {
     MachO::nlist_64 STE = Obj.getSymbol64TableEntry(Symb);
-    if ((STE.n_type & MachO::N_TYPE) == MachO::N_SECT)
-      return STE.n_sect;
-    return 0;
+    return (STE.n_type & MachO::N_TYPE) == MachO::N_SECT ? STE.n_sect : 0;
   }
   MachO::nlist STE = Obj.getSymbolTableEntry(Symb);
-  if ((STE.n_type & MachO::N_TYPE) == MachO::N_SECT)
-    return STE.n_sect;
-  return 0;
+  return (STE.n_type & MachO::N_TYPE) == MachO::N_SECT ? STE.n_sect : 0;
 }
 
 static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
