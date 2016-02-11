@@ -25,11 +25,11 @@ int main() {
   set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
 endfunction(check_cxx_atomics)
 
-check_cxx_atomics(LIBCXX_HAVE_CXX_ATOMICS_WITH_LIB)
+check_cxx_atomics(LIBCXX_HAVE_CXX_ATOMICS_WITHOUT_LIB)
 # If not, check if the library exists, and atomics work with it.
-if(NOT LIBCXX_HAVE_CXX_ATOMICS_WITH_LIB)
-  check_library_exists(atomic __atomic_fetch_add_8 "" HAVE_LIBATOMIC)
-  if(HAVE_LIBATOMIC)
+if(NOT LIBCXX_HAVE_CXX_ATOMICS_WITHOUT_LIB)
+  check_library_exists(atomic __atomic_fetch_add_8 "" LIBCXX_HAS_ATOMIC_LIB)
+  if(LIBCXX_HAS_ATOMIC_LIB)
     list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
     check_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
     if (NOT HAVE_CXX_ATOMICS_WITH_LIB)
