@@ -725,20 +725,10 @@ StringRef Writer<ELFT>::getOutputSectionName(StringRef S) const {
   if (It != std::end(InputToOutputSection))
     return It->second;
 
-  if (S.startswith(".text."))
-    return ".text";
-  if (S.startswith(".rodata."))
-    return ".rodata";
-  if (S.startswith(".data.rel.ro"))
-    return ".data.rel.ro";
-  if (S.startswith(".data."))
-    return ".data";
-  if (S.startswith(".bss."))
-    return ".bss";
-  if (S.startswith(".init_array."))
-    return ".init_array";
-  if (S.startswith(".fini_array."))
-    return ".fini_array";
+  for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
+                      ".init_array.", ".fini_array."})
+    if (S.startswith(V))
+      return V.drop_back();
   return S;
 }
 
