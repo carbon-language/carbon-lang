@@ -3250,7 +3250,7 @@ ToolChain::CXXStdlibType NetBSD::GetCXXStdlibType(const ArgList &Args) const {
 
   unsigned Major, Minor, Micro;
   getTriple().getOSVersion(Major, Minor, Micro);
-  if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 49) || Major == 0) {
+  if (Major >= 7 || Major == 0) {
     switch (getArch()) {
     case llvm::Triple::aarch64:
     case llvm::Triple::arm:
