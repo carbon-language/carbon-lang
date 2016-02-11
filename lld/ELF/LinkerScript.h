@@ -13,6 +13,8 @@
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 namespace lld {
 namespace elf2 {
@@ -23,6 +25,10 @@ class LinkerScript {
   friend class ScriptParser;
 
 public:
+  // Parses a linker script. Calling this function may update
+  // this object and Config.
+  void read(MemoryBufferRef MB);
+
   StringRef getOutputSection(StringRef InputSection);
   bool isDiscarded(StringRef InputSection);
   int compareSections(StringRef A, StringRef B);
@@ -35,6 +41,8 @@ private:
 
   // Inverse map of Sections.
   llvm::DenseMap<StringRef, StringRef> RevSections;
+
+  llvm::BumpPtrAllocator Alloc;
 };
 
 extern LinkerScript *Script;
