@@ -996,6 +996,42 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     LoadSegments.push_back(&Phdr);
   }
 
+  for (const Elf_Shdr &Sec : Obj->sections()) {
+    switch (Sec.sh_type) {
+    case ELF::SHT_GNU_versym:
+      if (dot_gnu_version_sec != nullptr)
+        reportError("Multiple SHT_GNU_versym");
+      dot_gnu_version_sec = &Sec;
+      break;
+    case ELF::SHT_GNU_verdef:
+      if (dot_gnu_version_d_sec != nullptr)
+        reportError("Multiple SHT_GNU_verdef");
+      dot_gnu_version_d_sec = &Sec;
+      break;
+    case ELF::SHT_GNU_verneed:
+      if (dot_gnu_version_r_sec != nullptr)
+        reportError("Multilpe SHT_GNU_verneed");
+      dot_gnu_version_r_sec = &Sec;
+      break;
+    case ELF::SHT_DYNSYM:
+      if (DotDynSymSec != nullptr)
+        reportError("Multilpe SHT_DYNSYM");
+      DotDynSymSec = &Sec;
+      break;
+    case ELF::SHT_SYMTAB:
+      if (DotSymtabSec != nullptr)
+        reportError("Multilpe SHT_SYMTAB");
+      DotSymtabSec = &Sec;
+      break;
+    case ELF::SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> TableOrErr = Obj->getSHNDXTable(Sec);
+      error(TableOrErr.getError());
+      ShndxTable = *TableOrErr;
+      break;
+    }
+    }
+  }
+
   auto toMappedAddr = [&](uint64_t VAddr) -> const uint8_t * {
     const Elf_Phdr **I = std::upper_bound(
         LoadSegments.begin(), LoadSegments.end(), VAddr, compareAddr<ELFT>);
@@ -1059,42 +1095,6 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     DynamicStringTable = StringRef(StringTableBegin, StringTableSize);
   if (SONameOffset)
     SOName = getDynamicString(SONameOffset);
-
-  for (const Elf_Shdr &Sec : Obj->sections()) {
-    switch (Sec.sh_type) {
-    case ELF::SHT_GNU_versym:
-      if (dot_gnu_version_sec != nullptr)
-        reportError("Multiple SHT_GNU_versym");
-      dot_gnu_version_sec = &Sec;
-      break;
-    case ELF::SHT_GNU_verdef:
-      if (dot_gnu_version_d_sec != nullptr)
-        reportError("Multiple SHT_GNU_verdef");
-      dot_gnu_version_d_sec = &Sec;
-      break;
-    case ELF::SHT_GNU_verneed:
-      if (dot_gnu_version_r_sec != nullptr)
-        reportError("Multilpe SHT_GNU_verneed");
-      dot_gnu_version_r_sec = &Sec;
-      break;
-    case ELF::SHT_DYNSYM:
-      if (DotDynSymSec != nullptr)
-        reportError("Multilpe SHT_DYNSYM");
-      DotDynSymSec = &Sec;
-      break;
-    case ELF::SHT_SYMTAB:
-      if (DotSymtabSec != nullptr)
-        reportError("Multilpe SHT_SYMTAB");
-      DotSymtabSec = &Sec;
-      break;
-    case ELF::SHT_SYMTAB_SHNDX: {
-      ErrorOr<ArrayRef<Elf_Word>> TableOrErr = Obj->getSHNDXTable(Sec);
-      error(TableOrErr.getError());
-      ShndxTable = *TableOrErr;
-      break;
-    }
-    }
-  }
   if (opts::Output == opts::GNU)
     ELFDumperStyle.reset(new GNUStyle<ELFT>(Writer));
   else
