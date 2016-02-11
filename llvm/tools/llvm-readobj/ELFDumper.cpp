@@ -2292,7 +2292,7 @@ void GNUStyle<ELFT>::printFileHeaders(const ELFFile<ELFT> *Obj) {
   OS << "ELF Header:\n";
   OS << "  Magic:  ";
   std::string Str;
-  auto printFields = [&](StringRef Str1, StringRef Str2) -> void {
+  auto printFields = [this](StringRef Str1, StringRef Str2) -> void {
     OS.PadToColumn(2u);
     OS << Str1;
     OS.PadToColumn(37u);
