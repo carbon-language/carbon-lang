@@ -49,15 +49,11 @@ public:
   static char ID;
 
 private:
-  // Interface used to lower the everything related to calls.
+  /// Interface used to lower the everything related to calls.
   const TargetLowering *TLI;
-  // Mapping of the values of the current LLVM IR function
-  // to the related virtual registers.
-  // We need several virtual registers for the lowering of things
-  // like structures. Right now, this is just a list of virtual
-  // registers, but we would need to encapsulate that in a higher
-  // level class.
-  ValueToVRegs ValToVRegs;
+  /// Mapping of the values of the current LLVM IR function
+  /// to the related virtual registers.
+  ValueToVReg ValToVReg;
   // Constants are special because when we encounter one,
   // we do not know at first where to insert the definition since
   // this depends on all its uses.
@@ -116,7 +112,7 @@ private:
   void finalize();
 
   /// Get the sequence of VRegs for that \p Val.
-  const VRegsSequence &getOrCreateVRegs(const Value *Val);
+  unsigned getOrCreateVReg(const Value *Val);
 
   MachineBasicBlock &getOrCreateBB(const BasicBlock *BB);
 

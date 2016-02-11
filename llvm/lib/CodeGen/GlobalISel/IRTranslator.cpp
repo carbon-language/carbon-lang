@@ -30,10 +30,10 @@ char IRTranslator::ID = 0;
 IRTranslator::IRTranslator() : MachineFunctionPass(ID), MRI(nullptr) {
 }
 
-const VRegsSequence &IRTranslator::getOrCreateVRegs(const Value *Val) {
-  VRegsSequence &ValRegSequence = ValToVRegs[Val];
+unsigned IRTranslator::getOrCreateVReg(const Value *Val) {
+  unsigned &ValReg = ValToVReg[Val];
   // Check if this is the first time we see Val.
-  if (ValRegSequence.empty()) {
+  if (!ValReg) {
     // Fill ValRegsSequence with the sequence of registers
     // we need to concat together to produce the value.
     assert(Val->getType()->isSized() &&
@@ -41,12 +41,10 @@ const VRegsSequence &IRTranslator::getOrCreateVRegs(const Value *Val) {
     assert(!Val->getType()->isAggregateType() && "Not yet implemented");
     unsigned Size = Val->getType()->getPrimitiveSizeInBits();
     unsigned VReg = MRI->createGenericVirtualRegister(Size);
-    ValRegSequence.push_back(VReg);
+    ValReg = VReg;
     assert(!isa<Constant>(Val) && "Not yet implemented");
   }
-  assert(ValRegSequence.size() == 1 &&
-         "We support only one vreg per value at the moment");
-  return ValRegSequence;
+  return ValReg;
 }
 
 MachineBasicBlock &IRTranslator::getOrCreateBB(const BasicBlock *BB) {
@@ -64,9 +62,9 @@ bool IRTranslator::translateADD(const Instruction &Inst) {
   // Unless the value is a Constant => loadimm cst?
   // or inline constant each time?
   // Creation of a virtual register needs to have a size.
-  unsigned Op0 = *getOrCreateVRegs(Inst.getOperand(0)).begin();
-  unsigned Op1 = *getOrCreateVRegs(Inst.getOperand(1)).begin();
-  unsigned Res = *getOrCreateVRegs(&Inst).begin();
+  unsigned Op0 = getOrCreateVReg(Inst.getOperand(0));
+  unsigned Op1 = getOrCreateVReg(Inst.getOperand(1));
+  unsigned Res = getOrCreateVReg(&Inst);
   MIRBuilder.buildInstr(TargetOpcode::G_ADD, Inst.getType(), Res, Op0, Op1);
   return true;
 }
@@ -78,7 +76,7 @@ bool IRTranslator::translateReturn(const Instruction &Inst) {
   // this is not important as a return is the last instruction
   // of the block anyway.
   return TLI->LowerReturn(MIRBuilder, Ret,
-                          !Ret ? 0 : *getOrCreateVRegs(Ret).begin());
+                          !Ret ? 0 : getOrCreateVReg(Ret));
 }
 
 bool IRTranslator::translate(const Instruction &Inst) {
@@ -98,7 +96,7 @@ bool IRTranslator::translate(const Instruction &Inst) {
 void IRTranslator::finalize() {
   // Release the memory used by the different maps we
   // needed during the translation.
-  ValToVRegs.clear();
+  ValToVReg.clear();
   Constants.clear();
 }
 
@@ -114,7 +112,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   MIRBuilder.setBasicBlock(MBB);
   SmallVector<unsigned, 8> VRegArgs;
   for (const Argument &Arg: F.args())
-    VRegArgs.push_back(*getOrCreateVRegs(&Arg).begin());
+    VRegArgs.push_back(getOrCreateVReg(&Arg));
   bool Succeeded = TLI->LowerFormalArguments(MIRBuilder, F.getArgumentList(),
                                              VRegArgs);
   if (!Succeeded)
