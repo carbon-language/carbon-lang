@@ -165,6 +165,7 @@ private:
   // Dynamic relocation info.
   DynRegionInfo DynRelRegion;
   DynRegionInfo DynRelaRegion;
+  DynRegionInfo DynPLTRelRegion;
 
   DynRegionInfo DynSymRegion;
   StringRef DynamicStringTable;
@@ -1126,6 +1127,21 @@ void ELFDumper<ELFT>::parseDynamicTable(
     case ELF::DT_RELENT:
       DynRelRegion.EntSize = Dyn.getVal();
       break;
+    case ELF::DT_PLTREL:
+      if (Dyn.getVal() == DT_REL)
+        DynPLTRelRegion.EntSize =  sizeof(Elf_Rel);
+      else if (Dyn.getVal() == DT_RELA)
+        DynPLTRelRegion.EntSize = sizeof(Elf_Rela);
+      else
+        reportError(Twine("unknown DT_PLTREL value of ") +
+                    Twine((uint64_t)Dyn.getVal()));
+      break;
+    case ELF::DT_JMPREL:
+      DynPLTRelRegion.Addr = toMappedAddr(Dyn.getPtr());
+      break;
+    case ELF::DT_PLTRELSZ:
+      DynPLTRelRegion.Size = Dyn.getVal();
+      break;
     }
   }
   if (StringTableBegin)
@@ -1155,6 +1171,7 @@ void ELFDumper<ELFT>::parseDynamicTable(
     CheckDRI(DynamicTable);
     CheckDRI(DynRelRegion);
     CheckDRI(DynRelaRegion);
+    CheckDRI(DynPLTRelRegion);
     
     if (DynamicStringTable.data() >= Start && DynamicStringTable.data() < End)
       End = DynamicStringTable.data();
@@ -1304,6 +1321,17 @@ template <class ELFT> void ELFDumper<ELFT>::printDynamicRelocations() {
       printDynamicRelocation(Rela);
   else
     for (const Elf_Rel &Rel : dyn_rels()) {
+      Elf_Rela Rela;
+      Rela.r_offset = Rel.r_offset;
+      Rela.r_info = Rel.r_info;
+      Rela.r_addend = 0;
+      printDynamicRelocation(Rela);
+    }
+  if (DynPLTRelRegion.EntSize == sizeof(Elf_Rela))
+    for (const Elf_Rela &Rela : DynPLTRelRegion.getAsRange<Elf_Rela>())
+      printDynamicRelocation(Rela);
+  else
+    for (const Elf_Rel &Rel : DynPLTRelRegion.getAsRange<Elf_Rel>()) {
       Elf_Rela Rela;
       Rela.r_offset = Rel.r_offset;
       Rela.r_info = Rel.r_info;
