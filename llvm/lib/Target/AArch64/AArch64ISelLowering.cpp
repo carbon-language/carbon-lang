@@ -21,6 +21,9 @@
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+#  include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#endif
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -3391,6 +3394,32 @@ AArch64TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 
   return DAG.getNode(AArch64ISD::RET_FLAG, DL, MVT::Other, RetOps);
 }
+
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+bool AArch64TargetLowering::LowerReturn(MachineIRBuilder &MIRBuilder,
+                                        const Value *Val, unsigned VReg) const {
+  MachineInstr *Return = MIRBuilder.buildInstr(AArch64::RET_ReallyLR);
+  assert(Return && "Unable to build a return instruction?!");
+
+  assert(((Val && VReg) || (!Val && !VReg)) && "Return value without a vreg");
+  if (VReg) {
+    assert(Val->getType()->isIntegerTy() && "Type not supported yet");
+    unsigned Size = Val->getType()->getPrimitiveSizeInBits();
+    assert((Size == 64 || Size == 32) && "Size not supported yet");
+    unsigned ResReg = (Size == 32) ? AArch64::W0 : AArch64::X0;
+    // Set the insertion point to be right before Return.
+    MIRBuilder.setInstr(*Return, /* Before */ true);
+    MachineInstr *Copy =
+        MIRBuilder.buildInstr(TargetOpcode::COPY, ResReg, VReg);
+    (void)Copy;
+    assert(Copy->getNextNode() == Return &&
+           "The insertion did not happen where we expected");
+    MachineInstrBuilder(MIRBuilder.getMF(), Return)
+        .addReg(ResReg, RegState::Implicit);
+  }
+  return true;
+}
+#endif
 
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
