@@ -8,8 +8,8 @@
 ;__device__ void bar() {}
 ;}
 
-; CHECK: .file   1 "/source/dir/bar.cu"
-; CHECK: .file   2 "/source/dir/foo.h"
+; CHECK: .file   1 "/source/dir{{/|\\\\}}bar.cu"
+; CHECK: .file   2 "/source/dir{{/|\\\\}}foo.h"
 
 ; CHECK-LABEL: @foo
 define void @foo() !dbg !4 {
