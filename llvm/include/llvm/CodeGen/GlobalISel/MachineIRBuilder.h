@@ -45,11 +45,6 @@ class MachineIRBuilder {
   bool Before;
   /// @}
 
-  MachineBasicBlock &getMBB() {
-    assert(MBB && "MachineBasicBlock is not set");
-    return *MBB;
-  }
-
   const TargetInstrInfo &getTII() {
     assert(TII && "TargetInstrInfo is not set");
     return *TII;
@@ -63,6 +58,12 @@ public:
   MachineFunction &getMF() {
     assert(MF && "MachineFunction is not set");
     return *MF;
+  }
+
+  /// Getter for the basic block we currently build.
+  MachineBasicBlock &getMBB() {
+    assert(MBB && "MachineBasicBlock is not set");
+    return *MBB;
   }
 
   /// Setters for the insertion point.
