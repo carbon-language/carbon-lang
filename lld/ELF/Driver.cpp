@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "Error.h"
 #include "InputFiles.h"
+#include "LinkerScript.h"
 #include "SymbolTable.h"
 #include "Target.h"
 #include "Writer.h"
@@ -34,8 +35,10 @@ bool elf2::link(ArrayRef<const char *> Args, raw_ostream &Error) {
   ErrorOS = &Error;
   Configuration C;
   LinkerDriver D;
+  LinkerScript LS;
   Config = &C;
   Driver = &D;
+  Script = &LS;
   Driver->main(Args.slice(1));
   return !HasError;
 }
@@ -292,6 +295,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
   Target.reset(createTarget());
+  Script->finalize();
 
   if (!Config->Shared) {
     // Add entry symbol.
