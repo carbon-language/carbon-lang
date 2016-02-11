@@ -28,7 +28,6 @@ class AMDGPUTargetLowering : public TargetLowering {
 protected:
   const AMDGPUSubtarget *Subtarget;
 
-private:
   SDValue LowerConstantInitializer(const Constant* Init, const GlobalValue *GV,
                                    const SDValue &InitPtr,
                                    SDValue Chain,

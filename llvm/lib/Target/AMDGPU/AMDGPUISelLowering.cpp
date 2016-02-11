@@ -671,11 +671,6 @@ void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
     // ReplaceNodeResults to sext_in_reg to an illegal type, so we'll just do
     // nothing here and let the illegal result integer be handled normally.
     return;
-  case ISD::STORE: {
-    if (SDValue Lowered = LowerSTORE(SDValue(N, 0), DAG))
-      Results.push_back(Lowered);
-    return;
-  }
   default:
     return;
   }
@@ -1146,6 +1141,8 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
   return DAG.getMergeValues(Ops, SL);
 }
 
+// FIXME: This isn't doing anything for SI. This should be used in a target
+// combine during type legalization.
 SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
                                                SelectionDAG &DAG) const {
   StoreSDNode *Store = cast<StoreSDNode>(Op);
@@ -1288,64 +1285,6 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                         HiAlign);
 
   return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, LoStore, HiStore);
-}
-
-SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  if (SDValue Result = AMDGPUTargetLowering::MergeVectorStore(Op, DAG))
-    return Result;
-
-  StoreSDNode *Store = cast<StoreSDNode>(Op);
-  SDValue Chain = Store->getChain();
-  if ((Store->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
-       Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) &&
-      Store->getValue().getValueType().isVector()) {
-    return SplitVectorStore(Op, DAG);
-  }
-
-  EVT MemVT = Store->getMemoryVT();
-  if (Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS &&
-      MemVT.bitsLT(MVT::i32)) {
-    unsigned Mask = 0;
-    if (Store->getMemoryVT() == MVT::i8) {
-      Mask = 0xff;
-    } else if (Store->getMemoryVT() == MVT::i16) {
-      Mask = 0xffff;
-    }
-    SDValue BasePtr = Store->getBasePtr();
-    SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, BasePtr,
-                              DAG.getConstant(2, DL, MVT::i32));
-    SDValue Dst = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
-                              Chain, Ptr,
-                              DAG.getTargetConstant(0, DL, MVT::i32));
-
-    SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, BasePtr,
-                                  DAG.getConstant(0x3, DL, MVT::i32));
-
-    SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
-                                   DAG.getConstant(3, DL, MVT::i32));
-
-    SDValue SExtValue = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i32,
-                                    Store->getValue());
-
-    SDValue MaskedValue = DAG.getZeroExtendInReg(SExtValue, DL, MemVT);
-
-    SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, MVT::i32,
-                                       MaskedValue, ShiftAmt);
-
-    SDValue DstMask = DAG.getNode(ISD::SHL, DL, MVT::i32,
-                                  DAG.getConstant(Mask, DL, MVT::i32),
-                                  ShiftAmt);
-    DstMask = DAG.getNode(ISD::XOR, DL, MVT::i32, DstMask,
-                          DAG.getConstant(0xffffffff, DL, MVT::i32));
-    Dst = DAG.getNode(ISD::AND, DL, MVT::i32, Dst, DstMask);
-
-    SDValue Value = DAG.getNode(ISD::OR, DL, MVT::i32, Dst, ShiftedValue);
-    return DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other,
-                       Chain, Value, Ptr,
-                       DAG.getTargetConstant(0, DL, MVT::i32));
-  }
-  return SDValue();
 }
 
 // This is a shortcut for integer division because we have fast i32<->f32

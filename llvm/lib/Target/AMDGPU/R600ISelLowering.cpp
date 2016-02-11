@@ -1264,17 +1264,73 @@ void R600TargetLowering::getStackAddress(unsigned StackWidth,
   }
 }
 
-SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  StoreSDNode *StoreNode = cast<StoreSDNode>(Op);
-  SDValue Chain = Op.getOperand(0);
-  SDValue Value = Op.getOperand(1);
-  SDValue Ptr = Op.getOperand(2);
+SDValue R600TargetLowering::lowerPrivateTruncStore(StoreSDNode *Store,
+                                                   SelectionDAG &DAG) const {
+  SDLoc DL(Store);
 
-  if (SDValue Result = AMDGPUTargetLowering::LowerSTORE(Op, DAG))
+  unsigned Mask = 0;
+  if (Store->getMemoryVT() == MVT::i8) {
+    Mask = 0xff;
+  } else if (Store->getMemoryVT() == MVT::i16) {
+    Mask = 0xffff;
+  }
+
+  SDValue Chain = Store->getChain();
+  SDValue BasePtr = Store->getBasePtr();
+  EVT MemVT = Store->getMemoryVT();
+
+  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, BasePtr,
+                            DAG.getConstant(2, DL, MVT::i32));
+  SDValue Dst = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
+                            Chain, Ptr,
+                            DAG.getTargetConstant(0, DL, MVT::i32));
+
+  SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, BasePtr,
+                                DAG.getConstant(0x3, DL, MVT::i32));
+
+  SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
+                                 DAG.getConstant(3, DL, MVT::i32));
+
+  SDValue SExtValue = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i32,
+                                  Store->getValue());
+
+  SDValue MaskedValue = DAG.getZeroExtendInReg(SExtValue, DL, MemVT);
+
+  SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, MVT::i32,
+                                     MaskedValue, ShiftAmt);
+
+  SDValue DstMask = DAG.getNode(ISD::SHL, DL, MVT::i32,
+                                DAG.getConstant(Mask, DL, MVT::i32),
+                                ShiftAmt);
+  DstMask = DAG.getNode(ISD::XOR, DL, MVT::i32, DstMask,
+                        DAG.getConstant(0xffffffff, DL, MVT::i32));
+  Dst = DAG.getNode(ISD::AND, DL, MVT::i32, Dst, DstMask);
+
+  SDValue Value = DAG.getNode(ISD::OR, DL, MVT::i32, Dst, ShiftedValue);
+  return DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other,
+                     Chain, Value, Ptr,
+                     DAG.getTargetConstant(0, DL, MVT::i32));
+}
+
+SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  if (SDValue Result = AMDGPUTargetLowering::MergeVectorStore(Op, DAG))
     return Result;
 
-  if (StoreNode->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS) {
+  StoreSDNode *StoreNode = cast<StoreSDNode>(Op);
+  unsigned AS = StoreNode->getAddressSpace();
+  SDValue Value = StoreNode->getValue();
+  EVT ValueVT = Value.getValueType();
+
+  if ((AS == AMDGPUAS::LOCAL_ADDRESS || AS == AMDGPUAS::PRIVATE_ADDRESS) &&
+      ValueVT.isVector()) {
+    return SplitVectorStore(Op, DAG);
+  }
+
+  SDLoc DL(Op);
+  SDValue Chain = StoreNode->getChain();
+  SDValue Ptr = StoreNode->getBasePtr();
+
+  if (AS == AMDGPUAS::GLOBAL_ADDRESS) {
     if (StoreNode->isTruncatingStore()) {
       EVT VT = Value.getValueType();
       assert(VT.bitsLE(MVT::i32));
@@ -1309,7 +1365,7 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
                                      Op->getVTList(), Args, MemVT,
                                      StoreNode->getMemOperand());
     } else if (Ptr->getOpcode() != AMDGPUISD::DWORDADDR &&
-               Value.getValueType().bitsGE(MVT::i32)) {
+               ValueVT.bitsGE(MVT::i32)) {
       // Convert pointer from byte address to dword address.
       Ptr = DAG.getNode(AMDGPUISD::DWORDADDR, DL, Ptr.getValueType(),
                         DAG.getNode(ISD::SRL, DL, Ptr.getValueType(),
@@ -1324,13 +1380,12 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  EVT ValueVT = Value.getValueType();
-
-  if (StoreNode->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
+  if (AS != AMDGPUAS::PRIVATE_ADDRESS)
     return SDValue();
 
-  if (SDValue Ret = AMDGPUTargetLowering::LowerSTORE(Op, DAG))
-    return Ret;
+  EVT MemVT = StoreNode->getMemoryVT();
+  if (MemVT.bitsLT(MVT::i32))
+    return lowerPrivateTruncStore(StoreNode, DAG);
 
   // Lowering for indirect addressing
   const MachineFunction &MF = DAG.getMachineFunction();

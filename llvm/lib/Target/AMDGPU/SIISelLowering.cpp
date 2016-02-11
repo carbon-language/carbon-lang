@@ -1846,23 +1846,27 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   StoreSDNode *Store = cast<StoreSDNode>(Op);
   EVT VT = Store->getMemoryVT();
 
-  // These stores are legal.
-  if (Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) {
-    if (VT.isVector() && VT.getVectorNumElements() > 4)
-      return ScalarizeVectorStore(Op, DAG);
-    return SDValue();
+  if (VT == MVT::i1) {
+    return DAG.getTruncStore(Store->getChain(), DL,
+       DAG.getSExtOrTrunc(Store->getValue(), DL, MVT::i32),
+       Store->getBasePtr(), MVT::i1, Store->getMemOperand());
   }
 
-  if (SDValue Ret = AMDGPUTargetLowering::LowerSTORE(Op, DAG))
-    return Ret;
+  assert(Store->getValue().getValueType().getScalarType() == MVT::i32);
 
-  if (VT.isVector() && VT.getVectorNumElements() >= 8)
-      return SplitVectorStore(Op, DAG);
+  unsigned NElts = VT.getVectorNumElements();
+  unsigned AS = Store->getAddressSpace();
+  if (AS == AMDGPUAS::LOCAL_ADDRESS) {
+    // If properly aligned, if we split we might be able to use ds_write_b64.
+    return SplitVectorStore(Op, DAG);
+  }
 
-  if (VT == MVT::i1)
-    return DAG.getTruncStore(Store->getChain(), DL,
-                        DAG.getSExtOrTrunc(Store->getValue(), DL, MVT::i32),
-                        Store->getBasePtr(), MVT::i1, Store->getMemOperand());
+  if (AS == AMDGPUAS::PRIVATE_ADDRESS && NElts > 4)
+    return ScalarizeVectorStore(Op, DAG);
+
+  // These stores are legal. private, global and flat.
+  if (NElts >= 8)
+    return SplitVectorStore(Op, DAG);
 
   return SDValue();
 }
