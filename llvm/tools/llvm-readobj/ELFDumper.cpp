@@ -112,6 +112,8 @@ private:
     uintX_t EntSize;
   };
 
+  void parseDynamicTable(ArrayRef<const Elf_Phdr *> LoadSegments);
+
   void printSymbolsHelper(bool IsDynamic);
   void printSymbol(const Elf_Sym *Symbol, const Elf_Shdr *SymTab,
                    StringRef StrTable, bool IsDynamic);
@@ -1032,8 +1034,19 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     }
   }
 
+  parseDynamicTable(LoadSegments);
+
+  if (opts::Output == opts::GNU)
+    ELFDumperStyle.reset(new GNUStyle<ELFT>(Writer));
+  else
+    ELFDumperStyle.reset(new LLVMStyle<ELFT>(Writer));
+}
+
+template <typename ELFT>
+void ELFDumper<ELFT>::parseDynamicTable(
+    ArrayRef<const Elf_Phdr *> LoadSegments) {
   auto toMappedAddr = [&](uint64_t VAddr) -> const uint8_t * {
-    const Elf_Phdr **I = std::upper_bound(
+    const Elf_Phdr *const *I = std::upper_bound(
         LoadSegments.begin(), LoadSegments.end(), VAddr, compareAddr<ELFT>);
     if (I == LoadSegments.begin())
       report_fatal_error("Virtual address is not in any segment");
@@ -1095,10 +1108,6 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     DynamicStringTable = StringRef(StringTableBegin, StringTableSize);
   if (SONameOffset)
     SOName = getDynamicString(SONameOffset);
-  if (opts::Output == opts::GNU)
-    ELFDumperStyle.reset(new GNUStyle<ELFT>(Writer));
-  else
-    ELFDumperStyle.reset(new LLVMStyle<ELFT>(Writer));
 }
 
 template <typename ELFT>
