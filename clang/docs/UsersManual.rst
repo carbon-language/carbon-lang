@@ -1711,6 +1711,9 @@ extensions are not implemented yet:
      ...
      local_function(1);
 
+-  clang does not support static initialization of flexible array
+   members. This appears to be a rarely used extension, but could be
+   implemented pending user demand.
 -  clang does not support
    ``__builtin_va_arg_pack``/``__builtin_va_arg_pack_len``. This is
    used rarely, but in some potentially interesting places, like the
