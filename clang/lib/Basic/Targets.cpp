@@ -4473,6 +4473,8 @@ class ARMTargetInfo : public TargetInfo {
       return "8A";
     case llvm::ARM::AK_ARMV8_1A:
       return "8_1A";
+    case llvm::ARM::AK_ARMV8_2A:
+      return "8_2A";
     }
   }
 
