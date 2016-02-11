@@ -294,7 +294,8 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
-  Target.reset(createTarget());
+  std::unique_ptr<TargetInfo> TI(createTarget());
+  Target = TI.get();
   Script->finalize();
 
   if (!Config->Shared) {
