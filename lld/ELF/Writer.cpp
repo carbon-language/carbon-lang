@@ -897,9 +897,15 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
 
 // Sort input sections by section name suffixes for
 // __attribute__((init_priority(N))).
-template <class ELFT> static void sortByPriority(OutputSectionBase<ELFT> *S) {
+template <class ELFT> static void sortInitFini(OutputSectionBase<ELFT> *S) {
   if (S)
-    reinterpret_cast<OutputSection<ELFT> *>(S)->sortByPriority();
+    reinterpret_cast<OutputSection<ELFT> *>(S)->sortInitFini();
+}
+
+// Sort input sections by the special rule for .ctors and .dtors.
+template <class ELFT> static void sortCtorsDtors(OutputSectionBase<ELFT> *S) {
+  if (S)
+    reinterpret_cast<OutputSection<ELFT> *>(S)->sortCtorsDtors();
 }
 
 // Create output section objects and add them to OutputSections.
@@ -950,10 +956,10 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
       Factory.lookup(".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC);
 
   // Sort section contents for __attribute__((init_priority(N)).
-  sortByPriority(Out<ELFT>::Dynamic->InitArraySec);
-  sortByPriority(Out<ELFT>::Dynamic->FiniArraySec);
-  sortByPriority(Factory.lookup(".ctors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
-  sortByPriority(Factory.lookup(".dtors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
+  sortInitFini(Out<ELFT>::Dynamic->InitArraySec);
+  sortInitFini(Out<ELFT>::Dynamic->FiniArraySec);
+  sortCtorsDtors(Factory.lookup(".ctors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
+  sortCtorsDtors(Factory.lookup(".dtors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
 
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
