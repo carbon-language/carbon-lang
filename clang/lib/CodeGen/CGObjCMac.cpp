@@ -6409,7 +6409,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
   const ObjCProtocolDecl *PD) {
   llvm::GlobalVariable *&Entry = Protocols[PD->getIdentifier()];
 
-  if (!Entry) {
+  if (!Entry)
     // We use the initializer as a marker of whether this is a forward
     // reference or not. At module finalization we add the empty
     // contents for protocols which were referenced but never defined.
@@ -6418,8 +6418,6 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
                                  false, llvm::GlobalValue::ExternalLinkage,
                                  nullptr,
                                  "\01l_OBJC_PROTOCOL_$_" + PD->getObjCRuntimeNameAsString());
-    Entry->setSection("__DATA,__datacoal_nt,coalesced");
-  }
 
   return Entry;
 }
@@ -6546,7 +6544,6 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                "\01l_OBJC_PROTOCOL_$_" + PD->getObjCRuntimeNameAsString());
     Entry->setAlignment(
       CGM.getDataLayout().getABITypeAlignment(ObjCTypes.ProtocolnfABITy));
-    Entry->setSection("__DATA,__datacoal_nt,coalesced");
 
     Protocols[PD->getIdentifier()] = Entry;
   }
@@ -7271,8 +7268,6 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
 
   if (ForDefinition)
     Entry->setSection("__DATA,__objc_const");
-  else
-    Entry->setSection("__DATA,__datacoal_nt,coalesced");
 
   return Entry;
 }
