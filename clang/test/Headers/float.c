@@ -3,6 +3,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -ffreestanding %s
 // expected-no-diagnostics
 
+// XFAIL: ppc64
+
 /* Basic conformance checks against the N1570 draft of C11 Std. */
 /*
     5.2.4.2.2p11, pp. 30
