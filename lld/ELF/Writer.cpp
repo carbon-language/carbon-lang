@@ -726,7 +726,7 @@ StringRef Writer<ELFT>::getOutputSectionName(StringRef S) const {
     return It->second;
 
   for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
-                      ".init_array.", ".fini_array."})
+                      ".init_array.", ".fini_array.", ".ctors.", ".dtors."})
     if (S.startswith(V))
       return V.drop_back();
   return S;
@@ -966,6 +966,8 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   // Sort section contents for __attribute__((init_priority(N)).
   sortByPriority(Out<ELFT>::Dynamic->InitArraySec);
   sortByPriority(Out<ELFT>::Dynamic->FiniArraySec);
+  sortByPriority(Factory.lookup(".ctors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
+  sortByPriority(Factory.lookup(".dtors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
 
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
