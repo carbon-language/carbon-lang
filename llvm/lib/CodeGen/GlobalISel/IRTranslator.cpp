@@ -38,7 +38,7 @@ const VRegsSequence &IRTranslator::getOrCreateVRegs(const Value *Val) {
     unsigned Size = Val->getType()->getPrimitiveSizeInBits();
     unsigned VReg = MRI->createGenericVirtualRegister(Size);
     ValRegSequence.push_back(VReg);
-    assert(isa<Constant>(Val) && "Not yet implemented");
+    assert(!isa<Constant>(Val) && "Not yet implemented");
   }
   assert(ValRegSequence.size() == 1 &&
          "We support only one vreg per value at the moment");
