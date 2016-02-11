@@ -1106,27 +1106,29 @@ static bool mayAlias(MachineInstr *MIa,
 bool AArch64LoadStoreOpt::findMatchingStore(
     MachineBasicBlock::iterator I, unsigned Limit,
     MachineBasicBlock::iterator &StoreI) {
-  MachineBasicBlock::iterator E = I->getParent()->begin();
+  MachineBasicBlock::iterator B = I->getParent()->begin();
   MachineBasicBlock::iterator MBBI = I;
   MachineInstr *LoadMI = I;
   unsigned BaseReg = getLdStBaseOp(LoadMI).getReg();
+
+  // If the load is the first instruction in the block, there's obviously
+  // not any matching store.
+  if (MBBI == B)
+    return false;
 
   // Track which registers have been modified and used between the first insn
   // and the second insn.
   ModifiedRegs.reset();
   UsedRegs.reset();
 
-  // FIXME: We miss the case where the matching store is the first instruction
-  // in the basic block.
-  for (unsigned Count = 0; MBBI != E && Count < Limit;) {
+  unsigned Count = 0;
+  do {
     --MBBI;
     MachineInstr *MI = MBBI;
-    // Skip DBG_VALUE instructions. Otherwise debug info can affect the
-    // optimization by changing how far we scan.
-    if (MI->isDebugValue())
-      continue;
-    // Now that we know this is a real instruction, count it.
-    ++Count;
+
+    // Don't count DBG_VALUE instructions towards the search limit.
+    if (!MI->isDebugValue())
+      ++Count;
 
     // If the load instruction reads directly from the address to which the
     // store instruction writes and the stored value is not modified, we can
@@ -1154,7 +1156,7 @@ bool AArch64LoadStoreOpt::findMatchingStore(
     // If we encounter a store aliased with the load, return early.
     if (MI->mayStore() && mayAlias(LoadMI, MI, TII))
       return false;
-  }
+  } while (MBBI != B && Count < Limit);
   return false;
 }
 
