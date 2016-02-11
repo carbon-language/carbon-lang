@@ -482,7 +482,7 @@ struct unordered_map_type {
       type;
 };
 
-template <class Key = CopyInsertable<1>, class Value = CopyInsertable<2>>
+template <class Key = CopyInsertable<1>, class Value = CopyInsertable<2> >
 struct unordered_multimap_type {
     typedef std::pair<const Key, Value> ValueTp;
     typedef
