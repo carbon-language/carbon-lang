@@ -12,8 +12,10 @@
 /// \todo This file should be removed when GlobalISel is not optional anymore.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Compiler.h"
+
 // Anonymous namespace so that we do not step on anyone's toes.
 namespace {
-__attribute__ ((unused)) void foo(void) {
+LLVM_ATTRIBUTE_UNUSED void foo(void) {
 }
 }
