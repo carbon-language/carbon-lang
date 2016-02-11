@@ -644,8 +644,8 @@ static bool PHIsEqualValue(PHINode *PN, Value *NonPhiInVal,
   return true;
 }
 
-/// Return an existing non-zero constant if this phi node has, otherwise ruturn
-/// constant 1.
+/// Return an existing non-zero constant if this phi node has one, otherwise
+/// return constant 1.
 static ConstantInt *GetAnyNonZeroConstInt(PHINode &PN) {
   assert(isa<IntegerType>(PN.getType()) && "Expect only intger type phi");
   for (Value *V : PN.operands())
@@ -934,9 +934,9 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     }
     // When a PHI is used only to be compared with zero, it is safe to replace
     // an incoming value proved as known nonzero with any non-zero constant.
-    // For example, in below code, the incoming value %v can be replaced with
-    // any non-zero constant based on the fact that the PHI is only used to be
-    // compared with zero and %v is a known non-zero value:
+    // For example, in the code below, the incoming value %v can be replaced
+    // with any non-zero constant based on the fact that the PHI is only used to
+    // be compared with zero and %v is a known non-zero value:
     // %v = select %cond, 1, 2
     // %p = phi [%v, BB] ...
     //      icmp eq, %p, 0
