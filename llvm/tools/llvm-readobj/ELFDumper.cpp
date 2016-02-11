@@ -2286,26 +2286,28 @@ template <class ELFT> void ELFDumper<ELFT>::printGroupSections() {
     W.startLine() << "There are no group sections in the file.\n";
 }
 
+static inline void printFields(formatted_raw_ostream &OS, StringRef Str1,
+                               StringRef Str2) {
+  OS.PadToColumn(2u);
+  OS << Str1;
+  OS.PadToColumn(37u);
+  OS << Str2 << "\n";
+  OS.flush();
+}
+
 template <class ELFT>
 void GNUStyle<ELFT>::printFileHeaders(const ELFFile<ELFT> *Obj) {
   const Elf_Ehdr *e = Obj->getHeader();
   OS << "ELF Header:\n";
   OS << "  Magic:  ";
   std::string Str;
-  auto printFields = [this](StringRef Str1, StringRef Str2) -> void {
-    OS.PadToColumn(2u);
-    OS << Str1;
-    OS.PadToColumn(37u);
-    OS << Str2 << "\n";
-    OS.flush();
-  };
   for (int i = 0; i < ELF::EI_NIDENT; i++)
     OS << format(" %02x", static_cast<int>(e->e_ident[i]));
   OS << "\n";
   Str = printEnum(e->e_ident[ELF::EI_CLASS], makeArrayRef(ElfClass));
-  printFields("Class:", Str);
+  printFields(OS, "Class:", Str);
   Str = printEnum(e->e_ident[ELF::EI_DATA], makeArrayRef(ElfDataEncoding));
-  printFields("Data:", Str);
+  printFields(OS, "Data:", Str);
   OS.PadToColumn(2u);
   OS << "Version:";
   OS.PadToColumn(37u);
@@ -2314,36 +2316,36 @@ void GNUStyle<ELFT>::printFileHeaders(const ELFFile<ELFT> *Obj) {
     OS << " (current)";
   OS << "\n";
   Str = printEnum(e->e_ident[ELF::EI_OSABI], makeArrayRef(ElfOSABI));
-  printFields("OS/ABI:", Str);
+  printFields(OS, "OS/ABI:", Str);
   Str = "0x" + to_hexString(e->e_version);
   Str = to_hexString(e->e_ident[ELF::EI_ABIVERSION]);
-  printFields("ABI Version:", Str);
+  printFields(OS, "ABI Version:", Str);
   Str = printEnum(e->e_type, makeArrayRef(ElfObjectFileType));
-  printFields("Type:", Str);
+  printFields(OS, "Type:", Str);
   Str = printEnum(e->e_machine, makeArrayRef(ElfMachineType));
-  printFields("Machine:", Str);
+  printFields(OS, "Machine:", Str);
   Str = "0x" + to_hexString(e->e_version);
-  printFields("Version:", Str);
+  printFields(OS, "Version:", Str);
   Str = "0x" + to_hexString(e->e_entry);
-  printFields("Entry point address:", Str);
+  printFields(OS, "Entry point address:", Str);
   Str = to_string(e->e_phoff) + " (bytes into file)";
-  printFields("Start of program headers:", Str);
+  printFields(OS, "Start of program headers:", Str);
   Str = to_string(e->e_shoff) + " (bytes into file)";
-  printFields("Start of section headers:", Str);
+  printFields(OS, "Start of section headers:", Str);
   Str = "0x" + to_hexString(e->e_flags);
-  printFields("Flags:", Str);
+  printFields(OS, "Flags:", Str);
   Str = to_string(e->e_ehsize) + " (bytes)";
-  printFields("Size of this header:", Str);
+  printFields(OS, "Size of this header:", Str);
   Str = to_string(e->e_phentsize) + " (bytes)";
-  printFields("Size of program headers:", Str);
+  printFields(OS, "Size of program headers:", Str);
   Str = to_string(e->e_phnum);
-  printFields("Number of program headers:", Str);
+  printFields(OS, "Number of program headers:", Str);
   Str = to_string(e->e_shentsize) + " (bytes)";
-  printFields("Size of section headers:", Str);
+  printFields(OS, "Size of section headers:", Str);
   Str = to_string(e->e_shnum);
-  printFields("Number of section headers:", Str);
+  printFields(OS, "Number of section headers:", Str);
   Str = to_string(e->e_shstrndx);
-  printFields("Section header string table index:", Str);
+  printFields(OS, "Section header string table index:", Str);
 }
 
 template <class ELFT>
