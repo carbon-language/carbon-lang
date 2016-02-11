@@ -160,7 +160,7 @@ private:
   void addEarlyLTOOptimizationPasses(legacy::PassManagerBase &PM);
   void addLateLTOOptimizationPasses(legacy::PassManagerBase &PM);
   void addPGOInstrPasses(legacy::PassManagerBase &MPM);
-  void addFunctionSimplificationPasses(legacy::PassManagerBase &MPM);
+
 public:
   /// populateFunctionPassManager - This fills in the function pass manager,
   /// which is expected to be run on each function immediately as it is
