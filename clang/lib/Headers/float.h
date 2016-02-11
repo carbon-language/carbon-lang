@@ -68,6 +68,9 @@
 #    undef FLT_TRUE_MIN
 #    undef DBL_TRUE_MIN
 #    undef LDBL_TRUE_MIN
+#    undef FLT_DECIMAL_DIG
+#    undef DBL_DECIMAL_DIG
+#    undef LDBL_DECIMAL_DIG
 #  endif
 #endif
 
@@ -119,6 +122,9 @@
 #  define FLT_TRUE_MIN __FLT_DENORM_MIN__
 #  define DBL_TRUE_MIN __DBL_DENORM_MIN__
 #  define LDBL_TRUE_MIN __LDBL_DENORM_MIN__
+#  define FLT_DECIMAL_DIG __FLT_DECIMAL_DIG__
+#  define DBL_DECIMAL_DIG __DBL_DECIMAL_DIG__
+#  define LDBL_DECIMAL_DIG __LDBL_DECIMAL_DIG__
 #endif
 
 #endif /* __FLOAT_H */
