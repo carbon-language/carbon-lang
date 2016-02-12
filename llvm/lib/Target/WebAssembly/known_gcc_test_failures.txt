@@ -54,22 +54,22 @@ pr38151.c
 pr28982b.c
 
 
-# Cannot select brind.
+# Computed gotos are not supported (Cannot select BlockAddress/BRIND)
 20040302-1.c
 20071210-1.c
 920501-4.c
 920501-5.c
-
-# Cannot select BlockAddress.
 comp-goto-1.c
 980526-1.c
 990208-1.c
 
-# unimplemented operation lowering.
+# WebAssembly hasn't implemented (will never?) __builtin_return_address
 20010122-1.c
 20030323-1.c
 20030811-1.c
 pr17377.c
+
+# WebAssembly hasn't implemented __builtin_frame_address
 frame-address.c
 
 # Error: invalid output constraint '=t' in asm.
