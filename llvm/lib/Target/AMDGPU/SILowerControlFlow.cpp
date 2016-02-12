@@ -223,7 +223,7 @@ void SILowerControlFlowPass::Break(MachineInstr &MI) {
 
   unsigned Dst = MI.getOperand(0).getReg();
   unsigned Src = MI.getOperand(1).getReg();
- 
+
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_OR_B64), Dst)
           .addReg(AMDGPU::EXEC)
           .addReg(Src);
@@ -238,7 +238,7 @@ void SILowerControlFlowPass::IfBreak(MachineInstr &MI) {
   unsigned Dst = MI.getOperand(0).getReg();
   unsigned Vcc = MI.getOperand(1).getReg();
   unsigned Src = MI.getOperand(2).getReg();
- 
+
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_OR_B64), Dst)
           .addReg(Vcc)
           .addReg(Src);
@@ -253,7 +253,7 @@ void SILowerControlFlowPass::ElseBreak(MachineInstr &MI) {
   unsigned Dst = MI.getOperand(0).getReg();
   unsigned Saved = MI.getOperand(1).getReg();
   unsigned Src = MI.getOperand(2).getReg();
- 
+
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_OR_B64), Dst)
           .addReg(Saved)
           .addReg(Src);
@@ -455,7 +455,7 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
 
   computeIndirectRegAndOffset(Dst, Reg, Off);
 
-  MachineInstr *MovRel = 
+  MachineInstr *MovRel =
     BuildMI(*MBB.getParent(), DL, TII->get(AMDGPU::V_MOVRELD_B32_e32))
             .addReg(Reg, RegState::Define)
             .addReg(Val)
