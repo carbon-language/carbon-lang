@@ -943,21 +943,24 @@ static bool removeConvergentAttrs(const CallGraphSCC &SCC,
   // Determines whether a function can be made non-convergent, ignoring all
   // other functions in SCC.  (A function can *actually* be made non-convergent
   // only if all functions in its SCC can be made convergent.)
-  auto CanRemoveConvergent = [&] (CallGraphNode *CGN) {
+  auto CanRemoveConvergent = [&](CallGraphNode *CGN) {
     Function *F = CGN->getFunction();
-    if (!F) return false;
+    if (!F)
+      return false;
 
-    if (!F->isConvergent()) return true;
+    if (!F->isConvergent())
+      return true;
 
     // Can't remove convergent from declarations.
-    if (F->isDeclaration()) return false;
+    if (F->isDeclaration())
+      return false;
 
     // Don't remove convergent from optnone functions.
     if (F->hasFnAttribute(Attribute::OptimizeNone))
       return false;
 
-    // Can't remove convergent if any of F's callees -- ignoring functions in the
-    // SCC itself -- are convergent.
+    // Can't remove convergent if any of F's callees -- ignoring functions in
+    // the SCC itself -- are convergent.
     if (llvm::any_of(*CGN, [&](const CallGraphNode::CallRecord &CR) {
           Function *F = CR.second->getFunction();
           return SCCNodes.count(F) == 0 && (!F || F->isConvergent());
@@ -965,8 +968,8 @@ static bool removeConvergentAttrs(const CallGraphSCC &SCC,
       return false;
 
     // CGN doesn't contain calls to intrinsics, so iterate over all of F's
-    // callsites, looking for any calls to convergent intrinsics.  If we find one,
-    // F must remain marked as convergent.
+    // callsites, looking for any calls to convergent intrinsics.  If we find
+    // one, F must remain marked as convergent.
     auto IsConvergentIntrinsicCall = [](Instruction &I) {
       CallSite CS(cast<Value>(&I));
       if (!CS)
@@ -979,10 +982,11 @@ static bool removeConvergentAttrs(const CallGraphSCC &SCC,
     });
   };
 
-  // We can remove the convergent attr from functions in the SCC if they all can
-  // be made non-convergent (because they call only non-convergent functions,
-  // other than each other).
-  if (!llvm::all_of(SCC, CanRemoveConvergent)) return false;
+  // We can remove the convergent attr from functions in the SCC if they all
+  // can be made non-convergent (because they call only non-convergent
+  // functions, other than each other).
+  if (!llvm::all_of(SCC, CanRemoveConvergent))
+    return false;
 
   // If we got here, all of the SCC's callees are non-convergent, and none of
   // the optnone functions in the SCC are marked as convergent.  Therefore all
