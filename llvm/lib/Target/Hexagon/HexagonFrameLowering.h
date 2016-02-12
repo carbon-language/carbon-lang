@@ -11,6 +11,7 @@
 #define LLVM_LIB_TARGET_HEXAGON_HEXAGONFRAMELOWERING_H
 
 #include "Hexagon.h"
+#include "HexagonBlockRanges.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
@@ -123,6 +124,13 @@ private:
       SmallVectorImpl<unsigned> &NewRegs) const;
   bool expandSpillMacros(MachineFunction &MF,
       SmallVectorImpl<unsigned> &NewRegs) const;
+
+  unsigned findPhysReg(MachineFunction &MF, HexagonBlockRanges::IndexRange &FIR,
+      HexagonBlockRanges::InstrIndexMap &IndexMap,
+      HexagonBlockRanges::RegToRangeMap &DeadMap,
+      const TargetRegisterClass *RC) const;
+  void optimizeSpillSlots(MachineFunction &MF,
+      SmallVectorImpl<unsigned> &VRegs) const;
 
   void findShrunkPrologEpilog(MachineFunction &MF, MachineBasicBlock *&PrologB,
       MachineBasicBlock *&EpilogB) const;

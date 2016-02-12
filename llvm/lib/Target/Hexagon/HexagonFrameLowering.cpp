@@ -10,6 +10,7 @@
 
 #define DEBUG_TYPE "hexagon-pei"
 
+#include "HexagonBlockRanges.h"
 #include "HexagonFrameLowering.h"
 #include "HexagonInstrInfo.h"
 #include "HexagonMachineFunctionInfo.h"
@@ -146,6 +147,9 @@ static cl::opt<unsigned> ShrinkLimit("shrink-frame-limit", cl::init(UINT_MAX),
 
 static cl::opt<bool> UseAllocframe("use-allocframe", cl::init(true),
     cl::Hidden, cl::desc("Use allocframe more conservatively"));
+
+static cl::opt<bool> OptimizeSpillSlots("hexagon-opt-spill", cl::Hidden,
+    cl::init(true), cl::desc("Optimize spill slots"));
 
 
 namespace llvm {
@@ -1046,13 +1050,13 @@ static bool needToReserveScavengingSpillSlots(MachineFunction &MF,
   // Check for an unused caller-saved register.
   for ( ; *CallerSavedRegs; ++CallerSavedRegs) {
     MCPhysReg FreeReg = *CallerSavedRegs;
-    if (!MRI.reg_nodbg_empty(FreeReg))
+    if (MRI.isPhysRegUsed(FreeReg))
       continue;
 
     // Check aliased register usage.
     bool IsCurrentRegUsed = false;
     for (MCRegAliasIterator AI(FreeReg, &HRI, false); AI.isValid(); ++AI)
-      if (!MRI.reg_nodbg_empty(*AI)) {
+      if (MRI.isPhysRegUsed(*AI)) {
         IsCurrentRegUsed = true;
         break;
       }
@@ -1634,7 +1638,8 @@ void HexagonFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // Replace predicate register pseudo spill code.
   SmallVector<unsigned,8> NewRegs;
   expandSpillMacros(MF, NewRegs);
-
+  if (OptimizeSpillSlots)
+    optimizeSpillSlots(MF, NewRegs);
 
   // We need to reserve a a spill slot if scavenging could potentially require
   // spilling a scavenged register.
@@ -1662,6 +1667,354 @@ void HexagonFrameLowering::determineCalleeSaves(MachineFunction &MF,
   }
 
   TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
+}
+
+
+unsigned HexagonFrameLowering::findPhysReg(MachineFunction &MF,
+      HexagonBlockRanges::IndexRange &FIR,
+      HexagonBlockRanges::InstrIndexMap &IndexMap,
+      HexagonBlockRanges::RegToRangeMap &DeadMap,
+      const TargetRegisterClass *RC) const {
+  auto &HRI = *MF.getSubtarget<HexagonSubtarget>().getRegisterInfo();
+  auto &MRI = MF.getRegInfo();
+
+  auto isDead = [&FIR,&DeadMap] (unsigned Reg) -> bool {
+    auto F = DeadMap.find({Reg,0});
+    if (F == DeadMap.end())
+      return false;
+    for (auto &DR : F->second)
+      if (DR.contains(FIR))
+        return true;
+    return false;
+  };
+
+  for (unsigned Reg : RC->getRawAllocationOrder(MF)) {
+    bool Dead = true;
+    for (auto R : HexagonBlockRanges::expandToSubRegs({Reg,0}, MRI, HRI)) {
+      if (isDead(R.Reg))
+        continue;
+      Dead = false;
+      break;
+    }
+    if (Dead)
+      return Reg;
+  }
+  return 0;
+}
+
+void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
+      SmallVectorImpl<unsigned> &VRegs) const {
+  auto &HST = MF.getSubtarget<HexagonSubtarget>();
+  auto &HII = *HST.getInstrInfo();
+  auto &HRI = *HST.getRegisterInfo();
+  auto &MRI = MF.getRegInfo();
+  HexagonBlockRanges HBR(MF);
+
+  typedef std::map<MachineBasicBlock*,HexagonBlockRanges::InstrIndexMap>
+      BlockIndexMap;
+  typedef std::map<MachineBasicBlock*,HexagonBlockRanges::RangeList>
+      BlockRangeMap;
+  typedef HexagonBlockRanges::IndexType IndexType;
+
+  struct SlotInfo {
+    BlockRangeMap Map;
+    unsigned Size = 0;
+    const TargetRegisterClass *RC = nullptr;
+  };
+
+  BlockIndexMap BlockIndexes;
+  SmallSet<int,4> BadFIs;
+  std::map<int,SlotInfo> FIRangeMap;
+
+  auto getRegClass = [&MRI,&HRI] (HexagonBlockRanges::RegisterRef R)
+        -> const TargetRegisterClass* {
+    if (TargetRegisterInfo::isPhysicalRegister(R.Reg))
+      assert(R.Sub == 0);
+    if (TargetRegisterInfo::isVirtualRegister(R.Reg)) {
+      auto *RCR = MRI.getRegClass(R.Reg);
+      if (R.Sub == 0)
+        return RCR;
+      unsigned PR = *RCR->begin();
+      R.Reg = HRI.getSubReg(PR, R.Sub);
+    }
+    return HRI.getMinimalPhysRegClass(R.Reg);
+  };
+  // Accumulate register classes: get a common class for a pre-existing
+  // class HaveRC and a new class NewRC. Return nullptr if a common class
+  // cannot be found, otherwise return the resulting class. If HaveRC is
+  // nullptr, assume that it is still unset.
+  auto getCommonRC = [&HRI] (const TargetRegisterClass *HaveRC,
+                             const TargetRegisterClass *NewRC)
+        -> const TargetRegisterClass* {
+    if (HaveRC == nullptr || HaveRC == NewRC)
+      return NewRC;
+    // Different classes, both non-null. Pick the more general one.
+    if (HaveRC->hasSubClassEq(NewRC))
+      return HaveRC;
+    if (NewRC->hasSubClassEq(HaveRC))
+      return NewRC;
+    return nullptr;
+  };
+
+  // Scan all blocks in the function. Check all occurrences of frame indexes,
+  // and collect relevant information.
+  for (auto &B : MF) {
+    std::map<int,IndexType> LastStore, LastLoad;
+    auto P = BlockIndexes.emplace(&B, HexagonBlockRanges::InstrIndexMap(B));
+    auto &IndexMap = P.first->second;
+    DEBUG(dbgs() << "Index map for BB#" << B.getNumber() << "\n"
+                 << IndexMap << '\n');
+
+    for (auto &In : B) {
+      int LFI, SFI;
+      bool Load = HII.isLoadFromStackSlot(&In, LFI) && !HII.isPredicated(&In);
+      bool Store = HII.isStoreToStackSlot(&In, SFI) && !HII.isPredicated(&In);
+      if (Load && Store) {
+        // If it's both a load and a store, then we won't handle it.
+        BadFIs.insert(LFI);
+        BadFIs.insert(SFI);
+        continue;
+      }
+      // Check for register classes of the register used as the source for
+      // the store, and the register used as the destination for the load.
+      // Also, only accept base+imm_offset addressing modes. Other addressing
+      // modes can have side-effects (post-increments, etc.). For stack
+      // slots they are very unlikely, so there is not much loss due to
+      // this restriction.
+      if (Load || Store) {
+        int TFI = Load ? LFI : SFI;
+        unsigned AM = HII.getAddrMode(&In);
+        SlotInfo &SI = FIRangeMap[TFI];
+        bool Bad = (AM != HexagonII::BaseImmOffset);
+        if (!Bad) {
+          // If the addressing mode is ok, check the register class.
+          const TargetRegisterClass *RC = nullptr;
+          if (Load) {
+            MachineOperand &DataOp = In.getOperand(0);
+            RC = getRegClass({DataOp.getReg(), DataOp.getSubReg()});
+          } else {
+            MachineOperand &DataOp = In.getOperand(2);
+            RC = getRegClass({DataOp.getReg(), DataOp.getSubReg()});
+          }
+          RC = getCommonRC(SI.RC, RC);
+          if (RC == nullptr)
+            Bad = true;
+          else
+            SI.RC = RC;
+        }
+        if (!Bad) {
+          // Check sizes.
+          unsigned S = (1U << (HII.getMemAccessSize(&In) - 1));
+          if (SI.Size != 0 && SI.Size != S)
+            Bad = true;
+          else
+            SI.Size = S;
+        }
+        if (Bad)
+          BadFIs.insert(TFI);
+      }
+
+      // Locate uses of frame indices.
+      for (unsigned i = 0, n = In.getNumOperands(); i < n; ++i) {
+        const MachineOperand &Op = In.getOperand(i);
+        if (!Op.isFI())
+          continue;
+        int FI = Op.getIndex();
+        // Make sure that the following operand is an immediate and that
+        // it is 0. This is the offset in the stack object.
+        if (i+1 >= n || !In.getOperand(i+1).isImm() ||
+            In.getOperand(i+1).getImm() != 0)
+          BadFIs.insert(FI);
+        if (BadFIs.count(FI))
+          continue;
+
+        IndexType Index = IndexMap.getIndex(&In);
+        if (Load) {
+          if (LastStore[FI] == IndexType::None)
+            LastStore[FI] = IndexType::Entry;
+          LastLoad[FI] = Index;
+        } else if (Store) {
+          HexagonBlockRanges::RangeList &RL = FIRangeMap[FI].Map[&B];
+          if (LastStore[FI] != IndexType::None)
+            RL.add(LastStore[FI], LastLoad[FI], false, false);
+          else if (LastLoad[FI] != IndexType::None)
+            RL.add(IndexType::Entry, LastLoad[FI], false, false);
+          LastLoad[FI] = IndexType::None;
+          LastStore[FI] = Index;
+        } else {
+          BadFIs.insert(FI);
+        }
+      }
+    }
+
+    for (auto &I : LastLoad) {
+      IndexType LL = I.second;
+      if (LL == IndexType::None)
+        continue;
+      auto &RL = FIRangeMap[I.first].Map[&B];
+      IndexType &LS = LastStore[I.first];
+      if (LS != IndexType::None)
+        RL.add(LS, LL, false, false);
+      else
+        RL.add(IndexType::Entry, LL, false, false);
+      LS = IndexType::None;
+    }
+    for (auto &I : LastStore) {
+      IndexType LS = I.second;
+      if (LS == IndexType::None)
+        continue;
+      auto &RL = FIRangeMap[I.first].Map[&B];
+      RL.add(LS, IndexType::None, false, false);
+    }
+  }
+
+  DEBUG({
+    for (auto &P : FIRangeMap) {
+      dbgs() << "fi#" << P.first;
+      if (BadFIs.count(P.first))
+        dbgs() << " (bad)";
+      dbgs() << "  RC: ";
+      if (P.second.RC != nullptr)
+        dbgs() << HRI.getRegClassName(P.second.RC) << '\n';
+      else
+        dbgs() << "<null>\n";
+      for (auto &R : P.second.Map)
+        dbgs() << "  BB#" << R.first->getNumber() << " { " << R.second << "}\n";
+    }
+  });
+
+  // When a slot is loaded from in a block without being stored to in the
+  // same block, it is live-on-entry to this block. To avoid CFG analysis,
+  // consider this slot to be live-on-exit from all blocks.
+  SmallSet<int,4> LoxFIs;
+
+  std::map<MachineBasicBlock*,std::vector<int>> BlockFIMap;
+
+  for (auto &P : FIRangeMap) {
+    // P = pair(FI, map: BB->RangeList)
+    if (BadFIs.count(P.first))
+      continue;
+    for (auto &B : MF) {
+      auto F = P.second.Map.find(&B);
+      // F = pair(BB, RangeList)
+      if (F == P.second.Map.end() || F->second.empty())
+        continue;
+      HexagonBlockRanges::IndexRange &IR = F->second.front();
+      if (IR.start() == IndexType::Entry)
+        LoxFIs.insert(P.first);
+      BlockFIMap[&B].push_back(P.first);
+    }
+  }
+
+  DEBUG({
+    dbgs() << "Block-to-FI map (* -- live-on-exit):\n";
+    for (auto &P : BlockFIMap) {
+      auto &FIs = P.second;
+      if (FIs.empty())
+        continue;
+      dbgs() << "  BB#" << P.first->getNumber() << ": {";
+      for (auto I : FIs) {
+        dbgs() << " fi#" << I;
+        if (LoxFIs.count(I))
+          dbgs() << '*';
+      }
+      dbgs() << " }\n";
+    }
+  });
+
+  // eliminate loads, when all loads eliminated, eliminate all stores.
+  for (auto &B : MF) {
+    auto F = BlockIndexes.find(&B);
+    assert(F != BlockIndexes.end());
+    HexagonBlockRanges::InstrIndexMap &IM = F->second;
+    HexagonBlockRanges::RegToRangeMap LM = HBR.computeLiveMap(IM);
+    HexagonBlockRanges::RegToRangeMap DM = HBR.computeDeadMap(IM, LM);
+    DEBUG(dbgs() << "BB#" << B.getNumber() << " dead map\n"
+                 << HexagonBlockRanges::PrintRangeMap(DM, HRI));
+
+    for (auto FI : BlockFIMap[&B]) {
+      if (BadFIs.count(FI))
+        continue;
+      DEBUG(dbgs() << "Working on fi#" << FI << '\n');
+      HexagonBlockRanges::RangeList &RL = FIRangeMap[FI].Map[&B];
+      for (auto &Range : RL) {
+        DEBUG(dbgs() << "--Examining range:" << RL << '\n');
+        if (!IndexType::isInstr(Range.start()) ||
+            !IndexType::isInstr(Range.end()))
+          continue;
+        MachineInstr *SI = IM.getInstr(Range.start());
+        MachineInstr *EI = IM.getInstr(Range.end());
+        assert(SI->mayStore() && "Unexpected start instruction");
+        assert(EI->mayLoad() && "Unexpected end instruction");
+        MachineOperand &SrcOp = SI->getOperand(2);
+
+        HexagonBlockRanges::RegisterRef SrcRR = { SrcOp.getReg(),
+                                                  SrcOp.getSubReg() };
+        auto *RC = getRegClass({SrcOp.getReg(), SrcOp.getSubReg()});
+        // The this-> is needed to unconfuse MSVC.
+        unsigned FoundR = this->findPhysReg(MF, Range, IM, DM, RC);
+        DEBUG(dbgs() << "Replacement reg:" << PrintReg(FoundR, &HRI) << '\n');
+        if (FoundR == 0)
+          continue;
+
+        // Generate the copy-in: "FoundR = COPY SrcR" at the store location.
+        MachineBasicBlock::iterator StartIt = SI, NextIt;
+        MachineInstr *CopyIn = nullptr;
+        if (SrcRR.Reg != FoundR || SrcRR.Sub != 0) {
+          DebugLoc DL = SI->getDebugLoc();
+          CopyIn = BuildMI(B, StartIt, DL, HII.get(TargetOpcode::COPY), FoundR)
+                      .addOperand(SrcOp);
+        }
+
+        ++StartIt;
+        // Check if this is a last store and the FI is live-on-exit.
+        if (LoxFIs.count(FI) && (&Range == &RL.back())) {
+          // Update store's source register.
+          if (unsigned SR = SrcOp.getSubReg())
+            SrcOp.setReg(HRI.getSubReg(FoundR, SR));
+          else
+            SrcOp.setReg(FoundR);
+          SrcOp.setSubReg(0);
+          // We are keeping this register live.
+          SrcOp.setIsKill(false);
+        } else {
+          B.erase(SI);
+          IM.replaceInstr(SI, CopyIn);
+        }
+
+        auto EndIt = std::next(MachineBasicBlock::iterator(EI));
+        for (auto It = StartIt; It != EndIt; It = NextIt) {
+          MachineInstr *MI = &*It;
+          NextIt = std::next(It);
+          int TFI;
+          if (!HII.isLoadFromStackSlot(MI, TFI) || TFI != FI)
+            continue;
+          unsigned DstR = MI->getOperand(0).getReg();
+          assert(MI->getOperand(0).getSubReg() == 0);
+          MachineInstr *CopyOut = nullptr;
+          if (DstR != FoundR) {
+            DebugLoc DL = MI->getDebugLoc();
+            unsigned MemSize = (1U << (HII.getMemAccessSize(MI) - 1));
+            assert(HII.getAddrMode(MI) == HexagonII::BaseImmOffset);
+            unsigned CopyOpc = TargetOpcode::COPY;
+            if (HII.isSignExtendingLoad(MI))
+              CopyOpc = (MemSize == 1) ? Hexagon::A2_sxtb : Hexagon::A2_sxth;
+            else if (HII.isZeroExtendingLoad(MI))
+              CopyOpc = (MemSize == 1) ? Hexagon::A2_zxtb : Hexagon::A2_zxth;
+            CopyOut = BuildMI(B, It, DL, HII.get(CopyOpc), DstR)
+                        .addReg(FoundR, getKillRegState(MI == EI));
+          }
+          IM.replaceInstr(MI, CopyOut);
+          B.erase(It);
+        }
+
+        // Update the dead map.
+        HexagonBlockRanges::RegisterRef FoundRR = { FoundR, 0 };
+        for (auto RR : HexagonBlockRanges::expandToSubRegs(FoundRR, MRI, HRI))
+          DM[RR].subtract(Range);
+      } // for Range in range list
+    }
+  }
 }
 
 
