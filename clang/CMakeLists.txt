@@ -677,11 +677,15 @@ if (CLANG_ENABLE_BOOTSTRAP)
 
   # If on Darwin we need to make bootstrap depend on LTO and pass
   # DARWIN_LTO_LIBRARY so that -flto will work using the just-built compiler
-  if(APPLE)
+  if(BOOTSTRAP_LLVM_ENABLE_LTO OR LLVM_ENABLE_LTO)
     set(LTO_DEP LTO llvm-ar llvm-ranlib)
-    set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_SHLIB_OUTPUT_INTDIR}/libLTO.dylib)
     set(LTO_AR -DCMAKE_AR=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar)
     set(LTO_RANLIB -DCMAKE_RANLIB=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ranlib)
+    if(APPLE)
+      set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_SHLIB_OUTPUT_INTDIR}/libLTO.dylib)
+    elseif(NOT WIN32)
+      list(APPEND LTO_DEP LLVMgold)
+    endif()
   endif()
 
   add_custom_target(${NEXT_CLANG_STAGE}-clear
