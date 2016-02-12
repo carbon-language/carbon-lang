@@ -3,9 +3,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -ffreestanding %s
 // expected-no-diagnostics
 
-/* Basic conformance checks against the N1570 draft of C11 Std. */
+/* Basic floating point conformance checks against:
+    - N1570 draft of C11 Std.
+    - N1256 draft of C99 Std.
+    - http://port70.net/~nsz/c/c89/c89-draft.html draft of C89/C90 Std.
+*/
 /*
-    5.2.4.2.2p11, pp. 30
+    C11,    5.2.4.2.2p11,   pp. 30
+    C99,    5.2.4.2.2p9,    pp. 25
+    C89,    2.2.4.2 
 */
 #include <float.h>
 
@@ -68,10 +74,16 @@
 #endif
 
 
-#ifndef DECIMAL_DIG
-    #error "Mandatory macro DECIMAL_DIG is missing."
-#elif   DECIMAL_DIG < 10
-    #error "Mandatory macro DECIMAL_DIG is invalid."
+#if __STDC_VERSION__ >= 199901L || !defined(__STRICT_ANSI__)
+    #ifndef DECIMAL_DIG
+        #error "Mandatory macro DECIMAL_DIG is missing."
+    #elif   DECIMAL_DIG < 10
+        #error "Mandatory macro DECIMAL_DIG is invalid."
+    #endif
+#else
+    #ifdef DECIMAL_DIG
+        #error "Macro DECIMAL_DIG should not be defined."
+    #endif
 #endif
 
 
@@ -182,7 +194,9 @@ _Static_assert(DBL_DECIMAL_DIG == __DBL_DECIMAL_DIG__, "");
 _Static_assert(LDBL_DECIMAL_DIG == __LDBL_DECIMAL_DIG__, "");
 #endif
 
+#if __STDC_VERSION__ >= 199901L || !defined(__STRICT_ANSI__)
 _Static_assert(DECIMAL_DIG == __DECIMAL_DIG__, "");
+#endif
 
 _Static_assert(FLT_DIG == __FLT_DIG__, "");
 _Static_assert(DBL_DIG == __DBL_DIG__, "");
