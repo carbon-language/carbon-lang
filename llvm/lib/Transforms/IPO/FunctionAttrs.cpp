@@ -959,27 +959,21 @@ static bool removeConvergentAttrs(const CallGraphSCC &SCC,
     if (F->hasFnAttribute(Attribute::OptimizeNone))
       return false;
 
-    // Can't remove convergent if any of F's callees -- ignoring functions in
-    // the SCC itself -- are convergent.
-    if (llvm::any_of(*CGN, [&](const CallGraphNode::CallRecord &CR) {
-          Function *F = CR.second->getFunction();
-          return SCCNodes.count(F) == 0 && (!F || F->isConvergent());
-        }))
-      return false;
+    for (Instruction &I : instructions(*F))
+      if (auto CS = CallSite(&I)) {
+        // Can't remove convergent if any of F's callees -- ignoring functions
+        // in the SCC itself -- are convergent. This needs to consider both
+        // function calls and intrinsic calls. We also assume indirect calls
+        // might call a convergent function.
+        // FIXME: We should revisit this when we put convergent onto calls
+        // instead of functions so that indirect calls which should be
+        // convergent are required to be marked as such.
+        Function *Callee = CS.getCalledFunction();
+        if (!Callee || (SCCNodes.count(Callee) == 0 && Callee->isConvergent()))
+          return false;
+      }
 
-    // CGN doesn't contain calls to intrinsics, so iterate over all of F's
-    // callsites, looking for any calls to convergent intrinsics.  If we find
-    // one, F must remain marked as convergent.
-    auto IsConvergentIntrinsicCall = [](Instruction &I) {
-      CallSite CS(cast<Value>(&I));
-      if (!CS)
-        return false;
-      Function *Callee = CS.getCalledFunction();
-      return Callee && Callee->isIntrinsic() && Callee->isConvergent();
-    };
-    return !llvm::any_of(*F, [=](BasicBlock &BB) {
-      return llvm::any_of(BB, IsConvergentIntrinsicCall);
-    });
+    return true;
   };
 
   // We can remove the convergent attr from functions in the SCC if they all
