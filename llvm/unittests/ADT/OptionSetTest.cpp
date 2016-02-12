@@ -65,6 +65,8 @@ TEST(OptionSet, intptr_t) {
   EXPECT_EQ(static_cast<intptr_t>(Small::A), static_cast<intptr_t>(small));
 
 
+#ifndef _MSC_VER
+  // Fails to compile in MSVC.
   enum class UPtr : uintptr_t {
     A = std::numeric_limits<uintptr_t>::max()
   };
@@ -79,6 +81,7 @@ TEST(OptionSet, intptr_t) {
 
   OptionSet<Ptr> ptr = Ptr::A;
   EXPECT_EQ(static_cast<intptr_t>(Ptr::A), static_cast<intptr_t>(ptr));
+#endif
 }
 
 TEST(OptionSet, intptr_t_isConstructible) {
