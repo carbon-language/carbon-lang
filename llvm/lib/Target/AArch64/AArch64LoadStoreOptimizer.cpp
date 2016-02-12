@@ -1969,7 +1969,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
 }
 
 bool AArch64LoadStoreOpt::enableNarrowLdMerge(MachineFunction &Fn) {
-  bool ProfitableArch = Subtarget->isCortexA57();
+  bool ProfitableArch = Subtarget->isCortexA57() || Subtarget->isKryo();
   // FIXME: The benefit from converting narrow loads into a wider load could be
   // microarchitectural as it assumes that a single load with two bitfield
   // extracts is cheaper than two narrow loads. Currently, this conversion is
