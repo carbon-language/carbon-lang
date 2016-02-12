@@ -642,11 +642,12 @@ bool LoopIdiomRecognize::processLoopMemSet(MemSetInst *MSI,
 
   // Check to see if the stride matches the size of the memset.  If so, then we
   // know that every byte is touched in the loop.
-  const SCEVConstant *Stride = dyn_cast<SCEVConstant>(Ev->getOperand(1));
+  const SCEVConstant *ConstStride = dyn_cast<SCEVConstant>(Ev->getOperand(1));
+  if (!ConstStride)
+    return false;
 
-  // TODO: Could also handle negative stride here someday, that will require the
-  // validity check in mayLoopAccessLocation to be updated though.
-  if (!Stride || MSI->getLength() != Stride->getValue())
+  APInt Stride = ConstStride->getAPInt();
+  if (SizeInBytes != Stride && SizeInBytes != -Stride)
     return false;
 
   // Verify that the memset value is loop invariant.  If not, we can't promote
@@ -657,9 +658,10 @@ bool LoopIdiomRecognize::processLoopMemSet(MemSetInst *MSI,
 
   SmallPtrSet<Instruction *, 1> MSIs;
   MSIs.insert(MSI);
+  bool NegStride = SizeInBytes == -Stride;
   return processLoopStridedStore(Pointer, (unsigned)SizeInBytes,
                                  MSI->getAlignment(), SplatValue, MSI, MSIs, Ev,
-                                 BECount, /*NegStride=*/false);
+                                 BECount, NegStride);
 }
 
 /// mayLoopAccessLocation - Return true if the specified loop might access the
