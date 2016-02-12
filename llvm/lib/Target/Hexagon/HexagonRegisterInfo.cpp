@@ -135,6 +135,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int Offset = HFI.getFrameIndexReference(MF, FI, BP);
   // Add the offset from the instruction.
   int RealOffset = Offset + MI.getOperand(FIOp+1).getImm();
+  bool IsKill = false;
 
   unsigned Opc = MI.getOpcode();
   switch (Opc) {
@@ -149,20 +150,22 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
   }
 
-  if (HII.isValidOffset(Opc, RealOffset)) {
-    MI.getOperand(FIOp).ChangeToRegister(BP, false);
-    MI.getOperand(FIOp+1).ChangeToImmediate(RealOffset);
-    return;
+  if (!HII.isValidOffset(Opc, RealOffset)) {
+    // If the offset is not valid, calculate the address in a temporary
+    // register and use it with offset 0.
+    auto &MRI = MF.getRegInfo();
+    unsigned TmpR = MRI.createVirtualRegister(&Hexagon::IntRegsRegClass);
+    DebugLoc DL = MI.getDebugLoc();
+    BuildMI(MB, II, DL, HII.get(Hexagon::A2_addi), TmpR)
+      .addReg(BP)
+      .addImm(RealOffset);
+    BP = TmpR;
+    RealOffset = 0;
+    IsKill = true;
   }
 
-#ifndef NDEBUG
-  const Function *F = MF.getFunction();
-  dbgs() << "In function ";
-  if (F) dbgs() << F->getName();
-  else   dbgs() << "<?>";
-  dbgs() << ", BB#" << MB.getNumber() << "\n" << MI;
-#endif
-  llvm_unreachable("Unhandled instruction");
+  MI.getOperand(FIOp).ChangeToRegister(BP, false, false, IsKill);
+  MI.getOperand(FIOp+1).ChangeToImmediate(RealOffset);
 }
 
 
