@@ -2652,9 +2652,9 @@ multiclass FLAT_Load_Helper <flat op, string asm_name,
 multiclass FLAT_Store_Helper <flat op, string asm_name,
     RegisterClass vdataClass,
     dag outs = (outs),
-    dag ins = (ins vdataClass:$data, VReg_64:$addr, glc_flat:$glc,
+    dag ins = (ins VReg_64:$addr, vdataClass:$data, glc_flat:$glc,
                    slc_flat:$slc, tfe_flat:$tfe),
-    string asm = asm_name#" $data, $addr"#"$glc"#"$slc"#"$tfe"> {
+    string asm = asm_name#" $addr, $data"#"$glc"#"$slc"#"$tfe"> {
 
   let mayLoad = 0, mayStore = 1, vdst = 0 in {
 

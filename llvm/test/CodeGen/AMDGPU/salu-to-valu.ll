@@ -56,7 +56,7 @@ done:                                             ; preds = %loop
 ; FIXME: We should be using flat load for HSA.
 ; GCN: buffer_load_dword [[OUT:v[0-9]+]]
 ; GCN-NOHSA: buffer_store_dword [[OUT]]
-; GCN-HSA: flat_store_dword [[OUT]]
+; GCN-HSA: flat_store_dword {{.*}}, [[OUT]]
 define void @smrd_valu(i32 addrspace(2)* addrspace(1)* %in, i32 %a, i32 %b, i32 addrspace(1)* %out) #1 {
 entry:
   %tmp = icmp ne i32 %a, 0
@@ -104,7 +104,7 @@ entry:
 ; GCN-NOHSA: v_add_i32_e32
 ; GCN-NOHSA: buffer_store_dword
 ; GCN-HSA: flat_load_dword v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}]
-; GCN-HSA: flat_store_dword v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}]
+; GCN-HSA: flat_store_dword v[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}
 define void @smrd_valu_ci_offset(i32 addrspace(1)* %out, i32 addrspace(2)* %in, i32 %c) #1 {
 entry:
   %tmp = call i32 @llvm.amdgcn.workitem.id.x()
@@ -248,7 +248,7 @@ entry:
 ; GCN-HSA: flat_load_dword [[MOVED:v[0-9]+]], v[{{[0-9+:[0-9]+}}]
 ; GCN: v_add_i32_e32 [[ADD:v[0-9]+]], vcc, s{{[0-9]+}}, [[MOVED]]
 ; GCN-NOHSA: buffer_store_dword [[ADD]]
-; GCN-HSA: flat_store_dword [[ADD]]
+; GCN-HSA: flat_store_dword {{.*}}, [[ADD]]
 define void @smrd_valu2_salu_user(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in, i32 %a) #1 {
 entry:
   %tmp = call i32 @llvm.amdgcn.workitem.id.x()
