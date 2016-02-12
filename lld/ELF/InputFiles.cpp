@@ -12,6 +12,9 @@
 #include "InputSection.h"
 #include "Symbols.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/Object/IRObjectFile.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -420,6 +423,28 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
       Undefs.push_back(Name);
     else
       SymbolBodies.emplace_back(this, Name, Sym);
+  }
+}
+
+BitcodeFile::BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind, M) {}
+
+bool BitcodeFile::classof(const InputFile *F) {
+  return F->kind() == BitcodeKind;
+}
+
+void BitcodeFile::parse() {
+  LLVMContext Context;
+  ErrorOr<std::unique_ptr<IRObjectFile>> ObjOrErr =
+      IRObjectFile::create(MB, Context);
+  fatal(ObjOrErr);
+  IRObjectFile &Obj = **ObjOrErr;
+  for (const BasicSymbolRef &Sym : Obj.symbols()) {
+    SmallString<64> Name;
+    raw_svector_ostream OS(Name);
+    Sym.printName(OS);
+    StringRef NameRef = Saver.save(StringRef(Name));
+    SymbolBody *Body = new (Alloc) DefinedBitcode(NameRef);
+    SymbolBodies.push_back(Body);
   }
 }
 
