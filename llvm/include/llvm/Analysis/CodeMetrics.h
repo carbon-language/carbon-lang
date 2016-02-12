@@ -53,6 +53,9 @@ struct CodeMetrics {
   /// one or more 'noduplicate' instructions.
   bool notDuplicatable = false;
 
+  /// \brief True if this function contains a call to a convergent function.
+  bool convergent = false;
+
   /// \brief True if this function calls alloca (in the C sense).
   bool usesDynamicAlloca = false;
 
