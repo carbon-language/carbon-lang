@@ -28,27 +28,22 @@ using namespace lld::elf2;
 
 LinkerScript *elf2::Script;
 
-void LinkerScript::finalize() {
-  for (const std::pair<StringRef, std::vector<StringRef>> &P : Sections)
-    for (StringRef S : P.second)
-      RevSections[S] = P.first;
-}
-
 StringRef LinkerScript::getOutputSection(StringRef S) {
-  return RevSections.lookup(S);
+  return Sections.lookup(S);
 }
 
 bool LinkerScript::isDiscarded(StringRef S) {
-  return RevSections.lookup(S) == "/DISCARD/";
+  return Sections.lookup(S) == "/DISCARD/";
 }
 
+// A compartor to sort output sections. Returns -1 or 1 if both
+// A and B are mentioned in linker scripts. Otherwise, returns 0
+// to use the default rule which is implemented in Writer.cpp.
 int LinkerScript::compareSections(StringRef A, StringRef B) {
-  auto I = Sections.find(A);
-  auto E = Sections.end();
-  if (I == E)
-    return 0;
-  auto J = Sections.find(B);
-  if (J == E)
+  auto E = SectionOrder.end();
+  auto I = std::find(SectionOrder.begin(), E, A);
+  auto J = std::find(SectionOrder.begin(), E, B);
+  if (I == E || J == E)
     return 0;
   return I < J ? -1 : 1;
 }
@@ -349,14 +344,15 @@ void ScriptParser::readSections() {
 }
 
 void ScriptParser::readOutputSectionDescription() {
-  std::vector<StringRef> &V = Script->Sections[next()];
+  StringRef OutSec = next();
+  Script->SectionOrder.push_back(OutSec);
   expect(":");
   expect("{");
   while (!Error && !skip("}")) {
     next(); // Skip input file name.
     expect("(");
     while (!Error && !skip(")"))
-      V.push_back(next());
+      Script->Sections[next()] = OutSec;
   }
 }
 

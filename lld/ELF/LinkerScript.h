@@ -32,15 +32,14 @@ public:
   StringRef getOutputSection(StringRef InputSection);
   bool isDiscarded(StringRef InputSection);
   int compareSections(StringRef A, StringRef B);
-  void finalize();
 
 private:
-  // Map for SECTIONS command. The key is output section name
-  // and a value is a list of input section names.
-  llvm::MapVector<StringRef, std::vector<StringRef>> Sections;
+  // A map for SECTIONS command. The key is input section name
+  // and the value is the corresponding output section name.
+  llvm::DenseMap<StringRef, StringRef> Sections;
 
-  // Inverse map of Sections.
-  llvm::DenseMap<StringRef, StringRef> RevSections;
+  // Output sections are sorted by this order.
+  std::vector<StringRef> SectionOrder;
 
   llvm::BumpPtrAllocator Alloc;
 };

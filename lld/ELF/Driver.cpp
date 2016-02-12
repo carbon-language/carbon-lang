@@ -296,7 +296,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
   std::unique_ptr<TargetInfo> TI(createTarget());
   Target = TI.get();
-  Script->finalize();
 
   if (!Config->Shared) {
     // Add entry symbol.
