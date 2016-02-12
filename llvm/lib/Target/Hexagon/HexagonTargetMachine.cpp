@@ -101,7 +101,6 @@ namespace llvm {
   FunctionPass *createHexagonCopyToCombine();
   FunctionPass *createHexagonEarlyIfConversion();
   FunctionPass *createHexagonExpandCondsets();
-  FunctionPass *createHexagonExpandPredSpillCode();
   FunctionPass *createHexagonFixupHwLoops();
   FunctionPass *createHexagonGenExtract();
   FunctionPass *createHexagonGenInsert();
@@ -287,9 +286,6 @@ void HexagonPassConfig::addPreEmitPass() {
 
   if (!NoOpt)
     addPass(createHexagonNewValueJump(), false);
-
-  // Expand Spill code for predicate registers.
-  addPass(createHexagonExpandPredSpillCode(), false);
 
   // Create Packets.
   if (!NoOpt) {
