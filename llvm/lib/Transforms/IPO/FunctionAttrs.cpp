@@ -938,25 +938,16 @@ static bool addNonNullAttrs(const SCCNodeSet &SCCNodes,
 /// Removes convergent attributes where we can prove that none of the SCC's
 /// callees are themselves convergent.  Returns true if successful at removing
 /// the attribute.
-static bool removeConvergentAttrs(const CallGraphSCC &SCC,
-                                  const SCCNodeSet &SCCNodes) {
+static bool removeConvergentAttrs(const SCCNodeSet &SCCNodes) {
   // Determines whether a function can be made non-convergent, ignoring all
   // other functions in SCC.  (A function can *actually* be made non-convergent
   // only if all functions in its SCC can be made convergent.)
-  auto CanRemoveConvergent = [&](CallGraphNode *CGN) {
-    Function *F = CGN->getFunction();
-    if (!F)
-      return false;
-
+  auto CanRemoveConvergent = [&](Function *F) {
     if (!F->isConvergent())
       return true;
 
     // Can't remove convergent from declarations.
     if (F->isDeclaration())
-      return false;
-
-    // Don't remove convergent from optnone functions.
-    if (F->hasFnAttribute(Attribute::OptimizeNone))
       return false;
 
     for (Instruction &I : instructions(*F))
@@ -979,19 +970,16 @@ static bool removeConvergentAttrs(const CallGraphSCC &SCC,
   // We can remove the convergent attr from functions in the SCC if they all
   // can be made non-convergent (because they call only non-convergent
   // functions, other than each other).
-  if (!llvm::all_of(SCC, CanRemoveConvergent))
+  if (!llvm::all_of(SCCNodes, CanRemoveConvergent))
     return false;
 
-  // If we got here, all of the SCC's callees are non-convergent, and none of
-  // the optnone functions in the SCC are marked as convergent.  Therefore all
+  // If we got here, all of the SCC's callees are non-convergent. Therefore all
   // of the SCC's functions can be marked as non-convergent.
-  for (CallGraphNode *CGN : SCC)
-    if (Function *F = CGN->getFunction()) {
-      if (F->isConvergent())
-        DEBUG(dbgs() << "Removing convergent attr from " << F->getName()
-                     << "\n");
-      F->setNotConvergent();
-    }
+  for (Function *F : SCCNodes) {
+    if (F->isConvergent())
+      DEBUG(dbgs() << "Removing convergent attr from " << F->getName() << "\n");
+    F->setNotConvergent();
+  }
   return true;
 }
 
@@ -1071,7 +1059,7 @@ bool PostOrderFunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
   if (!ExternalNode) {
     Changed |= addNoAliasAttrs(SCCNodes);
     Changed |= addNonNullAttrs(SCCNodes, *TLI);
-    Changed |= removeConvergentAttrs(SCC, SCCNodes);
+    Changed |= removeConvergentAttrs(SCCNodes);
   }
 
   Changed |= addNoRecurseAttrs(SCC);
