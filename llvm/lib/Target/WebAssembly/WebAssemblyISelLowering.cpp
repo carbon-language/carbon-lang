@@ -308,9 +308,8 @@ SDValue WebAssemblyTargetLowering::LowerCall(
       fail(DL, DAG, "WebAssembly hasn't implemented cons regs arguments");
     if (Out.Flags.isInConsecutiveRegsLast())
       fail(DL, DAG, "WebAssembly hasn't implemented cons regs last arguments");
-    if (Out.Flags.isByVal()) {
+    if (Out.Flags.isByVal() && Out.Flags.getByValSize() != 0) {
       auto *MFI = MF.getFrameInfo();
-      assert(Out.Flags.getByValSize() && "Zero-size byval?");
       int FI = MFI->CreateStackObject(Out.Flags.getByValSize(),
                                       Out.Flags.getByValAlign(),
                                       /*isSS=*/false);
