@@ -27,8 +27,7 @@ void MisplacedWideningCastCheck::registerMatchers(MatchFinder *Finder) {
 
   auto Cast = explicitCastExpr(anyOf(cStyleCastExpr(), cxxStaticCastExpr(),
                                      cxxReinterpretCastExpr()),
-                               hasDestinationType(isInteger()),
-                               has(Calc))
+                               hasDestinationType(isInteger()), has(Calc))
                   .bind("Cast");
 
   Finder->addMatcher(varDecl(has(Cast)), this);
@@ -90,9 +89,29 @@ void MisplacedWideningCastCheck::check(const MatchFinder::MatchResult &Result) {
   QualType CastType = Cast->getType();
   QualType CalcType = Calc->getType();
 
-  if (Context.getIntWidth(CastType) <= Context.getIntWidth(CalcType))
+  // Explicit truncation using cast.
+  if (Context.getIntWidth(CastType) < Context.getIntWidth(CalcType))
     return;
 
+  // If CalcType and CastType have same size then there is no real danger, but
+  // there can be a portability problem.
+  if (Context.getIntWidth(CastType) == Context.getIntWidth(CalcType)) {
+    if (CalcType->isSpecificBuiltinType(BuiltinType::Int)) {
+      // There should be a warning when casting from int to long or long long.
+      if (!CastType->isSpecificBuiltinType(BuiltinType::Long) &&
+          !CastType->isSpecificBuiltinType(BuiltinType::LongLong))
+        return;
+    } else if (CalcType->isSpecificBuiltinType(BuiltinType::Long)) {
+      // There should be a warning when casting from long to long long.
+      if (!CastType->isSpecificBuiltinType(BuiltinType::LongLong))
+        return;
+    } else {
+      return;
+    }
+  }
+
+  // Don't write a warning if we can easily see that the result is not
+  // truncated.
   if (Context.getIntWidth(CalcType) >= getMaxCalculationWidth(Context, Calc))
     return;
 
