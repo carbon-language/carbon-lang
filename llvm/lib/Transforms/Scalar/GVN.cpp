@@ -1961,7 +1961,6 @@ bool GVN::processLoad(LoadInst *L) {
 
   // ... to a pointer that has been loaded from before...
   MemDepResult Dep = MD->getDependency(L);
-  const DataLayout &DL = L->getModule()->getDataLayout();
 
   // If it is defined in another block, try harder.
   if (Dep.isNonLocal())
