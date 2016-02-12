@@ -91,11 +91,11 @@ elf2::ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
 
 template <class ELFT>
 typename elf2::ObjectFile<ELFT>::Elf_Sym_Range
-ObjectFile<ELFT>::getLocalSymbols() {
+elf2::ObjectFile<ELFT>::getLocalSymbols() {
   return this->getSymbolsHelper(true);
 }
 
-template <class ELFT> uint32_t ObjectFile<ELFT>::getMipsGp0() const {
+template <class ELFT> uint32_t elf2::ObjectFile<ELFT>::getMipsGp0() const {
   if (MipsReginfo)
     return MipsReginfo->Reginfo->ri_gp_value;
   return 0;
@@ -103,7 +103,7 @@ template <class ELFT> uint32_t ObjectFile<ELFT>::getMipsGp0() const {
 
 template <class ELFT>
 const typename elf2::ObjectFile<ELFT>::Elf_Sym *
-ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
+elf2::ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
   uint32_t FirstNonLocal = this->Symtab->sh_info;
   if (SymIndex >= FirstNonLocal)
     return nullptr;
@@ -139,7 +139,7 @@ StringRef elf2::ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
 
 template <class ELFT>
 ArrayRef<typename elf2::ObjectFile<ELFT>::uint32_X>
-ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
+elf2::ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
   ErrorOr<ArrayRef<uint32_X>> EntriesOrErr =
       Obj.template getSectionContentsAsArray<uint32_X>(&Sec);
