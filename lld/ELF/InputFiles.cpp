@@ -86,11 +86,12 @@ ELFFileBase<ELFT>::getNonLocalSymbols() {
 }
 
 template <class ELFT>
-ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
+elf2::ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
     : ELFFileBase<ELFT>(Base::ObjectKind, M) {}
 
 template <class ELFT>
-typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
+typename elf2::ObjectFile<ELFT>::Elf_Sym_Range
+ObjectFile<ELFT>::getLocalSymbols() {
   return this->getSymbolsHelper(true);
 }
 
@@ -101,7 +102,7 @@ template <class ELFT> uint32_t ObjectFile<ELFT>::getMipsGp0() const {
 }
 
 template <class ELFT>
-const typename ObjectFile<ELFT>::Elf_Sym *
+const typename elf2::ObjectFile<ELFT>::Elf_Sym *
 ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
   uint32_t FirstNonLocal = this->Symtab->sh_info;
   if (SymIndex >= FirstNonLocal)
@@ -111,7 +112,7 @@ ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
 }
 
 template <class ELFT>
-void ObjectFile<ELFT>::parse(DenseSet<StringRef> &ComdatGroups) {
+void elf2::ObjectFile<ELFT>::parse(DenseSet<StringRef> &ComdatGroups) {
   // Read section and symbol tables.
   initializeSections(ComdatGroups);
   initializeSymbols();
@@ -121,7 +122,7 @@ void ObjectFile<ELFT>::parse(DenseSet<StringRef> &ComdatGroups) {
 // They are identified and deduplicated by group name. This function
 // returns a group name.
 template <class ELFT>
-StringRef ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
+StringRef elf2::ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
   uint32_t SymtabdSectionIndex = Sec.sh_link;
   ErrorOr<const Elf_Shdr *> SecOrErr = Obj.getSection(SymtabdSectionIndex);
@@ -137,7 +138,7 @@ StringRef ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
 }
 
 template <class ELFT>
-ArrayRef<typename ObjectFile<ELFT>::uint32_X>
+ArrayRef<typename elf2::ObjectFile<ELFT>::uint32_X>
 ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
   ErrorOr<ArrayRef<uint32_X>> EntriesOrErr =
@@ -177,7 +178,8 @@ static bool shouldMerge(const typename ELFFile<ELFT>::Elf_Shdr &Sec) {
 }
 
 template <class ELFT>
-void ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &ComdatGroups) {
+void elf2::ObjectFile<ELFT>::initializeSections(
+    DenseSet<StringRef> &ComdatGroups) {
   uint64_t Size = this->ELFObj.getNumSections();
   Sections.resize(Size);
   unsigned I = -1;
@@ -241,8 +243,9 @@ void ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &ComdatGroups) {
   }
 }
 
-template <class ELFT> InputSectionBase<ELFT> *
-ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
+template <class ELFT>
+InputSectionBase<ELFT> *
+elf2::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   ErrorOr<StringRef> NameOrErr = this->ELFObj.getSectionName(&Sec);
   fatal(NameOrErr);
   StringRef Name = *NameOrErr;
@@ -268,7 +271,7 @@ ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   return new (Alloc) InputSection<ELFT>(this, &Sec);
 }
 
-template <class ELFT> void ObjectFile<ELFT>::initializeSymbols() {
+template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   this->initStringTable();
   Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
@@ -279,7 +282,7 @@ template <class ELFT> void ObjectFile<ELFT>::initializeSymbols() {
 
 template <class ELFT>
 InputSectionBase<ELFT> *
-ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
+elf2::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   uint32_t Index = this->getSectionIndex(Sym);
   if (Index == 0)
     return nullptr;
@@ -289,7 +292,7 @@ ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 }
 
 template <class ELFT>
-SymbolBody *ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
+SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
   ErrorOr<StringRef> NameOrErr = Sym->getName(this->StringTable);
   fatal(NameOrErr);
   StringRef Name = *NameOrErr;
