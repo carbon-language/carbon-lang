@@ -382,7 +382,6 @@ void Darwin::addProfileRTLibs(const ArgList &Args,
   }
   AddLinkRuntimeLib(Args, CmdArgs, Library,
                     /*AlwaysLink*/ true);
-  return;
 }
 
 void DarwinClang::AddLinkSanitizerLibArgs(const ArgList &Args,
@@ -771,7 +770,6 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
 
 void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const {
-
   // For Darwin platforms, use the compiler-rt-based support library
   // instead of the gcc-provided one (which is also incidentally
   // only present in the gcc lib dir, which makes it hard to find).
@@ -2451,7 +2449,6 @@ bool Generic_GCC::addLibStdCXXIncludePaths(
   return true;
 }
 
-
 void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
                                         ArgStringList &CC1Args) const {
   const Generic_GCC::GCCVersion &V = GCCInstallation.getVersion();
@@ -2610,7 +2607,6 @@ std::string HexagonToolChain::getHexagonTargetDir(
   return InstallRelDir;
 }
 
-
 Optional<unsigned> HexagonToolChain::getSmallDataThreshold(
       const ArgList &Args) {
   StringRef Gn = "";
@@ -2628,7 +2624,6 @@ Optional<unsigned> HexagonToolChain::getSmallDataThreshold(
 
   return None;
 }
-
 
 void HexagonToolChain::getHexagonLibraryPaths(const ArgList &Args,
       ToolChain::path_list &LibPaths) const {
@@ -3179,7 +3174,6 @@ SanitizerMask FreeBSD::getSupportedSanitizers() const {
 
 NetBSD::NetBSD(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     : Generic_ELF(D, Triple, Args) {
-
   if (getDriver().UseStdLib) {
     // When targeting a 32-bit platform, try the special directory used on
     // 64-bit hosts, and only fall back to the main library directory if that
@@ -4036,7 +4030,6 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 
   addExternCSystemInclude(DriverArgs, CC1Args, SysRoot + "/usr/include");
 }
-
 
 static std::string DetectLibcxxIncludePath(StringRef base) {
   std::error_code EC;
