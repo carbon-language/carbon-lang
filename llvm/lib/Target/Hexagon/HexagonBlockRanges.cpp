@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -368,9 +369,9 @@ void HexagonBlockRanges::computeInitialLiveRanges(InstrIndexMap &IndexMap,
 HexagonBlockRanges::RegToRangeMap HexagonBlockRanges::computeLiveMap(
       InstrIndexMap &IndexMap) {
   RegToRangeMap LiveMap;
-  DEBUG(dbgs() << __func__ << ": index map\n" << IndexMap << '\n');
+  DEBUG(dbgs() << LLVM_FUNCTION_NAME << ": index map\n" << IndexMap << '\n');
   computeInitialLiveRanges(IndexMap, LiveMap);
-  DEBUG(dbgs() << __func__ << ": live map\n"
+  DEBUG(dbgs() << LLVM_FUNCTION_NAME << ": live map\n"
                << PrintRangeMap(LiveMap, TRI) << '\n');
   return LiveMap;
 }
@@ -433,7 +434,7 @@ HexagonBlockRanges::RegToRangeMap HexagonBlockRanges::computeDeadMap(
     if (TargetRegisterInfo::isVirtualRegister(P.first.Reg))
       addDeadRanges(P.first);
 
-  DEBUG(dbgs() << __func__ << ": dead map\n"
+  DEBUG(dbgs() << LLVM_FUNCTION_NAME << ": dead map\n"
                << PrintRangeMap(DeadMap, TRI) << '\n');
   return DeadMap;
 }
