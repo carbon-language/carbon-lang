@@ -96,14 +96,19 @@ void MisplacedWideningCastCheck::check(const MatchFinder::MatchResult &Result) {
   // If CalcType and CastType have same size then there is no real danger, but
   // there can be a portability problem.
   if (Context.getIntWidth(CastType) == Context.getIntWidth(CalcType)) {
-    if (CalcType->isSpecificBuiltinType(BuiltinType::Int)) {
+    if (CalcType->isSpecificBuiltinType(BuiltinType::Int) ||
+        CalcType->isSpecificBuiltinType(BuiltinType::UInt)) {
       // There should be a warning when casting from int to long or long long.
       if (!CastType->isSpecificBuiltinType(BuiltinType::Long) &&
-          !CastType->isSpecificBuiltinType(BuiltinType::LongLong))
+          !CastType->isSpecificBuiltinType(BuiltinType::ULong) &&
+          !CastType->isSpecificBuiltinType(BuiltinType::LongLong) &&
+          !CastType->isSpecificBuiltinType(BuiltinType::ULongLong))
         return;
-    } else if (CalcType->isSpecificBuiltinType(BuiltinType::Long)) {
+    } else if (CalcType->isSpecificBuiltinType(BuiltinType::Long) ||
+               CalcType->isSpecificBuiltinType(BuiltinType::ULong)) {
       // There should be a warning when casting from long to long long.
-      if (!CastType->isSpecificBuiltinType(BuiltinType::LongLong))
+      if (!CastType->isSpecificBuiltinType(BuiltinType::LongLong) &&
+          !CastType->isSpecificBuiltinType(BuiltinType::ULongLong))
         return;
     } else {
       return;
