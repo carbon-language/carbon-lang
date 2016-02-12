@@ -682,80 +682,84 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       MachineBasicBlock::iterator I, DebugLoc DL, unsigned DestReg,
       unsigned SrcReg, bool KillSrc) const {
   auto &HRI = getRegisterInfo();
+  unsigned KillFlag = getKillRegState(KillSrc);
+
   if (Hexagon::IntRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::A2_tfr), DestReg).addReg(SrcReg);
+    auto MIB = BuildMI(MBB, I, DL, get(Hexagon::A2_tfr), DestReg)
+      .addReg(SrcReg, KillFlag);
+    // We could have a R12 = COPY R2, D1<imp-use, kill> instruction.
+    // Transfer the kill flags.
+    for (auto &Op : I->operands())
+      if (Op.isReg() && Op.isKill() && Op.isImplicit() && Op.isUse())
+        MIB.addReg(Op.getReg(), RegState::Kill | RegState::Implicit);
     return;
   }
   if (Hexagon::DoubleRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrp), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrp), DestReg)
+      .addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::PredRegsRegClass.contains(SrcReg, DestReg)) {
     // Map Pd = Ps to Pd = or(Ps, Ps).
-    BuildMI(MBB, I, DL, get(Hexagon::C2_or),
-            DestReg).addReg(SrcReg).addReg(SrcReg);
-    return;
-  }
-  if (Hexagon::DoubleRegsRegClass.contains(DestReg) &&
-      Hexagon::IntRegsRegClass.contains(SrcReg)) {
-    // We can have an overlap between single and double reg: r1:0 = r0.
-    if(SrcReg == RI.getSubReg(DestReg, Hexagon::subreg_loreg)) {
-        // r1:0 = r0
-        BuildMI(MBB, I, DL, get(Hexagon::A2_tfrsi), (RI.getSubReg(DestReg,
-                Hexagon::subreg_hireg))).addImm(0);
-    } else {
-        // r1:0 = r1 or no overlap.
-        BuildMI(MBB, I, DL, get(Hexagon::A2_tfr), (RI.getSubReg(DestReg,
-                Hexagon::subreg_loreg))).addReg(SrcReg);
-        BuildMI(MBB, I, DL, get(Hexagon::A2_tfrsi), (RI.getSubReg(DestReg,
-                Hexagon::subreg_hireg))).addImm(0);
-    }
+    BuildMI(MBB, I, DL, get(Hexagon::C2_or), DestReg)
+      .addReg(SrcReg).addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::CtrRegsRegClass.contains(DestReg) &&
       Hexagon::IntRegsRegClass.contains(SrcReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrrcr), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrrcr), DestReg)
+      .addReg(SrcReg, KillFlag);
+    return;
+  }
+  if (Hexagon::IntRegsRegClass.contains(DestReg) &&
+      Hexagon::CtrRegsRegClass.contains(SrcReg)) {
+    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrcrr), DestReg)
+      .addReg(SrcReg, KillFlag);
+    return;
+  }
+  if (Hexagon::ModRegsRegClass.contains(DestReg) &&
+      Hexagon::IntRegsRegClass.contains(SrcReg)) {
+    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrrcr), DestReg)
+      .addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::PredRegsRegClass.contains(SrcReg) &&
       Hexagon::IntRegsRegClass.contains(DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::C2_tfrpr), DestReg).
-      addReg(SrcReg, getKillRegState(KillSrc));
+    BuildMI(MBB, I, DL, get(Hexagon::C2_tfrpr), DestReg)
+      .addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::IntRegsRegClass.contains(SrcReg) &&
       Hexagon::PredRegsRegClass.contains(DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::C2_tfrrp), DestReg).
-      addReg(SrcReg, getKillRegState(KillSrc));
+    BuildMI(MBB, I, DL, get(Hexagon::C2_tfrrp), DestReg)
+      .addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::PredRegsRegClass.contains(SrcReg) &&
       Hexagon::IntRegsRegClass.contains(DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::C2_tfrpr), DestReg).
-      addReg(SrcReg, getKillRegState(KillSrc));
+    BuildMI(MBB, I, DL, get(Hexagon::C2_tfrpr), DestReg)
+      .addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::VectorRegsRegClass.contains(SrcReg, DestReg)) {
     BuildMI(MBB, I, DL, get(Hexagon::V6_vassign), DestReg).
-      addReg(SrcReg, getKillRegState(KillSrc));
+      addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::VecDblRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::V6_vcombine), DestReg).
-      addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_hireg),
-             getKillRegState(KillSrc)).
-      addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_loreg),
-             getKillRegState(KillSrc));
+    BuildMI(MBB, I, DL, get(Hexagon::V6_vcombine), DestReg)
+      .addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_hireg), KillFlag)
+      .addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_loreg), KillFlag);
     return;
   }
   if (Hexagon::VecPredRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::V6_pred_and), DestReg).
-      addReg(SrcReg).
-      addReg(SrcReg, getKillRegState(KillSrc));
+    BuildMI(MBB, I, DL, get(Hexagon::V6_pred_and), DestReg)
+      .addReg(SrcReg)
+      .addReg(SrcReg, KillFlag);
     return;
   }
   if (Hexagon::VecPredRegsRegClass.contains(SrcReg) &&
-    Hexagon::VectorRegsRegClass.contains(DestReg)) {
+      Hexagon::VectorRegsRegClass.contains(DestReg)) {
     llvm_unreachable("Unimplemented pred to vec");
     return;
   }
@@ -765,14 +769,12 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
   if (Hexagon::VecPredRegs128BRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::V6_pred_and),
-      HRI.getSubReg(DestReg, Hexagon::subreg_hireg)).
-      addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_hireg),
-             getKillRegState(KillSrc));
-    BuildMI(MBB, I, DL, get(Hexagon::V6_pred_and),
-      HRI.getSubReg(DestReg, Hexagon::subreg_loreg)).
-      addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_loreg),
-             getKillRegState(KillSrc));
+    unsigned DstHi = HRI.getSubReg(DestReg, Hexagon::subreg_hireg);
+    BuildMI(MBB, I, DL, get(Hexagon::V6_pred_and), DstHi)
+      .addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_hireg), KillFlag);
+    unsigned DstLo = HRI.getSubReg(DestReg, Hexagon::subreg_loreg);
+    BuildMI(MBB, I, DL, get(Hexagon::V6_pred_and), DstLo)
+      .addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_loreg), KillFlag);
     return;
   }
 
@@ -793,6 +795,7 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
+  unsigned KillFlag = getKillRegState(isKill);
 
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       MachinePointerInfo::getFixedStack(MF, FI), MachineMemOperand::MOStore,
@@ -800,20 +803,48 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   if (Hexagon::IntRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::S2_storeri_io))
-          .addFrameIndex(FI).addImm(0)
-          .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::DoubleRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::S2_storerd_io))
-          .addFrameIndex(FI).addImm(0)
-          .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::PredRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::STriw_pred))
       .addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::ModRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::STriw_mod))
       .addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
+  } else if (Hexagon::VecPredRegs128BRegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, I, DL, get(Hexagon::STriq_pred_V6_128B))
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
+  } else if (Hexagon::VecPredRegsRegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, I, DL, get(Hexagon::STriq_pred_V6))
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
+  } else if (Hexagon::VectorRegs128BRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating 128B vector spill");
+    BuildMI(MBB, I, DL, get(Hexagon::STriv_pseudo_V6_128B))
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
+  } else if (Hexagon::VectorRegsRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating vector spill");
+    BuildMI(MBB, I, DL, get(Hexagon::STriv_pseudo_V6))
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
+  } else if (Hexagon::VecDblRegsRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating double vector spill");
+    BuildMI(MBB, I, DL, get(Hexagon::STrivv_pseudo_V6))
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
+  } else if (Hexagon::VecDblRegs128BRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating 128B double vector spill");
+    BuildMI(MBB, I, DL, get(Hexagon::STrivv_pseudo_V6_128B))
+      .addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else {
     llvm_unreachable("Unimplemented");
   }
@@ -831,17 +862,40 @@ void HexagonInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       MachinePointerInfo::getFixedStack(MF, FI), MachineMemOperand::MOLoad,
       MFI.getObjectSize(FI), Align);
+
   if (Hexagon::IntRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::L2_loadri_io), DestReg)
-          .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::DoubleRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::L2_loadrd_io), DestReg)
-          .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::PredRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::LDriw_pred), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::ModRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::LDriw_mod), DestReg)
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+  } else if (Hexagon::VecPredRegs128BRegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, I, DL, get(Hexagon::LDriq_pred_V6_128B), DestReg)
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+  } else if (Hexagon::VecPredRegsRegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, I, DL, get(Hexagon::LDriq_pred_V6), DestReg)
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+  } else if (Hexagon::VecDblRegs128BRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating 128B double vector restore");
+    BuildMI(MBB, I, DL, get(Hexagon::LDrivv_pseudo_V6_128B), DestReg)
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+  } else if (Hexagon::VectorRegs128BRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating 128B vector restore");
+    BuildMI(MBB, I, DL, get(Hexagon::LDriv_pseudo_V6_128B), DestReg)
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+  } else if (Hexagon::VectorRegsRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating vector restore");
+    BuildMI(MBB, I, DL, get(Hexagon::LDriv_pseudo_V6), DestReg)
+      .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+  } else if (Hexagon::VecDblRegsRegClass.hasSubClassEq(RC)) {
+    DEBUG(dbgs() << "++Generating double vector restore");
+    BuildMI(MBB, I, DL, get(Hexagon::LDrivv_pseudo_V6), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else {
     llvm_unreachable("Can't store this register to stack slot");
