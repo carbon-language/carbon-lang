@@ -24,21 +24,9 @@ pr53645-2.c
 pr53645.c
 pr59643.c
 
-
-
-# WebAssemblyCFGStackify.cpp:438: void PlaceMarkers(llvm::MachineFunction&, const llvm::MachineLoopInfo&, const llvm::WebAssemblyInstrInfo&, llvm::MachineDominatorTree&): Assertion `ScopeTops[Stack.back()->getNumber()] == &MBB && "Block should be balanced"' failed.
+# WebAssemblyCFGStackify.cpp:458: void PlaceMarkers(llvm::MachineFunction &, const llvm::MachineLoopInfo &, const llvm::WebAssemblyInstrInfo &, llvm::MachineDominatorTree &, llvm::WebAssemblyFunctionInfo &): Assertion `Stack.back() == &MBB && "Loop top should be balanced"' failed.
 20090113-2.c
 20090113-3.c
-ashldi-1.c
-ashrdi-1.c
-builtin-bitops-1.c
-loop-11.c
-lshrdi-1.c
-mode-dependent-address.c
-va-arg-10.c
-
-
-# WebAssemblyCFGStackify.cpp:458: void PlaceMarkers(llvm::MachineFunction &, const llvm::MachineLoopInfo &, const llvm::WebAssemblyInstrInfo &, llvm::MachineDominatorTree &, llvm::WebAssemblyFunctionInfo &): Assertion `Stack.back() == &MBB && "Loop top should be balanced"' failed.
 930628-1.c
 
 
