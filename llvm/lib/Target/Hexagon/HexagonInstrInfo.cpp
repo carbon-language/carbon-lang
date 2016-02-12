@@ -2227,6 +2227,85 @@ bool HexagonInstrInfo::isSaveCalleeSavedRegsCall(const MachineInstr *MI) const {
 }
 
 
+bool HexagonInstrInfo::isSignExtendingLoad(const MachineInstr* MI) const {
+  switch (MI->getOpcode()) {
+    // Byte
+    case Hexagon::L2_loadrb_io:
+    case Hexagon::L4_loadrb_ur:
+    case Hexagon::L4_loadrb_ap:
+    case Hexagon::L2_loadrb_pr:
+    case Hexagon::L2_loadrb_pbr:
+    case Hexagon::L2_loadrb_pi:
+    case Hexagon::L2_loadrb_pci:
+    case Hexagon::L2_loadrb_pcr:
+    case Hexagon::L2_loadbsw2_io:
+    case Hexagon::L4_loadbsw2_ur:
+    case Hexagon::L4_loadbsw2_ap:
+    case Hexagon::L2_loadbsw2_pr:
+    case Hexagon::L2_loadbsw2_pbr:
+    case Hexagon::L2_loadbsw2_pi:
+    case Hexagon::L2_loadbsw2_pci:
+    case Hexagon::L2_loadbsw2_pcr:
+    case Hexagon::L2_loadbsw4_io:
+    case Hexagon::L4_loadbsw4_ur:
+    case Hexagon::L4_loadbsw4_ap:
+    case Hexagon::L2_loadbsw4_pr:
+    case Hexagon::L2_loadbsw4_pbr:
+    case Hexagon::L2_loadbsw4_pi:
+    case Hexagon::L2_loadbsw4_pci:
+    case Hexagon::L2_loadbsw4_pcr:
+    case Hexagon::L4_loadrb_rr:
+    case Hexagon::L2_ploadrbt_io:
+    case Hexagon::L2_ploadrbt_pi:
+    case Hexagon::L2_ploadrbf_io:
+    case Hexagon::L2_ploadrbf_pi:
+    case Hexagon::L2_ploadrbtnew_io:
+    case Hexagon::L2_ploadrbfnew_io:
+    case Hexagon::L4_ploadrbt_rr:
+    case Hexagon::L4_ploadrbf_rr:
+    case Hexagon::L4_ploadrbtnew_rr:
+    case Hexagon::L4_ploadrbfnew_rr:
+    case Hexagon::L2_ploadrbtnew_pi:
+    case Hexagon::L2_ploadrbfnew_pi:
+    case Hexagon::L4_ploadrbt_abs:
+    case Hexagon::L4_ploadrbf_abs:
+    case Hexagon::L4_ploadrbtnew_abs:
+    case Hexagon::L4_ploadrbfnew_abs:
+    case Hexagon::L2_loadrbgp:
+    // Half
+    case Hexagon::L2_loadrh_io:
+    case Hexagon::L4_loadrh_ur:
+    case Hexagon::L4_loadrh_ap:
+    case Hexagon::L2_loadrh_pr:
+    case Hexagon::L2_loadrh_pbr:
+    case Hexagon::L2_loadrh_pi:
+    case Hexagon::L2_loadrh_pci:
+    case Hexagon::L2_loadrh_pcr:
+    case Hexagon::L4_loadrh_rr:
+    case Hexagon::L2_ploadrht_io:
+    case Hexagon::L2_ploadrht_pi:
+    case Hexagon::L2_ploadrhf_io:
+    case Hexagon::L2_ploadrhf_pi:
+    case Hexagon::L2_ploadrhtnew_io:
+    case Hexagon::L2_ploadrhfnew_io:
+    case Hexagon::L4_ploadrht_rr:
+    case Hexagon::L4_ploadrhf_rr:
+    case Hexagon::L4_ploadrhtnew_rr:
+    case Hexagon::L4_ploadrhfnew_rr:
+    case Hexagon::L2_ploadrhtnew_pi:
+    case Hexagon::L2_ploadrhfnew_pi:
+    case Hexagon::L4_ploadrht_abs:
+    case Hexagon::L4_ploadrhf_abs:
+    case Hexagon::L4_ploadrhtnew_abs:
+    case Hexagon::L4_ploadrhfnew_abs:
+    case Hexagon::L2_loadrhgp:
+      return true;
+    default:
+      return false;
+  }
+}
+
+
 bool HexagonInstrInfo::isSolo(const MachineInstr* MI) const {
   const uint64_t F = MI->getDesc().TSFlags;
   return (F >> HexagonII::SoloPos) & HexagonII::SoloMask;
@@ -2464,7 +2543,7 @@ bool HexagonInstrInfo::isValidOffset(unsigned Opcode, int Offset,
   case Hexagon::L4_or_memopb_io :
     return (0 <= Offset && Offset <= 63);
 
-  // LDri_pred and STriw_pred are pseudo operations, so it has to take offset of
+  // LDriw_xxx and STriw_xxx are pseudo operations, so it has to take offset of
   // any size. Later pass knows how to handle it.
   case Hexagon::STriw_pred:
   case Hexagon::LDriw_pred:
@@ -2548,6 +2627,85 @@ bool HexagonInstrInfo::isVecUsableNextPacket(const MachineInstr *ProdMI,
     return true;
 
   return false;
+}
+
+
+bool HexagonInstrInfo::isZeroExtendingLoad(const MachineInstr* MI) const {
+  switch (MI->getOpcode()) {
+    // Byte
+    case Hexagon::L2_loadrub_io:
+    case Hexagon::L4_loadrub_ur:
+    case Hexagon::L4_loadrub_ap:
+    case Hexagon::L2_loadrub_pr:
+    case Hexagon::L2_loadrub_pbr:
+    case Hexagon::L2_loadrub_pi:
+    case Hexagon::L2_loadrub_pci:
+    case Hexagon::L2_loadrub_pcr:
+    case Hexagon::L2_loadbzw2_io:
+    case Hexagon::L4_loadbzw2_ur:
+    case Hexagon::L4_loadbzw2_ap:
+    case Hexagon::L2_loadbzw2_pr:
+    case Hexagon::L2_loadbzw2_pbr:
+    case Hexagon::L2_loadbzw2_pi:
+    case Hexagon::L2_loadbzw2_pci:
+    case Hexagon::L2_loadbzw2_pcr:
+    case Hexagon::L2_loadbzw4_io:
+    case Hexagon::L4_loadbzw4_ur:
+    case Hexagon::L4_loadbzw4_ap:
+    case Hexagon::L2_loadbzw4_pr:
+    case Hexagon::L2_loadbzw4_pbr:
+    case Hexagon::L2_loadbzw4_pi:
+    case Hexagon::L2_loadbzw4_pci:
+    case Hexagon::L2_loadbzw4_pcr:
+    case Hexagon::L4_loadrub_rr:
+    case Hexagon::L2_ploadrubt_io:
+    case Hexagon::L2_ploadrubt_pi:
+    case Hexagon::L2_ploadrubf_io:
+    case Hexagon::L2_ploadrubf_pi:
+    case Hexagon::L2_ploadrubtnew_io:
+    case Hexagon::L2_ploadrubfnew_io:
+    case Hexagon::L4_ploadrubt_rr:
+    case Hexagon::L4_ploadrubf_rr:
+    case Hexagon::L4_ploadrubtnew_rr:
+    case Hexagon::L4_ploadrubfnew_rr:
+    case Hexagon::L2_ploadrubtnew_pi:
+    case Hexagon::L2_ploadrubfnew_pi:
+    case Hexagon::L4_ploadrubt_abs:
+    case Hexagon::L4_ploadrubf_abs:
+    case Hexagon::L4_ploadrubtnew_abs:
+    case Hexagon::L4_ploadrubfnew_abs:
+    case Hexagon::L2_loadrubgp:
+    // Half
+    case Hexagon::L2_loadruh_io:
+    case Hexagon::L4_loadruh_ur:
+    case Hexagon::L4_loadruh_ap:
+    case Hexagon::L2_loadruh_pr:
+    case Hexagon::L2_loadruh_pbr:
+    case Hexagon::L2_loadruh_pi:
+    case Hexagon::L2_loadruh_pci:
+    case Hexagon::L2_loadruh_pcr:
+    case Hexagon::L4_loadruh_rr:
+    case Hexagon::L2_ploadruht_io:
+    case Hexagon::L2_ploadruht_pi:
+    case Hexagon::L2_ploadruhf_io:
+    case Hexagon::L2_ploadruhf_pi:
+    case Hexagon::L2_ploadruhtnew_io:
+    case Hexagon::L2_ploadruhfnew_io:
+    case Hexagon::L4_ploadruht_rr:
+    case Hexagon::L4_ploadruhf_rr:
+    case Hexagon::L4_ploadruhtnew_rr:
+    case Hexagon::L4_ploadruhfnew_rr:
+    case Hexagon::L2_ploadruhtnew_pi:
+    case Hexagon::L2_ploadruhfnew_pi:
+    case Hexagon::L4_ploadruht_abs:
+    case Hexagon::L4_ploadruhf_abs:
+    case Hexagon::L4_ploadruhtnew_abs:
+    case Hexagon::L4_ploadruhfnew_abs:
+    case Hexagon::L2_loadruhgp:
+      return true;
+    default:
+      return false;
+  }
 }
 
 
