@@ -16,6 +16,7 @@
 #include "LinkerScript.h"
 #include "Config.h"
 #include "Driver.h"
+#include "InputSection.h"
 #include "SymbolTable.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -23,17 +24,23 @@
 #include "llvm/Support/StringSaver.h"
 
 using namespace llvm;
+using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
 LinkerScript *elf2::Script;
 
-StringRef LinkerScript::getOutputSection(StringRef S) {
-  return Sections.lookup(S);
+template <class ELFT>
+StringRef LinkerScript::getOutputSection(InputSectionBase<ELFT> *S) {
+  for (SectionRule &R : Sections)
+    if (R.match(S))
+      return R.Dest;
+  return "";
 }
 
-bool LinkerScript::isDiscarded(StringRef S) {
-  return Sections.lookup(S) == "/DISCARD/";
+template <class ELFT>
+bool LinkerScript::isDiscarded(InputSectionBase<ELFT> *S) {
+  return getOutputSection(S) == "/DISCARD/";
 }
 
 // A compartor to sort output sections. Returns -1 or 1 if both
@@ -46,6 +53,33 @@ int LinkerScript::compareSections(StringRef A, StringRef B) {
   if (I == E || J == E)
     return 0;
   return I < J ? -1 : 1;
+}
+
+// Returns true if S matches T. S may contain a meta character '*'
+// which matches zero or more occurrences of any character.
+static bool matchStr(StringRef S, StringRef T) {
+  for (;;) {
+    if (S.empty())
+      return T.empty();
+    if (S[0] == '*') {
+      S = S.substr(1);
+      if (S.empty())
+        // Fast path. If a pattern is '*', it matches anything.
+        return true;
+      for (size_t I = 0, E = T.size(); I < E; ++I)
+        if (matchStr(S, T.substr(I)))
+          return true;
+      return false;
+    }
+    if (T.empty() || S[0] != T[0])
+      return false;
+    S = S.substr(1);
+    T = T.substr(1);
+  }
+}
+
+template <class ELFT> bool SectionRule::match(InputSectionBase<ELFT> *S) {
+  return matchStr(SectionPattern, S->getSectionName());
 }
 
 class elf2::ScriptParser {
@@ -352,7 +386,7 @@ void ScriptParser::readOutputSectionDescription() {
     next(); // Skip input file name.
     expect("(");
     while (!Error && !skip(")"))
-      Script->Sections[next()] = OutSec;
+      Script->Sections.push_back({OutSec, next()});
   }
 }
 
@@ -370,3 +404,18 @@ void LinkerScript::read(MemoryBufferRef MB) {
   StringRef Path = MB.getBufferIdentifier();
   ScriptParser(&Alloc, MB.getBuffer(), isUnderSysroot(Path)).run();
 }
+
+template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF32LE> *);
+template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF32BE> *);
+template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF64LE> *);
+template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF64BE> *);
+
+template bool LinkerScript::isDiscarded(InputSectionBase<ELF32LE> *);
+template bool LinkerScript::isDiscarded(InputSectionBase<ELF32BE> *);
+template bool LinkerScript::isDiscarded(InputSectionBase<ELF64LE> *);
+template bool LinkerScript::isDiscarded(InputSectionBase<ELF64BE> *);
+
+template bool SectionRule::match(InputSectionBase<ELF32LE> *);
+template bool SectionRule::match(InputSectionBase<ELF32BE> *);
+template bool SectionRule::match(InputSectionBase<ELF64LE> *);
+template bool SectionRule::match(InputSectionBase<ELF64BE> *);
