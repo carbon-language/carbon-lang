@@ -84,6 +84,8 @@ TEST(OptionSet, intptr_t) {
 #endif
 }
 
+#ifndef _MSC_VER
+// FIXME: This fails on MSVC.
 TEST(OptionSet, intptr_t_isConstructible) {
   // First check that std::is_constructible counts explicit conversion
   // operators.
@@ -109,3 +111,5 @@ TEST(OptionSet, intptr_t_isConstructible) {
     EXPECT_TRUE(isConvertible);
   }
 }
+#endif
+
