@@ -247,6 +247,30 @@ def si_truncstore_local_i16 : PatFrag <
   return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 
+def si_setcc_uniform : PatFrag <
+  (ops node:$lhs, node:$rhs, node:$cond),
+  (setcc node:$lhs, node:$rhs, node:$cond), [{
+  for (SDNode *Use : N->uses()) {
+    if (Use->isMachineOpcode() || Use->getOpcode() != ISD::CopyToReg)
+      return false;
+
+    unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+    if (Reg != AMDGPU::SCC)
+      return false;
+  }
+  return true;
+}]>;
+
+def si_uniform_br : PatFrag <
+  (ops node:$cond, node:$bb), (brcond node:$cond, node:$bb), [{
+  return isUniformBr(N);
+}]>;
+
+def si_uniform_br_scc : PatFrag <
+  (ops node:$cond, node:$bb), (si_uniform_br node:$cond, node:$bb), [{
+  return isCBranchSCC(N);
+}]>;
+
 multiclass SIAtomicM0Glue2 <string op_name> {
 
   def _glue : SDNode <"ISD::ATOMIC_"#op_name, SDTAtomic2,
@@ -826,7 +850,8 @@ multiclass SOP2_64_32 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
 class SOPC_Helper <bits<7> op, RegisterOperand rc, ValueType vt,
                     string opName, PatLeaf cond> : SOPC <
   op, (outs), (ins rc:$src0, rc:$src1),
-  opName#" $src0, $src1", []> {
+  opName#" $src0, $src1",
+  [(set SCC, (si_setcc_uniform vt:$src0, vt:$src1, cond))] > {
   let Defs = [SCC];
 }
 
