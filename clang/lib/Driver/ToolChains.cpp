@@ -1030,6 +1030,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
                                       const char *BoundArch) const {
   // First get the generic Apple args, before moving onto Darwin-specific ones.
   DerivedArgList *DAL = MachO::TranslateArgs(Args, BoundArch);
+  const OptTable &Opts = getDriver().getOpts();
 
   // If no architecture is bound, none of the translations here are relevant.
   if (!BoundArch)
@@ -1059,6 +1060,11 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       it = DAL->getArgs().erase(it);
     }
   }
+
+  if (!Args.getLastArg(options::OPT_stdlib_EQ) &&
+      GetDefaultCXXStdlibType() == ToolChain::CST_Libcxx)
+    DAL->AddJoinedArg(nullptr, Opts.getOption(options::OPT_stdlib_EQ),
+                      "libc++");
 
   // Validate the C++ standard library choice.
   CXXStdlibType Type = GetCXXStdlibType(*DAL);
