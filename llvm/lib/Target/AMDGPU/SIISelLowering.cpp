@@ -1197,7 +1197,7 @@ SDValue SITargetLowering::LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const {
 }
 
 bool SITargetLowering::isCFIntrinsic(const SDNode *Intr) const {
-  if (!Intr->getOpcode() == ISD::INTRINSIC_W_CHAIN)
+  if (Intr->getOpcode() != ISD::INTRINSIC_W_CHAIN)
     return false;
 
   switch (cast<ConstantSDNode>(Intr->getOperand(1))->getZExtValue()) {
