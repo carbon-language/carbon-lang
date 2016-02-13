@@ -4952,7 +4952,7 @@ static void handleNoSanitizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
-  std::vector<std::string> Sanitizers;
+  std::vector<StringRef> Sanitizers;
 
   for (unsigned I = 0, E = Attr.getNumArgs(); I != E; ++I) {
     StringRef SanitizerName;
@@ -4976,8 +4976,8 @@ static void handleNoSanitizeSpecificAttr(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   StringRef AttrName = Attr.getName()->getName();
   normalizeName(AttrName);
-  std::string SanitizerName =
-      llvm::StringSwitch<std::string>(AttrName)
+  StringRef SanitizerName =
+      llvm::StringSwitch<StringRef>(AttrName)
           .Case("no_address_safety_analysis", "address")
           .Case("no_sanitize_address", "address")
           .Case("no_sanitize_thread", "thread")
