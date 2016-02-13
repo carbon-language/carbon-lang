@@ -12,6 +12,7 @@
 #ifndef LLVM_FUZZER_INTERNAL_H
 #define LLVM_FUZZER_INTERNAL_H
 
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <climits>
@@ -119,10 +120,62 @@ bool ParseOneDictionaryEntry(const std::string &Str, Unit *U);
 // were parsed succesfully.
 bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units);
 
+class DictionaryEntry {
+ public:
+  DictionaryEntry() {}
+  DictionaryEntry(Word W) : W(W) {}
+  DictionaryEntry(Word W, size_t PositionHint) : W(W), PositionHint(PositionHint) {}
+  const Word &GetW() const { return W; }
+
+  bool HasPositionHint() const { return PositionHint != std::numeric_limits<size_t>::max(); }
+  size_t GetPositionHint() const {
+    assert(HasPositionHint());
+    return PositionHint;
+  }
+  void IncUseCount() { UseCount++; }
+  void IncSuccessCount() { SuccessCount++; }
+  size_t GetUseCount() const { return UseCount; }
+  size_t GetSuccessCount() const {return SuccessCount; }
+
+private:
+  Word W;
+  size_t PositionHint = std::numeric_limits<size_t>::max();
+  size_t UseCount = 0;
+  size_t SuccessCount = 0;
+};
+
+class Dictionary {
+ public:
+  static const size_t kMaxDictSize = 1 << 14;
+
+  bool ContainsWord(const Word &W) const {
+    return std::any_of(begin(), end(), [&](const DictionaryEntry &DE) {
+      return DE.GetW() == W;
+    });
+  }
+  const DictionaryEntry *begin() const { return &DE[0]; }
+  const DictionaryEntry *end() const { return begin() + Size; }
+  DictionaryEntry & operator[] (size_t Idx) {
+    assert(Idx < Size);
+    return DE[Idx];
+  }
+  void push_back(DictionaryEntry DE) {
+    if (Size < kMaxDictSize)
+      this->DE[Size++] = DE;
+  }
+  void clear() { Size = 0; }
+  bool empty() const { return Size == 0; }
+  size_t size() const { return Size; }
+
+private:
+  DictionaryEntry DE[kMaxDictSize];
+  size_t Size = 0;
+};
+
 class MutationDispatcher {
 public:
   MutationDispatcher(Random &Rand);
-  ~MutationDispatcher();
+  ~MutationDispatcher() {}
   /// Indicate that we are about to start a new sequence of mutations.
   void StartMutationSequence();
   /// Print the current sequence of mutations.
@@ -172,14 +225,34 @@ public:
   void ClearAutoDictionary();
   void PrintRecommendedDictionary();
 
-  void SetCorpus(const std::vector<Unit> *Corpus);
+  void SetCorpus(const std::vector<Unit> *Corpus) { this->Corpus = Corpus; }
 
   Random &GetRand() { return Rand; }
 
 private:
+
+  struct Mutator {
+    size_t (MutationDispatcher::*Fn)(uint8_t *Data, size_t Size, size_t Max);
+    const char *Name;
+  };
+
+  void Add(Mutator M) { Mutators.push_back(M); }
+  size_t AddWordFromDictionary(Dictionary &D, uint8_t *Data, size_t Size,
+                               size_t MaxSize);
+
   Random &Rand;
-  struct Impl;
-  Impl *MDImpl;
+  // Dictionary provided by the user via -dict=DICT_FILE.
+  Dictionary ManualDictionary;
+  // Temporary dictionary modified by the fuzzer itself,
+  // recreated periodically.
+  Dictionary TempAutoDictionary;
+  // Persistent dictionary modified by the fuzzer, consists of
+  // entries that led to successfull discoveries in the past mutations.
+  Dictionary PersistentAutoDictionary;
+  std::vector<Mutator> Mutators;
+  std::vector<Mutator> CurrentMutatorSequence;
+  std::vector<DictionaryEntry *> CurrentDictionaryEntrySequence;
+  const std::vector<Unit> *Corpus = nullptr;
 };
 
 class Fuzzer {
