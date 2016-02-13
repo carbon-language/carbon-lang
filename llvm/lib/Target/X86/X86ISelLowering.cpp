@@ -19717,13 +19717,6 @@ X86TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   }
 }
 
-static bool hasMFENCE(const X86Subtarget &Subtarget) {
-  // Use mfence if we have SSE2 or we're on x86-64 (even if we asked for
-  // no-sse2). There isn't any reason to disable it if the target processor
-  // supports it.
-  return Subtarget.hasSSE2() || Subtarget.is64Bit();
-}
-
 LoadInst *
 X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
   unsigned NativeWidth = Subtarget.is64Bit() ? 64 : 32;
@@ -19763,7 +19756,7 @@ X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
     // the IR level, so we must wrap it in an intrinsic.
     return nullptr;
 
-  if (!hasMFENCE(Subtarget))
+  if (!Subtarget.hasMFence())
     // FIXME: it might make sense to use a locked operation here but on a
     // different cache-line to prevent cache-line bouncing. In practice it
     // is probably a small win, and x86 processors without mfence are rare
@@ -19794,7 +19787,7 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget &Subtarget,
   // The only fence that needs an instruction is a sequentially-consistent
   // cross-thread fence.
   if (FenceOrdering == SequentiallyConsistent && FenceScope == CrossThread) {
-    if (hasMFENCE(Subtarget))
+    if (Subtarget.hasMFence())
       return DAG.getNode(X86ISD::MFENCE, dl, MVT::Other, Op.getOperand(0));
 
     SDValue Chain = Op.getOperand(0);
