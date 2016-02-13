@@ -403,9 +403,9 @@ TEST(FuzzerUtil, Base64) {
 
 TEST(Corpus, Distribution) {
   Random Rand(0);
-  SimpleUserSuppliedFuzzer USF(&Rand, LLVMFuzzerTestOneInput);
+  MutationDispatcher MD(Rand);
   Fuzzer::FuzzingOptions Options;
-  Fuzzer Fuzz(USF, Options);
+  Fuzzer Fuzz(LLVMFuzzerTestOneInput, MD, Options);
   size_t N = 10;
   size_t TriesPerUnit = 1<<20;
   for (size_t i = 0; i < N; i++) {

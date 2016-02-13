@@ -104,6 +104,7 @@ class Random {
   size_t Rand() { return R(); }
   size_t RandBool() { return Rand() % 2; }
   size_t operator()(size_t n) { return n ? Rand() % n : 0; }
+  std::mt19937 &Get_mt19937() { return R; }
  private:
   std::mt19937 R;
 };
@@ -173,35 +174,12 @@ public:
 
   void SetCorpus(const std::vector<Unit> *Corpus);
 
+  Random &GetRand() { return Rand; }
+
 private:
   Random &Rand;
   struct Impl;
   Impl *MDImpl;
-};
-
-class UserSuppliedFuzzer {
- public:
-  UserSuppliedFuzzer(Random *Rand);
-  /// Executes the target function on 'Size' bytes of 'Data'.
-  virtual int TargetFunction(const uint8_t *Data, size_t Size) = 0;
-  /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
-  /// returns the new size of the data, which should be positive.
-  virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
-  /// Crosses 'Data1' and 'Data2', writes up to 'MaxOutSize' bytes into Out,
-  /// returns the number of bytes written, which should be positive.
-  virtual size_t CrossOver(const uint8_t *Data1, size_t Size1,
-                           const uint8_t *Data2, size_t Size2,
-                           uint8_t *Out, size_t MaxOutSize);
-  virtual ~UserSuppliedFuzzer();
-
-  Random &GetRand() { return *Rand; }
-
-  MutationDispatcher &GetMD() { return *MD; }
-
- private:
-  bool OwnRand = false;
-  Random *Rand;
-  MutationDispatcher *MD;
 };
 
 class Fuzzer {
@@ -237,7 +215,7 @@ public:
     bool OutputCSV = false;
     bool PrintNewCovPcs = false;
   };
-  Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
+  Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) {
     Corpus.push_back(U);
     UpdateCorpusDistribution();
@@ -324,14 +302,9 @@ private:
     return Res;
   }
 
-  // TODO(krasin): remove GetRand from UserSuppliedFuzzer,
-  // and fully rely on the generator and the seed.
-  // The user supplied fuzzer will have a way to access the
-  // generator for its own purposes (like seeding the custom
-  // PRNG).
-  std::mt19937 Generator;
   std::piecewise_constant_distribution<double> CorpusDistribution;
-  UserSuppliedFuzzer &USF;
+  UserCallback CB;
+  MutationDispatcher &MD;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
   system_clock::time_point LastExternalSync = system_clock::now();
@@ -341,19 +314,6 @@ private:
   size_t LastRecordedBlockCoverage = 0;
   size_t LastRecordedCallerCalleeCoverage = 0;
   size_t LastCoveragePcBufferLen = 0;
-};
-
-class SimpleUserSuppliedFuzzer : public UserSuppliedFuzzer {
-public:
-  SimpleUserSuppliedFuzzer(Random *Rand, UserCallback Callback)
-      : UserSuppliedFuzzer(Rand), Callback(Callback) {}
-
-  virtual int TargetFunction(const uint8_t *Data, size_t Size) override {
-    return Callback(Data, Size);
-  }
-
-private:
-  UserCallback Callback = nullptr;
 };
 
 }; // namespace fuzzer

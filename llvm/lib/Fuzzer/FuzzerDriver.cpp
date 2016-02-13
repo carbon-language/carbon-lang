@@ -315,12 +315,12 @@ int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
     Printf("Seed: %u\n", Seed);
 
   Random Rand(Seed);
-  SimpleUserSuppliedFuzzer USF(&Rand, Callback);
-  Fuzzer F(USF, Options);
+  MutationDispatcher MD(Rand);
+  Fuzzer F(Callback, MD, Options);
 
   for (auto &U: Dictionary)
     if (U.size() <= Word::GetMaxSize())
-      USF.GetMD().AddWordToManualDictionary(Word(U.data(), U.size()));
+      MD.AddWordToManualDictionary(Word(U.data(), U.size()));
 
   // Timer
   if (Flags.timeout > 0)
