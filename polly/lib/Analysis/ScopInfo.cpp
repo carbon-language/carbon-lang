@@ -2731,10 +2731,9 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
   return MaxLD - MinLD + 1;
 }
 
-Scop::Scop(Region &R, AccFuncMapType &AccFuncMap,
-           ScalarEvolution &ScalarEvolution, isl_ctx *Context,
+Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, isl_ctx *Context,
            unsigned MaxLoopDepth)
-    : SE(&ScalarEvolution), R(R), AccFuncMap(AccFuncMap), IsOptimized(false),
+    : SE(&ScalarEvolution), R(R), IsOptimized(false),
       HasSingleExitEdge(R.getExitingBlock()), HasErrorBlock(false),
       MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Context(nullptr),
       Affinator(this), AssumedContext(nullptr), BoundaryContext(nullptr),
@@ -3978,7 +3977,7 @@ MemoryAccess *ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
   if (!Stmt)
     return nullptr;
 
-  AccFuncSetType &AccList = AccFuncMap[BB];
+  AccFuncSetType &AccList = scop->getOrCreateAccessFunctions(BB);
   Value *BaseAddr = BaseAddress;
   std::string BaseName = getIslCompatibleName("MemRef_", BaseAddr, "");
 
@@ -4127,7 +4126,7 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
 
 void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  scop = new Scop(R, AccFuncMap, *SE, ctx, MaxLoopDepth);
+  scop = new Scop(R, *SE, ctx, MaxLoopDepth);
 
   buildStmts(R, R);
   buildAccessFunctions(R, R);
@@ -4155,7 +4154,6 @@ void ScopInfo::print(raw_ostream &OS, const Module *) const {
 }
 
 void ScopInfo::clear() {
-  AccFuncMap.clear();
   if (scop) {
     delete scop;
     scop = 0;

@@ -1238,8 +1238,10 @@ private:
   /// The underlying Region.
   Region &R;
 
-  // Access function of bbs.
-  AccFuncMapType &AccFuncMap;
+  // Access function of statements (currently BasicBlocks) .
+  //
+  // This owns all the MemoryAccess objects of the Scop created in this pass.
+  AccFuncMapType AccFuncMap;
 
   /// Flag to indicate that the scheduler actually optimized the SCoP.
   bool IsOptimized;
@@ -1369,8 +1371,13 @@ private:
   InvariantEquivClassesTy InvariantEquivClasses;
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
-  Scop(Region &R, AccFuncMapType &AccFuncMap, ScalarEvolution &SE, isl_ctx *ctx,
-       unsigned MaxLoopDepth);
+  Scop(Region &R, ScalarEvolution &SE, isl_ctx *ctx, unsigned MaxLoopDepth);
+
+  /// @brief Get or create the access function set in a BasicBlock
+  AccFuncSetType &getOrCreateAccessFunctions(const BasicBlock *BB) {
+    return AccFuncMap[BB];
+  }
+  //@}
 
   /// @brief Initialize this ScopInfo .
   void init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
@@ -2000,12 +2007,6 @@ class ScopInfo : public RegionPass {
 
   /// @brief The ScalarEvolution to help building Scop.
   ScalarEvolution *SE;
-
-  // Access function of statements (currently BasicBlocks) .
-  //
-  // This owns all the MemoryAccess objects of the Scop created in this pass. It
-  // must live until #scop is deleted.
-  AccFuncMapType AccFuncMap;
 
   // The Scop
   Scop *scop;
