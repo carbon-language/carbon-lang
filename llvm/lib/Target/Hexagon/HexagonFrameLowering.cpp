@@ -1718,8 +1718,10 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
 
   struct SlotInfo {
     BlockRangeMap Map;
-    unsigned Size = 0;
-    const TargetRegisterClass *RC = nullptr;
+    unsigned Size;
+    const TargetRegisterClass *RC;
+
+    SlotInfo() : Map(), Size(0), RC(nullptr) {}
   };
 
   BlockIndexMap BlockIndexes;
