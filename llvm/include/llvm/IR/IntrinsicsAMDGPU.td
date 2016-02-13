@@ -139,32 +139,12 @@ def int_amdgcn_buffer_wbinvl1_sc :
   GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1_sc">,
   Intrinsic<[], [], []>;
 
-// On CI+
-def int_amdgcn_buffer_wbinvl1_vol :
-  GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1_vol">,
-  Intrinsic<[], [], []>;
-
 def int_amdgcn_buffer_wbinvl1 :
   GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1">,
   Intrinsic<[], [], []>;
 
 def int_amdgcn_s_dcache_inv :
   GCCBuiltin<"__builtin_amdgcn_s_dcache_inv">,
-  Intrinsic<[], [], []>;
-
-// CI+
-def int_amdgcn_s_dcache_inv_vol :
-  GCCBuiltin<"__builtin_amdgcn_s_dcache_inv_vol">,
-  Intrinsic<[], [], []>;
-
-// VI
-def int_amdgcn_s_dcache_wb :
-  GCCBuiltin<"__builtin_amdgcn_s_dcache_wb">,
-  Intrinsic<[], [], []>;
-
-// VI
-def int_amdgcn_s_dcache_wb_vol :
-  GCCBuiltin<"__builtin_amdgcn_s_dcache_wb_vol">,
   Intrinsic<[], [], []>;
 
 def int_amdgcn_dispatch_ptr :
@@ -194,4 +174,29 @@ def int_amdgcn_mbcnt_lo :
 def int_amdgcn_mbcnt_hi :
   GCCBuiltin<"__builtin_amdgcn_mbcnt_hi">,
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+
+//===----------------------------------------------------------------------===//
+// CI+ Intrinsics
+//===----------------------------------------------------------------------===//
+
+def int_amdgcn_s_dcache_inv_vol :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_inv_vol">,
+  Intrinsic<[], [], []>;
+
+def int_amdgcn_buffer_wbinvl1_vol :
+  GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1_vol">,
+  Intrinsic<[], [], []>;
+
+//===----------------------------------------------------------------------===//
+// VI Intrinsics
+//===----------------------------------------------------------------------===//
+
+def int_amdgcn_s_dcache_wb :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_wb">,
+  Intrinsic<[], [], []>;
+
+def int_amdgcn_s_dcache_wb_vol :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_wb_vol">,
+  Intrinsic<[], [], []>;
+
 }
