@@ -1744,7 +1744,7 @@ void Scop::buildBoundaryContext() {
   trackAssumption(WRAPPING, BoundaryContext, DebugLoc());
 }
 
-void Scop::addUserAssumptions(AssumptionCache &AC) {
+void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT) {
   auto *R = &getRegion();
   auto &F = *R->getEntry()->getParent();
   for (auto &Assumption : AC.assumptions()) {
@@ -2085,8 +2085,8 @@ isl_set *Scop::getDomainConditions(BasicBlock *BB) {
   return isl_set_copy(DomainMap[BB]);
 }
 
-void Scop::removeErrorBlockDomains(ScopDetection &SD) {
-  auto removeDomains = [this](BasicBlock *Start) {
+void Scop::removeErrorBlockDomains(ScopDetection &SD, DominatorTree &DT) {
+  auto removeDomains = [this, &DT](BasicBlock *Start) {
     auto BBNode = DT.getNode(Start);
     for (auto ErrorChild : depth_first(BBNode)) {
       auto ErrorChildBlock = ErrorChild->getBlock();
@@ -2117,7 +2117,7 @@ void Scop::removeErrorBlockDomains(ScopDetection &SD) {
       removeDomains(BB);
 }
 
-void Scop::buildDomains(Region *R, ScopDetection &SD) {
+void Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT) {
 
   bool IsOnlyNonAffineRegion = SD.isNonAffineSubRegion(R, R);
   auto *EntryBB = R->getEntry();
@@ -2135,8 +2135,8 @@ void Scop::buildDomains(Region *R, ScopDetection &SD) {
   if (IsOnlyNonAffineRegion)
     return;
 
-  buildDomainsWithBranchConstraints(R, SD);
-  propagateDomainConstraints(R, SD);
+  buildDomainsWithBranchConstraints(R, SD, DT);
+  propagateDomainConstraints(R, SD, DT);
 
   // Error blocks and blocks dominated by them have been assumed to never be
   // executed. Representing them in the Scop does not add any value. In fact,
@@ -2146,10 +2146,11 @@ void Scop::buildDomains(Region *R, ScopDetection &SD) {
   // Furthermore, basic blocks dominated by error blocks may reference
   // instructions in the error block which, if the error block is not modeled,
   // can themselves not be constructed properly.
-  removeErrorBlockDomains(SD);
+  removeErrorBlockDomains(SD, DT);
 }
 
-void Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD) {
+void Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
+                                             DominatorTree &DT) {
   auto &BoxedLoops = *SD.getBoxedLoops(&getRegion());
 
   // To create the domain for each block in R we iterate over all blocks and
@@ -2171,7 +2172,7 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD) {
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        buildDomainsWithBranchConstraints(SubRegion, SD);
+        buildDomainsWithBranchConstraints(SubRegion, SD, DT);
         continue;
       }
     }
@@ -2291,7 +2292,8 @@ getDomainForBlock(BasicBlock *BB, DenseMap<BasicBlock *, isl_set *> &DomainMap,
   return getDomainForBlock(R->getEntry(), DomainMap, RI);
 }
 
-void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD) {
+void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
+                                      DominatorTree &DT) {
   // Iterate over the region R and propagate the domain constrains from the
   // predecessors to the current node. In contrast to the
   // buildDomainsWithBranchConstraints function, this one will pull the domain
@@ -2312,7 +2314,7 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD) {
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        propagateDomainConstraints(SubRegion, SD);
+        propagateDomainConstraints(SubRegion, SD, DT);
         continue;
       }
     }
@@ -2727,9 +2729,9 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
 }
 
 Scop::Scop(Region &R, AccFuncMapType &AccFuncMap,
-           ScalarEvolution &ScalarEvolution, DominatorTree &DT, LoopInfo &LI,
-           isl_ctx *Context, unsigned MaxLoopDepth)
-    : LI(LI), DT(DT), SE(&ScalarEvolution), R(R), AccFuncMap(AccFuncMap),
+           ScalarEvolution &ScalarEvolution, LoopInfo &LI, isl_ctx *Context,
+           unsigned MaxLoopDepth)
+    : LI(LI), SE(&ScalarEvolution), R(R), AccFuncMap(AccFuncMap),
       IsOptimized(false), HasSingleExitEdge(R.getExitingBlock()),
       HasErrorBlock(false), MaxLoopDepth(MaxLoopDepth), IslCtx(Context),
       Context(nullptr), Affinator(this), AssumedContext(nullptr),
@@ -2737,15 +2739,16 @@ Scop::Scop(Region &R, AccFuncMapType &AccFuncMap,
   buildContext();
 }
 
-void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD) {
-  addUserAssumptions(AC);
+void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
+                DominatorTree &DT) {
+  addUserAssumptions(AC, DT);
   buildInvariantEquivalenceClasses(SD);
 
-  buildDomains(&R, SD);
+  buildDomains(&R, SD, DT);
 
   // Remove empty and ignored statements.
   // Exit early in case there are no executable statements left in this scop.
-  simplifySCoP(true);
+  simplifySCoP(true, DT);
   if (Stmts.empty())
     return;
 
@@ -2767,7 +2770,7 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD) {
   buildAliasChecks(AA);
 
   hoistInvariantLoads(SD);
-  simplifySCoP(false);
+  simplifySCoP(false, DT);
 }
 
 Scop::~Scop() {
@@ -2801,7 +2804,7 @@ void Scop::updateAccessDimensionality() {
       Access->updateDimensionality();
 }
 
-void Scop::simplifySCoP(bool RemoveIgnoredStmts) {
+void Scop::simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT) {
   for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
     ScopStmt &Stmt = *StmtIt;
     RegionNode *RN = Stmt.isRegionStmt()
@@ -2812,7 +2815,7 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts) {
     if (!RemoveStmt)
       RemoveStmt = isl_set_is_empty(DomainMap[getRegionNodeBasicBlock(RN)]);
     if (!RemoveStmt)
-      RemoveStmt = (RemoveIgnoredStmts && isIgnored(RN));
+      RemoveStmt = (RemoveIgnoredStmts && isIgnored(RN, DT));
 
     // Remove read only statements only after invariant loop hoisting.
     if (!RemoveStmt && !RemoveIgnoredStmts) {
@@ -3402,7 +3405,7 @@ bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
 
 ScalarEvolution *Scop::getSE() const { return SE; }
 
-bool Scop::isIgnored(RegionNode *RN) {
+bool Scop::isIgnored(RegionNode *RN, DominatorTree &DT) {
   BasicBlock *BB = getRegionNodeBasicBlock(RN);
   ScopStmt *Stmt = getStmtForRegionNode(RN);
 
@@ -4119,7 +4122,7 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
 
 void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  scop = new Scop(R, AccFuncMap, *SE, *DT, *LI, ctx, MaxLoopDepth);
+  scop = new Scop(R, AccFuncMap, *SE, *LI, ctx, MaxLoopDepth);
 
   buildStmts(R, R);
   buildAccessFunctions(R, R);
@@ -4134,7 +4137,7 @@ void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   if (!R.getExitingBlock())
     buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
 
-  scop->init(*AA, AC, *SD);
+  scop->init(*AA, AC, *SD, *DT);
 }
 
 void ScopInfo::print(raw_ostream &OS, const Module *) const {

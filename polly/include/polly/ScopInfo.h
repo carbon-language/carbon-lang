@@ -1234,7 +1234,6 @@ private:
   const Scop &operator=(const Scop &) = delete;
 
   LoopInfo &LI;
-  DominatorTree &DT;
   ScalarEvolution *SE;
 
   /// The underlying Region.
@@ -1371,11 +1370,12 @@ private:
   InvariantEquivClassesTy InvariantEquivClasses;
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
-  Scop(Region &R, AccFuncMapType &AccFuncMap, ScalarEvolution &SE,
-       DominatorTree &DT, LoopInfo &LI, isl_ctx *ctx, unsigned MaxLoopDepth);
+  Scop(Region &R, AccFuncMapType &AccFuncMap, ScalarEvolution &SE, LoopInfo &LI,
+       isl_ctx *ctx, unsigned MaxLoopDepth);
 
   /// @brief Initialize this ScopInfo .
-  void init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD);
+  void init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
+            DominatorTree &DT);
 
   /// @brief Add loop carried constraints to the header block of the loop @p L.
   ///
@@ -1386,25 +1386,31 @@ private:
   ///
   /// @param R  The region we currently build branching conditions for.
   /// @param SD The ScopDetection analysis for the current function.
-  void buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD);
+  /// @param DT The DominatorTree for the current function.
+  void buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
+                                         DominatorTree &DT);
 
   /// @brief Propagate the domain constraints through the region @p R.
   ///
   /// @param R  The region we currently build branching conditions for.
   /// @param SD The ScopDetection analysis for the current function.
-  void propagateDomainConstraints(Region *R, ScopDetection &SD);
+  /// @param DT The DominatorTree for the current function.
+  void propagateDomainConstraints(Region *R, ScopDetection &SD,
+                                  DominatorTree &DT);
 
   /// @brief Remove domains of error blocks/regions (and blocks dominated by
   ///        them).
   ///
   /// @param SD The ScopDetection analysis for the current function.
-  void removeErrorBlockDomains(ScopDetection &SD);
+  /// @param DT The DominatorTree for the current function.
+  void removeErrorBlockDomains(ScopDetection &SD, DominatorTree &DT);
 
   /// @brief Compute the domain for each basic block in @p R.
   ///
   /// @param R  The region we currently traverse.
   /// @param SD The ScopDetection analysis for the current function.
-  void buildDomains(Region *R, ScopDetection &SD);
+  /// @param DT The DominatorTree for the current function.
+  void buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT);
 
   /// @brief Check if a region part should be represented in the SCoP or not.
   ///
@@ -1412,9 +1418,10 @@ private:
   /// via error blocks we do not model it in the polyhedral representation.
   ///
   /// @param RN The region part to check.
+  /// @param DT The DominatorTree for the current function.
   ///
   /// @return True if the part should be ignored, otherwise false.
-  bool isIgnored(RegionNode *RN);
+  bool isIgnored(RegionNode *RN, DominatorTree &DT);
 
   /// @brief Add parameter constraints to @p C that imply a non-empty domain.
   __isl_give isl_set *addNonEmptyDomainConstraints(__isl_take isl_set *C) const;
@@ -1425,7 +1432,7 @@ private:
   ///   - removal of no-op statements
   /// @param RemoveIgnoredStmts If true, also removed ignored statments.
   /// @see isIgnored()
-  void simplifySCoP(bool RemoveIgnoredStmts);
+  void simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT);
 
   /// @brief Create equivalence classes for required invariant accesses.
   ///
@@ -1500,7 +1507,7 @@ private:
   void buildBoundaryContext();
 
   /// @brief Add user provided parameter constraints to context (source code).
-  void addUserAssumptions(AssumptionCache &AC);
+  void addUserAssumptions(AssumptionCache &AC, DominatorTree &DT);
 
   /// @brief Add user provided parameter constraints to context (command line).
   void addUserContext();
