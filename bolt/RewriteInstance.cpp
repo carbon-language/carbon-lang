@@ -94,7 +94,8 @@ SplitFunctions("split-functions",
                cl::desc("split functions into hot and cold distinct regions"),
                cl::Optional);
 
-static cl::opt<BinaryFunction::LayoutType> ReorderBlocks(
+static cl::opt<BinaryFunction::LayoutType>
+ReorderBlocks(
     "reorder-blocks",
     cl::desc("change layout of basic blocks in a function"),
     cl::init(BinaryFunction::LT_NONE),
@@ -118,13 +119,18 @@ static cl::opt<BinaryFunction::LayoutType> ReorderBlocks(
                clEnumValEnd));
 
 
-static cl::opt<bool> AlignBlocks("align-blocks",
-                                 cl::desc("try to align BBs inserting nops"),
-                                 cl::Optional);
+static cl::opt<bool>
+AlignBlocks("align-blocks",
+            cl::desc("try to align BBs inserting nops"),
+            cl::Optional);
+
+static cl::opt<bool>
+UseGnuStack("use-gnu-stack",
+            cl::desc("use GNU_STACK program header for new segment"));
 
 static cl::opt<bool>
 DumpEHFrame("dump-eh-frame", cl::desc("dump parsed .eh_frame (debugging)"),
-         cl::Hidden);
+            cl::Hidden);
 
 static cl::opt<bool>
 PrintAll("print-all", cl::desc("print functions after each stage"),
@@ -384,8 +390,6 @@ void RewriteInstance::discoverStorage() {
 
   auto Obj = ELF64LEFile->getELFFile();
 
-  // Alignment should be the size of a page.
-  unsigned Align = 0x200000;
 
   // Discover important addresses in the binary.
 
@@ -393,57 +397,64 @@ void RewriteInstance::discoverStorage() {
   uint64_t FirstAllocAddress = std::numeric_limits<uint64_t>::max();
 
   NextAvailableAddress = 0;
+  uint64_t NextAvailableOffset = 0;
   for (const auto &Phdr : Obj->program_headers()) {
     if (Phdr.p_type == ELF::PT_LOAD) {
       FirstAllocAddress = std::min(FirstAllocAddress,
                                    static_cast<uint64_t>(Phdr.p_vaddr));
       NextAvailableAddress = std::max(NextAvailableAddress,
                                       Phdr.p_vaddr + Phdr.p_memsz);
+      NextAvailableOffset = std::max(NextAvailableOffset,
+                                     Phdr.p_offset + Phdr.p_filesz);
     }
   }
 
-  assert(NextAvailableAddress && "no PT_LOAD pheader seen");
+  assert(NextAvailableAddress && NextAvailableOffset &&
+         "no PT_LOAD pheader seen");
 
   errs() << "BOLT-INFO: first alloc address is 0x"
          << Twine::utohexstr(FirstAllocAddress) << '\n';
 
-  NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, Align);
+  FirstNonAllocatableOffset = NextAvailableOffset;
 
-  // Earliest available offset is the size of the input file.
-  uint64_t NextAvailableOffset = Obj->size();
-  NextAvailableOffset = RoundUpToAlignment(NextAvailableOffset, Align);
+  NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, PageAlign);
+  NextAvailableOffset = RoundUpToAlignment(NextAvailableOffset, PageAlign);
 
-  // This is where the black magic happens. Creating PHDR table in a segment
-  // other than that containing ELF header is tricky. Some loaders and/or
-  // parts of loaders will apply e_phoff from ELF header assuming both are in
-  // the same segment, while others will do the proper calculation.
-  // We create the new PHDR table in such a way that both of the methods
-  // of loading and locating the table work. There's a slight file size
-  // overhead because of that.
+  if (!opts::UseGnuStack) {
+    // This is where the black magic happens. Creating PHDR table in a segment
+    // other than that containing ELF header is tricky. Some loaders and/or
+    // parts of loaders will apply e_phoff from ELF header assuming both are in
+    // the same segment, while others will do the proper calculation.
+    // We create the new PHDR table in such a way that both of the methods
+    // of loading and locating the table work. There's a slight file size
+    // overhead because of that.
+    if (NextAvailableOffset <= NextAvailableAddress - FirstAllocAddress) {
+      NextAvailableOffset = NextAvailableAddress - FirstAllocAddress;
+    } else {
+      NextAvailableAddress = NextAvailableOffset + FirstAllocAddress;
+    }
+    assert(NextAvailableOffset == NextAvailableAddress - FirstAllocAddress &&
+           "PHDR table address calculation error");
 
-  if (NextAvailableOffset <= NextAvailableAddress - FirstAllocAddress) {
-    NextAvailableOffset = NextAvailableAddress - FirstAllocAddress;
-  } else {
-    NextAvailableAddress = NextAvailableOffset + FirstAllocAddress;
+    errs() << "BOLT-INFO: creating new program header table at address 0x"
+           << Twine::utohexstr(NextAvailableAddress) << ", offset 0x"
+           << Twine::utohexstr(NextAvailableOffset) << '\n';
+
+    PHDRTableAddress = NextAvailableAddress;
+    PHDRTableOffset = NextAvailableOffset;
+
+    // Reserve space for 3 extra pheaders.
+    unsigned Phnum = Obj->getHeader()->e_phnum;
+    Phnum += 3;
+
+    NextAvailableAddress += Phnum * sizeof(ELFFile<ELF64LE>::Elf_Phdr);
+    NextAvailableOffset  += Phnum * sizeof(ELFFile<ELF64LE>::Elf_Phdr);
   }
 
-  assert(NextAvailableOffset == NextAvailableAddress - FirstAllocAddress &&
-         "PHDR table address calculation error");
+  // Align at cache line.
+  NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 64);
+  NextAvailableOffset = RoundUpToAlignment(NextAvailableOffset, 64);
 
-  errs() << "BOLT-INFO: creating new program header table at address 0x"
-         << Twine::utohexstr(NextAvailableAddress) << '\n';
-
-  PHDRTableAddress = NextAvailableAddress;
-  PHDRTableOffset = NextAvailableOffset;
-
-  // Reserve the space for 3 extra pheaders.
-  unsigned Phnum = Obj->getHeader()->e_phnum;
-  Phnum += 3;
-
-  NextAvailableAddress += Phnum * sizeof(ELFFile<ELF64LE>::Elf_Phdr);
-  NextAvailableOffset  += Phnum * sizeof(ELFFile<ELF64LE>::Elf_Phdr);
-
-  // TODO: insert alignment here if needed.
   NewTextSegmentAddress = NextAvailableAddress;
   NewTextSegmentOffset = NextAvailableOffset;
 }
@@ -758,7 +769,7 @@ void RewriteInstance::disassembleFunctions() {
               }
     );
     auto SFI = ProfiledFunctions.begin();
-    for(int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
+    for (int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
       errs() << "  " << (*SFI)->getName() << " : "
              << (*SFI)->getExecutionCount() << '\n';
     }
@@ -1115,6 +1126,7 @@ void RewriteInstance::emitFunctions() {
 
   // Map every function/section current address in memory to that in
   // the output binary.
+  uint64_t NewTextSectionStartAddress = NextAvailableAddress;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
     if (!Function.isSimple())
@@ -1161,12 +1173,24 @@ void RewriteInstance::emitFunctions() {
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
+  // Add the new text section aggregating all existing code sections.
+  auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
+  if (NewTextSectionSize) {
+    SectionMM->SectionMapInfo[".bolt.text"] =
+        SectionInfo(0,
+                    NewTextSectionSize,
+                    16,
+                    true /*IsCode*/,
+                    true /*IsReadOnly*/,
+                    NewTextSectionStartAddress,
+                    getFileOffsetFor(NewTextSectionStartAddress));
+  }
 
   // Map special sections to their addresses in the output image.
   //
   // TODO: perhaps we should process all the allocated sections here?
   std::vector<std::string> Sections = { ".eh_frame", ".gcc_except_table" };
-  for(auto &SectionName : Sections) {
+  for (auto &SectionName : Sections) {
     auto SMII = EFMM->SectionMapInfo.find(SectionName);
     if (SMII != EFMM->SectionMapInfo.end()) {
       SectionInfo &SI = SMII->second;
@@ -1222,69 +1246,201 @@ void RewriteInstance::patchELF() {
   }
   auto Obj = ELF64LEFile->getELFFile();
   auto &OS = Out->os();
+
+  // Write/re-write program headers.
+  unsigned Phnum = Obj->getHeader()->e_phnum;
+  if (PHDRTableOffset) {
+    // Writing new pheader table.
+    Phnum += 1; // only adding one new segment
+    // Segment size includes the size of the PHDR area.
+    NewTextSegmentSize = NextAvailableAddress - PHDRTableAddress;
+  } else {
+    assert(!PHDRTableAddress && "unexpected address for program header table");
+
+    // Update existing table.
+    PHDRTableOffset = Obj->getHeader()->e_phoff;
+    NewTextSegmentSize = NextAvailableAddress - NewTextSegmentAddress;
+  }
   OS.seek(PHDRTableOffset);
 
-  errs() << "BOLT-INFO: writing new program headers at offset 0x"
-         << Twine::utohexstr(PHDRTableOffset) << '\n';
-
-  auto Ehdr = Obj->getHeader();
-  unsigned Phnum = Ehdr->e_phnum;
-
-  // FIXME: this will depend on the number of segements we plan to write.
-  Phnum += 1;
+  bool ModdedGnuStack = false;
+  bool AddedSegment = false;
 
   // Copy existing program headers with modifications.
   for (auto &Phdr : Obj->program_headers()) {
-    if (Phdr.p_type == ELF::PT_PHDR) {
-      auto NewPhdr = Phdr;
+    auto NewPhdr = Phdr;
+    if (PHDRTableAddress && Phdr.p_type == ELF::PT_PHDR) {
       NewPhdr.p_offset = PHDRTableOffset;
       NewPhdr.p_vaddr = PHDRTableAddress;
       NewPhdr.p_paddr = PHDRTableAddress;
       NewPhdr.p_filesz = sizeof(NewPhdr) * Phnum;
       NewPhdr.p_memsz = sizeof(NewPhdr) * Phnum;
-      OS.write(reinterpret_cast<const char *>(&NewPhdr), sizeof(NewPhdr));
     } else if (Phdr.p_type == ELF::PT_GNU_EH_FRAME) {
-      auto NewPhdr = Phdr;
+      auto SMII = SectionMM->SectionMapInfo.find(".eh_frame_hdr");
+      assert(SMII != SectionMM->SectionMapInfo.end() &&
+             ".eh_frame_hdr could not be found for PT_GNU_EH_FRAME");
+      auto &EHFrameHdrSecInfo = SMII->second;
       NewPhdr.p_offset = EHFrameHdrSecInfo.FileOffset;
       NewPhdr.p_vaddr = EHFrameHdrSecInfo.FileAddress;
       NewPhdr.p_paddr = EHFrameHdrSecInfo.FileAddress;
       NewPhdr.p_filesz = EHFrameHdrSecInfo.Size;
       NewPhdr.p_memsz = EHFrameHdrSecInfo.Size;
-      OS.write(reinterpret_cast<const char *>(&NewPhdr), sizeof(NewPhdr));
-    } else {
-      OS.write(reinterpret_cast<const char *>(&Phdr), sizeof(Phdr));
+    } else if (opts::UseGnuStack && Phdr.p_type == ELF::PT_GNU_STACK) {
+      NewPhdr.p_type = ELF::PT_LOAD;
+      NewPhdr.p_offset = NewTextSegmentOffset;
+      NewPhdr.p_vaddr = NewTextSegmentAddress;
+      NewPhdr.p_paddr = NewTextSegmentAddress;
+      NewPhdr.p_filesz = NewTextSegmentSize;
+      NewPhdr.p_memsz = NewTextSegmentSize;
+      NewPhdr.p_flags = ELF::PF_X | ELF::PF_R;
+      NewPhdr.p_align = PageAlign;
+      ModdedGnuStack = true;
+    } else if (!opts::UseGnuStack && Phdr.p_type == ELF::PT_DYNAMIC) {
+      // Insert new pheader
+      ELFFile<ELF64LE>::Elf_Phdr NewTextPhdr;
+      NewTextPhdr.p_type = ELF::PT_LOAD;
+      NewTextPhdr.p_offset = PHDRTableOffset;
+      NewTextPhdr.p_vaddr = PHDRTableAddress;
+      NewTextPhdr.p_paddr = PHDRTableAddress;
+      NewTextPhdr.p_filesz = NewTextSegmentSize;
+      NewTextPhdr.p_memsz = NewTextSegmentSize;
+      NewTextPhdr.p_flags = ELF::PF_X | ELF::PF_R;
+      NewTextPhdr.p_align = PageAlign;
+      OS.write(reinterpret_cast<const char *>(&NewTextPhdr),
+               sizeof(NewTextPhdr));
+      AddedSegment = true;
     }
+    OS.write(reinterpret_cast<const char *>(&NewPhdr), sizeof(NewPhdr));
   }
 
-  NewTextSegmentSize = NextAvailableAddress - NewTextSegmentAddress;
+  assert((!opts::UseGnuStack || ModdedGnuStack) &&
+         "could not find GNU_STACK program header to modify");
 
-  // Alignment should be the size of a page.
-  unsigned Align = 0x200000;
+  assert((opts::UseGnuStack || AddedSegment) &&
+         "could not add program header for the new segment");
 
-  // Add new pheaders
-  ELFFile<ELF64LE>::Elf_Phdr NewTextPhdr;
-  NewTextPhdr.p_type = ELF::PT_LOAD;
-  NewTextPhdr.p_offset = PHDRTableOffset;
-  NewTextPhdr.p_vaddr = PHDRTableAddress;
-  NewTextPhdr.p_paddr = PHDRTableAddress;
-  NewTextPhdr.p_filesz = NewTextSegmentSize;
-  NewTextPhdr.p_memsz = NewTextSegmentSize;
-  NewTextPhdr.p_flags = ELF::PF_R | ELF::PF_X;
-  NewTextPhdr.p_align = Align;
+  // Copy original non-allocatable contents and update section offsets.
+  uint64_t NextAvailableOffset = getFileOffsetFor(NextAvailableAddress);
+  assert(NextAvailableOffset >= FirstNonAllocatableOffset &&
+         "next available offset calculation failure");
 
-  OS.write(reinterpret_cast<const char *>(&NewTextPhdr), sizeof(NewTextPhdr));
+  // Re-write using this offset delta.
+  uint64_t OffsetDelta = NextAvailableOffset - FirstNonAllocatableOffset;
 
-  // Fix ELF header.
-  uint64_t PhoffLoc = (uintptr_t)&Ehdr->e_phoff - (uintptr_t)Obj->base();
-  uint64_t PhnumLoc = (uintptr_t)&Ehdr->e_phnum - (uintptr_t)Obj->base();
-  char Buffer[8];
-  support::ulittle64_t::ref(Buffer + 0) = PHDRTableOffset;
-  OS.pwrite(Buffer, 8, PhoffLoc);
-  support::ulittle16_t::ref(Buffer + 0) = Phnum;
-  OS.pwrite(Buffer, 2, PhnumLoc);
+  // Make sure offset delta is a multiple of alignment;
+  OffsetDelta = RoundUpToAlignment(OffsetDelta, MaxNonAllocAlign);
+  NextAvailableOffset = FirstNonAllocatableOffset + OffsetDelta;
+
+  // FIXME: only write up to SHDR table.
+  OS.seek(NextAvailableOffset);
+  OS << File->getData().drop_front(FirstNonAllocatableOffset);
+
+  bool SeenNonAlloc = false;
+  uint64_t ExtraDelta = 0;  // for dynamically adjusting delta
+  unsigned NumNewSections = 0;
+
+  // Update section table. Note that the section table itself has shifted.
+  OS.seek(Obj->getHeader()->e_shoff + OffsetDelta);
+  for (auto &Section : Obj->sections()) {
+    // Always ignore this section.
+    if (Section.sh_type == ELF::SHT_NULL) {
+      OS.write(reinterpret_cast<const char *>(&Section), sizeof(Section));
+      continue;
+    }
+
+    auto NewSection = Section;
+    uint64_t SectionLoc = (uintptr_t)&Section - (uintptr_t)Obj->base();
+
+    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
+    check_error(SectionName.getError(), "cannot get section name");
+
+    if (!(Section.sh_flags & ELF::SHF_ALLOC)) {
+      if (!SeenNonAlloc) {
+
+        // This is where we place all our new sections.
+
+        std::vector<decltype(NewSection)> SectionsToRewrite;
+        for (auto &SMII : SectionMM->SectionMapInfo) {
+          SectionInfo &SI = SMII.second;
+          if (SI.IsCode && SMII.first != ".bolt.text")
+            continue;
+          errs() << "BOLT-INFO: re-writing section header for "
+                 << SMII.first << '\n';
+          auto NewSection = Section;
+          NewSection.sh_name = SI.ShName;
+          NewSection.sh_type = ELF::SHT_PROGBITS;
+          NewSection.sh_addr = SI.FileAddress;
+          NewSection.sh_offset = SI.FileOffset;
+          NewSection.sh_size = SI.Size;
+          NewSection.sh_entsize = 0;
+          NewSection.sh_flags = ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
+          NewSection.sh_link = 0;
+          NewSection.sh_info = 0;
+          NewSection.sh_addralign = SI.Alignment;
+          SectionsToRewrite.emplace_back(NewSection);
+        }
+
+        // Do actual writing after sorting out.
+        OS.seek(SectionLoc + OffsetDelta);
+        std::stable_sort(SectionsToRewrite.begin(), SectionsToRewrite.end(),
+            [] (decltype(Section) A, decltype(Section) B) {
+              return A.sh_offset < B.sh_offset;
+            });
+        for (auto &SI : SectionsToRewrite) {
+          OS.write(reinterpret_cast<const char *>(&SI),
+                   sizeof(SI));
+        }
+
+        NumNewSections = SectionsToRewrite.size();
+        ExtraDelta += sizeof(Section) * NumNewSections;
+
+        SeenNonAlloc = true;
+      }
+
+      assert(Section.sh_addralign <= MaxNonAllocAlign &&
+             "unexpected alignment for non-allocatable section");
+      assert(Section.sh_offset >= FirstNonAllocatableOffset &&
+             "bad offset for non-allocatable section");
+
+      NewSection.sh_offset = Section.sh_offset + OffsetDelta;
+
+      if (Section.sh_offset > Obj->getHeader()->e_shoff) {
+        // The section is going to be shifted.
+        NewSection.sh_offset = NewSection.sh_offset + ExtraDelta;
+      }
+
+      if (Section.sh_link)
+        NewSection.sh_link = Section.sh_link + NumNewSections;
+
+    } else if (*SectionName == ".bss") {
+      NewSection.sh_offset = NewTextSegmentOffset;
+    }
+
+    auto SMII = SectionMM->SectionMapInfo.find(*SectionName);
+    if (SMII != SectionMM->SectionMapInfo.end()) {
+      auto &SecInfo = SMII->second;
+      SecInfo.ShName = Section.sh_name;
+    }
+
+    OS.write(reinterpret_cast<const char *>(&NewSection), sizeof(NewSection));
+  }
+
+  // Write all the sections past the section table again as they are shifted.
+  auto OffsetPastShdrTable = Obj->getHeader()->e_shoff +
+      Obj->getHeader()->e_shnum * sizeof(ELFFile<ELF64LE>::Elf_Shdr);
+  OS.seek(OffsetPastShdrTable + OffsetDelta + ExtraDelta);
+  OS << File->getData().drop_front(OffsetPastShdrTable);
 
   // FIXME: Update _end in .dynamic
 
+  // Fix ELF header.
+  auto NewEhdr = *Obj->getHeader();
+  NewEhdr.e_phoff = PHDRTableOffset;
+  NewEhdr.e_phnum = Phnum;
+  NewEhdr.e_shoff = NewEhdr.e_shoff + OffsetDelta;
+  NewEhdr.e_shnum = NewEhdr.e_shnum + NumNewSections;
+  NewEhdr.e_shstrndx = NewEhdr.e_shstrndx + NumNewSections;
+  OS.pwrite(reinterpret_cast<const char *>(&NewEhdr), sizeof(NewEhdr), 0);
 }
 
 void RewriteInstance::rewriteFile() {
@@ -1305,7 +1461,8 @@ void RewriteInstance::rewriteFile() {
                      ->getAssembler()
                      .getWriter();
 
-  // Make sure output stream has enough space.
+  // Make sure output stream has enough reserved space, otherwise
+  // pwrite() will fail.
   auto Offset = Out->os().seek(getFileOffsetFor(NextAvailableAddress));
   assert(Offset == getFileOffsetFor(NextAvailableAddress) &&
          "error resizing output file");
@@ -1376,7 +1533,7 @@ void RewriteInstance::rewriteFile() {
          << " functions were overwritten.\n";
 
   // Write all non-code sections.
-  for(auto &SMII : SectionMM->SectionMapInfo) {
+  for (auto &SMII : SectionMM->SectionMapInfo) {
     SectionInfo &SI = SMII.second;
     if (SI.IsCode)
       continue;
@@ -1396,6 +1553,7 @@ void RewriteInstance::rewriteFile() {
         RoundUpToAlignment(NextAvailableAddress, FrameHdrAlign);
     }
 
+    SectionInfo EHFrameHdrSecInfo;
     EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
     EHFrameHdrSecInfo.FileOffset = getFileOffsetFor(NextAvailableAddress);
 
@@ -1412,6 +1570,8 @@ void RewriteInstance::rewriteFile() {
     assert(Out->os().tell() == EHFrameHdrSecInfo.FileOffset &&
            "offset mismatch");
     Out->os().write(FrameHdrCopy.data(), EHFrameHdrSecInfo.Size);
+
+    SectionMM->SectionMapInfo[".eh_frame_hdr"] = EHFrameHdrSecInfo;
 
     NextAvailableAddress += EHFrameHdrSecInfo.Size;
   }

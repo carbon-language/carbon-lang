@@ -39,15 +39,18 @@ struct SectionInfo {
   uint64_t AllocAddress;      /// Current location of the section in memory.
   uint64_t Size;              /// Section size.
   unsigned Alignment;         /// Alignment of the section.
-  uint64_t FileAddress{0};    /// Address for the output file (final address).
-  uint64_t FileOffset{0};     /// Offset in the output file.
   bool     IsCode{false};     /// Does this section contain code?
   bool     IsReadOnly{false}; /// Is the section read-only?
+  uint64_t FileAddress{0};    /// Address for the output file (final address).
+  uint64_t FileOffset{0};     /// Offset in the output file.
+  uint64_t ShName{0};         /// Name offset in section header string table.
 
   SectionInfo(uint64_t Address = 0, uint64_t Size = 0, unsigned Alignment = 0,
-              bool IsCode = false, bool IsReadOnly = false)
+              bool IsCode = false, bool IsReadOnly = false,
+              uint64_t FileAddress = 0, uint64_t FileOffset = 0)
     : AllocAddress(Address), Size(Size), Alignment(Alignment),
-      IsCode(IsCode), IsReadOnly(IsReadOnly) {}
+      IsCode(IsCode), IsReadOnly(IsReadOnly), FileAddress(FileAddress),
+      FileOffset(FileOffset) {}
 };
 
 /// Class responsible for allocating and managing code and data sections.
@@ -140,6 +143,12 @@ public:
 
 private:
 
+  /// Huge page size used for alignment.
+  static constexpr unsigned PageAlign = 0x200000;
+
+  /// Maximum alignment for non-allocatable section.
+  static constexpr unsigned MaxNonAllocAlign = 16;
+
   /// Detect storage available in the binary for allocating new sections.
   void discoverStorage();
 
@@ -168,6 +177,9 @@ private:
   /// optimized code for selected functions.
   std::unique_ptr<tool_output_file> Out;
 
+  /// Offset in the input file where non-allocatable sections start.
+  uint64_t FirstNonAllocatableOffset{0};
+
   uint64_t PHDRTableAddress{0};
   uint64_t PHDRTableOffset{0};
 
@@ -179,7 +191,8 @@ private:
   /// Track next available address in the new text segment.
   uint64_t NextAvailableAddress{0};
 
-  SectionInfo EHFrameHdrSecInfo;
+  /// Information on sections to re-write in the binary.
+  std::map<std::string, SectionInfo> SectionsToRewrite;
 
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
@@ -195,8 +208,6 @@ private:
   uint64_t FrameHdrAlign{1};
   const llvm::DWARFFrame *EHFrame{nullptr};
   StringRef NewEhFrameContents;
-  uint64_t NewEhFrameAddress{0};
-  uint64_t NewEhFrameOffset{0};
 
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.

@@ -879,7 +879,7 @@ bool BinaryFunction::fixCFIState() {
           return false;
         }
 
-        for(auto CFI : NewCFIs) {
+        for (auto CFI : NewCFIs) {
           InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
           ++InsertIt;
         }
@@ -977,7 +977,7 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
     BasicBlockOrderType ReverseOrder;
     auto FirstBB = BasicBlocksLayout.front();
     ReverseOrder.push_back(FirstBB);
-    for(auto RBBI = BasicBlocksLayout.rbegin(); *RBBI != FirstBB; ++RBBI)
+    for (auto RBBI = BasicBlocksLayout.rbegin(); *RBBI != FirstBB; ++RBBI)
       ReverseOrder.push_back(*RBBI);
     BasicBlocksLayout.swap(ReverseOrder);
 
@@ -1227,7 +1227,7 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   if (opts::PrintClusters) {
     errs() << "New cluster order: ";
     auto Sep = "";
-    for(auto O : Order) {
+    for (auto O : Order) {
       errs() << Sep << O;
       Sep = ", ";
     }

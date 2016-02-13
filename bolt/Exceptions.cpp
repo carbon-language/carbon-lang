@@ -310,7 +310,7 @@ void BinaryFunction::updateEHRanges() {
   // If previous call can throw, this is its exception handler.
   EHInfo PreviousEH = {nullptr, 0};
 
-  for(auto &BB : BasicBlocksLayout) {
+  for (auto &BB : BasicBlocksLayout) {
     for (auto II = BB->begin(); II != BB->end(); ++II) {
       auto Instr = *II;
 
@@ -409,7 +409,7 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   //
   //  sizeof(dwarf::DW_EH_PE_udata4) * 3 + sizeof(uleb128(action))
   uint64_t CallSiteTableLength = CallSites.size() * 4 * 3;
-  for(const auto &CallSite : CallSites) {
+  for (const auto &CallSite : CallSites) {
     CallSiteTableLength+= getULEB128Size(CallSite.Action);
   }
 
@@ -481,10 +481,10 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   // There's no need to change the original format we saw on input
   // unless we are doing a function splitting in which case we can
   // perhaps split and optimize the tables.
-  for(auto const &Byte : LSDAActionAndTypeTables) {
+  for (auto const &Byte : LSDAActionAndTypeTables) {
     Streamer->EmitIntValue(Byte, 1);
   }
-  for(auto const &Byte : LSDATypeIndexTable) {
+  for (auto const &Byte : LSDATypeIndexTable) {
     Streamer->EmitIntValue(Byte, 1);
   }
 }
