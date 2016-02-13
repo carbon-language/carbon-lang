@@ -7079,9 +7079,9 @@ Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
   case AMDGPU::BI__builtin_amdgcn_rsq:
   case AMDGPU::BI__builtin_amdgcn_rsqf:
     return emitUnaryBuiltin(*this, E, Intrinsic::amdgcn_rsq);
-  case AMDGPU::BI__builtin_amdgcn_rsq_clamped:
-  case AMDGPU::BI__builtin_amdgcn_rsq_clampedf:
-    return emitUnaryBuiltin(*this, E, Intrinsic::amdgcn_rsq_clamped);
+  case AMDGPU::BI__builtin_amdgcn_rsq_clamp:
+  case AMDGPU::BI__builtin_amdgcn_rsq_clampf:
+    return emitUnaryBuiltin(*this, E, Intrinsic::amdgcn_rsq_clamp);
   case AMDGPU::BI__builtin_amdgcn_ldexp:
   case AMDGPU::BI__builtin_amdgcn_ldexpf:
     return emitFPIntBuiltin(*this, E, Intrinsic::amdgcn_ldexp);

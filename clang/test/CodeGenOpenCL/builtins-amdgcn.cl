@@ -99,18 +99,18 @@ void test_rsq_f64(global double* out, double a)
   *out = __builtin_amdgcn_rsq(a);
 }
 
-// CHECK-LABEL: @test_rsq_clamped_f32
-// CHECK: call float @llvm.amdgcn.rsq.clamped.f32
-void test_rsq_clamped_f32(global float* out, float a)
+// CHECK-LABEL: @test_rsq_clamp_f32
+// CHECK: call float @llvm.amdgcn.rsq.clamp.f32
+void test_rsq_clamp_f32(global float* out, float a)
 {
-  *out = __builtin_amdgcn_rsq_clampedf(a);
+  *out = __builtin_amdgcn_rsq_clampf(a);
 }
 
-// CHECK-LABEL: @test_rsq_clamped_f64
-// CHECK: call double @llvm.amdgcn.rsq.clamped.f64
-void test_rsq_clamped_f64(global double* out, double a)
+// CHECK-LABEL: @test_rsq_clamp_f64
+// CHECK: call double @llvm.amdgcn.rsq.clamp.f64
+void test_rsq_clamp_f64(global double* out, double a)
 {
-  *out = __builtin_amdgcn_rsq_clamped(a);
+  *out = __builtin_amdgcn_rsq_clamp(a);
 }
 
 // CHECK-LABEL: @test_ldexp_f32
