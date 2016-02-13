@@ -1535,6 +1535,22 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                        Op.getOperand(2), Op.getOperand(3), Op.getOperand(4),
                        Glue);
   }
+  case Intrinsic::amdgcn_sin:
+    return DAG.getNode(AMDGPUISD::SIN_HW, DL, VT, Op.getOperand(1));
+
+  case Intrinsic::amdgcn_cos:
+    return DAG.getNode(AMDGPUISD::COS_HW, DL, VT, Op.getOperand(1));
+
+  case Intrinsic::amdgcn_log_clamp: {
+    if (Subtarget->getGeneration() < AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      return SDValue();
+
+    DiagnosticInfoUnsupported BadIntrin(
+      *MF.getFunction(), "intrinsic not supported on subtarget",
+      DL.getDebugLoc());
+      DAG.getContext()->diagnose(BadIntrin);
+      return DAG.getUNDEF(VT);
+  }
   case Intrinsic::amdgcn_ldexp:
     return DAG.getNode(AMDGPUISD::LDEXP, DL, VT,
                        Op.getOperand(1), Op.getOperand(2));
