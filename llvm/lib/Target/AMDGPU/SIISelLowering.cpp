@@ -1379,10 +1379,10 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::amdgcn_rsq:
   case AMDGPUIntrinsic::AMDGPU_rsq: // Legacy name
     return DAG.getNode(AMDGPUISD::RSQ, DL, VT, Op.getOperand(1));
-  case Intrinsic::amdgcn_rsq_clamped:
+  case Intrinsic::amdgcn_rsq_clamp:
   case AMDGPUIntrinsic::AMDGPU_rsq_clamped: { // Legacy name
     if (Subtarget->getGeneration() < AMDGPUSubtarget::VOLCANIC_ISLANDS)
-      return DAG.getNode(AMDGPUISD::RSQ_CLAMPED, DL, VT, Op.getOperand(1));
+      return DAG.getNode(AMDGPUISD::RSQ_CLAMP, DL, VT, Op.getOperand(1));
 
     Type *Type = VT.getTypeForEVT(*DAG.getContext());
     APFloat Max = APFloat::getLargest(Type->getFltSemantics());

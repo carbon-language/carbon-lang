@@ -1353,7 +1353,7 @@ defm V_LOG_CLAMP_F32 : VOP1InstSI <vop1<0x26>, "v_log_clamp_f32", VOP_F32_F32>;
 defm V_RCP_CLAMP_F32 : VOP1InstSI <vop1<0x28>, "v_rcp_clamp_f32", VOP_F32_F32>;
 defm V_RCP_LEGACY_F32 : VOP1InstSI <vop1<0x29>, "v_rcp_legacy_f32", VOP_F32_F32>;
 defm V_RSQ_CLAMP_F32 : VOP1InstSI <vop1<0x2c>, "v_rsq_clamp_f32",
-  VOP_F32_F32, AMDGPUrsq_clamped
+  VOP_F32_F32, AMDGPUrsq_clamp
 >;
 defm V_RSQ_LEGACY_F32 : VOP1InstSI <vop1<0x2d>, "v_rsq_legacy_f32",
   VOP_F32_F32, AMDGPUrsq_legacy
@@ -1365,7 +1365,7 @@ let SchedRW = [WriteDouble] in {
 
 defm V_RCP_CLAMP_F64 : VOP1InstSI <vop1<0x30>, "v_rcp_clamp_f64", VOP_F64_F64>;
 defm V_RSQ_CLAMP_F64 : VOP1InstSI <vop1<0x32>, "v_rsq_clamp_f64",
-  VOP_F64_F64, AMDGPUrsq_clamped
+  VOP_F64_F64, AMDGPUrsq_clamp
 >;
 
 } // End SchedRW = [WriteDouble]

@@ -100,7 +100,7 @@ def int_amdgcn_rsq :  Intrinsic<
   [llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]
 >;
 
-def int_amdgcn_rsq_clamped :  Intrinsic<
+def int_amdgcn_rsq_clamp : Intrinsic<
   [llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
 def int_amdgcn_ldexp : Intrinsic<
