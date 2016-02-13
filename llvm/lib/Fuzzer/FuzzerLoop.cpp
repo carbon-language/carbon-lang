@@ -35,6 +35,10 @@ __attribute__((weak)) uintptr_t
 __sanitizer_update_counter_bitset_and_clear_counters(uint8_t *bitset);
 __attribute__((weak)) uintptr_t
 __sanitizer_get_coverage_pc_buffer(uintptr_t **data);
+
+__attribute__((weak)) size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size,
+                                                     size_t MaxSize,
+                                                     unsigned int Seed);
 }
 
 namespace fuzzer {
@@ -407,7 +411,12 @@ void Fuzzer::MutateAndTestOne() {
   for (int i = 0; i < Options.MutateDepth; i++) {
     size_t Size = U.size();
     U.resize(Options.MaxLen);
-    size_t NewSize = USF.Mutate(U.data(), Size, U.size());
+    size_t NewSize = 0;
+    if (LLVMFuzzerCustomMutator)
+      NewSize = LLVMFuzzerCustomMutator(U.data(), Size, U.size(),
+                                        USF.GetRand().Rand());
+    else
+      NewSize = USF.Mutate(U.data(), Size, U.size());
     assert(NewSize > 0 && "Mutator returned empty unit");
     assert(NewSize <= (size_t)Options.MaxLen &&
            "Mutator return overisized unit");

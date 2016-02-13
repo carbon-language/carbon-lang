@@ -22,6 +22,22 @@
 #include <vector>
 #include <string>
 
+// Plain C interface. Should be sufficient for most uses.
+extern "C" {
+// The target function, mandatory.
+// Must return 0.
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
+// The initialization function, optional.
+int LLVMFuzzerInitialize(int *argc, char ***argv);
+// Custom mutator, optional.
+// Mutates raw data in [Data, Data+Size] inplace.
+// Returns the new size, which is not greater than MaxSize.
+// Given the same Seed produces the same mutation.
+size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size, size_t MaxSize,
+                               unsigned int Seed);
+
+}  // extern "C"
+
 namespace fuzzer {
 
 /// Returns an int 0. Values other than zero are reserved for future.
@@ -92,6 +108,8 @@ class FuzzerRandom_mt19937 : public FuzzerRandomBase {
 // For backward compatibility only, deprecated.
 size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
               FuzzerRandomBase &Rand);
+
+size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed);
 
 class MutationDispatcher;
 

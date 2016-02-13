@@ -58,6 +58,10 @@ size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
   return MD.Mutate(Data, Size, MaxSize);
 }
 
-
+size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {
+  FuzzerRandom_mt19937 R(Seed);
+  MutationDispatcher MD(R);
+  return MD.Mutate(Data, Size, MaxSize);
+}
 
 }  // namespace fuzzer.

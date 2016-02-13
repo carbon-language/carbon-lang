@@ -66,3 +66,7 @@ RUN: LLVMFuzzer-NthRunCrashTest %t/NthRunCrashTest.in
 RUN: LLVMFuzzer-NthRunCrashTest %t/NthRunCrashTest.in -runs=10
 RUN: not LLVMFuzzer-NthRunCrashTest %t/NthRunCrashTest.in -runs=10000 2>&1 | FileCheck %s
 RUN: rm %t/NthRunCrashTest.in
+
+RUN: not LLVMFuzzer-CustomMutatorTest 2>&1 | FileCheck %s --check-prefix=LLVMFuzzerCustomMutator
+LLVMFuzzerCustomMutator: In LLVMFuzzerCustomMutator
+LLVMFuzzerCustomMutator: BINGO
