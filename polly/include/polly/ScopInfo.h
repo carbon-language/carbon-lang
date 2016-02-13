@@ -2009,7 +2009,7 @@ class ScopInfo : public RegionPass {
   ScalarEvolution *SE;
 
   // The Scop
-  Scop *scop;
+  std::unique_ptr<Scop> scop;
   isl_ctx *ctx;
 
   // Clear the context.
@@ -2214,8 +2214,8 @@ public:
   /// @return If the current region is a valid for a static control part,
   ///         return the Polly IR representing this static control part,
   ///         return null otherwise.
-  Scop *getScop() { return scop; }
-  const Scop *getScop() const { return scop; }
+  Scop *getScop() { return scop.get(); }
+  const Scop *getScop() const { return scop.get(); }
 
   /// @name RegionPass interface
   //@{

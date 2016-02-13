@@ -4126,7 +4126,7 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
 
 void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  scop = new Scop(R, *SE, ctx, MaxLoopDepth);
+  scop.reset(new Scop(R, *SE, ctx, MaxLoopDepth));
 
   buildStmts(R, R);
   buildAccessFunctions(R, R);
@@ -4153,15 +4153,10 @@ void ScopInfo::print(raw_ostream &OS, const Module *) const {
   scop->print(OS);
 }
 
-void ScopInfo::clear() {
-  if (scop) {
-    delete scop;
-    scop = 0;
-  }
-}
+void ScopInfo::clear() { scop.reset(); }
 
 //===----------------------------------------------------------------------===//
-ScopInfo::ScopInfo() : RegionPass(ID), scop(0) {
+ScopInfo::ScopInfo() : RegionPass(ID) {
   ctx = isl_ctx_alloc();
   isl_options_set_on_error(ctx, ISL_ON_ERROR_ABORT);
 }
@@ -4207,8 +4202,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   if (scop->isEmpty() || !scop->hasFeasibleRuntimeContext()) {
     Msg = "SCoP ends here but was dismissed.";
-    delete scop;
-    scop = nullptr;
+    scop.reset();
   } else {
     Msg = "SCoP ends here.";
     ++ScopFound;
