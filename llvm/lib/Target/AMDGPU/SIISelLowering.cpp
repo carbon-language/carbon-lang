@@ -1693,11 +1693,31 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     //
     // Fall-through
   case AMDGPUAS::GLOBAL_ADDRESS:
-  case AMDGPUAS::PRIVATE_ADDRESS:
-    if (NumElements >= 8)
+  case AMDGPUAS::FLAT_ADDRESS:
+    if (NumElements > 4)
       return SplitVectorLoad(Op, DAG);
     // v4 loads are supported for private and global memory.
     return SDValue();
+  case AMDGPUAS::PRIVATE_ADDRESS: {
+    // Depending on the setting of the private_element_size field in the
+    // resource descriptor, we can only make private accesses up to a certain
+    // size.
+    switch (Subtarget->getMaxPrivateElementSize()) {
+    case 4:
+      return ScalarizeVectorLoad(Op, DAG);
+    case 8:
+      if (NumElements > 2)
+        return SplitVectorLoad(Op, DAG);
+      return SDValue();
+    case 16:
+      // Same as global/flat
+      if (NumElements > 4)
+        return SplitVectorLoad(Op, DAG);
+      return SDValue();
+    default:
+      llvm_unreachable("unsupported private_element_size");
+    }
+  }
   case AMDGPUAS::LOCAL_ADDRESS:
     // If properly aligned, if we split we might be able to use ds_read_b64.
     return SplitVectorLoad(Op, DAG);
@@ -1907,21 +1927,35 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 
   assert(Store->getValue().getValueType().getScalarType() == MVT::i32);
 
-  unsigned NElts = VT.getVectorNumElements();
-  unsigned AS = Store->getAddressSpace();
-  if (AS == AMDGPUAS::LOCAL_ADDRESS) {
+  unsigned NumElements = VT.getVectorNumElements();
+  switch (Store->getAddressSpace()) {
+  case AMDGPUAS::GLOBAL_ADDRESS:
+  case AMDGPUAS::FLAT_ADDRESS:
+    if (NumElements > 4)
+      return SplitVectorStore(Op, DAG);
+    return SDValue();
+  case AMDGPUAS::PRIVATE_ADDRESS: {
+    switch (Subtarget->getMaxPrivateElementSize()) {
+    case 4:
+      return ScalarizeVectorStore(Op, DAG);
+    case 8:
+      if (NumElements > 2)
+        return SplitVectorStore(Op, DAG);
+      return SDValue();
+    case 16:
+      if (NumElements > 4)
+        return SplitVectorStore(Op, DAG);
+      return SDValue();
+    default:
+      llvm_unreachable("unsupported private_element_size");
+    }
+  }
+  case AMDGPUAS::LOCAL_ADDRESS:
     // If properly aligned, if we split we might be able to use ds_write_b64.
     return SplitVectorStore(Op, DAG);
+  default:
+    llvm_unreachable("unhandled address space");
   }
-
-  if (AS == AMDGPUAS::PRIVATE_ADDRESS && NElts > 4)
-    return ScalarizeVectorStore(Op, DAG);
-
-  // These stores are legal. private, global and flat.
-  if (NElts >= 8)
-    return SplitVectorStore(Op, DAG);
-
-  return SDValue();
 }
 
 SDValue SITargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {
