@@ -113,6 +113,27 @@ void test_rsq_clamp_f64(global double* out, double a)
   *out = __builtin_amdgcn_rsq_clamp(a);
 }
 
+// CHECK-LABEL: @test_sin_f32
+// CHECK: call float @llvm.amdgcn.sin.f32
+void test_sin_f32(global float* out, float a)
+{
+  *out = __builtin_amdgcn_sinf(a);
+}
+
+// CHECK-LABEL: @test_cos_f32
+// CHECK: call float @llvm.amdgcn.cos.f32
+void test_cos_f32(global float* out, float a)
+{
+  *out = __builtin_amdgcn_cosf(a);
+}
+
+// CHECK-LABEL: @test_log_clamp_f32
+// CHECK: call float @llvm.amdgcn.log.clamp.f32
+void test_log_clamp_f32(global float* out, float a)
+{
+  *out = __builtin_amdgcn_log_clampf(a);
+}
+
 // CHECK-LABEL: @test_ldexp_f32
 // CHECK: call float @llvm.amdgcn.ldexp.f32
 void test_ldexp_f32(global float* out, float a, int b)
