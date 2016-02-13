@@ -90,10 +90,10 @@ struct MutationDispatcher::Impl {
   std::vector<Mutator> CurrentMutatorSequence;
   std::vector<DictionaryEntry *> CurrentDictionaryEntrySequence;
   const std::vector<Unit> *Corpus = nullptr;
-  FuzzerRandomBase &Rand;
+  Random &Rand;
 
   void Add(Mutator M) { Mutators.push_back(M); }
-  Impl(FuzzerRandomBase &Rand) : Rand(Rand) {
+  Impl(Random &Rand) : Rand(Rand) {
     Add({&MutationDispatcher::Mutate_EraseByte, "EraseByte"});
     Add({&MutationDispatcher::Mutate_InsertByte, "InsertByte"});
     Add({&MutationDispatcher::Mutate_ChangeByte, "ChangeByte"});
@@ -113,7 +113,7 @@ struct MutationDispatcher::Impl {
                                size_t MaxSize);
 };
 
-static char FlipRandomBit(char X, FuzzerRandomBase &Rand) {
+static char FlipRandomBit(char X, Random &Rand) {
   int Bit = Rand(8);
   char Mask = 1 << Bit;
   char R;
@@ -125,7 +125,7 @@ static char FlipRandomBit(char X, FuzzerRandomBase &Rand) {
   return R;
 }
 
-static char RandCh(FuzzerRandomBase &Rand) {
+static char RandCh(Random &Rand) {
   if (Rand.RandBool()) return Rand(256);
   const char *Special = "!*'();:@&=+$,/?%#[]123ABCxyz-`~.";
   return Special[Rand(sizeof(Special) - 1)];
@@ -359,7 +359,7 @@ void MutationDispatcher::ClearAutoDictionary() {
   MDImpl->TempAutoDictionary.clear();
 }
 
-MutationDispatcher::MutationDispatcher(FuzzerRandomBase &Rand) : Rand(Rand) {
+MutationDispatcher::MutationDispatcher(Random &Rand) : Rand(Rand) {
   MDImpl = new Impl(Rand);
 }
 

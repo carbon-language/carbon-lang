@@ -242,15 +242,12 @@ static bool AllInputsAreFiles() {
 }
 
 int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
-  FuzzerRandom_mt19937 Rand(0);
   std::vector<std::string> Args(argv, argv + argc);
   return FuzzerDriver(Args, Callback);
 }
 
 int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
   using namespace fuzzer;
-  FuzzerRandom_mt19937 Rand(0);
-  SimpleUserSuppliedFuzzer USF(&Rand, Callback);
   assert(!Args.empty());
   ProgName = new std::string(Args[0]);
   ParseFlags(Args);
@@ -309,6 +306,16 @@ int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
   Options.SaveArtifacts = !Flags.test_single_input;
   Options.PrintNewCovPcs = Flags.print_new_cov_pcs;
 
+  unsigned Seed = Flags.seed;
+  // Initialize Seed.
+  if (Seed == 0)
+    Seed = (std::chrono::system_clock::now().time_since_epoch().count() << 10) +
+           getpid();
+  if (Flags.verbosity)
+    Printf("Seed: %u\n", Seed);
+
+  Random Rand(Seed);
+  SimpleUserSuppliedFuzzer USF(&Rand, Callback);
   Fuzzer F(USF, Options);
 
   for (auto &U: Dictionary)
@@ -349,14 +356,6 @@ int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
     exit(0);
   }
 
-  unsigned Seed = Flags.seed;
-  // Initialize Seed.
-  if (Seed == 0)
-    Seed = (std::chrono::system_clock::now().time_since_epoch().count() << 10) +
-           getpid();
-  if (Flags.verbosity)
-    Printf("Seed: %u\n", Seed);
-  USF.GetRand().ResetSeed(Seed);
 
   F.RereadOutputCorpus();
   for (auto &inp : *Inputs)
