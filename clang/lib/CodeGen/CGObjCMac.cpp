@@ -1256,7 +1256,7 @@ public:
 
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
-  llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
+  llvm::GlobalVariable *GetClassGlobal(StringRef Name,
                                        bool Weak = false) override {
     llvm_unreachable("CGObjCMac::GetClassGlobal");
   }
@@ -1358,7 +1358,7 @@ private:
   
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
-  llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
+  llvm::GlobalVariable *GetClassGlobal(StringRef Name,
                                        bool Weak = false) override;
 
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
@@ -6834,7 +6834,7 @@ CGObjCNonFragileABIMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::GlobalVariable *
-CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name, bool Weak) {
+CGObjCNonFragileABIMac::GetClassGlobal(StringRef Name, bool Weak) {
   llvm::GlobalValue::LinkageTypes L =
       Weak ? llvm::GlobalValue::ExternalWeakLinkage
            : llvm::GlobalValue::ExternalLinkage;
