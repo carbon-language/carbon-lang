@@ -55,8 +55,7 @@ protected:
   };
 
   enum X86ProcFamilyEnum {
-    Others, IntelAtom, IntelSLM, IntelSNB, IntelIVB, IntelHSW, IntelBDW,
-    IntelKNL, IntelSKL, IntelSKX, IntelCNL
+    Others, IntelAtom, IntelSLM
   };
 
   /// X86 processor family: Intel Atom, and others
