@@ -174,7 +174,7 @@ private:
 
 class MutationDispatcher {
 public:
-  MutationDispatcher(Random &Rand);
+  MutationDispatcher(Random &Rand) : Rand(Rand) {}
   ~MutationDispatcher() {}
   /// Indicate that we are about to start a new sequence of mutations.
   void StartMutationSequence();
@@ -236,7 +236,6 @@ private:
     const char *Name;
   };
 
-  void Add(Mutator M) { Mutators.push_back(M); }
   size_t AddWordFromDictionary(Dictionary &D, uint8_t *Data, size_t Size,
                                size_t MaxSize);
 
@@ -249,10 +248,11 @@ private:
   // Persistent dictionary modified by the fuzzer, consists of
   // entries that led to successfull discoveries in the past mutations.
   Dictionary PersistentAutoDictionary;
-  std::vector<Mutator> Mutators;
   std::vector<Mutator> CurrentMutatorSequence;
   std::vector<DictionaryEntry *> CurrentDictionaryEntrySequence;
   const std::vector<Unit> *Corpus = nullptr;
+
+  static Mutator Mutators[];
 };
 
 class Fuzzer {

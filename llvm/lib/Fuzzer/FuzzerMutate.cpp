@@ -18,6 +18,22 @@ namespace fuzzer {
 
 const size_t Dictionary::kMaxDictSize;
 
+MutationDispatcher::Mutator MutationDispatcher::Mutators[] = {
+  {&MutationDispatcher::Mutate_EraseByte, "EraseByte"},
+  {&MutationDispatcher::Mutate_InsertByte, "InsertByte"},
+  {&MutationDispatcher::Mutate_ChangeByte, "ChangeByte"},
+  {&MutationDispatcher::Mutate_ChangeBit, "ChangeBit"},
+  {&MutationDispatcher::Mutate_ShuffleBytes, "ShuffleBytes"},
+  {&MutationDispatcher::Mutate_ChangeASCIIInteger, "ChangeASCIIInt"},
+  {&MutationDispatcher::Mutate_CrossOver, "CrossOver"},
+  {&MutationDispatcher::Mutate_AddWordFromManualDictionary,
+    "AddFromManualDict"},
+  {&MutationDispatcher::Mutate_AddWordFromTemporaryAutoDictionary,
+    "AddFromTempAutoDict"},
+  {&MutationDispatcher::Mutate_AddWordFromPersistentAutoDictionary,
+    "AddFromPersAutoDict"},
+};
+
 size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {
   Random R(Seed);
   MutationDispatcher MD(R);
@@ -233,7 +249,8 @@ size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
   // in which case they will return 0.
   // Try several times before returning un-mutated data.
   for (int Iter = 0; Iter < 10; Iter++) {
-    size_t MutatorIdx = Rand(Mutators.size());
+    size_t NumMutators = sizeof(Mutators) / sizeof(Mutators[0]);
+    size_t MutatorIdx = Rand(NumMutators);
     auto M = Mutators[MutatorIdx];
     size_t NewSize = (this->*(M.Fn))(Data, Size, MaxSize);
     if (NewSize) {
@@ -259,22 +276,5 @@ void MutationDispatcher::AddWordToAutoDictionary(const Word &W,
 void MutationDispatcher::ClearAutoDictionary() {
   TempAutoDictionary.clear();
 }
-
-MutationDispatcher::MutationDispatcher(Random &Rand) : Rand(Rand) {
-    Add({&MutationDispatcher::Mutate_EraseByte, "EraseByte"});
-    Add({&MutationDispatcher::Mutate_InsertByte, "InsertByte"});
-    Add({&MutationDispatcher::Mutate_ChangeByte, "ChangeByte"});
-    Add({&MutationDispatcher::Mutate_ChangeBit, "ChangeBit"});
-    Add({&MutationDispatcher::Mutate_ShuffleBytes, "ShuffleBytes"});
-    Add({&MutationDispatcher::Mutate_ChangeASCIIInteger, "ChangeASCIIInt"});
-    Add({&MutationDispatcher::Mutate_CrossOver, "CrossOver"});
-    Add({&MutationDispatcher::Mutate_AddWordFromManualDictionary,
-         "AddFromManualDict"});
-    Add({&MutationDispatcher::Mutate_AddWordFromTemporaryAutoDictionary,
-         "AddFromTempAutoDict"});
-    Add({&MutationDispatcher::Mutate_AddWordFromPersistentAutoDictionary,
-         "AddFromPersAutoDict"});
-}
-
 
 }  // namespace fuzzer
