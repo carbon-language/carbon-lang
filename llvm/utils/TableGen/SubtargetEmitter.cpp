@@ -127,7 +127,7 @@ void SubtargetEmitter::Enumeration(raw_ostream &OS,
   OS << "namespace " << Target << " {\n";
 
   // Open enumeration. Use a 64-bit underlying type.
-  OS << "enum : uint64_t {\n";
+  OS << "enum {\n";
 
   // For each record
   for (unsigned i = 0; i < N;) {
