@@ -16,11 +16,8 @@
 #ifndef LLVM_FUZZER_INTERFACE_H
 #define LLVM_FUZZER_INTERFACE_H
 
-#include <limits>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
-#include <string>
 
 // Plain C interface. Should be sufficient for most uses.
 extern "C" {
@@ -72,9 +69,6 @@ int main(int argc, char **argv) {
 #\endcode
 */
 int FuzzerDriver(int argc, char **argv, UserCallback Callback);
-
-/// More C++-ish interface.
-int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback);
 
 // Same interface as LLVMFuzzerTestOneInput.
 // Can be used inside the user-supplied LLVMFuzzerTestOneInput.

@@ -241,12 +241,8 @@ static bool AllInputsAreFiles() {
   return true;
 }
 
-int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
-  std::vector<std::string> Args(argv, argv + argc);
-  return FuzzerDriver(Args, Callback);
-}
-
-int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
+static int FuzzerDriver(const std::vector<std::string> &Args,
+                        UserCallback Callback) {
   using namespace fuzzer;
   assert(!Args.empty());
   ProgName = new std::string(Args[0]);
@@ -375,6 +371,11 @@ int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
            F.secondsSinceProcessStartUp());
 
   exit(0);  // Don't let F destroy itself.
+}
+
+int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
+  std::vector<std::string> Args(argv, argv + argc);
+  return FuzzerDriver(Args, Callback);
 }
 
 }  // namespace fuzzer
