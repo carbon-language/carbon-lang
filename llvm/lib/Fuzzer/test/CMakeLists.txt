@@ -37,7 +37,6 @@ set(Tests
   )
 
 set(CustomMainTests
-  UserSuppliedFuzzerTest
   )
 
 set(UninstrumentedTests

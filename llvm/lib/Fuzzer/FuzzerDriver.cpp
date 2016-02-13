@@ -243,24 +243,14 @@ static bool AllInputsAreFiles() {
 
 int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   FuzzerRandom_mt19937 Rand(0);
-  SimpleUserSuppliedFuzzer SUSF(&Rand, Callback);
-  return FuzzerDriver(argc, argv, SUSF);
-}
-
-int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   std::vector<std::string> Args(argv, argv + argc);
-  return FuzzerDriver(Args, USF);
+  return FuzzerDriver(Args, Callback);
 }
 
 int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback) {
-  FuzzerRandom_mt19937 Rand(0);
-  SimpleUserSuppliedFuzzer SUSF(&Rand, Callback);
-  return FuzzerDriver(Args, SUSF);
-}
-
-int FuzzerDriver(const std::vector<std::string> &Args,
-                 UserSuppliedFuzzer &USF) {
   using namespace fuzzer;
+  FuzzerRandom_mt19937 Rand(0);
+  SimpleUserSuppliedFuzzer USF(&Rand, Callback);
   assert(!Args.empty());
   ProgName = new std::string(Args[0]);
   ParseFlags(Args);

@@ -98,6 +98,41 @@ bool IsASCII(const Unit &U);
 int NumberOfCpuCores();
 int GetPid();
 
+class FuzzerRandomBase {
+ public:
+  FuzzerRandomBase(){}
+  virtual ~FuzzerRandomBase(){};
+  virtual void ResetSeed(unsigned int seed) = 0;
+  // Return a random number.
+  virtual size_t Rand() = 0;
+  // Return a random number in range [0,n).
+  size_t operator()(size_t n) { return n ? Rand() % n : 0; }
+  bool RandBool() { return Rand() % 2; }
+};
+
+// Using libc's stand/rand.
+class FuzzerRandomLibc : public FuzzerRandomBase {
+ public:
+  FuzzerRandomLibc(unsigned int seed) { ResetSeed(seed); }
+  void ResetSeed(unsigned int seed) override;
+  ~FuzzerRandomLibc() override {};
+  size_t Rand() override;
+};
+
+// Using std::mt19937
+class FuzzerRandom_mt19937 : public FuzzerRandomBase {
+ public:
+  FuzzerRandom_mt19937(unsigned int seed) { ResetSeed(seed); }
+  void ResetSeed(unsigned int seed) override;
+  ~FuzzerRandom_mt19937() override;
+  size_t Rand() override;
+ private:
+  struct Impl;
+  Impl *R = nullptr;
+};
+
+
+
 // Dictionary.
 
 // Parses one dictionary entry.
@@ -167,6 +202,31 @@ private:
   FuzzerRandomBase &Rand;
   struct Impl;
   Impl *MDImpl;
+};
+
+class UserSuppliedFuzzer {
+ public:
+  UserSuppliedFuzzer(FuzzerRandomBase *Rand);
+  /// Executes the target function on 'Size' bytes of 'Data'.
+  virtual int TargetFunction(const uint8_t *Data, size_t Size) = 0;
+  /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
+  /// returns the new size of the data, which should be positive.
+  virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Crosses 'Data1' and 'Data2', writes up to 'MaxOutSize' bytes into Out,
+  /// returns the number of bytes written, which should be positive.
+  virtual size_t CrossOver(const uint8_t *Data1, size_t Size1,
+                           const uint8_t *Data2, size_t Size2,
+                           uint8_t *Out, size_t MaxOutSize);
+  virtual ~UserSuppliedFuzzer();
+
+  FuzzerRandomBase &GetRand() { return *Rand; }
+
+  MutationDispatcher &GetMD() { return *MD; }
+
+ private:
+  bool OwnRand = false;
+  FuzzerRandomBase *Rand;
+  MutationDispatcher *MD;
 };
 
 class Fuzzer {
