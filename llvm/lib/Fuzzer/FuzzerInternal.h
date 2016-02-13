@@ -322,6 +322,7 @@ public:
 
   // Merge Corpora[1:] into Corpora[0].
   void Merge(const std::vector<std::string> &Corpora);
+  MutationDispatcher &GetMD() { return MD; }
 
 private:
   void AlarmCallback();

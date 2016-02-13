@@ -60,6 +60,11 @@ static void MissingWeakApiFunction(const char *FnName) {
 // Only one Fuzzer per process.
 static Fuzzer *F;
 
+size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
+  assert(F);
+  return F->GetMD().Mutate(Data, Size, MaxSize);
+}
+
 Fuzzer::Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options)
     : CB(CB), MD(MD), Options(Options) {
   SetDeathCallback();

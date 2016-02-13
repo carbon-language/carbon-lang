@@ -34,12 +34,6 @@ MutationDispatcher::Mutator MutationDispatcher::Mutators[] = {
     "AddFromPersAutoDict"},
 };
 
-size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {
-  Random R(Seed);
-  MutationDispatcher MD(R);
-  return MD.Mutate(Data, Size, MaxSize);
-}
-
 static char FlipRandomBit(char X, Random &Rand) {
   int Bit = Rand(8);
   char Mask = 1 << Bit;

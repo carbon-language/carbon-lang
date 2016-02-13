@@ -7,11 +7,19 @@
 
 #include "FuzzerInterface.h"
 
+static volatile int Sink;
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   assert(Data);
-  if (Size > 0 && Data[0] == 'F') {
-    std::cout << "BINGO; Found the target, exiting\n";
-    exit(1);
+  if (Size > 0 && Data[0] == 'H') {
+    Sink = 1;
+    if (Size > 1 && Data[1] == 'i') {
+      Sink = 2;
+      if (Size > 2 && Data[2] == '!') {
+        std::cout << "BINGO; Found the target, exiting\n";
+        exit(1);
+      }
+    }
   }
   return 0;
 }
@@ -23,5 +31,5 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size,
     std::cerr << "In LLVMFuzzerCustomMutator\n";
     Printed = true;
   }
-  return fuzzer::Mutate(Data, Size, MaxSize, Seed);
+  return fuzzer::Mutate(Data, Size, MaxSize);
 }

@@ -70,9 +70,10 @@ int main(int argc, char **argv) {
 */
 int FuzzerDriver(int argc, char **argv, UserCallback Callback);
 
-// Same interface as LLVMFuzzerTestOneInput.
+// Mutates raw data in [Data, Data+Size] inplace.
+// Returns the new size, which is not greater than MaxSize.
 // Can be used inside the user-supplied LLVMFuzzerTestOneInput.
-size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed);
+size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
 
 }  // namespace fuzzer
 
