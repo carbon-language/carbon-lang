@@ -306,6 +306,14 @@
 ; CHECK-AA: Running analysis: AAManager
 ; CHECK-AA: Finished pass manager
 
+; RUN: opt -disable-output -disable-verify -debug-pass-manager %s 2>&1 \
+; RUN:     -passes='require<basic-aa>' \
+; RUN:     | FileCheck %s --check-prefix=CHECK-BASIC-AA
+; CHECK-BASIC-AA: Starting pass manager
+; CHECK-BASIC-AA: Running pass: RequireAnalysisPass
+; CHECK-BASIC-AA: Running analysis: BasicAA
+; CHECK-BASIC-AA: Finished pass manager
+
 define void @foo() {
   ret void
 }
