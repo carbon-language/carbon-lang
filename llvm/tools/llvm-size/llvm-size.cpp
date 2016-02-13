@@ -450,8 +450,7 @@ static void printFileSectionSizes(StringRef file) {
          i != e; ++i) {
       if (error(i->getError()))
         exit(1);
-      auto &c = i->get();
-      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->get().getAsBinary();
       if (error(ChildOrErr.getError()))
         continue;
       if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get())) {
@@ -513,8 +512,7 @@ static void printFileSectionSizes(StringRef file) {
                    i != e; ++i) {
                 if (error(i->getError()))
                   exit(1);
-                auto &c = i->get();
-                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
+                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->get().getAsBinary();
                 if (error(ChildOrErr.getError()))
                   continue;
                 if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get())) {
@@ -590,8 +588,7 @@ static void printFileSectionSizes(StringRef file) {
                  i != e; ++i) {
               if (error(i->getError()))
                 exit(1);
-              auto &c = i->get();
-              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
+              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->get().getAsBinary();
               if (error(ChildOrErr.getError()))
                 continue;
               if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get())) {
@@ -654,8 +651,7 @@ static void printFileSectionSizes(StringRef file) {
              i != e; ++i) {
           if (error(i->getError()))
             exit(1);
-          auto &c = i->get();
-          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
+          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->get().getAsBinary();
           if (error(ChildOrErr.getError()))
             continue;
           if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get())) {
