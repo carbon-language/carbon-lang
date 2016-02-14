@@ -155,10 +155,8 @@ struct TypeCloner {
 
 static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
   unsigned Count = LLVMCountParams(Src);
-  if (Count != LLVMCountParams(Dst)) {
-    fprintf(stderr, "Parameter count mismatch\n");
-    exit(-1);
-  }
+  if (Count != LLVMCountParams(Dst))
+    report_fatal_error("Parameter count mismatch");
 
   ValueMap VMap;
   if (Count == 0)
@@ -183,49 +181,32 @@ static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
     SrcNext = LLVMGetNextParam(SrcCur);
     DstNext = LLVMGetNextParam(DstCur);
     if (SrcNext == nullptr && DstNext == nullptr) {
-      if (SrcCur != SrcLast) {
-        fprintf(stderr, "SrcLast param does not match End\n");
-        exit(-1);
-      }
-
-      if (DstCur != DstLast) {
-        fprintf(stderr, "DstLast param does not match End\n");
-        exit(-1);
-      }
-
+      if (SrcCur != SrcLast)
+        report_fatal_error("SrcLast param does not match End");
+      if (DstCur != DstLast)
+        report_fatal_error("DstLast param does not match End");
       break;
     }
 
-    if (SrcNext == nullptr) {
-      fprintf(stderr, "SrcNext was unexpectedly null\n");
-      exit(-1);
-    }
-
-    if (DstNext == nullptr) {
-      fprintf(stderr, "DstNext was unexpectedly null\n");
-      exit(-1);
-    }
+    if (SrcNext == nullptr)
+      report_fatal_error("SrcNext was unexpectedly null");
+    if (DstNext == nullptr)
+      report_fatal_error("DstNext was unexpectedly null");
 
     LLVMValueRef SrcPrev = LLVMGetPreviousParam(SrcNext);
-    if (SrcPrev != SrcCur) {
-      fprintf(stderr, "SrcNext.Previous param is not Current\n");
-      exit(-1);
-    }
+    if (SrcPrev != SrcCur)
+      report_fatal_error("SrcNext.Previous param is not Current");
 
     LLVMValueRef DstPrev = LLVMGetPreviousParam(DstNext);
-    if (DstPrev != DstCur) {
-      fprintf(stderr, "DstNext.Previous param is not Current\n");
-      exit(-1);
-    }
+    if (DstPrev != DstCur)
+      report_fatal_error("DstNext.Previous param is not Current");
 
     SrcCur = SrcNext;
     DstCur = DstNext;
   }
 
-  if (Count != 0) {
-    fprintf(stderr, "Parameter count does not match iteration\n");
-    exit(-1);
-  }
+  if (Count != 0)
+    report_fatal_error("Parameter count does not match iteration");
 
   return VMap;
 }
@@ -515,12 +496,11 @@ struct FunCloner {
       }
     }
 
-    const char *Name = LLVMGetBasicBlockName(Src);
-
     LLVMValueRef V = LLVMBasicBlockAsValue(Src);
     if (!LLVMValueIsBasicBlock(V) || LLVMValueAsBasicBlock(V) != Src)
       report_fatal_error("Basic block is not a basic block");
 
+    const char *Name = LLVMGetBasicBlockName(Src);
     const char *VName = LLVMGetValueName(V);
     if (Name != VName)
       report_fatal_error("Basic block name mismatch");
@@ -541,11 +521,8 @@ struct FunCloner {
     LLVMValueRef Last = LLVMGetLastInstruction(Src);
 
     if (First == nullptr) {
-      if (Last != nullptr) {
-        fprintf(stderr, "Has no first instruction, but last one\n");
-        exit(-1);
-      }
-
+      if (Last != nullptr)
+        report_fatal_error("Has no first instruction, but last one");
       return BB;
     }
 
@@ -559,19 +536,14 @@ struct FunCloner {
       CloneInstruction(Cur, Builder);
       Next = LLVMGetNextInstruction(Cur);
       if (Next == nullptr) {
-        if (Cur != Last) {
-          fprintf(stderr, "Final instruction does not match Last\n");
-          exit(-1);
-        }
-
+        if (Cur != Last)
+          report_fatal_error("Final instruction does not match Last");
         break;
       }
 
       LLVMValueRef Prev = LLVMGetPreviousInstruction(Next);
-      if (Prev != Cur) {
-        fprintf(stderr, "Next.Previous instruction is not Current\n");
-        exit(-1);
-      }
+      if (Prev != Cur)
+        report_fatal_error("Next.Previous instruction is not Current");
 
       Cur = Next;
     }
@@ -595,27 +567,20 @@ struct FunCloner {
       Count--;
       Next = LLVMGetNextBasicBlock(Cur);
       if (Next == nullptr) {
-        if (Cur != Last) {
-          fprintf(stderr, "Final basic block does not match Last\n");
-          exit(-1);
-        }
-
+        if (Cur != Last)
+          report_fatal_error("Final basic block does not match Last");
         break;
       }
 
       LLVMBasicBlockRef Prev = LLVMGetPreviousBasicBlock(Next);
-      if (Prev != Cur) {
-        fprintf(stderr, "Next.Previous basic bloc is not Current\n");
-        exit(-1);
-      }
+      if (Prev != Cur)
+        report_fatal_error("Next.Previous basic bloc is not Current");
 
       Cur = Next;
     }
 
-    if (Count != 0) {
-      fprintf(stderr, "Basic block count does not match iterration\n");
-      exit(-1);
-    }
+    if (Count != 0)
+      report_fatal_error("Basic block count does not match iterration");
   }
 };
 
@@ -643,19 +608,14 @@ static void clone_functions(LLVMModuleRef Src, LLVMModuleRef Dst) {
     clone_function(Cur, Dst);
     Next = LLVMGetNextFunction(Cur);
     if (Next == nullptr) {
-      if (Cur != End) {
-        fprintf(stderr, "Last function does not match End\n");
-        exit(-1);
-      }
-
+      if (Cur != End)
+        report_fatal_error("Last function does not match End");
       break;
     }
 
     LLVMValueRef Prev = LLVMGetPreviousFunction(Next);
-    if (Prev != Cur) {
-      fprintf(stderr, "Next.Previous function is not Current\n");
-      exit(-1);
-    }
+    if (Prev != Cur)
+      report_fatal_error("Next.Previous function is not Current");
 
     Cur = Next;
   }
