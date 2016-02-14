@@ -1727,8 +1727,8 @@ unsigned LLVMGetAlignment(LLVMValueRef V);
 void LLVMSetAlignment(LLVMValueRef V, unsigned Bytes);
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /**
  * @defgroup LLVMCoreValueConstantGlobalVariable Global Variables
