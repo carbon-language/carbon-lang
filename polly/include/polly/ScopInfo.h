@@ -234,6 +234,16 @@ public:
                 ArrayRef<const SCEV *> DimensionSizes, enum MemoryKind Kind,
                 const DataLayout &DL, Scop *S);
 
+  ///  @brief Update the element type of the ScopArrayInfo object.
+  ///
+  ///  Memory accesses referencing this ScopArrayInfo object may use
+  ///  different element sizes. This function ensures the canonical element type
+  ///  stored is small enough to model accesses to the current element type as
+  ///  well as to @p NewElementType.
+  ///
+  ///  @param NewElementType An element type that is used to access this array.
+  void updateElementType(Type *NewElementType);
+
   ///  @brief Update the sizes of the ScopArrayInfo object.
   ///
   ///  A ScopArrayInfo object may be created without all outer dimensions being
@@ -241,15 +251,10 @@ public:
   ///  this ScopArrayInfo object. It verifies that sizes are compatible and adds
   ///  additional outer array dimensions, if needed.
   ///
-  ///  Similarly, memory accesses referencing this ScopArrayInfo object may use
-  ///  different element sizes. This function ensures the canonical element type
-  ///  stored is small enough to model all memory accesses.
-  ///
   ///  @param Sizes       A vector of array sizes where the rightmost array
   ///                     sizes need to match the innermost array sizes already
   ///                     defined in SAI.
-  ///  @param ElementType The element type of this memory access.
-  bool updateSizes(ArrayRef<const SCEV *> Sizes, Type *ElementType);
+  bool updateSizes(ArrayRef<const SCEV *> Sizes);
 
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();

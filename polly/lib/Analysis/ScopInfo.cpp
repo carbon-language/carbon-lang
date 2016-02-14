@@ -182,7 +182,7 @@ ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
       getIslCompatibleName("MemRef_", BasePtr, Kind == MK_PHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
 
-  updateSizes(Sizes, ElementType);
+  updateSizes(Sizes);
   BasePtrOriginSAI = identifyBasePtrOriginSAI(S, BasePtr);
   if (BasePtrOriginSAI)
     const_cast<ScopArrayInfo *>(BasePtrOriginSAI)->addDerivedSAI(this);
@@ -195,21 +195,25 @@ __isl_give isl_space *ScopArrayInfo::getSpace() const {
   return Space;
 }
 
-bool ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes,
-                                Type *NewElementType) {
+void ScopArrayInfo::updateElementType(Type *NewElementType) {
+  if (NewElementType == ElementType)
+    return;
+
   auto OldElementSize = DL.getTypeAllocSizeInBits(ElementType);
   auto NewElementSize = DL.getTypeAllocSizeInBits(NewElementType);
 
-  if (NewElementSize != OldElementSize) {
-    if (NewElementSize % OldElementSize == 0 &&
-        NewElementSize < OldElementSize) {
-      ElementType = NewElementType;
-    } else {
-      auto GCD = GreatestCommonDivisor64(NewElementSize, OldElementSize);
-      ElementType = IntegerType::get(ElementType->getContext(), GCD);
-    }
-  }
+  if (NewElementSize == OldElementSize)
+    return;
 
+  if (NewElementSize % OldElementSize == 0 && NewElementSize < OldElementSize) {
+    ElementType = NewElementType;
+  } else {
+    auto GCD = GreatestCommonDivisor64(NewElementSize, OldElementSize);
+    ElementType = IntegerType::get(ElementType->getContext(), GCD);
+  }
+}
+
+bool ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes) {
   int SharedDims = std::min(NewSizes.size(), DimensionSizes.size());
   int ExtraDimsNew = NewSizes.size() - SharedDims;
   int ExtraDimsOld = DimensionSizes.size() - SharedDims;
@@ -3055,9 +3059,10 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,
     SAI.reset(new ScopArrayInfo(BasePtr, ElementType, getIslCtx(), Sizes, Kind,
                                 DL, this));
   } else {
+    SAI->updateElementType(ElementType);
     // In case of mismatching array sizes, we bail out by setting the run-time
     // context to false.
-    if (!SAI->updateSizes(Sizes, ElementType))
+    if (!SAI->updateSizes(Sizes))
       invalidate(DELINEARIZATION, DebugLoc());
   }
   return SAI.get();
