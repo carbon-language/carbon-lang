@@ -60,6 +60,10 @@ struct TypeCloner {
 
   TypeCloner(LLVMModuleRef M): M(M), Ctx(LLVMGetModuleContext(M)) {}
 
+  LLVMTypeRef Clone(LLVMValueRef Src) {
+    return Clone(LLVMTypeOf(Src));
+  }
+
   LLVMTypeRef Clone(LLVMTypeRef Src) {
     LLVMTypeKind Kind = LLVMGetTypeKind(Src);
     switch (Kind) {
@@ -226,6 +230,41 @@ static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
   return VMap;
 }
 
+LLVMValueRef clone_constant(LLVMValueRef Cst, LLVMModuleRef M) {
+  if (!LLVMIsAConstant(Cst))
+    report_fatal_error("Expected a constant");
+
+  // Maybe it is a symbol
+  if (LLVMIsAGlobalValue(Cst)) {
+    const char *Name = LLVMGetValueName(Cst);
+
+    // Try function
+    LLVMValueRef Dst = LLVMGetNamedFunction(M, Name);
+    if (Dst != nullptr)
+      return Dst;
+
+    // Try global variable
+    Dst = LLVMGetNamedGlobal(M, Name);
+    if (Dst != nullptr)
+      return Dst;
+
+    fprintf(stderr, "Could not find @%s\n", Name);
+    exit(-1);
+  }
+
+  // Try literal
+  if (LLVMIsAConstantInt(Cst))
+    return LLVMConstInt(TypeCloner(M).Clone(Cst),
+                        LLVMConstIntGetZExtValue(Cst), false);
+
+  // Try undef
+  if (LLVMIsUndef(Cst))
+    return LLVMGetUndef(TypeCloner(M).Clone(Cst));
+
+  // This kind of constant is not supported.
+  report_fatal_error("Unsupported contant type");
+}
+
 struct FunCloner {
   LLVMValueRef Fun;
   LLVMModuleRef M;
@@ -241,44 +280,14 @@ struct FunCloner {
   }
 
   LLVMTypeRef CloneType(LLVMValueRef Src) {
-    return CloneType(LLVMTypeOf(Src));
+    return TypeCloner(M).Clone(Src);
   }
 
   // Try to clone everything in the llvm::Value hierarchy.
   LLVMValueRef CloneValue(LLVMValueRef Src) {
-    const char *Name = LLVMGetValueName(Src);
-
     // First, the value may be constant.
-    if (LLVMIsAConstant(Src)) {
-      // Maybe it is a symbol
-      if (LLVMIsAGlobalValue(Src)) {
-        // Try function
-        LLVMValueRef Dst = LLVMGetNamedFunction(M, Name);
-        if (Dst != nullptr)
-          return Dst;
-
-        // Try global variable
-        Dst = LLVMGetNamedGlobal(M, Name);
-        if (Dst != nullptr)
-          return Dst;
-
-        fprintf(stderr, "Could not find @%s\n", Name);
-        exit(-1);
-      }
-
-      // Try literal
-      if (LLVMIsAConstantInt(Src)) {
-        LLVMTypeRef Ty = CloneType(Src);
-        return LLVMConstInt(Ty, LLVMConstIntGetZExtValue(Src), false);
-      }
-
-      // Try undef
-      if (LLVMIsUndef(Src))
-        return LLVMGetUndef(CloneType(Src));
-
-      // This kind of constant is not supported.
-      report_fatal_error("Unsupported contant type");
-    }
+    if (LLVMIsAConstant(Src))
+      return clone_constant(Src, M);
 
     // Function argument should always be in the map already.
     auto i = VMap.find(Src);
@@ -616,9 +625,7 @@ static LLVMValueRef clone_function(LLVMValueRef Src, LLVMModuleRef M) {
   if (Fun != nullptr)
     return Fun;
 
-  LLVMTypeRef DstTy = TypeCloner(M).Clone(LLVMTypeOf(Src));
-  LLVMTypeRef FunTy = LLVMGetElementType(DstTy);
-
+  LLVMTypeRef FunTy = LLVMGetElementType(TypeCloner(M).Clone(Src));
   Fun = LLVMAddFunction(M, Name, FunTy);
   FunCloner FC(Src, Fun);
   FC.CloneBBs(Src);
@@ -660,14 +667,14 @@ int llvm_echo(void) {
   LLVMModuleRef Src = llvm_load_module(false, true);
 
   LLVMContextRef Ctx = LLVMContextCreate();
-  LLVMModuleRef Dst = LLVMModuleCreateWithNameInContext("<stdin>", Ctx);
+  LLVMModuleRef M = LLVMModuleCreateWithNameInContext("<stdin>", Ctx);
 
-  clone_functions(Src, Dst);
-  char *Str = LLVMPrintModuleToString(Dst);
+  clone_functions(Src, M);
+  char *Str = LLVMPrintModuleToString(M);
   fputs(Str, stdout);
 
   LLVMDisposeMessage(Str);
-  LLVMDisposeModule(Dst);
+  LLVMDisposeModule(M);
   LLVMContextDispose(Ctx);
 
   return 0;
