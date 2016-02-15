@@ -18,7 +18,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "hexagon-mcexpr"
 
-HexagonMCExpr *HexagonMCExpr::Create(MCExpr const *Expr, MCContext &Ctx) {
+HexagonMCExpr *HexagonMCExpr::create(MCExpr const *Expr, MCContext &Ctx) {
   return new (Ctx) HexagonMCExpr(Expr);
 }
 

@@ -99,7 +99,7 @@ void HexagonMCInstrInfo::clampExtended(MCInstrInfo const &MCII,
   int64_t Value;
   if (exOp.getExpr()->evaluateAsAbsolute(Value)) {
     unsigned Shift = HexagonMCInstrInfo::getExtentAlignment(MCII, MCI);
-    exOp.setExpr(HexagonMCExpr::Create(
+    exOp.setExpr(HexagonMCExpr::create(
         MCConstantExpr::create((Value & 0x3f) << Shift, Context), Context));
   }
 }

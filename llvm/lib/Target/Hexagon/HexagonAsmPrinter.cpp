@@ -297,7 +297,7 @@ void HexagonAsmPrinter::HexagonProcessInstruction(MCInst &Inst,
       MCOperand &Reg = MappedInst.getOperand(0);
       TmpInst.setOpcode(Hexagon::L2_loadrigp);
       TmpInst.addOperand(Reg);
-      TmpInst.addOperand(MCOperand::createExpr(HexagonMCExpr::Create(
+      TmpInst.addOperand(MCOperand::createExpr(HexagonMCExpr::create(
           MCSymbolRefExpr::create(Sym, OutContext), OutContext)));
       MappedInst = TmpInst;
     }
@@ -383,7 +383,7 @@ void HexagonAsmPrinter::HexagonProcessInstruction(MCInst &Inst,
     const MCExpr *One = MCConstantExpr::create(1, OutContext);
     const MCExpr *Sub = MCBinaryExpr::createSub(Expr, One, OutContext);
     TmpInst.addOperand(
-        MCOperand::createExpr(HexagonMCExpr::Create(Sub, OutContext)));
+        MCOperand::createExpr(HexagonMCExpr::create(Sub, OutContext)));
     MappedInst = TmpInst;
     return;
   }
@@ -418,7 +418,7 @@ void HexagonAsmPrinter::HexagonProcessInstruction(MCInst &Inst,
     const MCExpr *One = MCConstantExpr::create(1, OutContext);
     const MCExpr *Sub = MCBinaryExpr::createSub(Expr, One, OutContext);
     TmpInst.addOperand(
-        MCOperand::createExpr(HexagonMCExpr::Create(Sub, OutContext)));
+        MCOperand::createExpr(HexagonMCExpr::create(Sub, OutContext)));
     MappedInst = TmpInst;
     return;
   }
@@ -444,7 +444,7 @@ void HexagonAsmPrinter::HexagonProcessInstruction(MCInst &Inst,
     const MCExpr *One = MCConstantExpr::create(1, OutContext);
     const MCExpr *Sub = MCBinaryExpr::createSub(Expr, One, OutContext);
     TmpInst.addOperand(
-        MCOperand::createExpr(HexagonMCExpr::Create(Sub, OutContext)));
+        MCOperand::createExpr(HexagonMCExpr::create(Sub, OutContext)));
     MappedInst = TmpInst;
     return;
   }
@@ -476,10 +476,10 @@ void HexagonAsmPrinter::HexagonProcessInstruction(MCInst &Inst,
     bool Success = MO.getExpr()->evaluateAsAbsolute(Imm);
     if (Success && Imm < 0) {
       const MCExpr *MOne = MCConstantExpr::create(-1, OutContext);
-      TmpInst.addOperand(MCOperand::createExpr(HexagonMCExpr::Create(MOne, OutContext)));
+      TmpInst.addOperand(MCOperand::createExpr(HexagonMCExpr::create(MOne, OutContext)));
     } else {
       const MCExpr *Zero = MCConstantExpr::create(0, OutContext);
-      TmpInst.addOperand(MCOperand::createExpr(HexagonMCExpr::Create(Zero, OutContext)));
+      TmpInst.addOperand(MCOperand::createExpr(HexagonMCExpr::create(Zero, OutContext)));
     }
     TmpInst.addOperand(MO);
     MappedInst = TmpInst;
@@ -533,7 +533,7 @@ void HexagonAsmPrinter::HexagonProcessInstruction(MCInst &Inst,
     (void)Success;
     if (Value < 0 && Value > -256) {
       MappedInst.setOpcode(Hexagon::M2_mpysin);
-      Imm.setExpr(HexagonMCExpr::Create(
+      Imm.setExpr(HexagonMCExpr::create(
           MCUnaryExpr::createMinus(Expr, OutContext), OutContext));
     } else
       MappedInst.setOpcode(Hexagon::M2_mpysip);
