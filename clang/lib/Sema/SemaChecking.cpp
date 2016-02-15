@@ -6144,8 +6144,10 @@ static const Expr *EvalVal(const Expr *E,
       // Array subscripts are potential references to data on the stack.  We
       // retrieve the DeclRefExpr* for the array variable if it indeed
       // has local storage.
-      return EvalAddr(cast<ArraySubscriptExpr>(E)->getBase(), refVars,
-                      ParentDecl);
+      const auto *ASE = cast<ArraySubscriptExpr>(E);
+      if (ASE->isTypeDependent())
+        return nullptr;
+      return EvalAddr(ASE->getBase(), refVars, ParentDecl);
     }
 
     case Stmt::OMPArraySectionExprClass: {
