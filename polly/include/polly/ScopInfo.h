@@ -2045,11 +2045,13 @@ class ScopInfo : public RegionPass {
   /// @param R          The region on which to build the data access dictionary.
   /// @param BoxedLoops The set of loops that are overapproximated in @p R.
   /// @param ScopRIL    The required invariant loads equivalence classes.
+  /// @param InsnToMemAcc The Instruction to MemoryAccess mapping
   /// @returns True if the access could be built, False otherwise.
   bool
   buildAccessMultiDimParam(MemAccInst Inst, Loop *L, Region *R,
                            const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
-                           const InvariantLoadsSetTy &ScopRIL);
+                           const InvariantLoadsSetTy &ScopRIL,
+                           const MapInsnToMemAcc &InsnToMemAcc);
 
   /// @brief Build a single-dimensional parameteric sized MemoryAccess
   ///        from the Load/Store instruction.
@@ -2070,9 +2072,11 @@ class ScopInfo : public RegionPass {
   /// @param R          The region on which to build the data access dictionary.
   /// @param BoxedLoops The set of loops that are overapproximated in @p R.
   /// @param ScopRIL    The required invariant loads equivalence classes.
+  /// @param InsnToMemAcc The Instruction to MemoryAccess mapping.
   void buildMemoryAccess(MemAccInst Inst, Loop *L, Region *R,
                          const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
-                         const InvariantLoadsSetTy &ScopRIL);
+                         const InvariantLoadsSetTy &ScopRIL,
+                         const MapInsnToMemAcc &InsnToMemAcc);
 
   /// @brief Analyze and extract the cross-BB scalar dependences (or,
   ///        dataflow dependencies) of an instruction.
@@ -2098,9 +2102,11 @@ class ScopInfo : public RegionPass {
 
   /// @brief Build the access functions for the subregion @p SR.
   ///
-  /// @param R  The SCoP region.
-  /// @param SR A subregion of @p R.
-  void buildAccessFunctions(Region &R, Region &SR);
+  /// @param R            The SCoP region.
+  /// @param SR           A subregion of @p R.
+  /// @param InsnToMemAcc The Instruction to MemoryAccess mapping.
+  void buildAccessFunctions(Region &R, Region &SR,
+                            const MapInsnToMemAcc &InsnToMemAcc);
 
   /// @brief Create ScopStmt for all BBs and non-affine subregions of @p SR.
   ///
@@ -2115,9 +2121,11 @@ class ScopInfo : public RegionPass {
   ///
   /// @param R                  The SCoP region.
   /// @param BB                 A basic block in @p R.
+  /// @param InsnToMemAcc       The Instruction to MemoryAccess mapping.
   /// @param NonAffineSubRegion The non affine sub-region @p BB is in.
   /// @param IsExitBlock        Flag to indicate that @p BB is in the exit BB.
   void buildAccessFunctions(Region &R, BasicBlock &BB,
+                            const MapInsnToMemAcc &InsnToMemAcc,
                             Region *NonAffineSubRegion = nullptr,
                             bool IsExitBlock = false);
 

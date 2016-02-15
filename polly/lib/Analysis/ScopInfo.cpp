@@ -3745,8 +3745,6 @@ void ScopInfo::buildEscapingDependences(Instruction *Inst) {
   }
 }
 
-extern MapInsnToMemAcc InsnToMemAcc;
-
 bool ScopInfo::buildAccessMultiDimFixed(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
@@ -3806,7 +3804,7 @@ bool ScopInfo::buildAccessMultiDimFixed(
 bool ScopInfo::buildAccessMultiDimParam(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
-    const InvariantLoadsSetTy &ScopRIL) {
+    const InvariantLoadsSetTy &ScopRIL, const MapInsnToMemAcc &InsnToMemAcc) {
   Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
   Type *SizeType = Val->getType();
@@ -3892,30 +3890,31 @@ void ScopInfo::buildAccessSingleDim(
 void ScopInfo::buildMemoryAccess(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
-    const InvariantLoadsSetTy &ScopRIL) {
+    const InvariantLoadsSetTy &ScopRIL, const MapInsnToMemAcc &InsnToMemAcc) {
 
   if (buildAccessMultiDimFixed(Inst, L, R, BoxedLoops, ScopRIL))
     return;
 
-  if (buildAccessMultiDimParam(Inst, L, R, BoxedLoops, ScopRIL))
+  if (buildAccessMultiDimParam(Inst, L, R, BoxedLoops, ScopRIL, InsnToMemAcc))
     return;
 
   buildAccessSingleDim(Inst, L, R, BoxedLoops, ScopRIL);
 }
 
-void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
+void ScopInfo::buildAccessFunctions(Region &R, Region &SR,
+                                    const MapInsnToMemAcc &InsnToMemAcc) {
 
   if (SD->isNonAffineSubRegion(&SR, &R)) {
     for (BasicBlock *BB : SR.blocks())
-      buildAccessFunctions(R, *BB, &SR);
+      buildAccessFunctions(R, *BB, InsnToMemAcc, &SR);
     return;
   }
 
   for (auto I = SR.element_begin(), E = SR.element_end(); I != E; ++I)
     if (I->isSubRegion())
-      buildAccessFunctions(R, *I->getNodeAs<Region>());
+      buildAccessFunctions(R, *I->getNodeAs<Region>(), InsnToMemAcc);
     else
-      buildAccessFunctions(R, *I->getNodeAs<BasicBlock>());
+      buildAccessFunctions(R, *I->getNodeAs<BasicBlock>(), InsnToMemAcc);
 }
 
 void ScopInfo::buildStmts(Region &R, Region &SR) {
@@ -3933,6 +3932,7 @@ void ScopInfo::buildStmts(Region &R, Region &SR) {
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
+                                    const MapInsnToMemAcc &InsnToMemAcc,
                                     Region *NonAffineSubRegion,
                                     bool IsExitBlock) {
   // We do not build access functions for error blocks, as they may contain
@@ -3962,7 +3962,7 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
     //       there might be other invariant accesses that will be hoisted and
     //       that would allow to make a non-affine access affine.
     if (auto MemInst = MemAccInst::dyn_cast(Inst))
-      buildMemoryAccess(MemInst, L, &R, BoxedLoops, ScopRIL);
+      buildMemoryAccess(MemInst, L, &R, BoxedLoops, ScopRIL, InsnToMemAcc);
 
     if (isIgnoredIntrinsic(&Inst))
       continue;
@@ -4140,7 +4140,7 @@ void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   scop.reset(new Scop(R, *SE, ctx, MaxLoopDepth));
 
   buildStmts(R, R);
-  buildAccessFunctions(R, R);
+  buildAccessFunctions(R, R, *SD->getInsnToMemAccMap(&R));
 
   // In case the region does not have an exiting block we will later (during
   // code generation) split the exit block. This will move potential PHI nodes
@@ -4150,7 +4150,8 @@ void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   // accesses. Note that we do not model anything in the exit block if we have
   // an exiting block in the region, as there will not be any splitting later.
   if (!R.getExitingBlock())
-    buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
+    buildAccessFunctions(R, *R.getExit(), *SD->getInsnToMemAccMap(&R), nullptr,
+                         /* IsExitBlock */ true);
 
   scop->init(*AA, AC, *SD, *DT, *LI);
 }
