@@ -21,7 +21,7 @@ if.end:                                           ; preds = %if.then, %entry
 }
 
 define void @loadByte(i32 %val1, i32 %val2, i8* nocapture %ival) nounwind {
-; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memb(##foo{{ *}}+{{ *}}1)
+; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memub(##foo{{ *}}+{{ *}}1)
 entry:
   %cmp = icmp sgt i32 %val1, %val2
   br i1 %cmp, label %if.then, label %if.end
