@@ -13326,10 +13326,8 @@ static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
   if (VecFloatVT != Op->getSimpleValueType(0))
     return SDValue();
 
-  unsigned NumElts = VecIntVT.getVectorNumElements();
   assert((VecIntVT == MVT::v4i32 || VecIntVT == MVT::v8i32) &&
          "Unsupported custom type");
-  assert(NumElts <= 8 && "The size of the constant array must be fixed");
 
   // In the #idef/#else code, we have in common:
   // - The vector of constants:
