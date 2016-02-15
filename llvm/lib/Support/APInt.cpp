@@ -490,10 +490,7 @@ APInt APInt::operator-(const APInt& RHS) const {
 }
 
 bool APInt::EqualSlowCase(const APInt& RHS) const {
-  for (unsigned I = 0, NumWords = getNumWords(); I < NumWords; ++I)
-    if (pVal[I] != RHS.pVal[I])
-      return false;
-  return true;
+  return std::equal(pVal, pVal + getNumWords(), RHS.pVal);
 }
 
 bool APInt::EqualSlowCase(uint64_t Val) const {
