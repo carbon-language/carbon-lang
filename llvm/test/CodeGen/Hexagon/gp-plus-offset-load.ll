@@ -36,7 +36,7 @@ if.end:                                           ; preds = %if.then, %entry
 }
 
 define void @loadHWord(i32 %val1, i32 %val2, i16* %ival) nounwind {
-; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memh(##foo{{ *}}+{{ *}}2)
+; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memuh(##foo{{ *}}+{{ *}}2)
 entry:
   %cmp = icmp sgt i32 %val1, %val2
   br i1 %cmp, label %if.then, label %if.end
