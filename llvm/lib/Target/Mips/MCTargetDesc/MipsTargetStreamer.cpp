@@ -611,7 +611,7 @@ void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   MCStreamer &OS = getStreamer();
 
   MCSectionELF *Sec = Context.getELFSection(".pdr", ELF::SHT_PROGBITS,
-                                            ELF::SHF_ALLOC | ELF::SHT_REL);
+                                            ELF::SHT_REL);
 
   MCSymbol *Sym = Context.getOrCreateSymbol(Name);
   const MCSymbolRefExpr *ExprRef =
