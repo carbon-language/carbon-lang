@@ -2997,12 +2997,6 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
     return false;
   }
 
-  // See comment above the definition of SAI.
-  if (SAI->getDerivedSAIs().size()) {
-    isl_map_free(AccessRelation);
-    return true;
-  }
-
   AccessRelation = isl_map_intersect_domain(AccessRelation, Stmt.getDomain());
   isl_set *AccessRange = isl_map_range(AccessRelation);
 
