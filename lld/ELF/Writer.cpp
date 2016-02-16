@@ -734,7 +734,7 @@ StringRef Writer<ELFT>::getOutputSectionName(InputSectionBase<ELFT> *S) const {
   StringRef Name = S->getSectionName();
   for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
                       ".init_array.", ".fini_array.", ".ctors.", ".dtors.",
-                      ".tbss.", ".gcc_except_table."})
+                      ".tbss.", ".gcc_except_table.", ".tdata."})
     if (Name.startswith(V))
       return V.drop_back();
   return Name;
