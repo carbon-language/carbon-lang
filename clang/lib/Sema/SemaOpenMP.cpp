@@ -1714,8 +1714,8 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
   }
 }
 
-static DeclRefExpr *buildCapture(Sema &S, IdentifierInfo *Id,
-                                 Expr *CaptureExpr) {
+static OMPCapturedExprDecl *buildCaptureDecl(Sema &S, IdentifierInfo *Id,
+                                             Expr *CaptureExpr) {
   ASTContext &C = S.getASTContext();
   Expr *Init = CaptureExpr->IgnoreImpCasts();
   QualType Ty = Init->getType();
@@ -1735,7 +1735,21 @@ static DeclRefExpr *buildCapture(Sema &S, IdentifierInfo *Id,
   S.CurContext->addHiddenDecl(CED);
   S.AddInitializerToDecl(CED, Init, /*DirectInit=*/false,
                          /*TypeMayContainAuto=*/true);
-  return buildDeclRefExpr(S, CED, Ty.getNonReferenceType(), SourceLocation());
+  return CED;
+}
+
+static DeclRefExpr *buildCapture(Sema &S, IdentifierInfo *Id,
+                                 Expr *CaptureExpr) {
+  auto *CD = buildCaptureDecl(S, Id, CaptureExpr);
+  return buildDeclRefExpr(S, CD, CD->getType().getNonReferenceType(),
+                          SourceLocation());
+}
+
+static DeclRefExpr *buildCapture(Sema &S, StringRef Name, Expr *CaptureExpr) {
+  auto *CD =
+      buildCaptureDecl(S, &S.getASTContext().Idents.get(Name), CaptureExpr);
+  return buildDeclRefExpr(S, CD, CD->getType().getNonReferenceType(),
+                          SourceLocation());
 }
 
 StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
@@ -1763,18 +1777,15 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
         }
       }
       DSAStack->setForceVarCapturing(/*V=*/false);
-    } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective()) &&
-               (Clause->getClauseKind() == OMPC_schedule ||
-                Clause->getClauseKind() == OMPC_dist_schedule)) {
+    } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
       // Mark all variables in private list clauses as used in inner region.
       // Required for proper codegen of combined directives.
       // TODO: add processing for other clauses.
-      if (auto *SC = dyn_cast<OMPScheduleClause>(Clause)) {
-        if (SC->getHelperChunkSize())
-          MarkDeclarationsReferencedInExpr(SC->getHelperChunkSize());
-      } else if (auto *DSC = dyn_cast<OMPDistScheduleClause>(Clause)) {
-        if (DSC->getHelperChunkSize())
-          MarkDeclarationsReferencedInExpr(DSC->getHelperChunkSize());
+      if (auto *C = OMPClauseWithPreInit::get(Clause)) {
+        if (auto *S = cast_or_null<DeclStmt>(C->getPreInitStmt())) {
+          for (auto *D : S->decls())
+            MarkVariableReferenced(D->getLocation(), cast<VarDecl>(D));
+        }
       }
     }
     if (Clause->getClauseKind() == OMPC_schedule)
@@ -6740,7 +6751,7 @@ OMPClause *Sema::ActOnOpenMPScheduleClause(
     return nullptr;
   }
   Expr *ValExpr = ChunkSize;
-  Expr *HelperValExpr = nullptr;
+  Stmt *HelperValStmt = nullptr;
   if (ChunkSize) {
     if (!ChunkSize->isValueDependent() && !ChunkSize->isTypeDependent() &&
         !ChunkSize->isInstantiationDependent() &&
@@ -6764,15 +6775,20 @@ OMPClause *Sema::ActOnOpenMPScheduleClause(
           return nullptr;
         }
       } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
-        HelperValExpr =
-            buildCapture(*this, &Context.Idents.get(".chunk."), ValExpr);
+        ValExpr = buildCapture(*this, ".chunk.", ValExpr);
+        Decl *D = cast<DeclRefExpr>(ValExpr)->getDecl();
+        HelperValStmt =
+            new (Context) DeclStmt(DeclGroupRef::Create(Context, &D,
+                                                        /*NumDecls=*/1),
+                                   SourceLocation(), SourceLocation());
+        ValExpr = DefaultLvalueConversion(ValExpr).get();
       }
     }
   }
 
   return new (Context)
       OMPScheduleClause(StartLoc, LParenLoc, KindLoc, CommaLoc, EndLoc, Kind,
-                        ValExpr, HelperValExpr, M1, M1Loc, M2, M2Loc);
+                        ValExpr, HelperValStmt, M1, M1Loc, M2, M2Loc);
 }
 
 OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
@@ -9526,7 +9542,7 @@ OMPClause *Sema::ActOnOpenMPDistScheduleClause(
     return nullptr;
   }
   Expr *ValExpr = ChunkSize;
-  Expr *HelperValExpr = nullptr;
+  Stmt *HelperValStmt = nullptr;
   if (ChunkSize) {
     if (!ChunkSize->isValueDependent() && !ChunkSize->isTypeDependent() &&
         !ChunkSize->isInstantiationDependent() &&
@@ -9550,15 +9566,20 @@ OMPClause *Sema::ActOnOpenMPDistScheduleClause(
           return nullptr;
         }
       } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
-        HelperValExpr =
-            buildCapture(*this, &Context.Idents.get(".chunk."), ValExpr);
+        ValExpr = buildCapture(*this, ".chunk.", ValExpr);
+        Decl *D = cast<DeclRefExpr>(ValExpr)->getDecl();
+        HelperValStmt =
+            new (Context) DeclStmt(DeclGroupRef::Create(Context, &D,
+                                                        /*NumDecls=*/1),
+                                   SourceLocation(), SourceLocation());
+        ValExpr = DefaultLvalueConversion(ValExpr).get();
       }
     }
   }
 
   return new (Context)
       OMPDistScheduleClause(StartLoc, LParenLoc, KindLoc, CommaLoc, EndLoc,
-                            Kind, ValExpr, HelperValExpr);
+                            Kind, ValExpr, HelperValStmt);
 }
 
 OMPClause *Sema::ActOnOpenMPDefaultmapClause(
