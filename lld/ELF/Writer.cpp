@@ -339,7 +339,7 @@ void Writer<ELFT>::scanRelocs(
     // to the symbol go through the PLT. This is true even for a local
     // symbol, although local symbols normally do not require PLT entries.
     if (Body && isGnuIFunc<ELFT>(*Body)) {
-      if (Body->isInGot())
+      if (Body->isInPlt())
         continue;
       Out<ELFT>::Plt->addEntry(Body);
       bool CBP = canBePreempted(Body, /*NeedsGot=*/true);
