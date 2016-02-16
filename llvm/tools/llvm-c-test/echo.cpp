@@ -585,26 +585,52 @@ struct FunCloner {
   }
 };
 
-static LLVMValueRef clone_function(LLVMValueRef Src, LLVMModuleRef M) {
+static void clone_function(LLVMValueRef Src, LLVMModuleRef M) {
+  const char *Name = LLVMGetValueName(Src);
+  LLVMValueRef Fun = LLVMGetNamedFunction(M, Name);
+  if (!Fun)
+    report_fatal_error("Function must have been declared already");
+
+  FunCloner FC(Src, Fun);
+  FC.CloneBBs(Src);
+}
+
+static void declare_function(LLVMValueRef Src, LLVMModuleRef M) {
   const char *Name = LLVMGetValueName(Src);
   LLVMValueRef Fun = LLVMGetNamedFunction(M, Name);
   if (Fun != nullptr)
-    return Fun;
+    report_fatal_error("Function already cloned");
 
   LLVMTypeRef FunTy = LLVMGetElementType(TypeCloner(M).Clone(Src));
-  Fun = LLVMAddFunction(M, Name, FunTy);
-  FunCloner FC(Src, Fun);
-  FC.CloneBBs(Src);
-
-  return Fun;
+  LLVMAddFunction(M, Name, FunTy);
 }
 
 static void clone_functions(LLVMModuleRef Src, LLVMModuleRef Dst) {
   LLVMValueRef Begin = LLVMGetFirstFunction(Src);
   LLVMValueRef End = LLVMGetLastFunction(Src);
 
+  // First pass, we declare all function
   LLVMValueRef Cur = Begin;
   LLVMValueRef Next = nullptr;
+  while (true) {
+    declare_function(Cur, Dst);
+    Next = LLVMGetNextFunction(Cur);
+    if (Next == nullptr) {
+      if (Cur != End)
+        report_fatal_error("Last function does not match End");
+      break;
+    }
+
+    LLVMValueRef Prev = LLVMGetPreviousFunction(Next);
+    if (Prev != Cur)
+      report_fatal_error("Next.Previous function is not Current");
+
+    Cur = Next;
+  }
+
+  // Second pass, we define them
+  Cur = Begin;
+  Next = nullptr;
   while (true) {
     clone_function(Cur, Dst);
     Next = LLVMGetNextFunction(Cur);
