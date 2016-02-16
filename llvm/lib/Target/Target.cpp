@@ -46,9 +46,6 @@ LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep) {
   return wrap(new DataLayout(StringRep));
 }
 
-void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM) {
-}
-
 void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef TLI,
                               LLVMPassManagerRef PM) {
   unwrap(PM)->add(new TargetLibraryInfoWrapperPass(*unwrap(TLI)));

@@ -187,11 +187,6 @@ static inline LLVMBool LLVMInitializeNativeDisassembler(void) {
     See the constructor llvm::DataLayout::DataLayout. */
 LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep);
 
-/** Adds target data information to a pass manager. This does not take ownership
-    of the target data.
-    See the method llvm::PassManagerBase::add. */
-void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM);
-
 /** Adds target library information to a pass manager. This does not take
     ownership of the target library info.
     See the method llvm::PassManagerBase::add. */
