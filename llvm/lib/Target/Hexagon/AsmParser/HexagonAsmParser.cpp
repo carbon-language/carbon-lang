@@ -592,7 +592,6 @@ public:
 
   static std::unique_ptr<HexagonOperand> CreateImm(const MCExpr *Val, SMLoc S,
                                                    SMLoc E) {
-    assert(&HexagonMCInstrInfo::getExpr(*Val) != nullptr);
     HexagonOperand *Op = new HexagonOperand(Immediate);
     Op->Imm.Val = Val;
     Op->Imm.MustExtend = false;
