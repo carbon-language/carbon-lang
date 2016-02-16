@@ -495,7 +495,7 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
 CodeViewDebug::LocalVarDefRange
 CodeViewDebug::createDefRangeMem(uint16_t CVRegister, int Offset) {
   LocalVarDefRange DR;
-  DR.InMemory = 1;
+  DR.InMemory = -1;
   DR.DataOffset = Offset;
   assert(DR.DataOffset == Offset && "truncation");
   DR.StructOffset = 0;
