@@ -221,14 +221,12 @@ LLVMValueRef clone_constant(LLVMValueRef Cst, LLVMModuleRef M) {
     const char *Name = LLVMGetValueName(Cst);
 
     // Try function
-    LLVMValueRef Dst = LLVMGetNamedFunction(M, Name);
-    if (Dst != nullptr)
-      return Dst;
+    if (LLVMIsAFunction(Cst))
+      return LLVMGetNamedFunction(M, Name);
 
     // Try global variable
-    Dst = LLVMGetNamedGlobal(M, Name);
-    if (Dst != nullptr)
-      return Dst;
+    if (LLVMIsAGlobalVariable(Cst))
+      return LLVMGetNamedGlobal(M, Name);
 
     fprintf(stderr, "Could not find @%s\n", Name);
     exit(-1);
@@ -243,8 +241,12 @@ LLVMValueRef clone_constant(LLVMValueRef Cst, LLVMModuleRef M) {
   if (LLVMIsUndef(Cst))
     return LLVMGetUndef(TypeCloner(M).Clone(Cst));
 
-  // This kind of constant is not supported.
-  report_fatal_error("Unsupported contant type");
+  // This kind of constant is not supported
+  if (!LLVMIsAConstantExpr(Cst))
+    report_fatal_error("Expected a constant expression");
+
+  // At this point, it must be a constant expression
+  report_fatal_error("ConstantExpression are not supported");
 }
 
 struct FunCloner {
