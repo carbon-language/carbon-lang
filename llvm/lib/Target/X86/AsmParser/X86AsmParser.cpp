@@ -1052,9 +1052,9 @@ bool X86AsmParser::VerifyAndAdjustOperands(OperandVector &OrigOperands,
                                            OperandVector &FinalOperands) {
 
   if (OrigOperands.size() > 1) {
-    // Check if sizes match, OrigOpernads also contains the instruction name
+    // Check if sizes match, OrigOperands also contains the instruction name
     assert(OrigOperands.size() == FinalOperands.size() + 1 &&
-           "Opernand size mismatch");
+           "Operand size mismatch");
 
     SmallVector<std::pair<SMLoc, std::string>, 2> Warnings;
     // Verify types match
