@@ -140,6 +140,8 @@ PassManagerBuilder::PassManagerBuilder() {
     PrepareForLTO = false;
     PGOInstrGen = RunPGOInstrGen;
     PGOInstrUse = RunPGOInstrUse;
+    PrepareForThinLTO = false;
+    PerformThinLTO = false;
 }
 
 PassManagerBuilder::~PassManagerBuilder() {
@@ -233,6 +235,11 @@ void PassManagerBuilder::addFunctionSimplificationPasses(
   MPM.add(createTailCallEliminationPass()); // Eliminate tail calls
   MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
   MPM.add(createReassociatePass());           // Reassociate expressions
+  if (PrepareForThinLTO) {
+    MPM.add(createAggressiveDCEPass());        // Delete dead instructions
+    MPM.add(createInstructionCombiningPass()); // Combine silly seq's
+    return;
+  }
   // Rotate Loop - disable header duplication at -Oz
   MPM.add(createLoopRotatePass(SizeLevel == 2 ? 0 : -1));
   MPM.add(createLICMPass());                  // Hoist loop invariants
@@ -356,7 +363,10 @@ void PassManagerBuilder::populateModulePassManager(
     MPM.add(createCFGSimplificationPass()); // Clean up after IPCP & DAE
   }
 
-  addPGOInstrPasses(MPM);
+  if (!PerformThinLTO)
+    /// PGO instrumentation is added during the compile phase for ThinLTO, do
+    /// not run it a second time
+    addPGOInstrPasses(MPM);
 
   if (EnableNonLTOGlobalsModRef)
     // We add a module alias analysis pass here. In part due to bugs in the
@@ -378,6 +388,12 @@ void PassManagerBuilder::populateModulePassManager(
 
   addFunctionSimplificationPasses(MPM);
 
+  // If we are planning to perform ThinLTO later, let's not bloat the code with
+  // unrolling/vectorization/... now. We'll first run the inliner + CGSCC passes
+  // during ThinLTO and perform the rest of the optimizations afterward.
+  if (PrepareForThinLTO)
+    return;
+
   // FIXME: This is a HACK! The inliner pass above implicitly creates a CGSCC
   // pass manager that we are specifically trying to avoid. To prevent this
   // we must insert a no-op module pass to reset the pass manager.
@@ -396,7 +412,7 @@ void PassManagerBuilder::populateModulePassManager(
   if (!DisableUnitAtATime)
     MPM.add(createReversePostOrderFunctionAttrsPass());
 
-  if (!DisableUnitAtATime && OptLevel > 1 && !PrepareForLTO) {
+  if (!DisableUnitAtATime && OptLevel > 1 && !PrepareForLTO)
     // Remove avail extern fns and globals definitions if we aren't
     // compiling an object file for later LTO. For LTO we want to preserve
     // these so they are eligible for inlining at link-time. Note if they
@@ -407,6 +423,15 @@ void PassManagerBuilder::populateModulePassManager(
     // globals referenced by available external functions dead
     // and saves running remaining passes on the eliminated functions.
     MPM.add(createEliminateAvailableExternallyPass());
+
+  if (PerformThinLTO) {
+    // Remove dead fns and globals. Removing unreferenced functions could lead
+    // to more opportunities for globalopt.
+    MPM.add(createGlobalDCEPass());
+    MPM.add(createGlobalOptimizerPass());
+    // Remove dead fns and globals after globalopt.
+    MPM.add(createGlobalDCEPass());
+    addFunctionSimplificationPasses(MPM);
   }
 
   if (EnableNonLTOGlobalsModRef)
@@ -680,6 +705,23 @@ void PassManagerBuilder::addLateLTOOptimizationPasses(
   // currently it damages debug info.
   if (MergeFunctions)
     PM.add(createMergeFunctionsPass());
+}
+
+void PassManagerBuilder::populateThinLTOPassManager(
+    legacy::PassManagerBase &PM) {
+  PerformThinLTO = true;
+
+  if (VerifyInput)
+    PM.add(createVerifierPass());
+
+  if (FunctionIndex)
+    PM.add(createFunctionImportPass(FunctionIndex));
+
+  populateModulePassManager(PM);
+
+  if (VerifyOutput)
+    PM.add(createVerifierPass());
+  PerformThinLTO = false;
 }
 
 void PassManagerBuilder::populateLTOPassManager(legacy::PassManagerBase &PM) {
