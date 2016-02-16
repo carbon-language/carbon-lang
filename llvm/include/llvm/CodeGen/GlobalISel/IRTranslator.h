@@ -120,6 +120,10 @@ public:
   // Ctor, nothing fancy.
   IRTranslator();
 
+  const char *getPassName() const override {
+    return "IRTranslator";
+  }
+
   // Algo:
   //   CallLowering = MF.subtarget.getCallLowering()
   //   F = MF.getParent()
