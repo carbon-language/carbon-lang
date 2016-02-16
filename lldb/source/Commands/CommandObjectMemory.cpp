@@ -42,7 +42,7 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 
-#include "lldb-private.h"
+#include "lldb/lldb-private.h"
 
 using namespace lldb;
 using namespace lldb_private;
