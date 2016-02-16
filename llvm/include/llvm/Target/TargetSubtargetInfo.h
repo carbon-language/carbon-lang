@@ -21,7 +21,6 @@
 
 namespace llvm {
 
-class CallLowering;
 class DataLayout;
 class MachineFunction;
 class MachineInstr;
@@ -72,7 +71,6 @@ public:
   // -- Pipelines and scheduling information
   // -- Stack frame information
   // -- Selection DAG lowering information
-  // -- Call lowering information
   //
   // N.B. These objects may change during compilation. It's not safe to cache
   // them between functions.
@@ -84,7 +82,6 @@ public:
   virtual const SelectionDAGTargetInfo *getSelectionDAGInfo() const {
     return nullptr;
   }
-  virtual const CallLowering *getCallLowering() const { return nullptr; }
   /// Target can subclass this hook to select a different DAG scheduler.
   virtual RegisterScheduler::FunctionPassCtor
       getDAGScheduler(CodeGenOpt::Level) const {

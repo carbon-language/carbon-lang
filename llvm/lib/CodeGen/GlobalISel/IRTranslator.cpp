@@ -13,7 +13,6 @@
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Constant.h"
@@ -76,7 +75,7 @@ bool IRTranslator::translateReturn(const Instruction &Inst) {
   // The target may mess up with the insertion point, but
   // this is not important as a return is the last instruction
   // of the block anyway.
-  return CLI->LowerReturn(MIRBuilder, Ret,
+  return TLI->LowerReturn(MIRBuilder, Ret,
                           !Ret ? 0 : getOrCreateVReg(Ret));
 }
 
@@ -105,7 +104,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   const Function &F = *MF.getFunction();
   if (F.empty())
     return false;
-  CLI = MF.getSubtarget().getCallLowering();
+  TLI = MF.getSubtarget().getTargetLowering();
   MIRBuilder.setFunction(MF);
   MRI = &MF.getRegInfo();
   // Setup the arguments.
@@ -114,7 +113,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   SmallVector<unsigned, 8> VRegArgs;
   for (const Argument &Arg: F.args())
     VRegArgs.push_back(getOrCreateVReg(&Arg));
-  bool Succeeded = CLI->LowerFormalArguments(MIRBuilder, F.getArgumentList(),
+  bool Succeeded = TLI->LowerFormalArguments(MIRBuilder, F.getArgumentList(),
                                              VRegArgs);
   if (!Succeeded)
     report_fatal_error("Unable to lower arguments");
