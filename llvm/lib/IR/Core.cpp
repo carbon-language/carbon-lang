@@ -160,8 +160,12 @@ void LLVMDisposeModule(LLVMModuleRef M) {
 }
 
 /*--.. Data layout .........................................................--*/
-const char * LLVMGetDataLayout(LLVMModuleRef M) {
+const char *LLVMGetDataLayoutStr(LLVMModuleRef M) {
   return unwrap(M)->getDataLayoutStr().c_str();
+}
+
+const char *LLVMGetDataLayout(LLVMModuleRef M) {
+  return LLVMGetDataLayoutStr(M);
 }
 
 void LLVMSetDataLayout(LLVMModuleRef M, const char *DataLayoutStr) {

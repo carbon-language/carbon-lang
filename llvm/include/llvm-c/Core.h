@@ -481,8 +481,13 @@ void LLVMDisposeModule(LLVMModuleRef M);
 /**
  * Obtain the data layout for a module.
  *
- * @see Module::getDataLayout()
+ * @see Module::getDataLayoutStr()
+ *
+ * LLVMGetDataLayout is DEPRECATED, as the name is not only incorrect,
+ * but match the name of another method on the module. Prefer the use
+ * of LLVMGetDataLayoutStr, which is not ambiguous.
  */
+const char *LLVMGetDataLayoutStr(LLVMModuleRef M);
 const char *LLVMGetDataLayout(LLVMModuleRef M);
 
 /**
