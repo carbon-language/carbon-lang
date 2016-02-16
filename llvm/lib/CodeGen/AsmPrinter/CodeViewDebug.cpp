@@ -594,11 +594,13 @@ void CodeViewDebug::collectVariableInfo(const DISubprogram *SP) {
       if (DIExpr && DIExpr->getNumElements() > 0)
         continue;
 
-      // Bail if the value is not indirect in memory or in a register. In these
-      // cases, operand 0 will not be a register.
-      // FIXME: CodeView does not have an obvious representation for a variable
-      // that has been optimized to be a constant.
-      if (!DVInst->getOperand(0).isReg())
+      // Bail if operand 0 is not a valid register. This means the variable is a
+      // simple constant, or is described by a complex expression.
+      // FIXME: Find a way to represent constant variables, since they are
+      // relatively common.
+      unsigned Reg =
+          DVInst->getOperand(0).isReg() ? DVInst->getOperand(0).getReg() : 0;
+      if (Reg == 0)
         continue;
 
       // Handle the two cases we can handle: indirect in memory and in register.
