@@ -42,6 +42,14 @@ void LLVMInitializeTarget(LLVMPassRegistryRef R) {
   initializeTarget(*unwrap(R));
 }
 
+LLVMTargetDataRef LLVMGetModuleDataLayout(LLVMModuleRef M) {
+  return wrap(&unwrap(M)->getDataLayout());
+}
+
+void LLVMSetModuleDataLayout(LLVMModuleRef M, LLVMTargetDataRef DL) {
+  unwrap(M)->setDataLayout(*unwrap(DL));
+}
+
 LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep) {
   return wrap(new DataLayout(StringRep));
 }

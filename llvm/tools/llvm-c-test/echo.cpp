@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c-test.h"
+#include "llvm-c/Target.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -628,6 +629,11 @@ int llvm_echo(void) {
 
   LLVMContextRef Ctx = LLVMContextCreate();
   LLVMModuleRef M = LLVMModuleCreateWithNameInContext("<stdin>", Ctx);
+
+  LLVMSetTarget(M, LLVMGetTarget(Src));
+  LLVMSetModuleDataLayout(M, LLVMGetModuleDataLayout(Src));
+  if (strcmp(LLVMGetDataLayoutStr(M), LLVMGetDataLayoutStr(Src)))
+    report_fatal_error("Inconsistent DataLayout string representation");
 
   clone_functions(Src, M);
   char *Str = LLVMPrintModuleToString(M);
