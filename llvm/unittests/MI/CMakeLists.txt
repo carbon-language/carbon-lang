@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   AsmPrinter
   CodeGen
   Core
+  MC
   MIRParser
   Support
   Target
