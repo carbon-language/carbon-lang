@@ -1092,7 +1092,7 @@ bool X86AsmParser::VerifyAndAdjustOperands(OperandVector &OrigOperands,
         else if (X86MCRegisterClasses[X86::GR16RegClassID].contains(OrigReg))
           RegClassID = X86::GR16RegClassID;
         else
-          // Unexpexted register class type
+          // Unexpected register class type
           // Return false and let a normal complaint about bogus operands happen
           return false;
 
