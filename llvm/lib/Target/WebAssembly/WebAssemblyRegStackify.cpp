@@ -129,6 +129,7 @@ static bool IsSafeToMove(const MachineInstr *Def, const MachineInstr *Insert,
       return false;
   }
 
+  SawStore = Def->isCall() || Def->mayStore();
   // Check for memory dependencies and side effects.
   for (--I; I != D; --I)
     SawSideEffects |= !I->isSafeToMove(&AA, SawStore);
