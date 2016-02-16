@@ -26470,13 +26470,23 @@ static SDValue combineLogicBlendIntoPBLENDV(SDNode *N, SelectionDAG &DAG,
   //   (add (xor X, M), (and M, 1))
   // And further to:
   //   (sub (xor X, M), M)
-  if (Y.getOpcode() == ISD::SUB && Y.getOperand(1) == X &&
-      ISD::isBuildVectorAllZeros(Y.getOperand(0).getNode()) &&
-      X.getValueType() == MaskVT && Y.getValueType() == MaskVT) {
-    assert(EltBits == 8 || EltBits == 16 || EltBits == 32);
-    return DAG.getBitcast(
-        VT, DAG.getNode(ISD::SUB, DL, MaskVT,
-                        DAG.getNode(ISD::XOR, DL, MaskVT, X, Mask), Mask));
+  if (X.getValueType() == MaskVT && Y.getValueType() == MaskVT) {
+    auto IsNegV = [](SDNode *N, SDValue V) {
+      return N->getOpcode() == ISD::SUB && N->getOperand(1) == V &&
+        ISD::isBuildVectorAllZeros(N->getOperand(0).getNode());
+    };
+    SDValue V;
+    if (IsNegV(Y.getNode(), X))
+      V = X;
+    else if (IsNegV(X.getNode(), Y))
+      V = Y;
+
+    if (V) {
+      assert(EltBits == 8 || EltBits == 16 || EltBits == 32);
+      return DAG.getBitcast(
+          VT, DAG.getNode(ISD::SUB, DL, MaskVT,
+                          DAG.getNode(ISD::XOR, DL, MaskVT, V, Mask), Mask));
+    }
   }
 
   // PBLENDVB is only available on SSE 4.1.
