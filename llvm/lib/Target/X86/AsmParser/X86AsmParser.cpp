@@ -1115,9 +1115,8 @@ bool X86AsmParser::VerifyAndAdjustOperands(OperandVector &OrigOperands,
 
     // Produce warnings only if all the operands passed the adjustment - prevent
     // legal cases like "movsd (%rax), %xmm0" mistakenly produce warnings
-    for (auto WarningMsg = Warnings.begin(); WarningMsg < Warnings.end();
-         ++WarningMsg) {
-      Warning((*WarningMsg).first, (*WarningMsg).second);
+    for (auto &WarningMsg : Warnings) {
+      Warning(WarningMsg.first, WarningMsg.second);
     }
 
     // Remove old operands
