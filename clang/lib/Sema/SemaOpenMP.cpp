@@ -4072,7 +4072,8 @@ static ExprResult BuildCounterUpdate(Sema &SemaRef, Scope *S,
   if (!Update.isUsable())
     return ExprError();
 
-  // Build 'VarRef = Start + Iter * Step'.
+  // Try to build 'VarRef = Start, VarRef (+|-)= Iter * Step' or
+  // 'VarRef = Start (+|-) Iter * Step'.
   auto NewStart = Transform.TransformExpr(Start.get()->IgnoreImplicit());
   if (NewStart.isInvalid())
     return ExprError();
@@ -4082,17 +4083,43 @@ static ExprResult BuildCounterUpdate(Sema &SemaRef, Scope *S,
       /*AllowExplicit=*/true);
   if (NewStart.isInvalid())
     return ExprError();
-  Update = SemaRef.BuildBinOp(S, Loc, (Subtract ? BO_Sub : BO_Add),
-                              NewStart.get(), Update.get());
-  if (!Update.isUsable())
-    return ExprError();
 
-  Update = SemaRef.PerformImplicitConversion(
-      Update.get(), VarRef.get()->getType(), Sema::AA_Converting, true);
-  if (!Update.isUsable())
-    return ExprError();
+  // First attempt: try to build 'VarRef = Start, VarRef += Iter * Step'.
+  ExprResult SavedUpdate = Update;
+  ExprResult UpdateVal;
+  if (VarRef.get()->getType()->isOverloadableType() ||
+      NewStart.get()->getType()->isOverloadableType() ||
+      Update.get()->getType()->isOverloadableType()) {
+    bool Suppress = SemaRef.getDiagnostics().getSuppressAllDiagnostics();
+    SemaRef.getDiagnostics().setSuppressAllDiagnostics(/*Val=*/true);
+    Update =
+        SemaRef.BuildBinOp(S, Loc, BO_Assign, VarRef.get(), NewStart.get());
+    if (Update.isUsable()) {
+      UpdateVal =
+          SemaRef.BuildBinOp(S, Loc, Subtract ? BO_SubAssign : BO_AddAssign,
+                             VarRef.get(), SavedUpdate.get());
+      if (UpdateVal.isUsable()) {
+        Update = SemaRef.CreateBuiltinBinOp(Loc, BO_Comma, Update.get(),
+                                            UpdateVal.get());
+      }
+    }
+    SemaRef.getDiagnostics().setSuppressAllDiagnostics(Suppress);
+  }
 
-  Update = SemaRef.BuildBinOp(S, Loc, BO_Assign, VarRef.get(), Update.get());
+  // Second attempt: try to build 'VarRef = Start (+|-) Iter * Step'.
+  if (!Update.isUsable() || !UpdateVal.isUsable()) {
+    Update = SemaRef.BuildBinOp(S, Loc, Subtract ? BO_Sub : BO_Add,
+                                NewStart.get(), SavedUpdate.get());
+    if (!Update.isUsable())
+      return ExprError();
+
+    Update = SemaRef.PerformImplicitConversion(
+        Update.get(), VarRef.get()->getType(), Sema::AA_Converting, true);
+    if (!Update.isUsable())
+      return ExprError();
+
+    Update = SemaRef.BuildBinOp(S, Loc, BO_Assign, VarRef.get(), Update.get());
+  }
   return Update;
 }
 
