@@ -177,7 +177,7 @@ private:
   void handleOperand(bool optional,
                      unsigned &operandIndex,
                      unsigned &physicalOperandIndex,
-                     unsigned &numPhysicalOperands,
+                     unsigned numPhysicalOperands,
                      const unsigned *operandMapping,
                      OperandEncoding (*encodingFromString)
                        (const std::string&,
