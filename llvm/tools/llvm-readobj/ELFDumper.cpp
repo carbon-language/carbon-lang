@@ -48,6 +48,17 @@ namespace {
 
 template <class ELFT> class DumpStyle;
 
+/// \brief Represents a region described by entries in the .dynamic table.
+struct DynRegionInfo {
+  DynRegionInfo() : Addr(nullptr), Size(0), EntSize(0) {}
+  /// \brief Address in current address space.
+  const void *Addr;
+  /// \brief Size in bytes of the region.
+  uint64_t Size;
+  /// \brief Size of each entity in the region.
+  uint64_t EntSize;
+};
+
 template<typename ELFT>
 class ELFDumper : public ObjDumper {
 public:
@@ -100,17 +111,6 @@ private:
   typedef typename ELFO::Elf_Vernaux Elf_Vernaux;
   typedef typename ELFO::Elf_Verdef Elf_Verdef;
   typedef typename ELFO::Elf_Verdaux Elf_Verdaux;
-
-  /// \brief Represents a region described by entries in the .dynamic table.
-  struct DynRegionInfo {
-    DynRegionInfo() : Addr(nullptr), Size(0), EntSize(0) {}
-    /// \brief Address in current address space.
-    const void *Addr;
-    /// \brief Size in bytes of the region.
-    uintX_t Size;
-    /// \brief Size of each entity in the region.
-    uintX_t EntSize;
-  };
 
   void parseDynamicTable(ArrayRef<const Elf_Phdr *> LoadSegments);
 
