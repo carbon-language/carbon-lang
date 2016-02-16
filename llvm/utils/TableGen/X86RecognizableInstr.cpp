@@ -225,7 +225,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   CD8_Scale        = byteFromRec(Rec, "CD8_Scale");
 
   Name      = Rec->getName();
-  AsmString = Rec->getValueAsString("AsmString");
 
   Operands = &insn.Operands.OperandList;
 
