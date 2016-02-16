@@ -57,6 +57,13 @@ struct DynRegionInfo {
   uint64_t Size;
   /// \brief Size of each entity in the region.
   uint64_t EntSize;
+
+  template <typename Type> iterator_range<const Type *> getAsRange() const {
+    const Type *Start = reinterpret_cast<const Type *>(Addr);
+    if (EntSize != sizeof(Type) || Size % EntSize)
+      reportError("Invalid entity size");
+    return {Start, Start + (Size / EntSize)};
+  }
 };
 
 template<typename ELFT>
@@ -123,10 +130,6 @@ private:
   void printRelocation(Elf_Rela Rel, const Elf_Shdr *SymTab);
   void printValue(uint64_t Type, uint64_t Value);
 
-  template <typename REL>
-  static const REL *dyn_rel_begin(const DynRegionInfo &region);
-  template <typename REL>
-  static const REL *dyn_rel_end(const DynRegionInfo &region);
   Elf_Rel_Range dyn_rels() const;
   Elf_Rela_Range dyn_relas() const;
   StringRef getDynamicString(uint64_t Offset) const;
@@ -1111,32 +1114,13 @@ void ELFDumper<ELFT>::parseDynamicTable(
 }
 
 template <typename ELFT>
-template <typename REL>
-const REL *ELFDumper<ELFT>::dyn_rel_begin(const DynRegionInfo &Region) {
-  if (Region.Size && Region.EntSize != sizeof(REL))
-    report_fatal_error("Invalid relocation entry size");
-  return reinterpret_cast<const REL *>(Region.Addr);
-}
-
-template <typename ELFT>
-template <typename REL>
-const REL *ELFDumper<ELFT>::dyn_rel_end(const DynRegionInfo &Region) {
-  uint64_t Size = Region.Size;
-  if (Size % sizeof(REL))
-    report_fatal_error("Invalid relocation table size");
-  return dyn_rel_begin<REL>(Region) + Size / sizeof(REL);
-}
-
-template <typename ELFT>
 typename ELFDumper<ELFT>::Elf_Rel_Range ELFDumper<ELFT>::dyn_rels() const {
-  return make_range(dyn_rel_begin<Elf_Rel>(DynRelRegion),
-                    dyn_rel_end<Elf_Rel>(DynRelRegion));
+  return DynRelRegion.getAsRange<Elf_Rel>();
 }
 
 template <typename ELFT>
 typename ELFDumper<ELFT>::Elf_Rela_Range ELFDumper<ELFT>::dyn_relas() const {
-  return make_range(dyn_rel_begin<Elf_Rela>(DynRelaRegion),
-                    dyn_rel_end<Elf_Rela>(DynRelaRegion));
+  return DynRelaRegion.getAsRange<Elf_Rela>();
 }
 
 template<class ELFT>
