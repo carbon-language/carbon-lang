@@ -610,6 +610,11 @@ static void declare_function(LLVMValueRef Src, LLVMModuleRef M) {
 static void clone_functions(LLVMModuleRef Src, LLVMModuleRef Dst) {
   LLVMValueRef Begin = LLVMGetFirstFunction(Src);
   LLVMValueRef End = LLVMGetLastFunction(Src);
+  if (!Begin) {
+    if (End != nullptr)
+      report_fatal_error("Range has an end but no start");
+    return;
+  }
 
   // First pass, we declare all function
   LLVMValueRef Cur = Begin;
