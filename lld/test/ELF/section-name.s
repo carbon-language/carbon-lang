@@ -21,11 +21,13 @@ _start:
 .section .data.rel.ro.a,"aw",%progbits
 .section .data.rel.ro.local,"aw",%progbits
 .section .data.rel.ro.local.a,"aw",%progbits
+.section .tbss.foo,"aGwT",@nobits,foo,comdat
 
 // CHECK-NOT: Name: .rodata.a
 // CHECK:     Name: .rodata
 // CHECK-NOT: Name: .text.a
 // CHECK:     Name: .text
+// CHECK:     Name: .tbss ({{.*}})
 // CHECK-NOT: Name: .data.rel.ro.a
 // CHECK-NOT: Name: .data.rel.ro.local.a
 // CHECK:     Name: .data.rel.ro
