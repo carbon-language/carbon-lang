@@ -57,7 +57,7 @@ std::unique_ptr<Module> parseMIR(legacy::PassManagerBase &PM,
 
   SMDiagnostic Diagnostic;
   std::unique_ptr<MemoryBuffer> MBuffer = MemoryBuffer::getMemBuffer(MIRCode);
-  MIR = std::move(createMIRParser(std::move(MBuffer), Context));
+  MIR = createMIRParser(std::move(MBuffer), Context);
   if (!MIR)
     return nullptr;
 
