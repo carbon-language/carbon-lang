@@ -592,9 +592,9 @@ class MDString : public Metadata {
 
   StringMapEntry<MDString> *Entry;
   MDString() : Metadata(MDStringKind, Uniqued), Entry(nullptr) {}
-  MDString(MDString &&) : Metadata(MDStringKind, Uniqued) {}
 
 public:
+  MDString(MDString &&R) = default;
   static MDString *get(LLVMContext &Context, StringRef Str);
   static MDString *get(LLVMContext &Context, const char *Str) {
     return get(Context, Str ? StringRef(Str) : StringRef());
