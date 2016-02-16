@@ -1,12 +1,5 @@
 # Tests which are known to fail from the GCC torture test suite.
 
-# WebAssemblyCFGStackify.cpp:458: void PlaceMarkers(llvm::MachineFunction &, const llvm::MachineLoopInfo &, const llvm::WebAssemblyInstrInfo &, llvm::MachineDominatorTree &, llvm::WebAssemblyFunctionInfo &): Assertion `Stack.back() == &MBB && "Loop top should be balanced"' failed.
-20090113-2.c
-20090113-3.c
-loop-15.c
-930628-1.c
-
-
 # Unknown type!
 # UNREACHABLE executed at /s/llvm-upstream/llvm/lib/IR/ValueTypes.cpp:280!
 # This is what happens when there is a struct operand to va_arg
