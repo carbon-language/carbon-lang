@@ -181,4 +181,35 @@ exit:
  ret void
 }
 
+declare void @use_i8_star(i8*)
+declare i8* @llvm.frameaddress(i32)
+
+; Test __builtin_frame_address(0).
+; TODO: When the prolog/epilog sequences are optimized, refine these checks to
+; be more specific.
+
+; CHECK-LABEL: frameaddress_0:
+; CHECK: __stack_pointer
+; CHECK: load
+; CHECK: call use_i8_star
+; CHECK: __stack_pointer
+; CHECK: store
+define void @frameaddress_0() {
+  %t = call i8* @llvm.frameaddress(i32 0)
+  call void @use_i8_star(i8* %t)
+  ret void
+}
+
+; Test __builtin_frame_address(1).
+
+; CHECK-LABEL: frameaddress_1:
+; CHECK-NEXT: i32.const $push0=, 0{{$}}
+; CHECK-NEXT: call use_i8_star@FUNCTION, $pop0{{$}}
+; CHECK-NEXT: return{{$}}
+define void @frameaddress_1() {
+  %t = call i8* @llvm.frameaddress(i32 1)
+  call void @use_i8_star(i8* %t)
+  ret void
+}
+
 ; TODO: test over-aligned alloca

@@ -542,9 +542,8 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     case ISD::RETURNADDR: // Probably nothing meaningful can be returned here.
       fail(DL, DAG, "WebAssembly hasn't implemented __builtin_return_address");
       return SDValue();
-    case ISD::FRAMEADDR: // TODO: Make this return the userspace frame address
-      fail(DL, DAG, "WebAssembly hasn't implemented __builtin_frame_address");
-      return SDValue();
+    case ISD::FRAMEADDR:
+      return LowerFRAMEADDR(Op, DAG);
     case ISD::CopyToReg:
       return LowerCopyToReg(Op, DAG);
   }
@@ -577,6 +576,21 @@ SDValue WebAssemblyTargetLowering::LowerFrameIndex(SDValue Op,
                                                    SelectionDAG &DAG) const {
   int FI = cast<FrameIndexSDNode>(Op)->getIndex();
   return DAG.getTargetFrameIndex(FI, Op.getValueType());
+}
+
+SDValue WebAssemblyTargetLowering::LowerFRAMEADDR(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  // Non-zero depths are not supported by WebAssembly currently. Use the
+  // legalizer's default expansion, which is to return 0 (what this function is
+  // documented to do).
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
+    return SDValue();
+
+  DAG.getMachineFunction().getFrameInfo()->setFrameAddressIsTaken(true);
+  EVT VT = Op.getValueType();
+  unsigned FP =
+      Subtarget->getRegisterInfo()->getFrameRegister(DAG.getMachineFunction());
+  return DAG.getCopyFromReg(DAG.getEntryNode(), SDLoc(Op), FP, VT);
 }
 
 SDValue WebAssemblyTargetLowering::LowerGlobalAddress(SDValue Op,
