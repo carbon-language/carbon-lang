@@ -160,4 +160,25 @@ define void @dynamic_static_alloca(i32 %alloc) {
  ret void
 }
 
+; The use of the alloca in a phi causes a CopyToReg DAG node to be generated,
+; which has to have special handling because CopyToReg can't have a FI operand
+; CHECK-LABEL: copytoreg_fi:
+define void @copytoreg_fi(i1 %cond, i32* %b) {
+entry:
+ ; CHECK: i32.const [[L2:.+]]=, 16
+ ; CHECK-NEXT: i32.sub [[SP:.+]]=, {{.+}}, [[L2]]
+ %addr = alloca i32
+ ; CHECK: i32.const [[OFF:.+]]=, 12
+ ; CHECK-NEXT: i32.add [[ADDR:.+]]=, [[SP]], [[OFF]]
+ ; CHECK-NEXT: copy_local [[COPY:.+]]=, [[ADDR]]
+ br label %body
+body:
+ %a = phi i32* [%addr, %entry], [%b, %body]
+ store i32 1, i32* %a
+ ; CHECK: i32.store {{.*}}, 0([[COPY]]),
+ br i1 %cond, label %body, label %exit
+exit:
+ ret void
+}
+
 ; TODO: test over-aligned alloca
