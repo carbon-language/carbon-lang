@@ -446,6 +446,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
             !StringRef(Arg->getValue(0))
                  .getAsInteger(0, LegacySanitizeCoverage) &&
             LegacySanitizeCoverage >= 0 && LegacySanitizeCoverage <= 4) {
+          D.Diag(diag::warn_drv_deprecated_arg)
+              << Arg->getAsString(Args) << "-fsanitize-coverage=[func,bb,edge]";
           // TODO: Add deprecation notice for this form.
           switch (LegacySanitizeCoverage) {
           case 0:
