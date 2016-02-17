@@ -221,21 +221,56 @@ LLVMValueRef clone_constant(LLVMValueRef Cst, LLVMModuleRef M) {
     const char *Name = LLVMGetValueName(Cst);
 
     // Try function
-    if (LLVMIsAFunction(Cst))
-      return LLVMGetNamedFunction(M, Name);
+    if (LLVMIsAFunction(Cst)) {
+      LLVMValueRef Dst = LLVMGetNamedFunction(M, Name);
+      if (Dst)
+        return Dst;
+      report_fatal_error("Could not find function");
+    }
 
     // Try global variable
-    if (LLVMIsAGlobalVariable(Cst))
-      return LLVMGetNamedGlobal(M, Name);
+    if (LLVMIsAGlobalVariable(Cst)) {
+      LLVMValueRef Dst = LLVMGetNamedGlobal(M, Name);
+      if (Dst)
+        return Dst;
+      report_fatal_error("Could not find function");
+    }
 
     fprintf(stderr, "Could not find @%s\n", Name);
     exit(-1);
   }
 
-  // Try literal
+  // Try integer literal
   if (LLVMIsAConstantInt(Cst))
     return LLVMConstInt(TypeCloner(M).Clone(Cst),
                         LLVMConstIntGetZExtValue(Cst), false);
+
+  // Try zeroinitializer
+  if (LLVMIsAConstantAggregateZero(Cst))
+    return LLVMConstNull(TypeCloner(M).Clone(Cst));
+
+  // Try constant array
+  if (LLVMIsAConstantArray(Cst)) {
+    LLVMTypeRef Ty = TypeCloner(M).Clone(Cst);
+    unsigned EltCount = LLVMGetArrayLength(Ty);
+    SmallVector<LLVMValueRef, 8> Elts;
+    for (unsigned i = 0; i < EltCount; i++)
+      Elts.push_back(clone_constant(LLVMGetOperand(Cst, i), M));
+    return LLVMConstArray(LLVMGetElementType(Ty), Elts.data(), EltCount);
+  }
+
+  // Try constant struct
+  if (LLVMIsAConstantStruct(Cst)) {
+    LLVMTypeRef Ty = TypeCloner(M).Clone(Cst);
+    unsigned EltCount = LLVMCountStructElementTypes(Ty);
+    SmallVector<LLVMValueRef, 8> Elts;
+    for (unsigned i = 0; i < EltCount; i++)
+      Elts.push_back(clone_constant(LLVMGetOperand(Cst, i), M));
+    if (LLVMGetStructName(Ty))
+      return LLVMConstNamedStruct(Ty, Elts.data(), EltCount);
+    return LLVMConstStructInContext(LLVMGetModuleContext(M), Elts.data(),
+                                    EltCount, LLVMIsPackedStruct(Ty));
+  }
 
   // Try undef
   if (LLVMIsUndef(Cst))
@@ -587,40 +622,53 @@ struct FunCloner {
   }
 };
 
-static void clone_function(LLVMValueRef Src, LLVMModuleRef M) {
-  const char *Name = LLVMGetValueName(Src);
-  LLVMValueRef Fun = LLVMGetNamedFunction(M, Name);
-  if (!Fun)
-    report_fatal_error("Function must have been declared already");
-
-  FunCloner FC(Src, Fun);
-  FC.CloneBBs(Src);
-}
-
-static void declare_function(LLVMValueRef Src, LLVMModuleRef M) {
-  const char *Name = LLVMGetValueName(Src);
-  LLVMValueRef Fun = LLVMGetNamedFunction(M, Name);
-  if (Fun != nullptr)
-    report_fatal_error("Function already cloned");
-
-  LLVMTypeRef FunTy = LLVMGetElementType(TypeCloner(M).Clone(Src));
-  LLVMAddFunction(M, Name, FunTy);
-}
-
-static void clone_functions(LLVMModuleRef Src, LLVMModuleRef Dst) {
-  LLVMValueRef Begin = LLVMGetFirstFunction(Src);
-  LLVMValueRef End = LLVMGetLastFunction(Src);
+static void declare_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
+  LLVMValueRef Begin = LLVMGetFirstGlobal(Src);
+  LLVMValueRef End = LLVMGetLastGlobal(Src);
   if (!Begin) {
     if (End != nullptr)
-      report_fatal_error("Range has an end but no start");
+      report_fatal_error("Range has an end but no begining");
     return;
   }
 
-  // First pass, we declare all function
   LLVMValueRef Cur = Begin;
   LLVMValueRef Next = nullptr;
   while (true) {
-    declare_function(Cur, Dst);
+    const char *Name = LLVMGetValueName(Cur);
+    if (LLVMGetNamedGlobal(M, Name))
+      report_fatal_error("GlobalVariable already cloned");
+    LLVMAddGlobal(M, LLVMGetElementType(TypeCloner(M).Clone(Cur)), Name);
+
+    Next = LLVMGetNextGlobal(Cur);
+    if (Next == nullptr) {
+      if (Cur != End)
+        report_fatal_error("");
+      break;
+    }
+
+    LLVMValueRef Prev = LLVMGetPreviousGlobal(Next);
+    if (Prev != Cur)
+      report_fatal_error("Next.Previous global is not Current");
+
+    Cur = Next;
+  }
+
+  Begin = LLVMGetFirstFunction(Src);
+  End = LLVMGetLastFunction(Src);
+  if (!Begin) {
+    if (End != nullptr)
+      report_fatal_error("Range has an end but no begining");
+    return;
+  }
+
+  Cur = Begin;
+  Next = nullptr;
+  while (true) {
+    const char *Name = LLVMGetValueName(Cur);
+    if (LLVMGetNamedFunction(M, Name))
+      report_fatal_error("Function already cloned");
+    LLVMAddFunction(M, Name, LLVMGetElementType(TypeCloner(M).Clone(Cur)));
+
     Next = LLVMGetNextFunction(Cur);
     if (Next == nullptr) {
       if (Cur != End)
@@ -634,12 +682,69 @@ static void clone_functions(LLVMModuleRef Src, LLVMModuleRef Dst) {
 
     Cur = Next;
   }
+}
 
-  // Second pass, we define them
+static void clone_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
+  LLVMValueRef Begin = LLVMGetFirstGlobal(Src);
+  LLVMValueRef End = LLVMGetLastGlobal(Src);
+  if (!Begin) {
+    if (End != nullptr)
+      report_fatal_error("Range has an end but no begining");
+    return;
+  }
+
+  LLVMValueRef Cur = Begin;
+  LLVMValueRef Next = nullptr;
+  while (true) {
+    const char *Name = LLVMGetValueName(Cur);
+    LLVMValueRef G = LLVMGetNamedGlobal(M, Name);
+    if (!G)
+      report_fatal_error("GlobalVariable must have been declared already");
+
+    if (auto I = LLVMGetInitializer(Cur))
+      LLVMSetInitializer(G, clone_constant(I, M));
+
+    LLVMSetGlobalConstant(G, LLVMIsGlobalConstant(Cur));
+    LLVMSetThreadLocal(G, LLVMIsThreadLocal(Cur));
+    LLVMSetExternallyInitialized(G, LLVMIsExternallyInitialized(Cur));
+    LLVMSetLinkage(G, LLVMGetLinkage(Cur));
+    LLVMSetSection(G, LLVMGetSection(Cur));
+    LLVMSetVisibility(G, LLVMGetVisibility(Cur));
+    LLVMSetUnnamedAddr(G, LLVMHasUnnamedAddr(Cur));
+    LLVMSetAlignment(G, LLVMGetAlignment(Cur));
+
+    Next = LLVMGetNextGlobal(Cur);
+    if (Next == nullptr) {
+      if (Cur != End)
+        report_fatal_error("");
+      break;
+    }
+
+    LLVMValueRef Prev = LLVMGetPreviousGlobal(Next);
+    if (Prev != Cur)
+      report_fatal_error("Next.Previous global is not Current");
+
+    Cur = Next;
+  }
+
+  Begin = LLVMGetFirstFunction(Src);
+  End = LLVMGetLastFunction(Src);
+  if (!Begin) {
+    if (End != nullptr)
+      report_fatal_error("Range has an end but no begining");
+    return;
+  }
+
   Cur = Begin;
   Next = nullptr;
   while (true) {
-    clone_function(Cur, Dst);
+    const char *Name = LLVMGetValueName(Cur);
+    LLVMValueRef Fun = LLVMGetNamedFunction(M, Name);
+    if (!Fun)
+      report_fatal_error("Function must have been declared already");
+    FunCloner FC(Cur, Fun);
+    FC.CloneBBs(Cur);
+
     Next = LLVMGetNextFunction(Cur);
     if (Next == nullptr) {
       if (Cur != End)
@@ -668,7 +773,8 @@ int llvm_echo(void) {
   if (strcmp(LLVMGetDataLayoutStr(M), LLVMGetDataLayoutStr(Src)))
     report_fatal_error("Inconsistent DataLayout string representation");
 
-  clone_functions(Src, M);
+  declare_symbols(Src, M);
+  clone_symbols(Src, M);
   char *Str = LLVMPrintModuleToString(M);
   fputs(Str, stdout);
 
