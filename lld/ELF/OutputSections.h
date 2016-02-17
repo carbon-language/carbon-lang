@@ -212,6 +212,8 @@ template <class ELFT> struct DynamicReloc {
       : Type(Type), OKind(Off_Sec), OffsetSec(OffsetSec),
         OffsetInSec(OffsetInSec), TargetSec(TargetSec),
         OffsetInTargetSec(OffsetInTargetSec), Addend(Addend) {}
+
+  uintX_t getOffset() const;
 };
 
 template <class ELFT>

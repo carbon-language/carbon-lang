@@ -225,25 +225,21 @@ void RelocationSection<ELFT>::addReloc(const DynamicReloc<ELFT> &Reloc) {
 }
 
 template <class ELFT>
-static typename ELFFile<ELFT>::uintX_t
-getOffset(const DynamicReloc<ELFT> &Rel) {
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
-  SymbolBody *Sym = Rel.Sym;
-  switch (Rel.OKind) {
-  case DynamicReloc<ELFT>::Off_GTlsIndex:
+typename ELFFile<ELFT>::uintX_t DynamicReloc<ELFT>::getOffset() const {
+  switch (OKind) {
+  case Off_GTlsIndex:
     return Out<ELFT>::Got->getGlobalDynAddr(*Sym);
-  case DynamicReloc<ELFT>::Off_GTlsOffset:
+  case Off_GTlsOffset:
     return Out<ELFT>::Got->getGlobalDynAddr(*Sym) + sizeof(uintX_t);
-  case DynamicReloc<ELFT>::Off_LTlsIndex:
+  case Off_LTlsIndex:
     return Out<ELFT>::Got->getTlsIndexVA();
-  case DynamicReloc<ELFT>::Off_Sec:
-    return Rel.OffsetSec->getOffset(Rel.OffsetInSec) +
-           Rel.OffsetSec->OutSec->getVA();
-  case DynamicReloc<ELFT>::Off_Bss:
+  case Off_Sec:
+    return OffsetSec->getOffset(OffsetInSec) + OffsetSec->OutSec->getVA();
+  case Off_Bss:
     return cast<SharedSymbol<ELFT>>(Sym)->OffsetInBss + Out<ELFT>::Bss->getVA();
-  case DynamicReloc<ELFT>::Off_Got:
+  case Off_Got:
     return Sym->getGotVA<ELFT>();
-  case DynamicReloc<ELFT>::Off_GotPlt:
+  case Off_GotPlt:
     return Sym->getGotPltVA<ELFT>();
   }
   llvm_unreachable("Invalid offset kind");
@@ -265,7 +261,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       reinterpret_cast<Elf_Rela *>(P)->r_addend = Rel.Addend + VA;
     }
 
-    P->r_offset = getOffset(Rel);
+    P->r_offset = Rel.getOffset();
     uint32_t SymIdx = (!Rel.UseSymVA && Sym) ? Sym->DynsymIndex : 0;
     P->setSymbolAndType(SymIdx, Rel.Type, Config->Mips64EL);
   }
