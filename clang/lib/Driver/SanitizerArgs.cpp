@@ -49,6 +49,7 @@ enum CoverageFeature {
   CoverageTraceBB = 1 << 4,
   CoverageTraceCmp = 1 << 5,
   Coverage8bitCounters = 1 << 6,
+  CoverageTracePC = 1 << 7,
 };
 
 /// Parse a -fsanitize= or -fno-sanitize= argument's values, diagnosing any
@@ -498,6 +499,11 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     D.Diag(clang::diag::err_drv_argument_only_allowed_with)
         << "-fsanitize-coverage=8bit-counters"
         << "-fsanitize-coverage=(func|bb|edge)";
+  if ((CoverageFeatures & CoverageTracePC) &&
+      !(CoverageFeatures & CoverageTypes))
+    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << "-fsanitize-coverage=trace-pc"
+        << "-fsanitize-coverage=(func|bb|edge)";
 
   if (AllAddedKinds & Address) {
     AsanSharedRuntime =
@@ -615,7 +621,8 @@ void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
     std::make_pair(CoverageIndirCall, "-fsanitize-coverage-indirect-calls"),
     std::make_pair(CoverageTraceBB, "-fsanitize-coverage-trace-bb"),
     std::make_pair(CoverageTraceCmp, "-fsanitize-coverage-trace-cmp"),
-    std::make_pair(Coverage8bitCounters, "-fsanitize-coverage-8bit-counters")};
+    std::make_pair(Coverage8bitCounters, "-fsanitize-coverage-8bit-counters"),
+    std::make_pair(CoverageTracePC, "-fsanitize-coverage-trace-pc")};
   for (auto F : CoverageFlags) {
     if (CoverageFeatures & F.first)
       CmdArgs.push_back(Args.MakeArgString(F.second));
@@ -696,6 +703,7 @@ int parseCoverageFeatures(const Driver &D, const llvm::opt::Arg *A) {
         .Case("trace-bb", CoverageTraceBB)
         .Case("trace-cmp", CoverageTraceCmp)
         .Case("8bit-counters", Coverage8bitCounters)
+        .Case("trace-pc", CoverageTracePC)
         .Default(0);
     if (F == 0)
       D.Diag(clang::diag::err_drv_unsupported_option_argument)
