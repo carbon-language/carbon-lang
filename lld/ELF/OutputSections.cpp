@@ -398,7 +398,7 @@ unsigned GnuHashTableSection<ELFT>::calcMaskWords(unsigned NumHashed) {
 }
 
 template <class ELFT> void GnuHashTableSection<ELFT>::finalize() {
-  unsigned NumHashed = HashedSymbols.size();
+  unsigned NumHashed = Symbols.size();
   NBuckets = calcNBuckets(NumHashed);
   MaskWords = calcMaskWords(NumHashed);
   // Second hash shift estimation: just predefined values.
@@ -413,7 +413,7 @@ template <class ELFT> void GnuHashTableSection<ELFT>::finalize() {
 
 template <class ELFT> void GnuHashTableSection<ELFT>::writeTo(uint8_t *Buf) {
   writeHeader(Buf);
-  if (HashedSymbols.empty())
+  if (Symbols.empty())
     return;
   writeBloomFilter(Buf);
   writeHashTable(Buf);
@@ -423,7 +423,7 @@ template <class ELFT>
 void GnuHashTableSection<ELFT>::writeHeader(uint8_t *&Buf) {
   auto *P = reinterpret_cast<Elf_Word *>(Buf);
   *P++ = NBuckets;
-  *P++ = Out<ELFT>::DynSymTab->getNumSymbols() - HashedSymbols.size();
+  *P++ = Out<ELFT>::DynSymTab->getNumSymbols() - Symbols.size();
   *P++ = MaskWords;
   *P++ = Shift2;
   Buf = reinterpret_cast<uint8_t *>(P);
@@ -434,7 +434,7 @@ void GnuHashTableSection<ELFT>::writeBloomFilter(uint8_t *&Buf) {
   unsigned C = sizeof(Elf_Off) * 8;
 
   auto *Masks = reinterpret_cast<Elf_Off *>(Buf);
-  for (const HashedSymbolData &Item : HashedSymbols) {
+  for (const HashedSymbolData &Item : Symbols) {
     size_t Pos = (Item.Hash / C) & (MaskWords - 1);
     uintX_t V = (uintX_t(1) << (Item.Hash % C)) |
                 (uintX_t(1) << ((Item.Hash >> Shift2) % C));
@@ -450,7 +450,7 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
 
   int PrevBucket = -1;
   int I = 0;
-  for (const HashedSymbolData &Item : HashedSymbols) {
+  for (const HashedSymbolData &Item : Symbols) {
     int Bucket = Item.Hash % NBuckets;
     assert(PrevBucket <= Bucket);
     if (Bucket != PrevBucket) {
@@ -471,32 +471,33 @@ static bool includeInGnuHashTable(SymbolBody *B) {
   return !B->isUndefined();
 }
 
+// Add symbols to this symbol hash table. Note that this function
+// destructively sort a given vector -- which is needed because
+// GNU-style hash table places some sorting requirements.
 template <class ELFT>
 void GnuHashTableSection<ELFT>::addSymbols(
-    std::vector<std::pair<SymbolBody *, size_t>> &Symbols) {
-  std::vector<std::pair<SymbolBody *, size_t>> NotHashed;
-  NotHashed.reserve(Symbols.size());
-  HashedSymbols.reserve(Symbols.size());
-  for (const std::pair<SymbolBody *, size_t> &P : Symbols) {
-    SymbolBody *B = P.first;
-    if (includeInGnuHashTable(B))
-      HashedSymbols.push_back(
-          HashedSymbolData{B, P.second, hashGnu(B->getName())});
-    else
-      NotHashed.push_back(P);
-  }
-  if (HashedSymbols.empty())
+    std::vector<std::pair<SymbolBody *, size_t>> &V) {
+  auto Mid = std::stable_partition(V.begin(), V.end(),
+                                   [](std::pair<SymbolBody *, size_t> &P) {
+                                     return !includeInGnuHashTable(P.first);
+                                   });
+  if (Mid == V.end())
     return;
+  for (auto I = Mid, E = V.end(); I != E; ++I) {
+    SymbolBody *B = I->first;
+    size_t StrOff = I->second;
+    Symbols.push_back({B, StrOff, hashGnu(B->getName())});
+  }
 
-  unsigned NBuckets = calcNBuckets(HashedSymbols.size());
-  std::stable_sort(HashedSymbols.begin(), HashedSymbols.end(),
+  unsigned NBuckets = calcNBuckets(Symbols.size());
+  std::stable_sort(Symbols.begin(), Symbols.end(),
                    [&](const HashedSymbolData &L, const HashedSymbolData &R) {
                      return L.Hash % NBuckets < R.Hash % NBuckets;
                    });
 
-  Symbols = std::move(NotHashed);
-  for (const HashedSymbolData &Item : HashedSymbols)
-    Symbols.push_back(std::make_pair(Item.Body, Item.STName));
+  V.erase(Mid, V.end());
+  for (const HashedSymbolData &Item : Symbols)
+    V.push_back({Item.Body, Item.STName});
 }
 
 template <class ELFT>

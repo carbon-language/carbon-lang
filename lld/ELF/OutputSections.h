@@ -417,7 +417,7 @@ private:
     uint32_t Hash;
   };
 
-  std::vector<HashedSymbolData> HashedSymbols;
+  std::vector<HashedSymbolData> Symbols;
 
   unsigned MaskWords;
   unsigned NBuckets;
