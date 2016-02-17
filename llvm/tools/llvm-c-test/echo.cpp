@@ -625,14 +625,15 @@ struct FunCloner {
 static void declare_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
   LLVMValueRef Begin = LLVMGetFirstGlobal(Src);
   LLVMValueRef End = LLVMGetLastGlobal(Src);
-  if (!Begin) {
-    if (End != nullptr)
-      report_fatal_error("Range has an end but no begining");
-    return;
-  }
 
   LLVMValueRef Cur = Begin;
   LLVMValueRef Next = nullptr;
+  if (!Begin) {
+    if (End != nullptr)
+      report_fatal_error("Range has an end but no begining");
+    goto FunDecl;
+  }
+
   while (true) {
     const char *Name = LLVMGetValueName(Cur);
     if (LLVMGetNamedGlobal(M, Name))
@@ -653,6 +654,7 @@ static void declare_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
     Cur = Next;
   }
 
+FunDecl:
   Begin = LLVMGetFirstFunction(Src);
   End = LLVMGetLastFunction(Src);
   if (!Begin) {
@@ -687,14 +689,15 @@ static void declare_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
 static void clone_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
   LLVMValueRef Begin = LLVMGetFirstGlobal(Src);
   LLVMValueRef End = LLVMGetLastGlobal(Src);
-  if (!Begin) {
-    if (End != nullptr)
-      report_fatal_error("Range has an end but no begining");
-    return;
-  }
 
   LLVMValueRef Cur = Begin;
   LLVMValueRef Next = nullptr;
+  if (!Begin) {
+    if (End != nullptr)
+      report_fatal_error("Range has an end but no begining");
+    goto FunClone;
+  }
+
   while (true) {
     const char *Name = LLVMGetValueName(Cur);
     LLVMValueRef G = LLVMGetNamedGlobal(M, Name);
@@ -727,6 +730,7 @@ static void clone_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
     Cur = Next;
   }
 
+FunClone:
   Begin = LLVMGetFirstFunction(Src);
   End = LLVMGetLastFunction(Src);
   if (!Begin) {
