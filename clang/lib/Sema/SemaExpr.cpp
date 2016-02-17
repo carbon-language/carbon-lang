@@ -3295,7 +3295,14 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
 
   if (Literal.isFloatingLiteral()) {
     QualType Ty;
-    if (Literal.isFloat)
+    if (Literal.isHalf){
+      if (getOpenCLOptions().cl_khr_fp16)
+        Ty = Context.HalfTy;
+      else {
+        Diag(Tok.getLocation(), diag::err_half_const_requires_fp16);
+        return ExprError();
+      }
+    } else if (Literal.isFloat)
       Ty = Context.FloatTy;
     else if (!Literal.isLong)
       Ty = Context.DoubleTy;
