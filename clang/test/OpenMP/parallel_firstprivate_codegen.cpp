@@ -345,7 +345,7 @@ int main() {
 // CHECK: call {{.*}} [[S_INT_TY_DESTR:@.+]]([[S_INT_TY]]*
 // CHECK: ret
 //
-// CHECK: define {{.+}} @{{.+}}([[SS_TY]]* %
+// CHECK: define {{.+}} @{{.+}}([[SS_TY]]*
 // CHECK: getelementptr inbounds [[SS_TY]], [[SS_TY]]* %{{.+}}, i32 0, i32 0
 // CHECK: store i{{[0-9]+}} 0, i{{[0-9]+}}* %
 // CHECK: getelementptr inbounds [[SS_TY]], [[SS_TY]]* %{{.+}}, i32 0, i32 1
