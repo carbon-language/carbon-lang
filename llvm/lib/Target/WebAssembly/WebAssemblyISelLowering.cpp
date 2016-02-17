@@ -321,7 +321,7 @@ SDValue WebAssemblyTargetLowering::LowerCall(
       SDValue FINode = DAG.getFrameIndex(FI, getPointerTy(Layout));
       Chain = DAG.getMemcpy(
           Chain, DL, FINode, OutVal, SizeNode, Out.Flags.getByValAlign(),
-          /*isVolatile*/ false, /*AlwaysInline=*/true,
+          /*isVolatile*/ false, /*AlwaysInline=*/false,
           /*isTailCall*/ false, MachinePointerInfo(), MachinePointerInfo());
       OutVal = FINode;
     }
