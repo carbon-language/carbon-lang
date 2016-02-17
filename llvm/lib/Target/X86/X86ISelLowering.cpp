@@ -6663,23 +6663,23 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   // See if we can use a vector load to get all of the elements.
   if (VT.is128BitVector() || VT.is256BitVector() || VT.is512BitVector()) {
-    SmallVector<SDValue, 64> V(Op->op_begin(), Op->op_begin() + NumElems);
-    if (SDValue LD = EltsFromConsecutiveLoads(VT, V, dl, DAG, false))
+    SmallVector<SDValue, 64> Ops(Op->op_begin(), Op->op_begin() + NumElems);
+    if (SDValue LD = EltsFromConsecutiveLoads(VT, Ops, dl, DAG, false))
       return LD;
   }
 
   // For AVX-length vectors, build the individual 128-bit pieces and use
   // shuffles to put them in place.
   if (VT.is256BitVector() || VT.is512BitVector()) {
-    SmallVector<SDValue, 64> V(Op->op_begin(), Op->op_begin() + NumElems);
+    SmallVector<SDValue, 64> Ops(Op->op_begin(), Op->op_begin() + NumElems);
 
     EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
 
     // Build both the lower and upper subvector.
     SDValue Lower = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT,
-                                makeArrayRef(&V[0], NumElems/2));
+                                makeArrayRef(&Ops[0], NumElems/2));
     SDValue Upper = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT,
-                                makeArrayRef(&V[NumElems / 2], NumElems/2));
+                                makeArrayRef(&Ops[NumElems / 2], NumElems/2));
 
     // Recreate the wider vector with the lower and upper part.
     if (VT.is256BitVector())
@@ -6716,30 +6716,30 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       return V;
 
   // If element VT is == 32 bits, turn it into a number of shuffles.
-  SmallVector<SDValue, 8> V(NumElems);
   if (NumElems == 4 && NumZero > 0) {
+    SmallVector<SDValue, 8> Ops(NumElems);
     for (unsigned i = 0; i < 4; ++i) {
       bool isZero = !(NonZeros & (1ULL << i));
       if (isZero)
-        V[i] = getZeroVector(VT, Subtarget, DAG, dl);
+        Ops[i] = getZeroVector(VT, Subtarget, DAG, dl);
       else
-        V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
+        Ops[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
     }
 
     for (unsigned i = 0; i < 2; ++i) {
       switch ((NonZeros & (0x3 << i*2)) >> (i*2)) {
         default: break;
         case 0:
-          V[i] = V[i*2];  // Must be a zero vector.
+          Ops[i] = Ops[i*2];  // Must be a zero vector.
           break;
         case 1:
-          V[i] = getMOVL(DAG, dl, VT, V[i*2+1], V[i*2]);
+          Ops[i] = getMOVL(DAG, dl, VT, Ops[i*2+1], Ops[i*2]);
           break;
         case 2:
-          V[i] = getMOVL(DAG, dl, VT, V[i*2], V[i*2+1]);
+          Ops[i] = getMOVL(DAG, dl, VT, Ops[i*2], Ops[i*2+1]);
           break;
         case 3:
-          V[i] = getUnpackl(DAG, dl, VT, V[i*2], V[i*2+1]);
+          Ops[i] = getUnpackl(DAG, dl, VT, Ops[i*2], Ops[i*2+1]);
           break;
       }
     }
@@ -6752,14 +6752,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       static_cast<int>(Reverse2 ? NumElems+1 : NumElems),
       static_cast<int>(Reverse2 ? NumElems   : NumElems+1)
     };
-    return DAG.getVectorShuffle(VT, dl, V[0], V[1], &MaskVec[0]);
+    return DAG.getVectorShuffle(VT, dl, Ops[0], Ops[1], &MaskVec[0]);
   }
 
   if (Values.size() > 1 && VT.is128BitVector()) {
-    // Check for a build vector of consecutive loads.
-    for (unsigned i = 0; i < NumElems; ++i)
-      V[i] = Op.getOperand(i);
-
     // Check for a build vector from mostly shuffle plus few inserting.
     if (SDValue Sh = buildFromShuffleMostly(Op, DAG))
       return Sh;
@@ -6783,11 +6779,12 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     // Otherwise, expand into a number of unpckl*, start by extending each of
     // our (non-undef) elements to the full vector width with the element in the
     // bottom slot of the vector (which generates no code for SSE).
+    SmallVector<SDValue, 8> Ops(NumElems);
     for (unsigned i = 0; i < NumElems; ++i) {
       if (Op.getOperand(i).getOpcode() != ISD::UNDEF)
-        V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
+        Ops[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
       else
-        V[i] = DAG.getUNDEF(VT);
+        Ops[i] = DAG.getUNDEF(VT);
     }
 
     // Next, we iteratively mix elements, e.g. for v4f32:
@@ -6797,20 +6794,20 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     unsigned EltStride = NumElems >> 1;
     while (EltStride != 0) {
       for (unsigned i = 0; i < EltStride; ++i) {
-        // If V[i+EltStride] is undef and this is the first round of mixing,
+        // If Ops[i+EltStride] is undef and this is the first round of mixing,
         // then it is safe to just drop this shuffle: V[i] is already in the
         // right place, the one element (since it's the first round) being
         // inserted as undef can be dropped.  This isn't safe for successive
         // rounds because they will permute elements within both vectors.
-        if (V[i+EltStride].getOpcode() == ISD::UNDEF &&
+        if (Ops[i+EltStride].getOpcode() == ISD::UNDEF &&
             EltStride == NumElems/2)
           continue;
 
-        V[i] = getUnpackl(DAG, dl, VT, V[i], V[i + EltStride]);
+        Ops[i] = getUnpackl(DAG, dl, VT, Ops[i], Ops[i + EltStride]);
       }
       EltStride >>= 1;
     }
-    return V[0];
+    return Ops[0];
   }
   return SDValue();
 }
