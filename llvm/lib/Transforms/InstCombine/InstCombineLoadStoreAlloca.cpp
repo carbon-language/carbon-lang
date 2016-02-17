@@ -562,8 +562,8 @@ static Instruction *unpackLoadToAggregate(InstCombiner &IC, LoadInst &LI) {
         Zero,
         ConstantInt::get(IdxType, i),
       };
-      auto *Ptr = IC.Builder->CreateInBoundsGEP(ST, Addr,
-                                            makeArrayRef(Indices), EltName);
+      auto *Ptr = IC.Builder->CreateInBoundsGEP(ST, Addr, makeArrayRef(Indices),
+                                                EltName);
       auto EltAlign = MinAlign(Align, SL->getElementOffset(i));
       auto *L = IC.Builder->CreateAlignedLoad(Ptr, EltAlign, LoadName);
       V = IC.Builder->CreateInsertValue(V, L, i);
@@ -972,8 +972,8 @@ static bool unpackStoreToAggregate(InstCombiner &IC, StoreInst &SI) {
         Zero,
         ConstantInt::get(IdxType, i),
       };
-      auto *Ptr = IC.Builder->CreateInBoundsGEP(ST, Addr,
-                                            makeArrayRef(Indices), AddrName);
+      auto *Ptr = IC.Builder->CreateInBoundsGEP(ST, Addr, makeArrayRef(Indices),
+                                                AddrName);
       auto *Val = IC.Builder->CreateExtractValue(V, i, EltName);
       auto EltAlign = MinAlign(Align, SL->getElementOffset(i));
       IC.Builder->CreateAlignedStore(Val, Ptr, EltAlign);
