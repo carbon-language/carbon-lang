@@ -411,13 +411,13 @@ private:
   void writeBloomFilter(uint8_t *&Buf);
   void writeHashTable(uint8_t *Buf);
 
-  struct HashedSymbolData {
+  struct SymbolData {
     SymbolBody *Body;
     size_t STName;
     uint32_t Hash;
   };
 
-  std::vector<HashedSymbolData> Symbols;
+  std::vector<SymbolData> Symbols;
 
   unsigned MaskWords;
   unsigned NBuckets;

@@ -434,10 +434,10 @@ void GnuHashTableSection<ELFT>::writeBloomFilter(uint8_t *&Buf) {
   unsigned C = sizeof(Elf_Off) * 8;
 
   auto *Masks = reinterpret_cast<Elf_Off *>(Buf);
-  for (const HashedSymbolData &Item : Symbols) {
-    size_t Pos = (Item.Hash / C) & (MaskWords - 1);
-    uintX_t V = (uintX_t(1) << (Item.Hash % C)) |
-                (uintX_t(1) << ((Item.Hash >> Shift2) % C));
+  for (const SymbolData &Sym : Symbols) {
+    size_t Pos = (Sym.Hash / C) & (MaskWords - 1);
+    uintX_t V = (uintX_t(1) << (Sym.Hash % C)) |
+                (uintX_t(1) << ((Sym.Hash >> Shift2) % C));
     Masks[Pos] |= V;
   }
   Buf += sizeof(Elf_Off) * MaskWords;
@@ -450,16 +450,16 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
 
   int PrevBucket = -1;
   int I = 0;
-  for (const HashedSymbolData &Item : Symbols) {
-    int Bucket = Item.Hash % NBuckets;
+  for (const SymbolData &Sym : Symbols) {
+    int Bucket = Sym.Hash % NBuckets;
     assert(PrevBucket <= Bucket);
     if (Bucket != PrevBucket) {
-      Buckets[Bucket] = Item.Body->DynsymIndex;
+      Buckets[Bucket] = Sym.Body->DynsymIndex;
       PrevBucket = Bucket;
       if (I > 0)
         Values[I - 1] |= 1;
     }
-    Values[I] = Item.Hash & ~1;
+    Values[I] = Sym.Hash & ~1;
     ++I;
   }
   if (I > 0)
@@ -491,13 +491,13 @@ void GnuHashTableSection<ELFT>::addSymbols(
 
   unsigned NBuckets = calcNBuckets(Symbols.size());
   std::stable_sort(Symbols.begin(), Symbols.end(),
-                   [&](const HashedSymbolData &L, const HashedSymbolData &R) {
+                   [&](const SymbolData &L, const SymbolData &R) {
                      return L.Hash % NBuckets < R.Hash % NBuckets;
                    });
 
   V.erase(Mid, V.end());
-  for (const HashedSymbolData &Item : Symbols)
-    V.push_back({Item.Body, Item.STName});
+  for (const SymbolData &Sym : Symbols)
+    V.push_back({Sym.Body, Sym.STName});
 }
 
 template <class ELFT>
