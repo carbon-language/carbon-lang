@@ -471,7 +471,7 @@ static int getPredState(DenseMap<BasicBlock *, int> &FinalStates, Function &F,
   }
 
   return CommonState;
-};
+}
 
 static bool isStateStoreNeeded(EHPersonality Personality, CallSite CS) {
   if (!CS)
