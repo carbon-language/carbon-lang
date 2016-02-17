@@ -192,7 +192,7 @@ MCInstrDesc const &HexagonMCInstrInfo::getDesc(MCInstrInfo const &MCII,
 }
 
 MCExpr const &HexagonMCInstrInfo::getExpr(MCExpr const &Expr) {
-  HexagonMCExpr const &HExpr = *llvm::cast<HexagonMCExpr>(&Expr);
+  const auto &HExpr = cast<HexagonMCExpr>(Expr);
   assert(HExpr.getExpr());
   return *HExpr.getExpr();
 }
