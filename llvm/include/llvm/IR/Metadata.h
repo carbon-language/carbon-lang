@@ -594,7 +594,9 @@ class MDString : public Metadata {
   MDString() : Metadata(MDStringKind, Uniqued), Entry(nullptr) {}
 
 public:
-  MDString(MDString &&R) = default;
+  // This is a "default" move ctor, MSVC does not support "= default" here
+  MDString(MDString &&R)
+      : Metadata(MDStringKind, Uniqued), Entry(std::move(R.Entry)) {}
   static MDString *get(LLVMContext &Context, StringRef Str);
   static MDString *get(LLVMContext &Context, const char *Str) {
     return get(Context, Str ? StringRef(Str) : StringRef());
