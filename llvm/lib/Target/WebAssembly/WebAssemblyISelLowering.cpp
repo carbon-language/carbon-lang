@@ -583,7 +583,7 @@ SDValue WebAssemblyTargetLowering::LowerFRAMEADDR(SDValue Op,
   // Non-zero depths are not supported by WebAssembly currently. Use the
   // legalizer's default expansion, which is to return 0 (what this function is
   // documented to do).
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
+  if (Op.getConstantOperandVal(0) > 0)
     return SDValue();
 
   DAG.getMachineFunction().getFrameInfo()->setFrameAddressIsTaken(true);
