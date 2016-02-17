@@ -127,8 +127,19 @@ private:
   typedef typename ELFO::Elf_Verdef Elf_Verdef;
   typedef typename ELFO::Elf_Verdaux Elf_Verdaux;
 
+  DynRegionInfo checkDRI(DynRegionInfo DRI) {
+    if (DRI.Addr < Obj->base() ||
+        (const uint8_t *)DRI.Addr + DRI.Size > Obj->base() + Obj->getBufSize())
+      error(llvm::object::object_error::parse_failed);
+    return DRI;
+  }
+
+  DynRegionInfo createDRIFrom(const Elf_Phdr *P, uintX_t EntSize) {
+    return checkDRI({Obj->base() + P->p_offset, P->p_filesz, EntSize});
+  }
+
   DynRegionInfo createDRIFrom(const Elf_Shdr *S) {
-    return {Obj->base() + S->sh_offset, S->sh_size, S->sh_entsize};
+    return checkDRI({Obj->base() + S->sh_offset, S->sh_size, S->sh_entsize});
   }
 
   void parseDynamicTable(ArrayRef<const Elf_Phdr *> LoadSegments);
@@ -145,12 +156,6 @@ private:
   Elf_Rel_Range dyn_rels() const;
   Elf_Rela_Range dyn_relas() const;
   StringRef getDynamicString(uint64_t Offset) const;
-  const Elf_Dyn *dynamic_table_begin() const {
-    return unwrapOrError(Obj->dynamic_table_begin(DynamicProgHeader));
-  }
-  const Elf_Dyn *dynamic_table_end() const {
-    return unwrapOrError(Obj->dynamic_table_end(DynamicProgHeader));
-  }
   StringRef getSymbolVersion(StringRef StrTab, const Elf_Sym *symb,
                              bool &IsDefault);
   void LoadVersionMap();
@@ -162,7 +167,7 @@ private:
   DynRegionInfo DynRelaRegion;
   DynRegionInfo DynPLTRelRegion;
   DynRegionInfo DynSymRegion;
-  const Elf_Phdr *DynamicProgHeader = nullptr;
+  DynRegionInfo DynamicTable;
   StringRef DynamicStringTable;
   StringRef SOName;
   const Elf_Hash *HashTable = nullptr;
@@ -199,7 +204,7 @@ private:
 
 public:
   Elf_Dyn_Range dynamic_table() const {
-    return unwrapOrError(Obj->dynamic_table(DynamicProgHeader));
+    return DynamicTable.getAsRange<Elf_Dyn>();
   }
 
   Elf_Sym_Range dynamic_symbols() const {
@@ -991,7 +996,7 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
   SmallVector<const Elf_Phdr *, 4> LoadSegments;
   for (const Elf_Phdr &Phdr : Obj->program_headers()) {
     if (Phdr.p_type == ELF::PT_DYNAMIC) {
-      DynamicProgHeader = &Phdr;
+      DynamicTable = createDRIFrom(&Phdr, sizeof(Elf_Dyn));
       continue;
     }
     if (Phdr.p_type != ELF::PT_LOAD || Phdr.p_filesz == 0)
@@ -1654,8 +1659,8 @@ template <> void ELFDumper<ELFType<support::little, false>>::printUnwindInfo() {
 
 template<class ELFT>
 void ELFDumper<ELFT>::printDynamicTable() {
-  auto I = dynamic_table_begin();
-  auto E = dynamic_table_end();
+  auto I = dynamic_table().begin();
+  auto E = dynamic_table().end();
 
   if (I == E)
     return;
