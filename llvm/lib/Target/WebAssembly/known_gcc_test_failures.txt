@@ -20,9 +20,6 @@ va-arg-22.c
 920908-1.c
 pr38151.c
 
-# include/llvm/CodeGen/SelectionDAGNodes.h:800: llvm::SDNode::SDNode(unsigned int, unsigned int, llvm::DebugLoc, llvm::SDVTList, ArrayRef<llvm::SDValue>): Assertion `NumOperands == Ops.size() && "NumOperands wasn't wide enough for its operands!"' failed.
-pr28982b.c
-
 # SelectionDAGNodes.h:943: llvm::SDValue::SDValue(llvm::SDNode *, unsigned int): Assertion `(!Node || ResNo < Node->getNumValues()) && "Invalid result number for the given node!"' failed.
 pr53645.c
 pr53645-2.c
