@@ -45,9 +45,6 @@ comp-goto-1.c
 20030811-1.c
 pr17377.c
 
-# WebAssembly hasn't implemented __builtin_frame_address
-frame-address.c
-
 # Error: invalid output constraint '=t' in asm.
 980709-1.c
 990413-2.c
