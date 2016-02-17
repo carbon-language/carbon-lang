@@ -276,12 +276,24 @@ LLVMValueRef clone_constant(LLVMValueRef Cst, LLVMModuleRef M) {
   if (LLVMIsUndef(Cst))
     return LLVMGetUndef(TypeCloner(M).Clone(Cst));
 
+  // Try float literal
+  if (LLVMIsAConstantFP(Cst))
+    report_fatal_error("ConstantFP is not supported");
+
   // This kind of constant is not supported
   if (!LLVMIsAConstantExpr(Cst))
     report_fatal_error("Expected a constant expression");
 
   // At this point, it must be a constant expression
-  report_fatal_error("ConstantExpression are not supported");
+  LLVMOpcode Op = LLVMGetConstOpcode(Cst);
+  switch(Op) {
+    case LLVMBitCast:
+      return LLVMConstBitCast(clone_constant(LLVMGetOperand(Cst, 0), M),
+                              TypeCloner(M).Clone(Cst));
+    default:
+      fprintf(stderr, "%d is not a supported opcode\n", Op);
+      exit(-1);
+  }
 }
 
 struct FunCloner {
@@ -487,6 +499,11 @@ struct FunCloner {
           Dst = LLVMBuildInBoundsGEP(Builder, Ptr, Idx.data(), NumIdx, Name);
         else
           Dst = LLVMBuildGEP(Builder, Ptr, Idx.data(), NumIdx, Name);
+        break;
+      }
+      case LLVMBitCast: {
+        LLVMValueRef V = CloneValue(LLVMGetOperand(Src, 0));
+        Dst = LLVMBuildBitCast(Builder, V, CloneType(Src), Name);
         break;
       }
       case LLVMICmp: {
