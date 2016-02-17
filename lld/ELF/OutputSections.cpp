@@ -1456,38 +1456,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
   for (const std::pair<SymbolBody *, unsigned> &P : Symbols) {
     SymbolBody *Body = P.first;
-    const OutputSectionBase<ELFT> *OutSec = nullptr;
-
-    switch (Body->kind()) {
-    case SymbolBody::DefinedSyntheticKind:
-      OutSec = &cast<DefinedSynthetic<ELFT>>(Body)->Section;
-      break;
-    case SymbolBody::DefinedRegularKind: {
-      auto *Sym = cast<DefinedRegular<ELFT>>(Body->repl());
-      if (InputSectionBase<ELFT> *Sec = Sym->Section) {
-        if (!Sec->isLive())
-          continue;
-        OutSec = Sec->OutSec;
-      }
-      break;
-    }
-    case SymbolBody::DefinedCommonKind:
-      OutSec = Out<ELFT>::Bss;
-      break;
-    case SymbolBody::SharedKind: {
-      if (cast<SharedSymbol<ELFT>>(Body)->needsCopy())
-        OutSec = Out<ELFT>::Bss;
-      break;
-    }
-    case SymbolBody::UndefinedElfKind:
-    case SymbolBody::UndefinedKind:
-    case SymbolBody::LazyKind:
-      break;
-    case SymbolBody::DefinedBitcodeKind:
-      llvm_unreachable("Should have been replaced");
-    }
-
-    ESym->st_name = P.second;
+    unsigned SymIdx = P.second;
 
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;
@@ -1501,16 +1470,44 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
 
     ESym->setBindingAndType(getSymbolBinding(Body), Type);
     ESym->st_size = Size;
+    ESym->st_name = SymIdx;
     ESym->setVisibility(Body->getVisibility());
     ESym->st_value = Body->getVA<ELFT>();
 
-    if (OutSec)
+    if (const OutputSectionBase<ELFT> *OutSec = getOutputSection(Body))
       ESym->st_shndx = OutSec->SectionIndex;
     else if (isa<DefinedRegular<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;
-
     ++ESym;
   }
+}
+
+template <class ELFT>
+const OutputSectionBase<ELFT> *
+SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
+  switch (Sym->kind()) {
+  case SymbolBody::DefinedSyntheticKind:
+    return &cast<DefinedSynthetic<ELFT>>(Sym)->Section;
+  case SymbolBody::DefinedRegularKind: {
+    auto *D = cast<DefinedRegular<ELFT>>(Sym->repl());
+    if (D->Section)
+      return D->Section->OutSec;
+    break;
+  }
+  case SymbolBody::DefinedCommonKind:
+    return Out<ELFT>::Bss;
+  case SymbolBody::SharedKind:
+    if (cast<SharedSymbol<ELFT>>(Sym)->needsCopy())
+      return Out<ELFT>::Bss;
+    break;
+  case SymbolBody::UndefinedElfKind:
+  case SymbolBody::UndefinedKind:
+  case SymbolBody::LazyKind:
+    break;
+  case SymbolBody::DefinedBitcodeKind:
+    llvm_unreachable("Should have been replaced");
+  }
+  return nullptr;
 }
 
 template <class ELFT>
