@@ -14826,6 +14826,9 @@ void Sema::ActOnModuleEnd(SourceLocation DirectiveLoc, Module *Mod) {
     VisibleModules = std::move(VisibleModulesStack.back());
     VisibleModulesStack.pop_back();
     VisibleModules.setVisible(Mod, DirectiveLoc);
+    // Leaving a module hides namespace names, so our visible namespace cache
+    // is now out of date.
+    VisibleNamespaceCache.clear();
   }
 }
 

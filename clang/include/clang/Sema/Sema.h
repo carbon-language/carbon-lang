@@ -6617,6 +6617,10 @@ public:
   /// template defined within it.
   llvm::DenseSet<Module*> &getLookupModules();
 
+  /// \brief Map from the most recent declaration of a namespace to the most
+  /// recent visible declaration of that namespace.
+  llvm::DenseMap<NamedDecl*, NamedDecl*> VisibleNamespaceCache;
+
   /// \brief Whether we are in a SFINAE context that is not associated with
   /// template instantiation.
   ///
