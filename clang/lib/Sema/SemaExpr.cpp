@@ -6838,8 +6838,23 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
     // doesn't handle dependent types properly, so make sure any TypoExprs have
     // been dealt with before checking the operands.
     ExprResult CondResult = CorrectDelayedTyposInExpr(CondExpr);
-    if (!CondResult.isUsable()) return ExprError();
+    ExprResult LHSResult = CorrectDelayedTyposInExpr(LHSExpr);
+    ExprResult RHSResult = CorrectDelayedTyposInExpr(RHSExpr);
+
+    if (!CondResult.isUsable())
+      return ExprError();
+
+    if (LHSExpr) {
+      if (!LHSResult.isUsable())
+        return ExprError();
+    }
+
+    if (!RHSResult.isUsable())
+      return ExprError();
+
     CondExpr = CondResult.get();
+    LHSExpr = LHSResult.get();
+    RHSExpr = RHSResult.get();
   }
 
   // If this is the gnu "x ?: y" extension, analyze the types as though the LHS
