@@ -1,5 +1,5 @@
 ; REQUIRES: asserts
-; RUN: llc < %s -march=x86 -mtriple=i686-pc-win32 | FileCheck %s
+; RUN: llc < %s -march=x86 -mtriple=i686-pc-win32 -enable-x86-lea-opt | FileCheck %s
 
 ; PR26575
 ; Assertion `(Disp->isImm() || Disp->isGlobal()) && (Other.Disp->isImm() || Other.Disp->isGlobal()) && "Address displacement operand is always an immediate or a global"' failed.
