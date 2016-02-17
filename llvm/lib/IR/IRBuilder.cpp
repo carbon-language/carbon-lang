@@ -284,13 +284,14 @@ CallInst *IRBuilderBase::CreateMaskedScatter(Value *Data, Value *Ptrs,
                                              unsigned Align, Value *Mask) {
   auto PtrsTy = cast<VectorType>(Ptrs->getType());
   auto DataTy = cast<VectorType>(Data->getType());
-
-  auto PtrTy = cast<PointerType>(PtrsTy->getElementType());
   unsigned NumElts = PtrsTy->getVectorNumElements();
 
+#ifndef NDEBUG
+  auto PtrTy = cast<PointerType>(PtrsTy->getElementType());
   assert(NumElts == DataTy->getVectorNumElements() &&
-         PtrTy->getElementType() ==  DataTy->getElementType() &&
-        "Incompatible pointer and data types");
+         PtrTy->getElementType() == DataTy->getElementType() &&
+         "Incompatible pointer and data types");
+#endif
 
   if (!Mask)
     Mask = Constant::getAllOnesValue(VectorType::get(Type::getInt1Ty(Context),
