@@ -473,11 +473,11 @@ static bool includeInGnuHashTable(SymbolBody *B) {
 
 template <class ELFT>
 void GnuHashTableSection<ELFT>::addSymbols(
-    std::vector<std::pair<SymbolBody *, unsigned>> &Symbols) {
-  std::vector<std::pair<SymbolBody *, unsigned>> NotHashed;
+    std::vector<std::pair<SymbolBody *, size_t>> &Symbols) {
+  std::vector<std::pair<SymbolBody *, size_t>> NotHashed;
   NotHashed.reserve(Symbols.size());
   HashedSymbols.reserve(Symbols.size());
-  for (const std::pair<SymbolBody *, unsigned> &P : Symbols) {
+  for (const std::pair<SymbolBody *, size_t> &P : Symbols) {
     SymbolBody *B = P.first;
     if (includeInGnuHashTable(B))
       HashedSymbols.push_back(
@@ -1386,14 +1386,13 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   else if (Config->EMachine == EM_MIPS)
     std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
   size_t I = 0;
-  for (const std::pair<SymbolBody *, unsigned> &P : Symbols)
+  for (const std::pair<SymbolBody *, size_t> &P : Symbols)
     P.first->DynsymIndex = ++I;
 }
 
 template <class ELFT>
-void SymbolTableSection<ELFT>::addSymbol(SymbolBody *Body) {
-  Symbols.push_back(
-      std::make_pair(Body, StrTabSec.addString(Body->getName(), false)));
+void SymbolTableSection<ELFT>::addSymbol(SymbolBody *B) {
+  Symbols.push_back({B, StrTabSec.addString(B->getName(), false)});
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -1412,7 +1411,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   // Iterate over all input object files to copy their local symbols
   // to the output symbol table pointed by Buf.
   for (const std::unique_ptr<ObjectFile<ELFT>> &File : Table.getObjectFiles()) {
-    for (const std::pair<const Elf_Sym *, unsigned> &P : File->KeptLocalSyms) {
+    for (const std::pair<const Elf_Sym *, size_t> &P : File->KeptLocalSyms) {
       const Elf_Sym *Sym = P.first;
 
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
@@ -1454,9 +1453,9 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-  for (const std::pair<SymbolBody *, unsigned> &P : Symbols) {
+  for (const std::pair<SymbolBody *, size_t> &P : Symbols) {
     SymbolBody *Body = P.first;
-    unsigned SymIdx = P.second;
+    size_t StrOff = P.second;
 
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;
@@ -1470,7 +1469,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
 
     ESym->setBindingAndType(getSymbolBinding(Body), Type);
     ESym->st_size = Size;
-    ESym->st_name = SymIdx;
+    ESym->st_name = StrOff;
     ESym->setVisibility(Body->getVisibility());
     ESym->st_value = Body->getVA<ELFT>();
 

@@ -230,7 +230,7 @@ public:
   StringTableSection<ELFT> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumLocals + Symbols.size() + 1; }
 
-  ArrayRef<std::pair<SymbolBody *, unsigned>> getSymbols() const {
+  ArrayRef<std::pair<SymbolBody *, size_t>> getSymbols() const {
     return Symbols;
   }
 
@@ -245,7 +245,9 @@ private:
   static uint8_t getSymbolBinding(SymbolBody *Body);
 
   SymbolTable<ELFT> &Table;
-  std::vector<std::pair<SymbolBody *, unsigned>> Symbols;
+
+  // A vector of symbols and their string table offsets.
+  std::vector<std::pair<SymbolBody *, size_t>> Symbols;
 };
 
 template <class ELFT>
@@ -399,7 +401,7 @@ public:
 
   // Adds symbols to the hash table.
   // Sorts the input to satisfy GNU hash section requirements.
-  void addSymbols(std::vector<std::pair<SymbolBody *, unsigned>> &Symbols);
+  void addSymbols(std::vector<std::pair<SymbolBody *, size_t>> &Symbols);
 
 private:
   static unsigned calcNBuckets(unsigned NumHashed);
@@ -411,7 +413,7 @@ private:
 
   struct HashedSymbolData {
     SymbolBody *Body;
-    unsigned STName;
+    size_t STName;
     uint32_t Hash;
   };
 
