@@ -464,6 +464,31 @@ struct FunCloner {
         Dst = LLVMBuildAlloca(Builder, Ty, Name);
         break;
       }
+      case LLVMLoad: {
+        LLVMValueRef Ptr = CloneValue(LLVMGetOperand(Src, 0));
+        Dst = LLVMBuildLoad(Builder, Ptr, Name);
+        LLVMSetAlignment(Dst, LLVMGetAlignment(Src));
+        break;
+      }
+      case LLVMStore: {
+        LLVMValueRef Val = CloneValue(LLVMGetOperand(Src, 0));
+        LLVMValueRef Ptr = CloneValue(LLVMGetOperand(Src, 1));
+        Dst = LLVMBuildStore(Builder, Val, Ptr);
+        LLVMSetAlignment(Dst, LLVMGetAlignment(Src));
+        break;
+      }
+      case LLVMGetElementPtr: {
+        LLVMValueRef Ptr = CloneValue(LLVMGetOperand(Src, 0));
+        SmallVector<LLVMValueRef, 8> Idx;
+        int NumIdx = LLVMGetNumIndices(Src);
+        for (int i = 1; i <= NumIdx; i++)
+          Idx.push_back(CloneValue(LLVMGetOperand(Src, i)));
+        if (LLVMIsInBounds(Src))
+          Dst = LLVMBuildInBoundsGEP(Builder, Ptr, Idx.data(), NumIdx, Name);
+        else
+          Dst = LLVMBuildGEP(Builder, Ptr, Idx.data(), NumIdx, Name);
+        break;
+      }
       case LLVMICmp: {
         LLVMIntPredicate Pred = LLVMGetICmpPredicate(Src);
         LLVMValueRef LHS = CloneValue(LLVMGetOperand(Src, 0));
