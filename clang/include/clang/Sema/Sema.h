@@ -2108,6 +2108,7 @@ public:
                                           VersionTuple Obsoleted,
                                           bool IsUnavailable,
                                           StringRef Message,
+                                          bool IsNopartial,
                                           AvailabilityMergeKind AMK,
                                           unsigned AttrSpellingListIndex);
   TypeVisibilityAttr *mergeTypeVisibilityAttr(Decl *D, SourceRange Range,
@@ -3535,7 +3536,8 @@ public:
 
   void redelayDiagnostics(sema::DelayedDiagnosticPool &pool);
 
-  enum AvailabilityDiagnostic { AD_Deprecation, AD_Unavailable, AD_Partial };
+  enum AvailabilityDiagnostic { AD_Deprecation, AD_Unavailable, AD_Partial,
+                                AD_NotYetIntroduced };
 
   void EmitAvailabilityWarning(AvailabilityDiagnostic AD,
                                NamedDecl *D, StringRef Message,
