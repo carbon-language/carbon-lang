@@ -203,7 +203,7 @@ static void writeIndex(MCStreamer &Out, MCSection *Section,
     while (Buckets[H]) {
       assert(S != IndexEntries[Buckets[H] - 1].Signature &&
              "Duplicate type unit");
-      H += ((S >> 32) & Mask) | 1;
+      H = (H + ((S >> 32) & Mask) | 1) % Buckets.size();
     }
     Buckets[H] = i + 1;
   }
