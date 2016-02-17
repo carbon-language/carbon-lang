@@ -11480,9 +11480,13 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // immediately cast everything to a float and operate entirely in that domain.
   if (VT.isInteger() && !Subtarget.hasAVX2()) {
     int ElementBits = VT.getScalarSizeInBits();
-    if (ElementBits < 32)
-      // No floating point type available, decompose into 128-bit vectors.
+    if (ElementBits < 32) {
+      // No floating point type available, if we can't use the bit operations
+      // for masking then decompose into 128-bit vectors.
+      if (SDValue V = lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, DAG))
+        return V;
       return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
+    }
 
     MVT FpVT = MVT::getVectorVT(MVT::getFloatingPointVT(ElementBits),
                                 VT.getVectorNumElements());
