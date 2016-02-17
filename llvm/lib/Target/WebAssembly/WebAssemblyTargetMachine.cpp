@@ -185,11 +185,13 @@ void WebAssemblyPassConfig::addPostRegAlloc() {
   // Fails with: should be run after register allocation.
   disablePass(&MachineCopyPropagationID);
 
-  // Mark registers as representing wasm's expression stack.
-  addPass(createWebAssemblyRegStackify());
+  if (getOptLevel() != CodeGenOpt::None) {
+    // Mark registers as representing wasm's expression stack.
+    addPass(createWebAssemblyRegStackify());
 
-  // Run the register coloring pass to reduce the total number of registers.
-  addPass(createWebAssemblyRegColoring());
+    // Run the register coloring pass to reduce the total number of registers.
+    addPass(createWebAssemblyRegColoring());
+  }
 
   TargetPassConfig::addPostRegAlloc();
 
