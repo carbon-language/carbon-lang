@@ -363,7 +363,7 @@ struct Variant {
   }
 
   ~Variant() {
-    if (Type == PDB_VariantType::String && Value.String != nullptr)
+    if (Type == PDB_VariantType::String)
       delete[] Value.String;
   }
 
@@ -410,7 +410,7 @@ struct Variant {
   Variant &operator=(const Variant &Other) {
     if (this == &Other)
       return *this;
-    if (Type == PDB_VariantType::String && Value.String != nullptr)
+    if (Type == PDB_VariantType::String)
       delete[] Value.String;
     Type = Other.Type;
     Value = Other.Value;
