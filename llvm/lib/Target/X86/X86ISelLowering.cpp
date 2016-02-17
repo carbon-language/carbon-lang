@@ -11482,8 +11482,10 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     int ElementBits = VT.getScalarSizeInBits();
     if (ElementBits < 32) {
       // No floating point type available, if we can't use the bit operations
-      // for masking then decompose into 128-bit vectors.
+      // for masking/blending then decompose into 128-bit vectors.
       if (SDValue V = lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, DAG))
+        return V;
+      if (SDValue V = lowerVectorShuffleAsBitBlend(DL, VT, V1, V2, Mask, DAG))
         return V;
       return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
     }

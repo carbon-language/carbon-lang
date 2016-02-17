@@ -660,12 +660,10 @@ define <32 x i8> @constant_pblendvb_avx2(<32 x i8> %xyzw, <32 x i8> %abcd) {
 ;
 ; AVX1-LABEL: constant_pblendvb_avx2:
 ; AVX1:       # BB#0: # %entry
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm4 = [255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255]
-; AVX1-NEXT:    vpblendvb %xmm4, %xmm2, %xmm3, %xmm2
-; AVX1-NEXT:    vpblendvb %xmm4, %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    vmovaps {{.*#+}} ymm2 = [255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255]
+; AVX1-NEXT:    vandnps %ymm0, %ymm2, %ymm0
+; AVX1-NEXT:    vandps %ymm2, %ymm1, %ymm1
+; AVX1-NEXT:    vorps %ymm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: constant_pblendvb_avx2:
