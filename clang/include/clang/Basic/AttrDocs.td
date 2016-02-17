@@ -1765,7 +1765,7 @@ The ``not_tail_called`` attribute prevents tail-call optimization on statically 
 
 For example, it prevents tail-call optimization in the following case:
 
-  .. code-block: c
+  .. code-block:: c
 
     int __attribute__((not_tail_called)) foo1(int);
 
@@ -1775,7 +1775,7 @@ For example, it prevents tail-call optimization in the following case:
 
 However, it doesn't prevent tail-call optimization in this case:
 
-  .. code-block: c
+  .. code-block:: c
 
     int __attribute__((not_tail_called)) foo1(int);
 
@@ -1789,7 +1789,7 @@ However, it doesn't prevent tail-call optimization in this case:
 
 Marking virtual functions as ``not_tail_called`` is an error:
 
-  .. code-block: c++
+  .. code-block:: c++
 
     class Base {
     public:
@@ -1839,7 +1839,7 @@ For example:
 
 Marking virtual functions as ``disable_tail_calls`` is legal.
 
-  .. code-block: c++
+  .. code-block:: c++
 
     int callee(int);
 
