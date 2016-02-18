@@ -136,6 +136,16 @@ bool isPositiveHalfWord(SDNode *N);
         SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const override;
     SDValue LowerGLOBALADDRESS(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
+        SelectionDAG &DAG) const;
+    SDValue LowerToTLSInitialExecModel(GlobalAddressSDNode *GA,
+        SelectionDAG &DAG) const;
+    SDValue LowerToTLSLocalExecModel(GlobalAddressSDNode *GA,
+        SelectionDAG &DAG) const;
+    SDValue GetDynamicTLSAddr(SelectionDAG &DAG, SDValue Chain,
+        GlobalAddressSDNode *GA, SDValue *InFlag, EVT PtrVT,
+        unsigned ReturnReg, unsigned char OperandFlags) const;
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue LowerCall(TargetLowering::CallLoweringInfo &CLI,
