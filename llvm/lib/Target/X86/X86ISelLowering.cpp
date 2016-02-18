@@ -21953,7 +21953,7 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr *MI,
   // to OverflowDestReg.
   if (NeedsAlign) {
     // Align the overflow address
-    assert((Align & (Align-1)) == 0 && "Alignment must be a power of 2");
+    assert(isPowerOf2_32(Align) && "Alignment must be a power of 2");
     unsigned TmpReg = MRI.createVirtualRegister(AddrRegClass);
 
     // aligned_addr = (addr + (align-1)) & ~(align-1)
