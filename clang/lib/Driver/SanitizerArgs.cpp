@@ -437,42 +437,45 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
 
   // Parse -f(no-)?sanitize-coverage flags if coverage is supported by the
   // enabled sanitizers.
-  if (AllAddedKinds & SupportsCoverage) {
-    for (const auto *Arg : Args) {
-      if (Arg->getOption().matches(options::OPT_fsanitize_coverage)) {
-        Arg->claim();
-        int LegacySanitizeCoverage;
-        if (Arg->getNumValues() == 1 &&
-            !StringRef(Arg->getValue(0))
-                 .getAsInteger(0, LegacySanitizeCoverage) &&
-            LegacySanitizeCoverage >= 0 && LegacySanitizeCoverage <= 4) {
-          D.Diag(diag::warn_drv_deprecated_arg)
-              << Arg->getAsString(Args) << "-fsanitize-coverage=[func,bb,edge]";
-          // TODO: Add deprecation notice for this form.
-          switch (LegacySanitizeCoverage) {
-          case 0:
-            CoverageFeatures = 0;
-            break;
-          case 1:
-            CoverageFeatures = CoverageFunc;
-            break;
-          case 2:
-            CoverageFeatures = CoverageBB;
-            break;
-          case 3:
-            CoverageFeatures = CoverageEdge;
-            break;
-          case 4:
-            CoverageFeatures = CoverageEdge | CoverageIndirCall;
-            break;
-          }
-          continue;
+  for (const auto *Arg : Args) {
+    if (Arg->getOption().matches(options::OPT_fsanitize_coverage)) {
+      int LegacySanitizeCoverage;
+      if (Arg->getNumValues() == 1 &&
+          !StringRef(Arg->getValue(0))
+               .getAsInteger(0, LegacySanitizeCoverage) &&
+          LegacySanitizeCoverage >= 0 && LegacySanitizeCoverage <= 4) {
+        D.Diag(diag::warn_drv_deprecated_arg)
+            << Arg->getAsString(Args) << "-fsanitize-coverage=[func,bb,edge]";
+        // TODO: Add deprecation notice for this form.
+        switch (LegacySanitizeCoverage) {
+        case 0:
+          CoverageFeatures = 0;
+          break;
+        case 1:
+          CoverageFeatures = CoverageFunc;
+          break;
+        case 2:
+          CoverageFeatures = CoverageBB;
+          break;
+        case 3:
+          CoverageFeatures = CoverageEdge;
+          break;
+        case 4:
+          CoverageFeatures = CoverageEdge | CoverageIndirCall;
+          break;
         }
-        CoverageFeatures |= parseCoverageFeatures(D, Arg);
-      } else if (Arg->getOption().matches(options::OPT_fno_sanitize_coverage)) {
-        Arg->claim();
-        CoverageFeatures &= ~parseCoverageFeatures(D, Arg);
+        continue;
       }
+      CoverageFeatures |= parseCoverageFeatures(D, Arg);
+      // If there is trace-pc, allow it w/o any of the sanitizers.
+      // Otherwise, require that one of the supported sanitizers is present.
+      if ((CoverageFeatures & CoverageTracePC) ||
+          (AllAddedKinds & SupportsCoverage)) {
+        Arg->claim();
+      }
+    } else if (Arg->getOption().matches(options::OPT_fno_sanitize_coverage)) {
+      Arg->claim();
+      CoverageFeatures &= ~parseCoverageFeatures(D, Arg);
     }
   }
   // Choose at most one coverage type: function, bb, or edge.
@@ -501,11 +504,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     D.Diag(clang::diag::err_drv_argument_only_allowed_with)
         << "-fsanitize-coverage=8bit-counters"
         << "-fsanitize-coverage=(func|bb|edge)";
+  // trace-pc w/o func/bb/edge implies edge.
   if ((CoverageFeatures & CoverageTracePC) &&
       !(CoverageFeatures & CoverageTypes))
-    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
-        << "-fsanitize-coverage=trace-pc"
-        << "-fsanitize-coverage=(func|bb|edge)";
+    CoverageFeatures |= CoverageEdge;
 
   if (AllAddedKinds & Address) {
     AsanSharedRuntime =
@@ -576,6 +578,23 @@ static void addIncludeLinkerOption(const ToolChain &TC,
 void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
                             llvm::opt::ArgStringList &CmdArgs,
                             types::ID InputType) const {
+  // Translate available CoverageFeatures to corresponding clang-cc1 flags.
+  // Do it even if Sanitizers.empty() since some forms of coverage don't require
+  // sanitizers.
+  std::pair<int, const char *> CoverageFlags[] = {
+    std::make_pair(CoverageFunc, "-fsanitize-coverage-type=1"),
+    std::make_pair(CoverageBB, "-fsanitize-coverage-type=2"),
+    std::make_pair(CoverageEdge, "-fsanitize-coverage-type=3"),
+    std::make_pair(CoverageIndirCall, "-fsanitize-coverage-indirect-calls"),
+    std::make_pair(CoverageTraceBB, "-fsanitize-coverage-trace-bb"),
+    std::make_pair(CoverageTraceCmp, "-fsanitize-coverage-trace-cmp"),
+    std::make_pair(Coverage8bitCounters, "-fsanitize-coverage-8bit-counters"),
+    std::make_pair(CoverageTracePC, "-fsanitize-coverage-trace-pc")};
+  for (auto F : CoverageFlags) {
+    if (CoverageFeatures & F.first)
+      CmdArgs.push_back(Args.MakeArgString(F.second));
+  }
+
   if (Sanitizers.empty())
     return;
   CmdArgs.push_back(Args.MakeArgString("-fsanitize=" + toString(Sanitizers)));
@@ -615,21 +634,6 @@ void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
   if (AsanFieldPadding)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-address-field-padding=" +
                                          llvm::utostr(AsanFieldPadding)));
-  // Translate available CoverageFeatures to corresponding clang-cc1 flags.
-  std::pair<int, const char *> CoverageFlags[] = {
-    std::make_pair(CoverageFunc, "-fsanitize-coverage-type=1"),
-    std::make_pair(CoverageBB, "-fsanitize-coverage-type=2"),
-    std::make_pair(CoverageEdge, "-fsanitize-coverage-type=3"),
-    std::make_pair(CoverageIndirCall, "-fsanitize-coverage-indirect-calls"),
-    std::make_pair(CoverageTraceBB, "-fsanitize-coverage-trace-bb"),
-    std::make_pair(CoverageTraceCmp, "-fsanitize-coverage-trace-cmp"),
-    std::make_pair(Coverage8bitCounters, "-fsanitize-coverage-8bit-counters"),
-    std::make_pair(CoverageTracePC, "-fsanitize-coverage-trace-pc")};
-  for (auto F : CoverageFlags) {
-    if (CoverageFeatures & F.first)
-      CmdArgs.push_back(Args.MakeArgString(F.second));
-  }
-
 
   // MSan: Workaround for PR16386.
   // ASan: This is mainly to help LSan with cases such as

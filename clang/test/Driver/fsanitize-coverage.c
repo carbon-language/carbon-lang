@@ -56,6 +56,14 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize-coverage=8bit-counters %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-MISSING-TYPE
 // CHECK-MISSING-TYPE: error: invalid argument '-fsanitize-coverage=8bit-counters' only allowed with '-fsanitize-coverage=(func|bb|edge)'
 
+// RUN: %clang -target x86_64-linux-gnu -fsanitize-coverage=trace-pc %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-TRACE_PC_EDGE
+// RUN: %clang -target x86_64-linux-gnu -fsanitize-coverage=edge,trace-pc %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-TRACE_PC_EDGE
+// CHECK-TRACE_PC_EDGE: -fsanitize-coverage-type=3
+// CHECK-TRACE_PC_EDGE: -fsanitize-coverage-trace-pc
+// RUN: %clang -target x86_64-linux-gnu -fsanitize-coverage=func,trace-pc %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-TRACE_PC_FUNC
+// CHECK-TRACE_PC_FUNC: -fsanitize-coverage-type=1
+// CHECK-TRACE_PC_FUNC: -fsanitize-coverage-trace-pc
+
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize-coverage=trace-cmp,indirect-calls %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-NO-TYPE-NECESSARY
 // CHECK-NO-TYPE-NECESSARY-NOT: error:
 // CHECK-NO-TYPE-NECESSARY: -fsanitize-coverage-indirect-calls
@@ -70,5 +78,5 @@
 // CLANG-CL-COVERAGE-NOT: warning:
 // CLANG-CL-COVERAGE-NOT: argument unused
 // CLANG-CL-COVERAGE-NOT: unknown argument
-// CLANG-CL-COVERAGE: -fsanitize=address
 // CLANG-CL-COVERAGE: -fsanitize-coverage-type=1
+// CLANG-CL-COVERAGE: -fsanitize=address
