@@ -201,7 +201,8 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
     // use the value that we get from the arguments.
     if (I->capturesVariableByCopy() && FD->getType()->isAnyPointerType()) {
       setAddrOfLocalVar(I->getCapturedVar(), GetAddrOfLocalVar(Args[Cnt]));
-      ++Cnt, ++I;
+      ++Cnt;
+      ++I;
       continue;
     }
 
@@ -242,7 +243,8 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
       CXXThisValue =
           EmitLoadOfLValue(ArgLVal, Args[Cnt]->getLocation()).getScalarVal();
     }
-    ++Cnt, ++I;
+    ++Cnt;
+    ++I;
   }
 
   PGO.assignRegionCounters(GlobalDecl(CD), F);
@@ -489,7 +491,8 @@ bool CodeGenFunction::EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
         // Silence the warning about unused variable.
         (void)IsRegistered;
       }
-      ++IRef, ++InitsRef;
+      ++IRef;
+      ++InitsRef;
     }
   }
   return FirstprivateIsLastprivate && !EmittedAsFirstprivate.empty();
@@ -628,7 +631,8 @@ bool CodeGenFunction::EmitOMPLastprivateClauseInit(
           (void)IsRegistered;
         }
       }
-      ++IRef, ++IDestRef;
+      ++IRef;
+      ++IDestRef;
     }
   }
   return HasAtLeastOneLastprivate;
@@ -917,7 +921,9 @@ void CodeGenFunction::EmitOMPReductionClauseInit(
           });
         }
       }
-      ++ILHS, ++IRHS, ++IPriv;
+      ++ILHS;
+      ++IRHS;
+      ++IPriv;
     }
   }
 }
@@ -2013,7 +2019,8 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
         FirstprivateCopies.push_back(IInit);
         FirstprivateInits.push_back(*IElemInitRef);
       }
-      ++IRef, ++IElemInitRef;
+      ++IRef;
+      ++IElemInitRef;
     }
   }
   // Build list of dependences.
