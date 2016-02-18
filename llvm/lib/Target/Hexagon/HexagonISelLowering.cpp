@@ -990,6 +990,34 @@ HexagonTargetLowering::LowerINLINEASM(SDValue Op, SelectionDAG &DAG) const {
   return Op;
 }
 
+// Need to transform ISD::PREFETCH into something that doesn't inherit
+// all of the properties of ISD::PREFETCH, specifically SDNPMayLoad and
+// SDNPMayStore.
+SDValue HexagonTargetLowering::LowerPREFETCH(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Addr = Op.getOperand(1);
+  // Lower it to DCFETCH($reg, #0).  A "pat" will try to merge the offset in,
+  // if the "reg" is fed by an "add".
+  SDLoc DL(Op);
+  SDValue Zero = DAG.getConstant(0, DL, MVT::i32);
+  return DAG.getNode(HexagonISD::DCFETCH, DL, MVT::Other, Chain, Addr, Zero);
+}
+
+SDValue HexagonTargetLowering::LowerINTRINSIC_VOID(SDValue Op,
+      SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  // Lower the hexagon_prefetch builtin to DCFETCH, as above.
+  if (IntNo == Intrinsic::hexagon_prefetch) {
+    SDValue Addr = Op.getOperand(2);
+    SDLoc DL(Op);
+    SDValue Zero = DAG.getConstant(0, DL, MVT::i32);
+    return DAG.getNode(HexagonISD::DCFETCH, DL, MVT::Other, Chain, Addr, Zero);
+  }
+  return SDValue();
+}
+
 SDValue
 HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                                SelectionDAG &DAG) const {
@@ -1606,6 +1634,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
   setOperationAction(ISD::INLINEASM, MVT::Other, Custom);
+  setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
   setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
   setOperationAction(ISD::GLOBAL_OFFSET_TABLE, MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
@@ -2608,7 +2638,9 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     case ISD::VSELECT:              return LowerVSELECT(Op, DAG);
     case ISD::CTPOP:                return LowerCTPOP(Op, DAG);
     case ISD::INTRINSIC_WO_CHAIN:   return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+    case ISD::INTRINSIC_VOID:       return LowerINTRINSIC_VOID(Op, DAG);
     case ISD::INLINEASM:            return LowerINLINEASM(Op, DAG);
+    case ISD::PREFETCH:             return LowerPREFETCH(Op, DAG);
   }
 }
 
