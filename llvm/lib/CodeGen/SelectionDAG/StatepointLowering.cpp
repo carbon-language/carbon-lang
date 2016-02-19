@@ -99,14 +99,15 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
 
   // Couldn't find a free slot, so create a new one:
 
-  StatepointMaxSlotsRequired =
-       std::max<unsigned long>(StatepointMaxSlotsRequired, NumSlots + 1);
-
   SDValue SpillSlot = Builder.DAG.CreateStackTemporary(ValueType);
   const unsigned FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
   MFI->markAsStatepointSpillSlotObjectIndex(FI);
 
   Builder.FuncInfo.StatepointStackSlots.push_back(FI);
+
+  StatepointMaxSlotsRequired = std::max<unsigned long>(
+      StatepointMaxSlotsRequired, Builder.FuncInfo.StatepointStackSlots.size());
+
   return SpillSlot;
 }
 
