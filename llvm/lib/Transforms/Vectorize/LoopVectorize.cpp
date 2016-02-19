@@ -364,6 +364,10 @@ protected:
   /// Copy and widen the instructions from the old loop.
   virtual void vectorizeLoop();
 
+  /// Fix a first-order recurrence. This is the second phase of vectorizing
+  /// this phi node.
+  void fixFirstOrderRecurrence(PHINode *Phi);
+
   /// \brief The Loop exit block may have single value PHI nodes where the
   /// incoming value is 'Undef'. While vectorizing we only handled real values
   /// that were defined inside the loop. Here we fix the 'undef case'.
@@ -1201,6 +1205,10 @@ public:
   /// induction descriptor.
   typedef MapVector<PHINode*, InductionDescriptor> InductionList;
 
+  /// RecurrenceSet contains the phi nodes that are recurrences other than
+  /// inductions and reductions.
+  typedef SmallPtrSet<const PHINode *, 8> RecurrenceSet;
+
   /// Returns true if it is legal to vectorize this loop.
   /// This does not mean that it is profitable to vectorize this
   /// loop, only that it is legal to do so.
@@ -1215,6 +1223,9 @@ public:
   /// Returns the induction variables found in the loop.
   InductionList *getInductionVars() { return &Inductions; }
 
+  /// Return the first-order recurrences found in the loop.
+  RecurrenceSet *getFirstOrderRecurrences() { return &FirstOrderRecurrences; }
+
   /// Returns the widest induction type.
   Type *getWidestInductionType() { return WidestIndTy; }
 
@@ -1223,6 +1234,9 @@ public:
 
   /// Returns True if PN is a reduction variable in this loop.
   bool isReductionVariable(PHINode *PN) { return Reductions.count(PN); }
+
+  /// Returns True if Phi is a first-order recurrence in this loop.
+  bool isFirstOrderRecurrence(const PHINode *Phi);
 
   /// Return true if the block BB needs to be predicated in order for the loop
   /// to be vectorized.
@@ -1384,6 +1398,8 @@ private:
   /// Notice that inductions don't need to start at zero and that induction
   /// variables can be pointers.
   InductionList Inductions;
+  /// Holds the phi nodes that are first-order recurrences.
+  RecurrenceSet FirstOrderRecurrences;
   /// Holds the widest induction type encountered.
   Type *WidestIndTy;
 
@@ -3386,8 +3402,14 @@ void InnerLoopVectorizer::vectorizeLoop() {
   for (PHINode *Phi : PHIsToFix) {
     assert(Phi && "Unable to recover vectorized PHI");
 
-    // We currently only handle reductions. Ensure the PHI node to be fixed is
-    // a reduction, and get its reduction variable descriptor.
+    // Handle first-order recurrences that need to be fixed.
+    if (Legal->isFirstOrderRecurrence(Phi)) {
+      fixFirstOrderRecurrence(Phi);
+      continue;
+    }
+
+    // If the phi node is not a first-order recurrence, it must be a reduction.
+    // Get it's reduction variable descriptor.
     assert(Legal->isReductionVariable(Phi) &&
            "Unable to find the reduction variable");
     RecurrenceDescriptor RdxDesc = (*Legal->getReductionVars())[Phi];
@@ -3613,6 +3635,158 @@ void InnerLoopVectorizer::vectorizeLoop() {
   cse(LoopVectorBody);
 }
 
+void InnerLoopVectorizer::fixFirstOrderRecurrence(PHINode *Phi) {
+
+  // This is the second phase of vectorizing first-order rececurrences. An
+  // overview of the transformation is described below. Suppose we have the
+  // following loop.
+  //
+  //   for (int i = 0; i < n; ++i)
+  //     b[i] = a[i] - a[i - 1];
+  //
+  // There is a first-order recurrence on "a". For this loop, the shorthand
+  // scalar IR looks like:
+  //
+  //   scalar.ph:
+  //     s_init = a[-1]
+  //     br scalar.body
+  //
+  //   scalar.body:
+  //     i = phi [0, scalar.ph], [i+1, scalar.body]
+  //     s1 = phi [s_init, scalar.ph], [s2, scalar.body]
+  //     s2 = a[i]
+  //     b[i] = s2 - s1
+  //     br cond, scalar.body, ...
+  //
+  // In this example, s1 is a recurrence because it's value depends on the
+  // previous iteration. In the first phase of vectorization, we created a
+  // temporary value for s1. We now complete the vectorization and produce the
+  // shorthand vector IR shown below (for VF = 4, UF = 1).
+  //
+  //   vector.ph:
+  //     v_init = vector(..., ..., ..., a[-1])
+  //     br vector.body
+  //
+  //   vector.body
+  //     i = phi [0, vector.ph], [i+4, vector.body]
+  //     v1 = phi [v_init, vector.ph], [v2, vector.body]
+  //     v2 = a[i, i+1, i+2, i+3];
+  //     v3 = vector(v1(3), v2(0, 1, 2))
+  //     b[i, i+1, i+2, i+3] = v2 - v3
+  //     br cond, vector.body, middle.block
+  //
+  //   middle.block:
+  //     x = v2(3)
+  //     br scalar.ph
+  //
+  //   scalar.ph:
+  //     s_init = phi [x, middle.block], [a[-1], otherwise]
+  //     br scalar.body
+  //
+  // After execution completes the vector loop, we extract the next value of
+  // the recurrence (x) to use as the initial value in the scalar loop.
+
+  // Get the original loop preheader and single loop latch.
+  auto *Preheader = OrigLoop->getLoopPreheader();
+  auto *Latch = OrigLoop->getLoopLatch();
+
+  // Get the initial and previous values of the scalar recurrence.
+  auto *ScalarInit = Phi->getIncomingValueForBlock(Preheader);
+  auto *Previous = Phi->getIncomingValueForBlock(Latch);
+
+  // Create a vector from the initial value.
+  auto *VectorInit = ScalarInit;
+  if (VF > 1) {
+    Builder.SetInsertPoint(LoopVectorPreHeader->getTerminator());
+    VectorInit = Builder.CreateInsertElement(
+        UndefValue::get(VectorType::get(VectorInit->getType(), VF)), VectorInit,
+        Builder.getInt32(VF - 1), "vector.recur.init");
+  }
+
+  // We constructed a temporary phi node in the first phase of vectorization.
+  // This phi node will eventually be deleted.
+  auto &PhiParts = getVectorValue(Phi);
+  Builder.SetInsertPoint(cast<Instruction>(PhiParts[0]));
+
+  // Create a phi node for the new recurrence. The current value will either be
+  // the initial value inserted into a vector or loop-varying vector value.
+  auto *VecPhi = Builder.CreatePHI(VectorInit->getType(), 2, "vector.recur");
+  VecPhi->addIncoming(VectorInit, LoopVectorPreHeader);
+
+  // Get the vectorized previous value. We ensured the previous values was an
+  // instruction when detecting the recurrence.
+  auto &PreviousParts = getVectorValue(Previous);
+
+  // Set the insertion point to be after this instruction. We ensured the
+  // previous value dominated all uses of the phi when detecting the
+  // recurrence.
+  Builder.SetInsertPoint(
+      &*++BasicBlock::iterator(cast<Instruction>(PreviousParts[UF - 1])));
+
+  // We will construct a vector for the recurrence by combining the values for
+  // the current and previous iterations. This is the required shuffle mask.
+  SmallVector<Constant *, 8> ShuffleMask(VF);
+  ShuffleMask[0] = Builder.getInt32(VF - 1);
+  for (unsigned I = 1; I < VF; ++I)
+    ShuffleMask[I] = Builder.getInt32(I + VF - 1);
+
+  // The vector from which to take the initial value for the current iteration
+  // (actual or unrolled). Initially, this is the vector phi node.
+  Value *Incoming = VecPhi;
+
+  // Shuffle the current and previous vector and update the vector parts.
+  for (unsigned Part = 0; Part < UF; ++Part) {
+    auto *Shuffle =
+        VF > 1
+            ? Builder.CreateShuffleVector(Incoming, PreviousParts[Part],
+                                          ConstantVector::get(ShuffleMask))
+            : Incoming;
+    PhiParts[Part]->replaceAllUsesWith(Shuffle);
+    cast<Instruction>(PhiParts[Part])->eraseFromParent();
+    PhiParts[Part] = Shuffle;
+    Incoming = PreviousParts[Part];
+  }
+
+  // Fix the latch value of the new recurrence in the vector loop.
+  VecPhi->addIncoming(Incoming,
+                      LI->getLoopFor(LoopVectorBody[0])->getLoopLatch());
+
+  // Extract the last vector element in the middle block. This will be the
+  // initial value for the recurrence when jumping to the scalar loop.
+  auto *Extract = Incoming;
+  if (VF > 1) {
+    Builder.SetInsertPoint(LoopMiddleBlock->getTerminator());
+    Extract = Builder.CreateExtractElement(Extract, Builder.getInt32(VF - 1),
+                                           "vector.recur.extract");
+  }
+
+  // Fix the initial value of the original recurrence in the scalar loop.
+  Builder.SetInsertPoint(&*LoopScalarPreHeader->begin());
+  auto *Start = Builder.CreatePHI(Phi->getType(), 2, "scalar.recur.init");
+  for (auto *BB : predecessors(LoopScalarPreHeader)) {
+    auto *Incoming = BB == LoopMiddleBlock ? Extract : ScalarInit;
+    Start->addIncoming(Incoming, BB);
+  }
+
+  Phi->setIncomingValue(Phi->getBasicBlockIndex(LoopScalarPreHeader), Start);
+  Phi->setName("scalar.recur");
+
+  // Finally, fix users of the recurrence outside the loop. The users will need
+  // either the last value of the scalar recurrence or the last value of the
+  // vector recurrence we extracted in the middle block. Since the loop is in
+  // LCSSA form, we just need to find the phi node for the original scalar
+  // recurrence in the exit block, and then add an edge for the middle block.
+  for (auto &I : *LoopExitBlock) {
+    auto *LCSSAPhi = dyn_cast<PHINode>(&I);
+    if (!LCSSAPhi)
+      break;
+    if (LCSSAPhi->getIncomingValue(0) == Phi) {
+      LCSSAPhi->addIncoming(Extract, LoopMiddleBlock);
+      break;
+    }
+  }
+}
+
 void InnerLoopVectorizer::fixLCSSAPHIs() {
   for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
        LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
@@ -3687,8 +3861,8 @@ void InnerLoopVectorizer::widenPHIInstruction(
     Instruction *PN, InnerLoopVectorizer::VectorParts &Entry, unsigned UF,
     unsigned VF, PhiVector *PV) {
   PHINode* P = cast<PHINode>(PN);
-  // Handle reduction variables:
-  if (Legal->isReductionVariable(P)) {
+  // Handle recurrences.
+  if (Legal->isReductionVariable(P) || Legal->isFirstOrderRecurrence(P)) {
     for (unsigned part = 0; part < UF; ++part) {
       // This is phase one of vectorizing PHIs.
       Type *VecTy = (VF == 1) ? PN->getType() :
@@ -4384,6 +4558,11 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           continue;
         }
 
+        if (RecurrenceDescriptor::isFirstOrderRecurrence(Phi, TheLoop, DT)) {
+          FirstOrderRecurrences.insert(Phi);
+          continue;
+        }
+
         emitAnalysis(VectorizationReport(&*it) <<
                      "value that could not be identified as "
                      "reduction is used outside the loop");
@@ -4559,6 +4738,10 @@ bool LoopVectorizationLegality::isInductionVariable(const Value *V) {
     return false;
 
   return Inductions.count(PN);
+}
+
+bool LoopVectorizationLegality::isFirstOrderRecurrence(const PHINode *Phi) {
+  return FirstOrderRecurrences.count(Phi);
 }
 
 bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
@@ -5450,9 +5633,17 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   case Instruction::Br: {
     return TTI.getCFInstrCost(I->getOpcode());
   }
-  case Instruction::PHI:
-    //TODO: IF-converted IFs become selects.
+  case Instruction::PHI: {
+    auto *Phi = cast<PHINode>(I);
+
+    // First-order recurrences are replaced by vector shuffles inside the loop.
+    if (VF > 1 && Legal->isFirstOrderRecurrence(Phi))
+      return TTI.getShuffleCost(TargetTransformInfo::SK_ExtractSubvector,
+                                VectorTy, VF - 1, VectorTy);
+
+    // TODO: IF-converted IFs become selects.
     return 0;
+  }
   case Instruction::Add:
   case Instruction::FAdd:
   case Instruction::Sub:
