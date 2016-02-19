@@ -350,7 +350,7 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         uint64_t OriginalSize;
         if (!zlib::isAvailable() ||
             !consumeCompressedDebugSectionHeader(Contents, OriginalSize))
-          continue;
+          return make_error_code(std::errc::invalid_argument);
         UncompressedSections.resize(UncompressedSections.size() + 1);
         if (zlib::uncompress(Contents, UncompressedSections.back(), OriginalSize) !=
             zlib::StatusOK) {
