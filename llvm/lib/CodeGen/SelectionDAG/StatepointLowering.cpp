@@ -88,11 +88,12 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
          "Broken invariant");
 
   for (; NextSlotToAllocate < NumSlots; NextSlotToAllocate++) {
-    if (!AllocatedStackSlots.test(NextSlotToAllocate) &&
-        MFI->getObjectSize(NextSlotToAllocate) == SpillSize) {
+    if (!AllocatedStackSlots.test(NextSlotToAllocate)) {
       const int FI = Builder.FuncInfo.StatepointStackSlots[NextSlotToAllocate];
-      AllocatedStackSlots.set(NextSlotToAllocate);
-      return Builder.DAG.getFrameIndex(FI, ValueType);
+      if (MFI->getObjectSize(FI) == SpillSize) {
+        AllocatedStackSlots.set(NextSlotToAllocate);
+        return Builder.DAG.getFrameIndex(FI, ValueType);
+      }
     }
   }
 
