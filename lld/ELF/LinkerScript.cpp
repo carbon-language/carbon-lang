@@ -86,16 +86,16 @@ class elf2::ScriptParser {
 public:
   ScriptParser(BumpPtrAllocator *A, StringRef S, bool B)
       : Saver(*A), Tokens(tokenize(S)), IsUnderSysroot(B) {
-    Cmd["ENTRY"] = &ScriptParser::readEntry;
-    Cmd["EXTERN"] = &ScriptParser::readExtern;
-    Cmd["GROUP"] = &ScriptParser::readGroup;
-    Cmd["INCLUDE"] = &ScriptParser::readInclude;
-    Cmd["INPUT"] = &ScriptParser::readGroup;
-    Cmd["OUTPUT"] = &ScriptParser::readOutput;
-    Cmd["OUTPUT_ARCH"] = &ScriptParser::readOutputArch;
-    Cmd["OUTPUT_FORMAT"] = &ScriptParser::readOutputFormat;
-    Cmd["SEARCH_DIR"] = &ScriptParser::readSearchDir;
-    Cmd["SECTIONS"] = &ScriptParser::readSections;
+    Cmd["ENTRY"] = std::mem_fn(&ScriptParser::readEntry);
+    Cmd["EXTERN"] = std::mem_fn(&ScriptParser::readExtern);
+    Cmd["GROUP"] = std::mem_fn(&ScriptParser::readGroup);
+    Cmd["INCLUDE"] = std::mem_fn(&ScriptParser::readInclude);
+    Cmd["INPUT"] = std::mem_fn(&ScriptParser::readGroup);
+    Cmd["OUTPUT"] = std::mem_fn(&ScriptParser::readOutput);
+    Cmd["OUTPUT_ARCH"] = std::mem_fn(&ScriptParser::readOutputArch);
+    Cmd["OUTPUT_FORMAT"] = std::mem_fn(&ScriptParser::readOutputFormat);
+    Cmd["SEARCH_DIR"] = std::mem_fn(&ScriptParser::readSearchDir);
+    Cmd["SECTIONS"] = std::mem_fn(&ScriptParser::readSections);
     Cmd[";"] = [](ScriptParser &) {};
   }
 
