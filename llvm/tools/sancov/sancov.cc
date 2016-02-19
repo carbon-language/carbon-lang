@@ -95,7 +95,10 @@ static cl::opt<bool> ClUseDefaultBlacklist(
     "use_default_blacklist", cl::init(true), cl::Hidden,
     cl::desc("Controls if default blacklist should be used."));
 
-static const char *const DefaultBlacklistStr = "fun:__sanitizer_*";
+static const char *const DefaultBlacklistStr = 
+      "fun:__sanitizer_.*\n"
+      "src:/usr/include/.*\n"
+      "src:.*/libc\\+\\+/.*\n";
 
 // --------- FORMAT SPECIFICATION ---------
 
