@@ -73,6 +73,10 @@ SDValue
 StatepointLoweringState::allocateStackSlot(EVT ValueType,
                                            SelectionDAGBuilder &Builder) {
   NumSlotsAllocatedForStatepoints++;
+  auto *MFI = Builder.DAG.getMachineFunction().getFrameInfo();
+
+  unsigned SpillSize = ValueType.getSizeInBits() / 8;
+  assert((SpillSize * 8) == ValueType.getSizeInBits() && "Size not in bytes?");
 
   // First look for a previously created stack slot which is not in
   // use (accounting for the fact arbitrary slots may already be
@@ -82,7 +86,8 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
   assert(NextSlotToAllocate <= NumSlots && "Broken invariant");
 
   for (; NextSlotToAllocate < NumSlots; NextSlotToAllocate++) {
-    if (!AllocatedStackSlots[NextSlotToAllocate]) {
+    if (!AllocatedStackSlots[NextSlotToAllocate] &&
+        MFI->getObjectSize(NextSlotToAllocate) == SpillSize) {
       const int FI = Builder.FuncInfo.StatepointStackSlots[NextSlotToAllocate];
       AllocatedStackSlots[NextSlotToAllocate] = true;
       return Builder.DAG.getFrameIndex(FI, ValueType);
@@ -96,7 +101,6 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
 
   SDValue SpillSlot = Builder.DAG.CreateStackTemporary(ValueType);
   const unsigned FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
-  auto *MFI = Builder.DAG.getMachineFunction().getFrameInfo();
   MFI->markAsStatepointSpillSlotObjectIndex(FI);
 
   Builder.FuncInfo.StatepointStackSlots.push_back(FI);
@@ -424,6 +428,19 @@ spillIncomingStatepointValue(SDValue Incoming, SDValue Chain,
     // TODO: We can create TokenFactor node instead of
     //       chaining stores one after another, this may allow
     //       a bit more optimal scheduling for them
+
+#ifndef NDEBUG
+    // Right now we always allocate spill slots that are of the same
+    // size as the value we're about to spill (the size of spillee can
+    // vary since we spill vectors of pointers too).  At some point we
+    // can consider allowing spills of smaller values to larger slots
+    // (i.e. change the '==' in the assert below to a '>=').
+    auto *MFI = Builder.DAG.getMachineFunction().getFrameInfo();
+    assert((MFI->getObjectSize(Index) * 8) ==
+               Incoming.getValueType().getSizeInBits() &&
+           "Bad spill:  stack slot does not match!");
+#endif
+
     Chain = Builder.DAG.getStore(Chain, Builder.getCurSDLoc(), Incoming, Loc,
                                  MachinePointerInfo::getFixedStack(
                                      Builder.DAG.getMachineFunction(), Index),
