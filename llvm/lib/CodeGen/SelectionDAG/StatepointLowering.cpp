@@ -53,13 +53,10 @@ void StatepointLoweringState::startNewStatepoint(SelectionDAGBuilder &Builder) {
          "Trying to visit statepoint before finished processing previous one");
   Locations.clear();
   NextSlotToAllocate = 0;
-  // Need to resize this on each safepoint - we need the two to stay in
-  // sync and the clear patterns of a SelectionDAGBuilder have no relation
-  // to FunctionLoweringInfo.
+  // Need to resize this on each safepoint - we need the two to stay in sync and
+  // the clear patterns of a SelectionDAGBuilder have no relation to
+  // FunctionLoweringInfo.  SmallBitVector::reset initializes all bits to false.
   AllocatedStackSlots.resize(Builder.FuncInfo.StatepointStackSlots.size());
-  for (size_t i = 0; i < AllocatedStackSlots.size(); i++) {
-    AllocatedStackSlots[i] = false;
-  }
 }
 
 void StatepointLoweringState::clear() {
@@ -85,11 +82,16 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
   const size_t NumSlots = AllocatedStackSlots.size();
   assert(NextSlotToAllocate <= NumSlots && "Broken invariant");
 
+  // The stack slots in StatepointStackSlots beyond the first NumSlots were
+  // added in this instance of StatepointLoweringState, and cannot be re-used.
+  assert(NumSlots <= Builder.FuncInfo.StatepointStackSlots.size() &&
+         "Broken invariant");
+
   for (; NextSlotToAllocate < NumSlots; NextSlotToAllocate++) {
-    if (!AllocatedStackSlots[NextSlotToAllocate] &&
+    if (!AllocatedStackSlots.test(NextSlotToAllocate) &&
         MFI->getObjectSize(NextSlotToAllocate) == SpillSize) {
       const int FI = Builder.FuncInfo.StatepointStackSlots[NextSlotToAllocate];
-      AllocatedStackSlots[NextSlotToAllocate] = true;
+      AllocatedStackSlots.set(NextSlotToAllocate);
       return Builder.DAG.getFrameIndex(FI, ValueType);
     }
   }
@@ -104,7 +106,6 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
   MFI->markAsStatepointSpillSlotObjectIndex(FI);
 
   Builder.FuncInfo.StatepointStackSlots.push_back(FI);
-  AllocatedStackSlots.push_back(true);
   return SpillSlot;
 }
 
