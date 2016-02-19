@@ -72,49 +72,36 @@ void StatepointLoweringState::clear() {
 SDValue
 StatepointLoweringState::allocateStackSlot(EVT ValueType,
                                            SelectionDAGBuilder &Builder) {
-
   NumSlotsAllocatedForStatepoints++;
 
-  // The basic scheme here is to first look for a previously created stack slot
-  // which is not in use (accounting for the fact arbitrary slots may already
-  // be reserved), or to create a new stack slot and use it.
+  // First look for a previously created stack slot which is not in
+  // use (accounting for the fact arbitrary slots may already be
+  // reserved), or to create a new stack slot and use it.
 
-  // If this doesn't succeed in 40000 iterations, something is seriously wrong
-  for (int i = 0; i < 40000; i++) {
-    assert(Builder.FuncInfo.StatepointStackSlots.size() ==
-               AllocatedStackSlots.size() &&
-           "broken invariant");
-    const size_t NumSlots = AllocatedStackSlots.size();
-    assert(NextSlotToAllocate <= NumSlots && "broken invariant");
+  const size_t NumSlots = AllocatedStackSlots.size();
+  assert(NextSlotToAllocate <= NumSlots && "Broken invariant");
 
-    if (NextSlotToAllocate >= NumSlots) {
-      assert(NextSlotToAllocate == NumSlots);
-      // record stats
-      if (NumSlots + 1 > StatepointMaxSlotsRequired) {
-        StatepointMaxSlotsRequired = NumSlots + 1;
-      }
-
-      SDValue SpillSlot = Builder.DAG.CreateStackTemporary(ValueType);
-      const unsigned FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
-      auto *MFI = Builder.DAG.getMachineFunction().getFrameInfo();
-      MFI->markAsStatepointSpillSlotObjectIndex(FI);
-
-      Builder.FuncInfo.StatepointStackSlots.push_back(FI);
-      AllocatedStackSlots.push_back(true);
-      return SpillSlot;
-    }
+  for (; NextSlotToAllocate < NumSlots; NextSlotToAllocate++) {
     if (!AllocatedStackSlots[NextSlotToAllocate]) {
       const int FI = Builder.FuncInfo.StatepointStackSlots[NextSlotToAllocate];
       AllocatedStackSlots[NextSlotToAllocate] = true;
       return Builder.DAG.getFrameIndex(FI, ValueType);
     }
-    // Note: We deliberately choose to advance this only on the failing path.
-    // Doing so on the succeeding path involves a bit of complexity that caused
-    // a minor bug previously.  Unless performance shows this matters, please
-    // keep this code as simple as possible.
-    NextSlotToAllocate++;
   }
-  llvm_unreachable("infinite loop?");
+
+  // Couldn't find a free slot, so create a new one:
+
+  StatepointMaxSlotsRequired =
+       std::max<unsigned long>(StatepointMaxSlotsRequired, NumSlots + 1);
+
+  SDValue SpillSlot = Builder.DAG.CreateStackTemporary(ValueType);
+  const unsigned FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
+  auto *MFI = Builder.DAG.getMachineFunction().getFrameInfo();
+  MFI->markAsStatepointSpillSlotObjectIndex(FI);
+
+  Builder.FuncInfo.StatepointStackSlots.push_back(FI);
+  AllocatedStackSlots.push_back(true);
+  return SpillSlot;
 }
 
 /// Utility function for reservePreviousStackSlotForValue. Tries to find
