@@ -123,7 +123,7 @@ static Optional<int> findPreviousSpillSlot(const Value *Val,
 
   // Spill location is known for gc relocates
   if (const auto *Relocate = dyn_cast<GCRelocateInst>(Val)) {
-    FunctionLoweringInfo::StatepointSpilledValueMapTy &SpillMap =
+    const auto &SpillMap =
         Builder.FuncInfo.StatepointRelocatedValues[Relocate->getStatepoint()];
 
     auto It = SpillMap.find(Relocate->getDerivedPtr());
@@ -134,9 +134,8 @@ static Optional<int> findPreviousSpillSlot(const Value *Val,
   }
 
   // Look through bitcast instructions.
-  if (const BitCastInst *Cast = dyn_cast<BitCastInst>(Val)) {
+  if (const BitCastInst *Cast = dyn_cast<BitCastInst>(Val))
     return findPreviousSpillSlot(Cast->getOperand(0), Builder, LookUpDepth - 1);
-  }
 
   // Look through phi nodes
   // All incoming values should have same known stack slot, otherwise result
@@ -207,7 +206,7 @@ static void reservePreviousStackSlotForValue(const Value *IncomingValue,
 
   SDValue OldLocation = Builder.StatepointLowering.getLocation(Incoming);
   if (OldLocation.getNode())
-    // duplicates in input
+    // Duplicates in input
     return;
 
   const int LookUpDepth = 6;
@@ -216,14 +215,14 @@ static void reservePreviousStackSlotForValue(const Value *IncomingValue,
   if (!Index.hasValue())
     return;
 
-  auto Itr = std::find(Builder.FuncInfo.StatepointStackSlots.begin(),
-                       Builder.FuncInfo.StatepointStackSlots.end(), *Index);
-  assert(Itr != Builder.FuncInfo.StatepointStackSlots.end() &&
-         "value spilled to the unknown stack slot");
+  const auto &StatepointSlots = Builder.FuncInfo.StatepointStackSlots;
+
+  auto SlotIt = find(StatepointSlots, *Index);
+  assert(SlotIt != StatepointSlots.end() &&
+         "Value spilled to the unknown stack slot");
 
   // This is one of our dedicated lowering slots
-  const int Offset =
-      std::distance(Builder.FuncInfo.StatepointStackSlots.begin(), Itr);
+  const int Offset = std::distance(StatepointSlots.begin(), SlotIt);
   if (Builder.StatepointLowering.isStackSlotAllocated(Offset)) {
     // stack slot already assigned to someone else, can't use it!
     // TODO: currently we reserve space for gc arguments after doing
@@ -255,7 +254,7 @@ static void removeDuplicatesGCPtrs(SmallVectorImpl<const Value *> &Bases,
   SmallSet<SDValue, 32> Seen;
 
   SmallVector<const Value *, 64> NewBases, NewPtrs, NewRelocs;
-  for (size_t i = 0; i < Ptrs.size(); i++) {
+  for (size_t i = 0, e = Ptrs.size(); i < e; i++) {
     SDValue SD = Builder.getValue(Ptrs[i]);
     // Only add non-duplicates
     if (Seen.count(SD) == 0) {
@@ -300,8 +299,9 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, const BasicBlock *EHPadBB,
     unsigned AS = ISP.getCalledValue()->getType()->getPointerAddressSpace();
     ActualCallee = Builder.DAG.getConstant(0, Builder.getCurSDLoc(),
                                            TLI.getPointerTy(DL, AS));
-  } else
+  } else {
     ActualCallee = Builder.getValue(ISP.getCalledValue());
+  }
 
   assert(CS.getCallingConv() != CallingConv::AnyReg &&
          "anyregcc is not supported on statepoints!");
@@ -423,7 +423,6 @@ spillIncomingStatepointValue(SDValue Incoming, SDValue Chain,
   if (!Loc.getNode()) {
     Loc = Builder.StatepointLowering.allocateStackSlot(Incoming.getValueType(),
                                                        Builder);
-    assert(isa<FrameIndexSDNode>(Loc));
     int Index = cast<FrameIndexSDNode>(Loc)->getIndex();
     // We use TargetFrameIndex so that isel will not select it into LEA
     Loc = Builder.DAG.getTargetFrameIndex(Index, Incoming.getValueType());
@@ -485,8 +484,7 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
     // spill location.  This would be a useful optimization, but would
     // need to be optional since it requires a lot of complexity on the
     // runtime side which not all would support.
-    std::pair<SDValue, SDValue> Res =
-        spillIncomingStatepointValue(Incoming, Chain, Builder);
+    auto Res = spillIncomingStatepointValue(Incoming, Chain, Builder);
     Ops.push_back(Res.first);
     Chain = Res.second;
   }
@@ -606,8 +604,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // values, while previous loops account only values with unique SDValues.
   const Instruction *StatepointInstr =
     StatepointSite.getCallSite().getInstruction();
-  FunctionLoweringInfo::StatepointSpilledValueMapTy &SpillMap =
-    Builder.FuncInfo.StatepointRelocatedValues[StatepointInstr];
+  auto &SpillMap = Builder.FuncInfo.StatepointRelocatedValues[StatepointInstr];
 
   for (const GCRelocateInst *Relocate : StatepointSite.getRelocates()) {
     const Value *V = Relocate->getDerivedPtr();
@@ -640,7 +637,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
 void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
   // Check some preconditions for sanity
   assert(isStatepoint(&CI) &&
-         "function called must be the statepoint function");
+         "Function called must be the statepoint function");
 
   LowerStatepoint(ImmutableStatepoint(&CI));
 }
@@ -769,9 +766,8 @@ void SelectionDAGBuilder::LowerStatepoint(
 
   // Add a constant argument for the flags
   uint64_t Flags = ISP.getFlags();
-  assert(
-      ((Flags & ~(uint64_t)StatepointFlags::MaskAll) == 0)
-          && "unknown flag used");
+  assert(((Flags & ~(uint64_t)StatepointFlags::MaskAll) == 0) &&
+         "Unknown flag used");
   pushStackMapConstant(Ops, *this, Flags);
 
   // Insert all vmstate and gcstate arguments
@@ -871,9 +867,8 @@ void SelectionDAGBuilder::visitGCRelocate(const GCRelocateInst &Relocate) {
   // We skip this check for relocates not in the same basic block as thier
   // statepoint. It would be too expensive to preserve validation info through
   // different basic blocks.
-  if (Relocate.getStatepoint()->getParent() == Relocate.getParent()) {
+  if (Relocate.getStatepoint()->getParent() == Relocate.getParent())
     StatepointLowering.relocCallVisited(Relocate);
-  }
 #endif
 
   const Value *DerivedPtr = Relocate.getDerivedPtr();
