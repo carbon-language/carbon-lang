@@ -233,7 +233,7 @@ static isl_stat getMaxScheduleDim(__isl_take isl_map *Map, void *User) {
   return isl_stat_ok;
 }
 
-__isl_give isl_union_map *
+static __isl_give isl_union_map *
 addZeroPaddingToSchedule(__isl_take isl_union_map *Schedule) {
   unsigned int MaxScheduleDim = 0;
 
