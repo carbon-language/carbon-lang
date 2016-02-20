@@ -217,4 +217,16 @@ define void @frameaddress_1() {
   ret void
 }
 
+; Test a stack address passed to an inline asm.
+; CHECK-LABEL: inline_asm:
+; CHECK:       __stack_pointer
+; CHECK:       #APP
+; CHECK-NEXT:  # %{{[0-9]+}}{{$}}
+; CHECK-NEXT:  #NO_APP
+define void @inline_asm() {
+  %tmp = alloca i8
+  call void asm sideeffect "# %0", "r"(i8* %tmp)
+  ret void
+}
+
 ; TODO: test over-aligned alloca
