@@ -779,11 +779,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF,
   assert((isPPC64 || !isSVR4ABI || !(!FrameSize && (MustSaveLR || HasFP))) &&
          "FrameSize must be >0 to save/restore the FP or LR for 32-bit SVR4.");
 
-  assert(findScratchRegister(&MBB, false, twoUniqueScratchRegsRequired(&MBB),
-                             &ScratchReg, &TempReg) &&
+  // Using the same bool variable as below to supress compiler warnings.
+  bool SingleScratchReg =
+    findScratchRegister(&MBB, false, twoUniqueScratchRegsRequired(&MBB),
+                        &ScratchReg, &TempReg);
+  assert(SingleScratchReg &&
          "Required number of registers not available in this block");
 
-  bool SingleScratchReg = ScratchReg == TempReg;
+  SingleScratchReg = ScratchReg == TempReg;
 
   int LROffset = getReturnSaveOffset();
 
@@ -1133,10 +1136,13 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   int FPOffset = 0;
 
-  assert(findScratchRegister(&MBB, true, false, &ScratchReg, &TempReg) &&
+  // Using the same bool variable as below to supress compiler warnings.
+  bool SingleScratchReg = findScratchRegister(&MBB, true, false, &ScratchReg,
+                                              &TempReg);
+  assert(SingleScratchReg &&
          "Could not find an available scratch register");
 
-  bool SingleScratchReg = ScratchReg == TempReg;
+  SingleScratchReg = ScratchReg == TempReg;
 
   if (HasFP) {
     if (isSVR4ABI) {
