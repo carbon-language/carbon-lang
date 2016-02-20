@@ -511,6 +511,8 @@ def main_file_name : Separate<["-"], "main-file-name">,
 
 def fblocks_runtime_optional : Flag<["-"], "fblocks-runtime-optional">,
   HelpText<"Weakly link in the blocks runtime">;
+def fexternc_nounwind : Flag<["-"], "fexternc-nounwind">,
+  HelpText<"Assume all functions with C linkage do not unwind">;
 def fsjlj_exceptions : Flag<["-"], "fsjlj-exceptions">,
   HelpText<"Use SjLj style exceptions">;
 def split_dwarf_file : Separate<["-"], "split-dwarf-file">,

@@ -5786,8 +5786,7 @@ struct EHFlags {
 /// - s: Cleanup after "synchronous" exceptions, aka C++ exceptions.
 /// - a: Cleanup after "asynchronous" exceptions, aka structured exceptions.
 ///      The 'a' modifier is unimplemented and fundamentally hard in LLVM IR.
-/// - c: Assume that extern "C" functions are implicitly noexcept.  This
-///      modifier is an optimization, so we ignore it for now.
+/// - c: Assume that extern "C" functions are implicitly nounwind.
 /// The default is /EHs-c-, meaning cleanups are disabled.
 static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
   EHFlags EH;
@@ -5897,10 +5896,11 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs,
 
   const Driver &D = getToolChain().getDriver();
   EHFlags EH = parseClangCLEHFlags(D, Args);
-  // FIXME: Do something with NoExceptC.
   if (EH.Synch || EH.Asynch) {
     CmdArgs.push_back("-fcxx-exceptions");
     CmdArgs.push_back("-fexceptions");
+    if (EH.NoUnwindC)
+      CmdArgs.push_back("-fexternc-nounwind");
   }
 
   // /EP should expand to -E -P.
