@@ -5775,10 +5775,9 @@ static bool maybeConsumeDash(const std::string &EH, size_t &I) {
 
 namespace {
 struct EHFlags {
-  EHFlags() : Synch(false), Asynch(false), NoExceptC(false) {}
-  bool Synch;
-  bool Asynch;
-  bool NoExceptC;
+  bool Synch = false;
+  bool Asynch = false;
+  bool NoUnwindC = false;
 };
 } // end anonymous namespace
 
@@ -5802,7 +5801,7 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
         EH.Asynch = maybeConsumeDash(EHVal, I);
         continue;
       case 'c':
-        EH.NoExceptC = maybeConsumeDash(EHVal, I);
+        EH.NoUnwindC = maybeConsumeDash(EHVal, I);
         continue;
       case 's':
         EH.Synch = maybeConsumeDash(EHVal, I);
@@ -5813,6 +5812,12 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
       D.Diag(clang::diag::err_drv_invalid_value) << "/EH" << EHVal;
       break;
     }
+  }
+  // The /GX, /GX- flags are only processed if there are not /EH flags.
+  if (EHArgs.empty() &&
+      Args.hasFlag(options::OPT__SLASH_GX, options::OPT__SLASH_GX_)) {
+    EH.Synch = true;
+    EH.NoUnwindC = true;
   }
 
   return EH;
@@ -9704,6 +9709,8 @@ std::unique_ptr<Command> visualstudio::Compiler::GetCommand(
   // Flags that can simply be passed through.
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_LD);
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_LDd);
+  Args.AddAllArgs(CmdArgs, options::OPT__SLASH_GX);
+  Args.AddAllArgs(CmdArgs, options::OPT__SLASH_GX_);
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_EH);
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_Zl);
 
