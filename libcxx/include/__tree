@@ -854,15 +854,12 @@ public:
 
     typedef typename _NodeTypes::__node_type           __node;
     typedef typename _NodeTypes::__node_pointer        __node_pointer;
-    typedef typename _NodeTypes::__node_pointer        __node_const_pointer;
 
     typedef typename _NodeTypes::__node_base_type      __node_base;
     typedef typename _NodeTypes::__node_base_pointer   __node_base_pointer;
-    typedef typename _NodeTypes::__node_base_pointer   __node_base_const_pointer;
 
     typedef typename _NodeTypes::__end_node_type       __end_node_t;
     typedef typename _NodeTypes::__end_node_pointer    __end_node_ptr;
-    typedef typename _NodeTypes::__end_node_pointer    __end_node_const_ptr;
 
     typedef typename __rebind_alloc_helper<__alloc_traits, __node>::type __node_allocator;
     typedef allocator_traits<__node_allocator>         __node_traits;
@@ -880,7 +877,7 @@ private:
                  "Allocator does not rebind pointers in a sane manner.");
 
 private:
-    __node_pointer                                          __begin_node_;
+    __node_pointer                                     __begin_node_;
     __compressed_pair<__end_node_t, __node_allocator>  __pair1_;
     __compressed_pair<size_type, value_compare>        __pair3_;
 
@@ -888,18 +885,18 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     __node_pointer __end_node() _NOEXCEPT
     {
-        return static_cast<__node_pointer>
-               (
-                   pointer_traits<__end_node_ptr>::pointer_to(__pair1_.first())
-               );
+        return static_cast<__node_pointer>(
+                pointer_traits<__end_node_ptr>::pointer_to(__pair1_.first())
+        );
     }
     _LIBCPP_INLINE_VISIBILITY
-    __node_const_pointer __end_node() const _NOEXCEPT
+    __node_pointer __end_node() const _NOEXCEPT
     {
-        return static_cast<__node_const_pointer>
-               (
-                   pointer_traits<__end_node_const_ptr>::pointer_to(const_cast<__end_node_t&>(__pair1_.first()))
-               );
+        return static_cast<__node_pointer>(
+            pointer_traits<__end_node_ptr>::pointer_to(
+                const_cast<__end_node_t&>(__pair1_.first())
+            )
+        );
     }
     _LIBCPP_INLINE_VISIBILITY
           __node_allocator& __node_alloc() _NOEXCEPT {return __pair1_.second();}
@@ -927,12 +924,10 @@ public:
     const value_compare& value_comp() const _NOEXCEPT
         {return __pair3_.second();}
 public:
+
     _LIBCPP_INLINE_VISIBILITY
-    __node_pointer __root() _NOEXCEPT
-        {return static_cast<__node_pointer>      (__end_node()->__left_);}
-    _LIBCPP_INLINE_VISIBILITY
-    __node_const_pointer __root() const _NOEXCEPT
-        {return static_cast<__node_const_pointer>(__end_node()->__left_);}
+    __node_pointer __root() const _NOEXCEPT
+        {return static_cast<__node_pointer>(__end_node()->__left_);}
 
     typedef __tree_iterator<value_type, __node_pointer, difference_type>             iterator;
     typedef __tree_const_iterator<value_type, __node_pointer, difference_type> const_iterator;
@@ -1069,8 +1064,8 @@ public:
             {return __lower_bound(__v, __root(), __end_node());}
     template <class _Key>
         const_iterator __lower_bound(const _Key& __v,
-                                     __node_const_pointer __root,
-                                     __node_const_pointer __result) const;
+                                     __node_pointer __root,
+                                     __node_pointer __result) const;
     template <class _Key>
         _LIBCPP_INLINE_VISIBILITY
         iterator upper_bound(const _Key& __v)
@@ -1085,8 +1080,8 @@ public:
             {return __upper_bound(__v, __root(), __end_node());}
     template <class _Key>
         const_iterator __upper_bound(const _Key& __v,
-                                     __node_const_pointer __root,
-                                     __node_const_pointer __result) const;
+                                     __node_pointer __root,
+                                     __node_pointer __result) const;
     template <class _Key>
         pair<iterator, iterator>
         __equal_range_unique(const _Key& __k);
@@ -2142,17 +2137,17 @@ template <class _Key>
 typename __tree<_Tp, _Compare, _Allocator>::size_type
 __tree<_Tp, _Compare, _Allocator>::__count_unique(const _Key& __k) const
 {
-    __node_const_pointer __result = __end_node();
-    __node_const_pointer __rt = __root();
+    __node_pointer __result = __end_node();
+    __node_pointer __rt = __root();
     while (__rt != nullptr)
     {
         if (value_comp()(__k, __rt->__value_))
         {
             __result = __rt;
-            __rt = static_cast<__node_const_pointer>(__rt->__left_);
+            __rt = static_cast<__node_pointer>(__rt->__left_);
         }
         else if (value_comp()(__rt->__value_, __k))
-            __rt = static_cast<__node_const_pointer>(__rt->__right_);
+            __rt = static_cast<__node_pointer>(__rt->__right_);
         else
             return 1;
     }
@@ -2164,21 +2159,21 @@ template <class _Key>
 typename __tree<_Tp, _Compare, _Allocator>::size_type
 __tree<_Tp, _Compare, _Allocator>::__count_multi(const _Key& __k) const
 {
-    __node_const_pointer __result = __end_node();
-    __node_const_pointer __rt = __root();
+    __node_pointer __result = __end_node();
+    __node_pointer __rt = __root();
     while (__rt != nullptr)
     {
         if (value_comp()(__k, __rt->__value_))
         {
             __result = __rt;
-            __rt = static_cast<__node_const_pointer>(__rt->__left_);
+            __rt = static_cast<__node_pointer>(__rt->__left_);
         }
         else if (value_comp()(__rt->__value_, __k))
-            __rt = static_cast<__node_const_pointer>(__rt->__right_);
+            __rt = static_cast<__node_pointer>(__rt->__right_);
         else
             return _VSTD::distance(
-                __lower_bound(__k, static_cast<__node_const_pointer>(__rt->__left_), __rt),
-                __upper_bound(__k, static_cast<__node_const_pointer>(__rt->__right_), __result)
+                __lower_bound(__k, static_cast<__node_pointer>(__rt->__left_), __rt),
+                __upper_bound(__k, static_cast<__node_pointer>(__rt->__right_), __result)
             );
     }
     return 0;
@@ -2208,18 +2203,18 @@ template <class _Tp, class _Compare, class _Allocator>
 template <class _Key>
 typename __tree<_Tp, _Compare, _Allocator>::const_iterator
 __tree<_Tp, _Compare, _Allocator>::__lower_bound(const _Key& __v,
-                                                 __node_const_pointer __root,
-                                                 __node_const_pointer __result) const
+                                                 __node_pointer __root,
+                                                 __node_pointer __result) const
 {
     while (__root != nullptr)
     {
         if (!value_comp()(__root->__value_, __v))
         {
             __result = __root;
-            __root = static_cast<__node_const_pointer>(__root->__left_);
+            __root = static_cast<__node_pointer>(__root->__left_);
         }
         else
-            __root = static_cast<__node_const_pointer>(__root->__right_);
+            __root = static_cast<__node_pointer>(__root->__right_);
     }
     return const_iterator(__result);
 }
@@ -2248,18 +2243,18 @@ template <class _Tp, class _Compare, class _Allocator>
 template <class _Key>
 typename __tree<_Tp, _Compare, _Allocator>::const_iterator
 __tree<_Tp, _Compare, _Allocator>::__upper_bound(const _Key& __v,
-                                                 __node_const_pointer __root,
-                                                 __node_const_pointer __result) const
+                                                 __node_pointer __root,
+                                                 __node_pointer __result) const
 {
     while (__root != nullptr)
     {
         if (value_comp()(__v, __root->__value_))
         {
             __result = __root;
-            __root = static_cast<__node_const_pointer>(__root->__left_);
+            __root = static_cast<__node_pointer>(__root->__left_);
         }
         else
-            __root = static_cast<__node_const_pointer>(__root->__right_);
+            __root = static_cast<__node_pointer>(__root->__right_);
     }
     return const_iterator(__result);
 }
@@ -2299,22 +2294,22 @@ pair<typename __tree<_Tp, _Compare, _Allocator>::const_iterator,
 __tree<_Tp, _Compare, _Allocator>::__equal_range_unique(const _Key& __k) const
 {
     typedef pair<const_iterator, const_iterator> _Pp;
-    __node_const_pointer __result = __end_node();
-    __node_const_pointer __rt = __root();
+    __node_pointer __result = __end_node();
+    __node_pointer __rt = __root();
     while (__rt != nullptr)
     {
         if (value_comp()(__k, __rt->__value_))
         {
             __result = __rt;
-            __rt = static_cast<__node_const_pointer>(__rt->__left_);
+            __rt = static_cast<__node_pointer>(__rt->__left_);
         }
         else if (value_comp()(__rt->__value_, __k))
-            __rt = static_cast<__node_const_pointer>(__rt->__right_);
+            __rt = static_cast<__node_pointer>(__rt->__right_);
         else
             return _Pp(const_iterator(__rt),
                       const_iterator(
                           __rt->__right_ != nullptr ?
-                              static_cast<__node_const_pointer>(__tree_min(__rt->__right_))
+                              static_cast<__node_pointer>(__tree_min(__rt->__right_))
                             : __result));
     }
     return _Pp(const_iterator(__result), const_iterator(__result));
@@ -2352,20 +2347,20 @@ pair<typename __tree<_Tp, _Compare, _Allocator>::const_iterator,
 __tree<_Tp, _Compare, _Allocator>::__equal_range_multi(const _Key& __k) const
 {
     typedef pair<const_iterator, const_iterator> _Pp;
-    __node_const_pointer __result = __end_node();
-    __node_const_pointer __rt = __root();
+    __node_pointer __result = __end_node();
+    __node_pointer __rt = __root();
     while (__rt != nullptr)
     {
         if (value_comp()(__k, __rt->__value_))
         {
             __result = __rt;
-            __rt = static_cast<__node_const_pointer>(__rt->__left_);
+            __rt = static_cast<__node_pointer>(__rt->__left_);
         }
         else if (value_comp()(__rt->__value_, __k))
-            __rt = static_cast<__node_const_pointer>(__rt->__right_);
+            __rt = static_cast<__node_pointer>(__rt->__right_);
         else
-            return _Pp(__lower_bound(__k, static_cast<__node_const_pointer>(__rt->__left_), __rt),
-                      __upper_bound(__k, static_cast<__node_const_pointer>(__rt->__right_), __result));
+            return _Pp(__lower_bound(__k, static_cast<__node_pointer>(__rt->__left_), __rt),
+                      __upper_bound(__k, static_cast<__node_pointer>(__rt->__right_), __result));
     }
     return _Pp(const_iterator(__result), const_iterator(__result));
 }
