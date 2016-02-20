@@ -125,7 +125,7 @@ void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
             WebAssembly::FP32)
         .addReg(WebAssembly::SP32);
   }
-  if (StackSize) {
+  if (StackSize || hasFP(MF)) {
     SPAddr = MRI.createVirtualRegister(&WebAssembly::I32RegClass);
     // The SP32 register now has the new stacktop. Also write it back to memory.
     BuildMI(MBB, InsertPt, DL, TII->get(WebAssembly::CONST_I32), SPAddr)

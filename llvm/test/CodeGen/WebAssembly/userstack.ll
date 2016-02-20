@@ -135,7 +135,8 @@ define void @dynamic_alloca(i32 %alloc) {
  ; CHECK-NEXT: i32.load [[SP:.+]]=, 0($pop[[L1]])
  ; CHECK-NEXT: copy_local [[FP:.+]]=, [[SP]]
  ; Target independent codegen bumps the stack pointer
- ; FIXME: we need to write the value back to memory
+ ; CHECK: i32.const $push[[L4:.+]]=, __stack_pointer{{$}}
+ ; CHECK-NEXT: i32.store [[SP]]=, 0($pop[[L4]]), [[SP]]
  %r = alloca i32, i32 %alloc
  ; Target-independent codegen also calculates the store addr
  store i32 0, i32* %r
@@ -193,6 +194,8 @@ declare i8* @llvm.frameaddress(i32)
 ; CHECK: i32.const $push[[L1:.+]]=, __stack_pointer
 ; CHECK-NEXT: i32.load [[SP:.+]]=, 0($pop[[L1]])
 ; CHECK-NEXT: copy_local [[FP:.+]]=, [[SP]]
+; CHECK-NEXT: i32.const $push[[L2:.+]]=, __stack_pointer{{$}}
+; CHECK-NEXT: i32.store [[SP]]=, 0($pop[[L2]]), [[SP]]
 ; CHECK-NEXT: call use_i8_star@FUNCTION, [[FP]]
 ; CHECK-NEXT: i32.const $push[[L6:.+]]=, __stack_pointer
 ; CHECK-NEXT: i32.store [[SP]]=, 0($pop[[L6]]), [[FP]]
