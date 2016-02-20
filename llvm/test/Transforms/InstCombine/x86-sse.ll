@@ -210,15 +210,9 @@ define float @test_cmp_ss_0(float %a, float %b) {
 define i32 @test_comieq_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_comieq_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.comieq.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.comieq.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -234,15 +228,9 @@ define i32 @test_comieq_ss_0(float %a, float %b) {
 define i32 @test_comige_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_comige_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.comige.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.comige.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -258,15 +246,9 @@ define i32 @test_comige_ss_0(float %a, float %b) {
 define i32 @test_comigt_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_comigt_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.comigt.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.comigt.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -282,15 +264,9 @@ define i32 @test_comigt_ss_0(float %a, float %b) {
 define i32 @test_comile_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_comile_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.comile.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.comile.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -306,15 +282,9 @@ define i32 @test_comile_ss_0(float %a, float %b) {
 define i32 @test_comilt_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_comilt_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.comilt.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.comilt.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -330,15 +300,9 @@ define i32 @test_comilt_ss_0(float %a, float %b) {
 define i32 @test_comineq_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_comineq_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.comineq.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.comineq.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -354,15 +318,9 @@ define i32 @test_comineq_ss_0(float %a, float %b) {
 define i32 @test_ucomieq_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_ucomieq_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.ucomieq.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.ucomieq.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -378,15 +336,9 @@ define i32 @test_ucomieq_ss_0(float %a, float %b) {
 define i32 @test_ucomige_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_ucomige_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.ucomige.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.ucomige.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -402,15 +354,9 @@ define i32 @test_ucomige_ss_0(float %a, float %b) {
 define i32 @test_ucomigt_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_ucomigt_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.ucomigt.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.ucomigt.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -426,15 +372,9 @@ define i32 @test_ucomigt_ss_0(float %a, float %b) {
 define i32 @test_ucomile_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_ucomile_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.ucomile.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.ucomile.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -450,15 +390,9 @@ define i32 @test_ucomile_ss_0(float %a, float %b) {
 define i32 @test_ucomilt_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_ucomilt_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.ucomilt.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.ucomilt.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
@@ -474,15 +408,9 @@ define i32 @test_ucomilt_ss_0(float %a, float %b) {
 define i32 @test_ucomineq_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_ucomineq_ss_0
 ; CHECK-NEXT: %1 = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT: %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
-; CHECK-NEXT: %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
-; CHECK-NEXT: %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
-; CHECK-NEXT: %5 = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT: %6 = insertelement <4 x float> %5, float 4.000000e+00, i32 1
-; CHECK-NEXT: %7 = insertelement <4 x float> %6, float 5.000000e+00, i32 2
-; CHECK-NEXT: %8 = insertelement <4 x float> %7, float 6.000000e+00, i32 3
-; CHECK-NEXT: %9 = tail call i32 @llvm.x86.sse.ucomineq.ss(<4 x float> %4, <4 x float> %8)
-; CHECK-NEXT: ret i32 %9
+; CHECK-NEXT: %2 = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT: %3 = tail call i32 @llvm.x86.sse.ucomineq.ss(<4 x float> %1, <4 x float> %2)
+; CHECK-NEXT: ret i32 %3
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
   %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
