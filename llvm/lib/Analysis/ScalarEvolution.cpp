@@ -3694,10 +3694,10 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
 namespace {
 class SCEVInitRewriter : public SCEVRewriteVisitor<SCEVInitRewriter> {
 public:
-  static const SCEV *rewrite(const SCEV *Scev, const Loop *L,
+  static const SCEV *rewrite(const SCEV *S, const Loop *L,
                              ScalarEvolution &SE) {
     SCEVInitRewriter Rewriter(L, SE);
-    const SCEV *Result = Rewriter.visit(Scev);
+    const SCEV *Result = Rewriter.visit(S);
     return Rewriter.isValid() ? Result : SE.getCouldNotCompute();
   }
 
@@ -3727,10 +3727,10 @@ private:
 
 class SCEVShiftRewriter : public SCEVRewriteVisitor<SCEVShiftRewriter> {
 public:
-  static const SCEV *rewrite(const SCEV *Scev, const Loop *L,
+  static const SCEV *rewrite(const SCEV *S, const Loop *L,
                              ScalarEvolution &SE) {
     SCEVShiftRewriter Rewriter(L, SE);
-    const SCEV *Result = Rewriter.visit(Scev);
+    const SCEV *Result = Rewriter.visit(S);
     return Rewriter.isValid() ? Result : SE.getCouldNotCompute();
   }
 
@@ -9647,14 +9647,13 @@ namespace {
 
 class SCEVPredicateRewriter : public SCEVRewriteVisitor<SCEVPredicateRewriter> {
 public:
-  // Rewrites Scev in the context of a loop L and the predicate A.
+  // Rewrites \p S in the context of a loop L and the predicate A.
   // If Assume is true, rewrite is free to add further predicates to A
   // such that the result will be an AddRecExpr.
-  static const SCEV *rewrite(const SCEV *Scev, const Loop *L,
-                             ScalarEvolution &SE, SCEVUnionPredicate &A,
-                             bool Assume) {
+  static const SCEV *rewrite(const SCEV *S, const Loop *L, ScalarEvolution &SE,
+                             SCEVUnionPredicate &A, bool Assume) {
     SCEVPredicateRewriter Rewriter(L, SE, A, Assume);
-    return Rewriter.visit(Scev);
+    return Rewriter.visit(S);
   }
 
   SCEVPredicateRewriter(const Loop *L, ScalarEvolution &SE,
@@ -9723,15 +9722,15 @@ private:
 };
 } // end anonymous namespace
 
-const SCEV *ScalarEvolution::rewriteUsingPredicate(const SCEV *Scev,
-                                                   const Loop *L,
+const SCEV *ScalarEvolution::rewriteUsingPredicate(const SCEV *S, const Loop *L,
                                                    SCEVUnionPredicate &Preds) {
-  return SCEVPredicateRewriter::rewrite(Scev, L, *this, Preds, false);
+  return SCEVPredicateRewriter::rewrite(S, L, *this, Preds, false);
 }
 
-const SCEV *ScalarEvolution::convertSCEVToAddRecWithPredicates(
-    const SCEV *Scev, const Loop *L, SCEVUnionPredicate &Preds) {
-  return SCEVPredicateRewriter::rewrite(Scev, L, *this, Preds, true);
+const SCEV *
+ScalarEvolution::convertSCEVToAddRecWithPredicates(const SCEV *S, const Loop *L,
+                                                   SCEVUnionPredicate &Preds) {
+  return SCEVPredicateRewriter::rewrite(S, L, *this, Preds, true);
 }
 
 /// SCEV predicates
