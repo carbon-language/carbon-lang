@@ -263,26 +263,6 @@ public:
   pointer getNodePtrUnchecked() const { return NodePtr; }
 };
 
-// operator!=/operator== - Allow mixed comparisons without dereferencing
-// the iterator, which could very likely be pointing to end().
-template<typename T>
-bool operator!=(const T* LHS, const ilist_iterator<const T> &RHS) {
-  return LHS != RHS.getNodePtrUnchecked();
-}
-template<typename T>
-bool operator==(const T* LHS, const ilist_iterator<const T> &RHS) {
-  return LHS == RHS.getNodePtrUnchecked();
-}
-template<typename T>
-bool operator!=(T* LHS, const ilist_iterator<T> &RHS) {
-  return LHS != RHS.getNodePtrUnchecked();
-}
-template<typename T>
-bool operator==(T* LHS, const ilist_iterator<T> &RHS) {
-  return LHS == RHS.getNodePtrUnchecked();
-}
-
-
 // Allow ilist_iterators to convert into pointers to a node automatically when
 // used by the dyn_cast, cast, isa mechanisms...
 
