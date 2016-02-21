@@ -2042,6 +2042,7 @@ class ScopInfo : public RegionPass {
   /// @param R          The region on which to build the data access dictionary.
   /// @param BoxedLoops The set of loops that are overapproximated in @p R.
   /// @param ScopRIL    The required invariant loads equivalence classes.
+  ///
   /// @returns True if the access could be built, False otherwise.
   bool
   buildAccessMultiDimFixed(MemAccInst Inst, Loop *L, Region *R,
@@ -2057,6 +2058,7 @@ class ScopInfo : public RegionPass {
   /// @param BoxedLoops The set of loops that are overapproximated in @p R.
   /// @param ScopRIL    The required invariant loads equivalence classes.
   /// @param InsnToMemAcc The Instruction to MemoryAccess mapping
+  ///
   /// @returns True if the access could be built, False otherwise.
   bool
   buildAccessMultiDimParam(MemAccInst Inst, Loop *L, Region *R,
@@ -2175,6 +2177,7 @@ class ScopInfo : public RegionPass {
   /// @param Subscripts  Access subscripts per dimension.
   /// @param Sizes       The array dimension's sizes.
   /// @param AccessValue Value read or written.
+  ///
   /// @see ScopArrayInfo::MemoryKind
   void addArrayAccess(MemAccInst MemAccInst, MemoryAccess::AccessType Type,
                       Value *BaseAddress, unsigned ElemBytes, bool IsAffine,
@@ -2186,6 +2189,7 @@ class ScopInfo : public RegionPass {
   /// The access will be created at the position of @p Inst.
   ///
   /// @param Inst The instruction to be written.
+  ///
   /// @see ensureValueRead()
   /// @see ScopArrayInfo::MemoryKind
   void ensureValueWrite(Instruction *Inst);
@@ -2195,6 +2199,7 @@ class ScopInfo : public RegionPass {
   ///
   /// @param V      The value expected to be loaded.
   /// @param UserBB Where to reload the value.
+  ///
   /// @see ensureValueStore()
   /// @see ScopArrayInfo::MemoryKind
   void ensureValueRead(Value *V, BasicBlock *UserBB);
@@ -2223,6 +2228,7 @@ class ScopInfo : public RegionPass {
   ///
   /// @param PHI PHINode under consideration; the READ access will be added
   /// here.
+  ///
   /// @see ensurePHIWrite()
   /// @see ScopArrayInfo::MemoryKind
   void addPHIReadAccess(PHINode *PHI);
