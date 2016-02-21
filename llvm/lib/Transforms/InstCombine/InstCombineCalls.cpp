@@ -61,8 +61,7 @@ static Type *reduceToSingleValueType(Type *T) {
 }
 
 /// Return a constant boolean vector that has true elements in all positions
-/// where the input constant integer vector has an element with the sign bit
-/// set.
+/// where the input constant data vector has an element with the sign bit set.
 static Constant *getNegativeIsTrueBoolVec(ConstantDataVector *V) {
   SmallVector<Constant *, 32> BoolVec;
   IntegerType *BoolTy = Type::getInt1Ty(V->getContext());
