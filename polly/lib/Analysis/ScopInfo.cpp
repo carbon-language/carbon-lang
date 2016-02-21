@@ -3107,9 +3107,11 @@ const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr,
 }
 
 std::string Scop::getContextStr() const { return stringFromIslObj(Context); }
+
 std::string Scop::getAssumedContextStr() const {
   return stringFromIslObj(AssumedContext);
 }
+
 std::string Scop::getBoundaryContextStr() const {
   return stringFromIslObj(BoundaryContext);
 }
@@ -4055,6 +4057,7 @@ void ScopInfo::addArrayAccess(MemAccInst MemAccInst,
                   ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
                   ScopArrayInfo::MK_Array);
 }
+
 void ScopInfo::ensureValueWrite(Instruction *Inst) {
   ScopStmt *Stmt = scop->getStmtForBasicBlock(Inst->getParent());
 
@@ -4070,6 +4073,7 @@ void ScopInfo::ensureValueWrite(Instruction *Inst) {
                   true, Inst, ArrayRef<const SCEV *>(),
                   ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
 }
+
 void ScopInfo::ensureValueRead(Value *V, BasicBlock *UserBB) {
 
   // There cannot be an "access" for literal constants. BasicBlock references
@@ -4121,6 +4125,7 @@ void ScopInfo::ensureValueRead(Value *V, BasicBlock *UserBB) {
   if (ValueInst)
     ensureValueWrite(ValueInst);
 }
+
 void ScopInfo::ensurePHIWrite(PHINode *PHI, BasicBlock *IncomingBlock,
                               Value *IncomingValue, bool IsExitBlock) {
   ScopStmt *IncomingStmt = scop->getStmtForBasicBlock(IncomingBlock);
@@ -4150,6 +4155,7 @@ void ScopInfo::ensurePHIWrite(PHINode *PHI, BasicBlock *IncomingBlock,
   assert(Acc);
   Acc->addIncoming(IncomingBlock, IncomingValue);
 }
+
 void ScopInfo::addPHIReadAccess(PHINode *PHI) {
   addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true, PHI,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
