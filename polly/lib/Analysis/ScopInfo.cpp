@@ -189,7 +189,7 @@ ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
 }
 
 __isl_give isl_space *ScopArrayInfo::getSpace() const {
-  auto Space =
+  auto *Space =
       isl_space_set_alloc(isl_id_get_ctx(Id), 0, getNumberOfDimensions());
   Space = isl_space_set_tuple_id(Space, isl_dim_set, isl_id_copy(Id));
   return Space;
@@ -261,7 +261,7 @@ void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
     OS << "[";
 
     if (SizeAsPwAff) {
-      auto Size = getDimensionSizePw(u);
+      auto *Size = getDimensionSizePw(u);
       OS << " " << Size << " ";
       isl_pw_aff_free(Size);
     } else {
@@ -295,8 +295,8 @@ const ScopArrayInfo *ScopArrayInfo::getFromId(isl_id *Id) {
 
 void MemoryAccess::updateDimensionality() {
   auto *SAI = getScopArrayInfo();
-  auto ArraySpace = SAI->getSpace();
-  auto AccessSpace = isl_space_range(isl_map_get_space(AccessRelation));
+  auto *ArraySpace = SAI->getSpace();
+  auto *AccessSpace = isl_space_range(isl_map_get_space(AccessRelation));
   auto *Ctx = isl_space_get_ctx(AccessSpace);
 
   auto DimsArray = isl_space_dim(ArraySpace, isl_dim_set);
@@ -305,7 +305,7 @@ void MemoryAccess::updateDimensionality() {
 
   unsigned ArrayElemSize = SAI->getElemSizeInBytes();
 
-  auto Map = isl_map_from_domain_and_range(
+  auto *Map = isl_map_from_domain_and_range(
       isl_set_universe(AccessSpace),
       isl_set_universe(isl_space_copy(ArraySpace)));
 
@@ -343,7 +343,7 @@ void MemoryAccess::updateDimensionality() {
   if (ElemBytes > ArrayElemSize) {
     assert(ElemBytes % ArrayElemSize == 0 &&
            "Loaded element size should be multiple of canonical element size");
-    auto Map = isl_map_from_domain_and_range(
+    auto *Map = isl_map_from_domain_and_range(
         isl_set_universe(isl_space_copy(ArraySpace)),
         isl_set_universe(isl_space_copy(ArraySpace)));
     for (unsigned i = 0; i < DimsArray - 1; i++)
@@ -452,16 +452,16 @@ getIndexExpressionsFromGEP(GetElementPtrInst *GEP, ScalarEvolution &SE) {
     const SCEV *Expr = SE.getSCEV(GEP->getOperand(i));
 
     if (i == 1) {
-      if (auto PtrTy = dyn_cast<PointerType>(Ty)) {
+      if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
         Ty = PtrTy->getElementType();
-      } else if (auto ArrayTy = dyn_cast<ArrayType>(Ty)) {
+      } else if (auto *ArrayTy = dyn_cast<ArrayType>(Ty)) {
         Ty = ArrayTy->getElementType();
       } else {
         Subscripts.clear();
         Sizes.clear();
         break;
       }
-      if (auto Const = dyn_cast<SCEVConstant>(Expr))
+      if (auto *Const = dyn_cast<SCEVConstant>(Expr))
         if (Const->getValue()->isZero()) {
           DroppedFirstDim = true;
           continue;
@@ -470,7 +470,7 @@ getIndexExpressionsFromGEP(GetElementPtrInst *GEP, ScalarEvolution &SE) {
       continue;
     }
 
-    auto ArrayTy = dyn_cast<ArrayType>(Ty);
+    auto *ArrayTy = dyn_cast<ArrayType>(Ty);
     if (!ArrayTy) {
       Subscripts.clear();
       Sizes.clear();
@@ -1279,7 +1279,7 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP,
   assert(IndexOffset <= 1 && "Unexpected large index offset");
 
   for (size_t i = 0; i < Sizes.size(); i++) {
-    auto Expr = Subscripts[i + IndexOffset];
+    auto *Expr = Subscripts[i + IndexOffset];
     auto Size = Sizes[i];
 
     InvariantLoadsSetTy AccessILS;
@@ -1697,7 +1697,7 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
     if (Val->hasName())
       ParameterName = Val->getName();
     else if (LoadInst *LI = dyn_cast<LoadInst>(Val)) {
-      auto LoadOrigin = LI->getPointerOperand()->stripInBoundsOffsets();
+      auto *LoadOrigin = LI->getPointerOperand()->stripInBoundsOffsets();
       if (LoadOrigin->hasName()) {
         ParameterName += "_loaded_from_";
         ParameterName +=
@@ -1805,8 +1805,8 @@ void Scop::addUserContext() {
   }
 
   for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
-    auto NameContext = isl_set_get_dim_name(Context, isl_dim_param, i);
-    auto NameUserContext = isl_set_get_dim_name(UserContext, isl_dim_param, i);
+    auto *NameContext = isl_set_get_dim_name(Context, isl_dim_param, i);
+    auto *NameUserContext = isl_set_get_dim_name(UserContext, isl_dim_param, i);
 
     if (strcmp(NameContext, NameUserContext) != 0) {
       auto SpaceStr = isl_space_to_str(Space);
@@ -2094,11 +2094,11 @@ isl_set *Scop::getDomainConditions(BasicBlock *BB) {
 void Scop::removeErrorBlockDomains(ScopDetection &SD, DominatorTree &DT,
                                    LoopInfo &LI) {
   auto removeDomains = [this, &DT](BasicBlock *Start) {
-    auto BBNode = DT.getNode(Start);
-    for (auto ErrorChild : depth_first(BBNode)) {
-      auto ErrorChildBlock = ErrorChild->getBlock();
-      auto CurrentDomain = DomainMap[ErrorChildBlock];
-      auto Empty = isl_set_empty(isl_set_get_space(CurrentDomain));
+    auto *BBNode = DT.getNode(Start);
+    for (auto *ErrorChild : depth_first(BBNode)) {
+      auto *ErrorChildBlock = ErrorChild->getBlock();
+      auto *CurrentDomain = DomainMap[ErrorChildBlock];
+      auto *Empty = isl_set_empty(isl_set_get_space(CurrentDomain));
       DomainMap[ErrorChildBlock] = Empty;
       isl_set_free(CurrentDomain);
     }
@@ -2107,7 +2107,7 @@ void Scop::removeErrorBlockDomains(ScopDetection &SD, DominatorTree &DT,
   SmallVector<Region *, 4> Todo = {&R};
 
   while (!Todo.empty()) {
-    auto SubRegion = Todo.back();
+    auto *SubRegion = Todo.back();
     Todo.pop_back();
 
     if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
@@ -2119,7 +2119,7 @@ void Scop::removeErrorBlockDomains(ScopDetection &SD, DominatorTree &DT,
       removeDomains(SubRegion->getEntry());
   }
 
-  for (auto BB : R.blocks())
+  for (auto *BB : R.blocks())
     if (isErrorBlock(*BB, R, LI, DT))
       removeDomains(BB);
 }
@@ -2576,7 +2576,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     if (AS.isMustAlias() || AS.isForwardingAliasSet())
       continue;
     AliasGroupTy AG;
-    for (auto PR : AS)
+    for (auto &PR : AS)
       AG.push_back(PtrToAcc[PR.getValue()]);
     assert(AG.size() > 1 &&
            "Alias groups should contain at least two accesses");
@@ -3388,8 +3388,8 @@ __isl_give isl_union_map *Scop::getAccesses() {
 }
 
 __isl_give isl_union_map *Scop::getSchedule() const {
-  auto Tree = getScheduleTree();
-  auto S = isl_schedule_get_map(Tree);
+  auto *Tree = getScheduleTree();
+  auto *S = isl_schedule_get_map(Tree);
   isl_schedule_free(Tree);
   return S;
 }
@@ -3525,7 +3525,6 @@ mapToDimension(__isl_take isl_union_set *USet, int N) {
   Data = {N, PwAff};
 
   auto Res = isl_union_set_foreach_set(USet, &mapToDimension_AddSet, &Data);
-
   (void)Res;
 
   assert(Res == isl_stat_ok);
@@ -3537,12 +3536,12 @@ mapToDimension(__isl_take isl_union_set *USet, int N) {
 void Scop::addScopStmt(BasicBlock *BB, Region *R) {
   if (BB) {
     Stmts.emplace_back(*this, *BB);
-    auto Stmt = &Stmts.back();
+    auto *Stmt = &Stmts.back();
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either basic block or a region expected.");
     Stmts.emplace_back(*this, *R);
-    auto Stmt = &Stmts.back();
+    auto *Stmt = &Stmts.back();
     for (BasicBlock *BB : R->blocks())
       StmtMap[BB] = Stmt;
   }
@@ -3658,7 +3657,7 @@ void Scop::buildSchedule(RegionNode *RN, LoopStackTy &LoopStack,
   // completed by this node.
   while (LoopData.L &&
          LoopData.NumBlocksProcessed == LoopData.L->getNumBlocks()) {
-    auto Schedule = LoopData.Schedule;
+    auto *Schedule = LoopData.Schedule;
     auto NumBlocksProcessed = LoopData.NumBlocksProcessed;
 
     LoopStack.pop_back();
@@ -3783,11 +3782,11 @@ bool ScopInfo::buildAccessMultiDimFixed(
       Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
   if (isa<GetElementPtrInst>(Address) || isa<BitCastInst>(Address)) {
-    auto NewAddress = Address;
+    auto *NewAddress = Address;
     if (auto *BitCast = dyn_cast<BitCastInst>(Address)) {
-      auto Src = BitCast->getOperand(0);
-      auto SrcTy = Src->getType();
-      auto DstTy = BitCast->getType();
+      auto *Src = BitCast->getOperand(0);
+      auto *SrcTy = Src->getType();
+      auto *DstTy = BitCast->getType();
       if (SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits())
         NewAddress = Src;
     }
@@ -3796,11 +3795,11 @@ bool ScopInfo::buildAccessMultiDimFixed(
       std::vector<const SCEV *> Subscripts;
       std::vector<int> Sizes;
       std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, *SE);
-      auto BasePtr = GEP->getOperand(0);
+      auto *BasePtr = GEP->getOperand(0);
 
       std::vector<const SCEV *> SizesSCEV;
 
-      for (auto Subscript : Subscripts) {
+      for (auto *Subscript : Subscripts) {
         InvariantLoadsSetTy AccessILS;
         if (!isAffineExpr(R, Subscript, *SE, nullptr, &AccessILS))
           return false;
@@ -4086,7 +4085,7 @@ void ScopInfo::ensureValueRead(Value *V, BasicBlock *UserBB) {
 
   // Do not build scalar dependences for required invariant loads as we will
   // hoist them later on anyway or drop the SCoP if we cannot.
-  auto ScopRIL = SD->getRequiredInvariantLoads(&ScopRegion);
+  auto *ScopRIL = SD->getRequiredInvariantLoads(&ScopRegion);
   if (ScopRIL->count(dyn_cast<LoadInst>(V)))
     return;
 
