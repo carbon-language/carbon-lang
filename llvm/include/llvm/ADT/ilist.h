@@ -204,20 +204,6 @@ public:
 private:
   pointer NodePtr;
 
-  // ilist_iterator is not a random-access iterator, but it has an
-  // implicit conversion to pointer-type, which is. Declare (but
-  // don't define) these functions as private to help catch
-  // accidental misuse.
-  void operator[](difference_type) const;
-  void operator+(difference_type) const;
-  void operator-(difference_type) const;
-  void operator+=(difference_type) const;
-  void operator-=(difference_type) const;
-  template<class T> void operator<(T) const;
-  template<class T> void operator<=(T) const;
-  template<class T> void operator>(T) const;
-  template<class T> void operator>=(T) const;
-  template<class T> void operator-(T) const;
 public:
 
   explicit ilist_iterator(pointer NP) : NodePtr(NP) {}
@@ -282,18 +268,6 @@ public:
   // Internal interface, do not use...
   pointer getNodePtrUnchecked() const { return NodePtr; }
 };
-
-// These are to catch errors when people try to use them as random access
-// iterators.
-template<typename T>
-void operator-(int, ilist_iterator<T>) = delete;
-template<typename T>
-void operator-(ilist_iterator<T>,int) = delete;
-
-template<typename T>
-void operator+(int, ilist_iterator<T>) = delete;
-template<typename T>
-void operator+(ilist_iterator<T>,int) = delete;
 
 // operator!=/operator== - Allow mixed comparisons without dereferencing
 // the iterator, which could very likely be pointing to end().
