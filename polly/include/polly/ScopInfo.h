@@ -2181,23 +2181,23 @@ class ScopInfo : public RegionPass {
                       ArrayRef<const SCEV *> Subscripts,
                       ArrayRef<const SCEV *> Sizes, Value *AccessValue);
 
-  /// @brief Create a MemoryAccess for writing an llvm::Value.
+  /// @brief Create a MemoryAccess for writing an llvm::Instruction.
   ///
-  /// The access will be created at the @p Value's definition.
+  /// The access will be created at the position of @p Inst.
   ///
-  /// @param Value The value to be written.
+  /// @param Inst The instruction to be written.
   /// @see ensureValueRead()
   /// @see ScopArrayInfo::MemoryKind
-  void ensureValueWrite(Instruction *Value);
+  void ensureValueWrite(Instruction *Inst);
 
   /// @brief Ensure an llvm::Value is available in the BB's statement, creating
   ///        a MemoryAccess for reloading it if necessary.
   ///
-  /// @param Value  The value expected to be loaded.
+  /// @param V      The value expected to be loaded.
   /// @param UserBB Where to reload the value.
   /// @see ensureValueStore()
   /// @see ScopArrayInfo::MemoryKind
-  void ensureValueRead(Value *Value, BasicBlock *UserBB);
+  void ensureValueRead(Value *V, BasicBlock *UserBB);
 
   /// @brief Create a write MemoryAccess for the incoming block of a phi node.
   ///

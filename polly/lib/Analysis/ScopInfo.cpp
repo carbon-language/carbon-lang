@@ -4056,45 +4056,44 @@ void ScopInfo::addArrayAccess(MemAccInst MemAccInst,
                   ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
                   ScopArrayInfo::MK_Array);
 }
-void ScopInfo::ensureValueWrite(Instruction *Value) {
-  ScopStmt *Stmt = scop->getStmtForBasicBlock(Value->getParent());
+void ScopInfo::ensureValueWrite(Instruction *Inst) {
+  ScopStmt *Stmt = scop->getStmtForBasicBlock(Inst->getParent());
 
-  // Value not defined within this SCoP.
+  // Inst not defined within this SCoP.
   if (!Stmt)
     return;
 
-  // Do not process further if the value is already written.
-  if (Stmt->lookupValueWriteOf(Value))
+  // Do not process further if the instruction is already written.
+  if (Stmt->lookupValueWriteOf(Inst))
     return;
 
-  addMemoryAccess(Value->getParent(), Value, MemoryAccess::MUST_WRITE, Value, 1,
-                  true, Value, ArrayRef<const SCEV *>(),
+  addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::MUST_WRITE, Inst, 1,
+                  true, Inst, ArrayRef<const SCEV *>(),
                   ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
 }
-void ScopInfo::ensureValueRead(Value *Value, BasicBlock *UserBB) {
+void ScopInfo::ensureValueRead(Value *V, BasicBlock *UserBB) {
 
   // There cannot be an "access" for literal constants. BasicBlock references
   // (jump destinations) also never change.
-  if ((isa<Constant>(Value) && !isa<GlobalVariable>(Value)) ||
-      isa<BasicBlock>(Value))
+  if ((isa<Constant>(V) && !isa<GlobalVariable>(V)) || isa<BasicBlock>(V))
     return;
 
   // If the instruction can be synthesized and the user is in the region we do
   // not need to add a value dependences.
   Region &ScopRegion = scop->getRegion();
-  if (canSynthesize(Value, LI, SE, &ScopRegion))
+  if (canSynthesize(V, LI, SE, &ScopRegion))
     return;
 
   // Do not build scalar dependences for required invariant loads as we will
   // hoist them later on anyway or drop the SCoP if we cannot.
   auto ScopRIL = SD->getRequiredInvariantLoads(&ScopRegion);
-  if (ScopRIL->count(dyn_cast<LoadInst>(Value)))
+  if (ScopRIL->count(dyn_cast<LoadInst>(V)))
     return;
 
   // Determine the ScopStmt containing the value's definition and use. There is
   // no defining ScopStmt if the value is a function argument, a global value,
   // or defined outside the SCoP.
-  Instruction *ValueInst = dyn_cast<Instruction>(Value);
+  Instruction *ValueInst = dyn_cast<Instruction>(V);
   ScopStmt *ValueStmt =
       ValueInst ? scop->getStmtForBasicBlock(ValueInst->getParent()) : nullptr;
 
@@ -4114,10 +4113,10 @@ void ScopInfo::ensureValueRead(Value *Value, BasicBlock *UserBB) {
 
   // Do not create another MemoryAccess for reloading the value if one already
   // exists.
-  if (UserStmt->lookupValueReadOf(Value))
+  if (UserStmt->lookupValueReadOf(V))
     return;
 
-  addMemoryAccess(UserBB, nullptr, MemoryAccess::READ, Value, 1, true, Value,
+  addMemoryAccess(UserBB, nullptr, MemoryAccess::READ, V, 1, true, V,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
                   ScopArrayInfo::MK_Value);
   if (ValueInst)
