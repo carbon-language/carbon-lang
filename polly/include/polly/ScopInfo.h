@@ -497,8 +497,8 @@ private:
   /// @brief An unique name of the accessed array.
   std::string BaseName;
 
-  /// @brief Size in bytes of a single array element.
-  unsigned ElemBytes;
+  /// @brief Type a single array element wrt. this access.
+  Type *ElementType;
 
   /// @brief Size of each dimension of the accessed array.
   SmallVector<const SCEV *, 4> Sizes;
@@ -529,7 +529,8 @@ private:
   /// @brief The value associated with this memory access.
   ///
   ///  - For array memory accesses (MK_Array) it is the loaded result or the
-  ///    stored value.
+  ///    stored value. If the access instruction is a memory intrinsic it
+  ///    the access value is also the memory intrinsic.
   ///  - For accesses of kind MK_Value it is the access instruction itself.
   ///  - For accesses of kind MK_PHI or MK_ExitPHI it is the PHI node itself
   ///    (for both, READ and WRITE accesses).
@@ -573,8 +574,6 @@ private:
   /// @brief Updated access relation read from JSCOP file.
   isl_map *NewAccessRelation;
   // @}
-
-  unsigned getElemSizeInBytes() const { return ElemBytes; }
 
   bool isAffine() const { return IsAffine; }
 
@@ -627,6 +626,9 @@ private:
   __isl_give isl_map *foldAccess(__isl_take isl_map *AccessRelation,
                                  ScopStmt *Statement);
 
+  /// @brief Create the access relation for the underlying memory intrinsic.
+  void buildMemIntrinsicAccessRelation();
+
   /// @brief Assemble the access relation from all availbale information.
   ///
   /// In particular, used the information passes in the constructor and the
@@ -641,15 +643,15 @@ public:
   /// @param Stmt       The parent statement.
   /// @param AccessInst The instruction doing the access.
   /// @param BaseAddr   The accessed array's address.
-  /// @param ElemBytes  Number of accessed bytes.
+  /// @param ElemType   The type of the accessed array elements.
   /// @param AccType    Whether read or write access.
   /// @param IsAffine   Whether the subscripts are affine expressions.
   /// @param Kind       The kind of memory accessed.
   /// @param Subscripts Subscipt expressions
   /// @param Sizes      Dimension lengths of the accessed array.
   /// @param BaseName   Name of the acessed array.
-  MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst, AccessType Type,
-               Value *BaseAddress, unsigned ElemBytes, bool Affine,
+  MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst, AccessType AccType,
+               Value *BaseAddress, Type *ElemType, bool Affine,
                ArrayRef<const SCEV *> Subscripts, ArrayRef<const SCEV *> Sizes,
                Value *AccessValue, ScopArrayInfo::MemoryKind Kind,
                StringRef BaseName);
@@ -753,6 +755,9 @@ public:
   static const std::string getReductionOperatorStr(ReductionType RT);
 
   const std::string &getBaseName() const { return BaseName; }
+
+  /// @brief Return the element type of the accessed array wrt. this access.
+  Type *getElementType() const { return ElementType; }
 
   /// @brief Return the access value of this memory access.
   Value *getAccessValue() const { return AccessValue; }
@@ -2066,6 +2071,19 @@ class ScopInfo : public RegionPass {
                            const InvariantLoadsSetTy &ScopRIL,
                            const MapInsnToMemAcc &InsnToMemAcc);
 
+  /// @brief Try to build a MemoryAccess for a memory intrinsic.
+  ///
+  /// @param Inst       The instruction that access the memory
+  /// @param L          The parent loop of the instruction
+  /// @param R          The region on which to build the data access dictionary.
+  /// @param BoxedLoops The set of loops that are overapproximated in @p R.
+  /// @param ScopRIL    The required invariant loads equivalence classes.
+  ///
+  /// @returns True if the access could be built, False otherwise.
+  bool buildAccessMemIntrinsic(MemAccInst Inst, Loop *L, Region *R,
+                               const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
+                               const InvariantLoadsSetTy &ScopRIL);
+
   /// @brief Build a single-dimensional parameteric sized MemoryAccess
   ///        from the Load/Store instruction.
   ///
@@ -2147,9 +2165,9 @@ class ScopInfo : public RegionPass {
   /// @param BB          The block where the access takes place.
   /// @param Inst        The instruction doing the access. It is not necessarily
   ///                    inside @p BB.
-  /// @param Type        The kind of access.
+  /// @param AccType     The kind of access.
   /// @param BaseAddress The accessed array's base address.
-  /// @param ElemBytes   Size of accessed array element.
+  /// @param ElemType    The type of the accessed array elements.
   /// @param Affine      Whether all subscripts are affine expressions.
   /// @param AccessValue Value read or written.
   /// @param Subscripts  Access subscripts per dimension.
@@ -2159,9 +2177,9 @@ class ScopInfo : public RegionPass {
   /// @return The created MemoryAccess, or nullptr if the access is not within
   ///         the SCoP.
   MemoryAccess *addMemoryAccess(BasicBlock *BB, Instruction *Inst,
-                                MemoryAccess::AccessType Type,
-                                Value *BaseAddress, unsigned ElemBytes,
-                                bool Affine, Value *AccessValue,
+                                MemoryAccess::AccessType AccType,
+                                Value *BaseAddress, Type *ElemType, bool Affine,
+                                Value *AccessValue,
                                 ArrayRef<const SCEV *> Subscripts,
                                 ArrayRef<const SCEV *> Sizes,
                                 ScopArrayInfo::MemoryKind Kind);
@@ -2170,17 +2188,17 @@ class ScopInfo : public RegionPass {
   /// StoreInst.
   ///
   /// @param MemAccInst  The LoadInst or StoreInst.
-  /// @param Type        The kind of access.
+  /// @param AccType     The kind of access.
   /// @param BaseAddress The accessed array's base address.
-  /// @param ElemBytes   Size of accessed array element.
+  /// @param ElemType    The type of the accessed array elements.
   /// @param IsAffine    Whether all subscripts are affine expressions.
   /// @param Subscripts  Access subscripts per dimension.
   /// @param Sizes       The array dimension's sizes.
   /// @param AccessValue Value read or written.
   ///
   /// @see ScopArrayInfo::MemoryKind
-  void addArrayAccess(MemAccInst MemAccInst, MemoryAccess::AccessType Type,
-                      Value *BaseAddress, unsigned ElemBytes, bool IsAffine,
+  void addArrayAccess(MemAccInst MemAccInst, MemoryAccess::AccessType AccType,
+                      Value *BaseAddress, Type *ElemType, bool IsAffine,
                       ArrayRef<const SCEV *> Subscripts,
                       ArrayRef<const SCEV *> Sizes, Value *AccessValue);
 

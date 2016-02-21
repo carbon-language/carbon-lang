@@ -303,7 +303,10 @@ void MemoryAccess::updateDimensionality() {
   auto DimsAccess = isl_space_dim(AccessSpace, isl_dim_set);
   auto DimsMissing = DimsArray - DimsAccess;
 
+  auto *BB = getStatement()->getParent()->getRegion().getEntry();
+  auto &DL = BB->getModule()->getDataLayout();
   unsigned ArrayElemSize = SAI->getElemSizeInBytes();
+  unsigned ElemBytes = DL.getTypeAllocSize(getElementType());
 
   auto *Map = isl_map_from_domain_and_range(
       isl_set_universe(AccessSpace),
@@ -612,10 +615,34 @@ void MemoryAccess::assumeNoOutOfBound() {
   isl_space_free(Space);
 }
 
+void MemoryAccess::buildMemIntrinsicAccessRelation() {
+  auto MAI = MemAccInst(getAccessInstruction());
+  assert(MAI.isMemIntrinsic());
+  assert(Subscripts.size() == 2 && Sizes.size() == 0);
+
+  auto *LengthPWA = Statement->getPwAff(Subscripts[1]);
+  auto *LengthMap = isl_map_from_pw_aff(LengthPWA);
+  auto *RangeSpace = isl_space_range(isl_map_get_space(LengthMap));
+  LengthMap = isl_map_apply_range(LengthMap, isl_map_lex_gt(RangeSpace));
+  LengthMap = isl_map_lower_bound_si(LengthMap, isl_dim_out, 0, 0);
+  auto *SubscriptPWA = Statement->getPwAff(Subscripts[0]);
+  auto *SubscriptMap = isl_map_from_pw_aff(SubscriptPWA);
+  SubscriptMap =
+      isl_map_align_params(SubscriptMap, isl_map_get_space(LengthMap));
+  LengthMap = isl_map_align_params(LengthMap, isl_map_get_space(SubscriptMap));
+  LengthMap = isl_map_sum(LengthMap, SubscriptMap);
+  AccessRelation = isl_map_set_tuple_id(LengthMap, isl_dim_in,
+                                        getStatement()->getDomainId());
+}
+
 void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
   ScalarEvolution *SE = Statement->getParent()->getSE();
 
-  Value *Ptr = MemAccInst(getAccessInstruction()).getPointerOperand();
+  auto MAI = MemAccInst(getAccessInstruction());
+  if (MAI.isMemIntrinsic())
+    return;
+
+  Value *Ptr = MAI.getPointerOperand();
   if (!Ptr || !SE->isSCEVable(Ptr->getType()))
     return;
 
@@ -731,11 +758,16 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
   isl_id *BaseAddrId = SAI->getBasePtrId();
 
   if (!isAffine()) {
+    if (isa<MemIntrinsic>(getAccessInstruction()))
+      buildMemIntrinsicAccessRelation();
+
     // We overapproximate non-affine accesses with a possible access to the
     // whole array. For read accesses it does not make a difference, if an
     // access must or may happen. However, for write accesses it is important to
     // differentiate between writes that must happen and writes that may happen.
-    AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+    if (!AccessRelation)
+      AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+
     AccessRelation =
         isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
     return;
@@ -764,19 +796,19 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
 }
 
 MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
-                           AccessType Type, Value *BaseAddress,
-                           unsigned ElemBytes, bool Affine,
+                           AccessType AccType, Value *BaseAddress,
+                           Type *ElementType, bool Affine,
                            ArrayRef<const SCEV *> Subscripts,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
                            ScopArrayInfo::MemoryKind Kind, StringRef BaseName)
-    : Kind(Kind), AccType(Type), RedType(RT_NONE), Statement(Stmt),
-      BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
+    : Kind(Kind), AccType(AccType), RedType(RT_NONE), Statement(Stmt),
+      BaseAddr(BaseAddress), BaseName(BaseName), ElementType(ElementType),
       Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
       AccessValue(AccessValue), IsAffine(Affine),
       Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
       NewAccessRelation(nullptr) {
   static const std::string TypeStrings[] = {"", "_Read", "_Write", "_MayWrite"};
-  const std::string Access = TypeStrings[Type] + utostr(Stmt->size()) + "_";
+  const std::string Access = TypeStrings[AccType] + utostr(Stmt->size()) + "_";
 
   std::string IdName =
       getIslCompatibleName(Stmt->getBaseName(), Access, BaseName);
@@ -948,7 +980,7 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
 void ScopStmt::buildAccessRelations() {
   Scop &S = *getParent();
   for (MemoryAccess *Access : MemAccs) {
-    Type *ElementType = Access->getAccessValue()->getType();
+    Type *ElementType = Access->getElementType();
 
     ScopArrayInfo::MemoryKind Ty;
     if (Access->isPHIKind())
@@ -2566,7 +2598,10 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       if (!MA->isRead())
         HasWriteAccess.insert(MA->getBaseAddr());
       MemAccInst Acc(MA->getAccessInstruction());
-      PtrToAcc[Acc.getPointerOperand()] = MA;
+      if (MA->isRead() && Acc.isMemTransferInst())
+        PtrToAcc[Acc.asMemTransferInst()->getSource()] = MA;
+      else
+        PtrToAcc[Acc.getPointerOperand()] = MA;
       AST.add(Acc);
     }
   }
@@ -2578,8 +2613,8 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     AliasGroupTy AG;
     for (auto &PR : AS)
       AG.push_back(PtrToAcc[PR.getValue()]);
-    assert(AG.size() > 1 &&
-           "Alias groups should contain at least two accesses");
+    if (AG.size() < 2)
+      continue;
     AliasGroups.push_back(std::move(AG));
   }
 
@@ -3774,8 +3809,7 @@ bool ScopInfo::buildAccessMultiDimFixed(
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
     const InvariantLoadsSetTy &ScopRIL) {
   Value *Val = Inst.getValueOperand();
-  Type *SizeType = Val->getType();
-  unsigned ElementSize = DL->getTypeAllocSize(SizeType);
+  Type *ElementType = Val->getType();
   Value *Address = Inst.getPointerOperand();
   const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
   const SCEVUnknown *BasePointer =
@@ -3816,7 +3850,7 @@ bool ScopInfo::buildAccessMultiDimFixed(
           SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
               IntegerType::getInt64Ty(BasePtr->getContext()), V)));
 
-        addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, true,
+        addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, true,
                        Subscripts, SizesSCEV, Val);
         return true;
       }
@@ -3831,8 +3865,8 @@ bool ScopInfo::buildAccessMultiDimParam(
     const InvariantLoadsSetTy &ScopRIL, const MapInsnToMemAcc &InsnToMemAcc) {
   Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
-  Type *SizeType = Val->getType();
-  unsigned ElementSize = DL->getTypeAllocSize(SizeType);
+  Type *ElementType = Val->getType();
+  unsigned ElementSize = DL->getTypeAllocSize(ElementType);
   enum MemoryAccess::AccessType Type =
       Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
@@ -3860,11 +3894,49 @@ bool ScopInfo::buildAccessMultiDimParam(
     if (ElementSize != DelinearizedSize)
       scop->invalidate(DELINEARIZATION, Inst.getDebugLoc());
 
-    addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, true,
+    addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, true,
                    AccItr->second.DelinearizedSubscripts, Sizes, Val);
     return true;
   }
   return false;
+}
+
+bool ScopInfo::buildAccessMemIntrinsic(
+    MemAccInst Inst, Loop *L, Region *R,
+    const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
+    const InvariantLoadsSetTy &ScopRIL) {
+  if (!Inst.isMemIntrinsic())
+    return false;
+
+  auto *LengthVal = SE->getSCEVAtScope(Inst.asMemIntrinsic()->getLength(), L);
+  assert(LengthVal);
+
+  auto *DestPtrVal = Inst.asMemIntrinsic()->getDest();
+  assert(DestPtrVal);
+  auto *DestAccFunc = SE->getSCEVAtScope(DestPtrVal, L);
+  assert(DestAccFunc);
+  auto *DestPtrSCEV = dyn_cast<SCEVUnknown>(SE->getPointerBase(DestAccFunc));
+  assert(DestPtrSCEV);
+  DestAccFunc = SE->getMinusSCEV(DestAccFunc, DestPtrSCEV);
+  addArrayAccess(Inst, MemoryAccess::MUST_WRITE, DestPtrSCEV->getValue(),
+                 IntegerType::getInt8Ty(DestPtrVal->getContext()), false,
+                 {DestAccFunc, LengthVal}, {}, Inst.getValueOperand());
+
+  if (!Inst.isMemTransferInst())
+    return true;
+
+  auto *SrcPtrVal = Inst.asMemTransferInst()->getSource();
+  assert(SrcPtrVal);
+  auto *SrcAccFunc = SE->getSCEVAtScope(SrcPtrVal, L);
+  assert(SrcAccFunc);
+  auto *SrcPtrSCEV = dyn_cast<SCEVUnknown>(SE->getPointerBase(SrcAccFunc));
+  assert(SrcPtrSCEV);
+  SrcAccFunc = SE->getMinusSCEV(SrcAccFunc, SrcPtrSCEV);
+  addArrayAccess(Inst, MemoryAccess::READ, SrcPtrSCEV->getValue(),
+                 IntegerType::getInt8Ty(SrcPtrVal->getContext()), false,
+                 {SrcAccFunc, LengthVal}, {}, Inst.getValueOperand());
+
+  return true;
 }
 
 void ScopInfo::buildAccessSingleDim(
@@ -3873,8 +3945,7 @@ void ScopInfo::buildAccessSingleDim(
     const InvariantLoadsSetTy &ScopRIL) {
   Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
-  Type *SizeType = Val->getType();
-  unsigned ElementSize = DL->getTypeAllocSize(SizeType);
+  Type *ElementType = Val->getType();
   enum MemoryAccess::AccessType Type =
       Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
@@ -3907,7 +3978,7 @@ void ScopInfo::buildAccessSingleDim(
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
-  addArrayAccess(Inst, Type, BasePointer->getValue(), ElementSize, IsAffine,
+  addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, IsAffine,
                  {AccessFunction}, {}, Val);
 }
 
@@ -3915,6 +3986,9 @@ void ScopInfo::buildMemoryAccess(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
     const InvariantLoadsSetTy &ScopRIL, const MapInsnToMemAcc &InsnToMemAcc) {
+
+  if (buildAccessMemIntrinsic(Inst, L, R, BoxedLoops, ScopRIL))
+    return;
 
   if (buildAccessMultiDimFixed(Inst, L, R, BoxedLoops, ScopRIL))
     return;
@@ -3999,8 +4073,8 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 }
 
 MemoryAccess *ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
-                                        MemoryAccess::AccessType Type,
-                                        Value *BaseAddress, unsigned ElemBytes,
+                                        MemoryAccess::AccessType AccType,
+                                        Value *BaseAddress, Type *ElementType,
                                         bool Affine, Value *AccessValue,
                                         ArrayRef<const SCEV *> Subscripts,
                                         ArrayRef<const SCEV *> Sizes,
@@ -4037,24 +4111,23 @@ MemoryAccess *ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
   if (Kind == ScopArrayInfo::MK_PHI || Kind == ScopArrayInfo::MK_ExitPHI)
     isKnownMustAccess = true;
 
-  if (!isKnownMustAccess && Type == MemoryAccess::MUST_WRITE)
-    Type = MemoryAccess::MAY_WRITE;
+  if (!isKnownMustAccess && AccType == MemoryAccess::MUST_WRITE)
+    AccType = MemoryAccess::MAY_WRITE;
 
-  AccList.emplace_back(Stmt, Inst, Type, BaseAddress, ElemBytes, Affine,
+  AccList.emplace_back(Stmt, Inst, AccType, BaseAddress, ElementType, Affine,
                        Subscripts, Sizes, AccessValue, Kind, BaseName);
   Stmt->addAccess(&AccList.back());
   return &AccList.back();
 }
 
 void ScopInfo::addArrayAccess(MemAccInst MemAccInst,
-                              MemoryAccess::AccessType Type, Value *BaseAddress,
-                              unsigned ElemBytes, bool IsAffine,
-                              ArrayRef<const SCEV *> Subscripts,
+                              MemoryAccess::AccessType AccType,
+                              Value *BaseAddress, Type *ElementType,
+                              bool IsAffine, ArrayRef<const SCEV *> Subscripts,
                               ArrayRef<const SCEV *> Sizes,
                               Value *AccessValue) {
-  assert(MemAccInst.isLoad() == (Type == MemoryAccess::READ));
-  addMemoryAccess(MemAccInst.getParent(), MemAccInst, Type, BaseAddress,
-                  ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
+  addMemoryAccess(MemAccInst.getParent(), MemAccInst, AccType, BaseAddress,
+                  ElementType, IsAffine, AccessValue, Subscripts, Sizes,
                   ScopArrayInfo::MK_Array);
 }
 
@@ -4069,8 +4142,8 @@ void ScopInfo::ensureValueWrite(Instruction *Inst) {
   if (Stmt->lookupValueWriteOf(Inst))
     return;
 
-  addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::MUST_WRITE, Inst, 1,
-                  true, Inst, ArrayRef<const SCEV *>(),
+  addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::MUST_WRITE, Inst,
+                  Inst->getType(), true, Inst, ArrayRef<const SCEV *>(),
                   ArrayRef<const SCEV *>(), ScopArrayInfo::MK_Value);
 }
 
@@ -4119,7 +4192,7 @@ void ScopInfo::ensureValueRead(Value *V, BasicBlock *UserBB) {
   if (UserStmt->lookupValueReadOf(V))
     return;
 
-  addMemoryAccess(UserBB, nullptr, MemoryAccess::READ, V, 1, true, V,
+  addMemoryAccess(UserBB, nullptr, MemoryAccess::READ, V, V->getType(), true, V,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
                   ScopArrayInfo::MK_Value);
   if (ValueInst)
@@ -4149,7 +4222,7 @@ void ScopInfo::ensurePHIWrite(PHINode *PHI, BasicBlock *IncomingBlock,
   MemoryAccess *Acc = addMemoryAccess(
       IncomingStmt->isBlockStmt() ? IncomingBlock
                                   : IncomingStmt->getRegion()->getEntry(),
-      PHI, MemoryAccess::MUST_WRITE, PHI, 1, true, PHI,
+      PHI, MemoryAccess::MUST_WRITE, PHI, PHI->getType(), true, PHI,
       ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
       IsExitBlock ? ScopArrayInfo::MK_ExitPHI : ScopArrayInfo::MK_PHI);
   assert(Acc);
@@ -4157,9 +4230,9 @@ void ScopInfo::ensurePHIWrite(PHINode *PHI, BasicBlock *IncomingBlock,
 }
 
 void ScopInfo::addPHIReadAccess(PHINode *PHI) {
-  addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true, PHI,
-                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  ScopArrayInfo::MK_PHI);
+  addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI,
+                  PHI->getType(), true, PHI, ArrayRef<const SCEV *>(),
+                  ArrayRef<const SCEV *>(), ScopArrayInfo::MK_PHI);
 }
 
 void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
