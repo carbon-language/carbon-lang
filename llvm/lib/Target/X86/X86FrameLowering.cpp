@@ -462,7 +462,9 @@ void X86FrameLowering::inlineStackProbe(MachineFunction &MF,
   }
 
   if (ChkStkStub != nullptr) {
-    MachineBasicBlock::iterator MBBI = std::next(ChkStkStub->getIterator());
+    // FIXME: MBBI is a bundle iterator.  Should this be getBundleIterator()?
+    MachineBasicBlock::iterator MBBI =
+        std::next(ChkStkStub->getInstrIterator());
     assert(std::prev(MBBI).operator==(ChkStkStub) &&
       "MBBI expected after __chkstk_stub.");
     DebugLoc DL = PrologMBB.findDebugLoc(MBBI);

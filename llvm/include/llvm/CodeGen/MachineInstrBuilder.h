@@ -472,7 +472,7 @@ public:
     if (I == Begin) {
       if (!empty())
         MI->bundleWithSucc();
-      Begin = MI->getIterator();
+      Begin = MI->getInstrIterator();
       return *this;
     }
     if (I == End) {
