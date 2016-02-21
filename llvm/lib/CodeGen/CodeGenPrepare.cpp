@@ -5458,11 +5458,9 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
     DEBUG(dbgs() << "Before branch condition splitting\n"; BB.dump());
 
     // Create a new BB.
-    auto *InsertBefore = std::next(Function::iterator(BB))
-        .getNodePtrUnchecked();
-    auto TmpBB = BasicBlock::Create(BB.getContext(),
-                                    BB.getName() + ".cond.split",
-                                    BB.getParent(), InsertBefore);
+    auto TmpBB =
+        BasicBlock::Create(BB.getContext(), BB.getName() + ".cond.split",
+                           BB.getParent(), BB.getNextNode());
 
     // Update original basic block by using the first condition directly by the
     // branch instruction and removing the no longer needed and/or instruction.
