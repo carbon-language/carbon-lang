@@ -253,12 +253,13 @@ static bool handleTlsRelocation(unsigned Type, SymbolBody *Body,
     return false;
 
   if (Target->isTlsGlobalDynamicRel(Type)) {
-    if (!Target->canRelaxTls(Type, Body) &&
-        Out<ELFT>::Got->addDynTlsEntry(Body)) {
-      Out<ELFT>::RelaDyn->addReloc(
-          {Target->TlsModuleIndexRel, DynamicReloc<ELFT>::Off_GTlsIndex, Body});
-      Out<ELFT>::RelaDyn->addReloc(
-          {Target->TlsOffsetRel, DynamicReloc<ELFT>::Off_GTlsOffset, Body});
+    if (!Target->canRelaxTls(Type, Body)) {
+      if (Out<ELFT>::Got->addDynTlsEntry(Body)) {
+        Out<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel,
+                                      DynamicReloc<ELFT>::Off_GTlsIndex, Body});
+        Out<ELFT>::RelaDyn->addReloc(
+            {Target->TlsOffsetRel, DynamicReloc<ELFT>::Off_GTlsOffset, Body});
+      }
       return true;
     }
     if (!canBePreempted(Body, true))
