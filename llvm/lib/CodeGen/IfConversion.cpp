@@ -198,10 +198,12 @@ namespace {
     bool ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
                       unsigned &Dups1, unsigned &Dups2) const;
     void ScanInstructions(BBInfo &BBI);
-    void AnalyzeBlock(MachineBasicBlock *MBB, std::vector<IfcvtToken*> &Tokens);
+    void AnalyzeBlock(MachineBasicBlock *MBB,
+                      std::vector<std::unique_ptr<IfcvtToken>> &Tokens);
     bool FeasibilityAnalysis(BBInfo &BBI, SmallVectorImpl<MachineOperand> &Cond,
                              bool isTriangle = false, bool RevBranch = false);
-    void AnalyzeBlocks(MachineFunction &MF, std::vector<IfcvtToken*> &Tokens);
+    void AnalyzeBlocks(MachineFunction &MF,
+                       std::vector<std::unique_ptr<IfcvtToken>> &Tokens);
     void InvalidatePreds(MachineBasicBlock *BB);
     void RemoveExtraEdges(BBInfo &BBI);
     bool IfConvertSimple(BBInfo &BBI, IfcvtKind Kind);
@@ -240,7 +242,8 @@ namespace {
     }
 
     // IfcvtTokenCmp - Used to sort if-conversion candidates.
-    static bool IfcvtTokenCmp(IfcvtToken *C1, IfcvtToken *C2) {
+    static bool IfcvtTokenCmp(const std::unique_ptr<IfcvtToken> &C1,
+                              const std::unique_ptr<IfcvtToken> &C2) {
       int Incr1 = (C1->Kind == ICDiamond)
         ? -(int)(C1->NumDups + C1->NumDups2) : (int)C1->NumDups;
       int Incr2 = (C2->Kind == ICDiamond)
@@ -309,7 +312,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   MF.RenumberBlocks();
   BBAnalysis.resize(MF.getNumBlockIDs());
 
-  std::vector<IfcvtToken*> Tokens;
+  std::vector<std::unique_ptr<IfcvtToken>> Tokens;
   MadeChange = false;
   unsigned NumIfCvts = NumSimple + NumSimpleFalse + NumTriangle +
     NumTriangleRev + NumTriangleFalse + NumTriangleFRev + NumDiamonds;
@@ -319,14 +322,12 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
     bool Change = false;
     AnalyzeBlocks(MF, Tokens);
     while (!Tokens.empty()) {
-      IfcvtToken *Token = Tokens.back();
+      std::unique_ptr<IfcvtToken> Token = std::move(Tokens.back());
       Tokens.pop_back();
       BBInfo &BBI = Token->BBI;
       IfcvtKind Kind = Token->Kind;
       unsigned NumDups = Token->NumDups;
       unsigned NumDups2 = Token->NumDups2;
-
-      delete Token;
 
       // If the block has been evicted out of the queue or it has already been
       // marked dead (due to it being predicated), then skip it.
@@ -412,13 +413,6 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
     if (!Change)
       break;
     MadeChange |= Change;
-  }
-
-  // Delete tokens in case of early exit.
-  while (!Tokens.empty()) {
-    IfcvtToken *Token = Tokens.back();
-    Tokens.pop_back();
-    delete Token;
   }
 
   Tokens.clear();
@@ -768,8 +762,8 @@ bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
 /// AnalyzeBlock - Analyze the structure of the sub-CFG starting from
 /// the specified block. Record its successors and whether it looks like an
 /// if-conversion candidate.
-void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
-                               std::vector<IfcvtToken*> &Tokens) {
+void IfConverter::AnalyzeBlock(
+    MachineBasicBlock *MBB, std::vector<std::unique_ptr<IfcvtToken>> &Tokens) {
   struct BBState {
     BBState(MachineBasicBlock *BB) : MBB(BB), SuccsAnalyzed(false) {}
     MachineBasicBlock *MBB;
@@ -867,8 +861,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
       //   \ /
       //  TailBB
       // Note TailBB can be empty.
-      Tokens.push_back(new IfcvtToken(BBI, ICDiamond, TNeedSub|FNeedSub, Dups,
-                                      Dups2));
+      Tokens.push_back(llvm::make_unique<IfcvtToken>(
+          BBI, ICDiamond, TNeedSub | FNeedSub, Dups, Dups2));
       Enqueued = true;
     }
 
@@ -883,7 +877,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
       //   | TBB
       //   |  /
       //   FBB
-      Tokens.push_back(new IfcvtToken(BBI, ICTriangle, TNeedSub, Dups));
+      Tokens.push_back(
+          llvm::make_unique<IfcvtToken>(BBI, ICTriangle, TNeedSub, Dups));
       Enqueued = true;
     }
 
@@ -891,7 +886,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
         MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize + TrueBBI.ExtraCost,
                            TrueBBI.ExtraCost2, Prediction) &&
         FeasibilityAnalysis(TrueBBI, BBI.BrCond, true, true)) {
-      Tokens.push_back(new IfcvtToken(BBI, ICTriangleRev, TNeedSub, Dups));
+      Tokens.push_back(
+          llvm::make_unique<IfcvtToken>(BBI, ICTriangleRev, TNeedSub, Dups));
       Enqueued = true;
     }
 
@@ -906,7 +902,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
       //   | TBB---> exit
       //   |
       //   FBB
-      Tokens.push_back(new IfcvtToken(BBI, ICSimple, TNeedSub, Dups));
+      Tokens.push_back(
+          llvm::make_unique<IfcvtToken>(BBI, ICSimple, TNeedSub, Dups));
       Enqueued = true;
     }
 
@@ -918,7 +915,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
                              FalseBBI.NonPredSize + FalseBBI.ExtraCost,
                              FalseBBI.ExtraCost2, Prediction.getCompl()) &&
           FeasibilityAnalysis(FalseBBI, RevCond, true)) {
-        Tokens.push_back(new IfcvtToken(BBI, ICTriangleFalse, FNeedSub, Dups));
+        Tokens.push_back(llvm::make_unique<IfcvtToken>(BBI, ICTriangleFalse,
+                                                       FNeedSub, Dups));
         Enqueued = true;
       }
 
@@ -928,7 +926,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
                              FalseBBI.NonPredSize + FalseBBI.ExtraCost,
                            FalseBBI.ExtraCost2, Prediction.getCompl()) &&
         FeasibilityAnalysis(FalseBBI, RevCond, true, true)) {
-        Tokens.push_back(new IfcvtToken(BBI, ICTriangleFRev, FNeedSub, Dups));
+        Tokens.push_back(
+            llvm::make_unique<IfcvtToken>(BBI, ICTriangleFRev, FNeedSub, Dups));
         Enqueued = true;
       }
 
@@ -937,7 +936,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
                              FalseBBI.NonPredSize + FalseBBI.ExtraCost,
                              FalseBBI.ExtraCost2, Prediction.getCompl()) &&
           FeasibilityAnalysis(FalseBBI, RevCond)) {
-        Tokens.push_back(new IfcvtToken(BBI, ICSimpleFalse, FNeedSub, Dups));
+        Tokens.push_back(
+            llvm::make_unique<IfcvtToken>(BBI, ICSimpleFalse, FNeedSub, Dups));
         Enqueued = true;
       }
     }
@@ -951,8 +951,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
 
 /// AnalyzeBlocks - Analyze all blocks and find entries for all if-conversion
 /// candidates.
-void IfConverter::AnalyzeBlocks(MachineFunction &MF,
-                                std::vector<IfcvtToken*> &Tokens) {
+void IfConverter::AnalyzeBlocks(
+    MachineFunction &MF, std::vector<std::unique_ptr<IfcvtToken>> &Tokens) {
   for (auto &BB : MF)
     AnalyzeBlock(&BB, Tokens);
 
