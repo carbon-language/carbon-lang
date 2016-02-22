@@ -517,7 +517,7 @@ public:
   void insert(iterator I, IT S, IT E) {
     assert((I == end() || I->getParent() == this) &&
            "iterator points outside of basic block");
-    Insts.insert(I.getInstrIterator(), S, E);
+    Insts.insert(I.getIterator(), S, E);
   }
 
   /// Insert MI into the instruction list before I.
@@ -526,7 +526,7 @@ public:
            "iterator points outside of basic block");
     assert(!MI->isBundledWithPred() && !MI->isBundledWithSucc() &&
            "Cannot insert instruction with bundle flags");
-    return Insts.insert(I.getInstrIterator(), MI);
+    return Insts.insert(I.getIterator(), MI);
   }
 
   /// Insert MI into the instruction list after I.
@@ -535,7 +535,7 @@ public:
            "iterator points outside of basic block");
     assert(!MI->isBundledWithPred() && !MI->isBundledWithSucc() &&
            "Cannot insert instruction with bundle flags");
-    return Insts.insertAfter(I.getInstrIterator(), MI);
+    return Insts.insertAfter(I.getIterator(), MI);
   }
 
   /// Remove an instruction from the instruction list and delete it.
@@ -554,7 +554,7 @@ public:
 
   /// Remove a range of instructions from the instruction list and delete them.
   iterator erase(iterator I, iterator E) {
-    return Insts.erase(I.getInstrIterator(), E.getInstrIterator());
+    return Insts.erase(I.getIterator(), E.getIterator());
   }
 
   /// Remove an instruction or bundle from the instruction list and delete it.
@@ -610,8 +610,8 @@ public:
   /// instructions to move.
   void splice(iterator Where, MachineBasicBlock *Other,
               iterator From, iterator To) {
-    Insts.splice(Where.getInstrIterator(), Other->Insts,
-                 From.getInstrIterator(), To.getInstrIterator());
+    Insts.splice(Where.getIterator(), Other->Insts, From.getIterator(),
+                 To.getIterator());
   }
 
   /// This method unlinks 'this' from the containing function, and returns it,
@@ -639,7 +639,7 @@ public:
   /// instructions.  Return UnknownLoc if there is none.
   DebugLoc findDebugLoc(instr_iterator MBBI);
   DebugLoc findDebugLoc(iterator MBBI) {
-    return findDebugLoc(MBBI.getInstrIterator());
+    return findDebugLoc(MBBI.getIterator());
   }
 
   /// Possible outcome of a register liveness query to computeRegisterLiveness()

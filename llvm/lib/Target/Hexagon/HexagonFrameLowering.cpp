@@ -582,7 +582,7 @@ namespace {
     if (!It->isBundle())
       return It->getOpcode() == Hexagon::S2_allocframe;
     auto End = It->getParent()->instr_end();
-    MachineBasicBlock::const_instr_iterator I = It.getInstrIterator();
+    MachineBasicBlock::const_instr_iterator I = It.getIterator();
     while (++I != End && I->isBundled())
       if (I->getOpcode() == Hexagon::S2_allocframe)
         return true;

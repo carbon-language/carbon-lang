@@ -126,9 +126,9 @@ static MachineBasicBlock::iterator moveInstrOut(MachineInstr *MI,
       MachineBasicBlock::iterator BundleIt, bool Before) {
   MachineBasicBlock::instr_iterator InsertPt;
   if (Before)
-    InsertPt = BundleIt.getInstrIterator();
+    InsertPt = BundleIt.getIterator();
   else
-    InsertPt = std::next(BundleIt).getInstrIterator();
+    InsertPt = std::next(BundleIt).getIterator();
 
   MachineBasicBlock &B = *MI->getParent();
   // The instruction should at least be bundled with the preceding instruction

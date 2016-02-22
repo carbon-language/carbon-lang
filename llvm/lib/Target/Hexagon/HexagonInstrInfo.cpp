@@ -520,7 +520,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // executed, so remove it.
   if (SecLastOpcode == Hexagon::J2_jump && LastOpcode == Hexagon::J2_jump) {
     TBB = SecondLastInst->getOperand(0).getMBB();
-    I = LastInst->getInstrIterator();
+    I = LastInst->getIterator();
     if (AllowModify)
       I->eraseFromParent();
     return false;
@@ -1260,7 +1260,7 @@ bool HexagonInstrInfo::PredicateInstruction(MachineInstr *MI,
   for (unsigned i = 0, n = T->getNumOperands(); i < n; ++i)
     MI->addOperand(T->getOperand(i));
 
-  auto TI = T->getInstrIterator();
+  MachineBasicBlock::instr_iterator TI = T->getIterator();
   B.erase(TI);
 
   MachineRegisterInfo &MRI = B.getParent()->getRegInfo();
@@ -4071,7 +4071,7 @@ unsigned HexagonInstrInfo::nonDbgBBSize(const MachineBasicBlock *BB) const {
 unsigned HexagonInstrInfo::nonDbgBundleSize(
       MachineBasicBlock::const_iterator BundleHead) const {
   assert(BundleHead->isBundle() && "Not a bundle header");
-  auto MII = BundleHead.getInstrIterator();
+  auto MII = BundleHead.getIterator();
   // Skip the bundle header.
   return nonDbgMICount(++MII, getBundleEnd(BundleHead));
 }
