@@ -2217,6 +2217,7 @@ class DS_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm> :
   DSe <op>,
   SIMCInstr <opName, SISubtarget.SI> {
   let isCodeGenOnly = 0;
+  let AssemblerPredicates = [isSICI];
   let DecoderNamespace="SICI";
   let DisableDecoder = DisableSIDecoder;
 }
@@ -2225,6 +2226,8 @@ class DS_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
   DS <outs, ins, asm, []>,
   DSe_vi <op>,
   SIMCInstr <opName, SISubtarget.VI> {
+  let isCodeGenOnly = 0;
+  let AssemblerPredicates = [isVI];
   let DecoderNamespace="VI";
   let DisableDecoder = DisableVIDecoder;
 }
@@ -2236,7 +2239,6 @@ class DS_Off16_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm
   bits<16> offset;
   let offset0 = offset{7-0};
   let offset1 = offset{15-8};
-  let isCodeGenOnly = 0;
 }
 
 class DS_Off16_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
