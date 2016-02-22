@@ -369,7 +369,7 @@ public:
   /// Return true if there are still any patterns left.
   bool consumeNameSuffix(StringRef NodeName, bool CanSkip) {
     for (size_t I = 0; I < Patterns.size();) {
-      if (internal::consumeNameSuffix(Patterns[I].Pattern, NodeName) ||
+      if (internal::consumeNameSuffix(Patterns[I].P, NodeName) ||
           CanSkip) {
         ++I;
       } else {
@@ -384,14 +384,14 @@ public:
   /// 'fully qualified' requirement.
   bool foundMatch(bool AllowFullyQualified) const {
     for (auto& P: Patterns)
-      if (P.Pattern.empty() && (AllowFullyQualified || !P.IsFullyQualified))
+      if (P.P.empty() && (AllowFullyQualified || !P.IsFullyQualified))
         return true;
     return false;
   }
 
 private:
   struct Pattern {
-    StringRef Pattern;
+    StringRef P;
     bool IsFullyQualified;
   };
   llvm::SmallVector<Pattern, 8> Patterns;
