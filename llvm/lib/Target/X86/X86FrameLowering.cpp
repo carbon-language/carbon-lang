@@ -462,7 +462,8 @@ void X86FrameLowering::inlineStackProbe(MachineFunction &MF,
   }
 
   if (ChkStkStub != nullptr) {
-    // FIXME: MBBI is a bundle iterator.  Should this be getBundleIterator()?
+    assert(!ChkStkStub->isBundled() &&
+           "Not expecting bundled instructions here");
     MachineBasicBlock::iterator MBBI =
         std::next(ChkStkStub->getInstrIterator());
     assert(std::prev(MBBI).operator==(ChkStkStub) &&
