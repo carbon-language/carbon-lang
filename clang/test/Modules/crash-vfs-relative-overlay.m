@@ -17,7 +17,7 @@
 // RUN: find %t/crash-vfs-*.cache/vfs | \
 // RUN:   grep "Inputs/System/usr/include/stdio.h" | count 1
 
-#include "usr/././//////include/../include/./././../include/stdio.h"
+#include "usr/include/stdio.h"
 
 // CHECK: Preprocessed source(s) and associated run script(s) are located at:
 // CHECK-NEXT: note: diagnostic msg: {{.*}}.m
@@ -40,16 +40,13 @@
 // CHECKYAML-NEXT:   {
 // CHECKYAML-NEXT:     'type': 'file',
 // CHECKYAML-NEXT:     'name': "module.map",
+// CHECKYAML-NOT:      'external-contents': "{{[^ ]*}}.cache
 // CHECKYAML-NEXT:     'external-contents': "/[[PATH]]/Inputs/System/usr/include/module.map"
 // CHECKYAML-NEXT:   },
 
-// Replace the paths in the YAML files with relative ".." traversals
-// and fed into clang to test whether we're correctly representing them
-// in the VFS overlay.
+// Test that reading the YAML file will yield the correct path after
+// the overlay dir is prefixed to access headers in .cache/vfs directory.
 
-// RUN: sed -e "s@usr/include@usr/include/../include@g" \
-// RUN:     %t/crash-vfs-*.cache/vfs/vfs.yaml > %t/vfs.yaml
-// RUN: cp %t/vfs.yaml %t/crash-vfs-*.cache/vfs/vfs.yaml
 // RUN: unset FORCE_CLANG_DIAGNOSTICS_CRASH
 // RUN: %clang -E %s -I %S/Inputs/System -isysroot %/t/i/ \
 // RUN:     -ivfsoverlay %t/crash-vfs-*.cache/vfs/vfs.yaml -fmodules \
