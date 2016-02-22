@@ -3330,6 +3330,41 @@ _mm512_maskz_cvtepu16_epi64 (__mmask8 __U, __m128i __A)
                                          (__v8di)(__m512i)(b), (p), \
                                          (__mmask8)(m)); })
 
+#define _mm512_rol_epi32(a, b) __extension__ ({ \
+  (__m512i) __builtin_ia32_prold512_mask ((__v16si) (a), (b),\
+                                          (__v16si)\
+                                          _mm512_setzero_si512 (),\
+                                          (__mmask16) -1); })
+
+#define _mm512_mask_rol_epi32(W, U, a, b) __extension__ ({ \
+  (__m512i) __builtin_ia32_prold512_mask ((__v16si) (a), (b),\
+                                          (__v16si) (W),\
+                                          (__mmask16) (U)); })
+
+#define _mm512_maskz_rol_epi32(U, a, b) __extension__ ({ \
+  (__m512i) __builtin_ia32_prold512_mask ((__v16si) (a), (b),\
+                                          (__v16si)\
+                                          _mm512_setzero_si512 (),\
+                                          (__mmask16) (U)); })
+
+#define _mm512_rol_epi64(a, b) __extension__ ({ \
+  (__m512i) __builtin_ia32_prolq512_mask ((__v8di) (a), (b),\
+                                          (__v8di)\
+                                          _mm512_setzero_si512 (),\
+                                          (__mmask8) -1); })
+
+#define _mm512_mask_rol_epi64(W, U, a, b) __extension__ ({ \
+  (__m512i) __builtin_ia32_prolq512_mask ((__v8di) (a), (b),\
+                                          (__v8di) (W),\
+                                          (__mmask8) (U)); })
+
+#define _mm512_maskz_rol_epi64(U, a, b) __extension__ ({ \
+  (__m512i) __builtin_ia32_prolq512_mask ((__v8di) (a), (b),\
+                                          (__v8di)\
+                                          _mm512_setzero_si512 (),\
+                                          (__mmask8) (U)); })
+
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
