@@ -4981,7 +4981,7 @@ _mm256_maskz_cvtepu16_epi64 (__mmask8 __U, __m128i __A)
                                          _mm256_setzero_si256 (),\
                                          (__mmask8) (u)); })
 
-#define _mm_rol_epi64(a, b) _extension__ ({\
+#define _mm_rol_epi64(a, b) __extension__ ({\
    (__m128i)__builtin_ia32_prolq128_mask((__v2di) (a), (b),\
                                          (__v2di)\
                                          _mm_setzero_di (),\
