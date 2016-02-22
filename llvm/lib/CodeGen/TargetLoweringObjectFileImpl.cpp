@@ -270,9 +270,11 @@ selectELFSectionForGlobal(MCContext &Ctx, const GlobalValue *GV,
       EntrySize = 4;
     } else if (Kind.isMergeableConst8()) {
       EntrySize = 8;
-    } else {
-      assert(Kind.isMergeableConst16() && "unknown data width");
+    } else if (Kind.isMergeableConst16()) {
       EntrySize = 16;
+    } else {
+      assert(Kind.isMergeableConst32() && "unknown data width");
+      EntrySize = 32;
     }
   }
 
@@ -375,6 +377,8 @@ MCSection *TargetLoweringObjectFileELF::getSectionForConstant(
     return MergeableConst8Section;
   if (Kind.isMergeableConst16() && MergeableConst16Section)
     return MergeableConst16Section;
+  if (Kind.isMergeableConst32() && MergeableConst32Section)
+    return MergeableConst32Section;
   if (Kind.isReadOnly())
     return ReadOnlySection;
 
