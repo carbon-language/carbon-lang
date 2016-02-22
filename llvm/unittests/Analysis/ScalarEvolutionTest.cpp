@@ -255,12 +255,13 @@ TEST_F(ScalarEvolutionsTest, SimplifiedPHI) {
   ScalarEvolution SE = buildSE(*F);
   auto *S1 = SE.getSCEV(PN);
   auto *S2 = SE.getSCEV(PN);
-  assert(isa<SCEVConstant>(S1) && "Expected a SCEV Constant");
+  auto *ZeroConst = SE.getConstant(Ty, 0);
 
   // At some point, only the first call to getSCEV returned the simplified
   // SCEVConstant and later calls just returned a SCEVUnknown referencing the
   // PHI node.
-  assert(S1 == S2 && "Expected identical SCEV values");
+  EXPECT_EQ(S1, ZeroConst);
+  EXPECT_EQ(S1, S2);
 }
 
 }  // end anonymous namespace
