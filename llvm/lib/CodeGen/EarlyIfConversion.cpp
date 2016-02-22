@@ -278,7 +278,7 @@ bool SSAIfConv::findInsertionPoint() {
   while (I != B) {
     --I;
     // Some of the conditional code depends in I.
-    if (InsertAfter.count(I)) {
+    if (InsertAfter.count(&*I)) {
       DEBUG(dbgs() << "Can't insert code after " << *I);
       return false;
     }
