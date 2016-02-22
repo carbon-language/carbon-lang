@@ -75,13 +75,6 @@ static cl::opt<bool>
     AllowStatepointWithNoDeoptInfo("rs4gc-allow-statepoint-with-no-deopt-info",
                                    cl::Hidden, cl::init(true));
 
-/// Should we split vectors of pointers into their individual elements?  This
-/// is known to be buggy, but the alternate implementation isn't yet ready.
-/// This is purely to provide a debugging and dianostic hook until the vector
-/// split is replaced with vector relocations.
-static cl::opt<bool> UseVectorSplit("rs4gc-split-vector-values", cl::Hidden,
-                                    cl::init(false));
-
 namespace {
 struct RewriteStatepointsForGC : public ModulePass {
   static char ID; // Pass identification, replacement for typeid
@@ -1819,139 +1812,6 @@ static void findLiveReferences(
   }
 }
 
-/// Remove any vector of pointers from the live set by scalarizing them over the
-/// statepoint instruction.  Adds the scalarized pieces to the live set.  It
-/// would be preferable to include the vector in the statepoint itself, but
-/// the lowering code currently does not handle that.  Extending it would be
-/// slightly non-trivial since it requires a format change.  Given how rare
-/// such cases are (for the moment?) scalarizing is an acceptable compromise.
-static void splitVectorValues(Instruction *StatepointInst,
-                              StatepointLiveSetTy &LiveSet,
-                              DenseMap<Value *, Value *>& PointerToBase,
-                              DominatorTree &DT) {
-  SmallVector<Value *, 16> ToSplit;
-  for (Value *V : LiveSet)
-    if (isa<VectorType>(V->getType()))
-      ToSplit.push_back(V);
-
-  if (ToSplit.empty())
-    return;
-
-  DenseMap<Value *, SmallVector<Value *, 16>> ElementMapping;
-
-  Function &F = *(StatepointInst->getParent()->getParent());
-
-  DenseMap<Value *, AllocaInst *> AllocaMap;
-  // First is normal return, second is exceptional return (invoke only)
-  DenseMap<Value *, std::pair<Value *, Value *>> Replacements;
-  for (Value *V : ToSplit) {
-    AllocaInst *Alloca =
-        new AllocaInst(V->getType(), "", F.getEntryBlock().getFirstNonPHI());
-    AllocaMap[V] = Alloca;
-
-    VectorType *VT = cast<VectorType>(V->getType());
-    IRBuilder<> Builder(StatepointInst);
-    SmallVector<Value *, 16> Elements;
-    for (unsigned i = 0; i < VT->getNumElements(); i++)
-      Elements.push_back(Builder.CreateExtractElement(V, Builder.getInt32(i)));
-    ElementMapping[V] = Elements;
-
-    auto InsertVectorReform = [&](Instruction *IP) {
-      Builder.SetInsertPoint(IP);
-      Builder.SetCurrentDebugLocation(IP->getDebugLoc());
-      Value *ResultVec = UndefValue::get(VT);
-      for (unsigned i = 0; i < VT->getNumElements(); i++)
-        ResultVec = Builder.CreateInsertElement(ResultVec, Elements[i],
-                                                Builder.getInt32(i));
-      return ResultVec;
-    };
-
-    if (isa<CallInst>(StatepointInst)) {
-      BasicBlock::iterator Next(StatepointInst);
-      Next++;
-      Instruction *IP = &*(Next);
-      Replacements[V].first = InsertVectorReform(IP);
-      Replacements[V].second = nullptr;
-    } else {
-      InvokeInst *Invoke = cast<InvokeInst>(StatepointInst);
-      // We've already normalized - check that we don't have shared destination
-      // blocks
-      BasicBlock *NormalDest = Invoke->getNormalDest();
-      assert(!isa<PHINode>(NormalDest->begin()));
-      BasicBlock *UnwindDest = Invoke->getUnwindDest();
-      assert(!isa<PHINode>(UnwindDest->begin()));
-      // Insert insert element sequences in both successors
-      Instruction *IP = &*(NormalDest->getFirstInsertionPt());
-      Replacements[V].first = InsertVectorReform(IP);
-      IP = &*(UnwindDest->getFirstInsertionPt());
-      Replacements[V].second = InsertVectorReform(IP);
-    }
-  }
-
-  for (Value *V : ToSplit) {
-    AllocaInst *Alloca = AllocaMap[V];
-
-    // Capture all users before we start mutating use lists
-    SmallVector<Instruction *, 16> Users;
-    for (User *U : V->users())
-      Users.push_back(cast<Instruction>(U));
-
-    for (Instruction *I : Users) {
-      if (auto Phi = dyn_cast<PHINode>(I)) {
-        for (unsigned i = 0; i < Phi->getNumIncomingValues(); i++)
-          if (V == Phi->getIncomingValue(i)) {
-            LoadInst *Load = new LoadInst(
-                Alloca, "", Phi->getIncomingBlock(i)->getTerminator());
-            Phi->setIncomingValue(i, Load);
-          }
-      } else {
-        LoadInst *Load = new LoadInst(Alloca, "", I);
-        I->replaceUsesOfWith(V, Load);
-      }
-    }
-
-    // Store the original value and the replacement value into the alloca
-    StoreInst *Store = new StoreInst(V, Alloca);
-    if (auto I = dyn_cast<Instruction>(V))
-      Store->insertAfter(I);
-    else
-      Store->insertAfter(Alloca);
-
-    // Normal return for invoke, or call return
-    Instruction *Replacement = cast<Instruction>(Replacements[V].first);
-    (new StoreInst(Replacement, Alloca))->insertAfter(Replacement);
-    // Unwind return for invoke only
-    Replacement = cast_or_null<Instruction>(Replacements[V].second);
-    if (Replacement)
-      (new StoreInst(Replacement, Alloca))->insertAfter(Replacement);
-  }
-
-  // apply mem2reg to promote alloca to SSA
-  SmallVector<AllocaInst *, 16> Allocas;
-  for (Value *V : ToSplit)
-    Allocas.push_back(AllocaMap[V]);
-  PromoteMemToReg(Allocas, DT);
-
-  // Update our tracking of live pointers and base mappings to account for the
-  // changes we just made.
-  for (Value *V : ToSplit) {
-    auto &Elements = ElementMapping[V];
-
-    LiveSet.erase(V);
-    LiveSet.insert(Elements.begin(), Elements.end());
-    // We need to update the base mapping as well.
-    assert(PointerToBase.count(V));
-    Value *OldBase = PointerToBase[V];
-    auto &BaseElements = ElementMapping[OldBase];
-    PointerToBase.erase(V);
-    assert(Elements.size() == BaseElements.size());
-    for (unsigned i = 0; i < Elements.size(); i++) {
-      Value *Elem = Elements[i];
-      PointerToBase[Elem] = BaseElements[i];
-    }
-  }
-}
-
 // Helper function for the "rematerializeLiveValues". It walks use chain
 // starting from the "CurrentValue" until it meets "BaseValue". Only "simple"
 // values are visited (currently it is GEP's and casts). Returns true if it
@@ -2267,22 +2127,6 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     CI->eraseFromParent();
 
   Holders.clear();
-
-  // Do a limited scalarization of any live at safepoint vector values which
-  // contain pointers.  This enables this pass to run after vectorization at
-  // the cost of some possible performance loss.  Note: This is known to not
-  // handle updating of the side tables correctly which can lead to relocation
-  // bugs when the same vector is live at multiple statepoints.  We're in the
-  // process of implementing the alternate lowering - relocating the
-  // vector-of-pointers as first class item and updating the backend to
-  // understand that - but that's not yet complete.  
-  if (UseVectorSplit)
-    for (size_t i = 0; i < Records.size(); i++) {
-      PartiallyConstructedSafepointRecord &Info = Records[i];
-      Instruction *Statepoint = ToUpdate[i].getInstruction();
-      splitVectorValues(cast<Instruction>(Statepoint), Info.LiveSet,
-                        Info.PointerToBase, DT);
-    }
 
   // In order to reduce live set of statepoint we might choose to rematerialize
   // some values instead of relocating them. This is purely an optimization and
