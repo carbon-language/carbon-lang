@@ -266,7 +266,7 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     return;
   }
 
-  if (New->isTls() != Existing->isTls()) {
+  if (New->IsTls != Existing->IsTls) {
     error("TLS attribute mismatch for symbol: " + conflictMsg(Existing, New));
     return;
   }

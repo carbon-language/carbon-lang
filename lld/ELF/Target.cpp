@@ -428,7 +428,7 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 }
 
 bool X86TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
-  if (S.isTls() && Type == R_386_TLS_GD)
+  if (S.IsTls && Type == R_386_TLS_GD)
     return Target->canRelaxTls(Type, &S) && canBePreempted(&S, true);
   if (Type == R_386_TLS_GOTIE || Type == R_386_TLS_IE)
     return !canRelaxTls(Type, &S);
@@ -500,7 +500,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 bool X86TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
+  if (Config->Shared || (S && !S->IsTls))
     return false;
   return Type == R_386_TLS_LDO_32 || Type == R_386_TLS_LDM ||
          Type == R_386_TLS_GD ||
@@ -790,7 +790,7 @@ bool X86_64TargetInfo::isSizeRel(uint32_t Type) const {
 }
 
 bool X86_64TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
+  if (Config->Shared || (S && !S->IsTls))
     return false;
   return Type == R_X86_64_TLSGD || Type == R_X86_64_TLSLD ||
          Type == R_X86_64_DTPOFF32 ||
@@ -1474,7 +1474,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 }
 
 bool AArch64TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
+  if (Config->Shared || (S && !S->IsTls))
     return false;
 
   // Global-Dynamic relocs can be relaxed to Initial-Exec if the target is
