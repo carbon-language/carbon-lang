@@ -73,7 +73,10 @@ exceptional_return:                               ; preds = %entry
 define <2 x i64 addrspace(1)*> @test5(i64 addrspace(1)* %p) gc "statepoint-example" {
 ; CHECK-LABEL: test5
 ; CHECK: insertelement
+; CHECK-NEXT: insertelement
 ; CHECK-NEXT: gc.statepoint
+; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %vec.relocated.casted
@@ -100,7 +103,10 @@ untaken:                                          ; preds = %entry
 merge:                                            ; preds = %untaken, %taken
 ; CHECK-LABEL: merge:
 ; CHECK-NEXT: = phi
+; CHECK-NEXT: = phi
 ; CHECK-NEXT: gc.statepoint
+; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: ret <2 x i64 addrspace(1)*>

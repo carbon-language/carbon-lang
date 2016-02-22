@@ -14,7 +14,6 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CFG.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/Statistic.h"
@@ -1025,68 +1024,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
 
   }
 
-  // Now that we're done with the algorithm, see if we can optimize the 
-  // results slightly by reducing the number of new instructions needed. 
-  // Arguably, this should be integrated into the algorithm above, but 
-  // doing as a post process step is easier to reason about for the moment.
-  DenseMap<Value *, Value *> ReverseMap;
-  SmallPtrSet<Instruction *, 16> NewInsts;
-  SmallSetVector<AssertingVH<Instruction>, 16> Worklist;
-  // Note: We need to visit the states in a deterministic order.  We uses the
-  // Keys we sorted above for this purpose.  Note that we are papering over a
-  // bigger problem with the algorithm above - it's visit order is not
-  // deterministic.  A larger change is needed to fix this.
-  for (auto Pair : States) {
-    auto *BDV = Pair.first;
-    auto State = Pair.second;
-    Value *Base = State.getBase();
-    assert(BDV && Base);
-    assert(!isKnownBaseResult(BDV) && "why did it get added?");
-    assert(isKnownBaseResult(Base) &&
-           "must be something we 'know' is a base pointer");
-    if (!State.isConflict())
-      continue;
-
-    ReverseMap[Base] = BDV;
-    if (auto *BaseI = dyn_cast<Instruction>(Base)) {
-      NewInsts.insert(BaseI);
-      Worklist.insert(BaseI);
-    }
-  }
-  auto ReplaceBaseInstWith = [&](Value *BDV, Instruction *BaseI,
-                                 Value *Replacement) {
-    // Add users which are new instructions (excluding self references)
-    for (User *U : BaseI->users())
-      if (auto *UI = dyn_cast<Instruction>(U))
-        if (NewInsts.count(UI) && UI != BaseI)
-          Worklist.insert(UI);
-    // Then do the actual replacement
-    NewInsts.erase(BaseI);
-    ReverseMap.erase(BaseI);
-    BaseI->replaceAllUsesWith(Replacement);
-    assert(States.count(BDV));
-    assert(States[BDV].isConflict() && States[BDV].getBase() == BaseI);
-    States[BDV] = BDVState(BDVState::Conflict, Replacement);
-    BaseI->eraseFromParent();
-  };
-  const DataLayout &DL = cast<Instruction>(def)->getModule()->getDataLayout();
-  while (!Worklist.empty()) {
-    Instruction *BaseI = Worklist.pop_back_val();
-    assert(NewInsts.count(BaseI));
-    Value *Bdv = ReverseMap[BaseI];
-    if (auto *BdvI = dyn_cast<Instruction>(Bdv))
-      if (BaseI->isIdenticalTo(BdvI)) {
-        DEBUG(dbgs() << "Identical Base: " << *BaseI << "\n");
-        ReplaceBaseInstWith(Bdv, BaseI, Bdv);
-        continue;
-      }
-    if (Value *V = SimplifyInstruction(BaseI, DL)) {
-      DEBUG(dbgs() << "Base " << *BaseI << " simplified to " << *V << "\n");
-      ReplaceBaseInstWith(Bdv, BaseI, V);
-      continue;
-    }
-  }
-
   // Cache all of our results so we can cheaply reuse them
   // NOTE: This is actually two caches: one of the base defining value
   // relation and one of the base pointer relation!  FIXME
@@ -1094,6 +1031,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     auto *BDV = Pair.first;
     Value *base = Pair.second.getBase();
     assert(BDV && base);
+    assert(!isKnownBaseResult(BDV) && "why did it get added?");
 
     std::string fromstr = cache.count(BDV) ? cache[BDV]->getName() : "none";
     DEBUG(dbgs() << "Updating base value cache"
@@ -1102,6 +1040,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
           << " to: " << base->getName() << "\n");
 
     if (cache.count(BDV)) {
+      assert(isKnownBaseResult(base) &&
+             "must be something we 'know' is a base pointer");
       // Once we transition from the BDV relation being store in the cache to
       // the base relation being stored, it must be stable
       assert((!isKnownBaseResult(cache[BDV]) || cache[BDV] == base) &&
