@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the machine instruction level if-conversion pass, which
-// tries to convert conditional branches into predicated instructions.
+// This file implements the machine instruction level if-conversion pass.
 //
 //===----------------------------------------------------------------------===//
 
@@ -674,9 +673,6 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (I->isDebugValue())
       continue;
 
-    // Don't need to check isConvergent(). It's OK to duplicate convergent
-    // instructions here, because we'll only push convergent operations up the
-    // CFG -- this can only *remove* control-flow dependencies.
     if (I->isNotDuplicable())
       BBI.CannotBeCopied = true;
 
