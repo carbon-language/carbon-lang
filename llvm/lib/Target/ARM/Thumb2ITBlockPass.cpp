@@ -256,7 +256,8 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
     LastITMI->findRegisterUseOperand(ARM::ITSTATE)->setIsKill();
 
     // Finalize the bundle.
-    finalizeBundle(MBB, InsertPos.getIterator(), ++LastITMI->getIterator());
+    finalizeBundle(MBB, InsertPos.getInstrIterator(),
+                   ++LastITMI->getIterator());
 
     Modified = true;
     ++NumITs;

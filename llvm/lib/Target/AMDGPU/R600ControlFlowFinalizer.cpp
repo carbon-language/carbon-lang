@@ -397,7 +397,7 @@ private:
       std::vector<int64_t> Literals;
       if (I->isBundle()) {
         MachineInstr *DeleteMI = I;
-        MachineBasicBlock::instr_iterator BI = I.getIterator();
+        MachineBasicBlock::instr_iterator BI = I.getInstrIterator();
         while (++BI != E && BI->isBundledWithPred()) {
           BI->unbundleFromPred();
           for (unsigned i = 0, e = BI->getNumOperands(); i != e; ++i) {

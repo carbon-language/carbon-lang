@@ -75,7 +75,7 @@ private:
     I--;
     if (!TII->isALUInstr(I->getOpcode()) && !I->isBundle())
       return Result;
-    MachineBasicBlock::instr_iterator BI = I.getIterator();
+    MachineBasicBlock::instr_iterator BI = I.getInstrIterator();
     if (I->isBundle())
       BI++;
     int LastDstChan = -1;

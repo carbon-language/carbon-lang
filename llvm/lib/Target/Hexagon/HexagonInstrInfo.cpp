@@ -4071,7 +4071,7 @@ unsigned HexagonInstrInfo::nonDbgBBSize(const MachineBasicBlock *BB) const {
 unsigned HexagonInstrInfo::nonDbgBundleSize(
       MachineBasicBlock::const_iterator BundleHead) const {
   assert(BundleHead->isBundle() && "Not a bundle header");
-  auto MII = BundleHead.getIterator();
+  auto MII = BundleHead.getInstrIterator();
   // Skip the bundle header.
   return nonDbgMICount(++MII, getBundleEnd(BundleHead));
 }

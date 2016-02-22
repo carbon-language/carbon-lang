@@ -44,7 +44,7 @@ public:
   // Template allows conversion from const to nonconst.
   template <class OtherTy>
   MachineInstrBundleIterator(const MachineInstrBundleIterator<OtherTy> &I)
-      : MII(I.getIterator()) {}
+      : MII(I.getInstrIterator()) {}
   MachineInstrBundleIterator() : MII(nullptr) {}
 
   Ty &operator*() const { return *MII; }
@@ -84,7 +84,7 @@ public:
     return Temp;
   }
 
-  instr_iterator getIterator() const { return MII; }
+  instr_iterator getInstrIterator() const { return MII; }
 };
 
 } // end namespace llvm
