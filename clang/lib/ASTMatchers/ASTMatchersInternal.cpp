@@ -307,8 +307,10 @@ HasNameMatcher::HasNameMatcher(std::vector<std::string> N)
           N.begin(), N.end(),
           [](StringRef Name) { return Name.find("::") == Name.npos; })),
       Names(std::move(N)) {
+#ifndef NDEBUG
   for (StringRef Name : Names)
     assert(!Name.empty());
+#endif
 }
 
 namespace {
