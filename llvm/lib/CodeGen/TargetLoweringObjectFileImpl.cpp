@@ -34,6 +34,7 @@
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/ProfileData/InstrProf.h"
+#include "llvm/ProfileData/ProfileCommon.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
@@ -244,6 +245,11 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
   return ".data.rel.ro";
 }
 
+static cl::opt<bool> GroupFunctionsByHotness(
+    "group-functions-by-hotness",
+    llvm::cl::desc("Partition hot/cold functions by sections prefix"),
+    cl::init(false));
+
 static MCSectionELF *
 selectELFSectionForGlobal(MCContext &Ctx, const GlobalValue *GV,
                           SectionKind Kind, Mangler &Mang,
@@ -294,6 +300,16 @@ selectELFSectionForGlobal(MCContext &Ctx, const GlobalValue *GV,
     Name += utostr(EntrySize);
   } else {
     Name = getSectionPrefixForGlobal(Kind);
+  }
+
+  if (GroupFunctionsByHotness) {
+    if (const Function *F = dyn_cast<Function>(GV)) {
+      if (ProfileSummary::isFunctionHot(F)) {
+        Name += getHotSectionPrefix();
+      } else if (ProfileSummary::isFunctionUnlikely(F)) {
+        Name += getUnlikelySectionPrefix();
+      }
+    }
   }
 
   if (EmitUniqueSection && UniqueSectionNames) {
