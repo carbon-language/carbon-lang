@@ -11,9 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IR/Attributes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Module.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/ProfileData/ProfileCommon.h"
 #include "llvm/ProfileData/SampleProf.h"
@@ -76,24 +73,6 @@ void ProfileSummary::computeDetailedSummary() {
     ProfileSummaryEntry PSE = {Cutoff, Count, CountsSeen};
     DetailedSummary.push_back(PSE);
   }
-}
-
-// Returns true if the function is a hot function.
-bool ProfileSummary::isFunctionHot(const Function *F) {
-  // FIXME: update when summary data is stored in module's metadata.
-  return false;
-}
-
-// Returns true if the function is a cold function.
-bool ProfileSummary::isFunctionUnlikely(const Function *F) {
-  if (F->hasFnAttribute(Attribute::Cold)) {
-    return true;
-  }
-  if (!F->getEntryCount()) {
-    return false;
-  }
-  // FIXME: update when summary data is stored in module's metadata.
-  return (*F->getEntryCount()) == 0;
 }
 
 InstrProfSummary::InstrProfSummary(const IndexedInstrProf::Summary &S)
