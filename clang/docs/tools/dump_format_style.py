@@ -4,11 +4,13 @@
 # Run from the directory in which this file is located to update the docs.
 
 import collections
+import os
 import re
 import urllib2
 
-FORMAT_STYLE_FILE = '../../include/clang/Format/Format.h'
-DOC_FILE = '../ClangFormatStyleOptions.rst'
+CLANG_DIR = os.path.join(os.path.dirname(__file__), '../..')
+FORMAT_STYLE_FILE = os.path.join(CLANG_DIR, 'include/clang/Format/Format.h')
+DOC_FILE = os.path.join(CLANG_DIR, 'docs/ClangFormatStyleOptions.rst')
 
 
 def substitute(text, tag, contents):
