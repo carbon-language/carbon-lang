@@ -16,10 +16,8 @@
 ;   f1();
 ; }
 
-; Check that there's only one DW_TAG_subprogram, nothing for the 'f2' function.
-; CHECK: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_name {{.*}} "f1"
+; Check that there is no DW_TAG_subprogram, nothing for the 'f2' function.
+; Note: No debug info was emitted for 'f1' function because it has no code.
 ; CHECK-NOT: DW_TAG_subprogram
 
 @i = external global i32

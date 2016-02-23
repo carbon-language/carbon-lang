@@ -298,6 +298,9 @@ public:
   /// Construct function argument DIEs.
   void constructSubprogramArguments(DIE &Buffer, DITypeRefArray Args);
 
+  /// Create a DIE with the given Tag, and call insertDIE if MD is not null.
+  DIE *createDIE(unsigned Tag, const DINode *N = nullptr);
+
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.
   DIE &createAndAddDIE(unsigned Tag, DIE &Parent, const DINode *N = nullptr);
