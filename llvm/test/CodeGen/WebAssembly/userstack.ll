@@ -49,7 +49,7 @@ define void @alloca3264() {
 }
 
 ; CHECK-LABEL: allocarray:
-; CHECK: .local i32, i32{{$}}
+; CHECK: .local i32{{$}}
 define void @allocarray() {
  ; CHECK: i32.const $push[[L1:.+]]=, __stack_pointer
  ; CHECK-NEXT: i32.load $push[[L2:.+]]=, 0($pop[[L1]])
@@ -60,9 +60,9 @@ define void @allocarray() {
  %r = alloca [33 x i32]
 
  ; CHECK-NEXT: i32.const $push[[L4:.+]]=, 12
- ; CHECK-NEXT: i32.const [[L5:.+]]=, 12
- ; CHECK-NEXT: i32.add [[L5]]=, [[SP]], [[L5]]
- ; CHECK-NEXT: i32.add $push[[L6:.+]]=, [[L5]], $pop[[L4]]
+ ; CHECK-NEXT: i32.const $push[[L5:.+]]=, 12
+ ; CHECK-NEXT: i32.add $push[[L7:.+]]=, [[SP]], $pop[[L5]]
+ ; CHECK-NEXT: i32.add $push[[L6:.+]]=, $pop[[L7]], $pop[[L4]]
  ; CHECK-NEXT: i32.const $push[[L9:.+]]=, 1{{$}}
  ; CHECK-NEXT: i32.store $push[[L10:.+]]=, 12([[SP]]), $pop[[L9]]{{$}}
  ; CHECK-NEXT: i32.store $discard=, 0($pop3), $pop[[L10]]{{$}}
@@ -86,18 +86,18 @@ define void @non_mem_use(i8** %addr) {
  %r = alloca i64
  %r2 = alloca i64
  ; %r is at SP+8
- ; CHECK: i32.const [[OFF:.+]]=, 8
- ; CHECK-NEXT: i32.add [[ARG1:.+]]=, [[SP]], [[OFF]]
- ; CHECK-NEXT: call ext_func@FUNCTION, [[ARG1]]
+ ; CHECK: i32.const $push[[OFF:.+]]=, 8
+ ; CHECK-NEXT: i32.add $push[[ARG1:.+]]=, [[SP]], $pop[[OFF]]
+ ; CHECK-NEXT: call ext_func@FUNCTION, $pop[[ARG1]]
  call void @ext_func(i64* %r)
  ; %r2 is at SP+0, no add needed
  ; CHECK-NEXT: call ext_func@FUNCTION, [[SP]]
  call void @ext_func(i64* %r2)
  ; Use as a value, but in a store
  ; %buf is at SP+16
- ; CHECK: i32.const [[OFF:.+]]=, 16
- ; CHECK-NEXT: i32.add [[VAL:.+]]=, [[SP]], [[OFF]]
- ; CHECK-NEXT: i32.store {{.*}}=, 0($0), [[VAL]]
+ ; CHECK: i32.const $push[[OFF:.+]]=, 16
+ ; CHECK-NEXT: i32.add $push[[VAL:.+]]=, [[SP]], $pop[[OFF]]
+ ; CHECK-NEXT: i32.store {{.*}}=, 0($0), $pop[[VAL]]
  %gep = getelementptr inbounds [27 x i8], [27 x i8]* %buf, i32 0, i32 0
  store i8* %gep, i8** %addr
  ret void
@@ -198,9 +198,9 @@ entry:
  ; CHECK: i32.const $push[[L1:.+]]=, 16
  ; CHECK-NEXT: i32.sub [[SP:.+]]=, {{.+}}, $pop[[L1]]
  %addr = alloca i32
- ; CHECK: i32.const [[OFF:.+]]=, 12
- ; CHECK-NEXT: i32.add [[ADDR:.+]]=, [[SP]], [[OFF]]
- ; CHECK-NEXT: copy_local [[COPY:.+]]=, [[ADDR]]
+ ; CHECK: i32.const $push[[OFF:.+]]=, 12
+ ; CHECK-NEXT: i32.add $push[[ADDR:.+]]=, [[SP]], $pop[[OFF]]
+ ; CHECK-NEXT: copy_local [[COPY:.+]]=, $pop[[ADDR]]
  br label %body
 body:
  %a = phi i32* [%addr, %entry], [%b, %body]

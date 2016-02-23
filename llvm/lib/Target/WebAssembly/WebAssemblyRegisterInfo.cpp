@@ -84,14 +84,18 @@ void WebAssemblyRegisterInfo::eliminateFrameIndex(
 
     unsigned FIRegOperand = WebAssembly::SP32;
     if (FrameOffset) {
-      FIRegOperand = MRI.createVirtualRegister(&WebAssembly::I32RegClass);
+      auto *WFI = MF.getInfo<WebAssemblyFunctionInfo>();
+      unsigned OffsetOp = MRI.createVirtualRegister(&WebAssembly::I32RegClass);
       BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(WebAssembly::CONST_I32),
-              FIRegOperand)
+              OffsetOp)
           .addImm(FrameOffset);
+      WFI->stackifyVReg(OffsetOp);
+      FIRegOperand = MRI.createVirtualRegister(&WebAssembly::I32RegClass);
       BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(WebAssembly::ADD_I32),
               FIRegOperand)
           .addReg(WebAssembly::SP32)
-          .addReg(FIRegOperand);
+          .addReg(OffsetOp);
+      WFI->stackifyVReg(FIRegOperand);
     }
     MI.getOperand(FIOperandNum).ChangeToRegister(FIRegOperand, /*IsDef=*/false);
   }
