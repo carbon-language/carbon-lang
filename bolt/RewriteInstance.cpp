@@ -472,18 +472,6 @@ void RewriteInstance::run() {
   runOptimizationPasses();
   emitFunctions();
 
-  if (opts::SplitFunctions && splitLargeFunctions()) {
-    // Emit again because now some functions have been split
-    outs() << "BOLT: split-functions: starting pass 2...\n";
-    reset();
-    discoverStorage();
-    readSymbolTable();
-    readSpecialSections();
-    disassembleFunctions();
-    runOptimizationPasses();
-    emitFunctions();
-  }
-
   // Copy input file to output
   std::error_code EC;
   Out = llvm::make_unique<tool_output_file>(opts::OutputFilename, EC,
@@ -838,8 +826,7 @@ void RewriteInstance::runOptimizationPasses() {
     }
 
     if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
-      bool ShouldSplit = ToSplit.find(BFI.first) != ToSplit.end();
-      BFI.second.modifyLayout(opts::ReorderBlocks, ShouldSplit);
+      BFI.second.modifyLayout(opts::ReorderBlocks, opts::SplitFunctions);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks");
     }
@@ -1223,24 +1210,6 @@ void RewriteInstance::emitFunctions() {
 
   if (opts::KeepTmp)
     TempOut->keep();
-}
-
-bool RewriteInstance::splitLargeFunctions() {
-  bool Changed = false;
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
-
-    // Ignore this function if we failed to map it to the output binary
-    if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
-      continue;
-
-    if (Function.getImageSize() <= Function.getMaxSize())
-      continue;
-
-    ToSplit.insert(BFI.first);
-    Changed = true;
-  }
-  return Changed;
 }
 
 void RewriteInstance::patchELF() {
