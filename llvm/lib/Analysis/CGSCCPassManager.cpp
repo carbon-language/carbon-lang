@@ -50,7 +50,6 @@ char FunctionAnalysisManagerCGSCCProxy::PassID;
 
 FunctionAnalysisManagerCGSCCProxy::Result
 FunctionAnalysisManagerCGSCCProxy::run(LazyCallGraph::SCC &C) {
-  assert(FAM->empty() && "Function analyses ran prior to the CGSCC proxy!");
   return Result(*FAM);
 }
 

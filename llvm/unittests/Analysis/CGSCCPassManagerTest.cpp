@@ -102,6 +102,30 @@ private:
 
 char TestFunctionAnalysis::PassID;
 
+class TestImmutableFunctionAnalysis {
+public:
+  struct Result {
+    bool invalidate(Function &, const PreservedAnalyses &) { return false; }
+  };
+
+  static void *ID() { return (void *)&PassID; }
+  static StringRef name() { return "TestImmutableFunctionAnalysis"; }
+
+  TestImmutableFunctionAnalysis(int &Runs) : Runs(Runs) {}
+
+  Result run(Function &F, FunctionAnalysisManager *AM) {
+    ++Runs;
+    return Result();
+  }
+
+private:
+  static char PassID;
+
+  int &Runs;
+};
+
+char TestImmutableFunctionAnalysis::PassID;
+
 struct TestModulePass {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}
 
@@ -155,6 +179,9 @@ struct TestSCCPass {
         TestFunctionAnalysis::Result &FAR =
             FAM.getResult<TestFunctionAnalysis>(N.getFunction());
         AnalyzedInstrCount += FAR.InstructionCount;
+
+        // Just ensure we get the immutable results.
+        (void)FAM.getResult<TestImmutableFunctionAnalysis>(N.getFunction());
       }
     }
 
@@ -234,6 +261,10 @@ TEST_F(CGSCCPassManagerTest, Basic) {
   FunctionAnalysisManager FAM(/*DebugLogging*/ true);
   int FunctionAnalysisRuns = 0;
   FAM.registerPass([&] { return TestFunctionAnalysis(FunctionAnalysisRuns); });
+  int ImmutableFunctionAnalysisRuns = 0;
+  FAM.registerPass([&] {
+    return TestImmutableFunctionAnalysis(ImmutableFunctionAnalysisRuns);
+  });
 
   CGSCCAnalysisManager CGAM(/*DebugLogging*/ true);
   int SCCAnalysisRuns = 0;
@@ -277,6 +308,7 @@ TEST_F(CGSCCPassManagerTest, Basic) {
   EXPECT_EQ(1, ModuleAnalysisRuns);
   EXPECT_EQ(4, SCCAnalysisRuns);
   EXPECT_EQ(6, FunctionAnalysisRuns);
+  EXPECT_EQ(6, ImmutableFunctionAnalysisRuns);
 
   EXPECT_EQ(4, SCCPassRunCount1);
   EXPECT_EQ(14, AnalyzedInstrCount1);
