@@ -1344,7 +1344,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     if (PageAlign.count(Sec))
       Align = std::max<uintX_t>(Align, Target->PageSize);
 
-    FileOff = alignTo(FileOff, Align);
+    if (Sec->getType() != SHT_NOBITS)
+      FileOff = alignTo(FileOff, Align);
     Sec->setFileOffset(FileOff);
     if (Sec->getType() != SHT_NOBITS)
       FileOff += Sec->getSize();
