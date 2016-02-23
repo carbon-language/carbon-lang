@@ -4043,17 +4043,20 @@ bool X86::isCalleePop(CallingConv::ID CallingConv,
 /// \brief Return true if the condition is an unsigned comparison operation.
 static bool isX86CCUnsigned(unsigned X86CC) {
   switch (X86CC) {
-  default: llvm_unreachable("Invalid integer condition!");
-  case X86::COND_E:     return true;
-  case X86::COND_G:     return false;
-  case X86::COND_GE:    return false;
-  case X86::COND_L:     return false;
-  case X86::COND_LE:    return false;
-  case X86::COND_NE:    return true;
-  case X86::COND_B:     return true;
-  case X86::COND_A:     return true;
-  case X86::COND_BE:    return true;
-  case X86::COND_AE:    return true;
+  default:
+    llvm_unreachable("Invalid integer condition!");
+  case X86::COND_E:
+  case X86::COND_NE:
+  case X86::COND_B:
+  case X86::COND_A:
+  case X86::COND_BE:
+  case X86::COND_AE:
+    return true;
+  case X86::COND_G:
+  case X86::COND_GE:
+  case X86::COND_L:
+  case X86::COND_LE:
+    return false;
   }
 }
 
