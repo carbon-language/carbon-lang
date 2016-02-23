@@ -3426,40 +3426,40 @@ __builtin_ia32_prord512_mask ((__v16si)( __A),( __B),\
              (__v16si)\
              _mm512_setzero_si512 (),\
              (__mmask16) -1);\
-}
+})
 
 #define _mm512_mask_ror_epi32( __W, __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prord512_mask ((__v16si)( __A),( __B),\
              (__v16si)( __W),\
              (__mmask16)( __U));\
-}
+})
 
 #define _mm512_maskz_ror_epi32( __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prord512_mask ((__v16si)( __A),( __B),\
              (__v16si)\
              _mm512_setzero_si512 (),\
              (__mmask16)( __U));\
-}
+})
 
 #define _mm512_ror_epi64( __A, __B) __extension__ ({ \
 __builtin_ia32_prorq512_mask ((__v8di)( __A),( __B),\
              (__v8di)\
              _mm512_setzero_si512 (),\
              (__mmask8) -1);\
-}
+})
 
 #define _mm512_mask_ror_epi64( __W, __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prorq512_mask ((__v8di)( __A),( __B),\
              (__v8di)( __W),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm512_maskz_ror_epi64( __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prorq512_mask ((__v8di)( __A),( __B),\
              (__v8di)\
              _mm512_setzero_si512 (),\
              (__mmask8)( __U));\
-}
+})
 
 
 #undef __DEFAULT_FN_ATTRS

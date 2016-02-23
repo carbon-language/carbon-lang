@@ -5140,80 +5140,80 @@ __builtin_ia32_prord128_mask ((__v4si)( __A),( __B),\
              (__v4si)\
              _mm_setzero_si128 (),\
              (__mmask8) -1);\
-}
+})
 
 #define _mm_mask_ror_epi32( __W, __U, __A ,__B) __extension__ ({ \
 __builtin_ia32_prord128_mask ((__v4si) __A, __B,\
              (__v4si)( __W),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm_maskz_ror_epi32( __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prord128_mask ((__v4si)( __A),( __B),\
              (__v4si)\
              _mm_setzero_si128 (),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm256_ror_epi32( __A, __B) __extension__ ({ \
 __builtin_ia32_prord256_mask ((__v8si)( __A),( __B),\
              (__v8si)\
              _mm256_setzero_si256 (),\
              (__mmask8) -1);\
-}
+})
 
 #define _mm256_mask_ror_epi32( __W, __U, __A ,__B) __extension__ ({ \
 __builtin_ia32_prord256_mask ((__v8si) __A, __B,\
              (__v8si)( __W),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm256_maskz_ror_epi32( __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prord256_mask ((__v8si)( __A),( __B),\
              (__v8si)\
              _mm256_setzero_si256 (),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm_ror_epi64( __A, __B) __extension__ ({ \
 __builtin_ia32_prorq128_mask ((__v2di)( __A),( __B),\
              (__v2di)\
              _mm_setzero_di (),\
              (__mmask8) -1);\
-}
+})
 
 #define _mm_mask_ror_epi64( __W, __U, __A ,__B) __extension__ ({ \
 __builtin_ia32_prorq128_mask ((__v2di) __A, __B,\
              (__v2di)( __W),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm_maskz_ror_epi64( __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prorq128_mask ((__v2di)( __A),( __B),\
              (__v2di)\
              _mm_setzero_di (),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm256_ror_epi64( __A, __B) __extension__ ({ \
 __builtin_ia32_prorq256_mask ((__v4di)( __A),( __B),\
              (__v4di)\
              _mm256_setzero_si256 (),\
              (__mmask8) -1);\
-}
+})
 
 #define _mm256_mask_ror_epi64( __W, __U, __A ,__B) __extension__ ({ \
 __builtin_ia32_prorq256_mask ((__v4di) __A, __B,\
              (__v4di)( __W),\
              (__mmask8)( __U));\
-}
+})
 
 #define _mm256_maskz_ror_epi64( __U, __A, __B) __extension__ ({ \
 __builtin_ia32_prorq256_mask ((__v4di)( __A),( __B),\
              (__v4di)\
              _mm256_setzero_si256 (),\
              (__mmask8)( __U));\
-}
+})
 
 
 #undef __DEFAULT_FN_ATTRS
