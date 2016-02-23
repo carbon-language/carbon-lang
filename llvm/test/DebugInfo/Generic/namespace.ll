@@ -23,11 +23,6 @@
 ; CHECK-NOT: NULL
 ; CHECK: [[BAR:0x[0-9a-f]*]]:{{ *}}DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name{{.*}}= "bar"
-; CHECK: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_name{{.*}}= "f1"
 ; CHECK: [[FUNC1:.*]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_MIPS_linkage_name
@@ -50,6 +45,11 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name{{.*}}= "func_fwd"
 ; CHECK-NOT: DW_AT_declaration
+; CHECK: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}= "f1"
 ; CHECK: NULL
 
 ; CHECK-NOT: NULL
@@ -71,22 +71,9 @@
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_name{{.*}}= "__cxx_global_var_init"
-; CHECK-NOT: DW_TAG
-
-; CHECK: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_MIPS_linkage_name
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name{{.*}}= "func"
-; CHECK-NOT: NULL
-; CHECK: DW_TAG_lexical_block
-; CHECK-NOT: NULL
-; CHECK: DW_TAG_imported_module
-; CHECK-NEXT: DW_AT_decl_file{{.*}}([[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(23)
-; CHECK-NEXT: DW_AT_import{{.*}}=>
-; CHECK: NULL
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_module
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}([[F2]])
@@ -147,6 +134,13 @@
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(37)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[FUNC_FWD]]})
 
+; CHECK: DW_TAG_lexical_block
+; CHECK-NOT: NULL
+; CHECK: DW_TAG_imported_module
+; CHECK-NEXT: DW_AT_decl_file{{.*}}([[F2]])
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(23)
+; CHECK-NEXT: DW_AT_import{{.*}}=>
+; CHECK: NULL
 ; CHECK: NULL
 ; CHECK: NULL
 
