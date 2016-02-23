@@ -1243,6 +1243,44 @@ static Instruction *matchDeMorgansLaws(BinaryOperator &I,
   return nullptr;
 }
 
+Instruction *InstCombiner::foldCastedBitwiseLogic(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    Value *Op0COp = Op0C->getOperand(0);
+    Type *SrcTy = Op0COp->getType();
+    // fold (and (cast A), (cast B)) -> (cast (and A, B))
+    if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
+      if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
+          SrcTy == Op1C->getOperand(0)->getType() &&
+          SrcTy->isIntOrIntVectorTy()) {
+        Value *Op1COp = Op1C->getOperand(0);
+
+        // Only do this if the casts both really cause code to be generated.
+        if (ShouldOptimizeCast(Op0C->getOpcode(), Op0COp, I.getType()) &&
+            ShouldOptimizeCast(Op1C->getOpcode(), Op1COp, I.getType())) {
+          Value *NewOp = Builder->CreateAnd(Op0COp, Op1COp, I.getName());
+          return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
+        }
+
+        // If this is and(cast(icmp), cast(icmp)), try to fold this even if the
+        // cast is otherwise not optimizable.  This happens for vector sexts.
+        if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
+          if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
+            if (Value *Res = FoldAndOfICmps(LHS, RHS))
+              return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+
+        // If this is and(cast(fcmp), cast(fcmp)), try to fold this even if the
+        // cast is otherwise not optimizable.  This happens for vector sexts.
+        if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
+          if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
+            if (Value *Res = FoldAndOfFCmps(LHS, RHS))
+              return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+      }
+    }
+  }
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -1480,39 +1518,12 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       if (Value *Res = FoldAndOfFCmps(LHS, RHS))
         return replaceInstUsesWith(I, Res);
 
+  if (Instruction *CastedAnd = foldCastedBitwiseLogic(I))
+    return CastedAnd;
 
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     Value *Op0COp = Op0C->getOperand(0);
     Type *SrcTy = Op0COp->getType();
-    // fold (and (cast A), (cast B)) -> (cast (and A, B))
-    if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
-      if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
-          SrcTy == Op1C->getOperand(0)->getType() &&
-          SrcTy->isIntOrIntVectorTy()) {
-        Value *Op1COp = Op1C->getOperand(0);
-
-        // Only do this if the casts both really cause code to be generated.
-        if (ShouldOptimizeCast(Op0C->getOpcode(), Op0COp, I.getType()) &&
-            ShouldOptimizeCast(Op1C->getOpcode(), Op1COp, I.getType())) {
-          Value *NewOp = Builder->CreateAnd(Op0COp, Op1COp, I.getName());
-          return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
-        }
-
-        // If this is and(cast(icmp), cast(icmp)), try to fold this even if the
-        // cast is otherwise not optimizable.  This happens for vector sexts.
-        if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
-          if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
-            if (Value *Res = FoldAndOfICmps(LHS, RHS))
-              return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-
-        // If this is and(cast(fcmp), cast(fcmp)), try to fold this even if the
-        // cast is otherwise not optimizable.  This happens for vector sexts.
-        if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
-          if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
-            if (Value *Res = FoldAndOfFCmps(LHS, RHS))
-              return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-      }
-    }
 
     // If we are masking off the sign bit of a floating-point value, convert
     // this to the canonical fabs intrinsic call and cast back to integer.
