@@ -861,6 +861,11 @@ multiclass SOP2_64_32 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
     opName#" $dst, $src0, $src1", pattern
 >;
 
+multiclass SOP2_64_32_32 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
+    op, opName, (outs SReg_64:$dst), (ins SSrc_32:$src0, SSrc_32:$src1),
+    opName#" $dst, $src0, $src1", pattern
+>;
+
 class SOPC_Helper <bits<7> op, RegisterOperand rc, ValueType vt,
                     string opName, PatLeaf cond> : SOPC <
   op, (outs), (ins rc:$src0, rc:$src1),
