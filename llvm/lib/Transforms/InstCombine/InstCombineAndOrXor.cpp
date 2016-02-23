@@ -1245,40 +1245,46 @@ static Instruction *matchDeMorgansLaws(BinaryOperator &I,
 
 Instruction *InstCombiner::foldCastedBitwiseLogic(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  CastInst *Op0C = dyn_cast<CastInst>(Op0);
-  CastInst *Op1C = dyn_cast<CastInst>(Op1);
-  if (!Op0C || !Op1C)
+  CastInst *Cast0 = dyn_cast<CastInst>(Op0);
+  CastInst *Cast1 = dyn_cast<CastInst>(Op1);
+  if (!Cast0 || !Cast1)
     return nullptr;
 
-  Value *Op0COp = Op0C->getOperand(0);
-  Type *SrcTy = Op0COp->getType();
+  // The casts must be of the same type, and this must be a cast from an integer
+  // or integer vector source type.
+  auto CastOpcode = Cast0->getOpcode();
+  Type *SrcTy = Cast0->getSrcTy();
+  if ((CastOpcode != Cast1->getOpcode()) || (SrcTy != Cast1->getSrcTy()) ||
+      !SrcTy->isIntOrIntVectorTy())
+    return nullptr;
+
+  Value *Cast0Src = Cast0->getOperand(0);
+  Value *Cast1Src = Cast1->getOperand(0);
+  Type *DestTy = I.getType();
+
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
-  if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
-      SrcTy == Op1C->getOperand(0)->getType() &&
-      SrcTy->isIntOrIntVectorTy()) {
-    Value *Op1COp = Op1C->getOperand(0);
 
-    // Only do this if the casts both really cause code to be generated.
-    if (ShouldOptimizeCast(Op0C->getOpcode(), Op0COp, I.getType()) &&
-        ShouldOptimizeCast(Op1C->getOpcode(), Op1COp, I.getType())) {
-      Value *NewOp = Builder->CreateAnd(Op0COp, Op1COp, I.getName());
-      return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
-    }
-
-    // If this is and(cast(icmp), cast(icmp)), try to fold this even if the
-    // cast is otherwise not optimizable.  This happens for vector sexts.
-    if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
-      if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
-        if (Value *Res = FoldAndOfICmps(LHS, RHS))
-          return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-
-    // If this is and(cast(fcmp), cast(fcmp)), try to fold this even if the
-    // cast is otherwise not optimizable.  This happens for vector sexts.
-    if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
-      if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
-        if (Value *Res = FoldAndOfFCmps(LHS, RHS))
-          return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+  // Only do this if the casts both really cause code to be generated.
+  if (ShouldOptimizeCast(CastOpcode, Cast0Src, DestTy) &&
+      ShouldOptimizeCast(CastOpcode, Cast1Src, DestTy)) {
+    Value *NewOp = Builder->CreateAnd(Cast0Src, Cast1Src, I.getName());
+    return CastInst::Create(CastOpcode, NewOp, DestTy);
   }
+
+  // If this is and(cast(icmp), cast(icmp)), try to fold this even if the
+  // cast is otherwise not optimizable.  This happens for vector sexts.
+  if (ICmpInst *RHS = dyn_cast<ICmpInst>(Cast1Src))
+    if (ICmpInst *LHS = dyn_cast<ICmpInst>(Cast0Src))
+      if (Value *Res = FoldAndOfICmps(LHS, RHS))
+        return CastInst::Create(CastOpcode, Res, DestTy);
+
+  // If this is and(cast(fcmp), cast(fcmp)), try to fold this even if the
+  // cast is otherwise not optimizable.  This happens for vector sexts.
+  if (FCmpInst *RHS = dyn_cast<FCmpInst>(Cast1Src))
+    if (FCmpInst *LHS = dyn_cast<FCmpInst>(Cast0Src))
+      if (Value *Res = FoldAndOfFCmps(LHS, RHS))
+        return CastInst::Create(CastOpcode, Res, DestTy);
+
   return nullptr;
 }
 
