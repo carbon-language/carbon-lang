@@ -148,7 +148,7 @@ the configuration (without a prefix: ``Auto``).
 .. START_FORMAT_STYLE_OPTIONS
 
 **AccessModifierOffset** (``int``)
-  The extra indent or outdent of access modifiers, e.g. ``public``:.
+  The extra indent or outdent of access modifiers, e.g. ``public:``.
 
 **AlignAfterOpenBracket** (``BracketAlignmentStyle``)
   If ``true``, horizontally aligns arguments after an open bracket.

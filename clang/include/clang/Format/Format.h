@@ -40,7 +40,7 @@ std::error_code make_error_code(ParseError e);
 /// \brief The ``FormatStyle`` is used to configure the formatting to follow
 /// specific guidelines.
 struct FormatStyle {
-  /// \brief The extra indent or outdent of access modifiers, e.g. ``public``:.
+  /// \brief The extra indent or outdent of access modifiers, e.g. ``public:``.
   int AccessModifierOffset;
 
   /// \brief Different styles for aligning after open brackets.
