@@ -154,7 +154,7 @@ the configuration (without a prefix: ``Auto``).
   If ``true``, horizontally aligns arguments after an open bracket.
 
   This applies to round brackets (parentheses), angle brackets and square
-  brackets. This will result in formattings like
+  brackets.
 
   Possible values:
 
@@ -213,6 +213,14 @@ the configuration (without a prefix: ``Auto``).
 **AlignOperands** (``bool``)
   If ``true``, horizontally align operands of binary and ternary
   expressions.
+
+  Specifically, this aligns operands of a single expression that needs to be
+  split over multiple lines, e.g.:
+
+  .. code-block:: c++
+
+    int aaa = bbbbbbbbbbbbbbb +
+              ccccccccccccccc;
 
 **AlignTrailingComments** (``bool``)
   If ``true``, aligns trailing comments.
@@ -377,6 +385,9 @@ the configuration (without a prefix: ``Auto``).
   Always break constructor initializers before commas and align
   the commas with the colon.
 
+**BreakStringLiterals** (``bool``)
+  Allow breaking string literals when formatting.
+
 **ColumnLimit** (``unsigned``)
   The column limit.
 
@@ -462,10 +473,12 @@ the configuration (without a prefix: ``Auto``).
   according to increasing category number and then alphabetically within
   each category.
 
-  If none of the regular expressions match, UINT_MAX is assigned as
-  category. The main header for a source file automatically gets category 0,
-  so that it is kept at the beginning of the #includes
-  (http://llvm.org/docs/CodingStandards.html#include-style).
+  If none of the regular expressions match, INT_MAX is assigned as
+  category. The main header for a source file automatically gets category 0.
+  so that it is generally kept at the beginning of the #includes
+  (http://llvm.org/docs/CodingStandards.html#include-style). However, you
+  can also assign negative priorities if you have certain headers that
+  always need to be first.
 
   To configure this in the .clang-format file, use:
 
@@ -511,6 +524,8 @@ the configuration (without a prefix: ``Auto``).
   * ``LK_Proto`` (in configuration: ``Proto``)
     Should be used for Protocol Buffers
     (https://developers.google.com/protocol-buffers/).
+  * ``LK_TableGen`` (in configuration: ``TableGen``)
+    Should be used for TableGen code.
 
 
 **MacroBlockBegin** (``std::string``)
@@ -577,6 +592,12 @@ the configuration (without a prefix: ``Auto``).
   * ``PAS_Middle`` (in configuration: ``Middle``)
     Align pointer in the middle.
 
+
+**ReflowComments** (``bool``)
+  If true, clang-format will attempt to re-flow comments.
+
+**SortIncludes** (``bool``)
+  If true, clang-format will sort #includes.
 
 **SpaceAfterCStyleCast** (``bool``)
   If ``true``, a space may be inserted after C style casts.
