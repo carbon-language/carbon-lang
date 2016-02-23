@@ -335,7 +335,7 @@ void Writer<ELFT>::scanRelocs(
     if (auto *B = dyn_cast_or_null<SharedSymbol<ELFT>>(Body)) {
       if (B->needsCopy())
         continue;
-      if (Target->needsCopyRel(Type, *B)) {
+      if (Target->needsCopyRel<ELFT>(Type, *B)) {
         B->NeedsCopyOrPltAddr = true;
         Out<ELFT>::RelaDyn->addReloc(
             {Target->CopyRel, DynamicReloc<ELFT>::Off_Bss, B});
