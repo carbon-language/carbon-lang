@@ -706,8 +706,13 @@ void RewriteInstance::disassembleFunctions() {
       continue;
 
     // Fill in CFI information for this function
-    if (EHFrame->ParseError.empty() && Function.isSimple()) {
-      CFIRdWrt->fillCFIInfoFor(Function);
+    if (EHFrame->ParseError.empty()) {
+      if (!CFIRdWrt->fillCFIInfoFor(Function)) {
+        errs() << "BOLT-WARNING: unable to fill CFI for function "
+               << Function.getName() << '\n';
+        Function.setSimple(false);
+        continue;
+      }
     }
 
     // Parse LSDA.

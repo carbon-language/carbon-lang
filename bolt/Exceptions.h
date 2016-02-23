@@ -44,7 +44,7 @@ public:
 
   using FDEsMap = std::map<uint64_t, const dwarf::FDE *>;
 
-  void fillCFIInfoFor(BinaryFunction &Function) const;
+  bool fillCFIInfoFor(BinaryFunction &Function) const;
 
   // Include a new EHFrame, updating the .eh_frame_hdr
   void rewriteHeaderFor(StringRef EHFrame, uint64_t EHFrameAddress,

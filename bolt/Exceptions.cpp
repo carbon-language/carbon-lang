@@ -492,11 +492,11 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
 
-void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
+bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   uint64_t Address = Function.getAddress();
   auto I = FDEs.find(Address);
   if (I == FDEs.end())
-    return;
+    return true;
 
   const FDE &CurFDE = *I->second;
   if (Function.getSize() != CurFDE.getAddressRange()) {
@@ -613,33 +613,41 @@ void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           break;
         case DW_CFA_val_offset_sf:
         case DW_CFA_val_offset:
-          llvm_unreachable("DWARF val_offset() unimplemented");
-          break;
+          errs() << "BOLT-WARNING: DWARF val_offset() unimplemented\n";
+          return false;
         case DW_CFA_expression:
         case DW_CFA_def_cfa_expression:
         case DW_CFA_val_expression:
-          llvm_unreachable("DWARF CFA expressions unimplemented");
-          break;
+          errs() << "BOLT-WARNING: DWARF CFA expressions unimplemented\n";
+          return false;
         case DW_CFA_MIPS_advance_loc8:
-          llvm_unreachable("DW_CFA_MIPS_advance_loc unimplemented");
-          break;
+          errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
+          return false;
         case DW_CFA_GNU_window_save:
         case DW_CFA_lo_user:
         case DW_CFA_hi_user:
-          llvm_unreachable("DW_CFA_GNU_* and DW_CFA_*_user unimplemented");
-          break;
+          errs() <<
+            "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user unimplemented\n";
+          return false;
         default:
-          llvm_unreachable("Unrecognized CFI instruction");
+          errs() << "BOLT-WARNING: Unrecognized CFI instruction\n";
+          return false;
         }
+
+        return true;
       };
 
   for (const FrameEntry::Instruction &Instr : *(CurFDE.getLinkedCIE())) {
-    decodeFrameInstruction(Instr);
+    if (!decodeFrameInstruction(Instr))
+      return false;
   }
 
   for (const FrameEntry::Instruction &Instr : CurFDE) {
-    decodeFrameInstruction(Instr);
+    if (!decodeFrameInstruction(Instr))
+      return false;
   }
+
+  return true;
 }
 
 void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
