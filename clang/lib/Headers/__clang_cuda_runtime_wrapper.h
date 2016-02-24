@@ -247,5 +247,19 @@ __device__ static inline void *malloc(size_t __size) {
 
 #include <__clang_cuda_cmath.h>
 
+// curand_mtgp32_kernel helpfully redeclares blockDim and threadIdx in host
+// mode, giving them their "proper" types of dim3 and uint3.  This is
+// incompatible with the types we give in cuda_builtin_vars.h.  As as hack,
+// force-include the header (nvcc doesn't include it by default) but redefine
+// dim3 and uint3 to our builtin types.  (Thankfully dim3 and uint3 are only
+// used here for the redeclarations of blockDim and threadIdx.)
+#pragma push_macro("dim3")
+#pragma push_macro("uint3")
+#define dim3 __cuda_builtin_blockDim_t
+#define uint3 __cuda_builtin_threadIdx_t
+#include "curand_mtgp32_kernel.h"
+#pragma pop_macro("dim3")
+#pragma pop_macro("uint3")
+
 #endif // __CUDA__
 #endif // __CLANG_CUDA_RUNTIME_WRAPPER_H__
