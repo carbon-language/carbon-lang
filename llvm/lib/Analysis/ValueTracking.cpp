@@ -1569,46 +1569,6 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
   }
 }
 
-static unsigned getAlignment(const Value *V, const DataLayout &DL) {
-  unsigned Align = 0;
-  if (auto *GO = dyn_cast<GlobalObject>(V)) {
-    Align = GO->getAlignment();
-    if (Align == 0) {
-      if (auto *GVar = dyn_cast<GlobalVariable>(GO)) {
-        Type *ObjectType = GVar->getValueType();
-        if (ObjectType->isSized()) {
-          // If the object is defined in the current Module, we'll be giving
-          // it the preferred alignment. Otherwise, we have to assume that it
-          // may only have the minimum ABI alignment.
-          if (GVar->isStrongDefinitionForLinker())
-            Align = DL.getPreferredAlignment(GVar);
-          else
-            Align = DL.getABITypeAlignment(ObjectType);
-        }
-      }
-    }
-  } else if (const Argument *A = dyn_cast<Argument>(V)) {
-    Align = A->getType()->isPointerTy() ? A->getParamAlignment() : 0;
-
-    if (!Align && A->hasStructRetAttr()) {
-      // An sret parameter has at least the ABI alignment of the return type.
-      Type *EltTy = cast<PointerType>(A->getType())->getElementType();
-      if (EltTy->isSized())
-        Align = DL.getABITypeAlignment(EltTy);
-    }
-  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(V))
-    Align = AI->getAlignment();
-  else if (auto CS = ImmutableCallSite(V))
-    Align = CS.getAttributes().getParamAlignment(AttributeSet::ReturnIndex);
-  else if (const LoadInst *LI = dyn_cast<LoadInst>(V))
-    if (MDNode *MD = LI->getMetadata(LLVMContext::MD_align)) {
-      ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(0));
-      Align = CI->getLimitedValue();
-    }
-
-  return Align;
-}
-
 /// Determine which bits of V are known to be either zero or one and return
 /// them in the KnownZero/KnownOne bit sets.
 ///
@@ -1691,7 +1651,7 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
 
   // Aligned pointers have trailing zeros - refine KnownZero set
   if (V->getType()->isPointerTy()) {
-    unsigned Align = getAlignment(V, Q.DL);
+    unsigned Align = V->getPointerAlignment(Q.DL);
     if (Align)
       KnownZero |= APInt::getLowBitsSet(BitWidth, countTrailingZeros(Align));
   }
@@ -3206,7 +3166,7 @@ static bool isDereferenceableFromAttribute(const Value *V, const DataLayout &DL,
 
 static bool isAligned(const Value *Base, APInt Offset, unsigned Align,
                       const DataLayout &DL) {
-  APInt BaseAlign(Offset.getBitWidth(), getAlignment(Base, DL));
+  APInt BaseAlign(Offset.getBitWidth(), Base->getPointerAlignment(DL));
 
   if (!BaseAlign) {
     Type *Ty = Base->getType()->getPointerElementType();
