@@ -12,8 +12,9 @@ define x86_mmx @mmx_movzl(x86_mmx %x) nounwind {
 ; CHECK-NEXT:    pmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; CHECK-NEXT:    movl $32, %eax
 ; CHECK-NEXT:    pinsrd $0, %eax, %xmm0
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,2,3],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
-; CHECK-NEXT:    movq %xmm0, (%esp)
+; CHECK-NEXT:    pxor %xmm1, %xmm1
+; CHECK-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; CHECK-NEXT:    movq %xmm1, (%esp)
 ; CHECK-NEXT:    movq (%esp), %mm0
 ; CHECK-NEXT:    addl $20, %esp
 ; CHECK-NEXT:    retl
