@@ -68,7 +68,7 @@ InputSectionBase<ELFT>::getOffset(const Elf_Sym &Sym) {
 // Returns a section that Rel relocation is pointing to.
 template <class ELFT>
 InputSectionBase<ELFT> *
-InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) {
+InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) const {
   // Global symbol
   uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
   if (SymbolBody *B = File->getSymbolBody(SymIndex))
@@ -83,7 +83,7 @@ InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) {
 
 template <class ELFT>
 InputSectionBase<ELFT> *
-InputSectionBase<ELFT>::getRelocTarget(const Elf_Rela &Rel) {
+InputSectionBase<ELFT>::getRelocTarget(const Elf_Rela &Rel) const {
   return getRelocTarget(reinterpret_cast<const Elf_Rel &>(Rel));
 }
 
