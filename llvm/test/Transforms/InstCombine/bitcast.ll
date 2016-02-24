@@ -16,7 +16,7 @@ define i32 @test1(i64 %a) {
 ; CHECK: ret i32 0
 }
 
-; FIXME: The bitcasts of the operands to the xor can be eliminated.
+; Perform the bitwise logic in the source type of the operands to eliminate bitcasts.
 
 define <2 x i32> @xor_two_vector_bitcasts(<1 x i64> %a, <1 x i64> %b) {
   %t1 = bitcast <1 x i64> %a to <2 x i32>
