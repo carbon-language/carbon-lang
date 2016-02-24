@@ -4270,8 +4270,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-ffunction-sections");
   }
 
-  if (Args.hasArg(options::OPT_fwhole_program_vtables,
-                  options::OPT_fno_whole_program_vtables, false)) {
+  if (Args.hasFlag(options::OPT_fwhole_program_vtables,
+                   options::OPT_fno_whole_program_vtables, false)) {
     if (!D.isUsingLTO())
       D.Diag(diag::err_drv_argument_only_allowed_with)
           << "-fwhole-program-vtables"
