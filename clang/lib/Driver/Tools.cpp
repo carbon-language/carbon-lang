@@ -4270,6 +4270,32 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-ffunction-sections");
   }
 
+  if (Args.hasArg(options::OPT_fwhole_program_vtables,
+                  options::OPT_fno_whole_program_vtables, false)) {
+    if (!D.isUsingLTO())
+      D.Diag(diag::err_drv_argument_only_allowed_with)
+          << "-fwhole-program-vtables"
+          << "-flto";
+    CmdArgs.push_back("-fwhole-program-vtables");
+
+    clang::SmallString<64> Path(D.ResourceDir);
+    llvm::sys::path::append(Path, "vtables_blacklist.txt");
+    if (llvm::sys::fs::exists(Path)) {
+      SmallString<64> BlacklistOpt("-fwhole-program-vtables-blacklist=");
+      BlacklistOpt += Path.str();
+      CmdArgs.push_back(Args.MakeArgString(BlacklistOpt));
+    }
+
+    for (const Arg *A :
+         Args.filtered(options::OPT_fwhole_program_vtables_blacklist_EQ)) {
+      A->claim();
+      if (!llvm::sys::fs::exists(A->getValue()))
+        D.Diag(clang::diag::err_drv_no_such_file) << A->getValue();
+    }
+
+    Args.AddAllArgs(CmdArgs, options::OPT_fwhole_program_vtables_blacklist_EQ);
+  }
+
   if (Args.hasFlag(options::OPT_fdata_sections, options::OPT_fno_data_sections,
                    UseSeparateSections)) {
     CmdArgs.push_back("-fdata-sections");
