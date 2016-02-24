@@ -49,36 +49,27 @@ void DeprecatedHeadersCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 IncludeModernizePPCallbacks::IncludeModernizePPCallbacks(ClangTidyCheck &Check,
                                                          LangOptions LangOpts)
     : Check(Check), LangOpts(LangOpts),
-      CStyledHeaderToCxx({{"assert.h", "cassert"},
-                          {"complex.h", "ccomplex"},
-                          {"ctype.h", "cctype"},
-                          {"errno.h", "cerrno"},
-                          {"float.h", "cfloat"},
-                          {"inttypes.h", "cinttypes"},
-                          {"iso646.h", "ciso646"},
-                          {"limits.h", "climits"},
-                          {"locale.h", "clocale"},
-                          {"math.h", "cmath"},
-                          {"setjmp.h", "csetjmp"},
-                          {"signal.h", "csignal"},
-                          {"stdarg.h", "cstdarg"},
-                          {"stddef.h", "cstddef"},
-                          {"stdint.h", "cstdint"},
-                          {"stdio.h", "cstdio"},
-                          {"stdlib.h", "cstdlib"},
-                          {"string.h", "cstring"},
-                          {"time.h", "ctime"},
-                          {"wchar.h", "cwchar"},
-                          {"wctype.h", "cwctype"}}) {
+      CStyledHeaderToCxx{{"assert.h", "cassert"}, {"complex.h", "ccomplex"},
+                         {"ctype.h", "cctype"},   {"errno.h", "cerrno"},
+                         {"float.h", "cfloat"},   {"inttypes.h", "cinttypes"},
+                         {"iso646.h", "ciso646"}, {"limits.h", "climits"},
+                         {"locale.h", "clocale"}, {"math.h", "cmath"},
+                         {"setjmp.h", "csetjmp"}, {"signal.h", "csignal"},
+                         {"stdarg.h", "cstdarg"}, {"stddef.h", "cstddef"},
+                         {"stdint.h", "cstdint"}, {"stdio.h", "cstdio"},
+                         {"stdlib.h", "cstdlib"}, {"string.h", "cstring"},
+                         {"time.h", "ctime"},     {"wchar.h", "cwchar"},
+                         {"wctype.h", "cwctype"}} {
   // Add C++ 11 headers.
   if (LangOpts.CPlusPlus11) {
-    for (const auto &it : std::vector<std::pair<std::string, std::string>>(
+    for (const auto &KeyValue :
+         std::vector<std::pair<std::string, std::string>>(
              {{"fenv.h", "cfenv"},
               {"stdalign.h", "cstdalign"},
               {"stdbool.h", "cstdbool"},
               {"tgmath.h", "ctgmath"},
               {"uchar.h", "cuchar"}})) {
-      CStyledHeaderToCxx.insert(it);
+      CStyledHeaderToCxx.insert(KeyValue);
     }
   }
 }
