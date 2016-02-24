@@ -24431,8 +24431,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI,
                                      const X86Subtarget &Subtarget) {
   SDLoc dl(N);
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
 
   // Don't create instructions with illegal types after legalize types has run.
@@ -24464,8 +24462,13 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   // potentially need to be further expanded (or custom lowered) into a
   // less optimal sequence of dag nodes.
   if (!DCI.isBeforeLegalize() && DCI.isBeforeLegalizeOps() &&
-      N1.getOpcode() == ISD::UNDEF && N0.hasOneUse() &&
-      N0.getOpcode() == ISD::BITCAST) {
+      N->getOpcode() == ISD::VECTOR_SHUFFLE &&
+      N->getOperand(0).getOpcode() == ISD::BITCAST &&
+      N->getOperand(1).getOpcode() == ISD::UNDEF &&
+      N->getOperand(0).hasOneUse()) {
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+
     SDValue BC0 = N0.getOperand(0);
     EVT SVT = BC0.getValueType();
     unsigned Opcode = BC0.getOpcode();
