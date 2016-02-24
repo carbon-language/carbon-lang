@@ -3064,16 +3064,6 @@ CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
   return EmitRuntimeCall(callee, None, name);
 }
 
-/// Emits a simple call (never an invoke) to the given runtime function.
-llvm::CallInst *
-CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
-                                 ArrayRef<llvm::Value*> args,
-                                 const llvm::Twine &name) {
-  llvm::CallInst *call = Builder.CreateCall(callee, args, name);
-  call->setCallingConv(getRuntimeCC());
-  return call;
-}
-
 // Calls which may throw must have operand bundles indicating which funclet
 // they are nested within.
 static void
@@ -3090,6 +3080,19 @@ getBundlesForFunclet(llvm::Value *Callee, llvm::Instruction *CurrentFuncletPad,
     return;
 
   BundleList.emplace_back("funclet", CurrentFuncletPad);
+}
+
+/// Emits a simple call (never an invoke) to the given runtime function.
+llvm::CallInst *
+CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
+                                 ArrayRef<llvm::Value*> args,
+                                 const llvm::Twine &name) {
+  SmallVector<llvm::OperandBundleDef, 1> BundleList;
+  getBundlesForFunclet(callee, CurrentFuncletPad, BundleList);
+
+  llvm::CallInst *call = Builder.CreateCall(callee, args, BundleList, name);
+  call->setCallingConv(getRuntimeCC());
+  return call;
 }
 
 /// Emits a call or invoke to the given noreturn runtime function.
