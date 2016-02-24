@@ -663,6 +663,7 @@ public:
   /// @param IncomingValue The value when reacing the PHI from the @p
   ///                      IncomingBlock.
   void addIncoming(BasicBlock *IncomingBlock, Value *IncomingValue) {
+    assert(!isRead());
     assert(isAnyPHIKind());
     Incoming.emplace_back(std::make_pair(IncomingBlock, IncomingValue));
   }
