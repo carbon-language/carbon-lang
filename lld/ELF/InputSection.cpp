@@ -217,7 +217,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     }
 
     uintX_t SymVA = Body->getVA<ELFT>();
-    if (Target->needsPlt(Type, *Body)) {
+    if (Target->needsPlt<ELFT>(Type, *Body)) {
       SymVA = Body->getPltVA<ELFT>();
     } else if (Target->needsGot(Type, *Body)) {
       if (Config->EMachine == EM_MIPS && !canBePreempted(Body, true))

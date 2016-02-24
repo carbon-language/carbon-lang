@@ -362,7 +362,7 @@ void Writer<ELFT>::scanRelocs(
     // for the symbol.
     TargetInfo::PltNeed NeedPlt = TargetInfo::Plt_No;
     if (Body)
-      NeedPlt = Target->needsPlt(Type, *Body);
+      NeedPlt = Target->needsPlt<ELFT>(Type, *Body);
     if (NeedPlt) {
       if (NeedPlt == TargetInfo::Plt_Implicit)
         Body->NeedsCopyOrPltAddr = true;
