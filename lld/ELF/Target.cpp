@@ -1209,7 +1209,9 @@ AArch64TargetInfo::AArch64TargetInfo() {
   PltZeroSize = 32;
 }
 
-bool AArch64TargetInfo::isRelRelative(uint32_t Type) const { return false; }
+bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
+  return Type == R_AARCH64_PREL32;
+}
 
 bool AArch64TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {
   return Type == R_AARCH64_TLSDESC_ADR_PAGE21 ||
