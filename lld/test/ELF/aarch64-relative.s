@@ -3,6 +3,7 @@
 // RUN: ld.lld %t.o -o %t.so -shared
 // RUN: llvm-readobj -r %t.so | FileCheck %s
         adrp    x8, .Lfoo
+        strb    w9, [x8, :lo12:.Lfoo]
 
         .data
         .Lfoo:
