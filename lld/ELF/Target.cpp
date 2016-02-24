@@ -718,6 +718,7 @@ TargetInfo::PltNeed X86_64TargetInfo::needsPlt(uint32_t Type,
   default:
     return Plt_No;
   case R_X86_64_32:
+  case R_X86_64_32S:
   case R_X86_64_64:
   case R_X86_64_PC32:
     // This relocation is defined to have a value of (S + A - P).
