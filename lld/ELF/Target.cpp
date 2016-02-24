@@ -1222,7 +1222,8 @@ AArch64TargetInfo::AArch64TargetInfo() {
 bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
   return Type == R_AARCH64_PREL32 || Type == R_AARCH64_ADR_PREL_PG_HI21 ||
          Type == R_AARCH64_LDST8_ABS_LO12_NC ||
-         Type == R_AARCH64_LDST32_ABS_LO12_NC;
+         Type == R_AARCH64_LDST32_ABS_LO12_NC ||
+         Type == R_AARCH64_LDST64_ABS_LO12_NC;
 }
 
 bool AArch64TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {

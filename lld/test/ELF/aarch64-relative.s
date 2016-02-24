@@ -5,6 +5,7 @@
         adrp    x8, .Lfoo
         strb    w9, [x8, :lo12:.Lfoo]
         ldr     w0, [x8, :lo12:.Lfoo]
+        ldr     x0, [x8, :lo12:.Lfoo]
 
         .data
         .Lfoo:
