@@ -207,7 +207,7 @@ private:
   Scop *S;
 
   /// @brief Dependences struct for the current SCoP.
-  std::auto_ptr<Dependences> D;
+  std::unique_ptr<Dependences> D;
 };
 
 } // End polly namespace.
