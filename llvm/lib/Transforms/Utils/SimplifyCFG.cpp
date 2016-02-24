@@ -5278,9 +5278,17 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   if ((pred_empty(BB) &&
        BB != &BB->getParent()->getEntryBlock()) ||
       BB->getSinglePredecessor() == BB) {
-    DEBUG(dbgs() << "Removing BB: \n" << *BB);
-    DeleteDeadBlock(BB);
-    return true;
+    // Get the block mostly empty.
+    Changed |= removeAllNonTerminatorAndEHPadInstructions(BB) > 0;
+    // Now, verify that we succeeded getting the block empty.
+    // This will not be the case if this unreachable BB creates a token which is
+    // consumed by other unreachable blocks.
+    Instruction *FirstNonPHI = BB->getFirstNonPHI();
+    if (isa<TerminatorInst>(FirstNonPHI) && FirstNonPHI->use_empty()) {
+      DEBUG(dbgs() << "Removing BB: \n" << *BB);
+      DeleteDeadBlock(BB);
+      return true;
+    }
   }
 
   // Check to see if we can constant propagate this terminator instruction
