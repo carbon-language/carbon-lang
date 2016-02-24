@@ -1536,6 +1536,12 @@ BasicBlock *ScopStmt::getEntryBlock() const {
   return getRegion()->getEntry();
 }
 
+RegionNode *ScopStmt::getRegionNode() const {
+  if (isRegionStmt())
+    return getRegion()->getNode();
+  return getParent()->getRegion().getBBNode(getBasicBlock());
+}
+
 unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
 
 unsigned ScopStmt::getNumIterators() const { return NestLoops.size(); }
@@ -2875,9 +2881,7 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT,
                         LoopInfo &LI) {
   for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
     ScopStmt &Stmt = *StmtIt;
-    RegionNode *RN = Stmt.isRegionStmt()
-                         ? Stmt.getRegion()->getNode()
-                         : getRegion().getBBNode(Stmt.getBasicBlock());
+    RegionNode *RN = Stmt.getRegionNode();
 
     bool RemoveStmt = StmtIt->isEmpty();
     if (!RemoveStmt)

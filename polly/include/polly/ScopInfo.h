@@ -1083,6 +1083,10 @@ public:
   /// statements, return its entry block.
   BasicBlock *getEntryBlock() const;
 
+  /// @brief Return RegionInfo's RegionNode for this statements' BB or
+  ///        subregion.
+  RegionNode *getRegionNode() const;
+
   /// @brief Return true if this statement does not contain any accesses.
   bool isEmpty() const { return MemAccs.empty(); }
 
