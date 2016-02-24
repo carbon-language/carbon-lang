@@ -16,6 +16,21 @@ define i32 @test1(i64 %a) {
 ; CHECK: ret i32 0
 }
 
+; FIXME: The bitcasts of the operands to the xor can be eliminated.
+
+define <2 x i32> @xor_two_vector_bitcasts(<1 x i64> %a, <1 x i64> %b) {
+  %t1 = bitcast <1 x i64> %a to <2 x i32>
+  %t2 = bitcast <1 x i64> %b to <2 x i32>
+  %t3 = xor <2 x i32> %t1, %t2
+  ret <2 x i32> %t3
+
+; CHECK-LABEL: @xor_two_vector_bitcasts(
+; CHECK-NEXT:  %t1 = bitcast <1 x i64> %a to <2 x i32>
+; CHECK-NEXT:  %t2 = bitcast <1 x i64> %b to <2 x i32>
+; CHECK-NEXT:  %t3 = xor <2 x i32> %t1, %t2
+; CHECK-NEXT:  ret <2 x i32> %t3
+}
+
 ; Optimize bitcasts that are extracting low element of vector.  This happens
 ; because of SRoA.
 ; rdar://7892780
