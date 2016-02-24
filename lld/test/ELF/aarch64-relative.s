@@ -6,6 +6,7 @@
         strb    w9, [x8, :lo12:.Lfoo]
         ldr     w0, [x8, :lo12:.Lfoo]
         ldr     x0, [x8, :lo12:.Lfoo]
+        add     x0, x0, :lo12:.Lfoo
 
         .data
         .Lfoo:
