@@ -303,7 +303,7 @@ void MemoryAccess::updateDimensionality() {
   auto DimsAccess = isl_space_dim(AccessSpace, isl_dim_set);
   auto DimsMissing = DimsArray - DimsAccess;
 
-  auto *BB = getStatement()->getParent()->getRegion().getEntry();
+  auto *BB = getStatement()->getEntryBlock();
   auto &DL = BB->getModule()->getDataLayout();
   unsigned ArrayElemSize = SAI->getElemSizeInBytes();
   unsigned ElemBytes = DL.getTypeAllocSize(getElementType());
@@ -966,8 +966,7 @@ isl_map *ScopStmt::getSchedule() const {
 }
 
 __isl_give isl_pw_aff *ScopStmt::getPwAff(const SCEV *E) {
-  return getParent()->getPwAff(E, isBlockStmt() ? getBasicBlock()
-                                                : getRegion()->getEntry());
+  return getParent()->getPwAff(E, getEntryBlock());
 }
 
 void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
@@ -1529,6 +1528,12 @@ std::string ScopStmt::getScheduleStr() const {
   auto Str = stringFromIslObj(S);
   isl_map_free(S);
   return Str;
+}
+
+BasicBlock *ScopStmt::getEntryBlock() const {
+  if (isBlockStmt())
+    return getBasicBlock();
+  return getRegion()->getEntry();
 }
 
 unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
@@ -2111,9 +2116,7 @@ static inline __isl_give isl_set *addDomainDimId(__isl_take isl_set *Domain,
 }
 
 isl_set *Scop::getDomainConditions(ScopStmt *Stmt) {
-  BasicBlock *BB = Stmt->isBlockStmt() ? Stmt->getBasicBlock()
-                                       : Stmt->getRegion()->getEntry();
-  return getDomainConditions(BB);
+  return getDomainConditions(Stmt->getEntryBlock());
 }
 
 isl_set *Scop::getDomainConditions(BasicBlock *BB) {
@@ -2878,7 +2881,7 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT,
 
     bool RemoveStmt = StmtIt->isEmpty();
     if (!RemoveStmt)
-      RemoveStmt = isl_set_is_empty(DomainMap[getRegionNodeBasicBlock(RN)]);
+      RemoveStmt = isl_set_is_empty(DomainMap[Stmt.getEntryBlock()]);
     if (!RemoveStmt)
       RemoveStmt = (RemoveIgnoredStmts && isIgnored(RN, DT, LI));
 
@@ -3011,8 +3014,7 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
   //       generation would otherwise use the old value.
 
   auto &Stmt = *Access->getStatement();
-  BasicBlock *BB =
-      Stmt.isBlockStmt() ? Stmt.getBasicBlock() : Stmt.getRegion()->getEntry();
+  BasicBlock *BB = Stmt.getEntryBlock();
 
   if (Access->isScalarKind() || Access->isWrite() || !Access->isAffine())
     return false;
@@ -4225,10 +4227,9 @@ void ScopInfo::ensurePHIWrite(PHINode *PHI, BasicBlock *IncomingBlock,
   }
 
   MemoryAccess *Acc = addMemoryAccess(
-      IncomingStmt->isBlockStmt() ? IncomingBlock
-                                  : IncomingStmt->getRegion()->getEntry(),
-      PHI, MemoryAccess::MUST_WRITE, PHI, PHI->getType(), true, PHI,
-      ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
+      IncomingStmt->getEntryBlock(), PHI, MemoryAccess::MUST_WRITE, PHI,
+      PHI->getType(), true, PHI, ArrayRef<const SCEV *>(),
+      ArrayRef<const SCEV *>(),
       IsExitBlock ? ScopArrayInfo::MK_ExitPHI : ScopArrayInfo::MK_PHI);
   assert(Acc);
   Acc->addIncoming(IncomingBlock, IncomingValue);

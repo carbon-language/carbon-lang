@@ -1077,6 +1077,12 @@ public:
   /// @brief Return true if this statement represents a whole region.
   bool isRegionStmt() const { return R != nullptr; }
 
+  /// @brief Return a BasicBlock from this statement.
+  ///
+  /// For block statements, it returns the BasicBlock itself. For subregion
+  /// statements, return its entry block.
+  BasicBlock *getEntryBlock() const;
+
   /// @brief Return true if this statement does not contain any accesses.
   bool isEmpty() const { return MemAccs.empty(); }
 

@@ -198,8 +198,7 @@ BlockGenerator::generateLocationAccessed(ScopStmt &Stmt, MemAccInst Inst,
 }
 
 Loop *BlockGenerator::getLoopForStmt(const ScopStmt &Stmt) const {
-  auto *StmtBB =
-      Stmt.isBlockStmt() ? Stmt.getBasicBlock() : Stmt.getRegion()->getEntry();
+  auto *StmtBB = Stmt.getEntryBlock();
   return LI.getLoopFor(StmtBB);
 }
 
