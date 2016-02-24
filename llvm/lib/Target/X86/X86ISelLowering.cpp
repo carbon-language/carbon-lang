@@ -12301,6 +12301,7 @@ SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
                                                   SelectionDAG &DAG) const {
   MVT VT = Op.getSimpleValueType();
   MVT EltVT = VT.getVectorElementType();
+  unsigned NumElts = VT.getVectorNumElements();
 
   if (EltVT == MVT::i1)
     return InsertBitToMaskVector(Op, DAG);
@@ -12313,6 +12314,19 @@ SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
     return SDValue();
   auto *N2C = cast<ConstantSDNode>(N2);
   unsigned IdxVal = N2C->getZExtValue();
+
+  // If we are clearing out a element, we do this more efficiently with a
+  // blend shuffle than a costly integer insertion.
+  // TODO: would other rematerializable values (e.g. allbits) benefit as well?
+  // TODO: pre-SSE41 targets will tend to use bit masking - this could still
+  // be beneficial if we are inserting several zeros and can combine the masks.
+  if (X86::isZeroNode(N1) && Subtarget.hasSSE41() && NumElts <= 8) {
+    SmallVector<int, 8> ClearMask;
+    for (unsigned i = 0; i != NumElts; ++i)
+      ClearMask.push_back(i == IdxVal ? i + NumElts : i);
+    SDValue ZeroVector = getZeroVector(VT, Subtarget, DAG, dl);
+    return DAG.getVectorShuffle(VT, dl, N0, ZeroVector, ClearMask);
+  }
 
   // If the vector is wider than 128 bits, extract the 128-bit subvector, insert
   // into that, and then insert the subvector back into the result.
