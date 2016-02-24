@@ -25,7 +25,13 @@ template <class ELFT>
 InputSectionBase<ELFT>::InputSectionBase(ObjectFile<ELFT> *File,
                                          const Elf_Shdr *Header,
                                          Kind SectionKind)
-    : Header(Header), File(File), SectionKind(SectionKind) {}
+    : Header(Header), File(File), SectionKind(SectionKind) {
+  // The garbage collector sets sections' Live bits.
+  // If GC is disabled, all sections are considered live by default.
+  // NB: "Discarded" section is initialized at start-up and when it
+  // happens Config is still null.
+  Live = Config && !Config->GcSections;
+}
 
 template <class ELFT> StringRef InputSectionBase<ELFT>::getSectionName() const {
   ErrorOr<StringRef> Name = File->getObj().getSectionName(this->Header);

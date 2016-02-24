@@ -44,8 +44,6 @@ public:
   OutputSectionBase<ELFT> *OutSec = nullptr;
 
   // Used for garbage collection.
-  // Live bit makes sense only when Config->GcSections is true.
-  bool isLive() const { return !Config->GcSections || Live; }
   bool Live = false;
 
   // Returns the size of this section (even if this is a common or BSS.)
