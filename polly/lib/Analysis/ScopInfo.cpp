@@ -1279,9 +1279,7 @@ buildConditionSets(Scop &S, TerminatorInst *TI, Loop *L,
 }
 
 void ScopStmt::buildDomain() {
-  isl_id *Id;
-
-  Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
+  isl_id *Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
 
   Domain = getParent()->getDomainConditions(this);
   Domain = isl_set_set_tuple_id(Domain, Id);
