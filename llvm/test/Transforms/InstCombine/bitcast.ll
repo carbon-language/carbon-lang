@@ -30,6 +30,47 @@ define <2 x i32> @xor_two_vector_bitcasts(<1 x i64> %a, <1 x i64> %b) {
 ; CHECK-NEXT:  ret <2 x i32> %t3
 }
 
+; FIXME: Do the logic in the original type for the following 3 tests.
+
+; Verify that 'xor' of vector and constant is done as a vector bitwise op before the bitcast.
+
+define <2 x i32> @xor_bitcast_vec_to_vec(<1 x i64> %a) {
+  %t1 = bitcast <1 x i64> %a to <2 x i32>
+  %t2 = xor <2 x i32> <i32 1, i32 2>, %t1
+  ret <2 x i32> %t2
+
+; CHECK-LABEL: @xor_bitcast_vec_to_vec(
+; CHECK-NEXT:  %t1 = bitcast <1 x i64> %a to <2 x i32>
+; CHECK-NEXT:  %t2 = xor <2 x i32> %t1, <i32 1, i32 2>
+; CHECK-NEXT:  ret <2 x i32> %t2
+}
+
+; Verify that 'and' of integer and constant is done as a vector bitwise op before the bitcast.
+
+define i64 @and_bitcast_vec_to_int(<2 x i32> %a) {
+  %t1 = bitcast <2 x i32> %a to i64
+  %t2 = and i64 %t1, 3
+  ret i64 %t2
+
+; CHECK-LABEL: @and_bitcast_vec_to_int(
+; CHECK-NEXT:  %t1 = bitcast <2 x i32> %a to i64
+; CHECK-NEXT:  %t2 = and i64 %t1, 3
+; CHECK-NEXT:  ret i64 %t2
+}
+
+; Verify that 'or' of vector and constant is done as an integer bitwise op before the bitcast.
+
+define <2 x i32> @or_bitcast_int_to_vec(i64 %a) {
+  %t1 = bitcast i64 %a to <2 x i32>
+  %t2 = or <2 x i32> %t1, <i32 1, i32 2>
+  ret <2 x i32> %t2
+
+; CHECK-LABEL: @or_bitcast_int_to_vec(
+; CHECK-NEXT:  %t1 = bitcast i64 %a to <2 x i32>
+; CHECK-NEXT:  %t2 = or <2 x i32> %t1, <i32 1, i32 2>
+; CHECK-NEXT:  ret <2 x i32> %t2
+}
+
 ; Optimize bitcasts that are extracting low element of vector.  This happens
 ; because of SRoA.
 ; rdar://7892780
