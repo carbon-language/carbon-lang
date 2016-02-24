@@ -1129,7 +1129,10 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     // Don't allow mixing of HD with other kinds. This guarantees that
     // we have only one viable function with this signature on any
     // side of CUDA compilation .
-    if ((NewTarget == CFT_HostDevice) || (OldTarget == CFT_HostDevice))
+    // __global__ functions can't be overloaded based on attribute
+    // difference because, like HD, they also exist on both sides.
+    if ((NewTarget == CFT_HostDevice) || (OldTarget == CFT_HostDevice) ||
+        (NewTarget == CFT_Global) || (OldTarget == CFT_Global))
       return false;
 
     // Allow overloading of functions with same signature, but
