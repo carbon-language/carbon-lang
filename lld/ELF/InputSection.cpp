@@ -31,6 +31,11 @@ InputSectionBase<ELFT>::InputSectionBase(ObjectFile<ELFT> *File,
   // NB: "Discarded" section is initialized at start-up and when it
   // happens Config is still null.
   Live = Config && !Config->GcSections;
+
+  // The ELF spec states that a value of 0 means the section has
+  // no alignment constraits.
+  if (Header)
+    Align = std::max<uintX_t>(Header->sh_addralign, 1);
 }
 
 template <class ELFT> StringRef InputSectionBase<ELFT>::getSectionName() const {

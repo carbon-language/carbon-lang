@@ -42,6 +42,7 @@ public:
   InputSectionBase(ObjectFile<ELFT> *File, const Elf_Shdr *Header,
                    Kind SectionKind);
   OutputSectionBase<ELFT> *OutSec = nullptr;
+  uint32_t Align = 1;
 
   // Used for garbage collection.
   bool Live = false;
@@ -54,14 +55,6 @@ public:
   StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
   ObjectFile<ELFT> *getFile() const { return File; }
-
-  // The writer sets and uses the addresses.
-  uintX_t getAlign() {
-    // The ELF spec states that a value of 0 means the section has no alignment
-    // constraits.
-    return std::max<uintX_t>(Header->sh_addralign, 1);
-  }
-
   uintX_t getOffset(const Elf_Sym &Sym);
 
   // Translate an offset in the input section to an offset in the output
