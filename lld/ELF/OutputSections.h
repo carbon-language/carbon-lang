@@ -287,6 +287,7 @@ public:
   void sortInitFini();
   void sortCtorsDtors();
   void writeTo(uint8_t *Buf) override;
+  void finalize() override;
 
 private:
   void reassignOffsets();
