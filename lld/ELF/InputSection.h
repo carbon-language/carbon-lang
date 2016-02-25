@@ -43,10 +43,10 @@ public:
   InputSectionBase(ObjectFile<ELFT> *File, const Elf_Shdr *Header,
                    Kind SectionKind);
   OutputSectionBase<ELFT> *OutSec = nullptr;
-  uint32_t Align = 1;
+  uint32_t Align;
 
   // Used for garbage collection.
-  bool Live = false;
+  bool Live;
 
   // This pointer points to the "real" instance of this instance.
   // Usually Repl == this. However, if ICF merges two sections,
