@@ -232,12 +232,6 @@ ScopDetection::ScopDetection() : FunctionPass(ID) {
     PollyUseRuntimeAliasChecks = false;
     return;
   }
-
-  if (AllowNonAffine) {
-    DEBUG(errs() << "WARNING: We disable runtime alias checks as non affine "
-                    "accesses are enabled.\n");
-    PollyUseRuntimeAliasChecks = false;
-  }
 }
 
 template <class RR, typename... Args>

@@ -2689,6 +2689,20 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       continue;
     }
 
+    // Check if we have non-affine accesses left, if so bail out as we cannot
+    // generate a good access range yet.
+    for (auto *MA : AG)
+      if (!MA->isAffine()) {
+        invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
+        return false;
+      }
+    for (auto &ReadOnlyPair : ReadOnlyPairs)
+      for (auto *MA : ReadOnlyPair.second)
+        if (!MA->isAffine()) {
+          invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
+          return false;
+        }
+
     // Calculate minimal and maximal accesses for non read only accesses.
     MinMaxAliasGroups.emplace_back();
     MinMaxVectorPairTy &pair = MinMaxAliasGroups.back();
