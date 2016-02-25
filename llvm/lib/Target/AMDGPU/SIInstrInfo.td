@@ -1666,7 +1666,7 @@ class VOP3_C_Real_si <bits<9> op, dag outs, dag ins, string asm, string opName,
 }
 
 class VOP3_C_Real_vi <bits<10> op, dag outs, dag ins, string asm, string opName,
-                     bit HasMods = 0, bit VOP3Only = 0> :
+                      bit HasMods = 0, bit VOP3Only = 0> :
   VOP3Common <outs, ins, asm, [], HasMods, VOP3Only>,
   VOP3ce_vi <op>,
   SIMCInstr <opName#"_e64", SISubtarget.VI> {
