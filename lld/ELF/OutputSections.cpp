@@ -762,6 +762,7 @@ template <class ELFT> void OutputSection<ELFT>::finalize() {
 
 template <class ELFT>
 void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
+  assert(C->Live);
   auto *S = cast<InputSection<ELFT>>(C);
   Sections.push_back(S);
   S->OutSec = this;

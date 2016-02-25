@@ -10,6 +10,7 @@
 #include "Driver.h"
 #include "Config.h"
 #include "Error.h"
+#include "ICF.h"
 #include "InputFiles.h"
 #include "LinkerScript.h"
 #include "SymbolTable.h"
@@ -217,6 +218,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->EnableNewDtags = !Args.hasArg(OPT_disable_new_dtags);
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
   Config->GcSections = Args.hasArg(OPT_gc_sections);
+  Config->ICF = Args.hasArg(OPT_icf);
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
@@ -375,5 +377,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   Symtab.scanShlibUndefined();
   if (Config->GcSections)
     markLive<ELFT>(&Symtab);
+  if (Config->ICF)
+    doIcf<ELFT>(&Symtab);
   writeResult<ELFT>(&Symtab);
 }

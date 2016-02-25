@@ -25,7 +25,7 @@ template <class ELFT>
 InputSectionBase<ELFT>::InputSectionBase(ObjectFile<ELFT> *File,
                                          const Elf_Shdr *Header,
                                          Kind SectionKind)
-    : Header(Header), File(File), SectionKind(SectionKind) {
+    : Header(Header), File(File), SectionKind(SectionKind), Repl(this) {
   // The garbage collector sets sections' Live bits.
   // If GC is disabled, all sections are considered live by default.
   Live = !Config->GcSections;
@@ -81,7 +81,7 @@ InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) const {
   uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
   if (SymbolBody *B = File->getSymbolBody(SymIndex))
     if (auto *D = dyn_cast<DefinedRegular<ELFT>>(B->repl()))
-      return D->Section;
+      return D->Section->Repl;
   // Local symbol
   if (const Elf_Sym *Sym = File->getLocalSymbol(SymIndex))
     if (InputSectionBase<ELFT> *Sec = File->getSection(*Sym))
@@ -316,6 +316,13 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
     else
       this->relocate(Buf, BufEnd, EObj.rels(RelSec));
   }
+}
+
+template <class ELFT>
+void InputSection<ELFT>::replace(InputSection<ELFT> *Other) {
+  this->Align = std::max(this->Align, Other->Align);
+  Other->Repl = this->Repl;
+  Other->Live = false;
 }
 
 template <class ELFT>
