@@ -29,8 +29,7 @@ namespace llvm {
       bool runOnFunction(Function &F) override {
         DominatorTree *DT =
             &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-        PostDominatorTree *PDT =
-            &getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
+        PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
         Function::iterator FI = F.begin();
 
         BasicBlock *BB0 = &*FI++;
@@ -207,7 +206,7 @@ namespace llvm {
       }
       void getAnalysisUsage(AnalysisUsage &AU) const override {
         AU.addRequired<DominatorTreeWrapperPass>();
-        AU.addRequired<PostDominatorTreeWrapperPass>();
+        AU.addRequired<PostDominatorTree>();
       }
       DPass() : FunctionPass(ID) {
         initializeDPassPass(*PassRegistry::getPassRegistry());
@@ -256,5 +255,5 @@ namespace llvm {
 
 INITIALIZE_PASS_BEGIN(DPass, "dpass", "dpass", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_END(DPass, "dpass", "dpass", false, false)

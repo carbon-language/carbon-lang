@@ -1,5 +1,4 @@
 ; RUN: opt < %s -postdomtree -analyze | FileCheck %s
-; RUN: opt < %s -passes='print<postdomtree>' 2>&1 | FileCheck %s
 ; PR932
 
 define void @foo(i1 %x) {

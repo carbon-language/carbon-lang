@@ -258,7 +258,7 @@ char DivergenceAnalysis::ID = 0;
 INITIALIZE_PASS_BEGIN(DivergenceAnalysis, "divergence", "Divergence Analysis",
                       false, true)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_END(DivergenceAnalysis, "divergence", "Divergence Analysis",
                     false, true)
 
@@ -268,7 +268,7 @@ FunctionPass *llvm::createDivergenceAnalysisPass() {
 
 void DivergenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<PostDominatorTreeWrapperPass>();
+  AU.addRequired<PostDominatorTree>();
   AU.setPreservesAll();
 }
 
@@ -284,10 +284,9 @@ bool DivergenceAnalysis::runOnFunction(Function &F) {
     return false;
 
   DivergentValues.clear();
-  auto &PDT = getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
   DivergencePropagator DP(F, TTI,
                           getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
-                          PDT, DivergentValues);
+                          getAnalysis<PostDominatorTree>(), DivergentValues);
   DP.populateWithSourcesOfDivergence();
   DP.propagate();
   return false;

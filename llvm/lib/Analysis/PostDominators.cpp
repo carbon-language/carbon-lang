@@ -16,7 +16,6 @@
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GenericDomTreeConstruction.h"
 using namespace llvm;
@@ -27,38 +26,25 @@ using namespace llvm;
 //  PostDominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-char PostDominatorTreeWrapperPass::ID = 0;
-INITIALIZE_PASS(PostDominatorTreeWrapperPass, "postdomtree",
+char PostDominatorTree::ID = 0;
+INITIALIZE_PASS(PostDominatorTree, "postdomtree",
                 "Post-Dominator Tree Construction", true, true)
 
-bool PostDominatorTreeWrapperPass::runOnFunction(Function &F) {
-  DT.recalculate(F);
+bool PostDominatorTree::runOnFunction(Function &F) {
+  DT->recalculate(F);
   return false;
 }
 
-void PostDominatorTreeWrapperPass::print(raw_ostream &OS, const Module *) const {
-  DT.print(OS);
+PostDominatorTree::~PostDominatorTree() {
+  delete DT;
 }
+
+void PostDominatorTree::print(raw_ostream &OS, const Module *) const {
+  DT->print(OS);
+}
+
 
 FunctionPass* llvm::createPostDomTree() {
-  return new PostDominatorTreeWrapperPass();
+  return new PostDominatorTree();
 }
 
-char PostDominatorTreeAnalysis::PassID;
-
-PostDominatorTree PostDominatorTreeAnalysis::run(Function &F) {
-  PostDominatorTree PDT;
-  PDT.recalculate(F);
-  return PDT;
-}
-
-PostDominatorTreePrinterPass::PostDominatorTreePrinterPass(raw_ostream &OS)
-  : OS(OS) {}
-
-PreservedAnalyses
-PostDominatorTreePrinterPass::run(Function &F, FunctionAnalysisManager *AM) {
-  OS << "PostDominatorTree for function: " << F.getName() << "\n";
-  AM->getResult<PostDominatorTreeAnalysis>(F).print(OS);
-
-  return PreservedAnalyses::all();
-}
