@@ -104,7 +104,7 @@ void MachineRegionInfoPass::verifyAnalysis() const {
 void MachineRegionInfoPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
-  AU.addRequired<PostDominatorTree>();
+  AU.addRequired<PostDominatorTreeWrapperPass>();
   AU.addRequired<DominanceFrontier>();
 }
 
