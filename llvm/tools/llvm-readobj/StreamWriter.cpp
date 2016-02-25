@@ -26,13 +26,6 @@ const std::string to_string(uint64_t Value) {
   return stream.str();
 }
 
-const std::string to_hexString(const format_object_base &obj) {
-  std::string number;
-  llvm::raw_string_ostream stream(number);
-  stream << obj;
-  return stream.str();
-}
-
 void StreamWriter::printBinaryImpl(StringRef Label, StringRef Str,
                                    ArrayRef<uint8_t> Data, bool Block) {
   if (Data.size() > 16)

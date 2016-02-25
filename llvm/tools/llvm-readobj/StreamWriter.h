@@ -62,7 +62,6 @@ raw_ostream &operator<<(raw_ostream &OS, const HexNumber& Value);
 const std::string to_hexString(uint64_t Value, bool UpperCase = true);
 const std::string to_string(uint64_t Value);
 
-const std::string to_hexString(const format_object_base &obj);
 class StreamWriter {
 public:
   StreamWriter(raw_ostream &OS)
