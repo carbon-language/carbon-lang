@@ -35,16 +35,16 @@ define void @a_linear_impl_fig_1() nounwind {
 
 ; CHECK: DominanceFrontier for function: a_linear_impl_fig_1
 ; CHECK-DAG:  DomFrontier for BB %"0" is:
-; CHECK-DAG:  DomFrontier for BB %"11" is:   %"8" %"9"
+; CHECK-DAG:  DomFrontier for BB %"11" is:   %"{{[8|9]}}" %"{{[8|9]}}"
 ; CHECK-DAG:  DomFrontier for BB %"1" is:    %"1"
-; CHECK-DAG:  DomFrontier for BB %"2" is:    %"1" %"2"
-; CHECK-DAG:  DomFrontier for BB %"3" is:    %"1" %"2"
-; CHECK-DAG:  DomFrontier for BB %"13" is:   %"1" %"2"
-; CHECK-DAG:  DomFrontier for BB %"4" is:    %"1" %"4"
-; CHECK-DAG:  DomFrontier for BB %"5" is:    %"1" %"4"
-; CHECK-DAG:  DomFrontier for BB %"8" is:    %"1" %"8"
+; CHECK-DAG:  DomFrontier for BB %"2" is:    %"{{[1|2]}}" %"{{[1|2]}}"
+; CHECK-DAG:  DomFrontier for BB %"3" is:    %"{{[1|2]}}" %"{{[1|2]}}"
+; CHECK-DAG:  DomFrontier for BB %"13" is:   %"{{[1|2]}}" %"{{[1|2]}}"
+; CHECK-DAG:  DomFrontier for BB %"4" is:    %"{{[1|4]}}" %"{{[1|4]}}"
+; CHECK-DAG:  DomFrontier for BB %"5" is:    %"{{[1|4]}}" %"{{[1|4]}}"
+; CHECK-DAG:  DomFrontier for BB %"8" is:    %"{{[1|8]}}" %"{{[1|8]}}"
 ; CHECK-DAG:  DomFrontier for BB %"6" is:    %"4"
 ; CHECK-DAG:  DomFrontier for BB %"7" is:
-; CHECK-DAG:  DomFrontier for BB %"9" is:    %"1" %"8" %"9"
-; CHECK-DAG:  DomFrontier for BB %"10" is:   %"1" %"8" %"9"
-; CHECK-DAG:  DomFrontier for BB %"12" is:   %"1" %"8" %"9"
+; CHECK-DAG:  DomFrontier for BB %"9" is:    %"{{[1|8|9]}}" %"{{[1|8|9]}}"
+; CHECK-DAG:  DomFrontier for BB %"10" is:   %"{{[1|8|9]}}" %"{{[1|8|9]}}"
+; CHECK-DAG:  DomFrontier for BB %"12" is:   %"{{[1|8|9]}}" %"{{[1|8|9]}}"
