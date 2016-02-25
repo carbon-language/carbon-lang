@@ -1158,19 +1158,6 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
          Out<ELFT>::Dynamic->FiniArraySec);
 }
 
-static bool isAlpha(char C) {
-  return ('a' <= C && C <= 'z') || ('A' <= C && C <= 'Z') || C == '_';
-}
-
-static bool isAlnum(char C) { return isAlpha(C) || ('0' <= C && C <= '9'); }
-
-// Returns true if S is valid as a C language identifier.
-static bool isValidCIdentifier(StringRef S) {
-  if (S.empty() || !isAlpha(S[0]))
-    return false;
-  return std::all_of(S.begin() + 1, S.end(), isAlnum);
-}
-
 // If a section name is valid as a C identifier (which is rare because of
 // the leading '.'), linkers are expected to define __start_<secname> and
 // __stop_<secname> symbols. They are at beginning and end of the section,
