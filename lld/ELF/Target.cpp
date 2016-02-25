@@ -751,9 +751,6 @@ bool X86_64TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
 }
 
 bool X86_64TargetInfo::needsPltImpl(uint32_t Type, const SymbolBody &S) const {
-  if (needsCopyRel<ELF64LE>(Type, S))
-    return false;
-
   switch (Type) {
   default:
     return Plt_No;
@@ -1712,8 +1709,6 @@ bool MipsTargetInfo<ELFT>::refersToGotEntry(uint32_t Type) const {
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::needsPltImpl(uint32_t Type,
                                         const SymbolBody &S) const {
-  if (needsCopyRel<ELFT>(Type, S))
-    return false;
   if (Type == R_MIPS_26 && canBePreempted(&S, false))
     return true;
   return false;
