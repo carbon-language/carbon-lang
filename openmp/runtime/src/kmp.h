@@ -369,6 +369,39 @@ enum sched_type {
     kmp_nm_ord_trapezoidal            = 199,
     kmp_nm_upper                      = 200,  /**< upper bound for nomerge values */
 
+#if OMP_41_ENABLED
+    /* Support for OpenMP 4.5 monotonic and nonmonotonic schedule modifiers.
+     * Since we need to distinguish the three possible cases (no modifier, monotonic modifier,
+     * nonmonotonic modifier), we need separate bits for each modifier.
+     * The absence of monotonic does not imply nonmonotonic, especially since 4.5 says
+     * that the behaviour of the "no modifier" case is implementation defined in 4.5,
+     * but will become "nonmonotonic" in 5.0.
+     *
+     * Since we're passing a full 32 bit value, we can use a couple of high bits for these
+     * flags; out of paranoia we avoid the sign bit.
+     *
+     * These modifiers can be or-ed into non-static schedules by the compiler to pass
+     * the additional information.
+     * They will be stripped early in the processing in __kmp_dispatch_init when setting up schedules, so
+     * most of the code won't ever see schedules with these bits set.
+     */
+    kmp_sch_modifier_monotonic      = (1<<29), /**< Set if the monotonic schedule modifier was present */
+    kmp_sch_modifier_nonmonotonic   = (1<<30), /**< Set if the nonmonotonic schedule modifier was present */
+
+# define SCHEDULE_WITHOUT_MODIFIERS(s) (enum sched_type)((s) & ~ (kmp_sch_modifier_nonmonotonic | kmp_sch_modifier_monotonic))
+# define SCHEDULE_HAS_MONOTONIC(s)     (((s) & kmp_sch_modifier_monotonic)    != 0)
+# define SCHEDULE_HAS_NONMONOTONIC(s)  (((s) & kmp_sch_modifier_nonmonotonic) != 0)
+# define SCHEDULE_HAS_NO_MODIFIERS(s)  (((s) & (kmp_sch_modifier_nonmonotonic | kmp_sch_modifier_monotonic)) == 0)
+#else
+    /* By doing this we hope to avoid multiple tests on OMP_41_ENABLED. Compilers can now eliminate tests on compile time
+     * constants and dead code that results from them, so we can leave code guarded by such an if in place.
+     */
+# define SCHEDULE_WITHOUT_MODIFIERS(s) (s)
+# define SCHEDULE_HAS_MONOTONIC(s)     false
+# define SCHEDULE_HAS_NONMONOTONIC(s)  false
+# define SCHEDULE_HAS_NO_MODIFIERS(s)  true
+#endif
+
     kmp_sch_default = kmp_sch_static  /**< default scheduling algorithm */
 };
 
