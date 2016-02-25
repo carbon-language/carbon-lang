@@ -129,7 +129,7 @@ bool RegionInfoPass::runOnFunction(Function &F) {
 
   auto DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto PDT = &getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
-  auto DF = &getAnalysis<DominanceFrontierWrapperPass>().getDominanceFrontier();
+  auto DF = &getAnalysis<DominanceFrontier>();
 
   RI.recalculate(F, DT, PDT, DF);
   return false;
@@ -146,8 +146,8 @@ void RegionInfoPass::verifyAnalysis() const {
 void RegionInfoPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
+  AU.addRequired<DominanceFrontier>();
   AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addRequired<DominanceFrontierWrapperPass>();
 }
 
 void RegionInfoPass::print(raw_ostream &OS, const Module *) const {
@@ -165,8 +165,8 @@ char RegionInfoPass::ID = 0;
 INITIALIZE_PASS_BEGIN(RegionInfoPass, "regions",
                 "Detect single entry single exit regions", true, true)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominanceFrontierWrapperPass)
 INITIALIZE_PASS_END(RegionInfoPass, "regions",
                 "Detect single entry single exit regions", true, true)
 

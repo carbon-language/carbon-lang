@@ -105,7 +105,7 @@ void MachineRegionInfoPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addRequired<DominanceFrontierWrapperPass>();
+  AU.addRequired<DominanceFrontier>();
 }
 
 void MachineRegionInfoPass::print(raw_ostream &OS, const Module *) const {
