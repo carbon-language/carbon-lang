@@ -149,6 +149,7 @@ template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   std::unique_ptr<RelocationSection<ELFT>> RelaPlt;
   std::unique_ptr<StringTableSection<ELFT>> StrTab;
   std::unique_ptr<SymbolTableSection<ELFT>> SymTabSec;
+  std::unique_ptr<OutputSection<ELFT>> MipsRldMap;
 
   if (Config->GnuHash)
     GnuHashTab.reset(new GnuHashTableSection<ELFT>);
@@ -162,6 +163,16 @@ template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   if (!Config->StripAll) {
     StrTab.reset(new StringTableSection<ELFT>(".strtab", false));
     SymTabSec.reset(new SymbolTableSection<ELFT>(*Symtab, *StrTab));
+  }
+  if (Config->EMachine == EM_MIPS && !Config->Shared) {
+    // This is a MIPS specific section to hold a space within the data segment
+    // of executable file which is pointed to by the DT_MIPS_RLD_MAP entry.
+    // See "Dynamic section" in Chapter 5 in the following document:
+    // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+    MipsRldMap.reset(new OutputSection<ELFT>(".rld_map", SHT_PROGBITS,
+                                             SHF_ALLOC | SHF_WRITE));
+    MipsRldMap->setSize(sizeof(uintX_t));
+    MipsRldMap->updateAlign(sizeof(uintX_t));
   }
 
   Out<ELFT>::DynStrTab = &DynStrTab;
@@ -180,7 +191,7 @@ template <class ELFT> void elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   Out<ELFT>::StrTab = StrTab.get();
   Out<ELFT>::SymTab = SymTabSec.get();
   Out<ELFT>::Bss = nullptr;
-  Out<ELFT>::MipsRldMap = nullptr;
+  Out<ELFT>::MipsRldMap = MipsRldMap.get();
   Out<ELFT>::Opd = nullptr;
   Out<ELFT>::OpdBuf = nullptr;
   Out<ELFT>::TlsPhdr = nullptr;
@@ -1108,19 +1119,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     Add(Out<ELFT>::DynStrTab);
     if (Out<ELFT>::RelaDyn->hasRelocs())
       Add(Out<ELFT>::RelaDyn);
-
-    // This is a MIPS specific section to hold a space within the data segment
-    // of executable file which is pointed to by the DT_MIPS_RLD_MAP entry.
-    // See "Dynamic section" in Chapter 5 in the following document:
-    // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-    if (Config->EMachine == EM_MIPS && !Config->Shared) {
-      Out<ELFT>::MipsRldMap = new OutputSection<ELFT>(".rld_map", SHT_PROGBITS,
-                                                      SHF_ALLOC | SHF_WRITE);
-      Out<ELFT>::MipsRldMap->setSize(sizeof(uintX_t));
-      Out<ELFT>::MipsRldMap->updateAlign(sizeof(uintX_t));
-      OwningSections.emplace_back(Out<ELFT>::MipsRldMap);
-      Add(Out<ELFT>::MipsRldMap);
-    }
+    Add(Out<ELFT>::MipsRldMap);
   }
 
   // We always need to add rel[a].plt to output if it has entries.
@@ -1136,7 +1135,6 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     Add(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     Add(Out<ELFT>::Plt);
-
   if (Out<ELFT>::EhFrameHdr->Live)
     Add(Out<ELFT>::EhFrameHdr);
 }
