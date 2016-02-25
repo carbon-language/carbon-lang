@@ -1,4 +1,5 @@
-; RUN: llc < %s
+; RUN: llc < %s -march=x86
+; PR26652
 
 define <2 x i32> @test(<4 x i32> %a, <4 x i32> %b) {
 entry:
