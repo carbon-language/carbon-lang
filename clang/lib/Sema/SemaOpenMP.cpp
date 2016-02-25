@@ -990,21 +990,10 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             PrivateCopies.push_back(nullptr);
             continue;
           }
-          VarDecl *VD = nullptr;
-          FieldDecl *FD = nullptr;
-          ValueDecl *D;
           auto *DRE = cast<DeclRefExpr>(DE->IgnoreParens());
-          if (auto *OCE = dyn_cast<OMPCapturedExprDecl>(DRE->getDecl())) {
-            FD = cast<FieldDecl>(
-                cast<MemberExpr>(OCE->getInit()->IgnoreImpCasts())
-                    ->getMemberDecl());
-            D = FD;
-          } else {
-            VD = cast<VarDecl>(DRE->getDecl());
-            D = VD;
-          }
-          QualType Type = D->getType().getNonReferenceType();
-          auto DVar = DSAStack->getTopDSA(D, false);
+          VarDecl *VD = cast<VarDecl>(DRE->getDecl());
+          QualType Type = VD->getType().getNonReferenceType();
+          auto DVar = DSAStack->getTopDSA(VD, false);
           if (DVar.CKind == OMPC_lastprivate) {
             // Generate helper private variable and initialize it with the
             // default value. The address of the original variable is replaced
@@ -1013,7 +1002,7 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             // region uses original variable for proper diagnostics.
             auto *VDPrivate = buildVarDecl(
                 *this, DE->getExprLoc(), Type.getUnqualifiedType(),
-                D->getName(), D->hasAttrs() ? &D->getAttrs() : nullptr);
+                VD->getName(), VD->hasAttrs() ? &VD->getAttrs() : nullptr);
             ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto=*/false);
             if (VDPrivate->isInvalidDecl())
               continue;
@@ -1786,10 +1775,14 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
       // Required for proper codegen of combined directives.
       // TODO: add processing for other clauses.
       if (auto *C = OMPClauseWithPreInit::get(Clause)) {
-        if (auto *S = cast_or_null<DeclStmt>(C->getPreInitStmt())) {
-          for (auto *D : S->decls())
+        if (auto *DS = cast_or_null<DeclStmt>(C->getPreInitStmt())) {
+          for (auto *D : DS->decls())
             MarkVariableReferenced(D->getLocation(), cast<VarDecl>(D));
         }
+      }
+      if (auto *C = OMPClauseWithPostUpdate::get(Clause)) {
+        if (auto *E = C->getPostUpdateExpr())
+          MarkDeclarationsReferencedInExpr(E);
       }
     }
     if (Clause->getClauseKind() == OMPC_schedule)
@@ -7289,8 +7282,10 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     auto ElemType = Context.getBaseElementType(Type).getNonReferenceType();
 
     // If an implicit firstprivate variable found it was checked already.
+    DSAStackTy::DSAVarData TopDVar;
     if (!IsImplicitClause) {
       DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(D, false);
+      TopDVar = DVar;
       bool IsConstant = ElemType.isConstant(Context);
       // OpenMP [2.4.13, Data-sharing Attribute Clauses]
       //  A list item that specifies a given variable may not appear in more
@@ -7485,8 +7480,13 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
         RefExpr->getExprLoc());
     DeclRefExpr *Ref = nullptr;
     if (!VD) {
-      Ref = buildCapture(*this, D, RefExpr);
-      ExprCaptures.push_back(Ref->getDecl());
+      if (TopDVar.CKind == OMPC_lastprivate)
+        Ref = TopDVar.PrivateCopy;
+      else {
+        Ref = buildCapture(*this, D, RefExpr);
+        if (!IsOpenMPCapturedDecl(D))
+          ExprCaptures.push_back(Ref->getDecl());
+      }
     }
     DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_firstprivate, Ref);
     Vars.push_back(VD ? RefExpr->IgnoreParens() : Ref);
@@ -7516,6 +7516,8 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
   SmallVector<Expr *, 8> SrcExprs;
   SmallVector<Expr *, 8> DstExprs;
   SmallVector<Expr *, 8> AssignmentOps;
+  SmallVector<Decl *, 4> ExprCaptures;
+  SmallVector<Expr *, 4> ExprPostUpdates;
   for (auto &RefExpr : VarList) {
     assert(RefExpr && "NULL expr in OpenMP lastprivate clause.");
     auto Res = getPrivateItem(*this, RefExpr);
@@ -7620,8 +7622,28 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
       continue;
 
     DeclRefExpr *Ref = nullptr;
-    if (!VD)
-      Ref = buildCapture(*this, D, RefExpr);
+    if (!VD) {
+      if (TopDVar.CKind == OMPC_firstprivate)
+        Ref = TopDVar.PrivateCopy;
+      else {
+        Ref = buildCapture(*this, D, RefExpr);
+        if (!IsOpenMPCapturedDecl(D))
+          ExprCaptures.push_back(Ref->getDecl());
+      }
+      if (TopDVar.CKind == OMPC_firstprivate ||
+          (!IsOpenMPCapturedDecl(D) &&
+           !Ref->getDecl()->getType()->isReferenceType())) {
+        ExprResult RefRes = DefaultLvalueConversion(Ref);
+        if (!RefRes.isUsable())
+          continue;
+        ExprResult PostUpdateRes =
+            BuildBinOp(DSAStack->getCurScope(), ELoc, BO_Assign,
+                       RefExpr->IgnoreParenLValueCasts(), RefRes.get());
+        if (!PostUpdateRes.isUsable())
+          continue;
+        ExprPostUpdates.push_back(PostUpdateRes.get());
+      }
+    }
     if (TopDVar.CKind != OMPC_firstprivate)
       DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_lastprivate, Ref);
     Vars.push_back(VD ? RefExpr->IgnoreParens() : Ref);
@@ -7632,9 +7654,27 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
 
   if (Vars.empty())
     return nullptr;
+  Stmt *PreInit = nullptr;
+  if (!ExprCaptures.empty()) {
+    PreInit = new (Context)
+        DeclStmt(DeclGroupRef::Create(Context, ExprCaptures.begin(),
+                                      ExprCaptures.size()),
+                 SourceLocation(), SourceLocation());
+  }
+  Expr *PostUpdate = nullptr;
+  if (!ExprPostUpdates.empty()) {
+    for (auto *E : ExprPostUpdates) {
+      ExprResult PostUpdateRes =
+          PostUpdate
+              ? CreateBuiltinBinOp(SourceLocation(), BO_Comma, PostUpdate, E)
+              : E;
+      PostUpdate = PostUpdateRes.get();
+    }
+  }
 
   return OMPLastprivateClause::Create(Context, StartLoc, LParenLoc, EndLoc,
-                                      Vars, SrcExprs, DstExprs, AssignmentOps);
+                                      Vars, SrcExprs, DstExprs, AssignmentOps,
+                                      PreInit, PostUpdate);
 }
 
 OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
