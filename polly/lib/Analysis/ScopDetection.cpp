@@ -224,14 +224,9 @@ void DiagnosticScopFound::print(DiagnosticPrinter &DP) const {
 // ScopDetection.
 
 ScopDetection::ScopDetection() : FunctionPass(ID) {
-  if (!PollyUseRuntimeAliasChecks)
-    return;
-
   // Disable runtime alias checks if we ignore aliasing all together.
-  if (IgnoreAliasing) {
+  if (IgnoreAliasing)
     PollyUseRuntimeAliasChecks = false;
-    return;
-  }
 }
 
 template <class RR, typename... Args>
