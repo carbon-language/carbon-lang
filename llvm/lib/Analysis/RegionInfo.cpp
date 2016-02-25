@@ -15,7 +15,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfoImpl.h"
 #include "llvm/Analysis/RegionIterator.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -181,36 +180,3 @@ namespace llvm {
   }
 }
 
-//===----------------------------------------------------------------------===//
-// RegionInfoAnalysis implementation
-//
-
-char RegionInfoAnalysis::PassID;
-
-RegionInfo RegionInfoAnalysis::run(Function &F, AnalysisManager<Function> *AM) {
-  RegionInfo RI;
-  auto *DT = &AM->getResult<DominatorTreeAnalysis>(F);
-  auto *PDT = &AM->getResult<PostDominatorTreeAnalysis>(F);
-  auto *DF = &AM->getResult<DominanceFrontierAnalysis>(F);
-
-  RI.recalculate(F, DT, PDT, DF);
-  return RI;
-}
-
-RegionInfoPrinterPass::RegionInfoPrinterPass(raw_ostream &OS)
-  : OS(OS) {}
-
-PreservedAnalyses
-RegionInfoPrinterPass::run(Function &F, FunctionAnalysisManager *AM) {
-  OS << "Region Tree for function: " << F.getName() << "\n";
-  AM->getResult<RegionInfoAnalysis>(F).print(OS);
-
-  return PreservedAnalyses::all();
-}
-
-PreservedAnalyses RegionInfoVerifierPass::run(Function &F,
-                                              AnalysisManager<Function> *AM) {
-  AM->getResult<RegionInfoAnalysis>(F).verifyAnalysis();
-
-  return PreservedAnalyses::all();
-}
