@@ -1423,6 +1423,20 @@ static typename ELFFile<ELFT>::uintX_t getEntryAddr() {
   return 0;
 }
 
+template <class ELFT> static uint8_t getELFEncoding() {
+  if (ELFT::TargetEndianness == llvm::support::little)
+    return ELFDATA2LSB;
+  return ELFDATA2MSB;
+}
+
+static uint16_t getELFType() {
+  if (Config->Shared)
+    return ET_DYN;
+  if (Config->Relocatable)
+    return ET_REL;
+  return ET_EXEC;
+}
+
 // This function is called after we have assigned address and size
 // to each section. This function fixes some predefined absolute
 // symbol values that depend on section address and size.
@@ -1444,24 +1458,15 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   memcpy(Buf, "\177ELF", 4);
 
+  auto &FirstObj = cast<ELFFileBase<ELFT>>(*Config->FirstElf);
+
   // Write the ELF header.
   auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
   EHdr->e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
-  EHdr->e_ident[EI_DATA] = ELFT::TargetEndianness == llvm::support::little
-                               ? ELFDATA2LSB
-                               : ELFDATA2MSB;
+  EHdr->e_ident[EI_DATA] = getELFEncoding<ELFT>();
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
-
-  auto &FirstObj = cast<ELFFileBase<ELFT>>(*Config->FirstElf);
   EHdr->e_ident[EI_OSABI] = FirstObj.getOSABI();
-
-  if (Config->Shared)
-    EHdr->e_type = ET_DYN;
-  else if (Config->Relocatable)
-    EHdr->e_type = ET_REL;
-  else
-    EHdr->e_type = ET_EXEC;
-
+  EHdr->e_type = getELFType();
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = getEntryAddr<ELFT>();
