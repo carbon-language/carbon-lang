@@ -1060,6 +1060,8 @@ extern int __kmp_place_num_threads_per_core;
 
 #define KMP_MAX_ACTIVE_LEVELS_LIMIT INT_MAX
 
+#define KMP_MAX_TASK_PRIORITY_LIMIT INT_MAX
+
 /* Minimum number of threads before switch to TLS gtid (experimentally determined) */
 /* josh TODO: what about OS X* tuning? */
 #if   KMP_ARCH_X86 || KMP_ARCH_X86_64
@@ -1998,6 +2000,9 @@ typedef enum kmp_tasking_mode {
 
 extern kmp_tasking_mode_t __kmp_tasking_mode;         /* determines how/when to execute tasks */
 extern kmp_int32 __kmp_task_stealing_constraint;
+#if OMP_41_ENABLED
+    extern kmp_int32 __kmp_max_task_priority; // Set via OMP_MAX_TASK_PRIORITY if specified, defaults to 0 otherwise
+#endif
 
 /* NOTE: kmp_taskdata_t and kmp_task_t structures allocated in single block with taskdata first */
 #define KMP_TASK_TO_TASKDATA(task)     (((kmp_taskdata_t *) task) - 1)
@@ -2016,6 +2021,18 @@ extern kmp_int32 __kmp_task_stealing_constraint;
  */
 typedef kmp_int32 (* kmp_routine_entry_t)( kmp_int32, void * );
 
+#if OMP_40_ENABLED || OMP_41_ENABLED
+typedef union kmp_cmplrdata {
+#if OMP_41_ENABLED
+    kmp_int32           priority;           /**< priority specified by user for the task */
+#endif // OMP_41_ENABLED
+#if OMP_40_ENABLED
+    kmp_routine_entry_t destructors;        /* pointer to function to invoke deconstructors of firstprivate C++ objects */
+#endif // OMP_40_ENABLED
+    /* future data */
+} kmp_cmplrdata_t;
+#endif
+
 /*  sizeof_kmp_task_t passed as arg to kmpc_omp_task call  */
 /*!
  */
@@ -2023,9 +2040,11 @@ typedef struct kmp_task {                   /* GEH: Shouldn't this be aligned so
     void *              shareds;            /**< pointer to block of pointers to shared vars   */
     kmp_routine_entry_t routine;            /**< pointer to routine to call for executing task */
     kmp_int32           part_id;            /**< part id for the task                          */
-#if OMP_40_ENABLED
-    kmp_routine_entry_t destructors;        /* pointer to function to invoke deconstructors of firstprivate C++ objects */
-#endif // OMP_40_ENABLED
+#if OMP_40_ENABLED || OMP_41_ENABLED
+    kmp_cmplrdata_t data1;                  /* Two known optional additions: destructors and priority */
+    kmp_cmplrdata_t data2;                  /* Process destructors first, priority second */
+    /* future data */
+#endif
     /*  private vars  */
 } kmp_task_t;
 
@@ -2124,7 +2143,8 @@ typedef struct kmp_tasking_flags {          /* Total struct must be exactly 32 b
     unsigned destructors_thunk : 1;         /* set if the compiler creates a thunk to invoke destructors from the runtime */
 #if OMP_41_ENABLED
     unsigned proxy       : 1;               /* task is a proxy task (it will be executed outside the context of the RTL) */
-    unsigned reserved    : 11;              /* reserved for compiler use */
+    unsigned priority_specified :1;         /* set if the compiler provides priority setting for the task */
+    unsigned reserved    : 10;              /* reserved for compiler use */
 #else
     unsigned reserved    : 12;              /* reserved for compiler use */
 #endif
