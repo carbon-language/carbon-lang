@@ -27,9 +27,10 @@ const std::string to_string(uint64_t Value) {
 }
 
 const std::string to_hexString(const format_object_base &obj) {
-  char number[20] = {'0'};
-  obj.print(number, 20);
-  return std::string(number);
+  std::string number;
+  llvm::raw_string_ostream stream(number);
+  stream << obj;
+  return stream.str();
 }
 
 void StreamWriter::printBinaryImpl(StringRef Label, StringRef Str,
