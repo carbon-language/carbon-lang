@@ -349,8 +349,7 @@ template <class ELFT> void ICF<ELFT>::run(SymbolTable<ELFT> *Symtab) {
     if (Id == NextId)
       break;
   }
-  if (Config->Verbose)
-    llvm::outs() << "ICF needed " << Cnt << " iterations.\n";
+  log("ICF needed " + Twine(Cnt) + " iterations.");
 
   // Merge sections in the same group.
   for (auto I = V.begin(), E = V.end(); I != E;) {
@@ -360,12 +359,10 @@ template <class ELFT> void ICF<ELFT>::run(SymbolTable<ELFT> *Symtab) {
     });
     if (I == Bound)
       continue;
-    if (Config->Verbose)
-      llvm::outs() << "Selected " << Head->getSectionName() << "\n";
+    log("Selected " + Head->getSectionName());
     while (I != Bound) {
       InputSection<ELFT> *S = *I++;
-      if (Config->Verbose)
-        llvm::outs() << "  Removed " << S->getSectionName() << "\n";
+      log("  Removed " + S->getSectionName());
       Head->replace(S);
     }
   }
