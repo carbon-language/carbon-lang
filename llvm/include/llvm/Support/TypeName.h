@@ -26,7 +26,7 @@ namespace llvm {
 /// inner substring of a larger string.
 template <typename DesiredTypeName>
 inline StringRef getTypeName() {
-#if defined(__clang__) || defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if defined(__clang__) || defined(__GNUC__)
   StringRef Name = __PRETTY_FUNCTION__;
 
   StringRef Key = "DesiredTypeName = ";
