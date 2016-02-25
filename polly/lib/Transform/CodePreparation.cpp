@@ -70,7 +70,7 @@ void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LoopInfoWrapperPass>();
   AU.addPreserved<RegionInfoPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominanceFrontierWrapperPass>();
+  AU.addPreserved<DominanceFrontier>();
 }
 
 bool CodePreparation::runOnFunction(Function &F) {
