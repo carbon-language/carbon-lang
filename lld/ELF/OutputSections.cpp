@@ -1517,7 +1517,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     // https://sourceware.org/ml/binutils/2008-07/txt00000.txt
     if (Config->EMachine == EM_MIPS && Body->isInPlt() &&
         Body->NeedsCopyOrPltAddr)
-      ESym->st_other |= ELF::STO_MIPS_PLT;
+      ESym->st_other |= STO_MIPS_PLT;
     ++ESym;
   }
 }
