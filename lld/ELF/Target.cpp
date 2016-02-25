@@ -303,6 +303,8 @@ bool TargetInfo::refersToGotEntry(uint32_t Type) const { return false; }
 template <class ELFT>
 TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
                                          const SymbolBody &S) const {
+  if (isGnuIFunc<ELFT>(S))
+    return Plt_Explicit;
   if (needsPltImpl(Type, S))
     return Plt_Explicit;
 
@@ -459,10 +461,7 @@ bool X86TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
 }
 
 bool X86TargetInfo::needsPltImpl(uint32_t Type, const SymbolBody &S) const {
-  if (isGnuIFunc<ELF32LE>(S) ||
-      (Type == R_386_PLT32 && canBePreempted(&S, true)))
-    return true;
-  return false;
+  return Type == R_386_PLT32 && canBePreempted(&S, true);
 }
 
 bool X86TargetInfo::isGotRelative(uint32_t Type) const {
@@ -754,8 +753,6 @@ bool X86_64TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
 bool X86_64TargetInfo::needsPltImpl(uint32_t Type, const SymbolBody &S) const {
   if (needsCopyRel<ELF64LE>(Type, S))
     return false;
-  if (isGnuIFunc<ELF64LE>(S))
-    return true;
 
   switch (Type) {
   default:
@@ -1337,8 +1334,6 @@ bool AArch64TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
 }
 
 bool AArch64TargetInfo::needsPltImpl(uint32_t Type, const SymbolBody &S) const {
-  if (isGnuIFunc<ELF64LE>(S))
-    return true;
   switch (Type) {
   default:
     return false;
