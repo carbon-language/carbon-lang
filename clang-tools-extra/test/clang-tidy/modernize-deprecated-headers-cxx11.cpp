@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s modernize-deprecated-headers %t -- -- -std=c++11 -isystem %S/Inputs/Headers
+// RUN: %check_clang_tidy %s modernize-deprecated-headers %t -- -extra-arg-before=-isystem%S/Inputs/modernize-deprecated-headers -- -std=c++11 -v
 // REQUIRES: target-headers
 
 #include <assert.h>
