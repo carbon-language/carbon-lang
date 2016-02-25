@@ -137,6 +137,46 @@
 ; CHECK-NESTED-MP-CG-FP: Finished pass manager
 ; CHECK-NESTED-MP-CG-FP: Finished pass manager
 
+; RUN: opt -disable-output -debug-pass-manager \
+; RUN:     -passes='no-op-loop,no-op-loop' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-TWO-NOOP-LOOP
+; CHECK-TWO-NOOP-LOOP: Starting pass manager
+; CHECK-TWO-NOOP-LOOP: Running pass: ModuleToFunctionPassAdaptor
+; CHECK-TWO-NOOP-LOOP: Starting pass manager
+; CHECK-TWO-NOOP-LOOP: Running pass: FunctionToLoopPassAdaptor
+; CHECK-TWO-NOOP-LOOP: Starting pass manager
+; CHECK-TWO-NOOP-LOOP: Running pass: NoOpLoopPass
+; CHECK-TWO-NOOP-LOOP: Running pass: NoOpLoopPass
+; CHECK-TWO-NOOP-LOOP: Finished pass manager
+; CHECK-TWO-NOOP-LOOP: Finished pass manager
+; CHECK-TWO-NOOP-LOOP: Finished pass manager
+
+; RUN: opt -disable-output -debug-pass-manager \
+; RUN:     -passes='module(function(loop(no-op-loop)))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NESTED-FP-LP
+; RUN: opt -disable-output -debug-pass-manager \
+; RUN:     -passes='function(loop(no-op-loop))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NESTED-FP-LP
+; RUN: opt -disable-output -debug-pass-manager \
+; RUN:     -passes='loop(no-op-loop)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NESTED-FP-LP
+; RUN: opt -disable-output -debug-pass-manager \
+; RUN:     -passes='no-op-loop' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NESTED-FP-LP
+; CHECK-NESTED-FP-LP: Starting pass manager
+; CHECK-NESTED-FP-LP: Running pass: ModuleToFunctionPassAdaptor
+; CHECK-NESTED-FP-LP: Starting pass manager
+; CHECK-NESTED-FP-LP: Running pass: FunctionToLoopPassAdaptor
+; CHECK-NESTED-FP-LP: Starting pass manager
+; CHECK-NESTED-FP-LP: Running pass: NoOpLoopPass
+; CHECK-NESTED-FP-LP: Finished pass manager
+; CHECK-NESTED-FP-LP: Finished pass manager
+; CHECK-NESTED-FP-LP: Finished pass manager
+
+
 define void @f() {
- ret void
+entry:
+ br label %loop
+loop:
+ br label %loop
 }
