@@ -1492,7 +1492,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
     *HBuf++ = P.H;
 
   // Write the section header table. Note that the first table entry is null.
-  auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
+  auto *SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   for (OutputSectionBase<ELFT> *Sec : getSections())
     Sec->writeHeaderTo(++SHdrs);
 }
