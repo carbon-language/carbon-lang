@@ -60,6 +60,7 @@ private:
   void addReservedSymbols();
   bool createSections();
   void addPredefinedSections();
+  bool needsGot();
 
   template <bool isRela>
   void scanRelocs(InputSectionBase<ELFT> &C,
@@ -1073,6 +1074,20 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   return true;
 }
 
+template <class ELFT> bool Writer<ELFT>::needsGot() {
+  if (!Out<ELFT>::Got->empty())
+    return true;
+
+  // We add the .got section to the result for dynamic MIPS target because
+  // its address and properties are mentioned in the .dynamic section.
+  if (Config->EMachine == EM_MIPS && isOutputDynamic())
+    return true;
+
+  // If we have a relocation that is relative to GOT (such as GOTOFFREL),
+  // we need to emit a GOT even if it's empty.
+  return HasGotOffRel;
+}
+
 // This function add Out<ELFT>::* sections to OutputSections.
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   auto Add = [&](OutputSectionBase<ELFT> *C) {
@@ -1115,17 +1130,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     Out<ELFT>::RelaPlt->Static = !isOutputDynamic();
   }
 
-  bool needsGot = !Out<ELFT>::Got->empty();
-  // We add the .got section to the result for dynamic MIPS target because
-  // its address and properties are mentioned in the .dynamic section.
-  if (Config->EMachine == EM_MIPS)
-    needsGot |= isOutputDynamic();
-  // If we have a relocation that is relative to GOT (such as GOTOFFREL),
-  // we need to emit a GOT even if it's empty.
-  if (HasGotOffRel)
-    needsGot = true;
-
-  if (needsGot)
+  if (needsGot())
     Add(Out<ELFT>::Got);
   if (Out<ELFT>::GotPlt && !Out<ELFT>::GotPlt->empty())
     Add(Out<ELFT>::GotPlt);
