@@ -1739,16 +1739,19 @@ static OMPCapturedExprDecl *buildCaptureDecl(Sema &S, IdentifierInfo *Id,
   return CED;
 }
 
-static DeclRefExpr *buildCapture(Sema &S, IdentifierInfo *Id,
-                                 Expr *CaptureExpr) {
-  auto *CD = buildCaptureDecl(S, Id, CaptureExpr);
+static DeclRefExpr *buildCapture(Sema &S, ValueDecl *D, Expr *CaptureExpr) {
+  OMPCapturedExprDecl *CD;
+  if (auto *VD = S.IsOpenMPCapturedDecl(D))
+    CD = cast<OMPCapturedExprDecl>(VD);
+  else
+    CD = buildCaptureDecl(S, D->getIdentifier(), CaptureExpr);
   return buildDeclRefExpr(S, CD, CD->getType().getNonReferenceType(),
                           SourceLocation());
 }
 
-static DeclRefExpr *buildCapture(Sema &S, StringRef Name, Expr *CaptureExpr) {
-  auto *CD =
-      buildCaptureDecl(S, &S.getASTContext().Idents.get(Name), CaptureExpr);
+static DeclRefExpr *buildCapture(Sema &S, Expr *CaptureExpr) {
+  auto *CD = buildCaptureDecl(
+      S, &S.getASTContext().Idents.get(".capture_expr."), CaptureExpr);
   return buildDeclRefExpr(S, CD, CD->getType().getNonReferenceType(),
                           SourceLocation());
 }
@@ -6841,7 +6844,7 @@ OMPClause *Sema::ActOnOpenMPScheduleClause(
           return nullptr;
         }
       } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
-        ValExpr = buildCapture(*this, ".chunk.", ValExpr);
+        ValExpr = buildCapture(*this, ValExpr);
         Decl *D = cast<DeclRefExpr>(ValExpr)->getDecl();
         HelperValStmt =
             new (Context) DeclStmt(DeclGroupRef::Create(Context, &D,
@@ -7205,7 +7208,7 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
 
     DeclRefExpr *Ref = nullptr;
     if (!VD)
-      Ref = buildCapture(*this, D->getIdentifier(), RefExpr);
+      Ref = buildCapture(*this, D, RefExpr);
     DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_private, Ref);
     Vars.push_back(VD ? RefExpr->IgnoreParens() : Ref);
     PrivateCopies.push_back(VDPrivateRefExpr);
@@ -7482,7 +7485,7 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
         RefExpr->getExprLoc());
     DeclRefExpr *Ref = nullptr;
     if (!VD) {
-      Ref = buildCapture(*this, D->getIdentifier(), RefExpr);
+      Ref = buildCapture(*this, D, RefExpr);
       ExprCaptures.push_back(Ref->getDecl());
     }
     DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_firstprivate, Ref);
@@ -7618,7 +7621,7 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
 
     DeclRefExpr *Ref = nullptr;
     if (!VD)
-      Ref = buildCapture(*this, D->getIdentifier(), RefExpr);
+      Ref = buildCapture(*this, D, RefExpr);
     if (TopDVar.CKind != OMPC_firstprivate)
       DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_lastprivate, Ref);
     Vars.push_back(VD ? RefExpr->IgnoreParens() : Ref);
@@ -7640,36 +7643,18 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
                                          SourceLocation EndLoc) {
   SmallVector<Expr *, 8> Vars;
   for (auto &RefExpr : VarList) {
-    assert(RefExpr && "NULL expr in OpenMP shared clause.");
-    if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
+    assert(RefExpr && "NULL expr in OpenMP lastprivate clause.");
+    auto Res = getPrivateItem(*this, RefExpr);
+    if (Res.second) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
-      continue;
     }
+    ValueDecl *D = Res.first;
+    if (!D)
+      continue;
 
     SourceLocation ELoc = RefExpr->getExprLoc();
-    // OpenMP [2.1, C/C++]
-    //  A list item is a variable name.
-    // OpenMP  [2.14.3.2, Restrictions, p.1]
-    //  A variable that is part of another variable (as an array or structure
-    //  element) cannot appear in a shared unless it is a static data member
-    //  of a C++ class.
-    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(RefExpr);
-    if (!DE || !isa<VarDecl>(DE->getDecl())) {
-      Diag(ELoc, diag::err_omp_expected_var_name_member_expr)
-          << 0 << RefExpr->getSourceRange();
-      continue;
-    }
-    Decl *D = DE->getDecl();
-    VarDecl *VD = cast<VarDecl>(D);
-
-    QualType Type = VD->getType();
-    if (Type->isDependentType() || Type->isInstantiationDependentType()) {
-      // It will be analyzed later.
-      Vars.push_back(DE);
-      continue;
-    }
-
+    auto *VD = dyn_cast<VarDecl>(D);
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct]
     //  Variables with the predetermined data-sharing attributes may not be
@@ -7677,17 +7662,20 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
     //  listed below. For these exceptions only, listing a predetermined
     //  variable in a data-sharing attribute clause is allowed and overrides
     //  the variable's predetermined data-sharing attributes.
-    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD, false);
+    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(D, false);
     if (DVar.CKind != OMPC_unknown && DVar.CKind != OMPC_shared &&
         DVar.RefExpr) {
       Diag(ELoc, diag::err_omp_wrong_dsa) << getOpenMPClauseName(DVar.CKind)
                                           << getOpenMPClauseName(OMPC_shared);
-      ReportOriginalDSA(*this, DSAStack, VD, DVar);
+      ReportOriginalDSA(*this, DSAStack, D, DVar);
       continue;
     }
 
-    DSAStack->addDSA(VD, DE, OMPC_shared);
-    Vars.push_back(DE);
+    DeclRefExpr *Ref = nullptr;
+    if (!VD)
+      Ref = buildCapture(*this, D, RefExpr);
+    DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_shared, Ref);
+    Vars.push_back(VD ? RefExpr->IgnoreParens() : Ref);
   }
 
   if (Vars.empty())
@@ -9627,7 +9615,7 @@ OMPClause *Sema::ActOnOpenMPDistScheduleClause(
           return nullptr;
         }
       } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
-        ValExpr = buildCapture(*this, ".chunk.", ValExpr);
+        ValExpr = buildCapture(*this, ValExpr);
         Decl *D = cast<DeclRefExpr>(ValExpr)->getDecl();
         HelperValStmt =
             new (Context) DeclStmt(DeclGroupRef::Create(Context, &D,
