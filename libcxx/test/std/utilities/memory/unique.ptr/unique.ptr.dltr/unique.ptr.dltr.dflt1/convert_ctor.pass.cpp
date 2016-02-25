@@ -23,5 +23,5 @@
 int main()
 {
     std::default_delete<int[]> d1;
-    std::default_delete<const int[]> d2;
+    std::default_delete<const int[]> d2 = d1;
 }
