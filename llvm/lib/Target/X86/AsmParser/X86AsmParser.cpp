@@ -916,7 +916,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
   } else if (!getSTI().getFeatureBits()[X86::FeatureAVX512]) {
     if (X86II::is32ExtendedReg(RegNo))
       return Error(StartLoc, "register %"
-                   + Tok.getString() + " is only available in with AVX512",
+                   + Tok.getString() + " is only available with AVX512",
                    SMRange(StartLoc, EndLoc));
   }
 
