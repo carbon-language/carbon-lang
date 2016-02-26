@@ -92,6 +92,7 @@ void Fuzzer::DeathCallback() {
   }
   WriteUnitToFileWithPrefix(
       {CurrentUnitData, CurrentUnitData + CurrentUnitSize}, "crash-");
+  PrintFinalStats();
 }
 
 void Fuzzer::StaticAlarmCallback() {
@@ -124,6 +125,7 @@ void Fuzzer::AlarmCallback() {
     if (__sanitizer_print_stack_trace)
       __sanitizer_print_stack_trace();
     Printf("SUMMARY: libFuzzer: timeout\n");
+    PrintFinalStats();
     if (Options.AbortOnTimeout)
       abort();
     exit(Options.TimeoutExitCode);
@@ -131,9 +133,7 @@ void Fuzzer::AlarmCallback() {
 }
 
 void Fuzzer::PrintStats(const char *Where, const char *End) {
-  size_t Seconds = secondsSinceProcessStartUp();
-  size_t ExecPerSec = (Seconds ? TotalNumberOfRuns / Seconds : 0);
-
+  size_t ExecPerSec = execPerSec();
   if (Options.OutputCSV) {
     static bool csvHeaderPrinted = false;
     if (!csvHeaderPrinted) {
@@ -161,6 +161,16 @@ void Fuzzer::PrintStats(const char *Where, const char *End) {
   if (TotalNumberOfExecutedTraceBasedMutations)
     Printf(" tbm: %zd", TotalNumberOfExecutedTraceBasedMutations);
   Printf("%s", End);
+}
+
+void Fuzzer::PrintFinalStats() {
+  if (!Options.PrintFinalStats) return;
+  size_t ExecPerSec = execPerSec();
+  Printf("stat::number_of_executed_units: %zd\n", TotalNumberOfRuns);
+  Printf("stat::average_exec_per_sec:     %zd\n", ExecPerSec);
+  Printf("stat::new_units_added:          %zd\n", NumberOfNewUnitsAdded);
+  Printf("stat::slowest_unit_time_sec:    %zd\n", TimeOfLongestUnitInSeconds);
+  Printf("stat::peak_rss_mb:              %zd\n", GetPeakRSSMb());
 }
 
 void Fuzzer::RereadOutputCorpus() {
@@ -382,6 +392,7 @@ void Fuzzer::ReportNewCoverage(const Unit &U) {
   MD.RecordSuccessfulMutationSequence();
   PrintStatusForNewUnit(U);
   WriteToOutputCorpus(U);
+  NumberOfNewUnitsAdded++;
   if (Options.ExitOnFirst)
     exit(0);
 }

@@ -85,6 +85,7 @@ std::string Hash(const Unit &U);
 void SetTimer(int Seconds);
 std::string Base64(const Unit &U);
 int ExecuteCommand(const std::string &Command);
+size_t GetPeakRSSMb();
 
 // Private copy of SHA1 implementation.
 static const int kSHA1NumBytes = 20;
@@ -295,6 +296,7 @@ public:
     bool PrintNEW = true; // Print a status line when new units are found;
     bool OutputCSV = false;
     bool PrintNewCovPcs = false;
+    bool PrintFinalStats = false;
   };
   Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) {
@@ -321,6 +323,10 @@ public:
     return duration_cast<seconds>(system_clock::now() - ProcessStartTime)
         .count();
   }
+  size_t execPerSec() {
+    size_t Seconds = secondsSinceProcessStartUp();
+    return Seconds ? TotalNumberOfRuns / Seconds : 0;
+  }
 
   size_t getTotalNumberOfRuns() { return TotalNumberOfRuns; }
 
@@ -331,6 +337,7 @@ public:
   // Merge Corpora[1:] into Corpora[0].
   void Merge(const std::vector<std::string> &Corpora);
   MutationDispatcher &GetMD() { return MD; }
+  void PrintFinalStats();
 
 private:
   void AlarmCallback();
@@ -372,6 +379,7 @@ private:
 
   size_t TotalNumberOfRuns = 0;
   size_t TotalNumberOfExecutedTraceBasedMutations = 0;
+  size_t NumberOfNewUnitsAdded = 0;
 
   std::vector<Unit> Corpus;
   std::unordered_set<std::string> UnitHashesAddedToCorpus;
