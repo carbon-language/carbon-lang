@@ -43,5 +43,12 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   return Symbol;
 }
 
+
+void BinaryContext::buildOffsetToDWARFCompileUnitMap() {
+  for (const auto &CU : DwCtx->compile_units()) {
+    OffsetToDwarfCU[CU->getOffset()] = CU.get();
+  }
+}
+
 } // namespace bolt
 } // namespace llvm

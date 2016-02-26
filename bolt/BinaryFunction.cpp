@@ -13,7 +13,9 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "DebugLineTableRowRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -38,7 +40,34 @@ namespace opts {
 static cl::opt<bool>
 PrintClusters("print-clusters", cl::desc("print clusters"), cl::Optional);
 
+static cl::opt<bool>
+PrintDebugInfo("print-debug-info",
+               cl::desc("print debug info when printing functions"),
+               cl::Hidden);
+
 } // namespace opts
+
+namespace {
+
+// Finds which DWARF compile unit owns an address in the executable by
+// querying .debug_aranges.
+DWARFCompileUnit *FindCompileUnitForAddress(uint64_t Address,
+                                            const BinaryContext &BC) {
+  auto DebugAranges = BC.DwCtx->getDebugAranges();
+  if (!DebugAranges)
+    return nullptr;
+
+  uint32_t CompileUnitIndex = DebugAranges->findAddress(Address);
+
+  auto It = BC.OffsetToDwarfCU.find(CompileUnitIndex);
+  if (It == BC.OffsetToDwarfCU.end()) {
+    return nullptr;
+  } else {
+    return It->second;
+  }
+}
+
+} // namespace
 
 uint64_t BinaryFunction::Count = 0;
 
@@ -135,6 +164,15 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     }
   };
 
+  // Used in printInstruction below to print debug line information.
+  DWARFCompileUnit *Unit = nullptr;
+  const DWARFDebugLine::LineTable *LineTable = nullptr;
+
+  if (opts::PrintDebugInfo) {
+    Unit = FindCompileUnitForAddress(getAddress(), BC);
+    LineTable = Unit ? BC.DwCtx->getLineTableForUnit(Unit) : nullptr;
+  }
+
   auto printInstruction = [&](const MCInst &Instruction) {
     if (BC.MIA->isEHLabel(Instruction)) {
       OS << "  EH_LABEL: "
@@ -168,6 +206,21 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
         OS << "; action: " << Action;
       }
     }
+    if (opts::PrintDebugInfo && LineTable) {
+      auto RowRef = DebugLineTableRowRef::fromSMLoc(Instruction.getLoc());
+
+      if (RowRef != DebugLineTableRowRef::NULL_ROW) {
+        const auto &Row = LineTable->Rows[RowRef.RowIndex];
+        OS << " # debug line "
+          << LineTable->Prologue.FileNames[Row.File - 1].Name
+          << ":" << Row.Line;
+
+        if (Row.Column) {
+          OS << ":" << Row.Column;
+        }
+      }
+    }
+
     OS << "\n";
     // In case we need MCInst printer:
     // Instr.dump_pretty(OS, InstructionPrinter.get());
@@ -294,12 +347,18 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   OS << "End of Function \"" << getName() << "\"\n\n";
 }
 
-bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
+bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData,
+                                 bool ExtractDebugLineData) {
   assert(FunctionData.size() == getSize() &&
          "function size does not match raw data size");
 
   auto &Ctx = BC.Ctx;
   auto &MIA = BC.MIA;
+  DWARFCompileUnit *CompileUnit = nullptr;
+
+  if (ExtractDebugLineData) {
+    CompileUnit = FindCompileUnitForAddress(getAddress(), BC);
+  }
 
   // Insert a label at the beginning of the function. This will be our first
   // basic block.
@@ -335,16 +394,18 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   for (uint64_t Offset = 0; IsSimple && (Offset < getSize()); ) {
     MCInst Instruction;
     uint64_t Size;
+    uint64_t AbsoluteInstrAddr = getAddress() + Offset;
+
     if (!BC.DisAsm->getInstruction(Instruction,
                                    Size,
                                    FunctionData.slice(Offset),
-                                   getAddress() + Offset,
+                                   AbsoluteInstrAddr,
                                    nulls(),
                                    nulls())) {
       // Ignore this function. Skip to the next one.
       errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
              << Twine::utohexstr(Offset) << " (address 0x"
-             << Twine::utohexstr(getAddress() + Offset) << ") in function "
+             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
              << getName() << '\n';
       IsSimple = false;
       break;
@@ -353,13 +414,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     if (MIA->isUnsupported(Instruction)) {
       errs() << "BOLT-WARNING: unsupported instruction seen at offset 0x"
              << Twine::utohexstr(Offset) << " (address 0x"
-             << Twine::utohexstr(getAddress() + Offset) << ") in function "
+             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
              << getName() << '\n';
       IsSimple = false;
       break;
     }
 
-    uint64_t AbsoluteInstrAddr = getAddress() + Offset;
     if (MIA->isBranch(Instruction) || MIA->isCall(Instruction)) {
       uint64_t InstructionTarget = 0;
       if (MIA->evaluateBranch(Instruction,
@@ -476,6 +536,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
+    if (CompileUnit) {
+      Instruction.setLoc(
+          findDebugLineInformationForInstructionAt(AbsoluteInstrAddr,
+                                                   CompileUnit));
+    }
+
     addInstruction(Offset, std::move(Instruction));
 
     Offset += Size;
@@ -489,6 +555,45 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   updateState(State::Disassembled);
 
   return true;
+}
+
+SMLoc
+BinaryFunction::findDebugLineInformationForInstructionAt(
+    uint64_t Address,
+    DWARFCompileUnit *Unit) {
+  // We use the pointer in SMLoc to store an instance of DebugLineTableRowRef,
+  // which occupies 64 bits. Thus, we can only proceed if the struct fits into
+  // the pointer itself.
+  assert(
+      sizeof(decltype(SMLoc().getPointer())) >= sizeof(DebugLineTableRowRef) &&
+      "Cannot fit instruction debug line information into SMLoc's pointer");
+
+  const DWARFDebugLine::LineTable *LineTable =
+      BC.DwCtx->getLineTableForUnit(Unit);
+
+  SMLoc NullResult = DebugLineTableRowRef::NULL_ROW.toSMLoc();
+
+  if (!LineTable) {
+    return NullResult;
+  }
+
+  uint32_t RowIndex = LineTable->lookupAddress(Address);
+
+  if (RowIndex == LineTable->UnknownRowIndex) {
+    return NullResult;
+  }
+
+  assert(RowIndex < LineTable->Rows.size() &&
+         "Line Table lookup returned invalid index.");
+
+  decltype(SMLoc().getPointer()) Ptr;
+  DebugLineTableRowRef *InstructionLocation =
+    reinterpret_cast<DebugLineTableRowRef *>(&Ptr);
+
+  InstructionLocation->DwCompileUnitIndex = Unit->getOffset();
+  InstructionLocation->RowIndex = RowIndex;
+
+  return SMLoc::getFromPointer(Ptr);
 }
 
 bool BinaryFunction::buildCFG() {

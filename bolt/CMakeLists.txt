@@ -17,6 +17,7 @@ add_llvm_tool(llvm-bolt
   BinaryContext.cpp
   BinaryFunction.cpp
   DataReader.cpp
+  DebugLineTableRowRef.cpp
   Exceptions.cpp
   RewriteInstance.cpp
   )

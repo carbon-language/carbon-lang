@@ -15,6 +15,8 @@
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
 #include "llvm/ADT/Triple.h"
+#include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -55,7 +57,13 @@ public:
   // Set of addresses we cannot relocate because we have a direct branch to it.
   std::set<uint64_t> InterproceduralBranchTargets;
 
+  // Map from offset in the .debug_info section of the binary the
+  // DWARF Compilation Unit that starts at that offset.
+  std::map<uint32_t, DWARFCompileUnit *> OffsetToDwarfCU;
+
   std::unique_ptr<MCContext> Ctx;
+
+  std::unique_ptr<DWARFContext> DwCtx;
 
   std::unique_ptr<Triple> TheTriple;
 
@@ -86,6 +94,7 @@ public:
   const DataReader &DR;
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
+                std::unique_ptr<DWARFContext> DwCtx,
                 std::unique_ptr<Triple> TheTriple,
                 const Target *TheTarget,
                 std::string TripleName,
@@ -98,8 +107,10 @@ public:
                 std::unique_ptr<const MCInstrAnalysis> MIA,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
-                const DataReader &DR) :
+                const DataReader &DR,
+                bool LoadDebugContext) :
       Ctx(std::move(Ctx)),
+      DwCtx(std::move(DwCtx)),
       TheTriple(std::move(TheTriple)),
       TheTarget(TheTarget),
       TripleName(TripleName),
@@ -112,7 +123,11 @@ public:
       MIA(std::move(MIA)),
       MRI(std::move(MRI)),
       DisAsm(std::move(DisAsm)),
-      DR(DR) {}
+      DR(DR) {
+    if (LoadDebugContext) {
+      buildOffsetToDWARFCompileUnitMap();
+    }
+  }
 
   ~BinaryContext() {}
 
@@ -121,6 +136,11 @@ public:
   /// If there are multiple symbols registered at the \p Address, then
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
+
+private:
+  // Iterates over all DWARF compilation units and maps their offset in the
+  // binary to themselves in OffsetDwarfCUMap
+  void buildOffsetToDWARFCompileUnitMap();
 };
 
 } // namespace bolt

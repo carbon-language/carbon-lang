@@ -94,6 +94,11 @@ SplitFunctions("split-functions",
                cl::desc("split functions into hot and cold distinct regions"),
                cl::Optional);
 
+static cl::opt<bool>
+UpdateDebugSections("update-debug-sections",
+                    cl::desc("update DWARF debug sections of the executable"),
+                    cl::Optional);
+
 static cl::opt<BinaryFunction::LayoutType>
 ReorderBlocks(
     "reorder-blocks",
@@ -258,7 +263,9 @@ bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
 /// triple \p TripleName.
 static std::unique_ptr<BinaryContext> CreateBinaryContext(
     std::string ArchName,
-    std::string TripleName, const DataReader &DR) {
+    std::string TripleName,
+    const DataReader &DR,
+    std::unique_ptr<DWARFContext> DwCtx) {
 
   std::string Error;
 
@@ -343,6 +350,7 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
 
   auto BC =
       llvm::make_unique<BinaryContext>(std::move(Ctx),
+                                       std::move(DwCtx),
                                        std::move(TheTriple),
                                        TheTarget,
                                        TripleName,
@@ -355,15 +363,18 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
                                        std::move(MIA),
                                        std::move(MRI),
                                        std::move(DisAsm),
-                                       DR);
+                                       DR,
+                                       opts::UpdateDebugSections);
 
   return BC;
 }
 
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File,
                                  const DataReader &DR)
-    : File(File), BC(CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR)),
-      DwCtx(new DWARFContextInMemory(*File)) {}
+    : File(File),
+      BC(CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR,
+                             std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*File))))
+{ }
 
 RewriteInstance::~RewriteInstance() {}
 
@@ -371,8 +382,8 @@ void RewriteInstance::reset() {
   BinaryFunctions.clear();
   FileSymRefs.clear();
   auto &DR = BC->DR;
-  BC = CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR);
-  DwCtx.reset(new DWARFContextInMemory(*File));
+  BC = CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR,
+                           std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*File)));
   CFIRdWrt.reset(nullptr);
   SectionMM.reset(nullptr);
   Out.reset(nullptr);
@@ -615,7 +626,7 @@ void RewriteInstance::readSpecialSections() {
   FrameHdrCopy =
       std::vector<char>(FrameHdrContents.begin(), FrameHdrContents.end());
   // Process debug sections.
-  EHFrame = DwCtx->getEHFrame();
+  EHFrame = BC->DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
     EHFrame->dump(outs());
   }
@@ -684,11 +695,11 @@ void RewriteInstance::disassembleFunctions() {
           (SectionContents.data()) + FunctionOffset,
         Function.getSize());
 
-    if (!Function.disassemble(FunctionData))
+    if (!Function.disassemble(FunctionData, opts::UpdateDebugSections))
       continue;
 
     if (opts::PrintAll || opts::PrintDisasm)
-      Function.print(errs(), "after disassembly");
+      Function.print(errs(), "after disassembly", true);
 
     if (!Function.isSimple())
       continue;
@@ -711,7 +722,7 @@ void RewriteInstance::disassembleFunctions() {
       continue;
 
     if (opts::PrintAll || opts::PrintCFG)
-      Function.print(errs(), "after building cfg");
+      Function.print(errs(), "after building cfg", true);
 
     TotalScore += Function.getFunctionScore();
 
@@ -822,13 +833,13 @@ void RewriteInstance::runOptimizationPasses() {
       }
 
       if (opts::PrintAll || opts::PrintUCE)
-        Function.print(errs(), "after unreachable code elimination");
+        Function.print(errs(), "after unreachable code elimination", true);
     }
 
     if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
       BFI.second.modifyLayout(opts::ReorderBlocks, opts::SplitFunctions);
       if (opts::PrintAll || opts::PrintReordered)
-        Function.print(errs(), "after reordering blocks");
+        Function.print(errs(), "after reordering blocks", true);
     }
 
     // Post-processing passes.
@@ -844,8 +855,7 @@ void RewriteInstance::runOptimizationPasses() {
     // Update exception handling information.
     Function.updateEHRanges();
     if (opts::PrintAll || opts::PrintEHRanges)
-      Function.print(errs(), "after updating EH ranges");
-
+      Function.print(errs(), "after updating EH ranges", true);
   }
 }
 

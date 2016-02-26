@@ -161,7 +161,6 @@ private:
   llvm::object::ELFObjectFileBase *File;
 
   std::unique_ptr<BinaryContext> BC;
-  std::unique_ptr<DWARFContext> DwCtx;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;
   /// Our in-memory intermediary object file where we hold final code for
   /// rewritten functions.

@@ -58,7 +58,7 @@ public:
   enum LayoutType : char {
     /// LT_NONE - do not change layout of basic blocks
     LT_NONE = 0, /// no reordering
-    /// LT_REVERSE - reverse the order of basic blocks, meant for testing 
+    /// LT_REVERSE - reverse the order of basic blocks, meant for testing
     /// purposes. The first basic block is left intact and the rest are
     /// put in the reverse order.
     LT_REVERSE,
@@ -185,6 +185,14 @@ private:
     CurrentState = State;
     return *this;
   }
+
+  /// Gets debug line information for the instruction located at the given
+  /// address in the original binary. The SMLoc's pointer is used
+  /// to point to this information, which is represented by a
+  /// DebugLineTableRowRef. The returned pointer is null if no debug line
+  /// information for this instruction was found.
+  SMLoc findDebugLineInformationForInstructionAt(uint64_t Address,
+                                                 DWARFCompileUnit *Unit);
 
   const BinaryBasicBlock *
   getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const;
@@ -434,7 +442,7 @@ public:
   /// function and append it to the end of list of blocks.
   /// If \p DeriveAlignment is true, set the alignment of the block based
   /// on the alignment of the existing offset.
-  /// 
+  ///
   /// Returns NULL if basic block already exists at the \p Offset.
   BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
                                   bool DeriveAlignment = false) {
@@ -648,6 +656,10 @@ public:
   ///
   /// \p FunctionData is the set bytes representing the function body.
   ///
+  /// \p ExtractDebugLineData is a flag indicating whether DWARF .debug_line
+  /// information should be looked up and tied to each disassembled
+  /// instruction.
+  ///
   /// The Function should be properly initialized before this function
   /// is called. I.e. function address and size should be set.
   ///
@@ -655,7 +667,8 @@ public:
   /// state to State:Disassembled.
   ///
   /// Returns false if disassembly failed.
-  bool disassemble(ArrayRef<uint8_t> FunctionData);
+  bool disassemble(ArrayRef<uint8_t> FunctionData,
+                   bool ExtractDebugLineData = false);
 
   /// Builds a list of basic blocks with successor and predecessor info.
   ///
