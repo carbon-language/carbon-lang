@@ -67,6 +67,8 @@ define void @mstore_one_one_double(i8* %f, <2 x double> %v) {
 ; CHECK-NEXT:  ret void
 }
 
+; Try 256-bit FP ops.
+
 define void @mstore_v8f32(i8* %f, <8 x float> %v) {
   tail call void @llvm.x86.avx.maskstore.ps.256(i8* %f, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 -1, i32 -2, i32 -3, i32 -4>, <8 x float> %v)
   ret void
@@ -87,8 +89,56 @@ define void @mstore_v4f64(i8* %f, <4 x double> %v) {
 ; CHECK-NEXT:  ret void
 }
 
+; Try the AVX2 variants.
+
+define void @mstore_v4i32(i8* %f, <4 x i32> %v) {
+  tail call void @llvm.x86.avx2.maskstore.d(i8* %f, <4 x i32> <i32 0, i32 1, i32 -1, i32 -2>, <4 x i32> %v)
+  ret void
+
+; CHECK-LABEL: @mstore_v4i32(
+; CHECK-NEXT:  %castvec = bitcast i8* %f to <4 x i32>*
+; CHECK-NEXT:  call void @llvm.masked.store.v4i32(<4 x i32> %v, <4 x i32>* %castvec, i32 1, <4 x i1> <i1 false, i1 false, i1 true, i1 true>)
+; CHECK-NEXT:  ret void
+}
+
+define void @mstore_v2i64(i8* %f, <2 x i64> %v) {
+  tail call void @llvm.x86.avx2.maskstore.q(i8* %f, <2 x i64> <i64 -1, i64 0>, <2 x i64> %v)
+  ret void
+
+; CHECK-LABEL: @mstore_v2i64(
+; CHECK-NEXT:  %castvec = bitcast i8* %f to <2 x i64>*
+; CHECK-NEXT:  call void @llvm.masked.store.v2i64(<2 x i64> %v, <2 x i64>* %castvec, i32 1, <2 x i1> <i1 true, i1 false>)
+; CHECK-NEXT:  ret void
+}
+
+define void @mstore_v8i32(i8* %f, <8 x i32> %v) {
+  tail call void @llvm.x86.avx2.maskstore.d.256(i8* %f, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 -1, i32 -2, i32 -3, i32 -4>, <8 x i32> %v)
+  ret void
+
+; CHECK-LABEL: @mstore_v8i32(
+; CHECK-NEXT:  %castvec = bitcast i8* %f to <8 x i32>*
+; CHECK-NEXT:  call void @llvm.masked.store.v8i32(<8 x i32> %v, <8 x i32>* %castvec, i32 1, <8 x i1> <i1 false, i1 false, i1 false, i1 false, i1 true, i1 true, i1 true, i1 true>)
+; CHECK-NEXT:  ret void
+}
+
+define void @mstore_v4i64(i8* %f, <4 x i64> %v) {
+  tail call void @llvm.x86.avx2.maskstore.q.256(i8* %f, <4 x i64> <i64 -1, i64 0, i64 1, i64 2>, <4 x i64> %v)
+  ret void
+
+; CHECK-LABEL: @mstore_v4i64(
+; CHECK-NEXT:  %castvec = bitcast i8* %f to <4 x i64>*
+; CHECK-NEXT:  call void @llvm.masked.store.v4i64(<4 x i64> %v, <4 x i64>* %castvec, i32 1, <4 x i1> <i1 true, i1 false, i1 false, i1 false>)
+; CHECK-NEXT:  ret void
+}
+
+
 declare void @llvm.x86.avx.maskstore.ps(i8*, <4 x i32>, <4 x float>)
 declare void @llvm.x86.avx.maskstore.pd(i8*, <2 x i64>, <2 x double>)
 declare void @llvm.x86.avx.maskstore.ps.256(i8*, <8 x i32>, <8 x float>)
 declare void @llvm.x86.avx.maskstore.pd.256(i8*, <4 x i64>, <4 x double>)
+
+declare void @llvm.x86.avx2.maskstore.d(i8*, <4 x i32>, <4 x i32>)
+declare void @llvm.x86.avx2.maskstore.q(i8*, <2 x i64>, <2 x i64>)
+declare void @llvm.x86.avx2.maskstore.d.256(i8*, <8 x i32>, <8 x i32>)
+declare void @llvm.x86.avx2.maskstore.q.256(i8*, <4 x i64>, <4 x i64>)
 

@@ -1634,7 +1634,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_maskstore_pd:
   case Intrinsic::x86_avx_maskstore_ps_256:
   case Intrinsic::x86_avx_maskstore_pd_256:
-  // TODO: The AVX2 integer variants can go here too.
+  case Intrinsic::x86_avx2_maskstore_d:
+  case Intrinsic::x86_avx2_maskstore_q:
+  case Intrinsic::x86_avx2_maskstore_d_256:
+  case Intrinsic::x86_avx2_maskstore_q_256:
     if (simplifyX86MaskedStore(*II, *this))
       return nullptr;
     break;
