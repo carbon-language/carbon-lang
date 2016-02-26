@@ -467,6 +467,9 @@ static AvailabilityResult CheckAvailability(ASTContext &Context,
 }
 
 AvailabilityResult Decl::getAvailability(std::string *Message) const {
+  if (auto *FTD = dyn_cast<FunctionTemplateDecl>(this))
+    return FTD->getTemplatedDecl()->getAvailability(Message);
+
   AvailabilityResult Result = AR_Available;
   std::string ResultMessage;
 
