@@ -3851,52 +3851,54 @@ bool ScopInfo::buildAccessMultiDimFixed(
   enum MemoryAccess::AccessType Type =
       Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
-  if (isa<GetElementPtrInst>(Address) || isa<BitCastInst>(Address)) {
-    auto *NewAddress = Address;
-    if (auto *BitCast = dyn_cast<BitCastInst>(Address)) {
-      auto *Src = BitCast->getOperand(0);
-      auto *SrcTy = Src->getType();
-      auto *DstTy = BitCast->getType();
-      if (SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits())
-        NewAddress = Src;
-    }
-
-    if (auto *GEP = dyn_cast<GetElementPtrInst>(NewAddress)) {
-      std::vector<const SCEV *> Subscripts;
-      std::vector<int> Sizes;
-      std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, *SE);
-      auto *BasePtr = GEP->getOperand(0);
-
-      std::vector<const SCEV *> SizesSCEV;
-
-      for (auto *Subscript : Subscripts) {
-        InvariantLoadsSetTy AccessILS;
-        if (!isAffineExpr(R, Subscript, *SE, nullptr, &AccessILS))
-          return false;
-
-        for (LoadInst *LInst : AccessILS)
-          if (!ScopRIL.count(LInst))
-            return false;
-      }
-
-      if (Sizes.size() > 0) {
-        for (auto V : Sizes)
-          SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
-              IntegerType::getInt64Ty(BasePtr->getContext()), V)));
-
-        addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, true,
-                       Subscripts, SizesSCEV, Val);
-        return true;
-      }
-    }
+  if (auto *BitCast = dyn_cast<BitCastInst>(Address)) {
+    auto *Src = BitCast->getOperand(0);
+    auto *SrcTy = Src->getType();
+    auto *DstTy = BitCast->getType();
+    if (SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits())
+      Address = Src;
   }
-  return false;
+
+  auto *GEP = dyn_cast<GetElementPtrInst>(Address);
+  if (!GEP)
+    return false;
+
+  std::vector<const SCEV *> Subscripts;
+  std::vector<int> Sizes;
+  std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, *SE);
+  auto *BasePtr = GEP->getOperand(0);
+
+  std::vector<const SCEV *> SizesSCEV;
+
+  for (auto *Subscript : Subscripts) {
+    InvariantLoadsSetTy AccessILS;
+    if (!isAffineExpr(R, Subscript, *SE, nullptr, &AccessILS))
+      return false;
+
+    for (LoadInst *LInst : AccessILS)
+      if (!ScopRIL.count(LInst))
+        return false;
+  }
+
+  if (Sizes.empty())
+    return false;
+
+  for (auto V : Sizes)
+    SizesSCEV.push_back(SE->getSCEV(
+        ConstantInt::get(IntegerType::getInt64Ty(BasePtr->getContext()), V)));
+
+  addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, true,
+                 Subscripts, SizesSCEV, Val);
+  return true;
 }
 
 bool ScopInfo::buildAccessMultiDimParam(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
     const InvariantLoadsSetTy &ScopRIL, const MapInsnToMemAcc &InsnToMemAcc) {
+  if (!PollyDelinearize)
+    return false;
+
   Value *Address = Inst.getPointerOperand();
   Value *Val = Inst.getValueOperand();
   Type *ElementType = Val->getType();
@@ -3912,27 +3914,27 @@ bool ScopInfo::buildAccessMultiDimParam(
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
   auto AccItr = InsnToMemAcc.find(Inst);
-  if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
-    std::vector<const SCEV *> Sizes(
-        AccItr->second.Shape->DelinearizedSizes.begin(),
-        AccItr->second.Shape->DelinearizedSizes.end());
-    // Remove the element size. This information is already provided by the
-    // ElementSize parameter. In case the element size of this access and the
-    // element size used for delinearization differs the delinearization is
-    // incorrect. Hence, we invalidate the scop.
-    //
-    // TODO: Handle delinearization with differing element sizes.
-    auto DelinearizedSize =
-        cast<SCEVConstant>(Sizes.back())->getAPInt().getSExtValue();
-    Sizes.pop_back();
-    if (ElementSize != DelinearizedSize)
-      scop->invalidate(DELINEARIZATION, Inst->getDebugLoc());
+  if (AccItr == InsnToMemAcc.end())
+    return false;
 
-    addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, true,
-                   AccItr->second.DelinearizedSubscripts, Sizes, Val);
-    return true;
-  }
-  return false;
+  std::vector<const SCEV *> Sizes(
+      AccItr->second.Shape->DelinearizedSizes.begin(),
+      AccItr->second.Shape->DelinearizedSizes.end());
+  // Remove the element size. This information is already provided by the
+  // ElementSize parameter. In case the element size of this access and the
+  // element size used for delinearization differs the delinearization is
+  // incorrect. Hence, we invalidate the scop.
+  //
+  // TODO: Handle delinearization with differing element sizes.
+  auto DelinearizedSize =
+      cast<SCEVConstant>(Sizes.back())->getAPInt().getSExtValue();
+  Sizes.pop_back();
+  if (ElementSize != DelinearizedSize)
+    scop->invalidate(DELINEARIZATION, Inst->getDebugLoc());
+
+  addArrayAccess(Inst, Type, BasePointer->getValue(), ElementType, true,
+                 AccItr->second.DelinearizedSubscripts, Sizes, Val);
+  return true;
 }
 
 bool ScopInfo::buildAccessMemIntrinsic(
