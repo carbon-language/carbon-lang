@@ -185,11 +185,13 @@ bool PassBuilder::parseModulePassName(ModulePassManager &MPM, StringRef Name) {
   }
 #define MODULE_ANALYSIS(NAME, CREATE_PASS)                                     \
   if (Name == "require<" NAME ">") {                                           \
-    MPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                 \
+    MPM.addPass(RequireAnalysisPass<                                           \
+                std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    MPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());              \
+    MPM.addPass(InvalidateAnalysisPass<                                        \
+                std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }
 #include "PassRegistry.def"
@@ -205,11 +207,13 @@ bool PassBuilder::parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
   }
 #define CGSCC_ANALYSIS(NAME, CREATE_PASS)                                      \
   if (Name == "require<" NAME ">") {                                           \
-    CGPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                \
+    CGPM.addPass(RequireAnalysisPass<                                          \
+                 std::remove_reference<decltype(CREATE_PASS)>::type>());       \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    CGPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());             \
+    CGPM.addPass(InvalidateAnalysisPass<                                       \
+                 std::remove_reference<decltype(CREATE_PASS)>::type>());       \
     return true;                                                               \
   }
 #include "PassRegistry.def"
@@ -226,11 +230,13 @@ bool PassBuilder::parseFunctionPassName(FunctionPassManager &FPM,
   }
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS)                                   \
   if (Name == "require<" NAME ">") {                                           \
-    FPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                 \
+    FPM.addPass(RequireAnalysisPass<                                           \
+                std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    FPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());              \
+    FPM.addPass(InvalidateAnalysisPass<                                        \
+                std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }
 #include "PassRegistry.def"
@@ -247,11 +253,13 @@ bool PassBuilder::parseLoopPassName(LoopPassManager &FPM,
   }
 #define LOOP_ANALYSIS(NAME, CREATE_PASS)                                       \
   if (Name == "require<" NAME ">") {                                           \
-    FPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                 \
+    FPM.addPass(RequireAnalysisPass<                                           \
+                std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    FPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());              \
+    FPM.addPass(InvalidateAnalysisPass<                                        \
+                std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }
 #include "PassRegistry.def"
