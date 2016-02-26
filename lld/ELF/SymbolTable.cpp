@@ -83,7 +83,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   if (auto *F = dyn_cast<BitcodeFile>(FileP)) {
     BitcodeFiles.emplace_back(cast<BitcodeFile>(File.release()));
     F->parse();
-    for (SymbolBody *B : F->SymbolBodies)
+    for (SymbolBody *B : F->getSymbols())
       resolve(B);
     return;
   }
