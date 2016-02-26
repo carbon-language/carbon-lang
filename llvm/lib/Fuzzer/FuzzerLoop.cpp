@@ -151,6 +151,8 @@ void Fuzzer::PrintStats(const char *Where, const char *End) {
   Printf("#%zd\t%s", TotalNumberOfRuns, Where);
   if (LastRecordedBlockCoverage)
     Printf(" cov: %zd", LastRecordedBlockCoverage);
+  if (LastRecordedPcMapSize)
+    Printf(" path: %zd", LastRecordedPcMapSize);
   if (auto TB = TotalBits())
     Printf(" bits: %zd", TB);
   if (LastRecordedCallerCalleeCoverage)
@@ -316,6 +318,12 @@ bool Fuzzer::CheckCoverageAfterRun() {
   size_t OldCallerCalleeCoverage = LastRecordedCallerCalleeCoverage;
   size_t NewCallerCalleeCoverage = RecordCallerCalleeCoverage();
   size_t NumNewBits = 0;
+  size_t OldPcMapSize = LastRecordedPcMapSize;
+  PcMapMergeCurrentToCombined();
+  size_t NewPcMapSize = PcMapCombinedSize();
+  LastRecordedPcMapSize = NewPcMapSize;
+  if (NewPcMapSize > OldPcMapSize)
+    return true;
   if (Options.UseCounters)
     NumNewBits = __sanitizer_update_counter_bitset_and_clear_counters(
         CounterBitmap.data());

@@ -99,6 +99,13 @@ bool IsASCII(const Unit &U);
 int NumberOfCpuCores();
 int GetPid();
 
+// Clears the current PC Map.
+void PcMapResetCurrent();
+// Merges the current PC Map into the combined one, and clears the former.
+void PcMapMergeCurrentToCombined();
+// Returns the size of the combined PC Map.
+size_t PcMapCombinedSize();
+
 class Random {
  public:
   Random(unsigned int seed) : R(seed) {}
@@ -390,6 +397,7 @@ private:
   long TimeOfLongestUnitInSeconds = 0;
   long EpochOfLastReadOfOutputCorpus = 0;
   size_t LastRecordedBlockCoverage = 0;
+  size_t LastRecordedPcMapSize = 0;
   size_t LastRecordedCallerCalleeCoverage = 0;
   size_t LastCoveragePcBufferLen = 0;
 };
