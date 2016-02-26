@@ -150,10 +150,8 @@ define <32 x i8> @test_pcmpgtb_256(<32 x i8> %x) {
 ;
 ; AVX2-LABEL: test_pcmpgtb_256:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpcmpgtb %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpxor %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpcmpgtb %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %sign = ashr <32 x i8> %x, <i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7>
   %not = xor <32 x i8> %sign, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
@@ -181,9 +179,8 @@ define <16 x i16> @test_pcmpgtw_256(<16 x i16> %x) {
 ;
 ; AVX2-LABEL: test_pcmpgtw_256:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsraw $15, %ymm0, %ymm0
 ; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpxor %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpcmpgtw %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %sign = ashr <16 x i16> %x, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
   %not = xor <16 x i16> %sign, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
@@ -211,9 +208,8 @@ define <8 x i32> @test_pcmpgtd_256(<8 x i32> %x) {
 ;
 ; AVX2-LABEL: test_pcmpgtd_256:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrad $31, %ymm0, %ymm0
 ; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpxor %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpcmpgtd %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %sign = ashr <8 x i32> %x, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
   %not = xor <8 x i32> %sign, <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>
@@ -254,10 +250,8 @@ define <4 x i64> @test_pcmpgtq_256(<4 x i64> %x) {
 ;
 ; AVX2-LABEL: test_pcmpgtq_256:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrad $31, %ymm0, %ymm0
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[1,1,3,3,5,5,7,7]
 ; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpxor %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpcmpgtq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %sign = ashr <4 x i64> %x, <i64 63, i64 63, i64 63, i64 63>
   %not = xor <4 x i64> %sign, <i64 -1, i64 -1, i64 -1, i64 -1>

@@ -26801,11 +26801,20 @@ static SDValue foldXorTruncShiftIntoCmp(SDNode *N, SelectionDAG &DAG) {
 static SDValue foldVectorXorShiftIntoCmp(SDNode *N, SelectionDAG &DAG,
                                          const X86Subtarget &Subtarget) {
   EVT VT = N->getValueType(0);
-  // TODO: AVX2 can handle 256-bit integer vectors.
-  if (!((Subtarget.hasSSE2() &&
-         (VT == MVT::v16i8 || VT == MVT::v8i16 || VT == MVT::v4i32)) ||
-        (Subtarget.hasSSE42() && VT == MVT::v2i64)))
+  if (!VT.isSimple())
     return SDValue();
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  default: return SDValue();
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32: if (!Subtarget.hasSSE2()) return SDValue(); break;
+  case MVT::v2i64: if (!Subtarget.hasSSE42()) return SDValue(); break;
+  case MVT::v32i8:
+  case MVT::v16i16:
+  case MVT::v8i32:
+  case MVT::v4i64: if (!Subtarget.hasAVX2()) return SDValue(); break;
+  }
 
   // There must be a shift right algebraic before the xor, and the xor must be a
   // 'not' operation.
