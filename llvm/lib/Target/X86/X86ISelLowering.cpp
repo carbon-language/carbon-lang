@@ -1847,7 +1847,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setPrefLoopAlignment(4); // 2^4 bytes.
 
   // An out-of-order CPU can speculatively execute past a predictable branch,
-  // but a conditional move could be stalled by an expensive earlier operation. 
+  // but a conditional move could be stalled by an expensive earlier operation.
   PredictableSelectIsExpensive = Subtarget.getSchedModel().isOutOfOrder();
   EnableExtLdPromotion = true;
   setPrefFunctionAlignment(4); // 2^4 bytes.
