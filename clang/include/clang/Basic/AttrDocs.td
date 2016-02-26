@@ -1583,10 +1583,8 @@ s6.11.5 for details.
 
 def OpenCLAccessDocs : Documentation {
   let Category = DocCatStmt;
-  let Heading = "__read_only, __write_only, __read_write (read_only, "
-                "write_only, read_write)";
-  let Content = [
-    {
+  let Heading = "__read_only, __write_only, __read_write (read_only, write_only, read_write)";
+  let Content = [{
 The access qualifiers must be used with image object arguments or pipe arguments
 to declare if they are being read or written by a kernel or function.
 
@@ -1596,10 +1594,9 @@ names are reserved for use as access qualifiers and shall not be used otherwise.
   .. code-block:: c
   kernel void
   foo (read_only image2d_t imageA,
-      write_only image2d_t imageB)
-  {
+      write_only image2d_t imageB) {
   ...
-}
+  }
 
 In the above example imageA is a read-only 2D image object, and imageB is a
 write-only 2D image object.
@@ -1607,8 +1604,7 @@ write-only 2D image object.
 The read_write (or __read_write) qualifier can not be used with pipe.
 
 More details can be found in the OpenCL C language Spec v2.0, Section 6.6.
-    }
-  ];
+    }];
 }
 
 def DocOpenCLAddressSpaces : DocumentationCategory<"OpenCL Address Spaces"> {
