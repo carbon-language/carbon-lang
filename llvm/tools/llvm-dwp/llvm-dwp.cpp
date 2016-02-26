@@ -219,6 +219,9 @@ static void
 writeIndex(MCStreamer &Out, MCSection *Section,
            ArrayRef<unsigned> ContributionOffsets,
            const MapVector<uint64_t, UnitIndexEntry> &IndexEntries) {
+  if (IndexEntries.empty())
+    return;
+
   unsigned Columns = 0;
   for (auto &C : ContributionOffsets)
     if (C)
@@ -397,8 +400,9 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       }
     }
 
-    assert(!AbbrevSection.empty());
-    assert(!InfoSection.empty());
+    if (InfoSection.empty())
+      continue;
+
     if (!CurCUIndexSection.empty()) {
       DWARFUnitIndex CUIndex(DW_SECT_INFO);
       DataExtractor CUIndexData(CurCUIndexSection,
@@ -448,13 +452,11 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       return Err;
   }
 
-  if (!TypeIndexEntries.empty()) {
-    // Lie about there being no info contributions so the TU index only includes
-    // the type unit contribution
-    ContributionOffsets[0] = 0;
-    writeIndex(Out, MCOFI.getDwarfTUIndexSection(), ContributionOffsets,
-               TypeIndexEntries);
-  }
+  // Lie about there being no info contributions so the TU index only includes
+  // the type unit contribution
+  ContributionOffsets[0] = 0;
+  writeIndex(Out, MCOFI.getDwarfTUIndexSection(), ContributionOffsets,
+             TypeIndexEntries);
 
   // Lie about the type contribution
   ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO] = 0;
