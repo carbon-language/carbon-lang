@@ -49,6 +49,7 @@
 #include "llvm/Transforms/Scalar/LowerExpectIntrinsic.h"
 #include "llvm/Transforms/Scalar/SROA.h"
 #include "llvm/Transforms/Scalar/SimplifyCFG.h"
+#include <type_traits>
 
 using namespace llvm;
 
@@ -261,7 +262,8 @@ bool PassBuilder::parseLoopPassName(LoopPassManager &FPM,
 bool PassBuilder::parseAAPassName(AAManager &AA, StringRef Name) {
 #define FUNCTION_ALIAS_ANALYSIS(NAME, CREATE_PASS)                             \
   if (Name == NAME) {                                                          \
-    AA.registerFunctionAnalysis<decltype(CREATE_PASS)>();                      \
+    AA.registerFunctionAnalysis<                                               \
+        std::remove_reference<decltype(CREATE_PASS)>::type>();                 \
     return true;                                                               \
   }
 #include "PassRegistry.def"
