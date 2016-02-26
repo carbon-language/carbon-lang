@@ -9533,6 +9533,10 @@ void Sema::ActOnFinishCXXNonNestedClass(Decl *D) {
   if (RD && Context.getTargetInfo().getCXXABI().isMicrosoft())
     getDefaultArgExprsForConstructors(*this, RD);
 
+  referenceDLLExportedClassMethods();
+}
+
+void Sema::referenceDLLExportedClassMethods() {
   if (!DelayedDllExportClasses.empty()) {
     // Calling ReferenceDllExportedMethods might cause the current function to
     // be called again, so use a local copy of DelayedDllExportClasses.
