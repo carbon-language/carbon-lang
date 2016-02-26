@@ -33,9 +33,8 @@ static bool isAlnum(char C) { return isAlpha(C) || ('0' <= C && C <= '9'); }
 
 // Returns true if S is valid as a C language identifier.
 bool elf2::isValidCIdentifier(StringRef S) {
-  if (S.empty() || !isAlpha(S[0]))
-    return false;
-  return std::all_of(S.begin() + 1, S.end(), isAlnum);
+  return !S.empty() && isAlpha(S[0]) &&
+         std::all_of(S.begin() + 1, S.end(), isAlnum);
 }
 
 template <class ELFT>
