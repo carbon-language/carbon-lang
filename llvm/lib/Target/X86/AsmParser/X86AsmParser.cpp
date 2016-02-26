@@ -1012,9 +1012,7 @@ std::unique_ptr<X86Operand> X86AsmParser::DefaultMemDIOperand(SMLoc Loc) {
 
 bool X86AsmParser::IsSIReg(unsigned Reg) {
   switch (Reg) {
-  default:
-    llvm_unreachable("Only (R|E)SI and (R|E)DI are expected!");
-    return false;
+  default: llvm_unreachable("Only (R|E)SI and (R|E)DI are expected!");
   case X86::RSI:
   case X86::ESI:
   case X86::SI:
@@ -1029,9 +1027,7 @@ bool X86AsmParser::IsSIReg(unsigned Reg) {
 unsigned X86AsmParser::GetSIDIForRegClass(unsigned RegClassID, unsigned Reg,
                                           bool IsSIReg) {
   switch (RegClassID) {
-  default:
-    llvm_unreachable("Unexpected register class");
-    return Reg;
+  default: llvm_unreachable("Unexpected register class");
   case X86::GR64RegClassID:
     return IsSIReg ? X86::RSI : X86::RDI;
   case X86::GR32RegClassID:
