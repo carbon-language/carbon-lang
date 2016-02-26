@@ -241,9 +241,13 @@ void LiveIntervals::computeRegMasks() {
       }
     }
 
-    // Some block ends, such as funclet returns, create masks.
+    // Some block ends, such as funclet returns, create masks. Put the mask on
+    // the last instruction of the block, because MBB slot index intervals are
+    // half-open.
     if (const uint32_t *Mask = MBB.getEndClobberMask(TRI)) {
-      RegMaskSlots.push_back(Indexes->getMBBEndIdx(&MBB));
+      assert(!MBB.empty() && "empty return block?");
+      RegMaskSlots.push_back(
+          Indexes->getInstructionIndex(&MBB.back()).getRegSlot());
       RegMaskBits.push_back(Mask);
     }
 
