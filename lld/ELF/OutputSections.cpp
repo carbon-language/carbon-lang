@@ -9,6 +9,7 @@
 
 #include "OutputSections.h"
 #include "Config.h"
+#include "LinkerScript.h"
 #include "SymbolTable.h"
 #include "Target.h"
 #include "llvm/Support/Dwarf.h"
@@ -954,7 +955,17 @@ bool elf2::canBePreempted(const SymbolBody *Body) {
   return true;
 }
 
+static void fill(uint8_t *Buf, size_t Size, ArrayRef<uint8_t> A) {
+  size_t I = 0;
+  for (; I + A.size() < Size; I += A.size())
+    memcpy(Buf + I, A.data(), A.size());
+  memcpy(Buf + I, A.data(), Size - I);
+}
+
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
+  ArrayRef<uint8_t> Filler = Script->getFiller(this->Name);
+  if (!Filler.empty())
+    fill(Buf, this->getSize(), Filler);
   for (InputSection<ELFT> *C : Sections)
     C->writeTo(Buf);
 }
