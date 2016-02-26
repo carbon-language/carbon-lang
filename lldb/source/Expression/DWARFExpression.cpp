@@ -1380,7 +1380,6 @@ DWARFExpression::Evaluate
                         intptr_t ptr;
                         ::memcpy (&ptr, src, sizeof(void *));
                         stack.back().GetScalar() = ptr;
-                        stack.back().SetValueType(Value::eValueTypeScalar);
                         stack.back().ClearContext();
                     }
                     break;
@@ -1395,7 +1394,6 @@ DWARFExpression::Evaluate
                             if (pointer_value != LLDB_INVALID_ADDRESS)
                             {
                                 stack.back().GetScalar() = pointer_value;
-                                stack.back().SetValueType(Value::eValueTypeScalar);
                                 stack.back().ClearContext();
                             }
                             else
@@ -1477,7 +1475,6 @@ DWARFExpression::Evaluate
                             default: break;
                         }
                         stack.back().GetScalar() = ptr;
-                        stack.back().SetValueType(Value::eValueTypeScalar);
                         stack.back().ClearContext();
                     }
                     break;
@@ -1501,7 +1498,6 @@ DWARFExpression::Evaluate
                                     case 8: stack.back().GetScalar() = addr_data.GetU64(&addr_data_offset); break;
                                     default: stack.back().GetScalar() = addr_data.GetPointer(&addr_data_offset);
                                 }
-                                stack.back().SetValueType(Value::eValueTypeScalar);
                                 stack.back().ClearContext();
                             }
                             else
