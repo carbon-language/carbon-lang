@@ -267,13 +267,13 @@ bool ICF<ELFT>::variableEq(const InputSection<ELFT> *A,
   const RelTy *EA = RelsA.end();
   const RelTy *IB = RelsB.begin();
   for (; IA != EA; ++IA, ++IB) {
-    // If both IA and BA are pointing to the same local symbol,
+    // If both IA and IB are pointing to the same local symbol,
     // this "if" condition must be true.
     if (A->File == B->File &&
         IA->getSymbol(Config->Mips64EL) == IB->getSymbol(Config->Mips64EL))
       continue;
 
-    // Otherwise, IA and BA must be pointing to the global symbols.
+    // Otherwise, IA and IB must be pointing to the global symbols.
     SymbolBody *SA = getSymbol(A, (const Elf_Rel *)IA);
     SymbolBody *SB = getSymbol(B, (const Elf_Rel *)IB);
     if (!SA || !SB)
