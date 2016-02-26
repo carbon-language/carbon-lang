@@ -914,20 +914,30 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   if (!isOutputDynamic())
     Symtab.addIgnored("__tls_get_addr");
 
+  auto Define = [this](StringRef Name, StringRef Alias, Elf_Sym &Sym) {
+    if (Symtab.find(Name))
+      Symtab.addAbsolute(Name, Sym);
+    if (SymbolBody *B = Symtab.find(Alias))
+      if (B->isUndefined())
+        Symtab.addAbsolute(Alias, Sym);
+  };
+
   // If the "_end" symbol is referenced, it is expected to point to the address
   // right after the data segment. Usually, this symbol points to the end
   // of .bss section or to the end of .data section if .bss section is absent.
   // We don't know the final address of _end yet, so just add a symbol here,
   // and fix ElfSym<ELFT>::End.st_value later.
-  if (Symtab.find("_end"))
-    Symtab.addAbsolute("_end", ElfSym<ELFT>::End);
-
   // Define "end" as an alias to "_end" if it is used but not defined.
   // We don't want to define that unconditionally because we don't want to
   // break programs that uses "end" as a regular symbol.
-  if (SymbolBody *B = Symtab.find("end"))
-    if (B->isUndefined())
-      Symtab.addAbsolute("end", ElfSym<ELFT>::End);
+  // The similar history with _etext/etext and _edata/edata:
+  // Address of _etext is the first location after the last read-only loadable
+  // segment. Address of _edata points to the end of the last non SHT_NOBITS
+  // section. That is how gold/bfd do. We update the values for these symbols
+  // later, after assigning sections to segments.
+  Define("_end", "end", ElfSym<ELFT>::End);
+  Define("_etext", "etext", ElfSym<ELFT>::Etext);
+  Define("_edata", "edata", ElfSym<ELFT>::Edata);
 }
 
 // Sort input sections by section name suffixes for
@@ -1454,6 +1464,17 @@ template <class ELFT> void Writer<ELFT>::fixAbsoluteSymbols() {
   // Update MIPS _gp absolute symbol so that it points to the static data.
   if (Config->EMachine == EM_MIPS)
     ElfSym<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
+
+  // _etext points to location after the last read-only loadable segment.
+  // _edata points to the end of the last non SHT_NOBITS section.
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
+    if (!(Sec->getFlags() & SHF_ALLOC))
+      continue;
+    if (!(Sec->getFlags() & SHF_WRITE))
+      ElfSym<ELFT>::Etext.st_value = Sec->getVA() + Sec->getSize();
+    if (Sec->getType() != SHT_NOBITS)
+      ElfSym<ELFT>::Edata.st_value = Sec->getVA() + Sec->getSize();
+  }
 }
 
 template <class ELFT> void Writer<ELFT>::writeHeader() {

@@ -214,6 +214,8 @@ std::unique_ptr<InputFile> Lazy::getMember() {
 }
 
 template <class ELFT> static void doInitSymbols() {
+  ElfSym<ELFT>::Etext.setBinding(STB_GLOBAL);
+  ElfSym<ELFT>::Edata.setBinding(STB_GLOBAL);
   ElfSym<ELFT>::End.setBinding(STB_GLOBAL);
   ElfSym<ELFT>::Ignored.setBinding(STB_WEAK);
   ElfSym<ELFT>::Ignored.setVisibility(STV_HIDDEN);
