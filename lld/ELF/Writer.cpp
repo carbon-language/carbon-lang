@@ -914,30 +914,22 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   if (!isOutputDynamic())
     Symtab.addIgnored("__tls_get_addr");
 
-  auto Define = [this](StringRef Name, StringRef Alias, Elf_Sym &Sym) {
-    if (Symtab.find(Name))
-      Symtab.addAbsolute(Name, Sym);
-    if (SymbolBody *B = Symtab.find(Alias))
+  auto Define = [this](StringRef S, Elf_Sym &Sym) {
+    if (Symtab.find(S))
+      Symtab.addAbsolute(S, Sym);
+
+    // The name without the underscore is not a reserved name,
+    // so it is defined only when there is a reference against it.
+    assert(Name.startswith("_"));
+    S = S.substr(1);
+    if (SymbolBody *B = Symtab.find(S))
       if (B->isUndefined())
-        Symtab.addAbsolute(Alias, Sym);
+        Symtab.addAbsolute(S, Sym);
   };
 
-  // If the "_end" symbol is referenced, it is expected to point to the address
-  // right after the data segment. Usually, this symbol points to the end
-  // of .bss section or to the end of .data section if .bss section is absent.
-  // We don't know the final address of _end yet, so just add a symbol here,
-  // and fix ElfSym<ELFT>::End.st_value later.
-  // Define "end" as an alias to "_end" if it is used but not defined.
-  // We don't want to define that unconditionally because we don't want to
-  // break programs that uses "end" as a regular symbol.
-  // The similar history with _etext/etext and _edata/edata:
-  // Address of _etext is the first location after the last read-only loadable
-  // segment. Address of _edata points to the end of the last non SHT_NOBITS
-  // section. That is how gold/bfd do. We update the values for these symbols
-  // later, after assigning sections to segments.
-  Define("_end", "end", ElfSym<ELFT>::End);
-  Define("_etext", "etext", ElfSym<ELFT>::Etext);
-  Define("_edata", "edata", ElfSym<ELFT>::Edata);
+  Define("_end", ElfSym<ELFT>::End);
+  Define("_etext", ElfSym<ELFT>::Etext);
+  Define("_edata", ElfSym<ELFT>::Edata);
 }
 
 // Sort input sections by section name suffixes for
