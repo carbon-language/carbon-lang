@@ -59,7 +59,7 @@ void DwarfCFIExceptionBase::endFragment() {
 
 DwarfCFIException::DwarfCFIException(AsmPrinter *A)
     : DwarfCFIExceptionBase(A), shouldEmitPersonality(false),
-      shouldEmitLSDA(false), forceEmitPersonality(false),
+      forceEmitPersonality(false), shouldEmitLSDA(false),
       shouldEmitMoves(false), moveTypeModule(AsmPrinter::CFI_M_None) {}
 
 DwarfCFIException::~DwarfCFIException() {}
