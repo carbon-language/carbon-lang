@@ -920,7 +920,7 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
 
     // The name without the underscore is not a reserved name,
     // so it is defined only when there is a reference against it.
-    assert(Name.startswith("_"));
+    assert(S.startswith("_"));
     S = S.substr(1);
     if (SymbolBody *B = Symtab.find(S))
       if (B->isUndefined())
