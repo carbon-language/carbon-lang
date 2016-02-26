@@ -9,6 +9,7 @@
 
 // C Includes
 // C++ Includes
+#include <atomic>
 #include <mutex>
 // Other libraries and framework includes
 // Project includes
