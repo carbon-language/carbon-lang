@@ -1456,8 +1456,11 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         const OutputSectionBase<ELFT> *OutSec = Section->OutSec;
         ESym->st_shndx = OutSec->SectionIndex;
         VA = Section->getOffset(*Sym);
-        // Symbol offsets for AMDGPU need to be the offset in bytes of the
-        // symbol from the beginning of the section.
+
+        // Symbol offsets for AMDGPU are the offsets in bytes of the
+        // symbols from the beginning of the section. There seems to be no
+        // reason for that deviation -- it's just that the definition of
+        // st_value field in AMDGPU's ELF is odd.
         if (Config->EMachine != EM_AMDGPU)
           VA += OutSec->getVA();
       }
