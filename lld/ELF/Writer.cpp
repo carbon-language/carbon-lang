@@ -327,6 +327,7 @@ void Writer<ELFT>::scanRelocs(
     if (Body)
       Body = Body->repl();
 
+    bool CBP = canBePreempted(Body);
     if (handleTlsRelocation<ELFT>(Type, Body, C, RI))
       continue;
 
@@ -335,7 +336,7 @@ void Writer<ELFT>::scanRelocs(
                                     Body, getAddend<ELFT>(RI)});
 
     // MIPS has a special rule to create GOTs for local symbols.
-    if (Config->EMachine == EM_MIPS && !canBePreempted(Body) &&
+    if (Config->EMachine == EM_MIPS && !CBP &&
         (Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16)) {
       // FIXME (simon): Do not add so many redundant entries.
       Out<ELFT>::Got->addMipsLocalEntry();
@@ -362,7 +363,6 @@ void Writer<ELFT>::scanRelocs(
       if (Body->isInPlt())
         continue;
       Out<ELFT>::Plt->addEntry(Body);
-      bool CBP = canBePreempted(Body);
       if (Target->UseLazyBinding) {
         Out<ELFT>::GotPlt->addEntry(Body);
         Out<ELFT>::RelaPlt->addReloc(
@@ -419,7 +419,6 @@ void Writer<ELFT>::scanRelocs(
         continue;
       }
 
-      bool CBP = canBePreempted(Body);
       bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
                     !Target->isSizeRel(Type);
       if (CBP || Dynrel) {
@@ -452,7 +451,7 @@ void Writer<ELFT>::scanRelocs(
         continue;
     }
 
-    if (canBePreempted(Body)) {
+    if (CBP) {
       // We don't know anything about the finaly symbol. Just ask the dynamic
       // linker to handle the relocation for us.
       Out<ELFT>::RelaDyn->addReloc({Target->getDynRel(Type), &C, RI.r_offset,
