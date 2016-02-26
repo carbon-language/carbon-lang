@@ -27703,33 +27703,22 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
   return true;
 }
 
-/// Do target-specific dag combines on floating point adds.
-static SDValue PerformFADDCombine(SDNode *N, SelectionDAG &DAG,
-                                  const X86Subtarget &Subtarget) {
+/// Do target-specific dag combines on floating-point adds/subs.
+static SDValue performFaddFsubCombine(SDNode *N, SelectionDAG &DAG,
+                                      const X86Subtarget &Subtarget) {
   EVT VT = N->getValueType(0);
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
+  bool IsFadd = N->getOpcode() == ISD::FADD;
+  assert((IsFadd || N->getOpcode() == ISD::FSUB) && "Wrong opcode");
 
-  // Try to synthesize horizontal adds from adds of shuffles.
+  // Try to synthesize horizontal add/sub from adds/subs of shuffles.
   if (((Subtarget.hasSSE3() && (VT == MVT::v4f32 || VT == MVT::v2f64)) ||
        (Subtarget.hasFp256() && (VT == MVT::v8f32 || VT == MVT::v4f64))) &&
-      isHorizontalBinOp(LHS, RHS, true))
-    return DAG.getNode(X86ISD::FHADD, SDLoc(N), VT, LHS, RHS);
-  return SDValue();
-}
-
-/// Do target-specific dag combines on floating point subs.
-static SDValue PerformFSUBCombine(SDNode *N, SelectionDAG &DAG,
-                                  const X86Subtarget &Subtarget) {
-  EVT VT = N->getValueType(0);
-  SDValue LHS = N->getOperand(0);
-  SDValue RHS = N->getOperand(1);
-
-  // Try to synthesize horizontal subs from subs of shuffles.
-  if (((Subtarget.hasSSE3() && (VT == MVT::v4f32 || VT == MVT::v2f64)) ||
-       (Subtarget.hasFp256() && (VT == MVT::v8f32 || VT == MVT::v4f64))) &&
-      isHorizontalBinOp(LHS, RHS, false))
-    return DAG.getNode(X86ISD::FHSUB, SDLoc(N), VT, LHS, RHS);
+      isHorizontalBinOp(LHS, RHS, IsFadd)) {
+    auto NewOpcode = IsFadd ? X86ISD::FHADD : X86ISD::FHSUB;
+    return DAG.getNode(NewOpcode, SDLoc(N), VT, LHS, RHS);
+  }
   return SDValue();
 }
 
@@ -28901,8 +28890,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::MSTORE:         return PerformMSTORECombine(N, DAG, Subtarget);
   case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, Subtarget);
   case ISD::UINT_TO_FP:     return PerformUINT_TO_FPCombine(N, DAG, Subtarget);
-  case ISD::FADD:           return PerformFADDCombine(N, DAG, Subtarget);
-  case ISD::FSUB:           return PerformFSUBCombine(N, DAG, Subtarget);
+  case ISD::FADD:
+  case ISD::FSUB:           return performFaddFsubCombine(N, DAG, Subtarget);
   case ISD::FNEG:           return PerformFNEGCombine(N, DAG, Subtarget);
   case ISD::TRUNCATE:       return PerformTRUNCATECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
