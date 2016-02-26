@@ -980,8 +980,8 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 
   // Check the access function.
   if (auto MemInst = MemAccInst::dyn_cast(Inst)) {
-    Context.hasStores |= MemInst.isLoad();
-    Context.hasLoads |= MemInst.isStore();
+    Context.hasStores |= MemInst.isStore();
+    Context.hasLoads |= MemInst.isLoad();
     if (!MemInst.isSimple())
       return invalid<ReportNonSimpleMemoryAccess>(Context, /*Assert=*/true,
                                                   &Inst);
