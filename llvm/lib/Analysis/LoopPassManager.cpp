@@ -11,8 +11,6 @@
 
 using namespace llvm;
 
-char LoopAnalysisManagerFunctionProxy::PassID;
-
 LoopAnalysisManagerFunctionProxy::Result
 LoopAnalysisManagerFunctionProxy::run(Function &F) {
   // TODO: In FunctionAnalysisManagerModuleProxy we assert that the
@@ -41,5 +39,3 @@ bool LoopAnalysisManagerFunctionProxy::Result::invalidate(
   // Return false to indicate that this result is still a valid proxy.
   return false;
 }
-
-char FunctionAnalysisManagerLoopProxy::PassID;

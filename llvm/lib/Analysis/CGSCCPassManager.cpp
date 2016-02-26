@@ -13,8 +13,6 @@
 
 using namespace llvm;
 
-char CGSCCAnalysisManagerModuleProxy::PassID;
-
 CGSCCAnalysisManagerModuleProxy::Result
 CGSCCAnalysisManagerModuleProxy::run(Module &M) {
   assert(CGAM->empty() && "CGSCC analyses ran prior to the module proxy!");
@@ -44,10 +42,6 @@ bool CGSCCAnalysisManagerModuleProxy::Result::invalidate(
   return false;
 }
 
-char ModuleAnalysisManagerCGSCCProxy::PassID;
-
-char FunctionAnalysisManagerCGSCCProxy::PassID;
-
 FunctionAnalysisManagerCGSCCProxy::Result
 FunctionAnalysisManagerCGSCCProxy::run(LazyCallGraph::SCC &C) {
   return Result(*FAM);
@@ -75,5 +69,3 @@ bool FunctionAnalysisManagerCGSCCProxy::Result::invalidate(
   // Return false to indicate that this result is still a valid proxy.
   return false;
 }
-
-char CGSCCAnalysisManagerFunctionProxy::PassID;

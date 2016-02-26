@@ -167,6 +167,33 @@ private:
 // Forward declare the analysis manager template.
 template <typename IRUnitT> class AnalysisManager;
 
+/// A CRTP mix-in base class to help define types that are valid passes.
+///
+/// This provides some boiler plate for types that are passes.
+template <typename DerivedT> struct PassBase {
+  /// Returns the name of the derived pass type.
+  static StringRef name() {
+    StringRef Name = getTypeName<DerivedT>();
+    if (Name.startswith("llvm::"))
+      Name = Name.drop_front(strlen("llvm::"));
+    return Name;
+  }
+};
+
+/// A CRTP mix-in base class to help define types that are valid analyses.
+///
+/// This provides some boiler plate for types that are analysis passes.
+template <typename DerivedT> class AnalysisBase : public PassBase<DerivedT> {
+  static char PassID;
+
+public:
+  /// Returns an opaque, unique ID for this pass type.
+  static void *ID() { return (void *)&PassID; }
+};
+
+/// Private static data to provide unique ID.
+template <typename DerivedT> char AnalysisBase<DerivedT>::PassID;
+
 /// \brief Manages a sequence of passes over units of IR.
 ///
 /// A pass manager contains a sequence of passes to run over units of IR. It is
@@ -178,7 +205,8 @@ template <typename IRUnitT> class AnalysisManager;
 /// that analysis manager to each pass it runs, as well as calling the analysis
 /// manager's invalidation routine with the PreservedAnalyses of each pass it
 /// runs.
-template <typename IRUnitT> class PassManager {
+template <typename IRUnitT>
+class PassManager : public PassBase<PassManager<IRUnitT>> {
 public:
   /// \brief Construct a pass manager.
   ///
@@ -623,13 +651,10 @@ typedef AnalysisManager<Function> FunctionAnalysisManager;
 /// Note that the proxy's result is a move-only object and represents ownership
 /// of the validity of the analyses in the \c FunctionAnalysisManager it
 /// provides.
-class FunctionAnalysisManagerModuleProxy {
+class FunctionAnalysisManagerModuleProxy
+    : public AnalysisBase<FunctionAnalysisManagerModuleProxy> {
 public:
   class Result;
-
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "FunctionAnalysisManagerModuleProxy"; }
 
   explicit FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM)
       : FAM(&FAM) {}
@@ -658,8 +683,6 @@ public:
   Result run(Module &M);
 
 private:
-  static char PassID;
-
   FunctionAnalysisManager *FAM;
 };
 
@@ -717,7 +740,8 @@ private:
 /// This proxy *doesn't* manage the invalidation in any way. That is handled by
 /// the recursive return path of each layer of the pass manager and the
 /// returned PreservedAnalysis set.
-class ModuleAnalysisManagerFunctionProxy {
+class ModuleAnalysisManagerFunctionProxy
+    : public AnalysisBase<ModuleAnalysisManagerFunctionProxy> {
 public:
   /// \brief Result proxy object for \c ModuleAnalysisManagerFunctionProxy.
   class Result {
@@ -741,10 +765,6 @@ public:
     const ModuleAnalysisManager *MAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "ModuleAnalysisManagerFunctionProxy"; }
-
   ModuleAnalysisManagerFunctionProxy(const ModuleAnalysisManager &MAM)
       : MAM(&MAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -766,8 +786,6 @@ public:
   Result run(Function &) { return Result(*MAM); }
 
 private:
-  static char PassID;
-
   const ModuleAnalysisManager *MAM;
 };
 
@@ -793,7 +811,9 @@ private:
 /// module.
 /// FIXME: Make the above true for all of LLVM's actual passes, some still
 /// violate this principle.
-template <typename FunctionPassT> class ModuleToFunctionPassAdaptor {
+template <typename FunctionPassT>
+class ModuleToFunctionPassAdaptor
+    : public PassBase<ModuleToFunctionPassAdaptor<FunctionPassT>> {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}
@@ -848,8 +868,6 @@ public:
     return PA;
   }
 
-  static StringRef name() { return "ModuleToFunctionPassAdaptor"; }
-
 private:
   FunctionPassT Pass;
 };
@@ -866,7 +884,8 @@ createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
 ///
 /// This is a no-op pass which simply forces a specific analysis pass's result
 /// to be available when it is run.
-template <typename AnalysisT> struct RequireAnalysisPass {
+template <typename AnalysisT>
+struct RequireAnalysisPass : PassBase<RequireAnalysisPass<AnalysisT>> {
   /// \brief Run this pass over some unit of IR.
   ///
   /// This pass can be run over any unit of IR and use any analysis manager
@@ -880,8 +899,6 @@ template <typename AnalysisT> struct RequireAnalysisPass {
 
     return PreservedAnalyses::all();
   }
-
-  static StringRef name() { return "RequireAnalysisPass"; }
 };
 
 /// \brief A template utility pass to force an analysis result to be
@@ -889,7 +906,8 @@ template <typename AnalysisT> struct RequireAnalysisPass {
 ///
 /// This is a no-op pass which simply forces a specific analysis result to be
 /// invalidated when it is run.
-template <typename AnalysisT> struct InvalidateAnalysisPass {
+template <typename AnalysisT>
+struct InvalidateAnalysisPass : PassBase<InvalidateAnalysisPass<AnalysisT>> {
   /// \brief Run this pass over some unit of IR.
   ///
   /// This pass can be run over any unit of IR and use any analysis manager
@@ -905,21 +923,17 @@ template <typename AnalysisT> struct InvalidateAnalysisPass {
 
     return PreservedAnalyses::all();
   }
-
-  static StringRef name() { return "InvalidateAnalysisPass"; }
 };
 
 /// \brief A utility pass that does nothing but preserves no analyses.
 ///
 /// As a consequence fo not preserving any analyses, this pass will force all
 /// analysis passes to be re-run to produce fresh results if any are needed.
-struct InvalidateAllAnalysesPass {
+struct InvalidateAllAnalysesPass : PassBase<InvalidateAllAnalysesPass> {
   /// \brief Run this pass over some unit of IR.
   template <typename IRUnitT> PreservedAnalyses run(IRUnitT &Arg) {
     return PreservedAnalyses::none();
   }
-
-  static StringRef name() { return "InvalidateAllAnalysesPass"; }
 };
 
 }

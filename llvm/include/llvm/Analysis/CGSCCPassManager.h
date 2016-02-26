@@ -52,7 +52,8 @@ typedef AnalysisManager<LazyCallGraph::SCC> CGSCCAnalysisManager;
 ///
 /// Note that the proxy's result is a move-only object and represents ownership
 /// of the validity of the analyses in the \c CGSCCAnalysisManager it provides.
-class CGSCCAnalysisManagerModuleProxy {
+class CGSCCAnalysisManagerModuleProxy
+    : public AnalysisBase<CGSCCAnalysisManagerModuleProxy> {
 public:
   class Result {
   public:
@@ -92,10 +93,6 @@ public:
     CGSCCAnalysisManager *CGAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "CGSCCAnalysisManagerModuleProxy"; }
-
   explicit CGSCCAnalysisManagerModuleProxy(CGSCCAnalysisManager &CGAM)
       : CGAM(&CGAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -122,8 +119,6 @@ public:
   Result run(Module &M);
 
 private:
-  static char PassID;
-
   CGSCCAnalysisManager *CGAM;
 };
 
@@ -139,7 +134,8 @@ private:
 /// This proxy *doesn't* manage the invalidation in any way. That is handled by
 /// the recursive return path of each layer of the pass manager and the
 /// returned PreservedAnalysis set.
-class ModuleAnalysisManagerCGSCCProxy {
+class ModuleAnalysisManagerCGSCCProxy
+    : public AnalysisBase<ModuleAnalysisManagerCGSCCProxy> {
 public:
   /// \brief Result proxy object for \c ModuleAnalysisManagerCGSCCProxy.
   class Result {
@@ -163,10 +159,6 @@ public:
     const ModuleAnalysisManager *MAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "ModuleAnalysisManagerCGSCCProxy"; }
-
   ModuleAnalysisManagerCGSCCProxy(const ModuleAnalysisManager &MAM)
       : MAM(&MAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -187,8 +179,6 @@ public:
   Result run(LazyCallGraph::SCC &) { return Result(*MAM); }
 
 private:
-  static char PassID;
-
   const ModuleAnalysisManager *MAM;
 };
 
@@ -201,7 +191,9 @@ private:
 /// \c CGSCCAnalysisManagerModuleProxy analysis prior to running the CGSCC
 /// pass over the module to enable a \c FunctionAnalysisManager to be used
 /// within this run safely.
-template <typename CGSCCPassT> class ModuleToPostOrderCGSCCPassAdaptor {
+template <typename CGSCCPassT>
+class ModuleToPostOrderCGSCCPassAdaptor
+    : public PassBase<ModuleToPostOrderCGSCCPassAdaptor<CGSCCPassT>> {
 public:
   explicit ModuleToPostOrderCGSCCPassAdaptor(CGSCCPassT Pass)
       : Pass(std::move(Pass)) {}
@@ -262,8 +254,6 @@ public:
     return PA;
   }
 
-  static StringRef name() { return "ModuleToPostOrderCGSCCPassAdaptor"; }
-
 private:
   CGSCCPassT Pass;
 };
@@ -288,7 +278,8 @@ createModuleToPostOrderCGSCCPassAdaptor(CGSCCPassT Pass) {
 /// Note that the proxy's result is a move-only object and represents ownership
 /// of the validity of the analyses in the \c FunctionAnalysisManager it
 /// provides.
-class FunctionAnalysisManagerCGSCCProxy {
+class FunctionAnalysisManagerCGSCCProxy
+    : public AnalysisBase<FunctionAnalysisManagerCGSCCProxy> {
 public:
   class Result {
   public:
@@ -328,10 +319,6 @@ public:
     FunctionAnalysisManager *FAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "FunctionAnalysisManagerCGSCCProxy"; }
-
   explicit FunctionAnalysisManagerCGSCCProxy(FunctionAnalysisManager &FAM)
       : FAM(&FAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -359,8 +346,6 @@ public:
   Result run(LazyCallGraph::SCC &C);
 
 private:
-  static char PassID;
-
   FunctionAnalysisManager *FAM;
 };
 
@@ -376,7 +361,8 @@ private:
 /// This proxy *doesn't* manage the invalidation in any way. That is handled by
 /// the recursive return path of each layer of the pass manager and the
 /// returned PreservedAnalysis set.
-class CGSCCAnalysisManagerFunctionProxy {
+class CGSCCAnalysisManagerFunctionProxy
+    : public AnalysisBase<CGSCCAnalysisManagerFunctionProxy> {
 public:
   /// \brief Result proxy object for \c CGSCCAnalysisManagerFunctionProxy.
   class Result {
@@ -400,10 +386,6 @@ public:
     const CGSCCAnalysisManager *CGAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "CGSCCAnalysisManagerFunctionProxy"; }
-
   CGSCCAnalysisManagerFunctionProxy(const CGSCCAnalysisManager &CGAM)
       : CGAM(&CGAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -425,8 +407,6 @@ public:
   Result run(Function &) { return Result(*CGAM); }
 
 private:
-  static char PassID;
-
   const CGSCCAnalysisManager *CGAM;
 };
 
@@ -438,7 +418,9 @@ private:
 /// \c FunctionAnalysisManagerCGSCCProxy analysis prior to running the function
 /// pass over the SCC to enable a \c FunctionAnalysisManager to be used
 /// within this run safely.
-template <typename FunctionPassT> class CGSCCToFunctionPassAdaptor {
+template <typename FunctionPassT>
+class CGSCCToFunctionPassAdaptor
+    : public PassBase<CGSCCToFunctionPassAdaptor<FunctionPassT>> {
 public:
   explicit CGSCCToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}
@@ -491,8 +473,6 @@ public:
     PA.preserve<FunctionAnalysisManagerCGSCCProxy>();
     return PA;
   }
-
-  static StringRef name() { return "CGSCCToFunctionPassAdaptor"; }
 
 private:
   FunctionPassT Pass;

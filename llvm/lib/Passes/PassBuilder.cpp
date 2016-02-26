@@ -61,16 +61,11 @@ struct NoOpModulePass {
 };
 
 /// \brief No-op module analysis.
-struct NoOpModuleAnalysis {
+struct NoOpModuleAnalysis : AnalysisBase<NoOpModuleAnalysis> {
   struct Result {};
   Result run(Module &) { return Result(); }
   static StringRef name() { return "NoOpModuleAnalysis"; }
-  static void *ID() { return (void *)&PassID; }
-private:
-  static char PassID;
 };
-
-char NoOpModuleAnalysis::PassID;
 
 /// \brief No-op CGSCC pass which does nothing.
 struct NoOpCGSCCPass {
@@ -81,16 +76,11 @@ struct NoOpCGSCCPass {
 };
 
 /// \brief No-op CGSCC analysis.
-struct NoOpCGSCCAnalysis {
+struct NoOpCGSCCAnalysis : AnalysisBase<NoOpCGSCCAnalysis> {
   struct Result {};
   Result run(LazyCallGraph::SCC &) { return Result(); }
   static StringRef name() { return "NoOpCGSCCAnalysis"; }
-  static void *ID() { return (void *)&PassID; }
-private:
-  static char PassID;
 };
-
-char NoOpCGSCCAnalysis::PassID;
 
 /// \brief No-op function pass which does nothing.
 struct NoOpFunctionPass {
@@ -99,16 +89,11 @@ struct NoOpFunctionPass {
 };
 
 /// \brief No-op function analysis.
-struct NoOpFunctionAnalysis {
+struct NoOpFunctionAnalysis : AnalysisBase<NoOpFunctionAnalysis> {
   struct Result {};
   Result run(Function &) { return Result(); }
   static StringRef name() { return "NoOpFunctionAnalysis"; }
-  static void *ID() { return (void *)&PassID; }
-private:
-  static char PassID;
 };
-
-char NoOpFunctionAnalysis::PassID;
 
 /// \brief No-op loop pass which does nothing.
 struct NoOpLoopPass {
@@ -117,16 +102,11 @@ struct NoOpLoopPass {
 };
 
 /// \brief No-op loop analysis.
-struct NoOpLoopAnalysis {
+struct NoOpLoopAnalysis : AnalysisBase<NoOpLoopAnalysis> {
   struct Result {};
   Result run(Loop &) { return Result(); }
   static StringRef name() { return "NoOpLoopAnalysis"; }
-  static void *ID() { return (void *)&PassID; }
-private:
-  static char PassID;
 };
-
-char NoOpLoopAnalysis::PassID;
 
 } // End anonymous namespace.
 

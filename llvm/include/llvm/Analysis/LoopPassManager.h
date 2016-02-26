@@ -44,7 +44,8 @@ typedef AnalysisManager<Loop> LoopAnalysisManager;
 /// never use a loop analysis manager from within (transitively) a function
 /// pass manager unless your parent function pass has received a proxy result
 /// object for it.
-class LoopAnalysisManagerFunctionProxy {
+class LoopAnalysisManagerFunctionProxy
+    : public AnalysisBase<LoopAnalysisManagerFunctionProxy> {
 public:
   class Result {
   public:
@@ -77,10 +78,6 @@ public:
     LoopAnalysisManager *LAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "LoopAnalysisManagerFunctionProxy"; }
-
   explicit LoopAnalysisManagerFunctionProxy(LoopAnalysisManager &LAM)
       : LAM(&LAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -107,8 +104,6 @@ public:
   Result run(Function &F);
 
 private:
-  static char PassID;
-
   LoopAnalysisManager *LAM;
 };
 
@@ -124,7 +119,8 @@ private:
 /// This proxy *doesn't* manage the invalidation in any way. That is handled by
 /// the recursive return path of each layer of the pass manager and the
 /// returned PreservedAnalysis set.
-class FunctionAnalysisManagerLoopProxy {
+class FunctionAnalysisManagerLoopProxy
+    : public AnalysisBase<FunctionAnalysisManagerLoopProxy> {
 public:
   /// \brief Result proxy object for \c FunctionAnalysisManagerLoopProxy.
   class Result {
@@ -148,10 +144,6 @@ public:
     const FunctionAnalysisManager *FAM;
   };
 
-  static void *ID() { return (void *)&PassID; }
-
-  static StringRef name() { return "FunctionAnalysisManagerLoopProxy"; }
-
   FunctionAnalysisManagerLoopProxy(const FunctionAnalysisManager &FAM)
       : FAM(&FAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -172,8 +164,6 @@ public:
   Result run(Loop &) { return Result(*FAM); }
 
 private:
-  static char PassID;
-
   const FunctionAnalysisManager *FAM;
 };
 
@@ -184,7 +174,9 @@ private:
 /// FunctionAnalysisManager it will run the \c LoopAnalysisManagerFunctionProxy
 /// analysis prior to running the loop passes over the function to enable a \c
 /// LoopAnalysisManager to be used within this run safely.
-template <typename LoopPassT> class FunctionToLoopPassAdaptor {
+template <typename LoopPassT>
+class FunctionToLoopPassAdaptor
+    : public PassBase<FunctionToLoopPassAdaptor<LoopPassT>> {
 public:
   explicit FunctionToLoopPassAdaptor(LoopPassT Pass)
       : Pass(std::move(Pass)) {}
@@ -249,8 +241,6 @@ public:
     PA.preserve<LoopAnalysisManagerFunctionProxy>();
     return PA;
   }
-
-  static StringRef name() { return "FunctionToLoopPassAdaptor"; }
 
 private:
   LoopPassT Pass;

@@ -13,8 +13,6 @@
 
 using namespace llvm;
 
-char FunctionAnalysisManagerModuleProxy::PassID;
-
 FunctionAnalysisManagerModuleProxy::Result
 FunctionAnalysisManagerModuleProxy::run(Module &M) {
   assert(FAM->empty() && "Function analyses ran prior to the module proxy!");
@@ -43,5 +41,3 @@ bool FunctionAnalysisManagerModuleProxy::Result::invalidate(
   // Return false to indicate that this result is still a valid proxy.
   return false;
 }
-
-char ModuleAnalysisManagerFunctionProxy::PassID;
