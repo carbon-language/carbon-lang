@@ -357,7 +357,7 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
       --I2;
     }
     // I1, I2==first (untested) non-DBGs preceding known match
-    if (!I1->isIdenticalTo(I2) ||
+    if (!I1->isIdenticalTo(*I2) ||
         // FIXME: This check is dubious. It's used to get around a problem where
         // people incorrectly expect inline asm directives to remain in the same
         // relative order. This is untenable because normal compiler
@@ -777,7 +777,7 @@ removeMMOsFromMemoryOperations(MachineBasicBlock::iterator MBBIStartPos,
 
     assert(MBBICommon != MBBIECommon &&
            "Reached BB end within common tail length!");
-    assert(MBBICommon->isIdenticalTo(&*MBBI) && "Expected matching MIIs!");
+    assert(MBBICommon->isIdenticalTo(*MBBI) && "Expected matching MIIs!");
 
     if (MBBICommon->mayLoad() || MBBICommon->mayStore())
       MBBICommon->setMemRefs(MBBICommon->mergeMemRefsWith(*MBBI));
@@ -1275,7 +1275,7 @@ ReoptimizeBlock:
         // DBG_VALUE at the beginning of MBB.
         while (PrevBBIter != PrevBB.begin() && MBBIter != MBB->end()
                && PrevBBIter->isDebugValue() && MBBIter->isDebugValue()) {
-          if (!MBBIter->isIdenticalTo(PrevBBIter))
+          if (!MBBIter->isIdenticalTo(*PrevBBIter))
             break;
           MachineInstr *DuplicateDbg = MBBIter;
           ++MBBIter; -- PrevBBIter;
@@ -1762,7 +1762,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       if (FIB == FIE)
         break;
     }
-    if (!TIB->isIdenticalTo(FIB, MachineInstr::CheckKillDead))
+    if (!TIB->isIdenticalTo(*FIB, MachineInstr::CheckKillDead))
       break;
 
     if (TII->isPredicated(*TIB))

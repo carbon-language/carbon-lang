@@ -580,7 +580,7 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
       if (FIB == FIE)
         break;
     }
-    if (!TIB->isIdenticalTo(FIB))
+    if (!TIB->isIdenticalTo(*FIB))
       break;
     ++Dups1;
     ++TIB;
@@ -624,7 +624,7 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
       if (FIE == FIB)
         break;
     }
-    if (!TIE->isIdenticalTo(FIE))
+    if (!TIE->isIdenticalTo(*FIE))
       break;
     ++Dups2;
     --TIE;

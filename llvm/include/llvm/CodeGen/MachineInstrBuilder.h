@@ -230,7 +230,7 @@ public:
 
   /// Copy all the implicit operands from OtherMI onto this one.
   const MachineInstrBuilder &
-  copyImplicitOps(const MachineInstr *OtherMI) const {
+  copyImplicitOps(const MachineInstr &OtherMI) const {
     MI->copyImplicitOps(*MF, OtherMI);
     return *this;
   }
