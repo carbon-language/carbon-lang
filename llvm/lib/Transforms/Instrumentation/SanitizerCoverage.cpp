@@ -294,18 +294,20 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
       new GlobalVariable(M, ModNameStrConst->getType(), true,
                          GlobalValue::PrivateLinkage, ModNameStrConst);
 
-  Function *CtorFunc;
-  std::tie(CtorFunc, std::ignore) = createSanitizerCtorAndInitFunctions(
-      M, kSanCovModuleCtorName, kSanCovModuleInitName,
-      {Int32PtrTy, IntptrTy, Int8PtrTy, Int8PtrTy},
-      {IRB.CreatePointerCast(RealGuardArray, Int32PtrTy),
-       ConstantInt::get(IntptrTy, N),
-       Options.Use8bitCounters
-           ? IRB.CreatePointerCast(RealEightBitCounterArray, Int8PtrTy)
-           : Constant::getNullValue(Int8PtrTy),
-       IRB.CreatePointerCast(ModuleName, Int8PtrTy)});
+  if (!Options.TracePC) {
+    Function *CtorFunc;
+    std::tie(CtorFunc, std::ignore) = createSanitizerCtorAndInitFunctions(
+        M, kSanCovModuleCtorName, kSanCovModuleInitName,
+        {Int32PtrTy, IntptrTy, Int8PtrTy, Int8PtrTy},
+        {IRB.CreatePointerCast(RealGuardArray, Int32PtrTy),
+          ConstantInt::get(IntptrTy, N),
+          Options.Use8bitCounters
+              ? IRB.CreatePointerCast(RealEightBitCounterArray, Int8PtrTy)
+              : Constant::getNullValue(Int8PtrTy),
+          IRB.CreatePointerCast(ModuleName, Int8PtrTy)});
 
-  appendToGlobalCtors(M, CtorFunc, kSanCtorAndDtorPriority);
+    appendToGlobalCtors(M, CtorFunc, kSanCtorAndDtorPriority);
+  }
 
   return true;
 }
