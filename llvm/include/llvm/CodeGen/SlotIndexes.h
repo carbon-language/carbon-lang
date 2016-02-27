@@ -455,7 +455,7 @@ namespace llvm {
         if (I == B)
           return getMBBStartIdx(MBB);
         --I;
-        Mi2IndexMap::const_iterator MapItr = mi2iMap.find(I);
+        Mi2IndexMap::const_iterator MapItr = mi2iMap.find(&*I);
         if (MapItr != mi2iMap.end())
           return MapItr->second;
       }
@@ -472,7 +472,7 @@ namespace llvm {
         ++I;
         if (I == E)
           return getMBBEndIdx(MBB);
-        Mi2IndexMap::const_iterator MapItr = mi2iMap.find(I);
+        Mi2IndexMap::const_iterator MapItr = mi2iMap.find(&*I);
         if (MapItr != mi2iMap.end())
           return MapItr->second;
       }
