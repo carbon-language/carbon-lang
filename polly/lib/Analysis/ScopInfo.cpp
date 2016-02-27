@@ -2240,13 +2240,8 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
       continue;
 
     isl_set *Domain = DomainMap.lookup(BB);
-    if (!Domain) {
-      DEBUG(dbgs() << "\tSkip: " << BB->getName()
-                   << ", it is only reachable from error blocks.\n");
+    if (!Domain)
       continue;
-    }
-
-    DEBUG(dbgs() << "\tVisit: " << BB->getName() << " : " << Domain << "\n");
 
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     int BBLoopDepth = getRelativeLoopDepth(BBLoop);
@@ -2321,8 +2316,6 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
         SuccDomain = Empty;
         invalidate(ERROR_DOMAINCONJUNCTS, DebugLoc());
       }
-      DEBUG(dbgs() << "\tSet SuccBB: " << SuccBB->getName() << " : "
-                   << SuccDomain << "\n");
     }
   }
 }
@@ -2382,12 +2375,9 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
     isl_set *&Domain = DomainMap[BB];
     if (!Domain) {
-      DEBUG(dbgs() << "\tSkip: " << BB->getName()
-                   << ", it is only reachable from error blocks.\n");
       DomainMap.erase(BB);
       continue;
     }
-    DEBUG(dbgs() << "\tVisit: " << BB->getName() << " : " << Domain << "\n");
 
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     int BBLoopDepth = getRelativeLoopDepth(BBLoop);
