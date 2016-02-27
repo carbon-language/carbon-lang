@@ -149,10 +149,16 @@ def FeatureCIInsts : SubtargetFeature<"ci-insts",
   "Additional intstructions for CI+"
 >;
 
-def FeatureVIInsts : SubtargetFeature<"vi-insts",
-  "VIInsts",
+def FeatureSMemRealTime : SubtargetFeature<"s-memrealtime",
+  "HasSMemRealTime",
   "true",
-  "Additional intstructions for VI+"
+  "Has s_memrealtime instruction"
+>;
+
+def Feature16BitInsts : SubtargetFeature<"16-bit-insts",
+  "Has16BitInsts",
+  "true",
+  "Has i16/f16 instructions"
 >;
 
 //===------------------------------------------------------------===//
@@ -314,7 +320,9 @@ def FeatureSeaIslands : SubtargetFeatureGeneration<"SEA_ISLANDS",
 def FeatureVolcanicIslands : SubtargetFeatureGeneration<"VOLCANIC_ISLANDS",
   [FeatureFP64, FeatureLocalMemorySize65536,
    FeatureWavefrontSize64, FeatureFlatAddressSpace, FeatureGCN,
-   FeatureGCN3Encoding, FeatureCIInsts, FeatureVIInsts]
+   FeatureGCN3Encoding, FeatureCIInsts, Feature16BitInsts,
+   FeatureSMemRealTime
+  ]
 >;
 
 //===----------------------------------------------------------------------===//

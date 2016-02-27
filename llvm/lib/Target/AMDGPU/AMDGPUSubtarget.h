@@ -88,7 +88,8 @@ private:
   bool GCN1Encoding;
   bool GCN3Encoding;
   bool CIInsts;
-  bool VIInsts;
+  bool HasSMemRealTime;
+  bool Has16BitInsts;
   bool FeatureDisable;
   int LDSBankCount;
   unsigned IsaVersion;
@@ -167,6 +168,14 @@ public:
 
   bool hasFlatAddressSpace() const {
     return FlatAddressSpace;
+  }
+
+  bool hasSMemRealTime() const {
+    return HasSMemRealTime;
+  }
+
+  bool has16BitInsts() const {
+    return Has16BitInsts;
   }
 
   bool useFlatForGlobal() const {
