@@ -169,7 +169,7 @@ private:
   void eliminateRedundantSpills(LiveInterval &LI, VNInfo *VNI);
 
   void markValueUsed(LiveInterval*, VNInfo*);
-  bool reMaterializeFor(LiveInterval&, MachineBasicBlock::iterator MI);
+  bool reMaterializeFor(LiveInterval &, MachineInstr &MI);
   void reMaterializeAll();
 
   bool coalesceStackAccess(MachineInstr *MI, unsigned Reg);
@@ -849,32 +849,31 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
 }
 
 /// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
-bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
-                                     MachineBasicBlock::iterator MI) {
+bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg, MachineInstr &MI) {
 
   // Analyze instruction
   SmallVector<std::pair<MachineInstr *, unsigned>, 8> Ops;
   MIBundleOperands::VirtRegInfo RI =
-      MIBundleOperands(*MI).analyzeVirtReg(VirtReg.reg, &Ops);
+      MIBundleOperands(MI).analyzeVirtReg(VirtReg.reg, &Ops);
 
   if (!RI.Reads)
     return false;
 
-  SlotIndex UseIdx = LIS.getInstructionIndex(*MI).getRegSlot(true);
+  SlotIndex UseIdx = LIS.getInstructionIndex(MI).getRegSlot(true);
   VNInfo *ParentVNI = VirtReg.getVNInfoAt(UseIdx.getBaseIndex());
 
   if (!ParentVNI) {
     DEBUG(dbgs() << "\tadding <undef> flags: ");
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
+    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI.getOperand(i);
       if (MO.isReg() && MO.isUse() && MO.getReg() == VirtReg.reg)
         MO.setIsUndef();
     }
-    DEBUG(dbgs() << UseIdx << '\t' << *MI);
+    DEBUG(dbgs() << UseIdx << '\t' << MI);
     return true;
   }
 
-  if (SnippetCopies.count(MI))
+  if (SnippetCopies.count(&MI))
     return false;
 
   // Use an OrigVNI from traceSiblingValue when ParentVNI is a sibling copy.
@@ -884,7 +883,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
     RM.OrigMI = SibI->second.DefMI;
   if (!Edit->canRematerializeAt(RM, UseIdx, false)) {
     markValueUsed(&VirtReg, ParentVNI);
-    DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
+    DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << MI);
     return false;
   }
 
@@ -892,7 +891,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   // same register for uses and defs.
   if (RI.Tied) {
     markValueUsed(&VirtReg, ParentVNI);
-    DEBUG(dbgs() << "\tcannot remat tied reg: " << UseIdx << '\t' << *MI);
+    DEBUG(dbgs() << "\tcannot remat tied reg: " << UseIdx << '\t' << MI);
     return false;
   }
 
@@ -909,8 +908,8 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   unsigned NewVReg = Edit->createFrom(Original);
 
   // Finally we can rematerialize OrigMI before MI.
-  SlotIndex DefIdx = Edit->rematerializeAt(*MI->getParent(), MI, NewVReg, RM,
-                                           TRI);
+  SlotIndex DefIdx =
+      Edit->rematerializeAt(*MI.getParent(), MI, NewVReg, RM, TRI);
   (void)DefIdx;
   DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t'
                << *LIS.getInstructionFromIndex(DefIdx));
@@ -923,7 +922,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
       MO.setIsKill();
     }
   }
-  DEBUG(dbgs() << "\t        " << UseIdx << '\t' << *MI << '\n');
+  DEBUG(dbgs() << "\t        " << UseIdx << '\t' << MI << '\n');
 
   ++NumRemats;
   return true;
@@ -945,10 +944,10 @@ void InlineSpiller::reMaterializeAll() {
     for (MachineRegisterInfo::reg_bundle_iterator
            RegI = MRI.reg_bundle_begin(Reg), E = MRI.reg_bundle_end();
          RegI != E; ) {
-      MachineInstr *MI = &*(RegI++);
+      MachineInstr &MI = *RegI++;
 
       // Debug values are not allowed to affect codegen.
-      if (MI->isDebugValue())
+      if (MI.isDebugValue())
         continue;
 
       anyRemat |= reMaterializeFor(LI, MI);
