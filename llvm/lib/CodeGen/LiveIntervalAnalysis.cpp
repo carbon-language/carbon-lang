@@ -236,7 +236,7 @@ void LiveIntervals::computeRegMasks() {
       for (const MachineOperand &MO : MI.operands()) {
         if (!MO.isRegMask())
           continue;
-        RegMaskSlots.push_back(Indexes->getInstructionIndex(&MI).getRegSlot());
+        RegMaskSlots.push_back(Indexes->getInstructionIndex(MI).getRegSlot());
         RegMaskBits.push_back(MO.getRegMask());
       }
     }
@@ -247,7 +247,7 @@ void LiveIntervals::computeRegMasks() {
     if (const uint32_t *Mask = MBB.getEndClobberMask(TRI)) {
       assert(!MBB.empty() && "empty return block?");
       RegMaskSlots.push_back(
-          Indexes->getInstructionIndex(&MBB.back()).getRegSlot());
+          Indexes->getInstructionIndex(MBB.back()).getRegSlot());
       RegMaskBits.push_back(Mask);
     }
 
@@ -443,7 +443,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     MachineInstr *UseMI = &*(I++);
     if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
       continue;
-    SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
+    SlotIndex Idx = getInstructionIndex(*UseMI).getRegSlot();
     LiveQueryResult LRQ = li->Query(Idx);
     VNInfo *VNI = LRQ.valueIn();
     if (!VNI) {
@@ -551,7 +551,7 @@ void LiveIntervals::shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg)
         continue;
     }
     // We only need to visit each instruction once.
-    SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
+    SlotIndex Idx = getInstructionIndex(*UseMI).getRegSlot();
     if (Idx == LastIdx)
       continue;
     LastIdx = Idx;
@@ -851,14 +851,13 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse,
 }
 
 LiveRange::Segment
-LiveIntervals::addSegmentToEndOfBlock(unsigned reg, MachineInstr* startInst) {
+LiveIntervals::addSegmentToEndOfBlock(unsigned reg, MachineInstr &startInst) {
   LiveInterval& Interval = createEmptyInterval(reg);
-  VNInfo* VN = Interval.getNextValue(
-    SlotIndex(getInstructionIndex(startInst).getRegSlot()),
-    getVNInfoAllocator());
-  LiveRange::Segment S(
-     SlotIndex(getInstructionIndex(startInst).getRegSlot()),
-     getMBBEndIdx(startInst->getParent()), VN);
+  VNInfo *VN = Interval.getNextValue(
+      SlotIndex(getInstructionIndex(startInst).getRegSlot()),
+      getVNInfoAllocator());
+  LiveRange::Segment S(SlotIndex(getInstructionIndex(startInst).getRegSlot()),
+                       getMBBEndIdx(startInst.getParent()), VN);
   Interval.addSegment(S);
 
   return S;
@@ -1348,7 +1347,7 @@ private:
             && (TRI.getSubRegIndexLaneMask(SubReg) & LaneMask) == 0)
           continue;
 
-        const MachineInstr *MI = MO.getParent();
+        const MachineInstr &MI = *MO.getParent();
         SlotIndex InstSlot = LIS.getSlotIndexes()->getInstructionIndex(MI);
         if (InstSlot > LastUse && InstSlot < OldIdx)
           LastUse = InstSlot.getRegSlot();
@@ -1374,7 +1373,7 @@ private:
     while (MII != Begin) {
       if ((--MII)->isDebugValue())
         continue;
-      SlotIndex Idx = Indexes->getInstructionIndex(MII);
+      SlotIndex Idx = Indexes->getInstructionIndex(*MII);
 
       // Stop searching when Before is reached.
       if (!SlotIndex::isEarlierInstr(Before, Idx))
@@ -1394,9 +1393,9 @@ private:
 
 void LiveIntervals::handleMove(MachineInstr* MI, bool UpdateFlags) {
   assert(!MI->isBundled() && "Can't handle bundled instructions yet.");
-  SlotIndex OldIndex = Indexes->getInstructionIndex(MI);
-  Indexes->removeMachineInstrFromMaps(MI);
-  SlotIndex NewIndex = Indexes->insertMachineInstrInMaps(MI);
+  SlotIndex OldIndex = Indexes->getInstructionIndex(*MI);
+  Indexes->removeMachineInstrFromMaps(*MI);
+  SlotIndex NewIndex = Indexes->insertMachineInstrInMaps(*MI);
   assert(getMBBStartIdx(MI->getParent()) <= OldIndex &&
          OldIndex < getMBBEndIdx(MI->getParent()) &&
          "Cannot handle moves across basic block boundaries.");
@@ -1408,8 +1407,8 @@ void LiveIntervals::handleMove(MachineInstr* MI, bool UpdateFlags) {
 void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI,
                                          MachineInstr* BundleStart,
                                          bool UpdateFlags) {
-  SlotIndex OldIndex = Indexes->getInstructionIndex(MI);
-  SlotIndex NewIndex = Indexes->getInstructionIndex(BundleStart);
+  SlotIndex OldIndex = Indexes->getInstructionIndex(*MI);
+  SlotIndex NewIndex = Indexes->getInstructionIndex(*BundleStart);
   HMEditor HME(*this, *MRI, *TRI, OldIndex, NewIndex, UpdateFlags);
   HME.updateAllRanges(MI);
 }
@@ -1432,7 +1431,7 @@ void LiveIntervals::repairOldRegInRange(const MachineBasicBlock::iterator Begin,
     if (MI->isDebugValue())
       continue;
 
-    SlotIndex instrIdx = getInstructionIndex(MI);
+    SlotIndex instrIdx = getInstructionIndex(*MI);
     bool isStartValid = getInstructionFromIndex(LII->start);
     bool isEndValid = getInstructionFromIndex(LII->end);
 
@@ -1509,18 +1508,18 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
                                       ArrayRef<unsigned> OrigRegs) {
   // Find anchor points, which are at the beginning/end of blocks or at
   // instructions that already have indexes.
-  while (Begin != MBB->begin() && !Indexes->hasIndex(Begin))
+  while (Begin != MBB->begin() && !Indexes->hasIndex(*Begin))
     --Begin;
-  while (End != MBB->end() && !Indexes->hasIndex(End))
+  while (End != MBB->end() && !Indexes->hasIndex(*End))
     ++End;
 
   SlotIndex endIdx;
   if (End == MBB->end())
     endIdx = getMBBEndIdx(MBB).getPrevSlot();
   else
-    endIdx = getInstructionIndex(End);
+    endIdx = getInstructionIndex(*End);
 
-  Indexes->repairIndexesInRange(MBB, Begin, End);
+  Indexes->repairIndexesInRange(MBB, *Begin, *End);
 
   for (MachineBasicBlock::iterator I = End; I != Begin;) {
     --I;
