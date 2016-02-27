@@ -1865,7 +1865,11 @@ public:
 
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
-    Builder.defineMacro("__R600__");
+    if (getTriple().getArch() == llvm::Triple::amdgcn)
+      Builder.defineMacro("__AMDGCN__");
+    else
+      Builder.defineMacro("__R600__");
+
     if (hasFMAF)
       Builder.defineMacro("__HAS_FMAF__");
     if (hasLDEXPF)
