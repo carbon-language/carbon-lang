@@ -1277,9 +1277,9 @@ ReoptimizeBlock:
                && PrevBBIter->isDebugValue() && MBBIter->isDebugValue()) {
           if (!MBBIter->isIdenticalTo(*PrevBBIter))
             break;
-          MachineInstr *DuplicateDbg = MBBIter;
+          MachineInstr &DuplicateDbg = *MBBIter;
           ++MBBIter; -- PrevBBIter;
-          DuplicateDbg->eraseFromParent();
+          DuplicateDbg.eraseFromParent();
         }
       }
       PrevBB.splice(PrevBB.end(), MBB, MBB->begin(), MBB->end());
