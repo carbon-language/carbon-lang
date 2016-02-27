@@ -855,7 +855,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   // Analyze instruction
   SmallVector<std::pair<MachineInstr *, unsigned>, 8> Ops;
   MIBundleOperands::VirtRegInfo RI =
-    MIBundleOperands(MI).analyzeVirtReg(VirtReg.reg, &Ops);
+      MIBundleOperands(*MI).analyzeVirtReg(VirtReg.reg, &Ops);
 
   if (!RI.Reads)
     return false;
@@ -1121,7 +1121,7 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
     return false;
 
   // Remove LIS for any dead defs in the original MI not in FoldMI.
-  for (MIBundleOperands MO(MI); MO.isValid(); ++MO) {
+  for (MIBundleOperands MO(*MI); MO.isValid(); ++MO) {
     if (!MO->isReg())
       continue;
     unsigned Reg = MO->getReg();
@@ -1133,7 +1133,7 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
     if (MO->isUse())
       continue;
     MIBundleOperands::PhysRegInfo RI =
-      MIBundleOperands(FoldMI).analyzePhysReg(Reg, &TRI);
+        MIBundleOperands(*FoldMI).analyzePhysReg(Reg, &TRI);
     if (RI.FullyDefined)
       continue;
     // FoldMI does not define this physreg. Remove the LI segment.
@@ -1248,7 +1248,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
     // Analyze instruction.
     SmallVector<std::pair<MachineInstr*, unsigned>, 8> Ops;
     MIBundleOperands::VirtRegInfo RI =
-      MIBundleOperands(MI).analyzeVirtReg(Reg, &Ops);
+        MIBundleOperands(*MI).analyzeVirtReg(Reg, &Ops);
 
     // Find the slot index where this instruction reads and writes OldLI.
     // This is usually the def slot, except for tied early clobbers.

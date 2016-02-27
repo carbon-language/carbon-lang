@@ -1049,7 +1049,7 @@ static void UpdatePredRedefs(MachineInstr &MI, LivePhysRegs &Redefs) {
  * Remove kill flags from operands with a registers in the @p DontKill set.
  */
 static void RemoveKills(MachineInstr &MI, const LivePhysRegs &DontKill) {
-  for (MIBundleOperands O(&MI); O.isValid(); ++O) {
+  for (MIBundleOperands O(MI); O.isValid(); ++O) {
     if (!O->isReg() || !O->isKill())
       continue;
     if (DontKill.contains(O->getReg()))

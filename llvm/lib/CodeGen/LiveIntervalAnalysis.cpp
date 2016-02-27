@@ -1044,7 +1044,7 @@ private:
       // Kill flags shouldn't be used while live intervals exist, they will be
       // reinserted by VirtRegRewriter.
       if (MachineInstr *KillMI = LIS.getInstructionFromIndex(OldIdxIn->end))
-        for (MIBundleOperands MO(KillMI); MO.isValid(); ++MO)
+        for (MIBundleOperands MO(*KillMI); MO.isValid(); ++MO)
           if (MO->isReg() && MO->isUse())
             MO->setIsKill(false);
 
@@ -1380,7 +1380,7 @@ private:
         return Before;
 
       // Check if MII uses Reg.
-      for (MIBundleOperands MO(MII); MO.isValid(); ++MO)
+      for (MIBundleOperands MO(*MII); MO.isValid(); ++MO)
         if (MO->isReg() &&
             TargetRegisterInfo::isPhysicalRegister(MO->getReg()) &&
             TRI.hasRegUnit(MO->getReg(), Reg))
