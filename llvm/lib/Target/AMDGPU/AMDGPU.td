@@ -149,6 +149,12 @@ def FeatureCIInsts : SubtargetFeature<"ci-insts",
   "Additional intstructions for CI+"
 >;
 
+def FeatureVIInsts : SubtargetFeature<"vi-insts",
+  "VIInsts",
+  "true",
+  "Additional intstructions for VI+"
+>;
+
 //===------------------------------------------------------------===//
 // Subtarget Features (options and debugging)
 //===------------------------------------------------------------===//
@@ -308,7 +314,7 @@ def FeatureSeaIslands : SubtargetFeatureGeneration<"SEA_ISLANDS",
 def FeatureVolcanicIslands : SubtargetFeatureGeneration<"VOLCANIC_ISLANDS",
   [FeatureFP64, FeatureLocalMemorySize65536,
    FeatureWavefrontSize64, FeatureFlatAddressSpace, FeatureGCN,
-   FeatureGCN3Encoding, FeatureCIInsts]
+   FeatureGCN3Encoding, FeatureCIInsts, FeatureVIInsts]
 >;
 
 //===----------------------------------------------------------------------===//

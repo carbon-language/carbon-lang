@@ -88,6 +88,7 @@ private:
   bool GCN1Encoding;
   bool GCN3Encoding;
   bool CIInsts;
+  bool VIInsts;
   bool FeatureDisable;
   int LDSBankCount;
   unsigned IsaVersion;

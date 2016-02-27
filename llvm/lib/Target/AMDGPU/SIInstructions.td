@@ -88,7 +88,15 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
   smrd<0x0c>, "s_buffer_load_dwordx16", SReg_128, SReg_512
 >;
 
-//def S_MEMTIME : SMRD_ <0x0000001e, "s_memtime", []>;
+let mayStore = ? in {
+// FIXME: mayStore = ? is a workaround for tablegen bug for different
+// inferred mayStore flags for the instruction pattern vs. standalone
+// Pat. Each considers the other contradictory.
+
+defm S_MEMTIME : SMRD_Special <smrd<0x1e, 0x24>, "s_memtime",
+  (outs SReg_64:$dst), " $dst", [(set i64:$dst, (int_amdgcn_s_memtime))]
+>;
+}
 
 defm S_DCACHE_INV : SMRD_Inval <smrd<0x1f, 0x20>, "s_dcache_inv",
   int_amdgcn_s_dcache_inv>;
@@ -3150,6 +3158,13 @@ defm : BFMPatterns <i32, S_BFM_B32, S_MOV_B32>;
 // FIXME: defm : BFMPatterns <i64, S_BFM_B64, S_MOV_B64>;
 
 def : BFEPattern <V_BFE_U32, S_MOV_B32>;
+
+let Predicates = [isSICI] in {
+def : Pat <
+  (i64 (readcyclecounter)),
+  (S_MEMTIME)
+>;
+}
 
 //===----------------------------------------------------------------------===//
 // Fract Patterns
