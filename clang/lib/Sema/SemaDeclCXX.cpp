@@ -7796,6 +7796,12 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
          I != E; ++I) {
     NamedDecl *D = (*I)->getUnderlyingDecl();
+    // We can have UsingDecls in our Previous results because we use the same
+    // LookupResult for checking whether the UsingDecl itself is a valid
+    // redeclaration.
+    if (isa<UsingDecl>(D))
+      continue;
+
     if (IsEquivalentForUsingDecl(Context, D, Target)) {
       if (UsingShadowDecl *Shadow = dyn_cast<UsingShadowDecl>(*I))
         PrevShadow = Shadow;
