@@ -15,6 +15,10 @@ using namespace llvm;
 
 // Explicit template instantiations for core template typedefs.
 namespace llvm {
+template class PassManager<Module>;
+template class PassManager<Function>;
+template class AnalysisManager<Module>;
+template class AnalysisManager<Function>;
 template class InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>;
 template class OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>;
 }

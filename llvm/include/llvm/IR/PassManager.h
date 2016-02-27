@@ -281,9 +281,11 @@ private:
   bool DebugLogging;
 };
 
+extern template class PassManager<Module>;
 /// \brief Convenience typedef for a pass manager over modules.
 typedef PassManager<Module> ModulePassManager;
 
+extern template class PassManager<Function>;
 /// \brief Convenience typedef for a pass manager over functions.
 typedef PassManager<Function> FunctionPassManager;
 
@@ -633,9 +635,11 @@ private:
   bool DebugLogging;
 };
 
+extern template class AnalysisManager<Module>;
 /// \brief Convenience typedef for the Module analysis manager.
 typedef AnalysisManager<Module> ModuleAnalysisManager;
 
+extern template class AnalysisManager<Function>;
 /// \brief Convenience typedef for the Function analysis manager.
 typedef AnalysisManager<Function> FunctionAnalysisManager;
 

@@ -21,6 +21,7 @@
 
 namespace llvm {
 
+extern template class PassManager<Loop>;
 /// \brief The loop pass manager.
 ///
 /// See the documentation for the PassManager template for details. It runs a
@@ -28,6 +29,7 @@ namespace llvm {
 /// typedef serves as a convenient way to refer to this construct.
 typedef PassManager<Loop> LoopPassManager;
 
+extern template class AnalysisManager<Loop>;
 /// \brief The loop analysis manager.
 ///
 /// See the documentation for the AnalysisManager template for detail

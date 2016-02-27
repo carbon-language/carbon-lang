@@ -26,6 +26,7 @@
 
 namespace llvm {
 
+extern template class PassManager<LazyCallGraph::SCC>;
 /// \brief The CGSCC pass manager.
 ///
 /// See the documentation for the PassManager template for details. It runs
@@ -33,6 +34,7 @@ namespace llvm {
 /// typedef serves as a convenient way to refer to this construct.
 typedef PassManager<LazyCallGraph::SCC> CGSCCPassManager;
 
+extern template class AnalysisManager<LazyCallGraph::SCC>;
 /// \brief The CGSCC analysis manager.
 ///
 /// See the documentation for the AnalysisManager template for detail
