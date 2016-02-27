@@ -616,9 +616,7 @@ void MemoryAccess::assumeNoOutOfBound() {
 }
 
 void MemoryAccess::buildMemIntrinsicAccessRelation() {
-  auto MAI = MemAccInst(getAccessInstruction());
-  (void)MAI;
-  assert(MAI.isMemIntrinsic());
+  assert(isa<MemIntrinsic>(getAccessInstruction()));
   assert(Subscripts.size() == 2 && Sizes.size() == 0);
 
   auto *SubscriptPWA = Statement->getPwAff(Subscripts[0]);
@@ -646,7 +644,7 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
   ScalarEvolution *SE = Statement->getParent()->getSE();
 
   auto MAI = MemAccInst(getAccessInstruction());
-  if (MAI.isMemIntrinsic())
+  if (isa<MemIntrinsic>(MAI))
     return;
 
   Value *Ptr = MAI.getPointerOperand();
@@ -2613,8 +2611,8 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       if (!MA->isRead())
         HasWriteAccess.insert(MA->getBaseAddr());
       MemAccInst Acc(MA->getAccessInstruction());
-      if (MA->isRead() && Acc.isMemTransferInst())
-        PtrToAcc[Acc.asMemTransferInst()->getSource()] = MA;
+      if (MA->isRead() && isa<MemTransferInst>(Acc))
+        PtrToAcc[cast<MemTransferInst>(Acc)->getSource()] = MA;
       else
         PtrToAcc[Acc.getPointerOperand()] = MA;
       AST.add(Acc);
@@ -3850,7 +3848,7 @@ bool ScopInfo::buildAccessMultiDimFixed(
   const SCEVUnknown *BasePointer =
       dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
   enum MemoryAccess::AccessType Type =
-      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
+      isa<LoadInst>(Inst) ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
   if (auto *BitCast = dyn_cast<BitCastInst>(Address)) {
     auto *Src = BitCast->getOperand(0);
@@ -3905,7 +3903,7 @@ bool ScopInfo::buildAccessMultiDimParam(
   Type *ElementType = Val->getType();
   unsigned ElementSize = DL->getTypeAllocSize(ElementType);
   enum MemoryAccess::AccessType Type =
-      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
+      isa<LoadInst>(Inst) ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
   const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
   const SCEVUnknown *BasePointer =
@@ -3942,10 +3940,12 @@ bool ScopInfo::buildAccessMemIntrinsic(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
     const InvariantLoadsSetTy &ScopRIL) {
-  if (!Inst.isMemIntrinsic())
+  auto *MemIntr = dyn_cast_or_null<MemIntrinsic>(Inst);
+
+  if (MemIntr == nullptr)
     return false;
 
-  auto *LengthVal = SE->getSCEVAtScope(Inst.asMemIntrinsic()->getLength(), L);
+  auto *LengthVal = SE->getSCEVAtScope(MemIntr->getLength(), L);
   assert(LengthVal);
 
   // Check if the length val is actually affine or if we overapproximate it
@@ -3957,7 +3957,7 @@ bool ScopInfo::buildAccessMemIntrinsic(
   if (!LengthIsAffine)
     LengthVal = nullptr;
 
-  auto *DestPtrVal = Inst.asMemIntrinsic()->getDest();
+  auto *DestPtrVal = MemIntr->getDest();
   assert(DestPtrVal);
   auto *DestAccFunc = SE->getSCEVAtScope(DestPtrVal, L);
   assert(DestAccFunc);
@@ -3968,10 +3968,11 @@ bool ScopInfo::buildAccessMemIntrinsic(
                  IntegerType::getInt8Ty(DestPtrVal->getContext()), false,
                  {DestAccFunc, LengthVal}, {}, Inst.getValueOperand());
 
-  if (!Inst.isMemTransferInst())
+  auto *MemTrans = dyn_cast<MemTransferInst>(MemIntr);
+  if (!MemTrans)
     return true;
 
-  auto *SrcPtrVal = Inst.asMemTransferInst()->getSource();
+  auto *SrcPtrVal = MemTrans->getSource();
   assert(SrcPtrVal);
   auto *SrcAccFunc = SE->getSCEVAtScope(SrcPtrVal, L);
   assert(SrcAccFunc);
@@ -3989,30 +3990,31 @@ bool ScopInfo::buildAccessCallInst(
     MemAccInst Inst, Loop *L, Region *R,
     const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
     const InvariantLoadsSetTy &ScopRIL) {
-  if (!Inst.isCallInst())
+  auto *CI = dyn_cast_or_null<CallInst>(Inst);
+
+  if (CI == nullptr)
     return false;
 
-  auto &CI = *Inst.asCallInst();
-  if (CI.doesNotAccessMemory() || isIgnoredIntrinsic(&CI))
+  if (CI->doesNotAccessMemory() || isIgnoredIntrinsic(CI))
     return true;
 
   bool ReadOnly = false;
-  auto *AF = SE->getConstant(IntegerType::getInt64Ty(CI.getContext()), 0);
-  auto *CalledFunction = CI.getCalledFunction();
+  auto *AF = SE->getConstant(IntegerType::getInt64Ty(CI->getContext()), 0);
+  auto *CalledFunction = CI->getCalledFunction();
   switch (AA->getModRefBehavior(CalledFunction)) {
   case llvm::FMRB_UnknownModRefBehavior:
     llvm_unreachable("Unknown mod ref behaviour cannot be represented.");
   case llvm::FMRB_DoesNotAccessMemory:
     return true;
   case llvm::FMRB_OnlyReadsMemory:
-    GlobalReads.push_back(&CI);
+    GlobalReads.push_back(CI);
     return true;
   case llvm::FMRB_OnlyReadsArgumentPointees:
     ReadOnly = true;
   // Fall through
   case llvm::FMRB_OnlyAccessesArgumentPointees:
     auto AccType = ReadOnly ? MemoryAccess::READ : MemoryAccess::MAY_WRITE;
-    for (const auto &Arg : CI.arg_operands()) {
+    for (const auto &Arg : CI->arg_operands()) {
       if (!Arg->getType()->isPointerTy())
         continue;
 
@@ -4022,7 +4024,7 @@ bool ScopInfo::buildAccessCallInst(
 
       auto *ArgBasePtr = cast<SCEVUnknown>(SE->getPointerBase(ArgSCEV));
       addArrayAccess(Inst, AccType, ArgBasePtr->getValue(),
-                     ArgBasePtr->getType(), false, {AF}, {}, &CI);
+                     ArgBasePtr->getType(), false, {AF}, {}, CI);
     }
     return true;
   }
@@ -4038,7 +4040,7 @@ void ScopInfo::buildAccessSingleDim(
   Value *Val = Inst.getValueOperand();
   Type *ElementType = Val->getType();
   enum MemoryAccess::AccessType Type =
-      Inst.isLoad() ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
+      isa<LoadInst>(Inst) ? MemoryAccess::READ : MemoryAccess::MUST_WRITE;
 
   const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
   const SCEVUnknown *BasePointer =
