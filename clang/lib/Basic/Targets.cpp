@@ -2022,8 +2022,8 @@ const char * const AMDGPUTargetInfo::GCCRegNames[] = {
   "s104", "s105", "s106", "s107", "s108", "s109", "s110", "s111",
   "s112", "s113", "s114", "s115", "s116", "s117", "s118", "s119",
   "s120", "s121", "s122", "s123", "s124", "s125", "s126", "s127"
-  "exec", "vcc", "scc", "m0", "flat_scr", "exec_lo", "exec_hi",
-  "vcc_lo", "vcc_hi", "flat_scr_lo", "flat_scr_hi"
+  "exec", "vcc", "scc", "m0", "flat_scratch", "exec_lo", "exec_hi",
+  "vcc_lo", "vcc_hi", "flat_scratch_lo", "flat_scratch_hi"
 };
 
 ArrayRef<const char *> AMDGPUTargetInfo::getGCCRegNames() const {
