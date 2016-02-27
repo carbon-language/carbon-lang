@@ -31,6 +31,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/EHPersonalities.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
@@ -159,8 +160,12 @@ class SanitizerCoverageModule : public ModulePass {
   const char *getPassName() const override {
     return "SanitizerCoverageModule";
   }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<PostDominatorTreeWrapperPass>();
+  }
 
- private:
+private:
   void InjectCoverageForIndirectCalls(Function &F,
                                       ArrayRef<Instruction *> IndirCalls);
   void InjectTraceForCmp(Function &F, ArrayRef<Instruction *> CmpTraceTargets);
@@ -305,20 +310,24 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   return true;
 }
 
-static bool shouldInstrumentBlock(const BasicBlock *BB,
-                                  const DominatorTree *DT) {
+static bool shouldInstrumentBlock(const BasicBlock *BB, const DominatorTree *DT,
+                                  const PostDominatorTree *PDT) {
   if (!ClPruneBlocks)
-    return true;
-  if (succ_begin(BB) == succ_end(BB))
     return true;
 
   // Check if BB dominates all its successors.
+  bool DominatesAll = succ_begin(BB) != succ_end(BB);
   for (const BasicBlock *SUCC : make_range(succ_begin(BB), succ_end(BB))) {
-    if (!DT->dominates(BB, SUCC))
-      return true;
+    DominatesAll &= DT->dominates(BB, SUCC);
   }
 
-  return false;
+  // Check if BB pre-dominates all predecessors.
+  bool PreDominatesAll = pred_begin(BB) != pred_end(BB);
+  for (const BasicBlock *PRED : make_range(pred_begin(BB), pred_end(BB))) {
+    PreDominatesAll &= PDT->dominates(BB, PRED);
+  }
+
+  return !(DominatesAll || PreDominatesAll);
 }
 
 bool SanitizerCoverageModule::runOnFunction(Function &F) {
@@ -338,10 +347,12 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
   SmallVector<Instruction*, 8> CmpTraceTargets;
   SmallVector<Instruction*, 8> SwitchTraceTargets;
 
-  DominatorTree DT;
-  DT.recalculate(F);
+  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
+  PostDominatorTree *PDT =
+      &getAnalysis<PostDominatorTreeWrapperPass>(F).getPostDomTree();
+
   for (auto &BB : F) {
-    if (shouldInstrumentBlock(&BB, &DT))
+    if (shouldInstrumentBlock(&BB, DT, PDT))
       BlocksToInstrument.push_back(&BB);
     for (auto &Inst : BB) {
       if (Options.IndirectCalls) {
