@@ -557,7 +557,12 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
 }
 
 char SanitizerCoverageModule::ID = 0;
-INITIALIZE_PASS(SanitizerCoverageModule, "sancov",
+INITIALIZE_PASS_BEGIN(SanitizerCoverageModule, "sancov",
+    "SanitizerCoverage: TODO."
+    "ModulePass", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
+INITIALIZE_PASS_END(SanitizerCoverageModule, "sancov",
     "SanitizerCoverage: TODO."
     "ModulePass", false, false)
 ModulePass *llvm::createSanitizerCoverageModulePass(
