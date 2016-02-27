@@ -977,6 +977,7 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
       // that input doesn't include C + C2.
       ConstantInt *CIAdded;
       switch (Pred) {
+      default: break;
       case ICmpInst::ICMP_EQ:
         if (match(SI->getFalseValue(), m_Add(m_Specific(A),
                                              m_ConstantInt(CIAdded)))) {
