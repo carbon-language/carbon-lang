@@ -271,10 +271,10 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
 //===----------------------------------------------------------------------===//
 
 /// HashMachineInstr - Compute a hash value for MI and its operands.
-static unsigned HashMachineInstr(const MachineInstr *MI) {
-  unsigned Hash = MI->getOpcode();
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &Op = MI->getOperand(i);
+static unsigned HashMachineInstr(const MachineInstr &MI) {
+  unsigned Hash = MI.getOpcode();
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    const MachineOperand &Op = MI.getOperand(i);
 
     // Merge in bits from the operand if easy. We can't use MachineOperand's
     // hash_code here because it's not deterministic and we sort by hash value
@@ -311,12 +311,12 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
 }
 
 /// HashEndOfMBB - Hash the last instruction in the MBB.
-static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
-  MachineBasicBlock::const_iterator I = MBB->getLastNonDebugInstr();
-  if (I == MBB->end())
+static unsigned HashEndOfMBB(const MachineBasicBlock &MBB) {
+  MachineBasicBlock::const_iterator I = MBB.getLastNonDebugInstr();
+  if (I == MBB.end())
     return 0;
 
-  return HashMachineInstr(I);
+  return HashMachineInstr(*I);
 }
 
 /// ComputeCommonTailLength - Given two machine basic blocks, compute the number
@@ -925,7 +925,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
     if (MergePotentials.size() == TailMergeThreshold)
       break;
     if (!TriedMerging.count(&MBB) && MBB.succ_empty())
-      MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(&MBB), &MBB));
+      MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(MBB), &MBB));
   }
 
   // If this is a large problem, avoid visiting the same basic blocks
@@ -1033,7 +1033,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
                               NewCond, dl);
         }
 
-        MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(PBB), PBB));
+        MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(*PBB), PBB));
       }
     }
 
