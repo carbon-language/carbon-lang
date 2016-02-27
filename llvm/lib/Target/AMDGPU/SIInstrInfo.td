@@ -371,6 +371,10 @@ def IMM16bit : PatLeaf <(imm),
   [{return isUInt<16>(N->getZExtValue());}]
 >;
 
+def SIMM16bit : PatLeaf <(imm),
+  [{return isInt<16>(N->getSExtValue());}]
+>;
+
 def IMM20bit : PatLeaf <(imm),
   [{return isUInt<20>(N->getZExtValue());}]
 >;

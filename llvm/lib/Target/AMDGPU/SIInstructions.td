@@ -501,10 +501,22 @@ def S_BARRIER : SOPP <0x0000000a, (ins), "s_barrier",
 
 def S_WAITCNT : SOPP <0x0000000c, (ins WAIT_FLAG:$simm16), "s_waitcnt $simm16">;
 def S_SETHALT : SOPP <0x0000000d, (ins i16imm:$simm16), "s_sethalt $simm16">;
-def S_SLEEP : SOPP <0x0000000e, (ins i16imm:$simm16), "s_sleep $simm16">;
+
+// On SI the documentation says sleep for approximately 64 * low 2
+// bits, consistent with the reported maximum of 448. On VI the
+// maximum reported is 960 cycles, so 960 / 64 = 15 max, so is the
+// maximum really 15 on VI?
+def S_SLEEP : SOPP <0x0000000e, (ins i32imm:$simm16),
+  "s_sleep $simm16", [(int_amdgcn_s_sleep SIMM16bit:$simm16)]> {
+  let hasSideEffects = 1;
+  let mayLoad = 1;
+  let mayStore = 1;
+}
+
 def S_SETPRIO : SOPP <0x0000000f, (ins i16imm:$sim16), "s_setprio $sim16">;
 
 let Uses = [EXEC, M0] in {
+  // FIXME: Should this be mayLoad+mayStore?
   def S_SENDMSG : SOPP <0x00000010, (ins SendMsgImm:$simm16), "s_sendmsg $simm16",
       [(AMDGPUsendmsg (i32 imm:$simm16))]
   >;
