@@ -56,8 +56,9 @@ public:
   /// Update DBG_VALUE if dependency breaker is updating
   /// other machine instruction to use NewReg.
   void UpdateDbgValue(MachineInstr *MI, unsigned OldReg, unsigned NewReg) {
+    assert(MI && "Expected valid instruction");
     assert (MI->isDebugValue() && "MI is not DBG_VALUE!");
-    if (MI && MI->getOperand(0).isReg() && MI->getOperand(0).getReg() == OldReg)
+    if (MI->getOperand(0).isReg() && MI->getOperand(0).getReg() == OldReg)
       MI->getOperand(0).setReg(NewReg);
   }
 };
