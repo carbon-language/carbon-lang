@@ -25,15 +25,13 @@ class Atom;
 /// the Atom, then the function Atom will have a Reference of: offsetInAtom=40,
 /// kind=callsite, target=malloc, addend=0.
 ///
-/// Besides supporting traditional "relocations", References are also used
-/// grouping atoms (group comdat), forcing layout (one atom must follow
-/// another), marking data-in-code (jump tables or ARM constants), etc.
+/// Besides supporting traditional "relocations", references are also used
+/// forcing layout (one atom must follow another), marking data-in-code
+/// (jump tables or ARM constants), etc.
 ///
 /// The "kind" of a reference is a tuple of <namespace, arch, value>.  This
 /// enable us to re-use existing relocation types definded for various
-/// file formats and architectures.  For instance, in ELF the relocation type 10
-/// means R_X86_64_32 for x86_64, and R_386_GOTPC for i386. For PE/COFF
-/// relocation 10 means IMAGE_REL_AMD64_SECTION.
+/// file formats and architectures.
 ///
 /// References and atoms form a directed graph. The dead-stripping pass
 /// traverses them starting from dead-strip root atoms to garbage collect
@@ -47,9 +45,7 @@ public:
   enum class KindNamespace {
     all     = 0,
     testing = 1,
-    ELF     = 2,
-    COFF    = 3,
-    mach_o  = 4,
+    mach_o  = 2,
   };
 
   KindNamespace kindNamespace() const { return (KindNamespace)_kindNamespace; }
