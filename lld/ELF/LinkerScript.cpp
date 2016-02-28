@@ -65,12 +65,11 @@ ArrayRef<uint8_t> LinkerScript::getFiller(StringRef Name) {
 // A and B are mentioned in linker scripts. Otherwise, returns 0
 // to use the default rule which is implemented in Writer.cpp.
 int LinkerScript::compareSections(StringRef A, StringRef B) {
-  auto E = OutSections.end();
-  auto I = std::find_if(OutSections.begin(), E,
-                        [&](OutSection &C) { return C.Name == A; });
-  auto J = std::find_if(OutSections.begin(), E,
-                        [&](OutSection &C) { return C.Name == B; });
-  if (I == E || J == E)
+  auto Begin = OutSections.begin();
+  auto End = OutSections.end();
+  auto I = std::find_if(Begin, End, [&](OutSection &C) { return C.Name == A; });
+  auto J = std::find_if(Begin, End, [&](OutSection &C) { return C.Name == B; });
+  if (I == End || J == End)
     return 0;
   return I < J ? -1 : 1;
 }
