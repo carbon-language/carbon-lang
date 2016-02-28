@@ -11,7 +11,6 @@
 #define LLD_CORE_ARCHIVE_LIBRARY_FILE_H
 
 #include "lld/Core/File.h"
-#include "lld/Core/Parallel.h"
 #include <set>
 
 namespace lld {
@@ -37,12 +36,6 @@ public:
 
   virtual std::error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) = 0;
-
-  // Parses a member file containing a given symbol, so that when you
-  // need the file find() can return that immediately. Calling this function
-  // has no side effect other than pre-instantiating a file. Calling this
-  // function doesn't affect correctness.
-  virtual void preload(TaskGroup &group, StringRef symbolName) {}
 
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated

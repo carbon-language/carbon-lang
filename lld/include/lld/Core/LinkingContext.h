@@ -13,7 +13,6 @@
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Node.h"
-#include "lld/Core/Parallel.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/Reader.h"
 #include "llvm/Support/ErrorOr.h"
@@ -309,8 +308,6 @@ public:
     return std::error_code();
   }
 
-  TaskGroup &getTaskGroup() { return _taskGroup; }
-
   /// @}
 protected:
   LinkingContext(); // Must be subclassed
@@ -354,7 +351,6 @@ protected:
 private:
   /// Validate the subclass bits. Only called by validate.
   virtual bool validateImpl(raw_ostream &diagnostics) = 0;
-  TaskGroup _taskGroup;
 };
 
 } // end namespace lld
