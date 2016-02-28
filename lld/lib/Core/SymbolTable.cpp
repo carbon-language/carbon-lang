@@ -55,25 +55,6 @@ bool SymbolTable::add(const DefinedAtom &atom) {
   return false;
 }
 
-const Atom *SymbolTable::findGroup(StringRef sym) {
-  NameToAtom::iterator pos = _groupTable.find(sym);
-  if (pos == _groupTable.end())
-    return nullptr;
-  return pos->second;
-}
-
-bool SymbolTable::addGroup(const DefinedAtom &da) {
-  StringRef name = da.name();
-  assert(!name.empty());
-  const Atom *existing = findGroup(name);
-  if (existing == nullptr) {
-    _groupTable[name] = &da;
-    return true;
-  }
-  _replacedAtoms[&da] = existing;
-  return false;
-}
-
 enum NameCollisionResolution {
   NCR_First,
   NCR_Second,

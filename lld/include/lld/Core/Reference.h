@@ -76,8 +76,6 @@ public:
     // kindLayoutAfter is treated as a bidirected edge by the dead-stripping
     // pass.
     kindLayoutAfter = 1,
-    // kindGroupChild is treated as a bidirected edge too.
-    kindGroupChild,
     kindAssociate,
   };
 

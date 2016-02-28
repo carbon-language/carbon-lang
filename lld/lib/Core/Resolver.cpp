@@ -154,39 +154,6 @@ bool Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   return newUndefAdded;
 }
 
-/// \brief Add the section group and the group-child reference members.
-void Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
-  // First time adding a group?
-  bool isFirstTime = _symbolTable.addGroup(atom);
-
-  if (!isFirstTime) {
-    // If duplicate symbols are allowed, select the first group.
-    if (_ctx.getAllowDuplicates())
-      return;
-    auto *prevGroup = dyn_cast<DefinedAtom>(_symbolTable.findGroup(atom.name()));
-    assert(prevGroup &&
-           "Internal Error: The group atom could only be a defined atom");
-    // The atoms should be of the same content type, reject invalid group
-    // resolution behaviors.
-    if (atom.contentType() == prevGroup->contentType())
-      return;
-    llvm::errs() << "SymbolTable: error while merging " << atom.name()
-                 << "\n";
-    llvm::report_fatal_error("duplicate symbol error");
-  }
-
-  for (const Reference *r : atom) {
-    if (r->kindNamespace() == lld::Reference::KindNamespace::all &&
-        r->kindValue() == lld::Reference::kindGroupChild) {
-      const DefinedAtom *target = dyn_cast<DefinedAtom>(r->target());
-      assert(target && "Internal Error: kindGroupChild references need to "
-                       "be associated with Defined Atoms only");
-      _atoms.push_back(target);
-      _symbolTable.add(*target);
-    }
-  }
-}
-
 // Called on each atom when a file is added. Returns true if a given
 // atom is added to the symbol table.
 void Resolver::doDefinedAtom(const DefinedAtom &atom) {
@@ -205,12 +172,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
 
   // add to list of known atoms
   _atoms.push_back(&atom);
-
-  if (atom.isGroupParent()) {
-    maybeAddSectionGroupOrGnuLinkOnce(atom);
-  } else {
-    _symbolTable.add(atom);
-  }
+  _symbolTable.add(atom);
 
   // An atom that should never be dead-stripped is a dead-strip root.
   if (_ctx.deadStrip() && atom.deadStrip() == DefinedAtom::deadStripNever) {
@@ -439,8 +401,7 @@ void Resolver::markLive(const Atom *atom) {
 static bool isBackref(const Reference *ref) {
   if (ref->kindNamespace() != lld::Reference::KindNamespace::all)
     return false;
-  return (ref->kindValue() == lld::Reference::kindLayoutAfter ||
-          ref->kindValue() == lld::Reference::kindGroupChild);
+  return (ref->kindValue() == lld::Reference::kindLayoutAfter);
 }
 
 // remove all atoms not actually used
