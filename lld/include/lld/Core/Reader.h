@@ -29,7 +29,6 @@ class IO;
 namespace lld {
 class File;
 class LinkingContext;
-class PECOFFLinkingContext;
 class MachOLinkingContext;
 
 /// \brief An abstract class for reading object files, library files, and
@@ -113,8 +112,6 @@ public:
   // as parameters to the addSupport*() method.
   void addSupportArchives(bool logLoading);
   void addSupportYamlFiles();
-  void addSupportCOFFObjects(PECOFFLinkingContext &);
-  void addSupportCOFFImportLibraries(PECOFFLinkingContext &);
   void addSupportMachOObjects(MachOLinkingContext &);
 
   /// To convert between kind values and names, the registry walks the list

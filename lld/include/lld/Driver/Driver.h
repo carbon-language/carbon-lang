@@ -29,7 +29,6 @@ namespace lld {
 class LinkingContext;
 class CoreLinkingContext;
 class MachOLinkingContext;
-class PECOFFLinkingContext;
 
 typedef std::vector<std::unique_ptr<File>> FileVector;
 
