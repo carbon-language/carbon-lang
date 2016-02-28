@@ -16,7 +16,6 @@
 #include "SymbolTable.h"
 #include "Target.h"
 #include "Writer.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
