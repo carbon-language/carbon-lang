@@ -149,15 +149,6 @@ public:
     return _noAbsoluteAtoms;
   }
 
-  /// Returns a set of all defined symbols in the archive.
-  std::set<StringRef> getDefinedSymbols() override {
-    parse();
-    std::set<StringRef> ret;
-    for (const auto &e : _symbolMemberMap)
-      ret.insert(e.first);
-    return ret;
-  }
-
 protected:
   std::error_code doParse() override {
     // Make Archive object which will be owned by FileArchive object.

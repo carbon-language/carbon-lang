@@ -44,12 +44,6 @@ public:
   // function doesn't affect correctness.
   virtual void preload(TaskGroup &group, StringRef symbolName) {}
 
-  /// Returns a set of all defined symbols in the archive, i.e. all
-  /// resolvable symbol using this file.
-  virtual std::set<StringRef> getDefinedSymbols() {
-    return std::set<StringRef>();
-  }
-
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated
   ArchiveLibraryFile(StringRef path) : File(path, kindArchiveLibrary) {}

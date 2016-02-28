@@ -203,11 +203,6 @@ public:
 
   void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
 
-  void addAlias(StringRef from, StringRef to) { _aliasSymbols[from] = to; }
-  const std::map<std::string, std::string> &getAliases() const {
-    return _aliasSymbols;
-  }
-
   std::vector<std::unique_ptr<Node>> &getNodes() { return _nodes; }
   const std::vector<std::unique_ptr<Node>> &getNodes() const { return _nodes; }
 
@@ -349,7 +344,6 @@ protected:
   bool _allowShlibUndefines;
   OutputFileType _outputFileType;
   std::vector<StringRef> _deadStripRoots;
-  std::map<std::string, std::string> _aliasSymbols;
   std::vector<const char *> _llvmOptions;
   StringRefVector _initialUndefinedSymbols;
   std::vector<std::unique_ptr<Node>> _nodes;
