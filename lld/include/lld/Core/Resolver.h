@@ -33,7 +33,7 @@ class LinkingContext;
 class Resolver {
 public:
   Resolver(LinkingContext &ctx)
-      : _ctx(ctx), _symbolTable(ctx), _result(new MergedFile()),
+      : _ctx(ctx), _symbolTable(), _result(new MergedFile()),
         _fileIndex(0) {}
 
   // InputFiles::Handler methods
