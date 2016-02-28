@@ -14,6 +14,9 @@
 # RUN: not ld.lld %t -o /no/such/file 2>&1 | FileCheck -check-prefix=MISSING %s
 # MISSING: failed to open /no/such/file
 
+# RUN: ld.lld --help 2>&1 | FileCheck -check-prefix=HELP %s
+# HELP: USAGE:
+
 # RUN: ld.lld --version 2>&1 | FileCheck -check-prefix=VERSION %s
 # VERSION: LLD
 

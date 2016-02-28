@@ -57,6 +57,9 @@ def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
 def hash_style : Separate<["--", "-"], "hash-style">,
   HelpText<"Specify hash style (sysv, gnu or both)">;
 
+def help : Flag<["--", "-"], "help">,
+  HelpText<"Print option help">;
+
 def icf : Flag<["--"], "icf=all">,
   HelpText<"Enable Identical Code Folding.">;
 

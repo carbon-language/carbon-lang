@@ -79,6 +79,11 @@ opt::InputArgList elf::parseArgs(llvm::BumpPtrAllocator *A,
   return Args;
 }
 
+void elf::printHelp(const char *Argv0) {
+  ELFOptTable Table;
+  Table.PrintHelp(outs(), Argv0, "lld", false);
+}
+
 void elf::printVersion() {
   outs() << "LLD " << getLLDVersion();
   std::string S = getLLDRepositoryVersion();

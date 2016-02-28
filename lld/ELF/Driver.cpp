@@ -41,7 +41,7 @@ bool elf::link(ArrayRef<const char *> Args, raw_ostream &Error) {
   Config = &C;
   Driver = &D;
   Script = &LS;
-  Driver->main(Args.slice(1));
+  Driver->main(Args);
   return !HasError;
 }
 
@@ -163,7 +163,11 @@ static bool hasZOption(opt::InputArgList &Args, StringRef Key) {
 void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initSymbols();
 
-  opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
+  opt::InputArgList Args = parseArgs(&Alloc, ArgsArr.slice(1));
+  if (Args.hasArg(OPT_help)) {
+    printHelp(ArgsArr[0]);
+    return;
+  }
   if (Args.hasArg(OPT_version)) {
     printVersion();
     return;
