@@ -68,7 +68,6 @@ public:
 
 enum class Flavor {
   invalid,
-  old_gnu_ld, // -flavor old-gnu
   gnu_ld,     // -flavor gnu
   win_link,   // -flavor link
   darwin_ld,  // -flavor darwin
@@ -84,7 +83,6 @@ struct ProgramNameParts {
 
 static Flavor strToFlavor(StringRef str) {
   return llvm::StringSwitch<Flavor>(str)
-      .Case("old-gnu", Flavor::old_gnu_ld)
       .Case("gnu", Flavor::gnu_ld)
       .Case("ld.lld", Flavor::gnu_ld)
       .Case("link", Flavor::win_link)
@@ -202,8 +200,6 @@ bool UniversalDriver::link(llvm::MutableArrayRef<const char *> args,
 
   // Switch to appropriate driver.
   switch (flavor) {
-  case Flavor::old_gnu_ld:
-    return GnuLdDriver::linkELF(args, diagnostics);
   case Flavor::gnu_ld:
     return elf2::link(args, diagnostics);
   case Flavor::darwin_ld:

@@ -27,7 +27,6 @@ class IO;
 }
 
 namespace lld {
-class ELFLinkingContext;
 class File;
 class LinkingContext;
 class PECOFFLinkingContext;
@@ -117,8 +116,6 @@ public:
   void addSupportCOFFObjects(PECOFFLinkingContext &);
   void addSupportCOFFImportLibraries(PECOFFLinkingContext &);
   void addSupportMachOObjects(MachOLinkingContext &);
-  void addSupportELFObjects(ELFLinkingContext &);
-  void addSupportELFDynamicSharedObjects(ELFLinkingContext &);
 
   /// To convert between kind values and names, the registry walks the list
   /// of registered kind tables. Each table is a zero terminated array of
