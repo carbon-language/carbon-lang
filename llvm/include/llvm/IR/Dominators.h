@@ -190,8 +190,6 @@ struct DominatorTreeAnalysis : AnalysisBase<DominatorTreeAnalysis> {
   DominatorTree run(Function &F);
 };
 
-extern template class AnalysisBase<DominatorTreeAnalysis>;
-
 /// \brief Printer pass for the \c DominatorTree.
 class DominatorTreePrinterPass : public PassBase<DominatorTreePrinterPass> {
   raw_ostream &OS;

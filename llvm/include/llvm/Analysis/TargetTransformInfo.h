@@ -938,8 +938,6 @@ private:
   static Result getDefaultTTI(const Function &F);
 };
 
-extern template class AnalysisBase<TargetIRAnalysis>;
-
 /// \brief Wrapper pass for TargetTransformInfo.
 ///
 /// This pass can be constructed from a TTI object which it stores internally

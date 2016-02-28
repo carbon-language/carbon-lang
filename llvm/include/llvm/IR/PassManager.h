@@ -749,8 +749,6 @@ extern template class InnerAnalysisManagerProxy<FunctionAnalysisManager,
 typedef InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>
     FunctionAnalysisManagerModuleProxy;
 
-extern template class AnalysisBase<FunctionAnalysisManagerModuleProxy>;
-
 /// \brief A function analysis which acts as a proxy for a module analysis
 /// manager.
 ///
