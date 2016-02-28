@@ -87,7 +87,7 @@ namespace coff {
 void link(llvm::ArrayRef<const char *> args);
 }
 
-namespace elf2 {
+namespace elf {
 bool link(llvm::ArrayRef<const char *> args, raw_ostream &diag = llvm::errs());
 }
 

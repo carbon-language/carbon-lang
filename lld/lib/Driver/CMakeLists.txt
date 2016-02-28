@@ -19,7 +19,7 @@ add_lld_library(lldDriver
     lldConfig
     lldMachO
     lldCOFF
-    lldELF2
+    lldELF
     lldCore
     lldReaderWriter
     lldYAML
