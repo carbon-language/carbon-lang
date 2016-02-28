@@ -53,6 +53,8 @@ enum {
 #undef OPTION
 };
 
+void printVersion();
+
 std::string findFromSearchPaths(StringRef Path);
 std::string searchLibrary(StringRef Path);
 std::string buildSysrootedPath(llvm::StringRef Dir, llvm::StringRef File);

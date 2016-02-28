@@ -119,6 +119,9 @@ def undefined : Joined<["--"], "undefined=">,
 
 def verbose : Flag<["--"], "verbose">;
 
+def version : Flag<["--", "-"], "version">,
+  HelpText<"Display the version number">;
+
 def whole_archive : Flag<["--", "-"], "whole-archive">,
   HelpText<"Force load of all members in a static library">;
 

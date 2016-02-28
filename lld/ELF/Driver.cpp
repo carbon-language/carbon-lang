@@ -164,6 +164,11 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initSymbols();
 
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
+  if (Args.hasArg(OPT_version)) {
+    printVersion();
+    return;
+  }
+
   readConfigs(Args);
   createFiles(Args);
   checkOptions(Args);
