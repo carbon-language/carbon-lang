@@ -113,14 +113,13 @@ int main(int Argc, const char **Argv) {
   std::vector<const char *> Args(Argv, Argv + Argc);
   switch (parseFlavor(Args)) {
   case Gnu:
-    return !elf::link(Args, errs());
+    return !elf::link(Args);
   case WinLink:
-    coff::link(Args);
-    return 0;
+    return !coff::link(Args);
   case Darwin:
-    return !DarwinLdDriver::linkMachO(Args, errs());
+    return !DarwinLdDriver::linkMachO(Args);
   case Core:
-    return !CoreDriver::link(Args, errs());
+    return !CoreDriver::link(Args);
   default:
     die("-flavor option is missing. Available flavors are "
         "gnu, darwin or link.");

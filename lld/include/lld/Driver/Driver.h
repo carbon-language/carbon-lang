@@ -71,7 +71,7 @@ private:
 
 /// Driver for Windows 'link.exe' command line options
 namespace coff {
-void link(llvm::ArrayRef<const char *> args);
+bool link(llvm::ArrayRef<const char *> args);
 }
 
 namespace elf {
