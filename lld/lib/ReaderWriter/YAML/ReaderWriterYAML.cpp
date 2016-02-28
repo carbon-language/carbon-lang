@@ -940,12 +940,11 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
   class NormalizedAtom : public lld::UndefinedAtom {
   public:
     NormalizedAtom(IO &io)
-        : _file(fileFromContext(io)), _name(), _canBeNull(canBeNullNever),
-          _fallback(nullptr) {}
+        : _file(fileFromContext(io)), _name(), _canBeNull(canBeNullNever) {}
 
     NormalizedAtom(IO &io, const lld::UndefinedAtom *atom)
         : _file(fileFromContext(io)), _name(atom->name()),
-          _canBeNull(atom->canBeNull()), _fallback(atom->fallback()) {}
+          _canBeNull(atom->canBeNull()) {}
 
     const lld::UndefinedAtom *denormalize(IO &io) {
       YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
@@ -973,12 +972,10 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
     const lld::File &file() const override { return _file; }
     StringRef name() const override { return _name; }
     CanBeNull canBeNull() const override { return _canBeNull; }
-    const UndefinedAtom *fallback() const override { return _fallback; }
 
     const lld::File     &_file;
     StringRef            _name;
     CanBeNull            _canBeNull;
-    const UndefinedAtom *_fallback;
   };
 
   static void mapping(IO &io, const lld::UndefinedAtom *&atom) {
@@ -988,8 +985,6 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
     io.mapRequired("name",        keys->_name);
     io.mapOptional("can-be-null", keys->_canBeNull,
                                   lld::UndefinedAtom::canBeNullNever);
-    io.mapOptional("fallback",    keys->_fallback,
-                                  (const lld::UndefinedAtom *)nullptr);
   }
 };
 

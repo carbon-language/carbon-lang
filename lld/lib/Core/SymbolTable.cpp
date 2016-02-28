@@ -196,23 +196,8 @@ bool SymbolTable::addByName(const Atom &newAtom) {
                    << " and in " << newUndef->file().path() << "\n";
     }
 
-    const UndefinedAtom *existingFallback = existingUndef->fallback();
-    const UndefinedAtom *newFallback = newUndef->fallback();
-    bool hasDifferentFallback =
-        (existingFallback && newFallback &&
-         existingFallback->name() != newFallback->name());
-    if (hasDifferentFallback) {
-      llvm::errs() << "lld warning: undefined symbol "
-                   << existingUndef->name() << " has different fallback: "
-                   << existingFallback->name() << " in "
-                   << existingUndef->file().path() << " and "
-                   << newFallback->name() << " in "
-                   << newUndef->file().path() << "\n";
-    }
-
-    bool hasNewFallback = newUndef->fallback();
     if (sameCanBeNull)
-      useNew = hasNewFallback;
+      useNew = false;
     else
       useNew = (newUndef->canBeNull() < existingUndef->canBeNull());
     break;

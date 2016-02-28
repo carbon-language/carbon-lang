@@ -98,7 +98,6 @@ ErrorOr<bool> Resolver::handleArchiveFile(File &file) {
                               bool dataSymbolOnly)->ErrorOr<bool> {
     if (File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_ctx.getNextOrdinalAndIncrement());
-      member->beforeLink();
       updatePreloadArchiveMap();
       return handleFile(*member);
     }
@@ -142,15 +141,6 @@ bool Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   if (newUndefAdded)
     _undefines.push_back(atom.name());
 
-  // If the undefined symbol has an alternative name, try to resolve the
-  // symbol with the name to give it a second chance. This feature is used
-  // for COFF "weak external" symbol.
-  if (newUndefAdded || !_symbolTable.isDefined(atom.name())) {
-    if (const UndefinedAtom *fallbackAtom = atom.fallback()) {
-      doUndefinedAtom(*fallbackAtom);
-      _symbolTable.addReplacement(&atom, fallbackAtom);
-    }
-  }
   return newUndefAdded;
 }
 
@@ -297,7 +287,6 @@ bool Resolver::resolveUndefines() {
     }
     DEBUG_WITH_TYPE("resolver",
                     llvm::dbgs() << "Loaded file: " << file->path() << "\n");
-    file->beforeLink();
     updatePreloadArchiveMap();
     switch (file->kind()) {
     case File::kindErrorObject:
