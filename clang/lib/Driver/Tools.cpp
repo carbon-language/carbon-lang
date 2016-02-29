@@ -5829,12 +5829,16 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
       switch (EHVal[I]) {
       case 'a':
         EH.Asynch = maybeConsumeDash(EHVal, I);
+        if (EH.Asynch)
+          EH.Synch = false;
         continue;
       case 'c':
         EH.NoUnwindC = maybeConsumeDash(EHVal, I);
         continue;
       case 's':
         EH.Synch = maybeConsumeDash(EHVal, I);
+        if (EH.Synch)
+          EH.Asynch = false;
         continue;
       default:
         break;
@@ -5932,7 +5936,7 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs,
   if (EH.Synch || EH.Asynch) {
     CmdArgs.push_back("-fcxx-exceptions");
     CmdArgs.push_back("-fexceptions");
-    if (EH.NoUnwindC)
+    if (EH.Synch && EH.NoUnwindC)
       CmdArgs.push_back("-fexternc-nounwind");
   }
 
