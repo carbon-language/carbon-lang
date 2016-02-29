@@ -2891,7 +2891,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case AVX512F:
     Features["avx512f"] = Features["avx512cd"] = Features["avx512er"] =
       Features["avx512pf"] = Features["avx512dq"] = Features["avx512bw"] =
-      Features["avx512vl"] = false;
+      Features["avx512vl"] = Features["avx512vbmi"] =
+      Features["avx512ifma"] = false;
   }
 }
 
@@ -2989,8 +2990,9 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
     setSSELevel(Features, AVX2, Enabled);
   } else if (Name == "avx512f") {
     setSSELevel(Features, AVX512F, Enabled);
-  } else if (Name == "avx512cd" || Name == "avx512er" || Name == "avx512pf"
-          || Name == "avx512dq" || Name == "avx512bw" || Name == "avx512vl") {
+  } else if (Name == "avx512cd" || Name == "avx512er" || Name == "avx512pf" ||
+             Name == "avx512dq" || Name == "avx512bw" || Name == "avx512vl" ||
+             Name == "avx512vbmi" || Name == "avx512ifma") {
     if (Enabled)
       setSSELevel(Features, AVX512F, Enabled);
   } else if (Name == "fma") {
@@ -3398,6 +3400,10 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__AVX512BW__");
   if (HasAVX512VL)
     Builder.defineMacro("__AVX512VL__");
+  if (HasAVX512VBMI)
+    Builder.defineMacro("__AVX512VBMI__");
+  if (HasAVX512IFMA)
+    Builder.defineMacro("__AVX512IFMA__");
 
   if (HasSHA)
     Builder.defineMacro("__SHA__");
