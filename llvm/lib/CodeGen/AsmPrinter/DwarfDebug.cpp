@@ -980,7 +980,7 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
     SmallVector<DebugLocEntry, 8> Entries;
     buildLocationList(Entries, Ranges);
 
-    // If the variable has an DIBasicType, extract it.  Basic types cannot have
+    // If the variable has a DIBasicType, extract it.  Basic types cannot have
     // unique identifiers, so don't bother resolving the type with the
     // identifier map.
     const DIBasicType *BT = dyn_cast<DIBasicType>(
