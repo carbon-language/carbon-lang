@@ -1,5 +1,64 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
+;; MASKED LOADS
+
+; If the mask isn't constant, do nothing.
+
+define <4 x float> @mload(i8* %f, <4 x i32> %mask) {
+  %ld = tail call <4 x float> @llvm.x86.avx.maskload.ps(i8* %f, <4 x i32> %mask)
+  ret <4 x float> %ld
+
+; CHECK-LABEL: @mload(
+; CHECK-NEXT:  %ld = tail call <4 x float> @llvm.x86.avx.maskload.ps(i8* %f, <4 x i32> %mask)
+; CHECK-NEXT:  ret <4 x float> %ld
+}
+
+; Zero mask is a nop.
+
+define <4 x float> @mload_zeros(i8* %f) {
+  %ld = tail call <4 x float> @llvm.x86.avx.maskload.ps(i8* %f, <4 x i32> zeroinitializer)
+  ret <4 x float> %ld
+
+; CHECK-LABEL: @mload_zeros(
+; CHECK-NEXT:  ret <4 x float> undef
+}
+
+; Only the sign bit matters.
+
+define <4 x float> @mload_fake_ones(i8* %f) {
+  %ld = tail call <4 x float> @llvm.x86.avx.maskload.ps(i8* %f, <4 x i32> <i32 1, i32 2, i32 3, i32 2147483647>)
+  ret <4 x float> %ld
+
+; CHECK-LABEL: @mload_fake_ones(
+; CHECK-NEXT:  ret <4 x float> undef
+}
+
+; All mask bits are set, so this is just a vector load.
+
+define <4 x float> @mload_real_ones(i8* %f) {
+  %ld = tail call <4 x float> @llvm.x86.avx.maskload.ps(i8* %f, <4 x i32> <i32 -1, i32 -2, i32 -3, i32 2147483648>)
+  ret <4 x float> %ld
+
+; CHECK-LABEL: @mload_real_ones(
+; CHECK-NEXT:  %castvec = bitcast i8* %f to <4 x float>*
+; CHECK-NEXT:  %unmaskedload = load <4 x float>, <4 x float>* %castvec
+; CHECK-NEXT:  ret <4 x float> %unmaskedload
+}
+
+; It's a constant mask, so convert to an LLVM intrinsic. The backend should optimize further.
+
+define <4 x float> @mload_one_one(i8* %f) {
+  %ld = tail call <4 x float> @llvm.x86.avx.maskload.ps(i8* %f, <4 x i32> <i32 0, i32 0, i32 0, i32 -1>)
+  ret <4 x float> %ld
+
+; CHECK-LABEL: @mload_one_one(
+; CHECK-NEXT:  %castvec = bitcast i8* %f to <4 x float>*
+; CHECK-NEXT:  %1 = call <4 x float> @llvm.masked.load.v4f32(<4 x float>* %castvec, i32 1, <4 x i1> <i1 false, i1 false, i1 false, i1 true>, <4 x float> undef)
+; CHECK-NEXT:  ret <4 x float> %1
+}
+
+;; MASKED STORES
+
 ; If the mask isn't constant, do nothing.
 
 define void @mstore(i8* %f, <4 x i32> %mask, <4 x float> %v) {
@@ -131,6 +190,10 @@ define void @mstore_v4i64(i8* %f, <4 x i64> %v) {
 ; CHECK-NEXT:  ret void
 }
 
+declare <4 x float> @llvm.x86.avx.maskload.ps(i8*, <4 x i32>)
+declare <2 x double> @llvm.x86.avx.maskload.pd(i8*, <2 x i64>)
+declare <8 x float> @llvm.x86.avx.maskload.ps.256(i8*, <8 x i32>)
+declare <4 x double> @llvm.x86.avx.maskload.pd.256(i8*, <4 x i64>)
 
 declare void @llvm.x86.avx.maskstore.ps(i8*, <4 x i32>, <4 x float>)
 declare void @llvm.x86.avx.maskstore.pd(i8*, <2 x i64>, <2 x double>)
