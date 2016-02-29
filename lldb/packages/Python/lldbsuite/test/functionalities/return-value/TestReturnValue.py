@@ -151,11 +151,11 @@ class ReturnValueTestCase(TestBase):
         #self.return_and_test_struct_value ("return_one_int_one_double_packed")
         self.return_and_test_struct_value ("return_one_int_one_long")
 
-        self.return_and_test_struct_value ("return_vector_size_float32_8")
-        self.return_and_test_struct_value ("return_vector_size_float32_16")
-        self.return_and_test_struct_value ("return_vector_size_float32_32")
         # icc and gcc don't support this extension.
         if self.getCompiler().endswith('clang'):
+            self.return_and_test_struct_value ("return_vector_size_float32_8")
+            self.return_and_test_struct_value ("return_vector_size_float32_16")
+            self.return_and_test_struct_value ("return_vector_size_float32_32")
             self.return_and_test_struct_value ("return_ext_vector_size_float32_2")
             self.return_and_test_struct_value ("return_ext_vector_size_float32_4")
             self.return_and_test_struct_value ("return_ext_vector_size_float32_8")
