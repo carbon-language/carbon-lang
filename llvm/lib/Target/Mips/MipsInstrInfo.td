@@ -653,6 +653,13 @@ def uimm16_64_relaxed : Operand<i64> {
       !cast<AsmOperandClass>("UImm16RelaxedAsmOperandClass");
 }
 
+// Like uimm5 but reports a less confusing error for 32-63 when
+// an instruction alias permits that.
+def uimm5_report_uimm6 : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+  let ParserMatchClass = ConstantUImm5ReportUImm6AsmOperandClass;
+}
+
 // Like uimm5_64 but reports a less confusing error for 32-63 when
 // an instruction alias permits that.
 def uimm5_64_report_uimm6 : Operand<i64> {
@@ -824,6 +831,16 @@ def immLow16Zero : PatLeaf<(imm), [{
 
 // shamt field must fit in 5 bits.
 def immZExt5 : ImmLeaf<i32, [{return Imm == (Imm & 0x1f);}]>;
+
+def immZExt5Plus1 : PatLeaf<(imm), [{
+  return isUInt<5>(N->getZExtValue() - 1);
+}]>;
+def immZExt5Plus32 : PatLeaf<(imm), [{
+  return isUInt<5>(N->getZExtValue() - 32);
+}]>;
+def immZExt5Plus33 : PatLeaf<(imm), [{
+  return isUInt<5>(N->getZExtValue() - 33);
+}]>;
 
 // True if (N + 1) fits in 16-bit field.
 def immSExt16Plus1 : PatLeaf<(imm), [{
@@ -1273,10 +1290,11 @@ class ReadHardware<RegisterOperand CPURegOperand, RegisterOperand RO> :
 
 // Ext and Ins
 class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
-              Operand SizeOpnd, SDPatternOperator Op = null_frag> :
+              Operand SizeOpnd, PatFrag PosImm, PatFrag SizeImm,
+              SDPatternOperator Op = null_frag> :
   InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, SizeOpnd:$size),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
-         [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size))], II_EXT,
+         [(set RO:$rt, (Op RO:$rs, PosImm:$pos, SizeImm:$size))], II_EXT,
          FrmR, opstr>, ISA_MIPS32R2;
 
 class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
@@ -1763,8 +1781,8 @@ let AdditionalPredicates = [NotInMicroMips] in {
 def RDHWR : MMRel, ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
 }
 // TODO: Add '0 < pos+size <= 32' constraint check to ext instruction
-def EXT : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, uimm5_plus1, MipsExt>,
-          EXT_FM<0>;
+def EXT : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, uimm5_plus1, immZExt5,
+                         immZExt5Plus1, MipsExt>, EXT_FM<0>;
 def INS : MMRel, InsBase<"ins", GPR32Opnd, uimm5, uimm5_inssize_plus1, MipsIns>,
           EXT_FM<4>;
 
