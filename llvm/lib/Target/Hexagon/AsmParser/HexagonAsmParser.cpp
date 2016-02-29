@@ -361,20 +361,17 @@ public:
 
   void addSignedImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    MCExpr const *Expr = getImm();
+    HexagonMCExpr *Expr =
+        const_cast<HexagonMCExpr *>(cast<HexagonMCExpr>(getImm()));
     int64_t Value;
     if (!Expr->evaluateAsAbsolute(Value)) {
       Inst.addOperand(MCOperand::createExpr(Expr));
       return;
     }
-    int64_t Extended = SignExtend64 (Value, 32);
-    if ((Extended < 0) == (Value < 0)) {
-      Inst.addOperand(MCOperand::createExpr(Expr));
-      return;
-    }
-    // Flip bit 33 to signal signed unsigned mismatch
-    Extended ^= 0x100000000;
-    Inst.addOperand(MCOperand::createImm(Extended));
+    int64_t Extended = SignExtend64(Value, 32);
+    if ((Extended < 0) != (Value < 0))
+      Expr->setSignMismatch();
+    Inst.addOperand(MCOperand::createExpr(Expr));
   }
 
   void addf32ExtOperands(MCInst &Inst, unsigned N) const {
@@ -763,17 +760,15 @@ void HexagonAsmParser::canonicalizeImmediates(MCInst &MCI) {
   for (MCOperand &I : MCI)
     if (I.isImm()) {
       int64_t Value (I.getImm());
-      if ((Value & 0x100000000) != (Value & 0x80000000)) {
-        // Detect flipped bit 33 wrt bit 32 and signal warning
-        Value ^= 0x100000000;
-        if (WarnSignedMismatch)
-          Warning (MCI.getLoc(), "Signed/Unsigned mismatch");
-      }
       NewInst.addOperand(MCOperand::createExpr(HexagonMCExpr::create(
           MCConstantExpr::create(Value, getContext()), getContext())));
     }
-    else
+    else {
+      if (I.isExpr() && cast<HexagonMCExpr>(I.getExpr())->signMismatch() &&
+          WarnSignedMismatch)
+        Warning (MCI.getLoc(), "Signed/Unsigned mismatch");
       NewInst.addOperand(I);
+    }
   MCI = NewInst;
 }
 

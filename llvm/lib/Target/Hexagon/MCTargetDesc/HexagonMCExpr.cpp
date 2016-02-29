@@ -67,3 +67,11 @@ HexagonMCExpr::HexagonMCExpr(MCExpr const *Expr)
 void HexagonMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   Expr->print(OS, MAI);
 }
+
+void HexagonMCExpr::setSignMismatch(bool Val) {
+  SignMismatch = Val;
+}
+
+bool HexagonMCExpr::signMismatch() const {
+  return SignMismatch;
+}
