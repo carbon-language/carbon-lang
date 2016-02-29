@@ -3018,15 +3018,11 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
     else
       setSSELevel(Features, SSE41, Enabled);
   } else if (Name == "xsave") {
-    if (Enabled)
-      setSSELevel(Features, AVX, Enabled);
-    else
+    if (!Enabled)
       Features["xsaveopt"] = false;
   } else if (Name == "xsaveopt" || Name == "xsavec" || Name == "xsaves") {
-    if (Enabled) {
+    if (Enabled)
       Features["xsave"] = true;
-      setSSELevel(Features, AVX, Enabled);
-    }
   }
 }
 
