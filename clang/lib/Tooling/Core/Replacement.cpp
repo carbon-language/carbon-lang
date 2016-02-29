@@ -11,17 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Tooling/Core/Replacement.h"
+
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Tooling/Core/Replacement.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_os_ostream.h"
+#include <iterator>
 
 namespace clang {
 namespace tooling {
@@ -281,6 +284,44 @@ std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
   return Result;
 }
 
+tooling::Replacements formatReplacements(StringRef Code,
+                                         const tooling::Replacements &Replaces,
+                                         const format::FormatStyle &Style) {
+  if (Replaces.empty()) return Replacements();
+
+  std::string NewCode = applyAllReplacements(Code, Replaces);
+  std::vector<tooling::Range> ChangedRanges =
+      calculateChangedRangesInFile(Replaces);
+  StringRef FileName = Replaces.begin()->getFilePath();
+  tooling::Replacements FormatReplaces =
+      format::reformat(Style, NewCode, ChangedRanges, FileName);
+
+  tooling::Replacements MergedReplacements =
+      mergeReplacements(Replaces, FormatReplaces);
+  return MergedReplacements;
+}
+
+std::vector<Range> calculateChangedRangesInFile(const Replacements &Replaces) {
+  std::vector<Range> ChangedRanges;
+  int Shift = 0;
+  for (const tooling::Replacement &R : Replaces) {
+    unsigned Offset = R.getOffset() + Shift;
+    unsigned Length = R.getReplacementText().size();
+    Shift += Length - R.getLength();
+    ChangedRanges.push_back(tooling::Range(Offset, Length));
+  }
+  return ChangedRanges;
+}
+
+std::string applyAllReplacementsAndFormat(StringRef Code,
+                                          const Replacements &Replaces,
+                                          const format::FormatStyle &Style) {
+  Replacements NewReplacements = formatReplacements(Code, Replaces, Style);
+  if (NewReplacements.empty())
+    return Code; // Exit early to avoid overhead in `applyAllReplacements`.
+  return applyAllReplacements(Code, NewReplacements);
+}
+
 namespace {
 // Represents a merged replacement, i.e. a replacement consisting of multiple
 // overlapping replacements from 'First' and 'Second' in mergeReplacements.
@@ -314,7 +355,7 @@ public:
 
   // Merges the next element 'R' into this merged element. As we always merge
   // from 'First' into 'Second' or vice versa, the MergedReplacement knows what
-  // set the next element is coming from. 
+  // set the next element is coming from.
   void merge(const Replacement &R) {
     if (MergeSecond) {
       unsigned REnd = R.getOffset() + Delta + R.getLength();

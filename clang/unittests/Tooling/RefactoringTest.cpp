@@ -18,6 +18,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -164,6 +165,35 @@ TEST_F(ReplacementTest, ApplyAllFailsIfOneApplyFails) {
   EXPECT_FALSE(applyAllReplacements(Replaces, Context.Rewrite));
   EXPECT_EQ("a", Context.getRewrittenText(IDa));
   EXPECT_EQ("z", Context.getRewrittenText(IDz));
+}
+
+TEST_F(ReplacementTest, FormatCodeAfterReplacements) {
+  // Column limit is 20.
+  std::string Code = "Type *a =\n"
+                     "    new Type();\n"
+                     "g(iiiii, 0, jjjjj,\n"
+                     "  0, kkkkk, 0, mm);\n"
+                     "int  bad     = format   ;";
+  std::string Expected = "auto a = new Type();\n"
+                         "g(iiiii, nullptr,\n"
+                         "  jjjjj, nullptr,\n"
+                         "  kkkkk, nullptr,\n"
+                         "  mm);\n"
+                         "int  bad     = format   ;";
+  FileID ID = Context.createInMemoryFile("format.cpp", Code);
+  Replacements Replaces;
+  Replaces.insert(
+      Replacement(Context.Sources, Context.getLocation(ID, 1, 1), 6, "auto "));
+  Replaces.insert(Replacement(Context.Sources, Context.getLocation(ID, 3, 10),
+                              1, "nullptr"));
+  Replaces.insert(Replacement(Context.Sources, Context.getLocation(ID, 4, 3), 1,
+                              "nullptr"));
+  Replaces.insert(Replacement(Context.Sources, Context.getLocation(ID, 4, 13),
+                              1, "nullptr"));
+
+  format::FormatStyle Style = format::getLLVMStyle();
+  Style.ColumnLimit = 20; // Set column limit to 20 to increase readibility.
+  EXPECT_EQ(Expected, applyAllReplacementsAndFormat(Code, Replaces, Style));
 }
 
 TEST(ShiftedCodePositionTest, FindsNewCodePosition) {
@@ -416,6 +446,25 @@ TEST(Range, contains) {
   EXPECT_TRUE(Range(0, 10).contains(Range(2, 6)));
   EXPECT_FALSE(Range(2, 6).contains(Range(0, 10)));
   EXPECT_FALSE(Range(0, 10).contains(Range(0, 11)));
+}
+
+TEST(Range, CalculateRangesOfReplacements) {
+  // Before: aaaabbbbbbz
+  // After : bbbbbbzzzzzzoooooooooooooooo
+  Replacements Replaces;
+  Replaces.insert(Replacement("foo", 0, 4, ""));
+  Replaces.insert(Replacement("foo", 10, 1, "zzzzzz"));
+  Replaces.insert(Replacement("foo", 11, 0, "oooooooooooooooo"));
+
+  std::vector<Range> Ranges = calculateChangedRangesInFile(Replaces);
+
+  EXPECT_EQ(3ul, Ranges.size());
+  EXPECT_TRUE(Ranges[0].getOffset() == 0);
+  EXPECT_TRUE(Ranges[0].getLength() == 0);
+  EXPECT_TRUE(Ranges[1].getOffset() == 6);
+  EXPECT_TRUE(Ranges[1].getLength() == 6);
+  EXPECT_TRUE(Ranges[2].getOffset() == 12);
+  EXPECT_TRUE(Ranges[2].getLength() == 16);
 }
 
 TEST(DeduplicateTest, removesDuplicates) {

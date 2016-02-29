@@ -30,6 +30,10 @@ namespace clang {
 
 class Rewriter;
 
+namespace format {
+struct FormatStyle;
+} // namespace format
+
 namespace tooling {
 
 /// \brief A source range independent of the \c SourceManager.
@@ -219,6 +223,41 @@ bool applyAllReplacements(const std::vector<Replacement> &Replaces,
 /// This completely ignores the path stored in each replacement. If one or more
 /// replacements cannot be applied, this returns an empty \c string.
 std::string applyAllReplacements(StringRef Code, const Replacements &Replaces);
+
+/// \brief Applies all replacements in \p Replaces to \p Code.
+///
+/// This completely ignores the path stored in each replacement. If one or more
+/// replacements cannot be applied, this returns an empty \c string.
+std::string applyAllReplacements(StringRef Code,
+                                 const std::vector<Replacements> &Replaces);
+
+/// \brief Calculate the ranges in a single file that are affected by the
+/// Replacements.
+///
+/// \pre Replacements must be for the same file.
+std::vector<tooling::Range>
+calculateChangedRangesInFile(const tooling::Replacements &Replaces);
+
+/// \brief Return replacements that are merged from orginal replacements
+/// and the replacements for formatting the code after applying the orginal
+/// replacements.
+tooling::Replacements formatReplacements(StringRef Code,
+                                         const tooling::Replacements &Replaces,
+                                         const format::FormatStyle &Style);
+
+/// \brief In addition to applying replacements as in `applyAllReplacements`,
+/// this function also reformats the changed code after applying replacements.
+///
+/// \pre Replacements must be for the same file and conflict-free.
+///
+/// Replacement applications happen independently of the success of
+/// other applications.
+///
+/// \returns the changed code if all replacements apply and code is fixed.
+/// empty string otherwise.
+std::string applyAllReplacementsAndFormat(StringRef Code,
+                                          const Replacements &Replaces,
+                                          const format::FormatStyle &Style);
 
 /// \brief Merges two sets of replacements with the second set referring to the
 /// code after applying the first set. Within both 'First' and 'Second',
