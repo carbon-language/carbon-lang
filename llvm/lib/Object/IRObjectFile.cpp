@@ -231,7 +231,8 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
     Res |= BasicSymbolRef::SF_Global;
   if (GV->hasCommonLinkage())
     Res |= BasicSymbolRef::SF_Common;
-  if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage())
+  if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage() ||
+      GV->hasExternalWeakLinkage())
     Res |= BasicSymbolRef::SF_Weak;
 
   if (GV->getName().startswith("llvm."))
