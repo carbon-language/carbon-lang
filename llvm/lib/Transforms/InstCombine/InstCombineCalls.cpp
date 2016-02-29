@@ -1663,7 +1663,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
 
   case Intrinsic::x86_avx_maskload_ps:
-  // TODO: Add the other masked load variants.
+  case Intrinsic::x86_avx_maskload_pd:
+  case Intrinsic::x86_avx_maskload_ps_256:
+  case Intrinsic::x86_avx_maskload_pd_256:
+  case Intrinsic::x86_avx2_maskload_d:
+  case Intrinsic::x86_avx2_maskload_q:
+  case Intrinsic::x86_avx2_maskload_d_256:
+  case Intrinsic::x86_avx2_maskload_q_256:
     if (Instruction *I = simplifyX86MaskedLoad(*II, *this))
       return I;
     break;
