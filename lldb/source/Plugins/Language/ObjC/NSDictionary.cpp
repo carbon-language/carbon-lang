@@ -63,7 +63,7 @@ GetLLDBNSPairType (TargetSP target_sp)
         
         if (!compiler_type)
         {
-            compiler_type = target_ast_context->CreateRecordType(NULL, lldb::eAccessPublic, g___lldb_autogen_nspair.GetCString(), clang::TTK_Struct, lldb::eLanguageTypeC);
+            compiler_type = target_ast_context->CreateRecordType(nullptr, lldb::eAccessPublic, g___lldb_autogen_nspair.GetCString(), clang::TTK_Struct, lldb::eLanguageTypeC);
             
             if (compiler_type)
             {
@@ -209,7 +209,7 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
     
     ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
     
-    if (!descriptor.get() || !descriptor->IsValid())
+    if (!descriptor || !descriptor->IsValid())
         return false;
     
     uint32_t ptr_size = process_sp->GetAddressByteSize();
@@ -286,10 +286,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
 {
     lldb::ProcessSP process_sp (valobj_sp->GetProcessSP());
     if (!process_sp)
-        return NULL;
+        return nullptr;
     ObjCLanguageRuntime *runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
     if (!runtime)
-        return NULL;
+        return nullptr;
     
     CompilerType valobj_type(valobj_sp->GetCompilerType());
     Flags flags(valobj_type.GetTypeInfo());
@@ -299,19 +299,19 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
         Error error;
         valobj_sp = valobj_sp->AddressOf(error);
         if (error.Fail() || !valobj_sp)
-            return NULL;
+            return nullptr;
     }
     
-    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(*valobj_sp.get()));
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(*valobj_sp));
     
-    if (!descriptor.get() || !descriptor->IsValid())
-        return NULL;
+    if (!descriptor || !descriptor->IsValid())
+        return nullptr;
     
     ConstString class_name_cs = descriptor->GetClassName();
     const char* class_name = class_name_cs.GetCString();
     
     if (!class_name || !*class_name)
-        return NULL;
+        return nullptr;
     
     if (!strcmp(class_name,"__NSDictionaryI"))
     {
@@ -333,22 +333,22 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
 }
 
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::NSDictionaryISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-SyntheticChildrenFrontEnd(*valobj_sp.get()),
-m_exe_ctx_ref(),
-m_ptr_size(8),
-m_order(lldb::eByteOrderInvalid),
-m_data_32(NULL),
-m_data_64(NULL),
-m_pair_type()
+    SyntheticChildrenFrontEnd(*valobj_sp),
+    m_exe_ctx_ref(),
+    m_ptr_size(8),
+    m_order(lldb::eByteOrderInvalid),
+    m_data_32(nullptr),
+    m_data_64(nullptr),
+    m_pair_type()
 {
 }
 
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::~NSDictionaryISyntheticFrontEnd ()
 {
     delete m_data_32;
-    m_data_32 = NULL;
+    m_data_32 = nullptr;
     delete m_data_64;
-    m_data_64 = NULL;
+    m_data_64 = nullptr;
 }
 
 size_t
@@ -374,9 +374,9 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::Update()
 {
     m_children.clear();
     delete m_data_32;
-    m_data_32 = NULL;
+    m_data_32 = nullptr;
     delete m_data_64;
-    m_data_64 = NULL;
+    m_data_64 = nullptr;
     m_ptr_size = 0;
     ValueObjectSP valobj_sp = m_backend.GetSP();
     if (!valobj_sp)
@@ -498,22 +498,22 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (size_
 }
 
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::NSDictionaryMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-SyntheticChildrenFrontEnd(*valobj_sp.get()),
-m_exe_ctx_ref(),
-m_ptr_size(8),
-m_order(lldb::eByteOrderInvalid),
-m_data_32(NULL),
-m_data_64(NULL),
-m_pair_type()
+    SyntheticChildrenFrontEnd(*valobj_sp),
+    m_exe_ctx_ref(),
+    m_ptr_size(8),
+    m_order(lldb::eByteOrderInvalid),
+    m_data_32(nullptr),
+    m_data_64(nullptr),
+    m_pair_type()
 {
 }
 
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::~NSDictionaryMSyntheticFrontEnd ()
 {
     delete m_data_32;
-    m_data_32 = NULL;
+    m_data_32 = nullptr;
     delete m_data_64;
-    m_data_64 = NULL;
+    m_data_64 = nullptr;
 }
 
 size_t
@@ -541,9 +541,9 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::Update()
     ValueObjectSP valobj_sp = m_backend.GetSP();
     m_ptr_size = 0;
     delete m_data_32;
-    m_data_32 = NULL;
+    m_data_32 = nullptr;
     delete m_data_64;
-    m_data_64 = NULL;
+    m_data_64 = nullptr;
     if (!valobj_sp)
         return false;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();

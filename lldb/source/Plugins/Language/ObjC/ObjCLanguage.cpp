@@ -61,6 +61,7 @@ ObjCLanguage::GetPluginNameStatic()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
+
 lldb_private::ConstString
 ObjCLanguage::GetPluginName()
 {
@@ -76,6 +77,7 @@ ObjCLanguage::GetPluginVersion()
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
+
 Language *
 ObjCLanguage::CreateInstance (lldb::LanguageType language)
 {
@@ -192,7 +194,7 @@ ObjCLanguage::MethodName::GetClassNameWithCategory ()
                 m_class_category.SetCStringWithLength (class_start, space_pos - class_start);
                 // If m_class hasn't been filled in and the class with category doesn't
                 // contain a '(', then we can also fill in the m_class
-                if (!m_class && strchr (m_class_category.GetCString(), '(') == NULL)
+                if (!m_class && strchr(m_class_category.GetCString(), '(') == nullptr)
                 {
                     m_class = m_class_category;
                     // No '(' was found in the full name, we can definitively say
@@ -732,7 +734,7 @@ ObjCLanguage::GetTypeScavenger ()
                     ConstString key_cs(key);
                     
                     if (clang_modules_decl_vendor->FindDecls(key_cs, false, UINT32_MAX, decls) > 0 &&
-                        decls.size() > 0)
+                        !decls.empty())
                     {
                         CompilerType module_type = ClangASTContext::GetTypeForDecl(decls.front());
                         result = true;
