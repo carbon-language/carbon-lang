@@ -266,10 +266,7 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
 
 ErrorOr<MemoryBufferRef> IRObjectFile::findBitcodeInObject(const ObjectFile &Obj) {
   for (const SectionRef &Sec : Obj.sections()) {
-    StringRef SecName;
-    if (std::error_code EC = Sec.getName(SecName))
-      return EC;
-    if (SecName == ".llvmbc") {
+    if (Sec.isBitcode()) {
       StringRef SecContents;
       if (std::error_code EC = Sec.getContents(SecContents))
         return EC;
