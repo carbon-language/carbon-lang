@@ -62,7 +62,7 @@ public:
 
 private:
   const Kind PSK;
-  const char *KindStr[2] = {"InstrProf", "SampleProfile"};
+  static const char *KindStr[2];
   // We keep track of the number of times a count (block count or samples)
   // appears in the profile. The map is kept sorted in the descending order of
   // counts.

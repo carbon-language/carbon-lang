@@ -30,6 +30,7 @@ const std::vector<uint32_t> ProfileSummary::DefaultCutoffs(
      100000, /* 10% */
      200000, 300000, 400000, 500000, 600000, 500000, 600000, 700000, 800000,
      900000, 950000, 990000, 999000, 999900, 999990, 999999});
+const char *ProfileSummary::KindStr[2] = {"InstrProf", "SampleProfile"};
 
 void InstrProfSummary::addRecord(const InstrProfRecord &R) {
   addEntryCount(R.Counts[0]);
