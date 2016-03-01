@@ -9,7 +9,7 @@ class B : public A<int> { };
 
 class C : public A<float> { };
 
-// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_KEEP_GOING=1 c-index-test -test-print-type %s 2> %t.stderr.txt  | FileCheck %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_KEEP_GOING=1 c-index-test -test-print-type %s -std=c++03 2> %t.stderr.txt  | FileCheck %s
 // RUN: FileCheck -check-prefix CHECK-DIAG %s < %t.stderr.txt
 
 // CHECK: inclusion directive=missing1.h ((null)) [type=] [typekind=Invalid] [isPOD=0]
