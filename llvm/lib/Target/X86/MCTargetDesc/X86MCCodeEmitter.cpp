@@ -1312,7 +1312,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     SrcRegNum = CurOp + 1;
 
     if (HasEVEX_K) // Skip writemask
-      SrcRegNum++;
+      ++SrcRegNum;
 
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       ++SrcRegNum;
@@ -1327,7 +1327,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     SrcRegNum = CurOp + X86::AddrNumOperands;
 
     if (HasEVEX_K) // Skip writemask
-      SrcRegNum++;
+      ++SrcRegNum;
 
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       ++SrcRegNum;
@@ -1343,7 +1343,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     SrcRegNum = CurOp + 1;
 
     if (HasEVEX_K) // Skip writemask
-      SrcRegNum++;
+      ++SrcRegNum;
 
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       ++SrcRegNum;
@@ -1360,7 +1360,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
       ++CurOp;
     // do not count the rounding control operand
     if (HasEVEX_RC)
-      NumOps--;
+      --NumOps;
     break;
 
   case X86II::MRMSrcMem: {
