@@ -1004,6 +1004,8 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   addStartEndSymbols();
   for (OutputSectionBase<ELFT> *Sec : RegularSections)
     addStartStopSymbols(Sec);
+  if (isOutputDynamic())
+    Symtab.addSynthetic("_DYNAMIC", *Out<ELFT>::Dynamic, 0, STV_HIDDEN);
 
   // Define __rel[a]_iplt_{start,end} symbols if needed.
   addRelIpltSymbols();
@@ -1146,8 +1148,8 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   auto Define = [&](StringRef Start, StringRef End,
                     OutputSectionBase<ELFT> *OS) {
     if (OS) {
-      Symtab.addSynthetic(Start, *OS, 0);
-      Symtab.addSynthetic(End, *OS, OS->getSize());
+      Symtab.addSynthetic(Start, *OS, 0, STV_DEFAULT);
+      Symtab.addSynthetic(End, *OS, OS->getSize(), STV_DEFAULT);
     } else {
       Symtab.addIgnored(Start);
       Symtab.addIgnored(End);
@@ -1177,10 +1179,10 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
   StringRef Stop = Saver.save("__stop_" + S);
   if (SymbolBody *B = Symtab.find(Start))
     if (B->isUndefined())
-      Symtab.addSynthetic(Start, *Sec, 0);
+      Symtab.addSynthetic(Start, *Sec, 0, STV_DEFAULT);
   if (SymbolBody *B = Symtab.find(Stop))
     if (B->isUndefined())
-      Symtab.addSynthetic(Stop, *Sec, Sec->getSize());
+      Symtab.addSynthetic(Stop, *Sec, Sec->getSize(), STV_DEFAULT);
 }
 
 template <class ELFT> static bool needsPtLoad(OutputSectionBase<ELFT> *Sec) {
