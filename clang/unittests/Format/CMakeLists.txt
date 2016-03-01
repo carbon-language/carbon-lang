@@ -15,5 +15,6 @@ target_link_libraries(FormatTests
   clangBasic
   clangFormat
   clangFrontend
+  clangRewrite
   clangToolingCore
   )
