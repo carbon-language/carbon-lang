@@ -9,7 +9,7 @@
 // CHECK-CC: -emit-obj
 // CHECK-CC: -fembed-bitcode
 
-// RUN: %clang %s -c -save-temps -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-SAVE-TEMP
+// RUN: %clang %s -c -save-temps -fembed-bitcode -fintegrated-as 2>&1 -### | FileCheck %s -check-prefix=CHECK-SAVE-TEMP
 // CHECK-SAVE-TEMP: -cc1
 // CHECK-SAVE-TEMP: -E
 // CHECK-SAVE-TEMP: -cc1
