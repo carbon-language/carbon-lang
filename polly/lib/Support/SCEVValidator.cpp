@@ -476,9 +476,6 @@ public:
   }
 
   bool visitAddRecExpr(const SCEVAddRecExpr *Expr) {
-    if (visit(Expr->getStart()))
-      return true;
-
     for (size_t i = 0; i < Expr->getNumOperands(); ++i)
       if (visit(Expr->getOperand(i)))
         return true;
