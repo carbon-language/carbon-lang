@@ -686,8 +686,10 @@ llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   assert(EHStack.requiresLandingPad());
   assert(!EHStack.empty());
 
-  // If exceptions are disabled, there are usually no landingpads. However, when
-  // SEH is enabled, functions using SEH still get landingpads.
+  // If exceptions are disabled and SEH is not in use, then there is no invoke
+  // destination. SEH "works" even if exceptions are off. In practice, this
+  // means that C++ destructors and other EH cleanups don't run, which is
+  // consistent with MSVC's behavior.
   const LangOptions &LO = CGM.getLangOpts();
   if (!LO.Exceptions) {
     if (!LO.Borland && !LO.MicrosoftExt)
