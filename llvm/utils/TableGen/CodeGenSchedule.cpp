@@ -1564,8 +1564,14 @@ void CodeGenSchedModels::checkCompleteness() {
     }
     HadCompleteModel = true;
   }
-  if (!Complete)
+  if (!Complete) {
+    errs() << "\n\nIncomplete schedule models found.\n"
+      << "- Consider setting 'CompleteModel = 0' while developing new models.\n"
+      << "- Pseudo instructions can be marked with 'hasNoSchedulingInfo = 1'.\n"
+      << "- Instructions should usually have Sched<[...]> as a superclass, "
+         "you may temporarily use an empty list.\n\n";
     PrintFatalError("Incomplete schedule model");
+  }
 }
 
 // Collect itinerary class resources for each processor.
