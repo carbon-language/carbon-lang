@@ -17,6 +17,7 @@ def CycloneModel : SchedMachineModel {
   let MicroOpBufferSize = 192; // Based on the reorder buffer.
   let LoadLatency = 4; // Optimistic load latency.
   let MispredictPenalty = 16; // 14-19 cycles are typical.
+  let CompleteModel = 0;
 }
 
 //===----------------------------------------------------------------------===//

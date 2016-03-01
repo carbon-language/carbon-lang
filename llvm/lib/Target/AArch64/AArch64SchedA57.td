@@ -30,6 +30,7 @@ def CortexA57Model : SchedMachineModel {
   // Enable partial & runtime unrolling. The magic number is chosen based on
   // experiments and benchmarking data.
   let LoopMicroOpBufferSize = 16;
+  let CompleteModel = 0;
 }
 
 //===----------------------------------------------------------------------===//

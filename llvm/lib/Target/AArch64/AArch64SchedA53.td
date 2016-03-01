@@ -26,6 +26,7 @@ def CortexA53Model : SchedMachineModel {
   let MispredictPenalty = 9; // Based on "Cortex-A53 Software Optimisation
                              // Specification - Instruction Timings"
                              // v 1.0 Spreadsheet
+  let CompleteModel = 0;
 }
 
 
