@@ -14159,7 +14159,8 @@ SDValue DAGCombiner::SimplifySelectCC(SDLoc DL, SDValue N0, SDValue N1,
           Temp = DAG.getZeroExtendInReg(SCC, SDLoc(N2),
                                         N2.getValueType());
         else
-          Temp = DAG.getZExtOrTrunc(SCC, SDLoc(N2), N2.getValueType());
+          Temp = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N2),
+                             N2.getValueType(), SCC);
       } else {
         SCC  = DAG.getSetCC(SDLoc(N0), MVT::i1, N0, N1, CC);
         Temp = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N2),
