@@ -2682,20 +2682,14 @@ def : Pat<(call texternalsym:$dst), (CALL texternalsym:$dst)>;
 class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
    : NVPTXInst<outs, ins, asmstr, pattern>;
 
-// @TODO: We use some tricks here to emit curly braces.  Can we clean this up
-// a bit without TableGen modifications?
 def Callseq_Start :
   NVPTXInst<(outs), (ins i32imm:$amt),
-            "// Callseq Start $amt\n"
-            "\t{{\n"
-            "\t.reg .b32 temp_param_reg;\n"
-            "\t// <end>}}",
+            "\\{ // callseq $amt\n"
+            "\t.reg .b32 temp_param_reg;",
            [(callseq_start timm:$amt)]>;
 def Callseq_End :
   NVPTXInst<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-            "\n"
-            "\t//{{\n"
-            "\t}}// Callseq End $amt1",
+            "\\} // callseq $amt1",
             [(callseq_end timm:$amt1, timm:$amt2)]>;
 
 // trap instruction
