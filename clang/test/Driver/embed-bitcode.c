@@ -2,16 +2,14 @@
 // CHECK: clang
 // CHECK: clang
 
-// RUN: %clang %s -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-CC
+// RUN: %clang %s -c -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-CC
 // CHECK-CC: -cc1
 // CHECK-CC: -emit-llvm-bc
 // CHECK-CC: -cc1
 // CHECK-CC: -emit-obj
 // CHECK-CC: -fembed-bitcode
-// CHECK-CC: ld
-// CHECK-CC: -bitcode_bundle
 
-// RUN: %clang %s -save-temps -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-SAVE-TEMP
+// RUN: %clang %s -c -save-temps -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-SAVE-TEMP
 // CHECK-SAVE-TEMP: -cc1
 // CHECK-SAVE-TEMP: -E
 // CHECK-SAVE-TEMP: -cc1
@@ -20,8 +18,6 @@
 // CHECK-SAVE-TEMP: -S
 // CHECK-SAVE-TEMP: -fembed-bitcode
 // CHECK-SAVE-TEMP: -cc1as
-// CHECK-SAVE-TEMP: ld
-// CHECK-SAVE-TEMP: -bitcode_bundle
 
 // RUN: %clang -c %s -flto -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-LTO
 // CHECK-LTO: -cc1
