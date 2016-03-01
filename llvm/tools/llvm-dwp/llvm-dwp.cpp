@@ -358,16 +358,10 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
   uint32_t ContributionOffsets[8] = {};
 
-  SmallVector<OwningBinary<object::ObjectFile>, 128> Objects;
-  Objects.reserve(Inputs.size());
   for (const auto &Input : Inputs) {
     auto ErrOrObj = object::ObjectFile::createObjectFile(Input);
     if (!ErrOrObj)
       return ErrOrObj.getError();
-
-    Objects.push_back(std::move(*ErrOrObj));
-
-    auto &Obj = *Objects.back().getBinary();
 
     UnitIndexEntry CurEntry = {};
 
@@ -381,7 +375,7 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
     SmallVector<SmallString<32>, 4> UncompressedSections;
 
-    for (const auto &Section : Obj.sections()) {
+    for (const auto &Section : ErrOrObj->getBinary()->sections()) {
       if (Section.isBSS())
         continue;
       if (Section.isVirtual())
@@ -458,7 +452,8 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
     if (!CurCUIndexSection.empty()) {
       DWARFUnitIndex CUIndex(DW_SECT_INFO);
-      DataExtractor CUIndexData(CurCUIndexSection, Obj.isLittleEndian(), 0);
+      DataExtractor CUIndexData(CurCUIndexSection,
+                                ErrOrObj->getBinary()->isLittleEndian(), 0);
       if (!CUIndex.parse(CUIndexData))
         return make_error_code(std::errc::invalid_argument);
 
@@ -496,7 +491,8 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         if (CurTUIndexSection.empty())
           return make_error_code(std::errc::invalid_argument);
         DWARFUnitIndex TUIndex(DW_SECT_TYPES);
-        DataExtractor TUIndexData(CurTUIndexSection, Obj.isLittleEndian(), 0);
+        DataExtractor TUIndexData(CurTUIndexSection,
+                                  ErrOrObj->getBinary()->isLittleEndian(), 0);
         if (!TUIndex.parse(TUIndexData))
           return make_error_code(std::errc::invalid_argument);
         addAllTypesFromDWP(Out, TypeIndexEntries, TUIndex, TypesSection,
@@ -541,7 +537,7 @@ static std::error_code write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
   writeIndex(Out, MCOFI.getDwarfCUIndexSection(), ContributionOffsets,
              IndexEntries);
-  Out.Finish();
+
   return std::error_code();
 }
 
@@ -612,4 +608,6 @@ int main(int argc, char **argv) {
 
   if (auto Err = write(*MS, InputFiles))
     return error(Err.message(), "Writing DWP file");
+
+  MS->Finish();
 }
