@@ -23,6 +23,13 @@ function(get_ext_project_build_command out_var target)
 endfunction()
 
 set(COMPILER_RT_SRC_ROOT ${LLVM_MAIN_SRC_DIR}/projects/compiler-rt)
+# Fallback to the external path, if the other one isn't available.
+# This is the same behavior (try "internal", then check the LLVM_EXTERNAL_...
+# variable) as in add_llvm_external_project
+if(NOT EXISTS ${COMPILER_RT_SRC_ROOT})
+  set(COMPILER_RT_SRC_ROOT ${LLVM_EXTERNAL_COMPILER_RT_SOURCE_DIR})
+endif()
+
 if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
   if(CMAKE_VERSION VERSION_GREATER 3.3.20150708)
     set(cmake_3_4_USES_TERMINAL_OPTIONS
