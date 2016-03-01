@@ -265,7 +265,6 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   Options.Verbosity = Flags.verbosity;
   Options.MaxLen = Flags.max_len;
   Options.UnitTimeoutSec = Flags.timeout;
-  Options.AbortOnTimeout = Flags.abort_on_timeout;
   Options.TimeoutExitCode = Flags.timeout_exitcode;
   Options.MaxTotalTimeSec = Flags.max_total_time;
   Options.DoCrossOver = Flags.cross_over;
@@ -322,6 +321,12 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   // Timer
   if (Flags.timeout > 0)
     SetTimer(Flags.timeout / 2 + 1);
+  if (Flags.handle_segv) SetSigSegvHandler();
+  if (Flags.handle_bus) SetSigBusHandler();
+  if (Flags.handle_abrt) SetSigAbrtHandler();
+  if (Flags.handle_ill) SetSigIllHandler();
+  if (Flags.handle_fpe) SetSigFpeHandler();
+  if (Flags.handle_int) SetSigIntHandler();
 
   if (Flags.test_single_input) {
     RunOneTest(&F, Flags.test_single_input);
