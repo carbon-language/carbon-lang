@@ -27,13 +27,7 @@
 
 namespace lld {
 class LinkingContext;
-class CoreLinkingContext;
 class MachOLinkingContext;
-
-typedef std::vector<std::unique_ptr<File>> FileVector;
-
-FileVector makeErrorFile(StringRef path, std::error_code ec);
-FileVector parseMemberFiles(std::unique_ptr<File> File);
 
 /// Base class for all Drivers.
 class Driver {
