@@ -1625,14 +1625,13 @@ void CodeGenFunction::startOutlinedSEHHelper(CodeGenFunction &ParentCGF,
   SmallString<128> Name;
   {
     llvm::raw_svector_ostream OS(Name);
-    const Decl *ParentCodeDecl = ParentCGF.CurCodeDecl;
-    const NamedDecl *Parent = dyn_cast_or_null<NamedDecl>(ParentCodeDecl);
-    assert(Parent && "FIXME: handle unnamed decls (lambdas, blocks) with SEH");
+    const FunctionDecl *ParentSEHFn = ParentCGF.CurSEHParent;
+    assert(ParentSEHFn && "No CurSEHParent!");
     MangleContext &Mangler = CGM.getCXXABI().getMangleContext();
     if (IsFilter)
-      Mangler.mangleSEHFilterExpression(Parent, OS);
+      Mangler.mangleSEHFilterExpression(ParentSEHFn, OS);
     else
-      Mangler.mangleSEHFinallyBlock(Parent, OS);
+      Mangler.mangleSEHFinallyBlock(ParentSEHFn, OS);
   }
 
   FunctionArgList Args;
@@ -1679,6 +1678,7 @@ void CodeGenFunction::startOutlinedSEHHelper(CodeGenFunction &ParentCGF,
 
   StartFunction(GlobalDecl(), RetTy, Fn, FnInfo, Args,
                 OutlinedStmt->getLocStart(), OutlinedStmt->getLocStart());
+  CurSEHParent = ParentCGF.CurSEHParent;
 
   CGM.SetLLVMFunctionAttributes(nullptr, FnInfo, CurFn);
   EmitCapturedLocals(ParentCGF, OutlinedStmt, IsFilter);
