@@ -5724,8 +5724,8 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   return SDValue();
 }
 
-/// LowerVectorBroadcast - Attempt to use the vbroadcast instruction
-/// to generate a splat value for the following cases:
+/// Attempt to use the vbroadcast instruction to generate a splat value for the
+/// following cases:
 /// 1. A splat BUILD_VECTOR which uses a single scalar load, or a constant.
 /// 2. A splat shuffle which uses a scalar_to_vector node which comes from
 /// a scalar load, or a constant.
@@ -8279,7 +8279,7 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   return V2;
 }
 
-/// \brief Try to lower broadcast of a single - truncated - integer element,
+/// Try to lower broadcast of a single - truncated - integer element,
 /// coming from a scalar_to_vector/build_vector node \p V0 with larger elements.
 ///
 /// This assumes we have AVX2.
@@ -13059,7 +13059,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
   llvm_unreachable("TLS not implemented for this target.");
 }
 
-/// LowerShiftParts - Lower SRA_PARTS and friends, which return two i32 values
+/// Lower SRA_PARTS and friends, which return two i32 values
 /// and take a 2 x i32 value to shift plus a shift amount.
 static SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && "Not a double-shift!");
@@ -13227,7 +13227,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
   return Result;
 }
 
-// LowerUINT_TO_FP_i64 - 64-bit unsigned integer to double expansion.
+/// 64-bit unsigned integer to double expansion.
 SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
                                                SelectionDAG &DAG) const {
   // This algorithm is not obvious. Here it is what we're trying to output:
@@ -13296,7 +13296,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
                      DAG.getIntPtrConstant(0, dl));
 }
 
-// LowerUINT_TO_FP_i32 - 32-bit unsigned integer to float expansion.
+/// 32-bit unsigned integer to float expansion.
 SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
                                                SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -14727,8 +14727,7 @@ unsigned X86TargetLowering::combineRepeatedFPDivisors() const {
   return 2;
 }
 
-/// LowerToBT - Result of 'and' is compared against zero. Turn it into a BT node
-/// if it's possible.
+/// Result of 'and' is compared against zero. Change to a BT node if possible.
 SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
                                      SDLoc dl, SelectionDAG &DAG) const {
   SDValue Op0 = And.getOperand(0);
@@ -14797,8 +14796,8 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
   return SDValue();
 }
 
-/// \brief - Turns an ISD::CondCode into a value suitable for SSE floating point
-/// mask CMPs.
+/// Turns an ISD::CondCode into a value suitable for SSE floating-point mask
+/// CMPs.
 static int translateX86FSETCC(ISD::CondCode SetCCOpcode, SDValue &Op0,
                               SDValue &Op1) {
   unsigned SSECC;
@@ -14842,8 +14841,8 @@ static int translateX86FSETCC(ISD::CondCode SetCCOpcode, SDValue &Op0,
   return SSECC;
 }
 
-// Lower256IntVSETCC - Break a VSETCC 256-bit integer VSETCC into two new 128
-// ones, and then concatenate the result back.
+/// Break a VSETCC 256-bit integer VSETCC into two new 128 ones and then
+/// concatenate the result back.
 static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
@@ -15372,7 +15371,7 @@ SDValue X86TargetLowering::LowerSETCCE(SDValue Op, SelectionDAG &DAG) const {
   return SetCC;
 }
 
-// isX86LogicalCmp - Return true if opcode is a X86 logical comparison.
+/// Return true if opcode is a X86 logical comparison.
 static bool isX86LogicalCmp(SDValue Op) {
   unsigned Opc = Op.getNode()->getOpcode();
   if (Opc == X86ISD::CMP || Opc == X86ISD::COMI || Opc == X86ISD::UCOMI ||
@@ -16043,9 +16042,8 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget &Subtarget,
   return Shuff;
 }
 
-// isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or
-// ISD::OR of two X86ISD::SETCC nodes each of which has no other use apart
-// from the AND / OR.
+/// Return true if node is an ISD::AND or ISD::OR of two X86ISD::SETCC nodes
+/// each of which has no other use apart from the AND / OR.
 static bool isAndOrOfSetCCs(SDValue Op, unsigned &Opc) {
   Opc = Op.getOpcode();
   if (Opc != ISD::OR && Opc != ISD::AND)
@@ -16056,8 +16054,8 @@ static bool isAndOrOfSetCCs(SDValue Op, unsigned &Opc) {
           Op.getOperand(1).hasOneUse());
 }
 
-// isXor1OfSetCC - Return true if node is an ISD::XOR of a X86ISD::SETCC and
-// 1 and that the SETCC node has a single use.
+/// Return true if node is an ISD::XOR of a X86ISD::SETCC and 1 and that the
+/// SETCC node has a single use.
 static bool isXor1OfSetCC(SDValue Op) {
   if (Op.getOpcode() != ISD::XOR)
     return false;
@@ -16580,8 +16578,8 @@ static SDValue LowerVACOPY(SDValue Op, const X86Subtarget &Subtarget,
                        MachinePointerInfo(DstSV), MachinePointerInfo(SrcSV));
 }
 
-// getTargetVShiftByConstNode - Handle vector element shifts where the shift
-// amount is a constant. Takes immediate version of shift as input.
+/// Handle vector element shifts where the shift amount is a constant.
+/// Takes immediate version of shift as input.
 static SDValue getTargetVShiftByConstNode(unsigned Opc, SDLoc dl, MVT VT,
                                           SDValue SrcOp, uint64_t ShiftAmt,
                                           SelectionDAG &DAG) {
@@ -16657,8 +16655,8 @@ static SDValue getTargetVShiftByConstNode(unsigned Opc, SDLoc dl, MVT VT,
                      DAG.getConstant(ShiftAmt, dl, MVT::i8));
 }
 
-// getTargetVShiftNode - Handle vector element shifts where the shift amount
-// may or may not be a constant. Takes immediate version of shift as input.
+/// Handle vector element shifts where the shift amount may or may not be a
+/// constant. Takes immediate version of shift as input.
 static SDValue getTargetVShiftNode(unsigned Opc, SDLoc dl, MVT VT,
                                    SDValue SrcOp, SDValue ShAmt,
                                    SelectionDAG &DAG) {
@@ -17712,8 +17710,8 @@ static SDValue getPrefetchNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   return SDValue(Res, 0);
 }
 
-// getReadPerformanceCounter - Handles the lowering of builtin intrinsics that
-// read performance monitor counters (x86_rdpmc).
+/// Handles the lowering of builtin intrinsics that read performance monitor
+/// counters (x86_rdpmc).
 static void getReadPerformanceCounter(SDNode *N, SDLoc DL,
                               SelectionDAG &DAG, const X86Subtarget &Subtarget,
                               SmallVectorImpl<SDValue> &Results) {
@@ -17757,9 +17755,9 @@ static void getReadPerformanceCounter(SDNode *N, SDLoc DL,
   Results.push_back(Chain);
 }
 
-// getReadTimeStampCounter - Handles the lowering of builtin intrinsics that
-// read the time stamp counter (x86_rdtsc and x86_rdtscp). This function is
-// also used to custom lower READCYCLECOUNTER nodes.
+/// Handles the lowering of builtin intrinsics that read the time stamp counter
+/// (x86_rdtsc and x86_rdtscp). This function is also used to custom lower
+/// READCYCLECOUNTER nodes.
 static void getReadTimeStampCounter(SDNode *N, SDLoc DL, unsigned Opcode,
                               SelectionDAG &DAG, const X86Subtarget &Subtarget,
                               SmallVectorImpl<SDValue> &Results) {
@@ -18642,8 +18640,8 @@ static SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(X86ISD::CMOV, dl, VT, Ops);
 }
 
-// Lower256IntArith - Break a 256-bit integer operation into two new 128-bit
-// ones, and then concatenate the result back.
+/// Break a 256-bit integer operation into two new 128-bit ones and then
+/// concatenate the result back.
 static SDValue Lower256IntArith(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
@@ -20811,8 +20809,7 @@ SDValue X86TargetLowering::LowerGC_TRANSITION_END(SDValue Op,
   return NOOP;
 }
 
-/// LowerOperation - Provide custom lowering hooks for some operations.
-///
+/// Provide custom lowering hooks for some operations.
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Should not custom lower this!");
@@ -20943,8 +20940,8 @@ void X86TargetLowering::LowerOperationWrapper(SDNode *N,
       Results.push_back(Res.getValue(I));
 }
 
-/// ReplaceNodeResults - Replace a node with an illegal result type
-/// with a new node built out of custom code.
+/// Replace a node with an illegal result type with a new node built out of
+/// custom code.
 void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
                                            SelectionDAG &DAG) const {
@@ -21444,8 +21441,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return nullptr;
 }
 
-// isLegalAddressingMode - Return true if the addressing mode represented
-// by AM is legal for this target, for a load/store of the specified type.
+/// Return true if the addressing mode represented by AM is legal for this
+/// target, for a load/store of the specified type.
 bool X86TargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                               const AddrMode &AM, Type *Ty,
                                               unsigned AS) const {
@@ -21618,8 +21615,8 @@ bool X86TargetLowering::isNarrowingProfitable(EVT VT1, EVT VT2) const {
   return !(VT1 == MVT::i32 && VT2 == MVT::i16);
 }
 
-/// isShuffleMaskLegal - Targets can use this to indicate that they only
-/// support *some* VECTOR_SHUFFLE operations, those with specific masks.
+/// Targets can use this to indicate that they only support *some*
+/// VECTOR_SHUFFLE operations, those with specific masks.
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
 /// are assumed to be legal.
 bool
@@ -23506,8 +23503,8 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
   return 1;
 }
 
-/// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
-/// node is a GlobalAddress + offset.
+/// Returns true (and the GlobalValue and the offset) if the node is a
+/// GlobalAddress + offset.
 bool X86TargetLowering::isGAPlusOffset(SDNode *N,
                                        const GlobalValue* &GA,
                                        int64_t &Offset) const {
@@ -23521,7 +23518,7 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
   return TargetLowering::isGAPlusOffset(N, GA, Offset);
 }
 
-/// PerformShuffleCombine256 - Performs shuffle combines for 256-bit vectors.
+/// Performs shuffle combines for 256-bit vectors.
 /// FIXME: This could be expanded to support 512 bit vectors as well.
 static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
                                         TargetLowering::DAGCombinerInfo &DCI,
@@ -24560,7 +24557,6 @@ static SDValue combineShuffleToAddSub(SDNode *N, const X86Subtarget &Subtarget,
   return DAG.getNode(X86ISD::ADDSUB, DL, VT, LHS, RHS);
 }
 
-/// PerformShuffleCombine - Performs several different shuffle combines.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI,
                                      const X86Subtarget &Subtarget) {
@@ -24670,8 +24666,8 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// XFormVExtractWithShuffleIntoLoad - Check if a vector extract from a target
-/// specific shuffle of a load can be folded into a single element load.
+/// Check if a vector extract from a target-specific shuffle of a load can be
+/// folded into a single element load.
 /// Similar handling for VECTOR_SHUFFLE is performed by DAGCombiner, but
 /// shuffles have been custom lowered so we need to handle those here.
 static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
@@ -24818,11 +24814,10 @@ static SDValue PerformBITCASTCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
-/// generation and convert it from being a bunch of shuffles and extracts
-/// into a somewhat faster sequence. For i686, the best sequence is apparently
-/// storing the value and loading scalars back, while for x64 we should
-/// use 64-bit extracts and shifts.
+/// Detect vector gather/scatter index generation and convert it from being a
+/// bunch of shuffles and extracts into a somewhat faster sequence.
+/// For i686, the best sequence is apparently storing the value and loading
+/// scalars back, while for x64 we should use 64-bit extracts and shifts.
 static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
                                          TargetLowering::DAGCombinerInfo &DCI) {
   if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
@@ -25013,8 +25008,7 @@ transformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
   return DAG.getVectorShuffle(VT, dl, LHS, RHS, &ShuffleMask[0]);
 }
 
-/// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
-/// nodes.
+/// Do target-specific dag combines on SELECT and VSELECT nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                                     TargetLowering::DAGCombinerInfo &DCI,
                                     const X86Subtarget &Subtarget) {
@@ -25915,9 +25909,8 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformMulCombine - Optimize a single multiply with constant into two
-/// in order to implement it with two cheaper instructions, e.g.
-/// LEA + SHL, LEA + LEA.
+/// Optimize a single multiply with constant into two operations in order to
+/// implement it with two cheaper instructions, e.g. LEA + SHL, LEA + LEA.
 static SDValue PerformMulCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI) {
   // An imul is usually smaller than the alternative sequence.
@@ -26148,7 +26141,6 @@ static SDValue performShiftToAllZeros(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformShiftCombine - Combine shifts.
 static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget &Subtarget) {
@@ -26168,9 +26160,9 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// CMPEQCombine - Recognize the distinctive  (AND (setcc ...) (setcc ..))
-// where both setccs reference the same FP CMP, and rewrite for CMPEQSS
-// and friends.  Likewise for OR -> CMPNEQSS.
+/// Recognize the distinctive (AND (setcc ...) (setcc ..)) where both setccs
+/// reference the same FP CMP, and rewrite for CMPEQSS and friends. Likewise for
+/// OR -> CMPNEQSS.
 static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
                             TargetLowering::DAGCombinerInfo &DCI,
                             const X86Subtarget &Subtarget) {
@@ -26271,7 +26263,7 @@ static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// Try to fold: (and (xor X, -1), Y) -> (andnp X, Y).
+/// Try to fold: (and (xor X, -1), Y) -> (andnp X, Y).
 static SDValue combineANDXORWithAllOnesIntoANDNP(SDNode *N, SelectionDAG &DAG) {
   assert(N->getOpcode() == ISD::AND);
 
@@ -26807,10 +26799,10 @@ static SDValue performIntegerAbsCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-// Try to turn tests against the signbit in the form of:
-//   XOR(TRUNCATE(SRL(X, size(X)-1)), 1)
-// into:
-//   SETGT(X, -1)
+/// Try to turn tests against the signbit in the form of:
+///   XOR(TRUNCATE(SRL(X, size(X)-1)), 1)
+/// into:
+///   SETGT(X, -1)
 static SDValue foldXorTruncShiftIntoCmp(SDNode *N, SelectionDAG &DAG) {
   // This is only worth doing if the output type is i8.
   if (N->getValueType(0) != MVT::i8)
@@ -28474,8 +28466,8 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// Optimize x == -y --> x+y == 0
-//          x != -y --> x+y != 0
+/// Optimize x == -y --> x+y == 0
+///          x != -y --> x+y != 0
 static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG,
                                       const X86Subtarget &Subtarget) {
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
@@ -28769,10 +28761,10 @@ static SDValue PerformADCCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// fold (add Y, (sete  X, 0)) -> adc  0, Y
-//      (add Y, (setne X, 0)) -> sbb -1, Y
-//      (sub (sete  X, 0), Y) -> sbb  0, Y
-//      (sub (setne X, 0), Y) -> adc -1, Y
+/// fold (add Y, (sete  X, 0)) -> adc  0, Y
+///      (add Y, (setne X, 0)) -> sbb -1, Y
+///      (sub (sete  X, 0), Y) -> sbb  0, Y
+///      (sub (setne X, 0), Y) -> adc -1, Y
 static SDValue OptimizeConditionalInDecrement(SDNode *N, SelectionDAG &DAG) {
   SDLoc DL(N);
 
@@ -28810,7 +28802,6 @@ static SDValue OptimizeConditionalInDecrement(SDNode *N, SelectionDAG &DAG) {
                      DAG.getConstant(0, DL, OtherVal.getValueType()), NewCmp);
 }
 
-/// PerformADDCombine - Do target-specific dag combines on integer adds.
 static SDValue PerformAddCombine(SDNode *N, SelectionDAG &DAG,
                                  const X86Subtarget &Subtarget) {
   EVT VT = N->getValueType(0);
@@ -28859,7 +28850,6 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG,
   return OptimizeConditionalInDecrement(N, DAG);
 }
 
-/// performVZEXTCombine - Performs build vector combines
 static SDValue performVZEXTCombine(SDNode *N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget &Subtarget) {
@@ -28923,7 +28913,7 @@ static SDValue performVZEXTCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// Canonicalize (LSUB p, 1) -> (LADD p, -1).
+/// Canonicalize (LSUB p, 1) -> (LADD p, -1).
 static SDValue performLSUBCombine(SDNode *N, SelectionDAG &DAG,
                                   const X86Subtarget &Subtarget) {
   SDValue Chain = N->getOperand(0);
@@ -29025,10 +29015,10 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   return SDValue();
 }
 
-/// isTypeDesirableForOp - Return true if the target has native support for
-/// the specified value type and it is 'desirable' to use the type for the
-/// given node type. e.g. On x86 i16 is legal, but undesirable since i16
-/// instruction encodings are longer and some i16 instructions are slow.
+/// Return true if the target has native support for the specified value type
+/// and it is 'desirable' to use the type for the given node type. e.g. On x86
+/// i16 is legal, but undesirable since i16 instruction encodings are longer and
+/// some i16 instructions are slow.
 bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   if (!isTypeLegal(VT))
     return false;
@@ -29066,9 +29056,9 @@ bool X86TargetLowering::hasCopyImplyingStackAdjustment(
                 [](const MachineInstr &RI) { return RI.isCopy(); });
 }
 
-/// IsDesirableToPromoteOp - This method query the target whether it is
-/// beneficial for dag combiner to promote the specified node. If true, it
-/// should return the desired promotion type by reference.
+/// This method query the target whether it is beneficial for dag combiner to
+/// promote the specified node. If true, it should return the desired promotion
+/// type by reference.
 bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   EVT VT = Op.getValueType();
   if (VT != MVT::i16)
@@ -29249,8 +29239,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   return false;
 }
 
-/// getConstraintType - Given a constraint letter, return the type of
-/// constraint it is for this target.
+/// Given a constraint letter, return the type of constraint for this target.
 X86TargetLowering::ConstraintType
 X86TargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
@@ -29397,9 +29386,9 @@ TargetLowering::ConstraintWeight
   return weight;
 }
 
-/// LowerXConstraint - try to replace an X constraint, which matches anything,
-/// with another that has more specific requirements based on the type of the
-/// corresponding operand.
+/// Try to replace an X constraint, which matches anything, with another that
+/// has more specific requirements based on the type of the corresponding
+/// operand.
 const char *X86TargetLowering::
 LowerXConstraint(EVT ConstraintVT) const {
   // FP X constraints get lowered to SSE1/2 registers if available, otherwise
@@ -29414,8 +29403,8 @@ LowerXConstraint(EVT ConstraintVT) const {
   return TargetLowering::LowerXConstraint(ConstraintVT);
 }
 
-/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-/// vector.  If it is invalid, don't add anything to Ops.
+/// Lower the specified operand into the Ops vector.
+/// If it is invalid, don't add anything to Ops.
 void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      std::string &Constraint,
                                                      std::vector<SDValue>&Ops,
