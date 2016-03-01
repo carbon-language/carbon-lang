@@ -1001,9 +1001,11 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
   // addresses of each section by section name. Add such symbols.
-  addStartEndSymbols();
-  for (OutputSectionBase<ELFT> *Sec : RegularSections)
-    addStartStopSymbols(Sec);
+  if (!Config->Relocatable) {
+    addStartEndSymbols();
+    for (OutputSectionBase<ELFT> *Sec : RegularSections)
+      addStartStopSymbols(Sec);
+  }
   if (isOutputDynamic())
     Symtab.addSynthetic("_DYNAMIC", *Out<ELFT>::Dynamic, 0, STV_HIDDEN);
 
