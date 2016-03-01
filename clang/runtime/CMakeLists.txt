@@ -129,7 +129,9 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
         COMMAND ${run_test_suite}
         DEPENDS compiler-rt-build ${COMPILER_RT_TEST_DEPENDENCIES}
         WORKING_DIRECTORY ${BINARY_DIR}
-        VERBATIM)
+        VERBATIM
+        ${cmake_3_2_USES_TERMINAL}
+        )
     endforeach()
 
     # Add special target to run all compiler-rt test suites.
