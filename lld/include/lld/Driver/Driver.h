@@ -78,23 +78,6 @@ namespace elf {
 bool link(llvm::ArrayRef<const char *> args, raw_ostream &diag = llvm::errs());
 }
 
-/// Driver for lld unit tests
-class CoreDriver : public Driver {
-public:
-  /// Parses command line arguments same as lld-core and performs link.
-  /// Returns true iff there was an error.
-  static bool link(llvm::ArrayRef<const char *> args,
-                   raw_ostream &diag = llvm::errs());
-
-  /// Uses lld-core command line options to fill in options struct.
-  /// Returns true iff there was an error.
-  static bool parse(llvm::ArrayRef<const char *> args, CoreLinkingContext &info,
-                    raw_ostream &diag = llvm::errs());
-
-private:
-  CoreDriver() = delete;
-};
-
 } // end namespace lld
 
 #endif
