@@ -12,6 +12,7 @@ add_clang_unittest(FormatTests
   )
 
 target_link_libraries(FormatTests
+  clangBasic
   clangFormat
   clangFrontend
   clangToolingCore
