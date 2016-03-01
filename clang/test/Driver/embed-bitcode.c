@@ -2,7 +2,7 @@
 // CHECK: clang
 // CHECK: clang
 
-// RUN: %clang %s -c -fembed-bitcode 2>&1 -### | FileCheck %s -check-prefix=CHECK-CC
+// RUN: %clang %s -c -fembed-bitcode -fintegrated-as 2>&1 -### | FileCheck %s -check-prefix=CHECK-CC
 // CHECK-CC: -cc1
 // CHECK-CC: -emit-llvm-bc
 // CHECK-CC: -cc1
@@ -26,7 +26,7 @@
 // CHECK-LTO-NOT: -cc1
 // CHECK-LTO-NOT: -fembed-bitcode
 
-// RUN: %clang -c %s -fembed-bitcode-marker 2>&1 -### | FileCheck %s -check-prefix=CHECK-MARKER
+// RUN: %clang -c %s -fembed-bitcode-marker -fintegrated-as 2>&1 -### | FileCheck %s -check-prefix=CHECK-MARKER
 // CHECK-MARKER: -cc1
 // CHECK-MARKER: -emit-obj
 // CHECK-MARKER: -fembed-bitcode-marker
