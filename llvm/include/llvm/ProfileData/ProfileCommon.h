@@ -80,6 +80,7 @@ protected:
                  uint64_t TotalCount, uint64_t MaxCount, uint32_t NumCounts)
       : PSK(K), DetailedSummary(DetailedSummary), TotalCount(TotalCount),
         MaxCount(MaxCount), NumCounts(NumCounts) {}
+  virtual ~ProfileSummary();
   inline void addCount(uint64_t Count);
   /// \brief Return metadata specific to the profile format.
   /// Derived classes implement this method to return a vector of Metadata.
@@ -112,7 +113,7 @@ class InstrProfSummary : public ProfileSummary {
   inline void addInternalCount(uint64_t Count);
 
 protected:
-  std::vector<Metadata *> getFormatSpecificMD(LLVMContext &Context);
+  std::vector<Metadata *> getFormatSpecificMD(LLVMContext &Context) override;
 
 public:
   InstrProfSummary(std::vector<uint32_t> Cutoffs)
@@ -144,7 +145,7 @@ class SampleProfileSummary : public ProfileSummary {
   uint32_t NumFunctions;
 
 protected:
-  std::vector<Metadata *> getFormatSpecificMD(LLVMContext &Context);
+  std::vector<Metadata *> getFormatSpecificMD(LLVMContext &Context) override;
 
 public:
   uint32_t getNumLinesWithSamples() { return NumCounts; }

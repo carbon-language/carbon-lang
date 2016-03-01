@@ -23,6 +23,8 @@
 
 using namespace llvm;
 
+ProfileSummary::~ProfileSummary() {}
+
 // A set of cutoff values. Each value, when divided by ProfileSummary::Scale
 // (which is 1000000) is a desired percentile of total counts.
 const std::vector<uint32_t> ProfileSummary::DefaultCutoffs(
