@@ -1801,8 +1801,9 @@ class StoreParamV2Inst<NVPTXRegClass regclass, string opstr> :
                 []>;
 
 class StoreParamV4Inst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs), (ins regclass:$val, regclass:$val1, regclass:$val2,
-                             regclass:$val3, i32imm:$a, i32imm:$b),
+      NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, regclass:$val3,
+                             regclass:$val4, i32imm:$a,
+                             i32imm:$b),
                 !strconcat("st.param.v4", opstr,
                            "\t[param$a+$b], {{$val, $val2, $val3, $val4}};"),
                 []>;
@@ -1894,37 +1895,15 @@ def StoreParamV2I32  : StoreParamV2Inst<Int32Regs, ".b32">;
 def StoreParamV2I16  : StoreParamV2Inst<Int16Regs, ".b16">;
 def StoreParamV2I8   : StoreParamV2Inst<Int16Regs, ".b8">;
 
-// FIXME: StoreParamV4Inst crashes llvm-tblgen :(
-//def StoreParamV4I32    : StoreParamV4Inst<Int32Regs, ".b32">;
-def StoreParamV4I32 :
-  NVPTXInst<(outs), (ins Int32Regs:$val, Int32Regs:$val2, Int32Regs:$val3,
-                         Int32Regs:$val4, i32imm:$a, i32imm:$b),
-            "st.param.v4.b32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-            []>;
-
-def StoreParamV4I16 :
-  NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2, Int16Regs:$val3,
-                         Int16Regs:$val4, i32imm:$a, i32imm:$b),
-            "st.param.v4.b16\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-            []>;
-
-def StoreParamV4I8 :
-  NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2, Int16Regs:$val3,
-                         Int16Regs:$val4, i32imm:$a, i32imm:$b),
-            "st.param.v4.b8\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-            []>;
+def StoreParamV4I32  : StoreParamV4Inst<Int32Regs, ".b32">;
+def StoreParamV4I16  : StoreParamV4Inst<Int16Regs, ".b16">;
+def StoreParamV4I8   : StoreParamV4Inst<Int16Regs, ".b8">;
 
 def StoreParamF32      : StoreParamInst<Float32Regs, ".f32">;
 def StoreParamF64      : StoreParamInst<Float64Regs, ".f64">;
 def StoreParamV2F32    : StoreParamV2Inst<Float32Regs, ".f32">;
 def StoreParamV2F64    : StoreParamV2Inst<Float64Regs, ".f64">;
-// FIXME: StoreParamV4Inst crashes llvm-tblgen :(
-//def StoreParamV4F32    : StoreParamV4Inst<Float32Regs, ".f32">;
-def StoreParamV4F32 :
-  NVPTXInst<(outs), (ins Float32Regs:$val, Float32Regs:$val2, Float32Regs:$val3,
-                         Float32Regs:$val4, i32imm:$a, i32imm:$b),
-            "st.param.v4.f32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-            []>;
+def StoreParamV4F32    : StoreParamV4Inst<Float32Regs, ".f32">;
 
 def StoreRetvalI64    : StoreRetvalInst<Int64Regs, ".b64">;
 def StoreRetvalI32    : StoreRetvalInst<Int32Regs, ".b32">;
