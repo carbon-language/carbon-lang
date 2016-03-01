@@ -1764,68 +1764,72 @@ def RETURNNode :
   SDNode<"NVPTXISD::RETURN", SDTCallArgMarkProfile,
          [SDNPHasChain, SDNPSideEffect]>;
 
-class LoadParamMemInst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs regclass:$dst), (ins i32imm:$b),
-                !strconcat(!strconcat("ld.param", opstr),
-                           "\t$dst, [retval0+$b];"),
-                []>;
+let mayLoad = 1 in {
+  class LoadParamMemInst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs regclass:$dst), (ins i32imm:$b),
+                  !strconcat(!strconcat("ld.param", opstr),
+                             "\t$dst, [retval0+$b];"),
+                  []>;
+
+  class LoadParamV2MemInst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs regclass:$dst, regclass:$dst2), (ins i32imm:$b),
+                  !strconcat("ld.param.v2", opstr,
+                             "\t{{$dst, $dst2}}, [retval0+$b];"), []>;
+
+  class LoadParamV4MemInst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs regclass:$dst, regclass:$dst2, regclass:$dst3,
+                        regclass:$dst4),
+                  (ins i32imm:$b),
+                  !strconcat("ld.param.v4", opstr,
+                             "\t{{$dst, $dst2, $dst3, $dst4}}, [retval0+$b];"),
+                  []>;
+}
 
 class LoadParamRegInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs regclass:$dst), (ins i32imm:$b),
                 !strconcat("mov", opstr, "\t$dst, retval$b;"),
                 [(set regclass:$dst, (LoadParam (i32 0), (i32 imm:$b)))]>;
 
-class LoadParamV2MemInst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs regclass:$dst, regclass:$dst2), (ins i32imm:$b),
-                !strconcat("ld.param.v2", opstr,
-                           "\t{{$dst, $dst2}}, [retval0+$b];"), []>;
+let mayStore = 1 in {
+  class StoreParamInst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs), (ins regclass:$val, i32imm:$a, i32imm:$b),
+                  !strconcat("st.param", opstr, "\t[param$a+$b], $val;"),
+                  []>;
 
-class LoadParamV4MemInst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs regclass:$dst, regclass:$dst2, regclass:$dst3,
-                      regclass:$dst4),
-                (ins i32imm:$b),
-                !strconcat("ld.param.v4", opstr,
-                           "\t{{$dst, $dst2, $dst3, $dst4}}, [retval0+$b];"),
-                []>;
+  class StoreParamV2Inst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs), (ins regclass:$val, regclass:$val2,
+                               i32imm:$a, i32imm:$b),
+                  !strconcat("st.param.v2", opstr,
+                             "\t[param$a+$b], {{$val, $val2}};"),
+                  []>;
 
-class StoreParamInst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs), (ins regclass:$val, i32imm:$a, i32imm:$b),
-                !strconcat("st.param", opstr, "\t[param$a+$b], $val;"),
-                []>;
+  class StoreParamV4Inst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, regclass:$val3,
+                               regclass:$val4, i32imm:$a,
+                               i32imm:$b),
+                  !strconcat("st.param.v4", opstr,
+                             "\t[param$a+$b], {{$val, $val2, $val3, $val4}};"),
+                  []>;
 
-class StoreParamV2Inst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs), (ins regclass:$val, regclass:$val2,
-                             i32imm:$a, i32imm:$b),
-                !strconcat("st.param.v2", opstr,
-                           "\t[param$a+$b], {{$val, $val2}};"),
-                []>;
+  class StoreRetvalInst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs), (ins regclass:$val, i32imm:$a),
+                  !strconcat("st.param", opstr, "\t[func_retval0+$a], $val;"),
+                  []>;
 
-class StoreParamV4Inst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, regclass:$val3,
-                             regclass:$val4, i32imm:$a,
-                             i32imm:$b),
-                !strconcat("st.param.v4", opstr,
-                           "\t[param$a+$b], {{$val, $val2, $val3, $val4}};"),
-                []>;
+  class StoreRetvalV2Inst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, i32imm:$a),
+                  !strconcat("st.param.v2", opstr,
+                             "\t[func_retval0+$a], {{$val, $val2}};"),
+                  []>;
 
-class StoreRetvalInst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs), (ins regclass:$val, i32imm:$a),
-                !strconcat("st.param", opstr, "\t[func_retval0+$a], $val;"),
-                []>;
-
-class StoreRetvalV2Inst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, i32imm:$a),
-                !strconcat("st.param.v2", opstr,
-                           "\t[func_retval0+$a], {{$val, $val2}};"),
-                []>;
-
-class StoreRetvalV4Inst<NVPTXRegClass regclass, string opstr> :
-      NVPTXInst<(outs),
-                (ins regclass:$val, regclass:$val2, regclass:$val3,
-                     regclass:$val4, i32imm:$a),
-                !strconcat("st.param.v4", opstr,
-                           "\t[func_retval0+$a], {{$val, $val2, $val3, $val4}};"),
-                []>;
+  class StoreRetvalV4Inst<NVPTXRegClass regclass, string opstr> :
+        NVPTXInst<(outs),
+                  (ins regclass:$val, regclass:$val2, regclass:$val3,
+                       regclass:$val4, i32imm:$a),
+                  !strconcat("st.param.v4", opstr,
+                             "\t[func_retval0+$a], {{$val, $val2, $val3, $val4}};"),
+                  []>;
+}
 
 let isCall=1 in {
   multiclass CALL<string OpcStr, SDNode OpNode> {
