@@ -1467,15 +1467,16 @@ template <class ELFT> void Writer<ELFT>::fixAbsoluteSymbols() {
   if (Config->EMachine == EM_MIPS)
     ElfSym<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
 
-  // _etext points to location after the last read-only loadable segment.
-  // _edata points to the end of the last non SHT_NOBITS section.
-  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    if (!(Sec->getFlags() & SHF_ALLOC))
+  // _etext is the first location after the last read-only loadable segment.
+  // _edata is the first location after the last read-write loadable segment.
+  for (Phdr &PHdr : Phdrs) {
+    if (PHdr.H.p_type != PT_LOAD)
       continue;
-    if (!(Sec->getFlags() & SHF_WRITE))
-      ElfSym<ELFT>::Etext.st_value = Sec->getVA() + Sec->getSize();
-    if (Sec->getType() != SHT_NOBITS)
-      ElfSym<ELFT>::Edata.st_value = Sec->getVA() + Sec->getSize();
+    uintX_t Val = PHdr.H.p_vaddr + PHdr.H.p_filesz;
+    if (PHdr.H.p_flags & PF_W)
+      ElfSym<ELFT>::Edata.st_value = Val;
+    else
+      ElfSym<ELFT>::Etext.st_value = Val;
   }
 }
 
