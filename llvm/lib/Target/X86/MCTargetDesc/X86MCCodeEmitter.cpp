@@ -1228,7 +1228,6 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (TSFlags & X86II::Has3DNow0F0FOpcode)
     BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
 
-  unsigned SrcRegNum = 0;
   switch (TSFlags & X86II::FormMask) {
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
     llvm_unreachable("Unknown FormMask value in X86MCCodeEmitter!");
@@ -1307,9 +1306,9 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode + GetX86RegNum(MI.getOperand(CurOp++)), CurByte, OS);
     break;
 
-  case X86II::MRMDestReg:
+  case X86II::MRMDestReg: {
     EmitByte(BaseOpcode, CurByte, OS);
-    SrcRegNum = CurOp + 1;
+    unsigned SrcRegNum = CurOp + 1;
 
     if (HasEVEX_K) // Skip writemask
       ++SrcRegNum;
@@ -1321,10 +1320,10 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
                      GetX86RegNum(MI.getOperand(SrcRegNum)), CurByte, OS);
     CurOp = SrcRegNum + 1;
     break;
-
-  case X86II::MRMDestMem:
+  }
+  case X86II::MRMDestMem: {
     EmitByte(BaseOpcode, CurByte, OS);
-    SrcRegNum = CurOp + X86::AddrNumOperands;
+    unsigned SrcRegNum = CurOp + X86::AddrNumOperands;
 
     if (HasEVEX_K) // Skip writemask
       ++SrcRegNum;
@@ -1337,10 +1336,10 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
                      TSFlags, CurByte, OS, Fixups, STI);
     CurOp = SrcRegNum + 1;
     break;
-
-  case X86II::MRMSrcReg:
+  }
+  case X86II::MRMSrcReg: {
     EmitByte(BaseOpcode, CurByte, OS);
-    SrcRegNum = CurOp + 1;
+    unsigned SrcRegNum = CurOp + 1;
 
     if (HasEVEX_K) // Skip writemask
       ++SrcRegNum;
@@ -1362,7 +1361,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasEVEX_RC)
       --NumOps;
     break;
-
+  }
   case X86II::MRMSrcMem: {
     int AddrOperands = X86::AddrNumOperands;
     unsigned FirstMemOp = CurOp+1;
