@@ -627,7 +627,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // VEX_W: opcode specific (use like REX.W, or used for
   // opcode extension, or ignored, depending on the opcode byte)
-  unsigned char VEX_W = 0;
+  unsigned char VEX_W = (TSFlags & X86II::VEX_W) ? 1 : 0;
 
   // VEX_5M (VEX m-mmmmm field):
   //
@@ -639,69 +639,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0b01000: XOP map select - 08h instructions with imm byte
   //  0b01001: XOP map select - 09h instructions with no imm byte
   //  0b01010: XOP map select - 0Ah instructions with imm dword
-  unsigned char VEX_5M = 0;
-
-  // VEX_4V (VEX vvvv field): a register specifier
-  // (in 1's complement form) or 1111 if unused.
-  unsigned char VEX_4V = 0xf;
-  unsigned char EVEX_V2 = 0x1;
-
-  // VEX_L (Vector Length):
-  //
-  //  0: scalar or 128-bit vector
-  //  1: 256-bit vector
-  //
-  unsigned char VEX_L = 0;
-  unsigned char EVEX_L2 = 0;
-
-  // VEX_PP: opcode extension providing equivalent
-  // functionality of a SIMD prefix
-  //
-  //  0b00: None
-  //  0b01: 66
-  //  0b10: F3
-  //  0b11: F2
-  //
-  unsigned char VEX_PP = 0;
-
-  // EVEX_U
-  unsigned char EVEX_U = 1; // Always '1' so far
-
-  // EVEX_z
-  unsigned char EVEX_z = 0;
-
-  // EVEX_b
-  unsigned char EVEX_b = 0;
-
-  // EVEX_rc
-  unsigned char EVEX_rc = 0;
-
-  // EVEX_aaa
-  unsigned char EVEX_aaa = 0;
-
-  bool EncodeRC = false;
-
-  if (TSFlags & X86II::VEX_W)
-    VEX_W = 1;
-
-  if (TSFlags & X86II::VEX_L)
-    VEX_L = 1;
-  if (TSFlags & X86II::EVEX_L2)
-    EVEX_L2 = 1;
-
-  if (HasEVEX_K && (TSFlags & X86II::EVEX_Z))
-    EVEX_z = 1;
-
-  if ((TSFlags & X86II::EVEX_B))
-    EVEX_b = 1;
-
-  switch (TSFlags & X86II::OpPrefixMask) {
-  default: break; // VEX_PP already correct
-  case X86II::PD: VEX_PP = 0x1; break; // 66
-  case X86II::XS: VEX_PP = 0x2; break; // F3
-  case X86II::XD: VEX_PP = 0x3; break; // F2
-  }
-
+  unsigned char VEX_5M;
   switch (TSFlags & X86II::OpMapMask) {
   default: llvm_unreachable("Invalid prefix!");
   case X86II::TB:   VEX_5M = 0x1; break; // 0F
@@ -711,6 +649,55 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::XOP9: VEX_5M = 0x9; break;
   case X86II::XOPA: VEX_5M = 0xA; break;
   }
+
+  // VEX_4V (VEX vvvv field): a register specifier
+  // (in 1's complement form) or 1111 if unused.
+  unsigned char VEX_4V = 0xf;
+  unsigned char EVEX_V2 = 0x1;
+
+  // EVEX_L2/VEX_L (Vector Length):
+  //
+  // L2 L
+  //  0 0: scalar or 128-bit vector
+  //  0 1: 256-bit vector
+  //  1 0: 512-bit vector
+  //
+  unsigned char VEX_L = (TSFlags & X86II::VEX_L) ? 1 : 0;
+  unsigned char EVEX_L2 = (TSFlags & X86II::EVEX_L2) ? 1 : 0;
+
+  // VEX_PP: opcode extension providing equivalent
+  // functionality of a SIMD prefix
+  //
+  //  0b00: None
+  //  0b01: 66
+  //  0b10: F3
+  //  0b11: F2
+  //
+  unsigned char VEX_PP;
+  switch (TSFlags & X86II::OpPrefixMask) {
+  default: llvm_unreachable("Invalid op prefix!");
+  case X86II::PS: VEX_PP = 0x0; break; // none
+  case X86II::PD: VEX_PP = 0x1; break; // 66
+  case X86II::XS: VEX_PP = 0x2; break; // F3
+  case X86II::XD: VEX_PP = 0x3; break; // F2
+  }
+
+  // EVEX_U
+  unsigned char EVEX_U = 1; // Always '1' so far
+
+  // EVEX_z
+  unsigned char EVEX_z = (HasEVEX_K && (TSFlags & X86II::EVEX_Z)) ? 1 : 0;
+
+  // EVEX_b
+  unsigned char EVEX_b = (TSFlags & X86II::EVEX_B) ? 1 : 0;
+
+  // EVEX_rc
+  unsigned char EVEX_rc = 0;
+
+  // EVEX_aaa
+  unsigned char EVEX_aaa = 0;
+
+  bool EncodeRC = false;
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned NumOps = Desc.getNumOperands();
