@@ -10,7 +10,6 @@ if( LLVM_USE_SANITIZE_COVERAGE )
     FuzzerIO.cpp
     FuzzerLoop.cpp
     FuzzerMutate.cpp
-    FuzzerSanitizerOptions.cpp
     FuzzerSHA1.cpp
     FuzzerTracePC.cpp
     FuzzerUtil.cpp
