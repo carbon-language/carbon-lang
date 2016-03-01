@@ -1701,8 +1701,14 @@ def LoadParamV4 :
 def PrintCall :
   SDNode<"NVPTXISD::PrintCall", SDTPrintCallProfile,
          [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
+def PrintConvergentCall :
+  SDNode<"NVPTXISD::PrintConvergentCall", SDTPrintCallProfile,
+         [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def PrintCallUni :
   SDNode<"NVPTXISD::PrintCallUni", SDTPrintCallUniProfile,
+         [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
+def PrintConvergentCallUni :
+  SDNode<"NVPTXISD::PrintConvergentCallUni", SDTPrintCallUniProfile,
          [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def StoreParam :
   SDNode<"NVPTXISD::StoreParam", SDTStoreParamProfile,
@@ -1821,53 +1827,44 @@ class StoreRetvalV4Inst<NVPTXRegClass regclass, string opstr> :
                 []>;
 
 let isCall=1 in {
- def PrintCallNoRetInst : NVPTXInst<(outs), (ins),
-   "call ", [(PrintCall (i32 0))]>;
- def PrintCallRetInst1 : NVPTXInst<(outs), (ins),
-   "call (retval0), ", [(PrintCall (i32 1))]>;
- def PrintCallRetInst2 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1), ", [(PrintCall (i32 2))]>;
- def PrintCallRetInst3 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1, retval2), ", [(PrintCall (i32 3))]>;
- def PrintCallRetInst4 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1, retval2, retval3), ", [(PrintCall (i32 4))]>;
- def PrintCallRetInst5 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1, retval2, retval3, retval4), ",
-   [(PrintCall (i32 5))]>;
- def PrintCallRetInst6 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1, retval2, retval3, retval4, retval5), ",
-   [(PrintCall (i32 6))]>;
- def PrintCallRetInst7 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1, retval2, retval3, retval4, retval5, retval6), ",
-   [(PrintCall (i32 7))]>;
- def PrintCallRetInst8 : NVPTXInst<(outs), (ins),
-   "call (retval0, retval1, retval2, retval3, retval4, retval5, retval6, "
-         "retval7), ",
-   [(PrintCall (i32 8))]>;
+  multiclass CALL<string OpcStr, SDNode OpNode> {
+     def PrintCallNoRetInst : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " "), [(OpNode (i32 0))]>;
+     def PrintCallRetInst1 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0), "), [(OpNode (i32 1))]>;
+     def PrintCallRetInst2 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1), "), [(OpNode (i32 2))]>;
+     def PrintCallRetInst3 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1, retval2), "), [(OpNode (i32 3))]>;
+     def PrintCallRetInst4 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1, retval2, retval3), "),
+       [(OpNode (i32 4))]>;
+     def PrintCallRetInst5 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1, retval2, retval3, retval4), "),
+       [(OpNode (i32 5))]>;
+     def PrintCallRetInst6 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1, retval2, retval3, retval4, "
+                            "retval5), "),
+       [(OpNode (i32 6))]>;
+     def PrintCallRetInst7 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1, retval2, retval3, retval4, "
+                            "retval5, retval6), "),
+       [(OpNode (i32 7))]>;
+     def PrintCallRetInst8 : NVPTXInst<(outs), (ins),
+       !strconcat(OpcStr, " (retval0, retval1, retval2, retval3, retval4, "
+                            "retval5, retval6, retval7), "),
+       [(OpNode (i32 8))]>;
+  }
+}
 
- def PrintCallUniNoRetInst : NVPTXInst<(outs), (ins),
-   "call.uni ", [(PrintCallUni (i32 0))]>;
- def PrintCallUniRetInst1 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0), ", [(PrintCallUni (i32 1))]>;
- def PrintCallUniRetInst2 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1), ", [(PrintCallUni (i32 2))]>;
- def PrintCallUniRetInst3 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1, retval2), ", [(PrintCallUni (i32 3))]>;
- def PrintCallUniRetInst4 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1, retval2, retval3), ", [(PrintCallUni (i32 4))]>;
- def PrintCallUniRetInst5 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1, retval2, retval3, retval4), ",
-   [(PrintCallUni (i32 5))]>;
- def PrintCallUniRetInst6 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1, retval2, retval3, retval4, retval5), ",
-   [(PrintCallUni (i32 6))]>;
- def PrintCallUniRetInst7 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1, retval2, retval3, retval4, retval5, retval6), ",
-   [(PrintCallUni (i32 7))]>;
- def PrintCallUniRetInst8 : NVPTXInst<(outs), (ins),
-   "call.uni (retval0, retval1, retval2, retval3, retval4, retval5, retval6, "
-             "retval7), ",
-   [(PrintCallUni (i32 8))]>;
+defm Call : CALL<"call", PrintCall>;
+defm CallUni : CALL<"call.uni", PrintCallUni>;
+
+// Convergent call instructions.  These are identical to regular calls, except
+// they have the isConvergent bit set.
+let isConvergent=1 in {
+  defm ConvergentCall : CALL<"call", PrintConvergentCall>;
+  defm ConvergentCallUni : CALL<"call.uni", PrintConvergentCallUni>;
 }
 
 def LoadParamMemI64    : LoadParamMemInst<Int64Regs, ".b64">;
