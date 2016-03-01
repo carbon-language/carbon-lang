@@ -527,7 +527,8 @@ void CodeGenSchedModels::collectSchedClasses() {
     std::string InstName = Inst->TheDef->getName();
     unsigned SCIdx = InstrClassMap.lookup(Inst->TheDef);
     if (!SCIdx) {
-      dbgs() << "No machine model for " << Inst->TheDef->getName() << '\n';
+      if (!Inst->hasNoSchedulingInfo)
+        dbgs() << "No machine model for " << Inst->TheDef->getName() << '\n';
       continue;
     }
     CodeGenSchedClass &SC = getSchedClass(SCIdx);
