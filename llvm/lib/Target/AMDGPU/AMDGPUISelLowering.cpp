@@ -295,6 +295,17 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setOperationAction(ISD::CTLZ, MVT::i64, Custom);
   setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
 
+  // We only really have 32-bit BFE instructions (and 16-bit on VI).
+  //
+  // On SI+ there are 64-bit BFEs, but they are scalar only and there isn't any
+  // effort to match them now. We want this to be false for i64 cases when the
+  // extraction isn't restricted to the upper or lower half. Ideally we would
+  // have some pass reduce 64-bit extracts to 32-bit if possible. Extracts that
+  // span the midpoint are probably relatively rare, so don't worry about them
+  // for now.
+  if (Subtarget->hasBFE())
+    setHasExtractBitsInsn(true);
+
   static const MVT::SimpleValueType VectorIntTypes[] = {
     MVT::v2i32, MVT::v4i32
   };
