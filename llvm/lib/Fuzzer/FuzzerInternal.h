@@ -281,7 +281,6 @@ public:
     int MaxTotalTimeSec = 0;
     bool DoCrossOver = true;
     int MutateDepth = 5;
-    bool ExitOnFirst = false;
     bool UseCounters = false;
     bool UseIndirCalls = true;
     bool UseTraces = false;

@@ -40,16 +40,20 @@ struct FlagDescription {
 };
 
 struct {
+#define FUZZER_DEPRECATED_FLAG(Name)
 #define FUZZER_FLAG_INT(Name, Default, Description) int Name;
 #define FUZZER_FLAG_UNSIGNED(Name, Default, Description) unsigned int Name;
 #define FUZZER_FLAG_STRING(Name, Description) const char *Name;
 #include "FuzzerFlags.def"
+#undef FUZZER_DEPRECATED_FLAG
 #undef FUZZER_FLAG_INT
 #undef FUZZER_FLAG_UNSIGNED
 #undef FUZZER_FLAG_STRING
 } Flags;
 
 static const FlagDescription FlagDescriptions [] {
+#define FUZZER_DEPRECATED_FLAG(Name)                                           \
+  {#Name, "Deprecated; don't use", 0, nullptr, nullptr, nullptr},
 #define FUZZER_FLAG_INT(Name, Default, Description)                            \
   {#Name, Description, Default, &Flags.Name, nullptr, nullptr},
 #define FUZZER_FLAG_UNSIGNED(Name, Default, Description)                       \
@@ -58,6 +62,7 @@ static const FlagDescription FlagDescriptions [] {
 #define FUZZER_FLAG_STRING(Name, Description)                                  \
   {#Name, Description, 0, nullptr, &Flags.Name, nullptr},
 #include "FuzzerFlags.def"
+#undef FUZZER_DEPRECATED_FLAG
 #undef FUZZER_FLAG_INT
 #undef FUZZER_FLAG_UNSIGNED
 #undef FUZZER_FLAG_STRING
@@ -150,6 +155,9 @@ static bool ParseOneFlag(const char *Param) {
         *FlagDescriptions[F].StrFlag = Str;
         if (Flags.verbosity >= 2)
           Printf("Flag: %s %s\n", Name, Str);
+        return true;
+      } else {  // Deprecated flag.
+        Printf("Flag: %s: deprecated, don't use\n", Name);
         return true;
       }
     }
@@ -269,7 +277,6 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   Options.MaxTotalTimeSec = Flags.max_total_time;
   Options.DoCrossOver = Flags.cross_over;
   Options.MutateDepth = Flags.mutate_depth;
-  Options.ExitOnFirst = Flags.exit_on_first;
   Options.UseCounters = Flags.use_counters;
   Options.UseIndirCalls = Flags.use_indir_calls;
   Options.UseTraces = Flags.use_traces;
@@ -346,11 +353,6 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
       Printf("%s: %zd ms\n", Path.c_str(), (long)MS);
     }
     exit(0);
-  }
-
-  if (Flags.save_minimized_corpus) {
-    Printf("The flag -save_minimized_corpus is deprecated; use -merge=1\n");
-    exit(1);
   }
 
   if (Flags.merge) {

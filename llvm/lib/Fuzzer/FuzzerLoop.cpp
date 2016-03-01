@@ -419,8 +419,6 @@ void Fuzzer::ReportNewCoverage(const Unit &U) {
   PrintStatusForNewUnit(U);
   WriteToOutputCorpus(U);
   NumberOfNewUnitsAdded++;
-  if (Options.ExitOnFirst)
-    exit(0);
 }
 
 void Fuzzer::Merge(const std::vector<std::string> &Corpora) {
