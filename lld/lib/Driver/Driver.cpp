@@ -46,23 +46,6 @@ FileVector parseMemberFiles(std::unique_ptr<File> file) {
   return members;
 }
 
-FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> mb
-      = MemoryBuffer::getFileOrSTDIN(path);
-  if (std::error_code ec = mb.getError())
-    return makeErrorFile(path, ec);
-  ErrorOr<std::unique_ptr<File>> fileOrErr =
-      ctx.registry().loadFile(std::move(mb.get()));
-  if (std::error_code ec = fileOrErr.getError())
-    return makeErrorFile(path, ec);
-  std::unique_ptr<File> &file = fileOrErr.get();
-  if (wholeArchive)
-    return parseMemberFiles(std::move(file));
-  std::vector<std::unique_ptr<File>> files;
-  files.push_back(std::move(file));
-  return files;
-}
-
 void Driver::parseLLVMOptions(const LinkingContext &ctx) {
   // Honor -mllvm
   if (!ctx.llvmOptions().empty()) {
