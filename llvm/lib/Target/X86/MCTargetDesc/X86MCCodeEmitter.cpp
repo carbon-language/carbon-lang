@@ -1228,8 +1228,9 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (TSFlags & X86II::Has3DNow0F0FOpcode)
     BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
 
-  switch (TSFlags & X86II::FormMask) {
-  default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
+  uint64_t Form = TSFlags & X86II::FormMask;
+  switch (Form) {
+  default: errs() << "FORM: " << Form << "\n";
     llvm_unreachable("Unknown FormMask value in X86MCCodeEmitter!");
   case X86II::Pseudo:
     llvm_unreachable("Pseudo instruction shouldn't be emitted");
@@ -1398,7 +1399,6 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasEVEX_K) // Skip writemask
       ++CurOp;
     EmitByte(BaseOpcode, CurByte, OS);
-    uint64_t Form = TSFlags & X86II::FormMask;
     EmitRegModRMByte(MI.getOperand(CurOp++),
                      (Form == X86II::MRMXr) ? 0 : Form-X86II::MRM0r,
                      CurByte, OS);
@@ -1415,7 +1415,6 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasEVEX_K) // Skip writemask
       ++CurOp;
     EmitByte(BaseOpcode, CurByte, OS);
-    uint64_t Form = TSFlags & X86II::FormMask;
     EmitMemModRMByte(MI, CurOp, (Form == X86II::MRMXm) ? 0 : Form-X86II::MRM0m,
                      TSFlags, CurByte, OS, Fixups, STI);
     CurOp += X86::AddrNumOperands;
@@ -1444,8 +1443,6 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM_FC: case X86II::MRM_FD: case X86II::MRM_FE:
   case X86II::MRM_FF:
     EmitByte(BaseOpcode, CurByte, OS);
-
-    uint64_t Form = TSFlags & X86II::FormMask;
     EmitByte(0xC0 + Form - X86II::MRM_C0, CurByte, OS);
     break;
   }
