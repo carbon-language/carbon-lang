@@ -22,6 +22,7 @@
 ; RUN: sed -e s/.T22:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK22 %s
 ; RUN: sed -e s/.T23:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK23 %s
 ; RUN: sed -e s/.T24:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK24 %s
+; RUN: sed -e s/.T25:// %s | not opt -verify -disable-output 2>&1 | FileCheck --check-prefix=CHECK25 %s
 
 declare void @g()
 
@@ -420,3 +421,21 @@ declare void @g()
 ;T24: exit:
 ;T24:   unreachable
 ;T24: }
+
+;T25: define void @f() personality void ()* @g {
+;T25: entry:
+;T25:   unreachable
+;T25:
+;T25: catch.dispatch:
+;T25:   %cs = catchswitch within %cp2 [label %catch] unwind label %ehcleanup
+;T25:   ; CHECK25: EH pad jumps through a cycle of pads
+;T25:   ; CHECK25:   %cs = catchswitch within %cp2 [label %catch] unwind label %ehcleanup
+;T25:
+;T25: catch:
+;T25:   %cp2 = catchpad within %cs [i8* null, i32 64, i8* null]
+;T25:   unreachable
+;T25:
+;T25: ehcleanup:
+;T25:   %cp3 = cleanuppad within none []
+;T25:   cleanupret from %cp3 unwind to caller
+;T25: }

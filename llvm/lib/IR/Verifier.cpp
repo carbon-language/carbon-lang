@@ -3064,6 +3064,7 @@ void Verifier::visitEHPadPredecessors(Instruction &I) {
     }
 
     // The edge may exit from zero or more nested pads.
+    SmallSet<Value *, 8> Seen;
     for (;; FromPad = getParentPad(FromPad)) {
       Assert(FromPad != ToPad,
              "EH pad cannot handle exceptions raised within it", FromPad, TI);
@@ -3073,6 +3074,8 @@ void Verifier::visitEHPadPredecessors(Instruction &I) {
       }
       Assert(!isa<ConstantTokenNone>(FromPad),
              "A single unwind edge may only enter one EH pad", TI);
+      Assert(Seen.insert(FromPad).second,
+             "EH pad jumps through a cycle of pads", FromPad);
     }
   }
 }
@@ -3171,7 +3174,7 @@ void Verifier::visitFuncletPadInst(FuncletPadInst &FPI) {
   User *FirstUser = nullptr;
   Value *FirstUnwindPad = nullptr;
   SmallVector<FuncletPadInst *, 8> Worklist({&FPI});
-  std::set<FuncletPadInst *> Seen;
+  SmallSet<FuncletPadInst *, 8> Seen;
 
   while (!Worklist.empty()) {
     FuncletPadInst *CurrentPad = Worklist.pop_back_val();
