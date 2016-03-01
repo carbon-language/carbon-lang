@@ -110,6 +110,8 @@ def A53WriteVST2 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 5;
 def A53WriteVST3 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 6;
                                                   let ResourceCycles = [3]; }
 
+def : WriteRes<WriteAtomic, []> { let Unsupported = 1; }
+
 // Branch
 def : WriteRes<WriteBr, [A53UnitB]>;
 def : WriteRes<WriteBrReg, [A53UnitB]>;

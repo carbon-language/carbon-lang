@@ -100,6 +100,8 @@ def : WriteRes<WriteHint,    []> { let Latency = 1; }
 
 def : WriteRes<WriteLDHi,    []> { let Latency = 4; }
 
+def : WriteRes<WriteAtomic, []> { let Unsupported = 1; }
+
 // No forwarding logic is modelled yet.
 def : ReadAdvance<ReadI,       0>;
 def : ReadAdvance<ReadISReg,   0>;

@@ -97,6 +97,8 @@ def : SchedAlias<WriteV,     A57Write_3cyc_1V>;
 def : SchedAlias<WriteVLD,   A57Write_5cyc_1L>;
 def : SchedAlias<WriteVST,   A57Write_1cyc_1S>;
 
+def : WriteRes<WriteAtomic,  []> { let Unsupported = 1; }
+
 def : WriteRes<WriteSys,     []> { let Latency = 1; }
 def : WriteRes<WriteBarrier, []> { let Latency = 1; }
 def : WriteRes<WriteHint,    []> { let Latency = 1; }
