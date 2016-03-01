@@ -409,7 +409,8 @@ private:
                 (!Contexts.back().ColonIsDictLiteral ||
                  Style.Language != FormatStyle::LK_Cpp)) ||
                Style.Language == FormatStyle::LK_Proto) &&
-              Previous->Tok.getIdentifierInfo())
+              (Previous->Tok.getIdentifierInfo() ||
+               Previous->is(tok::char_constant)))
             Previous->Type = TT_SelectorName;
           if (CurrentToken->is(tok::colon) ||
               Style.Language == FormatStyle::LK_JavaScript)
