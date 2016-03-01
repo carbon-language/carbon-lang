@@ -24850,13 +24850,7 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
   if (InputVector.getOpcode() == ISD::BITCAST && InputVector.hasOneUse() &&
       N->getValueType(0) == MVT::i32 &&
       InputVector.getValueType() == MVT::v2i32) {
-
-    // The bitcast source is a direct mmx result.
     SDValue MMXSrc = InputVector.getNode()->getOperand(0);
-    if (MMXSrc.getValueType() == MVT::x86mmx)
-      return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(InputVector),
-                         N->getValueType(0),
-                         InputVector.getNode()->getOperand(0));
 
     // The mmx is indirect: (i64 extract_elt (v1i64 bitcast (x86mmx ...))).
     if (MMXSrc.getOpcode() == ISD::EXTRACT_VECTOR_ELT && MMXSrc.hasOneUse() &&
@@ -27940,10 +27934,21 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
 
 static SDValue PerformTRUNCATECombine(SDNode *N, SelectionDAG &DAG,
                                       const X86Subtarget &Subtarget) {
+
+  SDValue Src = N->getOperand(0);
+
   // Try to detect AVG pattern first.
-  if (SDValue Avg = detectAVGPattern(N->getOperand(0), N->getValueType(0), DAG,
+  if (SDValue Avg = detectAVGPattern(Src, N->getValueType(0), DAG,
                                      Subtarget, SDLoc(N)))
     return Avg;
+
+  // The bitcast source is a direct mmx result.
+  // Detect bitcasts between i32 to x86mmx
+  if (Src.getOpcode() == ISD::BITCAST && N->getValueType(0) == MVT::i32) {
+    SDValue BCSrc = Src.getOperand(0);
+    if (BCSrc.getValueType() == MVT::x86mmx)
+      return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(N), MVT::i32, BCSrc);
+  }
 
   return combineVectorTruncation(N, DAG, Subtarget);
 }

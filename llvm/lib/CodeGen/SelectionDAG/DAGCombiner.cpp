@@ -12180,6 +12180,14 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     // converts.
   }
 
+  // extract_vector_elt (v2i32 (bitcast i64:x)), 0 -> i32 (trunc i64:x)
+  if (ConstEltNo && InVec.getOpcode() == ISD::BITCAST && InVec.hasOneUse() &&
+      ConstEltNo->isNullValue()) {
+    SDValue BCSrc = InVec.getOperand(0);
+    if (BCSrc.getValueType().isScalarInteger())
+      return DAG.getNode(ISD::TRUNCATE, SDLoc(N), NVT, BCSrc);
+  }
+
   // Transform: (EXTRACT_VECTOR_ELT( VECTOR_SHUFFLE )) -> EXTRACT_VECTOR_ELT.
   // We only perform this optimization before the op legalization phase because
   // we may introduce new vector instructions which are not backed by TD
