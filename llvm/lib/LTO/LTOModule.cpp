@@ -151,7 +151,7 @@ LTOModule::createInLocalContext(std::unique_ptr<LLVMContext> Context,
       makeLTOModule(Buffer, options, *Context, /* ShouldBeLazy */ true);
   if (Ret)
     (*Ret)->OwnedContext = std::move(Context);
-  return std::move(Ret);
+  return Ret;
 }
 
 static ErrorOr<std::unique_ptr<Module>>

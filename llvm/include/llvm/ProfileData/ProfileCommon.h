@@ -80,7 +80,7 @@ protected:
                  uint64_t TotalCount, uint64_t MaxCount, uint32_t NumCounts)
       : PSK(K), DetailedSummary(DetailedSummary), TotalCount(TotalCount),
         MaxCount(MaxCount), NumCounts(NumCounts) {}
-  virtual ~ProfileSummary();
+  ~ProfileSummary() = default;
   inline void addCount(uint64_t Count);
   /// \brief Return metadata specific to the profile format.
   /// Derived classes implement this method to return a vector of Metadata.
@@ -106,7 +106,7 @@ public:
   static ProfileSummary *getFromMD(Metadata *MD);
 };
 
-class InstrProfSummary : public ProfileSummary {
+class InstrProfSummary final : public ProfileSummary {
   uint64_t MaxInternalBlockCount, MaxFunctionCount;
   uint32_t NumFunctions;
   inline void addEntryCount(uint64_t Count);
@@ -140,7 +140,7 @@ public:
   uint64_t getMaxInternalBlockCount() { return MaxInternalBlockCount; }
 };
 
-class SampleProfileSummary : public ProfileSummary {
+class SampleProfileSummary final : public ProfileSummary {
   uint64_t MaxHeadSamples;
   uint32_t NumFunctions;
 
