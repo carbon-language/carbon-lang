@@ -10389,6 +10389,9 @@ TEST_F(FormatTest, BreakConstructorInitializersBeforeComma) {
   verifyFormat("SomeClass::Constructor()\n"
                "    : a(a) {}",
                Style);
+  verifyFormat("SomeClass::Constructor() noexcept\n"
+               "    : a(a) {}",
+               Style);
   verifyFormat("SomeClass::Constructor()\n"
                "    : a(a)\n"
                "    , b(b)\n"
