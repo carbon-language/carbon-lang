@@ -4391,66 +4391,15 @@ ScalarEvolution::getRange(const SCEV *S,
 
     // TODO: non-affine addrec
     if (AddRec->isAffine()) {
-      Type *Ty = AddRec->getType();
       const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
       if (!isa<SCEVCouldNotCompute>(MaxBECount) &&
           getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
-
-        // Check for overflow.  This must be done with ConstantRange arithmetic
-        // because we could be called from within the ScalarEvolution overflow
-        // checking code.
-
-        MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
-        ConstantRange MaxBECountRange = getUnsignedRange(MaxBECount);
-        ConstantRange ZExtMaxBECountRange =
-            MaxBECountRange.zextOrTrunc(BitWidth * 2 + 1);
-
-        const SCEV *Start = AddRec->getStart();
-        const SCEV *Step = AddRec->getStepRecurrence(*this);
-        ConstantRange StepSRange = getSignedRange(Step);
-        ConstantRange SExtStepSRange = StepSRange.sextOrTrunc(BitWidth * 2 + 1);
-
-        ConstantRange StartURange = getUnsignedRange(Start);
-        ConstantRange EndURange =
-            StartURange.add(MaxBECountRange.multiply(StepSRange));
-
-        // Check for unsigned overflow.
-        ConstantRange ZExtStartURange =
-            StartURange.zextOrTrunc(BitWidth * 2 + 1);
-        ConstantRange ZExtEndURange = EndURange.zextOrTrunc(BitWidth * 2 + 1);
-        if (ZExtStartURange.add(ZExtMaxBECountRange.multiply(SExtStepSRange)) ==
-            ZExtEndURange) {
-          APInt Min = APIntOps::umin(StartURange.getUnsignedMin(),
-                                     EndURange.getUnsignedMin());
-          APInt Max = APIntOps::umax(StartURange.getUnsignedMax(),
-                                     EndURange.getUnsignedMax());
-          bool IsFullRange = Min.isMinValue() && Max.isMaxValue();
-          if (!IsFullRange)
-            ConservativeResult =
-                ConservativeResult.intersectWith(ConstantRange(Min, Max + 1));
-        }
-
-        ConstantRange StartSRange = getSignedRange(Start);
-        ConstantRange EndSRange =
-            StartSRange.add(MaxBECountRange.multiply(StepSRange));
-
-        // Check for signed overflow. This must be done with ConstantRange
-        // arithmetic because we could be called from within the ScalarEvolution
-        // overflow checking code.
-        ConstantRange SExtStartSRange =
-            StartSRange.sextOrTrunc(BitWidth * 2 + 1);
-        ConstantRange SExtEndSRange = EndSRange.sextOrTrunc(BitWidth * 2 + 1);
-        if (SExtStartSRange.add(ZExtMaxBECountRange.multiply(SExtStepSRange)) ==
-            SExtEndSRange) {
-          APInt Min = APIntOps::smin(StartSRange.getSignedMin(),
-                                     EndSRange.getSignedMin());
-          APInt Max = APIntOps::smax(StartSRange.getSignedMax(),
-                                     EndSRange.getSignedMax());
-          bool IsFullRange = Min.isMinSignedValue() && Max.isMaxSignedValue();
-          if (!IsFullRange)
-            ConservativeResult =
-                ConservativeResult.intersectWith(ConstantRange(Min, Max + 1));
-        }
+        auto RangeFromAffine = getRangeForAffineAR(
+            AddRec->getStart(), AddRec->getStepRecurrence(*this), MaxBECount,
+            BitWidth);
+        if (!RangeFromAffine.isFullSet())
+          ConservativeResult =
+              ConservativeResult.intersectWith(RangeFromAffine);
       }
     }
 
@@ -4488,6 +4437,71 @@ ScalarEvolution::getRange(const SCEV *S,
   }
 
   return setRange(S, SignHint, ConservativeResult);
+}
+
+ConstantRange ScalarEvolution::getRangeForAffineAR(const SCEV *Start,
+                                                   const SCEV *Step,
+                                                   const SCEV *MaxBECount,
+                                                   unsigned BitWidth) {
+  assert(!isa<SCEVCouldNotCompute>(MaxBECount) &&
+         getTypeSizeInBits(MaxBECount->getType()) <= BitWidth &&
+         "Precondition!");
+
+  ConstantRange Result(BitWidth, /* isFullSet = */ true);
+
+  // Check for overflow.  This must be done with ConstantRange arithmetic
+  // because we could be called from within the ScalarEvolution overflow
+  // checking code.
+
+  MaxBECount = getNoopOrZeroExtend(MaxBECount, Start->getType());
+  ConstantRange MaxBECountRange = getUnsignedRange(MaxBECount);
+  ConstantRange ZExtMaxBECountRange =
+      MaxBECountRange.zextOrTrunc(BitWidth * 2 + 1);
+
+  ConstantRange StepSRange = getSignedRange(Step);
+  ConstantRange SExtStepSRange = StepSRange.sextOrTrunc(BitWidth * 2 + 1);
+
+  ConstantRange StartURange = getUnsignedRange(Start);
+  ConstantRange EndURange =
+      StartURange.add(MaxBECountRange.multiply(StepSRange));
+
+  // Check for unsigned overflow.
+  ConstantRange ZExtStartURange = StartURange.zextOrTrunc(BitWidth * 2 + 1);
+  ConstantRange ZExtEndURange = EndURange.zextOrTrunc(BitWidth * 2 + 1);
+  if (ZExtStartURange.add(ZExtMaxBECountRange.multiply(SExtStepSRange)) ==
+      ZExtEndURange) {
+    APInt Min = APIntOps::umin(StartURange.getUnsignedMin(),
+                               EndURange.getUnsignedMin());
+    APInt Max = APIntOps::umax(StartURange.getUnsignedMax(),
+                               EndURange.getUnsignedMax());
+    bool IsFullRange = Min.isMinValue() && Max.isMaxValue();
+    if (!IsFullRange)
+      Result =
+          Result.intersectWith(ConstantRange(Min, Max + 1));
+  }
+
+  ConstantRange StartSRange = getSignedRange(Start);
+  ConstantRange EndSRange =
+      StartSRange.add(MaxBECountRange.multiply(StepSRange));
+
+  // Check for signed overflow. This must be done with ConstantRange
+  // arithmetic because we could be called from within the ScalarEvolution
+  // overflow checking code.
+  ConstantRange SExtStartSRange = StartSRange.sextOrTrunc(BitWidth * 2 + 1);
+  ConstantRange SExtEndSRange = EndSRange.sextOrTrunc(BitWidth * 2 + 1);
+  if (SExtStartSRange.add(ZExtMaxBECountRange.multiply(SExtStepSRange)) ==
+      SExtEndSRange) {
+    APInt Min =
+        APIntOps::smin(StartSRange.getSignedMin(), EndSRange.getSignedMin());
+    APInt Max =
+        APIntOps::smax(StartSRange.getSignedMax(), EndSRange.getSignedMax());
+    bool IsFullRange = Min.isMinSignedValue() && Max.isMaxSignedValue();
+    if (!IsFullRange)
+      Result =
+          Result.intersectWith(ConstantRange(Min, Max + 1));
+  }
+
+  return Result;
 }
 
 SCEV::NoWrapFlags ScalarEvolution::getNoWrapFlagsFromUB(const Value *V) {
