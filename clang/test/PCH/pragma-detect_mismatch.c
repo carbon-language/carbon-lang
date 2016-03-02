@@ -17,7 +17,6 @@
 
 #else
 
-// CHECK: "/DEFAULTLIB:foo.lib"
 // CHECK: "/FAILIFMISMATCH:\22FruitKind=Jaboticaba\22"
 
 #endif
