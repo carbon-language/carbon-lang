@@ -156,6 +156,8 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
   Obj->parse(DummyGroups);
   for (SymbolBody *Body : Obj->getSymbols()) {
     Symbol *Sym = insert(Body);
+    if (!Sym->Body->isUndefined() && Body->isUndefined())
+      continue;
     Sym->Body = Body;
   }
 }
