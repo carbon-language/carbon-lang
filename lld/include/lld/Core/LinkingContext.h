@@ -200,9 +200,7 @@ public:
   bool validate(raw_ostream &diagnostics);
 
   /// Formats symbol name for use in error messages.
-  virtual std::string demangle(StringRef symbolName) const {
-    return symbolName;
-  }
+  virtual std::string demangle(StringRef symbolName) const = 0;
 
   /// @}
   /// \name Methods used by Driver::link()
@@ -234,11 +232,11 @@ public:
   /// This method is called by core linking to give the Writer a chance
   /// to add file format specific "files" to set of files to be linked. This is
   /// how file format specific atoms can be added to the link.
-  virtual void createImplicitFiles(std::vector<std::unique_ptr<File>> &);
+  virtual void createImplicitFiles(std::vector<std::unique_ptr<File>> &) = 0;
 
   /// This method is called by core linking to build the list of Passes to be
   /// run on the merged/linked graph of all input files.
-  virtual void addPasses(PassManager &pm);
+  virtual void addPasses(PassManager &pm) = 0;
 
   /// Calls through to the writeFile() method on the specified Writer.
   ///
@@ -250,16 +248,14 @@ public:
 
   // This function is called just before the Resolver kicks in.
   // Derived classes may use it to change the list of input files.
-  virtual void finalizeInputFiles() {}
+  virtual void finalizeInputFiles() = 0;
 
   /// Callback invoked for each file the Resolver decides we are going to load.
   /// This can be used to update context state based on the file, and emit
   /// errors for any differences between the context state and a loaded file.
   /// For example, we can error if we try to load a file which is a different
   /// arch from that being linked.
-  virtual std::error_code handleLoadedFile(File &file) {
-    return std::error_code();
-  }
+  virtual std::error_code handleLoadedFile(File &file) = 0;
 
   /// @}
 protected:

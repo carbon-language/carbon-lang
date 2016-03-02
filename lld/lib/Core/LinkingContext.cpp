@@ -33,11 +33,6 @@ std::error_code LinkingContext::writeFile(const File &linkedFile) const {
   return this->writer().writeFile(linkedFile, _outputPath);
 }
 
-void LinkingContext::createImplicitFiles(
-    std::vector<std::unique_ptr<File>> &result) {
-  this->writer().createImplicitFiles(result);
-}
-
 std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {
   return createEntrySymbolFile("<command line option -e>");
 }
@@ -76,7 +71,5 @@ void LinkingContext::createInternalFiles(
   if (std::unique_ptr<File> file = createUndefinedSymbolFile())
     result.push_back(std::move(file));
 }
-
-void LinkingContext::addPasses(PassManager &pm) {}
 
 } // end namespace lld
