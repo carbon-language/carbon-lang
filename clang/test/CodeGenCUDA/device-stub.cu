@@ -1,7 +1,8 @@
-// RUN: %clang_cc1 -emit-llvm %s -fcuda-include-gpubinary %s -o - | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm %s -fcuda-include-gpubinary %s -o -  -DNOGLOBALS \
+// RUN: echo "GPU binary would be here" > %t
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -emit-llvm %s -fcuda-include-gpubinary %t -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -emit-llvm %s -fcuda-include-gpubinary %t -o -  -DNOGLOBALS \
 // RUN:   | FileCheck %s -check-prefix=NOGLOBALS
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s -check-prefix=NOGPUBIN
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -emit-llvm %s -o - | FileCheck %s -check-prefix=NOGPUBIN
 
 #include "Inputs/cuda.h"
 
