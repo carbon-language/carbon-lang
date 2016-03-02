@@ -4400,6 +4400,13 @@ ScalarEvolution::getRange(const SCEV *S,
         if (!RangeFromAffine.isFullSet())
           ConservativeResult =
               ConservativeResult.intersectWith(RangeFromAffine);
+
+        auto RangeFromFactoring = getRangeViaFactoring(
+            AddRec->getStart(), AddRec->getStepRecurrence(*this), MaxBECount,
+            BitWidth);
+        if (!RangeFromFactoring.isFullSet())
+          ConservativeResult =
+              ConservativeResult.intersectWith(RangeFromFactoring);
       }
     }
 
@@ -4502,6 +4509,82 @@ ConstantRange ScalarEvolution::getRangeForAffineAR(const SCEV *Start,
   }
 
   return Result;
+}
+
+ConstantRange ScalarEvolution::getRangeViaFactoring(const SCEV *Start,
+                                                    const SCEV *Step,
+                                                    const SCEV *MaxBECount,
+                                                    unsigned BitWidth) {
+  APInt Offset(BitWidth, 0);
+
+  if (auto *SA = dyn_cast<SCEVAddExpr>(Start)) {
+    // Peel off a constant offset, if possible.  In the future we could consider
+    // being smarter here and handle {Start+Step,+,Step} too.
+    if (SA->getNumOperands() != 2 || !isa<SCEVConstant>(SA->getOperand(0)))
+      return ConstantRange(BitWidth, /* isFullSet = */ true);
+    Offset = cast<SCEVConstant>(SA->getOperand(0))->getAPInt();
+    Start = SA->getOperand(1);
+  }
+
+  if (!isa<SCEVUnknown>(Start) || !isa<SCEVUnknown>(Step))
+    // We don't have anything new to contribute in this case.
+    return ConstantRange(BitWidth, /* isFullSet = */ true);
+
+  //    RangeOf({C?A:B,+,C?P:Q}) == RangeOf(C?{A,+,P}:{B,+,Q})
+  // == RangeOf({A,+,P}) union RangeOf({B,+,Q})
+
+  struct SelectPattern {
+    Value *Condition = nullptr;
+    const APInt *TrueValue = nullptr;
+    const APInt *FalseValue = nullptr;
+
+    explicit SelectPattern(const SCEVUnknown *SU) {
+      using namespace llvm::PatternMatch;
+
+      if (!match(SU->getValue(),
+                 m_Select(m_Value(Condition), m_APInt(TrueValue),
+                          m_APInt(FalseValue)))) {
+        Condition = nullptr;
+        TrueValue = FalseValue = nullptr;
+      }
+    }
+
+    bool isRecognized() {
+      assert(((Condition && TrueValue && FalseValue) ||
+              (!Condition && !TrueValue && !FalseValue)) &&
+             "Invariant: either all three are non-null or all three are null");
+      return TrueValue != nullptr;
+    }
+  };
+
+  SelectPattern StartPattern(cast<SCEVUnknown>(Start));
+  if (!StartPattern.isRecognized())
+    return ConstantRange(BitWidth, /* isFullSet = */ true);
+
+  SelectPattern StepPattern(cast<SCEVUnknown>(Step));
+  if (!StepPattern.isRecognized())
+    return ConstantRange(BitWidth, /* isFullSet = */ true);
+
+  if (StartPattern.Condition != StepPattern.Condition) {
+    // We don't handle this case today; but we could, by considering four
+    // possibilities below instead of two. I'm not sure if there are cases where
+    // that will help over what getRange already does, though.
+    return ConstantRange(BitWidth, /* isFullSet = */ true);
+  }
+
+  // NB! Calling ScalarEvolution::getConstant is fine, but we should not try to
+  // construct arbitrary general SCEV expressions here.  This function is called
+  // from deep in the call stack, and calling getSCEV (on a sext instruction,
+  // say) can end up caching a suboptimal value.
+
+  auto TrueRange = getRangeForAffineAR(
+      getConstant(*StartPattern.TrueValue + Offset),
+      getConstant(*StepPattern.TrueValue), MaxBECount, BitWidth);
+  auto FalseRange = getRangeForAffineAR(
+      getConstant(*StartPattern.FalseValue + Offset),
+      getConstant(*StepPattern.FalseValue), MaxBECount, BitWidth);
+
+  return TrueRange.unionWith(FalseRange);
 }
 
 SCEV::NoWrapFlags ScalarEvolution::getNoWrapFlagsFromUB(const Value *V) {

@@ -672,6 +672,13 @@ namespace llvm {
                                       const SCEV *MaxBECount,
                                       unsigned BitWidth);
 
+    /// Try to compute a range for the affine SCEVAddRecExpr {\p Start,+,\p
+    /// Stop} by "factoring out" a ternary expression from the add recurrence.
+    /// Helper called by \c getRange.
+    ConstantRange getRangeViaFactoring(const SCEV *Start, const SCEV *Stop,
+                                       const SCEV *MaxBECount,
+                                       unsigned BitWidth);
+
     /// We know that there is no SCEV for the specified value.  Analyze the
     /// expression.
     const SCEV *createSCEV(Value *V);
