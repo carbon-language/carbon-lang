@@ -27,7 +27,7 @@ int main() {
   pipe(fds);
   int pid = vfork();
   if (pid < 0) {
-    printf("FAIL to vfork\n");
+    fprintf(stderr, "FAIL to vfork\n");
     exit(1);
   }
   if (pid == 0) {  // child
@@ -44,7 +44,7 @@ int main() {
   pthread_create(&t[1], NULL, Thread2, NULL);
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
-  printf("DONE\n");
+  fprintf(stderr, "DONE\n");
 }
 
 // CHECK-NOT: WARNING: ThreadSanitizer: data race

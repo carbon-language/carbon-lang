@@ -25,7 +25,7 @@ int main() {
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
 
-  printf("PASS\n");
+  fprintf(stderr, "PASS\n");
   return 0;
 }
 

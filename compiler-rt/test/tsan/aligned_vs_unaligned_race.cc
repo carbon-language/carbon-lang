@@ -28,7 +28,7 @@ int main() {
   pthread_create(&t[1], NULL, Thread2, NULL);
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
-  printf("Pass\n");
+  fprintf(stderr, "Pass\n");
   // CHECK: ThreadSanitizer: data race
   // CHECK: Pass
   return 0;
