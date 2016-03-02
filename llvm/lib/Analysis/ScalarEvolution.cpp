@@ -4577,15 +4577,15 @@ ConstantRange ScalarEvolution::getRangeViaFactoring(const SCEV *Start,
   // from deep in the call stack, and calling getSCEV (on a sext instruction,
   // say) can end up caching a suboptimal value.
 
-  APInt TrueStart = *StartPattern.TrueValue + Offset;
-  APInt TrueStep = *StepPattern.TrueValue;
-  APInt FalseStart = *StartPattern.FalseValue + Offset;
-  APInt FalseStep = *StepPattern.FalseValue;
+  const SCEV *TrueStart = this->getConstant(*StartPattern.TrueValue + Offset);
+  const SCEV *TrueStep = this->getConstant(*StepPattern.TrueValue);
+  const SCEV *FalseStart = this->getConstant(*StartPattern.FalseValue + Offset);
+  const SCEV *FalseStep = this->getConstant(*StepPattern.FalseValue);
 
-  ConstantRange TrueRange = getRangeForAffineAR(
-      getConstant(TrueStart), getConstant(TrueStep), MaxBECount, BitWidth);
-  ConstantRange FalseRange = getRangeForAffineAR(
-      getConstant(FalseStart), getConstant(FalseStep), MaxBECount, BitWidth);
+  ConstantRange TrueRange =
+      getRangeForAffineAR(TrueStart, TrueStep, MaxBECount, BitWidth);
+  ConstantRange FalseRange =
+      getRangeForAffineAR(FalseStart, FalseStep, MaxBECount, BitWidth);
 
   return TrueRange.unionWith(FalseRange);
 }
