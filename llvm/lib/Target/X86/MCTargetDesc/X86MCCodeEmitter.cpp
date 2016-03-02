@@ -739,13 +739,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       CurOp++;
     }
 
-    const MCOperand &MO = MI.getOperand(CurOp);
-    if (MO.isReg()) {
-      if (X86II::isX86_64ExtendedReg(MO.getReg()))
-        VEX_R = 0x0;
-      if (X86II::is32ExtendedReg(MO.getReg()))
-        EVEX_R2 = 0x0;
-    }
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
+      VEX_R = 0x0;
+    if (X86II::is32ExtendedReg(MI.getOperand(CurOp).getReg()))
+      EVEX_R2 = 0x0;
+    CurOp++;
     break;
   }
   case X86II::MRMSrcMem:
