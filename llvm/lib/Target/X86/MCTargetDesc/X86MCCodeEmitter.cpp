@@ -1408,7 +1408,6 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitRegModRMByte(MI.getOperand(CurOp++),
                      (Form == X86II::MRMXr) ? 0 : Form-X86II::MRM0r,
                      CurByte, OS);
-    assert(!HasVEX_I8IMM);
     break;
   }
 
