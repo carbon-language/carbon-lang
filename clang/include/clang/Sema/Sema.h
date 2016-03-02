@@ -7611,11 +7611,6 @@ public:
     PPK_Pop      // #pragma pack(pop, [identifier], [n])
   };
 
-  enum PragmaMSStructKind {
-    PMSST_OFF,  // #pragms ms_struct off
-    PMSST_ON    // #pragms ms_struct on
-  };
-
   /// ActOnPragmaPack - Called on well formed \#pragma pack(...).
   void ActOnPragmaPack(PragmaPackKind Kind,
                        IdentifierInfo *Name,

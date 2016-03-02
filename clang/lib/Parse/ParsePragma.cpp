@@ -362,9 +362,8 @@ void Parser::HandlePragmaPack() {
 
 void Parser::HandlePragmaMSStruct() {
   assert(Tok.is(tok::annot_pragma_msstruct));
-  Sema::PragmaMSStructKind Kind =
-    static_cast<Sema::PragmaMSStructKind>(
-    reinterpret_cast<uintptr_t>(Tok.getAnnotationValue()));
+  PragmaMSStructKind Kind = static_cast<PragmaMSStructKind>(
+      reinterpret_cast<uintptr_t>(Tok.getAnnotationValue()));
   Actions.ActOnPragmaMSStruct(Kind);
   ConsumeToken(); // The annotation token.
 }
@@ -1063,8 +1062,8 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
 void PragmaMSStructHandler::HandlePragma(Preprocessor &PP, 
                                          PragmaIntroducerKind Introducer,
                                          Token &MSStructTok) {
-  Sema::PragmaMSStructKind Kind = Sema::PMSST_OFF;
-  
+  PragmaMSStructKind Kind = PMSST_OFF;
+
   Token Tok;
   PP.Lex(Tok);
   if (Tok.isNot(tok::identifier)) {
@@ -1074,7 +1073,7 @@ void PragmaMSStructHandler::HandlePragma(Preprocessor &PP,
   SourceLocation EndLoc = Tok.getLocation();
   const IdentifierInfo *II = Tok.getIdentifierInfo();
   if (II->isStr("on")) {
-    Kind = Sema::PMSST_ON;
+    Kind = PMSST_ON;
     PP.Lex(Tok);
   }
   else if (II->isStr("off") || II->isStr("reset"))

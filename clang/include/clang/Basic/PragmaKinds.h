@@ -21,6 +21,11 @@ enum PragmaMSCommentKind {
   PCK_User      // #pragma comment(user, ...)
 };
 
+enum PragmaMSStructKind {
+  PMSST_OFF, // #pragms ms_struct off
+  PMSST_ON   // #pragms ms_struct on
+};
+
 }
 
 #endif
