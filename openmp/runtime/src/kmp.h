@@ -1665,7 +1665,7 @@ typedef struct dispatch_shared_info64 {
     volatile kmp_uint64      iteration;
     volatile kmp_uint64      num_done;
     volatile kmp_uint64      ordered_iteration;
-    kmp_int64   ordered_dummy[KMP_MAX_ORDERED-1]; // to retain the structure size after making ordered_iteration scalar
+    kmp_int64   ordered_dummy[KMP_MAX_ORDERED-3]; // to retain the structure size after making ordered_iteration scalar
 } dispatch_shared_info64_t;
 
 typedef struct dispatch_shared_info {
@@ -1673,8 +1673,12 @@ typedef struct dispatch_shared_info {
         dispatch_shared_info32_t  s32;
         dispatch_shared_info64_t  s64;
     } u;
-/*    volatile kmp_int32      dispatch_abort;  depricated */
     volatile kmp_uint32     buffer_index;
+#if OMP_41_ENABLED
+    volatile kmp_int32      doacross_buf_idx;  // teamwise index
+    volatile kmp_uint32    *doacross_flags;    // shared array of iteration flags (0/1)
+    kmp_int32               doacross_num_done; // count finished threads
+#endif
 } dispatch_shared_info_t;
 
 typedef struct kmp_disp {
@@ -1688,7 +1692,13 @@ typedef struct kmp_disp {
 
     dispatch_private_info_t *th_disp_buffer;
     kmp_int32                th_disp_index;
+#if OMP_41_ENABLED
+    kmp_int32                th_doacross_buf_idx; // thread's doacross buffer index
+    volatile kmp_uint32     *th_doacross_flags;   // pointer to shared array of flags
+    kmp_int64               *th_doacross_info;    // info on loop bounds
+#else
     void* dummy_padding[2]; // make it 64 bytes on Intel(R) 64
+#endif
 #if KMP_USE_INTERNODE_ALIGNMENT
     char more_padding[INTERNODE_CACHE_LINE];
 #endif
@@ -3543,7 +3553,17 @@ KMP_EXPORT void __kmpc_push_num_threads( ident_t *loc, kmp_int32 global_tid, kmp
 KMP_EXPORT void __kmpc_push_proc_bind( ident_t *loc, kmp_int32 global_tid, int proc_bind );
 KMP_EXPORT void __kmpc_push_num_teams( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_teams, kmp_int32 num_threads );
 KMP_EXPORT void __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...);
-
+#endif
+#if OMP_41_ENABLED
+struct kmp_dim {  // loop bounds info casted to kmp_int64
+    kmp_int64 lo; // lower
+    kmp_int64 up; // upper
+    kmp_int64 st; // stride
+};
+KMP_EXPORT void __kmpc_doacross_init(ident_t *loc, kmp_int32 gtid, kmp_int32 num_dims, struct kmp_dim * dims);
+KMP_EXPORT void __kmpc_doacross_wait(ident_t *loc, kmp_int32 gtid, kmp_int64 *vec);
+KMP_EXPORT void __kmpc_doacross_post(ident_t *loc, kmp_int32 gtid, kmp_int64 *vec);
+KMP_EXPORT void __kmpc_doacross_fini(ident_t *loc, kmp_int32 gtid);
 #endif
 
 KMP_EXPORT void*
