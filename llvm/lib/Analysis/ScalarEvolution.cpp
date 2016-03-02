@@ -4577,6 +4577,9 @@ ConstantRange ScalarEvolution::getRangeViaFactoring(const SCEV *Start,
   // from deep in the call stack, and calling getSCEV (on a sext instruction,
   // say) can end up caching a suboptimal value.
 
+  // FIXME: without the explicit `this` receiver below, MSVC errors out with
+  // C2352 and C2512 (otherwise it isn't needed).
+
   const SCEV *TrueStart = this->getConstant(*StartPattern.TrueValue + Offset);
   const SCEV *TrueStep = this->getConstant(*StepPattern.TrueValue);
   const SCEV *FalseStart = this->getConstant(*StartPattern.FalseValue + Offset);
