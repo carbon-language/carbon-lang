@@ -1528,11 +1528,18 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           !Global->hasAttr<CUDASharedAttr>())
         return;
     } else {
-      if (!Global->hasAttr<CUDAHostAttr>() && (
-            Global->hasAttr<CUDADeviceAttr>() ||
-            Global->hasAttr<CUDAConstantAttr>() ||
-            Global->hasAttr<CUDASharedAttr>()))
+      // We need to emit host-side 'shadows' for all global
+      // device-side variables because the CUDA runtime needs their
+      // size and host-side address in order to provide access to
+      // their device-side incarnations.
+
+      // So device-only functions are the only things we skip.
+      if (isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
+          Global->hasAttr<CUDADeviceAttr>())
         return;
+
+      assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
+             "Expected Variable or Function");
     }
   }
 
@@ -1561,8 +1568,15 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   } else {
     const auto *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
-
-    if (VD->isThisDeclarationADefinition() != VarDecl::Definition &&
+    // We need to emit device-side global CUDA variables even if a
+    // variable does not have a definition -- we still need to define
+    // host-side shadow for it.
+    bool MustEmitForCuda = LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
+                           !VD->hasDefinition() &&
+                           (VD->hasAttr<CUDAConstantAttr>() ||
+                            VD->hasAttr<CUDADeviceAttr>());
+    if (!MustEmitForCuda &&
+        VD->isThisDeclarationADefinition() != VarDecl::Definition &&
         !Context.isMSStaticDataMemberInlineDefinition(VD))
       return;
   }
@@ -2444,6 +2458,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
   if (D->hasAttr<AnnotateAttr>())
     AddGlobalAnnotations(D, GV);
 
+  // Set the llvm linkage type as appropriate.
+  llvm::GlobalValue::LinkageTypes Linkage =
+      getLLVMLinkageVarDefinition(D, GV->isConstant());
+
   // CUDA B.2.1 "The __device__ qualifier declares a variable that resides on
   // the device. [...]"
   // CUDA B.2.2 "The __constant__ qualifier, optionally used together with
@@ -2451,9 +2469,34 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
   // Is accessible from all the threads within the grid and from the host
   // through the runtime library (cudaGetSymbolAddress() / cudaGetSymbolSize()
   // / cudaMemcpyToSymbol() / cudaMemcpyFromSymbol())."
-  if (GV && LangOpts.CUDA && LangOpts.CUDAIsDevice &&
-      (D->hasAttr<CUDAConstantAttr>() || D->hasAttr<CUDADeviceAttr>())) {
-    GV->setExternallyInitialized(true);
+  if (GV && LangOpts.CUDA) {
+    if (LangOpts.CUDAIsDevice) {
+      if (D->hasAttr<CUDADeviceAttr>() || D->hasAttr<CUDAConstantAttr>())
+        GV->setExternallyInitialized(true);
+    } else {
+      // Host-side shadows of external declarations of device-side
+      // global variables become internal definitions. These have to
+      // be internal in order to prevent name conflicts with global
+      // host variables with the same name in a different TUs.
+      if (D->hasAttr<CUDADeviceAttr>() || D->hasAttr<CUDAConstantAttr>()) {
+        Linkage = llvm::GlobalValue::InternalLinkage;
+
+        // Shadow variables and their properties must be registered
+        // with CUDA runtime.
+        unsigned Flags = 0;
+        if (!D->hasDefinition())
+          Flags |= CGCUDARuntime::ExternDeviceVar;
+        if (D->hasAttr<CUDAConstantAttr>())
+          Flags |= CGCUDARuntime::ConstantDeviceVar;
+        getCUDARuntime().registerDeviceVar(*GV, Flags);
+      } else if (D->hasAttr<CUDASharedAttr>())
+        // __shared__ variables are odd. Shadows do get created, but
+        // they are not registered with the CUDA runtime, so they
+        // can't really be used to access their device-side
+        // counterparts. It's not clear yet whether it's nvcc's bug or
+        // a feature, but we've got to do the same for compatibility.
+        Linkage = llvm::GlobalValue::InternalLinkage;
+    }
   }
   GV->setInitializer(Init);
 
@@ -2470,9 +2513,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
 
   GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
 
-  // Set the llvm linkage type as appropriate.
-  llvm::GlobalValue::LinkageTypes Linkage =
-      getLLVMLinkageVarDefinition(D, GV->isConstant());
 
   // On Darwin, if the normal linkage of a C++ thread_local variable is
   // LinkOnce or Weak, we keep the normal linkage to prevent multiple

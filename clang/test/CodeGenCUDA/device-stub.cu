@@ -2,6 +2,40 @@
 
 #include "Inputs/cuda.h"
 
+// CHECK-DAG: @device_var = internal global i32
+__device__ int device_var;
+
+// CHECK-DAG: @constant_var = internal global i32
+__constant__ int constant_var;
+
+// CHECK-DAG: @shared_var = internal global i32
+__shared__ int shared_var;
+
+// Make sure host globals don't get internalized...
+// CHECK-DAG: @host_var = global i32
+int host_var;
+// ... and that extern vars remain external.
+// CHECK-DAG: @ext_host_var = external global i32
+extern int ext_host_var;
+
+// Shadows for external device-side variables are *definitions* of
+// those variables.
+// CHECK-DAG: @ext_device_var = internal global i32
+extern __device__ int ext_device_var;
+// CHECK-DAG: @ext_device_var = internal global i32
+extern __constant__ int ext_constant_var;
+
+void use_pointers() {
+  int *p;
+  p = &device_var;
+  p = &constant_var;
+  p = &shared_var;
+  p = &host_var;
+  p = &ext_device_var;
+  p = &ext_constant_var;
+  p = &ext_host_var;
+}
+
 // Make sure that all parts of GPU code init/cleanup are there:
 // * constant unnamed string with the kernel name
 // CHECK: private unnamed_addr constant{{.*}}kernelfunc{{.*}}\00"
@@ -32,9 +66,14 @@ __global__ void kernelfunc(int i, int j, int k) {}
 // CHECK: call{{.*}}kernelfunc
 void hostfunc(void) { kernelfunc<<<1, 1>>>(1, 1, 1); }
 
-// Test that we've built a function to register kernels
-// CHECK: define internal void @__cuda_register_kernels
+// Test that we've built a function to register kernels and global vars.
+// CHECK: define internal void @__cuda_register_globals
 // CHECK: call{{.*}}cudaRegisterFunction(i8** %0, {{.*}}kernelfunc
+// CHECK-DAG: call{{.*}}cudaRegisterVar(i8** %0, {{.*}}device_var{{.*}}i32 0, i32 4, i32 0, i32 0
+// CHECK-DAG: call{{.*}}cudaRegisterVar(i8** %0, {{.*}}constant_var{{.*}}i32 0, i32 4, i32 1, i32 0
+// CHECK-DAG: call{{.*}}cudaRegisterVar(i8** %0, {{.*}}ext_device_var{{.*}}i32 1, i32 4, i32 0, i32 0
+// CHECK-DAG: call{{.*}}cudaRegisterVar(i8** %0, {{.*}}ext_constant_var{{.*}}i32 1, i32 4, i32 1, i32 0
+// CHECK: ret void
 
 // Test that we've built contructor..
 // CHECK: define internal void @__cuda_module_ctor
@@ -42,8 +81,8 @@ void hostfunc(void) { kernelfunc<<<1, 1>>>(1, 1, 1); }
 // CHECK: call{{.*}}cudaRegisterFatBinary{{.*}}__cuda_fatbin_wrapper
 //   .. stores return value in __cuda_gpubin_handle
 // CHECK-NEXT: store{{.*}}__cuda_gpubin_handle
-//   .. and then calls __cuda_register_kernels
-// CHECK-NEXT: call void @__cuda_register_kernels
+//   .. and then calls __cuda_register_globals
+// CHECK-NEXT: call void @__cuda_register_globals
 
 // Test that we've created destructor.
 // CHECK: define internal void @__cuda_module_dtor
