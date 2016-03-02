@@ -981,9 +981,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
 /// REX prefix which specifies 1) 64-bit instructions, 2) non-default operand
 /// size, and 3) use of X86-64 extended registers.
-static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
-                                   const MCInstrDesc &Desc) {
-  unsigned REX = 0;
+static uint8_t DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
+                                  int MemOperand, const MCInstrDesc &Desc) {
+  uint8_t REX = 0;
   bool UsesHighByteReg = false;
 
   if (TSFlags & X86II::REX_W)
@@ -992,13 +992,10 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   if (MI.getNumOperands() == 0) return REX;
 
   unsigned NumOps = MI.getNumOperands();
-  // FIXME: MCInst should explicitize the two-addrness.
-  bool isTwoAddr = NumOps > 1 &&
-                      Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1;
+  unsigned CurOp = X86II::getOperandBias(Desc);
 
   // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
-  unsigned i = isTwoAddr ? 1 : 0;
-  for (; i != NumOps; ++i) {
+  for (unsigned i = CurOp; i != NumOps; ++i) {
     const MCOperand &MO = MI.getOperand(i);
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
@@ -1012,65 +1009,64 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   }
 
   switch (TSFlags & X86II::FormMask) {
+  case X86II::AddRegFrm:
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
+      REX |= 1 << 0; // set REX.B
+    break;
   case X86II::MRMSrcReg:
-    if (MI.getOperand(0).isReg() &&
-        X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
       REX |= 1 << 2; // set REX.R
-    i = isTwoAddr ? 2 : 1;
-    for (; i != NumOps; ++i) {
-      const MCOperand &MO = MI.getOperand(i);
-      if (MO.isReg() && X86II::isX86_64ExtendedReg(MO.getReg()))
-        REX |= 1 << 0; // set REX.B
-    }
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
+      REX |= 1 << 0; // set REX.B
     break;
   case X86II::MRMSrcMem: {
-    if (MI.getOperand(0).isReg() &&
-        X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
       REX |= 1 << 2; // set REX.R
-    unsigned Bit = 0;
-    i = isTwoAddr ? 2 : 1;
-    for (; i != NumOps; ++i) {
-      const MCOperand &MO = MI.getOperand(i);
-      if (MO.isReg()) {
-        if (X86II::isX86_64ExtendedReg(MO.getReg()))
-          REX |= 1 << Bit; // set REX.B (Bit=0) and REX.X (Bit=1)
-        Bit++;
-      }
-    }
+    if (X86II::isX86_64ExtendedReg(
+               MI.getOperand(MemOperand+X86::AddrBaseReg).getReg()))
+      REX |= 1 << 0; // set REX.B
+    if (X86II::isX86_64ExtendedReg(
+               MI.getOperand(MemOperand+X86::AddrIndexReg).getReg()))
+      REX |= 1 << 1; // set REX.X
+    CurOp += X86::AddrNumOperands;
     break;
   }
+  case X86II::MRMDestReg:
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
+      REX |= 1 << 0; // set REX.B
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
+      REX |= 1 << 2; // set REX.R
+    break;
+  case X86II::MRMDestMem:
+    if (X86II::isX86_64ExtendedReg(
+               MI.getOperand(MemOperand+X86::AddrBaseReg).getReg()))
+      REX |= 1 << 0; // set REX.B
+    if (X86II::isX86_64ExtendedReg(
+               MI.getOperand(MemOperand+X86::AddrIndexReg).getReg()))
+      REX |= 1 << 1; // set REX.X
+    CurOp += X86::AddrNumOperands;
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
+      REX |= 1 << 2; // set REX.R
+    break;
   case X86II::MRMXm:
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m:
-  case X86II::MRMDestMem: {
-    unsigned e = (isTwoAddr ? X86::AddrNumOperands+1 : X86::AddrNumOperands);
-    i = isTwoAddr ? 1 : 0;
-    if (NumOps > e && MI.getOperand(e).isReg() &&
-        X86II::isX86_64ExtendedReg(MI.getOperand(e).getReg()))
-      REX |= 1 << 2; // set REX.R
-    unsigned Bit = 0;
-    for (; i != e; ++i) {
-      const MCOperand &MO = MI.getOperand(i);
-      if (MO.isReg()) {
-        if (X86II::isX86_64ExtendedReg(MO.getReg()))
-          REX |= 1 << Bit; // REX.B (Bit=0) and REX.X (Bit=1)
-        Bit++;
-      }
-    }
-    break;
-  }
-  default:
-    if (MI.getOperand(0).isReg() &&
-        X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+    if (X86II::isX86_64ExtendedReg(
+               MI.getOperand(MemOperand+X86::AddrBaseReg).getReg()))
       REX |= 1 << 0; // set REX.B
-    i = isTwoAddr ? 2 : 1;
-    for (unsigned e = NumOps; i != e; ++i) {
-      const MCOperand &MO = MI.getOperand(i);
-      if (MO.isReg() && X86II::isX86_64ExtendedReg(MO.getReg()))
-        REX |= 1 << 2; // set REX.R
-    }
+    if (X86II::isX86_64ExtendedReg(
+               MI.getOperand(MemOperand+X86::AddrIndexReg).getReg()))
+      REX |= 1 << 1; // set REX.X
+    break;
+  case X86II::MRMXr:
+  case X86II::MRM0r: case X86II::MRM1r:
+  case X86II::MRM2r: case X86II::MRM3r:
+  case X86II::MRM4r: case X86II::MRM5r:
+  case X86II::MRM6r: case X86II::MRM7r:
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
+      REX |= 1 << 0; // set REX.B
     break;
   }
   if (REX && UsesHighByteReg)
@@ -1131,7 +1127,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // Handle REX prefix.
   // FIXME: Can this come before F2 etc to simplify emission?
   if (is64BitMode(STI)) {
-    if (unsigned REX = DetermineREXPrefix(MI, TSFlags, Desc))
+    if (uint8_t REX = DetermineREXPrefix(MI, TSFlags, MemOperand, Desc))
       EmitByte(0x40 | REX, CurByte, OS);
   }
 
