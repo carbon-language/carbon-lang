@@ -231,7 +231,7 @@ MemorySSAWalker *MemorySSA::buildMemorySSA(AliasAnalysis *AA,
   assert(!this->AA && !this->DT &&
          "MemorySSA without a walker already has AA or DT?");
 
-  Walker = new CachingMemorySSAWalker(this, AA, DT);
+  auto *Result = new CachingMemorySSAWalker(this, AA, DT);
   this->AA = AA;
   this->DT = DT;
 
@@ -343,7 +343,7 @@ MemorySSAWalker *MemorySSA::buildMemorySSA(AliasAnalysis *AA,
     for (auto &MA : *Accesses) {
       if (auto *MU = dyn_cast<MemoryUse>(&MA)) {
         Instruction *Inst = MU->getMemoryInst();
-        MU->setDefiningAccess(Walker->getClobberingMemoryAccess(Inst));
+        MU->setDefiningAccess(Result->getClobberingMemoryAccess(Inst));
       }
     }
   }
@@ -354,6 +354,7 @@ MemorySSAWalker *MemorySSA::buildMemorySSA(AliasAnalysis *AA,
     if (!Visited.count(&BB))
       markUnreachableAsLiveOnEntry(&BB);
 
+  Walker = Result;
   return Walker;
 }
 
