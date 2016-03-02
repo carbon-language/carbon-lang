@@ -393,6 +393,7 @@ kmpc_set_defaults                           224
         __kmpc_doacross_wait                262
         __kmpc_doacross_post                263
         __kmpc_doacross_fini                264
+        __kmpc_taskloop                     266
     %endif
 %endif
 

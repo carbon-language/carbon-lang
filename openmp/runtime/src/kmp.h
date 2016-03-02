@@ -2205,11 +2205,7 @@ struct kmp_taskdata {                                 /* aligned during dynamic 
 #endif
 #if OMP_41_ENABLED
     kmp_task_team_t *       td_task_team;
-#endif
-#if KMP_HAVE_QUAD
-    _Quad                   td_dummy;             // Align structure 16-byte size since allocated just before kmp_task_t
-#else
-    kmp_uint32              td_dummy[2];
+    kmp_int32               td_size_alloc;        // The size of task structure, including shareds etc.
 #endif
 }; // struct kmp_taskdata
 
@@ -3478,7 +3474,9 @@ KMP_EXPORT int __kmp_get_cancellation_status(int cancel_kind);
 
 KMP_EXPORT void __kmpc_proxy_task_completed( kmp_int32 gtid, kmp_task_t *ptask );
 KMP_EXPORT void __kmpc_proxy_task_completed_ooo ( kmp_task_t *ptask );
-
+KMP_EXPORT void __kmpc_taskloop(ident_t *loc, kmp_int32 gtid, kmp_task_t *task, kmp_int32 if_val,
+                kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
+                kmp_int32 nogroup, kmp_int32 sched, kmp_uint64 grainsize, void * task_dup );
 #endif
 
 #endif
