@@ -12,7 +12,7 @@ int main() {
   pthread_create(&t, 0, Thread, 0);
   barrier_wait(&barrier);
   pthread_detach(t);
-  fprintf(stderr, "PASS\n");
+  printf("PASS\n");
   return 0;
 }
 

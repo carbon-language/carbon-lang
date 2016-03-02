@@ -24,7 +24,7 @@ int main() {
   g = 1;
   barrier_wait(&barrier);
   pthread_join(t, 0);
-  fprintf(stderr, "PASS\n");
+  printf("PASS\n");
   // CHECK-NOT: ThreadSanitizer: data race
   // CHECK: PASS
 }

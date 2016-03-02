@@ -10,14 +10,14 @@ void *Thread(void *p) {
   *(int*)varaddr = 42;
   int rec = __tsan_java_mutex_unlock_rec(lockaddr);
   if (rec != 2) {
-    fprintf(stderr, "FAILED 0 rec=%d\n", rec);
+    printf("FAILED 0 rec=%d\n", rec);
     exit(1);
   }
   barrier_wait(&barrier);
   barrier_wait(&barrier);
   __tsan_java_mutex_lock_rec(lockaddr, rec);
   if (*(int*)varaddr != 43) {
-    fprintf(stderr, "FAILED 3 var=%d\n", *(int*)varaddr);
+    printf("FAILED 3 var=%d\n", *(int*)varaddr);
     exit(1);
   }
   __tsan_java_mutex_unlock(lockaddr);
@@ -40,7 +40,7 @@ int main() {
   barrier_wait(&barrier);
   __tsan_java_mutex_lock(lockaddr);
   if (*(int*)varaddr != 42) {
-    fprintf(stderr, "FAILED 1 var=%d\n", *(int*)varaddr);
+    printf("FAILED 1 var=%d\n", *(int*)varaddr);
     exit(1);
   }
   *(int*)varaddr = 43;
@@ -48,7 +48,7 @@ int main() {
   barrier_wait(&barrier);
   pthread_join(th, 0);
   __tsan_java_free(jheap, kBlockSize);
-  fprintf(stderr, "DONE\n");
+  printf("DONE\n");
   return __tsan_java_fini();
 }
 

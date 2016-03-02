@@ -23,7 +23,7 @@ int main() {
   while (write(pipes[1], &t, 1) != 1) {
   }
   pthread_join(t, 0);
-  fprintf(stderr, "OK\n");
+  printf("OK\n");
 }
 
 // CHECK-NOT: WARNING: ThreadSanitizer: data race

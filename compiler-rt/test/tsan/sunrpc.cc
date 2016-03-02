@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
   pthread_create(&th[1], 0, thr, 0);
   pthread_join(th[0], 0);
   pthread_join(th[1], 0);
-  fprintf(stderr, "DONE\n");
+  printf("DONE\n");
   // CHECK: DONE
   return 0;
 }

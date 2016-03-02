@@ -14,11 +14,11 @@ int foo(jmp_buf env) {
 int main() {
   jmp_buf env;
   if (setjmp(env) == 42) {
-    fprintf(stderr, "JUMPED\n");
+    printf("JUMPED\n");
     return 0;
   }
   foo(env);
-  fprintf(stderr, "FAILED\n");
+  printf("FAILED\n");
   return 0;
 }
 
