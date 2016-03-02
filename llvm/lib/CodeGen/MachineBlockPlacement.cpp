@@ -321,18 +321,7 @@ static std::string getBlockName(MachineBasicBlock *BB) {
   std::string Result;
   raw_string_ostream OS(Result);
   OS << "BB#" << BB->getNumber();
-  OS << " (derived from LLVM BB '" << BB->getName() << "')";
-  OS.flush();
-  return Result;
-}
-
-/// \brief Helper to print the number of a MBB.
-///
-/// Only used by debug logging.
-static std::string getBlockNum(MachineBasicBlock *BB) {
-  std::string Result;
-  raw_string_ostream OS(Result);
-  OS << "BB#" << BB->getNumber();
+  OS << " ('" << BB->getName() << "')";
   OS.flush();
   return Result;
 }
@@ -620,15 +609,15 @@ void MachineBlockPlacement::buildChain(
     // Zero out LoopPredecessors for the successor we're about to merge in case
     // we selected a successor that didn't fit naturally into the CFG.
     SuccChain.LoopPredecessors = 0;
-    DEBUG(dbgs() << "Merging from " << getBlockNum(BB) << " to "
-                 << getBlockNum(BestSucc) << "\n");
+    DEBUG(dbgs() << "Merging from " << getBlockName(BB) << " to "
+                 << getBlockName(BestSucc) << "\n");
     markChainSuccessors(SuccChain, LoopHeaderBB, BlockWorkList, BlockFilter);
     Chain.merge(BestSucc, &SuccChain);
     BB = *std::prev(Chain.end());
   }
 
   DEBUG(dbgs() << "Finished forming chain for header block "
-               << getBlockNum(*Chain.begin()) << "\n");
+               << getBlockName(*Chain.begin()) << "\n");
 }
 
 /// \brief Find the best loop top block for layout.
@@ -675,8 +664,10 @@ MachineBlockPlacement::findBestLoopTop(MachineLoop &L,
   }
 
   // If no direct predecessor is fine, just use the loop header.
-  if (!BestPred)
+  if (!BestPred) {
+    DEBUG(dbgs() << "    final top unchanged\n");
     return L.getHeader();
+  }
 
   // Walk backwards through any straight line of predecessors.
   while (BestPred->pred_size() == 1 &&
@@ -975,7 +966,7 @@ void MachineBlockPlacement::rotateLoopWithProfile(
       }
     }
 
-    DEBUG(dbgs() << "The cost of loop rotation by making " << getBlockNum(*Iter)
+    DEBUG(dbgs() << "The cost of loop rotation by making " << getBlockName(*Iter)
                  << " to the top: " << Cost.getFrequency() << "\n");
 
     if (Cost < SmallestRotationCost) {
@@ -985,7 +976,7 @@ void MachineBlockPlacement::rotateLoopWithProfile(
   }
 
   if (RotationPos != LoopChain.end()) {
-    DEBUG(dbgs() << "Rotate loop by making " << getBlockNum(*RotationPos)
+    DEBUG(dbgs() << "Rotate loop by making " << getBlockName(*RotationPos)
                  << " to the top\n");
     std::rotate(LoopChain.begin(), RotationPos, LoopChain.end());
   }
