@@ -112,8 +112,9 @@ std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
     fatal("Target not found: " + ErrMsg);
 
   TargetOptions Options;
+  Reloc::Model R = Config->Shared ? Reloc::PIC_ : Reloc::Static;
   std::unique_ptr<TargetMachine> TM(
-      TheTarget->createTargetMachine(TripleStr, "", "", Options));
+      TheTarget->createTargetMachine(TripleStr, "", "", Options, R));
 
   raw_svector_ostream OS(OwningLTOData);
   legacy::PassManager CodeGenPasses;
