@@ -233,11 +233,6 @@ namespace {
 
       Builder->EmitVTable(RD);
     }
-
-    void HandleDetectMismatch(llvm::StringRef Name,
-                              llvm::StringRef Value) override {
-      Builder->AddDetectMismatch(Name, Value);
-    }
   };
 }
 

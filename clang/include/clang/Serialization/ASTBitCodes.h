@@ -1166,7 +1166,9 @@ namespace clang {
       /// \brief An OMPCapturedExprDecl record.
       DECL_OMP_CAPTUREDEXPR,
       /// \brief A PragmaCommentDecl record.
-      DECL_PRAGMA_COMMENT
+      DECL_PRAGMA_COMMENT,
+      /// \brief A PragmaDetectMismatchDecl record.
+      DECL_PRAGMA_DETECT_MISMATCH
     };
 
     /// \brief Record codes for each kind of statement or expression.

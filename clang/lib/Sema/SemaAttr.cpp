@@ -277,9 +277,12 @@ void Sema::ActOnPragmaMSComment(SourceLocation CommentLoc,
   Consumer.HandleTopLevelDecl(DeclGroupRef(PCD));
 }
 
-void Sema::ActOnPragmaDetectMismatch(StringRef Name, StringRef Value) {
-  // FIXME: Serialize this.
-  Consumer.HandleDetectMismatch(Name, Value);
+void Sema::ActOnPragmaDetectMismatch(SourceLocation Loc, StringRef Name,
+                                     StringRef Value) {
+  auto *PDMD = PragmaDetectMismatchDecl::Create(
+      Context, Context.getTranslationUnitDecl(), Loc, Name, Value);
+  Context.getTranslationUnitDecl()->addDecl(PDMD);
+  Consumer.HandleTopLevelDecl(DeclGroupRef(PDMD));
 }
 
 void Sema::ActOnPragmaMSPointersToMembers(

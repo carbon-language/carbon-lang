@@ -427,6 +427,7 @@ namespace  {
     void VisitFileScopeAsmDecl(const FileScopeAsmDecl *D);
     void VisitImportDecl(const ImportDecl *D);
     void VisitPragmaCommentDecl(const PragmaCommentDecl *D);
+    void VisitPragmaDetectMismatchDecl(const PragmaDetectMismatchDecl *D);
 
     // C++ Decls
     void VisitNamespaceDecl(const NamespaceDecl *D);
@@ -1215,6 +1216,12 @@ void ASTDumper::VisitPragmaCommentDecl(const PragmaCommentDecl *D) {
   if (!Arg.empty())
     OS << " \"" << Arg << "\"";
 }
+
+void ASTDumper::VisitPragmaDetectMismatchDecl(
+    const PragmaDetectMismatchDecl *D) {
+  OS << " \"" << D->getName() << "\" \"" << D->getValue() << "\"";
+}
+
 
 //===----------------------------------------------------------------------===//
 // C++ Declarations

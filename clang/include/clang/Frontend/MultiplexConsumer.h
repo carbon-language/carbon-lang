@@ -44,8 +44,6 @@ public:
   void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) override;
   void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) override;
   void HandleImplicitImportDecl(ImportDecl *D) override;
-  void HandleDetectMismatch(llvm::StringRef Name,
-                            llvm::StringRef Value) override;
   void CompleteTentativeDefinition(VarDecl *D) override;
   void AssignInheritanceModel(CXXRecordDecl *RD) override;
   void HandleVTable(CXXRecordDecl *RD) override;

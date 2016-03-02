@@ -138,6 +138,39 @@ public:
   static bool classofKind(Kind K) { return K == PragmaComment; }
 };
 
+/// \brief Represents a `#pragma detect_mismatch` line. Always a child of
+/// TranslationUnitDecl.
+class PragmaDetectMismatchDecl final
+    : public Decl,
+      private llvm::TrailingObjects<PragmaDetectMismatchDecl, char> {
+  virtual void anchor();
+
+  size_t ValueStart;
+
+  friend TrailingObjects;
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+
+  PragmaDetectMismatchDecl(TranslationUnitDecl *TU, SourceLocation Loc,
+                           size_t ValueStart)
+      : Decl(PragmaDetectMismatch, TU, Loc), ValueStart(ValueStart) {}
+
+public:
+  static PragmaDetectMismatchDecl *Create(const ASTContext &C,
+                                          TranslationUnitDecl *DC,
+                                          SourceLocation Loc, StringRef Name,
+                                          StringRef Value);
+  static PragmaDetectMismatchDecl *
+  CreateDeserialized(ASTContext &C, unsigned ID, unsigned NameValueSize);
+
+  StringRef getName() const { return getTrailingObjects<char>(); }
+  StringRef getValue() const { return getTrailingObjects<char>() + ValueStart; }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == PragmaDetectMismatch; }
+};
+
 /// \brief Declaration context for names declared as extern "C" in C++. This
 /// is neither the semantic nor lexical context for such declarations, but is
 /// used to check for conflicts with other extern "C" declarations. Example:
