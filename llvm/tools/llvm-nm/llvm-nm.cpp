@@ -159,7 +159,8 @@ cl::alias JustSymbolNames("j", cl::desc("Alias for --just-symbol-name"),
 // line.
 cl::list<std::string> SegSect("s", cl::Positional, cl::ZeroOrMore,
                               cl::desc("Dump only symbols from this segment "
-                                       "and section name, Mach-O only"));
+                                       "and section name, Mach-O only"),
+                              cl::Grouping);
 
 cl::opt<bool> FormatMachOasHex("x", cl::desc("Print symbol entry in hex, "
                                              "Mach-O only"), cl::Grouping);
