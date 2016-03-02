@@ -4583,9 +4583,9 @@ ConstantRange ScalarEvolution::getRangeViaFactoring(const SCEV *Start,
   const SCEV *FalseStep = this->getConstant(*StepPattern.FalseValue);
 
   ConstantRange TrueRange =
-      getRangeForAffineAR(TrueStart, TrueStep, MaxBECount, BitWidth);
+      this->getRangeForAffineAR(TrueStart, TrueStep, MaxBECount, BitWidth);
   ConstantRange FalseRange =
-      getRangeForAffineAR(FalseStart, FalseStep, MaxBECount, BitWidth);
+      this->getRangeForAffineAR(FalseStart, FalseStep, MaxBECount, BitWidth);
 
   return TrueRange.unionWith(FalseRange);
 }
