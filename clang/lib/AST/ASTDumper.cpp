@@ -426,6 +426,7 @@ namespace  {
     void VisitVarDecl(const VarDecl *D);
     void VisitFileScopeAsmDecl(const FileScopeAsmDecl *D);
     void VisitImportDecl(const ImportDecl *D);
+    void VisitPragmaCommentDecl(const PragmaCommentDecl *D);
 
     // C++ Decls
     void VisitNamespaceDecl(const NamespaceDecl *D);
@@ -1198,6 +1199,21 @@ void ASTDumper::VisitFileScopeAsmDecl(const FileScopeAsmDecl *D) {
 
 void ASTDumper::VisitImportDecl(const ImportDecl *D) {
   OS << ' ' << D->getImportedModule()->getFullModuleName();
+}
+
+void ASTDumper::VisitPragmaCommentDecl(const PragmaCommentDecl *D) {
+  OS << ' ';
+  switch (D->getCommentKind()) {
+  case PCK_Unknown:  llvm_unreachable("unexpected pragma comment kind");
+  case PCK_Compiler: OS << "compiler"; break;
+  case PCK_ExeStr:   OS << "exestr"; break;
+  case PCK_Lib:      OS << "lib"; break;
+  case PCK_Linker:   OS << "linker"; break;
+  case PCK_User:     OS << "user"; break;
+  }
+  StringRef Arg = D->getArg();
+  if (!Arg.empty())
+    OS << " \"" << Arg << "\"";
 }
 
 //===----------------------------------------------------------------------===//

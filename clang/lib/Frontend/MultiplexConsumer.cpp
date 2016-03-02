@@ -317,19 +317,9 @@ void MultiplexConsumer::HandleImplicitImportDecl(ImportDecl *D) {
     Consumer->HandleImplicitImportDecl(D);
 }
 
-void MultiplexConsumer::HandleLinkerOption(llvm::StringRef Opts) {
-  for (auto &Consumer : Consumers)
-    Consumer->HandleLinkerOption(Opts);
-}
-
 void MultiplexConsumer::HandleDetectMismatch(llvm::StringRef Name, llvm::StringRef Value) {
   for (auto &Consumer : Consumers)
     Consumer->HandleDetectMismatch(Name, Value);
-}
-
-void MultiplexConsumer::HandleDependentLibrary(llvm::StringRef Lib) {
-  for (auto &Consumer : Consumers)
-    Consumer->HandleDependentLibrary(Lib);
 }
 
 void MultiplexConsumer::CompleteTentativeDefinition(VarDecl *D) {

@@ -3689,6 +3689,25 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     ObjCRuntime->RegisterAlias(cast<ObjCCompatibleAliasDecl>(D));
     break;
 
+  case Decl::PragmaComment: {
+    const auto *PCD = cast<PragmaCommentDecl>(D);
+    switch (PCD->getCommentKind()) {
+    case PCK_Unknown:
+      llvm_unreachable("unexpected pragma comment kind");
+    case PCK_Linker:
+      AppendLinkerOptions(PCD->getArg());
+      break;
+    case PCK_Lib:
+      AddDependentLib(PCD->getArg());
+      break;
+    case PCK_Compiler:
+    case PCK_ExeStr:
+    case PCK_User:
+      break; // We ignore all of these.
+    }
+    break;
+  }
+
   case Decl::LinkageSpec:
     EmitLinkageSpec(cast<LinkageSpecDecl>(D));
     break;

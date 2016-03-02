@@ -13,6 +13,7 @@
 
 #include "RAIIObjectsForParser.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/PragmaKinds.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
@@ -1793,22 +1794,22 @@ void PragmaCommentHandler::HandlePragma(Preprocessor &PP,
 
   // Verify that this is one of the 5 whitelisted options.
   IdentifierInfo *II = Tok.getIdentifierInfo();
-  Sema::PragmaMSCommentKind Kind =
-    llvm::StringSwitch<Sema::PragmaMSCommentKind>(II->getName())
-    .Case("linker",   Sema::PCK_Linker)
-    .Case("lib",      Sema::PCK_Lib)
-    .Case("compiler", Sema::PCK_Compiler)
-    .Case("exestr",   Sema::PCK_ExeStr)
-    .Case("user",     Sema::PCK_User)
-    .Default(Sema::PCK_Unknown);
-  if (Kind == Sema::PCK_Unknown) {
+  PragmaMSCommentKind Kind =
+    llvm::StringSwitch<PragmaMSCommentKind>(II->getName())
+    .Case("linker",   PCK_Linker)
+    .Case("lib",      PCK_Lib)
+    .Case("compiler", PCK_Compiler)
+    .Case("exestr",   PCK_ExeStr)
+    .Case("user",     PCK_User)
+    .Default(PCK_Unknown);
+  if (Kind == PCK_Unknown) {
     PP.Diag(Tok.getLocation(), diag::err_pragma_comment_unknown_kind);
     return;
   }
 
   // On PS4, issue a warning about any pragma comments other than
   // #pragma comment lib.
-  if (PP.getTargetInfo().getTriple().isPS4() && Kind != Sema::PCK_Lib) {
+  if (PP.getTargetInfo().getTriple().isPS4() && Kind != PCK_Lib) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_comment_ignored)
       << II->getName();
     return;
@@ -1844,7 +1845,7 @@ void PragmaCommentHandler::HandlePragma(Preprocessor &PP,
   if (PP.getPPCallbacks())
     PP.getPPCallbacks()->PragmaComment(CommentLoc, II, ArgumentString);
 
-  Actions.ActOnPragmaMSComment(Kind, ArgumentString);
+  Actions.ActOnPragmaMSComment(CommentLoc, Kind, ArgumentString);
 }
 
 // #pragma clang optimize off

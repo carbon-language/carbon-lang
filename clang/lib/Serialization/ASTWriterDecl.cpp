@@ -49,6 +49,7 @@ namespace clang {
     void Visit(Decl *D);
 
     void VisitDecl(Decl *D);
+    void VisitPragmaCommentDecl(PragmaCommentDecl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
     void VisitNamedDecl(NamedDecl *D);
     void VisitLabelDecl(LabelDecl *LD);
@@ -313,6 +314,16 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
       DC = NS->getParent();
     }
   }
+}
+
+void ASTDeclWriter::VisitPragmaCommentDecl(PragmaCommentDecl *D) {
+  StringRef Arg = D->getArg();
+  Record.push_back(Arg.size());
+  VisitDecl(D);
+  Writer.AddSourceLocation(D->getLocStart(), Record);
+  Record.push_back(D->getCommentKind());
+  Writer.AddString(Arg, Record);
+  Code = serialization::DECL_PRAGMA_COMMENT;
 }
 
 void ASTDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {

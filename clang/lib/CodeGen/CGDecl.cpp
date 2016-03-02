@@ -71,6 +71,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::ObjCImplementation:
   case Decl::ObjCProperty:
   case Decl::ObjCCompatibleAlias:
+  case Decl::PragmaComment:
   case Decl::AccessSpec:
   case Decl::LinkageSpec:
   case Decl::ObjCPropertyImpl:

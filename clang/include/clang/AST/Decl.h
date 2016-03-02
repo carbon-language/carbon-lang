@@ -23,6 +23,7 @@
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/Module.h"
 #include "clang/Basic/OperatorKinds.h"
+#include "clang/Basic/PragmaKinds.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
@@ -101,6 +102,40 @@ public:
   static TranslationUnitDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<TranslationUnitDecl *>(const_cast<DeclContext*>(DC));
   }
+};
+
+/// \brief Represents a `#pragma comment` line. Always a child of
+/// TranslationUnitDecl.
+class PragmaCommentDecl final
+    : public Decl,
+      private llvm::TrailingObjects<PragmaCommentDecl, char> {
+  virtual void anchor();
+
+  PragmaMSCommentKind CommentKind;
+
+  friend TrailingObjects;
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+
+  PragmaCommentDecl(TranslationUnitDecl *TU, SourceLocation CommentLoc,
+                    PragmaMSCommentKind CommentKind)
+      : Decl(PragmaComment, TU, CommentLoc), CommentKind(CommentKind) {}
+
+public:
+  static PragmaCommentDecl *Create(const ASTContext &C, TranslationUnitDecl *DC,
+                                   SourceLocation CommentLoc,
+                                   PragmaMSCommentKind CommentKind,
+                                   StringRef Arg);
+  static PragmaCommentDecl *CreateDeserialized(ASTContext &C, unsigned ID,
+                                               unsigned ArgSize);
+
+  PragmaMSCommentKind getCommentKind() const { return CommentKind; }
+
+  StringRef getArg() const { return getTrailingObjects<char>(); }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == PragmaComment; }
 };
 
 /// \brief Declaration context for names declared as extern "C" in C++. This

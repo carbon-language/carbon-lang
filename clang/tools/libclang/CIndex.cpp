@@ -5586,6 +5586,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::OMPThreadPrivate:
   case Decl::ObjCTypeParam:
   case Decl::BuiltinTemplate:
+  case Decl::PragmaComment:
     return C;
 
   // Declaration kinds that don't make any sense here, but are

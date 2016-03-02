@@ -3905,6 +3905,29 @@ TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   return new (C, (DeclContext *)nullptr) TranslationUnitDecl(C);
 }
 
+void PragmaCommentDecl::anchor() { }
+
+PragmaCommentDecl *PragmaCommentDecl::Create(const ASTContext &C,
+                                             TranslationUnitDecl *DC,
+                                             SourceLocation CommentLoc,
+                                             PragmaMSCommentKind CommentKind,
+                                             StringRef Arg) {
+  PragmaCommentDecl *PCD =
+      new (C, DC, additionalSizeToAlloc<char>(Arg.size() + 1))
+          PragmaCommentDecl(DC, CommentLoc, CommentKind);
+  memcpy(PCD->getTrailingObjects<char>(), Arg.data(), Arg.size());
+  PCD->getTrailingObjects<char>()[Arg.size()] = '\0';
+  return PCD;
+}
+
+PragmaCommentDecl *PragmaCommentDecl::CreateDeserialized(ASTContext &C,
+                                                         unsigned ID,
+                                                         unsigned ArgSize) {
+  return new (C, ID, additionalSizeToAlloc<char>(ArgSize + 1))
+      PragmaCommentDecl(nullptr, SourceLocation(), PCK_Unknown);
+}
+
+
 void ExternCContextDecl::anchor() { }
 
 ExternCContextDecl *ExternCContextDecl::Create(const ASTContext &C,

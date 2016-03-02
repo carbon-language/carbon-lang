@@ -1164,7 +1164,9 @@ namespace clang {
       /// \brief An ObjCTypeParamDecl record.
       DECL_OBJC_TYPE_PARAM,
       /// \brief An OMPCapturedExprDecl record.
-      DECL_OMP_CAPTUREDEXPR
+      DECL_OMP_CAPTUREDEXPR,
+      /// \brief A PragmaCommentDecl record.
+      DECL_PRAGMA_COMMENT
     };
 
     /// \brief Record codes for each kind of statement or expression.
