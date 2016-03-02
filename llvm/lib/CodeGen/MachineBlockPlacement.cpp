@@ -403,8 +403,6 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
     } else {
       BlockChain *SuccChain = BlockToChain[Succ];
       if (SuccChain == &Chain) {
-        DEBUG(dbgs() << "    " << getBlockName(Succ)
-                     << " -> Already merged!\n");
         SkipSucc = true;
       } else if (Succ != *SuccChain->begin()) {
         DEBUG(dbgs() << "    " << getBlockName(Succ) << " -> Mid chain!\n");
@@ -524,10 +522,9 @@ MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
   BlockFrequency BestFreq;
   for (MachineBasicBlock *MBB : WorkList) {
     BlockChain &SuccChain = *BlockToChain[MBB];
-    if (&SuccChain == &Chain) {
-      DEBUG(dbgs() << "    " << getBlockName(MBB) << " -> Already merged!\n");
+    if (&SuccChain == &Chain)
       continue;
-    }
+    
     assert(SuccChain.LoopPredecessors == 0 && "Found CFG-violating block");
 
     BlockFrequency CandidateFreq = MBFI->getBlockFreq(MBB);
