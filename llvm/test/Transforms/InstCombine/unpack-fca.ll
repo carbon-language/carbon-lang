@@ -137,6 +137,27 @@ define %B @structB(%B* %b.ptr) {
   ret %B %1
 }
 
+define [2 x %B] @loadArrayOfB([2 x %B]* %ab.ptr) {
+; CHECK-LABEL: loadArrayOfB
+; CHECK-NEXT: [[GEP1:%[a-z0-9\.]+]] = getelementptr inbounds [2 x %B], [2 x %B]* %ab.ptr, i64 0, i64 0, i32 0
+; CHECK-NEXT: [[LOAD1:%[a-z0-9\.]+]] = load i8*, i8** [[GEP1]], align 8
+; CHECK-NEXT: [[IV1:%[a-z0-9\.]+]] = insertvalue %B undef, i8* [[LOAD1]], 0
+; CHECK-NEXT: [[GEP2:%[a-z0-9\.]+]] = getelementptr inbounds [2 x %B], [2 x %B]* %ab.ptr, i64 0, i64 0, i32 1
+; CHECK-NEXT: [[LOAD2:%[a-z0-9\.]+]] = load i64, i64* [[GEP2]], align 8
+; CHECK-NEXT: [[IV2:%[a-z0-9\.]+]] = insertvalue %B [[IV1]], i64 [[LOAD2]], 1
+; CHECK-NEXT: [[IV3:%[a-z0-9\.]+]] = insertvalue [2 x %B] undef, %B [[IV2]], 0
+; CHECK-NEXT: [[GEP3:%[a-z0-9\.]+]] = getelementptr inbounds [2 x %B], [2 x %B]* %ab.ptr, i64 0, i64 1, i32 0
+; CHECK-NEXT: [[LOAD3:%[a-z0-9\.]+]] = load i8*, i8** [[GEP3]], align 8
+; CHECK-NEXT: [[IV4:%[a-z0-9\.]+]] = insertvalue %B undef, i8* [[LOAD3]], 0
+; CHECK-NEXT: [[GEP4:%[a-z0-9\.]+]] = getelementptr inbounds [2 x %B], [2 x %B]* %ab.ptr, i64 0, i64 1, i32 1
+; CHECK-NEXT: [[LOAD4:%[a-z0-9\.]+]] = load i64, i64* [[GEP4]], align 8
+; CHECK-NEXT: [[IV5:%[a-z0-9\.]+]] = insertvalue %B [[IV4]], i64 [[LOAD4]], 1
+; CHECK-NEXT: [[IV6:%[a-z0-9\.]+]] = insertvalue [2 x %B] [[IV3]], %B [[IV5]], 1
+; CHECK-NEXT: ret [2 x %B] [[IV6]]
+  %1 = load [2 x %B], [2 x %B]* %ab.ptr, align 8
+  ret [2 x %B] %1
+}
+
 %struct.S = type <{ i8, %struct.T }>
 %struct.T = type { i32, i32 }
 
