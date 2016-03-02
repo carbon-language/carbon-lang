@@ -21,7 +21,7 @@ LinkingContext::LinkingContext()
       _searchSharedLibrariesToOverrideTentativeDefinitions(false),
       _printRemainingUndefines(true), _allowRemainingUndefines(false),
       _logInputFiles(false), _allowShlibUndefines(true),
-      _outputFileType(OutputFileType::Default), _nextOrdinal(0) {}
+      _nextOrdinal(0) {}
 
 LinkingContext::~LinkingContext() {}
 

@@ -34,12 +34,6 @@ class SharedLibraryFile;
 /// Writers.
 class LinkingContext {
 public:
-  /// \brief The types of output file that the linker creates.
-  enum class OutputFileType : uint8_t {
-    Default, // The default output type for this target
-    YAML,    // The output type is set to YAML
-  };
-
   virtual ~LinkingContext();
 
   /// \name Methods needed by core linking
@@ -212,19 +206,6 @@ public:
   /// the linker to write to an in-memory buffer.
   StringRef outputPath() const { return _outputPath; }
 
-  /// Set the various output file types that the linker would
-  /// create
-  bool setOutputFileType(StringRef outputFileType) {
-    if (outputFileType.equals_lower("yaml")) {
-      _outputFileType = OutputFileType::YAML;
-      return true;
-    }
-    return false;
-  }
-
-  /// Returns the output file type that that the linker needs to create.
-  OutputFileType outputFileType() const { return _outputFileType; }
-
   /// Accessor for Register object embedded in LinkingContext.
   const Registry &registry() const { return _registry; }
   Registry &registry() { return _registry; }
@@ -282,7 +263,6 @@ protected:
   bool _allowRemainingUndefines;
   bool _logInputFiles;
   bool _allowShlibUndefines;
-  OutputFileType _outputFileType;
   std::vector<StringRef> _deadStripRoots;
   std::vector<const char *> _llvmOptions;
   StringRefVector _initialUndefinedSymbols;
