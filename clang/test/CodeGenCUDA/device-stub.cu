@@ -1,7 +1,11 @@
 // RUN: %clang_cc1 -emit-llvm %s -fcuda-include-gpubinary %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -fcuda-include-gpubinary %s -o -  -DNOGLOBALS \
+// RUN:   | FileCheck %s -check-prefix=NOGLOBALS
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s -check-prefix=NOGPUBIN
 
 #include "Inputs/cuda.h"
 
+#ifndef NOGLOBALS
 // CHECK-DAG: @device_var = internal global i32
 __device__ int device_var;
 
@@ -65,6 +69,7 @@ __global__ void kernelfunc(int i, int j, int k) {}
 // CHECK: call{{.*}}cudaConfigureCall
 // CHECK: call{{.*}}kernelfunc
 void hostfunc(void) { kernelfunc<<<1, 1>>>(1, 1, 1); }
+#endif
 
 // Test that we've built a function to register kernels and global vars.
 // CHECK: define internal void @__cuda_register_globals
@@ -89,3 +94,18 @@ void hostfunc(void) { kernelfunc<<<1, 1>>>(1, 1, 1); }
 // CHECK: load{{.*}}__cuda_gpubin_handle
 // CHECK-NEXT: call void @__cudaUnregisterFatBinary
 
+// There should be no __cuda_register_globals if we have no
+// device-side globals, but we still need to register GPU binary.
+// Skip GPU binary string first.
+// NOGLOBALS: @0 = private unnamed_addr constant{{.*}}
+// NOGLOBALS-NOT: define internal void @__cuda_register_globals
+// NOGLOBALS: define internal void @__cuda_module_ctor
+// NOGLOBALS: call{{.*}}cudaRegisterFatBinary{{.*}}__cuda_fatbin_wrapper
+// NOGLOBALS-NOT: call void @__cuda_register_globals
+// NOGLOBALS: define internal void @__cuda_module_dtor
+// NOGLOBALS: call void @__cudaUnregisterFatBinary
+
+// There should be no constructors/destructors if we have no GPU binary.
+// NOGPUBIN-NOT: define internal void @__cuda_register_globals
+// NOGPUBIN-NOT: define internal void @__cuda_module_ctor
+// NOGPUBIN-NOT: define internal void @__cuda_module_dtor

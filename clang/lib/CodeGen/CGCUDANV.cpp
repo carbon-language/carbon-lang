@@ -178,6 +178,10 @@ void CGNVCUDARuntime::emitDeviceStubBody(CodeGenFunction &CGF,
 /// }
 /// \endcode
 llvm::Function *CGNVCUDARuntime::makeRegisterGlobalsFn() {
+  // No need to register anything
+  if (EmittedKernels.empty() && DeviceVars.empty())
+    return nullptr;
+
   llvm::Function *RegisterKernelsFunc = llvm::Function::Create(
       llvm::FunctionType::get(VoidTy, VoidPtrPtrTy, false),
       llvm::GlobalValue::InternalLinkage, "__cuda_register_globals", &TheModule);
@@ -251,6 +255,10 @@ llvm::Function *CGNVCUDARuntime::makeRegisterGlobalsFn() {
 /// }
 /// \endcode
 llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
+  // No need to generate ctors/dtors if there are no GPU binaries.
+  if (CGM.getCodeGenOpts().CudaGpuBinaryFileNames.empty())
+    return nullptr;
+
   // void __cuda_register_globals(void* handle);
   llvm::Function *RegisterGlobalsFunc = makeRegisterGlobalsFn();
   // void ** __cudaRegisterFatBinary(void *);
@@ -309,7 +317,8 @@ llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
                                    CGM.getPointerAlign());
 
     // Call __cuda_register_globals(GpuBinaryHandle);
-    CtorBuilder.CreateCall(RegisterGlobalsFunc, RegisterFatbinCall);
+    if (RegisterGlobalsFunc)
+      CtorBuilder.CreateCall(RegisterGlobalsFunc, RegisterFatbinCall);
 
     // Save GpuBinaryHandle so we can unregister it in destructor.
     GpuBinaryHandles.push_back(GpuBinaryHandle);
@@ -329,6 +338,10 @@ llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
 /// }
 /// \endcode
 llvm::Function *CGNVCUDARuntime::makeModuleDtorFunction() {
+  // No need for destructor if we don't have handles to unregister.
+  if (GpuBinaryHandles.empty())
+    return nullptr;
+
   // void __cudaUnregisterFatBinary(void ** handle);
   llvm::Constant *UnregisterFatbinFunc = CGM.CreateRuntimeFunction(
       llvm::FunctionType::get(VoidTy, VoidPtrPtrTy, false),
