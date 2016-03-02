@@ -15,13 +15,7 @@
 
 namespace lld {
 
-LinkingContext::LinkingContext()
-    : _deadStrip(false), _globalsAreDeadStripRoots(false),
-      _searchArchivesToOverrideTentativeDefinitions(false),
-      _searchSharedLibrariesToOverrideTentativeDefinitions(false),
-      _printRemainingUndefines(true), _allowRemainingUndefines(false),
-      _logInputFiles(false), _allowShlibUndefines(true),
-      _nextOrdinal(0) {}
+LinkingContext::LinkingContext() {}
 
 LinkingContext::~LinkingContext() {}
 

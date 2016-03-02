@@ -255,20 +255,20 @@ protected:
 
   StringRef _outputPath;
   StringRef _entrySymbolName;
-  bool _deadStrip;
-  bool _globalsAreDeadStripRoots;
-  bool _searchArchivesToOverrideTentativeDefinitions;
-  bool _searchSharedLibrariesToOverrideTentativeDefinitions;
-  bool _printRemainingUndefines;
-  bool _allowRemainingUndefines;
-  bool _logInputFiles;
-  bool _allowShlibUndefines;
+  bool _deadStrip = false;
+  bool _globalsAreDeadStripRoots = false;
+  bool _searchArchivesToOverrideTentativeDefinitions = false;
+  bool _searchSharedLibrariesToOverrideTentativeDefinitions = false;
+  bool _printRemainingUndefines = true;
+  bool _allowRemainingUndefines = false;
+  bool _logInputFiles = false;
+  bool _allowShlibUndefines = true;
   std::vector<StringRef> _deadStripRoots;
   std::vector<const char *> _llvmOptions;
   StringRefVector _initialUndefinedSymbols;
   std::vector<std::unique_ptr<Node>> _nodes;
   mutable llvm::BumpPtrAllocator _allocator;
-  mutable uint64_t _nextOrdinal;
+  mutable uint64_t _nextOrdinal = 0;
   Registry _registry;
 
 private:
