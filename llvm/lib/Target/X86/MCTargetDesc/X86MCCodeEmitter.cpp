@@ -76,6 +76,10 @@ public:
     return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg()) & 0x7;
   }
 
+  unsigned GetX86RegEncoding(const MCOperand &MO) const {
+    return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
+  }
+
   // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the range
   // 0-7 and the difference between the 2 groups is given by the REX prefix.
   // In the VEX prefix, registers are seen sequencially from 0-15 and encoded
@@ -720,7 +724,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                                  X86::AddrIndexReg).getReg()))
       VEX_X = 0x0;
     if (X86II::is32ExtendedReg(MI.getOperand(MemOperand +
-                                          X86::AddrIndexReg).getReg()))
+                                             X86::AddrIndexReg).getReg()))
       EVEX_V2 = 0x0;
 
     CurOp += X86::AddrNumOperands;
@@ -1175,11 +1179,15 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   bool HasVEX_4V = TSFlags & X86II::VEX_4V;
   bool HasVEX_4VOp3 = TSFlags & X86II::VEX_4VOp3;
   bool HasMemOp4 = TSFlags & X86II::MemOp4;
-  const unsigned MemOp4_I8IMMOperand = 2;
+  bool HasVEX_I8IMM = TSFlags & X86II::VEX_I8IMM;
+  assert((!HasMemOp4 || HasVEX_I8IMM) && "MemOp4 should imply VEX_I8IMM");
 
   // It uses the EVEX.aaa field?
   bool HasEVEX_K = TSFlags & X86II::EVEX_K;
   bool HasEVEX_RC = TSFlags & X86II::EVEX_RC;
+
+  // Used if a register is encoded in 7:4 of immediate.
+  unsigned I8RegNum = 0;
 
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
@@ -1348,44 +1356,42 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       ++SrcRegNum;
 
-    if (HasMemOp4) // Skip 2nd src (which is encoded in I8IMM)
-      ++SrcRegNum;
+    if (HasMemOp4) // Capture 2nd src (which is encoded in I8IMM)
+      I8RegNum = GetX86RegEncoding(MI.getOperand(SrcRegNum++));
 
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
                      GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
-
-    // 2 operands skipped with HasMemOp4, compensate accordingly
-    CurOp = HasMemOp4 ? SrcRegNum : SrcRegNum + 1;
+    CurOp = SrcRegNum + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
+    if (!HasMemOp4 && HasVEX_I8IMM)
+      I8RegNum = GetX86RegEncoding(MI.getOperand(CurOp++));
     // do not count the rounding control operand
     if (HasEVEX_RC)
       --NumOps;
     break;
   }
   case X86II::MRMSrcMem: {
-    int AddrOperands = X86::AddrNumOperands;
     unsigned FirstMemOp = CurOp+1;
 
-    if (HasEVEX_K) { // Skip writemask
-      ++AddrOperands;
+    if (HasEVEX_K) // Skip writemask
       ++FirstMemOp;
-    }
 
-    if (HasVEX_4V) {
-      ++AddrOperands;
+    if (HasVEX_4V)
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
-    }
-    if (HasMemOp4) // Skip second register source (encoded in I8IMM)
-      ++FirstMemOp;
+
+    if (HasMemOp4) // Capture second register source (encoded in I8IMM)
+      I8RegNum = GetX86RegEncoding(MI.getOperand(FirstMemOp++));
 
     EmitByte(BaseOpcode, CurByte, OS);
 
     EmitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
                      TSFlags, CurByte, OS, Fixups, STI);
-    CurOp += AddrOperands + 1;
+    CurOp = FirstMemOp + X86::AddrNumOperands;
     if (HasVEX_4VOp3)
       ++CurOp;
+    if (!HasMemOp4 && HasVEX_I8IMM)
+      I8RegNum = GetX86RegEncoding(MI.getOperand(CurOp++));
     break;
   }
 
@@ -1402,6 +1408,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitRegModRMByte(MI.getOperand(CurOp++),
                      (Form == X86II::MRMXr) ? 0 : Form-X86II::MRM0r,
                      CurByte, OS);
+    assert(!HasVEX_I8IMM);
     break;
   }
 
@@ -1447,32 +1454,23 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
   }
 
-  // If there is a remaining operand, it must be a trailing immediate.  Emit it
-  // according to the right size for the instruction. Some instructions
-  // (SSE4a extrq and insertq) have two trailing immediates.
-  while (CurOp != NumOps && NumOps - CurOp <= 2) {
+  if (HasVEX_I8IMM) {
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte.
-    if (TSFlags & X86II::VEX_I8IMM) {
-      const MCOperand &MO = MI.getOperand(HasMemOp4 ? MemOp4_I8IMMOperand
-                                                    : CurOp);
-      ++CurOp;
-      unsigned RegNum = GetX86RegNum(MO) << 4;
-      if (X86II::isX86_64ExtendedReg(MO.getReg()))
-        RegNum |= 1 << 7;
-      // If there is an additional 5th operand it must be an immediate, which
-      // is encoded in bits[3:0]
-      if (CurOp != NumOps) {
-        const MCOperand &MIMM = MI.getOperand(CurOp++);
-        if (MIMM.isImm()) {
-          unsigned Val = MIMM.getImm();
-          assert(Val < 16 && "Immediate operand value out of range");
-          RegNum |= Val;
-        }
-      }
-      EmitImmediate(MCOperand::createImm(RegNum), MI.getLoc(), 1, FK_Data_1,
-                    CurByte, OS, Fixups);
-    } else {
+    assert(I8RegNum < 16 && "Register encoding out of range");
+    I8RegNum <<= 4;
+    if (CurOp != NumOps) {
+      unsigned Val = MI.getOperand(CurOp++).getImm();
+      assert(Val < 16 && "Immediate operand value out of range");
+      I8RegNum |= Val;
+    }
+    EmitImmediate(MCOperand::createImm(I8RegNum), MI.getLoc(), 1, FK_Data_1,
+                  CurByte, OS, Fixups);
+  } else {
+    // If there is a remaining operand, it must be a trailing immediate. Emit it
+    // according to the right size for the instruction. Some instructions
+    // (SSE4a extrq and insertq) have two trailing immediates.
+    while (CurOp != NumOps && NumOps - CurOp <= 2) {
       EmitImmediate(MI.getOperand(CurOp++), MI.getLoc(),
                     X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
                     CurByte, OS, Fixups);
