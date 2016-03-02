@@ -1017,11 +1017,43 @@ static bool unpackStoreToAggregate(InstCombiner &IC, StoreInst &SI) {
 
   if (auto *AT = dyn_cast<ArrayType>(T)) {
     // If the array only have one element, we unpack.
-    if (AT->getNumElements() == 1) {
+    auto NumElements = AT->getNumElements();
+    if (NumElements == 1) {
       V = IC.Builder->CreateExtractValue(V, 0);
       combineStoreToNewValue(IC, SI, V);
       return true;
     }
+
+    const DataLayout &DL = IC.getDataLayout();
+    auto EltSize = DL.getTypeAllocSize(AT->getElementType());
+    auto Align = SI.getAlignment();
+    if (!Align)
+      Align = DL.getABITypeAlignment(T);
+
+    SmallString<16> EltName = V->getName();
+    EltName += ".elt";
+    auto *Addr = SI.getPointerOperand();
+    SmallString<16> AddrName = Addr->getName();
+    AddrName += ".repack";
+
+    auto *IdxType = Type::getInt64Ty(T->getContext());
+    auto *Zero = ConstantInt::get(IdxType, 0);
+
+    uint64_t Offset = 0;
+    for (uint64_t i = 0; i < NumElements; i++) {
+      Value *Indices[2] = {
+        Zero,
+        ConstantInt::get(IdxType, i),
+      };
+      auto *Ptr = IC.Builder->CreateInBoundsGEP(AT, Addr, makeArrayRef(Indices),
+                                                AddrName);
+      auto *Val = IC.Builder->CreateExtractValue(V, i, EltName);
+      auto EltAlign = MinAlign(Align, Offset);
+      IC.Builder->CreateAlignedStore(Val, Ptr, EltAlign);
+      Offset += EltSize;
+    }
+
+    return true;
   }
 
   return false;
