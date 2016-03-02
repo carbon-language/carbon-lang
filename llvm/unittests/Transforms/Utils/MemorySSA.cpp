@@ -49,7 +49,7 @@ TEST(MemorySSA, RemoveMemoryAccess) {
   std::unique_ptr<MemorySSA> MSSA(new MemorySSA(*F));
   std::unique_ptr<DominatorTree> DT(new DominatorTree(*F));
   std::unique_ptr<AssumptionCache> AC(new AssumptionCache(*F));
-  AAResults *AA = new AAResults();
+  AAResults *AA = new AAResults(TLI);
   BasicAAResult *BAA = new BasicAAResult(DL, TLI, *AC, &*DT);
   AA->addAAResult(*BAA);
   MemorySSAWalker *Walker = MSSA->buildMemorySSA(AA, &*DT);
