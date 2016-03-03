@@ -50,10 +50,6 @@ const unsigned MaxDepth = 6;
 static cl::opt<unsigned> DomConditionsMaxUses("dom-conditions-max-uses",
                                               cl::Hidden, cl::init(20));
 
-// If true, don't consider only compares whose only use is a branch.
-static cl::opt<bool> DomConditionsSingleCmpUse("dom-conditions-single-cmp-use",
-                                               cl::Hidden, cl::init(false));
-
 /// Returns the bitwidth of the given scalar or pointer type (if unknown returns
 /// 0). For vector types, returns the element type's bitwidth.
 static unsigned getBitWidth(Type *Ty, const DataLayout &DL) {
@@ -3071,9 +3067,6 @@ static bool isKnownNonNullFromDominatingCondition(const Value *V,
     // Consider only compare instructions uniquely controlling a branch
     const ICmpInst *Cmp = dyn_cast<ICmpInst>(U);
     if (!Cmp)
-      continue;
-
-    if (DomConditionsSingleCmpUse && !Cmp->hasOneUse())
       continue;
 
     for (auto *CmpU : Cmp->users()) {
