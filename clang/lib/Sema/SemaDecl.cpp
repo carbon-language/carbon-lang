@@ -6633,34 +6633,26 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
     // OpenCL v2.0 s6.5.1 - Variables defined at program scope and static
     // variables inside a function can also be declared in the global
     // address space.
-    if (NewVD->isFileVarDecl()) {
+    if (NewVD->isFileVarDecl() || NewVD->isStaticLocal() ||
+        NewVD->hasExternalStorage()) {
       if (!T->isSamplerT() &&
           !(T.getAddressSpace() == LangAS::opencl_constant ||
             (T.getAddressSpace() == LangAS::opencl_global &&
              getLangOpts().OpenCLVersion == 200))) {
+        int Scope = NewVD->isStaticLocal() | NewVD->hasExternalStorage() << 1;
         if (getLangOpts().OpenCLVersion == 200)
           Diag(NewVD->getLocation(), diag::err_opencl_global_invalid_addr_space)
-              << "global or constant";
+              << Scope << "global or constant";
         else
           Diag(NewVD->getLocation(), diag::err_opencl_global_invalid_addr_space)
-              << "constant";
+              << Scope << "constant";
         NewVD->setInvalidDecl();
         return;
       }
     } else {
-      // OpenCL v2.0 s6.5.1 - Variables defined at program scope and static
-      // variables inside a function can also be declared in the global
-      // address space.
-      if (NewVD->isStaticLocal() &&
-          !(T.getAddressSpace() == LangAS::opencl_constant ||
-            (T.getAddressSpace() == LangAS::opencl_global &&
-             getLangOpts().OpenCLVersion == 200))) {
-        if (getLangOpts().OpenCLVersion == 200)
-          Diag(NewVD->getLocation(), diag::err_opencl_global_invalid_addr_space)
-              << "global or constant";
-        else
-          Diag(NewVD->getLocation(), diag::err_opencl_global_invalid_addr_space)
-              << "constant";
+      if (T.getAddressSpace() == LangAS::opencl_global) {
+        Diag(NewVD->getLocation(), diag::err_opencl_function_variable)
+            << 1 /*is any function*/ << "global";
         NewVD->setInvalidDecl();
         return;
       }
@@ -6671,11 +6663,11 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
         FunctionDecl *FD = getCurFunctionDecl();
         if (FD && !FD->hasAttr<OpenCLKernelAttr>()) {
           if (T.getAddressSpace() == LangAS::opencl_constant)
-            Diag(NewVD->getLocation(), diag::err_opencl_non_kernel_variable)
-                << "constant";
+            Diag(NewVD->getLocation(), diag::err_opencl_function_variable)
+                << 0 /*non-kernel only*/ << "constant";
           else
-            Diag(NewVD->getLocation(), diag::err_opencl_non_kernel_variable)
-                << "local";
+            Diag(NewVD->getLocation(), diag::err_opencl_function_variable)
+                << 0 /*non-kernel only*/ << "local";
           NewVD->setInvalidDecl();
           return;
         }

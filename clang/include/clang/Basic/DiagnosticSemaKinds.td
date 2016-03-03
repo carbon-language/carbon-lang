@@ -7683,8 +7683,8 @@ def err_opencl_ptrptr_kernel_param : Error<
   "kernel parameter cannot be declared as a pointer to a pointer">;
 def err_opencl_private_ptr_kernel_param : Error<
   "kernel parameter cannot be declared as a pointer to the __private address space">;
-def err_opencl_non_kernel_variable : Error<
-  "non-kernel function variable cannot be declared in %0 address space">;
+def err_opencl_function_variable : Error<
+  "%select{non-kernel function|function scope}0 variable cannot be declared in %1 address space">;
 def err_static_function_scope : Error<
   "variables in function scope cannot be declared static">;
 def err_opencl_bitfields : Error<
@@ -7712,7 +7712,7 @@ def err_sampler_argument_required : Error<
 def err_wrong_sampler_addressspace: Error<
   "sampler type cannot be used with the __local and __global address space qualifiers">;
 def err_opencl_global_invalid_addr_space : Error<
-  "program scope variable must reside in %0 address space">;
+  "%select{program scope|static local|extern}0 variable must reside in %1 address space">;
 def err_missing_actual_pipe_type : Error<
   "missing actual type specifier for pipe">;
 def err_reference_pipe_type : Error <
