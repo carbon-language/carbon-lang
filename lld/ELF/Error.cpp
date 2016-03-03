@@ -54,11 +54,6 @@ void fatal(const Twine &Msg, const Twine &Prefix) {
   fatal(Prefix + ": " + Msg);
 }
 
-void fatal(std::error_code EC, const Twine &Prefix) {
-  if (EC)
-    fatal(Prefix + ": " + EC.message());
-}
-
 void fatal(std::error_code EC) {
   if (EC)
     fatal(EC.message());

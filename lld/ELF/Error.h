@@ -39,7 +39,6 @@ template <typename T> bool error(const ErrorOr<T> &V) {
 
 LLVM_ATTRIBUTE_NORETURN void fatal(const Twine &Msg);
 LLVM_ATTRIBUTE_NORETURN void fatal(const Twine &Msg, const Twine &Prefix);
-void fatal(std::error_code EC, const Twine &Prefix);
 void fatal(std::error_code EC);
 
 template <class T> T fatal(ErrorOr<T> EO) {
