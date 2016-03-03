@@ -267,7 +267,14 @@ public:
     if (!Recurrence.isValid())
       return Recurrence;
 
-    if (R->contains(Expr->getLoop())) {
+    auto *L = Expr->getLoop();
+    if (R->contains(L) && (!Scope || !L->contains(Scope))) {
+      DEBUG(dbgs() << "INVALID: AddRec out of a loop whose exit value is not "
+                      "synthesizable");
+      return ValidatorResult(SCEVType::INVALID);
+    }
+
+    if (R->contains(L)) {
       if (Recurrence.isINT()) {
         ValidatorResult Result(SCEVType::IV);
         Result.addParamsFrom(Start);
