@@ -2972,7 +2972,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
       // If the pointer and the type is equal check if the access function wrt.
       // to the domain is equal too. It can happen that the domain fixes
       // parameter values and these can be different for distinct part of the
-      // SCoP. If this happens we cannot consolitate the loads but need to
+      // SCoP. If this happens we cannot consolidate the loads but need to
       // create a new invariant load equivalence class.
       auto &MAs = std::get<1>(IAClass);
       if (!MAs.empty()) {
