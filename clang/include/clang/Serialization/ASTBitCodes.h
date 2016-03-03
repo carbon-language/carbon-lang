@@ -578,7 +578,10 @@ namespace clang {
       DELETE_EXPRS_TO_ANALYZE = 54,
 
       /// \brief Record code for \#pragma ms_struct options.
-      MSSTRUCT_PRAGMA_OPTIONS = 55
+      MSSTRUCT_PRAGMA_OPTIONS = 55,
+
+      /// \brief Record code for \#pragma ms_struct options.
+      POINTERS_TO_MEMBERS_PRAGMA_OPTIONS = 56
     };
 
     /// \brief Record types used within a source manager block.
