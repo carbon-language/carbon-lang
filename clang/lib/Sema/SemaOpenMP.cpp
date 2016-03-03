@@ -1706,6 +1706,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
 
 static OMPCapturedExprDecl *buildCaptureDecl(Sema &S, IdentifierInfo *Id,
                                              Expr *CaptureExpr, bool WithInit) {
+  assert(CaptureExpr);
   ASTContext &C = S.getASTContext();
   Expr *Init = CaptureExpr->IgnoreImpCasts();
   QualType Ty = Init->getType();
@@ -1723,12 +1724,11 @@ static OMPCapturedExprDecl *buildCaptureDecl(Sema &S, IdentifierInfo *Id,
     WithInit = true;
   }
   auto *CED = OMPCapturedExprDecl::Create(C, S.CurContext, Id, Ty);
+  if (!WithInit)
+    CED->addAttr(OMPCaptureNoInitAttr::CreateImplicit(C, SourceRange()));
   S.CurContext->addHiddenDecl(CED);
-  if (WithInit)
-    S.AddInitializerToDecl(CED, Init, /*DirectInit=*/false,
-                           /*TypeMayContainAuto=*/true);
-  else
-    S.ActOnUninitializedDecl(CED, /*TypeMayContainAuto=*/true);
+  S.AddInitializerToDecl(CED, Init, /*DirectInit=*/false,
+                         /*TypeMayContainAuto=*/true);
   return CED;
 }
 
@@ -7676,7 +7676,7 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
       }
       if (TopDVar.CKind == OMPC_firstprivate ||
           (!IsOpenMPCapturedDecl(D) &&
-           !cast<OMPCapturedExprDecl>(Ref->getDecl())->getInit())) {
+           Ref->getDecl()->hasAttr<OMPCaptureNoInitAttr>())) {
         ExprResult RefRes = DefaultLvalueConversion(Ref);
         if (!RefRes.isUsable())
           continue;
@@ -8277,7 +8277,7 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
             buildCapture(*this, D, SimpleRefExpr, /*WithInit=*/false);
         if (!IsOpenMPCapturedDecl(D)) {
           ExprCaptures.push_back(Ref->getDecl());
-          if (!cast<OMPCapturedExprDecl>(Ref->getDecl())->getInit()) {
+          if (Ref->getDecl()->hasAttr<OMPCaptureNoInitAttr>()) {
             ExprResult RefRes = DefaultLvalueConversion(Ref);
             if (!RefRes.isUsable())
               continue;
@@ -8340,115 +8340,96 @@ OMPClause *Sema::ActOnOpenMPLinearClause(
   }
   for (auto &RefExpr : VarList) {
     assert(RefExpr && "NULL expr in OpenMP linear clause.");
-    if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
+    SourceLocation ELoc;
+    SourceRange ERange;
+    Expr *SimpleRefExpr = RefExpr;
+    auto Res = getPrivateItem(*this, SimpleRefExpr, ELoc, ERange,
+                              /*AllowArraySection=*/false);
+    if (Res.second) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
       Privates.push_back(nullptr);
       Inits.push_back(nullptr);
-      continue;
     }
-
-    // OpenMP [2.14.3.7, linear clause]
-    // A list item that appears in a linear clause is subject to the private
-    // clause semantics described in Section 2.14.3.3 on page 159 except as
-    // noted. In addition, the value of the new list item on each iteration
-    // of the associated loop(s) corresponds to the value of the original
-    // list item before entering the construct plus the logical number of
-    // the iteration times linear-step.
-
-    SourceLocation ELoc = RefExpr->getExprLoc();
-    // OpenMP [2.1, C/C++]
-    //  A list item is a variable name.
-    // OpenMP  [2.14.3.3, Restrictions, p.1]
-    //  A variable that is part of another variable (as an array or
-    //  structure element) cannot appear in a private clause.
-    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(RefExpr);
-    if (!DE || !isa<VarDecl>(DE->getDecl())) {
-      Diag(ELoc, diag::err_omp_expected_var_name_member_expr)
-          << 0 << RefExpr->getSourceRange();
+    ValueDecl *D = Res.first;
+    if (!D)
       continue;
-    }
 
-    VarDecl *VD = cast<VarDecl>(DE->getDecl());
+    QualType Type = D->getType();
+    auto *VD = dyn_cast<VarDecl>(D);
 
     // OpenMP [2.14.3.7, linear clause]
     //  A list-item cannot appear in more than one linear clause.
     //  A list-item that appears in a linear clause cannot appear in any
     //  other data-sharing attribute clause.
-    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD, false);
+    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(D, false);
     if (DVar.RefExpr) {
       Diag(ELoc, diag::err_omp_wrong_dsa) << getOpenMPClauseName(DVar.CKind)
                                           << getOpenMPClauseName(OMPC_linear);
-      ReportOriginalDSA(*this, DSAStack, VD, DVar);
-      continue;
-    }
-
-    QualType QType = VD->getType();
-    if (QType->isDependentType() || QType->isInstantiationDependentType()) {
-      // It will be analyzed later.
-      Vars.push_back(DE);
-      Privates.push_back(nullptr);
-      Inits.push_back(nullptr);
+      ReportOriginalDSA(*this, DSAStack, D, DVar);
       continue;
     }
 
     // A variable must not have an incomplete type or a reference type.
-    if (RequireCompleteType(ELoc, QType,
-                            diag::err_omp_linear_incomplete_type)) {
+    if (RequireCompleteType(ELoc, Type,
+                            diag::err_omp_linear_incomplete_type))
       continue;
-    }
     if ((LinKind == OMPC_LINEAR_uval || LinKind == OMPC_LINEAR_ref) &&
-        !QType->isReferenceType()) {
+        !Type->isReferenceType()) {
       Diag(ELoc, diag::err_omp_wrong_linear_modifier_non_reference)
-          << QType << getOpenMPSimpleClauseTypeName(OMPC_linear, LinKind);
+          << Type << getOpenMPSimpleClauseTypeName(OMPC_linear, LinKind);
       continue;
     }
-    QType = QType.getNonReferenceType();
+    Type = Type.getNonReferenceType();
 
     // A list item must not be const-qualified.
-    if (QType.isConstant(Context)) {
+    if (Type.isConstant(Context)) {
       Diag(ELoc, diag::err_omp_const_variable)
           << getOpenMPClauseName(OMPC_linear);
       bool IsDecl =
+          !VD ||
           VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
+      Diag(D->getLocation(),
            IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+          << D;
       continue;
     }
 
     // A list item must be of integral or pointer type.
-    QType = QType.getUnqualifiedType().getCanonicalType();
-    const Type *Ty = QType.getTypePtrOrNull();
+    Type = Type.getUnqualifiedType().getCanonicalType();
+    const auto *Ty = Type.getTypePtrOrNull();
     if (!Ty || (!Ty->isDependentType() && !Ty->isIntegralType(Context) &&
                 !Ty->isPointerType())) {
-      Diag(ELoc, diag::err_omp_linear_expected_int_or_ptr) << QType;
+      Diag(ELoc, diag::err_omp_linear_expected_int_or_ptr) << Type;
       bool IsDecl =
+          !VD ||
           VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
+      Diag(D->getLocation(),
            IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+          << D;
       continue;
     }
 
     // Build private copy of original var.
-    auto *Private = buildVarDecl(*this, ELoc, QType, VD->getName(),
-                                 VD->hasAttrs() ? &VD->getAttrs() : nullptr);
-    auto *PrivateRef = buildDeclRefExpr(
-        *this, Private, DE->getType().getUnqualifiedType(), DE->getExprLoc());
+    auto *Private = buildVarDecl(*this, ELoc, Type, D->getName(),
+                                 D->hasAttrs() ? &D->getAttrs() : nullptr);
+    auto *PrivateRef = buildDeclRefExpr(*this, Private, Type, ELoc);
     // Build var to save initial value.
-    VarDecl *Init = buildVarDecl(*this, ELoc, QType, ".linear.start");
+    VarDecl *Init = buildVarDecl(*this, ELoc, Type, ".linear.start");
     Expr *InitExpr;
+    DeclRefExpr *Ref = nullptr;
+    if (!VD)
+      Ref = buildCapture(*this, D, SimpleRefExpr, /*WithInit=*/true);
     if (LinKind == OMPC_LINEAR_uval)
-      InitExpr = VD->getInit();
+      InitExpr = VD ? VD->getInit() : SimpleRefExpr;
     else
-      InitExpr = DE;
+      InitExpr = VD ? SimpleRefExpr : Ref;
     AddInitializerToDecl(Init, DefaultLvalueConversion(InitExpr).get(),
-                         /*DirectInit*/ false, /*TypeMayContainAuto*/ false);
-    auto InitRef = buildDeclRefExpr(
-        *this, Init, DE->getType().getUnqualifiedType(), DE->getExprLoc());
-    DSAStack->addDSA(VD, DE, OMPC_linear);
-    Vars.push_back(DE);
+                         /*DirectInit=*/false, /*TypeMayContainAuto=*/false);
+    auto InitRef = buildDeclRefExpr(*this, Init, Type, ELoc);
+
+    DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_linear, Ref);
+    Vars.push_back(VD ? RefExpr->IgnoreParens() : Ref);
     Privates.push_back(PrivateRef);
     Inits.push_back(InitRef);
   }
