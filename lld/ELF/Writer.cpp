@@ -564,9 +564,7 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
     return;
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (const Elf_Sym &Sym : F->getLocalSymbols()) {
-      ErrorOr<StringRef> SymNameOrErr = Sym.getName(F->getStringTable());
-      fatal(SymNameOrErr);
-      StringRef SymName = *SymNameOrErr;
+      StringRef SymName = fatal(Sym.getName(F->getStringTable()));
       if (!shouldKeepInSymtab<ELFT>(*F, SymName, Sym))
         continue;
       if (Sym.st_shndx != SHN_ABS) {
