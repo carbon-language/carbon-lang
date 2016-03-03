@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc < %s -mtriple=arm-unknown-unknown
 
 define i8 @test_minsize_uu8(i8 %x) minsize optsize {
 entry:
