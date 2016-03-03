@@ -49,6 +49,23 @@ the ``struct``).
         s->B[i] += s->A[i];
     }
 
+
+
+Function calls with known side effects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Function calls that have only known memory effects can be represented as
+accesses in the polyhedral model. While calls without side effects were
+supported before, we now allow and model two other kinds. The first are
+intrinsic calls to ``memcpy``, ``memmove`` and ``memset``. These calls can be
+represented precisely if the pointers involved are known and the given length
+is affine. Additionally, we allow to over-approximate function calls that are
+known only to read memory, read memory accesible through pointer arguments or
+access only memory accesible through pointer arguments. See also the function
+attributes ``readonly`` and ``argmemonly`` for more information.
+
+
+
 Update of the isl math library
 ------------------------------
 
