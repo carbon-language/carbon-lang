@@ -466,7 +466,8 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
           MBFI->getBlockFreq(BB) * RealSuccProb * HotProb.getCompl();
       bool BadCFGConflict = false;
       for (MachineBasicBlock *Pred : Succ->predecessors()) {
-        if (Pred == Succ || (BlockFilter && !BlockFilter->count(Pred)) ||
+        if (Pred == Succ || BlockToChain[Pred] == &SuccChain ||
+            (BlockFilter && !BlockFilter->count(Pred)) ||
             BlockToChain[Pred] == &Chain)
           continue;
         BlockFrequency PredEdgeFreq =
