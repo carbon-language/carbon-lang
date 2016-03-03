@@ -25,19 +25,17 @@ using namespace llvm::sys::fs;
 using namespace lld;
 using namespace lld::elf;
 
-namespace {
-class ECRAII {
+template <class ELFT>
+static ELFFile<ELFT> createELFObj(MemoryBufferRef MB) {
   std::error_code EC;
-
-public:
-  std::error_code &getEC() { return EC; }
-  ~ECRAII() { fatal(EC); }
-};
+  ELFFile<ELFT> F(MB.getBuffer(), EC);
+  fatal(EC);
+  return F;
 }
 
 template <class ELFT>
-ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef M)
-    : InputFile(K, M), ELFObj(MB.getBuffer(), ECRAII().getEC()) {}
+ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef MB)
+    : InputFile(K, MB), ELFObj(createELFObj<ELFT>(MB)) {}
 
 template <class ELFT>
 ELFKind ELFFileBase<ELFT>::getELFKind() {
