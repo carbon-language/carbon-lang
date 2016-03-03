@@ -18236,6 +18236,10 @@ unsigned X86TargetLowering::getExceptionSelectorRegister(
   return Subtarget.isTarget64BitLP64() ? X86::RDX : X86::EDX;
 }
 
+bool X86TargetLowering::needsFixedCatchObjects() const {
+  return Subtarget.isTargetWin64();
+}
+
 SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain     = Op.getOperand(0);
   SDValue Offset    = Op.getOperand(1);
