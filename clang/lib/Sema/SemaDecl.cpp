@@ -6585,7 +6585,7 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
     return;
   }
 
-  // OpenCL v1.2 s6.8 -- The static qualifier is valid only in program
+  // OpenCL v1.2 s6.8 - The static qualifier is valid only in program
   // scope.
   if (getLangOpts().OpenCLVersion == 120 &&
       !getOpenCLOptions().cl_clang_storage_class_specifiers &&
@@ -6595,12 +6595,44 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
     return;
   }
 
-  // OpenCL v1.2 s6.5 - All program scope variables must be declared in the
-  // __constant address space.
-  // OpenCL v2.0 s6.5.1 - Variables defined at program scope and static
-  // variables inside a function can also be declared in the global
-  // address space.
   if (getLangOpts().OpenCL) {
+    // OpenCL v2.0 s6.12.5 - The __block storage type is not supported.
+    if (NewVD->hasAttr<BlocksAttr>()) {
+      Diag(NewVD->getLocation(), diag::err_opencl_block_storage_type);
+      return;
+    }
+
+    if (T->isBlockPointerType()) {
+      // OpenCL v2.0 s6.12.5 - Any block declaration must be const qualified and
+      // can't use 'extern' storage class.
+      if (!T.isConstQualified()) {
+        Diag(NewVD->getLocation(), diag::err_opencl_invalid_block_declaration)
+            << 0 /*const*/;
+        NewVD->setInvalidDecl();
+        return;
+      }
+      if (NewVD->hasExternalStorage()) {
+        Diag(NewVD->getLocation(), diag::err_opencl_extern_block_declaration);
+        NewVD->setInvalidDecl();
+        return;
+      }
+      // OpenCL v2.0 s6.12.5 - Blocks with variadic arguments are not supported.
+      // TODO: this check is not enough as it doesn't diagnose the typedef
+      const BlockPointerType *BlkTy = T->getAs<BlockPointerType>();
+      const FunctionProtoType *FTy =
+          BlkTy->getPointeeType()->getAs<FunctionProtoType>();
+      if (FTy && FTy->isVariadic()) {
+        Diag(NewVD->getLocation(), diag::err_opencl_block_proto_variadic)
+            << T << NewVD->getSourceRange();
+        NewVD->setInvalidDecl();
+        return;
+      }
+    }
+    // OpenCL v1.2 s6.5 - All program scope variables must be declared in the
+    // __constant address space.
+    // OpenCL v2.0 s6.5.1 - Variables defined at program scope and static
+    // variables inside a function can also be declared in the global
+    // address space.
     if (NewVD->isFileVarDecl()) {
       if (!T->isSamplerT() &&
           !(T.getAddressSpace() == LangAS::opencl_constant ||
@@ -6734,19 +6766,6 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
                          diag::err_constexpr_var_non_literal)) {
     NewVD->setInvalidDecl();
     return;
-  }
-
-  // OpenCL v2.0 s6.12.5 - Blocks with variadic arguments are not supported.
-  if (LangOpts.OpenCL && T->isBlockPointerType()) {
-    const BlockPointerType *BlkTy = T->getAs<BlockPointerType>();
-    const FunctionProtoType *FTy =
-        BlkTy->getPointeeType()->getAs<FunctionProtoType>();
-    if (FTy->isVariadic()) {
-      Diag(NewVD->getLocation(), diag::err_opencl_block_proto_variadic)
-          << T << NewVD->getSourceRange();
-      NewVD->setInvalidDecl();
-      return;
-    }
   }
 }
 
@@ -10058,6 +10077,18 @@ Sema::ActOnCXXForRangeIdentifier(Scope *S, SourceLocation IdentLoc,
 void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   if (var->isInvalidDecl()) return;
 
+  if (getLangOpts().OpenCL) {
+    // OpenCL v2.0 s6.12.5 - Every block variable declaration must have an
+    // initialiser
+    if (var->getTypeSourceInfo()->getType()->isBlockPointerType() &&
+        !var->hasInit()) {
+      Diag(var->getLocation(), diag::err_opencl_invalid_block_declaration)
+          << 1 /*Init*/;
+      var->setInvalidDecl();
+      return;
+    }
+  }
+
   // In Objective-C, don't allow jumps past the implicit initialization of a
   // local retaining variable.
   if (getLangOpts().ObjC1 &&
@@ -13110,10 +13141,11 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     D.setInvalidType();
   }
 
-  // OpenCL 1.2 spec, s6.9 r:
-  // The event type cannot be used to declare a structure or union field.
-  if (LangOpts.OpenCL && T->isEventT()) {
-    Diag(Loc, diag::err_event_t_struct_field);
+  // OpenCL v1.2 s6.9b,r & OpenCL v2.0 s6.12.5 - The following types cannot be
+  // used as structure or union field: image, sampler, event or block types.
+  if (LangOpts.OpenCL && (T->isEventT() || T->isImageType() ||
+                          T->isSamplerT() || T->isBlockPointerType())) {
+    Diag(Loc, diag::err_opencl_type_struct_or_union_field) << T;
     D.setInvalidType();
   }
 
