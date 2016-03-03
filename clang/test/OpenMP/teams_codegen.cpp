@@ -207,4 +207,136 @@ int teams_template_struct(void) {
 
 }
 #endif // CK3
+
+// Test target codegen - host bc file has to be created first.
+// RUN: %clang_cc1 -DCK4 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc
+// RUN: %clang_cc1 -DCK4 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -emit-llvm %s -fopenmp-is-device -omp-host-ir-file-path %t-ppc-host.bc -o - | FileCheck %s --check-prefix CK4 --check-prefix CK4-64
+// RUN: %clang_cc1 -DCK4 -fopenmp -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -emit-pch -fopenmp-is-device -omp-host-ir-file-path %t-ppc-host.bc -o %t %s
+// RUN: %clang_cc1 -DCK4 -fopenmp -x c++ -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -std=c++11 -fopenmp-is-device -omp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix CK4 --check-prefix CK4-64
+// RUN: %clang_cc1 -DCK4 -verify -fopenmp -x c++ -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -emit-llvm-bc %s -o %t-x86-host.bc
+// RUN: %clang_cc1 -DCK4 -verify -fopenmp -x c++ -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -emit-llvm %s -fopenmp-is-device -omp-host-ir-file-path %t-x86-host.bc -o - | FileCheck %s --check-prefix CK4 --check-prefix CK4-32
+// RUN: %clang_cc1 -DCK4 -fopenmp -x c++ -std=c++11 -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -emit-pch -fopenmp-is-device -omp-host-ir-file-path %t-x86-host.bc -o %t %s
+// RUN: %clang_cc1 -DCK4 -fopenmp -x c++ -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -std=c++11 -fopenmp-is-device -omp-host-ir-file-path %t-x86-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix CK4 --check-prefix CK4-32
+
+#ifdef CK4
+
+// CK4-DAG: %ident_t = type { i32, i32, i32, i32, i8* }
+// CK4-DAG: [[STR:@.+]] = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00"
+// CK4-DAG: [[DEF_LOC_0:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* [[STR]], i32 0, i32 0) }
+// CK4-DEBUG-DAG: [[LOC1:@.+]] = private unnamed_addr constant [{{.+}} x i8] c";{{.*}}teams_codegen.cpp;main;[[@LINE+14]];9;;\00"
+// CK4-DEBUG-DAG: [[LOC2:@.+]] = private unnamed_addr constant [{{.+}} x i8] c";{{.*}}teams_codegen.cpp;tmain;[[@LINE+7]];9;;\00"
+
+template <typename T>
+int tmain(T argc) {
+#pragma omp target
+#pragma omp teams
+  argc = 0;
+  return 0;
+}
+
+int main (int argc, char **argv) {
+#pragma omp target
+#pragma omp teams
+  argc = 0;
+  return tmain(argv);
+}
+
+// CK4:  define {{.*}}void @{{[^,]+}}(i{{.+}} %[[ARGC:.+]])
+// CK4:  [[ARGCADDR:%.+]] = alloca i{{.+}}
+// CK4:  store i{{.+}} %[[ARGC]], i{{.+}}* [[ARGCADDR]]
+// CK4-64:  [[CONV:%.+]] = bitcast i64* [[ARGCADDR]] to i32*
+// CK4-64:  call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC_0]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* {{.+}} to void (i32*, i32*, ...)*), i32* [[CONV]])
+// CK4-32:  call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC_0]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* {{.+}} to void (i32*, i32*, ...)*), i32* [[ARGCADDR]])
+// CK4:  ret void
+// CK4-NEXT: }
+
+// CK4:  define {{.*}}void @{{[^,]+}}(i8*** dereferenceable({{.}}) [[ARGC1:%.+]])
+// CK4:  [[ARGCADDR1:%.+]] = alloca i8***
+// CK4:  store i8*** [[ARGC1]], i8**** [[ARGCADDR1]]
+// CK4:  [[CONV1:%.+]] = load i8***, i8**** [[ARGCADDR1]]
+// CK4:  call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC_0]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i8***)* {{.+}} to void (i32*, i32*, ...)*), i8*** [[CONV1]])
+
+
+#endif // CK4
+
+// Test target codegen - host bc file has to be created first.
+// RUN: %clang_cc1 -DCK5 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc
+// RUN: %clang_cc1 -DCK5 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -emit-llvm %s -fopenmp-is-device -omp-host-ir-file-path %t-ppc-host.bc -o - | FileCheck %s --check-prefix CK5 --check-prefix CK5-64
+// RUN: %clang_cc1 -DCK5 -fopenmp -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -emit-pch -fopenmp-is-device -omp-host-ir-file-path %t-ppc-host.bc -o %t %s
+// RUN: %clang_cc1 -DCK5 -fopenmp -x c++ -triple powerpc64le-unknown-unknown -omptargets=powerpc64le-ibm-linux-gnu -std=c++11 -fopenmp-is-device -omp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix CK5 --check-prefix CK5-64
+// RUN: %clang_cc1 -DCK5 -verify -fopenmp -x c++ -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -emit-llvm-bc %s -o %t-x86-host.bc
+// RUN: %clang_cc1 -DCK5 -verify -fopenmp -x c++ -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -emit-llvm %s -fopenmp-is-device -omp-host-ir-file-path %t-x86-host.bc -o - | FileCheck %s --check-prefix CK5 --check-prefix CK5-32
+// RUN: %clang_cc1 -DCK5 -fopenmp -x c++ -std=c++11 -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -emit-pch -fopenmp-is-device -omp-host-ir-file-path %t-x86-host.bc -o %t %s
+// RUN: %clang_cc1 -DCK5 -fopenmp -x c++ -triple i386-unknown-unknown -omptargets=i386-pc-linux-gnu -std=c++11 -fopenmp-is-device -omp-host-ir-file-path %t-x86-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix CK5 --check-prefix CK5-32
+
+// expected-no-diagnostics
+#ifdef CK5
+
+// CK5-DAG: %ident_t = type { i32, i32, i32, i32, i8* }
+// CK5-DAG: [[STR:@.+]] = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00"
+// CK5-DAG: [[DEF_LOC_0:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* [[STR]], i32 0, i32 0) }
+// CK5-DEBUG-DAG: [[LOC1:@.+]] = private unnamed_addr constant [{{.+}} x i8] c";{{.*}}teams_codegen.cpp;main;[[@LINE+14]];9;;\00"
+// CK5-DEBUG-DAG: [[LOC2:@.+]] = private unnamed_addr constant [{{.+}} x i8] c";{{.*}}teams_codegen.cpp;tmain;[[@LINE+7]];9;;\00"
+
+template <typename T>
+int tmain(T argc) {
+  int a = 10;
+  int b = 5;
+#pragma omp target
+#pragma omp teams num_teams(a) thread_limit(b)
+  {
+  argc = 0;
+  }
+  return 0;
+}
+
+int main (int argc, char **argv) {
+  int a = 20;
+  int b = 5;
+#pragma omp target
+#pragma omp teams num_teams(a) thread_limit(b)
+  {
+  argc = 0;
+  }
+  return tmain(argv);
+}
+
+// CK5:  define {{.*}}void @{{[^,]+}}(i{{.+}} [[AP:%.+]], i{{.+}} [[BP:%.+]], i{{.+}} [[ARGC:.+]])
+// CK5:  [[AADDR:%.+]] = alloca i{{.+}}
+// CK5:  [[BADDR:%.+]] = alloca i{{.+}}
+// CK5:  [[ARGCADDR:%.+]] = alloca i{{.+}}
+// CK5:  [[GBL_TH_NUM:%.+]] = call i32 @__kmpc_global_thread_num(%ident_t* [[DEF_LOC_0]])
+// CK5:  store i{{.+}} [[AP]], i{{.+}}* [[AADDR]]
+// CK5:  store i{{.+}} [[BP]], i{{.+}}* [[BADDR]]
+// CK5:  store i{{.+}} [[ARGC]], i{{.+}}* [[ARGCADDR]]
+// CK5-64:  [[ACONV:%.+]] = bitcast i64* [[AADDR]] to i32*
+// CK5-64:  [[BCONV:%.+]] = bitcast i64* [[BADDR]] to i32*
+// CK5-64:  [[CONV:%.+]] = bitcast i64* [[ARGCADDR]] to i32*
+// CK5-64:  [[ACONVVAL:%.+]] = load i32, i32* [[ACONV]]
+// CK5-64:  [[BCONVVAL:%.+]] = load i32, i32* [[BCONV]]
+// CK5-32:  [[ACONVVAL:%.+]] = load i32, i32* [[AADDR]]
+// CK5-32:  [[BCONVVAL:%.+]] = load i32, i32* [[BADDR]]
+// CK5:  {{.+}} = call i32 @__kmpc_push_num_teams(%ident_t* [[DEF_LOC_0]], i32 [[GBL_TH_NUM]], i32 [[ACONVVAL]], i32 [[BCONVVAL]])
+// CK5-64:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC_0]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*), i32* [[CONV]])
+// CK5-32:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC_0]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*), i32* [[ARGCADDR]])
+
+// CK5:  define {{.*}}void @{{[^,]+}}(i{{.+}} dereferenceable({{.+}}) [[AP:%.+]], i{{.+}} dereferenceable({{.+}}) [[BP:%.+]], i{{.+}} dereferenceable({{.+}}) [[ARGC:%.+]])
+// CK5:  [[AADDR:%.+]] = alloca i{{.+}}
+// CK5:  [[BADDR:%.+]] = alloca i{{.+}}
+// CK5:  [[ARGCADDR:%.+]] = alloca i{{.+}}
+// CK5:  [[GBL_TH_NUM:%.+]] = call i32 @__kmpc_global_thread_num(%ident_t* [[DEF_LOC_0]])
+// CK5:  store i{{.+}} [[AP]], i{{.+}}* [[AADDR]]
+// CK5:  store i{{.+}} [[BP]], i{{.+}}* [[BADDR]]
+// CK5:  store i{{.+}} [[ARGC]], i{{.+}}* [[ARGCADDR]]
+// CK5:  [[A_ADDR_VAL:%.+]] = load i32*, i32** [[AADDR]]
+// CK5:  [[B_ADDR_VAL:%.+]] = load i32*, i32** [[BADDR]]
+// CK5:  [[ARGC_ADDR_VAL:%.+]] = load i{{.+}}, i{{.+}}* [[ARGCADDR]]
+// CK5:  [[A_VAL:%.+]] = load i32, i32* [[A_ADDR_VAL]]
+// CK5:  [[B_VAL:%.+]] = load i32, i32* [[B_ADDR_VAL]]
+// CK5:  {{.+}} = call i32 @__kmpc_push_num_teams(%ident_t* [[DEF_LOC_0]], i32 [[GBL_TH_NUM]], i32 [[A_VAL]], i32 [[B_VAL]])
+// CK5:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC_0]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i{{.+}})* @.omp_outlined.{{.+}} to void (i32*, i32*, ...)*), i{{.+}} [[ARGC_ADDR_VAL]])
+// CK5:  ret void
+// CK5-NEXT: }
+
+#endif // CK5
 #endif

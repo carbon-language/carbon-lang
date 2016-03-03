@@ -537,6 +537,12 @@ enum OpenMPRTLFunction {
   // Call to kmp_int32 __kmpc_cancel(ident_t *loc, kmp_int32 global_tid,
   // kmp_int32 cncl_kind);
   OMPRTL__kmpc_cancel,
+  // Call to void __kmpc_push_num_teams(ident_t *loc, kmp_int32 global_tid,
+  // kmp_int32 num_teams, kmp_int32 thread_limit);
+  OMPRTL__kmpc_push_num_teams,
+  /// \brief Call to void __kmpc_fork_teams(ident_t *loc, kmp_int32 argc,
+  /// kmpc_micro microtask, ...);
+  OMPRTL__kmpc_fork_teams,
 
   //
   // Offloading related calls
@@ -625,7 +631,7 @@ static Address createIdentFieldGEP(CodeGenFunction &CGF, Address Addr,
   return CGF.Builder.CreateStructGEP(Addr, Field, Offset, Name);
 }
 
-llvm::Value *CGOpenMPRuntime::emitParallelOutlinedFunction(
+llvm::Value *CGOpenMPRuntime::emitParallelOrTeamsOutlinedFunction(
     const OMPExecutableDirective &D, const VarDecl *ThreadIDVar,
     OpenMPDirectiveKind InnermostKind, const RegionCodeGenTy &CodeGen) {
   assert(ThreadIDVar->getType()->isPointerType() &&
@@ -1203,6 +1209,26 @@ CGOpenMPRuntime::createRuntimeFunction(unsigned Function) {
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_cancel");
+    break;
+  }
+  case OMPRTL__kmpc_push_num_teams: {
+    // Build void kmpc_push_num_teams (ident_t loc, kmp_int32 global_tid,
+    // kmp_int32 num_teams, kmp_int32 num_threads)
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.Int32Ty,
+        CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_push_num_teams");
+    break;
+  }
+  case OMPRTL__kmpc_fork_teams: {
+    // Build void __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro
+    // microtask, ...);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
+                                getKmpc_MicroPointerTy()};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ true);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_fork_teams");
     break;
   }
   case OMPRTL__tgt_target: {
@@ -4603,4 +4629,44 @@ llvm::Function *CGOpenMPRuntime::emitRegistrationFunction() {
   // entity that captures all the information about offloading in the current
   // compilation unit.
   return createOffloadingBinaryDescriptorRegistration();
+}
+
+void CGOpenMPRuntime::emitTeamsCall(CodeGenFunction &CGF,
+                                    const OMPExecutableDirective &D,
+                                    SourceLocation Loc,
+                                    llvm::Value *OutlinedFn,
+                                    ArrayRef<llvm::Value *> CapturedVars) {
+  if (!CGF.HaveInsertPoint())
+    return;
+
+  auto *RTLoc = emitUpdateLocation(CGF, Loc);
+  CodeGenFunction::RunCleanupsScope Scope(CGF);
+
+  // Build call __kmpc_fork_teams(loc, n, microtask, var1, .., varn);
+  llvm::Value *Args[] = {
+      RTLoc,
+      CGF.Builder.getInt32(CapturedVars.size()), // Number of captured vars
+      CGF.Builder.CreateBitCast(OutlinedFn, getKmpc_MicroPointerTy())};
+  llvm::SmallVector<llvm::Value *, 16> RealArgs;
+  RealArgs.append(std::begin(Args), std::end(Args));
+  RealArgs.append(CapturedVars.begin(), CapturedVars.end());
+
+  auto RTLFn = createRuntimeFunction(OMPRTL__kmpc_fork_teams);
+  CGF.EmitRuntimeCall(RTLFn, RealArgs);
+}
+
+void CGOpenMPRuntime::emitNumTeamsClause(CodeGenFunction &CGF,
+                                         llvm::Value *NumTeams,
+                                         llvm::Value *ThreadLimit,
+                                         SourceLocation Loc) {
+  if (!CGF.HaveInsertPoint())
+    return;
+
+  auto *RTLoc = emitUpdateLocation(CGF, Loc);
+
+  // Build call __kmpc_push_num_teamss(&loc, global_tid, num_teams, thread_limit)
+  llvm::Value *PushNumTeamsArgs[] = {
+      RTLoc, getThreadID(CGF, Loc), NumTeams, ThreadLimit};
+  CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_push_num_teams),
+                      PushNumTeamsArgs);
 }
