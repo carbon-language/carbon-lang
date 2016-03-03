@@ -1327,9 +1327,11 @@ template <class ELFT> void Writer<ELFT>::assignAddressesRelocatable() {
   Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
   uintX_t FileOff = 0;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    FileOff = alignTo(FileOff, Sec->getAlign());
+    if (Sec->getType() != SHT_NOBITS)
+      FileOff = alignTo(FileOff, Sec->getAlign());
     Sec->setFileOffset(FileOff);
-    FileOff += Sec->getSize();
+    if (Sec->getType() != SHT_NOBITS)
+      FileOff += Sec->getSize();
   }
   SectionHeaderOff = alignTo(FileOff, sizeof(uintX_t));
   FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
