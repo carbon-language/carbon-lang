@@ -21,6 +21,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -1698,6 +1699,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
   case OMPD_flush:
   case OMPD_target_enter_data:
   case OMPD_target_exit_data:
+  case OMPD_declare_reduction:
     llvm_unreachable("OpenMP Directive is not allowed");
   case OMPD_unknown:
     llvm_unreachable("Unknown OpenMP directive");
@@ -3139,6 +3141,7 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
                                          EndLoc, VarsWithInheritedDSA);
     break;
   case OMPD_threadprivate:
+  case OMPD_declare_reduction:
     llvm_unreachable("OpenMP Directive is not allowed");
   case OMPD_unknown:
     llvm_unreachable("Unknown OpenMP directive");
@@ -9582,6 +9585,235 @@ Sema::ActOnOpenMPMapClause(OpenMPMapClauseKind MapTypeModifier,
   return OMPMapClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars,
                               MapTypeModifier, MapType, IsMapTypeImplicit,
                               MapLoc);
+}
+
+QualType Sema::ActOnOpenMPDeclareReductionType(SourceLocation TyLoc,
+                                               TypeResult ParsedType) {
+  assert(ParsedType.isUsable());
+
+  QualType ReductionType = GetTypeFromParser(ParsedType.get());
+  if (ReductionType.isNull())
+    return QualType();
+
+  // [OpenMP 4.0], 2.15 declare reduction Directive, Restrictions, C\C++
+  // A type name in a declare reduction directive cannot be a function type, an
+  // array type, a reference type, or a type qualified with const, volatile or
+  // restrict.
+  if (ReductionType.hasQualifiers()) {
+    Diag(TyLoc, diag::err_omp_reduction_wrong_type) << 0;
+    return QualType();
+  }
+
+  if (ReductionType->isFunctionType()) {
+    Diag(TyLoc, diag::err_omp_reduction_wrong_type) << 1;
+    return QualType();
+  }
+  if (ReductionType->isReferenceType()) {
+    Diag(TyLoc, diag::err_omp_reduction_wrong_type) << 2;
+    return QualType();
+  }
+  if (ReductionType->isArrayType()) {
+    Diag(TyLoc, diag::err_omp_reduction_wrong_type) << 3;
+    return QualType();
+  }
+  return ReductionType;
+}
+
+Sema::DeclGroupPtrTy Sema::ActOnOpenMPDeclareReductionDirectiveStart(
+    Scope *S, DeclContext *DC, DeclarationName Name,
+    ArrayRef<std::pair<QualType, SourceLocation>> ReductionTypes,
+    AccessSpecifier AS, Decl *PrevDeclInScope) {
+  SmallVector<Decl *, 8> Decls;
+  Decls.reserve(ReductionTypes.size());
+
+  LookupResult Lookup(*this, Name, SourceLocation(), LookupOMPReductionName,
+                      ForRedeclaration);
+  // [OpenMP 4.0], 2.15 declare reduction Directive, Restrictions
+  // A reduction-identifier may not be re-declared in the current scope for the
+  // same type or for a type that is compatible according to the base language
+  // rules.
+  llvm::DenseMap<QualType, SourceLocation> PreviousRedeclTypes;
+  OMPDeclareReductionDecl *PrevDRD = nullptr;
+  bool InCompoundScope = true;
+  if (S != nullptr) {
+    // Find previous declaration with the same name not referenced in other
+    // declarations.
+    FunctionScopeInfo *ParentFn = getEnclosingFunction();
+    InCompoundScope =
+        (ParentFn != nullptr) && !ParentFn->CompoundScopes.empty();
+    LookupName(Lookup, S);
+    FilterLookupForScope(Lookup, DC, S, /*ConsiderLinkage=*/false,
+                         /*AllowInlineNamespace=*/false);
+    llvm::DenseMap<OMPDeclareReductionDecl *, bool> UsedAsPrevious;
+    auto Filter = Lookup.makeFilter();
+    while (Filter.hasNext()) {
+      auto *PrevDecl = cast<OMPDeclareReductionDecl>(Filter.next());
+      if (InCompoundScope) {
+        auto I = UsedAsPrevious.find(PrevDecl);
+        if (I == UsedAsPrevious.end())
+          UsedAsPrevious[PrevDecl] = false;
+        if (auto *D = PrevDecl->getPrevDeclInScope())
+          UsedAsPrevious[D] = true;
+      }
+      PreviousRedeclTypes[PrevDecl->getType().getCanonicalType()] =
+          PrevDecl->getLocation();
+    }
+    Filter.done();
+    if (InCompoundScope) {
+      for (auto &PrevData : UsedAsPrevious) {
+        if (!PrevData.second) {
+          PrevDRD = PrevData.first;
+          break;
+        }
+      }
+    }
+  } else if (PrevDeclInScope != nullptr) {
+    auto *PrevDRDInScope = PrevDRD =
+        cast<OMPDeclareReductionDecl>(PrevDeclInScope);
+    do {
+      PreviousRedeclTypes[PrevDRDInScope->getType().getCanonicalType()] =
+          PrevDRDInScope->getLocation();
+      PrevDRDInScope = PrevDRDInScope->getPrevDeclInScope();
+    } while (PrevDRDInScope != nullptr);
+  }
+  for (auto &TyData : ReductionTypes) {
+    auto I = PreviousRedeclTypes.find(TyData.first.getCanonicalType());
+    bool Invalid = false;
+    if (I != PreviousRedeclTypes.end()) {
+      Diag(TyData.second, diag::err_omp_declare_reduction_redefinition)
+          << TyData.first;
+      Diag(I->second, diag::note_previous_definition);
+      Invalid = true;
+    }
+    PreviousRedeclTypes[TyData.first.getCanonicalType()] = TyData.second;
+    auto *DRD = OMPDeclareReductionDecl::Create(Context, DC, TyData.second,
+                                                Name, TyData.first, PrevDRD);
+    DC->addDecl(DRD);
+    DRD->setAccess(AS);
+    Decls.push_back(DRD);
+    if (Invalid)
+      DRD->setInvalidDecl();
+    else
+      PrevDRD = DRD;
+  }
+
+  return DeclGroupPtrTy::make(
+      DeclGroupRef::Create(Context, Decls.begin(), Decls.size()));
+}
+
+void Sema::ActOnOpenMPDeclareReductionCombinerStart(Scope *S, Decl *D) {
+  auto *DRD = cast<OMPDeclareReductionDecl>(D);
+
+  // Enter new function scope.
+  PushFunctionScope();
+  getCurFunction()->setHasBranchProtectedScope();
+  getCurFunction()->setHasOMPDeclareReductionCombiner();
+
+  if (S != nullptr)
+    PushDeclContext(S, DRD);
+  else
+    CurContext = DRD;
+
+  PushExpressionEvaluationContext(PotentiallyEvaluated);
+
+  QualType ReductionType = DRD->getType();
+  // Create 'T omp_in;' implicit param.
+  auto *OmpInParm =
+      ImplicitParamDecl::Create(Context, DRD, D->getLocation(),
+                                &Context.Idents.get("omp_in"), ReductionType);
+  // Create 'T* omp_parm;T omp_out;'. All references to 'omp_out' will
+  // be replaced by '*omp_parm' during codegen. This required because 'omp_out'
+  // uses semantics of argument handles by value, but it should be passed by
+  // reference. C lang does not support references, so pass all parameters as
+  // pointers.
+  // Create 'T omp_out;' variable.
+  auto *OmpOutParm =
+      buildVarDecl(*this, D->getLocation(), ReductionType, "omp_out");
+  if (S != nullptr) {
+    PushOnScopeChains(OmpInParm, S);
+    PushOnScopeChains(OmpOutParm, S);
+  } else {
+    DRD->addDecl(OmpInParm);
+    DRD->addDecl(OmpOutParm);
+  }
+}
+
+void Sema::ActOnOpenMPDeclareReductionCombinerEnd(Decl *D, Expr *Combiner) {
+  auto *DRD = cast<OMPDeclareReductionDecl>(D);
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
+
+  PopDeclContext();
+  PopFunctionScopeInfo();
+
+  if (Combiner != nullptr)
+    DRD->setCombiner(Combiner);
+  else
+    DRD->setInvalidDecl();
+}
+
+void Sema::ActOnOpenMPDeclareReductionInitializerStart(Scope *S, Decl *D) {
+  auto *DRD = cast<OMPDeclareReductionDecl>(D);
+
+  // Enter new function scope.
+  PushFunctionScope();
+  getCurFunction()->setHasBranchProtectedScope();
+
+  if (S != nullptr)
+    PushDeclContext(S, DRD);
+  else
+    CurContext = DRD;
+
+  PushExpressionEvaluationContext(PotentiallyEvaluated);
+
+  QualType ReductionType = DRD->getType();
+  // Create 'T omp_orig;' implicit param.
+  auto *OmpOrigParm =
+      ImplicitParamDecl::Create(Context, DRD, D->getLocation(),
+                                &Context.Idents.get("omp_orig"), ReductionType);
+  // Create 'T* omp_parm;T omp_priv;'. All references to 'omp_priv' will
+  // be replaced by '*omp_parm' during codegen. This required because 'omp_priv'
+  // uses semantics of argument handles by value, but it should be passed by
+  // reference. C lang does not support references, so pass all parameters as
+  // pointers.
+  // Create 'T omp_priv;' variable.
+  auto *OmpPrivParm =
+      buildVarDecl(*this, D->getLocation(), ReductionType, "omp_priv");
+  if (S != nullptr) {
+    PushOnScopeChains(OmpPrivParm, S);
+    PushOnScopeChains(OmpOrigParm, S);
+  } else {
+    DRD->addDecl(OmpPrivParm);
+    DRD->addDecl(OmpOrigParm);
+  }
+}
+
+void Sema::ActOnOpenMPDeclareReductionInitializerEnd(Decl *D,
+                                                     Expr *Initializer) {
+  auto *DRD = cast<OMPDeclareReductionDecl>(D);
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
+
+  PopDeclContext();
+  PopFunctionScopeInfo();
+
+  if (Initializer != nullptr)
+    DRD->setInitializer(Initializer);
+  else
+    DRD->setInvalidDecl();
+}
+
+Sema::DeclGroupPtrTy Sema::ActOnOpenMPDeclareReductionDirectiveEnd(
+    Scope *S, DeclGroupPtrTy DeclReductions, bool IsValid) {
+  for (auto *D : DeclReductions.get()) {
+    if (IsValid) {
+      auto *DRD = cast<OMPDeclareReductionDecl>(D);
+      if (S != nullptr)
+        PushOnScopeChains(DRD, S, /*AddToContext=*/false);
+    } else
+      D->setInvalidDecl();
+  }
+  return DeclReductions;
 }
 
 OMPClause *Sema::ActOnOpenMPNumTeamsClause(Expr *NumTeams, 

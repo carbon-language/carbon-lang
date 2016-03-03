@@ -1174,7 +1174,9 @@ namespace clang {
       /// \brief A PragmaCommentDecl record.
       DECL_PRAGMA_COMMENT,
       /// \brief A PragmaDetectMismatchDecl record.
-      DECL_PRAGMA_DETECT_MISMATCH
+      DECL_PRAGMA_DETECT_MISMATCH,
+      /// \brief An OMPDeclareReductionDecl record.
+      DECL_OMP_DECLARE_REDUCTION,
     };
 
     /// \brief Record codes for each kind of statement or expression.
