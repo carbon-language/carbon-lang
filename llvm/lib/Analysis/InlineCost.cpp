@@ -585,7 +585,7 @@ bool CallAnalyzer::isKnownNonNullInCallee(Value *V) {
 // Adjust the threshold based on callsite hotness. Currently this is a nop.
 int CallAnalyzer::getAdjustedThreshold(int Threshold,
                                        Optional<uint64_t> CallSiteCount
-                                       __attribute__((unused))) {
+                                       LLVM_ATTRIBUTE_UNUSED) {
   // FIXME: The new threshold should be computed from the given Threshold and
   // the callsite hotness.
   return Threshold;
