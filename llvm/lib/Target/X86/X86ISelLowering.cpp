@@ -19356,6 +19356,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   SDLoc dl(Op);
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
+  bool ConstantAmt = ISD::isBuildVectorOfConstantSDNodes(Amt.getNode());
 
   assert(VT.isVector() && "Custom lowering only for vector shifts!");
   assert(Subtarget.hasSSE2() && "Only custom lower when we have SSE2!");
@@ -19411,10 +19412,9 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   // If possible, lower this packed shift into a vector multiply instead of
   // expanding it into a sequence of scalar shifts.
   // Do this only if the vector shift count is a constant build_vector.
-  if (Op.getOpcode() == ISD::SHL &&
+  if (ConstantAmt && Op.getOpcode() == ISD::SHL &&
       (VT == MVT::v8i16 || VT == MVT::v4i32 ||
-       (Subtarget.hasInt256() && VT == MVT::v16i16)) &&
-      ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
+       (Subtarget.hasInt256() && VT == MVT::v16i16))) {
     SmallVector<SDValue, 8> Elts;
     MVT SVT = VT.getVectorElementType();
     unsigned SVTBits = SVT.getSizeInBits();
@@ -19464,15 +19464,13 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   // lowered as X86ISD::VSRLI nodes. This would be cheaper than scalarizing
   // the vector shift into four scalar shifts plus four pairs of vector
   // insert/extract.
-  if ((VT == MVT::v8i16 || VT == MVT::v4i32) &&
-      ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
+  if (ConstantAmt && (VT == MVT::v8i16 || VT == MVT::v4i32)) {
     unsigned TargetOpcode = X86ISD::MOVSS;
     bool CanBeSimplified;
     // The splat value for the first packed shift (the 'X' from the example).
     SDValue Amt1 = Amt->getOperand(0);
     // The splat value for the second packed shift (the 'Y' from the example).
-    SDValue Amt2 = (VT == MVT::v4i32) ? Amt->getOperand(1) :
-                                        Amt->getOperand(2);
+    SDValue Amt2 = (VT == MVT::v4i32) ? Amt->getOperand(1) : Amt->getOperand(2);
 
     // See if it is possible to replace this node with a sequence of
     // two shifts followed by a MOVSS/MOVSD
@@ -19533,7 +19531,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   if (VT == MVT::v4i32) {
     unsigned Opc = Op.getOpcode();
     SDValue Amt0, Amt1, Amt2, Amt3;
-    if (ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
+    if (ConstantAmt) {
       Amt0 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {0, 0, 0, 0});
       Amt1 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {1, 1, 1, 1});
       Amt2 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {2, 2, 2, 2});
