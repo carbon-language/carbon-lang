@@ -266,7 +266,9 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
     return MipsReginfo;
   }
 
-  if (Name == ".eh_frame")
+  // We dont need special handling of .eh_frame sections if relocatable
+  // output was choosen. Proccess them as usual input sections.
+  if (!Config->Relocatable && Name == ".eh_frame")
     return new (EHAlloc.Allocate()) EHInputSection<ELFT>(this, &Sec);
   if (shouldMerge<ELFT>(Sec))
     return new (MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
