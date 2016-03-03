@@ -29013,6 +29013,21 @@ static SDValue combineLockSub(SDNode *N, SelectionDAG &DAG,
                                  {Chain, LHS, RHS}, VT, MMO);
 }
 
+// TEST (AND a, b) ,(AND a, b) -> TEST a, b
+static SDValue PerformTESTM(SDNode *N, SelectionDAG &DAG) {
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+
+  if (Op0 != Op1 || Op1->getOpcode() != ISD::AND)
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+  SDLoc DL(N);
+
+  return DAG.getNode(X86ISD::TESTM, DL, VT,
+                     Op0->getOperand(0), Op0->getOperand(1));
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -29086,6 +29101,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::MGATHER:
   case ISD::MSCATTER:       return combineGatherScatter(N, DAG);
   case X86ISD::LSUB:        return combineLockSub(N, DAG, Subtarget);
+  case X86ISD::TESTM:       return PerformTESTM(N, DAG);
   }
 
   return SDValue();
