@@ -3976,6 +3976,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::UNPCKL:
   case X86ISD::UNPCKH:
   case X86ISD::VPERMILPI:
+  case X86ISD::VPERMILPV:
   case X86ISD::VPERM2X128:
   case X86ISD::VPERMI:
   case X86ISD::VPERMV:
@@ -5008,6 +5009,16 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     DecodeZeroMoveLowMask(VT, Mask);
     IsUnary = true;
     break;
+  case X86ISD::VPERMILPV: {
+    IsUnary = true;
+    SDValue MaskNode = N->getOperand(1);
+    if (auto *C = getTargetShuffleMaskConstant(MaskNode)) {
+      unsigned MaskEltSize = VT.getScalarSizeInBits();
+      DecodeVPERMILPMask(C, MaskEltSize, Mask);
+      break;
+    }
+    return false;
+  }
   case X86ISD::PSHUFB: {
     IsUnary = true;
     SDValue MaskNode = N->getOperand(1);
@@ -29107,6 +29118,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::VPERMILPI:
+  case X86ISD::VPERMILPV:
   case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return combineShuffle(N, DAG, DCI,Subtarget);
   case ISD::FMA:            return combineFMA(N, DAG, Subtarget);
