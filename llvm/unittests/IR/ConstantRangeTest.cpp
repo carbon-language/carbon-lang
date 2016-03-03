@@ -608,7 +608,7 @@ TEST(ConstantRange, MakeSatisfyingICmpRegion) {
       ConstantRange(APInt(8, 4), APInt(8, -128)));
 }
 
-TEST(ConstantRange, MakeOverflowingRegion) {
+TEST(ConstantRange, MakeGuaranteedNoWrapRegion) {
   const int IntMin4Bits = 8;
   const int IntMax4Bits = 7;
   typedef OverflowingBinaryOperator OBO;
