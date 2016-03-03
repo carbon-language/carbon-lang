@@ -2716,8 +2716,12 @@ void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &S) {
                                         CapturedVars);
 }
 
-void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &) {
-  llvm_unreachable("CodeGen for 'omp teams' is not supported yet.");
+void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &S) {
+  OMPLexicalScope Scope(*this, S);
+  const CapturedStmt &CS = *cast<CapturedStmt>(S.getAssociatedStmt());
+
+  // FIXME: We should fork teams here instead of just emit the statement.
+  EmitStmt(CS.getCapturedStmt());
 }
 
 void CodeGenFunction::EmitOMPCancellationPointDirective(
