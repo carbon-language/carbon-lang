@@ -14,10 +14,12 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "DebugLineTableRowRef.h"
 #include "Exceptions.h"
 #include "RewriteInstance.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
@@ -25,6 +27,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -395,6 +398,27 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
                                        std::move(DisAsm),
                                        DR,
                                        opts::UpdateDebugSections);
+
+  if (opts::UpdateDebugSections) {
+    // Populate MCContext with DWARF files.
+    for (const auto &CU : BC->DwCtx->compile_units()) {
+      const auto CUID = CU->getOffset();
+      auto LineTable = BC->DwCtx->getLineTableForUnit(CU.get());
+      const auto &FileNames = LineTable->Prologue.FileNames;
+      for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
+        // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
+        // means empty dir.
+        const char *Dir = FileNames[I].DirIdx ?
+            LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1] :
+            "";
+        BC->Ctx->getDwarfFile(
+            Dir,
+            FileNames[I].Name,
+            I + 1,
+            CUID);
+      }
+    }
+  }
 
   return BC;
 }
@@ -959,6 +983,10 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                                   ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
 
   MCSection *Section = FunctionSection;
+
+  Section->setHasInstructions(true);
+  BC.Ctx->addGenDwarfSection(Section);
+
   Streamer.SwitchSection(Section);
 
   Streamer.EmitCodeAlignment(Function.getAlignment());
@@ -1029,6 +1057,29 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
         continue;
       }
       if (!BC.MIA->isCFI(Instr)) {
+        if (opts::UpdateDebugSections) {
+          auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
+          if (auto CompileUnit = BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex]) {
+
+            auto OriginalLineTable =
+              BC.DwCtx->getLineTableForUnit(
+                  CompileUnit);
+            const auto &OriginalRow = OriginalLineTable->Rows[RowReference.RowIndex];
+
+            BC.Ctx->setCurrentDwarfLoc(
+                OriginalRow.File,
+                OriginalRow.Line,
+                OriginalRow.Column,
+                (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
+                (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
+                (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
+                (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
+                OriginalRow.Isa,
+                OriginalRow.Discriminator);
+            BC.Ctx->setDwarfCompileUnitID(CompileUnit->getOffset());
+          }
+        }
+
         Streamer.EmitInstruction(Instr, *BC.STI);
         continue;
       }
@@ -1119,6 +1170,11 @@ void RewriteInstance::emitFunctions() {
   //////////////////////////////////////////////////////////////////////////////
   // Assign addresses to new functions/sections.
   //////////////////////////////////////////////////////////////////////////////
+
+  if (opts::UpdateDebugSections) {
+    // Compute offsets of tables in .debug_line for each compile unit.
+    computeLineTableOffsets();
+  }
 
   // Get output object as ObjectFile.
   std::unique_ptr<MemoryBuffer> ObjectMemBuffer =
@@ -1692,4 +1748,53 @@ void RewriteInstance::rewriteFile() {
 
   // TODO: we should find a way to mark the binary as optimized by us.
   Out->keep();
+}
+
+void RewriteInstance::computeLineTableOffsets() {
+  const auto LineSection =
+    BC->Ctx->getObjectFileInfo()->getDwarfLineSection();
+  auto CurrentFragment = LineSection->begin();
+  uint32_t CurrentOffset = 0;
+  uint32_t Offset = 0;
+
+  // Line tables are stored in MCContext in ascending order of offset in the
+  // output file, thus we can compute all table's offset by passing through
+  // each fragment at most once, continuing from the last CU's beginning
+  // instead of from the first fragment.
+  for (const auto &CUIDLineTablePair : BC->Ctx->getMCDwarfLineTables()) {
+    auto Label = CUIDLineTablePair.second.getLabel();
+
+    if (!Label)
+      continue;
+
+    auto Fragment = Label->getFragment();
+
+    while (&*CurrentFragment != Fragment) {
+      switch (CurrentFragment->getKind()) {
+      case MCFragment::FT_Dwarf:
+        Offset += cast<MCDwarfLineAddrFragment>(*CurrentFragment)
+          .getContents().size() - CurrentOffset;
+        break;
+      case MCFragment::FT_Data:
+        Offset += cast<MCDataFragment>(*CurrentFragment)
+          .getContents().size() - CurrentOffset;
+        break;
+      default:
+        llvm_unreachable(".debug_line section shouldn't contain other types "
+                         "of fragments.");
+      }
+
+      ++CurrentFragment;
+      CurrentOffset = 0;
+    }
+
+    Offset += Label->getOffset() - CurrentOffset;
+    CurrentOffset = Label->getOffset();
+
+    auto CompileUnit = BC->OffsetToDwarfCU[CUIDLineTablePair.first];
+    BC->CompileUnitLineTableOffset[CompileUnit] = Offset;
+
+    DEBUG(errs() << "BOLT-DEBUG: CU " << CUIDLineTablePair.first
+                 << " has line table at " << Offset << "\n");
+  }
 }

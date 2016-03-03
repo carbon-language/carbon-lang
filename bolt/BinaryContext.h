@@ -61,6 +61,10 @@ public:
   // DWARF Compilation Unit that starts at that offset.
   std::map<uint32_t, DWARFCompileUnit *> OffsetToDwarfCU;
 
+  // Maps each compile unit to the offset of its .debug_line line table in the
+  // output file.
+  std::map<const DWARFCompileUnit *, uint32_t> CompileUnitLineTableOffset;
+
   std::unique_ptr<MCContext> Ctx;
 
   std::unique_ptr<DWARFContext> DwCtx;

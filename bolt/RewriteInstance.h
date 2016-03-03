@@ -160,6 +160,10 @@ private:
   void patchELFPHDRTable();
   void patchELFSectionHeaderTable();
 
+  /// Computes output .debug_line line table offsets for each compile unit, and
+  /// stores them into BinaryContext::CompileUnitLineTableOffset.
+  void computeLineTableOffsets();
+
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
     assert(Address >= NewTextSegmentAddress &&
