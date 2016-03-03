@@ -3645,6 +3645,26 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
                          MachineFrameInfo *MFI, const MachineRegisterInfo *MRI,
                          const X86InstrInfo *TII, const CCValAssign &VA) {
   unsigned Bytes = Arg.getValueType().getSizeInBits() / 8;
+
+  for (;;) {
+    // Look through nodes that don't alter the bits of the incoming value.
+    unsigned Op = Arg.getOpcode();
+    if (Op == ISD::ZERO_EXTEND || Op == ISD::ANY_EXTEND || Op == ISD::BITCAST) {
+      Arg = Arg.getOperand(0);
+      continue;
+    }
+    if (Op == ISD::TRUNCATE) {
+      const SDValue &TruncInput = Arg.getOperand(0);
+      if (TruncInput.getOpcode() == ISD::AssertZext &&
+          cast<VTSDNode>(TruncInput.getOperand(1))->getVT() ==
+              Arg.getValueType()) {
+        Arg = TruncInput.getOperand(0);
+        continue;
+      }
+    }
+    break;
+  }
+
   int FI = INT_MAX;
   if (Arg.getOpcode() == ISD::CopyFromReg) {
     unsigned VR = cast<RegisterSDNode>(Arg.getOperand(1))->getReg();
