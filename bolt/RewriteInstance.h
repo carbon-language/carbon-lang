@@ -65,10 +65,15 @@ private:
 
 public:
 
-  // Keep [section name] -> [section info] map for later remapping.
+  /// Keep [section name] -> [section info] map for later remapping.
   std::map<std::string, SectionInfo> SectionMapInfo;
 
+  /// Information about non-allocatable sections.
+  std::map<std::string, SectionInfo> NoteSectionInfo;
+
   ExecutableFileMemoryManager() {}
+
+  ~ExecutableFileMemoryManager();
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID,
@@ -83,6 +88,10 @@ public:
     return allocateSection(Size, Alignment, SectionID, SectionName,
                            /*IsCode=*/false, IsReadOnly);
   }
+
+  void recordNoteSection(const uint8_t *Data, uintptr_t Size,
+                         unsigned Alignment, unsigned SectionID,
+                         StringRef SectionName) override;
 
   // Tell EE that we guarantee we don't need stubs.
   bool allowStubAllocation() const override { return false; }
@@ -139,14 +148,17 @@ private:
   /// Huge page size used for alignment.
   static constexpr unsigned PageAlign = 0x200000;
 
-  /// Maximum alignment for non-allocatable section.
-  static constexpr unsigned MaxNonAllocAlign = 16;
-
-  /// Detect storage available in the binary for allocating new sections.
+  /// Detect addresses and offsets available in the binary for allocating
+  /// new sections.
   void discoverStorage();
+
+  /// Rewrite non-allocatable sections with modifications.
+  void rewriteNoteSections();
 
   /// Patch ELF book-keeping info.
   void patchELF();
+  void patchELFPHDRTable();
+  void patchELFSectionHeaderTable();
 
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
@@ -158,7 +170,7 @@ private:
 
 private:
   /// An instance of the input binary we are processing, externally owned.
-  llvm::object::ELFObjectFileBase *File;
+  llvm::object::ELFObjectFileBase *InputFile;
 
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;
@@ -172,8 +184,10 @@ private:
   /// Offset in the input file where non-allocatable sections start.
   uint64_t FirstNonAllocatableOffset{0};
 
+  /// Information about program header table.
   uint64_t PHDRTableAddress{0};
   uint64_t PHDRTableOffset{0};
+  unsigned Phnum{0};
 
   /// New code segment info.
   uint64_t NewTextSegmentAddress{0};

@@ -254,9 +254,39 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   return ret;
 }
 
+void ExecutableFileMemoryManager::recordNoteSection(
+    const uint8_t *Data,
+    uintptr_t Size,
+    unsigned Alignment,
+    unsigned SectionID,
+    StringRef SectionName) {
+  DEBUG(dbgs() << "BOLT: note section "
+               << SectionName
+               << " with size " << Size << ", alignment " << Alignment
+               << " at 0x"
+               << Twine::utohexstr(reinterpret_cast<uint64_t>(Data)) << '\n');
+  if (SectionName == ".debug_line") {
+    // We need to make a copy of the section contents if we'll need it for
+    // a future reference.
+    uint8_t *p = new uint8_t[Size];
+    memcpy(p, Data, Size);
+    NoteSectionInfo[SectionName] = SectionInfo(reinterpret_cast<uint64_t>(p),
+                                               Size,
+                                               Alignment,
+                                               /*IsCode=*/false,
+                                               /*IsReadOnly*/true);
+  }
+}
+
 bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
   DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
   return SectionMemoryManager::finalizeMemory(ErrMsg);
+}
+
+ExecutableFileMemoryManager::~ExecutableFileMemoryManager() {
+  for (auto &SII : NoteSectionInfo) {
+    delete[] reinterpret_cast<uint8_t *>(SII.second.AllocAddress);
+  }
 }
 
 /// Create BinaryContext for a given architecture \p ArchName and
@@ -371,10 +401,10 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
 
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File,
                                  const DataReader &DR)
-    : File(File),
+    : InputFile(File),
       BC(CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR,
-                             std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*File))))
-{ }
+         std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*InputFile)))) {
+}
 
 RewriteInstance::~RewriteInstance() {}
 
@@ -383,7 +413,7 @@ void RewriteInstance::reset() {
   FileSymRefs.clear();
   auto &DR = BC->DR;
   BC = CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR,
-                           std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*File)));
+           std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*InputFile)));
   CFIRdWrt.reset(nullptr);
   SectionMM.reset(nullptr);
   Out.reset(nullptr);
@@ -393,16 +423,12 @@ void RewriteInstance::reset() {
 }
 
 void RewriteInstance::discoverStorage() {
-  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(File);
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
     errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
     exit(1);
   }
-
   auto Obj = ELF64LEFile->getELFFile();
-
-
-  // Discover important addresses in the binary.
 
   // This is where the first segment and ELF header were allocated.
   uint64_t FirstAllocAddress = std::numeric_limits<uint64_t>::max();
@@ -439,6 +465,9 @@ void RewriteInstance::discoverStorage() {
     // We create the new PHDR table in such a way that both of the methods
     // of loading and locating the table work. There's a slight file size
     // overhead because of that.
+    //
+    // NB: bfd's strip command cannot do the above and will corrupt the
+    //     binary during the process of stripping non-allocatable sections.
     if (NextAvailableOffset <= NextAvailableAddress - FirstAllocAddress) {
       NextAvailableOffset = NextAvailableAddress - FirstAllocAddress;
     } else {
@@ -483,14 +512,14 @@ void RewriteInstance::run() {
   runOptimizationPasses();
   emitFunctions();
 
-  // Copy input file to output
+  // Copy allocatable part of the input.
   std::error_code EC;
   Out = llvm::make_unique<tool_output_file>(opts::OutputFilename, EC,
                                             sys::fs::F_None, 0777);
   check_error(EC, "cannot create output executable file");
-  Out->os() << File->getData();
+  Out->os() << InputFile->getData().substr(0, FirstNonAllocatableOffset);
 
-  // Rewrite optimized functions back to this output
+  // Rewrite allocatable contents and copy non-allocatable parts with mods.
   rewriteFile();
 }
 
@@ -503,7 +532,7 @@ void RewriteInstance::readSymbolTable() {
 
   // For local symbols we want to keep track of associated FILE symbol for
   // disambiguation by name.
-  for (const SymbolRef &Symbol : File->symbols()) {
+  for (const SymbolRef &Symbol : InputFile->symbols()) {
     // Keep undefined symbols for pretty printing?
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
@@ -585,7 +614,7 @@ void RewriteInstance::readSymbolTable() {
     ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
     check_error(SectionOrErr.getError(), "cannot get symbol section");
     section_iterator Section = *SectionOrErr;
-    if (Section == File->section_end()) {
+    if (Section == InputFile->section_end()) {
       // Could be an absolute symbol. Could record for pretty printing.
       continue;
     }
@@ -602,7 +631,7 @@ void RewriteInstance::readSymbolTable() {
 void RewriteInstance::readSpecialSections() {
   // Process special sections.
   StringRef FrameHdrContents;
-  for (const auto &Section : File->sections()) {
+  for (const auto &Section : InputFile->sections()) {
     StringRef SectionName;
     check_error(Section.getName(SectionName), "cannot get section name");
     StringRef SectionContents;
@@ -645,8 +674,8 @@ void RewriteInstance::disassembleFunctions() {
     BinaryFunction &Function = BFI.second;
 
     if (!opts::shouldProcess(Function)) {
-      DEBUG(dbgs() << "BOLT: skipping processing function " << Function.getName()
-                   << " per user request.\n");
+      DEBUG(dbgs() << "BOLT: skipping processing function "
+                   << Function.getName() << " per user request.\n");
       continue;
     }
 
@@ -688,7 +717,7 @@ void RewriteInstance::disassembleFunctions() {
 
     // Offset of the function in the file.
     Function.setFileOffset(
-        SectionContents.data() - File->getData().data() + FunctionOffset);
+        SectionContents.data() - InputFile->getData().data() + FunctionOffset);
 
     ArrayRef<uint8_t> FunctionData(
         reinterpret_cast<const uint8_t *>
@@ -1122,7 +1151,8 @@ void RewriteInstance::emitFunctions() {
   auto ObjectsHandle = OLT.addObjectSet(
         singletonSet(std::move(ObjOrErr.get())),
         SectionMM.get(),
-        std::move(Resolver));
+        std::move(Resolver),
+        /* ProcessAllSections = */true);
 
   // FIXME: use notifyObjectLoaded() to remap sections.
 
@@ -1222,8 +1252,8 @@ void RewriteInstance::emitFunctions() {
     TempOut->keep();
 }
 
-void RewriteInstance::patchELF() {
-  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(File);
+void RewriteInstance::patchELFPHDRTable() {
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
     errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
     exit(1);
@@ -1232,7 +1262,7 @@ void RewriteInstance::patchELF() {
   auto &OS = Out->os();
 
   // Write/re-write program headers.
-  unsigned Phnum = Obj->getHeader()->e_phnum;
+  Phnum = Obj->getHeader()->e_phnum;
   if (PHDRTableOffset) {
     // Writing new pheader table.
     Phnum += 1; // only adding one new segment
@@ -1240,7 +1270,6 @@ void RewriteInstance::patchELF() {
     NewTextSegmentSize = NextAvailableAddress - PHDRTableAddress;
   } else {
     assert(!PHDRTableAddress && "unexpected address for program header table");
-
     // Update existing table.
     PHDRTableOffset = Obj->getHeader()->e_phoff;
     NewTextSegmentSize = NextAvailableAddress - NewTextSegmentAddress;
@@ -1302,29 +1331,109 @@ void RewriteInstance::patchELF() {
 
   assert((opts::UseGnuStack || AddedSegment) &&
          "could not add program header for the new segment");
+}
 
-  // Copy original non-allocatable contents and update section offsets.
+void RewriteInstance::rewriteNoteSections() {
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
+  if (!ELF64LEFile) {
+    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
+    exit(1);
+  }
+  auto Obj = ELF64LEFile->getELFFile();
+  auto &OS = Out->os();
+
   uint64_t NextAvailableOffset = getFileOffsetFor(NextAvailableAddress);
   assert(NextAvailableOffset >= FirstNonAllocatableOffset &&
          "next available offset calculation failure");
-
-  // Re-write using this offset delta.
-  uint64_t OffsetDelta = NextAvailableOffset - FirstNonAllocatableOffset;
-
-  // Make sure offset delta is a multiple of alignment;
-  OffsetDelta = RoundUpToAlignment(OffsetDelta, MaxNonAllocAlign);
-  NextAvailableOffset = FirstNonAllocatableOffset + OffsetDelta;
-
-  // FIXME: only write up to SHDR table.
   OS.seek(NextAvailableOffset);
-  OS << File->getData().drop_front(FirstNonAllocatableOffset);
 
-  bool SeenNonAlloc = false;
-  uint64_t ExtraDelta = 0;  // for dynamically adjusting delta
-  unsigned NumNewSections = 0;
+  // Copy over non-allocatable section contents and update file offsets.
+  for (auto &Section : Obj->sections()) {
+    if (Section.sh_type == ELF::SHT_NULL)
+      continue;
+    if (Section.sh_flags & ELF::SHF_ALLOC)
+      continue;
 
-  // Update section table. Note that the section table itself has shifted.
-  OS.seek(Obj->getHeader()->e_shoff + OffsetDelta);
+    // Insert padding as needed.
+    if (Section.sh_addralign > 1) {
+      auto Padding = OffsetToAlignment(NextAvailableOffset,
+                                       Section.sh_addralign);
+      const unsigned char ZeroByte{0};
+      for (unsigned I = 0; I < Padding; ++I)
+        OS.write(ZeroByte);
+
+      NextAvailableOffset += Padding;
+
+      assert(Section.sh_size % Section.sh_addralign == 0 &&
+             "section size does not match section alignment");
+    }
+
+    // Copy over section contents.
+    auto Size = Section.sh_size;
+    OS << InputFile->getData().substr(Section.sh_offset, Size);
+
+    // Address of extension to the section.
+    uint64_t Address{0};
+
+    // Append new section contents if available.
+    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
+    check_error(SectionName.getError(), "cannot get section name");
+
+    auto SII = SectionMM->NoteSectionInfo.find(*SectionName);
+    if (SII != SectionMM->NoteSectionInfo.end()) {
+      auto &SI = SII->second;
+      assert(SI.Alignment <= Section.sh_addralign &&
+             "alignment exceeds value in file");
+      outs() << "BOLT: appending contents to section " << *SectionName << '\n';
+      // Write section extension.
+      Address = SI.AllocAddress;
+      OS.write(reinterpret_cast<const char *>(Address), SI.Size);
+      Size += SI.Size;
+    }
+
+    // Set/modify section info.
+    SectionMM->NoteSectionInfo[*SectionName] =
+      SectionInfo(Address,
+                  Size,
+                  Section.sh_addralign,
+                  /*IsCode=*/false,
+                  /*IsReadOnly=*/false,
+                  /*FileAddress=*/0,
+                  NextAvailableOffset);
+
+    NextAvailableOffset += Size;
+  }
+}
+
+// Rewrite section header table inserting new entries as needed. The sections
+// header table size itself may affect the offsets of other sections,
+// so we are placing it at the end of the binary.
+//
+// As we rewrite entries we need to track how many sections were inserted
+// as it changes the sh_link value.
+//
+// The following are assumptoins about file modifications:
+//    * There are no modifications done to existing allocatable sections.
+//    * All new allocatable sections are written emmediately after existing
+//      allocatable sections.
+//    * There could be modifications done to non-allocatable sections, e.g.
+//      size could be increased.
+//    * New non-allocatable sections are added to the end of the file.
+void RewriteInstance::patchELFSectionHeaderTable() {
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
+  if (!ELF64LEFile) {
+    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
+    exit(1);
+  }
+  auto Obj = ELF64LEFile->getELFFile();
+  using Elf_Shdr = std::remove_pointer<decltype(Obj)>::type::Elf_Shdr;
+
+  auto &OS = Out->os();
+
+  auto SHTOffset = OS.tell();
+
+  // Copy over entries for original allocatable sections with minor
+  // modifications (e.g. name).
   for (auto &Section : Obj->sections()) {
     // Always ignore this section.
     if (Section.sh_type == ELF::SHT_NULL) {
@@ -1332,71 +1441,16 @@ void RewriteInstance::patchELF() {
       continue;
     }
 
-    auto NewSection = Section;
-    uint64_t SectionLoc = (uintptr_t)&Section - (uintptr_t)Obj->base();
+    // Break at first non-allocatable section.
+    if (!(Section.sh_flags & ELF::SHF_ALLOC))
+      break;
 
     ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
     check_error(SectionName.getError(), "cannot get section name");
 
-    if (!(Section.sh_flags & ELF::SHF_ALLOC)) {
-      if (!SeenNonAlloc) {
-
-        // This is where we place all our new sections.
-
-        std::vector<decltype(NewSection)> SectionsToRewrite;
-        for (auto &SMII : SectionMM->SectionMapInfo) {
-          SectionInfo &SI = SMII.second;
-          if (SI.IsCode && SMII.first != ".bolt.text")
-            continue;
-          errs() << "BOLT-INFO: re-writing section header for "
-                 << SMII.first << '\n';
-          auto NewSection = Section;
-          NewSection.sh_name = SI.ShName;
-          NewSection.sh_type = ELF::SHT_PROGBITS;
-          NewSection.sh_addr = SI.FileAddress;
-          NewSection.sh_offset = SI.FileOffset;
-          NewSection.sh_size = SI.Size;
-          NewSection.sh_entsize = 0;
-          NewSection.sh_flags = ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
-          NewSection.sh_link = 0;
-          NewSection.sh_info = 0;
-          NewSection.sh_addralign = SI.Alignment;
-          SectionsToRewrite.emplace_back(NewSection);
-        }
-
-        // Do actual writing after sorting out.
-        OS.seek(SectionLoc + OffsetDelta);
-        std::stable_sort(SectionsToRewrite.begin(), SectionsToRewrite.end(),
-            [] (decltype(Section) A, decltype(Section) B) {
-              return A.sh_offset < B.sh_offset;
-            });
-        for (auto &SI : SectionsToRewrite) {
-          OS.write(reinterpret_cast<const char *>(&SI),
-                   sizeof(SI));
-        }
-
-        NumNewSections = SectionsToRewrite.size();
-        ExtraDelta += sizeof(Section) * NumNewSections;
-
-        SeenNonAlloc = true;
-      }
-
-      assert(Section.sh_addralign <= MaxNonAllocAlign &&
-             "unexpected alignment for non-allocatable section");
-      assert(Section.sh_offset >= FirstNonAllocatableOffset &&
-             "bad offset for non-allocatable section");
-
-      NewSection.sh_offset = Section.sh_offset + OffsetDelta;
-
-      if (Section.sh_offset > Obj->getHeader()->e_shoff) {
-        // The section is going to be shifted.
-        NewSection.sh_offset = NewSection.sh_offset + ExtraDelta;
-      }
-
-      if (Section.sh_link)
-        NewSection.sh_link = Section.sh_link + NumNewSections;
-
-    } else if (*SectionName == ".bss") {
+    auto NewSection = Section;
+    if (*SectionName == ".bss") {
+      // .bss section offset matches that of the next section.
       NewSection.sh_offset = NewTextSegmentOffset;
     }
 
@@ -1409,11 +1463,72 @@ void RewriteInstance::patchELF() {
     OS.write(reinterpret_cast<const char *>(&NewSection), sizeof(NewSection));
   }
 
-  // Write all the sections past the section table again as they are shifted.
-  auto OffsetPastShdrTable = Obj->getHeader()->e_shoff +
-      Obj->getHeader()->e_shnum * sizeof(ELFFile<ELF64LE>::Elf_Shdr);
-  OS.seek(OffsetPastShdrTable + OffsetDelta + ExtraDelta);
-  OS << File->getData().drop_front(OffsetPastShdrTable);
+  // Create entries for new allocatable sections.
+  std::vector<Elf_Shdr> SectionsToRewrite;
+  for (auto &SMII : SectionMM->SectionMapInfo) {
+    SectionInfo &SI = SMII.second;
+    // Ignore function sections.
+    if (SI.IsCode && SMII.first != ".bolt.text")
+      continue;
+    errs() << "BOLT-INFO: writing section header for "
+           << SMII.first << '\n';
+    Elf_Shdr NewSection;
+    NewSection.sh_name = SI.ShName;
+    NewSection.sh_type = ELF::SHT_PROGBITS;
+    NewSection.sh_addr = SI.FileAddress;
+    NewSection.sh_offset = SI.FileOffset;
+    NewSection.sh_size = SI.Size;
+    NewSection.sh_entsize = 0;
+    NewSection.sh_flags = ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
+    NewSection.sh_link = 0;
+    NewSection.sh_info = 0;
+    NewSection.sh_addralign = SI.Alignment;
+    SectionsToRewrite.emplace_back(NewSection);
+  }
+
+  // Write section header entries for new allocatable sections in offset order.
+  std::stable_sort(SectionsToRewrite.begin(), SectionsToRewrite.end(),
+      [] (Elf_Shdr A, Elf_Shdr B) {
+        return A.sh_offset < B.sh_offset;
+      });
+  for (auto &SI : SectionsToRewrite) {
+    OS.write(reinterpret_cast<const char *>(&SI),
+             sizeof(SI));
+  }
+
+  auto NumNewSections = SectionsToRewrite.size();
+
+  // Copy over entries for non-allocatable sections performing necessary
+  // adjustements.
+  for (auto &Section : Obj->sections()) {
+    if (Section.sh_type == ELF::SHT_NULL)
+      continue;
+    if (Section.sh_flags & ELF::SHF_ALLOC)
+      continue;
+
+    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
+    check_error(SectionName.getError(), "cannot get section name");
+
+    auto SII = SectionMM->NoteSectionInfo.find(*SectionName);
+    assert(SII != SectionMM->NoteSectionInfo.end() &&
+           "missing section info for non-allocatable section");
+
+    auto NewSection = Section;
+    NewSection.sh_offset = SII->second.FileOffset;
+    NewSection.sh_size = SII->second.Size;
+
+    // Adjust sh_link for sections that use it.
+    if (Section.sh_link)
+      NewSection.sh_link = Section.sh_link + NumNewSections;
+
+    // Adjust sh_info for relocation sections.
+    if (Section.sh_type == ELF::SHT_REL || Section.sh_type == ELF::SHT_RELA) {
+      if (Section.sh_info)
+        NewSection.sh_info = Section.sh_info + NumNewSections;
+    }
+
+    OS.write(reinterpret_cast<const char *>(&NewSection), sizeof(NewSection));
+  }
 
   // FIXME: Update _end in .dynamic
 
@@ -1421,7 +1536,7 @@ void RewriteInstance::patchELF() {
   auto NewEhdr = *Obj->getHeader();
   NewEhdr.e_phoff = PHDRTableOffset;
   NewEhdr.e_phnum = Phnum;
-  NewEhdr.e_shoff = NewEhdr.e_shoff + OffsetDelta;
+  NewEhdr.e_shoff = SHTOffset;
   NewEhdr.e_shnum = NewEhdr.e_shnum + NumNewSections;
   NewEhdr.e_shstrndx = NewEhdr.e_shstrndx + NumNewSections;
   OS.pwrite(reinterpret_cast<const char *>(&NewEhdr), sizeof(NewEhdr), 0);
@@ -1512,9 +1627,15 @@ void RewriteInstance::rewriteFile() {
     }
   }
 
+  // Print function statistics.
   outs() << "BOLT: " << CountOverwrittenFunctions
          << " out of " << BinaryFunctions.size()
          << " functions were overwritten.\n";
+  if (TotalScore != 0) {
+    double Coverage = OverwrittenScore / (double)TotalScore * 100.0;
+    outs() << format("BOLT: Rewritten functions cover %.2lf", Coverage)
+           << "% of the execution count of simple functions of this binary.\n";
+  }
 
   // Write all non-code sections.
   for (auto &SMII : SectionMM->SectionMapInfo) {
@@ -1560,14 +1681,14 @@ void RewriteInstance::rewriteFile() {
     NextAvailableAddress += EHFrameHdrSecInfo.Size;
   }
 
-  // Update ELF book-keeping info.
-  patchELF();
+  // Patch program header table.
+  patchELFPHDRTable();
 
-  if (TotalScore != 0) {
-    double Coverage = OverwrittenScore / (double)TotalScore * 100.0;
-    outs() << format("BOLT: Rewritten functions cover %.2lf", Coverage)
-           << "% of the execution count of simple functions of this binary.\n";
-  }
+  // Copy non-allocatable sections once allocatable part is finished.
+  rewriteNoteSections();
+
+  // Update ELF book-keeping info.
+  patchELFSectionHeaderTable();
 
   // TODO: we should find a way to mark the binary as optimized by us.
   Out->keep();
