@@ -19781,20 +19781,8 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     SDValue V2 = Extract128BitVector(R, NumElems/2, DAG, dl);
 
     // Recreate the shift amount vectors
-    SDValue Amt1, Amt2;
-    if (Amt.getOpcode() == ISD::BUILD_VECTOR) {
-      // Constant shift amount
-      SmallVector<SDValue, 8> Ops(Amt->op_begin(), Amt->op_begin() + NumElems);
-      ArrayRef<SDValue> Amt1Csts = makeArrayRef(Ops).slice(0, NumElems / 2);
-      ArrayRef<SDValue> Amt2Csts = makeArrayRef(Ops).slice(NumElems / 2);
-
-      Amt1 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT, Amt1Csts);
-      Amt2 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT, Amt2Csts);
-    } else {
-      // Variable shift amount
-      Amt1 = Extract128BitVector(Amt, 0, DAG, dl);
-      Amt2 = Extract128BitVector(Amt, NumElems/2, DAG, dl);
-    }
+    SDValue Amt1 = Extract128BitVector(Amt, 0, DAG, dl);
+    SDValue Amt2 = Extract128BitVector(Amt, NumElems/2, DAG, dl);
 
     // Issue new vector shifts for the smaller types
     V1 = DAG.getNode(Op.getOpcode(), dl, NewVT, V1, Amt1);
