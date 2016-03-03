@@ -26,6 +26,29 @@ can model and optimize such code.
       }
     }
 
+
+If the accesses are not aligned with the size of the access type we model them
+as multiple accesses to an array of smaller elements. This is especially
+usefull for structs containing different typed elements as accesses to them are
+represented using only one base pointer, namely the ``struct`` itself.  In the
+example below the accesses to ``s`` are all modeled as if ``s`` was a single
+char array because the accesses to ``s->A`` and ``s->B`` are not aligned with
+their respective type size (both are off-by-one due to the ``char`` field in
+the ``struct``).
+
+.. code-block:: c
+
+    struct S {
+      char Offset;
+      int A[100];
+      double B[100];
+    };
+
+    void struct_accesses(struct S *s) {
+      for (long i = 0; i < 100; i++)
+        s->B[i] += s->A[i];
+    }
+
 Update of the isl math library
 ------------------------------
 
