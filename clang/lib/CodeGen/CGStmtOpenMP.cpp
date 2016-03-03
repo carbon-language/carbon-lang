@@ -45,10 +45,25 @@ class OMPLexicalScope {
     }
   }
 
+  class PostUpdateCleanup final : public EHScopeStack::Cleanup {
+    const OMPExecutableDirective &S;
+
+  public:
+    PostUpdateCleanup(const OMPExecutableDirective &S) : S(S) {}
+
+    void Emit(CodeGenFunction &CGF, Flags /*flags*/) override {
+      if (!CGF.HaveInsertPoint())
+        return;
+      (void)S;
+      // TODO: add cleanups for clauses that require post update.
+    }
+  };
+
 public:
   OMPLexicalScope(CodeGenFunction &CGF, const OMPExecutableDirective &S)
       : Scope(CGF, S.getSourceRange()) {
     emitPreInitStmt(CGF, S);
+    CGF.EHStack.pushCleanup<PostUpdateCleanup>(NormalAndEHCleanup, S);
   }
 };
 } // namespace
@@ -2755,6 +2770,8 @@ void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &S) {
   // Emit parallel region as a standalone region.
   auto &&CodeGen = [&S](CodeGenFunction &CGF) {
     OMPPrivateScope PrivateScope(CGF);
+    (void)CGF.EmitOMPFirstprivateClause(S, PrivateScope);
+    CGF.EmitOMPPrivateClause(S, PrivateScope);
     (void)PrivateScope.Privatize();
     CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
   };
