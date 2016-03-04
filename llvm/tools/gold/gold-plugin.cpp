@@ -1013,7 +1013,9 @@ void CodeGen::runSplitCodeGen() {
     std::list<llvm::raw_fd_ostream> OSs;
     std::vector<llvm::raw_pwrite_stream *> OSPtrs(MaxThreads);
     for (unsigned I = 0; I != MaxThreads; ++I) {
-      int FD = openOutputFile(Filename, TempOutFile, Filenames[I], I);
+      int FD = openOutputFile(Filename, TempOutFile, Filenames[I],
+                              // Only append ID if there are multiple tasks.
+                              MaxThreads > 1 ? I : -1);
       OSs.emplace_back(FD, true);
       OSPtrs[I] = &OSs.back();
     }
