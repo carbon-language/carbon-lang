@@ -1641,9 +1641,9 @@ static void applyMipsPcReloc(uint8_t *Loc, uint32_t Type, uint64_t P,
 }
 
 template <endianness E>
-static void writeMipsHi16(uint8_t *Loc, uint64_t S, int64_t A) {
+static void writeMipsHi16(uint8_t *Loc, uint64_t V) {
   uint32_t Instr = read32<E>(Loc);
-  write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(S + A));
+  write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(V));
 }
 
 template <class ELFT>
@@ -1659,7 +1659,7 @@ void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf) const {
   write32<E>(Buf + 28, 0x2718fffe); // subu  $24, $24, 2
   uint64_t Got = Out<ELFT>::GotPlt->getVA();
   uint64_t Plt = Out<ELFT>::Plt->getVA();
-  writeMipsHi16<E>(Buf, Got, 0);
+  writeMipsHi16<E>(Buf, Got);
   relocateOne(Buf + 4, Buf + 8, R_MIPS_LO16, Plt + 4, Got);
   relocateOne(Buf + 8, Buf + 12, R_MIPS_LO16, Plt + 8, Got);
 }
@@ -1673,7 +1673,7 @@ void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32<E>(Buf + 4, 0x8df90000);  // l[wd] $25, %lo(.got.plt entry)($15)
   write32<E>(Buf + 8, 0x03200008);  // jr    $25
   write32<E>(Buf + 12, 0x25f80000); // addiu $24, $15, %lo(.got.plt entry)
-  writeMipsHi16<E>(Buf, GotEntryAddr, 0);
+  writeMipsHi16<E>(Buf, GotEntryAddr);
   relocateOne(Buf + 4, Buf + 8, R_MIPS_LO16, PltEntryAddr + 4, GotEntryAddr);
   relocateOne(Buf + 12, Buf + 16, R_MIPS_LO16, PltEntryAddr + 8, GotEntryAddr);
 }
@@ -1739,10 +1739,10 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     if (PairedLoc) {
       uint64_t AHL = ((Instr & 0xffff) << 16) +
                      SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
-      writeMipsHi16<E>(Loc, S, AHL);
+      writeMipsHi16<E>(Loc, S + AHL);
     } else {
       warning("Can't find matching R_MIPS_LO16 relocation for R_MIPS_HI16");
-      writeMipsHi16<E>(Loc, S, 0);
+      writeMipsHi16<E>(Loc, S);
     }
     break;
   }
