@@ -20,6 +20,7 @@
 COMPILER_RT_WEAK void (*VPMergeHook)(ValueProfData *,
                                      __llvm_profile_data *) = NULL;
 
+COMPILER_RT_VISIBILITY
 void __llvm_profile_merge_from_buffer(const char *ProfileData,
                                       uint64_t ProfileSize) {
   __llvm_profile_data *SrcDataStart, *SrcDataEnd, *SrcData, *DstData;
