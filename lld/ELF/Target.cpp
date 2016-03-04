@@ -1652,10 +1652,13 @@ static void writeMipsLo16(uint8_t *Loc, uint64_t V) {
   write32<E>(Loc, (Instr & 0xffff0000) | (V & 0xffff));
 }
 
+template <endianness E> static int16_t readSignedLo16(uint8_t *Loc) {
+  return SignExtend32<16>(read32<E>(Loc) & 0xffff);
+}
+
 template <endianness E>
 static int64_t readMipsAHL(uint8_t *HiLoc, uint8_t *LoLoc) {
-  return ((read32<E>(HiLoc) & 0xffff) << 16) +
-         SignExtend64<16>(read32<E>(LoLoc) & 0xffff);
+  return ((read32<E>(HiLoc) & 0xffff) << 16) + readSignedLo16<E>(LoLoc);
 }
 
 template <class ELFT>
@@ -1736,8 +1739,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     break;
   }
   case R_MIPS_GPREL16: {
-    uint32_t Instr = read32<E>(Loc);
-    int64_t V = S + SignExtend64<16>(Instr & 0xffff) - getMipsGpAddr<ELFT>();
+    int64_t V = S + readSignedLo16<E>(Loc) - getMipsGpAddr<ELFT>();
     checkInt<16>(V, Type);
     writeMipsLo16<E>(Loc, V);
     break;
@@ -1757,7 +1759,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     // Ignore this optimization relocation for now
     break;
   case R_MIPS_LO16:
-    writeMipsLo16<E>(Loc, S + SignExtend64<16>(read32<E>(Loc) & 0xffff));
+    writeMipsLo16<E>(Loc, S + readSignedLo16<E>(Loc));
     break;
   case R_MIPS_PC16:
     applyMipsPcReloc<E, 16, 2>(Loc, Type, P, S);
@@ -1783,7 +1785,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     }
     break;
   case R_MIPS_PCLO16:
-    writeMipsLo16<E>(Loc, S + SignExtend64<16>(read32<E>(Loc) & 0xffff) - P);
+    writeMipsLo16<E>(Loc, S + readSignedLo16<E>(Loc) - P);
     break;
   default:
     fatal("unrecognized reloc " + Twine(Type));
