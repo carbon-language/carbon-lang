@@ -2095,8 +2095,7 @@ void ASTStmtWriter::VisitOMPLoopDirective(OMPLoopDirective *D) {
   Writer.AddStmt(D->getInit());
   Writer.AddStmt(D->getInc());
   if (isOpenMPWorksharingDirective(D->getDirectiveKind()) ||
-      isOpenMPTaskLoopDirective(D->getDirectiveKind()) ||
-      isOpenMPDistributeDirective(D->getDirectiveKind())) {
+      isOpenMPTaskLoopDirective(D->getDirectiveKind())) {
     Writer.AddStmt(D->getIsLastIterVariable());
     Writer.AddStmt(D->getLowerBoundVariable());
     Writer.AddStmt(D->getUpperBoundVariable());
