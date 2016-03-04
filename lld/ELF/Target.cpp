@@ -97,7 +97,7 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
-  bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
+  bool canRelaxTlsImpl(unsigned Type, const SymbolBody *S) const override;
   unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                     uint64_t SA, const SymbolBody *S) const override;
   bool isGotRelative(uint32_t Type) const override;
@@ -134,7 +134,7 @@ public:
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
+  bool canRelaxTlsImpl(unsigned Type, const SymbolBody *S) const override;
   bool isSizeRel(uint32_t Type) const override;
   unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                     uint64_t SA, const SymbolBody *S) const override;
@@ -192,7 +192,7 @@ public:
                    uint8_t *PairedLoc = nullptr) const override;
   unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                     uint64_t SA, const SymbolBody *S) const override;
-  bool canRelaxTls(unsigned Type, const SymbolBody *S) const override;
+  bool canRelaxTlsImpl(unsigned Type, const SymbolBody *S) const override;
 
 private:
   void relocateTlsGdToLe(unsigned Type, uint8_t *Loc, uint8_t *BufEnd,
@@ -262,6 +262,12 @@ TargetInfo *createTarget() {
 TargetInfo::~TargetInfo() {}
 
 bool TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
+  if (Config->Shared || (S && !S->isTls()))
+    return false;
+  return canRelaxTlsImpl(Type, S);
+}
+
+bool TargetInfo::canRelaxTlsImpl(unsigned Type, const SymbolBody *S) const {
   return false;
 }
 
@@ -522,9 +528,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   }
 }
 
-bool X86TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
-    return false;
+bool X86TargetInfo::canRelaxTlsImpl(unsigned Type, const SymbolBody *S) const {
   return Type == R_386_TLS_LDO_32 || Type == R_386_TLS_LDM ||
          Type == R_386_TLS_GD || (Type == R_386_TLS_IE && !canBePreempted(S)) ||
          (Type == R_386_TLS_GOTIE && !canBePreempted(S));
@@ -771,9 +775,8 @@ bool X86_64TargetInfo::isSizeRel(uint32_t Type) const {
   return Type == R_X86_64_SIZE32 || Type == R_X86_64_SIZE64;
 }
 
-bool X86_64TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
-    return false;
+bool X86_64TargetInfo::canRelaxTlsImpl(unsigned Type,
+                                       const SymbolBody *S) const {
   return Type == R_X86_64_TLSGD || Type == R_X86_64_TLSLD ||
          Type == R_X86_64_DTPOFF32 ||
          (Type == R_X86_64_GOTTPOFF && !canBePreempted(S));
@@ -1456,10 +1459,8 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   }
 }
 
-bool AArch64TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
-    return false;
-
+bool AArch64TargetInfo::canRelaxTlsImpl(unsigned Type,
+                                        const SymbolBody *S) const {
   // Global-Dynamic relocs can be relaxed to Initial-Exec if the target is
   // an executable.  And if the target is local it can also be fully relaxed to
   // Local-Exec.
