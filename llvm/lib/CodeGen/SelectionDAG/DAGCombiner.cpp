@@ -2155,14 +2155,18 @@ SDValue DAGCombiner::useDivRem(SDNode *Node) {
   if (Node->use_empty())
     return SDValue(); // This is a dead node, leave it alone.
 
-  EVT VT = Node->getValueType(0);
-  if (!TLI.isTypeLegal(VT))
-    return SDValue();
-
   unsigned Opcode = Node->getOpcode();
   bool isSigned = (Opcode == ISD::SDIV) || (Opcode == ISD::SREM);
-
   unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
+
+  // DivMod lib calls can still work on non-legal types if using lib-calls.
+  EVT VT = Node->getValueType(0);
+  if (VT.isVector() || !VT.isInteger())
+    return SDValue();
+
+  if (!TLI.isTypeLegal(VT) && !TLI.isOperationCustom(DivRemOpc, VT))
+    return SDValue();
+
   // If DIVREM is going to get expanded into a libcall,
   // but there is no libcall available, then don't combine.
   if (!TLI.isOperationLegalOrCustom(DivRemOpc, VT) &&
