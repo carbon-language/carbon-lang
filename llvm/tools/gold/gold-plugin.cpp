@@ -38,9 +38,12 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/thread.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Utils/FunctionImportUtils.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -76,17 +79,25 @@ struct claimed_file {
 /// RAII wrapper to manage opening and releasing of a ld_plugin_input_file.
 struct PluginInputFile {
   void *Handle;
-  ld_plugin_input_file File;
+  std::unique_ptr<ld_plugin_input_file> File;
 
   PluginInputFile(void *Handle) : Handle(Handle) {
-    if (get_input_file(Handle, &File) != LDPS_OK)
+    File = llvm::make_unique<ld_plugin_input_file>();
+    if (get_input_file(Handle, File.get()) != LDPS_OK)
       message(LDPL_FATAL, "Failed to get file information");
   }
   ~PluginInputFile() {
-    if (release_input_file(Handle) != LDPS_OK)
-      message(LDPL_FATAL, "Failed to release file information");
+    // File would have been reset to nullptr if we moved this object
+    // to a new owner.
+    if (File)
+      if (release_input_file(Handle) != LDPS_OK)
+        message(LDPL_FATAL, "Failed to release file information");
   }
-  ld_plugin_input_file &file() { return File; }
+
+  ld_plugin_input_file &file() { return *File; }
+
+  PluginInputFile(PluginInputFile &&RHS) = default;
+  PluginInputFile &operator=(PluginInputFile &&RHS) = default;
 };
 
 struct ResolutionInfo {
@@ -98,6 +109,33 @@ struct ResolutionInfo {
   unsigned CommonSize = 0;
   unsigned CommonAlign = 0;
   claimed_file *CommonFile = nullptr;
+};
+
+/// Class to own information used by a task or during its cleanup for a
+/// ThinLTO backend instantiation.
+class ThinLTOTaskInfo {
+  /// The input file holding the module bitcode read by the ThinLTO task.
+  PluginInputFile InputFile;
+
+  /// The output stream the task will codegen into.
+  std::unique_ptr<raw_fd_ostream> OS;
+
+  /// The file name corresponding to the output stream, used during cleanup.
+  std::string Filename;
+
+  /// Flag indicating whether the output file is a temp file that must be
+  /// added to the cleanup list during cleanup.
+  bool TempOutFile;
+
+public:
+  ThinLTOTaskInfo(PluginInputFile InputFile, std::unique_ptr<raw_fd_ostream> OS,
+                  std::string Filename, bool TempOutFile)
+      : InputFile(std::move(InputFile)), OS(std::move(OS)), Filename(Filename),
+        TempOutFile(TempOutFile) {}
+
+  /// Performs task related cleanup activities that must be done
+  /// single-threaded (i.e. call backs to gold).
+  void cleanup();
 };
 }
 
@@ -126,7 +164,8 @@ namespace options {
   static unsigned OptLevel = 2;
   // Default parallelism of 0 used to indicate that user did not specify.
   // Actual parallelism default value depends on implementation.
-  // Currently, code generation defaults to no parallelism.
+  // Currently, code generation defaults to no parallelism, whereas
+  // ThinLTO uses the hardware_concurrency as the default.
   static unsigned Parallelism = 0;
 #ifdef NDEBUG
   static bool DisableVerify = true;
@@ -141,6 +180,11 @@ namespace options {
   // the information from intermediate files and write a combined
   // global index for the ThinLTO backends.
   static bool thinlto = false;
+  // If false, all ThinLTO backend compilations through code gen are performed
+  // using multiple threads in the gold-plugin, before handing control back to
+  // gold. If true, exit after creating the combined index, the assuming is
+  // that the build system will launch the backend processes.
+  static bool thinlto_index_only = false;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -172,6 +216,8 @@ namespace options {
       TheOutputType = OT_DISABLE;
     } else if (opt == "thinlto") {
       thinlto = true;
+    } else if (opt == "thinlto-index-only") {
+      thinlto_index_only = true;
     } else if (opt.size() == 2 && opt[0] == 'O') {
       if (opt[1] < '0' || opt[1] > '3')
         message(LDPL_FATAL, "Optimization level must be between 0 and 3");
@@ -442,7 +488,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
   // If we are doing ThinLTO compilation, don't need to process the symbols.
   // Later we simply build a combined index file after all files are claimed.
-  if (options::thinlto)
+  if (options::thinlto && options::thinlto_index_only)
     return LDPS_OK;
 
   for (auto &Sym : Obj->symbols()) {
@@ -761,23 +807,57 @@ static void recordFile(std::string Filename, bool TempOutFile) {
     Cleanup.push_back(Filename.c_str());
 }
 
+void ThinLTOTaskInfo::cleanup() {
+  // Close the output file descriptor before we pass it to gold.
+  OS->close();
+
+  recordFile(Filename, TempOutFile);
+}
+
 namespace {
-/// Class to manage optimization and code generation for a module.
+/// Class to manage optimization and code generation for a module, possibly
+/// in a thread (ThinLTO).
 class CodeGen {
   /// The module for which this will generate code.
   std::unique_ptr<llvm::Module> M;
 
+  /// The output stream to generate code into.
+  raw_fd_ostream *OS;
+
+  /// The task ID when this was invoked in a thread (ThinLTO).
+  int TaskID;
+
+  /// The function index for ThinLTO tasks.
+  const FunctionInfoIndex *CombinedIndex;
+
   /// The target machine for generating code for this module.
   std::unique_ptr<TargetMachine> TM;
 
+  /// Filename to use as base when save-temps is enabled, used to get
+  /// a unique and identifiable save-temps output file for each ThinLTO backend.
+  std::string SaveTempsFilename;
+
 public:
   /// Constructor used by full LTO.
-  CodeGen(std::unique_ptr<llvm::Module> M) : M(std::move(M)) {
+  CodeGen(std::unique_ptr<llvm::Module> M)
+      : M(std::move(M)), OS(nullptr), TaskID(-1), CombinedIndex(nullptr) {
+    initTargetMachine();
+  }
+  /// Constructor used by ThinLTO.
+  CodeGen(std::unique_ptr<llvm::Module> M, raw_fd_ostream *OS, int TaskID,
+          const FunctionInfoIndex *CombinedIndex, std::string Filename)
+      : M(std::move(M)), OS(OS), TaskID(TaskID), CombinedIndex(CombinedIndex),
+        SaveTempsFilename(Filename) {
+    assert(options::thinlto == !!CombinedIndex &&
+           "Expected function index iff performing ThinLTO");
     initTargetMachine();
   }
 
   /// Invoke LTO passes and the code generator for the module.
   void runAll();
+
+  /// Invoke the actual code generation to emit Module's object to file.
+  void runCodegenPasses();
 
 private:
   /// Create a target machine for the module. Must be unique for each
@@ -854,6 +934,7 @@ void CodeGen::runLTOPasses() {
   PMB.LoopVectorize = true;
   PMB.SLPVectorize = true;
   PMB.OptLevel = options::OptLevel;
+  PMB.FunctionIndex = CombinedIndex;
   PMB.populateLTOPassManager(passes);
   passes.run(*M);
 }
@@ -881,6 +962,15 @@ static int openOutputFile(SmallString<128> InFilename, bool TempOutFile,
       message(LDPL_FATAL, "Could not open file: %s", EC.message().c_str());
   }
   return FD;
+}
+
+void CodeGen::runCodegenPasses() {
+  assert(OS && "Output stream must be set before emitting to file");
+  legacy::PassManager CodeGenPasses;
+  if (TM->addPassesToEmitFile(CodeGenPasses, *OS,
+                              TargetMachine::CGFT_ObjectFile))
+    report_fatal_error("Failed to setup codegen");
+  CodeGenPasses.run(*M);
 }
 
 void CodeGen::runSplitCodeGen() {
@@ -931,10 +1021,22 @@ void CodeGen::runAll() {
   runLTOPasses();
 
   if (options::TheOutputType == options::OT_SAVE_TEMPS) {
-    saveBCFile(output_name + ".opt.bc", *M);
+    std::string OptFilename = output_name;
+    // If the CodeGen client provided a filename, use it. Always expect
+    // a provided filename if we are in a task (i.e. ThinLTO backend).
+    assert(!SaveTempsFilename.empty() || TaskID == -1);
+    if (!SaveTempsFilename.empty())
+      OptFilename = SaveTempsFilename;
+    saveBCFile(OptFilename + ".opt.bc", *M);
   }
 
-  runSplitCodeGen();
+  // If we are already in a thread (i.e. ThinLTO), just perform
+  // codegen passes directly.
+  if (TaskID >= 0)
+    runCodegenPasses();
+  // Otherwise attempt split code gen.
+  else
+    runSplitCodeGen();
 }
 
 /// Links the module in \p View from file \p F into the combined module
@@ -957,6 +1059,88 @@ static bool linkInModule(LLVMContext &Context, IRMover &L, claimed_file &F,
   if (L.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {}))
     return true;
   return false;
+}
+
+/// Perform the ThinLTO backend on a single module, invoking the LTO and codegen
+/// pipelines.
+static void thinLTOBackendTask(claimed_file &F, const void *View,
+                               ld_plugin_input_file &File,
+                               raw_fd_ostream *ApiFile,
+                               const FunctionInfoIndex &CombinedIndex,
+                               raw_fd_ostream *OS, unsigned TaskID) {
+  // Need to use a separate context for each task
+  LLVMContext Context;
+  Context.setDiagnosticHandler(diagnosticHandlerForContext, nullptr, true);
+
+  std::unique_ptr<llvm::Module> NewModule(new llvm::Module(File.name, Context));
+  IRMover L(*NewModule.get());
+
+  StringSet<> Dummy;
+  if (linkInModule(Context, L, F, View, File, ApiFile, Dummy, Dummy))
+    message(LDPL_FATAL, "Failed to rename module for ThinLTO");
+  if (renameModuleForThinLTO(*NewModule, &CombinedIndex))
+    message(LDPL_FATAL, "Failed to rename module for ThinLTO");
+
+  CodeGen codeGen(std::move(NewModule), OS, TaskID, &CombinedIndex, File.name);
+  codeGen.runAll();
+}
+
+/// Launch each module's backend pipeline in a separate task in a thread pool.
+static void thinLTOBackends(raw_fd_ostream *ApiFile,
+                            const FunctionInfoIndex &CombinedIndex) {
+  unsigned TaskCount = 0;
+  std::vector<ThinLTOTaskInfo> Tasks;
+  Tasks.reserve(Modules.size());
+  unsigned int MaxThreads = options::Parallelism
+                                ? options::Parallelism
+                                : thread::hardware_concurrency();
+
+  // Create ThreadPool in nested scope so that threads will be joined
+  // on destruction.
+  {
+    ThreadPool ThinLTOThreadPool(MaxThreads);
+    for (claimed_file &F : Modules) {
+      // Do all the gold callbacks in the main thread, since gold is not thread
+      // safe by default.
+      PluginInputFile InputFile(F.handle);
+      const void *View = getSymbolsAndView(F);
+
+      SmallString<128> Filename;
+      if (!options::obj_path.empty())
+        // Note that openOutputFile will append a unique ID for each task
+        Filename = options::obj_path;
+      else if (options::TheOutputType == options::OT_SAVE_TEMPS) {
+        // Use the input file name so that we get a unique and identifiable
+        // output file for each ThinLTO backend task.
+        Filename = InputFile.file().name;
+        Filename += ".thinlto.o";
+      }
+      bool TempOutFile = Filename.empty();
+
+      SmallString<128> NewFilename;
+      int FD = openOutputFile(Filename, TempOutFile, NewFilename,
+                              // Only append the TaskID if we will use the
+                              // non-unique obj_path.
+                              !options::obj_path.empty() ? TaskCount : -1);
+      TaskCount++;
+      std::unique_ptr<raw_fd_ostream> OS =
+          llvm::make_unique<raw_fd_ostream>(FD, true);
+
+      // Enqueue the task
+      ThinLTOThreadPool.async(thinLTOBackendTask, std::ref(F), View,
+                              std::ref(InputFile.file()), ApiFile,
+                              std::ref(CombinedIndex), OS.get(), TaskCount);
+
+      // Record the information needed by the task or during its cleanup
+      // to a ThinLTOTaskInfo instance. For information needed by the task
+      // the unique_ptr ownership is transferred to the ThinLTOTaskInfo.
+      Tasks.emplace_back(std::move(InputFile), std::move(OS),
+                         NewFilename.c_str(), TempOutFile);
+    }
+  }
+
+  for (auto &Task : Tasks)
+    Task.cleanup();
 }
 
 /// gold informs us that all symbols have been read. At this point, we use
@@ -995,8 +1179,13 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     WriteFunctionSummaryToFile(CombinedIndex, OS);
     OS.close();
 
-    cleanup_hook();
-    exit(0);
+    if (options::thinlto_index_only) {
+      cleanup_hook();
+      exit(0);
+    }
+
+    thinLTOBackends(ApiFile, CombinedIndex);
+    return LDPS_OK;
   }
 
   LLVMContext Context;
