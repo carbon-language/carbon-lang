@@ -709,6 +709,16 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, const void *View,
     if (Resolution == LDPR_PREVAILING_DEF_IRONLY_EXP && !Res.IsLinkonceOdr)
       Resolution = LDPR_PREVAILING_DEF;
 
+    // In ThinLTO mode change all prevailing resolutions to LDPR_PREVAILING_DEF.
+    // For ThinLTO the IR files are compiled through the backend independently,
+    // so we need to ensure that any prevailing linkonce copy will be emitted
+    // into the object file by making it weak. Additionally, we can skip the
+    // IRONLY handling for internalization, which isn't performed in ThinLTO
+    // mode currently anyway.
+    if (options::thinlto && (Resolution == LDPR_PREVAILING_DEF_IRONLY_EXP ||
+                             Resolution == LDPR_PREVAILING_DEF_IRONLY))
+      Resolution = LDPR_PREVAILING_DEF;
+
     GV->setUnnamedAddr(Res.UnnamedAddr);
     GV->setVisibility(Res.Visibility);
 
