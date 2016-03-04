@@ -1646,6 +1646,12 @@ static void writeMipsHi16(uint8_t *Loc, uint64_t V) {
   write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(V));
 }
 
+template <endianness E>
+static int64_t readMipsAHL(uint8_t *HiLoc, uint8_t *LoLoc) {
+  return ((read32<E>(HiLoc) & 0xffff) << 16) +
+         SignExtend64<16>(read32<E>(LoLoc) & 0xffff);
+}
+
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf) const {
   const endianness E = ELFT::TargetEndianness;
@@ -1734,18 +1740,14 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_MIPS_GPREL32:
     write32<E>(Loc, S + int32_t(read32<E>(Loc)) - getMipsGpAddr<ELFT>());
     break;
-  case R_MIPS_HI16: {
-    uint32_t Instr = read32<E>(Loc);
-    if (PairedLoc) {
-      uint64_t AHL = ((Instr & 0xffff) << 16) +
-                     SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
-      writeMipsHi16<E>(Loc, S + AHL);
-    } else {
+  case R_MIPS_HI16:
+    if (PairedLoc)
+      writeMipsHi16<E>(Loc, S + readMipsAHL<E>(Loc, PairedLoc));
+    else {
       warning("Can't find matching R_MIPS_LO16 relocation for R_MIPS_HI16");
       writeMipsHi16<E>(Loc, S);
     }
     break;
-  }
   case R_MIPS_JALR:
     // Ignore this optimization relocation for now
     break;
@@ -1770,17 +1772,14 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_MIPS_PC32:
     applyMipsPcReloc<E, 32, 0>(Loc, Type, P, S);
     break;
-  case R_MIPS_PCHI16: {
-    if (PairedLoc) {
-      uint64_t AHL = ((read32<E>(Loc) & 0xffff) << 16) +
-                     SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
-      writeMipsHi16<E>(Loc, S + AHL - P);
-    } else {
+  case R_MIPS_PCHI16:
+    if (PairedLoc)
+      writeMipsHi16<E>(Loc, S + readMipsAHL<E>(Loc, PairedLoc) - P);
+    else {
       warning("Can't find matching R_MIPS_PCLO16 relocation for R_MIPS_PCHI16");
       writeMipsHi16<E>(Loc, S - P);
     }
     break;
-  }
   case R_MIPS_PCLO16: {
     uint32_t Instr = read32<E>(Loc);
     int64_t AHL = SignExtend64<16>(Instr & 0xffff);
