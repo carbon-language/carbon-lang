@@ -1771,14 +1771,13 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     applyMipsPcReloc<E, 32, 0>(Loc, Type, P, S);
     break;
   case R_MIPS_PCHI16: {
-    uint32_t Instr = read32<E>(Loc);
     if (PairedLoc) {
-      uint64_t AHL = ((Instr & 0xffff) << 16) +
+      uint64_t AHL = ((read32<E>(Loc) & 0xffff) << 16) +
                      SignExtend64<16>(read32<E>(PairedLoc) & 0xffff);
-      write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(S + AHL - P));
+      writeMipsHi16<E>(Loc, S + AHL - P);
     } else {
       warning("Can't find matching R_MIPS_PCLO16 relocation for R_MIPS_PCHI16");
-      write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(S - P));
+      writeMipsHi16<E>(Loc, S - P);
     }
     break;
   }
