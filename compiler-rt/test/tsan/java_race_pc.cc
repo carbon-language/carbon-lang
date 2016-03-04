@@ -3,6 +3,7 @@
 // The Tsan report is returning wrong information about
 // the location of the race.
 // XFAIL: powerpc64-unknown-linux-gnu
+
 #include "java.h"
 
 
