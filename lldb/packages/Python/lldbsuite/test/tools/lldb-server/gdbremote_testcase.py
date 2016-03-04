@@ -273,6 +273,7 @@ class GdbRemoteTestCaseBase(TestBase):
         if re.match(".*-.*-.*-android", triple):
             self.forward_adb_port(self.port, self.port, "forward", self.stub_device)
 
+        logger.info("Connecting to debug monitor on %s:%d", self.stub_hostname, self.port)
         connect_info = (self.stub_hostname, self.port)
         sock.connect(connect_info)
 
