@@ -112,6 +112,7 @@ static std::list<claimed_file> Modules;
 static StringMap<ResolutionInfo> ResInfo;
 static std::vector<std::string> Cleanup;
 static llvm::TargetOptions TargetOpts;
+static std::string DefaultTriple = sys::getDefaultTargetTriple();
 
 namespace options {
   enum OutputType {
@@ -123,7 +124,10 @@ namespace options {
   static bool generate_api_file = false;
   static OutputType TheOutputType = OT_NORMAL;
   static unsigned OptLevel = 2;
-  static unsigned Parallelism = 1;
+  // Default parallelism of 0 used to indicate that user did not specify.
+  // Actual parallelism default value depends on implementation.
+  // Currently, code generation defaults to no parallelism.
+  static unsigned Parallelism = 0;
 #ifdef NDEBUG
   static bool DisableVerify = true;
 #else
@@ -568,8 +572,8 @@ static void freeSymName(ld_plugin_symbol &Sym) {
   Sym.comdat_key = nullptr;
 }
 
-static std::unique_ptr<FunctionInfoIndex>
-getFunctionIndexForFile(claimed_file &F, ld_plugin_input_file &Info) {
+/// Helper to get a file's symbols and a view into it via gold callbacks.
+static const void *getSymbolsAndView(claimed_file &F) {
   ld_plugin_status status = get_symbols(F.handle, F.syms.size(), &F.syms[0]);
   if (status == LDPS_NO_SYMS)
     return nullptr;
@@ -580,6 +584,13 @@ getFunctionIndexForFile(claimed_file &F, ld_plugin_input_file &Info) {
   const void *View;
   if (get_view(F.handle, &View) != LDPS_OK)
     message(LDPL_FATAL, "Failed to get a view of file");
+
+  return View;
+}
+
+static std::unique_ptr<FunctionInfoIndex>
+getFunctionIndexForFile(claimed_file &F, ld_plugin_input_file &Info) {
+  const void *View = getSymbolsAndView(F);
 
   MemoryBufferRef BufferRef(StringRef((const char *)View, Info.filesize),
                             Info.name);
@@ -603,22 +614,10 @@ getFunctionIndexForFile(claimed_file &F, ld_plugin_input_file &Info) {
 }
 
 static std::unique_ptr<Module>
-getModuleForFile(LLVMContext &Context, claimed_file &F,
+getModuleForFile(LLVMContext &Context, claimed_file &F, const void *View,
                  ld_plugin_input_file &Info, raw_fd_ostream *ApiFile,
                  StringSet<> &Internalize, StringSet<> &Maybe,
                  std::vector<GlobalValue *> &Keep) {
-
-  ld_plugin_status status = get_symbols(F.handle, F.syms.size(), F.syms.data());
-  if (status == LDPS_NO_SYMS)
-    return nullptr;
-
-  if (status != LDPS_OK)
-    message(LDPL_FATAL, "Failed to get symbol information");
-
-  const void *View;
-  if (get_view(F.handle, &View) != LDPS_OK)
-    message(LDPL_FATAL, "Failed to get a view of file");
-
   MemoryBufferRef BufferRef(StringRef((const char *)View, Info.filesize),
                             Info.name);
   ErrorOr<std::unique_ptr<object::IRObjectFile>> ObjOrErr =
@@ -745,26 +744,6 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
   return Obj.takeModule();
 }
 
-static void runLTOPasses(Module &M, TargetMachine &TM) {
-  M.setDataLayout(TM.createDataLayout());
-
-  legacy::PassManager passes;
-  passes.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
-
-  PassManagerBuilder PMB;
-  PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM.getTargetTriple()));
-  PMB.Inliner = createFunctionInliningPass();
-  // Unconditionally verify input since it is not verified before this
-  // point and has unknown origin.
-  PMB.VerifyInput = true;
-  PMB.VerifyOutput = !options::DisableVerify;
-  PMB.LoopVectorize = true;
-  PMB.SLPVectorize = true;
-  PMB.OptLevel = options::OptLevel;
-  PMB.populateLTOPassManager(passes);
-  passes.run(M);
-}
-
 static void saveBCFile(StringRef Path, Module &M) {
   std::error_code EC;
   raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
@@ -773,24 +752,56 @@ static void saveBCFile(StringRef Path, Module &M) {
   WriteBitcodeToFile(&M, OS, /* ShouldPreserveUseListOrder */ false);
 }
 
-static void codegen(std::unique_ptr<Module> M) {
-  const std::string &TripleStr = M->getTargetTriple();
-  Triple TheTriple(TripleStr);
+static void recordFile(std::string Filename, bool TempOutFile) {
+  if (add_input_file(Filename.c_str()) != LDPS_OK)
+    message(LDPL_FATAL,
+            "Unable to add .o file to the link. File left behind in: %s",
+            Filename.c_str());
+  if (TempOutFile)
+    Cleanup.push_back(Filename.c_str());
+}
 
-  std::string ErrMsg;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr, ErrMsg);
-  if (!TheTarget)
-    message(LDPL_FATAL, "Target not found: %s", ErrMsg.c_str());
+namespace {
+/// Class to manage optimization and code generation for a module.
+class CodeGen {
+  /// The module for which this will generate code.
+  std::unique_ptr<llvm::Module> M;
 
-  if (unsigned NumOpts = options::extra.size())
-    cl::ParseCommandLineOptions(NumOpts, &options::extra[0]);
+  /// The target machine for generating code for this module.
+  std::unique_ptr<TargetMachine> TM;
 
+public:
+  /// Constructor used by full LTO.
+  CodeGen(std::unique_ptr<llvm::Module> M) : M(std::move(M)) {
+    initTargetMachine();
+  }
+
+  /// Invoke LTO passes and the code generator for the module.
+  void runAll();
+
+private:
+  /// Create a target machine for the module. Must be unique for each
+  /// module/task.
+  void initTargetMachine();
+
+  /// Run all LTO passes on the module.
+  void runLTOPasses();
+
+  /// Sets up output files necessary to perform optional multi-threaded
+  /// split code generation, and invokes the code generation implementation.
+  void runSplitCodeGen();
+};
+}
+
+static SubtargetFeatures getFeatures(Triple &TheTriple) {
   SubtargetFeatures Features;
   Features.getDefaultSubtargetFeatures(TheTriple);
   for (const std::string &A : MAttrs)
     Features.AddFeature(A);
+  return Features;
+}
 
-  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+static CodeGenOpt::Level getCGOptLevel() {
   CodeGenOpt::Level CGOptLevel;
   switch (options::OptLevel) {
   case 0:
@@ -806,62 +817,146 @@ static void codegen(std::unique_ptr<Module> M) {
     CGOptLevel = CodeGenOpt::Aggressive;
     break;
   }
-  std::unique_ptr<TargetMachine> TM(TheTarget->createTargetMachine(
+  return CGOptLevel;
+}
+
+void CodeGen::initTargetMachine() {
+  const std::string &TripleStr = M->getTargetTriple();
+  Triple TheTriple(TripleStr);
+
+  std::string ErrMsg;
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr, ErrMsg);
+  if (!TheTarget)
+    message(LDPL_FATAL, "Target not found: %s", ErrMsg.c_str());
+
+  SubtargetFeatures Features = getFeatures(TheTriple);
+  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  CodeGenOpt::Level CGOptLevel = getCGOptLevel();
+
+  TM.reset(TheTarget->createTargetMachine(
       TripleStr, options::mcpu, Features.getString(), Options, RelocationModel,
       CodeModel::Default, CGOptLevel));
+}
 
-  runLTOPasses(*M, *TM);
+void CodeGen::runLTOPasses() {
+  M->setDataLayout(TM->createDataLayout());
 
-  if (options::TheOutputType == options::OT_SAVE_TEMPS)
-    saveBCFile(output_name + ".opt.bc", *M);
+  legacy::PassManager passes;
+  passes.add(createTargetTransformInfoWrapperPass(TM->getTargetIRAnalysis()));
+
+  PassManagerBuilder PMB;
+  PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM->getTargetTriple()));
+  PMB.Inliner = createFunctionInliningPass();
+  // Unconditionally verify input since it is not verified before this
+  // point and has unknown origin.
+  PMB.VerifyInput = true;
+  PMB.VerifyOutput = !options::DisableVerify;
+  PMB.LoopVectorize = true;
+  PMB.SLPVectorize = true;
+  PMB.OptLevel = options::OptLevel;
+  PMB.populateLTOPassManager(passes);
+  passes.run(*M);
+}
+
+/// Open a file and return the new file descriptor given a base input
+/// file name, a flag indicating whether a temp file should be generated,
+/// and an optional task id. The new filename generated is
+/// returned in \p NewFilename.
+static int openOutputFile(SmallString<128> InFilename, bool TempOutFile,
+                          SmallString<128> &NewFilename, int TaskID = -1) {
+  int FD;
+  if (TempOutFile) {
+    std::error_code EC =
+        sys::fs::createTemporaryFile("lto-llvm", "o", FD, NewFilename);
+    if (EC)
+      message(LDPL_FATAL, "Could not create temporary file: %s",
+              EC.message().c_str());
+  } else {
+    NewFilename = InFilename;
+    if (TaskID >= 0)
+      NewFilename += utostr(TaskID);
+    std::error_code EC =
+        sys::fs::openFileForWrite(NewFilename, FD, sys::fs::F_None);
+    if (EC)
+      message(LDPL_FATAL, "Could not open file: %s", EC.message().c_str());
+  }
+  return FD;
+}
+
+void CodeGen::runSplitCodeGen() {
+  const std::string &TripleStr = M->getTargetTriple();
+  Triple TheTriple(TripleStr);
+
+  SubtargetFeatures Features = getFeatures(TheTriple);
+
+  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  CodeGenOpt::Level CGOptLevel = getCGOptLevel();
 
   SmallString<128> Filename;
+  // Note that openOutputFile will append a unique ID for each task
   if (!options::obj_path.empty())
     Filename = options::obj_path;
   else if (options::TheOutputType == options::OT_SAVE_TEMPS)
     Filename = output_name + ".o";
 
-  std::vector<SmallString<128>> Filenames(options::Parallelism);
+  // Note that the default parallelism is 1 instead of the
+  // hardware_concurrency, as there are behavioral differences between
+  // parallelism levels (e.g. symbol ordering will be different, and some uses
+  // of inline asm currently have issues with parallelism >1).
+  unsigned int MaxThreads = options::Parallelism ? options::Parallelism : 1;
+
+  std::vector<SmallString<128>> Filenames(MaxThreads);
   bool TempOutFile = Filename.empty();
   {
-    // Open a file descriptor for each backend thread. This is done in a block
+    // Open a file descriptor for each backend task. This is done in a block
     // so that the output file descriptors are closed before gold opens them.
     std::list<llvm::raw_fd_ostream> OSs;
-    std::vector<llvm::raw_pwrite_stream *> OSPtrs(options::Parallelism);
-    for (unsigned I = 0; I != options::Parallelism; ++I) {
-      int FD;
-      if (TempOutFile) {
-        std::error_code EC =
-            sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filenames[I]);
-        if (EC)
-          message(LDPL_FATAL, "Could not create temporary file: %s",
-                  EC.message().c_str());
-      } else {
-        Filenames[I] = Filename;
-        if (options::Parallelism != 1)
-          Filenames[I] += utostr(I);
-        std::error_code EC =
-            sys::fs::openFileForWrite(Filenames[I], FD, sys::fs::F_None);
-        if (EC)
-          message(LDPL_FATAL, "Could not open file: %s", EC.message().c_str());
-      }
+    std::vector<llvm::raw_pwrite_stream *> OSPtrs(MaxThreads);
+    for (unsigned I = 0; I != MaxThreads; ++I) {
+      int FD = openOutputFile(Filename, TempOutFile, Filenames[I], I);
       OSs.emplace_back(FD, true);
       OSPtrs[I] = &OSs.back();
     }
 
-    // Run backend threads.
+    // Run backend tasks.
     splitCodeGen(std::move(M), OSPtrs, options::mcpu, Features.getString(),
                  Options, RelocationModel, CodeModel::Default, CGOptLevel);
   }
 
-  for (auto &Filename : Filenames) {
-    if (add_input_file(Filename.c_str()) != LDPS_OK)
-      message(LDPL_FATAL,
-              "Unable to add .o file to the link. File left behind in: %s",
-              Filename.c_str());
-    if (TempOutFile)
-      Cleanup.push_back(Filename.c_str());
+  for (auto &Filename : Filenames)
+    recordFile(Filename.c_str(), TempOutFile);
+}
+
+void CodeGen::runAll() {
+  runLTOPasses();
+
+  if (options::TheOutputType == options::OT_SAVE_TEMPS) {
+    saveBCFile(output_name + ".opt.bc", *M);
   }
+
+  runSplitCodeGen();
+}
+
+/// Links the module in \p View from file \p F into the combined module
+/// saved in the IRMover \p L. Returns true on error, false on success.
+static bool linkInModule(LLVMContext &Context, IRMover &L, claimed_file &F,
+                         const void *View, ld_plugin_input_file &File,
+                         raw_fd_ostream *ApiFile, StringSet<> &Internalize,
+                         StringSet<> &Maybe) {
+  std::vector<GlobalValue *> Keep;
+  std::unique_ptr<Module> M = getModuleForFile(Context, F, View, File, ApiFile,
+                                               Internalize, Maybe, Keep);
+  if (!M.get())
+    return false;
+  if (!options::triple.empty())
+    M->setTargetTriple(options::triple.c_str());
+  else if (M->getTargetTriple().empty()) {
+    M->setTargetTriple(DefaultTriple);
+  }
+
+  if (L.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {}))
+    return true;
+  return false;
 }
 
 /// gold informs us that all symbols have been read. At this point, we use
@@ -870,6 +965,9 @@ static void codegen(std::unique_ptr<Module> M) {
 static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
   if (Modules.empty())
     return LDPS_OK;
+
+  if (unsigned NumOpts = options::extra.size())
+    cl::ParseCommandLineOptions(NumOpts, &options::extra[0]);
 
   // If we are doing ThinLTO compilation, simply build the combined
   // function index/summary and emit it. We don't need to parse the modules
@@ -907,23 +1005,13 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
   std::unique_ptr<Module> Combined(new Module("ld-temp.o", Context));
   IRMover L(*Combined);
 
-  std::string DefaultTriple = sys::getDefaultTargetTriple();
-
   StringSet<> Internalize;
   StringSet<> Maybe;
   for (claimed_file &F : Modules) {
     PluginInputFile InputFile(F.handle);
-    std::vector<GlobalValue *> Keep;
-    std::unique_ptr<Module> M = getModuleForFile(
-        Context, F, InputFile.file(), ApiFile, Internalize, Maybe, Keep);
-    if (!M.get())
-      continue;
-    if (!options::triple.empty())
-      M->setTargetTriple(options::triple.c_str());
-    else if (M->getTargetTriple().empty())
-      M->setTargetTriple(DefaultTriple);
-
-    if (L.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {}))
+    const void *View = getSymbolsAndView(F);
+    if (linkInModule(Context, L, F, View, InputFile.file(), ApiFile,
+                     Internalize, Maybe))
       message(LDPL_FATAL, "Failed to link module");
   }
 
@@ -956,7 +1044,8 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
       return LDPS_OK;
   }
 
-  codegen(std::move(Combined));
+  CodeGen codeGen(std::move(Combined));
+  codeGen.runAll();
 
   if (!options::extra_library_path.empty() &&
       set_extra_library_path(options::extra_library_path.c_str()) != LDPS_OK)
