@@ -1007,8 +1007,14 @@ bool RegisterCoalescer::reMaterializeTrivialDef(const CoalescerPair &CP,
         NewRC = TRI->getCommonSubClass(NewRC, DefRC);
       assert(NewRC && "subreg chosen for remat incompatible with instruction");
     }
+    // Remap subranges to new lanemask and change register class.
+    LiveInterval &DstInt = LIS->getInterval(DstReg);
+    for (LiveInterval::SubRange &SR : DstInt.subranges()) {
+      SR.LaneMask = TRI->composeSubRegIndexLaneMask(DstIdx, SR.LaneMask);
+    }
     MRI->setRegClass(DstReg, NewRC);
 
+    // Update machine operands and add flags.
     updateRegDefsUses(DstReg, DstReg, DstIdx);
     NewMI->getOperand(0).setSubReg(NewIdx);
     // Add dead subregister definitions if we are defining the whole register
@@ -1025,7 +1031,6 @@ bool RegisterCoalescer::reMaterializeTrivialDef(const CoalescerPair &CP,
     //
     // at this point for the part that wasn't defined before we could have
     // subranges missing the definition.
-    LiveInterval &DstInt = LIS->getInterval(DstReg);
     if (NewIdx == 0 && DstInt.hasSubRanges()) {
       SlotIndex CurrIdx = LIS->getInstructionIndex(*NewMI);
       SlotIndex DefIndex = CurrIdx.getRegSlot(NewMI->getOperand(0).isEarlyClobber());
