@@ -4880,6 +4880,20 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
     return false;
   }
 
+  if (MaskNode.getOpcode() == X86ISD::VZEXT_MOVL &&
+      MaskNode.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR) {
+    if (VT.getScalarSizeInBits() != MaskEltSizeInBits)
+      return false;
+    SDValue MaskElement = MaskNode.getOperand(0).getOperand(0);
+    if (auto *CN = dyn_cast<ConstantSDNode>(MaskElement)) {
+      APInt RawElt = CN->getAPIntValue().getLoBits(MaskEltSizeInBits);
+      RawMask.push_back(RawElt.getZExtValue());
+      RawMask.append(VT.getVectorNumElements() - 1, 0);
+      return true;
+    }
+    return false;
+  }
+
   if (MaskNode.getOpcode() != ISD::BUILD_VECTOR)
     return false;
 
@@ -5012,8 +5026,13 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
   case X86ISD::VPERMILPV: {
     IsUnary = true;
     SDValue MaskNode = N->getOperand(1);
+    unsigned MaskEltSize = VT.getScalarSizeInBits();
+    SmallVector<uint64_t, 32> RawMask;
+    if (getTargetShuffleMaskIndices(MaskNode, MaskEltSize, RawMask)) {
+      DecodeVPERMILPMask(VT, RawMask, Mask);
+      break;
+    }
     if (auto *C = getTargetShuffleMaskConstant(MaskNode)) {
-      unsigned MaskEltSize = VT.getScalarSizeInBits();
       DecodeVPERMILPMask(C, MaskEltSize, Mask);
       break;
     }
