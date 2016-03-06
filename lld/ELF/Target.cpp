@@ -81,19 +81,19 @@ class X86TargetInfo final : public TargetInfo {
 public:
   X86TargetInfo();
   void writeGotPltHeader(uint8_t *Buf) const override;
-  unsigned getDynRel(unsigned Type) const override;
-  unsigned getTlsGotRel(unsigned Type) const override;
-  bool pointsToLocalDynamicGotEntry(unsigned Type) const override;
-  bool isTlsLocalDynamicRel(unsigned Type) const override;
-  bool isTlsGlobalDynamicRel(unsigned Type) const override;
-  bool isTlsInitialExecRel(unsigned Type) const override;
-  bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
+  uint32_t getDynRel(uint32_t Type) const override;
+  uint32_t getTlsGotRel(uint32_t Type) const override;
+  bool pointsToLocalDynamicGotEntry(uint32_t Type) const override;
+  bool isTlsLocalDynamicRel(uint32_t Type) const override;
+  bool isTlsGlobalDynamicRel(uint32_t Type) const override;
+  bool isTlsInitialExecRel(uint32_t Type) const override;
+  bool isTlsDynRel(uint32_t Type, const SymbolBody &S) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsDynRelative(unsigned Type) const override;
+  bool needsDynRelative(uint32_t Type) const override;
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -111,19 +111,19 @@ private:
                          uint64_t SA) const;
   void relocateTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
                          uint64_t SA) const;
-  void relocateTlsIeToLe(unsigned Type, uint8_t *Loc, uint8_t *BufEnd,
+  void relocateTlsIeToLe(uint32_t Type, uint8_t *Loc, uint8_t *BufEnd,
                          uint64_t P, uint64_t SA) const;
 };
 
 class X86_64TargetInfo final : public TargetInfo {
 public:
   X86_64TargetInfo();
-  unsigned getTlsGotRel(unsigned Type) const override;
-  bool pointsToLocalDynamicGotEntry(unsigned Type) const override;
-  bool isTlsLocalDynamicRel(unsigned Type) const override;
-  bool isTlsGlobalDynamicRel(unsigned Type) const override;
-  bool isTlsInitialExecRel(unsigned Type) const override;
-  bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
+  uint32_t getTlsGotRel(uint32_t Type) const override;
+  bool pointsToLocalDynamicGotEntry(uint32_t Type) const override;
+  bool isTlsLocalDynamicRel(uint32_t Type) const override;
+  bool isTlsGlobalDynamicRel(uint32_t Type) const override;
+  bool isTlsInitialExecRel(uint32_t Type) const override;
+  bool isTlsDynRel(uint32_t Type, const SymbolBody &S) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
@@ -177,15 +177,15 @@ public:
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();
-  unsigned getDynRel(unsigned Type) const override;
-  bool isTlsGlobalDynamicRel(unsigned Type) const override;
-  bool isTlsInitialExecRel(unsigned Type) const override;
+  uint32_t getDynRel(uint32_t Type) const override;
+  bool isTlsGlobalDynamicRel(uint32_t Type) const override;
+  bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  unsigned getTlsGotRel(unsigned Type) const override;
-  bool isTlsDynRel(unsigned Type, const SymbolBody &S) const override;
+  uint32_t getTlsGotRel(uint32_t Type) const override;
+  bool isTlsDynRel(uint32_t Type, const SymbolBody &S) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
@@ -197,9 +197,9 @@ public:
                     uint64_t SA, const SymbolBody *S) const override;
 
 private:
-  void relocateTlsGdToLe(unsigned Type, uint8_t *Loc, uint8_t *BufEnd,
+  void relocateTlsGdToLe(uint32_t Type, uint8_t *Loc, uint8_t *BufEnd,
                          uint64_t P, uint64_t SA) const;
-  void relocateTlsIeToLe(unsigned Type, uint8_t *Loc, uint8_t *BufEnd,
+  void relocateTlsIeToLe(uint32_t Type, uint8_t *Loc, uint8_t *BufEnd,
                          uint64_t P, uint64_t SA) const;
 
   static const uint64_t TcbSize = 16;
@@ -216,7 +216,7 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
-  unsigned getDynRel(unsigned Type) const override;
+  uint32_t getDynRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
@@ -263,7 +263,7 @@ TargetInfo *createTarget() {
 
 TargetInfo::~TargetInfo() {}
 
-bool TargetInfo::canRelaxTls(unsigned Type, const SymbolBody *S) const {
+bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
   if (Config->Shared || (S && !S->isTls()))
     return false;
 
@@ -304,7 +304,7 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return mayNeedCopy<ELFT>(S) && needsCopyRelImpl(Type);
 }
 
-bool TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
+bool TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
@@ -356,15 +356,15 @@ TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
   return Plt_No;
 }
 
-bool TargetInfo::isTlsInitialExecRel(unsigned Type) const { return false; }
+bool TargetInfo::isTlsInitialExecRel(uint32_t Type) const { return false; }
 
-bool TargetInfo::pointsToLocalDynamicGotEntry(unsigned Type) const {
+bool TargetInfo::pointsToLocalDynamicGotEntry(uint32_t Type) const {
   return false;
 }
 
-bool TargetInfo::isTlsLocalDynamicRel(unsigned Type) const { return false; }
+bool TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const { return false; }
 
-bool TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {
+bool TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return false;
 }
 
@@ -398,7 +398,7 @@ void X86TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
   write32le(Buf, Plt + 6);
 }
 
-unsigned X86TargetInfo::getDynRel(unsigned Type) const {
+uint32_t X86TargetInfo::getDynRel(uint32_t Type) const {
   if (Type == R_386_TLS_LE)
     return R_386_TLS_TPOFF;
   if (Type == R_386_TLS_LE_32)
@@ -406,29 +406,29 @@ unsigned X86TargetInfo::getDynRel(unsigned Type) const {
   return Type;
 }
 
-unsigned X86TargetInfo::getTlsGotRel(unsigned Type) const {
+uint32_t X86TargetInfo::getTlsGotRel(uint32_t Type) const {
   if (Type == R_386_TLS_IE)
     return Type;
   return TlsGotRel;
 }
 
-bool X86TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {
+bool X86TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return Type == R_386_TLS_GD;
 }
 
-bool X86TargetInfo::isTlsLocalDynamicRel(unsigned Type) const {
+bool X86TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
   return Type == R_386_TLS_LDO_32 || Type == R_386_TLS_LDM;
 }
 
-bool X86TargetInfo::pointsToLocalDynamicGotEntry(unsigned Type) const {
+bool X86TargetInfo::pointsToLocalDynamicGotEntry(uint32_t Type) const {
   return Type == R_386_TLS_LDM;
 }
 
-bool X86TargetInfo::isTlsInitialExecRel(unsigned Type) const {
+bool X86TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
   return Type == R_386_TLS_IE || Type == R_386_TLS_GOTIE;
 }
 
-bool X86TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
+bool X86TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
   if (Type == R_386_TLS_LE || Type == R_386_TLS_LE_32 ||
       Type == R_386_TLS_GOTIE)
     return Config->Shared;
@@ -555,7 +555,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   }
 }
 
-bool X86TargetInfo::needsDynRelative(unsigned Type) const {
+bool X86TargetInfo::needsDynRelative(uint32_t Type) const {
   return Config->Shared && Type == R_386_TLS_IE;
 }
 
@@ -647,7 +647,7 @@ void X86TargetInfo::relocateTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
 // Read "ELF Handling For Thread-Local Storage, 5.1
 // IA-32 Linker Optimizations" (http://www.akkadia.org/drepper/tls.pdf)
 // by Ulrich Drepper for details.
-void X86TargetInfo::relocateTlsIeToLe(unsigned Type, uint8_t *Loc,
+void X86TargetInfo::relocateTlsIeToLe(uint32_t Type, uint8_t *Loc,
                                       uint8_t *BufEnd, uint64_t P,
                                       uint64_t SA) const {
   // Ulrich's document section 6.2 says that @gotntpoff can
@@ -754,30 +754,30 @@ bool X86_64TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   return refersToGotEntry(Type) || needsPlt<ELF64LE>(Type, S);
 }
 
-unsigned X86_64TargetInfo::getTlsGotRel(unsigned Type) const {
+uint32_t X86_64TargetInfo::getTlsGotRel(uint32_t Type) const {
   // No other types of TLS relocations requiring GOT should
   // reach here.
   assert(Type == R_X86_64_GOTTPOFF);
   return R_X86_64_PC32;
 }
 
-bool X86_64TargetInfo::isTlsInitialExecRel(unsigned Type) const {
+bool X86_64TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
   return Type == R_X86_64_GOTTPOFF;
 }
 
-bool X86_64TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {
+bool X86_64TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return Type == R_X86_64_TLSGD;
 }
 
-bool X86_64TargetInfo::pointsToLocalDynamicGotEntry(unsigned Type) const {
+bool X86_64TargetInfo::pointsToLocalDynamicGotEntry(uint32_t Type) const {
   return Type == R_X86_64_TLSLD;
 }
 
-bool X86_64TargetInfo::isTlsLocalDynamicRel(unsigned Type) const {
+bool X86_64TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
   return Type == R_X86_64_DTPOFF32 || Type == R_X86_64_TLSLD;
 }
 
-bool X86_64TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
+bool X86_64TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
   return Type == R_X86_64_GOTTPOFF || Type == R_X86_64_TLSGD;
 }
 
@@ -1236,19 +1236,19 @@ bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
          Type == R_AARCH64_ADD_ABS_LO12_NC || Type == R_AARCH64_CALL26;
 }
 
-bool AArch64TargetInfo::isTlsGlobalDynamicRel(unsigned Type) const {
+bool AArch64TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return Type == R_AARCH64_TLSDESC_ADR_PAGE21 ||
          Type == R_AARCH64_TLSDESC_LD64_LO12_NC ||
          Type == R_AARCH64_TLSDESC_ADD_LO12_NC ||
          Type == R_AARCH64_TLSDESC_CALL;
 }
 
-bool AArch64TargetInfo::isTlsInitialExecRel(unsigned Type) const {
+bool AArch64TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
   return Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
          Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC;
 }
 
-unsigned AArch64TargetInfo::getDynRel(unsigned Type) const {
+uint32_t AArch64TargetInfo::getDynRel(uint32_t Type) const {
   if (Type == R_AARCH64_ABS32 || Type == R_AARCH64_ABS64)
     return Type;
   StringRef S = getELFRelocationTypeName(EM_AARCH64, Type);
@@ -1303,13 +1303,13 @@ void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
               GotEntryAddr);
 }
 
-unsigned AArch64TargetInfo::getTlsGotRel(unsigned Type) const {
+uint32_t AArch64TargetInfo::getTlsGotRel(uint32_t Type) const {
   assert(Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
     Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC);
     return Type;
 }
 
-bool AArch64TargetInfo::isTlsDynRel(unsigned Type, const SymbolBody &S) const {
+bool AArch64TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
   return Type == R_AARCH64_TLSDESC_ADR_PAGE21 ||
          Type == R_AARCH64_TLSDESC_LD64_LO12_NC ||
          Type == R_AARCH64_TLSDESC_ADD_LO12_NC ||
@@ -1510,7 +1510,7 @@ unsigned AArch64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd,
 
 // Global-Dynamic relocations can be relaxed to Local-Exec if both binary is
 // an executable and target is final (can notbe preempted).
-void AArch64TargetInfo::relocateTlsGdToLe(unsigned Type, uint8_t *Loc,
+void AArch64TargetInfo::relocateTlsGdToLe(uint32_t Type, uint8_t *Loc,
                                           uint8_t *BufEnd, uint64_t P,
                                           uint64_t SA) const {
   // TLSDESC Global-Dynamic relocation are in the form:
@@ -1551,7 +1551,7 @@ void AArch64TargetInfo::relocateTlsGdToLe(unsigned Type, uint8_t *Loc,
 
 // Initial-Exec relocations can be relaxed to Local-Exec if symbol is final
 // (can not be preempted).
-void AArch64TargetInfo::relocateTlsIeToLe(unsigned Type, uint8_t *Loc,
+void AArch64TargetInfo::relocateTlsIeToLe(uint32_t Type, uint8_t *Loc,
                                           uint8_t *BufEnd, uint64_t P,
                                           uint64_t SA) const {
   uint64_t TPOff = llvm::alignTo(TcbSize, Out<ELF64LE>::TlsPhdr->p_align);
@@ -1598,7 +1598,7 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
 }
 
 template <class ELFT>
-unsigned MipsTargetInfo<ELFT>::getDynRel(unsigned Type) const {
+uint32_t MipsTargetInfo<ELFT>::getDynRel(uint32_t Type) const {
   if (Type == R_MIPS_32 || Type == R_MIPS_64)
     return R_MIPS_REL32;
   StringRef S = getELFRelocationTypeName(EM_MIPS, Type);
