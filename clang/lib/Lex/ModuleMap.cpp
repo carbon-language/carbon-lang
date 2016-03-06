@@ -1402,7 +1402,9 @@ void ModuleMapParser::parseModuleDecl() {
   
   // Parse the optional attribute list.
   Attributes Attrs;
-  parseOptionalAttributes(Attrs);
+  if (parseOptionalAttributes(Attrs))
+    return;
+
   
   // Parse the opening brace.
   if (!Tok.is(MMToken::LBrace)) {
@@ -2067,7 +2069,9 @@ void ModuleMapParser::parseConfigMacros() {
 
   // Parse the optional attributes.
   Attributes Attrs;
-  parseOptionalAttributes(Attrs);
+  if (parseOptionalAttributes(Attrs))
+    return;
+
   if (Attrs.IsExhaustive && !ActiveModule->Parent) {
     ActiveModule->ConfigMacrosExhaustive = true;
   }
@@ -2215,7 +2219,8 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
 
   // Parse optional attributes.
   Attributes Attrs;
-  parseOptionalAttributes(Attrs);
+  if (parseOptionalAttributes(Attrs))
+    return;
 
   if (ActiveModule) {
     // Note that we have an inferred submodule.
