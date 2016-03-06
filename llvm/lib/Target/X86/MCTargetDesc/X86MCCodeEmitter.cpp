@@ -947,8 +947,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     assert((VEX_5M & 0x3) == VEX_5M
            && "More than 2 significant bits in VEX.m-mmmm fields for EVEX!");
 
-    VEX_5M &= 0x3;
-
     EmitByte(0x62, CurByte, OS);
     EmitByte((VEX_R   << 7) |
              (VEX_X   << 6) |
