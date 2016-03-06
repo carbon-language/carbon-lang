@@ -268,7 +268,7 @@ static bool handleTlsRelocation(uint32_t Type, SymbolBody *Body,
     return true;
   }
 
-  if (!Body || !Body->isTls())
+  if (!Body || !Body->IsTls)
     return false;
 
   if (Target->isTlsGlobalDynamicRel(Type)) {
@@ -424,7 +424,7 @@ void Writer<ELFT>::scanRelocs(
       if (CBP || Dynrel) {
         uint32_t DynType;
         if (CBP)
-          DynType = Body->isTls() ? Target->TlsGotRel : Target->GotRel;
+          DynType = Body->IsTls ? Target->TlsGotRel : Target->GotRel;
         else
           DynType = Target->RelativeRel;
         Out<ELFT>::RelaDyn->addReloc(

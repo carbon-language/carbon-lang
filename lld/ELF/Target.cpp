@@ -264,7 +264,7 @@ TargetInfo *createTarget() {
 TargetInfo::~TargetInfo() {}
 
 bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
+  if (Config->Shared || (S && !S->IsTls))
     return false;
 
   // We know we are producing an executable.
@@ -485,7 +485,7 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 }
 
 bool X86TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
-  if (S.isTls() && Type == R_386_TLS_GD)
+  if (S.IsTls && Type == R_386_TLS_GD)
     return Target->canRelaxTls(Type, &S) && canBePreempted(&S);
   if (Type == R_386_TLS_GOTIE || Type == R_386_TLS_IE)
     return !canRelaxTls(Type, &S);
