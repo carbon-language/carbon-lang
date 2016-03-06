@@ -12,8 +12,6 @@
 
 #ifdef _WIN32
 #include <direct.h>
-#elif I386_FREEBSD
-int mkdir(const char*, unsigned short);
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
