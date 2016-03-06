@@ -37,7 +37,7 @@ void __llvm_profile_recursive_mkdir(char *path) {
 
 #if COMPILER_RT_HAS_ATOMICS != 1
 COMPILER_RT_VISIBILITY
-uint32_t BoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
+uint32_t lprofBoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
   void *R = *Ptr;
   if (R == OldV) {
     *Ptr = NewV;
