@@ -1305,8 +1305,8 @@ void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 
 uint32_t AArch64TargetInfo::getTlsGotRel(uint32_t Type) const {
   assert(Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
-    Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC);
-    return Type;
+         Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC);
+  return Type;
 }
 
 bool AArch64TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
@@ -1558,7 +1558,7 @@ void AArch64TargetInfo::relocateTlsIeToLe(uint32_t Type, uint8_t *Loc,
   uint64_t X = SA + TPOff;
   checkUInt<32>(X, Type);
 
-  uint32_t Inst = read32le (Loc);
+  uint32_t Inst = read32le(Loc);
   uint32_t NewInst;
   if (Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21) {
     // Generate movz.
@@ -1573,7 +1573,6 @@ void AArch64TargetInfo::relocateTlsIeToLe(uint32_t Type, uint8_t *Loc,
   }
   write32le(Loc, NewInst);
 }
-
 
 // Implementing relocations for AMDGPU is low priority since most
 // programs don't use relocations now. Thus, this function is not
