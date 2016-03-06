@@ -34,7 +34,7 @@ static StringMap<int> createIndexMap(const ArrayRef<StringRef>& a) {
   StringMap<int> map;
   for (auto Name : a)
     map.insert(std::make_pair(Name, map.size()));
-  return std::move(map);
+  return map;
 }
 
 static int get_amd_kernel_code_t_FieldIndex(StringRef name) {
