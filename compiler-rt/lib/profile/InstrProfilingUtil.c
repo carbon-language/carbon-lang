@@ -19,6 +19,12 @@ int mkdir(const char*, unsigned short);
 #include <sys/types.h>
 #endif
 
+#ifdef COMPILER_RT_HAS_UNAME
+#include <sys/utsname.h>
+#endif
+
+#include <string.h>
+
 COMPILER_RT_VISIBILITY
 void __llvm_profile_recursive_mkdir(char *path) {
   int i;
@@ -46,4 +52,15 @@ uint32_t lprofBoolCmpXchg(void **Ptr, void *OldV, void *NewV) {
   return 0;
 }
 #endif
+
+#ifdef COMPILER_RT_HAS_UNAME
+int lprofGetHostName(char *Name, int Len) {
+  struct utsname N;
+  int R;
+  if (!(R = uname(&N)))
+    strncpy(Name, N.nodename, Len);
+  return R;
+}
+#endif
+
 

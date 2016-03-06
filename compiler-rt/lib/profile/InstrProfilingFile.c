@@ -14,21 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef COMPILER_RT_HAS_UNAME
-#include <sys/utsname.h>
-#endif
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
-
-#ifdef COMPILER_RT_HAS_UNAME
-int lprofGetHostName(char *Name, int Len) {
-  struct utsname N;
-  int R;
-  if (!(R = uname(&N)))
-    strncpy(Name, N.nodename, Len);
-  return R;
-}
-#endif
 
 /* Return 1 if there is an error, otherwise return  0.  */
 static uint32_t fileWriter(ProfDataIOVec *IOVecs, uint32_t NumIOVecs,
