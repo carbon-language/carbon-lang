@@ -89,7 +89,7 @@ public:
   //  VEX.VVVV    => XMM9 => ~9
   //
   // See table 4-35 of Intel AVX Programming Reference for details.
-  unsigned char getVEXRegisterEncoding(const MCInst &MI,
+  uint8_t getVEXRegisterEncoding(const MCInst &MI,
                                        unsigned OpNum) const {
     unsigned SrcReg = MI.getOperand(OpNum).getReg();
     unsigned SrcRegNum = GetX86RegNum(MI.getOperand(OpNum));
@@ -101,15 +101,14 @@ public:
     return (~SrcRegNum) & 0xf;
   }
 
-  unsigned char getWriteMaskRegisterEncoding(const MCInst &MI,
+  uint8_t getWriteMaskRegisterEncoding(const MCInst &MI,
                                              unsigned OpNum) const {
     assert(X86::K0 != MI.getOperand(OpNum).getReg() &&
            "Invalid mask register as write-mask!");
-    unsigned MaskRegNum = GetX86RegNum(MI.getOperand(OpNum));
-    return MaskRegNum;
+    return GetX86RegEncoding(MI.getOperand(OpNum));
   }
 
-  void EmitByte(unsigned char C, unsigned &CurByte, raw_ostream &OS) const {
+  void EmitByte(uint8_t C, unsigned &CurByte, raw_ostream &OS) const {
     OS << (char)C;
     ++CurByte;
   }
@@ -129,8 +128,8 @@ public:
                      SmallVectorImpl<MCFixup> &Fixups,
                      int ImmOffset = 0) const;
 
-  inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
-                                        unsigned RM) {
+  inline static uint8_t ModRMByte(unsigned Mod, unsigned RegOpcode,
+                                  unsigned RM) {
     assert(Mod < 4 && RegOpcode < 8 && RM < 8 && "ModRM Fields out of range!");
     return RM | (RegOpcode << 3) | (Mod << 6);
   }
@@ -181,7 +180,7 @@ MCCodeEmitter *llvm::createX86MCCodeEmitter(const MCInstrInfo &MCII,
 /// isDisp8 - Return true if this signed displacement fits in a 8-bit
 /// sign-extended field.
 static bool isDisp8(int Value) {
-  return Value == (signed char)Value;
+  return Value == (int8_t)Value;
 }
 
 /// isCDisp8 - Return true if this signed displacement fits in a 8-bit
@@ -202,7 +201,7 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
   if (Value & Mask) // Unaligned offset
     return false;
   Value /= (int)CD8_Scale;
-  bool Ret = (Value == (signed char)Value);
+  bool Ret = (Value == (int8_t)Value);
 
   if (Ret)
     CValue = Value;
@@ -612,26 +611,26 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  1: Same as REX_R=0 (must be 1 in 32-bit mode)
   //  0: Same as REX_R=1 (64 bit mode only)
   //
-  unsigned char VEX_R = 0x1;
-  unsigned char EVEX_R2 = 0x1;
+  uint8_t VEX_R = 0x1;
+  uint8_t EVEX_R2 = 0x1;
 
   // VEX_X: equivalent to REX.X, only used when a
   // register is used for index in SIB Byte.
   //
   //  1: Same as REX.X=0 (must be 1 in 32-bit mode)
   //  0: Same as REX.X=1 (64-bit mode only)
-  unsigned char VEX_X = 0x1;
+  uint8_t VEX_X = 0x1;
 
   // VEX_B:
   //
   //  1: Same as REX_B=0 (ignored in 32-bit mode)
   //  0: Same as REX_B=1 (64 bit mode only)
   //
-  unsigned char VEX_B = 0x1;
+  uint8_t VEX_B = 0x1;
 
   // VEX_W: opcode specific (use like REX.W, or used for
   // opcode extension, or ignored, depending on the opcode byte)
-  unsigned char VEX_W = (TSFlags & X86II::VEX_W) ? 1 : 0;
+  uint8_t VEX_W = (TSFlags & X86II::VEX_W) ? 1 : 0;
 
   // VEX_5M (VEX m-mmmmm field):
   //
@@ -643,7 +642,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0b01000: XOP map select - 08h instructions with imm byte
   //  0b01001: XOP map select - 09h instructions with no imm byte
   //  0b01010: XOP map select - 0Ah instructions with imm dword
-  unsigned char VEX_5M;
+  uint8_t VEX_5M;
   switch (TSFlags & X86II::OpMapMask) {
   default: llvm_unreachable("Invalid prefix!");
   case X86II::TB:   VEX_5M = 0x1; break; // 0F
@@ -656,8 +655,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // VEX_4V (VEX vvvv field): a register specifier
   // (in 1's complement form) or 1111 if unused.
-  unsigned char VEX_4V = 0xf;
-  unsigned char EVEX_V2 = 0x1;
+  uint8_t VEX_4V = 0xf;
+  uint8_t EVEX_V2 = 0x1;
 
   // EVEX_L2/VEX_L (Vector Length):
   //
@@ -666,8 +665,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0 1: 256-bit vector
   //  1 0: 512-bit vector
   //
-  unsigned char VEX_L = (TSFlags & X86II::VEX_L) ? 1 : 0;
-  unsigned char EVEX_L2 = (TSFlags & X86II::EVEX_L2) ? 1 : 0;
+  uint8_t VEX_L = (TSFlags & X86II::VEX_L) ? 1 : 0;
+  uint8_t EVEX_L2 = (TSFlags & X86II::EVEX_L2) ? 1 : 0;
 
   // VEX_PP: opcode extension providing equivalent
   // functionality of a SIMD prefix
@@ -677,7 +676,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0b10: F3
   //  0b11: F2
   //
-  unsigned char VEX_PP;
+  uint8_t VEX_PP;
   switch (TSFlags & X86II::OpPrefixMask) {
   default: llvm_unreachable("Invalid op prefix!");
   case X86II::PS: VEX_PP = 0x0; break; // none
@@ -687,19 +686,19 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
 
   // EVEX_U
-  unsigned char EVEX_U = 1; // Always '1' so far
+  uint8_t EVEX_U = 1; // Always '1' so far
 
   // EVEX_z
-  unsigned char EVEX_z = (HasEVEX_K && (TSFlags & X86II::EVEX_Z)) ? 1 : 0;
+  uint8_t EVEX_z = (HasEVEX_K && (TSFlags & X86II::EVEX_Z)) ? 1 : 0;
 
   // EVEX_b
-  unsigned char EVEX_b = (TSFlags & X86II::EVEX_B) ? 1 : 0;
+  uint8_t EVEX_b = (TSFlags & X86II::EVEX_B) ? 1 : 0;
 
   // EVEX_rc
-  unsigned char EVEX_rc = 0;
+  uint8_t EVEX_rc = 0;
 
   // EVEX_aaa
-  unsigned char EVEX_aaa = 0;
+  uint8_t EVEX_aaa = 0;
 
   bool EncodeRC = false;
 
@@ -925,7 +924,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //    +-----+ +--------------+ +-------------------+
     //    | 8Fh | | RXB | m-mmmm | | W | vvvv | L | pp |
     //    +-----+ +--------------+ +-------------------+
-    unsigned char LastByte = VEX_PP | (VEX_L << 2) | (VEX_4V << 3);
+    uint8_t LastByte = VEX_PP | (VEX_L << 2) | (VEX_4V << 3);
 
     // Can we use the 2 byte VEX prefix?
     if (Encoding == X86II::VEX && VEX_B && VEX_X && !VEX_W && (VEX_5M == 1)) {
@@ -1225,7 +1224,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   else
     EmitVEXOpcodePrefix(TSFlags, CurByte, MemoryOperand, MI, Desc, OS);
 
-  unsigned char BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
+  uint8_t BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
 
   if (TSFlags & X86II::Has3DNow0F0FOpcode)
     BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
