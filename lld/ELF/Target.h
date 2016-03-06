@@ -70,8 +70,8 @@ public:
   bool canRelaxTls(uint32_t Type, const SymbolBody *S) const;
   template <class ELFT>
   bool needsCopyRel(uint32_t Type, const SymbolBody &S) const;
-  virtual unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                            uint64_t P, uint64_t SA, const SymbolBody *S) const;
+  virtual size_t relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                          uint64_t P, uint64_t SA, const SymbolBody *S) const;
   virtual ~TargetInfo();
 
   unsigned PageSize = 4096;

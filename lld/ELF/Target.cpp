@@ -99,8 +99,8 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
-  unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                    uint64_t SA, const SymbolBody *S) const override;
+  size_t relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
+                  uint64_t SA, const SymbolBody *S) const override;
   bool isGotRelative(uint32_t Type) const override;
   bool refersToGotEntry(uint32_t Type) const override;
 
@@ -138,8 +138,8 @@ public:
                    uint8_t *PairedLoc = nullptr) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool isSizeRel(uint32_t Type) const override;
-  unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                    uint64_t SA, const SymbolBody *S) const override;
+  size_t relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
+                  uint64_t SA, const SymbolBody *S) const override;
 
 private:
   void relocateTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint64_t P,
@@ -193,8 +193,8 @@ public:
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA, uint64_t ZA = 0,
                    uint8_t *PairedLoc = nullptr) const override;
-  unsigned relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                    uint64_t SA, const SymbolBody *S) const override;
+  size_t relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
+                  uint64_t SA, const SymbolBody *S) const override;
 
 private:
   void relocateTlsGdToLe(uint32_t Type, uint8_t *Loc, uint8_t *BufEnd,
@@ -368,9 +368,9 @@ bool TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return false;
 }
 
-unsigned TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                              uint64_t P, uint64_t SA,
-                              const SymbolBody *S) const {
+size_t TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                            uint64_t P, uint64_t SA,
+                            const SymbolBody *S) const {
   return 0;
 }
 
@@ -559,9 +559,9 @@ bool X86TargetInfo::needsDynRelative(uint32_t Type) const {
   return Config->Shared && Type == R_386_TLS_IE;
 }
 
-unsigned X86TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                 uint64_t P, uint64_t SA,
-                                 const SymbolBody *S) const {
+size_t X86TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                               uint64_t P, uint64_t SA,
+                               const SymbolBody *S) const {
   switch (Type) {
   case R_386_TLS_GD:
     if (canBePreempted(S))
@@ -907,9 +907,9 @@ void X86_64TargetInfo::relocateTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
 // relocation target, relocations immediately follow the TLS relocation (which
 // would be applied to rewritten instructions) may have to be skipped.
 // This function returns a number of relocations that need to be skipped.
-unsigned X86_64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd,
-                                    uint32_t Type, uint64_t P, uint64_t SA,
-                                    const SymbolBody *S) const {
+size_t X86_64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                                  uint64_t P, uint64_t SA,
+                                  const SymbolBody *S) const {
   switch (Type) {
   case R_X86_64_DTPOFF32:
     relocateOne(Loc, BufEnd, R_X86_64_TPOFF32, P, SA);
@@ -1486,9 +1486,9 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   }
 }
 
-unsigned AArch64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd,
-                                     uint32_t Type, uint64_t P, uint64_t SA,
-                                     const SymbolBody *S) const {
+size_t AArch64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                                   uint64_t P, uint64_t SA,
+                                   const SymbolBody *S) const {
   switch (Type) {
   case R_AARCH64_TLSDESC_ADR_PAGE21:
   case R_AARCH64_TLSDESC_LD64_LO12_NC:
