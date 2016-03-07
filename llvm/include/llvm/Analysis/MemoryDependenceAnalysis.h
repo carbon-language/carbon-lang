@@ -471,8 +471,6 @@ private:
 
   void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
 
-  /// Verifies that the specified instruction does not occur in our internal
-  /// data structures.
   void verifyRemoved(Instruction *Inst) const;
 };
 

@@ -66,7 +66,6 @@ static const unsigned int NumResultsLimit = 100;
 
 char MemoryDependenceAnalysis::ID = 0;
 
-// Register this pass...
 INITIALIZE_PASS_BEGIN(MemoryDependenceAnalysis, "memdep",
                       "Memory Dependence Analysis", false, true)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
@@ -91,8 +90,6 @@ void MemoryDependenceAnalysis::releaseMemory() {
   PredCache.clear();
 }
 
-/// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
-///
 void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<AssumptionCacheTracker>();
@@ -110,8 +107,9 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
-/// RemoveFromReverseMap - This is a helper function that removes Val from
-/// 'Inst's set in ReverseMap.  If the set becomes empty, remove Inst's entry.
+/// This is a helper function that removes Val from 'Inst's set in ReverseMap.
+///
+/// If the set becomes empty, remove Inst's entry.
 template <typename KeyTy>
 static void
 RemoveFromReverseMap(DenseMap<Instruction *, SmallPtrSet<KeyTy, 4>> &ReverseMap,
@@ -126,9 +124,10 @@ RemoveFromReverseMap(DenseMap<Instruction *, SmallPtrSet<KeyTy, 4>> &ReverseMap,
     ReverseMap.erase(InstIt);
 }
 
-/// GetLocation - If the given instruction references a specific memory
-/// location, fill in Loc with the details, otherwise set Loc.Ptr to null.
-/// Return a ModRefInfo value describing the general behavior of the
+/// If the given instruction references a specific memory location, fill in Loc
+/// with the details, otherwise set Loc.Ptr to null.
+///
+/// Returns a ModRefInfo value describing the general behavior of the
 /// instruction.
 static ModRefInfo GetLocation(const Instruction *Inst, MemoryLocation &Loc,
                               const TargetLibraryInfo &TLI) {
@@ -204,8 +203,7 @@ static ModRefInfo GetLocation(const Instruction *Inst, MemoryLocation &Loc,
   return MRI_NoModRef;
 }
 
-/// getCallSiteDependencyFrom - Private helper for finding the local
-/// dependencies of a call site.
+/// Private helper for finding the local dependencies of a call site.
 MemDepResult MemoryDependenceAnalysis::getCallSiteDependencyFrom(
     CallSite CS, bool isReadOnlyCall, BasicBlock::iterator ScanIt,
     BasicBlock *BB) {
@@ -265,8 +263,8 @@ MemDepResult MemoryDependenceAnalysis::getCallSiteDependencyFrom(
   return MemDepResult::getNonFuncLocal();
 }
 
-/// isLoadLoadClobberIfExtendedToFullWidth - Return true if LI is a load that
-/// would fully overlap MemLoc if done as a wider legal integer load.
+/// Return true if LI is a load that would fully overlap MemLoc if done as
+/// a wider legal integer load.
 ///
 /// MemLocBase, MemLocOffset are lazily computed here the first time the
 /// base/offs of memloc is needed.
@@ -285,13 +283,6 @@ static bool isLoadLoadClobberIfExtendedToFullWidth(const MemoryLocation &MemLoc,
   return Size != 0;
 }
 
-/// getLoadLoadClobberFullWidthSize - This is a little bit of analysis that
-/// looks at a memory location for a load (specified by MemLocBase, Offs,
-/// and Size) and compares it against a load.  If the specified load could
-/// be safely widened to a larger integer load that is 1) still efficient,
-/// 2) safe for the target, and 3) would provide the specified memory
-/// location value, then this function returns the size in bytes of the
-/// load width to use.  If not, this returns zero.
 unsigned MemoryDependenceAnalysis::getLoadLoadClobberFullWidthSize(
     const Value *MemLocBase, int64_t MemLocOffs, unsigned MemLocSize,
     const LoadInst *LI) {
@@ -377,12 +368,6 @@ static bool isVolatile(Instruction *Inst) {
   return false;
 }
 
-/// getPointerDependencyFrom - Return the instruction on which a memory
-/// location depends.  If isLoad is true, this routine ignores may-aliases with
-/// read-only operations.  If isLoad is false, this routine ignores may-aliases
-/// with reads from read-only locations.  If possible, pass the query
-/// instruction as well; this function may take advantage of the metadata
-/// annotated to the query instruction to refine the result.
 MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
     const MemoryLocation &MemLoc, bool isLoad, BasicBlock::iterator ScanIt,
     BasicBlock *BB, Instruction *QueryInst) {
@@ -738,8 +723,6 @@ MemDepResult MemoryDependenceAnalysis::getSimplePointerDependencyFrom(
   return MemDepResult::getNonFuncLocal();
 }
 
-/// getDependency - Return the instruction on which a memory operation
-/// depends.
 MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   Instruction *ScanPos = QueryInst;
 
@@ -798,8 +781,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
 }
 
 #ifndef NDEBUG
-/// AssertSorted - This method is used when -debug is specified to verify that
-/// cache arrays are properly kept sorted.
+/// This method is used when -debug is specified to verify that cache arrays
+/// are properly kept sorted.
 static void AssertSorted(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
                          int Count = -1) {
   if (Count == -1)
@@ -809,18 +792,6 @@ static void AssertSorted(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
 }
 #endif
 
-/// getNonLocalCallDependency - Perform a full dependency query for the
-/// specified call, returning the set of blocks that the value is
-/// potentially live across.  The returned set of results will include a
-/// "NonLocal" result for all blocks where the value is live across.
-///
-/// This method assumes the instruction returns a "NonLocal" dependency
-/// within its own block.
-///
-/// This returns a reference to an internal data structure that may be
-/// invalidated on the next non-local query or when an instruction is
-/// removed.  Clients must copy this data if they want it around longer than
-/// that.
 const MemoryDependenceAnalysis::NonLocalDepInfo &
 MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
   assert(getDependency(QueryCS.getInstruction()).isNonLocal() &&
@@ -829,10 +800,9 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
   PerInstNLInfo &CacheP = NonLocalDeps[QueryCS.getInstruction()];
   NonLocalDepInfo &Cache = CacheP.first;
 
-  /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
-  /// the cached case, this can happen due to instructions being deleted etc. In
-  /// the uncached case, this starts out as the set of predecessors we care
-  /// about.
+  // This is the set of blocks that need to be recomputed.  In the cached case,
+  // this can happen due to instructions being deleted etc. In the uncached
+  // case, this starts out as the set of predecessors we care about.
   SmallVector<BasicBlock *, 32> DirtyBlocks;
 
   if (!Cache.empty()) {
@@ -954,13 +924,6 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
   return Cache;
 }
 
-/// getNonLocalPointerDependency - Perform a full dependency query for an
-/// access to the specified (non-volatile) memory location, returning the
-/// set of instructions that either define or clobber the value.
-///
-/// This method assumes the pointer has a "NonLocal" dependency within its
-/// own block.
-///
 void MemoryDependenceAnalysis::getNonLocalPointerDependency(
     Instruction *QueryInst, SmallVectorImpl<NonLocalDepResult> &Result) {
   const MemoryLocation Loc = MemoryLocation::get(QueryInst);
@@ -1009,10 +972,11 @@ void MemoryDependenceAnalysis::getNonLocalPointerDependency(
                                      const_cast<Value *>(Loc.Ptr)));
 }
 
-/// GetNonLocalInfoForBlock - Compute the memdep value for BB with
-/// Pointer/PointeeSize using either cached information in Cache or by doing a
-/// lookup (which may use dirty cache info if available).  If we do a lookup,
-/// add the result to the cache.
+/// Compute the memdep value for BB with Pointer/PointeeSize using either
+/// cached information in Cache or by doing a lookup (which may use dirty cache
+/// info if available).
+///
+/// If we do a lookup, add the result to the cache.
 MemDepResult MemoryDependenceAnalysis::GetNonLocalInfoForBlock(
     Instruction *QueryInst, const MemoryLocation &Loc, bool isLoad,
     BasicBlock *BB, NonLocalDepInfo *Cache, unsigned NumSortedEntries) {
@@ -1078,9 +1042,10 @@ MemDepResult MemoryDependenceAnalysis::GetNonLocalInfoForBlock(
   return Dep;
 }
 
-/// SortNonLocalDepInfoCache - Sort the NonLocalDepInfo cache, given a certain
-/// number of elements in the array that are already properly ordered.  This is
-/// optimized for the case when only a few entries are added.
+/// Sort the NonLocalDepInfo cache, given a certain number of elements in the
+/// array that are already properly ordered.
+///
+/// This is optimized for the case when only a few entries are added.
 static void
 SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
                          unsigned NumSortedEntries) {
@@ -1114,10 +1079,11 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
   }
 }
 
-/// getNonLocalPointerDepFromBB - Perform a dependency query based on
-/// pointer/pointeesize starting at the end of StartBB.  Add any clobber/def
-/// results to the results vector and keep track of which blocks are visited in
-/// 'Visited'.
+/// Perform a dependency query based on pointer/pointeesize starting at the end
+/// of StartBB.
+///
+/// Add any clobber/def results to the results vector and keep track of which
+/// blocks are visited in 'Visited'.
 ///
 /// This has special behavior for the first block queries (when SkipFirstBlock
 /// is true).  In this special case, it ignores the contents of the specified
@@ -1510,8 +1476,7 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
   return false;
 }
 
-/// RemoveCachedNonLocalPointerDependencies - If P exists in
-/// CachedNonLocalPointerInfo, remove it.
+/// If P exists in CachedNonLocalPointerInfo, remove it.
 void MemoryDependenceAnalysis::RemoveCachedNonLocalPointerDependencies(
     ValueIsLoadPair P) {
   CachedNonLocalPointerInfo::iterator It = NonLocalPointerDeps.find(P);
@@ -1536,12 +1501,6 @@ void MemoryDependenceAnalysis::RemoveCachedNonLocalPointerDependencies(
   NonLocalPointerDeps.erase(It);
 }
 
-/// invalidateCachedPointerInfo - This method is used to invalidate cached
-/// information about the specified pointer, because it may be too
-/// conservative in memdep.  This is an optional call that can be used when
-/// the client detects an equivalence between the pointer and some other
-/// value and replaces the other value with ptr. This can make Ptr available
-/// in more places that cached info does not necessarily keep.
 void MemoryDependenceAnalysis::invalidateCachedPointerInfo(Value *Ptr) {
   // If Ptr isn't really a pointer, just ignore it.
   if (!Ptr->getType()->isPointerTy())
@@ -1552,16 +1511,10 @@ void MemoryDependenceAnalysis::invalidateCachedPointerInfo(Value *Ptr) {
   RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair(Ptr, true));
 }
 
-/// invalidateCachedPredecessors - Clear the PredIteratorCache info.
-/// This needs to be done when the CFG changes, e.g., due to splitting
-/// critical edges.
 void MemoryDependenceAnalysis::invalidateCachedPredecessors() {
   PredCache.clear();
 }
 
-/// removeInstruction - Remove an instruction from the dependence analysis,
-/// updating the dependence of instructions that previously depended on it.
-/// This method attempts to keep the cache coherent using the reverse map.
 void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // Walk through the Non-local dependencies, removing this one as the value
   // for any cached queries.
@@ -1723,9 +1676,11 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   assert(!NonLocalDeps.count(RemInst) && "RemInst got reinserted?");
   DEBUG(verifyRemoved(RemInst));
 }
-/// verifyRemoved - Verify that the specified instruction does not occur
-/// in our internal data structures. This function verifies by asserting in
-/// debug builds.
+
+/// Verify that the specified instruction does not occur in our internal data
+/// structures.
+///
+/// This function verifies by asserting in debug builds.
 void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
 #ifndef NDEBUG
   for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
