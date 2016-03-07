@@ -1577,7 +1577,7 @@ void CodeGenFunction::EmitOMPForOuterLoop(
                          Ordered, IL, LB, UB, ST, Chunk);
   }
 
-  EmitOMPOuterLoop(IsMonotonic, DynamicOrOrdered, S, LoopScope, Ordered, LB, UB,
+  EmitOMPOuterLoop(DynamicOrOrdered, IsMonotonic, S, LoopScope, Ordered, LB, UB,
                    ST, IL, Chunk);
 }
 
