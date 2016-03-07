@@ -457,7 +457,7 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
     if (Flags & BasicSymbolRef::SF_Undefined)
       Body = new (Alloc) Undefined(NameRef, IsWeak, Visibility, false);
     else
-      Body = new (Alloc) DefinedBitcode(NameRef, IsWeak);
+      Body = new (Alloc) DefinedBitcode(NameRef, IsWeak, Visibility);
     SymbolBodies.push_back(Body);
   }
 }
