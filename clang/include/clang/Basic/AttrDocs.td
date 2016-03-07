@@ -729,6 +729,31 @@ When one method overrides another, the overriding method can be more widely avai
   }];
 }
 
+def WarnUnusedResultsDocs : Documentation {
+  let Category = DocCatFunction;
+  let Heading = "nodiscard, warn_unused_result, clang::warn_unused_result, gnu::warn_unused_result";
+  let Content  = [{
+Clang supports the ability to diagnose when the results of a function call
+expression are discarded under suspicious circumstances. A diagnostic is
+generated when a function or its return type is marked with ``[[nodiscard]]``
+(or ``__attribute__((warn_unused_result))``) and the function call appears as a
+potentially-evaluated discarded-value expression that is not explicitly cast to
+`void`.
+
+.. code-block: c++
+  struct [[nodiscard]] error_info { /*...*/ };
+  error_info enable_missile_safety_mode();
+  
+  void launch_missiles();
+  void test_missiles() {
+    enable_missile_safety_mode(); // diagnoses
+    launch_missiles();
+  }
+  error_info &foo();
+  void f() { foo(); } // Does not diagnose, error_info is a reference.  
+  }];
+}
+
 def FallthroughDocs : Documentation {
   let Category = DocCatStmt;
   let Content = [{

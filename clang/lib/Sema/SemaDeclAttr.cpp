@@ -2463,6 +2463,12 @@ static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) 
       return;
     }
   
+  // If this is spelled as the standard C++1z attribute, but not in C++1z, warn
+  // about using it as an extension.
+  if (!S.getLangOpts().CPlusPlus1z && Attr.isCXX11Attribute() &&
+      !Attr.getScopeName())
+    S.Diag(Attr.getLoc(), diag::ext_nodiscard_attr_is_a_cxx1z_extension);
+
   D->addAttr(::new (S.Context) 
              WarnUnusedResultAttr(Attr.getRange(), S.Context,
                                   Attr.getAttributeSpellingListIndex()));

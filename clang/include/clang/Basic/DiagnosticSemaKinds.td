@@ -2475,7 +2475,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables, functions and classes|Objective-C protocols|"
   "functions and global variables|structs, unions, and typedefs|structs and typedefs|"
   "interface or protocol declarations|kernel functions|non-K&R-style functions|"
-  "variables, enums, fields and typedefs}1">,
+  "variables, enums, fields and typedefs|functions, methods, enums, and classes}1">,
   InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<warn_attribute_wrong_decl_type.Text>;
 def warn_type_attribute_wrong_type : Warning<
@@ -6587,11 +6587,13 @@ def warn_side_effects_typeid : Warning<
   "expression with side effects will be evaluated despite being used as an "
   "operand to 'typeid'">, InGroup<PotentiallyEvaluatedExpression>;
 def warn_unused_result : Warning<
-  "ignoring return value of function declared with warn_unused_result "
-  "attribute">, InGroup<DiagGroup<"unused-result">>;
+  "ignoring return value of function declared with %0 attribute">,
+  InGroup<DiagGroup<"unused-result">>;
 def warn_unused_volatile : Warning<
   "expression result unused; assign into a variable to force a volatile load">,
   InGroup<DiagGroup<"unused-volatile-lvalue">>;
+def ext_nodiscard_attr_is_a_cxx1z_extension : ExtWarn<
+  "use of the 'nodiscard' attribute is a C++1z extension">, InGroup<CXX1z>;
 
 def warn_unused_comparison : Warning<
   "%select{%select{|in}1equality|relational}0 comparison result unused">,
