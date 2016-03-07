@@ -105,7 +105,7 @@ CommandInterpreter::GetStaticBroadcasterClass ()
 }
 
 CommandInterpreter::CommandInterpreter(Debugger &debugger, ScriptLanguage script_language, bool synchronous_execution)
-    : Broadcaster(&debugger, CommandInterpreter::GetStaticBroadcasterClass().AsCString()),
+    : Broadcaster(debugger.GetBroadcasterManager(), CommandInterpreter::GetStaticBroadcasterClass().AsCString()),
       Properties(OptionValuePropertiesSP(new OptionValueProperties(ConstString("interpreter")))),
       IOHandlerDelegate(IOHandlerDelegate::Completion::LLDBCommand),
       m_debugger(debugger),
