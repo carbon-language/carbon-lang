@@ -887,7 +887,6 @@ using InvariantEquivClassTy =
 /// @brief Type for invariant accesses equivalence classes.
 using InvariantEquivClassesTy = SmallVector<InvariantEquivClassTy, 8>;
 
-///===----------------------------------------------------------------------===//
 /// @brief Statement of the Scop
 ///
 /// A Scop statement represents an instruction in the Scop.
@@ -1232,7 +1231,6 @@ static inline raw_ostream &operator<<(raw_ostream &O, const ScopStmt &S) {
   return O;
 }
 
-///===----------------------------------------------------------------------===//
 /// @brief Static Control Part
 ///
 /// A Scop is the polyhedral representation of a control flow region detected
@@ -2047,9 +2045,7 @@ static inline raw_ostream &operator<<(raw_ostream &O, const Scop &scop) {
   return O;
 }
 
-///===---------------------------------------------------------------------===//
 /// @brief Build the Polly IR (Scop and ScopStmt) on a Region.
-///
 class ScopInfo : public RegionPass {
   //===-------------------------------------------------------------------===//
   ScopInfo(const ScopInfo &) = delete;
