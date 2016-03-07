@@ -78,3 +78,15 @@ Constant *llvm::parseConstantValue(StringRef Asm, SMDiagnostic &Err,
     return nullptr;
   return C;
 }
+
+Type *llvm::parseType(StringRef Asm, SMDiagnostic &Err, const Module &M,
+                      const SlotMapping *Slots) {
+  SourceMgr SM;
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Asm);
+  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
+  Type *Ty;
+  if (LLParser(Asm, SM, Err, const_cast<Module *>(&M))
+          .parseStandaloneType(Ty, Slots))
+    return nullptr;
+  return Ty;
+}

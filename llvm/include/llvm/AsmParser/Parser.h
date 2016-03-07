@@ -23,6 +23,7 @@ class LLVMContext;
 class Module;
 struct SlotMapping;
 class SMDiagnostic;
+class Type;
 
 /// This function is the main interface to the LLVM Assembly Parser. It parses
 /// an ASCII file that (presumably) contains LLVM Assembly code. It returns a
@@ -90,6 +91,14 @@ bool parseAssemblyInto(MemoryBufferRef F, Module &M, SMDiagnostic &Err,
 /// \return null on error.
 Constant *parseConstantValue(StringRef Asm, SMDiagnostic &Err, const Module &M,
                              const SlotMapping *Slots = nullptr);
+
+/// Parse a type in the given string.
+///
+/// \param Slots The optional slot mapping that will restore the parsing state
+/// of the module.
+/// \return null on error.
+Type *parseType(StringRef Asm, SMDiagnostic &Err, const Module &M,
+                const SlotMapping *Slots = nullptr);
 
 } // End llvm namespace
 

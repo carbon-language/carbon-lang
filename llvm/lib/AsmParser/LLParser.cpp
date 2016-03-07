@@ -63,6 +63,18 @@ bool LLParser::parseStandaloneConstantValue(Constant *&C,
   return false;
 }
 
+bool LLParser::parseStandaloneType(Type *&Ty, const SlotMapping *Slots) {
+  restoreParsingState(Slots);
+  Lex.Lex();
+
+  Ty = nullptr;
+  if (ParseType(Ty))
+    return true;
+  if (Lex.getKind() != lltok::Eof)
+    return Error(Lex.getLoc(), "expected end of string");
+  return false;
+}
+
 void LLParser::restoreParsingState(const SlotMapping *Slots) {
   if (!Slots)
     return;

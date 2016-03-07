@@ -148,6 +148,8 @@ namespace llvm {
 
     bool parseStandaloneConstantValue(Constant *&C, const SlotMapping *Slots);
 
+    bool parseStandaloneType(Type *&Ty, const SlotMapping *Slots);
+
     LLVMContext &getContext() { return Context; }
 
   private:
