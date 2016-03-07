@@ -964,7 +964,7 @@ void MemoryDependenceAnalysis::getNonLocalPointerDependency(
   // a block with multiple different pointers.  This can happen during PHI
   // translation.
   DenseMap<BasicBlock *, Value *> Visited;
-  if (!getNonLocalPointerDepFromBB(QueryInst, Address, Loc, isLoad, FromBB,
+  if (getNonLocalPointerDepFromBB(QueryInst, Address, Loc, isLoad, FromBB,
                                    Result, Visited, true))
     return;
   Result.clear();
@@ -1089,7 +1089,7 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
 /// is true).  In this special case, it ignores the contents of the specified
 /// block and starts returning dependence info for its predecessors.
 ///
-/// This function returns false on success, or true to indicate that it could
+/// This function returns true on success, or false to indicate that it could
 /// not compute dependence information for some reason.  This should be treated
 /// as a clobber dependence on the first instruction in the predecessor block.
 bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
@@ -1174,10 +1174,10 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
         if (VI == Visited.end() || VI->second == Pointer.getAddr())
           continue;
 
-        // We have a pointer mismatch in a block.  Just return clobber, saying
+        // We have a pointer mismatch in a block.  Just return false, saying
         // that something was clobbered in this result.  We could also do a
         // non-fully cached query, but there is little point in doing this.
-        return true;
+        return false;
       }
     }
 
@@ -1197,7 +1197,7 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
       }
     }
     ++NumCacheCompleteNonLocalPtr;
-    return false;
+    return true;
   }
 
   // Otherwise, either this is a new block, a block with an invalid cache
@@ -1243,7 +1243,7 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
       // specific block queries) but we can't do the fastpath "return all
       // results from the set".  Clear out the indicator for this.
       CacheInfo->Pair = BBSkipFirstBlockPair();
-      return true;
+      return false;
     }
 
     // Skip the first block if we have it.
@@ -1395,7 +1395,7 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
       // result conflicted with the Visited list; we have to conservatively
       // assume it is unknown, but this also does not block PRE of the load.
       if (!CanTranslate ||
-          getNonLocalPointerDepFromBB(QueryInst, PredPointer,
+          !getNonLocalPointerDepFromBB(QueryInst, PredPointer,
                                       Loc.getWithNewPtr(PredPtrVal), isLoad,
                                       Pred, Result, Visited)) {
         // Add the entry to the Result list.
@@ -1450,7 +1450,7 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
     // incoming value.  Since we can't phi translate to one of the predecessors,
     // we have to bail out.
     if (SkipFirstBlock)
-      return true;
+      return false;
 
     bool foundBlock = false;
     for (NonLocalDepEntry &I : llvm::reverse(*Cache)) {
@@ -1473,7 +1473,7 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
   // Okay, we're done now.  If we added new values to the cache, re-sort it.
   SortNonLocalDepInfoCache(*Cache, NumSortedEntries);
   DEBUG(AssertSorted(*Cache));
-  return false;
+  return true;
 }
 
 /// If P exists in CachedNonLocalPointerInfo, remove it.
