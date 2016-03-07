@@ -416,12 +416,12 @@ bool BitcodeFile::classof(const InputFile *F) {
 
 static uint8_t getGvVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
+  case GlobalValue::DefaultVisibility:
+    return STV_DEFAULT;
   case GlobalValue::HiddenVisibility:
     return STV_HIDDEN;
   case GlobalValue::ProtectedVisibility:
     return STV_PROTECTED;
-  default:
-    return STV_DEFAULT;
   }
 }
 
