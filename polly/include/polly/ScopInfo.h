@@ -1676,14 +1676,14 @@ private:
   __isl_give isl_union_map *
   getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate);
 
-  /// @name Helper function for printing the Scop.
+  /// @name Helper functions for printing the Scop.
   ///
-  ///{
+  //@{
   void printContext(raw_ostream &OS) const;
   void printArrayInfo(raw_ostream &OS) const;
   void printStatements(raw_ostream &OS) const;
   void printAliasAssumptions(raw_ostream &OS) const;
-  ///}
+  //@}
 
   friend class ScopInfo;
 
@@ -1700,7 +1700,6 @@ public:
     AccFuncMapType::iterator at = AccFuncMap.find(BB);
     return at != AccFuncMap.end() ? &(at->second) : 0;
   }
-  //@}
 
   ScalarEvolution *getSE() const;
 
