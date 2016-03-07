@@ -34,18 +34,25 @@ class PredIteratorCache;
 class DominatorTree;
 class PHITransAddr;
 
-/// MemDepResult - A memory dependence query can return one of three different
-/// answers, described below.
+/// A memory dependence query can return one of three different answers.
 class MemDepResult {
   enum DepType {
-    /// Invalid - Clients of MemDep never see this.
+    /// Clients of MemDep never see this.
+    ///
+    /// Entries with this marker occur in a LocalDeps map or NonLocalDeps map
+    /// when the instruction they previously referenced was removed from
+    /// MemDep.  In either case, the entry may include an instruction pointer.
+    /// If so, the pointer is an instruction in the block where scanning can
+    /// start from, saving some work.
+    ///
+    /// In a default-constructed MemDepResult object, the type will be Invalid
+    /// and the instruction pointer will be null.
     Invalid = 0,
 
-    /// Clobber - This is a dependence on the specified instruction which
-    /// clobbers the desired value.  The pointer member of the MemDepResult
-    /// pair holds the instruction that clobbers the memory.  For example,
-    /// this occurs when we see a may-aliased store to the memory location we
-    /// care about.
+    /// This is a dependence on the specified instruction which clobbers the
+    /// desired value.  The pointer member of the MemDepResult pair holds the
+    /// instruction that clobbers the memory.  For example, this occurs when we
+    /// see a may-aliased store to the memory location we care about.
     ///
     /// There are several cases that may be interesting here:
     ///   1. Loads are clobbered by may-alias stores.
@@ -53,9 +60,10 @@ class MemDepResult {
     ///      client may choose to analyze deeper into these cases.
     Clobber,
 
-    /// Def - This is a dependence on the specified instruction which
-    /// defines/produces the desired memory location.  The pointer member of
-    /// the MemDepResult pair holds the instruction that defines the memory.
+    /// This is a dependence on the specified instruction which defines or
+    /// produces the desired memory location.  The pointer member of the
+    /// MemDepResult pair holds the instruction that defines the memory.
+    ///
     /// Cases of interest:
     ///   1. This could be a load or store for dependence queries on
     ///      load/store.  The value loaded or stored is the produced value.
@@ -66,30 +74,32 @@ class MemDepResult {
     ///   2. For loads and stores, this could be an allocation instruction. In
     ///      this case, the load is loading an undef value or a store is the
     ///      first store to (that part of) the allocation.
-    ///   3. Dependence queries on calls return Def only when they are
-    ///      readonly calls or memory use intrinsics with identical callees
-    ///      and no intervening clobbers.  No validation is done that the
-    ///      operands to the calls are the same.
+    ///   3. Dependence queries on calls return Def only when they are readonly
+    ///      calls or memory use intrinsics with identical callees and no
+    ///      intervening clobbers.  No validation is done that the operands to
+    ///      the calls are the same.
     Def,
 
-    /// Other - This marker indicates that the query has no known dependency
-    /// in the specified block.  More detailed state info is encoded in the
-    /// upper part of the pair (i.e. the Instruction*)
+    /// This marker indicates that the query has no known dependency in the
+    /// specified block.
+    ///
+    /// More detailed state info is encoded in the upper part of the pair (i.e.
+    /// the Instruction*)
     Other
   };
-  /// If DepType is "Other", the upper part of the pair
-  /// (i.e. the Instruction* part) is instead used to encode more detailed
-  /// type information as follows
+
+  /// If DepType is "Other", the upper part of the pair (i.e. the Instruction*
+  /// part) is instead used to encode more detailed type information.
   enum OtherType {
-    /// NonLocal - This marker indicates that the query has no dependency in
-    /// the specified block.  To find out more, the client should query other
-    /// predecessor blocks.
+    /// This marker indicates that the query has no dependency in the specified
+    /// block.
+    ///
+    /// To find out more, the client should query other predecessor blocks.
     NonLocal = 0x4,
-    /// NonFuncLocal - This marker indicates that the query has no
-    /// dependency in the specified function.
+    /// This marker indicates that the query has no dependency in the specified
+    /// function.
     NonFuncLocal = 0x8,
-    /// Unknown - This marker indicates that the query dependency
-    /// is unknown.
+    /// This marker indicates that the query dependency is unknown.
     Unknown = 0xc
   };
 
@@ -123,38 +133,37 @@ public:
         PairTy(reinterpret_cast<Instruction *>(Unknown), Other));
   }
 
-  /// isClobber - Return true if this MemDepResult represents a query that is
-  /// an instruction clobber dependency.
+  /// Tests if this MemDepResult represents a query that is an instruction
+  /// clobber dependency.
   bool isClobber() const { return Value.getInt() == Clobber; }
 
-  /// isDef - Return true if this MemDepResult represents a query that is
-  /// an instruction definition dependency.
+  /// Tests if this MemDepResult represents a query that is an instruction
+  /// definition dependency.
   bool isDef() const { return Value.getInt() == Def; }
 
-  /// isNonLocal - Return true if this MemDepResult represents a query that
-  /// is transparent to the start of the block, but where a non-local hasn't
-  /// been done.
+  /// Tests if this MemDepResult represents a query that is transparent to the
+  /// start of the block, but where a non-local hasn't been done.
   bool isNonLocal() const {
     return Value.getInt() == Other &&
            Value.getPointer() == reinterpret_cast<Instruction *>(NonLocal);
   }
 
-  /// isNonFuncLocal - Return true if this MemDepResult represents a query
-  /// that is transparent to the start of the function.
+  /// Tests if this MemDepResult represents a query that is transparent to the
+  /// start of the function.
   bool isNonFuncLocal() const {
     return Value.getInt() == Other &&
            Value.getPointer() == reinterpret_cast<Instruction *>(NonFuncLocal);
   }
 
-  /// isUnknown - Return true if this MemDepResult represents a query which
-  /// cannot and/or will not be computed.
+  /// Tests if this MemDepResult represents a query which cannot and/or will
+  /// not be computed.
   bool isUnknown() const {
     return Value.getInt() == Other &&
            Value.getPointer() == reinterpret_cast<Instruction *>(Unknown);
   }
 
-  /// getInst() - If this is a normal dependency, return the instruction that
-  /// is depended on.  Otherwise, return null.
+  /// If this is a normal dependency, returns the instruction that is depended
+  /// on.  Otherwise, returns null.
   Instruction *getInst() const {
     if (Value.getInt() == Other)
       return nullptr;
@@ -168,18 +177,8 @@ public:
 
 private:
   friend class MemoryDependenceAnalysis;
-  /// Dirty - Entries with this marker occur in a LocalDeps map or
-  /// NonLocalDeps map when the instruction they previously referenced was
-  /// removed from MemDep.  In either case, the entry may include an
-  /// instruction pointer.  If so, the pointer is an instruction in the
-  /// block where scanning can start from, saving some work.
-  ///
-  /// In a default-constructed MemDepResult object, the type will be Dirty
-  /// and the instruction pointer will be null.
-  ///
 
-  /// isDirty - Return true if this is a MemDepResult in its dirty/invalid.
-  /// state.
+  /// Tests if this is a MemDepResult in its dirty/invalid. state.
   bool isDirty() const { return Value.getInt() == Invalid; }
 
   static MemDepResult getDirty(Instruction *Inst) {
