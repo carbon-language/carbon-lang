@@ -194,8 +194,9 @@ private:
   }
 };
 
-/// NonLocalDepEntry - This is an entry in the NonLocalDepInfo cache.  For
-/// each BasicBlock (the BB entry) it keeps a MemDepResult.
+/// This is an entry in the NonLocalDepInfo cache.
+///
+/// For each BasicBlock (the BB entry) it keeps a MemDepResult.
 class NonLocalDepEntry {
   BasicBlock *BB;
   MemDepResult Result;
@@ -217,7 +218,8 @@ public:
   bool operator<(const NonLocalDepEntry &RHS) const { return BB < RHS.BB; }
 };
 
-/// NonLocalDepResult - This is a result from a NonLocal dependence query.
+/// This is a result from a NonLocal dependence query.
+///
 /// For each BasicBlock (the BB entry) it keeps a MemDepResult and the
 /// (potentially phi translated) address that was live in the block.
 class NonLocalDepResult {
@@ -238,18 +240,20 @@ public:
 
   const MemDepResult &getResult() const { return Entry.getResult(); }
 
-  /// getAddress - Return the address of this pointer in this block.  This can
-  /// be different than the address queried for the non-local result because
-  /// of phi translation.  This returns null if the address was not available
-  /// in a block (i.e. because phi translation failed) or if this is a cached
-  /// result and that address was deleted.
+  /// Returns the address of this pointer in this block.
+  ///
+  /// This can be different than the address queried for the non-local result
+  /// because of phi translation.  This returns null if the address was not
+  /// available in a block (i.e. because phi translation failed) or if this is
+  /// a cached result and that address was deleted.
   ///
   /// The address is always null for a non-local 'call' dependence.
   Value *getAddress() const { return Address; }
 };
 
-/// MemoryDependenceAnalysis - This is an analysis that determines, for a
-/// given memory operation, what preceding memory operations it depends on.
+/// Determines, for a given memory operation, what preceding memory operations
+/// it depends on.
+///
 /// It builds on alias analysis information, and tries to provide a lazy,
 /// caching interface to a common kind of alias information query.
 ///
@@ -262,7 +266,6 @@ public:
 /// b) they load from *must-aliased* pointers.  Returning a dependence on
 /// must-alias'd pointers instead of all pointers interacts well with the
 /// internal caching mechanism.
-///
 class MemoryDependenceAnalysis : public FunctionPass {
   // A map from instructions to their dependency.
   typedef DenseMap<Instruction *, MemDepResult> LocalDepMapType;
@@ -272,37 +275,40 @@ public:
   typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
 
 private:
-  /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if
-  /// the dependence is a read only dependence, false if read/write.
+  /// A pair<Value*, bool> where the bool is true if the dependence is a read
+  /// only dependence, false if read/write.
   typedef PointerIntPair<const Value *, 1, bool> ValueIsLoadPair;
 
-  /// BBSkipFirstBlockPair - This pair is used when caching information for a
-  /// block.  If the pointer is null, the cache value is not a full query that
-  /// starts at the specified block.  If non-null, the bool indicates whether
-  /// or not the contents of the block was skipped.
+  /// This pair is used when caching information for a block.
+  ///
+  /// If the pointer is null, the cache value is not a full query that starts
+  /// at the specified block.  If non-null, the bool indicates whether or not
+  /// the contents of the block was skipped.
   typedef PointerIntPair<BasicBlock *, 1, bool> BBSkipFirstBlockPair;
 
-  /// NonLocalPointerInfo - This record is the information kept for each
-  /// (value, is load) pair.
+  /// This record is the information kept for each (value, is load) pair.
   struct NonLocalPointerInfo {
-    /// Pair - The pair of the block and the skip-first-block flag.
+    /// The pair of the block and the skip-first-block flag.
     BBSkipFirstBlockPair Pair;
-    /// NonLocalDeps - The results of the query for each relevant block.
+    /// The results of the query for each relevant block.
     NonLocalDepInfo NonLocalDeps;
-    /// Size - The maximum size of the dereferences of the
-    /// pointer. May be UnknownSize if the sizes are unknown.
+    /// The maximum size of the dereferences of the pointer.
+    ///
+    /// May be UnknownSize if the sizes are unknown.
     uint64_t Size;
-    /// AATags - The AA tags associated with dereferences of the
-    /// pointer. The members may be null if there are no tags or
-    /// conflicting tags.
+    /// The AA tags associated with dereferences of the pointer.
+    ///
+    /// The members may be null if there are no tags or conflicting tags.
     AAMDNodes AATags;
 
     NonLocalPointerInfo() : Size(MemoryLocation::UnknownSize) {}
   };
 
-  /// CachedNonLocalPointerInfo - This map stores the cached results of doing
-  /// a pointer lookup at the bottom of a block.  The key of this map is the
-  /// pointer+isload bit, the value is a list of <bb->result> mappings.
+  /// This map stores the cached results of doing a pointer lookup at the
+  /// bottom of a block.
+  ///
+  /// The key of this map is the pointer+isload bit, the value is a list of
+  /// <bb->result> mappings.
   typedef DenseMap<ValueIsLoadPair, NonLocalPointerInfo>
       CachedNonLocalPointerInfo;
   CachedNonLocalPointerInfo NonLocalPointerDeps;
@@ -312,9 +318,11 @@ private:
       ReverseNonLocalPtrDepTy;
   ReverseNonLocalPtrDepTy ReverseNonLocalPtrDeps;
 
-  /// PerInstNLInfo - This is the instruction we keep for each cached access
-  /// that we have for an instruction.  The pointer is an owning pointer and
-  /// the bool indicates whether we have any dirty bits in the set.
+  /// This is the instruction we keep for each cached access that we have for
+  /// an instruction.
+  ///
+  /// The pointer is an owning pointer and the bool indicates whether we have
+  /// any dirty bits in the set.
   typedef std::pair<NonLocalDepInfo, bool> PerInstNLInfo;
 
   // A map from instructions to their non-local dependencies.
@@ -349,20 +357,20 @@ public:
   /// Clean up memory in between runs
   void releaseMemory() override;
 
-  /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
-  /// and Alias Analysis.
-  ///
+  /// Does not modify anything.  It uses Value Numbering and Alias Analysis.
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  /// getDependency - Return the instruction on which a memory operation
-  /// depends.  See the class comment for more details.  It is illegal to call
-  /// this on non-memory instructions.
+  /// Returns the instruction on which a memory operation depends.
+  ///
+  /// See the class comment for more details.  It is illegal to call this on
+  /// non-memory instructions.
   MemDepResult getDependency(Instruction *QueryInst);
 
-  /// getNonLocalCallDependency - Perform a full dependency query for the
-  /// specified call, returning the set of blocks that the value is
-  /// potentially live across.  The returned set of results will include a
-  /// "NonLocal" result for all blocks where the value is live across.
+  /// Perform a full dependency query for the specified call, returning the set
+  /// of blocks that the value is potentially live across.
+  ///
+  /// The returned set of results will include a "NonLocal" result for all
+  /// blocks where the value is live across.
   ///
   /// This method assumes the instruction returns a "NonLocal" dependency
   /// within its own block.
@@ -373,9 +381,9 @@ public:
   /// that.
   const NonLocalDepInfo &getNonLocalCallDependency(CallSite QueryCS);
 
-  /// getNonLocalPointerDependency - Perform a full dependency query for an
-  /// access to the QueryInst's specified memory location, returning the set
-  /// of instructions that either define or clobber the value.
+  /// Perform a full dependency query for an access to the QueryInst's
+  /// specified memory location, returning the set of instructions that either
+  /// define or clobber the value.
   ///
   /// Warning: For a volatile query instruction, the dependencies will be
   /// accurate, and thus usable for reordering, but it is never legal to
@@ -386,24 +394,27 @@ public:
   void getNonLocalPointerDependency(Instruction *QueryInst,
                                     SmallVectorImpl<NonLocalDepResult> &Result);
 
-  /// removeInstruction - Remove an instruction from the dependence analysis,
-  /// updating the dependence of instructions that previously depended on it.
+  /// Removes an instruction from the dependence analysis, updating the
+  /// dependence of instructions that previously depended on it.
   void removeInstruction(Instruction *InstToRemove);
 
-  /// invalidateCachedPointerInfo - This method is used to invalidate cached
-  /// information about the specified pointer, because it may be too
-  /// conservative in memdep.  This is an optional call that can be used when
-  /// the client detects an equivalence between the pointer and some other
-  /// value and replaces the other value with ptr. This can make Ptr available
-  /// in more places that cached info does not necessarily keep.
+  /// Invalidates cached information about the specified pointer, because it
+  /// may be too conservative in memdep.
+  ///
+  /// This is an optional call that can be used when the client detects an
+  /// equivalence between the pointer and some other value and replaces the
+  /// other value with ptr. This can make Ptr available in more places that
+  /// cached info does not necessarily keep.
   void invalidateCachedPointerInfo(Value *Ptr);
 
-  /// invalidateCachedPredecessors - Clear the PredIteratorCache info.
+  /// Clears the PredIteratorCache info.
+  ///
   /// This needs to be done when the CFG changes, e.g., due to splitting
   /// critical edges.
   void invalidateCachedPredecessors();
 
-  /// \brief Return the instruction on which a memory location depends.
+  /// Returns the instruction on which a memory location depends.
+  ///
   /// If isLoad is true, this routine ignores may-aliases with read-only
   /// operations.  If isLoad is false, this routine ignores may-aliases
   /// with reads from read-only locations. If possible, pass the query
@@ -411,7 +422,6 @@ public:
   /// annotated to the query instruction to refine the result.
   ///
   /// Note that this is an uncached query, and thus may be inefficient.
-  ///
   MemDepResult getPointerDependencyFrom(const MemoryLocation &Loc, bool isLoad,
                                         BasicBlock::iterator ScanIt,
                                         BasicBlock *BB,
@@ -431,13 +441,13 @@ public:
   /// at the call site.
   MemDepResult getInvariantGroupPointerDependency(LoadInst *LI, BasicBlock *BB);
 
-  /// getLoadLoadClobberFullWidthSize - This is a little bit of analysis that
-  /// looks at a memory location for a load (specified by MemLocBase, Offs,
-  /// and Size) and compares it against a load.  If the specified load could
-  /// be safely widened to a larger integer load that is 1) still efficient,
-  /// 2) safe for the target, and 3) would provide the specified memory
-  /// location value, then this function returns the size in bytes of the
-  /// load width to use.  If not, this returns zero.
+  /// Looks at a memory location for a load (specified by MemLocBase, Offs, and
+  /// Size) and compares it against a load.
+  ///
+  /// If the specified load could be safely widened to a larger integer load
+  /// that is 1) still efficient, 2) safe for the target, and 3) would provide
+  /// the specified memory location value, then this function returns the size
+  /// in bytes of the load width to use.  If not, this returns zero.
   static unsigned getLoadLoadClobberFullWidthSize(const Value *MemLocBase,
                                                   int64_t MemLocOffs,
                                                   unsigned MemLocSize,
@@ -461,8 +471,8 @@ private:
 
   void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
 
-  /// verifyRemoved - Verify that the specified instruction does not occur
-  /// in our internal data structures.
+  /// Verifies that the specified instruction does not occur in our internal
+  /// data structures.
   void verifyRemoved(Instruction *Inst) const;
 };
 
