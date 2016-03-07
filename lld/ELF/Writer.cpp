@@ -722,6 +722,7 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   uintX_t Off = getBss()->getSize();
   for (DefinedCommon *C : Syms) {
     Off = alignTo(Off, C->MaxAlignment);
+    Out<ELFT>::Bss->updateAlign(C->MaxAlignment);
     C->OffsetInBss = Off;
     Off += C->Size;
   }
