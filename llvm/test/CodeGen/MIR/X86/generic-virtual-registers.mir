@@ -1,0 +1,17 @@
+# RUN: llc -march=x86-64 -start-after machine-sink -stop-after machine-sink -o /dev/null %s 2>&1 | FileCheck %s
+# This test ensures that the MIR parser parses generic virtual
+# register definitions correctly.
+
+---
+name:            bar
+isSSA:           true
+# CHECK:      registers:
+# CHECK-NEXT:   - { id: 0, class: gr32 }
+registers:
+  - { id: 0, class: gr32 }
+body: |
+  bb.0.entry:
+    liveins: %edi
+    ; CHECK:      %0 = G_ADD %edi
+    %0(32) = G_ADD %edi, %edi
+...

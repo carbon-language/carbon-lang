@@ -17,21 +17,22 @@
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -119,6 +120,7 @@ public:
   bool parseRegisterFlag(unsigned &Flags);
   bool parseSubRegisterIndex(unsigned &SubReg);
   bool parseRegisterTiedDefIndex(unsigned &TiedDefIdx);
+  bool parseSize(unsigned &Size);
   bool parseRegisterOperand(MachineOperand &Dest,
                             Optional<unsigned> &TiedDefIdx, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
@@ -876,6 +878,17 @@ bool MIParser::parseRegisterTiedDefIndex(unsigned &TiedDefIdx) {
   return false;
 }
 
+bool MIParser::parseSize(unsigned &Size) {
+  if (Token.isNot(MIToken::IntegerLiteral))
+    return error("expected an integer literal for the size");
+  if (getUnsigned(Size))
+    return true;
+  lex();
+  if (expectAndConsume(MIToken::rparen))
+    return true;
+  return false;
+}
+
 bool MIParser::assignRegisterTies(MachineInstr &MI,
                                   ArrayRef<ParsedMachineOperand> Operands) {
   SmallVector<std::pair<unsigned, unsigned>, 4> TiedRegisterPairs;
@@ -932,11 +945,26 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest,
     if (parseSubRegisterIndex(SubReg))
       return true;
   }
-  if ((Flags & RegState::Define) == 0 && consumeIfPresent(MIToken::lparen)) {
-    unsigned Idx;
-    if (parseRegisterTiedDefIndex(Idx))
+  if ((Flags & RegState::Define) == 0) {
+    if (consumeIfPresent(MIToken::lparen)) {
+      unsigned Idx;
+      if (parseRegisterTiedDefIndex(Idx))
+        return true;
+      TiedDefIdx = Idx;
+    }
+  } else if (consumeIfPresent(MIToken::lparen)) {
+    // Generic virtual registers must have a size.
+    // The "must" part will be verify by the machine verifier,
+    // because at this point we actually do not know if Reg is
+    // a generic virtual register.
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      return error("unexpected size on physical register");
+    unsigned Size;
+    if (parseSize(Size))
       return true;
-    TiedDefIdx = Idx;
+
+    MachineRegisterInfo &MRI = MF.getRegInfo();
+    MRI.setSize(Reg, Size);
   }
   Dest = MachineOperand::CreateReg(
       Reg, Flags & RegState::Define, Flags & RegState::Implicit,
