@@ -15,7 +15,8 @@
 #define LLVM_ANALYSIS_MEMORYDEPENDENCEANALYSIS_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/PointerSumType.h"
+#include "llvm/ADT/PointerEmbeddedInt.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/BasicBlock.h"
@@ -88,86 +89,93 @@ class MemDepResult {
     Other
   };
 
-  /// If DepType is "Other", the upper part of the pair (i.e. the Instruction*
-  /// part) is instead used to encode more detailed type information.
+  /// If DepType is "Other", the upper part of the sum type is an encoding of
+  /// the following more detailed type information.
   enum OtherType {
     /// This marker indicates that the query has no dependency in the specified
     /// block.
     ///
     /// To find out more, the client should query other predecessor blocks.
-    NonLocal = 0x4,
+    NonLocal = 1,
     /// This marker indicates that the query has no dependency in the specified
     /// function.
-    NonFuncLocal = 0x8,
+    NonFuncLocal,
     /// This marker indicates that the query dependency is unknown.
-    Unknown = 0xc
+    Unknown
   };
 
-  typedef PointerIntPair<Instruction *, 2, DepType> PairTy;
-  PairTy Value;
-  explicit MemDepResult(PairTy V) : Value(V) {}
+  typedef PointerSumType<
+      DepType, PointerSumTypeMember<Invalid, Instruction *>,
+      PointerSumTypeMember<Clobber, Instruction *>,
+      PointerSumTypeMember<Def, Instruction *>,
+      PointerSumTypeMember<Other, PointerEmbeddedInt<OtherType, 3>>>
+      ValueTy;
+  ValueTy Value;
+  explicit MemDepResult(ValueTy V) : Value(V) {}
 
 public:
-  MemDepResult() : Value(nullptr, Invalid) {}
+  MemDepResult() : Value() {}
 
   /// get methods: These are static ctor methods for creating various
   /// MemDepResult kinds.
   static MemDepResult getDef(Instruction *Inst) {
     assert(Inst && "Def requires inst");
-    return MemDepResult(PairTy(Inst, Def));
+    return MemDepResult(ValueTy::create<Def>(Inst));
   }
   static MemDepResult getClobber(Instruction *Inst) {
     assert(Inst && "Clobber requires inst");
-    return MemDepResult(PairTy(Inst, Clobber));
+    return MemDepResult(ValueTy::create<Clobber>(Inst));
   }
   static MemDepResult getNonLocal() {
-    return MemDepResult(
-        PairTy(reinterpret_cast<Instruction *>(NonLocal), Other));
+    return MemDepResult(ValueTy::create<Other>(NonLocal));
   }
   static MemDepResult getNonFuncLocal() {
-    return MemDepResult(
-        PairTy(reinterpret_cast<Instruction *>(NonFuncLocal), Other));
+    return MemDepResult(ValueTy::create<Other>(NonFuncLocal));
   }
   static MemDepResult getUnknown() {
-    return MemDepResult(
-        PairTy(reinterpret_cast<Instruction *>(Unknown), Other));
+    return MemDepResult(ValueTy::create<Other>(Unknown));
   }
 
   /// Tests if this MemDepResult represents a query that is an instruction
   /// clobber dependency.
-  bool isClobber() const { return Value.getInt() == Clobber; }
+  bool isClobber() const { return Value.is<Clobber>(); }
 
   /// Tests if this MemDepResult represents a query that is an instruction
   /// definition dependency.
-  bool isDef() const { return Value.getInt() == Def; }
+  bool isDef() const { return Value.is<Def>(); }
 
   /// Tests if this MemDepResult represents a query that is transparent to the
   /// start of the block, but where a non-local hasn't been done.
   bool isNonLocal() const {
-    return Value.getInt() == Other &&
-           Value.getPointer() == reinterpret_cast<Instruction *>(NonLocal);
+    return Value.is<Other>() && Value.cast<Other>() == NonLocal;
   }
 
   /// Tests if this MemDepResult represents a query that is transparent to the
   /// start of the function.
   bool isNonFuncLocal() const {
-    return Value.getInt() == Other &&
-           Value.getPointer() == reinterpret_cast<Instruction *>(NonFuncLocal);
+    return Value.is<Other>() && Value.cast<Other>() == NonFuncLocal;
   }
 
   /// Tests if this MemDepResult represents a query which cannot and/or will
   /// not be computed.
   bool isUnknown() const {
-    return Value.getInt() == Other &&
-           Value.getPointer() == reinterpret_cast<Instruction *>(Unknown);
+    return Value.is<Other>() && Value.cast<Other>() == Unknown;
   }
 
   /// If this is a normal dependency, returns the instruction that is depended
   /// on.  Otherwise, returns null.
   Instruction *getInst() const {
-    if (Value.getInt() == Other)
+    switch (Value.getTag()) {
+    case Invalid:
+      return Value.cast<Invalid>();
+    case Clobber:
+      return Value.cast<Clobber>();
+    case Def:
+      return Value.cast<Def>();
+    case Other:
       return nullptr;
-    return Value.getPointer();
+    }
+    llvm_unreachable("Unknown discriminant!");
   }
 
   bool operator==(const MemDepResult &M) const { return Value == M.Value; }
@@ -179,10 +187,10 @@ private:
   friend class MemoryDependenceAnalysis;
 
   /// Tests if this is a MemDepResult in its dirty/invalid. state.
-  bool isDirty() const { return Value.getInt() == Invalid; }
+  bool isDirty() const { return Value.is<Invalid>(); }
 
   static MemDepResult getDirty(Instruction *Inst) {
-    return MemDepResult(PairTy(Inst, Invalid));
+    return MemDepResult(ValueTy::create<Invalid>(Inst));
   }
 };
 
