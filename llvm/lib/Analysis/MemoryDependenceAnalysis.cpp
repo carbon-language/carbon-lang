@@ -815,10 +815,9 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
 
     // If we already have a partially computed set of results, scan them to
     // determine what is dirty, seeding our initial DirtyBlocks worklist.
-    for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end(); I != E;
-         ++I)
-      if (I->getResult().isDirty())
-        DirtyBlocks.push_back(I->getBB());
+    for (auto &Entry : Cache)
+      if (Entry.getResult().isDirty())
+        DirtyBlocks.push_back(Entry.getBB());
 
     // Sort the cache so that we can do fast binary search lookups below.
     std::sort(Cache.begin(), Cache.end());
@@ -1122,10 +1121,8 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
       // cached data and proceed with the query at the greater size.
       CacheInfo->Pair = BBSkipFirstBlockPair();
       CacheInfo->Size = Loc.Size;
-      for (NonLocalDepInfo::iterator DI = CacheInfo->NonLocalDeps.begin(),
-                                     DE = CacheInfo->NonLocalDeps.end();
-           DI != DE; ++DI)
-        if (Instruction *Inst = DI->getResult().getInst())
+      for (auto &Entry : CacheInfo->NonLocalDeps)
+        if (Instruction *Inst = Entry.getResult().getInst())
           RemoveFromReverseMap(ReverseNonLocalPtrDeps, Inst, CacheKey);
       CacheInfo->NonLocalDeps.clear();
     } else if (CacheInfo->Size > Loc.Size) {
@@ -1143,10 +1140,8 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
       if (CacheInfo->AATags) {
         CacheInfo->Pair = BBSkipFirstBlockPair();
         CacheInfo->AATags = AAMDNodes();
-        for (NonLocalDepInfo::iterator DI = CacheInfo->NonLocalDeps.begin(),
-                                       DE = CacheInfo->NonLocalDeps.end();
-             DI != DE; ++DI)
-          if (Instruction *Inst = DI->getResult().getInst())
+        for (auto &Entry : CacheInfo->NonLocalDeps)
+          if (Instruction *Inst = Entry.getResult().getInst())
             RemoveFromReverseMap(ReverseNonLocalPtrDeps, Inst, CacheKey);
         CacheInfo->NonLocalDeps.clear();
       }
@@ -1168,9 +1163,9 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
     // to ensure that if a block in the results set is in the visited set that
     // it was for the same pointer query.
     if (!Visited.empty()) {
-      for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
-           I != E; ++I) {
-        DenseMap<BasicBlock *, Value *>::iterator VI = Visited.find(I->getBB());
+      for (auto &Entry : *Cache) {
+        DenseMap<BasicBlock *, Value *>::iterator VI =
+            Visited.find(Entry.getBB());
         if (VI == Visited.end() || VI->second == Pointer.getAddr())
           continue;
 
@@ -1182,18 +1177,18 @@ bool MemoryDependenceAnalysis::getNonLocalPointerDepFromBB(
     }
 
     Value *Addr = Pointer.getAddr();
-    for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end(); I != E;
-         ++I) {
-      Visited.insert(std::make_pair(I->getBB(), Addr));
-      if (I->getResult().isNonLocal()) {
+    for (auto &Entry : *Cache) {
+      Visited.insert(std::make_pair(Entry.getBB(), Addr));
+      if (Entry.getResult().isNonLocal()) {
         continue;
       }
 
       if (!DT) {
         Result.push_back(
-            NonLocalDepResult(I->getBB(), MemDepResult::getUnknown(), Addr));
-      } else if (DT->isReachableFromEntry(I->getBB())) {
-        Result.push_back(NonLocalDepResult(I->getBB(), I->getResult(), Addr));
+            NonLocalDepResult(Entry.getBB(), MemDepResult::getUnknown(), Addr));
+      } else if (DT->isReachableFromEntry(Entry.getBB())) {
+        Result.push_back(
+            NonLocalDepResult(Entry.getBB(), Entry.getResult(), Addr));
       }
     }
     ++NumCacheCompleteNonLocalPtr;
@@ -1521,9 +1516,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   NonLocalDepMapType::iterator NLDI = NonLocalDeps.find(RemInst);
   if (NLDI != NonLocalDeps.end()) {
     NonLocalDepInfo &BlockMap = NLDI->second.first;
-    for (NonLocalDepInfo::iterator DI = BlockMap.begin(), DE = BlockMap.end();
-         DI != DE; ++DI)
-      if (Instruction *Inst = DI->getResult().getInst())
+    for (auto &Entry : BlockMap)
+      if (Instruction *Inst = Entry.getResult().getInst())
         RemoveFromReverseMap(ReverseNonLocalDeps, Inst, RemInst);
     NonLocalDeps.erase(NLDI);
   }
@@ -1605,14 +1599,12 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       // The information is now dirty!
       INLD.second = true;
 
-      for (NonLocalDepInfo::iterator DI = INLD.first.begin(),
-                                     DE = INLD.first.end();
-           DI != DE; ++DI) {
-        if (DI->getResult().getInst() != RemInst)
+      for (auto &Entry : INLD.first) {
+        if (Entry.getResult().getInst() != RemInst)
           continue;
 
         // Convert to a dirty entry for the subsequent instruction.
-        DI->setResult(NewDirtyVal);
+        Entry.setResult(NewDirtyVal);
 
         if (Instruction *NextI = NewDirtyVal.getInst())
           ReverseDepsToAdd.push_back(std::make_pair(NextI, I));
@@ -1647,13 +1639,12 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       NonLocalPointerDeps[P].Pair = BBSkipFirstBlockPair();
 
       // Update any entries for RemInst to use the instruction after it.
-      for (NonLocalDepInfo::iterator DI = NLPDI.begin(), DE = NLPDI.end();
-           DI != DE; ++DI) {
-        if (DI->getResult().getInst() != RemInst)
+      for (auto &Entry : NLPDI) {
+        if (Entry.getResult().getInst() != RemInst)
           continue;
 
         // Convert to a dirty entry for the subsequent instruction.
-        DI->setResult(NewDirtyVal);
+        Entry.setResult(NewDirtyVal);
 
         if (Instruction *NewDirtyInst = NewDirtyVal.getInst())
           ReversePtrDepsToAdd.push_back(std::make_pair(NewDirtyInst, P));
@@ -1683,59 +1674,41 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
 /// This function verifies by asserting in debug builds.
 void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
 #ifndef NDEBUG
-  for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
-                                       E = LocalDeps.end();
-       I != E; ++I) {
-    assert(I->first != D && "Inst occurs in data structures");
-    assert(I->second.getInst() != D && "Inst occurs in data structures");
+  for (const auto &DepKV : LocalDeps) {
+    assert(DepKV.first != D && "Inst occurs in data structures");
+    assert(DepKV.second.getInst() != D && "Inst occurs in data structures");
   }
 
-  for (CachedNonLocalPointerInfo::const_iterator
-           I = NonLocalPointerDeps.begin(),
-           E = NonLocalPointerDeps.end();
-       I != E; ++I) {
-    assert(I->first.getPointer() != D && "Inst occurs in NLPD map key");
-    const NonLocalDepInfo &Val = I->second.NonLocalDeps;
-    for (NonLocalDepInfo::const_iterator II = Val.begin(), E = Val.end();
-         II != E; ++II)
-      assert(II->getResult().getInst() != D && "Inst occurs as NLPD value");
+  for (const auto &DepKV : NonLocalPointerDeps) {
+    assert(DepKV.first.getPointer() != D && "Inst occurs in NLPD map key");
+    for (const auto &Entry : DepKV.second.NonLocalDeps)
+      assert(Entry.getResult().getInst() != D && "Inst occurs as NLPD value");
   }
 
-  for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
-                                          E = NonLocalDeps.end();
-       I != E; ++I) {
-    assert(I->first != D && "Inst occurs in data structures");
-    const PerInstNLInfo &INLD = I->second;
-    for (NonLocalDepInfo::const_iterator II = INLD.first.begin(),
-                                         EE = INLD.first.end();
-         II != EE; ++II)
-      assert(II->getResult().getInst() != D &&
+  for (const auto &DepKV : NonLocalDeps) {
+    assert(DepKV.first != D && "Inst occurs in data structures");
+    const PerInstNLInfo &INLD = DepKV.second;
+    for (const auto &Entry : INLD.first)
+      assert(Entry.getResult().getInst() != D &&
              "Inst occurs in data structures");
   }
 
-  for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
-                                         E = ReverseLocalDeps.end();
-       I != E; ++I) {
-    assert(I->first != D && "Inst occurs in data structures");
-    for (Instruction *Inst : I->second)
+  for (const auto &DepKV : ReverseLocalDeps) {
+    assert(DepKV.first != D && "Inst occurs in data structures");
+    for (Instruction *Inst : DepKV.second)
       assert(Inst != D && "Inst occurs in data structures");
   }
 
-  for (ReverseDepMapType::const_iterator I = ReverseNonLocalDeps.begin(),
-                                         E = ReverseNonLocalDeps.end();
-       I != E; ++I) {
-    assert(I->first != D && "Inst occurs in data structures");
-    for (Instruction *Inst : I->second)
+  for (const auto &DepKV : ReverseNonLocalDeps) {
+    assert(DepKV.first != D && "Inst occurs in data structures");
+    for (Instruction *Inst : DepKV.second)
       assert(Inst != D && "Inst occurs in data structures");
   }
 
-  for (ReverseNonLocalPtrDepTy::const_iterator
-           I = ReverseNonLocalPtrDeps.begin(),
-           E = ReverseNonLocalPtrDeps.end();
-       I != E; ++I) {
-    assert(I->first != D && "Inst occurs in rev NLPD map");
+  for (const auto &DepKV : ReverseNonLocalPtrDeps) {
+    assert(DepKV.first != D && "Inst occurs in rev NLPD map");
 
-    for (ValueIsLoadPair P : I->second)
+    for (ValueIsLoadPair P : DepKV.second)
       assert(P != ValueIsLoadPair(D, false) && P != ValueIsLoadPair(D, true) &&
              "Inst occurs in ReverseNonLocalPtrDeps map");
   }
