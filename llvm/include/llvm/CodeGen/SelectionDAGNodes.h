@@ -1265,40 +1265,6 @@ class AtomicSDNode : public MemSDNode {
   }
 
 public:
-  // Opc:   opcode for atomic
-  // VTL:    value type list
-  // Chain:  memory chain for operaand
-  // Ptr:    address to update as a SDValue
-  // Cmp:    compare value
-  // Swp:    swap value
-  // SrcVal: address to update as a Value (used for MemOperand)
-  // Align:  alignment of memory
-  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
-               EVT MemVT, SDValue Chain, SDValue Ptr, SDValue Cmp, SDValue Swp,
-               MachineMemOperand *MMO, AtomicOrdering Ordering,
-               SynchronizationScope SynchScope)
-      : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, Ordering, SynchScope);
-    InitOperands(Ops, Chain, Ptr, Cmp, Swp);
-  }
-  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
-               EVT MemVT,
-               SDValue Chain, SDValue Ptr,
-               SDValue Val, MachineMemOperand *MMO,
-               AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, Ordering, SynchScope);
-    InitOperands(Ops, Chain, Ptr, Val);
-  }
-  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
-               EVT MemVT,
-               SDValue Chain, SDValue Ptr,
-               MachineMemOperand *MMO,
-               AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, Ordering, SynchScope);
-    InitOperands(Ops, Chain, Ptr);
-  }
   AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
                const SDValue* AllOps, SDUse *DynOps, unsigned NumOps,
                MachineMemOperand *MMO,
