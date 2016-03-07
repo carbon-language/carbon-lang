@@ -109,6 +109,10 @@ MachineRegisterInfo::getSize(unsigned VReg) const {
   return SizeIt != getVRegToSize().end() ? SizeIt->second : 0;
 }
 
+void MachineRegisterInfo::setSize(unsigned VReg, unsigned Size) {
+  getVRegToSize()[VReg] = Size;
+}
+
 unsigned
 MachineRegisterInfo::createGenericVirtualRegister(unsigned Size) {
   assert(Size && "Cannot create empty virtual register");
