@@ -190,12 +190,6 @@ public:
     virtual bool
     IsRemovable () const { return false; }
     
-    bool
-    IsAlias () { return m_is_alias; }
-    
-    void
-    SetIsAlias (bool value) { m_is_alias = value; }
-
     virtual bool
     IsMultiwordObject () { return false; }
 
@@ -527,7 +521,6 @@ protected:
     std::string m_cmd_help_short;
     std::string m_cmd_help_long;
     std::string m_cmd_syntax;
-    bool m_is_alias;
     Flags m_flags;
     std::vector<CommandArgumentEntry> m_arguments;
     lldb::CommandOverrideCallback m_deprecated_command_override_callback;

@@ -621,33 +621,31 @@ protected:
             
             OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
         
-            CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj.GetCommandName(), false);
+            if (CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj.GetCommandName(), false))
+            {
+                if (m_interpreter.AliasExists (alias_command.c_str())
+                    || m_interpreter.UserCommandExists (alias_command.c_str()))
+                {
+                    result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
+                                                    alias_command.c_str());
+                }
+                if (m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp, raw_command_string.c_str()))
+                {
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
+                else
+                {
+                    result.AppendError ("Unable to create requested alias.\n");
+                    result.SetStatus (eReturnStatusFailed);
+                }
 
-            if (!CommandInterpreter::CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, raw_command_string.c_str(), option_arg_vector_sp))
-            {
-                result.AppendError ("Unable to create requested alias.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            
-            // Create the alias
-            if (m_interpreter.AliasExists (alias_command.c_str())
-                || m_interpreter.UserCommandExists (alias_command.c_str()))
-            {
-                result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
-                                                alias_command.c_str());
-            }
-            
-            if (cmd_obj_sp)
-            {
-                m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp, option_arg_vector_sp);
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
             else
             {
                 result.AppendError ("Unable to create requested alias.\n");
                 result.SetStatus (eReturnStatusFailed);
             }
+
             return result.Succeeded ();
     }
     
@@ -715,37 +713,36 @@ protected:
 
                  // Verify & handle any options/arguments passed to the alias command
 
+                 std::string args_string;
+                 
                  if (args.GetArgumentCount () > 0)
                  {
                     CommandObjectSP tmp_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
                     if (use_subcommand)
                         tmp_sp = m_interpreter.GetCommandSPExact (sub_cmd_obj->GetCommandName(), false);
                         
-                    std::string args_string;
                     args.GetCommandString (args_string);
-                    
-                    if (!CommandInterpreter::CommandAlias::ProcessAliasOptionsArgs (tmp_sp, args_string.c_str(), option_arg_vector_sp))
-                    {
-                        result.AppendError ("Unable to create requested alias.\n");
-                        result.SetStatus (eReturnStatusFailed);
-                        return false;
-                    }
                  }
-
-                 // Create the alias.
-
+                 
                  if (m_interpreter.AliasExists (alias_command.c_str())
                      || m_interpreter.UserCommandExists (alias_command.c_str()))
                  {
-                     result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n", 
+                     result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
                                                      alias_command.c_str());
                  }
-
-                 if (use_subcommand)
-                     m_interpreter.AddAlias (alias_command.c_str(), subcommand_obj_sp, option_arg_vector_sp);
+                 
+                 if (m_interpreter.AddAlias(alias_command.c_str(),
+                                            use_subcommand ? subcommand_obj_sp : command_obj_sp,
+                                            args_string.c_str()))
+                 {
+                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                 }
                  else
-                     m_interpreter.AddAlias (alias_command.c_str(), command_obj_sp, option_arg_vector_sp);
-                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                 {
+                     result.AppendError ("Unable to create requested alias.\n");
+                     result.SetStatus (eReturnStatusFailed);
+                     return false;
+                 }
              }
              else
              {

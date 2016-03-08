@@ -53,7 +53,6 @@ CommandObject::CommandObject
     m_cmd_help_short (),
     m_cmd_help_long (),
     m_cmd_syntax (),
-    m_is_alias (false),
     m_flags (flags),
     m_arguments(),
     m_deprecated_command_override_callback (nullptr),

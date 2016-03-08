@@ -208,6 +208,9 @@ public:
         CommandAlias (lldb::CommandObjectSP cmd_sp = nullptr,
                       OptionArgVectorSP args_sp = nullptr);
         
+        void
+        GetAliasHelp (StreamString &help_string);
+        
         static bool
         ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
                                  const char *options_args,
@@ -302,11 +305,11 @@ public:
     bool
     UserCommandExists (const char *cmd);
 
-    void
-    AddAlias (const char *alias_name, 
+    bool
+    AddAlias (const char *alias_name,
               lldb::CommandObjectSP& command_obj_sp,
-              OptionArgVectorSP args_sp);
-
+              const char *args_string = nullptr);
+    
     // Remove a command if it is removable (python or regex command)
     bool
     RemoveCommand (const char *cmd);
@@ -436,7 +439,6 @@ public:
 
     void
     GetAliasHelp (const char *alias_name, 
-                  const char *command_name, 
                   StreamString &help_string);
 
     void
