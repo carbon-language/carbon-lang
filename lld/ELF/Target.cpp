@@ -87,7 +87,6 @@ public:
   bool isTlsLocalDynamicRel(uint32_t Type) const override;
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
-  bool isTlsDynRel(uint32_t Type, const SymbolBody &S) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
@@ -123,7 +122,6 @@ public:
   bool isTlsLocalDynamicRel(uint32_t Type) const override;
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
-  bool isTlsDynRel(uint32_t Type, const SymbolBody &S) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
@@ -185,7 +183,6 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   uint32_t getTlsGotRel(uint32_t Type) const override;
-  bool isTlsDynRel(uint32_t Type, const SymbolBody &S) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
@@ -281,7 +278,7 @@ bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
   // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
   // defined.
   if (isTlsInitialExecRel(Type))
-    return !canBePreempted(S);
+    return !canBePreempted(S, Type);
 
   return false;
 }
@@ -304,10 +301,6 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return mayNeedCopy<ELFT>(S) && needsCopyRelImpl(Type);
 }
 
-bool TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-
 bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
@@ -324,7 +317,7 @@ TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
                                          const SymbolBody &S) const {
   if (isGnuIFunc<ELFT>(S))
     return Plt_Explicit;
-  if (canBePreempted(&S) && needsPltImpl(Type))
+  if (canBePreempted(&S, Type) && needsPltImpl(Type))
     return Plt_Explicit;
 
   // This handles a non PIC program call to function in a shared library.
@@ -428,15 +421,6 @@ bool X86TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
   return Type == R_386_TLS_IE || Type == R_386_TLS_GOTIE;
 }
 
-bool X86TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
-  if (Type == R_386_TLS_LE || Type == R_386_TLS_LE_32 ||
-      Type == R_386_TLS_GOTIE)
-    return Config->Shared;
-  if (Type == R_386_TLS_IE)
-    return canBePreempted(&S);
-  return Type == R_386_TLS_GD;
-}
-
 void X86TargetInfo::writePltZero(uint8_t *Buf) const {
   // Executable files and shared object files have
   // separate procedure linkage tables.
@@ -486,7 +470,7 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 
 bool X86TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   if (S.IsTls && Type == R_386_TLS_GD)
-    return Target->canRelaxTls(Type, &S) && canBePreempted(&S);
+    return Target->canRelaxTls(Type, &S) && canBePreempted(&S, Type);
   if (Type == R_386_TLS_GOTIE || Type == R_386_TLS_IE)
     return !canRelaxTls(Type, &S);
   return Type == R_386_GOT32 || needsPlt<ELF32LE>(Type, S);
@@ -564,7 +548,7 @@ size_t X86TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                const SymbolBody *S) const {
   switch (Type) {
   case R_386_TLS_GD:
-    if (canBePreempted(S))
+    if (canBePreempted(S, Type))
       relocateTlsGdToIe(Loc, BufEnd, P, SA);
     else
       relocateTlsGdToLe(Loc, BufEnd, P, SA);
@@ -748,7 +732,7 @@ bool X86_64TargetInfo::refersToGotEntry(uint32_t Type) const {
 
 bool X86_64TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   if (Type == R_X86_64_TLSGD)
-    return Target->canRelaxTls(Type, &S) && canBePreempted(&S);
+    return Target->canRelaxTls(Type, &S) && canBePreempted(&S, Type);
   if (Type == R_X86_64_GOTTPOFF)
     return !canRelaxTls(Type, &S);
   return refersToGotEntry(Type) || needsPlt<ELF64LE>(Type, S);
@@ -774,11 +758,8 @@ bool X86_64TargetInfo::pointsToLocalDynamicGotEntry(uint32_t Type) const {
 }
 
 bool X86_64TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
-  return Type == R_X86_64_DTPOFF32 || Type == R_X86_64_TLSLD;
-}
-
-bool X86_64TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
-  return Type == R_X86_64_GOTTPOFF || Type == R_X86_64_TLSGD;
+  return Type == R_X86_64_DTPOFF32 || Type == R_X86_64_DTPOFF64 ||
+         Type == R_X86_64_TLSLD;
 }
 
 bool X86_64TargetInfo::needsPltImpl(uint32_t Type) const {
@@ -918,7 +899,7 @@ size_t X86_64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     relocateTlsIeToLe(Loc, BufEnd, P, SA);
     return 0;
   case R_X86_64_TLSGD: {
-    if (canBePreempted(S))
+    if (canBePreempted(S, Type))
       relocateTlsGdToIe(Loc, BufEnd, P, SA);
     else
       relocateTlsGdToLe(Loc, BufEnd, P, SA);
@@ -1309,15 +1290,6 @@ uint32_t AArch64TargetInfo::getTlsGotRel(uint32_t Type) const {
   return Type;
 }
 
-bool AArch64TargetInfo::isTlsDynRel(uint32_t Type, const SymbolBody &S) const {
-  return Type == R_AARCH64_TLSDESC_ADR_PAGE21 ||
-         Type == R_AARCH64_TLSDESC_LD64_LO12_NC ||
-         Type == R_AARCH64_TLSDESC_ADD_LO12_NC ||
-         Type == R_AARCH64_TLSDESC_CALL ||
-         Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
-         Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC;
-}
-
 bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   switch (Type) {
   default:
@@ -1494,7 +1466,7 @@ size_t AArch64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   case R_AARCH64_TLSDESC_LD64_LO12_NC:
   case R_AARCH64_TLSDESC_ADD_LO12_NC:
   case R_AARCH64_TLSDESC_CALL: {
-    if (canBePreempted(S))
+    if (canBePreempted(S, Type))
       fatal("Unsupported TLS optimization");
     uint64_t X = S ? S->getVA<ELF64LE>() : SA;
     relocateTlsGdToLe(Type, Loc, BufEnd, P, X);

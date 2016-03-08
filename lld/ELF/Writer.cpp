@@ -281,10 +281,10 @@ static bool handleTlsRelocation(uint32_t Type, SymbolBody *Body,
       }
       return true;
     }
-    if (!canBePreempted(Body))
+    if (!canBePreempted(Body, Type))
       return true;
   }
-  return !Target->isTlsDynRel(Type, *Body);
+  return false;
 }
 
 // The reason we have to do this early scan is as follows
@@ -327,7 +327,7 @@ void Writer<ELFT>::scanRelocs(
     if (Body)
       Body = Body->repl();
 
-    bool CBP = canBePreempted(Body);
+    bool CBP = canBePreempted(Body, Type);
     if (handleTlsRelocation<ELFT>(Type, Body, C, RI))
       continue;
 
