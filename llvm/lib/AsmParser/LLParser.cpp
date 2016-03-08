@@ -63,15 +63,19 @@ bool LLParser::parseStandaloneConstantValue(Constant *&C,
   return false;
 }
 
-bool LLParser::parseStandaloneType(Type *&Ty, const SlotMapping *Slots) {
+bool LLParser::parseTypeAtBeginning(Type *&Ty, unsigned &Read,
+                                    const SlotMapping *Slots) {
   restoreParsingState(Slots);
   Lex.Lex();
 
+  Read = 0;
+  SMLoc Start = Lex.getLoc();
   Ty = nullptr;
   if (ParseType(Ty))
     return true;
-  if (Lex.getKind() != lltok::Eof)
-    return Error(Lex.getLoc(), "expected end of string");
+  SMLoc End = Lex.getLoc();
+  Read = End.getPointer() - Start.getPointer();
+
   return false;
 }
 

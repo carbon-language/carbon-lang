@@ -100,6 +100,16 @@ Constant *parseConstantValue(StringRef Asm, SMDiagnostic &Err, const Module &M,
 Type *parseType(StringRef Asm, SMDiagnostic &Err, const Module &M,
                 const SlotMapping *Slots = nullptr);
 
+/// Parse a string \p Asm that starts with a type.
+/// \p Read[out] gives the number of characters that have been read to parse
+/// the type in \p Asm.
+///
+/// \param Slots The optional slot mapping that will restore the parsing state
+/// of the module.
+/// \return null on error.
+Type *parseTypeAtBeginning(StringRef Asm, unsigned &Read, SMDiagnostic &Err,
+                           const Module &M, const SlotMapping *Slots = nullptr);
+
 } // End llvm namespace
 
 #endif
