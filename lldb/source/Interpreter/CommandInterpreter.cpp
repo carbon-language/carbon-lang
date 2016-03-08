@@ -461,7 +461,7 @@ CommandInterpreter::Initialize ()
         AddAlias ("run", cmd_obj_sp, "--shell-expand-args true --");
     #else
         StreamString defaultshell;
-        defaultshell.Printf("--shell=%s --", HostInfo::GetDefaultShell().GetPath().c_str());
+        defaultshell.Printf("--shell=%s --", HostInfo::GetDefaultShell().GetPath().GetCString());
         AddAlias ("r", cmd_obj_sp, defaultshell.GetData());
         AddAlias ("run", cmd_obj_sp, defaultshell.GetData());
     #endif
