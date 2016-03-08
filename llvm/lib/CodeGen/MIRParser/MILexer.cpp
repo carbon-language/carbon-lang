@@ -498,9 +498,9 @@ static MIToken::TokenKind symbolToken(char C) {
   case '-':
     return MIToken::minus;
   case '<':
-    return MIToken::lt;
+    return MIToken::less;
   case '>':
-    return MIToken::gt;
+    return MIToken::greater;
   default:
     return MIToken::Error;
   }

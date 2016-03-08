@@ -45,8 +45,8 @@ struct MIToken {
     rbrace,
     plus,
     minus,
-    lt,
-    gt,
+    less,
+    greater,
 
     // Keywords
     kw_implicit,
