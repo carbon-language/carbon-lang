@@ -429,7 +429,7 @@ CommandInterpreter::Initialize ()
         shell_option.append("--shell=");
         shell_option.append(HostInfo::GetDefaultShell().GetPath());
         shell_option.append(" --");
-        ProcessAliasOptionsArgs (cmd_obj_sp, shell_option.c_str(), alias_arguments_vector_sp);
+        CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, shell_option.c_str(), alias_arguments_vector_sp);
     #endif
 #endif
         AddAlias ("r", cmd_obj_sp, alias_arguments_vector_sp);
