@@ -204,6 +204,11 @@ public:
     {
         lldb::CommandObjectSP m_underlying_command_sp;
         OptionArgVectorSP m_option_args_sp;
+        
+        static bool
+        ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
+                                 const char *options_args,
+                                 OptionArgVectorSP &option_arg_vector_sp);
     };
     
     typedef std::map<std::string, CommandAlias> CommandAliasMap;
@@ -309,11 +314,6 @@ public:
 
     OptionArgVectorSP
     GetAliasOptions (const char *alias_name);
-
-    bool
-    ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp, 
-                             const char *options_args,
-                             OptionArgVectorSP &option_arg_vector_sp);
 
     CommandObject *
     BuildAliasResult (const char *alias_name, 

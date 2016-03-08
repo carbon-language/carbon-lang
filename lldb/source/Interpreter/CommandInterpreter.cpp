@@ -97,6 +97,59 @@ enum
     eSpaceReplPrompts = 3
 };
 
+bool
+CommandInterpreter::CommandAlias::ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
+                                                           const char *options_args,
+                                                           OptionArgVectorSP &option_arg_vector_sp)
+{
+    bool success = true;
+    OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
+    
+    if (!options_args || (strlen (options_args) < 1))
+        return true;
+    
+    std::string options_string (options_args);
+    Args args (options_args);
+    CommandReturnObject result;
+    // Check to see if the command being aliased can take any command options.
+    Options *options = cmd_obj_sp->GetOptions ();
+    if (options)
+    {
+        // See if any options were specified as part of the alias;  if so, handle them appropriately.
+        options->NotifyOptionParsingStarting ();
+        args.Unshift ("dummy_arg");
+        args.ParseAliasOptions (*options, result, option_arg_vector, options_string);
+        args.Shift ();
+        if (result.Succeeded())
+            options->VerifyPartialOptions (result);
+        if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
+        {
+            result.AppendError ("Unable to create requested alias.\n");
+            return false;
+        }
+    }
+    
+    if (!options_string.empty())
+    {
+        if (cmd_obj_sp->WantsRawCommandString ())
+            option_arg_vector->push_back (OptionArgPair ("<argument>",
+                                                         OptionArgValue (-1,
+                                                                         options_string)));
+        else
+        {
+            const size_t argc = args.GetArgumentCount();
+            for (size_t i = 0; i < argc; ++i)
+                if (strcmp (args.GetArgumentAtIndex (i), "") != 0)
+                    option_arg_vector->push_back
+                    (OptionArgPair ("<argument>",
+                                    OptionArgValue (-1,
+                                                    std::string (args.GetArgumentAtIndex (i)))));
+        }
+    }
+    
+    return success;
+}
+
 ConstString &
 CommandInterpreter::GetStaticBroadcasterClass ()
 {
@@ -244,7 +297,7 @@ CommandInterpreter::Initialize ()
         AddAlias ("step", cmd_obj_sp, alias_arguments_vector_sp);
         
         alias_arguments_vector_sp.reset (new OptionArgVector);
-        ProcessAliasOptionsArgs (cmd_obj_sp, "--end-linenumber block --step-in-target %1", alias_arguments_vector_sp);
+        CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, "--end-linenumber block --step-in-target %1", alias_arguments_vector_sp);
         AddAlias ("sif", cmd_obj_sp, alias_arguments_vector_sp);
         alias_arguments_vector_sp.reset(new OptionArgVector);
     }
@@ -342,12 +395,12 @@ CommandInterpreter::Initialize ()
     cmd_obj_sp = GetCommandSPExact ("expression", false);
     if (cmd_obj_sp)
     {        
-        ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
+        CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
         AddAlias ("p", cmd_obj_sp, alias_arguments_vector_sp);
         AddAlias ("print", cmd_obj_sp, alias_arguments_vector_sp);
         AddAlias ("call", cmd_obj_sp, alias_arguments_vector_sp);
         alias_arguments_vector_sp.reset (new OptionArgVector);
-        ProcessAliasOptionsArgs (cmd_obj_sp, "-O -- ", alias_arguments_vector_sp);
+        CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, "-O -- ", alias_arguments_vector_sp);
         AddAlias ("po", cmd_obj_sp, alias_arguments_vector_sp);
         alias_arguments_vector_sp.reset(new OptionArgVector);
     }
@@ -370,7 +423,7 @@ CommandInterpreter::Initialize ()
         shell_option.append("--shell-expand-args");
         shell_option.append(" true");
         shell_option.append(" --");
-        ProcessAliasOptionsArgs (cmd_obj_sp, shell_option.c_str(), alias_arguments_vector_sp);
+        CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, shell_option.c_str(), alias_arguments_vector_sp);
     #else
         std::string shell_option;
         shell_option.append("--shell=");
@@ -394,7 +447,7 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
     {
         alias_arguments_vector_sp.reset (new OptionArgVector);
-        ProcessAliasOptionsArgs (cmd_obj_sp, "--func-regex %1", alias_arguments_vector_sp);
+        CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, "--func-regex %1", alias_arguments_vector_sp);
         AddAlias ("rbreak", cmd_obj_sp, alias_arguments_vector_sp);
         alias_arguments_vector_sp.reset(new OptionArgVector);
     }
@@ -1014,59 +1067,6 @@ bool
 CommandInterpreter::CommandExists (const char *cmd)
 {
     return m_command_dict.find(cmd) != m_command_dict.end();
-}
-
-bool
-CommandInterpreter::ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp, 
-                                            const char *options_args, 
-                                            OptionArgVectorSP &option_arg_vector_sp)
-{
-    bool success = true;
-    OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
-    
-    if (!options_args || (strlen (options_args) < 1))
-        return true;
-
-    std::string options_string (options_args);
-    Args args (options_args);
-    CommandReturnObject result;
-    // Check to see if the command being aliased can take any command options.
-    Options *options = cmd_obj_sp->GetOptions ();
-    if (options)
-    {
-        // See if any options were specified as part of the alias;  if so, handle them appropriately.
-        options->NotifyOptionParsingStarting ();
-        args.Unshift ("dummy_arg");
-        args.ParseAliasOptions (*options, result, option_arg_vector, options_string);
-        args.Shift ();
-        if (result.Succeeded())
-            options->VerifyPartialOptions (result);
-        if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
-        {
-            result.AppendError ("Unable to create requested alias.\n");
-            return false;
-        }
-    }
-    
-    if (!options_string.empty())
-    {
-        if (cmd_obj_sp->WantsRawCommandString ())
-            option_arg_vector->push_back (OptionArgPair ("<argument>",
-                                                          OptionArgValue (-1,
-                                                                          options_string)));
-        else
-        {
-            const size_t argc = args.GetArgumentCount();
-            for (size_t i = 0; i < argc; ++i)
-                if (strcmp (args.GetArgumentAtIndex (i), "") != 0)
-                    option_arg_vector->push_back 
-                                (OptionArgPair ("<argument>",
-                                                OptionArgValue (-1,
-                                                                std::string (args.GetArgumentAtIndex (i)))));
-        }
-    }
-        
-    return success;
 }
 
 bool

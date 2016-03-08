@@ -620,11 +620,10 @@ protected:
             // Verify & handle any options/arguments passed to the alias command
             
             OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
-            OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
-            
+        
             CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj.GetCommandName(), false);
 
-            if (!m_interpreter.ProcessAliasOptionsArgs (cmd_obj_sp, raw_command_string.c_str(), option_arg_vector_sp))
+            if (!CommandInterpreter::CommandAlias::ProcessAliasOptionsArgs (cmd_obj_sp, raw_command_string.c_str(), option_arg_vector_sp))
             {
                 result.AppendError ("Unable to create requested alias.\n");
                 result.SetStatus (eReturnStatusFailed);
@@ -688,7 +687,6 @@ protected:
                  CommandObject *cmd_obj = command_obj_sp.get();
                  CommandObject *sub_cmd_obj = nullptr;
                  OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
-                 OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
 
                  while (cmd_obj->IsMultiwordObject() && args.GetArgumentCount() > 0)
                  {
@@ -726,7 +724,7 @@ protected:
                     std::string args_string;
                     args.GetCommandString (args_string);
                     
-                    if (!m_interpreter.ProcessAliasOptionsArgs (tmp_sp, args_string.c_str(), option_arg_vector_sp))
+                    if (!CommandInterpreter::CommandAlias::ProcessAliasOptionsArgs (tmp_sp, args_string.c_str(), option_arg_vector_sp))
                     {
                         result.AppendError ("Unable to create requested alias.\n");
                         result.SetStatus (eReturnStatusFailed);
