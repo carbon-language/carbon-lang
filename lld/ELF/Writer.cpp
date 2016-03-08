@@ -281,7 +281,7 @@ static bool handleTlsRelocation(uint32_t Type, SymbolBody *Body,
       }
       return true;
     }
-    if (!canBePreempted(Body, Type))
+    if (!canBePreempted(Body))
       return true;
   }
   return false;
@@ -327,7 +327,7 @@ void Writer<ELFT>::scanRelocs(
     if (Body)
       Body = Body->repl();
 
-    bool CBP = canBePreempted(Body, Type);
+    bool CBP = canBePreempted(Body);
     if (handleTlsRelocation<ELFT>(Type, Body, C, RI))
       continue;
 

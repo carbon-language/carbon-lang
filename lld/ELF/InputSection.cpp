@@ -271,7 +271,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     }
 
     uintX_t SymVA = Body->getVA<ELFT>();
-    bool CBP = canBePreempted(Body, Type);
+    bool CBP = canBePreempted(Body);
     if (Target->needsPlt<ELFT>(Type, *Body)) {
       SymVA = Body->getPltVA<ELFT>();
     } else if (Target->needsGot(Type, *Body)) {

@@ -278,7 +278,7 @@ bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
   // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
   // defined.
   if (isTlsInitialExecRel(Type))
-    return !canBePreempted(S, Type);
+    return !canBePreempted(S);
 
   return false;
 }
@@ -317,7 +317,7 @@ TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
                                          const SymbolBody &S) const {
   if (isGnuIFunc<ELFT>(S))
     return Plt_Explicit;
-  if (canBePreempted(&S, Type) && needsPltImpl(Type))
+  if (canBePreempted(&S) && needsPltImpl(Type))
     return Plt_Explicit;
 
   // This handles a non PIC program call to function in a shared library.
@@ -470,7 +470,7 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 
 bool X86TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   if (S.IsTls && Type == R_386_TLS_GD)
-    return Target->canRelaxTls(Type, &S) && canBePreempted(&S, Type);
+    return Target->canRelaxTls(Type, &S) && canBePreempted(&S);
   if (Type == R_386_TLS_GOTIE || Type == R_386_TLS_IE)
     return !canRelaxTls(Type, &S);
   return Type == R_386_GOT32 || needsPlt<ELF32LE>(Type, S);
@@ -548,7 +548,7 @@ size_t X86TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                const SymbolBody *S) const {
   switch (Type) {
   case R_386_TLS_GD:
-    if (canBePreempted(S, Type))
+    if (canBePreempted(S))
       relocateTlsGdToIe(Loc, BufEnd, P, SA);
     else
       relocateTlsGdToLe(Loc, BufEnd, P, SA);
@@ -732,7 +732,7 @@ bool X86_64TargetInfo::refersToGotEntry(uint32_t Type) const {
 
 bool X86_64TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   if (Type == R_X86_64_TLSGD)
-    return Target->canRelaxTls(Type, &S) && canBePreempted(&S, Type);
+    return Target->canRelaxTls(Type, &S) && canBePreempted(&S);
   if (Type == R_X86_64_GOTTPOFF)
     return !canRelaxTls(Type, &S);
   return refersToGotEntry(Type) || needsPlt<ELF64LE>(Type, S);
@@ -899,7 +899,7 @@ size_t X86_64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     relocateTlsIeToLe(Loc, BufEnd, P, SA);
     return 0;
   case R_X86_64_TLSGD: {
-    if (canBePreempted(S, Type))
+    if (canBePreempted(S))
       relocateTlsGdToIe(Loc, BufEnd, P, SA);
     else
       relocateTlsGdToLe(Loc, BufEnd, P, SA);
@@ -1466,7 +1466,7 @@ size_t AArch64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   case R_AARCH64_TLSDESC_LD64_LO12_NC:
   case R_AARCH64_TLSDESC_ADD_LO12_NC:
   case R_AARCH64_TLSDESC_CALL: {
-    if (canBePreempted(S, Type))
+    if (canBePreempted(S))
       fatal("Unsupported TLS optimization");
     uint64_t X = S ? S->getVA<ELF64LE>() : SA;
     relocateTlsGdToLe(Type, Loc, BufEnd, P, X);

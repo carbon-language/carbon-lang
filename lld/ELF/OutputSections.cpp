@@ -176,7 +176,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
     // for detailed description:
     // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
     // As the first approach, we can just store addresses for all symbols.
-    if (Config->EMachine != EM_MIPS && canBePreempted(B, 0))
+    if (Config->EMachine != EM_MIPS && canBePreempted(B))
       continue; // The dynamic linker will take care of it.
     uintX_t VA = B->getVA<ELFT>();
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, VA);
@@ -932,16 +932,9 @@ elf::getLocalRelTarget(const ObjectFile<ELFT> &File,
 
 // Returns true if a symbol can be replaced at load-time by a symbol
 // with the same name defined in other ELF executable or DSO.
-bool elf::canBePreempted(const SymbolBody *Body, unsigned Type) {
+bool elf::canBePreempted(const SymbolBody *Body) {
   if (!Body)
     return false;  // Body is a local symbol.
-
-  // FIXME: Both gold and bfd consider that a local dynamic tls relocation to
-  // a symbol will not be preempted. Is that actually relevant? The compiler
-  // should not use it if the symbol can be preempted.
-  if (Target->isTlsLocalDynamicRel(Type))
-    return false;
-
   if (Body->isShared())
     return true;
 
