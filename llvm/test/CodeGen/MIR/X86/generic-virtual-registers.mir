@@ -13,6 +13,6 @@ registers:
 body: |
   bb.0.entry:
     liveins: %edi
-    ; CHECK:      %0(32) = G_ADD %edi
+    ; CHECK:      %0(32) = G_ADD i32 %edi
     %0(32) = G_ADD i32 %edi, %edi
 ...

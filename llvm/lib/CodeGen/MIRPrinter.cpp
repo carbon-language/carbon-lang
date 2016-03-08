@@ -552,6 +552,10 @@ void MIPrinter::print(const MachineInstr &MI) {
   if (MI.getFlag(MachineInstr::FrameSetup))
     OS << "frame-setup ";
   OS << TII->getName(MI.getOpcode());
+  if (isPreISelGenericOpcode(MI.getOpcode())) {
+    assert(MI.getType() && "Generic instructions must have a type");
+    OS << ' ' << *MI.getType();
+  }
   if (I < E)
     OS << ' ';
 
