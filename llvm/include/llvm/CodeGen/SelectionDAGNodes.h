@@ -2059,12 +2059,9 @@ template <> struct GraphTraits<SDNode*> {
 ///
 /// This needs to be a union because the largest node differs on 32 bit systems
 /// with 4 and 8 byte pointer alignment, respectively.
-union LargestSDNode {
-  AtomicSDNode Atomic;
-  TargetIndexSDNode TargetIndex;
-  BlockAddressSDNode BlockAddress;
-  GlobalAddressSDNode GlobalAddress;
-};
+typedef AlignedCharArrayUnion<AtomicSDNode, TargetIndexSDNode,
+                              BlockAddressSDNode, GlobalAddressSDNode>
+    LargestSDNode;
 
 /// The SDNode class with the greatest alignment requirement.
 typedef GlobalAddressSDNode MostAlignedSDNode;
