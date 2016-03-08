@@ -1344,7 +1344,7 @@ static CharUnits GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
       
       unsigned ILEElement = 0;
       if (auto *CXXRD = dyn_cast<CXXRecordDecl>(SD))
-        for (auto &Base : CXXRD->bases())
+        while (ILEElement != CXXRD->getNumBases())
           NumNonZeroBytes +=
               GetNumNonZeroBytesInInit(ILE->getInit(ILEElement++), CGF);
       for (const auto *Field : SD->fields()) {
