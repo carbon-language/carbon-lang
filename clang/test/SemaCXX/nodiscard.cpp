@@ -1,9 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++1z -verify -Wc++1z-extensions %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify -DEXT -Wc++1z-extensions %s
 
-#if !defined(EXT)
-static_assert(__has_cpp_attribute(nodiscard) == 201603);
-
 struct [[nodiscard]] S {};
 S get_s();
 S& get_s_ref();
@@ -28,6 +25,10 @@ void f() {
 [[nodiscard nodiscard]] int wrong1(); // expected-error {{attribute 'nodiscard' cannot appear multiple times in an attribute specifier}}
 
 namespace [[nodiscard]] N {} // expected-warning {{'nodiscard' attribute only applies to functions, methods, enums, and classes}}
-#else
-struct [[nodiscard]] S {}; // expected-warning {{use of the 'nodiscard' attribute is a C++1z extension}}
-#endif // EXT
+
+#ifdef EXT
+// expected-warning@4 {{use of the 'nodiscard' attribute is a C++1z extension}}
+// expected-warning@8 {{use of the 'nodiscard' attribute is a C++1z extension}}
+// expected-warning@11 {{use of the 'nodiscard' attribute is a C++1z extension}}
+// expected-warning@25 2{{use of the 'nodiscard' attribute is a C++1z extension}}
+#endif

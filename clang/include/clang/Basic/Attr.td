@@ -742,7 +742,7 @@ def ExtVectorType : Attr {
 }
 
 def FallThrough : StmtAttr {
-  let Spellings = [CXX11<"", "fallthrough", 201503>,
+  let Spellings = [CXX11<"", "fallthrough", 201603>,
                    CXX11<"clang", "fallthrough">];
 //  let Subjects = [NullStmt];
   let Documentation = [FallthroughDocs];
