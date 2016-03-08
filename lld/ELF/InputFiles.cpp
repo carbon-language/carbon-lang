@@ -440,10 +440,13 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
   for (const BasicSymbolRef &Sym : Obj->symbols()) {
     uint8_t Visibility = STV_DEFAULT;
     const GlobalValue *GV = Obj->getSymbolGV(Sym.getRawDataRefImpl());
+    uint32_t Flags = Sym.getFlags();
     if (GV) {
       if (const Comdat *C = GV->getComdat())
         if (!KeptComdats.count(C))
           continue;
+      if (!(Flags & object::BasicSymbolRef::SF_Global))
+        continue;
       Visibility = getGvVisibility(GV);
     }
 
@@ -453,7 +456,6 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
     StringRef NameRef = Saver.save(StringRef(Name));
 
     SymbolBody *Body;
-    uint32_t Flags = Sym.getFlags();
     bool IsWeak = Flags & BasicSymbolRef::SF_Weak;
     if (Flags & BasicSymbolRef::SF_Undefined) {
       Body = new (Alloc) Undefined(NameRef, IsWeak, Visibility, false);
