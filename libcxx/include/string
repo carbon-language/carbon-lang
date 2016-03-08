@@ -982,7 +982,7 @@ __str_find(const _CharT *__p, _SizeT __sz,
     const _CharT* __r = 
         _VSTD::__search(__p + __pos, __p + __sz,
                         __s, __s + __n, _Traits::eq,
-                        random_access_iterator_tag(), random_access_iterator_tag());
+                        random_access_iterator_tag(), random_access_iterator_tag()).first;
     if (__r == __p + __sz)
         return __npos;
     return static_cast<_SizeT>(__r - __p);
