@@ -207,8 +207,13 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
     unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
     yaml::VirtualRegisterDefinition VReg;
     VReg.ID = I;
-    VReg.Class =
-        StringRef(TRI->getRegClassName(RegInfo.getRegClass(Reg))).lower();
+    if (RegInfo.getRegClass(Reg))
+      VReg.Class =
+          StringRef(TRI->getRegClassName(RegInfo.getRegClass(Reg))).lower();
+    else {
+      VReg.Class = std::string("_");
+      assert(RegInfo.getSize(Reg) && "Generic registers must have a size");
+    }
     unsigned PreferredReg = RegInfo.getSimpleHint(Reg);
     if (PreferredReg)
       printReg(PreferredReg, VReg.PreferredRegister, TRI);
