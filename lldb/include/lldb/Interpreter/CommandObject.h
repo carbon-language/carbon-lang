@@ -28,6 +28,49 @@
 
 namespace lldb_private {
 
+// This function really deals with CommandObjectLists, but we didn't make a
+// CommandObjectList class, so I'm sticking it here.  But we really should have
+// such a class.  Anyway, it looks up the commands in the map that match the partial
+// string cmd_str, inserts the matches into matches, and returns the number added.
+
+template <typename ValueType>
+int
+AddNamesMatchingPartialString (std::map<std::string,ValueType> &in_map, const char *cmd_str, StringList &matches)
+{
+    class CommandDictCommandPartialMatch
+    {
+    public:
+        CommandDictCommandPartialMatch (const char *match_str)
+        {
+            m_match_str = match_str;
+        }
+        bool operator() (const std::pair<std::string, ValueType> map_element) const
+        {
+            // A NULL or empty string matches everything.
+            if (m_match_str == nullptr || *m_match_str == '\0')
+                return true;
+            
+            return map_element.first.find (m_match_str, 0) == 0;
+        }
+        
+    private:
+        const char *m_match_str;
+    };
+
+    int number_added = 0;
+    CommandDictCommandPartialMatch matcher(cmd_str);
+    
+    auto matching_cmds = std::find_if (in_map.begin(), in_map.end(), matcher);
+    
+    while (matching_cmds != in_map.end())
+    {
+        ++number_added;
+        matches.AppendString((*matching_cmds).first.c_str());
+        matching_cmds = std::find_if (++matching_cmds, in_map.end(), matcher);;
+    }
+    return number_added;    
+}
+    
 class CommandObject
 {
 public:
@@ -229,14 +272,6 @@ public:
 
     void
     SetCommandName (const char *name);
-
-    // This function really deals with CommandObjectLists, but we didn't make a
-    // CommandObjectList class, so I'm sticking it here.  But we really should have
-    // such a class.  Anyway, it looks up the commands in the map that match the partial
-    // string cmd_str, inserts the matches into matches, and returns the number added.
-
-    static int
-    AddNamesMatchingPartialString (CommandMap &in_map, const char *cmd_str, StringList &matches);
 
     //------------------------------------------------------------------
     /// The input array contains a parsed version of the line.  The insertion

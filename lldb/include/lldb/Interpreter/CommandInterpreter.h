@@ -200,8 +200,14 @@ class CommandInterpreter :
     public IOHandlerDelegate
 {
 public:
-    typedef std::map<std::string, OptionArgVectorSP> OptionArgMap;
-
+    struct CommandAlias
+    {
+        lldb::CommandObjectSP m_underlying_command_sp;
+        OptionArgVectorSP m_option_args_sp;
+    };
+    
+    typedef std::map<std::string, CommandAlias> CommandAliasMap;
+    
     enum
     {
         eBroadcastBitThreadShouldExit       = (1 << 0),
@@ -279,7 +285,8 @@ public:
 
     void
     AddAlias (const char *alias_name, 
-              lldb::CommandObjectSP& command_obj_sp);
+              lldb::CommandObjectSP& command_obj_sp,
+              OptionArgVectorSP args_sp);
 
     // Remove a command if it is removable (python or regex command)
     bool
@@ -307,13 +314,6 @@ public:
     ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp, 
                              const char *options_args,
                              OptionArgVectorSP &option_arg_vector_sp);
-
-    void
-    RemoveAliasOptions (const char *alias_name);
-
-    void
-    AddOrReplaceAliasOptions (const char *alias_name, 
-                              OptionArgVectorSP &option_arg_vector_sp);
 
     CommandObject *
     BuildAliasResult (const char *alias_name, 
@@ -533,8 +533,9 @@ public:
     bool
     GetSynchronous ();
     
+    template <typename ValueType>
     size_t
-    FindLongestCommandWord (CommandObject::CommandMap &dict);
+    FindLongestCommandWord (std::map<std::string,ValueType> &dict);
 
     void
     FindCommandsForApropos (const char *word, 
@@ -700,9 +701,8 @@ private:
     bool m_skip_lldbinit_files;
     bool m_skip_app_init_files;
     CommandObject::CommandMap m_command_dict;   // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
-    CommandObject::CommandMap m_alias_dict;     // Stores user aliases/abbreviations for commands
+    CommandAliasMap m_alias_dict;               // Stores user aliases/abbreviations for commands
     CommandObject::CommandMap m_user_dict;      // Stores user-defined commands
-    OptionArgMap m_alias_options;               // Stores any options (with or without arguments) that go with any alias.
     CommandHistory m_command_history;
     std::string m_repeat_command;               // Stores the command that will be executed for an empty command string.
     lldb::ScriptInterpreterSP m_script_interpreter_sp;

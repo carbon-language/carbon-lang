@@ -346,45 +346,6 @@ CommandObject::Cleanup ()
     m_api_locker.Unlock();
 }
 
-
-class CommandDictCommandPartialMatch
-{
-    public:
-        CommandDictCommandPartialMatch (const char *match_str)
-        {
-            m_match_str = match_str;
-        }
-        bool operator() (const std::pair<std::string, lldb::CommandObjectSP> map_element) const
-        {
-            // A NULL or empty string matches everything.
-            if (m_match_str == nullptr || *m_match_str == '\0')
-                return true;
-
-            return map_element.first.find (m_match_str, 0) == 0;
-        }
-
-    private:
-        const char *m_match_str;
-};
-
-int
-CommandObject::AddNamesMatchingPartialString (CommandObject::CommandMap &in_map, const char *cmd_str,
-                                              StringList &matches)
-{
-    int number_added = 0;
-    CommandDictCommandPartialMatch matcher(cmd_str);
-
-    CommandObject::CommandMap::iterator matching_cmds = std::find_if (in_map.begin(), in_map.end(), matcher);
-
-    while (matching_cmds != in_map.end())
-    {
-        ++number_added;
-        matches.AppendString((*matching_cmds).first.c_str());
-        matching_cmds = std::find_if (++matching_cmds, in_map.end(), matcher);;
-    }
-    return number_added;
-}
-
 int
 CommandObject::HandleCompletion
 (

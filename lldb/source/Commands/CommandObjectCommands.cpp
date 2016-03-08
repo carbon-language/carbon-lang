@@ -635,21 +635,13 @@ protected:
             if (m_interpreter.AliasExists (alias_command.c_str())
                 || m_interpreter.UserCommandExists (alias_command.c_str()))
             {
-                OptionArgVectorSP temp_option_arg_sp (m_interpreter.GetAliasOptions (alias_command.c_str()));
-                if (temp_option_arg_sp)
-                {
-                    if (option_arg_vector->empty())
-                        m_interpreter.RemoveAliasOptions (alias_command.c_str());
-                }
                 result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
                                                 alias_command.c_str());
             }
             
             if (cmd_obj_sp)
             {
-                m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp);
-                if (!option_arg_vector->empty())
-                    m_interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
+                m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp, option_arg_vector_sp);
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
             else
@@ -747,22 +739,14 @@ protected:
                  if (m_interpreter.AliasExists (alias_command.c_str())
                      || m_interpreter.UserCommandExists (alias_command.c_str()))
                  {
-                     OptionArgVectorSP tmp_option_arg_sp (m_interpreter.GetAliasOptions (alias_command.c_str()));
-                     if (tmp_option_arg_sp)
-                     {
-                         if (option_arg_vector->empty())
-                             m_interpreter.RemoveAliasOptions (alias_command.c_str());
-                     }
                      result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n", 
                                                      alias_command.c_str());
                  }
 
                  if (use_subcommand)
-                     m_interpreter.AddAlias (alias_command.c_str(), subcommand_obj_sp);
+                     m_interpreter.AddAlias (alias_command.c_str(), subcommand_obj_sp, option_arg_vector_sp);
                  else
-                     m_interpreter.AddAlias (alias_command.c_str(), command_obj_sp);
-                 if (!option_arg_vector->empty())
-                     m_interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
+                     m_interpreter.AddAlias (alias_command.c_str(), command_obj_sp, option_arg_vector_sp);
                  result.SetStatus (eReturnStatusSuccessFinishNoResult);
              }
              else
