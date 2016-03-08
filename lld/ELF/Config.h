@@ -67,6 +67,7 @@ struct Configuration {
   bool Mips64EL = false;
   bool NoInhibitExec;
   bool NoUndefined;
+  bool Nostdlib;
   bool PrintGcSections;
   bool Relocatable;
   bool Shared;
