@@ -65,8 +65,8 @@ struct Configuration {
   bool GnuHash = false;
   bool ICF;
   bool Mips64EL = false;
-  bool NoInhibitExec;
   bool NoUndefined;
+  bool NoinhibitExec;
   bool Nostdlib;
   bool PrintGcSections;
   bool Relocatable;
