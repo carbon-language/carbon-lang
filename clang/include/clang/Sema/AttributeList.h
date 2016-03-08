@@ -491,6 +491,7 @@ public:
 
   bool isTargetSpecificAttr() const;
   bool isTypeAttr() const;
+  bool isStmtAttr() const;
 
   bool hasCustomParsing() const;
   unsigned getMinArgs() const;

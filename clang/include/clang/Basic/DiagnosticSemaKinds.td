@@ -2358,8 +2358,10 @@ def warn_cxx11_gnu_attribute_on_type : Warning<
 def warn_unhandled_ms_attribute_ignored : Warning<
   "__declspec attribute %0 is not supported">, 
   InGroup<IgnoredAttributes>;
-def err_attribute_invalid_on_stmt : Error<
+def err_decl_attribute_invalid_on_stmt : Error<
   "%0 attribute cannot be applied to a statement">;
+def err_stmt_attribute_invalid_on_decl : Error<
+  "%0 attribute cannot be applied to a declaration">;
 def warn_declspec_attribute_ignored : Warning<
   "attribute %0 is ignored, place it after "
   "\"%select{class|struct|interface|union|enum}1\" to apply attribute to "
@@ -6592,8 +6594,11 @@ def warn_unused_result : Warning<
 def warn_unused_volatile : Warning<
   "expression result unused; assign into a variable to force a volatile load">,
   InGroup<DiagGroup<"unused-volatile-lvalue">>;
-def ext_nodiscard_attr_is_a_cxx1z_extension : ExtWarn<
-  "use of the 'nodiscard' attribute is a C++1z extension">, InGroup<CXX1z>;
+
+def ext_cxx14_attr : Extension<
+  "use of the %0 attribute is a C++14 extension">, InGroup<CXX14>;
+def ext_cxx1z_attr : Extension<
+  "use of the %0 attribute is a C++1z extension">, InGroup<CXX1z>;
 
 def warn_unused_comparison : Warning<
   "%select{%select{|in}1equality|relational}0 comparison result unused">,
@@ -7306,13 +7311,12 @@ def note_insert_fallthrough_fixit : Note<
 def note_insert_break_fixit : Note<
   "insert 'break;' to avoid fall-through">;
 def err_fallthrough_attr_wrong_target : Error<
-  "clang::fallthrough attribute is only allowed on empty statements">;
+  "%0 attribute is only allowed on empty statements">;
 def note_fallthrough_insert_semi_fixit : Note<"did you forget ';'?">;
 def err_fallthrough_attr_outside_switch : Error<
   "fallthrough annotation is outside switch statement">;
-def warn_fallthrough_attr_invalid_placement : Warning<
-  "fallthrough annotation does not directly precede switch label">,
-  InGroup<ImplicitFallthrough>;
+def err_fallthrough_attr_invalid_placement : Error<
+  "fallthrough annotation does not directly precede switch label">;
 def warn_fallthrough_attr_unreachable : Warning<
   "fallthrough annotation in unreachable code">,
   InGroup<ImplicitFallthrough>;
@@ -7677,9 +7681,6 @@ def err_asm_naked_this_ref : Error<
   "'this' pointer references not allowed in naked functions">;
 def err_asm_naked_parm_ref : Error<
   "parameter references not allowed in naked functions">;
-
-def ext_deprecated_attr_is_a_cxx14_extension : ExtWarn<
-  "use of the 'deprecated' attribute is a C++14 extension">, InGroup<CXX14>;
 
 // OpenCL warnings and errors.
 def err_invalid_astype_of_different_size : Error<

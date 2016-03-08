@@ -311,6 +311,9 @@ class TypeAttr : Attr {
   let ASTNode = 0;
 }
 
+/// A stmt attribute is not processed on a declaration or a type.
+class StmtAttr : Attr;
+
 /// An inheritable attribute is inherited by later redeclarations.
 class InheritableAttr : Attr;
 
@@ -738,8 +741,9 @@ def ExtVectorType : Attr {
   let Documentation = [Undocumented];
 }
 
-def FallThrough : Attr {
-  let Spellings = [CXX11<"clang", "fallthrough">];
+def FallThrough : StmtAttr {
+  let Spellings = [CXX11<"", "fallthrough", 201503>,
+                   CXX11<"clang", "fallthrough">];
 //  let Subjects = [NullStmt];
   let Documentation = [FallthroughDocs];
 }

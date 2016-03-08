@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++1z -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify -DEXT %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++1z -verify -Wc++1z-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify -DEXT -Wc++1z-extensions %s
 
 #if !defined(EXT)
 static_assert(__has_cpp_attribute(nodiscard) == 201603);

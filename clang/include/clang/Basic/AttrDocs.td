@@ -756,9 +756,10 @@ potentially-evaluated discarded-value expression that is not explicitly cast to
 
 def FallthroughDocs : Documentation {
   let Category = DocCatStmt;
+  let Heading = "fallthrough, clang::fallthrough";
   let Content = [{
-The ``clang::fallthrough`` attribute is used along with the
-``-Wimplicit-fallthrough`` argument to annotate intentional fall-through
+The ``fallthrough`` (or ``clang::fallthrough``) attribute is used
+to annotate intentional fall-through
 between switch labels.  It can only be applied to a null statement placed at a
 point of execution between any statement and the next switch label.  It is
 common to mark these places with a specific comment, but this attribute is
@@ -768,6 +769,10 @@ be used wherever an intended fall-through occurs.  It is designed to mimic
 control-flow statements like ``break;``, so it can be placed in most places
 where ``break;`` can, but only if there are no statements on the execution path
 between it and the next switch label.
+
+By default, Clang does not warn on unannotated fallthrough from one ``switch``
+case to another. Diagnostics on fallthrough without a corresponding annotation
+can be enabled with the ``-Wimplicit-fallthrough`` argument.
 
 Here is an example:
 
