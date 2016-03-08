@@ -1200,22 +1200,6 @@ CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_na
     help_string.Printf ("'");
 }
 
-template <typename ValueType>
-size_t
-CommandInterpreter::FindLongestCommandWord (std::map<std::string,ValueType> &dict)
-{
-    auto end = dict.end();
-    size_t max_len = 0;
-
-    for (auto pos = dict.begin(); pos != end; ++pos)
-    {
-        size_t len = pos->first.size();
-        if (max_len < len)
-            max_len = len;
-    }
-    return max_len;
-}
-
 void
 CommandInterpreter::GetHelp (CommandReturnObject &result,
                              uint32_t cmd_types)

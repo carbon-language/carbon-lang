@@ -181,7 +181,7 @@ CommandObjectMultiword::GenerateHelpText (Stream &output_stream)
     output_stream.PutCString ("The following subcommands are supported:\n\n");
 
     CommandMap::iterator pos;
-    uint32_t max_len = m_interpreter.FindLongestCommandWord (m_subcommand_dict);
+    uint32_t max_len = FindLongestCommandWord (m_subcommand_dict);
 
     if (max_len)
         max_len += 4; // Indent the output by 4 spaces.

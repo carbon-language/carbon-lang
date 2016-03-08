@@ -70,7 +70,23 @@ AddNamesMatchingPartialString (std::map<std::string,ValueType> &in_map, const ch
     }
     return number_added;    
 }
+
+template <typename ValueType>
+size_t
+FindLongestCommandWord (std::map<std::string,ValueType> &dict)
+{
+    auto end = dict.end();
+    size_t max_len = 0;
     
+    for (auto pos = dict.begin(); pos != end; ++pos)
+    {
+        size_t len = pos->first.size();
+        if (max_len < len)
+            max_len = len;
+    }
+    return max_len;
+}
+
 class CommandObject
 {
 public:

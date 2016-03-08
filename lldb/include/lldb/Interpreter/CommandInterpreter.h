@@ -533,10 +533,6 @@ public:
     bool
     GetSynchronous ();
     
-    template <typename ValueType>
-    size_t
-    FindLongestCommandWord (std::map<std::string,ValueType> &dict);
-
     void
     FindCommandsForApropos (const char *word, 
                             StringList &commands_found, 
