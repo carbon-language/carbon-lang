@@ -88,7 +88,9 @@ public:
            StringRef Source, const PerFunctionMIParsingState &PFS,
            const SlotMapping &IRSlots);
 
-  void lex();
+  /// \p SkipChar gives the number of characters to skip before looking
+  /// for the next token.
+  void lex(unsigned SkipChar = 0);
 
   /// Report an error at the current location with the given message.
   ///
@@ -127,8 +129,10 @@ public:
   bool parseIRConstant(StringRef::iterator Loc, StringRef Source,
                        const Constant *&C);
   bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
-  bool parseIRType(StringRef::iterator Loc, StringRef Source, Type *&Ty);
-  bool parseIRType(StringRef::iterator Loc, Type *&Ty);
+  bool parseIRType(StringRef::iterator Loc, StringRef Source, unsigned &Read,
+                   Type *&Ty);
+  // \p MustBeSized defines whether or not \p Ty must be sized.
+  bool parseIRType(StringRef::iterator Loc, Type *&Ty, bool MustBeSized = true);
   bool parseTypedImmediateOperand(MachineOperand &Dest);
   bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
@@ -254,9 +258,9 @@ MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
     : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
       PFS(PFS), IRSlots(IRSlots) {}
 
-void MIParser::lex() {
+void MIParser::lex(unsigned SkipChar) {
   CurrentSource = lexMIToken(
-      CurrentSource, Token,
+      CurrentSource.data() + SkipChar, Token,
       [this](StringRef::iterator Loc, const Twine &Msg) { error(Loc, Msg); });
 }
 
@@ -597,10 +601,6 @@ bool MIParser::parse(MachineInstr *&MI) {
     auto Loc = Token.location();
     if (parseIRType(Loc, Ty))
       return true;
-    // The type must be sized, otherwise there is not much the backend
-    // can do with it.
-    if (!Ty->isSized())
-      return error("expected a fully defined type for generic instruction");
   }
 
   // Parse the remaining machine operands.
@@ -1019,19 +1019,34 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
 }
 
 bool MIParser::parseIRType(StringRef::iterator Loc, StringRef StringValue,
-                           Type *&Ty) {
+                           unsigned &Read, Type *&Ty) {
   auto Source = StringValue.str(); // The source has to be null terminated.
   SMDiagnostic Err;
-  Ty = parseType(Source.c_str(), Err, *MF.getFunction()->getParent(), &IRSlots);
+  Ty = parseTypeAtBeginning(Source.c_str(), Read, Err,
+                            *MF.getFunction()->getParent(), &IRSlots);
   if (!Ty)
     return error(Loc + Err.getColumnNo(), Err.getMessage());
   return false;
 }
 
-bool MIParser::parseIRType(StringRef::iterator Loc, Type *&Ty) {
-  if (parseIRType(Loc, StringRef(Loc, Token.range().end() - Loc), Ty))
+bool MIParser::parseIRType(StringRef::iterator Loc, Type *&Ty,
+                           bool MustBeSized) {
+  // At this point we enter in the IR world, i.e., to get the correct type,
+  // we need to hand off the whole string, not just the current token.
+  // E.g., <4 x i64> would give '<' as a token and there is not much
+  // the IR parser can do with that.
+  unsigned Read = 0;
+  if (parseIRType(Loc, StringRef(Loc), Read, Ty))
     return true;
-  lex();
+  // The type must be sized, otherwise there is not much the backend
+  // can do with it.
+  if (MustBeSized && !Ty->isSized())
+    return error("expected a sized type");
+  // The next token is Read characters from the Loc.
+  // However, the current location is not Loc, but Loc + the length of Token.
+  // Therefore, subtract the length of Token (range().end() - Loc) to the
+  // number of characters to skip before the next token.
+  lex(Read - (Token.range().end() - Loc));
   return false;
 }
 
