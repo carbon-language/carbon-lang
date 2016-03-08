@@ -67,12 +67,12 @@ int main()
     }
 #endif
 #if TEST_STD_VER > 14
-	{
+    {
     typedef std::string S;
     S s1("");                     test_nonconst(s1);
     S s2("abcde");                test_nonconst(s2);
     S s3("abcdefghij");           test_nonconst(s3);
     S s4("abcdefghijklmnopqrst"); test_nonconst(s4);
-	}
+    }
 #endif
 }
