@@ -44,8 +44,8 @@ using namespace llvm;
 STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
 STATISTIC(NumUnrolled, "Number of loops unrolled (completely or otherwise)");
 
-/// RemapInstruction - Convert the instruction operands from referencing the
-/// current values into those specified by VMap.
+/// Convert the instruction operands from referencing the current values into
+/// those specified by VMap.
 static inline void RemapInstruction(Instruction *I,
                                     ValueToValueMapTy &VMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
@@ -64,8 +64,8 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
-/// FoldBlockIntoPredecessor - Folds a basic block into its predecessor if it
-/// only has one predecessor, and that predecessor only has one successor.
+/// Folds a basic block into its predecessor if it only has one predecessor, and
+/// that predecessor only has one successor.
 /// The LoopInfo Analysis that is passed will be kept consistent.  If folding is
 /// successful references to the containing loop must be removed from
 /// ScalarEvolution by calling ScalarEvolution::forgetLoop because SE may have
