@@ -127,6 +127,8 @@ public:
   bool parseIRConstant(StringRef::iterator Loc, StringRef Source,
                        const Constant *&C);
   bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
+  bool parseIRType(StringRef::iterator Loc, StringRef Source, Type *&Ty);
+  bool parseIRType(StringRef::iterator Loc, Type *&Ty);
   bool parseTypedImmediateOperand(MachineOperand &Dest);
   bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
@@ -589,6 +591,18 @@ bool MIParser::parse(MachineInstr *&MI) {
   if (Token.isError() || parseInstruction(OpCode, Flags))
     return true;
 
+  Type *Ty = nullptr;
+  if (isPreISelGenericOpcode(OpCode)) {
+    // For generic opcode, a type is mandatory.
+    auto Loc = Token.location();
+    if (parseIRType(Loc, Ty))
+      return true;
+    // The type must be sized, otherwise there is not much the backend
+    // can do with it.
+    if (!Ty->isSized())
+      return error("expected a fully defined type for generic instruction");
+  }
+
   // Parse the remaining machine operands.
   while (!Token.isNewlineOrEOF() && Token.isNot(MIToken::kw_debug_location) &&
          Token.isNot(MIToken::coloncolon) && Token.isNot(MIToken::lbrace)) {
@@ -644,6 +658,8 @@ bool MIParser::parse(MachineInstr *&MI) {
   // TODO: Check for extraneous machine operands.
   MI = MF.CreateMachineInstr(MCID, DebugLocation, /*NoImplicit=*/true);
   MI->setFlags(Flags);
+  if (Ty)
+    MI->setType(Ty);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand.Operand);
   if (assignRegisterTies(*MI, Operands))
@@ -997,6 +1013,23 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, StringRef StringValue,
 
 bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
   if (parseIRConstant(Loc, StringRef(Loc, Token.range().end() - Loc), C))
+    return true;
+  lex();
+  return false;
+}
+
+bool MIParser::parseIRType(StringRef::iterator Loc, StringRef StringValue,
+                           Type *&Ty) {
+  auto Source = StringValue.str(); // The source has to be null terminated.
+  SMDiagnostic Err;
+  Ty = parseType(Source.c_str(), Err, *MF.getFunction()->getParent(), &IRSlots);
+  if (!Ty)
+    return error(Loc + Err.getColumnNo(), Err.getMessage());
+  return false;
+}
+
+bool MIParser::parseIRType(StringRef::iterator Loc, Type *&Ty) {
+  if (parseIRType(Loc, StringRef(Loc, Token.range().end() - Loc), Ty))
     return true;
   lex();
   return false;
