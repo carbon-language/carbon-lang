@@ -432,7 +432,7 @@ static AvailabilityResult CheckAvailability(ASTContext &Context,
           << VTI << HintMessage;
     }
 
-    return AR_NotYetIntroduced;
+    return A->getStrict() ? AR_Unavailable : AR_NotYetIntroduced;
   }
 
   // Make sure that this declaration hasn't been obsoleted.
