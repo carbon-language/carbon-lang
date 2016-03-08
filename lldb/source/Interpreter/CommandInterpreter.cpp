@@ -97,6 +97,13 @@ enum
     eSpaceReplPrompts = 3
 };
 
+CommandInterpreter::CommandAlias::CommandAlias (lldb::CommandObjectSP cmd_sp,
+                                                OptionArgVectorSP args_sp) :
+    m_underlying_command_sp(cmd_sp),
+    m_option_args_sp(args_sp)
+{
+}
+
 bool
 CommandInterpreter::CommandAlias::ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
                                                            const char *options_args,
@@ -1170,7 +1177,7 @@ void
 CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_name, StreamString &help_string)
 {
     help_string.Printf ("'%s", command_name);
-    OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
+    OptionArgVectorSP option_arg_vector_sp = GetAlias(alias_name).m_option_args_sp;
 
     if (option_arg_vector_sp)
     {
@@ -1456,7 +1463,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
             cmd_args.Unshift (alias_name);
             
         result_str.Printf ("%s", alias_cmd_obj->GetCommandName ());
-        OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
+        OptionArgVectorSP option_arg_vector_sp = GetAlias(alias_name).m_option_args_sp;
 
         if (option_arg_vector_sp.get())
         {
@@ -2083,8 +2090,8 @@ CommandInterpreter::Confirm (const char *message, bool default_answer)
     return confirm->GetResponse();
 }
     
-OptionArgVectorSP
-CommandInterpreter::GetAliasOptions (const char *alias_name)
+CommandInterpreter::CommandAlias
+CommandInterpreter::GetAlias (const char *alias_name)
 {
     OptionArgVectorSP ret_val;
 
@@ -2092,9 +2099,9 @@ CommandInterpreter::GetAliasOptions (const char *alias_name)
 
     auto pos = m_alias_dict.find(alias);
     if (pos != m_alias_dict.end())
-        ret_val = pos->second.m_option_args_sp;
+        return pos->second;
     
-    return ret_val;
+    return CommandInterpreter::CommandAlias();
 }
 
 bool
@@ -2128,7 +2135,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
                                            std::string &raw_input_string,
                                            CommandReturnObject &result)
 {
-    OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
+    OptionArgVectorSP option_arg_vector_sp = GetAlias(alias_name).m_option_args_sp;
     
     bool wants_raw_input = alias_cmd_obj->WantsRawCommandString();
 

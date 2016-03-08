@@ -202,13 +202,27 @@ class CommandInterpreter :
 public:
     struct CommandAlias
     {
-        lldb::CommandObjectSP m_underlying_command_sp;
-        OptionArgVectorSP m_option_args_sp;
+        lldb::CommandObjectSP m_underlying_command_sp = nullptr;
+        OptionArgVectorSP m_option_args_sp = nullptr;
+        
+        CommandAlias (lldb::CommandObjectSP cmd_sp = nullptr,
+                      OptionArgVectorSP args_sp = nullptr);
         
         static bool
         ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
                                  const char *options_args,
                                  OptionArgVectorSP &option_arg_vector_sp);
+        
+        bool
+        IsValid ()
+        {
+            return m_underlying_command_sp && m_option_args_sp;
+        }
+        
+        explicit operator bool ()
+        {
+            return IsValid();
+        }
     };
     
     typedef std::map<std::string, CommandAlias> CommandAliasMap;
@@ -312,8 +326,8 @@ public:
         m_user_dict.clear();
     }
 
-    OptionArgVectorSP
-    GetAliasOptions (const char *alias_name);
+    CommandAlias
+    GetAlias (const char *alias_name);
 
     CommandObject *
     BuildAliasResult (const char *alias_name, 
