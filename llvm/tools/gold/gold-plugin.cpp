@@ -620,7 +620,7 @@ static void freeSymName(ld_plugin_symbol &Sym) {
 
 /// Helper to get a file's symbols and a view into it via gold callbacks.
 static const void *getSymbolsAndView(claimed_file &F) {
-  ld_plugin_status status = get_symbols(F.handle, F.syms.size(), &F.syms[0]);
+  ld_plugin_status status = get_symbols(F.handle, F.syms.size(), F.syms.data());
   if (status == LDPS_NO_SYMS)
     return nullptr;
 
