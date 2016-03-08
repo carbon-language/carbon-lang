@@ -492,6 +492,9 @@ public:
   bool isS16ImmX4() const { return Kind == Expression ||
                                    (Kind == Immediate && isInt<16>(getImm()) &&
                                     (getImm() & 3) == 0); }
+  bool isS16ImmX16() const { return Kind == Expression ||
+                                    (Kind == Immediate && isInt<16>(getImm()) &&
+                                     (getImm() & 15) == 0); }
   bool isS17Imm() const {
     switch (Kind) {
       case Expression:
