@@ -378,6 +378,10 @@ public:
     }
   }
 
+  // Disable use of sized deallocation due to overallocation of PPCOperand
+  // objects in CreateTokenWithStringCopy.
+  void operator delete(void *p) { ::operator delete(p); }
+
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const override { return StartLoc; }
 
