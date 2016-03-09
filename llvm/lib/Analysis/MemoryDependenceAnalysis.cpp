@@ -669,26 +669,13 @@ MemDepResult MemoryDependenceAnalysis::getSimplePointerDependencyFrom(
     // If this is an allocation, and if we know that the accessed pointer is to
     // the allocation, return Def.  This means that there is no dependence and
     // the access can be optimized based on that.  For example, a load could
-    // turn into undef.
-    // Note: Only determine this to be a malloc if Inst is the malloc call, not
-    // a subsequent bitcast of the malloc call result.  There can be stores to
-    // the malloced memory between the malloc call and its bitcast uses, and we
-    // need to continue scanning until the malloc call.
+    // turn into undef.  Note that we can bypass the allocation itself when
+    // looking for a clobber in many cases; that's an alias property and is
+    // handled by BasicAA.
     if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, TLI)) {
       const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, DL);
-
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
-      if (isInvariantLoad)
-        continue;
-      // Be conservative if the accessed pointer may alias the allocation -
-      // fallback to the generic handling below.
-      if ((AA->alias(Inst, AccessPtr) == NoAlias) &&
-          // If the allocation is not aliased and does not read memory (like
-          // strdup), it is safe to ignore.
-          (isa<AllocaInst>(Inst) || isMallocLikeFn(Inst, TLI) ||
-           isCallocLikeFn(Inst, TLI)))
-        continue;
     }
 
     if (isInvariantLoad)
