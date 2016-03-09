@@ -45,25 +45,10 @@ class OMPLexicalScope {
     }
   }
 
-  class PostUpdateCleanup final : public EHScopeStack::Cleanup {
-    const OMPExecutableDirective &S;
-
-  public:
-    PostUpdateCleanup(const OMPExecutableDirective &S) : S(S) {}
-
-    void Emit(CodeGenFunction &CGF, Flags /*flags*/) override {
-      if (!CGF.HaveInsertPoint())
-        return;
-      (void)S;
-      // TODO: add cleanups for clauses that require post update.
-    }
-  };
-
 public:
   OMPLexicalScope(CodeGenFunction &CGF, const OMPExecutableDirective &S)
       : Scope(CGF, S.getSourceRange()) {
     emitPreInitStmt(CGF, S);
-    CGF.EHStack.pushCleanup<PostUpdateCleanup>(NormalAndEHCleanup, S);
   }
 };
 } // namespace
@@ -1172,6 +1157,8 @@ static void emitLinearClauseFinal(CodeGenFunction &CGF,
       CGF.EmitIgnoredExpr(F);
       ++IC;
     }
+    if (auto *PostUpdate = C->getPostUpdateExpr())
+      EmitIgnoredExpr(PostUpdate);
   }
 }
 
