@@ -96,6 +96,15 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
     resolve(B);
 }
 
+// This is for use when debugging LTO.
+static void saveLtoObjectFile(StringRef Buffer) {
+  std::error_code EC;
+  raw_fd_ostream OS(Config->OutputFile.str() + ".lto.o", EC,
+                    sys::fs::OpenFlags::F_None);
+  check(EC);
+  OS << Buffer;
+}
+
 // Codegen the module M and returns the resulting InputFile.
 template <class ELFT>
 std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
@@ -123,6 +132,8 @@ std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
     fatal("Failed to setup codegen");
   CodeGenPasses.run(M);
   LtoBuffer = MemoryBuffer::getMemBuffer(OwningLTOData, "", false);
+  if (Config->SaveTemps)
+    saveLtoObjectFile(LtoBuffer->getBuffer());
   return createObjectFile(*LtoBuffer);
 }
 
