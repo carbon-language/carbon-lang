@@ -33,15 +33,18 @@ the same <substitution> the <unqualified-name> is.
 
 They are mangled as:
 
+.. code-block:: none
+
     <abi-tags> ::= <abi-tag>*   # sort by name
     <abi-tag> ::= B <tag source-name>
 
 Example:
 
+.. code-block:: c++
+
     __attribute__((abi_tag("test")))
     void Func();
-
-    gets mangled as: _Z4FuncB4testv (prettified as `Func[abi:test]()`)
+    // gets mangled as: _Z4FuncB4testv (prettified as `Func[abi:test]()`)
 
 Active tags
 ===========
@@ -51,6 +54,8 @@ enum), the explicit tags are the active tags.
 
 For variables and functions, the active tags are the explicit tags plus any
 "required tags" which are not in the "available tags" set:
+
+.. code-block:: none
 
     derived-tags := (required-tags - available-tags)
     active-tags := explicit-tags + derived-tags
@@ -68,15 +73,16 @@ Otherwise the function requires any implicit or explicit tag used in the name
 for the return type.
 
 Example:
+
+.. code-block:: c++
+
     namespace A {
       inline namespace B __attribute__((abi_tag)) {
         struct C { int x; };
       }
     }
 
-    A::C foo();
-
-    gets mangled as: _Z3fooB1Bv (prettified as `foo[abi:B]()`)
+    A::C foo(); // gets mangled as: _Z3fooB1Bv (prettified as `foo[abi:B]()`)
 
 Required tags for a variable
 ============================
@@ -99,4 +105,3 @@ in the type of a cast operator) are NOT available.
 Example: a cast operator to std::string (which is
 std::__cxx11::basic_string<...>) will use 'cxx11' as an active tag, as it is
 required from the return type `std::string` but not available.
-
