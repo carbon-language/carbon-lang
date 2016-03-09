@@ -2590,9 +2590,9 @@ TEST(Matcher, Initializers) {
 
 TEST(Matcher, ParenListExpr) {
   EXPECT_TRUE(
-        matches(
-          "  template<typename T> class foo { void bar() { foo X(*this); } }; ",
-          varDecl(hasInitializer(parenListExpr(has(unaryOperator()))))));
+      matches("template<typename T> class foo { void bar() { foo X(*this); } };"
+              "template class foo<int>;",
+              varDecl(hasInitializer(parenListExpr(has(unaryOperator()))))));
 }
 
 TEST(Matcher, StmtExpr) {
