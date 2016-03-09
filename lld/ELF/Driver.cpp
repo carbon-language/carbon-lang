@@ -104,9 +104,8 @@ void LinkerDriver::addFile(StringRef Path) {
     return;
   case file_magic::archive:
     if (WholeArchive) {
-      StringRef S = MBRef.getBufferIdentifier();
       for (MemoryBufferRef MB : getArchiveMembers(MBRef))
-        Files.push_back(createObjectFile(MB, S));
+        Files.push_back(createObjectFile(MB, Path));
       return;
     }
     Files.push_back(make_unique<ArchiveFile>(MBRef));
