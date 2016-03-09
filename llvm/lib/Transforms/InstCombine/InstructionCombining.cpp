@@ -78,6 +78,10 @@ STATISTIC(NumExpand,    "Number of expansions");
 STATISTIC(NumFactor   , "Number of factorizations");
 STATISTIC(NumReassoc  , "Number of reassociations");
 
+static cl::opt<bool>
+EnableExpensiveCombines("expensive-combines",
+                        cl::desc("Enable expensive instruction combines"));
+
 Value *InstCombiner::EmitGEPOffset(User *GEP) {
   return llvm::EmitGEPOffset(Builder, DL, GEP);
 }
@@ -2770,9 +2774,9 @@ bool InstCombiner::run() {
       }
     }
 
-    // In general, it is possible for computeKnownBits to determine all bits in a
-    // value even when the operands are not all constants.
-    if (!I->use_empty() && I->getType()->isIntegerTy()) {
+    // In general, it is possible for computeKnownBits to determine all bits in
+    // a value even when the operands are not all constants.
+    if (ExpensiveCombines && !I->use_empty() && I->getType()->isIntegerTy()) {
       unsigned BitWidth = I->getType()->getScalarSizeInBits();
       APInt KnownZero(BitWidth, 0);
       APInt KnownOne(BitWidth, 0);
@@ -3043,8 +3047,10 @@ static bool
 combineInstructionsOverFunction(Function &F, InstCombineWorklist &Worklist,
                                 AliasAnalysis *AA, AssumptionCache &AC,
                                 TargetLibraryInfo &TLI, DominatorTree &DT,
+                                bool ExpensiveCombines = true,
                                 LoopInfo *LI = nullptr) {
   auto &DL = F.getParent()->getDataLayout();
+  ExpensiveCombines |= EnableExpensiveCombines;
 
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
@@ -3064,8 +3070,8 @@ combineInstructionsOverFunction(Function &F, InstCombineWorklist &Worklist,
 
     bool Changed = prepareICWorklistFromFunction(F, DL, &TLI, Worklist);
 
-    InstCombiner IC(Worklist, &Builder, F.optForMinSize(), AA, &AC, &TLI, &DT,
-                    DL, LI);
+    InstCombiner IC(Worklist, &Builder, F.optForMinSize(), ExpensiveCombines,
+                    AA, &AC, &TLI, &DT, DL, LI);
     Changed |= IC.run();
 
     if (!Changed)
@@ -3084,7 +3090,8 @@ PreservedAnalyses InstCombinePass::run(Function &F,
   auto *LI = AM->getCachedResult<LoopAnalysis>(F);
 
   // FIXME: The AliasAnalysis is not yet supported in the new pass manager
-  if (!combineInstructionsOverFunction(F, Worklist, nullptr, AC, TLI, DT, LI))
+  if (!combineInstructionsOverFunction(F, Worklist, nullptr, AC, TLI, DT,
+                                       ExpensiveCombines, LI))
     // No changes, all analyses are preserved.
     return PreservedAnalyses::all();
 
@@ -3121,7 +3128,8 @@ bool InstructionCombiningPass::runOnFunction(Function &F) {
   auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
-  return combineInstructionsOverFunction(F, Worklist, AA, AC, TLI, DT, LI);
+  return combineInstructionsOverFunction(F, Worklist, AA, AC, TLI, DT,
+                                         ExpensiveCombines, LI);
 }
 
 char InstructionCombiningPass::ID = 0;
@@ -3144,6 +3152,6 @@ void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
   initializeInstructionCombiningPassPass(*unwrap(R));
 }
 
-FunctionPass *llvm::createInstructionCombiningPass() {
-  return new InstructionCombiningPass();
+FunctionPass *llvm::createInstructionCombiningPass(bool ExpensiveCombines) {
+  return new InstructionCombiningPass(ExpensiveCombines);
 }
