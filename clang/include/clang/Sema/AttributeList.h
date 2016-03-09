@@ -895,7 +895,8 @@ enum AttributeDeclKind {
   ExpectedKernelFunction,
   ExpectedFunctionWithProtoType,
   ExpectedVariableEnumFieldOrTypedef,
-  ExpectedFunctionMethodEnumOrClass
+  ExpectedFunctionMethodEnumOrClass,
+  ExpectedStructClassVariableFunctionOrInlineNamespace
 };
 
 }  // end namespace clang

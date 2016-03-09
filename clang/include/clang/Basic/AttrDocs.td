@@ -2132,3 +2132,16 @@ directly construct objects into them without relying on language
 optimizations like C++'s named return value optimization (NRVO).
   }];
 }
+
+def AbiTagsDocs : Documentation {
+  let Content = [{
+The ``abi_tag`` attribute can be applied to a function, variable, class or
+inline namespace declaration to modify the mangled name of the entity. It gives
+the ability to distinguish between different versions of the same entity but
+with different ABI versions supported. For example, a newer version of a class
+could have a different set of data members and thus have a different size. Using
+the ``abi_tag`` attribute, it is possible to have different mangled names for
+a global variable of the class type. Therefor, the old code could keep using
+the old manged name and the new code will use the new mangled name with tags.
+  }];
+}

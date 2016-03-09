@@ -4615,6 +4615,42 @@ static void handleDeclspecThreadAttr(Sema &S, Decl *D,
       Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleAbiTagAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  SmallVector<StringRef, 4> Tags;
+  for (unsigned I = 0, E = Attr.getNumArgs(); I != E; ++I) {
+    StringRef Tag;
+    if (!S.checkStringLiteralArgumentAttr(Attr, I, Tag))
+      return;
+    Tags.push_back(Tag);
+  }
+
+  if (const auto *NS = dyn_cast<NamespaceDecl>(D)) {
+    if (!NS->isInline()) {
+      S.Diag(Attr.getLoc(), diag::warn_attr_abi_tag_namespace) << 0;
+      return;
+    }
+    if (NS->isAnonymousNamespace()) {
+      S.Diag(Attr.getLoc(), diag::warn_attr_abi_tag_namespace) << 1;
+      return;
+    }
+    if (Attr.getNumArgs() == 0)
+      Tags.push_back(NS->getName());
+  } else if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
+    return;
+
+  // Store tags sorted and without duplicates.
+  std::sort(Tags.begin(), Tags.end());
+  Tags.erase(std::unique(Tags.begin(), Tags.end()), Tags.end());
+
+  D->addAttr(::new (S.Context)
+             AbiTagAttr(Attr.getRange(), S.Context, Tags.data(), Tags.size(),
+                        Attr.getAttributeSpellingListIndex()));
+
+  // FIXME: remove this warning as soon as mangled part is ready.
+  S.Diag(Attr.getRange().getBegin(), diag::warn_attribute_ignored)
+        << Attr.getName();
+}
+
 static void handleARMInterruptAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   // Check the attribute arguments.
@@ -5636,6 +5672,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_Thread:
     handleDeclspecThreadAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_AbiTag:
+    handleAbiTagAttr(S, D, Attr);
     break;
 
   // Thread safety attributes:
