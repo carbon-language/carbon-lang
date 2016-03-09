@@ -1313,6 +1313,35 @@ void AArch64InstrInfo::suppressLdStPair(MachineInstr *MI) const {
       ->setFlags(MOSuppressPair << MachineMemOperand::MOTargetStartBit);
 }
 
+bool AArch64InstrInfo::isUnscaledLdSt(unsigned Opc) const {
+  switch (Opc) {
+  default:
+    return false;
+  case AArch64::STURSi:
+  case AArch64::STURDi:
+  case AArch64::STURQi:
+  case AArch64::STURBBi:
+  case AArch64::STURHHi:
+  case AArch64::STURWi:
+  case AArch64::STURXi:
+  case AArch64::LDURSi:
+  case AArch64::LDURDi:
+  case AArch64::LDURQi:
+  case AArch64::LDURWi:
+  case AArch64::LDURXi:
+  case AArch64::LDURSWi:
+  case AArch64::LDURHHi:
+  case AArch64::LDURBBi:
+  case AArch64::LDURSBWi:
+  case AArch64::LDURSHWi:
+    return true;
+  }
+}
+
+bool AArch64InstrInfo::isUnscaledLdSt(MachineInstr *MI) const {
+  return isUnscaledLdSt(MI->getOpcode());
+}
+
 bool AArch64InstrInfo::getMemOpBaseRegImmOfs(
     MachineInstr *LdSt, unsigned &BaseReg, int64_t &Offset,
     const TargetRegisterInfo *TRI) const {

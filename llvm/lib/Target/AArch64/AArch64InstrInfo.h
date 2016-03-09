@@ -87,6 +87,12 @@ public:
   /// unprofitable.
   bool isLdStPairSuppressed(const MachineInstr *MI) const;
 
+  /// Return true if this is an unscaled load/store.
+  bool isUnscaledLdSt(unsigned Opc) const;
+
+  /// Return true if this is an unscaled load/store.
+  bool isUnscaledLdSt(MachineInstr *MI) const;
+
   /// Hint that pairing the given load or store is unprofitable.
   void suppressLdStPair(MachineInstr *MI) const;
 
