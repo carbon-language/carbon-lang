@@ -729,6 +729,32 @@ When one method overrides another, the overriding method can be more widely avai
   }];
 }
 
+def WarnMaybeUnusedDocs : Documentation {
+  let Category = DocCatVariable;
+  let Heading = "maybe_unused, unused, gnu::unused";
+  let Content = [{
+When passing the ``-Wunused`` flag to Clang, entities that are unused by the
+program may be diagnosed. The ``[[maybe_unused]]`` (or
+``__attribute__((unused))``) attribute can be used to silence such diagnostics
+when the entity cannot be removed. For instance, a local variable may exist
+solely for use in an ``assert()`` statement, which makes the local variable
+unused when ``NDEBUG`` is defined.
+
+The attribute may be applied to the declaration of a class, a typedef, a
+variable, a function or method, a function parameter, an enumeration, an
+enumerator, a non-static data member, or a label.
+
+.. code-block: c++
+  #include <cassert>
+
+  [[maybe_unused]] void f([[maybe_unused]] bool thing1,
+                          [[maybe_unused]] bool thing2) {
+    [[maybe_unused]] bool b = thing1 && thing2;
+    assert(b);
+  }
+  }];
+}
+
 def WarnUnusedResultsDocs : Documentation {
   let Category = DocCatFunction;
   let Heading = "nodiscard, warn_unused_result, clang::warn_unused_result, gnu::warn_unused_result";
