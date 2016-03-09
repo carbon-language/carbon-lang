@@ -65,7 +65,7 @@ uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
   uint32_t I = Sym.st_shndx;
   if (I == ELF::SHN_XINDEX)
     return ELFObj.getExtendedSymbolTableIndex(&Sym, Symtab, SymtabSHNDX);
-  if (I >= ELF::SHN_LORESERVE || I == ELF::SHN_ABS)
+  if (I >= ELF::SHN_LORESERVE)
     return 0;
   return I;
 }
