@@ -239,6 +239,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->NoinhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
+  Config->SaveTemps = Args.hasArg(OPT_save_temps);
   Config->Shared = Args.hasArg(OPT_shared);
   Config->StripAll = Args.hasArg(OPT_strip_all);
   Config->Verbose = Args.hasArg(OPT_verbose);

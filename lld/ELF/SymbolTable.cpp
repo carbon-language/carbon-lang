@@ -147,6 +147,13 @@ static void addBitcodeFile(IRMover &Mover, BitcodeFile &F,
   Mover.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {});
 }
 
+static void saveBCFile(std::string Path, Module &M) {
+  std::error_code EC;
+  raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
+  check(EC);
+  WriteBitcodeToFile(&M, OS, /* ShouldPreserveUseListOrder */ true);
+}
+
 // Merge all the bitcode files we have seen, codegen the result and return
 // the resulting ObjectFile.
 template <class ELFT>
@@ -156,6 +163,8 @@ ObjectFile<ELFT> *SymbolTable<ELFT>::createCombinedLtoObject() {
   IRMover Mover(Combined);
   for (const std::unique_ptr<BitcodeFile> &F : BitcodeFiles)
     addBitcodeFile(Mover, *F, Context);
+  if (Config->SaveTemps)
+    saveBCFile(Config->OutputFile.str() + ".lto.bc", Combined);
   std::unique_ptr<InputFile> F = codegen(Combined);
   ObjectFiles.emplace_back(cast<ObjectFile<ELFT>>(F.release()));
   return &*ObjectFiles.back();
