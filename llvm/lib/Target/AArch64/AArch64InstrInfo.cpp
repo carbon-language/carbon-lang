@@ -1313,10 +1313,9 @@ void AArch64InstrInfo::suppressLdStPair(MachineInstr *MI) const {
       ->setFlags(MOSuppressPair << MachineMemOperand::MOTargetStartBit);
 }
 
-bool
-AArch64InstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
-                                        unsigned &Offset,
-                                        const TargetRegisterInfo *TRI) const {
+bool AArch64InstrInfo::getMemOpBaseRegImmOfs(
+    MachineInstr *LdSt, unsigned &BaseReg, int64_t &Offset,
+    const TargetRegisterInfo *TRI) const {
   switch (LdSt->getOpcode()) {
   default:
     return false;
