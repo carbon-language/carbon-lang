@@ -6,3 +6,5 @@ struct [[nodiscard("Wrong")]] S3 {}; // expected-error {{'nodiscard' cannot have
 
 [[nodiscard]] int f();
 enum [[nodiscard]] E {};
+
+namespace [[nodiscard]] N {} // expected-warning {{'nodiscard' attribute only applies to functions, methods, enums, and classes}}
