@@ -426,6 +426,7 @@ static uint8_t getGvVisibility(const GlobalValue *GV) {
   case GlobalValue::ProtectedVisibility:
     return STV_PROTECTED;
   }
+  llvm_unreachable("Unknown visibility");
 }
 
 void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
