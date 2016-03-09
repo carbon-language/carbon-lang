@@ -1942,8 +1942,31 @@ Instruction *InstCombiner::visitAllocSite(Instruction &MI) {
   SmallVector<WeakVH, 64> Users;
   if (isAllocSiteRemovable(&MI, Users, TLI)) {
     for (unsigned i = 0, e = Users.size(); i != e; ++i) {
-      Instruction *I = cast_or_null<Instruction>(&*Users[i]);
-      if (!I) continue;
+      // Lowering all @llvm.objectsize calls first because they may
+      // use a bitcast/GEP of the alloca we are removing.
+      if (!Users[i])
+       continue;
+
+      Instruction *I = cast<Instruction>(&*Users[i]);
+
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+        if (II->getIntrinsicID() == Intrinsic::objectsize) {
+          uint64_t Size;
+          if (!getObjectSize(II->getArgOperand(0), Size, DL, TLI)) {
+            ConstantInt *CI = cast<ConstantInt>(II->getArgOperand(1));
+            Size = CI->isZero() ? -1ULL : 0;
+          }
+          replaceInstUsesWith(*I, ConstantInt::get(I->getType(), Size));
+          eraseInstFromFunction(*I);
+          Users[i] = nullptr; // Skip examining in the next loop.
+        }
+      }
+    }
+    for (unsigned i = 0, e = Users.size(); i != e; ++i) {
+      if (!Users[i])
+        continue;
+
+      Instruction *I = cast<Instruction>(&*Users[i]);
 
       if (ICmpInst *C = dyn_cast<ICmpInst>(I)) {
         replaceInstUsesWith(*C,
@@ -1951,12 +1974,6 @@ Instruction *InstCombiner::visitAllocSite(Instruction &MI) {
                                              C->isFalseWhenEqual()));
       } else if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I)) {
         replaceInstUsesWith(*I, UndefValue::get(I->getType()));
-      } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
-        if (II->getIntrinsicID() == Intrinsic::objectsize) {
-          ConstantInt *CI = cast<ConstantInt>(II->getArgOperand(1));
-          uint64_t DontKnow = CI->isZero() ? -1ULL : 0;
-          replaceInstUsesWith(*I, ConstantInt::get(I->getType(), DontKnow));
-        }
       }
       eraseInstFromFunction(*I);
     }
