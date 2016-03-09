@@ -580,7 +580,7 @@ typedef struct {
  *
  * \since LTO_API_VERSION=18
  */
-extern thinlto_code_gen_t thinlto_create_codegen();
+extern thinlto_code_gen_t thinlto_create_codegen(void);
 
 /**
  * Frees the generator and all memory it internally allocated.
