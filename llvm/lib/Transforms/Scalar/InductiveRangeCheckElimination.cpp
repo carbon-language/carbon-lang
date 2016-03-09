@@ -114,7 +114,7 @@ class InductiveRangeCheck {
     RANGE_CHECK_UNKNOWN = (unsigned)-1
   };
 
-  static const char *rangeCheckKindToStr(RangeCheckKind);
+  static StringRef rangeCheckKindToStr(RangeCheckKind);
 
   const SCEV *Offset;
   const SCEV *Scale;
@@ -228,7 +228,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopPass)
 INITIALIZE_PASS_END(InductiveRangeCheckElimination, "irce",
                     "Inductive range check elimination", false, false)
 
-const char *InductiveRangeCheck::rangeCheckKindToStr(
+StringRef InductiveRangeCheck::rangeCheckKindToStr(
     InductiveRangeCheck::RangeCheckKind RCK) {
   switch (RCK) {
   case InductiveRangeCheck::RANGE_CHECK_UNKNOWN:
