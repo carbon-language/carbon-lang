@@ -663,7 +663,8 @@ const SCEV *replaceSymbolicStrideSCEV(PredicatedScalarEvolution &PSE,
 /// The \p Assume parameter indicates if we are allowed to make additional
 /// run-time assumptions.
 int isStridedPtr(PredicatedScalarEvolution &PSE, Value *Ptr, const Loop *Lp,
-                 const ValueToValueMap &StridesMap, bool Assume = false);
+                 const ValueToValueMap &StridesMap = ValueToValueMap(),
+                 bool Assume = false);
 
 /// \brief Returns true if the memory operations \p A and \p B are consecutive.
 /// This is a simple API that does not depend on the analysis pass. 
