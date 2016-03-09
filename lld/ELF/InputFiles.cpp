@@ -465,6 +465,7 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
     } else {
       Body = new (Alloc) DefinedBitcode(NameRef, IsWeak, Visibility);
     }
+    Body->IsTls = GV->isThreadLocal();
     SymbolBodies.push_back(Body);
   }
 }
