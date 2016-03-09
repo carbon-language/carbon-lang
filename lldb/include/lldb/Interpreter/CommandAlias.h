@@ -25,16 +25,12 @@ class CommandAlias
 public:
     typedef std::unique_ptr<CommandAlias> UniquePointer;
 
-    static bool
-    ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
-                             const char *options_args,
-                             OptionArgVectorSP &option_arg_vector_sp);
-
-    CommandAlias (lldb::CommandObjectSP cmd_sp = nullptr,
-                  OptionArgVectorSP args_sp = nullptr);
+    static UniquePointer
+    GetCommandAlias (lldb::CommandObjectSP cmd_sp,
+                     const char *options_args);
     
     void
-    GetAliasHelp (StreamString &help_string);
+    GetAliasExpansion (StreamString &help_string);
     
     bool
     IsValid ()
@@ -49,6 +45,10 @@ public:
     
     lldb::CommandObjectSP GetUnderlyingCommand() { return m_underlying_command_sp; }
     OptionArgVectorSP GetOptionArguments() { return m_option_args_sp; }
+    
+protected:
+    CommandAlias (lldb::CommandObjectSP cmd_sp = nullptr,
+                  OptionArgVectorSP args_sp = nullptr);
     
 private:
     lldb::CommandObjectSP m_underlying_command_sp;
