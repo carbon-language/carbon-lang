@@ -438,17 +438,15 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
   }
 
   for (const BasicSymbolRef &Sym : Obj->symbols()) {
-    uint8_t Visibility = STV_DEFAULT;
     const GlobalValue *GV = Obj->getSymbolGV(Sym.getRawDataRefImpl());
+    assert(GV);
     uint32_t Flags = Sym.getFlags();
-    if (GV) {
-      if (const Comdat *C = GV->getComdat())
-        if (!KeptComdats.count(C))
-          continue;
-      if (!(Flags & object::BasicSymbolRef::SF_Global))
+    if (const Comdat *C = GV->getComdat())
+      if (!KeptComdats.count(C))
         continue;
-      Visibility = getGvVisibility(GV);
-    }
+    if (!(Flags & object::BasicSymbolRef::SF_Global))
+        continue;
+    uint8_t Visibility = getGvVisibility(GV);
 
     SmallString<64> Name;
     raw_svector_ostream OS(Name);
