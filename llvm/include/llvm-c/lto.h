@@ -739,7 +739,7 @@ extern void thinlto_debug_options(const char *const *options, int number);
  *
  * \since LTO_API_VERSION=18
  */
-extern bool lto_module_is_thinlto(lto_module_t mod);
+extern lto_bool_t lto_module_is_thinlto(lto_module_t mod);
 
 /**
  * Adds a symbol to the list of global symbols that must exist in the final
