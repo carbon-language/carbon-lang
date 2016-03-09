@@ -247,11 +247,9 @@ const char *InductiveRangeCheck::rangeCheckKindToStr(
   llvm_unreachable("unknown range check type!");
 }
 
-/// Parse a single ICmp instruction, `ICI`, into a range check.  If `ICI`
-/// cannot
+/// Parse a single ICmp instruction, `ICI`, into a range check.  If `ICI` cannot
 /// be interpreted as a range check, return `RANGE_CHECK_UNKNOWN` and set
-/// `Index` and `Length` to `nullptr`.  Otherwise set `Index` to the value
-/// being
+/// `Index` and `Length` to `nullptr`.  Otherwise set `Index` to the value being
 /// range checked, and set `Length` to the upper limit `Index` is being range
 /// checked with if (and only if) the range check type is stronger or equal to
 /// RANGE_CHECK_UPPER.
