@@ -26,10 +26,10 @@ define i32 @read_mod_write_single_ptr(float* nocapture %a, i32 %n) nounwind uwta
   ret i32 undef
 }
 
-;;; FIXME: If 32-byte accesses are fast, this should use a <4 x i64> load.
 
 ; CHECK-LABEL: @read_mod_i64(
-; CHECK: load <2 x i64>
+; SLOWMEM32: load <2 x i64>
+; FASTMEM32: load <4 x i64>
 ; CHECK: ret i32
 define i32 @read_mod_i64(i64* nocapture %a, i32 %n) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 0
