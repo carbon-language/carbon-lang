@@ -1090,7 +1090,7 @@ static void thinLTOBackendTask(claimed_file &F, const void *View,
   StringSet<> Dummy;
   if (linkInModule(Context, L, F, View, File, ApiFile, Dummy, Dummy))
     message(LDPL_FATAL, "Failed to rename module for ThinLTO");
-  if (renameModuleForThinLTO(*NewModule, &CombinedIndex))
+  if (renameModuleForThinLTO(*NewModule, CombinedIndex))
     message(LDPL_FATAL, "Failed to rename module for ThinLTO");
 
   CodeGen codeGen(std::move(NewModule), OS, TaskID, &CombinedIndex, File.name);
