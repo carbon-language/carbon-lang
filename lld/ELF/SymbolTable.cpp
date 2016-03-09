@@ -132,7 +132,7 @@ static void addBitcodeFile(IRMover &Mover, BitcodeFile &F,
       MemoryBuffer::getMemBuffer(F.MB, false);
   std::unique_ptr<Module> M =
       check(getLazyBitcodeModule(std::move(Buffer), Context,
-                                 /*ShouldLazyLoadMetadata*/ true));
+                                 /*ShouldLazyLoadMetadata*/ false));
   std::vector<GlobalValue *> Keep;
   for (SymbolBody *B : F.getSymbols()) {
     if (B->repl() != B)
