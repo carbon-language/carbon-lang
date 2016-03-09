@@ -13,6 +13,10 @@
 /// loops; they appear as CFG cycles that are not recorded in MachineLoopInfo
 /// due to being unnatural.
 ///
+/// Note that LLVM has a generic pass that lowers irreducible control flow, but
+/// it linearizes control flow, turning diamonds into two triangles, which is
+/// both unnecessary and undesirable for WebAssembly.
+///
 /// TODO: The transformation implemented here handles all irreducible control
 /// flow, without exponential code-size expansion, though it does so by creating
 /// inefficient code in many cases. Ideally, we should add other
