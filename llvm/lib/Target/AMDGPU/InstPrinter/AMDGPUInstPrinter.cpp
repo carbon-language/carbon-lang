@@ -404,7 +404,7 @@ void AMDGPUInstPrinter::printOperandAndMods(const MCInst *MI, unsigned OpNo,
 void AMDGPUInstPrinter::printDPPCtrlOperand(const MCInst *MI, unsigned OpNo,
                                              raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNo).getImm();
-  if ((Imm >= 0x000) && (Imm <= 0x0ff)) {
+  if (Imm <= 0x0ff) {
     O << " quad_perm:";
     printU8ImmDecOperand(MI, OpNo, O);
   } else if ((Imm >= 0x101) && (Imm <= 0x10f)) {
