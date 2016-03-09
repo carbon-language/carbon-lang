@@ -245,6 +245,9 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   if (Name == ".note.GNU-stack")
     return InputSection<ELFT>::Discarded;
 
+  if (Name == ".note.GNU-split-stack")
+    error("Objects using splitstacks are not supported");
+
   // A MIPS object file has a special section that contains register
   // usage info, which needs to be handled by the linker specially.
   if (Config->EMachine == EM_MIPS && Name == ".reginfo") {
