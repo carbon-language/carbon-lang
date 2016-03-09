@@ -444,7 +444,7 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
     if (const Comdat *C = GV->getComdat())
       if (!KeptComdats.count(C))
         continue;
-    if (!(Flags & object::BasicSymbolRef::SF_Global))
+    if (!(Flags & BasicSymbolRef::SF_Global))
         continue;
     uint8_t Visibility = getGvVisibility(GV);
 
