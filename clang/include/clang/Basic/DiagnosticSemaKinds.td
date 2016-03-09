@@ -7825,8 +7825,8 @@ def err_omp_expected_named_var_member_or_array_expression: Error<
   "expected expression containing only member accesses and/or array sections based on named variables">;
 def err_omp_bit_fields_forbidden_in_map_clause : Error<
   "bit fields cannot be used to specify storage in a map clause">;
-def err_omp_array_section_in_rightmost_expression : Error<
-  "array section can only be associated with the rightmost variable in a map clause expression">;
+def err_array_section_does_not_specify_contiguous_storage : Error<
+  "array section does not specify contiguous storage">;
 def err_omp_union_type_not_allowed : Error<
   "mapped storage cannot be derived from a union">;
 def err_omp_expected_access_to_data_field : Error<
