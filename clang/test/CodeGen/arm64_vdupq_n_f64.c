@@ -48,9 +48,9 @@ float64x2_t test_vmovq_n_f64(float64_t w) {
 // CHECK:   [[TMP0:%.*]] = load half, half* %a1, align 2
 // CHECK:   [[VECINIT:%.*]] = insertelement <4 x half> undef, half [[TMP0]], i32 0
 // CHECK:   [[VECINIT1:%.*]] = insertelement <4 x half> [[VECINIT]], half [[TMP0]], i32 1
-// CHECK:   [[VECINIT2:%.*]] = insertelement <4 x half> [[VECINIT]]1, half [[TMP0]], i32 2
-// CHECK:   [[VECINIT3:%.*]] = insertelement <4 x half> [[VECINIT]]2, half [[TMP0]], i32 3
-// CHECK:   ret <4 x half> [[VECINIT]]3
+// CHECK:   [[VECINIT2:%.*]] = insertelement <4 x half> [[VECINIT1]], half [[TMP0]], i32 2
+// CHECK:   [[VECINIT3:%.*]] = insertelement <4 x half> [[VECINIT2]], half [[TMP0]], i32 3
+// CHECK:   ret <4 x half> [[VECINIT3]]
 float16x4_t test_vmov_n_f16(float16_t *a1) {
   return vmov_n_f16(*a1);
 }
@@ -65,13 +65,13 @@ float64x1_t test_vmov_n_f64(float64_t a1) {
 // CHECK:   [[TMP0:%.*]] = load half, half* %a1, align 2
 // CHECK:   [[VECINIT:%.*]] = insertelement <8 x half> undef, half [[TMP0]], i32 0
 // CHECK:   [[VECINIT1:%.*]] = insertelement <8 x half> [[VECINIT]], half [[TMP0]], i32 1
-// CHECK:   [[VECINIT2:%.*]] = insertelement <8 x half> [[VECINIT]]1, half [[TMP0]], i32 2
-// CHECK:   [[VECINIT3:%.*]] = insertelement <8 x half> [[VECINIT]]2, half [[TMP0]], i32 3
-// CHECK:   [[VECINIT4:%.*]] = insertelement <8 x half> [[VECINIT]]3, half [[TMP0]], i32 4
-// CHECK:   [[VECINIT5:%.*]] = insertelement <8 x half> [[VECINIT]]4, half [[TMP0]], i32 5
-// CHECK:   [[VECINIT6:%.*]] = insertelement <8 x half> [[VECINIT]]5, half [[TMP0]], i32 6
-// CHECK:   [[VECINIT7:%.*]] = insertelement <8 x half> [[VECINIT]]6, half [[TMP0]], i32 7
-// CHECK:   ret <8 x half> [[VECINIT]]7
+// CHECK:   [[VECINIT2:%.*]] = insertelement <8 x half> [[VECINIT1]], half [[TMP0]], i32 2
+// CHECK:   [[VECINIT3:%.*]] = insertelement <8 x half> [[VECINIT2]], half [[TMP0]], i32 3
+// CHECK:   [[VECINIT4:%.*]] = insertelement <8 x half> [[VECINIT3]], half [[TMP0]], i32 4
+// CHECK:   [[VECINIT5:%.*]] = insertelement <8 x half> [[VECINIT4]], half [[TMP0]], i32 5
+// CHECK:   [[VECINIT6:%.*]] = insertelement <8 x half> [[VECINIT5]], half [[TMP0]], i32 6
+// CHECK:   [[VECINIT7:%.*]] = insertelement <8 x half> [[VECINIT6]], half [[TMP0]], i32 7
+// CHECK:   ret <8 x half> [[VECINIT7]]
 float16x8_t test_vmovq_n_f16(float16_t *a1) {
   return vmovq_n_f16(*a1);
 }

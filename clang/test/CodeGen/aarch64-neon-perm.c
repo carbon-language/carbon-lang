@@ -931,9 +931,9 @@ int8x8x2_t test_vuzp_s8(int8x8_t a, int8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.int16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.int16x4x2_t [[TMP12]]
 int16x4x2_t test_vuzp_s16(int16x4_t a, int16x4_t b) {
   return vuzp_s16(a, b);
 }
@@ -958,9 +958,9 @@ int16x4x2_t test_vuzp_s16(int16x4_t a, int16x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x i32>] [[TMP1]]1, [2 x <2 x i32>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x i32>] [[TMP11]], [2 x <2 x i32>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.int32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.int32x2x2_t [[TMP12]]
 int32x2x2_t test_vuzp_s32(int32x2_t a, int32x2_t b) {
   return vuzp_s32(a, b);
 }
@@ -1008,9 +1008,9 @@ uint8x8x2_t test_vuzp_u8(uint8x8_t a, uint8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.uint16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint16x4x2_t [[TMP12]]
 uint16x4x2_t test_vuzp_u16(uint16x4_t a, uint16x4_t b) {
   return vuzp_u16(a, b);
 }
@@ -1035,9 +1035,9 @@ uint16x4x2_t test_vuzp_u16(uint16x4_t a, uint16x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x i32>] [[TMP1]]1, [2 x <2 x i32>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x i32>] [[TMP11]], [2 x <2 x i32>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.uint32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint32x2x2_t [[TMP12]]
 uint32x2x2_t test_vuzp_u32(uint32x2_t a, uint32x2_t b) {
   return vuzp_u32(a, b);
 }
@@ -1062,9 +1062,9 @@ uint32x2x2_t test_vuzp_u32(uint32x2_t a, uint32x2_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.float32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x float>] [[TMP1]]1, [2 x <2 x float>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x float>] [[TMP11]], [2 x <2 x float>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.float32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.float32x2x2_t [[TMP12]]
 float32x2x2_t test_vuzp_f32(float32x2_t a, float32x2_t b) {
   return vuzp_f32(a, b);
 }
@@ -1112,9 +1112,9 @@ poly8x8x2_t test_vuzp_p8(poly8x8_t a, poly8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.poly16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.poly16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.poly16x4x2_t [[TMP12]]
 poly16x4x2_t test_vuzp_p16(poly16x4_t a, poly16x4_t b) {
   return vuzp_p16(a, b);
 }
@@ -1162,9 +1162,9 @@ int8x16x2_t test_vuzpq_s8(int8x16_t a, int8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.int16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.int16x8x2_t [[TMP12]]
 int16x8x2_t test_vuzpq_s16(int16x8_t a, int16x8_t b) {
   return vuzpq_s16(a, b);
 }
@@ -1189,9 +1189,9 @@ int16x8x2_t test_vuzpq_s16(int16x8_t a, int16x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i32>] [[TMP1]]1, [2 x <4 x i32>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x i32>] [[TMP11]], [2 x <4 x i32>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.int32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.int32x4x2_t [[TMP12]]
 int32x4x2_t test_vuzpq_s32(int32x4_t a, int32x4_t b) {
   return vuzpq_s32(a, b);
 }
@@ -1239,9 +1239,9 @@ uint8x16x2_t test_vuzpq_u8(uint8x16_t a, uint8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.uint16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint16x8x2_t [[TMP12]]
 uint16x8x2_t test_vuzpq_u16(uint16x8_t a, uint16x8_t b) {
   return vuzpq_u16(a, b);
 }
@@ -1266,9 +1266,9 @@ uint16x8x2_t test_vuzpq_u16(uint16x8_t a, uint16x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i32>] [[TMP1]]1, [2 x <4 x i32>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x i32>] [[TMP11]], [2 x <4 x i32>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.uint32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint32x4x2_t [[TMP12]]
 uint32x4x2_t test_vuzpq_u32(uint32x4_t a, uint32x4_t b) {
   return vuzpq_u32(a, b);
 }
@@ -1293,9 +1293,9 @@ uint32x4x2_t test_vuzpq_u32(uint32x4_t a, uint32x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.float32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x float>] [[TMP1]]1, [2 x <4 x float>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x float>] [[TMP11]], [2 x <4 x float>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.float32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.float32x4x2_t [[TMP12]]
 float32x4x2_t test_vuzpq_f32(float32x4_t a, float32x4_t b) {
   return vuzpq_f32(a, b);
 }
@@ -1343,9 +1343,9 @@ poly8x16x2_t test_vuzpq_p8(poly8x16_t a, poly8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.poly16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.poly16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.poly16x8x2_t [[TMP12]]
 poly16x8x2_t test_vuzpq_p16(poly16x8_t a, poly16x8_t b) {
   return vuzpq_p16(a, b);
 }
@@ -1395,9 +1395,9 @@ int8x8x2_t test_vzip_s8(int8x8_t a, int8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.int16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.int16x4x2_t [[TMP12]]
 int16x4x2_t test_vzip_s16(int16x4_t a, int16x4_t b) {
   return vzip_s16(a, b);
 }
@@ -1422,9 +1422,9 @@ int16x4x2_t test_vzip_s16(int16x4_t a, int16x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x i32>] [[TMP1]]1, [2 x <2 x i32>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x i32>] [[TMP11]], [2 x <2 x i32>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.int32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.int32x2x2_t [[TMP12]]
 int32x2x2_t test_vzip_s32(int32x2_t a, int32x2_t b) {
   return vzip_s32(a, b);
 }
@@ -1472,9 +1472,9 @@ uint8x8x2_t test_vzip_u8(uint8x8_t a, uint8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.uint16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint16x4x2_t [[TMP12]]
 uint16x4x2_t test_vzip_u16(uint16x4_t a, uint16x4_t b) {
   return vzip_u16(a, b);
 }
@@ -1499,9 +1499,9 @@ uint16x4x2_t test_vzip_u16(uint16x4_t a, uint16x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x i32>] [[TMP1]]1, [2 x <2 x i32>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x i32>] [[TMP11]], [2 x <2 x i32>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.uint32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint32x2x2_t [[TMP12]]
 uint32x2x2_t test_vzip_u32(uint32x2_t a, uint32x2_t b) {
   return vzip_u32(a, b);
 }
@@ -1526,9 +1526,9 @@ uint32x2x2_t test_vzip_u32(uint32x2_t a, uint32x2_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.float32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x float>] [[TMP1]]1, [2 x <2 x float>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x float>] [[TMP11]], [2 x <2 x float>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.float32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.float32x2x2_t [[TMP12]]
 float32x2x2_t test_vzip_f32(float32x2_t a, float32x2_t b) {
   return vzip_f32(a, b);
 }
@@ -1576,9 +1576,9 @@ poly8x8x2_t test_vzip_p8(poly8x8_t a, poly8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.poly16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.poly16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.poly16x4x2_t [[TMP12]]
 poly16x4x2_t test_vzip_p16(poly16x4_t a, poly16x4_t b) {
   return vzip_p16(a, b);
 }
@@ -1626,9 +1626,9 @@ int8x16x2_t test_vzipq_s8(int8x16_t a, int8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.int16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.int16x8x2_t [[TMP12]]
 int16x8x2_t test_vzipq_s16(int16x8_t a, int16x8_t b) {
   return vzipq_s16(a, b);
 }
@@ -1653,9 +1653,9 @@ int16x8x2_t test_vzipq_s16(int16x8_t a, int16x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i32>] [[TMP1]]1, [2 x <4 x i32>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x i32>] [[TMP11]], [2 x <4 x i32>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.int32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.int32x4x2_t [[TMP12]]
 int32x4x2_t test_vzipq_s32(int32x4_t a, int32x4_t b) {
   return vzipq_s32(a, b);
 }
@@ -1703,9 +1703,9 @@ uint8x16x2_t test_vzipq_u8(uint8x16_t a, uint8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.uint16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint16x8x2_t [[TMP12]]
 uint16x8x2_t test_vzipq_u16(uint16x8_t a, uint16x8_t b) {
   return vzipq_u16(a, b);
 }
@@ -1730,9 +1730,9 @@ uint16x8x2_t test_vzipq_u16(uint16x8_t a, uint16x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i32>] [[TMP1]]1, [2 x <4 x i32>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x i32>] [[TMP11]], [2 x <4 x i32>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.uint32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint32x4x2_t [[TMP12]]
 uint32x4x2_t test_vzipq_u32(uint32x4_t a, uint32x4_t b) {
   return vzipq_u32(a, b);
 }
@@ -1757,9 +1757,9 @@ uint32x4x2_t test_vzipq_u32(uint32x4_t a, uint32x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.float32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x float>] [[TMP1]]1, [2 x <4 x float>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x float>] [[TMP11]], [2 x <4 x float>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.float32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.float32x4x2_t [[TMP12]]
 float32x4x2_t test_vzipq_f32(float32x4_t a, float32x4_t b) {
   return vzipq_f32(a, b);
 }
@@ -1807,9 +1807,9 @@ poly8x16x2_t test_vzipq_p8(poly8x16_t a, poly8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.poly16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.poly16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.poly16x8x2_t [[TMP12]]
 poly16x8x2_t test_vzipq_p16(poly16x8_t a, poly16x8_t b) {
   return vzipq_p16(a, b);
 }
@@ -1859,9 +1859,9 @@ int8x8x2_t test_vtrn_s8(int8x8_t a, int8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.int16x4x2_t, %struct.int16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.int16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.int16x4x2_t [[TMP12]]
 int16x4x2_t test_vtrn_s16(int16x4_t a, int16x4_t b) {
   return vtrn_s16(a, b);
 }
@@ -1886,9 +1886,9 @@ int16x4x2_t test_vtrn_s16(int16x4_t a, int16x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x i32>] [[TMP1]]1, [2 x <2 x i32>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x i32>] [[TMP11]], [2 x <2 x i32>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.int32x2x2_t, %struct.int32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.int32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.int32x2x2_t [[TMP12]]
 int32x2x2_t test_vtrn_s32(int32x2_t a, int32x2_t b) {
   return vtrn_s32(a, b);
 }
@@ -1936,9 +1936,9 @@ uint8x8x2_t test_vtrn_u8(uint8x8_t a, uint8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.uint16x4x2_t, %struct.uint16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.uint16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint16x4x2_t [[TMP12]]
 uint16x4x2_t test_vtrn_u16(uint16x4_t a, uint16x4_t b) {
   return vtrn_u16(a, b);
 }
@@ -1963,9 +1963,9 @@ uint16x4x2_t test_vtrn_u16(uint16x4_t a, uint16x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x i32>] [[TMP1]]1, [2 x <2 x i32>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x i32>] [[TMP11]], [2 x <2 x i32>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.uint32x2x2_t, %struct.uint32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.uint32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint32x2x2_t [[TMP12]]
 uint32x2x2_t test_vtrn_u32(uint32x2_t a, uint32x2_t b) {
   return vtrn_u32(a, b);
 }
@@ -1990,9 +1990,9 @@ uint32x2x2_t test_vtrn_u32(uint32x2_t a, uint32x2_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.float32x2x2_t [[TMP9]], 0
-// CHECK:   store [2 x <2 x float>] [[TMP1]]1, [2 x <2 x float>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <2 x float>] [[TMP11]], [2 x <2 x float>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.float32x2x2_t, %struct.float32x2x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.float32x2x2_t [[TMP1]]2
+// CHECK:   ret %struct.float32x2x2_t [[TMP12]]
 float32x2x2_t test_vtrn_f32(float32x2_t a, float32x2_t b) {
   return vtrn_f32(a, b);
 }
@@ -2040,9 +2040,9 @@ poly8x8x2_t test_vtrn_p8(poly8x8_t a, poly8x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL_I]], align 8
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.poly16x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i16>] [[TMP1]]1, [2 x <4 x i16>]* [[TMP1]]0, align 8
+// CHECK:   store [2 x <4 x i16>] [[TMP11]], [2 x <4 x i16>]* [[TMP10]], align 8
 // CHECK:   [[TMP12:%.*]] = load %struct.poly16x4x2_t, %struct.poly16x4x2_t* [[RETVAL]], align 8
-// CHECK:   ret %struct.poly16x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.poly16x4x2_t [[TMP12]]
 poly16x4x2_t test_vtrn_p16(poly16x4_t a, poly16x4_t b) {
   return vtrn_p16(a, b);
 }
@@ -2090,9 +2090,9 @@ int8x16x2_t test_vtrnq_s8(int8x16_t a, int8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.int16x8x2_t, %struct.int16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.int16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.int16x8x2_t [[TMP12]]
 int16x8x2_t test_vtrnq_s16(int16x8_t a, int16x8_t b) {
   return vtrnq_s16(a, b);
 }
@@ -2117,9 +2117,9 @@ int16x8x2_t test_vtrnq_s16(int16x8_t a, int16x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.int32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i32>] [[TMP1]]1, [2 x <4 x i32>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x i32>] [[TMP11]], [2 x <4 x i32>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.int32x4x2_t, %struct.int32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.int32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.int32x4x2_t [[TMP12]]
 int32x4x2_t test_vtrnq_s32(int32x4_t a, int32x4_t b) {
   return vtrnq_s32(a, b);
 }
@@ -2167,9 +2167,9 @@ uint8x16x2_t test_vtrnq_u8(uint8x16_t a, uint8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.uint16x8x2_t, %struct.uint16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.uint16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint16x8x2_t [[TMP12]]
 uint16x8x2_t test_vtrnq_u16(uint16x8_t a, uint16x8_t b) {
   return vtrnq_u16(a, b);
 }
@@ -2194,9 +2194,9 @@ uint16x8x2_t test_vtrnq_u16(uint16x8_t a, uint16x8_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.uint32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x i32>] [[TMP1]]1, [2 x <4 x i32>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x i32>] [[TMP11]], [2 x <4 x i32>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.uint32x4x2_t, %struct.uint32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.uint32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.uint32x4x2_t [[TMP12]]
 uint32x4x2_t test_vtrnq_u32(uint32x4_t a, uint32x4_t b) {
   return vtrnq_u32(a, b);
 }
@@ -2221,9 +2221,9 @@ uint32x4x2_t test_vtrnq_u32(uint32x4_t a, uint32x4_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.float32x4x2_t [[TMP9]], 0
-// CHECK:   store [2 x <4 x float>] [[TMP1]]1, [2 x <4 x float>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <4 x float>] [[TMP11]], [2 x <4 x float>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.float32x4x2_t, %struct.float32x4x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.float32x4x2_t [[TMP1]]2
+// CHECK:   ret %struct.float32x4x2_t [[TMP12]]
 float32x4x2_t test_vtrnq_f32(float32x4_t a, float32x4_t b) {
   return vtrnq_f32(a, b);
 }
@@ -2271,9 +2271,9 @@ poly8x16x2_t test_vtrnq_p8(poly8x16_t a, poly8x16_t b) {
 // CHECK:   [[TMP9:%.*]] = load %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL_I]], align 16
 // CHECK:   [[TMP10:%.*]] = getelementptr inbounds %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL]], i32 0, i32 0
 // CHECK:   [[TMP11:%.*]] = extractvalue %struct.poly16x8x2_t [[TMP9]], 0
-// CHECK:   store [2 x <8 x i16>] [[TMP1]]1, [2 x <8 x i16>]* [[TMP1]]0, align 16
+// CHECK:   store [2 x <8 x i16>] [[TMP11]], [2 x <8 x i16>]* [[TMP10]], align 16
 // CHECK:   [[TMP12:%.*]] = load %struct.poly16x8x2_t, %struct.poly16x8x2_t* [[RETVAL]], align 16
-// CHECK:   ret %struct.poly16x8x2_t [[TMP1]]2
+// CHECK:   ret %struct.poly16x8x2_t [[TMP12]]
 poly16x8x2_t test_vtrnq_p16(poly16x8_t a, poly16x8_t b) {
   return vtrnq_p16(a, b);
 }

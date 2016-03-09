@@ -284,8 +284,8 @@ uint32x4_t test_vmulq_laneq_u32(uint32x4_t a, uint32x4_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <2 x i32> <i32 1, i32 1>
 // CHECK:   [[FMLA:%.*]] = bitcast <8 x i8> [[TMP1]] to <2 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x float>
-// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA]]1)
-// CHECK:   ret <2 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA1]])
+// CHECK:   ret <2 x float> [[FMLA2]]
 float32x2_t test_vfma_lane_f32(float32x2_t a, float32x2_t b, float32x2_t v) {
   return vfma_lane_f32(a, b, v, 1);
 }
@@ -298,8 +298,8 @@ float32x2_t test_vfma_lane_f32(float32x2_t a, float32x2_t b, float32x2_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <4 x i32> <i32 1, i32 1, i32 1, i32 1>
 // CHECK:   [[FMLA:%.*]] = bitcast <16 x i8> [[TMP1]] to <4 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x float>
-// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA]]1)
-// CHECK:   ret <4 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA1]])
+// CHECK:   ret <4 x float> [[FMLA2]]
 float32x4_t test_vfmaq_lane_f32(float32x4_t a, float32x4_t b, float32x2_t v) {
   return vfmaq_lane_f32(a, b, v, 1);
 }
@@ -341,8 +341,8 @@ float32x4_t test_vfmaq_laneq_f32(float32x4_t a, float32x4_t b, float32x4_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <2 x i32> <i32 1, i32 1>
 // CHECK:   [[FMLA:%.*]] = bitcast <8 x i8> [[TMP1]] to <2 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x float>
-// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA]]1)
-// CHECK:   ret <2 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA1]])
+// CHECK:   ret <2 x float> [[FMLA2]]
 float32x2_t test_vfms_lane_f32(float32x2_t a, float32x2_t b, float32x2_t v) {
   return vfms_lane_f32(a, b, v, 1);
 }
@@ -356,8 +356,8 @@ float32x2_t test_vfms_lane_f32(float32x2_t a, float32x2_t b, float32x2_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <4 x i32> <i32 1, i32 1, i32 1, i32 1>
 // CHECK:   [[FMLA:%.*]] = bitcast <16 x i8> [[TMP1]] to <4 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x float>
-// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA]]1)
-// CHECK:   ret <4 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA1]])
+// CHECK:   ret <4 x float> [[FMLA2]]
 float32x4_t test_vfmsq_lane_f32(float32x4_t a, float32x4_t b, float32x2_t v) {
   return vfmsq_lane_f32(a, b, v, 1);
 }
@@ -400,8 +400,8 @@ float32x4_t test_vfmsq_laneq_f32(float32x4_t a, float32x4_t b, float32x4_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <1 x double> [[TMP3]], <1 x double> [[TMP3]], <2 x i32> zeroinitializer
 // CHECK:   [[FMLA:%.*]] = bitcast <16 x i8> [[TMP1]] to <2 x double>
 // CHECK:   [[FMLA1:%.*]] = bitcast <16 x i8> [[TMP0]] to <2 x double>
-// CHECK:   [[FMLA2:%.*]] = call <2 x double> @llvm.fma.v2f64(<2 x double> [[FMLA]], <2 x double> [[LANE]], <2 x double> [[FMLA]]1)
-// CHECK:   ret <2 x double> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <2 x double> @llvm.fma.v2f64(<2 x double> [[FMLA]], <2 x double> [[LANE]], <2 x double> [[FMLA1]])
+// CHECK:   ret <2 x double> [[FMLA2]]
 float64x2_t test_vfmaq_lane_f64(float64x2_t a, float64x2_t b, float64x1_t v) {
   return vfmaq_lane_f64(a, b, v, 0);
 }
@@ -429,8 +429,8 @@ float64x2_t test_vfmaq_laneq_f64(float64x2_t a, float64x2_t b, float64x2_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <1 x double> [[TMP3]], <1 x double> [[TMP3]], <2 x i32> zeroinitializer
 // CHECK:   [[FMLA:%.*]] = bitcast <16 x i8> [[TMP1]] to <2 x double>
 // CHECK:   [[FMLA1:%.*]] = bitcast <16 x i8> [[TMP0]] to <2 x double>
-// CHECK:   [[FMLA2:%.*]] = call <2 x double> @llvm.fma.v2f64(<2 x double> [[FMLA]], <2 x double> [[LANE]], <2 x double> [[FMLA]]1)
-// CHECK:   ret <2 x double> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <2 x double> @llvm.fma.v2f64(<2 x double> [[FMLA]], <2 x double> [[LANE]], <2 x double> [[FMLA1]])
+// CHECK:   ret <2 x double> [[FMLA2]]
 float64x2_t test_vfmsq_lane_f64(float64x2_t a, float64x2_t b, float64x1_t v) {
   return vfmsq_lane_f64(a, b, v, 0);
 }
@@ -1906,8 +1906,8 @@ uint32x4_t test_vmulq_laneq_u32_0(uint32x4_t a, uint32x4_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <2 x i32> zeroinitializer
 // CHECK:   [[FMLA:%.*]] = bitcast <8 x i8> [[TMP1]] to <2 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x float>
-// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA]]1)
-// CHECK:   ret <2 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA1]])
+// CHECK:   ret <2 x float> [[FMLA2]]
 float32x2_t test_vfma_lane_f32_0(float32x2_t a, float32x2_t b, float32x2_t v) {
   return vfma_lane_f32(a, b, v, 0);
 }
@@ -1920,8 +1920,8 @@ float32x2_t test_vfma_lane_f32_0(float32x2_t a, float32x2_t b, float32x2_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <4 x i32> zeroinitializer
 // CHECK:   [[FMLA:%.*]] = bitcast <16 x i8> [[TMP1]] to <4 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x float>
-// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA]]1)
-// CHECK:   ret <4 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA1]])
+// CHECK:   ret <4 x float> [[FMLA2]]
 float32x4_t test_vfmaq_lane_f32_0(float32x4_t a, float32x4_t b, float32x2_t v) {
   return vfmaq_lane_f32(a, b, v, 0);
 }
@@ -1963,8 +1963,8 @@ float32x4_t test_vfmaq_laneq_f32_0(float32x4_t a, float32x4_t b, float32x4_t v) 
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <2 x i32> zeroinitializer
 // CHECK:   [[FMLA:%.*]] = bitcast <8 x i8> [[TMP1]] to <2 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x float>
-// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA]]1)
-// CHECK:   ret <2 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[FMLA]], <2 x float> [[LANE]], <2 x float> [[FMLA1]])
+// CHECK:   ret <2 x float> [[FMLA2]]
 float32x2_t test_vfms_lane_f32_0(float32x2_t a, float32x2_t b, float32x2_t v) {
   return vfms_lane_f32(a, b, v, 0);
 }
@@ -1978,8 +1978,8 @@ float32x2_t test_vfms_lane_f32_0(float32x2_t a, float32x2_t b, float32x2_t v) {
 // CHECK:   [[LANE:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP3]], <4 x i32> zeroinitializer
 // CHECK:   [[FMLA:%.*]] = bitcast <16 x i8> [[TMP1]] to <4 x float>
 // CHECK:   [[FMLA1:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x float>
-// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA]]1)
-// CHECK:   ret <4 x float> [[FMLA]]2
+// CHECK:   [[FMLA2:%.*]] = call <4 x float> @llvm.fma.v4f32(<4 x float> [[FMLA]], <4 x float> [[LANE]], <4 x float> [[FMLA1]])
+// CHECK:   ret <4 x float> [[FMLA2]]
 float32x4_t test_vfmsq_lane_f32_0(float32x4_t a, float32x4_t b, float32x2_t v) {
   return vfmsq_lane_f32(a, b, v, 0);
 }

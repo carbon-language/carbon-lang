@@ -26,15 +26,15 @@ int8x8_t test_vqtbl1_s8(int8x16_t a, int8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <8 x i8>] [[A]].coerce, [2 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VTBL1_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL13_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl1.v8i8(<16 x i8> [[VTBL1_I]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL13_I]]
@@ -48,15 +48,15 @@ int8x8_t test_vtbl2_s8(int8x8x2_t a, int8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[A]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VTBL2_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL2_I]]
 int8x8_t test_vqtbl2_s8(int8x16x2_t a, int8x8_t b) {
@@ -69,18 +69,18 @@ int8x8_t test_vqtbl2_s8(int8x16x2_t a, int8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <8 x i8>] [[A]].coerce, [3 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx4.i, align 8
+// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX4_I]], align 8
 // CHECK:   [[VTBL2_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL25_I:%.*]] = shufflevector <8 x i8> [[TMP3]], <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL26_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[VTBL2_I]], <16 x i8> [[VTBL25_I]], <8 x i8> %b) #2
@@ -95,18 +95,18 @@ int8x8_t test_vtbl3_s8(int8x8x3_t a, int8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[A]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VTBL3_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl3.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL3_I]]
 int8x8_t test_vqtbl3_s8(int8x16x3_t a, int8x8_t b) {
@@ -119,21 +119,21 @@ int8x8_t test_vqtbl3_s8(int8x16x3_t a, int8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <8 x i8>] [[A]].coerce, [4 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx4.i, align 8
+// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX4_I]], align 8
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx6.i, align 8
+// CHECK:   [[TMP4:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX6_I]], align 8
 // CHECK:   [[VTBL2_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL27_I:%.*]] = shufflevector <8 x i8> [[TMP3]], <8 x i8> [[TMP4]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL28_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[VTBL2_I]], <16 x i8> [[VTBL27_I]], <8 x i8> %b) #2
@@ -148,21 +148,21 @@ int8x8_t test_vtbl4_s8(int8x8x4_t a, int8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[A]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx6.i, align 16
+// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX6_I]], align 16
 // CHECK:   [[VTBL4_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl4.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> [[TMP4]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL4_I]]
 int8x8_t test_vqtbl4_s8(int8x16x4_t a, int8x8_t b) {
@@ -182,15 +182,15 @@ int8x16_t test_vqtbl1q_s8(int8x16_t a, int8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[A]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VTBL2_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl2.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL2_I]]
 int8x16_t test_vqtbl2q_s8(int8x16x2_t a, int8x16_t b) {
@@ -203,18 +203,18 @@ int8x16_t test_vqtbl2q_s8(int8x16x2_t a, int8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[A]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VTBL3_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl3.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL3_I]]
 int8x16_t test_vqtbl3q_s8(int8x16x3_t a, int8x16_t b) {
@@ -227,21 +227,21 @@ int8x16_t test_vqtbl3q_s8(int8x16x3_t a, int8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[A]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx6.i, align 16
+// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX6_I]], align 16
 // CHECK:   [[VTBL4_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl4.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> [[TMP4]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL4_I]]
 int8x16_t test_vqtbl4q_s8(int8x16x4_t a, int8x16_t b) {
@@ -268,9 +268,9 @@ int8x8_t test_vtbx1_s8(int8x8_t a, int8x8_t b, int8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <8 x i8>] [[B]].coerce, [2 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x8x2_t, %struct.int8x8x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -290,9 +290,9 @@ int8x8_t test_vtbx2_s8(int8x8_t a, int8x8x2_t b, int8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <8 x i8>] [[B]].coerce, [3 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x8x3_t, %struct.int8x8x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -322,9 +322,9 @@ int8x8_t test_vtbx3_s8(int8x8_t a, int8x8x3_t b, int8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <8 x i8>] [[B]].coerce, [4 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x8x4_t, %struct.int8x8x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -358,9 +358,9 @@ int8x8_t test_vqtbx1_s8(int8x8_t a, int8x16_t b, int8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[B]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -379,9 +379,9 @@ int8x8_t test_vqtbx2_s8(int8x8_t a, int8x16x2_t b, int8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[B]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -403,9 +403,9 @@ int8x8_t test_vqtbx3_s8(int8x8_t a, int8x16x3_t b, int8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[B]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -437,9 +437,9 @@ int8x16_t test_vqtbx1q_s8(int8x16_t a, int8x16_t b, int8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[B]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x2_t, %struct.int8x16x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -458,9 +458,9 @@ int8x16_t test_vqtbx2q_s8(int8x16_t a, int8x16x2_t b, int8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[B]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x3_t, %struct.int8x16x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -482,9 +482,9 @@ int8x16_t test_vqtbx3q_s8(int8x16_t a, int8x16x3_t b, int8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[B]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.int8x16x4_t, %struct.int8x16x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -524,15 +524,15 @@ uint8x8_t test_vqtbl1_u8(uint8x16_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <8 x i8>] [[A]].coerce, [2 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VTBL1_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL13_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl1.v8i8(<16 x i8> [[VTBL1_I]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL13_I]]
@@ -546,15 +546,15 @@ uint8x8_t test_vtbl2_u8(uint8x8x2_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[A]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VTBL2_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL2_I]]
 uint8x8_t test_vqtbl2_u8(uint8x16x2_t a, uint8x8_t b) {
@@ -567,18 +567,18 @@ uint8x8_t test_vqtbl2_u8(uint8x16x2_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <8 x i8>] [[A]].coerce, [3 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx4.i, align 8
+// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX4_I]], align 8
 // CHECK:   [[VTBL2_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL25_I:%.*]] = shufflevector <8 x i8> [[TMP3]], <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL26_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[VTBL2_I]], <16 x i8> [[VTBL25_I]], <8 x i8> %b) #2
@@ -593,18 +593,18 @@ uint8x8_t test_vtbl3_u8(uint8x8x3_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[A]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VTBL3_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl3.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL3_I]]
 uint8x8_t test_vqtbl3_u8(uint8x16x3_t a, uint8x8_t b) {
@@ -617,21 +617,21 @@ uint8x8_t test_vqtbl3_u8(uint8x16x3_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <8 x i8>] [[A]].coerce, [4 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx4.i, align 8
+// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX4_I]], align 8
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx6.i, align 8
+// CHECK:   [[TMP4:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX6_I]], align 8
 // CHECK:   [[VTBL2_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL27_I:%.*]] = shufflevector <8 x i8> [[TMP3]], <8 x i8> [[TMP4]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL28_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[VTBL2_I]], <16 x i8> [[VTBL27_I]], <8 x i8> %b) #2
@@ -646,21 +646,21 @@ uint8x8_t test_vtbl4_u8(uint8x8x4_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[A]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx6.i, align 16
+// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX6_I]], align 16
 // CHECK:   [[VTBL4_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl4.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> [[TMP4]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL4_I]]
 uint8x8_t test_vqtbl4_u8(uint8x16x4_t a, uint8x8_t b) {
@@ -680,15 +680,15 @@ uint8x16_t test_vqtbl1q_u8(uint8x16_t a, uint8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[A]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VTBL2_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl2.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL2_I]]
 uint8x16_t test_vqtbl2q_u8(uint8x16x2_t a, uint8x16_t b) {
@@ -701,18 +701,18 @@ uint8x16_t test_vqtbl2q_u8(uint8x16x2_t a, uint8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[A]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VTBL3_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl3.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL3_I]]
 uint8x16_t test_vqtbl3q_u8(uint8x16x3_t a, uint8x16_t b) {
@@ -725,21 +725,21 @@ uint8x16_t test_vqtbl3q_u8(uint8x16x3_t a, uint8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[A]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx6.i, align 16
+// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX6_I]], align 16
 // CHECK:   [[VTBL4_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl4.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> [[TMP4]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL4_I]]
 uint8x16_t test_vqtbl4q_u8(uint8x16x4_t a, uint8x16_t b) {
@@ -766,9 +766,9 @@ uint8x8_t test_vtbx1_u8(uint8x8_t a, uint8x8_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <8 x i8>] [[B]].coerce, [2 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x8x2_t, %struct.uint8x8x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -788,9 +788,9 @@ uint8x8_t test_vtbx2_u8(uint8x8_t a, uint8x8x2_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <8 x i8>] [[B]].coerce, [3 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x8x3_t, %struct.uint8x8x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -820,9 +820,9 @@ uint8x8_t test_vtbx3_u8(uint8x8_t a, uint8x8x3_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <8 x i8>] [[B]].coerce, [4 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x8x4_t, %struct.uint8x8x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -856,9 +856,9 @@ uint8x8_t test_vqtbx1_u8(uint8x8_t a, uint8x16_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[B]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -877,9 +877,9 @@ uint8x8_t test_vqtbx2_u8(uint8x8_t a, uint8x16x2_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[B]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -901,9 +901,9 @@ uint8x8_t test_vqtbx3_u8(uint8x8_t a, uint8x16x3_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[B]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -935,9 +935,9 @@ uint8x16_t test_vqtbx1q_u8(uint8x16_t a, uint8x16_t b, uint8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[B]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x2_t, %struct.uint8x16x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -956,9 +956,9 @@ uint8x16_t test_vqtbx2q_u8(uint8x16_t a, uint8x16x2_t b, uint8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[B]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x3_t, %struct.uint8x16x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -980,9 +980,9 @@ uint8x16_t test_vqtbx3q_u8(uint8x16_t a, uint8x16x3_t b, uint8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[B]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.uint8x16x4_t, %struct.uint8x16x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -1022,15 +1022,15 @@ poly8x8_t test_vqtbl1_p8(poly8x16_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <8 x i8>] [[A]].coerce, [2 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VTBL1_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL13_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl1.v8i8(<16 x i8> [[VTBL1_I]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL13_I]]
@@ -1044,15 +1044,15 @@ poly8x8_t test_vtbl2_p8(poly8x8x2_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[A]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VTBL2_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL2_I]]
 poly8x8_t test_vqtbl2_p8(poly8x16x2_t a, uint8x8_t b) {
@@ -1065,18 +1065,18 @@ poly8x8_t test_vqtbl2_p8(poly8x16x2_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <8 x i8>] [[A]].coerce, [3 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx4.i, align 8
+// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX4_I]], align 8
 // CHECK:   [[VTBL2_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL25_I:%.*]] = shufflevector <8 x i8> [[TMP3]], <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL26_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[VTBL2_I]], <16 x i8> [[VTBL25_I]], <8 x i8> %b) #2
@@ -1091,18 +1091,18 @@ poly8x8_t test_vtbl3_p8(poly8x8x3_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[A]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VTBL3_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl3.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL3_I]]
 poly8x8_t test_vqtbl3_p8(poly8x16x3_t a, uint8x8_t b) {
@@ -1115,21 +1115,21 @@ poly8x8_t test_vqtbl3_p8(poly8x16x3_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <8 x i8>] [[A]].coerce, [4 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx.i, align 8
+// CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx2.i, align 8
+// CHECK:   [[TMP2:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX2_I]], align 8
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx4.i, align 8
+// CHECK:   [[TMP3:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX4_I]], align 8
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <8 x i8>, <8 x i8>* [[A]]rrayidx6.i, align 8
+// CHECK:   [[TMP4:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX6_I]], align 8
 // CHECK:   [[VTBL2_I:%.*]] = shufflevector <8 x i8> [[TMP1]], <8 x i8> [[TMP2]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL27_I:%.*]] = shufflevector <8 x i8> [[TMP3]], <8 x i8> [[TMP4]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK:   [[VTBL28_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl2.v8i8(<16 x i8> [[VTBL2_I]], <16 x i8> [[VTBL27_I]], <8 x i8> %b) #2
@@ -1144,21 +1144,21 @@ poly8x8_t test_vtbl4_p8(poly8x8x4_t a, uint8x8_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[A]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx6.i, align 16
+// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX6_I]], align 16
 // CHECK:   [[VTBL4_I:%.*]] = call <8 x i8> @llvm.aarch64.neon.tbl4.v8i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> [[TMP4]], <8 x i8> %b) #2
 // CHECK:   ret <8 x i8> [[VTBL4_I]]
 poly8x8_t test_vqtbl4_p8(poly8x16x4_t a, uint8x8_t b) {
@@ -1178,15 +1178,15 @@ poly8x16_t test_vqtbl1q_p8(poly8x16_t a, uint8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[A]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[A]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VTBL2_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl2.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL2_I]]
 poly8x16_t test_vqtbl2q_p8(poly8x16x2_t a, uint8x16_t b) {
@@ -1199,18 +1199,18 @@ poly8x16_t test_vqtbl2q_p8(poly8x16x2_t a, uint8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[A]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[A]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VTBL3_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl3.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL3_I]]
 poly8x16_t test_vqtbl3q_p8(poly8x16x3_t a, uint8x16_t b) {
@@ -1223,21 +1223,21 @@ poly8x16_t test_vqtbl3q_p8(poly8x16x3_t a, uint8x16_t b) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[A]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[A]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[A]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
-// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx.i, align 16
+// CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
 // CHECK:   [[VAL1_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX2_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL1_I]], i64 0, i64 1
-// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx2.i, align 16
+// CHECK:   [[TMP2:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX2_I]], align 16
 // CHECK:   [[VAL3_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX4_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL3_I]], i64 0, i64 2
-// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx4.i, align 16
+// CHECK:   [[TMP3:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX4_I]], align 16
 // CHECK:   [[VAL5_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P0_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX6_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL5_I]], i64 0, i64 3
-// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[A]]rrayidx6.i, align 16
+// CHECK:   [[TMP4:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX6_I]], align 16
 // CHECK:   [[VTBL4_I:%.*]] = call <16 x i8> @llvm.aarch64.neon.tbl4.v16i8(<16 x i8> [[TMP1]], <16 x i8> [[TMP2]], <16 x i8> [[TMP3]], <16 x i8> [[TMP4]], <16 x i8> %b) #2
 // CHECK:   ret <16 x i8> [[VTBL4_I]]
 poly8x16_t test_vqtbl4q_p8(poly8x16x4_t a, uint8x16_t b) {
@@ -1264,9 +1264,9 @@ poly8x8_t test_vtbx1_p8(poly8x8_t a, poly8x8_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <8 x i8>] [[B]].coerce, [2 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [2 x <8 x i8>], [2 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [2 x <8 x i8>] [[TMP0]], [2 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x8x2_t, %struct.poly8x8x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <8 x i8>], [2 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -1286,9 +1286,9 @@ poly8x8_t test_vtbx2_p8(poly8x8_t a, poly8x8x2_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <8 x i8>] [[B]].coerce, [3 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [3 x <8 x i8>], [3 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [3 x <8 x i8>] [[TMP0]], [3 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x8x3_t, %struct.poly8x8x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <8 x i8>], [3 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -1318,9 +1318,9 @@ poly8x8_t test_vtbx3_p8(poly8x8_t a, poly8x8x3_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <8 x i8>] [[B]].coerce, [4 x <8 x i8>]* [[COERCE_DIVE]], align 8
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE]]1, align 8
+// CHECK:   [[TMP0:%.*]] = load [4 x <8 x i8>], [4 x <8 x i8>]* [[COERCE_DIVE1]], align 8
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE]].i, align 8
+// CHECK:   store [4 x <8 x i8>] [[TMP0]], [4 x <8 x i8>]* [[COERCE_DIVE_I]], align 8
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x8x4_t, %struct.poly8x8x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <8 x i8>], [4 x <8 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <8 x i8>, <8 x i8>* [[ARRAYIDX_I]], align 8
@@ -1354,9 +1354,9 @@ poly8x8_t test_vqtbx1_p8(poly8x8_t a, uint8x16_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[B]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -1375,9 +1375,9 @@ poly8x8_t test_vqtbx2_p8(poly8x8_t a, poly8x16x2_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[B]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -1399,9 +1399,9 @@ poly8x8_t test_vqtbx3_p8(poly8x8_t a, poly8x16x3_t b, uint8x8_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[B]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -1433,9 +1433,9 @@ poly8x16_t test_vqtbx1q_p8(poly8x16_t a, uint8x16_t b, uint8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[B]], i32 0, i32 0
 // CHECK:   store [2 x <16 x i8>] [[B]].coerce, [2 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [2 x <16 x i8>], [2 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [2 x <16 x i8>] [[TMP0]], [2 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x2_t, %struct.poly8x16x2_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [2 x <16 x i8>], [2 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -1454,9 +1454,9 @@ poly8x16_t test_vqtbx2q_p8(poly8x16_t a, poly8x16x2_t b, uint8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[B]], i32 0, i32 0
 // CHECK:   store [3 x <16 x i8>] [[B]].coerce, [3 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [3 x <16 x i8>], [3 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [3 x <16 x i8>] [[TMP0]], [3 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x3_t, %struct.poly8x16x3_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [3 x <16 x i8>], [3 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
@@ -1478,9 +1478,9 @@ poly8x16_t test_vqtbx3q_p8(poly8x16_t a, poly8x16x3_t b, uint8x16_t c) {
 // CHECK:   [[COERCE_DIVE:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[B]], i32 0, i32 0
 // CHECK:   store [4 x <16 x i8>] [[B]].coerce, [4 x <16 x i8>]* [[COERCE_DIVE]], align 16
 // CHECK:   [[COERCE_DIVE1:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[B]], i32 0, i32 0
-// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE]]1, align 16
+// CHECK:   [[TMP0:%.*]] = load [4 x <16 x i8>], [4 x <16 x i8>]* [[COERCE_DIVE1]], align 16
 // CHECK:   [[COERCE_DIVE_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P1_I]], i32 0, i32 0
-// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE]].i, align 16
+// CHECK:   store [4 x <16 x i8>] [[TMP0]], [4 x <16 x i8>]* [[COERCE_DIVE_I]], align 16
 // CHECK:   [[VAL_I:%.*]] = getelementptr inbounds %struct.poly8x16x4_t, %struct.poly8x16x4_t* [[__P1_I]], i32 0, i32 0
 // CHECK:   [[ARRAYIDX_I:%.*]] = getelementptr inbounds [4 x <16 x i8>], [4 x <16 x i8>]* [[VAL_I]], i64 0, i64 0
 // CHECK:   [[TMP1:%.*]] = load <16 x i8>, <16 x i8>* [[ARRAYIDX_I]], align 16
