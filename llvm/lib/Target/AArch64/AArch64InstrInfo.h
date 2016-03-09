@@ -95,7 +95,7 @@ public:
                              const TargetRegisterInfo *TRI) const override;
 
   bool getMemOpBaseRegImmOfsWidth(MachineInstr *LdSt, unsigned &BaseReg,
-                                  int &Offset, int &Width,
+                                  int64_t &Offset, unsigned &Width,
                                   const TargetRegisterInfo *TRI) const;
 
   bool enableClusterLoads() const override { return true; }

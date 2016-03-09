@@ -618,8 +618,8 @@ AArch64InstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
                                                   AliasAnalysis *AA) const {
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   unsigned BaseRegA = 0, BaseRegB = 0;
-  int OffsetA = 0, OffsetB = 0;
-  int WidthA = 0, WidthB = 0;
+  int64_t OffsetA = 0, OffsetB = 0;
+  unsigned WidthA = 0, WidthB = 0;
 
   assert(MIa && MIa->mayLoadOrStore() && "MIa must be a load or store.");
   assert(MIb && MIb->mayLoadOrStore() && "MIb must be a load or store.");
@@ -1319,6 +1319,7 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfs(
   switch (LdSt->getOpcode()) {
   default:
     return false;
+  // Scaled instructions.
   case AArch64::STRSui:
   case AArch64::STRDui:
   case AArch64::STRQui:
@@ -1329,18 +1330,13 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfs(
   case AArch64::LDRQui:
   case AArch64::LDRXui:
   case AArch64::LDRWui:
-    if (!LdSt->getOperand(1).isReg() || !LdSt->getOperand(2).isImm())
-      return false;
-    BaseReg = LdSt->getOperand(1).getReg();
-    MachineFunction &MF = *LdSt->getParent()->getParent();
-    unsigned Width = getRegClass(LdSt->getDesc(), 0, TRI, MF)->getSize();
-    Offset = LdSt->getOperand(2).getImm() * Width;
-    return true;
+    unsigned Width;
+    return getMemOpBaseRegImmOfsWidth(LdSt, BaseReg, Offset, Width, TRI);
   };
 }
 
 bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
-    MachineInstr *LdSt, unsigned &BaseReg, int &Offset, int &Width,
+    MachineInstr *LdSt, unsigned &BaseReg, int64_t &Offset, unsigned &Width,
     const TargetRegisterInfo *TRI) const {
   // Handle only loads/stores with base register followed by immediate offset.
   if (LdSt->getNumOperands() != 3)
@@ -1350,7 +1346,7 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
 
   // Offset is calculated as the immediate operand multiplied by the scaling factor.
   // Unscaled instructions have scaling factor set to 1.
-  int Scale = 0;
+  unsigned Scale = 0;
   switch (LdSt->getOpcode()) {
   default:
     return false;
