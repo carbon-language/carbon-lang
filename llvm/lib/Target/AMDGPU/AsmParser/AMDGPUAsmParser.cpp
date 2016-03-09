@@ -1008,10 +1008,21 @@ AMDGPUAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
       getLexer().is(AsmToken::EndOfStatement))
     return ResTy;
 
-  bool Negate = false, Abs = false;
+  bool Negate = false, Abs = false, Abs2 = false;
+
   if (getLexer().getKind()== AsmToken::Minus) {
     Parser.Lex();
     Negate = true;
+  }
+
+  if (getLexer().getKind() == AsmToken::Identifier && Parser.getTok().getString() == "abs") {
+    Parser.Lex();
+    Abs2 = true;
+    if (getLexer().isNot(AsmToken::LParen)) {
+      Error(Parser.getTok().getLoc(), "expected left paren after abs");
+      return MatchOperand_ParseFail;
+    }
+    Parser.Lex();
   }
 
   if (getLexer().getKind() == AsmToken::Pipe) {
@@ -1065,7 +1076,13 @@ AMDGPUAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
           Parser.Lex();
           Modifiers |= 0x2;
         }
-
+        if (Abs2) {
+          if (getLexer().isNot(AsmToken::RParen)) {
+            return MatchOperand_ParseFail;
+          }
+          Parser.Lex();
+          Modifiers |= 0x2;
+        }
         Operands.push_back(AMDGPUOperand::CreateReg(
             RegNo, S, E, getContext().getRegisterInfo(), &getSTI(),
             isForcedVOP3()));
