@@ -3178,9 +3178,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (auto *SI = dyn_cast<SelectInst>(Op0)) {
         SelectPatternResult SPR = matchSelectPattern(SI, A, B);
         if (SPR.Flavor == SPF_SMIN) {
-          if (isKnownNonNegative(A, DL) && isKnownNonZero(A, DL))
+          if (isKnownPositive(A, DL))
             return new ICmpInst(I.getPredicate(), B, CI);
-          if (isKnownNonNegative(B, DL) && isKnownNonZero(B, DL))
+          if (isKnownPositive(B, DL))
             return new ICmpInst(I.getPredicate(), A, CI);
         }
       }
