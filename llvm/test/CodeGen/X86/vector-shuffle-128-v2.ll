@@ -941,17 +941,13 @@ define <2 x i64> @shuffle_v2i64_bitcast_z123(<2 x i64> %x) {
 ;
 ; AVX2-LABEL: shuffle_v2i64_bitcast_z123:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
-; AVX2-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; AVX2-NEXT:    retq
 ;
 ; AVX512VL-LABEL: shuffle_v2i64_bitcast_z123:
 ; AVX512VL:       # BB#0:
-; AVX512VL-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512VL-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
-; AVX512VL-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; AVX512VL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; AVX512VL-NEXT:    vpblendd {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; AVX512VL-NEXT:    retq
   %bitcast32 = bitcast <2 x i64> %x to <4 x float>

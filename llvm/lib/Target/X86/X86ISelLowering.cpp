@@ -23916,7 +23916,8 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
         if (Mask[i / MaskRatio] < 0)
           BlendMask |= 1u << i;
 
-      if (Root.getOpcode() != X86ISD::BLENDI ||
+      if (Depth != 1 || RootVT != ShuffleVT ||
+          Root.getOpcode() != X86ISD::BLENDI ||
           Root->getConstantOperandVal(2) != BlendMask) {
         SDValue Zero = getZeroVector(ShuffleVT, Subtarget, DAG, DL);
         Res = DAG.getBitcast(ShuffleVT, Input);
