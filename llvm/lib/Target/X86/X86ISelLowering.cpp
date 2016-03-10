@@ -5266,8 +5266,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
 /// remaining input indices in case we now have a unary shuffle and adjust the
 /// Op0/Op1 inputs accordingly.
 /// Returns true if the target shuffle mask was decoded.
-static bool resolveTargetShuffleInputs(SDValue Op, bool &IsUnary, SDValue &Op0,
-                                       SDValue &Op1,
+static bool resolveTargetShuffleInputs(SDValue Op, SDValue &Op0, SDValue &Op1,
                                        SmallVectorImpl<int> &Mask) {
   SmallVector<SDValue, 2> Ops;
   if (!setTargetShuffleZeroElements(Op, Mask, Ops))
@@ -5282,10 +5281,6 @@ static bool resolveTargetShuffleInputs(SDValue Op, bool &IsUnary, SDValue &Op0,
 
   Op0 = Op0InUse ? Ops[0] : SDValue();
   Op1 = Op1InUse ? Ops[1] : SDValue();
-  IsUnary = !(Op0InUse && Op1InUse);
-
-  if (!IsUnary)
-    return true;
 
   // We're only using Op1 - commute the mask and inputs.
   if (!Op0InUse && Op1InUse) {
@@ -24036,14 +24031,9 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
          "Can only combine shuffles of the same vector register size.");
 
   // Extract target shuffle mask and resolve sentinels and inputs.
-  bool IsUnary;
   SDValue Input0, Input1;
   SmallVector<int, 16> OpMask;
-  if (!resolveTargetShuffleInputs(Op, IsUnary, Input0, Input1, OpMask))
-    return false;
-
-  // At the moment we can only combine target shuffle unary cases.
-  if (!IsUnary)
+  if (!resolveTargetShuffleInputs(Op, Input0, Input1, OpMask))
     return false;
 
   assert(VT.getVectorNumElements() == OpMask.size() &&
@@ -24103,8 +24093,24 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
                                                 Subtarget, DAG, SDLoc(Root)));
     return true;
   }
+
+  int MaskSize = Mask.size();
+  bool UseInput0 = std::any_of(Mask.begin(), Mask.end(),
+                  [MaskSize](int Idx) { return 0 <= Idx && Idx < MaskSize; });
+  bool UseInput1 = std::any_of(Mask.begin(), Mask.end(),
+                  [MaskSize](int Idx) { return MaskSize <= Idx; });
+
+  // At the moment we can only combine unary shuffle mask cases.
+  if (UseInput0 && UseInput1)
+    return false;
+  else if (UseInput1) {
+    std::swap(Input0, Input1);
+    ShuffleVectorSDNode::commuteMask(Mask);
+  }
+
   assert(Input0 && "Shuffle with no inputs detected");
 
+  // TODO - generalize this to support any variable mask shuffle.
   HasPSHUFB |= (Op.getOpcode() == X86ISD::PSHUFB);
 
   // See if we can recurse into Input0 (if it's a target shuffle).
