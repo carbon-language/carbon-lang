@@ -1457,8 +1457,10 @@ RenderScriptRuntime::EvalRSExpression(const char *expression, StackFrame *frame_
         log->Printf("%s(%s)", __FUNCTION__, expression);
 
     ValueObjectSP expr_result;
+    EvaluateExpressionOptions options;
+    options.SetLanguage(lldb::eLanguageTypeC_plus_plus);
     // Perform the actual expression evaluation
-    GetProcess()->GetTarget().EvaluateExpression(expression, frame_ptr, expr_result);
+    GetProcess()->GetTarget().EvaluateExpression(expression, frame_ptr, expr_result, options);
 
     if (!expr_result)
     {
