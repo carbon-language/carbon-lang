@@ -416,7 +416,11 @@ defm S_CBRANCH_I_FORK : SOPK_m <
   sopk<0x11, 0x10>, "s_cbranch_i_fork", (outs),
   (ins SReg_64:$sdst, u16imm:$simm16), " $sdst, $simm16"
 >;
+
+let mayLoad = 1 in {
 defm S_GETREG_B32 : SOPK_32 <sopk<0x12, 0x11>, "s_getreg_b32", []>;
+}
+
 defm S_SETREG_B32 : SOPK_m <
   sopk<0x13, 0x12>, "s_setreg_b32", (outs),
   (ins SReg_32:$sdst, u16imm:$simm16), " $sdst, $simm16"
@@ -2087,6 +2091,14 @@ def : Pat <
                  f32:$src0, f32:$src1, f32:$src2, f32:$src3),
   (EXP imm:$en, imm:$tgt, imm:$compr, imm:$done, imm:$vm,
        $src0, $src1, $src2, $src3)
+>;
+
+//===----------------------------------------------------------------------===//
+// S_GETREG_B32 Intrinsic Pattern.
+//===----------------------------------------------------------------------===//
+def : Pat <
+  (int_amdgcn_s_getreg imm:$simm16),
+  (S_GETREG_B32 (as_i16imm $simm16))
 >;
 
 //===----------------------------------------------------------------------===//
