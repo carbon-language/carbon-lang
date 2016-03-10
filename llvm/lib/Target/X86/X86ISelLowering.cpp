@@ -13948,16 +13948,21 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
     return DAG.getNode(X86ISD::VZEXT, DL, VT, In);
 
   assert(InVT.getVectorElementType() == MVT::i1);
-  MVT ExtVT = NumElts == 8 ? MVT::v8i64 : MVT::v16i32;
+
+  // Extend VT if the target is 256 or 128bit vector and VLX is not supported.
+  MVT ExtVT = VT;
+  if (!VT.is512BitVector() && !Subtarget.hasVLX())
+    ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
+
   SDValue One =
    DAG.getConstant(APInt(ExtVT.getScalarSizeInBits(), 1), DL, ExtVT);
   SDValue Zero =
    DAG.getConstant(APInt::getNullValue(ExtVT.getScalarSizeInBits()), DL, ExtVT);
 
-  SDValue V = DAG.getNode(ISD::VSELECT, DL, ExtVT, In, One, Zero);
-  if (VT.is512BitVector())
-    return V;
-  return DAG.getNode(X86ISD::VTRUNC, DL, VT, V);
+  SDValue SelectedVal = DAG.getNode(ISD::VSELECT, DL, ExtVT, In, One, Zero);
+  if (VT == ExtVT)
+    return SelectedVal;
+  return DAG.getNode(X86ISD::VTRUNC, DL, VT, SelectedVal);
 }
 
 static SDValue LowerANY_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
@@ -15047,16 +15052,15 @@ static SDValue LowerBoolVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
-static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG,
-                                     const X86Subtarget &Subtarget) {
+static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
+
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   SDValue CC = Op.getOperand(2);
   MVT VT = Op.getSimpleValueType();
   SDLoc dl(Op);
 
-  assert(Op0.getSimpleValueType().getVectorElementType().getSizeInBits() >= 8 &&
-         Op.getSimpleValueType().getVectorElementType() == MVT::i1 &&
+  assert(VT.getVectorElementType() == MVT::i1 &&
          "Cannot set masked compare for this operation");
 
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
@@ -15194,26 +15198,26 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
   if (VT.is256BitVector() && !Subtarget.hasInt256())
     return Lower256IntVSETCC(Op, DAG);
 
+  // Operands are boolean (vectors of i1)
   MVT OpVT = Op1.getSimpleValueType();
   if (OpVT.getVectorElementType() == MVT::i1)
     return LowerBoolVSETCC_AVX512(Op, DAG);
 
-  bool MaskResult = (VT.getVectorElementType() == MVT::i1);
-  if (Subtarget.hasAVX512()) {
-    if (Op1.getSimpleValueType().is512BitVector() ||
-        (Subtarget.hasBWI() && Subtarget.hasVLX()) ||
-        (MaskResult && OpVT.getVectorElementType().getSizeInBits() >= 32))
-      return LowerIntVSETCC_AVX512(Op, DAG, Subtarget);
-
+  // The result is boolean, but operands are int/float
+  if (VT.getVectorElementType() == MVT::i1) {
     // In AVX-512 architecture setcc returns mask with i1 elements,
     // But there is no compare instruction for i8 and i16 elements in KNL.
-    // We are not talking about 512-bit operands in this case, these
-    // types are illegal.
-    if (MaskResult &&
-        (OpVT.getVectorElementType().getSizeInBits() < 32 &&
-         OpVT.getVectorElementType().getSizeInBits() >= 8))
-      return DAG.getNode(ISD::TRUNCATE, dl, VT,
-                         DAG.getNode(ISD::SETCC, dl, OpVT, Op0, Op1, CC));
+    // In this case use SSE compare
+    bool UseAVX512Inst =
+      (OpVT.is512BitVector() ||
+       OpVT.getVectorElementType().getSizeInBits() >= 32 ||
+       (Subtarget.hasBWI() && Subtarget.hasVLX()));
+
+    if (UseAVX512Inst)
+      return LowerIntVSETCC_AVX512(Op, DAG);
+
+    return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                        DAG.getNode(ISD::SETCC, dl, OpVT, Op0, Op1, CC));
   }
 
   // Lower using XOP integer comparisons.
