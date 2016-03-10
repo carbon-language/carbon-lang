@@ -45,6 +45,16 @@ struct SectionInfo {
   uint64_t FileOffset{0};     /// Offset in the output file.
   uint64_t ShName{0};         /// Name offset in section header string table.
 
+  struct Reloc {
+    uint32_t Offset;
+    uint8_t  Size;
+    uint8_t  Type; // unused atm
+    uint32_t Value;
+  };
+
+  /// Pending relocations for the section.
+  std::vector<Reloc> PendingRelocs;
+
   SectionInfo(uint64_t Address = 0, uint64_t Size = 0, unsigned Alignment = 0,
               bool IsCode = false, bool IsReadOnly = false,
               uint64_t FileAddress = 0, uint64_t FileOffset = 0)
@@ -89,9 +99,9 @@ public:
                            /*IsCode=*/false, IsReadOnly);
   }
 
-  void recordNoteSection(const uint8_t *Data, uintptr_t Size,
-                         unsigned Alignment, unsigned SectionID,
-                         StringRef SectionName) override;
+  uint8_t *recordNoteSection(const uint8_t *Data, uintptr_t Size,
+                             unsigned Alignment, unsigned SectionID,
+                             StringRef SectionName) override;
 
   // Tell EE that we guarantee we don't need stubs.
   bool allowStubAllocation() const override { return false; }
@@ -222,6 +232,9 @@ private:
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.
   std::vector<uint64_t> FailedAddresses;
+
+  /// Size of the .debug_line section on input.
+  uint32_t DebugLineSize{0};
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};

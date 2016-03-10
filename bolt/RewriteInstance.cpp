@@ -257,7 +257,7 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   return ret;
 }
 
-void ExecutableFileMemoryManager::recordNoteSection(
+uint8_t *ExecutableFileMemoryManager::recordNoteSection(
     const uint8_t *Data,
     uintptr_t Size,
     unsigned Alignment,
@@ -271,13 +271,19 @@ void ExecutableFileMemoryManager::recordNoteSection(
   if (SectionName == ".debug_line") {
     // We need to make a copy of the section contents if we'll need it for
     // a future reference.
-    uint8_t *p = new uint8_t[Size];
-    memcpy(p, Data, Size);
-    NoteSectionInfo[SectionName] = SectionInfo(reinterpret_cast<uint64_t>(p),
-                                               Size,
-                                               Alignment,
-                                               /*IsCode=*/false,
-                                               /*IsReadOnly*/true);
+    uint8_t *DataCopy = new uint8_t[Size];
+    memcpy(DataCopy, Data, Size);
+    NoteSectionInfo[SectionName] =
+      SectionInfo(reinterpret_cast<uint64_t>(DataCopy),
+                  Size,
+                  Alignment,
+                  /*IsCode=*/false,
+                  /*IsReadOnly*/true);
+    return DataCopy;
+  } else {
+    DEBUG(dbgs() << "BOLT-DEBUG: ignoring section " << SectionName
+                 << " in recordNoteSection()\n");
+    return nullptr;
   }
 }
 
@@ -404,6 +410,8 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
     for (const auto &CU : BC->DwCtx->compile_units()) {
       const auto CUID = CU->getOffset();
       auto LineTable = BC->DwCtx->getLineTableForUnit(CU.get());
+      auto LineTableOffset =
+        BC->DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_stmt_list);
       const auto &FileNames = LineTable->Prologue.FileNames;
       for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
         // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
@@ -416,6 +424,9 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
             FileNames[I].Name,
             I + 1,
             CUID);
+      }
+      if (LineTableOffset) {
+        BC->LineTableOffsetCUMap[CUID] = LineTableOffset;
       }
     }
   }
@@ -668,11 +679,12 @@ void RewriteInstance::readSpecialSections() {
     if (SectionName == ".gcc_except_table") {
       LSDAData = SectionData;
       LSDAAddress = Section.getAddress();
-    }
-    if (SectionName == ".eh_frame_hdr") {
+    } else if (SectionName == ".eh_frame_hdr") {
       FrameHdrAddress = Section.getAddress();
       FrameHdrContents = SectionContents;
       FrameHdrAlign = Section.getAlignment();
+    } else if (SectionName == ".debug_line") {
+      DebugLineSize = Section.getSize();
     }
   }
 
@@ -1171,6 +1183,9 @@ void RewriteInstance::emitFunctions() {
   // Assign addresses to new functions/sections.
   //////////////////////////////////////////////////////////////////////////////
 
+  auto EFMM = new ExecutableFileMemoryManager();
+  SectionMM.reset(EFMM);
+
   if (opts::UpdateDebugSections) {
     // Compute offsets of tables in .debug_line for each compile unit.
     computeLineTableOffsets();
@@ -1182,10 +1197,6 @@ void RewriteInstance::emitFunctions() {
   ErrorOr<std::unique_ptr<object::ObjectFile>> ObjOrErr =
     object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef());
   check_error(ObjOrErr.getError(), "error creating in-memory object");
-
-  auto EFMM = new ExecutableFileMemoryManager();
-  SectionMM.reset(EFMM);
-
 
   // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
   orc::ObjectLinkingLayer<> OLT;
@@ -1431,20 +1442,40 @@ void RewriteInstance::rewriteNoteSections() {
     // Address of extension to the section.
     uint64_t Address{0};
 
-    // Append new section contents if available.
+    // Perform section post-processing.
     ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
     check_error(SectionName.getError(), "cannot get section name");
-
     auto SII = SectionMM->NoteSectionInfo.find(*SectionName);
     if (SII != SectionMM->NoteSectionInfo.end()) {
       auto &SI = SII->second;
       assert(SI.Alignment <= Section.sh_addralign &&
              "alignment exceeds value in file");
-      outs() << "BOLT: appending contents to section " << *SectionName << '\n';
+
       // Write section extension.
       Address = SI.AllocAddress;
-      OS.write(reinterpret_cast<const char *>(Address), SI.Size);
-      Size += SI.Size;
+      if (Address) {
+        DEBUG(dbgs() << "BOLT: appending contents to section "
+                     << *SectionName << '\n');
+        OS.write(reinterpret_cast<const char *>(Address), SI.Size);
+        Size += SI.Size;
+      }
+
+      if (!SI.PendingRelocs.empty()) {
+        DEBUG(dbgs() << "BOLT-DEBUG: processing relocs for section "
+                     << *SectionName << '\n');
+        for (auto &Reloc : SI.PendingRelocs) {
+          DEBUG(dbgs() << "BOLT-DEBUG: writing value "
+                       << Twine::utohexstr(Reloc.Value)
+                       << " of size " << (unsigned)Reloc.Size
+                       << " at offset "
+                       << Twine::utohexstr(Reloc.Offset) << '\n');
+          assert(Reloc.Size == 4 &&
+                 "only relocations of size 4 are supported at the moment");
+          OS.pwrite(reinterpret_cast<const char*>(&Reloc.Value),
+                    Reloc.Size,
+                    NextAvailableOffset + Reloc.Offset);
+        }
+      }
     }
 
     // Set/modify section info.
@@ -1794,7 +1825,15 @@ void RewriteInstance::computeLineTableOffsets() {
     auto CompileUnit = BC->OffsetToDwarfCU[CUIDLineTablePair.first];
     BC->CompileUnitLineTableOffset[CompileUnit] = Offset;
 
-    DEBUG(errs() << "BOLT-DEBUG: CU " << CUIDLineTablePair.first
-                 << " has line table at " << Offset << "\n");
+    auto LTOI = BC->LineTableOffsetCUMap.find(CUIDLineTablePair.first);
+    if (LTOI != BC->LineTableOffsetCUMap.end()) {
+      DEBUG(dbgs() << "BOLT-DEBUG: adding relocation for stmt_list "
+                   << "in .debug_info\n");
+      auto &SI = SectionMM->NoteSectionInfo[".debug_info"];
+      SI.PendingRelocs.emplace_back(
+          SectionInfo::Reloc{LTOI->second, 4, 0, Offset + DebugLineSize});
+    }
+    DEBUG(dbgs() << "BOLT-DEBUG: CU " << CUIDLineTablePair.first
+                << " has line table at " << Offset << "\n");
   }
 }

@@ -65,6 +65,9 @@ public:
   // output file.
   std::map<const DWARFCompileUnit *, uint32_t> CompileUnitLineTableOffset;
 
+  /// Maps DWARF CUID to offset of stmt_list attribute in .debug_info.
+  std::map<unsigned, uint32_t> LineTableOffsetCUMap;
+
   std::unique_ptr<MCContext> Ctx;
 
   std::unique_ptr<DWARFContext> DwCtx;
