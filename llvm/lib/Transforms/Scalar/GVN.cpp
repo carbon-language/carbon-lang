@@ -112,7 +112,7 @@ namespace {
     DenseMap<Value*, uint32_t> valueNumbering;
     DenseMap<Expression, uint32_t> expressionNumbering;
     AliasAnalysis *AA;
-    MemoryDependenceAnalysis *MD;
+    MemoryDependenceResults *MD;
     DominatorTree *DT;
 
     uint32_t nextValueNumber;
@@ -135,7 +135,7 @@ namespace {
     void erase(Value *v);
     void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
     AliasAnalysis *getAliasAnalysis() const { return AA; }
-    void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
+    void setMemDep(MemoryDependenceResults* M) { MD = M; }
     void setDomTree(DominatorTree* D) { DT = D; }
     uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
     void verifyRemoved(const Value *) const;
@@ -332,7 +332,7 @@ uint32_t ValueTable::lookup_or_add_call(CallInst *C) {
     }
 
     // Non-local case.
-    const MemoryDependenceAnalysis::NonLocalDepInfo &deps =
+    const MemoryDependenceResults::NonLocalDepInfo &deps =
       MD->getNonLocalCallDependency(CallSite(C));
     // FIXME: Move the checking logic to MemDep!
     CallInst* cdep = nullptr;
@@ -625,7 +625,7 @@ namespace {
 
   class GVN : public FunctionPass {
     bool NoLoads;
-    MemoryDependenceAnalysis *MD;
+    MemoryDependenceResults *MD;
     DominatorTree *DT;
     const TargetLibraryInfo *TLI;
     AssumptionCache *AC;
@@ -671,7 +671,7 @@ namespace {
 
     DominatorTree &getDominatorTree() const { return *DT; }
     AliasAnalysis *getAliasAnalysis() const { return VN.getAliasAnalysis(); }
-    MemoryDependenceAnalysis &getMemDep() const { return *MD; }
+    MemoryDependenceResults &getMemDep() const { return *MD; }
   private:
     /// Push a new Value to the LeaderTable onto the list for its value number.
     void addToLeaderTable(uint32_t N, Value *V, const BasicBlock *BB) {
@@ -727,7 +727,7 @@ namespace {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
       if (!NoLoads)
-        AU.addRequired<MemoryDependenceAnalysis>();
+        AU.addRequired<MemoryDependenceWrapperPass>();
       AU.addRequired<AAResultsWrapperPass>();
 
       AU.addPreserved<DominatorTreeWrapperPass>();
@@ -785,7 +785,7 @@ FunctionPass *llvm::createGVNPass(bool NoLoads) {
 
 INITIALIZE_PASS_BEGIN(GVN, "gvn", "Global Value Numbering", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(MemoryDependenceAnalysis)
+INITIALIZE_PASS_DEPENDENCY(MemoryDependenceWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
@@ -1105,7 +1105,7 @@ static int AnalyzeLoadFromClobberingLoad(Type *LoadTy, Value *LoadPtr,
       GetPointerBaseWithConstantOffset(LoadPtr, LoadOffs, DL);
   unsigned LoadSize = DL.getTypeStoreSize(LoadTy);
 
-  unsigned Size = MemoryDependenceAnalysis::getLoadLoadClobberFullWidthSize(
+  unsigned Size = MemoryDependenceResults::getLoadLoadClobberFullWidthSize(
       LoadBase, LoadOffs, LoadSize, DepLI);
   if (Size == 0) return -1;
 
@@ -2358,7 +2358,7 @@ bool GVN::runOnFunction(Function& F) {
     return false;
 
   if (!NoLoads)
-    MD = &getAnalysis<MemoryDependenceAnalysis>();
+    MD = &getAnalysis<MemoryDependenceWrapperPass>().getMemDep();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
