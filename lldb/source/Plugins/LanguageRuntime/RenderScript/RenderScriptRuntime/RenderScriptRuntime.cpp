@@ -141,6 +141,8 @@ GetArgsX86(const GetArgsCtx &ctx, ArgItem *arg_list, size_t num_args)
 {
     Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE);
 
+    Error error;
+
     // get the current stack pointer
     uint64_t sp = ctx.reg_ctx->GetSP();
 
@@ -365,20 +367,18 @@ GetArgsMipsel(GetArgsCtx &ctx, ArgItem *arg_list, size_t num_args)
         else
         {
             const size_t arg_size = sizeof(uint32_t);
-            uint64_t sp = ctx.reg_ctx->GetSP();
-            uint32_t offset = i * arg_size;
             arg.value = 0;
-            Error error;
-            size_t bytes_read = ctx.process->ReadMemory(sp + offset, &arg.value, arg_size, error);
+            size_t bytes_read = ctx.process->ReadMemory(sp, &arg.value, arg_size, error);
             success = (error.Success() && bytes_read == arg_size);
-            if (!success && log)
-                log->Printf ("RenderScriptRuntime::GetArgSimple - error reading Mips stack: %s.", error.AsCString());
+            // advance the stack pointer
+            sp += arg_size;
         }
         // fail if we couldn't read this argument
         if (!success)
         {
             if (log)
-                log->Printf("%s - error reading argument: %" PRIu64, __FUNCTION__, uint64_t(i));
+                log->Printf("%s - error reading argument: %" PRIu64", reason: %s",
+                            __FUNCTION__, uint64_t(i), error.AsCString("n/a"));
             return false;
         }
     }
