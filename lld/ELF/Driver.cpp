@@ -168,8 +168,6 @@ static bool hasZOption(opt::InputArgList &Args, StringRef Key) {
 }
 
 void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
-  initSymbols();
-
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr.slice(1));
   if (Args.hasArg(OPT_help)) {
     printHelp(ArgsArr[0]);
@@ -317,6 +315,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 }
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
+  initSymbols<ELFT>();
   // For LTO
   InitializeAllTargets();
   InitializeAllTargetMCs();

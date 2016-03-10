@@ -209,19 +209,12 @@ std::unique_ptr<InputFile> Lazy::getMember() {
   return createObjectFile(MBRef, File->getName());
 }
 
-template <class ELFT> static void doInitSymbols() {
+template <class ELFT> void elf::initSymbols() {
   ElfSym<ELFT>::Etext.setBinding(STB_GLOBAL);
   ElfSym<ELFT>::Edata.setBinding(STB_GLOBAL);
   ElfSym<ELFT>::End.setBinding(STB_GLOBAL);
   ElfSym<ELFT>::Ignored.setBinding(STB_WEAK);
   ElfSym<ELFT>::Ignored.setVisibility(STV_HIDDEN);
-}
-
-void elf::initSymbols() {
-  doInitSymbols<ELF32LE>();
-  doInitSymbols<ELF32BE>();
-  doInitSymbols<ELF64LE>();
-  doInitSymbols<ELF64BE>();
 }
 
 // Returns the demangled C++ symbol name for Name.
@@ -289,3 +282,8 @@ template class elf::DefinedSynthetic<ELF32LE>;
 template class elf::DefinedSynthetic<ELF32BE>;
 template class elf::DefinedSynthetic<ELF64LE>;
 template class elf::DefinedSynthetic<ELF64BE>;
+
+template void elf::initSymbols<ELF32LE>();
+template void elf::initSymbols<ELF32BE>();
+template void elf::initSymbols<ELF64LE>();
+template void elf::initSymbols<ELF64BE>();

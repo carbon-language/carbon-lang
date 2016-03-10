@@ -41,8 +41,7 @@ template <class ELFT> class OutputSectionBase;
 template <class ELFT> class SharedFile;
 
 // Initializes global objects defined in this file.
-// Called at the beginning of main().
-void initSymbols();
+template <class ELFT> void initSymbols();
 
 // Returns a demangled C++ symbol name. If Name is not a mangled
 // name or the system does not provide __cxa_demangle function,
