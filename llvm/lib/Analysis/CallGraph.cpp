@@ -259,6 +259,9 @@ void CallGraphNode::replaceCallEdge(CallSite CS,
   }
 }
 
+// Provide an explicit template instantiation for the static ID.
+template class llvm::AnalysisBase<CallGraphAnalysis>;
+
 PreservedAnalyses CallGraphPrinterPass::run(Module &M,
                                             AnalysisManager<Module> *AM) {
   AM->getResult<CallGraphAnalysis>(M).print(OS);

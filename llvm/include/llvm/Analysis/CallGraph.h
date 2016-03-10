@@ -312,7 +312,6 @@ class CallGraphPrinterPass : public PassBase<CallGraphPrinterPass> {
 
 public:
   explicit CallGraphPrinterPass(raw_ostream &OS) : OS(OS) {}
-  CallGraphPrinterPass(CallGraphPrinterPass &&Arg) : OS(Arg.OS) {}
   PreservedAnalyses run(Module &M, AnalysisManager<Module> *AM);
 };
 
