@@ -949,18 +949,23 @@ defm BUFFER_LOAD_FORMAT_XYZ : MUBUF_Load_Helper <
 defm BUFFER_LOAD_FORMAT_XYZW : MUBUF_Load_Helper <
   mubuf<0x03>, "buffer_load_format_xyzw", VReg_128
 >;
-defm BUFFER_STORE_FORMAT_X : MUBUF_Store_Helper <
-  mubuf<0x04>, "buffer_store_format_x", VGPR_32
->;
-defm BUFFER_STORE_FORMAT_XY : MUBUF_Store_Helper <
-  mubuf<0x05>, "buffer_store_format_xy", VReg_64
->;
-defm BUFFER_STORE_FORMAT_XYZ : MUBUF_Store_Helper <
-  mubuf<0x06>, "buffer_store_format_xyz", VReg_96
->;
-defm BUFFER_STORE_FORMAT_XYZW : MUBUF_Store_Helper <
-  mubuf<0x07>, "buffer_store_format_xyzw", VReg_128
->;
+// Without mayLoad and hasSideEffects, TableGen complains about the pattern
+// matching llvm.amdgcn.buffer.store.format. Eventually, we'll need a way
+// to express the effects of the intrinsic more precisely.
+let mayLoad = 1, hasSideEffects = 1 in {
+  defm BUFFER_STORE_FORMAT_X : MUBUF_Store_Helper <
+    mubuf<0x04>, "buffer_store_format_x", VGPR_32
+  >;
+  defm BUFFER_STORE_FORMAT_XY : MUBUF_Store_Helper <
+    mubuf<0x05>, "buffer_store_format_xy", VReg_64
+  >;
+  defm BUFFER_STORE_FORMAT_XYZ : MUBUF_Store_Helper <
+    mubuf<0x06>, "buffer_store_format_xyz", VReg_96
+  >;
+  defm BUFFER_STORE_FORMAT_XYZW : MUBUF_Store_Helper <
+    mubuf<0x07>, "buffer_store_format_xyzw", VReg_128
+  >;
+}
 defm BUFFER_LOAD_UBYTE : MUBUF_Load_Helper <
   mubuf<0x08, 0x10>, "buffer_load_ubyte", VGPR_32, i32, az_extloadi8_global
 >;
@@ -2091,6 +2096,74 @@ def : Pat <
                  f32:$src0, f32:$src1, f32:$src2, f32:$src3),
   (EXP imm:$en, imm:$tgt, imm:$compr, imm:$done, imm:$vm,
        $src0, $src1, $src2, $src3)
+>;
+
+//===----------------------------------------------------------------------===//
+// buffer_load/store_format patterns
+//===----------------------------------------------------------------------===//
+def : Pat<
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, 0, 0,
+                                 imm:$glc, imm:$slc),
+  (BUFFER_LOAD_FORMAT_XYZW_OFFSET $rsrc, $soffset, (as_i16imm $offset),
+    (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, i32:$vindex, 0,
+                                 imm:$glc, imm:$slc),
+  (BUFFER_LOAD_FORMAT_XYZW_IDXEN $vindex, $rsrc, $soffset, (as_i16imm $offset),
+    (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, 0, i32:$voffset,
+                                 imm:$glc, imm:$slc),
+  (BUFFER_LOAD_FORMAT_XYZW_OFFEN $voffset, $rsrc, $soffset, (as_i16imm $offset),
+    (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, i32:$vindex, i32:$voffset,
+                                 imm:$glc, imm:$slc),
+  (BUFFER_LOAD_FORMAT_XYZW_BOTHEN
+    (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
+    $rsrc, $soffset, (as_i16imm $offset),
+    (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc,
+                                  i32:$soffset, imm:$offset, 0, 0,
+                                  imm:$glc, imm:$slc),
+  (BUFFER_STORE_FORMAT_XYZW_OFFSET $vdata, $rsrc, $soffset, (as_i16imm $offset),
+    (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc,
+                                 i32:$soffset, imm:$offset, i32:$vindex, 0,
+                                 imm:$glc, imm:$slc),
+  (BUFFER_STORE_FORMAT_XYZW_IDXEN $vdata, $vindex, $rsrc, $soffset,
+    (as_i16imm $offset), (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc,
+                                  i32:$soffset, imm:$offset, 0, i32:$voffset,
+                                  imm:$glc, imm:$slc),
+  (BUFFER_STORE_FORMAT_XYZW_OFFEN $vdata, $voffset, $rsrc, $soffset,
+    (as_i16imm $offset), (as_i1imm $glc), (as_i1imm $slc), 0)
+>;
+
+def : Pat<
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, i32:$soffset,
+                                  imm:$offset, i32:$vindex, i32:$voffset,
+                                  imm:$glc, imm:$slc),
+  (BUFFER_STORE_FORMAT_XYZW_BOTHEN
+    $vdata,
+    (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
+    $rsrc, $soffset, (as_i16imm $offset),
+    (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 //===----------------------------------------------------------------------===//
