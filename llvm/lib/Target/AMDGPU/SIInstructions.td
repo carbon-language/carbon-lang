@@ -94,7 +94,7 @@ let mayStore = ? in {
 // Pat. Each considers the other contradictory.
 
 defm S_MEMTIME : SMRD_Special <smrd<0x1e, 0x24>, "s_memtime",
-  (outs SReg_64:$dst), " $dst", [(set i64:$dst, (int_amdgcn_s_memtime))]
+  (outs SReg_64:$sdst), ?, " $sdst", [(set i64:$sdst, (int_amdgcn_s_memtime))]
 >;
 }
 
