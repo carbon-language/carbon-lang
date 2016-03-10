@@ -92,7 +92,7 @@ void LinkerDriver::addFile(StringRef Path) {
   using namespace llvm::sys::fs;
   log(Path);
   auto MBOrErr = MemoryBuffer::getFile(Path);
-  if (error(MBOrErr, "cannot open " + Path))
+  if (error(MBOrErr, "Cannot open " + Path))
     return;
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   MemoryBufferRef MBRef = MB->getMemBufferRef();
@@ -313,7 +313,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   }
 
   if (Files.empty() && !HasError)
-    error("no input files.");
+    error("No input files");
 }
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
