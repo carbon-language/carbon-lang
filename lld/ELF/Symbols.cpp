@@ -106,10 +106,17 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
   return std::min(VA, VB);
 }
 
+static int compareCommons(DefinedCommon *A, DefinedCommon *B) {
+  A->MaxAlignment = B->MaxAlignment =
+      std::max(A->MaxAlignment, B->MaxAlignment);
+  if (A->Size < B->Size)
+    return -1;
+  return 1;
+}
+
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
   assert(!isLazy() && !Other->isLazy());
   std::tuple<bool, bool, bool> L(isDefined(), !isShared(), !isWeak());
   std::tuple<bool, bool, bool> R(Other->isDefined(), !Other->isShared(),
@@ -134,24 +141,14 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
 
   if (L != R)
     return -1;
-  if (!std::get<0>(L) || !std::get<1>(L) || !std::get<2>(L))
+  if (!isDefined() || isShared() || isWeak())
     return 1;
-  if (isCommon()) {
-    if (!Other->isCommon())
-      return -1;
-    auto *ThisC = cast<DefinedCommon>(this);
-    auto *OtherC = cast<DefinedCommon>(Other);
-    uintX_t Align = std::max(ThisC->MaxAlignment, OtherC->MaxAlignment);
-    if (ThisC->Size >= OtherC->Size) {
-      ThisC->MaxAlignment = Align;
-      return 1;
-    }
-    OtherC->MaxAlignment = Align;
-    return -1;
-  }
-  if (Other->isCommon())
-    return 1;
-  return 0;
+  if (!isCommon() && !Other->isCommon())
+    return 0;
+  if (isCommon() && Other->isCommon())
+    return compareCommons(cast<DefinedCommon>(this),
+                          cast<DefinedCommon>(Other));
+  return isCommon() ? -1 : 1;
 }
 
 Defined::Defined(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
