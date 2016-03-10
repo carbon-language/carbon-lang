@@ -4,7 +4,7 @@
 ; CHECK: tbz {{w[0-9]}}, #3, {{.LBB0_3}}
 ; CHECK: tbz [[REG1:x[0-9]+]], #2, {{.LBB0_3}}
 ; CHECK-NOT: and [[REG2:x[0-9]+]], [[REG1]], #0x4
-; CHECK-NEXT-NOT: cbz [[REG2]], {{.LBB0_3}}
+; CHECK-NOT: cbz [[REG2]], {{.LBB0_3}}
 
 ; CHECK: b
 define void @test1(i64 %A, i64 %B) {
@@ -28,7 +28,7 @@ if.end3:                                          ; preds = %if.then2, %entry
 ; CHECK: cbz {{x[0-9]}}, {{.LBB1_3}}
 ; CHECK: tbz [[REG1:x[0-9]+]], #3, {{.LBB1_3}}
 ; CHECK-NOT: and [REG2:x[0-9]+], [[REG1]], #0x08
-; CHECK-NEXT-NOT: cbz [[REG2]], {{.LBB1_3}}
+; CHECK-NOT: cbz [[REG2]], {{.LBB1_3}}
 
 define void @test2(i64 %A, i64* readonly %B) #0 {
 entry:
