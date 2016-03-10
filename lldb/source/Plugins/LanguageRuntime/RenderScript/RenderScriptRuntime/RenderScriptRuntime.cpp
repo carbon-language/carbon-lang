@@ -364,8 +364,15 @@ GetArgsMipsel(GetArgsCtx &ctx, ArgItem *arg_list, size_t num_args)
         // arguments passed on the stack
         else
         {
-            if (log)
-                log->Printf("%s - reading arguments spilled to stack not implemented.", __FUNCTION__);
+            const size_t arg_size = sizeof(uint32_t);
+            uint64_t sp = ctx.reg_ctx->GetSP();
+            uint32_t offset = i * arg_size;
+            arg.value = 0;
+            Error error;
+            size_t bytes_read = ctx.process->ReadMemory(sp + offset, &arg.value, arg_size, error);
+            success = (error.Success() && bytes_read == arg_size);
+            if (!success && log)
+                log->Printf ("RenderScriptRuntime::GetArgSimple - error reading Mips stack: %s.", error.AsCString());
         }
         // fail if we couldn't read this argument
         if (!success)
