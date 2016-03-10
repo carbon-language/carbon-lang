@@ -259,6 +259,12 @@ void CallGraphNode::replaceCallEdge(CallSite CS,
   }
 }
 
+PreservedAnalyses CallGraphPrinterPass::run(Module &M,
+                                            AnalysisManager<Module> *AM) {
+  AM->getResult<CallGraphAnalysis>(M).print(OS);
+  return PreservedAnalyses::all();
+}
+
 //===----------------------------------------------------------------------===//
 // Out-of-line definitions of CallGraphAnalysis class members.
 //
