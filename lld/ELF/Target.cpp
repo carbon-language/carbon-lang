@@ -895,6 +895,9 @@ size_t X86_64TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   case R_X86_64_DTPOFF32:
     relocateOne(Loc, BufEnd, R_X86_64_TPOFF32, P, SA);
     return 0;
+  case R_X86_64_DTPOFF64:
+    write64le(Loc, SA - Out<ELF64LE>::TlsPhdr->p_memsz);
+    return 0;
   case R_X86_64_GOTTPOFF:
     relocateTlsIeToLe(Loc, BufEnd, P, SA);
     return 0;
