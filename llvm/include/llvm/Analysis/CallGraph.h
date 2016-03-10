@@ -306,6 +306,9 @@ public:
   CallGraph run(Module &M) { return CallGraph(M); }
 };
 
+/// Instantiated in CallGraph.cpp
+extern template class llvm::AnalysisBase<CallGraphAnalysis>;
+
 /// \brief Printer pass for the \c CallGraphAnalysis results.
 class CallGraphPrinterPass : public PassBase<CallGraphPrinterPass> {
   raw_ostream &OS;
