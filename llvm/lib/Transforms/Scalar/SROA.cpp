@@ -3403,9 +3403,9 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
         }
 
         Loads.push_back(LI);
-      } else if (auto *SI = dyn_cast<StoreInst>(S.getUse()->getUser())) {
-        if (!SI ||
-            S.getUse() != &SI->getOperandUse(SI->getPointerOperandIndex()))
+      } else if (auto *SI = dyn_cast<StoreInst>(I)) {
+        if (S.getUse() != &SI->getOperandUse(SI->getPointerOperandIndex()))
+          // Skip stores *of* pointers. FIXME: This shouldn't even be possible!
           continue;
         auto *StoredLoad = dyn_cast<LoadInst>(SI->getValueOperand());
         if (!StoredLoad || !StoredLoad->isSimple())
