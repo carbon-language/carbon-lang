@@ -82,15 +82,15 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorCall(
                   Callee, ReturnValue, Args, MD);
 }
 
-RValue CodeGenFunction::EmitCXXStructorCall(
-    const CXXMethodDecl *MD, llvm::Value *Callee, ReturnValueSlot ReturnValue,
-    llvm::Value *This, llvm::Value *ImplicitParam, QualType ImplicitParamTy,
-    const CallExpr *CE, StructorType Type) {
+RValue CodeGenFunction::EmitCXXDestructorCall(
+    const CXXDestructorDecl *DD, llvm::Value *Callee, llvm::Value *This,
+    llvm::Value *ImplicitParam, QualType ImplicitParamTy, const CallExpr *CE,
+    StructorType Type) {
   CallArgList Args;
-  commonEmitCXXMemberOrOperatorCall(*this, MD, This, ImplicitParam,
+  commonEmitCXXMemberOrOperatorCall(*this, DD, This, ImplicitParam,
                                     ImplicitParamTy, CE, Args);
-  return EmitCall(CGM.getTypes().arrangeCXXStructorDeclaration(MD, Type),
-                  Callee, ReturnValue, Args, MD);
+  return EmitCall(CGM.getTypes().arrangeCXXStructorDeclaration(DD, Type),
+                  Callee, ReturnValueSlot(), Args, DD);
 }
 
 static CXXRecordDecl *getCXXRecord(const Expr *E) {
