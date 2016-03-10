@@ -78,79 +78,78 @@ MaxRecurseDepth("max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
 //                         ValueTable Class
 //===----------------------------------------------------------------------===//
 
+namespace {
+
+struct Expression {
+  uint32_t opcode;
+  Type *type;
+  SmallVector<uint32_t, 4> varargs;
+
+  Expression(uint32_t o = ~2U) : opcode(o) {}
+
+  bool operator==(const Expression &other) const {
+    if (opcode != other.opcode)
+      return false;
+    if (opcode == ~0U || opcode == ~1U)
+      return true;
+    if (type != other.type)
+      return false;
+    if (varargs != other.varargs)
+      return false;
+    return true;
+  }
+
+  friend hash_code hash_value(const Expression &Value) {
+    return hash_combine(
+        Value.opcode, Value.type,
+        hash_combine_range(Value.varargs.begin(), Value.varargs.end()));
+  }
+};
+
 /// This class holds the mapping between values and value numbers.  It is used
 /// as an efficient mechanism to determine the expression-wise equivalence of
 /// two values.
-namespace {
-  struct Expression {
-    uint32_t opcode;
-    Type *type;
-    SmallVector<uint32_t, 4> varargs;
+class ValueTable {
+  DenseMap<Value *, uint32_t> valueNumbering;
+  DenseMap<Expression, uint32_t> expressionNumbering;
+  AliasAnalysis *AA;
+  MemoryDependenceResults *MD;
+  DominatorTree *DT;
 
-    Expression(uint32_t o = ~2U) : opcode(o) { }
+  uint32_t nextValueNumber;
 
-    bool operator==(const Expression &other) const {
-      if (opcode != other.opcode)
-        return false;
-      if (opcode == ~0U || opcode == ~1U)
-        return true;
-      if (type != other.type)
-        return false;
-      if (varargs != other.varargs)
-        return false;
-      return true;
-    }
+  Expression create_expression(Instruction *I);
+  Expression create_cmp_expression(unsigned Opcode,
+                                   CmpInst::Predicate Predicate, Value *LHS,
+                                   Value *RHS);
+  Expression create_extractvalue_expression(ExtractValueInst *EI);
+  uint32_t lookup_or_add_call(CallInst *C);
 
-    friend hash_code hash_value(const Expression &Value) {
-      return hash_combine(Value.opcode, Value.type,
-                          hash_combine_range(Value.varargs.begin(),
-                                             Value.varargs.end()));
-    }
-  };
+public:
+  ValueTable() : nextValueNumber(1) {}
+  uint32_t lookup_or_add(Value *V);
+  uint32_t lookup(Value *V) const;
+  uint32_t lookup_or_add_cmp(unsigned Opcode, CmpInst::Predicate Pred,
+                             Value *LHS, Value *RHS);
+  bool exists(Value *V) const;
+  void add(Value *V, uint32_t num);
+  void clear();
+  void erase(Value *v);
+  void setAliasAnalysis(AliasAnalysis *A) { AA = A; }
+  AliasAnalysis *getAliasAnalysis() const { return AA; }
+  void setMemDep(MemoryDependenceResults *M) { MD = M; }
+  void setDomTree(DominatorTree *D) { DT = D; }
+  uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
+  void verifyRemoved(const Value *) const;
+};
 
-  class ValueTable {
-    DenseMap<Value*, uint32_t> valueNumbering;
-    DenseMap<Expression, uint32_t> expressionNumbering;
-    AliasAnalysis *AA;
-    MemoryDependenceResults *MD;
-    DominatorTree *DT;
-
-    uint32_t nextValueNumber;
-
-    Expression create_expression(Instruction* I);
-    Expression create_cmp_expression(unsigned Opcode,
-                                     CmpInst::Predicate Predicate,
-                                     Value *LHS, Value *RHS);
-    Expression create_extractvalue_expression(ExtractValueInst* EI);
-    uint32_t lookup_or_add_call(CallInst* C);
-  public:
-    ValueTable() : nextValueNumber(1) { }
-    uint32_t lookup_or_add(Value *V);
-    uint32_t lookup(Value *V) const;
-    uint32_t lookup_or_add_cmp(unsigned Opcode, CmpInst::Predicate Pred,
-                               Value *LHS, Value *RHS);
-    bool exists(Value *V) const;
-    void add(Value *V, uint32_t num);
-    void clear();
-    void erase(Value *v);
-    void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
-    AliasAnalysis *getAliasAnalysis() const { return AA; }
-    void setMemDep(MemoryDependenceResults* M) { MD = M; }
-    void setDomTree(DominatorTree* D) { DT = D; }
-    uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
-    void verifyRemoved(const Value *) const;
-  };
-}
+} // End anonymous namespace.
 
 namespace llvm {
 template <> struct DenseMapInfo<Expression> {
-  static inline Expression getEmptyKey() {
-    return ~0U;
-  }
+  static inline Expression getEmptyKey() { return ~0U; }
 
-  static inline Expression getTombstoneKey() {
-    return ~1U;
-  }
+  static inline Expression getTombstoneKey() { return ~1U; }
 
   static unsigned getHashValue(const Expression e) {
     using llvm::hash_value;
@@ -160,8 +159,7 @@ template <> struct DenseMapInfo<Expression> {
     return LHS == RHS;
   }
 };
-
-}
+} // End llvm namespace.
 
 //===----------------------------------------------------------------------===//
 //                     ValueTable Internal Functions
