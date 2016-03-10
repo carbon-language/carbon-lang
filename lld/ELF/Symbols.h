@@ -205,7 +205,7 @@ public:
   uint64_t OffsetInBss;
 
   // The maximum alignment we have seen for this symbol.
-  uint64_t MaxAlignment;
+  uint64_t Alignment;
 
   uint64_t Size;
 };

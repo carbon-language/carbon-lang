@@ -107,8 +107,7 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
 }
 
 static int compareCommons(DefinedCommon *A, DefinedCommon *B) {
-  A->MaxAlignment = B->MaxAlignment =
-      std::max(A->MaxAlignment, B->MaxAlignment);
+  A->Alignment = B->Alignment = std::max(A->Alignment, B->Alignment);
   if (A->Size < B->Size)
     return -1;
   return 1;
@@ -191,10 +190,8 @@ DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
 DefinedCommon::DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment,
                              bool IsWeak, uint8_t Visibility)
     : Defined(SymbolBody::DefinedCommonKind, N, IsWeak, Visibility,
-              0 /* Type */) {
-  MaxAlignment = Alignment;
-  this->Size = Size;
-}
+              0 /* Type */),
+      Alignment(Alignment), Size(Size) {}
 
 std::unique_ptr<InputFile> Lazy::getMember() {
   MemoryBufferRef MBRef = File->getMember(&Sym);

@@ -716,13 +716,13 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   // Sort the common symbols by alignment as an heuristic to pack them better.
   std::stable_sort(Syms.begin(), Syms.end(),
                    [](const DefinedCommon *A, const DefinedCommon *B) {
-                     return A->MaxAlignment > B->MaxAlignment;
+                     return A->Alignment > B->Alignment;
                    });
 
   uintX_t Off = getBss()->getSize();
   for (DefinedCommon *C : Syms) {
-    Off = alignTo(Off, C->MaxAlignment);
-    Out<ELFT>::Bss->updateAlign(C->MaxAlignment);
+    Off = alignTo(Off, C->Alignment);
+    Out<ELFT>::Bss->updateAlign(C->Alignment);
     C->OffsetInBss = Off;
     Off += C->Size;
   }
