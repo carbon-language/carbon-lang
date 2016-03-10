@@ -33,6 +33,11 @@ page <http://llvm.org/releases/>`_.
 
 Non-comprehensive list of changes in this release
 =================================================
+* The LLVMContext gains a new runtime check (see
+  LLVMContext::discardValueNames()) that can be set to discard Value names
+  (other than GlobalValue). This is intended to be used in release builds by
+  clients that are interested in saving CPU/memory as much as possible.
+
 * .. note about autoconf build having been removed.
 
 * .. note about C API functions LLVMParseBitcode,
