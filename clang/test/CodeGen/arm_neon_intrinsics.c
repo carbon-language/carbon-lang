@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple thumbv7s-apple-darwin -target-abi apcs-gnu\
-// RUN:  -target-cpu swift -ffreestanding -emit-llvm -S -o - %s\
-// RUN:  opt -S -mem2reg | FileCheck %s
+// RUN:  -target-cpu swift -ffreestanding -emit-llvm -o - %s\
+// RUN:  | opt -S -mem2reg > /dev/null
+// RxUN:  | FileCheck %s
 
 // REQUIRES: long_tests
 
