@@ -27336,8 +27336,8 @@ reduceMaskedLoadToScalarLoad(MaskedLoadSDNode *ML, SelectionDAG &DAG,
   return DCI.CombineTo(ML, Insert, Load.getValue(1), true);
 }
 
-/// Convert a masked load with a constant mask into a masked load and a shuffle.
-/// This allows the blend operation to use a faster kind of shuffle instruction
+/// Convert a masked load with a constant mask into a masked load and a select.
+/// This allows the select operation to use a faster kind of shuffle instruction
 /// (for example, vblendvps -> vblendps).
 static SDValue
 combineMaskedLoadConstantMask(MaskedLoadSDNode *ML, SelectionDAG &DAG,
@@ -27348,26 +27348,15 @@ combineMaskedLoadConstantMask(MaskedLoadSDNode *ML, SelectionDAG &DAG,
       ML->getSrc0().getOpcode() == ISD::UNDEF)
     return SDValue();
 
-  // Convert the masked load's mask into a blend mask for a vector shuffle node.
-  EVT VT = ML->getValueType(0);
-  unsigned NumElts = VT.getVectorNumElements();
-  BuildVectorSDNode *MaskBV = cast<BuildVectorSDNode>(ML->getMask());
-  SmallVector<int, 16> ShufMask(NumElts, SM_SentinelUndef);
-  for (unsigned i = 0; i < NumElts; ++i) {
-    // If this mask bit of the masked load is false, the pass-through vector
-    // (Src0) element will be selected for that vector lane.
-    if (MaskBV->getOperand(i).getOpcode() != ISD::UNDEF)
-      ShufMask[i] = isNullConstant(MaskBV->getOperand(i)) ? i + NumElts : i;
-  }
-
-  // The new masked load has an undef pass-through operand. The shuffle uses the
+  // The new masked load has an undef pass-through operand. The select uses the
   // original pass-through operand.
   SDLoc DL(ML);
+  EVT VT = ML->getValueType(0);
   SDValue NewML = DAG.getMaskedLoad(VT, DL, ML->getChain(), ML->getBasePtr(),
                                     ML->getMask(), DAG.getUNDEF(VT),
                                     ML->getMemoryVT(), ML->getMemOperand(),
                                     ML->getExtensionType());
-  SDValue Blend = DAG.getVectorShuffle(VT, DL, NewML, ML->getSrc0(), ShufMask);
+  SDValue Blend = DAG.getSelect(DL, VT, ML->getMask(), NewML, ML->getSrc0());
 
   return DCI.CombineTo(ML, Blend, NewML.getValue(1), true);
 }
