@@ -217,7 +217,8 @@ static inline void addPass(legacy::PassManagerBase &PM, Pass *P) {
 static void AddOptimizationPasses(legacy::PassManagerBase &MPM,
                                   legacy::FunctionPassManager &FPM,
                                   unsigned OptLevel, unsigned SizeLevel) {
-  FPM.add(createVerifierPass()); // Verify that input is correct
+  if (!NoVerify || VerifyEach)
+    FPM.add(createVerifierPass()); // Verify that input is correct
 
   PassManagerBuilder Builder;
   Builder.OptLevel = OptLevel;
