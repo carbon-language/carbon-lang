@@ -179,13 +179,13 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
   size_t Num = Rels.end() - Rels.begin();
   for (size_t I = 0; I < Num; ++I) {
     const RelType &RI = *(Rels.begin() + I);
-    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
-    uint32_t Type = RI.getType(Config->Mips64EL);
     uintX_t Offset = getOffset(RI.r_offset);
-    uintX_t A = getAddend<ELFT>(RI);
     if (Offset == (uintX_t)-1)
       continue;
 
+    uintX_t A = getAddend<ELFT>(RI);
+    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
+    uint32_t Type = RI.getType(Config->Mips64EL);
     uint8_t *BufLoc = Buf + Offset;
     uintX_t AddrLoc = OutSec->getVA() + Offset;
     auto NextRelocs = llvm::make_range(&RI, Rels.end());
