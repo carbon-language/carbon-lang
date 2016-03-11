@@ -75,6 +75,7 @@ private:
   bool openFile();
   void writeHeader();
   void writeSections();
+  void writeBuildId();
   bool isDiscarded(InputSectionBase<ELFT> *IS) const;
   StringRef getOutputSectionName(InputSectionBase<ELFT> *S) const;
   bool needsInterpSection() const {
@@ -143,6 +144,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   ProgramHeaders.updateAlign(sizeof(uintX_t));
 
   // Instantiate optional output sections if they are needed.
+  std::unique_ptr<BuildIdSection<ELFT>> BuildId;
   std::unique_ptr<GnuHashTableSection<ELFT>> GnuHashTab;
   std::unique_ptr<GotPltSection<ELFT>> GotPlt;
   std::unique_ptr<HashTableSection<ELFT>> HashTab;
@@ -151,6 +153,8 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   std::unique_ptr<SymbolTableSection<ELFT>> SymTabSec;
   std::unique_ptr<OutputSection<ELFT>> MipsRldMap;
 
+  if (Config->BuildId)
+    BuildId.reset(new BuildIdSection<ELFT>);
   if (Config->GnuHash)
     GnuHashTab.reset(new GnuHashTableSection<ELFT>);
   if (Config->SysvHash)
@@ -175,6 +179,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
     MipsRldMap->updateAlign(sizeof(uintX_t));
   }
 
+  Out<ELFT>::BuildId = BuildId.get();
   Out<ELFT>::DynStrTab = &DynStrTab;
   Out<ELFT>::DynSymTab = &DynSymTab;
   Out<ELFT>::Dynamic = &Dynamic;
@@ -219,6 +224,7 @@ template <class ELFT> void Writer<ELFT>::run() {
     return;
   writeHeader();
   writeSections();
+  writeBuildId();
   if (HasError)
     return;
   check(Buffer->commit());
@@ -1115,6 +1121,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
 
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.
+  Add(Out<ELFT>::BuildId);
   Add(Out<ELFT>::SymTab);
   Add(Out<ELFT>::ShStrTab);
   Add(Out<ELFT>::StrTab);
@@ -1531,6 +1538,29 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
     if (Sec != Out<ELFT>::Opd)
       Sec->writeTo(Buf + Sec->getFileOff());
+}
+
+template <class ELFT> void Writer<ELFT>::writeBuildId() {
+  BuildIdSection<ELFT> *S = Out<ELFT>::BuildId;
+  if (!S)
+    return;
+
+  // Compute a hash of all sections except .debug_* sections.
+  // We skip debug sections because they tend to be very large
+  // and their contents are very likely to be the same as long as
+  // other sections are the same.
+  uint8_t *Start = Buffer->getBufferStart();
+  uint8_t *Last = Start;
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
+    uint8_t *End = Start + Sec->getFileOff();
+    if (!Sec->getName().startswith(".debug_"))
+      S->update({Last, End});
+    Last = End;
+  }
+  S->update({Last, Start + FileSize});
+
+  // Fill the hash value field in the .note.gnu.build-id section.
+  S->writeBuildId();
 }
 
 template void elf::writeResult<ELF32LE>(SymbolTable<ELF32LE> *Symtab);

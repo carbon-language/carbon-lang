@@ -1530,6 +1530,36 @@ uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
 }
 
 template <class ELFT>
+BuildIdSection<ELFT>::BuildIdSection()
+    : OutputSectionBase<ELFT>(".note.gnu.build-id", SHT_NOTE, SHF_ALLOC) {
+  // 16 bytes for the note section header and 8 bytes for FNV1 hash.
+  this->Header.sh_size = 24;
+}
+
+template <class ELFT> void BuildIdSection<ELFT>::writeTo(uint8_t *Buf) {
+  const endianness E = ELFT::TargetEndianness;
+  write32<E>(Buf, 4);                   // Name size
+  write32<E>(Buf + 4, sizeof(Hash));    // Content size
+  write32<E>(Buf + 8, NT_GNU_BUILD_ID); // Type
+  memcpy(Buf + 12, "GNU", 4);           // Name string
+  HashBuf = Buf + 16;
+}
+
+template <class ELFT> void BuildIdSection<ELFT>::update(ArrayRef<uint8_t> Buf) {
+  // 64-bit FNV1 hash
+  const uint64_t Prime = 0x100000001b3;
+  for (uint8_t B : Buf) {
+    Hash *= Prime;
+    Hash ^= B;
+  }
+}
+
+template <class ELFT> void BuildIdSection<ELFT>::writeBuildId() {
+  const endianness E = ELFT::TargetEndianness;
+  write64<E>(HashBuf, Hash);
+}
+
+template <class ELFT>
 MipsReginfoOutputSection<ELFT>::MipsReginfoOutputSection()
     : OutputSectionBase<ELFT>(".reginfo", SHT_MIPS_REGINFO, SHF_ALLOC) {
   this->Header.sh_addralign = 4;
@@ -1632,5 +1662,10 @@ template class SymbolTableSection<ELF32LE>;
 template class SymbolTableSection<ELF32BE>;
 template class SymbolTableSection<ELF64LE>;
 template class SymbolTableSection<ELF64BE>;
+
+template class BuildIdSection<ELF32LE>;
+template class BuildIdSection<ELF32BE>;
+template class BuildIdSection<ELF64LE>;
+template class BuildIdSection<ELF64BE>;
 }
 }

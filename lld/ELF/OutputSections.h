@@ -511,12 +511,26 @@ private:
   std::vector<FdeData> FdeList;
 };
 
+template <class ELFT>
+class BuildIdSection final : public OutputSectionBase<ELFT> {
+public:
+  BuildIdSection();
+  void writeTo(uint8_t *Buf) override;
+  void update(ArrayRef<uint8_t> Buf);
+  void writeBuildId();
+
+private:
+  uint64_t Hash = 0xcbf29ce484222325; // FNV1 hash basis
+  uint8_t *HashBuf;
+};
+
 // All output sections that are hadnled by the linker specially are
 // globally accessible. Writer initializes them, so don't use them
 // until Writer is initialized.
 template <class ELFT> struct Out {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
+  static BuildIdSection<ELFT> *BuildId;
   static DynamicSection<ELFT> *Dynamic;
   static EhFrameHeader<ELFT> *EhFrameHdr;
   static GnuHashTableSection<ELFT> *GnuHashTab;
@@ -541,6 +555,7 @@ template <class ELFT> struct Out {
   static OutputSectionBase<ELFT> *ProgramHeaders;
 };
 
+template <class ELFT> BuildIdSection<ELFT> *Out<ELFT>::BuildId;
 template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
 template <class ELFT> EhFrameHeader<ELFT> *Out<ELFT>::EhFrameHdr;
 template <class ELFT> GnuHashTableSection<ELFT> *Out<ELFT>::GnuHashTab;
