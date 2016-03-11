@@ -12,10 +12,10 @@ int main() {
   volatile float f = 1.239;
   volatile char s[] = "34";
   volatile char buf[2];
-  puts("before sprintf");
+  fputs(stderr, "before sprintf");
   sprintf((char *)buf, "%c %d %.3f %s\n", c, x, f, s);
-  puts("after sprintf");
-  puts((const char *)buf);
+  fputs(stderr, "after sprintf");
+  fputs(stderr, (const char *)buf);
   return 0;
   // Check that size of output buffer is sanitized.
   // CHECK-ON: before sprintf
