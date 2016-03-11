@@ -10,14 +10,6 @@
 // All symbols are handled as SymbolBodies regardless of their types.
 // This file defines various types of SymbolBodies.
 //
-// File-scope symbols in ELF objects are the only exception of SymbolBody
-// instantiation. We will never create SymbolBodies for them for performance
-// reason. They are often represented as nullptrs. This is fine for symbol
-// resolution because the symbol table naturally cares only about
-// externally-visible symbols. For relocations, you have to deal with both
-// local and non-local functions, and we have two different functions
-// where we need them.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLD_ELF_SYMBOLS_H
