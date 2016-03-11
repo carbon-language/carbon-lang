@@ -455,7 +455,7 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
       continue;
     }
     if (Flags & BasicSymbolRef::SF_FormatSpecific)
-        continue;
+      continue;
     uint8_t Visibility = getGvVisibility(GV);
 
     SmallString<64> Name;
