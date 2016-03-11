@@ -917,6 +917,8 @@ GlobalsAAResult::GlobalsAAResult(GlobalsAAResult &&Arg)
   }
 }
 
+GlobalsAAResult::~GlobalsAAResult() {}
+
 /*static*/ GlobalsAAResult
 GlobalsAAResult::analyzeModule(Module &M, const TargetLibraryInfo &TLI,
                                CallGraph &CG) {

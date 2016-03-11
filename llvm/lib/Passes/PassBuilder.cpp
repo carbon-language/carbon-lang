@@ -25,6 +25,7 @@
 #include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
@@ -337,6 +338,12 @@ bool PassBuilder::parseLoopPassName(LoopPassManager &FPM,
 }
 
 bool PassBuilder::parseAAPassName(AAManager &AA, StringRef Name) {
+#define MODULE_ALIAS_ANALYSIS(NAME, CREATE_PASS)                               \
+  if (Name == NAME) {                                                          \
+    AA.registerModuleAnalysis<                                                 \
+        std::remove_reference<decltype(CREATE_PASS)>::type>();                 \
+    return true;                                                               \
+  }
 #define FUNCTION_ALIAS_ANALYSIS(NAME, CREATE_PASS)                             \
   if (Name == NAME) {                                                          \
     AA.registerFunctionAnalysis<                                               \

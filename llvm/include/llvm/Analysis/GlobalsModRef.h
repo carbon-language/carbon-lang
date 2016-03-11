@@ -77,6 +77,7 @@ class GlobalsAAResult : public AAResultBase<GlobalsAAResult> {
 
 public:
   GlobalsAAResult(GlobalsAAResult &&Arg);
+  ~GlobalsAAResult();
 
   static GlobalsAAResult analyzeModule(Module &M, const TargetLibraryInfo &TLI,
                                        CallGraph &CG);
