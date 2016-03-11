@@ -683,7 +683,7 @@ EhFrameHeader<ELFT>::getFdePc(uintX_t EhVA, const FdeData &F) {
     PC = read64<E>(F.PCRel);
     break;
   default:
-    fatal("Unknown FDE size encoding");
+    fatal("unknown FDE size encoding");
   }
   switch (F.Enc & 0x70) {
   case DW_EH_PE_absptr:
@@ -691,7 +691,7 @@ EhFrameHeader<ELFT>::getFdePc(uintX_t EhVA, const FdeData &F) {
   case DW_EH_PE_pcrel:
     return PC + EhVA + F.Off + 8;
   default:
-    fatal("Unknown FDE size relative encoding");
+    fatal("unknown FDE size relative encoding");
   }
 }
 
@@ -966,7 +966,7 @@ Cie<ELFT>::Cie(EHInputSection<ELFT> *S, unsigned Index)
 // Read a byte and advance D by one byte.
 static uint8_t readByte(ArrayRef<uint8_t> &D) {
   if (D.empty())
-    fatal("Corrupted or unsupported CIE information");
+    fatal("corrupted or unsupported CIE information");
   uint8_t B = D.front();
   D = D.slice(1);
   return B;
@@ -979,7 +979,7 @@ static void skipLeb128(ArrayRef<uint8_t> &D) {
     if ((Val & 0x80) == 0)
       return;
   }
-  fatal("Corrupted or unsupported CIE information");
+  fatal("corrupted or unsupported CIE information");
 }
 
 template <class ELFT> static size_t getAugPSize(unsigned Enc) {
@@ -997,7 +997,7 @@ template <class ELFT> static size_t getAugPSize(unsigned Enc) {
   case DW_EH_PE_sdata8:
     return 8;
   }
-  fatal("Unknown FDE encoding");
+  fatal("unknown FDE encoding");
 }
 
 template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
@@ -1006,7 +1006,7 @@ template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
     fatal("DW_EH_PE_aligned encoding is not supported");
   size_t Size = getAugPSize<ELFT>(Enc);
   if (Size >= D.size())
-    fatal("Corrupted CIE");
+    fatal("corrupted CIE");
   D = D.slice(Size);
 }
 
@@ -1022,7 +1022,7 @@ uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
 
   const unsigned char *AugEnd = std::find(D.begin() + 1, D.end(), '\0');
   if (AugEnd == D.end())
-    fatal("Corrupted CIE");
+    fatal("corrupted CIE");
   StringRef Aug(reinterpret_cast<const char *>(D.begin()), AugEnd - D.begin());
   D = D.slice(Aug.size() + 1);
 
@@ -1058,7 +1058,7 @@ uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
       readByte(D);
       continue;
     }
-    fatal("Unknown .eh_frame augmentation string: " + Aug);
+    fatal("unknown .eh_frame augmentation string: " + Aug);
   }
   return DW_EH_PE_absptr;
 }

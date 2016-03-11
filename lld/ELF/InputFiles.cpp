@@ -311,7 +311,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
 
   switch (Binding) {
   default:
-    fatal("Unexpected binding");
+    fatal("unexpected binding");
   case STB_GLOBAL:
   case STB_WEAK:
   case STB_GNU_UNIQUE:

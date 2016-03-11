@@ -500,7 +500,7 @@ static void reportUndefined(SymbolTable<ELFT> &Symtab, SymbolBody *Sym) {
   if ((Config->Relocatable || Config->Shared) && !Config->NoUndefined)
     return;
 
-  std::string Msg = "Undefined symbol: " + Sym->getName().str();
+  std::string Msg = "undefined symbol: " + Sym->getName().str();
   if (InputFile *File = Symtab.findFile(Sym))
     Msg += " in " + File->getName().str();
   if (Config->NoinhibitExec)
@@ -1508,7 +1508,7 @@ template <class ELFT> bool Writer<ELFT>::openFile() {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Config->OutputFile, FileSize,
                                FileOutputBuffer::F_executable);
-  if (error(BufferOrErr, "Failed to open " + Config->OutputFile))
+  if (error(BufferOrErr, "failed to open " + Config->OutputFile))
     return false;
   Buffer = std::move(*BufferOrErr);
   return true;
