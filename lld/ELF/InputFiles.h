@@ -18,8 +18,10 @@
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/Comdat.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ELF.h"
+#include "llvm/Object/IRObjectFile.h"
 #include "llvm/Support/StringSaver.h"
 
 namespace lld {
@@ -180,19 +182,16 @@ public:
   static bool classof(const InputFile *F);
   void parse(llvm::DenseSet<StringRef> &ComdatGroups);
   ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
-  ArrayRef<StringRef> getExtraKeeps() { return ExtraKeeps; }
+  static bool shouldSkip(const llvm::object::BasicSymbolRef &Sym);
 
 private:
   std::vector<SymbolBody *> SymbolBodies;
-  // Some symbols like llvm.global_ctors are internal to the IR and so
-  // don't show up in SymbolBodies, but must be kept when creating the
-  // combined LTO module. We track them here.
-  // We currently use a different Module for creating SymbolBody's vs when
-  // we are creating the combined LTO module, and so we can't store IR
-  // pointers directly and must rely on the IR names.
-  std::vector<StringRef> ExtraKeeps;
   llvm::BumpPtrAllocator Alloc;
   llvm::StringSaver Saver{Alloc};
+  SymbolBody *
+  createSymbolBody(const llvm::DenseSet<const llvm::Comdat *> &KeptComdats,
+                   const llvm::object::IRObjectFile &Obj,
+                   const llvm::object::BasicSymbolRef &Sym);
 };
 
 // .so file.

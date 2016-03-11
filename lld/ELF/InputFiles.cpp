@@ -436,6 +436,50 @@ static uint8_t getGvVisibility(const GlobalValue *GV) {
   llvm_unreachable("Unknown visibility");
 }
 
+SymbolBody *
+BitcodeFile::createSymbolBody(const DenseSet<const Comdat *> &KeptComdats,
+                              const IRObjectFile &Obj,
+                              const BasicSymbolRef &Sym) {
+  const GlobalValue *GV = Obj.getSymbolGV(Sym.getRawDataRefImpl());
+  assert(GV);
+  if (const Comdat *C = GV->getComdat())
+    if (!KeptComdats.count(C))
+      return nullptr;
+
+  uint8_t Visibility = getGvVisibility(GV);
+
+  SmallString<64> Name;
+  raw_svector_ostream OS(Name);
+  Sym.printName(OS);
+  StringRef NameRef = Saver.save(StringRef(Name));
+
+  const Module &M = Obj.getModule();
+  SymbolBody *Body;
+  uint32_t Flags = Sym.getFlags();
+  bool IsWeak = Flags & BasicSymbolRef::SF_Weak;
+  if (Flags & BasicSymbolRef::SF_Undefined) {
+    Body = new (Alloc) Undefined(NameRef, IsWeak, Visibility, false);
+  } else if (Flags & BasicSymbolRef::SF_Common) {
+    const DataLayout &DL = M.getDataLayout();
+    uint64_t Size = DL.getTypeAllocSize(GV->getValueType());
+    Body = new (Alloc)
+        DefinedCommon(NameRef, Size, GV->getAlignment(), IsWeak, Visibility);
+  } else {
+    Body = new (Alloc) DefinedBitcode(NameRef, IsWeak, Visibility);
+  }
+  Body->IsTls = GV->isThreadLocal();
+  return Body;
+}
+
+bool BitcodeFile::shouldSkip(const BasicSymbolRef &Sym) {
+  uint32_t Flags = Sym.getFlags();
+  if (!(Flags & BasicSymbolRef::SF_Global))
+    return true;
+  if (Flags & BasicSymbolRef::SF_FormatSpecific)
+    return true;
+  return false;
+}
+
 void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
   LLVMContext Context;
   std::unique_ptr<IRObjectFile> Obj = check(IRObjectFile::create(MB, Context));
@@ -448,43 +492,9 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
       KeptComdats.insert(&P.second);
   }
 
-  for (const BasicSymbolRef &Sym : Obj->symbols()) {
-    const GlobalValue *GV = Obj->getSymbolGV(Sym.getRawDataRefImpl());
-    assert(GV);
-    uint32_t Flags = Sym.getFlags();
-    if (const Comdat *C = GV->getComdat())
-      if (!KeptComdats.count(C))
-        continue;
-    if (!(Flags & BasicSymbolRef::SF_Global))
-        continue;
-    if (GV->hasAppendingLinkage()) {
-      ExtraKeeps.push_back(GV->getName().copy(Alloc));
-      continue;
-    }
-    if (Flags & BasicSymbolRef::SF_FormatSpecific)
-      continue;
-    uint8_t Visibility = getGvVisibility(GV);
-
-    SmallString<64> Name;
-    raw_svector_ostream OS(Name);
-    Sym.printName(OS);
-    StringRef NameRef = Saver.save(StringRef(Name));
-
-    SymbolBody *Body;
-    bool IsWeak = Flags & BasicSymbolRef::SF_Weak;
-    if (Flags & BasicSymbolRef::SF_Undefined) {
-      Body = new (Alloc) Undefined(NameRef, IsWeak, Visibility, false);
-    } else if (Flags & BasicSymbolRef::SF_Common) {
-      const DataLayout &DL = M.getDataLayout();
-      uint64_t Size = DL.getTypeAllocSize(GV->getValueType());
-      Body = new (Alloc)
-          DefinedCommon(NameRef, Size, GV->getAlignment(), IsWeak, Visibility);
-    } else {
-      Body = new (Alloc) DefinedBitcode(NameRef, IsWeak, Visibility);
-    }
-    Body->IsTls = GV->isThreadLocal();
-    SymbolBodies.push_back(Body);
-  }
+  for (const BasicSymbolRef &Sym : Obj->symbols())
+    if (!shouldSkip(Sym))
+      SymbolBodies.push_back(createSymbolBody(KeptComdats, *Obj, Sym));
 }
 
 template <typename T>
