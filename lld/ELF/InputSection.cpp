@@ -25,7 +25,7 @@ using namespace lld;
 using namespace lld::elf;
 
 template <class ELFT>
-InputSectionBase<ELFT>::InputSectionBase(ObjectFile<ELFT> *File,
+InputSectionBase<ELFT>::InputSectionBase(elf::ObjectFile<ELFT> *File,
                                          const Elf_Shdr *Header,
                                          Kind SectionKind)
     : Header(Header), File(File), SectionKind(SectionKind), Repl(this) {
@@ -62,7 +62,7 @@ InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
     // so it should never be copied to output.
     llvm_unreachable("MIPS .reginfo reached writeTo().");
   }
-  llvm_unreachable("invalid section kind");
+  llvm_unreachable("Invalid section kind");
 }
 
 template <class ELFT>
@@ -93,7 +93,8 @@ InputSectionBase<ELFT>::getRelocTarget(const Elf_Rela &Rel) const {
 }
 
 template <class ELFT>
-InputSection<ELFT>::InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
+InputSection<ELFT>::InputSection(elf::ObjectFile<ELFT> *F,
+                                 const Elf_Shdr *Header)
     : InputSectionBase<ELFT>(F, Header, Base::Regular) {}
 
 template <class ELFT>
@@ -331,12 +332,12 @@ void InputSection<ELFT>::replace(InputSection<ELFT> *Other) {
 
 template <class ELFT>
 SplitInputSection<ELFT>::SplitInputSection(
-    ObjectFile<ELFT> *File, const Elf_Shdr *Header,
+    elf::ObjectFile<ELFT> *File, const Elf_Shdr *Header,
     typename InputSectionBase<ELFT>::Kind SectionKind)
     : InputSectionBase<ELFT>(File, Header, SectionKind) {}
 
 template <class ELFT>
-EHInputSection<ELFT>::EHInputSection(ObjectFile<ELFT> *F,
+EHInputSection<ELFT>::EHInputSection(elf::ObjectFile<ELFT> *F,
                                      const Elf_Shdr *Header)
     : SplitInputSection<ELFT>(F, Header, InputSectionBase<ELFT>::EHFrame) {
   // Mark .eh_frame sections as live by default because there are
@@ -386,7 +387,7 @@ SplitInputSection<ELFT>::getRangeAndSize(uintX_t Offset) {
   StringRef Data((const char *)D.data(), D.size());
   uintX_t Size = Data.size();
   if (Offset >= Size)
-    fatal("entry is past the end of the section");
+    fatal("Entry is past the end of the section");
 
   // Find the element this offset points to.
   auto I = std::upper_bound(
@@ -424,13 +425,13 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
 }
 
 template <class ELFT>
-MipsReginfoInputSection<ELFT>::MipsReginfoInputSection(ObjectFile<ELFT> *F,
+MipsReginfoInputSection<ELFT>::MipsReginfoInputSection(elf::ObjectFile<ELFT> *F,
                                                        const Elf_Shdr *Hdr)
     : InputSectionBase<ELFT>(F, Hdr, InputSectionBase<ELFT>::MipsReginfo) {
   // Initialize this->Reginfo.
   ArrayRef<uint8_t> D = this->getSectionData();
   if (D.size() != sizeof(Elf_Mips_RegInfo<ELFT>))
-    fatal("invalid size of .reginfo section");
+    fatal("Invalid size of .reginfo section");
   Reginfo = reinterpret_cast<const Elf_Mips_RegInfo<ELFT> *>(D.data());
 }
 

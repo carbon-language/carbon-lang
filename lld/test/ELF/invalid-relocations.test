@@ -19,4 +19,4 @@ Symbols:
   Global:
     - Name:            lulz
 
-# CHECK: invalid relocated section index
+# CHECK: Invalid relocated section index

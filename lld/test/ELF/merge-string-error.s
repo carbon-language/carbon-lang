@@ -8,4 +8,4 @@
         .text
         .long .rodata.str1.1 + 4
 
-// CHECK: entry is past the end of the section
+// CHECK: Entry is past the end of the section

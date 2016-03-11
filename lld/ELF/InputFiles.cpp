@@ -53,7 +53,7 @@ ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   uint32_t FirstNonLocal = Symtab->sh_info;
   if (FirstNonLocal > NumSymbols)
-    fatal("invalid sh_info in symbol table");
+    fatal("Invalid sh_info in symbol table");
 
   if (OnlyGlobals)
     return make_range(Syms.begin() + FirstNonLocal, Syms.end());
@@ -137,7 +137,7 @@ elf::ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   ArrayRef<uint32_X> Entries =
       check(Obj.template getSectionContentsAsArray<uint32_X>(&Sec));
   if (Entries.empty() || Entries[0] != GRP_COMDAT)
-    fatal("unsupported SHT_GROUP format");
+    fatal("Unsupported SHT_GROUP format");
   return Entries.slice(1);
 }
 
@@ -148,7 +148,7 @@ static bool shouldMerge(const typename ELFFile<ELFT>::Elf_Shdr &Sec) {
   if (!(Flags & SHF_MERGE))
     return false;
   if (Flags & SHF_WRITE)
-    fatal("writable SHF_MERGE sections are not supported");
+    fatal("Writable SHF_MERGE sections are not supported");
   uintX_t EntSize = Sec.sh_entsize;
   if (!EntSize || Sec.sh_size % EntSize)
     fatal("SHF_MERGE section size must be a multiple of sh_entsize");
@@ -187,7 +187,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
         continue;
       for (uint32_t SecIndex : getShtGroupEntries(Sec)) {
         if (SecIndex >= Size)
-          fatal("invalid section index in group");
+          fatal("Invalid section index in group");
         Sections[SecIndex] = InputSection<ELFT>::Discarded;
       }
       break;
@@ -204,7 +204,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
     case SHT_REL: {
       uint32_t RelocatedSectionIndex = Sec.sh_info;
       if (RelocatedSectionIndex >= Size)
-        fatal("invalid relocated section index");
+        fatal("Invalid relocated section index");
       InputSectionBase<ELFT> *RelocatedSection =
           Sections[RelocatedSectionIndex];
       // Strictly speaking, a relocation section must be included in the
@@ -213,7 +213,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
       if (RelocatedSection == InputSection<ELFT>::Discarded)
         continue;
       if (!RelocatedSection)
-        fatal("unsupported relocation reference");
+        fatal("Unsupported relocation reference");
       if (Config->Relocatable) {
         // For -r, relocation sections are handled as regular input sections.
         Sections[I] = new (Alloc) InputSection<ELFT>(this, &Sec);
@@ -221,10 +221,10 @@ void elf::ObjectFile<ELFT>::initializeSections(
         S->RelocSections.push_back(&Sec);
       } else if (auto *S = dyn_cast<EHInputSection<ELFT>>(RelocatedSection)) {
         if (S->RelocSection)
-          fatal("multiple relocation sections to .eh_frame are not supported");
+          fatal("Multiple relocation sections to .eh_frame are not supported");
         S->RelocSection = &Sec;
       } else {
-        fatal("relocations pointing to SHF_MERGE are not supported");
+        fatal("Relocations pointing to SHF_MERGE are not supported");
       }
       break;
     }
@@ -247,7 +247,7 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
     return InputSection<ELFT>::Discarded;
 
   if (Name == ".note.GNU-split-stack")
-    error("objects using splitstacks are not supported");
+    error("Objects using splitstacks are not supported");
 
   // A MIPS object file has a special section that contains register
   // usage info, which needs to be handled by the linker specially.
@@ -281,7 +281,7 @@ elf::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   if (Index == 0)
     return nullptr;
   if (Index >= Sections.size() || !Sections[Index])
-    fatal("invalid section index");
+    fatal("Invalid section index");
   InputSectionBase<ELFT> *S = Sections[Index];
   if (S == InputSectionBase<ELFT>::Discarded)
     return S;
@@ -397,7 +397,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
     if (Dyn.d_tag == DT_SONAME) {
       uintX_t Val = Dyn.getVal();
       if (Val >= this->StringTable.size())
-        fatal("invalid DT_SONAME entry");
+        fatal("Invalid DT_SONAME entry");
       SoName = StringRef(this->StringTable.data() + Val);
       return;
     }
@@ -433,7 +433,51 @@ static uint8_t getGvVisibility(const GlobalValue *GV) {
   case GlobalValue::ProtectedVisibility:
     return STV_PROTECTED;
   }
-  llvm_unreachable("unknown visibility");
+  llvm_unreachable("Unknown visibility");
+}
+
+SymbolBody *
+BitcodeFile::createSymbolBody(const DenseSet<const Comdat *> &KeptComdats,
+                              const IRObjectFile &Obj,
+                              const BasicSymbolRef &Sym) {
+  const GlobalValue *GV = Obj.getSymbolGV(Sym.getRawDataRefImpl());
+  assert(GV);
+  if (const Comdat *C = GV->getComdat())
+    if (!KeptComdats.count(C))
+      return nullptr;
+
+  uint8_t Visibility = getGvVisibility(GV);
+
+  SmallString<64> Name;
+  raw_svector_ostream OS(Name);
+  Sym.printName(OS);
+  StringRef NameRef = Saver.save(StringRef(Name));
+
+  const Module &M = Obj.getModule();
+  SymbolBody *Body;
+  uint32_t Flags = Sym.getFlags();
+  bool IsWeak = Flags & BasicSymbolRef::SF_Weak;
+  if (Flags & BasicSymbolRef::SF_Undefined) {
+    Body = new (Alloc) Undefined(NameRef, IsWeak, Visibility, false);
+  } else if (Flags & BasicSymbolRef::SF_Common) {
+    const DataLayout &DL = M.getDataLayout();
+    uint64_t Size = DL.getTypeAllocSize(GV->getValueType());
+    Body = new (Alloc)
+        DefinedCommon(NameRef, Size, GV->getAlignment(), IsWeak, Visibility);
+  } else {
+    Body = new (Alloc) DefinedBitcode(NameRef, IsWeak, Visibility);
+  }
+  Body->IsTls = GV->isThreadLocal();
+  return Body;
+}
+
+bool BitcodeFile::shouldSkip(const BasicSymbolRef &Sym) {
+  uint32_t Flags = Sym.getFlags();
+  if (!(Flags & BasicSymbolRef::SF_Global))
+    return true;
+  if (Flags & BasicSymbolRef::SF_FormatSpecific)
+    return true;
+  return false;
 }
 
 void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
@@ -448,43 +492,9 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
       KeptComdats.insert(&P.second);
   }
 
-  for (const BasicSymbolRef &Sym : Obj->symbols()) {
-    const GlobalValue *GV = Obj->getSymbolGV(Sym.getRawDataRefImpl());
-    assert(GV);
-    uint32_t Flags = Sym.getFlags();
-    if (const Comdat *C = GV->getComdat())
-      if (!KeptComdats.count(C))
-        continue;
-    if (!(Flags & BasicSymbolRef::SF_Global))
-        continue;
-    if (GV->hasAppendingLinkage()) {
-      ExtraKeeps.push_back(GV->getName().copy(Alloc));
-      continue;
-    }
-    if (Flags & BasicSymbolRef::SF_FormatSpecific)
-      continue;
-    uint8_t Visibility = getGvVisibility(GV);
-
-    SmallString<64> Name;
-    raw_svector_ostream OS(Name);
-    Sym.printName(OS);
-    StringRef NameRef = Saver.save(StringRef(Name));
-
-    SymbolBody *Body;
-    bool IsWeak = Flags & BasicSymbolRef::SF_Weak;
-    if (Flags & BasicSymbolRef::SF_Undefined) {
-      Body = new (Alloc) Undefined(NameRef, IsWeak, Visibility, false);
-    } else if (Flags & BasicSymbolRef::SF_Common) {
-      const DataLayout &DL = M.getDataLayout();
-      uint64_t Size = DL.getTypeAllocSize(GV->getValueType());
-      Body = new (Alloc)
-          DefinedCommon(NameRef, Size, GV->getAlignment(), IsWeak, Visibility);
-    } else {
-      Body = new (Alloc) DefinedBitcode(NameRef, IsWeak, Visibility);
-    }
-    Body->IsTls = GV->isThreadLocal();
-    SymbolBodies.push_back(Body);
-  }
+  for (const BasicSymbolRef &Sym : Obj->symbols())
+    if (!shouldSkip(Sym))
+      SymbolBodies.push_back(createSymbolBody(KeptComdats, *Obj, Sym));
 }
 
 template <typename T>
@@ -506,7 +516,7 @@ template <template <class> class T>
 static std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB) {
   std::pair<unsigned char, unsigned char> Type = getElfArchType(MB.getBuffer());
   if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
-    fatal("invalid data encoding: " + MB.getBufferIdentifier());
+    fatal("Invalid data encoding: " + MB.getBufferIdentifier());
 
   if (Type.first == ELF::ELFCLASS32) {
     if (Type.second == ELF::ELFDATA2LSB)
@@ -518,7 +528,7 @@ static std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB) {
       return createELFFileAux<T<ELF64LE>>(MB);
     return createELFFileAux<T<ELF64BE>>(MB);
   }
-  fatal("invalid file class: " + MB.getBufferIdentifier());
+  fatal("Invalid file class: " + MB.getBufferIdentifier());
 }
 
 std::unique_ptr<InputFile> elf::createObjectFile(MemoryBufferRef MB,

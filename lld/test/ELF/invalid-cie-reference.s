@@ -29,4 +29,4 @@
         .long 0x0
         .long 0x0
 
-// CHECK: invalid CIE reference
+// CHECK: Invalid CIE reference

@@ -84,7 +84,8 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
     BitcodeFiles.emplace_back(cast<BitcodeFile>(File.release()));
     F->parse(ComdatGroups);
     for (SymbolBody *B : F->getSymbols())
-      resolve(B);
+      if (B)
+        resolve(B);
     return;
   }
 
@@ -118,7 +119,7 @@ std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
   std::string ErrMsg;
   const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr, ErrMsg);
   if (!TheTarget)
-    fatal("target not found: " + ErrMsg);
+    fatal("Target not found: " + ErrMsg);
 
   TargetOptions Options;
   Reloc::Model R = Config->Shared ? Reloc::PIC_ : Reloc::Static;
@@ -129,7 +130,7 @@ std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
   legacy::PassManager CodeGenPasses;
   if (TM->addPassesToEmitFile(CodeGenPasses, OS,
                               TargetMachine::CGFT_ObjectFile))
-    fatal("failed to setup codegen");
+    fatal("Failed to setup codegen");
   CodeGenPasses.run(M);
   LtoBuffer = MemoryBuffer::getMemBuffer(OwningLTOData, "", false);
   if (Config->SaveTemps)
@@ -139,28 +140,33 @@ std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
 
 static void addBitcodeFile(IRMover &Mover, BitcodeFile &F,
                            LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> Buffer =
-      MemoryBuffer::getMemBuffer(F.MB, false);
-  std::unique_ptr<Module> M =
-      check(getLazyBitcodeModule(std::move(Buffer), Context,
-                                 /*ShouldLazyLoadMetadata*/ false));
+
+  std::unique_ptr<IRObjectFile> Obj =
+      check(IRObjectFile::create(F.MB, Context));
   std::vector<GlobalValue *> Keep;
-  for (SymbolBody *B : F.getSymbols()) {
-    if (&B->repl() != B)
+  unsigned BodyIndex = 0;
+  ArrayRef<SymbolBody *> Bodies = F.getSymbols();
+
+  for (const BasicSymbolRef &Sym : Obj->symbols()) {
+    GlobalValue *GV = Obj->getSymbolGV(Sym.getRawDataRefImpl());
+    assert(GV);
+    if (GV->hasAppendingLinkage()) {
+      Keep.push_back(GV);
+      continue;
+    }
+    if (BitcodeFile::shouldSkip(Sym))
+      continue;
+    SymbolBody *B = Bodies[BodyIndex++];
+    if (!B || &B->repl() != B)
       continue;
     auto *DB = dyn_cast<DefinedBitcode>(B);
     if (!DB)
       continue;
-    GlobalValue *GV = M->getNamedValue(B->getName());
-    assert(GV);
     Keep.push_back(GV);
   }
-  for (StringRef S : F.getExtraKeeps()) {
-    GlobalValue *GV = M->getNamedValue(S);
-    assert(GV);
-    Keep.push_back(GV);
-  }
-  Mover.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {});
+
+  Mover.move(Obj->takeModule(), Keep,
+             [](GlobalValue &, IRMover::ValueAdder) {});
 }
 
 // This is for use when debugging LTO.
