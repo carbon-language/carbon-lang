@@ -547,7 +547,8 @@ static bool shouldKeepInSymtab(const elf::ObjectFile<ELFT> &File,
 template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
   if (!Out<ELFT>::SymTab)
     return;
-  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
+  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
+       Symtab.getObjectFiles()) {
     for (SymbolBody *B : F->getLocalSymbols()) {
       auto *L = cast<DefinedRegular<ELFT>>(B);
       const Elf_Sym &Sym = L->Sym;
@@ -951,7 +952,8 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   // Create output sections for input object file sections.
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
   OutputSectionFactory<ELFT> Factory;
-  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
+  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
+       Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
       if (isDiscarded(C)) {
         reportDiscarded(C, F);
@@ -1011,7 +1013,8 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
-  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
+  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
+       Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
       if (isDiscarded(C))
         continue;
