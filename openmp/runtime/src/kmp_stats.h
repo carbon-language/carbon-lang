@@ -114,7 +114,7 @@ class stats_flags_e {
     macro (OMP_barrier, 0, arg)                                 \
     macro (FOR_static_scheduling, 0, arg)                       \
     macro (FOR_dynamic_scheduling, 0, arg)                      \
-    macro (TASK_execution, 0, arg)                              \
+    macro (OMP_task,   0, arg)                                  \
     macro (OMP_single, 0, arg)                                  \
     macro (OMP_master, 0, arg)                                  \
     macro (OMP_set_numthreads, stats_flags_e::noUnits, arg)     \
@@ -129,7 +129,7 @@ class stats_flags_e {
 // OMP_serial             -- thread zero time executing serial code
 // OMP_work               -- elapsed time in code dispatched by a fork (measured in the thread)
 // OMP_barrier            -- time at "real" barriers (includes task time)
-// TASK_execution         -- time spent executing tasks
+// OMP_task               -- time spent executing tasks
 // FOR_static_iterations  -- Available parallelism in statically scheduled for loops
 // FOR_dynamic_iterations -- Available parallelism in dynamically scheduled for loops
 // FOR_static_scheduling  -- time spent doing scheduling for a static "for"
