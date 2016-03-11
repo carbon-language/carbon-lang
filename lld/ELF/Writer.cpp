@@ -307,7 +307,7 @@ void Writer<ELFT>::scanRelocs(
     InputSectionBase<ELFT> &C,
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
-  const ObjectFile<ELFT> &File = *C.getFile();
+  const elf::ObjectFile<ELFT> &File = *C.getFile();
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     SymbolBody &OrigBody = File.getSymbolBody(SymIndex);
