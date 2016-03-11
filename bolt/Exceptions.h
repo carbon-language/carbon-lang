@@ -42,14 +42,24 @@ public:
     }
   }
 
-  using FDEsMap = std::map<uint64_t, const dwarf::FDE *>;
-
   bool fillCFIInfoFor(BinaryFunction &Function) const;
 
   // Include a new EHFrame, updating the .eh_frame_hdr
   void rewriteHeaderFor(StringRef EHFrame, uint64_t EHFrameAddress,
                         uint64_t NewFrameHdrAddress,
                         ArrayRef<uint64_t> FailedAddresses);
+
+  using FDEsMap = std::map<uint64_t, const dwarf::FDE *>;
+  using fde_iterator = FDEsMap::const_iterator;
+
+  /// Get all FDEs discovered by this reader.
+  iterator_range<fde_iterator> fdes() const {
+    return iterator_range<fde_iterator>(FDEs.begin(), FDEs.end());
+  }
+
+  const FDEsMap &getFDEs() const {
+    return FDEs;
+  }
 
 private:
   const DWARFFrame &EHFrame;

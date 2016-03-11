@@ -125,9 +125,9 @@ public:
   /// Run all the necessary steps to read, optimize and rewrite the binary.
   void run();
 
-  /// Populate array of binary functions and file symbols from file symbol
-  /// table.
-  void readSymbolTable();
+  /// Populate array of binary functions and other objects of interest
+  /// from meta data in the file.
+  void discoverFileObjects();
 
   /// Read .eh_frame, .eh_frame_hdr and .gcc_except_table sections for exception
   /// and stack unwinding information.

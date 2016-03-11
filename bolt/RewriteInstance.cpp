@@ -540,9 +540,10 @@ void RewriteInstance::run() {
     return;
   }
 
+  // Main "loop".
   discoverStorage();
-  readSymbolTable();
   readSpecialSections();
+  discoverFileObjects();
   disassembleFunctions();
   runOptimizationPasses();
   emitFunctions();
@@ -558,7 +559,7 @@ void RewriteInstance::run() {
   rewriteFile();
 }
 
-void RewriteInstance::readSymbolTable() {
+void RewriteInstance::discoverFileObjects() {
   std::string FileSymbolName;
 
   FileSymRefs.clear();
@@ -654,11 +655,45 @@ void RewriteInstance::readSymbolTable() {
       continue;
     }
 
+    // Checkout for conflicts with function data from FDEs.
+    bool IsSimple = true;
+    auto FDEI = CFIRdWrt->getFDEs().lower_bound(Address);
+    if (FDEI != CFIRdWrt->getFDEs().end()) {
+      auto &FDE = *FDEI->second;
+      if (FDEI->first != Address) {
+        // There's no matching starting address in FDE. Make sure the previous
+        // FDE does not contain this address.
+        if (FDEI != CFIRdWrt->getFDEs().begin()) {
+          --FDEI;
+          auto &PrevFDE = *FDEI->second;
+          auto PrevStart = PrevFDE.getInitialLocation();
+          auto PrevLength = PrevFDE.getAddressRange();
+          if (Address > PrevStart && Address < PrevStart + PrevLength) {
+            errs() << "BOLT-WARNING: function " << UniqueName
+                   << " is in conflict with FDE ["
+                   << Twine::utohexstr(PrevStart) << ", "
+                   << Twine::utohexstr(PrevStart + PrevLength)
+                   << "). Skipping.\n";
+            IsSimple = false;
+          }
+        }
+      } else if (FDE.getAddressRange() != SymbolSize) {
+        // Function addresses match but sizes differ.
+        errs() << "BOLT-WARNING: sizes differ for function " << UniqueName
+               << ". FDE : " << FDE.getAddressRange()
+               << "; symbol table : " << SymbolSize << ". Skipping.\n";
+
+        // Create maximum size non-simple function.
+        IsSimple = false;
+        SymbolSize = std::max(SymbolSize, FDE.getAddressRange());
+      }
+    }
+
     // Create the function and add to the map.
     BinaryFunctions.emplace(
         Address,
         BinaryFunction(UniqueName, Symbol, *Section, Address,
-                       SymbolSize, *BC)
+                       SymbolSize, *BC, IsSimple)
     );
   }
 }

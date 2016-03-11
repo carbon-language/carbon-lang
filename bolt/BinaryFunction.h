@@ -109,10 +109,6 @@ private:
   /// Alignment requirements for the function.
   uint64_t Alignment{1};
 
-  /// False if the function is too complex to reconstruct its control
-  /// flow graph and re-assemble.
-  bool IsSimple{true};
-
   /// True if this function needs to be emitted in two separate parts, one for
   /// the hot basic blocks and another for the cold basic blocks.
   bool IsSplit{false};
@@ -124,6 +120,10 @@ private:
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
 
   BinaryContext &BC;
+
+  /// False if the function is too complex to reconstruct its control
+  /// flow graph and re-assemble.
+  bool IsSimple{true};
 
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
@@ -326,9 +326,10 @@ public:
 
 
   BinaryFunction(std::string Name, SymbolRef Symbol, SectionRef Section,
-                 uint64_t Address, uint64_t Size, BinaryContext &BC) :
+                 uint64_t Address, uint64_t Size, BinaryContext &BC,
+                 bool IsSimple = true) :
       Name(Name), Symbol(Symbol), Section(Section), Address(Address),
-      Size(Size), BC(BC), CodeSectionName(".text." + Name),
+      Size(Size), BC(BC), IsSimple(IsSimple), CodeSectionName(".text." + Name),
       FunctionNumber(++Count)
   {}
 
