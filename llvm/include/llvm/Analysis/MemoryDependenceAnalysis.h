@@ -341,13 +341,13 @@ private:
   AliasAnalysis &AA;
   AssumptionCache &AC;
   const TargetLibraryInfo &TLI;
-  DominatorTree *DT;
+  DominatorTree &DT;
   PredIteratorCache PredCache;
 
 public:
   MemoryDependenceResults(AliasAnalysis &AA, AssumptionCache &AC,
                           const TargetLibraryInfo &TLI,
-                          DominatorTree *DT = nullptr)
+                          DominatorTree &DT)
       : AA(AA), AC(AC), TLI(TLI), DT(DT) {}
 
   /// Returns the instruction on which a memory operation depends.
