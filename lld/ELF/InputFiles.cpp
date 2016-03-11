@@ -292,7 +292,7 @@ template <class ELFT>
 SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
   unsigned char Binding = Sym->getBinding();
   if (Binding == STB_LOCAL)
-    return new (Alloc) LocalSymbol<ELFT>(*Sym);
+    return new (Alloc) LocalSymbol<ELFT>(*Sym, getSection(*Sym));
 
   StringRef Name = check(Sym->getName(this->StringTable));
 

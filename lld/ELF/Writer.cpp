@@ -474,20 +474,8 @@ void Writer<ELFT>::scanRelocs(
                                     (uintX_t)getPPC64TocBase() + Addend});
       continue;
     }
-    if (!Body.isLocal()) {
-      Out<ELFT>::RelaDyn->addReloc(
-          {Target->RelativeRel, &C, RI.r_offset, true, &Body, Addend});
-      continue;
-    }
-    const Elf_Sym &Sym = cast<LocalSymbol<ELFT>>(Body).Sym;
-    InputSectionBase<ELFT> *Section = File.getSection(Sym);
-    uintX_t Offset = Sym.st_value;
-    if (Sym.getType() == STT_SECTION) {
-      Offset += Addend;
-      Addend = 0;
-    }
     Out<ELFT>::RelaDyn->addReloc(
-        {Target->RelativeRel, &C, RI.r_offset, Section, Offset, Addend});
+        {Target->RelativeRel, &C, RI.r_offset, true, &Body, Addend});
   }
 }
 

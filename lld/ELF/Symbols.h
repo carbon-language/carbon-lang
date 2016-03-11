@@ -310,12 +310,15 @@ template <class ELFT> class LocalSymbol : public DefinedElf<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
-  LocalSymbol(const Elf_Sym &Sym)
-      : DefinedElf<ELFT>(SymbolBody::DefinedLocalKind, "", Sym) {}
+  LocalSymbol(const Elf_Sym &Sym, InputSectionBase<ELFT> *Section)
+      : DefinedElf<ELFT>(SymbolBody::DefinedLocalKind, "", Sym),
+        Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == SymbolBody::DefinedLocalKind;
   }
+
+  InputSectionBase<ELFT> *Section;
 };
 
 // This class represents a symbol defined in an archive file. It is

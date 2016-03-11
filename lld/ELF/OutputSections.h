@@ -186,8 +186,6 @@ template <class ELFT> struct DynamicReloc {
   InputSectionBase<ELFT> *OffsetSec = nullptr;
   uintX_t OffsetInSec = 0;
   bool UseSymVA = false;
-  InputSectionBase<ELFT> *TargetSec = nullptr;
-  uintX_t OffsetInTargetSec = 0;
   uintX_t Addend = 0;
 
   DynamicReloc(uint32_t Type, OffsetKind OKind, SymbolBody *Sym)
@@ -201,13 +199,6 @@ template <class ELFT> struct DynamicReloc {
                uintX_t Addend)
       : Type(Type), OKind(Off_Sec), Sym(Sym), OffsetSec(OffsetSec),
         OffsetInSec(OffsetInSec), UseSymVA(UseSymVA), Addend(Addend) {}
-
-  DynamicReloc(uint32_t Type, InputSectionBase<ELFT> *OffsetSec,
-               uintX_t OffsetInSec, InputSectionBase<ELFT> *TargetSec,
-               uintX_t OffsetInTargetSec, uintX_t Addend)
-      : Type(Type), OKind(Off_Sec), OffsetSec(OffsetSec),
-        OffsetInSec(OffsetInSec), TargetSec(TargetSec),
-        OffsetInTargetSec(OffsetInTargetSec), Addend(Addend) {}
 
   uintX_t getOffset() const;
 };
