@@ -46,12 +46,17 @@ getSymVA(const SymbolBody &Body, typename ELFFile<ELFT>::uintX_t &Addend) {
     // This is an absolute symbol.
     if (!SC)
       return D.Sym.st_value;
-    assert(SC->Live);
 
-    if (D.Sym.getType() == STT_TLS)
-      return SC->OutSec->getVA() + SC->getOffset(D.Sym) -
-             Out<ELFT>::TlsPhdr->p_vaddr;
-    return SC->OutSec->getVA() + SC->getOffset(D.Sym);
+    const Elf_Sym &Sym = D.Sym;
+    uintX_t Offset = Sym.st_value;
+    if (Sym.getType() == STT_SECTION) {
+      Offset += Addend;
+      Addend = 0;
+    }
+    uintX_t VA = SC->OutSec->getVA() + SC->getOffset(Offset);
+    if (Sym.getType() == STT_TLS)
+      return VA - Out<ELFT>::TlsPhdr->p_vaddr;
+    return VA;
   }
   case SymbolBody::DefinedCommonKind:
     return Out<ELFT>::Bss->getVA() + cast<DefinedCommon>(Body).OffsetInBss;
@@ -72,27 +77,6 @@ getSymVA(const SymbolBody &Body, typename ELFFile<ELFT>::uintX_t &Addend) {
     return 0;
   case SymbolBody::DefinedBitcodeKind:
     llvm_unreachable("Should have been replaced");
-  case SymbolBody::DefinedLocalKind: {
-    auto &L = cast<LocalSymbol<ELFT>>(Body);
-    InputSectionBase<ELFT> *SC = L.Section;
-
-    // According to the ELF spec reference to a local symbol from outside the
-    // group are not allowed. Unfortunately .eh_frame breaks that rule and must
-    // be treated specially. For now we just replace the symbol with 0.
-    if (SC == InputSection<ELFT>::Discarded || !SC->Live)
-      return 0;
-
-    const Elf_Sym &Sym = L.Sym;
-    uintX_t Offset = Sym.st_value;
-    if (Sym.getType() == STT_TLS)
-      return (SC->OutSec->getVA() + SC->getOffset(Sym) + Addend) -
-             Out<ELFT>::TlsPhdr->p_vaddr;
-    if (Sym.getType() == STT_SECTION) {
-      Offset += Addend;
-      Addend = 0;
-    }
-    return SC->OutSec->getVA() + SC->getOffset(Offset);
-  }
   }
   llvm_unreachable("Invalid symbol kind");
 }
@@ -181,12 +165,13 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   return isCommon() ? -1 : 1;
 }
 
-Defined::Defined(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
-                 uint8_t Type)
-    : SymbolBody(K, Name, IsWeak, Visibility, Type) {}
+Defined::Defined(Kind K, StringRef Name, bool IsWeak, bool IsLocal,
+                 uint8_t Visibility, uint8_t Type)
+    : SymbolBody(K, Name, IsWeak, IsLocal, Visibility, Type) {}
 
 DefinedBitcode::DefinedBitcode(StringRef Name, bool IsWeak, uint8_t Visibility)
-    : Defined(DefinedBitcodeKind, Name, IsWeak, Visibility, 0 /* Type */) {}
+    : Defined(DefinedBitcodeKind, Name, IsWeak, false, Visibility,
+              0 /* Type */) {}
 
 bool DefinedBitcode::classof(const SymbolBody *S) {
   return S->kind() == DefinedBitcodeKind;
@@ -194,7 +179,7 @@ bool DefinedBitcode::classof(const SymbolBody *S) {
 
 Undefined::Undefined(SymbolBody::Kind K, StringRef N, bool IsWeak,
                      uint8_t Visibility, uint8_t Type)
-    : SymbolBody(K, N, IsWeak, Visibility, Type),
+    : SymbolBody(K, N, IsWeak, false, Visibility, Type),
       CanKeepUndefined(false) {}
 
 Undefined::Undefined(StringRef N, bool IsWeak, uint8_t Visibility,
@@ -214,13 +199,13 @@ template <typename ELFT>
 DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
                                          OutputSectionBase<ELFT> &Section,
                                          uint8_t Visibility)
-    : Defined(SymbolBody::DefinedSyntheticKind, N, false, Visibility,
+    : Defined(SymbolBody::DefinedSyntheticKind, N, false, false, Visibility,
               0 /* Type */),
       Value(Value), Section(Section) {}
 
 DefinedCommon::DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment,
                              bool IsWeak, uint8_t Visibility)
-    : Defined(SymbolBody::DefinedCommonKind, N, IsWeak, Visibility,
+    : Defined(SymbolBody::DefinedCommonKind, N, IsWeak, false, Visibility,
               0 /* Type */),
       Alignment(Alignment), Size(Size) {}
 

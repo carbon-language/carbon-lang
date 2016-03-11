@@ -1146,7 +1146,7 @@ void EHOutputSection<ELFT>::addSectionAux(
       if (!HasReloc)
         fatal("FDE doesn't reference another section");
       InputSectionBase<ELFT> *Target = S->getRelocTarget(*RelI);
-      if (Target != InputSection<ELFT>::Discarded && Target->Live) {
+      if (Target && Target->Live) {
         uint32_t CieOffset = Offset + 4 - ID;
         auto I = OffsetToIndex.find(CieOffset);
         if (I == OffsetToIndex.end())
@@ -1513,8 +1513,6 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
     break;
   case SymbolBody::DefinedBitcodeKind:
     llvm_unreachable("Should have been replaced");
-  case SymbolBody::DefinedLocalKind:
-    llvm_unreachable("Should not be used");
   }
   return nullptr;
 }

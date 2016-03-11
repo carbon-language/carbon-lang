@@ -291,8 +291,12 @@ elf::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 template <class ELFT>
 SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
   unsigned char Binding = Sym->getBinding();
-  if (Binding == STB_LOCAL)
-    return new (Alloc) LocalSymbol<ELFT>(*Sym, getSection(*Sym));
+  InputSectionBase<ELFT> *Sec = getSection(*Sym);
+  if (Binding == STB_LOCAL) {
+    if (Sec == InputSection<ELFT>::Discarded)
+      Sec = nullptr;
+    return new (Alloc) DefinedRegular<ELFT>("", *Sym, Sec);
+  }
 
   StringRef Name = check(Sym->getName(this->StringTable));
 
@@ -310,12 +314,10 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
     fatal("Unexpected binding");
   case STB_GLOBAL:
   case STB_WEAK:
-  case STB_GNU_UNIQUE: {
-    InputSectionBase<ELFT> *Sec = getSection(*Sym);
+  case STB_GNU_UNIQUE:
     if (Sec == InputSection<ELFT>::Discarded)
       return new (Alloc) UndefinedElf<ELFT>(Name, *Sym);
     return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, Sec);
-  }
   }
 }
 

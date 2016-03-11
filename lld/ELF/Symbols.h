@@ -59,8 +59,7 @@ public:
     DefinedFirst,
     DefinedRegularKind = DefinedFirst,
     SharedKind,
-    DefinedLocalKind,
-    DefinedElfLast = DefinedLocalKind,
+    DefinedElfLast = SharedKind,
     DefinedCommonKind,
     DefinedBitcodeKind,
     DefinedSyntheticKind,
@@ -80,7 +79,7 @@ public:
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
   bool isLazy() const { return SymbolKind == LazyKind; }
   bool isShared() const { return SymbolKind == SharedKind; }
-  bool isLocal() const { return SymbolKind == DefinedLocalKind; }
+  bool isLocal() const { return IsLocal; }
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
 
   // Returns the symbol name.
@@ -125,9 +124,9 @@ public:
   template <class ELFT> int compare(SymbolBody *Other);
 
 protected:
-  SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
-             uint8_t Type)
-      : SymbolKind(K), IsWeak(IsWeak), Visibility(Visibility),
+  SymbolBody(Kind K, StringRef Name, bool IsWeak, bool IsLocal,
+             uint8_t Visibility, uint8_t Type)
+      : SymbolKind(K), IsWeak(IsWeak), IsLocal(IsLocal), Visibility(Visibility),
         MustBeInDynSym(false), NeedsCopyOrPltAddr(false), Name(Name) {
     IsFunc = Type == llvm::ELF::STT_FUNC;
     IsTls = Type == llvm::ELF::STT_TLS;
@@ -136,6 +135,7 @@ protected:
 
   const unsigned SymbolKind : 8;
   unsigned IsWeak : 1;
+  unsigned IsLocal : 1;
   unsigned Visibility : 2;
 
   // True if the symbol was used for linking and thus need to be
@@ -163,7 +163,7 @@ protected:
 // The base class for any defined symbols.
 class Defined : public SymbolBody {
 public:
-  Defined(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
+  Defined(Kind K, StringRef Name, bool IsWeak, bool IsLocal, uint8_t Visibility,
           uint8_t Type);
   static bool classof(const SymbolBody *S) { return S->isDefined(); }
 };
@@ -176,7 +176,8 @@ protected:
 public:
   DefinedElf(Kind K, StringRef N, const Elf_Sym &Sym)
       : Defined(K, N, Sym.getBinding() == llvm::ELF::STB_WEAK,
-                Sym.getVisibility(), Sym.getType()),
+                Sym.getBinding() == llvm::ELF::STB_LOCAL, Sym.getVisibility(),
+                Sym.getType()),
         Sym(Sym) {}
 
   const Elf_Sym &Sym;
@@ -307,21 +308,6 @@ public:
   bool needsCopy() const { return this->NeedsCopyOrPltAddr && !this->IsFunc; }
 };
 
-template <class ELFT> class LocalSymbol : public DefinedElf<ELFT> {
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-
-public:
-  LocalSymbol(const Elf_Sym &Sym, InputSectionBase<ELFT> *Section)
-      : DefinedElf<ELFT>(SymbolBody::DefinedLocalKind, "", Sym),
-        Section(Section) {}
-
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == SymbolBody::DefinedLocalKind;
-  }
-
-  InputSectionBase<ELFT> *Section;
-};
-
 // This class represents a symbol defined in an archive file. It is
 // created from an archive file header, and it knows how to load an
 // object file from an archive to replace itself with a defined
@@ -330,7 +316,7 @@ public:
 class Lazy : public SymbolBody {
 public:
   Lazy(ArchiveFile *F, const llvm::object::Archive::Symbol S)
-      : SymbolBody(LazyKind, S.getName(), false, llvm::ELF::STV_DEFAULT,
+      : SymbolBody(LazyKind, S.getName(), false, false, llvm::ELF::STV_DEFAULT,
                    /* Type */ 0),
         File(F), Sym(S) {}
 

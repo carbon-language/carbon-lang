@@ -78,11 +78,11 @@ InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) const {
   // Global symbol
   uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
   SymbolBody &B = File->getSymbolBody(SymIndex).repl();
+  InputSectionBase<ELFT> *S = nullptr;
   if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B))
-    return D->Section->Repl;
-  if (auto *L = dyn_cast<LocalSymbol<ELFT>>(&B))
-    if (InputSectionBase<ELFT> *Sec = File->getSection(L->Sym))
-      return Sec;
+    S = D->Section;
+  if (S)
+    return S->Repl;
   return nullptr;
 }
 
