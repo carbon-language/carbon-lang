@@ -249,9 +249,11 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
             AHL += SignExtend64<16>(read32<E>(LowLoc));
           SymVA = Out<ELFT>::Got->getMipsLocalPageAddr(SymVA + AHL);
         } else {
-          // Under some conditions relocations against non-local symbols require
-          // entries in the local part of MIPS GOT. In that case we need an
-          // entryinitialized by full address of the symbol.
+          // For non-local symbols GOT entries should contain their full
+          // addresses. But if such symbol cannot be preempted, we do not
+          // have to put them into the "global" part of GOT and use dynamic
+          // linker to determine their actual addresses. That is why we
+          // create GOT entries for them in the "local" part of GOT.
           SymVA = Out<ELFT>::Got->getMipsLocalFullAddr(Body) + A;
         }
       } else {
