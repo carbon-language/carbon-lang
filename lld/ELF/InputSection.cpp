@@ -201,9 +201,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
 
     if (Target->canRelaxTls(Type, &Body)) {
       uintX_t SymVA;
-      if (Body.isLocal())
-        SymVA = Body.getVA<ELFT>();
-      else if (Target->needsGot(Type, Body))
+      if (Target->needsGot(Type, Body))
         SymVA = Body.getGotVA<ELFT>();
       else
         SymVA = Body.getVA<ELFT>();
@@ -222,17 +220,22 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       continue;
     }
 
-    // Handle relocations for local symbols.
-    if (Body.isLocal()) {
-      uintX_t SymVA = Body.getVA<ELFT>(A);
-      uint8_t *PairedLoc = nullptr;
-      if (Config->EMachine == EM_MIPS) {
-        if (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32)
-          // We need to adjust SymVA value in case of R_MIPS_GPREL16/32
-          // relocations because they use the following expression to calculate
-          // the relocation's result for local symbol: S + A + GP0 - G.
-          SymVA += File->getMipsGp0();
-        else if (Type == R_MIPS_GOT16) {
+    if (Target->isTlsGlobalDynamicRel(Type) &&
+        !Target->canRelaxTls(Type, &Body)) {
+      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
+                          Out<ELFT>::Got->getGlobalDynAddr(Body) + A);
+      continue;
+    }
+
+    uintX_t SymVA = Body.getVA<ELFT>(A);
+    bool CBP = canBePreempted(Body);
+    uint8_t *PairedLoc = nullptr;
+
+    if (Target->needsPlt<ELFT>(Type, Body)) {
+      SymVA = Body.getPltVA<ELFT>() + A;
+    } else if (Target->needsGot(Type, Body)) {
+      if (Config->EMachine == EM_MIPS && !CBP) {
+        if (Body.isLocal()) {
           // R_MIPS_GOT16 relocation against local symbol requires index of
           // a local GOT entry which contains page address corresponds
           // to sum of the symbol address and addend. The addend in that case
@@ -245,33 +248,15 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
           if (LowLoc)
             AHL += SignExtend64<16>(read32<E>(LowLoc));
           SymVA = Out<ELFT>::Got->getMipsLocalPageAddr(SymVA + AHL);
-        } else
-          PairedLoc = findMipsPairedReloc(
-              Buf, SymIndex, getMipsPairedRelocType(Type), NextRelocs);
+        } else {
+          // Under some conditions relocations against non-local symbols require
+          // entries in the local part of MIPS GOT. In that case we need an
+          // entryinitialized by full address of the symbol.
+          SymVA = Out<ELFT>::Got->getMipsLocalFullAddr(Body) + A;
+        }
+      } else {
+        SymVA = Body.getGotVA<ELFT>() + A;
       }
-      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, 0, PairedLoc);
-      continue;
-    }
-
-    if (Target->isTlsGlobalDynamicRel(Type) &&
-        !Target->canRelaxTls(Type, &Body)) {
-      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getGlobalDynAddr(Body) + A);
-      continue;
-    }
-
-    uintX_t SymVA = Body.getVA<ELFT>();
-    bool CBP = canBePreempted(Body);
-    if (Target->needsPlt<ELFT>(Type, Body)) {
-      SymVA = Body.getPltVA<ELFT>();
-    } else if (Target->needsGot(Type, Body)) {
-      if (Config->EMachine == EM_MIPS && !CBP)
-        // Under some conditions relocations against non-local symbols require
-        // entries in the local part of MIPS GOT. In that case we need an entry
-        // initialized by full address of the symbol.
-        SymVA = Out<ELFT>::Got->getMipsLocalFullAddr(Body);
-      else
-        SymVA = Body.getGotVA<ELFT>();
       if (Body.IsTls)
         Type = Target->getTlsGotRel(Type);
     } else if (Target->isSizeRel(Type) && CBP) {
@@ -281,20 +266,27 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       // with a possibly incorrect value.
       continue;
     } else if (Config->EMachine == EM_MIPS) {
-      if (Type == R_MIPS_HI16 && &Body == Config->MipsGpDisp)
-        SymVA = getMipsGpAddr<ELFT>() - AddrLoc;
-      else if (Type == R_MIPS_LO16 && &Body == Config->MipsGpDisp)
-        SymVA = getMipsGpAddr<ELFT>() - AddrLoc + 4;
-      else if (&Body == Config->MipsLocalGp)
-        SymVA = getMipsGpAddr<ELFT>();
+      if (Type == R_MIPS_HI16 && &Body == Config->MipsGpDisp) {
+        SymVA = getMipsGpAddr<ELFT>() - AddrLoc + A;
+      } else if (Type == R_MIPS_LO16 && &Body == Config->MipsGpDisp) {
+        SymVA = getMipsGpAddr<ELFT>() - AddrLoc + 4 + A;
+      } else if (&Body == Config->MipsLocalGp) {
+        SymVA = getMipsGpAddr<ELFT>() + A;
+      } else if (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32) {
+        // We need to adjust SymVA value in case of R_MIPS_GPREL16/32
+        // relocations because they use the following expression to calculate
+        // the relocation's result for local symbol: S + A + GP0 - G.
+        SymVA += File->getMipsGp0();
+      } else {
+        PairedLoc = findMipsPairedReloc(
+            Buf, SymIndex, getMipsPairedRelocType(Type), NextRelocs);
+      }
     } else if (!Target->needsCopyRel<ELFT>(Type, Body) && CBP) {
       continue;
     }
     uintX_t Size = Body.getSize<ELFT>();
-    Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA + A, Size + A,
-                        findMipsPairedReloc(Buf, SymIndex,
-                                            getMipsPairedRelocType(Type),
-                                            NextRelocs));
+    Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, Size + A,
+                        PairedLoc);
   }
 }
 
