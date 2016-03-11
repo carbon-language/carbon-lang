@@ -343,8 +343,10 @@ struct CGFunctionInfoArgInfo {
 /// function definition.
 class CGFunctionInfo final
     : public llvm::FoldingSetNode,
-      private llvm::TrailingObjects<CGFunctionInfo, CGFunctionInfoArgInfo> {
+      private llvm::TrailingObjects<CGFunctionInfo, CGFunctionInfoArgInfo,
+                                    FunctionProtoType::ExtParameterInfo> {
   typedef CGFunctionInfoArgInfo ArgInfo;
+  typedef FunctionProtoType::ExtParameterInfo ExtParameterInfo;
 
   /// The LLVM::CallingConv to use for this function (as specified by the
   /// user).
@@ -378,7 +380,8 @@ class CGFunctionInfo final
   /// The struct representing all arguments passed in memory.  Only used when
   /// passing non-trivial types with inalloca.  Not part of the profile.
   llvm::StructType *ArgStruct;
-  unsigned ArgStructAlign;
+  unsigned ArgStructAlign : 31;
+  unsigned HasExtParameterInfos : 1;
 
   unsigned NumArgs;
 
@@ -389,7 +392,19 @@ class CGFunctionInfo final
     return getTrailingObjects<ArgInfo>();
   }
 
-  size_t numTrailingObjects(OverloadToken<ArgInfo>) { return NumArgs + 1; }
+  ExtParameterInfo *getExtParameterInfosBuffer() {
+    return getTrailingObjects<ExtParameterInfo>();
+  }
+  const ExtParameterInfo *getExtParameterInfosBuffer() const{
+    return getTrailingObjects<ExtParameterInfo>();
+  }
+
+  size_t numTrailingObjects(OverloadToken<ArgInfo>) const {
+    return NumArgs + 1;
+  }
+  size_t numTrailingObjects(OverloadToken<ExtParameterInfo>) const {
+    return (HasExtParameterInfos ? NumArgs : 0);
+  }
   friend class TrailingObjects;
 
   CGFunctionInfo() : Required(RequiredArgs::All) {}
@@ -399,6 +414,7 @@ public:
                                 bool instanceMethod,
                                 bool chainCall,
                                 const FunctionType::ExtInfo &extInfo,
+                                ArrayRef<ExtParameterInfo> paramInfos,
                                 CanQualType resultType,
                                 ArrayRef<CanQualType> argTypes,
                                 RequiredArgs required);
@@ -472,6 +488,16 @@ public:
   ABIArgInfo &getReturnInfo() { return getArgsBuffer()[0].info; }
   const ABIArgInfo &getReturnInfo() const { return getArgsBuffer()[0].info; }
 
+  ArrayRef<ExtParameterInfo> getExtParameterInfos() const {
+    if (!HasExtParameterInfos) return {};
+    return llvm::makeArrayRef(getExtParameterInfosBuffer(), NumArgs);
+  }
+  ExtParameterInfo getExtParameterInfo(unsigned argIndex) const {
+    assert(argIndex <= NumArgs);
+    if (!HasExtParameterInfos) return ExtParameterInfo();
+    return getExtParameterInfos()[argIndex];
+  }
+
   /// \brief Return true if this function uses inalloca arguments.
   bool usesInAlloca() const { return ArgStruct; }
 
@@ -494,6 +520,11 @@ public:
     ID.AddBoolean(HasRegParm);
     ID.AddInteger(RegParm);
     ID.AddInteger(Required.getOpaqueData());
+    ID.AddBoolean(HasExtParameterInfos);
+    if (HasExtParameterInfos) {
+      for (auto paramInfo : getExtParameterInfos())
+        ID.AddInteger(paramInfo.getOpaqueValue());
+    }
     getReturnType().Profile(ID);
     for (const auto &I : arguments())
       I.type.Profile(ID);
@@ -502,6 +533,7 @@ public:
                       bool InstanceMethod,
                       bool ChainCall,
                       const FunctionType::ExtInfo &info,
+                      ArrayRef<ExtParameterInfo> paramInfos,
                       RequiredArgs required,
                       CanQualType resultType,
                       ArrayRef<CanQualType> argTypes) {
@@ -513,6 +545,11 @@ public:
     ID.AddBoolean(info.getHasRegParm());
     ID.AddInteger(info.getRegParm());
     ID.AddInteger(required.getOpaqueData());
+    ID.AddBoolean(!paramInfos.empty());
+    if (!paramInfos.empty()) {
+      for (auto paramInfo : paramInfos)
+        ID.AddInteger(paramInfo.getOpaqueValue());
+    }
     resultType.Profile(ID);
     for (ArrayRef<CanQualType>::iterator
            i = argTypes.begin(), e = argTypes.end(); i != e; ++i) {
