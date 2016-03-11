@@ -420,8 +420,10 @@ void Writer<ELFT>::scanRelocs(
                     !Target->isSizeRel(Type);
       if (CBP || Dynrel) {
         uint32_t DynType;
-        if (CBP)
-          DynType = Body.IsTls ? Target->TlsGotRel : Target->GotRel;
+        if (Body.IsTls)
+          DynType = Target->TlsGotRel;
+        else if (CBP)
+          DynType = Target->GotRel;
         else
           DynType = Target->RelativeRel;
         Out<ELFT>::RelaDyn->addReloc(
