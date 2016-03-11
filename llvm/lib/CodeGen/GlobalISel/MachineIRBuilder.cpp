@@ -53,16 +53,11 @@ MachineBasicBlock::iterator MachineIRBuilder::getInsertPt() {
   return Before ? getMBB().begin() : getMBB().end();
 }
 
-MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
-                                           unsigned Op0, unsigned Op1) {
-  return buildInstr(Opcode, nullptr, Res, Op0, Op1);
-}
-
-MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty,
-                                           unsigned Res, unsigned Op0,
-                                           unsigned Op1) {
-  MachineInstr *NewMI =
-      BuildMI(getMF(), DL, getTII().get(Opcode), Res).addReg(Op0).addReg(Op1);
+//------------------------------------------------------------------------------
+// Build instruction variants.
+//------------------------------------------------------------------------------
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty) {
+  MachineInstr *NewMI = BuildMI(getMF(), DL, getTII().get(Opcode));
   if (Ty) {
     assert(isPreISelGenericOpcode(Opcode) &&
            "Only generic instruction can have a type");
@@ -75,21 +70,28 @@ MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty,
 }
 
 MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
-                                           unsigned Op0) {
-  assert(!isPreISelGenericOpcode(Opcode) &&
-         "Generic instruction must have a type");
+                                           unsigned Op0, unsigned Op1) {
+  return buildInstr(Opcode, nullptr, Res, Op0, Op1);
+}
 
-  MachineInstr *NewMI =
-      BuildMI(getMF(), DL, getTII().get(Opcode), Res).addReg(Op0);
-  getMBB().insert(getInsertPt(), NewMI);
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty,
+                                           unsigned Res, unsigned Op0,
+                                           unsigned Op1) {
+  MachineInstr *NewMI = buildInstr(Opcode, Ty);
+  MachineInstrBuilder(getMF(), NewMI)
+      .addReg(Res, RegState::Define)
+      .addReg(Op0)
+      .addReg(Op1);
+  return NewMI;
+}
+
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
+                                           unsigned Op0) {
+  MachineInstr *NewMI = buildInstr(Opcode, nullptr);
+  MachineInstrBuilder(getMF(), NewMI).addReg(Res, RegState::Define).addReg(Op0);
   return NewMI;
 }
 
 MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode) {
-  assert(!isPreISelGenericOpcode(Opcode) &&
-         "Generic instruction must have a type");
-
-  MachineInstr *NewMI = BuildMI(getMF(), DL, getTII().get(Opcode));
-  getMBB().insert(getInsertPt(), NewMI);
-  return NewMI;
+  return buildInstr(Opcode, nullptr);
 }
