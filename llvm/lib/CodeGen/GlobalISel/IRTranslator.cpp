@@ -112,7 +112,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   // Setup the arguments.
   MachineBasicBlock &MBB = getOrCreateBB(F.front());
-  MIRBuilder.setBasicBlock(MBB);
+  MIRBuilder.setMBB(MBB);
   SmallVector<unsigned, 8> VRegArgs;
   for (const Argument &Arg: F.args())
     VRegArgs.push_back(getOrCreateVReg(&Arg));
@@ -123,7 +123,9 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
 
   for (const BasicBlock &BB: F) {
     MachineBasicBlock &MBB = getOrCreateBB(BB);
-    MIRBuilder.setBasicBlock(MBB);
+    // Set the insertion point of all the following translations to
+    // the end of this basic block.
+    MIRBuilder.setMBB(MBB);
     for (const Instruction &Inst: BB) {
       bool Succeeded = translate(Inst);
       if (!Succeeded) {

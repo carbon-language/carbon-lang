@@ -74,7 +74,7 @@ public:
   /// Set the insertion point to the beginning (\p Beginning = true) or end
   /// (\p Beginning = false) of \p MBB.
   /// \pre \p MBB must be contained by getMF().
-  void setBasicBlock(MachineBasicBlock &MBB, bool Beginning = false);
+  void setMBB(MachineBasicBlock &MBB, bool Beginning = false);
 
   /// Set the insertion point to before (\p Before = true) or after
   /// (\p Before = false) \p MI.

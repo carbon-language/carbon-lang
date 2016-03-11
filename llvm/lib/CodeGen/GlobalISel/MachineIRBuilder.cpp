@@ -28,7 +28,7 @@ void MachineIRBuilder::setFunction(MachineFunction &MF) {
   this->MI = nullptr;
 }
 
-void MachineIRBuilder::setBasicBlock(MachineBasicBlock &MBB, bool Beginning) {
+void MachineIRBuilder::setMBB(MachineBasicBlock &MBB, bool Beginning) {
   this->MBB = &MBB;
   Before = Beginning;
   assert(&getMF() == MBB.getParent() &&
@@ -37,7 +37,7 @@ void MachineIRBuilder::setBasicBlock(MachineBasicBlock &MBB, bool Beginning) {
 
 void MachineIRBuilder::setInstr(MachineInstr &MI, bool Before) {
   assert(MI.getParent() && "Instruction is not part of a basic block");
-  setBasicBlock(*MI.getParent());
+  setMBB(*MI.getParent());
   this->MI = &MI;
   this->Before = Before;
 }
