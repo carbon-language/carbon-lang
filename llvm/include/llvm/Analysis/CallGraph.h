@@ -295,8 +295,8 @@ private:
 /// This class implements the concept of an analysis pass used by the \c
 /// ModuleAnalysisManager to run an analysis over a module and cache the
 /// resulting data.
-class CallGraphAnalysis : public AnalysisBase<CallGraphAnalysis> {
-  friend AnalysisBase<CallGraphAnalysis>;
+class CallGraphAnalysis : public AnalysisInfoMixin<CallGraphAnalysis> {
+  friend AnalysisInfoMixin<CallGraphAnalysis>;
   static char PassID;
 
 public:
@@ -310,7 +310,7 @@ public:
 };
 
 /// \brief Printer pass for the \c CallGraphAnalysis results.
-class CallGraphPrinterPass : public PassBase<CallGraphPrinterPass> {
+class CallGraphPrinterPass : public PassInfoMixin<CallGraphPrinterPass> {
   raw_ostream &OS;
 
 public:

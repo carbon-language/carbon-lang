@@ -70,8 +70,8 @@ struct NoOpModulePass {
 };
 
 /// \brief No-op module analysis.
-class NoOpModuleAnalysis : public AnalysisBase<NoOpModuleAnalysis> {
-  friend AnalysisBase<NoOpModuleAnalysis>;
+class NoOpModuleAnalysis : public AnalysisInfoMixin<NoOpModuleAnalysis> {
+  friend AnalysisInfoMixin<NoOpModuleAnalysis>;
   static char PassID;
 
 public:
@@ -89,8 +89,8 @@ struct NoOpCGSCCPass {
 };
 
 /// \brief No-op CGSCC analysis.
-class NoOpCGSCCAnalysis : public AnalysisBase<NoOpCGSCCAnalysis> {
-  friend AnalysisBase<NoOpCGSCCAnalysis>;
+class NoOpCGSCCAnalysis : public AnalysisInfoMixin<NoOpCGSCCAnalysis> {
+  friend AnalysisInfoMixin<NoOpCGSCCAnalysis>;
   static char PassID;
 
 public:
@@ -106,8 +106,8 @@ struct NoOpFunctionPass {
 };
 
 /// \brief No-op function analysis.
-class NoOpFunctionAnalysis : public AnalysisBase<NoOpFunctionAnalysis> {
-  friend AnalysisBase<NoOpFunctionAnalysis>;
+class NoOpFunctionAnalysis : public AnalysisInfoMixin<NoOpFunctionAnalysis> {
+  friend AnalysisInfoMixin<NoOpFunctionAnalysis>;
   static char PassID;
 
 public:
@@ -123,8 +123,8 @@ struct NoOpLoopPass {
 };
 
 /// \brief No-op loop analysis.
-class NoOpLoopAnalysis : public AnalysisBase<NoOpLoopAnalysis> {
-  friend AnalysisBase<NoOpLoopAnalysis>;
+class NoOpLoopAnalysis : public AnalysisInfoMixin<NoOpLoopAnalysis> {
+  friend AnalysisInfoMixin<NoOpLoopAnalysis>;
   static char PassID;
 
 public:

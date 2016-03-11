@@ -923,8 +923,8 @@ public:
 };
 
 /// \brief Analysis pass that exposes the \c RegionInfo for a function.
-class RegionInfoAnalysis : public AnalysisBase<RegionInfoAnalysis> {
-  friend AnalysisBase<RegionInfoAnalysis>;
+class RegionInfoAnalysis : public AnalysisInfoMixin<RegionInfoAnalysis> {
+  friend AnalysisInfoMixin<RegionInfoAnalysis>;
   static char PassID;
 
 public:
@@ -934,7 +934,7 @@ public:
 };
 
 /// \brief Printer pass for the \c RegionInfo.
-class RegionInfoPrinterPass : public PassBase<RegionInfoPrinterPass> {
+class RegionInfoPrinterPass : public PassInfoMixin<RegionInfoPrinterPass> {
   raw_ostream &OS;
 
 public:
@@ -943,7 +943,7 @@ public:
 };
 
 /// \brief Verifier pass for the \c RegionInfo.
-struct RegionInfoVerifierPass : PassBase<RegionInfoVerifierPass> {
+struct RegionInfoVerifierPass : PassInfoMixin<RegionInfoVerifierPass> {
   PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
 };
 

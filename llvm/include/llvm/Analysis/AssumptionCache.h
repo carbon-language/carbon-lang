@@ -93,8 +93,8 @@ public:
 ///
 /// This analysis is intended for use with the new pass manager and will vend
 /// assumption caches for a given function.
-class AssumptionAnalysis : public AnalysisBase<AssumptionAnalysis> {
-  friend AnalysisBase<AssumptionAnalysis>;
+class AssumptionAnalysis : public AnalysisInfoMixin<AssumptionAnalysis> {
+  friend AnalysisInfoMixin<AssumptionAnalysis>;
   static char PassID;
 
 public:
@@ -110,7 +110,7 @@ public:
 };
 
 /// \brief Printer pass for the \c AssumptionAnalysis results.
-class AssumptionPrinterPass : public PassBase<AssumptionPrinterPass> {
+class AssumptionPrinterPass : public PassInfoMixin<AssumptionPrinterPass> {
   raw_ostream &OS;
 
 public:

@@ -61,8 +61,8 @@ public:
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
-class ObjCARCAA : public AnalysisBase<ObjCARCAA> {
-  friend AnalysisBase<ObjCARCAA>;
+class ObjCARCAA : public AnalysisInfoMixin<ObjCARCAA> {
+  friend AnalysisInfoMixin<ObjCARCAA>;
   static char PassID;
 
 public:

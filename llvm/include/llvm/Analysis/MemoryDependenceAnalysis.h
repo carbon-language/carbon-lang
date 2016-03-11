@@ -471,8 +471,9 @@ private:
 ///
 /// This is essentially a no-op because the results are computed entirely
 /// lazily.
-class MemoryDependenceAnalysis : public AnalysisBase<MemoryDependenceAnalysis> {
-  friend AnalysisBase<MemoryDependenceAnalysis>;
+class MemoryDependenceAnalysis
+    : public AnalysisInfoMixin<MemoryDependenceAnalysis> {
+  friend AnalysisInfoMixin<MemoryDependenceAnalysis>;
   static char PassID;
 
 public:

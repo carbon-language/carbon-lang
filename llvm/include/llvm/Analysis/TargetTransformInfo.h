@@ -889,7 +889,7 @@ TargetTransformInfo::TargetTransformInfo(T Impl)
 /// is done in a subtarget specific way and LLVM supports compiling different
 /// functions targeting different subtargets in order to support runtime
 /// dispatch according to the observed subtarget.
-class TargetIRAnalysis : public AnalysisBase<TargetIRAnalysis> {
+class TargetIRAnalysis : public AnalysisInfoMixin<TargetIRAnalysis> {
 public:
   typedef TargetTransformInfo Result;
 
@@ -922,7 +922,7 @@ public:
   Result run(const Function &F);
 
 private:
-  friend AnalysisBase<TargetIRAnalysis>;
+  friend AnalysisInfoMixin<TargetIRAnalysis>;
   static char PassID;
 
   /// \brief The callback used to produce a result.

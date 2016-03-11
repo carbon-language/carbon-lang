@@ -109,8 +109,8 @@ private:
 ///
 /// FIXME: We really should refactor CFL to use the analysis more heavily, and
 /// in particular to leverage invalidation to trigger re-computation of sets.
-class CFLAA : public AnalysisBase<CFLAA> {
-  friend AnalysisBase<CFLAA>;
+class CFLAA : public AnalysisInfoMixin<CFLAA> {
+  friend AnalysisInfoMixin<CFLAA>;
   static char PassID;
 
 public:

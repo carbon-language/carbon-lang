@@ -38,8 +38,8 @@ struct PostDominatorTree : public DominatorTreeBase<BasicBlock> {
 
 /// \brief Analysis pass which computes a \c PostDominatorTree.
 class PostDominatorTreeAnalysis
-    : public AnalysisBase<PostDominatorTreeAnalysis> {
-  friend AnalysisBase<PostDominatorTreeAnalysis>;
+    : public AnalysisInfoMixin<PostDominatorTreeAnalysis> {
+  friend AnalysisInfoMixin<PostDominatorTreeAnalysis>;
   static char PassID;
 
 public:
@@ -53,7 +53,7 @@ public:
 
 /// \brief Printer pass for the \c PostDominatorTree.
 class PostDominatorTreePrinterPass
-    : public PassBase<PostDominatorTreePrinterPass> {
+    : public PassInfoMixin<PostDominatorTreePrinterPass> {
   raw_ostream &OS;
 
 public:

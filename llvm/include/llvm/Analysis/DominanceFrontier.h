@@ -169,8 +169,8 @@ extern template class ForwardDominanceFrontierBase<BasicBlock>;
 
 /// \brief Analysis pass which computes a \c DominanceFrontier.
 class DominanceFrontierAnalysis
-    : public AnalysisBase<DominanceFrontierAnalysis> {
-  friend AnalysisBase<DominanceFrontierAnalysis>;
+    : public AnalysisInfoMixin<DominanceFrontierAnalysis> {
+  friend AnalysisInfoMixin<DominanceFrontierAnalysis>;
   static char PassID;
 
 public:
@@ -183,7 +183,7 @@ public:
 
 /// \brief Printer pass for the \c DominanceFrontier.
 class DominanceFrontierPrinterPass
-    : public PassBase<DominanceFrontierPrinterPass> {
+    : public PassInfoMixin<DominanceFrontierPrinterPass> {
   raw_ostream &OS;
 
 public:

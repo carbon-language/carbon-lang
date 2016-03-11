@@ -48,8 +48,8 @@ private:
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
-class TypeBasedAA : public AnalysisBase<TypeBasedAA> {
-  friend AnalysisBase<TypeBasedAA>;
+class TypeBasedAA : public AnalysisInfoMixin<TypeBasedAA> {
+  friend AnalysisInfoMixin<TypeBasedAA>;
   static char PassID;
 
 public:

@@ -19,7 +19,7 @@ using namespace llvm;
 
 namespace {
 
-class TestFunctionAnalysis : public AnalysisBase<TestFunctionAnalysis> {
+class TestFunctionAnalysis : public AnalysisInfoMixin<TestFunctionAnalysis> {
 public:
   struct Result {
     Result(int Count) : InstructionCount(Count) {}
@@ -40,7 +40,7 @@ public:
   }
 
 private:
-  friend AnalysisBase<TestFunctionAnalysis>;
+  friend AnalysisInfoMixin<TestFunctionAnalysis>;
   static char PassID;
 
   int &Runs;
@@ -48,7 +48,7 @@ private:
 
 char TestFunctionAnalysis::PassID;
 
-class TestModuleAnalysis : public AnalysisBase<TestModuleAnalysis> {
+class TestModuleAnalysis : public AnalysisInfoMixin<TestModuleAnalysis> {
 public:
   struct Result {
     Result(int Count) : FunctionCount(Count) {}
@@ -66,7 +66,7 @@ public:
   }
 
 private:
-  friend AnalysisBase<TestModuleAnalysis>;
+  friend AnalysisInfoMixin<TestModuleAnalysis>;
   static char PassID;
 
   int &Runs;
@@ -74,7 +74,7 @@ private:
 
 char TestModuleAnalysis::PassID;
 
-struct TestModulePass : PassBase<TestModulePass> {
+struct TestModulePass : PassInfoMixin<TestModulePass> {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}
 
   PreservedAnalyses run(Module &M) {
@@ -85,11 +85,12 @@ struct TestModulePass : PassBase<TestModulePass> {
   int &RunCount;
 };
 
-struct TestPreservingModulePass : PassBase<TestPreservingModulePass> {
+struct TestPreservingModulePass : PassInfoMixin<TestPreservingModulePass> {
   PreservedAnalyses run(Module &M) { return PreservedAnalyses::all(); }
 };
 
-struct TestMinPreservingModulePass : PassBase<TestMinPreservingModulePass> {
+struct TestMinPreservingModulePass
+    : PassInfoMixin<TestMinPreservingModulePass> {
   PreservedAnalyses run(Module &M, ModuleAnalysisManager *AM) {
     PreservedAnalyses PA;
 
@@ -101,7 +102,7 @@ struct TestMinPreservingModulePass : PassBase<TestMinPreservingModulePass> {
   }
 };
 
-struct TestFunctionPass : PassBase<TestFunctionPass> {
+struct TestFunctionPass : PassInfoMixin<TestFunctionPass> {
   TestFunctionPass(int &RunCount, int &AnalyzedInstrCount,
                    int &AnalyzedFunctionCount,
                    bool OnlyUseCachedResults = false)
@@ -140,7 +141,8 @@ struct TestFunctionPass : PassBase<TestFunctionPass> {
 
 // A test function pass that invalidates all function analyses for a function
 // with a specific name.
-struct TestInvalidationFunctionPass : PassBase<TestInvalidationFunctionPass> {
+struct TestInvalidationFunctionPass
+    : PassInfoMixin<TestInvalidationFunctionPass> {
   TestInvalidationFunctionPass(StringRef FunctionName) : Name(FunctionName) {}
 
   PreservedAnalyses run(Function &F) {

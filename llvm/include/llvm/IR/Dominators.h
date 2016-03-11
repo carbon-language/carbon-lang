@@ -182,8 +182,8 @@ template <> struct GraphTraits<DominatorTree*>
 };
 
 /// \brief Analysis pass which computes a \c DominatorTree.
-class DominatorTreeAnalysis : public AnalysisBase<DominatorTreeAnalysis> {
-  friend AnalysisBase<DominatorTreeAnalysis>;
+class DominatorTreeAnalysis : public AnalysisInfoMixin<DominatorTreeAnalysis> {
+  friend AnalysisInfoMixin<DominatorTreeAnalysis>;
   static char PassID;
 
 public:
@@ -195,7 +195,8 @@ public:
 };
 
 /// \brief Printer pass for the \c DominatorTree.
-class DominatorTreePrinterPass : public PassBase<DominatorTreePrinterPass> {
+class DominatorTreePrinterPass
+    : public PassInfoMixin<DominatorTreePrinterPass> {
   raw_ostream &OS;
 
 public:
@@ -204,7 +205,7 @@ public:
 };
 
 /// \brief Verifier pass for the \c DominatorTree.
-struct DominatorTreeVerifierPass : PassBase<DominatorTreeVerifierPass> {
+struct DominatorTreeVerifierPass : PassInfoMixin<DominatorTreeVerifierPass> {
   PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
 };
 

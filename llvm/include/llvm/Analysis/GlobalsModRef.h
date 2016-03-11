@@ -118,8 +118,8 @@ private:
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
-class GlobalsAA : public AnalysisBase<GlobalsAA> {
-  friend AnalysisBase<GlobalsAA>;
+class GlobalsAA : public AnalysisInfoMixin<GlobalsAA> {
+  friend AnalysisInfoMixin<GlobalsAA>;
   static char PassID;
 
 public:

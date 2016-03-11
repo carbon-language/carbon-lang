@@ -65,7 +65,7 @@ typedef OuterAnalysisManagerProxy<ModuleAnalysisManager, LazyCallGraph::SCC>
 /// within this run safely.
 template <typename CGSCCPassT>
 class ModuleToPostOrderCGSCCPassAdaptor
-    : public PassBase<ModuleToPostOrderCGSCCPassAdaptor<CGSCCPassT>> {
+    : public PassInfoMixin<ModuleToPostOrderCGSCCPassAdaptor<CGSCCPassT>> {
 public:
   explicit ModuleToPostOrderCGSCCPassAdaptor(CGSCCPassT Pass)
       : Pass(std::move(Pass)) {}
@@ -159,7 +159,7 @@ typedef OuterAnalysisManagerProxy<CGSCCAnalysisManager, Function>
 /// within this run safely.
 template <typename FunctionPassT>
 class CGSCCToFunctionPassAdaptor
-    : public PassBase<CGSCCToFunctionPassAdaptor<FunctionPassT>> {
+    : public PassInfoMixin<CGSCCToFunctionPassAdaptor<FunctionPassT>> {
 public:
   explicit CGSCCToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}

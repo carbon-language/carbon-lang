@@ -47,8 +47,8 @@ private:
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
-class ScopedNoAliasAA : public AnalysisBase<ScopedNoAliasAA> {
-  friend AnalysisBase<ScopedNoAliasAA>;
+class ScopedNoAliasAA : public AnalysisInfoMixin<ScopedNoAliasAA> {
+  friend AnalysisInfoMixin<ScopedNoAliasAA>;
   static char PassID;
 
 public:

@@ -167,10 +167,11 @@ private:
 // Forward declare the analysis manager template.
 template <typename IRUnitT> class AnalysisManager;
 
-/// A CRTP mix-in base class to help define types that are valid passes.
+/// A CRTP mix-in to automatically provide informational APIs needed for
+/// passes.
 ///
 /// This provides some boiler plate for types that are passes.
-template <typename DerivedT> struct PassBase {
+template <typename DerivedT> struct PassInfoMixin {
   /// Returns the name of the derived pass type.
   static StringRef name() {
     StringRef Name = getTypeName<DerivedT>();
@@ -180,10 +181,14 @@ template <typename DerivedT> struct PassBase {
   }
 };
 
-/// A CRTP mix-in base class to help define types that are valid analyses.
+/// A CRTP mix-in to automatically provide informational APIs needed for
+/// analysis passes.
 ///
-/// This provides some boiler plate for types that are analysis passes.
-template <typename DerivedT> struct AnalysisBase : PassBase<DerivedT> {
+/// This provides some boiler plate for types that are analysis passes. It
+/// automatically mixes in \c PassInfoMixin and adds informational APIs
+/// specifically used for analyses.
+template <typename DerivedT>
+struct AnalysisInfoMixin : PassInfoMixin<DerivedT> {
   /// Returns an opaque, unique ID for this pass type.
   ///
   /// Note that this requires the derived type provide a static member whose
@@ -212,7 +217,7 @@ template <typename DerivedT> struct AnalysisBase : PassBase<DerivedT> {
 /// manager's invalidation routine with the PreservedAnalyses of each pass it
 /// runs.
 template <typename IRUnitT>
-class PassManager : public PassBase<PassManager<IRUnitT>> {
+class PassManager : public PassInfoMixin<PassManager<IRUnitT>> {
 public:
   /// \brief Construct a pass manager.
   ///
@@ -663,7 +668,7 @@ typedef AnalysisManager<Function> FunctionAnalysisManager;
 /// provides.
 template <typename AnalysisManagerT, typename IRUnitT>
 class InnerAnalysisManagerProxy
-    : public AnalysisBase<
+    : public AnalysisInfoMixin<
           InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>> {
 public:
   class Result {
@@ -746,7 +751,8 @@ public:
   Result run(IRUnitT &IR) { return Result(*AM); }
 
 private:
-  friend AnalysisBase<InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
+  friend AnalysisInfoMixin<
+      InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
   static char PassID;
 
   AnalysisManagerT *AM;
@@ -775,7 +781,7 @@ typedef InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>
 /// returned PreservedAnalysis set.
 template <typename AnalysisManagerT, typename IRUnitT>
 class OuterAnalysisManagerProxy
-    : public AnalysisBase<
+    : public AnalysisInfoMixin<
           OuterAnalysisManagerProxy<AnalysisManagerT, IRUnitT>> {
 public:
   /// \brief Result proxy object for \c OuterAnalysisManagerProxy.
@@ -818,7 +824,8 @@ public:
   Result run(IRUnitT &) { return Result(*AM); }
 
 private:
-  friend AnalysisBase<OuterAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
+  friend AnalysisInfoMixin<
+      OuterAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
   static char PassID;
 
   const AnalysisManagerT *AM;
@@ -857,7 +864,7 @@ typedef OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>
 /// violate this principle.
 template <typename FunctionPassT>
 class ModuleToFunctionPassAdaptor
-    : public PassBase<ModuleToFunctionPassAdaptor<FunctionPassT>> {
+    : public PassInfoMixin<ModuleToFunctionPassAdaptor<FunctionPassT>> {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}
@@ -929,7 +936,7 @@ createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
 /// This is a no-op pass which simply forces a specific analysis pass's result
 /// to be available when it is run.
 template <typename AnalysisT>
-struct RequireAnalysisPass : PassBase<RequireAnalysisPass<AnalysisT>> {
+struct RequireAnalysisPass : PassInfoMixin<RequireAnalysisPass<AnalysisT>> {
   /// \brief Run this pass over some unit of IR.
   ///
   /// This pass can be run over any unit of IR and use any analysis manager
@@ -951,7 +958,8 @@ struct RequireAnalysisPass : PassBase<RequireAnalysisPass<AnalysisT>> {
 /// This is a no-op pass which simply forces a specific analysis result to be
 /// invalidated when it is run.
 template <typename AnalysisT>
-struct InvalidateAnalysisPass : PassBase<InvalidateAnalysisPass<AnalysisT>> {
+struct InvalidateAnalysisPass
+    : PassInfoMixin<InvalidateAnalysisPass<AnalysisT>> {
   /// \brief Run this pass over some unit of IR.
   ///
   /// This pass can be run over any unit of IR and use any analysis manager
@@ -973,7 +981,7 @@ struct InvalidateAnalysisPass : PassBase<InvalidateAnalysisPass<AnalysisT>> {
 ///
 /// As a consequence fo not preserving any analyses, this pass will force all
 /// analysis passes to be re-run to produce fresh results if any are needed.
-struct InvalidateAllAnalysesPass : PassBase<InvalidateAllAnalysesPass> {
+struct InvalidateAllAnalysesPass : PassInfoMixin<InvalidateAllAnalysesPass> {
   /// \brief Run this pass over some unit of IR.
   template <typename IRUnitT> PreservedAnalyses run(IRUnitT &Arg) {
     return PreservedAnalyses::none();

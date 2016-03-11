@@ -38,8 +38,8 @@ private:
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
-class SCEVAA : public AnalysisBase<SCEVAA> {
-  friend AnalysisBase<SCEVAA>;
+class SCEVAA : public AnalysisInfoMixin<SCEVAA> {
+  friend AnalysisInfoMixin<SCEVAA>;
   static char PassID;
 
 public:

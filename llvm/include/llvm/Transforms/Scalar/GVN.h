@@ -42,7 +42,7 @@ class GVNLegacyPass;
 ///
 /// FIXME: We should have a good summary of the GVN algorithm implemented by
 /// this particular pass here.
-class GVN : public PassBase<GVN> {
+class GVN : public PassInfoMixin<GVN> {
 public:
 
   /// \brief Run the pass over the function.

@@ -838,7 +838,7 @@ bool isIdentifiedFunctionLocal(const Value *V);
 /// This manager effectively wraps the AnalysisManager for registering alias
 /// analyses. When you register your alias analysis with this manager, it will
 /// ensure the analysis itself is registered with its AnalysisManager.
-class AAManager : public AnalysisBase<AAManager> {
+class AAManager : public AnalysisInfoMixin<AAManager> {
 public:
   typedef AAResults Result;
 
@@ -874,7 +874,7 @@ public:
   }
 
 private:
-  friend AnalysisBase<AAManager>;
+  friend AnalysisInfoMixin<AAManager>;
   static char PassID;
 
   SmallVector<void (*)(Function &F, AnalysisManager<Function> &AM,
