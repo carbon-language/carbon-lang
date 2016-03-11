@@ -510,7 +510,8 @@ static void reportUndefined(SymbolTable<ELFT> &Symtab, SymbolBody *Sym) {
 }
 
 template <class ELFT>
-static bool shouldKeepInSymtab(const ObjectFile<ELFT> &File, StringRef SymName,
+static bool shouldKeepInSymtab(const elf::ObjectFile<ELFT> &File,
+                               StringRef SymName,
                                const typename ELFFile<ELFT>::Elf_Sym &Sym) {
   if (Sym.getType() == STT_FILE)
     return false;
@@ -752,7 +753,7 @@ StringRef Writer<ELFT>::getOutputSectionName(InputSectionBase<ELFT> *S) const {
 
 template <class ELFT>
 void reportDiscarded(InputSectionBase<ELFT> *IS,
-                     const std::unique_ptr<ObjectFile<ELFT>> &File) {
+                     const std::unique_ptr<elf::ObjectFile<ELFT>> &File) {
   if (!Config->PrintGcSections || !IS || IS->Live)
     return;
   llvm::errs() << "removing unused section from '" << IS->getSectionName()

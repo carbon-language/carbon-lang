@@ -369,7 +369,7 @@ EHInputSection<ELFT>::getOffset(uintX_t Offset) {
 }
 
 template <class ELFT>
-MergeInputSection<ELFT>::MergeInputSection(ObjectFile<ELFT> *F,
+MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
                                            const Elf_Shdr *Header)
     : SplitInputSection<ELFT>(F, Header, InputSectionBase<ELFT>::Merge) {}
 

@@ -181,7 +181,7 @@ static void saveBCFile(Module &M) {
 // Merge all the bitcode files we have seen, codegen the result and return
 // the resulting ObjectFile.
 template <class ELFT>
-ObjectFile<ELFT> *SymbolTable<ELFT>::createCombinedLtoObject() {
+elf::ObjectFile<ELFT> *SymbolTable<ELFT>::createCombinedLtoObject() {
   LLVMContext Context;
   Module Combined("ld-temp.o", Context);
   IRMover Mover(Combined);
