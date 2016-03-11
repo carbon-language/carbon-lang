@@ -492,14 +492,6 @@ class CGFunctionInfo final
     return getTrailingObjects<ExtParameterInfo>();
   }
 
-  size_t numTrailingObjects(OverloadToken<ArgInfo>) const {
-    return NumArgs + 1;
-  }
-  size_t numTrailingObjects(OverloadToken<ExtParameterInfo>) const {
-    return (HasExtParameterInfos ? NumArgs : 0);
-  }
-  friend class TrailingObjects;
-
   CGFunctionInfo() : Required(RequiredArgs::All) {}
 
 public:
@@ -512,6 +504,15 @@ public:
                                 ArrayRef<CanQualType> argTypes,
                                 RequiredArgs required);
   void operator delete(void *p) { ::operator delete(p); }
+
+  // Friending class TrailingObjects is apparently not good enough for MSVC,
+  // so these have to be public.
+  size_t numTrailingObjects(OverloadToken<ArgInfo>) const {
+    return NumArgs + 1;
+  }
+  size_t numTrailingObjects(OverloadToken<ExtParameterInfo>) const {
+    return (HasExtParameterInfos ? NumArgs : 0);
+  }
 
   typedef const ArgInfo *const_arg_iterator;
   typedef ArgInfo *arg_iterator;
