@@ -450,8 +450,10 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
         continue;
     if (!(Flags & BasicSymbolRef::SF_Global))
         continue;
-    if (Flags & BasicSymbolRef::SF_FormatSpecific)
+    if (GV->hasAppendingLinkage()) {
+      ExtraKeeps.push_back(GV->getName().copy(Alloc));
       continue;
+    }
     uint8_t Visibility = getGvVisibility(GV);
 
     SmallString<64> Name;
