@@ -505,6 +505,7 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
            << format(": Function size is %dB, CFI covers "
                      "%dB\n",
                      Function.getSize(), CurFDE.getAddressRange());
+    return false;
   }
 
   Function.setLSDAAddress(CurFDE.getLSDAAddress());
