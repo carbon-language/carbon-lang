@@ -98,6 +98,14 @@ public:
   /// \return The newly created instruction.
   MachineInstr *buildInstr(unsigned Opcode, Type *Ty);
 
+  /// Build and insert <empty> = \p Opcode [\p Ty] \p BB.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  /// \pre Ty == nullptr or isPreISelGenericOpcode(Opcode)
+  ///
+  /// \return The newly created instruction.
+  MachineInstr *buildInstr(unsigned Opcode, Type *Ty, MachineBasicBlock &BB);
+
   /// Build and insert \p Res<def> = \p Opcode [\p Ty] \p Op0, \p Op1.
   ///
   /// \pre setBasicBlock or setMI must have been called.

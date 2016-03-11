@@ -95,3 +95,10 @@ MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, unsigned Res,
 MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode) {
   return buildInstr(Opcode, nullptr);
 }
+
+MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, Type *Ty,
+                                           MachineBasicBlock &BB) {
+  MachineInstr *NewMI = buildInstr(Opcode, Ty);
+  MachineInstrBuilder(getMF(), NewMI).addMBB(&BB);
+  return NewMI;
+}

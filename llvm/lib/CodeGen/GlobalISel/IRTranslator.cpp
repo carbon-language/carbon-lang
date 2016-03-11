@@ -82,11 +82,30 @@ bool IRTranslator::translateReturn(const Instruction &Inst) {
   return CLI->LowerReturn(MIRBuilder, Ret, !Ret ? 0 : getOrCreateVReg(*Ret));
 }
 
+bool IRTranslator::translateBr(const Instruction &Inst) {
+  assert(isa<BranchInst>(Inst) && "Branch expected");
+  const BranchInst &BrInst = *cast<BranchInst>(&Inst);
+  if (BrInst.isUnconditional()) {
+    const BasicBlock &BrTgt = *cast<BasicBlock>(BrInst.getOperand(0));
+    MachineBasicBlock &TgtBB = getOrCreateBB(BrTgt);
+    MIRBuilder.buildInstr(TargetOpcode::G_BR, BrTgt.getType(), TgtBB);
+  } else {
+    assert(0 && "Not yet implemented");
+  }
+  // Link successors.
+  MachineBasicBlock &CurBB = MIRBuilder.getMBB();
+  for (const BasicBlock *Succ : BrInst.successors())
+    CurBB.addSuccessor(&getOrCreateBB(*Succ));
+  return true;
+}
+
 bool IRTranslator::translate(const Instruction &Inst) {
   MIRBuilder.setDebugLoc(Inst.getDebugLoc());
   switch(Inst.getOpcode()) {
   case Instruction::Add:
     return translateADD(Inst);
+  case Instruction::Br:
+    return translateBr(Inst);
   case Instruction::Ret:
     return translateReturn(Inst);
 

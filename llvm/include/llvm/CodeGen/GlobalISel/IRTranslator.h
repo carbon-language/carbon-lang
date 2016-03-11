@@ -89,6 +89,8 @@ private:
   // 3. Create the generic instruction.
   bool translateADD(const Instruction &Inst);
 
+  bool translateBr(const Instruction &Inst);
+
   bool translateReturn(const Instruction &Inst);
 
   // Builder for machine instruction a la IRBuilder.
