@@ -585,11 +585,16 @@ void GVN::ValueTable::verifyRemoved(const Value *V) const {
 //===----------------------------------------------------------------------===//
 
 PreservedAnalyses GVN::run(Function &F, AnalysisManager<Function> &AM) {
-  bool Changed = runImpl(F, AM.getResult<AssumptionAnalysis>(F),
-                         AM.getResult<DominatorTreeAnalysis>(F),
-                         AM.getResult<TargetLibraryAnalysis>(F),
-                         AM.getResult<AAManager>(F),
-                         &AM.getResult<MemoryDependenceAnalysis>(F));
+  // FIXME: The order of evaluation of these 'getResult' calls is very
+  // significant! Re-ordering these variables will cause GVN when run alone to
+  // be less effective! We should fix memdep and basic-aa to not exhibit this
+  // behavior, but until then don't change the order here.
+  auto &AC = AM.getResult<AssumptionAnalysis>(F);
+  auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
+  auto &TLI = AM.getResult<TargetLibraryAnalysis>(F);
+  auto &AA = AM.getResult<AAManager>(F);
+  auto &MemDep = AM.getResult<MemoryDependenceAnalysis>(F);
+  bool Changed = runImpl(F, AC, DT, TLI, AA, &MemDep);
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
