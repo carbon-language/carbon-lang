@@ -98,7 +98,8 @@ public:
   bool isInPlt() const { return PltIndex != -1U; }
 
   template <class ELFT>
-  typename llvm::object::ELFFile<ELFT>::uintX_t getVA() const;
+  typename llvm::object::ELFFile<ELFT>::uintX_t
+  getVA(typename llvm::object::ELFFile<ELFT>::uintX_t Addend = 0) const;
   template <class ELFT>
   typename llvm::object::ELFFile<ELFT>::uintX_t getGotVA() const;
   template <class ELFT>

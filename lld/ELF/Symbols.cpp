@@ -29,49 +29,78 @@ using namespace lld;
 using namespace lld::elf;
 
 template <class ELFT>
-typename ELFFile<ELFT>::uintX_t SymbolBody::getVA() const {
-  switch (kind()) {
-  case DefinedSyntheticKind: {
-    auto *D = cast<DefinedSynthetic<ELFT>>(this);
-    return D->Section.getVA() + D->Value;
+static typename ELFFile<ELFT>::uintX_t
+getSymVA(const SymbolBody &Body, typename ELFFile<ELFT>::uintX_t &Addend) {
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+
+  switch (Body.kind()) {
+  case SymbolBody::DefinedSyntheticKind: {
+    auto &D = cast<DefinedSynthetic<ELFT>>(Body);
+    return D.Section.getVA() + D.Value;
   }
-  case DefinedRegularKind: {
-    auto *D = cast<DefinedRegular<ELFT>>(this);
-    InputSectionBase<ELFT> *SC = D->Section;
+  case SymbolBody::DefinedRegularKind: {
+    auto &D = cast<DefinedRegular<ELFT>>(Body);
+    InputSectionBase<ELFT> *SC = D.Section;
 
     // This is an absolute symbol.
     if (!SC)
-      return D->Sym.st_value;
+      return D.Sym.st_value;
     assert(SC->Live);
 
-    if (D->Sym.getType() == STT_TLS)
-      return SC->OutSec->getVA() + SC->getOffset(D->Sym) -
+    if (D.Sym.getType() == STT_TLS)
+      return SC->OutSec->getVA() + SC->getOffset(D.Sym) -
              Out<ELFT>::TlsPhdr->p_vaddr;
-    return SC->OutSec->getVA() + SC->getOffset(D->Sym);
+    return SC->OutSec->getVA() + SC->getOffset(D.Sym);
   }
-  case DefinedCommonKind:
-    return Out<ELFT>::Bss->getVA() + cast<DefinedCommon>(this)->OffsetInBss;
-  case SharedKind: {
-    auto *SS = cast<SharedSymbol<ELFT>>(this);
-    if (!SS->NeedsCopyOrPltAddr)
+  case SymbolBody::DefinedCommonKind:
+    return Out<ELFT>::Bss->getVA() + cast<DefinedCommon>(Body).OffsetInBss;
+  case SymbolBody::SharedKind: {
+    auto &SS = cast<SharedSymbol<ELFT>>(Body);
+    if (!SS.NeedsCopyOrPltAddr)
       return 0;
-    if (SS->IsFunc)
-      return getPltVA<ELFT>();
+    if (SS.IsFunc)
+      return Body.getPltVA<ELFT>();
     else
-      return Out<ELFT>::Bss->getVA() + SS->OffsetInBss;
+      return Out<ELFT>::Bss->getVA() + SS.OffsetInBss;
   }
-  case UndefinedElfKind:
-  case UndefinedKind:
+  case SymbolBody::UndefinedElfKind:
+  case SymbolBody::UndefinedKind:
     return 0;
-  case LazyKind:
-    assert(isUsedInRegularObj() && "Lazy symbol reached writer");
+  case SymbolBody::LazyKind:
+    assert(Body.isUsedInRegularObj() && "Lazy symbol reached writer");
     return 0;
-  case DefinedBitcodeKind:
+  case SymbolBody::DefinedBitcodeKind:
     llvm_unreachable("Should have been replaced");
-  case DefinedLocalKind:
-    llvm_unreachable("Should not be used");
+  case SymbolBody::DefinedLocalKind: {
+    auto &L = cast<LocalSymbol<ELFT>>(Body);
+    InputSectionBase<ELFT> *SC = L.Section;
+
+    // According to the ELF spec reference to a local symbol from outside the
+    // group are not allowed. Unfortunately .eh_frame breaks that rule and must
+    // be treated specially. For now we just replace the symbol with 0.
+    if (SC == InputSection<ELFT>::Discarded || !SC->Live)
+      return 0;
+
+    const Elf_Sym &Sym = L.Sym;
+    uintX_t Offset = Sym.st_value;
+    if (Sym.getType() == STT_TLS)
+      return (SC->OutSec->getVA() + SC->getOffset(Sym) + Addend) -
+             Out<ELFT>::TlsPhdr->p_vaddr;
+    if (Sym.getType() == STT_SECTION) {
+      Offset += Addend;
+      Addend = 0;
+    }
+    return SC->OutSec->getVA() + SC->getOffset(Offset);
+  }
   }
   llvm_unreachable("Invalid symbol kind");
+}
+
+template <class ELFT>
+typename ELFFile<ELFT>::uintX_t
+SymbolBody::getVA(typename ELFFile<ELFT>::uintX_t Addend) const {
+  return getSymVA<ELFT>(*this, Addend) + Addend;
 }
 
 template <class ELFT>
@@ -231,10 +260,10 @@ std::string elf::demangle(StringRef Name) {
 #endif
 }
 
-template uint32_t SymbolBody::template getVA<ELF32LE>() const;
-template uint32_t SymbolBody::template getVA<ELF32BE>() const;
-template uint64_t SymbolBody::template getVA<ELF64LE>() const;
-template uint64_t SymbolBody::template getVA<ELF64BE>() const;
+template uint32_t SymbolBody::template getVA<ELF32LE>(uint32_t) const;
+template uint32_t SymbolBody::template getVA<ELF32BE>(uint32_t) const;
+template uint64_t SymbolBody::template getVA<ELF64LE>(uint64_t) const;
+template uint64_t SymbolBody::template getVA<ELF64BE>(uint64_t) const;
 
 template uint32_t SymbolBody::template getGotVA<ELF32LE>() const;
 template uint32_t SymbolBody::template getGotVA<ELF32BE>() const;

@@ -171,48 +171,6 @@ InputSectionBase<ELFT>::findMipsPairedReloc(uint8_t *Buf, uint32_t SymIndex,
   return nullptr;
 }
 
-// Returns a VA which a relocatin RI refers to. Used only for local symbols.
-// For non-local symbols, use SymbolBody::getVA instead.
-template <class ELFT, bool IsRela>
-static typename ELFFile<ELFT>::uintX_t
-getLocalRelTarget(const ObjectFile<ELFT> &File,
-                  const Elf_Rel_Impl<ELFT, IsRela> &RI,
-                  typename ELFFile<ELFT>::uintX_t Addend) {
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
-
-  // PPC64 has a special relocation representing the TOC base pointer
-  // that does not have a corresponding symbol.
-  if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC)
-    return getPPC64TocBase() + Addend;
-
-  const Elf_Sym *Sym =
-      File.getObj().getRelocationSymbol(&RI, File.getSymbolTable());
-
-  if (!Sym)
-    fatal("Unsupported relocation without symbol");
-
-  InputSectionBase<ELFT> *Section = File.getSection(*Sym);
-
-  if (Sym->getType() == STT_TLS)
-    return (Section->OutSec->getVA() + Section->getOffset(*Sym) + Addend) -
-           Out<ELFT>::TlsPhdr->p_vaddr;
-
-  // According to the ELF spec reference to a local symbol from outside
-  // the group are not allowed. Unfortunately .eh_frame breaks that rule
-  // and must be treated specially. For now we just replace the symbol with
-  // 0.
-  if (Section == InputSection<ELFT>::Discarded || !Section->Live)
-    return Addend;
-
-  uintX_t Offset = Sym->st_value;
-  if (Sym->getType() == STT_SECTION) {
-    Offset += Addend;
-    Addend = 0;
-  }
-  return Section->OutSec->getVA() + Section->getOffset(Offset) + Addend;
-}
-
 template <class ELFT>
 template <bool isRela>
 void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
@@ -244,7 +202,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     if (Target->canRelaxTls(Type, &Body)) {
       uintX_t SymVA;
       if (Body.isLocal())
-        SymVA = getLocalRelTarget(*File, RI, 0);
+        SymVA = Body.getVA<ELFT>();
       else if (Target->needsGot(Type, Body))
         SymVA = Body.getGotVA<ELFT>();
       else
@@ -256,11 +214,19 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       continue;
     }
 
-    // Handle relocations for local symbols -- they never get
-    // resolved so we don't allocate a SymbolBody.
     uintX_t A = getAddend<ELFT>(RI);
+
+    // PPC64 has a special relocation representing the TOC base pointer
+    // that does not have a corresponding symbol.
+    if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC) {
+      uintX_t SymVA = getPPC64TocBase() + A;
+      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, 0);
+      continue;
+    }
+
+    // Handle relocations for local symbols.
     if (Body.isLocal()) {
-      uintX_t SymVA = getLocalRelTarget(*File, RI, A);
+      uintX_t SymVA = Body.getVA<ELFT>(A);
       uint8_t *PairedLoc = nullptr;
       if (Config->EMachine == EM_MIPS) {
         if (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32)

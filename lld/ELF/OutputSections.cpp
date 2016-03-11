@@ -266,21 +266,12 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     SymbolBody *Sym = Rel.Sym;
 
     if (IsRela) {
-      uintX_t VA = 0;
-      uintX_t Addend = Rel.Addend;
-      if (Rel.UseSymVA) {
-        if (auto *L = dyn_cast<LocalSymbol<ELFT>>(Sym)) {
-          uintX_t Pos = L->Sym.st_value;
-          if (L->Sym.getType() == STT_SECTION) {
-            Pos += Addend;
-            Addend = 0;
-          }
-          VA = L->Section->OutSec->getVA() + L->Section->getOffset(Pos);
-        } else {
-          VA = Sym->getVA<ELFT>();
-        }
-      }
-      reinterpret_cast<Elf_Rela *>(P)->r_addend = Addend + VA;
+      uintX_t VA;
+      if (Rel.UseSymVA)
+        VA = Sym->getVA<ELFT>(Rel.Addend);
+      else
+        VA = Rel.Addend;
+      reinterpret_cast<Elf_Rela *>(P)->r_addend = VA;
     }
 
     P->r_offset = Rel.getOffset();
