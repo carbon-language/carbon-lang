@@ -182,6 +182,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     uint32_t Type = RI.getType(Config->Mips64EL);
     uintX_t Offset = getOffset(RI.r_offset);
+    uintX_t A = getAddend<ELFT>(RI);
     if (Offset == (uintX_t)-1)
       continue;
 
@@ -192,8 +193,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     if (Target->pointsToLocalDynamicGotEntry(Type) &&
         !Target->canRelaxTls(Type, nullptr)) {
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getTlsIndexVA() +
-                              getAddend<ELFT>(RI));
+                          Out<ELFT>::Got->getTlsIndexVA() + A);
       continue;
     }
 
@@ -213,8 +213,6 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       I += Target->relaxTls(BufLoc, BufEnd, Type, AddrLoc, SymVA, Body);
       continue;
     }
-
-    uintX_t A = getAddend<ELFT>(RI);
 
     // PPC64 has a special relocation representing the TOC base pointer
     // that does not have a corresponding symbol.
@@ -258,8 +256,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     if (Target->isTlsGlobalDynamicRel(Type) &&
         !Target->canRelaxTls(Type, &Body)) {
       Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getGlobalDynAddr(Body) +
-                              getAddend<ELFT>(RI));
+                          Out<ELFT>::Got->getGlobalDynAddr(Body) + A);
       continue;
     }
 
