@@ -1662,11 +1662,11 @@ void MemoryDependenceResults::verifyRemoved(Instruction *D) const {
 char MemoryDependenceAnalysis::PassID;
 
 MemoryDependenceResults
-MemoryDependenceAnalysis::run(Function &F, AnalysisManager<Function> *AM) {
-  auto &AA = AM->getResult<AAManager>(F);
-  auto &AC = AM->getResult<AssumptionAnalysis>(F);
-  auto &TLI = AM->getResult<TargetLibraryAnalysis>(F);
-  auto *DT = AM->getCachedResult<DominatorTreeAnalysis>(F);
+MemoryDependenceAnalysis::run(Function &F, AnalysisManager<Function> &AM) {
+  auto &AA = AM.getResult<AAManager>(F);
+  auto &AC = AM.getResult<AssumptionAnalysis>(F);
+  auto &TLI = AM.getResult<TargetLibraryAnalysis>(F);
+  auto *DT = AM.getCachedResult<DominatorTreeAnalysis>(F);
   return MemoryDependenceResults(AA, AC, TLI, DT);
 }
 

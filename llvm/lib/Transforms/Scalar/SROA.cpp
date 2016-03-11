@@ -4241,9 +4241,9 @@ PreservedAnalyses SROA::runImpl(Function &F, DominatorTree &RunDT,
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
-PreservedAnalyses SROA::run(Function &F, AnalysisManager<Function> *AM) {
-  return runImpl(F, AM->getResult<DominatorTreeAnalysis>(F),
-                 AM->getResult<AssumptionAnalysis>(F));
+PreservedAnalyses SROA::run(Function &F, AnalysisManager<Function> &AM) {
+  return runImpl(F, AM.getResult<DominatorTreeAnalysis>(F),
+                 AM.getResult<AssumptionAnalysis>(F));
 }
 
 /// A legacy pass for the legacy pass manager that wraps the \c SROA pass.

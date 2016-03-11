@@ -584,12 +584,12 @@ void GVN::ValueTable::verifyRemoved(const Value *V) const {
 //                                GVN Pass
 //===----------------------------------------------------------------------===//
 
-PreservedAnalyses GVN::run(Function &F, AnalysisManager<Function> *AM) {
-  bool Changed = runImpl(F, AM->getResult<AssumptionAnalysis>(F),
-                         AM->getResult<DominatorTreeAnalysis>(F),
-                         AM->getResult<TargetLibraryAnalysis>(F),
-                         AM->getResult<AAManager>(F),
-                         &AM->getResult<MemoryDependenceAnalysis>(F));
+PreservedAnalyses GVN::run(Function &F, AnalysisManager<Function> &AM) {
+  bool Changed = runImpl(F, AM.getResult<AssumptionAnalysis>(F),
+                         AM.getResult<DominatorTreeAnalysis>(F),
+                         AM.getResult<TargetLibraryAnalysis>(F),
+                         AM.getResult<AAManager>(F),
+                         &AM.getResult<MemoryDependenceAnalysis>(F));
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
