@@ -1430,13 +1430,15 @@ namespace llvm {
   };
 
   /// \brief Analysis pass that exposes the \c ScalarEvolution for a function.
-  struct ScalarEvolutionAnalysis : AnalysisBase<ScalarEvolutionAnalysis> {
+  class ScalarEvolutionAnalysis : public AnalysisBase<ScalarEvolutionAnalysis> {
+    friend AnalysisBase<ScalarEvolutionAnalysis>;
+    static char PassID;
+
+  public:
     typedef ScalarEvolution Result;
 
     ScalarEvolution run(Function &F, AnalysisManager<Function> *AM);
   };
-
-  extern template class AnalysisBase<ScalarEvolutionAnalysis>;
 
   /// \brief Printer pass for the \c ScalarEvolutionAnalysis results.
   class ScalarEvolutionPrinterPass

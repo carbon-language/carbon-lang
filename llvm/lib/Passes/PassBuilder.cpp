@@ -70,7 +70,11 @@ struct NoOpModulePass {
 };
 
 /// \brief No-op module analysis.
-struct NoOpModuleAnalysis : AnalysisBase<NoOpModuleAnalysis> {
+class NoOpModuleAnalysis : public AnalysisBase<NoOpModuleAnalysis> {
+  friend AnalysisBase<NoOpModuleAnalysis>;
+  static char PassID;
+
+public:
   struct Result {};
   Result run(Module &) { return Result(); }
   static StringRef name() { return "NoOpModuleAnalysis"; }
@@ -85,7 +89,11 @@ struct NoOpCGSCCPass {
 };
 
 /// \brief No-op CGSCC analysis.
-struct NoOpCGSCCAnalysis : AnalysisBase<NoOpCGSCCAnalysis> {
+class NoOpCGSCCAnalysis : public AnalysisBase<NoOpCGSCCAnalysis> {
+  friend AnalysisBase<NoOpCGSCCAnalysis>;
+  static char PassID;
+
+public:
   struct Result {};
   Result run(LazyCallGraph::SCC &) { return Result(); }
   static StringRef name() { return "NoOpCGSCCAnalysis"; }
@@ -98,7 +106,11 @@ struct NoOpFunctionPass {
 };
 
 /// \brief No-op function analysis.
-struct NoOpFunctionAnalysis : AnalysisBase<NoOpFunctionAnalysis> {
+class NoOpFunctionAnalysis : public AnalysisBase<NoOpFunctionAnalysis> {
+  friend AnalysisBase<NoOpFunctionAnalysis>;
+  static char PassID;
+
+public:
   struct Result {};
   Result run(Function &) { return Result(); }
   static StringRef name() { return "NoOpFunctionAnalysis"; }
@@ -111,11 +123,20 @@ struct NoOpLoopPass {
 };
 
 /// \brief No-op loop analysis.
-struct NoOpLoopAnalysis : AnalysisBase<NoOpLoopAnalysis> {
+class NoOpLoopAnalysis : public AnalysisBase<NoOpLoopAnalysis> {
+  friend AnalysisBase<NoOpLoopAnalysis>;
+  static char PassID;
+
+public:
   struct Result {};
   Result run(Loop &) { return Result(); }
   static StringRef name() { return "NoOpLoopAnalysis"; }
 };
+
+char NoOpModuleAnalysis::PassID;
+char NoOpCGSCCAnalysis::PassID;
+char NoOpFunctionAnalysis::PassID;
+char NoOpLoopAnalysis::PassID;
 
 } // End anonymous namespace.
 

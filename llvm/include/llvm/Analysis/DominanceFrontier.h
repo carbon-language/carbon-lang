@@ -168,15 +168,18 @@ extern template class DominanceFrontierBase<BasicBlock>;
 extern template class ForwardDominanceFrontierBase<BasicBlock>;
 
 /// \brief Analysis pass which computes a \c DominanceFrontier.
-struct DominanceFrontierAnalysis : AnalysisBase<DominanceFrontierAnalysis> {
+class DominanceFrontierAnalysis
+    : public AnalysisBase<DominanceFrontierAnalysis> {
+  friend AnalysisBase<DominanceFrontierAnalysis>;
+  static char PassID;
+
+public:
   /// \brief Provide the result typedef for this analysis pass.
   typedef DominanceFrontier Result;
 
   /// \brief Run the analysis pass over a function and produce a dominator tree.
   DominanceFrontier run(Function &F, AnalysisManager<Function> *AM);
 };
-
-extern template class AnalysisBase<DominanceFrontierAnalysis>;
 
 /// \brief Printer pass for the \c DominanceFrontier.
 class DominanceFrontierPrinterPass

@@ -182,15 +182,17 @@ template <> struct GraphTraits<DominatorTree*>
 };
 
 /// \brief Analysis pass which computes a \c DominatorTree.
-struct DominatorTreeAnalysis : AnalysisBase<DominatorTreeAnalysis> {
+class DominatorTreeAnalysis : public AnalysisBase<DominatorTreeAnalysis> {
+  friend AnalysisBase<DominatorTreeAnalysis>;
+  static char PassID;
+
+public:
   /// \brief Provide the result typedef for this analysis pass.
   typedef DominatorTree Result;
 
   /// \brief Run the analysis pass over a function and produce a dominator tree.
   DominatorTree run(Function &F);
 };
-
-extern template class AnalysisBase<DominatorTreeAnalysis>;
 
 /// \brief Printer pass for the \c DominatorTree.
 class DominatorTreePrinterPass : public PassBase<DominatorTreePrinterPass> {

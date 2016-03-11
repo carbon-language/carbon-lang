@@ -118,7 +118,11 @@ private:
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
-struct GlobalsAA : AnalysisBase<GlobalsAA> {
+class GlobalsAA : public AnalysisBase<GlobalsAA> {
+  friend AnalysisBase<GlobalsAA>;
+  static char PassID;
+
+public:
   typedef GlobalsAAResult Result;
 
   GlobalsAAResult run(Module &M, AnalysisManager<Module> *AM);

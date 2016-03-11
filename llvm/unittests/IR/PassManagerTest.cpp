@@ -40,8 +40,13 @@ public:
   }
 
 private:
+  friend AnalysisBase<TestFunctionAnalysis>;
+  static char PassID;
+
   int &Runs;
 };
+
+char TestFunctionAnalysis::PassID;
 
 class TestModuleAnalysis : public AnalysisBase<TestModuleAnalysis> {
 public:
@@ -61,8 +66,13 @@ public:
   }
 
 private:
+  friend AnalysisBase<TestModuleAnalysis>;
+  static char PassID;
+
   int &Runs;
 };
+
+char TestModuleAnalysis::PassID;
 
 struct TestModulePass : PassBase<TestModulePass> {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}

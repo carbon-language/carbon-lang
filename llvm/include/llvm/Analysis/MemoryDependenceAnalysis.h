@@ -471,7 +471,11 @@ private:
 ///
 /// This is essentially a no-op because the results are computed entirely
 /// lazily.
-struct MemoryDependenceAnalysis : AnalysisBase<MemoryDependenceAnalysis> {
+class MemoryDependenceAnalysis : public AnalysisBase<MemoryDependenceAnalysis> {
+  friend AnalysisBase<MemoryDependenceAnalysis>;
+  static char PassID;
+
+public:
   typedef MemoryDependenceResults Result;
 
   MemoryDependenceResults run(Function &F, AnalysisManager<Function> *AM);

@@ -292,14 +292,15 @@ public:
   TargetLibraryInfo run(Function &F);
 
 private:
+  friend AnalysisBase<TargetLibraryAnalysis>;
+  static char PassID;
+
   Optional<TargetLibraryInfoImpl> PresetInfoImpl;
 
   StringMap<std::unique_ptr<TargetLibraryInfoImpl>> Impls;
 
   TargetLibraryInfoImpl &lookupInfoImpl(Triple T);
 };
-
-extern template class AnalysisBase<TargetLibraryAnalysis>;
 
 class TargetLibraryInfoWrapperPass : public ImmutablePass {
   TargetLibraryInfoImpl TLIImpl;

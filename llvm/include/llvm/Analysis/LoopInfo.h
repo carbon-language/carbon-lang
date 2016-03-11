@@ -787,13 +787,15 @@ template <> struct GraphTraits<Loop*> {
 };
 
 /// \brief Analysis pass that exposes the \c LoopInfo for a function.
-struct LoopAnalysis : AnalysisBase<LoopAnalysis> {
+class LoopAnalysis : public AnalysisBase<LoopAnalysis> {
+  friend AnalysisBase<LoopAnalysis>;
+  static char PassID;
+
+public:
   typedef LoopInfo Result;
 
   LoopInfo run(Function &F, AnalysisManager<Function> *AM);
 };
-
-extern template class AnalysisBase<LoopAnalysis>;
 
 /// \brief Printer pass for the \c LoopAnalysis results.
 class LoopPrinterPass : public PassBase<LoopPrinterPass> {

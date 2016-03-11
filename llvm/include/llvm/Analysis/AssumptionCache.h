@@ -93,7 +93,11 @@ public:
 ///
 /// This analysis is intended for use with the new pass manager and will vend
 /// assumption caches for a given function.
-struct AssumptionAnalysis : AnalysisBase<AssumptionAnalysis> {
+class AssumptionAnalysis : public AnalysisBase<AssumptionAnalysis> {
+  friend AnalysisBase<AssumptionAnalysis>;
+  static char PassID;
+
+public:
   typedef AssumptionCache Result;
 
   AssumptionAnalysis() {}
@@ -104,8 +108,6 @@ struct AssumptionAnalysis : AnalysisBase<AssumptionAnalysis> {
 
   AssumptionCache run(Function &F) { return AssumptionCache(F); }
 };
-
-extern template class AnalysisBase<AssumptionAnalysis>;
 
 /// \brief Printer pass for the \c AssumptionAnalysis results.
 class AssumptionPrinterPass : public PassBase<AssumptionPrinterPass> {

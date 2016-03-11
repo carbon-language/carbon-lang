@@ -922,6 +922,9 @@ public:
   Result run(const Function &F);
 
 private:
+  friend AnalysisBase<TargetIRAnalysis>;
+  static char PassID;
+
   /// \brief The callback used to produce a result.
   ///
   /// We use a completely opaque callback so that targets can provide whatever
@@ -937,8 +940,6 @@ private:
   /// \brief Helper function used as the callback in the default constructor.
   static Result getDefaultTTI(const Function &F);
 };
-
-extern template class AnalysisBase<TargetIRAnalysis>;
 
 /// \brief Wrapper pass for TargetTransformInfo.
 ///

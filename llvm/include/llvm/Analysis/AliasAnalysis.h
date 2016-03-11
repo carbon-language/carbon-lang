@@ -874,6 +874,9 @@ public:
   }
 
 private:
+  friend AnalysisBase<AAManager>;
+  static char PassID;
+
   SmallVector<void (*)(Function &F, AnalysisManager<Function> &AM,
                        AAResults &AAResults),
               4> ResultGetters;
@@ -894,8 +897,6 @@ private:
       AAResults.addAAResult(*R);
   }
 };
-
-extern template class AnalysisBase<AAManager>;
 
 /// A wrapper pass to provide the legacy pass manager access to a suitably
 /// prepared AAResults object.

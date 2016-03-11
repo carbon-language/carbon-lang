@@ -183,16 +183,22 @@ template <typename DerivedT> struct PassBase {
 /// A CRTP mix-in base class to help define types that are valid analyses.
 ///
 /// This provides some boiler plate for types that are analysis passes.
-template <typename DerivedT> class AnalysisBase : public PassBase<DerivedT> {
-  static char PassID;
-
-public:
+template <typename DerivedT> struct AnalysisBase : PassBase<DerivedT> {
   /// Returns an opaque, unique ID for this pass type.
-  static void *ID() { return (void *)&PassID; }
+  ///
+  /// Note that this requires the derived type provide a static member whose
+  /// address can be converted to a void pointer.
+  ///
+  /// FIXME: The only reason the derived type needs to provide this rather than
+  /// this mixin providing it is due to broken implementations which cannot
+  /// correctly unique a templated static so that they have the same addresses
+  /// for each instantiation and are definitively emitted once for each
+  /// instantiation. The only currently known platform with this limitation are
+  /// Windows DLL builds, specifically building each part of LLVM as a DLL. If
+  /// we ever remove that build configuration, this mixin can provide the
+  /// static PassID as well.
+  static void *ID() { return (void *)&DerivedT::PassID; }
 };
-
-/// Private static data to provide unique ID.
-template <typename DerivedT> char AnalysisBase<DerivedT>::PassID;
 
 /// \brief Manages a sequence of passes over units of IR.
 ///
@@ -740,16 +746,20 @@ public:
   Result run(IRUnitT &IR) { return Result(*AM); }
 
 private:
+  friend AnalysisBase<InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
+  static char PassID;
+
   AnalysisManagerT *AM;
 };
+
+template <typename AnalysisManagerT, typename IRUnitT>
+char InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>::PassID;
 
 extern template class InnerAnalysisManagerProxy<FunctionAnalysisManager,
                                                 Module>;
 /// Provide the \c FunctionAnalysisManager to \c Module proxy.
 typedef InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>
     FunctionAnalysisManagerModuleProxy;
-
-extern template class AnalysisBase<FunctionAnalysisManagerModuleProxy>;
 
 /// \brief A function analysis which acts as a proxy for a module analysis
 /// manager.
@@ -808,8 +818,14 @@ public:
   Result run(IRUnitT &) { return Result(*AM); }
 
 private:
+  friend AnalysisBase<OuterAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
+  static char PassID;
+
   const AnalysisManagerT *AM;
 };
+
+template <typename AnalysisManagerT, typename IRUnitT>
+char OuterAnalysisManagerProxy<AnalysisManagerT, IRUnitT>::PassID;
 
 extern template class OuterAnalysisManagerProxy<ModuleAnalysisManager,
                                                 Function>;
