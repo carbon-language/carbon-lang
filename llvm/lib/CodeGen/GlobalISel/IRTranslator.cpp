@@ -51,8 +51,8 @@ unsigned IRTranslator::getOrCreateVReg(const Value *Val) {
   return ValReg;
 }
 
-MachineBasicBlock &IRTranslator::getOrCreateBB(const BasicBlock *BB) {
-  MachineBasicBlock *&MBB = BBToMBB[BB];
+MachineBasicBlock &IRTranslator::getOrCreateBB(const BasicBlock &BB) {
+  MachineBasicBlock *&MBB = BBToMBB[&BB];
   if (!MBB) {
     MachineFunction &MF = MIRBuilder.getMF();
     MBB = MF.CreateMachineBasicBlock();
@@ -111,7 +111,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   MIRBuilder.setFunction(MF);
   MRI = &MF.getRegInfo();
   // Setup the arguments.
-  MachineBasicBlock &MBB = getOrCreateBB(&F.front());
+  MachineBasicBlock &MBB = getOrCreateBB(F.front());
   MIRBuilder.setBasicBlock(MBB);
   SmallVector<unsigned, 8> VRegArgs;
   for (const Argument &Arg: F.args())
@@ -122,7 +122,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
     report_fatal_error("Unable to lower arguments");
 
   for (const BasicBlock &BB: F) {
-    MachineBasicBlock &MBB = getOrCreateBB(&BB);
+    MachineBasicBlock &MBB = getOrCreateBB(BB);
     MIRBuilder.setBasicBlock(MBB);
     for (const Instruction &Inst: BB) {
       bool Succeeded = translate(Inst);
