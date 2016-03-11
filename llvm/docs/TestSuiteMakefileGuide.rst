@@ -115,6 +115,7 @@ To run the test suite, you need to use the following steps:
    the test suite in the source tree.
 
    .. code-block:: bash
+   
        % mkdir test-suite-build
        % cd test-suite-build
        % cmake ../test-suite
@@ -122,6 +123,7 @@ To run the test suite, you need to use the following steps:
 #. Build the benchmarks, using the makefiles CMake generated.
 
 .. code-block:: bash
+
     % make
     Scanning dependencies of target timeit-target
     [  0%] Building C object tools/CMakeFiles/timeit-target.dir/timeit.c.o
@@ -138,6 +140,7 @@ To run the test suite, you need to use the following steps:
 #. Run the tests with lit:
 
 .. code-block:: bash
+
     % lit -v -j 1 . -o results.json
     -- Testing: 474 tests, 1 threads --
     PASS: test-suite :: MultiSource/Applications/ALAC/decode/alacconvert-decode.test (1 of 474)
