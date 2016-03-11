@@ -69,7 +69,7 @@ public:
   /// Setters for the insertion point.
   /// @{
   /// Set the MachineFunction where to build instructions.
-  void setFunction(MachineFunction &);
+  void setMF(MachineFunction &);
 
   /// Set the insertion point to the beginning (\p Beginning = true) or end
   /// (\p Beginning = false) of \p MBB.

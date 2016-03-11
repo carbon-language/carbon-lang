@@ -20,7 +20,7 @@
 
 using namespace llvm;
 
-void MachineIRBuilder::setFunction(MachineFunction &MF) {
+void MachineIRBuilder::setMF(MachineFunction &MF) {
   this->MF = &MF;
   this->MBB = nullptr;
   this->TII = MF.getSubtarget().getInstrInfo();

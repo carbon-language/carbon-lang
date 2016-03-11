@@ -108,7 +108,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   if (F.empty())
     return false;
   CLI = MF.getSubtarget().getCallLowering();
-  MIRBuilder.setFunction(MF);
+  MIRBuilder.setMF(MF);
   MRI = &MF.getRegInfo();
   // Setup the arguments.
   MachineBasicBlock &MBB = getOrCreateBB(F.front());
