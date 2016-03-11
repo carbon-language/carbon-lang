@@ -59,7 +59,8 @@ public:
     DefinedFirst,
     DefinedRegularKind = DefinedFirst,
     SharedKind,
-    DefinedElfLast = SharedKind,
+    DefinedLocalKind,
+    DefinedElfLast = DefinedLocalKind,
     DefinedCommonKind,
     DefinedBitcodeKind,
     DefinedSyntheticKind,
@@ -79,6 +80,7 @@ public:
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
   bool isLazy() const { return SymbolKind == LazyKind; }
   bool isShared() const { return SymbolKind == SharedKind; }
+  bool isLocal() const { return SymbolKind == DefinedLocalKind; }
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
 
   // Returns the symbol name.
@@ -113,7 +115,7 @@ public:
   // has chosen the object among other objects having the same name,
   // you can access P->Backref->Body to get the resolver's result.
   void setBackref(Symbol *P) { Backref = P; }
-  SymbolBody *repl() { return Backref ? Backref->Body : this; }
+  SymbolBody &repl() { return Backref ? *Backref->Body : *this; }
   Symbol *getSymbol() { return Backref; }
 
   // Decides which symbol should "win" in the symbol table, this or
@@ -302,6 +304,18 @@ public:
   uintX_t OffsetInBss = 0;
 
   bool needsCopy() const { return this->NeedsCopyOrPltAddr && !this->IsFunc; }
+};
+
+template <class ELFT> class LocalSymbol : public DefinedElf<ELFT> {
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+
+public:
+  LocalSymbol(const Elf_Sym &Sym)
+      : DefinedElf<ELFT>(SymbolBody::DefinedLocalKind, "", Sym) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == SymbolBody::DefinedLocalKind;
+  }
 };
 
 // This class represents a symbol defined in an archive file. It is

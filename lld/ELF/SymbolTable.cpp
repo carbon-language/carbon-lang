@@ -92,7 +92,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   auto *F = cast<ObjectFile<ELFT>>(FileP);
   ObjectFiles.emplace_back(cast<ObjectFile<ELFT>>(File.release()));
   F->parse(ComdatGroups);
-  for (SymbolBody *B : F->getSymbols())
+  for (SymbolBody *B : F->getNonLocalSymbols())
     resolve(B);
 }
 
@@ -146,7 +146,7 @@ static void addBitcodeFile(IRMover &Mover, BitcodeFile &F,
                                  /*ShouldLazyLoadMetadata*/ false));
   std::vector<GlobalValue *> Keep;
   for (SymbolBody *B : F.getSymbols()) {
-    if (B->repl() != B)
+    if (&B->repl() != B)
       continue;
     auto *DB = dyn_cast<DefinedBitcode>(B);
     if (!DB)
@@ -194,7 +194,7 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
   ObjectFile<ELFT> *Obj = createCombinedLtoObject();
   llvm::DenseSet<StringRef> DummyGroups;
   Obj->parse(DummyGroups);
-  for (SymbolBody *Body : Obj->getSymbols()) {
+  for (SymbolBody *Body : Obj->getNonLocalSymbols()) {
     Symbol *Sym = insert(Body);
     if (!Sym->Body->isUndefined() && Body->isUndefined())
       continue;

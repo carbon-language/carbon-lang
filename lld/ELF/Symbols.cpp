@@ -68,6 +68,8 @@ typename ELFFile<ELFT>::uintX_t SymbolBody::getVA() const {
     return 0;
   case DefinedBitcodeKind:
     llvm_unreachable("Should have been replaced");
+  case DefinedLocalKind:
+    llvm_unreachable("Should not be used");
   }
   llvm_unreachable("Invalid symbol kind");
 }

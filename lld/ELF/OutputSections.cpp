@@ -53,9 +53,9 @@ GotPltSection<ELFT>::GotPltSection()
   this->Header.sh_addralign = sizeof(uintX_t);
 }
 
-template <class ELFT> void GotPltSection<ELFT>::addEntry(SymbolBody *Sym) {
-  Sym->GotPltIndex = Target->GotPltHeaderEntriesNum + Entries.size();
-  Entries.push_back(Sym);
+template <class ELFT> void GotPltSection<ELFT>::addEntry(SymbolBody &Sym) {
+  Sym.GotPltIndex = Target->GotPltHeaderEntriesNum + Entries.size();
+  Entries.push_back(&Sym);
 }
 
 template <class ELFT> bool GotPltSection<ELFT>::empty() const {
@@ -84,21 +84,21 @@ GotSection<ELFT>::GotSection()
   this->Header.sh_addralign = sizeof(uintX_t);
 }
 
-template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody *Sym) {
-  Sym->GotIndex = Entries.size();
-  Entries.push_back(Sym);
+template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody &Sym) {
+  Sym.GotIndex = Entries.size();
+  Entries.push_back(&Sym);
 }
 
 template <class ELFT> void GotSection<ELFT>::addMipsLocalEntry() {
   ++MipsLocalEntries;
 }
 
-template <class ELFT> bool GotSection<ELFT>::addDynTlsEntry(SymbolBody *Sym) {
-  if (Sym->hasGlobalDynIndex())
+template <class ELFT> bool GotSection<ELFT>::addDynTlsEntry(SymbolBody &Sym) {
+  if (Sym.hasGlobalDynIndex())
     return false;
-  Sym->GlobalDynIndex = Target->GotHeaderEntriesNum + Entries.size();
+  Sym.GlobalDynIndex = Target->GotHeaderEntriesNum + Entries.size();
   // Global Dynamic TLS entries take two GOT slots.
-  Entries.push_back(Sym);
+  Entries.push_back(&Sym);
   Entries.push_back(nullptr);
   return true;
 }
@@ -177,7 +177,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
     // for detailed description:
     // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
     // As the first approach, we can just store addresses for all symbols.
-    if (Config->EMachine != EM_MIPS && canBePreempted(B))
+    if (Config->EMachine != EM_MIPS && canBePreempted(*B))
       continue; // The dynamic linker will take care of it.
     uintX_t VA = B->getVA<ELFT>();
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, VA);
@@ -209,12 +209,12 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
-template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody *Sym) {
-  Sym->PltIndex = Entries.size();
+template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody &Sym) {
+  Sym.PltIndex = Entries.size();
   unsigned RelOff = Target->UseLazyBinding
                         ? Out<ELFT>::RelaPlt->getRelocOffset()
                         : Out<ELFT>::RelaDyn->getRelocOffset();
-  Entries.push_back(std::make_pair(Sym, RelOff));
+  Entries.push_back(std::make_pair(&Sym, RelOff));
 }
 
 template <class ELFT> void PltSection<ELFT>::finalize() {
@@ -891,14 +891,15 @@ template <class ELFT> void OutputSection<ELFT>::sortCtorsDtors() {
 
 // Returns true if a symbol can be replaced at load-time by a symbol
 // with the same name defined in other ELF executable or DSO.
-bool elf::canBePreempted(const SymbolBody *Body) {
-  if (!Body)
-    return false;  // Body is a local symbol.
-  if (Body->isShared())
+bool elf::canBePreempted(const SymbolBody &Body) {
+  if (Body.isLocal())
+    return false;
+
+  if (Body.isShared())
     return true;
 
-  if (Body->isUndefined()) {
-    if (!Body->isWeak())
+  if (Body.isUndefined()) {
+    if (!Body.isWeak())
       return true;
 
     // Ideally the static linker should see a definition for every symbol, but
@@ -912,9 +913,9 @@ bool elf::canBePreempted(const SymbolBody *Body) {
   }
   if (!Config->Shared)
     return false;
-  if (Body->getVisibility() != STV_DEFAULT)
+  if (Body.getVisibility() != STV_DEFAULT)
     return false;
-  if (Config->Bsymbolic || (Config->BsymbolicFunctions && Body->IsFunc))
+  if (Config->Bsymbolic || (Config->BsymbolicFunctions && Body.IsFunc))
     return false;
   return true;
 }
@@ -1132,7 +1133,7 @@ void EHOutputSection<ELFT>::addSectionAux(
       SymbolBody *Personality = nullptr;
       if (HasReloc) {
         uint32_t SymIndex = RelI->getSymbol(Config->Mips64EL);
-        Personality = S->getFile()->getSymbolBody(SymIndex)->repl();
+        Personality = &S->getFile()->getSymbolBody(SymIndex).repl();
       }
 
       std::pair<StringRef, SymbolBody *> CieInfo(Entry, Personality);
@@ -1496,9 +1497,9 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
   case SymbolBody::DefinedSyntheticKind:
     return &cast<DefinedSynthetic<ELFT>>(Sym)->Section;
   case SymbolBody::DefinedRegularKind: {
-    auto *D = cast<DefinedRegular<ELFT>>(Sym->repl());
-    if (D->Section)
-      return D->Section->OutSec;
+    auto &D = cast<DefinedRegular<ELFT>>(Sym->repl());
+    if (D.Section)
+      return D.Section->OutSec;
     break;
   }
   case SymbolBody::DefinedCommonKind:
@@ -1513,6 +1514,8 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
     break;
   case SymbolBody::DefinedBitcodeKind:
     llvm_unreachable("Should have been replaced");
+  case SymbolBody::DefinedLocalKind:
+    llvm_unreachable("Should not be used");
   }
   return nullptr;
 }

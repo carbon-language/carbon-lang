@@ -47,7 +47,7 @@ getAddend(const typename llvm::object::ELFFile<ELFT>::Elf_Rela &Rel) {
   return Rel.r_addend;
 }
 
-bool canBePreempted(const SymbolBody *Body);
+bool canBePreempted(const SymbolBody &Body);
 
 bool isValidCIdentifier(StringRef S);
 
@@ -106,9 +106,9 @@ public:
   GotSection();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-  void addEntry(SymbolBody *Sym);
+  void addEntry(SymbolBody &Sym);
   void addMipsLocalEntry();
-  bool addDynTlsEntry(SymbolBody *Sym);
+  bool addDynTlsEntry(SymbolBody &Sym);
   bool addTlsIndex();
   bool empty() const { return MipsLocalEntries == 0 && Entries.empty(); }
   uintX_t getMipsLocalFullAddr(const SymbolBody &B);
@@ -145,7 +145,7 @@ public:
   GotPltSection();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-  void addEntry(SymbolBody *Sym);
+  void addEntry(SymbolBody &Sym);
   bool empty() const;
 
 private:
@@ -160,7 +160,7 @@ public:
   PltSection();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-  void addEntry(SymbolBody *Sym);
+  void addEntry(SymbolBody &Sym);
   bool empty() const { return Entries.empty(); }
 
 private:
@@ -234,9 +234,6 @@ public:
 
   unsigned NumLocals = 0;
   StringTableSection<ELFT> &StrTabSec;
-
-  // Local symbol -> ID, filled only when producing relocatable output.
-  llvm::DenseMap<const Elf_Sym *, uint32_t> Locals;
 
 private:
   void writeLocalSymbols(uint8_t *&Buf);
