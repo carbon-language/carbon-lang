@@ -11863,7 +11863,7 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           lowerVectorShuffleAsBroadcast(DL, VT, V1, V2, Mask, Subtarget, DAG))
     return Broadcast;
 
-  // Dispatch to each element type for lowering. If we don't have supprot for
+  // Dispatch to each element type for lowering. If we don't have support for
   // specific element type shuffles at 512 bits, immediately split them and
   // lower them. Each lowering routine of a given type is allowed to assume that
   // the requisite ISA extensions for that element type are available.
