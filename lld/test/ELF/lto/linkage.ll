@@ -13,3 +13,6 @@ target triple = "x86_64-unknown-linux-gnu"
 define internal void @ctor() {
   ret void
 }
+
+; Should not try to merge a declaration into the combined module.
+declare i32 @llvm.ctpop.i32(i32)
