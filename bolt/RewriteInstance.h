@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
+#include "DebugArangesWriter.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Object/ELFObjectFile.h"
@@ -174,6 +175,19 @@ private:
   /// stores them into BinaryContext::CompileUnitLineTableOffset.
   void computeLineTableOffsets();
 
+  /// Adds an entry to be saved in the .debug_aranges section.
+  /// \p OriginalFunctionAddress function's address in the original binary,
+  /// used for compile unit lookup.
+  /// \p RangeBegin first address of the address range being added.
+  /// \p RangeSie size in bytes of the address range.
+  void addDebugArangesEntry(uint64_t OriginalFunctionAddress,
+                            uint64_t RangeBegin,
+                            uint64_t RangeSize);
+
+  /// Generate the contents of the output .debug_aranges section based on the
+  /// added entries.
+  void generateDebugAranges();
+
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
     assert(Address >= NewTextSegmentAddress &&
@@ -219,6 +233,10 @@ private:
 
   /// Store all functions seen in the binary, sorted by address.
   std::map<uint64_t, BinaryFunction> BinaryFunctions;
+
+  /// Stores and serializes information that will be put into
+  /// the .debug_aranges DWARF section.
+  DebugArangesWriter ArangesWriter;
 
   /// Exception handling and stack unwinding information in this binary.
   ArrayRef<uint8_t> LSDAData;

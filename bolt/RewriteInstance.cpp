@@ -1277,6 +1277,11 @@ void RewriteInstance::emitFunctions() {
           Function.getAddress());
       Function.setImageAddress(SMII->second.AllocAddress);
       Function.setImageSize(SMII->second.Size);
+
+      if (opts::UpdateDebugSections) {
+        addDebugArangesEntry(Function.getAddress(), Function.getAddress(),
+                             Function.getSize());
+      }
     } else {
       errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
@@ -1301,12 +1306,23 @@ void RewriteInstance::emitFunctions() {
       Function.cold().setImageAddress(SMII->second.AllocAddress);
       Function.cold().setImageSize(SMII->second.Size);
       Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
+
+      if (opts::UpdateDebugSections) {
+        addDebugArangesEntry(Function.getAddress(), NextAvailableAddress,
+                             Function.cold().getImageSize());
+      }
+
       NextAvailableAddress += SMII->second.Size;
     } else {
       errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
+
+  // After collecting rewritten function addresses, generate the contents of
+  // .debug_aranges.
+  generateDebugAranges();
+
   // Add the new text section aggregating all existing code sections.
   auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
   if (NewTextSectionSize) {
@@ -1352,6 +1368,50 @@ void RewriteInstance::emitFunctions() {
 
   if (opts::KeepTmp)
     TempOut->keep();
+}
+
+void RewriteInstance::addDebugArangesEntry(uint64_t OriginalFunctionAddress,
+                                           uint64_t RangeBegin,
+                                           uint64_t RangeSize) {
+  if (auto DebugAranges = BC->DwCtx->getDebugAranges()) {
+    uint32_t CUOffset = DebugAranges->findAddress(OriginalFunctionAddress);
+    if (CUOffset != -1U) {
+      ArangesWriter.AddRange(CUOffset, RangeBegin, RangeSize);
+    }
+  }
+}
+
+void RewriteInstance::generateDebugAranges() {
+  // Get the address of all non-simple functions and add them intact to aranges.
+  // Simple functions are rewritten and have their .debug_aranges entries added
+  // during rewriting.
+  for (const auto &BFI : BinaryFunctions) {
+    const auto &Function = BFI.second;
+    if (!Function.isSimple()) {
+      addDebugArangesEntry(Function.getAddress(), Function.getAddress(),
+                           Function.getSize());
+    }
+  }
+
+  SmallVector<char, 16> ArangesBuffer;
+  raw_svector_ostream OS(ArangesBuffer);
+
+  auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
+  auto Writer = MAB->createObjectWriter(OS);
+
+  ArangesWriter.Write(Writer);
+  const auto &DebugArangesContents = OS.str();
+
+  // Free'd by SectionMM.
+  uint8_t *SectionData = new uint8_t[DebugArangesContents.size()];
+  memcpy(SectionData, DebugArangesContents.data(), DebugArangesContents.size());
+
+  SectionMM->NoteSectionInfo[".debug_aranges"] = SectionInfo(
+      reinterpret_cast<uint64_t>(SectionData),
+      DebugArangesContents.size(),
+      /*Alignment=*/0,
+      /*IsCode=*/false,
+      /*IsReadOnly=*/true);
 }
 
 void RewriteInstance::patchELFPHDRTable() {
@@ -1470,16 +1530,23 @@ void RewriteInstance::rewriteNoteSections() {
              "section size does not match section alignment");
     }
 
-    // Copy over section contents.
-    auto Size = Section.sh_size;
-    OS << InputFile->getData().substr(Section.sh_offset, Size);
+    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
+    check_error(SectionName.getError(), "cannot get section name");
+
+    // Copy over section contents unless it's .debug_aranges, which shall be
+    // overwritten if -update-debug-sections is passed.
+    uint64_t Size = 0;
+
+    if (*SectionName != ".debug_aranges" || !opts::UpdateDebugSections) {
+      Size = Section.sh_size;
+      OS << InputFile->getData().substr(Section.sh_offset, Size);
+    }
 
     // Address of extension to the section.
     uint64_t Address{0};
 
     // Perform section post-processing.
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
+
     auto SII = SectionMM->NoteSectionInfo.find(*SectionName);
     if (SII != SectionMM->NoteSectionInfo.end()) {
       auto &SI = SII->second;
@@ -1678,6 +1745,7 @@ void RewriteInstance::rewriteFile() {
                                           *BC->STI,
                                           /* RelaxAll */ false,
                                           /* DWARFMustBeAtTheEnd */ false));
+
   auto &Writer = static_cast<MCObjectStreamer *>(Streamer.get())
                      ->getAssembler()
                      .getWriter();
