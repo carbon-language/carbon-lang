@@ -111,8 +111,9 @@ private:
   // * Clear the different maps.
   void finalize();
 
-  /// Get the sequence of VRegs for that \p Val.
-  unsigned getOrCreateVReg(const Value *Val);
+  /// Get the VReg that represents \p Val.
+  /// If such VReg does not exist, it is created.
+  unsigned getOrCreateVReg(const Value &Val);
 
   /// Get the MachineBasicBlock that represents \p BB.
   /// If such basic block does not exist, it is created.
