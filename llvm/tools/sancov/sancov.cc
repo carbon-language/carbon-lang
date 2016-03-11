@@ -98,10 +98,9 @@ static cl::opt<bool> ClUseDefaultBlacklist(
     "use_default_blacklist", cl::init(true), cl::Hidden,
     cl::desc("Controls if default blacklist should be used."));
 
-static const char *const DefaultBlacklistStr = 
-      "fun:__sanitizer_.*\n"
-      "src:/usr/include/.*\n"
-      "src:.*/libc\\+\\+/.*\n";
+static const char *const DefaultBlacklistStr = "fun:__sanitizer_.*\n"
+                                               "src:/usr/include/.*\n"
+                                               "src:.*/libc\\+\\+/.*\n";
 
 // --------- FORMAT SPECIFICATION ---------
 
@@ -491,8 +490,12 @@ static std::string escapeHtml(const std::string &S) {
 static ErrorOr<bool> isCoverageFile(std::string FileName) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
       MemoryBuffer::getFile(FileName);
-  if (!BufOrErr)
+  if (!BufOrErr) {
+    errs() << "Warning: " << BufOrErr.getError().message() << "("
+           << BufOrErr.getError().value()
+           << "), filename: " << llvm::sys::path::filename(FileName) << "\n";
     return BufOrErr.getError();
+  }
   std::unique_ptr<MemoryBuffer> Buf = std::move(BufOrErr.get());
   if (Buf->getBufferSize() < 8) {
     return false;
@@ -940,7 +943,8 @@ public:
     // Partition input values into coverage/object files.
     for (const auto &FileName : FileNames) {
       auto ErrorOrIsCoverage = isCoverageFile(FileName);
-      FailIfError(ErrorOrIsCoverage);
+      if (!ErrorOrIsCoverage)
+        continue;
       if (ErrorOrIsCoverage.get()) {
         CovFiles.insert(FileName);
       } else {
