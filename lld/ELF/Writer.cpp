@@ -557,9 +557,6 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
         InputSectionBase<ELFT> *Section = F->getSection(Sym);
         if (!Section->Live)
           continue;
-        // That can happen if creating relocatable output.
-        if (Sym.getType() == STT_SECTION)
-          SymName = Section->getSectionName();
       }
       ++Out<ELFT>::SymTab->NumLocals;
       if (Config->Relocatable)

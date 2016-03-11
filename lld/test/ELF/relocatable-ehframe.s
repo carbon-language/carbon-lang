@@ -10,15 +10,13 @@
 # CHECK-NEXT: ]
 # CHECK-NEXT: Address:
 # CHECK-NEXT: Offset
-# CHECK-NEXT: Size: 35
+# CHECK-NEXT: Size: 9
 # CHECK-NEXT: Link: 0
 # CHECK-NEXT: Info: 0
 # CHECK-NEXT: AddressAlignment: 1
 # CHECK-NEXT: EntrySize: 0
 # CHECK-NEXT: SectionData (
-# CHECK-NEXT:   0000: 00666F6F 00626172 00646168 00666F6F  |.foo.bar.dah.foo|
-# CHECK-NEXT:   0010: 31006261 72310064 61683100 5F737461  |1.bar1.dah1._sta|
-# CHECK-NEXT:   0020: 727400                               |rt.|
+# CHECK-NEXT:   0000: 00005F73 74617274 00                 |.._start.|
 # CHECK-NEXT: )
 
 # CHECK:      Relocations [
