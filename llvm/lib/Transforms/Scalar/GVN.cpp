@@ -75,7 +75,7 @@ static cl::opt<uint32_t>
 MaxRecurseDepth("max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
                 cl::desc("Max recurse depth (default = 1000)"));
 
-struct llvm::gvn::Expression {
+struct llvm::GVN::Expression {
   uint32_t opcode;
   Type *type;
   SmallVector<uint32_t, 4> varargs;
@@ -102,16 +102,16 @@ struct llvm::gvn::Expression {
 };
 
 namespace llvm {
-template <> struct DenseMapInfo<Expression> {
-  static inline Expression getEmptyKey() { return ~0U; }
+template <> struct DenseMapInfo<GVN::Expression> {
+  static inline GVN::Expression getEmptyKey() { return ~0U; }
 
-  static inline Expression getTombstoneKey() { return ~1U; }
+  static inline GVN::Expression getTombstoneKey() { return ~1U; }
 
-  static unsigned getHashValue(const Expression e) {
+  static unsigned getHashValue(const GVN::Expression e) {
     using llvm::hash_value;
     return static_cast<unsigned>(hash_value(e));
   }
-  static bool isEqual(const Expression &LHS, const Expression &RHS) {
+  static bool isEqual(const GVN::Expression &LHS, const GVN::Expression &RHS) {
     return LHS == RHS;
   }
 };
@@ -229,7 +229,7 @@ struct llvm::gvn::AvailableValueInBlock {
 //                     ValueTable Internal Functions
 //===----------------------------------------------------------------------===//
 
-Expression GVN::ValueTable::create_expression(Instruction *I) {
+GVN::Expression GVN::ValueTable::create_expression(Instruction *I) {
   Expression e;
   e.type = I->getType();
   e.opcode = I->getOpcode();
@@ -263,9 +263,8 @@ Expression GVN::ValueTable::create_expression(Instruction *I) {
   return e;
 }
 
-Expression GVN::ValueTable::create_cmp_expression(unsigned Opcode,
-                                             CmpInst::Predicate Predicate,
-                                             Value *LHS, Value *RHS) {
+GVN::Expression GVN::ValueTable::create_cmp_expression(
+    unsigned Opcode, CmpInst::Predicate Predicate, Value *LHS, Value *RHS) {
   assert((Opcode == Instruction::ICmp || Opcode == Instruction::FCmp) &&
          "Not a comparison!");
   Expression e;
@@ -282,7 +281,8 @@ Expression GVN::ValueTable::create_cmp_expression(unsigned Opcode,
   return e;
 }
 
-Expression GVN::ValueTable::create_extractvalue_expression(ExtractValueInst *EI) {
+GVN::Expression
+GVN::ValueTable::create_extractvalue_expression(ExtractValueInst *EI) {
   assert(EI && "Not an ExtractValueInst?");
   Expression e;
   e.type = EI->getType();
