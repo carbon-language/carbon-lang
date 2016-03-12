@@ -3,45 +3,55 @@ LibFuzzer -- a library for coverage-guided fuzz testing.
 ========================================================
 .. contents::
    :local:
-   :depth: 4
+   :depth: 1
 
 Introduction
 ============
 
-This library is intended primarily for in-process coverage-guided fuzz testing
-(fuzzing) of other libraries. The typical workflow looks like this:
+libFuzzer -- library for in-process evolutionary fuzzing of other libraries.
 
-* Build the Fuzzer library as a static archive (or just a set of .o files).
-  Note that the Fuzzer contains the main() function.
-  Preferably do *not* use sanitizers while building the Fuzzer.
-* Build the library you are going to test with
-  `-fsanitize-coverage={bb,edge}[,indirect-calls,8bit-counters]`
-  and one of the sanitizers. We recommend to build the library in several
-  different modes (e.g. asan, msan, lsan, ubsan, etc) and even using different
-  optimizations options (e.g. -O0, -O1, -O2) to diversify testing.
-* Build a test driver using the same options as the library.
-  The test driver is a C/C++ file containing interesting calls to the library
-  inside a single function  ``extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);``.
-  Currently, the only expected return value is 0, others are reserved for future.
-* Link the Fuzzer, the library and the driver together into an executable
-  using the same sanitizer options as for the library.
-* Collect the initial corpus of inputs for the
-  fuzzer (a directory with test inputs, one file per input).
-  The better your inputs are the faster you will find something interesting.
-  Also try to keep your inputs small, otherwise the Fuzzer will run too slow.
-  Use ``-max_len=N`` to set hard limit on the size of the inputs;
-  by default libFuzzer will try to guess a good value.
-* Run the fuzzer with the test corpus. As new interesting test cases are
-  discovered they will be added to the corpus. If a bug is discovered by
-  the sanitizer (asan, etc) it will be reported as usual and the reproducer
-  will be written to disk.
-  Each Fuzzer process is single-threaded (unless the library starts its own
-  threads). You can run the Fuzzer on the same corpus in multiple processes
-  in parallel.
+The typical workflow looks like the following.
+First, implement a fuzzing target function, like this::
+
+  // fuzz_target.cc
+  extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+    DoSomethingInterestingWithMyAPI(Data, Size);
+    return 0;
+  }
+
+Next, build the Fuzzer library as a static archive. Note that libFuzzer contains the `main()` function::
+
+  svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
+  clang++ -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
+  ar ruv libFuzzer.a Fuzzer*.o
+
+Then build the target function and the library you are going to test.
+You should use SanitizerCoverage_ and one of ASan, MSan, or UBSan.
+Link it with `libFuzzer.a`::
+
+  clang -fsanitize-coverage=edge -fsanitize=address your_lib.cc fuzz_target.cc libFuzzer.a -o my_fuzzer
+
+Create a directory with the initial "seed" samlpes.
+For some input types libFuzzer will work just fine w/o any seeds,
+but for complex inputs this step is very important::
+
+  mkdir CORPUS_DIR
+  cp /some/input/samples/* CORPUS_DIR
+
+Finally, run the fuzzer on the `CORPUS_DIR`::
+
+  ./my_fuzzer CORPUS_DIR  # -max_len=1000 -jobs=20 -more_lags=...
 
 
-The Fuzzer is similar in concept to AFL_,
-but uses in-process Fuzzing, which is more fragile, more restrictive, but
+As new interesting test cases are discovered they will be added to the corpus.
+If a bug is discovered by the sanitizer (ASan, etc) it will be reported as usual and the reproducer
+will be written to disk.
+Each Fuzzer process is single-threaded (unless the library starts its own
+threads). You can run the libFuzzer on the same corpus in multiple processes
+in parallel (use the flags `-jobs=N` and `-workers=N`).
+
+libFuzzer is similar in concept to AFL_,
+but uses in-process Fuzzing, which is more fragile and restrictive, but
 potentially much faster as it has no overhead for process start-up.
 It uses LLVM's SanitizerCoverage_ instrumentation to get in-process
 coverage-feedback
@@ -51,9 +61,9 @@ and is used to fuzz various parts of LLVM,
 but the Fuzzer itself does not (and should not) depend on any
 part of LLVM and can be used for other projects w/o requiring the rest of LLVM.
 
-Usage:
-======
-To run fuzzing pass 0 or more directories::
+Usage
+=====
+To run fuzzing pass 0 or more directories. New samples will be written into `dir1`, other directories will be read once during startup.::
 
 ./fuzzer [-flag1=val1 [-flag2=val2 ...] ] [dir1 [dir2 ...] ]
 
@@ -66,18 +76,13 @@ The most important flags are::
   seed                               	0	Random seed. If 0, seed is generated.
   runs                               	-1	Number of individual test runs (-1 for infinite runs).
   max_len                               0       Maximum length of the test input. If 0, libFuzzer tries to guess a good value based on the corpus and reports it.
-  cross_over                         	1	If 1, cross over inputs.
-  mutate_depth                       	5	Apply this number of consecutive mutations to each input.
   timeout                            	1200	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
-  abort_on_timeout                      0       If positive, call abort on timeout.
   timeout_exitcode                     77       Unless abort_on_timeout is set, use this exitcode on timeout.
   max_total_time                        0       If positive, indicates the maximal total time in seconds to run the fuzzer.
   help                               	0	Print help.
   merge                                 0       If 1, the 2-nd, 3-rd, etc corpora will be merged into the 1-st corpus. Only interesting units will be taken.
   jobs                               	0	Number of jobs to run. If jobs >= 1 we spawn this number of jobs in separate worker processes with stdout/stderr redirected to fuzz-JOB.log.
   workers                            	0	Number of simultaneous worker processes to run the jobs. If zero, "min(jobs,NumberOfCpuCores()/2)" is used.
-  sync_command                       	0	Execute an external command "<sync_command> <test_corpus>" to synchronize the test corpus.
-  sync_timeout                       	600	Minimum timeout between syncs.
   use_traces                            0       Experimental: use instruction traces
   only_ascii                            0       If 1, generate only ASCII (isprint+isspace) inputs.
   artifact_prefix                       ""      Write fuzzing artifacts (crash, timeout, or slow inputs) as $(artifact_prefix)file
@@ -88,6 +93,9 @@ For the full list of flags run the fuzzer binary with ``-help=1``.
 
 Usage examples
 ==============
+.. contents::
+   :local:
+   :depth: 1
 
 Toy example
 -----------
@@ -281,6 +289,9 @@ is now a part of the boringssl source tree.
 
 Advanced features
 =================
+.. contents::
+   :local:
+   :depth: 1
 
 Dictionaries
 ------------
@@ -377,6 +388,9 @@ it will skew the coverage data. Don't do this::
 
 Fuzzing components of LLVM
 ==========================
+.. contents::
+   :local:
+   :depth: 1
 
 clang-format-fuzzer
 -------------------
