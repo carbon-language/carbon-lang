@@ -29,8 +29,8 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   fuzzer (a directory with test inputs, one file per input).
   The better your inputs are the faster you will find something interesting.
   Also try to keep your inputs small, otherwise the Fuzzer will run too slow.
-  By default, the Fuzzer limits the size of every input to 64 bytes
-  (use ``-max_len=N`` to override).
+  Use ``-max_len=N`` to set hard limit on the size of the inputs;
+  by default libFuzzer will try to guess a good value.
 * Run the fuzzer with the test corpus. As new interesting test cases are
   discovered they will be added to the corpus. If a bug is discovered by
   the sanitizer (asan, etc) it will be reported as usual and the reproducer
@@ -65,7 +65,7 @@ The most important flags are::
 
   seed                               	0	Random seed. If 0, seed is generated.
   runs                               	-1	Number of individual test runs (-1 for infinite runs).
-  max_len                            	64	Maximum length of the test input.
+  max_len                               0       Maximum length of the test input. If 0, libFuzzer tries to guess a good value based on the corpus and reports it.
   cross_over                         	1	If 1, cross over inputs.
   mutate_depth                       	5	Apply this number of consecutive mutations to each input.
   timeout                            	1200	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
