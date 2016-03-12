@@ -11,9 +11,6 @@
 // FIXME: not %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
 // RUN: not %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
 
-// FIXME: http://llvm.org/PR26919
-// XFAIL: win32
-
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
 #if defined(__APPLE__)
