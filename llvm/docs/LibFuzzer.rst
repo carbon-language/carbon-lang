@@ -342,7 +342,7 @@ you will want to know whether the function or the corpus can be improved further
 One easy to use metric is, of course, code coverage.
 You can get the coverage for your corpus like this::
 
-  ASAN_OPTIONS=coverage_pcs=1 ./fuzzer CORPUS_DIR -runs=0
+  ASAN_OPTIONS=coverage=1 ./fuzzer CORPUS_DIR -runs=0
 
 This will run all the tests in the CORPUS_DIR but will not generate any new tests
 and dump covered PCs to disk before exiting.
@@ -370,9 +370,6 @@ the program arguments that you can read and modify::
     ReadAndMaybeModify(argc, argv);
     return 0;
    }
-
-Finally, you may use your own ``main()`` and call ``FuzzerDriver``
-from there, see FuzzerInterface.h_.
 
 Try to avoid initialization inside the target function itself as
 it will skew the coverage data. Don't do this::
