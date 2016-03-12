@@ -113,32 +113,36 @@ A simple function that does something interesting if it receives the input "HI!"
     return 0;
   }
   EOF
-  # Get lib/Fuzzer. Assuming that you already have fresh clang in PATH.
-  svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
-  # Build lib/Fuzzer files.
-  clang -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
-  # Build test_fuzzer.cc with asan and link against lib/Fuzzer.
-  clang++ -fsanitize=address -fsanitize-coverage=edge test_fuzzer.cc Fuzzer*.o
+  # Build test_fuzzer.cc with asan and link against libFuzzer.a
+  clang++ -fsanitize=address -fsanitize-coverage=edge test_fuzzer.cc libFuzzer.a
   # Run the fuzzer with no corpus.
   ./a.out
 
-You should get ``Illegal instruction (core dumped)`` pretty quickly.
+You should get an error pretty quickly::
+
+  #0  READ   units: 1 exec/s: 0
+  #1  INITED cov: 3 units: 1 exec/s: 0
+  #2  NEW    cov: 5 units: 2 exec/s: 0 L: 64 MS: 0 
+  #19237  NEW    cov: 9 units: 3 exec/s: 0 L: 64 MS: 0 
+  #20595  NEW    cov: 10 units: 4 exec/s: 0 L: 1 MS: 4 ChangeASCIIInt-ShuffleBytes-ChangeByte-CrossOver-
+  #34574  NEW    cov: 13 units: 5 exec/s: 0 L: 2 MS: 3 ShuffleBytes-CrossOver-ChangeBit-
+  #34807  NEW    cov: 15 units: 6 exec/s: 0 L: 3 MS: 1 CrossOver-
+  ==31511== ERROR: libFuzzer: deadly signal
+  ...
+  artifact_prefix='./'; Test unit written to ./crash-b13e8756b13a00cf168300179061fb4b91fefbed
+
 
 PCRE2
 -----
 
-Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
+Here we show how to use libFuzzer on something real, yet simple: pcre2_::
 
   COV_FLAGS=" -fsanitize-coverage=edge,indirect-calls,8bit-counters"
   # Get PCRE2
   svn co svn://vcs.exim.org/pcre2/code/trunk pcre
-  # Get lib/Fuzzer. Assuming that you already have fresh clang in PATH.
-  svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
   # Build PCRE2 with AddressSanitizer and coverage.
   (cd pcre; ./autogen.sh; CC="clang -fsanitize=address $COV_FLAGS" ./configure --prefix=`pwd`/../inst && make -j && make install)
-  # Build lib/Fuzzer files.
-  clang -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
-  # Build the actual function that does something interesting with PCRE2.
+  # Build the fuzzing target function that does something interesting with PCRE2.
   cat << EOF > pcre_fuzzer.cc
   #include <string.h>
   #include <stdint.h>
@@ -159,7 +163,7 @@ Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
   EOF
   clang++ -g -fsanitize=address $COV_FLAGS -c -std=c++11  -I inst/include/ pcre_fuzzer.cc
   # Link.
-  clang++ -g -fsanitize=address -Wl,--whole-archive inst/lib/*.a -Wl,-no-whole-archive Fuzzer*.o pcre_fuzzer.o -o pcre_fuzzer
+  clang++ -g -fsanitize=address -Wl,--whole-archive inst/lib/*.a -Wl,-no-whole-archive libFuzzer.a pcre_fuzzer.o -o pcre_fuzzer
 
 This will give you a binary of the fuzzer, called ``pcre_fuzzer``.
 Now, create a directory that will hold the test corpus::
@@ -202,12 +206,6 @@ Now, interrupt the fuzzer and run it again the same way. You will see::
 
 This time you were running the fuzzer with a non-empty input corpus (564 items).
 As the first step, the fuzzer minimized the set to produce 344 interesting items (the ``INITED`` line)
-
-It is quite convenient to store test corpuses in git.
-As an example, here is a git repository with test inputs for the above PCRE2 fuzzer::
-
-  git clone https://github.com/kcc/fuzzing-with-sanitizers.git
-  ./pcre_fuzzer ./fuzzing-with-sanitizers/pcre2/C1/
 
 You may run ``N`` independent fuzzer jobs in parallel on ``M`` CPUs::
 
