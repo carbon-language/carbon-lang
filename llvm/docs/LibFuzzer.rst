@@ -438,23 +438,11 @@ Buildbot
 We have a buildbot that runs the above fuzzers for LLVM components
 24/7/365 at http://lab.llvm.org:8011/builders/sanitizer-x86_64-linux-fuzzer .
 
-Pre-fuzzed test inputs in git
------------------------------
-
-The buildbot occumulates large test corpuses over time.
-The corpuses are stored in git on github and can be used like this::
-
-  git clone https://github.com/kcc/fuzzing-with-sanitizers.git
-  bin/clang-format-fuzzer fuzzing-with-sanitizers/llvm/clang-format/C1
-  bin/clang-fuzzer        fuzzing-with-sanitizers/llvm/clang/C1/
-  bin/llvm-as-fuzzer      fuzzing-with-sanitizers/llvm/llvm-as/C1  -only_ascii=1
-
-
 FAQ
 =========================
 
-Q. Why Fuzzer does not use any of the LLVM support?
----------------------------------------------------
+Q. Why libFuzzer does not use any of the LLVM support?
+------------------------------------------------------
 
 There are two reasons.
 
@@ -473,15 +461,13 @@ reason for it to exist is extreme speed.
 Q. What about Windows then? The Fuzzer contains code that does not build on Windows.
 ------------------------------------------------------------------------------------
 
-The sanitizer coverage support does not work on Windows either as of 01/2015.
-Once it's there, we'll need to re-implement OS-specific parts (I/O, signals).
+Volunteers are welcome.
 
 Q. When this Fuzzer is not a good solution for a problem?
 ---------------------------------------------------------
 
 * If the test inputs are validated by the target library and the validator
-  asserts/crashes on invalid inputs, the in-process fuzzer is not applicable
-  (we could use fork() w/o exec, but it comes with extra overhead).
+  asserts/crashes on invalid inputs, in-process fuzzing is not applicable.
 * Bugs in the target library may accumulate w/o being detected. E.g. a memory
   corruption that goes undetected at first and then leads to a crash while
   testing another input. This is why it is highly recommended to run this
@@ -502,9 +488,10 @@ Q. So, what exactly this Fuzzer is good for?
 --------------------------------------------
 
 This Fuzzer might be a good choice for testing libraries that have relatively
-small inputs, each input takes < 1ms to run, and the library code is not expected
+small inputs, each input takes < 10ms to run, and the library code is not expected
 to crash on invalid inputs.
-Examples: regular expression matchers, text or binary format parsers.
+Examples: regular expression matchers, text or binary format parsers, compression,
+network, crypto.
 
 Trophies
 ========
