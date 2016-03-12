@@ -132,12 +132,14 @@ void InputSection<ELFT>::copyRelocations(uint8_t *Buf,
   }
 }
 
-static uint32_t getMipsPairedRelocType(uint32_t Type) {
+static uint32_t getMipsPairedRelocType(uint32_t Type, bool IsLocal) {
   if (Config->EMachine != EM_MIPS)
     return R_MIPS_NONE;
   switch (Type) {
   case R_MIPS_HI16:
     return R_MIPS_LO16;
+  case R_MIPS_GOT16:
+    return IsLocal ? R_MIPS_LO16 : R_MIPS_NONE;
   case R_MIPS_PCHI16:
     return R_MIPS_PCLO16;
   case R_MICROMIPS_HI16:
@@ -150,9 +152,10 @@ static uint32_t getMipsPairedRelocType(uint32_t Type) {
 template <class ELFT>
 template <bool isRela>
 uint8_t *
-InputSectionBase<ELFT>::findMipsPairedReloc(uint8_t *Buf, uint32_t SymIndex,
-                                            uint32_t Type,
+InputSectionBase<ELFT>::findMipsPairedReloc(uint32_t Type, uint8_t *Buf,
+                                            uint32_t SymIndex, bool IsLocal,
                                             RelIteratorRange<isRela> Rels) {
+  Type = getMipsPairedRelocType(Type, IsLocal);
   // Some MIPS relocations use addend calculated from addend of the relocation
   // itself and addend of paired relocation. ABI requires to compute such
   // combined addend in case of REL relocation record format only.
@@ -231,6 +234,9 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     uintX_t SymVA = Body.getVA<ELFT>(A);
     bool CBP = canBePreempted(Body);
     uint8_t *PairedLoc = nullptr;
+    if (Config->EMachine == EM_MIPS)
+      PairedLoc =
+          findMipsPairedReloc(Type, Buf, SymIndex, Body.isLocal(), NextRelocs);
 
     if (Target->needsPlt<ELFT>(Type, Body)) {
       SymVA = Body.getPltVA<ELFT>() + A;
@@ -243,11 +249,9 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
           // is calculated using addends from R_MIPS_GOT16 and paired
           // R_MIPS_LO16 relocations.
           const endianness E = ELFT::TargetEndianness;
-          uint8_t *LowLoc =
-              findMipsPairedReloc(Buf, SymIndex, R_MIPS_LO16, NextRelocs);
           uint64_t AHL = read32<E>(BufLoc) << 16;
-          if (LowLoc)
-            AHL += SignExtend64<16>(read32<E>(LowLoc));
+          if (PairedLoc)
+            AHL += SignExtend64<16>(read32<E>(PairedLoc));
           SymVA = Out<ELFT>::Got->getMipsLocalPageAddr(SymVA + AHL);
         } else {
           // For non-local symbols GOT entries should contain their full
@@ -280,9 +284,6 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
         // relocations because they use the following expression to calculate
         // the relocation's result for local symbol: S + A + GP0 - G.
         SymVA += File->getMipsGp0();
-      } else {
-        PairedLoc = findMipsPairedReloc(
-            Buf, SymIndex, getMipsPairedRelocType(Type), NextRelocs);
       }
     } else if (!Target->needsCopyRel<ELFT>(Type, Body) && CBP) {
       continue;
