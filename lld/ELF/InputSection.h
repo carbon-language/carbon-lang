@@ -84,8 +84,10 @@ public:
 
 private:
   template <bool isRela>
-  uint8_t *findMipsPairedReloc(uint32_t Type, uint8_t *Buf, uint32_t SymIndex,
-                               bool IsLocal, RelIteratorRange<isRela> Rels);
+  uint8_t *
+  findMipsPairedReloc(uint8_t *Buf,
+                      const llvm::object::Elf_Rel_Impl<ELFT, isRela> *Rel,
+                      const llvm::object::Elf_Rel_Impl<ELFT, isRela> *End);
 };
 
 template <class ELFT>
