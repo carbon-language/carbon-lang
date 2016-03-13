@@ -957,6 +957,12 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
   if (needsInterpSection())
     OutputSections.push_back(Out<ELFT>::Interp);
 
+  // A core file does not usually contain unmodified segments except
+  // the first page of the executable. Add the build ID section now
+  // so that the section is included in the first page.
+  if (Out<ELFT>::BuildId)
+    OutputSections.push_back(Out<ELFT>::BuildId);
+
   // Create output sections for input object file sections.
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
   OutputSectionFactory<ELFT> Factory;
@@ -1121,7 +1127,6 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
 
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.
-  Add(Out<ELFT>::BuildId);
   Add(Out<ELFT>::SymTab);
   Add(Out<ELFT>::ShStrTab);
   Add(Out<ELFT>::StrTab);
