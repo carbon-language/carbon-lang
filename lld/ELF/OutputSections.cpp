@@ -228,10 +228,10 @@ template <class ELFT> void PltSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-RelocationSection<ELFT>::RelocationSection(StringRef Name, bool IsRela)
-    : OutputSectionBase<ELFT>(Name, IsRela ? SHT_RELA : SHT_REL, SHF_ALLOC),
-      IsRela(IsRela) {
-  this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
+RelocationSection<ELFT>::RelocationSection(StringRef Name)
+    : OutputSectionBase<ELFT>(Name, Config->Rela ? SHT_RELA : SHT_REL,
+                              SHF_ALLOC) {
+  this->Header.sh_entsize = Config->Rela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   this->Header.sh_addralign = sizeof(uintX_t);
 }
 
@@ -267,10 +267,10 @@ typename ELFFile<ELFT>::uintX_t DynamicReloc<ELFT>::getOffset() const {
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   for (const DynamicReloc<ELFT> &Rel : Relocs) {
     auto *P = reinterpret_cast<Elf_Rela *>(Buf);
-    Buf += IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
+    Buf += Config->Rela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
     SymbolBody *Sym = Rel.Sym;
 
-    if (IsRela)
+    if (Config->Rela)
       P->r_addend = Rel.UseSymVA ? Sym->getVA<ELFT>(Rel.Addend) : Rel.Addend;
     P->r_offset = Rel.getOffset();
     uint32_t SymIdx = (!Rel.UseSymVA && Sym) ? Sym->DynsymIndex : 0;
@@ -541,7 +541,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   Out<ELFT>::DynStrTab->finalize();
 
   if (Out<ELFT>::RelaDyn->hasRelocs()) {
-    bool IsRela = Out<ELFT>::RelaDyn->isRela();
+    bool IsRela = Config->Rela;
     Add({IsRela ? DT_RELA : DT_REL, Out<ELFT>::RelaDyn});
     Add({IsRela ? DT_RELASZ : DT_RELSZ, Out<ELFT>::RelaDyn->getSize()});
     Add({IsRela ? DT_RELAENT : DT_RELENT,
@@ -552,7 +552,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_PLTRELSZ, Out<ELFT>::RelaPlt->getSize()});
     Add({Config->EMachine == EM_MIPS ? DT_MIPS_PLTGOT : DT_PLTGOT,
          Out<ELFT>::GotPlt});
-    Add({DT_PLTREL, uint64_t(Out<ELFT>::RelaPlt->isRela() ? DT_RELA : DT_REL)});
+    Add({DT_PLTREL, uint64_t(Config->Rela ? DT_RELA : DT_REL)});
   }
 
   Add({DT_SYMTAB, Out<ELFT>::DynSymTab});

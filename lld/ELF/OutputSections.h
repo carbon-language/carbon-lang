@@ -244,19 +244,17 @@ class RelocationSection final : public OutputSectionBase<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  RelocationSection(StringRef Name, bool IsRela);
+  RelocationSection(StringRef Name);
   void addReloc(const DynamicReloc<ELFT> &Reloc);
   unsigned getRelocOffset();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
   bool hasRelocs() const { return !Relocs.empty(); }
-  bool isRela() const { return IsRela; }
 
   bool Static = false;
 
 private:
   std::vector<DynamicReloc<ELFT>> Relocs;
-  const bool IsRela;
 };
 
 template <class ELFT>

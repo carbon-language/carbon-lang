@@ -124,19 +124,16 @@ private:
 };
 } // anonymous namespace
 
-template <class ELFT> static bool shouldUseRela() { return ELFT::Is64Bits; }
-
 template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
 
   // Create singleton output sections.
-  bool IsRela = shouldUseRela<ELFT>();
   DynamicSection<ELFT> Dynamic(*Symtab);
   EhFrameHeader<ELFT> EhFrameHdr;
   GotSection<ELFT> Got;
   InterpSection<ELFT> Interp;
   PltSection<ELFT> Plt;
-  RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
+  RelocationSection<ELFT> RelaDyn(Config->Rela ? ".rela.dyn" : ".rel.dyn");
   StringTableSection<ELFT> DynStrTab(".dynstr", true);
   StringTableSection<ELFT> ShStrTab(".shstrtab", false);
   SymbolTableSection<ELFT> DynSymTab(*Symtab, DynStrTab);
@@ -162,9 +159,9 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   if (Config->SysvHash)
     HashTab.reset(new HashTableSection<ELFT>);
   if (Target->UseLazyBinding) {
-    StringRef S = IsRela ? ".rela.plt" : ".rel.plt";
+    StringRef S = Config->Rela ? ".rela.plt" : ".rel.plt";
     GotPlt.reset(new GotPltSection<ELFT>);
-    RelaPlt.reset(new RelocationSection<ELFT>(S, IsRela));
+    RelaPlt.reset(new RelocationSection<ELFT>(S));
   }
   if (!Config->StripAll) {
     StrTab.reset(new StringTableSection<ELFT>(".strtab", false));
@@ -794,13 +791,11 @@ template <class ELFT>
 void Writer<ELFT>::addRelIpltSymbols() {
   if (isOutputDynamic() || !Out<ELFT>::RelaPlt)
     return;
-  bool IsRela = shouldUseRela<ELFT>();
-
-  StringRef S = IsRela ? "__rela_iplt_start" : "__rel_iplt_start";
+  StringRef S = Config->Rela ? "__rela_iplt_start" : "__rel_iplt_start";
   if (Symtab.find(S))
     Symtab.addAbsolute(S, ElfSym<ELFT>::RelaIpltStart);
 
-  S = IsRela ? "__rela_iplt_end" : "__rel_iplt_end";
+  S = Config->Rela ? "__rela_iplt_end" : "__rel_iplt_end";
   if (Symtab.find(S))
     Symtab.addAbsolute(S, ElfSym<ELFT>::RelaIpltEnd);
 }
