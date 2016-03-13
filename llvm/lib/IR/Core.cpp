@@ -910,14 +910,6 @@ LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
   return wrap(ConstantDataArray::getString(*unwrap(C), StringRef(Str, Length),
                                            DontNullTerminate == 0));
 }
-LLVMValueRef LLVMConstStructInContext(LLVMContextRef C,
-                                      LLVMValueRef *ConstantVals,
-                                      unsigned Count, LLVMBool Packed) {
-  Constant **Elements = unwrap<Constant>(ConstantVals, Count);
-  return wrap(ConstantStruct::getAnon(*unwrap(C), makeArrayRef(Elements, Count),
-                                      Packed != 0));
-}
-
 LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
                              LLVMBool DontNullTerminate) {
   return LLVMConstStringInContext(LLVMGetGlobalContext(), Str, Length,
@@ -942,6 +934,14 @@ LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length) {
   ArrayRef<Constant*> V(unwrap<Constant>(ConstantVals, Length), Length);
   return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length), V));
+}
+
+LLVMValueRef LLVMConstStructInContext(LLVMContextRef C,
+                                      LLVMValueRef *ConstantVals,
+                                      unsigned Count, LLVMBool Packed) {
+  Constant **Elements = unwrap<Constant>(ConstantVals, Count);
+  return wrap(ConstantStruct::getAnon(*unwrap(C), makeArrayRef(Elements, Count),
+                                      Packed != 0));
 }
 
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
