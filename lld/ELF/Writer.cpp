@@ -85,7 +85,7 @@ private:
     return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
 
-  OutputSection<ELFT> *getBss();
+  void ensureBss();
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
   void addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
 
@@ -691,14 +691,15 @@ static bool compareSections(OutputSectionBase<ELFT> *A,
   return false;
 }
 
-template <class ELFT> OutputSection<ELFT> *Writer<ELFT>::getBss() {
-  if (!Out<ELFT>::Bss) {
-    Out<ELFT>::Bss =
-        new OutputSection<ELFT>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-    OwningSections.emplace_back(Out<ELFT>::Bss);
-    OutputSections.push_back(Out<ELFT>::Bss);
-  }
-  return Out<ELFT>::Bss;
+// The .bss section does not exist if no input file has a .bss section.
+// This function creates one if that's the case.
+template <class ELFT> void Writer<ELFT>::ensureBss() {
+  if (Out<ELFT>::Bss)
+    return;
+  Out<ELFT>::Bss =
+      new OutputSection<ELFT>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+  OwningSections.emplace_back(Out<ELFT>::Bss);
+  OutputSections.push_back(Out<ELFT>::Bss);
 }
 
 // Until this function is called, common symbols do not belong to any section.
@@ -714,7 +715,8 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
                      return A->Alignment > B->Alignment;
                    });
 
-  uintX_t Off = getBss()->getSize();
+  ensureBss();
+  uintX_t Off = Out<ELFT>::Bss->getSize();
   for (DefinedCommon *C : Syms) {
     Off = alignTo(Off, C->Alignment);
     Out<ELFT>::Bss->updateAlign(C->Alignment);
@@ -740,7 +742,8 @@ template <class ELFT>
 void Writer<ELFT>::addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
   if (Syms.empty())
     return;
-  uintX_t Off = getBss()->getSize();
+  ensureBss();
+  uintX_t Off = Out<ELFT>::Bss->getSize();
   uintX_t MaxAlign = Out<ELFT>::Bss->getAlign();
   for (SharedSymbol<ELFT> *SS : Syms) {
     uintX_t Align = getAlignment(SS);
