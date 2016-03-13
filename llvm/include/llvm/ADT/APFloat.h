@@ -642,6 +642,7 @@ private:
 /// These additional declarations are required in order to compile LLVM with IBM
 /// xlC compiler.
 hash_code hash_value(const APFloat &Arg);
+int ilogb(const APFloat &Arg);
 APFloat scalbn(APFloat X, int Exp, APFloat::roundingMode);
 
 /// \brief Returns the absolute value of the argument.
