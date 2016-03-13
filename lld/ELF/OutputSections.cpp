@@ -182,7 +182,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
     // for detailed description:
     // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
     // As the first approach, we can just store addresses for all symbols.
-    if (Config->EMachine != EM_MIPS && canBePreempted(*B))
+    if (Config->EMachine != EM_MIPS && B->isPreemptible())
       continue; // The dynamic linker will take care of it.
     uintX_t VA = B->getVA<ELFT>();
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, VA);
@@ -880,37 +880,6 @@ static bool compCtors(const InputSection<ELFT> *A,
 template <class ELFT> void OutputSection<ELFT>::sortCtorsDtors() {
   std::stable_sort(Sections.begin(), Sections.end(), compCtors<ELFT>);
   reassignOffsets();
-}
-
-// Returns true if a symbol can be replaced at load-time by a symbol
-// with the same name defined in other ELF executable or DSO.
-bool elf::canBePreempted(const SymbolBody &Body) {
-  if (Body.isLocal())
-    return false;
-
-  if (Body.isShared())
-    return true;
-
-  if (Body.isUndefined()) {
-    if (!Body.isWeak())
-      return true;
-
-    // Ideally the static linker should see a definition for every symbol, but
-    // shared object are normally allowed to have undefined references that the
-    // static linker never sees a definition for.
-    if (Config->Shared)
-      return true;
-
-    // Otherwise, just resolve to 0.
-    return false;
-  }
-  if (!Config->Shared)
-    return false;
-  if (Body.getVisibility() != STV_DEFAULT)
-    return false;
-  if (Config->Bsymbolic || (Config->BsymbolicFunctions && Body.IsFunc))
-    return false;
-  return true;
 }
 
 static void fill(uint8_t *Buf, size_t Size, ArrayRef<uint8_t> A) {

@@ -290,7 +290,7 @@ static bool handleTlsRelocation(uint32_t Type, SymbolBody &Body,
       }
       return true;
     }
-    if (!canBePreempted(Body))
+    if (!Body.isPreemptible())
       return true;
   }
   return false;
@@ -332,7 +332,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
       if (auto *S = dyn_cast<SharedSymbol<ELFT>>(&Body))
         S->File->IsUsed = true;
 
-    bool CBP = canBePreempted(Body);
+    bool Preemptible = Body.isPreemptible();
     if (handleTlsRelocation<ELFT>(Type, Body, C, RI))
       continue;
 
@@ -341,7 +341,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
                                     &Body, getAddend<ELFT>(RI)});
 
     // MIPS has a special rule to create GOTs for local symbols.
-    if (Config->EMachine == EM_MIPS && !CBP &&
+    if (Config->EMachine == EM_MIPS && !Preemptible &&
         (Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16)) {
       // FIXME (simon): Do not add so many redundant entries.
       Out<ELFT>::Got->addMipsLocalEntry();
@@ -371,13 +371,13 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
       if (Target->UseLazyBinding) {
         Out<ELFT>::GotPlt->addEntry(Body);
         Out<ELFT>::RelaPlt->addReloc(
-            {CBP ? Target->PltRel : Target->IRelativeRel,
-             DynamicReloc<ELFT>::Off_GotPlt, !CBP, &Body});
+            {Preemptible ? Target->PltRel : Target->IRelativeRel,
+             DynamicReloc<ELFT>::Off_GotPlt, !Preemptible, &Body});
       } else {
         Out<ELFT>::Got->addEntry(Body);
         Out<ELFT>::RelaDyn->addReloc(
-            {CBP ? Target->PltRel : Target->IRelativeRel,
-             DynamicReloc<ELFT>::Off_Got, !CBP, &Body});
+            {Preemptible ? Target->PltRel : Target->IRelativeRel,
+             DynamicReloc<ELFT>::Off_Got, !Preemptible, &Body});
       }
       continue;
     }
@@ -424,16 +424,16 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
 
       bool Dynrel = Config->Shared && !Target->isRelRelative(Type) &&
                     !Target->isSizeRel(Type);
-      if (CBP || Dynrel) {
+      if (Preemptible || Dynrel) {
         uint32_t DynType;
         if (Body.IsTls)
           DynType = Target->TlsGotRel;
-        else if (CBP)
+        else if (Preemptible)
           DynType = Target->GotRel;
         else
           DynType = Target->RelativeRel;
         Out<ELFT>::RelaDyn->addReloc(
-            {DynType, DynamicReloc<ELFT>::Off_Got, !CBP, &Body});
+            {DynType, DynamicReloc<ELFT>::Off_Got, !Preemptible, &Body});
       }
       continue;
     }
@@ -456,7 +456,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
         continue;
     }
 
-    if (CBP) {
+    if (Preemptible) {
       // We don't know anything about the finaly symbol. Just ask the dynamic
       // linker to handle the relocation for us.
       Out<ELFT>::RelaDyn->addReloc({Target->getDynRel(Type), &C, RI.r_offset,

@@ -47,8 +47,6 @@ getAddend(const typename llvm::object::ELFFile<ELFT>::Elf_Rela &Rel) {
   return Rel.r_addend;
 }
 
-bool canBePreempted(const SymbolBody &Body);
-
 bool isValidCIdentifier(StringRef S);
 
 // This represents a section in an output file.

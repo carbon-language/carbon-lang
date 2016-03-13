@@ -209,7 +209,7 @@ static uintX_t getMipsGotVA(const SymbolBody &Body, uintX_t SymVA,
       AHL += SignExtend64<16>(read32<E>(PairedLoc));
     return Out<ELFT>::Got->getMipsLocalPageAddr(SymVA + AHL);
   }
-  if (!canBePreempted(Body))
+  if (!Body.isPreemptible())
     // For non-local symbols GOT entries should contain their full
     // addresses. But if such symbol cannot be preempted, we do not
     // have to put them into the "global" part of GOT and use dynamic
@@ -274,7 +274,6 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     }
 
     uintX_t SymVA = Body.getVA<ELFT>(A);
-    bool CBP = canBePreempted(Body);
     uint8_t *PairedLoc = nullptr;
     if (Config->EMachine == EM_MIPS)
       PairedLoc = findMipsPairedReloc(Buf, &RI, Rels.end());
@@ -288,7 +287,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
         SymVA = Body.getGotVA<ELFT>() + A;
       if (Body.IsTls)
         Type = Target->getTlsGotRel(Type);
-    } else if (Target->isSizeRel(Type) && CBP) {
+    } else if (Target->isSizeRel(Type) && Body.isPreemptible()) {
       // A SIZE relocation is supposed to set a symbol size, but if a symbol
       // can be preempted, the size at runtime may be different than link time.
       // If that's the case, we leave the field alone rather than filling it
@@ -296,7 +295,8 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       continue;
     } else if (Config->EMachine == EM_MIPS) {
       SymVA = adjustMipsSymVA<ELFT>(Type, *File, Body, AddrLoc, SymVA) + A;
-    } else if (!Target->needsCopyRel<ELFT>(Type, Body) && CBP) {
+    } else if (!Target->needsCopyRel<ELFT>(Type, Body) &&
+               Body.isPreemptible()) {
       continue;
     }
     uintX_t Size = Body.getSize<ELFT>();
