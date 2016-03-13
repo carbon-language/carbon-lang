@@ -62,9 +62,9 @@ private:
   void addPredefinedSections();
   bool needsGot();
 
-  template <bool isRela>
+  template <class RelTy>
   void scanRelocs(InputSectionBase<ELFT> &C,
-                  iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
+                  iterator_range<const RelTy *> Rels);
 
   void scanRelocs(InputSection<ELFT> &C);
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
@@ -310,13 +310,11 @@ static bool handleTlsRelocation(uint32_t Type, SymbolBody &Body,
 // complicates things for the dynamic linker and means we would have to reserve
 // space for the extra PT_LOAD even if we end up not using it.
 template <class ELFT>
-template <bool isRela>
-void Writer<ELFT>::scanRelocs(
-    InputSectionBase<ELFT> &C,
-    iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
-  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
+template <class RelTy>
+void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
+                              iterator_range<const RelTy *> Rels) {
   const elf::ObjectFile<ELFT> &File = *C.getFile();
-  for (const RelType &RI : Rels) {
+  for (const RelTy &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     SymbolBody &OrigBody = File.getSymbolBody(SymIndex);
     SymbolBody &Body = OrigBody.repl();

@@ -113,19 +113,18 @@ InputSectionBase<ELFT> *InputSection<ELFT>::getRelocatedSection() {
 // to update symbol table offset and section index for each relocation. So we
 // copy relocations one by one.
 template <class ELFT>
-template <bool isRela>
+template <class RelTy>
 void InputSection<ELFT>::copyRelocations(uint8_t *Buf,
-                                         RelIteratorRange<isRela> Rels) {
-  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
+                                         iterator_range<const RelTy *> Rels) {
   InputSectionBase<ELFT> *RelocatedSection = getRelocatedSection();
 
-  for (const RelType &Rel : Rels) {
+  for (const RelTy &Rel : Rels) {
     uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
     uint32_t Type = Rel.getType(Config->Mips64EL);
     SymbolBody &Body = this->File->getSymbolBody(SymIndex).repl();
 
-    RelType *P = reinterpret_cast<RelType *>(Buf);
-    Buf += sizeof(RelType);
+    RelTy *P = reinterpret_cast<RelTy *>(Buf);
+    Buf += sizeof(RelTy);
 
     P->r_offset = RelocatedSection->getOffset(Rel.r_offset);
     P->setSymbolAndType(Body.DynsymIndex, Type, Config->Mips64EL);
@@ -149,11 +148,10 @@ static uint32_t getMipsPairType(const RelTy *Rel, const SymbolBody &Sym) {
 }
 
 template <class ELFT>
-template <bool isRela>
-uint8_t *InputSectionBase<ELFT>::findMipsPairedReloc(
-    uint8_t *Buf,
-    const Elf_Rel_Impl<ELFT, isRela> *Rel,
-    const Elf_Rel_Impl<ELFT, isRela> *End) {
+template <class RelTy>
+uint8_t *InputSectionBase<ELFT>::findMipsPairedReloc(uint8_t *Buf,
+                                                     const RelTy *Rel,
+                                                     const RelTy *End) {
   uint32_t SymIndex = Rel->getSymbol(Config->Mips64EL);
   SymbolBody &Sym = File->getSymbolBody(SymIndex).repl();
   uint32_t Type = getMipsPairType(Rel, Sym);
@@ -162,10 +160,10 @@ uint8_t *InputSectionBase<ELFT>::findMipsPairedReloc(
   // itself and addend of paired relocation. ABI requires to compute such
   // combined addend in case of REL relocation record format only.
   // See p. 4-17 at ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-  if (isRela || Type == R_MIPS_NONE)
+  if (RelTy::IsRela || Type == R_MIPS_NONE)
     return nullptr;
 
-  for (const Elf_Rel_Impl<ELFT, isRela> *RI = Rel; RI != End; ++RI) {
+  for (const RelTy *RI = Rel; RI != End; ++RI) {
     if (RI->getType(Config->Mips64EL) != Type)
       continue;
     if (RI->getSymbol(Config->Mips64EL) != SymIndex)
@@ -179,13 +177,12 @@ uint8_t *InputSectionBase<ELFT>::findMipsPairedReloc(
 }
 
 template <class ELFT>
-template <bool isRela>
+template <class RelTy>
 void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
-                                      RelIteratorRange<isRela> Rels) {
-  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
+                                      iterator_range<const RelTy *> Rels) {
   size_t Num = Rels.end() - Rels.begin();
   for (size_t I = 0; I < Num; ++I) {
-    const RelType &RI = *(Rels.begin() + I);
+    const RelTy &RI = *(Rels.begin() + I);
     uintX_t Offset = getOffset(RI.r_offset);
     if (Offset == (uintX_t)-1)
       continue;
