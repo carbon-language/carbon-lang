@@ -177,7 +177,7 @@ uint8_t *InputSectionBase<ELFT>::findMipsPairedReloc(uint8_t *Buf,
 }
 
 template <class ELFT, class uintX_t>
-static uintX_t adjustMipsSymVA(uint32_t Type, const ObjectFile<ELFT> &File,
+static uintX_t adjustMipsSymVA(uint32_t Type, const elf::ObjectFile<ELFT> &File,
                                const SymbolBody &Body, uintX_t AddrLoc,
                                uintX_t SymVA) {
   if (Type == R_MIPS_HI16 && &Body == Config->MipsGpDisp)
