@@ -74,6 +74,8 @@ public:
   bool isLocal() const { return IsLocal; }
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
 
+  template <class ELFT> bool isGnuIfunc() const;
+
   // Returns the symbol name.
   StringRef getName() const { return Name; }
 

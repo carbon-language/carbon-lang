@@ -366,7 +366,7 @@ void Writer<ELFT>::scanRelocs(
     // An STT_GNU_IFUNC symbol always uses a PLT entry, and all references
     // to the symbol go through the PLT. This is true even for a local
     // symbol, although local symbols normally do not require PLT entries.
-    if (isGnuIFunc<ELFT>(Body)) {
+    if (Body.isGnuIfunc<ELFT>()) {
       if (Body.isInPlt())
         continue;
       Out<ELFT>::Plt->addEntry(Body);
