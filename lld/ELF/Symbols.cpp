@@ -66,8 +66,7 @@ getSymVA(const SymbolBody &Body, typename ELFFile<ELFT>::uintX_t &Addend) {
       return 0;
     if (SS.IsFunc)
       return Body.getPltVA<ELFT>();
-    else
-      return Out<ELFT>::Bss->getVA() + SS.OffsetInBss;
+    return Out<ELFT>::Bss->getVA() + SS.OffsetInBss;
   }
   case SymbolBody::UndefinedElfKind:
   case SymbolBody::UndefinedKind:
