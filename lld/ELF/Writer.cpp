@@ -339,7 +339,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
 
     // MIPS has a special rule to create GOTs for local symbols.
     if (Config->EMachine == EM_MIPS && !Preemptible &&
-        (Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16)) {
+        Target->needsGot(Type, Body)) {
       // FIXME (simon): Do not add so many redundant entries.
       Out<ELFT>::Got->addMipsLocalEntry();
       continue;
