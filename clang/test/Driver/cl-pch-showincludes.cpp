@@ -9,8 +9,7 @@
 // input itself) and header3.h (included directly, above) should be printed.
 // RUN: %clang_cl -Werror /showIncludes /I%S/Inputs /Ycheader2.h /FIheader2.h /Fp%t.pch /c -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YC %s
-// FIXME: clang-cl doesn't print "header2.h" yet, next line shouldn't say -NOT
-// CHECK-YC-NOT: Note: including file: {{.*header2.h}}
+// CHECK-YC: Note: including file: {{.*header2.h}}
 // CHECK-YC: Note: including file: {{.*header1.h}}
 // CHECK-YC: Note: including file: {{.*header3.h}}
 

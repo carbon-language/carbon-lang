@@ -752,6 +752,7 @@ public:
                                       FileManager &FileMgr,
                                       SourceManager &SourceMgr,
                                       HeaderSearch *HS,
+                                      DependencyOutputOptions &DepOpts,
                                       const FrontendOptions &Opts);
 
   /// }
