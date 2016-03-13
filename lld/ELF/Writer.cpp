@@ -555,8 +555,7 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
   for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
        Symtab.getObjectFiles()) {
     for (SymbolBody *B : F->getLocalSymbols()) {
-      auto *L = cast<DefinedRegular<ELFT>>(B);
-      const Elf_Sym &Sym = L->Sym;
+      const Elf_Sym &Sym = cast<DefinedRegular<ELFT>>(B)->Sym;
       StringRef SymName = check(Sym.getName(F->getStringTable()));
       if (!shouldKeepInSymtab<ELFT>(*F, SymName, Sym))
         continue;
@@ -567,7 +566,7 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       }
       ++Out<ELFT>::SymTab->NumLocals;
       if (Config->Relocatable)
-        L->DynsymIndex = Out<ELFT>::SymTab->NumLocals;
+        B->DynsymIndex = Out<ELFT>::SymTab->NumLocals;
       F->KeptLocalSyms.push_back(std::make_pair(
           &Sym, Out<ELFT>::SymTab->StrTabSec.addString(SymName)));
     }
