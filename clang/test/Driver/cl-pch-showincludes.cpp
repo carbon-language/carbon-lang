@@ -2,6 +2,7 @@
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
 // Tests interaction of /Yc / /Yu with /showIncludes
+// REQUIRES: x86-registered-target
 
 #include "header3.h"
 
