@@ -352,7 +352,7 @@ void Writer<ELFT>::scanRelocs(
 
     // If a symbol in a DSO is referenced directly instead of through GOT,
     // we need to create a copy relocation for the symbol.
-    if (auto *B = dyn_cast_or_null<SharedSymbol<ELFT>>(&Body)) {
+    if (auto *B = dyn_cast<SharedSymbol<ELFT>>(&Body)) {
       if (B->needsCopy())
         continue;
       if (Target->needsCopyRel<ELFT>(Type, *B)) {
