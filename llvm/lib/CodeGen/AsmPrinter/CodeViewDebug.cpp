@@ -397,10 +397,11 @@ void CodeViewDebug::emitInlinedCallSite(const FunctionInfo &FI,
   OS.EmitIntValue(SymbolRecordKind::S_INLINESITE_END, 2); // RecordKind
 }
 
-static void emitNullTerminatedString(MCStreamer &OS, StringRef S) {
+static void emitNullTerminatedString(MCStreamer &OS, StringRef S,
+                                     size_t MaxSize) {
+  S = S.substr(0, MaxSize);
   SmallString<32> NullTerminatedString(S);
-  if (NullTerminatedString.empty() || NullTerminatedString.back() != '\0')
-    NullTerminatedString.push_back('\0');
+  NullTerminatedString.push_back('\0');
   OS.EmitBytes(NullTerminatedString);
 }
 
@@ -462,7 +463,8 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
     OS.EmitIntValue(0, 1);
     // Emit the function display name as a null-terminated string.
     OS.AddComment("Function name");
-    emitNullTerminatedString(OS, FuncName);
+    // Truncate the name so we won't overflow the record length field.
+    emitNullTerminatedString(OS, FuncName, 0xffd9);
     OS.EmitLabel(ProcRecordEnd);
 
     for (const LocalVariable &Var : FI.Locals)
@@ -706,7 +708,8 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
   OS.EmitIntValue(TypeIndex::Int32().getIndex(), 4);
   OS.AddComment("Flags");
   OS.EmitIntValue(Flags, 2);
-  emitNullTerminatedString(OS, Var.DIVar->getName());
+  // Truncate the name so we won't overflow the record length field.
+  emitNullTerminatedString(OS, Var.DIVar->getName(), 0xfff6);
   OS.EmitLabel(LocalEnd);
 
   // Calculate the on disk prefix of the appropriate def range record. The
