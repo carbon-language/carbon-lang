@@ -296,7 +296,8 @@ InterpSection<ELFT>::InterpSection()
 }
 
 template <class ELFT> void InterpSection<ELFT>::writeTo(uint8_t *Buf) {
-  memcpy(Buf, Config->DynamicLinker.data(), Config->DynamicLinker.size());
+  StringRef S = Config->DynamicLinker;
+  memcpy(Buf, S.data(), S.size());
 }
 
 template <class ELFT>
