@@ -131,11 +131,11 @@ StringRef elf::ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
 }
 
 template <class ELFT>
-ArrayRef<typename elf::ObjectFile<ELFT>::uint32_X>
+ArrayRef<typename elf::ObjectFile<ELFT>::Elf_Word>
 elf::ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
-  ArrayRef<uint32_X> Entries =
-      check(Obj.template getSectionContentsAsArray<uint32_X>(&Sec));
+  ArrayRef<Elf_Word> Entries =
+      check(Obj.template getSectionContentsAsArray<Elf_Word>(&Sec));
   if (Entries.empty() || Entries[0] != GRP_COMDAT)
     fatal("unsupported SHT_GROUP format");
   return Entries.slice(1);
