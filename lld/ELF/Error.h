@@ -22,14 +22,14 @@ void log(const Twine &Msg);
 void warning(const Twine &Msg);
 
 void error(const Twine &Msg);
-bool error(std::error_code EC, const Twine &Prefix);
-bool error(std::error_code EC);
+void error(std::error_code EC, const Twine &Prefix);
+void error(std::error_code EC);
 
-template <typename T> bool error(const ErrorOr<T> &V, const Twine &Prefix) {
+template <typename T> void error(const ErrorOr<T> &V, const Twine &Prefix) {
   return error(V.getError(), Prefix);
 }
 
-template <typename T> bool error(const ErrorOr<T> &V) {
+template <typename T> void error(const ErrorOr<T> &V) {
   return error(V.getError());
 }
 

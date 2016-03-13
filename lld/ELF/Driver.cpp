@@ -92,8 +92,10 @@ void LinkerDriver::addFile(StringRef Path) {
   using namespace llvm::sys::fs;
   log(Path);
   auto MBOrErr = MemoryBuffer::getFile(Path);
-  if (error(MBOrErr, "cannot open " + Path))
+  if (!MBOrErr) {
+    error(MBOrErr, "cannot open " + Path);
     return;
+  }
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take MB ownership

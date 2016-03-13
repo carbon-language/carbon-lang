@@ -1534,8 +1534,10 @@ template <class ELFT> bool Writer<ELFT>::openFile() {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Config->OutputFile, FileSize,
                                FileOutputBuffer::F_executable);
-  if (error(BufferOrErr, "failed to open " + Config->OutputFile))
+  if (!BufferOrErr) {
+    error(BufferOrErr, "failed to open " + Config->OutputFile);
     return false;
+  }
   Buffer = std::move(*BufferOrErr);
   return true;
 }
