@@ -89,6 +89,8 @@ private:
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
   void addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
 
+  static uint32_t getAlignment(SharedSymbol<ELFT> *SS);
+
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
   BumpPtrAllocator Alloc;
@@ -723,26 +725,32 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   Out<ELFT>::Bss->setSize(Off);
 }
 
+template <class ELFT>
+uint32_t Writer<ELFT>::getAlignment(SharedSymbol<ELFT> *SS) {
+  const Elf_Sym &Sym = SS->Sym;
+  const Elf_Shdr *Sec = SS->File->getSection(Sym);
+  uintX_t SecAlign = Sec->sh_addralign;
+  int TrailingZeros = std::min(countTrailingZeros(SecAlign),
+                               countTrailingZeros((uintX_t)Sym.st_value));
+  return 1 << TrailingZeros;
+}
+
 // Reserve space in .bss for copy relocations.
 template <class ELFT>
 void Writer<ELFT>::addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
   if (Syms.empty())
     return;
   uintX_t Off = getBss()->getSize();
-  for (SharedSymbol<ELFT> *C : Syms) {
-    const Elf_Sym &Sym = C->Sym;
-    const Elf_Shdr *Sec = C->File->getSection(Sym);
-    uintX_t SecAlign = Sec->sh_addralign;
-    unsigned TrailingZeros =
-        std::min(countTrailingZeros(SecAlign),
-                 countTrailingZeros((uintX_t)Sym.st_value));
-    uintX_t Align = 1 << TrailingZeros;
-    Out<ELFT>::Bss->updateAlign(Align);
+  uintX_t MaxAlign = Out<ELFT>::Bss->getAlign();
+  for (SharedSymbol<ELFT> *SS : Syms) {
+    uintX_t Align = getAlignment(SS);
     Off = alignTo(Off, Align);
-    C->OffsetInBss = Off;
-    Off += Sym.st_size;
+    SS->OffsetInBss = Off;
+    Off += SS->Sym.st_size;
+    MaxAlign = std::max(MaxAlign, Align);
   }
   Out<ELFT>::Bss->setSize(Off);
+  Out<ELFT>::Bss->updateAlign(MaxAlign);
 }
 
 template <class ELFT>
