@@ -36,11 +36,6 @@ void error(std::error_code EC, const Twine &Prefix) {
     error(Prefix + ": " + EC.message());
 }
 
-void error(std::error_code EC) {
-  if (EC)
-    error(EC.message());
-}
-
 void fatal(const Twine &Msg) {
   llvm::errs() << Msg << "\n";
   exit(1);
