@@ -134,8 +134,6 @@ void InputSection<ELFT>::copyRelocations(uint8_t *Buf,
 
 template <class RelTy>
 static uint32_t getMipsPairType(const RelTy *Rel, const SymbolBody &Sym) {
-  if (Config->EMachine != EM_MIPS)
-    return R_MIPS_NONE;
   switch (Rel->getType(Config->Mips64EL)) {
   case R_MIPS_HI16:
     return R_MIPS_LO16;
