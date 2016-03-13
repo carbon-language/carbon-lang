@@ -10,14 +10,11 @@
 #ifndef LLD_ELF_OUTPUT_SECTIONS_H
 #define LLD_ELF_OUTPUT_SECTIONS_H
 
-#include "lld/Core/LLVM.h"
-
-#include "llvm/MC/StringTableBuilder.h"
-#include "llvm/Object/ELF.h"
-
 #include "Config.h"
 
-#include <type_traits>
+#include "lld/Core/LLVM.h"
+#include "llvm/MC/StringTableBuilder.h"
+#include "llvm/Object/ELF.h"
 
 namespace lld {
 namespace elf {
