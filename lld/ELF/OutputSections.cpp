@@ -48,6 +48,11 @@ OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t Type,
 }
 
 template <class ELFT>
+void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *Shdr) {
+  *Shdr = Header;
+}
+
+template <class ELFT>
 GotPltSection<ELFT>::GotPltSection()
     : OutputSectionBase<ELFT>(".got.plt", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
   this->Header.sh_addralign = sizeof(uintX_t);
@@ -288,11 +293,6 @@ InterpSection<ELFT>::InterpSection()
     : OutputSectionBase<ELFT>(".interp", SHT_PROGBITS, SHF_ALLOC) {
   this->Header.sh_size = Config->DynamicLinker.size() + 1;
   this->Header.sh_addralign = 1;
-}
-
-template <class ELFT>
-void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
-  *SHdr = Header;
 }
 
 template <class ELFT> void InterpSection<ELFT>::writeTo(uint8_t *Buf) {
