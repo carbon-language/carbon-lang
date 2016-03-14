@@ -541,7 +541,6 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.DisableFPElim =
       (Args.hasArg(OPT_mdisable_fp_elim) || Args.hasArg(OPT_pg));
   Opts.DisableFree = Args.hasArg(OPT_disable_free);
-  Opts.DiscardValueNames = Args.hasArg(OPT_discard_value_names);
   Opts.DisableTailCalls = Args.hasArg(OPT_mdisable_tail_calls);
   Opts.FloatABI = Args.getLastArgValue(OPT_mfloat_abi);
   if (Arg *A = Args.getLastArg(OPT_meabi)) {
@@ -794,6 +793,12 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.CudaGpuBinaryFileNames =
       Args.getAllArgValues(OPT_fcuda_include_gpubinary);
 
+  // DiscardValueNames is set here so that it can depend (perhaps temporarily)
+  // on other options.
+  // We check SanitizeMemoryTrackOrigins here because the backend pass depends
+  // on the name of the alloca in order to print out names.
+  Opts.DiscardValueNames =
+      Args.hasArg(OPT_discard_value_names) && !Opts.SanitizeMemoryTrackOrigins;
   return Success;
 }
 
