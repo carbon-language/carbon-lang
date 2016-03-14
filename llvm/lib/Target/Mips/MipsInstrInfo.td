@@ -394,10 +394,6 @@ class ConstantSImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = [],
   let DiagnosticType = "SImm" # Bits # "_" # Offset;
 }
 
-def ConstantSImm4AsmOperandClass
-    : ConstantSImmAsmOperandClass<
-          4, []>;
-
 class ConstantUImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = [],
                                   int Offset = 0> : AsmOperandClass {
   let Name = "ConstantUImm" # Bits # "_" # Offset;
@@ -426,6 +422,29 @@ class UImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = []>
   let DiagnosticType = "UImm" # Bits;
 }
 
+// AsmOperandClasses require a strict ordering which is difficult to manage
+// as a hierarchy. Instead, we use a linear ordering and impose an order that
+// is in some places arbitrary.
+//
+// Here the rules that are in use:
+// * Wider immediates are a superset of narrower immediates:
+//     uimm4 < uimm5 < uimm6
+// * For the same bit-width, unsigned immediates are a superset of signed
+//   immediates::
+//     simm4 < uimm4 < simm5 < uimm5
+// * For the same upper-bound, signed immediates are a superset of unsigned
+//   immediates:
+//     uimm3 < simm4 < uimm4 < simm4
+// * Modified immediates are a superset of ordinary immediates:
+//     uimm5 < uimm5_plus1 (1..32) < uimm5_plus32 (32..63) < uimm6
+//   The term 'superset' starts to break down here since the uimm5_plus* classes
+//   are not true supersets of uimm5 (but they are still subsets of uimm6).
+// * 'Relaxed' immediates are supersets of the corresponding unsigned immediate.
+//     uimm16 < uimm16_relaxed
+// * The codeGen pattern type is arbitrarily ordered.
+//     uimm5 < uimm5_64, and uimm5 < vsplat_uimm5
+//   This is entirely arbitrary. We need an ordering and what we pick is
+//   unimportant since only one is possible for a given mnemonic.
 def ConstantUImm20AsmOperandClass
     : ConstantUImmAsmOperandClass<20, []>;
 def UImm16RelaxedAsmOperandClass
@@ -450,45 +469,46 @@ def ConstantUImm6Lsl2AsmOperandClass : AsmOperandClass {
   let DiagnosticType = "UImm6_Lsl2";
 }
 def ConstantUImm6AsmOperandClass
-    : ConstantUImmAsmOperandClass<6, [ConstantUImm7AsmOperandClass]>;
+    : ConstantUImmAsmOperandClass<6, [ConstantUImm6Lsl2AsmOperandClass]>;
 def ConstantSImm6AsmOperandClass
-    : ConstantSImmAsmOperandClass<6, [ConstantUImm7AsmOperandClass]>;
-def ConstantUImm5Plus1AsmOperandClass
-    : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass], 1>;
-def ConstantUImm5_Range2_64AsmOperandClass
-    : ConstantUImmRangeAsmOperandClass<2, 64, [ConstantUImm6AsmOperandClass]>;
-def ConstantUImm5Plus32AsmOperandClass
-    : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass], 32>;
-def ConstantUImm5Plus33AsmOperandClass
-    : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass], 33>;
-def ConstantUImm5Plus32NormalizeAsmOperandClass
-    : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass], 32> {
-  let Name = "ConstantUImm5_32_Norm";
-  // We must also subtract 32 when we render the operand.
-  let RenderMethod = "addConstantUImmOperands<5, 32, -32>";
-}
+    : ConstantSImmAsmOperandClass<6, [ConstantUImm6AsmOperandClass]>;
 def ConstantUImm5Lsl2AsmOperandClass : AsmOperandClass {
   let Name = "UImm5Lsl2";
   let RenderMethod = "addImmOperands";
   let PredicateMethod = "isScaledUImm<5, 2>";
-  let SuperClasses = [ConstantUImm6AsmOperandClass];
+  let SuperClasses = [ConstantSImm6AsmOperandClass];
   let DiagnosticType = "UImm5_Lsl2";
 }
+def ConstantUImm5_Range2_64AsmOperandClass
+    : ConstantUImmRangeAsmOperandClass<2, 64, [ConstantUImm5Lsl2AsmOperandClass]>;
+def ConstantUImm5Plus33AsmOperandClass
+    : ConstantUImmAsmOperandClass<5, [ConstantUImm5_Range2_64AsmOperandClass],
+                                  33>;
 def ConstantUImm5ReportUImm6AsmOperandClass
-    : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass]> {
+    : ConstantUImmAsmOperandClass<5, [ConstantUImm5Plus33AsmOperandClass]> {
   let Name = "ConstantUImm5_0_Report_UImm6";
   let DiagnosticType = "UImm5_0_Report_UImm6";
 }
-def ConstantUImm5AsmOperandClass
-    : ConstantUImmAsmOperandClass<5, [ConstantUImm6AsmOperandClass]>;
-def ConstantUImm4AsmOperandClass
+def ConstantUImm5Plus32AsmOperandClass
     : ConstantUImmAsmOperandClass<
-          4, [ConstantUImm5AsmOperandClass,
-              ConstantUImm5Plus32AsmOperandClass,
-              ConstantUImm5Plus32NormalizeAsmOperandClass]>;
+          5, [ConstantUImm5ReportUImm6AsmOperandClass], 32>;
+def ConstantUImm5Plus32NormalizeAsmOperandClass
+    : ConstantUImmAsmOperandClass<5, [ConstantUImm5Plus32AsmOperandClass], 32> {
+  let Name = "ConstantUImm5_32_Norm";
+  // We must also subtract 32 when we render the operand.
+  let RenderMethod = "addConstantUImmOperands<5, 32, -32>";
+}
+def ConstantUImm5Plus1AsmOperandClass
+    : ConstantUImmAsmOperandClass<
+          5, [ConstantUImm5Plus32NormalizeAsmOperandClass], 1>;
+def ConstantUImm5AsmOperandClass
+    : ConstantUImmAsmOperandClass<5, [ConstantUImm5Plus1AsmOperandClass]>;
+def ConstantUImm4AsmOperandClass
+    : ConstantUImmAsmOperandClass<4, [ConstantUImm5AsmOperandClass]>;
+def ConstantSImm4AsmOperandClass
+    : ConstantSImmAsmOperandClass<4, [ConstantUImm4AsmOperandClass]>;
 def ConstantUImm3AsmOperandClass
-    : ConstantUImmAsmOperandClass<3, [ConstantSImm4AsmOperandClass,
-                                      ConstantUImm4AsmOperandClass]>;
+    : ConstantUImmAsmOperandClass<3, [ConstantSImm4AsmOperandClass]>;
 def ConstantUImm2Plus1AsmOperandClass
     : ConstantUImmAsmOperandClass<2, [ConstantUImm3AsmOperandClass], 1>;
 def ConstantUImm2AsmOperandClass
