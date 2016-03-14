@@ -340,7 +340,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
 }
 
 void ArchiveFile::parse() {
-  File = check(Archive::create(MB), "Failed to parse archive");
+  File = check(Archive::create(MB), "failed to parse archive");
 
   // Allocate a buffer for Lazy objects.
   size_t NumSyms = File->getNumberOfSymbols();
@@ -355,13 +355,13 @@ void ArchiveFile::parse() {
 MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   Archive::Child C =
       check(Sym->getMember(),
-            "Could not get the member for symbol " + Sym->getName());
+            "could not get the member for symbol " + Sym->getName());
 
   if (!Seen.insert(C.getChildOffset()).second)
     return MemoryBufferRef();
 
   return check(C.getMemoryBufferRef(),
-               "Could not get the buffer for the member defining symbol " +
+               "could not get the buffer for the member defining symbol " +
                    Sym->getName());
 }
 
