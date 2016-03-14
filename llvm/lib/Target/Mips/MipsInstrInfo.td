@@ -658,7 +658,7 @@ def uimm6_lsl2 : Operand<OtherVT> {
 
 foreach I = {16} in
   def uimm # I : Operand<i32> {
-    let PrintMethod = "printUImm<16>";
+    let PrintMethod = "printUImm<" # I # ">";
     let ParserMatchClass =
         !cast<AsmOperandClass>("UImm" # I # "AsmOperandClass");
   }
@@ -672,16 +672,17 @@ def uimm16_relaxed : Operand<i32> {
 
 foreach I = {5} in
   def uimm # I # _64 : Operand<i64> {
-    let PrintMethod = "printUImm<5>";
+    let PrintMethod = "printUImm<" # I # ">";
     let ParserMatchClass =
         !cast<AsmOperandClass>("ConstantUImm" # I # "AsmOperandClass");
   }
 
-def uimm16_64 : Operand<i64> {
-  let PrintMethod = "printUImm<16>";
-  let ParserMatchClass =
-      !cast<AsmOperandClass>("UImm16AsmOperandClass");
-}
+foreach I = {16} in
+  def uimm # I # _64 : Operand<i64> {
+    let PrintMethod = "printUImm<" # I # ">";
+    let ParserMatchClass =
+        !cast<AsmOperandClass>("UImm" # I # "AsmOperandClass");
+  }
 
 // Like uimm16_64 but coerces simm16 to uimm16.
 def uimm16_64_relaxed : Operand<i64> {
