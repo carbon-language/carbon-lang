@@ -29,10 +29,10 @@ using namespace lld;
 using namespace lld::elf;
 
 template <class ELFT>
-static typename ELFFile<ELFT>::uintX_t
-getSymVA(const SymbolBody &Body, typename ELFFile<ELFT>::uintX_t &Addend) {
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+static typename ELFT::uint getSymVA(const SymbolBody &Body,
+                                    typename ELFT::uint &Addend) {
+  typedef typename ELFT::Sym Elf_Sym;
+  typedef typename ELFT::uint uintX_t;
 
   switch (Body.kind()) {
   case SymbolBody::DefinedSyntheticKind: {
@@ -119,32 +119,26 @@ template <class ELFT> bool SymbolBody::isGnuIfunc() const {
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::uintX_t
-SymbolBody::getVA(typename ELFFile<ELFT>::uintX_t Addend) const {
+typename ELFT::uint SymbolBody::getVA(typename ELFT::uint Addend) const {
   return getSymVA<ELFT>(*this, Addend) + Addend;
 }
 
-template <class ELFT>
-typename ELFFile<ELFT>::uintX_t SymbolBody::getGotVA() const {
+template <class ELFT> typename ELFT::uint SymbolBody::getGotVA() const {
   return Out<ELFT>::Got->getVA() +
          (Out<ELFT>::Got->getMipsLocalEntriesNum() + GotIndex) *
-             sizeof(typename ELFFile<ELFT>::uintX_t);
+             sizeof(typename ELFT::uint);
 }
 
-template <class ELFT>
-typename ELFFile<ELFT>::uintX_t SymbolBody::getGotPltVA() const {
-  return Out<ELFT>::GotPlt->getVA() +
-         GotPltIndex * sizeof(typename ELFFile<ELFT>::uintX_t);
+template <class ELFT> typename ELFT::uint SymbolBody::getGotPltVA() const {
+  return Out<ELFT>::GotPlt->getVA() + GotPltIndex * sizeof(typename ELFT::uint);
 }
 
-template <class ELFT>
-typename ELFFile<ELFT>::uintX_t SymbolBody::getPltVA() const {
+template <class ELFT> typename ELFT::uint SymbolBody::getPltVA() const {
   return Out<ELFT>::Plt->getVA() + Target->PltZeroSize +
          PltIndex * Target->PltEntrySize;
 }
 
-template <class ELFT>
-typename ELFFile<ELFT>::uintX_t SymbolBody::getSize() const {
+template <class ELFT> typename ELFT::uint SymbolBody::getSize() const {
   if (auto *B = dyn_cast<DefinedElf<ELFT>>(this))
     return B->Sym.st_size;
   return 0;

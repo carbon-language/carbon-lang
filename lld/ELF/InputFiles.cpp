@@ -45,8 +45,7 @@ ELFKind ELFFileBase<ELFT>::getELFKind() {
 }
 
 template <class ELFT>
-typename ELFFileBase<ELFT>::Elf_Sym_Range
-ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
+typename ELFT::SymRange ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
   if (!Symtab)
     return Elf_Sym_Range(nullptr, nullptr);
   Elf_Sym_Range Syms = ELFObj.symbols(Symtab);
@@ -141,9 +140,8 @@ elf::ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   return Entries.slice(1);
 }
 
-template <class ELFT>
-static bool shouldMerge(const typename ELFFile<ELFT>::Elf_Shdr &Sec) {
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+template <class ELFT> static bool shouldMerge(const typename ELFT::Shdr &Sec) {
+  typedef typename ELFT::uint uintX_t;
   uintX_t Flags = Sec.sh_flags;
   if (!(Flags & SHF_MERGE))
     return false;
@@ -370,7 +368,7 @@ SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
     : ELFFileBase<ELFT>(Base::SharedKind, M), AsNeeded(Config->AsNeeded) {}
 
 template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Shdr *
+const typename ELFT::Shdr *
 SharedFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   uint32_t Index = this->getSectionIndex(Sym);
   if (Index == 0)
@@ -381,8 +379,8 @@ SharedFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 // Partially parse the shared object file so that we can call
 // getSoName on this object.
 template <class ELFT> void SharedFile<ELFT>::parseSoName() {
-  typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename ELFT::Dyn Elf_Dyn;
+  typedef typename ELFT::uint uintX_t;
   const Elf_Shdr *DynamicSec = nullptr;
 
   const ELFFile<ELFT> Obj = this->ELFObj;
