@@ -10,5 +10,5 @@ void A::f() {}
 
 // CHECK: define void @_ZN1A1fEv({{.*}}) unnamed_addr
 // CHECK: declare void @_ZN1A1gEv({{.*}}) unnamed_addr
-// CHECK: declare void @_ZN1AD1Ev({{.*}}) unnamed_addr
+// CHECK: declare {{.*}} @_ZN1AD1Ev({{.*}}) unnamed_addr
 // CHECK: declare void @_ZN1AD0Ev({{.*}}) unnamed_addr
