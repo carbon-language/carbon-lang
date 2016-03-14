@@ -396,6 +396,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     BuildMI(MBB, MBBI, DL, TII->get(AArch64::ANDXri), AArch64::SP)
       .addReg(scratchSPReg, RegState::Kill)
       .addImm(andMaskEncoded);
+    AFI->setStackRealigned(true);
   }
 
   // If we need a base pointer, set it up here. It's whatever the value of the
@@ -607,9 +608,12 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   // FIXME: Rather than doing the math here, we should instead just use
   // non-post-indexed loads for the restores if we aren't actually going to
   // be able to save any instructions.
-  if (NumBytes || MFI->hasVarSizedObjects())
+  if (MFI->hasVarSizedObjects() || AFI->isStackRealigned())
     emitFrameOffset(MBB, LastPopI, DL, AArch64::SP, AArch64::FP,
                     -AFI->getCalleeSavedStackSize() + 16, TII,
+                    MachineInstr::FrameDestroy);
+  else if (NumBytes)
+    emitFrameOffset(MBB, LastPopI, DL, AArch64::SP, AArch64::SP, NumBytes, TII,
                     MachineInstr::FrameDestroy);
 
   // This must be placed after the callee-save restore code because that code
