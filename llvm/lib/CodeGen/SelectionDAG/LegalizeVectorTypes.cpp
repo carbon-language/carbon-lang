@@ -370,7 +370,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
 SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
   // Figure out if the scalar is the LHS or RHS and return it.
   SDValue Arg = N->getOperand(2).getOperand(0);
-  if (Arg.getOpcode() == ISD::UNDEF)
+  if (Arg.isUndef())
     return DAG.getUNDEF(N->getValueType(0).getVectorElementType());
   unsigned Op = !cast<ConstantSDNode>(Arg)->isNullValue();
   return GetScalarizedVector(N->getOperand(Op));

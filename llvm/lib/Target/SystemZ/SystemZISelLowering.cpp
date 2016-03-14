@@ -3703,7 +3703,7 @@ void GeneralShuffle::add(SDValue Op, unsigned Elem) {
       }
       Op = Op.getOperand(unsigned(NewByte) / SystemZ::VectorBytes);
       Byte = unsigned(NewByte) % SystemZ::VectorBytes;
-    } else if (Op.getOpcode() == ISD::UNDEF) {
+    } else if (Op.isUndef()) {
       addUndef();
       return;
     } else
@@ -3822,7 +3822,7 @@ static SDValue buildScalarToVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
     SmallVector<SDValue, 16> Ops(VT.getVectorNumElements(), Value);
     return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Ops);
   }
-  if (Value.getOpcode() == ISD::UNDEF)
+  if (Value.isUndef())
     return DAG.getUNDEF(VT);
   return DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VT, Value);
 }
@@ -3831,12 +3831,12 @@ static SDValue buildScalarToVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
 // element 1.  Used for cases in which replication is cheap.
 static SDValue buildMergeScalars(SelectionDAG &DAG, SDLoc DL, EVT VT,
                                  SDValue Op0, SDValue Op1) {
-  if (Op0.getOpcode() == ISD::UNDEF) {
-    if (Op1.getOpcode() == ISD::UNDEF)
+  if (Op0.isUndef()) {
+    if (Op1.isUndef())
       return DAG.getUNDEF(VT);
     return DAG.getNode(SystemZISD::REPLICATE, DL, VT, Op1);
   }
-  if (Op1.getOpcode() == ISD::UNDEF)
+  if (Op1.isUndef())
     return DAG.getNode(SystemZISD::REPLICATE, DL, VT, Op0);
   return DAG.getNode(SystemZISD::MERGE_HIGH, DL, VT,
                      buildScalarToVector(DAG, DL, VT, Op0),
@@ -3847,13 +3847,13 @@ static SDValue buildMergeScalars(SelectionDAG &DAG, SDLoc DL, EVT VT,
 // vector for them.
 static SDValue joinDwords(SelectionDAG &DAG, SDLoc DL, SDValue Op0,
                           SDValue Op1) {
-  if (Op0.getOpcode() == ISD::UNDEF && Op1.getOpcode() == ISD::UNDEF)
+  if (Op0.isUndef() && Op1.isUndef())
     return DAG.getUNDEF(MVT::v2i64);
   // If one of the two inputs is undefined then replicate the other one,
   // in order to avoid using another register unnecessarily.
-  if (Op0.getOpcode() == ISD::UNDEF)
+  if (Op0.isUndef())
     Op0 = Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op1);
-  else if (Op1.getOpcode() == ISD::UNDEF)
+  else if (Op1.isUndef())
     Op0 = Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op0);
   else {
     Op0 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op0);
@@ -3955,7 +3955,7 @@ static SDValue tryBuildVectorShuffle(SelectionDAG &DAG,
       unsigned Elem = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
       GS.add(Op.getOperand(0), Elem);
       FoundOne = true;
-    } else if (Op.getOpcode() == ISD::UNDEF) {
+    } else if (Op.isUndef()) {
       GS.addUndef();
     } else {
       GS.add(SDValue(), ResidueOps.size());
@@ -4034,9 +4034,9 @@ static SDValue buildVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
     SDValue Op01 = buildMergeScalars(DAG, DL, VT, Elems[0], Elems[1]);
     SDValue Op23 = buildMergeScalars(DAG, DL, VT, Elems[2], Elems[3]);
     // Avoid unnecessary undefs by reusing the other operand.
-    if (Op01.getOpcode() == ISD::UNDEF)
+    if (Op01.isUndef())
       Op01 = Op23;
-    else if (Op23.getOpcode() == ISD::UNDEF)
+    else if (Op23.isUndef())
       Op23 = Op01;
     // Merging identical replications is a no-op.
     if (Op01.getOpcode() == SystemZISD::REPLICATE && Op01 == Op23)
