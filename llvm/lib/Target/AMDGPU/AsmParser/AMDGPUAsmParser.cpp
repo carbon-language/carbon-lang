@@ -1106,14 +1106,13 @@ AMDGPUAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
           Parser.Lex();
           Modifiers |= 0x2;
         }
-        Operands.push_back(AMDGPUOperand::CreateReg(
-            RegNo, S, E, getContext().getRegisterInfo(), &getSTI(),
-            isForcedVOP3()));
-
+        auto R = AMDGPUOperand::CreateReg(RegNo, S, E,
+                                          getContext().getRegisterInfo(),
+                                          &getSTI(), isForcedVOP3());
         if (Modifiers) {
-          AMDGPUOperand &RegOp = ((AMDGPUOperand&)*Operands[Operands.size() - 1]);
-          RegOp.setModifiers(Modifiers);
+          R->setModifiers(Modifiers);
         }
+        Operands.push_back(std::move(R));
       } else {
         ResTy = parseVOP3OptionalOps(Operands);
         if (ResTy == MatchOperand_NoMatch) {
