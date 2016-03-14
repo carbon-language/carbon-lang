@@ -231,6 +231,15 @@ void CodeViewDebug::endModule() {
   clear();
 }
 
+static void emitNullTerminatedSymbolName(MCStreamer &OS, StringRef S) {
+  // Microsoft's linker seems to have trouble with symbol names longer than
+  // 0xffd8 bytes.
+  S = S.substr(0, 0xffd8);
+  SmallString<32> NullTerminatedString(S);
+  NullTerminatedString.push_back('\0');
+  OS.EmitBytes(NullTerminatedString);
+}
+
 void CodeViewDebug::emitTypeInformation() {
   // Start the .debug$T section with 0x4.
   OS.SwitchSection(Asm->getObjFileLowering().getCOFFDebugTypesSection());
@@ -274,7 +283,10 @@ void CodeViewDebug::emitTypeInformation() {
     for (auto *SP : CUNode->getSubprograms()) {
       StringRef DisplayName = SP->getDisplayName();
       OS.AddComment("Type record length");
-      OS.EmitIntValue(2 + sizeof(FuncId) + DisplayName.size() + 1, 2);
+      MCSymbol *FuncBegin = MMI->getContext().createTempSymbol(),
+               *FuncEnd = MMI->getContext().createTempSymbol();
+      OS.emitAbsoluteSymbolDiff(FuncEnd, FuncBegin, 2);
+      OS.EmitLabel(FuncBegin);
       OS.AddComment("Leaf type: LF_FUNC_ID");
       OS.EmitIntValue(LF_FUNC_ID, 2);
 
@@ -283,12 +295,10 @@ void CodeViewDebug::emitTypeInformation() {
       OS.AddComment("Function type");
       OS.EmitIntValue(VoidProcIdx.getIndex(), 4);
       {
-        SmallString<32> NullTerminatedString(DisplayName);
-        if (NullTerminatedString.empty() || NullTerminatedString.back() != '\0')
-          NullTerminatedString.push_back('\0');
         OS.AddComment("Function name");
-        OS.EmitBytes(NullTerminatedString);
+        emitNullTerminatedSymbolName(OS, DisplayName);
       }
+      OS.EmitLabel(FuncEnd);
 
       TypeIndex FuncIdIdx = getNextTypeIndex();
       SubprogramToFuncId.insert(std::make_pair(SP, FuncIdIdx));
@@ -397,14 +407,6 @@ void CodeViewDebug::emitInlinedCallSite(const FunctionInfo &FI,
   OS.EmitIntValue(SymbolRecordKind::S_INLINESITE_END, 2); // RecordKind
 }
 
-static void emitNullTerminatedString(MCStreamer &OS, StringRef S,
-                                     size_t MaxSize) {
-  S = S.substr(0, MaxSize);
-  SmallString<32> NullTerminatedString(S);
-  NullTerminatedString.push_back('\0');
-  OS.EmitBytes(NullTerminatedString);
-}
-
 void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
                                              FunctionInfo &FI) {
   // For each function there is a separate subsection
@@ -464,7 +466,7 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
     // Emit the function display name as a null-terminated string.
     OS.AddComment("Function name");
     // Truncate the name so we won't overflow the record length field.
-    emitNullTerminatedString(OS, FuncName, 0xffd9);
+    emitNullTerminatedSymbolName(OS, FuncName);
     OS.EmitLabel(ProcRecordEnd);
 
     for (const LocalVariable &Var : FI.Locals)
@@ -709,7 +711,7 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
   OS.AddComment("Flags");
   OS.EmitIntValue(Flags, 2);
   // Truncate the name so we won't overflow the record length field.
-  emitNullTerminatedString(OS, Var.DIVar->getName(), 0xfff6);
+  emitNullTerminatedSymbolName(OS, Var.DIVar->getName());
   OS.EmitLabel(LocalEnd);
 
   // Calculate the on disk prefix of the appropriate def range record. The
