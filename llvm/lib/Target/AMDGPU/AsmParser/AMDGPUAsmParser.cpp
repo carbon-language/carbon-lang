@@ -277,11 +277,11 @@ public:
   }
 
   bool isSCSrc32() const {
-    return isInlinableImm() || (isReg() && isRegClass(AMDGPU::SReg_32RegClassID));
+    return isInlinableImm() || isRegClass(AMDGPU::SReg_32RegClassID);
   }
 
   bool isSCSrc64() const {
-    return isInlinableImm() || (isReg() && isRegClass(AMDGPU::SReg_64RegClassID));
+    return isInlinableImm() || isRegClass(AMDGPU::SReg_64RegClassID);
   }
 
   bool isSSrc32() const {
@@ -295,11 +295,11 @@ public:
   }
 
   bool isVCSrc32() const {
-    return isInlinableImm() || (isReg() && isRegClass(AMDGPU::VS_32RegClassID));
+    return isInlinableImm() || isRegClass(AMDGPU::VS_32RegClassID);
   }
 
   bool isVCSrc64() const {
-    return isInlinableImm() || (isReg() && isRegClass(AMDGPU::VS_64RegClassID));
+    return isInlinableImm() || isRegClass(AMDGPU::VS_64RegClassID);
   }
 
   bool isVSrc32() const {
@@ -1752,7 +1752,7 @@ static bool isVOP3(OperandVector &Operands) {
   if (Operands.size() >= 2) {
     AMDGPUOperand &DstOp = ((AMDGPUOperand&)*Operands[1]);
 
-    if (DstOp.isReg() && DstOp.isRegClass(AMDGPU::SGPR_64RegClassID))
+    if (DstOp.isRegClass(AMDGPU::SGPR_64RegClassID))
       return true;
   }
 
@@ -1761,8 +1761,8 @@ static bool isVOP3(OperandVector &Operands) {
 
   if (Operands.size() > 3) {
     AMDGPUOperand &Src1Op = ((AMDGPUOperand&)*Operands[3]);
-    if (Src1Op.isReg() && (Src1Op.isRegClass(AMDGPU::SReg_32RegClassID) ||
-                           Src1Op.isRegClass(AMDGPU::SReg_64RegClassID)))
+    if (Src1Op.isRegClass(AMDGPU::SReg_32RegClassID) ||
+        Src1Op.isRegClass(AMDGPU::SReg_64RegClassID))
       return true;
   }
   return false;
