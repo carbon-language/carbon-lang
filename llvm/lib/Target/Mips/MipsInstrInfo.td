@@ -442,6 +442,13 @@ def ConstantUImm8AsmOperandClass
     : ConstantUImmAsmOperandClass<8, [ConstantUImm10AsmOperandClass]>;
 def ConstantUImm7AsmOperandClass
     : ConstantUImmAsmOperandClass<7, [ConstantUImm8AsmOperandClass]>;
+def ConstantUImm6Lsl2AsmOperandClass : AsmOperandClass {
+  let Name = "UImm6Lsl2";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isScaledUImm<6, 2>";
+  let SuperClasses = [ConstantUImm7AsmOperandClass];
+  let DiagnosticType = "UImm6_Lsl2";
+}
 def ConstantUImm6AsmOperandClass
     : ConstantUImmAsmOperandClass<6, [ConstantUImm7AsmOperandClass]>;
 def ConstantSImm6AsmOperandClass
@@ -614,13 +621,19 @@ def uimm5_plus32_normalize : Operand<i32> {
 
 def uimm5_lsl2 : Operand<OtherVT> {
   let EncoderMethod = "getUImm5Lsl2Encoding";
-  let DecoderMethod = "DecodeUImm5lsl2";
+  let DecoderMethod = "DecodeUImmWithOffsetAndScale<5, 0, 4>";
   let ParserMatchClass = ConstantUImm5Lsl2AsmOperandClass;
 }
 
 def uimm5_plus32_normalize_64 : Operand<i64> {
   let PrintMethod = "printUImm<5>";
   let ParserMatchClass = ConstantUImm5Plus32NormalizeAsmOperandClass;
+}
+
+def uimm6_lsl2 : Operand<OtherVT> {
+  let EncoderMethod = "getUImm6Lsl2Encoding";
+  let DecoderMethod = "DecodeUImmWithOffsetAndScale<6, 0, 4>";
+  let ParserMatchClass = ConstantUImm6Lsl2AsmOperandClass;
 }
 
 foreach I = {16} in
