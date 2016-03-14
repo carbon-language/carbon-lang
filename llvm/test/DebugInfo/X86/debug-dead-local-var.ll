@@ -11,9 +11,9 @@
 ;   return 1;
 ; }
 
-; Check that we still have the structure type for X even though we're not
-; going to emit a low/high_pc for foo.
-; CHECK: DW_TAG_structure_type
+; Check that we will not have the structure type for X as we are going to omit
+; the function foo.
+; CHECK-NOT: DW_TAG_structure_type
 
 ; Function Attrs: nounwind readnone uwtable
 define i32 @bar() #0 !dbg !4 {
@@ -27,7 +27,7 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !llvm.module.flags = !{!18, !19}
 !llvm.ident = !{!20}
 
-!0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 209255) (llvm/trunk 209253)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 209255) (llvm/trunk 209253)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !22, subprograms: !3, globals: !2, imports: !2)
 !1 = !DIFile(filename: "debug-dead-local-var.c", directory: "/usr/local/google/home/echristo")
 !2 = !{}
 !3 = !{!4, !9}
@@ -49,3 +49,4 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !19 = !{i32 2, !"Debug Info Version", i32 3}
 !20 = !{!"clang version 3.5.0 (trunk 209255) (llvm/trunk 209253)"}
 !21 = !DILocation(line: 13, scope: !4)
+!22 = !{!14}
