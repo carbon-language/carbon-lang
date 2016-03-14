@@ -632,7 +632,7 @@ directives through MCStreamer.
 
 On the implementation side of MCStreamer, there are two major implementations:
 one for writing out a .s file (MCAsmStreamer), and one for writing out a .o
-file (MCObjectStreamer).  MCAsmStreamer is a straight-forward implementation
+file (MCObjectStreamer).  MCAsmStreamer is a straightforward implementation
 that prints out a directive for each method (e.g. ``EmitValue -> .byte``), but
 MCObjectStreamer implements a full assembler.
 
