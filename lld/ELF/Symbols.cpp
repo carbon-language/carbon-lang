@@ -159,6 +159,8 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
 }
 
 static int compareCommons(DefinedCommon *A, DefinedCommon *B) {
+  if (Config->WarnCommon)
+    warning("multiple common of " + A->getName());
   A->Alignment = B->Alignment = std::max(A->Alignment, B->Alignment);
   if (A->Size < B->Size)
     return -1;
@@ -199,6 +201,8 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   if (isCommon() && Other->isCommon())
     return compareCommons(cast<DefinedCommon>(this),
                           cast<DefinedCommon>(Other));
+  if (Config->WarnCommon)
+    warning("common " + this->getName() + " is overridden");
   return isCommon() ? -1 : 1;
 }
 
