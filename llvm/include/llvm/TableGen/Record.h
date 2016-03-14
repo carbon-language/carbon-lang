@@ -458,7 +458,7 @@ public:
 /// It contains a vector of bits, whose size is determined by the type.
 ///
 class BitsInit final : public TypedInit, public FoldingSetNode,
-                       public TrailingObjects<BitsInit, Init *> {
+                       private TrailingObjects<BitsInit, Init *> {
   unsigned NumBits;
 
   BitsInit(unsigned N)
@@ -590,7 +590,7 @@ public:
 /// ListInit - [AL, AH, CL] - Represent a list of defs
 ///
 class ListInit final : public TypedInit, public FoldingSetNode,
-                       public TrailingObjects<BitsInit, Init *> {
+                       private TrailingObjects<BitsInit, Init *> {
   unsigned NumValues;
 
 public:
