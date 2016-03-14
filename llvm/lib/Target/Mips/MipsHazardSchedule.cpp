@@ -1,4 +1,4 @@
-//===-- MipsHazardSchedule.cpp - Workaround pipeline hazards---------------===//
+//===-- MipsHazardSchedule.cpp - Workaround pipeline hazards --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -69,7 +69,7 @@ typedef MachineBasicBlock::reverse_iterator ReverseIter;
 class MipsHazardSchedule : public MachineFunctionPass {
 
 public:
-  MipsHazardSchedule(TargetMachine &tm) : MachineFunctionPass(ID), TM(tm) {}
+  MipsHazardSchedule() : MachineFunctionPass(ID) {}
 
   const char *getPassName() const override { return "Mips Hazard Schedule"; }
 
@@ -77,15 +77,14 @@ public:
 
 private:
   static char ID;
-  const TargetMachine &TM;
 };
 
 char MipsHazardSchedule::ID = 0;
 } // end of anonymous namespace
 
 /// Returns a pass that clears pipeline hazards.
-FunctionPass *llvm::createMipsHazardSchedule(MipsTargetMachine &tm) {
-  return new MipsHazardSchedule(tm);
+FunctionPass *llvm::createMipsHazardSchedule() {
+  return new MipsHazardSchedule();
 }
 
 bool MipsHazardSchedule::runOnMachineFunction(MachineFunction &MF) {

@@ -256,7 +256,7 @@ void MipsPassConfig::addPreEmitPass() {
   // (new) pass that creates compact branches after the HSP must handle FS
   // hazards itself or be pipelined before the HSP.
   addPass(createMipsDelaySlotFillerPass(TM));
-  addPass(createMipsHazardSchedule(TM));
+  addPass(createMipsHazardSchedule());
   addPass(createMipsLongBranchPass(TM));
   addPass(createMipsConstantIslandPass(TM));
 }
