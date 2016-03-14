@@ -6256,7 +6256,7 @@ bool PPCTargetLowering::canReuseLoadAddress(SDValue Op, EVT MemVT,
     return false;
 
   RLI.Ptr = LD->getBasePtr();
-  if (LD->isIndexed() && LD->getOffset().getOpcode() != ISD::UNDEF) {
+  if (LD->isIndexed() && !LD->getOffset().isUndef()) {
     assert(LD->getAddressingMode() == ISD::PRE_INC &&
            "Non-pre-inc AM on PPC?");
     RLI.Ptr = DAG.getNode(ISD::ADD, dl, RLI.Ptr.getValueType(), RLI.Ptr,

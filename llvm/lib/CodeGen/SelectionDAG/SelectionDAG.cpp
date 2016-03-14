@@ -135,8 +135,7 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   // undefs. Even with the above element type twiddling, this should be OK, as
   // the same type legalization should have applied to all the elements.
   for (++i; i != e; ++i)
-    if (N->getOperand(i) != NotZero &&
-        N->getOperand(i).getOpcode() != ISD::UNDEF)
+    if (N->getOperand(i) != NotZero && !N->getOperand(i).isUndef())
       return false;
   return true;
 }
@@ -221,7 +220,7 @@ bool ISD::allOperandsUndef(const SDNode *N) {
     return false;
 
   for (const SDValue &Op : N->op_values())
-    if (Op.getOpcode() != ISD::UNDEF)
+    if (!Op.isUndef())
       return false;
 
   return true;
@@ -3443,8 +3442,7 @@ SDValue SelectionDAG::FoldConstantVectorArithmetic(unsigned Opcode, SDLoc DL,
       ScalarResult = getNode(ISD::SIGN_EXTEND, DL, LegalSVT, ScalarResult);
 
     // Scalar folding only succeeded if the result is a constant or UNDEF.
-    if (ScalarResult.getOpcode() != ISD::UNDEF &&
-        ScalarResult.getOpcode() != ISD::Constant &&
+    if (!ScalarResult.isUndef() && ScalarResult.getOpcode() != ISD::Constant &&
         ScalarResult.getOpcode() != ISD::ConstantFP)
       return SDValue();
     ScalarResults.push_back(ScalarResult);
@@ -4070,7 +4068,7 @@ SDValue SelectionDAG::getStackArgumentTokenFactor(SDValue Chain) {
 /// operand.
 static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
                               SDLoc dl) {
-  assert(Value.getOpcode() != ISD::UNDEF);
+  assert(!Value.isUndef());
 
   unsigned NumBits = VT.getScalarType().getSizeInBits();
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {

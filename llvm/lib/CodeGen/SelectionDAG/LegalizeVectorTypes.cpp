@@ -2585,7 +2585,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
       // The inputs and the result are widen to the same value.
       unsigned i;
       for (i=1; i < NumOperands; ++i)
-        if (N->getOperand(i).getOpcode() != ISD::UNDEF)
+        if (!N->getOperand(i).isUndef())
           break;
 
       if (i == NumOperands)

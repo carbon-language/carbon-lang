@@ -4665,7 +4665,7 @@ static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
   // extend the subvector to the size of the result vector. Make sure that
   // we are not recursing on that node by checking for undef here.
   if (IdxVal == 0 && Result.getValueType().is256BitVector() &&
-      Result.getOpcode() != ISD::UNDEF) {
+      !Result.isUndef()) {
     EVT ResultVT = Result.getValueType();
     SDValue ZeroIndex = DAG.getIntPtrConstant(0, dl);
     SDValue Undef = DAG.getUNDEF(ResultVT);
@@ -6121,7 +6121,7 @@ static SDValue ConvertI1VectorToInteger(SDValue Op, SelectionDAG &DAG) {
   uint64_t Immediate = 0;
   for (unsigned idx = 0, e = Op.getNumOperands(); idx < e; ++idx) {
     SDValue In = Op.getOperand(idx);
-    if (In.getOpcode() != ISD::UNDEF)
+    if (!In.isUndef())
       Immediate |= cast<ConstantSDNode>(In)->getZExtValue() << idx;
   }
   SDLoc dl(Op);
@@ -6357,18 +6357,16 @@ static SDValue ExpandHorizontalBinOp(const SDValue &V0, const SDValue &V1,
 
   if (Mode) {
     // Don't emit a horizontal binop if the result is expected to be UNDEF.
-    if (!isUndefLO && V0->getOpcode() != ISD::UNDEF)
+    if (!isUndefLO && !V0->isUndef())
       LO = DAG.getNode(X86Opcode, DL, NewVT, V0_LO, V0_HI);
-    if (!isUndefHI && V1->getOpcode() != ISD::UNDEF)
+    if (!isUndefHI && !V1->isUndef())
       HI = DAG.getNode(X86Opcode, DL, NewVT, V1_LO, V1_HI);
   } else {
     // Don't emit a horizontal binop if the result is expected to be UNDEF.
-    if (!isUndefLO && (V0_LO->getOpcode() != ISD::UNDEF ||
-                       V1_LO->getOpcode() != ISD::UNDEF))
+    if (!isUndefLO && (!V0_LO->isUndef() || !V1_LO->isUndef()))
       LO = DAG.getNode(X86Opcode, DL, NewVT, V0_LO, V1_LO);
 
-    if (!isUndefHI && (V0_HI->getOpcode() != ISD::UNDEF ||
-                       V1_HI->getOpcode() != ISD::UNDEF))
+    if (!isUndefHI && (!V0_HI->isUndef() || !V1_HI->isUndef()))
       HI = DAG.getNode(X86Opcode, DL, NewVT, V0_HI, V1_HI);
   }
 
@@ -6471,8 +6469,7 @@ static SDValue LowerToAddSub(const BuildVectorSDNode *BV,
   }
 
   // Don't try to fold this build_vector into an ADDSUB if the inputs are undef.
-  if (AddFound && SubFound && InVec0.getOpcode() != ISD::UNDEF &&
-      InVec1.getOpcode() != ISD::UNDEF)
+  if (AddFound && SubFound && !InVec0.isUndef() && !InVec1.isUndef())
     return DAG.getNode(X86ISD::ADDSUB, DL, VT, InVec0, InVec1);
 
   return SDValue();
@@ -6910,7 +6907,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     // For SSE 4.1, use insertps to put the high elements into the low element.
     if (Subtarget.hasSSE41()) {
       SDValue Result;
-      if (Op.getOperand(0).getOpcode() != ISD::UNDEF)
+      if (!Op.getOperand(0).isUndef())
         Result = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(0));
       else
         Result = DAG.getUNDEF(VT);
@@ -6928,7 +6925,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     // bottom slot of the vector (which generates no code for SSE).
     SmallVector<SDValue, 8> Ops(NumElems);
     for (unsigned i = 0; i < NumElems; ++i) {
-      if (Op.getOperand(i).getOpcode() != ISD::UNDEF)
+      if (!Op.getOperand(i).isUndef())
         Ops[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
       else
         Ops[i] = DAG.getUNDEF(VT);
@@ -23734,8 +23731,7 @@ static SDValue combineShuffle256(SDNode *N, SelectionDAG &DAG,
     //          RESULT: V + zero extended
     //
     if (V2.getOperand(0).getOpcode() != ISD::BUILD_VECTOR ||
-        V2.getOperand(1).getOpcode() != ISD::UNDEF ||
-        V1.getOperand(1).getOpcode() != ISD::UNDEF)
+        !V2.getOperand(1).isUndef() || !V1.getOperand(1).isUndef())
       return SDValue();
 
     if (!ISD::isBuildVectorAllZeros(V2.getOperand(0).getNode()))
@@ -26501,7 +26497,7 @@ static SDValue combineANDXORWithAllOnesIntoANDNP(SDNode *N, SelectionDAG &DAG) {
     SDValue V1 = N01->getOperand(0);
     SDValue V2 = N01->getOperand(1);
     if (V1.getOpcode() != ISD::INSERT_SUBVECTOR ||
-        V1.getOperand(0).getOpcode() != ISD::UNDEF ||
+        !V1.getOperand(0).isUndef() ||
         !ISD::isBuildVectorAllOnes(V1.getOperand(1).getNode()) ||
         !ISD::isBuildVectorAllOnes(V2.getNode()))
       return SDValue();
@@ -26620,7 +26616,7 @@ static SDValue combineVectorZext(SDNode *N, SelectionDAG &DAG,
   EVT SrcType = Shuffle->getValueType(0);
 
   // We expect a single-source shuffle
-  if (Shuffle->getOperand(1)->getOpcode() != ISD::UNDEF)
+  if (!Shuffle->getOperand(1)->isUndef())
     return SDValue();
 
   unsigned SrcSize = SrcType.getScalarSizeInBits();
@@ -27458,7 +27454,7 @@ static SDValue combineMaskedLoad(SDNode *N, SelectionDAG &DAG,
 
   // Convert Src0 value.
   SDValue WideSrc0 = DAG.getBitcast(WideVecVT, Mld->getSrc0());
-  if (Mld->getSrc0().getOpcode() != ISD::UNDEF) {
+  if (!Mld->getSrc0().isUndef()) {
     SmallVector<int, 16> ShuffleVec(NumElems * SizeRatio, -1);
     for (unsigned i = 0; i != NumElems; ++i)
       ShuffleVec[i] = i * SizeRatio;
@@ -27936,14 +27932,14 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
   SDValue A, B;
   SmallVector<int, 16> LMask(NumElts);
   if (LHS.getOpcode() == ISD::VECTOR_SHUFFLE) {
-    if (LHS.getOperand(0).getOpcode() != ISD::UNDEF)
+    if (!LHS.getOperand(0).isUndef())
       A = LHS.getOperand(0);
-    if (LHS.getOperand(1).getOpcode() != ISD::UNDEF)
+    if (!LHS.getOperand(1).isUndef())
       B = LHS.getOperand(1);
     ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(LHS.getNode())->getMask();
     std::copy(Mask.begin(), Mask.end(), LMask.begin());
   } else {
-    if (LHS.getOpcode() != ISD::UNDEF)
+    if (!LHS.isUndef())
       A = LHS;
     for (unsigned i = 0; i != NumElts; ++i)
       LMask[i] = i;
@@ -27954,14 +27950,14 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
   SDValue C, D;
   SmallVector<int, 16> RMask(NumElts);
   if (RHS.getOpcode() == ISD::VECTOR_SHUFFLE) {
-    if (RHS.getOperand(0).getOpcode() != ISD::UNDEF)
+    if (!RHS.getOperand(0).isUndef())
       C = RHS.getOperand(0);
-    if (RHS.getOperand(1).getOpcode() != ISD::UNDEF)
+    if (!RHS.getOperand(1).isUndef())
       D = RHS.getOperand(1);
     ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(RHS.getNode())->getMask();
     std::copy(Mask.begin(), Mask.end(), RMask.begin());
   } else {
-    if (RHS.getOpcode() != ISD::UNDEF)
+    if (!RHS.isUndef())
       C = RHS;
     for (unsigned i = 0; i != NumElts; ++i)
       RMask[i] = i;

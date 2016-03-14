@@ -6437,7 +6437,7 @@ FailedModImm:
     //    value is already in an S or D register.
     // Do not do this for UNDEF/LOAD nodes because we have better patterns
     // for those avoiding the SCALAR_TO_VECTOR/BUILD_VECTOR.
-    if (Op0.getOpcode() != ISD::UNDEF && Op0.getOpcode() != ISD::LOAD &&
+    if (!Op0.isUndef() && Op0.getOpcode() != ISD::LOAD &&
         (ElemSize == 32 || ElemSize == 64)) {
       unsigned SubIdx = ElemSize == 32 ? AArch64::ssub : AArch64::dsub;
       MachineSDNode *N =

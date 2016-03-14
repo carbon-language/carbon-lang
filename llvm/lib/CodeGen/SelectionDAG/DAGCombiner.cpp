@@ -2813,7 +2813,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
 
       // Don't try to fold this node if it requires introducing a
       // build vector of all zeros that might be illegal at this stage.
-      if (N->getOpcode() == ISD::XOR && ShOp.getOpcode() != ISD::UNDEF) {
+      if (N->getOpcode() == ISD::XOR && !ShOp.isUndef()) {
         if (!LegalTypes)
           ShOp = DAG.getConstant(0, SDLoc(N), VT);
         else
@@ -2834,7 +2834,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
       // Don't try to fold this node if it requires introducing a
       // build vector of all zeros that might be illegal at this stage.
       ShOp = N0->getOperand(0);
-      if (N->getOpcode() == ISD::XOR && ShOp.getOpcode() != ISD::UNDEF) {
+      if (N->getOpcode() == ISD::XOR && !ShOp.isUndef()) {
         if (!LegalTypes)
           ShOp = DAG.getConstant(0, SDLoc(N), VT);
         else
@@ -7168,7 +7168,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
 
     for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i) {
       SDValue X = N0.getOperand(i);
-      if (X.getOpcode() != ISD::UNDEF) {
+      if (!X.isUndef()) {
         V = X;
         Idx = i;
         NumDefs++;
@@ -10233,7 +10233,7 @@ struct LoadedSlice {
       return false;
 
     // Offsets are for indexed load only, we do not handle that.
-    if (Origin->getOffset().getOpcode() != ISD::UNDEF)
+    if (!Origin->getOffset().isUndef())
       return false;
 
     const TargetLowering &TLI = DAG->getTargetLoweringInfo();
@@ -13322,7 +13322,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       SDValue Base;
       bool AllSame = true;
       for (unsigned i = 0; i != NumElts; ++i) {
-        if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
+        if (!V->getOperand(i).isUndef()) {
           Base = V->getOperand(i);
           break;
         }

@@ -3806,7 +3806,7 @@ SDValue GeneralShuffle::getNode(SelectionDAG &DAG, SDLoc DL) {
 // Return true if the given BUILD_VECTOR is a scalar-to-vector conversion.
 static bool isScalarToVector(SDValue Op) {
   for (unsigned I = 1, E = Op.getNumOperands(); I != E; ++I)
-    if (Op.getOperand(I).getOpcode() != ISD::UNDEF)
+    if (!Op.getOperand(I).isUndef())
       return false;
   return true;
 }
@@ -3870,7 +3870,7 @@ static bool tryBuildVectorByteMask(BuildVectorSDNode *BVN, uint64_t &Mask) {
   unsigned BytesPerElement = ElemVT.getStoreSize();
   for (unsigned I = 0, E = BVN->getNumOperands(); I != E; ++I) {
     SDValue Op = BVN->getOperand(I);
-    if (Op.getOpcode() != ISD::UNDEF) {
+    if (!Op.isUndef()) {
       uint64_t Value;
       if (Op.getOpcode() == ISD::Constant)
         Value = dyn_cast<ConstantSDNode>(Op)->getZExtValue();
@@ -3989,7 +3989,7 @@ static SDValue buildVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
   unsigned int NumElements = Elems.size();
   unsigned int Count = 0;
   for (auto Elem : Elems) {
-    if (Elem.getOpcode() != ISD::UNDEF) {
+    if (!Elem.isUndef()) {
       if (!Single.getNode())
         Single = Elem;
       else if (Elem != Single) {
@@ -4078,8 +4078,8 @@ static SDValue buildVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
     // is defined.
     unsigned I1 = NumElements / 2 - 1;
     unsigned I2 = NumElements - 1;
-    bool Def1 = (Elems[I1].getOpcode() != ISD::UNDEF);
-    bool Def2 = (Elems[I2].getOpcode() != ISD::UNDEF);
+    bool Def1 = !Elems[I1].isUndef();
+    bool Def2 = !Elems[I2].isUndef();
     if (Def1 || Def2) {
       SDValue Elem1 = Elems[Def1 ? I1 : I2];
       SDValue Elem2 = Elems[Def2 ? I2 : I1];
@@ -4093,7 +4093,7 @@ static SDValue buildVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
 
   // Use VLVGx to insert the other elements.
   for (unsigned I = 0; I < NumElements; ++I)
-    if (!Done[I] && Elems[I].getOpcode() != ISD::UNDEF)
+    if (!Done[I] && !Elems[I].isUndef())
       Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, Result, Elems[I],
                            DAG.getConstant(I, DL, MVT::i32));
   return Result;

@@ -2316,7 +2316,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
         !isa<ConstantSDNode>(V1.getOperand(0))) {
       bool IsScalarToVector = true;
       for (unsigned i = 1, e = V1.getNumOperands(); i != e; ++i)
-        if (V1.getOperand(i).getOpcode() != ISD::UNDEF) {
+        if (!V1.getOperand(i).isUndef()) {
           IsScalarToVector = false;
           break;
         }
