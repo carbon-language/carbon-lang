@@ -772,7 +772,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
     {
         CommandAliasMap::iterator alias_pos = m_alias_dict.find(cmd);
         if (alias_pos != m_alias_dict.end())
-            command_sp = ((CommandAlias*)alias_pos->second.get())->GetUnderlyingCommand();
+            command_sp = alias_pos->second;
     }
 
     if (HasUserCommands())
@@ -823,7 +823,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
             cmd.assign(matches->GetStringAtIndex (num_cmd_matches));
             CommandAliasMap::iterator alias_pos = m_alias_dict.find(cmd);
             if (alias_pos != m_alias_dict.end())
-                alias_match_sp = ((CommandAlias*)alias_pos->second.get())->GetUnderlyingCommand();
+                alias_match_sp = alias_pos->second;
         }
 
         if (HasUserCommands())
@@ -1351,15 +1351,16 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
     alias_cmd_obj = GetCommandObject (alias_name);
     StreamString result_str;
     
-    if (alias_cmd_obj)
+    if (alias_cmd_obj && alias_cmd_obj->IsAlias())
     {
+        OptionArgVectorSP option_arg_vector_sp =  ((CommandAlias*)alias_cmd_obj)->GetOptionArguments();
+        alias_cmd_obj = ((CommandAlias*)alias_cmd_obj)->GetUnderlyingCommand().get();
         std::string alias_name_str = alias_name;
         if ((cmd_args.GetArgumentCount() == 0)
             || (alias_name_str.compare (cmd_args.GetArgumentAtIndex(0)) != 0))
             cmd_args.Unshift (alias_name);
             
         result_str.Printf ("%s", alias_cmd_obj->GetCommandName ());
-        OptionArgVectorSP option_arg_vector_sp = GetAlias(alias_name)->GetOptionArguments();
 
         if (option_arg_vector_sp.get())
         {

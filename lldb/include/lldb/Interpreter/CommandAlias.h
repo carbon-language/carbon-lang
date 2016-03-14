@@ -52,7 +52,41 @@ public:
     WantsRawCommandString() override;
     
     bool
+    WantsCompletion() override;
+    
+    int
+    HandleCompletion (Args &input,
+                      int &cursor_index,
+                      int &cursor_char_position,
+                      int match_start_point,
+                      int max_return_elements,
+                      bool &word_complete,
+                      StringList &matches) override;
+    
+    int
+    HandleArgumentCompletion (Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches) override;
+    
+    Options*
+    GetOptions() override;
+    
+    bool
     IsAlias () override { return true; }
+    
+    bool
+    IsDashDashCommand () override;
+    
+    const char*
+    GetHelp () override;
+    
+    const char*
+    GetHelpLong () override;
     
     bool
     Execute(const char *args_string, CommandReturnObject &result) override;
@@ -63,6 +97,7 @@ public:
 private:
     lldb::CommandObjectSP m_underlying_command_sp;
     OptionArgVectorSP m_option_args_sp ;
+    LazyBool m_is_dashdash_alias;
 };
 } // namespace lldb_private
 

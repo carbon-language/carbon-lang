@@ -148,7 +148,7 @@ public:
     virtual const char *
     GetHelpLong ();
 
-    const char *
+    virtual const char *
     GetSyntax ();
 
     const char *
@@ -180,6 +180,12 @@ public:
     
     virtual bool
     IsAlias () { return false; }
+    
+    // override this to return true if your command is somehow a "dash-dash"
+    // form of some other command (e.g. po is expr -O --); this is a powerful
+    // hint to the help system that one cannot pass options to this command
+    virtual bool
+    IsDashDashCommand () { return false; }
 
     virtual lldb::CommandObjectSP
     GetSubcommandSP(const char *sub_cmd, StringList *matches = nullptr)
