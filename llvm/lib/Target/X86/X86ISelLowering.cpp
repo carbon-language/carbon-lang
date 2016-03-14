@@ -27386,22 +27386,40 @@ reduceMaskedLoadToScalarLoad(MaskedLoadSDNode *ML, SelectionDAG &DAG,
   return DCI.CombineTo(ML, Insert, Load.getValue(1), true);
 }
 
-/// Convert a masked load with a constant mask into a masked load and a select.
-/// This allows the select operation to use a faster kind of shuffle instruction
-/// (for example, vblendvps -> vblendps).
 static SDValue
 combineMaskedLoadConstantMask(MaskedLoadSDNode *ML, SelectionDAG &DAG,
                               TargetLowering::DAGCombinerInfo &DCI) {
+  if (!ISD::isBuildVectorOfConstantSDNodes(ML->getMask().getNode()))
+    return SDValue();
+
+  SDLoc DL(ML);
+  EVT VT = ML->getValueType(0);
+
+  // If we are loading the first and last elements of a vector, it is safe and
+  // always faster to load the whole vector. Replace the masked load with a
+  // vector load and select.
+  unsigned NumElts = VT.getVectorNumElements();
+  BuildVectorSDNode *MaskBV = cast<BuildVectorSDNode>(ML->getMask());
+  bool LoadFirstElt = !isNullConstant(MaskBV->getOperand(0));
+  bool LoadLastElt = !isNullConstant(MaskBV->getOperand(NumElts - 1));
+  if (LoadFirstElt && LoadLastElt) {
+    SDValue VecLd = DAG.getLoad(VT, DL, ML->getChain(), ML->getBasePtr(),
+                                ML->getMemOperand());
+    SDValue Blend = DAG.getSelect(DL, VT, ML->getMask(), VecLd, ML->getSrc0());
+    return DCI.CombineTo(ML, Blend, VecLd.getValue(1), true);
+  }
+
+  // Convert a masked load with a constant mask into a masked load and a select.
+  // This allows the select operation to use a faster kind of select instruction
+  // (for example, vblendvps -> vblendps).
+
   // Don't try this if the pass-through operand is already undefined. That would
   // cause an infinite loop because that's what we're about to create.
-  if (!ISD::isBuildVectorOfConstantSDNodes(ML->getMask().getNode()) ||
-      ML->getSrc0().getOpcode() == ISD::UNDEF)
+  if (ML->getSrc0().isUndef())
     return SDValue();
 
   // The new masked load has an undef pass-through operand. The select uses the
   // original pass-through operand.
-  SDLoc DL(ML);
-  EVT VT = ML->getValueType(0);
   SDValue NewML = DAG.getMaskedLoad(VT, DL, ML->getChain(), ML->getBasePtr(),
                                     ML->getMask(), DAG.getUNDEF(VT),
                                     ML->getMemoryVT(), ML->getMemOperand(),
