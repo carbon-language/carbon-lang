@@ -89,8 +89,6 @@ private:
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
   void addCopyRelSymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
 
-  static uint32_t getAlignment(SharedSymbol<ELFT> *SS);
-
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
   BumpPtrAllocator Alloc;
@@ -719,13 +717,13 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   Out<ELFT>::Bss->setSize(Off);
 }
 
-template <class ELFT>
-uint32_t Writer<ELFT>::getAlignment(SharedSymbol<ELFT> *SS) {
-  const Elf_Sym &Sym = SS->Sym;
-  const Elf_Shdr *Sec = SS->File->getSection(Sym);
-  uintX_t SecAlign = Sec->sh_addralign;
+template <class ELFT> static uint32_t getAlignment(SharedSymbol<ELFT> *SS) {
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+
+  uintX_t SecAlign = SS->File->getSection(SS->Sym)->sh_addralign;
+  uintX_t SymValue = SS->Sym.st_value;
   int TrailingZeros = std::min(countTrailingZeros(SecAlign),
-                               countTrailingZeros((uintX_t)Sym.st_value));
+                               countTrailingZeros(SymValue));
   return 1 << TrailingZeros;
 }
 
