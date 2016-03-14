@@ -1445,6 +1445,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::UINT_TO_FP,       MVT::v4i32, Legal);
       setOperationAction(ISD::FP_TO_SINT,       MVT::v4i32, Legal);
       setOperationAction(ISD::FP_TO_UINT,       MVT::v4i32, Legal);
+      setOperationAction(ISD::ZERO_EXTEND,      MVT::v4i32, Custom);
+      setOperationAction(ISD::ZERO_EXTEND,      MVT::v2i64, Custom);
     }
     setOperationAction(ISD::TRUNCATE,           MVT::v8i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i1, Custom);
@@ -1884,7 +1886,8 @@ X86TargetLowering::getPreferredVectorAction(EVT VT) const {
   return TargetLoweringBase::getPreferredVectorAction(VT);
 }
 
-EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &,
+EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL,
+                                          LLVMContext& Context,
                                           EVT VT) const {
   if (!VT.isVector())
     return Subtarget.hasAVX512() ? MVT::i1: MVT::i8;
@@ -1892,7 +1895,7 @@ EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &,
   if (VT.isSimple()) {
     MVT VVT = VT.getSimpleVT();
     const unsigned NumElts = VVT.getVectorNumElements();
-    const MVT EltVT = VVT.getVectorElementType();
+    MVT EltVT = VVT.getVectorElementType();
     if (VVT.is512BitVector()) {
       if (Subtarget.hasAVX512())
         if (EltVT == MVT::i32 || EltVT == MVT::i64 ||
@@ -1909,23 +1912,20 @@ EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &,
         }
     }
 
-    if (VVT.is256BitVector() || VVT.is128BitVector()) {
-      if (Subtarget.hasVLX())
-        if (EltVT == MVT::i32 || EltVT == MVT::i64 ||
-            EltVT == MVT::f32 || EltVT == MVT::f64)
-          switch(NumElts) {
-          case 2: return MVT::v2i1;
-          case 4: return MVT::v4i1;
-          case 8: return MVT::v8i1;
-        }
-      if (Subtarget.hasBWI() && Subtarget.hasVLX())
-        if (EltVT == MVT::i8 || EltVT == MVT::i16)
-          switch(NumElts) {
-          case  8: return MVT::v8i1;
-          case 16: return MVT::v16i1;
-          case 32: return MVT::v32i1;
-        }
+    if (Subtarget.hasBWI() && Subtarget.hasVLX())
+      return MVT::getVectorVT(MVT::i1, NumElts);
+
+    if (!isTypeLegal(VT) && getTypeAction(Context, VT) == TypePromoteInteger) {
+      EVT LegalVT = getTypeToTransformTo(Context, VT);
+      EltVT = LegalVT.getVectorElementType().getSimpleVT();
     }
+ 
+    if (Subtarget.hasVLX() && EltVT.getSizeInBits() >= 32)
+      switch(NumElts) {
+      case 2: return MVT::v2i1;
+      case 4: return MVT::v4i1;
+      case 8: return MVT::v8i1;
+      }
   }
 
   return VT.changeVectorElementTypeToInteger();
@@ -6750,15 +6750,16 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       // it to i32 first.
       if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
-        if (VT.is256BitVector()) {
+        if (VT.getSizeInBits() >= 256) {
+          MVT ShufVT = MVT::getVectorVT(MVT::i32, VT.getSizeInBits()/32);
           if (Subtarget.hasAVX()) {
-            Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v8i32, Item);
+            Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, ShufVT, Item);
             Item = getShuffleVectorZeroOrUndef(Item, 0, true, Subtarget, DAG);
           } else {
             // Without AVX, we need to extend to a 128-bit vector and then
             // insert into the 256-bit vector.
             Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, Item);
-            SDValue ZeroVec = getZeroVector(MVT::v8i32, Subtarget, DAG, dl);
+            SDValue ZeroVec = getZeroVector(ShufVT, Subtarget, DAG, dl);
             Item = Insert128BitVector(ZeroVec, Item, 0, DAG, dl);
           }
         } else {
