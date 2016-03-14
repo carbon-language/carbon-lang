@@ -15,7 +15,7 @@
 namespace llvm {
 namespace bolt {
 
-const DebugLineTableRowRef DebugLineTableRowRef::NULL_ROW{-1U, -1U};
+const DebugLineTableRowRef DebugLineTableRowRef::NULL_ROW{0, 0};
 
 } // namespace bolt
 } // namespace llvm

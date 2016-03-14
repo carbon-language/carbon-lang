@@ -210,7 +210,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       auto RowRef = DebugLineTableRowRef::fromSMLoc(Instruction.getLoc());
 
       if (RowRef != DebugLineTableRowRef::NULL_ROW) {
-        const auto &Row = LineTable->Rows[RowRef.RowIndex];
+        const auto &Row = LineTable->Rows[RowRef.RowIndex - 1];
         OS << " # debug line "
           << LineTable->Prologue.FileNames[Row.File - 1].Name
           << ":" << Row.Line;
@@ -591,7 +591,7 @@ BinaryFunction::findDebugLineInformationForInstructionAt(
     reinterpret_cast<DebugLineTableRowRef *>(&Ptr);
 
   InstructionLocation->DwCompileUnitIndex = Unit->getOffset();
-  InstructionLocation->RowIndex = RowIndex;
+  InstructionLocation->RowIndex = RowIndex + 1;
 
   return SMLoc::getFromPointer(Ptr);
 }

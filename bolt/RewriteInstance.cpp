@@ -1106,12 +1106,17 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       if (!BC.MIA->isCFI(Instr)) {
         if (opts::UpdateDebugSections) {
           auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
-          if (auto CompileUnit = BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex]) {
+          if (RowReference != DebugLineTableRowRef::NULL_ROW) {
+            auto CompileUnit =
+                BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex];
+            assert(CompileUnit &&
+                   "Invalid CU offset set in instruction debug info.");
 
             auto OriginalLineTable =
               BC.DwCtx->getLineTableForUnit(
                   CompileUnit);
-            const auto &OriginalRow = OriginalLineTable->Rows[RowReference.RowIndex];
+            const auto &OriginalRow =
+                OriginalLineTable->Rows[RowReference.RowIndex - 1];
 
             BC.Ctx->setCurrentDwarfLoc(
                 OriginalRow.File,
