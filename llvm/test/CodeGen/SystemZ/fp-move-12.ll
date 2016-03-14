@@ -1,11 +1,11 @@
-; Test moves between FPRs.
+; Test moves between FPRs on z13.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
-; Test f32 moves.
+; Test that we use LDR instead of LER.
 define float @f1(float %a, float %b) {
 ; CHECK-LABEL: f1:
-; CHECK: ler %f0, %f2
+; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   ret float %b
 }
