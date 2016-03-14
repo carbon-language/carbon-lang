@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace llvm {
-class ModuleSummaryIndex;
+class FunctionInfoIndex;
 class Pass;
 class TargetLibraryInfoImpl;
 class TargetMachine;
@@ -117,8 +117,8 @@ public:
   /// added to the per-module passes.
   Pass *Inliner;
 
-  /// The module summary index to use for function importing.
-  const ModuleSummaryIndex *ModuleSummary;
+  /// The function summary index to use for function importing.
+  const FunctionInfoIndex *FunctionIndex;
 
   bool DisableTailCalls;
   bool DisableUnitAtATime;

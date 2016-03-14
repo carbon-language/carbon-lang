@@ -186,9 +186,9 @@ enum { BITCODE_CURRENT_EPOCH = 0 };
     MST_CODE_ENTRY   = 1,  // MST_ENTRY: [modid, namechar x N]
   };
 
-  // The summary section uses different codes in the per-module
+  // The function summary section uses different codes in the per-module
   // and combined index cases.
-  enum GlobalValueSummarySymtabCodes {
+  enum FunctionSummarySymtabCodes {
     // PERMODULE: [valueid, linkage, instcount, numrefs, numrefs x valueid,
     //             n x (valueid, callsitecount)]
     FS_PERMODULE = 1,

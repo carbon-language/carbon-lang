@@ -1,4 +1,4 @@
-//===- ModuleSummaryIndexObjectFile.h - Summary index file implementation -=//
+//===- FunctionIndexObjectFile.h - Function index file implementation -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,36 +7,36 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the ModuleSummaryIndexObjectFile template class.
+// This file declares the FunctionIndexObjectFile template class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_MODULESUMMARYINDEXOBJECTFILE_H
-#define LLVM_OBJECT_MODULESUMMARYINDEXOBJECTFILE_H
+#ifndef LLVM_OBJECT_FUNCTIONINDEXOBJECTFILE_H
+#define LLVM_OBJECT_FUNCTIONINDEXOBJECTFILE_H
 
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/Object/SymbolicFile.h"
 
 namespace llvm {
-class ModuleSummaryIndex;
+class FunctionInfoIndex;
 class Module;
 
 namespace object {
 class ObjectFile;
 
-/// This class is used to read just the module summary index related
+/// This class is used to read just the function summary index related
 /// sections out of the given object (which may contain a single module's
-/// bitcode or be a combined index bitcode file). It builds a ModuleSummaryIndex
+/// bitcode or be a combined index bitcode file). It builds a FunctionInfoIndex
 /// object.
-class ModuleSummaryIndexObjectFile : public SymbolicFile {
-  std::unique_ptr<ModuleSummaryIndex> Index;
+class FunctionIndexObjectFile : public SymbolicFile {
+  std::unique_ptr<FunctionInfoIndex> Index;
 
 public:
-  ModuleSummaryIndexObjectFile(MemoryBufferRef Object,
-                               std::unique_ptr<ModuleSummaryIndex> I);
-  ~ModuleSummaryIndexObjectFile() override;
+  FunctionIndexObjectFile(MemoryBufferRef Object,
+                          std::unique_ptr<FunctionInfoIndex> I);
+  ~FunctionIndexObjectFile() override;
 
-  // TODO: Walk through GlobalValueMap entries for symbols.
+  // TODO: Walk through FunctionMap entries for function symbols.
   // However, currently these interfaces are not used by any consumers.
   void moveSymbolNext(DataRefImpl &Symb) const override {
     llvm_unreachable("not implemented");
@@ -59,15 +59,13 @@ public:
     return basic_symbol_iterator(BasicSymbolRef());
   }
 
-  const ModuleSummaryIndex &getIndex() const {
-    return const_cast<ModuleSummaryIndexObjectFile *>(this)->getIndex();
+  const FunctionInfoIndex &getIndex() const {
+    return const_cast<FunctionIndexObjectFile *>(this)->getIndex();
   }
-  ModuleSummaryIndex &getIndex() { return *Index; }
-  std::unique_ptr<ModuleSummaryIndex> takeIndex();
+  FunctionInfoIndex &getIndex() { return *Index; }
+  std::unique_ptr<FunctionInfoIndex> takeIndex();
 
-  static inline bool classof(const Binary *v) {
-    return v->isModuleSummaryIndex();
-  }
+  static inline bool classof(const Binary *v) { return v->isFunctionIndex(); }
 
   /// \brief Finds and returns bitcode embedded in the given object file, or an
   /// error code if not found.
@@ -85,28 +83,28 @@ public:
   hasGlobalValueSummaryInMemBuffer(MemoryBufferRef Object,
                                    DiagnosticHandlerFunction DiagnosticHandler);
 
-  /// \brief Parse module summary index in the given memory buffer.
-  /// Return new ModuleSummaryIndexObjectFile instance containing parsed module
+  /// \brief Parse function index in the given memory buffer.
+  /// Return new FunctionIndexObjectFile instance containing parsed function
   /// summary/index.
-  static ErrorOr<std::unique_ptr<ModuleSummaryIndexObjectFile>>
+  static ErrorOr<std::unique_ptr<FunctionIndexObjectFile>>
   create(MemoryBufferRef Object, DiagnosticHandlerFunction DiagnosticHandler,
          bool IsLazy = false);
 
-  /// \brief Parse the summary information for global value with the
+  /// \brief Parse the function summary information for function with the
   /// given name out of the given buffer. Parsed information is
   /// stored on the index object saved in this object.
   std::error_code
-  findGlobalValueSummaryInMemBuffer(MemoryBufferRef Object,
-                                    DiagnosticHandlerFunction DiagnosticHandler,
-                                    StringRef ValueName);
+  findFunctionSummaryInMemBuffer(MemoryBufferRef Object,
+                                 DiagnosticHandlerFunction DiagnosticHandler,
+                                 StringRef FunctionName);
 };
 }
 
-/// Parse the module summary index out of an IR file and return the module
-/// summary index object if found, or nullptr if not.
-ErrorOr<std::unique_ptr<ModuleSummaryIndex>>
-getModuleSummaryIndexForFile(StringRef Path,
-                             DiagnosticHandlerFunction DiagnosticHandler);
+/// Parse the function index out of an IR file and return the function
+/// index object if found, or nullptr if not.
+ErrorOr<std::unique_ptr<FunctionInfoIndex>>
+getFunctionIndexForFile(StringRef Path,
+                        DiagnosticHandlerFunction DiagnosticHandler);
 }
 
 #endif
