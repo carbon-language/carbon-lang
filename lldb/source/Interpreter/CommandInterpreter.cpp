@@ -772,7 +772,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
     {
         CommandAliasMap::iterator alias_pos = m_alias_dict.find(cmd);
         if (alias_pos != m_alias_dict.end())
-            command_sp = alias_pos->second->GetUnderlyingCommand();
+            command_sp = ((CommandAlias*)alias_pos->second.get())->GetUnderlyingCommand();
     }
 
     if (HasUserCommands())
@@ -823,7 +823,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
             cmd.assign(matches->GetStringAtIndex (num_cmd_matches));
             CommandAliasMap::iterator alias_pos = m_alias_dict.find(cmd);
             if (alias_pos != m_alias_dict.end())
-                alias_match_sp = alias_pos->second->GetUnderlyingCommand();
+                alias_match_sp = ((CommandAlias*)alias_pos->second.get())->GetUnderlyingCommand();
         }
 
         if (HasUserCommands())
@@ -1057,11 +1057,17 @@ CommandInterpreter::AddAlias (const char *alias_name,
     if (command_obj_sp.get())
         assert((this == &command_obj_sp->GetCommandInterpreter()) && "tried to add a CommandObject from a different interpreter");
     
-    if (auto cmd_alias = CommandAlias::GetCommandAlias(command_obj_sp, args_string))
+    std::unique_ptr<CommandAlias> command_alias_up(new CommandAlias(*this,
+                                                                    command_obj_sp,
+                                                                    args_string,
+                                                                    alias_name));
+    
+    if (command_alias_up && command_alias_up->IsValid())
     {
-        m_alias_dict[alias_name] = std::move(cmd_alias);
+        m_alias_dict[alias_name] = CommandObjectSP(command_alias_up.release());
         return true;
     }
+    
     return false;
 }
 
@@ -1144,15 +1150,8 @@ CommandInterpreter::GetHelp (CommandReturnObject &result,
 
         for (auto alias_pos = m_alias_dict.begin(); alias_pos != m_alias_dict.end(); ++alias_pos)
         {
-            StreamString sstr;
-            StreamString translation_and_help;
-            std::string entry_name = alias_pos->first;
-            std::string second_entry = alias_pos->second->GetUnderlyingCommand()->GetCommandName();
-            alias_pos->second->GetAliasExpansion(sstr);
-            
-            translation_and_help.Printf ("(%s)  %s", sstr.GetData(), alias_pos->second->GetUnderlyingCommand()->GetHelp());
-            OutputFormattedHelpText (result.GetOutputStream(), alias_pos->first.c_str(), "--",
-                                     translation_and_help.GetData(), max_len);
+            OutputFormattedHelpText (result.GetOutputStream(), alias_pos->first.c_str(), "--", alias_pos->second->GetHelp(),
+                                     max_len);
         }
         result.AppendMessage("");
     }
@@ -1996,7 +1995,7 @@ CommandInterpreter::GetAlias (const char *alias_name)
 
     auto pos = m_alias_dict.find(alias);
     if (pos != m_alias_dict.end())
-        return pos->second.get();
+        return (CommandAlias*)pos->second.get();
     
     return nullptr;
 }

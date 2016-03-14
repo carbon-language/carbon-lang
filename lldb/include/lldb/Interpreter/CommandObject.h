@@ -177,6 +177,9 @@ public:
     
     virtual bool
     IsMultiwordObject () { return false; }
+    
+    virtual bool
+    IsAlias () { return false; }
 
     virtual lldb::CommandObjectSP
     GetSubcommandSP(const char *sub_cmd, StringList *matches = nullptr)

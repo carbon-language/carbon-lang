@@ -18,16 +18,21 @@
 // Project includes
 #include "lldb/lldb-forward.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/CommandObject.h"
 
 namespace lldb_private {
-class CommandAlias
+class CommandAlias : public CommandObject
 {
 public:
     typedef std::unique_ptr<CommandAlias> UniquePointer;
 
-    static UniquePointer
-    GetCommandAlias (lldb::CommandObjectSP cmd_sp,
-                     const char *options_args);
+    CommandAlias (CommandInterpreter &interpreter,
+                  lldb::CommandObjectSP cmd_sp,
+                  const char *options_args,
+                  const char *name,
+                  const char *help = nullptr,
+                  const char *syntax = nullptr,
+                  uint32_t flags = 0);
     
     void
     GetAliasExpansion (StreamString &help_string);
@@ -43,12 +48,17 @@ public:
         return IsValid();
     }
     
+    bool
+    WantsRawCommandString() override;
+    
+    bool
+    IsAlias () override { return true; }
+    
+    bool
+    Execute(const char *args_string, CommandReturnObject &result) override;
+    
     lldb::CommandObjectSP GetUnderlyingCommand() { return m_underlying_command_sp; }
     OptionArgVectorSP GetOptionArguments() { return m_option_args_sp; }
-    
-protected:
-    CommandAlias (lldb::CommandObjectSP cmd_sp = nullptr,
-                  OptionArgVectorSP args_sp = nullptr);
     
 private:
     lldb::CommandObjectSP m_underlying_command_sp;

@@ -9,6 +9,8 @@
 
 #include "lldb/Interpreter/CommandAlias.h"
 
+#include "llvm/Support/ErrorHandling.h"
+
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -70,22 +72,48 @@ ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
     return success;
 }
 
-CommandAlias::UniquePointer
-CommandAlias::GetCommandAlias (lldb::CommandObjectSP cmd_sp,
-                               const char *options_args)
+CommandAlias::CommandAlias (CommandInterpreter &interpreter,
+                            lldb::CommandObjectSP cmd_sp,
+                            const char *options_args,
+                            const char *name,
+                            const char *help,
+                            const char *syntax,
+                            uint32_t flags) :
+    CommandObject(interpreter,
+                  name,
+                  help,
+                  syntax,
+                  flags),
+m_underlying_command_sp(),
+m_option_args_sp(new OptionArgVector)
 {
-    CommandAlias::UniquePointer ret_val(nullptr);
-    OptionArgVectorSP opt_args_sp(new OptionArgVector);
-    if (ProcessAliasOptionsArgs(cmd_sp, options_args, opt_args_sp))
-        ret_val.reset(new CommandAlias(cmd_sp, opt_args_sp));
-    return ret_val;
+    if (ProcessAliasOptionsArgs(cmd_sp, options_args, m_option_args_sp))
+    {
+        m_underlying_command_sp = cmd_sp;
+        if (!help || !help[0])
+        {
+            StreamString sstr;
+            StreamString translation_and_help;
+            GetAliasExpansion(sstr);
+            
+            translation_and_help.Printf ("(%s)  %s", sstr.GetData(), GetUnderlyingCommand()->GetHelp());
+            SetHelp(translation_and_help.GetData());
+        }
+    }
 }
 
-CommandAlias::CommandAlias (lldb::CommandObjectSP cmd_sp,
-                            OptionArgVectorSP args_sp) :
-m_underlying_command_sp(cmd_sp),
-m_option_args_sp(args_sp)
+bool
+CommandAlias::WantsRawCommandString()
 {
+    if (IsValid())
+        return m_underlying_command_sp->WantsRawCommandString();
+    return false;
+}
+
+bool
+CommandAlias::Execute(const char *args_string, CommandReturnObject &result)
+{
+    llvm_unreachable("CommandAlias::Execute is not to be called");
 }
 
 void
