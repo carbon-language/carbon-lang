@@ -107,8 +107,6 @@ uint64_t getPPC64TocBase();
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t getMipsGpAddr();
 
-template <class ELFT> bool isGnuIFunc(const SymbolBody &S);
-
 extern TargetInfo *Target;
 TargetInfo *createTarget();
 }
