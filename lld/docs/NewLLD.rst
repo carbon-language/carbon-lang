@@ -128,6 +128,36 @@ between speed, simplicity and extensibility.
   However, in reality, we don't know any program that cannot link
   with our algorithm so far, so we are not too worried about the incompatibility.
 
+Numbers You Want to Know
+------------------------
+
+To give you intuition about what kinds of data the linker is mainly working on,
+this is the list of objects and their numbers LLD has to read and process
+in order to link a very large executable
+(Chrome with debug info which is roughly 2 GB in output size).
+
+- 13,000,000 relocations
+- 6,300,000 symbols
+- 1,800,000 sections
+- 17,000 files
+
+LLD can produce the 2 GB executable in 15 seconds.
+
+These numbers vary depending on your program, but in general,
+you have a lot of relocations and symbols for each file.
+If your program is written in C++, symbol names are likely to be
+pretty long because of name mangling.
+
+It is important to not waste time on relocations and symbols.
+
+In the above case, the total amount of symbol strings is 450 MB,
+and inserting all of them to a hash table takes 1.5 seconds.
+Therefore, if you causally add a hash table lookup for each symbol,
+it would slow down the linker by 10%. So, don't do that.
+
+On the other hand, you don't have to pursue efficiency
+when handling files.
+
 Important Data Strcutures
 -------------------------
 
