@@ -1077,6 +1077,11 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     if (opts::AlignBlocks && BB->getAlignment() > 1)
       Streamer.EmitCodeAlignment(BB->getAlignment());
     Streamer.EmitLabel(BB->getLabel());
+    // Remember last .debug_line entry emitted so that we don't repeat them in
+    // subsequent instructions, as gdb can figure it out by looking at the
+    // previous instruction with available line number info.
+    SMLoc LastLocSeen;
+
     for (const auto &Instr : *BB) {
       // Handle pseudo instructions.
       if (BC.MIA->isEHLabel(Instr)) {
@@ -1090,7 +1095,8 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       if (!BC.MIA->isCFI(Instr)) {
         if (opts::UpdateDebugSections) {
           auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
-          if (RowReference != DebugLineTableRowRef::NULL_ROW) {
+          if (RowReference != DebugLineTableRowRef::NULL_ROW &&
+              Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
             auto CompileUnit =
                 BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex];
             assert(CompileUnit &&
@@ -1113,6 +1119,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                 OriginalRow.Isa,
                 OriginalRow.Discriminator);
             BC.Ctx->setDwarfCompileUnitID(CompileUnit->getOffset());
+            LastLocSeen = Instr.getLoc();
           }
         }
 
