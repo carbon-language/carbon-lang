@@ -170,7 +170,8 @@ static bool hasZOption(opt::InputArgList &Args, StringRef Key) {
 }
 
 void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
-  opt::InputArgList Args = parseArgs(&Alloc, ArgsArr.slice(1));
+  ELFOptTable Parser;
+  opt::InputArgList Args = Parser.parse(ArgsArr.slice(1));
   if (Args.hasArg(OPT_help)) {
     printHelp(ArgsArr[0]);
     return;
