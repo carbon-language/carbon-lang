@@ -627,6 +627,21 @@ void MaybeReexec() {
     CHECK("execv failed" && 0);
   }
 
+  // Verify that interceptors really work.  We'll use dlsym to locate
+  // "pthread_create", if interceptors are working, it should really point to
+  // "wrap_pthread_create" within our own dylib.
+  Dl_info info_pthread_create;
+  void *dlopen_addr = dlsym(RTLD_DEFAULT, "pthread_create");
+  CHECK(dladdr(dlopen_addr, &info_pthread_create));
+  if (internal_strcmp(info.dli_fname, info_pthread_create.dli_fname) != 0) {
+    Report(
+        "ERROR: Interceptors are not working. This may be because %s is "
+        "loaded too late (e.g. via dlopen). Please launch the executable "
+        "with:\n%s=%s\n",
+        SanitizerToolName, kDyldInsertLibraries, info.dli_fname);
+    CHECK("interceptors not installed" && 0);
+  }
+
   if (!lib_is_in_env)
     return;
 
