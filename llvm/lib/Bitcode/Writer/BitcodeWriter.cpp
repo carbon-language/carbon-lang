@@ -2973,7 +2973,7 @@ static void WritePerModuleGlobalValueSummary(
     assert(FunctionIndex.count(&F) == 1);
 
     WritePerModuleFunctionSummaryRecord(
-        NameVals, dyn_cast<FunctionSummary>(FunctionIndex[&F]->summary()),
+        NameVals, cast<FunctionSummary>(FunctionIndex[&F]->summary()),
         VE.getValueID(M->getValueSymbolTable().lookup(F.getName())),
         FSCallsAbbrev, FSCallsProfileAbbrev, Stream, F);
   }
@@ -2987,7 +2987,7 @@ static void WritePerModuleGlobalValueSummary(
 
     assert(FunctionIndex.count(F) == 1);
     FunctionSummary *FS =
-        dyn_cast<FunctionSummary>(FunctionIndex[F]->summary());
+        cast<FunctionSummary>(FunctionIndex[F]->summary());
     // Add the alias to the reference list of aliasee function.
     FS->addRefEdge(
         VE.getValueID(M->getValueSymbolTable().lookup(A.getName())));
@@ -3001,11 +3001,9 @@ static void WritePerModuleGlobalValueSummary(
   // of a function scope.
   for (const GlobalVariable &G : M->globals())
     WriteModuleLevelReferences(G, VE, NameVals, FSModRefsAbbrev, Stream);
-  for (const GlobalAlias &A : M->aliases()) {
-    const auto *GV = dyn_cast<GlobalVariable>(A.getBaseObject());
-    if (GV)
+  for (const GlobalAlias &A : M->aliases())
+    if (auto *GV = dyn_cast<GlobalVariable>(A.getBaseObject()))
       WriteModuleLevelReferences(*GV, VE, NameVals, FSModRefsAbbrev, Stream);
-  }
 
   Stream.ExitBlock();
 }
@@ -3085,8 +3083,7 @@ static void WriteCombinedGlobalValueSummary(
         continue;
       }
 
-      auto *FS = dyn_cast<FunctionSummary>(S);
-      assert(FS);
+      auto *FS = cast<FunctionSummary>(S);
       NameVals.push_back(I.getModuleId(FS->modulePath()));
       NameVals.push_back(getEncodedLinkage(FS->linkage()));
       NameVals.push_back(FS->instCount());
