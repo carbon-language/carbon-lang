@@ -36,10 +36,10 @@
 // As such, we test only for a trailing quote in its rendering.
 // The same goes for "moviAsm".
 
-// RUN: %clang -target shave-myriad -mcpu=myriad1 -c -### %s -isystem somewhere -Icommon -Wa,-yippee 2>&1 \
+// RUN: %clang -target shave-myriad -mcpu=myriad2.2 -c -### %s -isystem somewhere -Icommon -Wa,-yippee 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=MOVICOMPILE
-// MOVICOMPILE: moviCompile{{(.exe)?}}" "-S" "-fno-exceptions" "-DMYRIAD2" "-mcpu=myriad1" "-isystem" "somewhere" "-I" "common"
-// MOVICOMPILE: moviAsm{{(.exe)?}}" "-no6thSlotCompression" "-cv:myriad1" "-noSPrefixing" "-a"
+// MOVICOMPILE: moviCompile{{(.exe)?}}" "-S" "-fno-exceptions" "-DMYRIAD2" "-mcpu=myriad2.2" "-isystem" "somewhere" "-I" "common"
+// MOVICOMPILE: moviAsm{{(.exe)?}}" "-no6thSlotCompression" "-cv:myriad2.2" "-noSPrefixing" "-a"
 // MOVICOMPILE: "-yippee" "-i:somewhere" "-i:common" "-elf"
 
 // RUN: %clang -target shave-myriad -c -### %s -DEFINE_ME -UNDEFINE_ME 2>&1 \
