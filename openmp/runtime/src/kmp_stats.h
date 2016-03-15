@@ -40,9 +40,9 @@
 
 /*!
  * @ingroup STATS_GATHERING
- * \brief flags to describe the statistic ( timers or counter )
+ * \brief flags to describe the statistic (timer or counter)
  *
-*/
+ */
 enum stats_flags_e {
     noTotal      = 1<<0,             //!< do not show a TOTAL_aggregation for this statistic
     onlyInMaster = (1<<1) | noTotal, //!< statistic is valid only for master
@@ -66,7 +66,7 @@ enum stats_flags_e {
  * Format is "macro(name, flags, arg)"
  *
  * @ingroup STATS_GATHERING
-*/
+ */
 #define KMP_FOREACH_COUNTER(macro, arg)                         \
     macro (OMP_PARALLEL, stats_flags_e::onlyInMaster, arg)      \
     macro (OMP_NESTED_PARALLEL, 0, arg)                         \
@@ -87,11 +87,6 @@ enum stats_flags_e {
     macro (TASK_cancelled, 0, arg)                              \
     macro (TASK_stolen, 0, arg)                                 \
     macro (LAST,0,arg)
-
-// OMP_PARALLEL_args      -- the number of arguments passed to a fork
-// FOR_static_iterations  -- Number of available parallel chunks of work in a static for
-// FOR_dynamic_iterations -- Number of available parallel chunks of work in a dynamic for
-//                           Both adjust for any chunking, so if there were an iteration count of 20 but a chunk size of 10, we'd record 2.
 
 /*!
  * \brief Add new timers under KMP_FOREACH_TIMER() macro in kmp_stats.h
@@ -126,24 +121,24 @@ enum stats_flags_e {
     macro (LAST,0, arg)
 
 
-// OMP_start_end          -- time from when OpenMP is initialized until the stats are printed at exit
-// OMP_serial             -- thread zero time executing serial code
-// OMP_work               -- elapsed time in code dispatched by a fork (measured in the thread)
-// OMP_barrier            -- time at "real" barriers (includes task time)
-// OMP_task               -- time spent executing tasks
-// FOR_static_iterations  -- Available parallelism in statically scheduled for loops
-// FOR_dynamic_iterations -- Available parallelism in dynamically scheduled for loops
-// FOR_static_scheduling  -- time spent doing scheduling for a static "for"
-// FOR_dynamic_scheduling -- time spent doing scheduling for a dynamic "for"
+// OMP_start_end          -- Time from when OpenMP is initialized until the stats are printed at exit
+// OMP_serial             -- Thread zero time executing serial code
+// OMP_work               -- Elapsed time in code dispatched by a fork (measured in the thread)
+// OMP_barrier            -- Time at "real" barriers (includes task time)
+// FOR_static_scheduling  -- Time spent doing scheduling for a static "for"
+// FOR_dynamic_scheduling -- Time spent doing scheduling for a dynamic "for"
+// OMP_task               -- Time spent executing tasks
+// OMP_single             -- Time spent executing a "single" region
+// OMP_master             -- Time spent executing a "master" region
 // OMP_set_numthreads     -- Values passed to omp_set_num_threads
 // OMP_PARALLEL_args      -- Number of arguments passed to a parallel region
-// OMP_single
-
-
+// FOR_static_iterations  -- Number of available parallel chunks of work in a static for
+// FOR_dynamic_iterations -- Number of available parallel chunks of work in a dynamic for
+//                           Both adjust for any chunking, so if there were an iteration count of 20 but a chunk size of 10, we'd record 2.
 
 #if (KMP_DEVELOPER_STATS)
-// Timers which are of interest tio runtime library developers, not end users.
-// THese have to be explicitly enabled in addition to the other stats.
+// Timers which are of interest to runtime library developers, not end users.
+// These have to be explicitly enabled in addition to the other stats.
 
 // KMP_fork_barrier       -- time in __kmp_fork_barrier
 // KMP_join_barrier       -- time in __kmp_join_barrier
