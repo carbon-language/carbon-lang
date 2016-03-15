@@ -1,31 +1,53 @@
 // RUN:  llvm-mc -triple x86_64-apple-darwin -filetype=obj %s -o - | llvm-readobj -t | FileCheck %s
 
-	// CHECK: Symbol {
-	// CHECK: Name: _offsetsym0
-	// CHECK: Flags [ (0x0)
-	// CHECK: Value: 0x0
+// CHECK: Symbol {
+// CHECK: Name: _foo
+// CHECK: Flags [ (0x0)
+// CHECK: Value: 0x0
 
-	// CHECK: Symbol {
-	// CHECK: Name: _offsetsym1
-	// CHECK: Flags [ (0x200)
-	// CHECK: Value: 0x4
+// CHECK: Symbol {
+// CHECK: Name: _bar
+// CHECK: Flags [ (0x0)
+// CHECK: Value: 0x0
 
-	// CHECK: Symbol {
-	// CHECK: Name: _offsetsym2
-	// CHECK: Flags [ (0x200)
-	// CHECK: Value: 0x8
+// CHECK: Symbol {
+// CHECK: Name: _baz
+// CHECK: Flags [ (0x200)
+// CHECK: Value: 0x1
 
-	// CHECK: Symbol {
-	// CHECK: Name: _offsetsym3
-	// CHECK: Flags [ (0x200)
-	// CHECK: Value: 0x18
+// CHECK: Symbol {
+// CHECK: Name: _offsetsym0
+// CHECK: Flags [ (0x0)
+// CHECK: Value: 0x8
 
-	// CHECK: Symbol {
-	// CHECK: Symbol {
-	// CHECK: Symbol {
+// CHECK: Symbol {
+// CHECK: Name: _offsetsym1
+// CHECK: Flags [ (0x200)
+// CHECK: Value: 0xC
+
+// CHECK: Symbol {
+// CHECK: Name: _offsetsym2
+// CHECK: Flags [ (0x200)
+// CHECK: Value: 0x10
+
+// CHECK: Symbol {
+// CHECK: Name: _offsetsym3
+// CHECK: Flags [ (0x200)
+// CHECK: Value: 0x20
+
+// CHECK: Symbol {
+// CHECK: Symbol {
+// CHECK: Symbol {
 
 	.section	__TEXT,__text,regular,pure_instructions
+
+_foo:
+_bar = _foo
+	nop
+_baz = .
+
 	.comm	_g0,4,2
+
 	.section	__DATA,__data
 	.globl	_s0
 	.align	3

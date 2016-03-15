@@ -203,10 +203,13 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   MCValue Res;
 
-  if (Value->evaluateAsRelocatable(Res, nullptr, nullptr))
-    if (Res.getSymA() && !Res.getSymB() && Res.getConstant() != 0)
-      cast<MCSymbolMachO>(Symbol)->setAltEntry();
-
+  if (Value->evaluateAsRelocatable(Res, nullptr, nullptr)) {
+    if (const MCSymbolRefExpr *SymAExpr = Res.getSymA()) {
+      const MCSymbol &SymA = SymAExpr->getSymbol();
+      if (!Res.getSymB() && (SymA.getName() == "" || Res.getConstant() != 0))
+        cast<MCSymbolMachO>(Symbol)->setAltEntry();
+    }
+  }
   MCObjectStreamer::EmitAssignment(Symbol, Value);
 }
 
