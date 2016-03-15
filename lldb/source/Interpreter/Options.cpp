@@ -511,22 +511,22 @@ Options::GenerateOptionUsage
     
     uint32_t i;
     
-    for (uint32_t opt_set = 0; opt_set < num_option_sets; ++opt_set)
+    if (!only_print_args)
     {
-        uint32_t opt_set_mask;
-        
-        opt_set_mask = 1 << opt_set;
-        if (opt_set > 0)
-            strm.Printf ("\n");
-        strm.Indent (name);
-
-        // Different option sets may require different args.
-        StreamString args_str;
-        if (cmd)
-            cmd->GetFormattedCommandArguments(args_str, opt_set_mask);
-
-        if (!only_print_args)
+        for (uint32_t opt_set = 0; opt_set < num_option_sets; ++opt_set)
         {
+            uint32_t opt_set_mask;
+            
+            opt_set_mask = 1 << opt_set;
+            if (opt_set > 0)
+                strm.Printf ("\n");
+            strm.Indent (name);
+
+            // Different option sets may require different args.
+            StreamString args_str;
+            if (cmd)
+                cmd->GetFormattedCommandArguments(args_str, opt_set_mask);
+
             // First go through and print all options that take no arguments as
             // a single string. If a command has "-a" "-b" and "-c", this will show
             // up as [-abc]
@@ -619,24 +619,24 @@ Options::GenerateOptionUsage
                         PrintOption (opt_defs[i], eDisplayBestOption, " ", nullptr, true, strm);
                 }
             }
-        }
-        
-        if (args_str.GetSize() > 0)
-        {
-            if (cmd->WantsRawCommandString() && !only_print_args)
-                strm.Printf(" --");
             
-            strm.Printf (" %s", args_str.GetData());
-            if (only_print_args)
-                break;
+            if (args_str.GetSize() > 0)
+            {
+                if (cmd->WantsRawCommandString() && !only_print_args)
+                    strm.Printf(" --");
+                
+                strm.Printf (" %s", args_str.GetData());
+                if (only_print_args)
+                    break;
+            }
         }
     }
     
     if (cmd &&
-        cmd->WantsRawCommandString() &&
+        (only_print_args || cmd->WantsRawCommandString()) &&
         arguments_str.GetSize() > 0)
     {        
-        strm.PutChar('\n');
+        if (!only_print_args) strm.PutChar('\n');
         strm.Indent(name);
         strm.Printf(" %s", arguments_str.GetData());
     }
