@@ -134,6 +134,9 @@ public:
   /// and stack unwinding information.
   void readSpecialSections();
 
+  /// Read information from debug sections.
+  void readDebugInfo();
+
   /// Disassemble each function in the binary and associate it with a
   /// BinaryFunction object, preparing all information necessary for binary
   /// optimization.
@@ -146,6 +149,9 @@ public:
   /// addresses and link this object file, resolving all relocations and
   /// performing final relaxation.
   void emitFunctions();
+
+  /// Update debug information in the file for re-written code.
+  void updateDebugInfo();
 
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
@@ -175,14 +181,17 @@ private:
   /// stores them into BinaryContext::CompileUnitLineTableOffset.
   void computeLineTableOffsets();
 
-  /// Adds an entry to be saved in the .debug_aranges section.
+  /// Adds an entry to be saved in the .debug_aranges/.debug_ranges section.
   /// \p OriginalFunctionAddress function's address in the original binary,
   /// used for compile unit lookup.
   /// \p RangeBegin first address of the address range being added.
   /// \p RangeSie size in bytes of the address range.
-  void addDebugArangesEntry(uint64_t OriginalFunctionAddress,
-                            uint64_t RangeBegin,
-                            uint64_t RangeSize);
+  void addDebugRangesEntry(uint64_t OriginalFunctionAddress,
+                           uint64_t RangeBegin,
+                           uint64_t RangeSize);
+
+  /// Update internal function ranges after functions have been written.
+  void updateFunctionRanges();
 
   /// Generate the contents of the output .debug_aranges section based on the
   /// added entries.
@@ -194,7 +203,6 @@ private:
            "address in not in the new text segment");
     return Address - NewTextSegmentAddress + NewTextSegmentOffset;
   }
-
 
 private:
   /// An instance of the input binary we are processing, externally owned.

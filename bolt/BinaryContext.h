@@ -114,8 +114,7 @@ public:
                 std::unique_ptr<const MCInstrAnalysis> MIA,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
-                const DataReader &DR,
-                bool LoadDebugContext) :
+                const DataReader &DR) :
       Ctx(std::move(Ctx)),
       DwCtx(std::move(DwCtx)),
       TheTriple(std::move(TheTriple)),
@@ -130,11 +129,7 @@ public:
       MIA(std::move(MIA)),
       MRI(std::move(MRI)),
       DisAsm(std::move(DisAsm)),
-      DR(DR) {
-    if (LoadDebugContext) {
-      buildOffsetToDWARFCompileUnitMap();
-    }
-  }
+      DR(DR) {}
 
   ~BinaryContext() {}
 
@@ -144,10 +139,9 @@ public:
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 
-private:
-  // Iterates over all DWARF compilation units and maps their offset in the
-  // binary to themselves in OffsetDwarfCUMap
-  void buildOffsetToDWARFCompileUnitMap();
+  /// Populate some internal data structures with debug info.
+  void preprocessDebugInfo();
+
 };
 
 } // namespace bolt

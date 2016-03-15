@@ -726,16 +726,19 @@ public:
   /// Info for fragmented functions.
   class FragmentInfo {
   private:
+    uint64_t Address{0};
     uint64_t ImageAddress{0};
     uint64_t ImageSize{0};
     uint64_t FileOffset{0};
     const MCSymbol *OutputSymbol{nullptr};
   public:
+    uint64_t getAddress() const { return Address; }
     uint64_t getImageAddress() const { return ImageAddress; }
     uint64_t getImageSize() const { return ImageSize; }
     uint64_t getFileOffset() const { return FileOffset; }
     const MCSymbol *getOutputSymbol() const { return OutputSymbol; }
 
+    void setAddress(uint64_t VAddress) { Address = VAddress; }
     void setImageAddress(uint64_t Address) { ImageAddress = Address; }
     void setImageSize(uint64_t Size) { ImageSize = Size; }
     void setFileOffset(uint64_t Offset) { FileOffset = Offset; }
@@ -746,6 +749,8 @@ public:
   FragmentInfo ColdFragment;
 
   FragmentInfo &cold() { return ColdFragment; }
+
+  const FragmentInfo &cold() const { return ColdFragment; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,

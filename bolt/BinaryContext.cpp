@@ -43,10 +43,31 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   return Symbol;
 }
 
-
-void BinaryContext::buildOffsetToDWARFCompileUnitMap() {
+void BinaryContext::preprocessDebugInfo() {
+  // Iterate over all DWARF compilation units and map their offset in the
+  // binary to themselves in OffsetDwarfCUMap
   for (const auto &CU : DwCtx->compile_units()) {
     OffsetToDwarfCU[CU->getOffset()] = CU.get();
+  }
+
+  // Populate MCContext with DWARF files.
+  for (const auto &CU : DwCtx->compile_units()) {
+    const auto CUID = CU->getOffset();
+    auto LineTable = DwCtx->getLineTableForUnit(CU.get());
+    const auto &FileNames = LineTable->Prologue.FileNames;
+    for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
+      // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
+      // means empty dir.
+      const char *Dir = FileNames[I].DirIdx ?
+          LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1] :
+          "";
+      Ctx->getDwarfFile(Dir, FileNames[I].Name, I + 1, CUID);
+    }
+
+    auto LineTableOffset =
+      DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_stmt_list);
+    if (LineTableOffset)
+      LineTableOffsetCUMap[CUID] = LineTableOffset;
   }
 }
 

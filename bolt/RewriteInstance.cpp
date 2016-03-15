@@ -402,34 +402,7 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
                                        std::move(MIA),
                                        std::move(MRI),
                                        std::move(DisAsm),
-                                       DR,
-                                       opts::UpdateDebugSections);
-
-  if (opts::UpdateDebugSections) {
-    // Populate MCContext with DWARF files.
-    for (const auto &CU : BC->DwCtx->compile_units()) {
-      const auto CUID = CU->getOffset();
-      auto LineTable = BC->DwCtx->getLineTableForUnit(CU.get());
-      auto LineTableOffset =
-        BC->DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_stmt_list);
-      const auto &FileNames = LineTable->Prologue.FileNames;
-      for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
-        // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
-        // means empty dir.
-        const char *Dir = FileNames[I].DirIdx ?
-            LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1] :
-            "";
-        BC->Ctx->getDwarfFile(
-            Dir,
-            FileNames[I].Name,
-            I + 1,
-            CUID);
-      }
-      if (LineTableOffset) {
-        BC->LineTableOffsetCUMap[CUID] = LineTableOffset;
-      }
-    }
-  }
+                                       DR);
 
   return BC;
 }
@@ -543,10 +516,12 @@ void RewriteInstance::run() {
   // Main "loop".
   discoverStorage();
   readSpecialSections();
+  readDebugInfo();
   discoverFileObjects();
   disassembleFunctions();
   runOptimizationPasses();
   emitFunctions();
+  updateDebugInfo();
 
   // Copy allocatable part of the input.
   std::error_code EC;
@@ -736,6 +711,13 @@ void RewriteInstance::readSpecialSections() {
            << EHFrame->ParseError << "\"\n";
     exit(1);
   }
+}
+
+void RewriteInstance::readDebugInfo() {
+  if (!opts::UpdateDebugSections)
+    return;
+
+  BC->preprocessDebugInfo();
 }
 
 void RewriteInstance::disassembleFunctions() {
@@ -1282,11 +1264,6 @@ void RewriteInstance::emitFunctions() {
           Function.getAddress());
       Function.setImageAddress(SMII->second.AllocAddress);
       Function.setImageSize(SMII->second.Size);
-
-      if (opts::UpdateDebugSections) {
-        addDebugArangesEntry(Function.getAddress(), Function.getAddress(),
-                             Function.getSize());
-      }
     } else {
       errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
@@ -1308,14 +1285,10 @@ void RewriteInstance::emitFunctions() {
       OLT.mapSectionAddress(ObjectsHandle,
           reinterpret_cast<const void*>(SMII->second.AllocAddress),
           NextAvailableAddress);
+      Function.cold().setAddress(NextAvailableAddress);
       Function.cold().setImageAddress(SMII->second.AllocAddress);
       Function.cold().setImageSize(SMII->second.Size);
       Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
-
-      if (opts::UpdateDebugSections) {
-        addDebugArangesEntry(Function.getAddress(), NextAvailableAddress,
-                             Function.cold().getImageSize());
-      }
 
       NextAvailableAddress += SMII->second.Size;
     } else {
@@ -1323,10 +1296,6 @@ void RewriteInstance::emitFunctions() {
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
-
-  // After collecting rewritten function addresses, generate the contents of
-  // .debug_aranges.
-  generateDebugAranges();
 
   // Add the new text section aggregating all existing code sections.
   auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
@@ -1375,28 +1344,33 @@ void RewriteInstance::emitFunctions() {
     TempOut->keep();
 }
 
-void RewriteInstance::addDebugArangesEntry(uint64_t OriginalFunctionAddress,
-                                           uint64_t RangeBegin,
-                                           uint64_t RangeSize) {
-  if (auto DebugAranges = BC->DwCtx->getDebugAranges()) {
-    uint32_t CUOffset = DebugAranges->findAddress(OriginalFunctionAddress);
-    if (CUOffset != -1U) {
-      ArangesWriter.AddRange(CUOffset, RangeBegin, RangeSize);
+void RewriteInstance::updateFunctionRanges() {
+  auto addDebugArangesEntry = [&](uint64_t OriginalFunctionAddress,
+                                  uint64_t RangeBegin,
+                                  uint64_t RangeSize) {
+    if (auto DebugAranges = BC->DwCtx->getDebugAranges()) {
+      uint32_t CUOffset = DebugAranges->findAddress(OriginalFunctionAddress);
+      if (CUOffset != -1U)
+        ArangesWriter.AddRange(CUOffset, RangeBegin, RangeSize);
+    }
+  };
+
+  for (const auto &BFI : BinaryFunctions) {
+    const auto &Function = BFI.second;
+    // Use either new (image) or original size for the function range.
+    addDebugArangesEntry(Function.getAddress(),
+                         Function.getAddress(),
+                         Function.isSimple() ? Function.getImageSize()
+                                             : Function.getSize());
+    if (Function.isSimple() && Function.cold().getImageSize()) {
+      addDebugArangesEntry(Function.getAddress(),
+                           Function.cold().getAddress(),
+                           Function.cold().getImageSize());
     }
   }
 }
 
 void RewriteInstance::generateDebugAranges() {
-  // Get the address of all non-simple functions and add them intact to aranges.
-  // Simple functions are rewritten and have their .debug_aranges entries added
-  // during rewriting.
-  for (const auto &BFI : BinaryFunctions) {
-    const auto &Function = BFI.second;
-    if (!Function.isSimple()) {
-      addDebugArangesEntry(Function.getAddress(), Function.getAddress(),
-                           Function.getSize());
-    }
-  }
 
   SmallVector<char, 16> ArangesBuffer;
   raw_svector_ostream OS(ArangesBuffer);
@@ -1944,4 +1918,13 @@ void RewriteInstance::computeLineTableOffsets() {
     DEBUG(dbgs() << "BOLT-DEBUG: CU " << CUIDLineTablePair.first
                 << " has line table at " << Offset << "\n");
   }
+}
+
+void RewriteInstance::updateDebugInfo() {
+  if (!opts::UpdateDebugSections)
+    return;
+
+  updateFunctionRanges();
+
+  generateDebugAranges();
 }
