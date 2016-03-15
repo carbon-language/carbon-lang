@@ -43,12 +43,12 @@
  * \brief flags to describe the statistic ( timers or counter )
  *
 */
-class stats_flags_e {
-    public:
-        const static int onlyInMaster = 1<<0; //!< statistic is valid only for master
-        const static int noUnits      = 1<<1; //!< statistic doesn't need units printed next to it in output
-        const static int notInMaster  = 1<<2; //!< statistic is valid for non-master threads
-        const static int logEvent     = 1<<3; //!< statistic can be logged when KMP_STATS_EVENTS is on (valid only for timers)
+enum stats_flags_e {
+    noTotal      = 1<<0,             //!< do not show a TOTAL_aggregation for this statistic
+    onlyInMaster = (1<<1) | noTotal, //!< statistic is valid only for master
+    noUnits      = (1<<2) | noTotal, //!< statistic doesn't need units printed next to it in output
+    notInMaster  = 1<<3,             //!< statistic is valid only for non-master threads
+    logEvent     = 1<<4              //!< statistic can be logged when KMP_STATS_EVENTS is on (valid only for timers)
 };
 
 /*!
@@ -99,7 +99,8 @@ class stats_flags_e {
  * @param macro a user defined macro that takes three arguments - macro(TIMER_NAME, flags, arg)
  * @param arg a user defined argument to send to the user defined macro
  *
- * \details A timer collects multiple samples of some count in each thread and then finally aggregates over all the threads.
+ * \details A timer collects multiple samples of some count in each thread and then finally aggregates alll of the samples from all of the threads.
+ * For most timers the printing code also provides an aggregation over the thread totals. These are printed as TOTAL_foo.
  * The count is normally a time (in ticks), hence the name "timer". (But can be any value, so we use this for "number of arguments passed to fork"
  * as well).
  * For timers the threads are not significant, it's the individual observations that count, so the statistics are at that level.
@@ -276,13 +277,13 @@ class timeStat : public statistic
  public:
     timeStat() : statistic() {}
     static const char * name(timer_e e) { return timerInfo[e].name; }
+    static bool  noTotal    (timer_e e) { return timerInfo[e].flags & stats_flags_e::noTotal; }
     static bool  masterOnly (timer_e e) { return timerInfo[e].flags & stats_flags_e::onlyInMaster; }
     static bool  workerOnly (timer_e e) { return timerInfo[e].flags & stats_flags_e::notInMaster;  }
     static bool  noUnits    (timer_e e) { return timerInfo[e].flags & stats_flags_e::noUnits;      }
     static bool  logEvent   (timer_e e) { return timerInfo[e].flags & stats_flags_e::logEvent;     }
     static void  clearEventFlags()      {
-        int i;
-        for(i=0;i<TIMER_LAST;i++) {
+        for(int i=0;i<TIMER_LAST;i++) {
             timerInfo[i].flags &= (~(stats_flags_e::logEvent));
         }
     }
@@ -575,20 +576,14 @@ class kmp_stats_output_module {
     void init();
     static void setupEventColors();
     static void printPloticusFile();
+    static void printHeaderInfo(FILE *statsOut);
     static void printTimerStats(FILE *statsOut, statistic const * theStats, statistic const * totalStats);
     static void printCounterStats(FILE *statsOut, statistic const * theStats);
     static void printCounters(FILE * statsOut, counter const * theCounters);
     static void printEvents(FILE * eventsOut, kmp_stats_event_vector* theEvents, int gtid);
     static rgb_color getEventColor(timer_e e) { return timerColorInfo[e]; }
     static void windupExplicitTimers();
-    bool eventPrintingEnabled() {
-        if(printPerThreadEventsFlag) return true;
-        else return false;
-    }
-    bool perThreadPrintingEnabled() {
-        if(printPerThreadFlag) return true;
-        else return false;
-    }
+    bool eventPrintingEnabled() const         { return printPerThreadEventsFlag; }
 
  public:
     kmp_stats_output_module() { init(); }
