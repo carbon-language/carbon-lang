@@ -695,6 +695,8 @@ void RewriteInstance::readSpecialSections() {
       FrameHdrAlign = Section.getAlignment();
     } else if (SectionName == ".debug_line") {
       DebugLineSize = Section.getSize();
+    } else if (SectionName == ".debug_ranges") {
+      DebugRangesSize = Section.getSize();
     }
   }
 
@@ -1370,27 +1372,36 @@ void RewriteInstance::updateFunctionRanges() {
   }
 }
 
-void RewriteInstance::generateDebugAranges() {
+void RewriteInstance::generateDebugRanges() {
+  using RangeType = enum { RANGES, ARANGES };
+  for (int IntRT = RANGES; IntRT <= ARANGES; ++IntRT) {
+    RangeType RT = static_cast<RangeType>(IntRT);
+    const char *SectionName = (RT == RANGES) ? ".debug_ranges"
+                                             : ".debug_aranges";
+    SmallVector<char, 16> RangesBuffer;
+    raw_svector_ostream OS(RangesBuffer);
 
-  SmallVector<char, 16> ArangesBuffer;
-  raw_svector_ostream OS(ArangesBuffer);
+    auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
+    auto Writer = MAB->createObjectWriter(OS);
 
-  auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
-  auto Writer = MAB->createObjectWriter(OS);
+    if (RT == RANGES) {
+      ArangesWriter.WriteRangesSection(Writer);
+    } else {
+      ArangesWriter.WriteArangesSection(Writer);
+    }
+    const auto &DebugRangesContents = OS.str();
 
-  ArangesWriter.Write(Writer);
-  const auto &DebugArangesContents = OS.str();
+    // Free'd by SectionMM.
+    uint8_t *SectionData = new uint8_t[DebugRangesContents.size()];
+    memcpy(SectionData, DebugRangesContents.data(), DebugRangesContents.size());
 
-  // Free'd by SectionMM.
-  uint8_t *SectionData = new uint8_t[DebugArangesContents.size()];
-  memcpy(SectionData, DebugArangesContents.data(), DebugArangesContents.size());
-
-  SectionMM->NoteSectionInfo[".debug_aranges"] = SectionInfo(
-      reinterpret_cast<uint64_t>(SectionData),
-      DebugArangesContents.size(),
-      /*Alignment=*/0,
-      /*IsCode=*/false,
-      /*IsReadOnly=*/true);
+    SectionMM->NoteSectionInfo[SectionName] = SectionInfo(
+        reinterpret_cast<uint64_t>(SectionData),
+        DebugRangesContents.size(),
+        /*Alignment=*/0,
+        /*IsCode=*/false,
+        /*IsReadOnly=*/true);
+  }
 }
 
 void RewriteInstance::patchELFPHDRTable() {
@@ -1926,5 +1937,28 @@ void RewriteInstance::updateDebugInfo() {
 
   updateFunctionRanges();
 
-  generateDebugAranges();
+  generateDebugRanges();
+
+  auto &DebugInfoSI = SectionMM->NoteSectionInfo[".debug_info"];
+  for (const auto &CU : BC->DwCtx->compile_units()) {
+    const auto CUID = CU->getOffset();
+
+    // Update DW_AT_ranges
+    auto RangesFieldOffset =
+      BC->DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_ranges);
+    if (RangesFieldOffset) {
+      DEBUG(dbgs() << "BOLT-DEBUG: adding relocation for DW_AT_ranges "
+                   << "in .debug_info\n");
+      const auto RSOI = ArangesWriter.getRangesOffsetCUMap().find(CUID);
+      if (RSOI != ArangesWriter.getRangesOffsetCUMap().end()) {
+        auto Offset = RSOI->second;
+        DebugInfoSI.PendingRelocs.emplace_back(
+            SectionInfo::Reloc{RangesFieldOffset, 4, 0,
+                               Offset + DebugRangesSize});
+      } else {
+        DEBUG(dbgs() << "BOLT-DEBUG: no .debug_ranges entry found for CU "
+                     << CUID << '\n');
+      }
+    }
+  }
 }

@@ -21,7 +21,28 @@ void DebugArangesWriter::AddRange(uint32_t CompileUnitOffset,
   CUAddressRanges[CompileUnitOffset].push_back(std::make_pair(Address, Size));
 }
 
-void DebugArangesWriter::Write(MCObjectWriter *Writer) const {
+void DebugArangesWriter::WriteRangesSection(MCObjectWriter *Writer) {
+  uint32_t SectionOffset = 0;
+  for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
+    uint64_t CUOffset = CUOffsetAddressRangesPair.first;
+    RangesSectionOffsetCUMap[CUOffset] = SectionOffset;
+    const auto &AddressRanges = CUOffsetAddressRangesPair.second;
+
+    // Write all entries.
+    for (auto &Range : AddressRanges) {
+      Writer->writeLE64(Range.first);
+      Writer->writeLE64(Range.first + Range.second);
+    }
+
+    // Finish with 0 entry.
+    Writer->writeLE64(0);
+    Writer->writeLE64(0);
+
+    SectionOffset += AddressRanges.size() * 16 + 16;
+  }
+}
+
+void DebugArangesWriter::WriteArangesSection(MCObjectWriter *Writer) const {
   // For reference on the format of the .debug_aranges section, see the DWARF4
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf

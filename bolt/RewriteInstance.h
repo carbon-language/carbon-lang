@@ -193,9 +193,8 @@ private:
   /// Update internal function ranges after functions have been written.
   void updateFunctionRanges();
 
-  /// Generate the contents of the output .debug_aranges section based on the
-  /// added entries.
-  void generateDebugAranges();
+  /// Generate new contents for .debug_ranges and .debug_aranges section.
+  void generateDebugRanges();
 
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
@@ -261,6 +260,9 @@ private:
 
   /// Size of the .debug_line section on input.
   uint32_t DebugLineSize{0};
+
+  /// Size of the .debug_ranges section on input.
+  uint32_t DebugRangesSize{0};
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
