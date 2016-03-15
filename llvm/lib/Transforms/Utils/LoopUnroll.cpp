@@ -275,15 +275,19 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
   // Loops containing convergent instructions must have a count that divides
   // their TripMultiple.
-  DEBUG(bool HasConvergent = false;
+  DEBUG(
+      {
+        bool HasConvergent = false;
         for (auto &BB
-             : L->blocks()) for (auto &I
-                                 : *BB) if (auto CS = CallSite(&I))
-            HasConvergent |= CS.isConvergent();
+             : L->blocks())
+          for (auto &I : *BB)
+            if (auto CS = CallSite(&I))
+              HasConvergent |= CS.isConvergent();
         assert((!HasConvergent || TripMultiple % Count == 0) &&
                "Unroll count must divide trip multiple if loop contains a "
                "convergent "
-               "operation."););
+               "operation.");
+      });
   // Don't output the runtime loop prolog if Count is a multiple of
   // TripMultiple.  Such a prolog is never needed, and is unsafe if the loop
   // contains a convergent instruction.
