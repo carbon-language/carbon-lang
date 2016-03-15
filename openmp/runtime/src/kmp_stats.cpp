@@ -482,7 +482,10 @@ void kmp_stats_output_module::printHeaderInfo(FILE * statsOut)
 #if KMP_ARCH_X86 || KMP_ARCH_X86_64
     fprintf (statsOut, "# CPU:  %s\n", &__kmp_cpuinfo.name[0]);
     fprintf (statsOut, "# Family: %d, Model: %d, Stepping: %d\n", __kmp_cpuinfo.family, __kmp_cpuinfo.model, __kmp_cpuinfo.stepping);
-    fprintf (statsOut, "# Nominal frequency: %sz\n", formatSI(double(__kmp_cpuinfo.frequency),9,'H').c_str());
+    if (__kmp_cpuinfo.frequency == 0)
+        fprintf (statsOut, "# Nominal frequency: Unknown\n");
+    else
+        fprintf (statsOut, "# Nominal frequency: %sz\n", formatSI(double(__kmp_cpuinfo.frequency),9,'H').c_str());
 #endif
 }
 

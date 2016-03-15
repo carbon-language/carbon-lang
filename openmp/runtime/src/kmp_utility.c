@@ -109,7 +109,7 @@ __kmp_parse_frequency(        // R: Frequency in Hz.
 
     double       value  = 0.0;
     char const * unit   = NULL;
-    kmp_uint64   result = ~ 0;
+    kmp_uint64   result = 0;                    /* Zero is a better unknown value than all ones. */
 
     if ( frequency == NULL ) {
         return result;
