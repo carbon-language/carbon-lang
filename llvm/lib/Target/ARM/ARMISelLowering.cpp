@@ -840,6 +840,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   // the default expansion. If we are targeting a single threaded system,
   // then set them all for expand so we can lower them later into their
   // non-atomic form.
+  InsertFencesForAtomic = false;
   if (TM.Options.ThreadModel == ThreadModel::Single)
     setOperationAction(ISD::ATOMIC_FENCE,   MVT::Other, Expand);
   else if (Subtarget->hasAnyDataBarrier() && (!Subtarget->isThumb() ||
@@ -852,7 +853,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     // if they can be combined with nearby atomic loads and stores.
     if (!Subtarget->hasV8Ops()) {
       // Automatically insert fences (dmb ish) around ATOMIC_SWAP etc.
-      setInsertFencesForAtomic(true);
+      InsertFencesForAtomic = true;
     }
   } else {
     // If there's anything we can use as a barrier, go through custom lowering
@@ -11997,9 +11998,6 @@ Instruction* ARMTargetLowering::makeDMB(IRBuilder<> &Builder,
 Instruction* ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
                                          AtomicOrdering Ord, bool IsStore,
                                          bool IsLoad) const {
-  if (!getInsertFencesForAtomic())
-    return nullptr;
-
   switch (Ord) {
   case NotAtomic:
   case Unordered:
@@ -12025,9 +12023,6 @@ Instruction* ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
 Instruction* ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
                                           AtomicOrdering Ord, bool IsStore,
                                           bool IsLoad) const {
-  if (!getInsertFencesForAtomic())
-    return nullptr;
-
   switch (Ord) {
   case NotAtomic:
   case Unordered:
@@ -12079,6 +12074,11 @@ ARMTargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
 bool ARMTargetLowering::shouldExpandAtomicCmpXchgInIR(
     AtomicCmpXchgInst *AI) const {
   return true;
+}
+
+bool ARMTargetLowering::shouldInsertFencesForAtomic(
+    const Instruction *I) const {
+  return InsertFencesForAtomic;
 }
 
 // This has so far only been implemented for MachO.
