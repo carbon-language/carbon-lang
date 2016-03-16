@@ -50,14 +50,14 @@ C:              ; preds = %B, %A, %A2, %T, %T
 ; CHECK-NEXT:    i32 4, label %T
 ; CHECK-NEXT:    i32 17, label %Done
 ; CHECK-NEXT:    ]
-; CHECK:       T: ; preds = %0
+; CHECK:       T:
 ; CHECK-NEXT:    call void @foo1()
 ; CHECK-NEXT:    call void @foo2()
 ; CHECK-NEXT:    br label %Done
-; CHECK:       A: ; preds = %0
+; CHECK:       A:
 ; CHECK-NEXT:    call void @foo1()
 ; CHECK-NEXT:    br label %Done
-; CHECK:       Done: ; preds = %T, %A, %0
+; CHECK:       Done:
 ; CHECK-NEXT:    ret void
 }
 
@@ -96,18 +96,18 @@ E:              ; preds = %A, %0
 ; CHECK-NEXT:    i32 17, label %D
 ; CHECK-NEXT:    i32 1234, label %E
 ; CHECK-NEXT:    ]
-; CHECK:       A: ; preds = %0
+; CHECK:       A:
 ; CHECK-NEXT:    call void @foo1()
 ; CHECK-NEXT:    [[COND:%.*]] = icmp eq i32 %V, 42
 ; CHECK-NEXT:    br i1 [[COND]], label %D, label %E
-; CHECK:       T: ; preds = %0
+; CHECK:       T:
 ; CHECK-NEXT:    call void @foo1()
 ; CHECK-NEXT:    call void @foo1()
 ; CHECK-NEXT:    ret void
-; CHECK:       D: ; preds = %A, %0
+; CHECK:       D:
 ; CHECK-NEXT:    call void @foo1()
 ; CHECK-NEXT:    ret void
-; CHECK:       E: ; preds = %A, %0
+; CHECK:       E:
 ; CHECK-NEXT:    ret void
 }
 
