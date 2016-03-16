@@ -40,7 +40,7 @@ define void @convert_v2i16_to_v2f32(<2 x float>* %dst.addr, <2 x i16> %src) noun
 ; X64-NEXT:    retq
 entry:
 	%val = sitofp <2 x i16> %src to <2 x float>
-	store <2 x float> %val, <2 x float>* %dst.addr
+	store <2 x float> %val, <2 x float>* %dst.addr, align 4
 	ret void
 }
 
@@ -52,9 +52,15 @@ define void @convert_v3i8_to_v3f32(<3 x float>* %dst.addr, <3 x i8>* %src.addr) 
 ; X86-SSE2-NEXT:    pushl %eax
 ; X86-SSE2-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-SSE2-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X86-SSE2-NEXT:    movd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X86-SSE2-NEXT:    movzwl (%ecx), %edx
+; X86-SSE2-NEXT:    movd %edx, %xmm0
 ; X86-SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; X86-SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; X86-SSE2-NEXT:    movzbl 2(%ecx), %ecx
+; X86-SSE2-NEXT:    movd %ecx, %xmm1
+; X86-SSE2-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,0],xmm0[3,0]
+; X86-SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,2]
+; X86-SSE2-NEXT:    pslld $24, %xmm0
 ; X86-SSE2-NEXT:    psrad $24, %xmm0
 ; X86-SSE2-NEXT:    cvtdq2ps %xmm0, %xmm0
 ; X86-SSE2-NEXT:    movss %xmm0, (%eax)
@@ -71,9 +77,13 @@ define void @convert_v3i8_to_v3f32(<3 x float>* %dst.addr, <3 x i8>* %src.addr) 
 ; X86-SSE42-NEXT:    pushl %eax
 ; X86-SSE42-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-SSE42-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X86-SSE42-NEXT:    movl (%ecx), %ecx
-; X86-SSE42-NEXT:    movl %ecx, (%esp)
-; X86-SSE42-NEXT:    pmovsxbd (%esp), %xmm0
+; X86-SSE42-NEXT:    movzbl 2(%ecx), %edx
+; X86-SSE42-NEXT:    movzwl (%ecx), %ecx
+; X86-SSE42-NEXT:    movd %ecx, %xmm0
+; X86-SSE42-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
+; X86-SSE42-NEXT:    pinsrd $2, %edx, %xmm0
+; X86-SSE42-NEXT:    pslld $24, %xmm0
+; X86-SSE42-NEXT:    psrad $24, %xmm0
 ; X86-SSE42-NEXT:    cvtdq2ps %xmm0, %xmm0
 ; X86-SSE42-NEXT:    extractps $2, %xmm0, 8(%eax)
 ; X86-SSE42-NEXT:    extractps $1, %xmm0, 4(%eax)
@@ -83,9 +93,17 @@ define void @convert_v3i8_to_v3f32(<3 x float>* %dst.addr, <3 x i8>* %src.addr) 
 ;
 ; X64-SSE2-LABEL: convert_v3i8_to_v3f32:
 ; X64-SSE2:       # BB#0: # %entry
-; X64-SSE2-NEXT:    movd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X64-SSE2-NEXT:    movzwl (%rsi), %eax
+; X64-SSE2-NEXT:    movd %rax, %xmm0
+; X64-SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; X64-SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,2,2,3,4,5,6,7]
 ; X64-SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; X64-SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; X64-SSE2-NEXT:    movzbl 2(%rsi), %eax
+; X64-SSE2-NEXT:    movd %eax, %xmm1
+; X64-SSE2-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,0],xmm0[3,0]
+; X64-SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,2]
+; X64-SSE2-NEXT:    pslld $24, %xmm0
 ; X64-SSE2-NEXT:    psrad $24, %xmm0
 ; X64-SSE2-NEXT:    cvtdq2ps %xmm0, %xmm0
 ; X64-SSE2-NEXT:    movlps %xmm0, (%rdi)
@@ -95,16 +113,22 @@ define void @convert_v3i8_to_v3f32(<3 x float>* %dst.addr, <3 x i8>* %src.addr) 
 ;
 ; X64-SSE42-LABEL: convert_v3i8_to_v3f32:
 ; X64-SSE42:       # BB#0: # %entry
-; X64-SSE42-NEXT:    movl (%rsi), %eax
-; X64-SSE42-NEXT:    movl %eax, -{{[0-9]+}}(%rsp)
-; X64-SSE42-NEXT:    pmovsxbd -{{[0-9]+}}(%rsp), %xmm0
+; X64-SSE42-NEXT:    movzbl 2(%rsi), %eax
+; X64-SSE42-NEXT:    movzwl (%rsi), %ecx
+; X64-SSE42-NEXT:    movd %rcx, %xmm0
+; X64-SSE42-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; X64-SSE42-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,2,2,3,4,5,6,7]
+; X64-SSE42-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
+; X64-SSE42-NEXT:    pinsrd $2, %eax, %xmm0
+; X64-SSE42-NEXT:    pslld $24, %xmm0
+; X64-SSE42-NEXT:    psrad $24, %xmm0
 ; X64-SSE42-NEXT:    cvtdq2ps %xmm0, %xmm0
 ; X64-SSE42-NEXT:    extractps $2, %xmm0, 8(%rdi)
 ; X64-SSE42-NEXT:    movlps %xmm0, (%rdi)
 ; X64-SSE42-NEXT:    retq
 entry:
-	%load = load <3 x i8>, <3 x i8>* %src.addr
+	%load = load <3 x i8>, <3 x i8>* %src.addr, align 1
 	%cvt = sitofp <3 x i8> %load to <3 x float>
-	store <3 x float> %cvt, <3 x float>* %dst.addr
+	store <3 x float> %cvt, <3 x float>* %dst.addr, align 4
 	ret void
 }
