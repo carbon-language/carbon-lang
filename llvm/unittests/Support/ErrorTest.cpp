@@ -412,8 +412,7 @@ TEST(Error, CheckExpected) {
 #ifndef NDEBUG
   {
     Expected<int> A = make_error<CustomError>(42);
-    EXPECT_DEATH(*A, "\\(!HasError && \"Cannot get value "
-                     "when an error exists!\"\\)")
+    EXPECT_DEATH(*A, "!HasError && \"Cannot get value when an error exists!\"")
         << "Incorrect Expected error value";
     consumeError(A.takeError());
   }
