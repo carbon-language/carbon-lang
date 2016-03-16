@@ -311,11 +311,13 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, const BasicBlock *EHPadBB,
   Type *DefTy = ISP.getActualReturnType();
   bool HasDef = !DefTy->isVoidTy();
 
+  TargetLowering::CallLoweringInfo CLI(Builder.DAG);
+  Builder.populateCallLoweringInfo(
+      CLI, ISP.getCallSite(), ImmutableStatepoint::CallArgsBeginPos,
+      ISP.getNumCallArgs(), ActualCallee, DefTy, false);
+
   SDValue ReturnValue, CallEndVal;
-  std::tie(ReturnValue, CallEndVal) = Builder.lowerCallOperands(
-      ISP.getCallSite(), ImmutableStatepoint::CallArgsBeginPos,
-      ISP.getNumCallArgs(), ActualCallee, DefTy, EHPadBB,
-      false /* IsPatchPoint */);
+  std::tie(ReturnValue, CallEndVal) = Builder.lowerInvokable(CLI, EHPadBB);
 
   SDNode *CallEnd = CallEndVal.getNode();
 

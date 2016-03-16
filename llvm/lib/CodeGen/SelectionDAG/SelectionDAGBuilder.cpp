@@ -6896,16 +6896,16 @@ SDValue SelectionDAGBuilder::lowerRangeToAssertZExt(SelectionDAG &DAG,
   return DAG.getMergeValues(Ops, SL);
 }
 
-/// \brief Lower an argument list according to the target calling convention.
-///
-/// \return A tuple of <return-value, token-chain>
+/// \brief Populate a CallLowerinInfo (into \p CLI) based on the properties of
+/// the call being lowered.
 ///
 /// This is a helper for lowering intrinsics that follow a target calling
 /// convention or require stack pointer adjustment. Only a subset of the
 /// intrinsic's operands need to participate in the calling convention.
-std::pair<SDValue, SDValue> SelectionDAGBuilder::lowerCallOperands(
-    ImmutableCallSite CS, unsigned ArgIdx, unsigned NumArgs, SDValue Callee,
-    Type *ReturnTy, const BasicBlock *EHPadBB, bool IsPatchPoint) {
+void SelectionDAGBuilder::populateCallLoweringInfo(
+    TargetLowering::CallLoweringInfo &CLI, ImmutableCallSite CS,
+    unsigned ArgIdx, unsigned NumArgs, SDValue Callee, Type *ReturnTy,
+    bool IsPatchPoint) {
   TargetLowering::ArgListTy Args;
   Args.reserve(NumArgs);
 
@@ -6924,12 +6924,12 @@ std::pair<SDValue, SDValue> SelectionDAGBuilder::lowerCallOperands(
     Args.push_back(Entry);
   }
 
-  TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(getCurSDLoc()).setChain(getRoot())
-    .setCallee(CS.getCallingConv(), ReturnTy, Callee, std::move(Args), NumArgs)
-    .setDiscardResult(CS->use_empty()).setIsPatchPoint(IsPatchPoint);
-
-  return lowerInvokable(CLI, EHPadBB);
+  CLI.setDebugLoc(getCurSDLoc())
+      .setChain(getRoot())
+      .setCallee(CS.getCallingConv(), ReturnTy, Callee, std::move(Args),
+                 NumArgs)
+      .setDiscardResult(CS->use_empty())
+      .setIsPatchPoint(IsPatchPoint);
 }
 
 /// \brief Add a stack map intrinsic call's live variable operands to a stackmap
@@ -7070,8 +7070,11 @@ void SelectionDAGBuilder::visitPatchpoint(ImmutableCallSite CS,
   unsigned NumCallArgs = IsAnyRegCC ? 0 : NumArgs;
   Type *ReturnTy =
     IsAnyRegCC ? Type::getVoidTy(*DAG.getContext()) : CS->getType();
-  std::pair<SDValue, SDValue> Result = lowerCallOperands(
-      CS, NumMetaOpers, NumCallArgs, Callee, ReturnTy, EHPadBB, true);
+
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  populateCallLoweringInfo(CLI, CS, NumMetaOpers, NumCallArgs, Callee, ReturnTy,
+                           true);
+  std::pair<SDValue, SDValue> Result = lowerInvokable(CLI, EHPadBB);
 
   SDNode *CallEnd = Result.second.getNode();
   if (HasDef && (CallEnd->getOpcode() == ISD::CopyFromReg))

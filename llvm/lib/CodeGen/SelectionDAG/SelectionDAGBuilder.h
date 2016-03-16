@@ -713,14 +713,14 @@ public:
   SDValue lowerRangeToAssertZExt(SelectionDAG &DAG, const Instruction &I,
                                  SDValue Op);
 
-  std::pair<SDValue, SDValue> lowerCallOperands(
-          ImmutableCallSite CS,
-          unsigned ArgIdx,
-          unsigned NumArgs,
-          SDValue Callee,
-          Type *ReturnTy,
-          const BasicBlock *EHPadBB = nullptr,
-          bool IsPatchPoint = false);
+  void populateCallLoweringInfo(TargetLowering::CallLoweringInfo &CLI,
+                                ImmutableCallSite CS, unsigned ArgIdx,
+                                unsigned NumArgs, SDValue Callee,
+                                Type *ReturnTy, bool IsPatchPoint);
+
+  std::pair<SDValue, SDValue>
+  lowerInvokable(TargetLowering::CallLoweringInfo &CLI,
+                 const BasicBlock *EHPadBB = nullptr);
 
   /// UpdateSplitBlock - When an MBB was split during scheduling, update the
   /// references that need to refer to the last resulting block.
@@ -731,10 +731,6 @@ public:
   void LowerStatepoint(ImmutableStatepoint Statepoint,
                        const BasicBlock *EHPadBB = nullptr);
 private:
-  std::pair<SDValue, SDValue>
-  lowerInvokable(TargetLowering::CallLoweringInfo &CLI,
-                 const BasicBlock *EHPadBB = nullptr);
-
   // Terminator instructions.
   void visitRet(const ReturnInst &I);
   void visitBr(const BranchInst &I);
