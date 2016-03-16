@@ -96,11 +96,9 @@ public:
   size_t relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                         uint64_t P, uint64_t SA) const override;
   size_t relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                        uint64_t P, uint64_t SA,
-                        const SymbolBody &S) const override;
+                        uint64_t P, uint64_t SA) const override;
   size_t relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                        uint64_t P, uint64_t SA,
-                        const SymbolBody &S) const override;
+                        uint64_t P, uint64_t SA) const override;
   size_t relaxTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                         uint64_t P, uint64_t SA) const override;
 
@@ -134,11 +132,9 @@ public:
   size_t relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                         uint64_t P, uint64_t SA) const override;
   size_t relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                        uint64_t P, uint64_t SA,
-                        const SymbolBody &S) const override;
+                        uint64_t P, uint64_t SA) const override;
   size_t relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                        uint64_t P, uint64_t SA,
-                        const SymbolBody &S) const override;
+                        uint64_t P, uint64_t SA) const override;
   size_t relaxTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                         uint64_t P, uint64_t SA) const override;
 };
@@ -185,11 +181,9 @@ public:
                    uint8_t *PairedLoc = nullptr) const override;
 
   size_t relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                        uint64_t P, uint64_t SA,
-                        const SymbolBody &S) const override;
+                        uint64_t P, uint64_t SA) const override;
   size_t relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                        uint64_t P, uint64_t SA,
-                        const SymbolBody &S) const override;
+                        uint64_t P, uint64_t SA) const override;
 
 private:
   static const uint64_t TcbSize = 16;
@@ -360,17 +354,16 @@ size_t TargetInfo::relaxTls(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
   if (isTlsGlobalDynamicRel(Type)) {
     if (S.isPreemptible())
       return relaxTlsGdToIe(Loc, BufEnd, Type, P, SA);
-    return relaxTlsGdToLe(Loc, BufEnd, Type, P, SA, S);
+    return relaxTlsGdToLe(Loc, BufEnd, Type, P, SA);
   }
   if (isTlsLocalDynamicRel(Type))
     return relaxTlsLdToLe(Loc, BufEnd, Type, P, SA);
   assert(isTlsInitialExecRel(Type));
-  return relaxTlsIeToLe(Loc, BufEnd, Type, P, SA, S);
+  return relaxTlsIeToLe(Loc, BufEnd, Type, P, SA);
 }
 
 size_t TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                  uint64_t P, uint64_t SA,
-                                  const SymbolBody &S) const {
+                                  uint64_t P, uint64_t SA) const {
   llvm_unreachable("Should not have claimed to be relaxable");
 }
 
@@ -380,8 +373,7 @@ size_t TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 size_t TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                  uint64_t P, uint64_t SA,
-                                  const SymbolBody &S) const {
+                                  uint64_t P, uint64_t SA) const {
   llvm_unreachable("Should not have claimed to be relaxable");
 }
 
@@ -567,8 +559,8 @@ bool X86TargetInfo::needsDynRelative(uint32_t Type) const {
 }
 
 size_t X86TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd,
-                                     uint32_t Type, uint64_t P, uint64_t SA,
-                                     const SymbolBody &S) const {
+                                     uint32_t Type, uint64_t P,
+                                     uint64_t SA) const {
   // GD can be optimized to LE:
   //   leal x@tlsgd(, %ebx, 1),
   //   call __tls_get_addr@plt
@@ -621,8 +613,8 @@ size_t X86TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd,
 // by Ulrich Drepper for details.
 
 size_t X86TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
-                                     uint32_t Type, uint64_t P, uint64_t SA,
-                                     const SymbolBody &S) const {
+                                     uint32_t Type, uint64_t P,
+                                     uint64_t SA) const {
   // Ulrich's document section 6.2 says that @gotntpoff can
   // be used with MOVL or ADDL instructions.
   // @indntpoff is similar to @gotntpoff, but for use in
@@ -814,8 +806,8 @@ bool X86_64TargetInfo::isSizeRel(uint32_t Type) const {
 //  mov %fs:0x0,%rax
 //  lea x@tpoff,%rax
 size_t X86_64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd,
-                                        uint32_t Type, uint64_t P, uint64_t SA,
-                                        const SymbolBody &S) const {
+                                        uint32_t Type, uint64_t P,
+                                        uint64_t SA) const {
   const uint8_t Inst[] = {
       0x64, 0x48, 0x8b, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00, // mov %fs:0x0,%rax
       0x48, 0x8d, 0x80, 0x00, 0x00, 0x00, 0x00              // lea x@tpoff,%rax
@@ -858,8 +850,8 @@ size_t X86_64TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd,
 // 5.5 x86-x64 linker optimizations" (http://www.akkadia.org/drepper/tls.pdf)
 // by Ulrich Drepper for details.
 size_t X86_64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
-                                        uint32_t Type, uint64_t P, uint64_t SA,
-                                        const SymbolBody &S) const {
+                                        uint32_t Type, uint64_t P,
+                                        uint64_t SA) const {
   // Ulrich's document section 6.5 says that @gottpoff(%rip) must be
   // used in MOVQ or ADDQ instructions only.
   // "MOVQ foo@GOTTPOFF(%RIP), %REG" is transformed to "MOVQ $foo, %REG".
@@ -1320,8 +1312,8 @@ bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 bool AArch64TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   switch (Type) {
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-    return !canRelaxTls(Type, &S);
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+    return !canRelaxTls(Type, &S);
   case R_AARCH64_ADR_GOT_PAGE:
   case R_AARCH64_LD64_GOT_LO12_NC:
     return true;
@@ -1468,8 +1460,8 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 }
 
 size_t AArch64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd,
-                                         uint32_t Type, uint64_t P, uint64_t SA,
-                                         const SymbolBody &S) const {
+                                         uint32_t Type, uint64_t P,
+                                         uint64_t SA) const {
   // TLSDESC Global-Dynamic relocation are in the form:
   //   adrp    x0, :tlsdesc:v             [R_AARCH64_TLSDESC_ADR_PAGE21]
   //   ldr     x1, [x0, #:tlsdesc_lo12:v  [R_AARCH64_TLSDESC_LD64_LO12_NC]
@@ -1480,7 +1472,6 @@ size_t AArch64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd,
   //   movk    x0, #0x10
   //   nop
   //   nop
-  SA = S.getVA<ELF64LE>();
   uint64_t TPOff = llvm::alignTo(TcbSize, Out<ELF64LE>::TlsPhdr->p_align);
   uint64_t X = SA + TPOff;
   checkUInt<32>(X, Type);
@@ -1509,9 +1500,8 @@ size_t AArch64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd,
 }
 
 size_t AArch64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
-                                         uint32_t Type, uint64_t P, uint64_t SA,
-                                         const SymbolBody &S) const {
-  SA = S.getVA<ELF64LE>();
+                                         uint32_t Type, uint64_t P,
+                                         uint64_t SA) const {
   uint64_t TPOff = llvm::alignTo(TcbSize, Out<ELF64LE>::TlsPhdr->p_align);
   uint64_t X = SA + TPOff;
   checkUInt<32>(X, Type);

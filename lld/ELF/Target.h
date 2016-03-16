@@ -104,11 +104,9 @@ private:
   virtual size_t relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                 uint64_t P, uint64_t SA) const;
   virtual size_t relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                uint64_t P, uint64_t SA,
-                                const SymbolBody &S) const;
+                                uint64_t P, uint64_t SA) const;
   virtual size_t relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                uint64_t P, uint64_t SA,
-                                const SymbolBody &S) const;
+                                uint64_t P, uint64_t SA) const;
   virtual size_t relaxTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                 uint64_t P, uint64_t SA) const;
 };
