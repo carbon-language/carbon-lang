@@ -438,9 +438,8 @@ static void
 lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
                         SelectionDAGBuilder::StatepointLoweringInfo &SI,
                         SelectionDAGBuilder &Builder) {
-
-// Lower the deopt and gc arguments for this statepoint.  Layout will
-// be: deopt argument length, deopt arguments.., gc arguments...
+  // Lower the deopt and gc arguments for this statepoint.  Layout will be:
+  // deopt argument length, deopt arguments.., gc arguments...
 #ifndef NDEBUG
   // Check that each of the gc pointer and bases we've gotten out of the
   // safepoint is something the strategy thinks might be a pointer (or vector
