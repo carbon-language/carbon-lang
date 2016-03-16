@@ -465,6 +465,25 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
     return !Result.empty();
   }
 
+  // Handle Cast instructions.  Only see through Cast when the source operand is
+  // PHI or Cmp and the source type is i1 to save the compilation time.
+  if (CastInst *CI = dyn_cast<CastInst>(I)) {
+    Value *Source = CI->getOperand(0);
+    if (!Source->getType()->isIntegerTy(1))
+      return false;
+    if (!isa<PHINode>(Source) && !isa<CmpInst>(Source))
+      return false;
+    ComputeValueKnownInPredecessors(Source, BB, Result, Preference, CxtI);
+    if (Result.empty())
+      return false;
+
+    // Convert the known values.
+    for (auto &R : Result)
+      R.first = ConstantExpr::getCast(CI->getOpcode(), R.first, CI->getType());
+
+    return true;
+  }
+
   PredValueInfoTy LHSVals, RHSVals;
 
   // Handle some boolean conditions.
