@@ -1319,8 +1319,9 @@ bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 
 bool AArch64TargetInfo::needsGot(uint32_t Type, SymbolBody &S) const {
   switch (Type) {
-  case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+    return !canRelaxTls(Type, &S);
+  case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_AARCH64_ADR_GOT_PAGE:
   case R_AARCH64_LD64_GOT_LO12_NC:
     return true;
