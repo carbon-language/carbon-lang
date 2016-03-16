@@ -1072,6 +1072,11 @@ struct __uncvref  {
     typedef typename remove_cv<typename remove_reference<_Tp>::type>::type type;
 };
 
+template <class _Tp>
+struct __unconstref {
+    typedef typename remove_const<typename remove_reference<_Tp>::type>::type type;
+};
+
 // __is_same_uncvref
 
 template <class _Tp, class _Up>
