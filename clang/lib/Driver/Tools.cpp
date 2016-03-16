@@ -5284,6 +5284,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   }
 
+  // Allow the user to control whether messages can be converted to runtime
+  // functions.
+  if (types::isObjC(InputType)) {
+    auto *Arg = Args.getLastArg(
+        options::OPT_fobjc_convert_messages_to_runtime_calls,
+        options::OPT_fno_objc_convert_messages_to_runtime_calls);
+    if (Arg &&
+        Arg->getOption().matches(
+            options::OPT_fno_objc_convert_messages_to_runtime_calls))
+      CmdArgs.push_back("-fno-objc-convert-messages-to-runtime-calls");
+  }
+
   // -fobjc-infer-related-result-type is the default, except in the Objective-C
   // rewriter.
   if (rewriteKind != RK_None)
