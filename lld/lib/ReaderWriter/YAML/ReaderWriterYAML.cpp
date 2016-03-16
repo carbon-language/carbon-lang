@@ -745,8 +745,9 @@ template <> struct MappingTraits<const lld::Reference *> {
   };
 
   static void mapping(IO &io, const lld::Reference *&ref) {
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     MappingNormalizationHeap<NormalizedReference, const lld::Reference *> keys(
-        io, ref);
+        io, ref, &info->_file->allocator());
 
     io.mapRequired("kind",   keys->_mappedKind);
     io.mapOptional("offset", keys->_offset);
@@ -889,12 +890,12 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
   };
 
   static void mapping(IO &io, const lld::DefinedAtom *&atom) {
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     MappingNormalizationHeap<NormalizedAtom, const lld::DefinedAtom *> keys(
-        io, atom);
+        io, atom, &info->_file->allocator());
     if (io.outputting()) {
       // If writing YAML, check if atom needs a ref-name.
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
-      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       NormalizedFile *f = reinterpret_cast<NormalizedFile *>(info->_file);
       assert(f);
@@ -979,8 +980,9 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
   };
 
   static void mapping(IO &io, const lld::UndefinedAtom *&atom) {
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     MappingNormalizationHeap<NormalizedAtom, const lld::UndefinedAtom *> keys(
-        io, atom);
+        io, atom, &info->_file->allocator());
 
     io.mapRequired("name",        keys->_name);
     io.mapOptional("can-be-null", keys->_canBeNull,
