@@ -752,17 +752,17 @@ public:
 
   /// Create an error on exit helper.
   ExitOnError(std::string Banner = "", int DefaultErrorExitCode = 1)
-    : Banner(Banner),
+    : Banner(std::move(Banner)),
       GetExitCode([=](const Error&) { return DefaultErrorExitCode; }) {}
 
   /// Set the banner string for any errors caught by operator().
   void setBanner(std::string Banner) {
-    this->Banner = Banner;
+    this->Banner = std::move(Banner);
   }
 
   /// Set the exit-code mapper function.
   void setExitCodeMapper(std::function<int(const Error&)> GetExitCode) {
-    this->GetExitCode = GetExitCode;
+    this->GetExitCode = std::move(GetExitCode);
   }
 
   /// Check Err. If it's in a failure state log the error(s) and exit.
@@ -773,7 +773,7 @@ public:
   /// Check E. If it's in a success state return the contained value. If it's
   /// in a failure state log the error(s) and exit.
   template <typename T>
-  T operator()(Expected<T> E) const {
+  T operator()(Expected<T> &&E) const {
     checkError(E.takeError());
     return std::move(*E);
   }
