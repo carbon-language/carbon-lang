@@ -16,6 +16,7 @@ add_llvm_tool(llvm-bolt
   BinaryBasicBlock.cpp
   BinaryContext.cpp
   BinaryFunction.cpp
+  BinaryPatcher.cpp
   DataReader.cpp
   DebugArangesWriter.cpp
   DebugLineTableRowRef.cpp

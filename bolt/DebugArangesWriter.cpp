@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebugArangesWriter.h"
+#include "BinaryFunction.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCObjectWriter.h"
 
@@ -21,24 +22,49 @@ void DebugArangesWriter::AddRange(uint32_t CompileUnitOffset,
   CUAddressRanges[CompileUnitOffset].push_back(std::make_pair(Address, Size));
 }
 
+void DebugArangesWriter::AddRange(BinaryFunction &BF,
+                                  uint64_t Address,
+                                  uint64_t Size) {
+  FunctionAddressRanges[&BF].push_back(std::make_pair(Address, Size));
+}
+
+namespace {
+
+// Writes address ranges to Writer as pairs of 64-bit (address, size).
+// If RelativeRange is true, assumes the address range to be written must be of
+// the form (begin address, range size), otherwise (begin address, end address).
+// Terminates the list by writing a pair of two zeroes.
+// Returns the number of written bytes.
+uint32_t WriteAddressRanges(
+    MCObjectWriter *Writer,
+    const std::vector<std::pair<uint64_t, uint64_t>> &AddressRanges,
+    bool RelativeRange) {
+  // Write entries.
+  for (auto &Range : AddressRanges) {
+    Writer->writeLE64(Range.first);
+    Writer->writeLE64((!RelativeRange) * Range.first + Range.second);
+  }
+  // Finish with 0 entries.
+  Writer->writeLE64(0);
+  Writer->writeLE64(0);
+  return AddressRanges.size() * 16 + 16;
+}
+
+} // namespace
+
 void DebugArangesWriter::WriteRangesSection(MCObjectWriter *Writer) {
   uint32_t SectionOffset = 0;
   for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
     uint64_t CUOffset = CUOffsetAddressRangesPair.first;
     RangesSectionOffsetCUMap[CUOffset] = SectionOffset;
     const auto &AddressRanges = CUOffsetAddressRangesPair.second;
+    SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
+  }
 
-    // Write all entries.
-    for (auto &Range : AddressRanges) {
-      Writer->writeLE64(Range.first);
-      Writer->writeLE64(Range.first + Range.second);
-    }
-
-    // Finish with 0 entry.
-    Writer->writeLE64(0);
-    Writer->writeLE64(0);
-
-    SectionOffset += AddressRanges.size() * 16 + 16;
+  for (const auto &BFAddressRangesPair : FunctionAddressRanges) {
+    BFAddressRangesPair.first->setAddressRangesOffset(SectionOffset);
+    const auto &AddressRanges = BFAddressRangesPair.second;
+    SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
   }
 }
 
@@ -77,15 +103,7 @@ void DebugArangesWriter::WriteArangesSection(MCObjectWriter *Writer) const {
     // Padding before address table - 4 bytes in the 64-bit-pointer case.
     Writer->writeLE32(0);
 
-    // Emit address ranges.
-    for (const auto &Range : AddressRanges) {
-      Writer->writeLE64(Range.first);
-      Writer->writeLE64(Range.second);
-    }
-
-    // Emit terminating address range (offset 0, length 0).
-    Writer->writeLE64(0);
-    Writer->writeLE64(0);
+    WriteAddressRanges(Writer, AddressRanges, true);
   }
 }
 

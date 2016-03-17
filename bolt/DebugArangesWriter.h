@@ -24,12 +24,19 @@ class MCObjectWriter;
 
 namespace bolt {
 
+class BinaryFunction;
+
 class DebugArangesWriter {
 public:
   DebugArangesWriter() = default;
 
   /// Adds a range to the .debug_arange section.
   void AddRange(uint32_t CompileUnitOffset, uint64_t Address, uint64_t Size);
+
+  /// Adds an address range that belongs to a given BinaryFunction.
+  /// When .debug_ranges is written, the offset of the range corresponding
+  /// to the function will be set using BF->setAddressRangesOffset().
+  void AddRange(BinaryFunction &BF, uint64_t Address, uint64_t Size);
 
   using RangesCUMapType = std::map<uint32_t, uint32_t>;
 
@@ -48,7 +55,13 @@ private:
   // Map from compile unit offset to the list of address intervals that belong
   // to that compile unit. Each interval is a pair
   // (first address, interval size).
-  std::map<uint32_t, std::vector<std::pair<uint64_t, uint64_t>>> CUAddressRanges;
+  std::map<uint32_t, std::vector<std::pair<uint64_t, uint64_t>>>
+      CUAddressRanges;
+
+  // Map from BinaryFunction to the list of address intervals that belong
+  // to that function, represented like CUAddressRanges.
+  std::map<BinaryFunction *, std::vector<std::pair<uint64_t, uint64_t>>>
+      FunctionAddressRanges;
 
   /// When writing data to .debug_ranges remember offset per CU.
   RangesCUMapType RangesSectionOffsetCUMap;

@@ -39,6 +39,7 @@
 namespace llvm {
 namespace bolt {
 
+class BinaryFunction;
 class DataReader;
 
 class BinaryContext {
@@ -142,6 +143,10 @@ public:
   /// Populate some internal data structures with debug info.
   void preprocessDebugInfo();
 
+  /// Populate internal data structures with debug info that depends on
+  /// disassembled functions.
+  void preprocessFunctionDebugInfo(
+      std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 };
 
 } // namespace bolt

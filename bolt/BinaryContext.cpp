@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryContext.h"
+#include "BinaryFunction.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
@@ -68,6 +69,31 @@ void BinaryContext::preprocessDebugInfo() {
       DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_stmt_list);
     if (LineTableOffset)
       LineTableOffsetCUMap[CUID] = LineTableOffset;
+  }
+}
+
+void BinaryContext::preprocessFunctionDebugInfo(
+    std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
+  // For each CU, iterate over its children DIEs and match subroutine DIEs to
+  // BinaryFunctions.
+  for (const auto &CU : DwCtx->compile_units()) {
+    const auto *UnitDIE = CU->getUnitDIE(false);
+    if (!UnitDIE->hasChildren())
+      continue;
+
+    for (auto ChildDIE = UnitDIE->getFirstChild();
+         ChildDIE != nullptr && !ChildDIE->isNULL();
+         ChildDIE = ChildDIE->getSibling()) {
+      if (ChildDIE->isSubprogramDIE()) {
+        uint64_t LowPC, HighPC;
+        if (ChildDIE->getLowAndHighPC(CU.get(), LowPC, HighPC)) {
+          auto It = BinaryFunctions.find(LowPC);
+          if (It != BinaryFunctions.end()) {
+            It->second.setSubprocedureDIE(CU.get(), ChildDIE);
+          }
+        }
+      }
+    }
   }
 }
 

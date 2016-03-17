@@ -39,6 +39,10 @@
 using namespace llvm::object;
 
 namespace llvm {
+
+class DWARFCompileUnit;
+class DWARFDebugInfoEntryMinimal;
+
 namespace bolt {
 
 /// BinaryFunction is a representation of machine-level function.
@@ -146,6 +150,16 @@ private:
 
   /// Landing pads for the function.
   std::set<MCSymbol *> LandingPads;
+
+  /// Associated DIE in the .debug_info section.
+  const DWARFDebugInfoEntryMinimal *SubprocedureDIE{nullptr};
+
+  /// DWARF Unit that contains the DIE of this function.
+  const DWARFCompileUnit *DIECompileUnit{nullptr};
+
+  /// Offset of this function's address ranges in the .debug_ranges section of
+  /// the output binary.
+  uint32_t AddressRangesOffset;
 
   /// Release storage used by instructions.
   BinaryFunction &clearInstructions() {
@@ -622,6 +636,14 @@ public:
     return *this;
   }
 
+  /// Sets the function's address ranges list offset in .debug_ranges.
+  void setAddressRangesOffset(uint32_t Offset) {
+    AddressRangesOffset = Offset;
+  }
+
+  /// Returns the offset of the function's address ranges in .debug_ranges.
+  uint32_t getAddressRangesOffset() const { return AddressRangesOffset; }
+
   /// Return the profile information about the number of times
   /// the function was executed.
   ///
@@ -720,6 +742,21 @@ public:
 
   /// Emit exception handling ranges for the function.
   void emitLSDA(MCStreamer *Streamer);
+
+  /// Sets the associated .debug_info entry.
+  void setSubprocedureDIE(const DWARFCompileUnit *Unit,
+                          const DWARFDebugInfoEntryMinimal *DIE) {
+    DIECompileUnit = Unit;
+    SubprocedureDIE = DIE;
+  }
+
+  const DWARFDebugInfoEntryMinimal *getSubprocedureDIE() const {
+    return SubprocedureDIE;
+  }
+
+  const DWARFCompileUnit *getSubprocedureDIECompileUnit() const {
+    return DIECompileUnit;
+  }
 
   virtual ~BinaryFunction() {}
 

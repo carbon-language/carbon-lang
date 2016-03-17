@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
+#include "BinaryPatcher.h"
 #include "DebugArangesWriter.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -137,6 +138,10 @@ public:
   /// Read information from debug sections.
   void readDebugInfo();
 
+  /// Read information from debug sections that depends on disassembled
+  /// functions.
+  void readFunctionDebugInfo();
+
   /// Disassemble each function in the binary and associate it with a
   /// BinaryFunction object, preparing all information necessary for binary
   /// optimization.
@@ -196,6 +201,9 @@ private:
   /// Generate new contents for .debug_ranges and .debug_aranges section.
   void generateDebugRanges();
 
+  /// Patches the binary for function address ranges to be updated.
+  void updateDWARFSubprogramAddressRanges();
+
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
     assert(Address >= NewTextSegmentAddress &&
@@ -244,6 +252,10 @@ private:
   /// Stores and serializes information that will be put into
   /// the .debug_aranges DWARF section.
   DebugArangesWriter ArangesWriter;
+
+  /// Patchers used to apply simple changes to sections of the input binary.
+  /// Maps section name -> patcher.
+  std::map<std::string, std::unique_ptr<BinaryPatcher>> SectionPatchers;
 
   /// Exception handling and stack unwinding information in this binary.
   ArrayRef<uint8_t> LSDAData;
