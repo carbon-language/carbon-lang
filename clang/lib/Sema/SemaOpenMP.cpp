@@ -8929,52 +8929,37 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
   SmallVector<Expr *, 8> DstExprs;
   SmallVector<Expr *, 8> AssignmentOps;
   for (auto &RefExpr : VarList) {
-    assert(RefExpr && "NULL expr in OpenMP copyprivate clause.");
-    if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
+    assert(RefExpr && "NULL expr in OpenMP linear clause.");
+    SourceLocation ELoc;
+    SourceRange ERange;
+    Expr *SimpleRefExpr = RefExpr;
+    auto Res = getPrivateItem(*this, SimpleRefExpr, ELoc, ERange,
+                              /*AllowArraySection=*/false);
+    if (Res.second) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
       SrcExprs.push_back(nullptr);
       DstExprs.push_back(nullptr);
       AssignmentOps.push_back(nullptr);
-      continue;
     }
-
-    SourceLocation ELoc = RefExpr->getExprLoc();
-    // OpenMP [2.1, C/C++]
-    //  A list item is a variable name.
-    // OpenMP  [2.14.4.1, Restrictions, p.1]
-    //  A list item that appears in a copyin clause must be threadprivate.
-    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(RefExpr);
-    if (!DE || !isa<VarDecl>(DE->getDecl())) {
-      Diag(ELoc, diag::err_omp_expected_var_name_member_expr)
-          << 0 << RefExpr->getSourceRange();
+    ValueDecl *D = Res.first;
+    if (!D)
       continue;
-    }
 
-    Decl *D = DE->getDecl();
-    VarDecl *VD = cast<VarDecl>(D);
-
-    QualType Type = VD->getType();
-    if (Type->isDependentType() || Type->isInstantiationDependentType()) {
-      // It will be analyzed later.
-      Vars.push_back(DE);
-      SrcExprs.push_back(nullptr);
-      DstExprs.push_back(nullptr);
-      AssignmentOps.push_back(nullptr);
-      continue;
-    }
+    QualType Type = D->getType();
+    auto *VD = dyn_cast<VarDecl>(D);
 
     // OpenMP [2.14.4.2, Restrictions, p.2]
     //  A list item that appears in a copyprivate clause may not appear in a
     //  private or firstprivate clause on the single construct.
-    if (!DSAStack->isThreadPrivate(VD)) {
-      auto DVar = DSAStack->getTopDSA(VD, false);
+    if (!VD || !DSAStack->isThreadPrivate(VD)) {
+      auto DVar = DSAStack->getTopDSA(D, false);
       if (DVar.CKind != OMPC_unknown && DVar.CKind != OMPC_copyprivate &&
           DVar.RefExpr) {
         Diag(ELoc, diag::err_omp_wrong_dsa)
             << getOpenMPClauseName(DVar.CKind)
             << getOpenMPClauseName(OMPC_copyprivate);
-        ReportOriginalDSA(*this, DSAStack, VD, DVar);
+        ReportOriginalDSA(*this, DSAStack, D, DVar);
         continue;
       }
 
@@ -8982,12 +8967,12 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
       //  All list items that appear in a copyprivate clause must be either
       //  threadprivate or private in the enclosing context.
       if (DVar.CKind == OMPC_unknown) {
-        DVar = DSAStack->getImplicitDSA(VD, false);
+        DVar = DSAStack->getImplicitDSA(D, false);
         if (DVar.CKind == OMPC_shared) {
           Diag(ELoc, diag::err_omp_required_access)
               << getOpenMPClauseName(OMPC_copyprivate)
               << "threadprivate or private in the enclosing context";
-          ReportOriginalDSA(*this, DSAStack, VD, DVar);
+          ReportOriginalDSA(*this, DSAStack, D, DVar);
           continue;
         }
       }
@@ -8999,10 +8984,11 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
           << getOpenMPClauseName(OMPC_copyprivate) << Type
           << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
       bool IsDecl =
+          !VD ||
           VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
+      Diag(D->getLocation(),
            IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+          << D;
       continue;
     }
 
@@ -9013,27 +8999,29 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
     Type = Context.getBaseElementType(Type.getNonReferenceType())
                .getUnqualifiedType();
     auto *SrcVD =
-        buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.src",
-                     VD->hasAttrs() ? &VD->getAttrs() : nullptr);
-    auto *PseudoSrcExpr =
-        buildDeclRefExpr(*this, SrcVD, Type, DE->getExprLoc());
+        buildVarDecl(*this, RefExpr->getLocStart(), Type, ".copyprivate.src",
+                     D->hasAttrs() ? &D->getAttrs() : nullptr);
+    auto *PseudoSrcExpr = buildDeclRefExpr(*this, SrcVD, Type, ELoc);
     auto *DstVD =
-        buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.dst",
-                     VD->hasAttrs() ? &VD->getAttrs() : nullptr);
+        buildVarDecl(*this, RefExpr->getLocStart(), Type, ".copyprivate.dst",
+                     D->hasAttrs() ? &D->getAttrs() : nullptr);
     auto *PseudoDstExpr =
-        buildDeclRefExpr(*this, DstVD, Type, DE->getExprLoc());
-    auto AssignmentOp = BuildBinOp(/*S=*/nullptr, DE->getExprLoc(), BO_Assign,
+        buildDeclRefExpr(*this, DstVD, Type, ELoc);
+    auto AssignmentOp = BuildBinOp(DSAStack->getCurScope(), ELoc, BO_Assign,
                                    PseudoDstExpr, PseudoSrcExpr);
     if (AssignmentOp.isInvalid())
       continue;
-    AssignmentOp = ActOnFinishFullExpr(AssignmentOp.get(), DE->getExprLoc(),
+    AssignmentOp = ActOnFinishFullExpr(AssignmentOp.get(), ELoc,
                                        /*DiscardedValue=*/true);
     if (AssignmentOp.isInvalid())
       continue;
 
     // No need to mark vars as copyprivate, they are already threadprivate or
     // implicitly private.
-    Vars.push_back(DE);
+    assert(VD || IsOpenMPCapturedDecl(D));
+    Vars.push_back(
+        VD ? RefExpr->IgnoreParens()
+           : buildCapture(*this, D, SimpleRefExpr, /*WithInit=*/false));
     SrcExprs.push_back(PseudoSrcExpr);
     DstExprs.push_back(PseudoDstExpr);
     AssignmentOps.push_back(AssignmentOp.get());
