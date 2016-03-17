@@ -24,7 +24,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 /// The statepoint intrinsic accepts a set of flags as its third argument.
