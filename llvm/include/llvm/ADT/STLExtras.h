@@ -117,7 +117,7 @@ public:
           iterator_category;
   typedef typename std::iterator_traits<RootIt>::difference_type
           difference_type;
-  typedef typename UnaryFunc::result_type value_type;
+  typedef decltype(Fn(*current)) value_type;
 
   typedef void pointer;
   //typedef typename UnaryFunc::result_type *pointer;
