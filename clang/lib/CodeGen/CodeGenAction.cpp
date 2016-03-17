@@ -123,14 +123,14 @@ namespace clang {
       return true;
     }
 
-    void HandleInlineFunctionDefinition(FunctionDecl *D) override {
+    void HandleInlineMethodDefinition(CXXMethodDecl *D) override {
       PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
                                      Context->getSourceManager(),
-                                     "LLVM IR generation of inline function");
+                                     "LLVM IR generation of inline method");
       if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.startTimer();
 
-      Gen->HandleInlineFunctionDefinition(D);
+      Gen->HandleInlineMethodDefinition(D);
 
       if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.stopTimer();
