@@ -103,8 +103,8 @@ LLVM's capabilities.
 Properties of the LLVM IR
 =========================
 
-We have a couple common questions about code in the LLVM IR form - lets
-just get these out of the way right now, shall we?
+We have a couple of common questions about code in the LLVM IR form -
+let's just get these out of the way right now, shall we?
 
 Target Independence
 -------------------
