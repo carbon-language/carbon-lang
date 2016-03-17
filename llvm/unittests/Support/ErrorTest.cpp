@@ -38,6 +38,7 @@ namespace {
 //   - consume_error to consume a "safe" error without any output.
 //   - handleAllUnhandledErrors to assert that all errors are handled.
 //   - logAllUnhandledErrors to log errors to a stream.
+//   - ExitOnError tests.
 //
 // Expected tests:
 //   - Expected<T> with T.
@@ -50,6 +51,7 @@ namespace {
 //   - std::error_code to Error (ECError) in failure mode.
 //   - Error to std::error_code in success mode.
 //   - Error (ECError) to std::error_code in failure mode.
+//
 
 // Custom error class with a default base class and some random 'info' attached.
 class CustomError : public ErrorInfo<CustomError> {
@@ -375,6 +377,32 @@ TEST(Error, CheckErrorUtilities) {
 
     EXPECT_EQ(ErrorInfo, 7)
         << "Failed to handle Error returned from handleErrors.";
+  }
+
+  // Test ExitOnError
+  {
+    ExitOnError ExitOnErr;
+    ExitOnErr.setBanner("Error in tool:");
+    ExitOnErr.setExitCodeMapper(
+      [](const Error &E) {
+        if (E.isA<CustomSubError>())
+          return 2;
+        return 1;
+      });
+
+    // Make sure we don't bail on success.
+    ExitOnErr(Error::success());
+    EXPECT_EQ(ExitOnErr(Expected<int>(7)), 7)
+      << "exitOnError returned an invalid value for Expected";
+
+    // Exit tests.
+    EXPECT_EXIT(ExitOnErr(make_error<CustomError>(7)),
+                ::testing::ExitedWithCode(1), "Error in tool:")
+      << "exitOnError returned an unexpected error result";
+
+    EXPECT_EXIT(ExitOnErr(Expected<int>(make_error<CustomSubError>(0, 0))),
+                ::testing::ExitedWithCode(2), "Error in tool:")
+      << "exitOnError returned an unexpected error result";
   }
 }
 
