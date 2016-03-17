@@ -1,0 +1,10 @@
+# Check that target displacement has '0x' prefix
+# to accent hex format of the number.
+
+# RUN: llvm-objdump -d %p/Inputs/export.dll.coff-i386 | FileCheck %s
+
+# CHECK:      exportfn2:
+# CHECK-NEXT: 10002010:       50      pushl   %eax
+# CHECK-NEXT: 10002011:       e8 00 00 00 00  calll   0 <exportfn2+0x6>
+# CHECK-NEXT: 10002016:       50      pushl   %eax
+# CHECK-NEXT: 10002017:       e8 00 00 00 00  calll   0 <exportfn2+0xC>
