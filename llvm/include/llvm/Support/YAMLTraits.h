@@ -895,7 +895,7 @@ private:
 template <typename TNorm, typename TFinal>
 struct MappingNormalizationHeap {
   MappingNormalizationHeap(IO &i_o, TFinal &Obj,
-                           llvm::BumpPtrAllocator *allocator = nullptr)
+                           llvm::BumpPtrAllocator *allocator)
     : io(i_o), BufPtr(nullptr), Result(Obj) {
     if ( io.outputting() ) {
       BufPtr = new (&Buffer) TNorm(io, Obj);
