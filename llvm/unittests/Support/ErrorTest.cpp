@@ -149,14 +149,17 @@ TEST(Error, CheckCustomErrors) {
   {
     Error E = make_error<CustomError>(1);
     Error F = make_error<CustomSubError>(1, 2);
+    Error G = Error::success();
 
     EXPECT_TRUE(E.isA<CustomError>());
     EXPECT_FALSE(E.isA<CustomSubError>());
     EXPECT_TRUE(F.isA<CustomError>());
     EXPECT_TRUE(F.isA<CustomSubError>());
+    EXPECT_FALSE(G.isA<CustomError>());
 
     consumeError(std::move(E));
     consumeError(std::move(F));
+    consumeError(std::move(G));
   }
 
   // Check that we can handle a custom error.

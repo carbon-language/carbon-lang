@@ -195,7 +195,7 @@ public:
 
   /// Check whether one error is a subclass of another.
   template <typename ErrT> bool isA() const {
-    return getPtr()->isA(ErrT::classID());
+    return getPtr() && getPtr()->isA(ErrT::classID());
   }
 
 private:
