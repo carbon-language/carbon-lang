@@ -561,7 +561,6 @@ void Fuzzer::Loop() {
   if (Options.DoCrossOver)
     MD.SetCorpus(&Corpus);
   while (true) {
-    SyncCorpus();
     auto Now = system_clock::now();
     if (duration_cast<seconds>(Now - LastCorpusReload).count()) {
       RereadOutputCorpus(Options.MaxLen);
@@ -579,17 +578,6 @@ void Fuzzer::Loop() {
 
   PrintStats("DONE  ", "\n");
   MD.PrintRecommendedDictionary();
-}
-
-void Fuzzer::SyncCorpus() {
-  if (Options.SyncCommand.empty() || Options.OutputCorpus.empty())
-    return;
-  auto Now = system_clock::now();
-  if (duration_cast<seconds>(Now - LastExternalSync).count() <
-      Options.SyncTimeout)
-    return;
-  LastExternalSync = Now;
-  ExecuteCommand(Options.SyncCommand + " " + Options.OutputCorpus);
 }
 
 void Fuzzer::UpdateCorpusDistribution() {

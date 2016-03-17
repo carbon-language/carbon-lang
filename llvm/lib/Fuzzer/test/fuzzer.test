@@ -2,7 +2,7 @@ CHECK: BINGO
 Done1000000: Done 1000000 runs in
 
 RUN: LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s
-RUN: not LLVMFuzzer-NullDerefTest -test_single_input=%S/hi.txt 2>&1 | FileCheck %s --check-prefix=SingleInput
+RUN: not LLVMFuzzer-NullDerefTest %S/hi.txt 2>&1 | FileCheck %s --check-prefix=SingleInput
 SingleInput-NOT: Test unit written to ./crash-
 
 RUN: LLVMFuzzer-SimpleCmpTest -max_total_time=1 2>&1 | FileCheck %s --check-prefix=MaxTotalTime

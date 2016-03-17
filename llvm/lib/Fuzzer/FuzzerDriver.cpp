@@ -293,9 +293,6 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
     Options.MaxNumberOfRuns = Flags.runs;
   if (!Inputs->empty())
     Options.OutputCorpus = (*Inputs)[0];
-  if (Flags.sync_command)
-    Options.SyncCommand = Flags.sync_command;
-  Options.SyncTimeout = Flags.sync_timeout;
   Options.ReportSlowUnits = Flags.report_slow_units;
   if (Flags.artifact_prefix)
     Options.ArtifactPrefix = Flags.artifact_prefix;
@@ -307,7 +304,8 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
       return 1;
   if (Flags.verbosity > 0 && !Dictionary.empty())
     Printf("Dictionary: %zd entries\n", Dictionary.size());
-  Options.SaveArtifacts = !Flags.test_single_input;
+  bool DoPlainRun = AllInputsAreFiles();
+  Options.SaveArtifacts = !DoPlainRun;
   Options.PrintNewCovPcs = Flags.print_new_cov_pcs;
   Options.PrintFinalStats = Flags.print_final_stats;
 
@@ -337,12 +335,8 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   if (Flags.handle_fpe) SetSigFpeHandler();
   if (Flags.handle_int) SetSigIntHandler();
 
-  if (Flags.test_single_input) {
-    RunOneTest(&F, Flags.test_single_input);
-    exit(0);
-  }
-
-  if (AllInputsAreFiles()) {
+  if (DoPlainRun) {
+    Options.SaveArtifacts = false;
     int Runs = std::max(1, Flags.runs);
     Printf("%s: Running %zd inputs %d time(s) each.\n", ProgName->c_str(),
            Inputs->size(), Runs);

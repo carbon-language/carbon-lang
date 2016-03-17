@@ -290,11 +290,9 @@ public:
     bool ShuffleAtStartUp = true;
     int PreferSmallDuringInitialShuffle = -1;
     size_t MaxNumberOfRuns = ULONG_MAX;
-    int SyncTimeout = 600;
     int ReportSlowUnits = 10;
     bool OnlyASCII = false;
     std::string OutputCorpus;
-    std::string SyncCommand;
     std::string ArtifactPrefix = "./";
     std::string ExactArtifactPath;
     bool SaveArtifacts = true;
@@ -365,8 +363,6 @@ private:
   // Must be called whenever the corpus or unit weights are changed.
   void UpdateCorpusDistribution();
 
-  void SyncCorpus();
-
   size_t RecordBlockCoverage();
   size_t RecordCallerCalleeCoverage();
   void PrepareCoverageBeforeRun();
@@ -412,7 +408,6 @@ private:
   MutationDispatcher &MD;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
-  system_clock::time_point LastExternalSync = system_clock::now();
   system_clock::time_point UnitStartTime;
   long TimeOfLongestUnitInSeconds = 0;
   long EpochOfLastReadOfOutputCorpus = 0;

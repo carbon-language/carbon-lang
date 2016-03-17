@@ -52,16 +52,11 @@ FUZZER_FLAG_INT(workers, 0,
 FUZZER_FLAG_INT(reload, 1,
                 "Reload the main corpus periodically to get new units"
                 " discovered by other processes.")
-FUZZER_FLAG_STRING(sync_command, "Execute an external command "
-                                 "\"<sync_command> <test_corpus>\" "
-                                 "to synchronize the test corpus.")
-FUZZER_FLAG_INT(sync_timeout, 600, "Minimum timeout between syncs.")
 FUZZER_FLAG_INT(report_slow_units, 10,
     "Report slowest units if they run for more than this number of seconds.")
 FUZZER_FLAG_INT(only_ascii, 0,
                 "If 1, generate only ASCII (isprint+isspace) inputs.")
 FUZZER_FLAG_STRING(dict, "Experimental. Use the dictionary file.")
-FUZZER_FLAG_STRING(test_single_input, "Use specified file as test input.")
 FUZZER_FLAG_STRING(artifact_prefix, "Write fuzzing artifacts (crash, "
                                     "timeout, or slow inputs) as "
                                     "$(artifact_prefix)file")
@@ -82,5 +77,9 @@ FUZZER_FLAG_INT(handle_abrt, 1, "If 1, try to intercept SIGABRT.")
 FUZZER_FLAG_INT(handle_ill, 1, "If 1, try to intercept SIGILL.")
 FUZZER_FLAG_INT(handle_fpe, 1, "If 1, try to intercept SIGFPE.")
 FUZZER_FLAG_INT(handle_int, 1, "If 1, try to intercept SIGINT.")
+
 FUZZER_DEPRECATED_FLAG(exit_on_first)
 FUZZER_DEPRECATED_FLAG(save_minimized_corpus)
+FUZZER_DEPRECATED_FLAG(sync_command)
+FUZZER_DEPRECATED_FLAG(sync_timeout)
+FUZZER_DEPRECATED_FLAG(test_single_input)
