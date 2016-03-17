@@ -92,6 +92,7 @@ void Fuzzer::DumpCurrentUnit(const char *Prefix) {
       {CurrentUnitData, CurrentUnitData + CurrentUnitSize}, Prefix);
 }
 
+__attribute__((no_sanitize_memory))
 void Fuzzer::DeathCallback() {
   if (!CurrentUnitSize) return;
   Printf("DEATH:\n");
@@ -133,6 +134,7 @@ void Fuzzer::InterruptCallback() {
   _Exit(0);  // Stop right now, don't perform any at-exit actions.
 }
 
+__attribute__((no_sanitize_memory))
 void Fuzzer::AlarmCallback() {
   assert(Options.UnitTimeoutSec > 0);
   if (!CurrentUnitSize)
