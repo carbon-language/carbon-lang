@@ -144,6 +144,9 @@ static void checkOptions(opt::InputArgList &Args) {
   if (Config->EMachine == EM_AMDGPU && !Config->Entry.empty())
     error("-e option is not valid for AMDGPU.");
 
+  if (Config->Pie && Config->Shared)
+    error("-shared and -pie may not be used together");
+
   if (!Config->Relocatable)
     return;
 
@@ -153,6 +156,8 @@ static void checkOptions(opt::InputArgList &Args) {
     error("-r and --gc-sections may not be used together");
   if (Config->ICF)
     error("-r and --icf may not be used together");
+  if (Config->Pie)
+    error("-r and -pie may not be used together");
 }
 
 static StringRef
@@ -238,6 +243,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ICF = Args.hasArg(OPT_icf);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->NoinhibitExec = Args.hasArg(OPT_noinhibit_exec);
+  Config->Pie = Args.hasArg(OPT_pie);
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
@@ -260,6 +266,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ZNow = hasZOption(Args, "now");
   Config->ZOrigin = hasZOption(Args, "origin");
   Config->ZRelro = !hasZOption(Args, "norelro");
+
+  Config->Pic = Config->Pie || Config->Shared;
 
   if (Config->Relocatable)
     Config->StripAll = false;

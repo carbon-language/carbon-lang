@@ -270,7 +270,7 @@ bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
   return false;
 }
 
-uint64_t TargetInfo::getVAStart() const { return Config->Shared ? 0 : VAStart; }
+uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
 
 bool TargetInfo::needsCopyRelImpl(uint32_t Type) const { return false; }
 
@@ -329,7 +329,7 @@ TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
   // plt. That is identified by special relocation types (R_X86_64_JUMP_SLOT,
   // R_386_JMP_SLOT, etc).
   if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(&S))
-    if (!Config->Shared && SS->Sym.getType() == STT_FUNC &&
+    if (!Config->Pic && SS->Sym.getType() == STT_FUNC &&
         !refersToGotEntry(Type))
       return Plt_Implicit;
 
@@ -439,7 +439,7 @@ bool X86TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
 void X86TargetInfo::writePltZero(uint8_t *Buf) const {
   // Executable files and shared object files have
   // separate procedure linkage tables.
-  if (Config->Shared) {
+  if (Config->Pic) {
     const uint8_t V[] = {
         0xff, 0xb3, 0x04, 0x00, 0x00, 0x00, // pushl 4(%ebx)
         0xff, 0xa3, 0x08, 0x00, 0x00, 0x00, // jmp   *8(%ebx)
@@ -471,7 +471,7 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   memcpy(Buf, Inst, sizeof(Inst));
 
   // jmp *foo@GOT(%ebx) or jmp *foo_in_GOT
-  Buf[1] = Config->Shared ? 0xa3 : 0x25;
+  Buf[1] = Config->Pic ? 0xa3 : 0x25;
   uint32_t Got = UseLazyBinding ? Out<ELF32LE>::GotPlt->getVA()
                                 : Out<ELF32LE>::Got->getVA();
   write32le(Buf + 2, Config->Shared ? GotEntryAddr - Got : GotEntryAddr);
