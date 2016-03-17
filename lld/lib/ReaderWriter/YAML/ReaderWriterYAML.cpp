@@ -669,8 +669,9 @@ template <> struct MappingTraits<const lld::File *> {
   }
 
   static void mappingAtoms(IO &io, const lld::File *&file) {
-    MappingNormalizationHeap<NormalizedFile, const lld::File *> keys(io, file);
     YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
+    MappingNormalizationHeap<NormalizedFile, const lld::File *>
+      keys(io, file, nullptr);
     assert(info != nullptr);
     info->_file = keys.operator->();
 
@@ -682,7 +683,9 @@ template <> struct MappingTraits<const lld::File *> {
   }
 
   static void mappingArchive(IO &io, const lld::File *&file) {
-    MappingNormalizationHeap<NormArchiveFile, const lld::File *> keys(io, file);
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
+    MappingNormalizationHeap<NormArchiveFile, const lld::File *>
+      keys(io, file, &info->_file->allocator());
 
     io.mapOptional("path",    keys->_path);
     io.mapOptional("members", keys->_members);
@@ -1046,8 +1049,9 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
 
   static void mapping(IO &io, const lld::SharedLibraryAtom *&atom) {
 
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     MappingNormalizationHeap<NormalizedAtom, const lld::SharedLibraryAtom *>
-    keys(io, atom);
+    keys(io, atom, &info->_file->allocator());
 
     io.mapRequired("name",        keys->_name);
     io.mapOptional("load-name",   keys->_loadName);
@@ -1102,8 +1106,9 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
   };
 
   static void mapping(IO &io, const lld::AbsoluteAtom *&atom) {
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     MappingNormalizationHeap<NormalizedAtom, const lld::AbsoluteAtom *> keys(
-        io, atom);
+        io, atom, &info->_file->allocator());
 
     if (io.outputting()) {
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
