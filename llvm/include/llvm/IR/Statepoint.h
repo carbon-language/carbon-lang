@@ -40,14 +40,14 @@ enum class StatepointFlags {
 class GCRelocateInst;
 class ImmutableStatepoint;
 
-bool isStatepoint(const ImmutableCallSite &CS);
+bool isStatepoint(ImmutableCallSite CS);
 bool isStatepoint(const Value *V);
 bool isStatepoint(const Value &V);
 
-bool isGCRelocate(const ImmutableCallSite &CS);
+bool isGCRelocate(ImmutableCallSite CS);
 
 bool isGCResult(const Value *V);
-bool isGCResult(const ImmutableCallSite &CS);
+bool isGCResult(ImmutableCallSite CS);
 
 /// Analogous to CallSiteBase, this provides most of the actual
 /// functionality for Statepoint and ImmutableStatepoint.  It is
