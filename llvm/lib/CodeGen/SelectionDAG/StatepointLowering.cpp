@@ -550,14 +550,6 @@ lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   }
 }
 
-void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
-  // Check some preconditions for sanity
-  assert(isStatepoint(&CI) &&
-         "Function called must be the statepoint function");
-
-  LowerStatepoint(ImmutableStatepoint(&CI));
-}
-
 SDValue SelectionDAGBuilder::LowerAsStatepoint(
     SelectionDAGBuilder::StatepointLoweringInfo &SI) {
   // The basic scheme here is that information about both the original call and

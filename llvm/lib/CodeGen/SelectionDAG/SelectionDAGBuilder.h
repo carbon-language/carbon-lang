@@ -902,8 +902,7 @@ private:
   void visitPatchpoint(ImmutableCallSite CS,
                        const BasicBlock *EHPadBB = nullptr);
 
-  // These three are implemented in StatepointLowering.cpp
-  void visitStatepoint(const CallInst &I);
+  // These two are implemented in StatepointLowering.cpp
   void visitGCRelocate(const GCRelocateInst &I);
   void visitGCResult(const CallInst &I);
 

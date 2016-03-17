@@ -5364,7 +5364,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return nullptr;
   }
   case Intrinsic::experimental_gc_statepoint: {
-    visitStatepoint(I);
+    LowerStatepoint(ImmutableStatepoint(&I));
     return nullptr;
   }
   case Intrinsic::experimental_gc_result: {
