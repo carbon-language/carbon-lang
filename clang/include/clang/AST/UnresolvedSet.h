@@ -59,8 +59,11 @@ class UnresolvedSetImpl {
   // UnresolvedSet.
 private:
   template <unsigned N> friend class UnresolvedSet;
-  UnresolvedSetImpl() {}
-  UnresolvedSetImpl(const UnresolvedSetImpl &) {}
+  UnresolvedSetImpl() = default;
+  UnresolvedSetImpl(const UnresolvedSetImpl &) = default;
+  UnresolvedSetImpl(UnresolvedSetImpl &&) = default;
+  UnresolvedSetImpl &operator=(const UnresolvedSetImpl &) = default;
+  UnresolvedSetImpl &operator=(UnresolvedSetImpl &&) = default;
 
 public:
   // We don't currently support assignment through this iterator, so we might
