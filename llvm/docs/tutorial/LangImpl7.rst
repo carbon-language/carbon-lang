@@ -252,7 +252,7 @@ is:
    technique dovetails very naturally with this style of debug info.
 
 If nothing else, this makes it much easier to get your front-end up and
-running, and is very simple to implement. Lets extend Kaleidoscope with
+running, and is very simple to implement. Let's extend Kaleidoscope with
 mutable variables now!
 
 Mutable Variables in Kaleidoscope
