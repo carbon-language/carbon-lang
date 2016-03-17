@@ -255,9 +255,11 @@ __declspec(dllexport) void redecl2();
 // GNU-DAG: define dllexport void @_Z7friend1v()
 // MSC-DAG: define dllexport void @"\01?friend2@@YAXXZ"()
 // GNU-DAG: define dllexport void @_Z7friend2v()
+// MSC-DAG: define weak_odr dllexport void @"\01?friend3@@YAXXZ"()
 struct FuncFriend {
   friend __declspec(dllexport) void friend1();
   friend __declspec(dllexport) void friend2();
+  friend __declspec(dllexport) void friend3() {}
 };
 __declspec(dllexport) void friend1() {}
                       void friend2() {}
