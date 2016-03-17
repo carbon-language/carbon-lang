@@ -258,7 +258,7 @@ mutable variables now!
 Mutable Variables in Kaleidoscope
 =================================
 
-Now that we know the sort of problem we want to tackle, lets see what
+Now that we know the sort of problem we want to tackle, let's see what
 this looks like in the context of our little Kaleidoscope language.
 We're going to add two features:
 
@@ -306,7 +306,7 @@ Adjusting Existing Variables for Mutation
 The symbol table in Kaleidoscope is managed at code generation time by
 the '``NamedValues``' map. This map currently keeps track of the LLVM
 "Value\*" that holds the double value for the named variable. In order
-to support mutation, we need to change this slightly, so that it
+to support mutation, we need to change this slightly, so that
 ``NamedValues`` holds the *memory location* of the variable in question.
 Note that this change is a refactoring: it changes the structure of the
 code, but does not (by itself) change the behavior of the compiler. All
@@ -632,7 +632,7 @@ When run, this example prints "123" and then "4", showing that we did
 actually mutate the value! Okay, we have now officially implemented our
 goal: getting this to work requires SSA construction in the general
 case. However, to be really useful, we want the ability to define our
-own local variables, lets add this next!
+own local variables, let's add this next!
 
 User-defined Local Variables
 ============================
