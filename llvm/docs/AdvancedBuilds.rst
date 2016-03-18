@@ -34,7 +34,7 @@ CLANG_ENABLE_BOOTSTRAP.
 
 .. code-block:: console
 
-  $ make -G Ninja -DCLANG_ENABLE_BOOTSTRAP=On <path to source>
+  $ cmake -G Ninja -DCLANG_ENABLE_BOOTSTRAP=On <path to source>
   $ ninja stage2
 
 This command itself isn't terribly useful because it assumes default
@@ -62,7 +62,7 @@ You can build an Apple Clang compiler using the following commands:
 
 .. code-block:: console
 
-  $ make -G Ninja -C <path to clang>/cmake/caches/Apple-stage1.cmake <path to source>
+  $ cmake -G Ninja -C <path to clang>/cmake/caches/Apple-stage1.cmake <path to source>
   $ ninja stage2-distribution
 
 This CMake invocation configures the stage1 host compiler, and sets
@@ -96,7 +96,7 @@ running:
 
 .. code-block:: console
 
-  $ make -G Ninja -C <path_to_clang>/cmake/caches/PGO.cmake <source dir>
+  $ cmake -G Ninja -C <path_to_clang>/cmake/caches/PGO.cmake <source dir>
   $ ninja stage2-instrumented-generate-profdata
 
 If you let that run for a few hours or so, it will place a profdata file in your
