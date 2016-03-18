@@ -2107,28 +2107,38 @@ def : Pat <
 // buffer_load/store_format patterns
 //===----------------------------------------------------------------------===//
 def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, 0, 0,
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, 0,
+                                 (MUBUFIntrinsicOffset i32:$soffset,
+                                                       i16:$offset),
                                  imm:$glc, imm:$slc),
   (BUFFER_LOAD_FORMAT_XYZW_OFFSET $rsrc, $soffset, (as_i16imm $offset),
     (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, i32:$vindex, 0,
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$vindex,
+                                 (MUBUFIntrinsicOffset i32:$soffset,
+                                                       i16:$offset),
                                  imm:$glc, imm:$slc),
   (BUFFER_LOAD_FORMAT_XYZW_IDXEN $vindex, $rsrc, $soffset, (as_i16imm $offset),
     (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, 0, i32:$voffset,
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, 0,
+                                 (MUBUFIntrinsicVOffset i32:$soffset,
+                                                        i16:$offset,
+                                                        i32:$voffset),
                                  imm:$glc, imm:$slc),
   (BUFFER_LOAD_FORMAT_XYZW_OFFEN $voffset, $rsrc, $soffset, (as_i16imm $offset),
     (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$soffset, imm:$offset, i32:$vindex, i32:$voffset,
+  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$vindex,
+                                 (MUBUFIntrinsicVOffset i32:$soffset,
+                                                        i16:$offset,
+                                                        i32:$voffset),
                                  imm:$glc, imm:$slc),
   (BUFFER_LOAD_FORMAT_XYZW_BOTHEN
     (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
@@ -2137,32 +2147,38 @@ def : Pat<
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc,
-                                  i32:$soffset, imm:$offset, 0, 0,
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, 0,
+                                  (MUBUFIntrinsicOffset i32:$soffset,
+                                                        i16:$offset),
                                   imm:$glc, imm:$slc),
   (BUFFER_STORE_FORMAT_XYZW_OFFSET $vdata, $rsrc, $soffset, (as_i16imm $offset),
     (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc,
-                                 i32:$soffset, imm:$offset, i32:$vindex, 0,
-                                 imm:$glc, imm:$slc),
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, i32:$vindex,
+                                  (MUBUFIntrinsicOffset i32:$soffset,
+                                                        i16:$offset),
+                                  imm:$glc, imm:$slc),
   (BUFFER_STORE_FORMAT_XYZW_IDXEN $vdata, $vindex, $rsrc, $soffset,
     (as_i16imm $offset), (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc,
-                                  i32:$soffset, imm:$offset, 0, i32:$voffset,
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, 0,
+                                  (MUBUFIntrinsicVOffset i32:$soffset,
+                                                         i16:$offset,
+                                                         i32:$voffset),
                                   imm:$glc, imm:$slc),
   (BUFFER_STORE_FORMAT_XYZW_OFFEN $vdata, $voffset, $rsrc, $soffset,
     (as_i16imm $offset), (as_i1imm $glc), (as_i1imm $slc), 0)
 >;
 
 def : Pat<
-  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, i32:$soffset,
-                                  imm:$offset, i32:$vindex, i32:$voffset,
+  (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, i32:$vindex,
+                                  (MUBUFIntrinsicVOffset i32:$soffset,
+                                                         i16:$offset,
+                                                         i32:$voffset),
                                   imm:$glc, imm:$slc),
   (BUFFER_STORE_FORMAT_XYZW_BOTHEN
     $vdata,
