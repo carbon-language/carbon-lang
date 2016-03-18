@@ -127,11 +127,11 @@ The PGO came cache generates the following additional targets:
   llvm-profdata) then uses that compiler to build an instrumented stage2 compiler.
 
 **stage2-instrumented-generate-profdata**
-  Depends on “stage2-instrumented” and will use the instrumented compiler to
+  Depends on "stage2-instrumented" and will use the instrumented compiler to
   generate profdata based on the training files in <clang>/utils/perf-training
 
 **stage2**
-  Depends of “stage2-instrumented-generate-profdata” and will use the stage1
+  Depends of "stage2-instrumented-generate-profdata" and will use the stage1
   compiler with the stage2 profdata to build a PGO-optimized compiler.
 
 **stage2-check-llvm**
