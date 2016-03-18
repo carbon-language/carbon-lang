@@ -29,6 +29,7 @@
 namespace fuzzer {
 using namespace std::chrono;
 typedef std::vector<uint8_t> Unit;
+typedef std::vector<Unit> UnitVector;
 
 // A simple POD sized array of bytes.
 template <size_t kMaxSize> class FixedWord {
@@ -288,7 +289,7 @@ public:
     bool UseFullCoverageSet = false;
     bool Reload = true;
     bool ShuffleAtStartUp = true;
-    int PreferSmallDuringInitialShuffle = -1;
+    bool PreferSmall = true;
     size_t MaxNumberOfRuns = ULONG_MAX;
     int ReportSlowUnits = 10;
     bool OnlyASCII = false;
@@ -342,6 +343,8 @@ public:
 
   // Merge Corpora[1:] into Corpora[0].
   void Merge(const std::vector<std::string> &Corpora);
+  // Returns a subset of 'Extra' that adds coverage to 'Initial'.
+  UnitVector FindExtraUnits(const UnitVector &Initial, const UnitVector &Extra);
   MutationDispatcher &GetMD() { return MD; }
   void PrintFinalStats();
   void SetMaxLen(size_t MaxLen);
@@ -359,6 +362,8 @@ private:
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
   void PrintStats(const char *Where, const char *End = "\n");
   void PrintStatusForNewUnit(const Unit &U);
+  void ShuffleCorpus(UnitVector *V);
+
   // Updates the probability distribution for the units in the corpus.
   // Must be called whenever the corpus or unit weights are changed.
   void UpdateCorpusDistribution();
@@ -367,6 +372,7 @@ private:
   size_t RecordCallerCalleeCoverage();
   void PrepareCoverageBeforeRun();
   bool CheckCoverageAfterRun();
+  void ResetCoverage();
 
   // Trace-based fuzzing: we run a unit with some kind of tracing
   // enabled and record potentially useful mutations. Then

@@ -284,8 +284,7 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   Options.UseTraces = Flags.use_traces;
   Options.UseMemcmp = Flags.use_memcmp;
   Options.ShuffleAtStartUp = Flags.shuffle;
-  Options.PreferSmallDuringInitialShuffle =
-      Flags.prefer_small_during_initial_shuffle;
+  Options.PreferSmall = Flags.prefer_small;
   Options.Reload = Flags.reload;
   Options.OnlyASCII = Flags.only_ascii;
   Options.OutputCSV = Flags.output_csv;
