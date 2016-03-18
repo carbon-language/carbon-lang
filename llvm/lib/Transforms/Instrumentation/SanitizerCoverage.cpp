@@ -152,7 +152,9 @@ class SanitizerCoverageModule : public ModulePass {
  public:
   SanitizerCoverageModule(
       const SanitizerCoverageOptions &Options = SanitizerCoverageOptions())
-      : ModulePass(ID), Options(OverrideFromCL(Options)) {}
+      : ModulePass(ID), Options(OverrideFromCL(Options)) {
+    initializeSanitizerCoverageModulePass(*PassRegistry::getPassRegistry());
+  }
   bool runOnModule(Module &M) override;
   bool runOnFunction(Function &F);
   static char ID;  // Pass identification, replacement for typeid
