@@ -23,6 +23,12 @@ template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
 template <class ELFT> class OutputSectionBase;
 
+struct Relocation {
+  enum RelType { R_64 } Type;
+  uint64_t Offset;
+  SymbolBody *Sym;
+};
+
 // This corresponds to a section of an input file.
 template <class ELFT> class InputSectionBase {
 protected:
@@ -75,9 +81,8 @@ public:
   InputSectionBase<ELFT> *getRelocTarget(const Elf_Rel &Rel) const;
   InputSectionBase<ELFT> *getRelocTarget(const Elf_Rela &Rel) const;
 
-  template <class RelTy>
-  void relocate(uint8_t *Buf, uint8_t *BufEnd,
-                llvm::iterator_range<const RelTy *> Rels);
+  void relocate(uint8_t *Buf);
+  std::vector<Relocation> Relocations;
 
 private:
   template <class RelTy>

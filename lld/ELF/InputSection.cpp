@@ -215,89 +215,10 @@ static uintX_t getMipsGotVA(const SymbolBody &Body, uintX_t SymVA,
   return Body.getGotVA<ELFT>();
 }
 
-template <class ELFT>
-template <class RelTy>
-void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
-                                      iterator_range<const RelTy *> Rels) {
-  size_t Num = Rels.end() - Rels.begin();
-  for (size_t I = 0; I < Num; ++I) {
-    const RelTy &RI = *(Rels.begin() + I);
-    uintX_t Offset = getOffset(RI.r_offset);
-    if (Offset == (uintX_t)-1)
-      continue;
-
-    uintX_t A = getAddend<ELFT>(RI);
-    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
-    uint32_t Type = RI.getType(Config->Mips64EL);
-    uint8_t *BufLoc = Buf + Offset;
-    uintX_t AddrLoc = OutSec->getVA() + Offset;
-
-    if (Target->pointsToLocalDynamicGotEntry(Type) &&
-        !Target->canRelaxTls(Type, nullptr)) {
-      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getTlsIndexVA() + A);
-      continue;
-    }
-
-    SymbolBody &Body = File->getSymbolBody(SymIndex).repl();
-
-    if (Target->canRelaxTls(Type, &Body)) {
-      uintX_t SymVA;
-      if (Target->needsGot(Type, Body))
-        SymVA = Body.getGotVA<ELFT>();
-      else
-        SymVA = Body.getVA<ELFT>();
-      // By optimizing TLS relocations, it is sometimes needed to skip
-      // relocations that immediately follow TLS relocations. This function
-      // knows how many slots we need to skip.
-      I += Target->relaxTls(BufLoc, BufEnd, Type, AddrLoc, SymVA, Body);
-      continue;
-    }
-
-    // PPC64 has a special relocation representing the TOC base pointer
-    // that does not have a corresponding symbol.
-    if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC) {
-      uintX_t SymVA = getPPC64TocBase() + A;
-      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, 0);
-      continue;
-    }
-
-    if (Target->isTlsGlobalDynamicRel(Type) &&
-        !Target->canRelaxTls(Type, &Body)) {
-      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc,
-                          Out<ELFT>::Got->getGlobalDynAddr(Body) + A);
-      continue;
-    }
-
-    uintX_t SymVA = Body.getVA<ELFT>(A);
-    uint8_t *PairedLoc = nullptr;
-    if (Config->EMachine == EM_MIPS)
-      PairedLoc = findMipsPairedReloc(Buf, &RI, Rels.end());
-
-    if (Target->needsPlt<ELFT>(Type, Body)) {
-      SymVA = Body.getPltVA<ELFT>() + A;
-    } else if (Target->needsGot(Type, Body)) {
-      if (Config->EMachine == EM_MIPS)
-        SymVA = getMipsGotVA<ELFT>(Body, SymVA, BufLoc, PairedLoc) + A;
-      else
-        SymVA = Body.getGotVA<ELFT>() + A;
-      if (Body.IsTls)
-        Type = Target->getTlsGotRel(Type);
-    } else if (Target->isSizeRel(Type) && Body.isPreemptible()) {
-      // A SIZE relocation is supposed to set a symbol size, but if a symbol
-      // can be preempted, the size at runtime may be different than link time.
-      // If that's the case, we leave the field alone rather than filling it
-      // with a possibly incorrect value.
-      continue;
-    } else if (Config->EMachine == EM_MIPS) {
-      SymVA = adjustMipsSymVA<ELFT>(Type, *File, Body, AddrLoc, SymVA) + A;
-    } else if (!Target->needsCopyRel<ELFT>(Type, Body) &&
-               Body.isPreemptible()) {
-      continue;
-    }
-    uintX_t Size = Body.getSize<ELFT>();
-    Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, Size + A,
-                        PairedLoc);
+template <class ELFT> void InputSectionBase<ELFT>::relocate(uint8_t *Buf) {
+  for (const Relocation &Rel : Relocations) {
+    uint8_t *Pos = Buf + Rel.Offset;
+    *(uint64_t *)Pos = Rel.Sym->getVA<ELFT>(0);
   }
 }
 
@@ -321,14 +242,7 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
 
   memcpy(Buf + OutSecOff, Data.data(), Data.size());
 
-  uint8_t *BufEnd = Buf + OutSecOff + Data.size();
-  // Iterate over all relocation sections that apply to this section.
-  for (const Elf_Shdr *RelSec : this->RelocSections) {
-    if (RelSec->sh_type == SHT_RELA)
-      this->relocate(Buf, BufEnd, EObj.relas(RelSec));
-    else
-      this->relocate(Buf, BufEnd, EObj.rels(RelSec));
-  }
+  this->relocate(Buf);
 }
 
 template <class ELFT>

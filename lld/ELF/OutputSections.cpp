@@ -1168,16 +1168,8 @@ template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
     }
   }
 
-  for (EHInputSection<ELFT> *S : Sections) {
-    const Elf_Shdr *RelSec = S->RelocSection;
-    if (!RelSec)
-      continue;
-    ELFFile<ELFT> &EObj = S->getFile()->getObj();
-    if (RelSec->sh_type == SHT_RELA)
-      S->relocate(Buf, nullptr, EObj.relas(RelSec));
-    else
-      S->relocate(Buf, nullptr, EObj.rels(RelSec));
-  }
+  for (EHInputSection<ELFT> *S : Sections)
+    S->relocate(Buf);
 }
 
 template <class ELFT>
