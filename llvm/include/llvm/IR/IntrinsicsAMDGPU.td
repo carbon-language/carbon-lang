@@ -224,6 +224,34 @@ def int_amdgcn_buffer_store_format : Intrinsic <
    llvm_i1_ty],       // slc(imm)
   []>;
 
+class AMDGPUBufferAtomic : Intrinsic <
+  [llvm_i32_ty],
+  [llvm_i32_ty,       // vdata(VGPR)
+   llvm_v4i32_ty,     // rsrc(SGPR)
+   llvm_i32_ty,       // vindex(VGPR)
+   llvm_i32_ty,       // offset(SGPR/VGPR/imm)
+   llvm_i1_ty],       // slc(imm)
+  []>;
+def int_amdgcn_buffer_atomic_swap : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_add : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_sub : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_smin : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_umin : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_smax : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_umax : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_and : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_or : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_xor : AMDGPUBufferAtomic;
+def int_amdgcn_buffer_atomic_cmpswap : Intrinsic<
+  [llvm_i32_ty],
+  [llvm_i32_ty,       // src(VGPR)
+   llvm_i32_ty,       // cmp(VGPR)
+   llvm_v4i32_ty,     // rsrc(SGPR)
+   llvm_i32_ty,       // vindex(VGPR)
+   llvm_i32_ty,       // offset(SGPR/VGPR/imm)
+   llvm_i1_ty],       // slc(imm)
+  []>;
+
 def int_amdgcn_read_workdim : AMDGPUReadPreloadRegisterIntrinsic <
   "__builtin_amdgcn_read_workdim">;
 
