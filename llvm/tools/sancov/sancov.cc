@@ -1049,8 +1049,8 @@ public:
   }
 
   void printReport(raw_ostream &OS) const {
-    auto Title = std::string(llvm::sys::path::filename(MainObjFile) +
-                             " Coverage Report");
+    auto Title =
+        (llvm::sys::path::filename(MainObjFile) + " Coverage Report").str();
 
     OS << "<html>\n";
     OS << "<head>\n";
