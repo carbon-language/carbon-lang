@@ -82,7 +82,7 @@ uintptr_t GetCurrentProcess(void);
   #endif
 #endif
 
-#if defined(__ANDROID__) && defined(__arm__)
+#if defined(__linux__) && defined(__arm__)
   #include <asm/unistd.h>
 #endif
 
@@ -107,7 +107,7 @@ void __clear_cache(void *start, void *end) {
         arg.len = (uintptr_t)end - (uintptr_t)start;
 
         sysarch(ARM_SYNC_ICACHE, &arg);
-    #elif defined(__ANDROID__)
+    #elif defined(__linux__)
          register int start_reg __asm("r0") = (int) (intptr_t) start;
          const register int end_reg __asm("r1") = (int) (intptr_t) end;
          const register int flags __asm("r2") = 0;
