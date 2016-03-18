@@ -507,7 +507,7 @@ A few notes about CMake Caches:
 - It is recommended that all -D options should be specified *before* -C
 
 For more information about some of the advanced build configurations supported
-via Cache files see :doc:`Advanced_Builds`.
+via Cache files see :doc:`AdvancedBuilds`.
 
 Executing the test suite
 ========================

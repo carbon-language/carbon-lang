@@ -37,7 +37,7 @@ CLANG_ENABLE_BOOTSTRAP.
   $ make -G Ninja -DCLANG_ENABLE_BOOTSTRAP=On <path to source>
   $ ninja stage2
 
-This command itself isn’t terribly useful because it assumes default
+This command itself isn't terribly useful because it assumes default
 configurations for each stage. The next series of examples utilize CMake cache
 scripts to provide more complex options.
 
@@ -49,7 +49,7 @@ general a stage*n* build is built using the output from stage*n-1*.
 Apple Clang Builds (A More Complex Bootstrap)
 =============================================
 
-Apple’s Clang builds are a slightly more complicated example of the simple
+Apple's Clang builds are a slightly more complicated example of the simple
 bootstrapping scenario. Apple Clang is built using a 2-stage build.
 
 The stage1 compiler is a host-only compiler with some options set. The stage1
