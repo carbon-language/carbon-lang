@@ -19,10 +19,13 @@ add_lld_library(lldELF
 
   LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
+  Analysis
   BitReader
   BitWriter
   Core
+  IPO
   Linker
+  LTO
   Object
   Option
   MC
