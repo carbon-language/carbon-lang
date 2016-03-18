@@ -88,6 +88,7 @@ The most important flags are::
   artifact_prefix                       ""      Write fuzzing artifacts (crash, timeout, or slow inputs) as $(artifact_prefix)file
   exact_artifact_path                   ""      Write the single artifact on failure (crash, timeout) as $(exact_artifact_path). This overrides -artifact_prefix and will not use checksum in the file name. Do not use the same path for several parallel processes.
   print_final_stats                     0       If 1, print statistics at exit.
+  close_fd_mask                         0       If 1, close stdout at startup; if 2, close stderr; if 3, close both.
 
 For the full list of flags run the fuzzer binary with ``-help=1``.
 
