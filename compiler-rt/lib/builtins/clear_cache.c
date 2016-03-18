@@ -14,6 +14,15 @@
 #if __APPLE__
   #include <libkern/OSCacheControl.h>
 #endif
+
+#if defined(_WIN32)
+/* Forward declare Win32 APIs since the GCC mode driver does not handle the
+   newer SDKs as well as needed.  */
+uint32_t FlushInstructionCache(uintptr_t hProcess, void *lpBaseAddress,
+                               uintptr_t dwSize);
+uintptr_t GetCurrentProcess(void);
+#endif
+
 #if (defined(__FreeBSD__) || defined(__Bitrig__)) && defined(__arm__)
   #include <sys/types.h>
   #include <machine/sysarch.h>
@@ -109,6 +118,8 @@ void __clear_cache(void *start, void *end) {
          if (start_reg != 0) {
              compilerrt_abort();
          }
+    #elif defined(_WIN32)
+        FlushInstructionCache(GetCurrentProcess(), start, end - start);
     #else
         compilerrt_abort();
     #endif
