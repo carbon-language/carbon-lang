@@ -206,7 +206,7 @@ def int_amdgcn_image_atomic_cmpswap : Intrinsic <
   []>;
 
 def int_amdgcn_buffer_load_format : Intrinsic <
-  [llvm_v4f32_ty],
+  [llvm_anyfloat_ty],
   [llvm_v4i32_ty,     // rsrc(SGPR)
    llvm_i32_ty,       // vindex(VGPR)
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)

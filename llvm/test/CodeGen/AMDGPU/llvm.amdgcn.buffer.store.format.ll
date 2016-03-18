@@ -65,13 +65,13 @@ main_body:
 define void @buffer_store_wait(<4 x i32> inreg, <4 x float>, i32, i32, i32) #0 {
 main_body:
   call void @llvm.amdgcn.buffer.store.format.v4f32(<4 x float> %1, <4 x i32> %0, i32 %2, i32 0, i1 0, i1 0)
-  %data = call <4 x float> @llvm.amdgcn.buffer.load.format(<4 x i32> %0, i32 %3, i32 0, i1 0, i1 0)
+  %data = call <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %0, i32 %3, i32 0, i1 0, i1 0)
   call void @llvm.amdgcn.buffer.store.format.v4f32(<4 x float> %data, <4 x i32> %0, i32 %4, i32 0, i1 0, i1 0)
   ret void
 }
 
 declare void @llvm.amdgcn.buffer.store.format.v4f32(<4 x float>, <4 x i32>, i32, i32, i1, i1) #1
-declare <4 x float> @llvm.amdgcn.buffer.load.format(<4 x i32>, i32, i32, i1, i1) #2
+declare <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32>, i32, i32, i1, i1) #2
 
 attributes #0 = { "ShaderType"="0" }
 attributes #1 = { nounwind }

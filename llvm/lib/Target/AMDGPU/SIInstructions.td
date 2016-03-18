@@ -2108,45 +2108,52 @@ def : Pat <
 //===----------------------------------------------------------------------===//
 // buffer_load/store_format patterns
 //===----------------------------------------------------------------------===//
-def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, 0,
-                                 (MUBUFIntrinsicOffset i32:$soffset,
-                                                       i16:$offset),
-                                 imm:$glc, imm:$slc),
-  (BUFFER_LOAD_FORMAT_XYZW_OFFSET $rsrc, $soffset, (as_i16imm $offset),
-    (as_i1imm $glc), (as_i1imm $slc), 0)
->;
 
-def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$vindex,
-                                 (MUBUFIntrinsicOffset i32:$soffset,
-                                                       i16:$offset),
-                                 imm:$glc, imm:$slc),
-  (BUFFER_LOAD_FORMAT_XYZW_IDXEN $vindex, $rsrc, $soffset, (as_i16imm $offset),
-    (as_i1imm $glc), (as_i1imm $slc), 0)
->;
+multiclass MUBUF_LoadIntrinsicPat<ValueType vt, string opcode> {
+  def : Pat<
+    (vt (int_amdgcn_buffer_load_format v4i32:$rsrc, 0,
+                                       (MUBUFIntrinsicOffset i32:$soffset,
+                                                             i16:$offset),
+                                       imm:$glc, imm:$slc)),
+    (!cast<MUBUF>(opcode # _OFFSET) $rsrc, $soffset, (as_i16imm $offset),
+      (as_i1imm $glc), (as_i1imm $slc), 0)
+  >;
 
-def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, 0,
-                                 (MUBUFIntrinsicVOffset i32:$soffset,
-                                                        i16:$offset,
-                                                        i32:$voffset),
-                                 imm:$glc, imm:$slc),
-  (BUFFER_LOAD_FORMAT_XYZW_OFFEN $voffset, $rsrc, $soffset, (as_i16imm $offset),
-    (as_i1imm $glc), (as_i1imm $slc), 0)
->;
+  def : Pat<
+    (vt (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$vindex,
+                                       (MUBUFIntrinsicOffset i32:$soffset,
+                                                             i16:$offset),
+                                       imm:$glc, imm:$slc)),
+    (!cast<MUBUF>(opcode # _IDXEN) $vindex, $rsrc, $soffset, (as_i16imm $offset),
+      (as_i1imm $glc), (as_i1imm $slc), 0)
+  >;
 
-def : Pat<
-  (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$vindex,
-                                 (MUBUFIntrinsicVOffset i32:$soffset,
-                                                        i16:$offset,
-                                                        i32:$voffset),
-                                 imm:$glc, imm:$slc),
-  (BUFFER_LOAD_FORMAT_XYZW_BOTHEN
-    (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
-    $rsrc, $soffset, (as_i16imm $offset),
-    (as_i1imm $glc), (as_i1imm $slc), 0)
->;
+  def : Pat<
+    (vt (int_amdgcn_buffer_load_format v4i32:$rsrc, 0,
+                                       (MUBUFIntrinsicVOffset i32:$soffset,
+                                                              i16:$offset,
+                                                              i32:$voffset),
+                                       imm:$glc, imm:$slc)),
+    (!cast<MUBUF>(opcode # _OFFEN) $voffset, $rsrc, $soffset, (as_i16imm $offset),
+      (as_i1imm $glc), (as_i1imm $slc), 0)
+  >;
+
+  def : Pat<
+    (vt (int_amdgcn_buffer_load_format v4i32:$rsrc, i32:$vindex,
+                                       (MUBUFIntrinsicVOffset i32:$soffset,
+                                                              i16:$offset,
+                                                              i32:$voffset),
+                                       imm:$glc, imm:$slc)),
+    (!cast<MUBUF>(opcode # _BOTHEN)
+      (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
+      $rsrc, $soffset, (as_i16imm $offset),
+      (as_i1imm $glc), (as_i1imm $slc), 0)
+  >;
+}
+
+defm : MUBUF_LoadIntrinsicPat<f32, "BUFFER_LOAD_FORMAT_X">;
+defm : MUBUF_LoadIntrinsicPat<v2f32, "BUFFER_LOAD_FORMAT_XY">;
+defm : MUBUF_LoadIntrinsicPat<v4f32, "BUFFER_LOAD_FORMAT_XYZW">;
 
 def : Pat<
   (int_amdgcn_buffer_store_format v4f32:$vdata, v4i32:$rsrc, 0,
