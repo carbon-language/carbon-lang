@@ -290,7 +290,6 @@
 		266942451A6DC2AC0063BE93 /* MIUtilString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */; };
 		2669424A1A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */; };
 		2669424B1A6DC2AC0063BE93 /* MIUtilVariant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */; };
-		2669424C1A6DC2AC0063BE93 /* Platform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941FC1A6DC2AC0063BE93 /* Platform.cpp */; };
 		2669424D1A6DC32B0063BE93 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
 		266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */; };
 		266E82971B8CE3AC008FCA06 /* DWARFDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266E82961B8CE3AC008FCA06 /* DWARFDIE.cpp */; };
@@ -1657,7 +1656,6 @@
 		266941F91A6DC2AC0063BE93 /* MIUtilThreadBaseStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilThreadBaseStd.h; path = "tools/lldb-mi/MIUtilThreadBaseStd.h"; sourceTree = SOURCE_ROOT; };
 		266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilVariant.cpp; path = "tools/lldb-mi/MIUtilVariant.cpp"; sourceTree = SOURCE_ROOT; };
 		266941FB1A6DC2AC0063BE93 /* MIUtilVariant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilVariant.h; path = "tools/lldb-mi/MIUtilVariant.h"; sourceTree = SOURCE_ROOT; };
-		266941FC1A6DC2AC0063BE93 /* Platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Platform.cpp; path = "tools/lldb-mi/Platform.cpp"; sourceTree = SOURCE_ROOT; };
 		266941FD1A6DC2AC0063BE93 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Platform.h; path = "tools/lldb-mi/Platform.h"; sourceTree = SOURCE_ROOT; };
 		266960591199F4230075C61A /* build-llvm.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "build-llvm.pl"; sourceTree = "<group>"; };
 		2669605A1199F4230075C61A /* build-swig-wrapper-classes.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-swig-wrapper-classes.sh"; sourceTree = "<group>"; };
@@ -3973,7 +3971,6 @@
 				266941F91A6DC2AC0063BE93 /* MIUtilThreadBaseStd.h */,
 				266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */,
 				266941FB1A6DC2AC0063BE93 /* MIUtilVariant.h */,
-				266941FC1A6DC2AC0063BE93 /* Platform.cpp */,
 				266941FD1A6DC2AC0063BE93 /* Platform.h */,
 			);
 			path = "lldb-mi";
@@ -7103,7 +7100,6 @@
 				266942351A6DC2AC0063BE93 /* MICmnMIValueTuple.cpp in Sources */,
 				2669422B1A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp in Sources */,
 				2669423E1A6DC2AC0063BE93 /* MIDriverBase.cpp in Sources */,
-				2669424C1A6DC2AC0063BE93 /* Platform.cpp in Sources */,
 				266942021A6DC2AC0063BE93 /* MICmdArgValBase.cpp in Sources */,
 				266942091A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp in Sources */,
 				266942291A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp in Sources */,
