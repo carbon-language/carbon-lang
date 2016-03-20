@@ -1676,6 +1676,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,           MVT::v32i8, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v32i1, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v64i1, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v32i1, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v64i1, Custom);
 
     setOperationAction(ISD::SMAX,               MVT::v64i8, Legal);
     setOperationAction(ISD::SMAX,               MVT::v32i16, Legal);
