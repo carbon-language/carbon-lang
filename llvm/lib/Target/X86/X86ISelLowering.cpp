@@ -5214,7 +5214,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
   while (V2.getOpcode() == ISD::BITCAST)
     V2 = V2->getOperand(0);
 
-  for (int i = 0, Size = Mask.size(); i != Size; ++i) {
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
     int M = Mask[i];
 
     // Already decoded as SM_SentinelZero / SM_SentinelUndef.
@@ -5239,7 +5239,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
     // element must be UNDEF/ZERO.
     // TODO: Is it worth testing the individual bits of a constant?
     if ((Size % V.getNumOperands()) == 0) {
-      unsigned Scale = Size / V->getNumOperands();
+      int Scale = Size / V->getNumOperands();
       SDValue Op = V.getOperand(M / Scale);
       if (Op.isUndef())
         Mask[i] = SM_SentinelUndef;
@@ -5251,10 +5251,10 @@ static bool setTargetShuffleZeroElements(SDValue N,
     // If the BUILD_VECTOR has more elements then all the (smaller) source
     // elements must be all UNDEF or all ZERO.
     if ((V.getNumOperands() % Size) == 0) {
-      unsigned Scale = V->getNumOperands() / Size;
+      int Scale = V->getNumOperands() / Size;
       bool AllUndef = true;
       bool AllZero = true;
-      for (unsigned j = 0; j != Scale; ++j) {
+      for (int j = 0; j < Scale; ++j) {
         SDValue Op = V.getOperand((M * Scale) + j);
         AllUndef &= Op.isUndef();
         AllZero &= X86::isZeroNode(Op);
