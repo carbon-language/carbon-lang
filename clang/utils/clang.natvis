@@ -189,7 +189,33 @@ or create a symbolic link so it updates automatically.
       <!-- TODO: Other kinds-->
     </Expand>
   </Type>
+  <!-- Builtin types that have C++ keywords are manually displayed as that keyword. Otherwise, just use the enum name -->
   <Type Name="clang::BuiltinType">
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Void">void</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Bool">bool</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Char_U">char</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::UChar">unsigned char</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::WChar_U">wchar_t</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Char16">char16_t</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Char32">char32_t</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::UShort">unsigned short</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::UInt">unsigned int</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::ULong">unsigned long</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::ULongLong">unsigned long long</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::UInt128">__uint128_t</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Char_S">char</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::SChar">signed char</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::WChar_S">wchar_t</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Short">short</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Int">int</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Long">long</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::LongLong">long long</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Int128">__int128_t</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Half">__fp16</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Float">float</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Double">double</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::LongDouble">long double</DisplayString>
+    <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::NullPtr">nullptr_t</DisplayString>
     <DisplayString>{(clang::BuiltinType::Kind)BuiltinTypeBits.Kind, en}</DisplayString>
     <Expand>
       <Item Name="Kind">(clang::BuiltinType::Kind)BuiltinTypeBits.Kind</Item>
