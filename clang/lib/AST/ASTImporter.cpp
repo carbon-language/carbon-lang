@@ -619,8 +619,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     if (!IsStructurallyEquivalent(Context, Function1->getReturnType(),
                                   Function2->getReturnType()))
       return false;
-      if (Function1->getExtInfo() != Function2->getExtInfo())
-        return false;
+    if (Function1->getExtInfo() != Function2->getExtInfo())
+      return false;
     break;
   }
    
