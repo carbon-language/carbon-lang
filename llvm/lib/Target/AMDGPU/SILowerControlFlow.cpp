@@ -130,10 +130,12 @@ bool SILowerControlFlow::shouldSkip(MachineBasicBlock *From,
 
   unsigned NumInstr = 0;
 
-  for (MachineBasicBlock *MBB = From; MBB != To && !MBB->succ_empty();
-       MBB = *MBB->succ_begin()) {
+  for (MachineFunction::iterator MBBI = MachineFunction::iterator(From),
+                                 ToI = MachineFunction::iterator(To); MBBI != ToI; ++MBBI) {
 
-    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+    MachineBasicBlock &MBB = *MBBI;
+
+    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          NumInstr < SkipThreshold && I != E; ++I) {
 
       if (I->isBundle() || !I->isBundled()) {
