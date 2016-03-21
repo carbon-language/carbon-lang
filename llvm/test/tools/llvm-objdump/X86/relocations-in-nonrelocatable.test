@@ -1,0 +1,9 @@
+// This test checks that relocation in nonrelocatable files are printed
+// RUN: llvm-objdump -r %p/Inputs/relocations-in-nonrelocatable.elf-x86_64 | FileCheck %s
+
+// (main.c)
+// void g(void){}
+// int main(void) { g(); };
+// gcc main.c -o main -Wl,--emit-relocs
+
+CHECK: 00000000000000f8 R_X86_64_PC32 g-4-P
