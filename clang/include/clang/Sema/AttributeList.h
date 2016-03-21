@@ -55,11 +55,12 @@ enum AvailabilitySlot {
 struct AvailabilityData {
   AvailabilityChange Changes[NumAvailabilitySlots];
   SourceLocation StrictLoc;
+  const Expr *Replacement;
   AvailabilityData(const AvailabilityChange &Introduced,
                    const AvailabilityChange &Deprecated,
                    const AvailabilityChange &Obsoleted,
-                   SourceLocation Strict)
-    : StrictLoc(Strict) {
+                   SourceLocation Strict, const Expr *ReplaceExpr)
+    : StrictLoc(Strict), Replacement(ReplaceExpr) {
     Changes[IntroducedSlot] = Introduced;
     Changes[DeprecatedSlot] = Deprecated;
     Changes[ObsoletedSlot] = Obsoleted;
@@ -255,7 +256,8 @@ private:
                 const AvailabilityChange &obsoleted,
                 SourceLocation unavailable, 
                 const Expr *messageExpr,
-                Syntax syntaxUsed, SourceLocation strict)
+                Syntax syntaxUsed, SourceLocation strict,
+                const Expr *replacementExpr)
     : AttrName(attrName), ScopeName(scopeName), AttrRange(attrRange),
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(1), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
@@ -265,7 +267,7 @@ private:
     ArgsUnion PVal(Parm);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     new (getAvailabilityData()) AvailabilityData(
-        introduced, deprecated, obsoleted, strict);
+        introduced, deprecated, obsoleted, strict, replacementExpr);
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
 
@@ -458,6 +460,11 @@ public:
     return MessageExpr;
   }
 
+  const Expr *getReplacementExpr() const {
+    assert(getKind() == AT_Availability && "Not an availability attribute");
+    return getAvailabilityData()->Replacement;
+  }
+
   const ParsedType &getMatchingCType() const {
     assert(getKind() == AT_TypeTagForDatatype &&
            "Not a type_tag_for_datatype attribute");
@@ -643,13 +650,13 @@ public:
                         SourceLocation unavailable,
                         const Expr *MessageExpr,
                         AttributeList::Syntax syntax,
-                        SourceLocation strict) {
+                        SourceLocation strict, const Expr *ReplacementExpr) {
     void *memory = allocate(AttributeFactory::AvailabilityAllocSize);
     return add(new (memory) AttributeList(attrName, attrRange,
                                           scopeName, scopeLoc,
                                           Param, introduced, deprecated,
                                           obsoleted, unavailable, MessageExpr,
-                                          syntax, strict));
+                                          syntax, strict, ReplacementExpr));
   }
 
   AttributeList *create(IdentifierInfo *attrName, SourceRange attrRange,
@@ -779,11 +786,11 @@ public:
                         SourceLocation unavailable,
                         const Expr *MessageExpr,
                         AttributeList::Syntax syntax,
-                        SourceLocation strict) {
+                        SourceLocation strict, const Expr *ReplacementExpr) {
     AttributeList *attr =
       pool.create(attrName, attrRange, scopeName, scopeLoc, Param, introduced,
                   deprecated, obsoleted, unavailable, MessageExpr, syntax,
-                  strict);
+                  strict, ReplacementExpr);
     add(attr);
     return attr;
   }
