@@ -307,8 +307,7 @@ char SIWholeQuadMode::analyzeFunction(const MachineFunction &MF) {
 
 void SIWholeQuadMode::toExact(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator Before,
-                              unsigned SaveWQM, unsigned LiveMaskReg)
-{
+                              unsigned SaveWQM, unsigned LiveMaskReg) {
   if (SaveWQM) {
     BuildMI(MBB, Before, DebugLoc(), TII->get(AMDGPU::S_AND_SAVEEXEC_B64),
             SaveWQM)
@@ -323,8 +322,7 @@ void SIWholeQuadMode::toExact(MachineBasicBlock &MBB,
 
 void SIWholeQuadMode::toWQM(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator Before,
-                            unsigned SavedWQM)
-{
+                            unsigned SavedWQM) {
   if (SavedWQM) {
     BuildMI(MBB, Before, DebugLoc(), TII->get(AMDGPU::COPY), AMDGPU::EXEC)
         .addReg(SavedWQM);
