@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++1y -triple i686-pc-windows-msvc -emit-llvm %s -o - | tee /tmp/__.bak | FileCheck %s
+// RUN: %clang_cc1 -std=c++1y -triple i686-pc-windows-msvc -emit-llvm %s -o - | FileCheck %s
 //CHECK: %[[A_LAMBDA:.*]] = type { %struct.A }
 //CHECK: %[[B_LAMBDA:.*]] = type { %struct.B* }
 struct A {
