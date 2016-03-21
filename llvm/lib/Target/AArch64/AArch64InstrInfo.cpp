@@ -3081,8 +3081,8 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
 /// to
 ///   b.<condition code>
 ///
-/// \brief Replace compare and branch sequence by TBZ/TBNZ instruction when
-/// the compare's constant operand is power of 2.
+/// Replace compare and branch sequence by TBZ/TBNZ instruction when the
+/// compare's constant operand is power of 2.
 ///
 /// Examples:
 ///   and  w8, w8, #0x400
