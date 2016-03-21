@@ -3257,6 +3257,7 @@ VersionTuple visualstudio::getMSVCVersion(const Driver *D,
     if (Major || Minor || Micro)
       return VersionTuple(Major, Minor, Micro);
 
+    // FIXME: Consider bumping this to 19 (MSVC2015) soon.
     return VersionTuple(18);
   }
   return VersionTuple();
