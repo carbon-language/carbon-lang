@@ -347,16 +347,20 @@ INTERFACE_FUNCTION(__sanitizer_verify_contiguous_container)
 
 // ----------------- Memory allocation functions ---------------------
 WRAP_V_W(free)
+WRAP_V_W(_free_base)
 WRAP_V_WW(_free_dbg)
 
 WRAP_W_W(malloc)
+WRAP_W_W(_malloc_base)
 WRAP_W_WWWW(_malloc_dbg)
 
 WRAP_W_WW(calloc)
+WRAP_W_WW(_calloc_base)
 WRAP_W_WWWWW(_calloc_dbg)
 WRAP_W_WWW(_calloc_impl)
 
 WRAP_W_WW(realloc)
+WRAP_W_WW(_realloc_base)
 WRAP_W_WWW(_realloc_dbg)
 WRAP_W_WWW(_recalloc)
 
