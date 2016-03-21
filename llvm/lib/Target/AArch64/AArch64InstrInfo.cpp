@@ -1402,6 +1402,7 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfs(
 bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
     MachineInstr *LdSt, unsigned &BaseReg, int64_t &Offset, unsigned &Width,
     const TargetRegisterInfo *TRI) const {
+  assert(LdSt->mayLoadOrStore() && "Expected a memory operation.");
   // Handle only loads/stores with base register followed by immediate offset.
   if (LdSt->getNumOperands() != 3)
     return false;
