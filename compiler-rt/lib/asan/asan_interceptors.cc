@@ -467,25 +467,6 @@ INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
   ASAN_MEMSET_IMPL(ctx, block, c, size);
 }
 
-INTERCEPTOR(char*, strchr, const char *str, int c) {
-  void *ctx;
-  ASAN_INTERCEPTOR_ENTER(ctx, strchr);
-  if (UNLIKELY(!asan_inited)) return internal_strchr(str, c);
-  // strchr is called inside create_purgeable_zone() when MallocGuardEdges=1 is
-  // used.
-  if (asan_init_is_running) {
-    return REAL(strchr)(str, c);
-  }
-  ENSURE_ASAN_INITED();
-  char *result = REAL(strchr)(str, c);
-  if (flags()->replace_str) {
-    uptr len = REAL(strlen)(str);
-    uptr bytes_read = (result ? result - str : len) + 1;
-    ASAN_READ_STRING_OF_LEN(ctx, str, len, bytes_read);
-  }
-  return result;
-}
-
 #if ASAN_INTERCEPT_INDEX
 # if ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX
 INTERCEPTOR(char*, index, const char *string, int c)
@@ -744,7 +725,6 @@ void InitializeAsanInterceptors() {
 
   // Intercept str* functions.
   ASAN_INTERCEPT_FUNC(strcat);  // NOLINT
-  ASAN_INTERCEPT_FUNC(strchr);
   ASAN_INTERCEPT_FUNC(strcpy);  // NOLINT
   ASAN_INTERCEPT_FUNC(wcslen);
   ASAN_INTERCEPT_FUNC(strncat);
