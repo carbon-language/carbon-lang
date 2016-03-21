@@ -640,6 +640,9 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
 template <class ELFT>
 section_iterator
 ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
+  if (EF.getHeader()->e_type != ELF::ET_REL)
+    return section_end();
+
   const Elf_Shdr *EShdr = getSection(Sec);
   uintX_t Type = EShdr->sh_type;
   if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
@@ -680,19 +683,13 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel) const {
+  assert(EF.getHeader()->e_type == ELF::ET_REL &&
+         "Only relocatable object files have relocation offsets");
   const Elf_Shdr *sec = getRelSection(Rel);
-  uint64_t Offset = sec->sh_type == ELF::SHT_REL ?
-                    getRel(Rel)->r_offset :
-                    getRela(Rel)->r_offset;
-  if (EF.getHeader()->e_type == ELF::ET_EXEC ||
-      EF.getHeader()->e_type == ELF::ET_DYN) {
-    // For an executable file or a shared object, the value is the virtual
-    // address of the storage unit affected by the relocation.
-    auto SectionIter = getRelocatedSection(toDRI(sec));
-    if (SectionIter != section_end())
-      Offset -= SectionIter->getAddress();
-  }
-  return Offset;
+  if (sec->sh_type == ELF::SHT_REL)
+    return getRel(Rel)->r_offset;
+
+  return getRela(Rel)->r_offset;
 }
 
 template <class ELFT>

@@ -1188,6 +1188,10 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 void llvm::PrintRelocations(const ObjectFile *Obj) {
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "%016" PRIx64 :
                                                  "%08" PRIx64;
+  // Regular objdump doesn't print relocations in non-relocatable object
+  // files.
+  if (!Obj->isRelocatableObject())
+    return;
 
   for (const SectionRef &Section : ToolSectionFilter(*Obj)) {
     if (Section.relocation_begin() == Section.relocation_end())
