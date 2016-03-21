@@ -29,6 +29,13 @@ if(APPLE)
   darwin_filter_host_archs(ASAN_SUPPORTED_ARCH ASAN_TEST_ARCH)
 endif()
 
+# Extract the major version from CMake's MSVC_VERSION variable and pass it into
+# the lit configuration.
+set(MSVC_MAJOR_VERSION "")
+if (MSVC)
+  string(SUBSTRING "${MSVC_VERSION}" 0 2 MSVC_MAJOR_VERSION)
+endif()
+
 foreach(arch ${ASAN_TEST_ARCH})
   if(ANDROID)
     set(ASAN_TEST_TARGET_ARCH ${arch}-android)

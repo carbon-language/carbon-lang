@@ -5,6 +5,7 @@
 config.name_suffix = "@ASAN_TEST_CONFIG_SUFFIX@"
 config.asan_lit_source_dir = "@ASAN_LIT_SOURCE_DIR@"
 config.target_cflags = "@ASAN_TEST_TARGET_CFLAGS@"
+config.msvc_major_version = "@MSVC_MAJOR_VERSION@"
 config.clang = "@ASAN_TEST_TARGET_CC@"
 config.bits = "@ASAN_TEST_BITS@"
 config.android = "@ANDROID@"
