@@ -184,14 +184,16 @@ char SIWholeQuadMode::scanInstructions(const MachineFunction &MF,
 void SIWholeQuadMode::propagateInstruction(const MachineInstr &MI,
                                            std::vector<WorkItem>& Worklist) {
   const MachineBasicBlock &MBB = *MI.getParent();
-  InstrInfo &II = Instructions[&MI];
+  InstrInfo II = Instructions[&MI]; // take a copy to prevent dangling references
   BlockInfo &BI = Blocks[&MBB];
 
   // Control flow-type instructions that are followed by WQM computations
   // must themselves be in WQM.
   if ((II.OutNeeds & StateWQM) && !(II.Needs & StateWQM) &&
-      (MI.isBranch() || MI.isTerminator() || MI.getOpcode() == AMDGPU::SI_KILL))
+      (MI.isBranch() || MI.isTerminator() || MI.getOpcode() == AMDGPU::SI_KILL)) {
+    Instructions[&MI].Needs = StateWQM;
     II.Needs = StateWQM;
+  }
 
   // Propagate to block level
   BI.Needs |= II.Needs;
@@ -253,7 +255,7 @@ void SIWholeQuadMode::propagateInstruction(const MachineInstr &MI,
 
 void SIWholeQuadMode::propagateBlock(const MachineBasicBlock &MBB,
                                      std::vector<WorkItem>& Worklist) {
-  BlockInfo &BI = Blocks[&MBB];
+  BlockInfo BI = Blocks[&MBB]; // take a copy to prevent dangling references
 
   // Propagate through instructions
   if (!MBB.empty()) {
