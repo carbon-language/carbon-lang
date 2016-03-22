@@ -461,10 +461,23 @@ def UImm16AsmOperandClass
     : UImmAsmOperandClass<16, [UImm16RelaxedAsmOperandClass]>;
 def ConstantUImm10AsmOperandClass
     : ConstantUImmAsmOperandClass<10, [UImm16AsmOperandClass]>;
+def ConstantSImm7Lsl2AsmOperandClass : AsmOperandClass {
+  let Name = "SImm7Lsl2";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isScaledSImm<7, 2>";
+  let SuperClasses = [ConstantUImm10AsmOperandClass];
+  let DiagnosticType = "SImm7_Lsl2";
+}
 def ConstantUImm8AsmOperandClass
-    : ConstantUImmAsmOperandClass<8, [ConstantUImm10AsmOperandClass]>;
+    : ConstantUImmAsmOperandClass<8, [ConstantSImm7Lsl2AsmOperandClass]>;
+def ConstantUImm7Sub1AsmOperandClass
+    : ConstantUImmAsmOperandClass<7, [ConstantUImm8AsmOperandClass], -1> {
+  // Specify the names since the -1 offset causes invalid identifiers otherwise.
+  let Name = "UImm7_N1";
+  let DiagnosticType = "UImm7_N1";
+}
 def ConstantUImm7AsmOperandClass
-    : ConstantUImmAsmOperandClass<7, [ConstantUImm8AsmOperandClass]>;
+    : ConstantUImmAsmOperandClass<7, [ConstantUImm7Sub1AsmOperandClass]>;
 def ConstantUImm6Lsl2AsmOperandClass : AsmOperandClass {
   let Name = "UImm6Lsl2";
   let RenderMethod = "addImmOperands";
@@ -728,10 +741,22 @@ foreach I = {1, 2, 3, 4, 5, 6, 8} in
 // Signed operands
 foreach I = {4, 5} in
   def simm # I : Operand<i32> {
-    let DecoderMethod = "DecodeSImmWithOffset<" # I # ">";
+    let DecoderMethod = "DecodeSImmWithOffsetAndScale<" # I # ">";
     let ParserMatchClass =
         !cast<AsmOperandClass>("ConstantSImm" # I # "AsmOperandClass");
   }
+
+def simm7_lsl2 : Operand<OtherVT> {
+  let EncoderMethod = "getSImm7Lsl2Encoding";
+  let DecoderMethod = "DecodeSImmWithOffsetAndScale<" # I # ", 0, 4>";
+  let ParserMatchClass = ConstantSImm7Lsl2AsmOperandClass;
+}
+
+// This is almost the same as a uimm7 but 0x7f is interpreted as -1.
+def li16_imm : Operand<i32> {
+  let DecoderMethod = "DecodeLi16Imm";
+  let ParserMatchClass = ConstantUImm7Sub1AsmOperandClass;
+}
 
 
 def pcrel16      : Operand<i32> {
