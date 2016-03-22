@@ -709,6 +709,13 @@ def uimm5_64_report_uimm6 : Operand<i64> {
   let ParserMatchClass = ConstantUImm5ReportUImm6AsmOperandClass;
 }
 
+foreach I = {1, 2, 3, 4} in
+  def uimm # I # _ptr : Operand<iPTR> {
+    let PrintMethod = "printUImm<" # I # ">";
+    let ParserMatchClass =
+        !cast<AsmOperandClass>("ConstantUImm" # I # "AsmOperandClass");
+  }
+
 // Signed operands
 foreach I = {4} in
   def simm # I : Operand<i32> {
