@@ -88,6 +88,12 @@ public:
     const char*
     GetHelpLong () override;
     
+    void
+    SetHelp (const char * str) override;
+    
+    void
+    SetHelpLong (const char * str) override;
+    
     bool
     Execute(const char *args_string, CommandReturnObject &result) override;
     
@@ -105,6 +111,8 @@ private:
     std::string m_option_string;
     OptionArgVectorSP m_option_args_sp ;
     LazyBool m_is_dashdash_alias;
+    bool m_did_set_help : 1;
+    bool m_did_set_help_long : 1;
 };
 } // namespace lldb_private
 

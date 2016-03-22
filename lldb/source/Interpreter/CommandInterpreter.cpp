@@ -344,10 +344,14 @@ CommandInterpreter::Initialize ()
     cmd_obj_sp = GetCommandSPExact ("expression", false);
     if (cmd_obj_sp)
     {        
-        AddAlias ("p", cmd_obj_sp, "--");
-        AddAlias ("print", cmd_obj_sp, "--");
-        AddAlias ("call", cmd_obj_sp, "--");
-        AddAlias ("po", cmd_obj_sp, "-O --");
+        AddAlias ("p", cmd_obj_sp, "--")->SetHelpLong("");
+        AddAlias ("print", cmd_obj_sp, "--")->SetHelpLong("");
+        AddAlias ("call", cmd_obj_sp, "--")->SetHelpLong("");
+        if (auto po = AddAlias ("po", cmd_obj_sp, "-O --"))
+        {
+            po->SetHelp("Evaluate an expression in the current program context, using user defined variables and variables currently in scope, and display the result of evaluation in a language-specific manner.");
+            po->SetHelpLong("");
+        }
     }
     
     cmd_obj_sp = GetCommandSPExact ("process kill", false);
