@@ -100,6 +100,8 @@ public:
   }
 
   void operator=(OwningAtomPtr&& ptr) {
+    if (atom)
+      runDestructor(atom);
     atom = ptr.atom;
     ptr.atom = nullptr;
   }
