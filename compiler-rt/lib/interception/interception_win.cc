@@ -197,6 +197,7 @@ static void **InterestingDLLsAvailable() {
     "kernel32.dll",
     "msvcr110.dll", // VS2012
     "msvcr120.dll", // VS2013
+    "ucrtbase.dll", // Universal CRT
     // NTDLL should go last as it exports some functions that we should override
     // in the CRT [presumably only used internally].
     "ntdll.dll", NULL
