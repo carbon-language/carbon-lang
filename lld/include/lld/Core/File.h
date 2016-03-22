@@ -40,10 +40,6 @@ class LinkingContext;
 /// The Atom objects in a File are owned by the File object.  The Atom objects
 /// are destroyed when the File object is destroyed.
 class File {
-protected:
-  /// The type of atom mutable container.
-  template <typename T> using AtomVector = std::vector<OwningAtomPtr<T>>;
-
 public:
   virtual ~File();
 
@@ -108,6 +104,9 @@ public:
   llvm::BumpPtrAllocator &allocator() const {
     return _allocator;
   }
+
+  /// The type of atom mutable container.
+  template <typename T> using AtomVector = std::vector<OwningAtomPtr<T>>;
 
   /// The range type for the atoms.
   template <typename T> class AtomRange {
