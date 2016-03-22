@@ -121,9 +121,6 @@ catch.dispatch:
 
 catch:
   %cp1 = catchpad within %cs1 [i8* null, i32 64, i8* null]
-  br label %loop
-
-loop:
   %val2 = call i32 @callee_1(i32 100) "statepoint-id"="4243" [ "funclet"(token %cp1), "deopt"(i32 55) ]
   catchret from %cp1 to label %try.cont
 
