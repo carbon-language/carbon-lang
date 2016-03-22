@@ -1,39 +1,40 @@
-; RUN: llc -debug-only=stackmaps     < %s 2>&1 | FileCheck %s
-; RUN: llc -debug-only=stackmaps -O3 < %s 2>&1 | FileCheck %s
+; RUN: llc     < %s 2>&1 | FileCheck %s
+; RUN: llc -O3 < %s 2>&1 | FileCheck %s
+; RUN: llc -O3 -debug-only=stackmaps < %s 2>&1 | FileCheck -check-prefix=STACKMAPS %s
 ; REQUIRES: asserts
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.11.0"
 
 
-; CHECK: Stack Maps: callsite 2882400015
-; CHECK-NEXT: Stack Maps:   has 4 locations
-; CHECK-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
-; CHECK-NEXT: Stack Maps: 		Loc 3: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 	has 0 live-out registers
-; CHECK-NEXT: Stack Maps: callsite 4242
-; CHECK-NEXT: Stack Maps:   has 4 locations
-; CHECK-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
-; CHECK-NEXT: Stack Maps: 		Loc 3: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
-; CHECK-NEXT: Stack Maps: 	has 0 live-out registers
-; CHECK-NEXT: Stack Maps: callsite 2882400015
-; CHECK-NEXT: Stack Maps:   has 4 locations
-; CHECK-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
-; CHECK-NEXT: Stack Maps: 		Loc 3: Constant 2	[encoding: .byte 4, .byte 8, .short 0, .int 2]
-; CHECK-NEXT: Stack Maps: 	has 0 live-out registers
-; CHECK-NEXT: Stack Maps: callsite 2882400015
-; CHECK-NEXT: Stack Maps:   has 4 locations
-; CHECK-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
-; CHECK-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
-; CHECK-NEXT: Stack Maps: 		Loc 3: Constant 3	[encoding: .byte 4, .byte 8, .short 0, .int 3]
-; CHECK-NEXT: Stack Maps: 	has 0 live-out registers
+; STACKMAPS: Stack Maps: callsite 2882400015
+; STACKMAPS-NEXT: Stack Maps:   has 4 locations
+; STACKMAPS-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 3: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 	has 0 live-out registers
+; STACKMAPS-NEXT: Stack Maps: callsite 4242
+; STACKMAPS-NEXT: Stack Maps:   has 4 locations
+; STACKMAPS-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 3: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
+; STACKMAPS-NEXT: Stack Maps: 	has 0 live-out registers
+; STACKMAPS-NEXT: Stack Maps: callsite 2882400015
+; STACKMAPS-NEXT: Stack Maps:   has 4 locations
+; STACKMAPS-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 3: Constant 2	[encoding: .byte 4, .byte 8, .short 0, .int 2]
+; STACKMAPS-NEXT: Stack Maps: 	has 0 live-out registers
+; STACKMAPS-NEXT: Stack Maps: callsite 2882400015
+; STACKMAPS-NEXT: Stack Maps:   has 4 locations
+; STACKMAPS-NEXT: Stack Maps: 		Loc 0: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 1: Constant 0	[encoding: .byte 4, .byte 8, .short 0, .int 0]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 2: Constant 1	[encoding: .byte 4, .byte 8, .short 0, .int 1]
+; STACKMAPS-NEXT: Stack Maps: 		Loc 3: Constant 3	[encoding: .byte 4, .byte 8, .short 0, .int 3]
+; STACKMAPS-NEXT: Stack Maps: 	has 0 live-out registers
 
 
 declare i32 @callee_0()
