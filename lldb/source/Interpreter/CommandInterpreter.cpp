@@ -1359,8 +1359,9 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
     
     if (alias_cmd_obj && alias_cmd_obj->IsAlias())
     {
-        OptionArgVectorSP option_arg_vector_sp =  ((CommandAlias*)alias_cmd_obj)->GetOptionArguments();
-        alias_cmd_obj = ((CommandAlias*)alias_cmd_obj)->GetUnderlyingCommand().get();
+        std::pair<CommandObjectSP, OptionArgVectorSP> desugared = ((CommandAlias*)alias_cmd_obj)->Desugar();
+        OptionArgVectorSP option_arg_vector_sp =  desugared.second;
+        alias_cmd_obj = desugared.first.get();
         std::string alias_name_str = alias_name;
         if ((cmd_args.GetArgumentCount() == 0)
             || (alias_name_str.compare (cmd_args.GetArgumentAtIndex(0)) != 0))

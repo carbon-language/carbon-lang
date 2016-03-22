@@ -85,6 +85,7 @@ CommandAlias::CommandAlias (CommandInterpreter &interpreter,
                   syntax,
                   flags),
 m_underlying_command_sp(),
+m_option_string(options_args ? options_args : ""),
 m_option_args_sp(new OptionArgVector),
 m_is_dashdash_alias(eLazyBoolCalculate)
 {
@@ -236,6 +237,24 @@ CommandAlias::IsDashDashCommand ()
         }
     }
     return (m_is_dashdash_alias == eLazyBoolYes);
+}
+
+std::pair<lldb::CommandObjectSP, OptionArgVectorSP>
+CommandAlias::Desugar ()
+{
+    auto underlying = GetUnderlyingCommand();
+    if (!underlying)
+        return {nullptr,nullptr};
+    
+    if (underlying->IsAlias())
+    {
+        auto desugared = ((CommandAlias*)underlying.get())->Desugar();
+        auto options = GetOptionArguments();
+        options->insert(options->begin(), desugared.second->begin(), desugared.second->end());
+        return {desugared.first,options};
+    }
+
+    return {underlying,GetOptionArguments()};
 }
 
 // allow CommandAlias objects to provide their own help, but fallback to the info

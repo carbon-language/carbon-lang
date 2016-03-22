@@ -93,9 +93,16 @@ public:
     
     lldb::CommandObjectSP GetUnderlyingCommand() { return m_underlying_command_sp; }
     OptionArgVectorSP GetOptionArguments() { return m_option_args_sp; }
+    const char* GetOptionString() { return m_option_string.c_str(); }
+    
+    // this takes an alias - potentially nested (i.e. an alias to an alias)
+    // and expands it all the way to a non-alias command
+    std::pair<lldb::CommandObjectSP, OptionArgVectorSP>
+    Desugar ();
     
 private:
     lldb::CommandObjectSP m_underlying_command_sp;
+    std::string m_option_string;
     OptionArgVectorSP m_option_args_sp ;
     LazyBool m_is_dashdash_alias;
 };
