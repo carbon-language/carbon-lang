@@ -420,11 +420,6 @@ void ArchHandler_x86::generateAtomContent(const DefinedAtom &atom,
                                           FindAddressForAtom findSectionAddress,
                                           uint64_t imageBaseAddress,
                                           uint8_t *atomContentBuffer) {
-  if (!atom.size()) {
-    assert(atom.begin() == atom.end() &&
-           "Cannot have references without content");
-    return;
-  }
   // Copy raw bytes.
   memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
   // Apply fix-ups.
