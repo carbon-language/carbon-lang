@@ -837,16 +837,12 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
 
 void SelectionDAGBuilder::LowerCallSiteWithDeoptBundle(
     ImmutableCallSite CS, SDValue Callee, const BasicBlock *EHPadBB) {
-  assert(CS.getNumOperandBundles() == 1 &&
-         "Only deopt operand bundles can be lowered!");
-
   StatepointLoweringInfo SI(DAG);
   unsigned ArgBeginIndex = CS.arg_begin() - CS.getInstruction()->op_begin();
   populateCallLoweringInfo(SI.CLI, CS, ArgBeginIndex, CS.getNumArgOperands(),
                            Callee, CS.getType(), false);
 
-  auto DeoptBundle = CS.getOperandBundleAt(0);
-  assert(DeoptBundle.getTagID() == LLVMContext::OB_deopt && "Should be!");
+  auto DeoptBundle = *CS.getOperandBundle(LLVMContext::OB_deopt);
 
   unsigned DefaultID = StatepointDirectives::DeoptBundleStatepointID;
 
