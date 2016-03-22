@@ -335,14 +335,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
       Out<ELFT>::RelaDyn->addReloc({Target->RelativeRel, &C, RI.r_offset, true,
                                     &Body, getAddend<ELFT>(RI)});
 
-    // MIPS has a special rule to create GOTs for local symbols.
-    if (Config->EMachine == EM_MIPS && !Preemptible &&
-        Target->needsGot(Type, Body)) {
-      // FIXME (simon): Do not add so many redundant entries.
-      Out<ELFT>::Got->addMipsLocalEntry();
-      continue;
-    }
-
     // If a symbol in a DSO is referenced directly instead of through GOT,
     // we need to create a copy relocation for the symbol.
     if (auto *B = dyn_cast<SharedSymbol<ELFT>>(&Body)) {
@@ -407,15 +399,13 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
         continue;
       Out<ELFT>::Got->addEntry(Body);
 
-      if (Config->EMachine == EM_MIPS) {
+      if (Config->EMachine == EM_MIPS)
         // MIPS ABI has special rules to process GOT entries
         // and doesn't require relocation entries for them.
         // See "Global Offset Table" in Chapter 5 in the following document
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-        Body.MustBeInDynSym = true;
         continue;
-      }
 
       bool Dynrel = Config->Pic && !Target->isRelRelative(Type) &&
                     !Target->isSizeRel(Type);
