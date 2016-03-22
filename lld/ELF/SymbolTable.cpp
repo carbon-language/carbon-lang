@@ -168,7 +168,8 @@ std::unique_ptr<InputFile> SymbolTable<ELFT>::codegen(Module &M) {
                               TargetMachine::CGFT_ObjectFile))
     fatal("failed to setup codegen");
   CodeGenPasses.run(M);
-  LtoBuffer = MemoryBuffer::getMemBuffer(OwningLTOData, "", false);
+  LtoBuffer = MemoryBuffer::getMemBuffer(
+      OwningLTOData, "LLD-INTERNAL-combined-lto-object", false);
   if (Config->SaveTemps)
     saveLtoObjectFile(LtoBuffer->getBuffer());
   return createObjectFile(*LtoBuffer);
