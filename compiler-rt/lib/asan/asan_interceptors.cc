@@ -544,7 +544,6 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
   return REAL(strcpy)(to, from);  // NOLINT
 }
 
-#if ASAN_INTERCEPT_STRDUP
 INTERCEPTOR(char*, strdup, const char *s) {
   void *ctx;
   ASAN_INTERCEPTOR_ENTER(ctx, strdup);
@@ -559,7 +558,6 @@ INTERCEPTOR(char*, strdup, const char *s) {
   REAL(memcpy)(new_mem, s, length + 1);
   return reinterpret_cast<char*>(new_mem);
 }
-#endif
 
 INTERCEPTOR(SIZE_T, wcslen, const wchar_t *s) {
   void *ctx;
@@ -729,9 +727,7 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(wcslen);
   ASAN_INTERCEPT_FUNC(strncat);
   ASAN_INTERCEPT_FUNC(strncpy);
-#if ASAN_INTERCEPT_STRDUP
   ASAN_INTERCEPT_FUNC(strdup);
-#endif
 #if ASAN_INTERCEPT_STRNLEN
   ASAN_INTERCEPT_FUNC(strnlen);
 #endif
