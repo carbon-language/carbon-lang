@@ -716,6 +716,13 @@ foreach I = {1, 2, 3, 4} in
         !cast<AsmOperandClass>("ConstantUImm" # I # "AsmOperandClass");
   }
 
+foreach I = {1, 2, 3, 4, 5, 6, 8} in
+  def vsplat_uimm # I : Operand<vAny> {
+    let PrintMethod = "printUImm<" # I # ">";
+    let ParserMatchClass =
+        !cast<AsmOperandClass>("ConstantUImm" # I # "AsmOperandClass");
+  }
+
 // Signed operands
 foreach I = {4} in
   def simm # I : Operand<i32> {
