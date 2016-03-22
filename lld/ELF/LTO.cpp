@@ -82,10 +82,15 @@ void BitcodeCompiler::add(BitcodeFile &F) {
       Keep.push_back(GV);
       continue;
     }
-    if (!BitcodeFile::shouldSkip(Sym))
+    if (!BitcodeFile::shouldSkip(Sym)) {
+
+      if (GV->getLinkage() == llvm::GlobalValue::LinkOnceODRLinkage)
+        GV->setLinkage(GlobalValue::WeakODRLinkage);
+
       if (SymbolBody *B = Bodies[BodyIndex++])
         if (&B->repl() == B && isa<DefinedBitcode>(B))
           Keep.push_back(GV);
+    }
   }
 
   Mover.move(Obj->takeModule(), Keep,
