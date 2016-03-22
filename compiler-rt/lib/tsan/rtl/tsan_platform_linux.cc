@@ -302,7 +302,7 @@ void InitializePlatform() {
       Report("WARNING: Program is run with randomized virtual address space,"
              " which wouldn't work with ThreadSanitizer.\n");
       Report("Re-execing with fixed virtual address space.\n");
-      CHECK(personality(old_personality | ADDR_NO_RANDOMIZE) != -1);
+      CHECK_NE(-1, personality(old_personality | ADDR_NO_RANDOMIZE));
       reexec = true;
     }
 #endif
