@@ -60,11 +60,6 @@ endif()
 if(MSVC)
   # Disable exceptions on Windows until they work reliably.
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -fno-exceptions -DGTEST_HAS_SEH=0)
-  # Extract the major version from CMake's MSVC_VERSION variable and pass it to
-  # -fms-compatibility-version. The major version controls the most important
-  # parts of clang's compatibility.
-  string(SUBSTRING "${MSVC_VERSION}" 0 2 MSVC_MAJOR_VERSION)
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS "-fms-compatibility-version=${MSVC_MAJOR_VERSION}")
 endif()
 
 set(ASAN_BLACKLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore")
