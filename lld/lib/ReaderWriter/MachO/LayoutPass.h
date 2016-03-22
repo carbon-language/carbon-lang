@@ -33,10 +33,9 @@ namespace mach_o {
 class LayoutPass : public Pass {
 public:
   struct SortKey {
-    SortKey(OwningAtomPtr<DefinedAtom> &&atom,
-            const DefinedAtom *root, uint64_t override)
-    : _atom(std::move(atom)), _root(root), _override(override) {}
-    OwningAtomPtr<DefinedAtom> _atom;
+    SortKey(const DefinedAtom *atom, const DefinedAtom *root, uint64_t override)
+        : _atom(atom), _root(root), _override(override) {}
+    const DefinedAtom *_atom;
     const DefinedAtom *_root;
     uint64_t _override;
   };
@@ -54,10 +53,10 @@ public:
 private:
   // Build the followOn atoms chain as specified by the kindLayoutAfter
   // reference type
-  void buildFollowOnTable(const SimpleFile::DefinedAtomRange &range);
+  void buildFollowOnTable(SimpleFile::DefinedAtomRange &range);
 
   // Build a map of Atoms to ordinals for sorting the atoms
-  void buildOrdinalOverrideMap(const SimpleFile::DefinedAtomRange &range);
+  void buildOrdinalOverrideMap(SimpleFile::DefinedAtomRange &range);
 
   const Registry &_registry;
   SortOverride _customSorter;
@@ -86,12 +85,11 @@ private:
   void setChainRoot(const DefinedAtom *targetAtom, const DefinedAtom *root);
 
   std::vector<SortKey> decorate(SimpleFile::DefinedAtomRange &atomRange) const;
-
   void undecorate(SimpleFile::DefinedAtomRange &atomRange,
                   std::vector<SortKey> &keys) const;
 
   // Check if the follow-on graph is a correct structure. For debugging only.
-  void checkFollowonChain(const SimpleFile::DefinedAtomRange &range);
+  void checkFollowonChain(SimpleFile::DefinedAtomRange &range);
 };
 
 } // namespace mach_o

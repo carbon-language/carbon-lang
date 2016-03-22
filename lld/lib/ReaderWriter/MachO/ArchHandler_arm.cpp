@@ -1429,8 +1429,6 @@ public:
     _name = tmp.copy(file.allocator());
   }
 
-  ~Thumb2ToArmShimAtom() override = default;
-
   StringRef name() const override {
     return _name;
   }
@@ -1473,8 +1471,6 @@ public:
     StringRef tmp(name);
     _name = tmp.copy(file.allocator());
   }
-
-  ~ArmToThumbShimAtom() override = default;
 
   StringRef name() const override {
     return _name;

@@ -44,8 +44,6 @@ public:
 
 protected:
   SharedLibraryAtom() : Atom(definitionSharedLibrary) {}
-
-  ~SharedLibraryAtom() override = default;
 };
 
 } // namespace lld

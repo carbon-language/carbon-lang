@@ -30,8 +30,6 @@ public:
   TLVPEntryAtom(const File &file, bool is64, StringRef name)
       : SimpleDefinedAtom(file), _is64(is64), _name(name) {}
 
-  ~TLVPEntryAtom() override = default;
-
   ContentType contentType() const override {
     return DefinedAtom::typeTLVInitializerPtr;
   }

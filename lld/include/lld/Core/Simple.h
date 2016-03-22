@@ -31,35 +31,20 @@ public:
   SimpleFile(StringRef path, File::Kind kind)
     : File(path, kind) {}
 
-  ~SimpleFile() override {
-    _defined.clear();
-    _undefined.clear();
-    _shared.clear();
-    _absolute.clear();
-  }
-
-  void addAtom(DefinedAtom &a) {
-    _defined.push_back(OwningAtomPtr<DefinedAtom>(&a));
-  }
-  void addAtom(UndefinedAtom &a) {
-    _undefined.push_back(OwningAtomPtr<UndefinedAtom>(&a));
-  }
-  void addAtom(SharedLibraryAtom &a) {
-    _shared.push_back(OwningAtomPtr<SharedLibraryAtom>(&a));
-  }
-  void addAtom(AbsoluteAtom &a) {
-    _absolute.push_back(OwningAtomPtr<AbsoluteAtom>(&a));
-  }
+  void addAtom(const DefinedAtom &a) { _defined.push_back(&a); }
+  void addAtom(const UndefinedAtom &a) { _undefined.push_back(&a); }
+  void addAtom(const SharedLibraryAtom &a) { _shared.push_back(&a); }
+  void addAtom(const AbsoluteAtom &a) { _absolute.push_back(&a); }
 
   void addAtom(const Atom &atom) {
     if (auto *p = dyn_cast<DefinedAtom>(&atom)) {
-      addAtom(const_cast<DefinedAtom &>(*p));
+      _defined.push_back(p);
     } else if (auto *p = dyn_cast<UndefinedAtom>(&atom)) {
-      addAtom(const_cast<UndefinedAtom &>(*p));
+      _undefined.push_back(p);
     } else if (auto *p = dyn_cast<SharedLibraryAtom>(&atom)) {
-      addAtom(const_cast<SharedLibraryAtom &>(*p));
+      _shared.push_back(p);
     } else if (auto *p = dyn_cast<AbsoluteAtom>(&atom)) {
-      addAtom(const_cast<AbsoluteAtom &>(*p));
+      _absolute.push_back(p);
     } else {
       llvm_unreachable("atom has unknown definition kind");
     }
@@ -67,35 +52,25 @@ public:
 
   void removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) {
     auto &atoms = _defined;
-    auto newEnd = std::remove_if(atoms.begin(), atoms.end(),
-                                 [&pred](OwningAtomPtr<DefinedAtom> &p) {
-                                   return pred(p.get());
-                                 });
+    auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
     atoms.erase(newEnd, atoms.end());
   }
 
-  const AtomRange<DefinedAtom> defined() const override { return _defined; }
+  const AtomVector<DefinedAtom> &defined() const override { return _defined; }
 
-  const AtomRange<UndefinedAtom> undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     return _undefined;
   }
 
-  const AtomRange<SharedLibraryAtom> sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     return _shared;
   }
 
-  const AtomRange<AbsoluteAtom> absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _absolute;
   }
 
-  void clearAtoms() override {
-    _defined.clear();
-    _undefined.clear();
-    _shared.clear();
-    _absolute.clear();
-  }
-
-  typedef AtomRange<DefinedAtom> DefinedAtomRange;
+  typedef llvm::MutableArrayRef<const DefinedAtom *> DefinedAtomRange;
   DefinedAtomRange definedAtoms() { return _defined; }
 
 private:
@@ -194,10 +169,6 @@ public:
     _references.setAllocator(&f.allocator());
   }
 
-  ~SimpleDefinedAtom() {
-    _references.clearAndLeakNodesUnsafely();
-  }
-
   const File &file() const override { return _file; }
 
   StringRef name() const override { return StringRef(); }
@@ -293,8 +264,6 @@ public:
   SimpleUndefinedAtom(const File &f, StringRef name) : _file(f), _name(name) {
     assert(!name.empty() && "UndefinedAtoms must have a name");
   }
-
-  ~SimpleUndefinedAtom() override = default;
 
   /// file - returns the File that produced/owns this Atom
   const File &file() const override { return _file; }

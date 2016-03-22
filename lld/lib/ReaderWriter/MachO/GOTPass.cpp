@@ -54,8 +54,6 @@ public:
   GOTEntryAtom(const File &file, bool is64, StringRef name)
     : SimpleDefinedAtom(file), _is64(is64), _name(name) { }
 
-  ~GOTEntryAtom() override = default;
-
   ContentType contentType() const override {
     return DefinedAtom::typeGOT;
   }

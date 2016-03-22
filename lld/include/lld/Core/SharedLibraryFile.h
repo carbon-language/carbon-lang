@@ -27,33 +27,26 @@ public:
   /// Check if the shared library exports a symbol with the specified name.
   /// If so, return a SharedLibraryAtom which represents that exported
   /// symbol.  Otherwise return nullptr.
-  virtual OwningAtomPtr<SharedLibraryAtom> exports(StringRef name,
+  virtual const SharedLibraryAtom *exports(StringRef name,
                                            bool dataSymbolOnly) const = 0;
 
   // Returns the install name.
   virtual StringRef getDSOName() const = 0;
 
-  const AtomRange<DefinedAtom> defined() const override {
+  const AtomVector<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  const AtomRange<UndefinedAtom> undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     return _undefinedAtoms;
   }
 
-  const AtomRange<SharedLibraryAtom> sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  const AtomRange<AbsoluteAtom> absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
-  }
-
-  void clearAtoms() override {
-    _definedAtoms.clear();
-    _undefinedAtoms.clear();
-    _sharedLibraryAtoms.clear();
-    _absoluteAtoms.clear();
   }
 
 protected:

@@ -35,10 +35,10 @@ public:
   Resolver(LinkingContext &ctx) : _ctx(ctx), _result(new MergedFile()) {}
 
   // InputFiles::Handler methods
-  void doDefinedAtom(OwningAtomPtr<DefinedAtom> atom);
-  bool doUndefinedAtom(OwningAtomPtr<UndefinedAtom> atom);
-  void doSharedLibraryAtom(OwningAtomPtr<SharedLibraryAtom> atom);
-  void doAbsoluteAtom(OwningAtomPtr<AbsoluteAtom> atom);
+  void doDefinedAtom(const DefinedAtom&);
+  bool doUndefinedAtom(const UndefinedAtom &);
+  void doSharedLibraryAtom(const SharedLibraryAtom &);
+  void doAbsoluteAtom(const AbsoluteAtom &);
 
   // Handle files, this adds atoms from the current file thats
   // being processed by the resolver
@@ -71,16 +71,17 @@ private:
                                  UndefCallback callback);
 
   void markLive(const Atom *atom);
+  void addAtoms(const std::vector<const DefinedAtom *>&);
 
   class MergedFile : public SimpleFile {
   public:
     MergedFile() : SimpleFile("<linker-internal>", kindResolverMergedObject) {}
-    void addAtoms(llvm::MutableArrayRef<OwningAtomPtr<Atom>> atoms);
+    void addAtoms(std::vector<const Atom*>& atoms);
   };
 
   LinkingContext &_ctx;
   SymbolTable _symbolTable;
-  std::vector<OwningAtomPtr<Atom>>     _atoms;
+  std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;
   llvm::DenseSet<const Atom *>  _liveAtoms;
   llvm::DenseSet<const Atom *>  _deadAtoms;
