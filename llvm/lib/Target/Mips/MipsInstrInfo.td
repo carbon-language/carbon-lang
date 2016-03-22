@@ -507,8 +507,10 @@ def ConstantUImm5Plus1AsmOperandClass
           5, [ConstantUImm5Plus32NormalizeAsmOperandClass], 1>;
 def ConstantUImm5AsmOperandClass
     : ConstantUImmAsmOperandClass<5, [ConstantUImm5Plus1AsmOperandClass]>;
+def ConstantSImm5AsmOperandClass
+    : ConstantSImmAsmOperandClass<5, [ConstantUImm5AsmOperandClass]>;
 def ConstantUImm4AsmOperandClass
-    : ConstantUImmAsmOperandClass<4, [ConstantUImm5AsmOperandClass]>;
+    : ConstantUImmAsmOperandClass<4, [ConstantSImm5AsmOperandClass]>;
 def ConstantSImm4AsmOperandClass
     : ConstantSImmAsmOperandClass<4, [ConstantUImm4AsmOperandClass]>;
 def ConstantUImm3AsmOperandClass
@@ -724,7 +726,7 @@ foreach I = {1, 2, 3, 4, 5, 6, 8} in
   }
 
 // Signed operands
-foreach I = {4} in
+foreach I = {4, 5} in
   def simm # I : Operand<i32> {
     let DecoderMethod = "DecodeSImmWithOffset<" # I # ">";
     let ParserMatchClass =

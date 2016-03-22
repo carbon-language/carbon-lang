@@ -70,7 +70,6 @@ def immZExt4Ptr : ImmLeaf<iPTR, [{return isUInt<4>(Imm);}]>;
 
 // Operands
 
-def simm5 : Operand<i32>;
 
 def vsplat_simm5 : Operand<vAny>;
 
