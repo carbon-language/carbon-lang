@@ -732,11 +732,11 @@ public:
   struct StatepointLoweringInfo {
     /// Bases[i] is the base pointer for Ptrs[i].  Together they denote the set
     /// of gc pointers this STATEPOINT has to relocate.
-    ArrayRef<const Value *> Bases;
-    ArrayRef<const Value *> Ptrs;
+    SmallVector<const Value *, 16> Bases;
+    SmallVector<const Value *, 16> Ptrs;
 
     /// The set of gc.relocate calls associated with this gc.statepoint.
-    ArrayRef<const GCRelocateInst *> GCRelocates;
+    SmallVector<const GCRelocateInst *, 16> GCRelocates;
 
     /// The full list of gc arguments to the gc.statepoint being lowered.
     ArrayRef<const Use> GCArgs;

@@ -334,12 +334,6 @@ static void getIncomingStatepointGCValues(
     Ptrs.push_back(Relocate->getDerivedPtr());
   }
 
-  // Remove any redundant llvm::Values which map to the same SDValue as another
-  // input.  Also has the effect of removing duplicates in the original
-  // llvm::Value input list as well.  This is a useful optimization for
-  // reducing the size of the StackMap section.  It has no other impact.
-  removeDuplicatesGCPtrs(Bases, Ptrs, Relocs, Builder);
-
   assert(Bases.size() == Ptrs.size() && Ptrs.size() == Relocs.size());
 }
 
@@ -566,10 +560,20 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
   StatepointLowering.startNewStatepoint(*this);
 
 #ifndef NDEBUG
+  // We schedule gc relocates before removeDuplicatesGCPtrs since we _will_
+  // encounter the duplicate gc relocates we elide in removeDuplicatesGCPtrs.
   for (auto *Reloc : SI.GCRelocates)
     if (Reloc->getParent() == SI.StatepointInstr->getParent())
       StatepointLowering.scheduleRelocCall(*Reloc);
 #endif
+
+  // Remove any redundant llvm::Values which map to the same SDValue as another
+  // input.  Also has the effect of removing duplicates in the original
+  // llvm::Value input list as well.  This is a useful optimization for
+  // reducing the size of the StackMap section.  It has no other impact.
+  removeDuplicatesGCPtrs(SI.Bases, SI.Ptrs, SI.GCRelocates, *this);
+  assert(SI.Bases.size() == SI.Ptrs.size() &&
+         SI.Ptrs.size() == SI.GCRelocates.size());
 
   // Lower statepoint vmstate and gcstate arguments
   SmallVector<SDValue, 10> LoweredMetaArgs;
