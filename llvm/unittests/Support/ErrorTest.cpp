@@ -9,6 +9,7 @@
 
 #include "llvm/Support/Error.h"
 #include "llvm/Support/Errc.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "gtest/gtest.h"
 #include <memory>
 
@@ -28,6 +29,10 @@ public:
   // Log this error to a stream.
   void log(raw_ostream &OS) const override {
     OS << "CustomError { " << getInfo() << "}";
+  }
+
+  std::error_code convertToErrorCode() const override {
+    llvm_unreachable("CustomError doesn't support ECError conversion");
   }
 
 protected:
@@ -55,6 +60,10 @@ public:
   // Log this error to a stream.
   void log(raw_ostream &OS) const override {
     OS << "CustomSubError { " << getInfo() << ", " << getExtraInfo() << "}";
+  }
+
+  std::error_code convertToErrorCode() const override {
+    llvm_unreachable("CustomSubError doesn't support ECError conversion");
   }
 
 protected:
