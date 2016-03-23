@@ -85,8 +85,16 @@ void BitcodeCompiler::add(BitcodeFile &F) {
     if (!BitcodeFile::shouldSkip(Sym)) {
       if (SymbolBody *B = Bodies[BodyIndex++])
         if (&B->repl() == B && isa<DefinedBitcode>(B)) {
-          if (GV->getLinkage() == llvm::GlobalValue::LinkOnceODRLinkage)
+          switch (GV->getLinkage()) {
+          default:
+            break;
+          case llvm::GlobalValue::LinkOnceAnyLinkage:
+            GV->setLinkage(GlobalValue::WeakAnyLinkage);
+            break;
+          case llvm::GlobalValue::LinkOnceODRLinkage:
             GV->setLinkage(GlobalValue::WeakODRLinkage);
+            break;
+          }
           Keep.push_back(GV);
         }
     }
