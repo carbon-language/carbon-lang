@@ -167,5 +167,5 @@ namespace ThisLambdaIsNotMyFriend {
   template <class T> void foo() {
     []() { A::foo(); }(); // expected-error {{private}}
   }
-  void bar() { foo<void>(); } // expected-note {{instantiation}}
+  void bar() { foo<void>(); }
 }
