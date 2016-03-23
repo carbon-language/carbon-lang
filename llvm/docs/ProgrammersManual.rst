@@ -356,12 +356,24 @@ that inherits from the ErrorInfo utility:
     return Error::success();
   }
 
+Error values can be implicitly converted to bool: true for error, false for
+success, enabling the following idiom:
+
+.. code-block::
+
+  if (auto Err = mayFail())
+    return Err;
+
+  // Success! We can proceed.
+
+
 For functions that can fail but need to return a value the ``Expected<T>``
 utility can be used. Values of this type can be constructed with either a
-``T``, or a ``Error``. Values are implicitly convertible to boolean: true
-for success, false for error. If success, the ``T`` value can be accessed via
-the dereference operator. If failure, the ``Error`` value can be extracted
-using the ``takeError()`` method:
+``T``, or a ``Error``. Expected<T> values are also implicitly convertible to
+boolean, but with the opposite convention to Error: true for success, false for
+error. If success, the ``T`` value can be accessed via the dereference operator.
+If failure, the ``Error`` value can be extracted using the ``takeError()``
+method. Idiomatic usage looks like:
 
 .. code-block:: c++
 
