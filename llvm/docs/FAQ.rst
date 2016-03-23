@@ -178,12 +178,6 @@ available in the debug build.  These tests will fail in an optimized or
 profile build.
 
 
-Compiling LLVM with GCC 3.3.2 fails, what should I do?
-------------------------------------------------------
-This is `a bug in GCC <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=13392>`_,
-and affects projects other than LLVM.  Try upgrading or downgrading your GCC.
-
-
 After Subversion update, rebuilding gives the error "No rule to make target".
 -----------------------------------------------------------------------------
 If the error is of the form:
