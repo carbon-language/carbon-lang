@@ -151,7 +151,12 @@ OPTIONS
 **--compile-command** *command*
 
  This option defines the command to use with the **--compile-custom**
- option to compile the bitcode testcase. This can be useful for
+ option to compile the bitcode testcase. The command should exit with a
+ failure exit code if the file is "interesting" and should exit with a
+ success exit code (i.e. 0) otherwise (this is the same as if it crashed on
+ "interesting" inputs).
+
+ This can be useful for
  testing compiler output without running any link or execute stages. To
  generate a reduced unit test, you may add CHECK directives to the
  testcase and pass the name of an executable compile-command script in this form:
