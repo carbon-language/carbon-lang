@@ -422,9 +422,8 @@ bool ModuleLinker::linkIfNeeded(GlobalValue &GV) {
     bool LinkFromSrc;
     Comdat::SelectionKind SK;
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
-    if (LinkFromSrc)
-      ValuesToLink.insert(&GV);
-    return false;
+    if (!LinkFromSrc)
+      return false;
   }
 
   bool LinkFromSrc = true;
@@ -565,7 +564,8 @@ bool ModuleLinker::run() {
     if (!SC)
       continue;
     for (GlobalValue *GV2 : ComdatMembers[SC])
-      ValuesToLink.insert(GV2);
+      if (GV2->hasInternalLinkage())
+        ValuesToLink.insert(GV2);
   }
 
   if (shouldInternalizeLinkedSymbols()) {
