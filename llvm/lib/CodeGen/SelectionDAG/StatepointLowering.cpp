@@ -317,26 +317,6 @@ static std::pair<SDValue, SDNode *> lowerCallFromStatepointLoweringInfo(
   return std::make_pair(ReturnValue, CallEnd->getOperand(0).getNode());
 }
 
-/// Callect all gc pointers coming into statepoint intrinsic, clean them up,
-/// and return two arrays:
-///   Bases - base pointers incoming to this statepoint
-///   Ptrs - derived pointers incoming to this statepoint
-///   Relocs - the gc_relocate corresponding to each base/ptr pair
-/// Elements of this arrays should be in one-to-one correspondence with each
-/// other i.e Bases[i], Ptrs[i] are from the same gcrelocate call
-static void getIncomingStatepointGCValues(
-    SmallVectorImpl<const Value *> &Bases, SmallVectorImpl<const Value *> &Ptrs,
-    SmallVectorImpl<const GCRelocateInst *> &Relocs,
-    ImmutableStatepoint StatepointSite, SelectionDAGBuilder &Builder) {
-  for (const GCRelocateInst *Relocate : StatepointSite.getRelocates()) {
-    Relocs.push_back(Relocate);
-    Bases.push_back(Relocate->getBasePtr());
-    Ptrs.push_back(Relocate->getDerivedPtr());
-  }
-
-  assert(Bases.size() == Ptrs.size() && Ptrs.size() == Relocs.size());
-}
-
 /// Spill a value incoming to the statepoint. It might be either part of
 /// vmstate
 /// or gcstate. In both cases unconditionally spill it on the stack unless it
@@ -746,12 +726,6 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
 void
 SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
                                      const BasicBlock *EHPadBB /*= nullptr*/) {
-  SmallVector<const Value *, 16> Bases;
-  SmallVector<const Value *, 16> Ptrs;
-  SmallVector<const GCRelocateInst *, 16> GCRelocates;
-
-  getIncomingStatepointGCValues(Bases, Ptrs, GCRelocates, ISP, *this);
-
   assert(ISP.getCallSite().getCallingConv() != CallingConv::AnyReg &&
          "anyregcc is not supported on statepoints!");
 
@@ -790,9 +764,12 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
                            ISP.getNumCallArgs(), ActualCallee,
                            ISP.getActualReturnType(), false /* IsPatchPoint */);
 
-  SI.Bases = Bases;
-  SI.Ptrs = Ptrs;
-  SI.GCRelocates = GCRelocates;
+  for (const GCRelocateInst *Relocate : ISP.getRelocates()) {
+    SI.GCRelocates.push_back(Relocate);
+    SI.Bases.push_back(Relocate->getBasePtr());
+    SI.Ptrs.push_back(Relocate->getDerivedPtr());
+  }
+
   SI.GCArgs = ArrayRef<const Use>(ISP.gc_args_begin(), ISP.gc_args_end());
   SI.StatepointInstr = ISP.getInstruction();
   SI.GCTransitionArgs =
