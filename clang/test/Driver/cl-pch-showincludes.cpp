@@ -11,8 +11,7 @@
 // RUN: %clang_cl -Werror /showIncludes /I%S/Inputs /Ycheader2.h /FIheader2.h /Fp%t.pch /c /Fo%t -- %s \
 // RUN:   | FileCheck --strict-whitespace -check-prefix=CHECK-YC %s
 // CHECK-YC: Note: including file: {{[^ ]*header2.h}}
-// FIXME: header1.h should be indented one more:
-// CHECK-YC: Note: including file: {{[^ ]*header1.h}}
+// CHECK-YC: Note: including file:  {{[^ ]*header1.h}}
 // CHECK-YC: Note: including file: {{[^ ]*header3.h}}
 
 // When using the pch, only the direct include is printed.
@@ -35,11 +34,9 @@
 // /FI flags before the /Yc arg should be printed, /FI flags after it shouldn't.
 // RUN: %clang_cl -Werror /showIncludes /I%S/Inputs /Ycheader2.h /FIheader0.h /FIheader2.h /FIheader4.h /Fp%t.pch /c /Fo%t -- %s \
 // RUN:   | FileCheck --strict-whitespace -check-prefix=CHECK-YCFI %s
-// FIXME: The order of the first two lines here must be reversed:
-// CHECK-YCFI: Note: including file: {{[^ ]*header2.h}}
 // CHECK-YCFI: Note: including file: {{[^ ]*header0.h}}
-// FIXME: header1.h should be indented one more:
-// CHECK-YCFI: Note: including file: {{[^ ]*header1.h}}
+// CHECK-YCFI: Note: including file: {{[^ ]*header2.h}}
+// CHECK-YCFI: Note: including file:  {{[^ ]*header1.h}}
 // CHECK-YCFI: Note: including file: {{[^ ]*header4.h}}
 // CHECK-YCFI: Note: including file: {{[^ ]*header3.h}}
 
