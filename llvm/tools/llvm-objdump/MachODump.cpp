@@ -179,7 +179,7 @@ struct SymbolSorter {
     ErrorOr<SymbolRef::Type> BTypeOrErr = B.getType();
     if (std::error_code EC = BTypeOrErr.getError())
         report_fatal_error(EC.message());
-    SymbolRef::Type BType = *ATypeOrErr;
+    SymbolRef::Type BType = *BTypeOrErr;
     uint64_t AAddr = (AType != SymbolRef::ST_Function) ? 0 : A.getValue();
     uint64_t BAddr = (BType != SymbolRef::ST_Function) ? 0 : B.getValue();
     return AAddr < BAddr;
