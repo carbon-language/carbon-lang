@@ -47,9 +47,10 @@ public:
   /// spilled.  Otherwise, the value has already been spilled and no
   /// further action is required by the caller.
   SDValue getLocation(SDValue Val) {
-    if (!Locations.count(Val))
+    auto I = Locations.find(Val);
+    if (I == Locations.end())
       return SDValue();
-    return Locations[Val];
+    return I->second;
   }
 
   void setLocation(SDValue Val, SDValue Location) {
