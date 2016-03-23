@@ -837,7 +837,7 @@ int llvm::isStridedPtr(PredicatedScalarEvolution &PSE, Value *Ptr,
 
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PtrScev);
   if (Assume && !AR)
-    AR = dyn_cast<SCEVAddRecExpr>(PSE.getAsAddRec(Ptr));
+    AR = PSE.getAsAddRec(Ptr);
 
   if (!AR) {
     DEBUG(dbgs() << "LAA: Bad stride - Not an AddRecExpr pointer " << *Ptr
