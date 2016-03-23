@@ -6423,16 +6423,20 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   }
 
   // Determine what kind of declaration we're shadowing.
-  unsigned Kind;
+
+  // The order must be consistent with the %select in the warning message.
+  enum ShadowedDeclKind { Local, Global, StaticMember, Field };
+  ShadowedDeclKind Kind;
   if (isa<RecordDecl>(OldDC)) {
     if (isa<FieldDecl>(ShadowedDecl))
-      Kind = 3; // field
+      Kind = Field;
     else
-      Kind = 2; // static data member
-  } else if (OldDC->isFileContext())
-    Kind = 1; // global
-  else
-    Kind = 0; // local
+      Kind = StaticMember;
+  } else if (OldDC->isFileContext()) {
+    Kind = Global;
+  } else {
+    Kind = Local;
+  }
 
   DeclarationName Name = R.getLookupName();
 
