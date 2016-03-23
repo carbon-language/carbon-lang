@@ -17,7 +17,7 @@
 //
 // RUN: %clang -fsyntax-only -fdiagnostics-format=vi    %s 2>&1 | FileCheck %s -check-prefix=VI
 //
-// RUN: %clang -fsyntax-only -fdiagnostics-format=msvc -fno-show-column -fmsc-version=1500 %s 2>&1 | FileCheck %s -check-prefix=MSVC2015_ORIG
+// RUN: %clang -fsyntax-only -fdiagnostics-format=msvc -fno-show-column -fmsc-version=1900 %s 2>&1 | FileCheck %s -check-prefix=MSVC2015_ORIG
 //
 // RUN: %clang -fsyntax-only -fno-show-column %s 2>&1 | FileCheck %s -check-prefix=NO_COLUMN
 //
@@ -40,7 +40,7 @@
 // MSVC: {{.*}}(36,8) : warning: extra tokens at end of #endif directive [-Wextra-tokens]
 // MSVC2015: {{.*}}(36,8): warning: extra tokens at end of #endif directive [-Wextra-tokens]
 // VI: {{.*}} +36:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
-// MSVC2015_ORIG: {{.*}}(36) : warning: extra tokens at end of #endif directive [-Wextra-tokens]
+// MSVC2015_ORIG: {{.*}}(36): warning: extra tokens at end of #endif directive [-Wextra-tokens]
 // NO_COLUMN: {{.*}}:36: warning: extra tokens at end of #endif directive [-Wextra-tokens]
 // MSVC2010-FALLBACK: {{.*}}(36,7) : error(clang): extra tokens at end of #endif directive
 // MSVC2013-FALLBACK: {{.*}}(36,8) : error(clang): extra tokens at end of #endif directive
