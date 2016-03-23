@@ -727,8 +727,7 @@ public:
   void UpdateSplitBlock(MachineBasicBlock *First, MachineBasicBlock *Last);
 
   /// Describes a gc.statepoint or a gc.statepoint like thing for the purposes
-  /// of lowering into a STATEPOINT node.  Right now it only abstracts an actual
-  /// gc.statepoint, but that will change in the future.
+  /// of lowering into a STATEPOINT node.
   struct StatepointLoweringInfo {
     /// Bases[i] is the base pointer for Ptrs[i].  Together they denote the set
     /// of gc pointers this STATEPOINT has to relocate.
