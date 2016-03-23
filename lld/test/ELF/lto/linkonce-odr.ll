@@ -13,5 +13,5 @@ define void @g() {
   ret void
 }
 
-; Be sure that 'f' is kept and has weak_odr visibility.
+; Be sure that 'f' is kept and has weak_odr linkage.
 ; CHECK: define weak_odr void @f()
