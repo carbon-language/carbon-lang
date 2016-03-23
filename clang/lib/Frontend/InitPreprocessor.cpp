@@ -972,6 +972,10 @@ void clang::InitializePreprocessor(
                          PP.getDiagnostics());
   }
 
+  // Exit the command line and go back to <built-in> (2 is LC_LEAVE).
+  if (!PP.getLangOpts().AsmPreprocessor)
+    Builder.append("# 1 \"<built-in>\" 2");
+
   // If -imacros are specified, include them now.  These are processed before
   // any -include directives.
   for (unsigned i = 0, e = InitOpts.MacroIncludes.size(); i != e; ++i)
@@ -989,10 +993,6 @@ void clang::InitializePreprocessor(
     const std::string &Path = InitOpts.Includes[i];
     AddImplicitInclude(Builder, Path);
   }
-
-  // Exit the command line and go back to <built-in> (2 is LC_LEAVE).
-  if (!PP.getLangOpts().AsmPreprocessor)
-    Builder.append("# 1 \"<built-in>\" 2");
 
   // Instruct the preprocessor to skip the preamble.
   PP.setSkipMainFilePreamble(InitOpts.PrecompiledPreambleBytes.first,

@@ -148,11 +148,18 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
   // line buffers.
   bool ShowHeader = (HasProcessedPredefines ||
                      (ShowAllHeaders && CurrentIncludeDepth > 2));
+  unsigned IncludeDepth = CurrentIncludeDepth;
+  if (!HasProcessedPredefines)
+    --IncludeDepth;  // Ignore indent from <built-in>.
 
   // Dump the header include information we are past the predefines buffer or
-  // are showing all headers.
-  if (ShowHeader && Reason == PPCallbacks::EnterFile) {
-    PrintHeaderInfo(OutputFile, UserLoc.getFilename(),
-                    ShowDepth, CurrentIncludeDepth, MSStyle);
+  // are showing all headers and this isn't the magic implicit <command line>
+  // header.
+  // FIXME: Identify headers in a more robust way than comparing their name to
+  // "<command line>" and "<built-in>" in a bunch of places.
+  if (ShowHeader && Reason == PPCallbacks::EnterFile &&
+      UserLoc.getFilename() != StringRef("<command line>")) {
+    PrintHeaderInfo(OutputFile, UserLoc.getFilename(), ShowDepth, IncludeDepth,
+                    MSStyle);
   }
 }

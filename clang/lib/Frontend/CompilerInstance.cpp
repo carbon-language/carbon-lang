@@ -372,7 +372,7 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
 
   if (DepOpts.PrintShowIncludes) {
     AttachHeaderIncludeGen(*PP, DepOpts.ExtraDeps,
-                           /*ShowAllHeaders=*/false, /*OutputPath=*/"",
+                           /*ShowAllHeaders=*/true, /*OutputPath=*/"",
                            /*ShowDepth=*/true, /*MSStyle=*/true);
   }
 }
