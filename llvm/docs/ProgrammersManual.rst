@@ -1876,7 +1876,7 @@ pointer from an iterator is very straight-forward.  Assuming that ``i`` is a
 
 However, the iterators you'll be working with in the LLVM framework are special:
 they will automatically convert to a ptr-to-instance type whenever they need to.
-Instead of derferencing the iterator and then taking the address of the result,
+Instead of dereferencing the iterator and then taking the address of the result,
 you can simply assign the iterator to the proper pointer type and you get the
 dereference and address-of operation as a result of the assignment (behind the
 scenes, this is a result of overloading casting mechanisms).  Thus the second
