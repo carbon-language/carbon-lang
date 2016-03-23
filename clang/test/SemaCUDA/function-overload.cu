@@ -16,65 +16,85 @@
 
 #include "Inputs/cuda.h"
 
-typedef int (*fp_t)(void);
-typedef void (*gp_t)(void);
+typedef int (*fp_t)();
+typedef void (*gp_t)();
 
-// Host and unattributed functions can't be overloaded
-__host__ int hh(void) { return 1; } // expected-note {{previous definition is here}}
-int hh(void) { return 1; } // expected-error {{redefinition of 'hh'}}
+// Host and unattributed functions can't be overloaded.
+__host__ void hh() {} // expected-note {{previous definition is here}}
+void hh() {} // expected-error {{redefinition of 'hh'}}
 
-// H/D overloading is OK
-__host__ int dh(void) { return 2; }
-__device__ int dh(void) { return 2; }
+// H/D overloading is OK.
+__host__ int dh() { return 2; }
+__device__ int dh() { return 2; }
 
-// H/HD and D/HD are not allowed
-__host__ __device__ int hdh(void) { return 5; } // expected-note {{previous definition is here}}
-__host__ int hdh(void) { return 4; } // expected-error {{redefinition of 'hdh'}}
+// H/HD and D/HD are not allowed.
+__host__ __device__ int hdh() { return 5; } // expected-note {{previous definition is here}}
+__host__ int hdh() { return 4; } // expected-error {{redefinition of 'hdh'}}
 
-__host__ int hhd(void) { return 4; } // expected-note {{previous definition is here}}
-__host__ __device__ int hhd(void) { return 5; } // expected-error {{redefinition of 'hhd'}}
+__host__ int hhd() { return 4; } // expected-note {{previous definition is here}}
+__host__ __device__ int hhd() { return 5; } // expected-error {{redefinition of 'hhd'}}
 // expected-warning@-1 {{attribute declaration must precede definition}}
 // expected-note@-3 {{previous definition is here}}
 
-__host__ __device__ int hdd(void) { return 7; } // expected-note {{previous definition is here}}
-__device__ int hdd(void) { return 6; } // expected-error {{redefinition of 'hdd'}}
+__host__ __device__ int hdd() { return 7; } // expected-note {{previous definition is here}}
+__device__ int hdd() { return 6; } // expected-error {{redefinition of 'hdd'}}
 
-__device__ int dhd(void) { return 6; } // expected-note {{previous definition is here}}
-__host__ __device__ int dhd(void) { return 7; } // expected-error {{redefinition of 'dhd'}}
+__device__ int dhd() { return 6; } // expected-note {{previous definition is here}}
+__host__ __device__ int dhd() { return 7; } // expected-error {{redefinition of 'dhd'}}
 // expected-warning@-1 {{attribute declaration must precede definition}}
 // expected-note@-3 {{previous definition is here}}
 
-// Same tests for extern "C" functions
-extern "C" __host__ int chh(void) {return 11;} // expected-note {{previous definition is here}}
-extern "C" int chh(void) {return 11;} // expected-error {{redefinition of 'chh'}}
+// Same tests for extern "C" functions.
+extern "C" __host__ int chh() {return 11;} // expected-note {{previous definition is here}}
+extern "C" int chh() {return 11;} // expected-error {{redefinition of 'chh'}}
 
-// H/D overloading is OK
-extern "C" __device__ int cdh(void) {return 10;}
-extern "C" __host__ int cdh(void) {return 11;}
+// H/D overloading is OK.
+extern "C" __device__ int cdh() {return 10;}
+extern "C" __host__ int cdh() {return 11;}
 
 // H/HD and D/HD overloading is not allowed.
-extern "C" __host__ __device__ int chhd1(void) {return 12;} // expected-note {{previous definition is here}}
-extern "C" __host__ int chhd1(void) {return 13;} // expected-error {{redefinition of 'chhd1'}}
+extern "C" __host__ __device__ int chhd1() {return 12;} // expected-note {{previous definition is here}}
+extern "C" __host__ int chhd1() {return 13;} // expected-error {{redefinition of 'chhd1'}}
 
-extern "C" __host__ int chhd2(void) {return 13;} // expected-note {{previous definition is here}}
-extern "C" __host__ __device__ int chhd2(void) {return 12;} // expected-error {{redefinition of 'chhd2'}}
+extern "C" __host__ int chhd2() {return 13;} // expected-note {{previous definition is here}}
+extern "C" __host__ __device__ int chhd2() {return 12;} // expected-error {{redefinition of 'chhd2'}}
 // expected-warning@-1 {{attribute declaration must precede definition}}
 // expected-note@-3 {{previous definition is here}}
 
 // Helper functions to verify calling restrictions.
-__device__ int d(void) { return 8; }
-__host__ int h(void) { return 9; }
-__global__ void g(void) {}
-extern "C" __device__ int cd(void) {return 10;}
-extern "C" __host__ int ch(void) {return 11;}
+__device__ int d() { return 8; }
+// expected-note@-1 1+ {{'d' declared here}}
+// expected-note@-2 1+ {{candidate function not viable: call to __device__ function from __host__ function}}
+// expected-note@-3 0+ {{candidate function not viable: call to __device__ function from __host__ __device__ function}}
 
-__host__ void hostf(void) {
+__host__ int h() { return 9; }
+// expected-note@-1 1+ {{'h' declared here}}
+// expected-note@-2 1+ {{candidate function not viable: call to __host__ function from __device__ function}}
+// expected-note@-3 0+ {{candidate function not viable: call to __host__ function from __host__ __device__ function}}
+// expected-note@-4 1+ {{candidate function not viable: call to __host__ function from __global__ function}}
+
+__global__ void g() {}
+// expected-note@-1 1+ {{'g' declared here}}
+// expected-note@-2 1+ {{candidate function not viable: call to __global__ function from __device__ function}}
+// expected-note@-3 0+ {{candidate function not viable: call to __global__ function from __host__ __device__ function}}
+// expected-note@-4 1+ {{candidate function not viable: call to __global__ function from __global__ function}}
+
+extern "C" __device__ int cd() {return 10;}
+// expected-note@-1 1+ {{'cd' declared here}}
+// expected-note@-2 1+ {{candidate function not viable: call to __device__ function from __host__ function}}
+// expected-note@-3 0+ {{candidate function not viable: call to __device__ function from __host__ __device__ function}}
+
+extern "C" __host__ int ch() {return 11;}
+// expected-note@-1 1+ {{'ch' declared here}}
+// expected-note@-2 1+ {{candidate function not viable: call to __host__ function from __device__ function}}
+// expected-note@-3 0+ {{candidate function not viable: call to __host__ function from __host__ __device__ function}}
+// expected-note@-4 1+ {{candidate function not viable: call to __host__ function from __global__ function}}
+
+__host__ void hostf() {
   fp_t dp = d;
   // expected-error@-1 {{reference to __device__ function 'd' in __host__ function}}
-  // expected-note@65 {{'d' declared here}}
   fp_t cdp = cd;
   // expected-error@-1 {{reference to __device__ function 'cd' in __host__ function}}
-  // expected-note@68 {{'cd' declared here}}
   fp_t hp = h;
   fp_t chp = ch;
   fp_t dhp = dh;
@@ -83,10 +103,8 @@ __host__ void hostf(void) {
 
   d();
   // expected-error@-1 {{no matching function for call to 'd'}}
-  // expected-note@65 {{candidate function not viable: call to __device__ function from __host__ function}}
   cd();
   // expected-error@-1 {{no matching function for call to 'cd'}}
-  // expected-note@68 {{candidate function not viable: call to __device__ function from __host__ function}}
   h();
   ch();
   dh();
@@ -95,108 +113,85 @@ __host__ void hostf(void) {
   g<<<0,0>>>();
 }
 
-
-__device__ void devicef(void) {
+__device__ void devicef() {
   fp_t dp = d;
   fp_t cdp = cd;
   fp_t hp = h;
   // expected-error@-1 {{reference to __host__ function 'h' in __device__ function}}
-  // expected-note@66 {{'h' declared here}}
   fp_t chp = ch;
   // expected-error@-1 {{reference to __host__ function 'ch' in __device__ function}}
-  // expected-note@69 {{'ch' declared here}}
   fp_t dhp = dh;
   fp_t cdhp = cdh;
   gp_t gp = g; // expected-error {{reference to __global__ function 'g' in __device__ function}}
-               // expected-note@67 {{'g' declared here}}
 
   d();
   cd();
   h(); // expected-error {{no matching function for call to 'h'}}
-  // expected-note@66 {{candidate function not viable: call to __host__ function from __device__ function}}
   ch(); // expected-error {{no matching function for call to 'ch'}}
-  // expected-note@69 {{candidate function not viable: call to __host__ function from __device__ function}}
   dh();
   cdh();
   g(); // expected-error {{no matching function for call to 'g'}}
-  // expected-note@67 {{candidate function not viable: call to __global__ function from __device__ function}}
   g<<<0,0>>>(); // expected-error {{reference to __global__ function 'g' in __device__ function}}
-  // expected-note@67 {{'g' declared here}}
 }
 
-__global__ void globalf(void) {
+__global__ void globalf() {
   fp_t dp = d;
   fp_t cdp = cd;
   fp_t hp = h;
   // expected-error@-1 {{reference to __host__ function 'h' in __global__ function}}
-  // expected-note@66 {{'h' declared here}}
   fp_t chp = ch;
   // expected-error@-1 {{reference to __host__ function 'ch' in __global__ function}}
-  // expected-note@69 {{'ch' declared here}}
   fp_t dhp = dh;
   fp_t cdhp = cdh;
   gp_t gp = g;
   // expected-error@-1 {{reference to __global__ function 'g' in __global__ function}}
-  // expected-note@67 {{'g' declared here}}
 
   d();
   cd();
   h();
   // expected-error@-1 {{no matching function for call to 'h'}}
-  // expected-note@66 {{candidate function not viable: call to __host__ function from __global__ function}}
   ch();
   // expected-error@-1 {{no matching function for call to 'ch'}}
-  // expected-note@69 {{candidate function not viable: call to __host__ function from __global__ function}}
   dh();
   cdh();
   g(); // expected-error {{no matching function for call to 'g'}}
-  // expected-note@67 {{candidate function not viable: call to __global__ function from __global__ function}}
   g<<<0,0>>>(); // expected-error {{reference to __global__ function 'g' in __global__ function}}
-  // expected-note@67 {{'g' declared here}}
 }
 
-__host__ __device__ void hostdevicef(void) {
+__host__ __device__ void hostdevicef() {
   fp_t dp = d;
   fp_t cdp = cd;
+#if !defined(NOCHECKS) && !defined(__CUDA_ARCH__)
+  // expected-error@-3 {{reference to __device__ function 'd' in __host__ __device__ function}}
+  // expected-error@-3 {{reference to __device__ function 'cd' in __host__ __device__ function}}
+#endif
+
   fp_t hp = h;
   fp_t chp = ch;
-#if !defined(NOCHECKS)
-#if !defined(__CUDA_ARCH__)
-  // expected-error@-6 {{reference to __device__ function 'd' in __host__ __device__ function}}
-  // expected-note@65 {{'d' declared here}}
-  // expected-error@-7 {{reference to __device__ function 'cd' in __host__ __device__ function}}
-  // expected-note@68 {{'cd' declared here}}
-#else
-  // expected-error@-9 {{reference to __host__ function 'h' in __host__ __device__ function}}
-  // expected-note@66 {{'h' declared here}}
-  // expected-error@-10 {{reference to __host__ function 'ch' in __host__ __device__ function}}
-  // expected-note@69 {{'ch' declared here}}
+#if !defined(NOCHECKS) && defined(__CUDA_ARCH__)
+  // expected-error@-3 {{reference to __host__ function 'h' in __host__ __device__ function}}
+  // expected-error@-3 {{reference to __host__ function 'ch' in __host__ __device__ function}}
 #endif
-#endif
+
   fp_t dhp = dh;
   fp_t cdhp = cdh;
   gp_t gp = g;
 #if defined(__CUDA_ARCH__)
   // expected-error@-2 {{reference to __global__ function 'g' in __host__ __device__ function}}
-  // expected-note@67 {{'g' declared here}}
 #endif
 
   d();
   cd();
+#if !defined(NOCHECKS) && !defined(__CUDA_ARCH__)
+  // expected-error@-3 {{no matching function for call to 'd'}}
+  // expected-error@-3 {{no matching function for call to 'cd'}}
+#endif
+
   h();
   ch();
-#if !defined(NOCHECKS)
-#if !defined(__CUDA_ARCH__)
-  // expected-error@-6 {{no matching function for call to 'd'}}
-  // expected-note@65 {{candidate function not viable: call to __device__ function from __host__ __device__ function}}
-  // expected-error@-7 {{no matching function for call to 'cd'}}
-  // expected-note@68 {{candidate function not viable: call to __device__ function from __host__ __device__ function}}
-#else
-  // expected-error@-9 {{no matching function for call to 'h'}}
-  // expected-note@66 {{candidate function not viable: call to __host__ function from __host__ __device__ function}}
-  // expected-error@-10 {{no matching function for call to 'ch'}}
-  // expected-note@69 {{candidate function not viable: call to __host__ function from __host__ __device__ function}}
-#endif
+#if !defined(NOCHECKS) && defined(__CUDA_ARCH__)
+  // expected-error@-3 {{no matching function for call to 'h'}}
+  // expected-error@-3 {{no matching function for call to 'ch'}}
 #endif
 
   dh();
@@ -207,9 +202,7 @@ __host__ __device__ void hostdevicef(void) {
   // expected-error@-3 {{call to global function g not configured}}
 #else
   // expected-error@-5 {{no matching function for call to 'g'}}
-  // expected-note@67 {{candidate function not viable: call to __global__ function from __host__ __device__ function}}
-  // expected-error@-6 {{reference to __global__ function 'g' in __host__ __device__ function}}
-  // expected-note@67 {{'g' declared here}}
+  // expected-error@-5 {{reference to __global__ function 'g' in __host__ __device__ function}}
 #endif  // __CUDA_ARCH__
 }
 
