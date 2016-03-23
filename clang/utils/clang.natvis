@@ -95,7 +95,7 @@ or create a symbolic link so it updates automatically.
     </Expand>
   </Type>
   <Type Name="clang::FieldDecl">
-    <DisplayString>Field {{{*(clang::NamedDecl *)this,view(cpp)nd}}}</DisplayString>
+    <DisplayString>Field {{{*(clang::DeclaratorDecl *)this,view(cpp)nd}}}</DisplayString>
   </Type>
   <Type Name="clang::CXXMethodDecl">
     <DisplayString IncludeView="cpp">{*(clang::FunctionDecl *)this,nd}</DisplayString>
