@@ -45,8 +45,6 @@ protected:
   int Info;
 };
 
-template <> char ErrorInfo<CustomError>::ID = 0;
-
 // Custom error class with a custom base class and some additional random
 // 'info'.
 class CustomSubError : public ErrorInfo<CustomSubError, CustomError> {
@@ -71,8 +69,6 @@ public:
 protected:
   int ExtraInfo;
 };
-
-template <> char ErrorInfo<CustomSubError, CustomError>::ID = 0;
 
 static Error handleCustomError(const CustomError &CE) { return Error(); }
 
@@ -457,3 +453,6 @@ TEST(Error, ErrorCodeConversions) {
 }
 
 } // end anon namespace
+
+template <> char ErrorInfo<CustomError>::ID = 0;
+template <> char ErrorInfo<CustomSubError, CustomError>::ID = 0;
