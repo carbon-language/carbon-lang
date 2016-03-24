@@ -1624,8 +1624,9 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
       if (LocalRedecls.empty())
         Record.push_back(0);
       else {
-        Record.push_back(Writer.Stream.GetCurrentBitNo());
+        auto Start = Writer.Stream.GetCurrentBitNo();
         Writer.Stream.EmitRecord(LOCAL_REDECLARATIONS, LocalRedecls);
+        Record.push_back(Writer.Stream.GetCurrentBitNo() - Start);
       }
     } else {
       Record.push_back(0);
