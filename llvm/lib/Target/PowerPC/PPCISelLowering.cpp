@@ -255,7 +255,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
-  if (Subtarget.hasDirectMove()) {
+  if (Subtarget.hasDirectMove() && isPPC64) {
     setOperationAction(ISD::BITCAST, MVT::f32, Legal);
     setOperationAction(ISD::BITCAST, MVT::i32, Legal);
     setOperationAction(ISD::BITCAST, MVT::i64, Legal);
@@ -557,7 +557,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Legal);
         setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
       }
-      if (Subtarget.hasDirectMove()) {
+      if (Subtarget.hasDirectMove() && isPPC64) {
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Legal);
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Legal);
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Legal);
