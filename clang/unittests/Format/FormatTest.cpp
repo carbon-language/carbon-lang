@@ -11202,7 +11202,7 @@ TEST_F(FormatTest, FormatsTableGenCode) {
 
 // Since this test case uses UNIX-style file path. We disable it for MS
 // compiler.
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 
 TEST(FormatStyle, GetStyleOfFile) {
   vfs::InMemoryFileSystem FS;
