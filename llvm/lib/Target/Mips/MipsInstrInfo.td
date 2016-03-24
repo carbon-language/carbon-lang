@@ -315,6 +315,10 @@ class ASE_CNMIPS {
   list<Predicate> InsnPredicates = [HasCnMips];
 }
 
+class ASE_MIPS64_CNMIPS {
+  list<Predicate> InsnPredicates = [HasMips64, HasCnMips];
+}
+
 class ASE_MSA {
   list<Predicate> InsnPredicates = [HasMSA];
 }
