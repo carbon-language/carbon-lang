@@ -755,6 +755,12 @@ foreach I = {10} in
         !cast<AsmOperandClass>("ConstantSImm" # I # "AsmOperandClass");
   }
 
+foreach I = {5, 10} in
+  def vsplat_simm # I : Operand<vAny> {
+    let ParserMatchClass =
+        !cast<AsmOperandClass>("ConstantSImm" # I # "AsmOperandClass");
+  }
+
 def simm7_lsl2 : Operand<OtherVT> {
   let EncoderMethod = "getSImm7Lsl2Encoding";
   let DecoderMethod = "DecodeSImmWithOffsetAndScale<" # I # ", 0, 4>";
