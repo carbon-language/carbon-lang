@@ -753,6 +753,22 @@ inline std::error_code errorToErrorCode(Error Err) {
   return EC;
 }
 
+/// Convert an ErrorOr<T> to an Expected<T>.
+template <typename T>
+Expected<T> errorOrToExpected(ErrorOr<T> &&EO) {
+  if (auto EC = EO.getError())
+    return errorCodeToError(EC);
+  return std::move(*EO);
+}
+
+/// Convert an Expected<T> to an ErrorOr<T>.
+template <typename T>
+ErrorOr<T> expectedToErrorOr(Expected<T> &&E) {
+  if (auto Err = E.takeError())
+    return errorToErrorCode(std::move(Err));
+  return std::move(*E);
+}
+
 /// Helper for check-and-exit error handling.
 ///
 /// For tool use only. NOT FOR USE IN LIBRARY CODE.
