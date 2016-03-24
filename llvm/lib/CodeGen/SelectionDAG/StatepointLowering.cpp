@@ -923,3 +923,37 @@ void SelectionDAGBuilder::visitGCRelocate(const GCRelocateInst &Relocate) {
   assert(SpillLoad.getNode());
   setValue(&Relocate, SpillLoad);
 }
+
+void SelectionDAGBuilder::LowerDeoptimizeCall(const CallInst *CI) {
+  const auto &TLI = DAG.getTargetLoweringInfo();
+
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(RTLIB::DEOPTIMIZE),
+                                         TLI.getPointerTy(DAG.getDataLayout()));
+  StatepointLoweringInfo SI(DAG);
+  unsigned ArgBeginIndex = CI->arg_begin() - CI->op_begin();
+  populateCallLoweringInfo(SI.CLI, CI, ArgBeginIndex, CI->getNumArgOperands(),
+                           Callee, CI->getType(), false);
+
+  // We don't lower calls to __llvm_deoptimize as varargs, but as a
+  // regular call.
+  assert(!SI.CLI.IsVarArg && "Expected from populateCallLoweringInfo!");
+
+  auto DeoptBundle = *CI->getOperandBundle(LLVMContext::OB_deopt);
+
+  unsigned DefaultID = StatepointDirectives::DeoptBundleStatepointID;
+
+  auto SD = parseStatepointDirectivesFromAttrs(CI->getAttributes());
+  SI.ID = SD.StatepointID.getValueOr(DefaultID);
+  SI.NumPatchBytes = SD.NumPatchBytes.getValueOr(0);
+
+  SI.DeoptState =
+      ArrayRef<const Use>(DeoptBundle.Inputs.begin(), DeoptBundle.Inputs.end());
+  SI.StatepointFlags = static_cast<uint64_t>(StatepointFlags::None);
+
+  // NB! The GC arguments are specifically left empty.
+
+  if (SDValue ReturnVal = LowerAsSTATEPOINT(SI)) {
+    ReturnVal = lowerRangeToAssertZExt(DAG, *CI, ReturnVal);
+    setValue(CI, ReturnVal);
+  }
+}
