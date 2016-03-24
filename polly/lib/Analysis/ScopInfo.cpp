@@ -99,12 +99,6 @@ static cl::opt<bool> DetectReductions("polly-detect-reductions",
                                       cl::Hidden, cl::ZeroOrMore,
                                       cl::init(true), cl::cat(PollyCategory));
 
-static cl::opt<int> MaxDisjunctsAssumed(
-    "polly-max-disjuncts-assumed",
-    cl::desc("The maximal number of disjuncts we allow in the assumption "
-             "context (this bounds compile time)"),
-    cl::Hidden, cl::ZeroOrMore, cl::init(150), cl::cat(PollyCategory));
-
 static cl::opt<bool> IgnoreIntegerWrapping(
     "polly-ignore-integer-wrapping",
     cl::desc("Do not build run-time checks to proof absence of integer "
