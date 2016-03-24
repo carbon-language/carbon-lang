@@ -536,7 +536,8 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
 
   // Check for RESTORE_DEALLOC_RET* tail call. Don't emit an extra dealloc-
   // frame instruction if we encounter it.
-  if (RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4) {
+  if (RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4 ||
+      RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4_PIC) {
     MachineBasicBlock::iterator It = RetI;
     ++It;
     // Delete all instructions after the RESTORE (except labels).
@@ -556,7 +557,8 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
   if (!MBB.empty() && InsertPt != MBB.begin()) {
     MachineBasicBlock::iterator PrevIt = std::prev(InsertPt);
     unsigned COpc = PrevIt->getOpcode();
-    if (COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4)
+    if (COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4 ||
+        COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_PIC)
       NeedsDeallocframe = false;
   }
 
@@ -922,10 +924,16 @@ bool HexagonFrameLowering::insertCSRSpillsInBlock(MachineBasicBlock &MBB,
   if (useSpillFunction(MF, CSI)) {
     unsigned MaxReg = getMaxCalleeSavedReg(CSI, HRI);
     const char *SpillFun = getSpillFunctionFor(MaxReg, SK_ToMem);
+    auto &HTM = static_cast<const HexagonTargetMachine&>(MF.getTarget());
+    bool IsPIC = HTM.getRelocationModel() == Reloc::PIC_;
+
     // Call spill function.
     DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
+    unsigned SpillOpc = IsPIC ? Hexagon::SAVE_REGISTERS_CALL_V4_PIC
+                              : Hexagon::SAVE_REGISTERS_CALL_V4;
+
     MachineInstr *SaveRegsCall =
-        BuildMI(MBB, MI, DL, HII.get(Hexagon::SAVE_REGISTERS_CALL_V4))
+        BuildMI(MBB, MI, DL, HII.get(SpillOpc))
           .addExternalSymbol(SpillFun);
     // Add callee-saved registers as use.
     addCalleeSaveRegistersAsImpOperand(SaveRegsCall, MaxReg, false);
@@ -965,6 +973,8 @@ bool HexagonFrameLowering::insertCSRRestoresInBlock(MachineBasicBlock &MBB,
     unsigned MaxR = getMaxCalleeSavedReg(CSI, HRI);
     SpillKind Kind = HasTC ? SK_FromMemTailcall : SK_FromMem;
     const char *RestoreFn = getSpillFunctionFor(MaxR, Kind);
+    auto &HTM = static_cast<const HexagonTargetMachine&>(MF.getTarget());
+    bool IsPIC = HTM.getRelocationModel() == Reloc::PIC_;
 
     // Call spill function.
     DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc()
@@ -972,14 +982,16 @@ bool HexagonFrameLowering::insertCSRRestoresInBlock(MachineBasicBlock &MBB,
     MachineInstr *DeallocCall = nullptr;
 
     if (HasTC) {
-      unsigned ROpc = Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4;
+      unsigned ROpc = IsPIC ? Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_PIC
+                            : Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4;
       DeallocCall = BuildMI(MBB, MI, DL, HII.get(ROpc))
           .addExternalSymbol(RestoreFn);
     } else {
       // The block has a return.
       MachineBasicBlock::iterator It = MBB.getFirstTerminator();
       assert(It->isReturn() && std::next(It) == MBB.end());
-      unsigned ROpc = Hexagon::RESTORE_DEALLOC_RET_JMP_V4;
+      unsigned ROpc = IsPIC ? Hexagon::RESTORE_DEALLOC_RET_JMP_V4_PIC
+                            : Hexagon::RESTORE_DEALLOC_RET_JMP_V4;
       DeallocCall = BuildMI(MBB, It, DL, HII.get(ROpc))
           .addExternalSymbol(RestoreFn);
       // Transfer the function live-out registers.
