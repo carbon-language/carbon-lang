@@ -1,5 +1,5 @@
-; RUN: llc     < %s 2>&1 | FileCheck %s
-; RUN: llc -O3 < %s 2>&1 | FileCheck %s
+; RUN: llc     < %s | FileCheck %s
+; RUN: llc -O3 < %s | FileCheck %s
 ; RUN: llc -O3 -debug-only=stackmaps < %s 2>&1 | FileCheck -check-prefix=STACKMAPS %s
 ; REQUIRES: asserts
 
