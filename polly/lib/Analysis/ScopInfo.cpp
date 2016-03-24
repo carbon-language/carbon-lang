@@ -3064,14 +3064,7 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
     return false;
 
   isl_map *AccessRelation = Access->getAccessRelation();
-
-  // Skip accesses that have an empty access relation. These can be caused
-  // by multiple offsets with a type cast in-between that cause the overall
-  // byte offset to be not divisible by the new types sizes.
-  if (isl_map_is_empty(AccessRelation)) {
-    isl_map_free(AccessRelation);
-    return false;
-  }
+  assert(!isl_map_is_empty(AccessRelation));
 
   if (isl_map_involves_dims(AccessRelation, isl_dim_in, 0,
                             Stmt.getNumIterators())) {
