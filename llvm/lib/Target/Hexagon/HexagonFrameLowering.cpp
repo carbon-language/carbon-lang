@@ -234,7 +234,8 @@ namespace {
 
   /// Checks if the basic block contains any instruction that needs a stack
   /// frame to be already in place.
-  bool needsStackFrame(const MachineBasicBlock &MBB, const BitVector &CSR) {
+  bool needsStackFrame(const MachineBasicBlock &MBB, const BitVector &CSR,
+        const HexagonRegisterInfo &HRI) {
     for (auto &I : MBB) {
       const MachineInstr *MI = &I;
       if (MI->isCall())
@@ -263,8 +264,9 @@ namespace {
         // a stack slot.
         if (TargetRegisterInfo::isVirtualRegister(R))
           return true;
-        if (CSR[R])
-          return true;
+        for (MCSubRegIterator S(R, &HRI, true); S.isValid(); ++S)
+          if (CSR[*S])
+            return true;
       }
     }
     return false;
@@ -335,10 +337,11 @@ void HexagonFrameLowering::findShrunkPrologEpilog(MachineFunction &MF,
   SmallVector<MachineBasicBlock*,16> SFBlocks;
   BitVector CSR(Hexagon::NUM_TARGET_REGS);
   for (const MCPhysReg *P = HRI.getCalleeSavedRegs(&MF); *P; ++P)
-    CSR[*P] = true;
+    for (MCSubRegIterator S(*P, &HRI, true); S.isValid(); ++S)
+      CSR[*S] = true;
 
   for (auto &I : MF)
-    if (needsStackFrame(I, CSR))
+    if (needsStackFrame(I, CSR, HRI))
       SFBlocks.push_back(&I);
 
   DEBUG({
