@@ -32,7 +32,7 @@ namespace {
     }
   };
 
-};
+}
 
 void ErrorInfoBase::anchor() {}
 char ErrorInfoBase::ID = 0;
