@@ -1301,11 +1301,11 @@ static void WriteDIImportedEntity(const DIImportedEntity *N,
   Record.clear();
 }
 
-static void WriteModuleMetadata(const Module *M,
+static void WriteModuleMetadata(const Module &M,
                                 const ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
   const auto &MDs = VE.getMDs();
-  if (MDs.empty() && M->named_metadata_empty())
+  if (MDs.empty() && M.named_metadata_empty())
     return;
 
   Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
@@ -1356,7 +1356,7 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   unsigned NameAbbrev = 0;
-  if (!M->named_metadata_empty()) {
+  if (!M.named_metadata_empty()) {
     // Abbrev for METADATA_NAME.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_NAME));
@@ -1394,7 +1394,7 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   // Write named metadata.
-  for (const NamedMDNode &NMD : M->named_metadata()) {
+  for (const NamedMDNode &NMD : M.named_metadata()) {
     // Write name.
     StringRef Str = NMD.getName();
     Record.append(Str.bytes_begin(), Str.bytes_end());
@@ -3196,7 +3196,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream,
   WriteModuleConstants(VE, Stream);
 
   // Emit metadata.
-  WriteModuleMetadata(M, VE, Stream);
+  WriteModuleMetadata(*M, VE, Stream);
 
   // Emit metadata.
   WriteModuleMetadataStore(M, Stream);
