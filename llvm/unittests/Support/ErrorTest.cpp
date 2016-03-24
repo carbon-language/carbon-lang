@@ -245,7 +245,7 @@ TEST(Error, HandlerShadowing) {
         DummyExtraInfo = SE.getExtraInfo();
       });
 
-  EXPECT_TRUE(CaughtErrorInfo = 42 && DummyInfo == 0 && DummyExtraInfo == 0)
+  EXPECT_TRUE(CaughtErrorInfo == 42 && DummyInfo == 0 && DummyExtraInfo == 0)
       << "General Error handler did not shadow specific handler";
 }
 
