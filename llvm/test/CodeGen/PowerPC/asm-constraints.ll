@@ -37,7 +37,37 @@ entry:
   ret void
 }
 
-attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+; Function Attrs: nounwind
+; Check that we accept the 'd' constraint.
+; Generated from the following C code:
+; int foo(double x) {
+;   int64_t result;
+;   __asm__ __volatile__("fctid %0, %1"
+;                        : "=d"(result)
+;                        : "d"(x)
+;                        : /* No clobbers */);
+;   return result;
+; }
+define signext i32 @bar(double %x) #0 {
+
+; CHECK-LABEL: @bar
+; CHECK: fctid 0, 1
+entry:
+  %x.addr = alloca double, align 8
+  %result = alloca i64, align 8
+  store double %x, double* %x.addr, align 8
+  %0 = load double, double* %x.addr, align 8
+  %1 = call i64 asm sideeffect "fctid $0, $1", "=d,d"(double %0) #1, !srcloc !1
+  store i64 %1, i64* %result, align 8
+  %2 = load i64, i64* %result, align 8
+  %conv = trunc i64 %2 to i32
+  ret i32 %conv
+}
+
+
+attributes #0 = { nounwind "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="ppc64le" "target-features"="+altivec,+bpermd,+crypto,+direct-move,+extdiv,+power8-vector,+vsx,-qpx" "unsafe-fp-math"="false" "use-soft-float"="false" }
+
 attributes #1 = { nounwind }
 
 !0 = !{i32 67, i32 91, i32 110, i32 126}
+!1 = !{i32 84}
