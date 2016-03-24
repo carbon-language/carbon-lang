@@ -2917,9 +2917,15 @@ const InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) const {
 
   Type *Ty = LInst->getType();
   const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
-  for (auto &IAClass : InvariantEquivClasses)
-    if (PointerSCEV == std::get<0>(IAClass) && Ty == std::get<3>(IAClass))
-      return &IAClass;
+  for (auto &IAClass : InvariantEquivClasses) {
+    if (PointerSCEV != std::get<0>(IAClass) || Ty != std::get<3>(IAClass))
+      continue;
+
+    auto &MAs = std::get<1>(IAClass);
+    for (auto *MA : MAs)
+      if (MA->getAccessInstruction() == Val)
+        return &IAClass;
+  }
 
   return nullptr;
 }
