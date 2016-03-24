@@ -137,6 +137,10 @@ static cl::opt<int> SpillFuncThresholdOs("spill-func-threshold-Os",
     cl::Hidden, cl::desc("Specify Os spill func threshold"),
     cl::init(1), cl::ZeroOrMore);
 
+static cl::opt<bool> EnableStackOVFSanitizer("enable-stackovf-sanitizer",
+    cl::Hidden, cl::desc("Enable runtime checks for stack overflow."),
+    cl::init(false), cl::ZeroOrMore);
+
 static cl::opt<bool> EnableShrinkWrapping("hexagon-shrink-frame",
     cl::init(true), cl::Hidden, cl::ZeroOrMore,
     cl::desc("Enable stack frame shrink wrapping"));
@@ -387,6 +391,7 @@ void HexagonFrameLowering::findShrunkPrologEpilog(MachineFunction &MF,
   EpilogB = PDomB;
 }
 
+
 /// Perform most of the PEI work here:
 /// - saving/restoring of the callee-saved registers,
 /// - stack frame creation and destruction.
@@ -404,8 +409,9 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
   if (EnableShrinkWrapping)
     findShrunkPrologEpilog(MF, PrologB, EpilogB);
 
-  insertCSRSpillsInBlock(*PrologB, CSI, HRI);
-  insertPrologueInBlock(*PrologB);
+  bool PrologueStubs = false;
+  insertCSRSpillsInBlock(*PrologB, CSI, HRI, PrologueStubs);
+  insertPrologueInBlock(*PrologB, PrologueStubs);
 
   if (EpilogB) {
     insertCSRRestoresInBlock(*EpilogB, CSI, HRI);
@@ -422,7 +428,8 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
 }
 
 
-void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB) const {
+void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB,
+      bool PrologueStubs) const {
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   auto &HST = MF.getSubtarget<HexagonSubtarget>();
@@ -497,6 +504,13 @@ void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB) const {
         .addReg(SP)
         .addImm(-int64_t(MaxAlign));
   }
+
+  // If the stack-checking is enabled, and we spilled the callee-saved
+  // registers inline (i.e. did not use a spill function), then call
+  // the stack checker directly.
+  if (EnableStackOVFSanitizer && !PrologueStubs)
+    BuildMI(MBB, InsertPt, dl, HII.get(Hexagon::CALLstk))
+           .addExternalSymbol("__runtime_stack_check");
 }
 
 void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
@@ -736,7 +750,7 @@ bool HexagonFrameLowering::hasFP(const MachineFunction &MF) const {
     return true;
 
   if (MFI.getStackSize() > 0) {
-    if (UseAllocframe)
+    if (EnableStackOVFSanitizer || UseAllocframe)
       return true;
   }
 
@@ -754,8 +768,8 @@ enum SpillKind {
   SK_FromMemTailcall
 };
 
-static const char *
-getSpillFunctionFor(unsigned MaxReg, SpillKind SpillType) {
+static const char *getSpillFunctionFor(unsigned MaxReg, SpillKind SpillType,
+      bool Stkchk = false) {
   const char * V4SpillToMemoryFunctions[] = {
     "__save_r16_through_r17",
     "__save_r16_through_r19",
@@ -763,6 +777,14 @@ getSpillFunctionFor(unsigned MaxReg, SpillKind SpillType) {
     "__save_r16_through_r23",
     "__save_r16_through_r25",
     "__save_r16_through_r27" };
+
+  const char * V4SpillToMemoryStkchkFunctions[] = {
+    "__save_r16_through_r17_stkchk",
+    "__save_r16_through_r19_stkchk",
+    "__save_r16_through_r21_stkchk",
+    "__save_r16_through_r23_stkchk",
+    "__save_r16_through_r25_stkchk",
+    "__save_r16_through_r27_stkchk" };
 
   const char * V4SpillFromMemoryFunctions[] = {
     "__restore_r16_through_r17_and_deallocframe",
@@ -785,7 +807,8 @@ getSpillFunctionFor(unsigned MaxReg, SpillKind SpillType) {
 
   switch(SpillType) {
   case SK_ToMem:
-    SpillFunc = V4SpillToMemoryFunctions;
+    SpillFunc = Stkchk ? V4SpillToMemoryStkchkFunctions
+                       : V4SpillToMemoryFunctions;
     break;
   case SK_FromMem:
     SpillFunc = V4SpillFromMemoryFunctions;
@@ -913,24 +936,34 @@ int HexagonFrameLowering::getFrameIndexReference(const MachineFunction &MF,
 
 
 bool HexagonFrameLowering::insertCSRSpillsInBlock(MachineBasicBlock &MBB,
-      const CSIVect &CSI, const HexagonRegisterInfo &HRI) const {
+      const CSIVect &CSI, const HexagonRegisterInfo &HRI,
+      bool &PrologueStubs) const {
   if (CSI.empty())
     return true;
 
   MachineBasicBlock::iterator MI = MBB.begin();
+  PrologueStubs = false;
   MachineFunction &MF = *MBB.getParent();
   auto &HII = *MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
 
   if (useSpillFunction(MF, CSI)) {
+    PrologueStubs = true;
     unsigned MaxReg = getMaxCalleeSavedReg(CSI, HRI);
-    const char *SpillFun = getSpillFunctionFor(MaxReg, SK_ToMem);
+    bool StkOvrFlowEnabled = EnableStackOVFSanitizer;
+    const char *SpillFun = getSpillFunctionFor(MaxReg, SK_ToMem,
+                                               StkOvrFlowEnabled);
     auto &HTM = static_cast<const HexagonTargetMachine&>(MF.getTarget());
     bool IsPIC = HTM.getRelocationModel() == Reloc::PIC_;
 
     // Call spill function.
     DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
-    unsigned SpillOpc = IsPIC ? Hexagon::SAVE_REGISTERS_CALL_V4_PIC
-                              : Hexagon::SAVE_REGISTERS_CALL_V4;
+    unsigned SpillOpc;
+    if (StkOvrFlowEnabled)
+      SpillOpc = IsPIC ? Hexagon::SAVE_REGISTERS_CALL_V4STK_PIC
+                       : Hexagon::SAVE_REGISTERS_CALL_V4STK;
+    else
+      SpillOpc = IsPIC ? Hexagon::SAVE_REGISTERS_CALL_V4_PIC
+                       : Hexagon::SAVE_REGISTERS_CALL_V4;
 
     MachineInstr *SaveRegsCall =
         BuildMI(MBB, MI, DL, HII.get(SpillOpc))
@@ -1007,6 +1040,7 @@ bool HexagonFrameLowering::insertCSRRestoresInBlock(MachineBasicBlock &MBB,
     int FI = CSI[i].getFrameIdx();
     HII.loadRegFromStackSlot(MBB, MI, Reg, FI, RC, &HRI);
   }
+
   return true;
 }
 
