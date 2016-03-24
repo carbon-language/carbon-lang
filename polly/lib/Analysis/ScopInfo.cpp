@@ -3942,8 +3942,17 @@ bool ScopInfo::buildAccessMemIntrinsic(
 
   auto *DestPtrVal = MemIntr->getDest();
   assert(DestPtrVal);
+
   auto *DestAccFunc = SE->getSCEVAtScope(DestPtrVal, L);
   assert(DestAccFunc);
+  // Ignore accesses to "NULL".
+  // TODO: We could use this to optimize the region further, e.g., intersect
+  //       the context with
+  //          isl_set_complement(isl_set_params(getDomain()))
+  //       as we know it would be undefined to execute this instruction anyway.
+  if (DestAccFunc->isZero())
+    return true;
+
   auto *DestPtrSCEV = dyn_cast<SCEVUnknown>(SE->getPointerBase(DestAccFunc));
   assert(DestPtrSCEV);
   DestAccFunc = SE->getMinusSCEV(DestAccFunc, DestPtrSCEV);
@@ -3957,8 +3966,14 @@ bool ScopInfo::buildAccessMemIntrinsic(
 
   auto *SrcPtrVal = MemTrans->getSource();
   assert(SrcPtrVal);
+
   auto *SrcAccFunc = SE->getSCEVAtScope(SrcPtrVal, L);
   assert(SrcAccFunc);
+  // Ignore accesses to "NULL".
+  // TODO: See above TODO
+  if (SrcAccFunc->isZero())
+    return true;
+
   auto *SrcPtrSCEV = dyn_cast<SCEVUnknown>(SE->getPointerBase(SrcAccFunc));
   assert(SrcPtrSCEV);
   SrcAccFunc = SE->getMinusSCEV(SrcAccFunc, SrcPtrSCEV);

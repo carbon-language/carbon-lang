@@ -533,17 +533,21 @@ bool ScopDetection::isValidIntrinsicInst(IntrinsicInst &II,
   case llvm::Intrinsic::memmove:
   case llvm::Intrinsic::memcpy:
     AF = SE->getSCEVAtScope(cast<MemTransferInst>(II).getSource(), L);
-    BP = dyn_cast<SCEVUnknown>(SE->getPointerBase(AF));
-    // Bail if the source pointer is not valid.
-    if (!isValidAccess(&II, AF, BP, Context))
-      return false;
+    if (!AF->isZero()) {
+      BP = dyn_cast<SCEVUnknown>(SE->getPointerBase(AF));
+      // Bail if the source pointer is not valid.
+      if (!isValidAccess(&II, AF, BP, Context))
+        return false;
+    }
   // Fall through
   case llvm::Intrinsic::memset:
     AF = SE->getSCEVAtScope(cast<MemIntrinsic>(II).getDest(), L);
-    BP = dyn_cast<SCEVUnknown>(SE->getPointerBase(AF));
-    // Bail if the destination pointer is not valid.
-    if (!isValidAccess(&II, AF, BP, Context))
-      return false;
+    if (!AF->isZero()) {
+      BP = dyn_cast<SCEVUnknown>(SE->getPointerBase(AF));
+      // Bail if the destination pointer is not valid.
+      if (!isValidAccess(&II, AF, BP, Context))
+        return false;
+    }
 
     // Bail if the length is not affine.
     if (!isAffine(SE->getSCEVAtScope(cast<MemIntrinsic>(II).getLength(), L), L,
