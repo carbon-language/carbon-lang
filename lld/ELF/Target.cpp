@@ -1223,12 +1223,25 @@ AArch64TargetInfo::AArch64TargetInfo() {
 }
 
 bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
-  return Type == R_AARCH64_PREL32 || Type == R_AARCH64_ADR_PREL_PG_HI21 ||
-         Type == R_AARCH64_LDST8_ABS_LO12_NC ||
-         Type == R_AARCH64_LDST32_ABS_LO12_NC ||
-         Type == R_AARCH64_LDST64_ABS_LO12_NC ||
-         Type == R_AARCH64_ADD_ABS_LO12_NC || Type == R_AARCH64_CALL26 ||
-         Type == R_AARCH64_CONDBR19;
+  switch (Type) {
+  default:
+    return false;
+  case R_AARCH64_PREL32:
+  case R_AARCH64_ADR_PREL_LO21:
+  case R_AARCH64_ADR_PREL_PG_HI21:
+  case R_AARCH64_ADR_GOT_PAGE:
+  case R_AARCH64_LDST8_ABS_LO12_NC:
+  case R_AARCH64_LDST16_ABS_LO12_NC:
+  case R_AARCH64_LDST32_ABS_LO12_NC:
+  case R_AARCH64_LDST64_ABS_LO12_NC:
+  case R_AARCH64_LDST128_ABS_LO12_NC:
+  case R_AARCH64_ADD_ABS_LO12_NC:
+  case R_AARCH64_CALL26:
+  case R_AARCH64_JUMP26:
+  case R_AARCH64_CONDBR19:
+  case R_AARCH64_TSTBR14:
+    return true;
+  }
 }
 
 bool AArch64TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
