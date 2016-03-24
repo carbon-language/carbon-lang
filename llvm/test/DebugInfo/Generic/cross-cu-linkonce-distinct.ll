@@ -32,7 +32,7 @@
 ; CHECK:     DW_AT_name {{.*}} "func"
 ; CHECK: DW_TAG_compile_unit
 
-; FIXME: Maybe we should drop the subprogram here - since the function was
+; Check that the subprogram is dropped in this CU - since the function was
 ; emitted in one CU, due to linkonce_odr uniquing. We certainly don't emit the
 ; subprogram here if the source location for this definition is the same (see
 ; test/DebugInfo/cross-cu-linkonce.ll), though it's very easy to tickle that
@@ -43,7 +43,7 @@
 ; directory of the source file even though the file name is absolute, not
 ; relative)
 
-; CHECK: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG_subprogram
 
 @x = global i32 (i32)* @_Z4funci, align 8
 @y = global i32 (i32)* @_Z4funci, align 8
@@ -64,7 +64,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 attributes #0 = { inlinehint nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }
 
-!llvm.dbg.cu = !{!12, !0}
+!llvm.dbg.cu = !{!0, !12}
 !llvm.module.flags = !{!19, !20}
 !llvm.ident = !{!21, !21}
 
