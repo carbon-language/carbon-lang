@@ -334,6 +334,8 @@ struct MappingTraits<Section> {
       NormalizedFile *file = info->_normalizeMachOFile;
       assert(file != nullptr);
       size_t size = _normalizedContent.size();
+      if (!size)
+        return ArrayRef<uint8_t>();
       uint8_t *bytes = file->ownedAllocations.Allocate<uint8_t>(size);
       std::copy(_normalizedContent.begin(), _normalizedContent.end(), bytes);
       return makeArrayRef(bytes, size);
