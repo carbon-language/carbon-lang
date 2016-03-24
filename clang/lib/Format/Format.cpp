@@ -2005,6 +2005,7 @@ tooling::Replacements formatReplacements(StringRef Code,
 
   tooling::Replacements MergedReplacements =
       mergeReplacements(Replaces, FormatReplaces);
+
   return MergedReplacements;
 }
 
