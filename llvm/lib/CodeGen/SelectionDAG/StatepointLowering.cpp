@@ -246,10 +246,10 @@ static void reservePreviousStackSlotForValue(const Value *IncomingValue,
 /// StackMap section.  It has no effect on the number of spill slots required
 /// or the actual lowering.
 static void
-removeDuplicatesGCPtrs(SmallVectorImpl<const Value *> &Bases,
-                       SmallVectorImpl<const Value *> &Ptrs,
-                       SmallVectorImpl<const GCRelocateInst *> &Relocs,
-                       SelectionDAGBuilder &Builder) {
+removeDuplicateGCPtrs(SmallVectorImpl<const Value *> &Bases,
+                      SmallVectorImpl<const Value *> &Ptrs,
+                      SmallVectorImpl<const GCRelocateInst *> &Relocs,
+                      SelectionDAGBuilder &Builder) {
 
   // This is horribly inefficient, but I don't care right now
   SmallSet<SDValue, 32> Seen;
@@ -540,8 +540,8 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
   StatepointLowering.startNewStatepoint(*this);
 
 #ifndef NDEBUG
-  // We schedule gc relocates before removeDuplicatesGCPtrs since we _will_
-  // encounter the duplicate gc relocates we elide in removeDuplicatesGCPtrs.
+  // We schedule gc relocates before removeDuplicateGCPtrs since we _will_
+  // encounter the duplicate gc relocates we elide in removeDuplicateGCPtrs.
   for (auto *Reloc : SI.GCRelocates)
     if (Reloc->getParent() == SI.StatepointInstr->getParent())
       StatepointLowering.scheduleRelocCall(*Reloc);
@@ -551,7 +551,7 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
   // input.  Also has the effect of removing duplicates in the original
   // llvm::Value input list as well.  This is a useful optimization for
   // reducing the size of the StackMap section.  It has no other impact.
-  removeDuplicatesGCPtrs(SI.Bases, SI.Ptrs, SI.GCRelocates, *this);
+  removeDuplicateGCPtrs(SI.Bases, SI.Ptrs, SI.GCRelocates, *this);
   assert(SI.Bases.size() == SI.Ptrs.size() &&
          SI.Ptrs.size() == SI.GCRelocates.size());
 

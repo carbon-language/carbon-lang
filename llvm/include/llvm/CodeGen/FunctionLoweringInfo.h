@@ -80,12 +80,11 @@ public:
   /// Track virtual registers created for exception pointers.
   DenseMap<const Value *, unsigned> CatchPadExceptionPointers;
 
-  // Keep track of frame indices allocated for statepoints as they could be used
-  // across basic block boundaries.
-  // Key of the map is statepoint instruction, value is a map from spilled
-  // llvm Value to the optional stack stack slot index.
-  // If optional is unspecified it means that we have visited this value
-  // but didn't spill it.
+  /// Keep track of frame indices allocated for statepoints as they could be
+  /// used across basic block boundaries.  Key of the map is statepoint
+  /// instruction, value is a map from spilled llvm Value to the optional stack
+  /// stack slot index.  If optional is unspecified it means that we have
+  /// visited this value but didn't spill it.
   typedef DenseMap<const Value*, Optional<int>> StatepointSpilledValueMapTy;
   DenseMap<const Instruction*, StatepointSpilledValueMapTy>
     StatepointRelocatedValues;
