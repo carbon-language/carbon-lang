@@ -2144,8 +2144,7 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
 
     llvm::sys::path::append(ConfigFile, ".clang-format");
     DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
-    // Ignore errors from is_regular_file: we only need to know if we can read
-    // the file or not.
+
     Status = FS->status(ConfigFile.str());
     bool IsFile =
         Status && (Status->getType() == llvm::sys::fs::file_type::regular_file);
