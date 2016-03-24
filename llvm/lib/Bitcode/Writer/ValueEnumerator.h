@@ -67,7 +67,6 @@ private:
   typedef DenseMap<const Metadata *, unsigned> MetadataMapType;
   MetadataMapType MetadataMap;
   bool HasMDString;
-  bool HasGenericDINode;
   bool ShouldPreserveUseListOrder;
 
   typedef DenseMap<AttributeSet, unsigned> AttributeGroupMapType;
@@ -123,7 +122,6 @@ public:
   unsigned numMDs() const { return MDs.size(); }
 
   bool hasMDString() const { return HasMDString; }
-  bool hasGenericDINode() const { return HasGenericDINode; }
 
   bool shouldPreserveUseListOrder() const { return ShouldPreserveUseListOrder; }
 
