@@ -543,10 +543,10 @@ struct CoverageStats {
 };
 
 static raw_ostream &operator<<(raw_ostream &OS, const CoverageStats &Stats) {
-  OS << "all-points: " << Stats.AllPoints << "\n";
-  OS << "cov-points: " << Stats.CovPoints << "\n";
-  OS << "all-fns: " << Stats.AllFns << "\n";
-  OS << "cov-fns: " << Stats.CovFns << "\n";
+  OS << "all-edges: " << Stats.AllPoints << "\n";
+  OS << "cov-edges: " << Stats.CovPoints << "\n";
+  OS << "all-functions: " << Stats.AllFns << "\n";
+  OS << "cov-functions: " << Stats.CovFns << "\n";
   return OS;
 }
 
