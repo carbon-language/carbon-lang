@@ -21514,6 +21514,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VSRAI:              return "X86ISD::VSRAI";
   case X86ISD::VROTLI:             return "X86ISD::VROTLI";
   case X86ISD::VROTRI:             return "X86ISD::VROTRI";
+  case X86ISD::VPPERM:             return "X86ISD::VPPERM";
   case X86ISD::CMPP:               return "X86ISD::CMPP";
   case X86ISD::PCMPEQ:             return "X86ISD::PCMPEQ";
   case X86ISD::PCMPGT:             return "X86ISD::PCMPGT";
