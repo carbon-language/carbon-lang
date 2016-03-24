@@ -14,7 +14,6 @@
 
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "gtest/gtest.h"
 
 #define DEBUG_TYPE "format-test"
@@ -11198,33 +11197,6 @@ TEST_F(FormatTest, FormatsTableGenCode) {
   FormatStyle Style = getLLVMStyle();
   Style.Language = FormatStyle::LK_TableGen;
   verifyFormat("include \"a.td\"\ninclude \"b.td\"", Style);
-}
-
-TEST(FormatStyle, GetStyleOfFile) {
-  vfs::InMemoryFileSystem FS;
-  // Test 1: format file in the same directory.
-  ASSERT_TRUE(
-      FS.addFile("/a/.clang-format", 0,
-                 llvm::MemoryBuffer::getMemBuffer("BasedOnStyle: LLVM")));
-  ASSERT_TRUE(
-      FS.addFile("/a/test.cpp", 0, llvm::MemoryBuffer::getMemBuffer("int i;")));
-  auto Style1 = getStyle("file", "/a/.clang-format", "Google", &FS);
-  ASSERT_EQ(Style1, getLLVMStyle());
-
-  // Test 2: fallback to default.
-  ASSERT_TRUE(
-      FS.addFile("/b/test.cpp", 0, llvm::MemoryBuffer::getMemBuffer("int i;")));
-  auto Style2 = getStyle("file", "/b/test.cpp", "Mozilla", &FS);
-  ASSERT_EQ(Style2, getMozillaStyle());
-
-  // Test 3: format file in parent directory.
-  ASSERT_TRUE(
-      FS.addFile("/c/.clang-format", 0,
-                 llvm::MemoryBuffer::getMemBuffer("BasedOnStyle: Google")));
-  ASSERT_TRUE(FS.addFile("/c/sub/sub/sub/test.cpp", 0,
-                         llvm::MemoryBuffer::getMemBuffer("int i;")));
-  auto Style3 = getStyle("file", "/c/sub/sub/sub/test.cpp", "LLVM", &FS);
-  ASSERT_EQ(Style3, getGoogleStyle());
 }
 
 class ReplacementTest : public ::testing::Test {

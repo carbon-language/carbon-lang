@@ -16,7 +16,6 @@
 #define LLVM_CLANG_FORMAT_FORMAT_H
 
 #include "clang/Basic/LangOptions.h"
-#include "clang/Basic/VirtualFileSystem.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <system_error>
@@ -833,13 +832,11 @@ extern const char *StyleOptionHelpDescription;
 /// == "file".
 /// \param[in] FallbackStyle The name of a predefined style used to fallback to
 /// in case the style can't be determined from \p StyleName.
-/// \param[in] FS The underlying file system, in which the file resides. By
-/// default, the file system is the real file system.
 ///
 /// \returns FormatStyle as specified by ``StyleName``. If no style could be
 /// determined, the default is LLVM Style (see ``getLLVMStyle()``).
 FormatStyle getStyle(StringRef StyleName, StringRef FileName,
-                     StringRef FallbackStyle, vfs::FileSystem *FS = nullptr);
+                     StringRef FallbackStyle);
 
 } // end namespace format
 } // end namespace clang
