@@ -8,6 +8,7 @@
         ldr     x0, [x8, :lo12:.Lfoo]
         add     x0, x0, :lo12:.Lfoo
         bl      .Lfoo
+        b.eq    .Lfoo
 
         .data
         .Lfoo:
