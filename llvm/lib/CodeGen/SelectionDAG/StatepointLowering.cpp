@@ -827,6 +827,7 @@ void SelectionDAGBuilder::LowerCallSiteWithDeoptBundle(
   unsigned ArgBeginIndex = CS.arg_begin() - CS.getInstruction()->op_begin();
   populateCallLoweringInfo(SI.CLI, CS, ArgBeginIndex, CS.getNumArgOperands(),
                            Callee, CS.getType(), false);
+  SI.CLI.IsVarArg = CS.getFunctionType()->isVarArg();
 
   auto DeoptBundle = *CS.getOperandBundle(LLVMContext::OB_deopt);
 
