@@ -262,19 +262,21 @@ let ExeDomain = SSEPackedInt in {
 }
 
 // Instruction where either second or third source can be memory
-multiclass xop4op_int<bits<8> opc, string OpcodeStr, Intrinsic Int> {
+multiclass xop4op_int<bits<8> opc, string OpcodeStr,
+                      Intrinsic Int128, Intrinsic Int256> {
+  // 128-bit Instruction
   def rr : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2, VR128:$src3))]>,
+           [(set VR128:$dst, (Int128 VR128:$src1, VR128:$src2, VR128:$src3))]>,
            XOP_4V, VEX_I8IMM;
   def rm : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, i128mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, VR128:$src2,
+             (Int128 VR128:$src1, VR128:$src2,
               (bitconvert (loadv2i64 addr:$src3))))]>,
            XOP_4V, VEX_I8IMM, VEX_W, MemOp4;
   def mr : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
@@ -282,7 +284,7 @@ multiclass xop4op_int<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
+             (Int128 VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
               VR128:$src3))]>,
            XOP_4V, VEX_I8IMM;
   // For disassembler
@@ -292,25 +294,20 @@ multiclass xop4op_int<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            []>, XOP_4V, VEX_I8IMM, VEX_W, MemOp4;
-}
 
-let ExeDomain = SSEPackedInt in {
-  defm VPCMOV : xop4op_int<0xA2, "vpcmov", int_x86_xop_vpcmov>;
-}
-
-multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
+  // 256-bit Instruction
   def rrY : IXOPi8<opc, MRMSrcReg, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           [(set VR256:$dst, (Int VR256:$src1, VR256:$src2, VR256:$src3))]>,
+           [(set VR256:$dst, (Int256 VR256:$src1, VR256:$src2, VR256:$src3))]>,
            XOP_4V, VEX_I8IMM, VEX_L;
   def rmY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, i256mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst,
-             (Int VR256:$src1, VR256:$src2,
+             (Int256 VR256:$src1, VR256:$src2,
               (bitconvert (loadv4i64 addr:$src3))))]>,
            XOP_4V, VEX_I8IMM, VEX_W, MemOp4, VEX_L;
   def mrY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
@@ -318,7 +315,7 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst,
-             (Int VR256:$src1, (bitconvert (loadv4i64 addr:$src2)),
+             (Int256 VR256:$src1, (bitconvert (loadv4i64 addr:$src2)),
               VR256:$src3))]>,
            XOP_4V, VEX_I8IMM, VEX_L;
   // For disassembler
@@ -330,8 +327,10 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            []>, XOP_4V, VEX_I8IMM, VEX_W, MemOp4, VEX_L;
 }
 
-let ExeDomain = SSEPackedInt in
-  defm VPCMOV : xop4op256<0xA2, "vpcmov", int_x86_xop_vpcmov_256>;
+let ExeDomain = SSEPackedInt in {
+  defm VPCMOV : xop4op_int<0xA2, "vpcmov",
+                           int_x86_xop_vpcmov, int_x86_xop_vpcmov_256>;
+}
 
 let Predicates = [HasXOP] in {
   def : Pat<(v2i64 (or (and VR128:$src3, VR128:$src1),
