@@ -566,8 +566,14 @@ bool ModuleLinker::run() {
     const Comdat *SC = GV->getComdat();
     if (!SC)
       continue;
-    for (GlobalValue *GV2 : LazyComdatMembers[SC])
-      ValuesToLink.insert(GV2);
+    for (GlobalValue *GV2 : LazyComdatMembers[SC]) {
+      GlobalValue *DGV = getLinkedToGlobal(GV2);
+      bool LinkFromSrc = true;
+      if (DGV && shouldLinkFromSource(LinkFromSrc, *DGV, *GV2))
+        return true;
+      if (LinkFromSrc)
+        ValuesToLink.insert(GV2);
+    }
   }
 
   if (shouldInternalizeLinkedSymbols()) {
