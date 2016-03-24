@@ -37,6 +37,9 @@ namespace {
 void ErrorInfoBase::anchor() {}
 char ErrorInfoBase::ID = 0;
 
+template <> char ErrorInfo<ErrorList>::ID = 0;
+template <> char ErrorInfo<ECError>::ID = 0;
+
 static ManagedStatic<ErrorErrorCategory> ErrorErrorCat;
 
 std::error_code ErrorList::convertToErrorCode() const {

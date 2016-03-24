@@ -291,9 +291,6 @@ private:
   static char ID;
 };
 
-template <typename MyErrT, typename ParentErrT>
-char ErrorInfo<MyErrT, ParentErrT>::ID = 0;
-
 /// Special ErrorInfo subclass representing a list of ErrorInfos.
 /// Instances of this class are constructed by joinError.
 class ErrorList final : public ErrorInfo<ErrorList> {
