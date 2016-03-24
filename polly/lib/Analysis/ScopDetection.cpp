@@ -575,8 +575,7 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
 
   // When Val is a Phi node, it is likely not invariant. We do not check whether
   // Phi nodes are actually invariant, we assume that Phi nodes are usually not
-  // invariant. Recursively checking the operators of Phi nodes would lead to
-  // infinite recursion.
+  // invariant.
   if (isa<PHINode>(*I))
     return false;
 
