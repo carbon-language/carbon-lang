@@ -108,6 +108,37 @@ int AMDGPUTTIImpl::getArithmeticInstrCost(
   MVT::SimpleValueType SLT = LT.second.getScalarType().SimpleTy;
 
   switch (ISD) {
+  case ISD::SHL:
+  case ISD::SRL:
+  case ISD::SRA: {
+    if (SLT == MVT::i64)
+      return get64BitInstrCost() * LT.first * NElts;
+
+    // i32
+    return getFullRateInstrCost() * LT.first * NElts;
+  }
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: {
+    if (SLT == MVT::i64){
+      // and, or and xor are typically split into 2 VALU instructions.
+      return 2 * getFullRateInstrCost() * LT.first * NElts;
+    }
+
+    return LT.first * NElts * getFullRateInstrCost();
+  }
+  case ISD::MUL: {
+    const int QuarterRateCost = getQuarterRateInstrCost();
+    if (SLT == MVT::i64) {
+      const int FullRateCost = getFullRateInstrCost();
+      return (4 * QuarterRateCost + (2 * 2) * FullRateCost) * LT.first * NElts;
+    }
+
+    // i32
+    return QuarterRateCost * NElts * LT.first;
+  }
   case ISD::FADD:
   case ISD::FSUB:
   case ISD::FMUL:
