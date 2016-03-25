@@ -416,8 +416,8 @@ static std::error_code getStatus(HANDLE FileHandle, file_status &Result) {
                          ? file_type::directory_file
                          : file_type::regular_file;
     Result =
-        file_status(Type, Info.ftLastAccessTime.dwHighDateTime,
-                    Info.ftLastAccessTime.dwLowDateTime,
+        file_status(Type, Info.lpLastAccessTime.dwHighDateTime,
+                    Info.lpLastAccessTime.dwLowDateTime,
                     Info.ftLastWriteTime.dwHighDateTime,
                     Info.ftLastWriteTime.dwLowDateTime,
                     Info.dwVolumeSerialNumber, Info.nFileSizeHigh,
