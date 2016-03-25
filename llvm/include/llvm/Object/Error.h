@@ -58,7 +58,6 @@ public:
     // Default to parse_failed, can be overridden with setErrorCode.
     setErrorCode(make_error_code(object_error::parse_failed));
   }
-private:
 };
 
 /// Generic binary error.
