@@ -312,7 +312,9 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   case bitc::METADATA_BLOCK_ID:
     switch(CodeID) {
     default:return nullptr;
-      STRINGIFY_CODE(METADATA, STRING)
+      STRINGIFY_CODE(METADATA, STRING_OLD)
+      STRINGIFY_CODE(METADATA, BULK_STRING_SIZES)
+      STRINGIFY_CODE(METADATA, BULK_STRING_DATA)
       STRINGIFY_CODE(METADATA, NAME)
       STRINGIFY_CODE(METADATA, KIND) // Older bitcode has it in a MODULE_BLOCK
       STRINGIFY_CODE(METADATA, NODE)
