@@ -90,7 +90,7 @@ private:
   // before we make the array.
   template <typename... ArgsT> ResultT Execute(const ArgsT &... Args) const {
     const ArgT *const ArgsArray[] = {&Args...};
-    return Func(ArgsArray);
+    return Func(ArrayRef<const ArgT *>(ArgsArray, sizeof...(ArgsT)));
   }
 };
 
