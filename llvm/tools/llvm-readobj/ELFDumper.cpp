@@ -2767,7 +2767,7 @@ bool GNUStyle<ELFT>::checkPTDynamic(const Elf_Phdr &Phdr, const Elf_Shdr &Sec) {
 
 template <class ELFT>
 void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
-  int Bias = (ELFT::Is64Bits) ? 8 : 0;
+  unsigned Bias = (ELFT::Is64Bits) ? 8 : 0;
   unsigned Width = (ELFT::Is64Bits) ? 18 : 10;
   unsigned SizeWidth = (ELFT::Is64Bits) ? 8 : 7;
   std::string Type, Offset, VMA, LMA, FileSz, MemSz, Flag, Align;
