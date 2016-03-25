@@ -2363,7 +2363,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
           NextMetadataNo++);
       break;
     }
-    case bitc::METADATA_STRING_OLD: {
+    case bitc::METADATA_STRING: {
       std::string String(Record.begin(), Record.end());
 
       // Test for upgrading !llvm.loop.
@@ -2371,38 +2371,6 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
 
       Metadata *MD = MDString::get(Context, String);
       MetadataList.assignValue(MD, NextMetadataNo++);
-      break;
-    }
-    case bitc::METADATA_BULK_STRING_SIZES: {
-      // This is a pair of records for an MDString block: SIZES, which is a
-      // list of string lengths; and DATA, which is a blob with all the strings
-      // concatenated together.
-      //
-      // Note: since this record type was introduced after the upgrade for
-      // !llvm.loop, we don't need to change HasSeenOldLoopTags.
-      if (Record.empty())
-        return error("Invalid record: missing bulk metadata string sizes");
-
-      StringRef Blob;
-      SmallVector<uint64_t, 1> BlobRecord;
-      Code = Stream.ReadCode();
-      unsigned BlobCode = Stream.readRecord(Code, BlobRecord, &Blob);
-      if (BlobCode != bitc::METADATA_BULK_STRING_DATA)
-        return error("Invalid record: missing bulk metadata string data");
-      if (!BlobRecord.empty())
-        return error("Invalid record: unexpected bulk metadata arguments");
-
-      for (uint64_t Size : Record) {
-        if (Blob.size() < Size)
-          return error("Invalid record: not enough bulk metadata string bytes");
-
-        // Extract the current string.
-        MetadataList.assignValue(MDString::get(Context, Blob.slice(0, Size)),
-                                 NextMetadataNo++);
-        Blob = Blob.drop_front(Size);
-      }
-      if (!Blob.empty())
-        return error("Invalid record: too many bulk metadata string bytes");
       break;
     }
     case bitc::METADATA_KIND: {
