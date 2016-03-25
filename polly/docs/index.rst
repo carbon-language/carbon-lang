@@ -13,7 +13,7 @@ Using Polly
 ===========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Architecture
    UsingPollyWithClang
