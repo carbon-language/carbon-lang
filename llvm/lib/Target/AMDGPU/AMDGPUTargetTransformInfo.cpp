@@ -99,6 +99,11 @@ int AMDGPUTTIImpl::getVectorInstrCost(unsigned Opcode, Type *ValTy,
                                       unsigned Index) {
   switch (Opcode) {
   case Instruction::ExtractElement:
+  case Instruction::InsertElement:
+    // Extracts are just reads of a subregister, so are free. Inserts are
+    // considered free because we don't want to have any cost for scalarizing
+    // operations, and we don't have to copy into a different register class.
+
     // Dynamic indexing isn't free and is best avoided.
     return Index == ~0u ? 2 : 0;
   default:
