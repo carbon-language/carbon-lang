@@ -19897,26 +19897,8 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   }
 
   // Decompose 256-bit shifts into smaller 128-bit shifts.
-  if (VT.is256BitVector()) {
-    unsigned NumElems = VT.getVectorNumElements();
-    MVT EltVT = VT.getVectorElementType();
-    MVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
-
-    // Extract the two vectors
-    SDValue V1 = extract128BitVector(R, 0, DAG, dl);
-    SDValue V2 = extract128BitVector(R, NumElems / 2, DAG, dl);
-
-    // Recreate the shift amount vectors
-    SDValue Amt1 = extract128BitVector(Amt, 0, DAG, dl);
-    SDValue Amt2 = extract128BitVector(Amt, NumElems / 2, DAG, dl);
-
-    // Issue new vector shifts for the smaller types
-    V1 = DAG.getNode(Op.getOpcode(), dl, NewVT, V1, Amt1);
-    V2 = DAG.getNode(Op.getOpcode(), dl, NewVT, V2, Amt2);
-
-    // Concatenate the result back
-    return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, V1, V2);
-  }
+  if (VT.is256BitVector())
+    return Lower256IntArith(Op, DAG);
 
   return SDValue();
 }
