@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s readability-redundant-string-cstr %t
+// RUN: %check_clang_tidy %s readability-redundant-string-cstr %t -- -- -fno-ms-compatibility
 
 namespace std {
 template <typename T>
