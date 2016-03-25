@@ -151,17 +151,6 @@ public:
     return false;
   }
 
-  /// Erase a single element from the set vector.
-  /// \returns an iterator pointing to the next element that followed the
-  /// element erased. This is the end of the SetVector if the last element is
-  /// erased.
-  iterator erase(iterator I) {
-    const key_type &V = *I;
-    assert(set_.count(V) && "Corrupted SetVector instances!");
-    set_.erase(V);
-    return vector_.erase(I);
-  }
-
   /// \brief Remove items from the set vector based on a predicate function.
   ///
   /// This is intended to be equivalent to the following code, if we could
