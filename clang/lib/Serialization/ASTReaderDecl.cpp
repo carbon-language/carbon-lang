@@ -53,6 +53,12 @@ namespace clang {
 
     uint64_t GetCurrentCursorOffset();
 
+    uint64_t ReadLocalOffset(const RecordData &R, unsigned &I) {
+      uint64_t LocalOffset = R[I++];
+      assert(LocalOffset < Offset && "offset point after current record");
+      return LocalOffset ? Offset - LocalOffset : 0;
+    }
+
     SourceLocation ReadSourceLocation(const RecordData &R, unsigned &I) {
       return Reader.ReadSourceLocation(F, R, I);
     }
@@ -2189,8 +2195,8 @@ void ASTDeclReader::VisitEmptyDecl(EmptyDecl *D) {
 
 std::pair<uint64_t, uint64_t>
 ASTDeclReader::VisitDeclContext(DeclContext *DC) {
-  uint64_t LexicalOffset = Record[Idx++];
-  uint64_t VisibleOffset = Record[Idx++];
+  uint64_t LexicalOffset = ReadLocalOffset(Record, Idx);
+  uint64_t VisibleOffset = ReadLocalOffset(Record, Idx);
   return std::make_pair(LexicalOffset, VisibleOffset);
 }
 
@@ -2225,10 +2231,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     for (unsigned I = 0; I != N - 1; ++I)
       MergeWith = ReadDecl(Record, Idx/*, MergeWith*/);
 
-    RedeclOffset = Record[Idx++];
-    // RedeclOffset is a delta relative to the start of this record.
-    if (RedeclOffset)
-      RedeclOffset = Offset - RedeclOffset;
+    RedeclOffset = ReadLocalOffset(Record, Idx);
   } else {
     // This declaration was not the first local declaration. Read the first
     // local declaration now, to trigger the import of other redeclarations.
