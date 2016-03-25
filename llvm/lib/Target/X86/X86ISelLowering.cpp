@@ -14525,7 +14525,7 @@ static SDValue EmitKTEST(SDValue Op, SelectionDAG &DAG,
   if (Op.getOpcode() == ISD::BITCAST) {
     auto hasKTEST = [&](MVT VT) {
       unsigned SizeInBits = VT.getSizeInBits();
-      return (Subtarget.hasDQI() && (SizeInBits == 8 || SizeInBits == 8)) ||
+      return (Subtarget.hasDQI() && (SizeInBits == 8 || SizeInBits == 16)) ||
         (Subtarget.hasBWI() && (SizeInBits == 32 || SizeInBits == 64));
     };
     SDValue Op0 = Op.getOperand(0);
