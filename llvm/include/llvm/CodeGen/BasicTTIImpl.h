@@ -726,6 +726,11 @@ public:
     std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, RetTy);
 
     if (TLI->isOperationLegalOrPromote(ISD, LT.second)) {
+      if (IID == Intrinsic::fabs &&
+          TLI->isFAbsFree(LT.second)) {
+        return 0;
+      }
+
       // The operation is legal. Assume it costs 1.
       // If the type is split to multiple registers, assume that there is some
       // overhead to this.
