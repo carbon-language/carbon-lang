@@ -243,6 +243,18 @@ static Error parseSegmentLoadCommand(
   return Error::success();
 }
 
+Expected<std::unique_ptr<MachOObjectFile>>
+MachOObjectFile::create(MemoryBufferRef Object, bool IsLittleEndian,
+                        bool Is64Bits) {
+  Error Err = Error::errorForOutParameter();
+  std::unique_ptr<MachOObjectFile> Obj(
+      new MachOObjectFile(std::move(Object), IsLittleEndian,
+                           Is64Bits, Err));
+  if (Err)
+    return std::move(Err);
+  return std::move(Obj);
+}
+
 MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, Error &Err)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
@@ -250,10 +262,6 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       DataInCodeLoadCmd(nullptr), LinkOptHintsLoadCmd(nullptr),
       DyldInfoLoadCmd(nullptr), UuidLoadCmd(nullptr),
       HasPageZeroSegment(false) {
-
-  // We have to check Err before it's assigned to.
-  if (Err)
-    llvm_unreachable("Err should be in success state at entry to constructor.");
 
   if (is64Bit())
     parseHeader(this, Header64, Err);
@@ -2416,29 +2424,18 @@ bool MachOObjectFile::isRelocatableObject() const {
 ErrorOr<std::unique_ptr<MachOObjectFile>>
 ObjectFile::createMachOObjectFile(MemoryBufferRef Buffer) {
   StringRef Magic = Buffer.getBuffer().slice(0, 4);
-  std::unique_ptr<MachOObjectFile> Ret;
-  if (Magic == "\xFE\xED\xFA\xCE") {
-    Error Err;
-    Ret.reset(new MachOObjectFile(Buffer, false, false, Err));
-    if (Err)
-      return errorToErrorCode(std::move(Err));
-  } else if (Magic == "\xCE\xFA\xED\xFE") {
-    Error Err;
-    Ret.reset(new MachOObjectFile(Buffer, true, false, Err));
-    if (Err)
-      return errorToErrorCode(std::move(Err));
-  } else if (Magic == "\xFE\xED\xFA\xCF") {
-    Error Err;
-    Ret.reset(new MachOObjectFile(Buffer, false, true, Err));
-    if (Err)
-      return errorToErrorCode(std::move(Err));
-  } else if (Magic == "\xCF\xFA\xED\xFE") {
-    Error Err;
-    Ret.reset(new MachOObjectFile(Buffer, true, true, Err));
-    if (Err)
-      return errorToErrorCode(std::move(Err));
-  } else
-    return object_error::parse_failed;
-
-  return std::move(Ret);
+  if (Magic == "\xFE\xED\xFA\xCE")
+    return expectedToErrorOr(
+        MachOObjectFile::create(Buffer, false, false));
+  else if (Magic == "\xCE\xFA\xED\xFE")
+    return expectedToErrorOr(
+        MachOObjectFile::create(Buffer, true, false));
+  else if (Magic == "\xFE\xED\xFA\xCF")
+    return expectedToErrorOr(
+        MachOObjectFile::create(Buffer, false, true));
+  else if (Magic == "\xCF\xFA\xED\xFE")
+    return expectedToErrorOr(
+        MachOObjectFile::create(Buffer, true, true));
+  //else
+  return object_error::parse_failed;
 }
