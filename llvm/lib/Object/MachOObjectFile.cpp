@@ -246,7 +246,7 @@ static Error parseSegmentLoadCommand(
 Expected<std::unique_ptr<MachOObjectFile>>
 MachOObjectFile::create(MemoryBufferRef Object, bool IsLittleEndian,
                         bool Is64Bits) {
-  Error Err = Error::errorForOutParameter();
+  Error Err;
   std::unique_ptr<MachOObjectFile> Obj(
       new MachOObjectFile(std::move(Object), IsLittleEndian,
                            Is64Bits, Err));
@@ -262,7 +262,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       DataInCodeLoadCmd(nullptr), LinkOptHintsLoadCmd(nullptr),
       DyldInfoLoadCmd(nullptr), UuidLoadCmd(nullptr),
       HasPageZeroSegment(false) {
-
+  ErrorAsOutParameter ErrAsOutParam(Err);
   if (is64Bit())
     parseHeader(this, Header64, Err);
   else
