@@ -15,6 +15,7 @@ Using Polly
 .. toctree::
    :maxdepth: 1
 
+   Architecture
    UsingPollyWithClang
 
 Indices and tables
