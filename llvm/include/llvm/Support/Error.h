@@ -143,6 +143,13 @@ public:
   /// constructor, but should be preferred for readability where possible.
   static Error success() { return Error(); }
 
+  /// Create a 'pre-checked' success value suitable for use as an out-parameter.
+  static Error errorForOutParameter() {
+    Error Err;
+    (void)!!Err;
+    return Err;
+  }
+
   // Errors are not copy-constructable.
   Error(const Error &Other) = delete;
 

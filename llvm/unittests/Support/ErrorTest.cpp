@@ -105,6 +105,12 @@ TEST(Error, UncheckedSuccess) {
 }
 #endif
 
+// Test that errors to be used as out parameters are implicitly checked (
+// and thus destruct quietly).
+TEST(Error, ErrorAsOutParameter) {
+  Error E = Error::errorForOutParameter();
+}
+
 // Check that we abort on unhandled failure cases. (Force conversion to bool
 // to make sure that we don't accidentally treat checked errors as handled).
 // Test runs in debug mode only.
