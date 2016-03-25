@@ -359,6 +359,11 @@ public:
         TLI->isZExtFree(SrcLT.second, DstLT.second))
       return 0;
 
+    if (Opcode == Instruction::AddrSpaceCast &&
+        TLI->isNoopAddrSpaceCast(Src->getPointerAddressSpace(),
+                                 Dst->getPointerAddressSpace()))
+      return 0;
+
     // If the cast is marked as legal (or promote) then assume low cost.
     if (SrcLT.first == DstLT.first &&
         TLI->isOperationLegalOrPromote(ISD, DstLT.second))
