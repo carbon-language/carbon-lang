@@ -11,3 +11,4 @@ optimizations have been derived and applied, optimized LLVM-IR is regenerated
 and inserted into the LLVM-IR module.
 
 .. image:: images/architecture.png
+    :align: center
