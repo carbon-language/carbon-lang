@@ -2421,21 +2421,18 @@ bool MachOObjectFile::isRelocatableObject() const {
   return getHeader().filetype == MachO::MH_OBJECT;
 }
 
-ErrorOr<std::unique_ptr<MachOObjectFile>>
+Expected<std::unique_ptr<MachOObjectFile>>
 ObjectFile::createMachOObjectFile(MemoryBufferRef Buffer) {
   StringRef Magic = Buffer.getBuffer().slice(0, 4);
   if (Magic == "\xFE\xED\xFA\xCE")
-    return expectedToErrorOr(
-        MachOObjectFile::create(Buffer, false, false));
+    return MachOObjectFile::create(Buffer, false, false);
   else if (Magic == "\xCE\xFA\xED\xFE")
-    return expectedToErrorOr(
-        MachOObjectFile::create(Buffer, true, false));
+    return MachOObjectFile::create(Buffer, true, false);
   else if (Magic == "\xFE\xED\xFA\xCF")
-    return expectedToErrorOr(
-        MachOObjectFile::create(Buffer, false, true));
+    return MachOObjectFile::create(Buffer, false, true);
   else if (Magic == "\xCF\xFA\xED\xFE")
-    return expectedToErrorOr(
-        MachOObjectFile::create(Buffer, true, true));
+    return MachOObjectFile::create(Buffer, true, true);
   //else
-  return object_error::parse_failed;
+  return malformedError(Buffer.getBufferIdentifier(),
+                        "Unrecognized MachO magic number");
 }
