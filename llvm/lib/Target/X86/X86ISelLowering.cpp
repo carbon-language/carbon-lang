@@ -1253,6 +1253,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::MUL,             MVT::v16i16, Custom);
       setOperationAction(ISD::MUL,             MVT::v32i8, Custom);
 
+      setOperationAction(ISD::UMUL_LOHI,       MVT::v8i32, Custom);
+      setOperationAction(ISD::SMUL_LOHI,       MVT::v8i32, Custom);
+
       setOperationAction(ISD::MULHU,           MVT::v16i16, Custom);
       setOperationAction(ISD::MULHS,           MVT::v16i16, Custom);
       setOperationAction(ISD::MULHU,           MVT::v32i8, Custom);
@@ -19218,6 +19221,24 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget &Subtarget,
   SDValue Op0 = Op.getOperand(0), Op1 = Op.getOperand(1);
   MVT VT = Op0.getSimpleValueType();
   SDLoc dl(Op);
+
+  // Decompose 256-bit ops into smaller 128-bit ops.
+  if (VT.is256BitVector() && !Subtarget.hasInt256()) {
+    unsigned Opcode = Op.getOpcode();
+    unsigned NumElems = VT.getVectorNumElements();
+    MVT HalfVT = MVT::getVectorVT(VT.getScalarType(), NumElems / 2);
+    SDValue Lo0 = extract128BitVector(Op0, 0, DAG, dl);
+    SDValue Lo1 = extract128BitVector(Op1, 0, DAG, dl);
+    SDValue Hi0 = extract128BitVector(Op0, NumElems / 2, DAG, dl);
+    SDValue Hi1 = extract128BitVector(Op1, NumElems / 2, DAG, dl);
+    SDValue Lo = DAG.getNode(Opcode, dl, DAG.getVTList(HalfVT, HalfVT), Lo0, Lo1);
+    SDValue Hi = DAG.getNode(Opcode, dl, DAG.getVTList(HalfVT, HalfVT), Hi0, Hi1);
+    SDValue Ops[] = {
+      DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo.getValue(0), Hi.getValue(0)),
+      DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo.getValue(1), Hi.getValue(1))
+    };
+    return DAG.getMergeValues(Ops, dl);
+  }
 
   assert((VT == MVT::v4i32 && Subtarget.hasSSE2()) ||
          (VT == MVT::v8i32 && Subtarget.hasInt256()));
