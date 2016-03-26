@@ -38,7 +38,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/type_traits.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -758,8 +757,7 @@ static void moveOperands(MachineOperand *Dst, MachineOperand *Src,
   if (MRI)
     return MRI->moveOperands(Dst, Src, NumOps);
 
-  static_assert(isPodLike<MachineOperand>::value,
-                "must be trivially copyable to memmove");
+  // MachineOperand is a trivially copyable type so we can just use memmove.
   std::memmove(Dst, Src, NumOps * sizeof(MachineOperand));
 }
 
