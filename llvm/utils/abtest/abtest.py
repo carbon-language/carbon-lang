@@ -139,14 +139,15 @@ def testrun(files):
 
 def check_files():
     """Check files mode"""
-    for f in NO_PREFIX:
+    for i in range(0, len(NO_PREFIX)):
+        f = NO_PREFIX[i]
         b=baddir+"/"+f
         if b not in BAD_FILES:
             warn("There is no corresponding file to '%s' in %s" \
                  % (gooddir+"/"+f, baddir))
             continue
 
-        announce_test(f)
+        announce_test(f + " [%s/%s]" % (i+1, len(NO_PREFIX)))
 
         # combine files (everything from good except f)
         testfiles=[]
@@ -179,7 +180,7 @@ def check_functions_in_file(base, goodfile, badfile):
     COMBINED="/tmp/combined.s"
     i = 0
     for (func,func_text) in functions:
-        announce_test(func + " [%s/%s]" % (i, len(functions)))
+        announce_test(func + " [%s/%s]" % (i+1, len(functions)))
         i+=1
         if func not in badfunctions:
             warn("Function '%s' missing from bad file" % func)
@@ -211,8 +212,8 @@ if not os.access(LINKTEST, os.X_OK):
 gooddir=config.dir_a
 baddir=config.dir_b
 
-BAD_FILES=find(baddir, "*.s")
-GOOD_FILES=find(gooddir, "*.s")
+BAD_FILES=find(baddir, "*")
+GOOD_FILES=find(gooddir, "*")
 NO_PREFIX=sorted([x[len(gooddir)+1:] for x in GOOD_FILES])
 
 if config.file is not None:
