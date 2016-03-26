@@ -1253,6 +1253,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::MUL,             MVT::v16i16, Custom);
       setOperationAction(ISD::MUL,             MVT::v32i8, Custom);
 
+      setOperationAction(ISD::MULHU,           MVT::v16i16, Custom);
+      setOperationAction(ISD::MULHS,           MVT::v16i16, Custom);
       setOperationAction(ISD::MULHU,           MVT::v32i8, Custom);
       setOperationAction(ISD::MULHS,           MVT::v32i8, Custom);
 
