@@ -4,7 +4,7 @@ define void @ifconvertstore(i32* %A, i32 %B, i32 %C, i32 %D) {
 ; CHECK-LABEL: @ifconvertstore(
 ; CHECK:         store i32 %B, i32* %A
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 %D, 42
-; CHECK-NEXT:    [[C_B:%.*]] = select i1 [[CMP]], i32 %C, i32 %B
+; CHECK-NEXT:    [[C_B:%.*]] = select i1 [[CMP]], i32 %C, i32 %B, !prof !0
 ; CHECK-NEXT:    store i32 [[C_B]], i32* %A
 ; CHECK-NEXT:    ret void
 ;
@@ -12,7 +12,7 @@ entry:
 ; First store to the location.
   store i32 %B, i32* %A
   %cmp = icmp sgt i32 %D, 42
-  br i1 %cmp, label %if.then, label %ret.end
+  br i1 %cmp, label %if.then, label %ret.end, !prof !0
 
 ; Make sure we speculate stores like the following one. It is cheap compared to
 ; a mispredicated branch.
@@ -84,4 +84,7 @@ if.then:
 ret.end:
   ret void
 }
+
+; CHECK: !0 = !{!"branch_weights", i32 3, i32 5}
+!0 = !{!"branch_weights", i32 3, i32 5}
 
