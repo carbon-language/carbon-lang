@@ -1,13 +1,22 @@
 #!/usr/bin/env python
 #
 # Given a previous good compile narrow down miscompiles.
-# Expectes two directories named "before" and "after" each containing a set of
-# assembly files where the "after" version is assumed to be broken.
-# Also assumes the presence of a executable or script "link_test" which when
-# called with a set of assembly files will link them together and test if the
-# resulting executable is "good".
+# Expects two directories named "before" and "after" each containing a set of
+# assembly or object files where the "after" version is assumed to be broken.
+# You also have to provide a script called "link_test". It is called with a list
+# of files which should be linked together and result tested. "link_test" should
+# returns with exitcode 0 if the linking and testing succeeded.
 #
-# Example usage:
+# abtest.py operates by taking all files from the "before" directory and
+# in each step replacing one of them with a file from the "bad" directory.
+#
+# Additionally you can perform the same steps with a single .s file. In this
+# mode functions are identified by "# -- Begin FunctionName" and
+# "# -- End FunctionName" markers. The abtest.py then takes all functions from
+# the file in the "before" directory and replaces one function with the
+# corresponding function from the "bad" file in each step.
+#
+# Example usage to identify miscompiled files:
 #    1. Create a link_test script, make it executable. Simple Example:
 #          clang "$@" -o /tmp/test && /tmp/test || echo "PROBLEM"
 #    2. Run the script to figure out which files are miscompiled:
@@ -16,29 +25,27 @@
 #       someotherfile.s: skipped: same content
 #       anotherfile.s: failed: './link_test' exitcode != 0
 #       ...
-#    3. If you want to replace+test with the functions inside a single file
-#       you first have to mark function begins and ends in the .s files
-#       this directory comes with some: mark_XXX.py example scripts,
-#       unfortunately you usually have to adapt them to each environment.
+# Example usage to identify miscompiled functions inside a file:
+#    3. First you have to mark begin and end of the functions.
+#       The script comes with some examples called mark_xxx.py.
+#       Unfortunately this is very specific to your environment and it is likely
+#       that you have to write a custom version for your environment.
 #       > for i in before/*.s after/*.s; do mark_xxx.py $i; done
-#    4. Run the tests on a single file
-#       > ./abtest.py
+#    4. Run the tests on a single file (assuming before/file.s and
+#       after/file.s exist)
+#       > ./abtest.py file.s
 #       funcname1 [0/XX]: ok
 #       funcname2 [1/XX]: ok
 #       funcname3 [2/XX]: skipped: same content
 #       funcname4 [3/XX]: failed: './link_test' exitcode != 0
 #       ...
-import sys
-import os
-from os import system, mkdir, walk, makedirs, errno, getenv
-from os.path import dirname, isdir
-from shutil import rmtree, copyfile
 from fnmatch import filter
-from itertools import chain
-from subprocess import call
 from sys import stderr
 import argparse
 import filecmp
+import os
+import subprocess
+import sys
 
 LINKTEST="./link_test"
 ESCAPE="\033[%sm"
@@ -47,17 +54,8 @@ RED=ESCAPE % "31"
 NORMAL=ESCAPE % "0"
 FAILED=RED+"failed"+NORMAL
 
-def mkdirtree(path):
-    try:
-        makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and isdir(path):
-            pass
-        else:
-            raise
-
 def find(dir, file_filter=None):
-    files = [walkdir[0]+"/"+file for walkdir in walk(dir) for file in walkdir[2]]
+    files = [walkdir[0]+"/"+file for walkdir in os.walk(dir) for file in walkdir[2]]
     if file_filter != None:
         files = filter(files, file_filter)
     return files
@@ -67,9 +65,6 @@ def error(message):
 
 def warn(message):
     stderr.write("Warning: %s\n" % (message,))
-
-def notice(message):
-    stderr.write("%s\n" % message)
 
 def extract_functions(file):
     functions = []
@@ -131,11 +126,13 @@ def announce_result(result, info):
 
 def testrun(files):
     linkline="%s %s" % (LINKTEST, " ".join(files),)
-    res = call(linkline, shell=True)
+    res = subprocess.call(linkline, shell=True)
     if res != 0:
         announce_result(FAILED, "'%s' exitcode != 0" % LINKTEST)
+        return False
     else:
         announce_result("ok", "")
+        return True
 
 def check_files():
     """Check files mode"""
@@ -201,13 +198,9 @@ def check_functions_in_file(base, goodfile, badfile):
 parser = argparse.ArgumentParser()
 parser.add_argument('--a', dest='dir_a', default='before')
 parser.add_argument('--b', dest='dir_b', default='after')
+parser.add_argument('--insane', help='Skip sanity check', action='store_true')
 parser.add_argument('file', metavar='file', nargs='?')
 config = parser.parse_args()
-
-# Check if environment is sane
-if not os.access(LINKTEST, os.X_OK):
-    error("Expect '%s' to be present and executable" % (LINKTEST,))
-    exit(1)
 
 gooddir=config.dir_a
 baddir=config.dir_b
@@ -216,9 +209,26 @@ BAD_FILES=find(baddir, "*")
 GOOD_FILES=find(gooddir, "*")
 NO_PREFIX=sorted([x[len(gooddir)+1:] for x in GOOD_FILES])
 
+# "Checking whether build environment is sane ..."
+if not config.insane:
+    announce_test("sanity check")
+    if not os.access(LINKTEST, os.X_OK):
+        error("Expect '%s' to be present and executable" % (LINKTEST,))
+        exit(1)
+
+    res = testrun(GOOD_FILES)
+    if not res:
+        # "build environment is grinning and holding a spatula. Guess not."
+        linkline="%s %s" % (LINKTEST, " ".join(GOOD_FILES),)
+        stderr.write("\n%s\n\n" % linkline)
+        stderr.write("Returned with exitcode != 0\n")
+        sys.exit(1)
+
 if config.file is not None:
+    # File exchange mode
     goodfile = gooddir+"/"+config.file
     badfile = baddir+"/"+config.file
     check_functions_in_file(config.file, goodfile, badfile)
 else:
+    # Function exchange mode
     check_files()
