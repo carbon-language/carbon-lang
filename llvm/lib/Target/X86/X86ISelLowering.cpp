@@ -18910,8 +18910,9 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
   if (VT == MVT::v16i8 || VT == MVT::v32i8) {
     if (Subtarget.hasInt256()) {
       // For 256-bit vectors, split into 128-bit vectors to allow the
-      // sign-extension to occur.
-      if (VT == MVT::v32i8)
+      // sign-extension to occur. We don't need this on AVX512BW as we can
+      // safely sign-extend to v32i16.
+      if (VT == MVT::v32i8 && !Subtarget.hasBWI())
         return Lower256IntArith(Op, DAG);
 
       MVT ExVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements());

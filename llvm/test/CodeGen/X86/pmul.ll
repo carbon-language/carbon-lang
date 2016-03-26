@@ -473,15 +473,11 @@ define <32 x i8> @mul_v32i8c(<32 x i8> %i) nounwind  {
 ;
 ; AVX512BW-LABEL: mul_v32i8c:
 ; AVX512BW:       # BB#0: # %entry
-; AVX512BW-NEXT:    vpmovsxbw %xmm0, %ymm1
-; AVX512BW-NEXT:    vpmovsxbw {{.*}}(%rip), %ymm2
-; AVX512BW-NEXT:    vpmullw %ymm2, %ymm1, %ymm1
-; AVX512BW-NEXT:    vpmovwb %zmm1, %ymm1
-; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm0
-; AVX512BW-NEXT:    vpmovsxbw %xmm0, %ymm0
-; AVX512BW-NEXT:    vpmullw %ymm2, %ymm0, %ymm0
+; AVX512BW-NEXT:    vmovaps {{.*#+}} ymm1 = [117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117]
+; AVX512BW-NEXT:    vpmovsxbw %ymm1, %zmm1
+; AVX512BW-NEXT:    vpmovsxbw %ymm0, %zmm0
+; AVX512BW-NEXT:    vpmullw %zmm1, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
-; AVX512BW-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX512BW-NEXT:    retq
 entry:
   %A = mul <32 x i8> %i, < i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117, i8 117 >
@@ -678,17 +674,10 @@ define <32 x i8> @mul_v32i8(<32 x i8> %i, <32 x i8> %j) nounwind  {
 ;
 ; AVX512BW-LABEL: mul_v32i8:
 ; AVX512BW:       # BB#0: # %entry
-; AVX512BW-NEXT:    vpmovsxbw %xmm1, %ymm2
-; AVX512BW-NEXT:    vpmovsxbw %xmm0, %ymm3
-; AVX512BW-NEXT:    vpmullw %ymm2, %ymm3, %ymm2
-; AVX512BW-NEXT:    vpmovwb %zmm2, %ymm2
-; AVX512BW-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512BW-NEXT:    vpmovsxbw %xmm1, %ymm1
-; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm0
-; AVX512BW-NEXT:    vpmovsxbw %xmm0, %ymm0
-; AVX512BW-NEXT:    vpmullw %ymm1, %ymm0, %ymm0
+; AVX512BW-NEXT:    vpmovsxbw %ymm1, %zmm1
+; AVX512BW-NEXT:    vpmovsxbw %ymm0, %zmm0
+; AVX512BW-NEXT:    vpmullw %zmm1, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
-; AVX512BW-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
 ; AVX512BW-NEXT:    retq
 entry:
   %A = mul <32 x i8> %i, %j
