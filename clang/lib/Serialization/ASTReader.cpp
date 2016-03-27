@@ -3033,17 +3033,6 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       break;
     }
 
-    case DECL_REPLACEMENTS: {
-      if (Record.size() % 3 != 0) {
-        Error("invalid DECL_REPLACEMENTS block in AST file");
-        return Failure;
-      }
-      for (unsigned I = 0, N = Record.size(); I != N; I += 3)
-        ReplacedDecls[getGlobalDeclID(F, Record[I])]
-          = ReplacedDeclInfo(&F, Record[I+1], Record[I+2]);
-      break;
-    }
-
     case OBJC_CATEGORIES_MAP: {
       if (F.LocalNumObjCCategoriesInMap != 0) {
         Error("duplicate OBJC_CATEGORIES_MAP record in AST file");

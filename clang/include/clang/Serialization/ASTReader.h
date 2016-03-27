@@ -469,21 +469,6 @@ private:
   /// declaration that has an exception specification.
   llvm::SmallMapVector<Decl *, FunctionDecl *, 4> PendingExceptionSpecUpdates;
 
-  struct ReplacedDeclInfo {
-    ModuleFile *Mod;
-    uint64_t Offset;
-    unsigned RawLoc;
-
-    ReplacedDeclInfo() : Mod(nullptr), Offset(0), RawLoc(0) {}
-    ReplacedDeclInfo(ModuleFile *Mod, uint64_t Offset, unsigned RawLoc)
-      : Mod(Mod), Offset(Offset), RawLoc(RawLoc) {}
-  };
-
-  typedef llvm::DenseMap<serialization::DeclID, ReplacedDeclInfo>
-      DeclReplacementMap;
-  /// \brief Declarations that have been replaced in a later file in the chain.
-  DeclReplacementMap ReplacedDecls;
-
   /// \brief Declarations that have been imported and have typedef names for
   /// linkage purposes.
   llvm::DenseMap<std::pair<DeclContext*, IdentifierInfo*>, NamedDecl*>
