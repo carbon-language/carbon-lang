@@ -24,12 +24,11 @@
 
 namespace llvm {
 
-/// isPodLike - This is a type trait that is used to determine whether a given
-/// type can be copied around with memcpy instead of running ctors etc.
-template <typename T>
-struct isPodLike {
-  // std::is_trivially_copyable is available in libc++ with clang, libstdc++
-  // that comes with GCC 5.
+/// Type trait used to determine whether a given type can be copied around with
+/// memcpy instead of running ctors.
+template <typename T> struct isPodLike {
+// std::is_trivially_copyable is available in libc++ with clang, libstdc++
+// that comes with GCC 5.
 #if (__has_feature(is_trivially_copyable) && defined(_LIBCPP_VERSION)) ||      \
     (defined(__GNUC__) && __GNUC__ >= 5)
   // If the compiler supports the is_trivially_copyable trait use it, as it
@@ -40,10 +39,15 @@ struct isPodLike {
   // don't know if the standard library does. This is the case for clang in
   // conjunction with libstdc++ from GCC 4.x.
   static const bool value = __is_trivially_copyable(T);
+#elif defined(__GNUC__)
+  // Fallback to ye olden compiler intrinsic, which isn't as accurate as the new
+  // one but more widely supported.
+  static const bool value = __has_trivial_copy(T);
 #else
-  // If we don't know anything else, we can (at least) assume that all non-class
-  // types are PODs.
-  static const bool value = !std::is_class<T>::value;
+  // If we really don't know anything else is_pod will do, is widely supported,
+  // but is too strict (e.g. a user-defined ctor doesn't prevent trivial copy
+  // but prevents POD-ness).
+  static const bool value = std::is_pod<T>::value;
 #endif
 };
 
