@@ -136,6 +136,8 @@ def genericize_check_lines(lines):
   lines_with_def = []
   vars_seen = []
   for line in lines:
+    # An IR variable named '%.' matches the FileCheck regex string.
+    line = line.replace('%.', '%dot')
     m = IR_VALUE_DEF_RE.match(line)
     if m:
       vars_seen.append(m.group(1))
