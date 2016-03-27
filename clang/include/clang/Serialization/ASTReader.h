@@ -1175,7 +1175,7 @@ private:
   Decl *getMostRecentExistingDecl(Decl *D);
 
   RecordLocation DeclCursorForID(serialization::DeclID ID,
-                                 unsigned &RawLocation);
+                                 SourceLocation &Location);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);
   void loadPendingDeclChain(Decl *D, uint64_t LocalOffset);
   void loadObjCCategories(serialization::GlobalDeclID ID, ObjCInterfaceDecl *D,
@@ -1982,7 +1982,15 @@ public:
   /// \brief Read a source location from raw form.
   SourceLocation ReadSourceLocation(ModuleFile &ModuleFile, unsigned Raw) const {
     SourceLocation Loc = SourceLocation::getFromRawEncoding(Raw);
-    assert(ModuleFile.SLocRemap.find(Loc.getOffset()) != ModuleFile.SLocRemap.end() &&
+    return TranslateSourceLocation(ModuleFile, Loc);
+  }
+
+  /// \brief Translate a source location from another module file's source
+  /// location space into ours.
+  SourceLocation TranslateSourceLocation(ModuleFile &ModuleFile,
+                                         SourceLocation Loc) const {
+    assert(ModuleFile.SLocRemap.find(Loc.getOffset()) !=
+               ModuleFile.SLocRemap.end() &&
            "Cannot find offset to remap.");
     int Remap = ModuleFile.SLocRemap.find(Loc.getOffset())->second;
     return Loc.getLocWithOffset(Remap);

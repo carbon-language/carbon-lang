@@ -4897,8 +4897,8 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
     return nullptr;
 
   // Read the record.
-  SourceRange Range(ReadSourceLocation(M, PPOffs.Begin),
-                    ReadSourceLocation(M, PPOffs.End));
+  SourceRange Range(TranslateSourceLocation(M, PPOffs.getBegin()),
+                    TranslateSourceLocation(M, PPOffs.getEnd()));
   PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
   StringRef Blob;
   RecordData Record;
@@ -5089,7 +5089,7 @@ Optional<bool> ASTReader::isPreprocessedEntityInFileID(unsigned Index,
   unsigned LocalIndex = PPInfo.second;
   const PPEntityOffset &PPOffs = M.PreprocessedEntityOffsets[LocalIndex];
   
-  SourceLocation Loc = ReadSourceLocation(M, PPOffs.Begin);
+  SourceLocation Loc = TranslateSourceLocation(M, PPOffs.getBegin());
   if (Loc.isInvalid())
     return false;
   
@@ -6426,9 +6426,9 @@ SourceLocation ASTReader::getSourceLocationForDeclID(GlobalDeclID ID) {
   if (Decl *D = DeclsLoaded[Index])
     return D->getLocation();
 
-  unsigned RawLocation = 0;
-  RecordLocation Rec = DeclCursorForID(ID, RawLocation);
-  return ReadSourceLocation(*Rec.F, RawLocation);
+  SourceLocation Loc;
+  DeclCursorForID(ID, Loc);
+  return Loc;
 }
 
 static Decl *getPredefinedDecl(ASTContext &Context, PredefinedDeclIDs ID) {

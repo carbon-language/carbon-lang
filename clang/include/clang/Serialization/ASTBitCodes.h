@@ -175,6 +175,12 @@ namespace clang {
         : Begin(R.getBegin().getRawEncoding()),
           End(R.getEnd().getRawEncoding()),
           BitOffset(BitOffset) { }
+      SourceLocation getBegin() const {
+        return SourceLocation::getFromRawEncoding(Begin);
+      }
+      SourceLocation getEnd() const {
+        return SourceLocation::getFromRawEncoding(End);
+      }
     };
 
     /// \brief Source range/offset of a preprocessed entity.
@@ -190,6 +196,9 @@ namespace clang {
           BitOffset(BitOffset) { }
       void setLocation(SourceLocation L) {
         Loc = L.getRawEncoding();
+      }
+      SourceLocation getLocation() const {
+        return SourceLocation::getFromRawEncoding(Loc);
       }
     };
 
