@@ -95,7 +95,7 @@ Here's the short story for getting up and running quickly with LLVM:
      Some common generators are:
 
      * ``Unix Makefiles`` --- for generating make-compatible parallel makefiles.
-     * ``Ninja`` --- for generating `Ninja <http://martine.github.io/ninja/>`
+     * ``Ninja`` --- for generating `Ninja <https://ninja-build.org>`_
         build files. Most llvm developers use Ninja.
      * ``Visual Studio`` --- for generating Visual Studio projects and
         solutions.
