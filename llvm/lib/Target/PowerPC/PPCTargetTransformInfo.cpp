@@ -375,7 +375,7 @@ int PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
   // If we can use the permutation-based load sequence, then this is also
   // relatively cheap (not counting loop-invariant instructions): one load plus
   // one permute (the last load in a series has extra cost, but we're
-  // neglecting that here). Note that on the P7, we should do unaligned loads
+  // neglecting that here). Note that on the P7, we could do unaligned loads
   // for Altivec types using the VSX instructions, but that's more expensive
   // than using the permutation-based load sequence. On the P8, that's no
   // longer true.
