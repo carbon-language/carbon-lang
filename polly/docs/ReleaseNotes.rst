@@ -71,7 +71,7 @@ access only memory accessible through pointer arguments. See also the function
 attributes ``readonly`` and ``argmemonly`` for more information.
 
 Fine-grain dependences analysis
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 In addition of the ScopStmt wise dependences analysis, now the "polly-dependence"
 pass provides dependences analysis at memory reference wise and memory access wise.
