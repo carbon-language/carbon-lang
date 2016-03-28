@@ -343,6 +343,112 @@ VSX:
   . Provide builtin?
     (set f128:$vT, (int_ppc_vsx_xsrqpxp f128:$vB))
 
+- Insert Exponent DP/QP: xsiexpdp xsiexpqp
+  . Use intrinsic?
+  . xsiexpdp:
+    // Note: rA and rB are the unsigned integer value.
+    (set f128:$XT, (int_ppc_vsx_xsiexpdp i64:$rA, i64:$rB))
+
+  . xsiexpqp:
+    (set f128:$vT, (int_ppc_vsx_xsiexpqp f128:$vA, f64:$vB))
+
+- Extract Exponent/Significand DP/QP: xsxexpdp xsxsigdp xsxexpqp xsxsigqp
+  . Use intrinsic?
+  . (set i64:$rT, (int_ppc_vsx_xsxexpdp f64$XB))    // xsxexpdp
+    (set i64:$rT, (int_ppc_vsx_xsxsigdp f64$XB))    // xsxsigdp
+    (set f128:$vT, (int_ppc_vsx_xsxexpqp f128$vB))  // xsxexpqp
+    (set f128:$vT, (int_ppc_vsx_xsxsigqp f128$vB))  // xsxsigqp
+
+- Vector Insert Word: xxinsertw
+  . Note: llvm has insertelem in "Vector Operations"
+    ; yields <n x <ty>>
+    <result> = insertelement <n x <ty>> <val>, <ty> <elt>, <ty2> <idx>
+
+    But how to map to it??
+    [(set v1f128:$XT, (insertelement v1f128:$XTi, f128:$XB, i4:$UIMM))]>,
+    RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+
+  . Or use intrinsic?
+    (set v1f128:$XT, (int_ppc_vsx_xxinsertw v1f128:$XTi, f128:$XB, i4:$UIMM))
+
+- Vector Extract Unsigned Word: xxextractuw
+  . Note: llvm has extractelement in "Vector Operations"
+    ; yields <ty>
+    <result> = extractelement <n x <ty>> <val>, <ty2> <idx>
+
+    How to map to it??
+    [(set f128:$XT, (extractelement v1f128:$XB, i4:$UIMM))]
+
+  . Or use intrinsic?
+    (set f128:$XT, (int_ppc_vsx_xxextractuw v1f128:$XB, i4:$UIMM))
+
+- Vector Insert Exponent DP/SP: xviexpdp xviexpsp
+  . Use intrinsic
+    (set v2f64:$XT, (int_ppc_vsx_xviexpdp v2f64:$XA, v2f64:$XB))
+    (set v4f32:$XT, (int_ppc_vsx_xviexpsp v4f32:$XA, v4f32:$XB))
+
+- Vector Extract Exponent/Significand DP/SP: xvxexpdp xvxexpsp xvxsigdp xvxsigsp
+  . Use intrinsic
+    (set v2f64:$XT, (int_ppc_vsx_xvxexpdp v2f64:$XB))
+    (set v4f32:$XT, (int_ppc_vsx_xvxexpsp v4f32:$XB))
+    (set v2f64:$XT, (int_ppc_vsx_xvxsigdp v2f64:$XB))
+    (set v4f32:$XT, (int_ppc_vsx_xvxsigsp v4f32:$XB))
+
+- Test Data Class SP/DP/QP: xststdcsp xststdcdp xststdcqp
+  . No SDAG, intrinsic, builtin are required?
+    Because it seems that we have no way to map BF field?
+
+    Instruction Form: [PO T XO B XO BX TX]
+    Asm: xststd* BF,XB,DCMX
+
+    BF is an index to CR register field.
+
+- Vector Test Data Class SP/DP: xvtstdcsp xvtstdcdp
+  . Use intrinsic
+    (set v4f32:$XT, (int_ppc_vsx_xvtstdcsp v4f32:$XB, i7:$DCMX))
+    (set v2f64:$XT, (int_ppc_vsx_xvtstdcdp v2f64:$XB, i7:$DCMX))
+
+- Maximum/Minimum Type-C/Type-J DP: xsmaxcdp xsmaxjdp xsmincdp xsminjdp
+  . PowerISA_V3.0:
+    "xsmaxcdp can be used to implement the C/C++/Java conditional operation
+     (x>y)?x:y for single-precision and double-precision arguments."
+
+    Note! c type and j type have different behavior when:
+    1. Either input is NaN
+    2. Both input are +-Infinity, +-Zero
+
+  . dtype map to llvm fmaxnum/fminnum
+    jtype use intrinsic
+
+  . xsmaxcdp xsmincdp
+    (set f64:$XT, (fmaxnum f64:$XA, f64:$XB))
+    (set f64:$XT, (fminnum f64:$XA, f64:$XB))
+
+  . xsmaxjdp xsminjdp
+    (set f64:$XT, (int_ppc_vsx_xsmaxjdp f64:$XA, f64:$XB))
+    (set f64:$XT, (int_ppc_vsx_xsminjdp f64:$XA, f64:$XB))
+
+- Vector Byte-Reverse H/W/D/Q Word: xxbrh xxbrw xxbrd xxbrq
+  . Use intrinsic
+    (set v8i16:$XT, (int_ppc_vsx_xxbrh v8i16:$XB))
+    (set v4i32:$XT, (int_ppc_vsx_xxbrw v4i32:$XB))
+    (set v2i64:$XT, (int_ppc_vsx_xxbrd v2i64:$XB))
+    (set v1i128:$XT, (int_ppc_vsx_xxbrq v1i128:$XB))
+
+- Vector Permute: xxperm xxpermr
+  . I have checked "PPCxxswapd" in PPCInstrVSX.td, but they are different
+  . Use intrinsic
+    (set v16i8:$XT, (int_ppc_vsx_xxperm v16i8:$XA, v16i8:$XB))
+    (set v16i8:$XT, (int_ppc_vsx_xxpermr v16i8:$XA, v16i8:$XB))
+
+- Vector Splat Immediate Byte: xxspltib
+  . Similar to XXSPLTW:
+      def XXSPLTW : XX2Form_2<60, 164,
+                           (outs vsrc:$XT), (ins vsrc:$XB, u2imm:$UIM),
+                           "xxspltw $XT, $XB, $UIM", IIC_VecPerm, []>;
+
+  . No SDAG, intrinsic, builtin are required?
+
 - Load/Store Vector: lxv stxv
   . Has likely SDAG match:
     (set v?:$XT, (load ix16addr:$src))
