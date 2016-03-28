@@ -681,7 +681,7 @@ private:
       // langref in a very strict sense. If we ever want to enable
       // SROAStrictInbounds, this code should be factored cleanly into
       // PtrUseVisitor, but it is easier to experiment with SROAStrictInbounds
-      // by writing out the code here where we have tho underlying allocation
+      // by writing out the code here where we have the underlying allocation
       // size readily available.
       APInt GEPOffset = Offset;
       const DataLayout &DL = GEPI.getModule()->getDataLayout();
