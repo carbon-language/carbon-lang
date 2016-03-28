@@ -1779,6 +1779,44 @@ class VXRForm_1<bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{22-31} = xo;
 }
 
+// VX-Form: [PO VRT EO VRB 1 PS XO]
+class VX_RD5_EO5_RS5_PS1_XO9<bits<5> eo, bits<9> xo,
+                             dag OOL, dag IOL, string asmstr,
+                             InstrItinClass itin, list<dag> pattern>
+  : I<4, OOL, IOL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VB;
+  bit PS;
+
+  let Pattern = pattern;
+
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = eo;
+  let Inst{16-20} = VB;
+  let Inst{21}    = 1;
+  let Inst{22}    = PS;
+  let Inst{23-31} = xo;
+}
+
+// VX-Form: [PO VRT VRA VRB 1 PS XO] or [PO VRT VRA VRB 1 / XO]
+class VX_RD5_RSp5_PS1_XO9<bits<9> xo, dag OOL, dag IOL, string asmstr,
+                          InstrItinClass itin, list<dag> pattern>
+  : I<4, OOL, IOL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<5> VB;
+  bit PS;
+
+  let Pattern = pattern;
+
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = VB;
+  let Inst{21}    = 1;
+  let Inst{22}    = PS;
+  let Inst{23-31} = xo;
+}
+
 // Z23-Form (used by QPX)
 class Z23Form_1<bits<6> opcode, bits<8> xo, dag OOL, dag IOL, string asmstr, 
               InstrItinClass itin, list<dag> pattern>

@@ -140,6 +140,36 @@ Altivec:
     VX1_Int_Ty<577, "vmul10euq",  int_ppc_altivec_vmul10euq, v1i128>;
     VX1_Int_Ty< 65, "vmul10ecuq", int_ppc_altivec_vmul10ecuq, v1i128>;
 
+- Decimal Convert From/to National/Zoned/Signed-QWord:
+  bcdcfn. bcdcfz. bcdctn. bcdctz. bcdcfsq. bcdctsq.
+  . Use instrinstics:
+    (set v1i128:$vD, (int_ppc_altivec_bcdcfno  v1i128:$vB, i1:$PS))
+    (set v1i128:$vD, (int_ppc_altivec_bcdcfzo  v1i128:$vB, i1:$PS))
+    (set v1i128:$vD, (int_ppc_altivec_bcdctno  v1i128:$vB))
+    (set v1i128:$vD, (int_ppc_altivec_bcdctzo  v1i128:$vB, i1:$PS))
+    (set v1i128:$vD, (int_ppc_altivec_bcdcfsqo v1i128:$vB, i1:$PS))
+    (set v1i128:$vD, (int_ppc_altivec_bcdctsqo v1i128:$vB))
+
+- Decimal Copy-Sign/Set-Sign: bcdcpsgn. bcdsetsgn.
+  . Use instrinstics:
+    (set v1i128:$vD, (int_ppc_altivec_bcdcpsgno v1i128:$vA, v1i128:$vB))
+    (set v1i128:$vD, (int_ppc_altivec_bcdsetsgno v1i128:$vB, i1:$PS))
+
+- Decimal Shift/Unsigned-Shift/Shift-and-Round: bcds. bcdus. bcdsr.
+  . Use instrinstics:
+    (set v1i128:$vD, (int_ppc_altivec_bcdso  v1i128:$vA, v1i128:$vB, i1:$PS))
+    (set v1i128:$vD, (int_ppc_altivec_bcduso v1i128:$vA, v1i128:$vB))
+    (set v1i128:$vD, (int_ppc_altivec_bcdsro v1i128:$vA, v1i128:$vB, i1:$PS))
+
+  . Note! Their VA is accessed only 1 byte, i.e. VA.byte[7]
+
+- Decimal (Unsigned) Truncate: bcdtrunc. bcdutrunc.
+  . Use instrinstics:
+    (set v1i128:$vD, (int_ppc_altivec_bcdso  v1i128:$vA, v1i128:$vB, i1:$PS))
+    (set v1i128:$vD, (int_ppc_altivec_bcduso v1i128:$vA, v1i128:$vB))
+
+  . Note! Their VA is accessed only 2 byte, i.e. VA.hword[3] (VA.bit[48:63])
+
 VSX:
 - QP Copy Sign: xscpsgnqp
   . Similar to xscpsgndp
