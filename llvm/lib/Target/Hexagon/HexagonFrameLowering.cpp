@@ -1086,14 +1086,16 @@ void HexagonFrameLowering::processFunctionBeforeFrameFinalized(
     return;
 
   unsigned LFS = MFI->getLocalFrameSize();
-  int Offset = -LFS;
   for (int i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
     if (!MFI->isSpillSlotObjectIndex(i) || MFI->isDeadObjectIndex(i))
       continue;
-    int S = MFI->getObjectSize(i);
-    LFS += S;
-    Offset -= S;
-    MFI->mapLocalFrameObject(i, Offset);
+    unsigned S = MFI->getObjectSize(i);
+    // Reduce the alignment to at most 8. This will require unaligned vector
+    // stores if they happen here.
+    unsigned A = std::max(MFI->getObjectAlignment(i), 8U);
+    MFI->setObjectAlignment(i, 8);
+    LFS = alignTo(LFS+S, A);
+    MFI->mapLocalFrameObject(i, -LFS);
   }
 
   MFI->setLocalFrameSize(LFS);
