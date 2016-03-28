@@ -18,7 +18,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include <string>
-#include <limits.h>
+#include <limits>
 
 namespace llvm {
 
@@ -60,6 +60,7 @@ namespace ISD {
     static const uint64_t One            = 1ULL; ///< 1 of this type, for shifts
 
     uint64_t Flags;
+
   public:
     ArgFlagsTy() : Flags(0) { }
 
@@ -141,7 +142,7 @@ namespace ISD {
     /// Index original Function's argument.
     unsigned OrigArgIndex;
     /// Sentinel value for implicit machine-level input arguments.
-    static const unsigned NoArgIndex = UINT_MAX;
+    static const unsigned NoArgIndex = std::numeric_limits<uint32_t>::max();
 
     /// Offset in bytes of current input value relative to the beginning of
     /// original argument. E.g. if argument was splitted into four 32 bit
@@ -195,8 +196,8 @@ namespace ISD {
       ArgVT = argvt;
     }
   };
-}
+} // end namespace ISD
 
 } // end llvm namespace
 
-#endif
+#endif // LLVM_TARGET_TARGETCALLINGCONV_H
