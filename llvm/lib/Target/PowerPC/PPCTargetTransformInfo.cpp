@@ -43,7 +43,7 @@ TargetTransformInfo::PopcntSupportKind
 PPCTTIImpl::getPopcntSupport(unsigned TyWidth) {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   if (ST->hasPOPCNTD() && TyWidth <= 64)
-    return TTI::PSK_FastHardware;
+    return ST->isPOPCNTDSlow() ? TTI::PSK_SlowHardware : TTI::PSK_FastHardware;
   return TTI::PSK_Software;
 }
 
