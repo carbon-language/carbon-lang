@@ -160,7 +160,7 @@ int collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
                               bool doCompression, std::string &Result) {
   uint8_t Header[16], *P = Header;
   std::string UncompressedNameStrings =
-      join(NameStrs.begin(), NameStrs.end(), StringRef(" "));
+      join(NameStrs.begin(), NameStrs.end(), getInstrProfNameSeparator());
 
   unsigned EncLen = encodeULEB128(UncompressedNameStrings.length(), P);
   P += EncLen;
@@ -238,7 +238,7 @@ int readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
     }
     // Now parse the name strings.
     SmallVector<StringRef, 0> Names;
-    NameStrings.split(Names, ' ');
+    NameStrings.split(Names, getInstrProfNameSeparator());
     for (StringRef &Name : Names)
       Symtab.addFuncName(Name);
 
