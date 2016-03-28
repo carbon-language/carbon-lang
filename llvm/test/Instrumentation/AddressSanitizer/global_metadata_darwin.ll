@@ -15,8 +15,8 @@ target triple = "x86_64-apple-macosx10.11.0"
 !1 = !{!"test-globals.c", i32 1, i32 5}
 
 
-; Test that there is a Needle global variable:
-; CHECK: @__asan_needle = internal global i64 0
+; Test that there is the flag global variable:
+; CHECK: @__asan_globals_registered = common global i64 0
 
 ; Find the metadata for @global:
 ; CHECK: [[METADATA:@[0-9]+]] = internal global {{.*}} @global {{.*}} section "__DATA,__asan_globals,regular", align 1
@@ -24,14 +24,14 @@ target triple = "x86_64-apple-macosx10.11.0"
 ; Find the liveness binder for @global and its metadata:
 ; CHECK: @{{[0-9]+}} = internal global {{.*}} @global {{.*}} [[METADATA]] {{.*}} section "__DATA,__asan_liveness,regular,live_support"
 
-; Test that __asan_apply_to_globals is invoked from the constructor:
+; Test that __asan_register_image_globals is invoked from the constructor:
 ; CHECK-LABEL: define internal void @asan.module_ctor
 ; CHECK-NOT: ret
-; CHECK: call void @__asan_apply_to_globals(i64 ptrtoint (void (i64, i64)* @__asan_register_globals to i64), i64 ptrtoint (i64* @__asan_needle to i64))
+; CHECK: call void @__asan_register_image_globals(i64 ptrtoint (i64* @__asan_globals_registered to i64))
 ; CHECK: ret
 
-; Test that __asan_apply_to_globals is invoked from the destructor:
+; Test that __asan_unregister_image_globals is invoked from the destructor:
 ; CHECK-LABEL: define internal void @asan.module_dtor
 ; CHECK-NOT: ret
-; CHECK: call void @__asan_apply_to_globals(i64 ptrtoint (void (i64, i64)* @__asan_unregister_globals to i64), i64 ptrtoint (i64* @__asan_needle to i64))
+; CHECK: call void @__asan_unregister_image_globals(i64 ptrtoint (i64* @__asan_globals_registered to i64))
 ; CHECK: ret
