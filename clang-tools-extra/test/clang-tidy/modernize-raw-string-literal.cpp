@@ -46,10 +46,12 @@ char const *const TrailingNewLine("A single \\line.\n");
 char const *const AlreadyRaw(R"(foobie\\bletch)");
 char const *const UTF8Literal(u8"foobie\\bletch");
 char const *const UTF8RawLiteral(u8R"(foobie\\bletch)");
-char16_t const *const UTF16Literal(u"foobie\\bletch");
-char16_t const *const UTF16RawLiteral(uR"(foobie\\bletch)");
-char32_t const *const UTF32Literal(U"foobie\\bletch");
-char32_t const *const UTF32RawLiteral(UR"(foobie\\bletch)");
+// TODO: enable these tests once all supported compilers
+// support char16_t and char32_t (VS2013 does not)
+// char16_t const *const UTF16Literal(u"foobie\\bletch");
+// char16_t const *const UTF16RawLiteral(uR"(foobie\\bletch)");
+// char32_t const *const UTF32Literal(U"foobie\\bletch");
+// char32_t const *const UTF32RawLiteral(UR"(foobie\\bletch)");
 wchar_t const *const WideLiteral(L"foobie\\bletch");
 wchar_t const *const WideRawLiteral(LR"(foobie\\bletch)");
 
