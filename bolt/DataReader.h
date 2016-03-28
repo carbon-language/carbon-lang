@@ -46,18 +46,19 @@ struct BranchInfo {
         Branches(Branches) {}
 };
 
-class FuncBranchData {
-public:
+struct FuncBranchData {
   typedef std::vector<BranchInfo> ContainerTy;
 
   StringRef Name;
   ContainerTy Data;
 
+  /// Total execution count for the function.
+  int64_t ExecutionCount{0};
+
   FuncBranchData(StringRef Name, ContainerTy Data)
       : Name(Name), Data(std::move(Data)) {}
 
   ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
-  uint64_t countBranchesTo(StringRef FuncName) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -94,7 +95,6 @@ public:
   std::error_code parse();
 
   ErrorOr<const FuncBranchData &> getFuncBranchData(StringRef FuncName) const;
-  uint64_t countBranchesTo(StringRef FuncName) const;
 
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;

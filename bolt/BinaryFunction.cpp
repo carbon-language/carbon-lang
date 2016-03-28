@@ -604,7 +604,8 @@ bool BinaryFunction::buildCFG() {
   if (std::error_code EC = BranchDataOrErr.getError()) {
     DEBUG(dbgs() << "no branch data found for \"" << getName() << "\"\n");
   } else {
-    ExecutionCount = BC.DR.countBranchesTo(getName());
+    if (!BranchDataOrErr.get().Data.empty())
+      ExecutionCount = BranchDataOrErr.get().ExecutionCount;
   }
 
   if (!isSimple())

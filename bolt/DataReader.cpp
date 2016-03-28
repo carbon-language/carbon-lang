@@ -27,16 +27,6 @@ ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
   return make_error_code(llvm::errc::invalid_argument);
 }
 
-uint64_t
-FuncBranchData::countBranchesTo(StringRef FuncName) const {
-  uint64_t TotalCount = 0;
-  for (const auto &I : Data) {
-    if (I.To.Offset == 0 && I.To.Name == FuncName)
-      TotalCount += I.Branches;
-  }
-  return TotalCount;
-}
-
 ErrorOr<std::unique_ptr<DataReader>>
 DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
@@ -161,6 +151,18 @@ bool DataReader::hasData() {
 }
 
 std::error_code DataReader::parse() {
+  auto GetOrCreateFuncEntry = [&](StringRef Name) {
+    auto I = FuncsMap.find(Name);
+    if (I == FuncsMap.end()) {
+      bool success;
+      std::tie(I, success) = FuncsMap.insert(
+          std::make_pair(Name, FuncBranchData(Name,
+                                              FuncBranchData::ContainerTy())));
+      assert(success && "unexpected result of insert");
+    }
+    return I;
+  };
+
   Col = 0;
   Line = 1;
   while (hasData()) {
@@ -171,16 +173,22 @@ std::error_code DataReader::parse() {
     Line += 1;
 
     BranchInfo BI = Res.get();
-    StringRef Name = BI.From.Name;
-    auto I = FuncsMap.find(Name);
-    if (I == FuncsMap.end()) {
-      FuncBranchData::ContainerTy Cont;
-      Cont.emplace_back(std::move(BI));
-      FuncsMap.insert(
-          std::make_pair(Name, FuncBranchData(Name, std::move(Cont))));
+
+    // Ignore branches not involving known location.
+    if (!BI.From.IsSymbol && !BI.To.IsSymbol)
       continue;
-    }
+
+    auto I = GetOrCreateFuncEntry(BI.From.Name);
     I->getValue().Data.emplace_back(std::move(BI));
+
+    // If destination is the function start - update execution count.
+    // NB: the data is skewed since we cannot tell tail recursion from
+    //     branches to the function start.
+    if (BI.To.IsSymbol && BI.To.Offset == 0) {
+      I = GetOrCreateFuncEntry(BI.To.Name);
+      I->getValue().ExecutionCount += BI.Branches;
+    }
+
   }
   return std::error_code();
 }
@@ -192,14 +200,6 @@ DataReader::getFuncBranchData(StringRef FuncName) const {
     return make_error_code(llvm::errc::invalid_argument);
   }
   return I->getValue();
-}
-
-uint64_t DataReader::countBranchesTo(StringRef FuncName) const {
-  uint64_t TotalCount = 0;
-  for (const auto &KV : FuncsMap) {
-    TotalCount += KV.getValue().countBranchesTo(FuncName);
-  }
-  return TotalCount;
 }
 
 void DataReader::dump() const {
