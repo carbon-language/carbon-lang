@@ -42,8 +42,8 @@ void InstrProfSummary::addRecord(const InstrProfRecord &R) {
 // equivalent to a block with a count in the instrumented profile.
 void SampleProfileSummary::addRecord(const sampleprof::FunctionSamples &FS) {
   NumFunctions++;
-  if (FS.getHeadSamples() > MaxHeadSamples)
-    MaxHeadSamples = FS.getHeadSamples();
+  if (FS.getHeadSamples() > MaxFunctionCount)
+    MaxFunctionCount = FS.getHeadSamples();
   for (const auto &I : FS.getBodySamples())
     addCount(I.second.getSamples());
 }
@@ -103,13 +103,13 @@ bool ProfileSummary::isFunctionUnlikely(const Function *F) {
 InstrProfSummary::InstrProfSummary(const IndexedInstrProf::Summary &S)
     : ProfileSummary(PSK_Instr),
       MaxInternalBlockCount(
-          S.get(IndexedInstrProf::Summary::MaxInternalBlockCount)),
-      MaxFunctionCount(S.get(IndexedInstrProf::Summary::MaxFunctionCount)),
-      NumFunctions(S.get(IndexedInstrProf::Summary::TotalNumFunctions)) {
+          S.get(IndexedInstrProf::Summary::MaxInternalBlockCount)) {
 
   TotalCount = S.get(IndexedInstrProf::Summary::TotalBlockCount);
   MaxCount = S.get(IndexedInstrProf::Summary::MaxBlockCount);
+  MaxFunctionCount = S.get(IndexedInstrProf::Summary::MaxFunctionCount);
   NumCounts = S.get(IndexedInstrProf::Summary::TotalNumBlocks);
+  NumFunctions = S.get(IndexedInstrProf::Summary::TotalNumFunctions);
 
   for (unsigned I = 0; I < S.NumCutoffEntries; I++) {
     const IndexedInstrProf::Summary::Entry &Ent = S.getEntry(I);
@@ -117,6 +117,7 @@ InstrProfSummary::InstrProfSummary(const IndexedInstrProf::Summary &S)
                                  Ent.NumBlocks);
   }
 }
+
 void InstrProfSummary::addEntryCount(uint64_t Count) {
   addCount(Count);
   NumFunctions++;
