@@ -287,6 +287,20 @@ namespace {
         return true;
     return false;
   }
+
+  inline bool isOptNone(const MachineFunction &MF) {
+    return MF.getFunction()->hasFnAttribute(Attribute::OptimizeNone) ||
+           MF.getTarget().getOptLevel() == CodeGenOpt::None;
+  }
+
+  inline bool isOptSize(const MachineFunction &MF) {
+    const Function &F = *MF.getFunction();
+    return F.optForSize() && !F.optForMinSize();
+  }
+
+  inline bool isMinSize(const MachineFunction &MF) {
+    return MF.getFunction()->optForMinSize();
+  }
 }
 
 
@@ -864,9 +878,8 @@ int HexagonFrameLowering::getFrameIndexReference(const MachineFunction &MF,
   bool NoOpt = MF.getTarget().getOptLevel() == CodeGenOpt::None;
 
   unsigned SP = HRI.getStackRegister(), FP = HRI.getFrameRegister();
-  unsigned AP = 0;
-  if (const MachineInstr *AI = getAlignaInstr(MF))
-    AP = AI->getOperand(0).getReg();
+  auto &HMFI = *MF.getInfo<HexagonMachineFunctionInfo>();
+  unsigned AP = HMFI.getStackAlignBasePhysReg();
   unsigned FrameSize = MFI.getStackSize();
 
   bool UseFP = false, UseAP = false;  // Default: use SP (except at -O0).
@@ -1089,6 +1102,13 @@ void HexagonFrameLowering::processFunctionBeforeFrameFinalized(
   if (A == 0)
     MFI->setLocalFrameMaxAlign(8);
   MFI->setUseLocalStackAllocationBlock(true);
+
+  // Set the physical aligned-stack base address register.
+  unsigned AP = 0;
+  if (const MachineInstr *AI = getAlignaInstr(MF))
+    AP = AI->getOperand(0).getReg();
+  auto &HMFI = *MF.getInfo<HexagonMachineFunctionInfo>();
+  HMFI.setStackAlignBasePhysReg(AP);
 }
 
 /// Returns true if there is no caller saved registers available.
@@ -1680,7 +1700,7 @@ void HexagonFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // Replace predicate register pseudo spill code.
   SmallVector<unsigned,8> NewRegs;
   expandSpillMacros(MF, NewRegs);
-  if (OptimizeSpillSlots)
+  if (OptimizeSpillSlots && !isOptNone(MF))
     optimizeSpillSlots(MF, NewRegs);
 
   // We need to reserve a a spill slot if scavenging could potentially require
@@ -2142,18 +2162,6 @@ const MachineInstr *HexagonFrameLowering::getAlignaInstr(
       if (I.getOpcode() == Hexagon::ALIGNA)
         return &I;
   return nullptr;
-}
-
-
-// FIXME: Use Function::optForSize().
-inline static bool isOptSize(const MachineFunction &MF) {
-  AttributeSet AF = MF.getFunction()->getAttributes();
-  return AF.hasAttribute(AttributeSet::FunctionIndex,
-                         Attribute::OptimizeForSize);
-}
-
-inline static bool isMinSize(const MachineFunction &MF) {
-  return MF.getFunction()->optForMinSize();
 }
 
 
