@@ -214,7 +214,7 @@ SampleProfileSummary::getFormatSpecificMD(LLVMContext &Context) {
   Components.push_back(
       getKeyValMD(Context, "MaxSamplesPerLine", getMaxSamplesPerLine()));
   Components.push_back(
-      getKeyValMD(Context, "MaxHeadSamples", getMaxHeadSamples()));
+      getKeyValMD(Context, "MaxFunctionCount", getMaxFunctionCount()));
   Components.push_back(
       getKeyValMD(Context, "NumLinesWithSamples", getNumLinesWithSamples()));
   Components.push_back(getKeyValMD(Context, "NumFunctions", NumFunctions));
@@ -318,8 +318,8 @@ static ProfileSummary *getInstrProfSummaryFromMD(MDTuple *Tuple) {
 
 // Parse an MDTuple representing a SampleProfileSummary object.
 static ProfileSummary *getSampleProfileSummaryFromMD(MDTuple *Tuple) {
-  uint64_t TotalSamples, MaxSamplesPerLine, MaxHeadSamples, NumLinesWithSamples,
-      NumFunctions;
+  uint64_t TotalSamples, MaxSamplesPerLine, MaxFunctionCount,
+      NumLinesWithSamples, NumFunctions;
   SummaryEntryVector Summary;
 
   if (Tuple->getNumOperands() != 7)
@@ -332,8 +332,8 @@ static ProfileSummary *getSampleProfileSummaryFromMD(MDTuple *Tuple) {
   if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(2)), "MaxSamplesPerLine",
               MaxSamplesPerLine))
     return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(3)), "MaxHeadSamples",
-              MaxHeadSamples))
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(3)), "MaxFunctionCount",
+              MaxFunctionCount))
     return nullptr;
   if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(4)), "NumLinesWithSamples",
               NumLinesWithSamples))
@@ -344,7 +344,7 @@ static ProfileSummary *getSampleProfileSummaryFromMD(MDTuple *Tuple) {
   if (!getSummaryFromMD(dyn_cast<MDTuple>(Tuple->getOperand(6)), Summary))
     return nullptr;
   return new SampleProfileSummary(TotalSamples, MaxSamplesPerLine,
-                                  MaxHeadSamples, NumLinesWithSamples,
+                                  MaxFunctionCount, NumLinesWithSamples,
                                   NumFunctions, Summary);
 }
 

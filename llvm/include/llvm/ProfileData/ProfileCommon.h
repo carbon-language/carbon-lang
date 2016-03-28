@@ -150,17 +150,16 @@ protected:
 public:
   uint32_t getNumLinesWithSamples() { return NumCounts; }
   uint64_t getTotalSamples() { return TotalCount; }
-  uint64_t getMaxHeadSamples() { return MaxFunctionCount; }
   uint64_t getMaxSamplesPerLine() { return MaxCount; }
   void addRecord(const sampleprof::FunctionSamples &FS);
   SampleProfileSummary(std::vector<uint32_t> Cutoffs)
       : ProfileSummary(PSK_Sample, Cutoffs) {}
   SampleProfileSummary(uint64_t TotalSamples, uint64_t MaxSamplesPerLine,
-                       uint64_t MaxHeadSamples, int32_t NumLinesWithSamples,
+                       uint64_t MaxFunctionCount, int32_t NumLinesWithSamples,
                        uint32_t NumFunctions,
                        SummaryEntryVector DetailedSummary)
       : ProfileSummary(PSK_Sample, DetailedSummary, TotalSamples,
-                       MaxSamplesPerLine, MaxHeadSamples, NumLinesWithSamples,
+                       MaxSamplesPerLine, MaxFunctionCount, NumLinesWithSamples,
                        NumFunctions) {}
   static bool classof(const ProfileSummary *PS) {
     return PS->getKind() == PSK_Sample;
