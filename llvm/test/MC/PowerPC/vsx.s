@@ -550,6 +550,80 @@
 
 # Power9 Instructions:
 
+# Copy Sign
+# CHECK-BE: xscpsgnqp 7, 31, 27                # encoding: [0xfc,0xff,0xd8,0xc8]
+# CHECK-LE: xscpsgnqp 7, 31, 27                # encoding: [0xc8,0xd8,0xff,0xfc]
+            xscpsgnqp 7, 31, 27
+
+# Absolute/Negative Absolute/Negate
+# CHECK-BE: xsabsqp 7, 27                      # encoding: [0xfc,0xe0,0xde,0x48]
+# CHECK-LE: xsabsqp 7, 27                      # encoding: [0x48,0xde,0xe0,0xfc]
+            xsabsqp 7, 27
+# CHECK-BE: xsnegqp 7, 27                      # encoding: [0xfc,0xf0,0xde,0x48]
+# CHECK-LE: xsnegqp 7, 27                      # encoding: [0x48,0xde,0xf0,0xfc]
+            xsnegqp 7, 27
+# CHECK-BE: xsnabsqp 7, 27                     # encoding: [0xfc,0xe8,0xde,0x48]
+# CHECK-LE: xsnabsqp 7, 27                     # encoding: [0x48,0xde,0xe8,0xfc]
+            xsnabsqp 7, 27
+
+# Add/Divide/Multiply/Square-Root/Subtract
+# CHECK-BE: xsaddqp 7, 31, 27                  # encoding: [0xfc,0xff,0xd8,0x08]
+# CHECK-LE: xsaddqp 7, 31, 27                  # encoding: [0x08,0xd8,0xff,0xfc]
+            xsaddqp 7, 31, 27
+# CHECK-BE: xsaddqpo 7, 31, 27                 # encoding: [0xfc,0xff,0xd8,0x09]
+# CHECK-LE: xsaddqpo 7, 31, 27                 # encoding: [0x09,0xd8,0xff,0xfc]
+            xsaddqpo 7, 31, 27
+# CHECK-BE: xsdivqp 7, 31, 27                  # encoding: [0xfc,0xff,0xdc,0x48]
+# CHECK-LE: xsdivqp 7, 31, 27                  # encoding: [0x48,0xdc,0xff,0xfc]
+            xsdivqp 7, 31, 27
+# CHECK-BE: xsdivqpo 7, 31, 27                 # encoding: [0xfc,0xff,0xdc,0x49]
+# CHECK-LE: xsdivqpo 7, 31, 27                 # encoding: [0x49,0xdc,0xff,0xfc]
+            xsdivqpo 7, 31, 27
+# CHECK-BE: xsmulqp 7, 31, 27                  # encoding: [0xfc,0xff,0xd8,0x48]
+# CHECK-LE: xsmulqp 7, 31, 27                  # encoding: [0x48,0xd8,0xff,0xfc]
+            xsmulqp 7, 31, 27
+# CHECK-BE: xsmulqpo 7, 31, 27                 # encoding: [0xfc,0xff,0xd8,0x49]
+# CHECK-LE: xsmulqpo 7, 31, 27                 # encoding: [0x49,0xd8,0xff,0xfc]
+            xsmulqpo 7, 31, 27
+# CHECK-BE: xssqrtqp 7, 31                     # encoding: [0xfc,0xfb,0xfe,0x48]
+# CHECK-LE: xssqrtqp 7, 31                     # encoding: [0x48,0xfe,0xfb,0xfc]
+            xssqrtqp 7, 31
+# CHECK-BE: xssqrtqpo 7, 31                    # encoding: [0xfc,0xfb,0xfe,0x49]
+# CHECK-LE: xssqrtqpo 7, 31                    # encoding: [0x49,0xfe,0xfb,0xfc]
+            xssqrtqpo 7, 31
+# CHECK-BE: xssubqp 7, 31, 27                  # encoding: [0xfc,0xff,0xdc,0x08]
+# CHECK-LE: xssubqp 7, 31, 27                  # encoding: [0x08,0xdc,0xff,0xfc]
+            xssubqp 7, 31, 27
+# CHECK-BE: xssubqpo 7, 31, 27                 # encoding: [0xfc,0xff,0xdc,0x09]
+# CHECK-LE: xssubqpo 7, 31, 27                 # encoding: [0x09,0xdc,0xff,0xfc]
+            xssubqpo 7, 31, 27
+
+# (Negative) Multiply-Add/Subtract
+# CHECK-BE: xsmaddqp 7, 31, 27                 # encoding: [0xfc,0xff,0xdb,0x08]
+# CHECK-LE: xsmaddqp 7, 31, 27                 # encoding: [0x08,0xdb,0xff,0xfc]
+            xsmaddqp 7, 31, 27
+# CHECK-BE: xsmaddqpo 7, 31, 27                # encoding: [0xfc,0xff,0xdb,0x09]
+# CHECK-LE: xsmaddqpo 7, 31, 27                # encoding: [0x09,0xdb,0xff,0xfc]
+            xsmaddqpo 7, 31, 27
+# CHECK-BE: xsmsubqp 7, 31, 27                 # encoding: [0xfc,0xff,0xdb,0x48]
+# CHECK-LE: xsmsubqp 7, 31, 27                 # encoding: [0x48,0xdb,0xff,0xfc]
+            xsmsubqp 7, 31, 27
+# CHECK-BE: xsmsubqpo 7, 31, 27                # encoding: [0xfc,0xff,0xdb,0x49]
+# CHECK-LE: xsmsubqpo 7, 31, 27                # encoding: [0x49,0xdb,0xff,0xfc]
+            xsmsubqpo 7, 31, 27
+# CHECK-BE: xsnmaddqp 7, 31, 27                # encoding: [0xfc,0xff,0xdb,0x88]
+# CHECK-LE: xsnmaddqp 7, 31, 27                # encoding: [0x88,0xdb,0xff,0xfc]
+            xsnmaddqp 7, 31, 27
+# CHECK-BE: xsnmaddqpo 7, 31, 27               # encoding: [0xfc,0xff,0xdb,0x89]
+# CHECK-LE: xsnmaddqpo 7, 31, 27               # encoding: [0x89,0xdb,0xff,0xfc]
+            xsnmaddqpo 7, 31, 27
+# CHECK-BE: xsnmsubqp 7, 31, 27                # encoding: [0xfc,0xff,0xdb,0xc8]
+# CHECK-LE: xsnmsubqp 7, 31, 27                # encoding: [0xc8,0xdb,0xff,0xfc]
+            xsnmsubqp 7, 31, 27
+# CHECK-BE: xsnmsubqpo 7, 31, 27               # encoding: [0xfc,0xff,0xdb,0xc9]
+# CHECK-LE: xsnmsubqpo 7, 31, 27               # encoding: [0xc9,0xdb,0xff,0xfc]
+            xsnmsubqpo 7, 31, 27
+
 # Compare Ordered/Unordered
 # CHECK-BE: xscmpoqp 6, 31, 27                 # encoding: [0xff,0x1f,0xd9,0x08]
 # CHECK-LE: xscmpoqp 6, 31, 27                 # encoding: [0x08,0xd9,0x1f,0xff]

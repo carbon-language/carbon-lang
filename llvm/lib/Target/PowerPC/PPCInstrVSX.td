@@ -1819,6 +1819,55 @@ let Predicates = [HasP9Vector] in {
     : XX3Form<opcode, xo, (outs xty:$XT), (ins aty:$XA, bty:$XB),
               !strconcat(opc, " $XT, $XA, $XB"), itin, pattern>;
 
+  // [PO VRT VRA VRB XO /]
+  class X_VT5_VA5_VB5<bits<6> opcode, bits<10> xo, string opc,
+                      list<dag> pattern>
+    : XForm_1<opcode, xo, (outs vrrc:$vT), (ins vrrc:$vA, vrrc:$vB),
+              !strconcat(opc, " $vT, $vA, $vB"), IIC_VecFP, pattern>;
+
+  // [PO VRT VRA VRB XO RO], Round to Odd version of [PO VRT VRA VRB XO /]
+  class X_VT5_VA5_VB5_Ro<bits<6> opcode, bits<10> xo, string opc,
+                         list<dag> pattern>
+    : X_VT5_VA5_VB5<opcode, xo, opc, pattern>, isDOT;
+
+  //===--------------------------------------------------------------------===//
+  // Quad-Precision Scalar Move Instructions:
+
+  // Copy Sign
+  def XSCPSGNQP : X_VT5_VA5_VB5<63, 100, "xscpsgnqp", []>;
+
+  // Absolute/Negative-Absolute/Negate
+  def XSABSQP   : X_VT5_XO5_VB5<63,  0, 804, "xsabsqp" , []>;
+  def XSNABSQP  : X_VT5_XO5_VB5<63,  8, 804, "xsnabsqp", []>;
+  def XSNEGQP   : X_VT5_XO5_VB5<63, 16, 804, "xsnegqp" , []>;
+
+  //===--------------------------------------------------------------------===//
+  // Quad-Precision Scalar Floating-Point Arithmetic Instructions:
+
+  // Add/Divide/Multiply/Subtract
+  def XSADDQP   : X_VT5_VA5_VB5   <63,   4, "xsaddqp" , []>;
+  def XSADDQPO  : X_VT5_VA5_VB5_Ro<63,   4, "xsaddqpo", []>;
+  def XSDIVQP   : X_VT5_VA5_VB5   <63, 548, "xsdivqp" , []>;
+  def XSDIVQPO  : X_VT5_VA5_VB5_Ro<63, 548, "xsdivqpo", []>;
+  def XSMULQP   : X_VT5_VA5_VB5   <63,  36, "xsmulqp" , []>;
+  def XSMULQPO  : X_VT5_VA5_VB5_Ro<63,  36, "xsmulqpo", []>;
+  def XSSUBQP   : X_VT5_VA5_VB5   <63, 516, "xssubqp" , []>;
+  def XSSUBQPO  : X_VT5_VA5_VB5_Ro<63, 516, "xssubqpo", []>;
+
+  // Square-Root
+  def XSSQRTQP  : X_VT5_XO5_VB5   <63, 27, 804, "xssqrtqp" , []>;
+  def XSSQRTQPO : X_VT5_XO5_VB5_Ro<63, 27, 804, "xssqrtqpo", []>;
+
+  // (Negative) Multiply-{Add/Subtract}
+  def XSMADDQP  : X_VT5_VA5_VB5   <63, 388, "xsmaddqp"  , []>;
+  def XSMADDQPO : X_VT5_VA5_VB5_Ro<63, 388, "xsmaddqpo" , []>;
+  def XSMSUBQP  : X_VT5_VA5_VB5   <63, 420, "xsmsubqp"  , []>;
+  def XSMSUBQPO : X_VT5_VA5_VB5_Ro<63, 420, "xsmsubqpo" , []>;
+  def XSNMADDQP : X_VT5_VA5_VB5   <63, 452, "xsnmaddqp" , []>;
+  def XSNMADDQPO: X_VT5_VA5_VB5_Ro<63, 452, "xsnmaddqpo", []>;
+  def XSNMSUBQP : X_VT5_VA5_VB5   <63, 484, "xsnmsubqp" , []>;
+  def XSNMSUBQPO: X_VT5_VA5_VB5_Ro<63, 484, "xsnmsubqpo", []>;
+
   //===--------------------------------------------------------------------===//
   // Quad/Double-Precision Compare Instructions:
 

@@ -141,6 +141,128 @@ Altivec:
     VX1_Int_Ty< 65, "vmul10ecuq", int_ppc_altivec_vmul10ecuq, v1i128>;
 
 VSX:
+- QP Copy Sign: xscpsgnqp
+  . Similar to xscpsgndp
+  . (set f128:$vT, (fcopysign f128:$vB, f128:$vA)
+
+- QP Absolute/Negative-Absolute/Negate: xsabsqp xsnabsqp xsnegqp
+  . Similar to xsabsdp/xsnabsdp/xsnegdp
+  . (set f128:$vT, (fabs f128:$vB))             // xsabsqp
+    (set f128:$vT, (fneg (fabs f128:$vB)))      // xsnabsqp
+    (set f128:$vT, (fneg f128:$vB))             // xsnegqp
+
+- QP Add/Divide/Multiply/Subtract/Square-Root:
+  xsaddqp xsdivqp xsmulqp xssubqp xssqrtqp
+  . Similar to xsadddp
+  . isCommutable = 1
+    (set f128:$vT, (fadd f128:$vA, f128:$vB))   // xsaddqp
+    (set f128:$vT, (fmul f128:$vA, f128:$vB))   // xsmulqp
+
+  . isCommutable = 0
+    (set f128:$vT, (fdiv f128:$vA, f128:$vB))   // xsdivqp
+    (set f128:$vT, (fsub f128:$vA, f128:$vB))   // xssubqp
+    (set f128:$vT, (fsqrt f128:$vB)))           // xssqrtqp
+
+- Round to Odd of QP Add/Divide/Multiply/Subtract/Square-Root:
+  xsaddqpo xsdivqpo xsmulqpo xssubqpo xssqrtqpo
+  . Similar to xsrsqrtedp??
+      def XSRSQRTEDP : XX2Form<60, 74,
+                               (outs vsfrc:$XT), (ins vsfrc:$XB),
+                               "xsrsqrtedp $XT, $XB", IIC_VecFP,
+                               [(set f64:$XT, (PPCfrsqrte f64:$XB))]>;
+
+  . Define DAG Node in PPCInstrInfo.td:
+    def PPCfaddrto: SDNode<"PPCISD::FADDRTO", SDTFPBinOp, []>;
+    def PPCfdivrto: SDNode<"PPCISD::FDIVRTO", SDTFPBinOp, []>;
+    def PPCfmulrto: SDNode<"PPCISD::FMULRTO", SDTFPBinOp, []>;
+    def PPCfsubrto: SDNode<"PPCISD::FSUBRTO", SDTFPBinOp, []>;
+    def PPCfsqrtrto: SDNode<"PPCISD::FSQRTRTO", SDTFPUnaryOp, []>;
+
+    DAG patterns of each instruction (PPCInstrVSX.td):
+    . isCommutable = 1
+      (set f128:$vT, (PPCfaddrto f128:$vA, f128:$vB))   // xsaddqpo
+      (set f128:$vT, (PPCfmulrto f128:$vA, f128:$vB))   // xsmulqpo
+
+    . isCommutable = 0
+      (set f128:$vT, (PPCfdivrto f128:$vA, f128:$vB))   // xsdivqpo
+      (set f128:$vT, (PPCfsubrto f128:$vA, f128:$vB))   // xssubqpo
+      (set f128:$vT, (PPCfsqrtrto f128:$vB))            // xssqrtqpo
+
+- QP (Negative) Multiply-{Add/Subtract}: xsmaddqp xsmsubqp xsnmaddqp xsnmsubqp
+  . Ref: xsmaddadp/xsmsubadp/xsnmaddadp/xsnmsubadp
+
+  . isCommutable = 1
+    // xsmaddqp
+    [(set f128:$vT, (fma f128:$vA, f128:$vB, f128:$vTi))]>,
+    RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+    AltVSXFMARel;
+
+    // xsmsubqp
+    [(set f128:$vT, (fma f128:$vA, f128:$vB, (fneg f128:$vTi)))]>,
+    RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+    AltVSXFMARel;
+
+    // xsnmaddqp
+    [(set f128:$vT, (fneg (fma f128:$vA, f128:$vB, f128:$vTi)))]>,
+    RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+    AltVSXFMARel;
+
+    // xsnmsubqp
+    [(set f128:$vT, (fneg (fma f128:$vA, f128:$vB, (fneg f128:$vTi))))]>,
+    RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+    AltVSXFMARel;
+
+- Round to Odd of QP (Negative) Multiply-{Add/Subtract}:
+  xsmaddqpo xsmsubqpo xsnmaddqpo xsnmsubqpo
+  . Similar to xsrsqrtedp??
+
+  . Define DAG Node in PPCInstrInfo.td:
+    def PPCfmarto: SDNode<"PPCISD::FMARTO", SDTFPTernaryOp, []>;
+
+    It looks like we only need to define "PPCfmarto" for these instructions,
+    because according to PowerISA_V3.0, these instructions perform RTO on
+    fma's result:
+        xsmaddqp(o)
+        v      ← bfp_MULTIPLY_ADD(src1, src3, src2)
+        rnd    ← bfp_ROUND_TO_BFP128(RO, FPSCR.RN, v)
+        result ← bfp_CONVERT_TO_BFP128(rnd)
+
+        xsmsubqp(o)
+        v      ← bfp_MULTIPLY_ADD(src1, src3, bfp_NEGATE(src2))
+        rnd    ← bfp_ROUND_TO_BFP128(RO, FPSCR.RN, v)
+        result ← bfp_CONVERT_TO_BFP128(rnd)
+
+        xsnmaddqp(o)
+        v      ← bfp_MULTIPLY_ADD(src1,src3,src2)
+        rnd    ← bfp_NEGATE(bfp_ROUND_TO_BFP128(RO, FPSCR.RN, v))
+        result ← bfp_CONVERT_TO_BFP128(rnd)
+
+        xsnmsubqp(o)
+        v      ← bfp_MULTIPLY_ADD(src1, src3, bfp_NEGATE(src2))
+        rnd    ← bfp_NEGATE(bfp_ROUND_TO_BFP128(RO, FPSCR.RN, v))
+        result ← bfp_CONVERT_TO_BFP128(rnd)
+
+    DAG patterns of each instruction (PPCInstrVSX.td):
+    . isCommutable = 1
+      // xsmaddqpo
+      [(set f128:$vT, (PPCfmarto f128:$vA, f128:$vB, f128:$vTi))]>,
+      RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+      AltVSXFMARel;
+
+      // xsmsubqpo
+      [(set f128:$vT, (PPCfmarto f128:$vA, f128:$vB, (fneg f128:$vTi)))]>,
+      RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+      AltVSXFMARel;
+
+      // xsnmaddqpo
+      [(set f128:$vT, (fneg (PPCfmarto f128:$vA, f128:$vB, f128:$vTi)))]>,
+      RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+      AltVSXFMARel;
+
+      // xsnmsubqpo
+      [(set f128:$vT, (fneg (PPCfmarto f128:$vA, f128:$vB, (fneg f128:$vTi))))]>,
+      RegConstraint<"$vTi = $vT">, NoEncode<"$vTi">,
+      AltVSXFMARel;
 
 - QP Compare Ordered/Unordered: xscmpoqp xscmpuqp
   . ref: XSCMPUDP
