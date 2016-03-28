@@ -67,7 +67,7 @@ define i16 @test_mask_pcmpgt_w_256(<16 x i16> %a, <16 x i16> %b, i16 %mask) {
 declare i16 @llvm.x86.avx512.mask.pcmpgt.w.256(<16 x i16>, <16 x i16>, i16)
 
 define <8 x i32> @test_cmp_b_256(<32 x i8> %a0, <32 x i8> %a1) {
-; CHECK_LABEL: test_cmp_b_256
+; CHECK-LABEL: test_cmp_b_256
 ; CHECK: vpcmpeqb %ymm1, %ymm0, %k0 ##
   %res0 = call i32 @llvm.x86.avx512.mask.cmp.b.256(<32 x i8> %a0, <32 x i8> %a1, i32 0, i32 -1)
   %vec0 = insertelement <8 x i32> undef, i32 %res0, i32 0
@@ -96,7 +96,7 @@ define <8 x i32> @test_cmp_b_256(<32 x i8> %a0, <32 x i8> %a1) {
 }
 
 define <8 x i32> @test_mask_cmp_b_256(<32 x i8> %a0, <32 x i8> %a1, i32 %mask) {
-; CHECK_LABEL: test_mask_cmp_b_256
+; CHECK-LABEL: test_mask_cmp_b_256
 ; CHECK: vpcmpeqb %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i32 @llvm.x86.avx512.mask.cmp.b.256(<32 x i8> %a0, <32 x i8> %a1, i32 0, i32 %mask)
   %vec0 = insertelement <8 x i32> undef, i32 %res0, i32 0
@@ -127,7 +127,7 @@ define <8 x i32> @test_mask_cmp_b_256(<32 x i8> %a0, <32 x i8> %a1, i32 %mask) {
 declare i32 @llvm.x86.avx512.mask.cmp.b.256(<32 x i8>, <32 x i8>, i32, i32) nounwind readnone
 
 define <8 x i32> @test_ucmp_b_256(<32 x i8> %a0, <32 x i8> %a1) {
-; CHECK_LABEL: test_ucmp_b_256
+; CHECK-LABEL: test_ucmp_b_256
 ; CHECK: vpcmpequb %ymm1, %ymm0, %k0 ##
   %res0 = call i32 @llvm.x86.avx512.mask.ucmp.b.256(<32 x i8> %a0, <32 x i8> %a1, i32 0, i32 -1)
   %vec0 = insertelement <8 x i32> undef, i32 %res0, i32 0
@@ -156,7 +156,7 @@ define <8 x i32> @test_ucmp_b_256(<32 x i8> %a0, <32 x i8> %a1) {
 }
 
 define <8 x i32> @test_mask_ucmp_b_256(<32 x i8> %a0, <32 x i8> %a1, i32 %mask) {
-; CHECK_LABEL: test_mask_ucmp_b_256
+; CHECK-LABEL: test_mask_ucmp_b_256
 ; CHECK: vpcmpequb %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i32 @llvm.x86.avx512.mask.ucmp.b.256(<32 x i8> %a0, <32 x i8> %a1, i32 0, i32 %mask)
   %vec0 = insertelement <8 x i32> undef, i32 %res0, i32 0
@@ -187,7 +187,7 @@ define <8 x i32> @test_mask_ucmp_b_256(<32 x i8> %a0, <32 x i8> %a1, i32 %mask) 
 declare i32 @llvm.x86.avx512.mask.ucmp.b.256(<32 x i8>, <32 x i8>, i32, i32) nounwind readnone
 
 define <8 x i16> @test_cmp_w_256(<16 x i16> %a0, <16 x i16> %a1) {
-; CHECK_LABEL: test_cmp_w_256
+; CHECK-LABEL: test_cmp_w_256
 ; CHECK: vpcmpeqw %ymm1, %ymm0, %k0 ##
   %res0 = call i16 @llvm.x86.avx512.mask.cmp.w.256(<16 x i16> %a0, <16 x i16> %a1, i32 0, i16 -1)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -216,7 +216,7 @@ define <8 x i16> @test_cmp_w_256(<16 x i16> %a0, <16 x i16> %a1) {
 }
 
 define <8 x i16> @test_mask_cmp_w_256(<16 x i16> %a0, <16 x i16> %a1, i16 %mask) {
-; CHECK_LABEL: test_mask_cmp_w_256
+; CHECK-LABEL: test_mask_cmp_w_256
 ; CHECK: vpcmpeqw %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i16 @llvm.x86.avx512.mask.cmp.w.256(<16 x i16> %a0, <16 x i16> %a1, i32 0, i16 %mask)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -247,7 +247,7 @@ define <8 x i16> @test_mask_cmp_w_256(<16 x i16> %a0, <16 x i16> %a1, i16 %mask)
 declare i16 @llvm.x86.avx512.mask.cmp.w.256(<16 x i16>, <16 x i16>, i32, i16) nounwind readnone
 
 define <8 x i16> @test_ucmp_w_256(<16 x i16> %a0, <16 x i16> %a1) {
-; CHECK_LABEL: test_ucmp_w_256
+; CHECK-LABEL: test_ucmp_w_256
 ; CHECK: vpcmpequw %ymm1, %ymm0, %k0 ##
   %res0 = call i16 @llvm.x86.avx512.mask.ucmp.w.256(<16 x i16> %a0, <16 x i16> %a1, i32 0, i16 -1)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -276,7 +276,7 @@ define <8 x i16> @test_ucmp_w_256(<16 x i16> %a0, <16 x i16> %a1) {
 }
 
 define <8 x i16> @test_mask_ucmp_w_256(<16 x i16> %a0, <16 x i16> %a1, i16 %mask) {
-; CHECK_LABEL: test_mask_ucmp_w_256
+; CHECK-LABEL: test_mask_ucmp_w_256
 ; CHECK: vpcmpequw %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i16 @llvm.x86.avx512.mask.ucmp.w.256(<16 x i16> %a0, <16 x i16> %a1, i32 0, i16 %mask)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -373,7 +373,7 @@ define i8 @test_mask_pcmpgt_w_128(<8 x i16> %a, <8 x i16> %b, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.pcmpgt.w.128(<8 x i16>, <8 x i16>, i8)
 
 define <8 x i16> @test_cmp_b_128(<16 x i8> %a0, <16 x i8> %a1) {
-; CHECK_LABEL: test_cmp_b_128
+; CHECK-LABEL: test_cmp_b_128
 ; CHECK: vpcmpeqb %xmm1, %xmm0, %k0 ##
   %res0 = call i16 @llvm.x86.avx512.mask.cmp.b.128(<16 x i8> %a0, <16 x i8> %a1, i32 0, i16 -1)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -402,7 +402,7 @@ define <8 x i16> @test_cmp_b_128(<16 x i8> %a0, <16 x i8> %a1) {
 }
 
 define <8 x i16> @test_mask_cmp_b_128(<16 x i8> %a0, <16 x i8> %a1, i16 %mask) {
-; CHECK_LABEL: test_mask_cmp_b_128
+; CHECK-LABEL: test_mask_cmp_b_128
 ; CHECK: vpcmpeqb %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i16 @llvm.x86.avx512.mask.cmp.b.128(<16 x i8> %a0, <16 x i8> %a1, i32 0, i16 %mask)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -433,7 +433,7 @@ define <8 x i16> @test_mask_cmp_b_128(<16 x i8> %a0, <16 x i8> %a1, i16 %mask) {
 declare i16 @llvm.x86.avx512.mask.cmp.b.128(<16 x i8>, <16 x i8>, i32, i16) nounwind readnone
 
 define <8 x i16> @test_ucmp_b_128(<16 x i8> %a0, <16 x i8> %a1) {
-; CHECK_LABEL: test_ucmp_b_128
+; CHECK-LABEL: test_ucmp_b_128
 ; CHECK: vpcmpequb %xmm1, %xmm0, %k0 ##
   %res0 = call i16 @llvm.x86.avx512.mask.ucmp.b.128(<16 x i8> %a0, <16 x i8> %a1, i32 0, i16 -1)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -462,7 +462,7 @@ define <8 x i16> @test_ucmp_b_128(<16 x i8> %a0, <16 x i8> %a1) {
 }
 
 define <8 x i16> @test_mask_ucmp_b_128(<16 x i8> %a0, <16 x i8> %a1, i16 %mask) {
-; CHECK_LABEL: test_mask_ucmp_b_128
+; CHECK-LABEL: test_mask_ucmp_b_128
 ; CHECK: vpcmpequb %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i16 @llvm.x86.avx512.mask.ucmp.b.128(<16 x i8> %a0, <16 x i8> %a1, i32 0, i16 %mask)
   %vec0 = insertelement <8 x i16> undef, i16 %res0, i32 0
@@ -493,7 +493,7 @@ define <8 x i16> @test_mask_ucmp_b_128(<16 x i8> %a0, <16 x i8> %a1, i16 %mask) 
 declare i16 @llvm.x86.avx512.mask.ucmp.b.128(<16 x i8>, <16 x i8>, i32, i16) nounwind readnone
 
 define <8 x i8> @test_cmp_w_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK_LABEL: test_cmp_w_128
+; CHECK-LABEL: test_cmp_w_128
 ; CHECK: vpcmpeqw %xmm1, %xmm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.w.128(<8 x i16> %a0, <8 x i16> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -522,7 +522,7 @@ define <8 x i8> @test_cmp_w_128(<8 x i16> %a0, <8 x i16> %a1) {
 }
 
 define <8 x i8> @test_mask_cmp_w_128(<8 x i16> %a0, <8 x i16> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_cmp_w_128
+; CHECK-LABEL: test_mask_cmp_w_128
 ; CHECK: vpcmpeqw %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.w.128(<8 x i16> %a0, <8 x i16> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -553,7 +553,7 @@ define <8 x i8> @test_mask_cmp_w_128(<8 x i16> %a0, <8 x i16> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.cmp.w.128(<8 x i16>, <8 x i16>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_ucmp_w_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK_LABEL: test_ucmp_w_128
+; CHECK-LABEL: test_ucmp_w_128
 ; CHECK: vpcmpequw %xmm1, %xmm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.w.128(<8 x i16> %a0, <8 x i16> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -582,7 +582,7 @@ define <8 x i8> @test_ucmp_w_128(<8 x i16> %a0, <8 x i16> %a1) {
 }
 
 define <8 x i8> @test_mask_ucmp_w_128(<8 x i16> %a0, <8 x i16> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_ucmp_w_128
+; CHECK-LABEL: test_mask_ucmp_w_128
 ; CHECK: vpcmpequw %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.w.128(<8 x i16> %a0, <8 x i16> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
