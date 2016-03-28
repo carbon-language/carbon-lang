@@ -46,44 +46,7 @@ class Address;
 class CodeGenFunction;
 class CodeGenModule;
 
-/// A basic class for pre|post-action for advanced codegen sequence for OpenMP
-/// region.
-class PrePostActionTy {
-public:
-  explicit PrePostActionTy() {}
-  virtual void Enter(CodeGenFunction &CGF) {}
-  virtual void Exit(CodeGenFunction &CGF) {}
-  virtual ~PrePostActionTy() {}
-};
-
-/// Class provides a way to call simple version of codegen for OpenMP region, or
-/// an advanced with possible pre|post-actions in codegen.
-class RegionCodeGenTy final {
-  intptr_t CodeGen;
-  typedef void (*CodeGenTy)(intptr_t, CodeGenFunction &, PrePostActionTy &);
-  CodeGenTy Callback;
-  mutable PrePostActionTy *PrePostAction;
-  RegionCodeGenTy() = delete;
-  RegionCodeGenTy &operator=(const RegionCodeGenTy &) = delete;
-  template <typename Callable>
-  static void CallbackFn(intptr_t CodeGen, CodeGenFunction &CGF,
-                         PrePostActionTy &Action) {
-    return (*reinterpret_cast<Callable *>(CodeGen))(CGF, Action);
-  }
-
-public:
-  template <typename Callable>
-  RegionCodeGenTy(
-      Callable &&CodeGen,
-      typename std::enable_if<
-          !std::is_same<typename std::remove_reference<Callable>::type,
-                        RegionCodeGenTy>::value>::type * = nullptr)
-      : CodeGen(reinterpret_cast<intptr_t>(&CodeGen)),
-        Callback(CallbackFn<typename std::remove_reference<Callable>::type>),
-        PrePostAction(nullptr) {}
-  void setAction(PrePostActionTy &Action) const { PrePostAction = &Action; }
-  void operator()(CodeGenFunction &CGF) const;
-};
+typedef llvm::function_ref<void(CodeGenFunction &)> RegionCodeGenTy;
 
 class CGOpenMPRuntime {
 protected:
@@ -847,15 +810,13 @@ public:
   /// \param OutlinedFn Outlined function value to be defined by this call.
   /// \param OutlinedFnID Outlined function ID value to be defined by this call.
   /// \param IsOffloadEntry True if the outlined function is an offload entry.
-  /// \param CodeGen Code generation sequence for the \a D directive.
   /// An oulined function may not be an entry if, e.g. the if clause always
   /// evaluates to false.
   virtual void emitTargetOutlinedFunction(const OMPExecutableDirective &D,
                                           StringRef ParentName,
                                           llvm::Function *&OutlinedFn,
                                           llvm::Constant *&OutlinedFnID,
-                                          bool IsOffloadEntry,
-                                          const RegionCodeGenTy &CodeGen);
+                                          bool IsOffloadEntry);
 
   /// \brief Emit the target offloading code associated with \a D. The emitted
   /// code attempts offloading the execution to the device, an the event of
