@@ -100,12 +100,10 @@ class MachineFunctionProperties {
   // Possible TODO: Allow requiring the negative (e.g. VRegsAllocated could be
   // stated as the negative of "has vregs"
 
-  // Stated in "positive" form; i.e. a pass could require that the property
-  // hold, but not that it does not hold.
-  BitVector Properties =
-      BitVector(static_cast<unsigned>(Property::LastProperty));
+public:
+  // The properties are stated in "positive" form; i.e. a pass could require
+  // that the property hold, but not that it does not hold.
 
- public:
   // Property descriptions:
   // IsSSA (currently unused, intended to eventually replace
   // MachineRegisterInfo::isSSA())
@@ -144,6 +142,10 @@ class MachineFunctionProperties {
   bool verifyRequiredProperties(const MachineFunctionProperties &V) const {
     return !V.Properties.test(Properties);
   }
+
+private:
+  BitVector Properties =
+      BitVector(static_cast<unsigned>(Property::LastProperty));
 };
 
 class MachineFunction {
