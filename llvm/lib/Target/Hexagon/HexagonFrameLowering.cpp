@@ -2218,7 +2218,18 @@ bool HexagonFrameLowering::useRestoreFunction(MachineFunction &MF,
       const CSIVect &CSI) const {
   if (shouldInlineCSR(MF, CSI))
     return false;
+  // The restore functions do a bit more than just restoring registers.
+  // The non-returning versions will go back directly to the caller's
+  // caller, others will clean up the stack frame in preparation for
+  // a tail call. Using them can still save code size even if only one
+  // register is getting restores. Make the decision based on -Oz:
+  // using -Os will use inline restore for a single register.
+  if (isMinSize(MF))
+    return true;
   unsigned NumCSI = CSI.size();
+  if (NumCSI <= 1)
+    return false;
+
   unsigned Threshold = isOptSize(MF) ? SpillFuncThresholdOs-1
                                      : SpillFuncThreshold;
   return Threshold < NumCSI;
