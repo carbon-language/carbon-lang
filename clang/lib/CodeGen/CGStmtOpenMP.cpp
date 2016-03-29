@@ -52,6 +52,25 @@ public:
   }
 };
 
+/// Private scope for OpenMP loop-based directives, that supports capturing
+/// of used expression from loop statement.
+class OMPLoopScope : public CodeGenFunction::RunCleanupsScope {
+  void emitPreInitStmt(CodeGenFunction &CGF, const OMPLoopDirective &S) {
+    if (auto *LD = dyn_cast<OMPLoopDirective>(&S)) {
+      if (auto *PreInits = cast_or_null<DeclStmt>(LD->getPreInits())) {
+        for (const auto *I : PreInits->decls())
+          CGF.EmitVarDecl(cast<VarDecl>(*I));
+      }
+    }
+  }
+
+public:
+  OMPLoopScope(CodeGenFunction &CGF, const OMPLoopDirective &S)
+      : CodeGenFunction::RunCleanupsScope(CGF) {
+    emitPreInitStmt(CGF, S);
+  }
+};
+
 } // namespace
 
 llvm::Value *CodeGenFunction::getTypeSize(QualType Ty) {
@@ -1467,6 +1486,7 @@ void CodeGenFunction::EmitOMPSimdFinal(
 
 void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
   auto &&CodeGen = [&S](CodeGenFunction &CGF, PrePostActionTy &) {
+    OMPLoopScope PreInitScope(CGF, S);
     // if (PreCond) {
     //   for (IV in 0..LastIteration) BODY;
     //   <Final counter/linear vars updates>;
@@ -1781,6 +1801,7 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
   bool HasLastprivateClause;
   // Check pre-condition.
   {
+    OMPLoopScope PreInitScope(*this, S);
     // Skip the entire loop if we don't meet the precondition.
     // If the condition constant folds and can be elided, avoid emitting the
     // whole loop.
@@ -2397,6 +2418,7 @@ void CodeGenFunction::EmitOMPDistributeLoop(const OMPDistributeDirective &S) {
 
   // Check pre-condition.
   {
+    OMPLoopScope PreInitScope(*this, S);
     // Skip the entire loop if we don't meet the precondition.
     // If the condition constant folds and can be elided, avoid emitting the
     // whole loop.
@@ -3174,6 +3196,7 @@ void CodeGenFunction::EmitOMPTaskLoopDirective(const OMPTaskLoopDirective &S) {
   OMPLexicalScope Scope(*this, S);
   CGM.getOpenMPRuntime().emitInlinedDirective(
       *this, OMPD_taskloop, [&S](CodeGenFunction &CGF, PrePostActionTy &) {
+        OMPLoopScope PreInitScope(CGF, S);
         CGF.EmitStmt(
             cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
       });
@@ -3185,6 +3208,7 @@ void CodeGenFunction::EmitOMPTaskLoopSimdDirective(
   OMPLexicalScope Scope(*this, S);
   CGM.getOpenMPRuntime().emitInlinedDirective(
       *this, OMPD_taskloop_simd, [&S](CodeGenFunction &CGF, PrePostActionTy &) {
+        OMPLoopScope PreInitScope(CGF, S);
         CGF.EmitStmt(
             cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
       });
