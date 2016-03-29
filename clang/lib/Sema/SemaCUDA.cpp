@@ -68,7 +68,7 @@ Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
 // Ph - preference in host mode
 // Pd - preference in device mode
 // H  - handled in (x)
-// Preferences: N:native, HD:host-device, SS:same side, WS:wrong side, --:never.
+// Preferences: N:native, SS:same side, HD:host-device, WS:wrong side, --:never.
 //
 // | F  | T  | Ph  | Pd  |  H  |
 // |----+----+-----+-----+-----+
