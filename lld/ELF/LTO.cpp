@@ -49,7 +49,8 @@ static void saveBCFile(Module &M, StringRef Suffix) {
 }
 
 // Run LTO passes.
-// FIXME: Reduce code duplication by sharing this code with the gold plugin.
+// Note that the gold plugin has a similar piece of code, so
+// it is probably better to move this code to a common place.
 static void runLTOPasses(Module &M, TargetMachine &TM) {
   legacy::PassManager LtoPasses;
   LtoPasses.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
