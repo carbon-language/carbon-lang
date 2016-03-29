@@ -78,6 +78,10 @@ void BitcodeCompiler::add(BitcodeFile &F) {
   ArrayRef<SymbolBody *> Bodies = F.getSymbols();
 
   Module &M = Obj->getModule();
+
+  // If a symbol appears in @llvm.used, the linker is required
+  // to treat the symbol as there is a reference to the symbol
+  // that it cannot see. Therefore, we can't internalize.
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(M, Used, /* CompilerUsed */ false);
 
