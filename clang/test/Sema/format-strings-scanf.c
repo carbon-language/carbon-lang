@@ -183,3 +183,11 @@ void check_conditional_literal(char *s, int *i) {
   scanf(i ? "%d" : "%d", i, s); // expected-warning{{data argument not used}}
   scanf(i ? "%s" : "%d", s); // expected-warning{{format specifies type 'int *'}}
 }
+
+void testInvalidNoPrintable(int *a) {
+  scanf("%\u25B9", a); // expected-warning {{invalid conversion specifier '\u25b9'}}
+  scanf("%\xE2\x96\xB9", a); // expected-warning {{invalid conversion specifier '\u25b9'}}
+  scanf("%\U00010348", a); // expected-warning {{invalid conversion specifier '\U00010348'}}
+  scanf("%\xF0\x90\x8D\x88", a); // expected-warning {{invalid conversion specifier '\U00010348'}}
+  scanf("%\xe2", a); // expected-warning {{invalid conversion specifier '\xe2'}}
+}

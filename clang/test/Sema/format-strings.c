@@ -642,6 +642,14 @@ void test_qualifiers(volatile int *vip, const int *cip,
   printf("%n", (cip_t)0); // expected-warning{{format specifies type 'int *' but the argument has type 'cip_t' (aka 'const int *')}}
 }
 
+void testInvalidNoPrintable() {
+  printf("%\u25B9"); // expected-warning {{invalid conversion specifier '\u25b9'}}
+  printf("%\xE2\x96\xB9"); // expected-warning {{invalid conversion specifier '\u25b9'}}
+  printf("%\U00010348"); // expected-warning {{invalid conversion specifier '\U00010348'}}
+  printf("%\xF0\x90\x8D\x88"); // expected-warning {{invalid conversion specifier '\U00010348'}}
+  printf("%\xe2"); // expected-warning {{invalid conversion specifier '\xe2'}}
+}
+
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #pragma GCC diagnostic warning "-Wformat-security"
 // <rdar://problem/14178260>
