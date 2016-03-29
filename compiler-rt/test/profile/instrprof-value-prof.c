@@ -90,9 +90,12 @@ int main(int argc, const char *argv[]) {
   qsort(CallerInfos, sizeof(CallerInfos) / sizeof(CallerInfo), sizeof(CallerInfo),
         cmpaddr);
 
-  /* We will synthesis value profile data for 128 callers functions.
-   * The number of * value sites. The number values for each value site
-   * ranges from 0 to 8.  */
+  /* We will synthesis value profile data for 128 callers functions declared.
+   * The number of value sites for each caller function is recorded in
+   * the NS field of the CallerInfo object. For each value site, the number of
+   * callee values is determined by the site index (modulo 8). The frequency
+   * of each callee target synthesized is equal to V + 1, in which V is the
+   * index of the target value for the callsite. */
 
   Data = __llvm_profile_begin_data();
   DataEnd = __llvm_profile_end_data();
