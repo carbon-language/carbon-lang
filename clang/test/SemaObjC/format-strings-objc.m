@@ -264,12 +264,3 @@ void testObjCModifierFlags() {
   NSLog(@"%2$[tt]@ %1$[tt]@", @"Foo", @"Bar"); // no-warning
   NSLog(@"%2$[tt]@ %1$[tt]s", @"Foo", @"Bar"); // expected-warning {{object format flags cannot be used with 's' conversion specifier}}
 }
-
-// Test Objective-C invalid no printable specifiers
-void testObjcInvalidNoPrintable(int *a) {
-  NSLog(@"%\u25B9"); // expected-warning {{invalid conversion specifier '\u25b9'}}
-  NSLog(@"%\xE2\x96\xB9"); // expected-warning {{invalid conversion specifier '\u25b9'}}
-  NSLog(@"%\U00010348"); // expected-warning {{invalid conversion specifier '\U00010348'}}
-  NSLog(@"%\xF0\x90\x8D\x88"); // expected-warning {{invalid conversion specifier '\U00010348'}}
-  NSLog(@"%\xe2"); // expected-warning {{input conversion stopped}} expected-warning {{invalid conversion specifier '\xe2'}}
-}
