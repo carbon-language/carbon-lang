@@ -1,3 +1,4 @@
+// REQUIRES: system-darwin
 // RUN: rm -f %t.log
 // RUN: env RC_DEBUG_OPTIONS=1 \
 // RUN:     CC_LOG_DIAGNOSTICS=1 CC_LOG_DIAGNOSTICS_FILE=%t.log \
