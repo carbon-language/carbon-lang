@@ -254,7 +254,10 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                             Size,
                                             Alignment,
                                             IsCode,
-                                            IsReadOnly);
+                                            IsReadOnly,
+                                            0,
+                                            0,
+                                            SectionID);
 
   return ret;
 }
@@ -280,7 +283,10 @@ uint8_t *ExecutableFileMemoryManager::recordNoteSection(
                   Size,
                   Alignment,
                   /*IsCode=*/false,
-                  /*IsReadOnly*/true);
+                  /*IsReadOnly*/true,
+                  0,
+                  0,
+                  SectionID);
     return DataCopy;
   } else {
     DEBUG(dbgs() << "BOLT-DEBUG: ignoring section " << SectionName
@@ -1279,8 +1285,8 @@ void RewriteInstance::emitFunctions() {
                    << " to 0x" << Twine::utohexstr(Function.getAddress())
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
-          reinterpret_cast<const void*>(SMII->second.AllocAddress),
-          Function.getAddress());
+                            SMII->second.SectionID,
+                            Function.getAddress());
       Function.setImageAddress(SMII->second.AllocAddress);
       Function.setImageSize(SMII->second.Size);
     } else {
@@ -1302,8 +1308,8 @@ void RewriteInstance::emitFunctions() {
                    << " with size " << Twine::utohexstr(SMII->second.Size)
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
-          reinterpret_cast<const void*>(SMII->second.AllocAddress),
-          NextAvailableAddress);
+                            SMII->second.SectionID,
+                            NextAvailableAddress);
       Function.cold().setAddress(NextAvailableAddress);
       Function.cold().setImageAddress(SMII->second.AllocAddress);
       Function.cold().setImageSize(SMII->second.Size);
@@ -1345,9 +1351,8 @@ void RewriteInstance::emitFunctions() {
                    << '\n');
 
       OLT.mapSectionAddress(ObjectsHandle,
-                            reinterpret_cast<const void *>(SI.AllocAddress),
+                            SI.SectionID,
                             NextAvailableAddress);
-
       SI.FileAddress = NextAvailableAddress;
       SI.FileOffset = getFileOffsetFor(NextAvailableAddress);
 

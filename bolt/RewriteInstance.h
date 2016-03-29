@@ -46,6 +46,7 @@ struct SectionInfo {
   uint64_t FileAddress{0};    /// Address for the output file (final address).
   uint64_t FileOffset{0};     /// Offset in the output file.
   uint64_t ShName{0};         /// Name offset in section header string table.
+  unsigned SectionID{0};      /// Unique ID used for address mapping.
 
   struct Reloc {
     uint32_t Offset;
@@ -59,10 +60,11 @@ struct SectionInfo {
 
   SectionInfo(uint64_t Address = 0, uint64_t Size = 0, unsigned Alignment = 0,
               bool IsCode = false, bool IsReadOnly = false,
-              uint64_t FileAddress = 0, uint64_t FileOffset = 0)
-    : AllocAddress(Address), Size(Size), Alignment(Alignment),
-      IsCode(IsCode), IsReadOnly(IsReadOnly), FileAddress(FileAddress),
-      FileOffset(FileOffset) {}
+              uint64_t FileAddress = 0, uint64_t FileOffset = 0,
+              unsigned SectionID = 0)
+    : AllocAddress(Address), Size(Size), Alignment(Alignment), IsCode(IsCode),
+      IsReadOnly(IsReadOnly), FileAddress(FileAddress), FileOffset(FileOffset),
+      SectionID(SectionID) {}
 };
 
 /// Class responsible for allocating and managing code and data sections.
