@@ -1505,7 +1505,7 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
   case SymbolBody::LazyKind:
     break;
   case SymbolBody::DefinedBitcodeKind:
-    llvm_unreachable("Symbol " + Sym.getName() + " should have been replaced");
+    llvm_unreachable("should have been replaced");
   }
   return nullptr;
 }

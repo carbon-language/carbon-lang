@@ -75,7 +75,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body,
     assert(Body.isUsedInRegularObj() && "lazy symbol reached writer");
     return 0;
   case SymbolBody::DefinedBitcodeKind:
-    llvm_unreachable("Symbol " + Body.getName() + " should have been replaced");
+    llvm_unreachable("should have been replaced");
   }
   llvm_unreachable("invalid symbol kind");
 }
