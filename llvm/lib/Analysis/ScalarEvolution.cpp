@@ -4730,29 +4730,24 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
   if (!isSCEVable(V->getType()))
     return getUnknown(V);
 
-  unsigned Opcode = Instruction::UserOp1;
   if (Instruction *I = dyn_cast<Instruction>(V)) {
-    Opcode = I->getOpcode();
-
     // Don't attempt to analyze instructions in blocks that aren't
     // reachable. Such instructions don't matter, and they aren't required
     // to obey basic rules for definitions dominating uses which this
     // analysis depends on.
     if (!DT.isReachableFromEntry(I->getParent()))
       return getUnknown(V);
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    Opcode = CE->getOpcode();
-  else if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+  } else if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
     return getConstant(CI);
   else if (isa<ConstantPointerNull>(V))
     return getZero(V->getType());
   else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
     return GA->mayBeOverridden() ? getUnknown(V) : getSCEV(GA->getAliasee());
-  else
+  else if (!isa<ConstantExpr>(V))
     return getUnknown(V);
 
   Operator *U = cast<Operator>(V);
-  switch (Opcode) {
+  switch (U->getOpcode()) {
   case Instruction::Add: {
     // The simple thing to do would be to just call getSCEV on both operands
     // and call getAddExpr with the result. However if we're looking at a
