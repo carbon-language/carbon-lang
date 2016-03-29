@@ -124,8 +124,7 @@ static void internalize(GlobalValue &GV) {
 
 // Merge all the bitcode files we have seen, codegen the result
 // and return the resulting ObjectFile.
-template <class ELFT>
-std::unique_ptr<elf::ObjectFile<ELFT>> BitcodeCompiler::compile() {
+std::unique_ptr<InputFile> BitcodeCompiler::compile() {
   for (const auto &Name : InternalizedSyms) {
     GlobalValue *GV = Combined.getNamedValue(Name.first());
     assert(GV);
@@ -148,10 +147,7 @@ std::unique_ptr<elf::ObjectFile<ELFT>> BitcodeCompiler::compile() {
                                   "LLD-INTERNAL-combined-lto-object", false);
   if (Config->SaveTemps)
     saveLtoObjectFile(MB->getBuffer());
-
-  std::unique_ptr<InputFile> IF = createObjectFile(*MB);
-  auto *OF = cast<ObjectFile<ELFT>>(IF.release());
-  return std::unique_ptr<ObjectFile<ELFT>>(OF);
+  return createObjectFile(*MB);
 }
 
 TargetMachine *BitcodeCompiler::getTargetMachine() {
@@ -164,8 +160,3 @@ TargetMachine *BitcodeCompiler::getTargetMachine() {
   Reloc::Model R = Config->Pic ? Reloc::PIC_ : Reloc::Static;
   return T->createTargetMachine(TripleStr, "", "", Options, R);
 }
-
-template std::unique_ptr<elf::ObjectFile<ELF32LE>> BitcodeCompiler::compile();
-template std::unique_ptr<elf::ObjectFile<ELF32BE>> BitcodeCompiler::compile();
-template std::unique_ptr<elf::ObjectFile<ELF64LE>> BitcodeCompiler::compile();
-template std::unique_ptr<elf::ObjectFile<ELF64BE>> BitcodeCompiler::compile();
