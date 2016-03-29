@@ -27,12 +27,6 @@ namespace clang {
 
 class Rewriter;
 
-namespace format {
-
-class FormatStyle;
-
-} // namespace format
-
 namespace tooling {
 
 /// \brief A tool to run refactorings.
