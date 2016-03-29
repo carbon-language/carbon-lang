@@ -50,7 +50,8 @@ public:
     initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
   }
 
-  SimpleInliner(int Threshold) : Inliner(ID), DefaultThreshold(Threshold) {
+  explicit SimpleInliner(int Threshold)
+      : Inliner(ID), DefaultThreshold(Threshold) {
     initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
   }
 
