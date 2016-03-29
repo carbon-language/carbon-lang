@@ -25,6 +25,7 @@
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -541,6 +542,7 @@ void RewriteInstance::run() {
 
   // Rewrite allocatable contents and copy non-allocatable parts with mods.
   rewriteFile();
+
 }
 
 void RewriteInstance::discoverFileObjects() {
@@ -1144,6 +1146,10 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       }
       emitCFIInstr(*Function.getCFIFor(Instr));
     }
+
+    MCSymbol *BBEndLabel = BC.Ctx->createTempSymbol();
+    BB->setEndLabel(BBEndLabel);
+    Streamer.EmitLabel(BBEndLabel);
   }
 
   // Emit CFI end
@@ -1362,6 +1368,26 @@ void RewriteInstance::emitFunctions() {
     }
   }
 
+  MCAsmLayout Layout(
+      static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
+
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+    for (auto &BB : Function) {
+      if (!(BB.getLabel()->isDefined(false) &&
+            BB.getEndLabel() && BB.getEndLabel()->isDefined(false))) {
+        continue;
+      }
+      uint64_t BaseAddress = (BB.isCold() ? Function.cold().getAddress()
+                                          : Function.getAddress());
+      uint64_t BeginAddress =
+          BaseAddress + Layout.getSymbolOffset(*BB.getLabel());
+      uint64_t EndAddress =
+          BaseAddress + Layout.getSymbolOffset(*BB.getEndLabel());
+      BB.setOutputAddressRange(std::make_pair(BeginAddress, EndAddress));
+    }
+  }
+
   OLT.emitAndFinalize(ObjectsHandle);
 
   if (opts::KeepTmp)
@@ -1375,7 +1401,7 @@ void RewriteInstance::updateFunctionRanges() {
     if (auto DebugAranges = BC->DwCtx->getDebugAranges()) {
       uint32_t CUOffset = DebugAranges->findAddress(OriginalFunctionAddress);
       if (CUOffset != -1U)
-        ArangesWriter.AddRange(CUOffset, RangeBegin, RangeSize);
+        RangesSectionsWriter.AddRange(CUOffset, RangeBegin, RangeSize);
     }
   };
 
@@ -1387,14 +1413,14 @@ void RewriteInstance::updateFunctionRanges() {
     addDebugArangesEntry(Function.getAddress(),
                          Function.getAddress(),
                          Size);
-    ArangesWriter.AddRange(Function, Function.getAddress(), Size);
+    RangesSectionsWriter.AddRange(&Function, Function.getAddress(), Size);
     if (Function.isSimple() && Function.cold().getImageSize()) {
       addDebugArangesEntry(Function.getAddress(),
                            Function.cold().getAddress(),
                            Function.cold().getImageSize());
-      ArangesWriter.AddRange(Function,
-                             Function.cold().getAddress(),
-                             Function.cold().getImageSize());
+      RangesSectionsWriter.AddRange(&Function,
+                                    Function.cold().getAddress(),
+                                    Function.cold().getImageSize());
     }
   }
 }
@@ -1412,9 +1438,9 @@ void RewriteInstance::generateDebugRanges() {
     auto Writer = MAB->createObjectWriter(OS);
 
     if (RT == RANGES) {
-      ArangesWriter.WriteRangesSection(Writer);
+      RangesSectionsWriter.WriteRangesSection(Writer);
     } else {
-      ArangesWriter.WriteArangesSection(Writer);
+      RangesSectionsWriter.WriteArangesSection(Writer);
     }
     const auto &DebugRangesContents = OS.str();
 
@@ -1906,6 +1932,15 @@ void RewriteInstance::rewriteFile() {
   Out->keep();
 }
 
+void RewriteInstance::updateLexicalBlocksAddresses() {
+  for (auto &LB : BC->LexicalBlocks) {
+    for (const auto &Range : LB.getAbsoluteAddressRanges()) {
+      RangesSectionsWriter.AddRange(&LB, Range.first,
+                                    Range.second - Range.first);
+    }
+  }
+}
+
 void RewriteInstance::computeLineTableOffsets() {
   const auto LineSection =
     BC->Ctx->getObjectFileInfo()->getDwarfLineSection();
@@ -1969,6 +2004,8 @@ void RewriteInstance::updateDebugInfo() {
 
   updateFunctionRanges();
 
+  updateLexicalBlocksAddresses();
+
   generateDebugRanges();
 
   auto &DebugInfoSI = SectionMM->NoteSectionInfo[".debug_info"];
@@ -1981,8 +2018,8 @@ void RewriteInstance::updateDebugInfo() {
     if (RangesFieldOffset) {
       DEBUG(dbgs() << "BOLT-DEBUG: adding relocation for DW_AT_ranges for "
                    << "compile unit in .debug_info\n");
-      const auto RSOI = ArangesWriter.getRangesOffsetCUMap().find(CUID);
-      if (RSOI != ArangesWriter.getRangesOffsetCUMap().end()) {
+      const auto RSOI = RangesSectionsWriter.getRangesOffsetCUMap().find(CUID);
+      if (RSOI != RangesSectionsWriter.getRangesOffsetCUMap().end()) {
         auto Offset = RSOI->second;
         DebugInfoSI.PendingRelocs.emplace_back(
             SectionInfo::Reloc{RangesFieldOffset, 4, 0,
@@ -1994,87 +2031,104 @@ void RewriteInstance::updateDebugInfo() {
     }
   }
 
-  updateDWARFSubprogramAddressRanges();
+  updateDWARFAddressRanges();
 }
 
-void RewriteInstance::updateDWARFSubprogramAddressRanges() {
-  auto AbbrevPatcher = llvm::make_unique<DebugAbbrevPatcher>();
-  auto DebugInfoPatcher = llvm::make_unique<SimpleBinaryPatcher>();
+void RewriteInstance::updateDWARFAddressRanges() {
+  SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
+  SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
 
-  // For each simple function, we update its pointer in .debug_info to point to
-  // its uptated address ranges. If the function was contiguous, also update its
-  // abbreviation.
+  // Update address ranges of simple functions.
   for (const auto &BFI : BinaryFunctions) {
     const auto &Function = BFI.second;
-    if (!Function.isSimple()) {
-      continue;
-    }
-    auto FunctionDIE = Function.getSubprocedureDIE();
-    // If we didn't find the DIE associated to the function or the DIE doesn't
-    // have an abbreviation, give up on this function.
-    if (!(FunctionDIE && FunctionDIE->getAbbreviationDeclarationPtr()))
-      continue;
-    auto DebugRangesOffset = Function.getAddressRangesOffset() +
-        DebugRangesSize;
-    const auto *AbbreviationDecl = FunctionDIE->getAbbreviationDeclarationPtr();
-    assert(AbbreviationDecl &&
-           "Function DIE doesn't have an abbreviation: not supported yet.");
-    auto AbbrevCode = AbbreviationDecl->getCode();
-    const auto *Unit = Function.getSubprocedureDIECompileUnit();
-
-    if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges) != -1U) {
-      // Case 1: The function was already non-contiguous and had DW_AT_ranges.
-      // In this case we simply need to update the value of DW_AT_ranges.
-      DWARFFormValue FormValue;
-      uint32_t RangesOffset = -1U;
-      FunctionDIE->getAttributeValue(Unit, dwarf::DW_AT_ranges, FormValue,
-                                     &RangesOffset);
-      DebugInfoPatcher->addLE32Patch(RangesOffset, DebugRangesOffset);
-    } else {
-      // Case 2: The function has both DW_AT_low_pc and DW_AT_high_pc.
-      // We require the compiler to put both attributes one after the other
-      // for our approach to work. low_pc and high_pc both occupy 8 bytes
-      // as we're dealing with a 64-bit ELF. We basically change low_pc to
-      // DW_AT_ranges and high_pc to DW_AT_producer. ranges spans only 4 bytes
-      // in 32-bit DWARF, which we assume to be used, which leaves us with 12
-      // more bytes. We then set the value of DW_AT_producer as an arbitrary
-      // 12-byte string that fills the remaining space and leaves the rest of
-      // the abbreviation layout unchanged.
-      if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) != -1U &&
-          AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc) != -1U) {
-        uint32_t LowPCOffset = -1U;
-        uint32_t HighPCOffset = -1U;
-        DWARFFormValue FormValue;
-        FunctionDIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, FormValue,
-                                       &LowPCOffset);
-        FunctionDIE->getAttributeValue(Unit, dwarf::DW_AT_high_pc, FormValue,
-                                       &HighPCOffset);
-
-        AbbrevPatcher->addAttributePatch(Unit,
-                                         AbbrevCode,
-                                         dwarf::DW_AT_low_pc,
-                                         dwarf::DW_AT_ranges,
-                                         dwarf::DW_FORM_sec_offset);
-        AbbrevPatcher->addAttributePatch(Unit,
-                                         AbbrevCode,
-                                         dwarf::DW_AT_high_pc,
-                                         dwarf::DW_AT_producer,
-                                         dwarf::DW_FORM_string);
-        assert(LowPCOffset != -1U && LowPCOffset + 8 == HighPCOffset &&
-               "We depend on the compiler putting high_pc right after low_pc.");
-        DebugInfoPatcher->addLE32Patch(LowPCOffset, DebugRangesOffset);
-        std::string ProducerString{"LLVM-BOLT"};
-        ProducerString.resize(12, ' ');
-        ProducerString.back() = '\0';
-
-        DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
-      } else {
-        DEBUG(errs() << "BOLT-WARNING: Cannot update ranges for function "
-                     << Function.getName() << "\n");
-      }
+    if (Function.isSimple()) {
+      updateDWARFObjectAddressRanges(
+          Function.getAddressRangesOffset() + DebugRangesSize,
+          Function.getSubprocedureDIECompileUnit(),
+          Function.getSubprocedureDIE());
     }
   }
 
-  SectionPatchers[".debug_abbrev"].reset(AbbrevPatcher.release());
-  SectionPatchers[".debug_info"].reset(DebugInfoPatcher.release());
+  // Update address ranges of lexical blocks.
+  for (const auto &LB : BC->LexicalBlocks) {
+    updateDWARFObjectAddressRanges(
+        LB.getAddressRangesOffset() + DebugRangesSize,
+        LB.getCompileUnit(),
+        LB.getDIE());
+  }
+}
+
+void RewriteInstance::updateDWARFObjectAddressRanges(
+    uint32_t DebugRangesOffset,
+    const DWARFUnit *Unit,
+    const DWARFDebugInfoEntryMinimal *DIE) {
+
+  // Some objects don't have an associated DIE and cannot be updated (such as
+  // compiler-generated functions).
+  if (!DIE) {
+    return;
+  }
+
+  auto DebugInfoPatcher =
+      static_cast<SimpleBinaryPatcher *>(SectionPatchers[".debug_info"].get());
+  auto AbbrevPatcher =
+      static_cast<DebugAbbrevPatcher*>(SectionPatchers[".debug_abbrev"].get());
+
+  assert(DebugInfoPatcher && AbbrevPatcher && "Patchers not initialized.");
+
+  const auto *AbbreviationDecl = DIE->getAbbreviationDeclarationPtr();
+  assert(AbbreviationDecl &&
+         "Object's DIE doesn't have an abbreviation: not supported yet.");
+  auto AbbrevCode = AbbreviationDecl->getCode();
+
+  if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges) != -1U) {
+    // Case 1: The object was already non-contiguous and had DW_AT_ranges.
+    // In this case we simply need to update the value of DW_AT_ranges.
+    DWARFFormValue FormValue;
+    uint32_t AttrOffset = -1U;
+    DIE->getAttributeValue(Unit, dwarf::DW_AT_ranges, FormValue, &AttrOffset);
+    DebugInfoPatcher->addLE32Patch(AttrOffset, DebugRangesOffset);
+  } else {
+    // Case 2: The object has both DW_AT_low_pc and DW_AT_high_pc.
+    // We require the compiler to put both attributes one after the other
+    // for our approach to work. low_pc and high_pc both occupy 8 bytes
+    // as we're dealing with a 64-bit ELF. We basically change low_pc to
+    // DW_AT_ranges and high_pc to DW_AT_producer. ranges spans only 4 bytes
+    // in 32-bit DWARF, which we assume to be used, which leaves us with 12
+    // more bytes. We then set the value of DW_AT_producer as an arbitrary
+    // 12-byte string that fills the remaining space and leaves the rest of
+    // the abbreviation layout unchanged.
+    if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) != -1U &&
+        AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc) != -1U) {
+      uint32_t LowPCOffset = -1U;
+      uint32_t HighPCOffset = -1U;
+      DWARFFormValue FormValue;
+      DIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, FormValue,
+                             &LowPCOffset);
+      DIE->getAttributeValue(Unit, dwarf::DW_AT_high_pc, FormValue,
+                             &HighPCOffset);
+
+      AbbrevPatcher->addAttributePatch(Unit,
+                                       AbbrevCode,
+                                       dwarf::DW_AT_low_pc,
+                                       dwarf::DW_AT_ranges,
+                                       dwarf::DW_FORM_sec_offset);
+      AbbrevPatcher->addAttributePatch(Unit,
+                                       AbbrevCode,
+                                       dwarf::DW_AT_high_pc,
+                                       dwarf::DW_AT_producer,
+                                       dwarf::DW_FORM_string);
+      assert(LowPCOffset != -1U && LowPCOffset + 8 == HighPCOffset &&
+             "We depend on the compiler putting high_pc right after low_pc.");
+      DebugInfoPatcher->addLE32Patch(LowPCOffset, DebugRangesOffset);
+      std::string ProducerString{"LLVM-BOLT"};
+      ProducerString.resize(12, ' ');
+      ProducerString.back() = '\0';
+
+      DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
+    } else {
+      DEBUG(errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
+                   << Twine::utohexstr(DIE->getOffset()) << "\n");
+    }
+  }
 }

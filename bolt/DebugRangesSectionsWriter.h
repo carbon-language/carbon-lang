@@ -1,4 +1,4 @@
-//===--- DebugArangesWriter.h - Writes the .debug_aranges DWARF section ---===//
+//===-- DebugRangesSectionsWriter.h - Writes DWARF address ranges sections -==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Class that serializes a .debug_aranges section of a binary.
+// Class that serializes the .debug_ranges and .debug_aranges sections.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_DEBUGARANGESWRITER_H
-#define LLVM_TOOLS_LLVM_BOLT_DEBUGARANGESWRITER_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_DEBUG_RANGES_SECTIONS_WRITER_H
+#define LLVM_TOOLS_LLVM_BOLT_DEBUG_RANGES_SECTIONS_WRITER_H
 
 #include <map>
 #include <vector>
@@ -24,19 +24,26 @@ class MCObjectWriter;
 
 namespace bolt {
 
-class BinaryFunction;
-
-class DebugArangesWriter {
+/// Abstract interface for classes that represent objects that have
+/// associated address ranges in .debug_ranges. These address ranges can
+/// be serialized by DebugRangesSectionsWriter which notifies the object
+/// of where in the section its address ranges list was written.
+class AddressRangesOwner {
 public:
-  DebugArangesWriter() = default;
+  virtual void setAddressRangesOffset(uint32_t Offset) = 0;
+};
+
+class DebugRangesSectionsWriter {
+public:
+  DebugRangesSectionsWriter() = default;
 
   /// Adds a range to the .debug_arange section.
   void AddRange(uint32_t CompileUnitOffset, uint64_t Address, uint64_t Size);
 
-  /// Adds an address range that belongs to a given BinaryFunction.
+  /// Adds an address range that belongs to a given object.
   /// When .debug_ranges is written, the offset of the range corresponding
   /// to the function will be set using BF->setAddressRangesOffset().
-  void AddRange(BinaryFunction &BF, uint64_t Address, uint64_t Size);
+  void AddRange(AddressRangesOwner *ARO, uint64_t Address, uint64_t Size);
 
   using RangesCUMapType = std::map<uint32_t, uint32_t>;
 
@@ -60,8 +67,8 @@ private:
 
   // Map from BinaryFunction to the list of address intervals that belong
   // to that function, represented like CUAddressRanges.
-  std::map<BinaryFunction *, std::vector<std::pair<uint64_t, uint64_t>>>
-      FunctionAddressRanges;
+  std::map<AddressRangesOwner *, std::vector<std::pair<uint64_t, uint64_t>>>
+      ObjectAddressRanges;
 
   /// When writing data to .debug_ranges remember offset per CU.
   RangesCUMapType RangesSectionOffsetCUMap;

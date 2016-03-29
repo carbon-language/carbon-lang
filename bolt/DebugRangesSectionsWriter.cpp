@@ -1,4 +1,4 @@
-//===--- DebugArangesWriter.h - Writes the .debug_aranges DWARF section ---===//
+//===-- DebugRangesSectionsWriter.h - Writes DWARF address ranges sections -==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,25 +7,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DebugArangesWriter.h"
+#include "DebugRangesSectionsWriter.h"
 #include "BinaryFunction.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCObjectWriter.h"
 
-
 namespace llvm {
 namespace bolt {
 
-void DebugArangesWriter::AddRange(uint32_t CompileUnitOffset,
-                                  uint64_t Address,
-                                  uint64_t Size) {
+void DebugRangesSectionsWriter::AddRange(uint32_t CompileUnitOffset,
+                                         uint64_t Address,
+                                         uint64_t Size) {
   CUAddressRanges[CompileUnitOffset].push_back(std::make_pair(Address, Size));
 }
 
-void DebugArangesWriter::AddRange(BinaryFunction &BF,
-                                  uint64_t Address,
-                                  uint64_t Size) {
-  FunctionAddressRanges[&BF].push_back(std::make_pair(Address, Size));
+void DebugRangesSectionsWriter::AddRange(AddressRangesOwner *BF,
+                                         uint64_t Address,
+                                         uint64_t Size) {
+  ObjectAddressRanges[BF].push_back(std::make_pair(Address, Size));
 }
 
 namespace {
@@ -52,7 +51,7 @@ uint32_t WriteAddressRanges(
 
 } // namespace
 
-void DebugArangesWriter::WriteRangesSection(MCObjectWriter *Writer) {
+void DebugRangesSectionsWriter::WriteRangesSection(MCObjectWriter *Writer) {
   uint32_t SectionOffset = 0;
   for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
     uint64_t CUOffset = CUOffsetAddressRangesPair.first;
@@ -61,14 +60,15 @@ void DebugArangesWriter::WriteRangesSection(MCObjectWriter *Writer) {
     SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
   }
 
-  for (const auto &BFAddressRangesPair : FunctionAddressRanges) {
+  for (const auto &BFAddressRangesPair : ObjectAddressRanges) {
     BFAddressRangesPair.first->setAddressRangesOffset(SectionOffset);
     const auto &AddressRanges = BFAddressRangesPair.second;
     SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
   }
 }
 
-void DebugArangesWriter::WriteArangesSection(MCObjectWriter *Writer) const {
+void
+DebugRangesSectionsWriter::WriteArangesSection(MCObjectWriter *Writer) const {
   // For reference on the format of the .debug_aranges section, see the DWARF4
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf

@@ -26,6 +26,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
+#include <utility>
 
 namespace llvm {
 namespace bolt {
@@ -38,6 +39,15 @@ class BinaryBasicBlock {
 
   /// Label associated with the block.
   MCSymbol *Label{nullptr};
+
+  /// Function that owns this basic block.
+  BinaryFunction *Function;
+
+  /// Label associated with the end of the block in the output binary.
+  MCSymbol *EndLabel{nullptr};
+
+  /// [Begin, End) address range for this block in the output binary.
+  std::pair<uint64_t, uint64_t> OutputAddressRange{0, 0};
 
   /// Original offset in the function.
   uint64_t Offset{std::numeric_limits<uint64_t>::max()};
@@ -80,8 +90,9 @@ class BinaryBasicBlock {
 
   explicit BinaryBasicBlock(
       MCSymbol *Label,
+      BinaryFunction *Function,
       uint64_t Offset = std::numeric_limits<uint64_t>::max())
-    : Label(Label), Offset(Offset) {}
+    : Label(Label), Function(Function), Offset(Offset) {}
 
   explicit BinaryBasicBlock(uint64_t Offset)
     : Offset(Offset) {}
@@ -259,6 +270,30 @@ public:
       }
     }
     return false;
+  }
+
+  /// Sets the symbol pointing to the end of the BB in the output binary.
+  void setEndLabel(MCSymbol *Symbol) {
+    EndLabel = Symbol;
+  }
+
+  /// Gets the symbol pointing to the end of the BB in the output binary.
+  MCSymbol *getEndLabel() const {
+    return EndLabel;
+  }
+
+  /// Sets the memory address range of this BB in the output binary.
+  void setOutputAddressRange(std::pair<uint64_t, uint64_t> Range) {
+    OutputAddressRange = Range;
+  }
+
+  /// Gets the memory address range of this BB in the output binary.
+  std::pair<uint64_t, uint64_t> getOutputAddressRange() const {
+    return OutputAddressRange;
+  }
+
+  BinaryFunction *getFunction() const {
+    return Function;
   }
 
 private:

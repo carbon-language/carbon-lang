@@ -87,6 +87,16 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   return &(*--I);
 }
 
+size_t
+BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
+  auto Index = getIndex(BB);
+  if (Index + 1 == BasicBlocks.size()) {
+    return Size - BB->getOffset();
+  } else {
+    return BasicBlocks[Index + 1].getOffset() - BB->getOffset();
+  }
+}
+
 unsigned BinaryFunction::eraseDeadBBs(
     std::map<BinaryBasicBlock *, bool> &ToPreserve) {
   BasicBlockOrderType NewLayout;
@@ -704,7 +714,7 @@ bool BinaryFunction::buildCFG() {
     }
   }
 
-  // Set the basic block layout to the original order
+  // Set the basic block layout to the original order.
   for (auto &BB : BasicBlocks) {
     BasicBlocksLayout.emplace_back(&BB);
   }

@@ -12,11 +12,14 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/DebugInfo/DWARF/DWARFUnit.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 
 namespace llvm {
 namespace bolt {
+
+BinaryContext::~BinaryContext() { }
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
                                                  Twine Prefix) {
@@ -43,6 +46,59 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
 
   return Symbol;
 }
+
+} // namespace bolt
+} // namespace llvm
+
+namespace {
+
+using namespace llvm;
+using namespace bolt;
+
+/// Returns the binary function that contains a given address in the input
+/// binary, or nullptr if none does.
+BinaryFunction *getBinaryFunctionContainingAddress(
+    uint64_t Address,
+    std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
+  auto It = BinaryFunctions.upper_bound(Address);
+  if (It != BinaryFunctions.begin()) {
+    --It;
+    if (It->first + It->second.getSize() > Address) {
+      return &It->second;
+    }
+  }
+  return nullptr;
+}
+
+// Traverses the DIE tree in a recursive depth-first search and finds lexical
+// blocks, saving them in LexicalBlocks.
+void findLexicalBlocks(const DWARFCompileUnit *Unit,
+                       const DWARFDebugInfoEntryMinimal *DIE,
+                       std::map<uint64_t, BinaryFunction> &Functions,
+                       std::vector<llvm::bolt::LexicalBlock> &LexicalBlocks) {
+  if (DIE->getTag() == dwarf::DW_TAG_lexical_block) {
+    LexicalBlocks.emplace_back(Unit, DIE);
+    auto &LB = LexicalBlocks.back();
+    for (const auto &Range : DIE->getAddressRanges(Unit)) {
+      if (auto *Function = getBinaryFunctionContainingAddress(Range.first,
+                                                              Functions)) {
+        if (Function->isSimple()) {
+          LB.addAddressRange(*Function, Range.first, Range.second);
+        }
+      }
+    }
+  }
+
+  // Recursively visit each child.
+  for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
+    findLexicalBlocks(Unit, Child, Functions, LexicalBlocks);
+  }
+}
+
+} // namespace
+
+namespace llvm {
+namespace bolt {
 
 void BinaryContext::preprocessDebugInfo() {
   // Iterate over all DWARF compilation units and map their offset in the
@@ -94,6 +150,12 @@ void BinaryContext::preprocessFunctionDebugInfo(
         }
       }
     }
+  }
+
+  // Iterate over DIE trees finding lexical blocks.
+  for (const auto &CU : DwCtx->compile_units()) {
+    findLexicalBlocks(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
+                      LexicalBlocks);
   }
 }
 

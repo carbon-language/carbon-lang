@@ -15,7 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
 #include "BinaryPatcher.h"
-#include "DebugArangesWriter.h"
+#include "DebugRangesSectionsWriter.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Object/ELFObjectFile.h"
@@ -200,11 +200,26 @@ private:
   /// Update internal function ranges after functions have been written.
   void updateFunctionRanges();
 
+  /// Update lexical blocks ranges after optimizations.
+  void updateLexicalBlocksAddresses();
+
   /// Generate new contents for .debug_ranges and .debug_aranges section.
   void generateDebugRanges();
 
-  /// Patches the binary for function address ranges to be updated.
-  void updateDWARFSubprogramAddressRanges();
+  /// Patches the binary for DWARF address ranges (e.g. in functions and lexical
+  /// blocks) to be updated.
+  void updateDWARFAddressRanges();
+
+  /// Patches the binary for an object's address ranges to be updated.
+  /// The object can be a anything that has associated address ranges via either
+  /// DW_AT_low/high_pc or DW_AT_ranges (i.e. functions, lexical blocks, etc).
+  /// \p DebugRangesOffset is the offset in .debug_ranges of the object's
+  /// new address ranges in the output binary.
+  /// \p Unit Compile uniit the object belongs to.
+  /// \p DIE is the object's DIE in the input binary.
+  void updateDWARFObjectAddressRanges(uint32_t DebugRangesOffset,
+                                      const DWARFUnit *Unit,
+                                      const DWARFDebugInfoEntryMinimal *DIE);
 
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
@@ -251,9 +266,9 @@ private:
   /// Store all functions seen in the binary, sorted by address.
   std::map<uint64_t, BinaryFunction> BinaryFunctions;
 
-  /// Stores and serializes information that will be put into
-  /// the .debug_aranges DWARF section.
-  DebugArangesWriter ArangesWriter;
+  /// Stores and serializes information that will be put into the .debug_ranges
+  /// and .debug_aranges DWARF sections.
+  DebugRangesSectionsWriter RangesSectionsWriter;
 
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.

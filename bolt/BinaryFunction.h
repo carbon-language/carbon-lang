@@ -19,6 +19,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
+#include "DebugRangesSectionsWriter.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -48,7 +49,7 @@ namespace bolt {
 /// BinaryFunction is a representation of machine-level function.
 //
 /// We use the term "Binary" as "Machine" was already taken.
-class BinaryFunction {
+class BinaryFunction : public AddressRangesOwner {
 public:
   enum class State : char {
     Empty = 0,        /// Function body is empty
@@ -370,6 +371,11 @@ public:
     return I;
   }
 
+  /// Returns the n-th basic block in this function in its original layout, or
+  /// nullptr if n >= size().
+  const BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) const {
+    return &BasicBlocks.at(Index);
+  }
 
   /// Return the name of the function as extracted from the binary file.
   StringRef getName() const {
@@ -465,7 +471,7 @@ public:
     assert(BC.Ctx && "cannot be called with empty context");
     if (!Label)
       Label = BC.Ctx->createTempSymbol("BB", true);
-    BasicBlocks.emplace_back(BinaryBasicBlock(Label, Offset));
+    BasicBlocks.emplace_back(BinaryBasicBlock(Label, this, Offset));
 
     auto BB = &BasicBlocks.back();
 
@@ -757,6 +763,9 @@ public:
   const DWARFCompileUnit *getSubprocedureDIECompileUnit() const {
     return DIECompileUnit;
   }
+
+  /// Returns the size of the basic block in the original binary.
+  size_t getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const;
 
   virtual ~BinaryFunction() {}
 

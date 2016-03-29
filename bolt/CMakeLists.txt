@@ -13,13 +13,14 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_tool(llvm-bolt
   llvm-bolt.cpp
+  BasicBlockOffsetRanges.cpp
   BinaryBasicBlock.cpp
   BinaryContext.cpp
   BinaryFunction.cpp
   BinaryPatcher.cpp
   DataReader.cpp
-  DebugArangesWriter.cpp
   DebugLineTableRowRef.cpp
+  DebugRangesSectionsWriter.cpp
   Exceptions.cpp
   RewriteInstance.cpp
   )

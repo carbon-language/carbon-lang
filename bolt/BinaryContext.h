@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
+#include "LexicalBlock.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -68,6 +69,9 @@ public:
 
   /// Maps DWARF CUID to offset of stmt_list attribute in .debug_info.
   std::map<unsigned, uint32_t> LineTableOffsetCUMap;
+
+  /// List of DWARF lexical blocks in .debug_info.
+  std::vector<LexicalBlock> LexicalBlocks;
 
   std::unique_ptr<MCContext> Ctx;
 
@@ -132,7 +136,7 @@ public:
       DisAsm(std::move(DisAsm)),
       DR(DR) {}
 
-  ~BinaryContext() {}
+  ~BinaryContext();
 
   /// Return a global symbol registered at a given \p Address. If no symbol
   /// exists, create one with unique name using \p Prefix.

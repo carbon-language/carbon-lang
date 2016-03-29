@@ -10,7 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryBasicBlock.h"
-#include "BinaryFunction.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
