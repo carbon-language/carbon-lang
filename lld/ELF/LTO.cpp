@@ -125,7 +125,7 @@ void BitcodeCompiler::add(BitcodeFile &F) {
 
 static void internalize(GlobalValue &GV) {
   assert(!GV.hasLocalLinkage() &&
-      "Trying to internalize a symbol with local linkage!") ;
+         "Trying to internalize a symbol with local linkage!");
   GV.setLinkage(GlobalValue::InternalLinkage);
 }
 
