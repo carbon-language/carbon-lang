@@ -2179,6 +2179,15 @@ bool Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
   return true;
 }
 
+static Loop *
+getFirstNonBoxedLoopFor(BasicBlock *BB, LoopInfo &LI,
+                        const ScopDetection::BoxedLoopsSetTy &BoxedLoops) {
+  auto *L = LI.getLoopFor(BB);
+  while (BoxedLoops.count(L))
+    L = L->getParentLoop();
+  return L;
+}
+
 bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
                                              DominatorTree &DT, LoopInfo &LI) {
   auto &BoxedLoops = *SD.getBoxedLoops(&getRegion());
@@ -2251,9 +2260,7 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
 
       // Do not adjust the number of dimensions if we enter a boxed loop or are
       // in a non-affine subregion or if the surrounding loop stays the same.
-      Loop *SuccBBLoop = LI.getLoopFor(SuccBB);
-      while (BoxedLoops.count(SuccBBLoop))
-        SuccBBLoop = SuccBBLoop->getParentLoop();
+      auto *SuccBBLoop = getFirstNonBoxedLoopFor(SuccBB, LI, BoxedLoops);
 
       if (BBLoop != SuccBBLoop) {
 
@@ -2389,9 +2396,7 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
         //     predecessor and the current block are surrounded by different
         //     loops in the same depth.
         PredBBDom = getDomainForBlock(PredBB, DomainMap, *R->getRegionInfo());
-        Loop *PredBBLoop = LI.getLoopFor(PredBB);
-        while (BoxedLoops.count(PredBBLoop))
-          PredBBLoop = PredBBLoop->getParentLoop();
+        auto *PredBBLoop = getFirstNonBoxedLoopFor(PredBB, LI, BoxedLoops);
 
         int PredBBLoopDepth = getRelativeLoopDepth(PredBBLoop);
         unsigned LoopDepthDiff = std::abs(BBLoopDepth - PredBBLoopDepth);
