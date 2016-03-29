@@ -1344,9 +1344,11 @@ void Verifier::verifyParameterAttrs(AttributeSet Attrs, unsigned Idx, Type *Ty,
                !Attrs.hasAttribute(Idx, Attribute::StructRet) &&
                !Attrs.hasAttribute(Idx, Attribute::NoCapture) &&
                !Attrs.hasAttribute(Idx, Attribute::Returned) &&
-               !Attrs.hasAttribute(Idx, Attribute::InAlloca),
-           "Attributes 'byval', 'inalloca', 'nest', 'sret', 'nocapture', and "
-           "'returned' do not apply to return values!",
+               !Attrs.hasAttribute(Idx, Attribute::InAlloca) &&
+               !Attrs.hasAttribute(Idx, Attribute::SwiftSelf),
+           "Attributes 'byval', 'inalloca', 'nest', 'sret', 'nocapture', "
+           "'returned', and 'swiftself' do not apply to return "
+           "values!",
            V);
 
   // Check for mutually incompatible attributes.  Only inreg is compatible with
@@ -1423,6 +1425,7 @@ void Verifier::verifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
   bool SawNest = false;
   bool SawReturned = false;
   bool SawSRet = false;
+  bool SawSwiftSelf = false;
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
     unsigned Idx = Attrs.getSlotIndex(i);
@@ -1460,6 +1463,11 @@ void Verifier::verifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
       Assert(Idx == 1 || Idx == 2,
              "Attribute 'sret' is not on first or second parameter!", V);
       SawSRet = true;
+    }
+
+    if (Attrs.hasAttribute(Idx, Attribute::SwiftSelf)) {
+      Assert(!SawSwiftSelf, "Cannot have multiple 'swiftself' parameters!", V);
+      SawSwiftSelf = true;
     }
 
     if (Attrs.hasAttribute(Idx, Attribute::InAlloca)) {
@@ -2554,7 +2562,7 @@ static bool isTypeCongruent(Type *L, Type *R) {
 static AttrBuilder getParameterABIAttributes(int I, AttributeSet Attrs) {
   static const Attribute::AttrKind ABIAttrs[] = {
       Attribute::StructRet, Attribute::ByVal, Attribute::InAlloca,
-      Attribute::InReg, Attribute::Returned};
+      Attribute::InReg, Attribute::Returned, Attribute::SwiftSelf};
   AttrBuilder Copy;
   for (auto AK : ABIAttrs) {
     if (Attrs.hasAttribute(I + 1, AK))

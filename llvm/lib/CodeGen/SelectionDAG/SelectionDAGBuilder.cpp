@@ -7281,6 +7281,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
     Entry.isNest = false;
     Entry.isByVal = false;
     Entry.isReturned = false;
+    Entry.isSwiftSelf = false;
     Entry.Alignment = Align;
     CLI.getArgs().insert(CLI.getArgs().begin(), Entry);
     CLI.RetTy = Type::getVoidTy(CLI.RetTy->getContext());
@@ -7338,6 +7339,8 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
         Flags.setInReg();
       if (Args[i].isSRet)
         Flags.setSRet();
+      if (Args[i].isSwiftSelf)
+        Flags.setSwiftSelf();
       if (Args[i].isByVal)
         Flags.setByVal();
       if (Args[i].isInAlloca) {
@@ -7617,6 +7620,8 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
         Flags.setInReg();
       if (F.getAttributes().hasAttribute(Idx, Attribute::StructRet))
         Flags.setSRet();
+      if (F.getAttributes().hasAttribute(Idx, Attribute::SwiftSelf))
+        Flags.setSwiftSelf();
       if (F.getAttributes().hasAttribute(Idx, Attribute::ByVal))
         Flags.setByVal();
       if (F.getAttributes().hasAttribute(Idx, Attribute::InAlloca)) {

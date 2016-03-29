@@ -1058,6 +1058,11 @@ Currently, only the following parameter attributes are defined:
     ``dereferenceable(<n>)``). This attribute may only be applied to
     pointer typed parameters.
 
+``swiftself``
+    This indicates that the parameter is the self/context parameter. This is not
+    a valid attribute for return values and can only be applied to one
+    parameter.
+
 .. _gc:
 
 Garbage Collector Strategy Names

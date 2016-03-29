@@ -195,6 +195,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "byval";
   if (hasAttribute(Attribute::Convergent))
     return "convergent";
+  if (hasAttribute(Attribute::SwiftSelf))
+    return "swiftself";
   if (hasAttribute(Attribute::InaccessibleMemOnly))
     return "inaccessiblememonly";
   if (hasAttribute(Attribute::InaccessibleMemOrArgMemOnly))
@@ -448,6 +450,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::NoRecurse:       return 1ULL << 48;
   case Attribute::InaccessibleMemOnly:         return 1ULL << 49;
   case Attribute::InaccessibleMemOrArgMemOnly: return 1ULL << 50;
+  case Attribute::SwiftSelf:       return 1ULL << 51;
   case Attribute::Dereferenceable:
     llvm_unreachable("dereferenceable attribute not supported in raw format");
     break;

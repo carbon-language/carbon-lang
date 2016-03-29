@@ -77,6 +77,7 @@ void TargetLowering::ArgListEntry::setAttributes(ImmutableCallSite *CS,
   isByVal    = CS->paramHasAttr(AttrIdx, Attribute::ByVal);
   isInAlloca = CS->paramHasAttr(AttrIdx, Attribute::InAlloca);
   isReturned = CS->paramHasAttr(AttrIdx, Attribute::Returned);
+  isSwiftSelf = CS->paramHasAttr(AttrIdx, Attribute::SwiftSelf);
   Alignment  = CS->getParamAlignment(AttrIdx);
 }
 
