@@ -307,25 +307,24 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
 template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   if (this->Header->sh_type == SHT_NOBITS)
     return;
-  // Copy section contents from source object file to output file.
-  ArrayRef<uint8_t> Data = this->getSectionData();
   ELFFile<ELFT> &EObj = this->File->getObj();
 
-  // That happens with -r. In that case we need fix the relocation position and
-  // target. No relocations are applied.
+  // If -r is given, then an InputSection may be a relocation section.
   if (this->Header->sh_type == SHT_RELA) {
-    this->copyRelocations(Buf + OutSecOff, EObj.relas(this->Header));
+    copyRelocations(Buf + OutSecOff, EObj.relas(this->Header));
     return;
   }
   if (this->Header->sh_type == SHT_REL) {
-    this->copyRelocations(Buf + OutSecOff, EObj.rels(this->Header));
+    copyRelocations(Buf + OutSecOff, EObj.rels(this->Header));
     return;
   }
 
+  // Copy section contents from source object file to output file.
+  ArrayRef<uint8_t> Data = this->getSectionData();
   memcpy(Buf + OutSecOff, Data.data(), Data.size());
 
-  uint8_t *BufEnd = Buf + OutSecOff + Data.size();
   // Iterate over all relocation sections that apply to this section.
+  uint8_t *BufEnd = Buf + OutSecOff + Data.size();
   for (const Elf_Shdr *RelSec : this->RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
       this->relocate(Buf, BufEnd, EObj.relas(RelSec));
