@@ -261,7 +261,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
     // that does not have a corresponding symbol.
     if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC) {
       uintX_t SymVA = getPPC64TocBase() + A;
-      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, 0);
+      Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA);
       continue;
     }
 
@@ -299,8 +299,10 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
                Body.isPreemptible()) {
       continue;
     }
-    uintX_t Size = Body.getSize<ELFT>();
-    Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA, Size + A);
+    if (Target->isSizeRel(Type))
+      SymVA = Body.getSize<ELFT>() + A;
+
+    Target->relocateOne(BufLoc, BufEnd, Type, AddrLoc, SymVA);
   }
 }
 

@@ -87,7 +87,7 @@ public:
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA = 0) const override;
+                   uint64_t SA) const override;
 
   size_t relaxTlsGdToIe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                         uint64_t P, uint64_t SA) const override;
@@ -121,7 +121,7 @@ public:
   bool refersToGotEntry(uint32_t Type) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA = 0) const override;
+                   uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool isSizeRel(uint32_t Type) const override;
 
@@ -139,7 +139,7 @@ class PPCTargetInfo final : public TargetInfo {
 public:
   PPCTargetInfo();
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA) const override;
+                   uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 
@@ -151,7 +151,7 @@ public:
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA) const override;
+                   uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 
@@ -171,7 +171,7 @@ public:
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA = 0) const override;
+                   uint64_t SA) const override;
   size_t relaxTlsGdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                         uint64_t P, uint64_t SA) const override;
   size_t relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
@@ -185,7 +185,7 @@ class AMDGPUTargetInfo final : public TargetInfo {
 public:
   AMDGPUTargetInfo() {}
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA) const override;
+                   uint64_t SA) const override;
 };
 
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
@@ -202,7 +202,7 @@ public:
   bool needsGot(uint32_t Type, SymbolBody &S) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
-                   uint64_t SA, uint64_t ZA) const override;
+                   uint64_t SA) const override;
   bool isHintRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool refersToGotEntry(uint32_t Type) const override;
@@ -525,7 +525,7 @@ uint64_t X86TargetInfo::getImplicitAddend(uint8_t *Buf, uint32_t Type) const {
 }
 
 void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                uint64_t P, uint64_t SA, uint64_t ZA) const {
+                                uint64_t P, uint64_t SA) const {
   switch (Type) {
   case R_386_32:
     write32le(Loc, SA);
@@ -941,7 +941,7 @@ size_t X86_64TargetInfo::relaxTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd,
 }
 
 void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                   uint64_t P, uint64_t SA, uint64_t ZA) const {
+                                   uint64_t P, uint64_t SA) const {
   switch (Type) {
   case R_X86_64_32:
     checkUInt<32>(SA, Type);
@@ -968,10 +968,10 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     write32le(Loc, SA - P);
     break;
   case R_X86_64_SIZE32:
-    write32le(Loc, ZA);
+    write32le(Loc, SA);
     break;
   case R_X86_64_SIZE64:
-    write64le(Loc, ZA);
+    write64le(Loc, SA);
     break;
   case R_X86_64_TPOFF32: {
     uint64_t Val = SA - Out<ELF64LE>::TlsPhdr->p_memsz;
@@ -1000,7 +1000,7 @@ PPCTargetInfo::PPCTargetInfo() {}
 bool PPCTargetInfo::isRelRelative(uint32_t Type) const { return false; }
 
 void PPCTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                uint64_t P, uint64_t SA, uint64_t ZA) const {
+                                uint64_t P, uint64_t SA) const {
   switch (Type) {
   case R_PPC_ADDR16_HA:
     write16be(Loc, applyPPCHa(SA));
@@ -1103,7 +1103,7 @@ bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
 }
 
 void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                  uint64_t P, uint64_t SA, uint64_t ZA) const {
+                                  uint64_t P, uint64_t SA) const {
   uint64_t TB = getPPC64TocBase();
 
   // For a TOC-relative relocation, adjust the addend and proceed in terms of
@@ -1393,8 +1393,8 @@ static uint64_t getAArch64Page(uint64_t Expr) {
 }
 
 void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
-                                    uint32_t Type, uint64_t P, uint64_t SA,
-                                    uint64_t ZA) const {
+                                    uint32_t Type, uint64_t P,
+                                    uint64_t SA) const {
   switch (Type) {
   case R_AARCH64_ABS16:
     checkIntUInt<16>(SA, Type);
@@ -1569,7 +1569,7 @@ size_t AArch64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint8_t *BufEnd,
 // actually called (relocateOne is called for each relocation).
 // That's why the AMDGPU port works without implementing this function.
 void AMDGPUTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
-                                   uint64_t P, uint64_t SA, uint64_t ZA) const {
+                                   uint64_t P, uint64_t SA) const {
   llvm_unreachable("not implemented");
 }
 
@@ -1750,8 +1750,8 @@ uint64_t MipsTargetInfo<ELFT>::getImplicitAddend(uint8_t *Buf,
 
 template <class ELFT>
 void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
-                                       uint32_t Type, uint64_t P, uint64_t SA,
-                                       uint64_t ZA) const {
+                                       uint32_t Type, uint64_t P,
+                                       uint64_t SA) const {
   const endianness E = ELFT::TargetEndianness;
   // Thread pointer and DRP offsets from the start of TLS data area.
   // https://www.linux-mips.org/wiki/NPTL
