@@ -507,16 +507,25 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // The compilation takes ownership of Args.
   Compilation *C = new Compilation(*this, TC, UArgs.release(), TranslatedArgs);
 
-  C->setCudaDeviceToolChain(
-      &getToolChain(C->getArgs(), llvm::Triple(TC.getTriple().isArch64Bit()
-                                                   ? "nvptx64-nvidia-cuda"
-                                                   : "nvptx-nvidia-cuda")));
   if (!HandleImmediateArgs(*C))
     return C;
 
   // Construct the list of inputs.
   InputList Inputs;
   BuildInputs(C->getDefaultToolChain(), *TranslatedArgs, Inputs);
+
+  // Initialize the CUDA device TC only if we have any CUDA Inputs.  This is
+  // necessary so that we don't break compilations that pass flags that are
+  // incompatible with the NVPTX TC (e.g. -mthread-model single).
+  if (llvm::any_of(Inputs, [](const std::pair<types::ID, const Arg *> &I) {
+        return I.first == types::TY_CUDA || I.first == types::TY_PP_CUDA ||
+               I.first == types::TY_CUDA_DEVICE;
+      })) {
+    C->setCudaDeviceToolChain(
+        &getToolChain(C->getArgs(), llvm::Triple(TC.getTriple().isArch64Bit()
+                                                     ? "nvptx64-nvidia-cuda"
+                                                     : "nvptx-nvidia-cuda")));
+  }
 
   // Construct the list of abstract actions to perform for this compilation. On
   // MachO targets this uses the driver-driver and universal actions.
