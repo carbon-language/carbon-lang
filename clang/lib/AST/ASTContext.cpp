@@ -6389,6 +6389,7 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
 
   // };
   VaListDecl->completeDefinition();
+  Context->VaListTagDecl = VaListDecl;
 
   // typedef struct __va_list __builtin_va_list;
   QualType T = Context->getRecordType(VaListDecl);
