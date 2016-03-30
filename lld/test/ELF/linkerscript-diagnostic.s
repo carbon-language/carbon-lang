@@ -3,8 +3,7 @@
 
 ## Take some valid script with multiline comments
 ## and check it actually works:
-# RUN: rm -f %t.script
-# RUN: echo "SECTIONS {" >> %t.script
+# RUN: echo "SECTIONS {" > %t.script
 # RUN: echo ".text : { *(.text) }" >> %t.script
 # RUN: echo ".keep : { *(.keep) } /*" >> %t.script
 # RUN: echo "comment line 1" >> %t.script
@@ -14,8 +13,7 @@
 
 ## Change ":" to "+" at line 2, check that error
 ## message starts from correct line number:
-# RUN: rm -f %t.script
-# RUN: echo "SECTIONS {" >> %t.script
+# RUN: echo "SECTIONS {" > %t.script
 # RUN: echo ".text + { *(.text) }" >> %t.script
 # RUN: echo ".keep : { *(.keep) } /*" >> %t.script
 # RUN: echo "comment line 1" >> %t.script
@@ -25,8 +23,7 @@
 # ERR1: line 2:
 
 ## Change ":" to "+" at line 3 now, check correct error line number:
-# RUN: rm -f %t.script
-# RUN: echo "SECTIONS {" >> %t.script
+# RUN: echo "SECTIONS {" > %t.script
 # RUN: echo ".text : { *(.text) }" >> %t.script
 # RUN: echo ".keep + { *(.keep) } /*" >> %t.script
 # RUN: echo "comment line 1" >> %t.script
@@ -37,8 +34,7 @@
 
 ## Change ":" to "+" at line 6, after multiline comment,
 ## check correct error line number:
-# RUN: rm -f %t.script
-# RUN: echo "SECTIONS {" >> %t.script
+# RUN: echo "SECTIONS {" > %t.script
 # RUN: echo ".text : { *(.text) }" >> %t.script
 # RUN: echo ".keep : { *(.keep) } /*" >> %t.script
 # RUN: echo "comment line 1" >> %t.script
