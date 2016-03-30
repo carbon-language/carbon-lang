@@ -2215,9 +2215,6 @@ void AssemblyWriter::printModule(const Module *M) {
       M->getModuleIdentifier().find('\n') == std::string::npos)
     Out << "; ModuleID = '" << M->getModuleIdentifier() << "'\n";
 
-  if (!M->getSourceFileName().empty())
-    Out << "source_filename = \"" << M->getSourceFileName() << "\"\n";
-
   const std::string &DL = M->getDataLayoutStr();
   if (!DL.empty())
     Out << "target datalayout = \"" << DL << "\"\n";
