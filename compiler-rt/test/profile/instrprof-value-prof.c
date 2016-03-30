@@ -1,6 +1,6 @@
 // RUN: %clang_profgen -O2 -o %t %s
-// RUN: env LLVM_PROFILE_FILE=%t.profraw %run %t 1
-// RUN: env LLVM_PROFILE_FILE=%t-2.profraw %run %t
+// RUN: env LLVM_PROFILE_FILE=%t.profraw %run %t
+// RUN: env LLVM_PROFILE_FILE=%t-2.profraw %run %t DO_NOT_INSTRUMENT
 // RUN: llvm-profdata merge -o %t.profdata %t.profraw
 // RUN: llvm-profdata merge -o %t-2.profdata %t-2.profraw
 // RUN: llvm-profdata merge -o %t-merged.profdata %t.profraw %t-2.profdata
@@ -8,11 +8,11 @@
 // RUN: llvm-profdata show --all-functions -ic-targets  %t.profdata | FileCheck  %s
 // RUN: llvm-profdata show --all-functions -ic-targets  %t-merged.profdata | FileCheck  %s
 //
-// RUN: env LLVM_PROFILE_FILE=%t-3.profraw LLVM_VP_BUFFER_SIZE=1 %run %t 1
-// RUN: env LLVM_PROFILE_FILE=%t-4.profraw LLVM_VP_BUFFER_SIZE=8 %run %t 1
-// RUN: env LLVM_PROFILE_FILE=%t-5.profraw LLVM_VP_BUFFER_SIZE=128 %run %t 1
-// RUN: env LLVM_PROFILE_FILE=%t-6.profraw LLVM_VP_BUFFER_SIZE=1024 %run %t 1
-// RUN: env LLVM_PROFILE_FILE=%t-7.profraw LLVM_VP_BUFFER_SIZE=102400 %run %t 1
+// RUN: env LLVM_PROFILE_FILE=%t-3.profraw LLVM_VP_BUFFER_SIZE=1 %run %t
+// RUN: env LLVM_PROFILE_FILE=%t-4.profraw LLVM_VP_BUFFER_SIZE=8 %run %t
+// RUN: env LLVM_PROFILE_FILE=%t-5.profraw LLVM_VP_BUFFER_SIZE=128 %run %t
+// RUN: env LLVM_PROFILE_FILE=%t-6.profraw LLVM_VP_BUFFER_SIZE=1024 %run %t
+// RUN: env LLVM_PROFILE_FILE=%t-7.profraw LLVM_VP_BUFFER_SIZE=102400 %run %t
 // RUN: llvm-profdata merge -o %t-3.profdata %t-3.profraw
 // RUN: llvm-profdata merge -o %t-4.profdata %t-4.profraw
 // RUN: llvm-profdata merge -o %t-5.profdata %t-5.profraw
@@ -80,7 +80,7 @@ int main(int argc, const char *argv[]) {
   unsigned S, NS = 0, I, V, doInstrument = 1;
   const __llvm_profile_data *Data, *DataEnd;
 
-  if (argc < 2)
+  if (argc >= 2 && !strcmp(argv[1], "DO_NOT_INSTRUMENT"))
     doInstrument = 0;
 
   for (I = 0; I < 128; I++) {
