@@ -146,6 +146,7 @@ namespace clang {
   class ObjCProtocolDecl;
   class OMPThreadPrivateDecl;
   class OMPDeclareReductionDecl;
+  class OMPDeclareSimdDecl;
   class OMPClause;
   struct OverloadCandidate;
   class OverloadCandidateSet;
@@ -8086,6 +8087,11 @@ public:
       ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
       SourceLocation EndLoc,
       llvm::DenseMap<ValueDecl *, Expr *> &VarsWithImplicitDSA);
+
+  /// \brief Called on well-formed '\#pragma omp declare simd' after parsing of
+  /// the associated method/function.
+  DeclGroupPtrTy ActOnOpenMPDeclareSimdDirective(DeclGroupPtrTy DG,
+                                                 SourceLocation StartLoc);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,
