@@ -347,6 +347,17 @@ if( MSVC )
   # "Enforce type conversion rules".
   append("/Zc:rvalueCast" CMAKE_CXX_FLAGS)
 
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # In VS 2015, char16_t became a builtin type. Clang still defaults to VS
+    # 2013 compatibility, where it cannot be a builtin type. If we're using an
+    # STL newer than 2015, this compilation will fail. Rasing the MSVC
+    # compatibility version of the compiler will provide char16/32.
+    check_cxx_source_compiles("#include <cstdint>\nchar16_t v1;\n" STL_PROVIDES_CHAR16_T)
+    if (NOT STL_PROVIDES_CHAR16_T)
+      append("-fms-compatibility-version=19" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    endif()
+  endif()
+
   if (NOT LLVM_ENABLE_TIMESTAMPS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # clang-cl and cl by default produce non-deterministic binaries because
     # link.exe /incremental requires a timestamp in the .obj file.  clang-cl
