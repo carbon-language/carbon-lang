@@ -910,18 +910,20 @@ MemoryAccessPair CachingMemorySSAWalker::UpwardsDFSWalk(
            "Skipping phi's children doesn't end the DFS?");
 #endif
 
+    const MemoryAccessPair PHIPair(CurrAccess, Loc);
+
+    // Don't try to optimize this phi again if we've already tried to do so.
+    if (!Q.Visited.insert(PHIPair).second) {
+      ModifyingAccess = CurrAccess;
+      break;
+    }
+
     // Recurse on PHI nodes, since we need to change locations.
     // TODO: Allow graphtraits on pairs, which would turn this whole function
     // into a normal single depth first walk.
     MemoryAccess *FirstDef = nullptr;
-    const MemoryAccessPair PHIPair(CurrAccess, Loc);
-    bool VisitedOnlyOne = true;
     for (auto MPI = upward_defs_begin(PHIPair), MPE = upward_defs_end();
          MPI != MPE; ++MPI) {
-      // Don't follow this path again if we've followed it once
-      if (!Q.Visited.insert(*MPI).second)
-        continue;
-
       bool Backedge =
           !FollowingBackedge &&
           DT->dominates(CurrAccess->getBlock(), MPI.getPhiArgBlock());
@@ -939,26 +941,12 @@ MemoryAccessPair CachingMemorySSAWalker::UpwardsDFSWalk(
 
       if (!FirstDef)
         FirstDef = CurrentPair.first;
-      else
-        VisitedOnlyOne = false;
     }
 
     // If we exited the loop early, go with the result it gave us.
     if (!ModifyingAccess) {
-      // The above loop determines if all arguments of the phi node reach the
-      // same place. However we skip arguments that are cyclically dependent
-      // only on the value of this phi node. This means in some cases, we may
-      // only visit one argument of the phi node, and the above loop will
-      // happily say that all the arguments are the same. However, in that case,
-      // we still can't walk past the phi node, because that argument still
-      // kills the access unless we hit the top of the function when walking
-      // that argument.
-      if (VisitedOnlyOne && !(FirstDef && MSSA->isLiveOnEntryDef(FirstDef))) {
-        ModifyingAccess = CurrAccess;
-      } else {
-        assert(FirstDef && "Visited multiple phis, but FirstDef isn't set?");
-        ModifyingAccess = FirstDef;
-      }
+      assert(FirstDef && "Found a Phi with no upward defs?");
+      ModifyingAccess = FirstDef;
     }
     break;
   }
