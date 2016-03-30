@@ -35,10 +35,6 @@ namespace elf {
 
 TargetInfo *Target;
 
-template <endianness E> static void add32(void *P, int32_t V) {
-  write32<E>(P, read32<E>(P) + V);
-}
-
 static void or32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) | V); }
 
 template <unsigned N> static void checkInt(int64_t V, uint32_t Type) {
@@ -195,6 +191,7 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
+  uint64_t getImplicitAddend(uint8_t *Buf, uint32_t Type) const override;
   uint32_t getDynRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
@@ -1630,14 +1627,20 @@ void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
 static uint16_t mipsHigh(uint64_t V) { return (V + 0x8000) >> 16; }
 
 template <endianness E, uint8_t BSIZE, uint8_t SHIFT>
+static int64_t getPcRelocAddend(uint8_t *Loc) {
+  uint32_t Instr = read32<E>(Loc);
+  uint32_t Mask = 0xffffffff >> (32 - BSIZE);
+  return SignExtend64<BSIZE + SHIFT>((Instr & Mask) << SHIFT);
+}
+
+template <endianness E, uint8_t BSIZE, uint8_t SHIFT>
 static void applyMipsPcReloc(uint8_t *Loc, uint32_t Type, uint64_t P,
-                             uint64_t S) {
+                             uint64_t SA) {
   uint32_t Mask = 0xffffffff >> (32 - BSIZE);
   uint32_t Instr = read32<E>(Loc);
-  int64_t A = SignExtend64<BSIZE + SHIFT>((Instr & Mask) << SHIFT);
   if (SHIFT > 0)
-    checkAlignment<(1 << SHIFT)>(S + A, Type);
-  int64_t V = S + A - P;
+    checkAlignment<(1 << SHIFT)>(SA, Type);
+  int64_t V = SA - P;
   checkInt<BSIZE + SHIFT>(V, Type);
   write32<E>(Loc, (Instr & ~Mask) | ((V >> SHIFT) & Mask));
 }
@@ -1710,8 +1713,44 @@ bool MipsTargetInfo<ELFT>::needsPltImpl(uint32_t Type) const {
 }
 
 template <class ELFT>
+uint64_t MipsTargetInfo<ELFT>::getImplicitAddend(uint8_t *Buf,
+                                                 uint32_t Type) const {
+  const endianness E = ELFT::TargetEndianness;
+  switch (Type) {
+  default:
+    return 0;
+  case R_MIPS_32:
+  case R_MIPS_GPREL32:
+    return read32<E>(Buf);
+  case R_MIPS_26:
+    // FIXME (simon): If the relocation target symbol is not a PLT entry
+    // we should use another expression for calculation:
+    // ((A << 2) | (P & 0xf0000000)) >> 2
+    return SignExtend64<28>((read32<E>(Buf) & 0x3ffffff) << 2);
+  case R_MIPS_GPREL16:
+  case R_MIPS_LO16:
+  case R_MIPS_PCLO16:
+  case R_MIPS_TLS_DTPREL_HI16:
+  case R_MIPS_TLS_DTPREL_LO16:
+  case R_MIPS_TLS_TPREL_HI16:
+  case R_MIPS_TLS_TPREL_LO16:
+    return readSignedLo16<E>(Buf);
+  case R_MIPS_PC16:
+    return getPcRelocAddend<E, 16, 2>(Buf);
+  case R_MIPS_PC19_S2:
+    return getPcRelocAddend<E, 19, 2>(Buf);
+  case R_MIPS_PC21_S2:
+    return getPcRelocAddend<E, 21, 2>(Buf);
+  case R_MIPS_PC26_S2:
+    return getPcRelocAddend<E, 26, 2>(Buf);
+  case R_MIPS_PC32:
+    return getPcRelocAddend<E, 32, 0>(Buf);
+  }
+}
+
+template <class ELFT>
 void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
-                                       uint32_t Type, uint64_t P, uint64_t S,
+                                       uint32_t Type, uint64_t P, uint64_t SA,
                                        uint64_t ZA) const {
   const endianness E = ELFT::TargetEndianness;
   // Thread pointer and DRP offsets from the start of TLS data area.
@@ -1720,75 +1759,71 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   const uint32_t DTPOffset = 0x8000;
   switch (Type) {
   case R_MIPS_32:
-    add32<E>(Loc, S);
+    write32<E>(Loc, SA);
     break;
   case R_MIPS_26: {
     uint32_t Instr = read32<E>(Loc);
-    // FIXME (simon): If the relocation target symbol is not a PLT entry
-    // we should use another expression for calculation:
-    // ((A << 2) | (P & 0xf0000000)) >> 2
-    S += SignExtend64<28>((Instr & 0x3ffffff) << 2);
-    write32<E>(Loc, (Instr & ~0x3ffffff) | (S >> 2));
+    write32<E>(Loc, (Instr & ~0x3ffffff) | (SA >> 2));
     break;
   }
   case R_MIPS_CALL16:
   case R_MIPS_GOT16: {
-    int64_t V = S - getMipsGpAddr<ELFT>();
+    int64_t V = SA - getMipsGpAddr<ELFT>();
     if (Type == R_MIPS_GOT16)
       checkInt<16>(V, Type);
     writeMipsLo16<E>(Loc, V);
     break;
   }
   case R_MIPS_GPREL16: {
-    int64_t V = S + readSignedLo16<E>(Loc) - getMipsGpAddr<ELFT>();
+    int64_t V = SA - getMipsGpAddr<ELFT>();
     checkInt<16>(V, Type);
     writeMipsLo16<E>(Loc, V);
     break;
   }
   case R_MIPS_GPREL32:
-    write32<E>(Loc, S + int32_t(read32<E>(Loc)) - getMipsGpAddr<ELFT>());
+    write32<E>(Loc, SA - getMipsGpAddr<ELFT>());
     break;
   case R_MIPS_HI16:
-    writeMipsHi16<E>(Loc, S);
+    writeMipsHi16<E>(Loc, SA);
     break;
   case R_MIPS_JALR:
     // Ignore this optimization relocation for now
     break;
   case R_MIPS_LO16:
-    writeMipsLo16<E>(Loc, S + readSignedLo16<E>(Loc));
+    writeMipsLo16<E>(Loc, SA);
     break;
   case R_MIPS_PC16:
-    applyMipsPcReloc<E, 16, 2>(Loc, Type, P, S);
+    applyMipsPcReloc<E, 16, 2>(Loc, Type, P, SA);
     break;
   case R_MIPS_PC19_S2:
-    applyMipsPcReloc<E, 19, 2>(Loc, Type, P, S);
+    applyMipsPcReloc<E, 19, 2>(Loc, Type, P, SA);
     break;
   case R_MIPS_PC21_S2:
-    applyMipsPcReloc<E, 21, 2>(Loc, Type, P, S);
+    applyMipsPcReloc<E, 21, 2>(Loc, Type, P, SA);
     break;
   case R_MIPS_PC26_S2:
-    applyMipsPcReloc<E, 26, 2>(Loc, Type, P, S);
+    applyMipsPcReloc<E, 26, 2>(Loc, Type, P, SA);
     break;
   case R_MIPS_PC32:
-    applyMipsPcReloc<E, 32, 0>(Loc, Type, P, S);
+    applyMipsPcReloc<E, 32, 0>(Loc, Type, P, SA);
     break;
   case R_MIPS_PCHI16:
-    writeMipsHi16<E>(Loc, S - P);
+    writeMipsHi16<E>(Loc, SA - P);
     break;
   case R_MIPS_PCLO16:
-    writeMipsLo16<E>(Loc, S + readSignedLo16<E>(Loc) - P);
+    writeMipsLo16<E>(Loc, SA - P);
     break;
   case R_MIPS_TLS_DTPREL_HI16:
-    writeMipsHi16<E>(Loc, S - DTPOffset + readSignedLo16<E>(Loc));
+    writeMipsHi16<E>(Loc, SA - DTPOffset);
     break;
   case R_MIPS_TLS_DTPREL_LO16:
-    writeMipsLo16<E>(Loc, S - DTPOffset + readSignedLo16<E>(Loc));
+    writeMipsLo16<E>(Loc, SA - DTPOffset);
     break;
   case R_MIPS_TLS_TPREL_HI16:
-    writeMipsHi16<E>(Loc, S - TPOffset + readSignedLo16<E>(Loc));
+    writeMipsHi16<E>(Loc, SA - TPOffset);
     break;
   case R_MIPS_TLS_TPREL_LO16:
-    writeMipsLo16<E>(Loc, S - TPOffset + readSignedLo16<E>(Loc));
+    writeMipsLo16<E>(Loc, SA - TPOffset);
     break;
   default:
     fatal("unrecognized reloc " + Twine(Type));
