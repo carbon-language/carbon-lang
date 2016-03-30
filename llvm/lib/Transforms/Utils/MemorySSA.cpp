@@ -763,11 +763,11 @@ struct CachingMemorySSAWalker::UpwardsMemoryQuery {
   const Instruction *Inst;
   // Set of visited Instructions for this query.
   DenseSet<MemoryAccessPair> Visited;
-  // Set of visited call accesses for this query. This is separated out because
-  // you can always cache and lookup the result of call queries (IE when IsCall
-  // == true) for every call in the chain. The calls have no AA location
+  // Vector of visited call accesses for this query. This is separated out
+  // because you can always cache and lookup the result of call queries (IE when
+  // IsCall == true) for every call in the chain. The calls have no AA location
   // associated with them with them, and thus, no context dependence.
-  SmallPtrSet<const MemoryAccess *, 32> VisitedCalls;
+  SmallVector<const MemoryAccess *, 32> VisitedCalls;
   // The MemoryAccess we actually got called with, used to test local domination
   const MemoryAccess *OriginalAccess;
   // The Datalayout for the module we started in
@@ -862,7 +862,7 @@ bool CachingMemorySSAWalker::instructionClobbersQuery(
 
   // If this is a call, mark it for caching
   if (ImmutableCallSite(DefMemoryInst))
-    Q.VisitedCalls.insert(MD);
+    Q.VisitedCalls.push_back(MD);
   ModRefInfo I = AA->getModRefInfo(DefMemoryInst, ImmutableCallSite(Q.Inst));
   return I != MRI_NoModRef;
 }
@@ -918,6 +918,8 @@ MemoryAccessPair CachingMemorySSAWalker::UpwardsDFSWalk(
       break;
     }
 
+    std::size_t InitialVisitedCallSize = Q.VisitedCalls.size();
+
     // Recurse on PHI nodes, since we need to change locations.
     // TODO: Allow graphtraits on pairs, which would turn this whole function
     // into a normal single depth first walk.
@@ -947,6 +949,10 @@ MemoryAccessPair CachingMemorySSAWalker::UpwardsDFSWalk(
     if (!ModifyingAccess) {
       assert(FirstDef && "Found a Phi with no upward defs?");
       ModifyingAccess = FirstDef;
+    } else {
+      // If we can't optimize this Phi, then we can't safely cache any of the
+      // calls we visited when trying to optimize it. Wipe them out now.
+      Q.VisitedCalls.resize(InitialVisitedCallSize);
     }
     break;
   }
