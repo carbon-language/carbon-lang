@@ -735,5 +735,6 @@ TEST(BinaryReaderTest, hello_obj_ppc) {
   EXPECT_EQ(printfLabel.type, N_UNDF);
   EXPECT_EQ(printfLabel.scope, SymbolScope(N_EXT));
 
-  writeBinary(*f, "/tmp/foo.o");
+  auto ec = writeBinary(*f, "/tmp/foo.o");
+  EXPECT_FALSE(ec);
 }

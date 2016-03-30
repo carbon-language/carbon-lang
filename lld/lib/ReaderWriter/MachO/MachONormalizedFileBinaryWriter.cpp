@@ -133,7 +133,7 @@ public:
   /// Writes the normalized file as a binary mach-o file to the specified
   /// path.  This does not have a stream interface because the generated
   /// file may need the 'x' bit set.
-  std::error_code writeBinary(StringRef path);
+  llvm::Error writeBinary(StringRef path);
 
 private:
   uint32_t    loadCommandsSize(uint32_t &count);
@@ -1459,10 +1459,10 @@ void MachOFileLayout::writeLinkEditContent() {
   }
 }
 
-std::error_code MachOFileLayout::writeBinary(StringRef path) {
+llvm::Error MachOFileLayout::writeBinary(StringRef path) {
   // Check for pending error from constructor.
   if (_ec)
-    return _ec;
+    return llvm::errorCodeToError(_ec);
   // Create FileOutputBuffer with calculated size.
   unsigned flags = 0;
   if (_file.fileType != llvm::MachO::MH_OBJECT)
@@ -1470,23 +1470,23 @@ std::error_code MachOFileLayout::writeBinary(StringRef path) {
   ErrorOr<std::unique_ptr<llvm::FileOutputBuffer>> fobOrErr =
       llvm::FileOutputBuffer::create(path, size(), flags);
   if (std::error_code ec = fobOrErr.getError())
-    return ec;
+    return llvm::errorCodeToError(ec);
   std::unique_ptr<llvm::FileOutputBuffer> &fob = *fobOrErr;
   // Write content.
   _buffer = fob->getBufferStart();
   writeMachHeader();
   std::error_code ec = writeLoadCommands();
   if (ec)
-    return ec;
+    return llvm::errorCodeToError(ec);
   writeSectionContent();
   writeLinkEditContent();
   fob->commit();
 
-  return std::error_code();
+  return llvm::Error();
 }
 
 /// Takes in-memory normalized view and writes a mach-o object file.
-std::error_code writeBinary(const NormalizedFile &file, StringRef path) {
+llvm::Error writeBinary(const NormalizedFile &file, StringRef path) {
   MachOFileLayout layout(file);
   return layout.writeBinary(path);
 }

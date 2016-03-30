@@ -294,7 +294,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
            const MachOLinkingContext::Arch arch);
 
 /// Takes in-memory normalized view and writes a mach-o object file.
-std::error_code writeBinary(const NormalizedFile &file, StringRef path);
+llvm::Error writeBinary(const NormalizedFile &file, StringRef path);
 
 size_t headerAndLoadCommandsSize(const NormalizedFile &file);
 
@@ -322,7 +322,7 @@ normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                   bool copyRefs);
 
 /// Takes atoms and generates a normalized macho-o view.
-ErrorOr<std::unique_ptr<NormalizedFile>>
+llvm::Expected<std::unique_ptr<NormalizedFile>>
 normalizedFromAtoms(const lld::File &atomFile, const MachOLinkingContext &ctxt);
 
 

@@ -1199,9 +1199,11 @@ bool link(llvm::ArrayRef<const char *> args, raw_ostream &diagnostics) {
 
   // Give linked atoms to Writer to generate output file.
   ScopedTask writeTask(getDefaultDomain(), "Write");
-  if (std::error_code ec = ctx.writeFile(*merged)) {
-    diagnostics << "Failed to write file '" << ctx.outputPath()
-                << "': " << ec.message() << "\n";
+  if (auto ec = ctx.writeFile(*merged)) {
+    // FIXME: This should be passed to logAllUnhandledErrors but it needs
+    // to be passed a Twine instead of a string.
+    diagnostics << "Failed to write file '" << ctx.outputPath() << "': ";
+    logAllUnhandledErrors(std::move(ec), diagnostics, std::string());
     return false;
   }
 
