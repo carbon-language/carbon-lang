@@ -202,14 +202,12 @@ static uintX_t adjustMipsSymVA(uint32_t Type, const elf::ObjectFile<ELFT> &File,
 
 template <class ELFT, class uintX_t>
 static uintX_t getMipsGotVA(const SymbolBody &Body, uintX_t SymVA,
-                            uint8_t *BufLoc, uint64_t AHL) {
+                            uint8_t *BufLoc) {
   if (Body.isLocal())
     // If relocation against MIPS local symbol requires GOT entry, this entry
     // should be initialized by 'page address'. This address is high 16-bits
-    // of sum the symbol's value and the addend. The addend in that case is
-    // calculated using addends from R_MIPS_GOT16 and paired R_MIPS_LO16
-    // relocations.
-    return Out<ELFT>::Got->getMipsLocalPageAddr(SymVA + AHL);
+    // of sum the symbol's value and the addend.
+    return Out<ELFT>::Got->getMipsLocalPageAddr(SymVA);
   if (!Body.isPreemptible())
     // For non-local symbols GOT entries should contain their full
     // addresses. But if such symbol cannot be preempted, we do not
@@ -276,15 +274,15 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
 
     if (!RelTy::IsRela)
       A += Target->getImplicitAddend(BufLoc, Type);
-    uintX_t SymVA = Body.getVA<ELFT>(A);
     if (Config->EMachine == EM_MIPS)
       A += findMipsPairedAddend(Buf, BufLoc, Body, &RI, Rels.end());
+    uintX_t SymVA = Body.getVA<ELFT>(A);
 
     if (Target->needsPlt(Type, Body)) {
       SymVA = Body.getPltVA<ELFT>() + A;
     } else if (Target->needsGot(Type, Body)) {
       if (Config->EMachine == EM_MIPS)
-        SymVA = getMipsGotVA<ELFT>(Body, SymVA, BufLoc, A);
+        SymVA = getMipsGotVA<ELFT>(Body, SymVA, BufLoc);
       else
         SymVA = Body.getGotVA<ELFT>() + A;
       if (Body.IsTls)
@@ -296,7 +294,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       // with a possibly incorrect value.
       continue;
     } else if (Config->EMachine == EM_MIPS) {
-      SymVA = adjustMipsSymVA<ELFT>(Type, *File, Body, AddrLoc, SymVA) + A;
+      SymVA = adjustMipsSymVA<ELFT>(Type, *File, Body, AddrLoc, SymVA);
     } else if (!Target->needsCopyRel<ELFT>(Type, Body) &&
                Body.isPreemptible()) {
       continue;
