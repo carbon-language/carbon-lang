@@ -230,9 +230,9 @@ static std::error_code parseOrderFile(StringRef orderFilePath,
 // In this variant, the path is to a text file which contains a partial path
 // per line. The <dir> prefix is prepended to each partial path.
 //
-static std::error_code loadFileList(StringRef fileListPath,
-                                    MachOLinkingContext &ctx, bool forceLoad,
-                                    raw_ostream &diagnostics) {
+static llvm::Error loadFileList(StringRef fileListPath,
+                                MachOLinkingContext &ctx, bool forceLoad,
+                                raw_ostream &diagnostics) {
   // If there is a comma, split off <dir>.
   std::pair<StringRef, StringRef> opt = fileListPath.split(',');
   StringRef filePath = opt.first;
@@ -242,7 +242,7 @@ static std::error_code loadFileList(StringRef fileListPath,
   ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
                                         MemoryBuffer::getFileOrSTDIN(filePath);
   if (std::error_code ec = mb.getError())
-    return ec;
+    return llvm::errorCodeToError(ec);
   StringRef buffer = mb->get()->getBuffer();
   while (!buffer.empty()) {
     // Split off each line in the file.
@@ -260,9 +260,9 @@ static std::error_code loadFileList(StringRef fileListPath,
       path = ctx.copy(line);
     }
     if (!ctx.pathExists(path)) {
-      return make_dynamic_error_code(Twine("File not found '")
-                                     + path
-                                     + "'");
+      return llvm::make_error<GenericError>(Twine("File not found '")
+                                            + path
+                                            + "'");
     }
     if (ctx.testingFileUsage()) {
       diagnostics << "Found filelist entry " << canonicalizePath(path) << '\n';
@@ -270,7 +270,7 @@ static std::error_code loadFileList(StringRef fileListPath,
     addFile(path, ctx, forceLoad, false, diagnostics);
     buffer = lineAndRest.second;
   }
-  return std::error_code();
+  return llvm::Error();
 }
 
 /// Parse number assuming it is base 16, but allow 0x prefix.
@@ -1095,12 +1095,14 @@ bool parse(llvm::ArrayRef<const char *> args, MachOLinkingContext &ctx,
       addFile(resolvedPath.get(), ctx, globalWholeArchive, upward, diagnostics);
       break;
     case OPT_filelist:
-      if (std::error_code ec = loadFileList(arg->getValue(),
-                                            ctx, globalWholeArchive,
-                                            diagnostics)) {
-        diagnostics << "error: " << ec.message()
-                    << ", processing '-filelist " << arg->getValue()
-                    << "'\n";
+      if (auto ec = loadFileList(arg->getValue(),
+                                 ctx, globalWholeArchive,
+                                 diagnostics)) {
+        handleAllErrors(std::move(ec), [&](const llvm::ErrorInfoBase &EI) {
+          diagnostics << "error: ";
+          EI.log(diagnostics);
+          diagnostics << ", processing '-filelist " << arg->getValue() << "'\n";
+        });
         return false;
       }
       break;
