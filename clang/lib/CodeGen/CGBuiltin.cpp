@@ -6416,7 +6416,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
     // Check the value of the bit corresponding to the feature requested.
     Value *Bitset = Builder.CreateAnd(
-        Features, llvm::ConstantInt::get(Int32Ty, 1 << Feature));
+        Features, llvm::ConstantInt::get(Int32Ty, 1ULL << Feature));
     return Builder.CreateICmpNE(Bitset, llvm::ConstantInt::get(Int32Ty, 0));
   }
   case X86::BI_mm_prefetch: {
