@@ -28,6 +28,7 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1183,9 +1184,12 @@ bool link(llvm::ArrayRef<const char *> args, raw_ostream &diagnostics) {
   ScopedTask passTask(getDefaultDomain(), "Passes");
   PassManager pm;
   ctx.addPasses(pm);
-  if (std::error_code ec = pm.runOnFile(*merged)) {
-    diagnostics << "Failed to write file '" << ctx.outputPath()
-                << "': " << ec.message() << "\n";
+  if (auto ec = pm.runOnFile(*merged)) {
+    // FIXME: This should be passed to logAllUnhandledErrors but it needs
+    // to be passed a Twine instead of a string.
+    diagnostics << "Failed to run passes on file '" << ctx.outputPath()
+                << "': ";
+    logAllUnhandledErrors(std::move(ec), diagnostics, std::string());
     return false;
   }
 
