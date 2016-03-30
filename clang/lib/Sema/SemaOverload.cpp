@@ -992,7 +992,7 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
 }
 
 bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
-                      bool UseMemberUsingDeclRules) {
+                      bool UseMemberUsingDeclRules, bool ConsiderCudaAttrs) {
   // C++ [basic.start.main]p2: This function shall not be overloaded.
   if (New->isMain())
     return false;
@@ -1125,7 +1125,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
       return true;
   }
 
-  if (getLangOpts().CUDA) {
+  if (getLangOpts().CUDA && ConsiderCudaAttrs) {
     CUDAFunctionTarget NewTarget = IdentifyCUDATarget(New),
                        OldTarget = IdentifyCUDATarget(Old);
     if (NewTarget == CFT_InvalidTarget || NewTarget == CFT_Global)

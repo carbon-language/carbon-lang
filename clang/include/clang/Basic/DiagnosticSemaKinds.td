@@ -6491,6 +6491,12 @@ def err_variadic_device_fn : Error<
 def err_va_arg_in_device : Error<
   "CUDA device code does not support va_arg">;
 def err_alias_not_supported_on_nvptx : Error<"CUDA does not support aliases">;
+def err_cuda_unattributed_constexpr_cannot_overload_device : Error<
+  "constexpr function '%0' without __host__ or __device__ attributes cannot "
+  "overload __device__ function with same signature.  Add a __host__ "
+  "attribute, or build with -fno-cuda-host-device-constexpr.">;
+def note_cuda_conflicting_device_function_declared_here : Note<
+  "conflicting __device__ function declared here">;
 def err_dynamic_var_init : Error<
     "dynamic initialization is not supported for "
     "__device__, __constant__, and __shared__ variables.">;
