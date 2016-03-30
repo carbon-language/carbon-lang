@@ -231,9 +231,8 @@ protected:
     if (std::error_code ec = normFile.getError())
       return ec;
     // Convert normalized mach-o to atoms.
-    if (std::error_code ec = normalized::normalizedObjectToAtoms(
-            this, **normFile, false))
-      return ec;
+    if (auto ec = normalized::normalizedObjectToAtoms(this, **normFile, false))
+      return llvm::errorToErrorCode(std::move(ec));
     return std::error_code();
   }
 
@@ -321,9 +320,8 @@ public:
     if (std::error_code ec = normFile.getError())
       return ec;
     // Convert normalized mach-o to atoms.
-    if (std::error_code ec = normalized::normalizedDylibToAtoms(
-            this, **normFile, false))
-      return ec;
+    if (auto ec = normalized::normalizedDylibToAtoms(this, **normFile, false))
+      return llvm::errorToErrorCode(std::move(ec));
     return std::error_code();
   }
 
