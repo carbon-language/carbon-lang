@@ -274,6 +274,8 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd,
       continue;
     }
 
+    if (!RelTy::IsRela)
+      A += Target->getImplicitAddend(BufLoc, Type);
     uintX_t SymVA = Body.getVA<ELFT>(A);
     if (Config->EMachine == EM_MIPS)
       A += findMipsPairedAddend(Buf, BufLoc, Body, &RI, Rels.end());

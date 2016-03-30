@@ -39,7 +39,6 @@ template <endianness E> static void add32(void *P, int32_t V) {
   write32<E>(P, read32<E>(P) + V);
 }
 
-static void add32le(uint8_t *P, int32_t V) { add32<support::little>(P, V); }
 static void or32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) | V); }
 
 template <unsigned N> static void checkInt(int64_t V, uint32_t Type) {
@@ -74,6 +73,7 @@ namespace {
 class X86TargetInfo final : public TargetInfo {
 public:
   X86TargetInfo();
+  uint64_t getImplicitAddend(uint8_t *Buf, uint32_t Type) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
   uint32_t getDynRel(uint32_t Type) const override;
   uint32_t getTlsGotRel(uint32_t Type) const override;
@@ -240,6 +240,10 @@ TargetInfo *createTarget() {
 }
 
 TargetInfo::~TargetInfo() {}
+
+uint64_t TargetInfo::getImplicitAddend(uint8_t *Buf, uint32_t Type) const {
+  return 0;
+}
 
 bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
   if (Config->Shared || (S && !S->IsTls))
@@ -509,28 +513,42 @@ bool X86TargetInfo::refersToGotEntry(uint32_t Type) const {
   return Type == R_386_GOT32;
 }
 
+uint64_t X86TargetInfo::getImplicitAddend(uint8_t *Buf, uint32_t Type) const {
+  switch (Type) {
+  default:
+    return 0;
+  case R_386_32:
+  case R_386_GOT32:
+  case R_386_GOTOFF:
+  case R_386_GOTPC:
+  case R_386_PC32:
+  case R_386_PLT32:
+    return read32le(Buf);
+  }
+}
+
 void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                 uint64_t P, uint64_t SA, uint64_t ZA) const {
   switch (Type) {
   case R_386_32:
-    add32le(Loc, SA);
+    write32le(Loc, SA);
     break;
   case R_386_GOT32: {
     uint64_t V = SA - Out<ELF32LE>::Got->getVA() -
                  Out<ELF32LE>::Got->getNumEntries() * 4;
     checkInt<32>(V, Type);
-    add32le(Loc, V);
+    write32le(Loc, V);
     break;
   }
   case R_386_GOTOFF:
-    add32le(Loc, SA - Out<ELF32LE>::Got->getVA());
+    write32le(Loc, SA - Out<ELF32LE>::Got->getVA());
     break;
   case R_386_GOTPC:
-    add32le(Loc, SA + Out<ELF32LE>::Got->getVA() - P);
+    write32le(Loc, SA + Out<ELF32LE>::Got->getVA() - P);
     break;
   case R_386_PC32:
   case R_386_PLT32:
-    add32le(Loc, SA - P);
+    write32le(Loc, SA - P);
     break;
   case R_386_TLS_GD:
   case R_386_TLS_LDM:
