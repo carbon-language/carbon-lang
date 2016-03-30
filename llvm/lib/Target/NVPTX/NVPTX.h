@@ -56,8 +56,6 @@ FunctionPass *createNVPTXLowerKernelArgsPass(const NVPTXTargetMachine *TM);
 BasicBlockPass *createNVPTXLowerAllocaPass();
 MachineFunctionPass *createNVPTXPeephole();
 
-bool isImageOrSamplerVal(const Value *, const Module *);
-
 extern Target TheNVPTXTarget32;
 extern Target TheNVPTXTarget64;
 
