@@ -348,14 +348,16 @@ if( MSVC )
   append("/Zc:rvalueCast" CMAKE_CXX_FLAGS)
 
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # In VS 2015, char16_t became a builtin type. Clang still defaults to VS
-    # 2013 compatibility, where it cannot be a builtin type. If we're using an
-    # STL newer than 2015, this compilation will fail. Rasing the MSVC
-    # compatibility version of the compiler will provide char16/32.
-    check_cxx_source_compiles("#include <cstdint>\nchar16_t v1;\n" STL_PROVIDES_CHAR16_T)
-    if (NOT STL_PROVIDES_CHAR16_T)
-      append("-fms-compatibility-version=19" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-    endif()
+    # Find and run MSVC (not clang-cl) and get its version. This will tell
+    # clang-cl what version of MSVC to pretend to be so that the STL works.
+    execute_process(COMMAND "$ENV{VSINSTALLDIR}/VC/bin/cl.exe"
+      OUTPUT_QUIET
+      ERROR_VARIABLE MSVC_COMPAT_VERSION
+      )
+    string(REGEX REPLACE "^.*Compiler Version ([0-9.]+) for .*$" "\\1"
+      MSVC_COMPAT_VERSION "${MSVC_COMPAT_VERSION}")
+    append("-fms-compatibility-version=${MSVC_COMPAT_VERSION}"
+      CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   endif()
 
   if (NOT LLVM_ENABLE_TIMESTAMPS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
