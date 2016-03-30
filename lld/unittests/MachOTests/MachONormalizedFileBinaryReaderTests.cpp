@@ -22,7 +22,7 @@ static std::unique_ptr<NormalizedFile>
 fromBinary(const uint8_t bytes[], unsigned length, StringRef archStr) {
   StringRef sr((const char*)bytes, length);
   std::unique_ptr<MemoryBuffer> mb(MemoryBuffer::getMemBuffer(sr, "", false));
-  ErrorOr<std::unique_ptr<NormalizedFile>> r =
+  llvm::Expected<std::unique_ptr<NormalizedFile>> r =
       lld::mach_o::normalized::readBinary(
           mb, lld::MachOLinkingContext::archFromName(archStr));
   EXPECT_FALSE(!r);

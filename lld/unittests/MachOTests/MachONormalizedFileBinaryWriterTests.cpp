@@ -35,7 +35,7 @@ static void fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
   EXPECT_FALSE(ec);
   mb = std::move(mbOrErr.get());
 
-  ErrorOr<std::unique_ptr<NormalizedFile>> r =
+  llvm::Expected<std::unique_ptr<NormalizedFile>> r =
       lld::mach_o::normalized::readBinary(
           mb, lld::MachOLinkingContext::archFromName(archStr));
   EXPECT_FALSE(!r);

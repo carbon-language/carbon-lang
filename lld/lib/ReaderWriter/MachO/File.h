@@ -228,8 +228,8 @@ protected:
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
     auto normFile = normalized::readBinary(_mb, _ctx->arch());
-    if (std::error_code ec = normFile.getError())
-      return ec;
+    if (auto ec = normFile.takeError())
+      return llvm::errorToErrorCode(std::move(ec));
     // Convert normalized mach-o to atoms.
     if (auto ec = normalized::normalizedObjectToAtoms(this, **normFile, false))
       return llvm::errorToErrorCode(std::move(ec));
@@ -317,8 +317,8 @@ public:
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
     auto normFile = normalized::readBinary(_mb, _ctx->arch());
-    if (std::error_code ec = normFile.getError())
-      return ec;
+    if (auto ec = normFile.takeError())
+      return llvm::errorToErrorCode(std::move(ec));
     // Convert normalized mach-o to atoms.
     if (auto ec = normalized::normalizedDylibToAtoms(this, **normFile, false))
       return llvm::errorToErrorCode(std::move(ec));

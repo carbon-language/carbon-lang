@@ -289,7 +289,7 @@ bool sliceFromFatFile(MemoryBufferRef mb, MachOLinkingContext::Arch arch,
                       uint32_t &offset, uint32_t &size);
 
 /// Reads a mach-o file and produces an in-memory normalized view.
-ErrorOr<std::unique_ptr<NormalizedFile>>
+llvm::Expected<std::unique_ptr<NormalizedFile>>
 readBinary(std::unique_ptr<MemoryBuffer> &mb,
            const MachOLinkingContext::Arch arch);
 

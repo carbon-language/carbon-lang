@@ -199,7 +199,7 @@ bool sliceFromFatFile(MemoryBufferRef mb, MachOLinkingContext::Arch arch,
 }
 
 /// Reads a mach-o file and produces an in-memory normalized view.
-ErrorOr<std::unique_ptr<NormalizedFile>>
+llvm::Expected<std::unique_ptr<NormalizedFile>>
 readBinary(std::unique_ptr<MemoryBuffer> &mb,
            const MachOLinkingContext::Arch arch) {
   // Make empty NormalizedFile.
@@ -220,7 +220,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   // Determine endianness and pointer size for mach-o file.
   bool is64, isBig;
   if (!isMachOHeader(mh, is64, isBig))
-    return make_error_code(llvm::errc::executable_format_error);
+    return llvm::make_error<GenericError>("File is not a mach-o");
 
   // Endian swap header, if needed.
   mach_header headerCopy;
@@ -237,12 +237,13 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       start + (is64 ? sizeof(mach_header_64) : sizeof(mach_header));
   StringRef lcRange(lcStart, smh->sizeofcmds);
   if (lcRange.end() > (start + objSize))
-    return make_error_code(llvm::errc::executable_format_error);
+    return llvm::make_error<GenericError>("Load commands exceed file size");
 
   // Get architecture from mach_header.
   f->arch = MachOLinkingContext::archFromCpuType(smh->cputype, smh->cpusubtype);
   if (f->arch != arch) {
-    return make_dynamic_error_code(Twine("file is wrong architecture. Expected "
+    return llvm::make_error<GenericError>(
+                                  Twine("file is wrong architecture. Expected "
                                   "(" + MachOLinkingContext::nameFromArch(arch)
                                   + ") found ("
                                   + MachOLinkingContext::nameFromArch(f->arch)
@@ -268,7 +269,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     return false;
   });
   if (ec)
-    return ec;
+    return llvm::errorCodeToError(ec);
 
   // Walk load commands looking for segments/sections and the symbol table.
   const data_in_code_entry *dataInCode = nullptr;
@@ -484,7 +485,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     return false;
   });
   if (ec)
-    return ec;
+    return llvm::errorCodeToError(ec);
 
   if (dataInCode) {
     // Convert on-disk data_in_code_entry array to DataInCode vector.
