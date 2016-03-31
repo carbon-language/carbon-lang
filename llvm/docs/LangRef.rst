@@ -12181,6 +12181,50 @@ ensure that this symbol is defined).  The call arguments to
 arguments of the specified types, and not as varargs.
 
 
+'``llvm.experimental.guard``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare void @llvm.experimental.guard(i1, ...) [ "deopt"(...) ]
+
+Overview:
+"""""""""
+
+This intrinsic, together with :ref:`deoptimization operand bundles
+<deopt_opbundles>`, allows frontends to express guards or checks on
+optimistic assumptions made during compilation.  The semantics of
+``@llvm.experimental.guard`` is defined in terms of
+``@llvm.experimental.deoptimize`` -- its body is defined to be
+equivalent to:
+
+.. code-block:: llvm
+
+	define void @llvm.experimental.guard(i1 %pred, <args...>) {
+	  %realPred = and i1 %pred, undef
+	  br i1 %realPred, label %continue, label %leave
+
+	leave:
+	  call void @llvm.experimental.deoptimize(<args...>) [ "deopt"() ]
+	  ret void
+
+	continue:
+	  ret void
+	}
+
+In words, ``@llvm.experimental.guard`` executes the attached
+``"deopt"`` continuation if (but **not** only if) its first argument
+is ``false``.  Since the optimizer is allowed to replace the ``undef``
+with an arbitrary value, it can optimize guard to fail "spuriously",
+i.e. without the original condition being false (hence the "not only
+if"); and this allows for "check widening" type optimizations.
+
+``@llvm.experimental.guard`` cannot be invoked.
+
+
 Stack Map Intrinsics
 --------------------
 
