@@ -1638,9 +1638,9 @@ static void applyMipsPcReloc(uint8_t *Loc, uint32_t Type, uint64_t P,
                              uint64_t SA) {
   uint32_t Mask = 0xffffffff >> (32 - BSIZE);
   uint32_t Instr = read32<E>(Loc);
-  if (SHIFT > 0)
-    checkAlignment<(1 << SHIFT)>(SA, Type);
   int64_t V = SA - P;
+  if (SHIFT > 0)
+    checkAlignment<(1 << SHIFT)>(V, Type);
   checkInt<BSIZE + SHIFT>(V, Type);
   write32<E>(Loc, (Instr & ~Mask) | ((V >> SHIFT) & Mask));
 }
