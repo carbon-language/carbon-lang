@@ -68,6 +68,10 @@ identified.  The improvements since the 3.8 release include:
   This check selectively replaces string literals containing escaped
   characters with raw string literals.
 
+- New ``readability-avoid-const-params-in-decls`` check
+
+  This check warns about top-level const parameters in function delcartions.
+
 Clang-tidy changes from 3.7 to 3.8
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
