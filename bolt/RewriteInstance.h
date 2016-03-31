@@ -160,6 +160,13 @@ public:
   /// Update debug information in the file for re-written code.
   void updateDebugInfo();
 
+  /// Check which functions became larger than their original version and
+  /// annotate function splitting information.
+  ///
+  /// Returns true if any function was annotated, requiring us to perform a
+  /// second pass to emit those functions in two parts.
+  bool splitLargeFunctions();
+
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
   /// not fit in the binary, reject it and preserve the original version of the
@@ -292,6 +299,9 @@ private:
 
   /// Size of the .debug_ranges section on input.
   uint32_t DebugRangesSize{0};
+
+  /// Keep track of which functions to split in a second pass.
+  std::set<uint64_t> ToSplit;
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};

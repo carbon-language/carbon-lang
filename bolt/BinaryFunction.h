@@ -58,6 +58,13 @@ public:
     Assembled,        /// Function has been assembled in memory
   };
 
+  /// Settings for splitting function bodies into hot/cold partitions.
+  enum SplittingType : char {
+    ST_NONE = 0,      /// Do not split functions
+    ST_LARGE = 1,     /// Only split functions that exceed maximum size
+    ST_ALL =2,        /// Split all functions
+  };
+
   /// Choose which strategy should the block layout heuristic prioritize when
   /// facing conflicting goals.
   enum LayoutType : char {
@@ -73,7 +80,7 @@ public:
     /// paper (PLDI '90) about block reordering, trying to minimize branch
     /// mispredictions.
     LT_OPTIMIZE_BRANCH,
-    /// LT_OPTIMIZE_CACHE pigbacks on the idea from Ispike paper (CGO '04)
+    /// LT_OPTIMIZE_CACHE piggybacks on the idea from Ispike paper (CGO '04)
     /// that suggests putting frequently executed chains first in the layout.
     LT_OPTIMIZE_CACHE,
   };

@@ -95,9 +95,17 @@ EliminateUnreachable("eliminate-unreachable",
                      cl::desc("eliminate unreachable code"),
                      cl::Optional);
 
-static cl::opt<bool>
+static cl::opt<BinaryFunction::SplittingType>
 SplitFunctions("split-functions",
-               cl::desc("split functions into hot and cold distinct regions"),
+               cl::desc("split functions into hot and cold regions"),
+               cl::init(BinaryFunction::ST_NONE),
+               cl::values(clEnumValN(BinaryFunction::ST_NONE, "0",
+                                     "do not split any function"),
+                          clEnumValN(BinaryFunction::ST_LARGE, "1",
+                                     "split if function is too large to fit"),
+                          clEnumValN(BinaryFunction::ST_ALL, "2",
+                                     "split all functions"),
+                          clEnumValEnd),
                cl::Optional);
 
 static cl::opt<bool>
@@ -531,6 +539,22 @@ void RewriteInstance::run() {
   readFunctionDebugInfo();
   runOptimizationPasses();
   emitFunctions();
+
+  if (opts::SplitFunctions == BinaryFunction::ST_LARGE &&
+      splitLargeFunctions()) {
+    // Emit again because now some functions have been split
+    outs() << "BOLT: split-functions: starting pass 2...\n";
+    reset();
+    discoverStorage();
+    readSpecialSections();
+    discoverFileObjects();
+    readDebugInfo();
+    disassembleFunctions();
+    readFunctionDebugInfo();
+    runOptimizationPasses();
+    emitFunctions();
+  }
+
   updateDebugInfo();
 
   // Copy allocatable part of the input.
@@ -939,7 +963,10 @@ void RewriteInstance::runOptimizationPasses() {
     }
 
     if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
-      BFI.second.modifyLayout(opts::ReorderBlocks, opts::SplitFunctions);
+      bool ShouldSplit =
+        (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
+         ToSplit.find(BFI.first) != ToSplit.end();
+      BFI.second.modifyLayout(opts::ReorderBlocks, ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks", true);
     }
@@ -1392,6 +1419,24 @@ void RewriteInstance::emitFunctions() {
 
   if (opts::KeepTmp)
     TempOut->keep();
+}
+
+bool RewriteInstance::splitLargeFunctions() {
+  bool Changed = false;
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+
+    // Ignore this function if we failed to map it to the output binary
+    if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
+      continue;
+
+    if (Function.getImageSize() <= Function.getMaxSize())
+      continue;
+
+    ToSplit.insert(BFI.first);
+    Changed = true;
+  }
+  return Changed;
 }
 
 void RewriteInstance::updateFunctionRanges() {
