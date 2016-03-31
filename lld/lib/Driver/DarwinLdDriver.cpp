@@ -1053,7 +1053,7 @@ bool parse(llvm::ArrayRef<const char *> args, MachOLinkingContext &ctx,
   // Handle input files and sectcreate.
   for (auto &arg : parsedArgs) {
     bool upward;
-    ErrorOr<StringRef> resolvedPath = StringRef();
+    llvm::Optional<StringRef> resolvedPath;
     switch (arg->getOption().getID()) {
     default:
       continue;
@@ -1076,9 +1076,10 @@ bool parse(llvm::ArrayRef<const char *> args, MachOLinkingContext &ctx,
         return false;
       } else if (ctx.testingFileUsage()) {
         diagnostics << "Found " << (upward ? "upward " : " ") << "library "
-                   << canonicalizePath(resolvedPath.get()) << '\n';
+                   << canonicalizePath(resolvedPath.getValue()) << '\n';
       }
-      addFile(resolvedPath.get(), ctx, globalWholeArchive, upward, diagnostics);
+      addFile(resolvedPath.getValue(), ctx, globalWholeArchive,
+              upward, diagnostics);
       break;
     case OPT_framework:
     case OPT_upward_framework:
@@ -1090,9 +1091,10 @@ bool parse(llvm::ArrayRef<const char *> args, MachOLinkingContext &ctx,
         return false;
       } else if (ctx.testingFileUsage()) {
         diagnostics << "Found " << (upward ? "upward " : " ") << "framework "
-                    << canonicalizePath(resolvedPath.get()) << '\n';
+                    << canonicalizePath(resolvedPath.getValue()) << '\n';
       }
-      addFile(resolvedPath.get(), ctx, globalWholeArchive, upward, diagnostics);
+      addFile(resolvedPath.getValue(), ctx, globalWholeArchive,
+              upward, diagnostics);
       break;
     case OPT_filelist:
       if (auto ec = loadFileList(arg->getValue(),
