@@ -2534,22 +2534,13 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       BuildCFI(MBB, I, DL, 
                MCCFIInstruction::createAdjustCfaOffset(nullptr, -InternalAmt));
 
-    // Add Amount to SP to destroy a frame, or subtract to setup.
-    int64_t StackAdjustment = isDestroy ? Amount : -Amount;
+    if (Amount) {
+      // Add Amount to SP to destroy a frame, and subtract to setup.
+      int Offset = isDestroy ? Amount : -Amount;
 
-    if (StackAdjustment) {
-      // Merge with any previous or following adjustment instruction.
-      StackAdjustment += mergeSPUpdates(MBB, I, true);
-      StackAdjustment += mergeSPUpdates(MBB, I, false);
-
-      if (!StackAdjustment) {
-        // This and the merged instruction canceled out each other.
-        return I;
-      }
-
-      if (!(Fn->optForMinSize() &&
-            adjustStackWithPops(MBB, I, DL, StackAdjustment)))
-        BuildStackAdjustment(MBB, I, DL, StackAdjustment, /*InEpilogue=*/false);
+      if (!(Fn->optForMinSize() && 
+            adjustStackWithPops(MBB, I, DL, Offset)))
+        BuildStackAdjustment(MBB, I, DL, Offset, /*InEpilogue=*/false);
     }
 
     if (DwarfCFI && !hasFP(MF)) {
@@ -2559,12 +2550,14 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // CFI only for EH purposes or for debugging. EH only requires the CFA
       // offset to be correct at each call site, while for debugging we want
       // it to be more precise.
-
+      int CFAOffset = Amount;
       // TODO: When not using precise CFA, we also need to adjust for the
       // InternalAmt here.
-      if (StackAdjustment) {
-        BuildCFI(MBB, I, DL, MCCFIInstruction::createAdjustCfaOffset(
-                                 nullptr, -StackAdjustment));
+
+      if (CFAOffset) {
+        CFAOffset = isDestroy ? -CFAOffset : CFAOffset;
+        BuildCFI(MBB, I, DL, 
+                 MCCFIInstruction::createAdjustCfaOffset(nullptr, CFAOffset));
       }
     }
 
