@@ -116,6 +116,9 @@ For later versions of Visual Studio, no setup is required-->
     <DisplayString Condition="!Typename">class {Name,view(cpp)}</DisplayString>
     <DisplayString>typename {Name,view(cpp)}</DisplayString>
   </Type>
+  <Type Name="clang::TemplateDecl">
+    <DisplayString>template{*TemplateParams} {*TemplatedDecl};</DisplayString>
+  </Type>
   <Type Name="clang::NamedDecl" >
     <DisplayString IncludeView="cpp">{Name,view(cpp)}</DisplayString>
     <DisplayString>{Name}</DisplayString>
