@@ -1131,14 +1131,13 @@ bool PPCFastISel::SelectFPToI(const Instruction *I, bool IsSigned) {
     return false;
 
   // Convert f32 to f64 if necessary.  This is just a meaningless copy
-  // to get the register class right.  COPY_TO_REGCLASS is needed since
-  // a COPY from F4RC to F8RC is converted to a F4RC-F4RC copy downstream.
+  // to get the register class right.
   const TargetRegisterClass *InRC = MRI.getRegClass(SrcReg);
   if (InRC == &PPC::F4RCRegClass) {
     unsigned TmpReg = createResultReg(&PPC::F8RCRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(TargetOpcode::COPY_TO_REGCLASS), TmpReg)
-      .addReg(SrcReg).addImm(PPC::F8RCRegClassID);
+            TII.get(TargetOpcode::COPY), TmpReg)
+      .addReg(SrcReg);
     SrcReg = TmpReg;
   }
 
