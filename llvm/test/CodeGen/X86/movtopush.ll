@@ -2,6 +2,7 @@
 ; RUN: llc < %s -mtriple=i686-windows -no-x86-call-frame-opt | FileCheck %s -check-prefix=NOPUSH
 ; RUN: llc < %s -mtriple=x86_64-windows | FileCheck %s -check-prefix=X64
 ; RUN: llc < %s -mtriple=i686-windows -stackrealign -stack-alignment=32 | FileCheck %s -check-prefix=ALIGNED
+; RUN: llc < %s -mtriple=i686-pc-linux | FileCheck %s -check-prefix=LINUX
 
 %class.Class = type { i32 }
 %struct.s = type { i64 }
@@ -223,8 +224,7 @@ entry:
 ; NORMAL-NEXT: pushl $2
 ; NORMAL-NEXT: pushl $1
 ; NORMAL-NEXT: call
-; NORMAL-NEXT: addl $16, %esp
-; NORMAL-NEXT: subl $20, %esp
+; NORMAL-NEXT: subl $4, %esp
 ; NORMAL-NEXT: movl 20(%esp), [[E1:%e..]]
 ; NORMAL-NEXT: movl 24(%esp), [[E2:%e..]]
 ; NORMAL-NEXT: movl    [[E2]], 4(%esp)
@@ -261,7 +261,7 @@ entry:
 ; NORMAL-NEXT: pushl $2
 ; NORMAL-NEXT: pushl $1
 ; NORMAL-NEXT: calll *16(%esp)
-; NORMAL-NEXT: addl $16, %esp
+; NORMAL-NEXT: addl $24, %esp
 define void @test10() optsize {
   %stack_fptr = alloca void (i32, i32, i32, i32)*
   store void (i32, i32, i32, i32)* @good, void (i32, i32, i32, i32)** %stack_fptr
@@ -314,8 +314,7 @@ entry:
 ; NORMAL-NEXT: pushl    $2
 ; NORMAL-NEXT: pushl    $1
 ; NORMAL-NEXT: calll _good
-; NORMAL-NEXT: addl    $16, %esp
-; NORMAL-NEXT: subl    $20, %esp
+; NORMAL-NEXT: subl    $4, %esp
 ; NORMAL: movl    $8, 16(%esp)
 ; NORMAL-NEXT: movl    $7, 12(%esp)
 ; NORMAL-NEXT: movl    $6, 8(%esp)
@@ -357,4 +356,28 @@ entry:
   %add = add i32 %val1, %val2
   call void @good(i32 %val1, i32 %val2, i32 %val3, i32 %add)
   ret i32* %ptr3
+}
+
+; Make sure to fold adjacent stack adjustments.
+; LINUX-LABEL: pr27140:
+; LINUX: subl    $12, %esp
+; LINUX: .cfi_def_cfa_offset 16
+; LINUX-NOT: sub
+; LINUX: pushl   $4
+; LINUX: .cfi_adjust_cfa_offset 4
+; LINUX: pushl   $3
+; LINUX: .cfi_adjust_cfa_offset 4
+; LINUX: pushl   $2
+; LINUX: .cfi_adjust_cfa_offset 4
+; LINUX: pushl   $1
+; LINUX: .cfi_adjust_cfa_offset 4
+; LINUX: calll   good
+; LINUX: addl    $28, %esp
+; LINUX: .cfi_adjust_cfa_offset -28
+; LINUX-NOT: add
+; LINUX: retl
+define void @pr27140() optsize {
+entry:
+  tail call void @good(i32 1, i32 2, i32 3, i32 4)
+  ret void
 }
