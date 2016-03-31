@@ -3786,6 +3786,9 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_SImm10_0:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected 10-bit signed immediate");
+  case Match_SImm11_0:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected 11-bit signed immediate");
   case Match_UImm16:
   case Match_UImm16_Relaxed:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
@@ -3814,6 +3817,9 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MemSImm10Lsl3:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected memory with 13-bit signed offset and multiple of 8");
+  case Match_MemSImm11:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected memory with 11-bit signed offset");
   }
 
   llvm_unreachable("Implement any new match types added!");

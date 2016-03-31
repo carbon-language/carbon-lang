@@ -479,11 +479,13 @@ def ConstantSImm10Lsl2AsmOperandClass : AsmOperandClass {
   let SuperClasses = [ConstantSImm10Lsl3AsmOperandClass];
   let DiagnosticType = "SImm10_Lsl2";
 }
+def ConstantSImm11AsmOperandClass
+    : ConstantSImmAsmOperandClass<11, [ConstantSImm10Lsl2AsmOperandClass]>;
 def ConstantSImm10Lsl1AsmOperandClass : AsmOperandClass {
   let Name = "SImm10Lsl1";
   let RenderMethod = "addImmOperands";
   let PredicateMethod = "isScaledSImm<10, 1>";
-  let SuperClasses = [ConstantSImm10Lsl2AsmOperandClass];
+  let SuperClasses = [ConstantSImm11AsmOperandClass];
   let DiagnosticType = "SImm10_Lsl1";
 }
 def ConstantUImm10AsmOperandClass
@@ -597,8 +599,6 @@ def calltarget  : Operand<iPTR> {
 }
 
 def imm64: Operand<i64>;
-
-def simm11 : Operand<i32>;
 
 def simm16      : Operand<i32> {
   let DecoderMethod= "DecodeSimm16";
@@ -763,7 +763,7 @@ foreach I = {1, 2, 3, 4, 5, 6, 8} in
   }
 
 // Signed operands
-foreach I = {4, 5, 6, 9, 10} in
+foreach I = {4, 5, 6, 9, 10, 11} in
   def simm # I : Operand<i32> {
     let DecoderMethod = "DecodeSImmWithOffsetAndScale<" # I # ">";
     let ParserMatchClass =
@@ -854,6 +854,7 @@ def MipsMemSimm11AsmOperand : AsmOperandClass {
   let RenderMethod = "addMemOperands";
   let ParserMethod = "parseMemOperand";
   let PredicateMethod = "isMemWithSimmOffset<11>";
+  let DiagnosticType = "MemSImm11";
 }
 
 def MipsMemSimm16AsmOperand : AsmOperandClass {
@@ -1150,7 +1151,8 @@ class StoreLeftRight<string opstr, SDNode OpNode, RegisterOperand RO,
 // COP2 Load/Store
 class LW_FT2<string opstr, RegisterOperand RC, InstrItinClass Itin,
              SDPatternOperator OpNode= null_frag> :
-  InstSE<(outs RC:$rt), (ins mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+  InstSE<(outs RC:$rt), (ins mem_simm16:$addr),
+         !strconcat(opstr, "\t$rt, $addr"),
          [(set RC:$rt, (OpNode addrDefault:$addr))], Itin, FrmFI, opstr> {
   let DecoderMethod = "DecodeFMem2";
   let mayLoad = 1;
@@ -1158,7 +1160,8 @@ class LW_FT2<string opstr, RegisterOperand RC, InstrItinClass Itin,
 
 class SW_FT2<string opstr, RegisterOperand RC, InstrItinClass Itin,
              SDPatternOperator OpNode= null_frag> :
-  InstSE<(outs), (ins RC:$rt, mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+  InstSE<(outs), (ins RC:$rt, mem_simm16:$addr),
+         !strconcat(opstr, "\t$rt, $addr"),
          [(OpNode RC:$rt, addrDefault:$addr)], Itin, FrmFI, opstr> {
   let DecoderMethod = "DecodeFMem2";
   let mayStore = 1;
