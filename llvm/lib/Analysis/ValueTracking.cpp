@@ -3549,7 +3549,7 @@ static SelectPatternResult matchSelectPattern(CmpInst::Predicate Pred,
         return {(CmpLHS == FalseVal) ? SPF_ABS : SPF_NABS, SPNB_NA, false};
       }
     }
-    
+
     // Y >s C ? ~Y : ~C == ~Y <s ~C ? ~Y : ~C = SMIN(~Y, ~C)
     if (const auto *C2 = dyn_cast<ConstantInt>(FalseVal)) {
       if (C1->getType() == C2->getType() && ~C1->getValue() == C2->getValue() &&
