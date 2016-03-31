@@ -53,7 +53,7 @@ namespace mach_o {
 namespace normalized {
 
 // Utility to call a lambda expression on each load command.
-static std::error_code forEachLoadCommand(
+static llvm::Error forEachLoadCommand(
     StringRef lcRange, unsigned lcCount, bool isBig, bool is64,
     std::function<bool(uint32_t cmd, uint32_t size, const char *lc)> func) {
   const char* p = lcRange.begin();
@@ -67,15 +67,15 @@ static std::error_code forEachLoadCommand(
       slc = &lcCopy;
     }
     if ( (p + slc->cmdsize) > lcRange.end() )
-      return make_error_code(llvm::errc::executable_format_error);
+      return llvm::make_error<GenericError>("Load command exceeds range");
 
     if (func(slc->cmd, slc->cmdsize, p))
-      return std::error_code();
+      return llvm::Error();
 
     p += slc->cmdsize;
   }
 
-  return std::error_code();
+  return llvm::Error();
 }
 
 static std::error_code appendRelocations(Relocations &relocs, StringRef buffer,
@@ -257,9 +257,9 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   // Pre-scan load commands looking for indirect symbol table.
   uint32_t indirectSymbolTableOffset = 0;
   uint32_t indirectSymbolTableCount = 0;
-  std::error_code ec = forEachLoadCommand(lcRange, lcCount, isBig, is64,
-                                          [&](uint32_t cmd, uint32_t size,
-                                              const char *lc) -> bool {
+  auto ec = forEachLoadCommand(lcRange, lcCount, isBig, is64,
+                               [&](uint32_t cmd, uint32_t size,
+                                   const char *lc) -> bool {
     if (cmd == LC_DYSYMTAB) {
       const dysymtab_command *d = reinterpret_cast<const dysymtab_command*>(lc);
       indirectSymbolTableOffset = read32(&d->indirectsymoff, isBig);
@@ -269,7 +269,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     return false;
   });
   if (ec)
-    return llvm::errorCodeToError(ec);
+    return std::move(ec);
 
   // Walk load commands looking for segments/sections and the symbol table.
   const data_in_code_entry *dataInCode = nullptr;
@@ -485,7 +485,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     return false;
   });
   if (ec)
-    return llvm::errorCodeToError(ec);
+    return std::move(ec);
 
   if (dataInCode) {
     // Convert on-disk data_in_code_entry array to DataInCode vector.
