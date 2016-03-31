@@ -90,6 +90,7 @@ struct Configuration {
   ELFKind EKind = ELFNoneKind;
   uint16_t EMachine = llvm::ELF::EM_NONE;
   uint64_t EntryAddr = -1;
+  unsigned LtoO = 2;
   unsigned Optimize = 0;
 };
 

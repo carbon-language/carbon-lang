@@ -282,6 +282,12 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
       error("invalid optimization level");
   }
 
+  if (auto *Arg = Args.getLastArg(OPT_lto_O)) {
+    StringRef Val = Arg->getValue();
+    if (Val.getAsInteger(10, Config->LtoO))
+      error("invalid optimization level");
+  }
+
   if (auto *Arg = Args.getLastArg(OPT_hash_style)) {
     StringRef S = Arg->getValue();
     if (S == "gnu") {
