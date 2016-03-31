@@ -1,5 +1,6 @@
 RUN: echo hello > %t.file
-RUN: llvm-ar rcsT %t.a %t.file
+RUN: rm -f %t.a
+RUN: llvm-ar --format=gnu rcsT %t.a %t.file
 RUN: llvm-ar p %t.a | FileCheck %s
 
 CHECK: hello
