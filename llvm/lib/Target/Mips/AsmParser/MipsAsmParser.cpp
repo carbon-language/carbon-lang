@@ -1055,9 +1055,11 @@ public:
   bool isConstantMemOff() const {
     return isMem() && isa<MCConstantExpr>(getMemOff());
   }
-  template <unsigned Bits> bool isMemWithSimmOffset() const {
-    return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff())
-      && getMemBase()->isGPRAsmReg();
+  template <unsigned Bits, unsigned ShiftAmount = 0>
+  bool isMemWithSimmOffset() const {
+    return isMem() && isConstantMemOff() &&
+           isShiftedInt<Bits, ShiftAmount>(getConstantMemOff()) &&
+           getMemBase()->isGPRAsmReg();
   }
   template <unsigned Bits> bool isMemWithSimmOffsetGPR() const {
     return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff()) &&
@@ -3800,6 +3802,18 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MemGPSImm9:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected memory with $gp and 9-bit signed offset");
+  case Match_MemSImm10:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected memory with 10-bit signed offset");
+  case Match_MemSImm10Lsl1:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected memory with 11-bit signed offset and multiple of 2");
+  case Match_MemSImm10Lsl2:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected memory with 12-bit signed offset and multiple of 4");
+  case Match_MemSImm10Lsl3:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected memory with 13-bit signed offset and multiple of 8");
   }
 
   llvm_unreachable("Implement any new match types added!");

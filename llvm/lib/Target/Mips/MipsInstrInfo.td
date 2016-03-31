@@ -465,8 +465,29 @@ def UImm16RelaxedAsmOperandClass
 }
 def UImm16AsmOperandClass
     : UImmAsmOperandClass<16, [UImm16RelaxedAsmOperandClass]>;
+def ConstantSImm10Lsl3AsmOperandClass : AsmOperandClass {
+  let Name = "SImm10Lsl3";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isScaledSImm<10, 3>";
+  let SuperClasses = [UImm16AsmOperandClass];
+  let DiagnosticType = "SImm10_Lsl3";
+}
+def ConstantSImm10Lsl2AsmOperandClass : AsmOperandClass {
+  let Name = "SImm10Lsl2";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isScaledSImm<10, 2>";
+  let SuperClasses = [ConstantSImm10Lsl3AsmOperandClass];
+  let DiagnosticType = "SImm10_Lsl2";
+}
+def ConstantSImm10Lsl1AsmOperandClass : AsmOperandClass {
+  let Name = "SImm10Lsl1";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isScaledSImm<10, 1>";
+  let SuperClasses = [ConstantSImm10Lsl2AsmOperandClass];
+  let DiagnosticType = "SImm10_Lsl1";
+}
 def ConstantUImm10AsmOperandClass
-    : ConstantUImmAsmOperandClass<10, [UImm16AsmOperandClass]>;
+    : ConstantUImmAsmOperandClass<10, [ConstantSImm10Lsl1AsmOperandClass]>;
 def ConstantSImm10AsmOperandClass
     : ConstantSImmAsmOperandClass<10, [ConstantUImm10AsmOperandClass]>;
 def ConstantSImm9AsmOperandClass
@@ -577,7 +598,6 @@ def calltarget  : Operand<iPTR> {
 
 def imm64: Operand<i64>;
 
-def simm10 : Operand<i32>;
 def simm11 : Operand<i32>;
 
 def simm16      : Operand<i32> {
@@ -743,11 +763,18 @@ foreach I = {1, 2, 3, 4, 5, 6, 8} in
   }
 
 // Signed operands
-foreach I = {4, 5, 6, 9} in
+foreach I = {4, 5, 6, 9, 10} in
   def simm # I : Operand<i32> {
     let DecoderMethod = "DecodeSImmWithOffsetAndScale<" # I # ">";
     let ParserMatchClass =
         !cast<AsmOperandClass>("ConstantSImm" # I # "AsmOperandClass");
+  }
+
+foreach I = {1, 2, 3} in
+  def simm10_lsl # I : Operand<i32> {
+    let DecoderMethod = "DecodeSImmWithOffsetAndScale<10, " # I # ">";
+    let ParserMatchClass =
+        !cast<AsmOperandClass>("ConstantSImm10Lsl" # I # "AsmOperandClass");
   }
 
 foreach I = {10} in
@@ -792,6 +819,25 @@ def MipsMemSimm9AsmOperand : AsmOperandClass {
   let PredicateMethod = "isMemWithSimmOffset<9>";
   let DiagnosticType = "MemSImm9";
 }
+
+def MipsMemSimm10AsmOperand : AsmOperandClass {
+  let Name = "MemOffsetSimm10";
+  let SuperClasses = [MipsMemAsmOperand];
+  let RenderMethod = "addMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithSimmOffset<10>";
+  let DiagnosticType = "MemSImm10";
+}
+
+foreach I = {1, 2, 3} in
+  def MipsMemSimm10Lsl # I # AsmOperand : AsmOperandClass {
+    let Name = "MemOffsetSimm10_" # I;
+    let SuperClasses = [MipsMemAsmOperand];
+    let RenderMethod = "addMemOperands";
+    let ParserMethod = "parseMemOperand";
+    let PredicateMethod = "isMemWithSimmOffset<10, " # I # ">";
+    let DiagnosticType = "MemSImm10Lsl" # I;
+  }
 
 def MipsMemSimm9GPRAsmOperand : AsmOperandClass {
   let Name = "MemOffsetSimm9GPR";
@@ -854,6 +900,20 @@ def mem_simm9 : mem_generic {
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemSimm9AsmOperand;
 }
+
+def mem_simm10 : mem_generic {
+  let MIOperandInfo = (ops ptr_rc, simm10);
+  let EncoderMethod = "getMemEncoding";
+  let ParserMatchClass = MipsMemSimm10AsmOperand;
+}
+
+foreach I = {1, 2, 3} in
+  def mem_simm10_lsl # I : mem_generic {
+    let MIOperandInfo = (ops ptr_rc, !cast<Operand>("simm10_lsl" # I));
+    let EncoderMethod = "getMemEncoding<" # I  # ">";
+    let ParserMatchClass =
+            !cast<AsmOperandClass>("MipsMemSimm10Lsl" # I # "AsmOperand");
+  }
 
 def mem_simm9gpr : mem_generic {
   let MIOperandInfo = (ops ptr_rc, simm9);
