@@ -2129,7 +2129,7 @@ def err_attribute_bad_neon_vector_size : Error<
 def err_attribute_requires_positive_integer : Error<
   "%0 attribute requires a positive integral compile time constant expression">;
 def err_attribute_requires_opencl_version : Error<
-  "%0 attribute requires OpenCL version %1 or above">;
+  "%0 attribute requires OpenCL version %1%select{| or above}2">;
 def warn_unsupported_target_attribute
     : Warning<"Ignoring unsupported '%0' in the target attribute string">,
     InGroup<IgnoredAttributes>;
@@ -7775,6 +7775,9 @@ def err_opencl_pointer_to_type : Error<
   "pointer to type %0 is invalid in OpenCL">;
 def err_opencl_type_can_only_be_used_as_function_parameter : Error <
   "type %0 can only be used as a function parameter in OpenCL">;
+def warn_opencl_attr_deprecated_ignored : Warning <
+  "%0 attribute is deprecated and ignored in OpenCL version %1">,
+  InGroup<IgnoredAttributes>;
 
 // OpenCL v2.0 s6.13.6 -- Builtin Pipe Functions
 def err_opencl_builtin_pipe_first_arg : Error<
