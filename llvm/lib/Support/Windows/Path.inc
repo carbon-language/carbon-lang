@@ -151,7 +151,7 @@ UniqueID file_status::getUniqueID() const {
   return UniqueID(VolumeSerialNumber, FileID);
 }
 
-ErrorOr<space_info> disk_space(const Twine Path) {
+ErrorOr<space_info> disk_space(const Twine &Path) {
   PULARGE_INTEGER Avail, Total, Free;
   if (!::GetDiskFreeSpaceExA(Path.str().c_str(), &Avail, &Total, &Free))
     return mapWindowsError(::GetLastError());

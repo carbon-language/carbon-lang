@@ -658,7 +658,7 @@ std::error_code getUniqueID(const Twine Path, UniqueID &Result);
 /// @returns a space_info structure filled with the capacity, free, and
 /// available space on the device \a Path is on. A platform specific error_code
 /// is returned on error.
-ErrorOr<space_info> disk_space(const Twine Path);
+ErrorOr<space_info> disk_space(const Twine &Path);
 
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
