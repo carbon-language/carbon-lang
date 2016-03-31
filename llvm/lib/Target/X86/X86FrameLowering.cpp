@@ -2477,7 +2477,7 @@ bool X86FrameLowering::adjustStackWithPops(MachineBasicBlock &MBB,
   return true;
 }
 
-void X86FrameLowering::
+MachineBasicBlock::iterator X86FrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   bool reserveCallFrame = hasReservedCallFrame(MF);
@@ -2521,7 +2521,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                MCCFIInstruction::createGnuArgsSize(nullptr, Amount));
 
     if (Amount == 0)
-      return;
+      return I;
 
     // Factor out the amount that gets handled inside the sequence
     // (Pushes of argument for frame setup, callee pops for frame destroy)
@@ -2561,7 +2561,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       }
     }
 
-    return;
+    return I;
   }
 
   if (isDestroy && InternalAmt) {
@@ -2571,11 +2571,14 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // We are not tracking the stack pointer adjustment by the callee, so make
     // sure we restore the stack pointer immediately after the call, there may
     // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
+    MachineBasicBlock::iterator CI = I;
     MachineBasicBlock::iterator B = MBB.begin();
-    while (I != B && !std::prev(I)->isCall())
+    while (CI != B && !std::prev(I)->isCall())
       --I;
-    BuildStackAdjustment(MBB, I, DL, -InternalAmt, /*InEpilogue=*/false);
+    BuildStackAdjustment(MBB, CI, DL, -InternalAmt, /*InEpilogue=*/false);
   }
+
+  return I;
 }
 
 bool X86FrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {
