@@ -170,6 +170,16 @@ getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
   return Default;
 }
 
+static int getInteger(opt::InputArgList &Args, unsigned Key, int Default) {
+  int V = Default;
+  if (auto *Arg = Args.getLastArg(Key)) {
+    StringRef S = Arg->getValue();
+    if (S.getAsInteger(10, V))
+      error(Arg->getSpelling() + ": number expected, but got " + S);
+  }
+  return V;
+}
+
 static bool hasZOption(opt::InputArgList &Args, StringRef Key) {
   for (auto *Arg : Args.filtered(OPT_z))
     if (Key == Arg->getValue())
@@ -265,6 +275,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
+  Config->Optimize = getInteger(Args, OPT_O, 0);
+  Config->LtoO = getInteger(Args, OPT_lto_O, 2);
+
   Config->ZExecStack = hasZOption(Args, "execstack");
   Config->ZNodelete = hasZOption(Args, "nodelete");
   Config->ZNow = hasZOption(Args, "now");
@@ -275,18 +288,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   if (Config->Relocatable)
     Config->StripAll = false;
-
-  if (auto *Arg = Args.getLastArg(OPT_O)) {
-    StringRef Val = Arg->getValue();
-    if (Val.getAsInteger(10, Config->Optimize))
-      error("invalid optimization level");
-  }
-
-  if (auto *Arg = Args.getLastArg(OPT_lto_O)) {
-    StringRef Val = Arg->getValue();
-    if (Val.getAsInteger(10, Config->LtoO))
-      error("invalid optimization level");
-  }
 
   if (auto *Arg = Args.getLastArg(OPT_hash_style)) {
     StringRef S = Arg->getValue();
