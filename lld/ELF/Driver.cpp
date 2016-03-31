@@ -46,13 +46,15 @@ bool elf::link(ArrayRef<const char *> Args, raw_ostream &Error) {
 }
 
 static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
+  if (S.endswith("_fbsd"))
+    S = S.drop_back(5);
   if (S == "elf32btsmip")
     return {ELF32BEKind, EM_MIPS};
   if (S == "elf32ltsmip")
     return {ELF32LEKind, EM_MIPS};
-  if (S == "elf32ppc" || S == "elf32ppc_fbsd")
+  if (S == "elf32ppc")
     return {ELF32BEKind, EM_PPC};
-  if (S == "elf64ppc" || S == "elf64ppc_fbsd")
+  if (S == "elf64ppc")
     return {ELF64BEKind, EM_PPC64};
   if (S == "elf_i386")
     return {ELF32LEKind, EM_386};
