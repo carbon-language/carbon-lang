@@ -3806,6 +3806,8 @@ struct BinaryOp {
   unsigned Opcode;
   Value *LHS;
   Value *RHS;
+  bool IsNSW;
+  bool IsNUW;
 
   /// Op is set if this BinaryOp corresponds to a concrete LLVM instruction or
   /// constant expression.
@@ -3813,10 +3815,17 @@ struct BinaryOp {
 
   explicit BinaryOp(Operator *Op)
       : Opcode(Op->getOpcode()), LHS(Op->getOperand(0)), RHS(Op->getOperand(1)),
-        Op(Op) {}
+        IsNSW(false), IsNUW(false), Op(Op) {
+    if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(Op)) {
+      IsNSW = OBO->hasNoSignedWrap();
+      IsNUW = OBO->hasNoUnsignedWrap();
+    }
+  }
 
-  explicit BinaryOp(unsigned Opcode, Value *LHS, Value *RHS)
-      : Opcode(Opcode), LHS(LHS), RHS(RHS), Op(nullptr) {}
+  explicit BinaryOp(unsigned Opcode, Value *LHS, Value *RHS, bool IsNSW = false,
+                    bool IsNUW = false)
+      : Opcode(Opcode), LHS(LHS), RHS(RHS), IsNSW(IsNSW), IsNUW(IsNUW),
+        Op(nullptr) {}
 };
 }
 
@@ -3944,11 +3953,11 @@ const SCEV *ScalarEvolution::createAddRecFromPHI(PHINode *PN) {
 
           // If the increment doesn't overflow, then neither the addrec nor
           // the post-increment will overflow.
-          if (const AddOperator *OBO = dyn_cast<AddOperator>(BEValueV)) {
-            if (OBO->getOperand(0) == PN) {
-              if (OBO->hasNoUnsignedWrap())
+          if (auto BO = MatchBinaryOp(BEValueV)) {
+            if (BO->Opcode == Instruction::Add && BO->LHS == PN) {
+              if (BO->IsNUW)
                 Flags = setFlags(Flags, SCEV::FlagNUW);
-              if (OBO->hasNoSignedWrap())
+              if (BO->IsNSW)
                 Flags = setFlags(Flags, SCEV::FlagNSW);
             }
           } else if (GEPOperator *GEP = dyn_cast<GEPOperator>(BEValueV)) {
