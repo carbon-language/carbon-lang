@@ -33,13 +33,13 @@ public:
     llvm::Expected<std::unique_ptr<NormalizedFile>> nFile =
         normalized::normalizedFromAtoms(file, _ctx);
     if (auto ec = nFile.takeError())
-      return std::move(ec);
+      return ec;
 
     // For testing, write out yaml form of normalized file.
     if (_ctx.printAtoms()) {
       std::unique_ptr<Writer> yamlWriter = createWriterYAML(_ctx);
       if (auto ec = yamlWriter->writeFile(file, "-"))
-        return std::move(ec);
+        return ec;
     }
 
     // Write normalized file as mach-o binary.

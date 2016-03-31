@@ -1177,7 +1177,7 @@ normalizedObjectToAtoms(MachOFile *file,
       continue;
     if (llvm::Error ec = convertRelocs(sect, normalizedFile, scatterable,
                                        *file, *handler))
-      return std::move(ec);
+      return ec;
   }
 
   // Add additional arch-specific References

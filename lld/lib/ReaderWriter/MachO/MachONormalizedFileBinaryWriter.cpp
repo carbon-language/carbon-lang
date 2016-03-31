@@ -779,7 +779,7 @@ llvm::Error MachOFileLayout::writeLoadCommands() {
     // Object files have one unnamed segment which holds all sections.
     if (_is64) {
      if (auto ec = writeSingleSegmentLoadCommand<MachO64Trait>(lc))
-       return std::move(ec);
+       return ec;
     } else {
       if (auto ec = writeSingleSegmentLoadCommand<MachO32Trait>(lc))
         return std::move(ec);
