@@ -655,8 +655,6 @@ std::error_code getUniqueID(const Twine Path, UniqueID &Result);
 /// Note: Windows reports results according to the quota allocated to the user.
 ///
 /// @param Path Input path.
-/// @param SpaceInfo Set to the capacity, free, and available space on the
-///        device \a Path is on.
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 ErrorOr<space_info> disk_space(const Twine Path);
