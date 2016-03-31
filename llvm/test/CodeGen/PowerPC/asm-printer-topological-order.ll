@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc64le-unknown-linux-gnu < %s | FileCheck %s
 
 @TestA = alias void (), void ()* @TestC
 @TestB = alias void (), void ()* @TestC
