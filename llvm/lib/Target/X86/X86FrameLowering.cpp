@@ -2573,8 +2573,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
     MachineBasicBlock::iterator CI = I;
     MachineBasicBlock::iterator B = MBB.begin();
-    while (CI != B && !std::prev(I)->isCall())
-      --I;
+    while (CI != B && !std::prev(CI)->isCall())
+      --CI;
     BuildStackAdjustment(MBB, CI, DL, -InternalAmt, /*InEpilogue=*/false);
   }
 
