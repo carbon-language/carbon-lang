@@ -32,7 +32,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/TimeValue.h"
 #include <ctime>
 #include <iterator>
@@ -648,16 +647,6 @@ file_magic identify_magic(StringRef magic);
 std::error_code identify_magic(const Twine &path, file_magic &result);
 
 std::error_code getUniqueID(const Twine Path, UniqueID &Result);
-
-/// @brief Get disk space usage information.
-///
-/// Note: Users must be careful about "Time Of Check, Time Of Use" kind of bug.
-/// Note: Windows reports results according to the quota allocated to the user.
-///
-/// @param Path Input path.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-ErrorOr<space_info> disk_space(const Twine Path);
 
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
