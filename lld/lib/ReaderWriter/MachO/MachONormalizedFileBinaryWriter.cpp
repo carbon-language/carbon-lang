@@ -782,7 +782,7 @@ llvm::Error MachOFileLayout::writeLoadCommands() {
        return ec;
     } else {
       if (auto ec = writeSingleSegmentLoadCommand<MachO32Trait>(lc))
-        return std::move(ec);
+        return ec;
     }
     // Add LC_SYMTAB with symbol table info
     symtab_command* st = reinterpret_cast<symtab_command*>(lc);
@@ -828,10 +828,10 @@ llvm::Error MachOFileLayout::writeLoadCommands() {
     // Final linked images have sections under segments.
     if (_is64) {
       if (auto ec = writeSegmentLoadCommands<MachO64Trait>(lc))
-        return std::move(ec);
+        return ec;
     } else {
       if (auto ec = writeSegmentLoadCommands<MachO32Trait>(lc))
-        return std::move(ec);
+        return ec;
     }
 
     // Add LC_ID_DYLIB command for dynamic libraries.
@@ -1481,7 +1481,7 @@ llvm::Error MachOFileLayout::writeBinary(StringRef path) {
   _buffer = fob->getBufferStart();
   writeMachHeader();
   if (auto ec = writeLoadCommands())
-    return std::move(ec);
+    return ec;
   writeSectionContent();
   writeLinkEditContent();
   fob->commit();
