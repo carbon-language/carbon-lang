@@ -1424,10 +1424,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   SectionHeaderOff = alignTo(FileOff, sizeof(uintX_t));
   FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
 
-  // Update "_end" and "end" symbols so that they
-  // point to the end of the data segment.
-  ElfSym<ELFT>::End.st_value = VA;
-
   for (Phdr &PHdr : Phdrs) {
     Elf_Phdr &H = PHdr.H;
     if (PHdr.First) {
@@ -1503,9 +1499,11 @@ template <class ELFT> void Writer<ELFT>::fixAbsoluteSymbols() {
 
   // _etext is the first location after the last read-only loadable segment.
   // _edata is the first location after the last read-write loadable segment.
+  // _end is the first location after the uninitialized data region.
   for (Phdr &PHdr : Phdrs) {
     if (PHdr.H.p_type != PT_LOAD)
       continue;
+    ElfSym<ELFT>::End.st_value = PHdr.H.p_vaddr + PHdr.H.p_memsz;
     uintX_t Val = PHdr.H.p_vaddr + PHdr.H.p_filesz;
     if (PHdr.H.p_flags & PF_W)
       ElfSym<ELFT>::Edata.st_value = Val;
