@@ -302,7 +302,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
       return 1;
     }
     if (!Body.isPreemptible())
-      return 1;
+      return 2;
     if (!Body.isInGot()) {
       Out<ELFT>::Got->addEntry(Body);
       Out<ELFT>::RelaDyn->addReloc(
