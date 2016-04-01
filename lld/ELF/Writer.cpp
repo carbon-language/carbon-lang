@@ -225,8 +225,8 @@ template <class ELFT> void Writer<ELFT>::run() {
     assignAddresses();
     assignFileOffsets();
     setPhdrs();
+    fixAbsoluteSymbols();
   }
-  fixAbsoluteSymbols();
 
   if (!openFile())
     return;
