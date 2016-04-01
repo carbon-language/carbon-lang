@@ -2038,15 +2038,13 @@ void RewriteInstance::updateDWARFAddressRanges() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
   SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
 
-  // Update address ranges of simple functions.
+  // Update address ranges of functions.
   for (const auto &BFI : BinaryFunctions) {
     const auto &Function = BFI.second;
-    if (Function.isSimple()) {
-      updateDWARFObjectAddressRanges(
-          Function.getAddressRangesOffset() + DebugRangesSize,
-          Function.getSubprocedureDIECompileUnit(),
-          Function.getSubprocedureDIE());
-    }
+    updateDWARFObjectAddressRanges(
+        Function.getAddressRangesOffset() + DebugRangesSize,
+        Function.getSubprocedureDIECompileUnit(),
+        Function.getSubprocedureDIE());
   }
 
   // Update address ranges of lexical blocks.
