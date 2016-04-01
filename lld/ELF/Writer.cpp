@@ -107,9 +107,6 @@ private:
   unsigned getNumSections() const {
     return OutputSections.size() + 1 - dummySectionsNum();
   }
-  // Usually there are 2 dummies sections: ELF header and program header.
-  // Relocatable output does not require program headers to be created.
-  unsigned dummySectionsNum() const { return Config->Relocatable ? 1 : 2; }
 
   void addRelIpltSymbols();
   void addStartEndSymbols();
@@ -126,6 +123,10 @@ private:
   bool HasGotOffRel = false;
 };
 } // anonymous namespace
+
+// Usually there are 2 dummies sections: ELF header and program header.
+// Relocatable output does not require program headers to be created.
+unsigned dummySectionsNum() { return Config->Relocatable ? 1 : 2; }
 
 template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   typedef typename ELFT::uint uintX_t;
