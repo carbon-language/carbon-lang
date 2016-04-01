@@ -74,8 +74,8 @@ private:
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
   void createPhdrs();
   void assignAddresses();
-  void assignAddressesRelocatable();
-  void assignPhdrs();
+  void assignFileOffsets();
+  void setPhdrs();
   void fixSectionAlignments();
   void fixAbsoluteSymbols();
   bool openFile();
@@ -216,14 +216,18 @@ template <class ELFT> void Writer<ELFT>::run() {
   addReservedSymbols();
   if (!createSections())
     return;
-  if (!Config->Relocatable) {
+
+  if (Config->Relocatable) {
+    assignFileOffsets();
+  } else {
     createPhdrs();
     fixSectionAlignments();
     assignAddresses();
-  } else {
-    assignAddressesRelocatable();
+    assignFileOffsets();
+    setPhdrs();
   }
   fixAbsoluteSymbols();
+
   if (!openFile())
     return;
   writeHeader();
@@ -1351,28 +1355,9 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 template <class ELFT, class uintX_t>
 static uintX_t fixFileOff(uintX_t FileOff, uintX_t Align,
                           OutputSectionBase<ELFT> *Sec) {
-  if (Sec->getType() != SHT_NOBITS)
-    FileOff = alignTo(FileOff, Align);
-  Sec->setFileOffset(FileOff);
-  if (Sec->getType() != SHT_NOBITS)
-    FileOff += Sec->getSize();
-  return FileOff;
 }
 
-// Used for relocatable output (-r). In this case we create only ELF file
-// header, do not create program headers. Also assign of section addresses
-// is very straightforward: we just put all sections sequentually to the file.
-template <class ELFT> void Writer<ELFT>::assignAddressesRelocatable() {
-  Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
-  uintX_t FileOff = 0;
-  for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    FileOff = fixFileOff(FileOff, Sec->getAlign(), Sec);
-  SectionHeaderOff = alignTo(FileOff, sizeof(uintX_t));
-  FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
-}
-
-// Visits all headers in PhdrTable and assigns the adresses to
-// the output sections. Also creates common and special headers.
+// Assign VAs (addresses at run-time) to output sections.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
   Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
   size_t PhdrSize = sizeof(Elf_Phdr) * Phdrs.size();
@@ -1380,13 +1365,11 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
   uintX_t ThreadBssOffset = 0;
   uintX_t VA = Target->getVAStart();
-  uintX_t FileOff = 0;
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     uintX_t Align = Sec->getAlign();
     if (Sec->PageAlign)
       Align = std::max<uintX_t>(Align, Target->PageSize);
-    FileOff = fixFileOff(FileOff, Align, Sec);
 
     // We only assign VAs to allocated sections.
     if (needsPtLoad<ELFT>(Sec)) {
@@ -1400,15 +1383,31 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       ThreadBssOffset = TVA - VA + Sec->getSize();
     }
   }
-
-  // Add space for section headers.
-  SectionHeaderOff = alignTo(FileOff, sizeof(uintX_t));
-  FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
-
-  assignPhdrs();
 }
 
-template <class ELFT> void Writer<ELFT>::assignPhdrs() {
+// Assign file offsets to output sections.
+template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
+  Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
+  uintX_t Off = 0;
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
+    if (Sec->getType() == SHT_NOBITS) {
+      Sec->setFileOffset(Off);
+      continue;
+    }
+    uintX_t Align = Sec->getAlign();
+    if (Sec->PageAlign)
+      Align = std::max<uintX_t>(Align, Target->PageSize);
+    Off = alignTo(Off, Align);
+    Sec->setFileOffset(Off);
+    Off += Sec->getSize();
+  }
+  SectionHeaderOff = alignTo(Off, sizeof(uintX_t));
+  FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
+}
+
+// Finalize the program headers. We call this function after we assign
+// file offsets and VAs to all sections.
+template <class ELFT> void Writer<ELFT>::setPhdrs() {
   for (Phdr &PHdr : Phdrs) {
     Elf_Phdr &H = PHdr.H;
     if (PHdr.First) {
