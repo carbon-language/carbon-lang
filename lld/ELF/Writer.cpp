@@ -62,7 +62,7 @@ private:
 
   void copyLocalSymbols();
   void addReservedSymbols();
-  bool createSections();
+  void createSections();
   void addPredefinedSections();
   bool needsGot();
 
@@ -78,7 +78,7 @@ private:
   void setPhdrs();
   void fixSectionAlignments();
   void fixAbsoluteSymbols();
-  bool openFile();
+  void openFile();
   void writeHeader();
   void writeSections();
   void writeBuildId();
@@ -214,7 +214,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (!Config->DiscardAll)
     copyLocalSymbols();
   addReservedSymbols();
-  if (!createSections())
+  createSections();
+  if (HasError)
     return;
 
   if (Config->Relocatable) {
@@ -228,7 +229,8 @@ template <class ELFT> void Writer<ELFT>::run() {
     fixAbsoluteSymbols();
   }
 
-  if (!openFile())
+  openFile();
+  if (HasError)
     return;
   writeHeader();
   writeSections();
@@ -959,7 +961,7 @@ template <class ELFT> static void sortCtorsDtors(OutputSectionBase<ELFT> *S) {
 }
 
 // Create output section objects and add them to OutputSections.
-template <class ELFT> bool Writer<ELFT>::createSections() {
+template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(Out<ELFT>::ElfHeader);
   if (!Config->Relocatable)
     OutputSections.push_back(Out<ELFT>::ProgramHeaders);
@@ -1082,7 +1084,7 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
 
   // Do not proceed if there was an undefined symbol.
   if (HasError)
-    return false;
+    return;
 
   addCommonSymbols(CommonSymbols);
   addCopyRelSymbols(CopyRelSymbols);
@@ -1116,7 +1118,6 @@ template <class ELFT> bool Writer<ELFT>::createSections() {
 
   if (isOutputDynamic())
     Out<ELFT>::Dynamic->finalize();
-  return true;
 }
 
 template <class ELFT> bool Writer<ELFT>::needsGot() {
@@ -1533,16 +1534,14 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
     Sec->writeHeaderTo(++SHdrs);
 }
 
-template <class ELFT> bool Writer<ELFT>::openFile() {
+template <class ELFT> void Writer<ELFT>::openFile() {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Config->OutputFile, FileSize,
                                FileOutputBuffer::F_executable);
-  if (!BufferOrErr) {
+  if (BufferOrErr)
+    Buffer = std::move(*BufferOrErr);
+  else
     error(BufferOrErr, "failed to open " + Config->OutputFile);
-    return false;
-  }
-  Buffer = std::move(*BufferOrErr);
-  return true;
 }
 
 // Write section contents to a mmap'ed file.
