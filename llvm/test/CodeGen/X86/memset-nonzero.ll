@@ -35,17 +35,11 @@ define void @memset_32_nonzero_bytes(i8* %x) {
 ; SSE2-NEXT:    movq %rax, (%rdi)
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: memset_32_nonzero_bytes:
-; AVX1:         vmovaps {{.*#+}} ymm0 = [1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13]
-; AVX1-NEXT:    vmovups %ymm0, (%rdi)
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: memset_32_nonzero_bytes:
-; AVX2:         vbroadcastss {{.*}}(%rip), %ymm0
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
-; AVX2-NEXT:    vzeroupper
-; AVX2-NEXT:    retq
+; AVX-LABEL: memset_32_nonzero_bytes:
+; AVX:         vmovaps {{.*#+}} ymm0 = [42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42]
+; AVX-NEXT:    vmovups %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
 ;
   %call = tail call i8* @__memset_chk(i8* %x, i32 42, i64 32, i64 -1)
   ret void
@@ -64,19 +58,12 @@ define void @memset_64_nonzero_bytes(i8* %x) {
 ; SSE2-NEXT:    movq %rax, (%rdi)
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: memset_64_nonzero_bytes:
-; AVX1:         vmovaps {{.*#+}} ymm0 = [1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13]
-; AVX1-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, (%rdi)
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: memset_64_nonzero_bytes:
-; AVX2:         vbroadcastss {{.*}}(%rip), %ymm0
-; AVX2-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
-; AVX2-NEXT:    vzeroupper
-; AVX2-NEXT:    retq
+; AVX-LABEL: memset_64_nonzero_bytes:
+; AVX:         vmovaps {{.*#+}} ymm0 = [42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42]
+; AVX-NEXT:    vmovups %ymm0, 32(%rdi)
+; AVX-NEXT:    vmovups %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
 ;
   %call = tail call i8* @__memset_chk(i8* %x, i32 42, i64 64, i64 -1)
   ret void
@@ -103,23 +90,14 @@ define void @memset_128_nonzero_bytes(i8* %x) {
 ; SSE2-NEXT:    movq %rax, (%rdi)
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: memset_128_nonzero_bytes:
-; AVX1:         vmovaps {{.*#+}} ymm0 = [1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13]
-; AVX1-NEXT:    vmovups %ymm0, 96(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 64(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, (%rdi)
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: memset_128_nonzero_bytes:
-; AVX2:         vbroadcastss {{.*}}(%rip), %ymm0
-; AVX2-NEXT:    vmovups %ymm0, 96(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 64(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
-; AVX2-NEXT:    vzeroupper
-; AVX2-NEXT:    retq
+; AVX-LABEL: memset_128_nonzero_bytes:
+; AVX:         vmovaps {{.*#+}} ymm0 = [42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42]
+; AVX-NEXT:    vmovups %ymm0, 96(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 64(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 32(%rdi)
+; AVX-NEXT:    vmovups %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
 ;
   %call = tail call i8* @__memset_chk(i8* %x, i32 42, i64 128, i64 -1)
   ret void
@@ -136,31 +114,18 @@ define void @memset_256_nonzero_bytes(i8* %x) {
 ; SSE2-NEXT:    popq %rax
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: memset_256_nonzero_bytes:
-; AVX1:         vmovaps {{.*#+}} ymm0 = [1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13,1.511366e-13]
-; AVX1-NEXT:    vmovups %ymm0, 224(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 192(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 160(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 128(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 96(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 64(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX1-NEXT:    vmovups %ymm0, (%rdi)
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: memset_256_nonzero_bytes:
-; AVX2:         vbroadcastss {{.*}}(%rip), %ymm0
-; AVX2-NEXT:    vmovups %ymm0, 224(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 192(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 160(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 128(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 96(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 64(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
-; AVX2-NEXT:    vzeroupper
-; AVX2-NEXT:    retq
+; AVX-LABEL: memset_256_nonzero_bytes:
+; AVX:         vmovaps {{.*#+}} ymm0 = [42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42]
+; AVX-NEXT:    vmovups %ymm0, 224(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 192(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 160(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 128(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 96(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 64(%rdi)
+; AVX-NEXT:    vmovups %ymm0, 32(%rdi)
+; AVX-NEXT:    vmovups %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
 ;
   %call = tail call i8* @__memset_chk(i8* %x, i32 42, i64 256, i64 -1)
   ret void
@@ -211,21 +176,18 @@ define void @memset_32_nonconst_bytes(i8* %x, i8 %c) {
 ; SSE2-NEXT:    retq
 ;
 ; AVX1-LABEL: memset_32_nonconst_bytes:
-; AVX1:         movzbl %sil, %eax
-; AVX1-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX1-NEXT:    vmovd %eax, %xmm0
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1:         vmovd %esi, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vmovups %ymm0, (%rdi)
 ; AVX1-NEXT:    vzeroupper
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: memset_32_nonconst_bytes:
-; AVX2:         movzbl %sil, %eax
-; AVX2-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
+; AVX2:         vmovd %esi, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %ymm0
+; AVX2-NEXT:    vmovdqu %ymm0, (%rdi)
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
@@ -249,10 +211,9 @@ define void @memset_64_nonconst_bytes(i8* %x, i8 %c) {
 ; SSE2-NEXT:    retq
 ;
 ; AVX1-LABEL: memset_64_nonconst_bytes:
-; AVX1:         movzbl %sil, %eax
-; AVX1-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX1-NEXT:    vmovd %eax, %xmm0
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1:         vmovd %esi, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vmovups %ymm0, 32(%rdi)
 ; AVX1-NEXT:    vmovups %ymm0, (%rdi)
@@ -260,12 +221,10 @@ define void @memset_64_nonconst_bytes(i8* %x, i8 %c) {
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: memset_64_nonconst_bytes:
-; AVX2:         movzbl %sil, %eax
-; AVX2-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
-; AVX2-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
+; AVX2:         vmovd %esi, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %ymm0
+; AVX2-NEXT:    vmovdqu %ymm0, 32(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, (%rdi)
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
@@ -297,10 +256,9 @@ define void @memset_128_nonconst_bytes(i8* %x, i8 %c) {
 ; SSE2-NEXT:    retq
 ;
 ; AVX1-LABEL: memset_128_nonconst_bytes:
-; AVX1:         movzbl %sil, %eax
-; AVX1-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX1-NEXT:    vmovd %eax, %xmm0
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1:         vmovd %esi, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vmovups %ymm0, 96(%rdi)
 ; AVX1-NEXT:    vmovups %ymm0, 64(%rdi)
@@ -310,14 +268,12 @@ define void @memset_128_nonconst_bytes(i8* %x, i8 %c) {
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: memset_128_nonconst_bytes:
-; AVX2:         movzbl %sil, %eax
-; AVX2-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
-; AVX2-NEXT:    vmovups %ymm0, 96(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 64(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
+; AVX2:         vmovd %esi, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %ymm0
+; AVX2-NEXT:    vmovdqu %ymm0, 96(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 64(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 32(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, (%rdi)
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
@@ -331,10 +287,9 @@ define void @memset_256_nonconst_bytes(i8* %x, i8 %c) {
 ; SSE2-NEXT:    jmp memset # TAILCALL
 ;
 ; AVX1-LABEL: memset_256_nonconst_bytes:
-; AVX1:         movzbl %sil, %eax
-; AVX1-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX1-NEXT:    vmovd %eax, %xmm0
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1:         vmovd %esi, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vmovups %ymm0, 224(%rdi)
 ; AVX1-NEXT:    vmovups %ymm0, 192(%rdi)
@@ -348,18 +303,16 @@ define void @memset_256_nonconst_bytes(i8* %x, i8 %c) {
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: memset_256_nonconst_bytes:
-; AVX2:         movzbl %sil, %eax
-; AVX2-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
-; AVX2-NEXT:    vmovups %ymm0, 224(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 192(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 160(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 128(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 96(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 64(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, 32(%rdi)
-; AVX2-NEXT:    vmovups %ymm0, (%rdi)
+; AVX2:         vmovd %esi, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %ymm0
+; AVX2-NEXT:    vmovdqu %ymm0, 224(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 192(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 160(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 128(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 96(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 64(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, 32(%rdi)
+; AVX2-NEXT:    vmovdqu %ymm0, (%rdi)
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
