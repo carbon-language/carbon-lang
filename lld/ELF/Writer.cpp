@@ -71,6 +71,7 @@ private:
   void createPhdrs();
   void assignAddresses();
   void assignAddressesRelocatable();
+  void assignPhdrs();
   void fixSectionAlignments();
   void fixAbsoluteSymbols();
   bool openFile();
@@ -1424,6 +1425,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   SectionHeaderOff = alignTo(FileOff, sizeof(uintX_t));
   FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
 
+  assignPhdrs();
+}
+
+template <class ELFT> void Writer<ELFT>::assignPhdrs() {
   for (Phdr &PHdr : Phdrs) {
     Elf_Phdr &H = PHdr.H;
     if (PHdr.First) {
