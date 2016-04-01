@@ -1722,7 +1722,7 @@ void MipsTargetInfo<ELFT>::writeThunk(uint8_t *Buf, uint64_t S) const {
 
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::needsCopyRelImpl(uint32_t Type) const {
-  return !isRelRelative(Type);
+  return !isRelRelative(Type) || Type == R_MIPS_LO16;
 }
 
 template <class ELFT>
@@ -1897,7 +1897,6 @@ bool MipsTargetInfo<ELFT>::isRelRelative(uint32_t Type) const {
   case R_MIPS_32:
   case R_MIPS_64:
   case R_MIPS_HI16:
-  case R_MIPS_LO16:
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_DTPREL_LO16:
   case R_MIPS_TLS_TPREL_HI16:
