@@ -384,27 +384,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
       }
     }
 
-    // An STT_GNU_IFUNC symbol always uses a PLT entry, and all references
-    // to the symbol go through the PLT. This is true even for a local
-    // symbol, although local symbols normally do not require PLT entries.
-    if (Body.IsGnuIFunc) {
-      if (Body.isInPlt())
-        continue;
-      Out<ELFT>::Plt->addEntry(Body);
-      if (Target->UseLazyBinding) {
-        Out<ELFT>::GotPlt->addEntry(Body);
-        Out<ELFT>::RelaPlt->addReloc(
-            {Preemptible ? Target->PltRel : Target->IRelativeRel,
-             DynamicReloc<ELFT>::Off_GotPlt, !Preemptible, &Body});
-      } else {
-        Out<ELFT>::Got->addEntry(Body);
-        Out<ELFT>::RelaDyn->addReloc(
-            {Preemptible ? Target->PltRel : Target->IRelativeRel,
-             DynamicReloc<ELFT>::Off_Got, !Preemptible, &Body});
-      }
-      continue;
-    }
-
     // If a relocation needs PLT, we create a PLT and a GOT slot
     // for the symbol.
     TargetInfo::PltNeed NeedPlt = Target->needsPlt(Type, Body);
@@ -415,16 +394,22 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
         continue;
       Out<ELFT>::Plt->addEntry(Body);
 
+      uint32_t Rel;
+      if (Body.IsGnuIFunc)
+        Rel = Preemptible ? Target->PltRel : Target->IRelativeRel;
+      else
+        Rel = Target->UseLazyBinding ? Target->PltRel : Target->GotRel;
+
       if (Target->UseLazyBinding) {
         Out<ELFT>::GotPlt->addEntry(Body);
         Out<ELFT>::RelaPlt->addReloc(
-            {Target->PltRel, DynamicReloc<ELFT>::Off_GotPlt, &Body});
+            {Rel, DynamicReloc<ELFT>::Off_GotPlt, !Preemptible, &Body});
       } else {
         if (Body.isInGot())
           continue;
         Out<ELFT>::Got->addEntry(Body);
         Out<ELFT>::RelaDyn->addReloc(
-            {Target->GotRel, DynamicReloc<ELFT>::Off_Got, &Body});
+            {Rel, DynamicReloc<ELFT>::Off_Got, !Preemptible, &Body});
       }
       continue;
     }
