@@ -104,3 +104,19 @@ entry:
   call i8 @callee_with_alloca();
   ret void
 }
+
+define i8 @callee_with_dynamic_alloca(i32 %n) alwaysinline {
+  %p = alloca i8, i32 %n
+  %v = call i8(...) @llvm.experimental.deoptimize.i8(i32 1) [ "deopt"(i8* %p) ]
+  ret i8 %v
+}
+
+define void @caller_with_stacksaverestore(i32 %n) {
+; CHECK-LABEL: void @caller_with_stacksaverestore(
+; CHECK:  call void (...) @llvm.experimental.deoptimize.isVoid(i32 1) [ "deopt"(i8* %p.i) ]
+; CHECK-NEXT:  ret void
+
+  %p = alloca i32, i32 %n
+  call i8 @callee_with_dynamic_alloca(i32 %n)
+  ret void
+}
