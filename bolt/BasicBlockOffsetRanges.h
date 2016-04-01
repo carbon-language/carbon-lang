@@ -16,7 +16,9 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BASIC_BLOCK_OFFSET_RANGES_H
 #define LLVM_TOOLS_LLVM_BOLT_BASIC_BLOCK_OFFSET_RANGES_H
 
+#include "llvm/ADT/SmallVector.h"
 #include <map>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -27,6 +29,26 @@ class BinaryFunction;
 class BinaryBasicBlock;
 
 class BasicBlockOffsetRanges {
+public:
+  typedef SmallVectorImpl<unsigned char> BinaryData;
+  struct AbsoluteRange {
+    uint64_t Begin;
+    uint64_t End;
+    const BinaryData *Data;
+  };
+
+  /// Add range [BeginAddress, EndAddress) to the address ranges list.
+  /// \p Function is the function that contains the given address range.
+  void addAddressRange(BinaryFunction &Function,
+                       uint64_t BeginAddress,
+                       uint64_t EndAddress,
+                       const BinaryData *Data = nullptr);
+
+  /// Returns the list of absolute addresses calculated using the output address
+  /// of the basic blocks, i.e. the input ranges updated after basic block
+  /// addresses might have changed, together with the data associated to them.
+  std::vector<AbsoluteRange> getAbsoluteAddressRanges() const;
+
 private:
   /// An address range inside one basic block.
   struct BBAddressRange {
@@ -35,21 +57,11 @@ private:
     uint16_t RangeBeginOffset;
     /// (Exclusive) end of the range counting from BB's start address.
     uint16_t RangeEndOffset;
+    /// Binary data associated with this range.
+    const BinaryData *Data;
   };
 
   std::vector<BBAddressRange> AddressRanges;
-
-public:
-  /// Add range [BeginAddress, EndAddress) to the address ranges list.
-  /// \p Function is the function that contains the given address range.
-  void addAddressRange(BinaryFunction &Function,
-                       uint64_t BeginAddress,
-                       uint64_t EndAddress);
-
-  /// Returns the list of absolute addresses calculated using the output address
-  /// of the basic blocks, i.e. the input ranges updated after basic block
-  /// addresses might have changed.
-  std::vector<std::pair<uint64_t, uint64_t>> getAbsoluteAddressRanges() const;
 };
 
 } // namespace bolt

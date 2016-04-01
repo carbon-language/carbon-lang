@@ -20,6 +20,7 @@ add_llvm_tool(llvm-bolt
   BinaryPatcher.cpp
   DataReader.cpp
   DebugLineTableRowRef.cpp
+  DebugLocWriter.cpp
   DebugRangesSectionsWriter.cpp
   Exceptions.cpp
   RewriteInstance.cpp

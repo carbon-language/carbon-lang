@@ -15,6 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
 #include "BinaryPatcher.h"
+#include "DebugLocWriter.h"
 #include "DebugRangesSectionsWriter.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -210,6 +211,9 @@ private:
   /// Update lexical blocks ranges after optimizations.
   void updateLexicalBlocksAddresses();
 
+  /// Generate new contents for .debug_loc.
+  void updateLocationLists();
+
   /// Generate new contents for .debug_ranges and .debug_aranges section.
   void generateDebugRanges();
 
@@ -227,6 +231,12 @@ private:
   void updateDWARFObjectAddressRanges(uint32_t DebugRangesOffset,
                                       const DWARFUnit *Unit,
                                       const DWARFDebugInfoEntryMinimal *DIE);
+
+  /// Updates pointers in .debug_info to location lists in .debug_loc.
+  void updateLocationListPointers(
+      const DWARFUnit *Unit,
+      const DWARFDebugInfoEntryMinimal *DIE,
+      const std::map<uint32_t, uint32_t> &UpdatedOffsets);
 
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
@@ -296,6 +306,9 @@ private:
 
   /// Size of the .debug_line section on input.
   uint32_t DebugLineSize{0};
+
+  /// Size of the .debug_loc section in input.
+  uint32_t DebugLocSize{0};
 
   /// Size of the .debug_ranges section on input.
   uint32_t DebugRangesSize{0};

@@ -15,6 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
 #include "LexicalBlock.h"
+#include "LocationList.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -36,6 +37,7 @@
 #include <set>
 #include <string>
 #include <system_error>
+#include <vector>
 
 namespace llvm {
 namespace bolt {
@@ -72,6 +74,9 @@ public:
 
   /// List of DWARF lexical blocks in .debug_info.
   std::vector<LexicalBlock> LexicalBlocks;
+
+  /// List of DWARF location lists in .debug_loc.
+  std::vector<LocationList> LocationLists;
 
   std::unique_ptr<MCContext> Ctx;
 

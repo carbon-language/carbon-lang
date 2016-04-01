@@ -12,13 +12,15 @@
 #include "BasicBlockOffsetRanges.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include <algorithm>
 
 namespace llvm {
 namespace bolt {
 
 void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
                                              uint64_t BeginAddress,
-                                             uint64_t EndAddress) {
+                                             uint64_t EndAddress,
+                                             const BinaryData *Data) {
   auto FirstBB = Function.getBasicBlockContainingOffset(
       BeginAddress - Function.getAddress());
   assert(FirstBB && "No basic blocks in the function intersect given range.");
@@ -40,13 +42,14 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
         BBAddressRange{
             BB,
             static_cast<uint16_t>(InternalAddressRangeBegin - BBAddress),
-            static_cast<uint16_t>(InternalAddressRangeEnd - BBAddress)});
+            static_cast<uint16_t>(InternalAddressRangeEnd - BBAddress),
+            Data});
   }
 }
 
-std::vector<std::pair<uint64_t, uint64_t>>
+std::vector<BasicBlockOffsetRanges::AbsoluteRange>
 BasicBlockOffsetRanges::getAbsoluteAddressRanges() const {
-  std::vector<std::pair<uint64_t, uint64_t>> AbsoluteRanges;
+  std::vector<AbsoluteRange> AbsoluteRanges;
   for (const auto &BBAddressRange : AddressRanges) {
     auto BBOutputAddressRange =
         BBAddressRange.BasicBlock->getOutputAddressRange();
@@ -61,9 +64,32 @@ BasicBlockOffsetRanges::getAbsoluteAddressRanges() const {
          BBFunction->getBasicBlockOriginalSize(BBAddressRange.BasicBlock))
         ? BBOutputAddressRange.second
         : (BBOutputAddressRange.first + BBAddressRange.RangeEndOffset);
-    AbsoluteRanges.emplace_back(NewRangeBegin, NewRangeEnd);
+    AbsoluteRanges.emplace_back(AbsoluteRange{NewRangeBegin, NewRangeEnd,
+                                              BBAddressRange.Data});
   }
-  return AbsoluteRanges;
+  if (AbsoluteRanges.empty()) {
+    return AbsoluteRanges;
+  }
+  // Merge adjacent ranges that have the same data.
+  std::sort(AbsoluteRanges.begin(), AbsoluteRanges.end(),
+            [](const AbsoluteRange &A, const AbsoluteRange &B) {
+                return A.Begin < B.Begin;
+            });
+  decltype(AbsoluteRanges) MergedRanges;
+
+  MergedRanges.emplace_back(AbsoluteRanges[0]);
+  for (unsigned I = 1, S = AbsoluteRanges.size(); I != S; ++I) {
+    // If this range complements the last one and they point to the same
+    // (possibly null) data, merge them instead of creating another one.
+    if (AbsoluteRanges[I].Begin == MergedRanges.back().End &&
+        AbsoluteRanges[I].Data == MergedRanges.back().Data) {
+      MergedRanges.back().End = AbsoluteRanges[I].End;
+    } else {
+      MergedRanges.emplace_back(AbsoluteRanges[I]);
+    }
+  }
+
+  return MergedRanges;
 }
 
 } // namespace bolt

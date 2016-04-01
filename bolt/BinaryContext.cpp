@@ -157,6 +157,21 @@ void BinaryContext::preprocessFunctionDebugInfo(
     findLexicalBlocks(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
                       LexicalBlocks);
   }
+
+  // Iterate over location lists and save them in LocationLists.
+  auto DebugLoc = DwCtx->getDebugLoc();
+  for (const auto &DebugLocEntry : DebugLoc->getLocationLists()) {
+    LocationLists.emplace_back(DebugLocEntry.Offset);
+    auto &LocationList = LocationLists.back();
+    for (const auto &Location : DebugLocEntry.Entries) {
+      auto *Function = getBinaryFunctionContainingAddress(Location.Begin,
+                                                          BinaryFunctions);
+      if (Function && Function->isSimple()) {
+        LocationList.addLocation(&Location.Loc, *Function, Location.Begin,
+                                 Location.End);
+      }
+    }
+  }
 }
 
 } // namespace bolt

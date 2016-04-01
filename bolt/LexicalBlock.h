@@ -35,7 +35,7 @@ public:
                const DWARFDebugInfoEntryMinimal *DIE)
       : CU(CU), DIE(DIE) { }
 
-  // Add range [BeginAddress, EndAddress) to lexical block.
+  /// Add range [BeginAddress, EndAddress) to lexical block.
   void addAddressRange(BinaryFunction &Function,
                        uint64_t BeginAddress,
                        uint64_t EndAddress) {
@@ -43,7 +43,14 @@ public:
   }
 
   std::vector<std::pair<uint64_t, uint64_t>> getAbsoluteAddressRanges() const {
-    return BBOffsetRanges.getAbsoluteAddressRanges();
+    auto AddressRangesWithData = BBOffsetRanges.getAbsoluteAddressRanges();
+    std::vector<std::pair<uint64_t, uint64_t>> AddressRanges(
+        AddressRangesWithData.size());
+    for (unsigned I = 0, S = AddressRanges.size(); I != S; ++I) {
+      AddressRanges[I] = std::make_pair(AddressRangesWithData[I].Begin,
+                                        AddressRangesWithData[I].End);
+    }
+    return AddressRanges;
   }
 
   void setAddressRangesOffset(uint32_t Offset) { AddressRangesOffset = Offset; }

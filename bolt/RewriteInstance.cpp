@@ -732,6 +732,8 @@ void RewriteInstance::readSpecialSections() {
       DebugLineSize = Section.getSize();
     } else if (SectionName == ".debug_ranges") {
       DebugRangesSize = Section.getSize();
+    } else if (SectionName == ".debug_loc") {
+      DebugLocSize = Section.getSize();
     }
   }
 
@@ -1502,6 +1504,85 @@ void RewriteInstance::generateDebugRanges() {
   }
 }
 
+void RewriteInstance::updateLocationLists() {
+  // Write new contents to .debug_loc.
+  SmallVector<char, 16> DebugLocBuffer;
+  raw_svector_ostream OS(DebugLocBuffer);
+
+  auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
+  auto Writer = MAB->createObjectWriter(OS);
+
+  DebugLocWriter LocationListsWriter;
+
+  for (const auto &Loc : BC->LocationLists) {
+    LocationListsWriter.write(Loc, Writer);
+  }
+
+  const auto &DebugLocContents = OS.str();
+
+  // Free'd by SectionMM.
+  uint8_t *SectionData = new uint8_t[DebugLocContents.size()];
+  memcpy(SectionData, DebugLocContents.data(), DebugLocContents.size());
+
+  SectionMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
+      reinterpret_cast<uint64_t>(SectionData),
+      DebugLocContents.size(),
+      /*Alignment=*/0,
+      /*IsCode=*/false,
+      /*IsReadOnly=*/true);
+
+  // For each CU, update pointers into .debug_loc.
+  for (const auto &CU : BC->DwCtx->compile_units()) {
+    updateLocationListPointers(
+        CU.get(),
+        CU->getUnitDIE(false),
+        LocationListsWriter.getUpdatedLocationListOffsets());
+  }
+}
+
+void RewriteInstance::updateLocationListPointers(
+    const DWARFUnit *Unit,
+    const DWARFDebugInfoEntryMinimal *DIE,
+    const std::map<uint32_t, uint32_t> &UpdatedOffsets) {
+  // Stop if we're in a non-simple function, which will not be rewritten.
+  auto Tag = DIE->getTag();
+  if (Tag == dwarf::DW_TAG_subprogram) {
+    uint64_t LowPC = -1ULL, HighPC = -1ULL;
+    DIE->getLowAndHighPC(Unit, LowPC, HighPC);
+    if (LowPC != -1ULL) {
+      auto It = BinaryFunctions.find(LowPC);
+      if (It != BinaryFunctions.end() && !It->second.isSimple())
+        return;
+    }
+  }
+  // If the DIE has a DW_AT_location attribute with a section offset, update it.
+  DWARFFormValue Value;
+  uint32_t AttrOffset;
+  if (DIE->getAttributeValue(Unit, dwarf::DW_AT_location, Value, &AttrOffset) &&
+      (Value.isFormClass(DWARFFormValue::FC_Constant) ||
+       Value.isFormClass(DWARFFormValue::FC_SectionOffset))) {
+    uint64_t DebugLocOffset = -1ULL;
+    if (Value.isFormClass(DWARFFormValue::FC_SectionOffset)) {
+      DebugLocOffset = Value.getAsSectionOffset().getValue();
+    } else if (Value.isFormClass(DWARFFormValue::FC_Constant)) {  // DWARF 3
+      DebugLocOffset = Value.getAsUnsignedConstant().getValue();
+    }
+
+    auto It = UpdatedOffsets.find(DebugLocOffset);
+    if (It != UpdatedOffsets.end()) {
+      auto DebugInfoPatcher =
+          static_cast<SimpleBinaryPatcher *>(
+              SectionPatchers[".debug_info"].get());
+      DebugInfoPatcher->addLE32Patch(AttrOffset, It->second + DebugLocSize);
+    }
+  }
+
+  // Recursively visit children.
+  for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
+    updateLocationListPointers(Unit, Child, UpdatedOffsets);
+  }
+}
+
 void RewriteInstance::patchELFPHDRTable() {
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
@@ -2047,11 +2128,16 @@ void RewriteInstance::updateDebugInfo() {
   if (!opts::UpdateDebugSections)
     return;
 
+  SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
+  SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
+
   updateFunctionRanges();
 
   updateLexicalBlocksAddresses();
 
   generateDebugRanges();
+
+  updateLocationLists();
 
   auto &DebugInfoSI = SectionMM->NoteSectionInfo[".debug_info"];
   for (const auto &CU : BC->DwCtx->compile_units()) {
@@ -2080,9 +2166,6 @@ void RewriteInstance::updateDebugInfo() {
 }
 
 void RewriteInstance::updateDWARFAddressRanges() {
-  SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
-  SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
-
   // Update address ranges of functions.
   for (const auto &BFI : BinaryFunctions) {
     const auto &Function = BFI.second;
