@@ -48,9 +48,6 @@ static cl::opt<bool> EmitSummaryIndex("module-summary",
                                       cl::desc("Emit module summary index"),
                                       cl::init(false));
 
-static cl::opt<bool> EmitModuleHash("module-hash", cl::desc("Emit module hash"),
-                                    cl::init(false));
-
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print assembly as parsed"), cl::Hidden);
 
@@ -85,7 +82,7 @@ static void WriteOutputFile(const Module *M) {
 
   if (Force || !CheckBitcodeOutputToConsole(Out->os(), true))
     WriteBitcodeToFile(M, Out->os(), PreserveBitcodeUseListOrder,
-                       EmitSummaryIndex, EmitModuleHash);
+                       EmitSummaryIndex);
 
   // Declare success.
   Out->keep();

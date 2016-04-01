@@ -5632,7 +5632,11 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseModule() {
       }
       continue;
 
-    case BitstreamEntry::Record: {
+    case BitstreamEntry::Record:
+      // Once we find the last record of interest, skip the rest.
+      if (VSTOffset > 0)
+        Stream.skipRecord(Entry.ID);
+      else {
         Record.clear();
         auto BitCode = Stream.readRecord(Entry.ID, Record);
         switch (BitCode) {
@@ -5644,25 +5648,6 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseModule() {
           if (convertToString(Record, 0, ValueName))
             return error("Invalid record");
           SourceFileName = ValueName.c_str();
-          break;
-        }
-        /// MODULE_CODE_HASH: [5*i32]
-        case bitc::MODULE_CODE_HASH: {
-          if (Record.size() != 5)
-            return error("Invalid hash length " + Twine(Record.size()).str());
-          if (!TheIndex)
-            break;
-          if (TheIndex->modulePaths().empty())
-            // Does not have any summary emitted.
-            break;
-          if (TheIndex->modulePaths().size() != 1)
-            return error("Don't expect multiple modules defined?");
-          auto &Hash = TheIndex->modulePaths().begin()->second.second;
-          int Pos = 0;
-          for (auto &Val : Record) {
-            assert(!(Val >> 32) && "Unexpected high bits set");
-            Hash[Pos++] = Val;
-          }
           break;
         }
         /// MODULE_CODE_VSTOFFSET: [offset]
@@ -5776,7 +5761,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseEntireSummary() {
       // module path string table entry with an empty (0) ID to take
       // ownership.
       FS->setModulePath(
-          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0)->first());
+          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0));
       static int RefListStartIndex = 4;
       int CallGraphEdgeStartIndex = RefListStartIndex + NumRefs;
       assert(Record.size() >= RefListStartIndex + NumRefs &&
@@ -5814,7 +5799,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseEntireSummary() {
       std::unique_ptr<GlobalVarSummary> FS =
           llvm::make_unique<GlobalVarSummary>(getDecodedLinkage(RawLinkage));
       FS->setModulePath(
-          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0)->first());
+          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0));
       for (unsigned I = 2, E = Record.size(); I != E; ++I) {
         unsigned RefValueId = Record[I];
         uint64_t RefGUID = getGUIDFromValueId(RefValueId);
@@ -5902,7 +5887,6 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseModuleStringTable() {
   SmallVector<uint64_t, 64> Record;
 
   SmallString<128> ModulePath;
-  ModulePathStringTableTy::iterator LastSeenModulePath;
   while (1) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
 
@@ -5923,30 +5907,12 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseModuleStringTable() {
       break;
     case bitc::MST_CODE_ENTRY: {
       // MST_ENTRY: [modid, namechar x N]
-      uint64_t ModuleId = Record[0];
-
       if (convertToString(Record, 1, ModulePath))
         return error("Invalid record");
-
-      LastSeenModulePath = TheIndex->addModulePath(ModulePath, ModuleId);
-      ModuleIdMap[ModuleId] = LastSeenModulePath->first();
-
+      uint64_t ModuleId = Record[0];
+      StringRef ModulePathInMap = TheIndex->addModulePath(ModulePath, ModuleId);
+      ModuleIdMap[ModuleId] = ModulePathInMap;
       ModulePath.clear();
-      break;
-    }
-    /// MST_CODE_HASH: [5*i32]
-    case bitc::MST_CODE_HASH: {
-      if (Record.size() != 5)
-        return error("Invalid hash length " + Twine(Record.size()).str());
-      if (LastSeenModulePath == TheIndex->modulePaths().end())
-        return error("Invalid hash that does not follow a module path");
-      int Pos = 0;
-      for (auto &Val : Record) {
-        assert(!(Val >> 32) && "Unexpected high bits set");
-        LastSeenModulePath->second.second[Pos++] = Val;
-      }
-      // Reset LastSeenModulePath to avoid overriding the hash unexpectedly.
-      LastSeenModulePath = TheIndex->modulePaths().end();
       break;
     }
     }

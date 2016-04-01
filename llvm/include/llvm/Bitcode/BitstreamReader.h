@@ -446,8 +446,6 @@ public:
   using SimpleBitstreamCursor::canSkipToPos;
   using SimpleBitstreamCursor::AtEndOfStream;
   using SimpleBitstreamCursor::GetCurrentBitNo;
-  using SimpleBitstreamCursor::getCurrentByteNo;
-  using SimpleBitstreamCursor::getPointerToByte;
   using SimpleBitstreamCursor::getBitStreamReader;
   using SimpleBitstreamCursor::JumpToBit;
   using SimpleBitstreamCursor::fillCurWord;
