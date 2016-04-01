@@ -2308,15 +2308,13 @@ void X86FrameLowering::adjustForHiPEPrologue(
   if (MFI->hasCalls()) {
     unsigned MoreStackForCalls = 0;
 
-    for (MachineFunction::iterator MBBI = MF.begin(), MBBE = MF.end();
-         MBBI != MBBE; ++MBBI)
-      for (MachineBasicBlock::iterator MI = MBBI->begin(), ME = MBBI->end();
-           MI != ME; ++MI) {
-        if (!MI->isCall())
+    for (auto &MBB : MF) {
+      for (auto &MI : MBB) {
+        if (!MI.isCall())
           continue;
 
         // Get callee operand.
-        const MachineOperand &MO = MI->getOperand(0);
+        const MachineOperand &MO = MI.getOperand(0);
 
         // Only take account of global function calls (no closures etc.).
         if (!MO.isGlobal())
@@ -2342,6 +2340,7 @@ void X86FrameLowering::adjustForHiPEPrologue(
           MoreStackForCalls = std::max(MoreStackForCalls,
                                (HipeLeafWords - 1 - CalleeStkArity) * SlotSize);
       }
+    }
     MaxStack += MoreStackForCalls;
   }
 
