@@ -2636,8 +2636,8 @@ bool Lexer::IsStartOfConflictMarker(const char *CurPtr) {
     return false;
   
   // Check to see if we have <<<<<<< or >>>>.
-  if ((BufferEnd-CurPtr < 8 || StringRef(CurPtr, 7) != "<<<<<<<") &&
-      (BufferEnd-CurPtr < 6 || StringRef(CurPtr, 5) != ">>>> "))
+  if (!StringRef(CurPtr, BufferEnd - CurPtr).startswith("<<<<<<<") &&
+      !StringRef(CurPtr, BufferEnd - CurPtr).startswith(">>>> "))
     return false;
 
   // If we have a situation where we don't care about conflict markers, ignore
