@@ -154,6 +154,9 @@ def SanitizeThread : EnumAttr<"sanitize_thread">;
 /// MemorySanitizer is on.
 def SanitizeMemory : EnumAttr<"sanitize_memory">;
 
+/// Argument is swift error.
+def SwiftError : EnumAttr<"swifterror">;
+
 /// Argument is swift self/context.
 def SwiftSelf : EnumAttr<"swiftself">;
 

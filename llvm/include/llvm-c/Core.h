@@ -95,6 +95,7 @@ typedef enum {
     LLVMConvergentAttribute = 1ULL << 46,
     LLVMSafeStackAttribute = 1ULL << 47,
     LLVMSwiftSelfAttribute = 1ULL << 48,
+    LLVMSwiftErrorAttribute = 1ULL << 49,
     */
 } LLVMAttribute;
 

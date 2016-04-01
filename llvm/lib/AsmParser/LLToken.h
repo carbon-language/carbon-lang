@@ -152,6 +152,7 @@ namespace lltok {
     kw_sret,
     kw_sanitize_thread,
     kw_sanitize_memory,
+    kw_swifterror,
     kw_swiftself,
     kw_uwtable,
     kw_zeroext,

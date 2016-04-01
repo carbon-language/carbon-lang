@@ -50,6 +50,8 @@ namespace ISD {
     static const uint64_t SplitEndOffs   = 13;
     static const uint64_t SwiftSelf      = 1ULL<<14; ///< Swift self parameter
     static const uint64_t SwiftSelfOffs  = 14;
+    static const uint64_t SwiftError     = 1ULL<<15; ///< Swift error parameter
+    static const uint64_t SwiftErrorOffs = 15;
     static const uint64_t OrigAlign      = 0x1FULL<<27;
     static const uint64_t OrigAlignOffs  = 27;
     static const uint64_t ByValSize      = 0x3fffffffULL<<32; ///< Struct size
@@ -86,6 +88,9 @@ namespace ISD {
 
     bool isSwiftSelf() const { return Flags & SwiftSelf; }
     void setSwiftSelf() { Flags |= One << SwiftSelfOffs; }
+
+    bool isSwiftError() const { return Flags & SwiftError; }
+    void setSwiftError() { Flags |= One << SwiftErrorOffs; }
 
     bool isNest()      const { return Flags & Nest; }
     void setNest()     { Flags |= One << NestOffs; }
