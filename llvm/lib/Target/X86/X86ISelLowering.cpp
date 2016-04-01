@@ -2039,7 +2039,8 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
         return MVT::v32i8;
       }
       if (Subtarget.hasSSE2())
-        return MVT::v4i32;
+        return MVT::v16i8;
+      // TODO: Can SSE1 handle a byte vector?
       if (Subtarget.hasSSE1())
         return MVT::v4f32;
     } else if ((!IsMemset || ZeroMemset) && !MemcpyStrSrc && Size >= 8 &&

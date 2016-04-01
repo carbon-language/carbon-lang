@@ -12,15 +12,10 @@ define void @memset_16_nonzero_bytes(i8* %x) {
 ; SSE2-NEXT:    movq %rax, (%rdi)
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: memset_16_nonzero_bytes:
-; AVX1:         vmovaps {{.*#+}} xmm0 = [707406378,707406378,707406378,707406378]
-; AVX1-NEXT:    vmovups %xmm0, (%rdi)
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: memset_16_nonzero_bytes:
-; AVX2:         vbroadcastss {{.*}}(%rip), %xmm0
-; AVX2-NEXT:    vmovups %xmm0, (%rdi)
-; AVX2-NEXT:    retq
+; AVX-LABEL: memset_16_nonzero_bytes:
+; AVX:         vmovaps {{.*#+}} xmm0 = [42,42,42,42,42,42,42,42,42,42,42,42,42,42,42,42]
+; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    retq
 ;
   %call = tail call i8* @__memset_chk(i8* %x, i32 42, i64 16, i64 -1)
   ret void
@@ -145,19 +140,16 @@ define void @memset_16_nonconst_bytes(i8* %x, i8 %c) {
 ; SSE2-NEXT:    retq
 ;
 ; AVX1-LABEL: memset_16_nonconst_bytes:
-; AVX1:         movzbl %sil, %eax
-; AVX1-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX1-NEXT:    vmovd %eax, %xmm0
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1:         vmovd %esi, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vmovdqu %xmm0, (%rdi)
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: memset_16_nonconst_bytes:
-; AVX2:         movzbl %sil, %eax
-; AVX2-NEXT:    imull $16843009, %eax, %eax # imm = 0x1010101
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vbroadcastss %xmm0, %xmm0
-; AVX2-NEXT:    vmovups %xmm0, (%rdi)
+; AVX2:         vmovd %esi, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %xmm0
+; AVX2-NEXT:    vmovdqu %xmm0, (%rdi)
 ; AVX2-NEXT:    retq
 ;
   tail call void @llvm.memset.p0i8.i64(i8* %x, i8 %c, i64 16, i32 1, i1 false)
