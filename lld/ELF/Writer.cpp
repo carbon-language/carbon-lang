@@ -28,6 +28,10 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf;
 
+// Usually there are 2 dummies sections: ELF header and program header.
+// Relocatable output does not require program headers to be created.
+unsigned dummySectionsNum() { return Config->Relocatable ? 1 : 2; }
+
 namespace {
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
@@ -123,10 +127,6 @@ private:
   bool HasGotOffRel = false;
 };
 } // anonymous namespace
-
-// Usually there are 2 dummies sections: ELF header and program header.
-// Relocatable output does not require program headers to be created.
-unsigned dummySectionsNum() { return Config->Relocatable ? 1 : 2; }
 
 template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   typedef typename ELFT::uint uintX_t;
