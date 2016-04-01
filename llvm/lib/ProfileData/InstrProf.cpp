@@ -720,6 +720,10 @@ bool getValueProfDataFromInst(const Instruction &Inst,
   return true;
 }
 
+MDNode *getPGOFuncNameMetadata(const Function &F) {
+  return F.getMetadata(getPGOFuncNameMetadataName());
+}
+
 void createPGOFuncNameMetadata(Function &F) {
   const std::string &FuncName = getPGOFuncName(F);
   if (FuncName == F.getName())

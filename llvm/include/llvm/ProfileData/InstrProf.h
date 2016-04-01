@@ -19,7 +19,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/ProfileData/InstrProfData.inc"
@@ -250,9 +249,7 @@ bool getValueProfDataFromInst(const Instruction &Inst,
 inline StringRef getPGOFuncNameMetadataName() { return "PGOFuncName"; }
 
 /// Return the PGOFuncName meta data associated with a function.
-inline MDNode *getPGOFuncNameMetadata(const Function &F) {
-  return F.getMetadata(getPGOFuncNameMetadataName());
-}
+MDNode *getPGOFuncNameMetadata(const Function &F);
 
 /// Create the PGOFuncName meta data if PGOFuncName is different from
 /// function's raw name. This should only apply to internal linkage functions
