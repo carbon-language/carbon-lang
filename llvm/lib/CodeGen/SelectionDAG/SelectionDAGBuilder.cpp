@@ -7446,13 +7446,12 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
     return std::make_pair(SDValue(), SDValue());
   }
 
-#ifndef NDEBUG
-  for (unsigned i = 0, e = CLI.Ins.size(); i != e; ++i) {
-    assert(InVals[i].getNode() && "LowerCall emitted a null value!");
-    assert(EVT(CLI.Ins[i].VT) == InVals[i].getValueType() &&
-           "LowerCall emitted a value with the wrong type!");
-  }
-#endif
+  DEBUG(for (unsigned i = 0, e = CLI.Ins.size(); i != e; ++i) {
+          assert(InVals[i].getNode() &&
+                 "LowerCall emitted a null value!");
+          assert(EVT(CLI.Ins[i].VT) == InVals[i].getValueType() &&
+                 "LowerCall emitted a value with the wrong type!");
+        });
 
   SmallVector<SDValue, 4> ReturnValues;
   if (!CanLowerReturn) {
