@@ -1352,11 +1352,6 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
   }
 }
 
-template <class ELFT, class uintX_t>
-static uintX_t fixFileOff(uintX_t FileOff, uintX_t Align,
-                          OutputSectionBase<ELFT> *Sec) {
-}
-
 // Assign VAs (addresses at run-time) to output sections.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
   Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
