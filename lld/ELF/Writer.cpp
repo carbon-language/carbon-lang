@@ -130,6 +130,7 @@ private:
 
 template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   typedef typename ELFT::uint uintX_t;
+  typedef typename ELFT::Ehdr Elf_Ehdr;
 
   // Create singleton output sections.
   DynamicSection<ELFT> Dynamic(*Symtab);
@@ -143,6 +144,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   SymbolTableSection<ELFT> DynSymTab(*Symtab, DynStrTab);
 
   OutputSectionBase<ELFT> ElfHeader("", 0, SHF_ALLOC);
+  ElfHeader.setSize(sizeof(Elf_Ehdr));
   OutputSectionBase<ELFT> ProgramHeaders("", 0, SHF_ALLOC);
   ProgramHeaders.updateAlign(sizeof(uintX_t));
 
@@ -1329,6 +1331,8 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
 
   if (Note.First)
     Phdrs.push_back(std::move(Note));
+
+  Out<ELFT>::ProgramHeaders->setSize(sizeof(Elf_Phdr) * Phdrs.size());
 }
 
 // The first section of each PT_LOAD and the first section after PT_GNU_RELRO
@@ -1355,10 +1359,6 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 
 // Assign VAs (addresses at run-time) to output sections.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
-  size_t PhdrSize = sizeof(Elf_Phdr) * Phdrs.size();
-  Out<ELFT>::ProgramHeaders->setSize(PhdrSize);
-
   uintX_t ThreadBssOffset = 0;
   uintX_t VA = Target->getVAStart();
 
@@ -1383,7 +1383,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
 // Assign file offsets to output sections.
 template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
-  Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
   uintX_t Off = 0;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     if (Sec->getType() == SHT_NOBITS) {
