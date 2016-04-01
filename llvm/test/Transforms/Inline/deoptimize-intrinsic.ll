@@ -88,3 +88,19 @@ normal:
   store i8 %v, i8* %ptr
   ret i32 42
 }
+
+define i8 @callee_with_alloca() alwaysinline {
+  %t = alloca i8
+  %v0 = call i8(...) @llvm.experimental.deoptimize.i8(i32 1) [ "deopt"(i8* %t) ]
+  ret i8 %v0
+}
+
+define void @caller_with_lifetime() {
+; CHECK-LABLE: @caller_with_lifetime(
+; CHECK:  call void (...) @llvm.experimental.deoptimize.isVoid(i32 1) [ "deopt"(i8* %t.i) ]
+; CHECK-NEXT:  ret void
+
+entry:
+  call i8 @callee_with_alloca();
+  ret void
+}
