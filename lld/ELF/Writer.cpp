@@ -452,14 +452,13 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C,
       continue;
     }
 
-    if (Config->EMachine == EM_MIPS) {
-      if (&Body == Config->MipsGpDisp || &Body == Config->MipsLocalGp)
-        // MIPS _gp_disp designates offset between start of function and 'gp'
-        // pointer into GOT. __gnu_local_gp is equal to the current value of
-        // the 'gp'. Therefore any relocations against them do not require
-        // dynamic relocation.
-        continue;
-    }
+    // MIPS _gp_disp designates offset between start of function and 'gp'
+    // pointer into GOT. __gnu_local_gp is equal to the current value of
+    // the 'gp'. Therefore any relocations against them do not require
+    // dynamic relocation.
+    if (Config->EMachine == EM_MIPS &&
+        (&Body == Config->MipsGpDisp || &Body == Config->MipsLocalGp))
+      continue;
 
     if (Preemptible) {
       // We don't know anything about the finaly symbol. Just ask the dynamic
