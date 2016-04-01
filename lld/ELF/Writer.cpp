@@ -295,9 +295,11 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     }
     if (!Body.isPreemptible())
       return 1;
-    Out<ELFT>::Got->addEntry(Body);
-    Out<ELFT>::RelaDyn->addReloc(
-        {Target->TlsGotRel, DynamicReloc<ELFT>::Off_Got, false, &Body});
+    if (!Body.isInGot()) {
+      Out<ELFT>::Got->addEntry(Body);
+      Out<ELFT>::RelaDyn->addReloc(
+          {Target->TlsGotRel, DynamicReloc<ELFT>::Off_Got, false, &Body});
+    }
     return 2;
   }
   return 0;
