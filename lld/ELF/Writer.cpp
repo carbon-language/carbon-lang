@@ -1369,19 +1369,25 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
   }
 }
 
+template <class ELFT, class uintX_t>
+static uintX_t fixFileOff(uintX_t FileOff, uintX_t Align,
+                          OutputSectionBase<ELFT> *Sec) {
+  if (Sec->getType() != SHT_NOBITS)
+    FileOff = alignTo(FileOff, Align);
+  Sec->setFileOffset(FileOff);
+  if (Sec->getType() != SHT_NOBITS)
+    FileOff += Sec->getSize();
+  return FileOff;
+}
+
 // Used for relocatable output (-r). In this case we create only ELF file
 // header, do not create program headers. Also assign of section addresses
 // is very straightforward: we just put all sections sequentually to the file.
 template <class ELFT> void Writer<ELFT>::assignAddressesRelocatable() {
   Out<ELFT>::ElfHeader->setSize(sizeof(Elf_Ehdr));
   uintX_t FileOff = 0;
-  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    if (Sec->getType() != SHT_NOBITS)
-      FileOff = alignTo(FileOff, Sec->getAlign());
-    Sec->setFileOffset(FileOff);
-    if (Sec->getType() != SHT_NOBITS)
-      FileOff += Sec->getSize();
-  }
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
+    FileOff = fixFileOff(FileOff, Sec->getAlign(), Sec);
   SectionHeaderOff = alignTo(FileOff, sizeof(uintX_t));
   FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
 }
@@ -1401,12 +1407,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     uintX_t Align = Sec->getAlign();
     if (Sec->PageAlign)
       Align = std::max<uintX_t>(Align, Target->PageSize);
-
-    if (Sec->getType() != SHT_NOBITS)
-      FileOff = alignTo(FileOff, Align);
-    Sec->setFileOffset(FileOff);
-    if (Sec->getType() != SHT_NOBITS)
-      FileOff += Sec->getSize();
+    FileOff = fixFileOff(FileOff, Align, Sec);
 
     // We only assign VAs to allocated sections.
     if (needsPtLoad<ELFT>(Sec)) {
