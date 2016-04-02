@@ -313,7 +313,7 @@ void LLVMContext::deleteGC(const Function &Fn) {
   pImpl->GCNames.erase(&Fn);
 }
 
-bool LLVMContext::discardValueNames() const { return pImpl->DiscardValueNames; }
+bool LLVMContext::shouldDiscardValueNames() const { return pImpl->DiscardValueNames; }
 
 void LLVMContext::setDiscardValueNames(bool Discard) {
   pImpl->DiscardValueNames = Discard;
