@@ -142,6 +142,24 @@ void LinkerDriver::addLibrary(StringRef Name) {
     addFile(Path);
 }
 
+// This function is called on startup. We need this for LTO since
+// LTO calls LLVM functions to compile bitcode files to native code.
+// Technically this can be delayed until we read bitcode files, but
+// we don't bother to do lazily because the initialization is fast.
+static void initLLVM(opt::InputArgList &Args) {
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+
+  // Parse and evaluate -mllvm options.
+  std::vector<const char *> V;
+  V.push_back("lld (LLVM option parsing)");
+  for (auto *Arg : Args.filtered(OPT_mllvm))
+    V.push_back(Arg->getValue());
+  cl::ParseCommandLineOptions(V.size(), V.data());
+}
+
 // Some command line options or some combinations of them are not allowed.
 // This function checks for such errors.
 static void checkOptions(opt::InputArgList &Args) {
@@ -205,6 +223,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
     return;
   }
 
+  initLLVM(Args);
   readConfigs(Args);
   createFiles(Args);
   checkOptions(Args);
@@ -308,12 +327,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
-
-  std::vector<const char *> Argv;
-  Argv.push_back("lld (LLVM option parsing)");
-  for (auto *Arg : Args.filtered(OPT_mllvm))
-    Argv.push_back(Arg->getValue());
-  cl::ParseCommandLineOptions(Argv.size(), Argv.data());
 }
 
 void LinkerDriver::createFiles(opt::InputArgList &Args) {
@@ -360,12 +373,6 @@ template <class ELFT> static void initSymbols() {
 }
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
-  // For LTO
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  InitializeAllAsmParsers();
-
   initSymbols<ELFT>();
 
   SymbolTable<ELFT> Symtab;
