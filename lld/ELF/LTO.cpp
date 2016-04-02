@@ -143,6 +143,8 @@ std::unique_ptr<InputFile> BitcodeCompiler::compile() {
     internalize(*GV);
   }
 
+  cl::ParseCommandLineOptions(Config->MLlvm.size(), Config->MLlvm.data());
+
   if (Config->SaveTemps)
     saveBCFile(Combined, ".lto.bc");
 

@@ -308,6 +308,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
+
+  for (auto *Arg : Args.filtered(OPT_mllvm))
+    Config->MLlvm.push_back(Arg->getValue());
 }
 
 void LinkerDriver::createFiles(opt::InputArgList &Args) {
