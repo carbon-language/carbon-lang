@@ -80,11 +80,11 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
   for (const ErrorOr<Archive::Child> &COrErr : File->children()) {
     Archive::Child C = check(COrErr, "could not get the child of the archive " +
                                          File->getFileName());
-    MemoryBufferRef Mb =
+    MemoryBufferRef MBRef =
         check(C.getMemoryBufferRef(),
               "could not get the buffer for a child of the archive " +
                   File->getFileName());
-    V.push_back(Mb);
+    V.push_back(MBRef);
   }
 
   // Take ownership of memory buffers created for members of thin archives.
