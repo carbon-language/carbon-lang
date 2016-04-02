@@ -1430,21 +1430,18 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
       const Elf_Sym *Sym = P.first;
 
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-      uintX_t VA = 0;
       if (Sym->st_shndx == SHN_ABS) {
         ESym->st_shndx = SHN_ABS;
-        VA = Sym->st_value;
+        ESym->st_value = Sym->st_value;
       } else {
         InputSectionBase<ELFT> *Section = File->getSection(*Sym);
         const OutputSectionBase<ELFT> *OutSec = Section->OutSec;
         ESym->st_shndx = OutSec->SectionIndex;
-        VA = Section->getOffset(*Sym);
-        VA += OutSec->getVA();
+        ESym->st_value = OutSec->getVA() + Section->getOffset(*Sym);
       }
       ESym->st_name = P.second;
       ESym->st_size = Sym->st_size;
       ESym->setBindingAndType(Sym->getBinding(), Sym->getType());
-      ESym->st_value = VA;
       Buf += sizeof(*ESym);
     }
   }
