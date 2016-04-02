@@ -1451,15 +1451,6 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
 }
 
 template <class ELFT>
-static const typename ELFT::Sym *getElfSym(SymbolBody &Body) {
-  if (auto *EBody = dyn_cast<DefinedElf<ELFT>>(&Body))
-    return &EBody->Sym;
-  if (auto *EBody = dyn_cast<UndefinedElf<ELFT>>(&Body))
-    return &EBody->Sym;
-  return nullptr;
-}
-
-template <class ELFT>
 void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
@@ -1470,7 +1461,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
 
     uint8_t Type = STT_NOTYPE;
     uintX_t Size = 0;
-    if (const Elf_Sym *InputSym = getElfSym<ELFT>(*Body)) {
+    if (const Elf_Sym *InputSym = Body->getElfSym<ELFT>()) {
       Type = InputSym->getType();
       Size = InputSym->st_size;
     } else if (auto *C = dyn_cast<DefinedCommon>(Body)) {
@@ -1533,7 +1524,7 @@ uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
   uint8_t Visibility = Body->getVisibility();
   if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
     return STB_LOCAL;
-  if (const Elf_Sym *ESym = getElfSym<ELFT>(*Body))
+  if (const Elf_Sym *ESym = Body->getElfSym<ELFT>())
     return ESym->getBinding();
   if (isa<DefinedSynthetic<ELFT>>(Body))
     return STB_LOCAL;
