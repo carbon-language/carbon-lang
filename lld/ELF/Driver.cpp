@@ -174,17 +174,16 @@ static void checkOptions(opt::InputArgList &Args) {
   if (Config->Pie && Config->Shared)
     error("-shared and -pie may not be used together");
 
-  if (!Config->Relocatable)
-    return;
-
-  if (Config->Shared)
-    error("-r and -shared may not be used together");
-  if (Config->GcSections)
-    error("-r and --gc-sections may not be used together");
-  if (Config->ICF)
-    error("-r and --icf may not be used together");
-  if (Config->Pie)
-    error("-r and -pie may not be used together");
+  if (Config->Relocatable) {
+    if (Config->Shared)
+      error("-r and -shared may not be used together");
+    if (Config->GcSections)
+      error("-r and --gc-sections may not be used together");
+    if (Config->ICF)
+      error("-r and --icf may not be used together");
+    if (Config->Pie)
+      error("-r and -pie may not be used together");
+  }
 }
 
 static StringRef
