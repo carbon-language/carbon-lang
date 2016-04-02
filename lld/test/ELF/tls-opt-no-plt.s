@@ -15,6 +15,16 @@ _start:
         rex64
         callq   __tls_get_addr@PLT
 
+        leaq    bar@TLSLD(%rip), %rdi
+        callq   __tls_get_addr@PLT
+        leaq    bar@DTPOFF(%rax), %rax
+
+        .type   bar,@object
+        .section        .tdata,"awT",@progbits
+        .align  8
+bar:
+        .long   42
+
 
         .type   foo,@object
         .section        .tdata,"awT",@progbits
