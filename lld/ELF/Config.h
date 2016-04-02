@@ -91,7 +91,6 @@ struct Configuration {
   uint16_t EMachine = llvm::ELF::EM_NONE;
   uint64_t EntryAddr = -1;
   unsigned LtoO;
-  std::vector<const char *> MLlvm;
   unsigned Optimize;
 };
 
