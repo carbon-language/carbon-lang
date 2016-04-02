@@ -116,7 +116,7 @@ bool IsFirstDefinitionForLinker(const GlobalValueInfoList &GVInfo,
           }))
     return false;
   return true;
-};
+}
 
 static void ResolveODR(GlobalValue &GV, const ModuleSummaryIndex &Index,
                              StringRef ModulePath) {
