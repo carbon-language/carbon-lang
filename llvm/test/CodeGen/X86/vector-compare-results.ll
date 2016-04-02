@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse4.2 | FileCheck %s --check-prefix=SSE --check-prefix=SSE42
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512f | FileCheck %s --check-prefix=AVX --check-prefix=AVX512 --check-prefix=AVX512F
 
 ;
 ; 128-bit vector comparisons
@@ -149,6 +150,12 @@ define <4 x i1> @test_cmp_v4f64(<4 x double> %a0, <4 x double> %a1) nounwind {
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,3,2,3]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v4f64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltpd %ymm0, %ymm1, %ymm0
+; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
+; AVX512-NEXT:    retq
   %1 = fcmp ogt <4 x double> %a0, %a1
   ret <4 x i1> %1
 }
@@ -195,6 +202,12 @@ define <8 x i1> @test_cmp_v8f32(<8 x float> %a0, <8 x float> %a1) nounwind {
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v8f32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltps %ymm0, %ymm1, %ymm0
+; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
+; AVX512-NEXT:    retq
   %1 = fcmp ogt <8 x float> %a0, %a1
   ret <8 x i1> %1
 }
@@ -256,6 +269,12 @@ define <4 x i1> @test_cmp_v4i64(<4 x i64> %a0, <4 x i64> %a1) nounwind {
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,3,2,3]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v4i64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtq %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <4 x i64> %a0, %a1
   ret <4 x i1> %1
 }
@@ -302,6 +321,12 @@ define <8 x i1> @test_cmp_v8i32(<8 x i32> %a0, <8 x i32> %a1) nounwind {
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v8i32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtd %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <8 x i32> %a0, %a1
   ret <8 x i1> %1
 }
@@ -350,6 +375,13 @@ define <16 x i1> @test_cmp_v16i16(<16 x i16> %a0, <16 x i16> %a1) nounwind {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v16i16:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtw %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpmovsxwd %ymm0, %zmm0
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <16 x i16> %a0, %a1
   ret <16 x i1> %1
 }
@@ -576,6 +608,11 @@ define <32 x i1> @test_cmp_v32i8(<32 x i8> %a0, <32 x i8> %a1) nounwind {
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vpcmpgtb %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v32i8:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtb %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <32 x i8> %a0, %a1
   ret <32 x i1> %1
 }
@@ -656,6 +693,13 @@ define <8 x i1> @test_cmp_v8f64(<8 x double> %a0, <8 x double> %a1) nounwind {
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v8f64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; AVX512-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512-NEXT:    retq
   %1 = fcmp ogt <8 x double> %a0, %a1
   ret <8 x i1> %1
 }
@@ -710,6 +754,13 @@ define <16 x i1> @test_cmp_v16f32(<16 x float> %a0, <16 x float> %a1) nounwind {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v16f32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltps %zmm0, %zmm1, %k1
+; AVX512-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512-NEXT:    retq
   %1 = fcmp ogt <16 x float> %a0, %a1
   ret <16 x i1> %1
 }
@@ -825,6 +876,13 @@ define <8 x i1> @test_cmp_v8i64(<8 x i64> %a0, <8 x i64> %a1) nounwind {
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v8i64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtq %zmm1, %zmm0, %k1
+; AVX512-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <8 x i64> %a0, %a1
   ret <8 x i1> %1
 }
@@ -882,6 +940,13 @@ define <16 x i1> @test_cmp_v16i32(<16 x i32> %a0, <16 x i32> %a1) nounwind {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v16i32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtd %zmm1, %zmm0, %k1
+; AVX512-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <16 x i32> %a0, %a1
   ret <16 x i1> %1
 }
@@ -1148,6 +1213,17 @@ define <32 x i1> @test_cmp_v32i16(<32 x i16> %a0, <32 x i16> %a1) nounwind {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v32i16:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtw %ymm2, %ymm0, %ymm0
+; AVX512-NEXT:    vpmovsxwd %ymm0, %zmm0
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512-NEXT:    vpcmpgtw %ymm3, %ymm1, %ymm1
+; AVX512-NEXT:    vpmovsxwd %ymm1, %zmm1
+; AVX512-NEXT:    vpmovdb %zmm1, %xmm1
+; AVX512-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX512-NEXT:    retq
   %1 = icmp sgt <32 x i16> %a0, %a1
   ret <32 x i1> %1
 }
@@ -1966,6 +2042,28 @@ define <64 x i1> @test_cmp_v64i8(<64 x i8> %a0, <64 x i8> %a1) nounwind {
 ; AVX2-NEXT:    movq %rdi, %rax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_cmp_v64i8:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtb %ymm3, %ymm1, %ymm3
+; AVX512-NEXT:    vpcmpgtb %ymm2, %ymm0, %ymm1
+; AVX512-NEXT:    vpsllw $7, %xmm1, %xmm0
+; AVX512-NEXT:    vmovdqa {{.*#+}} xmm4 = [128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128]
+; AVX512-NEXT:    vpand %xmm4, %xmm0, %xmm0
+; AVX512-NEXT:    vpxor %xmm5, %xmm5, %xmm5
+; AVX512-NEXT:    vpcmpgtb %xmm0, %xmm5, %xmm0
+; AVX512-NEXT:    vextracti128 $1, %ymm1, %xmm1
+; AVX512-NEXT:    vpsllw $7, %xmm1, %xmm1
+; AVX512-NEXT:    vpand %xmm4, %xmm1, %xmm1
+; AVX512-NEXT:    vpcmpgtb %xmm1, %xmm5, %xmm1
+; AVX512-NEXT:    vpsllw $7, %xmm3, %xmm2
+; AVX512-NEXT:    vpand %xmm4, %xmm2, %xmm2
+; AVX512-NEXT:    vpcmpgtb %xmm2, %xmm5, %xmm2
+; AVX512-NEXT:    vextracti128 $1, %ymm3, %xmm3
+; AVX512-NEXT:    vpsllw $7, %xmm3, %xmm3
+; AVX512-NEXT:    vpand %xmm4, %xmm3, %xmm3
+; AVX512-NEXT:    vpcmpgtb %xmm3, %xmm5, %xmm3
+; AVX512-NEXT:    retq
   %1 = icmp sgt <64 x i8> %a0, %a1
   ret <64 x i1> %1
 }
