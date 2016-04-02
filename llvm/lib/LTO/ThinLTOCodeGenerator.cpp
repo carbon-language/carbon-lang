@@ -29,6 +29,9 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Object/ModuleSummaryIndexObjectFile.h"
+#include "llvm/Support/CachePruning.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/SHA1.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ThreadPool.h"
@@ -286,6 +289,72 @@ std::unique_ptr<MemoryBuffer> codegenModule(Module &TheModule,
   return make_unique<ObjectMemoryBuffer>(std::move(OutputBuffer));
 }
 
+/// Manage caching for a single Module.
+class ModuleCacheEntry {
+  SmallString<128> EntryPath;
+
+public:
+  // Create a cache entry. This compute a unique hash for the Module considering
+  // the current list of export/import, and offer an interface to query to
+  // access the content in the cache.
+  ModuleCacheEntry(StringRef CachePath, const ModuleSummaryIndex &Index,
+                   StringRef ModuleID,
+                   const FunctionImporter::ImportMapTy &ImportList,
+                   const FunctionImporter::ExportSetTy &ExportList) {
+    if (CachePath.empty())
+      return;
+
+    // Compute the unique hash for this entry
+    // This is based on the module itself, the export list, and the hash for
+    // every single module in the import list
+
+    SHA1 Hasher;
+    // Include the hash for the current module
+    auto ModHash = Index.getModuleHash(ModuleID);
+    Hasher.update(ArrayRef<uint8_t>((uint8_t *)&ModHash[0], sizeof(ModHash)));
+    for (auto F : ExportList)
+      // The export list can impact the internalization, be conservative here
+      Hasher.update(ArrayRef<uint8_t>((uint8_t *)&F, sizeof(F)));
+
+    // Include the hash for every module we import functions from
+    for (auto &Entry : ImportList) {
+      auto ModHash = Index.getModuleHash(Entry.first());
+      Hasher.update(ArrayRef<uint8_t>((uint8_t *)&ModHash[0], sizeof(ModHash)));
+    }
+
+    sys::path::append(EntryPath, CachePath, toHex(Hasher.result()));
+  }
+
+  // Try loading the buffer for this cache entry.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> tryLoadingBuffer() {
+    if (EntryPath.empty())
+      return std::error_code();
+    return MemoryBuffer::getFile(EntryPath);
+  }
+
+  // Cache the Produced object file
+  void write(MemoryBufferRef OutputBuffer) {
+    if (EntryPath.empty())
+      return;
+
+    // Write to a temporary to avoid race condition
+    SmallString<128> TempFilename;
+    int TempFD;
+    std::error_code EC =
+        sys::fs::createTemporaryFile("Thin", "tmp.o", TempFD, TempFilename);
+    if (EC) {
+      errs() << "Error: " << EC.message() << "\n";
+      report_fatal_error("ThinLTO: Can't get a temporary file");
+    }
+    {
+      raw_fd_ostream OS(TempFD, /* ShouldClose */ true);
+      OS << OutputBuffer.getBuffer();
+    }
+    // Rename to final destination (hopefully race condition won't matter here)
+    sys::fs::rename(TempFilename, EntryPath);
+  }
+};
+
 static std::unique_ptr<MemoryBuffer>
 ProcessThinLTOModule(Module &TheModule, const ModuleSummaryIndex &Index,
                      StringMap<MemoryBufferRef> &ModuleMap, TargetMachine &TM,
@@ -528,6 +597,21 @@ void ThinLTOCodeGenerator::run() {
     int count = 0;
     for (auto &ModuleBuffer : Modules) {
       Pool.async([&](int count) {
+        // The module may be cached, this helps handling it.
+        ModuleCacheEntry CacheEntry(
+            CacheOptions.Path, *Index, ModuleBuffer.getBufferIdentifier(),
+            ImportLists[ModuleBuffer.getBufferIdentifier()],
+            ExportLists[ModuleBuffer.getBufferIdentifier()]);
+
+        {
+          auto ErrOrBuffer = CacheEntry.tryLoadingBuffer();
+          if (ErrOrBuffer) {
+            // Cache Hit!
+            ProducedBinaries[count] = std::move(ErrOrBuffer.get());
+            return;
+          }
+        }
+
         LLVMContext Context;
         Context.setDiscardValueNames(LTODiscardValueNames);
 
@@ -540,13 +624,23 @@ void ThinLTOCodeGenerator::run() {
         }
 
         auto &ImportList = ImportLists[TheModule->getModuleIdentifier()];
-        ProducedBinaries[count] = ProcessThinLTOModule(
+
+        auto OutputBuffer = ProcessThinLTOModule(
             *TheModule, *Index, ModuleMap, *TMBuilder.create(), ImportList,
             CacheOptions, DisableCodeGen, SaveTempsDir, count);
+
+        CacheEntry.write(*OutputBuffer);
+        ProducedBinaries[count] = std::move(OutputBuffer);
       }, count);
       count++;
     }
   }
+
+  CachePruning(CacheOptions.Path)
+      .setPruningInterval(CacheOptions.PruningInterval)
+      .setEntryExpiration(CacheOptions.Expiration)
+      .setMaxSize(CacheOptions.MaxPercentageOfAvailableSpace)
+      .prune();
 
   // If statistics were requested, print them out now.
   if (llvm::AreStatisticsEnabled())
