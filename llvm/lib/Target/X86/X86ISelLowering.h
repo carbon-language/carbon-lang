@@ -352,6 +352,9 @@ namespace llvm {
       // X86-specific multiply by immediate.
       MUL_IMM,
 
+      // Vector sign bit extraction.
+      MOVMSK,
+
       // Vector bitwise comparisons.
       PTEST,
 
