@@ -301,6 +301,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   Config->Optimize = getInteger(Args, OPT_O, 0);
   Config->LtoO = getInteger(Args, OPT_lto_O, 2);
+  if (Config->LtoO > 3)
+    error("invalid optimization level for LTO: " + getString(Args, OPT_lto_O));
 
   Config->ZExecStack = hasZOption(Args, "execstack");
   Config->ZNodelete = hasZOption(Args, "nodelete");
