@@ -3680,7 +3680,7 @@ void Scop::buildSchedule(Region *R, LoopStackTy &LoopStack, ScopDetection &SD,
 
     Loop *LastLoop = LoopStack.back().L;
     if (LastLoop != L) {
-      if (!LastLoop->contains(L)) {
+      if (LastLoop && !LastLoop->contains(L)) {
         LastRNWaiting = true;
         DelayList.push_back(RN);
         continue;
