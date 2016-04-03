@@ -1,8 +1,16 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; Verify we do not create a SCoP in the presence of infinite loops.
+; Verify we detect and create the SCoP correctly
 ;
-; CHECK-NOT:      Statements
+; CHECK:      Statements {
+; CHECK-NEXT:   Stmt_while_body_us
+; CHECK-NEXT:     Domain :=
+; CHECK-NEXT:       [a13] -> { Stmt_while_body_us[] };
+; CHECK-NEXT:     Schedule :=
+; CHECK-NEXT:       [a13] -> { Stmt_while_body_us[] -> [] };
+; CHECK-NEXT:     MustWriteAccess := [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:       [a13] -> { Stmt_while_body_us[] -> MemRef_uuu[] };
+; CHECK-NEXT: }
 ;
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n8:16:32-S64"
 

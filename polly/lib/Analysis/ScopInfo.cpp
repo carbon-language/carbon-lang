@@ -3618,15 +3618,8 @@ void Scop::buildSchedule(ScopDetection &SD, LoopInfo &LI) {
   Loop *L = getLoopSurroundingRegion(getRegion(), LI);
   LoopStackTy LoopStack({LoopStackElementTy(L, nullptr, 0)});
   buildSchedule(getRegion().getNode(), LoopStack, SD, LI);
-  assert(!LoopStack.empty());
-  if (LoopStack.size() == 1 && LoopStack.back().L == L) {
-    Schedule = LoopStack[0].Schedule;
-  } else {
-    // If something went wrong we have to cleanup.
-    assert(!hasFeasibleRuntimeContext());
-    while (!LoopStack.empty())
-      isl_schedule_free(LoopStack.pop_back_val().Schedule);
-  }
+  assert(LoopStack.size() == 1 && LoopStack.back().L == L);
+  Schedule = LoopStack[0].Schedule;
 }
 
 /// To generate a schedule for the elements in a Region we traverse the Region
@@ -3669,21 +3662,8 @@ void Scop::buildSchedule(Region *R, LoopStackTy &LoopStack, ScopDetection &SD,
   // iterator. If it is set we have to explore the next sub-region/block from
   // the iterator (if any) to guarantee progress. If it is not set we first try
   // the next queued sub-region/blocks.
-  unsigned RemainingWork = WorkList.size() + DelayList.size() + 1;
   while (!WorkList.empty() || !DelayList.empty()) {
-    Loop *LastLoop = LoopStack.back().L;
     RegionNode *RN;
-
-    // FIXME: We will bail out if we cannot make progress. So far that is only
-    //        known to happen in the presence of infinite loops without an exit
-    //        edge. For such cases there is no region covering only the loop and
-    //        our reasoning fails.
-    if (WorkList.size() + DelayList.size() >= RemainingWork) {
-      invalidate(INFINITELOOP, R->getEntry()->getTerminator()->getDebugLoc());
-      LastLoop = nullptr;
-    }
-
-    RemainingWork = WorkList.size() + DelayList.size();
 
     if ((LastRNWaiting && !WorkList.empty()) || DelayList.size() == 0) {
       RN = WorkList.front();
@@ -3698,8 +3678,9 @@ void Scop::buildSchedule(Region *R, LoopStackTy &LoopStack, ScopDetection &SD,
     if (!getRegion().contains(L))
       L = OuterScopLoop;
 
+    Loop *LastLoop = LoopStack.back().L;
     if (LastLoop != L) {
-      if (LastLoop && !LastLoop->contains(L)) {
+      if (!LastLoop->contains(L)) {
         LastRNWaiting = true;
         DelayList.push_back(RN);
         continue;
