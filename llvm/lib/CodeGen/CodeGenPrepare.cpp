@@ -855,11 +855,11 @@ static bool CombineUAddWithOverflow(CmpInst *CI) {
 /// lose; some adjustment may be wanted there.
 ///
 /// Return true if any changes are made.
-static bool SinkCmpExpression(CmpInst *CI, const TargetLowering &TLI) {
+static bool SinkCmpExpression(CmpInst *CI, const TargetLowering *TLI) {
   BasicBlock *DefBB = CI->getParent();
 
   // Avoid sinking soft-FP comparisons, since this can move them into a loop.
-  if (TLI.useSoftFloat() && isa<FCmpInst>(CI))
+  if (TLI && TLI->useSoftFloat() && isa<FCmpInst>(CI))
     return false;
 
   // Only insert a cmp in each block once.
@@ -911,7 +911,7 @@ static bool SinkCmpExpression(CmpInst *CI, const TargetLowering &TLI) {
 }
 
 static bool OptimizeCmpExpression(CmpInst *CI, const TargetLowering *TLI) {
-  if (TLI && SinkCmpExpression(CI, *TLI))
+  if (SinkCmpExpression(CI, TLI))
     return true;
 
   if (CombineUAddWithOverflow(CI))
