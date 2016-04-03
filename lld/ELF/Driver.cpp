@@ -434,13 +434,17 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (StringRef S : Config->Undefined)
     Symtab.addUndefinedOpt(S);
 
+  // -save-temps creates a file based on the output file name so we want
+  // to set it right before LTO. This code can't be moved to option parsing
+  // because linker scripts can override the output filename using the
+  // OUTPUT() directive.
+  if (Config->OutputFile.empty())
+    Config->OutputFile = "a.out";
+
   Symtab.addCombinedLtoObject();
 
   for (auto *Arg : Args.filtered(OPT_wrap))
     Symtab.wrap(Arg->getValue());
-
-  if (Config->OutputFile.empty())
-    Config->OutputFile = "a.out";
 
   // Write the result to the file.
   Symtab.scanShlibUndefined();
