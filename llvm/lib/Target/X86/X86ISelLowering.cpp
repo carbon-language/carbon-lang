@@ -28507,20 +28507,20 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
 
 static SDValue combineTruncate(SDNode *N, SelectionDAG &DAG,
                                const X86Subtarget &Subtarget) {
-
+  EVT VT = N->getValueType(0);
   SDValue Src = N->getOperand(0);
+  SDLoc DL(N);
 
   // Try to detect AVG pattern first.
-  if (SDValue Avg = detectAVGPattern(Src, N->getValueType(0), DAG,
-                                     Subtarget, SDLoc(N)))
+  if (SDValue Avg = detectAVGPattern(Src, VT, DAG, Subtarget, DL))
     return Avg;
 
   // The bitcast source is a direct mmx result.
   // Detect bitcasts between i32 to x86mmx
-  if (Src.getOpcode() == ISD::BITCAST && N->getValueType(0) == MVT::i32) {
+  if (Src.getOpcode() == ISD::BITCAST && VT == MVT::i32) {
     SDValue BCSrc = Src.getOperand(0);
     if (BCSrc.getValueType() == MVT::x86mmx)
-      return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(N), MVT::i32, BCSrc);
+      return DAG.getNode(X86ISD::MMX_MOVD2W, DL, MVT::i32, BCSrc);
   }
 
   return combineVectorTruncation(N, DAG, Subtarget);
