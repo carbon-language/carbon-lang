@@ -910,8 +910,8 @@ static bool SinkCmpExpression(CmpInst *CI, const TargetLowering &TLI) {
   return MadeChange;
 }
 
-static bool OptimizeCmpExpression(CmpInst *CI, const TargetLowering &TLI) {
-  if (SinkCmpExpression(CI, TLI))
+static bool OptimizeCmpExpression(CmpInst *CI, const TargetLowering *TLI) {
+  if (TLI && SinkCmpExpression(CI, *TLI))
     return true;
 
   if (CombineUAddWithOverflow(CI))
@@ -5177,7 +5177,7 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, bool& ModifiedDT) {
 
   if (CmpInst *CI = dyn_cast<CmpInst>(I))
     if (!TLI || !TLI->hasMultipleConditionRegisters())
-      return OptimizeCmpExpression(CI, *TLI);
+      return OptimizeCmpExpression(CI, TLI);
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     stripInvariantGroupMetadata(*LI);
