@@ -1240,15 +1240,23 @@ buildConditionSets(Scop &S, Value *Condition, TerminatorInst *TI, Loop *L,
   // under which @p Condition is true/false.
   if (!TI)
     ConsequenceCondSet = isl_set_params(ConsequenceCondSet);
-
   assert(ConsequenceCondSet);
-  isl_set *AlternativeCondSet =
-      isl_set_complement(isl_set_copy(ConsequenceCondSet));
+  ConsequenceCondSet = isl_set_coalesce(
+      isl_set_intersect(ConsequenceCondSet, isl_set_copy(Domain)));
 
-  ConditionSets.push_back(isl_set_coalesce(
-      isl_set_intersect(ConsequenceCondSet, isl_set_copy(Domain))));
-  ConditionSets.push_back(isl_set_coalesce(
-      isl_set_intersect(AlternativeCondSet, isl_set_copy(Domain))));
+  isl_set *AlternativeCondSet;
+  unsigned NumParams = isl_set_n_param(ConsequenceCondSet);
+  unsigned NumBasicSets = isl_set_n_basic_set(ConsequenceCondSet);
+  if (NumBasicSets + NumParams < MaxConjunctsInDomain) {
+    AlternativeCondSet = isl_set_subtract(isl_set_copy(Domain),
+                                          isl_set_copy(ConsequenceCondSet));
+  } else {
+    S.invalidate(COMPLEXITY, TI ? TI->getDebugLoc() : DebugLoc());
+    AlternativeCondSet = isl_set_empty(isl_set_get_space(ConsequenceCondSet));
+  }
+
+  ConditionSets.push_back(ConsequenceCondSet);
+  ConditionSets.push_back(isl_set_coalesce(AlternativeCondSet));
 }
 
 /// @brief Build the conditions sets for the terminator @p TI in the @p Domain.
@@ -2390,7 +2398,7 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
 
       // Check if the maximal number of domain conjuncts was reached.
       // In case this happens we will clean up and bail.
-      if (isl_set_n_basic_set(SuccDomain) <= MaxConjunctsInDomain)
+      if (isl_set_n_basic_set(SuccDomain) < MaxConjunctsInDomain)
         continue;
 
       invalidate(COMPLEXITY, DebugLoc());

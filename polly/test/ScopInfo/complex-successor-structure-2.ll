@@ -4,7 +4,7 @@
 ; We build a scop for the region for.body->B13. The CFG is of the following
 ; form and the branch conditions are build from "smax" SCEVs. However, in
 ; contrast to complex-success-structure.ll the smax constraints do not grow
-; anymore after B4. This will keep the condition construction bounded.
+; anymore after B3. This will keep the condition construction bounded.
 ; Since we propagate the domains from one B(X) to the B(X+1) we can also keep
 ; the domains simple. We will bail anyway due to invalid required invariant
 ; loads.
@@ -443,7 +443,7 @@ A4:                                      ; preds = %B3
 
 B4:                                       ; preds = %A4, %B3
   %46 = phi i16 [ %add84.3, %A4 ], [ %45, %B3 ]
-  %add84.4 = add i16 %46, 128
+  %add84.4 = add i16 %44, 128
   %arrayidx74.5 = getelementptr inbounds i16, i16* %Output, i32 5
   %47 = load i16, i16* %arrayidx74.5, align 2
   %cmp77.5 = icmp slt i16 %47, %add84.4
@@ -455,7 +455,7 @@ A5:                                      ; preds = %B4
 
 B5:                                       ; preds = %A5, %B4
   %48 = phi i16 [ %add84.4, %A5 ], [ %47, %B4 ]
-  %add84.5 = add i16 %46, 128
+  %add84.5 = add i16 %44, 128
   %arrayidx74.6 = getelementptr inbounds i16, i16* %Output, i32 6
   %49 = load i16, i16* %arrayidx74.6, align 2
   %cmp77.6 = icmp slt i16 %49, %add84.5
@@ -467,7 +467,7 @@ A6:                                      ; preds = %B5
 
 B6:                                       ; preds = %A6, %B5
   %50 = phi i16 [ %add84.5, %A6 ], [ %49, %B5 ]
-  %add84.6 = add i16 %46, 128
+  %add84.6 = add i16 %44, 128
   %arrayidx74.7 = getelementptr inbounds i16, i16* %Output, i32 7
   %51 = load i16, i16* %arrayidx74.7, align 2
   %cmp77.7 = icmp slt i16 %51, %add84.6
@@ -479,7 +479,7 @@ A7:                                      ; preds = %B6
 
 B7:                                       ; preds = %A7, %B6
   %52 = phi i16 [ %add84.6, %A7 ], [ %51, %B6 ]
-  %add84.7 = add i16 %46, 128
+  %add84.7 = add i16 %44, 128
   %arrayidx74.8 = getelementptr inbounds i16, i16* %Output, i32 8
   %53 = load i16, i16* %arrayidx74.8, align 2
   %cmp77.8 = icmp slt i16 %53, %add84.7
@@ -491,7 +491,7 @@ A8:                                      ; preds = %B7
 
 B8:                                       ; preds = %A8, %B7
   %54 = phi i16 [ %add84.7, %A8 ], [ %53, %B7 ]
-  %add84.8 = add i16 %46, 128
+  %add84.8 = add i16 %44, 128
   %cmp77.9 = icmp slt i16 %.reload, %add84.8
   br i1 %cmp77.9, label %A9, label %B9
 
@@ -502,7 +502,7 @@ A9:                                      ; preds = %B8
 
 B9:                                       ; preds = %A9, %B8
   %55 = phi i16 [ %add84.8, %A9 ], [ %.reload, %B8 ]
-  %add84.9 = add i16 %46, 128
+  %add84.9 = add i16 %44, 128
   %cmp77.10 = icmp slt i16 %.reload151, %add84.9
   br i1 %cmp77.10, label %A10, label %B10
 
@@ -513,7 +513,7 @@ A10:                                     ; preds = %B9
 
 B10:                                      ; preds = %A10, %B9
   %56 = phi i16 [ %add84.9, %A10 ], [ %.reload151, %B9 ]
-  %add84.10 = add i16 %46, 128
+  %add84.10 = add i16 %44, 128
   %cmp77.11 = icmp slt i16 %.reload153, %add84.10
   br i1 %cmp77.11, label %A11, label %B11
 
@@ -524,7 +524,7 @@ A11:                                     ; preds = %B10
 
 B11:                                      ; preds = %A11, %B10
   %57 = phi i16 [ %add84.10, %A11 ], [ %.reload153, %B10 ]
-  %add84.11 = add i16 %46, 128
+  %add84.11 = add i16 %44, 128
   %cmp77.12 = icmp slt i16 %.reload155, %add84.11
   br i1 %cmp77.12, label %A12, label %B13
 
