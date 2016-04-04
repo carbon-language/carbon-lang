@@ -152,9 +152,11 @@ public:
   // symbol or if the symbol should point to its plt entry.
   unsigned NeedsCopyOrPltAddr : 1;
 
-  uint8_t Type;
-  uint8_t Binding;
-  uint8_t Other;
+  // The following fields have the same meaning as the ELF symbol attributes.
+  uint8_t Type;    // symbol type
+  uint8_t Binding; // symbol binding
+  uint8_t Other;   // st_other field value
+
   bool isSection() const { return Type == llvm::ELF::STT_SECTION; }
   bool isTls() const { return Type == llvm::ELF::STT_TLS; }
   bool isFunc() const { return Type == llvm::ELF::STT_FUNC; }
