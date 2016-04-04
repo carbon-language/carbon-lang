@@ -8091,8 +8091,10 @@ public:
 
   /// \brief Called on well-formed '\#pragma omp declare simd' after parsing of
   /// the associated method/function.
-  DeclGroupPtrTy ActOnOpenMPDeclareSimdDirective(DeclGroupPtrTy DG,
-                                                 SourceLocation StartLoc);
+  DeclGroupPtrTy
+  ActOnOpenMPDeclareSimdDirective(DeclGroupPtrTy DG,
+                                  OMPDeclareSimdDeclAttr::BranchStateTy BS,
+                                  SourceRange SR);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,
