@@ -54,7 +54,6 @@ static cl::opt<bool> DisableHoisting("disable-spill-hoist", cl::Hidden,
 
 namespace {
 class HoistSpillHelper {
-  MachineFunction &MF;
   LiveIntervals &LIS;
   LiveStacks &LSS;
   AliasAnalysis *AA;
@@ -104,7 +103,7 @@ class HoistSpillHelper {
 public:
   HoistSpillHelper(MachineFunctionPass &pass, MachineFunction &mf,
                    VirtRegMap &vrm)
-      : MF(mf), LIS(pass.getAnalysis<LiveIntervals>()),
+      : LIS(pass.getAnalysis<LiveIntervals>()),
         LSS(pass.getAnalysis<LiveStacks>()),
         AA(&pass.getAnalysis<AAResultsWrapperPass>().getAAResults()),
         MDT(pass.getAnalysis<MachineDominatorTree>()),
@@ -343,9 +342,10 @@ bool InlineSpiller::isSibling(unsigned Reg) {
 bool InlineSpiller::hoistSpillInsideBB(LiveInterval &SpillLI,
                                        MachineInstr &CopyMI) {
   SlotIndex Idx = LIS.getInstructionIndex(CopyMI);
+#ifndef NDEBUG
   VNInfo *VNI = SpillLI.getVNInfoAt(Idx.getRegSlot());
   assert(VNI && VNI->def == Idx.getRegSlot() && "Not defined by copy");
-
+#endif
   unsigned SrcReg = CopyMI.getOperand(1).getReg();
   LiveInterval &SrcLI = LIS.getInterval(SrcReg);
   VNInfo *SrcVNI = SrcLI.getVNInfoAt(Idx);
