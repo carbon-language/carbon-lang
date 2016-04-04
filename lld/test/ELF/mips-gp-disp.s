@@ -17,7 +17,7 @@
 # INT-SO-NEXT: Binding: Local
 
 # EXT-SO:      Name: _gp_disp
-# EXT-SO-NEXT: Value: 0x20010
+# EXT-SO-NEXT: Value: 0x20000
 
 # DIS:      Disassembly of section .text:
 # DIS-NEXT: __start:

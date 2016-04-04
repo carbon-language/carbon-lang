@@ -426,9 +426,6 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms) {
-    // FIXME: We should probably just err if we get a local symbol in here.
-    if (Sym.getBinding() == STB_LOCAL)
-      continue;
     StringRef Name = check(Sym.getName(this->StringTable));
     if (Sym.isUndefined())
       Undefs.push_back(Name);
