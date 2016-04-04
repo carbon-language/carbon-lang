@@ -92,7 +92,8 @@ namespace {
                     MachineBasicBlock *PredBB,
                     DenseMap<unsigned, unsigned> &LocalVRMap,
                     SmallVectorImpl<std::pair<unsigned,unsigned> > &Copies,
-                    const DenseSet<unsigned> &UsedByPhi);
+                    const DenseSet<unsigned> &UsedByPhi,
+                    bool Remove);
     void DuplicateInstruction(MachineInstr *MI,
                               MachineBasicBlock *TailBB,
                               MachineBasicBlock *PredBB,
@@ -394,7 +395,7 @@ void TailDuplicatePass::ProcessPHI(
     MachineInstr *MI, MachineBasicBlock *TailBB, MachineBasicBlock *PredBB,
     DenseMap<unsigned, unsigned> &LocalVRMap,
     SmallVectorImpl<std::pair<unsigned, unsigned> > &Copies,
-    const DenseSet<unsigned> &RegsUsedByPhi) {
+    const DenseSet<unsigned> &RegsUsedByPhi, bool Remove) {
   unsigned DefReg = MI->getOperand(0).getReg();
   unsigned SrcOpIdx = getPHISrcRegOpIdx(MI, PredBB);
   assert(SrcOpIdx && "Unable to find matching PHI source?");
@@ -408,6 +409,9 @@ void TailDuplicatePass::ProcessPHI(
   Copies.push_back(std::make_pair(NewDef, SrcReg));
   if (isDefLiveOut(DefReg, TailBB, MRI) || RegsUsedByPhi.count(DefReg))
     AddSSAUpdateEntry(DefReg, NewDef, PredBB);
+
+  if (!Remove)
+    return;
 
   // Remove PredBB from the PHI node.
   MI->RemoveOperand(SrcOpIdx+1);
@@ -836,7 +840,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
       if (MI->isPHI()) {
         // Replace the uses of the def of the PHI with the register coming
         // from PredBB.
-        ProcessPHI(MI, TailBB, PredBB, LocalVRMap, CopyInfos, UsedByPhi);
+        ProcessPHI(MI, TailBB, PredBB, LocalVRMap, CopyInfos, UsedByPhi, true);
       } else {
         // Replace def of virtual registers with new registers, and update
         // uses with PHI source register or the new registers.
@@ -890,7 +894,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
         // Replace the uses of the def of the PHI with the register coming
         // from PredBB.
         MachineInstr *MI = &*I++;
-        ProcessPHI(MI, TailBB, PrevBB, LocalVRMap, CopyInfos, UsedByPhi);
+        ProcessPHI(MI, TailBB, PrevBB, LocalVRMap, CopyInfos, UsedByPhi, true);
         if (MI->getParent())
           MI->eraseFromParent();
       }
@@ -922,16 +926,56 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
     Changed = true;
   }
 
-  // TODO: We shouldn't need this assert. It's here to be defensive about
-  // removing the logic from r132816, which handled an unreachable case.
-  assert((!PreRegAlloc || !Changed ||
-          std::all_of(Preds.begin(), Preds.end(),
-                      [&TDBBs](MachineBasicBlock *PredBB) {
-                        return (std::find(TDBBs.begin(), TDBBs.end(), PredBB) !=
-                                TDBBs.end()) ||
-                               PredBB->succ_size() != 1;
-                      })) &&
-         "loop block duplicated into some but not all predecessors");
+  // If this is after register allocation, there are no phis to fix.
+  if (!PreRegAlloc)
+    return Changed;
+
+  // If we made no changes so far, we are safe.
+  if (!Changed)
+    return Changed;
+
+
+  // Handle the nasty case in that we duplicated a block that is part of a loop
+  // into some but not all of its predecessors. For example:
+  //    1 -> 2 <-> 3                 |
+  //          \                      |
+  //           \---> rest            |
+  // if we duplicate 2 into 1 but not into 3, we end up with
+  // 12 -> 3 <-> 2 -> rest           |
+  //   \             /               |
+  //    \----->-----/                |
+  // If there was a "var = phi(1, 3)" in 2, it has to be ultimately replaced
+  // with a phi in 3 (which now dominates 2).
+  // What we do here is introduce a copy in 3 of the register defined by the
+  // phi, just like when we are duplicating 2 into 3, but we don't copy any
+  // real instructions or remove the 3 -> 2 edge from the phi in 2.
+  for (SmallSetVector<MachineBasicBlock *, 8>::iterator PI = Preds.begin(),
+       PE = Preds.end(); PI != PE; ++PI) {
+    MachineBasicBlock *PredBB = *PI;
+    if (std::find(TDBBs.begin(), TDBBs.end(), PredBB) != TDBBs.end())
+      continue;
+
+    // EH edges
+    if (PredBB->succ_size() != 1)
+      continue;
+
+    DenseMap<unsigned, unsigned> LocalVRMap;
+    SmallVector<std::pair<unsigned,unsigned>, 4> CopyInfos;
+    MachineBasicBlock::iterator I = TailBB->begin();
+    // Process PHI instructions first.
+    while (I != TailBB->end() && I->isPHI()) {
+      // Replace the uses of the def of the PHI with the register coming
+      // from PredBB.
+      MachineInstr *MI = &*I++;
+      ProcessPHI(MI, TailBB, PredBB, LocalVRMap, CopyInfos, UsedByPhi, false);
+    }
+    MachineBasicBlock::iterator Loc = PredBB->getFirstTerminator();
+    for (unsigned i = 0, e = CopyInfos.size(); i != e; ++i) {
+      Copies.push_back(BuildMI(*PredBB, Loc, DebugLoc(),
+                               TII->get(TargetOpcode::COPY),
+                               CopyInfos[i].first).addReg(CopyInfos[i].second));
+    }
+  }
 
   return Changed;
 }
