@@ -11,7 +11,10 @@
 
 # REQUIRES: mips
 
-# INT-SO-NOT:  Name: _gp_disp
+# INT-SO:      Name: _gp_disp
+# INT-SO-NEXT: Value:
+# INT-SO-NEXT: Size:
+# INT-SO-NEXT: Binding: Local
 
 # EXT-SO:      Name: _gp_disp
 # EXT-SO-NEXT: Value: 0x20010
