@@ -77,7 +77,7 @@ public:
   // Returns the symbol name.
   StringRef getName() const {
     assert(!isLocal());
-    return Name;
+    return StringRef(Name.S, Name.Len);
   }
   uint32_t getNameOffset() const {
     assert(isLocal());
@@ -127,7 +127,8 @@ protected:
   SymbolBody(Kind K, StringRef Name, uint8_t Binding, uint8_t Other,
              uint8_t Type)
       : SymbolKind(K), MustBeInDynSym(false), NeedsCopyOrPltAddr(false),
-        Type(Type), Binding(Binding), Other(Other), Name(Name) {
+        Type(Type), Binding(Binding), Other(Other),
+        Name({Name.data(), Name.size()}) {
     assert(!isLocal());
     IsUsedInRegularObj =
         K != SharedKind && K != LazyKind && K != DefinedBitcodeKind;
@@ -163,8 +164,12 @@ public:
   void setVisibility(uint8_t V) { Other = (Other & ~0x3) | V; }
 
 protected:
+  struct Str {
+    const char *S;
+    size_t Len;
+  };
   union {
-    StringRef Name;
+    Str Name;
     uint32_t NameOffset;
   };
   Symbol *Backref = nullptr;
