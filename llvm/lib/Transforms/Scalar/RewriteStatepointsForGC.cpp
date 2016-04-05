@@ -1283,9 +1283,20 @@ class DeferredReplacement {
   DeferredReplacement() {}
 
 public:
-  explicit DeferredReplacement(Instruction *Old, Instruction *New) :
-    Old(Old), New(New) {
-    assert(Old != New && "Not allowed!");
+  static DeferredReplacement createRAUW(Instruction *Old, Instruction *New) {
+    assert(Old != New && Old && New &&
+           "Cannot RAUW equal values or to / from null!");
+
+    DeferredReplacement D;
+    D.Old = Old;
+    D.New = New;
+    return D;
+  }
+
+  static DeferredReplacement createDelete(Instruction *ToErase) {
+    DeferredReplacement D;
+    D.Old = ToErase;
+    return D;
   }
 
   static DeferredReplacement createDeoptimizeReplacement(Instruction *Old) {
@@ -1488,9 +1499,11 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
       // llvm::Instruction.  Instead, we defer the replacement and deletion to
       // after the live sets have been made explicit in the IR, and we no longer
       // have raw pointers to worry about.
-      Replacements.emplace_back(CS.getInstruction(), GCResult);
+      Replacements.emplace_back(
+          DeferredReplacement::createRAUW(CS.getInstruction(), GCResult));
     } else {
-      Replacements.emplace_back(CS.getInstruction(), nullptr);
+      Replacements.emplace_back(
+          DeferredReplacement::createDelete(CS.getInstruction()));
     }
   }
 
