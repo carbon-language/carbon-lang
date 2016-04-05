@@ -11,6 +11,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 @null_hello = constant [7 x i8] c"\00hello\00"
 @nullstring = constant i8 0
 @a = common global [32 x i8] zeroinitializer, align 1
+@null_hello_mid = constant [13 x i8] c"hello wor\00ld\00"
 
 declare i32 @strlen(i8*)
 
@@ -107,6 +108,35 @@ define i32 @test_simplify9(i1 %x) {
   ret i32 %l
 }
 
+; Check the case that should be simplified to a sub instruction.
+; strlen(@hello + x) --> 5 - x
+
+define i32 @test_simplify10(i32 %x) {
+; CHECK-LABEL: @test_simplify10(
+; CHECK-NEXT:    [[HELLO_P:%.*]] = getelementptr inbounds [6 x i8], [6 x i8]* @hello, i32 0, i32 %x
+; CHECK-NEXT:    [[HELLO_L:%.*]] = call i32 @strlen(i8* [[HELLO_P]])
+; CHECK-NEXT:    ret i32 [[HELLO_L]]
+;
+  %hello_p = getelementptr inbounds [6 x i8], [6 x i8]* @hello, i32 0, i32 %x
+  %hello_l = call i32 @strlen(i8* %hello_p)
+  ret i32 %hello_l
+}
+
+; strlen(@null_hello_mid + (x & 7)) --> 9 - (x & 7)
+
+define i32 @test_simplify11(i32 %x) {
+; CHECK-LABEL: @test_simplify11(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %x, 7
+; CHECK-NEXT:    [[HELLO_P:%.*]] = getelementptr inbounds [13 x i8], [13 x i8]* @null_hello_mid, i32 0, i32 [[AND]]
+; CHECK-NEXT:    [[HELLO_L:%.*]] = call i32 @strlen(i8* [[HELLO_P]])
+; CHECK-NEXT:    ret i32 [[HELLO_L]]
+;
+  %and = and i32 %x, 7
+  %hello_p = getelementptr inbounds [13 x i8], [13 x i8]* @null_hello_mid, i32 0, i32 %and
+  %hello_l = call i32 @strlen(i8* %hello_p)
+  ret i32 %hello_l
+}
+
 ; Check cases that shouldn't be simplified.
 
 define i32 @test_no_simplify1() {
@@ -118,3 +148,32 @@ define i32 @test_no_simplify1() {
   %a_l = call i32 @strlen(i8* %a_p)
   ret i32 %a_l
 }
+
+; strlen(@null_hello + x) should not be simplified to a sub instruction.
+
+define i32 @test_no_simplify2(i32 %x) {
+; CHECK-LABEL: @test_no_simplify2(
+; CHECK-NEXT:    [[HELLO_P:%.*]] = getelementptr inbounds [7 x i8], [7 x i8]* @null_hello, i32 0, i32 %x
+; CHECK-NEXT:    [[HELLO_L:%.*]] = call i32 @strlen(i8* [[HELLO_P]])
+; CHECK-NEXT:    ret i32 [[HELLO_L]]
+;
+  %hello_p = getelementptr inbounds [7 x i8], [7 x i8]* @null_hello, i32 0, i32 %x
+  %hello_l = call i32 @strlen(i8* %hello_p)
+  ret i32 %hello_l
+}
+
+; strlen(@null_hello_mid + (x & 15)) should not be simplified to a sub instruction.
+
+define i32 @test_no_simplify3(i32 %x) {
+; CHECK-LABEL: @test_no_simplify3(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %x, 15
+; CHECK-NEXT:    [[HELLO_P:%.*]] = getelementptr inbounds [13 x i8], [13 x i8]* @null_hello_mid, i32 0, i32 [[AND]]
+; CHECK-NEXT:    [[HELLO_L:%.*]] = call i32 @strlen(i8* [[HELLO_P]])
+; CHECK-NEXT:    ret i32 [[HELLO_L]]
+;
+  %and = and i32 %x, 15
+  %hello_p = getelementptr inbounds [13 x i8], [13 x i8]* @null_hello_mid, i32 0, i32 %and
+  %hello_l = call i32 @strlen(i8* %hello_p)
+  ret i32 %hello_l
+}
+
