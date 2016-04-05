@@ -1,10 +1,32 @@
 #!/usr/bin/env python2.7
 
-"""A test case update script.
+"""A script to generate FileCheck statements for regression tests.
 
 This script is a utility to update LLVM opt or llc test cases with new
 FileCheck patterns. It can either update all of the tests in the file or
 a single test function.
+
+Example usage:
+$ update_test_checks.py --tool=../bin/opt test/foo.ll
+
+Workflow:
+1. Make a compiler patch that requires updating some number of FileCheck lines
+   in regression test files.
+2. Save the patch and revert it from your local work area.
+3. Update the RUN-lines in the affected regression tests to look canonical.
+   Example: "; RUN: opt < %s -instcombine -S | FileCheck %s"
+4. Refresh the FileCheck lines for either the entire file or select functions by
+   running this script.
+5. Commit the fresh baseline of checks.
+6. Apply your patch from step 1 and rebuild your local binaries.
+7. Re-run this script on affected regression tests.
+8. Check the diffs to ensure the script has done something reasonable.
+9. Submit a patch including the regression test diffs for review.
+
+A common pattern is to have the script insert complete checking of every
+instruction. Then, edit it down to only check the relevant instructions.
+The script is designed to make adding checks to a test case fast, it is *not*
+designed to be authoratitive about what constitutes a good test!
 """
 
 import argparse
@@ -242,7 +264,8 @@ def should_add_line_to_output(input_line, prefix_set):
 
 
 def main():
-  parser = argparse.ArgumentParser(description=__doc__)
+  from argparse import RawTextHelpFormatter
+  parser = argparse.ArgumentParser(description=__doc__, formatter_class=RawTextHelpFormatter)
   parser.add_argument('-v', '--verbose', action='store_true',
                       help='Show verbose output')
   parser.add_argument('--tool-binary', default='llc',
