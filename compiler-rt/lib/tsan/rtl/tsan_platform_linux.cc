@@ -36,7 +36,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/mman.h>
+#if SANITIZER_LINUX
 #include <sys/personality.h>
+#endif
 #include <sys/syscall.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -292,7 +294,7 @@ void InitializePlatform() {
       SetAddressSpaceUnlimited();
       reexec = true;
     }
-#if defined(__aarch64__)
+#if SANITIZER_LINUX && defined(__aarch64__)
     // After patch "arm64: mm: support ARCH_MMAP_RND_BITS." is introduced in
     // linux kernel, the random gap between stack and mapped area is increased
     // from 128M to 36G on 39-bit aarch64. As it is almost impossible to cover
