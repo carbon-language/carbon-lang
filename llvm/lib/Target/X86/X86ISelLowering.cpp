@@ -2193,16 +2193,17 @@ unsigned X86TargetLowering::getAddressSpace() const {
   return 256;
 }
 
-bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
-                                               unsigned &Offset) const {
+Value *X86TargetLowering::getStackCookieLocation(IRBuilder<> &IRB) const {
   if (!Subtarget.isTargetLinux())
-    return false;
+    return TargetLowering::getStackCookieLocation(IRB);
 
   // %fs:0x28, unless we're using a Kernel code model, in which case it's %gs:
   // %gs:0x14 on i386
-  Offset = (Subtarget.is64Bit()) ? 0x28 : 0x14;
-  AddressSpace = getAddressSpace();
-  return true;
+  unsigned Offset = (Subtarget.is64Bit()) ? 0x28 : 0x14;
+  unsigned AddressSpace = getAddressSpace();
+  return ConstantExpr::getIntToPtr(
+      ConstantInt::get(Type::getInt32Ty(IRB.getContext()), Offset),
+      Type::getInt8PtrTy(IRB.getContext())->getPointerTo(AddressSpace));
 }
 
 Value *X86TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
