@@ -2275,6 +2275,12 @@ public:
     return false;
   }
 
+  /// Return true if the target supports swifterror attribute. It optimizes
+  /// loads and stores to reading and writing a specific register.
+  virtual bool supportSwiftError() const {
+    return false;
+  }
+
   /// Return true if the target supports that a subset of CSRs for the given
   /// machine function is handled explicitly via copies.
   virtual bool supportSplitCSR(MachineFunction *MF) const {
@@ -2377,6 +2383,7 @@ public:
     SmallVector<ISD::OutputArg, 32> Outs;
     SmallVector<SDValue, 32> OutVals;
     SmallVector<ISD::InputArg, 32> Ins;
+    SmallVector<SDValue, 4> InVals;
 
     CallLoweringInfo(SelectionDAG &DAG)
         : RetTy(nullptr), RetSExt(false), RetZExt(false), IsVarArg(false),
