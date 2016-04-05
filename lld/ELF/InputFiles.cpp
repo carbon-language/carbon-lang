@@ -306,13 +306,12 @@ elf::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 
 template <class ELFT>
 SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
-  uint32_t NameOffset = Sym->st_name;
-  unsigned char Binding = Sym->getBinding();
+   unsigned char Binding = Sym->getBinding();
   InputSectionBase<ELFT> *Sec = getSection(*Sym);
   if (Binding == STB_LOCAL) {
     if (Sym->st_shndx == SHN_UNDEF)
-      return new (Alloc) UndefinedElf<ELFT>(NameOffset, *Sym);
-    return new (Alloc) DefinedRegular<ELFT>(NameOffset, *Sym, Sec);
+      return new (Alloc) UndefinedElf<ELFT>(*Sym);
+    return new (Alloc) DefinedRegular<ELFT>(*Sym, Sec);
   }
 
   StringRef Name = check(Sym->getName(this->StringTable));
