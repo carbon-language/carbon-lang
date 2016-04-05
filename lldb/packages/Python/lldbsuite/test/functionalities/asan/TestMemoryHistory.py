@@ -21,6 +21,7 @@ class AsanTestCase(TestBase):
     @skipIfFreeBSD # llvm.org/pr21136 runtimes not yet available by default
     @skipIfRemote
     @skipUnlessCompilerRt
+    @expectedFailureAll(oslist=lldbplatform.darwin_all)
     def test (self):
         self.build ()
         self.asan_tests ()
