@@ -374,8 +374,8 @@ def c : Flag<["-"], "c">, Flags<[DriverOption]>,
   HelpText<"Only run preprocess, compile, and assemble steps">;
 def cuda_device_only : Flag<["--"], "cuda-device-only">,
   HelpText<"Do device-side CUDA compilation only">;
-def cuda_gpu_arch_EQ : Joined<["--"], "cuda-gpu-arch=">,
-  Flags<[DriverOption, HelpHidden]>, HelpText<"CUDA GPU architecture">;
+def cuda_gpu_arch_EQ : Joined<["--"], "cuda-gpu-arch=">, Flags<[DriverOption]>,
+  HelpText<"CUDA GPU architecture (e.g. sm_35).  May be specified more than once.">;
 def cuda_host_only : Flag<["--"], "cuda-host-only">,
   HelpText<"Do host-side CUDA compilation only">;
 def cuda_noopt_device_debug : Flag<["--"], "cuda-noopt-device-debug">,
