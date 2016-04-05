@@ -23,10 +23,33 @@ const unsigned RegisterBank::InvalidID = UINT_MAX;
 RegisterBank::RegisterBank() : ID(InvalidID), Name(nullptr), Size(0) {}
 
 void RegisterBank::verify(const TargetRegisterInfo &TRI) const {
-  // Verify that the Size of the register bank is big enough to cover all the
-  // register classes it covers.
-  // Verify that the register bank covers all the sub and super classes of the
-  // classes it covers.
+  assert(isValid() && "Invalid register bank");
+  assert(ContainedRegClasses.size() == TRI.getNumRegClasses() &&
+         "TRI does not match the initialization process?");
+  for (unsigned RCId = 0, End = TRI.getNumRegClasses(); RCId != End; ++RCId) {
+    const TargetRegisterClass &RC = *TRI.getRegClass(RCId);
+
+    if (!contains(RC))
+      continue;
+    // Verify that the register bank covers all the sub classes of the
+    // classes it covers.
+
+    // Use a different (slow in that case) method than
+    // RegisterBankInfo to find the subclasses of RC, to make sure
+    // both agree on the contains.
+    for (unsigned SubRCId = 0; SubRCId != End; ++SubRCId) {
+      const TargetRegisterClass &SubRC = *TRI.getRegClass(RCId);
+
+      if (!RC.hasSubClassEq(&SubRC))
+        continue;
+
+      // Verify that the Size of the register bank is big enough to cover
+      // all the register classes it covers.
+      assert((getSize() >= SubRC.getSize() * 8) &&
+             "Size is not big enough for all the subclasses!");
+      assert(contains(SubRC) && "Not all subclasses are covered");
+    }
+  }
 }
 
 bool RegisterBank::contains(const TargetRegisterClass &RC) const {
