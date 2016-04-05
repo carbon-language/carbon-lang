@@ -22,22 +22,26 @@
 #if !defined(LLVM_ENABLE_THREADS) || LLVM_ENABLE_THREADS == 0
 // Define all methods as no-ops if threading is explicitly disabled
 namespace llvm {
+
 using namespace sys;
+
 MutexImpl::MutexImpl( bool recursive) { }
 MutexImpl::~MutexImpl() { }
 bool MutexImpl::acquire() { return true; }
 bool MutexImpl::release() { return true; }
 bool MutexImpl::tryacquire() { return true; }
-}
+
+} // end namespace llvm
 #else
 
 #if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_MUTEX_LOCK)
 
 #include <cassert>
+#include <cstdlib>
 #include <pthread.h>
-#include <stdlib.h>
 
 namespace llvm {
+
 using namespace sys;
 
 // Construct a Mutex using pthread calls
@@ -110,7 +114,7 @@ MutexImpl::tryacquire()
   return errorcode == 0;
 }
 
-}
+} // end namespace llvm
 
 #elif defined(LLVM_ON_UNIX)
 #include "Unix/Mutex.inc"

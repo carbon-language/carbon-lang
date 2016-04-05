@@ -10,10 +10,15 @@
 |* Header file for llvm-c-test                                                *|
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
+
 #ifndef LLVM_C_TEST_H
 #define LLVM_C_TEST_H
 
+#ifdef __cplusplus
+#include <cstdbool>
+#else
 #include <stdbool.h>
+#endif
 #include "llvm-c/Core.h"
 
 #ifdef __cplusplus
@@ -51,6 +56,6 @@ int llvm_echo(void);
 
 #ifdef __cplusplus
 }
-#endif /* !defined(__cplusplus) */
-
 #endif
+
+#endif // LLVM_C_TEST_H

@@ -14,14 +14,19 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <cstring>
-#include <limits.h>
+#include <limits>
 
 using namespace llvm;
 
@@ -93,18 +98,21 @@ namespace llvm {
   const unsigned int maxPowerOfFiveExponent = maxExponent + maxPrecision - 1;
   const unsigned int maxPowerOfFiveParts = 2 + ((maxPowerOfFiveExponent * 815)
                                                 / (351 * integerPartWidth));
-}
+
+} // end namespace llvm
+
+namespace {
 
 /* A bunch of private, handy routines.  */
 
-static inline unsigned int
+inline unsigned int
 partCountForBits(unsigned int bits)
 {
   return ((bits) + integerPartWidth - 1) / integerPartWidth;
 }
 
 /* Returns 0U-9U.  Return values >= 10U are not digits.  */
-static inline unsigned int
+inline unsigned int
 decDigitValue(unsigned int c)
 {
   return c - '0';
@@ -115,7 +123,7 @@ decDigitValue(unsigned int c)
 
    If the exponent overflows, returns a large exponent with the
    appropriate sign.  */
-static int
+int
 readExponent(StringRef::iterator begin, StringRef::iterator end)
 {
   bool isNegative;
@@ -159,7 +167,7 @@ readExponent(StringRef::iterator begin, StringRef::iterator end)
 
 /* This is ugly and needs cleaning up, but I don't immediately see
    how whilst remaining safe.  */
-static int
+int
 totalExponent(StringRef::iterator p, StringRef::iterator end,
               int exponentAdjustment)
 {
@@ -208,7 +216,7 @@ totalExponent(StringRef::iterator p, StringRef::iterator end,
   return exponent;
 }
 
-static StringRef::iterator
+StringRef::iterator
 skipLeadingZeroesAndAnyDot(StringRef::iterator begin, StringRef::iterator end,
                            StringRef::iterator *dot)
 {
@@ -249,7 +257,7 @@ struct decimalInfo {
   int normalizedExponent;
 };
 
-static void
+void
 interpretDecimal(StringRef::iterator begin, StringRef::iterator end,
                  decimalInfo *D)
 {
@@ -308,7 +316,7 @@ interpretDecimal(StringRef::iterator begin, StringRef::iterator end,
 /* Return the trailing fraction of a hexadecimal number.
    DIGITVALUE is the first hex digit of the fraction, P points to
    the next digit.  */
-static lostFraction
+lostFraction
 trailingHexadecimalFraction(StringRef::iterator p, StringRef::iterator end,
                             unsigned int digitValue)
 {
@@ -339,7 +347,7 @@ trailingHexadecimalFraction(StringRef::iterator p, StringRef::iterator end,
 
 /* Return the fraction lost were a bignum truncated losing the least
    significant BITS bits.  */
-static lostFraction
+lostFraction
 lostFractionThroughTruncation(const integerPart *parts,
                               unsigned int partCount,
                               unsigned int bits)
@@ -361,7 +369,7 @@ lostFractionThroughTruncation(const integerPart *parts,
 }
 
 /* Shift DST right BITS bits noting lost fraction.  */
-static lostFraction
+lostFraction
 shiftRight(integerPart *dst, unsigned int parts, unsigned int bits)
 {
   lostFraction lost_fraction;
@@ -374,7 +382,7 @@ shiftRight(integerPart *dst, unsigned int parts, unsigned int bits)
 }
 
 /* Combine the effect of two lost fractions.  */
-static lostFraction
+lostFraction
 combineLostFractions(lostFraction moreSignificant,
                      lostFraction lessSignificant)
 {
@@ -395,7 +403,7 @@ combineLostFractions(lostFraction moreSignificant,
 
    See "How to Read Floating Point Numbers Accurately" by William D
    Clinger.  */
-static unsigned int
+unsigned int
 HUerrBound(bool inexactMultiply, unsigned int HUerr1, unsigned int HUerr2)
 {
   assert(HUerr1 < 2 || HUerr2 < 2 || (HUerr1 + HUerr2 < 8));
@@ -409,7 +417,7 @@ HUerrBound(bool inexactMultiply, unsigned int HUerr1, unsigned int HUerr2)
 /* The number of ulps from the boundary (zero, or half if ISNEAREST)
    when the least significant BITS are truncated.  BITS cannot be
    zero.  */
-static integerPart
+integerPart
 ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
 {
   unsigned int count, partBits;
@@ -454,7 +462,7 @@ ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
 
 /* Place pow(5, power) in DST, and return the number of parts used.
    DST must be at least one part larger than size of the answer.  */
-static unsigned int
+unsigned int
 powerOf5(integerPart *dst, unsigned int power)
 {
   static const integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
@@ -517,17 +525,17 @@ powerOf5(integerPart *dst, unsigned int power)
 
 /* Zero at the end to avoid modular arithmetic when adding one; used
    when rounding up during hexadecimal output.  */
-static const char hexDigitsLower[] = "0123456789abcdef0";
-static const char hexDigitsUpper[] = "0123456789ABCDEF0";
-static const char infinityL[] = "infinity";
-static const char infinityU[] = "INFINITY";
-static const char NaNL[] = "nan";
-static const char NaNU[] = "NAN";
+const char hexDigitsLower[] = "0123456789abcdef0";
+const char hexDigitsUpper[] = "0123456789ABCDEF0";
+const char infinityL[] = "infinity";
+const char infinityU[] = "INFINITY";
+const char NaNL[] = "nan";
+const char NaNU[] = "NAN";
 
 /* Write out an integerPart in hexadecimal, starting with the most
    significant nibble.  Write out exactly COUNT hexdigits, return
    COUNT.  */
-static unsigned int
+unsigned int
 partAsHex (char *dst, integerPart part, unsigned int count,
            const char *hexDigitChars)
 {
@@ -545,7 +553,7 @@ partAsHex (char *dst, integerPart part, unsigned int count,
 }
 
 /* Write out an unsigned decimal integer.  */
-static char *
+char *
 writeUnsignedDecimal (char *dst, unsigned int n)
 {
   char buff[40], *p;
@@ -563,7 +571,7 @@ writeUnsignedDecimal (char *dst, unsigned int n)
 }
 
 /* Write out a signed decimal integer.  */
-static char *
+char *
 writeSignedDecimal (char *dst, int value)
 {
   if (value < 0) {
@@ -574,6 +582,8 @@ writeSignedDecimal (char *dst, int value)
 
   return dst;
 }
+
+} // end anonymous namespace
 
 /* Constructors.  */
 void
@@ -852,11 +862,13 @@ APFloat::semanticsPrecision(const fltSemantics &semantics)
 {
   return semantics.precision;
 }
+
 APFloat::ExponentType
 APFloat::semanticsMaxExponent(const fltSemantics &semantics)
 {
   return semantics.maxExponent;
 }
+
 APFloat::ExponentType
 APFloat::semanticsMinExponent(const fltSemantics &semantics)
 {
@@ -1907,7 +1919,6 @@ APFloat::opStatus APFloat::roundToIntegral(roundingMode rounding_mode) {
   return fs;
 }
 
-
 /* Comparison requires normalized numbers.  */
 APFloat::cmpResult
 APFloat::compare(const APFloat &rhs) const
@@ -2558,14 +2569,16 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
 
   /* Check whether the normalized exponent is high enough to overflow
      max during the log-rebasing in the max-exponent check below. */
-  } else if (D.normalizedExponent - 1 > INT_MAX / 42039) {
+  } else if (D.normalizedExponent - 1 >
+              std::numeric_limits<int>::max() / 42039) {
     fs = handleOverflow(rounding_mode);
 
   /* If it wasn't, then it also wasn't high enough to overflow max
      during the log-rebasing in the min-exponent check.  Check that it
      won't overflow min in either check, then perform the min-exponent
      check. */
-  } else if (D.normalizedExponent - 1 < INT_MIN / 42039 ||
+  } else if ((D.normalizedExponent - 1 <
+               std::numeric_limits<int>::min() / 42039) ||
              (D.normalizedExponent + 1) * 28738 <=
                8651 * (semantics->minExponent - (int) semantics->precision)) {
     /* Underflow to zero and round.  */
@@ -3219,7 +3232,7 @@ APFloat::initFromQuadrupleAPInt(const APInt &api)
   uint64_t mysignificand2 = i2 & 0xffffffffffffLL;
 
   initialize(&APFloat::IEEEquad);
-  assert(partCount()==2);
+  assert(partCount() == 2);
 
   sign = static_cast<unsigned int>(i2>>63);
   if (myexponent==0 &&
@@ -3485,6 +3498,7 @@ APFloat::APFloat(double d) {
 }
 
 namespace {
+
   void append(SmallVectorImpl<char> &Buffer, StringRef Str) {
     Buffer.append(Str.begin(), Str.end());
   }
@@ -3520,7 +3534,6 @@ namespace {
     // Truncate the significand down to its active bit count.
     significand = significand.trunc(significand.getActiveBits());
   }
-
 
   void AdjustToPrecision(SmallVectorImpl<char> &buffer,
                          int &exp, unsigned FormatPrecision) {
@@ -3566,7 +3579,8 @@ namespace {
     exp += FirstSignificant;
     buffer.erase(&buffer[0], &buffer[FirstSignificant]);
   }
-}
+
+} // end anonymous namespace
 
 void APFloat::toString(SmallVectorImpl<char> &Str,
                        unsigned FormatPrecision,

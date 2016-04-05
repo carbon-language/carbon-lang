@@ -17,8 +17,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
-#include <limits.h>
-#include <stdio.h>
+#include <cassert>
+#include <climits>
+#include <cstdio>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -86,7 +87,10 @@ namespace fs {
 #if defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
     defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__) || \
     defined(__linux__) || defined(__CYGWIN__) || defined(__DragonFly__)
-static int
+
+namespace {
+
+int
 test_dir(char ret[PATH_MAX], const char *dir, const char *bin)
 {
   struct stat sb;
@@ -101,7 +105,7 @@ test_dir(char ret[PATH_MAX], const char *dir, const char *bin)
   return 0;
 }
 
-static char *
+char *
 getprogpath(char ret[PATH_MAX], const char *bin)
 {
   char *pv, *s, *t;
@@ -138,6 +142,9 @@ getprogpath(char ret[PATH_MAX], const char *bin)
   free(pv);
   return nullptr;
 }
+
+} // end anonymous namespace
+
 #endif // __FreeBSD__ || __NetBSD__ || __FreeBSD_kernel__
 
 /// GetMainExecutable - Return the path to the main executable, given the
@@ -330,7 +337,9 @@ std::error_code resize_file(int FD, uint64_t Size) {
   return std::error_code();
 }
 
-static int convertAccessMode(AccessMode Mode) {
+namespace {
+
+int convertAccessMode(AccessMode Mode) {
   switch (Mode) {
   case AccessMode::Exist:
     return F_OK;
@@ -341,6 +350,8 @@ static int convertAccessMode(AccessMode Mode) {
   }
   llvm_unreachable("invalid enum");
 }
+
+} // end anonymous namespace
 
 std::error_code access(const Twine &Path, AccessMode Mode) {
   SmallString<128> PathStorage;
@@ -381,8 +392,10 @@ std::error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   return std::error_code();
 }
 
-static std::error_code fillStatus(int StatRet, const struct stat &Status,
-                             file_status &Result) {
+namespace {
+
+std::error_code fillStatus(int StatRet, const struct stat &Status,
+                           file_status &Result) {
   if (StatRet != 0) {
     std::error_code ec(errno, std::generic_category());
     if (ec == errc::no_such_file_or_directory)
@@ -415,6 +428,8 @@ static std::error_code fillStatus(int StatRet, const struct stat &Status,
 
   return std::error_code();
 }
+
+} // end anonymous namespace
 
 std::error_code status(const Twine &Path, file_status &Result) {
   SmallString<128> PathStorage;
@@ -597,7 +612,9 @@ bool home_directory(SmallVectorImpl<char> &result) {
   return false;
 }
 
-static bool getDarwinConfDir(bool TempDir, SmallVectorImpl<char> &Result) {
+namespace {
+
+bool getDarwinConfDir(bool TempDir, SmallVectorImpl<char> &Result) {
   #if defined(_CS_DARWIN_USER_TEMP_DIR) && defined(_CS_DARWIN_USER_CACHE_DIR)
   // On Darwin, use DARWIN_USER_TEMP_DIR or DARWIN_USER_CACHE_DIR.
   // macros defined in <unistd.h> on darwin >= 9
@@ -622,7 +639,7 @@ static bool getDarwinConfDir(bool TempDir, SmallVectorImpl<char> &Result) {
   return false;
 }
 
-static bool getUserCacheDir(SmallVectorImpl<char> &Result) {
+bool getUserCacheDir(SmallVectorImpl<char> &Result) {
   // First try using XDG_CACHE_HOME env variable,
   // as specified in XDG Base Directory Specification at
   // http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
@@ -645,7 +662,7 @@ static bool getUserCacheDir(SmallVectorImpl<char> &Result) {
   return false;
 }
 
-static const char *getEnvTempDir() {
+const char *getEnvTempDir() {
   // Check whether the temporary directory is specified by an environment
   // variable.
   const char *EnvironmentVariables[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR"};
@@ -657,7 +674,7 @@ static const char *getEnvTempDir() {
   return nullptr;
 }
 
-static const char *getDefaultTempDir(bool ErasedOnReboot) {
+const char *getDefaultTempDir(bool ErasedOnReboot) {
 #ifdef P_tmpdir
   if ((bool)P_tmpdir)
     return P_tmpdir;
@@ -667,6 +684,8 @@ static const char *getDefaultTempDir(bool ErasedOnReboot) {
     return "/tmp";
   return "/var/tmp";
 }
+
+} // end anonymous namespace
 
 void system_temp_directory(bool ErasedOnReboot, SmallVectorImpl<char> &Result) {
   Result.clear();

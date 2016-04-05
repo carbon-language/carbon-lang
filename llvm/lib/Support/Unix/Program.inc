@@ -1,4 +1,4 @@
-//===- llvm/Support/Unix/Program.cpp -----------------------------*- C++ -*-===//
+//===- llvm/Support/Unix/Program.cpp ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -30,9 +30,7 @@
 #if HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
-#if HAVE_SIGNAL_H
-#include <signal.h>
-#endif
+#include <csignal>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -96,7 +94,9 @@ ErrorOr<std::string> sys::findProgramByName(StringRef Name,
   return errc::no_such_file_or_directory;
 }
 
-static bool RedirectIO(const StringRef *Path, int FD, std::string* ErrMsg) {
+namespace {
+
+bool RedirectIO(const StringRef *Path, int FD, std::string* ErrMsg) {
   if (!Path) // Noop
     return false;
   std::string File;
@@ -125,8 +125,8 @@ static bool RedirectIO(const StringRef *Path, int FD, std::string* ErrMsg) {
 }
 
 #ifdef HAVE_POSIX_SPAWN
-static bool RedirectIO_PS(const std::string *Path, int FD, std::string *ErrMsg,
-                          posix_spawn_file_actions_t *FileActions) {
+bool RedirectIO_PS(const std::string *Path, int FD, std::string *ErrMsg,
+                   posix_spawn_file_actions_t *FileActions) {
   if (!Path) // Noop
     return false;
   const char *File;
@@ -144,10 +144,10 @@ static bool RedirectIO_PS(const std::string *Path, int FD, std::string *ErrMsg,
 }
 #endif
 
-static void TimeOutHandler(int Sig) {
+void TimeOutHandler(int Sig) {
 }
 
-static void SetMemoryLimits (unsigned size)
+void SetMemoryLimits (unsigned size)
 {
 #if HAVE_SYS_RESOURCE_H && HAVE_GETRLIMIT && HAVE_SETRLIMIT
   struct rlimit r;
@@ -176,7 +176,9 @@ static void SetMemoryLimits (unsigned size)
 #endif
 }
 
-}
+} // end anonymous namespace
+
+} // end namespace llvm
 
 static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
                     const char **envp, const StringRef **redirects,
@@ -419,12 +421,12 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
   return WaitResult;
 }
 
-  std::error_code sys::ChangeStdinToBinary(){
+std::error_code sys::ChangeStdinToBinary() {
   // Do nothing, as Unix doesn't differentiate between text and binary.
     return std::error_code();
 }
 
-  std::error_code sys::ChangeStdoutToBinary(){
+std::error_code sys::ChangeStdoutToBinary() {
   // Do nothing, as Unix doesn't differentiate between text and binary.
     return std::error_code();
 }
@@ -466,4 +468,5 @@ bool llvm::sys::commandLineFitsWithinSystemLimits(StringRef Program, ArrayRef<co
   }
   return true;
 }
-}
+
+} // end namespace llvm

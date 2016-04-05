@@ -1,4 +1,4 @@
-//======- SHA1.h - Private copy of the SHA1 implementation ---*- C++ -* ======//
+//===--- SHA1.h - Private copy of the SHA1 implementation -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,12 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/SHA1.h"
-using namespace llvm;
 
-#include <stdint.h>
-#include <string.h>
+#include <cstring>
+
+using namespace llvm;
 
 #if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
 #define SHA_BIG_ENDIAN
@@ -46,9 +47,13 @@ void SHA1::init() {
   InternalState.BufferOffset = 0;
 }
 
-static uint32_t rol32(uint32_t number, uint8_t bits) {
+namespace {
+
+uint32_t rol32(uint32_t number, uint8_t bits) {
   return ((number << bits) | (number >> (32 - bits)));
 }
+
+} // end anonymous namespace
 
 void SHA1::hashBlock() {
   uint8_t i;

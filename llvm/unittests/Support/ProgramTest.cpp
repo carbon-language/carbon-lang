@@ -7,13 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <vector>
 #if defined(__APPLE__)
 # include <crt_externs.h>
 #elif !defined(_MSC_VER)
@@ -45,6 +51,7 @@ void sleep_for(unsigned int seconds) {
     GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
   } else {                                                                     \
   }
+
 // From TestMain.cpp.
 extern const char *TestMainArgv0;
 
@@ -53,9 +60,9 @@ namespace {
 using namespace llvm;
 using namespace sys;
 
-static cl::opt<std::string>
+cl::opt<std::string>
 ProgramTestStringArg1("program-test-string-arg1");
-static cl::opt<std::string>
+cl::opt<std::string>
 ProgramTestStringArg2("program-test-string-arg2");
 
 class ProgramEnvTest : public testing::Test {
@@ -309,7 +316,6 @@ TEST(ProgramTest, TestExecuteNegative) {
     ASSERT_TRUE(ExecutionFailed);
     ASSERT_FALSE(Error.empty());
   }
-
 }
 
 #ifdef LLVM_ON_WIN32

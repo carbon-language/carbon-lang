@@ -13,10 +13,10 @@
 #include "llvm-c/OrcBindings.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
+#include "llvm/ADT/Triple.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstring>
+#include <memory>
 
 namespace llvm {
 
@@ -157,4 +157,4 @@ TEST_F(OrcCAPIExecutionTest, TestDirectCallbacksAPI) {
   LLVMOrcDisposeInstance(JIT);
 }
 
-} // namespace llvm
+} // end namespace llvm

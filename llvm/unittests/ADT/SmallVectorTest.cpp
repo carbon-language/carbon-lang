@@ -15,8 +15,10 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "gtest/gtest.h"
+#include <cstdarg>
+#include <cstdlib>
 #include <list>
-#include <stdarg.h>
+#include <utility>
 
 using namespace llvm;
 
@@ -141,9 +143,10 @@ int Constructable::numCopyAssignmentCalls;
 int Constructable::numMoveAssignmentCalls;
 
 struct NonCopyable {
-  NonCopyable() {}
-  NonCopyable(NonCopyable &&) {}
+  NonCopyable() = default;
+  NonCopyable(NonCopyable &&) = default;
   NonCopyable &operator=(NonCopyable &&) { return *this; }
+
 private:
   NonCopyable(const NonCopyable &) = delete;
   NonCopyable &operator=(const NonCopyable &) = delete;
@@ -199,7 +202,6 @@ protected:
   VectorT theVector;
   VectorT otherVector;
 };
-
 
 typedef ::testing::Types<SmallVector<Constructable, 0>,
                          SmallVector<Constructable, 1>,
@@ -522,7 +524,6 @@ TYPED_TEST(SmallVectorTest, InsertRepeatedTest) {
   this->assertValuesInOrder(this->theVector, 6u, 1, 16, 16, 2, 3, 4);
 }
 
-
 TYPED_TEST(SmallVectorTest, InsertRepeatedAtEndTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
@@ -580,7 +581,6 @@ TYPED_TEST(SmallVectorTest, InsertRangeTest) {
   EXPECT_EQ(this->theVector.begin() + 1, I);
   this->assertValuesInOrder(this->theVector, 6u, 1, 77, 77, 77, 2, 3);
 }
-
 
 TYPED_TEST(SmallVectorTest, InsertRangeAtEndTest) {
   SCOPED_TRACE("InsertRangeTest");
@@ -748,11 +748,14 @@ TEST(SmallVectorCustomTest, NoAssignTest) {
 
 struct MovedFrom {
   bool hasValue;
+
   MovedFrom() : hasValue(true) {
   }
+
   MovedFrom(MovedFrom&& m) : hasValue(m.hasValue) {
     m.hasValue = false;
   }
+
   MovedFrom &operator=(MovedFrom&& m) {
     hasValue = m.hasValue;
     m.hasValue = false;
@@ -775,6 +778,7 @@ enum EmplaceableArgState {
   EAS_RValue,
   EAS_Failure
 };
+
 template <int I> struct EmplaceableArg {
   EmplaceableArgState State;
   EmplaceableArg() : State(EAS_Defaulted) {}
@@ -924,4 +928,4 @@ TEST(SmallVectorTest, InitializerList) {
   EXPECT_TRUE(makeArrayRef(V2).equals({4, 5, 3, 2}));
 }
 
-} // end namespace
+} // end anonymous namespace

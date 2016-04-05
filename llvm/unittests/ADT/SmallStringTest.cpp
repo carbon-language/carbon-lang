@@ -12,10 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "gtest/gtest.h"
-#include <climits>
-#include <cstring>
-#include <stdarg.h>
 
 using namespace llvm;
 
@@ -204,4 +203,4 @@ TEST(StringRefTest, Comparisons) {
   EXPECT_EQ( 1, SmallString<10>("V8_q0").compare_numeric("V1_q0"));
 }
 
-}
+} // end anonymous namespace

@@ -13,7 +13,7 @@
 #if LLVM_ON_WIN32
 #include <windows.h>
 #else
-#include <time.h>
+#include <ctime>
 #endif
 
 using namespace llvm;
@@ -62,4 +62,4 @@ TEST(Timer, CheckIfTriggered) {
   EXPECT_FALSE(T1.hasTriggered());
 }
 
-} // end anon namespace
+} // end anonymous namespace

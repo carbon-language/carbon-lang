@@ -1,4 +1,4 @@
-//===- Signals.cpp - Generic Unix Signals Implementation -----*- C++ -*-===//
+//===- Signals.cpp - Generic Unix Signals Implementation --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,9 +27,7 @@
 #if HAVE_EXECINFO_H
 # include <execinfo.h>         // For backtrace().
 #endif
-#if HAVE_SIGNAL_H
-#include <signal.h>
-#endif
+#include <csignal>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -48,25 +46,27 @@
 
 using namespace llvm;
 
-static RETSIGTYPE SignalHandler(int Sig);  // defined below.
+namespace {
 
-static ManagedStatic<SmartMutex<true> > SignalsMutex;
+RETSIGTYPE SignalHandler(int Sig);  // defined below.
+
+ManagedStatic<SmartMutex<true> > SignalsMutex;
 
 /// InterruptFunction - The function to call if ctrl-c is pressed.
-static void (*InterruptFunction)() = nullptr;
+void (*InterruptFunction)() = nullptr;
 
-static ManagedStatic<std::vector<std::string>> FilesToRemove;
+ManagedStatic<std::vector<std::string>> FilesToRemove;
 
 // IntSigs - Signals that represent requested termination. There's no bug
 // or failure, or if there is, it's not our direct responsibility. For whatever
 // reason, our continued execution is no longer desirable.
-static const int IntSigs[] = {
+const int IntSigs[] = {
   SIGHUP, SIGINT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
 
 // KillSigs - Signals that represent that we have a bug, and our prompt
 // termination has been ordered.
-static const int KillSigs[] = {
+const int KillSigs[] = {
   SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV, SIGQUIT
 #ifdef SIGSYS
   , SIGSYS
@@ -82,14 +82,13 @@ static const int KillSigs[] = {
 #endif
 };
 
-static unsigned NumRegisteredSignals = 0;
-static struct {
+unsigned NumRegisteredSignals = 0;
+struct {
   struct sigaction SA;
   int SigNo;
 } RegisteredSignalInfo[array_lengthof(IntSigs) + array_lengthof(KillSigs)];
 
-
-static void RegisterHandler(int Signal) {
+void RegisterHandler(int Signal) {
   assert(NumRegisteredSignals < array_lengthof(RegisteredSignalInfo) &&
          "Out of space for signal handlers!");
 
@@ -106,7 +105,7 @@ static void RegisterHandler(int Signal) {
   ++NumRegisteredSignals;
 }
 
-static void RegisterHandlers() {
+void RegisterHandlers() {
   // We need to dereference the signals mutex during handler registration so
   // that we force its construction. This is to prevent the first use being
   // during handling an actual signal because you can't safely call new in a
@@ -120,7 +119,7 @@ static void RegisterHandlers() {
   for (auto S : KillSigs) RegisterHandler(S);
 }
 
-static void UnregisterHandlers() {
+void UnregisterHandlers() {
   // Restore all of the signal handlers to how they were before we showed up.
   for (unsigned i = 0, e = NumRegisteredSignals; i != e; ++i)
     sigaction(RegisteredSignalInfo[i].SigNo,
@@ -128,12 +127,11 @@ static void UnregisterHandlers() {
   NumRegisteredSignals = 0;
 }
 
-
 /// RemoveFilesToRemove - Process the FilesToRemove list. This function
 /// should be called with the SignalsMutex lock held.
 /// NB: This must be an async signal safe function. It cannot allocate or free
 /// memory, even in debug builds.
-static void RemoveFilesToRemove() {
+void RemoveFilesToRemove() {
   // Avoid constructing ManagedStatic in the signal handler.
   // If FilesToRemove is not constructed, there are no files to remove.
   if (!FilesToRemove.isConstructed())
@@ -164,7 +162,7 @@ static void RemoveFilesToRemove() {
 }
 
 // SignalHandler - The signal handler that runs.
-static RETSIGTYPE SignalHandler(int Sig) {
+RETSIGTYPE SignalHandler(int Sig) {
   // Restore the signal behavior to default, so that the program actually
   // crashes when we return and the signal reissues.  This also ensures that if
   // we crash in our signal handler that the program will terminate immediately
@@ -208,6 +206,8 @@ static RETSIGTYPE SignalHandler(int Sig) {
     raise(Sig);
 #endif
 }
+
+} // end anonymous namespace
 
 void llvm::sys::RunInterruptHandlers() {
   sys::SmartScopedLock<true> Guard(*SignalsMutex);
@@ -264,7 +264,9 @@ struct DlIteratePhdrData {
   const char *main_exec_name;
 };
 
-static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
+namespace {
+
+int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrData *data = (DlIteratePhdrData*)arg;
   const char *name = data->first ? data->main_exec_name : info->dlpi_name;
   data->first = false;
@@ -286,6 +288,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   }
   return 0;
 }
+
+} // end anonymous namespace
 
 /// If this is an ELF platform, we can find all loaded modules and their virtual
 /// addresses with dl_iterate_phdr.
@@ -375,9 +379,13 @@ void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 #endif
 }
 
-static void PrintStackTraceSignalHandler(void *) {
+namespace {
+
+void PrintStackTraceSignalHandler(void *) {
   PrintStackTrace(llvm::errs());
 }
+
+} // end anonymous namespace
 
 void llvm::sys::DisableSystemDialogsOnCrash() {}
 
@@ -402,9 +410,6 @@ void llvm::sys::PrintStackTraceOnErrorSignal(bool DisableCrashReporting) {
   }
 #endif
 }
-
-
-/***/
 
 // On Darwin, raise sends a signal to the main thread instead of the current
 // thread. This has the unfortunate effect that assert() and abort() will end up

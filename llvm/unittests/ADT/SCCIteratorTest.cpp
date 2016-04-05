@@ -10,7 +10,10 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "gtest/gtest.h"
-#include <limits.h>
+#include <cassert>
+#include <climits>
+#include <utility>
+#include <vector>
 
 using namespace llvm;
 
@@ -27,13 +30,14 @@ private:
   static void ValidateIndex(unsigned Idx) {
     assert(Idx < N && "Invalid node index!");
   }
-public:
 
+public:
   /// NodeSubset - A subset of the graph's nodes.
   class NodeSubset {
     typedef unsigned char BitVector; // Where the limitation N <= 8 comes from.
     BitVector Elements;
     NodeSubset(BitVector e) : Elements(e) {}
+
   public:
     /// NodeSubset - Default constructor, creates an empty subset.
     NodeSubset() : Elements(0) {
@@ -98,8 +102,8 @@ public:
 private:
   /// Nodes - The list of nodes for this graph.
   NodeType Nodes[N];
-public:
 
+public:
   /// Graph - Default constructor.  Creates an empty graph.
   Graph() {
     // Let each node know which node it is.  This allows us to find the start of
@@ -166,6 +170,7 @@ public:
     NodeSubset Children;
 
     ChildIterator(); // Disable default constructor.
+
   protected:
     ChildIterator(NodeType *F, NodeSubset C) : FirstNode(F), Children(C) {}
 
@@ -341,4 +346,4 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
   }
 }
 
-}
+} // end namespace llvm
