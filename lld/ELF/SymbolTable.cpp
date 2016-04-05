@@ -112,6 +112,8 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
     Sym->Body->setUsedInRegularObj();
     if (!Sym->Body->isUndefined() && Body->isUndefined())
       continue;
+    if (Sym->Body->MustBeInDynSym)
+      Body->MustBeInDynSym = true;
     Sym->Body = Body;
   }
   ObjectFiles.emplace_back(Obj);

@@ -205,8 +205,10 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   // and in DSOs, so that the symbols in the executable can interrupt
   // symbols in the DSO at runtime.
   if (isShared() != Other->isShared())
-    if (isa<DefinedRegular<ELFT>>(isShared() ? Other : this))
+    if (isa<Defined>(isShared() ? Other : this)) {
+      IsUsedInRegularObj = Other->IsUsedInRegularObj = true;
       MustBeInDynSym = Other->MustBeInDynSym = true;
+    }
 
   if (L != R)
     return -1;
