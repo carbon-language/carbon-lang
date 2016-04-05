@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 #include <algorithm> // For std::max.
@@ -33,11 +34,14 @@ void RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
     const RegisterBank &RegBank = getRegBank(Idx);
     assert(Idx == RegBank.getID() &&
            "ID does not match the index in the array");
+    DEBUG(dbgs() << "Verify " << RegBank << '\n');
     RegBank.verify(TRI);
   }
 }
 
 void RegisterBankInfo::createRegisterBank(unsigned ID, const char *Name) {
+  DEBUG(dbgs() << "Create register bank: " << ID << " with name \"" << Name
+               << "\"\n");
   RegisterBank &RegBank = getRegBank(ID);
   assert(RegBank.getID() == RegisterBank::InvalidID &&
          "A register bank should be created only once");
@@ -50,6 +54,9 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID,
                                           const TargetRegisterInfo &TRI) {
   RegisterBank &RB = getRegBank(ID);
   unsigned NbOfRegClasses = TRI.getNumRegClasses();
+
+  DEBUG(dbgs() << "Add coverage for: " << RB << '\n');
+
   // Check if RB is underconstruction.
   if (!RB.isValid())
     RB.ContainedRegClasses.resize(NbOfRegClasses);
@@ -69,6 +76,10 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID,
     unsigned RCId = WorkList.pop_back_val();
 
     const TargetRegisterClass &CurRC = *TRI.getRegClass(RCId);
+
+    DEBUG(dbgs() << "Examine: " << TRI.getRegClassName(&CurRC)
+                 << "(Size*8: " << (CurRC.getSize() * 8) << ")\n");
+
     // Remember the biggest size in bits.
     MaxSize = std::max(MaxSize, CurRC.getSize() * 8);
 
