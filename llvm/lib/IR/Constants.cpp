@@ -1036,6 +1036,8 @@ ConstantVector::ConstantVector(VectorType *T, ArrayRef<Constant *> V)
   : Constant(T, ConstantVectorVal,
              OperandTraits<ConstantVector>::op_end(this) - V.size(),
              V.size()) {
+  assert(V.size() == T->getNumElements() &&
+         "Invalid initializer vector for constant vector");
   for (size_t i = 0, e = V.size(); i != e; i++)
     assert(V[i]->getType() == T->getElementType() &&
            "Initializer for vector element doesn't match vector element type!");
