@@ -15,11 +15,12 @@
 #ifndef LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 #define LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 
+#include "llvm/CodeGen/GlobalISel/RegisterBank.h"
+
 #include <cassert>
 #include <memory> // For unique_ptr.
 
 namespace llvm {
-class RegisterBank;
 class TargetRegisterInfo;
 
 /// Holds all the information related to register banks.
