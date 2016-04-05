@@ -30,10 +30,17 @@ private:
   unsigned ID;
   const char *Name;
   unsigned Size;
-  BitVector ContainedRegClass;
+  BitVector ContainedRegClasses;
+
+  /// Sentinel value used to recognize register bank not properly
+  /// initialized yet.
+  static const unsigned InvalidID;
 
   /// Only the RegisterBankInfo can create RegisterBank.
-  RegisterBank() = default;
+  /// The default constructor will leave the object in
+  /// an invalid state. I.e. isValid() == false.
+  /// The field must be updated to fix that.
+  RegisterBank();
 
   friend RegisterBankInfo;
 
@@ -48,6 +55,9 @@ public:
   /// Get the maximal size in bits that fits in this register bank.
   unsigned getSize() const { return Size; }
 
+  /// Check whether this instance is ready to be used.
+  bool isValid() const;
+
   /// Check if this register bank is valid. In other words,
   /// if it has been properly constructed.
   void verify(const TargetRegisterInfo &TRI) const;
@@ -55,6 +65,7 @@ public:
   /// Check whether this register bank contains \p RC.
   /// In other words, check if this register bank fully covers
   /// the registers that \p RC contains.
+  /// \pre isValid()
   bool contains(const TargetRegisterClass &RC) const;
 
   /// Check whether \p OtherRB is the same as this.

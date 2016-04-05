@@ -18,6 +18,10 @@
 
 using namespace llvm;
 
+const unsigned RegisterBank::InvalidID = UINT_MAX;
+
+RegisterBank::RegisterBank() : ID(InvalidID), Name(nullptr), Size(0) {}
+
 void RegisterBank::verify(const TargetRegisterInfo &TRI) const {
   // Verify that the Size of the register bank is big enough to cover all the
   // register classes it covers.
@@ -26,7 +30,14 @@ void RegisterBank::verify(const TargetRegisterInfo &TRI) const {
 }
 
 bool RegisterBank::contains(const TargetRegisterClass &RC) const {
-  return ContainedRegClass.test(RC.getID());
+  assert(isValid() && "RB hasn't been initialized yet");
+  return ContainedRegClasses.test(RC.getID());
+}
+
+bool RegisterBank::isValid() const {
+  return ID != InvalidID && Name != nullptr && Size != 0 &&
+         // A register bank that does not cover anything is useless.
+         !ContainedRegClasses.empty();
 }
 
 bool RegisterBank::operator==(const RegisterBank &OtherRB) const {
