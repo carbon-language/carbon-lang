@@ -38,7 +38,11 @@ class TestPlatformProcessConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
         commandline_args = ["platform", "--listen", listen_url, "--socket-file", port_file, "--", "%s/a.out" % working_dir, "foo"]
         self.spawnSubprocess(self.debug_monitor_exe, commandline_args, install_remote=False)
         self.addTearDownHook(self.cleanupSubprocesses)
-        socket_id = self.run_shell_cmd("while [ ! -f %s ]; do sleep 0.25; done && cat %s" % (port_file, port_file))
+        
+        # Wait until the port_file have been created. Doing it with 1 shell command will fail because
+        # of a bug in LLDB shell escaping code
+        _, _ = self.run_platform_command("while [ ! -f %s ]; do sleep 0.25; done" % port_file)
+        _, socket_id = self.run_platform_command("cat %s" % port_file)
 
         new_debugger = lldb.SBDebugger.Create()
         new_debugger.SetAsync(False)
