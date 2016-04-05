@@ -55,8 +55,8 @@ typename ELFT::SymRange ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
     fatal("invalid sh_info in symbol table");
 
   if (OnlyGlobals)
-    return make_range(Syms.begin() + FirstNonLocal, Syms.end());
-  return make_range(Syms.begin(), Syms.end());
+    return makeArrayRef(Syms.begin() + FirstNonLocal, Syms.end());
+  return makeArrayRef(Syms.begin(), Syms.end());
 }
 
 template <class ELFT>
