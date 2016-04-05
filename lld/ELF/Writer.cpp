@@ -432,9 +432,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
         continue;
 
-      bool Dynrel = Config->Pic && !Target->isRelRelative(Type) &&
-                    !Target->isSizeRel(Type);
-      if (Preemptible || Dynrel) {
+      if (Preemptible || Config->Pic) {
         uint32_t DynType;
         if (Body.isTls())
           DynType = Target->TlsGotRel;
