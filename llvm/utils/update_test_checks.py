@@ -186,15 +186,25 @@ def add_checks(output_lines, prefix_list, func_dict, func_name, tool_basename):
       if tool_basename == "opt":
         func_body = genericize_check_lines(func_body)
 
+      # This could be selectively enabled with an optional invocation argument.
+      # Disabled for now: better to check everything. Be safe rather than sorry.
+
       # Handle the first line of the function body as a special case because
       # it's often just noise (a useless asm comment or entry label).
-      if func_body[0].startswith("#") or func_body[0].startswith("entry:"):
-        is_blank_line = True
-      else:
-        output_lines.append('; %s:       %s' % (checkprefix, func_body[0]))
-        is_blank_line = False
+      #if func_body[0].startswith("#") or func_body[0].startswith("entry:"):
+      #  is_blank_line = True
+      #else:
+      #  output_lines.append('; %s:       %s' % (checkprefix, func_body[0]))
+      #  is_blank_line = False
 
-      for func_line in func_body[1:]:
+      # For llc tests, there may be asm directives between the label and the
+      # first checked line (most likely that first checked line is "# BB#0").
+      if tool_basename == "opt":
+        is_blank_line = False
+      else:
+        is_blank_line = True;
+
+      for func_line in func_body:
         if func_line.strip() == '':
           is_blank_line = True
           continue
