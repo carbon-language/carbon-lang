@@ -571,6 +571,7 @@ public:
     if (!Err)
       Err = Error::success();
   }
+
 private:
   Error &Err;
 };
@@ -776,24 +777,21 @@ inline Error errorCodeToError(std::error_code EC) {
 /// will trigger a call to abort().
 inline std::error_code errorToErrorCode(Error Err) {
   std::error_code EC;
-  handleAllErrors(std::move(Err),
-                  [&](const ErrorInfoBase &EI) {
-                    EC = EI.convertToErrorCode();
-                  });
+  handleAllErrors(std::move(Err), [&](const ErrorInfoBase &EI) {
+    EC = EI.convertToErrorCode();
+  });
   return EC;
 }
 
 /// Convert an ErrorOr<T> to an Expected<T>.
-template <typename T>
-Expected<T> errorOrToExpected(ErrorOr<T> &&EO) {
+template <typename T> Expected<T> errorOrToExpected(ErrorOr<T> &&EO) {
   if (auto EC = EO.getError())
     return errorCodeToError(EC);
   return std::move(*EO);
 }
 
 /// Convert an Expected<T> to an ErrorOr<T>.
-template <typename T>
-ErrorOr<T> expectedToErrorOr(Expected<T> &&E) {
+template <typename T> ErrorOr<T> expectedToErrorOr(Expected<T> &&E) {
   if (auto Err = E.takeError())
     return errorToErrorCode(std::move(Err));
   return std::move(*E);
@@ -805,37 +803,30 @@ ErrorOr<T> expectedToErrorOr(Expected<T> &&E) {
 ///
 class ExitOnError {
 public:
-
   /// Create an error on exit helper.
   ExitOnError(std::string Banner = "", int DefaultErrorExitCode = 1)
-    : Banner(std::move(Banner)),
-      GetExitCode([=](const Error&) { return DefaultErrorExitCode; }) {}
+      : Banner(std::move(Banner)),
+        GetExitCode([=](const Error &) { return DefaultErrorExitCode; }) {}
 
   /// Set the banner string for any errors caught by operator().
-  void setBanner(std::string Banner) {
-    this->Banner = std::move(Banner);
-  }
+  void setBanner(std::string Banner) { this->Banner = std::move(Banner); }
 
   /// Set the exit-code mapper function.
-  void setExitCodeMapper(std::function<int(const Error&)> GetExitCode) {
+  void setExitCodeMapper(std::function<int(const Error &)> GetExitCode) {
     this->GetExitCode = std::move(GetExitCode);
   }
 
   /// Check Err. If it's in a failure state log the error(s) and exit.
-  void operator()(Error Err) const {
-    checkError(std::move(Err));
-  }
+  void operator()(Error Err) const { checkError(std::move(Err)); }
 
   /// Check E. If it's in a success state return the contained value. If it's
   /// in a failure state log the error(s) and exit.
-  template <typename T>
-  T operator()(Expected<T> &&E) const {
+  template <typename T> T operator()(Expected<T> &&E) const {
     checkError(E.takeError());
     return std::move(*E);
   }
 
 private:
-
   void checkError(Error Err) const {
     if (Err) {
       int ExitCode = GetExitCode(Err);
@@ -845,7 +836,7 @@ private:
   }
 
   std::string Banner;
-  std::function<int(const Error&)> GetExitCode;
+  std::function<int(const Error &)> GetExitCode;
 };
 
 } // namespace llvm
