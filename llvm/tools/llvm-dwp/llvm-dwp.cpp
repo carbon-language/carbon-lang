@@ -126,8 +126,13 @@ struct CompileUnitIdentifiers {
   const char *DWOName = "";
 };
 
-static const char *getIndexedString(uint32_t StrIndex, StringRef StrOffsets,
+static const char *getIndexedString(uint32_t Form, DataExtractor InfoData,
+                                    uint32_t &InfoOffset, StringRef StrOffsets,
                                     StringRef Str) {
+  if (Form == dwarf::DW_FORM_string)
+    return InfoData.getCStr(&InfoOffset);
+  assert(Form == dwarf::DW_FORM_GNU_str_index);
+  auto StrIndex = InfoData.getULEB128(&InfoOffset);
   DataExtractor StrOffsetsData(StrOffsets, true, 0);
   uint32_t StrOffsetsOffset = 4 * StrIndex;
   uint32_t StrOffset = StrOffsetsData.getU32(&StrOffsetsOffset);
@@ -163,12 +168,11 @@ static CompileUnitIdentifiers getCUIdentifiers(StringRef Abbrev, StringRef Info,
          (Name != 0 || Form != 0)) {
     switch (Name) {
     case dwarf::DW_AT_name: {
-      ID.Name = getIndexedString(InfoData.getULEB128(&Offset), StrOffsets, Str);
+      ID.Name = getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
       break;
     }
     case dwarf::DW_AT_GNU_dwo_name: {
-      ID.DWOName =
-          getIndexedString(InfoData.getULEB128(&Offset), StrOffsets, Str);
+      ID.DWOName = getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
       break;
     }
     case dwarf::DW_AT_GNU_dwo_id:
