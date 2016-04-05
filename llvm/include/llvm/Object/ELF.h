@@ -112,7 +112,7 @@ public:
   const Elf_Shdr *section_begin() const;
   const Elf_Shdr *section_end() const;
   Elf_Shdr_Range sections() const {
-    return make_range(section_begin(), section_end());
+    return makeArrayRef(section_begin(), section_end());
   }
 
   const Elf_Sym *symbol_begin(const Elf_Shdr *Sec) const {
@@ -131,7 +131,7 @@ public:
     return symbol_begin(Sec) + Size / sizeof(Elf_Sym);
   }
   Elf_Sym_Range symbols(const Elf_Shdr *Sec) const {
-    return make_range(symbol_begin(Sec), symbol_end(Sec));
+    return makeArrayRef(symbol_begin(Sec), symbol_end(Sec));
   }
 
   const Elf_Rela *rela_begin(const Elf_Shdr *sec) const {
@@ -148,7 +148,7 @@ public:
   }
 
   Elf_Rela_Range relas(const Elf_Shdr *Sec) const {
-    return make_range(rela_begin(Sec), rela_end(Sec));
+    return makeArrayRef(rela_begin(Sec), rela_end(Sec));
   }
 
   const Elf_Rel *rel_begin(const Elf_Shdr *sec) const {
@@ -165,7 +165,7 @@ public:
   }
 
   Elf_Rel_Range rels(const Elf_Shdr *Sec) const {
-    return make_range(rel_begin(Sec), rel_end(Sec));
+    return makeArrayRef(rel_begin(Sec), rel_end(Sec));
   }
 
   /// \brief Iterate over program header table.
@@ -180,7 +180,7 @@ public:
   }
 
   const Elf_Phdr_Range program_headers() const {
-    return make_range(program_header_begin(), program_header_end());
+    return makeArrayRef(program_header_begin(), program_header_end());
   }
 
   uint64_t getNumSections() const;
