@@ -19,6 +19,7 @@
 namespace llvm {
 // Forward declarations.
 class RegisterBankInfo;
+class raw_ostream;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 
@@ -73,7 +74,24 @@ public:
   bool operator!=(const RegisterBank &OtherRB) const {
     return !this->operator==(OtherRB);
   }
+
+  /// Dump the register mask on dbgs() stream.
+  /// The dump is verbose.
+  void dump(const TargetRegisterInfo *TRI = nullptr) const;
+
+  /// Print the register mask on OS.
+  /// If IsForDebug is false, then only the name of the register bank
+  /// is printed. Otherwise, all the fields are printing.
+  /// TRI is then used to print the name of the register classes that
+  /// this register bank covers.
+  void print(raw_ostream &OS, bool IsForDebug = false,
+             const TargetRegisterInfo *TRI = nullptr) const;
 };
+
+inline raw_ostream &operator<<(raw_ostream &OS, const RegisterBank &RegBank) {
+  RegBank.print(OS);
+  return OS;
+}
 } // End namespace llvm.
 
 #endif

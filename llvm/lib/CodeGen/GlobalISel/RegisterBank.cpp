@@ -48,3 +48,37 @@ bool RegisterBank::operator==(const RegisterBank &OtherRB) const {
          "ID does not uniquely identify a RegisterBank");
   return &OtherRB == this;
 }
+
+void RegisterBank::dump(const TargetRegisterInfo *TRI) const {
+  print(dbgs(), /* IsForDebug */ true, TRI);
+}
+
+void RegisterBank::print(raw_ostream &OS, bool IsForDebug,
+                         const TargetRegisterInfo *TRI) const {
+  OS << getName();
+  if (!IsForDebug)
+    return;
+  OS << "(ID:" << getID() << ", Size:" << getSize() << ")\n"
+     << "isValid:" << isValid() << '\n'
+     << "Number of Covered register classes: " << ContainedRegClasses.count()
+     << '\n';
+  // Print all the subclasses if we can.
+  // This register classes may not be properly initialized yet.
+  if (!TRI || ContainedRegClasses.empty())
+    return;
+  assert(ContainedRegClasses.size() == TRI->getNumRegClasses() &&
+         "TRI does not match the initialization process?");
+  bool IsFirst = true;
+  OS << "Covered register classes:\n";
+  for (unsigned RCId = 0, End = TRI->getNumRegClasses(); RCId != End; ++RCId) {
+    const TargetRegisterClass &RC = *TRI->getRegClass(RCId);
+
+    if (!contains(RC))
+      continue;
+
+    if (!IsFirst)
+      OS << ", ";
+    OS << TRI->getRegClassName(&RC);
+    IsFirst = false;
+  }
+}
