@@ -27,6 +27,7 @@ class CallLowering;
 class DataLayout;
 class MachineFunction;
 class MachineInstr;
+class RegisterBankInfo;
 class SDep;
 class SUnit;
 class TargetFrameLowering;
@@ -98,6 +99,10 @@ public:
   /// details of graph coloring register allocation removed from it.
   ///
   virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
+
+  /// If the information for the register banks is available, return it.
+  /// Otherwise return nullptr.
+  virtual const RegisterBankInfo *getRegBankInfo() const { return nullptr; }
 
   /// getInstrItineraryData - Returns instruction itinerary data for the target
   /// or specific subtarget.
