@@ -54,9 +54,12 @@ public:
   typedef Elf_Versym_Impl<ELFT> Elf_Versym;
   typedef Elf_Hash_Impl<ELFT> Elf_Hash;
   typedef Elf_GnuHash_Impl<ELFT> Elf_GnuHash;
-  typedef iterator_range<const Elf_Dyn *> Elf_Dyn_Range;
-  typedef iterator_range<const Elf_Shdr *> Elf_Shdr_Range;
-  typedef iterator_range<const Elf_Sym *> Elf_Sym_Range;
+  typedef typename ELFT::DynRange Elf_Dyn_Range;
+  typedef typename ELFT::ShdrRange Elf_Shdr_Range;
+  typedef typename ELFT::SymRange Elf_Sym_Range;
+  typedef typename ELFT::RelRange Elf_Rel_Range;
+  typedef typename ELFT::RelaRange Elf_Rela_Range;
+  typedef typename ELFT::PhdrRange Elf_Phdr_Range;
 
   const uint8_t *base() const {
     return reinterpret_cast<const uint8_t *>(Buf.data());
@@ -131,8 +134,6 @@ public:
     return make_range(symbol_begin(Sec), symbol_end(Sec));
   }
 
-  typedef iterator_range<const Elf_Rela *> Elf_Rela_Range;
-
   const Elf_Rela *rela_begin(const Elf_Shdr *sec) const {
     if (sec->sh_entsize != sizeof(Elf_Rela))
       report_fatal_error("Invalid relocation entry size");
@@ -163,7 +164,6 @@ public:
     return rel_begin(sec) + Size / sizeof(Elf_Rel);
   }
 
-  typedef iterator_range<const Elf_Rel *> Elf_Rel_Range;
   Elf_Rel_Range rels(const Elf_Shdr *Sec) const {
     return make_range(rel_begin(Sec), rel_end(Sec));
   }
@@ -178,8 +178,6 @@ public:
   const Elf_Phdr *program_header_end() const {
     return program_header_begin() + Header->e_phnum;
   }
-
-  typedef iterator_range<const Elf_Phdr *> Elf_Phdr_Range;
 
   const Elf_Phdr_Range program_headers() const {
     return make_range(program_header_begin(), program_header_end());

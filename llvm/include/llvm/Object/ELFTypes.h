@@ -62,6 +62,9 @@ public:
   typedef iterator_range<const Dyn *> DynRange;
   typedef iterator_range<const Shdr *> ShdrRange;
   typedef iterator_range<const Sym *> SymRange;
+  typedef iterator_range<const Rel *> RelRange;
+  typedef iterator_range<const Rela *> RelaRange;
+  typedef iterator_range<const Phdr *> PhdrRange;
 
   typedef packed<uint16_t> Half;
   typedef packed<uint32_t> Word;
