@@ -941,6 +941,10 @@ CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
       if (canSkipAddingToSets(CurValue))
         continue;
 
+      Optional<StratifiedAttr> MaybeCurIndex = valueToAttrIndex(CurValue);
+      if (MaybeCurIndex)
+        Builder.noteAttributes(CurValue, *MaybeCurIndex);
+
       for (const auto &EdgeTuple : Graph.edgesFor(Node)) {
         auto Weight = std::get<0>(EdgeTuple);
         auto Label = Weight.first;
@@ -964,7 +968,7 @@ CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
         }
 
         auto Aliasing = Weight.second;
-        if (auto MaybeCurIndex = valueToAttrIndex(CurValue))
+        if (MaybeCurIndex)
           Aliasing.set(*MaybeCurIndex);
         if (auto MaybeOtherIndex = valueToAttrIndex(OtherValue))
           Aliasing.set(*MaybeOtherIndex);
