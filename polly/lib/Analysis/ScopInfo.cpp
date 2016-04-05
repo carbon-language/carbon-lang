@@ -4448,6 +4448,13 @@ void ScopInfo::ensureValueRead(Value *V, BasicBlock *UserBB) {
 
 void ScopInfo::ensurePHIWrite(PHINode *PHI, BasicBlock *IncomingBlock,
                               Value *IncomingValue, bool IsExitBlock) {
+  // As the incoming block might turn out to be an error statement ensure we
+  // will create an exit PHI SAI object. It is needed during code generation
+  // and would be created later anyway.
+  if (IsExitBlock)
+    scop->getOrCreateScopArrayInfo(PHI, PHI->getType(), {},
+                                   ScopArrayInfo::MK_ExitPHI);
+
   ScopStmt *IncomingStmt = scop->getStmtFor(IncomingBlock);
   if (!IncomingStmt)
     return;
