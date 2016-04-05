@@ -30,7 +30,9 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#include <csignal>
+#if HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 // DragonFlyBSD, OpenBSD, and Bitrig have deprecated <malloc.h> for
 // <stdlib.h> instead. Unix.h includes this for us already.
 #if defined(HAVE_MALLOC_H) && !defined(__DragonFly__) && \
@@ -58,9 +60,7 @@
 using namespace llvm;
 using namespace sys;
 
-namespace {
-
-std::pair<TimeValue, TimeValue> getRUsageTimes() {
+static std::pair<TimeValue, TimeValue> getRUsageTimes() {
 #if defined(HAVE_GETRUSAGE)
   struct rusage RU;
   ::getrusage(RUSAGE_SELF, &RU);
@@ -78,8 +78,6 @@ std::pair<TimeValue, TimeValue> getRUsageTimes() {
   return std::make_pair(TimeValue(), TimeValue());
 #endif
 }
-
-} // end anonymous namespace
 
 // On Cygwin, getpagesize() returns 64k(AllocationGranularity) and
 // offset in mmap(3) should be aligned to the AllocationGranularity.
@@ -191,7 +189,6 @@ Process::GetArgumentVector(SmallVectorImpl<const char *> &ArgsOut,
 }
 
 namespace {
-
 class FDCloser {
 public:
   FDCloser(int &FD) : FD(FD), KeepOpen(false) {}
@@ -208,8 +205,7 @@ private:
   int &FD;
   bool KeepOpen;
 };
-
-} // end anonymous namespace
+}
 
 std::error_code Process::FixupStandardFileDescriptors() {
   int NullFD = -1;
@@ -304,9 +300,7 @@ bool Process::FileDescriptorIsDisplayed(int fd) {
 #endif
 }
 
-namespace {
-
-unsigned getColumns(int FileID) {
+static unsigned getColumns(int FileID) {
   // If COLUMNS is defined in the environment, wrap to that many columns.
   if (const char *ColumnsStr = std::getenv("COLUMNS")) {
     int Columns = std::atoi(ColumnsStr);
@@ -325,8 +319,6 @@ unsigned getColumns(int FileID) {
 
   return Columns;
 }
-
-} // end anonymous namespace
 
 unsigned Process::StandardOutColumns() {
   if (!StandardOutIsDisplayed())
@@ -352,13 +344,11 @@ extern "C" int del_curterm(struct term *termp);
 extern "C" int tigetnum(char *capname);
 #endif
 
-namespace {
-
 #ifdef HAVE_TERMINFO
-ManagedStatic<sys::Mutex> TermColorMutex;
+static ManagedStatic<sys::Mutex> TermColorMutex;
 #endif
 
-bool terminalHasColors(int fd) {
+static bool terminalHasColors(int fd) {
 #ifdef HAVE_TERMINFO
   // First, acquire a global lock because these C routines are thread hostile.
   MutexGuard G(*TermColorMutex);
@@ -397,8 +387,6 @@ bool terminalHasColors(int fd) {
   // Otherwise, be conservative.
   return false;
 }
-
-} // end anonymous namespace
 
 bool Process::FileDescriptorHasColors(int fd) {
   // A file descriptor has colors if it is displayed and the terminal has
@@ -440,10 +428,7 @@ const char *Process::ResetColor() {
 }
 
 #if !defined(HAVE_DECL_ARC4RANDOM) || !HAVE_DECL_ARC4RANDOM
-
-namespace {
-
-unsigned GetRandomNumberSeed() {
+static unsigned GetRandomNumberSeed() {
   // Attempt to get the initial seed from /dev/urandom, if possible.
   int urandomFD = open("/dev/urandom", O_RDONLY);
 
@@ -465,9 +450,6 @@ unsigned GetRandomNumberSeed() {
   TimeValue Now = TimeValue::now();
   return hash_combine(Now.seconds(), Now.nanoseconds(), ::getpid());
 }
-
-} // end anonymous namespace
-
 #endif
 
 unsigned llvm::sys::Process::GetRandomNumber() {

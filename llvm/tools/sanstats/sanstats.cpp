@@ -12,26 +12,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Transforms/Utils/SanitizerStats.h"
-#include <cassert>
-#include <cstdint>
-#include <memory>
-#include <string>
+#include <stdint.h>
 
 using namespace llvm;
 
-namespace {
+static cl::opt<std::string> ClInputFile(cl::Positional, cl::Required,
+                                        cl::desc("<filename>"));
 
-cl::opt<std::string> ClInputFile(cl::Positional, cl::Required,
-                                 cl::desc("<filename>"));
-
-cl::opt<bool> ClDemangle("demangle", cl::init(false),
-                         cl::desc("Print demangled function name."));
+static cl::opt<bool> ClDemangle("demangle", cl::init(false),
+                                cl::desc("Print demangled function name."));
 
 inline uint64_t KindFromData(uint64_t Data, char SizeofPtr) {
   return Data >> (SizeofPtr * 8 - kSanitizerStatKindBits);
@@ -69,7 +63,7 @@ const char *ReadModule(char SizeofPtr, const char *Begin, const char *End) {
   SymbolizerOptions.UseSymbolTable = true;
   symbolize::LLVMSymbolizer Symbolizer(SymbolizerOptions);
 
-  while (true) {
+  while (1) {
     uint64_t Addr = ReadLE(SizeofPtr, Begin, End);
     Begin += SizeofPtr;
     uint64_t Data = ReadLE(SizeofPtr, Begin, End);
@@ -114,8 +108,6 @@ const char *ReadModule(char SizeofPtr, const char *Begin, const char *End) {
     llvm::outs() << " " << CountFromData(Data, SizeofPtr) << '\n';
   }
 }
-
-} // end anonymous namespace
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,

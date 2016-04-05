@@ -8,23 +8,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CrashRecoveryContext.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/ThreadLocal.h"
-#include "llvm/Support/Threading.h"
-#include <cassert>
-#include <csetjmp>
-
+#include <setjmp.h>
 using namespace llvm;
 
 namespace {
 
 struct CrashRecoveryContextImpl;
 
-ManagedStatic<
+static ManagedStatic<
     sys::ThreadLocal<const CrashRecoveryContextImpl> > CurrentContext;
 
 struct CrashRecoveryContextImpl {
@@ -46,7 +42,6 @@ public:
     Next = CurrentContext->get();
     CurrentContext->set(this);
   }
-
   ~CrashRecoveryContextImpl() {
     if (!SwitchedThread)
       CurrentContext->set(Next);
@@ -75,13 +70,13 @@ public:
   }
 };
 
-ManagedStatic<sys::Mutex> gCrashRecoveryContextMutex;
-bool gCrashRecoveryEnabled = false;
+}
 
-ManagedStatic<sys::ThreadLocal<const CrashRecoveryContext>>
+static ManagedStatic<sys::Mutex> gCrashRecoveryContextMutex;
+static bool gCrashRecoveryEnabled = false;
+
+static ManagedStatic<sys::ThreadLocal<const CrashRecoveryContext>>
        tlIsRecoveringFromCrash;
-
-} // end anonymous namespace
 
 CrashRecoveryContextCleanup::~CrashRecoveryContextCleanup() {}
 
@@ -167,9 +162,7 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
 // SetUnhandledExceptionFilter API, but there's a risk of that
 // being entirely overwritten (it's not a chain).
 
-namespace {
-
-LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
+static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 {
   // Lookup the current thread local recovery object.
   const CrashRecoveryContextImpl *CRCI = CurrentContext->get();
@@ -197,9 +190,7 @@ LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 // CrashRecoveryContext at all.  So we make use of a thread-local
 // exception table.  The handles contained in here will either be
 // non-NULL, valid VEH handles, or NULL.
-sys::ThreadLocal<const void> sCurrentExceptionHandle;
-
-} // end anonymous namespace
+static sys::ThreadLocal<const void> sCurrentExceptionHandle;
 
 void CrashRecoveryContext::Enable() {
   sys::ScopedLock L(*gCrashRecoveryContextMutex);
@@ -248,15 +239,14 @@ void CrashRecoveryContext::Disable() {
 // reliable fashion -- if we get a signal outside of a crash recovery context we
 // simply disable crash recovery and raise the signal again.
 
-#include <csignal>
+#include <signal.h>
 
-namespace {
+static const int Signals[] =
+    { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP };
+static const unsigned NumSignals = array_lengthof(Signals);
+static struct sigaction PrevActions[NumSignals];
 
-const int Signals[] = { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP };
-const unsigned NumSignals = array_lengthof(Signals);
-struct sigaction PrevActions[NumSignals];
-
-void CrashRecoverySignalHandler(int Signal) {
+static void CrashRecoverySignalHandler(int Signal) {
   // Lookup the current thread local recovery object.
   const CrashRecoveryContextImpl *CRCI = CurrentContext->get();
 
@@ -287,8 +277,6 @@ void CrashRecoverySignalHandler(int Signal) {
   if (CRCI)
     const_cast<CrashRecoveryContextImpl*>(CRCI)->HandleCrash();
 }
-
-} // end anonymous namespace
 
 void CrashRecoveryContext::Enable() {
   sys::ScopedLock L(*gCrashRecoveryContextMutex);
@@ -346,16 +334,14 @@ void CrashRecoveryContext::HandleCrash() {
   CRCI->HandleCrash();
 }
 
-namespace {
-
 // FIXME: Portability.
-void setThreadBackgroundPriority() {
+static void setThreadBackgroundPriority() {
 #ifdef __APPLE__
   setpriority(PRIO_DARWIN_THREAD, 0, PRIO_DARWIN_BG);
 #endif
 }
 
-bool hasThreadBackgroundPriority() {
+static bool hasThreadBackgroundPriority() {
 #ifdef __APPLE__
   return getpriority(PRIO_DARWIN_THREAD, 0) == 1;
 #else
@@ -363,14 +349,16 @@ bool hasThreadBackgroundPriority() {
 #endif
 }
 
+namespace {
 struct RunSafelyOnThreadInfo {
   function_ref<void()> Fn;
   CrashRecoveryContext *CRC;
   bool UseBackgroundPriority;
   bool Result;
 };
+}
 
-void RunSafelyOnThread_Dispatch(void *UserData) {
+static void RunSafelyOnThread_Dispatch(void *UserData) {
   RunSafelyOnThreadInfo *Info =
     reinterpret_cast<RunSafelyOnThreadInfo*>(UserData);
 
@@ -379,9 +367,6 @@ void RunSafelyOnThread_Dispatch(void *UserData) {
 
   Info->Result = Info->CRC->RunSafely(Info->Fn);
 }
-
-} // end anonymous namespace
-
 bool CrashRecoveryContext::RunSafelyOnThread(function_ref<void()> Fn,
                                              unsigned RequestedStackSize) {
   bool UseBackgroundPriority = hasThreadBackgroundPriority();

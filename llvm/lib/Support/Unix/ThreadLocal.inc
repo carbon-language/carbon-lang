@@ -19,11 +19,10 @@
 #if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_GETSPECIFIC)
 
 #include <cassert>
-#include <cstdlib>
 #include <pthread.h>
+#include <stdlib.h>
 
 namespace llvm {
-
 using namespace sys;
 
 ThreadLocalImpl::ThreadLocalImpl() : data() {
@@ -57,19 +56,14 @@ void ThreadLocalImpl::removeInstance() {
   setInstance(nullptr);
 }
 
-} // end namespace llvm
+}
 #else
-
 namespace llvm {
-
 using namespace sys;
-
 ThreadLocalImpl::ThreadLocalImpl() : data() { }
 ThreadLocalImpl::~ThreadLocalImpl() { }
 void ThreadLocalImpl::setInstance(const void* d) { data = const_cast<void*>(d);}
 void *ThreadLocalImpl::getInstance() { return data; }
 void ThreadLocalImpl::removeInstance() { setInstance(0); }
-
-} // end namespace llvm
-
+}
 #endif

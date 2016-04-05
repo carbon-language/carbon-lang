@@ -9,12 +9,9 @@
 
 #include "gtest/gtest.h"
 #include "llvm/Support/TimeValue.h"
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
+#include <time.h>
 
 using namespace llvm;
-
 namespace {
 
 TEST(TimeValue, time_t) {
@@ -40,4 +37,4 @@ TEST(TimeValue, Win32FILETIME) {
   EXPECT_EQ(ft1970, epoch.toWin32Time());
 }
 
-} // end anonymous namespace
+}

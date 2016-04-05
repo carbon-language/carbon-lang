@@ -34,8 +34,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include <cstdint>
-
+#include <stdint.h>
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-isel"
@@ -142,7 +141,7 @@ namespace {
     }
 #endif
   };
-} // end anonymous namespace
+}
 
 namespace {
   //===--------------------------------------------------------------------===//
@@ -302,6 +301,7 @@ namespace {
       // Walk all the users of the immediate.
       for (SDNode::use_iterator UI = N->use_begin(),
            UE = N->use_end(); (UI != UE) && (UseCount < 2); ++UI) {
+
         SDNode *User = *UI;
 
         // This user is already selected. Count it as a legitimate use and
@@ -393,7 +393,8 @@ namespace {
       return true;
     }
   };
-} // end anonymous namespace
+}
+
 
 bool
 X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
@@ -458,12 +459,10 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
   return true;
 }
 
-namespace {
-
 /// Replace the original chain operand of the call with
 /// load's chain operand and move load below the call's chain operand.
-void moveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load, SDValue Call,
-                        SDValue OrigChain) {
+static void moveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
+                               SDValue Call, SDValue OrigChain) {
   SmallVector<SDValue, 8> Ops;
   SDValue Chain = OrigChain.getOperand(0);
   if (Chain.getNode() == Load.getNode())
@@ -497,7 +496,7 @@ void moveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load, SDValue Call,
 /// Return the CALLSEQ_START by reference as a second output.
 /// In the case of a tail call, there isn't a callseq node between the call
 /// chain and the load.
-bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
+static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
   // The transformation is somewhat dangerous if the call's chain was glued to
   // the call. After MoveBelowOrigChain the load is moved between the call and
   // the chain, this can create a cycle if the load is not folded. So it is
@@ -533,8 +532,6 @@ bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
     return true;
   return false;
 }
-
-} // end anonymous namespace
 
 void X86DAGToDAGISel::PreprocessISelDAG() {
   // OptFor[Min]Size are used in pattern predicates that isel is matching.
@@ -654,6 +651,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
   }
 }
 
+
 /// Emit any code that needs to be executed only in the main function.
 void X86DAGToDAGISel::emitSpecialCodeForMain() {
   if (Subtarget->isTargetCygMing()) {
@@ -678,9 +676,7 @@ void X86DAGToDAGISel::EmitFunctionEntryCode() {
       emitSpecialCodeForMain();
 }
 
-namespace {
-
-bool isDispSafeForFrameIndex(int64_t Val) {
+static bool isDispSafeForFrameIndex(int64_t Val) {
   // On 64-bit platforms, we can run into an issue where a frame index
   // includes a displacement that, when added to the explicit displacement,
   // will overflow the displacement field. Assuming that the frame index
@@ -689,8 +685,6 @@ bool isDispSafeForFrameIndex(int64_t Val) {
   // a 32-bit integer), a 31-bit disp should always be safe.
   return isInt<31>(Val);
 }
-
-} // end anonymous namespace
 
 bool X86DAGToDAGISel::foldOffsetIntoAddress(uint64_t Offset,
                                             X86ISelAddressMode &AM) {
@@ -711,6 +705,7 @@ bool X86DAGToDAGISel::foldOffsetIntoAddress(uint64_t Offset,
   }
   AM.Disp = Val;
   return false;
+
 }
 
 bool X86DAGToDAGISel::matchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM){
@@ -901,14 +896,12 @@ bool X86DAGToDAGISel::matchAdd(SDValue N, X86ISelAddressMode &AM,
   return true;
 }
 
-namespace {
-
 // Insert a node into the DAG at least before the Pos node's position. This
 // will reposition the node as needed, and will assign it a node ID that is <=
 // the Pos node's ID. Note that this does *not* preserve the uniqueness of node
 // IDs! The selection DAG must no longer depend on their uniqueness when this
 // is used.
-void insertDAGNode(SelectionDAG &DAG, SDValue Pos, SDValue N) {
+static void insertDAGNode(SelectionDAG &DAG, SDValue Pos, SDValue N) {
   if (N.getNode()->getNodeId() == -1 ||
       N.getNode()->getNodeId() > Pos.getNode()->getNodeId()) {
     DAG.RepositionNode(Pos.getNode()->getIterator(), N.getNode());
@@ -920,9 +913,10 @@ void insertDAGNode(SelectionDAG &DAG, SDValue Pos, SDValue N) {
 // safe. This allows us to convert the shift and and into an h-register
 // extract and a scaled index. Returns false if the simplification is
 // performed.
-bool foldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N, uint64_t Mask,
-                               SDValue Shift, SDValue X,
-                               X86ISelAddressMode &AM) {
+static bool foldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
+                                      uint64_t Mask,
+                                      SDValue Shift, SDValue X,
+                                      X86ISelAddressMode &AM) {
   if (Shift.getOpcode() != ISD::SRL ||
       !isa<ConstantSDNode>(Shift.getOperand(1)) ||
       !Shift.hasOneUse())
@@ -962,9 +956,10 @@ bool foldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N, uint64_t Mask,
 // Transforms "(X << C1) & C2" to "(X & (C2>>C1)) << C1" if safe and if this
 // allows us to fold the shift into this addressing mode. Returns false if the
 // transform succeeded.
-bool foldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N, uint64_t Mask,
-                                 SDValue Shift, SDValue X,
-                                 X86ISelAddressMode &AM) {
+static bool foldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
+                                        uint64_t Mask,
+                                        SDValue Shift, SDValue X,
+                                        X86ISelAddressMode &AM) {
   if (Shift.getOpcode() != ISD::SHL ||
       !isa<ConstantSDNode>(Shift.getOperand(1)))
     return true;
@@ -1028,8 +1023,10 @@ bool foldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N, uint64_t Mask,
 // Note that this function assumes the mask is provided as a mask *after* the
 // value is shifted. The input chain may or may not match that, but computing
 // such a mask is trivial.
-bool foldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N, uint64_t Mask,
-                             SDValue Shift, SDValue X, X86ISelAddressMode &AM) {
+static bool foldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
+                                    uint64_t Mask,
+                                    SDValue Shift, SDValue X,
+                                    X86ISelAddressMode &AM) {
   if (Shift.getOpcode() != ISD::SRL || !Shift.hasOneUse() ||
       !isa<ConstantSDNode>(Shift.getOperand(1)))
     return true;
@@ -1106,8 +1103,6 @@ bool foldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N, uint64_t Mask,
   AM.IndexReg = NewSRL;
   return false;
 }
-
-} // end anonymous namespace
 
 bool X86DAGToDAGISel::matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                               unsigned Depth) {
@@ -1423,6 +1418,7 @@ bool X86DAGToDAGISel::matchAddressBase(SDValue N, X86ISelAddressMode &AM) {
 bool X86DAGToDAGISel::selectVectorAddr(SDNode *Parent, SDValue N, SDValue &Base,
                                       SDValue &Scale, SDValue &Index,
                                       SDValue &Disp, SDValue &Segment) {
+
   MaskedGatherScatterSDNode *Mgs = dyn_cast<MaskedGatherScatterSDNode>(Parent);
   if (!Mgs)
     return false;
@@ -1544,6 +1540,7 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root,
   }
   return false;
 }
+
 
 bool X86DAGToDAGISel::selectMOV64Imm32(SDValue N, SDValue &Imm) {
   if (const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
@@ -1698,6 +1695,7 @@ bool X86DAGToDAGISel::selectTLSADDRAddr(SDValue N, SDValue &Base,
   return true;
 }
 
+
 bool X86DAGToDAGISel::tryFoldLoad(SDNode *P, SDValue N,
                                   SDValue &Base, SDValue &Scale,
                                   SDValue &Index, SDValue &Disp,
@@ -1720,11 +1718,9 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   return CurDAG->getRegister(GlobalBaseReg, TLI->getPointerTy(DL)).getNode();
 }
 
-namespace {
-
 /// Test whether the given X86ISD::CMP node has any uses which require the SF
 /// or OF bits to be accurate.
-bool hasNoSignedComparisonUses(SDNode *N) {
+static bool hasNoSignedComparisonUses(SDNode *N) {
   // Examine each user of the node.
   for (SDNode::use_iterator UI = N->use_begin(),
          UE = N->use_end(); UI != UE; ++UI) {
@@ -1786,9 +1782,10 @@ bool hasNoSignedComparisonUses(SDNode *N) {
 
 /// Check whether or not the chain ending in StoreNode is suitable for doing
 /// the {load; increment or decrement; store} to modify transformation.
-bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
-                          SDValue StoredVal, SelectionDAG *CurDAG,
-                          LoadSDNode* &LoadNode, SDValue &InputChain) {
+static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
+                                SDValue StoredVal, SelectionDAG *CurDAG,
+                                LoadSDNode* &LoadNode, SDValue &InputChain) {
+
   // is the value stored the result of a DEC or INC?
   if (!(Opc == X86ISD::DEC || Opc == X86ISD::INC)) return false;
 
@@ -1870,7 +1867,7 @@ bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
 
 /// Get the appropriate X86 opcode for an in-memory increment or decrement.
 /// Opc should be X86ISD::DEC or X86ISD::INC.
-unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
+static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   if (Opc == X86ISD::DEC) {
     if (LdVT == MVT::i64) return X86::DEC64m;
     if (LdVT == MVT::i32) return X86::DEC32m;
@@ -1885,8 +1882,6 @@ unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   }
   llvm_unreachable("unrecognized size for LdVT");
 }
-
-} // end anonymous namespace
 
 /// Customized ISel for GATHER operations.
 SDNode *X86DAGToDAGISel::selectGather(SDNode *Node, unsigned Opc) {

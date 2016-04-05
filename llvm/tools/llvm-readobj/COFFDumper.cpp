@@ -40,14 +40,9 @@
 #include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <cassert>
-#include <cstdint>
-#include <ctime>
-#include <memory>
-#include <string>
-#include <tuple>
+#include <cstring>
 #include <system_error>
-#include <vector>
+#include <time.h>
 
 using namespace llvm;
 using namespace llvm::object;
@@ -76,7 +71,6 @@ public:
   void printCOFFBaseReloc() override;
   void printCodeViewDebugInfo() override;
   void printStackMap() const override;
-
 private:
   void printSymbol(const SymbolRef &Sym);
   void printRelocation(const SectionRef &Section, const RelocationRef &Reloc,
@@ -150,7 +144,8 @@ private:
   StringSet<> TypeNames;
 };
 
-} // end anonymous namespace
+} // namespace
+
 
 namespace llvm {
 
@@ -165,7 +160,7 @@ std::error_code createCOFFDumper(const object::ObjectFile *Obj,
   return readobj_error::success;
 }
 
-} // end namespace llvm
+} // namespace llvm
 
 // Given a a section and an offset into this section the function returns the
 // symbol used for the relocation at the offset.
@@ -248,9 +243,7 @@ void COFFDumper::printBinaryBlockWithRelocs(StringRef Label,
   }
 }
 
-namespace {
-
-const EnumEntry<COFF::MachineTypes> ImageFileMachineType[] = {
+static const EnumEntry<COFF::MachineTypes> ImageFileMachineType[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_MACHINE_UNKNOWN  ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_MACHINE_AM33     ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_MACHINE_AMD64    ),
@@ -274,7 +267,7 @@ const EnumEntry<COFF::MachineTypes> ImageFileMachineType[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_MACHINE_WCEMIPSV2)
 };
 
-const EnumEntry<COFF::Characteristics> ImageFileCharacteristics[] = {
+static const EnumEntry<COFF::Characteristics> ImageFileCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_RELOCS_STRIPPED        ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_EXECUTABLE_IMAGE       ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_LINE_NUMS_STRIPPED     ),
@@ -292,7 +285,7 @@ const EnumEntry<COFF::Characteristics> ImageFileCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_BYTES_REVERSED_HI      )
 };
 
-const EnumEntry<COFF::WindowsSubsystem> PEWindowsSubsystem[] = {
+static const EnumEntry<COFF::WindowsSubsystem> PEWindowsSubsystem[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_UNKNOWN                ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_NATIVE                 ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_WINDOWS_GUI            ),
@@ -306,7 +299,7 @@ const EnumEntry<COFF::WindowsSubsystem> PEWindowsSubsystem[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_XBOX                   ),
 };
 
-const EnumEntry<COFF::DLLCharacteristics> PEDLLCharacteristics[] = {
+static const EnumEntry<COFF::DLLCharacteristics> PEDLLCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA      ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE         ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY      ),
@@ -320,7 +313,7 @@ const EnumEntry<COFF::DLLCharacteristics> PEDLLCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE),
 };
 
-const EnumEntry<COFF::SectionCharacteristics>
+static const EnumEntry<COFF::SectionCharacteristics>
 ImageSectionCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SCN_TYPE_NOLOAD           ),
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SCN_TYPE_NO_PAD           ),
@@ -360,7 +353,7 @@ ImageSectionCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SCN_MEM_WRITE             )
 };
 
-const EnumEntry<COFF::SymbolBaseType> ImageSymType[] = {
+static const EnumEntry<COFF::SymbolBaseType> ImageSymType[] = {
   { "Null"  , COFF::IMAGE_SYM_TYPE_NULL   },
   { "Void"  , COFF::IMAGE_SYM_TYPE_VOID   },
   { "Char"  , COFF::IMAGE_SYM_TYPE_CHAR   },
@@ -379,14 +372,14 @@ const EnumEntry<COFF::SymbolBaseType> ImageSymType[] = {
   { "DWord" , COFF::IMAGE_SYM_TYPE_DWORD  }
 };
 
-const EnumEntry<COFF::SymbolComplexType> ImageSymDType[] = {
+static const EnumEntry<COFF::SymbolComplexType> ImageSymDType[] = {
   { "Null"    , COFF::IMAGE_SYM_DTYPE_NULL     },
   { "Pointer" , COFF::IMAGE_SYM_DTYPE_POINTER  },
   { "Function", COFF::IMAGE_SYM_DTYPE_FUNCTION },
   { "Array"   , COFF::IMAGE_SYM_DTYPE_ARRAY    }
 };
 
-const EnumEntry<COFF::SymbolStorageClass> ImageSymClass[] = {
+static const EnumEntry<COFF::SymbolStorageClass> ImageSymClass[] = {
   { "EndOfFunction"  , COFF::IMAGE_SYM_CLASS_END_OF_FUNCTION  },
   { "Null"           , COFF::IMAGE_SYM_CLASS_NULL             },
   { "Automatic"      , COFF::IMAGE_SYM_CLASS_AUTOMATIC        },
@@ -416,7 +409,7 @@ const EnumEntry<COFF::SymbolStorageClass> ImageSymClass[] = {
   { "CLRToken"       , COFF::IMAGE_SYM_CLASS_CLR_TOKEN        }
 };
 
-const EnumEntry<COFF::COMDATType> ImageCOMDATSelect[] = {
+static const EnumEntry<COFF::COMDATType> ImageCOMDATSelect[] = {
   { "NoDuplicates", COFF::IMAGE_COMDAT_SELECT_NODUPLICATES },
   { "Any"         , COFF::IMAGE_COMDAT_SELECT_ANY          },
   { "SameSize"    , COFF::IMAGE_COMDAT_SELECT_SAME_SIZE    },
@@ -426,14 +419,14 @@ const EnumEntry<COFF::COMDATType> ImageCOMDATSelect[] = {
   { "Newest"      , COFF::IMAGE_COMDAT_SELECT_NEWEST       }
 };
 
-const EnumEntry<COFF::WeakExternalCharacteristics>
+static const EnumEntry<COFF::WeakExternalCharacteristics>
 WeakExternalCharacteristics[] = {
   { "NoLibrary", COFF::IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY },
   { "Library"  , COFF::IMAGE_WEAK_EXTERN_SEARCH_LIBRARY   },
   { "Alias"    , COFF::IMAGE_WEAK_EXTERN_SEARCH_ALIAS     }
 };
 
-const EnumEntry<CompileSym3::Flags> CompileSym3Flags[] = {
+static const EnumEntry<CompileSym3::Flags> CompileSym3Flags[] = {
     LLVM_READOBJ_ENUM_ENT(CompileSym3, EC),
     LLVM_READOBJ_ENUM_ENT(CompileSym3, NoDbgInfo),
     LLVM_READOBJ_ENUM_ENT(CompileSym3, LTCG),
@@ -448,7 +441,7 @@ const EnumEntry<CompileSym3::Flags> CompileSym3Flags[] = {
     LLVM_READOBJ_ENUM_ENT(CompileSym3, Exp),
 };
 
-const EnumEntry<codeview::SourceLanguage> SourceLanguages[] = {
+static const EnumEntry<codeview::SourceLanguage> SourceLanguages[] = {
     LLVM_READOBJ_ENUM_ENT(SourceLanguage, C),
     LLVM_READOBJ_ENUM_ENT(SourceLanguage, Cpp),
     LLVM_READOBJ_ENUM_ENT(SourceLanguage, Fortran),
@@ -468,7 +461,7 @@ const EnumEntry<codeview::SourceLanguage> SourceLanguages[] = {
     LLVM_READOBJ_ENUM_ENT(SourceLanguage, HLSL),
 };
 
-const EnumEntry<uint32_t> SubSectionTypes[] = {
+static const EnumEntry<uint32_t> SubSectionTypes[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(ModuleSubstreamKind, Symbols),
   LLVM_READOBJ_ENUM_CLASS_ENT(ModuleSubstreamKind, Lines),
   LLVM_READOBJ_ENUM_CLASS_ENT(ModuleSubstreamKind, StringTable),
@@ -484,7 +477,7 @@ const EnumEntry<uint32_t> SubSectionTypes[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(ModuleSubstreamKind, CoffSymbolRVA),
 };
 
-const EnumEntry<unsigned> CPUTypeNames[] = {
+static const EnumEntry<unsigned> CPUTypeNames[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(CPUType, Intel8080),
   LLVM_READOBJ_ENUM_CLASS_ENT(CPUType, Intel8086),
   LLVM_READOBJ_ENUM_CLASS_ENT(CPUType, Intel80286),
@@ -546,7 +539,7 @@ const EnumEntry<unsigned> CPUTypeNames[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(CPUType, D3D11_Shader),
 };
 
-const EnumEntry<uint8_t> ProcSymFlags[] = {
+static const EnumEntry<uint8_t> ProcSymFlags[] = {
     LLVM_READOBJ_ENUM_ENT(ProcFlags, HasFP),
     LLVM_READOBJ_ENUM_ENT(ProcFlags, HasIRET),
     LLVM_READOBJ_ENUM_ENT(ProcFlags, HasFRET),
@@ -557,7 +550,7 @@ const EnumEntry<uint8_t> ProcSymFlags[] = {
     LLVM_READOBJ_ENUM_ENT(ProcFlags, HasOptimizedDebugInfo),
 };
 
-const EnumEntry<uint32_t> FrameProcSymFlags[] = {
+static const EnumEntry<uint32_t> FrameProcSymFlags[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(FrameProcedureOptions, HasAlloca),
     LLVM_READOBJ_ENUM_CLASS_ENT(FrameProcedureOptions, HasSetJmp),
     LLVM_READOBJ_ENUM_CLASS_ENT(FrameProcedureOptions, HasLongJmp),
@@ -583,13 +576,13 @@ const EnumEntry<uint32_t> FrameProcSymFlags[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(FrameProcedureOptions, GuardCfw),
 };
 
-const EnumEntry<uint32_t> FrameDataFlags[] = {
+static const EnumEntry<uint32_t> FrameDataFlags[] = {
     LLVM_READOBJ_ENUM_ENT(FrameData, HasSEH),
     LLVM_READOBJ_ENUM_ENT(FrameData, HasEH),
     LLVM_READOBJ_ENUM_ENT(FrameData, IsFunctionStart),
 };
 
-const EnumEntry<uint16_t> LocalFlags[] = {
+static const EnumEntry<uint16_t> LocalFlags[] = {
     LLVM_READOBJ_ENUM_ENT(LocalSym, IsParameter),
     LLVM_READOBJ_ENUM_ENT(LocalSym, IsAddressTaken),
     LLVM_READOBJ_ENUM_ENT(LocalSym, IsCompilerGenerated),
@@ -603,14 +596,14 @@ const EnumEntry<uint16_t> LocalFlags[] = {
     LLVM_READOBJ_ENUM_ENT(LocalSym, IsEnregisteredStatic),
 };
 
-const EnumEntry<uint16_t> FrameCookieKinds[] = {
+static const EnumEntry<uint16_t> FrameCookieKinds[] = {
     LLVM_READOBJ_ENUM_ENT(FrameCookieSym, Copy),
     LLVM_READOBJ_ENUM_ENT(FrameCookieSym, XorStackPointer),
     LLVM_READOBJ_ENUM_ENT(FrameCookieSym, XorFramePointer),
     LLVM_READOBJ_ENUM_ENT(FrameCookieSym, XorR13),
 };
 
-const EnumEntry<uint16_t> ClassOptionNames[] = {
+static const EnumEntry<uint16_t> ClassOptionNames[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(ClassOptions, Packed),
   LLVM_READOBJ_ENUM_CLASS_ENT(ClassOptions, HasConstructorOrDestructor),
   LLVM_READOBJ_ENUM_CLASS_ENT(ClassOptions, HasOverloadedOperator),
@@ -625,14 +618,14 @@ const EnumEntry<uint16_t> ClassOptionNames[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(ClassOptions, Intrinsic),
 };
 
-const EnumEntry<uint8_t> MemberAccessNames[] = {
+static const EnumEntry<uint8_t> MemberAccessNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(MemberAccess, None),
     LLVM_READOBJ_ENUM_CLASS_ENT(MemberAccess, Private),
     LLVM_READOBJ_ENUM_CLASS_ENT(MemberAccess, Protected),
     LLVM_READOBJ_ENUM_CLASS_ENT(MemberAccess, Public),
 };
 
-const EnumEntry<uint16_t> MethodOptionNames[] = {
+static const EnumEntry<uint16_t> MethodOptionNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodOptions, Pseudo),
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodOptions, NoInherit),
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodOptions, NoConstruct),
@@ -640,7 +633,7 @@ const EnumEntry<uint16_t> MethodOptionNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodOptions, Sealed),
 };
 
-const EnumEntry<uint16_t> MemberKindNames[] = {
+static const EnumEntry<uint16_t> MemberKindNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodKind, Vanilla),
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodKind, Virtual),
     LLVM_READOBJ_ENUM_CLASS_ENT(MethodKind, Static),
@@ -653,7 +646,7 @@ const EnumEntry<uint16_t> MemberKindNames[] = {
 /// The names here all end in "*". If the simple type is a pointer type, we
 /// return the whole name. Otherwise we lop off the last character in our
 /// StringRef.
-const EnumEntry<SimpleTypeKind> SimpleTypeNames[] = {
+static const EnumEntry<SimpleTypeKind> SimpleTypeNames[] = {
     {"void*", SimpleTypeKind::Void},
     {"<not translated>*", SimpleTypeKind::NotTranslated},
     {"HRESULT*", SimpleTypeKind::HResult},
@@ -694,12 +687,12 @@ const EnumEntry<SimpleTypeKind> SimpleTypeNames[] = {
     {"__bool64*", SimpleTypeKind::Boolean64},
 };
 
-const EnumEntry<TypeLeafKind> LeafTypeNames[] = {
+static const EnumEntry<TypeLeafKind> LeafTypeNames[] = {
 #define LEAF_TYPE(name, val) LLVM_READOBJ_ENUM_ENT(TypeLeafKind, name),
 #include "llvm/DebugInfo/CodeView/CVLeafTypes.def"
 };
 
-const EnumEntry<uint8_t> PtrKindNames[] = {
+static const EnumEntry<uint8_t> PtrKindNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerKind, Near16),
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerKind, Far16),
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerKind, Huge16),
@@ -715,7 +708,7 @@ const EnumEntry<uint8_t> PtrKindNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerKind, Near64),
 };
 
-const EnumEntry<uint8_t> PtrModeNames[] = {
+static const EnumEntry<uint8_t> PtrModeNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerMode, Pointer),
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerMode, LValueReference),
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerMode, PointerToDataMember),
@@ -723,7 +716,7 @@ const EnumEntry<uint8_t> PtrModeNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerMode, RValueReference),
 };
 
-const EnumEntry<uint16_t> PtrMemberRepNames[] = {
+static const EnumEntry<uint16_t> PtrMemberRepNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerToMemberRepresentation, Unknown),
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerToMemberRepresentation,
                                 SingleInheritanceData),
@@ -741,13 +734,13 @@ const EnumEntry<uint16_t> PtrMemberRepNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(PointerToMemberRepresentation, GeneralFunction),
 };
 
-const EnumEntry<uint16_t> TypeModifierNames[] = {
+static const EnumEntry<uint16_t> TypeModifierNames[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(ModifierOptions, Const),
     LLVM_READOBJ_ENUM_CLASS_ENT(ModifierOptions, Volatile),
     LLVM_READOBJ_ENUM_CLASS_ENT(ModifierOptions, Unaligned),
 };
 
-const EnumEntry<uint8_t> CallingConventions[] = {
+static const EnumEntry<uint8_t> CallingConventions[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(CallingConvention, NearC),
     LLVM_READOBJ_ENUM_CLASS_ENT(CallingConvention, FarC),
     LLVM_READOBJ_ENUM_CLASS_ENT(CallingConvention, NearPascal),
@@ -774,13 +767,13 @@ const EnumEntry<uint8_t> CallingConventions[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(CallingConvention, NearVector),
 };
 
-const EnumEntry<uint8_t> FunctionOptionEnum[] = {
+static const EnumEntry<uint8_t> FunctionOptionEnum[] = {
     LLVM_READOBJ_ENUM_CLASS_ENT(FunctionOptions, CxxReturnUdt),
     LLVM_READOBJ_ENUM_CLASS_ENT(FunctionOptions, Constructor),
     LLVM_READOBJ_ENUM_CLASS_ENT(FunctionOptions, ConstructorWithVirtualBases),
 };
 
-const EnumEntry<uint8_t> FileChecksumKindNames[] = {
+static const EnumEntry<uint8_t> FileChecksumKindNames[] = {
   LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, None),
   LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, MD5),
   LLVM_READOBJ_ENUM_CLASS_ENT(FileChecksumKind, SHA1),
@@ -788,7 +781,7 @@ const EnumEntry<uint8_t> FileChecksumKindNames[] = {
 };
 
 template <typename T>
-std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
+static std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
                                         COFFSymbolRef Symbol,
                                         uint8_t AuxSymbolIdx, const T *&Aux) {
   ArrayRef<uint8_t> AuxData = Obj->getSymbolAuxData(Symbol);
@@ -796,8 +789,6 @@ std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
   Aux = reinterpret_cast<const T*>(AuxData.data());
   return readobj_error::success;
 }
-
-} // end anonymous namespace
 
 void COFFDumper::cacheRelocations() {
   if (RelocCached)
@@ -949,13 +940,11 @@ void COFFDumper::printCodeViewDebugInfo() {
   }
 }
 
-namespace {
-
 /// Consumes sizeof(T) bytes from the given byte sequence. Returns an error if
 /// there are not enough bytes remaining. Reinterprets the consumed bytes as a
 /// T object and points 'Res' at them.
 template <typename T>
-std::error_code consumeObject(StringRef &Data, const T *&Res) {
+static std::error_code consumeObject(StringRef &Data, const T *&Res) {
   if (Data.size() < sizeof(*Res))
     return object_error::parse_failed;
   Res = reinterpret_cast<const T *>(Data.data());
@@ -963,15 +952,13 @@ std::error_code consumeObject(StringRef &Data, const T *&Res) {
   return std::error_code();
 }
 
-std::error_code consumeUInt32(StringRef &Data, uint32_t &Res) {
+static std::error_code consumeUInt32(StringRef &Data, uint32_t &Res) {
   const ulittle32_t *IntPtr;
   if (auto EC = consumeObject(Data, IntPtr))
     return EC;
   Res = *IntPtr;
   return std::error_code();
 }
-
-} // end anonymous namespace
 
 void COFFDumper::initializeFileAndStringTables(StringRef Data) {
   while (!Data.empty() && (CVFileChecksumTable.data() == nullptr ||
@@ -1195,9 +1182,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
   }
 }
 
-namespace {
-
-std::error_code decodeNumerictLeaf(StringRef &Data, APSInt &Num) {
+static std::error_code decodeNumerictLeaf(StringRef &Data, APSInt &Num) {
   // Used to avoid overload ambiguity on APInt construtor.
   bool FalseVal = false;
   if (Data.size() < 2)
@@ -1262,8 +1247,6 @@ std::error_code decodeNumerictLeaf(StringRef &Data, APSInt &Num) {
   }
   return object_error::parse_failed;
 }
-
-} // end anonymous namespace
 
 /// Decode an unsigned integer numeric leaf value.
 std::error_code decodeUIntLeaf(StringRef &Data, uint64_t &Num) {
@@ -1330,10 +1313,11 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       break;
     }
 
-    case S_PROC_ID_END:
+    case S_PROC_ID_END: {
       W.startLine() << "ProcEnd\n";
       InFunctionScope = false;
       break;
+    }
 
     case S_BLOCK32: {
       DictScope S(W, "BlockStart");
@@ -1353,10 +1337,11 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       break;
     }
 
-    case S_END:
+    case S_END: {
       W.startLine() << "BlockEnd\n";
       InFunctionScope = false;
       break;
+    }
 
     case S_LABEL32: {
       DictScope S(W, "Label");
@@ -1530,7 +1515,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       printLocalVariableAddrGap(SymData);
       break;
     }
-
     case S_DEFRANGE_SUBFIELD: {
       DictScope S(W, "DefRangeSubfield");
       const DefRangeSubfieldSym *DefRangeSubfield;
@@ -1545,7 +1529,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       printLocalVariableAddrGap(SymData);
       break;
     }
-
     case S_DEFRANGE_REGISTER: {
       DictScope S(W, "DefRangeRegister");
       const DefRangeRegisterSym *DefRangeRegister;
@@ -1557,7 +1540,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       printLocalVariableAddrGap(SymData);
       break;
     }
-
     case S_DEFRANGE_SUBFIELD_REGISTER: {
       DictScope S(W, "DefRangeSubfieldRegister");
       const DefRangeSubfieldRegisterSym *DefRangeSubfieldRegisterSym;
@@ -1572,7 +1554,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       printLocalVariableAddrGap(SymData);
       break;
     }
-
     case S_DEFRANGE_FRAMEPOINTER_REL: {
       DictScope S(W, "DefRangeFramePointerRel");
       const DefRangeFramePointerRelSym *DefRangeFramePointerRel;
@@ -1583,7 +1564,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       printLocalVariableAddrGap(SymData);
       break;
     }
-
     case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE: {
       DictScope S(W, "DefRangeFramePointerRelFullScope");
       const DefRangeFramePointerRelFullScopeSym
@@ -1592,7 +1572,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
       W.printNumber("Offset", DefRangeFramePointerRelFullScope->Offset);
       break;
     }
-
     case S_DEFRANGE_REGISTER_REL: {
       DictScope S(W, "DefRangeRegisterRel");
       const DefRangeRegisterRelSym *DefRangeRegisterRel;
@@ -1966,9 +1945,7 @@ void COFFDumper::printFileNameForOffset(StringRef Label, uint32_t FileOffset) {
   W.printHex(Label, getFileNameForFileOffset(FileOffset), FileOffset);
 }
 
-namespace {
-
-StringRef getLeafTypeName(TypeLeafKind LT) {
+static StringRef getLeafTypeName(TypeLeafKind LT) {
   switch (LT) {
   case LF_STRING_ID: return "StringId";
   case LF_FIELDLIST: return "FieldList";
@@ -1996,8 +1973,6 @@ StringRef getLeafTypeName(TypeLeafKind LT) {
   }
   return "UnknownLeaf";
 }
-
-} // end anonymous namespace
 
 void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
                                           const SectionRef &Section) {
@@ -2225,7 +2200,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
       break;
     }
 
-    case LF_METHODLIST:
+    case LF_METHODLIST: {
       while (!LeafData.empty()) {
         const MethodListEntry *Method;
         error(consumeObject(LeafData, Method));
@@ -2239,6 +2214,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
         }
       }
       break;
+    }
 
     case LF_FUNC_ID: {
       const FuncId *Func;
@@ -2380,9 +2356,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   }
 }
 
-namespace {
-
-StringRef skipPadding(StringRef Data) {
+static StringRef skipPadding(StringRef Data) {
   if (Data.empty())
     return Data;
   uint8_t Leaf = Data.front();
@@ -2392,8 +2366,6 @@ StringRef skipPadding(StringRef Data) {
   // low 4 bits.
   return Data.drop_front(Leaf & 0x0F);
 }
-
-} // end anonymous namespace
 
 void COFFDumper::printMemberAttributes(MemberAttributes Attrs) {
   W.printEnum("AccessSpecifier", uint8_t(Attrs.getAccess()),
@@ -2659,9 +2631,7 @@ void COFFDumper::printSymbols() {
 
 void COFFDumper::printDynamicSymbols() { ListScope Group(W, "DynamicSymbols"); }
 
-namespace {
-
-ErrorOr<StringRef>
+static ErrorOr<StringRef>
 getSectionName(const llvm::object::COFFObjectFile *Obj, int32_t SectionNumber,
                const coff_section *Section) {
   if (Section) {
@@ -2678,8 +2648,6 @@ getSectionName(const llvm::object::COFFObjectFile *Obj, int32_t SectionNumber,
     return StringRef("IMAGE_SYM_UNDEFINED");
   return StringRef("");
 }
-
-} // end anonymous namespace
 
 void COFFDumper::printSymbol(const SymbolRef &Sym) {
   DictScope D(W, "Symbol");
@@ -2925,9 +2893,7 @@ void COFFDumper::printCOFFDirectives() {
   }
 }
 
-namespace {
-
-StringRef getBaseRelocTypeName(uint8_t Type) {
+static StringRef getBaseRelocTypeName(uint8_t Type) {
   switch (Type) {
   case COFF::IMAGE_REL_BASED_ABSOLUTE: return "ABSOLUTE";
   case COFF::IMAGE_REL_BASED_HIGH: return "HIGH";
@@ -2939,8 +2905,6 @@ StringRef getBaseRelocTypeName(uint8_t Type) {
   default: return "unknown (" + llvm::utostr(Type) + ")";
   }
 }
-
-} // end anonymous namespace
 
 void COFFDumper::printCOFFBaseReloc() {
   ListScope D(W, "BaseReloc");

@@ -1,4 +1,4 @@
-//===-- sancov.cc ---------------------------------------------------------===//
+//===-- sancov.cc --------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,13 +10,7 @@
 // This file is a command-line tool for reading and analyzing sanitizer
 // coverage.
 //===----------------------------------------------------------------------===//
-
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -53,13 +47,9 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
-#include <cstdint>
-#include <cstdlib>
-#include <map>
-#include <memory>
 #include <set>
+#include <stdio.h>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -93,28 +83,28 @@ cl::opt<ActionType> Action(
                           "Print coverage statistics."),
                clEnumValEnd));
 
-cl::list<std::string>
+static cl::list<std::string>
     ClInputFiles(cl::Positional, cl::OneOrMore,
                  cl::desc("(<binary file>|<.sancov file>)..."));
 
-cl::opt<bool> ClDemangle("demangle", cl::init(true),
-                         cl::desc("Print demangled function name."));
+static cl::opt<bool> ClDemangle("demangle", cl::init(true),
+                                cl::desc("Print demangled function name."));
 
-cl::opt<std::string> ClStripPathPrefix(
+static cl::opt<std::string> ClStripPathPrefix(
     "strip_path_prefix", cl::init(""),
     cl::desc("Strip this prefix from file paths in reports."));
 
-cl::opt<std::string>
+static cl::opt<std::string>
     ClBlacklist("blacklist", cl::init(""),
                 cl::desc("Blacklist file (sanitizer blacklist format)."));
 
-cl::opt<bool> ClUseDefaultBlacklist(
+static cl::opt<bool> ClUseDefaultBlacklist(
     "use_default_blacklist", cl::init(true), cl::Hidden,
     cl::desc("Controls if default blacklist should be used."));
 
-const char *const DefaultBlacklistStr = "fun:__sanitizer_.*\n"
-                                        "src:/usr/include/.*\n"
-                                        "src:.*/libc\\+\\+/.*\n";
+static const char *const DefaultBlacklistStr = "fun:__sanitizer_.*\n"
+                                               "src:/usr/include/.*\n"
+                                               "src:.*/libc\\+\\+/.*\n";
 
 // --------- FORMAT SPECIFICATION ---------
 
@@ -123,37 +113,37 @@ struct FileHeader {
   uint32_t Magic;
 };
 
-const uint32_t BinCoverageMagic = 0xC0BFFFFF;
-const uint32_t Bitness32 = 0xFFFFFF32;
-const uint32_t Bitness64 = 0xFFFFFF64;
+static const uint32_t BinCoverageMagic = 0xC0BFFFFF;
+static const uint32_t Bitness32 = 0xFFFFFF32;
+static const uint32_t Bitness64 = 0xFFFFFF64;
 
 // --------- ERROR HANDLING ---------
 
-void Fail(const llvm::Twine &E) {
+static void Fail(const llvm::Twine &E) {
   errs() << "Error: " << E << "\n";
   exit(1);
 }
 
-void FailIfError(std::error_code Error) {
+static void FailIfError(std::error_code Error) {
   if (!Error)
     return;
   errs() << "Error: " << Error.message() << "(" << Error.value() << ")\n";
   exit(1);
 }
 
-template <typename T>
-void FailIfError(const ErrorOr<T> &E) {
+template <typename T> static void FailIfError(const ErrorOr<T> &E) {
   FailIfError(E.getError());
 }
 
-void FailIfNotEmpty(const llvm::Twine &E) {
+static void FailIfNotEmpty(const llvm::Twine &E) {
   if (E.str().empty())
     return;
   Fail(E);
 }
 
 template <typename T>
-void FailIfEmpty(const std::unique_ptr<T> &Ptr, const std::string &Message) {
+static void FailIfEmpty(const std::unique_ptr<T> &Ptr,
+                        const std::string &Message) {
   if (Ptr.get())
     return;
   Fail(Message);
@@ -164,7 +154,7 @@ void FailIfEmpty(const std::unique_ptr<T> &Ptr, const std::string &Message) {
 // Produces std::map<K, std::vector<E>> grouping input
 // elements by FuncTy result.
 template <class RangeTy, class FuncTy>
-inline auto group_by(const RangeTy &R, FuncTy F)
+static inline auto group_by(const RangeTy &R, FuncTy F)
     -> std::map<typename std::decay<decltype(F(*R.begin()))>::type,
                 std::vector<typename std::decay<decltype(*R.begin())>::type>> {
   std::map<typename std::decay<decltype(F(*R.begin()))>::type,
@@ -177,7 +167,8 @@ inline auto group_by(const RangeTy &R, FuncTy F)
 }
 
 template <typename T>
-void readInts(const char *Start, const char *End, std::set<uint64_t> *Ints) {
+static void readInts(const char *Start, const char *End,
+                     std::set<uint64_t> *Ints) {
   const T *S = reinterpret_cast<const T *>(Start);
   const T *E = reinterpret_cast<const T *>(End);
   std::copy(S, E, std::inserter(*Ints, Ints->end()));
@@ -220,7 +211,7 @@ std::string stripPathPrefix(std::string Path) {
   return Path.substr(Pos + ClStripPathPrefix.size());
 }
 
-std::unique_ptr<symbolize::LLVMSymbolizer> createSymbolizer() {
+static std::unique_ptr<symbolize::LLVMSymbolizer> createSymbolizer() {
   symbolize::LLVMSymbolizer::Options SymbolizerOptions;
   SymbolizerOptions.Demangle = ClDemangle;
   SymbolizerOptions.UseSymbolTable = true;
@@ -285,9 +276,9 @@ private:
 };
 
 // Collect all debug info for given addresses.
-std::vector<AddrInfo> getAddrInfo(std::string ObjectFile,
-                                  const std::set<uint64_t> &Addrs,
-                                  bool InlinedCode) {
+static std::vector<AddrInfo> getAddrInfo(std::string ObjectFile,
+                                         const std::set<uint64_t> &Addrs,
+                                         bool InlinedCode) {
   std::vector<AddrInfo> Result;
   auto Symbolizer(createSymbolizer());
   Blacklists B;
@@ -315,7 +306,7 @@ std::vector<AddrInfo> getAddrInfo(std::string ObjectFile,
 
 // Locate __sanitizer_cov* function addresses that are used for coverage
 // reporting.
-std::set<uint64_t>
+static std::set<uint64_t>
 findSanitizerCovFunctions(const object::ObjectFile &O) {
   std::set<uint64_t> Result;
 
@@ -340,8 +331,8 @@ findSanitizerCovFunctions(const object::ObjectFile &O) {
 // Locate addresses of all coverage points in a file. Coverage point
 // is defined as the 'address of instruction following __sanitizer_cov
 // call - 1'.
-void getObjectCoveragePoints(const object::ObjectFile &O,
-                             std::set<uint64_t> *Addrs) {
+static void getObjectCoveragePoints(const object::ObjectFile &O,
+                                    std::set<uint64_t> *Addrs) {
   Triple TheTriple("unknown-unknown-unknown");
   TheTriple.setArch(Triple::ArchType(O.getArch()));
   auto TripleName = TheTriple.getTriple();
@@ -413,7 +404,7 @@ void getObjectCoveragePoints(const object::ObjectFile &O,
   }
 }
 
-void
+static void
 visitObjectFiles(const object::Archive &A,
                  std::function<void(const object::ObjectFile &)> Fn) {
   for (auto &ErrorOrChild : A.children()) {
@@ -428,7 +419,7 @@ visitObjectFiles(const object::Archive &A,
   }
 }
 
-void
+static void
 visitObjectFiles(std::string FileName,
                  std::function<void(const object::ObjectFile &)> Fn) {
   ErrorOr<object::OwningBinary<object::Binary>> BinaryOrErr =
@@ -464,7 +455,7 @@ std::set<uint64_t> getCoveragePoints(std::string FileName) {
   return Result;
 }
 
-void printCovPoints(std::string ObjFile, raw_ostream &OS) {
+static void printCovPoints(std::string ObjFile, raw_ostream &OS) {
   for (uint64_t Addr : getCoveragePoints(ObjFile)) {
     OS << "0x";
     OS.write_hex(Addr);
@@ -472,7 +463,7 @@ void printCovPoints(std::string ObjFile, raw_ostream &OS) {
   }
 }
 
-std::string escapeHtml(const std::string &S) {
+static std::string escapeHtml(const std::string &S) {
   std::string Result;
   Result.reserve(S.size());
   for (char Ch : S) {
@@ -502,7 +493,7 @@ std::string escapeHtml(const std::string &S) {
 
 // Adds leading zeroes wrapped in 'lz' style.
 // Leading zeroes help locate 000% coverage.
-std::string formatHtmlPct(size_t Pct) {
+static std::string formatHtmlPct(size_t Pct) {
   Pct = std::max(std::size_t{0}, std::min(std::size_t{100}, Pct));
 
   std::string Num = std::to_string(Pct);
@@ -513,7 +504,7 @@ std::string formatHtmlPct(size_t Pct) {
   return Zeroes + Num;
 }
 
-std::string anchorName(std::string Anchor) {
+static std::string anchorName(std::string Anchor) {
   llvm::MD5 Hasher;
   llvm::MD5::MD5Result Hash;
   Hasher.update(Anchor);
@@ -524,7 +515,7 @@ std::string anchorName(std::string Anchor) {
   return HexString.str().str();
 }
 
-ErrorOr<bool> isCoverageFile(std::string FileName) {
+static ErrorOr<bool> isCoverageFile(std::string FileName) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
       MemoryBuffer::getFile(FileName);
   if (!BufOrErr) {
@@ -551,7 +542,7 @@ struct CoverageStats {
   size_t CovFns;
 };
 
-raw_ostream &operator<<(raw_ostream &OS, const CoverageStats &Stats) {
+static raw_ostream &operator<<(raw_ostream &OS, const CoverageStats &Stats) {
   OS << "all-edges: " << Stats.AllPoints << "\n";
   OS << "cov-edges: " << Stats.CovPoints << "\n";
   OS << "all-functions: " << Stats.AllFns << "\n";
@@ -831,8 +822,8 @@ private:
   std::vector<AddrInfo> CovAddrInfo;
 };
 
-void printFunctionLocs(const SourceCoverageData::FunctionLocs &FnLocs,
-                       raw_ostream &OS) {
+static void printFunctionLocs(const SourceCoverageData::FunctionLocs &FnLocs,
+                              raw_ostream &OS) {
   for (const auto &Fns : FnLocs) {
     for (const auto &Fn : Fns.second) {
       OS << stripPathPrefix(Fns.first.FileName) << ":" << Fns.first.Line << " "
@@ -1191,7 +1182,7 @@ private:
   const std::set<std::string> CoverageFiles;
 };
 
-} // end anonymous namespace
+} // namespace
 
 int main(int argc, char **argv) {
   // Print stack trace if we signal out.

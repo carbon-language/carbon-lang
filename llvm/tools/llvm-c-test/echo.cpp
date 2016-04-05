@@ -16,18 +16,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c-test.h"
-#include "llvm-c/Core.h"
-#include "llvm-c/ErrorHandling.h"
 #include "llvm-c/Target.h"
-#include "llvm-c/Types.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Hashing.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace llvm;
 
@@ -45,16 +39,13 @@ struct CAPIDenseMap<T*> {
       uintptr_t Val = static_cast<uintptr_t>(-1);
       return reinterpret_cast<T*>(Val);
     }
-
     static inline T* getTombstoneKey() {
       uintptr_t Val = static_cast<uintptr_t>(-2);
       return reinterpret_cast<T*>(Val);
     }
-
     static unsigned getHashValue(const T *PtrVal) {
       return hash_value(PtrVal);
     }
-
     static bool isEqual(const T *LHS, const T *RHS) { return LHS == RHS; }
   };
 
@@ -163,9 +154,7 @@ struct TypeCloner {
   }
 };
 
-namespace {
-
-ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
+static ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
   unsigned Count = LLVMCountParams(Src);
   if (Count != LLVMCountParams(Dst))
     report_fatal_error("Parameter count mismatch");
@@ -222,8 +211,6 @@ ValueMap clone_params(LLVMValueRef Src, LLVMValueRef Dst) {
 
   return VMap;
 }
-
-} // end anonymous namespace
 
 LLVMValueRef clone_constant(LLVMValueRef Cst, LLVMModuleRef M) {
   if (!LLVMIsAConstant(Cst))
@@ -723,9 +710,7 @@ struct FunCloner {
   }
 };
 
-namespace {
-
-void declare_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
+static void declare_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
   LLVMValueRef Begin = LLVMGetFirstGlobal(Src);
   LLVMValueRef End = LLVMGetLastGlobal(Src);
 
@@ -789,7 +774,7 @@ FunDecl:
   }
 }
 
-void clone_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
+static void clone_symbols(LLVMModuleRef Src, LLVMModuleRef M) {
   LLVMValueRef Begin = LLVMGetFirstGlobal(Src);
   LLVMValueRef End = LLVMGetLastGlobal(Src);
 
@@ -875,8 +860,6 @@ FunClone:
     Cur = Next;
   }
 }
-
-} // end anonymous namespace
 
 int llvm_echo(void) {
   LLVMEnablePrettyStackTrace();

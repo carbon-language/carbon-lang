@@ -11,7 +11,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/StreamingMemoryObject.h"
 #include "gtest/gtest.h"
-#include <cstring>
+#include <string.h>
 
 using namespace llvm;
 
@@ -65,4 +65,4 @@ TEST(StreamingMemoryObjectTest, getPointer) {
   EXPECT_TRUE(std::equal(InputBuffer, InputBuffer + 8, O.getPointer(0, 20)));
 }
 
-} // end anonymous namespace
+} // end namespace

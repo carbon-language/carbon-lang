@@ -1,4 +1,4 @@
-//===-- MathExtras.cpp - Implement the MathExtras header ------------------===//
+//===-- MathExtras.cpp - Implement the MathExtras header --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,7 +16,7 @@
 #ifdef _MSC_VER
 #include <limits>
 #else
-#include <cmath>
+#include <math.h>
 #endif
 
 namespace llvm {
@@ -29,4 +29,4 @@ namespace llvm {
   const float huge_valf = HUGE_VALF;
 #endif
 
-} // end namespace llvm
+}

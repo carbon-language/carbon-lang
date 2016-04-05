@@ -19,8 +19,8 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
-#include <cstring>
-#include <string>
+#include "llvm/Support/raw_ostream.h"
+#include <string.h>
 
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
@@ -49,10 +49,8 @@
 
 using namespace llvm;
 
-namespace {
-
 #if defined(__linux__)
-ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
+static ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
   // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
   // memory buffer because the 'file' has 0 size (it can be read from only
   // as a stream).
@@ -76,8 +74,8 @@ ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
 
 /// GetX86CpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
-bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
-                        unsigned *rECX, unsigned *rEDX) {
+static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
+                               unsigned *rECX, unsigned *rEDX) {
 #if defined(__GNUC__) || defined(__clang__)
   #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
@@ -122,8 +120,9 @@ bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
 /// GetX86CpuIDAndInfoEx - Execute the specified cpuid with subleaf and return the
 /// 4 values in the specified arguments.  If we can't run cpuid on the host,
 /// return true.
-bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
-                          unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
+static bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
+                                 unsigned *rEAX, unsigned *rEBX, unsigned *rECX,
+                                 unsigned *rEDX) {
 #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
   #if defined(__GNUC__)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
@@ -183,7 +182,7 @@ bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
 #endif
 }
 
-bool GetX86XCR0(unsigned *rEAX, unsigned *rEDX) {
+static bool GetX86XCR0(unsigned *rEAX, unsigned *rEDX) {
 #if defined(__GNUC__)
   // Check xgetbv; this uses a .byte sequence instead of the instruction
   // directly because older assemblers do not include support for xgetbv and
@@ -200,7 +199,8 @@ bool GetX86XCR0(unsigned *rEAX, unsigned *rEDX) {
 #endif
 }
 
-void DetectX86FamilyModel(unsigned EAX, unsigned &Family, unsigned &Model) {
+static void DetectX86FamilyModel(unsigned EAX, unsigned &Family,
+                                 unsigned &Model) {
   Family = (EAX >> 8) & 0xf; // Bits 8 - 11
   Model  = (EAX >> 4) & 0xf; // Bits 4 - 7
   if (Family == 6 || Family == 0xf) {
@@ -211,8 +211,6 @@ void DetectX86FamilyModel(unsigned EAX, unsigned &Family, unsigned &Model) {
     Model += ((EAX >> 16) & 0xf) << 4; // Bits 16 - 19
   }
 }
-
-} // end anonymous namespace
 
 StringRef sys::getHostCPUName() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;

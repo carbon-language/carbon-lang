@@ -1,4 +1,4 @@
-//===- llvm/Support/Unix/Unix.h - Common Unix Include File ------*- C++ -*-===//
+//===- llvm/Support/Unix/Unix.h - Common Unix Include File -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,7 +22,7 @@
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/Errno.h"
 #include <algorithm>
-#include <cassert>
+#include <assert.h>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -42,7 +42,7 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
-#include <ctime>
+#include <time.h>
 
 #ifdef HAVE_DLFCN_H
 # include <dlfcn.h>
@@ -65,4 +65,4 @@ static inline bool MakeErrMsg(
   return true;
 }
 
-#endif // LLVM_LIB_SUPPORT_UNIX_UNIX_H
+#endif

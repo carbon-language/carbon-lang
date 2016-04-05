@@ -14,12 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cstring>
-
-namespace {
+#include <string.h>
 
 // Must declare the symbols in the global namespace.
-void *DoSearch(const char* symbolName) {
+static void *DoSearch(const char* symbolName) {
 #define EXPLICIT_SYMBOL(SYM) \
    extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
 
@@ -53,12 +51,8 @@ void *DoSearch(const char* symbolName) {
   return nullptr;
 }
 
-} // end anonymous namespace
-
 namespace llvm {
-
 void *SearchForAddressOfSpecialSymbol(const char* symbolName) {
   return DoSearch(symbolName);
 }
-
-} // end namespace llvm
+}  // namespace llvm

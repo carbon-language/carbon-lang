@@ -14,9 +14,11 @@
 #include "llvm/Support/Errno.h"
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/raw_ostream.h"
-#include <cerrno>
-#include <cstring>
-#include <string>
+#include <string.h>
+
+#if HAVE_ERRNO_H
+#include <errno.h>
+#endif
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
@@ -30,7 +32,7 @@ namespace sys {
 std::string StrError() {
   return StrError(errno);
 }
-#endif // HAVE_ERRNO_H
+#endif  // HAVE_ERRNO_H
 
 std::string StrError(int errnum) {
   std::string str;
@@ -70,5 +72,5 @@ std::string StrError(int errnum) {
   return str;
 }
 
-} // namespace sys
-} // namespace llvm
+}  // namespace sys
+}  // namespace llvm

@@ -7,17 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/StringSaver.h"
 #include "gtest/gtest.h"
-#include <cstdlib>
+#include <stdlib.h>
 #include <string>
 
 using namespace llvm;
@@ -25,7 +20,7 @@ using namespace llvm;
 namespace {
 
 class TempEnvVar {
-public:
+ public:
   TempEnvVar(const char *name, const char *value)
       : name(name) {
     const char *old_value = getenv(name);
@@ -46,14 +41,13 @@ public:
 #endif
   }
 
-private:
+ private:
   const char *const name;
 };
 
 template <typename T>
 class StackOption : public cl::opt<T> {
   typedef cl::opt<T> Base;
-
 public:
   // One option...
   template<class M0t>
@@ -74,6 +68,7 @@ public:
 
   ~StackOption() override { this->removeArgument(); }
 };
+
 
 cl::OptionCategory TestCategory("Test Options", "Description");
 TEST(CommandLineTest, ModifyExisitingOption) {
@@ -270,4 +265,4 @@ TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
       << "Hid default option that should be visable.";
 }
 
-} // end anonymous namespace
+}  // anonymous namespace
