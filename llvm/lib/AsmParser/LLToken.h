@@ -100,6 +100,7 @@ namespace lltok {
     kw_spir_kernel, kw_spir_func,
     kw_x86_64_sysvcc, kw_x86_64_win64cc,
     kw_webkit_jscc, kw_anyregcc,
+    kw_swiftcc,
     kw_preserve_mostcc, kw_preserve_allcc,
     kw_ghccc,
     kw_x86_intrcc,

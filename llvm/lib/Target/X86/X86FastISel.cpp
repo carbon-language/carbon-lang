@@ -2852,6 +2852,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   case CallingConv::C:
   case CallingConv::Fast:
   case CallingConv::WebKit_JS:
+  case CallingConv::Swift:
   case CallingConv::X86_FastCall:
   case CallingConv::X86_64_Win64:
   case CallingConv::X86_64_SysV:
