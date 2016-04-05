@@ -16,7 +16,6 @@ class ImportTestCase(TestBase):
 
     @add_test_categories(['pyapi'])
     @no_debug_info_test
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr27227: Python 3 import rules are different")
     def test_import_command(self):
         """Import some Python scripts by path and test them"""
         self.run_test()
