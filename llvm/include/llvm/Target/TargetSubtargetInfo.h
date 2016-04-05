@@ -95,8 +95,7 @@ public:
   }
 
   /// getRegisterInfo - If register information is available, return it.  If
-  /// not, return null.  This is kept separate from RegInfo until RegInfo has
-  /// details of graph coloring register allocation removed from it.
+  /// not, return null.
   ///
   virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
 
