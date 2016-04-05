@@ -72,7 +72,7 @@ public:
 /// This is the shared class of boolean and integer constants. This class
 /// represents both boolean and integral constants.
 /// @brief Class for constant integers.
-class ConstantInt : public ConstantData {
+class ConstantInt final : public ConstantData {
   void anchor() override;
   ConstantInt(const ConstantInt &) = delete;
   ConstantInt(IntegerType *Ty, const APInt& V);
@@ -251,7 +251,7 @@ public:
 //===----------------------------------------------------------------------===//
 /// ConstantFP - Floating Point Values [float, double]
 ///
-class ConstantFP : public ConstantData {
+class ConstantFP final : public ConstantData {
   APFloat Val;
   void anchor() override;
   ConstantFP(const ConstantFP &) = delete;
@@ -259,7 +259,6 @@ class ConstantFP : public ConstantData {
   friend class Constant;
   void destroyConstantImpl();
 
-protected:
   ConstantFP(Type *Ty, const APFloat& V);
 
 public:
@@ -318,13 +317,12 @@ public:
 //===----------------------------------------------------------------------===//
 /// All zero aggregate value
 ///
-class ConstantAggregateZero : public ConstantData {
+class ConstantAggregateZero final : public ConstantData {
   ConstantAggregateZero(const ConstantAggregateZero &) = delete;
 
   friend class Constant;
   void destroyConstantImpl();
 
-protected:
   explicit ConstantAggregateZero(Type *Ty)
       : ConstantData(Ty, ConstantAggregateZeroVal) {}
 
@@ -359,7 +357,7 @@ public:
 //===----------------------------------------------------------------------===//
 /// ConstantArray - Constant Array Declarations
 ///
-class ConstantArray : public Constant {
+class ConstantArray final : public Constant {
   friend struct ConstantAggrKeyType<ConstantArray>;
   ConstantArray(const ConstantArray &) = delete;
 
@@ -367,8 +365,8 @@ class ConstantArray : public Constant {
   void destroyConstantImpl();
   Value *handleOperandChangeImpl(Value *From, Value *To);
 
-protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
+
 public:
   // ConstantArray accessors
   static Constant *get(ArrayType *T, ArrayRef<Constant*> V);
@@ -402,7 +400,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
 //===----------------------------------------------------------------------===//
 // Constant Struct Declarations
 //
-class ConstantStruct : public Constant {
+class ConstantStruct final : public Constant {
   friend struct ConstantAggrKeyType<ConstantStruct>;
   ConstantStruct(const ConstantStruct &) = delete;
 
@@ -410,8 +408,8 @@ class ConstantStruct : public Constant {
   void destroyConstantImpl();
   Value *handleOperandChangeImpl(Value *From, Value *To);
 
-protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
+
 public:
   // ConstantStruct accessors
   static Constant *get(StructType *T, ArrayRef<Constant*> V);
@@ -461,7 +459,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
 //===----------------------------------------------------------------------===//
 /// Constant Vector Declarations
 ///
-class ConstantVector : public Constant {
+class ConstantVector final : public Constant {
   friend struct ConstantAggrKeyType<ConstantVector>;
   ConstantVector(const ConstantVector &) = delete;
 
@@ -469,8 +467,8 @@ class ConstantVector : public Constant {
   void destroyConstantImpl();
   Value *handleOperandChangeImpl(Value *From, Value *To);
 
-protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
+
 public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
@@ -511,13 +509,12 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantVector, Constant)
 //===----------------------------------------------------------------------===//
 /// A constant pointer value that points to null
 ///
-class ConstantPointerNull : public ConstantData {
+class ConstantPointerNull final : public ConstantData {
   ConstantPointerNull(const ConstantPointerNull &) = delete;
 
   friend class Constant;
   void destroyConstantImpl();
 
-protected:
   explicit ConstantPointerNull(PointerType *T)
       : ConstantData(T, Value::ConstantPointerNullVal) {}
 
@@ -655,20 +652,19 @@ private:
 /// (i.e. ConstantInt/ConstantFP). This Constant node has no operands because it
 /// stores all of the elements of the constant as densely packed data, instead
 /// of as Value*'s.
-class ConstantDataArray : public ConstantDataSequential {
+class ConstantDataArray final : public ConstantDataSequential {
   void *operator new(size_t, unsigned) = delete;
   ConstantDataArray(const ConstantDataArray &) = delete;
   void anchor() override;
   friend class ConstantDataSequential;
   explicit ConstantDataArray(Type *ty, const char *Data)
-    : ConstantDataSequential(ty, ConstantDataArrayVal, Data) {}
-protected:
+      : ConstantDataSequential(ty, ConstantDataArrayVal, Data) {}
   /// Allocate space for exactly zero operands.
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-public:
 
+public:
   /// get() constructors - Return a constant with array type with an element
   /// count and element type matching the ArrayRef passed in.  Note that this
   /// can return a ConstantAggregateZero object.
@@ -714,20 +710,19 @@ public:
 /// (i.e. ConstantInt/ConstantFP). This Constant node has no operands because it
 /// stores all of the elements of the constant as densely packed data, instead
 /// of as Value*'s.
-class ConstantDataVector : public ConstantDataSequential {
+class ConstantDataVector final : public ConstantDataSequential {
   void *operator new(size_t, unsigned) = delete;
   ConstantDataVector(const ConstantDataVector &) = delete;
   void anchor() override;
   friend class ConstantDataSequential;
   explicit ConstantDataVector(Type *ty, const char *Data)
-  : ConstantDataSequential(ty, ConstantDataVectorVal, Data) {}
-protected:
+      : ConstantDataSequential(ty, ConstantDataVectorVal, Data) {}
   // allocate space for exactly zero operands.
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-public:
 
+public:
   /// get() constructors - Return a constant with vector type with an element
   /// count and element type matching the ArrayRef passed in.  Note that this
   /// can return a ConstantAggregateZero object.
@@ -771,13 +766,12 @@ public:
 //===----------------------------------------------------------------------===//
 /// A constant token which is empty
 ///
-class ConstantTokenNone : public ConstantData {
+class ConstantTokenNone final : public ConstantData {
   ConstantTokenNone(const ConstantTokenNone &) = delete;
 
   friend class Constant;
   void destroyConstantImpl();
 
-protected:
   explicit ConstantTokenNone(LLVMContext &Context)
       : ConstantData(Type::getTokenTy(Context), ConstantTokenNoneVal) {}
 
@@ -793,7 +787,7 @@ public:
 
 /// The address of a basic block.
 ///
-class BlockAddress : public Constant {
+class BlockAddress final : public Constant {
   void *operator new(size_t, unsigned) = delete;
   void *operator new(size_t s) { return User::operator new(s, 2); }
   BlockAddress(Function *F, BasicBlock *BB);
@@ -851,7 +845,7 @@ class ConstantExpr : public Constant {
 
 protected:
   ConstantExpr(Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
-    : Constant(ty, ConstantExprVal, Ops, NumOps) {
+      : Constant(ty, ConstantExprVal, Ops, NumOps) {
     // Operation type (an Instruction opcode) is stored as the SubclassData.
     setValueSubclassData(Opcode);
   }
@@ -1210,13 +1204,12 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantExpr, Constant)
 /// can appear to have different bit patterns at each use. See
 /// LangRef.html#undefvalues for details.
 ///
-class UndefValue : public ConstantData {
+class UndefValue final : public ConstantData {
   UndefValue(const UndefValue &) = delete;
 
   friend class Constant;
   void destroyConstantImpl();
 
-protected:
   explicit UndefValue(Type *T) : ConstantData(T, UndefValueVal) {}
 
 public:
