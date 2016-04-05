@@ -131,6 +131,10 @@ class Error {
   template <typename... HandlerTs>
   friend Error handleErrors(Error E, HandlerTs &&... Handlers);
 
+  // Expected<T> needs to be able to steal the payload when constructed from an
+  // error.
+  template <typename T> class Expected;
+
 public:
   /// Create a success value. Prefer using 'Error::success()' for readability
   /// where possible.
@@ -587,6 +591,8 @@ template <class T> class Expected {
   static const bool isRef = std::is_reference<T>::value;
   typedef ReferenceStorage<typename std::remove_reference<T>::type> wrap;
 
+  typedef std::unique_ptr<ErrorInfoBase> error_type;
+
 public:
   typedef typename std::conditional<isRef, wrap, T>::type storage_type;
 
@@ -598,8 +604,14 @@ private:
 
 public:
   /// Create an Expected<T> error value from the given Error.
-  Expected(Error Err) : HasError(true) {
-    assert(Err && "Cannot create Expected from Error success value.");
+  Expected(Error Err)
+      : HasError(true)
+#ifndef NDEBUG
+        ,
+        Checked(false)
+#endif
+  {
+    assert(Err && "Cannot create Expected<T> from Error success value.");
     new (getErrorStorage()) Error(std::move(Err));
   }
 
@@ -609,7 +621,12 @@ public:
   Expected(OtherT &&Val,
            typename std::enable_if<std::is_convertible<OtherT, T>::value>::type
                * = nullptr)
-      : HasError(false) {
+      : HasError(false)
+#ifndef NDEBUG
+        ,
+        Checked(false)
+#endif
+  {
     new (getStorage()) storage_type(std::move(Val));
   }
 
@@ -643,20 +660,32 @@ public:
 
   /// Destroy an Expected<T>.
   ~Expected() {
+    assertIsChecked();
     if (!HasError)
       getStorage()->~storage_type();
     else
-      getErrorStorage()->~Error();
+      getErrorStorage()->~error_type();
   }
 
   /// \brief Return false if there is an error.
-  explicit operator bool() const { return !HasError; }
+  explicit operator bool() {
+#ifndef NDEBUG
+    Checked = !HasError;
+#endif
+    return !HasError;
+  }
 
   /// \brief Returns a reference to the stored T value.
-  reference get() { return *getStorage(); }
+  reference get() {
+    assertIsChecked();
+    return *getStorage();
+  }
 
   /// \brief Returns a const reference to the stored T value.
-  const_reference get() const { return const_cast<Expected<T> *>(this)->get(); }
+  const_reference get() const {
+    assertIsChecked();
+    return const_cast<Expected<T> *>(this)->get();
+  }
 
   /// \brief Check that this Expected<T> is an error of type ErrT.
   template <typename ErrT> bool errorIsA() const {
@@ -668,20 +697,35 @@ public:
   /// only be safely destructed. No further calls (beside the destructor) should
   /// be made on the Expected<T> vaule.
   Error takeError() {
-    return HasError ? std::move(*getErrorStorage()) : Error();
+#ifndef NDEBUG
+    Checked = true;
+#endif
+    return HasError ? Error(std::move(*getErrorStorage())) : Error::success();
   }
 
   /// \brief Returns a pointer to the stored T value.
-  pointer operator->() { return toPointer(getStorage()); }
+  pointer operator->() {
+    assertIsChecked();
+    return toPointer(getStorage());
+  }
 
   /// \brief Returns a const pointer to the stored T value.
-  const_pointer operator->() const { return toPointer(getStorage()); }
+  const_pointer operator->() const {
+    assertIsChecked();
+    return toPointer(getStorage());
+  }
 
   /// \brief Returns a reference to the stored T value.
-  reference operator*() { return *getStorage(); }
+  reference operator*() {
+    assertIsChecked();
+    return *getStorage();
+  }
 
   /// \brief Returns a const reference to the stored T value.
-  const_reference operator*() const { return *getStorage(); }
+  const_reference operator*() const {
+    assertIsChecked();
+    return *getStorage();
+  }
 
 private:
   template <class T1>
@@ -695,18 +739,22 @@ private:
   }
 
   template <class OtherT> void moveConstruct(Expected<OtherT> &&Other) {
-    if (!Other.HasError) {
-      // Get the other value.
-      HasError = false;
+    HasError = Other.HasError;
+
+#ifndef NDEBUG
+    Checked = false;
+    Other.Checked = true;
+#endif
+
+    if (!HasError)
       new (getStorage()) storage_type(std::move(*Other.getStorage()));
-    } else {
-      // Get other's error.
-      HasError = true;
-      new (getErrorStorage()) Error(Other.takeError());
-    }
+    else
+      new (getErrorStorage()) error_type(std::move(*Other.getErrorStorage()));
   }
 
   template <class OtherT> void moveAssign(Expected<OtherT> &&Other) {
+    assertIsChecked();
+
     if (compareThisIfSameType(*this, Other))
       return;
 
@@ -732,16 +780,35 @@ private:
     return reinterpret_cast<const storage_type *>(TStorage.buffer);
   }
 
-  Error *getErrorStorage() {
+  error_type *getErrorStorage() {
     assert(HasError && "Cannot get error when a value exists!");
-    return reinterpret_cast<Error *>(ErrorStorage.buffer);
+    return reinterpret_cast<error_type *>(ErrorStorage.buffer);
+  }
+
+  void assertIsChecked() {
+#ifndef NDEBUG
+    if (!Checked) {
+      dbgs() << "Expected<T> must be checked before access or destruction.\n";
+      if (HasError) {
+        dbgs() << "Unchecked Expected<T> contained error:\n";
+        (*getErrorStorage())->log(dbgs());
+      } else
+        dbgs() << "Expected<T> value was in success state. (Note: Expected<T> "
+                  "values in success mode must still be checked prior to being "
+                  "destroyed).\n";
+      abort();
+    }
+#endif
   }
 
   union {
     AlignedCharArrayUnion<storage_type> TStorage;
-    AlignedCharArrayUnion<Error> ErrorStorage;
+    AlignedCharArrayUnion<error_type> ErrorStorage;
   };
   bool HasError : 1;
+#ifndef NDEBUG
+  bool Checked : 1;
+#endif
 };
 
 /// This class wraps a std::error_code in a Error.
