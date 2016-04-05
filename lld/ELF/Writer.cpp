@@ -1196,9 +1196,9 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   auto Define = [&](StringRef Start, StringRef End,
                     OutputSectionBase<ELFT> *OS) {
     if (OS) {
-      Symtab.addSynthetic(Start, *OS, 0, STV_DEFAULT);
+      Symtab.addSynthetic(Start, *OS, 0, STV_HIDDEN);
       Symtab.addSynthetic(End, *OS, DefinedSynthetic<ELFT>::SectionEnd,
-                          STV_DEFAULT);
+                          STV_HIDDEN);
     } else {
       Symtab.addIgnored(Start);
       Symtab.addIgnored(End);
