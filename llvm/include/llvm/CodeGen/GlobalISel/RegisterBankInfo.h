@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 #define LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 
+#include <cassert>
 #include <memory> // For unique_ptr.
 
 namespace llvm {
