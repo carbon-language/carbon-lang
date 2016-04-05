@@ -353,14 +353,43 @@ public:
   }
 };
 
+/// Base class for aggregate constants (with operands).
+///
+/// These constants are aggregates of other constants, which are stored as
+/// operands.
+///
+/// Subclasses are \a ConstantStruct, \a ConstantArray, and \a
+/// ConstantVector.
+///
+/// \note Some subclasses of \a ConstantData are semantically aggregates --
+/// such as \a ConstantDataArray -- but are not subclasses of this because they
+/// use operands.
+class ConstantAggregate : public Constant {
+protected:
+  ConstantAggregate(CompositeType *T, ValueTy VT, ArrayRef<Constant *> V);
+
+public:
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static bool classof(const Value *V) {
+    return V->getValueID() >= ConstantAggregateFirstVal &&
+           V->getValueID() <= ConstantAggregateLastVal;
+  }
+};
+
+template <>
+struct OperandTraits<ConstantAggregate>
+    : public VariadicOperandTraits<ConstantAggregate> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantAggregate, Constant)
 
 //===----------------------------------------------------------------------===//
 /// ConstantArray - Constant Array Declarations
 ///
-class ConstantArray final : public Constant {
+class ConstantArray final : public ConstantAggregate {
   friend struct ConstantAggrKeyType<ConstantArray>;
-  ConstantArray(const ConstantArray &) = delete;
-
   friend class Constant;
   void destroyConstantImpl();
   Value *handleOperandChangeImpl(Value *From, Value *To);
@@ -375,9 +404,6 @@ private:
   static Constant *getImpl(ArrayType *T, ArrayRef<Constant *> V);
 
 public:
-  /// Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
-
   /// Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
   inline ArrayType *getType() const {
@@ -390,20 +416,11 @@ public:
   }
 };
 
-template <>
-struct OperandTraits<ConstantArray> :
-  public VariadicOperandTraits<ConstantArray> {
-};
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
-
 //===----------------------------------------------------------------------===//
 // Constant Struct Declarations
 //
-class ConstantStruct final : public Constant {
+class ConstantStruct final : public ConstantAggregate {
   friend struct ConstantAggrKeyType<ConstantStruct>;
-  ConstantStruct(const ConstantStruct &) = delete;
-
   friend class Constant;
   void destroyConstantImpl();
   Value *handleOperandChangeImpl(Value *From, Value *To);
@@ -434,9 +451,6 @@ public:
                                         ArrayRef<Constant*> V,
                                         bool Packed = false);
 
-  /// Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
-
   /// Specialization - reduce amount of casting.
   inline StructType *getType() const {
     return cast<StructType>(Value::getType());
@@ -448,21 +462,12 @@ public:
   }
 };
 
-template <>
-struct OperandTraits<ConstantStruct> :
-  public VariadicOperandTraits<ConstantStruct> {
-};
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
-
 
 //===----------------------------------------------------------------------===//
 /// Constant Vector Declarations
 ///
-class ConstantVector final : public Constant {
+class ConstantVector final : public ConstantAggregate {
   friend struct ConstantAggrKeyType<ConstantVector>;
-  ConstantVector(const ConstantVector &) = delete;
-
   friend class Constant;
   void destroyConstantImpl();
   Value *handleOperandChangeImpl(Value *From, Value *To);
@@ -480,9 +485,6 @@ public:
   /// Return a ConstantVector with the specified constant in each element.
   static Constant *getSplat(unsigned NumElts, Constant *Elt);
 
-  /// Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
-
   /// Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   inline VectorType *getType() const {
@@ -498,13 +500,6 @@ public:
     return V->getValueID() == ConstantVectorVal;
   }
 };
-
-template <>
-struct OperandTraits<ConstantVector> :
-  public VariadicOperandTraits<ConstantVector> {
-};
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantVector, Constant)
 
 //===----------------------------------------------------------------------===//
 /// A constant pointer value that points to null

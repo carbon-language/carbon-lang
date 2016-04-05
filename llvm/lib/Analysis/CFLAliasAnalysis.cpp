@@ -894,13 +894,12 @@ static bool canSkipAddingToSets(Value *Val) {
   // we should filter out the (potentially shared) instance to
   // i32* null.
   if (isa<Constant>(Val)) {
-    bool Container = isa<ConstantVector>(Val) || isa<ConstantArray>(Val) ||
-                     isa<ConstantStruct>(Val);
     // TODO: Because all of these things are constant, we can determine whether
     // the data is *actually* mutable at graph building time. This will probably
     // come for free/cheap with offset awareness.
-    bool CanStoreMutableData =
-        isa<GlobalValue>(Val) || isa<ConstantExpr>(Val) || Container;
+    bool CanStoreMutableData = isa<GlobalValue>(Val) ||
+                               isa<ConstantExpr>(Val) ||
+                               isa<ConstantAggregate>(Val);
     return !CanStoreMutableData;
   }
 
