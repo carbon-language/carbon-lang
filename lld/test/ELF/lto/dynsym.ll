@@ -1,5 +1,5 @@
 ; REQUIRES: x86
-; RUN: llvm-mc -filetype=obj -o %t.o %p/Inputs/dynsym.s
+; RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux -o %t.o %p/Inputs/dynsym.s
 ; RUN: ld.lld -m elf_x86_64 %t.o -o %t.so -shared
 ; RUN: llvm-as %s -o %t2.o
 ; RUN: ld.lld -m elf_x86_64 %t2.o %t.so -o %t
