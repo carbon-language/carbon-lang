@@ -228,7 +228,8 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     }
     // Found a definition for something also in an archive.
     // Ignore the archive definition.
-    New->setUsedInRegularObj();
+    if (L->isUsedInRegularObj())
+      New->setUsedInRegularObj();
     Sym->Body = New;
     return;
   }
@@ -282,6 +283,8 @@ template <class ELFT> void SymbolTable<ELFT>::addLazy(Lazy *L) {
 
 template <class ELFT>
 void SymbolTable<ELFT>::addMemberFile(Undefined *Undef, Lazy *L) {
+  if (Undef->isUsedInRegularObj())
+    L->setUsedInRegularObj();
   // Weak undefined symbols should not fetch members from archives.
   // If we were to keep old symbol we would not know that an archive member was
   // available if a strong undefined symbol shows up afterwards in the link.
