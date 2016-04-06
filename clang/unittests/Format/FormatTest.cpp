@@ -301,6 +301,12 @@ TEST_F(FormatTest, FormatIfWithoutCompoundStatement) {
                "  // comment\n"
                "  f();",
                AllowsMergedIf);
+  verifyFormat("{\n"
+               "  if (a)\n"
+               "  label:\n"
+               "    f();\n"
+               "}",
+               AllowsMergedIf);
   verifyFormat("if (a)\n"
                "  ;",
                AllowsMergedIf);
