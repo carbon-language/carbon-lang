@@ -12,6 +12,7 @@
 
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
+#include <vector>
 
 namespace lld {
 namespace elf {
