@@ -27,8 +27,6 @@ RegisterBankInfo::RegisterBankInfo(unsigned NumRegBanks)
   RegBanks.reset(new RegisterBank[NumRegBanks]);
 }
 
-RegisterBankInfo::~RegisterBankInfo() {}
-
 void RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
   for (unsigned Idx = 0, End = getNumRegBanks(); Idx != End; ++Idx) {
     const RegisterBank &RegBank = getRegBank(Idx);

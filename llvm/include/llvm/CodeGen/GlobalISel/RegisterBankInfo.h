@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <cassert>
 #include <memory> // For unique_ptr.
@@ -39,7 +40,17 @@ protected:
   /// addRegBankCoverage RegisterBank.
   RegisterBankInfo(unsigned NumRegBanks);
 
-  virtual ~RegisterBankInfo();
+  /// This constructor is meaningless.
+  /// It just provides a default constructor that can be used at link time
+  /// when GlobalISel is not built.
+  /// That way, targets can still inherit from this class without doing
+  /// crazy gymnastic to avoid link time failures.
+  /// \note That works because the constructor is inlined.
+  RegisterBankInfo() {
+    llvm_unreachable("This constructor should not be executed");
+  }
+
+  virtual ~RegisterBankInfo() {}
 
   /// Create a new register bank with the given parameter and add it
   /// to RegBanks.
