@@ -224,16 +224,16 @@ int SymbolBody::compare(SymbolBody *Other) {
   return isCommon() ? -1 : 1;
 }
 
-Defined::Defined(Kind K, StringRef Name, uint8_t Binding, uint8_t Visibility,
+Defined::Defined(Kind K, StringRef Name, uint8_t Binding, uint8_t StOther,
                  uint8_t Type)
-    : SymbolBody(K, Name, Binding, Visibility, Type) {}
+    : SymbolBody(K, Name, Binding, StOther, Type) {}
 
-Defined::Defined(Kind K, uint32_t NameOffset, uint8_t Visibility, uint8_t Type)
-    : SymbolBody(K, NameOffset, Visibility, Type) {}
+Defined::Defined(Kind K, uint32_t NameOffset, uint8_t StOther, uint8_t Type)
+    : SymbolBody(K, NameOffset, StOther, Type) {}
 
-DefinedBitcode::DefinedBitcode(StringRef Name, bool IsWeak, uint8_t Visibility)
+DefinedBitcode::DefinedBitcode(StringRef Name, bool IsWeak, uint8_t StOther)
     : Defined(DefinedBitcodeKind, Name, IsWeak ? STB_WEAK : STB_GLOBAL,
-              Visibility, 0 /* Type */) {}
+              StOther, 0 /* Type */) {}
 
 bool DefinedBitcode::classof(const SymbolBody *S) {
   return S->kind() == DefinedBitcodeKind;
@@ -244,13 +244,13 @@ Undefined::Undefined(SymbolBody::Kind K, StringRef N, uint8_t Binding,
     : SymbolBody(K, N, Binding, Other, Type), CanKeepUndefined(false) {}
 
 Undefined::Undefined(SymbolBody::Kind K, uint32_t NameOffset,
-                     uint8_t Visibility, uint8_t Type)
-    : SymbolBody(K, NameOffset, Visibility, Type), CanKeepUndefined(false) {}
+                     uint8_t StOther, uint8_t Type)
+    : SymbolBody(K, NameOffset, StOther, Type), CanKeepUndefined(false) {}
 
-Undefined::Undefined(StringRef N, bool IsWeak, uint8_t Visibility,
+Undefined::Undefined(StringRef N, bool IsWeak, uint8_t StOther,
                      bool CanKeepUndefined)
     : Undefined(SymbolBody::UndefinedKind, N, IsWeak ? STB_WEAK : STB_GLOBAL,
-                Visibility, 0 /* Type */) {
+                StOther, 0 /* Type */) {
   this->CanKeepUndefined = CanKeepUndefined;
 }
 
@@ -271,14 +271,14 @@ UndefinedElf<ELFT>::UndefinedElf(const Elf_Sym &Sym)
 template <typename ELFT>
 DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
                                          OutputSectionBase<ELFT> &Section,
-                                         uint8_t Visibility)
-    : Defined(SymbolBody::DefinedSyntheticKind, N, STB_GLOBAL, Visibility,
+                                         uint8_t StOther)
+    : Defined(SymbolBody::DefinedSyntheticKind, N, STB_GLOBAL, StOther,
               0 /* Type */),
       Value(Value), Section(Section) {}
 
 DefinedCommon::DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment,
-                             uint8_t Binding, uint8_t Visibility, uint8_t Type)
-    : Defined(SymbolBody::DefinedCommonKind, N, Binding, Visibility, Type),
+                             uint8_t Binding, uint8_t StOther, uint8_t Type)
+    : Defined(SymbolBody::DefinedCommonKind, N, Binding, StOther, Type),
       Alignment(Alignment), Size(Size) {}
 
 std::unique_ptr<InputFile> Lazy::getMember() {
