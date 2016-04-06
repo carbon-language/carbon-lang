@@ -550,6 +550,17 @@ LLVMTypeRef LLVMTypeOf(LLVMValueRef Val) {
   return wrap(unwrap(Val)->getType());
 }
 
+LLVMValueKind LLVMGetValueKind(LLVMValueRef Val) {
+    switch(unwrap(Val)->getValueID()) {
+#define HANDLE_VALUE(Name) \
+  case Value::Name##Val: \
+    return LLVM##Name##ValueKind;
+#include "llvm/IR/Value.def"
+  default:
+    return LLVMInstructionValueKind;
+  }
+}
+
 const char *LLVMGetValueName(LLVMValueRef Val) {
   return unwrap(Val)->getName().data();
 }
