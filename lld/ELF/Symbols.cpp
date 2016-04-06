@@ -76,7 +76,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body,
     return Out<ELFT>::Bss->getVA() + SS.OffsetInBss;
   }
   case SymbolBody::UndefinedElfKind:
-  case SymbolBody::UndefinedKind:
+  case SymbolBody::UndefinedBitcodeKind:
     return 0;
   case SymbolBody::LazyKind:
     assert(Body.isUsedInRegularObj() && "lazy symbol reached writer");
@@ -91,8 +91,22 @@ SymbolBody::SymbolBody(Kind K, uint32_t NameOffset, uint8_t StOther,
                        uint8_t Type)
     : SymbolKind(K), MustBeInDynSym(false), NeedsCopyOrPltAddr(false),
       Type(Type), Binding(STB_LOCAL), StOther(StOther), NameOffset(NameOffset) {
-  IsUsedInRegularObj =
-      K != SharedKind && K != LazyKind && K != DefinedBitcodeKind;
+  init();
+}
+
+SymbolBody::SymbolBody(Kind K, StringRef Name, uint8_t Binding, uint8_t StOther,
+                       uint8_t Type)
+    : SymbolKind(K), MustBeInDynSym(false), NeedsCopyOrPltAddr(false),
+      Type(Type), Binding(Binding), StOther(StOther),
+      Name({Name.data(), Name.size()}) {
+  assert(!isLocal());
+  init();
+}
+
+void SymbolBody::init() {
+  Kind K = kind();
+  IsUsedInRegularObj = K == DefinedRegularKind || K == DefinedCommonKind ||
+                       K == DefinedSyntheticKind || K == UndefinedElfKind;
 }
 
 // Returns true if a symbol can be replaced at load-time by a symbol
@@ -239,31 +253,27 @@ bool DefinedBitcode::classof(const SymbolBody *S) {
   return S->kind() == DefinedBitcodeKind;
 }
 
-Undefined::Undefined(SymbolBody::Kind K, StringRef N, uint8_t Binding,
-                     uint8_t Other, uint8_t Type)
-    : SymbolBody(K, N, Binding, Other, Type), CanKeepUndefined(false) {}
-
-Undefined::Undefined(SymbolBody::Kind K, uint32_t NameOffset,
-                     uint8_t StOther, uint8_t Type)
-    : SymbolBody(K, NameOffset, StOther, Type), CanKeepUndefined(false) {}
-
-Undefined::Undefined(StringRef N, bool IsWeak, uint8_t StOther,
-                     bool CanKeepUndefined)
-    : Undefined(SymbolBody::UndefinedKind, N, IsWeak ? STB_WEAK : STB_GLOBAL,
-                StOther, 0 /* Type */) {
-  this->CanKeepUndefined = CanKeepUndefined;
-}
+UndefinedBitcode::UndefinedBitcode(StringRef N, bool IsWeak, uint8_t StOther)
+    : SymbolBody(SymbolBody::UndefinedBitcodeKind, N,
+                 IsWeak ? STB_WEAK : STB_GLOBAL, StOther, 0 /* Type */) {}
 
 template <typename ELFT>
 UndefinedElf<ELFT>::UndefinedElf(StringRef N, const Elf_Sym &Sym)
-    : Undefined(SymbolBody::UndefinedElfKind, N, Sym.getBinding(), Sym.st_other,
-                Sym.getType()),
+    : SymbolBody(SymbolBody::UndefinedElfKind, N, Sym.getBinding(),
+                 Sym.st_other, Sym.getType()),
       Size(Sym.st_size) {}
 
 template <typename ELFT>
+UndefinedElf<ELFT>::UndefinedElf(StringRef Name, uint8_t Binding,
+                                 uint8_t StOther, uint8_t Type,
+                                 bool CanKeepUndefined)
+    : SymbolBody(SymbolBody::UndefinedElfKind, Name, Binding, StOther, Type),
+      CanKeepUndefined(CanKeepUndefined) {}
+
+template <typename ELFT>
 UndefinedElf<ELFT>::UndefinedElf(const Elf_Sym &Sym)
-    : Undefined(SymbolBody::UndefinedElfKind, Sym.st_name, Sym.st_other,
-                Sym.getType()),
+    : SymbolBody(SymbolBody::UndefinedElfKind, Sym.st_name, Sym.st_other,
+                 Sym.getType()),
       Size(Sym.st_size) {
   assert(Sym.getBinding() == STB_LOCAL);
 }
