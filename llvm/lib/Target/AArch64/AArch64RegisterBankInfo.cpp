@@ -22,7 +22,7 @@ using namespace llvm;
 
 #ifndef LLVM_BUILD_GLOBAL_ISEL
 AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
-    : RegisterBankInfo(0) {
+    : RegisterBankInfo() {
   llvm_unreachable("This API shouldn't be useful outside of GlobalISel");
 }
 
