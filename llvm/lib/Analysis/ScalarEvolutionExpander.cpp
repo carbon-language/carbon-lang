@@ -2004,9 +2004,7 @@ Value *SCEVExpander::generateOverflowCheck(const SCEVAddRecExpr *AR,
   assert(AR->isAffine() && "Cannot generate RT check for "
                            "non-affine expression");
 
-  SCEVUnionPredicate Pred;
-  const SCEV *ExitCount =
-      SE.getPredicatedBackedgeTakenCount(AR->getLoop(), Pred);
+  const SCEV *ExitCount = SE.getBackedgeTakenCount(AR->getLoop());
   const SCEV *Step = AR->getStepRecurrence(SE);
   const SCEV *Start = AR->getStart();
 

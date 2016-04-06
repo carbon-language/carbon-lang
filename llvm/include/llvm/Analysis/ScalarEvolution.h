@@ -270,17 +270,10 @@ namespace llvm {
     }
   };
 
-  /// SCEVWrapPredicate - This class represents an assumption made on an AddRec
-  /// expression. Given an affine AddRec expression {a,+,b}, we assume that it
-  /// has the nssw or nusw flags (defined below) in the first X iterations of
-  /// the loop, where X is a SCEV expression returned by
-  /// getPredicatedBackedgeTakenCount).
-  ///
-  /// Note that this does not imply that X is equal to the backedge taken
-  /// count. This means that if we have a nusw predicate for i32 {0,+,1} with a
-  /// predicated backedge taken count of X, we only guarantee that {0,+,1} has
-  /// nusw in the first X iterations. {0,+,1} may still wrap in the loop if we
-  /// have more than X iterations.
+  /// SCEVWrapPredicate - This class represents an assumption
+  /// made on an AddRec expression. Given an affine AddRec expression
+  /// {a,+,b}, we assume that it has the nssw or nusw flags (defined
+  /// below).
   class SCEVWrapPredicate final : public SCEVPredicate {
   public:
     /// Similar to SCEV::NoWrapFlags, but with slightly different semantics
@@ -527,14 +520,9 @@ namespace llvm {
       const SCEV *Exact;
       const SCEV *Max;
 
-      /// A predicate union guard for this ExitLimit. The result is only
-      /// valid if this predicate evaluates to 'true' at run-time.
-      SCEVUnionPredicate Pred;
-
       /*implicit*/ ExitLimit(const SCEV *E) : Exact(E), Max(E) {}
 
-      ExitLimit(const SCEV *E, const SCEV *M, SCEVUnionPredicate &P)
-          : Exact(E), Max(M), Pred(P) {
+      ExitLimit(const SCEV *E, const SCEV *M) : Exact(E), Max(M) {
         assert((isa<SCEVCouldNotCompute>(Exact) ||
                 !isa<SCEVCouldNotCompute>(Max)) &&
                "Exact is not allowed to be less precise than Max");
@@ -546,146 +534,30 @@ namespace llvm {
         return !isa<SCEVCouldNotCompute>(Exact) ||
           !isa<SCEVCouldNotCompute>(Max);
       }
-
-      /// Test whether this ExitLimit contains all information.
-      bool hasFullInfo() const { return !isa<SCEVCouldNotCompute>(Exact); }
     };
-
-    /// Forward declaration of ExitNotTakenExtras
-    struct ExitNotTakenExtras;
 
     /// Information about the number of times a particular loop exit may be
     /// reached before exiting the loop.
     struct ExitNotTakenInfo {
       AssertingVH<BasicBlock> ExitingBlock;
       const SCEV *ExactNotTaken;
-
-      PointerIntPair<ExitNotTakenExtras *, 1> ExtraInfo;
+      PointerIntPair<ExitNotTakenInfo*, 1> NextExit;
 
       ExitNotTakenInfo() : ExitingBlock(nullptr), ExactNotTaken(nullptr) {}
-      ExitNotTakenInfo(BasicBlock *ExitBlock, const SCEV *Expr,
-                       ExitNotTakenExtras *Ptr)
-          : ExitingBlock(ExitBlock), ExactNotTaken(Expr) {
-        ExtraInfo.setPointer(Ptr);
-      }
 
       /// Return true if all loop exits are computable.
-      bool isCompleteList() const { return ExtraInfo.getInt() == 0; }
-
-      /// Sets the incomplete property, indicating that one of the loop exits
-      /// doesn't have a corresponding ExitNotTakenInfo entry.
-      void setIncomplete() { ExtraInfo.setInt(1); }
-
-      /// Returns a pointer to the predicate associated with this information,
-      /// or nullptr if this doesn't exist (meaning always true).
-      SCEVUnionPredicate *getPred() const {
-        if (auto *Info = ExtraInfo.getPointer())
-          return &Info->Pred;
-
-        return nullptr;
+      bool isCompleteList() const {
+        return NextExit.getInt() == 0;
       }
 
-      /// Return true if the SCEV predicate associated with this information
-      /// is always true.
-      bool hasAlwaysTruePred() const {
-        return !getPred() || getPred()->isAlwaysTrue();
+      void setIncomplete() { NextExit.setInt(1); }
+
+      /// Return a pointer to the next exit's not-taken info.
+      ExitNotTakenInfo *getNextExit() const {
+        return NextExit.getPointer();
       }
 
-      /// Defines a simple forward iterator for ExitNotTakenInfo.
-      class ExitNotTakenInfoIterator
-          : public std::iterator<std::forward_iterator_tag, ExitNotTakenInfo> {
-        const ExitNotTakenInfo *Start;
-        unsigned Position;
-
-      public:
-        ExitNotTakenInfoIterator(const ExitNotTakenInfo *Start,
-                                 unsigned Position)
-            : Start(Start), Position(Position) {}
-
-        const ExitNotTakenInfo &operator*() const {
-          if (Position == 0)
-            return *Start;
-
-          return Start->ExtraInfo.getPointer()->Exits[Position - 1];
-        }
-
-        const ExitNotTakenInfo *operator->() const {
-          if (Position == 0)
-            return Start;
-
-          return &Start->ExtraInfo.getPointer()->Exits[Position - 1];
-        }
-
-        bool operator==(const ExitNotTakenInfoIterator &RHS) const {
-          return Start == RHS.Start && Position == RHS.Position;
-        }
-
-        bool operator!=(const ExitNotTakenInfoIterator &RHS) const {
-          return Start != RHS.Start || Position != RHS.Position;
-        }
-
-        ExitNotTakenInfoIterator &operator++() { // Preincrement
-          if (!Start)
-            return *this;
-
-          unsigned Elements =
-              Start->ExtraInfo.getPointer()
-                  ? Start->ExtraInfo.getPointer()->Exits.size() + 1
-                  : 1;
-
-          ++Position;
-
-          // We've run out of elements.
-          if (Position == Elements) {
-            Start = nullptr;
-            Position = 0;
-          }
-
-          return *this;
-        }
-        ExitNotTakenInfoIterator operator++(int) { // Postincrement
-          ExitNotTakenInfoIterator Tmp = *this;
-          ++*this;
-          return Tmp;
-        }
-      };
-
-      /// Iterators
-      ExitNotTakenInfoIterator begin() const {
-        return ExitNotTakenInfoIterator(this, 0);
-      }
-      ExitNotTakenInfoIterator end() const {
-        return ExitNotTakenInfoIterator(nullptr, 0);
-      }
-    };
-
-    /// Describes the extra information that a ExitNotTakenInfo can have.
-    struct ExitNotTakenExtras {
-      /// The predicate associated with the ExitNotTakenInfo struct.
-      SCEVUnionPredicate Pred;
-
-      /// The extra exits in the loop. Only the ExitNotTakenExtras structure
-      /// pointed to by the first ExitNotTakenInfo struct (associated with the
-      /// first loop exit) will populate this vector to prevent having
-      /// redundant information.
-      SmallVector<ExitNotTakenInfo, 4> Exits;
-    };
-
-    /// A struct containing the information attached to a backedge.
-    struct EdgeInfo {
-      EdgeInfo(BasicBlock *Block, const SCEV *Taken, SCEVUnionPredicate &P) :
-          ExitBlock(Block), Taken(Taken), Pred(std::move(P)) {}
-
-      /// The exit basic block.
-      BasicBlock *ExitBlock;
-
-      /// The (exact) number of time we take the edge back.
-      const SCEV *Taken;
-
-      /// The SCEV predicated associated with Taken. If Pred doesn't evaluate
-      /// to true, the information in Taken is not valid (or equivalent with
-      /// a CouldNotCompute.
-      SCEVUnionPredicate Pred;
+      void setNextExit(ExitNotTakenInfo *ENT) { NextExit.setPointer(ENT); }
     };
 
     /// Information about the backedge-taken count of a loop. This currently
@@ -697,16 +569,16 @@ namespace llvm {
       ExitNotTakenInfo ExitNotTaken;
 
       /// An expression indicating the least maximum backedge-taken count of the
-      /// loop that is known, or a SCEVCouldNotCompute. This expression is only
-      /// valid if the predicates associated with all loop exits are true.
+      /// loop that is known, or a SCEVCouldNotCompute.
       const SCEV *Max;
 
     public:
       BackedgeTakenInfo() : Max(nullptr) {}
 
       /// Initialize BackedgeTakenInfo from a list of exact exit counts.
-      BackedgeTakenInfo(SmallVectorImpl<EdgeInfo> &ExitCounts, bool Complete,
-                        const SCEV *MaxCount);
+      BackedgeTakenInfo(
+        SmallVectorImpl< std::pair<BasicBlock *, const SCEV *> > &ExitCounts,
+        bool Complete, const SCEV *MaxCount);
 
       /// Test whether this BackedgeTakenInfo contains any computed information,
       /// or whether it's all SCEVCouldNotCompute values.
@@ -714,27 +586,11 @@ namespace llvm {
         return ExitNotTaken.ExitingBlock || !isa<SCEVCouldNotCompute>(Max);
       }
 
-      /// Test whether this BackedgeTakenInfo contains complete information.
-      bool hasFullInfo() const { return ExitNotTaken.isCompleteList(); }
-
       /// Return an expression indicating the exact backedge-taken count of the
-      /// loop if it is known or SCEVCouldNotCompute otherwise. This is the
+      /// loop if it is known, or SCEVCouldNotCompute otherwise. This is the
       /// number of times the loop header can be guaranteed to execute, minus
       /// one.
-      ///
-      /// If the SCEV predicate associated with the answer can be different
-      /// from AlwaysTrue, we must add a (non null) Predicates argument.
-      /// The SCEV predicate associated with the answer will be added to
-      /// Predicates. A run-time check needs to be emitted for the SCEV
-      /// predicate in order for the answer to be valid.
-      ///
-      /// Note that we should always know if we need to pass a predicate
-      /// argument or not from the way the ExitCounts vector was computed.
-      /// If we allowed SCEV predicates to be generated when populating this
-      /// vector, this information can contain them and therefore a
-      /// SCEVPredicate argument should be added to getExact.
-      const SCEV *getExact(ScalarEvolution *SE,
-                           SCEVUnionPredicate *Predicates = nullptr) const;
+      const SCEV *getExact(ScalarEvolution *SE) const;
 
       /// Return the number of times this loop exit may fall through to the back
       /// edge, or SCEVCouldNotCompute. The loop is guaranteed not to exit via
@@ -755,11 +611,7 @@ namespace llvm {
 
     /// Cache the backedge-taken count of the loops for this function as they
     /// are computed.
-    DenseMap<const Loop *, BackedgeTakenInfo> BackedgeTakenCounts;
-
-    /// Cache the predicated backedge-taken count of the loops for this
-    /// function as they are computed.
-    DenseMap<const Loop *, BackedgeTakenInfo> PredicatedBackedgeTakenCounts;
+    DenseMap<const Loop*, BackedgeTakenInfo> BackedgeTakenCounts;
 
     /// This map contains entries for all of the PHI instructions that we
     /// attempt to compute constant evolutions for.  This allows us to avoid
@@ -861,49 +713,33 @@ namespace llvm {
     void forgetSymbolicName(Instruction *I, const SCEV *SymName);
 
     /// Return the BackedgeTakenInfo for the given loop, lazily computing new
-    /// values if the loop hasn't been analyzed yet. The returned result is
-    /// guaranteed not to be predicated.
+    /// values if the loop hasn't been analyzed yet.
     const BackedgeTakenInfo &getBackedgeTakenInfo(const Loop *L);
 
-    /// Similar to getBackedgeTakenInfo, but will add predicates as required
-    /// with the purpose of returning complete information.
-    const BackedgeTakenInfo &getPredicatedBackedgeTakenInfo(const Loop *L);
-
     /// Compute the number of times the specified loop will iterate.
-    /// If AllowPredicates is set, we will create new SCEV predicates as
-    /// necessary in order to return an exact answer.
-    BackedgeTakenInfo computeBackedgeTakenCount(const Loop *L,
-                                                bool AllowPredicates = false);
+    BackedgeTakenInfo computeBackedgeTakenCount(const Loop *L);
 
     /// Compute the number of times the backedge of the specified loop will
-    /// execute if it exits via the specified block. If AllowPredicates is set,
-    /// this call will try to use a minimal set of SCEV predicates in order to
-    /// return an exact answer.
-    ExitLimit computeExitLimit(const Loop *L, BasicBlock *ExitingBlock,
-                               bool AllowPredicates = false);
+    /// execute if it exits via the specified block.
+    ExitLimit computeExitLimit(const Loop *L, BasicBlock *ExitingBlock);
 
     /// Compute the number of times the backedge of the specified loop will
     /// execute if its exit condition were a conditional branch of ExitCond,
-    /// TBB, and FBB. If AllowPredicates is set, this call will try to use a
-    /// minimal set of SCEV predicates in order to return an exact answer.
+    /// TBB, and FBB.
     ExitLimit computeExitLimitFromCond(const Loop *L,
                                        Value *ExitCond,
                                        BasicBlock *TBB,
                                        BasicBlock *FBB,
-                                       bool IsSubExpr,
-                                       bool AllowPredicates = false);
+                                       bool IsSubExpr);
 
     /// Compute the number of times the backedge of the specified loop will
     /// execute if its exit condition were a conditional branch of the ICmpInst
-    /// ExitCond, TBB, and FBB. If AllowPredicates is set, this call will try
-    /// to use a minimal set of SCEV predicates in order to return an exact
-    /// answer.
+    /// ExitCond, TBB, and FBB.
     ExitLimit computeExitLimitFromICmp(const Loop *L,
                                        ICmpInst *ExitCond,
                                        BasicBlock *TBB,
                                        BasicBlock *FBB,
-                                       bool IsSubExpr,
-                                       bool AllowPredicates = false);
+                                       bool IsSubExpr);
 
     /// Compute the number of times the backedge of the specified loop will
     /// execute if its exit condition were a switch with a single exiting case
@@ -941,10 +777,7 @@ namespace llvm {
 
     /// Return the number of times an exit condition comparing the specified
     /// value to zero will execute.  If not computable, return CouldNotCompute.
-    /// If AllowPredicates is set, this call will try to use a minimal set of
-    /// SCEV predicates in order to return an exact answer.
-    ExitLimit HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr,
-                           bool AllowPredicates = false);
+    ExitLimit HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr);
 
     /// Return the number of times an exit condition checking the specified
     /// value for nonzero will execute.  If not computable, return
@@ -954,15 +787,10 @@ namespace llvm {
     /// Return the number of times an exit condition containing the specified
     /// less-than comparison will execute.  If not computable, return
     /// CouldNotCompute. isSigned specifies whether the less-than is signed.
-    /// If AllowPredicates is set, this call will try to use a minimal set of
-    /// SCEV predicates in order to return an exact answer.
-    ExitLimit HowManyLessThans(const SCEV *LHS, const SCEV *RHS, const Loop *L,
-                               bool isSigned, bool IsSubExpr,
-                               bool AllowPredicates = false);
-
+    ExitLimit HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
+                               const Loop *L, bool isSigned, bool IsSubExpr);
     ExitLimit HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
-                                  const Loop *L, bool isSigned, bool IsSubExpr,
-                                  bool AllowPredicates = false);
+                                  const Loop *L, bool isSigned, bool IsSubExpr);
 
     /// Return a predecessor of BB (which may not be an immediate predecessor)
     /// which has exactly one successor from which BB is reachable, or null if
@@ -1340,13 +1168,6 @@ namespace llvm {
     ///
     const SCEV *getBackedgeTakenCount(const Loop *L);
 
-    /// Similar to getBackedgeTakenCount, except it will add a set of
-    /// SCEV predicates to Predicates that are required to be true in order for
-    /// the answer to be correct. Predicates can be checked with run-time
-    /// checks and can be used to perform loop versioning.
-    const SCEV *getPredicatedBackedgeTakenCount(const Loop *L,
-                                                SCEVUnionPredicate &Predicates);
-
     /// Similar to getBackedgeTakenCount, except return the least SCEV value
     /// that is known never to be less than the actual backedge taken count.
     const SCEV *getMaxBackedgeTakenCount(const Loop *L);
@@ -1672,8 +1493,6 @@ namespace llvm {
     /// by ScalarEvolution is guaranteed to be preserved, even when adding new
     /// predicates.
     const SCEV *getSCEV(Value *V);
-    /// Get the (predicated) backedge count for the analyzed loop.
-    const SCEV *getBackedgeTakenCount();
     /// \brief Adds a new predicate.
     void addPredicate(const SCEVPredicate &Pred);
     /// \brief Attempts to produce an AddRecExpr for V by adding additional
@@ -1717,8 +1536,6 @@ namespace llvm {
     /// figure out if the predicate has changed from the last rewrite of the
     /// SCEV. If so, we need to perform a new rewrite.
     unsigned Generation;
-    /// The backedge taken count.
-    const SCEV *BackedgeCount;
   };
 }
 
