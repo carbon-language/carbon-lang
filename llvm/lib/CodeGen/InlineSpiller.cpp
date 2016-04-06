@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Spiller.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/TinyPtrVector.h"
@@ -71,7 +72,7 @@ class HoistSpillHelper {
   // Map from pair of (StackSlot and Original VNI) to a set of spills which
   // have the same stackslot and have equal values defined by Original VNI.
   // These spills are mergeable and are hoist candiates.
-  typedef DenseMap<std::pair<int, VNInfo *>, SmallPtrSet<MachineInstr *, 16>>
+  typedef MapVector<std::pair<int, VNInfo *>, SmallPtrSet<MachineInstr *, 16>>
       MergeableSpillsMap;
   MergeableSpillsMap MergeableSpills;
 
