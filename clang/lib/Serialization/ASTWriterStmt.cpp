@@ -2417,7 +2417,8 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
 
   Writer.Visit(S);
   
-  SubStmtEntries[S] = Writer.Emit();
+  uint64_t Offset = Writer.Emit();
+  SubStmtEntries[S] = Offset;
 }
 
 /// \brief Flush all of the statements that have been added to the
