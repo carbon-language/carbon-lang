@@ -100,8 +100,6 @@ public:
     /// \pre ID != InvalidMappingID
     InstructionMapping(unsigned ID, unsigned Cost, unsigned NumOperands)
         : ID(ID), Cost(Cost), NumOperands(NumOperands) {
-      assert(getID() != InvalidMappingID &&
-             "Use the default constructor for invalid mapping");
       OperandsMapping.reset(new ValueMapping[getNumOperands()]);
     }
 
