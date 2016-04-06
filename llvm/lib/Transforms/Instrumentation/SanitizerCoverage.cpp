@@ -101,10 +101,10 @@ static cl::opt<bool>
                                       "instructions"),
                              cl::Hidden, cl::init(false));
 
-static cl::opt<bool> ClPruneBlocks(
-    "sanitizer-coverage-prune-blocks",
-    cl::desc("Reduce the number of instrumented blocks (experimental)"),
-    cl::Hidden, cl::init(false));
+static cl::opt<bool>
+    ClPruneBlocks("sanitizer-coverage-prune-blocks",
+                  cl::desc("Reduce the number of instrumented blocks"),
+                  cl::Hidden, cl::init(true));
 
 // Experimental 8-bit counters used as an additional search heuristic during
 // coverage-guided fuzzing.
