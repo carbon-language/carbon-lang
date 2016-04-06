@@ -639,10 +639,12 @@ static bool tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI,
       Count = (std::max(UP.PartialThreshold, 3u) - 2) / (LoopSize - 2);
       while (Count != 0 && TripCount % Count != 0)
         Count--;
-      if (Count <= 1) {
+      if (AllowRuntime && Count <= 1) {
         // If there is no Count that is modulo of TripCount, set Count to
         // largest power-of-two factor that satisfies the threshold limit.
-        Count = (std::max(UP.PartialThreshold, 3u) - 2) / (LoopSize - 2);
+        // As we'll create fixup loop, do the type of unrolling only if
+        // runtime unrolling is allowed.
+        Count = DefaultUnrollRuntimeCount;
         UnrolledSize = (LoopSize - 2) * Count + 2;
         while (Count != 0 && UnrolledSize > UP.PartialThreshold) {
           Count >>= 1;
