@@ -1317,7 +1317,8 @@ public:
     Instruction *NewI = New;
 
     assert(OldI != NewI && "Disallowed at construction?!");
-    assert(!IsDeoptimize || !New && "Deoptimize instrinsics are not replaced!");
+    assert((!IsDeoptimize || !New) &&
+           "Deoptimize instrinsics are not replaced!");
 
     Old = nullptr;
     New = nullptr;
