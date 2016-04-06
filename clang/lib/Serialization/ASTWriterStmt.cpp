@@ -29,7 +29,6 @@ using namespace clang;
 namespace clang {
 
   class ASTStmtWriter : public StmtVisitor<ASTStmtWriter, void> {
-    friend class OMPClauseWriter;
     ASTWriter &Writer;
     ASTRecordWriter Record;
 
@@ -43,7 +42,7 @@ namespace clang {
 
     ASTStmtWriter(const ASTStmtWriter&) = delete;
 
-    uint64_t Emit(Stmt *S) {
+    uint64_t Emit() {
       assert(Code != serialization::STMT_NULL_PTR &&
              "unhandled sub-statement writing AST file");
       return Record.EmitStmt(Code, AbbrevToUse);
@@ -2380,9 +2379,7 @@ void ASTWriter::ClearSwitchCaseIDs() {
 
 /// \brief Write the given substatement or subexpression to the
 /// bitstream.
-void ASTWriter::WriteSubStmt(Stmt *S,
-                             llvm::DenseMap<Stmt *, uint64_t> &SubStmtEntries,
-                             llvm::DenseSet<Stmt *> &ParentStmts) {
+void ASTWriter::WriteSubStmt(Stmt *S) {
   RecordData Record;
   ASTStmtWriter Writer(*this, Record);
   ++NumStatements;
@@ -2420,7 +2417,7 @@ void ASTWriter::WriteSubStmt(Stmt *S,
 
   Writer.Visit(S);
   
-  SubStmtEntries[S] = Writer.Emit(S);
+  SubStmtEntries[S] = Writer.Emit();
 }
 
 /// \brief Flush all of the statements that have been added to the
@@ -2432,7 +2429,7 @@ void ASTRecordWriter::FlushStmts() {
   assert(Writer->ParentStmts.empty() && "unexpected entries in parent stmt map");
 
   for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {
-    Writer->WriteSubStmt(StmtsToEmit[I], Writer->SubStmtEntries, Writer->ParentStmts);
+    Writer->WriteSubStmt(StmtsToEmit[I]);
     
     assert(N == StmtsToEmit.size() && "record modified while being written!");
 
@@ -2453,8 +2450,7 @@ void ASTRecordWriter::FlushSubStmts() {
   // that a simple stack machine can be used when loading), and don't emit a
   // STMT_STOP after each one.
   for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {
-    Writer->WriteSubStmt(StmtsToEmit[N - I - 1],
-                         Writer->SubStmtEntries, Writer->ParentStmts);
+    Writer->WriteSubStmt(StmtsToEmit[N - I - 1]);
     assert(N == StmtsToEmit.size() && "record modified while being written!");
   }
 

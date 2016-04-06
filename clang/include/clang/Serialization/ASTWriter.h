@@ -477,9 +477,7 @@ private:
   unsigned getSubmoduleID(Module *Mod);
 
   /// \brief Write the given subexpression to the bitstream.
-  void WriteSubStmt(Stmt *S,
-                    llvm::DenseMap<Stmt *, uint64_t> &SubStmtEntries,
-                    llvm::DenseSet<Stmt *> &ParentStmts);
+  void WriteSubStmt(Stmt *S);
 
   void WriteBlockInfoBlock();
   uint64_t WriteControlBlock(Preprocessor &PP, ASTContext &Context,

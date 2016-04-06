@@ -52,7 +52,7 @@ namespace clang {
 
       auto Offset = Record.Emit(Code, AbbrevToUse);
 
-      // Flush any expressions, base specifiers, and ctor initializers that
+      // Flush any base specifiers and ctor initializers that
       // were written as part of this declaration.
       Writer.FlushPendingAfterDecl();
 
