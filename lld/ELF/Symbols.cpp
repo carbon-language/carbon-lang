@@ -262,7 +262,7 @@ UndefinedElf<ELFT>::UndefinedElf(StringRef N, const Elf_Sym &Sym)
 
 template <typename ELFT>
 UndefinedElf<ELFT>::UndefinedElf(const Elf_Sym &Sym)
-    : Undefined(SymbolBody::UndefinedElfKind, NameOffset, Sym.st_other,
+    : Undefined(SymbolBody::UndefinedElfKind, Sym.st_name, Sym.st_other,
                 Sym.getType()),
       Size(Sym.st_size) {
   assert(Sym.getBinding() == STB_LOCAL);
