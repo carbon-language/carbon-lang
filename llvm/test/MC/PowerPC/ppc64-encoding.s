@@ -854,3 +854,34 @@
 # CHECK-BE: mfsrin  10, 12                    # encoding: [0x7d,0x40,0x65,0x26]
 # CHECK-LE: mfsrin  10, 12                    # encoding: [0x26,0x65,0x40,0x7d]
             mfsrin  %r10,%r12
+
+# Copy-Paste Facility
+# CHECK-BE: copy 2, 19, 1                      # encoding: [0x7c,0x22,0x9e,0x0c]
+# CHECK-LE: copy 2, 19, 1                      # encoding: [0x0c,0x9e,0x22,0x7c]
+            copy 2, 19, 1
+# CHECK-BE: paste 17, 1, 1                     # encoding: [0x7c,0x31,0x0f,0x0c]
+# CHECK-LE: paste 17, 1, 1                     # encoding: [0x0c,0x0f,0x31,0x7c]
+            paste 17, 1, 1
+# CHECK-BE: cp_abort                           # encoding: [0x7c,0x00,0x06,0x8c]
+# CHECK-LE: cp_abort                           # encoding: [0x8c,0x06,0x00,0x7c]
+            cp_abort
+
+# Message Synchronize
+# CHECK-BE: msgsync                            # encoding: [0x7c,0x00,0x06,0xec]
+# CHECK-LE: msgsync                            # encoding: [0xec,0x06,0x00,0x7c]
+            msgsync
+
+# SLB Invalidate Entry Global
+# CHECK-BE: slbieg 6, 21                       # encoding: [0x7c,0xc0,0xab,0xa4]
+# CHECK-LE: slbieg 6, 21                       # encoding: [0xa4,0xab,0xc0,0x7c]
+            slbieg 6, 21
+
+# SLB Synchronize
+# CHECK-BE: slbsync                            # encoding: [0x7c,0x00,0x02,0xa4]
+# CHECK-LE: slbsync                            # encoding: [0xa4,0x02,0x00,0x7c]
+            slbsync
+
+# Power-Saving Mode Instruction
+# CHECK-BE: stop                               # encoding: [0x4c,0x00,0x02,0xe4]
+# CHECK-LE: stop                               # encoding: [0xe4,0x02,0x00,0x4c]
+            stop

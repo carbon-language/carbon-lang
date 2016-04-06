@@ -573,3 +573,20 @@ Load Doubleword Monitored (ldmx):
 
 Move to CR from XER Extended (mcrxrx):
 - Is there a use for this in LLVM?
+
+Fixed Point Facility:
+
+- Copy-Paste Facility: copy copy_first cp_abort paste paste. paste_last
+  . Use instrinstics:
+    (int_ppc_copy_first i32:$rA, i32:$rB)
+    (int_ppc_copy i32:$rA, i32:$rB)
+
+    (int_ppc_paste i32:$rA, i32:$rB)
+    (int_ppc_paste_last i32:$rA, i32:$rB)
+
+    (int_cp_abort)
+
+- Message Synchronize: msgsync
+- SLB*: slbieg slbsync
+- stop
+  . No instrinstics

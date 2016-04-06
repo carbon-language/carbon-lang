@@ -814,6 +814,17 @@ class X_BF3<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let FRB = 0;
 }
 
+// [PO /// L RA RB XO /]
+class X_L1_RS5_RS5<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+                   string asmstr, InstrItinClass itin, list<dag> pattern>
+  : XForm_16<opcode, xo, OOL, IOL, asmstr, itin> {
+  let BF = 0;
+  let Pattern = pattern;
+
+  bit RC = 0;
+  let Inst{31} = RC;
+}
+
 // XX*-Form (VSX)
 class XX1Form<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr, 
               InstrItinClass itin, list<dag> pattern>

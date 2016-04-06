@@ -1260,3 +1260,24 @@ def : Pat<(atomic_load_64 xaddr:$src),  (LDX memrr:$src)>;
 
 def : Pat<(atomic_store_64 ixaddr:$ptr, i64:$val), (STD  g8rc:$val, memrix:$ptr)>;
 def : Pat<(atomic_store_64 xaddr:$ptr,  i64:$val), (STDX g8rc:$val, memrr:$ptr)>;
+
+let Predicates = [IsISA3_0] in {
+
+class X_L1_RA5_RB5<bits<6> opcode, bits<10> xo, string opc, RegisterOperand ty,
+                   InstrItinClass itin, list<dag> pattern>
+  : X_L1_RS5_RS5<opcode, xo, (outs), (ins ty:$rA, ty:$rB, u1imm:$L),
+                 !strconcat(opc, " $rA, $rB, $L"), itin, pattern>;
+
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
+def CP_COPY8   : X_L1_RA5_RB5<31, 774, "copy"  , g8rc, IIC_LdStCOPY, []>;
+def CP_PASTE8  : X_L1_RA5_RB5<31, 902, "paste" , g8rc, IIC_LdStPASTE, []>;
+def CP_PASTE8o : X_L1_RA5_RB5<31, 902, "paste.", g8rc, IIC_LdStPASTE, []>,isDOT;
+}
+
+// SLB Invalidate Entry Global
+def SLBIEG : XForm_26<31, 466, (outs), (ins gprc:$RS, gprc:$RB),
+                      "slbieg $RS, $RB", IIC_SprSLBIEG, []>;
+// SLB Synchronize
+def SLBSYNC : XForm_0<31, 338, (outs), (ins), "slbsync", IIC_SprSLBSYNC, []>;
+
+} // IsISA3_0
