@@ -89,7 +89,7 @@ public:
 
   public:
     /// Constructor for the mapping of an instruction.
-    /// \p NumOperands should be equal to number of all the operands of
+    /// \p NumOperands must be equal to number of all the operands of
     /// the related instruction.
     /// The rationale is that it is more efficient for the optimizers
     /// to be able to assume that the mapping of the ith operand is

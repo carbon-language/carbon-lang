@@ -14,6 +14,9 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -231,4 +234,26 @@ void RegisterBankInfo::ValueMapping::verify(unsigned ExpectedBitWidth) const {
 void RegisterBankInfo::InstructionMapping::verify(
     const MachineInstr &MI) const {
   // Check that all the register operands are properly mapped.
+  const MachineRegisterInfo &MRI = MI.getParent()->getParent()->getRegInfo();
+  // Check the constructor invariant.
+  assert(NumOperands == MI.getNumOperands() &&
+         "NumOperands must match, see constructor");
+  for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
+    const MachineOperand &MO = MI.getOperand(Idx);
+    const RegisterBankInfo::ValueMapping &MOMapping = getOperandMapping(Idx);
+    if (!MO.isReg()) {
+      assert(MOMapping.BreakDown.empty() &&
+             "We should not care about non-reg mapping");
+      continue;
+    }
+    unsigned Reg = MO.getReg();
+    // Register size in bits.
+    // This size must match what the mapping expect.
+    unsigned RegSize = MRI.getSize(Reg);
+    // If Reg is not a generic register, query the register class to
+    // get its size.
+    if (!RegSize)
+      RegSize = MRI.getRegClass(Reg)->getSize() * 8;
+    MOMapping.verify(RegSize);
+  }
 }
