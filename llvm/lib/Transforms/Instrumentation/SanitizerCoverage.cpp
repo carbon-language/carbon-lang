@@ -551,7 +551,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     IRB.CreateCall(SanCovWithCheckFunction, GuardP);
   } else {
     LoadInst *Load = IRB.CreateLoad(GuardP);
-    Load->setAtomic(Monotonic);
+    Load->setAtomic(AtomicOrdering::Monotonic);
     Load->setAlignment(4);
     SetNoSanitizeMetadata(Load);
     Value *Cmp =

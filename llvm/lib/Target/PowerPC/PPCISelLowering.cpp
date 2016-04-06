@@ -8323,9 +8323,9 @@ static Instruction* callIntrinsic(IRBuilder<> &Builder, Intrinsic::ID Id) {
 Instruction* PPCTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
                                          AtomicOrdering Ord, bool IsStore,
                                          bool IsLoad) const {
-  if (Ord == SequentiallyConsistent)
+  if (Ord == AtomicOrdering::SequentiallyConsistent)
     return callIntrinsic(Builder, Intrinsic::ppc_sync);
-  if (isAtLeastRelease(Ord))
+  if (isReleaseOrStronger(Ord))
     return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
   return nullptr;
 }
@@ -8333,7 +8333,7 @@ Instruction* PPCTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
 Instruction* PPCTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
                                           AtomicOrdering Ord, bool IsStore,
                                           bool IsLoad) const {
-  if (IsLoad && isAtLeastAcquire(Ord))
+  if (IsLoad && isAcquireOrStronger(Ord))
     return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
   // FIXME: this is too conservative, a dependent branch + isync is enough.
   // See http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html and

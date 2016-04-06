@@ -20464,7 +20464,7 @@ X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
   // r1 = r2 = 0 is impossible, but becomes possible if the idempotent rmw is
   // lowered to just a load without a fence. A mfence flushes the store buffer,
   // making the optimization clearly correct.
-  // FIXME: it is required if isAtLeastRelease(Order) but it is not clear
+  // FIXME: it is required if isReleaseOrStronger(Order) but it is not clear
   // otherwise, we might be able to be more aggressive on relaxed idempotent
   // rmw. In practice, they do not look useful, so we don't try to be
   // especially clever.
@@ -20503,7 +20503,8 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget &Subtarget,
 
   // The only fence that needs an instruction is a sequentially-consistent
   // cross-thread fence.
-  if (FenceOrdering == SequentiallyConsistent && FenceScope == CrossThread) {
+  if (FenceOrdering == AtomicOrdering::SequentiallyConsistent &&
+      FenceScope == CrossThread) {
     if (Subtarget.hasMFence())
       return DAG.getNode(X86ISD::MFENCE, dl, MVT::Other, Op.getOperand(0));
 
@@ -20986,7 +20987,8 @@ static SDValue LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) {
   // FIXME: On 32-bit, store -> fist or movq would be more efficient
   //        (The only way to get a 16-byte store is cmpxchg16b)
   // FIXME: 16-byte ATOMIC_SWAP isn't actually hooked up at the moment.
-  if (cast<AtomicSDNode>(Node)->getOrdering() == SequentiallyConsistent ||
+  if (cast<AtomicSDNode>(Node)->getOrdering() ==
+          AtomicOrdering::SequentiallyConsistent ||
       !DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
     SDValue Swap = DAG.getAtomic(ISD::ATOMIC_SWAP, dl,
                                  cast<AtomicSDNode>(Node)->getMemoryVT(),

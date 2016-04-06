@@ -2602,14 +2602,15 @@ LLVMValueRef LLVMBuildStore(LLVMBuilderRef B, LLVMValueRef Val,
 
 static AtomicOrdering mapFromLLVMOrdering(LLVMAtomicOrdering Ordering) {
   switch (Ordering) {
-    case LLVMAtomicOrderingNotAtomic: return NotAtomic;
-    case LLVMAtomicOrderingUnordered: return Unordered;
-    case LLVMAtomicOrderingMonotonic: return Monotonic;
-    case LLVMAtomicOrderingAcquire: return Acquire;
-    case LLVMAtomicOrderingRelease: return Release;
-    case LLVMAtomicOrderingAcquireRelease: return AcquireRelease;
+    case LLVMAtomicOrderingNotAtomic: return AtomicOrdering::NotAtomic;
+    case LLVMAtomicOrderingUnordered: return AtomicOrdering::Unordered;
+    case LLVMAtomicOrderingMonotonic: return AtomicOrdering::Monotonic;
+    case LLVMAtomicOrderingAcquire: return AtomicOrdering::Acquire;
+    case LLVMAtomicOrderingRelease: return AtomicOrdering::Release;
+    case LLVMAtomicOrderingAcquireRelease:
+      return AtomicOrdering::AcquireRelease;
     case LLVMAtomicOrderingSequentiallyConsistent:
-      return SequentiallyConsistent;
+      return AtomicOrdering::SequentiallyConsistent;
   }
 
   llvm_unreachable("Invalid LLVMAtomicOrdering value!");
@@ -2617,13 +2618,14 @@ static AtomicOrdering mapFromLLVMOrdering(LLVMAtomicOrdering Ordering) {
 
 static LLVMAtomicOrdering mapToLLVMOrdering(AtomicOrdering Ordering) {
   switch (Ordering) {
-    case NotAtomic: return LLVMAtomicOrderingNotAtomic;
-    case Unordered: return LLVMAtomicOrderingUnordered;
-    case Monotonic: return LLVMAtomicOrderingMonotonic;
-    case Acquire: return LLVMAtomicOrderingAcquire;
-    case Release: return LLVMAtomicOrderingRelease;
-    case AcquireRelease: return LLVMAtomicOrderingAcquireRelease;
-    case SequentiallyConsistent:
+    case AtomicOrdering::NotAtomic: return LLVMAtomicOrderingNotAtomic;
+    case AtomicOrdering::Unordered: return LLVMAtomicOrderingUnordered;
+    case AtomicOrdering::Monotonic: return LLVMAtomicOrderingMonotonic;
+    case AtomicOrdering::Acquire: return LLVMAtomicOrderingAcquire;
+    case AtomicOrdering::Release: return LLVMAtomicOrderingRelease;
+    case AtomicOrdering::AcquireRelease:
+      return LLVMAtomicOrderingAcquireRelease;
+    case AtomicOrdering::SequentiallyConsistent:
       return LLVMAtomicOrderingSequentiallyConsistent;
   }
 

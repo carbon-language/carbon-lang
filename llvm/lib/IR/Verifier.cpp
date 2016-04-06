@@ -2919,7 +2919,8 @@ void Verifier::visitLoadInst(LoadInst &LI) {
   Assert(LI.getAlignment() <= Value::MaximumAlignment,
          "huge alignment values are unsupported", &LI);
   if (LI.isAtomic()) {
-    Assert(LI.getOrdering() != Release && LI.getOrdering() != AcquireRelease,
+    Assert(LI.getOrdering() != AtomicOrdering::Release &&
+               LI.getOrdering() != AtomicOrdering::AcquireRelease,
            "Load cannot have Release ordering", &LI);
     Assert(LI.getAlignment() != 0,
            "Atomic load must specify explicit alignment", &LI);
@@ -2946,7 +2947,8 @@ void Verifier::visitStoreInst(StoreInst &SI) {
   Assert(SI.getAlignment() <= Value::MaximumAlignment,
          "huge alignment values are unsupported", &SI);
   if (SI.isAtomic()) {
-    Assert(SI.getOrdering() != Acquire && SI.getOrdering() != AcquireRelease,
+    Assert(SI.getOrdering() != AtomicOrdering::Acquire &&
+               SI.getOrdering() != AtomicOrdering::AcquireRelease,
            "Store cannot have Acquire ordering", &SI);
     Assert(SI.getAlignment() != 0,
            "Atomic store must specify explicit alignment", &SI);
@@ -3022,19 +3024,20 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
 void Verifier::visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI) {
 
   // FIXME: more conditions???
-  Assert(CXI.getSuccessOrdering() != NotAtomic,
+  Assert(CXI.getSuccessOrdering() != AtomicOrdering::NotAtomic,
          "cmpxchg instructions must be atomic.", &CXI);
-  Assert(CXI.getFailureOrdering() != NotAtomic,
+  Assert(CXI.getFailureOrdering() != AtomicOrdering::NotAtomic,
          "cmpxchg instructions must be atomic.", &CXI);
-  Assert(CXI.getSuccessOrdering() != Unordered,
+  Assert(CXI.getSuccessOrdering() != AtomicOrdering::Unordered,
          "cmpxchg instructions cannot be unordered.", &CXI);
-  Assert(CXI.getFailureOrdering() != Unordered,
+  Assert(CXI.getFailureOrdering() != AtomicOrdering::Unordered,
          "cmpxchg instructions cannot be unordered.", &CXI);
-  Assert(CXI.getSuccessOrdering() >= CXI.getFailureOrdering(),
-         "cmpxchg instructions be at least as constrained on success as fail",
+  Assert(!isStrongerThan(CXI.getFailureOrdering(), CXI.getSuccessOrdering()),
+         "cmpxchg instructions failure argument shall be no stronger than the "
+         "success argument",
          &CXI);
-  Assert(CXI.getFailureOrdering() != Release &&
-             CXI.getFailureOrdering() != AcquireRelease,
+  Assert(CXI.getFailureOrdering() != AtomicOrdering::Release &&
+             CXI.getFailureOrdering() != AtomicOrdering::AcquireRelease,
          "cmpxchg failure ordering cannot include release semantics", &CXI);
 
   PointerType *PTy = dyn_cast<PointerType>(CXI.getOperand(0)->getType());
@@ -3053,9 +3056,9 @@ void Verifier::visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI) {
 }
 
 void Verifier::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
-  Assert(RMWI.getOrdering() != NotAtomic,
+  Assert(RMWI.getOrdering() != AtomicOrdering::NotAtomic,
          "atomicrmw instructions must be atomic.", &RMWI);
-  Assert(RMWI.getOrdering() != Unordered,
+  Assert(RMWI.getOrdering() != AtomicOrdering::Unordered,
          "atomicrmw instructions cannot be unordered.", &RMWI);
   PointerType *PTy = dyn_cast<PointerType>(RMWI.getOperand(0)->getType());
   Assert(PTy, "First atomicrmw operand must be a pointer.", &RMWI);
@@ -3074,10 +3077,12 @@ void Verifier::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
 
 void Verifier::visitFenceInst(FenceInst &FI) {
   const AtomicOrdering Ordering = FI.getOrdering();
-  Assert(Ordering == Acquire || Ordering == Release ||
-             Ordering == AcquireRelease || Ordering == SequentiallyConsistent,
-         "fence instructions may only have "
-         "acquire, release, acq_rel, or seq_cst ordering.",
+  Assert(Ordering == AtomicOrdering::Acquire ||
+             Ordering == AtomicOrdering::Release ||
+             Ordering == AtomicOrdering::AcquireRelease ||
+             Ordering == AtomicOrdering::SequentiallyConsistent,
+         "fence instructions may only have acquire, release, acq_rel, or "
+         "seq_cst ordering.",
          &FI);
   visitInstruction(FI);
 }
