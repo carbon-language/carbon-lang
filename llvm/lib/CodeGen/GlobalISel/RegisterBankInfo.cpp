@@ -30,6 +30,7 @@
 using namespace llvm;
 
 const unsigned RegisterBankInfo::DefaultMappingID = UINT_MAX;
+const unsigned RegisterBankInfo::InvalidMappingID = UINT_MAX - 1;
 
 /// Get the size in bits of the \p OpIdx-th operand of \p MI.
 ///
