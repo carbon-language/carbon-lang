@@ -210,10 +210,22 @@ void RegisterBankInfo::PartialMapping::print(raw_ostream &OS) const {
     OS << "nullptr";
 }
 
-void RegisterBankInfo::ValueMapping::verify() const {
-  // Check that all the partial mapping have the same bitwidth.
-  // Check that the union of the partial mappings covers the whole value.
-  // Check that each register bank is big enough to hold the partial value.
+void RegisterBankInfo::ValueMapping::verify(unsigned ExpectedBitWidth) const {
+  assert(!BreakDown.empty() && "Value mapped nowhere?!");
+  unsigned ValueBitWidth = BreakDown.back().Mask.getBitWidth();
+  assert(ValueBitWidth == ExpectedBitWidth && "BitWidth does not match");
+  APInt ValueMask(ValueBitWidth, 0);
+  for (const RegisterBankInfo::PartialMapping &PartMap : BreakDown) {
+    // Check that all the partial mapping have the same bitwidth.
+    assert(PartMap.Mask.getBitWidth() == ValueBitWidth &&
+           "Value does not have the same size accross the partial mappings");
+    // Check that the union of the partial mappings covers the whole value.
+    ValueMask |= PartMap.Mask;
+    // Check that each register bank is big enough to hold the partial value:
+    // this check is done by PartialMapping::verify
+    PartMap.verify();
+  }
+  assert(ValueMask.isAllOnesValue() && "Value is not fully mapped");
 }
 
 void RegisterBankInfo::InstructionMapping::verify(

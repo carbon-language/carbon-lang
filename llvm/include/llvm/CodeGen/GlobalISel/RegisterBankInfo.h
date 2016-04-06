@@ -64,8 +64,8 @@ public:
   struct ValueMapping {
     /// How the value is broken down between the different register banks.
     SmallVector<PartialMapping, 2> BreakDown;
-    /// Verify that this mapping makes sense.
-    void verify() const;
+    /// Verify that this mapping makes sense for a value of \p ExpectedBitWidth.
+    void verify(unsigned ExpectedBitWidth) const;
   };
 
   /// Helper class that represents how the value of an instruction may be
