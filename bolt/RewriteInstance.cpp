@@ -444,6 +444,7 @@ void RewriteInstance::reset() {
   Out.reset(nullptr);
   EHFrame = nullptr;
   FailedAddresses.clear();
+  RangesSectionsWriter.reset();
   TotalScore = 0;
 }
 
@@ -566,7 +567,6 @@ void RewriteInstance::run() {
 
   // Rewrite allocatable contents and copy non-allocatable parts with mods.
   rewriteFile();
-
 }
 
 void RewriteInstance::discoverFileObjects() {
@@ -1259,6 +1259,8 @@ void RewriteInstance::emitFunctions() {
       emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/true);
   }
 
+  updateDebugLineInfoForNonSimpleFunctions();
+
   Streamer->Finish();
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1940,6 +1942,7 @@ void RewriteInstance::rewriteFile() {
 
     if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
       continue;
+
     if (Function.isSplit() && (Function.cold().getImageAddress() == 0 ||
                                Function.cold().getImageSize() == 0))
       continue;
@@ -2257,6 +2260,66 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
     } else {
       DEBUG(errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
                    << Twine::utohexstr(DIE->getOffset()) << "\n");
+    }
+  }
+}
+
+void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
+  if (!opts::UpdateDebugSections)
+    return;
+
+  auto DebugAranges = BC->DwCtx->getDebugAranges();
+  assert(DebugAranges && "Need .debug_aranges in the input file.");
+
+  for (auto It : BinaryFunctions) {
+    const auto &Function = It.second;
+
+    if (Function.isSimple())
+      continue;
+
+    uint64_t Address = It.first;
+    uint32_t CUOffset = DebugAranges->findAddress(Address);
+    if (CUOffset == -1U) {
+      DEBUG(errs() << "BOLT-DEBUG: Function does not belong to any compile unit"
+                   << "in .debug_aranges: " << Function.getName() << "\n");
+      continue;
+    }
+    auto Unit = BC->OffsetToDwarfCU[CUOffset];
+    auto LineTable = BC->DwCtx->getLineTableForUnit(Unit);
+    assert(LineTable && "CU without .debug_line info.");
+
+    std::vector<uint32_t> Results;
+    MCSectionELF *FunctionSection =
+        BC->Ctx->getELFSection(Function.getCodeSectionName(),
+                               ELF::SHT_PROGBITS,
+                               ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+
+    if (LineTable->lookupAddressRange(Address, Function.getSize(), Results)) {
+      for (auto RowIndex : Results) {
+        const auto &Row = LineTable->Rows[RowIndex];
+        BC->Ctx->setCurrentDwarfLoc(
+            Row.File,
+            Row.Line,
+            Row.Column,
+            (DWARF2_FLAG_IS_STMT * Row.IsStmt) |
+            (DWARF2_FLAG_BASIC_BLOCK * Row.BasicBlock) |
+            (DWARF2_FLAG_PROLOGUE_END * Row.PrologueEnd) |
+            (DWARF2_FLAG_EPILOGUE_BEGIN * Row.EpilogueBegin),
+            Row.Isa,
+            Row.Discriminator,
+            Row.Address);
+
+        auto Loc = BC->Ctx->getCurrentDwarfLoc();
+        BC->Ctx->clearDwarfLocSeen();
+
+        auto &OutputLineTable =
+            BC->Ctx->getMCDwarfLineTable(CUOffset).getMCLineSections();
+        OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
+                                     FunctionSection);
+      }
+    } else {
+      DEBUG(errs() << "BOLT-DEBUG: Function " << Function.getName()
+                   << " has no associated line number information.\n");
     }
   }
 }

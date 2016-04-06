@@ -53,6 +53,13 @@ public:
   /// Writes .debug_ranges with the added ranges to the MCObjectWriter.
   void WriteRangesSection(MCObjectWriter *Writer);
 
+  /// Resets the writer to a clear state.
+  void reset() {
+    CUAddressRanges.clear();
+    ObjectAddressRanges.clear();
+    RangesSectionOffsetCUMap.clear();
+  }
+
   /// Return mapping of CUs to offsets in .debug_ranges.
   const RangesCUMapType &getRangesOffsetCUMap() const {
     return RangesSectionOffsetCUMap;

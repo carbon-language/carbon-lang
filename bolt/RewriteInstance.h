@@ -168,6 +168,10 @@ public:
   /// second pass to emit those functions in two parts.
   bool splitLargeFunctions();
 
+  /// Updates debug line information for non-simple functions, which are not
+  /// rewritten.
+  void updateDebugLineInfoForNonSimpleFunctions();
+
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
   /// not fit in the binary, reject it and preserve the original version of the
