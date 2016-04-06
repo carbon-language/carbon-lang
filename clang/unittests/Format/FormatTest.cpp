@@ -3997,6 +3997,12 @@ TEST_F(FormatTest, FunctionAnnotations) {
                "                << bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
   verifyFormat("TEST_F(ThisIsATestFixtureeeeeeeeeeeee,\n"
                "       ThisIsATestWithAReallyReallyReallyReallyLongName) {}");
+  verifyFormat("MACRO(abc).function() // wrap\n"
+               "    << abc;");
+  verifyFormat("MACRO(abc)->function() // wrap\n"
+               "    << abc;");
+  verifyFormat("MACRO(abc)::function() // wrap\n"
+               "    << abc;");
 }
 
 TEST_F(FormatTest, BreaksDesireably) {
