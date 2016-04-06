@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 #include <algorithm> // For std::max.
@@ -26,6 +27,8 @@
 #define DEBUG_TYPE "registerbankinfo"
 
 using namespace llvm;
+
+const unsigned RegisterBankInfo::DefaultMappingID = UINT_MAX;
 
 RegisterBankInfo::RegisterBankInfo(unsigned NumRegBanks)
     : NumRegBanks(NumRegBanks) {
@@ -174,6 +177,14 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
     if (!First)
       DEBUG(dbgs() << '\n');
   } while (!WorkList.empty());
+}
+
+RegisterBankInfo::InstructionMapping
+RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
+  if (MI.getOpcode() > TargetOpcode::GENERIC_OP_END) {
+    // TODO.
+  }
+  llvm_unreachable("The target must implement this");
 }
 
 //------------------------------------------------------------------------------
