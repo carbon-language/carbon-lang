@@ -1253,6 +1253,10 @@ bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
   switch (Type) {
   default:
     return false;
+  case R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+  case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+  case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_AARCH64_PREL32:
   case R_AARCH64_ADR_PREL_LO21:
   case R_AARCH64_ADR_PREL_PG_HI21:
