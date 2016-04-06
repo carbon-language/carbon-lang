@@ -107,7 +107,7 @@ public:
 
     /// Default constructor.
     /// Use this constructor to express that the mapping is invalid.
-    InstructionMapping() : ID(InvalidMappingID), Cost(0), NumOperands(0) {}
+    InstructionMapping() : InstructionMapping(InvalidMappingID, 0, 0) {}
 
     /// Get the cost.
     unsigned getCost() const { return Cost; }
