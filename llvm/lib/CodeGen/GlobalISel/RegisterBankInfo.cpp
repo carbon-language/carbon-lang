@@ -181,6 +181,25 @@ void RegisterBankInfo::PartialMapping::dump() const {
   dbgs() << '\n';
 }
 
+void RegisterBankInfo::PartialMapping::verify() const {
+  assert(RegBank && "Register bank not set");
+  // Check what is the minimum width that will live into RegBank.
+  // RegBank will have to, at least, accomodate all the bits between the first
+  // and last bits active in Mask.
+  // If Mask is zero, then ActiveWidth is 0.
+  unsigned ActiveWidth = 0;
+  // Otherwise, remove the trailing and leading zeros from the bitwidth.
+  // 0..0 ActiveWidth 0..0.
+  if (Mask.getBoolValue())
+    ActiveWidth = Mask.getBitWidth() - Mask.countLeadingZeros() -
+                  Mask.countTrailingZeros();
+  (void)ActiveWidth;
+  assert(ActiveWidth <= Mask.getBitWidth() &&
+         "Wrong computation of ActiveWidth, overflow?");
+  assert(RegBank->getSize() >= ActiveWidth &&
+         "Register bank too small for Mask");
+}
+
 void RegisterBankInfo::PartialMapping::print(raw_ostream &OS) const {
   SmallString<128> MaskStr;
   Mask.toString(MaskStr, /*Radix*/ 2, /*Signed*/ 0, /*formatAsCLiteral*/ true);

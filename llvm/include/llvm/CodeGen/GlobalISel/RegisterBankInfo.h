@@ -52,6 +52,11 @@ public:
 
     /// Print this partial mapping on \p OS;
     void print(raw_ostream &OS) const;
+
+    /// Check that the Mask is compatible with the RegBank.
+    /// Indeed, if the RegBank cannot accomadate the "active bits" of the mask,
+    /// there is no way this mapping is valid.
+    void verify() const;
   };
 
   /// Helper struct that represents how a value is mapped through
