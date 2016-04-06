@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
+#include "llvm/CodeGen/GlobalISel/Types.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #include <cassert>
@@ -146,8 +147,6 @@ protected:
     llvm_unreachable("This constructor should not be executed");
   }
 
-  virtual ~RegisterBankInfo() {}
-
   /// Create a new register bank with the given parameter and add it
   /// to RegBanks.
   /// \pre \p ID must not already be used.
@@ -180,6 +179,8 @@ protected:
   }
 
 public:
+  virtual ~RegisterBankInfo() {}
+
   /// Get the register bank identified by \p ID.
   const RegisterBank &getRegBank(unsigned ID) const {
     return const_cast<RegisterBankInfo *>(this)->getRegBank(ID);
