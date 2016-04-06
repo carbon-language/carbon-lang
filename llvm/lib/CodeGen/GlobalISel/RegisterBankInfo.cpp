@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 #include <algorithm> // For std::max.
@@ -169,4 +171,33 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
     if (!First)
       DEBUG(dbgs() << '\n');
   } while (!WorkList.empty());
+}
+
+//------------------------------------------------------------------------------
+// Helper classes implementation.
+//------------------------------------------------------------------------------
+void RegisterBankInfo::PartialMapping::dump() const {
+  print(dbgs());
+  dbgs() << '\n';
+}
+
+void RegisterBankInfo::PartialMapping::print(raw_ostream &OS) const {
+  SmallString<128> MaskStr;
+  Mask.toString(MaskStr, /*Radix*/ 2, /*Signed*/ 0, /*formatAsCLiteral*/ true);
+  OS << "Mask(" << Mask.getBitWidth() << ") = " << MaskStr << ", RegBank = ";
+  if (RegBank)
+    OS << *RegBank;
+  else
+    OS << "nullptr";
+}
+
+void RegisterBankInfo::ValueMapping::verify() const {
+  // Check that all the partial mapping have the same bitwidth.
+  // Check that the union of the partial mappings covers the whole value.
+  // Check that each register bank is big enough to hold the partial value.
+}
+
+void RegisterBankInfo::InstructionMapping::verify(
+    const MachineInstr &MI) const {
+  // Check that all the register operands are properly mapped.
 }

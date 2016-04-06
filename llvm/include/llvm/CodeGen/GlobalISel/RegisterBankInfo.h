@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 #define LLVM_CODEGEN_GLOBALISEL_REGBANKINFO_H
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -22,10 +23,100 @@
 #include <memory> // For unique_ptr.
 
 namespace llvm {
+class MachineInstr;
 class TargetRegisterInfo;
+class raw_ostream;
 
 /// Holds all the information related to register banks.
 class RegisterBankInfo {
+public:
+  /// Helper struct that represents how a value is partially mapped
+  /// into a register.
+  /// The Mask is used to represent this partial mapping. Ones represent
+  /// where the value lives in RegBank and the width of the Mask represents
+  /// the size of the whole value.
+  struct PartialMapping {
+    /// Mask where the partial value lives.
+    APInt Mask;
+    /// Register bank where the partial value lives.
+    const RegisterBank *RegBank;
+
+    PartialMapping() = default;
+
+    /// Provide a shortcut for quickly building PartialMapping.
+    PartialMapping(const APInt &Mask, const RegisterBank &RegBank)
+        : Mask(Mask), RegBank(&RegBank) {}
+
+    /// Print this partial mapping on dbgs() stream.
+    void dump() const;
+
+    /// Print this partial mapping on \p OS;
+    void print(raw_ostream &OS) const;
+  };
+
+  /// Helper struct that represents how a value is mapped through
+  /// different register banks.
+  struct ValueMapping {
+    /// How the value is broken down between the different register banks.
+    SmallVector<PartialMapping, 2> BreakDown;
+    /// Verify that this mapping makes sense.
+    void verify() const;
+  };
+
+  /// Helper class that represents how the value of an instruction may be
+  /// mapped and what is the related cost of such mapping.
+  class InstructionMapping {
+    /// Identifier of the mapping.
+    /// This is used to communicate between the target and the optimizers
+    /// which mapping should be realized.
+    unsigned ID;
+    /// Cost of this mapping.
+    unsigned Cost;
+    /// Mapping of all the operands.
+    std::unique_ptr<ValueMapping[]> OperandsMapping;
+    /// Number of operands.
+    unsigned NumOperands;
+
+    ValueMapping &getOperandMapping(unsigned i) {
+      assert(i < getNumOperands() && "Out of bound operand");
+      return OperandsMapping[i];
+    }
+
+  public:
+    /// Constructor for the mapping of an instruction.
+    /// \p NumOperands should be equal to number of all the operands of
+    /// the related instruction.
+    /// The rationale is that it is more efficient for the optimizers
+    /// to be able to assume that the mapping of the ith operand is
+    /// at the index i.
+    InstructionMapping(unsigned ID, unsigned Cost, unsigned NumOperands)
+        : ID(ID), Cost(Cost), NumOperands(NumOperands) {
+      OperandsMapping.reset(new ValueMapping[getNumOperands()]);
+    }
+
+    /// Get the cost.
+    unsigned getCost() const { return Cost; }
+
+    /// Get the ID.
+    unsigned getID() const { return ID; }
+
+    /// Get the number of operands.
+    unsigned getNumOperands() const { return NumOperands; }
+
+    /// Get the value mapping of the ith operand.
+    const ValueMapping &getOperandMapping(unsigned i) const {
+      return const_cast<InstructionMapping *>(this)->getOperandMapping(i);
+    }
+
+    /// Get the value mapping of the ith operand.
+    void setOperandMapping(unsigned i, const ValueMapping &ValMapping) {
+      getOperandMapping(i) = ValMapping;
+    }
+
+    /// Verifiy that this mapping makes sense for \p MI.
+    void verify(const MachineInstr &MI) const;
+  };
+
 protected:
   /// Hold the set of supported register banks.
   std::unique_ptr<RegisterBank[]> RegBanks;
@@ -101,6 +192,13 @@ public:
 
   void verify(const TargetRegisterInfo &TRI) const;
 };
+
+inline raw_ostream &
+operator<<(raw_ostream &OS,
+           const RegisterBankInfo::PartialMapping &PartMapping) {
+  PartMapping.print(OS);
+  return OS;
+}
 } // End namespace llvm.
 
 #endif
