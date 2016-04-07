@@ -1334,9 +1334,8 @@ unsigned SystemZInstrInfo::getCompareAndBranch(unsigned Opcode,
     default:
       return 0;
     }
-  default:
-    return 0;
   }
+  return 0;
 }
 
 void SystemZInstrInfo::loadImmediate(MachineBasicBlock &MBB,
