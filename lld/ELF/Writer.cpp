@@ -738,8 +738,6 @@ void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   Off = alignTo(Off, Align);
   Out<ELFT>::Bss->setSize(Off + SS->template getSize<ELFT>());
   Out<ELFT>::Bss->updateAlign(Align);
-  Out<ELFT>::RelaDyn->addReloc(
-      {Target->CopyRel, DynamicReloc<ELFT>::Off_Bss, SS});
   uintX_t Shndx = SS->Sym.st_shndx;
   uintX_t Value = SS->Sym.st_value;
   // Look through the DSO's dynamic symbol for aliases and create a dynamic
@@ -753,6 +751,8 @@ void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
     S.setUsedInRegularObj();
     S.MustBeInDynSym = true;
   }
+  Out<ELFT>::RelaDyn->addReloc(
+      {Target->CopyRel, Out<ELFT>::Bss, SS->OffsetInBss, false, SS, 0});
 }
 
 template <class ELFT>

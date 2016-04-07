@@ -176,7 +176,6 @@ template <class ELFT> struct DynamicReloc {
   enum OffsetKind {
     Off_Got,       // The got entry of Sym.
     Off_GotPlt,    // The got.plt entry of Sym.
-    Off_Bss,       // The bss entry of Sym (copy reloc).
     Off_Sec,       // The final position of the given input section and offset.
     Off_LTlsIndex, // The local tls index.
     Off_GTlsIndex, // The global tls index of Sym.

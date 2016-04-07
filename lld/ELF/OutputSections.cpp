@@ -308,8 +308,6 @@ typename ELFT::uint DynamicReloc<ELFT>::getOffset() const {
     return Out<ELFT>::Got->getTlsIndexVA();
   case Off_Sec:
     return OffsetInSec + OffsetSec->getVA();
-  case Off_Bss:
-    return cast<SharedSymbol<ELFT>>(Sym)->OffsetInBss + Out<ELFT>::Bss->getVA();
   case Off_Got:
     return Sym->getGotVA<ELFT>();
   case Off_GotPlt:
