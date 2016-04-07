@@ -51,6 +51,15 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
   assert(RBFPR.getSize() == 512 &&
          "FPRs should hold up to 512-bit via QQQQ sequence");
 
+  // Initialize the CCR bank.
+  createRegisterBank(AArch64::CCRRegBankID, "CCR");
+  addRegBankCoverage(AArch64::CCRRegBankID, AArch64::CCRRegClassID, TRI);
+  const RegisterBank &RBCCR = getRegBank(AArch64::CCRRegBankID);
+  (void)RBCCR;
+  assert(RBCCR.contains(*TRI.getRegClass(AArch64::CCRRegClassID)) &&
+         "Class not added?");
+  assert(RBCCR.getSize() == 32 && "CCR should hold up to 32-bit");
+
   verify(TRI);
 }
 
@@ -94,6 +103,8 @@ const RegisterBank &AArch64RegisterBankInfo::getRegBankFromRegClass(
   case AArch64::WSeqPairsClassRegClassID:
   case AArch64::XSeqPairsClassRegClassID:
     return getRegBank(AArch64::FPRRegBankID);
+  case AArch64::CCRRegClassID:
+    return getRegBank(AArch64::CCRRegBankID);
   default:
     llvm_unreachable("Register class not supported");
   }

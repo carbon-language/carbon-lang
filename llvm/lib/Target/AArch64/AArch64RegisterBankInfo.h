@@ -24,6 +24,7 @@ namespace AArch64 {
 enum {
   GPRRegBankID = 0, /// General Purpose Registers: W, X.
   FPRRegBankID = 1, /// Floating Point/Vector Registers: B, H, S, D, Q.
+  CCRRegBankID = 2, /// Conditional register: NZCV.
   NumRegisterBanks
 };
 } // End AArch64 namespace.
