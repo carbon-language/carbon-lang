@@ -410,13 +410,13 @@ public:
 
     IP.printInst(MI, IS, "", STI);
 
-    OS << left_justify(IS.str(), 60) << format("// %012X: ", Address);
+    OS << left_justify(IS.str(), 60) << format("// %012" PRIX64 ": ", Address);
     typedef support::ulittle32_t U32;
     for (auto D : makeArrayRef(reinterpret_cast<const U32*>(Bytes.data()),
                                Bytes.size() / sizeof(U32)))
       // D should be explicitly casted to uint32_t here as it is passed
       // by format to snprintf as vararg.
-      OS << format("%08X ", static_cast<uint32_t>(D));
+      OS << format("%08" PRIX32 " ", static_cast<uint32_t>(D));
 
     if (!Annot.empty())
       OS << "// " << Annot;
