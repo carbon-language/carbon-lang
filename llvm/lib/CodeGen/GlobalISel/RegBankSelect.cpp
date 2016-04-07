@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 #define DEBUG_TYPE "regbankselect"
@@ -58,14 +59,20 @@ RegBankSelect::repairReg(unsigned Reg,
   unsigned NewReg =
       MRI->createGenericVirtualRegister(PartialMap.Mask.getBitWidth());
   (void)MIRBuilder.buildInstr(TargetOpcode::COPY, NewReg, Reg);
+  DEBUG(dbgs() << "Repair: " << PrintReg(Reg) << " with: "
+        << PrintReg(NewReg) << '\n');
   return NewReg;
 }
 
 void RegBankSelect::assignInstr(MachineInstr &MI) {
+  DEBUG(dbgs() << "Assign: " << MI);
   const RegisterBankInfo::InstructionMapping DefaultMapping =
       RBI->getInstrMapping(MI);
   // Make sure the mapping is valid for MI.
   DefaultMapping.verify(MI);
+
+  DEBUG(dbgs() << "Mapping: " << DefaultMapping << '\n');
+
   // Set the insertion point before MI.
   // This is where we are going to insert the repairing code if any.
   MIRBuilder.setInstr(MI, /*Before*/ true);
@@ -112,9 +119,11 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
     MRI->setRegBank(Reg, *ValMapping.BreakDown[0].RegBank);
     MO.setReg(Reg);
   }
+  DEBUG(dbgs() << "Assigned: " << MI);
 }
 
 bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
+  DEBUG(dbgs() << "Assign register banks for: " << MF.getName() << '\n');
   init(MF);
   // Walk the function and assign register banks to all operands.
   for (MachineBasicBlock &MBB : MF)
