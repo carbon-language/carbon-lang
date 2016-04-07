@@ -281,6 +281,11 @@ public:
   /// Get the mapping of the different operands of \p MI
   /// on the register bank.
   /// This mapping should be the direct translation of \p MI.
+  /// In other words, when \p MI is mapped with the returned mapping,
+  /// only the register banks of the operands of \p MI need to be updated.
+  /// In particular, neither the opcode or the type of \p MI needs to be
+  /// updated for this direct mapping.
+  ///
   /// The target independent implementation gives a mapping based on
   /// the register classes for the target specific opcode.
   /// It uses the ID RegisterBankInfo::DefaultMappingID for that mapping.
