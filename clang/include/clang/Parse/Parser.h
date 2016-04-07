@@ -2526,7 +2526,7 @@ private:
 public:
   /// Parses simple expression in parens for single-expression clauses of OpenMP
   /// constructs.
-  /// \param LLoc Returned location of left paren.
+  /// \param RLoc Returned location of right paren.
   ExprResult ParseOpenMPParensExpr(StringRef ClauseName, SourceLocation &RLoc);
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                           bool AllowDestructorName,
