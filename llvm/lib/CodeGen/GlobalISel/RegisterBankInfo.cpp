@@ -209,52 +209,107 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
   } while (!WorkList.empty());
 }
 
-RegisterBankInfo::InstructionMapping
-RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
-  if (MI.getOpcode() > TargetOpcode::GENERIC_OP_END) {
-    // This is a target specific opcode:
-    // The mapping of the registers is already available via the
-    // register class.
-    // Just map the register class to a register bank.
-    RegisterBankInfo::InstructionMapping Mapping(DefaultMappingID, /*Cost*/ 1,
-                                                 MI.getNumOperands());
-    const MachineFunction &MF = *MI.getParent()->getParent();
-    const TargetSubtargetInfo &STI = MF.getSubtarget();
-    const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
-    const TargetInstrInfo &TII = *STI.getInstrInfo();
-    const MachineRegisterInfo &MRI = MF.getRegInfo();
+const RegisterBank *
+RegisterBankInfo::getRegBank(unsigned Reg, const MachineRegisterInfo &MRI,
+                             const TargetRegisterInfo &TRI) const {
+  if (TargetRegisterInfo::isPhysicalRegister(Reg))
+    return &getRegBankFromRegClass(*TRI.getMinimalPhysRegClass(Reg));
 
-    for (unsigned OpIdx = 0, End = MI.getNumOperands(); OpIdx != End; ++OpIdx) {
-      const MachineOperand &MO = MI.getOperand(OpIdx);
-      if (!MO.isReg())
-        continue;
-      unsigned Reg = MO.getReg();
-      if (!Reg)
-        continue;
-      // Since this is a target instruction, the operand must have a register
-      // class constraint.
+  assert(Reg && "NoRegister does not have a register bank");
+  const RegClassOrRegBank &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
+  if (RegClassOrBank.is<const RegisterBank *>())
+    return RegClassOrBank.get<const RegisterBank *>();
+  const TargetRegisterClass *RC =
+      RegClassOrBank.get<const TargetRegisterClass *>();
+  if (RC)
+    return &getRegBankFromRegClass(*RC);
+  return nullptr;
+}
+
+RegisterBankInfo::InstructionMapping
+RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
+  RegisterBankInfo::InstructionMapping Mapping(DefaultMappingID, /*Cost*/ 1,
+                                               MI.getNumOperands());
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const TargetSubtargetInfo &STI = MF.getSubtarget();
+  const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  // We may need to query the instruction encoding to guess the mapping.
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
+
+  // Before doing anything complicated check if the mapping is not
+  // directly available.
+  bool CompleteMapping = true;
+  // For copies we want to walk over the operands and try to find one
+  // that has a register bank.
+  bool isCopyLike = MI.isCopy() || MI.isPHI();
+  // Remember the register bank for reuse for copy-like instructions.
+  const RegisterBank *RegBank = nullptr;
+  // Remember the size of the register for reuse for copy-like instructions.
+  unsigned RegSize = 0;
+  for (unsigned OpIdx = 0, End = MI.getNumOperands(); OpIdx != End; ++OpIdx) {
+    const MachineOperand &MO = MI.getOperand(OpIdx);
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg)
+      continue;
+    const RegisterBank *CurRegBank = getRegBank(Reg, MRI, TRI);
+    if (!CurRegBank) {
+      // The mapping of the registers may be available via the
+      // register class constraints.
       const TargetRegisterClass *RC =
           MI.getRegClassConstraint(OpIdx, &TII, &TRI);
-      // Note: This cannot be a "dynamic" constraint like inline asm,
-      //       since inlineasm opcode is a generic opcode.
-      assert(RC && "Invalid encoding constraints for target instruction?");
 
-      // Build the value mapping.
-      const RegisterBank &RegBank = getRegBankFromRegClass(*RC);
-      unsigned RegSize = getSizeInBits(Reg, MRI, TRI);
-      assert(RegSize <= RegBank.getSize() && "Register bank too small");
-      // Assume the value is mapped in one register that lives in the
-      // register bank that covers RC.
-      APInt Mask(RegSize, 0);
-      // The value is represented by all the bits.
-      Mask.flipAllBits();
-
-      // Create the mapping object.
-      ValueMapping ValMapping;
-      ValMapping.BreakDown.push_back(PartialMapping(Mask, RegBank));
-      Mapping.setOperandMapping(OpIdx, ValMapping);
+      if (RC)
+        CurRegBank = &getRegBankFromRegClass(*RC);
     }
+    if (!CurRegBank) {
+      CompleteMapping = false;
+
+      if (!isCopyLike)
+        // MI does not carry enough information to guess the mapping.
+        return InstructionMapping();
+
+      // For copies, we want to keep interating to find a register
+      // bank for the other operands if we did not find one yet.
+      if(RegBank)
+        break;
+      continue;
+    }
+    RegBank = CurRegBank;
+    RegSize = getSizeInBits(Reg, MRI, TRI);
+    Mapping.setOperandMapping(OpIdx, RegSize, *CurRegBank);
+  }
+
+  if (CompleteMapping)
     return Mapping;
+
+  assert(isCopyLike && "We should have bailed on non-copies at this point");
+  // For copy like instruction, if none of the operand has a register
+  // bank avialable, there is nothing we can propagate.
+  if (!RegBank)
+    return InstructionMapping();
+
+  // This is a copy-like instruction.
+  // Propagate RegBank to all operands that do not have a
+  // mapping yet.
+  for (unsigned OpIdx = 0, End = MI.getNumOperands(); OpIdx != End; ++OpIdx) {
+    if (!static_cast<const InstructionMapping *>(&Mapping)
+             ->getOperandMapping(OpIdx)
+             .BreakDown.empty())
+      continue;
+    Mapping.setOperandMapping(OpIdx, RegSize, *RegBank);
+  }
+  return Mapping;
+}
+
+RegisterBankInfo::InstructionMapping
+RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
+  if (!isPreISelGenericOpcode(MI.getOpcode())) {
+    RegisterBankInfo::InstructionMapping Mapping = getInstrMappingImpl(MI);
+    if (Mapping.isValid())
+      return Mapping;
   }
   llvm_unreachable("The target must implement this");
 }
@@ -334,6 +389,18 @@ void RegisterBankInfo::ValueMapping::verify(unsigned ExpectedBitWidth) const {
     PartMap.verify();
   }
   assert(ValueMask.isAllOnesValue() && "Value is not fully mapped");
+}
+
+void RegisterBankInfo::InstructionMapping::setOperandMapping(
+    unsigned OpIdx, unsigned MaskSize, const RegisterBank &RegBank) {
+  // Build the value mapping.
+  assert(MaskSize <= RegBank.getSize() && "Register bank is too small");
+  APInt Mask(MaskSize, 0);
+  // The value is represented by all the bits.
+  Mask.flipAllBits();
+
+  // Create the mapping object.
+  getOperandMapping(OpIdx).BreakDown.push_back(PartialMapping(Mask, RegBank));
 }
 
 void RegisterBankInfo::InstructionMapping::verify(

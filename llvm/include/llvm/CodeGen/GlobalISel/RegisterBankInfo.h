@@ -26,6 +26,7 @@
 
 namespace llvm {
 class MachineInstr;
+class MachineRegisterInfo;
 class TargetRegisterInfo;
 class raw_ostream;
 
@@ -66,6 +67,7 @@ public:
   struct ValueMapping {
     /// How the value is broken down between the different register banks.
     SmallVector<PartialMapping, 2> BreakDown;
+
     /// Verify that this mapping makes sense for a value of \p ExpectedBitWidth.
     void verify(unsigned ExpectedBitWidth) const;
   };
@@ -132,6 +134,13 @@ public:
     /// This is a lightweight check for obvious wrong instance.
     bool isValid() const { return getID() != InvalidMappingID; }
 
+    /// Set the operand mapping for the \p OpIdx-th operand.
+    /// The mapping will consist of only one element in the break down list.
+    /// This element will map to \p RegBank and fully define a mask, whose
+    /// bitwidth matches the size of \p MaskSize.
+    void setOperandMapping(unsigned OpIdx, unsigned MaskSize,
+                           const RegisterBank &RegBank);
+
     /// Verifiy that this mapping makes sense for \p MI.
     /// \pre \p MI must be connected to a MachineFunction.
     void verify(const MachineInstr &MI) const;
@@ -197,6 +206,25 @@ protected:
     return RegBanks[ID];
   }
 
+  /// Try to get the mapping of \p MI.
+  /// See getInstrMapping for more details on what a mapping represents.
+  ///
+  /// Unlike getInstrMapping the returned InstructionMapping may be invalid
+  /// (isValid() == false).
+  /// This means that the target independent code is not smart enough
+  /// to get the mapping of \p MI and thus, the target has to provide the
+  /// information for \p MI.
+  ///
+  /// This implementation is able to get the mapping of:
+  /// - Target specific instructions by looking at the encoding constraints.
+  /// - Any instruction if all the register operands are already been assigned
+  ///   a register, a register class, or a register bank.
+  /// - Copies and phis if at least one of the operand has been assigned a
+  ///   register, a register class, or a register bank.
+  /// In other words, this method will likely fail to find a mapping for
+  /// any generic opcode that has not been lowered by target specific code.
+  InstructionMapping getInstrMappingImpl(const MachineInstr &MI) const;
+
 public:
   virtual ~RegisterBankInfo() {}
 
@@ -204,6 +232,14 @@ public:
   const RegisterBank &getRegBank(unsigned ID) const {
     return const_cast<RegisterBankInfo *>(this)->getRegBank(ID);
   }
+
+  /// Get the register bank of \p Reg.
+  /// If Reg has not been assigned a register, a register class,
+  /// or a register bank, then this returns nullptr.
+  ///
+  /// \pre Reg != 0 (NoRegister)
+  const RegisterBank *getRegBank(unsigned Reg, const MachineRegisterInfo &MRI,
+                                 const TargetRegisterInfo &TRI) const;
 
   /// Get the total number of register banks.
   unsigned getNumRegBanks() const { return NumRegBanks; }
