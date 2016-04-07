@@ -91,7 +91,7 @@ static bool isCaseSensitivePath(StringRef Path) {
   // sensitive in the absense of realpath, since this is what the VFSWriter
   // already expects when sensitivity isn't setup.
   for (auto &C : Path)
-    UpperDest.push_back(std::toupper(C));
+    UpperDest.push_back(::toupper(C));
   if (real_path(UpperDest, RealDest) && Path.equals(RealDest))
     return false;
   return true;
