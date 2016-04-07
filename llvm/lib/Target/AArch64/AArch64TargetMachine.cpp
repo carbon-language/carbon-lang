@@ -19,6 +19,7 @@
 #ifdef LLVM_BUILD_GLOBAL_ISEL
 #  include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #endif
+#include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/IR/Function.h"
@@ -241,6 +242,7 @@ public:
   bool addInstSelector() override;
 #ifdef LLVM_BUILD_GLOBAL_ISEL
   bool addIRTranslator() override;
+  bool addRegBankSelect() override;
 #endif
   bool addILPOpts() override;
   void addPreRegAlloc() override;
@@ -337,6 +339,10 @@ bool AArch64PassConfig::addInstSelector() {
 #ifdef LLVM_BUILD_GLOBAL_ISEL
 bool AArch64PassConfig::addIRTranslator() {
   addPass(new IRTranslator());
+  return false;
+}
+bool AArch64PassConfig::addRegBankSelect() {
+  addPass(new RegBankSelect());
   return false;
 }
 #endif
