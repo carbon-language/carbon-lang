@@ -81,7 +81,7 @@ void ModuleDependencyCollector::attachToPreprocessor(Preprocessor &PP) {
 }
 
 static bool isCaseSensitivePath(StringRef Path) {
-  SmallString<PATH_MAX> TmpDest = Path, UpperDest, RealDest;
+  SmallString<256> TmpDest = Path, UpperDest, RealDest;
   // Remove component traversals, links, etc.
   if (!real_path(Path, TmpDest))
     return true; // Current default value in vfs.yaml
