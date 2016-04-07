@@ -87,8 +87,9 @@ public:
   // Typically the first section of each PT_LOAD segment has this flag.
   bool PageAlign = false;
 
-  virtual void assignOffsets() {}
   virtual void finalize() {}
+  virtual void
+  forEachInputSection(std::function<void(InputSectionBase<ELFT> *)> F) {}
   virtual void writeTo(uint8_t *Buf) {}
   virtual ~OutputSectionBase() = default;
 
@@ -183,7 +184,7 @@ template <class ELFT> struct DynamicReloc {
   } OKind;
 
   SymbolBody *Sym = nullptr;
-  InputSectionBase<ELFT> *OffsetSec = nullptr;
+  OutputSectionBase<ELFT> *OffsetSec = nullptr;
   uintX_t OffsetInSec = 0;
   bool UseSymVA = false;
   uintX_t Addend = 0;
@@ -194,7 +195,7 @@ template <class ELFT> struct DynamicReloc {
   DynamicReloc(uint32_t Type, OffsetKind OKind, bool UseSymVA, SymbolBody *Sym)
       : Type(Type), OKind(OKind), Sym(Sym), UseSymVA(UseSymVA) {}
 
-  DynamicReloc(uint32_t Type, InputSectionBase<ELFT> *OffsetSec,
+  DynamicReloc(uint32_t Type, OutputSectionBase<ELFT> *OffsetSec,
                uintX_t OffsetInSec, bool UseSymVA, SymbolBody *Sym,
                uintX_t Addend)
       : Type(Type), OKind(Off_Sec), Sym(Sym), OffsetSec(OffsetSec),
@@ -272,10 +273,9 @@ public:
   void sortInitFini();
   void sortCtorsDtors();
   void writeTo(uint8_t *Buf) override;
-  void assignOffsets() override;
   void finalize() override;
-
-private:
+  void
+  forEachInputSection(std::function<void(InputSectionBase<ELFT> *)> F) override;
   std::vector<InputSection<ELFT> *> Sections;
 };
 
@@ -321,6 +321,9 @@ public:
   typedef typename ELFT::Rela Elf_Rela;
   EHOutputSection(StringRef Name, uint32_t Type, uintX_t Flags);
   void writeTo(uint8_t *Buf) override;
+  void finalize() override;
+  void
+  forEachInputSection(std::function<void(InputSectionBase<ELFT> *)> F) override;
 
   template <class RelTy>
   void addSectionAux(EHInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
@@ -335,6 +338,7 @@ private:
 
   // Maps CIE content + personality to a index in Cies.
   llvm::DenseMap<std::pair<StringRef, SymbolBody *>, unsigned> CieMap;
+  bool Finalized = false;
 };
 
 template <class ELFT>
@@ -493,6 +497,8 @@ public:
 
   bool Live = false;
 
+  EHOutputSection<ELFT> *Sec = nullptr;
+
 private:
   struct FdeData {
     uint8_t Enc;
@@ -502,7 +508,6 @@ private:
 
   uintX_t getFdePc(uintX_t EhVA, const FdeData &F);
 
-  EHOutputSection<ELFT> *Sec = nullptr;
   std::vector<FdeData> FdeList;
 };
 

@@ -307,7 +307,7 @@ typename ELFT::uint DynamicReloc<ELFT>::getOffset() const {
   case Off_LTlsIndex:
     return Out<ELFT>::Got->getTlsIndexVA();
   case Off_Sec:
-    return OffsetSec->getOffset(OffsetInSec) + OffsetSec->OutSec->getVA();
+    return OffsetInSec + OffsetSec->getVA();
   case Off_Bss:
     return cast<SharedSymbol<ELFT>>(Sym)->OffsetInBss + Out<ELFT>::Bss->getVA();
   case Off_Got:
@@ -836,16 +836,11 @@ static int getPriority(StringRef S) {
   return V;
 }
 
-// This function is called after we sort input sections
-// and scan relocations to setup sections' offsets.
-template <class ELFT> void OutputSection<ELFT>::assignOffsets() {
-  uintX_t Off = this->Header.sh_size;
-  for (InputSection<ELFT> *S : Sections) {
-    Off = alignTo(Off, S->Align);
-    S->OutSecOff = Off;
-    Off += S->getSize();
-  }
-  this->Header.sh_size = Off;
+template <class ELFT>
+void OutputSection<ELFT>::forEachInputSection(
+    std::function<void(InputSectionBase<ELFT> *S)> F) {
+  for (InputSection<ELFT> *S : Sections)
+    F(S);
 }
 
 // Sorts input sections by section name suffixes, so that .foo.N comes
@@ -953,6 +948,13 @@ EHOutputSection<ELFT>::EHOutputSection(StringRef Name, uint32_t Type,
                                        uintX_t Flags)
     : OutputSectionBase<ELFT>(Name, Type, Flags) {
   Out<ELFT>::EhFrameHdr->assignEhFrame(this);
+}
+
+template <class ELFT>
+void EHOutputSection<ELFT>::forEachInputSection(
+    std::function<void(InputSectionBase<ELFT> *)> F) {
+  for (EHInputSection<ELFT> *S : Sections)
+    F(S);
 }
 
 template <class ELFT>
@@ -1186,31 +1188,43 @@ void EHOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
 }
 
 template <class ELFT>
-static typename ELFT::uint writeAlignedCieOrFde(StringRef Data, uint8_t *Buf) {
+static void writeAlignedCieOrFde(StringRef Data, uint8_t *Buf) {
   typedef typename ELFT::uint uintX_t;
   const endianness E = ELFT::TargetEndianness;
   uint64_t Len = alignTo(Data.size(), sizeof(uintX_t));
   write32<E>(Buf, Len - 4);
   memcpy(Buf + 4, Data.data() + 4, Data.size() - 4);
-  return Len;
+}
+
+template <class ELFT> void EHOutputSection<ELFT>::finalize() {
+  if (Finalized)
+    return;
+  Finalized = true;
+
+  size_t Offset = 0;
+  for (const Cie<ELFT> &C : Cies) {
+    C.S->Offsets[C.Index].second = Offset;
+    Offset += alignTo(C.data().size(), sizeof(uintX_t));
+
+    for (const EHRegion<ELFT> &F : C.Fdes) {
+      F.S->Offsets[F.Index].second = Offset;
+      Offset += alignTo(F.data().size(), sizeof(uintX_t));
+    }
+  }
 }
 
 template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
-  size_t Offset = 0;
   for (const Cie<ELFT> &C : Cies) {
-    size_t CieOffset = Offset;
-
-    uintX_t CIELen = writeAlignedCieOrFde<ELFT>(C.data(), Buf + Offset);
-    C.S->Offsets[C.Index].second = Offset;
-    Offset += CIELen;
+    size_t CieOffset = C.S->Offsets[C.Index].second;
+    writeAlignedCieOrFde<ELFT>(C.data(), Buf + CieOffset);
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
-      uintX_t Len = writeAlignedCieOrFde<ELFT>(F.data(), Buf + Offset);
+      size_t Offset = F.S->Offsets[F.Index].second;
+      writeAlignedCieOrFde<ELFT>(F.data(), Buf + Offset);
       write32<E>(Buf + Offset + 4, Offset + 4 - CieOffset); // Pointer
-      F.S->Offsets[F.Index].second = Offset;
+
       Out<ELFT>::EhFrameHdr->addFde(C.FdeEncoding, Offset, Buf + Offset + 8);
-      Offset += Len;
     }
   }
 
