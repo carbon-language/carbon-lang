@@ -231,7 +231,7 @@ protected:
   /// If a record was already set for \p SVT, the mapping is not
   /// updated, unless \p Force == true
   ///
-  /// \post if getRegBankForType(SVT)@pre == nullptr then
+  /// \post if getRegBankForType(SVT)\@pre == nullptr then
   ///                       getRegBankForType(SVT) == &RegBank
   /// \post if Force == true then getRegBankForType(SVT) == &RegBank
   void recordRegBankForType(const RegisterBank &RegBank,
