@@ -98,8 +98,8 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
   // Check if RB is underconstruction.
   if (!RB.isValid())
     RB.ContainedRegClasses.resize(NbOfRegClasses);
-  else if (RB.contains(*TRI.getRegClass(RCId)))
-    // If RB already contains this register class, there is nothing
+  else if (RB.covers(*TRI.getRegClass(RCId)))
+    // If RB already covers this register class, there is nothing
     // to do.
     return;
 
