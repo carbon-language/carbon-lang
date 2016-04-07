@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -214,7 +215,45 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
 RegisterBankInfo::InstructionMapping
 RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   if (MI.getOpcode() > TargetOpcode::GENERIC_OP_END) {
-    // TODO.
+    // This is a target specific opcode:
+    // The mapping of the registers is already available via the
+    // register class.
+    // Just map the register class to a register bank.
+    RegisterBankInfo::InstructionMapping Mapping(DefaultMappingID, /*Cost*/ 1,
+                                                 MI.getNumOperands());
+    const TargetSubtargetInfo &STI =
+        MI.getParent()->getParent()->getSubtarget();
+    const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
+    const TargetInstrInfo &TII = *STI.getInstrInfo();
+
+    for (unsigned OpIdx = 0, End = MI.getNumOperands(); OpIdx != End; ++OpIdx) {
+      const MachineOperand &MO = MI.getOperand(OpIdx);
+      if (!MO.getReg())
+        continue;
+      // Since this is a target instruction, the operand must have a register
+      // class constraint.
+      const TargetRegisterClass *RC =
+          MI.getRegClassConstraint(OpIdx, &TII, &TRI);
+      // Note: This cannot be a "dynamic" constraint like inline asm,
+      //       since inlineasm opcode is a generic opcode.
+      assert(RC && "Invalid encoding constraints for target instruction?");
+
+      // Build the value mapping.
+      const RegisterBank &RegBank = getRegBankFromRegClass(*RC);
+      unsigned RegSize = getSizeInBits(MI, OpIdx);
+      assert(RegSize <= RegBank.getSize() && "Register bank too small");
+      // Assume the value is mapped in one register that lives in the
+      // register bank that covers RC.
+      APInt Mask(RegSize, 0);
+      // The value is represented by all the bits.
+      Mask.flipAllBits();
+
+      // Create the mapping object.
+      ValueMapping ValMapping;
+      ValMapping.BreakDown.push_back(PartialMapping(Mask, RegBank));
+      Mapping.setOperandMapping(OpIdx, ValMapping);
+    }
+    return Mapping;
   }
   llvm_unreachable("The target must implement this");
 }
