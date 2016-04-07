@@ -133,6 +133,7 @@ public:
     bool isValid() const { return getID() != InvalidMappingID; }
 
     /// Verifiy that this mapping makes sense for \p MI.
+    /// \pre \p MI must be connected to a MachineFunction.
     void verify(const MachineInstr &MI) const;
   };
 
