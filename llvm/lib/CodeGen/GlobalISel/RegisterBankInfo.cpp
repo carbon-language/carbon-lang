@@ -119,35 +119,18 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
     MaxSize = std::max(MaxSize, CurRC.getSize() * 8);
 
     // Walk through all sub register classes and push them into the worklist.
-    const uint32_t *SubClassMask = CurRC.getSubClassMask();
-    // The subclasses mask is broken down into chunks of uint32_t, but it still
-    // represents all register classes.
     bool First = true;
-    for (unsigned Base = 0; Base < NbOfRegClasses; Base += 32) {
-      unsigned Idx = Base;
-      for (uint32_t Mask = *SubClassMask++; Mask; Mask >>= 1, ++Idx) {
-        unsigned Offset = countTrailingZeros(Mask);
-        unsigned SubRCId = Idx + Offset;
-        if (!Covered.test(SubRCId)) {
-          if (First)
-            DEBUG(dbgs() << "  Enqueue sub-class: ");
-          DEBUG(dbgs() << TRI.getRegClassName(TRI.getRegClass(SubRCId))
-                       << ", ");
-          WorkList.push_back(SubRCId);
-          // Remember that we saw the sub class.
-          Covered.set(SubRCId);
-          First = false;
-        }
-
-        // Move the cursor to the next sub class.
-        // I.e., eat up the zeros then move to the next bit.
-        // This last part is done as part of the loop increment.
-
-        // By construction, Offset must be less than 32.
-        // Otherwise, than means Mask was zero. I.e., no UB.
-        Mask >>= Offset;
-        // Remember that we shifted the base offset.
-        Idx += Offset;
+    for (BitMaskClassIterator It(CurRC.getSubClassMask(), TRI); It.isValid();
+         ++It) {
+      unsigned SubRCId = It.getID();
+      if (!Covered.test(SubRCId)) {
+        if (First)
+          DEBUG(dbgs() << "  Enqueue sub-class: ");
+        DEBUG(dbgs() << TRI.getRegClassName(TRI.getRegClass(SubRCId)) << ", ");
+        WorkList.push_back(SubRCId);
+        // Remember that we saw the sub class.
+        Covered.set(SubRCId);
+        First = false;
       }
     }
     if (!First)
@@ -173,33 +156,19 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
            ++SuperRCIt) {
         if (Pushed)
           break;
-        const uint32_t *SuperRCMask = SuperRCIt.getMask();
-        for (unsigned Base = 0; Base < NbOfRegClasses; Base += 32) {
-          unsigned Idx = Base;
-          for (uint32_t Mask = *SuperRCMask++; Mask; Mask >>= 1, ++Idx) {
-            unsigned Offset = countTrailingZeros(Mask);
-            unsigned SuperRCId = Idx + Offset;
-            if (SuperRCId == RCId) {
-              if (First)
-                DEBUG(dbgs() << "  Enqueue subreg-class: ");
-              DEBUG(dbgs() << TRI.getRegClassName(SubRC) << ", ");
-              WorkList.push_back(SubRCId);
-              // Remember that we saw the sub class.
-              Covered.set(SubRCId);
-              Pushed = true;
-              First = false;
-              break;
-            }
-
-            // Move the cursor to the next sub class.
-            // I.e., eat up the zeros then move to the next bit.
-            // This last part is done as part of the loop increment.
-
-            // By construction, Offset must be less than 32.
-            // Otherwise, than means Mask was zero. I.e., no UB.
-            Mask >>= Offset;
-            // Remember that we shifted the base offset.
-            Idx += Offset;
+        for (BitMaskClassIterator It(SuperRCIt.getMask(), TRI); It.isValid();
+             ++It) {
+          unsigned SuperRCId = It.getID();
+          if (SuperRCId == RCId) {
+            if (First)
+              DEBUG(dbgs() << "  Enqueue subreg-class: ");
+            DEBUG(dbgs() << TRI.getRegClassName(SubRC) << ", ");
+            WorkList.push_back(SubRCId);
+            // Remember that we saw the sub class.
+            Covered.set(SubRCId);
+            Pushed = true;
+            First = false;
+            break;
           }
         }
       }
