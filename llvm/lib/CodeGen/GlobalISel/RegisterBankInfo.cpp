@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -255,18 +256,26 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
       // the register bank from the encoding constraints.
       CurRegBank = getRegBankFromConstraints(MI, OpIdx, TII, TRI);
       if (!CurRegBank) {
-        // All our attempts failed, give up.
-        CompleteMapping = false;
+        // Check if we can deduce the register bank from the type of
+        // the instruction.
+        Type *MITy = MI.getType();
+        if (MITy)
+          CurRegBank = getRegBankForType(
+              MVT::getVT(MITy, /*HandleUnknown*/ true).SimpleTy);
+        if (!CurRegBank) {
+          // All our attempts failed, give up.
+          CompleteMapping = false;
 
-        if (!isCopyLike)
-          // MI does not carry enough information to guess the mapping.
-          return InstructionMapping();
+          if (!isCopyLike)
+            // MI does not carry enough information to guess the mapping.
+            return InstructionMapping();
 
-        // For copies, we want to keep interating to find a register
-        // bank for the other operands if we did not find one yet.
-        if (RegBank)
-          break;
-        continue;
+          // For copies, we want to keep interating to find a register
+          // bank for the other operands if we did not find one yet.
+          if (RegBank)
+            break;
+          continue;
+        }
       }
     }
     RegBank = CurRegBank;
@@ -298,11 +307,9 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
 
 RegisterBankInfo::InstructionMapping
 RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
-  if (!isPreISelGenericOpcode(MI.getOpcode())) {
     RegisterBankInfo::InstructionMapping Mapping = getInstrMappingImpl(MI);
     if (Mapping.isValid())
       return Mapping;
-  }
   llvm_unreachable("The target must implement this");
 }
 
