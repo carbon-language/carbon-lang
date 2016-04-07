@@ -16,9 +16,7 @@
 #include "AArch64TargetMachine.h"
 #include "AArch64TargetObjectFile.h"
 #include "AArch64TargetTransformInfo.h"
-#ifdef LLVM_BUILD_GLOBAL_ISEL
-#  include "llvm/CodeGen/GlobalISel/IRTranslator.h"
-#endif
+#include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
