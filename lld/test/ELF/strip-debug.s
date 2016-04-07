@@ -5,6 +5,8 @@
 # RUN: llvm-readobj -sections -symbols %t2 | FileCheck -check-prefix=DEFAULT %s
 # RUN: ld.lld %t -o %t2 --strip-debug
 # RUN: llvm-readobj -sections -symbols %t2 | FileCheck -check-prefix=STRIP %s
+# RUN: ld.lld %t -o %t2 -S
+# RUN: llvm-readobj -sections -symbols %t2 | FileCheck -check-prefix=STRIP %s
 # RUN: ld.lld %t -o %t2 --strip-all
 # RUN: llvm-readobj -sections -symbols %t2 | FileCheck -check-prefix=STRIP %s
 

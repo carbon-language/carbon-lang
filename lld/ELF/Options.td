@@ -189,6 +189,7 @@ def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
 def alias_script_T : JoinedOrSeparate<["-"], "T">, Alias<script>;
 def alias_trace : Flag<["-"], "t">, Alias<trace>;
 def alias_strip_all: Flag<["-"], "s">, Alias<strip_all>;
+def alias_strip_debug_S: Flag<["-"], "S">, Alias<strip_debug>;
 def alias_undefined_u : JoinedOrSeparate<["-"], "u">, Alias<undefined>;
 def alias_wrap_wrap : Joined<["--", "-"], "wrap=">, Alias<wrap>;
 
