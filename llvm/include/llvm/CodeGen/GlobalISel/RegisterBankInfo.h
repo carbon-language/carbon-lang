@@ -151,6 +151,12 @@ public:
     /// Verifiy that this mapping makes sense for \p MI.
     /// \pre \p MI must be connected to a MachineFunction.
     void verify(const MachineInstr &MI) const;
+
+    /// Print this on dbgs() stream.
+    void dump() const;
+
+    /// Print this on \p OS;
+    void print(raw_ostream &OS) const;
   };
 
   /// Convenient type to represent the alternatives for mapping an
@@ -395,6 +401,13 @@ operator<<(raw_ostream &OS,
 inline raw_ostream &
 operator<<(raw_ostream &OS, const RegisterBankInfo::ValueMapping &ValMapping) {
   ValMapping.print(OS);
+  return OS;
+}
+
+inline raw_ostream &
+operator<<(raw_ostream &OS,
+           const RegisterBankInfo::InstructionMapping &InstrMapping) {
+  InstrMapping.print(OS);
   return OS;
 }
 } // End namespace llvm.

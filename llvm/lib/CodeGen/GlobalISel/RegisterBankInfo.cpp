@@ -447,3 +447,19 @@ void RegisterBankInfo::InstructionMapping::verify(
     MOMapping.verify(RegSize);
   }
 }
+
+void RegisterBankInfo::InstructionMapping::dump() const {
+  print(dbgs());
+  dbgs() << '\n';
+}
+
+void RegisterBankInfo::InstructionMapping::print(raw_ostream &OS) const {
+  OS << "ID: " << getID() << " Cost: " << getCost() << " Mapping: ";
+
+  for (unsigned OpIdx = 0; OpIdx != NumOperands; ++OpIdx) {
+    const ValueMapping &ValMapping = getOperandMapping(OpIdx);
+    if (OpIdx)
+      OS << ", ";
+    OS << "{ Idx: " << OpIdx << " Map: " << ValMapping << '}';
+  }
+}
