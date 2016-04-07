@@ -943,8 +943,9 @@ public:
   /// Returns the current sub-register index.
   unsigned getSubReg() const { return SubReg; }
 
-  /// Returns the bit mask if register classes that getSubReg() projects into
+  /// Returns the bit mask of register classes that getSubReg() projects into
   /// RC.
+  /// See TargetRegisterClass::getSubClassMask() for how to use it.
   const uint32_t *getMask() const { return Mask; }
 
   /// Advance iterator to the next entry.
