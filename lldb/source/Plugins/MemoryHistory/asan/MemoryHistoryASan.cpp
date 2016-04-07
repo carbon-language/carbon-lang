@@ -104,8 +104,8 @@ const char *
 memory_history_asan_command_format = R"(
     data t;
 
-    t.alloc_count = ((size_t (*) (void *, void **, size_t, int *))__asan_get_alloc_stack)((void *)0x%)" PRIx64 R"(, t.alloc_trace, 256, &t.alloc_tid);
-    t.free_count = ((size_t (*) (void *, void **, size_t, int *))__asan_get_free_stack)((void *)0x%)" PRIx64 R"(, t.free_trace, 256, &t.free_tid);
+    t.alloc_count = __asan_get_alloc_stack((void *)0x%)" PRIx64 R"(, t.alloc_trace, 256, &t.alloc_tid);
+    t.free_count = __asan_get_free_stack((void *)0x%)" PRIx64 R"(, t.free_trace, 256, &t.free_tid);
 
     t;
 )";
