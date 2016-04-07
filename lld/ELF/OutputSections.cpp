@@ -16,6 +16,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/SHA1.h"
 #include <map>
 
 using namespace llvm;
@@ -1562,6 +1563,14 @@ template <class ELFT> void BuildIdMd5<ELFT>::writeBuildId() {
   memcpy(this->HashBuf, Res, 16);
 }
 
+template <class ELFT> void BuildIdSha1<ELFT>::update(ArrayRef<uint8_t> Buf) {
+  Hash.update(Buf);
+}
+
+template <class ELFT> void BuildIdSha1<ELFT>::writeBuildId() {
+  memcpy(this->HashBuf, Hash.final().data(), 20);
+}
+
 template <class ELFT>
 MipsReginfoOutputSection<ELFT>::MipsReginfoOutputSection()
     : OutputSectionBase<ELFT>(".reginfo", SHT_MIPS_REGINFO, SHF_ALLOC) {
@@ -1680,5 +1689,10 @@ template class BuildIdMd5<ELF32LE>;
 template class BuildIdMd5<ELF32BE>;
 template class BuildIdMd5<ELF64LE>;
 template class BuildIdMd5<ELF64BE>;
+
+template class BuildIdSha1<ELF32LE>;
+template class BuildIdSha1<ELF32BE>;
+template class BuildIdSha1<ELF64LE>;
+template class BuildIdSha1<ELF64BE>;
 }
 }
