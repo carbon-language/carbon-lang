@@ -268,7 +268,8 @@ class MachineBlockPlacement : public MachineFunctionPass {
                                          const BlockFilterSet *BlockFilter);
   MachineBasicBlock *
   selectBestCandidateBlock(BlockChain &Chain,
-                           SmallVectorImpl<MachineBasicBlock *> &WorkList);
+                           SmallVectorImpl<MachineBasicBlock *> &WorkList,
+                           const BlockFilterSet *BlockFilter);
   MachineBasicBlock *
   getFirstUnplacedBlock(MachineFunction &F, const BlockChain &PlacedChain,
                         MachineFunction::iterator &PrevUnplacedBlockIt,
@@ -521,7 +522,8 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
 ///
 /// \returns The best block found, or null if none are viable.
 MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
-    BlockChain &Chain, SmallVectorImpl<MachineBasicBlock *> &WorkList) {
+    BlockChain &Chain, SmallVectorImpl<MachineBasicBlock *> &WorkList,
+    const BlockFilterSet *BlockFilter) {
   // Once we need to walk the worklist looking for a candidate, cleanup the
   // worklist of already placed entries.
   // FIXME: If this shows up on profiles, it could be folded (at the cost of
@@ -628,7 +630,7 @@ void MachineBlockPlacement::buildChain(
     // block among those we've identified as not violating the loop's CFG at
     // this point. This won't be a fallthrough, but it will increase locality.
     if (!BestSucc)
-      BestSucc = selectBestCandidateBlock(Chain, BlockWorkList);
+      BestSucc = selectBestCandidateBlock(Chain, BlockWorkList, BlockFilter);
 
     if (!BestSucc) {
       BestSucc =
@@ -809,6 +811,7 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F, MachineLoop &L,
       // Restore the old exiting state, no viable looping successor was found.
       ExitingBB = OldExitingBB;
       BestExitEdgeFreq = OldBestExitEdgeFreq;
+      continue;
     }
   }
   // Without a candidate exiting block or with only a single block in the
