@@ -390,6 +390,22 @@ void RegisterBankInfo::ValueMapping::verify(unsigned ExpectedBitWidth) const {
   assert(ValueMask.isAllOnesValue() && "Value is not fully mapped");
 }
 
+void RegisterBankInfo::ValueMapping::dump() const {
+  print(dbgs());
+  dbgs() << '\n';
+}
+
+void RegisterBankInfo::ValueMapping::print(raw_ostream &OS) const {
+  OS << "#BreakDown: " << BreakDown.size() << " ";
+  bool IsFirst = true;
+  for (const PartialMapping &PartMap : BreakDown) {
+    if (!IsFirst)
+      OS << ", ";
+    OS << '[' << PartMap << ']';
+    IsFirst = false;
+  }
+}
+
 void RegisterBankInfo::InstructionMapping::setOperandMapping(
     unsigned OpIdx, unsigned MaskSize, const RegisterBank &RegBank) {
   // Build the value mapping.

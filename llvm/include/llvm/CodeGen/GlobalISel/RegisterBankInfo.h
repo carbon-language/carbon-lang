@@ -71,6 +71,12 @@ public:
 
     /// Verify that this mapping makes sense for a value of \p ExpectedBitWidth.
     void verify(unsigned ExpectedBitWidth) const;
+
+    /// Print this on dbgs() stream.
+    void dump() const;
+
+    /// Print this on \p OS;
+    void print(raw_ostream &OS) const;
   };
 
   /// Helper class that represents how the value of an instruction may be
@@ -383,6 +389,12 @@ inline raw_ostream &
 operator<<(raw_ostream &OS,
            const RegisterBankInfo::PartialMapping &PartMapping) {
   PartMapping.print(OS);
+  return OS;
+}
+
+inline raw_ostream &
+operator<<(raw_ostream &OS, const RegisterBankInfo::ValueMapping &ValMapping) {
+  ValMapping.print(OS);
   return OS;
 }
 } // End namespace llvm.
