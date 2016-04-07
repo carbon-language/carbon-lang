@@ -830,7 +830,8 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
 
   // Create the target instance.
   setTarget(TargetInfo::CreateTargetInfo(getDiagnostics(),
-                                         getInvocation().TargetOpts));
+                                         getInvocation().TargetOpts,
+                                         getInvocation().getCodeGenOpts()));
   if (!hasTarget())
     return false;
 
@@ -838,7 +839,8 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   if (getLangOpts().CUDA && !getFrontendOpts().AuxTriple.empty()) {
     std::shared_ptr<TargetOptions> TO(new TargetOptions);
     TO->Triple = getFrontendOpts().AuxTriple;
-    setAuxTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), TO));
+    setAuxTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), TO,
+                                              getInvocation().getCodeGenOpts()));
   }
 
   // Inform the target of the language options.
