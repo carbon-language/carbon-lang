@@ -282,6 +282,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
   Config->GcSections = Args.hasArg(OPT_gc_sections);
   Config->ICF = Args.hasArg(OPT_icf);
+  Config->NoGnuUnique = Args.hasArg(OPT_no_gnu_unique);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->NoinhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->Pie = Args.hasArg(OPT_pie);

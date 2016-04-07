@@ -91,6 +91,9 @@ def no_as_needed : Flag<["--"], "no-as-needed">;
 def no_demangle: Flag<["--"], "no-demangle">,
   HelpText<"Do not demangle symbol names">;
 
+def no_gnu_unique : Flag<["--"], "no-gnu-unique">,
+  HelpText<"Disable STB_GNU_UNIQUE symbol binding">;
+
 def no_whole_archive : Flag<["--", "-"], "no-whole-archive">,
   HelpText<"Restores the default behavior of loading archive members">;
 

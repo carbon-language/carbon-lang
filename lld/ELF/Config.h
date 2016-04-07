@@ -67,6 +67,7 @@ struct Configuration {
   bool GnuHash = false;
   bool ICF;
   bool Mips64EL = false;
+  bool NoGnuUnique;
   bool NoUndefined;
   bool NoinhibitExec;
   bool Pic;

@@ -1515,6 +1515,8 @@ uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
   uint8_t Visibility = Body->getVisibility();
   if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
     return STB_LOCAL;
+  if (Config->NoGnuUnique && Body->Binding == STB_GNU_UNIQUE)
+    return STB_GLOBAL;
   return Body->Binding;
 }
 
