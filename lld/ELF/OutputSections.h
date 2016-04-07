@@ -113,6 +113,7 @@ public:
   uintX_t getMipsLocalFullAddr(const SymbolBody &B);
   uintX_t getMipsLocalPageAddr(uintX_t Addr);
   uintX_t getGlobalDynAddr(const SymbolBody &B) const;
+  uintX_t getGlobalDynOffset(const SymbolBody &B) const;
   uintX_t getNumEntries() const { return Entries.size(); }
 
   // Returns the symbol which corresponds to the first entry of the global part
@@ -126,6 +127,7 @@ public:
   unsigned getMipsLocalEntriesNum() const;
 
   uintX_t getTlsIndexVA() { return Base::getVA() + TlsIndexOff; }
+  uint32_t getTlsIndexOff() { return TlsIndexOff; }
 
 private:
   std::vector<const SymbolBody *> Entries;
@@ -172,35 +174,17 @@ template <class ELFT> struct DynamicReloc {
   typedef typename ELFT::uint uintX_t;
   uint32_t Type;
 
-  // Where the relocation is.
-  enum OffsetKind {
-    Off_Got,       // The got entry of Sym.
-    Off_GotPlt,    // The got.plt entry of Sym.
-    Off_Sec,       // The final position of the given input section and offset.
-    Off_LTlsIndex, // The local tls index.
-    Off_GTlsIndex, // The global tls index of Sym.
-    Off_GTlsOffset // The global tls offset of Sym.
-  } OKind;
-
   SymbolBody *Sym = nullptr;
   OutputSectionBase<ELFT> *OffsetSec = nullptr;
   uintX_t OffsetInSec = 0;
   bool UseSymVA = false;
   uintX_t Addend = 0;
 
-  DynamicReloc(uint32_t Type, OffsetKind OKind, SymbolBody *Sym)
-      : Type(Type), OKind(OKind), Sym(Sym) {}
-
-  DynamicReloc(uint32_t Type, OffsetKind OKind, bool UseSymVA, SymbolBody *Sym)
-      : Type(Type), OKind(OKind), Sym(Sym), UseSymVA(UseSymVA) {}
-
   DynamicReloc(uint32_t Type, OutputSectionBase<ELFT> *OffsetSec,
                uintX_t OffsetInSec, bool UseSymVA, SymbolBody *Sym,
                uintX_t Addend)
-      : Type(Type), OKind(Off_Sec), Sym(Sym), OffsetSec(OffsetSec),
-        OffsetInSec(OffsetInSec), UseSymVA(UseSymVA), Addend(Addend) {}
-
-  uintX_t getOffset() const;
+      : Type(Type), Sym(Sym), OffsetSec(OffsetSec), OffsetInSec(OffsetInSec),
+        UseSymVA(UseSymVA), Addend(Addend) {}
 };
 
 template <class ELFT>

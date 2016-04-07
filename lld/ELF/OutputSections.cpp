@@ -195,6 +195,12 @@ GotSection<ELFT>::getGlobalDynAddr(const SymbolBody &B) const {
 }
 
 template <class ELFT>
+typename GotSection<ELFT>::uintX_t
+GotSection<ELFT>::getGlobalDynOffset(const SymbolBody &B) const {
+  return B.GlobalDynIndex * sizeof(uintX_t);
+}
+
+template <class ELFT>
 const SymbolBody *GotSection<ELFT>::getMipsFirstGlobalEntry() const {
   return Entries.empty() ? nullptr : Entries.front();
 }
@@ -297,25 +303,6 @@ void RelocationSection<ELFT>::addReloc(const DynamicReloc<ELFT> &Reloc) {
   Relocs.push_back(Reloc);
 }
 
-template <class ELFT>
-typename ELFT::uint DynamicReloc<ELFT>::getOffset() const {
-  switch (OKind) {
-  case Off_GTlsIndex:
-    return Out<ELFT>::Got->getGlobalDynAddr(*Sym);
-  case Off_GTlsOffset:
-    return Out<ELFT>::Got->getGlobalDynAddr(*Sym) + sizeof(uintX_t);
-  case Off_LTlsIndex:
-    return Out<ELFT>::Got->getTlsIndexVA();
-  case Off_Sec:
-    return OffsetInSec + OffsetSec->getVA();
-  case Off_Got:
-    return Sym->getGotVA<ELFT>();
-  case Off_GotPlt:
-    return Sym->getGotPltVA<ELFT>();
-  }
-  llvm_unreachable("invalid offset kind");
-}
-
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   for (const DynamicReloc<ELFT> &Rel : Relocs) {
     auto *P = reinterpret_cast<Elf_Rela *>(Buf);
@@ -324,7 +311,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 
     if (Config->Rela)
       P->r_addend = Rel.UseSymVA ? Sym->getVA<ELFT>(Rel.Addend) : Rel.Addend;
-    P->r_offset = Rel.getOffset();
+    P->r_offset = Rel.OffsetInSec + Rel.OffsetSec->getVA();
     uint32_t SymIdx = (!Rel.UseSymVA && Sym) ? Sym->DynsymIndex : 0;
     P->setSymbolAndType(SymIdx, Rel.Type, Config->Mips64EL);
   }

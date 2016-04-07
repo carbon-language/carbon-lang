@@ -266,13 +266,14 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 template <class ELFT, class RelT>
 static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
                                     InputSectionBase<ELFT> &C, RelT &RI) {
+  typedef typename ELFT::uint uintX_t;
   if (Target->pointsToLocalDynamicGotEntry(Type)) {
     if (Target->canRelaxTls(Type, nullptr))
       return 2;
     if (Out<ELFT>::Got->addTlsIndex())
-      Out<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel,
-                                    DynamicReloc<ELFT>::Off_LTlsIndex,
-                                    nullptr});
+      Out<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel, Out<ELFT>::Got,
+                                    Out<ELFT>::Got->getTlsIndexOff(), false,
+                                    nullptr, 0});
     return 1;
   }
 
@@ -282,11 +283,12 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
   if (Target->isTlsGlobalDynamicRel(Type)) {
     if (!Target->canRelaxTls(Type, &Body)) {
       if (Out<ELFT>::Got->addDynTlsEntry(Body)) {
-        Out<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel,
-                                      DynamicReloc<ELFT>::Off_GTlsIndex,
-                                      &Body});
+        uintX_t Off = Out<ELFT>::Got->getGlobalDynOffset(Body);
         Out<ELFT>::RelaDyn->addReloc(
-            {Target->TlsOffsetRel, DynamicReloc<ELFT>::Off_GTlsOffset, &Body});
+            {Target->TlsModuleIndexRel, Out<ELFT>::Got, Off, false, &Body, 0});
+        Out<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, Out<ELFT>::Got,
+                                      Off + (uintX_t)sizeof(uintX_t), false,
+                                      &Body, 0});
       }
       return 1;
     }
@@ -294,8 +296,9 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
       return 2;
     if (!Body.isInGot()) {
       Out<ELFT>::Got->addEntry(Body);
-      Out<ELFT>::RelaDyn->addReloc(
-          {Target->TlsGotRel, DynamicReloc<ELFT>::Off_Got, false, &Body});
+      Out<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, Out<ELFT>::Got,
+                                    Body.getGotOffset<ELFT>(), false, &Body,
+                                    0});
     }
     return 2;
   }
@@ -400,14 +403,16 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
       if (Target->UseLazyBinding) {
         Out<ELFT>::GotPlt->addEntry(Body);
-        Out<ELFT>::RelaPlt->addReloc(
-            {Rel, DynamicReloc<ELFT>::Off_GotPlt, !Preemptible, &Body});
+        Out<ELFT>::RelaPlt->addReloc({Rel, Out<ELFT>::GotPlt,
+                                      Body.getGotPltOffset<ELFT>(),
+                                      !Preemptible, &Body, 0});
       } else {
         if (Body.isInGot())
           continue;
         Out<ELFT>::Got->addEntry(Body);
-        Out<ELFT>::RelaDyn->addReloc(
-            {Rel, DynamicReloc<ELFT>::Off_Got, !Preemptible, &Body});
+        Out<ELFT>::RelaDyn->addReloc({Rel, Out<ELFT>::Got,
+                                      Body.getGotOffset<ELFT>(), !Preemptible,
+                                      &Body, 0});
       }
       continue;
     }
@@ -434,8 +439,9 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
           DynType = Target->GotRel;
         else
           DynType = Target->RelativeRel;
-        Out<ELFT>::RelaDyn->addReloc(
-            {DynType, DynamicReloc<ELFT>::Off_Got, !Preemptible, &Body});
+        Out<ELFT>::RelaDyn->addReloc({DynType, Out<ELFT>::Got,
+                                      Body.getGotOffset<ELFT>(), !Preemptible,
+                                      &Body, 0});
       }
       continue;
     }
