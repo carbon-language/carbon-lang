@@ -195,6 +195,23 @@ RegisterBankInfo::getRegBank(unsigned Reg, const MachineRegisterInfo &MRI,
   return nullptr;
 }
 
+const RegisterBank *RegisterBankInfo::getRegBankFromConstraints(
+    const MachineInstr &MI, unsigned OpIdx, const TargetInstrInfo &TII,
+    const TargetRegisterInfo &TRI) const {
+  // The mapping of the registers may be available via the
+  // register class constraints.
+  const TargetRegisterClass *RC = MI.getRegClassConstraint(OpIdx, &TII, &TRI);
+
+  if (!RC)
+    return nullptr;
+
+  const RegisterBank &RegBank = getRegBankFromRegClass(*RC);
+  // Sanity check that the target properly implemented getRegBankFromRegClass.
+  assert(RegBank.covers(*RC) &&
+         "The mapping of the register bank does not make sense");
+  return &RegBank;
+}
+
 RegisterBankInfo::InstructionMapping
 RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
   RegisterBankInfo::InstructionMapping Mapping(DefaultMappingID, /*Cost*/ 1,
@@ -225,26 +242,23 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
       continue;
     const RegisterBank *CurRegBank = getRegBank(Reg, MRI, TRI);
     if (!CurRegBank) {
-      // The mapping of the registers may be available via the
-      // register class constraints.
-      const TargetRegisterClass *RC =
-          MI.getRegClassConstraint(OpIdx, &TII, &TRI);
+      // If this is a target specific instruction, we can deduce
+      // the register bank from the encoding constraints.
+      CurRegBank = getRegBankFromConstraints(MI, OpIdx, TII, TRI);
+      if (!CurRegBank) {
+        // All our attempts failed, give up.
+        CompleteMapping = false;
 
-      if (RC)
-        CurRegBank = &getRegBankFromRegClass(*RC);
-    }
-    if (!CurRegBank) {
-      CompleteMapping = false;
+        if (!isCopyLike)
+          // MI does not carry enough information to guess the mapping.
+          return InstructionMapping();
 
-      if (!isCopyLike)
-        // MI does not carry enough information to guess the mapping.
-        return InstructionMapping();
-
-      // For copies, we want to keep interating to find a register
-      // bank for the other operands if we did not find one yet.
-      if(RegBank)
-        break;
-      continue;
+        // For copies, we want to keep interating to find a register
+        // bank for the other operands if we did not find one yet.
+        if (RegBank)
+          break;
+        continue;
+      }
     }
     RegBank = CurRegBank;
     RegSize = getSizeInBits(Reg, MRI, TRI);

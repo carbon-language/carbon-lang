@@ -27,6 +27,7 @@
 namespace llvm {
 class MachineInstr;
 class MachineRegisterInfo;
+class TargetInstrInfo;
 class TargetRegisterInfo;
 class raw_ostream;
 
@@ -224,6 +225,17 @@ protected:
   /// In other words, this method will likely fail to find a mapping for
   /// any generic opcode that has not been lowered by target specific code.
   InstructionMapping getInstrMappingImpl(const MachineInstr &MI) const;
+
+  /// Get the register bank for the \p OpIdx-th operand of \p MI form
+  /// the encoding constraints, if any.
+  ///
+  /// \return A register bank that covers the register class of the
+  /// related encoding constraints or nullptr if \p MI did not provide
+  /// enough information to deduce it.
+  const RegisterBank *
+  getRegBankFromConstraints(const MachineInstr &MI, unsigned OpIdx,
+                            const TargetInstrInfo &TII,
+                            const TargetRegisterInfo &TRI) const;
 
 public:
   virtual ~RegisterBankInfo() {}
