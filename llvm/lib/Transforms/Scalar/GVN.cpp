@@ -775,7 +775,9 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal, Type *LoadedTy,
   // If this is a big-endian system, we need to shift the value down to the low
   // bits so that a truncate will work.
   if (DL.isBigEndian()) {
-    StoredVal = IRB.CreateLShr(StoredVal, StoreSize - LoadSize, "tmp");
+    uint64_t ShiftAmt = DL.getTypeStoreSizeInBits(StoredValTy) -
+                        DL.getTypeStoreSizeInBits(LoadedTy);
+    StoredVal = IRB.CreateLShr(StoredVal, ShiftAmt, "tmp");
   }
 
   // Truncate the integer to the right size now.
@@ -1056,8 +1058,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
     // system, we need to shift down to get the relevant bits.
     Value *RV = NewLoad;
     if (DL.isBigEndian())
-      RV = Builder.CreateLShr(RV,
-                    NewLoadSize*8-SrcVal->getType()->getPrimitiveSizeInBits());
+      RV = Builder.CreateLShr(RV, (NewLoadSize - SrcValSize) * 8);
     RV = Builder.CreateTrunc(RV, SrcVal->getType());
     SrcVal->replaceAllUsesWith(RV);
 
