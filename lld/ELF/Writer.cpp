@@ -1061,7 +1061,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
-  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
+  // Check size() each time to guard against .bss being created.
+  for (unsigned I = 0; I < OutputSections.size(); ++I) {
+    OutputSectionBase<ELFT> *Sec = OutputSections[I];
     Sec->forEachInputSection([&](InputSectionBase<ELFT> *S) {
       if (auto *IS = dyn_cast<InputSection<ELFT>>(S)) {
         // Set OutSecOff so that scanRelocs can use it.
