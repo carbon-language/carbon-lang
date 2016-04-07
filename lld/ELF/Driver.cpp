@@ -66,7 +66,7 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
     error("Windows targets are not supported on the ELF frontend: " + S);
   else
     error("unknown emulation: " + S);
-  return {ELFNoneKind, 0};
+  return {ELFNoneKind, EM_NONE};
 }
 
 // Returns slices of MB by parsing MB as an archive file.
