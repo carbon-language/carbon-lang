@@ -1397,23 +1397,25 @@ void RewriteInstance::emitFunctions() {
     }
   }
 
-  MCAsmLayout Layout(
-      static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
+  if (opts::UpdateDebugSections) {
+    MCAsmLayout Layout(
+        static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
 
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
-    for (auto &BB : Function) {
-      if (!(BB.getLabel()->isDefined(false) &&
-            BB.getEndLabel() && BB.getEndLabel()->isDefined(false))) {
-        continue;
+    for (auto &BFI : BinaryFunctions) {
+      auto &Function = BFI.second;
+      for (auto &BB : Function) {
+        if (!(BB.getLabel()->isDefined(false) &&
+              BB.getEndLabel() && BB.getEndLabel()->isDefined(false))) {
+          continue;
+        }
+        uint64_t BaseAddress = (BB.isCold() ? Function.cold().getAddress()
+                                            : Function.getAddress());
+        uint64_t BeginAddress =
+            BaseAddress + Layout.getSymbolOffset(*BB.getLabel());
+        uint64_t EndAddress =
+            BaseAddress + Layout.getSymbolOffset(*BB.getEndLabel());
+        BB.setOutputAddressRange(std::make_pair(BeginAddress, EndAddress));
       }
-      uint64_t BaseAddress = (BB.isCold() ? Function.cold().getAddress()
-                                          : Function.getAddress());
-      uint64_t BeginAddress =
-          BaseAddress + Layout.getSymbolOffset(*BB.getLabel());
-      uint64_t EndAddress =
-          BaseAddress + Layout.getSymbolOffset(*BB.getEndLabel());
-      BB.setOutputAddressRange(std::make_pair(BeginAddress, EndAddress));
     }
   }
 
