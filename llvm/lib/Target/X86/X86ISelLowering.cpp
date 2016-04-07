@@ -29609,10 +29609,28 @@ static SDValue combineVZext(SDNode *N, SelectionDAG &DAG,
                             const X86Subtarget &Subtarget) {
   SDLoc DL(N);
   MVT VT = N->getSimpleValueType(0);
+  MVT SVT = VT.getVectorElementType();
   SDValue Op = N->getOperand(0);
   MVT OpVT = Op.getSimpleValueType();
   MVT OpEltVT = OpVT.getVectorElementType();
   unsigned InputBits = OpEltVT.getSizeInBits() * VT.getVectorNumElements();
+
+  // Perform any constant folding.
+  if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
+    SmallVector<SDValue, 4> Vals;
+    for (int i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
+      SDValue OpElt = Op.getOperand(i);
+      if (OpElt.getOpcode() == ISD::UNDEF) {
+        Vals.push_back(DAG.getUNDEF(SVT));
+        continue;
+      }
+      APInt Cst = cast<ConstantSDNode>(OpElt.getNode())->getAPIntValue();
+      assert(Cst.getBitWidth() == OpEltVT.getSizeInBits());
+      Cst = Cst.zextOrTrunc(SVT.getSizeInBits());
+      Vals.push_back(DAG.getConstant(Cst, DL, SVT));
+    }
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Vals);
+  }
 
   // (vzext (bitcast (vzext (x)) -> (vzext x)
   SDValue V = peekThroughBitcasts(Op);
