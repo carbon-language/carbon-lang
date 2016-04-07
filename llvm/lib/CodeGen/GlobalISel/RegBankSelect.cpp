@@ -33,6 +33,7 @@ void RegBankSelect::init(MachineFunction &MF) {
   RBI = MF.getSubtarget().getRegBankInfo();
   assert(RBI && "Cannot work without RegisterBankInfo");
   MRI = &MF.getRegInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MIRBuilder.setMF(MF);
 }
 
@@ -43,18 +44,7 @@ bool RegBankSelect::assignmentMatch(
   if (ValMapping.BreakDown.size() > 1)
     return false;
 
-  const RegClassOrRegBank &CurAssignment = MRI->getRegClassOrRegBank(Reg);
-  // Nothing assigned, the assignment does not match.
-  if (!CurAssignment)
-    return false;
-  // Get the register bank form the current assignment.
-  const RegisterBank *CurRegBank = nullptr;
-  if (CurAssignment.is<const TargetRegisterClass *>())
-    CurRegBank = &RBI->getRegBankFromRegClass(
-        *CurAssignment.get<const TargetRegisterClass *>());
-  else
-    CurRegBank = CurAssignment.get<const RegisterBank *>();
-  return CurRegBank == ValMapping.BreakDown[0].RegBank;
+  return RBI->getRegBank(Reg, *MRI, *TRI) == ValMapping.BreakDown[0].RegBank;
 }
 
 unsigned

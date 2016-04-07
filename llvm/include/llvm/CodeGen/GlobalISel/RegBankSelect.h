@@ -71,6 +71,7 @@
 namespace llvm {
 // Forward declarations.
 class MachineRegisterInfo;
+class TargetRegisterInfo;
 
 /// This pass implements the reg bank selector pass used in the GlobalISel
 /// pipeline. At the end of this pass, all register operands have been assigned
@@ -86,6 +87,9 @@ private:
   /// MRI contains all the register class/bank information that this
   /// pass uses and updates.
   MachineRegisterInfo *MRI;
+
+  /// Information on the register classes for the current function.
+  const TargetRegisterInfo *TRI;
 
   /// Helper class used for every code morphing.
   MachineIRBuilder MIRBuilder;
