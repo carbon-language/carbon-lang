@@ -271,7 +271,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);
   Config->BsymbolicFunctions = Args.hasArg(OPT_Bsymbolic_functions);
-  Config->BuildId = Args.hasArg(OPT_build_id);
   Config->Demangle = !Args.hasArg(OPT_no_demangle);
   Config->DisableVerify = Args.hasArg(OPT_disable_verify);
   Config->DiscardAll = Args.hasArg(OPT_discard_all);
@@ -335,6 +334,17 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
       Config->GnuHash = true;
     } else if (S != "sysv")
       error("unknown hash style: " + S);
+  }
+
+  // Parse --build-id or --build-id=<style>.
+  if (Args.hasArg(OPT_build_id))
+    Config->BuildId = BuildIdKind::Fnv1;
+  if (auto *Arg = Args.getLastArg(OPT_build_id_eq)) {
+    StringRef S = Arg->getValue();
+    if (S == "md5") {
+      Config->BuildId = BuildIdKind::Md5;
+    } else
+      error("unknown --build-id style: " + S);
   }
 
   for (auto *Arg : Args.filtered(OPT_undefined))

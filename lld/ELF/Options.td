@@ -15,6 +15,8 @@ def Bstatic: Flag<["-"], "Bstatic">,
 def build_id : Flag<["--", "-"], "build-id">,
   HelpText<"Generate build ID note">;
 
+def build_id_eq : Joined<["--", "-"], "build-id=">;
+
 def L : JoinedOrSeparate<["-"], "L">, MetaVarName<"<dir>">,
   HelpText<"Directory to search for libraries">;
 
