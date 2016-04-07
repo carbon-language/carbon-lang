@@ -13,7 +13,6 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
-#include "DebugLineTableRowRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"

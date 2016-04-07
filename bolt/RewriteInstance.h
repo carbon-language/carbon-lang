@@ -14,9 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
-#include "BinaryPatcher.h"
-#include "DebugLocWriter.h"
-#include "DebugRangesSectionsWriter.h"
+#include "DebugData.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Object/ELFObjectFile.h"

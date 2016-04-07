@@ -19,7 +19,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
-#include "DebugRangesSectionsWriter.h"
+#include "DebugData.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/MC/MCCodeEmitter.h"

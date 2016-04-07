@@ -14,7 +14,6 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
-#include "DebugLineTableRowRef.h"
 #include "Exceptions.h"
 #include "RewriteInstance.h"
 #include "llvm/ADT/STLExtras.h"
