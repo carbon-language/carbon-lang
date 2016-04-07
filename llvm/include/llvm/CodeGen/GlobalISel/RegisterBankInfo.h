@@ -196,7 +196,7 @@ protected:
   /// be mapped to \p ID. Although this done by default, targets may want to
   /// disable it, espicially if a given type may be mapped on different
   /// register bank. Indeed, in such case, this method only records the
-  /// last register bank where the type matches.
+  /// first register bank where the type matches.
   /// This information is only used to provide default mapping
   /// (see getInstrMappingImpl).
   ///
@@ -227,18 +227,23 @@ protected:
     return VTToRegBank.get()[SVT];
   }
 
-  /// Add \p SVT to the type that \p RegBank covers.
+  /// Record \p RegBank as the register bank that covers \p SVT.
+  /// If a record was already set for \p SVT, the mapping is not
+  /// updated, unless \p Force == true
   ///
-  /// \post If \p SVT was covered by another register bank before that call,
-  ///       then this information is gone.
-  /// \post getRegBankForType(SVT) == &RegBank
+  /// \post if getRegBankForType(SVT)@pre == nullptr then
+  ///                       getRegBankForType(SVT) == &RegBank
+  /// \post if Force == true then getRegBankForType(SVT) == &RegBank
   void recordRegBankForType(const RegisterBank &RegBank,
-                            MVT::SimpleValueType SVT) {
+                            MVT::SimpleValueType SVT, bool Force = false) {
     if (!VTToRegBank)
       VTToRegBank.reset(
           new const RegisterBank *[MVT::SimpleValueType::LAST_VALUETYPE]);
     assert(SVT < MVT::SimpleValueType::LAST_VALUETYPE && "Out-of-bound access");
-    VTToRegBank.get()[SVT] = &RegBank;
+    // If we want to override the mapping or the mapping does not exits yet,
+    // set the register bank for SVT.
+    if (Force || !getRegBankForType(SVT))
+      VTToRegBank.get()[SVT] = &RegBank;
   }
 
   /// Try to get the mapping of \p MI.
