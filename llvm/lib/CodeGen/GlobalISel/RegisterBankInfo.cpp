@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -86,7 +87,8 @@ void RegisterBankInfo::createRegisterBank(unsigned ID, const char *Name) {
 }
 
 void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
-                                          const TargetRegisterInfo &TRI) {
+                                          const TargetRegisterInfo &TRI,
+                                          bool AddTypeMapping) {
   RegisterBank &RB = getRegBank(ID);
   unsigned NbOfRegClasses = TRI.getNumRegClasses();
 
@@ -117,6 +119,13 @@ void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
 
     // Remember the biggest size in bits.
     MaxSize = std::max(MaxSize, CurRC.getSize() * 8);
+
+    // If we have been asked to record the type supported by this
+    // register bank, do it now.
+    if (AddTypeMapping)
+      for (MVT::SimpleValueType SVT :
+           make_range(CurRC.vt_begin(), CurRC.vt_end()))
+        recordRegBankForType(getRegBank(ID), SVT);
 
     // Walk through all sub register classes and push them into the worklist.
     bool First = true;

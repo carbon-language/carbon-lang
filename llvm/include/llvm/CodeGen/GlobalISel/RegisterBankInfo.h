@@ -18,7 +18,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
-#include "llvm/CodeGen/GlobalISel/Types.h"
+#include "llvm/CodeGen/MachineValueType.h" // For SimpleValueType.
 #include "llvm/Support/ErrorHandling.h"
 
 #include <cassert>
@@ -158,6 +158,9 @@ protected:
   /// Total number of register banks.
   unsigned NumRegBanks;
 
+  /// Mapping from MVT::SimpleValueType to register banks.
+  std::unique_ptr<const RegisterBank *[]> VTToRegBank;
+
   /// Create a RegisterBankInfo that can accomodate up to \p NumRegBanks
   /// RegisterBank instances.
   ///
@@ -182,12 +185,20 @@ protected:
   /// \pre \p ID < NumRegBanks.
   void createRegisterBank(unsigned ID, const char *Name);
 
-  /// Add \p RCId to the set of register class that the register bank
-  /// identified \p ID covers.
+  /// Add \p RCId to the set of register class that the register bank,
+  /// identified \p ID, covers.
   /// This method transitively adds all the sub classes and the subreg-classes
   /// of \p RCId to the set of covered register classes.
   /// It also adjusts the size of the register bank to reflect the maximal
   /// size of a value that can be hold into that register bank.
+  ///
+  /// If \p AddTypeMapping is true, this method also records what types can
+  /// be mapped to \p ID. Although this done by default, targets may want to
+  /// disable it, espicially if a given type may be mapped on different
+  /// register bank. Indeed, in such case, this method only records the
+  /// last register bank where the type matches.
+  /// This information is only used to provide default mapping
+  /// (see getInstrMappingImpl).
   ///
   /// \note This method does *not* add the super classes of \p RCId.
   /// The rationale is if \p ID covers the registers of \p RCId, that
@@ -199,12 +210,35 @@ protected:
   ///
   /// \todo TableGen should just generate the BitSet vector for us.
   void addRegBankCoverage(unsigned ID, unsigned RCId,
-                          const TargetRegisterInfo &TRI);
+                          const TargetRegisterInfo &TRI,
+                          bool AddTypeMapping = true);
 
   /// Get the register bank identified by \p ID.
   RegisterBank &getRegBank(unsigned ID) {
     assert(ID < getNumRegBanks() && "Accessing an unknown register bank");
     return RegBanks[ID];
+  }
+
+  /// Get the register bank that has been recorded to cover \p SVT.
+  const RegisterBank *getRegBankForType(MVT::SimpleValueType SVT) const {
+    if (!VTToRegBank)
+      return nullptr;
+    assert(SVT < MVT::SimpleValueType::LAST_VALUETYPE && "Out-of-bound access");
+    return VTToRegBank.get()[SVT];
+  }
+
+  /// Add \p SVT to the type that \p RegBank covers.
+  ///
+  /// \post If \p SVT was covered by another register bank before that call,
+  ///       then this information is gone.
+  /// \post getRegBankForType(SVT) == &RegBank
+  void recordRegBankForType(const RegisterBank &RegBank,
+                            MVT::SimpleValueType SVT) {
+    if (!VTToRegBank)
+      VTToRegBank.reset(
+          new const RegisterBank *[MVT::SimpleValueType::LAST_VALUETYPE]);
+    assert(SVT < MVT::SimpleValueType::LAST_VALUETYPE && "Out-of-bound access");
+    VTToRegBank.get()[SVT] = &RegBank;
   }
 
   /// Try to get the mapping of \p MI.
