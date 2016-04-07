@@ -63,3 +63,38 @@ unsigned AArch64RegisterBankInfo::copyCost(const RegisterBank &A,
   // * build_sequence cost.
   return 0;
 }
+
+const RegisterBank &AArch64RegisterBankInfo::getRegBankFromRegClass(
+    const TargetRegisterClass &RC) const {
+  switch (RC.getID()) {
+  case AArch64::FPR8RegClassID:
+  case AArch64::FPR16RegClassID:
+  case AArch64::FPR32RegClassID:
+  case AArch64::FPR64RegClassID:
+  case AArch64::FPR128RegClassID:
+  case AArch64::FPR128_loRegClassID:
+  case AArch64::DDRegClassID:
+  case AArch64::DDDRegClassID:
+  case AArch64::DDDDRegClassID:
+  case AArch64::QQRegClassID:
+  case AArch64::QQQRegClassID:
+  case AArch64::QQQQRegClassID:
+    return getRegBank(AArch64::FPRRegBankID);
+  case AArch64::GPR32commonRegClassID:
+  case AArch64::GPR32RegClassID:
+  case AArch64::GPR32spRegClassID:
+  case AArch64::GPR32sponlyRegClassID:
+  case AArch64::GPR32allRegClassID:
+  case AArch64::GPR64commonRegClassID:
+  case AArch64::GPR64RegClassID:
+  case AArch64::GPR64spRegClassID:
+  case AArch64::GPR64sponlyRegClassID:
+  case AArch64::GPR64allRegClassID:
+  case AArch64::tcGPR64RegClassID:
+  case AArch64::WSeqPairsClassRegClassID:
+  case AArch64::XSeqPairsClassRegClassID:
+    return getRegBank(AArch64::FPRRegBankID);
+  default:
+    llvm_unreachable("Register class not supported");
+  }
+}
