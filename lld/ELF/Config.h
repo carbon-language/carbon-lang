@@ -79,6 +79,7 @@ struct Configuration {
   bool Shared;
   bool Static = false;
   bool StripAll;
+  bool StripDebug;
   bool SysvHash = true;
   bool Threads;
   bool Trace;

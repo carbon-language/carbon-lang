@@ -133,6 +133,9 @@ def start_lib : Flag<["--"], "start-lib">,
 def strip_all : Flag<["--"], "strip-all">,
   HelpText<"Strip all symbols">;
 
+def strip_debug : Flag<["--"], "strip-debug">,
+  HelpText<"Strip debugging information">;
+
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 

@@ -291,6 +291,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
   Config->Shared = Args.hasArg(OPT_shared);
   Config->StripAll = Args.hasArg(OPT_strip_all);
+  Config->StripDebug = Args.hasArg(OPT_strip_debug);
   Config->Threads = Args.hasArg(OPT_threads);
   Config->Trace = Args.hasArg(OPT_trace);
   Config->Verbose = Args.hasArg(OPT_verbose);
@@ -315,10 +316,15 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ZOrigin = hasZOption(Args, "origin");
   Config->ZRelro = !hasZOption(Args, "norelro");
 
-  Config->Pic = Config->Pie || Config->Shared;
-
   if (Config->Relocatable)
     Config->StripAll = false;
+
+  // --strip-all implies --strip-debug.
+  if (Config->StripAll)
+    Config->StripDebug = true;
+
+  // Config->Pic is true if we are generating position-independent code.
+  Config->Pic = Config->Pie || Config->Shared;
 
   if (auto *Arg = Args.getLastArg(OPT_hash_style)) {
     StringRef S = Arg->getValue();
