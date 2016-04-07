@@ -35,6 +35,9 @@
 // RUN: %clang_cc1 -fmodules -DFOO=1 -fsanitize=address -x c++ -fmodule-name=tmp %t/map -emit-module -o %t/tmp-san.pcm
 // RUN: %clang_cc1 -fmodules -DBAR=2 -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp-san.pcm -verify -I%t %s
 
+// -fno-assume-sane-operator-new is implied by the driver -fsanitize=address flag.
+// RUN: %clang_cc1 -fmodules -DBAR=2 -fno-assume-sane-operator-new -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp.pcm -verify -I%t %s
+
 // Can use the module if -O flags change.
 // RUN: %clang_cc1 -fmodules -DBAR=2 -Os -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp.pcm -verify -I%t %s
 //

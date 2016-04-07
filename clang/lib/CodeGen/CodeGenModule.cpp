@@ -1076,11 +1076,21 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD, llvm::Function *F,
   if (const SectionAttr *SA = FD->getAttr<SectionAttr>())
     F->setSection(SA->getName());
 
-  // A replaceable global allocation function does not act like a builtin by
-  // default, only if it is invoked by a new-expression or delete-expression.
-  if (FD->isReplaceableGlobalAllocationFunction())
+  if (FD->isReplaceableGlobalAllocationFunction()) {
+    // A replaceable global allocation function does not act like a builtin by
+    // default, only if it is invoked by a new-expression or delete-expression.
     F->addAttribute(llvm::AttributeSet::FunctionIndex,
                     llvm::Attribute::NoBuiltin);
+
+    // A sane operator new returns a non-aliasing pointer.
+    // FIXME: Also add NonNull attribute to the return value
+    // for the non-nothrow forms?
+    auto Kind = FD->getDeclName().getCXXOverloadedOperator();
+    if (getCodeGenOpts().AssumeSaneOperatorNew &&
+        (Kind == OO_New || Kind == OO_Array_New))
+      F->addAttribute(llvm::AttributeSet::ReturnIndex,
+                      llvm::Attribute::NoAlias);
+  }
 
   if (isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD))
     F->setUnnamedAddr(true);

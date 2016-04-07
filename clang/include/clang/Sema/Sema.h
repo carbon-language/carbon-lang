@@ -4710,8 +4710,7 @@ public:
   void DeclareGlobalNewDelete();
   void DeclareGlobalAllocationFunction(DeclarationName Name, QualType Return,
                                        QualType Param1,
-                                       QualType Param2 = QualType(),
-                                       bool addRestrictAttr = false);
+                                       QualType Param2 = QualType());
 
   bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
                                 DeclarationName Name, FunctionDecl* &Operator,
