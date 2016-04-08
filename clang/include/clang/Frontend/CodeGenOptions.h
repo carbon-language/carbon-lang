@@ -159,9 +159,6 @@ public:
   /// importing.
   std::string ThinLTOIndexFile;
 
-  /// The EABI version to use
-  std::string EABIVersion;
-
   /// A list of file names passed with -fcuda-include-gpubinary options to
   /// forward to CUDA runtime back-end for incorporating them into host-side
   /// object file.

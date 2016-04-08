@@ -552,7 +552,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.CompressDebugSections = CodeGenOpts.CompressDebugSections;
 
   // Set EABI version.
-  Options.EABIVersion = llvm::StringSwitch<llvm::EABI>(CodeGenOpts.EABIVersion)
+  Options.EABIVersion = llvm::StringSwitch<llvm::EABI>(TargetOpts.EABIVersion)
                             .Case("4", llvm::EABI::EABI4)
                             .Case("5", llvm::EABI::EABI5)
                             .Case("gnu", llvm::EABI::GNU)
