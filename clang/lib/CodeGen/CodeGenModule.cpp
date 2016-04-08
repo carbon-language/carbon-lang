@@ -332,7 +332,7 @@ void CodeGenModule::checkAliases() {
     // to its aliasee's aliasee. We also warn, since the user is probably
     // expecting the link to be weak.
     if (auto GA = dyn_cast<llvm::GlobalAlias>(AliaseeGV)) {
-      if (GA->mayBeOverridden()) {
+      if (GA->isInterposable()) {
         Diags.Report(AA->getLocation(), diag::warn_alias_to_weak_alias)
             << GV->getName() << GA->getName();
         Aliasee = llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(
