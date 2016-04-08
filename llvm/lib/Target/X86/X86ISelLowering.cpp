@@ -16777,12 +16777,9 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
     assert(SPReg && "Target cannot require DYNAMIC_STACKALLOC expansion and"
                     " not tell us which reg is the stack pointer!");
-    EVT VT = Node->getValueType(0);
-    SDValue Tmp3 = Node->getOperand(2);
 
     SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
     Chain = SP.getValue(1);
-    unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
     const TargetFrameLowering &TFI = *Subtarget.getFrameLowering();
     unsigned StackAlign = TFI.getStackAlignment();
     Result = DAG.getNode(ISD::SUB, dl, VT, SP, Size); // Value
