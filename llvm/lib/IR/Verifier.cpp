@@ -626,7 +626,7 @@ void Verifier::visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias*> &Visited,
     if (const auto *GA2 = dyn_cast<GlobalAlias>(GV)) {
       Assert(Visited.insert(GA2).second, "Aliases cannot form a cycle", &GA);
 
-      Assert(!GA2->mayBeOverridden(), "Alias cannot point to a weak alias",
+      Assert(!GA2->isInterposable(), "Alias cannot point to an interposable alias",
              &GA);
     } else {
       // Only continue verifying subexpressions of GlobalAliases.
