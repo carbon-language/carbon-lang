@@ -2778,7 +2778,7 @@ Value *InnerLoopVectorizer::getOrCreateTripCount(Loop *L) {
   IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
   // Find the loop boundaries.
   ScalarEvolution *SE = PSE.getSE();
-  const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(OrigLoop);
+  const SCEV *BackedgeTakenCount = PSE.getBackedgeTakenCount();
   assert(BackedgeTakenCount != SE->getCouldNotCompute() &&
          "Invalid loop count");
 
@@ -4425,7 +4425,7 @@ bool LoopVectorizationLegality::canVectorize() {
   }
 
   // ScalarEvolution needs to be able to find the exit count.
-  const SCEV *ExitCount = PSE.getSE()->getBackedgeTakenCount(TheLoop);
+  const SCEV *ExitCount = PSE.getBackedgeTakenCount();
   if (ExitCount == PSE.getSE()->getCouldNotCompute()) {
     emitAnalysis(VectorizationReport()
                  << "could not determine number of loop iterations");
