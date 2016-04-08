@@ -136,6 +136,51 @@ define i64 @andn64(i64 %x, i64 %y)   {
   ret i64 %tmp2
 }
 
+; FIXME: Don't choose a 'test' if an 'andn' can be used.
+define i1 @andn_cmp(i32 %x, i32 %y) {
+; CHECK-LABEL: andn_cmp:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    notl %edi
+; CHECK-NEXT:    testl %esi, %edi
+; CHECK-NEXT:    sete %al
+; CHECK-NEXT:    retq
+;
+  %notx = xor i32 %x, -1
+  %and = and i32 %notx, %y
+  %cmp = icmp eq i32 %and, 0
+  ret i1 %cmp
+}
+
+; FIXME: Don't choose a 'test' if an 'andn' can be used.
+define i1 @andn_cmp_swap_ops(i64 %x, i64 %y) {
+; CHECK-LABEL: andn_cmp_swap_ops:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    notq %rdi
+; CHECK-NEXT:    testq %rdi, %rsi
+; CHECK-NEXT:    sete %al
+; CHECK-NEXT:    retq
+;
+  %notx = xor i64 %x, -1
+  %and = and i64 %y, %notx
+  %cmp = icmp eq i64 %and, 0
+  ret i1 %cmp
+}
+
+; Use a 'test' (not an 'and') because 'andn' only works for i32/i64.
+define i1 @andn_cmp_i8(i8 %x, i8 %y) {
+; CHECK-LABEL: andn_cmp_i8:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    notb %sil
+; CHECK-NEXT:    testb %sil, %dil
+; CHECK-NEXT:    sete %al
+; CHECK-NEXT:    retq
+;
+  %noty = xor i8 %y, -1
+  %and = and i8 %x, %noty
+  %cmp = icmp eq i8 %and, 0
+  ret i1 %cmp
+}
+
 define i32 @bextr32(i32 %x, i32 %y)   {
 ; CHECK-LABEL: bextr32:
 ; CHECK:       # BB#0:
