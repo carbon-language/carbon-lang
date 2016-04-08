@@ -1,5 +1,5 @@
 # RUN: llvm-mc -filetype=obj %s -triple=mips-unknown-linux \
-# RUN:   | llvm-objdump -d --print-imm-hex - | FileCheck %s
+# RUN:   | llvm-objdump -d - | FileCheck %s
 
 # CHECK: jal   0x20
 # CHECK: addiu $sp, $sp, -0x20

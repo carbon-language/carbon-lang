@@ -1,4 +1,4 @@
-RUN: llvm-objdump -d -mattr=micromips %p/../Inputs/micro-mips.elf-mipsel \
+RUN: llvm-objdump --print-imm-hex=false -d -mattr=micromips %p/../Inputs/micro-mips.elf-mipsel \
 RUN:   | FileCheck %s
 
 CHECK:      foo:

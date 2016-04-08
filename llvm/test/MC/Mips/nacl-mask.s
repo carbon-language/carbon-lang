@@ -1,5 +1,5 @@
 # RUN: llvm-mc -filetype=obj -triple=mipsel-unknown-nacl %s \
-# RUN:  | llvm-objdump -triple mipsel -disassemble -no-show-raw-insn - \
+# RUN:  | llvm-objdump --print-imm-hex=false -triple mipsel -disassemble -no-show-raw-insn - \
 # RUN:  | FileCheck %s
 
 # This test tests that address-masking sandboxing is added when given assembly

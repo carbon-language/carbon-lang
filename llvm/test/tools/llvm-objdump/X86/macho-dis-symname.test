@@ -1,4 +1,4 @@
-# RUN: llvm-objdump -m -d %p/Inputs/exeThread.macho-x86_64 -dis-symname start -no-show-raw-insn -full-leading-addr -print-imm-hex | FileCheck %s
+# RUN: llvm-objdump -m -d %p/Inputs/exeThread.macho-x86_64 -dis-symname start -no-show-raw-insn -full-leading-addr | FileCheck %s
 
 # CHECK: (__TEXT,__text) section
 # CHECK: start:

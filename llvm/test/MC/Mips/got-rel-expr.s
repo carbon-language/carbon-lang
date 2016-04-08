@@ -2,7 +2,7 @@
 # as an argument of the %got relocation.
 
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s \
-# RUN:   | llvm-objdump -d -r - | FileCheck %s
+# RUN:   | llvm-objdump --print-imm-hex=false -d -r - | FileCheck %s
 
   .text
 foo:

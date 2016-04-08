@@ -1,5 +1,5 @@
-// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.obj.macho-arm | FileCheck %s -check-prefix=OBJ
-// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.exe.macho-arm | FileCheck %s -check-prefix=EXE
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr %p/Inputs/hello.obj.macho-arm | FileCheck %s -check-prefix=OBJ
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr %p/Inputs/hello.exe.macho-arm | FileCheck %s -check-prefix=EXE
 
 OBJ: 00000006	movw	r3, :lower16:((54-14)-4)
 OBJ: 0000000a	movt	r3, :upper16:((54-14)-4)
