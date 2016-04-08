@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=hexagon -filetype=obj %s | llvm-objdump --print-imm-hex=false -d -r - | FileCheck %s
+# RUN: llvm-mc -triple=hexagon -filetype=obj %s | llvm-objdump -d -r - | FileCheck %s
 
 a:
 # CHECK: r0 = add(r0, #0)

@@ -4,10 +4,10 @@
 // field.
 
 // RUN: llvm-mc -mcpu=mips32r2 -triple=mipsel-pc-linux -filetype=obj -relocation-model=static %s -o - \
-// RUN: | llvm-objdump --print-imm-hex=false -disassemble -mattr +mips32r2 - \
+// RUN: | llvm-objdump -disassemble -mattr +mips32r2 - \
 // RUN: | FileCheck %s
 // RUN: llvm-mc -mcpu=mips32r2 -triple=mips-pc-linux -filetype=obj -relocation-model=static %s -o - \
-// RUN: | llvm-objdump --print-imm-hex=false -disassemble -mattr +mips32r2 - \
+// RUN: | llvm-objdump -disassemble -mattr +mips32r2 - \
 // RUN: | FileCheck %s
 
 	.text

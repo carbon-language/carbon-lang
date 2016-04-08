@@ -1,5 +1,5 @@
 ; RUN: llc -march=mipsel -filetype=obj --disable-machine-licm -mattr=micromips < %s -o - \
-; RUN:   | llvm-objdump --print-imm-hex=false -no-show-raw-insn -arch mipsel -mcpu=mips32r2 -mattr=micromips -d - \
+; RUN:   | llvm-objdump -no-show-raw-insn -arch mipsel -mcpu=mips32r2 -mattr=micromips -d - \
 ; RUN:   | FileCheck %s -check-prefix=MICROMIPS
 
 ; Use llvm-objdump to check wheter the encodings of microMIPS atomic instructions are correct.

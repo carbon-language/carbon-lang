@@ -1,5 +1,5 @@
 ;; RUN: llc -mtriple=hexagon-unknown-elf -filetype=obj %s -o - \
-;; RUN: | llvm-objdump --print-imm-hex=false -d - | FileCheck %s
+;; RUN: | llvm-objdump -d - | FileCheck %s
 
 define i1 @foo (i32 %a)
 {

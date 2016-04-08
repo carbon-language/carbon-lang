@@ -177,8 +177,7 @@ PrivateHeadersShort("p", cl::desc("Alias for --private-headers"),
 
 cl::opt<bool>
     llvm::PrintImmHex("print-imm-hex",
-                      cl::desc("Use hex format for immediate values"),
-                      cl::init(true));
+                      cl::desc("Use hex format for immediate values"));
 
 cl::opt<bool> PrintFaultMaps("fault-map-section",
                              cl::desc("Display contents of faultmap section"));

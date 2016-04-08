@@ -1,5 +1,5 @@
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o - \
-# RUN:   | llvm-objdump --print-imm-hex=false -d - | FileCheck %s
+# RUN:   | llvm-objdump -d - | FileCheck %s
 
 # CHECK:      foo:
 # CHECK-NEXT:        0:       0c 00 00 02     jal     8 <loc1>

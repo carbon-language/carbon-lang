@@ -1,8 +1,8 @@
 # RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - \
-# RUN:   | llvm-objdump --print-imm-hex=false -disassemble -no-show-raw-insn - \
+# RUN:   | llvm-objdump -disassemble -no-show-raw-insn - \
 # RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-OPT %s
 # RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu -mc-relax-all %s -o - \
-# RUN:   | llvm-objdump --print-imm-hex=false -disassemble -no-show-raw-insn - \
+# RUN:   | llvm-objdump -disassemble -no-show-raw-insn - \
 # RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-RELAX %s
 
         .text

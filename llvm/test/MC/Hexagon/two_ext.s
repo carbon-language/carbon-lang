@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=hexagon -filetype=obj %s | llvm-objdump --print-imm-hex=false -d - | FileCheck %s
+# RUN: llvm-mc -triple=hexagon -filetype=obj %s | llvm-objdump -d - | FileCheck %s
 
 # verify two extenders generated during relaxation
 {

@@ -1,4 +1,4 @@
-# RUN: llvm-mc -filetype=obj %s -triple=x86_64-apple-darwin9 | llvm-objdump -d - | FileCheck %s
+# RUN: llvm-mc -filetype=obj %s -triple=x86_64-apple-darwin9 | llvm-objdump -d --print-imm-hex - | FileCheck %s
 
 # CHECK: movabsq	$0x7fffffffffffffff, %rcx
 movabsq	$0x7fffffffffffffff, %rcx

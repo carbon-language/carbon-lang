@@ -2,7 +2,7 @@
 # RUN:  FileCheck %s
 
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32 -relocation-model=pic -filetype=obj -o -| \
-# RUN:  llvm-objdump --print-imm-hex=false -d -r -arch=mips - | \
+# RUN:  llvm-objdump -d -r -arch=mips - | \
 # RUN:   FileCheck %s -check-prefix=CHECK-FOR-STORE
 
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32 -mattr=+micromips -relocation-model=pic -show-encoding | \

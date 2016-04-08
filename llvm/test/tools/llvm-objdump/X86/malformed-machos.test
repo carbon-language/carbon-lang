@@ -1,40 +1,40 @@
 // These test checks that llvm-objdump will not crash with malformed Mach-O
 // files.  So the check line is not all that important but the bug fixes to
 // make sure llvm-objdump is robust is what matters.
-# RUN: llvm-objdump --print-imm-hex=false -macho -objc-meta-data \
+# RUN: llvm-objdump -macho -objc-meta-data \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0001.macho \
 # RUN:   | FileCheck -check-prefix=m0001 %s 
 
 # m0001: (method_t extends past the end of the section)
 
-# RUN: llvm-objdump --print-imm-hex=false -macho -objc-meta-data \
+# RUN: llvm-objdump -macho -objc-meta-data \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0006.macho \
 # RUN:   | FileCheck -check-prefix=m0006 %s 
 
 # m0006: ivarLayout 0x8
 
-# RUN: llvm-objdump --print-imm-hex=false -macho -objc-meta-data \
+# RUN: llvm-objdump -macho -objc-meta-data \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0006.macho \
 # RUN:   | FileCheck -check-prefix=m0010 %s 
 
 # m0010: 00000000000010e0 0x10e8 _OBJC_CLASS_
 
-# RUN: llvm-objdump --print-imm-hex=false -macho -objc-meta-data \
+# RUN: llvm-objdump -macho -objc-meta-data \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0040.macho \
 # RUN:   | FileCheck -check-prefix=m0040 %s 
 
 # m0040: 00000000000010a0 0xf39 -[tiny_dylib init]
 
-# RUN: llvm-objdump --print-imm-hex=false -macho -objc-meta-data \
+# RUN: llvm-objdump -macho -objc-meta-data \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0080.macho \
 # RUN:   | FileCheck -check-prefix=m0080 %s 
 
 # m0080: data 0xf960000 (struct class_ro_t *)
 
-# RUN: llvm-objdump --print-imm-hex=false -macho -objc-meta-data \
+# RUN: llvm-objdump -macho -objc-meta-data \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0261.macho
 
-# RUN: llvm-objdump --print-imm-hex=false -macho -disassemble \
+# RUN: llvm-objdump -macho -disassemble \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0337.macho \
 # RUN:   | FileCheck -check-prefix=m0337 %s 
 
