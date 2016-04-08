@@ -536,17 +536,19 @@ static std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
 
 template <template <class> class T>
 static std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB) {
-  std::pair<unsigned char, unsigned char> Type = getElfArchType(MB.getBuffer());
-  if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
+  unsigned char Size;
+  unsigned char Endian;
+  std::tie(Size, Endian) = getElfArchType(MB.getBuffer());
+  if (Endian != ELFDATA2LSB && Endian != ELFDATA2MSB)
     fatal("invalid data encoding: " + MB.getBufferIdentifier());
 
-  if (Type.first == ELF::ELFCLASS32) {
-    if (Type.second == ELF::ELFDATA2LSB)
+  if (Size == ELFCLASS32) {
+    if (Endian == ELFDATA2LSB)
       return createELFFileAux<T<ELF32LE>>(MB);
     return createELFFileAux<T<ELF32BE>>(MB);
   }
-  if (Type.first == ELF::ELFCLASS64) {
-    if (Type.second == ELF::ELFDATA2LSB)
+  if (Size == ELFCLASS64) {
+    if (Endian == ELFDATA2LSB)
       return createELFFileAux<T<ELF64LE>>(MB);
     return createELFFileAux<T<ELF64BE>>(MB);
   }
