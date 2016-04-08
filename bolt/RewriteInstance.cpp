@@ -2174,10 +2174,12 @@ void RewriteInstance::updateDWARFAddressRanges() {
   // Update address ranges of functions.
   for (const auto &BFI : BinaryFunctions) {
     const auto &Function = BFI.second;
-    updateDWARFObjectAddressRanges(
-        Function.getAddressRangesOffset() + DebugRangesSize,
-        Function.getSubprocedureDIECompileUnit(),
-        Function.getSubprocedureDIE());
+    for (const auto DIECompileUnitPair : Function.getSubprocedureDIEs()) {
+      updateDWARFObjectAddressRanges(
+          Function.getAddressRangesOffset() + DebugRangesSize,
+          DIECompileUnitPair.second,
+          DIECompileUnitPair.first);
+    }
   }
 
   // Update address ranges of lexical blocks.

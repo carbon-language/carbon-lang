@@ -145,7 +145,7 @@ void BinaryContext::preprocessFunctionDebugInfo(
         if (ChildDIE->getLowAndHighPC(CU.get(), LowPC, HighPC)) {
           auto It = BinaryFunctions.find(LowPC);
           if (It != BinaryFunctions.end()) {
-            It->second.setSubprocedureDIE(CU.get(), ChildDIE);
+            It->second.addSubprocedureDIE(CU.get(), ChildDIE);
           }
         }
       }

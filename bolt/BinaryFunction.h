@@ -36,6 +36,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <map>
+#include <vector>
 
 using namespace llvm::object;
 
@@ -159,11 +160,11 @@ private:
   /// Landing pads for the function.
   std::set<MCSymbol *> LandingPads;
 
-  /// Associated DIE in the .debug_info section.
-  const DWARFDebugInfoEntryMinimal *SubprocedureDIE{nullptr};
-
-  /// DWARF Unit that contains the DIE of this function.
-  const DWARFCompileUnit *DIECompileUnit{nullptr};
+  /// Associated DIEs in the .debug_info section with their respective CUs.
+  /// There can be multiple because of identical code folding performed by
+  /// the Linker Script.
+  std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
+                        const DWARFCompileUnit *>> SubprocedureDIEs;
 
   /// Offset of this function's address ranges in the .debug_ranges section of
   /// the output binary.
@@ -757,18 +758,13 @@ public:
   void emitLSDA(MCStreamer *Streamer);
 
   /// Sets the associated .debug_info entry.
-  void setSubprocedureDIE(const DWARFCompileUnit *Unit,
+  void addSubprocedureDIE(const DWARFCompileUnit *Unit,
                           const DWARFDebugInfoEntryMinimal *DIE) {
-    DIECompileUnit = Unit;
-    SubprocedureDIE = DIE;
+    SubprocedureDIEs.emplace_back(DIE, Unit);
   }
 
-  const DWARFDebugInfoEntryMinimal *getSubprocedureDIE() const {
-    return SubprocedureDIE;
-  }
-
-  const DWARFCompileUnit *getSubprocedureDIECompileUnit() const {
-    return DIECompileUnit;
+  const decltype(SubprocedureDIEs) &getSubprocedureDIEs() const {
+    return SubprocedureDIEs;
   }
 
   /// Returns the size of the basic block in the original binary.
