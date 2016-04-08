@@ -3502,6 +3502,10 @@ void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {
   // Quick check whether the def has already been encountered in the same block.
   // PHI nodes are not checked to prevent accepting preceeding PHIs, because PHI
   // uses are defined to happen on the incoming edge, not at the instruction.
+  //
+  // FIXME: If this operand is a MetadataAsValue (wrapping a LocalAsMetadata)
+  // wrapping an SSA value, assert that we've already encountered it.  See
+  // related FIXME in Mapper::mapLocalAsMetadata in ValueMapper.cpp.
   if (!isa<PHINode>(I) && InstsInThisBlock.count(Op))
     return;
 
