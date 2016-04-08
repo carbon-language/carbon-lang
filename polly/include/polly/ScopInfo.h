@@ -2053,12 +2053,12 @@ public:
   /// for complex cases without "error handling code" needed on the users side.
   __isl_give isl_pw_aff *getPwAff(const SCEV *E, BasicBlock *BB = nullptr);
 
-  /// @brief Return the non-loop carried conditions on the domain of @p Stmt.
+  /// @brief Return the domain of @p Stmt.
   ///
   /// @param Stmt The statement for which the conditions should be returned.
   __isl_give isl_set *getDomainConditions(ScopStmt *Stmt);
 
-  /// @brief Return the non-loop carried conditions on the domain of @p BB.
+  /// @brief Return the domain of @p BB.
   ///
   /// @param BB The block for which the conditions should be returned.
   __isl_give isl_set *getDomainConditions(BasicBlock *BB);

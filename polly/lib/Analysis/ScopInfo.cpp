@@ -2114,8 +2114,15 @@ isl_set *Scop::getDomainConditions(ScopStmt *Stmt) {
 }
 
 isl_set *Scop::getDomainConditions(BasicBlock *BB) {
-  assert(DomainMap.count(BB) && "Requested BB did not have a domain");
-  return isl_set_copy(DomainMap[BB]);
+  auto DIt = DomainMap.find(BB);
+  if (DIt != DomainMap.end())
+    return isl_set_copy(DIt->getSecond());
+
+  auto &RI = *R.getRegionInfo();
+  auto *BBR = RI.getRegionFor(BB);
+  while (BBR->getEntry() == BB)
+    BBR = BBR->getParent();
+  return getDomainConditions(BBR->getEntry());
 }
 
 bool Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
@@ -2442,24 +2449,6 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
   return true;
 }
 
-/// @brief Return the domain for @p BB wrt @p DomainMap.
-///
-/// This helper function will lookup @p BB in @p DomainMap but also handle the
-/// case where @p BB is contained in a non-affine subregion using the region
-/// tree obtained by @p RI.
-static __isl_give isl_set *
-getDomainForBlock(BasicBlock *BB, DenseMap<BasicBlock *, isl_set *> &DomainMap,
-                  RegionInfo &RI) {
-  auto DIt = DomainMap.find(BB);
-  if (DIt != DomainMap.end())
-    return isl_set_copy(DIt->getSecond());
-
-  Region *R = RI.getRegionFor(BB);
-  while (R->getEntry() == BB)
-    R = R->getParent();
-  return getDomainForBlock(R->getEntry(), DomainMap, RI);
-}
-
 isl_set *Scop::getPredecessorDomainConstraints(BasicBlock *BB, isl_set *Domain,
                                                ScopDetection &SD,
                                                DominatorTree &DT,
@@ -2509,7 +2498,7 @@ isl_set *Scop::getPredecessorDomainConstraints(BasicBlock *BB, isl_set *Domain,
       PropagatedRegions.insert(PredR);
     }
 
-    auto *PredBBDom = getDomainForBlock(PredBB, DomainMap, RI);
+    auto *PredBBDom = getDomainConditions(PredBB);
     auto *PredBBLoop = getFirstNonBoxedLoopFor(PredBB, LI, BoxedLoops);
     PredBBDom = adjustDomainDimensions(*this, PredBBDom, PredBBLoop, BBLoop);
 
