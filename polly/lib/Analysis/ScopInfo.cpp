@@ -3063,7 +3063,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
       SetVector<Value *> Values;
       for (const SCEV *Parameter : Parameters) {
         Values.clear();
-        findValues(Parameter, Values);
+        findValues(Parameter, *SE, Values);
         if (!Values.count(AccInst))
           continue;
 
