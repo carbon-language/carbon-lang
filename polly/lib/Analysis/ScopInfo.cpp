@@ -3992,7 +3992,9 @@ bool ScopInfo::buildAccessMultiDimFixed(
     auto *Src = BitCast->getOperand(0);
     auto *SrcTy = Src->getType();
     auto *DstTy = BitCast->getType();
-    if (SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits())
+    if (SrcTy->isPointerTy() && DstTy->isPointerTy() &&
+        DL->getTypeAllocSize(SrcTy->getPointerElementType()) ==
+            DL->getTypeAllocSize(DstTy->getPointerElementType()))
       Address = Src;
   }
 
