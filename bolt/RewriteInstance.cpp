@@ -2182,6 +2182,14 @@ void RewriteInstance::updateDWARFAddressRanges() {
     }
   }
 
+  // Update address ranges of DIEs with addresses that don't match functions.
+  for (auto &DIECompileUnitPair : BC->UnknownFunctions) {
+    updateDWARFObjectAddressRanges(
+        RangesSectionsWriter.getEmptyRangesListOffset(),
+        DIECompileUnitPair.second,
+        DIECompileUnitPair.first);
+  }
+
   // Update address ranges of lexical blocks.
   for (const auto &LB : BC->LexicalBlocks) {
     updateDWARFObjectAddressRanges(

@@ -65,6 +65,14 @@ void DebugRangesSectionsWriter::WriteRangesSection(MCObjectWriter *Writer) {
     const auto &AddressRanges = BFAddressRangesPair.second;
     SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
   }
+
+  // Write an empty address list to be used for objects with unknown address
+  // ranges.
+  EmptyRangesListOffset = SectionOffset;
+  SectionOffset += WriteAddressRanges(
+      Writer,
+      std::vector<std::pair<uint64_t, uint64_t>>{},
+      false);
 }
 
 void

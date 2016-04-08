@@ -95,6 +95,32 @@ void findLexicalBlocks(const DWARFCompileUnit *Unit,
   }
 }
 
+// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
+// BinaryFunctions. Record DIEs for unknown subprograms (mostly functions that
+// are never called and removed from the binary) in Unknown.
+void findSubprograms(const DWARFCompileUnit *Unit,
+                     const DWARFDebugInfoEntryMinimal *DIE,
+                     std::map<uint64_t, BinaryFunction> &BinaryFunctions,
+                     BinaryContext::DIECompileUnitVector &Unknown) {
+  if (DIE->isSubprogramDIE()) {
+    uint64_t LowPC, HighPC;
+    if (DIE->getLowAndHighPC(Unit, LowPC, HighPC)) {
+      auto It = BinaryFunctions.find(LowPC);
+      if (It != BinaryFunctions.end()) {
+        It->second.addSubprocedureDIE(Unit, DIE);
+      } else {
+        Unknown.emplace_back(DIE, Unit);
+      }
+    }
+  }
+
+  for (auto ChildDIE = DIE->getFirstChild();
+       ChildDIE != nullptr && !ChildDIE->isNULL();
+       ChildDIE = ChildDIE->getSibling()) {
+    findSubprograms(Unit, ChildDIE, BinaryFunctions, Unknown);
+  }
+}
+
 } // namespace
 
 namespace llvm {
@@ -130,26 +156,11 @@ void BinaryContext::preprocessDebugInfo() {
 
 void BinaryContext::preprocessFunctionDebugInfo(
     std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
-  // For each CU, iterate over its children DIEs and match subroutine DIEs to
+  // For each CU, iterate over its children DIEs and match subprogram DIEs to
   // BinaryFunctions.
   for (const auto &CU : DwCtx->compile_units()) {
-    const auto *UnitDIE = CU->getUnitDIE(false);
-    if (!UnitDIE->hasChildren())
-      continue;
-
-    for (auto ChildDIE = UnitDIE->getFirstChild();
-         ChildDIE != nullptr && !ChildDIE->isNULL();
-         ChildDIE = ChildDIE->getSibling()) {
-      if (ChildDIE->isSubprogramDIE()) {
-        uint64_t LowPC, HighPC;
-        if (ChildDIE->getLowAndHighPC(CU.get(), LowPC, HighPC)) {
-          auto It = BinaryFunctions.find(LowPC);
-          if (It != BinaryFunctions.end()) {
-            It->second.addSubprocedureDIE(CU.get(), ChildDIE);
-          }
-        }
-      }
-    }
+    findSubprograms(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
+                    UnknownFunctions);
   }
 
   // Iterate over DIE trees finding lexical blocks.

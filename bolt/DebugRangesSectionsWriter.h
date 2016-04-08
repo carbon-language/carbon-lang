@@ -65,6 +65,10 @@ public:
     return RangesSectionOffsetCUMap;
   }
 
+  /// Returns an offset of an empty address ranges list that is always written
+  /// to .debug_ranges
+  uint32_t getEmptyRangesListOffset() const { return EmptyRangesListOffset; }
+
 private:
   // Map from compile unit offset to the list of address intervals that belong
   // to that compile unit. Each interval is a pair
@@ -76,6 +80,9 @@ private:
   // to that function, represented like CUAddressRanges.
   std::map<AddressRangesOwner *, std::vector<std::pair<uint64_t, uint64_t>>>
       ObjectAddressRanges;
+
+  // Offset of an empty address ranges list.
+  uint32_t EmptyRangesListOffset;
 
   /// When writing data to .debug_ranges remember offset per CU.
   RangesCUMapType RangesSectionOffsetCUMap;

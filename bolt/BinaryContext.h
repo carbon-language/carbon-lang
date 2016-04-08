@@ -40,6 +40,9 @@
 #include <vector>
 
 namespace llvm {
+
+class DWARFDebugInfoEntryMinimal;
+
 namespace bolt {
 
 class BinaryFunction;
@@ -77,6 +80,14 @@ public:
 
   /// List of DWARF location lists in .debug_loc.
   std::vector<LocationList> LocationLists;
+
+  using DIECompileUnitVector =
+    std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
+                          const DWARFCompileUnit *>> ;
+
+  /// List of subprocedure DIEs that have addresses that don't match any
+  /// function, along with their CU.
+  DIECompileUnitVector UnknownFunctions;
 
   std::unique_ptr<MCContext> Ctx;
 
