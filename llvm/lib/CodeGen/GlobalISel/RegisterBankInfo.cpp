@@ -364,7 +364,7 @@ void RegisterBankInfo::PartialMapping::verify() const {
 
 void RegisterBankInfo::PartialMapping::print(raw_ostream &OS) const {
   SmallString<128> MaskStr;
-  Mask.toString(MaskStr, /*Radix*/ 2, /*Signed*/ 0, /*formatAsCLiteral*/ true);
+  Mask.toString(MaskStr, /*Radix*/ 16, /*Signed*/ 0, /*formatAsCLiteral*/ true);
   OS << "Mask(" << Mask.getBitWidth() << ") = " << MaskStr << ", RegBank = ";
   if (RegBank)
     OS << *RegBank;
