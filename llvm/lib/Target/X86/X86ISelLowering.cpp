@@ -2193,9 +2193,9 @@ unsigned X86TargetLowering::getAddressSpace() const {
   return 256;
 }
 
-Value *X86TargetLowering::getStackCookieLocation(IRBuilder<> &IRB) const {
+Value *X86TargetLowering::getIRStackGuard(IRBuilder<> &IRB) const {
   if (!Subtarget.isTargetLinux())
-    return TargetLowering::getStackCookieLocation(IRB);
+    return TargetLowering::getIRStackGuard(IRB);
 
   // %fs:0x28, unless we're using a Kernel code model, in which case it's %gs:
   // %gs:0x14 on i386
@@ -2204,6 +2204,19 @@ Value *X86TargetLowering::getStackCookieLocation(IRBuilder<> &IRB) const {
   return ConstantExpr::getIntToPtr(
       ConstantInt::get(Type::getInt32Ty(IRB.getContext()), Offset),
       Type::getInt8PtrTy(IRB.getContext())->getPointerTo(AddressSpace));
+}
+
+void X86TargetLowering::insertSSPDeclarations(Module &M) const {
+  if (!Subtarget.isTargetLinux())
+    TargetLowering::insertSSPDeclarations(M);
+  else
+    llvm_unreachable("X86 Linux supports customized IR stack guard load");
+}
+
+Value *X86TargetLowering::getSDStackGuard(const Module &M) const {
+  if (!Subtarget.isTargetLinux())
+    return TargetLowering::getSDStackGuard(M);
+  llvm_unreachable("X86 Linux supports customized IR stack guard load");
 }
 
 Value *X86TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
