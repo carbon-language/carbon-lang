@@ -33,6 +33,24 @@ struct Location {
 
   Location(bool IsSymbol, StringRef Name, uint64_t Offset)
       : IsSymbol(IsSymbol), Name(Name), Offset(Offset) {}
+
+  bool operator==(const Location &RHS) const {
+    return IsSymbol == RHS.IsSymbol &&
+           Name == RHS.Name &&
+           Offset == RHS.Offset;
+  }
+
+  bool operator<(const Location &RHS) const {
+    if (IsSymbol < RHS.IsSymbol)
+      return true;
+
+    if (Name < RHS.Name)
+      return true;
+
+    return IsSymbol == RHS.IsSymbol &&
+           Name == RHS.Name &&
+           Offset < RHS.Offset;
+  }
 };
 
 struct BranchInfo {
@@ -44,6 +62,21 @@ struct BranchInfo {
   BranchInfo(Location From, Location To, int64_t Mispreds, int64_t Branches)
       : From(std::move(From)), To(std::move(To)), Mispreds(Mispreds),
         Branches(Branches) {}
+
+  bool operator==(const BranchInfo &RHS) const {
+    return From == RHS.From &&
+           To == RHS.To;
+  }
+
+  bool operator<(const BranchInfo &RHS) const {
+    if (From < RHS.From)
+      return true;
+
+    if (From == RHS.From)
+      return (To < RHS.To);
+
+    return false;
+  }
 };
 
 struct FuncBranchData {
@@ -96,6 +129,10 @@ public:
 
   ErrorOr<const FuncBranchData &> getFuncBranchData(StringRef FuncName) const;
 
+  using FuncsMapType = StringMap<FuncBranchData>;
+
+  FuncsMapType &getAllFuncsData() { return FuncsMap; }
+
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;
 
@@ -115,7 +152,7 @@ private:
   StringRef ParsingBuf;
   unsigned Line;
   unsigned Col;
-  StringMap<FuncBranchData> FuncsMap;
+  FuncsMapType FuncsMap;
   static const char FieldSeparator = ' ';
 };
 

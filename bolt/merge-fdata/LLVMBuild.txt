@@ -1,4 +1,4 @@
-;===- ./tools/llvm-bolt/LLVMBuild.txt ---------------------------*- Conf -*--===;
+;===- ./tools/llvm-bolt/merge-fdata/LLVMBuild.txt --------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,11 +15,7 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = merge-fdata
-
 [component_0]
 type = Tool
-name = llvm-bolt
-parent = Tools
-required_libraries = MC MCDisassembler MCParser Object all-targets
+name = merge-fdata
+parent = llvm-bolt

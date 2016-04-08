@@ -1,3 +1,5 @@
+add_subdirectory(merge-fdata)
+
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   CodeGen

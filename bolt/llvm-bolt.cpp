@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
   cl::ParseCommandLineOptions(argc, argv,
-                              "llvm feedback-directed layout optimizer\n");
+                              "BOLT - Binary Optimization and Layout Tool\n");
 
   ToolName = argv[0];
 

@@ -501,7 +501,7 @@ public:
 
     if (DeriveAlignment) {
       uint64_t DerivedAlignment = Offset & (1 + ~Offset);
-      BB->setAlignment(std::min(DerivedAlignment, uint64_t(16)));
+      BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
     }
 
     return BB;
