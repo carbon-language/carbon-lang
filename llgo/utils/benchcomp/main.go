@@ -22,7 +22,7 @@ func symsizes(path string) map[string]float64 {
 		panic(err.Error())
 	}
 	for _, sym := range syms {
-		if sym.Section < elf.SectionIndex(len(f.Sections)) && f.Sections[sym.Section].Name == ".text" {
+		if sym.Section < elf.SectionIndex(len(f.Sections)) && strings.HasPrefix(f.Sections[sym.Section].Name, ".text") {
 			m[sym.Name] = float64(sym.Size)
 		}
 	}
