@@ -987,16 +987,15 @@ class BitMaskClassIterator {
     // If the current chunk of memory is empty, move to the next one,
     // while making sure we do not go pass the number of register
     // classes.
-    while (!CurrentChunk && Base < NumRegClasses) {
+    while (!CurrentChunk) {
       // Move to the next chunk.
-      CurrentChunk = *++Mask;
       Base += 32;
+      if (Base >= NumRegClasses) {
+        ID = NumRegClasses;
+        return;
+      }
+      CurrentChunk = *++Mask;
       Idx = Base;
-    }
-    // The mask is empty now.
-    if (!CurrentChunk || Base >= NumRegClasses) {
-      ID = NumRegClasses;
-      return;
     }
     // Otherwise look for the first bit set from the right
     // (representation of the class ID is big endian).
