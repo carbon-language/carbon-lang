@@ -398,7 +398,7 @@ class IRLinker {
   bool HasError = false;
 
   /// Flags to pass to value mapper invocations.
-  RemapFlags ValueMapperFlags = RF_MoveDistinctMDs;
+  RemapFlags ValueMapperFlags = RF_MoveDistinctMDs | RF_IgnoreMissingLocals;
 
   /// Set of subprogram metadata that does not need to be linked into the
   /// destination module, because the functions were not imported directly
@@ -997,8 +997,8 @@ bool IRLinker::linkFunctionBody(Function &Dst, Function &Src) {
     A.mutateType(TypeMap.get(A.getType()));
   for (BasicBlock &BB : Dst)
     for (Instruction &I : BB)
-      RemapInstruction(&I, ValueMap, RF_IgnoreMissingLocals | ValueMapperFlags,
-                       &TypeMap, &GValMaterializer);
+      RemapInstruction(&I, ValueMap, ValueMapperFlags, &TypeMap,
+                       &GValMaterializer);
 
   return false;
 }
