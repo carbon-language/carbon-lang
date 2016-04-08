@@ -336,7 +336,9 @@ void PrintPPOutputPPCallbacks::InclusionDirective(SourceLocation HashLoc,
       OS << "#include "
          << (IsAngled ? '<' : '"')
          << FileName
-         << (IsAngled ? '>' : '"');
+         << (IsAngled ? '>' : '"')
+         << " /* clang -E: implicit import for module "
+         << Imported->getFullModuleName() << " */";
     }
     // Since we want a newline after the @import, but not a #<line>, start a new
     // line immediately.
