@@ -1372,6 +1372,15 @@ static bool sortMipsSymbols(const std::pair<SymbolBody *, unsigned> &L,
   return L.first->GotIndex < R.first->GotIndex;
 }
 
+static uint8_t getSymbolBinding(SymbolBody *Body) {
+  uint8_t Visibility = Body->getVisibility();
+  if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
+    return STB_LOCAL;
+  if (Config->NoGnuUnique && Body->Binding == STB_GNU_UNIQUE)
+    return STB_GLOBAL;
+  return Body->Binding;
+}
+
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   if (this->Header.sh_size)
     return; // Already finalized.
@@ -1510,16 +1519,6 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
     llvm_unreachable("should have been replaced");
   }
   return nullptr;
-}
-
-template <class ELFT>
-uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
-  uint8_t Visibility = Body->getVisibility();
-  if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
-    return STB_LOCAL;
-  if (Config->NoGnuUnique && Body->Binding == STB_GNU_UNIQUE)
-    return STB_GLOBAL;
-  return Body->Binding;
 }
 
 template <class ELFT>
