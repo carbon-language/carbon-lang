@@ -609,7 +609,7 @@ std::vector<StringRef> LazyObjectFile::getBitcodeSymbols() {
   for (const BasicSymbolRef &Sym : Obj->symbols()) {
     if (BitcodeFile::shouldSkip(Sym))
       continue;
-    if (Sym.getFlags() == BasicSymbolRef::SF_Undefined)
+    if (Sym.getFlags() & BasicSymbolRef::SF_Undefined)
       continue;
     SmallString<64> Name;
     raw_svector_ostream OS(Name);
