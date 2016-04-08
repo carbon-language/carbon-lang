@@ -9,6 +9,17 @@
 _start:
         .quad foo
 
+        .global bar
+bar:
+
+// CHECK:      Name: bar
+// CHECK-NEXT: Value:
+// CHECK-NEXT: Size: 0
+// CHECK-NEXT: Binding: Global
+// CHECK-NEXT: Type: None
+// CHECK-NEXT: Other: 0
+// CHECK-NEXT: Section: .text
+
 // CHECK:      Name: foo
 // CHECK-NEXT: Value: 0x0
 // CHECK-NEXT: Size: 0
