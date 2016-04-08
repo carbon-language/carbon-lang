@@ -1458,6 +1458,12 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   }
 }
 
+static uint8_t getSymbolVisibility(SymbolBody *Body) {
+  if (Body->isShared())
+    return STV_DEFAULT;
+  return Body->getVisibility();
+}
+
 template <class ELFT>
 void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
@@ -1473,7 +1479,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     ESym->setBindingAndType(getSymbolBinding(Body), Type);
     ESym->st_size = Size;
     ESym->st_name = StrOff;
-    ESym->setVisibility(Body->getVisibility());
+    ESym->setVisibility(getSymbolVisibility(Body));
     ESym->st_value = Body->getVA<ELFT>();
 
     if (const OutputSectionBase<ELFT> *OutSec = getOutputSection(Body))
