@@ -85,6 +85,10 @@ SkipFunctionNames("skip_funcs",
                   cl::desc("list of functions to skip"),
                   cl::value_desc("func1,func2,func3,..."));
 
+static cl::opt<std::string>
+SkipFunctionNamesFile("skip_funcs_file",
+                      cl::desc("file with list of functions to skip"));
+
 static cl::opt<unsigned>
 MaxFunctions("max_funcs",
              cl::desc("maximum # of functions to overwrite"),
@@ -189,14 +193,22 @@ bool shouldProcess(const BinaryFunction &Function) {
   if (opts::MaxFunctions && Function.getFunctionNumber() > opts::MaxFunctions)
     return false;
 
-  if (!FunctionNamesFile.empty()) {
+  auto populateFunctionNames = [](cl::opt<std::string> &FunctionNamesFile,
+                                  cl::list<std::string> &FunctionNames) {
+    assert(!FunctionNamesFile.empty() && "unexpected empty file name");
     std::ifstream FuncsFile(FunctionNamesFile, std::ios::in);
     std::string FuncName;
     while (std::getline(FuncsFile, FuncName)) {
       FunctionNames.push_back(FuncName);
     }
     FunctionNamesFile = "";
-  }
+  };
+
+  if (!FunctionNamesFile.empty())
+    populateFunctionNames(FunctionNamesFile, FunctionNames);
+
+  if (!SkipFunctionNamesFile.empty())
+    populateFunctionNames(SkipFunctionNamesFile, SkipFunctionNames);
 
   bool IsValid = true;
   if (!FunctionNames.empty()) {
