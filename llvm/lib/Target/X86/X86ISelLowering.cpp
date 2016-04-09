@@ -14677,10 +14677,20 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     break;
 
   case ISD::AND:
-    // If the primary and result isn't used, don't bother using X86ISD::AND,
+    // If the primary 'and' result isn't used, don't bother using X86ISD::AND,
     // because a TEST instruction will be better.
-    if (!hasNonFlagsUse(Op))
-      break;
+    if (!hasNonFlagsUse(Op)) {
+      SDValue Op0 = ArithOp->getOperand(0);
+      SDValue Op1 = ArithOp->getOperand(1);
+      EVT VT = ArithOp.getValueType();
+      bool isAndn = isBitwiseNot(Op0) || isBitwiseNot(Op1);
+      bool isLegalAndnType = VT == MVT::i32 || VT == MVT::i64;
+
+      // But if we can combine this into an ANDN operation, then create an AND
+      // now and allow it to be pattern matched into an ANDN.
+      if (!Subtarget.hasBMI() || !isAndn || !isLegalAndnType)
+        break;
+    }
     // FALL THROUGH
   case ISD::SUB:
   case ISD::OR:
