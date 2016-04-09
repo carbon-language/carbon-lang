@@ -578,6 +578,9 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
   if (I->mayHaveSideEffects())
     return false;
 
+  if (isa<SelectInst>(I))
+    return false;
+
   // When Val is a Phi node, it is likely not invariant. We do not check whether
   // Phi nodes are actually invariant, we assume that Phi nodes are usually not
   // invariant.
