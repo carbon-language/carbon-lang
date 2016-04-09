@@ -994,6 +994,9 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
       return false;
   }
 
+  if (isa<LandingPadInst>(&Inst) || isa<ResumeInst>(&Inst))
+    return false;
+
   // We only check the call instruction but not invoke instruction.
   if (CallInst *CI = dyn_cast<CallInst>(&Inst)) {
     if (isValidCallInst(*CI, Context))
