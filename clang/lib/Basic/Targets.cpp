@@ -4675,6 +4675,11 @@ public:
     // that follows it, `bar', `bar' will be aligned as the  type of the
     // zero length bitfield.
     UseZeroLengthBitfieldAlignment = true;
+
+    if (Triple.getOS() == llvm::Triple::Linux ||
+        Triple.getOS() == llvm::Triple::UnknownOS)
+      this->MCountName =
+          Opts.EABIVersion == "gnu" ? "\01__gnu_mcount_nc" : "\01mcount";
   }
 
   StringRef getABI() const override { return ABI; }
@@ -5423,9 +5428,8 @@ class AArch64TargetInfo : public TargetInfo {
   std::string ABI;
 
 public:
-  AArch64TargetInfo(const llvm::Triple &Triple, const TargetOptions &)
+  AArch64TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : TargetInfo(Triple), ABI("aapcs") {
-
     if (getTriple().getOS() == llvm::Triple::NetBSD) {
       WCharType = SignedInt;
 
@@ -5460,6 +5464,11 @@ public:
 
     // AArch64 targets default to using the ARM C++ ABI.
     TheCXXABI.set(TargetCXXABI::GenericAArch64);
+
+    if (Triple.getOS() == llvm::Triple::Linux ||
+        Triple.getOS() == llvm::Triple::UnknownOS)
+      this->MCountName =
+          Opts.EABIVersion == "gnu" ? "\01__gnu_mcount_nc" : "\01mcount";
   }
 
   StringRef getABI() const override { return ABI; }
