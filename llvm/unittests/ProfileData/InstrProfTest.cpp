@@ -752,6 +752,46 @@ TEST_P(MaybeSparseInstrProfTest, runtime_value_prof_data_read_write) {
   free(VPData);
 }
 
+static uint16_t NumValueSites2[IPVK_Last + 1] = {1};
+TEST_P(MaybeSparseInstrProfTest, runtime_value_prof_data_read_write_mapping) {
+  ValueProfRuntimeRecord RTRecord;
+  initializeValueProfRuntimeRecord(&RTRecord, &NumValueSites2[0],
+                                   &ValueProfNodes[0]);
+
+  ValueProfData *VPData = serializeValueProfDataFromRT(&RTRecord, nullptr);
+
+  InstrProfRecord Record("caller", 0x1234, {1ULL << 31, 2});
+  InstrProfSymtab Symtab;
+  Symtab.mapAddress(uint64_t(callee1), 0x1000ULL);
+  Symtab.mapAddress(uint64_t(callee2), 0x2000ULL);
+  Symtab.mapAddress(uint64_t(callee3), 0x3000ULL);
+  Symtab.mapAddress(uint64_t(callee4), 0x4000ULL);
+  // Missing mapping for callee5
+  Symtab.finalizeSymtab();
+
+  VPData->deserializeTo(Record, &Symtab.getAddrHashMap());
+
+  // Now read data from Record and sanity check the data
+  ASSERT_EQ(1U, Record.getNumValueSites(IPVK_IndirectCallTarget));
+  ASSERT_EQ(5U, Record.getNumValueDataForSite(IPVK_IndirectCallTarget, 0));
+
+  auto Cmp = [](const InstrProfValueData &VD1, const InstrProfValueData &VD2) {
+    return VD1.Count > VD2.Count;
+  };
+  std::unique_ptr<InstrProfValueData[]> VD_0(
+      Record.getValueForSite(IPVK_IndirectCallTarget, 0));
+  std::sort(&VD_0[0], &VD_0[5], Cmp);
+  ASSERT_EQ(VD_0[0].Value, 0x2000ULL);
+  ASSERT_EQ(1000U, VD_0[0].Count);
+  ASSERT_EQ(VD_0[1].Value, 0x3000ULL);
+  ASSERT_EQ(500U, VD_0[1].Count);
+  ASSERT_EQ(VD_0[2].Value, 0x1000ULL);
+  ASSERT_EQ(400U, VD_0[2].Count);
+
+  // callee5 does not have a mapped value -- default to 0.
+  ASSERT_EQ(VD_0[4].Value, 0ULL);
+}
+
 TEST_P(MaybeSparseInstrProfTest, get_max_function_count) {
   InstrProfRecord Record1("foo", 0x1234, {1ULL << 31, 2});
   InstrProfRecord Record2("bar", 0, {1ULL << 63});
