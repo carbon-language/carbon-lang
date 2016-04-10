@@ -3974,6 +3974,81 @@ __builtin_ia32_vcomisd ((__v2df) (__A), (__v2df) (__B), ( __P), (  __R));\
 __builtin_ia32_vcomiss ((__v4sf) (__A), (__v4sf) (__B), ( __P), ( __R));\
 })
 
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_mask_unpackhi_pd (__m512d __W, __mmask8 __U, __m512d __A, __m512d __B)
+{
+  return (__m512d) __builtin_ia32_unpckhpd512_mask ((__v8df) __A,
+                (__v8df) __B,
+                (__v8df) __W,
+                (__mmask8) __U);
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_maskz_unpackhi_pd (__mmask8 __U, __m512d __A, __m512d __B)
+{
+  return (__m512d) __builtin_ia32_unpckhpd512_mask ((__v8df) __A,
+                (__v8df) __B,
+                (__v8df)
+                _mm512_setzero_pd (),
+                (__mmask8) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_mask_unpackhi_ps (__m512 __W, __mmask16 __U, __m512 __A, __m512 __B)
+{
+  return (__m512) __builtin_ia32_unpckhps512_mask ((__v16sf) __A,
+               (__v16sf) __B,
+               (__v16sf) __W,
+               (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_maskz_unpackhi_ps (__mmask16 __U, __m512 __A, __m512 __B)
+{
+  return (__m512) __builtin_ia32_unpckhps512_mask ((__v16sf) __A,
+               (__v16sf) __B,
+               (__v16sf)
+               _mm512_setzero_ps (),
+               (__mmask16) __U);
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_mask_unpacklo_pd (__m512d __W, __mmask8 __U, __m512d __A, __m512d __B)
+{
+  return (__m512d) __builtin_ia32_unpcklpd512_mask ((__v8df) __A,
+                (__v8df) __B,
+                (__v8df) __W,
+                (__mmask8) __U);
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_maskz_unpacklo_pd (__mmask8 __U, __m512d __A, __m512d __B)
+{
+  return (__m512d) __builtin_ia32_unpcklpd512_mask ((__v8df) __A,
+                (__v8df) __B,
+                (__v8df)
+                _mm512_setzero_pd (),
+                (__mmask8) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_mask_unpacklo_ps (__m512 __W, __mmask16 __U, __m512 __A, __m512 __B)
+{
+  return (__m512) __builtin_ia32_unpcklps512_mask ((__v16sf) __A,
+               (__v16sf) __B,
+               (__v16sf) __W,
+               (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_maskz_unpacklo_ps (__mmask16 __U, __m512 __A, __m512 __B)
+{
+  return (__m512) __builtin_ia32_unpcklps512_mask ((__v16sf) __A,
+               (__v16sf) __B,
+               (__v16sf)
+               _mm512_setzero_ps (),
+               (__mmask16) __U);
+}
 
 #undef __DEFAULT_FN_ATTRS
 
