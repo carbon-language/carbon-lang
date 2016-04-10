@@ -6360,6 +6360,103 @@ _mm256_maskz_loadu_ps (__mmask8 __U, void const *__P)
               _mm256_setzero_ps (),
               (__mmask8) __U);
 }
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_mask_store_pd (void *__P, __mmask8 __U, __m128d __A)
+{
+  __builtin_ia32_storeapd128_mask ((__v2df *) __P,
+           (__v2df) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm256_mask_store_pd (void *__P, __mmask8 __U, __m256d __A)
+{
+  __builtin_ia32_storeapd256_mask ((__v4df *) __P,
+           (__v4df) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_mask_store_ps (void *__P, __mmask8 __U, __m128 __A)
+{
+  __builtin_ia32_storeaps128_mask ((__v4sf *) __P,
+           (__v4sf) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm256_mask_store_ps (void *__P, __mmask8 __U, __m256 __A)
+{
+  __builtin_ia32_storeaps256_mask ((__v8sf *) __P,
+           (__v8sf) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_mask_storeu_epi64 (void *__P, __mmask8 __U, __m128i __A)
+{
+  __builtin_ia32_storedqudi128_mask ((__v2di *) __P,
+             (__v2di) __A,
+             (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm256_mask_storeu_epi64 (void *__P, __mmask8 __U, __m256i __A)
+{
+  __builtin_ia32_storedqudi256_mask ((__v4di *) __P,
+             (__v4di) __A,
+             (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_mask_storeu_epi32 (void *__P, __mmask8 __U, __m128i __A)
+{
+  __builtin_ia32_storedqusi128_mask ((__v4si *) __P,
+             (__v4si) __A,
+             (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm256_mask_storeu_epi32 (void *__P, __mmask8 __U, __m256i __A)
+{
+  __builtin_ia32_storedqusi256_mask ((__v8si *) __P,
+             (__v8si) __A,
+             (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_mask_storeu_pd (void *__P, __mmask8 __U, __m128d __A)
+{
+  __builtin_ia32_storeupd128_mask ((__v2df *) __P,
+           (__v2df) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm256_mask_storeu_pd (void *__P, __mmask8 __U, __m256d __A)
+{
+  __builtin_ia32_storeupd256_mask ((__v4df *) __P,
+           (__v4df) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_mask_storeu_ps (void *__P, __mmask8 __U, __m128 __A)
+{
+  __builtin_ia32_storeups128_mask ((__v4sf *) __P,
+           (__v4sf) __A,
+           (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm256_mask_storeu_ps (void *__P, __mmask8 __U, __m256 __A)
+{
+  __builtin_ia32_storeups256_mask ((__v8sf *) __P,
+           (__v8sf) __A,
+           (__mmask8) __U);
+}
+
 #undef __DEFAULT_FN_ATTRS
 #undef __DEFAULT_FN_ATTRS_BOTH
 
