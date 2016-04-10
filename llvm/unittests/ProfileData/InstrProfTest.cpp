@@ -790,6 +790,8 @@ TEST_P(MaybeSparseInstrProfTest, runtime_value_prof_data_read_write_mapping) {
 
   // callee5 does not have a mapped value -- default to 0.
   ASSERT_EQ(VD_0[4].Value, 0ULL);
+  finalizeValueProfRuntimeRecord(&RTRecord);
+  free(VPData);
 }
 
 TEST_P(MaybeSparseInstrProfTest, get_max_function_count) {
