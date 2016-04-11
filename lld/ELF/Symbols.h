@@ -407,8 +407,8 @@ template <class ELFT> struct ElfSym {
 
   // __rel_iplt_start/__rel_iplt_end for signaling
   // where R_[*]_IRELATIVE relocations do live.
-  static DefinedRegular<ELFT> *RelaIpltStart;
-  static DefinedRegular<ELFT> *RelaIpltEnd;
+  static SymbolBody *RelaIpltStart;
+  static SymbolBody *RelaIpltEnd;
 };
 
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Etext;
@@ -418,8 +418,8 @@ template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Edata2;
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::End;
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::End2;
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::MipsGp;
-template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::RelaIpltStart;
-template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::RelaIpltEnd;
+template <class ELFT> SymbolBody *ElfSym<ELFT>::RelaIpltStart;
+template <class ELFT> SymbolBody *ElfSym<ELFT>::RelaIpltEnd;
 
 } // namespace elf
 } // namespace lld

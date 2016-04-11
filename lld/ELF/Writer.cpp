@@ -806,10 +806,14 @@ void Writer<ELFT>::addRelIpltSymbols() {
   if (isOutputDynamic() || !Out<ELFT>::RelaPlt)
     return;
   StringRef S = Config->Rela ? "__rela_iplt_start" : "__rel_iplt_start";
-  ElfSym<ELFT>::RelaIpltStart = Symtab.addIgnored(S);
+  if (Symtab.find(S))
+    ElfSym<ELFT>::RelaIpltStart =
+        Symtab.addSynthetic(S, *Out<ELFT>::RelaPlt, 0, STV_HIDDEN);
 
   S = Config->Rela ? "__rela_iplt_end" : "__rel_iplt_end";
-  ElfSym<ELFT>::RelaIpltEnd = Symtab.addIgnored(S);
+  if (Symtab.find(S))
+    ElfSym<ELFT>::RelaIpltEnd = Symtab.addSynthetic(
+        S, *Out<ELFT>::RelaPlt, DefinedSynthetic<ELFT>::SectionEnd, STV_HIDDEN);
 }
 
 template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
@@ -1505,16 +1509,6 @@ static uint16_t getELFType() {
 // to each section. This function fixes some predefined absolute
 // symbol values that depend on section address and size.
 template <class ELFT> void Writer<ELFT>::fixAbsoluteSymbols() {
-  // Update __rel[a]_iplt_{start,end} symbols so that they point
-  // to beginning or ending of .rela.plt section, respectively.
-  if (Out<ELFT>::RelaPlt) {
-    uintX_t Start = Out<ELFT>::RelaPlt->getVA();
-    if (ElfSym<ELFT>::RelaIpltStart)
-      ElfSym<ELFT>::RelaIpltStart->Value = Start;
-    if (ElfSym<ELFT>::RelaIpltEnd)
-      ElfSym<ELFT>::RelaIpltEnd->Value = Start + Out<ELFT>::RelaPlt->getSize();
-  }
-
   // Update MIPS _gp absolute symbol so that it points to the static data.
   if (Config->EMachine == EM_MIPS)
     ElfSym<ELFT>::MipsGp->Value = getMipsGpAddr<ELFT>();
