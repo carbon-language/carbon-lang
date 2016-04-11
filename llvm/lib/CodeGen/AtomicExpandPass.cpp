@@ -1065,25 +1065,25 @@ static ArrayRef<RTLIB::Libcall> GetRMWLibcall(AtomicRMWInst::BinOp Op) {
   case AtomicRMWInst::BAD_BINOP:
     llvm_unreachable("Should not have BAD_BINOP.");
   case AtomicRMWInst::Xchg:
-    return LibcallsXchg;
+    return ArrayRef<RTLIB::Libcall>(LibcallsXchg);
   case AtomicRMWInst::Add:
-    return LibcallsAdd;
+    return ArrayRef<RTLIB::Libcall>(LibcallsAdd);
   case AtomicRMWInst::Sub:
-    return LibcallsSub;
+    return ArrayRef<RTLIB::Libcall>(LibcallsSub);
   case AtomicRMWInst::And:
-    return LibcallsAnd;
+    return ArrayRef<RTLIB::Libcall>(LibcallsAnd);
   case AtomicRMWInst::Or:
-    return LibcallsOr;
+    return ArrayRef<RTLIB::Libcall>(LibcallsOr);
   case AtomicRMWInst::Xor:
-    return LibcallsXor;
+    return ArrayRef<RTLIB::Libcall>(LibcallsXor);
   case AtomicRMWInst::Nand:
-    return LibcallsNand;
+    return ArrayRef<RTLIB::Libcall>(LibcallsNand);
   case AtomicRMWInst::Max:
   case AtomicRMWInst::Min:
   case AtomicRMWInst::UMax:
   case AtomicRMWInst::UMin:
     // No atomic libcalls are available for max/min/umax/umin.
-    return {};
+    return ArrayRef<RTLIB::Libcall>();
   }
   llvm_unreachable("Unexpected AtomicRMW operation.");
 }
