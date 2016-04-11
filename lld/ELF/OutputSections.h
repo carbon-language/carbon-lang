@@ -176,11 +176,11 @@ template <class ELFT> struct DynamicReloc {
   typedef typename ELFT::uint uintX_t;
   uint32_t Type;
 
-  SymbolBody *Sym = nullptr;
-  OutputSectionBase<ELFT> *OffsetSec = nullptr;
-  uintX_t OffsetInSec = 0;
-  bool UseSymVA = false;
-  uintX_t Addend = 0;
+  SymbolBody *Sym;
+  OutputSectionBase<ELFT> *OffsetSec;
+  uintX_t OffsetInSec;
+  bool UseSymVA;
+  uintX_t Addend;
 
   DynamicReloc(uint32_t Type, OutputSectionBase<ELFT> *OffsetSec,
                uintX_t OffsetInSec, bool UseSymVA, SymbolBody *Sym,
