@@ -4609,3 +4609,98 @@ __m256i test_mm256_maskz_lzcnt_epi64(__mmask8 __U, __m256i __A) {
 }
 
 
+__m128d test_mm_mask_permute_pd(__m128d __W, __mmask8 __U, __m128d __X) {
+  // CHECK-LABEL: @test_mm_mask_permute_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermil.pd
+  return _mm_mask_permute_pd(__W, __U, __X, 2); 
+}
+
+__m128d test_mm_maskz_permute_pd(__mmask8 __U, __m128d __X) {
+  // CHECK-LABEL: @test_mm_maskz_permute_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermil.pd
+  return _mm_maskz_permute_pd(__U, __X, 2); 
+}
+
+__m256d test_mm256_mask_permute_pd(__m256d __W, __mmask8 __U, __m256d __X) {
+  // CHECK-LABEL: @test_mm256_mask_permute_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermil.pd.256
+  return _mm256_mask_permute_pd(__W, __U, __X, 2); 
+}
+
+__m256d test_mm256_maskz_permute_pd(__mmask8 __U, __m256d __X) {
+  // CHECK-LABEL: @test_mm256_maskz_permute_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermil.pd.256
+  return _mm256_maskz_permute_pd(__U, __X, 2); 
+}
+
+__m128 test_mm_mask_permute_ps(__m128 __W, __mmask8 __U, __m128 __X) {
+  // CHECK-LABEL: @test_mm_mask_permute_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermil.ps
+  return _mm_mask_permute_ps(__W, __U, __X, 2); 
+}
+
+__m128 test_mm_maskz_permute_ps(__mmask8 __U, __m128 __X) {
+  // CHECK-LABEL: @test_mm_maskz_permute_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermil.ps
+  return _mm_maskz_permute_ps(__U, __X, 2); 
+}
+
+__m256 test_mm256_mask_permute_ps(__m256 __W, __mmask8 __U, __m256 __X) {
+  // CHECK-LABEL: @test_mm256_mask_permute_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermil.ps.256
+  return _mm256_mask_permute_ps(__W, __U, __X, 2); 
+}
+
+__m256 test_mm256_maskz_permute_ps(__mmask8 __U, __m256 __X) {
+  // CHECK-LABEL: @test_mm256_maskz_permute_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermil.ps.256
+  return _mm256_maskz_permute_ps(__U, __X, 2); 
+}
+
+__m128d test_mm_mask_permutevar_pd(__m128d __W, __mmask8 __U, __m128d __A, __m128i __C) {
+  // CHECK-LABEL: @test_mm_mask_permutevar_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.pd
+  return _mm_mask_permutevar_pd(__W, __U, __A, __C); 
+}
+
+__m128d test_mm_maskz_permutevar_pd(__mmask8 __U, __m128d __A, __m128i __C) {
+  // CHECK-LABEL: @test_mm_maskz_permutevar_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.pd
+  return _mm_maskz_permutevar_pd(__U, __A, __C); 
+}
+
+__m256d test_mm256_mask_permutevar_pd(__m256d __W, __mmask8 __U, __m256d __A, __m256i __C) {
+  // CHECK-LABEL: @test_mm256_mask_permutevar_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.pd.256
+  return _mm256_mask_permutevar_pd(__W, __U, __A, __C); 
+}
+
+__m256d test_mm256_maskz_permutevar_pd(__mmask8 __U, __m256d __A, __m256i __C) {
+  // CHECK-LABEL: @test_mm256_maskz_permutevar_pd
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.pd.256
+  return _mm256_maskz_permutevar_pd(__U, __A, __C); 
+}
+
+__m128 test_mm_mask_permutevar_ps(__m128 __W, __mmask8 __U, __m128 __A, __m128i __C) {
+  // CHECK-LABEL: @test_mm_mask_permutevar_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.ps
+  return _mm_mask_permutevar_ps(__W, __U, __A, __C); 
+}
+
+__m128 test_mm_maskz_permutevar_ps(__mmask8 __U, __m128 __A, __m128i __C) {
+  // CHECK-LABEL: @test_mm_maskz_permutevar_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.ps
+  return _mm_maskz_permutevar_ps(__U, __A, __C); 
+}
+
+__m256 test_mm256_mask_permutevar_ps(__m256 __W, __mmask8 __U, __m256 __A, __m256i __C) {
+  // CHECK-LABEL: @test_mm256_mask_permutevar_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.ps.256
+  return _mm256_mask_permutevar_ps(__W, __U, __A, __C); 
+}
+
+__m256 test_mm256_maskz_permutevar_ps(__mmask8 __U, __m256 __A, __m256i __C) {
+  // CHECK-LABEL: @test_mm256_maskz_permutevar_ps
+  // CHECK: @llvm.x86.avx512.mask.vpermilvar.ps.256
+  return _mm256_maskz_permutevar_ps(__U, __A, __C); 
+}
