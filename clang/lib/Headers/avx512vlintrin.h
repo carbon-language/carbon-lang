@@ -7407,6 +7407,95 @@ __builtin_ia32_psraqi256_mask ((__v4di)( __A),( __imm),\
               (__mmask8)( __U));\
 })
 
+#define _mm_ternarylogic_epi32( __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogd128_mask ((__v4si)( __A),\
+                 (__v4si)( __B),\
+                 (__v4si)( __C),( imm),\
+                 (__mmask8) -1);\
+})
+
+#define _mm_mask_ternarylogic_epi32( __A, __U, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogd128_mask ((__v4si)( __A),\
+                 (__v4si)( __B),\
+                 (__v4si)( __C),( imm),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm_maskz_ternarylogic_epi32( __U, __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogd128_maskz ((__v4si)( __A),\
+                  (__v4si)( __B),\
+                  (__v4si)( __C),\
+                 ( imm),\
+                  (__mmask8)( __U));\
+})
+
+#define _mm256_ternarylogic_epi32( __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogd256_mask ((__v8si)( __A),\
+                 (__v8si)( __B),\
+                 (__v8si)( __C),( imm),\
+                 (__mmask8) -1);\
+})
+
+#define _mm256_mask_ternarylogic_epi32( __A, __U, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogd256_mask ((__v8si)( __A),\
+                 (__v8si)( __B),\
+                 (__v8si)( __C),( imm),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm256_maskz_ternarylogic_epi32( __U, __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogd256_maskz ((__v8si)( __A),\
+                  (__v8si)( __B),\
+                  (__v8si)( __C),\
+                 ( imm),\
+                  (__mmask8)( __U));\
+})
+
+#define _mm_ternarylogic_epi64( __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogq128_mask ((__v2di)( __A),\
+                 (__v2di)( __B),\
+                 (__v2di)( __C),( imm),\
+                 (__mmask8) -1);\
+})
+
+#define _mm_mask_ternarylogic_epi64( __A, __U, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogq128_mask ((__v2di)( __A),\
+                 (__v2di)( __B),\
+                 (__v2di)( __C),( imm),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm_maskz_ternarylogic_epi64( __U, __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogq128_maskz ((__v2di)( __A),\
+                  (__v2di)( __B),\
+                  (__v2di)( __C),\
+                 ( imm),\
+                  (__mmask8)( __U));\
+})
+
+#define _mm256_ternarylogic_epi64( __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogq256_mask ((__v4di)( __A),\
+                 (__v4di)( __B),\
+                 (__v4di)( __C),( imm),\
+                 (__mmask8) -1);\
+})
+
+#define _mm256_mask_ternarylogic_epi64( __A, __U, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogq256_mask ((__v4di)( __A),\
+                 (__v4di)( __B),\
+                 (__v4di)( __C),( imm),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm256_maskz_ternarylogic_epi64( __U, __A, __B, __C, imm) __extension__ ({ \
+__builtin_ia32_pternlogq256_maskz ((__v4di)( __A),\
+                  (__v4di)( __B),\
+                  (__v4di)( __C),\
+                 ( imm),\
+                  (__mmask8)( __U));\
+})
+
+
 #undef __DEFAULT_FN_ATTRS
 #undef __DEFAULT_FN_ATTRS_BOTH
 
