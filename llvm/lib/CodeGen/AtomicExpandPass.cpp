@@ -1000,6 +1000,7 @@ void AtomicExpand::expandAtomicLoadToLibcall(LoadInst *I) {
   bool expanded = expandAtomicOpToLibcall(
       I, Size, Align, I->getPointerOperand(), nullptr, nullptr,
       I->getOrdering(), AtomicOrdering::NotAtomic, Libcalls);
+  (void)expanded;
   assert(expanded && "expandAtomicOpToLibcall shouldn't fail tor Load");
 }
 
@@ -1013,6 +1014,7 @@ void AtomicExpand::expandAtomicStoreToLibcall(StoreInst *I) {
   bool expanded = expandAtomicOpToLibcall(
       I, Size, Align, I->getPointerOperand(), I->getValueOperand(), nullptr,
       I->getOrdering(), AtomicOrdering::NotAtomic, Libcalls);
+  (void)expanded;
   assert(expanded && "expandAtomicOpToLibcall shouldn't fail tor Store");
 }
 
@@ -1028,6 +1030,7 @@ void AtomicExpand::expandAtomicCASToLibcall(AtomicCmpXchgInst *I) {
       I, Size, Align, I->getPointerOperand(), I->getNewValOperand(),
       I->getCompareOperand(), I->getSuccessOrdering(), I->getFailureOrdering(),
       Libcalls);
+  (void)expanded;
   assert(expanded && "expandAtomicOpToLibcall shouldn't fail tor CAS");
 }
 
