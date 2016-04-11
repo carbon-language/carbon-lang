@@ -1477,20 +1477,14 @@ static void adjustCallerSSPLevel(Function &Caller, const Function &Callee) {
                                               AttributeSet::FunctionIndex,
                                               B);
 
-  if (Callee.hasFnAttribute(Attribute::SafeStack)) {
-    Caller.removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
-    Caller.addFnAttr(Attribute::SafeStack);
-  } else if (Callee.hasFnAttribute(Attribute::StackProtectReq) &&
-             !Caller.hasFnAttribute(Attribute::SafeStack)) {
+  if (Callee.hasFnAttribute(Attribute::StackProtectReq)) {
     Caller.removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
     Caller.addFnAttr(Attribute::StackProtectReq);
   } else if (Callee.hasFnAttribute(Attribute::StackProtectStrong) &&
-             !Caller.hasFnAttribute(Attribute::SafeStack) &&
              !Caller.hasFnAttribute(Attribute::StackProtectReq)) {
     Caller.removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
     Caller.addFnAttr(Attribute::StackProtectStrong);
   } else if (Callee.hasFnAttribute(Attribute::StackProtect) &&
-             !Caller.hasFnAttribute(Attribute::SafeStack) &&
              !Caller.hasFnAttribute(Attribute::StackProtectReq) &&
              !Caller.hasFnAttribute(Attribute::StackProtectStrong))
     Caller.addFnAttr(Attribute::StackProtect);
