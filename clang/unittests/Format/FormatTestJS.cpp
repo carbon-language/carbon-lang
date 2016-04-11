@@ -686,6 +686,8 @@ TEST_F(FormatTestJS, AutomaticSemicolonInsertionHeuristic) {
   verifyFormat("x instanceof String", "x\n"
                                       "instanceof\n"
                                       "String");
+  verifyFormat("function f(@Foo bar) {}", "function f(@Foo\n"
+                                          "  bar) {}");
 }
 
 TEST_F(FormatTestJS, ClosureStyleCasts) {
