@@ -41,7 +41,7 @@ let isReturn = 1, isTerminator = 1, hasCtrlDep = 1, CCMaskFirst = 1, Uses = [CC]
   def CondReturn : Alias<2, (outs), (ins cond4:$valid, cond4:$R1), []>;
 
 // Fused compare and conditional returns.
-let isReturn = 1, isTerminator = 1, hasCtrlDep = 1, Uses = [CC] in {
+let isReturn = 1, isTerminator = 1, hasCtrlDep = 1 in {
   def CRBReturn : Alias<6, (outs), (ins GR32:$R1, GR32:$R2, cond4:$M3), []>;
   def CGRBReturn : Alias<6, (outs), (ins GR64:$R1, GR64:$R2, cond4:$M3), []>;
   def CIBReturn : Alias<6, (outs), (ins GR32:$R1, imm32sx8:$I2, cond4:$M3), []>;
