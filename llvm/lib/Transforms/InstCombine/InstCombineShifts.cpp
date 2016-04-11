@@ -62,7 +62,7 @@ static bool canEvaluateShiftedShift(unsigned FirstShiftAmt,
                                     Instruction *SecondShift, InstCombiner &IC,
                                     Instruction *CxtI) {
   assert(SecondShift->isLogicalShift() && "Unexpected instruction type");
-  
+
   // We need constant shifts.
   auto *SecondShiftConst = dyn_cast<ConstantInt>(SecondShift->getOperand(1));
   if (!SecondShiftConst)
@@ -256,6 +256,8 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
     BO->setHasNoSignedWrap(false);
     return BO;
   }
+  // FIXME: This is almost identical to the SHL case. Refactor both cases into
+  // a helper function.
   case Instruction::LShr: {
     BinaryOperator *BO = cast<BinaryOperator>(I);
     unsigned TypeWidth = BO->getType()->getScalarSizeInBits();
