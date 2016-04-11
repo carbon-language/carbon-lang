@@ -1570,6 +1570,10 @@ let mayLoad = 1, Defs = [CC] in
   defm SRST : StringRRE<"srst", 0xb25e, z_search_string>;
 
 // Other instructions for inline assembly
+let hasSideEffects = 1, Defs = [CC], isCall = 1 in
+  def SVC : InstI<0x0A, (outs), (ins imm32zx8:$I1),
+                  "svc\t$I1",
+                  []>;
 let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
   def STCK : InstS<0xB205, (outs), (ins bdaddr12only:$BD2),
                        "stck\t$BD2",
