@@ -138,11 +138,12 @@ class MachineFrameInfo {
   /// The alignment of the stack.
   unsigned StackAlignment;
 
-  /// Can the stack be realigned.
-  /// Targets that set this to false don't have the ability to overalign
-  /// their stack frame, and thus, overaligned allocas are all treated
-  /// as dynamic allocations and the target must handle them as part
-  /// of DYNAMIC_STACKALLOC lowering.
+  /// Can the stack be realigned. This can be false if the target does not
+  /// support stack realignment, or if the user asks us not to realign the
+  /// stack. In this situation, overaligned allocas are all treated as dynamic
+  /// allocations and the target must handle them as part of DYNAMIC_STACKALLOC
+  /// lowering. All non-alloca stack objects have their alignment clamped to the
+  /// base ABI stack alignment.
   /// FIXME: There is room for improvement in this case, in terms of
   /// grouping overaligned allocas into a "secondary stack frame" and
   /// then only use a single alloca to allocate this frame and only a
@@ -150,6 +151,9 @@ class MachineFrameInfo {
   /// optimization, each such alloca gets it's own dynamic
   /// realignment.
   bool StackRealignable;
+
+  /// Whether the function has the \c alignstack attribute.
+  bool ForcedRealign;
 
   /// The list of stack objects allocated.
   std::vector<StackObject> Objects;
@@ -250,12 +254,6 @@ class MachineFrameInfo {
   /// just allocate them normally.
   bool UseLocalStackAllocationBlock;
 
-  /// Whether the "realign-stack" option is on.
-  bool RealignOption;
-
-  /// Whether the function has the \c alignstack attribute.
-  bool ForcedRealign;
-
   /// True if the function dynamically adjusts the stack pointer through some
   /// opaque mechanism like inline assembly or Win32 EH.
   bool HasOpaqueSPAdjustment;
@@ -281,10 +279,10 @@ class MachineFrameInfo {
   MachineBasicBlock *Restore;
 
 public:
-  explicit MachineFrameInfo(unsigned StackAlign, bool isStackRealign,
-                            bool RealignOpt, bool ForceRealign)
-      : StackAlignment(StackAlign), StackRealignable(isStackRealign),
-        RealignOption(RealignOpt), ForcedRealign(ForceRealign) {
+  explicit MachineFrameInfo(unsigned StackAlignment, bool StackRealignable,
+                            bool ForcedRealign)
+      : StackAlignment(StackAlignment), StackRealignable(StackRealignable),
+        ForcedRealign(ForcedRealign) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
