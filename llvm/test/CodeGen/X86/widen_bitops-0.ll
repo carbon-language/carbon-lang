@@ -9,24 +9,14 @@
 define i24 @and_i24_as_v3i8(i24 %a, i24 %b) nounwind {
 ; X32-SSE-LABEL: and_i24_as_v3i8:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    subl $12, %esp
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
-; X32-SSE-NEXT:    pand %xmm0, %xmm1
-; X32-SSE-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
-; X32-SSE-NEXT:    movd %xmm1, %eax
-; X32-SSE-NEXT:    addl $12, %esp
+; X32-SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE-NEXT:    andl {{[0-9]+}}(%esp), %eax
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: and_i24_as_v3i8:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    movd %esi, %xmm0
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X64-SSE-NEXT:    movd %edi, %xmm1
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero
-; X64-SSE-NEXT:    pand %xmm0, %xmm1
-; X64-SSE-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
-; X64-SSE-NEXT:    movd %xmm1, %eax
+; X64-SSE-NEXT:    andl %esi, %edi
+; X64-SSE-NEXT:    movl %edi, %eax
 ; X64-SSE-NEXT:    retq
   %1 = bitcast i24 %a to <3 x i8>
   %2 = bitcast i24 %b to <3 x i8>
@@ -38,24 +28,14 @@ define i24 @and_i24_as_v3i8(i24 %a, i24 %b) nounwind {
 define i24 @xor_i24_as_v3i8(i24 %a, i24 %b) nounwind {
 ; X32-SSE-LABEL: xor_i24_as_v3i8:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    subl $12, %esp
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
-; X32-SSE-NEXT:    pxor %xmm0, %xmm1
-; X32-SSE-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
-; X32-SSE-NEXT:    movd %xmm1, %eax
-; X32-SSE-NEXT:    addl $12, %esp
+; X32-SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE-NEXT:    xorl {{[0-9]+}}(%esp), %eax
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: xor_i24_as_v3i8:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    movd %esi, %xmm0
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X64-SSE-NEXT:    movd %edi, %xmm1
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero
-; X64-SSE-NEXT:    pxor %xmm0, %xmm1
-; X64-SSE-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
-; X64-SSE-NEXT:    movd %xmm1, %eax
+; X64-SSE-NEXT:    xorl %esi, %edi
+; X64-SSE-NEXT:    movl %edi, %eax
 ; X64-SSE-NEXT:    retq
   %1 = bitcast i24 %a to <3 x i8>
   %2 = bitcast i24 %b to <3 x i8>
@@ -67,24 +47,14 @@ define i24 @xor_i24_as_v3i8(i24 %a, i24 %b) nounwind {
 define i24 @or_i24_as_v3i8(i24 %a, i24 %b) nounwind {
 ; X32-SSE-LABEL: or_i24_as_v3i8:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    subl $12, %esp
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
-; X32-SSE-NEXT:    por %xmm0, %xmm1
-; X32-SSE-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
-; X32-SSE-NEXT:    movd %xmm1, %eax
-; X32-SSE-NEXT:    addl $12, %esp
+; X32-SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE-NEXT:    orl {{[0-9]+}}(%esp), %eax
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: or_i24_as_v3i8:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    movd %esi, %xmm0
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X64-SSE-NEXT:    movd %edi, %xmm1
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero
-; X64-SSE-NEXT:    por %xmm0, %xmm1
-; X64-SSE-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
-; X64-SSE-NEXT:    movd %xmm1, %eax
+; X64-SSE-NEXT:    orl %esi, %edi
+; X64-SSE-NEXT:    movl %edi, %eax
 ; X64-SSE-NEXT:    retq
   %1 = bitcast i24 %a to <3 x i8>
   %2 = bitcast i24 %b to <3 x i8>
@@ -100,186 +70,14 @@ define i24 @or_i24_as_v3i8(i24 %a, i24 %b) nounwind {
 define i24 @and_i24_as_v8i3(i24 %a, i24 %b) nounwind {
 ; X32-SSE-LABEL: and_i24_as_v8i3:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    pushl %ebp
-; X32-SSE-NEXT:    movl %esp, %ebp
-; X32-SSE-NEXT:    andl $-8, %esp
-; X32-SSE-NEXT:    subl $24, %esp
-; X32-SSE-NEXT:    movl 12(%ebp), %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movl 8(%ebp), %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm1
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm1
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm1
-; X32-SSE-NEXT:    pxor %xmm2, %xmm2
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1,2,3,4,5],xmm2[6,7]
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm0
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm2[6,7]
-; X32-SSE-NEXT:    pand %xmm1, %xmm0
-; X32-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
-; X32-SSE-NEXT:    shll $16, %ecx
-; X32-SSE-NEXT:    movzwl (%esp), %eax
-; X32-SSE-NEXT:    orl %ecx, %eax
-; X32-SSE-NEXT:    movl %ebp, %esp
-; X32-SSE-NEXT:    popl %ebp
+; X32-SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE-NEXT:    andl {{[0-9]+}}(%esp), %eax
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: and_i24_as_v8i3:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    movw %si, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %esi
-; X64-SSE-NEXT:    movb %sil, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movw %di, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %edi
-; X64-SSE-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $3, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    movl %eax, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movd %edx, %xmm0
-; X64-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $6, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $9, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $12, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X64-SSE-NEXT:    shrl $15, %eax
-; X64-SSE-NEXT:    movzwl %ax, %eax
-; X64-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X64-SSE-NEXT:    xorl %eax, %eax
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm0
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm0
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $3, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movl %ecx, %esi
-; X64-SSE-NEXT:    andl $7, %esi
-; X64-SSE-NEXT:    movd %esi, %xmm1
-; X64-SSE-NEXT:    pinsrw $1, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $6, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $2, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $9, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $3, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $12, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $4, %edx, %xmm1
-; X64-SSE-NEXT:    shrl $15, %ecx
-; X64-SSE-NEXT:    movzwl %cx, %ecx
-; X64-SSE-NEXT:    pinsrw $5, %ecx, %xmm1
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm1
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm1
-; X64-SSE-NEXT:    pand %xmm0, %xmm1
-; X64-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    shll $16, %ecx
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    orl %ecx, %eax
+; X64-SSE-NEXT:    andl %esi, %edi
+; X64-SSE-NEXT:    movl %edi, %eax
 ; X64-SSE-NEXT:    retq
   %1 = bitcast i24 %a to <8 x i3>
   %2 = bitcast i24 %b to <8 x i3>
@@ -291,186 +89,14 @@ define i24 @and_i24_as_v8i3(i24 %a, i24 %b) nounwind {
 define i24 @xor_i24_as_v8i3(i24 %a, i24 %b) nounwind {
 ; X32-SSE-LABEL: xor_i24_as_v8i3:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    pushl %ebp
-; X32-SSE-NEXT:    movl %esp, %ebp
-; X32-SSE-NEXT:    andl $-8, %esp
-; X32-SSE-NEXT:    subl $24, %esp
-; X32-SSE-NEXT:    movl 12(%ebp), %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movl 8(%ebp), %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm1
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm1
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm1
-; X32-SSE-NEXT:    pxor %xmm2, %xmm2
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1,2,3,4,5],xmm2[6,7]
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm0
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm2[6,7]
-; X32-SSE-NEXT:    pxor %xmm1, %xmm0
-; X32-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
-; X32-SSE-NEXT:    shll $16, %ecx
-; X32-SSE-NEXT:    movzwl (%esp), %eax
-; X32-SSE-NEXT:    orl %ecx, %eax
-; X32-SSE-NEXT:    movl %ebp, %esp
-; X32-SSE-NEXT:    popl %ebp
+; X32-SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE-NEXT:    xorl {{[0-9]+}}(%esp), %eax
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: xor_i24_as_v8i3:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    movw %si, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %esi
-; X64-SSE-NEXT:    movb %sil, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movw %di, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %edi
-; X64-SSE-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $3, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    movl %eax, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movd %edx, %xmm0
-; X64-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $6, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $9, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $12, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X64-SSE-NEXT:    shrl $15, %eax
-; X64-SSE-NEXT:    movzwl %ax, %eax
-; X64-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X64-SSE-NEXT:    xorl %eax, %eax
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm0
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm0
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $3, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movl %ecx, %esi
-; X64-SSE-NEXT:    andl $7, %esi
-; X64-SSE-NEXT:    movd %esi, %xmm1
-; X64-SSE-NEXT:    pinsrw $1, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $6, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $2, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $9, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $3, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $12, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $4, %edx, %xmm1
-; X64-SSE-NEXT:    shrl $15, %ecx
-; X64-SSE-NEXT:    movzwl %cx, %ecx
-; X64-SSE-NEXT:    pinsrw $5, %ecx, %xmm1
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm1
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm1
-; X64-SSE-NEXT:    pxor %xmm0, %xmm1
-; X64-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    shll $16, %ecx
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    orl %ecx, %eax
+; X64-SSE-NEXT:    xorl %esi, %edi
+; X64-SSE-NEXT:    movl %edi, %eax
 ; X64-SSE-NEXT:    retq
   %1 = bitcast i24 %a to <8 x i3>
   %2 = bitcast i24 %b to <8 x i3>
@@ -482,186 +108,14 @@ define i24 @xor_i24_as_v8i3(i24 %a, i24 %b) nounwind {
 define i24 @or_i24_as_v8i3(i24 %a, i24 %b) nounwind {
 ; X32-SSE-LABEL: or_i24_as_v8i3:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    pushl %ebp
-; X32-SSE-NEXT:    movl %esp, %ebp
-; X32-SSE-NEXT:    andl $-8, %esp
-; X32-SSE-NEXT:    subl $24, %esp
-; X32-SSE-NEXT:    movl 12(%ebp), %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movl 8(%ebp), %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm1
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm1
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm1
-; X32-SSE-NEXT:    pxor %xmm2, %xmm2
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1,2,3,4,5],xmm2[6,7]
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm0
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm2[6,7]
-; X32-SSE-NEXT:    por %xmm1, %xmm0
-; X32-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
-; X32-SSE-NEXT:    shll $16, %ecx
-; X32-SSE-NEXT:    movzwl (%esp), %eax
-; X32-SSE-NEXT:    orl %ecx, %eax
-; X32-SSE-NEXT:    movl %ebp, %esp
-; X32-SSE-NEXT:    popl %ebp
+; X32-SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE-NEXT:    orl {{[0-9]+}}(%esp), %eax
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: or_i24_as_v8i3:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    movw %si, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %esi
-; X64-SSE-NEXT:    movb %sil, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movw %di, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %edi
-; X64-SSE-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $3, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    movl %eax, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movd %edx, %xmm0
-; X64-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $6, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $9, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $12, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X64-SSE-NEXT:    shrl $15, %eax
-; X64-SSE-NEXT:    movzwl %ax, %eax
-; X64-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X64-SSE-NEXT:    xorl %eax, %eax
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm0
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm0
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $3, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movl %ecx, %esi
-; X64-SSE-NEXT:    andl $7, %esi
-; X64-SSE-NEXT:    movd %esi, %xmm1
-; X64-SSE-NEXT:    pinsrw $1, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $6, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $2, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $9, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $3, %edx, %xmm1
-; X64-SSE-NEXT:    movl %ecx, %edx
-; X64-SSE-NEXT:    shrl $12, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    pinsrw $4, %edx, %xmm1
-; X64-SSE-NEXT:    shrl $15, %ecx
-; X64-SSE-NEXT:    movzwl %cx, %ecx
-; X64-SSE-NEXT:    pinsrw $5, %ecx, %xmm1
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm1
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm1
-; X64-SSE-NEXT:    por %xmm0, %xmm1
-; X64-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    shll $16, %ecx
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    orl %ecx, %eax
+; X64-SSE-NEXT:    orl %esi, %edi
+; X64-SSE-NEXT:    movl %edi, %eax
 ; X64-SSE-NEXT:    retq
   %1 = bitcast i24 %a to <8 x i3>
   %2 = bitcast i24 %b to <8 x i3>
@@ -677,22 +131,16 @@ define i24 @or_i24_as_v8i3(i24 %a, i24 %b) nounwind {
 define <3 x i8> @and_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 ; X32-SSE-LABEL: and_v3i8_as_i24:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    subl $12, %esp
 ; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $1, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $2, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $1, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $2, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    movd %xmm0, %ecx
-; X32-SSE-NEXT:    andl %eax, %ecx
-; X32-SSE-NEXT:    movd %ecx, %xmm0
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X32-SSE-NEXT:    pextrb $0, %xmm0, %eax
-; X32-SSE-NEXT:    pextrb $4, %xmm0, %edx
-; X32-SSE-NEXT:    pextrb $8, %xmm0, %ecx
-; X32-SSE-NEXT:    addl $12, %esp
+; X32-SSE-NEXT:    pinsrb $4, {{[0-9]+}}(%esp), %xmm0
+; X32-SSE-NEXT:    pinsrb $8, {{[0-9]+}}(%esp), %xmm0
+; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pinsrb $4, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pinsrb $8, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pand %xmm0, %xmm1
+; X32-SSE-NEXT:    pextrb $0, %xmm1, %eax
+; X32-SSE-NEXT:    pextrb $4, %xmm1, %edx
+; X32-SSE-NEXT:    pextrb $8, %xmm1, %ecx
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: and_v3i8_as_i24:
@@ -700,20 +148,13 @@ define <3 x i8> @and_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 ; X64-SSE-NEXT:    movd %ecx, %xmm0
 ; X64-SSE-NEXT:    pinsrd $1, %r8d, %xmm0
 ; X64-SSE-NEXT:    pinsrd $2, %r9d, %xmm0
-; X64-SSE-NEXT:    movdqa {{.*#+}} xmm1 = <0,4,8,128,u,u,u,u,u,u,u,u,u,u,u,u>
-; X64-SSE-NEXT:    pshufb %xmm1, %xmm0
-; X64-SSE-NEXT:    movd %xmm0, %eax
-; X64-SSE-NEXT:    movd %edi, %xmm0
-; X64-SSE-NEXT:    pinsrd $1, %esi, %xmm0
-; X64-SSE-NEXT:    pinsrd $2, %edx, %xmm0
-; X64-SSE-NEXT:    pshufb %xmm1, %xmm0
-; X64-SSE-NEXT:    movd %xmm0, %ecx
-; X64-SSE-NEXT:    andl %eax, %ecx
-; X64-SSE-NEXT:    movd %ecx, %xmm0
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X64-SSE-NEXT:    pextrb $0, %xmm0, %eax
-; X64-SSE-NEXT:    pextrb $4, %xmm0, %edx
-; X64-SSE-NEXT:    pextrb $8, %xmm0, %ecx
+; X64-SSE-NEXT:    movd %edi, %xmm1
+; X64-SSE-NEXT:    pinsrd $1, %esi, %xmm1
+; X64-SSE-NEXT:    pinsrd $2, %edx, %xmm1
+; X64-SSE-NEXT:    pand %xmm0, %xmm1
+; X64-SSE-NEXT:    pextrb $0, %xmm1, %eax
+; X64-SSE-NEXT:    pextrb $4, %xmm1, %edx
+; X64-SSE-NEXT:    pextrb $8, %xmm1, %ecx
 ; X64-SSE-NEXT:    retq
   %1 = bitcast <3 x i8> %a to i24
   %2 = bitcast <3 x i8> %b to i24
@@ -725,22 +166,16 @@ define <3 x i8> @and_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 define <3 x i8> @xor_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 ; X32-SSE-LABEL: xor_v3i8_as_i24:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    subl $12, %esp
 ; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $1, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $2, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $1, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $2, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    movd %xmm0, %ecx
-; X32-SSE-NEXT:    xorl %eax, %ecx
-; X32-SSE-NEXT:    movd %ecx, %xmm0
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X32-SSE-NEXT:    pextrb $0, %xmm0, %eax
-; X32-SSE-NEXT:    pextrb $4, %xmm0, %edx
-; X32-SSE-NEXT:    pextrb $8, %xmm0, %ecx
-; X32-SSE-NEXT:    addl $12, %esp
+; X32-SSE-NEXT:    pinsrb $4, {{[0-9]+}}(%esp), %xmm0
+; X32-SSE-NEXT:    pinsrb $8, {{[0-9]+}}(%esp), %xmm0
+; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pinsrb $4, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pinsrb $8, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pxor %xmm0, %xmm1
+; X32-SSE-NEXT:    pextrb $0, %xmm1, %eax
+; X32-SSE-NEXT:    pextrb $4, %xmm1, %edx
+; X32-SSE-NEXT:    pextrb $8, %xmm1, %ecx
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: xor_v3i8_as_i24:
@@ -748,20 +183,13 @@ define <3 x i8> @xor_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 ; X64-SSE-NEXT:    movd %ecx, %xmm0
 ; X64-SSE-NEXT:    pinsrd $1, %r8d, %xmm0
 ; X64-SSE-NEXT:    pinsrd $2, %r9d, %xmm0
-; X64-SSE-NEXT:    movdqa {{.*#+}} xmm1 = <0,4,8,128,u,u,u,u,u,u,u,u,u,u,u,u>
-; X64-SSE-NEXT:    pshufb %xmm1, %xmm0
-; X64-SSE-NEXT:    movd %xmm0, %eax
-; X64-SSE-NEXT:    movd %edi, %xmm0
-; X64-SSE-NEXT:    pinsrd $1, %esi, %xmm0
-; X64-SSE-NEXT:    pinsrd $2, %edx, %xmm0
-; X64-SSE-NEXT:    pshufb %xmm1, %xmm0
-; X64-SSE-NEXT:    movd %xmm0, %ecx
-; X64-SSE-NEXT:    xorl %eax, %ecx
-; X64-SSE-NEXT:    movd %ecx, %xmm0
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X64-SSE-NEXT:    pextrb $0, %xmm0, %eax
-; X64-SSE-NEXT:    pextrb $4, %xmm0, %edx
-; X64-SSE-NEXT:    pextrb $8, %xmm0, %ecx
+; X64-SSE-NEXT:    movd %edi, %xmm1
+; X64-SSE-NEXT:    pinsrd $1, %esi, %xmm1
+; X64-SSE-NEXT:    pinsrd $2, %edx, %xmm1
+; X64-SSE-NEXT:    pxor %xmm0, %xmm1
+; X64-SSE-NEXT:    pextrb $0, %xmm1, %eax
+; X64-SSE-NEXT:    pextrb $4, %xmm1, %edx
+; X64-SSE-NEXT:    pextrb $8, %xmm1, %ecx
 ; X64-SSE-NEXT:    retq
   %1 = bitcast <3 x i8> %a to i24
   %2 = bitcast <3 x i8> %b to i24
@@ -773,22 +201,16 @@ define <3 x i8> @xor_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 define <3 x i8> @or_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 ; X32-SSE-LABEL: or_v3i8_as_i24:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    subl $12, %esp
 ; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $1, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $2, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $1, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    pinsrb $2, {{[0-9]+}}(%esp), %xmm0
-; X32-SSE-NEXT:    movd %xmm0, %ecx
-; X32-SSE-NEXT:    orl %eax, %ecx
-; X32-SSE-NEXT:    movd %ecx, %xmm0
-; X32-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X32-SSE-NEXT:    pextrb $0, %xmm0, %eax
-; X32-SSE-NEXT:    pextrb $4, %xmm0, %edx
-; X32-SSE-NEXT:    pextrb $8, %xmm0, %ecx
-; X32-SSE-NEXT:    addl $12, %esp
+; X32-SSE-NEXT:    pinsrb $4, {{[0-9]+}}(%esp), %xmm0
+; X32-SSE-NEXT:    pinsrb $8, {{[0-9]+}}(%esp), %xmm0
+; X32-SSE-NEXT:    pinsrb $0, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pinsrb $4, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    pinsrb $8, {{[0-9]+}}(%esp), %xmm1
+; X32-SSE-NEXT:    por %xmm0, %xmm1
+; X32-SSE-NEXT:    pextrb $0, %xmm1, %eax
+; X32-SSE-NEXT:    pextrb $4, %xmm1, %edx
+; X32-SSE-NEXT:    pextrb $8, %xmm1, %ecx
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: or_v3i8_as_i24:
@@ -796,20 +218,13 @@ define <3 x i8> @or_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 ; X64-SSE-NEXT:    movd %ecx, %xmm0
 ; X64-SSE-NEXT:    pinsrd $1, %r8d, %xmm0
 ; X64-SSE-NEXT:    pinsrd $2, %r9d, %xmm0
-; X64-SSE-NEXT:    movdqa {{.*#+}} xmm1 = <0,4,8,128,u,u,u,u,u,u,u,u,u,u,u,u>
-; X64-SSE-NEXT:    pshufb %xmm1, %xmm0
-; X64-SSE-NEXT:    movd %xmm0, %eax
-; X64-SSE-NEXT:    movd %edi, %xmm0
-; X64-SSE-NEXT:    pinsrd $1, %esi, %xmm0
-; X64-SSE-NEXT:    pinsrd $2, %edx, %xmm0
-; X64-SSE-NEXT:    pshufb %xmm1, %xmm0
-; X64-SSE-NEXT:    movd %xmm0, %ecx
-; X64-SSE-NEXT:    orl %eax, %ecx
-; X64-SSE-NEXT:    movd %ecx, %xmm0
-; X64-SSE-NEXT:    pmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; X64-SSE-NEXT:    pextrb $0, %xmm0, %eax
-; X64-SSE-NEXT:    pextrb $4, %xmm0, %edx
-; X64-SSE-NEXT:    pextrb $8, %xmm0, %ecx
+; X64-SSE-NEXT:    movd %edi, %xmm1
+; X64-SSE-NEXT:    pinsrd $1, %esi, %xmm1
+; X64-SSE-NEXT:    pinsrd $2, %edx, %xmm1
+; X64-SSE-NEXT:    por %xmm0, %xmm1
+; X64-SSE-NEXT:    pextrb $0, %xmm1, %eax
+; X64-SSE-NEXT:    pextrb $4, %xmm1, %edx
+; X64-SSE-NEXT:    pextrb $8, %xmm1, %ecx
 ; X64-SSE-NEXT:    retq
   %1 = bitcast <3 x i8> %a to i24
   %2 = bitcast <3 x i8> %b to i24
@@ -825,186 +240,12 @@ define <3 x i8> @or_v3i8_as_i24(<3 x i8> %a, <3 x i8> %b) nounwind {
 define <8 x i3> @and_v8i3_as_i24(<8 x i3> %a, <8 x i3> %b) nounwind {
 ; X32-SSE-LABEL: and_v8i3_as_i24:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    pushl %ebp
-; X32-SSE-NEXT:    movl %esp, %ebp
-; X32-SSE-NEXT:    andl $-8, %esp
-; X32-SSE-NEXT:    subl $24, %esp
-; X32-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movd %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    shll $16, %eax
-; X32-SSE-NEXT:    movzwl (%esp), %ecx
-; X32-SSE-NEXT:    orl %eax, %ecx
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
-; X32-SSE-NEXT:    shll $16, %edx
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    orl %edx, %eax
-; X32-SSE-NEXT:    andl %ecx, %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm1
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm1
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm1
-; X32-SSE-NEXT:    pxor %xmm0, %xmm0
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3,4,5],xmm0[6,7]
-; X32-SSE-NEXT:    movl %ebp, %esp
-; X32-SSE-NEXT:    popl %ebp
+; X32-SSE-NEXT:    andps %xmm1, %xmm0
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: and_v8i3_as_i24:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    shll $16, %eax
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    orl %eax, %ecx
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    shll $16, %eax
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %edx
-; X64-SSE-NEXT:    orl %eax, %edx
-; X64-SSE-NEXT:    andl %ecx, %edx
-; X64-SSE-NEXT:    movw %dx, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %edx
-; X64-SSE-NEXT:    movb %dl, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $3, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    movl %eax, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movd %edx, %xmm0
-; X64-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $6, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $9, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $12, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X64-SSE-NEXT:    shrl $15, %eax
-; X64-SSE-NEXT:    movzwl %ax, %eax
-; X64-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X64-SSE-NEXT:    xorl %eax, %eax
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm0
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm0
+; X64-SSE-NEXT:    andps %xmm1, %xmm0
 ; X64-SSE-NEXT:    retq
   %1 = bitcast <8 x i3> %a to i24
   %2 = bitcast <8 x i3> %b to i24
@@ -1016,186 +257,12 @@ define <8 x i3> @and_v8i3_as_i24(<8 x i3> %a, <8 x i3> %b) nounwind {
 define <8 x i3> @xor_v8i3_as_i24(<8 x i3> %a, <8 x i3> %b) nounwind {
 ; X32-SSE-LABEL: xor_v8i3_as_i24:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    pushl %ebp
-; X32-SSE-NEXT:    movl %esp, %ebp
-; X32-SSE-NEXT:    andl $-8, %esp
-; X32-SSE-NEXT:    subl $24, %esp
-; X32-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movd %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    shll $16, %eax
-; X32-SSE-NEXT:    movzwl (%esp), %ecx
-; X32-SSE-NEXT:    orl %eax, %ecx
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
-; X32-SSE-NEXT:    shll $16, %edx
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    orl %edx, %eax
-; X32-SSE-NEXT:    xorl %ecx, %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm1
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm1
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm1
-; X32-SSE-NEXT:    pxor %xmm0, %xmm0
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3,4,5],xmm0[6,7]
-; X32-SSE-NEXT:    movl %ebp, %esp
-; X32-SSE-NEXT:    popl %ebp
+; X32-SSE-NEXT:    xorps %xmm1, %xmm0
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: xor_v8i3_as_i24:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    shll $16, %eax
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    orl %eax, %ecx
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    shll $16, %eax
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %edx
-; X64-SSE-NEXT:    orl %eax, %edx
-; X64-SSE-NEXT:    xorl %ecx, %edx
-; X64-SSE-NEXT:    movw %dx, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %edx
-; X64-SSE-NEXT:    movb %dl, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $3, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    movl %eax, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movd %edx, %xmm0
-; X64-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $6, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $9, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $12, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X64-SSE-NEXT:    shrl $15, %eax
-; X64-SSE-NEXT:    movzwl %ax, %eax
-; X64-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X64-SSE-NEXT:    xorl %eax, %eax
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm0
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm0
+; X64-SSE-NEXT:    xorps %xmm1, %xmm0
 ; X64-SSE-NEXT:    retq
   %1 = bitcast <8 x i3> %a to i24
   %2 = bitcast <8 x i3> %b to i24
@@ -1207,186 +274,12 @@ define <8 x i3> @xor_v8i3_as_i24(<8 x i3> %a, <8 x i3> %b) nounwind {
 define <8 x i3> @or_v8i3_as_i24(<8 x i3> %a, <8 x i3> %b) nounwind {
 ; X32-SSE-LABEL: or_v8i3_as_i24:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    pushl %ebp
-; X32-SSE-NEXT:    movl %esp, %ebp
-; X32-SSE-NEXT:    andl $-8, %esp
-; X32-SSE-NEXT:    subl $24, %esp
-; X32-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    movd %xmm1, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, (%esp)
-; X32-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movd %xmm0, %eax
-; X32-SSE-NEXT:    andl $15, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    shll $16, %eax
-; X32-SSE-NEXT:    movzwl (%esp), %ecx
-; X32-SSE-NEXT:    orl %eax, %ecx
-; X32-SSE-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
-; X32-SSE-NEXT:    shll $16, %edx
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    orl %edx, %eax
-; X32-SSE-NEXT:    orl %ecx, %eax
-; X32-SSE-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    shrl $16, %eax
-; X32-SSE-NEXT:    movb %al, {{[0-9]+}}(%esp)
-; X32-SSE-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $3, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    movl %eax, %edx
-; X32-SSE-NEXT:    andl $7, %edx
-; X32-SSE-NEXT:    movd %edx, %xmm1
-; X32-SSE-NEXT:    pinsrw $1, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $6, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $2, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $9, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $3, %ecx, %xmm1
-; X32-SSE-NEXT:    movl %eax, %ecx
-; X32-SSE-NEXT:    shrl $12, %ecx
-; X32-SSE-NEXT:    andl $7, %ecx
-; X32-SSE-NEXT:    pinsrw $4, %ecx, %xmm1
-; X32-SSE-NEXT:    shrl $15, %eax
-; X32-SSE-NEXT:    pinsrw $5, %eax, %xmm1
-; X32-SSE-NEXT:    pxor %xmm0, %xmm0
-; X32-SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3,4,5],xmm0[6,7]
-; X32-SSE-NEXT:    movl %ebp, %esp
-; X32-SSE-NEXT:    popl %ebp
+; X32-SSE-NEXT:    orps %xmm1, %xmm0
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: or_v8i3_as_i24:
 ; X64-SSE:       # BB#0:
-; X64-SSE-NEXT:    pextrw $7, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm1, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $7, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $6, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $5, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $4, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $3, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $2, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    pextrw $1, %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movd %xmm0, %eax
-; X64-SSE-NEXT:    andl $15, %eax
-; X64-SSE-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    shll $16, %eax
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %ecx
-; X64-SSE-NEXT:    orl %eax, %ecx
-; X64-SSE-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    shll $16, %eax
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %edx
-; X64-SSE-NEXT:    orl %eax, %edx
-; X64-SSE-NEXT:    orl %ecx, %edx
-; X64-SSE-NEXT:    movw %dx, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    shrl $16, %edx
-; X64-SSE-NEXT:    movb %dl, -{{[0-9]+}}(%rsp)
-; X64-SSE-NEXT:    movzwl -{{[0-9]+}}(%rsp), %eax
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $3, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    movl %eax, %edx
-; X64-SSE-NEXT:    andl $7, %edx
-; X64-SSE-NEXT:    movd %edx, %xmm0
-; X64-SSE-NEXT:    pinsrw $1, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $6, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $2, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $9, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $3, %ecx, %xmm0
-; X64-SSE-NEXT:    movl %eax, %ecx
-; X64-SSE-NEXT:    shrl $12, %ecx
-; X64-SSE-NEXT:    andl $7, %ecx
-; X64-SSE-NEXT:    pinsrw $4, %ecx, %xmm0
-; X64-SSE-NEXT:    shrl $15, %eax
-; X64-SSE-NEXT:    movzwl %ax, %eax
-; X64-SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; X64-SSE-NEXT:    xorl %eax, %eax
-; X64-SSE-NEXT:    pinsrw $6, %eax, %xmm0
-; X64-SSE-NEXT:    pinsrw $7, %eax, %xmm0
+; X64-SSE-NEXT:    orps %xmm1, %xmm0
 ; X64-SSE-NEXT:    retq
   %1 = bitcast <8 x i3> %a to i24
   %2 = bitcast <8 x i3> %b to i24
