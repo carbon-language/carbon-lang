@@ -61,6 +61,8 @@ static bool canEvaluateShiftedShift(unsigned FirstShiftAmt,
                                     bool IsFirstShiftLeft,
                                     Instruction *SecondShift, InstCombiner &IC,
                                     Instruction *CxtI) {
+  assert(SecondShift->isLogicalShift() && "Unexpected instruction type");
+  
   // We need constant shifts.
   auto *SecondShiftConst = dyn_cast<ConstantInt>(SecondShift->getOperand(1));
   if (!SecondShiftConst)
