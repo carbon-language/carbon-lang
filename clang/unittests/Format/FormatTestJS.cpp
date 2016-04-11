@@ -936,6 +936,9 @@ TEST_F(FormatTestJS, MetadataAnnotations) {
                "    return 'y';\n"
                "  }\n"
                "}");
+  verifyFormat("class C {\n"
+               "  private x(@A x: string) {}\n"
+               "}");
   verifyFormat("class X {}\n"
                "class Y {}");
 }
