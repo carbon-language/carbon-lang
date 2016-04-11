@@ -41,3 +41,35 @@ loop:
   br label %loop
 }
 
+; Converting the 2 shifts to SHL 6 without the AND is wrong.
+; https://llvm.org/bugs/show_bug.cgi?id=8547
+
+define i32 @pr8547(i32* %g) {
+; CHECK-LABEL: @pr8547(
+; CHECK-NEXT:  codeRepl:
+; CHECK-NEXT:    br label %for.cond
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[STOREMERGE:%.*]] = phi i32 [ 0, %codeRepl ], [ 5, %for.cond ]
+; CHECK-NEXT:    store i32 [[STOREMERGE]], i32* %g, align 4
+; CHECK-NEXT:    [[TMP0:%.*]] = shl nuw nsw i32 [[STOREMERGE]], 6
+; CHECK-NEXT:    [[CONV2:%.*]] = and i32 [[TMP0]], 64
+; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp eq i32 [[CONV2]], 0
+; CHECK-NEXT:    br i1 [[TOBOOL]], label %for.cond, label %codeRepl2
+; CHECK:       codeRepl2:
+; CHECK-NEXT:    ret i32 [[CONV2]]
+;
+codeRepl:
+  br label %for.cond
+
+for.cond:
+  %storemerge = phi i32 [ 0, %codeRepl ], [ 5, %for.cond ]
+  store i32 %storemerge, i32* %g, align 4
+  %shl = shl i32 %storemerge, 30
+  %conv2 = lshr i32 %shl, 24
+  %tobool = icmp eq i32 %conv2, 0
+  br i1 %tobool, label %for.cond, label %codeRepl2
+
+codeRepl2:
+  ret i32 %conv2
+}
+
