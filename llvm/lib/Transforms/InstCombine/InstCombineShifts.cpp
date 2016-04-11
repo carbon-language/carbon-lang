@@ -110,7 +110,7 @@ static bool canEvaluateShiftedShift(unsigned FirstShiftAmt,
 /// where the client will ask if E can be computed shifted right by 64-bits.  If
 /// this succeeds, the GetShiftedValue function will be called to produce the
 /// value.
-static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
+static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool IsLeftShift,
                                InstCombiner &IC, Instruction *CxtI) {
   // We can always evaluate constants shifted.
   if (isa<Constant>(V))
@@ -124,8 +124,8 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
   // the value which means that we don't care if the shift has multiple uses.
   //  TODO:  Handle opposite shift by exact value.
   ConstantInt *CI = nullptr;
-  if ((isLeftShift && match(I, m_LShr(m_Value(), m_ConstantInt(CI)))) ||
-      (!isLeftShift && match(I, m_Shl(m_Value(), m_ConstantInt(CI))))) {
+  if ((IsLeftShift && match(I, m_LShr(m_Value(), m_ConstantInt(CI)))) ||
+      (!IsLeftShift && match(I, m_Shl(m_Value(), m_ConstantInt(CI))))) {
     if (CI->getZExtValue() == NumBits) {
       // TODO: Check that the input bits are already zero with MaskedValueIsZero
 #if 0
@@ -154,19 +154,19 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
   case Instruction::Or:
   case Instruction::Xor:
     // Bitwise operators can all arbitrarily be arbitrarily evaluated shifted.
-    return CanEvaluateShifted(I->getOperand(0), NumBits, isLeftShift, IC, I) &&
-           CanEvaluateShifted(I->getOperand(1), NumBits, isLeftShift, IC, I);
+    return CanEvaluateShifted(I->getOperand(0), NumBits, IsLeftShift, IC, I) &&
+           CanEvaluateShifted(I->getOperand(1), NumBits, IsLeftShift, IC, I);
 
   case Instruction::Shl:
   case Instruction::LShr:
-    return canEvaluateShiftedShift(NumBits, isLeftShift, I, IC, CxtI);
+    return canEvaluateShiftedShift(NumBits, IsLeftShift, I, IC, CxtI);
 
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
     Value *TrueVal = SI->getTrueValue();
     Value *FalseVal = SI->getFalseValue();
-    return CanEvaluateShifted(TrueVal, NumBits, isLeftShift, IC, SI) &&
-           CanEvaluateShifted(FalseVal, NumBits, isLeftShift, IC, SI);
+    return CanEvaluateShifted(TrueVal, NumBits, IsLeftShift, IC, SI) &&
+           CanEvaluateShifted(FalseVal, NumBits, IsLeftShift, IC, SI);
   }
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
@@ -174,7 +174,7 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
     for (Value *IncValue : PN->incoming_values())
-      if (!CanEvaluateShifted(IncValue, NumBits, isLeftShift, IC, PN))
+      if (!CanEvaluateShifted(IncValue, NumBits, IsLeftShift, IC, PN))
         return false;
     return true;
   }
