@@ -3251,3 +3251,39 @@ __m128 test_mm_maskz_scalef_round_ss(__mmask8 __U, __m128 __A, __m128 __B){
   // CHECK: @llvm.x86.avx512.mask.scalef.ss
     return _mm_maskz_scalef_round_ss(__U, __A, __B, _MM_FROUND_CUR_DIRECTION);
 }
+
+__m512i test_mm512_srai_epi32(__m512i __A) {
+  // CHECK-LABEL: @test_mm512_srai_epi32
+  // CHECK: @llvm.x86.avx512.mask.psra.di.512
+  return _mm512_srai_epi32(__A, 5); 
+}
+
+__m512i test_mm512_mask_srai_epi32(__m512i __W, __mmask16 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_mask_srai_epi32
+  // CHECK: @llvm.x86.avx512.mask.psra.di.512
+  return _mm512_mask_srai_epi32(__W, __U, __A, 5); 
+}
+
+__m512i test_mm512_maskz_srai_epi32(__mmask16 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_maskz_srai_epi32
+  // CHECK: @llvm.x86.avx512.mask.psra.di.512
+  return _mm512_maskz_srai_epi32(__U, __A, 5); 
+}
+
+__m512i test_mm512_srai_epi64(__m512i __A) {
+  // CHECK-LABEL: @test_mm512_srai_epi64
+  // CHECK: @llvm.x86.avx512.mask.psra.qi.512
+  return _mm512_srai_epi64(__A, 5); 
+}
+
+__m512i test_mm512_mask_srai_epi64(__m512i __W, __mmask8 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_mask_srai_epi64
+  // CHECK: @llvm.x86.avx512.mask.psra.qi.512
+  return _mm512_mask_srai_epi64(__W, __U, __A, 5); 
+}
+
+__m512i test_mm512_maskz_srai_epi64(__mmask8 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_maskz_srai_epi64
+  // CHECK: @llvm.x86.avx512.mask.psra.qi.512
+  return _mm512_maskz_srai_epi64(__U, __A, 5); 
+}

@@ -4874,6 +4874,49 @@ __builtin_ia32_scalefss_round_mask ((__v4sf)( __A),\
              _MM_FROUND_CUR_DIRECTION);\
 })
 
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_srai_epi32 (__m512i __A, unsigned int __B)
+{
+  return (__m512i) __builtin_ia32_psradi512_mask ((__v16si) __A, __B,
+              (__v16si)
+              _mm512_setzero_si512 (),
+              (__mmask16) -1);
+}
+
+#define _mm512_mask_srai_epi32( __W, __U, __A, __B) __extension__ ({ \
+__builtin_ia32_psradi512_mask ((__v16si)( __A),( __B),\
+              (__v16si)( __W),\
+              (__mmask16)( __U));\
+})
+
+#define _mm512_maskz_srai_epi32( __U, __A, __B) __extension__ ({ \
+__builtin_ia32_psradi512_mask ((__v16si)( __A),( __B),\
+              (__v16si)\
+              _mm512_setzero_si512 (),\
+              (__mmask16)( __U));\
+})
+
+#define _mm512_srai_epi64( __A, __B) __extension__ ({ \
+__builtin_ia32_psraqi512_mask ((__v8di)( __A),( __B),\
+              (__v8di)\
+              _mm512_setzero_si512 (),\
+              (__mmask8) -1);\
+})
+
+#define _mm512_mask_srai_epi64( __W, __U, __A, __B) __extension__ ({ \
+__builtin_ia32_psraqi512_mask ((__v8di)( __A),( __B),\
+              (__v8di)( __W),\
+              (__mmask8)( __U));\
+})
+
+#define _mm512_maskz_srai_epi64( __U, __A, __B) __extension__ ({ \
+__builtin_ia32_psraqi512_mask ((__v8di)( __A),( __B),\
+              (__v8di)\
+              _mm512_setzero_si512 (),\
+              (__mmask8)( __U));\
+})
+
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
