@@ -605,8 +605,9 @@ void MemoryAccess::assumeNoOutOfBound() {
   // bail out more often than strictly necessary.
   Outside = isl_set_remove_divs(Outside);
   Outside = isl_set_complement(Outside);
-  auto &Loc = getAccessInstruction() ? getAccessInstruction()->getDebugLoc()
-                                     : DebugLoc();
+  const auto &Loc = getAccessInstruction()
+                        ? getAccessInstruction()->getDebugLoc()
+                        : DebugLoc();
   Statement->getParent()->addAssumption(INBOUNDS, Outside, Loc, AS_ASSUMPTION);
   isl_space_free(Space);
 }
