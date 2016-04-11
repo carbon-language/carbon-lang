@@ -972,6 +972,21 @@ bool X86FastISel::X86SelectStore(const Instruction *I) {
   if (S->isAtomic())
     return false;
 
+  const Value *PtrV = I->getOperand(1);
+  if (TLI.supportSwiftError()) {
+    // Swifterror values can come from either a function parameter with
+    // swifterror attribute or an alloca with swifterror attribute.
+    if (const Argument *Arg = dyn_cast<Argument>(PtrV)) {
+      if (Arg->hasSwiftErrorAttr())
+        return false;
+    }
+
+    if (const AllocaInst *Alloca = dyn_cast<AllocaInst>(PtrV)) {
+      if (Alloca->isSwiftError())
+        return false;
+    }
+  }
+
   const Value *Val = S->getValueOperand();
   const Value *Ptr = S->getPointerOperand();
 
@@ -1000,6 +1015,10 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
       FuncInfo.MF->getInfo<X86MachineFunctionInfo>();
 
   if (!FuncInfo.CanLowerReturn)
+    return false;
+
+  if (TLI.supportSwiftError() &&
+      F.getAttributes().hasAttrSomewhere(Attribute::SwiftError))
     return false;
 
   if (TLI.supportSplitCSR(FuncInfo.MF))
@@ -1132,6 +1151,21 @@ bool X86FastISel::X86SelectLoad(const Instruction *I) {
   // Atomic loads need special handling.
   if (LI->isAtomic())
     return false;
+
+  const Value *SV = I->getOperand(0);
+  if (TLI.supportSwiftError()) {
+    // Swifterror values can come from either a function parameter with
+    // swifterror attribute or an alloca with swifterror attribute.
+    if (const Argument *Arg = dyn_cast<Argument>(SV)) {
+      if (Arg->hasSwiftErrorAttr())
+        return false;
+    }
+
+    if (const AllocaInst *Alloca = dyn_cast<AllocaInst>(SV)) {
+      if (Alloca->isSwiftError())
+        return false;
+    }
+  }
 
   MVT VT;
   if (!isTypeLegal(LI->getType(), VT, /*AllowI1=*/true))
@@ -2745,6 +2779,7 @@ bool X86FastISel::fastLowerArguments() {
         F->getAttributes().hasAttribute(Idx, Attribute::InReg) ||
         F->getAttributes().hasAttribute(Idx, Attribute::StructRet) ||
         F->getAttributes().hasAttribute(Idx, Attribute::SwiftSelf) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::SwiftError) ||
         F->getAttributes().hasAttribute(Idx, Attribute::Nest))
       return false;
 
@@ -2876,6 +2911,10 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   // Don't know about inalloca yet.
   if (CLI.CS && CLI.CS->hasInAllocaArgument())
     return false;
+
+  for (auto Flag : CLI.OutFlags)
+    if (Flag.isSwiftError())
+      return false;
 
   // Fast-isel doesn't know about callee-pop yet.
   if (X86::isCalleePop(CC, Subtarget->is64Bit(), IsVarArg,

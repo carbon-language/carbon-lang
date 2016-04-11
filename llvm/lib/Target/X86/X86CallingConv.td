@@ -162,6 +162,9 @@ def RetCC_X86_64_C : CallingConv<[
 
   // MMX vector types are always returned in XMM0.
   CCIfType<[x86mmx], CCAssignToReg<[XMM0, XMM1]>>,
+
+  CCIfSwiftError<CCIfType<[i64], CCAssignToReg<[R12]>>>,
+
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
@@ -296,6 +299,9 @@ def CC_X86_64_C : CallingConv<[
 
   // A SwiftSelf is passed in R10.
   CCIfSwiftSelf<CCIfType<[i64], CCAssignToReg<[R10]>>>,
+
+  // A SwiftError is passed in R12.
+  CCIfSwiftError<CCIfType<[i64], CCAssignToReg<[R12]>>>,
 
   // The first 6 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
@@ -844,6 +850,8 @@ def CSR_NoRegs : CalleeSavedRegs<(add)>;
 
 def CSR_32 : CalleeSavedRegs<(add ESI, EDI, EBX, EBP)>;
 def CSR_64 : CalleeSavedRegs<(add RBX, R12, R13, R14, R15, RBP)>;
+
+def CSR_64_SwiftError : CalleeSavedRegs<(sub CSR_64, R12)>;
 
 def CSR_32EHRet : CalleeSavedRegs<(add EAX, EDX, CSR_32)>;
 def CSR_64EHRet : CalleeSavedRegs<(add RAX, RDX, CSR_64)>;

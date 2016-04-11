@@ -87,6 +87,10 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     }
   }
 
+  if (STI.isTargetDarwin() && STI.getTargetLowering()->supportSwiftError() &&
+      F->getAttributes().hasAttrSomewhere(Attribute::SwiftError))
+    return CSR_iOS_SwiftError_SaveList;
+
   if (STI.isTargetDarwin() && F->getCallingConv() == CallingConv::CXX_FAST_TLS)
     return MF->getInfo<ARMFunctionInfo>()->isSplitCSR()
                ? CSR_iOS_CXX_TLS_PE_SaveList
@@ -110,6 +114,11 @@ ARMBaseRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
   if (CC == CallingConv::GHC)
     // This is academic becase all GHC calls are (supposed to be) tail calls
     return CSR_NoRegs_RegMask;
+
+  if (STI.isTargetDarwin() && STI.getTargetLowering()->supportSwiftError() &&
+      MF.getFunction()->getAttributes().hasAttrSomewhere(Attribute::SwiftError))
+    return CSR_iOS_SwiftError_RegMask;
+
   if (STI.isTargetDarwin() && CC == CallingConv::CXX_FAST_TLS)
     return CSR_iOS_CXX_TLS_RegMask;
   return STI.isTargetDarwin() ? CSR_iOS_RegMask : CSR_AAPCS_RegMask;

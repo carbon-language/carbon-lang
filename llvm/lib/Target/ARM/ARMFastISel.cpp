@@ -1062,6 +1062,21 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   if (cast<LoadInst>(I)->isAtomic())
     return false;
 
+  const Value *SV = I->getOperand(0);
+  if (TLI.supportSwiftError()) {
+    // Swifterror values can come from either a function parameter with
+    // swifterror attribute or an alloca with swifterror attribute.
+    if (const Argument *Arg = dyn_cast<Argument>(SV)) {
+      if (Arg->hasSwiftErrorAttr())
+        return false;
+    }
+
+    if (const AllocaInst *Alloca = dyn_cast<AllocaInst>(SV)) {
+      if (Alloca->isSwiftError())
+        return false;
+    }
+  }
+
   // Verify we have a legal type before going any further.
   MVT VT;
   if (!isLoadTypeLegal(I->getType(), VT))
@@ -1176,6 +1191,21 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
   // Atomic stores need special handling.
   if (cast<StoreInst>(I)->isAtomic())
     return false;
+
+  const Value *PtrV = I->getOperand(1);
+  if (TLI.supportSwiftError()) {
+    // Swifterror values can come from either a function parameter with
+    // swifterror attribute or an alloca with swifterror attribute.
+    if (const Argument *Arg = dyn_cast<Argument>(PtrV)) {
+      if (Arg->hasSwiftErrorAttr())
+        return false;
+    }
+
+    if (const AllocaInst *Alloca = dyn_cast<AllocaInst>(PtrV)) {
+      if (Alloca->isSwiftError())
+        return false;
+    }
+  }
 
   // Verify we have a legal type before going any further.
   MVT VT;
@@ -2085,6 +2115,10 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
   if (!FuncInfo.CanLowerReturn)
     return false;
 
+  if (TLI.supportSwiftError() &&
+      F.getAttributes().hasAttrSomewhere(Attribute::SwiftError))
+    return false;
+
   if (TLI.supportSplitCSR(FuncInfo.MF))
     return false;
 
@@ -2347,6 +2381,7 @@ bool ARMFastISel::SelectCall(const Instruction *I,
     if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
         CS.paramHasAttr(AttrInd, Attribute::StructRet) ||
         CS.paramHasAttr(AttrInd, Attribute::SwiftSelf) ||
+        CS.paramHasAttr(AttrInd, Attribute::SwiftError) ||
         CS.paramHasAttr(AttrInd, Attribute::Nest) ||
         CS.paramHasAttr(AttrInd, Attribute::ByVal))
       return false;
@@ -3023,6 +3058,7 @@ bool ARMFastISel::fastLowerArguments() {
     if (F->getAttributes().hasAttribute(Idx, Attribute::InReg) ||
         F->getAttributes().hasAttribute(Idx, Attribute::StructRet) ||
         F->getAttributes().hasAttribute(Idx, Attribute::SwiftSelf) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::SwiftError) ||
         F->getAttributes().hasAttribute(Idx, Attribute::ByVal))
       return false;
 

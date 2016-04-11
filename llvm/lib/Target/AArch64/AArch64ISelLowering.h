@@ -400,6 +400,10 @@ public:
       MachineBasicBlock *Entry,
       const SmallVectorImpl<MachineBasicBlock *> &Exits) const override;
 
+  bool supportSwiftError() const override {
+    return true;
+  }
+
 private:
   bool isExtFreeImpl(const Instruction *Ext) const override;
 

@@ -984,6 +984,10 @@ namespace llvm {
 
     bool isIntDivCheap(EVT VT, AttributeSet Attr) const override;
 
+    bool supportSwiftError() const override {
+      return true;
+    }
+
   protected:
     std::pair<const TargetRegisterClass *, uint8_t>
     findRepresentativeClass(const TargetRegisterInfo *TRI,
