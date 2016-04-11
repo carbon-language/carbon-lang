@@ -4418,6 +4418,37 @@ _mm512_maskz_permutex2var_epi64 (__mmask8 __U, __m512i __A,
               (__mmask8) __U);
 }
 
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_testn_epi32_mask (__m512i __A, __m512i __B)
+{
+  return (__mmask16) __builtin_ia32_ptestnmd512 ((__v16si) __A,
+             (__v16si) __B,
+             (__mmask16) -1);
+}
+
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_mask_testn_epi32_mask (__mmask16 __U, __m512i __A, __m512i __B)
+{
+  return (__mmask16) __builtin_ia32_ptestnmd512 ((__v16si) __A,
+             (__v16si) __B, __U);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_mm512_testn_epi64_mask (__m512i __A, __m512i __B)
+{
+  return (__mmask8) __builtin_ia32_ptestnmq512 ((__v8di) __A,
+            (__v8di) __B,
+            (__mmask8) -1);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_mm512_mask_testn_epi64_mask (__mmask8 __U, __m512i __A, __m512i __B)
+{
+  return (__mmask8) __builtin_ia32_ptestnmq512 ((__v8di) __A,
+            (__v8di) __B, __U);
+}
+
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H

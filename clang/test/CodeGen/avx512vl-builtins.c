@@ -4704,3 +4704,99 @@ __m256 test_mm256_maskz_permutevar_ps(__mmask8 __U, __m256 __A, __m256i __C) {
   // CHECK: @llvm.x86.avx512.mask.vpermilvar.ps.256
   return _mm256_maskz_permutevar_ps(__U, __A, __C); 
 }
+
+__mmask8 test_mm_test_epi32_mask(__m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_test_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestm.d.128
+  return _mm_test_epi32_mask(__A, __B); 
+}
+
+__mmask8 test_mm_mask_test_epi32_mask(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_test_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestm.d.128
+  return _mm_mask_test_epi32_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm256_test_epi32_mask(__m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_test_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestm.d.256
+  return _mm256_test_epi32_mask(__A, __B); 
+}
+
+__mmask8 test_mm256_mask_test_epi32_mask(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_test_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestm.d.256
+  return _mm256_mask_test_epi32_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm_test_epi64_mask(__m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_test_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestm.q.128
+  return _mm_test_epi64_mask(__A, __B); 
+}
+
+__mmask8 test_mm_mask_test_epi64_mask(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_test_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestm.q.128
+  return _mm_mask_test_epi64_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm256_test_epi64_mask(__m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_test_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestm.q.256
+  return _mm256_test_epi64_mask(__A, __B); 
+}
+
+__mmask8 test_mm256_mask_test_epi64_mask(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_test_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestm.q.256
+  return _mm256_mask_test_epi64_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm_testn_epi32_mask(__m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_testn_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.d.128
+  return _mm_testn_epi32_mask(__A, __B); 
+}
+
+__mmask8 test_mm_mask_testn_epi32_mask(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_testn_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.d.128
+  return _mm_mask_testn_epi32_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm256_testn_epi32_mask(__m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_testn_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.d.256
+  return _mm256_testn_epi32_mask(__A, __B); 
+}
+
+__mmask8 test_mm256_mask_testn_epi32_mask(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_testn_epi32_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.d.256
+  return _mm256_mask_testn_epi32_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm_testn_epi64_mask(__m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_testn_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.q.128
+  return _mm_testn_epi64_mask(__A, __B); 
+}
+
+__mmask8 test_mm_mask_testn_epi64_mask(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_testn_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.q.128
+  return _mm_mask_testn_epi64_mask(__U, __A, __B); 
+}
+
+__mmask8 test_mm256_testn_epi64_mask(__m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_testn_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.q.256
+  return _mm256_testn_epi64_mask(__A, __B); 
+}
+
+__mmask8 test_mm256_mask_testn_epi64_mask(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_testn_epi64_mask
+  // CHECK: @llvm.x86.avx512.ptestnm.q.256
+  return _mm256_mask_testn_epi64_mask(__U, __A, __B); 
+}
