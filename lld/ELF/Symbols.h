@@ -405,6 +405,9 @@ template <class ELFT> struct ElfSym {
   // The content for _gp symbol for MIPS target.
   static DefinedRegular<ELFT> *MipsGp;
 
+  static DefinedRegular<ELFT> *MipsLocalGp;
+  static DefinedRegular<ELFT> *MipsGpDisp;
+
   // __rel_iplt_start/__rel_iplt_end for signaling
   // where R_[*]_IRELATIVE relocations do live.
   static SymbolBody *RelaIpltStart;
@@ -418,6 +421,8 @@ template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Edata2;
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::End;
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::End2;
 template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::MipsGp;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::MipsLocalGp;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::MipsGpDisp;
 template <class ELFT> SymbolBody *ElfSym<ELFT>::RelaIpltStart;
 template <class ELFT> SymbolBody *ElfSym<ELFT>::RelaIpltEnd;
 
