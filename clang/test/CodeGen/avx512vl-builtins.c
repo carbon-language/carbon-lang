@@ -4800,3 +4800,98 @@ __mmask8 test_mm256_mask_testn_epi64_mask(__mmask8 __U, __m256i __A, __m256i __B
   // CHECK: @llvm.x86.avx512.ptestnm.q.256
   return _mm256_mask_testn_epi64_mask(__U, __A, __B); 
 }
+__m128i test_mm_mask_unpackhi_epi32(__m128i __W, __mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_unpackhi_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckhd.q.128
+  return _mm_mask_unpackhi_epi32(__W, __U, __A, __B); 
+}
+
+__m128i test_mm_maskz_unpackhi_epi32(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_maskz_unpackhi_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckhd.q.128
+  return _mm_maskz_unpackhi_epi32(__U, __A, __B); 
+}
+
+__m256i test_mm256_mask_unpackhi_epi32(__m256i __W, __mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_unpackhi_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckhd.q.256
+  return _mm256_mask_unpackhi_epi32(__W, __U, __A, __B); 
+}
+
+__m256i test_mm256_maskz_unpackhi_epi32(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_maskz_unpackhi_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckhd.q.256
+  return _mm256_maskz_unpackhi_epi32(__U, __A, __B); 
+}
+
+__m128i test_mm_mask_unpackhi_epi64(__m128i __W, __mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_unpackhi_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpckhqd.q.128
+  return _mm_mask_unpackhi_epi64(__W, __U, __A, __B); 
+}
+
+__m128i test_mm_maskz_unpackhi_epi64(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_maskz_unpackhi_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpckhqd.q.128
+  return _mm_maskz_unpackhi_epi64(__U, __A, __B); 
+}
+
+__m256i test_mm256_mask_unpackhi_epi64(__m256i __W, __mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_unpackhi_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpckhqd.q.256
+  return _mm256_mask_unpackhi_epi64(__W, __U, __A, __B); 
+}
+
+__m256i test_mm256_maskz_unpackhi_epi64(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_maskz_unpackhi_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpckhqd.q.256
+  return _mm256_maskz_unpackhi_epi64(__U, __A, __B); 
+}
+
+__m128i test_mm_mask_unpacklo_epi32(__m128i __W, __mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_unpacklo_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckld.q.128
+  return _mm_mask_unpacklo_epi32(__W, __U, __A, __B); 
+}
+
+__m128i test_mm_maskz_unpacklo_epi32(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_maskz_unpacklo_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckld.q.128
+  return _mm_maskz_unpacklo_epi32(__U, __A, __B); 
+}
+
+__m256i test_mm256_mask_unpacklo_epi32(__m256i __W, __mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_unpacklo_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckld.q.256
+  return _mm256_mask_unpacklo_epi32(__W, __U, __A, __B); 
+}
+
+__m256i test_mm256_maskz_unpacklo_epi32(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_maskz_unpacklo_epi32
+  // CHECK: @llvm.x86.avx512.mask.punpckld.q.256
+  return _mm256_maskz_unpacklo_epi32(__U, __A, __B); 
+}
+
+__m128i test_mm_mask_unpacklo_epi64(__m128i __W, __mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_mask_unpacklo_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpcklqd.q.128
+  return _mm_mask_unpacklo_epi64(__W, __U, __A, __B); 
+}
+
+__m128i test_mm_maskz_unpacklo_epi64(__mmask8 __U, __m128i __A, __m128i __B) {
+  // CHECK-LABEL: @test_mm_maskz_unpacklo_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpcklqd.q.128
+  return _mm_maskz_unpacklo_epi64(__U, __A, __B); 
+}
+
+__m256i test_mm256_mask_unpacklo_epi64(__m256i __W, __mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_mask_unpacklo_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpcklqd.q.256
+  return _mm256_mask_unpacklo_epi64(__W, __U, __A, __B); 
+}
+
+__m256i test_mm256_maskz_unpacklo_epi64(__mmask8 __U, __m256i __A, __m256i __B) {
+  // CHECK-LABEL: @test_mm256_maskz_unpacklo_epi64
+  // CHECK: @llvm.x86.avx512.mask.punpcklqd.q.256
+  return _mm256_maskz_unpacklo_epi64(__U, __A, __B); 
+}
