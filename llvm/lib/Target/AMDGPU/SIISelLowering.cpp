@@ -128,6 +128,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v16i8, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v4f32, Custom);
 
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
+
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::BR_CC, MVT::i32, Expand);
@@ -306,6 +308,25 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
 //===----------------------------------------------------------------------===//
 // TargetLowering queries
 //===----------------------------------------------------------------------===//
+
+bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
+                                          const CallInst &CI,
+                                          unsigned IntrID) const {
+  switch (IntrID) {
+  case Intrinsic::amdgcn_atomic_inc:
+  case Intrinsic::amdgcn_atomic_dec:
+    Info.opc = ISD::INTRINSIC_W_CHAIN;
+    Info.memVT = MVT::getVT(CI.getType());
+    Info.ptrVal = CI.getOperand(0);
+    Info.align = 0;
+    Info.vol = false;
+    Info.readMem = true;
+    Info.writeMem = true;
+    return true;
+  default:
+    return false;
+  }
+}
 
 bool SITargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &,
                                           EVT) const {
@@ -1173,6 +1194,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerGlobalAddress(MFI, Op, DAG);
   }
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN: return LowerINTRINSIC_W_CHAIN(Op, DAG);
   case ISD::INTRINSIC_VOID: return LowerINTRINSIC_VOID(Op, DAG);
   }
   return SDValue();
@@ -1635,6 +1657,29 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getNode(AMDGPUISD::CVT_F32_UBYTE3, DL, VT, Op.getOperand(1));
   default:
     return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  }
+}
+
+SDValue SITargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  unsigned IntrID = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  switch (IntrID) {
+  case Intrinsic::amdgcn_atomic_inc:
+  case Intrinsic::amdgcn_atomic_dec: {
+    MemSDNode *M = cast<MemSDNode>(Op);
+    unsigned Opc = (IntrID == Intrinsic::amdgcn_atomic_inc) ?
+      AMDGPUISD::ATOMIC_INC : AMDGPUISD::ATOMIC_DEC;
+    SDValue Ops[] = {
+      M->getOperand(0), // Chain
+      M->getOperand(2), // Ptr
+      M->getOperand(3)  // Value
+    };
+
+    return DAG.getMemIntrinsicNode(Opc, SDLoc(Op), M->getVTList(), Ops,
+                                   M->getMemoryVT(), M->getMemOperand());
+  }
+  default:
+    return SDValue();
   }
 }
 
@@ -2644,7 +2689,9 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ATOMIC_LOAD_MIN:
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
-  case ISD::ATOMIC_LOAD_UMAX: { // TODO: Target mem intrinsics.
+  case ISD::ATOMIC_LOAD_UMAX:
+  case AMDGPUISD::ATOMIC_INC:
+  case AMDGPUISD::ATOMIC_DEC: { // TODO: Target mem intrinsics.
     if (DCI.isBeforeLegalize())
       break;
 

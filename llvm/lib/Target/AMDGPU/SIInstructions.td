@@ -1042,8 +1042,13 @@ defm BUFFER_ATOMIC_OR : MUBUF_Atomic <
 defm BUFFER_ATOMIC_XOR : MUBUF_Atomic <
   mubuf<0x3b, 0x4a>, "buffer_atomic_xor", VGPR_32, i32, atomic_xor_global
 >;
-//def BUFFER_ATOMIC_INC : MUBUF_ <mubuf<0x3c, 0x4b>, "buffer_atomic_inc", []>;
-//def BUFFER_ATOMIC_DEC : MUBUF_ <mubuf<0x3d, 0x4c>, "buffer_atomic_dec", []>;
+defm BUFFER_ATOMIC_INC : MUBUF_Atomic <
+  mubuf<0x3c, 0x4b>, "buffer_atomic_inc", VGPR_32, i32, atomic_inc_global
+>;
+defm BUFFER_ATOMIC_DEC : MUBUF_Atomic <
+  mubuf<0x3d, 0x4c>, "buffer_atomic_dec", VGPR_32, i32, atomic_dec_global
+>;
+
 //def BUFFER_ATOMIC_FCMPSWAP : MUBUF_ <mubuf<0x3e>, "buffer_atomic_fcmpswap", []>; // isn't on VI
 //def BUFFER_ATOMIC_FMIN : MUBUF_ <mubuf<0x3f>, "buffer_atomic_fmin", []>; // isn't on VI
 //def BUFFER_ATOMIC_FMAX : MUBUF_ <mubuf<0x40>, "buffer_atomic_fmax", []>; // isn't on VI
@@ -1061,8 +1066,12 @@ defm BUFFER_ATOMIC_CMPSWAP_X2 : MUBUF_Atomic <
 //def BUFFER_ATOMIC_AND_X2 : MUBUF_X2 <mubuf<0x59, 0x68>, "buffer_atomic_and_x2", []>;
 //def BUFFER_ATOMIC_OR_X2 : MUBUF_X2 <mubuf<0x5a, 0x69>, "buffer_atomic_or_x2", []>;
 //def BUFFER_ATOMIC_XOR_X2 : MUBUF_X2 <mubuf<0x5b, 0x6a>, "buffer_atomic_xor_x2", []>;
-//def BUFFER_ATOMIC_INC_X2 : MUBUF_X2 <mubuf<0x5c, 0x6b>, "buffer_atomic_inc_x2", []>;
-//def BUFFER_ATOMIC_DEC_X2 : MUBUF_X2 <mubuf<0x5d, 0x6c>, "buffer_atomic_dec_x2", []>;
+defm BUFFER_ATOMIC_INC_X2 : MUBUF_Atomic <
+  mubuf<0x5c, 0x6b>, "buffer_atomic_inc_x2", VReg_64, i64, atomic_inc_global
+>;
+defm BUFFER_ATOMIC_DEC_X2 : MUBUF_Atomic <
+  mubuf<0x5d, 0x6c>, "buffer_atomic_dec_x2", VReg_64, i64, atomic_dec_global
+>;
 //def BUFFER_ATOMIC_FCMPSWAP_X2 : MUBUF_X2 <mubuf<0x5e>, "buffer_atomic_fcmpswap_x2", []>; // isn't on VI
 //def BUFFER_ATOMIC_FMIN_X2 : MUBUF_X2 <mubuf<0x5f>, "buffer_atomic_fmin_x2", []>; // isn't on VI
 //def BUFFER_ATOMIC_FMAX_X2 : MUBUF_X2 <mubuf<0x60>, "buffer_atomic_fmax_x2", []>; // isn't on VI
@@ -3073,6 +3082,8 @@ class DSAtomicCmpXChg <DS inst, ValueType vt, PatFrag frag> : Pat <
 def : DSAtomicRetPat<DS_WRXCHG_RTN_B32, i32, si_atomic_swap_local>;
 def : DSAtomicRetPat<DS_ADD_RTN_U32, i32, si_atomic_load_add_local>;
 def : DSAtomicRetPat<DS_SUB_RTN_U32, i32, si_atomic_load_sub_local>;
+def : DSAtomicRetPat<DS_INC_RTN_U32, i32, si_atomic_inc_local>;
+def : DSAtomicRetPat<DS_DEC_RTN_U32, i32, si_atomic_dec_local>;
 def : DSAtomicRetPat<DS_AND_RTN_B32, i32, si_atomic_load_and_local>;
 def : DSAtomicRetPat<DS_OR_RTN_B32, i32, si_atomic_load_or_local>;
 def : DSAtomicRetPat<DS_XOR_RTN_B32, i32, si_atomic_load_xor_local>;
@@ -3080,13 +3091,14 @@ def : DSAtomicRetPat<DS_MIN_RTN_I32, i32, si_atomic_load_min_local>;
 def : DSAtomicRetPat<DS_MAX_RTN_I32, i32, si_atomic_load_max_local>;
 def : DSAtomicRetPat<DS_MIN_RTN_U32, i32, si_atomic_load_umin_local>;
 def : DSAtomicRetPat<DS_MAX_RTN_U32, i32, si_atomic_load_umax_local>;
-
 def : DSAtomicCmpXChg<DS_CMPST_RTN_B32, i32, si_atomic_cmp_swap_32_local>;
 
 // 64-bit atomics.
 def : DSAtomicRetPat<DS_WRXCHG_RTN_B64, i64, si_atomic_swap_local>;
 def : DSAtomicRetPat<DS_ADD_RTN_U64, i64, si_atomic_load_add_local>;
 def : DSAtomicRetPat<DS_SUB_RTN_U64, i64, si_atomic_load_sub_local>;
+def : DSAtomicRetPat<DS_INC_RTN_U64, i64, si_atomic_inc_local>;
+def : DSAtomicRetPat<DS_DEC_RTN_U64, i64, si_atomic_dec_local>;
 def : DSAtomicRetPat<DS_AND_RTN_B64, i64, si_atomic_load_and_local>;
 def : DSAtomicRetPat<DS_OR_RTN_B64, i64, si_atomic_load_or_local>;
 def : DSAtomicRetPat<DS_XOR_RTN_B64, i64, si_atomic_load_xor_local>;

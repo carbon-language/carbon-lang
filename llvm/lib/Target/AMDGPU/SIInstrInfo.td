@@ -95,6 +95,14 @@ def SIload_constant : SDNode<"AMDGPUISD::LOAD_CONSTANT",
                       [SDNPMayLoad, SDNPMemOperand]
 >;
 
+def SIatomic_inc : SDNode<"AMDGPUISD::ATOMIC_INC", SDTAtomic2,
+  [SDNPMayLoad, SDNPMayStore, SDNPMemOperand, SDNPHasChain]
+>;
+
+def SIatomic_dec : SDNode<"AMDGPUISD::ATOMIC_DEC", SDTAtomic2,
+  [SDNPMayLoad, SDNPMayStore, SDNPMemOperand, SDNPHasChain]
+>;
+
 def SItbuffer_store : SDNode<"AMDGPUISD::TBUFFER_STORE_FORMAT",
   SDTypeProfile<0, 13,
     [SDTCisVT<0, v4i32>,   // rsrc(SGPR)
@@ -179,6 +187,13 @@ def smrd_load : PatFrag <(ops node:$ptr), (load node:$ptr), [{
   return isConstantLoad(cast<LoadSDNode>(N), -1) &&
   static_cast<const SITargetLowering *>(getTargetLowering())->isMemOpUniform(N);
 }]>;
+
+//===----------------------------------------------------------------------===//
+// PatFrags for global memory operations
+//===----------------------------------------------------------------------===//
+
+def atomic_inc_global : global_binary_atomic_op<SIatomic_inc>;
+def atomic_dec_global : global_binary_atomic_op<SIatomic_dec>;
 
 //===----------------------------------------------------------------------===//
 // SDNodes and PatFrag for local loads and stores to enable s_mov_b32 m0, -1
@@ -279,9 +294,10 @@ def si_uniform_br_scc : PatFrag <
   return isCBranchSCC(N);
 }]>;
 
-multiclass SIAtomicM0Glue2 <string op_name> {
+multiclass SIAtomicM0Glue2 <string op_name, bit is_amdgpu = 0> {
 
-  def _glue : SDNode <"ISD::ATOMIC_"#op_name, SDTAtomic2,
+  def _glue : SDNode <
+    !if(is_amdgpu, "AMDGPUISD", "ISD")#"::ATOMIC_"#op_name, SDTAtomic2,
     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
   >;
 
@@ -289,11 +305,13 @@ multiclass SIAtomicM0Glue2 <string op_name> {
 }
 
 defm si_atomic_load_add : SIAtomicM0Glue2 <"LOAD_ADD">;
+defm si_atomic_load_sub : SIAtomicM0Glue2 <"LOAD_SUB">;
+defm si_atomic_inc : SIAtomicM0Glue2 <"INC", 1>;
+defm si_atomic_dec : SIAtomicM0Glue2 <"DEC", 1>;
 defm si_atomic_load_and : SIAtomicM0Glue2 <"LOAD_AND">;
 defm si_atomic_load_min : SIAtomicM0Glue2 <"LOAD_MIN">;
 defm si_atomic_load_max : SIAtomicM0Glue2 <"LOAD_MAX">;
 defm si_atomic_load_or : SIAtomicM0Glue2 <"LOAD_OR">;
-defm si_atomic_load_sub : SIAtomicM0Glue2 <"LOAD_SUB">;
 defm si_atomic_load_xor : SIAtomicM0Glue2 <"LOAD_XOR">;
 defm si_atomic_load_umin : SIAtomicM0Glue2 <"LOAD_UMIN">;
 defm si_atomic_load_umax : SIAtomicM0Glue2 <"LOAD_UMAX">;
