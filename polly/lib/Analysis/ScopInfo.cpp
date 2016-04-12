@@ -67,6 +67,11 @@ STATISTIC(RichScopFound, "Number of Scops containing a loop");
 // are also unlikely to result in good code
 static int const MaxConjunctsInDomain = 20;
 
+static cl::opt<bool> PollyRemarksMinimal(
+    "polly-remarks-minimal",
+    cl::desc("Do not emit remarks about assumptions that are known"),
+    cl::Hidden, cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool> ModelReadOnlyScalars(
     "polly-analyze-read-only-scalars",
     cl::desc("Model read-only scalar values in the scop description"),
@@ -3450,18 +3455,20 @@ static std::string toString(AssumptionKind Kind) {
 
 bool Scop::trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
                            DebugLoc Loc, AssumptionSign Sign) {
-  if (Sign == AS_ASSUMPTION) {
-    if (isl_set_is_subset(Context, Set))
-      return false;
+  if (PollyRemarksMinimal) {
+    if (Sign == AS_ASSUMPTION) {
+      if (isl_set_is_subset(Context, Set))
+        return false;
 
-    if (isl_set_is_subset(AssumedContext, Set))
-      return false;
-  } else {
-    if (isl_set_is_disjoint(Set, Context))
-      return false;
+      if (isl_set_is_subset(AssumedContext, Set))
+        return false;
+    } else {
+      if (isl_set_is_disjoint(Set, Context))
+        return false;
 
-    if (isl_set_is_subset(Set, InvalidContext))
-      return false;
+      if (isl_set_is_subset(Set, InvalidContext))
+        return false;
+    }
   }
 
   auto &F = *getRegion().getEntry()->getParent();
