@@ -8182,6 +8182,10 @@ def err_omp_variable_in_map_and_dsa : Error<
   "%0 variable cannot be in a map clause in '#pragma omp %1' directive">;
 def err_omp_param_or_this_in_clause : Error<
   "expected reference to one of the parameters of function %0%select{| or 'this'}1">;
+def err_omp_expected_uniform_param : Error<
+  "expected a reference to a parameter specified in a 'uniform' clause">;
+def err_omp_expected_int_param : Error<
+  "expected a reference to an integer-typed parameter">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
