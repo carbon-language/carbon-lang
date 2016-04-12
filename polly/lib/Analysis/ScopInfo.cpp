@@ -676,14 +676,14 @@ void MemoryAccess::buildMemIntrinsicAccessRelation() {
   assert(isa<MemIntrinsic>(getAccessInstruction()));
   assert(Subscripts.size() == 2 && Sizes.size() == 0);
 
-  auto *SubscriptPWA = Statement->getPwAff(Subscripts[0]);
+  auto *SubscriptPWA = getPwAff(Subscripts[0]);
   auto *SubscriptMap = isl_map_from_pw_aff(SubscriptPWA);
 
   isl_map *LengthMap;
   if (Subscripts[1] == nullptr) {
     LengthMap = isl_map_universe(isl_map_get_space(SubscriptMap));
   } else {
-    auto *LengthPWA = Statement->getPwAff(Subscripts[1]);
+    auto *LengthPWA = getPwAff(Subscripts[1]);
     LengthMap = isl_map_from_pw_aff(LengthPWA);
     auto *RangeSpace = isl_space_range(isl_map_get_space(LengthMap));
     LengthMap = isl_map_apply_range(LengthMap, isl_map_lex_gt(RangeSpace));
@@ -742,7 +742,7 @@ __isl_give isl_map *MemoryAccess::foldAccess(__isl_take isl_map *AccessRelation,
   for (int i = Size - 2; i >= 0; --i) {
     isl_space *Space;
     isl_map *MapOne, *MapTwo;
-    isl_pw_aff *DimSize = Statement->getPwAff(Sizes[i]);
+    isl_pw_aff *DimSize = getPwAff(Sizes[i]);
 
     isl_space *SpaceSize = isl_pw_aff_get_space(DimSize);
     isl_pw_aff_free(DimSize);
@@ -840,7 +840,7 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
   AccessRelation = isl_map_universe(Space);
 
   for (int i = 0, Size = Subscripts.size(); i < Size; ++i) {
-    isl_pw_aff *Affine = Statement->getPwAff(Subscripts[i]);
+    isl_pw_aff *Affine = getPwAff(Subscripts[i]);
     isl_map *SubscriptMap = isl_map_from_pw_aff(Affine);
     AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
   }
@@ -918,6 +918,11 @@ void MemoryAccess::print(raw_ostream &OS) const {
 }
 
 void MemoryAccess::dump() const { print(errs()); }
+
+__isl_give isl_pw_aff *MemoryAccess::getPwAff(const SCEV *E) {
+  auto *Stmt = getStatement();
+  return Stmt->getParent()->getPwAff(E, Stmt->getEntryBlock());
+}
 
 // Create a map in the size of the provided set domain, that maps from the
 // one element of the provided set domain to another element of the provided

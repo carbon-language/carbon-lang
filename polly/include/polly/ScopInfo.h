@@ -797,6 +797,9 @@ public:
   /// @brief Return the access function subscript in the dimension @p Dim.
   const SCEV *getSubscript(unsigned Dim) const { return Subscripts[Dim]; }
 
+  /// @brief Compute the isl representation for the SCEV @p E wrt. this access.
+  __isl_give isl_pw_aff *getPwAff(const SCEV *E);
+
   /// Get the stride of this memory access in the specified Schedule. Schedule
   /// is a map from the statement to a schedule where the innermost dimension is
   /// the dimension of the innermost loop containing the statement.
