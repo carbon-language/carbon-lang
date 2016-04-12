@@ -224,7 +224,7 @@ def int_amdgcn_image_atomic_cmpswap : Intrinsic <
    llvm_i1_ty],       // slc(imm)
   []>;
 
-def int_amdgcn_buffer_load_format : Intrinsic <
+class AMDGPUBufferLoad : Intrinsic <
   [llvm_anyfloat_ty],
   [llvm_v4i32_ty,     // rsrc(SGPR)
    llvm_i32_ty,       // vindex(VGPR)
@@ -232,16 +232,20 @@ def int_amdgcn_buffer_load_format : Intrinsic <
    llvm_i1_ty,        // glc(imm)
    llvm_i1_ty],       // slc(imm)
   [IntrReadMem]>;
+def int_amdgcn_buffer_load_format : AMDGPUBufferLoad;
+def int_amdgcn_buffer_load : AMDGPUBufferLoad;
 
-def int_amdgcn_buffer_store_format : Intrinsic <
+class AMDGPUBufferStore : Intrinsic <
   [],
-  [llvm_anyfloat_ty,  // vdata(VGPR) -- can currently only select v4f32
+  [llvm_anyfloat_ty,  // vdata(VGPR) -- can currently only select f32, v2f32, v4f32
    llvm_v4i32_ty,     // rsrc(SGPR)
    llvm_i32_ty,       // vindex(VGPR)
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
    llvm_i1_ty,        // glc(imm)
    llvm_i1_ty],       // slc(imm)
   []>;
+def int_amdgcn_buffer_store_format : AMDGPUBufferStore;
+def int_amdgcn_buffer_store : AMDGPUBufferStore;
 
 class AMDGPUBufferAtomic : Intrinsic <
   [llvm_i32_ty],
