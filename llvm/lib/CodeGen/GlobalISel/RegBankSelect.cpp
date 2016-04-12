@@ -63,7 +63,10 @@ RegBankSelect::repairReg(unsigned Reg,
   assert(ValMapping.BreakDown.size() == 1 &&
          "Support for complex break down not supported yet");
   const RegisterBankInfo::PartialMapping &PartialMap = ValMapping.BreakDown[0];
-  assert(PartialMap.Mask.getBitWidth() == MRI->getSize(Reg) &&
+  assert(PartialMap.Mask.getBitWidth() ==
+             (TargetRegisterInfo::isPhysicalRegister(Reg)
+                  ? TRI->getMinimalPhysRegClass(Reg)->getSize() * 8
+                  : MRI->getSize(Reg)) &&
          "Repairing other than copy not implemented yet");
   // If the MIRBuilder is configured to insert somewhere else than
   // DefUseMI, we may not use this function like was it first
@@ -207,7 +210,8 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
     // Therefore, create a new temporary for Reg.
     assert(ValMapping.BreakDown.size() == 1 &&
            "Support for complex break down not supported yet");
-    if (MRI->getRegClassOrRegBank(Reg)) {
+    if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
+        MRI->getRegClassOrRegBank(Reg)) {
       if (!MO.isDef() && MI.isPHI()) {
         // Phis are already copies, so there is nothing to repair.
         // Note: This will not hold when we support break downs with
