@@ -1,5 +1,8 @@
 ; Reject if DISubprogram does not belong to a DICompileUnit.
-; RUN: not llvm-as %s
+; RUN: not llvm-as -disable-output <%s 2>&1 | FileCheck %s
+
+; CHECK:  assembly parsed, but does not verify as correct!
+; CHECK: subprogram not found in any compile unit
 
 @_ZZNK4llvm6object15MachOObjectFile21getRelocationTypeNameENS0_11DataRefImplERNS_15SmallVectorImplIcEEE5Table = external unnamed_addr constant [6 x i8*], align 16
 
