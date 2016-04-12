@@ -6863,7 +6863,7 @@ Syntax:
 ::
 
       <result> = load [volatile] <ty>, <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>][, !invariant.group !<index>][, !nonnull !<index>][, !dereferenceable !<deref_bytes_node>][, !dereferenceable_or_null !<deref_bytes_node>][, !align !<align_node>]
-      <result> = load atomic [volatile] <ty>* <pointer> [singlethread] <ordering>, align <alignment> [, !invariant.group !<index>]
+      <result> = load atomic [volatile] <ty>, <ty>* <pointer> [singlethread] <ordering>, align <alignment> [, !invariant.group !<index>]
       !<index> = !{ i32 1 }
       !<deref_bytes_node> = !{i64 <dereferenceable_bytes>}
       !<align_node> = !{ i64 <value_alignment> }
