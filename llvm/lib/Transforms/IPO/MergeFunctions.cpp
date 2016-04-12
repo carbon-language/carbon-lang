@@ -1001,6 +1001,7 @@ int FunctionComparator::cmpOperations(const Instruction *L,
       if (int Res = cmpNumbers(LIndices[i], RIndices[i]))
         return Res;
     }
+    return 0;
   }
   if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(L)) {
     ArrayRef<unsigned> LIndices = EVI->getIndices();
@@ -1018,7 +1019,6 @@ int FunctionComparator::cmpOperations(const Instruction *L,
       return Res;
     return cmpNumbers(FI->getSynchScope(), cast<FenceInst>(R)->getSynchScope());
   }
-
   if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(L)) {
     if (int Res = cmpNumbers(CXI->isVolatile(),
                              cast<AtomicCmpXchgInst>(R)->isVolatile()))
