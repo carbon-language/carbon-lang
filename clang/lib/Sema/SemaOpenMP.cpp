@@ -3190,10 +3190,9 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
   return Res;
 }
 
-Sema::DeclGroupPtrTy
-Sema::ActOnOpenMPDeclareSimdDirective(DeclGroupPtrTy DG,
-                                      OMPDeclareSimdDeclAttr::BranchStateTy BS,
-                                      Expr *Simdlen, SourceRange SR) {
+Sema::DeclGroupPtrTy Sema::ActOnOpenMPDeclareSimdDirective(
+    DeclGroupPtrTy DG, OMPDeclareSimdDeclAttr::BranchStateTy BS, Expr *Simdlen,
+    ArrayRef<Expr *> Uniforms, SourceRange SR) {
   if (!DG || DG.get().isNull())
     return DeclGroupPtrTy();
 
@@ -3205,9 +3204,9 @@ Sema::ActOnOpenMPDeclareSimdDirective(DeclGroupPtrTy DG,
   if (auto *FTD = dyn_cast<FunctionTemplateDecl>(ADecl))
     ADecl = FTD->getTemplatedDecl();
 
-  if (!isa<FunctionDecl>(ADecl)) {
-    Diag(ADecl->getLocation(), diag::err_omp_function_expected)
-        << ADecl->getDeclContext()->isFileContext();
+  auto *FD = dyn_cast<FunctionDecl>(ADecl);
+  if (!FD) {
+    Diag(ADecl->getLocation(), diag::err_omp_function_expected);
     return DeclGroupPtrTy();
   }
 
@@ -3215,13 +3214,30 @@ Sema::ActOnOpenMPDeclareSimdDirective(DeclGroupPtrTy DG,
   // The parameter of the simdlen clause must be a constant positive integer
   // expression.
   ExprResult SL;
-  if (Simdlen) {
+  if (Simdlen)
     SL = VerifyPositiveIntegerConstantInClause(Simdlen, OMPC_simdlen);
-    if (SL.isInvalid())
-      return DG;
+  // OpenMP [2.8.2, declare simd construct, Description]
+  // The special this pointer can be used as if was one of the arguments to the
+  // function in any of the linear, aligned, or uniform clauses.
+  // The uniform clause declares one or more arguments to have an invariant
+  // value for all concurrent invocations of the function in the execution of a
+  // single SIMD loop.
+  for (auto *E : Uniforms) {
+    E = E->IgnoreParenImpCasts();
+    if (auto *DRE = dyn_cast<DeclRefExpr>(E))
+      if (auto *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl()))
+        if (FD->getNumParams() > PVD->getFunctionScopeIndex() &&
+            FD->getParamDecl(PVD->getFunctionScopeIndex())
+                    ->getCanonicalDecl() == PVD->getCanonicalDecl())
+          continue;
+    if (isa<CXXThisExpr>(E))
+      continue;
+    Diag(E->getExprLoc(), diag::err_omp_param_or_this_in_clause)
+        << FD->getDeclName() << (isa<CXXMethodDecl>(ADecl) ? 1 : 0);
   }
-  auto *NewAttr =
-      OMPDeclareSimdDeclAttr::CreateImplicit(Context, BS, SL.get(), SR);
+  auto *NewAttr = OMPDeclareSimdDeclAttr::CreateImplicit(
+      Context, BS, SL.get(), const_cast<Expr **>(Uniforms.data()),
+      Uniforms.size(), SR);
   ADecl->addAttr(NewAttr);
   return ConvertDeclToDeclGroup(ADecl);
 }
@@ -6386,6 +6402,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_dist_schedule:
   case OMPC_defaultmap:
   case OMPC_unknown:
+  case OMPC_uniform:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -6671,6 +6688,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_dist_schedule:
   case OMPC_defaultmap:
   case OMPC_unknown:
+  case OMPC_uniform:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -6821,6 +6839,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_unknown:
+  case OMPC_uniform:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7004,6 +7023,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_dist_schedule:
   case OMPC_defaultmap:
   case OMPC_unknown:
+  case OMPC_uniform:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7149,6 +7169,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_dist_schedule:
   case OMPC_defaultmap:
   case OMPC_unknown:
+  case OMPC_uniform:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;

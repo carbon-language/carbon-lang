@@ -75,8 +75,10 @@ void h(int *hp, int *hp2, int *hq, int *lin) {
 #pragma omp declare simd simdlen() simdlen)
 void foo();
 
+// expected-error@+3 2 {{expected reference to one of the parameters of function 'foo'}}
+// expected-error@+2 {{invalid use of 'this' outside of a non-static member function}}
 // expected-error@+1 {{argument to 'simdlen' clause must be a strictly positive integer value}}
-#pragma omp declare simd simdlen(N)
+#pragma omp declare simd simdlen(N) uniform(this, var)
 template<int N>
 void foo() {}
 
@@ -85,12 +87,34 @@ void test() {
   foo<-3>();
 }
 
+// expected-error@+1 {{expected '(' after 'uniform'}}
+#pragma omp declare simd uniform
+// expected-note@+3 {{to match this '('}}
+// expected-error@+2 {{expected ')'}}
+// expected-error@+1 {{expected expression}}
+#pragma omp declare simd uniform(
+// expected-error@+1 {{expected expression}}
+#pragma omp declare simd uniform()
+// expected-note@+3 {{to match this '('}}
+// expected-error@+2 {{expected ')'}}
+// expected-error@+1 {{invalid use of 'this' outside of a non-static member function}}
+#pragma omp declare simd uniform(this
+// expected-note@+3 {{to match this '('}}
+// expected-error@+2 {{expected ')'}}
+// expected-error@+1 {{invalid use of 'this' outside of a non-static member function}}
+#pragma omp declare simd uniform(this,a
+// expected-error@+1 {{expected expression}}
+#pragma omp declare simd uniform(,a)
+void bar(int a);
+
 template <class T>
 struct St {
 // expected-error@+2 {{function declaration is expected after 'declare simd' directive}}
 #pragma init_seg(compiler)
 #pragma omp declare simd
 #pragma init_seg(compiler)
+// expected-error@+1 {{use of undeclared identifier 't'}}
+#pragma omp declare simd uniform(this, t)
   void h(T *hp) {
 // expected-error@+1 {{unexpected OpenMP directive '#pragma omp declare simd'}}
 #pragma omp declare simd

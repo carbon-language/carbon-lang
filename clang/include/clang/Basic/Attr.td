@@ -2276,7 +2276,7 @@ def OMPDeclareSimdDecl : Attr {
     EnumArgument<"BranchState", "BranchStateTy",
                  [ "", "inbranch", "notinbranch" ],
                  [ "BS_Undefined", "BS_Inbranch", "BS_Notinbranch" ]>,
-    ExprArgument<"Simdlen">
+    ExprArgument<"Simdlen">, VariadicExprArgument<"Uniforms">
   ];
   let AdditionalMembers = [{
     void printPrettyPragma(raw_ostream & OS, const PrintingPolicy &Policy)
@@ -2286,6 +2286,16 @@ def OMPDeclareSimdDecl : Attr {
       if (auto *E = getSimdlen()) {
         OS << "simdlen(";
         E->printPretty(OS, nullptr, Policy);
+        OS << ") ";
+      }
+      if (uniforms_size() > 0) {
+        OS << "uniform";
+        StringRef Sep = "(";
+        for (auto *E : uniforms()) {
+          OS << Sep;
+          E->printPretty(OS, nullptr, Policy);
+          Sep = ", ";
+        }
         OS << ") ";
       }
     }

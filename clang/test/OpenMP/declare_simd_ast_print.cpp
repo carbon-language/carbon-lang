@@ -48,11 +48,11 @@ void h(int *hp, int *hp2, int *hq, int *lin)
 }
 
 class VV {
-  // CHECK: #pragma omp declare simd
+  // CHECK: #pragma omp declare simd uniform(this, a)
   // CHECK-NEXT: int add(int a, int b) __attribute__((cold))    {
   // CHECK-NEXT: return a + b;
   // CHECK-NEXT: }
-  #pragma omp declare simd
+  #pragma omp declare simd uniform(this, a)
   int add(int a, int b) __attribute__((cold)) { return a + b; }
 
   // CHECK: #pragma omp declare simd
@@ -109,10 +109,10 @@ public:
 // CHECK-NEXT: }
 
   #pragma omp declare simd
-  #pragma omp declare simd
+  #pragma omp declare simd uniform(this, b)
   int tadd(int b) { return x[b] + b; }
 
-// CHECK: #pragma omp declare simd
+// CHECK: #pragma omp declare simd uniform(this, b)
 // CHECK-NEXT: #pragma omp declare simd
 // CHECK-NEXT: int tadd(int b) {
 // CHECK-NEXT: return this->x[b] + b;
