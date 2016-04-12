@@ -3425,6 +3425,7 @@ bool Scop::hasFeasibleRuntimeContext() const {
   auto *NegativeContext = getInvalidContext();
   auto *DomainContext = isl_union_set_params(getDomains());
   IsFeasible = !isl_set_is_subset(DomainContext, NegativeContext);
+  IsFeasible &= !isl_set_is_subset(Context, NegativeContext);
   isl_set_free(NegativeContext);
   isl_set_free(DomainContext);
 
