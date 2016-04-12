@@ -5376,7 +5376,9 @@ def ext_typecheck_comparison_of_distinct_pointers_nonstandard : ExtWarn<
   "composite pointer type %2">, InGroup<CompareDistinctPointerType>;
 def err_typecheck_op_on_nonoverlapping_address_space_pointers : Error<
   "%select{comparison between %diff{ ($ and $)|}0,1"
-  "|arithmetic operation with operands of type %diff{ ($ and $)|}0,1}2"
+  "|arithmetic operation with operands of type %diff{ ($ and $)|}0,1"
+  "|conditional operator with the second and third operands of type "
+  "%diff{ ($ and $)|}0,1}2"
   " which are pointers to non-overlapping address spaces">;
 
 def err_typecheck_assign_const : Error<
