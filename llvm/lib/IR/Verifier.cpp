@@ -1774,11 +1774,11 @@ void Verifier::verifyStatepoint(ImmutableCallSite CS) {
     const CallInst *Call = dyn_cast<const CallInst>(U);
     Assert(Call, "illegal use of statepoint token", &CI, U);
     if (!Call) continue;
-    Assert(isa<GCRelocateInst>(Call) || isGCResult(Call),
+    Assert(isa<GCRelocateInst>(Call) || isa<GCResultInst>(Call),
            "gc.result or gc.relocate are the only value uses"
            "of a gc.statepoint",
            &CI, U);
-    if (isGCResult(Call)) {
+    if (isa<GCResultInst>(Call)) {
       Assert(Call->getArgOperand(0) == &CI,
              "gc.result connected to wrong gc.statepoint", &CI, Call);
     } else if (isa<GCRelocateInst>(Call)) {
