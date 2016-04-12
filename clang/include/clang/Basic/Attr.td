@@ -2276,7 +2276,8 @@ def OMPDeclareSimdDecl : Attr {
     EnumArgument<"BranchState", "BranchStateTy",
                  [ "", "inbranch", "notinbranch" ],
                  [ "BS_Undefined", "BS_Inbranch", "BS_Notinbranch" ]>,
-    ExprArgument<"Simdlen">, VariadicExprArgument<"Uniforms">
+    ExprArgument<"Simdlen">, VariadicExprArgument<"Uniforms">,
+    VariadicExprArgument<"Aligneds">, VariadicExprArgument<"Alignments">
   ];
   let AdditionalMembers = [{
     void printPrettyPragma(raw_ostream & OS, const PrintingPolicy &Policy)
@@ -2297,6 +2298,17 @@ def OMPDeclareSimdDecl : Attr {
           Sep = ", ";
         }
         OS << ") ";
+      }
+      alignments_iterator NI = alignments_begin();
+      for (auto E : aligneds()) {
+        OS << "aligned(";
+        E->printPretty(OS, nullptr, Policy);
+        if (*NI) {
+          OS << ": ";
+          (*NI)->printPretty(OS, nullptr, Policy);
+        }
+        OS << ") ";
+        ++NI;
       }
     }
   }];

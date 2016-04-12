@@ -329,63 +329,6 @@ Parser::ParseOpenMPDeclareReductionDirective(AccessSpecifier AS) {
                                                          IsCorrect);
 }
 
-/// Parses clauses for 'declare simd' directive.
-///    clause:
-///      'inbranch' | 'notinbranch'
-///      'simdlen' '(' <expr> ')'
-///      { 'uniform' '(' <argument_list> ')' }
-static bool parseDeclareSimdClauses(Parser &P,
-                                    OMPDeclareSimdDeclAttr::BranchStateTy &BS,
-                                    ExprResult &SimdLen,
-                                    SmallVectorImpl<Expr *> &Uniforms) {
-  SourceRange BSRange;
-  const Token &Tok = P.getCurToken();
-  bool IsError = false;
-  while (Tok.isNot(tok::annot_pragma_openmp_end)) {
-    if (Tok.isNot(tok::identifier))
-      break;
-    OMPDeclareSimdDeclAttr::BranchStateTy Out;
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    StringRef ClauseName = II->getName();
-    // Parse 'inranch|notinbranch' clauses.
-    if (OMPDeclareSimdDeclAttr::ConvertStrToBranchStateTy(ClauseName, Out)) {
-      if (BS != OMPDeclareSimdDeclAttr::BS_Undefined && BS != Out) {
-        P.Diag(Tok, diag::err_omp_declare_simd_inbranch_notinbranch)
-            << ClauseName
-            << OMPDeclareSimdDeclAttr::ConvertBranchStateTyToStr(BS) << BSRange;
-        IsError = true;
-      }
-      BS = Out;
-      BSRange = SourceRange(Tok.getLocation(), Tok.getEndLoc());
-      P.ConsumeToken();
-    } else if (ClauseName.equals("simdlen")) {
-      if (SimdLen.isUsable()) {
-        P.Diag(Tok, diag::err_omp_more_one_clause)
-            << getOpenMPDirectiveName(OMPD_declare_simd) << ClauseName << 0;
-        IsError = true;
-      }
-      P.ConsumeToken();
-      SourceLocation RLoc;
-      SimdLen = P.ParseOpenMPParensExpr(ClauseName, RLoc);
-      if (SimdLen.isInvalid())
-        IsError = true;
-    } else if (ClauseName.equals("uniform")) {
-      Parser::OpenMPVarListDataTy Data;
-
-      P.ConsumeToken();
-      if (P.ParseOpenMPVarList(OMPD_declare_simd,
-                               getOpenMPClauseKind(ClauseName), Uniforms, Data))
-        IsError = true;
-    } else
-      // TODO: add parsing of other clauses.
-      break;
-    // Skip ',' if any.
-    if (Tok.is(tok::comma))
-      P.ConsumeToken();
-  }
-  return IsError;
-}
-
 namespace {
 /// RAII that recreates function context for correct parsing of clauses of
 /// 'declare simd' construct.
@@ -442,6 +385,75 @@ public:
 };
 } // namespace
 
+/// Parses clauses for 'declare simd' directive.
+///    clause:
+///      'inbranch' | 'notinbranch'
+///      'simdlen' '(' <expr> ')'
+///      { 'uniform' '(' <argument_list> ')' }
+///      { 'aligned '(' <argument_list> [ ':' <alignment> ] ')' }
+static bool parseDeclareSimdClauses(Parser &P,
+                                    OMPDeclareSimdDeclAttr::BranchStateTy &BS,
+                                    ExprResult &SimdLen,
+                                    SmallVectorImpl<Expr *> &Uniforms,
+                                    SmallVectorImpl<Expr *> &Aligneds,
+                                    SmallVectorImpl<Expr *> &Alignments) {
+  SourceRange BSRange;
+  const Token &Tok = P.getCurToken();
+  bool IsError = false;
+  while (Tok.isNot(tok::annot_pragma_openmp_end)) {
+    if (Tok.isNot(tok::identifier))
+      break;
+    OMPDeclareSimdDeclAttr::BranchStateTy Out;
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    StringRef ClauseName = II->getName();
+    // Parse 'inranch|notinbranch' clauses.
+    if (OMPDeclareSimdDeclAttr::ConvertStrToBranchStateTy(ClauseName, Out)) {
+      if (BS != OMPDeclareSimdDeclAttr::BS_Undefined && BS != Out) {
+        P.Diag(Tok, diag::err_omp_declare_simd_inbranch_notinbranch)
+            << ClauseName
+            << OMPDeclareSimdDeclAttr::ConvertBranchStateTyToStr(BS) << BSRange;
+        IsError = true;
+      }
+      BS = Out;
+      BSRange = SourceRange(Tok.getLocation(), Tok.getEndLoc());
+      P.ConsumeToken();
+    } else if (ClauseName.equals("simdlen")) {
+      if (SimdLen.isUsable()) {
+        P.Diag(Tok, diag::err_omp_more_one_clause)
+            << getOpenMPDirectiveName(OMPD_declare_simd) << ClauseName << 0;
+        IsError = true;
+      }
+      P.ConsumeToken();
+      SourceLocation RLoc;
+      SimdLen = P.ParseOpenMPParensExpr(ClauseName, RLoc);
+      if (SimdLen.isInvalid())
+        IsError = true;
+    } else {
+      OpenMPClauseKind CKind = getOpenMPClauseKind(ClauseName);
+      if (CKind == OMPC_uniform || CKind == OMPC_aligned) {
+        Parser::OpenMPVarListDataTy Data;
+        auto *Vars = &Uniforms;
+        if (CKind == OMPC_aligned) {
+          Vars = &Aligneds;
+        }
+
+        P.ConsumeToken();
+        if (P.ParseOpenMPVarList(OMPD_declare_simd,
+                                 getOpenMPClauseKind(ClauseName), *Vars, Data))
+          IsError = true;
+        if (CKind == OMPC_aligned)
+          Alignments.append(Aligneds.size() - Alignments.size(), Data.TailExpr);
+      } else
+        // TODO: add parsing of other clauses.
+        break;
+    }
+    // Skip ',' if any.
+    if (Tok.is(tok::comma))
+      P.ConsumeToken();
+  }
+  return IsError;
+}
+
 /// Parse clauses for '#pragma omp declare simd'.
 Parser::DeclGroupPtrTy
 Parser::ParseOMPDeclareSimdClauses(Parser::DeclGroupPtrTy Ptr,
@@ -456,7 +468,10 @@ Parser::ParseOMPDeclareSimdClauses(Parser::DeclGroupPtrTy Ptr,
       OMPDeclareSimdDeclAttr::BS_Undefined;
   ExprResult Simdlen;
   SmallVector<Expr *, 4> Uniforms;
-  bool IsError = parseDeclareSimdClauses(*this, BS, Simdlen, Uniforms);
+  SmallVector<Expr *, 4> Aligneds;
+  SmallVector<Expr *, 4> Alignments;
+  bool IsError = parseDeclareSimdClauses(*this, BS, Simdlen, Uniforms, Aligneds,
+                                         Alignments);
   // Need to check for extra tokens.
   if (Tok.isNot(tok::annot_pragma_openmp_end)) {
     Diag(Tok, diag::warn_omp_extra_tokens_at_eol)
@@ -466,9 +481,11 @@ Parser::ParseOMPDeclareSimdClauses(Parser::DeclGroupPtrTy Ptr,
   }
   // Skip the last annot_pragma_openmp_end.
   SourceLocation EndLoc = ConsumeToken();
-  if (!IsError)
+  if (!IsError) {
     return Actions.ActOnOpenMPDeclareSimdDirective(
-        Ptr, BS, Simdlen.get(), Uniforms, SourceRange(Loc, EndLoc));
+        Ptr, BS, Simdlen.get(), Uniforms, Aligneds, Alignments,
+        SourceRange(Loc, EndLoc));
+  }
   return Ptr;
 }
 

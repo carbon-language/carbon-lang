@@ -247,7 +247,7 @@ static void instantiateOMPDeclareSimdDeclAttr(
     New = FTD->getTemplatedDecl();
   auto *FD = cast<FunctionDecl>(New);
   auto *ThisContext = dyn_cast_or_null<CXXRecordDecl>(FD->getDeclContext());
-  SmallVector<Expr *, 4> Uniforms;
+  SmallVector<Expr *, 4> Uniforms, Aligneds, Alignments;
 
   auto &&Subst = [&](Expr *E) -> ExprResult {
     if (auto *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParenImpCasts()))
@@ -273,9 +273,21 @@ static void instantiateOMPDeclareSimdDeclAttr(
     }
   }
 
-  (void)S.ActOnOpenMPDeclareSimdDirective(S.ConvertDeclToDeclGroup(New),
-                                          Attr.getBranchState(), Simdlen.get(),
-                                          Uniforms, Attr.getRange());
+  auto AI = Attr.alignments_begin();
+  for (auto *E : Attr.aligneds()) {
+    ExprResult Inst = Subst(E);
+    if (Inst.isInvalid())
+      continue;
+    Aligneds.push_back(Inst.get());
+    Inst = ExprEmpty();
+    if (*AI)
+      Inst = S.SubstExpr(*AI, TemplateArgs);
+    Alignments.push_back(Inst.get());
+    ++AI;
+  }
+  (void)S.ActOnOpenMPDeclareSimdDirective(
+      S.ConvertDeclToDeclGroup(New), Attr.getBranchState(), Simdlen.get(),
+      Uniforms, Aligneds, Alignments, Attr.getRange());
 }
 
 void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,

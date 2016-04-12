@@ -7950,7 +7950,7 @@ def err_omp_aligned_expected_array_or_ptr : Error<
   "%select{ or pointer|, pointer, reference to array or reference to pointer}1"
   ", not %0">;
 def err_omp_aligned_twice : Error<
-  "a variable cannot appear in more than one aligned clause">;
+  "%select{a variable|a parameter|'this'}0 cannot appear in more than one aligned clause">;
 def err_omp_local_var_in_threadprivate_init : Error<
   "variable with local storage in initial value of threadprivate variable">;
 def err_omp_loop_not_canonical_init : Error<

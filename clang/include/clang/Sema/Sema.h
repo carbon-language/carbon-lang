@@ -8112,7 +8112,8 @@ public:
   /// the associated method/function.
   DeclGroupPtrTy ActOnOpenMPDeclareSimdDirective(
       DeclGroupPtrTy DG, OMPDeclareSimdDeclAttr::BranchStateTy BS,
-      Expr *Simdlen, ArrayRef<Expr *> Uniforms, SourceRange SR);
+      Expr *Simdlen, ArrayRef<Expr *> Uniforms, ArrayRef<Expr *> Aligneds,
+      ArrayRef<Expr *> Alignments, SourceRange SR);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,
