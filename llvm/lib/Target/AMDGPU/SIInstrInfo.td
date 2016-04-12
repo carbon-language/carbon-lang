@@ -1379,11 +1379,11 @@ class getInsDPP <RegisterClass Src0RC, RegisterClass Src1RC, int NumSrcArgs,
               !if (!eq(HasModifiers, 1),
                 // VOP1_DPP with modifiers
                 (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
-                     dpp_ctrl:$dpp_ctrl, row_mask:$row_mask, 
+                     dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                      bank_mask:$bank_mask, bound_ctrl:$bound_ctrl)
               /* else */,
                 // VOP1_DPP without modifiers
-                (ins Src0RC:$src0, dpp_ctrl:$dpp_ctrl, row_mask:$row_mask, 
+                (ins Src0RC:$src0, dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                 bank_mask:$bank_mask, bound_ctrl:$bound_ctrl)
               /* endif */)
               /* NumSrcArgs == 2 */,
@@ -1391,12 +1391,12 @@ class getInsDPP <RegisterClass Src0RC, RegisterClass Src1RC, int NumSrcArgs,
                 // VOP2_DPP with modifiers
                 (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
                       InputModsNoDefault:$src1_modifiers, Src1RC:$src1,
-                      dpp_ctrl:$dpp_ctrl, row_mask:$row_mask, 
+                      dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                       bank_mask:$bank_mask, bound_ctrl:$bound_ctrl)
               /* else */,
                 // VOP2_DPP without modifiers
-                (ins Src0RC:$src0, Src1RC:$src1, dpp_ctrl:$dpp_ctrl, 
-                row_mask:$row_mask, bank_mask:$bank_mask, 
+                (ins Src0RC:$src0, Src1RC:$src1, dpp_ctrl:$dpp_ctrl,
+                row_mask:$row_mask, bank_mask:$bank_mask,
                 bound_ctrl:$bound_ctrl)
              /* endif */)));
 }
@@ -1641,9 +1641,9 @@ def VOP_MAC : VOPProfile <[f32, f32, f32, f32]> {
   let Ins64 = getIns64<Src0RC64, Src1RC64, RegisterOperand<VGPR_32>, 3,
                              HasModifiers>.ret;
   let InsDPP = (ins InputModsNoDefault:$src0_modifiers, Src0RC32:$src0,
-                    InputModsNoDefault:$src1_modifiers, Src1RC32:$src1, 
+                    InputModsNoDefault:$src1_modifiers, Src1RC32:$src1,
                     VGPR_32:$src2, // stub argument
-                    dpp_ctrl:$dpp_ctrl, row_mask:$row_mask, 
+                    dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                     bank_mask:$bank_mask, bound_ctrl:$bound_ctrl);
   let Asm32 = getAsm32<1, 2, f32>.ret;
   let Asm64 = getAsm64<1, 2, HasModifiers, f32>.ret;
