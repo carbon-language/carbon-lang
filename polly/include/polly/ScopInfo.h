@@ -1398,6 +1398,9 @@ private:
 
     /// @brief The location that caused this assumption.
     DebugLoc Loc;
+
+    /// @brief An optional block whos domain can simplify the assumption.
+    BasicBlock *BB;
   };
 
   /// @brief Collection to hold taken assumptions.
@@ -1672,9 +1675,6 @@ private:
 
   /// @brief Build the Context of the Scop.
   void buildContext();
-
-  /// @brief Add the restrictions based on the wrapping of expressions.
-  void addWrappingContext();
 
   /// @brief Add user provided parameter constraints to context (source code).
   void addUserAssumptions(AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI);
@@ -1965,8 +1965,13 @@ public:
   /// @param Loc  The location in the source that caused this assumption.
   /// @param Sign Enum to indicate if the assumptions in @p Set are positive
   ///             (needed/assumptions) or negative (invalid/restrictions).
+  /// @param BB   The block in which this assumption was taken. If it is
+  ///             set, the domain of that block will be used to simplify the
+  ///             actual assumption in @p Set once it is added. This is useful
+  ///             if the assumption was created prior to the domain.
   void recordAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
-                        DebugLoc Loc, AssumptionSign Sign);
+                        DebugLoc Loc, AssumptionSign Sign,
+                        BasicBlock *BB = nullptr);
 
   /// @brief Add all recorded assumptions to the assumed context.
   void addRecordedAssumptions();

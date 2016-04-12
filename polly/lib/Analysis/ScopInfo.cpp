@@ -99,12 +99,6 @@ static cl::opt<bool> DetectReductions("polly-detect-reductions",
                                       cl::Hidden, cl::ZeroOrMore,
                                       cl::init(true), cl::cat(PollyCategory));
 
-static cl::opt<bool> IgnoreIntegerWrapping(
-    "polly-ignore-integer-wrapping",
-    cl::desc("Do not build run-time checks to proof absence of integer "
-             "wrapping"),
-    cl::Hidden, cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
-
 //===----------------------------------------------------------------------===//
 
 // Create a sequence of two schedules. Either argument may be null and is
@@ -1847,14 +1841,6 @@ __isl_give isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
   return isl_set_intersect_params(C, DomainContext);
 }
 
-void Scop::addWrappingContext() {
-  if (IgnoreIntegerWrapping)
-    return;
-
-  auto *WrappingContext = Affinator.getWrappingContext();
-  addAssumption(WRAPPING, WrappingContext, DebugLoc(), AS_RESTRICTION);
-}
-
 void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
                               LoopInfo &LI) {
   auto *R = &getRegion();
@@ -3026,7 +3012,6 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
   realignParams();
   addParameterBounds();
   addUserContext();
-  addWrappingContext();
 
   // After the context was fully constructed, thus all our knowledge about
   // the parameters is in there, we add all recorded assumptions to the
@@ -3506,14 +3491,20 @@ void Scop::addAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
 }
 
 void Scop::recordAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
-                            DebugLoc Loc, AssumptionSign Sign) {
-  RecordedAssumptions.push_back({Kind, Sign, Set, Loc});
+                            DebugLoc Loc, AssumptionSign Sign, BasicBlock *BB) {
+  RecordedAssumptions.push_back({Kind, Sign, Set, Loc, BB});
 }
 
 void Scop::addRecordedAssumptions() {
   while (!RecordedAssumptions.empty()) {
     const Assumption &AS = RecordedAssumptions.pop_back_val();
-    addAssumption(AS.Kind, AS.Set, AS.Loc, AS.Sign);
+
+    isl_set *S = AS.Set;
+    // If a basic block was given use its domain to simplify the assumption.
+    if (AS.BB)
+      S = isl_set_params(isl_set_intersect(S, getDomainConditions(AS.BB)));
+
+    addAssumption(AS.Kind, S, AS.Loc, AS.Sign);
   }
 }
 
