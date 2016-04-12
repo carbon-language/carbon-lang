@@ -668,7 +668,8 @@ void MemoryAccess::assumeNoOutOfBound() {
   const auto &Loc = getAccessInstruction()
                         ? getAccessInstruction()->getDebugLoc()
                         : DebugLoc();
-  Statement->getParent()->addAssumption(INBOUNDS, Outside, Loc, AS_ASSUMPTION);
+  Statement->getParent()->recordAssumption(INBOUNDS, Outside, Loc,
+                                           AS_ASSUMPTION);
   isl_space_free(Space);
 }
 
@@ -1419,8 +1420,8 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP,
         isl_set_union(isl_set_copy(NotExecuted), InBound);
 
     InBoundIfExecuted = isl_set_coalesce(InBoundIfExecuted);
-    Parent.addAssumption(INBOUNDS, InBoundIfExecuted, GEP->getDebugLoc(),
-                         AS_ASSUMPTION);
+    Parent.recordAssumption(INBOUNDS, InBoundIfExecuted, GEP->getDebugLoc(),
+                            AS_ASSUMPTION);
   }
 
   isl_local_space_free(LSpace);
@@ -2639,8 +2640,8 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
     if (containsErrorBlock(RN, getRegion(), LI, DT)) {
       IsOptimized = true;
       isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
-      addAssumption(ERRORBLOCK, DomPar, BB->getTerminator()->getDebugLoc(),
-                    AS_RESTRICTION);
+      recordAssumption(ERRORBLOCK, DomPar, BB->getTerminator()->getDebugLoc(),
+                       AS_RESTRICTION);
     }
   }
 }
@@ -2740,8 +2741,8 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
   }
 
   isl_set *UnboundedCtx = isl_set_params(Parts.first);
-  addAssumption(INFINITELOOP, UnboundedCtx,
-                HeaderBB->getTerminator()->getDebugLoc(), AS_RESTRICTION);
+  recordAssumption(INFINITELOOP, UnboundedCtx,
+                   HeaderBB->getTerminator()->getDebugLoc(), AS_RESTRICTION);
 }
 
 void Scop::buildAliasChecks(AliasAnalysis &AA) {
@@ -3026,6 +3027,12 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
   addParameterBounds();
   addUserContext();
   addWrappingContext();
+
+  // After the context was fully constructed, thus all our knowledge about
+  // the parameters is in there, we add all recorded assumptions to the
+  // assumed/invalid context.
+  addRecordedAssumptions();
+
   simplifyContexts();
   buildAliasChecks(AA);
 
@@ -3042,6 +3049,9 @@ Scop::~Scop() {
 
   for (auto It : DomainMap)
     isl_set_free(It.second);
+
+  for (auto &AS : RecordedAssumptions)
+    isl_set_free(AS.Set);
 
   // Free the alias groups
   for (MinMaxVectorPairTy &MinMaxAccessPair : MinMaxAliasGroups) {
@@ -3478,6 +3488,9 @@ bool Scop::trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
 
 void Scop::addAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
                          DebugLoc Loc, AssumptionSign Sign) {
+  // Simplify the assumptions/restrictions first.
+  Set = isl_set_gist_params(Set, getContext());
+
   if (!trackAssumption(Kind, Set, Loc, Sign)) {
     isl_set_free(Set);
     return;
@@ -3489,6 +3502,18 @@ void Scop::addAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
   } else {
     InvalidContext = isl_set_union(InvalidContext, Set);
     InvalidContext = isl_set_coalesce(InvalidContext);
+  }
+}
+
+void Scop::recordAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
+                            DebugLoc Loc, AssumptionSign Sign) {
+  RecordedAssumptions.push_back({Kind, Sign, Set, Loc});
+}
+
+void Scop::addRecordedAssumptions() {
+  while (!RecordedAssumptions.empty()) {
+    const Assumption &AS = RecordedAssumptions.pop_back_val();
+    addAssumption(AS.Kind, AS.Set, AS.Loc, AS.Sign);
   }
 }
 

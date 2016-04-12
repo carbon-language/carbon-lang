@@ -1384,6 +1384,34 @@ private:
   /// need to be "false". Otherwise they behave the same.
   isl_set *InvalidContext;
 
+  /// @brief Helper struct to remember assumptions.
+  struct Assumption {
+
+    /// @brief The kind of the assumption (e.g., WRAPPING).
+    AssumptionKind Kind;
+
+    /// @brief Flag to distinguish assumptions and restrictions.
+    AssumptionSign Sign;
+
+    /// @brief The valid/invalid context if this is an assumption/restriction.
+    isl_set *Set;
+
+    /// @brief The location that caused this assumption.
+    DebugLoc Loc;
+  };
+
+  /// @brief Collection to hold taken assumptions.
+  ///
+  /// There are two reasons why we want to record assumptions first before we
+  /// add them to the assumed/invalid context:
+  ///   1) If the SCoP is not profitable or otherwise invalid without the
+  ///      assumed/invalid context we do not have to compute it.
+  ///   2) Information about the context are gathered rather late in the SCoP
+  ///      construction (basically after we know all parameters), thus the user
+  ///      might see overly complicated assumptions to be taken while they will
+  ///      only be simplified later on.
+  SmallVector<Assumption, 8> RecordedAssumptions;
+
   /// @brief The schedule of the SCoP
   ///
   /// The schedule of the SCoP describes the execution order of the statements
@@ -1925,6 +1953,23 @@ public:
   ///             (needed/assumptions) or negative (invalid/restrictions).
   void addAssumption(AssumptionKind Kind, __isl_take isl_set *Set, DebugLoc Loc,
                      AssumptionSign Sign);
+
+  /// @brief Record an assumption for later addition to the assumed context.
+  ///
+  /// This function will add the assumption to the RecordedAssumptions. This
+  /// collection will be added (@see addAssumption) to the assumed context once
+  /// all paramaters are known and the context is fully build.
+  ///
+  /// @param Kind The assumption kind describing the underlying cause.
+  /// @param Set  The relations between parameters that are assumed to hold.
+  /// @param Loc  The location in the source that caused this assumption.
+  /// @param Sign Enum to indicate if the assumptions in @p Set are positive
+  ///             (needed/assumptions) or negative (invalid/restrictions).
+  void recordAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
+                        DebugLoc Loc, AssumptionSign Sign);
+
+  /// @brief Add all recorded assumptions to the assumed context.
+  void addRecordedAssumptions();
 
   /// @brief Mark the scop as invalid.
   ///
