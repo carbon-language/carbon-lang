@@ -26,10 +26,9 @@ define i32 @call_void_void() {
 ; N64:           ld $[[TGT:[0-9]+]], %call16(extern_void_void)($gp)
 
 ; NOT-R6C:       jalr $[[TGT]]
-; R6C:           jalrc $[[TGT]]
+; R6C:           jialc $[[TGT]], 0
 
   call void @extern_void_void()
-; R6C:           jrc $ra
   ret i32 0
 }
 
@@ -41,11 +40,10 @@ define i32 @call_i32_void() {
 ; N64:           ld $[[TGT:[0-9]+]], %call16(extern_i32_void)($gp)
 
 ; NOT-R6C:       jalr $[[TGT]]
-; R6C:           jalrc $[[TGT]]
+; R6C:           jialc $[[TGT]], 0
 
   %1 = call i32 @extern_i32_void()
   %2 = add i32 %1, 1
-; R6C:           jrc $ra
   ret i32 %2
 }
 
@@ -60,12 +58,11 @@ define float @call_float_void() {
 ; N64:           ld $[[TGT:[0-9]+]], %call16(extern_float_void)($gp)
 
 ; NOT-R6C:       jalr $[[TGT]]
-; R6C:           jalrc $[[TGT]]
+; R6C:           jialc $[[TGT]], 0
 
 
   %1 = call float @extern_float_void()
   %2 = fadd float %1, 1.0
-; R6C:           jrc $ra
   ret float %2
 }
 
@@ -113,10 +110,10 @@ define i32 @indirect_call_void_void(void ()* %addr) {
 
 ; ALL:           move $25, $4
 ; NOT-R6C:       jalr $25
-; R6C:           jalrc $25
+; R6C:           jialc $25, 0
+
 
   call void %addr()
-; R6C:           jrc $ra
   ret i32 0
 }
 
@@ -125,12 +122,11 @@ define i32 @indirect_call_i32_void(i32 ()* %addr) {
 
 ; ALL:           move $25, $4
 ; NOT-R6C:       jalr $25
-; R6C:           jalrc $25
+; R6C:           jialc $25, 0
 
 
   %1 = call i32 %addr()
   %2 = add i32 %1, 1
-; R6C:           jrc $ra
   ret i32 %2
 }
 
@@ -139,12 +135,11 @@ define float @indirect_call_float_void(float ()* %addr) {
 
 ; ALL:           move $25, $4
 ; NOT-R6C:       jalr $25
-; R6C:           jalrc $25
+; R6C:           jialc $25, 0
 
 
   %1 = call float %addr()
   %2 = fadd float %1, 1.0
-; R6C:           jrc $ra
   ret float %2
 }
 
@@ -202,11 +197,10 @@ define i32 @jal_only_allows_symbols() {
 ; ALL:           addiu $[[TGT:[0-9]+]], $zero, 1234
 ; ALL-NOT:       {{jal }}
 ; NOT-R6C:       jalr $[[TGT]]
-; R6C:           jalrc $[[TGT]]
+; R6C:           jialc $[[TGT]], 0
 ; ALL-NOT:       {{jal }}
 
   call void () inttoptr (i32 1234 to void ()*)()
-; R6C:           jrc $ra
   ret i32 0
 }
 
