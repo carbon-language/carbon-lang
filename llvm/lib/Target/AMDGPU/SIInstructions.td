@@ -1049,23 +1049,43 @@ defm BUFFER_ATOMIC_DEC : MUBUF_Atomic <
   mubuf<0x3d, 0x4c>, "buffer_atomic_dec", VGPR_32, i32, atomic_dec_global
 >;
 
-//def BUFFER_ATOMIC_FCMPSWAP : MUBUF_ <mubuf<0x3e>, "buffer_atomic_fcmpswap", []>; // isn't on VI
-//def BUFFER_ATOMIC_FMIN : MUBUF_ <mubuf<0x3f>, "buffer_atomic_fmin", []>; // isn't on VI
-//def BUFFER_ATOMIC_FMAX : MUBUF_ <mubuf<0x40>, "buffer_atomic_fmax", []>; // isn't on VI
-//def BUFFER_ATOMIC_SWAP_X2 : MUBUF_X2 <mubuf<0x50, 0x60>, "buffer_atomic_swap_x2", []>;
+//def BUFFER_ATOMIC_FCMPSWAP : MUBUF_Atomic <mubuf<0x3e>, "buffer_atomic_fcmpswap", []>; // isn't on VI
+//def BUFFER_ATOMIC_FMIN : MUBUF_Atomic <mubuf<0x3f>, "buffer_atomic_fmin", []>; // isn't on VI
+//def BUFFER_ATOMIC_FMAX : MUBUF_Atomic <mubuf<0x40>, "buffer_atomic_fmax", []>; // isn't on VI
+defm BUFFER_ATOMIC_SWAP_X2 : MUBUF_Atomic <
+  mubuf<0x50, 0x60>, "buffer_atomic_swap_x2", VReg_64, i64, atomic_swap_global
+>;
 defm BUFFER_ATOMIC_CMPSWAP_X2 : MUBUF_Atomic <
   mubuf<0x51, 0x61>, "buffer_atomic_cmpswap_x2", VReg_128, v2i64, null_frag
 >;
-//def BUFFER_ATOMIC_ADD_X2 : MUBUF_X2 <mubuf<0x52, 0x62>, "buffer_atomic_add_x2", []>;
-//def BUFFER_ATOMIC_SUB_X2 : MUBUF_X2 <mubuf<0x53, 0x63>, "buffer_atomic_sub_x2", []>;
-//def BUFFER_ATOMIC_RSUB_X2 : MUBUF_X2 <mubuf<0x54>, "buffer_atomic_rsub_x2", []>; // isn't on CI & VI
-//def BUFFER_ATOMIC_SMIN_X2 : MUBUF_X2 <mubuf<0x55, 0x64>, "buffer_atomic_smin_x2", []>;
-//def BUFFER_ATOMIC_UMIN_X2 : MUBUF_X2 <mubuf<0x56, 0x65>, "buffer_atomic_umin_x2", []>;
-//def BUFFER_ATOMIC_SMAX_X2 : MUBUF_X2 <mubuf<0x57, 0x66>, "buffer_atomic_smax_x2", []>;
-//def BUFFER_ATOMIC_UMAX_X2 : MUBUF_X2 <mubuf<0x58, 0x67>, "buffer_atomic_umax_x2", []>;
-//def BUFFER_ATOMIC_AND_X2 : MUBUF_X2 <mubuf<0x59, 0x68>, "buffer_atomic_and_x2", []>;
-//def BUFFER_ATOMIC_OR_X2 : MUBUF_X2 <mubuf<0x5a, 0x69>, "buffer_atomic_or_x2", []>;
-//def BUFFER_ATOMIC_XOR_X2 : MUBUF_X2 <mubuf<0x5b, 0x6a>, "buffer_atomic_xor_x2", []>;
+defm BUFFER_ATOMIC_ADD_X2 : MUBUF_Atomic <
+  mubuf<0x52, 0x62>, "buffer_atomic_add_x2", VReg_64, i64, atomic_add_global
+>;
+defm BUFFER_ATOMIC_SUB_X2 : MUBUF_Atomic <
+  mubuf<0x53, 0x63>, "buffer_atomic_sub_x2", VReg_64, i64, atomic_sub_global
+>;
+//defm BUFFER_ATOMIC_RSUB_X2 : MUBUF_Atomic <mubuf<0x54>, "buffer_atomic_rsub_x2", []>; // isn't on CI & VI
+defm BUFFER_ATOMIC_SMIN_X2 : MUBUF_Atomic <
+  mubuf<0x55, 0x64>, "buffer_atomic_smin_x2", VReg_64, i64, atomic_min_global
+>;
+defm BUFFER_ATOMIC_UMIN_X2 : MUBUF_Atomic <
+  mubuf<0x56, 0x65>, "buffer_atomic_umin_x2", VReg_64, i64, atomic_umin_global
+>;
+defm BUFFER_ATOMIC_SMAX_X2 : MUBUF_Atomic <
+  mubuf<0x57, 0x66>, "buffer_atomic_smax_x2", VReg_64, i64, atomic_max_global
+>;
+defm BUFFER_ATOMIC_UMAX_X2 : MUBUF_Atomic <
+  mubuf<0x58, 0x67>, "buffer_atomic_umax_x2", VReg_64, i64, atomic_umax_global
+>;
+defm BUFFER_ATOMIC_AND_X2 : MUBUF_Atomic <
+  mubuf<0x59, 0x68>, "buffer_atomic_and_x2", VReg_64, i64, atomic_and_global
+>;
+defm BUFFER_ATOMIC_OR_X2 : MUBUF_Atomic <
+  mubuf<0x5a, 0x69>, "buffer_atomic_or_x2", VReg_64, i64, atomic_or_global
+>;
+defm BUFFER_ATOMIC_XOR_X2 : MUBUF_Atomic <
+  mubuf<0x5b, 0x6a>, "buffer_atomic_xor_x2", VReg_64, i64, atomic_xor_global
+>;
 defm BUFFER_ATOMIC_INC_X2 : MUBUF_Atomic <
   mubuf<0x5c, 0x6b>, "buffer_atomic_inc_x2", VReg_64, i64, atomic_inc_global
 >;
