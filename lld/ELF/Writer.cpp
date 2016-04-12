@@ -1163,7 +1163,7 @@ template <class ELFT> bool Writer<ELFT>::needsGot() {
 
   // We add the .got section to the result for dynamic MIPS target because
   // its address and properties are mentioned in the .dynamic section.
-  if (Config->EMachine == EM_MIPS && isOutputDynamic())
+  if (Config->EMachine == EM_MIPS)
     return true;
 
   // If we have a relocation that is relative to GOT (such as GOTOFFREL),
