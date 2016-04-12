@@ -1678,7 +1678,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     // FIXME: Remove this; loadModule does the same check (but produces
     // slightly worse diagnostics).
     if (!SuggestedModule.getModule()->isAvailable() &&
-        !SuggestedModule.getModule()->HasIncompatibleModuleFile) {
+        !SuggestedModule.getModule()
+             ->getTopLevelModule()
+             ->HasIncompatibleModuleFile) {
       clang::Module::Requirement Requirement;
       clang::Module::UnresolvedHeaderDirective MissingHeader;
       Module *M = SuggestedModule.getModule();

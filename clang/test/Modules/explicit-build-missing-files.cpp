@@ -3,7 +3,7 @@
 // RUN: echo 'extern int a; template<typename T> int a2 = T::error;' > %t/a.h
 // RUN: echo 'extern int b;' > %t/b.h
 // RUN: echo 'extern int c = 0;' > %t/c.h
-// RUN: echo 'module a { header "a.h" header "b.h" header "c.h" }' > %t/modulemap
+// RUN: echo 'module a { module aa { header "a.h" header "b.h" header "c.h" } }' > %t/modulemap
 // RUN: echo 'module other {}' > %t/other.modulemap
 
 // We lazily check that the files referenced by an explicitly-specified .pcm
