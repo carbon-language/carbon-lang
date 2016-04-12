@@ -1920,8 +1920,7 @@ bool MipsTargetInfo<ELFT>::isRelRelative(uint32_t Type) const {
 // a location that is relative to GOT. This function returns
 // the value for the symbol.
 template <class ELFT> typename ELFT::uint getMipsGpAddr() {
-  unsigned GPOffset = 0x7ff0;
-  return Out<ELFT>::Got->getVA() + GPOffset;
+  return Out<ELFT>::Got->getVA() + MipsGPOffset;
 }
 
 template uint32_t getMipsGpAddr<ELF32LE>();

@@ -219,7 +219,7 @@ __start:
 # CHECK-NEXT:     Binding: Global
 # CHECK-NEXT:     Type: None (0x0)
 # CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: Absolute (0xFFF1)
+# CHECK-NEXT:     Section: .got
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 # CHECK-NEXT: ProgramHeaders [
