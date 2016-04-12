@@ -1681,7 +1681,7 @@ def noprebind : Flag<["-"], "noprebind">;
 def noseglinkedit : Flag<["-"], "noseglinkedit">;
 def nostartfiles : Flag<["-"], "nostartfiles">;
 def nostdinc : Flag<["-"], "nostdinc">;
-def nostdlibinc : Flag<["-"], "nostdlibinc">;
+def nostdlibinc : Flag<["-"], "nostdlibinc">, Flags<[CoreOption]>;
 def nostdincxx : Flag<["-"], "nostdinc++">, Flags<[CC1Option]>,
   HelpText<"Disable standard #include directories for the C++ standard library">;
 def nostdlib : Flag<["-"], "nostdlib">;

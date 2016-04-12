@@ -454,6 +454,7 @@
 // RUN:     -fno-ms-extensions \
 // RUN:     -isystem=some/path \
 // RUN:     -mllvm -disable-llvm-optzns \
+// RUN:     -nostdlibinc \
 // RUN:     -Wunused-variable \
 // RUN:     -fmacro-backtrace-limit=0 \
 // RUN:     -Werror /Zs -- %s 2>&1
