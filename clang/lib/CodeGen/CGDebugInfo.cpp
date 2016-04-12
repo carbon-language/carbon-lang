@@ -1119,6 +1119,11 @@ llvm::DISubprogram *CGDebugInfo::CreateCXXMemberFunction(
   // Since a single ctor/dtor corresponds to multiple functions, it doesn't
   // make sense to give a single ctor/dtor a linkage name.
   StringRef MethodLinkageName;
+  // FIXME: 'isFunctionLocalClass' seems like an arbitrary/unintentional
+  // property to use here. It may've been intended to model "is non-external
+  // type" but misses cases of non-function-local but non-external classes such
+  // as those in anonymous namespaces as well as the reverse - external types
+  // that are function local, such as those in (non-local) inline functions.
   if (!IsCtorOrDtor && !isFunctionLocalClass(Method->getParent()))
     MethodLinkageName = CGM.getMangledName(Method);
 
