@@ -10283,6 +10283,11 @@ vec_vsx_ld(int __a, const vector float *__b) {
   return (vector float)__builtin_vsx_lxvw4x(__a, __b);
 }
 
+static __inline__ vector float __ATTRS_o_ai vec_vsx_ld(int __a,
+                                                       const float *__b) {
+  return (vector float)__builtin_vsx_lxvw4x(__a, __b);
+}
+
 static __inline__ vector signed long long __ATTRS_o_ai
 vec_vsx_ld(int __a, const vector signed long long *__b) {
   return (vector signed long long)__builtin_vsx_lxvd2x(__a, __b);
@@ -10371,6 +10376,11 @@ static __inline__ void __ATTRS_o_ai vec_vsx_st(vector unsigned int __a, int __b,
 
 static __inline__ void __ATTRS_o_ai vec_vsx_st(vector float __a, int __b,
                                                vector float *__c) {
+  __builtin_vsx_stxvw4x((vector int)__a, __b, __c);
+}
+
+static __inline__ void __ATTRS_o_ai vec_vsx_st(vector float __a, int __b,
+                                               float *__c) {
   __builtin_vsx_stxvw4x((vector int)__a, __b, __c);
 }
 

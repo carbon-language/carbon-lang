@@ -18,6 +18,7 @@ vector signed long long vsll = { 255LL, -937LL };
 vector unsigned long long vull = { 1447LL, 2894LL };
 vector signed short vss = { -1, 2, -3, 4, -5, 6, -7, 8 };
 vector unsigned short vus = { 0, 1, 2, 3, 4, 5, 6, 7 };
+float f = 12.34;
 double d = 23.4;
 signed char sc = -128;
 unsigned char uc = 1;
@@ -38,6 +39,7 @@ vector bool char res_vbc;
 vector signed char res_vsc;
 vector unsigned char res_vuc;
 
+float res_f;
 double res_d;
 signed int res_si;
 unsigned int res_ui;
@@ -335,6 +337,10 @@ void test1() {
 // CHECK: @llvm.ppc.vsx.lxvw4x
 // CHECK-LE: @llvm.ppc.vsx.lxvw4x
 
+  res_vf = vec_vsx_ld (0, &f);
+// CHECK: @llvm.ppc.vsx.lxvw4x
+// CHECK-LE: @llvm.ppc.vsx.lxvw4x
+
   res_vsll = vec_vsx_ld(0, &vsll);
 // CHECK: @llvm.ppc.vsx.lxvd2x
 // CHECK-LE: @llvm.ppc.vsx.lxvd2x
@@ -410,6 +416,10 @@ void test1() {
 // CHECK-LE: @llvm.ppc.vsx.stxvw4x
 
   vec_vsx_st(vf, 0, &res_vf);
+// CHECK: @llvm.ppc.vsx.stxvw4x
+// CHECK-LE: @llvm.ppc.vsx.stxvw4x
+
+  vec_vsx_st(vf, 0, &res_f);
 // CHECK: @llvm.ppc.vsx.stxvw4x
 // CHECK-LE: @llvm.ppc.vsx.stxvw4x
 
