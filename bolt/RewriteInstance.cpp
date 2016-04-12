@@ -117,6 +117,12 @@ UpdateDebugSections("update-debug-sections",
                     cl::desc("update DWARF debug sections of the executable"),
                     cl::Optional);
 
+static cl::opt<bool>
+FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
+                           cl::desc("do another pass if we encounter large "
+                                    "functions, to correct their debug info."),
+                           cl::Optional);
+
 static cl::opt<BinaryFunction::LayoutType>
 ReorderBlocks(
     "reorder-blocks",
@@ -543,6 +549,8 @@ void RewriteInstance::run() {
     return;
   }
 
+  unsigned PassNumber = 1;
+
   // Main "loop".
   discoverStorage();
   readSpecialSections();
@@ -554,15 +562,46 @@ void RewriteInstance::run() {
   emitFunctions();
 
   if (opts::SplitFunctions == BinaryFunction::ST_LARGE &&
-      splitLargeFunctions()) {
+      checkLargeFunctions()) {
+    ++PassNumber;
     // Emit again because now some functions have been split
-    outs() << "BOLT: split-functions: starting pass 2...\n";
+    outs() << "BOLT: split-functions: starting pass " << PassNumber << "...\n";
     reset();
     discoverStorage();
     readSpecialSections();
     discoverFileObjects();
     readDebugInfo();
     disassembleFunctions();
+    readFunctionDebugInfo();
+    runOptimizationPasses();
+    emitFunctions();
+  }
+
+  // Emit functions again ignoring functions which still didn't fit in their
+  // original space, so that we don't generate incorrect debugging information
+  // for them (information that would reflect the optimized version).
+  if (opts::UpdateDebugSections && opts::FixDebugInfoLargeFunctions &&
+      checkLargeFunctions()) {
+    ++PassNumber;
+    outs() << "BOLT: starting pass (ignoring large functions)"
+           << PassNumber << "...\n";
+    reset();
+    discoverStorage();
+    readSpecialSections();
+    discoverFileObjects();
+    readDebugInfo();
+    disassembleFunctions();
+
+    for (uint64_t Address : LargeFunctions) {
+      auto FunctionIt = BinaryFunctions.find(Address);
+      assert(FunctionIt != BinaryFunctions.end() &&
+             "Invalid large function address.");
+      errs() << "BOLT-WARNING: Function " << FunctionIt->second.getName()
+             << " is larger than it's  orginal size: emitting again marking it "
+             << "as not simple.\n";
+      FunctionIt->second.setSimple(false);
+    }
+
     readFunctionDebugInfo();
     runOptimizationPasses();
     emitFunctions();
@@ -979,7 +1018,7 @@ void RewriteInstance::runOptimizationPasses() {
     if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
       bool ShouldSplit =
         (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
-         ToSplit.find(BFI.first) != ToSplit.end();
+         LargeFunctions.find(BFI.first) != LargeFunctions.end();
       BFI.second.modifyLayout(opts::ReorderBlocks, ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks", true);
@@ -1439,8 +1478,8 @@ void RewriteInstance::emitFunctions() {
     TempOut->keep();
 }
 
-bool RewriteInstance::splitLargeFunctions() {
-  bool Changed = false;
+bool RewriteInstance::checkLargeFunctions() {
+  LargeFunctions.clear();
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
@@ -1451,10 +1490,9 @@ bool RewriteInstance::splitLargeFunctions() {
     if (Function.getImageSize() <= Function.getMaxSize())
       continue;
 
-    ToSplit.insert(BFI.first);
-    Changed = true;
+    LargeFunctions.insert(BFI.first);
   }
-  return Changed;
+  return !LargeFunctions.empty();
 }
 
 void RewriteInstance::updateFunctionRanges() {
@@ -2281,8 +2319,8 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
 
       DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
     } else {
-      DEBUG(errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
-                   << Twine::utohexstr(DIE->getOffset()) << "\n");
+      errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
+                   << Twine::utohexstr(DIE->getOffset()) << "\n";
     }
   }
 }

@@ -166,7 +166,7 @@ public:
   ///
   /// Returns true if any function was annotated, requiring us to perform a
   /// second pass to emit those functions in two parts.
-  bool splitLargeFunctions();
+  bool checkLargeFunctions();
 
   /// Updates debug line information for non-simple functions, which are not
   /// rewritten.
@@ -317,8 +317,9 @@ private:
   /// Size of the .debug_ranges section on input.
   uint32_t DebugRangesSize{0};
 
-  /// Keep track of which functions to split in a second pass.
-  std::set<uint64_t> ToSplit;
+  /// Keep track of which functions didn't fit in their original space in the
+  /// last emission, so that we may either decide to split or not optimize them.
+  std::set<uint64_t> LargeFunctions;
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
