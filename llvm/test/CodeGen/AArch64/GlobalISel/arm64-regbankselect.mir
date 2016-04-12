@@ -21,6 +21,10 @@
   entry:
     ret void
   }
+  define void @defaultMappingDefRepair() {
+  entry:
+    ret void
+  }
 ...
 
 ---
@@ -99,4 +103,28 @@ body: |
     ; CHECK-NEXT:      %1(32) = G_ADD i32 %2, %3
     %0(32) = COPY %s0
     %1(32) = G_ADD i32 %0, %0
+...
+
+---
+# Check that we repair the definition of %1.
+# %1 is forced to be into FPR, but its definition actually
+# requires that it lives in GPR. Make sure regbankselect
+# fixes that.
+name:            defaultMappingDefRepair
+isSSA:           true
+# CHECK:      registers:
+# CHECK-NEXT:   - { id: 0, class: gpr }
+# CHECK-NEXT:   - { id: 1, class: fpr }
+# CHECK-NEXT:   - { id: 2, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: fpr }
+body: |
+  bb.0.entry:
+    liveins: %w0
+    ; CHECK:           %0(32) = COPY %w0
+    ; CHECK-NEXT:      %2(32) = G_ADD i32 %0, %w0
+    ; CHECK-NEXT:      %1(32) = COPY %2
+    %0(32) = COPY %w0
+    %1(32) = G_ADD i32 %0, %w0
 ...
