@@ -2332,6 +2332,36 @@ SDValue SITargetLowering::performOrCombine(SDNode *N,
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
 
+  EVT VT = N->getValueType(0);
+  if (VT == MVT::i64) {
+    // TODO: This could be a generic combine with a predicate for extracting the
+    // high half of an integer being free.
+
+    // (or i64:x, (zero_extend i32:y)) ->
+    //   i64 (bitcast (v2i32 build_vector (or i32:y, lo_32(x)), hi_32(x)))
+    if (LHS.getOpcode() == ISD::ZERO_EXTEND &&
+        RHS.getOpcode() != ISD::ZERO_EXTEND)
+      std::swap(LHS, RHS);
+
+    if (RHS.getOpcode() == ISD::ZERO_EXTEND) {
+      SDValue ExtSrc = RHS.getOperand(0);
+      EVT SrcVT = ExtSrc.getValueType();
+      if (SrcVT == MVT::i32) {
+        SDLoc SL(N);
+        SDValue LowLHS, HiBits;
+        std::tie(LowLHS, HiBits) = split64BitValue(LHS, DAG);
+        SDValue LowOr = DAG.getNode(ISD::OR, SL, MVT::i32, LowLHS, ExtSrc);
+
+        DCI.AddToWorklist(LowOr.getNode());
+        DCI.AddToWorklist(HiBits.getNode());
+
+        SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32,
+                                  LowOr, HiBits);
+        return DAG.getNode(ISD::BITCAST, SL, MVT::i64, Vec);
+      }
+    }
+  }
+
   // or (fp_class x, c1), (fp_class x, c2) -> fp_class x, (c1 | c2)
   if (LHS.getOpcode() == AMDGPUISD::FP_CLASS &&
       RHS.getOpcode() == AMDGPUISD::FP_CLASS) {
