@@ -1091,6 +1091,7 @@ void ScopStmt::realignParams() {
   for (MemoryAccess *MA : *this)
     MA->realignParams();
 
+  InvalidContext = isl_set_align_params(InvalidContext, Parent.getParamSpace());
   Domain = isl_set_align_params(Domain, Parent.getParamSpace());
 }
 
@@ -1437,13 +1438,15 @@ void ScopStmt::collectSurroundingLoops() {
 }
 
 ScopStmt::ScopStmt(Scop &parent, Region &R)
-    : Parent(parent), Domain(nullptr), BB(nullptr), R(&R), Build(nullptr) {
+    : Parent(parent), InvalidContext(isl_set_empty(Parent.getParamSpace())),
+      Domain(nullptr), BB(nullptr), R(&R), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", R.getNameStr(), "");
 }
 
 ScopStmt::ScopStmt(Scop &parent, BasicBlock &bb)
-    : Parent(parent), Domain(nullptr), BB(&bb), R(nullptr), Build(nullptr) {
+    : Parent(parent), InvalidContext(isl_set_empty(Parent.getParamSpace())),
+      Domain(nullptr), BB(&bb), R(nullptr), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
 }
@@ -1605,6 +1608,11 @@ std::string ScopStmt::getScheduleStr() const {
   return Str;
 }
 
+void ScopStmt::setInvalidContext(__isl_take isl_set *IC) {
+  isl_set_free(InvalidContext);
+  InvalidContext = IC;
+}
+
 BasicBlock *ScopStmt::getEntryBlock() const {
   if (isBlockStmt())
     return getBasicBlock();
@@ -1639,7 +1647,10 @@ __isl_give isl_id *ScopStmt::getDomainId() const {
   return isl_set_get_tuple_id(Domain);
 }
 
-ScopStmt::~ScopStmt() { isl_set_free(Domain); }
+ScopStmt::~ScopStmt() {
+  isl_set_free(Domain);
+  isl_set_free(InvalidContext);
+}
 
 void ScopStmt::print(raw_ostream &OS) const {
   OS << "\t" << getBaseName() << "\n";
@@ -2222,9 +2233,9 @@ bool Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
   // can themselves not be constructed properly. To this end we will replace
   // the domains of error blocks and those only reachable via error blocks
   // with an empty set. Additionally, we will record for each block under which
-  // parameter combination it would be reached via an error block in the
-  // ErrorDomainCtxMap map. This information is needed during load hoisting.
-  propagateErrorConstraints(R, SD, DT, LI);
+  // parameter combination it would be reached via an error block in its
+  // InvalidContext. This information is needed during load hoisting.
+  propagateInvalidStmtContexts(R, SD, DT, LI);
 
   return true;
 }
@@ -2288,8 +2299,8 @@ static __isl_give isl_set *adjustDomainDimensions(Scop &S,
   return Dom;
 }
 
-void Scop::propagateErrorConstraints(Region *R, ScopDetection &SD,
-                                     DominatorTree &DT, LoopInfo &LI) {
+void Scop::propagateInvalidStmtContexts(Region *R, ScopDetection &SD,
+                                        DominatorTree &DT, LoopInfo &LI) {
 
   ReversePostOrderTraversal<Region *> RTraversal(R);
   for (auto *RN : RTraversal) {
@@ -2299,23 +2310,24 @@ void Scop::propagateErrorConstraints(Region *R, ScopDetection &SD,
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        propagateErrorConstraints(SubRegion, SD, DT, LI);
+        propagateInvalidStmtContexts(SubRegion, SD, DT, LI);
         continue;
       }
     }
 
     bool ContainsErrorBlock = containsErrorBlock(RN, getRegion(), LI, DT);
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    ScopStmt *Stmt = getStmtFor(BB);
     isl_set *&Domain = DomainMap[BB];
     assert(Domain && "Cannot propagate a nullptr");
 
-    auto *&ErrorCtx = ErrorDomainCtxMap[BB];
+    auto *InvalidCtx = Stmt->getInvalidContext();
     auto *DomainCtx = isl_set_params(isl_set_copy(Domain));
-    bool IsErrorBlock = ContainsErrorBlock ||
-                        (ErrorCtx && isl_set_is_subset(DomainCtx, ErrorCtx));
+    bool IsInvalidBlock =
+        ContainsErrorBlock || isl_set_is_subset(DomainCtx, InvalidCtx);
 
-    if (IsErrorBlock) {
-      ErrorCtx = ErrorCtx ? isl_set_union(ErrorCtx, DomainCtx) : DomainCtx;
+    if (IsInvalidBlock) {
+      InvalidCtx = isl_set_coalesce(isl_set_union(InvalidCtx, DomainCtx));
       auto *EmptyDom = isl_set_empty(isl_set_get_space(Domain));
       isl_set_free(Domain);
       Domain = EmptyDom;
@@ -2323,22 +2335,32 @@ void Scop::propagateErrorConstraints(Region *R, ScopDetection &SD,
       isl_set_free(DomainCtx);
     }
 
-    if (!ErrorCtx)
+    if (isl_set_is_empty(InvalidCtx)) {
+      isl_set_free(InvalidCtx);
       continue;
+    }
+
+    Stmt->setInvalidContext(InvalidCtx);
 
     auto *TI = BB->getTerminator();
     unsigned NumSuccs = RN->isSubRegion() ? 1 : TI->getNumSuccessors();
     for (unsigned u = 0; u < NumSuccs; u++) {
       auto *SuccBB = getRegionNodeSuccessor(RN, TI, u);
-      auto *&SuccErrorCtx = ErrorDomainCtxMap[SuccBB];
-      auto *CurErrorCtx = isl_set_copy(ErrorCtx);
-      SuccErrorCtx =
-          SuccErrorCtx ? isl_set_union(SuccErrorCtx, CurErrorCtx) : CurErrorCtx;
-      SuccErrorCtx = isl_set_coalesce(SuccErrorCtx);
+      auto *SuccStmt = getStmtFor(SuccBB);
+
+      // Skip successors outside the SCoP.
+      if (!SuccStmt)
+        continue;
+
+      auto *SuccInvalidCtx = SuccStmt->getInvalidContext();
+      SuccInvalidCtx = isl_set_union(SuccInvalidCtx, Stmt->getInvalidContext());
+      SuccInvalidCtx = isl_set_coalesce(SuccInvalidCtx);
+      unsigned NumConjucts = isl_set_n_basic_set(SuccInvalidCtx);
+      SuccStmt->setInvalidContext(SuccInvalidCtx);
 
       // Check if the maximal number of domain conjuncts was reached.
       // In case this happens we will bail.
-      if (isl_set_n_basic_set(SuccErrorCtx) < MaxConjunctsInDomain)
+      if (NumConjucts < MaxConjunctsInDomain)
         continue;
 
       invalidate(COMPLEXITY, TI->getDebugLoc());
@@ -3016,8 +3038,6 @@ Scop::~Scop() {
 
   for (auto It : DomainMap)
     isl_set_free(It.second);
-  for (auto It : ErrorDomainCtxMap)
-    isl_set_free(It.second);
 
   // Free the alias groups
   for (MinMaxVectorPairTy &MinMaxAccessPair : MinMaxAliasGroups) {
@@ -3130,18 +3150,12 @@ const InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) const {
   return nullptr;
 }
 
-__isl_give isl_set *Scop::getErrorCtxReachingStmt(ScopStmt &Stmt) {
-  auto *BB = Stmt.getEntryBlock();
-  return isl_set_copy(ErrorDomainCtxMap.lookup(BB));
-}
-
 void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
 
   // Get the context under which the statement is executed but remove the error
   // context under which this statement is reached.
   isl_set *DomainCtx = isl_set_params(Stmt.getDomain());
-  if (auto *ErrorCtx = getErrorCtxReachingStmt(Stmt))
-    DomainCtx = isl_set_subtract(DomainCtx, ErrorCtx);
+  DomainCtx = isl_set_subtract(DomainCtx, Stmt.getInvalidContext());
   DomainCtx = isl_set_remove_redundancies(DomainCtx);
   DomainCtx = isl_set_detect_equalities(DomainCtx);
   DomainCtx = isl_set_coalesce(DomainCtx);

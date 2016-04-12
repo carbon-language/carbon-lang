@@ -932,6 +932,14 @@ private:
   /// The Scop containing this ScopStmt
   Scop &Parent;
 
+  /// @brief The context under which this statement is not modeled precisely.
+  ///
+  /// The invalid context for a statement describes all parameter combinations
+  /// under which the statement looks to be executed but is in fact not because
+  /// some assumption/restriction makes the statement/scop invalid. Currently
+  /// it is build only using error block domain contexts.
+  isl_set *InvalidContext;
+
   /// The iteration domain describes the set of iterations for which this
   /// statement is executed.
   ///
@@ -1085,6 +1093,14 @@ public:
 
   /// @brief Get an isl string representing this schedule.
   std::string getScheduleStr() const;
+
+  /// @brief Get the invalid context for this statement.
+  __isl_give isl_set *getInvalidContext() const {
+    return isl_set_copy(InvalidContext);
+  }
+
+  /// @brief Set the invalid context for this statement to @p IC.
+  void setInvalidContext(__isl_take isl_set *IC);
 
   /// @brief Get the BasicBlock represented by this ScopStmt (if any).
   ///
@@ -1332,14 +1348,6 @@ private:
   /// @brief A map from basic blocks to their domains.
   DenseMap<BasicBlock *, isl_set *> DomainMap;
 
-  /// @brief A map from basic blocks to the error context reaching them.
-  ///
-  /// The error context describes all parameter configurations under which
-  /// the block would be executed but the control would pass an error block.
-  /// This information is not contained in the domain and only implicit in the
-  /// AssumedContext/InvalidContext.
-  DenseMap<BasicBlock *, isl_set *> ErrorDomainCtxMap;
-
   /// Constraints on parameters.
   isl_set *Context;
 
@@ -1517,20 +1525,19 @@ private:
   void propagateDomainConstraints(Region *R, ScopDetection &SD,
                                   DominatorTree &DT, LoopInfo &LI);
 
-  /// @brief Propagate of error block domain contexts through @p R.
+  /// @brief Propagate invalid contexts of statements through @p R.
   ///
-  /// This method will propagate error block domain contexts through @p R
-  /// and thereby fill the ErrorDomainCtxMap map. Additionally, the domains
-  /// of error statements and those only reachable via error statements will
-  /// be replaced by an empty set. Later those will be removed completely from
-  /// the SCoP.
+  /// This method will propagate invalid statement contexts through @p R and at
+  /// the same time add error block domain context to them. Additionally, the
+  /// domains of error statements and those only reachable via error statements
+  /// will be replaced by an empty set. Later those will be removed completely.
   ///
   /// @param R  The currently traversed region.
   /// @param SD The ScopDetection analysis for the current function.
   /// @param DT The DominatorTree for the current function.
   /// @param LI The LoopInfo for the current function.
-  void propagateErrorConstraints(Region *R, ScopDetection &SD,
-                                 DominatorTree &DT, LoopInfo &LI);
+  void propagateInvalidStmtContexts(Region *R, ScopDetection &SD,
+                                    DominatorTree &DT, LoopInfo &LI);
 
   /// @brief Compute the domain for each basic block in @p R.
   ///
@@ -1565,9 +1572,6 @@ private:
   /// @param RemoveIgnoredStmts If true, also removed ignored statments.
   /// @see isIgnored()
   void simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT, LoopInfo &LI);
-
-  /// @brief Return the error context under which @p Stmt is reached.
-  __isl_give isl_set *getErrorCtxReachingStmt(ScopStmt &Stmt);
 
   /// @brief Create equivalence classes for required invariant accesses.
   ///
