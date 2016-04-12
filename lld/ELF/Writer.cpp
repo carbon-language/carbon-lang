@@ -1261,11 +1261,11 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
   StringRef Stop = Saver.save("__stop_" + S);
   if (SymbolBody *B = Symtab.find(Start))
     if (B->isUndefined())
-      Symtab.addSynthetic(Start, *Sec, 0, STV_DEFAULT);
+      Symtab.addSynthetic(Start, *Sec, 0, STV_HIDDEN);
   if (SymbolBody *B = Symtab.find(Stop))
     if (B->isUndefined())
       Symtab.addSynthetic(Stop, *Sec, DefinedSynthetic<ELFT>::SectionEnd,
-                          STV_DEFAULT);
+                          STV_HIDDEN);
 }
 
 template <class ELFT> static bool needsPtLoad(OutputSectionBase<ELFT> *Sec) {
