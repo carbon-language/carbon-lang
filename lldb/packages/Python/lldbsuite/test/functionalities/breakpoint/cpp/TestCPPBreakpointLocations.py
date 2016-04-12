@@ -48,15 +48,18 @@ class TestCPPBreakpointLocations(TestBase):
             { 'name' : 'func1', 'loc_names' : [ 'a::c::func1()', 'b::c::func1()'] },
             { 'name' : 'func2', 'loc_names' : [ 'a::c::func2()', 'c::d::func2()'] },
             { 'name' : 'func3', 'loc_names' : [ 'a::c::func3()', 'b::c::func3()', 'c::d::func3()'] },
+            { 'name' : '~c', 'loc_names' : [ 'a::c::~c()', 'b::c::~c()', 'a::c::~c()', 'b::c::~c()'] },
             { 'name' : 'c::func1', 'loc_names' : [ 'a::c::func1()', 'b::c::func1()'] },
             { 'name' : 'c::func2', 'loc_names' : [ 'a::c::func2()'] },
             { 'name' : 'c::func3', 'loc_names' : [ 'a::c::func3()', 'b::c::func3()'] },
+            { 'name' : 'c::~c', 'loc_names' : [ 'a::c::~c()', 'b::c::~c()', 'a::c::~c()', 'b::c::~c()'] },
             { 'name' : 'a::c::func1', 'loc_names' : [ 'a::c::func1()'] },
             { 'name' : 'b::c::func1', 'loc_names' : [ 'b::c::func1()'] },
             { 'name' : 'c::d::func2', 'loc_names' : [ 'c::d::func2()'] },
             { 'name' : 'a::c::func1()', 'loc_names' : [ 'a::c::func1()'] },
             { 'name' : 'b::c::func1()', 'loc_names' : [ 'b::c::func1()'] },
             { 'name' : 'c::d::func2()', 'loc_names' : [ 'c::d::func2()'] },
+            { 'name' : 'c::~c()', 'loc_names' : [ 'a::c::~c()', 'b::c::~c()', 'a::c::~c()', 'b::c::~c()'] },
         ]
         
         for bp_dict in bp_dicts:
