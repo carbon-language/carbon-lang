@@ -1411,7 +1411,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   }
   case CK_AddressSpaceConversion: {
     Value *Src = Visit(const_cast<Expr*>(E));
-    return Builder.CreateAddrSpaceCast(Src, ConvertType(DestTy));
+    // Since target may map different address spaces in AST to the same address
+    // space, an address space conversion may end up as a bitcast.
+    return Builder.CreatePointerBitCastOrAddrSpaceCast(Src,
+                                                       ConvertType(DestTy));
   }
   case CK_AtomicToNonAtomic:
   case CK_NonAtomicToAtomic:
