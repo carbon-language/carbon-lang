@@ -14,7 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
-#include "LexicalBlock.h"
+#include "AddressRangesDWARFObject.h"
 #include "LocationList.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
@@ -75,8 +75,10 @@ public:
   /// Maps DWARF CUID to offset of stmt_list attribute in .debug_info.
   std::map<unsigned, uint32_t> LineTableOffsetCUMap;
 
-  /// List of DWARF lexical blocks in .debug_info.
-  std::vector<LexicalBlock> LexicalBlocks;
+  /// List of DWARF entries in .debug_info that have address ranges to be
+  /// updated. These include lexical blocks (DW_TAG_lexical_block) and concrete
+  /// instances of inlined subroutines (DW_TAG_inlined_subroutine).
+  std::vector<AddressRangesDWARFObject> AddressRangesObjects;
 
   /// List of DWARF location lists in .debug_loc.
   std::vector<LocationList> LocationLists;

@@ -2075,10 +2075,10 @@ void RewriteInstance::rewriteFile() {
   Out->keep();
 }
 
-void RewriteInstance::updateLexicalBlocksAddresses() {
-  for (auto &LB : BC->LexicalBlocks) {
-    for (const auto &Range : LB.getAbsoluteAddressRanges()) {
-      RangesSectionsWriter.AddRange(&LB, Range.first,
+void RewriteInstance::updateAddressRangesObjects() {
+  for (auto &Obj : BC->AddressRangesObjects) {
+    for (const auto &Range : Obj.getAbsoluteAddressRanges()) {
+      RangesSectionsWriter.AddRange(&Obj, Range.first,
                                     Range.second - Range.first);
     }
   }
@@ -2150,7 +2150,7 @@ void RewriteInstance::updateDebugInfo() {
 
   updateFunctionRanges();
 
-  updateLexicalBlocksAddresses();
+  updateAddressRangesObjects();
 
   generateDebugRanges();
 
@@ -2202,12 +2202,13 @@ void RewriteInstance::updateDWARFAddressRanges() {
         DIECompileUnitPair.first);
   }
 
-  // Update address ranges of lexical blocks.
-  for (const auto &LB : BC->LexicalBlocks) {
+  // Update address ranges of DWARF block objects (lexical/try/catch blocks,
+  // inlined subroutine instances, etc).
+  for (const auto &Obj : BC->AddressRangesObjects) {
     updateDWARFObjectAddressRanges(
-        LB.getAddressRangesOffset() + DebugRangesSize,
-        LB.getCompileUnit(),
-        LB.getDIE());
+        Obj.getAddressRangesOffset() + DebugRangesSize,
+        Obj.getCompileUnit(),
+        Obj.getDIE());
   }
 }
 

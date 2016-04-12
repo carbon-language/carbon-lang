@@ -71,19 +71,25 @@ BinaryFunction *getBinaryFunctionContainingAddress(
 }
 
 // Traverses the DIE tree in a recursive depth-first search and finds lexical
-// blocks, saving them in LexicalBlocks.
-void findLexicalBlocks(const DWARFCompileUnit *Unit,
-                       const DWARFDebugInfoEntryMinimal *DIE,
-                       std::map<uint64_t, BinaryFunction> &Functions,
-                       std::vector<llvm::bolt::LexicalBlock> &LexicalBlocks) {
-  if (DIE->getTag() == dwarf::DW_TAG_lexical_block) {
-    LexicalBlocks.emplace_back(Unit, DIE);
-    auto &LB = LexicalBlocks.back();
+// blocks and instances of inlined subroutines, saving them in
+// AddressRangesObjects.
+void findAddressRangesObjects(
+    const DWARFCompileUnit *Unit,
+    const DWARFDebugInfoEntryMinimal *DIE,
+    std::map<uint64_t, BinaryFunction> &Functions,
+    std::vector<llvm::bolt::AddressRangesDWARFObject> &AddressRangesObjects) {
+  auto Tag = DIE->getTag();
+  if (Tag == dwarf::DW_TAG_lexical_block ||
+      Tag == dwarf::DW_TAG_inlined_subroutine ||
+      Tag == dwarf::DW_TAG_try_block ||
+      Tag == dwarf::DW_TAG_catch_block) {
+    AddressRangesObjects.emplace_back(Unit, DIE);
+    auto &Object = AddressRangesObjects.back();
     for (const auto &Range : DIE->getAddressRanges(Unit)) {
       if (auto *Function = getBinaryFunctionContainingAddress(Range.first,
                                                               Functions)) {
         if (Function->isSimple()) {
-          LB.addAddressRange(*Function, Range.first, Range.second);
+          Object.addAddressRange(*Function, Range.first, Range.second);
         }
       }
     }
@@ -91,7 +97,7 @@ void findLexicalBlocks(const DWARFCompileUnit *Unit,
 
   // Recursively visit each child.
   for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
-    findLexicalBlocks(Unit, Child, Functions, LexicalBlocks);
+    findAddressRangesObjects(Unit, Child, Functions, AddressRangesObjects);
   }
 }
 
@@ -163,10 +169,10 @@ void BinaryContext::preprocessFunctionDebugInfo(
                     UnknownFunctions);
   }
 
-  // Iterate over DIE trees finding lexical blocks.
+  // Iterate over DIE trees finding objects that contain address ranges.
   for (const auto &CU : DwCtx->compile_units()) {
-    findLexicalBlocks(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
-                      LexicalBlocks);
+    findAddressRangesObjects(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
+                             AddressRangesObjects);
   }
 
   // Iterate over location lists and save them in LocationLists.

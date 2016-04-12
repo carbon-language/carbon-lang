@@ -1,4 +1,4 @@
-//===--- LexicalBlock.h - DWARF lexical blocks ----------------------------===//
+//===--- AddressRangesDWARFObject.h - DWARF Entities with address ranges --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_LEXICAL_BLOCK_H
-#define LLVM_TOOLS_LLVM_BOLT_LEXICAL_BLOCK_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_ADDRESS_RANGES_DWARF_OBJECT_H
+#define LLVM_TOOLS_LLVM_BOLT_ADDRESS_RANGES_DWARF_OBJECT_H
 
 #include "DebugRangesSectionsWriter.h"
 #include "BasicBlockOffsetRanges.h"
@@ -29,13 +29,13 @@ class BasicBlockTable;
 class BinaryBasicBlock;
 class BinaryFunction;
 
-class LexicalBlock : public AddressRangesOwner {
+class AddressRangesDWARFObject : public AddressRangesOwner {
 public:
-  LexicalBlock(const DWARFCompileUnit *CU,
-               const DWARFDebugInfoEntryMinimal *DIE)
+  AddressRangesDWARFObject(const DWARFCompileUnit *CU,
+                           const DWARFDebugInfoEntryMinimal *DIE)
       : CU(CU), DIE(DIE) { }
 
-  /// Add range [BeginAddress, EndAddress) to lexical block.
+  /// Add range [BeginAddress, EndAddress) to this object.
   void addAddressRange(BinaryFunction &Function,
                        uint64_t BeginAddress,
                        uint64_t EndAddress) {
@@ -66,7 +66,7 @@ private:
 
   BasicBlockOffsetRanges BBOffsetRanges;
 
-  // Offset of the address ranges of this block in the output .debug_ranges.
+  // Offset of the address ranges of this object in the output .debug_ranges.
   uint32_t AddressRangesOffset;
 };
 

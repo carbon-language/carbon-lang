@@ -212,8 +212,8 @@ private:
   /// Update internal function ranges after functions have been written.
   void updateFunctionRanges();
 
-  /// Update lexical blocks ranges after optimizations.
-  void updateLexicalBlocksAddresses();
+  /// Update objects with address ranges after optimization.
+  void updateAddressRangesObjects();
 
   /// Generate new contents for .debug_loc.
   void updateLocationLists();
