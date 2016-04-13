@@ -49,7 +49,7 @@ def MicroMipsMemGPRMM16AsmOperand : AsmOperandClass {
 
 class mem_mm_4_generic : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPRMM16, simm4);
+  let MIOperandInfo = (ops ptr_rc, simm4);
   let OperandType = "OPERAND_MEMORY";
   let ParserMatchClass = MicroMipsMemGPRMM16AsmOperand;
 }
@@ -75,7 +75,7 @@ def MicroMipsMemSPAsmOperand : AsmOperandClass {
 
 def mem_mm_sp_imm5_lsl2 : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32:$base, simm5:$offset);
+  let MIOperandInfo = (ops ptr_rc:$base, simm5:$offset);
   let OperandType = "OPERAND_MEMORY";
   let ParserMatchClass = MicroMipsMemSPAsmOperand;
   let EncoderMethod = "getMemEncodingMMSPImm5Lsl2";
@@ -90,7 +90,7 @@ def mem_mm_gp_imm7_lsl2 : Operand<i32> {
 
 def mem_mm_9 : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32, simm9);
+  let MIOperandInfo = (ops ptr_rc, simm9);
   let EncoderMethod = "getMemEncodingMMImm9";
   let ParserMatchClass = MipsMemSimm9AsmOperand;
   let OperandType = "OPERAND_MEMORY";
@@ -98,7 +98,7 @@ def mem_mm_9 : Operand<i32> {
 
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32, simm12);
+  let MIOperandInfo = (ops ptr_rc, simm12);
   let EncoderMethod = "getMemEncodingMMImm12";
   let ParserMatchClass = MipsMemAsmOperand;
   let OperandType = "OPERAND_MEMORY";
@@ -106,7 +106,7 @@ def mem_mm_12 : Operand<i32> {
 
 def mem_mm_16 : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32, simm16);
+  let MIOperandInfo = (ops ptr_rc, simm16);
   let EncoderMethod = "getMemEncodingMMImm16";
   let ParserMatchClass = MipsMemAsmOperand;
   let OperandType = "OPERAND_MEMORY";
@@ -122,7 +122,7 @@ def MipsMemUimm4AsmOperand : AsmOperandClass {
 
 def mem_mm_4sp : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32, uimm8);
+  let MIOperandInfo = (ops ptr_rc, uimm8);
   let EncoderMethod = "getMemEncodingMMImm4sp";
   let ParserMatchClass = MipsMemUimm4AsmOperand;
   let OperandType = "OPERAND_MEMORY";
@@ -203,7 +203,7 @@ def movep_regpair : Operand<i32> {
   let ParserMatchClass = MovePRegPairAsmOperand;
   let PrintMethod = "printRegisterList";
   let DecoderMethod = "DecodeMovePRegPair";
-  let MIOperandInfo = (ops GPR32Opnd, GPR32Opnd);
+  let MIOperandInfo = (ops ptr_rc, ptr_rc);
 }
 
 class MovePMM16<string opstr, RegisterOperand RO> :
@@ -224,7 +224,7 @@ def regpair : Operand<i32> {
   let ParserMatchClass = RegPairAsmOperand;
   let PrintMethod = "printRegisterPair";
   let DecoderMethod = "DecodeRegPairOperand";
-  let MIOperandInfo = (ops GPR32Opnd, GPR32Opnd);
+  let MIOperandInfo = (ops ptr_rc, ptr_rc);
 }
 
 class StorePairMM<string opstr, InstrItinClass Itin = NoItinerary,
