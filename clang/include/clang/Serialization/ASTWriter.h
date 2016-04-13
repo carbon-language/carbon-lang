@@ -787,7 +787,7 @@ class ASTRecordWriter {
   /// declaration or type.
   SmallVector<Stmt *, 16> StmtsToEmit;
 
-  static constexpr int MaxOffsetIndices = 4;
+  static const int MaxOffsetIndices = 4;
   /// \brief Indices of record elements that describe offsets within the
   /// bitcode. These will be converted to offsets relative to the current
   /// record when emitted.
