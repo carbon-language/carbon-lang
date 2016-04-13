@@ -773,6 +773,31 @@ _mm512_maskz_cvtepu64_ps (__mmask8 __U, __m512i __A) {
   (__m512) __builtin_ia32_reduceps512_mask ((__v16sf) __A, __B,      \
                (__v16sf) _mm512_setzero_ps(), (__mmask16) __U, __R);})
 
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_movepi32_mask (__m512i __A)
+{
+  return (__mmask16) __builtin_ia32_cvtd2mask512 ((__v16si) __A);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_movm_epi32 (__mmask16 __A)
+{
+  return (__m512i) __builtin_ia32_cvtmask2d512 (__A);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_movm_epi64 (__mmask8 __A)
+{
+  return (__m512i) __builtin_ia32_cvtmask2q512 (__A);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_mm512_movepi64_mask (__m512i __A)
+{
+  return (__mmask8) __builtin_ia32_cvtq2mask512 ((__v8di) __A);
+}
+
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif

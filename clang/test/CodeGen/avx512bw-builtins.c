@@ -1404,3 +1404,22 @@ __mmask32 test_mm512_mask_testn_epi16_mask(__mmask32 __U, __m512i __A, __m512i _
   return _mm512_mask_testn_epi16_mask(__U, __A, __B); 
 }
 
+__mmask64 test_mm512_movepi8_mask(__m512i __A) {
+  // CHECK-LABEL: @test_mm512_movepi8_mask
+  // CHECK: @llvm.x86.avx512.cvtb2mask.512
+  return _mm512_movepi8_mask(__A); 
+}
+
+__m512i test_mm512_movm_epi8(__mmask64 __A) {
+  // CHECK-LABEL: @test_mm512_movm_epi8
+  // CHECK: @llvm.x86.avx512.cvtmask2b.512
+  return _mm512_movm_epi8(__A); 
+}
+
+__m512i test_mm512_movm_epi16(__mmask32 __A) {
+  // CHECK-LABEL: @test_mm512_movm_epi16
+  // CHECK: @llvm.x86.avx512.cvtmask2w.512
+  return _mm512_movm_epi16(__A); 
+}
+
+

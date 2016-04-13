@@ -743,3 +743,27 @@ __m512 test_mm512_maskz_reduce_round_ps(__mmask16 __U, __m512 __A) {
   return _mm512_maskz_reduce_round_ps(__U, __A, 4, 8); 
 }
 
+__mmask16 test_mm512_movepi32_mask(__m512i __A) {
+  // CHECK-LABEL: @test_mm512_movepi32_mask
+  // CHECK: @llvm.x86.avx512.cvtd2mask.512
+  return _mm512_movepi32_mask(__A); 
+}
+
+__m512i test_mm512_movm_epi32(__mmask16 __A) {
+  // CHECK-LABEL: @test_mm512_movm_epi32
+  // CHECK: @llvm.x86.avx512.cvtmask2d.512
+  return _mm512_movm_epi32(__A); 
+}
+
+__m512i test_mm512_movm_epi64(__mmask8 __A) {
+  // CHECK-LABEL: @test_mm512_movm_epi64
+  // CHECK: @llvm.x86.avx512.cvtmask2q.512
+  return _mm512_movm_epi64(__A); 
+}
+
+__mmask8 test_mm512_movepi64_mask(__m512i __A) {
+  // CHECK-LABEL: @test_mm512_movepi64_mask
+  // CHECK: @llvm.x86.avx512.cvtq2mask.512
+  return _mm512_movepi64_mask(__A); 
+}
+
