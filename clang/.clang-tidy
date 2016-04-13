@@ -1,1 +1,1 @@
-Checks: '-*,clang-diagnostic-*,llvm-*,misc-*'
+Checks: '-*,clang-diagnostic-*,llvm-*,misc-*,-misc-unused-parameters'
