@@ -1303,6 +1303,16 @@ class ObjCTypeArgOrProtocolValidatorCCC : public CorrectionCandidateCallback {
 };
 } // end anonymous namespace
 
+void Sema::DiagnoseTypeArgsAndProtocols(IdentifierInfo *ProtocolId,
+                                        SourceLocation ProtocolLoc,
+                                        IdentifierInfo *TypeArgId,
+                                        SourceLocation TypeArgLoc,
+                                        bool SelectProtocolFirst) {
+  Diag(TypeArgLoc, diag::err_objc_type_args_and_protocols)
+      << SelectProtocolFirst << TypeArgId << ProtocolId
+      << SourceRange(ProtocolLoc);
+}
+
 void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
        Scope *S,
        ParsedType baseType,
@@ -1570,11 +1580,9 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
 
       // We have a conflict: some names refer to protocols and others
       // refer to types.
-      Diag(identifierLocs[i], diag::err_objc_type_args_and_protocols)
-        << (protocols[i] != nullptr)
-        << identifiers[i]
-        << identifiers[0]
-        << SourceRange(identifierLocs[0]);
+      DiagnoseTypeArgsAndProtocols(identifiers[0], identifierLocs[0],
+                                   identifiers[i], identifierLocs[i],
+                                   protocols[i] != nullptr);
 
       protocols.clear();
       typeArgs.clear();
