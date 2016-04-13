@@ -276,6 +276,22 @@ The 3.8 release didn't include release notes for :program:`clang-tidy`. In the
   * `readability-uniqueptr-delete-release
     <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/readability-uniqueptr-delete-release.html>`_
 
+- Updated ``cppcoreguidelines-pro-member-type-member-init`` check
+
+  This check now conforms to C++ Core Guidelines rule Type.6: Always Initialize
+  a Member Variable. The check examines every record type where construction
+  might result in an undefined memory state. These record types needing
+  initialization have at least one default-initialized built-in, pointer,
+  array or record type matching these criteria or a default-initialized
+  direct base class of this kind.
+
+  The check has two complementary aspects:
+  1. Ensure every constructor for a record type needing initialization
+     value-initializes all members and direct bases via a combination of
+     in-class initializers and the member initializer list.
+  2. Value-initialize every non-member instance of a record type needing
+     initialization that lacks a user-provided default constructor, e.g.
+     a POD.
 
 Improvements to modularize
 --------------------------
