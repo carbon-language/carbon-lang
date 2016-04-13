@@ -2075,6 +2075,69 @@ _mm512_movm_epi16 (__mmask32 __A)
   return (__m512i) __builtin_ia32_cvtmask2w512 (__A);
 }
 
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_broadcastb_epi8 (__m128i __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastb512_mask ((__v16qi) __A,
+                   (__v64qi) _mm512_setzero_si512(),
+                   (__mmask64) -1);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_broadcastb_epi8 (__m512i __O, __mmask64 __M, __m128i __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastb512_mask ((__v16qi) __A,
+                   (__v64qi) __O,
+                   __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_broadcastb_epi8 (__mmask64 __M, __m128i __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastb512_mask ((__v16qi) __A,
+                   (__v64qi) _mm512_setzero_qi(),
+                   __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_set1_epi16 (__m512i __O, __mmask32 __M, short __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastw512_gpr_mask (__A,
+                 (__v32hi) __O,
+                 __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_set1_epi16 (__mmask32 __M, short __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastw512_gpr_mask (__A,
+                 (__v32hi) _mm512_setzero_hi(),
+                 __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_broadcastw_epi16 (__m128i __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastw512_mask ((__v8hi) __A,
+                   (__v32hi) _mm512_setzero_si512(),
+                   (__mmask32) -1);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_broadcastw_epi16 (__m512i __O, __mmask32 __M, __m128i __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastw512_mask ((__v8hi) __A,
+                   (__v32hi) __O,
+                   __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_broadcastw_epi16 (__mmask32 __M, __m128i __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastw512_mask ((__v8hi) __A,
+                   (__v32hi) _mm512_setzero_hi(),
+                   __M);
+}
 
 #undef __DEFAULT_FN_ATTRS
 

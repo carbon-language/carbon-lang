@@ -767,3 +767,110 @@ __mmask8 test_mm512_movepi64_mask(__m512i __A) {
   return _mm512_movepi64_mask(__A); 
 }
 
+__m512 test_mm512_broadcast_f32x2(__m128 __A) {
+  // CHECK-LABEL: @test_mm512_broadcast_f32x2
+  // CHECK: @llvm.x86.avx512.mask.broadcastf32x2
+  return _mm512_broadcast_f32x2(__A); 
+}
+
+__m512 test_mm512_mask_broadcast_f32x2(__m512 __O, __mmask16 __M, __m128 __A) {
+  // CHECK-LABEL: @test_mm512_mask_broadcast_f32x2
+  // CHECK: @llvm.x86.avx512.mask.broadcastf32x2
+  return _mm512_mask_broadcast_f32x2(__O, __M, __A); 
+}
+
+__m512 test_mm512_maskz_broadcast_f32x2(__mmask16 __M, __m128 __A) {
+  // CHECK-LABEL: @test_mm512_maskz_broadcast_f32x2
+  // CHECK: @llvm.x86.avx512.mask.broadcastf32x2
+  return _mm512_maskz_broadcast_f32x2(__M, __A); 
+}
+
+__m512 test_mm512_broadcast_f32x8(__m256 __A) {
+  // CHECK-LABEL: @test_mm512_broadcast_f32x8
+  // CHECK: @llvm.x86.avx512.mask.broadcastf32x8
+  return _mm512_broadcast_f32x8(__A); 
+}
+
+__m512 test_mm512_mask_broadcast_f32x8(__m512 __O, __mmask16 __M, __m256 __A) {
+  // CHECK-LABEL: @test_mm512_mask_broadcast_f32x8
+  // CHECK: @llvm.x86.avx512.mask.broadcastf32x8
+  return _mm512_mask_broadcast_f32x8(__O, __M, __A); 
+}
+
+__m512 test_mm512_maskz_broadcast_f32x8(__mmask16 __M, __m256 __A) {
+  // CHECK-LABEL: @test_mm512_maskz_broadcast_f32x8
+  // CHECK: @llvm.x86.avx512.mask.broadcastf32x8
+  return _mm512_maskz_broadcast_f32x8(__M, __A); 
+}
+
+__m512d test_mm512_broadcast_f64x2(__m128d __A) {
+  // CHECK-LABEL: @test_mm512_broadcast_f64x2
+  // CHECK: @llvm.x86.avx512.mask.broadcastf64x2
+  return _mm512_broadcast_f64x2(__A); 
+}
+
+__m512d test_mm512_mask_broadcast_f64x2(__m512d __O, __mmask8 __M, __m128d __A) {
+  // CHECK-LABEL: @test_mm512_mask_broadcast_f64x2
+  // CHECK: @llvm.x86.avx512.mask.broadcastf64x2
+  return _mm512_mask_broadcast_f64x2(__O, __M, __A); 
+}
+
+__m512d test_mm512_maskz_broadcast_f64x2(__mmask8 __M, __m128d __A) {
+  // CHECK-LABEL: @test_mm512_maskz_broadcast_f64x2
+  // CHECK: @llvm.x86.avx512.mask.broadcastf64x2
+  return _mm512_maskz_broadcast_f64x2(__M, __A); 
+}
+
+__m512i test_mm512_broadcast_i32x2(__m128i __A) {
+  // CHECK-LABEL: @test_mm512_broadcast_i32x2
+  // CHECK: @llvm.x86.avx512.mask.broadcasti32x2
+  return _mm512_broadcast_i32x2(__A); 
+}
+
+__m512i test_mm512_mask_broadcast_i32x2(__m512i __O, __mmask16 __M, __m128i __A) {
+  // CHECK-LABEL: @test_mm512_mask_broadcast_i32x2
+  // CHECK: @llvm.x86.avx512.mask.broadcasti32x2
+  return _mm512_mask_broadcast_i32x2(__O, __M, __A); 
+}
+
+__m512i test_mm512_maskz_broadcast_i32x2(__mmask16 __M, __m128i __A) {
+  // CHECK-LABEL: @test_mm512_maskz_broadcast_i32x2
+  // CHECK: @llvm.x86.avx512.mask.broadcasti32x2
+  return _mm512_maskz_broadcast_i32x2(__M, __A); 
+}
+
+__m512i test_mm512_broadcast_i32x8(__m256i __A) {
+  // CHECK-LABEL: @test_mm512_broadcast_i32x8
+  // CHECK: @llvm.x86.avx512.mask.broadcasti32x8
+  return _mm512_broadcast_i32x8(__A); 
+}
+
+__m512i test_mm512_mask_broadcast_i32x8(__m512i __O, __mmask16 __M, __m256i __A) {
+  // CHECK-LABEL: @test_mm512_mask_broadcast_i32x8
+  // CHECK: @llvm.x86.avx512.mask.broadcasti32x8
+  return _mm512_mask_broadcast_i32x8(__O, __M, __A); 
+}
+
+__m512i test_mm512_maskz_broadcast_i32x8(__mmask16 __M, __m256i __A) {
+  // CHECK-LABEL: @test_mm512_maskz_broadcast_i32x8
+  // CHECK: @llvm.x86.avx512.mask.broadcasti32x8
+  return _mm512_maskz_broadcast_i32x8(__M, __A); 
+}
+
+__m512i test_mm512_broadcast_i64x2(__m128i __A) {
+  // CHECK-LABEL: @test_mm512_broadcast_i64x2
+  // CHECK: @llvm.x86.avx512.mask.broadcasti64x2
+  return _mm512_broadcast_i64x2(__A); 
+}
+
+__m512i test_mm512_mask_broadcast_i64x2(__m512i __O, __mmask8 __M, __m128i __A) {
+  // CHECK-LABEL: @test_mm512_mask_broadcast_i64x2
+  // CHECK: @llvm.x86.avx512.mask.broadcasti64x2
+  return _mm512_mask_broadcast_i64x2(__O, __M, __A); 
+}
+
+__m512i test_mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A) {
+  // CHECK-LABEL: @test_mm512_maskz_broadcast_i64x2
+  // CHECK: @llvm.x86.avx512.mask.broadcasti64x2
+  return _mm512_maskz_broadcast_i64x2(__M, __A); 
+}
