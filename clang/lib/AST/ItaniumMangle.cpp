@@ -2097,7 +2097,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
     type_name = "ocl_" #ImgType "_" #Suffix; \
     Out << type_name.size() << type_name; \
     break;
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
   case BuiltinType::OCLSampler:
     Out << "11ocl_sampler";
     break;

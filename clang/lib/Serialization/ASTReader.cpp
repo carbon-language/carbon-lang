@@ -6096,7 +6096,7 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_##Id##_ID: \
       T = Context.SingletonId; \
       break;
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
     case PREDEF_TYPE_SAMPLER_ID:
       T = Context.OCLSamplerTy;
       break;

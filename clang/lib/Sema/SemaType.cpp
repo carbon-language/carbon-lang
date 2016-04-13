@@ -1580,7 +1580,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
                  .Cases("read_write", "__read_write", Context.Id##RWTy) \
                  .Default(Context.Id##ROTy); \
     break;
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
 
   case DeclSpec::TST_error:
     Result = Context.IntTy;

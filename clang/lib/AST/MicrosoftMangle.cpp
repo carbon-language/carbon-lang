@@ -1721,7 +1721,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
   case BuiltinType::Id: \
     Out << "PAUocl_" #ImgType "_" #Suffix "@@"; \
     break;
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
   case BuiltinType::OCLSampler:
     Out << "PA";
     mangleArtificalTagType(TTK_Struct, "ocl_sampler");

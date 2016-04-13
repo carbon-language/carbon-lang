@@ -1093,7 +1093,7 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target,
   if (LangOpts.OpenCL) {
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
     InitBuiltinType(SingletonId, BuiltinType::Id);
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
 
     InitBuiltinType(OCLSamplerTy, BuiltinType::OCLSampler);
     InitBuiltinType(OCLEventTy, BuiltinType::OCLEvent);
@@ -1673,7 +1673,7 @@ TypeInfo ASTContext::getTypeInfoImpl(const Type *T) const {
     case BuiltinType::OCLReserveID:
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
     case BuiltinType::Id:
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
 
       // Currently these types are pointers to opaque types.
       Width = Target->getPointerWidth(0);
@@ -5501,7 +5501,7 @@ static char getObjCEncodingForPrimitiveKind(const ASTContext *C,
     // OpenCL and placeholder types don't need @encodings.
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
     case BuiltinType::Id:
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
     case BuiltinType::OCLEvent:
     case BuiltinType::OCLClkEvent:
     case BuiltinType::OCLQueue:

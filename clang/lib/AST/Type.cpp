@@ -2584,7 +2584,7 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
   case Id: \
     return "__" #Access " " #ImgType "_t";
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
   case OCLSampler:
     return "sampler_t";
   case OCLEvent:
@@ -3560,7 +3560,7 @@ bool Type::canHaveNullability() const {
     case BuiltinType::ObjCSel:
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
     case BuiltinType::Id:
-#include "clang/AST/OpenCLImageTypes.def"
+#include "clang/Basic/OpenCLImageTypes.def"
     case BuiltinType::OCLSampler:
     case BuiltinType::OCLEvent:
     case BuiltinType::OCLClkEvent:
