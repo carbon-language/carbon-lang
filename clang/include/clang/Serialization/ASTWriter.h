@@ -438,33 +438,6 @@ private:
   /// in the order they should be written.
   SmallVector<QueuedCXXBaseSpecifiers, 2> CXXBaseSpecifiersToWrite;
 
-  /// \brief The offset of each CXXCtorInitializer list within the AST.
-  SmallVector<uint32_t, 16> CXXCtorInitializersOffsets;
-
-  /// \brief The first ID number we can use for our own ctor initializers.
-  serialization::CXXCtorInitializersID FirstCXXCtorInitializersID;
-
-  /// \brief The ctor initializers ID that will be assigned to the next new
-  /// list of C++ ctor initializers.
-  serialization::CXXCtorInitializersID NextCXXCtorInitializersID;
-
-  /// \brief A set of C++ ctor initializers that is queued to be written
-  /// into the AST file.
-  struct QueuedCXXCtorInitializers {
-    QueuedCXXCtorInitializers() : ID() {}
-
-    QueuedCXXCtorInitializers(serialization::CXXCtorInitializersID ID,
-                              ArrayRef<CXXCtorInitializer*> Inits)
-        : ID(ID), Inits(Inits) {}
-
-    serialization::CXXCtorInitializersID ID;
-    ArrayRef<CXXCtorInitializer*> Inits;
-  };
-
-  /// \brief Queue of C++ ctor initializers to be written to the AST file,
-  /// in the order they should be written.
-  SmallVector<QueuedCXXCtorInitializers, 2> CXXCtorInitializersToWrite;
-
   /// \brief A mapping from each known submodule to its ID number, which will
   /// be a positive integer.
   llvm::DenseMap<Module *, unsigned> SubmoduleIDs;
@@ -494,7 +467,6 @@ private:
   void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag,
                                      bool isModule);
   void WriteCXXBaseSpecifiersOffsets();
-  void WriteCXXCtorInitializersOffsets();
 
   unsigned TypeExtQualAbbrev;
   unsigned TypeFunctionProtoAbbrev;
@@ -660,11 +632,6 @@ public:
   /// \brief Emit a UnresolvedSet structure.
   void AddUnresolvedSet(const ASTUnresolvedSet &Set, RecordDataImpl &Record);
 
-  /// \brief Emit the ID for a CXXCtorInitializer array and register the array
-  /// for later serialization.
-  void AddCXXCtorInitializersRef(ArrayRef<CXXCtorInitializer *> Inits,
-                                 RecordDataImpl &Record);
-
   /// \brief Add a string to the given record.
   void AddString(StringRef Str, RecordDataImpl &Record);
 
@@ -703,15 +670,10 @@ public:
   /// via \c AddCXXBaseSpecifiersRef().
   void FlushCXXBaseSpecifiers();
 
-  /// \brief Flush all of the C++ constructor initializer lists that have been
-  /// added via \c AddCXXCtorInitializersRef().
-  void FlushCXXCtorInitializers();
-
   /// \brief Flush all pending records that are tacked onto the end of
   /// decl and decl update records.
   void FlushPendingAfterDecl() {
     FlushCXXBaseSpecifiers();
-    FlushCXXCtorInitializers();
   }
 
   /// \brief Record an ID for the given switch-case statement.
@@ -988,15 +950,8 @@ public:
   /// \brief Emit a C++ base specifier.
   void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base);
 
-  /// \brief Emit the ID for a CXXCtorInitializer array and register the array
-  /// for later serialization.
-  void AddCXXCtorInitializersRef(ArrayRef<CXXCtorInitializer *> Inits) {
-    return Writer->AddCXXCtorInitializersRef(Inits, *Record);
-  }
-
   /// \brief Emit a CXXCtorInitializer array.
-  void AddCXXCtorInitializers(const CXXCtorInitializer *const *CtorInitializers,
-                              unsigned NumCtorInitializers);
+  void AddCXXCtorInitializers(ArrayRef<CXXCtorInitializer*> CtorInits);
 
   void AddCXXDefinitionData(const CXXRecordDecl *D);
 

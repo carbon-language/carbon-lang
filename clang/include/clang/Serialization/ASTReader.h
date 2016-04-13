@@ -1971,11 +1971,6 @@ public:
   ReadCXXCtorInitializers(ModuleFile &F, const RecordData &Record,
                           unsigned &Idx);
 
-  /// \brief Read a CXXCtorInitializers ID from the given record and
-  /// return its global bit offset.
-  uint64_t ReadCXXCtorInitializersRef(ModuleFile &M, const RecordData &Record,
-                                      unsigned &Idx);
-
   /// \brief Read the contents of a CXXCtorInitializer array.
   CXXCtorInitializer **GetExternalCXXCtorInitializers(uint64_t Offset) override;
 
