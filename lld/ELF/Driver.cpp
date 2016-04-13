@@ -135,10 +135,9 @@ void LinkerDriver::addFile(StringRef Path) {
 
 Optional<MemoryBufferRef> LinkerDriver::readFile(StringRef Path) {
   auto MBOrErr = MemoryBuffer::getFile(Path);
-  if (std::error_code EC = MBOrErr.getError()) {
-    error(MBOrErr, "cannot open " + Path);
+  error(MBOrErr, "cannot open " + Path);
+  if (HasError)
     return None;
-  }
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take MB ownership
