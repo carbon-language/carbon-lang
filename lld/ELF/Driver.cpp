@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Driver.h"
-#include "DynamicList.h"
 #include "Config.h"
+#include "DynamicList.h"
 #include "Error.h"
 #include "ICF.h"
 #include "InputFiles.h"

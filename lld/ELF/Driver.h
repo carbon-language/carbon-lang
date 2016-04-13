@@ -12,7 +12,7 @@
 
 #include "SymbolTable.h"
 #include "lld/Core/LLVM.h"
-#include "llvm/ADT/Optional.h" 
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/raw_ostream.h"
