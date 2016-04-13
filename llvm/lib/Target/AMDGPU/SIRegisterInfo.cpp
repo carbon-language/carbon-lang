@@ -114,6 +114,16 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   reserveRegisterTuples(Reserved, AMDGPU::EXEC);
   reserveRegisterTuples(Reserved, AMDGPU::FLAT_SCR);
 
+  // Reserve Trap Handler registers - support is not implemented in Codegen.
+  reserveRegisterTuples(Reserved, AMDGPU::TBA);
+  reserveRegisterTuples(Reserved, AMDGPU::TMA);
+  reserveRegisterTuples(Reserved, AMDGPU::TTMP0_TTMP1);
+  reserveRegisterTuples(Reserved, AMDGPU::TTMP2_TTMP3);
+  reserveRegisterTuples(Reserved, AMDGPU::TTMP4_TTMP5);
+  reserveRegisterTuples(Reserved, AMDGPU::TTMP6_TTMP7);
+  reserveRegisterTuples(Reserved, AMDGPU::TTMP8_TTMP9);
+  reserveRegisterTuples(Reserved, AMDGPU::TTMP10_TTMP11);
+
   // Reserve the last 2 registers so we will always have at least 2 more that
   // will physically contain VCC.
   reserveRegisterTuples(Reserved, AMDGPU::SGPR102_SGPR103);
@@ -640,7 +650,21 @@ unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
       switch(Channel) {
         case 0: return AMDGPU::VCC_LO;
         case 1: return AMDGPU::VCC_HI;
-        default: llvm_unreachable("Invalid SubIdx for VCC");
+        default: llvm_unreachable("Invalid SubIdx for VCC"); break;
+      }
+
+    case AMDGPU::TBA:
+      switch(Channel) {
+        case 0: return AMDGPU::TBA_LO;
+        case 1: return AMDGPU::TBA_HI;
+        default: llvm_unreachable("Invalid SubIdx for TBA"); break;
+      }
+
+    case AMDGPU::TMA:
+      switch(Channel) {
+        case 0: return AMDGPU::TMA_LO;
+        case 1: return AMDGPU::TMA_HI;
+        default: llvm_unreachable("Invalid SubIdx for TMA"); break;
       }
 
   case AMDGPU::FLAT_SCR:
