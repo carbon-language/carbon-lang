@@ -696,9 +696,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def MULTu_MM : MMRel, Mult<"multu", II_MULTU, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x26c>;
   def SDIV_MM  : MMRel, Div<"div", II_DIV, GPR32Opnd, [HI0, LO0]>,
-                 MULT_FM_MM<0x2ac>;
+                 MULT_FM_MM<0x2ac>, ISA_MIPS1_NOT_32R6_64R6;
   def UDIV_MM  : MMRel, Div<"divu", II_DIVU, GPR32Opnd, [HI0, LO0]>,
-                 MULT_FM_MM<0x2ec>;
+                 MULT_FM_MM<0x2ec>, ISA_MIPS1_NOT_32R6_64R6;
 
   /// Arithmetic Instructions with PC and Immediate
   def ADDIUPC_MM : AddImmUPC<"addiupc", GPRMM16Opnd>, ADDIUPC_FM_MM;
@@ -997,6 +997,11 @@ class UncondBranchMMPseudo<string opstr> :
                     !strconcat(opstr, "\t$offset")>;
 
 def B_MM_Pseudo : UncondBranchMMPseudo<"b">, ISA_MICROMIPS;
+
+def SDIV_MM_Pseudo : MultDivPseudo<SDIV_MM, ACC64, GPR32Opnd, MipsDivRem,
+                                   II_DIV, 0, 1, 1>, ISA_MIPS1_NOT_32R6_64R6;
+def UDIV_MM_Pseudo : MultDivPseudo<UDIV_MM, ACC64, GPR32Opnd, MipsDivRemU,
+                                   II_DIVU, 0, 1, 1>, ISA_MIPS1_NOT_32R6_64R6;
 
   def : MipsInstAlias<"wait", (WAIT_MM 0x0), 1>;
   def : MipsInstAlias<"nop", (SLL_MM ZERO, ZERO, 0), 1>;
