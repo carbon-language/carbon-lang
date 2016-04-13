@@ -476,6 +476,9 @@ unsigned LLVMGetMDKindIDInContext(LLVMContextRef C, const char *Name,
                                   unsigned SLen);
 unsigned LLVMGetMDKindID(const char *Name, unsigned SLen);
 
+unsigned LLVMGetAttrKindIDInContext(LLVMContextRef C, const char *Name,
+                                    size_t SLen);
+
 /**
  * @}
  */
