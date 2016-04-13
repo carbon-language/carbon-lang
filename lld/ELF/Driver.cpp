@@ -98,7 +98,7 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
 // Newly created memory buffers are owned by this driver.
 void LinkerDriver::addFile(StringRef Path) {
   using namespace llvm::sys::fs;
-  if (Config->Verbose || Config->Trace)
+  if (Config->Verbose)
     llvm::outs() << Path << "\n";
   auto MBOrErr = MemoryBuffer::getFile(Path);
   if (!MBOrErr) {
