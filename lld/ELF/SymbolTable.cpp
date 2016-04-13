@@ -339,6 +339,14 @@ template <class ELFT> void SymbolTable<ELFT>::scanShlibUndefined() {
           Sym->MustBeInDynSym = true;
 }
 
+// This function process the dynamic list option by marking all the symbols
+// to be exported in the dynamic table.
+template <class ELFT> void SymbolTable<ELFT>::scanDynamicList() {
+  for (StringRef S : Config->DynamicList)
+    if (SymbolBody *B = find(S))
+      B->MustBeInDynSym = true;
+}
+
 template class elf::SymbolTable<ELF32LE>;
 template class elf::SymbolTable<ELF32BE>;
 template class elf::SymbolTable<ELF64LE>;

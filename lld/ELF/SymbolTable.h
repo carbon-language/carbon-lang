@@ -60,6 +60,7 @@ public:
                                    uint8_t Visibility = llvm::ELF::STV_HIDDEN);
 
   void scanShlibUndefined();
+  void scanDynamicList();
   SymbolBody *find(StringRef Name);
   void wrap(StringRef Name);
   InputFile *findFile(SymbolBody *B);
