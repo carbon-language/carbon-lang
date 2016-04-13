@@ -218,10 +218,12 @@ int SymbolBody::compare(SymbolBody *Other) {
   if (L > R)
     return -Other->compare(this);
 
+  uint8_t V = getMinVisibility(getVisibility(), Other->getVisibility());
   if (isShared() != Other->isShared()) {
     SymbolBody *Shared = isShared() ? this : Other;
     Shared->MustBeInDynSym = true;
-    if (Shared->getVisibility() == STV_DEFAULT) {
+    if (Shared->getVisibility() == STV_DEFAULT &&
+        (V == STV_DEFAULT || V == STV_PROTECTED)) {
       // We want to export all symbols that exist in the executable and are
       // preemptable in DSOs, so that the symbols in the executable can
       // preempt symbols in the DSO at runtime.
@@ -231,7 +233,6 @@ int SymbolBody::compare(SymbolBody *Other) {
   }
 
   if (!isShared() && !Other->isShared()) {
-    uint8_t V = getMinVisibility(getVisibility(), Other->getVisibility());
     setVisibility(V);
     Other->setVisibility(V);
   }
