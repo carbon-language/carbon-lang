@@ -296,9 +296,8 @@ UndefinedElf<ELFT>::UndefinedElf(const Elf_Sym &Sym)
 
 template <typename ELFT>
 DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
-                                         OutputSectionBase<ELFT> &Section,
-                                         uint8_t StOther)
-    : Defined(SymbolBody::DefinedSyntheticKind, N, STB_GLOBAL, StOther,
+                                         OutputSectionBase<ELFT> &Section)
+    : Defined(SymbolBody::DefinedSyntheticKind, N, STB_GLOBAL, STV_HIDDEN,
               0 /* Type */),
       Value(Value), Section(Section) {}
 

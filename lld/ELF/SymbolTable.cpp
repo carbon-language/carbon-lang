@@ -161,8 +161,8 @@ DefinedRegular<ELFT> *SymbolTable<ELFT>::addAbsolute(StringRef Name,
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addSynthetic(StringRef Name,
                                             OutputSectionBase<ELFT> &Sec,
-                                            uintX_t Val, uint8_t Visibility) {
-  auto *Sym = new (Alloc) DefinedSynthetic<ELFT>(Name, Val, Sec, Visibility);
+                                            uintX_t Val) {
+  auto *Sym = new (Alloc) DefinedSynthetic<ELFT>(Name, Val, Sec);
   resolve(Sym);
   return Sym;
 }
