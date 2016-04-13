@@ -1542,16 +1542,6 @@ void ASTDeclWriter::VisitStaticAssertDecl(StaticAssertDecl *D) {
 }
 
 /// \brief Emit the DeclContext part of a declaration context decl.
-///
-/// \param LexicalOffset the offset at which the DECL_CONTEXT_LEXICAL
-/// block for this declaration context is stored. May be 0 to indicate
-/// that there are no declarations stored within this context.
-///
-/// \param VisibleOffset the offset at which the DECL_CONTEXT_VISIBLE
-/// block for this declaration context is stored. May be 0 to indicate
-/// that there are no declarations visible from this context. Note
-/// that this value will not be emitted for non-primary declaration
-/// contexts.
 void ASTDeclWriter::VisitDeclContext(DeclContext *DC) {
   Record.AddOffset(Writer.WriteDeclContextLexicalBlock(Context, DC));
   Record.AddOffset(Writer.WriteDeclContextVisibleBlock(Context, DC));
