@@ -154,6 +154,12 @@ identified.  The improvements since the 3.8 release include:
 
   Warns about top-level const parameters in function declarations.
 
+- New `readability-deleted-default
+  <http://clang.llvm.org/extra/clang-tidy/checks/readability-deleted-default.html>`_ check
+
+  Warns about defaulted constructors and assignment operators that are actually
+  deleted.
+
 - New `readability-redundant-control-flow
   <http://clang.llvm.org/extra/clang-tidy/checks/readability-redundant-control-flow.html>`_ check
 
