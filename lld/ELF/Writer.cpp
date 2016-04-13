@@ -573,6 +573,10 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
           DynType = Target->TlsGotRel;
         else if (Preemptible)
           DynType = Target->GotRel;
+        else if (Body.isUndefined())
+          // Weak undefined symbols evaluate to zero, so don't create
+          // relocations for them.
+          continue;
         else
           DynType = Target->RelativeRel;
         AddDyn({DynType, Out<ELFT>::Got, Body.getGotOffset<ELFT>(),
