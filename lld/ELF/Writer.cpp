@@ -880,9 +880,8 @@ template <class ELFT> static uint32_t getAlignment(SharedSymbol<ELFT> *SS) {
 template <class ELFT>
 void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   ensureBss();
-  uintX_t Off = Out<ELFT>::Bss->getSize();
   uintX_t Align = getAlignment(SS);
-  Off = alignTo(Off, Align);
+  uintX_t Off = alignTo(Out<ELFT>::Bss->getSize(), Align);
   Out<ELFT>::Bss->setSize(Off + SS->template getSize<ELFT>());
   Out<ELFT>::Bss->updateAlign(Align);
   uintX_t Shndx = SS->Sym.st_shndx;
