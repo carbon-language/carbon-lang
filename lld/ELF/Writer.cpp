@@ -462,14 +462,22 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       if (auto *S = dyn_cast<SharedSymbol<ELFT>>(&Body))
         S->File->IsUsed = true;
 
+    RelExpr Expr = Target->getRelExpr(Type, Body);
     uintX_t Addend = getAddend<ELFT>(RI);
     const uint8_t *BufLoc = Buf + RI.r_offset;
     if (!RelTy::IsRela)
       Addend += Target->getImplicitAddend(BufLoc, Type);
-    if (Config->EMachine == EM_MIPS)
+    if (Config->EMachine == EM_MIPS) {
       Addend += findMipsPairedAddend<ELFT>(Buf, BufLoc, Body, &RI, E);
+      if (Type == R_MIPS_LO16 && Expr == R_PC)
+        // R_MIPS_LO16 expression has R_PC type iif the target is _gp_disp
+        // symbol. In that case we should use the following formula for
+        // calculation "AHL + GP – P + 4". Let's add 4 right here.
+        // For details see p. 4-19 at
+        // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+        Addend += 4;
+    }
 
-    RelExpr Expr = Target->getRelExpr(Type, Body);
     if (unsigned Processed =
             handleTlsRelocation<ELFT>(Type, Body, C, Offset, Addend, Expr)) {
       I += (Processed - 1);
