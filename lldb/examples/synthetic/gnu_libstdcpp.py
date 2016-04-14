@@ -239,7 +239,7 @@ class StdVectorSynthProvider:
 				return None
 			element_type = self.start_p.GetType().GetPointeeType()
 			element_bits = 8 * element_type.GetByteSize()
-			element_offset = index / element_bits
+			element_offset = (index / element_bits) * element_type.GetByteSize()
 			bit_offset = index % element_bits
 			element = self.start_p.CreateChildAtOffset('['+str(index)+']',element_offset,element_type)
 			bit = element.GetValueAsUnsigned(0) & (1 << bit_offset)
