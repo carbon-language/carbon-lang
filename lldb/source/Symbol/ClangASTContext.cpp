@@ -72,7 +72,6 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
-#include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ThreadSafeDenseMap.h"
 #include "lldb/Core/UniqueCStringMap.h"
@@ -8647,10 +8646,18 @@ ClangASTContext::ConvertStringToFloatValue (lldb::opaque_compiler_type_t type, c
             const uint64_t byte_size = bit_size / 8;
             if (dst_size >= byte_size)
             {
-                Scalar scalar = ap_float.bitcastToAPInt().zextOrTrunc(llvm::NextPowerOf2(byte_size) * 8);
-                lldb_private::Error get_data_error;
-                if (scalar.GetAsMemoryData(dst, byte_size, lldb_private::endian::InlHostByteOrder(), get_data_error))
+                if (bit_size == sizeof(float)*8)
+                {
+                    float float32 = ap_float.convertToFloat();
+                    ::memcpy (dst, &float32, byte_size);
                     return byte_size;
+                }
+                else if (bit_size >= 64)
+                {
+                    llvm::APInt ap_int(ap_float.bitcastToAPInt());
+                    ::memcpy (dst, ap_int.getRawData(), byte_size);
+                    return byte_size;
+                }
             }
         }
     }
