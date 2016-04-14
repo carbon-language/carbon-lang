@@ -222,6 +222,8 @@ bool AddDiscriminators::runOnFunction(Function &F) {
         continue;
 
       DILocation *CurrentDIL = Current->getDebugLoc();
+      if (!CurrentDIL)
+        continue;
       Location L =
           std::make_pair(CurrentDIL->getFilename(), CurrentDIL->getLine());
       if (!CallLocations.insert(L).second) {
