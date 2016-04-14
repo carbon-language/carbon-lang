@@ -1814,7 +1814,7 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     // size.
     switch (Subtarget->getMaxPrivateElementSize()) {
     case 4:
-      return ScalarizeVectorLoad(Op, DAG);
+      return scalarizeVectorLoad(Load, DAG);
     case 8:
       if (NumElements > 2)
         return SplitVectorLoad(Op, DAG);
@@ -2047,7 +2047,7 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   case AMDGPUAS::PRIVATE_ADDRESS: {
     switch (Subtarget->getMaxPrivateElementSize()) {
     case 4:
-      return ScalarizeVectorStore(Op, DAG);
+      return scalarizeVectorStore(Store, DAG);
     case 8:
       if (NumElements > 2)
         return SplitVectorStore(Op, DAG);

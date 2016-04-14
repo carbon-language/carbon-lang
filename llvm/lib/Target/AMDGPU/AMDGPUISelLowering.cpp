@@ -1039,58 +1039,17 @@ SDValue AMDGPUTargetLowering::getHiHalf64(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, Vec, One);
 }
 
-SDValue AMDGPUTargetLowering::ScalarizeVectorLoad(const SDValue Op,
-                                                  SelectionDAG &DAG) const {
-  LoadSDNode *Load = cast<LoadSDNode>(Op);
-  EVT MemVT = Load->getMemoryVT();
-  EVT MemEltVT = MemVT.getVectorElementType();
-
-  EVT LoadVT = Op.getValueType();
-  EVT EltVT = LoadVT.getVectorElementType();
-  EVT PtrVT = Load->getBasePtr().getValueType();
-
-  unsigned NumElts = Load->getMemoryVT().getVectorNumElements();
-  SmallVector<SDValue, 8> Loads;
-  SmallVector<SDValue, 8> Chains;
-
-  SDLoc SL(Op);
-  unsigned BaseAlign = Load->getAlignment();
-  unsigned MemEltSize = MemEltVT.getStoreSize();
-
-  MachinePointerInfo SrcValue(Load->getMemOperand()->getValue());
-
-  for (unsigned i = 0; i < NumElts; ++i) {
-    SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT, Load->getBasePtr(),
-                              DAG.getConstant(i * MemEltSize, SL, PtrVT));
-
-    SDValue NewLoad
-      = DAG.getExtLoad(Load->getExtensionType(), SL, EltVT,
-                       Load->getChain(), Ptr,
-                       SrcValue.getWithOffset(i * MemEltSize),
-                       MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
-                       Load->isInvariant(), MinAlign(BaseAlign, i * MemEltSize));
-    Loads.push_back(NewLoad.getValue(0));
-    Chains.push_back(NewLoad.getValue(1));
-  }
-
-  SDValue Ops[] = {
-    DAG.getNode(ISD::BUILD_VECTOR, SL, LoadVT, Loads),
-    DAG.getNode(ISD::TokenFactor, SL, MVT::Other, Chains)
-  };
-
-  return DAG.getMergeValues(Ops, SL);
-}
-
 SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
                                               SelectionDAG &DAG) const {
+  LoadSDNode *Load = cast<LoadSDNode>(Op);
   EVT VT = Op.getValueType();
+
 
   // If this is a 2 element vector, we really want to scalarize and not create
   // weird 1 element vectors.
   if (VT.getVectorNumElements() == 2)
-    return ScalarizeVectorLoad(Op, DAG);
+    return scalarizeVectorLoad(Load, DAG);
 
-  LoadSDNode *Load = cast<LoadSDNode>(Op);
   SDValue BasePtr = Load->getBasePtr();
   EVT PtrVT = BasePtr.getValueType();
   EVT MemVT = Load->getMemoryVT();
@@ -1196,39 +1155,6 @@ SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
                       Store->getAlignment());
 }
 
-SDValue AMDGPUTargetLowering::ScalarizeVectorStore(SDValue Op,
-                                                   SelectionDAG &DAG) const {
-  StoreSDNode *Store = cast<StoreSDNode>(Op);
-  EVT MemEltVT = Store->getMemoryVT().getVectorElementType();
-  EVT EltVT = Store->getValue().getValueType().getVectorElementType();
-  EVT PtrVT = Store->getBasePtr().getValueType();
-  unsigned NumElts = Store->getMemoryVT().getVectorNumElements();
-  SDLoc SL(Op);
-
-  SmallVector<SDValue, 8> Chains;
-
-  unsigned BaseAlign = Store->getAlignment();
-  unsigned EltSize = MemEltVT.getStoreSize();
-  MachinePointerInfo SrcValue(Store->getMemOperand()->getValue());
-
-  for (unsigned i = 0, e = NumElts; i != e; ++i) {
-    SDValue Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
-                              Store->getValue(),
-                              DAG.getConstant(i, SL, MVT::i32));
-
-    SDValue Offset = DAG.getConstant(i * MemEltVT.getStoreSize(), SL, PtrVT);
-    SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT, Store->getBasePtr(), Offset);
-    SDValue NewStore =
-      DAG.getTruncStore(Store->getChain(), SL, Val, Ptr,
-                        SrcValue.getWithOffset(i * EltSize),
-                        MemEltVT, Store->isNonTemporal(), Store->isVolatile(),
-                        MinAlign(BaseAlign, i * EltSize));
-    Chains.push_back(NewStore);
-  }
-
-  return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, Chains);
-}
-
 SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                                                SelectionDAG &DAG) const {
   StoreSDNode *Store = cast<StoreSDNode>(Op);
@@ -1238,7 +1164,7 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
   // If this is a 2 element vector, we really want to scalarize and not create
   // weird 1 element vectors.
   if (VT.getVectorNumElements() == 2)
-    return ScalarizeVectorStore(Op, DAG);
+    return scalarizeVectorStore(Store, DAG);
 
   EVT MemVT = Store->getMemoryVT();
   SDValue Chain = Store->getChain();
