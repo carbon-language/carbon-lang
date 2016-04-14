@@ -1102,7 +1102,7 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   if (!isOutputDynamic())
     Symtab.addIgnored("__tls_get_addr");
 
-  auto Define = [this](StringRef S, ElfSym<ELFT>::SymPair &Sym) {
+  auto Define = [this](StringRef S, typename ElfSym<ELFT>::SymPair &Sym) {
     Sym.first = Symtab.addIgnored(S, STV_DEFAULT);
 
     // The name without the underscore is not a reserved name,
