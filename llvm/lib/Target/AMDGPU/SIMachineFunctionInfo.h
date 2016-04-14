@@ -164,6 +164,10 @@ public:
     return PrivateSegmentWaveByteOffsetSystemSGPR;
   }
 
+  void setPrivateSegmentWaveByteOffset(unsigned Reg) {
+    PrivateSegmentWaveByteOffsetSystemSGPR = Reg;
+  }
+
   bool hasPrivateSegmentBuffer() const {
     return PrivateSegmentBuffer;
   }

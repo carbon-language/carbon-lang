@@ -37,6 +37,16 @@
 
 using namespace llvm;
 
+static unsigned findFirstFreeSGPR(CCState &CCInfo) {
+  unsigned NumSGPRs = AMDGPU::SGPR_32RegClass.getNumRegs();
+  for (unsigned Reg = 0; Reg < NumSGPRs; ++Reg) {
+    if (!CCInfo.isAllocated(AMDGPU::SGPR0 + Reg)) {
+      return AMDGPU::SGPR0 + Reg;
+    }
+  }
+  llvm_unreachable("Cannot allocate sgpr");
+}
+
 SITargetLowering::SITargetLowering(TargetMachine &TM,
                                    const AMDGPUSubtarget &STI)
     : AMDGPUTargetLowering(TM, STI) {
@@ -712,6 +722,15 @@ SDValue SITargetLowering::LowerFormalArguments(
   if (!AMDGPU::isShader(CallConv)) {
     getOriginalFunctionArgs(DAG, DAG.getMachineFunction().getFunction(), Ins,
                             Splits);
+
+    assert(Info->hasWorkGroupIDX() && Info->hasWorkItemIDX());
+  } else {
+    assert(!Info->hasPrivateSegmentBuffer() && !Info->hasDispatchPtr() &&
+           !Info->hasKernargSegmentPtr() && !Info->hasFlatScratchInit() &&
+           !Info->hasWorkGroupIDX() && !Info->hasWorkGroupIDY() &&
+           !Info->hasWorkGroupIDZ() && !Info->hasWorkGroupInfo() &&
+           !Info->hasWorkItemIDX() && !Info->hasWorkItemIDY() &&
+           !Info->hasWorkItemIDZ());
   }
 
   // FIXME: How should these inputs interact with inreg / custom SGPR inputs?
@@ -834,8 +853,7 @@ SDValue SITargetLowering::LowerFormalArguments(
     unsigned Reg = Info->addWorkGroupIDX();
     MF.addLiveIn(Reg, &AMDGPU::SReg_32RegClass);
     CCInfo.AllocateReg(Reg);
-  } else
-    llvm_unreachable("work group id x is always enabled");
+  }
 
   if (Info->hasWorkGroupIDY()) {
     unsigned Reg = Info->addWorkGroupIDY();
@@ -857,8 +875,13 @@ SDValue SITargetLowering::LowerFormalArguments(
 
   if (Info->hasPrivateSegmentWaveByteOffset()) {
     // Scratch wave offset passed in system SGPR.
-    unsigned PrivateSegmentWaveByteOffsetReg
-      = Info->addPrivateSegmentWaveByteOffset();
+    unsigned PrivateSegmentWaveByteOffsetReg;
+
+    if (AMDGPU::isShader(CallConv)) {
+      PrivateSegmentWaveByteOffsetReg = findFirstFreeSGPR(CCInfo);
+      Info->setPrivateSegmentWaveByteOffset(PrivateSegmentWaveByteOffsetReg);
+    } else
+      PrivateSegmentWaveByteOffsetReg = Info->addPrivateSegmentWaveByteOffset();
 
     MF.addLiveIn(PrivateSegmentWaveByteOffsetReg, &AMDGPU::SGPR_32RegClass);
     CCInfo.AllocateReg(PrivateSegmentWaveByteOffsetReg);
@@ -923,8 +946,7 @@ SDValue SITargetLowering::LowerFormalArguments(
     unsigned Reg = TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_X);
     MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
     CCInfo.AllocateReg(Reg);
-  } else
-    llvm_unreachable("workitem id x should always be enabled");
+  }
 
   if (Info->hasWorkItemIDY()) {
     unsigned Reg = TRI->getPreloadedValue(MF, SIRegisterInfo::WORKITEM_ID_Y);
