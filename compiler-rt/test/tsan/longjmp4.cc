@@ -37,7 +37,7 @@ void mymain() {
     return;
   }
   foo(env);
-  printf("FAILED\n");
+  fprintf(stderr, "FAILED\n");
 }
 
 int main() {
