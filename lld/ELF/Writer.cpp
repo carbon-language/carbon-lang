@@ -1102,9 +1102,8 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   if (!isOutputDynamic())
     Symtab.addIgnored("__tls_get_addr");
 
-  auto Define = [this](StringRef S, DefinedRegular<ELFT> *&Sym,
-                       DefinedRegular<ELFT> *&Sym2) {
-    Sym = Symtab.addIgnored(S, STV_DEFAULT);
+  auto Define = [this](StringRef S, ElfSym<ELFT>::SymPair &Sym) {
+    Sym.first = Symtab.addIgnored(S, STV_DEFAULT);
 
     // The name without the underscore is not a reserved name,
     // so it is defined only when there is a reference against it.
@@ -1112,12 +1111,12 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
     S = S.substr(1);
     if (SymbolBody *B = Symtab.find(S))
       if (B->isUndefined())
-        Sym2 = Symtab.addAbsolute(S, STV_DEFAULT);
+        Sym.second = Symtab.addAbsolute(S, STV_DEFAULT);
   };
 
-  Define("_end", ElfSym<ELFT>::End, ElfSym<ELFT>::End2);
-  Define("_etext", ElfSym<ELFT>::Etext, ElfSym<ELFT>::Etext2);
-  Define("_edata", ElfSym<ELFT>::Edata, ElfSym<ELFT>::Edata2);
+  Define("_end", ElfSym<ELFT>::End);
+  Define("_etext", ElfSym<ELFT>::Etext);
+  Define("_edata", ElfSym<ELFT>::Edata);
 }
 
 // Sort input sections by section name suffixes for
@@ -1645,6 +1644,14 @@ static uint16_t getELFType() {
   return ET_EXEC;
 }
 
+template <class ELFT, class SymPair, class uintX_t>
+static void assignSymValue(SymPair &Sym, uintX_t Val) {
+  if (Sym.first)
+    Sym.first->Value = Val;
+  if (Sym.second)
+    Sym.second->Value = Val;
+}
+
 // This function is called after we have assigned address and size
 // to each section. This function fixes some predefined absolute
 // symbol values that depend on section address and size.
@@ -1656,24 +1663,13 @@ template <class ELFT> void Writer<ELFT>::fixAbsoluteSymbols() {
     Elf_Phdr &H = P.H;
     if (H.p_type != PT_LOAD)
       continue;
-    uintX_t Val = H.p_vaddr + H.p_memsz;
-    if (ElfSym<ELFT>::End)
-      ElfSym<ELFT>::End->Value = Val;
-    if (ElfSym<ELFT>::End2)
-      ElfSym<ELFT>::End2->Value = Val;
+    assignSymValue<ELFT>(ElfSym<ELFT>::End, H.p_vaddr + H.p_memsz);
 
-    Val = H.p_vaddr + H.p_filesz;
-    if (H.p_flags & PF_W) {
-      if (ElfSym<ELFT>::Edata)
-        ElfSym<ELFT>::Edata->Value = Val;
-      if (ElfSym<ELFT>::Edata2)
-        ElfSym<ELFT>::Edata2->Value = Val;
-    } else {
-      if (ElfSym<ELFT>::Etext)
-        ElfSym<ELFT>::Etext->Value = Val;
-      if (ElfSym<ELFT>::Etext2)
-        ElfSym<ELFT>::Etext2->Value = Val;
-    }
+    uintX_t Val = H.p_vaddr + H.p_filesz;
+    if (H.p_flags & PF_W)
+      assignSymValue<ELFT>(ElfSym<ELFT>::Edata, Val);
+    else
+      assignSymValue<ELFT>(ElfSym<ELFT>::Etext, Val);
   }
 }
 
