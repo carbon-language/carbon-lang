@@ -3053,17 +3053,6 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       F.ObjCCategories.swap(Record);
       break;
 
-    case CXX_BASE_SPECIFIER_OFFSETS: {
-      if (F.LocalNumCXXBaseSpecifiers != 0) {
-        Error("duplicate CXX_BASE_SPECIFIER_OFFSETS record in AST file");
-        return Failure;
-      }
-
-      F.LocalNumCXXBaseSpecifiers = Record[0];
-      F.CXXBaseSpecifiersOffsets = (const uint32_t *)Blob.data();
-      break;
-    }
-
     case DIAG_PRAGMA_MAPPINGS:
       if (F.PragmaDiagMappings.empty())
         F.PragmaDiagMappings.swap(Record);
@@ -6310,18 +6299,6 @@ ASTReader::GetExternalCXXCtorInitializers(uint64_t Offset) {
 
   unsigned Idx = 0;
   return ReadCXXCtorInitializers(*Loc.F, Record, Idx);
-}
-
-uint64_t ASTReader::readCXXBaseSpecifiers(ModuleFile &M,
-                                          const RecordData &Record,
-                                          unsigned &Idx) {
-  if (Idx >= Record.size() || Record[Idx] > M.LocalNumCXXBaseSpecifiers) {
-    Error("malformed AST file: missing C++ base specifier");
-    return 0;
-  }
-
-  unsigned LocalID = Record[Idx++];
-  return getGlobalBitOffset(M, M.CXXBaseSpecifiersOffsets[LocalID - 1]);
 }
 
 CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {

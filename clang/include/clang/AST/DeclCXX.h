@@ -523,6 +523,13 @@ class CXXRecordDecl : public RecordDecl {
       return getVBasesSlowCase();
     }
 
+    ArrayRef<CXXBaseSpecifier> bases() const {
+      return llvm::makeArrayRef(getBases(), NumBases);
+    }
+    ArrayRef<CXXBaseSpecifier> vbases() const {
+      return llvm::makeArrayRef(getVBases(), NumVBases);
+    }
+
   private:
     CXXBaseSpecifier *getBasesSlowCase() const;
     CXXBaseSpecifier *getVBasesSlowCase() const;

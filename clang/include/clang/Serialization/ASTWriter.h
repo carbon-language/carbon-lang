@@ -409,35 +409,6 @@ private:
   /// file.
   unsigned NumVisibleDeclContexts;
 
-  /// \brief The offset of each CXXBaseSpecifier set within the AST.
-  SmallVector<uint32_t, 16> CXXBaseSpecifiersOffsets;
-
-  /// \brief The first ID number we can use for our own base specifiers.
-  serialization::CXXBaseSpecifiersID FirstCXXBaseSpecifiersID;
-
-  /// \brief The base specifiers ID that will be assigned to the next new
-  /// set of C++ base specifiers.
-  serialization::CXXBaseSpecifiersID NextCXXBaseSpecifiersID;
-
-  /// \brief A set of C++ base specifiers that is queued to be written into the
-  /// AST file.
-  struct QueuedCXXBaseSpecifiers {
-    QueuedCXXBaseSpecifiers() : ID(), Bases(), BasesEnd() { }
-
-    QueuedCXXBaseSpecifiers(serialization::CXXBaseSpecifiersID ID,
-                            CXXBaseSpecifier const *Bases,
-                            CXXBaseSpecifier const *BasesEnd)
-      : ID(ID), Bases(Bases), BasesEnd(BasesEnd) { }
-
-    serialization::CXXBaseSpecifiersID ID;
-    CXXBaseSpecifier const * Bases;
-    CXXBaseSpecifier const * BasesEnd;
-  };
-
-  /// \brief Queue of C++ base specifiers to be written to the AST file,
-  /// in the order they should be written.
-  SmallVector<QueuedCXXBaseSpecifiers, 2> CXXBaseSpecifiersToWrite;
-
   /// \brief A mapping from each known submodule to its ID number, which will
   /// be a positive integer.
   llvm::DenseMap<Module *, unsigned> SubmoduleIDs;
@@ -466,7 +437,6 @@ private:
                                         
   void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag,
                                      bool isModule);
-  void WriteCXXBaseSpecifiersOffsets();
 
   unsigned TypeExtQualAbbrev;
   unsigned TypeFunctionProtoAbbrev;
@@ -574,11 +544,6 @@ public:
   /// \brief Emit a CXXTemporary.
   void AddCXXTemporary(const CXXTemporary *Temp, RecordDataImpl &Record);
 
-  /// \brief Emit a set of C++ base specifiers to the record.
-  void AddCXXBaseSpecifiersRef(CXXBaseSpecifier const *Bases,
-                               CXXBaseSpecifier const *BasesEnd,
-                               RecordDataImpl &Record);
-
   /// \brief Get the unique number used to refer to the given selector.
   serialization::SelectorID getSelectorRef(Selector Sel);
 
@@ -665,16 +630,6 @@ public:
   /// \brief Note that the selector Sel occurs at the given offset
   /// within the method pool/selector table.
   void SetSelectorOffset(Selector Sel, uint32_t Offset);
-
-  /// \brief Flush all of the C++ base specifier sets that have been added
-  /// via \c AddCXXBaseSpecifiersRef().
-  void FlushCXXBaseSpecifiers();
-
-  /// \brief Flush all pending records that are tacked onto the end of
-  /// decl and decl update records.
-  void FlushPendingAfterDecl() {
-    FlushCXXBaseSpecifiers();
-  }
 
   /// \brief Record an ID for the given switch-case statement.
   unsigned RecordSwitchCaseID(SwitchCase *S);
@@ -877,11 +832,11 @@ public:
     return Writer->AddCXXTemporary(Temp, *Record);
   }
 
+  /// \brief Emit a C++ base specifier.
+  void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base);
+
   /// \brief Emit a set of C++ base specifiers.
-  void AddCXXBaseSpecifiersRef(const CXXBaseSpecifier *BasesBegin,
-                               const CXXBaseSpecifier *BasesEnd) {
-    return Writer->AddCXXBaseSpecifiersRef(BasesBegin, BasesEnd, *Record);
-  }
+  void AddCXXBaseSpecifiers(ArrayRef<CXXBaseSpecifier> Bases);
 
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T) {
@@ -946,9 +901,6 @@ public:
   void AddUnresolvedSet(const ASTUnresolvedSet &Set) {
     return Writer->AddUnresolvedSet(Set, *Record);
   }
-
-  /// \brief Emit a C++ base specifier.
-  void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base);
 
   /// \brief Emit a CXXCtorInitializer array.
   void AddCXXCtorInitializers(ArrayRef<CXXCtorInitializer*> CtorInits);

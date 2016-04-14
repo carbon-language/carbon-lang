@@ -49,14 +49,7 @@ namespace clang {
       if (!Code)
         llvm::report_fatal_error(StringRef("unexpected declaration kind '") +
             D->getDeclKindName() + "'");
-
-      auto Offset = Record.Emit(Code, AbbrevToUse);
-
-      // Flush any base specifiers and ctor initializers that
-      // were written as part of this declaration.
-      Writer.FlushPendingAfterDecl();
-
-      return Offset;
+      return Record.Emit(Code, AbbrevToUse);
     }
 
     void Visit(Decl *D);

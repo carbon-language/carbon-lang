@@ -1479,10 +1479,10 @@ void ASTDeclReader::ReadCXXDefinitionData(
 
   Data.NumBases = Record[Idx++];
   if (Data.NumBases)
-    Data.Bases = Reader.readCXXBaseSpecifiers(F, Record, Idx);
+    Data.Bases = ReadGlobalOffset(F, Record, Idx);
   Data.NumVBases = Record[Idx++];
   if (Data.NumVBases)
-    Data.VBases = Reader.readCXXBaseSpecifiers(F, Record, Idx);
+    Data.VBases = ReadGlobalOffset(F, Record, Idx);
   
   Reader.ReadUnresolvedSet(F, Data.Conversions, Record, Idx);
   Reader.ReadUnresolvedSet(F, Data.VisibleConversions, Record, Idx);

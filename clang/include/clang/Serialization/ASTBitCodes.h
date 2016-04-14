@@ -491,9 +491,7 @@ namespace clang {
       // ID 30 used to be a decl update record. These are now in the DECLTYPES
       // block.
       
-      /// \brief Record code for the table of offsets to CXXBaseSpecifier
-      /// sets.
-      CXX_BASE_SPECIFIER_OFFSETS = 31,
+      // ID 31 used to be a list of offsets to DECL_CXX_BASE_SPECIFIERS records.
 
       /// \brief Record code for \#pragma diagnostic mappings.
       DIAG_PRAGMA_MAPPINGS = 32,
