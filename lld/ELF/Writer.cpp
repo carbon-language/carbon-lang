@@ -992,7 +992,10 @@ public:
   std::pair<OutputSectionBase<ELFT> *, bool> create(InputSectionBase<ELFT> *C,
                                                     StringRef OutsecName);
 
-  OutputSectionBase<ELFT> *lookup(StringRef Name, uint32_t Type, uintX_t Flags);
+  OutputSectionBase<ELFT> *lookup(StringRef Name, uint32_t Type,
+                                  uintX_t Flags) {
+    return Map.lookup({Name, Type, Flags});
+  }
 
 private:
   SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
@@ -1027,13 +1030,6 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
     break;
   }
   return {Sec, true};
-}
-
-template <class ELFT>
-OutputSectionBase<ELFT> *OutputSectionFactory<ELFT>::lookup(StringRef Name,
-                                                            uint32_t Type,
-                                                            uintX_t Flags) {
-  return Map.lookup({Name, Type, Flags, 0});
 }
 
 template <class ELFT>
