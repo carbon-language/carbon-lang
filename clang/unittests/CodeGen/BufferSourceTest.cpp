@@ -39,8 +39,8 @@ const char TestProgram[] =
     "EmitCXXGlobalInitFunc test;    ";
 
 TEST(BufferSourceTest, EmitCXXGlobalInitFunc) {
-    CompilerInstance compiler;
     LLVMContext Context;
+    CompilerInstance compiler;
 
     compiler.createDiagnostics();
     compiler.getLangOpts().CPlusPlus = 1;
