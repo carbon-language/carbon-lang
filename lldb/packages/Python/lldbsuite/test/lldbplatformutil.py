@@ -139,3 +139,10 @@ def createPlatformContext():
         return _PlatformContext('LD_LIBRARY_PATH', 'lib', 'so')
     else:
         return None
+
+def hasChattyStderr(test_case):
+    """Some targets produce garbage on the standard error output. This utility function
+    determines whether the tests can be strict about the expected stderr contents."""
+    if match_android_device(test_case.getArchitecture(), ['aarch64'], [22]):
+        return True # The dynamic linker on the device will complain about unknown DT entries
+    return False

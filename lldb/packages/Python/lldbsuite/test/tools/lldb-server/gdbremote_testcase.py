@@ -1374,3 +1374,6 @@ class GdbRemoteTestCaseBase(TestBase):
         self.assertTrue(state_reached)
         self.assertEqual(step_count, expected_step_count)
 
+    def maybe_strict_output_regex(self, regex):
+        return '.*'+regex+'.*' if lldbplatformutil.hasChattyStderr(self) else '^'+regex+'$'
+

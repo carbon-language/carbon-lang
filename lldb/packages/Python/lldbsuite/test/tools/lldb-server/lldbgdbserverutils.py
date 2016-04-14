@@ -787,7 +787,7 @@ class GdbRemoteTestSequence(object):
                     regex = line.get("regex", None)
                     # Compile the regex.
                     if regex and (type(regex) == str):
-                        regex = re.compile(regex)
+                        regex = re.compile(regex, re.DOTALL)
 
                     regex_mode = line.get("regex_mode", "match")
                     capture = line.get("capture", None)
