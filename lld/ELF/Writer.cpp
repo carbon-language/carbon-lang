@@ -462,8 +462,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       if (auto *S = dyn_cast<SharedSymbol<ELFT>>(&Body))
         S->File->IsUsed = true;
 
-    RelExpr Expr = Target->getRelExpr(Type, Body);
-
     uintX_t Addend = getAddend<ELFT>(RI);
     const uint8_t *BufLoc = Buf + RI.r_offset;
     if (!RelTy::IsRela)
@@ -471,7 +469,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (Config->EMachine == EM_MIPS)
       Addend += findMipsPairedAddend<ELFT>(Buf, BufLoc, Body, &RI, E);
 
-    bool Preemptible = Body.isPreemptible();
+    RelExpr Expr = Target->getRelExpr(Type, Body);
     if (unsigned Processed =
             handleTlsRelocation<ELFT>(Type, Body, C, Offset, Addend, Expr)) {
       I += (Processed - 1);
@@ -493,6 +491,8 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
         continue;
       }
     }
+
+    bool Preemptible = Body.isPreemptible();
 
     // If a relocation needs PLT, we create a PLT and a GOT slot
     // for the symbol.
