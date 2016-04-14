@@ -1,6 +1,7 @@
 ; RUN: opt -mtriple armv7-linux-gnueabihf -loop-vectorize -S %s -debug-only=loop-vectorize -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=LINUX-V7
 ; RUN: opt -mtriple armv8-linux-gnu -loop-vectorize -S %s -debug-only=loop-vectorize -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=LINUX-V8
 ; RUN: opt -mtriple armv7-unknwon-darwin -loop-vectorize -S %s -debug-only=loop-vectorize -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=DARWIN
+; REQUIRES: asserts
 
 ; Testing the ability of the loop vectorizer to tell when SIMD is safe or not
 ; regarding IEEE 754 standard.
