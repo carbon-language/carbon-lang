@@ -726,12 +726,12 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
 // thus, within reach of the TOC base pointer).
 static int getPPC64SectionRank(StringRef SectionName) {
   return StringSwitch<int>(SectionName)
-           .Case(".tocbss", 0)
-           .Case(".branch_lt", 2)
-           .Case(".toc", 3)
-           .Case(".toc1", 4)
-           .Case(".opd", 5)
-           .Default(1);
+      .Case(".tocbss", 0)
+      .Case(".branch_lt", 2)
+      .Case(".toc", 3)
+      .Case(".toc1", 4)
+      .Case(".opd", 5)
+      .Default(1);
 }
 
 template <class ELFT> static bool isRelroSection(OutputSectionBase<ELFT> *Sec) {
@@ -871,8 +871,8 @@ template <class ELFT> static uint32_t getAlignment(SharedSymbol<ELFT> *SS) {
 
   uintX_t SecAlign = SS->File->getSection(SS->Sym)->sh_addralign;
   uintX_t SymValue = SS->Sym.st_value;
-  int TrailingZeros = std::min(countTrailingZeros(SecAlign),
-                               countTrailingZeros(SymValue));
+  int TrailingZeros =
+      std::min(countTrailingZeros(SecAlign), countTrailingZeros(SymValue));
   return 1 << TrailingZeros;
 }
 
@@ -947,8 +947,7 @@ addOptionalSynthetic(SymbolTable<ELFT> &Table, StringRef Name,
 // all IRELATIVE relocs on startup. For dynamic executables, we don't
 // need these symbols, since IRELATIVE relocs are resolved through GOT
 // and PLT. For details, see http://www.airs.com/blog/archives/403.
-template <class ELFT>
-void Writer<ELFT>::addRelIpltSymbols() {
+template <class ELFT> void Writer<ELFT>::addRelIpltSymbols() {
   if (isOutputDynamic() || !Out<ELFT>::RelaPlt)
     return;
   StringRef S = Config->Rela ? "__rela_iplt_start" : "__rel_iplt_start";
