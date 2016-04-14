@@ -532,13 +532,6 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_386_32:
     write32le(Loc, Val);
     break;
-  case R_386_GOT32: {
-    uint64_t V = Val - Out<ELF32LE>::Got->getVA() -
-                 Out<ELF32LE>::Got->getNumEntries() * 4;
-    checkInt<32>(V, Type);
-    write32le(Loc, V);
-    break;
-  }
   case R_386_GOTOFF:
     write32le(Loc, Val - Out<ELF32LE>::Got->getVA());
     break;
@@ -549,6 +542,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_386_PLT32:
     write32le(Loc, Val);
     break;
+  case R_386_GOT32:
   case R_386_TLS_GD:
   case R_386_TLS_LDM:
   case R_386_TLS_TPOFF: {
