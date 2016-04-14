@@ -7110,10 +7110,9 @@ TEST_F(FormatTest, BlockCommentsAtEndOfLine) {
 }
 
 TEST_F(FormatTest, IndentLineCommentsInStartOfBlockAtEndOfFile) {
-  // FIXME: This is not what we want...
   verifyFormat("{\n"
-               "// a"
-               "// b");
+               "  // a\n"
+               "  // b");
 }
 
 TEST_F(FormatTest, FormatStarDependingOnContext) {
