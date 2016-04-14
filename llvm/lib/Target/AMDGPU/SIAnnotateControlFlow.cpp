@@ -341,8 +341,7 @@ void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
 void SIAnnotateControlFlow::closeControlFlow(BasicBlock *BB) {
   llvm::Loop *L = LI->getLoopFor(BB);
 
-  if (Stack.back().first != BB)
-    return;
+  assert(Stack.back().first == BB);
 
   if (L && L->getHeader() == BB) {
     // We can't insert an EndCF call into a loop header, because it will
