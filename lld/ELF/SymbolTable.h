@@ -12,7 +12,7 @@
 
 #include "InputFiles.h"
 #include "LTO.h"
-#include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace lld {
 namespace elf {
@@ -69,9 +69,7 @@ public:
   void addFile(std::unique_ptr<InputFile> File);
   void addCombinedLtoObject();
 
-  const llvm::MapVector<SymName, Symbol *> &getSymbols() const {
-    return Symtab;
-  }
+  llvm::ArrayRef<Symbol *> getSymbols() const { return SymVector; }
 
   const std::vector<std::unique_ptr<ObjectFile<ELFT>>> &getObjectFiles() const {
     return ObjectFiles;
@@ -106,11 +104,12 @@ private:
   // The order the global symbols are in is not defined. We can use an arbitrary
   // order, but it has to be reproducible. That is true even when cross linking.
   // The default hashing of StringRef produces different results on 32 and 64
-  // bit systems so we use a MapVector. That is arbitrary, deterministic but
-  // a bit inefficient.
+  // bit systems so we use a map to a vector. That is arbitrary, deterministic
+  // but a bit inefficient.
   // FIXME: Experiment with passing in a custom hashing or sorting the symbols
   // once symbol resolution is finished.
-  llvm::MapVector<SymName, Symbol *> Symtab;
+  llvm::DenseMap<SymName, unsigned> Symtab;
+  std::vector<Symbol *> SymVector;
   llvm::BumpPtrAllocator Alloc;
 
   // Comdat groups define "link once" sections. If two comdat groups have the

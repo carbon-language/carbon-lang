@@ -1232,8 +1232,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // Now that we have defined all possible symbols including linker-
   // synthesized ones. Visit all symbols to give the finishing touches.
   std::vector<DefinedCommon *> CommonSymbols;
-  for (auto &P : Symtab.getSymbols()) {
-    SymbolBody *Body = P.second->Body;
+  for (Symbol *S : Symtab.getSymbols()) {
+    SymbolBody *Body = S->Body;
     if (Body->isUndefined() && !Body->isWeak()) {
       auto *U = dyn_cast<UndefinedElf<ELFT>>(Body);
       if (!U || !U->canKeepUndefined())
