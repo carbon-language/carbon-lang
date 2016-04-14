@@ -1103,10 +1103,18 @@ unsigned SITargetLowering::getRegisterByName(const char* RegName, EVT VT,
                            + StringRef(RegName) + "\"."));
 }
 
-MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
-    MachineInstr * MI, MachineBasicBlock * BB) const {
-
+MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
+  MachineInstr *MI, MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
+  case AMDGPU::SI_INIT_M0: {
+    const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
+    BuildMI(*BB, MI->getIterator(), MI->getDebugLoc(),
+            TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
+      .addOperand(MI->getOperand(0));
+    MI->eraseFromParent();
+    break;
+  }
   case AMDGPU::BRANCH:
     return BB;
   case AMDGPU::GET_GROUPSTATICSIZE: {
@@ -1395,19 +1403,18 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
 
 SDValue SITargetLowering::copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL,
                                    SDValue V) const {
+  // We can't use S_MOV_B32 directly, because there is no way to specify m0 as
+  // the destination register.
+  //
   // We can't use CopyToReg, because MachineCSE won't combine COPY instructions,
   // so we will end up with redundant moves to m0.
   //
-  // We can't use S_MOV_B32, because there is no way to specify m0 as the
-  // destination register.
-  //
-  // We have to use them both.  Machine cse will combine all the S_MOV_B32
-  // instructions and the register coalescer eliminate the extra copies.
-  SDNode *M0 = DAG.getMachineNode(AMDGPU::S_MOV_B32, DL, V.getValueType(), V);
-  return DAG.getCopyToReg(Chain, DL, DAG.getRegister(AMDGPU::M0, MVT::i32),
-                          SDValue(M0, 0), SDValue()); // Glue
-                                                      // A Null SDValue creates
-                                                      // a glue result.
+  // We use a pseudo to ensure we emit s_mov_b32 with m0 as the direct result.
+
+  // A Null SDValue creates a glue result.
+  SDNode *M0 = DAG.getMachineNode(AMDGPU::SI_INIT_M0, DL, MVT::Other, MVT::Glue,
+                                  V, Chain);
+  return SDValue(M0, 0);
 }
 
 SDValue SITargetLowering::lowerImplicitZextParam(SelectionDAG &DAG,
