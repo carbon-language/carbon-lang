@@ -369,7 +369,8 @@ void SymbolTable::addCombinedLTOObjects() {
 
   // Create an object file and add it to the symbol table by replacing any
   // DefinedBitcode symbols with the definitions in the object file.
-  LTOCodeGenerator CG(getGlobalContext());
+  LLVMContext Context;
+  LTOCodeGenerator CG(Context);
   CG.setOptLevel(Config->LTOOptLevel);
   std::vector<ObjectFile *> Objs = createLTOObjects(&CG);
 
