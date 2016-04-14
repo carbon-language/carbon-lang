@@ -4661,8 +4661,7 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         auto *RD = cast<CXXRecordDecl>(D);
         UpdatedDeclContexts.insert(RD->getPrimaryContext());
         Record.AddCXXDefinitionData(RD);
-        // FIXME: Use AddOffset here.
-        Record.push_back(WriteDeclContextLexicalBlock(
+        Record.AddOffset(WriteDeclContextLexicalBlock(
             *Context, const_cast<CXXRecordDecl *>(RD)));
 
         // This state is sometimes updated by template instantiation, when we
