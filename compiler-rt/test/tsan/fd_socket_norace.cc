@@ -45,7 +45,7 @@ int main() {
   close(c);
   close(s);
   pthread_join(t, 0);
-  fprintf(stderr, "OK\n");
+  printf("OK\n");
 }
 
 // CHECK-NOT: WARNING: ThreadSanitizer: data race

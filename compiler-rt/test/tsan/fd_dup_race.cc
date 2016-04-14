@@ -27,7 +27,7 @@ int main() {
     exit(printf("dup2 failed\n"));
   barrier_wait(&barrier);
   pthread_join(th, 0);
-  fprintf(stderr, "DONE\n");
+  printf("DONE\n");
 }
 
 // CHECK: WARNING: ThreadSanitizer: data race

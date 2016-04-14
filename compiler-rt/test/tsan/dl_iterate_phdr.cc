@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     dlclose(lib);
   }
   pthread_join(th, 0);
-  fprintf(stderr, "DONE\n");
+  printf("DONE\n");
   return 0;
 }
 

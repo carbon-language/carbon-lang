@@ -77,7 +77,7 @@ int main() {
   pthread_create(&th, 0, Thread, 0);
   Test(true);
   pthread_join(th, 0);
-  fprintf(stderr, "OK\n");
+  printf("OK\n");
 }
 
 // CHECK-NOT: WARNING: ThreadSanitizer:

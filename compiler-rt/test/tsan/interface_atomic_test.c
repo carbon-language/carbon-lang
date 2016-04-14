@@ -9,7 +9,7 @@ int main() {
   int res = __tsan_atomic32_load(&a, __tsan_memory_order_acquire);
   if (res == 100) {
     // CHECK: PASS
-    fprintf(stderr, "PASS\n");
+    printf("PASS\n");
     return 0;
   }
   return 1;
