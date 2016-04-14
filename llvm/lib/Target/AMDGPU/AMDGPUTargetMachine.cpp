@@ -23,6 +23,7 @@
 #include "SIISelLowering.h"
 #include "SIInstrInfo.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -202,6 +203,10 @@ public:
     : AMDGPUPassConfig(TM, PM) { }
   bool addPreISel() override;
   bool addInstSelector() override;
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+  bool addIRTranslator() override;
+  bool addRegBankSelect() override;
+#endif
   void addFastRegAlloc(FunctionPass *RegAllocPass) override;
   void addOptimizedRegAlloc(FunctionPass *RegAllocPass) override;
   void addPreRegAlloc() override;
@@ -325,6 +330,17 @@ bool GCNPassConfig::addInstSelector() {
   addPass(createSIFoldOperandsPass());
   return false;
 }
+
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+bool GCNPassConfig::addIRTranslator() {
+  addPass(new IRTranslator());
+  return false;
+}
+
+bool GCNPassConfig::addRegBankSelect() {
+  return false;
+}
+#endif
 
 void GCNPassConfig::addPreRegAlloc() {
   const AMDGPUSubtarget &ST = *getAMDGPUTargetMachine().getSubtargetImpl();
