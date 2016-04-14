@@ -603,6 +603,8 @@ struct FormatStyle {
     UT_Never,
     /// Use tabs only for indentation.
     UT_ForIndentation,
+    /// Use tabs only for line continuation and indentation.
+    UT_ForContinuationAndIndentation,
     /// Use tabs whenever we need to fill whitespace that spans at least from
     /// one tab stop to the next one.
     UT_Always

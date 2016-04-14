@@ -69,6 +69,8 @@ template <> struct ScalarEnumerationTraits<FormatStyle::UseTabStyle> {
     IO.enumCase(Value, "Always", FormatStyle::UT_Always);
     IO.enumCase(Value, "true", FormatStyle::UT_Always);
     IO.enumCase(Value, "ForIndentation", FormatStyle::UT_ForIndentation);
+    IO.enumCase(Value, "ForContinuationAndIndentation",
+                FormatStyle::UT_ForContinuationAndIndentation);
   }
 };
 
