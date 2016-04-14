@@ -60,6 +60,8 @@ class SIMachineFunctionInfo final : public AMDGPUMachineFunction {
   unsigned PSInputAddr;
   bool ReturnsVoid;
 
+  unsigned MaximumWorkGroupSize;
+
 public:
   // FIXME: Make private
   unsigned LDSWaveSpillSize;

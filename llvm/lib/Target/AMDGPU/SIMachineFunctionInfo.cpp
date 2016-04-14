@@ -48,6 +48,7 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     PrivateSegmentWaveByteOffsetSystemSGPR(AMDGPU::NoRegister),
     PSInputAddr(0),
     ReturnsVoid(true),
+    MaximumWorkGroupSize(0),
     LDSWaveSpillSize(0),
     PSInputEna(0),
     NumUserSGPRs(0),
@@ -123,6 +124,11 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   if (HasStackObjects && ST.getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS &&
       ST.isAmdHsaOS())
     FlatScratchInit = true;
+
+  if (AMDGPU::isCompute(F->getCallingConv()))
+    MaximumWorkGroupSize = AMDGPU::getMaximumWorkGroupSize(*F);
+  else
+    MaximumWorkGroupSize = ST.getWavefrontSize();
 }
 
 unsigned SIMachineFunctionInfo::addPrivateSegmentBuffer(
@@ -202,10 +208,5 @@ SIMachineFunctionInfo::SpilledReg SIMachineFunctionInfo::getSpilledReg(
 
 unsigned SIMachineFunctionInfo::getMaximumWorkGroupSize(
                                               const MachineFunction &MF) const {
-  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
-  // FIXME: We should get this information from kernel attributes if it
-  // is available.
-  if (AMDGPU::isCompute(MF.getFunction()->getCallingConv()))
-    return 256;
-  return ST.getWavefrontSize();
+  return MaximumWorkGroupSize;
 }
