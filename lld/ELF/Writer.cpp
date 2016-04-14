@@ -1051,11 +1051,8 @@ OutputSectionFactory<ELFT>::createKey(InputSectionBase<ELFT> *C,
   // This makes each output section simple and keeps a single level mapping from
   // input to output.
   uintX_t Alignment = 0;
-  if (isa<MergeInputSection<ELFT>>(C)) {
-    Alignment = H->sh_addralign;
-    if (H->sh_entsize > Alignment)
-      Alignment = H->sh_entsize;
-  }
+  if (isa<MergeInputSection<ELFT>>(C))
+    Alignment = std::max(H->sh_addralign, H->sh_entsize);
 
   // GNU as can give .eh_frame secion type SHT_PROGBITS or SHT_X86_64_UNWIND
   // depending on the construct. We want to canonicalize it so that
