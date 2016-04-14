@@ -704,13 +704,10 @@ class ASTRecordWriter {
   /// declaration or type.
   SmallVector<Stmt *, 16> StmtsToEmit;
 
-  /// Worst case: bases, vbases, visible and lexical contents, local redecls.
-  static const int MaxOffsetIndices = 5;
   /// \brief Indices of record elements that describe offsets within the
   /// bitcode. These will be converted to offsets relative to the current
   /// record when emitted.
-  unsigned OffsetIndices[MaxOffsetIndices];
-  unsigned NumOffsetIndices = 0;
+  SmallVector<unsigned, 8> OffsetIndices;
 
   /// \brief Flush all of the statements and expressions that have
   /// been added to the queue via AddStmt().
@@ -719,13 +716,13 @@ class ASTRecordWriter {
 
   void PrepareToEmit(uint64_t MyOffset) {
     // Convert offsets into relative form.
-    for (unsigned I = 0; I != NumOffsetIndices; ++I) {
-      auto &StoredOffset = (*Record)[OffsetIndices[I]];
+    for (unsigned I : OffsetIndices) {
+      auto &StoredOffset = (*Record)[I];
       assert(StoredOffset < MyOffset && "invalid offset");
       if (StoredOffset)
         StoredOffset = MyOffset - StoredOffset;
     }
-    NumOffsetIndices = 0;
+    OffsetIndices.clear();
   }
 
 public:
@@ -779,8 +776,7 @@ public:
   /// \brief Add a bit offset into the record. This will be converted into an
   /// offset relative to the current record when emitted.
   void AddOffset(uint64_t BitOffset) {
-    assert(NumOffsetIndices != MaxOffsetIndices && "too many offset indices");
-    OffsetIndices[NumOffsetIndices++] = Record->size();
+    OffsetIndices.push_back(Record->size());
     Record->push_back(BitOffset);
   }
 
