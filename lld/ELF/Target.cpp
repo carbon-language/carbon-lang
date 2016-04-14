@@ -120,7 +120,6 @@ public:
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool isSizeRel(uint32_t Type) const override;
 
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -282,7 +281,6 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
-bool TargetInfo::isSizeRel(uint32_t Type) const { return false; }
 
 bool TargetInfo::needsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
@@ -692,6 +690,9 @@ RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return R_ABS;
+  case R_X86_64_SIZE32:
+  case R_X86_64_SIZE64:
+    return R_SIZE;
   case R_X86_64_GOTPCREL:
   case R_X86_64_PLT32:
   case R_X86_64_PC32:
@@ -808,10 +809,6 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   case R_X86_64_TPOFF32:
     return true;
   }
-}
-
-bool X86_64TargetInfo::isSizeRel(uint32_t Type) const {
-  return Type == R_X86_64_SIZE32 || Type == R_X86_64_SIZE64;
 }
 
 // "Ulrich Drepper, ELF Handling For Thread-Local Storage" (5.5

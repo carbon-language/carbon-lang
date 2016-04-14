@@ -609,11 +609,8 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // We can however do better than just copying the incoming relocation. We
     // can process some of it and and just ask the dynamic linker to add the
     // load address.
-    if (Target->isSizeRel(Type)) {
-      C.Relocations.push_back({R_SIZE, Type, Offset, Addend, &Body});
-      continue;
-    }
-    if (!Config->Pic || Target->isRelRelative(Type) || Expr == R_PC) {
+    if (!Config->Pic || Target->isRelRelative(Type) || Expr == R_PC ||
+        Expr == R_SIZE) {
       if (Config->EMachine == EM_MIPS && Body.isLocal() &&
           (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32))
         Expr = R_MIPS_GP0;
