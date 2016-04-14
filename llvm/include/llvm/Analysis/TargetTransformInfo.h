@@ -367,6 +367,15 @@ public:
   /// \brief Enable matching of interleaved access groups.
   bool enableInterleavedAccessVectorization() const;
 
+  /// \brief Indicate that it is potentially unsafe to automatically vectorize
+  /// floating-point operations because the semantics of vector and scalar
+  /// floating-point semantics may differ. For example, ARM NEON v7 SIMD math
+  /// does not support IEEE-754 denormal numbers, while depending on the
+  /// platform, scalar floating-point math does.
+  /// This applies to floating-point math operations and calls, not memory
+  /// operations, shuffles, or casts.
+  bool isFPVectorizationPotentiallyUnsafe() const;
+
   /// \brief Return hardware support for population count.
   PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const;
 
@@ -621,6 +630,7 @@ public:
   virtual bool shouldBuildLookupTables() = 0;
   virtual bool enableAggressiveInterleaving(bool LoopHasReductions) = 0;
   virtual bool enableInterleavedAccessVectorization() = 0;
+  virtual bool isFPVectorizationPotentiallyUnsafe() = 0;
   virtual PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) = 0;
   virtual bool haveFastSqrt(Type *Ty) = 0;
   virtual int getFPOpCost(Type *Ty) = 0;
@@ -778,6 +788,9 @@ public:
   }
   bool enableInterleavedAccessVectorization() override {
     return Impl.enableInterleavedAccessVectorization();
+  }
+  bool isFPVectorizationPotentiallyUnsafe() override {
+    return Impl.isFPVectorizationPotentiallyUnsafe();
   }
   PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) override {
     return Impl.getPopcntSupport(IntTyWidthInBit);

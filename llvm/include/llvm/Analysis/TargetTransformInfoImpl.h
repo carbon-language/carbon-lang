@@ -240,6 +240,8 @@ public:
 
   bool enableInterleavedAccessVectorization() { return false; }
 
+  bool isFPVectorizationPotentiallyUnsafe() { return false; }
+
   TTI::PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) {
     return TTI::PSK_Software;
   }
