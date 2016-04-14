@@ -490,12 +490,13 @@ static void GetArgsAndEnv(char ***argv, char ***envp) {
 #else
   // On FreeBSD, retrieving the argument and environment arrays is done via the
   // kern.ps_strings sysctl, which returns a pointer to a structure containing
-  // this information.  If the sysctl is not available, a "hardcoded" address,
-  // PS_STRINGS, must be used instead.  See also <sys/exec.h>.
+  // this information. See also <sys/exec.h>.
   ps_strings *pss;
   size_t sz = sizeof(pss);
-  if (sysctlbyname("kern.ps_strings", &pss, &sz, NULL, 0) == -1)
-    pss = (ps_strings*)PS_STRINGS;
+  if (sysctlbyname("kern.ps_strings", &pss, &sz, NULL, 0) == -1) {
+    Printf("sysctl kern.ps_strings failed\n");
+    Die();
+  }
   *argv = pss->ps_argvstr;
   *envp = pss->ps_envstr;
 #endif
