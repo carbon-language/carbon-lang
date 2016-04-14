@@ -783,8 +783,8 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (ASTContext *ast, Encoding 
         break;
         
     case eEncodingSint:
-        if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
-            return CompilerType (ast, ast->CharTy);
+        if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
+            return CompilerType (ast, ast->SignedCharTy);
         if (QualTypeMatchesBitSize (bit_size, ast, ast->ShortTy))
             return CompilerType (ast, ast->ShortTy);
         if (QualTypeMatchesBitSize (bit_size, ast, ast->IntTy))
