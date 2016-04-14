@@ -5143,18 +5143,28 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                              getValue(I.getArgOperand(0))));
     return nullptr;
   }
-  case Intrinsic::minnum:
-    setValue(&I, DAG.getNode(ISD::FMINNUM, sdl,
-                             getValue(I.getArgOperand(0)).getValueType(),
+  case Intrinsic::minnum: {
+    auto VT = getValue(I.getArgOperand(0)).getValueType();
+    unsigned Opc =
+        I.hasNoNaNs() && TLI.isOperationLegalOrCustom(ISD::FMINNAN, VT)
+            ? ISD::FMINNAN
+            : ISD::FMINNUM;
+    setValue(&I, DAG.getNode(Opc, sdl, VT,
                              getValue(I.getArgOperand(0)),
                              getValue(I.getArgOperand(1))));
     return nullptr;
-  case Intrinsic::maxnum:
-    setValue(&I, DAG.getNode(ISD::FMAXNUM, sdl,
-                             getValue(I.getArgOperand(0)).getValueType(),
+  }
+  case Intrinsic::maxnum: {
+    auto VT = getValue(I.getArgOperand(0)).getValueType();
+    unsigned Opc =
+        I.hasNoNaNs() && TLI.isOperationLegalOrCustom(ISD::FMAXNAN, VT)
+            ? ISD::FMAXNAN
+            : ISD::FMAXNUM;
+    setValue(&I, DAG.getNode(Opc, sdl, VT,
                              getValue(I.getArgOperand(0)),
                              getValue(I.getArgOperand(1))));
     return nullptr;
+  }
   case Intrinsic::copysign:
     setValue(&I, DAG.getNode(ISD::FCOPYSIGN, sdl,
                              getValue(I.getArgOperand(0)).getValueType(),
