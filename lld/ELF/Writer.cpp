@@ -977,9 +977,7 @@ static bool includeInDynsym(const SymbolBody &B) {
   uint8_t V = B.getVisibility();
   if (V != STV_DEFAULT && V != STV_PROTECTED)
     return false;
-  if (Config->ExportDynamic || Config->Shared)
-    return true;
-  return false;
+  return Config->ExportDynamic || Config->Shared;
 }
 
 // This class knows how to create an output section for a given
