@@ -422,7 +422,7 @@ uint32_t X86TargetInfo::getDynRel(uint32_t Type) const {
 uint32_t X86TargetInfo::getTlsGotRel(uint32_t Type) const {
   if (Type == R_386_TLS_IE)
     return Type;
-  return TlsGotRel;
+  return R_386_GOT32;
 }
 
 bool X86TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
@@ -544,8 +544,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_386_GOT32:
   case R_386_TLS_GD:
-  case R_386_TLS_LDM:
-  case R_386_TLS_TPOFF: {
+  case R_386_TLS_LDM: {
     uint64_t V = Val - Out<ELF32LE>::Got->getVA() -
                  Out<ELF32LE>::Got->getNumEntries() * 4;
     checkInt<32>(V, Type);
