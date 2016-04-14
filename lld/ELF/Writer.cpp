@@ -994,7 +994,7 @@ public:
 
   OutputSectionBase<ELFT> *lookup(StringRef Name, uint32_t Type,
                                   uintX_t Flags) {
-    return Map.lookup({Name, Type, Flags});
+    return Map.lookup({Name, Type, Flags, 0});
   }
 
 private:
