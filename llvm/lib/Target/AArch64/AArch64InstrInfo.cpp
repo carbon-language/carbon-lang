@@ -1445,6 +1445,11 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfs(
   case AArch64::LDRWui:
   case AArch64::LDRSWui:
   // Unscaled instructions.
+  case AArch64::STURSi:
+  case AArch64::STURDi:
+  case AArch64::STURQi:
+  case AArch64::STURXi:
+  case AArch64::STURWi:
   case AArch64::LDURSi:
   case AArch64::LDURDi:
   case AArch64::LDURQi:
@@ -1554,15 +1559,20 @@ static bool scaleOffset(unsigned Opc, int64_t &Offset) {
   default:
     return false;
   case AArch64::LDURQi:
+  case AArch64::STURQi:
     OffsetStride = 16;
     break;
   case AArch64::LDURXi:
   case AArch64::LDURDi:
+  case AArch64::STURXi:
+  case AArch64::STURDi:
     OffsetStride = 8;
     break;
   case AArch64::LDURWi:
   case AArch64::LDURSi:
   case AArch64::LDURSWi:
+  case AArch64::STURWi:
+  case AArch64::STURSi:
     OffsetStride = 4;
     break;
   }
@@ -1598,9 +1608,9 @@ static bool canPairLdStOpc(unsigned FirstOpc, unsigned SecondOpc) {
 /// Detect opportunities for ldp/stp formation.
 ///
 /// Only called for LdSt for which getMemOpBaseRegImmOfs returns true.
-bool AArch64InstrInfo::shouldClusterLoads(MachineInstr *FirstLdSt,
-                                          MachineInstr *SecondLdSt,
-                                          unsigned NumLoads) const {
+bool AArch64InstrInfo::shouldClusterMemOps(MachineInstr *FirstLdSt,
+                                           MachineInstr *SecondLdSt,
+                                           unsigned NumLoads) const {
   // Only cluster up to a single pair.
   if (NumLoads > 1)
     return false;
