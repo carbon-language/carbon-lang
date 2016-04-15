@@ -2652,12 +2652,12 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
                 if (data.GetByteOrder() == eByteOrderBig)
                 {
                     int128.x[1] = (uint64_t)data.GetU64 (&offset);
-                    int128.x[0] = (uint64_t)data.GetU64 (&offset + 1);
+                    int128.x[0] = (uint64_t)data.GetU64 (&offset);
                 }
                 else
                 {
                     int128.x[0] = (uint64_t)data.GetU64 (&offset);
-                    int128.x[1] = (uint64_t)data.GetU64 (&offset + 1);
+                    int128.x[1] = (uint64_t)data.GetU64 (&offset);
                 }
                 operator=(llvm::APInt(BITWIDTH_INT128, NUM_OF_WORDS_INT128, int128.x));
                 break;
@@ -2665,16 +2665,16 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
                 if (data.GetByteOrder() == eByteOrderBig)
                 {
                     int256.x[3] = (uint64_t)data.GetU64 (&offset);
-                    int256.x[2] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[1] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[0] = (uint64_t)data.GetU64 (&offset + 1);
+                    int256.x[2] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[1] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[0] = (uint64_t)data.GetU64 (&offset);
                 }
                 else
                 {
                     int256.x[0] = (uint64_t)data.GetU64 (&offset);
-                    int256.x[1] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[2] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[3] = (uint64_t)data.GetU64 (&offset + 1);
+                    int256.x[1] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[2] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[3] = (uint64_t)data.GetU64 (&offset);
                 }
                 operator=(llvm::APInt(BITWIDTH_INT256, NUM_OF_WORDS_INT256, int256.x));
                 break;
@@ -2698,12 +2698,12 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
                 if (data.GetByteOrder() == eByteOrderBig)
                 {
                     int128.x[1] = (uint64_t)data.GetU64 (&offset);
-                    int128.x[0] = (uint64_t)data.GetU64 (&offset + 1);
+                    int128.x[0] = (uint64_t)data.GetU64 (&offset);
                 }
                 else
                 {
                     int128.x[0] = (uint64_t)data.GetU64 (&offset);
-                    int128.x[1] = (uint64_t)data.GetU64 (&offset + 1);
+                    int128.x[1] = (uint64_t)data.GetU64 (&offset);
                 }
                 operator=(llvm::APInt(BITWIDTH_INT128, NUM_OF_WORDS_INT128, int128.x));
                 break;
@@ -2711,16 +2711,16 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
                 if (data.GetByteOrder() == eByteOrderBig)
                 {
                     int256.x[3] = (uint64_t)data.GetU64 (&offset);
-                    int256.x[2] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[1] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[0] = (uint64_t)data.GetU64 (&offset + 1);
+                    int256.x[2] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[1] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[0] = (uint64_t)data.GetU64 (&offset);
                 }
                 else
                 {
                     int256.x[0] = (uint64_t)data.GetU64 (&offset);
-                    int256.x[1] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[2] = (uint64_t)data.GetU64 (&offset + 1);
-                    int256.x[3] = (uint64_t)data.GetU64 (&offset + 1);
+                    int256.x[1] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[2] = (uint64_t)data.GetU64 (&offset);
+                    int256.x[3] = (uint64_t)data.GetU64 (&offset);
                 }
                 operator=(llvm::APInt(BITWIDTH_INT256, NUM_OF_WORDS_INT256, int256.x));
                 break;
