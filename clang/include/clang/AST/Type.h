@@ -2051,7 +2051,7 @@ public:
   }
 
   bool isFloatingPoint() const {
-    return getKind() >= Half && getKind() <= Float128;
+    return getKind() >= Half && getKind() <= LongDouble;
   }
 
   /// Determines whether the given kind corresponds to a placeholder type.
