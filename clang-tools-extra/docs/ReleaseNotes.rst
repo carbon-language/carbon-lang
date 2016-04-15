@@ -103,6 +103,11 @@ identified.  The improvements since the 3.8 release include:
   Warns when there is a explicit redundant cast of a calculation result to a
   bigger type.
 
+- New `misc-multiple-statement-macro
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-multiple-statement-macro.html>`_ check
+
+  Detect multiple statement macros that are used in unbraced conditionals.
+
 - New `misc-pointer-and-integral-operation
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-misc-pointer-and-integral-operation.html>`_ check
 
@@ -128,7 +133,7 @@ identified.  The improvements since the 3.8 release include:
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-suspicious-semicolon.html>`_ check
 
   Finds most instances of stray semicolons that unexpectedly alter the meaning
-  of the code.  
+  of the code.
 
 - New `modernize-deprecated-headers
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-deprecated-headers.html>`_ check
