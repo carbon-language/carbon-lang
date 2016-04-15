@@ -6,7 +6,7 @@ define i1 @qux(i8* %m, i8* %n, i8* %o, i8* %p) nounwind  {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[TMP7:%.*]] = icmp eq i8* %m, %n
 ; CHECK-NEXT:    [[TMP15:%.*]] = icmp eq i8* %o, %p
-; CHECK-NEXT:    [[TMP15_:%.*]] = select i1 [[TMP7]], i1 [[TMP15]], i1 false
+; CHECK-NEXT:    [[TMP15_:%.*]] = select i1 [[TMP7]], i1 [[TMP15]], i1 false, !prof !0
 ; CHECK-NEXT:    ret i1 [[TMP15_]]
 ;
 entry:
