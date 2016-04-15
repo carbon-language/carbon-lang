@@ -43,3 +43,11 @@
 // RUN: %clang_cl /Zi /Tc%s -### 2>&1 | FileCheck --check-prefix=DEBUG %s
 // DEBUG: link.exe
 // DEBUG: "-debug"
+
+// PR27234
+// RUN: %clang_cl /Tc%s nonexistent.obj -### /link /libpath:somepath 2>&1 | FileCheck --check-prefix=NONEXISTENT %s
+// RUN: %clang_cl /Tc%s nonexistent.lib -### /link /libpath:somepath 2>&1 | FileCheck --check-prefix=NONEXISTENT %s
+// NONEXISTENT-NOT: no such file
+// NONEXISTENT: link.exe
+// NONEXISTENT: "/libpath:somepath"
+// NONEXISTENT: nonexistent
