@@ -43,6 +43,19 @@ splitCodeGen(std::unique_ptr<Module> M, ArrayRef<raw_pwrite_stream *> OSs,
              TargetMachine::CodeGenFileType FT = TargetMachine::CGFT_ObjectFile,
              bool PreserveLocals = false);
 
+/// Split M into OSs.size() partitions, and generate code for each.
+/// It is a variant that takes a factory function for the TargetMachine
+/// TMFactory. TMFactory needs to be thread safe on the client side.
+/// See the other splitCodeGen() for a more detailed description.
+///
+/// \returns M if OSs.size() == 1, otherwise returns std::unique_ptr<Module>().
+std::unique_ptr<Module>
+splitCodeGen(std::unique_ptr<Module> M, ArrayRef<raw_pwrite_stream *> OSs,
+             ArrayRef<llvm::raw_pwrite_stream *> BCOSs,
+             const std::function<std::unique_ptr<TargetMachine>()> &TMFactory,
+             TargetMachine::CodeGenFileType FT = TargetMachine::CGFT_ObjectFile,
+             bool PreserveLocals = false);
+
 } // namespace llvm
 
 #endif
