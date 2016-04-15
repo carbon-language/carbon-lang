@@ -1634,8 +1634,8 @@ static uint32_t getMipsEFlags() {
 }
 
 template <class ELFT> static typename ELFT::uint getEntryAddr() {
-  if (SymbolBody *B = Config->EntrySym)
-    return B->repl().getVA<ELFT>();
+  if (Symbol *S = Config->EntrySym)
+    return S->Body->getVA<ELFT>();
   if (Config->EntryAddr != uint64_t(-1))
     return Config->EntryAddr;
   return 0;
