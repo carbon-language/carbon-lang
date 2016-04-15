@@ -23,6 +23,7 @@ add_clang_library(clangTidyMiscModule
   NonCopyableObjects.cpp
   PointerAndIntegralOperationCheck.cpp
   SizeofContainerCheck.cpp
+  SizeofExpressionCheck.cpp
   StaticAssertCheck.cpp
   StringIntegerAssignmentCheck.cpp
   StringLiteralWithEmbeddedNulCheck.cpp

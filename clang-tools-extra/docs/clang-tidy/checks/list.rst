@@ -67,6 +67,7 @@ Clang-Tidy Checks
    misc-non-copyable-objects
    misc-pointer-and-integral-operation
    misc-sizeof-container
+   misc-sizeof-expression
    misc-static-assert
    misc-string-integer-assignment
    misc-string-literal-with-embedded-nul

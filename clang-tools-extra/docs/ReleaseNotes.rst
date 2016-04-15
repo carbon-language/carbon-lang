@@ -108,6 +108,11 @@ identified.  The improvements since the 3.8 release include:
 
   Warns about suspicious operations involving pointers and integral types.
 
+- New `misc-sizeof-expression
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-sizeof-expression.html>`_ check
+
+  Warns about incorrect uses of ``sizeof`` operator.
+
 - New `misc-string-literal-with-embedded-nul
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-string-literal-with-embedded-nul.html>`_ check
 
@@ -123,7 +128,7 @@ identified.  The improvements since the 3.8 release include:
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-suspicious-semicolon.html>`_ check
 
   Finds most instances of stray semicolons that unexpectedly alter the meaning
-  of the code.
+  of the code.  
 
 - New `modernize-deprecated-headers
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-deprecated-headers.html>`_ check
