@@ -588,16 +588,12 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
         continue;
 
-      if (Preemptible || Config->Pic) {
+      if (Preemptible || (Config->Pic && !isAbsolute<ELFT>(Body))) {
         uint32_t DynType;
         if (Body.isTls())
           DynType = Target->TlsGotRel;
         else if (Preemptible)
           DynType = Target->GotRel;
-        else if (Body.isUndefined())
-          // Weak undefined symbols evaluate to zero, so don't create
-          // relocations for them.
-          continue;
         else
           DynType = Target->RelativeRel;
         AddDyn({DynType, Out<ELFT>::Got, Body.getGotOffset<ELFT>(),
