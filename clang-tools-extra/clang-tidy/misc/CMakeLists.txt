@@ -21,6 +21,7 @@ add_clang_library(clangTidyMiscModule
   NewDeleteOverloadsCheck.cpp
   NoexceptMoveConstructorCheck.cpp
   NonCopyableObjects.cpp
+  PointerAndIntegralOperationCheck.cpp
   SizeofContainerCheck.cpp
   StaticAssertCheck.cpp
   StringIntegerAssignmentCheck.cpp
