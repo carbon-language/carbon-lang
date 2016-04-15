@@ -3,6 +3,7 @@
 // under /Users.
 
 // RUN: %clang_cl /Tc%s -### /link foo bar baz 2>&1 | FileCheck --check-prefix=LINK %s
+// RUN: %clang_cl /Tc%s -### /linkfoo bar baz 2>&1 | FileCheck --check-prefix=LINK %s
 // LINK: link.exe
 // LINK: "foo"
 // LINK: "bar"
