@@ -18,6 +18,8 @@
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetMachine.h"
 
+#include <functional>
+
 namespace llvm {
 
 class Module;
