@@ -254,7 +254,7 @@ public:
     unsigned char
     UChar(unsigned char fail_value = 0) const;
 
-    char
+    signed char
     SChar(char fail_value = 0) const;
 
     unsigned short

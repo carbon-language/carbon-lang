@@ -1380,7 +1380,7 @@ Scalar::MakeSigned ()
     return success;
 }
 
-char
+signed char
 Scalar::SChar(char fail_value) const
 {
     switch (m_type)
