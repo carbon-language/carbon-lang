@@ -166,6 +166,14 @@ public:
   /// This overload allows specifying a set of candidate argument values.
   int getCallCost(const Function *F, ArrayRef<const Value *> Arguments) const;
 
+  /// \returns A value by which our inlining threshold should be multiplied.
+  /// This is primarily used to bump up the inlining threshold wholesale on
+  /// targets where calls are unusually expensive.
+  ///
+  /// TODO: This is a rather blunt instrument.  Perhaps altering the costs of
+  /// individual classes of instructions would be better.
+  unsigned getInliningThresholdMultiplier() const;
+
   /// \brief Estimate the cost of an intrinsic when lowered.
   ///
   /// Mirrors the \c getCallCost method but uses an intrinsic identifier.
@@ -600,6 +608,7 @@ public:
   virtual int getCallCost(const Function *F, int NumArgs) = 0;
   virtual int getCallCost(const Function *F,
                           ArrayRef<const Value *> Arguments) = 0;
+  virtual unsigned getInliningThresholdMultiplier() = 0;
   virtual int getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
                                ArrayRef<Type *> ParamTys) = 0;
   virtual int getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
@@ -721,6 +730,9 @@ public:
   int getCallCost(const Function *F,
                   ArrayRef<const Value *> Arguments) override {
     return Impl.getCallCost(F, Arguments);
+  }
+  unsigned getInliningThresholdMultiplier() override {
+    return Impl.getInliningThresholdMultiplier();
   }
   int getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
                        ArrayRef<Type *> ParamTys) override {

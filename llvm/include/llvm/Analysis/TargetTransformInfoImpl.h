@@ -128,6 +128,8 @@ public:
     return TTI::TCC_Basic * (NumArgs + 1);
   }
 
+  unsigned getInliningThresholdMultiplier() { return 1; }
+
   unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
                             ArrayRef<Type *> ParamTys) {
     switch (IID) {
