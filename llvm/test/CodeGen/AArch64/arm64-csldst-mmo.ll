@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; RUN: llc < %s -mtriple=arm64-linux-gnu -mcpu=cortex-a57 -enable-misched=0 -debug-only=misched -o - 2>&1 > /dev/null | FileCheck %s
 ; REQUIRES: asserts
 
