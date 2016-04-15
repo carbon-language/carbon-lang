@@ -1069,6 +1069,8 @@ void RewriteInstance::runOptimizationPasses() {
     if (opts::PrintAll || opts::PrintEHRanges)
       Function.print(errs(), "after updating EH ranges", true);
   }
+
+  BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions);
 }
 
 namespace {
