@@ -1369,9 +1369,9 @@ Scalar::MakeSigned ()
     case e_slonglong:                           success = true; break;
     case e_ulonglong:   m_type = e_slonglong;   success = true; break;
     case e_sint128:                             success = true; break;
-    case e_uint128:     m_type = e_sint;        success = true; break;
+    case e_uint128:     m_type = e_sint128;     success = true; break;
     case e_sint256:                             success = true; break;
-    case e_uint256:     m_type = e_sint;        success = true; break;
+    case e_uint256:     m_type = e_sint256;     success = true; break;
     case e_float:                               success = true; break;
     case e_double:                              success = true; break;
     case e_long_double:                         success = true; break;
