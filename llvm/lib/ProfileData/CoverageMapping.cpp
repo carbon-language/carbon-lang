@@ -375,7 +375,21 @@ static SmallBitVector gatherFileIDs(StringRef SourceFile,
   return FilenameEquivalence;
 }
 
-/// Return the ID of the file where the definition of the function is located.
+static Optional<unsigned> findMainViewFileID(StringRef SourceFile,
+                                             const FunctionRecord &Function) {
+  SmallBitVector IsNotExpandedFile(Function.Filenames.size(), true);
+  SmallBitVector FilenameEquivalence = gatherFileIDs(SourceFile, Function);
+  for (const auto &CR : Function.CountedRegions)
+    if (CR.Kind == CounterMappingRegion::ExpansionRegion &&
+        FilenameEquivalence[CR.FileID])
+      IsNotExpandedFile[CR.ExpandedFileID] = false;
+  IsNotExpandedFile &= FilenameEquivalence;
+  int I = IsNotExpandedFile.find_first();
+  if (I == -1)
+    return None;
+  return I;
+}
+
 static Optional<unsigned> findMainViewFileID(const FunctionRecord &Function) {
   SmallBitVector IsNotExpandedFile(Function.Filenames.size(), true);
   for (const auto &CR : Function.CountedRegions)
@@ -385,16 +399,6 @@ static Optional<unsigned> findMainViewFileID(const FunctionRecord &Function) {
   if (I == -1)
     return None;
   return I;
-}
-
-/// Check if SourceFile is the file that contains the definition of
-/// the Function. Return the ID of the file in that case or None otherwise.
-static Optional<unsigned> findMainViewFileID(StringRef SourceFile,
-                                             const FunctionRecord &Function) {
-  Optional<unsigned> I = findMainViewFileID(Function);
-  if (I && SourceFile == Function.Filenames[*I])
-    return I;
-  return None;
 }
 
 /// Sort a nested sequence of regions from a single file.
@@ -418,11 +422,13 @@ CoverageData CoverageMapping::getCoverageForFile(StringRef Filename) {
 
   for (const auto &Function : Functions) {
     auto MainFileID = findMainViewFileID(Filename, Function);
+    if (!MainFileID)
+      continue;
     auto FileIDs = gatherFileIDs(Filename, Function);
     for (const auto &CR : Function.CountedRegions)
       if (FileIDs.test(CR.FileID)) {
         Regions.push_back(CR);
-        if (MainFileID && isExpansion(CR, *MainFileID))
+        if (isExpansion(CR, *MainFileID))
           FileCoverage.Expansions.emplace_back(CR, Function);
       }
   }
