@@ -13,6 +13,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "BinaryPassManager.h"
 #include "DataReader.h"
 #include "Exceptions.h"
 #include "RewriteInstance.h"
@@ -1053,6 +1054,7 @@ void RewriteInstance::runOptimizationPasses() {
     }
 
     // Post-processing passes.
+    BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions);
 
     // Fix the CFI state.
     if (!Function.fixCFIState()) {

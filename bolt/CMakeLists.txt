@@ -18,6 +18,8 @@ add_llvm_tool(llvm-bolt
   BinaryBasicBlock.cpp
   BinaryContext.cpp
   BinaryFunction.cpp
+  BinaryPasses.cpp
+  BinaryPassManager.cpp
   DataReader.cpp
   DebugData.cpp
   Exceptions.cpp
