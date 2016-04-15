@@ -411,6 +411,16 @@ static int32_t findMipsPairedAddend(const uint8_t *Buf, const uint8_t *BufLoc,
   return 0;
 }
 
+// True if non-preemptable symbol always has the same value regardless of where
+// the DSO is loaded.
+template <class ELFT> static bool isAbsolute(const SymbolBody &Body) {
+  if (Body.isUndefined() && Body.isWeak())
+    return true; // always 0
+  if (const auto *DR = dyn_cast<DefinedRegular<ELFT>>(&Body))
+    return DR->Section == nullptr; // Absolute symbol.
+  return false;
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -618,7 +628,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // can process some of it and and just ask the dynamic linker to add the
     // load address.
     if (!Config->Pic || Target->isRelRelative(Type) || Expr == R_PC ||
-        Expr == R_SIZE || (Body.isUndefined() && Body.isWeak())) {
+        Expr == R_SIZE || isAbsolute<ELFT>(Body)) {
       if (Config->EMachine == EM_MIPS && Body.isLocal() &&
           (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32))
         Expr = R_MIPS_GP0;
