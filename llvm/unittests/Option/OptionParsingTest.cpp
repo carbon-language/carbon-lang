@@ -202,6 +202,57 @@ TEST(Option, Slurp) {
   EXPECT_EQ("foo", AL.getAllArgValues(OPT_Slurp)[2]);
 }
 
+TEST(Option, SlurpJoinedEmpty) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-A", "-slurpjoined" };
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_SlurpJoined));
+  EXPECT_EQ(AL.getAllArgValues(OPT_SlurpJoined).size(), 0U);
+}
+
+TEST(Option, SlurpJoinedOneJoined) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-A", "-slurpjoinedfoo" };
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_SlurpJoined));
+  EXPECT_EQ(AL.getAllArgValues(OPT_SlurpJoined).size(), 1U);
+  EXPECT_EQ(AL.getAllArgValues(OPT_SlurpJoined)[0], "foo");
+}
+
+TEST(Option, SlurpJoinedAndSeparate) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-A", "-slurpjoinedfoo", "bar", "baz" };
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_SlurpJoined));
+  EXPECT_EQ(3U, AL.getAllArgValues(OPT_SlurpJoined).size());
+  EXPECT_EQ("foo", AL.getAllArgValues(OPT_SlurpJoined)[0]);
+  EXPECT_EQ("bar", AL.getAllArgValues(OPT_SlurpJoined)[1]);
+  EXPECT_EQ("baz", AL.getAllArgValues(OPT_SlurpJoined)[2]);
+}
+
+TEST(Option, SlurpJoinedButSeparate) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-A", "-slurpjoined", "foo", "bar", "baz" };
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_SlurpJoined));
+  EXPECT_EQ(3U, AL.getAllArgValues(OPT_SlurpJoined).size());
+  EXPECT_EQ("foo", AL.getAllArgValues(OPT_SlurpJoined)[0]);
+  EXPECT_EQ("bar", AL.getAllArgValues(OPT_SlurpJoined)[1]);
+  EXPECT_EQ("baz", AL.getAllArgValues(OPT_SlurpJoined)[2]);
+}
+
 TEST(Option, FlagAliasToJoined) {
   TestOptTable T;
   unsigned MAI, MAC;
