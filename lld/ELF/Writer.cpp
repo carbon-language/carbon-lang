@@ -618,7 +618,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // can process some of it and and just ask the dynamic linker to add the
     // load address.
     if (!Config->Pic || Target->isRelRelative(Type) || Expr == R_PC ||
-        Expr == R_SIZE) {
+        Expr == R_SIZE || (Body.isUndefined() && Body.isWeak())) {
       if (Config->EMachine == EM_MIPS && Body.isLocal() &&
           (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32))
         Expr = R_MIPS_GP0;
