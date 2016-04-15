@@ -364,7 +364,7 @@ define void @ignore_dbg_value() {
 !1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !2, producer: "clang version 3.9.0 (trunk 266005) (llvm/trunk 266105)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !3)
 !2 = !DIFile(filename: "test.c", directory: "/")
 !3 = !{}
-!5 = distinct !DISubprogram(name: "test", scope: !2, file: !2, line: 10, type: !6, isLocal: false, isDefinition: true, scopeLine: 11, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !3)
+!5 = distinct !DISubprogram(name: "test", scope: !2, file: !2, line: 10, type: !6, isLocal: false, isDefinition: true, scopeLine: 11, flags: DIFlagPrototyped, isOptimized: true, unit: !1, variables: !3)
 !6 = !DISubroutineType(types: !3)
 !7 = !DILocalVariable(name: "nzcnt", scope: !5, file: !2, line: 15, type: !8)
 !8 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
