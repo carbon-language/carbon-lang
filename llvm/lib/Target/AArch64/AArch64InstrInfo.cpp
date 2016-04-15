@@ -1466,9 +1466,15 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
     const TargetRegisterInfo *TRI) const {
   assert(LdSt->mayLoadOrStore() && "Expected a memory operation.");
   // Handle only loads/stores with base register followed by immediate offset.
-  if (LdSt->getNumExplicitOperands() != 3)
-    return false;
-  if (!LdSt->getOperand(1).isReg() || !LdSt->getOperand(2).isImm())
+  if (LdSt->getNumExplicitOperands() == 3) {
+    // Non-paired instruction (e.g., ldr x1, [x0, #8]).
+    if (!LdSt->getOperand(1).isReg() || !LdSt->getOperand(2).isImm())
+      return false;
+  } else if (LdSt->getNumExplicitOperands() == 4) {
+    // Paired instruction (e.g., ldp x1, x2, [x0, #8]).
+    if (!LdSt->getOperand(1).isReg() || !LdSt->getOperand(2).isReg() || !LdSt->getOperand(3).isImm())
+      return false;
+  } else
     return false;
 
   // Offset is calculated as the immediate operand multiplied by the scaling factor.
@@ -1515,15 +1521,44 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
     Width = 1;
     Scale = 1;
     break;
+  case AArch64::LDPQi:
+  case AArch64::LDNPQi:
+  case AArch64::STPQi:
+  case AArch64::STNPQi:
+    Scale = 16;
+    Width = 32;
+    break;
   case AArch64::LDRQui:
   case AArch64::STRQui:
     Scale = Width = 16;
+    break;
+  case AArch64::LDPXi:
+  case AArch64::LDPDi:
+  case AArch64::LDNPXi:
+  case AArch64::LDNPDi:
+  case AArch64::STPXi:
+  case AArch64::STPDi:
+  case AArch64::STNPXi:
+  case AArch64::STNPDi:
+    Scale = 8;
+    Width = 16;
     break;
   case AArch64::LDRXui:
   case AArch64::LDRDui:
   case AArch64::STRXui:
   case AArch64::STRDui:
     Scale = Width = 8;
+    break;
+  case AArch64::LDPWi:
+  case AArch64::LDPSi:
+  case AArch64::LDNPWi:
+  case AArch64::LDNPSi:
+  case AArch64::STPWi:
+  case AArch64::STPSi:
+  case AArch64::STNPWi:
+  case AArch64::STNPSi:
+    Scale = 4;
+    Width = 8;
     break;
   case AArch64::LDRWui:
   case AArch64::LDRSui:
@@ -1546,8 +1581,14 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
     break;
   }
 
-  BaseReg = LdSt->getOperand(1).getReg();
-  Offset = LdSt->getOperand(2).getImm() * Scale;
+  if (LdSt->getNumExplicitOperands() == 3) {
+    BaseReg = LdSt->getOperand(1).getReg();
+    Offset = LdSt->getOperand(2).getImm() * Scale;
+  } else {
+    assert(LdSt->getNumExplicitOperands() == 4 && "invalid number of operands");
+    BaseReg = LdSt->getOperand(2).getReg();
+    Offset = LdSt->getOperand(3).getImm() * Scale;
+  }
   return true;
 }
 
