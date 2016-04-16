@@ -1056,6 +1056,17 @@ public:
       return __emplace_unique_extract_key(_VSTD::forward<_Pp>(__x),
                                           __can_extract_key<_Pp, key_type>());
     }
+
+    template <class _First, class _Second>
+    _LIBCPP_INLINE_VISIBILITY
+    typename enable_if<
+        __can_extract_map_key<_First, key_type, __container_value_type>::value,
+        pair<iterator, bool>
+    >::type __emplace_unique(_First&& __f, _Second&& __s) {
+        return __emplace_unique_key_args(__f, _VSTD::forward<_First>(__f),
+                                              _VSTD::forward<_Second>(__s));
+    }
+
     template <class... _Args>
     _LIBCPP_INLINE_VISIBILITY
     pair<iterator, bool> __emplace_unique(_Args&&... __args) {

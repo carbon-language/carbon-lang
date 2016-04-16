@@ -351,6 +351,4 @@ void testMultisetInsert()
   }
 }
 
-
-
 #endif

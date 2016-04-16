@@ -231,6 +231,62 @@ void testMapEmplace()
       assert(c.emplace(std::move(v2)).second == false);
     }
   }
+  {
+    CHECKPOINT("Testing C::emplace(const Key&, ConvertibleToMapped&&)");
+    Container c;
+    const Key k(42);
+    cc->expect<Key const&, int&&>();
+    assert(c.emplace(k, 1).second);
+    assert(!cc->unchecked());
+    {
+      DisableAllocationGuard g;
+      const Key k2(42);
+      assert(c.emplace(k2, 2).second == false);
+    }
+  }
+  {
+    CHECKPOINT("Testing C::emplace(Key&, Mapped&)");
+    Container c;
+    Key k(42);
+    Mapped m(1);
+    cc->expect<Key&, Mapped&>();
+    assert(c.emplace(k, m).second);
+    assert(!cc->unchecked());
+    {
+      DisableAllocationGuard g;
+      Key k2(42);
+      assert(c.emplace(k2, m).second == false);
+    }
+  }
+  {
+    CHECKPOINT("Testing C::emplace(Key&&, Mapped&&)");
+    Container c;
+    Key k(42);
+    Mapped m(1);
+    cc->expect<Key&&, Mapped&&>();
+    assert(c.emplace(std::move(k), std::move(m)).second);
+    assert(!cc->unchecked());
+    {
+      DisableAllocationGuard g;
+      Key k2(42);
+      Mapped m2(2);
+      assert(c.emplace(std::move(k2), std::move(m2)).second == false);
+    }
+  }
+  {
+    CHECKPOINT("Testing C::emplace(ConvertibleToKey&&, ConvertibleToMapped&&)");
+    Container c;
+    cc->expect<int&&, int&&>();
+    assert(c.emplace(42, 1).second);
+    assert(!cc->unchecked());
+    {
+      // test that emplacing a duplicate item allocates. We cannot optimize
+      // this case because int&& does not match the type of key exactly.
+      cc->expect<int&&, int&&>();
+      assert(c.emplace(42, 1).second == false);
+      assert(!cc->unchecked());
+    }
+  }
 }
 
 
@@ -347,6 +403,78 @@ void testMapEmplaceHint()
       assert(c.size() == 1);
     }
   }
+  {
+    CHECKPOINT("Testing C::emplace_hint(p, const Key&, ConvertibleToMapped&&)");
+    Container c;
+    const Key k(42);
+    cc->expect<Key const&, int&&>();
+    It ret = c.emplace_hint(c.end(), k, 42);
+    assert(ret != c.end());
+    assert(c.size() == 1);
+    assert(!cc->unchecked());
+    {
+      DisableAllocationGuard g;
+      const Key k2(42);
+      It ret2 = c.emplace_hint(c.begin(), k2, 1);
+      assert(&(*ret2) == &(*ret));
+      assert(c.size() == 1);
+    }
+  }
+  {
+    CHECKPOINT("Testing C::emplace_hint(p, Key&, Mapped&)");
+    Container c;
+    Key k(42);
+    Mapped m(1);
+    cc->expect<Key&, Mapped&>();
+    It ret = c.emplace_hint(c.end(), k, m);
+    assert(ret != c.end());
+    assert(c.size() == 1);
+    assert(!cc->unchecked());
+    {
+      DisableAllocationGuard g;
+      Key k2(42);
+      Mapped m2(2);
+      It ret2 = c.emplace_hint(c.begin(), k2, m2);
+      assert(&(*ret2) == &(*ret));
+      assert(c.size() == 1);
+    }
+  }
+  {
+    CHECKPOINT("Testing C::emplace_hint(p, Key&&, Mapped&&)");
+    Container c;
+    Key k(42);
+    Mapped m(1);
+    cc->expect<Key&&, Mapped&&>();
+    It ret = c.emplace_hint(c.end(), std::move(k), std::move(m));
+    assert(ret != c.end());
+    assert(c.size() == 1);
+    assert(!cc->unchecked());
+    {
+      DisableAllocationGuard g;
+      Key k2(42);
+      Mapped m2(2);
+      It ret2 = c.emplace_hint(c.begin(), std::move(k2), std::move(m2));
+      assert(&(*ret2) == &(*ret));
+      assert(c.size() == 1);
+    }
+  }
+  {
+    CHECKPOINT("Testing C::emplace_hint(p, ConvertibleToKey&&, ConvertibleToMapped&&)");
+    Container c;
+    cc->expect<int&&, int&&>();
+    It ret = c.emplace_hint(c.end(), 42, 1);
+    assert(ret != c.end());
+    assert(c.size() == 1);
+    assert(!cc->unchecked());
+    {
+      cc->expect<int&&, int&&>();
+      It ret2 = c.emplace_hint(c.begin(), 42, 2);
+      assert(&(*ret2) == &(*ret));
+      assert(c.size() == 1);
+      assert(!cc->unchecked());
+    }
+  }
+
 }
 
 
@@ -414,6 +542,7 @@ void testMultimapInsert()
     c.insert(std::begin(ValueList), std::end(ValueList));
     assert(!cc->unchecked());
   }
+
 }
 
 #endif
