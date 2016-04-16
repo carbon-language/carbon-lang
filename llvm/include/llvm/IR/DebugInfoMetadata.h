@@ -14,7 +14,6 @@
 #ifndef LLVM_IR_DEBUGINFOMETADATA_H
 #define LLVM_IR_DEBUGINFOMETADATA_H
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Dwarf.h"
 
@@ -43,6 +42,8 @@
   DEFINE_MDNODE_GET_DISTINCT_TEMPORARY(CLASS, FORMAL, ARGS)
 
 namespace llvm {
+
+template <typename T> class Optional;
 
 /// \brief Pointer union between a subclass of DINode and MDString.
 ///
