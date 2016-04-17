@@ -880,6 +880,7 @@ public:
 
 private:
   const Target *TheTarget;
+  std::string TripleStr;
   std::string FeaturesString;
   TargetOptions Options;
 
@@ -923,7 +924,7 @@ static CodeGenOpt::Level getCGOptLevel() {
 }
 
 void CodeGen::initTargetMachine() {
-  const std::string &TripleStr = M->getTargetTriple();
+  TripleStr = M->getTargetTriple();
   Triple TheTriple(TripleStr);
 
   std::string ErrMsg;
@@ -939,7 +940,6 @@ void CodeGen::initTargetMachine() {
 }
 
 std::unique_ptr<TargetMachine> CodeGen::createTargetMachine() {
-  const std::string &TripleStr = M->getTargetTriple();
   CodeGenOpt::Level CGOptLevel = getCGOptLevel();
 
   return std::unique_ptr<TargetMachine>(TheTarget->createTargetMachine(
