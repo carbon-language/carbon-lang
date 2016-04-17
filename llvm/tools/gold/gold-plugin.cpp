@@ -879,9 +879,15 @@ public:
   void runCodegenPasses();
 
 private:
+  const Target *TheTarget;
+  std::string FeaturesString;
+  TargetOptions Options;
+
   /// Create a target machine for the module. Must be unique for each
   /// module/task.
   void initTargetMachine();
+
+  std::unique_ptr<TargetMachine> createTargetMachine();
 
   /// Run all LTO passes on the module.
   void runLTOPasses();
@@ -921,16 +927,23 @@ void CodeGen::initTargetMachine() {
   Triple TheTriple(TripleStr);
 
   std::string ErrMsg;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr, ErrMsg);
+  TheTarget = TargetRegistry::lookupTarget(TripleStr, ErrMsg);
   if (!TheTarget)
     message(LDPL_FATAL, "Target not found: %s", ErrMsg.c_str());
 
   SubtargetFeatures Features = getFeatures(TheTriple);
-  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  FeaturesString = Features.getString();
+  Options = InitTargetOptionsFromCodeGenFlags();
+
+  TM = createTargetMachine();
+}
+
+std::unique_ptr<TargetMachine> CodeGen::createTargetMachine() {
+  const std::string &TripleStr = M->getTargetTriple();
   CodeGenOpt::Level CGOptLevel = getCGOptLevel();
 
-  TM.reset(TheTarget->createTargetMachine(
-      TripleStr, options::mcpu, Features.getString(), Options, RelocationModel,
+  return std::unique_ptr<TargetMachine>(TheTarget->createTargetMachine(
+      TripleStr, options::mcpu, FeaturesString, Options, RelocationModel,
       CodeModel::Default, CGOptLevel));
 }
 
@@ -990,14 +1003,6 @@ void CodeGen::runCodegenPasses() {
 }
 
 void CodeGen::runSplitCodeGen(const SmallString<128> &BCFilename) {
-  const std::string &TripleStr = M->getTargetTriple();
-  Triple TheTriple(TripleStr);
-
-  SubtargetFeatures Features = getFeatures(TheTriple);
-
-  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  CodeGenOpt::Level CGOptLevel = getCGOptLevel();
-
   SmallString<128> Filename;
   // Note that openOutputFile will append a unique ID for each task
   if (!options::obj_path.empty())
@@ -1038,8 +1043,8 @@ void CodeGen::runSplitCodeGen(const SmallString<128> &BCFilename) {
     }
 
     // Run backend tasks.
-    splitCodeGen(std::move(M), OSPtrs, BCOSPtrs, options::mcpu, Features.getString(),
-                 Options, RelocationModel, CodeModel::Default, CGOptLevel);
+    splitCodeGen(std::move(M), OSPtrs, BCOSPtrs,
+                 [&]() { return createTargetMachine(); });
   }
 
   for (auto &Filename : Filenames)

@@ -175,6 +175,7 @@ private:
   void restoreLinkageForExternals();
   void applyScopeRestrictions();
   bool determineTarget();
+  std::unique_ptr<TargetMachine> createTargetMachine();
 
   static void DiagnosticHandler(const DiagnosticInfo &DI, void *Context);
 
@@ -199,6 +200,8 @@ private:
   std::string NativeObjectPath;
   TargetOptions Options;
   CodeGenOpt::Level CGOptLevel = CodeGenOpt::Default;
+  const Target *MArch = nullptr;
+  std::string TripleStr;
   unsigned OptLevel = 2;
   lto_diagnostic_handler_t DiagHandler = nullptr;
   void *DiagContext = nullptr;
