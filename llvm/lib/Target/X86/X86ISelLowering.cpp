@@ -3328,8 +3328,6 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     const GlobalValue *GV = G->getGlobal();
     if (!GV->hasDLLImportStorageClass()) {
       unsigned char OpFlags = 0;
-      bool ExtraLoad = false;
-      unsigned WrapperKind = ISD::DELETED_NODE;
 
       // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
       // external symbols most go through the PLT in PIC mode.  If the symbol
@@ -3353,23 +3351,21 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         // which loads from the GOT directly. This avoids runtime overhead
         // at the cost of eager binding (and one extra byte of encoding).
         OpFlags = X86II::MO_GOTPCREL;
-        WrapperKind = X86ISD::WrapperRIP;
-        ExtraLoad = true;
       }
 
       Callee = DAG.getTargetGlobalAddress(
           GV, dl, getPointerTy(DAG.getDataLayout()), G->getOffset(), OpFlags);
 
-      // Add a wrapper if needed.
-      if (WrapperKind != ISD::DELETED_NODE)
+      if (OpFlags == X86II::MO_GOTPCREL) {
+        // Add a wrapper.
         Callee = DAG.getNode(X86ISD::WrapperRIP, dl,
-                             getPointerTy(DAG.getDataLayout()), Callee);
-      // Add extra indirection if needed.
-      if (ExtraLoad)
+          getPointerTy(DAG.getDataLayout()), Callee);
+        // Add extra indirection
         Callee = DAG.getLoad(
-            getPointerTy(DAG.getDataLayout()), dl, DAG.getEntryNode(), Callee,
-            MachinePointerInfo::getGOT(DAG.getMachineFunction()), false, false,
-            false, 0);
+          getPointerTy(DAG.getDataLayout()), dl, DAG.getEntryNode(), Callee,
+          MachinePointerInfo::getGOT(DAG.getMachineFunction()), false, false,
+          false, 0);
+      }
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     unsigned char OpFlags = 0;
