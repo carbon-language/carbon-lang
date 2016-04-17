@@ -65,7 +65,7 @@ std::unique_ptr<Module> llvm::splitCodeGen(
           // spinning up new threads which deserialize the partitions into
           // separate contexts.
           // FIXME: Provide a more direct way to do this in LLVM.
-          SmallVector<char, 0> BC;
+          SmallString<0> BC;
           raw_svector_ostream BCOS(BC);
           WriteBitcodeToFile(MPart.get(), BCOS);
 
@@ -77,7 +77,7 @@ std::unique_ptr<Module> llvm::splitCodeGen(
           llvm::raw_pwrite_stream *ThreadOS = OSs[ThreadCount++];
           // Enqueue the task
           CodegenThreadPool.async(
-              [TMFactory, FileType, ThreadOS](const SmallVector<char, 0> &BC) {
+              [TMFactory, FileType, ThreadOS](const SmallString<0> &BC) {
                 LLVMContext Ctx;
                 ErrorOr<std::unique_ptr<Module>> MOrErr = parseBitcodeFile(
                     MemoryBufferRef(StringRef(BC.data(), BC.size()),
