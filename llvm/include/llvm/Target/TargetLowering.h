@@ -608,16 +608,14 @@ public:
 
   /// Return true if the specified load with extension is legal on this target.
   bool isLoadExtLegal(unsigned ExtType, EVT ValVT, EVT MemVT) const {
-    return ValVT.isSimple() && MemVT.isSimple() &&
-      getLoadExtAction(ExtType, ValVT, MemVT) == Legal;
+    return getLoadExtAction(ExtType, ValVT, MemVT) == Legal;
   }
 
   /// Return true if the specified load with extension is legal or custom
   /// on this target.
   bool isLoadExtLegalOrCustom(unsigned ExtType, EVT ValVT, EVT MemVT) const {
-    return ValVT.isSimple() && MemVT.isSimple() &&
-      (getLoadExtAction(ExtType, ValVT, MemVT) == Legal ||
-       getLoadExtAction(ExtType, ValVT, MemVT) == Custom);
+    return (getLoadExtAction(ExtType, ValVT, MemVT) == Legal ||
+            getLoadExtAction(ExtType, ValVT, MemVT) == Custom);
   }
 
   /// Return how this store with truncation should be treated: either it is
@@ -635,16 +633,15 @@ public:
   /// Return true if the specified store with truncation is legal on this
   /// target.
   bool isTruncStoreLegal(EVT ValVT, EVT MemVT) const {
-    return isTypeLegal(ValVT) && MemVT.isSimple() &&
-      getTruncStoreAction(ValVT.getSimpleVT(), MemVT.getSimpleVT()) == Legal;
+    return isTypeLegal(ValVT) && getTruncStoreAction(ValVT, MemVT) == Legal;
   }
 
   /// Return true if the specified store with truncation has solution on this
   /// target.
   bool isTruncStoreLegalOrCustom(EVT ValVT, EVT MemVT) const {
-    return isTypeLegal(ValVT) && MemVT.isSimple() &&
-      (getTruncStoreAction(ValVT.getSimpleVT(), MemVT.getSimpleVT()) == Legal ||
-       getTruncStoreAction(ValVT.getSimpleVT(), MemVT.getSimpleVT()) == Custom);
+    return isTypeLegal(ValVT) &&
+      (getTruncStoreAction(ValVT, MemVT) == Legal ||
+       getTruncStoreAction(ValVT, MemVT) == Custom);
   }
 
   /// Return how the indexed load should be treated: either it is legal, needs
