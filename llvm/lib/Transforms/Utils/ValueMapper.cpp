@@ -341,8 +341,10 @@ Value *Mapper::mapValue(const Value *V) {
   ValueToValueMapTy::iterator I = getVM().find(V);
 
   // If the value already exists in the map, use it.
-  if (I != getVM().end() && I->second)
+  if (I != getVM().end()) {
+    assert(I->second && "Unexpected null mapping");
     return I->second;
+  }
 
   // If we have a materializer and it can materialize a value, use that.
   if (auto *Materializer = getMaterializer()) {
