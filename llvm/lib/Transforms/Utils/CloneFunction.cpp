@@ -362,7 +362,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
     // If switching on a value known constant in the caller.
     ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition());
     if (!Cond) { // Or known constant after constant prop in the callee...
-      Value *V = VMap[SI->getCondition()];
+      Value *V = VMap.lookup(SI->getCondition());
       Cond = dyn_cast_or_null<ConstantInt>(V);
     }
     if (Cond) {     // Constant fold to uncond branch!
@@ -493,7 +493,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
       OPN = PHIToResolve[phino];
       PHINode *PN = cast<PHINode>(VMap[OPN]);
       for (unsigned pred = 0, e = NumPreds; pred != e; ++pred) {
-        Value *V = VMap[PN->getIncomingBlock(pred)];
+        Value *V = VMap.lookup(PN->getIncomingBlock(pred));
         if (BasicBlock *MappedBlock = cast_or_null<BasicBlock>(V)) {
           Value *InVal = MapValue(PN->getIncomingValue(pred),
                                   VMap, 
