@@ -603,7 +603,8 @@ public:
     unsigned MemI = (unsigned) MemVT.getSimpleVT().SimpleTy;
     assert(ExtType < ISD::LAST_LOADEXT_TYPE && ValI < MVT::LAST_VALUETYPE &&
            MemI < MVT::LAST_VALUETYPE && "Table isn't big enough!");
-    return LoadExtActions[ValI][MemI][ExtType];
+    unsigned Shift = 4 * ExtType;
+    return (LegalizeAction)((LoadExtActions[ValI][MemI] >> Shift) & 0xf);
   }
 
   /// Return true if the specified load with extension is legal on this target.
@@ -614,8 +615,8 @@ public:
   /// Return true if the specified load with extension is legal or custom
   /// on this target.
   bool isLoadExtLegalOrCustom(unsigned ExtType, EVT ValVT, EVT MemVT) const {
-    return (getLoadExtAction(ExtType, ValVT, MemVT) == Legal ||
-            getLoadExtAction(ExtType, ValVT, MemVT) == Custom);
+    return getLoadExtAction(ExtType, ValVT, MemVT) == Legal ||
+           getLoadExtAction(ExtType, ValVT, MemVT) == Custom;
   }
 
   /// Return how this store with truncation should be treated: either it is
@@ -1357,7 +1358,10 @@ protected:
                         LegalizeAction Action) {
     assert(ExtType < ISD::LAST_LOADEXT_TYPE && ValVT.isValid() &&
            MemVT.isValid() && "Table isn't big enough!");
-    LoadExtActions[(unsigned)ValVT.SimpleTy][MemVT.SimpleTy][ExtType] = Action;
+    assert((unsigned)Action < 0x10 && "too many bits for bitfield array");
+    unsigned Shift = 4 * ExtType;
+    LoadExtActions[ValVT.SimpleTy][MemVT.SimpleTy] &= ~((uint16_t)0xF << Shift);
+    LoadExtActions[ValVT.SimpleTy][MemVT.SimpleTy] |= (uint16_t)Action << Shift;
   }
 
   /// Indicate that the specified truncating store does not work with the
@@ -1930,9 +1934,9 @@ private:
 
   /// For each load extension type and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with a load of a
-  /// specific value type and extension type.
-  LegalizeAction LoadExtActions[MVT::LAST_VALUETYPE][MVT::LAST_VALUETYPE]
-                               [ISD::LAST_LOADEXT_TYPE];
+  /// specific value type and extension type. Uses 4-bits to store the action
+  /// for each of the 4 load ext types.
+  uint16_t LoadExtActions[MVT::LAST_VALUETYPE][MVT::LAST_VALUETYPE];
 
   /// For each value type pair keep a LegalizeAction that indicates whether a
   /// truncating store of a specific value type and truncating type is legal.
