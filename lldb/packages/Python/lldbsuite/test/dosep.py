@@ -109,13 +109,17 @@ def setup_global_variables(
         global GET_WORKER_INDEX
         GET_WORKER_INDEX = get_worker_index_use_pid
 
-def report_test_failure(name, command, output):
+def report_test_failure(name, command, output, timeout):
     global output_lock
     with output_lock:
         if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
             print(file=sys.stderr)
             print(output, file=sys.stderr)
-            print("[%s FAILED]" % name, file=sys.stderr)
+            if timeout:
+                timeout_str = " (TIMEOUT)"
+            else:
+                timeout_str = ""
+            print("[%s FAILED]%s" % (name, timeout_str), file=sys.stderr)
             print("Command invoked: %s" % ' '.join(command), file=sys.stderr)
         update_progress(name)
 
@@ -211,7 +215,7 @@ class DoTestProcessDriver(process_control.ProcessDriver):
             # only stderr does.
             report_test_pass(self.file_name, output[1])
         else:
-            report_test_failure(self.file_name, command, output[1])
+            report_test_failure(self.file_name, command, output[1], was_timeout)
 
         # Save off the results for the caller.
         self.results = (
