@@ -467,8 +467,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (Offset == (uintX_t)-1)
       continue;
 
-    if (Target->isGotRelative(Type))
-      HasGotOffRel = true;
 
     // Set "used" bit for --as-needed.
     if (OrigBody.isUndefined() && !OrigBody.isWeak())
@@ -476,6 +474,12 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
         S->File->IsUsed = true;
 
     RelExpr Expr = Target->getRelExpr(Type, Body);
+
+    // This relocation does not require got entry, but it is relative to got and
+    // needs it to be created. Here we request for that.
+    if (Expr == R_GOTONLY_PC || Expr == R_GOTREL)
+      HasGotOffRel = true;
+
     uintX_t Addend = getAddend<ELFT>(RI);
     const uint8_t *BufLoc = Buf + RI.r_offset;
     if (!RelTy::IsRela)

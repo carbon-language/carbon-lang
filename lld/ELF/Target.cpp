@@ -93,7 +93,6 @@ public:
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
-  bool isGotRelative(uint32_t Type) const override;
   bool refersToGotEntry(uint32_t Type) const override;
 };
 
@@ -271,7 +270,6 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
   return mayNeedCopy<ELFT>(S) && needsCopyRelImpl(Type);
 }
 
-bool TargetInfo::isGotRelative(uint32_t Type) const { return false; }
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
@@ -485,13 +483,6 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 
 bool X86TargetInfo::needsPltImpl(uint32_t Type) const {
   return Type == R_386_PLT32;
-}
-
-bool X86TargetInfo::isGotRelative(uint32_t Type) const {
-  // This relocation does not require got entry,
-  // but it is relative to got and needs it to be created.
-  // Here we request for that.
-  return Type == R_386_GOTOFF;
 }
 
 bool X86TargetInfo::refersToGotEntry(uint32_t Type) const {
