@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -21,6 +19,7 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/CodeGen/ParallelCG.h"
+#include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
 #include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -31,8 +30,8 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Linker/IRMover.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Object/ModuleSummaryIndexObjectFile.h"
 #include "llvm/Object/IRObjectFile.h"
+#include "llvm/Object/ModuleSummaryIndexObjectFile.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"

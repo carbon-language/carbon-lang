@@ -36,7 +36,6 @@
 #define LLVM_LTO_LTOCODEGENERATOR_H
 
 #include "llvm-c/lto.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
@@ -48,6 +47,7 @@
 #include <vector>
 
 namespace llvm {
+template <typename T> class ArrayRef;
   class LLVMContext;
   class DiagnosticInfo;
   class Linker;

@@ -14,7 +14,6 @@
 #ifndef LLVM_CODEGEN_PARALLELCG_H
 #define LLVM_CODEGEN_PARALLELCG_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -22,6 +21,7 @@
 
 namespace llvm {
 
+template <typename T> class ArrayRef;
 class Module;
 class TargetOptions;
 class raw_pwrite_stream;
