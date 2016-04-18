@@ -293,7 +293,6 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
       Out<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel, Out<ELFT>::Got,
                                     Out<ELFT>::Got->getTlsIndexOff(), false,
                                     nullptr, 0});
-    Expr = Expr == R_PC ? R_TLSLD_PC : R_TLSLD;
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
     return 1;
   }
