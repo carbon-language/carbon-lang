@@ -35,9 +35,9 @@ namespace remote {
 template <typename T>
 class RPCFunctionIdTraits {
 public:
-  constexpr static const T InvalidId = static_cast<T>(0);
-  constexpr static const T ResponseId = static_cast<T>(1);
-  constexpr static const T FirstValidId = static_cast<T>(2);
+  static constexpr T InvalidId = static_cast<T>(0);
+  static constexpr T ResponseId = static_cast<T>(1);
+  static constexpr T FirstValidId = static_cast<T>(2);
 };
 
 // Base class containing utilities that require partial specialization.
@@ -539,7 +539,7 @@ public:
     }
 
     return std::error_code();
-  };
+  }
 
   // Default handler for 'other' (non-response) functions when waiting for a
   // result from the channel.
