@@ -649,7 +649,7 @@ RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_X86_64_PC32:
     return R_PC;
   case R_X86_64_GOT32:
-    return R_GOT;
+    return R_GOT_FROM_END;
   case R_X86_64_GOTPCREL:
   case R_X86_64_GOTTPOFF:
     return R_GOT_PC;
@@ -869,6 +869,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_X86_64_32S:
   case R_X86_64_TPOFF32:
+  case R_X86_64_GOT32:
     checkInt<32>(Val, Type);
     write32le(Loc, Val);
     break;
