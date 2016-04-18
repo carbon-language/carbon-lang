@@ -42,13 +42,34 @@ entry:
   ret <8 x float> %shuffle
 }
 
-define <32 x i8> @E(<32 x i8> %a, <32 x i8> %b) nounwind uwtable readnone ssp {
-; ALL-LABEL: E:
+define <32 x i8> @shuffle_v32i8_2323(<32 x i8> %a, <32 x i8> %b) nounwind uwtable readnone ssp {
+; ALL-LABEL: shuffle_v32i8_2323:
 ; ALL:       ## BB#0: ## %entry
 ; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3,2,3]
 ; ALL-NEXT:    retq
 entry:
   %shuffle = shufflevector <32 x i8> %a, <32 x i8> %b, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  ret <32 x i8> %shuffle
+}
+
+define <32 x i8> @shuffle_v32i8_2323_domain(<32 x i8> %a, <32 x i8> %b) nounwind uwtable readnone ssp {
+; AVX1-LABEL: shuffle_v32i8_2323_domain:
+; AVX1:       ## BB#0: ## %entry
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpaddb {{.*}}(%rip), %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3,2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v32i8_2323_domain:
+; AVX2:       ## BB#0: ## %entry
+; AVX2-NEXT:    vpaddb {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vperm2i128 {{.*#+}} ymm0 = ymm0[2,3,2,3]
+; AVX2-NEXT:    retq
+entry:
+  ; add forces execution domain
+  %a2 = add <32 x i8> %a, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  %shuffle = shufflevector <32 x i8> %a2, <32 x i8> %b, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
   ret <32 x i8> %shuffle
 }
 
@@ -80,27 +101,6 @@ entry:
   %a2 = add <4 x i64> %a, <i64 1, i64 1, i64 1, i64 1>
   %shuffle = shufflevector <4 x i64> %a2, <4 x i64> %b, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x i64> %shuffle
-}
-
-define <32 x i8> @shuffle_v32i8_2323(<32 x i8> %a, <32 x i8> %b) nounwind uwtable readnone ssp {
-; AVX1-LABEL: shuffle_v32i8_2323:
-; AVX1:       ## BB#0: ## %entry
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; AVX1-NEXT:    vpaddb {{.*}}(%rip), %xmm0, %xmm0
-; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
-; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3,2,3]
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: shuffle_v32i8_2323:
-; AVX2:       ## BB#0: ## %entry
-; AVX2-NEXT:    vpaddb {{.*}}(%rip), %ymm0, %ymm0
-; AVX2-NEXT:    vperm2i128 {{.*#+}} ymm0 = ymm0[2,3,2,3]
-; AVX2-NEXT:    retq
-entry:
-  ; add forces execution domain
-  %a2 = add <32 x i8> %a, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
-  %shuffle = shufflevector <32 x i8> %a2, <32 x i8> %b, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-  ret <32 x i8> %shuffle
 }
 
 define <8 x i32> @shuffle_v8i32_u5u7cdef(<8 x i32> %a, <8 x i32> %b) nounwind uwtable readnone ssp {
