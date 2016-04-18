@@ -3651,6 +3651,8 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
   else {
     if (Tok.is(tok::colon))
       ParseConstructorInitializer(MCDecl);
+    else
+      Actions.ActOnDefaultCtorInitializers(MCDecl);
     ParseFunctionStatementBody(MCDecl, BodyScope);
   }
   
