@@ -266,9 +266,18 @@ entry:
 ;; Test zero mask generation.
 ;; PR22984: https://llvm.org/bugs/show_bug.cgi?id=22984
 ;; Prefer xor+vblendpd over vperm2f128 because that has better performance.
+;; TODO: When building for optsize we should use vperm2f128.
 
 define <4 x double> @shuffle_v4f64_zz01(<4 x double> %a) {
 ; ALL-LABEL: shuffle_v4f64_zz01:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = zero,zero,ymm0[0,1]
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
+  ret <4 x double> %s
+}
+define <4 x double> @shuffle_v4f64_zz01_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_zz01_optsize:
 ; ALL:       ## BB#0:
 ; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = zero,zero,ymm0[0,1]
 ; ALL-NEXT:    retq
@@ -285,6 +294,15 @@ define <4 x double> @shuffle_v4f64_zz23(<4 x double> %a) {
   %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
   ret <4 x double> %s
 }
+define <4 x double> @shuffle_v4f64_zz23_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_zz23_optsize:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3]
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+  ret <4 x double> %s
+}
 
 define <4 x double> @shuffle_v4f64_zz45(<4 x double> %a) {
 ; ALL-LABEL: shuffle_v4f64_zz45:
@@ -294,9 +312,26 @@ define <4 x double> @shuffle_v4f64_zz45(<4 x double> %a) {
   %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   ret <4 x double> %s
 }
+define <4 x double> @shuffle_v4f64_zz45_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_zz45_optsize:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = zero,zero,ymm0[0,1]
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x double> %s
+}
 
 define <4 x double> @shuffle_v4f64_zz67(<4 x double> %a) {
 ; ALL-LABEL: shuffle_v4f64_zz67:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3]
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 0, i32 1, i32 6, i32 7>
+  ret <4 x double> %s
+}
+define <4 x double> @shuffle_v4f64_zz67_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_zz67_optsize:
 ; ALL:       ## BB#0:
 ; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3]
@@ -314,9 +349,26 @@ define <4 x double> @shuffle_v4f64_01zz(<4 x double> %a) {
   %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   ret <4 x double> %s
 }
+define <4 x double> @shuffle_v4f64_01zz_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_01zz_optsize:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x double> %s
+}
 
 define <4 x double> @shuffle_v4f64_23zz(<4 x double> %a) {
 ; ALL-LABEL: shuffle_v4f64_23zz:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],zero,zero
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 2, i32 3, i32 4, i32 5>
+  ret <4 x double> %s
+}
+define <4 x double> @shuffle_v4f64_23zz_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_23zz_optsize:
 ; ALL:       ## BB#0:
 ; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],zero,zero
 ; ALL-NEXT:    retq
@@ -333,9 +385,26 @@ define <4 x double> @shuffle_v4f64_45zz(<4 x double> %a) {
   %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
   ret <4 x double> %s
 }
+define <4 x double> @shuffle_v4f64_45zz_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_45zz_optsize:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
+  ret <4 x double> %s
+}
 
 define <4 x double> @shuffle_v4f64_67zz(<4 x double> %a) {
 ; ALL-LABEL: shuffle_v4f64_67zz:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],zero,zero
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+  ret <4 x double> %s
+}
+define <4 x double> @shuffle_v4f64_67zz_optsize(<4 x double> %a) optsize {
+; ALL-LABEL: shuffle_v4f64_67zz_optsize:
 ; ALL:       ## BB#0:
 ; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],zero,zero
 ; ALL-NEXT:    retq
