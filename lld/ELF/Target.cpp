@@ -636,6 +636,8 @@ RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return R_ABS;
+  case R_X86_64_TPOFF32:
+    return R_TLS;
   case R_X86_64_TLSLD:
     return R_TLSLD_PC;
   case R_X86_64_TLSGD:
@@ -768,7 +770,8 @@ void X86_64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
       0x48, 0x8d, 0x80, 0x00, 0x00, 0x00, 0x00              // lea x@tpoff,%rax
   };
   memcpy(Loc - 4, Inst, sizeof(Inst));
-  relocateOne(Loc + 8, R_X86_64_TPOFF32, Val + 4);
+  relocateOne(Loc + 8, R_X86_64_TPOFF32,
+              Val + 4 - Out<ELF64LE>::TlsPhdr->p_memsz);
 }
 
 // "Ulrich Drepper, ELF Handling For Thread-Local Storage" (5.5
@@ -824,7 +827,7 @@ void X86_64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
   if (*Prefix == 0x4c)
     *Prefix = (IsMov || RspAdd) ? 0x49 : 0x4d;
   *RegSlot = (IsMov || RspAdd) ? (0xc0 | Reg) : (0x80 | Reg | (Reg << 3));
-  relocateOne(Loc, R_X86_64_TPOFF32, Val + 4);
+  relocateOne(Loc, R_X86_64_TPOFF32, Val + 4 - Out<ELF64LE>::TlsPhdr->p_memsz);
 }
 
 // "Ulrich Drepper, ELF Handling For Thread-Local Storage" (5.5
@@ -845,7 +848,7 @@ void X86_64TargetInfo::relaxTlsLdToLe(uint8_t *Loc, uint32_t Type,
     return;
   }
   if (Type == R_X86_64_DTPOFF32) {
-    relocateOne(Loc, R_X86_64_TPOFF32, Val);
+    relocateOne(Loc, R_X86_64_TPOFF32, Val - Out<ELF64LE>::TlsPhdr->p_memsz);
     return;
   }
 
@@ -865,6 +868,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write32le(Loc, Val);
     break;
   case R_X86_64_32S:
+  case R_X86_64_TPOFF32:
     checkInt<32>(Val, Type);
     write32le(Loc, Val);
     break;
@@ -884,12 +888,6 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_X86_64_SIZE32:
     write32le(Loc, Val);
     break;
-  case R_X86_64_TPOFF32: {
-    Val -= Out<ELF64LE>::TlsPhdr->p_memsz;
-    checkInt<32>(Val, Type);
-    write32le(Loc, Val);
-    break;
-  }
   default:
     fatal("unrecognized reloc " + Twine(Type));
   }

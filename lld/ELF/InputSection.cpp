@@ -198,7 +198,7 @@ getSymVA(uint32_t Type, typename ELFT::uint A, typename ELFT::uint P,
   case R_GOTONLY_PC:
     return Out<ELFT>::Got->getVA() + A - P;
   case R_TLS:
-    return Body.getVA<ELFT>(A) - Out<ELF32LE>::TlsPhdr->p_memsz;
+    return Body.getVA<ELFT>(A) - Out<ELFT>::TlsPhdr->p_memsz;
   case R_NEG_TLS:
     return Out<ELF32LE>::TlsPhdr->p_memsz - Body.getVA<ELFT>(A);
   case R_ABS:
