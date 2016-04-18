@@ -372,12 +372,20 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_TLSLD;
   case R_386_PLT32:
   case R_386_PC32:
-  case R_386_GOTPC:
     return R_PC;
-  case R_386_GOT32:
-  case R_386_TLS_GOTIE:
+  case R_386_GOTPC:
+    return R_GOTONLY_PC;
   case R_386_TLS_IE:
     return R_GOT;
+  case R_386_GOT32:
+  case R_386_TLS_GOTIE:
+    return R_GOT_FROM_END;
+  case R_386_GOTOFF:
+    return R_GOTREL;
+  case R_386_TLS_LE:
+    return R_TLS;
+  case R_386_TLS_LE_32:
+    return R_NEG_TLS;
   }
 }
 
@@ -507,38 +515,8 @@ uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
 
 void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                 uint64_t Val) const {
-  switch (Type) {
-  case R_386_32:
-  case R_386_PC32:
-  case R_386_PLT32:
-  case R_386_TLS_IE:
-  case R_386_TLS_LDO_32:
-    write32le(Loc, Val);
-    break;
-  case R_386_GOTOFF:
-    write32le(Loc, Val - Out<ELF32LE>::Got->getVA());
-    break;
-  case R_386_GOTPC:
-    write32le(Loc, Val + Out<ELF32LE>::Got->getVA());
-    break;
-  case R_386_GOT32:
-  case R_386_TLS_GD:
-  case R_386_TLS_LDM: {
-    uint64_t V = Val - Out<ELF32LE>::Got->getVA() -
-                 Out<ELF32LE>::Got->getNumEntries() * 4;
-    checkInt<32>(V, Type);
-    write32le(Loc, V);
-    break;
-  }
-  case R_386_TLS_LE:
-    write32le(Loc, Val - Out<ELF32LE>::TlsPhdr->p_memsz);
-    break;
-  case R_386_TLS_LE_32:
-    write32le(Loc, Out<ELF32LE>::TlsPhdr->p_memsz - Val);
-    break;
-  default:
-    fatal("unrecognized reloc " + Twine(Type));
-  }
+  checkInt<32>(Val, Type);
+  write32le(Loc, Val);
 }
 
 bool X86TargetInfo::needsDynRelative(uint32_t Type) const {
@@ -623,13 +601,13 @@ void X86TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
     else
       *Op = 0x80 | Reg | (Reg << 3);
   }
-  relocateOne(Loc, R_386_TLS_LE, Val);
+  relocateOne(Loc, R_386_TLS_LE, Val - Out<ELF32LE>::TlsPhdr->p_memsz);
 }
 
 void X86TargetInfo::relaxTlsLdToLe(uint8_t *Loc, uint32_t Type,
                                    uint64_t Val) const {
   if (Type == R_386_TLS_LDO_32) {
-    relocateOne(Loc, R_386_TLS_LE, Val);
+    relocateOne(Loc, R_386_TLS_LE, Val - Out<ELF32LE>::TlsPhdr->p_memsz);
     return;
   }
 
