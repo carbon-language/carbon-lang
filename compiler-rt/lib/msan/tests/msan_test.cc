@@ -2914,6 +2914,10 @@ static void GetPathToLoadable(char *buf, size_t sz) {
   static const char basename[] = "libmsan_loadable.mips64el.so";
 #elif defined(__aarch64__)
   static const char basename[] = "libmsan_loadable.aarch64.so";
+#elif defined(__powerpc64__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+  static const char basename[] = "libmsan_loadable.powerpc64.so";
+#elif defined(__powerpc64__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  static const char basename[] = "libmsan_loadable.powerpc64le.so";
 #endif
   int res = snprintf(buf, sz, "%.*s/%s",
                      (int)dir_len, program_path, basename);
