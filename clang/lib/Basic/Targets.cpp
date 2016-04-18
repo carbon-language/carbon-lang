@@ -4847,6 +4847,10 @@ public:
     // Target identification.
     Builder.defineMacro("__arm");
     Builder.defineMacro("__arm__");
+    // For bare-metal none-eabi.
+    if (getTriple().getOS() == llvm::Triple::UnknownOS &&
+        getTriple().getEnvironment() == llvm::Triple::EABI)
+      Builder.defineMacro("__ELF__");
 
     // Target properties.
     Builder.defineMacro("__REGISTER_PREFIX__", "");
