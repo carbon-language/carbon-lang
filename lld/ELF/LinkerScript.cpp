@@ -113,7 +113,7 @@ void LinkerScript::assignAddresses(
     StringRef Name = Sec->getName();
     auto I = std::find(SectionOrder.begin(), SectionOrder.end(), Name);
     if (I == SectionOrder.end())
-      Locations.push_back({Command::Section, {}, {Name}});
+      Locations.push_back({Command::Section, {}, Name});
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
@@ -400,7 +400,7 @@ void ScriptParser::readSectionPatterns(StringRef OutSec, bool Keep) {
 void ScriptParser::readLocationCounterValue() {
   expect(".");
   expect("=");
-  Script->Locations.push_back({Command::Expr, {}, {}});
+  Script->Locations.push_back({Command::Expr, {}, ""});
   LocationNode &Node = Script->Locations.back();
   while (!Error) {
     StringRef Tok = next();
@@ -415,7 +415,7 @@ void ScriptParser::readLocationCounterValue() {
 void ScriptParser::readOutputSectionDescription() {
   StringRef OutSec = next();
   Script->SectionOrder.push_back(OutSec);
-  Script->Locations.push_back({Command::Section, {}, {OutSec}});
+  Script->Locations.push_back({Command::Section, {}, OutSec});
   expect(":");
   expect("{");
   while (!Error && !skip("}")) {
