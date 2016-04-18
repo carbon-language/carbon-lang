@@ -72,8 +72,6 @@ public:
   bool DoLayout = false;
 
 private:
-  template <class ELFT>
-  void fixupLocations(std::vector<OutputSectionBase<ELFT> *> &);
   uint64_t evaluate(std::vector<StringRef> &Tokens, uint64_t LocCounter);
   template <class ELFT> SectionRule *find(InputSectionBase<ELFT> *S);
 
