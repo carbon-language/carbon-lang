@@ -124,7 +124,7 @@ void initializeAAResultsWrapperPassPass(PassRegistry &);
 void initializeGCOVProfilerPass(PassRegistry&);
 void initializePGOInstrumentationGenPass(PassRegistry&);
 void initializePGOInstrumentationUsePass(PassRegistry&);
-void initializeInstrProfilingPass(PassRegistry&);
+void initializeInstrProfilingLegacyPassPass(PassRegistry &);
 void initializeAddressSanitizerPass(PassRegistry&);
 void initializeAddressSanitizerModulePass(PassRegistry&);
 void initializeMemorySanitizerPass(PassRegistry&);
