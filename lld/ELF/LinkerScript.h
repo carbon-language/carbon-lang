@@ -44,10 +44,10 @@ private:
 // This enum represents what we can observe in SECTIONS tag of script:
 // Expr is a location counter change, like ". = . + 0x1000"
 // Section is a description of output section, like ".data :..."
-enum class Command { Expr, Section };
+enum SectionsCommandKind { ExprKind, SectionKind };
 
-struct LocationNode {
-  Command Type;
+struct SectionsCommand {
+  SectionsCommandKind Kind;
   std::vector<StringRef> Expr;
   StringRef SectionName;
 };
@@ -85,7 +85,7 @@ private:
   llvm::StringMap<std::vector<uint8_t>> Filler;
 
   // Used to assign addresses to sections.
-  std::vector<LocationNode> Locations;
+  std::vector<SectionsCommand> Commands;
 
   llvm::BumpPtrAllocator Alloc;
 };

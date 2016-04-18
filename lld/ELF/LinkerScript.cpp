@@ -113,7 +113,7 @@ void LinkerScript::assignAddresses(
     StringRef Name = Sec->getName();
     auto I = std::find(SectionOrder.begin(), SectionOrder.end(), Name);
     if (I == SectionOrder.end())
-      Locations.push_back({Command::Section, {}, Name});
+      Commands.push_back({SectionKind, {}, Name});
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
@@ -121,13 +121,13 @@ void LinkerScript::assignAddresses(
   uintX_t VA =
       Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
 
-  for (LocationNode &Node : Locations) {
-    if (Node.Type == Command::Expr) {
-      VA = evaluate(Node.Expr, VA);
+  for (SectionsCommand &Cmd : Commands) {
+    if (Cmd.Kind == ExprKind) {
+      VA = evaluate(Cmd.Expr, VA);
       continue;
     }
 
-    OutputSectionBase<ELFT> *Sec = findSection(Sections, Node.SectionName);
+    OutputSectionBase<ELFT> *Sec = findSection(Sections, Cmd.SectionName);
     if (!Sec)
       continue;
 
@@ -400,22 +400,22 @@ void ScriptParser::readSectionPatterns(StringRef OutSec, bool Keep) {
 void ScriptParser::readLocationCounterValue() {
   expect(".");
   expect("=");
-  Script->Locations.push_back({Command::Expr, {}, ""});
-  LocationNode &Node = Script->Locations.back();
+  Script->Commands.push_back({ExprKind, {}, ""});
+  SectionsCommand &Cmd = Script->Commands.back();
   while (!Error) {
     StringRef Tok = next();
     if (Tok == ";")
       break;
-    Node.Expr.push_back(Tok);
+    Cmd.Expr.push_back(Tok);
   }
-  if (Node.Expr.empty())
+  if (Cmd.Expr.empty())
     error("error in location counter expression");
 }
 
 void ScriptParser::readOutputSectionDescription() {
   StringRef OutSec = next();
   Script->SectionOrder.push_back(OutSec);
-  Script->Locations.push_back({Command::Section, {}, OutSec});
+  Script->Commands.push_back({SectionKind, {}, OutSec});
   expect(":");
   expect("{");
   while (!Error && !skip("}")) {
