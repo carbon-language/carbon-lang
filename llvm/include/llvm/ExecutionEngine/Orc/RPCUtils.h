@@ -549,6 +549,9 @@ private:
   public:
     SequenceNumberManager() = default;
 
+    SequenceNumberManager(const SequenceNumberManager&) = delete;
+    SequenceNumberManager& operator=(const SequenceNumberManager&) = delete;
+
     SequenceNumberManager(SequenceNumberManager &&Other)
         : NextSequenceNumber(std::move(Other.NextSequenceNumber)),
           FreeSequenceNumbers(std::move(Other.FreeSequenceNumbers)) {}
