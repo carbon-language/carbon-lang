@@ -18,6 +18,8 @@
 #ifndef LLVM_SUPPORT_ATOMICORDERING_H
 #define LLVM_SUPPORT_ATOMICORDERING_H
 
+#include <stddef.h>
+
 namespace llvm {
 
 /// Atomic ordering for C11 / C++11's memody models.
