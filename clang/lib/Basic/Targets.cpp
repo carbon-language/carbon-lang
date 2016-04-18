@@ -5946,6 +5946,12 @@ void HexagonTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__QDSP6_V60__");
     Builder.defineMacro("__QDSP6_ARCH__", "60");
   }
+
+  if (hasFeature("hvx")) {
+    Builder.defineMacro("__HVX__");
+    if (hasFeature("hvx-double"))
+      Builder.defineMacro("__HVXDBL__");
+  }
 }
 
 bool HexagonTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
