@@ -1930,6 +1930,11 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     }
   }
 
+  bool FillDelaySlot =
+      MCID.hasDelaySlot() && AssemblerOptions.back()->isReorder();
+  if (FillDelaySlot)
+    getTargetStreamer().emitDirectiveSetNoReorder();
+
   MacroExpanderResultTy ExpandResult =
       tryExpandInstruction(Inst, IDLoc, Out, STI);
   switch (ExpandResult) {
@@ -1944,8 +1949,10 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
 
   // If this instruction has a delay slot and .set reorder is active,
   // emit a NOP after it.
-  if (MCID.hasDelaySlot() && AssemblerOptions.back()->isReorder())
+  if (FillDelaySlot) {
     createNop(hasShortDelaySlot(Inst.getOpcode()), IDLoc, Out, STI);
+    getTargetStreamer().emitDirectiveSetReorder();
+  }
 
   if ((Inst.getOpcode() == Mips::JalOneReg ||
        Inst.getOpcode() == Mips::JalTwoReg || ExpandedJalSym) &&
