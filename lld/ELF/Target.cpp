@@ -901,10 +901,8 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_X86_64_64:
   case R_X86_64_DTPOFF64:
+  case R_X86_64_SIZE64:
     write64le(Loc, Val);
-    break;
-  case R_X86_64_DTPOFF32:
-    write32le(Loc, Val);
     break;
   case R_X86_64_GOTPCREL:
   case R_X86_64_GOTPCRELX:
@@ -913,13 +911,9 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_X86_64_PLT32:
   case R_X86_64_TLSGD:
   case R_X86_64_TLSLD:
-    write32le(Loc, Val);
-    break;
+  case R_X86_64_DTPOFF32:
   case R_X86_64_SIZE32:
     write32le(Loc, Val);
-    break;
-  case R_X86_64_SIZE64:
-    write64le(Loc, Val);
     break;
   case R_X86_64_TPOFF32: {
     Val -= Out<ELF64LE>::TlsPhdr->p_memsz;
