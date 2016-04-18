@@ -326,7 +326,7 @@ if (LIBCXXABI_USE_LLVM_UNWINDER OR LLVM_NATIVE_ARCH MATCHES ARM)
   )
 
   if (LIBCXXABI_LIBUNWIND_SOURCES STREQUAL "LIBCXXABI_LIBUNWIND_SOURCES-NOTFOUND")
-    message(WARNING "LIBCXXABI_LIBCXX_PATH was not specified and couldn't be infered.")
+    message(WARNING "LIBCXXABI_LIBUNWIND_SOURCES was not specified and couldn't be infered.")
     set(LIBCXXABI_LIBUNWIND_SOURCES "")
   endif()
 
