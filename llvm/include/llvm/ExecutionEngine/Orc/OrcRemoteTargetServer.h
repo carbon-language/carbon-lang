@@ -45,14 +45,14 @@ public:
         EHFramesRegister(std::move(EHFramesRegister)),
         EHFramesDeregister(std::move(EHFramesDeregister)) {}
 
-  std::error_code getNextFuncId(JITFuncId &Id) {
+  std::error_code getNextProcId(JITProcId &Id) {
     return deserialize(Channel, Id);
   }
 
-  std::error_code handleKnownFunction(JITFuncId Id) {
+  std::error_code handleKnownProcedure(JITProcId Id) {
     typedef OrcRemoteTargetServer ThisT;
 
-    DEBUG(dbgs() << "Handling known proc: " << getJITFuncIdName(Id) << "\n");
+    DEBUG(dbgs() << "Handling known proc: " << getJITProcIdName(Id) << "\n");
 
     switch (Id) {
     case CallIntVoidId:
@@ -111,17 +111,27 @@ public:
     llvm_unreachable("Unhandled JIT RPC procedure Id.");
   }
 
-  ErrorOr<TargetAddress> requestCompile(TargetAddress TrampolineAddr) {
-    auto Listen =
-      [&](RPCChannel &C, uint32_t Id) {
-        return handleKnownFunction(static_cast<JITFuncId>(Id));
-      };
+  std::error_code requestCompile(TargetAddress &CompiledFnAddr,
+                                 TargetAddress TrampolineAddr) {
+    if (auto EC = call<RequestCompile>(Channel, TrampolineAddr))
+      return EC;
 
-    return callSTHandling<RequestCompile>(Channel, Listen, TrampolineAddr);
-  }
+    while (1) {
+      JITProcId Id = InvalidId;
+      if (auto EC = getNextProcId(Id))
+        return EC;
 
-  void handleTerminateSession() {
-    handle<TerminateSession>(Channel, [](){ return std::error_code(); });
+      switch (Id) {
+      case RequestCompileResponseId:
+        return handle<RequestCompileResponse>(Channel,
+                                              readArgs(CompiledFnAddr));
+      default:
+        if (auto EC = handleKnownProcedure(Id))
+          return EC;
+      }
+    }
+
+    llvm_unreachable("Fell through request-compile command loop.");
   }
 
 private:
@@ -165,16 +175,18 @@ private:
   static std::error_code doNothing() { return std::error_code(); }
 
   static TargetAddress reenter(void *JITTargetAddr, void *TrampolineAddr) {
+    TargetAddress CompiledFnAddr = 0;
+
     auto T = static_cast<OrcRemoteTargetServer *>(JITTargetAddr);
-    auto AddrOrErr = T->requestCompile(
-		       static_cast<TargetAddress>(
-		         reinterpret_cast<uintptr_t>(TrampolineAddr)));
-    // FIXME: Allow customizable failure substitution functions.
-    assert(AddrOrErr && "Compile request failed");
-    return *AddrOrErr;
+    auto EC = T->requestCompile(
+        CompiledFnAddr, static_cast<TargetAddress>(
+                            reinterpret_cast<uintptr_t>(TrampolineAddr)));
+    assert(!EC && "Compile request failed");
+    (void)EC;
+    return CompiledFnAddr;
   }
 
-  ErrorOr<int32_t> handleCallIntVoid(TargetAddress Addr) {
+  std::error_code handleCallIntVoid(TargetAddress Addr) {
     typedef int (*IntVoidFnTy)();
     IntVoidFnTy Fn =
         reinterpret_cast<IntVoidFnTy>(static_cast<uintptr_t>(Addr));
@@ -183,11 +195,11 @@ private:
     int Result = Fn();
     DEBUG(dbgs() << "  Result = " << Result << "\n");
 
-    return Result;
+    return call<CallIntVoidResponse>(Channel, Result);
   }
 
-  ErrorOr<int32_t> handleCallMain(TargetAddress Addr,
-				  std::vector<std::string> Args) {
+  std::error_code handleCallMain(TargetAddress Addr,
+                                 std::vector<std::string> Args) {
     typedef int (*MainFnTy)(int, const char *[]);
 
     MainFnTy Fn = reinterpret_cast<MainFnTy>(static_cast<uintptr_t>(Addr));
@@ -202,7 +214,7 @@ private:
     int Result = Fn(ArgC, ArgV.get());
     DEBUG(dbgs() << "  Result = " << Result << "\n");
 
-    return Result;
+    return call<CallMainResponse>(Channel, Result);
   }
 
   std::error_code handleCallVoidVoid(TargetAddress Addr) {
@@ -214,7 +226,7 @@ private:
     Fn();
     DEBUG(dbgs() << "  Complete.\n");
 
-    return std::error_code();
+    return call<CallVoidVoidResponse>(Channel);
   }
 
   std::error_code handleCreateRemoteAllocator(ResourceIdMgr::ResourceId Id) {
@@ -261,9 +273,8 @@ private:
     return std::error_code();
   }
 
-  ErrorOr<std::tuple<TargetAddress, TargetAddress, uint32_t>>
-  handleEmitIndirectStubs(ResourceIdMgr::ResourceId Id,
-			  uint32_t NumStubsRequired) {
+  std::error_code handleEmitIndirectStubs(ResourceIdMgr::ResourceId Id,
+                                          uint32_t NumStubsRequired) {
     DEBUG(dbgs() << "  ISMgr " << Id << " request " << NumStubsRequired
                  << " stubs.\n");
 
@@ -285,7 +296,8 @@ private:
     auto &BlockList = StubOwnerItr->second;
     BlockList.push_back(std::move(IS));
 
-    return std::make_tuple(StubsBase, PtrsBase, NumStubsEmitted);
+    return call<EmitIndirectStubsResponse>(Channel, StubsBase, PtrsBase,
+                                           NumStubsEmitted);
   }
 
   std::error_code handleEmitResolverBlock() {
@@ -304,8 +316,7 @@ private:
                                                 sys::Memory::MF_EXEC);
   }
 
-  ErrorOr<std::tuple<TargetAddress, uint32_t>>
-  handleEmitTrampolineBlock() {
+  std::error_code handleEmitTrampolineBlock() {
     std::error_code EC;
     auto TrampolineBlock =
         sys::OwningMemoryBlock(sys::Memory::allocateMappedMemory(
@@ -314,7 +325,7 @@ private:
     if (EC)
       return EC;
 
-    uint32_t NumTrampolines =
+    unsigned NumTrampolines =
         (sys::Process::getPageSize() - TargetT::PointerSize) /
         TargetT::TrampolineSize;
 
@@ -328,21 +339,20 @@ private:
 
     TrampolineBlocks.push_back(std::move(TrampolineBlock));
 
-    auto TrampolineBaseAddr =
-      static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(TrampolineMem));
-
-    return std::make_tuple(TrampolineBaseAddr, NumTrampolines);
+    return call<EmitTrampolineBlockResponse>(
+        Channel,
+        static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(TrampolineMem)),
+        NumTrampolines);
   }
 
-  ErrorOr<TargetAddress> handleGetSymbolAddress(const std::string &Name) {
+  std::error_code handleGetSymbolAddress(const std::string &Name) {
     TargetAddress Addr = SymbolLookup(Name);
     DEBUG(dbgs() << "  Symbol '" << Name << "' =  " << format("0x%016x", Addr)
                  << "\n");
-    return Addr;
+    return call<GetSymbolAddressResponse>(Channel, Addr);
   }
 
-  ErrorOr<std::tuple<std::string, uint32_t, uint32_t, uint32_t, uint32_t>>
-  handleGetRemoteInfo() {
+  std::error_code handleGetRemoteInfo() {
     std::string ProcessTriple = sys::getProcessTriple();
     uint32_t PointerSize = TargetT::PointerSize;
     uint32_t PageSize = sys::Process::getPageSize();
@@ -354,23 +364,24 @@ private:
                  << "    page size          = " << PageSize << "\n"
                  << "    trampoline size    = " << TrampolineSize << "\n"
                  << "    indirect stub size = " << IndirectStubSize << "\n");
-    return std::make_tuple(ProcessTriple, PointerSize, PageSize ,TrampolineSize,
-			   IndirectStubSize);
+    return call<GetRemoteInfoResponse>(Channel, ProcessTriple, PointerSize,
+                                       PageSize, TrampolineSize,
+                                       IndirectStubSize);
   }
 
-  ErrorOr<std::vector<char>>
-  handleReadMem(TargetAddress RSrc, uint64_t Size) {
+  std::error_code handleReadMem(TargetAddress RSrc, uint64_t Size) {
     char *Src = reinterpret_cast<char *>(static_cast<uintptr_t>(RSrc));
 
     DEBUG(dbgs() << "  Reading " << Size << " bytes from "
                  << format("0x%016x", RSrc) << "\n");
 
-    std::vector<char> Buffer;
-    Buffer.resize(Size);
-    for (char *P = Src; Size != 0; --Size)
-      Buffer.push_back(*P++);
+    if (auto EC = call<ReadMemResponse>(Channel))
+      return EC;
 
-    return Buffer;
+    if (auto EC = Channel.appendBytes(Src, Size))
+      return EC;
+
+    return Channel.send();
   }
 
   std::error_code handleRegisterEHFrames(TargetAddress TAddr, uint32_t Size) {
@@ -381,9 +392,8 @@ private:
     return std::error_code();
   }
 
-  ErrorOr<TargetAddress>
-  handleReserveMem(ResourceIdMgr::ResourceId Id, uint64_t Size,
-		   uint32_t Align) {
+  std::error_code handleReserveMem(ResourceIdMgr::ResourceId Id, uint64_t Size,
+                                   uint32_t Align) {
     auto I = Allocators.find(Id);
     if (I == Allocators.end())
       return orcError(OrcErrorCode::RemoteAllocatorDoesNotExist);
@@ -398,7 +408,7 @@ private:
     TargetAddress AllocAddr =
         static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(LocalAllocAddr));
 
-    return AllocAddr;
+    return call<ReserveMemResponse>(Channel, AllocAddr);
   }
 
   std::error_code handleSetProtections(ResourceIdMgr::ResourceId Id,
@@ -415,10 +425,11 @@ private:
     return Allocator.setProtections(LocalAddr, Flags);
   }
 
-  std::error_code handleWriteMem(DirectBufferWriter DBW) {
-    DEBUG(dbgs() << "  Writing " << DBW.getSize() << " bytes to "
-	         << format("0x%016x", DBW.getDst()) << "\n");
-    return std::error_code();
+  std::error_code handleWriteMem(TargetAddress RDst, uint64_t Size) {
+    char *Dst = reinterpret_cast<char *>(static_cast<uintptr_t>(RDst));
+    DEBUG(dbgs() << "  Writing " << Size << " bytes to "
+                 << format("0x%016x", RDst) << "\n");
+    return Channel.readBytes(Dst, Size);
   }
 
   std::error_code handleWritePtr(TargetAddress Addr, TargetAddress PtrVal) {

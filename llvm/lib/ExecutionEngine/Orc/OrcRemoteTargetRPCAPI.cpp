@@ -13,40 +13,50 @@ namespace llvm {
 namespace orc {
 namespace remote {
 
-#define FUNCNAME(X) \
+#define PROCNAME(X) \
   case X ## Id: \
   return #X
 
-const char *OrcRemoteTargetRPCAPI::getJITFuncIdName(JITFuncId Id) {
+const char *OrcRemoteTargetRPCAPI::getJITProcIdName(JITProcId Id) {
   switch (Id) {
   case InvalidId:
-    return "*** Invalid JITFuncId ***";
-  FUNCNAME(CallIntVoid);
-  FUNCNAME(CallMain);
-  FUNCNAME(CallVoidVoid);
-  FUNCNAME(CreateRemoteAllocator);
-  FUNCNAME(CreateIndirectStubsOwner);
-  FUNCNAME(DeregisterEHFrames);
-  FUNCNAME(DestroyRemoteAllocator);
-  FUNCNAME(DestroyIndirectStubsOwner);
-  FUNCNAME(EmitIndirectStubs);
-  FUNCNAME(EmitResolverBlock);
-  FUNCNAME(EmitTrampolineBlock);
-  FUNCNAME(GetSymbolAddress);
-  FUNCNAME(GetRemoteInfo);
-  FUNCNAME(ReadMem);
-  FUNCNAME(RegisterEHFrames);
-  FUNCNAME(ReserveMem);
-  FUNCNAME(RequestCompile);
-  FUNCNAME(SetProtections);
-  FUNCNAME(TerminateSession);
-  FUNCNAME(WriteMem);
-  FUNCNAME(WritePtr);
+    return "*** Invalid JITProcId ***";
+  PROCNAME(CallIntVoid);
+  PROCNAME(CallIntVoidResponse);
+  PROCNAME(CallMain);
+  PROCNAME(CallMainResponse);
+  PROCNAME(CallVoidVoid);
+  PROCNAME(CallVoidVoidResponse);
+  PROCNAME(CreateRemoteAllocator);
+  PROCNAME(CreateIndirectStubsOwner);
+  PROCNAME(DeregisterEHFrames);
+  PROCNAME(DestroyRemoteAllocator);
+  PROCNAME(DestroyIndirectStubsOwner);
+  PROCNAME(EmitIndirectStubs);
+  PROCNAME(EmitIndirectStubsResponse);
+  PROCNAME(EmitResolverBlock);
+  PROCNAME(EmitTrampolineBlock);
+  PROCNAME(EmitTrampolineBlockResponse);
+  PROCNAME(GetSymbolAddress);
+  PROCNAME(GetSymbolAddressResponse);
+  PROCNAME(GetRemoteInfo);
+  PROCNAME(GetRemoteInfoResponse);
+  PROCNAME(ReadMem);
+  PROCNAME(ReadMemResponse);
+  PROCNAME(RegisterEHFrames);
+  PROCNAME(ReserveMem);
+  PROCNAME(ReserveMemResponse);
+  PROCNAME(RequestCompile);
+  PROCNAME(RequestCompileResponse);
+  PROCNAME(SetProtections);
+  PROCNAME(TerminateSession);
+  PROCNAME(WriteMem);
+  PROCNAME(WritePtr);
   };
   return nullptr;
 }
 
-#undef FUNCNAME
+#undef PROCNAME
 
 } // end namespace remote
 } // end namespace orc

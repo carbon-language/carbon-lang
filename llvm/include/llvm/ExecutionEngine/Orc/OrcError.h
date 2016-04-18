@@ -26,8 +26,7 @@ enum class OrcErrorCode : int {
   RemoteMProtectAddrUnrecognized,
   RemoteIndirectStubsOwnerDoesNotExist,
   RemoteIndirectStubsOwnerIdAlreadyInUse,
-  UnexpectedRPCCall,
-  UnexpectedRPCResponse,
+  UnexpectedRPCCall
 };
 
 std::error_code orcError(OrcErrorCode ErrCode);

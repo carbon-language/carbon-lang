@@ -582,7 +582,7 @@ int main(int argc, char **argv, char * const *envp) {
   // Reset errno to zero on entry to main.
   errno = 0;
 
-  int Result = -1;
+  int Result;
 
   // Sanity check use of remote-jit: LLI currently only supports use of the
   // remote JIT on Unix platforms.
@@ -681,13 +681,12 @@ int main(int argc, char **argv, char * const *envp) {
     static_cast<ForwardingMemoryManager*>(RTDyldMM)->setResolver(
       orc::createLambdaResolver(
         [&](const std::string &Name) {
-          if (auto AddrOrErr = R->getSymbolAddress(Name))
-	    return RuntimeDyld::SymbolInfo(*AddrOrErr, JITSymbolFlags::Exported);
-	  else {
-	    errs() << "Failure during symbol lookup: "
-		   << AddrOrErr.getError().message() << "\n";
-	    exit(1);
-	  }
+          orc::TargetAddress Addr = 0;
+          if (auto EC = R->getSymbolAddress(Addr, Name)) {
+            errs() << "Failure during symbol lookup: " << EC.message() << "\n";
+            exit(1);
+          }
+          return RuntimeDyld::SymbolInfo(Addr, JITSymbolFlags::Exported);
         },
         [](const std::string &Name) { return nullptr; }
       ));
@@ -699,10 +698,8 @@ int main(int argc, char **argv, char * const *envp) {
     EE->finalizeObject();
     DEBUG(dbgs() << "Executing '" << EntryFn->getName() << "' at 0x"
                  << format("%llx", Entry) << "\n");
-    if (auto ResultOrErr = R->callIntVoid(Entry))
-      Result = *ResultOrErr;
-    else
-      errs() << "ERROR: " << ResultOrErr.getError().message() << "\n";
+    if (auto EC = R->callIntVoid(Result, Entry))
+      errs() << "ERROR: " << EC.message() << "\n";
 
     // Like static constructors, the remote target MCJIT support doesn't handle
     // this yet. It could. FIXME.

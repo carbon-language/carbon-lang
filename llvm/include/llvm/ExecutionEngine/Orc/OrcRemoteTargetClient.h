@@ -36,7 +36,6 @@ namespace remote {
 template <typename ChannelT>
 class OrcRemoteTargetClient : public OrcRemoteTargetRPCAPI {
 public:
-
   /// Remote memory manager.
   class RCMemoryManager : public RuntimeDyld::MemoryManager {
   public:
@@ -106,13 +105,11 @@ public:
       DEBUG(dbgs() << "Allocator " << Id << " reserved:\n");
 
       if (CodeSize != 0) {
-	if (auto AddrOrErr = Client.reserveMem(Id, CodeSize, CodeAlign))
-	  Unmapped.back().RemoteCodeAddr = *AddrOrErr;
-	else {
-	  // FIXME; Add error to poll.
-	  assert(!AddrOrErr.getError() && "Failed reserving remote memory.");
-	}
-
+        std::error_code EC = Client.reserveMem(Unmapped.back().RemoteCodeAddr,
+                                               Id, CodeSize, CodeAlign);
+        // FIXME; Add error to poll.
+        assert(!EC && "Failed reserving remote memory.");
+        (void)EC;
         DEBUG(dbgs() << "  code: "
                      << format("0x%016x", Unmapped.back().RemoteCodeAddr)
                      << " (" << CodeSize << " bytes, alignment " << CodeAlign
@@ -120,13 +117,11 @@ public:
       }
 
       if (RODataSize != 0) {
-        if (auto AddrOrErr = Client.reserveMem(Id, RODataSize, RODataAlign))
-	  Unmapped.back().RemoteRODataAddr = *AddrOrErr;
-	else {
-	  // FIXME; Add error to poll.
-	  assert(!AddrOrErr.getError() && "Failed reserving remote memory.");
-	}
-                                               
+        std::error_code EC = Client.reserveMem(Unmapped.back().RemoteRODataAddr,
+                                               Id, RODataSize, RODataAlign);
+        // FIXME; Add error to poll.
+        assert(!EC && "Failed reserving remote memory.");
+        (void)EC;
         DEBUG(dbgs() << "  ro-data: "
                      << format("0x%016x", Unmapped.back().RemoteRODataAddr)
                      << " (" << RODataSize << " bytes, alignment "
@@ -134,13 +129,11 @@ public:
       }
 
       if (RWDataSize != 0) {
-        if (auto AddrOrErr = Client.reserveMem(Id, RWDataSize, RWDataAlign))
-	  Unmapped.back().RemoteRWDataAddr = *AddrOrErr;
-	else {
-	  // FIXME; Add error to poll.
-	  assert(!AddrOrErr.getError() && "Failed reserving remote memory.");
-        }
-
+        std::error_code EC = Client.reserveMem(Unmapped.back().RemoteRWDataAddr,
+                                               Id, RWDataSize, RWDataAlign);
+        // FIXME; Add error to poll.
+        assert(!EC && "Failed reserving remote memory.");
+        (void)EC;
         DEBUG(dbgs() << "  rw-data: "
                      << format("0x%016x", Unmapped.back().RemoteRWDataAddr)
                      << " (" << RWDataSize << " bytes, alignment "
@@ -438,10 +431,8 @@ public:
       TargetAddress PtrBase;
       unsigned NumStubsEmitted;
 
-      if (auto StubInfoOrErr = Remote.emitIndirectStubs(Id, NewStubsRequired))
-	std::tie(StubBase, PtrBase, NumStubsEmitted) = *StubInfoOrErr;
-      else
-	return StubInfoOrErr.getError();
+      Remote.emitIndirectStubs(StubBase, PtrBase, NumStubsEmitted, Id,
+                               NewStubsRequired);
 
       unsigned NewBlockId = RemoteIndirectStubsInfos.size();
       RemoteIndirectStubsInfos.push_back({StubBase, PtrBase, NumStubsEmitted});
@@ -493,12 +484,8 @@ public:
     void grow() override {
       TargetAddress BlockAddr = 0;
       uint32_t NumTrampolines = 0;
-      if (auto TrampolineInfoOrErr = Remote.emitTrampolineBlock())
-	std::tie(BlockAddr, NumTrampolines) = *TrampolineInfoOrErr;
-      else {
-	// FIXME: Return error.
-	llvm_unreachable("Failed to create trampolines");
-      }
+      auto EC = Remote.emitTrampolineBlock(BlockAddr, NumTrampolines);
+      assert(!EC && "Failed to create trampolines");
 
       uint32_t TrampolineSize = Remote.getTrampolineSize();
       for (unsigned I = 0; I < NumTrampolines; ++I)
@@ -516,33 +503,53 @@ public:
     OrcRemoteTargetClient H(Channel, EC);
     if (EC)
       return EC;
-    return ErrorOr<OrcRemoteTargetClient>(std::move(H));
+    return H;
   }
 
   /// Call the int(void) function at the given address in the target and return
   /// its result.
-  ErrorOr<int> callIntVoid(TargetAddress Addr) {
+  std::error_code callIntVoid(int &Result, TargetAddress Addr) {
     DEBUG(dbgs() << "Calling int(*)(void) " << format("0x%016x", Addr) << "\n");
 
-    auto Listen =
-      [&](RPCChannel &C, uint32_t Id) {
-        return listenForCompileRequests(C, Id);
-      };
-    return callSTHandling<CallIntVoid>(Channel, Listen, Addr);
+    if (auto EC = call<CallIntVoid>(Channel, Addr))
+      return EC;
+
+    unsigned NextProcId;
+    if (auto EC = listenForCompileRequests(NextProcId))
+      return EC;
+
+    if (NextProcId != CallIntVoidResponseId)
+      return orcError(OrcErrorCode::UnexpectedRPCCall);
+
+    return handle<CallIntVoidResponse>(Channel, [&](int R) {
+      Result = R;
+      DEBUG(dbgs() << "Result: " << R << "\n");
+      return std::error_code();
+    });
   }
 
   /// Call the int(int, char*[]) function at the given address in the target and
   /// return its result.
-  ErrorOr<int> callMain(TargetAddress Addr,
-			const std::vector<std::string> &Args) {
+  std::error_code callMain(int &Result, TargetAddress Addr,
+                           const std::vector<std::string> &Args) {
     DEBUG(dbgs() << "Calling int(*)(int, char*[]) " << format("0x%016x", Addr)
                  << "\n");
 
-    auto Listen =
-      [&](RPCChannel &C, uint32_t Id) {
-        return listenForCompileRequests(C, Id);
-      };
-    return callSTHandling<CallMain>(Channel, Listen, Addr, Args);
+    if (auto EC = call<CallMain>(Channel, Addr, Args))
+      return EC;
+
+    unsigned NextProcId;
+    if (auto EC = listenForCompileRequests(NextProcId))
+      return EC;
+
+    if (NextProcId != CallMainResponseId)
+      return orcError(OrcErrorCode::UnexpectedRPCCall);
+
+    return handle<CallMainResponse>(Channel, [&](int R) {
+      Result = R;
+      DEBUG(dbgs() << "Result: " << R << "\n");
+      return std::error_code();
+    });
   }
 
   /// Call the void() function at the given address in the target and wait for
@@ -551,11 +558,17 @@ public:
     DEBUG(dbgs() << "Calling void(*)(void) " << format("0x%016x", Addr)
                  << "\n");
 
-    auto Listen =
-      [&](RPCChannel &C, JITFuncId Id) {
-        return listenForCompileRequests(C, Id);
-      };
-    return callSTHandling<CallVoidVoid>(Channel, Listen, Addr);
+    if (auto EC = call<CallVoidVoid>(Channel, Addr))
+      return EC;
+
+    unsigned NextProcId;
+    if (auto EC = listenForCompileRequests(NextProcId))
+      return EC;
+
+    if (NextProcId != CallVoidVoidResponseId)
+      return orcError(OrcErrorCode::UnexpectedRPCCall);
+
+    return handle<CallVoidVoidResponse>(Channel, doNothing);
   }
 
   /// Create an RCMemoryManager which will allocate its memory on the remote
@@ -565,7 +578,7 @@ public:
     assert(!MM && "MemoryManager should be null before creation.");
 
     auto Id = AllocatorIds.getNext();
-    if (auto EC = callST<CreateRemoteAllocator>(Channel, Id))
+    if (auto EC = call<CreateRemoteAllocator>(Channel, Id))
       return EC;
     MM = llvm::make_unique<RCMemoryManager>(*this, Id);
     return std::error_code();
@@ -577,7 +590,7 @@ public:
   createIndirectStubsManager(std::unique_ptr<RCIndirectStubsManager> &I) {
     assert(!I && "Indirect stubs manager should be null before creation.");
     auto Id = IndirectStubOwnerIds.getNext();
-    if (auto EC = callST<CreateIndirectStubsOwner>(Channel, Id))
+    if (auto EC = call<CreateIndirectStubsOwner>(Channel, Id))
       return EC;
     I = llvm::make_unique<RCIndirectStubsManager>(*this, Id);
     return std::error_code();
@@ -586,39 +599,45 @@ public:
   /// Search for symbols in the remote process. Note: This should be used by
   /// symbol resolvers *after* they've searched the local symbol table in the
   /// JIT stack.
-  ErrorOr<TargetAddress> getSymbolAddress(StringRef Name) {
+  std::error_code getSymbolAddress(TargetAddress &Addr, StringRef Name) {
     // Check for an 'out-of-band' error, e.g. from an MM destructor.
     if (ExistingError)
       return ExistingError;
 
-    return callST<GetSymbolAddress>(Channel, Name);
+    // Request remote symbol address.
+    if (auto EC = call<GetSymbolAddress>(Channel, Name))
+      return EC;
+
+    return expect<GetSymbolAddressResponse>(Channel, [&](TargetAddress &A) {
+      Addr = A;
+      DEBUG(dbgs() << "Remote address lookup " << Name << " = "
+                   << format("0x%016x", Addr) << "\n");
+      return std::error_code();
+    });
   }
 
   /// Get the triple for the remote target.
   const std::string &getTargetTriple() const { return RemoteTargetTriple; }
 
-  std::error_code terminateSession() {
-    return callST<TerminateSession>(Channel);
-  }
+  std::error_code terminateSession() { return call<TerminateSession>(Channel); }
 
 private:
   OrcRemoteTargetClient(ChannelT &Channel, std::error_code &EC)
       : Channel(Channel) {
-    if (auto RIOrErr = callST<GetRemoteInfo>(Channel)) {
-      std::tie(RemoteTargetTriple, RemotePointerSize, RemotePageSize,
-	       RemoteTrampolineSize, RemoteIndirectStubSize) =
-	*RIOrErr;
-      EC = std::error_code();
-    } else
-      EC = RIOrErr.getError();
+    if ((EC = call<GetRemoteInfo>(Channel)))
+      return;
+
+    EC = expect<GetRemoteInfoResponse>(
+        Channel, readArgs(RemoteTargetTriple, RemotePointerSize, RemotePageSize,
+                          RemoteTrampolineSize, RemoteIndirectStubSize));
   }
 
   std::error_code deregisterEHFrames(TargetAddress Addr, uint32_t Size) {
-    return callST<RegisterEHFrames>(Channel, Addr, Size);
+    return call<RegisterEHFrames>(Channel, Addr, Size);
   }
 
   void destroyRemoteAllocator(ResourceIdMgr::ResourceId Id) {
-    if (auto EC = callST<DestroyRemoteAllocator>(Channel, Id)) {
+    if (auto EC = call<DestroyRemoteAllocator>(Channel, Id)) {
       // FIXME: This will be triggered by a removeModuleSet call: Propagate
       //        error return up through that.
       llvm_unreachable("Failed to destroy remote allocator.");
@@ -628,13 +647,19 @@ private:
 
   std::error_code destroyIndirectStubsManager(ResourceIdMgr::ResourceId Id) {
     IndirectStubOwnerIds.release(Id);
-    return callST<DestroyIndirectStubsOwner>(Channel, Id);
+    return call<DestroyIndirectStubsOwner>(Channel, Id);
   }
 
-  ErrorOr<std::tuple<TargetAddress, TargetAddress, uint32_t>>
-  emitIndirectStubs(ResourceIdMgr::ResourceId Id,
-		    uint32_t NumStubsRequired) {
-    return callST<EmitIndirectStubs>(Channel, Id, NumStubsRequired);
+  std::error_code emitIndirectStubs(TargetAddress &StubBase,
+                                    TargetAddress &PtrBase,
+                                    uint32_t &NumStubsEmitted,
+                                    ResourceIdMgr::ResourceId Id,
+                                    uint32_t NumStubsRequired) {
+    if (auto EC = call<EmitIndirectStubs>(Channel, Id, NumStubsRequired))
+      return EC;
+
+    return expect<EmitIndirectStubsResponse>(
+        Channel, readArgs(StubBase, PtrBase, NumStubsEmitted));
   }
 
   std::error_code emitResolverBlock() {
@@ -642,16 +667,24 @@ private:
     if (ExistingError)
       return ExistingError;
 
-    return callST<EmitResolverBlock>(Channel);
+    return call<EmitResolverBlock>(Channel);
   }
 
-  ErrorOr<std::tuple<TargetAddress, uint32_t>>
-  emitTrampolineBlock() {
+  std::error_code emitTrampolineBlock(TargetAddress &BlockAddr,
+                                      uint32_t &NumTrampolines) {
     // Check for an 'out-of-band' error, e.g. from an MM destructor.
     if (ExistingError)
       return ExistingError;
 
-    return callST<EmitTrampolineBlock>(Channel);
+    if (auto EC = call<EmitTrampolineBlock>(Channel))
+      return EC;
+
+    return expect<EmitTrampolineBlockResponse>(
+        Channel, [&](TargetAddress BAddr, uint32_t NTrampolines) {
+          BlockAddr = BAddr;
+          NumTrampolines = NTrampolines;
+          return std::error_code();
+        });
   }
 
   uint32_t getIndirectStubSize() const { return RemoteIndirectStubSize; }
@@ -660,46 +693,67 @@ private:
 
   uint32_t getTrampolineSize() const { return RemoteTrampolineSize; }
 
-  std::error_code listenForCompileRequests(RPCChannel &C, uint32_t &Id) {
+  std::error_code listenForCompileRequests(uint32_t &NextId) {
     // Check for an 'out-of-band' error, e.g. from an MM destructor.
     if (ExistingError)
       return ExistingError;
 
-    if (Id == RequestCompileId) {
-      if (auto EC = handle<RequestCompile>(C, CompileCallback))
+    if (auto EC = getNextProcId(Channel, NextId))
+      return EC;
+
+    while (NextId == RequestCompileId) {
+      TargetAddress TrampolineAddr = 0;
+      if (auto EC = handle<RequestCompile>(Channel, readArgs(TrampolineAddr)))
         return EC;
-      return std::error_code();
+
+      TargetAddress ImplAddr = CompileCallback(TrampolineAddr);
+      if (auto EC = call<RequestCompileResponse>(Channel, ImplAddr))
+        return EC;
+
+      if (auto EC = getNextProcId(Channel, NextId))
+        return EC;
     }
-    // else
-    return orcError(OrcErrorCode::UnexpectedRPCCall);
+
+    return std::error_code();
   }
 
-  ErrorOr<std::vector<char>> readMem(char *Dst, TargetAddress Src, uint64_t Size) {
+  std::error_code readMem(char *Dst, TargetAddress Src, uint64_t Size) {
     // Check for an 'out-of-band' error, e.g. from an MM destructor.
     if (ExistingError)
       return ExistingError;
 
-    return callST<ReadMem>(Channel, Src, Size);
+    if (auto EC = call<ReadMem>(Channel, Src, Size))
+      return EC;
+
+    if (auto EC = expect<ReadMemResponse>(
+            Channel, [&]() { return Channel.readBytes(Dst, Size); }))
+      return EC;
+
+    return std::error_code();
   }
 
   std::error_code registerEHFrames(TargetAddress &RAddr, uint32_t Size) {
-    return callST<RegisterEHFrames>(Channel, RAddr, Size);
+    return call<RegisterEHFrames>(Channel, RAddr, Size);
   }
 
-  ErrorOr<TargetAddress> reserveMem(ResourceIdMgr::ResourceId Id, uint64_t Size,
-				    uint32_t Align) {
+  std::error_code reserveMem(TargetAddress &RemoteAddr,
+                             ResourceIdMgr::ResourceId Id, uint64_t Size,
+                             uint32_t Align) {
 
     // Check for an 'out-of-band' error, e.g. from an MM destructor.
     if (ExistingError)
       return ExistingError;
 
-    return callST<ReserveMem>(Channel, Id, Size, Align);
+    if (std::error_code EC = call<ReserveMem>(Channel, Id, Size, Align))
+      return EC;
+
+    return expect<ReserveMemResponse>(Channel, readArgs(RemoteAddr));
   }
 
   std::error_code setProtections(ResourceIdMgr::ResourceId Id,
                                  TargetAddress RemoteSegAddr,
                                  unsigned ProtFlags) {
-    return callST<SetProtections>(Channel, Id, RemoteSegAddr, ProtFlags);
+    return call<SetProtections>(Channel, Id, RemoteSegAddr, ProtFlags);
   }
 
   std::error_code writeMem(TargetAddress Addr, const char *Src, uint64_t Size) {
@@ -707,7 +761,15 @@ private:
     if (ExistingError)
       return ExistingError;
 
-    return callST<WriteMem>(Channel, DirectBufferWriter(Src, Addr, Size));
+    // Make the send call.
+    if (auto EC = call<WriteMem>(Channel, Addr, Size))
+      return EC;
+
+    // Follow this up with the section contents.
+    if (auto EC = Channel.appendBytes(Src, Size))
+      return EC;
+
+    return Channel.send();
   }
 
   std::error_code writePointer(TargetAddress Addr, TargetAddress PtrVal) {
@@ -715,7 +777,7 @@ private:
     if (ExistingError)
       return ExistingError;
 
-    return callST<WritePtr>(Channel, Addr, PtrVal);
+    return call<WritePtr>(Channel, Addr, PtrVal);
   }
 
   static std::error_code doNothing() { return std::error_code(); }
