@@ -283,7 +283,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     return 0;
 
   typedef typename ELFT::uint uintX_t;
-  if (Target->pointsToLocalDynamicGotEntry(Type)) {
+  if (Expr == R_TLSLD_PC || Expr == R_TLSLD) {
     if (Target->canRelaxTls(Type, nullptr)) {
       C.Relocations.push_back(
           {R_RELAX_TLS_LD_TO_LE, Type, Offset, Addend, &Body});
