@@ -14,6 +14,9 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_RPCUTILS_H
 #define LLVM_EXECUTIONENGINE_ORC_RPCUTILS_H
 
+#include <map>
+#include <vector>
+
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/OrcError.h"
@@ -35,8 +38,6 @@
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-
-#include <map>
 
 namespace llvm {
 namespace orc {
