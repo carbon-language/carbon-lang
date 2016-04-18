@@ -372,6 +372,8 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return R_ABS;
+  case R_386_TLS_GD:
+    return R_TLSGD;
   case R_386_TLS_LDM:
     return R_TLSLD;
   case R_386_PLT32:
@@ -677,12 +679,13 @@ RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_ABS;
   case R_X86_64_TLSLD:
     return R_TLSLD_PC;
+  case R_X86_64_TLSGD:
+    return R_TLSGD_PC;
   case R_X86_64_SIZE32:
   case R_X86_64_SIZE64:
     return R_SIZE;
   case R_X86_64_PLT32:
   case R_X86_64_PC32:
-  case R_X86_64_TLSGD:
     return R_PC;
   case R_X86_64_GOT32:
     return R_GOT;

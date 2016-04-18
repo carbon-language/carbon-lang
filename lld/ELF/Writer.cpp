@@ -317,13 +317,13 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
                                       Off + (uintX_t)sizeof(uintX_t), false,
                                       &Body, 0});
       }
-      Expr = Expr == R_PC ? R_TLSGD_PC : R_TLSGD;
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       return 1;
     }
 
     if (Body.isPreemptible()) {
-      Expr = Expr == R_PC ? R_RELAX_TLS_GD_TO_IE_PC : R_RELAX_TLS_GD_TO_IE;
+      Expr =
+          Expr == R_TLSGD_PC ? R_RELAX_TLS_GD_TO_IE_PC : R_RELAX_TLS_GD_TO_IE;
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       if (!Body.isInGot()) {
         Out<ELFT>::Got->addEntry(Body);
