@@ -2974,9 +2974,16 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
   // fill in the InstResults map.
   for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
     TreePatternNode *Pat = I->getTree(j);
-    if (Pat->getNumTypes() != 0)
+    if (Pat->getNumTypes() != 0) {
+      std::string Types;
+      for (unsigned k = 0, ke = Pat->getNumTypes(); k != ke; ++k) {
+        if (k > 0)
+          Types += ", ";
+        Types += Pat->getExtType(k).getName();
+      }
       I->error("Top-level forms in instruction pattern should have"
-               " void types");
+               " void types, has types " + Types);
+    }
 
     // Find inputs and outputs, and verify the structure of the uses/defs.
     FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults,
