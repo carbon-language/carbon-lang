@@ -943,6 +943,16 @@ TEST_F(FormatTestJS, MetadataAnnotations) {
                "class Y {}");
 }
 
+TEST_F(FormatTestJS, TypeAliases) {
+  verifyFormat("type X = number;\n"
+               "class C {}");
+  verifyFormat("type X<Y> = Z<Y>;");
+  verifyFormat("type X = {\n"
+               "  y: number\n"
+               "};\n"
+               "class C {}");
+}
+
 TEST_F(FormatTestJS, Modules) {
   verifyFormat("import SomeThing from 'some/module.js';");
   verifyFormat("import {X, Y} from 'some/module.js';");
@@ -1095,7 +1105,10 @@ TEST_F(FormatTestJS, TemplateStrings) {
                "var y;");
 }
 
-TEST_F(FormatTestJS, CastSyntax) { verifyFormat("var x = <type>foo;"); }
+TEST_F(FormatTestJS, CastSyntax) {
+  verifyFormat("var x = <type>foo;");
+  verifyFormat("var x = foo as type;");
+}
 
 TEST_F(FormatTestJS, TypeArguments) {
   verifyFormat("class X<Y> {}");
