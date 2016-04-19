@@ -148,6 +148,9 @@ LanaiTargetLowering::LanaiTargetLowering(const TargetMachine &TM,
   MaxStoresPerMemcpyOptSize = 8;
   MaxStoresPerMemmove = 16; // For @llvm.memmove -> sequence of stores
   MaxStoresPerMemmoveOptSize = 8;
+
+  // Booleans always contain 0 or 1.
+  setBooleanContents(ZeroOrOneBooleanContent);
 }
 
 SDValue LanaiTargetLowering::LowerOperation(SDValue Op,
