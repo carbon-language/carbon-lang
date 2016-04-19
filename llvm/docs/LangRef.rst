@@ -9634,6 +9634,33 @@ pass will generate the appropriate data structures and replace the
 ``llvm.instrprof_value_profile`` intrinsic with the call to the profile
 runtime library with proper arguments.
 
+'``llvm.thread.pointer``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare i8* @llvm.thread.pointer()
+
+Overview:
+"""""""""
+
+The '``llvm.thread.pointer``' intrinsic returns the value of the thread
+pointer.
+
+Semantics:
+""""""""""
+
+The '``llvm.thread.pointer``' intrinsic returns a pointer to the TLS area
+for the current thread.  The exact semantics of this value are target
+specific: it may point to the start of TLS area, to the end, or somewhere
+in the middle.  Depending on the target, this intrinsic may read a register,
+call a helper function, read from an alternate memory space, or perform
+other operations necessary to locate the TLS area.  Not all targets support
+this intrinsic.
+
 Standard C Library Intrinsics
 -----------------------------
 

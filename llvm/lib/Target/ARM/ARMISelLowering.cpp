@@ -2929,7 +2929,7 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
            "RBIT intrinsic must have i32 type!");
     return DAG.getNode(ISD::BITREVERSE, dl, MVT::i32, Op.getOperand(1));
   }
-  case Intrinsic::arm_thread_pointer: {
+  case Intrinsic::thread_pointer: {
     EVT PtrVT = getPointerTy(DAG.getDataLayout());
     return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
   }
