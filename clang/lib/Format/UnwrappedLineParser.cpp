@@ -1880,7 +1880,8 @@ void UnwrappedLineParser::parseObjCProtocol() {
 }
 
 void UnwrappedLineParser::parseJavaScriptEs6ImportExport() {
-  assert(FormatTok->isOneOf(Keywords.kw_import, tok::kw_export));
+  bool IsImport = FormatTok->is(Keywords.kw_import);
+  assert(IsImport || FormatTok->is(tok::kw_export));
   nextToken();
 
   // Consume the "default" in "export default class/function".
@@ -1894,14 +1895,13 @@ void UnwrappedLineParser::parseJavaScriptEs6ImportExport() {
     return;
   }
 
-  // Consume the "abstract" in "export abstract class".
-  if (FormatTok->is(Keywords.kw_abstract))
-    nextToken();
-
-  if (FormatTok->isOneOf(tok::kw_const, tok::kw_class, tok::kw_enum,
-                         Keywords.kw_interface, Keywords.kw_let,
-                         Keywords.kw_var))
-    return; // Fall through to parsing the corresponding structure.
+  // For imports, `export *`, `export {...}`, consume the rest of the line up
+  // to the terminating `;`. For everything else, just return and continue
+  // parsing the structural element, i.e. the declaration or expression for
+  // `export default`.
+  if (!IsImport && !FormatTok->isOneOf(tok::l_brace, tok::star) &&
+      !FormatTok->isStringLiteral())
+    return;
 
   while (!eof() && FormatTok->isNot(tok::semi)) {
     if (FormatTok->is(tok::l_brace)) {

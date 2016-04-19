@@ -961,6 +961,10 @@ TEST_F(FormatTestJS, Modules) {
   verifyFormat("export function A() {}\n"
                "export default function B() {}\n"
                "export function C() {}");
+  verifyFormat("export default () => {\n"
+               "  let x = 1;\n"
+               "  return x;\n"
+               "}");
   verifyFormat("export const x = 12;");
   verifyFormat("export default class X {}");
   verifyFormat("export {X, Y} from 'some/module.js';");
