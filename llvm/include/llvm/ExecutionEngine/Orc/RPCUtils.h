@@ -358,54 +358,83 @@ public:
 
   /// Return type for asynchronous call primitives.
   template <typename Func>
-  using AsyncCallResult =
+  using AsyncCallResult = std::future<typename Func::OptionalReturn>;
+
+  /// Return type for asynchronous call-with-seq primitives.
+  template <typename Func>
+  using AsyncCallWithSeqResult =
       std::pair<std::future<typename Func::OptionalReturn>, SequenceNumberT>;
 
   /// Serialize Args... to channel C, but do not call C.send().
   ///
-  /// For void functions returns a std::future<Error>. For functions that
-  /// return an R, returns a std::future<Optional<R>>.
+  /// Returns an error (on serialization failure) or a pair of:
+  /// (1) A future Optional<T> (or future<bool> for void functions), and
+  /// (2) A sequence number.
+  ///
+  /// This utility function is primarily used for single-threaded mode support,
+  /// where the sequence number can be used to wait for the corresponding
+  /// result. In multi-threaded mode the appendCallAsync method, which does not
+  /// return the sequence numeber, should be preferred.
   template <typename Func, typename... ArgTs>
-  ErrorOr<AsyncCallResult<Func>> appendCallAsync(ChannelT &C,
-                                                 const ArgTs &... Args) {
+  ErrorOr<AsyncCallWithSeqResult<Func>>
+  appendCallAsyncWithSeq(ChannelT &C, const ArgTs &... Args) {
     auto SeqNo = SequenceNumberMgr.getSequenceNumber();
     std::promise<typename Func::OptionalReturn> Promise;
     auto Result = Promise.get_future();
-    OutstandingResults[SeqNo] = std::move(Promise);
+    OutstandingResults[SeqNo] =
+      createOutstandingResult<Func>(std::move(Promise));
 
     if (auto EC = CallHelper<ChannelT, SequenceNumberT, Func>::call(C, SeqNo,
                                                                     Args...)) {
       abandonOutstandingResults();
       return EC;
     } else
-      return AsyncCallResult<Func>(std::move(Result), SeqNo);
+      return AsyncCallWithSeqResult<Func>(std::move(Result), SeqNo);
   }
 
-  /// Serialize Args... to channel C and call C.send().
+  /// The same as appendCallAsyncWithSeq, except that it calls C.send() to
+  /// flush the channel after serializing the call.
   template <typename Func, typename... ArgTs>
-  ErrorOr<AsyncCallResult<Func>> callAsync(ChannelT &C, const ArgTs &... Args) {
-    auto SeqNo = SequenceNumberMgr.getSequenceNumber();
-    std::promise<typename Func::OptionalReturn> Promise;
-    auto Result = Promise.get_future();
-    OutstandingResults[SeqNo] =
-        createOutstandingResult<Func>(std::move(Promise));
-    if (auto EC = CallHelper<ChannelT, SequenceNumberT, Func>::call(C, SeqNo,
-                                                                    Args...)) {
-      abandonOutstandingResults();
-      return EC;
-    }
+  ErrorOr<AsyncCallWithSeqResult<Func>>
+  callAsyncWithSeq(ChannelT &C, const ArgTs &... Args) {
+    auto Result = appendCallAsyncWithSeq<Func>(C, Args...);
+    if (!Result)
+      return Result;
     if (auto EC = C.send()) {
       abandonOutstandingResults();
       return EC;
     }
-    return AsyncCallResult<Func>(std::move(Result), SeqNo);
+    return Result;
+  }
+
+  /// Serialize Args... to channel C, but do not call send.
+  /// Returns an error if serialization fails, otherwise returns a
+  /// std::future<Optional<T>> (or a future<bool> for void functions).
+  template <typename Func, typename... ArgTs>
+  ErrorOr<AsyncCallResult<Func>>
+  appendCallAsync(ChannelT &C, const ArgTs &... Args) {
+    auto ResAndSeqOrErr = appendCallAsyncWithSeq<Func>(C, Args...);
+    if (ResAndSeqOrErr)
+      return std::move(ResAndSeqOrErr->first);
+    return ResAndSeqOrErr.getError();
+  }
+
+  /// The same as appendCallAsync, except that it calls C.send to flush the
+  /// channel after serializing the call.
+  template <typename Func, typename... ArgTs>
+  ErrorOr<AsyncCallResult<Func>>
+  callAsync(ChannelT &C, const ArgTs &... Args) {
+    auto ResAndSeqOrErr = callAsyncWithSeq<Func>(C, Args...);
+    if (ResAndSeqOrErr)
+      return std::move(ResAndSeqOrErr->first);
+    return ResAndSeqOrErr.getError();
   }
 
   /// This can be used in single-threaded mode.
   template <typename Func, typename HandleFtor, typename... ArgTs>
   typename Func::ErrorReturn
   callSTHandling(ChannelT &C, HandleFtor &HandleOther, const ArgTs &... Args) {
-    if (auto ResultAndSeqNoOrErr = callAsync<Func>(C, Args...)) {
+    if (auto ResultAndSeqNoOrErr = callAsyncWithSeq<Func>(C, Args...)) {
       auto &ResultAndSeqNo = *ResultAndSeqNoOrErr;
       if (auto EC = waitForResult(C, ResultAndSeqNo.second, HandleOther))
         return EC;
@@ -491,11 +520,16 @@ public:
 
   /// Read a response from Channel.
   /// This should be called from the receive loop to retrieve results.
-  std::error_code handleResponse(ChannelT &C, SequenceNumberT &SeqNo) {
+  std::error_code handleResponse(ChannelT &C,
+                                 SequenceNumberT *SeqNoRet = nullptr) {
+    SequenceNumberT SeqNo;
     if (auto EC = deserialize(C, SeqNo)) {
       abandonOutstandingResults();
       return EC;
     }
+
+    if (SeqNoRet)
+      *SeqNoRet = SeqNo;
 
     auto I = OutstandingResults.find(SeqNo);
     if (I == OutstandingResults.end()) {
@@ -528,7 +562,7 @@ public:
         return EC;
       if (Id == RPCFunctionIdTraits<FunctionIdT>::ResponseId) {
         SequenceNumberT SeqNo;
-        if (auto EC = handleResponse(C, SeqNo))
+        if (auto EC = handleResponse(C, &SeqNo))
           return EC;
         GotTgtResult = (SeqNo == TgtSeqNo);
       } else if (auto EC = HandleOther(C, Id))
