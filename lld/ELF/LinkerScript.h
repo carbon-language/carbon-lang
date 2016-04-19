@@ -42,8 +42,8 @@ private:
 };
 
 // This enum represents what we can observe in SECTIONS tag of script:
-// Expr is a location counter change, like ". = . + 0x1000"
-// Section is a description of output section, like ".data :..."
+// ExprKind is a location counter change, like ". = . + 0x1000"
+// SectionKind is a description of output section, like ".data :..."
 enum SectionsCommandKind { ExprKind, SectionKind };
 
 struct SectionsCommand {
