@@ -3883,7 +3883,18 @@ def note_template_type_alias_instantiation_here : Note<
   "in instantiation of template type alias %0 requested here">;
 def note_template_exception_spec_instantiation_here : Note<
   "in instantiation of exception specification for %0 requested here">;
-  
+def warn_var_template_missing : Warning<"instantiation of variable %q0 "
+  "required here, but no definition is available">,
+  InGroup<UndefinedVarTemplate>;
+def warn_func_template_missing : Warning<"instantiation of function %q0 "
+  "required here, but no definition is available">,
+  InGroup<UndefinedFuncTemplate>, DefaultIgnore;
+def note_forward_template_decl : Note<
+  "forward declaration of template entity is here">;
+def note_inst_declaration_hint : Note<"add an explicit instantiation "
+  "declaration to suppress this warning if %q0 is explicitly instantiated in "
+  "another translation unit">;
+
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
 def note_default_function_arg_instantiation_here : Note<
