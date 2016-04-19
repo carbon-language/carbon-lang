@@ -72,7 +72,6 @@ public:
   bool DoLayout = false;
 
 private:
-  uint64_t evaluate(std::vector<StringRef> &Tokens, uint64_t LocCounter);
   template <class ELFT> SectionRule *find(InputSectionBase<ELFT> *S);
 
   // SECTIONS commands.
