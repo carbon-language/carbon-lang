@@ -3310,10 +3310,7 @@ protected:
     bool
     PrivateStateThreadIsValid () const
     {
-        lldb::StateType state = m_private_state.GetValue();
-        return state != lldb::eStateDetached &&
-               state != lldb::eStateExited &&
-               m_private_state_thread.IsJoinable();
+        return m_private_state_thread.IsJoinable();
     }
     
     void
