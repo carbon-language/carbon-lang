@@ -6190,3 +6190,75 @@ __m256i test_mm256_maskz_inserti32x4(__mmask8 __U, __m256i __A, __m128i __B) {
   // CHECK: @llvm.x86.avx512.mask.inserti32x4
   return _mm256_maskz_inserti32x4(__U, __A, __B, 1); 
 }
+
+__m128d test_mm_getmant_pd(__m128d __A) {
+  // CHECK-LABEL: @test_mm_getmant_pd
+  // CHECK: @llvm.x86.avx512.mask.getmant.pd.128
+  return _mm_getmant_pd(__A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m128d test_mm_mask_getmant_pd(__m128d __W, __mmask8 __U, __m128d __A) {
+  // CHECK-LABEL: @test_mm_mask_getmant_pd
+  // CHECK: @llvm.x86.avx512.mask.getmant.pd.128
+  return _mm_mask_getmant_pd(__W, __U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m128d test_mm_maskz_getmant_pd(__mmask8 __U, __m128d __A) {
+  // CHECK-LABEL: @test_mm_maskz_getmant_pd
+  // CHECK: @llvm.x86.avx512.mask.getmant.pd.128
+  return _mm_maskz_getmant_pd(__U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m256d test_mm256_getmant_pd(__m256d __A) {
+  // CHECK-LABEL: @test_mm256_getmant_pd
+  // CHECK: @llvm.x86.avx512.mask.getmant.pd.256
+  return _mm256_getmant_pd(__A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m256d test_mm256_mask_getmant_pd(__m256d __W, __mmask8 __U, __m256d __A) {
+  // CHECK-LABEL: @test_mm256_mask_getmant_pd
+  // CHECK: @llvm.x86.avx512.mask.getmant.pd.256
+  return _mm256_mask_getmant_pd(__W, __U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m256d test_mm256_maskz_getmant_pd(__mmask8 __U, __m256d __A) {
+  // CHECK-LABEL: @test_mm256_maskz_getmant_pd
+  // CHECK: @llvm.x86.avx512.mask.getmant.pd.256
+  return _mm256_maskz_getmant_pd(__U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m128 test_mm_getmant_ps(__m128 __A) {
+  // CHECK-LABEL: @test_mm_getmant_ps
+  // CHECK: @llvm.x86.avx512.mask.getmant.ps.128
+  return _mm_getmant_ps(__A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m128 test_mm_mask_getmant_ps(__m128 __W, __mmask8 __U, __m128 __A) {
+  // CHECK-LABEL: @test_mm_mask_getmant_ps
+  // CHECK: @llvm.x86.avx512.mask.getmant.ps.128
+  return _mm_mask_getmant_ps(__W, __U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m128 test_mm_maskz_getmant_ps(__mmask8 __U, __m128 __A) {
+  // CHECK-LABEL: @test_mm_maskz_getmant_ps
+  // CHECK: @llvm.x86.avx512.mask.getmant.ps.128
+  return _mm_maskz_getmant_ps(__U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m256 test_mm256_getmant_ps(__m256 __A) {
+  // CHECK-LABEL: @test_mm256_getmant_ps
+  // CHECK: @llvm.x86.avx512.mask.getmant.ps.256
+  return _mm256_getmant_ps(__A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m256 test_mm256_mask_getmant_ps(__m256 __W, __mmask8 __U, __m256 __A) {
+  // CHECK-LABEL: @test_mm256_mask_getmant_ps
+  // CHECK: @llvm.x86.avx512.mask.getmant.ps.256
+  return _mm256_mask_getmant_ps(__W, __U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}
+
+__m256 test_mm256_maskz_getmant_ps(__mmask8 __U, __m256 __A) {
+  // CHECK-LABEL: @test_mm256_maskz_getmant_ps
+  // CHECK: @llvm.x86.avx512.mask.getmant.ps.256
+  return _mm256_maskz_getmant_ps(__U, __A,_MM_MANT_NORM_p5_2, _MM_MANT_SIGN_nan); 
+}

@@ -8894,6 +8894,90 @@ __builtin_ia32_inserti32x4_256_mask ((__v8si)( __A),\
                 (__mmask8) ( __U));\
 })
 
+#define _mm_getmant_pd( __A, __B, __C) __extension__({\
+__builtin_ia32_getmantpd128_mask ((__v2df) __A,\
+                 (__C << 2) | __B,\
+                 (__v2df) _mm_setzero_pd (),\
+                 (__mmask8) -1);\
+})
+
+#define _mm_mask_getmant_pd(  __W,  __U, __A, __B, __C) __extension__({\
+__builtin_ia32_getmantpd128_mask ((__v2df) __A,\
+                 (__C << 2) | __B,\
+                 (__v2df) __W,\
+                 (__mmask8) __U);\
+})
+
+#define _mm_maskz_getmant_pd( __U, __A, __B, __C) __extension__({\
+__builtin_ia32_getmantpd128_mask ((__v2df) __A,\
+                 (__C << 2) | __B,\
+                 (__v2df) _mm_setzero_pd (),\
+                 (__mmask8) __U);\
+})
+
+#define _mm256_getmant_pd( __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantpd256_mask ((__v4df)( __A),\
+                 (__C << 2) |( __B),\
+                 (__v4df) _mm256_setzero_pd (),\
+                 (__mmask8) -1);\
+})
+
+#define _mm256_mask_getmant_pd( __W, __U, __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantpd256_mask ((__v4df)( __A),\
+                 (__C << 2) |( __B),\
+                 (__v4df)( __W),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm256_maskz_getmant_pd( __U, __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantpd256_mask ((__v4df)( __A),\
+                 (__C << 2) |( __B),\
+                 (__v4df) _mm256_setzero_pd (),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm_getmant_ps( __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantps128_mask ((__v4sf)( __A),\
+                (__C << 2) |( __B),\
+                (__v4sf) _mm_setzero_ps (),\
+                (__mmask8) -1);\
+})
+
+#define _mm_mask_getmant_ps( __W, __U, __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantps128_mask ((__v4sf)( __A),\
+                (__C << 2) |( __B),\
+                (__v4sf)( __W),\
+                (__mmask8)( __U));\
+})
+
+#define _mm_maskz_getmant_ps( __U, __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantps128_mask ((__v4sf)( __A),\
+                (__C << 2) |( __B),\
+                (__v4sf) _mm_setzero_ps (),\
+                (__mmask8)( __U));\
+})
+
+#define _mm256_getmant_ps( __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantps256_mask ((__v8sf)( __A),\
+                (__C << 2) |( __B),\
+                (__v8sf) _mm256_setzero_ps (),\
+                (__mmask8) -1);\
+})
+
+#define _mm256_mask_getmant_ps( __W, __U, __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantps256_mask ((__v8sf)( __A),\
+                (__C << 2) |( __B),\
+                (__v8sf)( __W),\
+                (__mmask8)( __U));\
+})
+
+#define _mm256_maskz_getmant_ps( __U, __A, __B, __C) __extension__ ({ \
+__builtin_ia32_getmantps256_mask ((__v8sf)( __A),\
+                (__C << 2) |( __B),\
+                (__v8sf) _mm256_setzero_ps (),\
+                (__mmask8)( __U));\
+})
+
 #undef __DEFAULT_FN_ATTRS
 #undef __DEFAULT_FN_ATTRS_BOTH
 
