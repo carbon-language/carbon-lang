@@ -375,11 +375,15 @@ def cxx_isystem : JoinedOrSeparate<["-"], "cxx-isystem">, Group<clang_i_Group>,
 def c : Flag<["-"], "c">, Flags<[DriverOption]>,
   HelpText<"Only run preprocess, compile, and assemble steps">;
 def cuda_device_only : Flag<["--"], "cuda-device-only">,
-  HelpText<"Do device-side CUDA compilation only">;
+  HelpText<"Compile CUDA code for device only">;
+def cuda_host_only : Flag<["--"], "cuda-host-only">,
+  HelpText<"Compile CUDA code for host only.  Has no effect on non-CUDA "
+           "compilations.">;
+def cuda_compile_host_device : Flag<["--"], "cuda-compile-host-device">,
+  HelpText<"Compile CUDA code for both host and device (default).  Has no "
+           "effect on non-CUDA compilations.">;
 def cuda_gpu_arch_EQ : Joined<["--"], "cuda-gpu-arch=">, Flags<[DriverOption]>,
   HelpText<"CUDA GPU architecture (e.g. sm_35).  May be specified more than once.">;
-def cuda_host_only : Flag<["--"], "cuda-host-only">,
-  HelpText<"Do host-side CUDA compilation only">;
 def cuda_noopt_device_debug : Flag<["--"], "cuda-noopt-device-debug">,
   HelpText<"Enable device-side debug info generation. Disables ptxas optimizations.">;
 def cuda_path_EQ : Joined<["--"], "cuda-path=">, Group<i_Group>,
