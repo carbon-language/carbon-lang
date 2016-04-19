@@ -2489,6 +2489,13 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
       isl_set *CondSet = ConditionSets[u];
       BasicBlock *SuccBB = getRegionNodeSuccessor(RN, TI, u);
 
+      auto *SuccStmt = getStmtFor(SuccBB);
+      // Skip blocks outside the region.
+      if (!SuccStmt) {
+        isl_set_free(CondSet);
+        continue;
+      }
+
       // If we propagate the domain of some block to "SuccBB" we do not have to
       // adjust the domain.
       if (FinishedExitBlocks.count(SuccBB)) {
