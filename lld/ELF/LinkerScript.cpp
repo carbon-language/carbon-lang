@@ -105,7 +105,7 @@ static uint64_t apply(StringRef Op, uint64_t L, uint64_t R) {
   }
   if (Op == "&")
     return L & R;
-  llvm_unreachable("unknown operator " + Op);
+  llvm_unreachable("invalid operator");
   return 0;
 }
 
