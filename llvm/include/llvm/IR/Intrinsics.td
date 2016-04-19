@@ -38,6 +38,17 @@ def IntrReadArgMem : IntrinsicProperty;
 // deleted if dead.
 def IntrReadMem : IntrinsicProperty;
 
+// IntrWriteMem - This intrinsic writes to unspecified memory, but does not
+// read from memory, and has no other side effects. This means dead stores
+// before calls to this intrinsics may be removed.
+def IntrWriteMem : IntrinsicProperty;
+
+// IntrWriteArgMem - This intrinsic writes only to memory that one of its
+// arguments points to, but may access an unspecified amount. The intrinsic
+// does not read from memory and has no other side effects. This means that
+// dead stores before calls to this intrinsics may be removed.
+def IntrWriteArgMem : IntrinsicProperty;
+
 // IntrReadWriteArgMem - This intrinsic reads and writes only from memory that
 // one of its arguments points to, but may access an unspecified amount.  The
 // reads and writes may be volatile, but except for this it has no other side

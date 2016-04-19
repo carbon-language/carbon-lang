@@ -2816,14 +2816,14 @@ public:
 
     if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
       // If this is an intrinsic, analyze it.
-      if (IntInfo->ModRef >= CodeGenIntrinsic::ReadArgMem)
+      if (IntInfo->ModRef & CodeGenIntrinsic::MR_Ref)
         mayLoad = true;// These may load memory.
 
-      if (IntInfo->ModRef >= CodeGenIntrinsic::ReadWriteArgMem)
+      if (IntInfo->ModRef & CodeGenIntrinsic::MR_Mod)
         mayStore = true;// Intrinsics that can write to memory are 'mayStore'.
 
       if (IntInfo->ModRef >= CodeGenIntrinsic::ReadWriteMem)
-        // WriteMem intrinsics can have other strange effects.
+        // ReadWriteMem intrinsics can have other strange effects.
         hasSideEffects = true;
     }
   }
