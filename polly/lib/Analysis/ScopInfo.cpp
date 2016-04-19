@@ -2999,11 +2999,12 @@ Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
 
 void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
                 DominatorTree &DT, LoopInfo &LI) {
-  addUserAssumptions(AC, DT, LI);
   buildInvariantEquivalenceClasses(SD);
 
   if (!buildDomains(&R, SD, DT, LI))
     return;
+
+  addUserAssumptions(AC, DT, LI);
 
   // Remove empty and ignored statements.
   // Exit early in case there are no executable statements left in this scop.
