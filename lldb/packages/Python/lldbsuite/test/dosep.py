@@ -52,6 +52,7 @@ from six.moves import queue
 import lldbsuite
 import lldbsuite.support.seven as seven
 
+from lldbsuite.support import optional_with
 from . import configuration
 from . import dotest_channels
 from . import dotest_args
@@ -59,12 +60,7 @@ from . import result_formatter
 
 from .result_formatter import EventBuilder
 
-
-# Todo: Convert this folder layout to be relative-import friendly and
-# don't hack up sys.path like this
-sys.path.append(os.path.join(os.path.dirname(__file__), "test_runner", "lib"))
-import lldb_utils
-import process_control
+from .test_runner import process_control
 
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1
@@ -177,7 +173,7 @@ class DoTestProcessDriver(process_control.ProcessDriver):
         super(DoTestProcessDriver, self).__init__(
             soft_terminate_timeout=soft_terminate_timeout)
         self.output_file = output_file
-        self.output_lock = lldb_utils.OptionalWith(output_file_lock)
+        self.output_lock = optional_with.optional_with(output_file_lock)
         self.pid_events = pid_events
         self.results = None
         self.file_name = file_name
