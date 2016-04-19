@@ -4647,11 +4647,6 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F);
   }
 
-  if (BuiltinID == AArch64::BI__builtin_thread_pointer) {
-    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_thread_pointer);
-    return Builder.CreateCall(F);
-  }
-
   // CRC32
   Intrinsic::ID CRCIntrinsicID = Intrinsic::not_intrinsic;
   switch (BuiltinID) {
