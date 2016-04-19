@@ -1007,6 +1007,21 @@ void UnwrappedLineParser::parseStructuralElement() {
       if ((Style.Language == FormatStyle::LK_JavaScript ||
            Style.Language == FormatStyle::LK_Java) &&
           FormatTok->is(Keywords.kw_interface)) {
+        if (Style.Language == FormatStyle::LK_JavaScript) {
+          // In JavaScript/TypeScript, "interface" can be used as a standalone
+          // identifier, e.g. in `var interface = 1;`. If "interface" is
+          // followed by another identifier, it is very like to be an actual
+          // interface declaration.
+          unsigned StoredPosition = Tokens->getPosition();
+          FormatToken *Next = Tokens->getNextToken();
+          FormatTok = Tokens->setPosition(StoredPosition);
+          if (Next && (Next->isNot(tok::identifier) ||
+                       Next->isOneOf(Keywords.kw_instanceof, Keywords.kw_of,
+                                     Keywords.kw_in))) {
+            nextToken();
+            break;
+          }
+        }
         parseRecord();
         addUnwrappedLine();
         return;
