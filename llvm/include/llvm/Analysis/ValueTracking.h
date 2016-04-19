@@ -15,6 +15,7 @@
 #ifndef LLVM_ANALYSIS_VALUETRACKING_H
 #define LLVM_ANALYSIS_VALUETRACKING_H
 
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/Support/DataTypes.h"
@@ -34,6 +35,10 @@ template <typename T> class ArrayRef;
   class StringRef;
   class TargetLibraryInfo;
   class Value;
+
+  namespace Intrinsic {
+  enum ID : unsigned;
+  }
 
   /// Determine which bits of V are known to be either zero or one and return
   /// them in the KnownZero/KnownOne bit sets.
@@ -142,6 +147,11 @@ template <typename T> class ArrayRef;
   bool ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
                        bool LookThroughSExt = false,
                        unsigned Depth = 0);
+
+  /// Map a call instruction to an intrinsic ID.  Libcalls which have equivalent
+  /// intrinsics are treated as-if they were intrinsics.
+  Intrinsic::ID getIntrinsicForCallSite(ImmutableCallSite ICS,
+                                        const TargetLibraryInfo *TLI);
 
   /// CannotBeNegativeZero - Return true if we can prove that the specified FP
   /// value is never equal to -0.0.
