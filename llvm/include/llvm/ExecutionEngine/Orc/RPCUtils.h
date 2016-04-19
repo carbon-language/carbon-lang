@@ -349,6 +349,7 @@ public:
   RPC& operator=(RPC &&Other) {
     SequenceNumberMgr = std::move(Other.SequenceNumberMgr);
     OutstandingResults = std::move(Other.OutstandingResults);
+    return *this;
   }
 
   /// Utility class for defining/referring to RPC procedures.
