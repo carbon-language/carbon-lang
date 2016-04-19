@@ -6058,6 +6058,96 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
   __builtin_ia32_pmovqw512mem_mask ((__v8hi *) __P, (__v8di) __A, __M);
 }
 
+#define _mm512_extracti32x4_epi32( __A, __imm) __extension__ ({ \
+__builtin_ia32_extracti32x4_mask ((__v16si)( __A),\
+                 (__imm),\
+                 (__v4si) _mm_undefined_si128 (),\
+                 (__mmask8) -1);\
+})
+
+#define _mm512_mask_extracti32x4_epi32( __W, __U, __A, __imm) __extension__ ({ \
+__builtin_ia32_extracti32x4_mask ((__v16si)( __A),\
+                 ( __imm),\
+                 (__v4si)( __W),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm512_maskz_extracti32x4_epi32( __U, __A, __imm) __extension__ ({ \
+__builtin_ia32_extracti32x4_mask ((__v16si)( __A),\
+                 ( __imm),\
+                 (__v4si) _mm_setzero_si128 (),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm512_extracti64x4_epi64( __A, __imm) __extension__ ({ \
+__builtin_ia32_extracti64x4_mask ((__v8di)( __A),\
+                 ( __imm),\
+                 (__v4di) _mm256_undefined_si256 (),\
+                 (__mmask8) -1);\
+})
+
+#define _mm512_mask_extracti64x4_epi64( __W, __U, __A, __imm) __extension__ ({ \
+__builtin_ia32_extracti64x4_mask ((__v8di)( __A),\
+                 ( __imm),\
+                 (__v4di)( __W),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm512_maskz_extracti64x4_epi64( __U, __A, __imm) __extension__ ({ \
+__builtin_ia32_extracti64x4_mask ((__v8di)( __A),\
+                 ( __imm),\
+                 (__v4di) _mm256_setzero_si256 (),\
+                 (__mmask8)( __U));\
+})
+
+#define _mm512_insertf64x4( __A, __B, __imm) __extension__ ({ \
+__builtin_ia32_insertf64x4_mask ((__v8df)( __A),\
+                (__v4df)( __B),\
+                ( __imm),\
+                (__v8df) _mm512_undefined_pd (),\
+                (__mmask8) -1);\
+})
+
+#define _mm512_mask_insertf64x4( __W, __U, __A, __B, __imm) __extension__ ({ \
+__builtin_ia32_insertf64x4_mask ((__v8df)( __A),\
+                (__v4df)( __B),\
+                ( __imm),\
+                (__v8df)( __W),\
+                (__mmask8)( __U));\
+})
+
+#define _mm512_maskz_insertf64x4( __U, __A, __B, __imm) __extension__ ({ \
+__builtin_ia32_insertf64x4_mask ((__v8df)( __A),\
+                (__v4df)( __B),\
+                ( __imm),\
+                (__v8df) _mm512_setzero_pd (),\
+                (__mmask8)( __U));\
+})
+
+#define _mm512_inserti64x4( __A, __B, __imm) __extension__ ({ \
+__builtin_ia32_inserti64x4_mask ((__v8di)( __A),\
+                (__v4di)( __B),\
+                ( __imm),\
+                (__v8di) _mm512_setzero_si512 (),\
+                (__mmask8) -1);\
+})
+
+#define _mm512_mask_inserti64x4( __W, __U, __A, __B, __imm) __extension__ ({ \
+__builtin_ia32_inserti64x4_mask ((__v8di)( __A),\
+                (__v4di)( __B),\
+                ( __imm),\
+                (__v8di)( __W),\
+                (__mmask8)( __U));\
+})
+
+#define _mm512_maskz_inserti64x4( __U, __A, __B, __imm) __extension__ ({ \
+__builtin_ia32_inserti64x4_mask ((__v8di)( __A),\
+                (__v4di)( __B),\
+                ( __imm),\
+                (__v8di) _mm512_setzero_si512 (),\
+                (__mmask8)( __U));\
+})
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
