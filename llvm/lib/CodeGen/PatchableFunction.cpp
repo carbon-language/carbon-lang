@@ -67,4 +67,5 @@ bool PatchableFunction::runOnMachineFunction(MachineFunction &MF) {
 
 char PatchableFunction::ID = 0;
 char &llvm::PatchableFunctionID = PatchableFunction::ID;
-INITIALIZE_PASS(PatchableFunction, "patchable-function", "", false, false)
+INITIALIZE_PASS(PatchableFunction, "patchable-function",
+                "Implement the 'patchable-function' attribute", false, false)
