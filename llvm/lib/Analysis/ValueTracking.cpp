@@ -3788,16 +3788,104 @@ static bool isImpliedCondOperands(CmpInst::Predicate Pred, Value *ALHS,
   }
 }
 
-bool llvm::isImpliedCondition(Value *LHS, Value *RHS, const DataLayout &DL,
-                              unsigned Depth, AssumptionCache *AC,
-                              const Instruction *CxtI,
+/// Return true if "icmp2 BPred BLHS BRHS" is known to be implied by "icmp1
+/// APred ALHS ARHS".  The implication may be either true or false depending on
+/// the return value of ImpliedTrue.
+static bool isImpliedCondMatchingOperands(CmpInst::Predicate APred, Value *ALHS,
+                                          Value *ARHS, CmpInst::Predicate BPred,
+                                          Value *BLHS, Value *BRHS,
+                                          bool &ImpliedTrue) {
+  // The operands of the two compares must match.
+  bool IsMatchingOps = (ALHS == BLHS && ARHS == BRHS);
+  bool IsSwappedOps = (ALHS == BRHS && ARHS == BLHS);
+  if (!IsMatchingOps && !IsSwappedOps)
+    return false;
+
+  // Canonicalize the operands so they're matching.
+  if (IsSwappedOps) {
+    std::swap(BLHS, BRHS);
+    BPred = ICmpInst::getSwappedPredicate(BPred);
+  }
+
+  // If the predicates match, then we know the first condition implies the
+  // second is true.
+  if (APred == BPred) {
+    ImpliedTrue = true;
+    return true;
+  }
+
+  // If an inverted APred matches BPred, we can infer the second condition is
+  // false.
+  if (CmpInst::getInversePredicate(APred) == BPred) {
+    ImpliedTrue = false;
+    return true;
+  }
+
+  // If a swapped APred matches BPred, we can infer the second condition is
+  // false in many cases.
+  if (CmpInst::getSwappedPredicate(APred) == BPred) {
+    switch (APred) {
+    default:
+      break;
+    case CmpInst::ICMP_UGT: // A >u B implies A <u B is false.
+    case CmpInst::ICMP_ULT: // A <u B implies A >u B is false.
+    case CmpInst::ICMP_SGT: // A >s B implies A <s B is false.
+    case CmpInst::ICMP_SLT: // A <s B implies A >s B is false.
+      ImpliedTrue = false;
+      return true;
+    }
+  }
+
+  // The predicates must match sign or at least one of them must be an equality
+  // comparison (which is signless).
+  if (ICmpInst::isSigned(APred) != ICmpInst::isSigned(BPred) &&
+      !ICmpInst::isEquality(APred) && !ICmpInst::isEquality(BPred))
+    return false;
+
+  switch (APred) {
+  default:
+    break;
+  case CmpInst::ICMP_EQ:
+    // A == B implies A > B and A < B are false.
+    if (CmpInst::isFalseWhenEqual(BPred)) {
+      ImpliedTrue = false;
+      return true;
+    }
+    break;
+  case CmpInst::ICMP_UGT:
+  case CmpInst::ICMP_ULT:
+  case CmpInst::ICMP_SGT:
+  case CmpInst::ICMP_SLT:
+    // A > B implies A == B is false.
+    // A < B implies A == B is false.
+    if (BPred == CmpInst::ICMP_EQ) {
+      ImpliedTrue = false;
+      return true;
+    }
+    // A > B implies A != B is true.
+    // A < B implies A != B is true.
+    if (BPred == CmpInst::ICMP_NE) {
+      ImpliedTrue = true;
+      return true;
+    }
+    break;
+  }
+  return false;
+}
+
+bool llvm::isImpliedCondition(Value *LHS, Value *RHS, bool &ImpliedTrue,
+                              const DataLayout &DL, unsigned Depth,
+                              AssumptionCache *AC, const Instruction *CxtI,
                               const DominatorTree *DT) {
   assert(LHS->getType() == RHS->getType() && "mismatched type");
   Type *OpTy = LHS->getType();
   assert(OpTy->getScalarType()->isIntegerTy(1));
 
   // LHS ==> RHS by definition
-  if (LHS == RHS) return true;
+  if (LHS == RHS) {
+    ImpliedTrue = true;
+    return true;
+  }
 
   if (OpTy->isVectorTy())
     // TODO: extending the code below to handle vectors
@@ -3812,9 +3900,15 @@ bool llvm::isImpliedCondition(Value *LHS, Value *RHS, const DataLayout &DL,
       !match(RHS, m_ICmp(BPred, m_Value(BLHS), m_Value(BRHS))))
     return false;
 
-  if (APred == BPred)
+  if (isImpliedCondMatchingOperands(APred, ALHS, ARHS, BPred, BLHS, BRHS,
+                                    ImpliedTrue))
+    return true;
+
+  if (APred == BPred) {
+    ImpliedTrue = true;
     return isImpliedCondOperands(APred, ALHS, ARHS, BLHS, BRHS, DL, Depth, AC,
                                  CxtI, DT);
+  }
 
   return false;
 }
