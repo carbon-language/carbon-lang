@@ -329,6 +329,7 @@ void initializeLoopLoadEliminationPass(PassRegistry&);
 void initializeFunctionImportPassPass(PassRegistry &);
 void initializeLoopVersioningPassPass(PassRegistry &);
 void initializeWholeProgramDevirtPass(PassRegistry &);
+void initializePatchableFunctionPass(PassRegistry &);
 }
 
 #endif
