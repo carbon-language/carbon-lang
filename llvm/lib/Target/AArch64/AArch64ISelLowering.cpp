@@ -10114,7 +10114,9 @@ void AArch64TargetLowering::ReplaceNodeResults(
 }
 
 bool AArch64TargetLowering::useLoadStackGuardNode() const {
-  return true;
+  if (!Subtarget->isTargetAndroid())
+    return true;
+  return TargetLowering::useLoadStackGuardNode();
 }
 
 unsigned AArch64TargetLowering::combineRepeatedFPDivisors() const {

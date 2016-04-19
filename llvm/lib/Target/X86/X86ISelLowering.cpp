@@ -2016,14 +2016,12 @@ Value *X86TargetLowering::getIRStackGuard(IRBuilder<> &IRB) const {
 void X86TargetLowering::insertSSPDeclarations(Module &M) const {
   if (!Subtarget.isTargetLinux())
     TargetLowering::insertSSPDeclarations(M);
-  else
-    llvm_unreachable("X86 Linux supports customized IR stack guard load");
 }
 
 Value *X86TargetLowering::getSDStackGuard(const Module &M) const {
   if (!Subtarget.isTargetLinux())
     return TargetLowering::getSDStackGuard(M);
-  llvm_unreachable("X86 Linux supports customized IR stack guard load");
+  return nullptr;
 }
 
 Value *X86TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
