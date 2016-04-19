@@ -21,6 +21,25 @@ define float @test_rcp_ss_0(float %a) {
   ret float %6
 }
 
+define float @test_rcp_ss_1(float %a) {
+; CHECK-LABEL: @test_rcp_ss_1(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> [[TMP3]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP5:%.*]] = tail call <4 x float> @llvm.x86.sse.rcp.ss(<4 x float> [[TMP4]])
+; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <4 x float> [[TMP5]], i32 1
+; CHECK-NEXT:    ret float [[TMP6]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = tail call <4 x float> @llvm.x86.sse.rcp.ss(<4 x float> %4)
+  %6 = extractelement <4 x float> %5, i32 1
+  ret float %6
+}
+
 define float @test_sqrt_ss_0(float %a) {
 ; CHECK-LABEL: @test_sqrt_ss_0(
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
@@ -37,6 +56,25 @@ define float @test_sqrt_ss_0(float %a) {
   %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
   %5 = tail call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %4)
   %6 = extractelement <4 x float> %5, i32 0
+  ret float %6
+}
+
+define float @test_sqrt_ss_2(float %a) {
+; CHECK-LABEL: @test_sqrt_ss_2(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> [[TMP3]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP5:%.*]] = tail call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> [[TMP4]])
+; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <4 x float> [[TMP5]], i32 2
+; CHECK-NEXT:    ret float [[TMP6]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = tail call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %4)
+  %6 = extractelement <4 x float> %5, i32 2
   ret float %6
 }
 
@@ -57,6 +95,40 @@ define float @test_rsqrt_ss_0(float %a) {
   %5 = tail call <4 x float> @llvm.x86.sse.rsqrt.ss(<4 x float> %4)
   %6 = extractelement <4 x float> %5, i32 0
   ret float %6
+}
+
+define float @test_rsqrt_ss_3(float %a) {
+; CHECK-LABEL: @test_rsqrt_ss_3(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> [[TMP3]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP5:%.*]] = tail call <4 x float> @llvm.x86.sse.rsqrt.ss(<4 x float> [[TMP4]])
+; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <4 x float> [[TMP5]], i32 3
+; CHECK-NEXT:    ret float [[TMP6]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = tail call <4 x float> @llvm.x86.sse.rsqrt.ss(<4 x float> %4)
+  %6 = extractelement <4 x float> %5, i32 3
+  ret float %6
+}
+
+define <4 x float> @test_add_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_add_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.add.ss(<4 x float> %a, <4 x float> [[TMP3]])
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.add.ss(<4 x float> %a, <4 x float> %3)
+  ret <4 x float> %4
 }
 
 define float @test_add_ss_0(float %a, float %b) {
@@ -86,6 +158,42 @@ define float @test_add_ss_0(float %a, float %b) {
   ret float %r
 }
 
+define float @test_add_ss_1(float %a, float %b) {
+; CHECK-LABEL: @test_add_ss_1(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> [[TMP3]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP5:%.*]] = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT:    [[TMP6:%.*]] = tail call <4 x float> @llvm.x86.sse.add.ss(<4 x float> [[TMP4]], <4 x float> [[TMP5]])
+; CHECK-NEXT:    [[TMP7:%.*]] = extractelement <4 x float> [[TMP6]], i32 1
+; CHECK-NEXT:    ret float [[TMP7]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.add.ss(<4 x float> %4, <4 x float> %5)
+  %7 = extractelement <4 x float> %6, i32 1
+  ret float %7
+}
+
+define <4 x float> @test_sub_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_sub_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.sub.ss(<4 x float> %a, <4 x float> [[TMP3]])
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.sub.ss(<4 x float> %a, <4 x float> %3)
+  ret <4 x float> %4
+}
+
 define float @test_sub_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_sub_ss_0(
 ; CHECK-NEXT:    [[TMP1:%.*]] = fsub float %a, %b
@@ -104,6 +212,37 @@ define float @test_sub_ss_0(float %a, float %b) {
   ret float %r
 }
 
+define float @test_sub_ss_2(float %a, float %b) {
+; CHECK-LABEL: @test_sub_ss_2(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.sse.sub.ss(<4 x float> <float undef, float undef, float 2.000000e+00, float undef>, <4 x float> undef)
+; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <4 x float> [[TMP1]], i32 2
+; CHECK-NEXT:    ret float [[TMP2]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.sub.ss(<4 x float> %4, <4 x float> %5)
+  %7 = extractelement <4 x float> %6, i32 2
+  ret float %7
+}
+
+define <4 x float> @test_mul_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_mul_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.mul.ss(<4 x float> %a, <4 x float> [[TMP3]])
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.mul.ss(<4 x float> %a, <4 x float> %3)
+  ret <4 x float> %4
+}
+
 define float @test_mul_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_mul_ss_0(
 ; CHECK-NEXT:    [[TMP1:%.*]] = fmul float %a, %b
@@ -120,6 +259,37 @@ define float @test_mul_ss_0(float %a, float %b) {
   %9 = tail call <4 x float> @llvm.x86.sse.mul.ss(<4 x float> %4, <4 x float> %8)
   %r = extractelement <4 x float> %9, i32 0
   ret float %r
+}
+
+define float @test_mul_ss_3(float %a, float %b) {
+; CHECK-LABEL: @test_mul_ss_3(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.sse.mul.ss(<4 x float> <float undef, float undef, float undef, float 3.000000e+00>, <4 x float> undef)
+; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <4 x float> [[TMP1]], i32 3
+; CHECK-NEXT:    ret float [[TMP2]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.mul.ss(<4 x float> %4, <4 x float> %5)
+  %7 = extractelement <4 x float> %6, i32 3
+  ret float %7
+}
+
+define <4 x float> @test_div_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_div_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.div.ss(<4 x float> %a, <4 x float> [[TMP3]])
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.div.ss(<4 x float> %a, <4 x float> %3)
+  ret <4 x float> %4
 }
 
 define float @test_div_ss_0(float %a, float %b) {
@@ -149,6 +319,42 @@ define float @test_div_ss_0(float %a, float %b) {
   ret float %r
 }
 
+define float @test_div_ss_1(float %a, float %b) {
+; CHECK-LABEL: @test_div_ss_1(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> [[TMP3]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP5:%.*]] = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT:    [[TMP6:%.*]] = tail call <4 x float> @llvm.x86.sse.div.ss(<4 x float> [[TMP4]], <4 x float> [[TMP5]])
+; CHECK-NEXT:    [[TMP7:%.*]] = extractelement <4 x float> [[TMP6]], i32 1
+; CHECK-NEXT:    ret float [[TMP7]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.div.ss(<4 x float> %4, <4 x float> %5)
+  %7 = extractelement <4 x float> %6, i32 1
+  ret float %7
+}
+
+define <4 x float> @test_min_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_min_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.min.ss(<4 x float> %a, <4 x float> [[TMP3]])
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.min.ss(<4 x float> %a, <4 x float> %3)
+  ret <4 x float> %4
+}
+
 define float @test_min_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_min_ss_0(
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
@@ -170,6 +376,37 @@ define float @test_min_ss_0(float %a, float %b) {
   ret float %10
 }
 
+define float @test_min_ss_2(float %a, float %b) {
+; CHECK-LABEL: @test_min_ss_2(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.sse.min.ss(<4 x float> <float undef, float undef, float 2.000000e+00, float undef>, <4 x float> undef)
+; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <4 x float> [[TMP1]], i32 2
+; CHECK-NEXT:    ret float [[TMP2]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.min.ss(<4 x float> %4, <4 x float> %5)
+  %7 = extractelement <4 x float> %6, i32 2
+  ret float %7
+}
+
+define <4 x float> @test_max_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_max_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.max.ss(<4 x float> %a, <4 x float> [[TMP3]])
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.max.ss(<4 x float> %a, <4 x float> %3)
+  ret <4 x float> %4
+}
+
 define float @test_max_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_max_ss_0(
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
@@ -189,6 +426,37 @@ define float @test_max_ss_0(float %a, float %b) {
   %9 = tail call <4 x float> @llvm.x86.sse.max.ss(<4 x float> %4, <4 x float> %8)
   %10 = extractelement <4 x float> %9, i32 0
   ret float %10
+}
+
+define float @test_max_ss_3(float %a, float %b) {
+; CHECK-LABEL: @test_max_ss_3(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.sse.max.ss(<4 x float> <float undef, float undef, float undef, float 3.000000e+00>, <4 x float> undef)
+; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <4 x float> [[TMP1]], i32 3
+; CHECK-NEXT:    ret float [[TMP2]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.max.ss(<4 x float> %4, <4 x float> %5)
+  %7 = extractelement <4 x float> %6, i32 3
+  ret float %7
+}
+
+define <4 x float> @test_cmp_ss(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: @test_cmp_ss(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x float> @llvm.x86.sse.cmp.ss(<4 x float> %a, <4 x float> [[TMP3]], i8 0)
+; CHECK-NEXT:    ret <4 x float> [[TMP4]]
+;
+  %1 = insertelement <4 x float> %b, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.sse.cmp.ss(<4 x float> %a, <4 x float> %3, i8 0)
+  ret <4 x float> %4
 }
 
 define float @test_cmp_ss_0(float %a, float %b) {
@@ -216,6 +484,27 @@ define float @test_cmp_ss_0(float %a, float %b) {
   %9 = tail call <4 x float> @llvm.x86.sse.cmp.ss(<4 x float> %4, <4 x float> %8, i8 0)
   %r = extractelement <4 x float> %9, i32 0
   ret float %r
+}
+
+define float @test_cmp_ss_1(float %a, float %b) {
+; CHECK-LABEL: @test_cmp_ss_1(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> [[TMP1]], float 1.000000e+00, i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <4 x float> [[TMP2]], float 2.000000e+00, i32 2
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> [[TMP3]], float 3.000000e+00, i32 3
+; CHECK-NEXT:    [[TMP5:%.*]] = insertelement <4 x float> undef, float %b, i32 0
+; CHECK-NEXT:    [[TMP6:%.*]] = tail call <4 x float> @llvm.x86.sse.cmp.ss(<4 x float> [[TMP4]], <4 x float> [[TMP5]], i8 0)
+; CHECK-NEXT:    [[TMP7:%.*]] = extractelement <4 x float> [[TMP6]], i32 1
+; CHECK-NEXT:    ret float [[TMP7]]
+;
+  %1 = insertelement <4 x float> undef, float %a, i32 0
+  %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
+  %3 = insertelement <4 x float> %2, float 2.000000e+00, i32 2
+  %4 = insertelement <4 x float> %3, float 3.000000e+00, i32 3
+  %5 = insertelement <4 x float> undef, float %b, i32 0
+  %6 = tail call <4 x float> @llvm.x86.sse.cmp.ss(<4 x float> %4, <4 x float> %5, i8 0)
+  %7 = extractelement <4 x float> %6, i32 1
+  ret float %7
 }
 
 define i32 @test_comieq_ss_0(float %a, float %b) {
