@@ -4112,11 +4112,8 @@ Process::ControlPrivateStateThread (uint32_t signal)
     if (log)
         log->Printf ("Process::%s (signal = %d)", __FUNCTION__, signal);
 
-    // Signal the private state thread. First we should copy this is case the
-    // thread starts exiting since the private state thread will NULL this out
-    // when it exits
-    HostThread private_state_thread(m_private_state_thread);
-    if (private_state_thread.IsJoinable())
+    // Signal the private state thread
+    if (PrivateStateThreadIsValid())
     {
         TimeValue timeout_time;
         bool timed_out;
@@ -4134,7 +4131,7 @@ Process::ControlPrivateStateThread (uint32_t signal)
         {
             if (timed_out)
             {
-                Error error = private_state_thread.Cancel();
+                Error error = m_private_state_thread.Cancel();
                 if (log)
                     log->Printf ("Timed out responding to the control event, cancel got error: \"%s\".", error.AsCString());
             }
@@ -4145,7 +4142,7 @@ Process::ControlPrivateStateThread (uint32_t signal)
             }
 
             thread_result_t result = NULL;
-            private_state_thread.Join(&result);
+            m_private_state_thread.Join(&result);
             m_private_state_thread.Reset();
         }
     }
@@ -4449,7 +4446,6 @@ Process::RunPrivateStateThread (bool is_secondary_thread)
     if (!is_secondary_thread)
         m_public_run_lock.SetStopped();
     m_private_state_control_wait.SetValue (true, eBroadcastAlways);
-    m_private_state_thread.Reset();
     return NULL;
 }
 
