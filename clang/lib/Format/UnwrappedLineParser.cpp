@@ -663,10 +663,8 @@ static bool tokenCanStartNewLine(const clang::Token &Tok) {
          Tok.isNot(tok::kw_noexcept);
 }
 
-static bool mustBeJSIdentOrValue(const AdditionalKeywords &Keywords,
-                                 const FormatToken *FormatTok) {
-  if (FormatTok->Tok.isLiteral())
-    return true;
+static bool mustBeJSIdent(const AdditionalKeywords &Keywords,
+                          const FormatToken *FormatTok) {
   // FIXME: This returns true for C/C++ keywords like 'struct'.
   return FormatTok->is(tok::identifier) &&
          (FormatTok->Tok.getIdentifierInfo() == nullptr ||
@@ -677,6 +675,11 @@ static bool mustBeJSIdentOrValue(const AdditionalKeywords &Keywords,
                               Keywords.kw_abstract, Keywords.kw_extends,
                               Keywords.kw_implements, Keywords.kw_instanceof,
                               Keywords.kw_interface, Keywords.kw_throws));
+}
+
+static bool mustBeJSIdentOrValue(const AdditionalKeywords &Keywords,
+                                 const FormatToken *FormatTok) {
+  return FormatTok->Tok.isLiteral() || mustBeJSIdent(Keywords, FormatTok);
 }
 
 // isJSDeclOrStmt returns true if |FormatTok| starts a declaration or statement
@@ -1015,9 +1018,7 @@ void UnwrappedLineParser::parseStructuralElement() {
           unsigned StoredPosition = Tokens->getPosition();
           FormatToken *Next = Tokens->getNextToken();
           FormatTok = Tokens->setPosition(StoredPosition);
-          if (Next && (Next->isNot(tok::identifier) ||
-                       Next->isOneOf(Keywords.kw_instanceof, Keywords.kw_of,
-                                     Keywords.kw_in))) {
+          if (Next && !mustBeJSIdent(Keywords, Next)) {
             nextToken();
             break;
           }
