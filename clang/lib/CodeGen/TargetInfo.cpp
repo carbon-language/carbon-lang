@@ -4472,7 +4472,7 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
   if (isIllegalVectorType(Ty)) {
     uint64_t Size = getContext().getTypeSize(Ty);
     // Android promotes <2 x i8> to i16, not i32
-    if(isAndroid() && (Size <= 16)) {
+    if (isAndroid() && (Size <= 16)) {
       llvm::Type *ResType = llvm::Type::getInt16Ty(getVMContext());
       return ABIArgInfo::getDirect(ResType);
     }
