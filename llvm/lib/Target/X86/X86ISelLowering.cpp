@@ -2018,12 +2018,6 @@ void X86TargetLowering::insertSSPDeclarations(Module &M) const {
     TargetLowering::insertSSPDeclarations(M);
 }
 
-Value *X86TargetLowering::getSDStackGuard(const Module &M) const {
-  if (!Subtarget.isTargetLinux())
-    return TargetLowering::getSDStackGuard(M);
-  return nullptr;
-}
-
 Value *X86TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
   if (!Subtarget.isTargetAndroid())
     return TargetLowering::getSafeStackPointerLocation(IRB);
