@@ -73,44 +73,33 @@ private:
 static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit,
                      const MCSubtargetInfo &STI);
 
-namespace llvm {
-   X86AsmPrinter::StackMapShadowTracker::StackMapShadowTracker()
-     : InShadow(false), RequiredShadowSize(0), CurrentShadowSize(0) {}
-
-  X86AsmPrinter::StackMapShadowTracker::~StackMapShadowTracker() {}
-
-  void X86AsmPrinter::StackMapShadowTracker::startFunction(MachineFunction &F) {
-    MF = &F;
+void X86AsmPrinter::StackMapShadowTracker::count(MCInst &Inst,
+                                                 const MCSubtargetInfo &STI,
+                                                 MCCodeEmitter *CodeEmitter) {
+  if (InShadow) {
+    SmallString<256> Code;
+    SmallVector<MCFixup, 4> Fixups;
+    raw_svector_ostream VecOS(Code);
+    CodeEmitter->encodeInstruction(Inst, VecOS, Fixups, STI);
+    CurrentShadowSize += Code.size();
+    if (CurrentShadowSize >= RequiredShadowSize)
+      InShadow = false; // The shadow is big enough. Stop counting.
   }
+}
 
-  void X86AsmPrinter::StackMapShadowTracker::count(MCInst &Inst,
-                                                   const MCSubtargetInfo &STI,
-                                                   MCCodeEmitter *CodeEmitter) {
-    if (InShadow) {
-      SmallString<256> Code;
-      SmallVector<MCFixup, 4> Fixups;
-      raw_svector_ostream VecOS(Code);
-      CodeEmitter->encodeInstruction(Inst, VecOS, Fixups, STI);
-      CurrentShadowSize += Code.size();
-      if (CurrentShadowSize >= RequiredShadowSize)
-        InShadow = false; // The shadow is big enough. Stop counting.
-    }
-  }
-
-  void X86AsmPrinter::StackMapShadowTracker::emitShadowPadding(
+void X86AsmPrinter::StackMapShadowTracker::emitShadowPadding(
     MCStreamer &OutStreamer, const MCSubtargetInfo &STI) {
-    if (InShadow && CurrentShadowSize < RequiredShadowSize) {
-      InShadow = false;
-      EmitNops(OutStreamer, RequiredShadowSize - CurrentShadowSize,
-               MF->getSubtarget<X86Subtarget>().is64Bit(), STI);
-    }
+  if (InShadow && CurrentShadowSize < RequiredShadowSize) {
+    InShadow = false;
+    EmitNops(OutStreamer, RequiredShadowSize - CurrentShadowSize,
+             MF->getSubtarget<X86Subtarget>().is64Bit(), STI);
   }
+}
 
-  void X86AsmPrinter::EmitAndCountInstruction(MCInst &Inst) {
-    OutStreamer->EmitInstruction(Inst, getSubtargetInfo());
-    SMShadowTracker.count(Inst, getSubtargetInfo(), CodeEmitter.get());
-  }
-} // end llvm namespace
+void X86AsmPrinter::EmitAndCountInstruction(MCInst &Inst) {
+  OutStreamer->EmitInstruction(Inst, getSubtargetInfo());
+  SMShadowTracker.count(Inst, getSubtargetInfo(), CodeEmitter.get());
+}
 
 X86MCInstLower::X86MCInstLower(const MachineFunction &mf,
                                X86AsmPrinter &asmprinter)
