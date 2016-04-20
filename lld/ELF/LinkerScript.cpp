@@ -64,6 +64,20 @@ static StringRef next(ArrayRef<StringRef> &Tokens) {
   return Tok;
 }
 
+static bool expect(ArrayRef<StringRef> &Tokens, StringRef S) {
+  if (Tokens.empty()) {
+    error(S + " expected");
+    return false;
+  }
+  StringRef Tok = Tokens.front();
+  if (Tok != S) {
+    error(S + " expected, but got " + Tok);
+    return false;
+  }
+  Tokens = Tokens.slice(1);
+  return true;
+}
+
 static uint64_t parseExpr(ArrayRef<StringRef> &Tokens, uint64_t Dot);
 
 // This is a part of the operator-precedence parser to evaluate
@@ -75,13 +89,8 @@ static uint64_t parsePrimary(ArrayRef<StringRef> &Tokens, uint64_t Dot) {
     return Dot;
   if (Tok == "(") {
     uint64_t V = parseExpr(Tokens, Dot);
-    if (Tokens.empty()) {
-      error(") expected");
-    } else {
-      Tok = next(Tokens);
-      if (Tok != ")")
-        error(") expected, but got " + Tok);
-    }
+    if (!expect(Tokens, ")"))
+      return 0;
     return V;
   }
   return getInteger(Tok);
