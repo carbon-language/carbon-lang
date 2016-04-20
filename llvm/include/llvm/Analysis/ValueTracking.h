@@ -446,8 +446,9 @@ template <typename T> class ArrayRef;
   /// E.g. if RangeMD is !{i32 0, i32 10, i32 15, i32 20} then return [0, 20).
   ConstantRange getConstantRangeFromMetadata(MDNode &RangeMD);
 
-  /// Return true if RHS is known to be implied by LHS.  The implication may be
-  /// either true or false depending on what is returned in ImpliedTrue.
+  /// Return true if RHS is known to be implied true by LHS.  Return false if
+  /// RHS is known to be implied false by LHS.  Otherwise, return None if no
+  /// implication can be made.
   /// A & B must be i1 (boolean) values or a vector of such values. Note that
   /// the truth table for implication is the same as <=u on i1 values (but not
   /// <=s!).  The truth table for both is:
@@ -455,11 +456,11 @@ template <typename T> class ArrayRef;
   ///  T | T | F
   ///  F | T | T
   /// (A)
-  bool isImpliedCondition(Value *LHS, Value *RHS, bool &ImpliedTrue,
-                          const DataLayout &DL, unsigned Depth = 0,
-                          AssumptionCache *AC = nullptr,
-                          const Instruction *CxtI = nullptr,
-                          const DominatorTree *DT = nullptr);
+  Optional<bool> isImpliedCondition(Value *LHS, Value *RHS,
+                                    const DataLayout &DL, unsigned Depth = 0,
+                                    AssumptionCache *AC = nullptr,
+                                    const Instruction *CxtI = nullptr,
+                                    const DominatorTree *DT = nullptr);
 } // end namespace llvm
 
 #endif
