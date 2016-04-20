@@ -3273,31 +3273,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // non-JIT mode.
     const GlobalValue *GV = G->getGlobal();
     if (!GV->hasDLLImportStorageClass()) {
-      unsigned char OpFlags = 0;
-
-      // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
-      // external symbols most go through the PLT in PIC mode.  If the symbol
-      // has hidden or protected visibility, or if it is static or local, then
-      // we don't need to use the PLT - we can directly call it.
-      if (Subtarget.isTargetELF() &&
-          DAG.getTarget().getRelocationModel() == Reloc::PIC_ &&
-          GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
-        OpFlags = X86II::MO_PLT;
-      } else if (Subtarget.isPICStyleStubAny() &&
-                 !GV->isStrongDefinitionForLinker() &&
-                 (!Subtarget.getTargetTriple().isMacOSX() ||
-                  Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5))) {
-        // PC-relative references to external symbols should go through $stub,
-        // unless we're building with the leopard linker or later, which
-        // automatically synthesizes these stubs.
-        OpFlags = X86II::MO_DARWIN_STUB;
-      } else if (Subtarget.isPICStyleRIPRel() && isa<Function>(GV) &&
-                 cast<Function>(GV)->hasFnAttribute(Attribute::NonLazyBind)) {
-        // If the function is marked as non-lazy, generate an indirect call
-        // which loads from the GOT directly. This avoids runtime overhead
-        // at the cost of eager binding (and one extra byte of encoding).
-        OpFlags = X86II::MO_GOTPCREL;
-      }
+      unsigned char OpFlags =
+          Subtarget.classifyGlobalFunctionReference(GV, DAG.getTarget());
 
       Callee = DAG.getTargetGlobalAddress(
           GV, dl, getPointerTy(DAG.getDataLayout()), G->getOffset(), OpFlags);
