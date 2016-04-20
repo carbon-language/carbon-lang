@@ -37,6 +37,11 @@ namespace bolt {
 namespace opts {
 
 static cl::opt<bool>
+AgressiveSplitting("split-all-cold",
+                   cl::desc("outline as many cold basic blocks as possible"),
+                   cl::Optional);
+
+static cl::opt<bool>
 PrintClusters("print-clusters", cl::desc("print clusters"), cl::Optional);
 
 static cl::opt<bool>
@@ -1611,34 +1616,26 @@ void BinaryFunction::splitFunction() {
 
   assert(BasicBlocksLayout.size() > 0);
 
-  // Separate hot from cold
-  if (!hasEHRanges()) {
-    for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
-         I != E; ++I) {
-      BinaryBasicBlock *BB = *I;
-      if (BB->getExecutionCount() != 0)
-        break;
-      BB->IsCold = true;
-      IsSplit = true;
+  // Never outline the first basic block.
+  BasicBlocks.front().CanOutline = false;
+  for (auto &BB : BasicBlocks) {
+    if (!BB.CanOutline)
+      continue;
+    if (BB.getExecutionCount() != 0) {
+      BB.CanOutline = false;
+      continue;
     }
-  } else {
-    // We cannot move a block that can throw since exception-handling
-    // runtime cannot deal with split functions. However, if we can guarantee
-    // that the block never throws, it is safe to move the block to
-    // decrease the size of the function.
-    //
-    // We also cannot move landing pads (or rather entry points for landing
-    // pads) for the same reason.
-    //
-    // Never move the first basic block.
-    BasicBlocks.front().CanOutline = false;
-    for (auto &BB : BasicBlocks) {
-      if (!BB.CanOutline)
-        continue;
+    if (hasEHRanges()) {
+      // We cannot move landing pads (or rather entry points for landing
+      // pads).
       if (LandingPads.find(BB.getLabel()) != LandingPads.end()) {
         BB.CanOutline = false;
         continue;
       }
+      // We cannot move a block that can throw since exception-handling
+      // runtime cannot deal with split functions. However, if we can guarantee
+      // that the block never throws, it is safe to move the block to
+      // decrease the size of the function.
       for (auto &Instr : BB) {
         if (BC.MIA->isInvoke(Instr)) {
           BB.CanOutline = false;
@@ -1646,23 +1643,36 @@ void BinaryFunction::splitFunction() {
         }
       }
     }
+  }
+
+  if (opts::AgressiveSplitting) {
+    // All blocks with 0 count that we can move go to the end of the function.
     std::stable_sort(BasicBlocksLayout.begin(), BasicBlocksLayout.end(),
         [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
-          if (A->getExecutionCount() != 0 || B->getExecutionCount() != 0)
-            return false;
           return A->canOutline() < B->canOutline();
         });
+  } else if (hasEHRanges()) {
+    // Typically functions with exception handling have landing pads at the end.
+    // We cannot move beginning of landing pads, but we can move 0-count blocks
+    // comprising landing pads to the end and thus facilitating splitting.
+    auto FirstLP = BasicBlocksLayout.begin();
+    while (LandingPads.find((*FirstLP)->getLabel()) != LandingPads.end())
+      ++FirstLP;
 
-    for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
-         I != E; ++I) {
-      BinaryBasicBlock *BB = *I;
-      if (BB->getExecutionCount() != 0)
-        break;
-      if (!BB->canOutline())
-        break;
-      BB->IsCold = true;
-      IsSplit = true;
-    }
+    std::stable_sort(FirstLP, BasicBlocksLayout.end(),
+        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
+          return A->canOutline() < B->canOutline();
+        });
+  }
+
+  // Separate hot from cold
+  for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
+       I != E; ++I) {
+    BinaryBasicBlock *BB = *I;
+    if (!BB->canOutline())
+      break;
+    BB->IsCold = true;
+    IsSplit = true;
   }
 }
 
@@ -1673,7 +1683,7 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
     return;
 
   // The current value of DW_CFA_GNU_args_size affects all following
-  // invoke instructions untill the next CFI overrides it.
+  // invoke instructions until the next CFI overrides it.
   // It is important to iterate basic blocks in the original order when
   // assigning the value.
   uint64_t CurrentGnuArgsSize = 0;

@@ -104,9 +104,11 @@ SplitFunctions("split-functions",
                cl::init(BinaryFunction::ST_NONE),
                cl::values(clEnumValN(BinaryFunction::ST_NONE, "0",
                                      "do not split any function"),
-                          clEnumValN(BinaryFunction::ST_LARGE, "1",
-                                     "split if function is too large to fit"),
-                          clEnumValN(BinaryFunction::ST_ALL, "2",
+                          clEnumValN(BinaryFunction::ST_EH, "1",
+                                     "split all landing pads"),
+                          clEnumValN(BinaryFunction::ST_LARGE, "2",
+                                     "also split if function too large to fit"),
+                          clEnumValN(BinaryFunction::ST_ALL, "3",
                                      "split all functions"),
                           clEnumValEnd),
                cl::Optional);
@@ -1017,7 +1019,9 @@ void RewriteInstance::runOptimizationPasses() {
     if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
       bool ShouldSplit =
         (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
-         LargeFunctions.find(BFI.first) != LargeFunctions.end();
+        (opts::SplitFunctions == BinaryFunction::ST_EH &&
+         Function.hasEHRanges()) ||
+        (LargeFunctions.find(BFI.first) != LargeFunctions.end());
       BFI.second.modifyLayout(opts::ReorderBlocks, ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks", true);

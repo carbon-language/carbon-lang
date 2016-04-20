@@ -62,8 +62,10 @@ public:
   /// Settings for splitting function bodies into hot/cold partitions.
   enum SplittingType : char {
     ST_NONE = 0,      /// Do not split functions
-    ST_LARGE = 1,     /// Only split functions that exceed maximum size
-    ST_ALL =2,        /// Split all functions
+    ST_EH,            /// Split blocks comprising landing pads
+    ST_LARGE,         /// Split functions that exceed maximum size in addition
+                      /// to landing pads.
+    ST_ALL,           /// Split all functions
   };
 
   /// Choose which strategy should the block layout heuristic prioritize when
