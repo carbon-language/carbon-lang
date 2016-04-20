@@ -273,29 +273,6 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 };
 }
 
-static bool canRelaxTls(uint32_t Type, const SymbolBody &S) {
-  if (Config->Shared)
-    return false;
-
-  // We know we are producing an executable.
-
-  // Global-Dynamic relocs can be relaxed to Initial-Exec or Local-Exec
-  // depending on the symbol being locally defined or not.
-  if (Target->isTlsGlobalDynamicRel(Type))
-    return true;
-
-  // Local-Dynamic relocs can be relaxed to Local-Exec.
-  if (Target->isTlsLocalDynamicRel(Type))
-    return true;
-
-  // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
-  // defined.
-  if (Target->isTlsInitialExecRel(Type))
-    return !S.isPreemptible();
-
-  return false;
-}
-
 // Returns the number of relocations processed.
 template <class ELFT>
 static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
@@ -310,7 +287,8 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
 
   typedef typename ELFT::uint uintX_t;
   if (Expr == R_TLSLD_PC || Expr == R_TLSLD) {
-    if (canRelaxTls(Type, Body)) {
+    // Local-Dynamic relocs can be relaxed to Local-Exec.
+    if (!Config->Shared) {
       C.Relocations.push_back(
           {R_RELAX_TLS_LD_TO_LE, Type, Offset, Addend, &Body});
       return 2;
@@ -323,14 +301,15 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     return 1;
   }
 
-  if (Target->isTlsLocalDynamicRel(Type) && canRelaxTls(Type, Body)) {
+  // Local-Dynamic relocs can be relaxed to Local-Exec.
+  if (Target->isTlsLocalDynamicRel(Type) && !Config->Shared) {
     C.Relocations.push_back(
         {R_RELAX_TLS_LD_TO_LE, Type, Offset, Addend, &Body});
     return 1;
   }
 
   if (Target->isTlsGlobalDynamicRel(Type)) {
-    if (!canRelaxTls(Type, Body)) {
+    if (Config->Shared) {
       if (Out<ELFT>::Got->addDynTlsEntry(Body)) {
         uintX_t Off = Out<ELFT>::Got->getGlobalDynOffset(Body);
         Out<ELFT>::RelaDyn->addReloc(
@@ -343,6 +322,8 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
       return 1;
     }
 
+    // Global-Dynamic relocs can be relaxed to Initial-Exec or Local-Exec
+    // depending on the symbol being locally defined or not.
     if (Body.isPreemptible()) {
       Expr =
           Expr == R_TLSGD_PC ? R_RELAX_TLS_GD_TO_IE_PC : R_RELAX_TLS_GD_TO_IE;
@@ -359,7 +340,11 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
         {R_RELAX_TLS_GD_TO_LE, Type, Offset, Addend, &Body});
     return Target->TlsGdToLeSkip;
   }
-  if (Target->isTlsInitialExecRel(Type) && canRelaxTls(Type, Body)) {
+
+  // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
+  // defined.
+  if (Target->isTlsInitialExecRel(Type) && !Config->Shared &&
+      !Body.isPreemptible()) {
     C.Relocations.push_back(
         {R_RELAX_TLS_IE_TO_LE, Type, Offset, Addend, &Body});
     return 1;
