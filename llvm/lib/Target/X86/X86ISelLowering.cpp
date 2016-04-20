@@ -647,14 +647,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   for (MVT VT : MVT::vector_valuetypes()) {
     setOperationAction(ISD::ADD , VT, Expand);
     setOperationAction(ISD::SUB , VT, Expand);
-    setOperationAction(ISD::FADD, VT, Expand);
-    setOperationAction(ISD::FNEG, VT, Expand);
-    setOperationAction(ISD::FSUB, VT, Expand);
     setOperationAction(ISD::MUL , VT, Expand);
-    setOperationAction(ISD::FMUL, VT, Expand);
     setOperationAction(ISD::SDIV, VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
-    setOperationAction(ISD::FDIV, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
     setOperationAction(ISD::LOAD, VT, Expand);
@@ -663,7 +658,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Expand);
     setOperationAction(ISD::EXTRACT_SUBVECTOR, VT,Expand);
     setOperationAction(ISD::INSERT_SUBVECTOR, VT,Expand);
-    setOperationAction(ISD::FABS, VT, Expand);
     setOperationAction(ISD::FSIN, VT, Expand);
     setOperationAction(ISD::FSINCOS, VT, Expand);
     setOperationAction(ISD::FCOS, VT, Expand);
@@ -671,7 +665,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FREM, VT, Expand);
     setOperationAction(ISD::FMA,  VT, Expand);
     setOperationAction(ISD::FPOWI, VT, Expand);
-    setOperationAction(ISD::FSQRT, VT, Expand);
     setOperationAction(ISD::FCOPYSIGN, VT, Expand);
     setOperationAction(ISD::FFLOOR, VT, Expand);
     setOperationAction(ISD::FCEIL, VT, Expand);
@@ -756,11 +749,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSE1()) {
     addRegisterClass(MVT::v4f32, &X86::VR128RegClass);
 
-    setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
-    setOperationAction(ISD::FSUB,               MVT::v4f32, Legal);
-    setOperationAction(ISD::FMUL,               MVT::v4f32, Legal);
-    setOperationAction(ISD::FDIV,               MVT::v4f32, Legal);
-    setOperationAction(ISD::FSQRT,              MVT::v4f32, Legal);
     setOperationAction(ISD::FNEG,               MVT::v4f32, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f32, Custom);
     setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
@@ -800,11 +788,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
     setOperationAction(ISD::SUB,                MVT::v2i64, Legal);
     setOperationAction(ISD::MUL,                MVT::v8i16, Legal);
-    setOperationAction(ISD::FADD,               MVT::v2f64, Legal);
-    setOperationAction(ISD::FSUB,               MVT::v2f64, Legal);
-    setOperationAction(ISD::FMUL,               MVT::v2f64, Legal);
-    setOperationAction(ISD::FDIV,               MVT::v2f64, Legal);
-    setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
     setOperationAction(ISD::FABS,               MVT::v2f64, Custom);
 
@@ -1029,11 +1012,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::LOAD,               MVT::v4i64, Legal);
 
     for (auto VT : { MVT::v8f32, MVT::v4f64 }) {
-      setOperationAction(ISD::FADD,       VT, Legal);
-      setOperationAction(ISD::FSUB,       VT, Legal);
-      setOperationAction(ISD::FMUL,       VT, Legal);
-      setOperationAction(ISD::FDIV,       VT, Legal);
-      setOperationAction(ISD::FSQRT,      VT, Legal);
       setOperationAction(ISD::FFLOOR,     VT, Legal);
       setOperationAction(ISD::FCEIL,      VT, Legal);
       setOperationAction(ISD::FTRUNC,     VT, Legal);
@@ -1252,11 +1230,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
 
     for (MVT VT : { MVT::v16f32, MVT::v8f64 }) {
-      setOperationAction(ISD::FADD,  VT, Legal);
-      setOperationAction(ISD::FSUB,  VT, Legal);
-      setOperationAction(ISD::FMUL,  VT, Legal);
-      setOperationAction(ISD::FDIV,  VT, Legal);
-      setOperationAction(ISD::FSQRT, VT, Legal);
       setOperationAction(ISD::FNEG,  VT, Custom);
       setOperationAction(ISD::FABS,  VT, Custom);
       setOperationAction(ISD::FMA,   VT, Legal);
