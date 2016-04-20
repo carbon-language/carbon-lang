@@ -838,6 +838,7 @@ static unsigned EmitNop(MCStreamer &OS, unsigned NumBytes, bool Is64Bit,
 static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit,
                      const MCSubtargetInfo &STI) {
   unsigned NopsToEmit = NumBytes;
+  (void)NopsToEmit;
   while (NumBytes) {
     NumBytes -= EmitNop(OS, NumBytes, Is64Bit, STI);
     assert(NopsToEmit >= NumBytes && "Emitted more than I asked for!");
