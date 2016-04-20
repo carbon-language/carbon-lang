@@ -1,3 +1,4 @@
+# REQUIRES: winlib
 # RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
 
 # RUN: mkdir -p %T/out/tmp
