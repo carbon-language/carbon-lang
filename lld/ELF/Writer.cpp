@@ -220,8 +220,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   } else {
     createPhdrs();
     fixHeaders();
-    if (Script->DoLayout) {
-      Script->assignAddresses(OutputSections);
+    if (ScriptConfig->DoLayout) {
+      Script<ELFT>::X->assignAddresses(OutputSections);
     } else {
       fixSectionAlignments();
       assignAddresses();
@@ -776,7 +776,7 @@ static bool compareSections(OutputSectionBase<ELFT> *A,
                             OutputSectionBase<ELFT> *B) {
   typedef typename ELFT::uint uintX_t;
 
-  int Comp = Script->compareSections(A->getName(), B->getName());
+  int Comp = Script<ELFT>::X->compareSections(A->getName(), B->getName());
   if (Comp != 0)
     return Comp < 0;
 
@@ -918,7 +918,7 @@ void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
 
 template <class ELFT>
 StringRef Writer<ELFT>::getOutputSectionName(InputSectionBase<ELFT> *S) const {
-  StringRef Dest = Script->getOutputSection<ELFT>(S);
+  StringRef Dest = Script<ELFT>::X->getOutputSection(S);
   if (!Dest.empty())
     return Dest;
 
@@ -943,7 +943,7 @@ void reportDiscarded(InputSectionBase<ELFT> *IS,
 template <class ELFT>
 bool Writer<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) const {
   return !S || S == &InputSection<ELFT>::Discarded || !S->Live ||
-         Script->isDiscarded(S);
+         Script<ELFT>::X->isDiscarded(S);
 }
 
 template <class ELFT>
@@ -1545,7 +1545,7 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 // sections. These are special, we do not include them into output sections
 // list, but have them to simplify the code.
 template <class ELFT> void Writer<ELFT>::fixHeaders() {
-  uintX_t BaseVA = Script->DoLayout ? 0 : Target->getVAStart();
+  uintX_t BaseVA = ScriptConfig->DoLayout ? 0 : Target->getVAStart();
   Out<ELFT>::ElfHeader->setVA(BaseVA);
   Out<ELFT>::ElfHeader->setFileOffset(0);
   uintX_t Off = Out<ELFT>::ElfHeader->getSize();

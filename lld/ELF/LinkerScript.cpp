@@ -33,7 +33,7 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf;
 
-LinkerScript *elf::Script;
+ScriptConfiguration *elf::ScriptConfig;
 
 static uint64_t getInteger(StringRef S) {
   uint64_t V;
@@ -147,25 +147,26 @@ static uint64_t evaluate(ArrayRef<StringRef> Tokens, uint64_t Dot) {
 }
 
 template <class ELFT>
-SectionRule *LinkerScript::find(InputSectionBase<ELFT> *S) {
-  for (SectionRule &R : Sections)
+SectionRule *LinkerScript<ELFT>::find(InputSectionBase<ELFT> *S) {
+  for (SectionRule &R : Opt.Sections)
     if (R.match(S))
       return &R;
   return nullptr;
 }
 
 template <class ELFT>
-StringRef LinkerScript::getOutputSection(InputSectionBase<ELFT> *S) {
+StringRef LinkerScript<ELFT>::getOutputSection(InputSectionBase<ELFT> *S) {
   SectionRule *R = find(S);
   return R ? R->Dest : "";
 }
 
 template <class ELFT>
-bool LinkerScript::isDiscarded(InputSectionBase<ELFT> *S) {
+bool LinkerScript<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) {
   return getOutputSection(S) == "/DISCARD/";
 }
 
-template <class ELFT> bool LinkerScript::shouldKeep(InputSectionBase<ELFT> *S) {
+template <class ELFT>
+bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   SectionRule *R = find(S);
   return R && R->Keep;
 }
@@ -180,7 +181,7 @@ findSection(std::vector<OutputSectionBase<ELFT> *> &V, StringRef Name) {
 }
 
 template <class ELFT>
-void LinkerScript::assignAddresses(
+void LinkerScript<ELFT>::assignAddresses(
     std::vector<OutputSectionBase<ELFT> *> &Sections) {
   typedef typename ELFT::uint uintX_t;
 
@@ -191,9 +192,9 @@ void LinkerScript::assignAddresses(
   // https://sourceware.org/binutils/docs/ld/Orphan-Sections.html#Orphan-Sections.
   for (OutputSectionBase<ELFT> *Sec : Sections) {
     StringRef Name = Sec->getName();
-    auto I = std::find(SectionOrder.begin(), SectionOrder.end(), Name);
-    if (I == SectionOrder.end())
-      Commands.push_back({SectionKind, {}, Name});
+    auto I = std::find(Opt.SectionOrder.begin(), Opt.SectionOrder.end(), Name);
+    if (I == Opt.SectionOrder.end())
+      Opt.Commands.push_back({SectionKind, {}, Name});
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
@@ -201,7 +202,7 @@ void LinkerScript::assignAddresses(
   uintX_t VA =
       Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
 
-  for (SectionsCommand &Cmd : Commands) {
+  for (SectionsCommand &Cmd : Opt.Commands) {
     if (Cmd.Kind == ExprKind) {
       VA = evaluate(Cmd.Expr, VA);
       continue;
@@ -228,9 +229,10 @@ void LinkerScript::assignAddresses(
   }
 }
 
-ArrayRef<uint8_t> LinkerScript::getFiller(StringRef Name) {
-  auto I = Filler.find(Name);
-  if (I == Filler.end())
+template <class ELFT>
+ArrayRef<uint8_t> LinkerScript<ELFT>::getFiller(StringRef Name) {
+  auto I = Opt.Filler.find(Name);
+  if (I == Opt.Filler.end())
     return {};
   return I->second;
 }
@@ -238,10 +240,11 @@ ArrayRef<uint8_t> LinkerScript::getFiller(StringRef Name) {
 // A compartor to sort output sections. Returns -1 or 1 if both
 // A and B are mentioned in linker scripts. Otherwise, returns 0
 // to use the default rule which is implemented in Writer.cpp.
-int LinkerScript::compareSections(StringRef A, StringRef B) {
-  auto E = SectionOrder.end();
-  auto I = std::find(SectionOrder.begin(), E, A);
-  auto J = std::find(SectionOrder.begin(), E, B);
+template <class ELFT>
+int LinkerScript<ELFT>::compareSections(StringRef A, StringRef B) {
+  auto E = Opt.SectionOrder.end();
+  auto I = std::find(Opt.SectionOrder.begin(), E, A);
+  auto J = std::find(Opt.SectionOrder.begin(), E, B);
   if (I == E || J == E)
     return 0;
   return I < J ? -1 : 1;
@@ -275,12 +278,11 @@ template <class ELFT> bool SectionRule::match(InputSectionBase<ELFT> *S) {
   return matchStr(SectionPattern, S->getSectionName());
 }
 
-class elf::ScriptParser final : public elf::ScriptParserBase {
+class elf::ScriptParser : public ScriptParserBase {
   typedef void (ScriptParser::*Handler)();
 
 public:
-  ScriptParser(BumpPtrAllocator *A, StringRef S, bool B)
-      : ScriptParserBase(S), Saver(*A), IsUnderSysroot(B) {}
+  ScriptParser(StringRef S, bool B) : ScriptParserBase(S), IsUnderSysroot(B) {}
 
   void run() override;
 
@@ -303,8 +305,9 @@ private:
   void readOutputSectionDescription();
   void readSectionPatterns(StringRef OutSec, bool Keep);
 
-  StringSaver Saver;
   const static StringMap<Handler> Cmd;
+  ScriptConfiguration &Opt = *ScriptConfig;
+  StringSaver Saver = {ScriptConfig->Alloc};
   bool IsUnderSysroot;
 };
 
@@ -460,7 +463,7 @@ void ScriptParser::readSearchDir() {
 }
 
 void ScriptParser::readSections() {
-  Script->DoLayout = true;
+  Opt.DoLayout = true;
   expect("{");
   while (!Error && !skip("}")) {
     StringRef Tok = peek();
@@ -474,14 +477,14 @@ void ScriptParser::readSections() {
 void ScriptParser::readSectionPatterns(StringRef OutSec, bool Keep) {
   expect("(");
   while (!Error && !skip(")"))
-    Script->Sections.emplace_back(OutSec, next(), Keep);
+    Opt.Sections.emplace_back(OutSec, next(), Keep);
 }
 
 void ScriptParser::readLocationCounterValue() {
   expect(".");
   expect("=");
-  Script->Commands.push_back({ExprKind, {}, ""});
-  SectionsCommand &Cmd = Script->Commands.back();
+  Opt.Commands.push_back({ExprKind, {}, ""});
+  SectionsCommand &Cmd = Opt.Commands.back();
   while (!Error) {
     StringRef Tok = next();
     if (Tok == ";")
@@ -494,8 +497,8 @@ void ScriptParser::readLocationCounterValue() {
 
 void ScriptParser::readOutputSectionDescription() {
   StringRef OutSec = next();
-  Script->SectionOrder.push_back(OutSec);
-  Script->Commands.push_back({SectionKind, {}, OutSec});
+  Opt.SectionOrder.push_back(OutSec);
+  Opt.Commands.push_back({SectionKind, {}, OutSec});
   expect(":");
   expect("{");
   while (!Error && !skip("}")) {
@@ -518,7 +521,7 @@ void ScriptParser::readOutputSectionDescription() {
       return;
     }
     Tok = Tok.substr(3);
-    Script->Filler[OutSec] = parseHex(Tok);
+    Opt.Filler[OutSec] = parseHex(Tok);
     next();
   }
 }
@@ -532,32 +535,13 @@ static bool isUnderSysroot(StringRef Path) {
   return false;
 }
 
-// Entry point. The other functions or classes are private to this file.
-void LinkerScript::read(MemoryBufferRef MB) {
+// Entry point.
+void elf::readLinkerScript(MemoryBufferRef MB) {
   StringRef Path = MB.getBufferIdentifier();
-  ScriptParser(&Alloc, MB.getBuffer(), isUnderSysroot(Path)).run();
+  ScriptParser(MB.getBuffer(), isUnderSysroot(Path)).run();
 }
 
-template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF32LE> *);
-template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF32BE> *);
-template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF64LE> *);
-template StringRef LinkerScript::getOutputSection(InputSectionBase<ELF64BE> *);
-
-template bool LinkerScript::isDiscarded(InputSectionBase<ELF32LE> *);
-template bool LinkerScript::isDiscarded(InputSectionBase<ELF32BE> *);
-template bool LinkerScript::isDiscarded(InputSectionBase<ELF64LE> *);
-template bool LinkerScript::isDiscarded(InputSectionBase<ELF64BE> *);
-
-template bool LinkerScript::shouldKeep(InputSectionBase<ELF32LE> *);
-template bool LinkerScript::shouldKeep(InputSectionBase<ELF32BE> *);
-template bool LinkerScript::shouldKeep(InputSectionBase<ELF64LE> *);
-template bool LinkerScript::shouldKeep(InputSectionBase<ELF64BE> *);
-
-template void
-LinkerScript::assignAddresses(std::vector<OutputSectionBase<ELF32LE> *> &);
-template void
-LinkerScript::assignAddresses(std::vector<OutputSectionBase<ELF32BE> *> &);
-template void
-LinkerScript::assignAddresses(std::vector<OutputSectionBase<ELF64LE> *> &);
-template void
-LinkerScript::assignAddresses(std::vector<OutputSectionBase<ELF64BE> *> &);
+template class elf::LinkerScript<ELF32LE>;
+template class elf::LinkerScript<ELF32BE>;
+template class elf::LinkerScript<ELF64LE>;
+template class elf::LinkerScript<ELF64BE>;
