@@ -50,7 +50,7 @@ malformedError(std::string FileName, std::string Msg,
 static Error
 malformedError(const MachOObjectFile &Obj, Twine Msg,
                object_error ECOverride = object_error::parse_failed) {
-  return malformedError(Obj.getFileName(), std::move(Msg.str()), ECOverride);
+  return malformedError(Obj.getFileName(), Msg.str(), ECOverride);
 }
 
 // FIXME: Replace all uses of this function with getStructOrErr.
