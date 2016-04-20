@@ -273,8 +273,8 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 };
 }
 
-static bool canRelaxTls(uint32_t Type, const SymbolBody *S) {
-  if (Config->Shared || (S && !S->isTls()))
+static bool canRelaxTls(uint32_t Type, const SymbolBody &S) {
+  if (Config->Shared)
     return false;
 
   // We know we are producing an executable.
@@ -291,7 +291,7 @@ static bool canRelaxTls(uint32_t Type, const SymbolBody *S) {
   // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
   // defined.
   if (Target->isTlsInitialExecRel(Type))
-    return !S->isPreemptible();
+    return !S.isPreemptible();
 
   return false;
 }
@@ -305,9 +305,12 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
   if (!(C.getSectionHdr()->sh_flags & SHF_ALLOC))
     return 0;
 
+  if (!Body.isTls())
+    return 0;
+
   typedef typename ELFT::uint uintX_t;
   if (Expr == R_TLSLD_PC || Expr == R_TLSLD) {
-    if (canRelaxTls(Type, nullptr)) {
+    if (canRelaxTls(Type, Body)) {
       C.Relocations.push_back(
           {R_RELAX_TLS_LD_TO_LE, Type, Offset, Addend, &Body});
       return 2;
@@ -320,17 +323,14 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     return 1;
   }
 
-  if (!Body.isTls())
-    return 0;
-
-  if (Target->isTlsLocalDynamicRel(Type) && canRelaxTls(Type, nullptr)) {
+  if (Target->isTlsLocalDynamicRel(Type) && canRelaxTls(Type, Body)) {
     C.Relocations.push_back(
         {R_RELAX_TLS_LD_TO_LE, Type, Offset, Addend, &Body});
     return 1;
   }
 
   if (Target->isTlsGlobalDynamicRel(Type)) {
-    if (!canRelaxTls(Type, &Body)) {
+    if (!canRelaxTls(Type, Body)) {
       if (Out<ELFT>::Got->addDynTlsEntry(Body)) {
         uintX_t Off = Out<ELFT>::Got->getGlobalDynOffset(Body);
         Out<ELFT>::RelaDyn->addReloc(
@@ -359,7 +359,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
         {R_RELAX_TLS_GD_TO_LE, Type, Offset, Addend, &Body});
     return Target->TlsGdToLeSkip;
   }
-  if (Target->isTlsInitialExecRel(Type) && canRelaxTls(Type, &Body)) {
+  if (Target->isTlsInitialExecRel(Type) && canRelaxTls(Type, Body)) {
     C.Relocations.push_back(
         {R_RELAX_TLS_IE_TO_LE, Type, Offset, Addend, &Body});
     return 1;
