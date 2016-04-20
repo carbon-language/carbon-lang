@@ -258,15 +258,16 @@ public:
       return false;
     }
     for (const BasicBlock &BB : F) {
-      if (BB.empty() || !BB.back().isTerminator()) {
-        if (OS) {
-          *OS << "Basic Block in function '" << F.getName()
-              << "' does not have terminator!\n";
-          BB.printAsOperand(*OS, true);
-          *OS << "\n";
-        }
-        return false;
+      if (!BB.empty() && BB.back().isTerminator())
+        continue;
+
+      if (OS) {
+        *OS << "Basic Block in function '" << F.getName()
+            << "' does not have terminator!\n";
+        BB.printAsOperand(*OS, true);
+        *OS << "\n";
       }
+      return false;
     }
 
     // Now directly compute a dominance tree. We don't rely on the pass
