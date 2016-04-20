@@ -59,6 +59,12 @@ enum RelExpr {
   R_TLSLD_PC
 };
 
+inline bool refersToGotEntry(RelExpr Expr) {
+  return Expr == R_GOT || Expr == R_GOT_OFF || Expr == R_MIPS_GOT ||
+         Expr == R_MIPS_GOT_LOCAL || Expr == R_GOT_PAGE_PC ||
+         Expr == R_GOT_PC || Expr == R_GOT_FROM_END;
+}
+
 struct Relocation {
   RelExpr Expr;
   uint32_t Type;

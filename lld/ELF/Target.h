@@ -55,8 +55,6 @@ public:
   // dynamic linker if isRelRelative returns true.
   virtual bool isRelRelative(uint32_t Type) const;
 
-  virtual bool refersToGotEntry(uint32_t Type) const;
-
   enum PltNeed { Plt_No, Plt_Explicit, Plt_Implicit };
   PltNeed needsPlt(uint32_t Type, const SymbolBody &S) const;
 

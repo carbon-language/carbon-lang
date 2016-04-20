@@ -91,8 +91,6 @@ public:
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
-
-  bool refersToGotEntry(uint32_t Type) const override;
 };
 
 class X86_64TargetInfo final : public TargetInfo {
@@ -110,7 +108,6 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool refersToGotEntry(uint32_t Type) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
@@ -154,7 +151,6 @@ public:
   uint32_t getTlsGotRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool refersToGotEntry(uint32_t Type) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -190,7 +186,6 @@ public:
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isHintRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool refersToGotEntry(uint32_t Type) const override;
 };
 } // anonymous namespace
 
@@ -251,8 +246,6 @@ bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
 bool TargetInfo::needsPltImpl(uint32_t Type) const { return false; }
 
-bool TargetInfo::refersToGotEntry(uint32_t Type) const { return false; }
-
 TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
                                          const SymbolBody &S) const {
   if (S.isGnuIFunc())
@@ -281,9 +274,11 @@ TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
   // that points to the real function is a dedicated got entry used by the
   // plt. That is identified by special relocation types (R_X86_64_JUMP_SLOT,
   // R_386_JMP_SLOT, etc).
-  if (S.isShared())
-    if (!Config->Pic && S.isFunc() && !refersToGotEntry(Type))
+  if (S.isShared() && !Config->Pic && S.isFunc()) {
+    RelExpr Expr = getRelExpr(Type, S);
+    if (!refersToGotEntry(Expr))
       return Plt_Implicit;
+  }
 
   return Plt_No;
 }
@@ -459,10 +454,6 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
 
 bool X86TargetInfo::needsPltImpl(uint32_t Type) const {
   return Type == R_386_PLT32;
-}
-
-bool X86TargetInfo::refersToGotEntry(uint32_t Type) const {
-  return Type == R_386_GOT32;
 }
 
 uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
@@ -670,11 +661,6 @@ void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 bool X86_64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   return Type == R_X86_64_32S || Type == R_X86_64_32 || Type == R_X86_64_PC32 ||
          Type == R_X86_64_64;
-}
-
-bool X86_64TargetInfo::refersToGotEntry(uint32_t Type) const {
-  return Type == R_X86_64_GOTPCREL || Type == R_X86_64_GOTPCRELX ||
-         Type == R_X86_64_REX_GOTPCRELX;
 }
 
 uint32_t X86_64TargetInfo::getDynRel(uint32_t Type) const {
@@ -1236,10 +1222,6 @@ bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   }
 }
 
-bool AArch64TargetInfo::refersToGotEntry(uint32_t Type) const {
-  return Type == R_AARCH64_ADR_GOT_PAGE || Type == R_AARCH64_LD64_GOT_LO12_NC;
-}
-
 bool AArch64TargetInfo::needsPltImpl(uint32_t Type) const {
   switch (Type) {
   default:
@@ -1609,11 +1591,6 @@ void MipsTargetInfo<ELFT>::writeThunk(uint8_t *Buf, uint64_t S) const {
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::needsCopyRelImpl(uint32_t Type) const {
   return !isRelRelative(Type) || Type == R_MIPS_LO16;
-}
-
-template <class ELFT>
-bool MipsTargetInfo<ELFT>::refersToGotEntry(uint32_t Type) const {
-  return Type == R_MIPS_GOT16 || Type == R_MIPS_CALL16;
 }
 
 template <class ELFT>
