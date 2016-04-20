@@ -611,6 +611,7 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           Function.addCFIInstruction(
               Offset,
               MCCFIInstruction::createGnuArgsSize(nullptr, Instr.Ops[0]));
+          Function.setUsesGnuArgsSize();
           break;
         case DW_CFA_val_offset_sf:
         case DW_CFA_val_offset:

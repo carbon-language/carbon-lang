@@ -1168,6 +1168,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
          "first basic block should never be cold");
 
   // Emit code.
+  int64_t CurrentGnuArgsSize = 0;
   for (auto BB : Function.layout()) {
     if (EmitColdPart != BB->isCold())
       continue;
@@ -1189,41 +1190,50 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
         Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
         continue;
       }
-      if (!BC.MIA->isCFI(Instr)) {
-        if (opts::UpdateDebugSections) {
-          auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
-          if (RowReference != DebugLineTableRowRef::NULL_ROW &&
-              Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
-            auto CompileUnit =
-                BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex];
-            assert(CompileUnit &&
-                   "Invalid CU offset set in instruction debug info.");
-
-            auto OriginalLineTable =
-              BC.DwCtx->getLineTableForUnit(
-                  CompileUnit);
-            const auto &OriginalRow =
-                OriginalLineTable->Rows[RowReference.RowIndex - 1];
-
-            BC.Ctx->setCurrentDwarfLoc(
-                OriginalRow.File,
-                OriginalRow.Line,
-                OriginalRow.Column,
-                (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
-                (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
-                (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
-                (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
-                OriginalRow.Isa,
-                OriginalRow.Discriminator);
-            BC.Ctx->setDwarfCompileUnitID(CompileUnit->getOffset());
-            LastLocSeen = Instr.getLoc();
-          }
-        }
-
-        Streamer.EmitInstruction(Instr, *BC.STI);
+      if (BC.MIA->isCFI(Instr)) {
+        emitCFIInstr(*Function.getCFIFor(Instr));
         continue;
       }
-      emitCFIInstr(*Function.getCFIFor(Instr));
+      if (opts::UpdateDebugSections) {
+        auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
+        if (RowReference != DebugLineTableRowRef::NULL_ROW &&
+            Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
+          auto CompileUnit =
+              BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex];
+          assert(CompileUnit &&
+                 "Invalid CU offset set in instruction debug info.");
+
+          auto OriginalLineTable =
+            BC.DwCtx->getLineTableForUnit(
+                CompileUnit);
+          const auto &OriginalRow =
+              OriginalLineTable->Rows[RowReference.RowIndex - 1];
+
+          BC.Ctx->setCurrentDwarfLoc(
+              OriginalRow.File,
+              OriginalRow.Line,
+              OriginalRow.Column,
+              (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
+              (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
+              (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
+              (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
+              OriginalRow.Isa,
+              OriginalRow.Discriminator);
+          BC.Ctx->setDwarfCompileUnitID(CompileUnit->getOffset());
+          LastLocSeen = Instr.getLoc();
+        }
+      }
+
+      // Emit GNU_args_size CFIs as necessary.
+      if (Function.usesGnuArgsSize() && BC.MIA->isInvoke(Instr)) {
+        auto NewGnuArgsSize = BC.MIA->getGnuArgsSize(Instr);
+        if (NewGnuArgsSize >= 0 && NewGnuArgsSize != CurrentGnuArgsSize) {
+          CurrentGnuArgsSize = NewGnuArgsSize;
+          Streamer.EmitCFIGnuArgsSize(CurrentGnuArgsSize);
+        }
+      }
+
+      Streamer.EmitInstruction(Instr, *BC.STI);
     }
 
     MCSymbol *BBEndLabel = BC.Ctx->createTempSymbol();

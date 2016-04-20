@@ -213,6 +213,9 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
         else
           OS << '0';
         OS << "; action: " << Action;
+        auto GnuArgsSize = BC.MIA->getGnuArgsSize(Instruction);
+        if (GnuArgsSize >= 0)
+          OS << "; GNU_args_size = " << GnuArgsSize;
       }
     }
     if (opts::PrintDebugInfo && LineTable) {
@@ -825,6 +828,9 @@ bool BinaryFunction::buildCFG() {
   // Update the state.
   CurrentState = State::CFG;
 
+  // Annotate invoke instructions with GNU_args_size data.
+  propagateGnuArgsSizeInfo();
+
   return true;
 }
 
@@ -939,15 +945,13 @@ void BinaryFunction::annotateCFIState() {
       ++HighestState;
       if (CFI->getOperation() == MCCFIInstruction::OpRememberState) {
         StateStack.push(State);
-        continue;
-      }
-      if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
+      } else if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
         assert(!StateStack.empty() && "Corrupt CFI stack");
         State = StateStack.top();
         StateStack.pop();
-        continue;
+      } else if (CFI->getOperation() != MCCFIInstruction::OpGnuArgsSize) {
+        State = HighestState;
       }
-      State = HighestState;
     }
   }
 
@@ -995,8 +999,12 @@ bool BinaryFunction::fixCFIState() {
         }
 
         for (auto CFI : NewCFIs) {
-          InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
-          ++InsertIt;
+          // Ignore GNU_args_size instructions.
+          if (FrameInstructions[CFI].getOperation() !=
+              MCCFIInstruction::OpGnuArgsSize) {
+            InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
+            ++InsertIt;
+          }
         }
 
         return true;
@@ -1654,6 +1662,46 @@ void BinaryFunction::splitFunction() {
         break;
       BB->IsCold = true;
       IsSplit = true;
+    }
+  }
+}
+
+void BinaryFunction::propagateGnuArgsSizeInfo() {
+  assert(CurrentState == State::CFG && "unexpected function state");
+
+  if (!hasEHRanges() || !usesGnuArgsSize())
+    return;
+
+  // The current value of DW_CFA_GNU_args_size affects all following
+  // invoke instructions untill the next CFI overrides it.
+  // It is important to iterate basic blocks in the original order when
+  // assigning the value.
+  uint64_t CurrentGnuArgsSize = 0;
+  for (auto &BB : BasicBlocks) {
+    for (auto II = BB.begin(); II != BB.end(); ) {
+      auto &Instr = *II;
+      if (BC.MIA->isCFI(Instr)) {
+        auto CFI = getCFIFor(Instr);
+        if (CFI->getOperation() == MCCFIInstruction::OpGnuArgsSize) {
+          CurrentGnuArgsSize = CFI->getOffset();
+          // Delete DW_CFA_GNU_args_size instructions and only regenerate
+          // during the final code emission. The information is embedded
+          // inside call instructions.
+          II = BB.Instructions.erase(II);
+        } else {
+          ++II;
+        }
+        continue;
+      }
+
+      if (BC.MIA->isInvoke(Instr)) {
+        // Add the value of GNU_args_size as an extra operand if landing pad
+        // is non-emptry.
+        if (BC.MIA->getEHInfo(Instr).first) {
+          Instr.addOperand(MCOperand::createImm(CurrentGnuArgsSize));
+        }
+      }
+      ++II;
     }
   }
 }

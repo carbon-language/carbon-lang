@@ -122,13 +122,6 @@ private:
   /// Alignment requirements for the function.
   uint64_t Alignment{1};
 
-  /// True if this function needs to be emitted in two separate parts, one for
-  /// the hot basic blocks and another for the cold basic blocks.
-  bool IsSplit{false};
-
-  /// Indicate if this function has associated exception handling metadata.
-  bool HasEHRanges{false};
-
   MCSymbol *PersonalityFunction{nullptr};
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
 
@@ -137,6 +130,16 @@ private:
   /// False if the function is too complex to reconstruct its control
   /// flow graph and re-assemble.
   bool IsSimple{true};
+
+  /// True if this function needs to be emitted in two separate parts, one for
+  /// the hot basic blocks and another for the cold basic blocks.
+  bool IsSplit{false};
+
+  /// Indicate if this function has associated exception handling metadata.
+  bool HasEHRanges{false};
+
+  /// True if the function uses DW_CFA_GNU_args_size CFIs.
+  bool UsesGnuArgsSize{false};
 
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
@@ -440,8 +443,19 @@ public:
     return IsSimple;
   }
 
+  /// Return true if the function body is non-contiguous.
   bool isSplit() const {
     return IsSplit;
+  }
+
+  /// Return true if the function has exception handling tables.
+  bool hasEHRanges() const {
+    return HasEHRanges;
+  }
+
+  /// Return true if the function uses DW_CFA_GNU_args_size CFIs.
+  bool usesGnuArgsSize() const {
+    return UsesGnuArgsSize;
   }
 
   MCSymbol *getPersonalityFunction() const {
@@ -531,7 +545,8 @@ public:
     // with NOPs and then reorder it away.
     // We fix this by moving the CFI instruction just before any NOPs.
     auto I = Instructions.lower_bound(Offset);
-    if (I == Instructions.end() && Offset == getSize()) {
+    if (Offset == getSize()) {
+      assert(I == Instructions.end() && "unexpected iterator value");
       // Sometimes compiler issues restore_state after all instructions
       // in the function (even after nop).
       --I;
@@ -590,6 +605,11 @@ public:
 
   BinaryFunction &setSimple(bool Simple) {
     IsSimple = Simple;
+    return *this;
+  }
+
+  BinaryFunction &setUsesGnuArgsSize(bool Uses = true) {
+    UsesGnuArgsSize = Uses;
     return *this;
   }
 
@@ -737,6 +757,10 @@ public:
   /// is corrupted. If it is unable to fix it, it returns false.
   bool fixCFIState();
 
+  /// Associate DW_CFA_GNU_args_size info with invoke instructions
+  /// (call instructions with non-empty landing pad).
+  void propagateGnuArgsSizeInfo();
+
   /// Traverse the CFG checking branches, inverting their condition, removing or
   /// adding jumps based on a new layout order.
   void fixBranches();
@@ -750,9 +774,6 @@ public:
 
   /// Update exception handling ranges for the function.
   void updateEHRanges();
-
-  /// Return true if the function has exception handling tables.
-  bool hasEHRanges() const { return HasEHRanges; }
 
   /// Emit exception handling ranges for the function.
   void emitLSDA(MCStreamer *Streamer);
