@@ -652,7 +652,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
-    setOperationAction(ISD::LOAD, VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT,Expand);
     setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Expand);
@@ -683,9 +682,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Expand);
     setOperationAction(ISD::CTLZ, VT, Expand);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Expand);
-    setOperationAction(ISD::SHL, VT, Expand);
-    setOperationAction(ISD::SRA, VT, Expand);
-    setOperationAction(ISD::SRL, VT, Expand);
     setOperationAction(ISD::ROTL, VT, Expand);
     setOperationAction(ISD::ROTR, VT, Expand);
     setOperationAction(ISD::BSWAP, VT, Expand);
@@ -736,6 +732,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   // MMX-sized vectors (other than x86mmx) are expected to be expanded
   // into smaller operations.
   for (MVT MMXTy : {MVT::v8i8, MVT::v4i16, MVT::v2i32, MVT::v1i64}) {
+    setOperationAction(ISD::LOAD,               MMXTy,      Expand);
+    setOperationAction(ISD::SRL,                MMXTy,      Expand);
+    setOperationAction(ISD::SHL,                MMXTy,      Expand);
+    setOperationAction(ISD::SRA,                MMXTy,      Expand);
     setOperationAction(ISD::MULHS,              MMXTy,      Expand);
     setOperationAction(ISD::AND,                MMXTy,      Expand);
     setOperationAction(ISD::OR,                 MMXTy,      Expand);
@@ -751,7 +751,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::FNEG,               MVT::v4f32, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f32, Custom);
-    setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
     setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
@@ -867,8 +866,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
 
     // Custom lower v2i64 and v2f64 selects.
-    setOperationAction(ISD::LOAD,               MVT::v2f64, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);
     setOperationAction(ISD::SELECT,             MVT::v2f64, Custom);
     setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
 
@@ -1004,10 +1001,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v8f32,  &X86::VR256RegClass);
     addRegisterClass(MVT::v4i64,  &X86::VR256RegClass);
     addRegisterClass(MVT::v4f64,  &X86::VR256RegClass);
-
-    setOperationAction(ISD::LOAD,               MVT::v8f32, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v4f64, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v4i64, Legal);
 
     for (auto VT : { MVT::v8f32, MVT::v4f64 }) {
       setOperationAction(ISD::FFLOOR,     VT, Legal);
@@ -1210,12 +1203,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SUB,                MVT::i1,    Custom);
     setOperationAction(ISD::ADD,                MVT::i1,    Custom);
     setOperationAction(ISD::MUL,                MVT::i1,    Custom);
-    setOperationAction(ISD::LOAD,               MVT::v16f32, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v8f64, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v8i64, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v16i32, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v16i1,  Legal);
-    setOperationAction(ISD::LOAD,               MVT::v8i1,   Legal);
 
     for (MVT VT : {MVT::v2i64, MVT::v4i32, MVT::v8i32, MVT::v4i64, MVT::v8i16,
                    MVT::v16i8, MVT::v16i16, MVT::v32i8, MVT::v16i32,
@@ -1458,10 +1445,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v32i1,  &X86::VK32RegClass);
     addRegisterClass(MVT::v64i1,  &X86::VK64RegClass);
 
-    setOperationAction(ISD::LOAD,               MVT::v32i1, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v64i1, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v32i16, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v64i8, Legal);
     setOperationAction(ISD::SETCC,              MVT::v32i1, Custom);
     setOperationAction(ISD::SETCC,              MVT::v64i1, Custom);
     setOperationAction(ISD::ADD,                MVT::v32i16, Legal);
@@ -1552,8 +1535,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v4i1,   &X86::VK4RegClass);
     addRegisterClass(MVT::v2i1,   &X86::VK2RegClass);
 
-    setOperationAction(ISD::LOAD,               MVT::v2i1, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v4i1, Legal);
     setOperationAction(ISD::TRUNCATE,           MVT::v2i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v4i1, Custom);
     setOperationAction(ISD::SETCC,              MVT::v4i1, Custom);
