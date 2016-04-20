@@ -228,29 +228,6 @@ uint64_t TargetInfo::getImplicitAddend(const uint8_t *Buf,
   return 0;
 }
 
-bool TargetInfo::canRelaxTls(uint32_t Type, const SymbolBody *S) const {
-  if (Config->Shared || (S && !S->isTls()))
-    return false;
-
-  // We know we are producing an executable.
-
-  // Global-Dynamic relocs can be relaxed to Initial-Exec or Local-Exec
-  // depending on the symbol being locally defined or not.
-  if (isTlsGlobalDynamicRel(Type))
-    return true;
-
-  // Local-Dynamic relocs can be relaxed to Local-Exec.
-  if (isTlsLocalDynamicRel(Type))
-    return true;
-
-  // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
-  // defined.
-  if (isTlsInitialExecRel(Type))
-    return !S->isPreemptible();
-
-  return false;
-}
-
 uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
 
 bool TargetInfo::needsCopyRelImpl(uint32_t Type) const { return false; }
