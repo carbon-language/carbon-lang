@@ -84,7 +84,6 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsDynRelative(uint32_t Type) const override;
   bool needsPltImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
@@ -508,10 +507,6 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                 uint64_t Val) const {
   checkInt<32>(Val, Type);
   write32le(Loc, Val);
-}
-
-bool X86TargetInfo::needsDynRelative(uint32_t Type) const {
-  return Config->Shared && Type == R_386_TLS_IE;
 }
 
 void X86TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
@@ -1166,6 +1161,7 @@ bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case R_AARCH64_TSTBR14:
+  case R_AARCH64_LD64_GOT_LO12_NC:
     return true;
   }
 }
