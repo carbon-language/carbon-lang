@@ -64,8 +64,7 @@ static StringRef next(ArrayRef<StringRef> &Tokens) {
   return Tok;
 }
 
-static uint64_t parseExpr(uint64_t Lhs, int MinPrec,
-                          ArrayRef<StringRef> &Tokens, uint64_t Dot);
+static uint64_t parseExpr(ArrayRef<StringRef> &Tokens, uint64_t Dot);
 
 // This is a part of the operator-precedence parser to evaluate
 // arithmetic expressions in SECTIONS command. This function evaluates an
@@ -75,8 +74,7 @@ static uint64_t parsePrimary(ArrayRef<StringRef> &Tokens, uint64_t Dot) {
   if (Tok == ".")
     return Dot;
   if (Tok == "(") {
-    uint64_t V = parsePrimary(Tokens, Dot);
-    V = parseExpr(V, 0, Tokens, Dot);
+    uint64_t V = parseExpr(Tokens, Dot);
     if (Tokens.empty()) {
       error(") expected");
     } else {
@@ -111,8 +109,9 @@ static uint64_t apply(StringRef Op, uint64_t L, uint64_t R) {
 
 // This is an operator-precedence parser to evaluate
 // arithmetic expressions in SECTIONS command.
-static uint64_t parseExpr(uint64_t Lhs, int MinPrec,
-                          ArrayRef<StringRef> &Tokens, uint64_t Dot) {
+// Tokens should start with an operator.
+static uint64_t parseExpr1(uint64_t Lhs, int MinPrec,
+                           ArrayRef<StringRef> &Tokens, uint64_t Dot) {
   while (!Tokens.empty()) {
     // Read an operator and an expression.
     StringRef Op1 = Tokens.front();
@@ -129,7 +128,7 @@ static uint64_t parseExpr(uint64_t Lhs, int MinPrec,
       StringRef Op2 = Tokens.front();
       if (precedence(Op2) <= precedence(Op1))
         break;
-      Rhs = parseExpr(Rhs, precedence(Op2), Tokens, Dot);
+      Rhs = parseExpr1(Rhs, precedence(Op2), Tokens, Dot);
     }
 
     Lhs = apply(Op1, Lhs, Rhs);
@@ -137,10 +136,14 @@ static uint64_t parseExpr(uint64_t Lhs, int MinPrec,
   return Lhs;
 }
 
+static uint64_t parseExpr(ArrayRef<StringRef> &Tokens, uint64_t Dot) {
+  uint64_t V = parsePrimary(Tokens, Dot);
+  return parseExpr1(V, 0, Tokens, Dot);
+}
+
 // Evaluates the expression given by list of tokens.
 static uint64_t evaluate(ArrayRef<StringRef> Tokens, uint64_t Dot) {
-  uint64_t V = parsePrimary(Tokens, Dot);
-  V = parseExpr(V, 0, Tokens, Dot);
+  uint64_t V = parseExpr(Tokens, Dot);
   if (!Tokens.empty())
     error("stray token: " + Tokens[0]);
   return V;
