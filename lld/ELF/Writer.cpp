@@ -630,8 +630,10 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (!Config->Pic || Target->isRelRelative(Type) || Expr == R_PC ||
         Expr == R_SIZE || isAbsolute<ELFT>(Body)) {
       if (Config->EMachine == EM_MIPS && Body.isLocal() &&
-          (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32))
-        Expr = R_MIPS_GP0;
+          (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32)) {
+        Expr = R_ABS;
+        Addend += File.getMipsGp0();
+      }
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       continue;
     }

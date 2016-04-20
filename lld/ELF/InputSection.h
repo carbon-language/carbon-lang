@@ -37,7 +37,6 @@ enum RelExpr {
   R_GOT_PC,
   R_MIPS_GOT,
   R_MIPS_GOT_LOCAL,
-  R_MIPS_GP0,
   R_NEG_TLS,
   R_PAGE_PC,
   R_PC,
