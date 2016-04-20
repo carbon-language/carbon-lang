@@ -39,10 +39,6 @@
     }
   #endif
 
-  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (defined(__i386__) || \
-                                           defined(__x86_64__) || \
-                                           defined(__arm64__) || \
-                                           defined(__mips__))
   #define _LIBUNWIND_BUILD_SJLJ_APIS      defined(__arm__)
   #define _LIBUNWIND_SUPPORT_FRAME_APIS   (defined(__i386__) || \
                                            defined(__x86_64__))
@@ -71,10 +67,6 @@
     abort();
   }
 
-  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (defined(__i386__) || \
-                                           defined(__x86_64__) || \
-                                           defined(__arm__) || \
-                                           defined(__aarch64__))
   #define _LIBUNWIND_BUILD_SJLJ_APIS      0
   #define _LIBUNWIND_SUPPORT_FRAME_APIS   (defined(__i386__) || \
                                            defined(__x86_64__))
@@ -89,6 +81,11 @@
   #define _LIBUNWIND_SUPPORT_DWARF_INDEX _LIBUNWIND_SUPPORT_DWARF_UNWIND
 #endif
 
+#define _LIBUNWIND_BUILD_ZERO_COST_APIS                                        \
+  (defined(__i386__) || defined(__x86_64__) ||                                 \
+   (!defined(__APPLE__) && defined(__arm__)) ||                                \
+   (defined(__arm64__) || defined(__aarch64__)) ||                             \
+   (defined(__APPLE__) && defined(__mips__)))
 
 // Macros that define away in non-Debug builds
 #ifdef NDEBUG
