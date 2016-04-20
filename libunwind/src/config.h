@@ -75,10 +75,15 @@
   #define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libuwind: " msg, __VA_ARGS__)
   #define _LIBUNWIND_ABORT(msg) assert_rtn(__func__, __FILE__, __LINE__, msg)
 
-  #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND 0
-  #define _LIBUNWIND_SUPPORT_DWARF_UNWIND !defined(__arm__) || \
-                                          defined(__ARM_DWARF_EH__)
-  #define _LIBUNWIND_SUPPORT_DWARF_INDEX _LIBUNWIND_SUPPORT_DWARF_UNWIND
+  #if defined(__ARM_DWARF_EH__) || !defined(__arm__)
+    #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND 0
+    #define _LIBUNWIND_SUPPORT_DWARF_UNWIND 1
+    #define _LIBUNWIND_SUPPORT_DWARF_INDEX 1
+  #else
+    #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND 0
+    #define _LIBUNWIND_SUPPORT_DWARF_UNWIND 0
+    #define _LIBUNWIND_SUPPORT_DWARF_INDEX 0
+  #endif
 #endif
 
 #define _LIBUNWIND_BUILD_ZERO_COST_APIS                                        \
