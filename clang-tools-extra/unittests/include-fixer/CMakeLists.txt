@@ -8,6 +8,9 @@ include_directories(
   ${INCLUDE_FIXER_SOURCE_DIR}
   )
 
+# We'd like to clang/unittests/Tooling/RewriterTestContext.h in the test.
+include_directories(${CLANG_SOURCE_DIR})
+
 add_extra_unittest(IncludeFixerTests
   IncludeFixerTest.cpp
   )

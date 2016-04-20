@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../../../unittests/Tooling/RewriterTestContext.h"
+#include "unittests/Tooling/RewriterTestContext.h"
 #include "InMemoryXrefsDB.h"
 #include "IncludeFixer.h"
 #include "clang/Tooling/Tooling.h"
