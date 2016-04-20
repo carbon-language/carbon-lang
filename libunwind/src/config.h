@@ -82,7 +82,11 @@
   #endif
 #endif
 
-#define _LIBUNWIND_SUPPORT_FRAME_APIS (defined(__i386__) || defined(__x86_64__))
+#if defined(__i386__) || defined(__x86_64__)
+#define _LIBUNWIND_SUPPORT_FRAME_APIS 1
+#else
+#define _LIBUNWIND_SUPPORT_FRAME_APIS 0
+#endif
 
 #if defined(__i386__) || defined(__x86_64__) ||                                \
     (!defined(__APPLE__) && defined(__arm__)) ||                               \
