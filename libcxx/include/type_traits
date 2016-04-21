@@ -382,6 +382,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS_ONLY pair;
 template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY reference_wrapper;
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY hash;
 
 template <class>
 struct __void_t { typedef void type; };

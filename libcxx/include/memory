@@ -3166,8 +3166,6 @@ template<class _Tp, class... _Args>
 
 #endif  // _LIBCPP_STD_VER > 11
 
-template <class _Tp> struct hash;
-
 template <class _Size>
 inline _LIBCPP_INLINE_VISIBILITY
 _Size
@@ -3978,23 +3976,23 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         operator=(shared_ptr<_Yp>&& __r);
     template<class _Yp>
+        _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
             !is_array<_Yp>::value &&
             is_convertible<_Yp*, element_type*>::value,
             shared_ptr
         >::type&
-        _LIBCPP_INLINE_VISIBILITY
         operator=(auto_ptr<_Yp>&& __r);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template<class _Yp>
+        _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
             !is_array<_Yp>::value &&
             is_convertible<_Yp*, element_type*>::value,
             shared_ptr&
         >::type
-        _LIBCPP_INLINE_VISIBILITY
         operator=(auto_ptr<_Yp> __r);
 #endif
     template <class _Yp, class _Dp>
@@ -5622,7 +5620,7 @@ _LIBCPP_FUNC_VIS void* align(size_t __align, size_t __sz, void*& __ptr, size_t& 
 
 // --- Helper for container swap --
 template <typename _Alloc>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 void __swap_allocator(_Alloc & __a1, _Alloc & __a2)
 #if _LIBCPP_STD_VER >= 14
     _NOEXCEPT
@@ -5648,7 +5646,7 @@ void __swap_allocator(_Alloc & __a1, _Alloc & __a2, true_type)
 }
 
 template <typename _Alloc>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 void __swap_allocator(_Alloc &, _Alloc &, false_type) _NOEXCEPT {}
 
 template <typename _Alloc, typename _Traits=allocator_traits<_Alloc> >
