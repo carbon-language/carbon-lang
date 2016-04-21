@@ -81,7 +81,7 @@ public:
   ArrayRef<uint8_t> getFiller(StringRef Name);
   bool isDiscarded(InputSectionBase<ELFT> *S);
   bool shouldKeep(InputSectionBase<ELFT> *S);
-  void assignAddresses(std::vector<OutputSectionBase<ELFT> *> &S);
+  void assignAddresses(ArrayRef<OutputSectionBase<ELFT> *> S);
   int compareSections(StringRef A, StringRef B);
   uint32_t getSectionOrder(StringRef Name);
 

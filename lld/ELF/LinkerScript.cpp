@@ -185,7 +185,7 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 static OutputSectionBase<ELFT> *
-findSection(std::vector<OutputSectionBase<ELFT> *> &V, StringRef Name) {
+findSection(ArrayRef<OutputSectionBase<ELFT> *> V, StringRef Name) {
   for (OutputSectionBase<ELFT> *Sec : V)
     if (Sec->getName() == Name)
       return Sec;
@@ -194,7 +194,7 @@ findSection(std::vector<OutputSectionBase<ELFT> *> &V, StringRef Name) {
 
 template <class ELFT>
 void LinkerScript<ELFT>::assignAddresses(
-    std::vector<OutputSectionBase<ELFT> *> &Sections) {
+    ArrayRef<OutputSectionBase<ELFT> *> Sections) {
   typedef typename ELFT::uint uintX_t;
 
   // Orphan sections are sections present in the input files which
@@ -219,7 +219,7 @@ void LinkerScript<ELFT>::assignAddresses(
       continue;
     }
 
-    OutputSectionBase<ELFT> *Sec = findSection(Sections, Cmd.SectionName);
+    OutputSectionBase<ELFT> *Sec = findSection<ELFT>(Sections, Cmd.SectionName);
     if (!Sec)
       continue;
 
