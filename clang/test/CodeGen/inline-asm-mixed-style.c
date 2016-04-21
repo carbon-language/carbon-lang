@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -fasm-blocks -fsyntax-only -verify %s -DCHECK_ASM_GOTO
 // RUN: %clang_cc1 -triple i386-unknown-unknown -fasm-blocks -O0 -emit-llvm -S %s -o - | FileCheck %s
+// REQUIRES: x86-registered-target
 
 void f() {
   __asm mov eax, ebx
