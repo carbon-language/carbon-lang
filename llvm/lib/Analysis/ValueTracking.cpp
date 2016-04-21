@@ -3935,9 +3935,9 @@ static Optional<bool> isImpliedCondMatchingOperands(CmpInst::Predicate APred,
     std::swap(BLHS, BRHS);
     BPred = ICmpInst::getSwappedPredicate(BPred);
   }
-  if (CmpInst::isTrueWhenOperandsMatch(APred, BPred))
+  if (CmpInst::isImpliedTrueByMatchingCmp(APred, BPred))
     return true;
-  if (CmpInst::isFalseWhenOperandsMatch(APred, BPred))
+  if (CmpInst::isImpliedFalseByMatchingCmp(APred, BPred))
     return false;
 
   return None;

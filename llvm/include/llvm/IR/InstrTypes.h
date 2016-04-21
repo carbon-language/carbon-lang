@@ -1069,14 +1069,14 @@ public:
 
   /// @brief Determine if Pred1 implies Pred2 is true when two compares have
   /// matching operands.
-  bool isTrueWhenOperandsMatch(Predicate Pred2) {
-    return isTrueWhenOperandsMatch(getPredicate(), Pred2);
+  bool isImpliedTrueByMatchingCmp(Predicate Pred2) {
+    return isImpliedTrueByMatchingCmp(getPredicate(), Pred2);
   }
 
   /// @brief Determine if Pred1 implies Pred2 is false when two compares have
   /// matching operands.
-  bool isFalseWhenOperandsMatch(Predicate Pred2) {
-    return isFalseWhenOperandsMatch(getPredicate(), Pred2);
+  bool isImpliedFalseByMatchingCmp(Predicate Pred2) {
+    return isImpliedFalseByMatchingCmp(getPredicate(), Pred2);
   }
 
   /// @returns true if the predicate is unsigned, false otherwise.
@@ -1101,11 +1101,11 @@ public:
 
   /// Determine if Pred1 implies Pred2 is true when two compares have matching
   /// operands.
-  static bool isTrueWhenOperandsMatch(Predicate Pred1, Predicate Pred2);
+  static bool isImpliedTrueByMatchingCmp(Predicate Pred1, Predicate Pred2);
 
   /// Determine if Pred1 implies Pred2 is false when two compares have matching
   /// operands.
-  static bool isFalseWhenOperandsMatch(Predicate Pred1, Predicate Pred2);
+  static bool isImpliedFalseByMatchingCmp(Predicate Pred1, Predicate Pred2);
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {

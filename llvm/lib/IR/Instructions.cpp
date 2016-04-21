@@ -3597,7 +3597,7 @@ bool CmpInst::isFalseWhenEqual(Predicate predicate) {
   }
 }
 
-bool CmpInst::isTrueWhenOperandsMatch(Predicate Pred1, Predicate Pred2) {
+bool CmpInst::isImpliedTrueByMatchingCmp(Predicate Pred1, Predicate Pred2) {
   // If the predicates match, then we know the first condition implies the
   // second is true.
   if (Pred1 == Pred2)
@@ -3615,7 +3615,7 @@ bool CmpInst::isTrueWhenOperandsMatch(Predicate Pred1, Predicate Pred2) {
   return false;
 }
 
-bool CmpInst::isFalseWhenOperandsMatch(Predicate Pred1, Predicate Pred2) {
+bool CmpInst::isImpliedFalseByMatchingCmp(Predicate Pred1, Predicate Pred2) {
   // If an inverted Pred1 matches Pred2, we can infer the second condition is
   // false.
   if (getInversePredicate(Pred1) == Pred2)
