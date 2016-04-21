@@ -435,10 +435,14 @@ namespace {
 enum PltNeed { Plt_No, Plt_Explicit, Plt_Implicit };
 }
 
+static bool needsPlt(RelExpr Expr) {
+  return Expr == R_PLT_PC || Expr == R_PPC_PLT_OPD || Expr == R_PLT;
+}
+
 static PltNeed needsPlt(RelExpr Expr, uint32_t Type, const SymbolBody &S) {
   if (S.isGnuIFunc())
     return Plt_Explicit;
-  if (S.isPreemptible() && Target->needsPlt(Type))
+  if (S.isPreemptible() && needsPlt(Expr))
     return Plt_Explicit;
 
   // This handles a non PIC program call to function in a shared library.
@@ -570,12 +574,12 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (NeedPlt) {
       if (NeedPlt == Plt_Implicit)
         Body.NeedsCopyOrPltAddr = true;
-      RelExpr E;
+      RelExpr E = Expr;
       if (Expr == R_PPC_OPD)
         E = R_PPC_PLT_OPD;
       else if (Expr == R_PC)
         E = R_PLT_PC;
-      else
+      else if (Expr == R_ABS)
         E = R_PLT;
       C.Relocations.push_back({E, Type, Offset, Addend, &Body});
 
@@ -604,6 +608,15 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       }
       continue;
     }
+
+    // We decided not to use a plt. Optimize a reference to the plt to a
+    // reference to the symbol itself.
+    if (Expr == R_PLT_PC)
+      Expr = R_PC;
+    if (Expr == R_PPC_PLT_OPD)
+      Expr = R_PPC_OPD;
+    if (Expr == R_PLT)
+      Expr = R_ABS;
 
     if (Target->needsThunk(Type, File, Body)) {
       C.Relocations.push_back({R_THUNK, Type, Offset, Addend, &Body});

@@ -84,7 +84,6 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -108,7 +107,6 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
 
@@ -132,7 +130,6 @@ public:
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
@@ -151,7 +148,6 @@ public:
   uint32_t getTlsGotRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -180,7 +176,6 @@ public:
   void writeGotHeader(uint8_t *Buf) const override;
   void writeThunk(uint8_t *Buf, uint64_t S) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPlt(uint32_t Type) const override;
   bool needsThunk(uint32_t Type, const InputFile &File,
                   const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -244,8 +239,6 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
-bool TargetInfo::needsPlt(uint32_t Type) const { return false; }
-
 bool TargetInfo::needsThunk(uint32_t Type, const InputFile &File,
                             const SymbolBody &S) const {
   return false;
@@ -303,6 +296,7 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_386_TLS_LDM:
     return R_TLSLD;
   case R_386_PLT32:
+    return R_PLT_PC;
   case R_386_PC32:
     return R_PC;
   case R_386_GOTPC:
@@ -413,10 +407,6 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 
 bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   return Type == R_386_32 || Type == R_386_16 || Type == R_386_8;
-}
-
-bool X86TargetInfo::needsPlt(uint32_t Type) const {
-  return Type == R_386_PLT32;
 }
 
 uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
@@ -572,6 +562,7 @@ RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_X86_64_SIZE64:
     return R_SIZE;
   case R_X86_64_PLT32:
+    return R_PLT_PC;
   case R_X86_64_PC32:
     return R_PC;
   case R_X86_64_GOT32:
@@ -652,10 +643,6 @@ bool X86_64TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
 bool X86_64TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
   return Type == R_X86_64_DTPOFF32 || Type == R_X86_64_DTPOFF64 ||
          Type == R_X86_64_TLSLD;
-}
-
-bool X86_64TargetInfo::needsPlt(uint32_t Type) const {
-  return Type == R_X86_64_PLT32;
 }
 
 bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
@@ -892,7 +879,7 @@ RelExpr PPC64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   default:
     return R_ABS;
   case R_PPC64_REL24:
-    return R_PPC_OPD;
+    return R_PPC_PLT_OPD;
   }
 }
 
@@ -915,11 +902,6 @@ void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32be(Buf + 20, 0xe84c0008);                   // ld %r2,8(%r12)
   write32be(Buf + 24, 0xe96c0010);                   // ld %r11,16(%r12)
   write32be(Buf + 28, 0x4e800420);                   // bctr
-}
-
-bool PPC64TargetInfo::needsPlt(uint32_t Type) const {
-  // These are function calls that need to be redirected through a PLT stub.
-  return Type == R_PPC64_REL24;
 }
 
 bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
@@ -1044,14 +1026,16 @@ RelExpr AArch64TargetInfo::getRelExpr(uint32_t Type,
   switch (Type) {
   default:
     return R_ABS;
-  case R_AARCH64_JUMP26:
   case R_AARCH64_CALL26:
+  case R_AARCH64_CONDBR19:
+  case R_AARCH64_JUMP26:
+  case R_AARCH64_TSTBR14:
+    return R_PLT_PC;
+
   case R_AARCH64_PREL16:
   case R_AARCH64_PREL32:
   case R_AARCH64_PREL64:
-  case R_AARCH64_CONDBR19:
   case R_AARCH64_ADR_PREL_LO21:
-  case R_AARCH64_TSTBR14:
     return R_PC;
   case R_AARCH64_ADR_PREL_PG_HI21:
     return R_PAGE_PC;
@@ -1181,18 +1165,6 @@ bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   case R_AARCH64_LDST32_ABS_LO12_NC:
   case R_AARCH64_LDST64_ABS_LO12_NC:
   case R_AARCH64_LDST128_ABS_LO12_NC:
-    return true;
-  }
-}
-
-bool AArch64TargetInfo::needsPlt(uint32_t Type) const {
-  switch (Type) {
-  default:
-    return false;
-  case R_AARCH64_CALL26:
-  case R_AARCH64_CONDBR19:
-  case R_AARCH64_JUMP26:
-  case R_AARCH64_TSTBR14:
     return true;
   }
 }
@@ -1405,6 +1377,8 @@ RelExpr MipsTargetInfo<ELFT>::getRelExpr(uint32_t Type,
   switch (Type) {
   default:
     return R_ABS;
+  case R_MIPS_26:
+    return R_PLT;
   case R_MIPS_HI16:
   case R_MIPS_LO16:
     // MIPS _gp_disp designates offset between start of function and 'gp'
@@ -1554,10 +1528,6 @@ void MipsTargetInfo<ELFT>::writeThunk(uint8_t *Buf, uint64_t S) const {
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::needsCopyRelImpl(uint32_t Type) const {
   return !isRelRelative(Type) || Type == R_MIPS_LO16;
-}
-
-template <class ELFT> bool MipsTargetInfo<ELFT>::needsPlt(uint32_t Type) const {
-  return Type == R_MIPS_26;
 }
 
 template <class ELFT>
