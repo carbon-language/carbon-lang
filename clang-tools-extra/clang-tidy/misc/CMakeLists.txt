@@ -29,6 +29,7 @@ add_clang_library(clangTidyMiscModule
   StringLiteralWithEmbeddedNulCheck.cpp
   SuspiciousMissingCommaCheck.cpp
   SuspiciousSemicolonCheck.cpp
+  SuspiciousStringCompareCheck.cpp
   SwappedArgumentsCheck.cpp
   ThrowByValueCatchByReferenceCheck.cpp
   UndelegatedConstructor.cpp
