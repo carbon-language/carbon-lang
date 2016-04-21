@@ -435,7 +435,7 @@ namespace {
 enum PltNeed { Plt_No, Plt_Explicit, Plt_Implicit };
 }
 
-static PltNeed needsPlt(uint32_t Type, const SymbolBody &S) {
+static PltNeed needsPlt(RelExpr Expr, uint32_t Type, const SymbolBody &S) {
   if (S.isGnuIFunc())
     return Plt_Explicit;
   if (S.isPreemptible() && Target->needsPlt(Type))
@@ -462,11 +462,9 @@ static PltNeed needsPlt(uint32_t Type, const SymbolBody &S) {
   // that points to the real function is a dedicated got entry used by the
   // plt. That is identified by special relocation types (R_X86_64_JUMP_SLOT,
   // R_386_JMP_SLOT, etc).
-  if (S.isShared() && !Config->Pic && S.isFunc()) {
-    RelExpr Expr = Target->getRelExpr(Type, S);
+  if (S.isShared() && !Config->Pic && S.isFunc())
     if (!refersToGotEntry(Expr))
       return Plt_Implicit;
-  }
 
   return Plt_No;
 }
@@ -568,7 +566,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     // If a relocation needs PLT, we create a PLT and a GOT slot
     // for the symbol.
-    PltNeed NeedPlt = needsPlt(Type, Body);
+    PltNeed NeedPlt = needsPlt(Expr, Type, Body);
     if (NeedPlt) {
       if (NeedPlt == Plt_Implicit)
         Body.NeedsCopyOrPltAddr = true;
