@@ -21,6 +21,7 @@ a:
         dextm $9, $6, 3, 39      # CHECK: dextm $9, $6, 3, 39 # encoding: [0x59,0x26,0x30,0xe4]
         dextu $9, $6, 35, 7      # CHECK: dextu $9, $6, 35, 7  # encoding: [0x59,0x26,0x30,0xd4]
         dalign $4, $2, $3, 5     # CHECK: dalign $4, $2, $3, 5  # encoding: [0x58,0x43,0x25,0x1c]
+        ldpc $2, 16              # CHECK: ldpc $2, 16           # encoding: [0x78,0x58,0x00,0x02]
         lw $3, 32($gp)           # CHECK: lw $3, 32($gp)        # encoding: [0x65,0x88]
         lw $3, 24($sp)           # CHECK: lw $3, 24($sp)        # encoding: [0x48,0x66]
         lw16 $4, 8($17)          # CHECK: lw16 $4, 8($17)       # encoding: [0x6a,0x12]
