@@ -12,7 +12,7 @@
 #include "llvm/DebugInfo/PDB/IPDBSourceFile.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
-#include "llvm/DebugInfo/PDB/Raw/PdbFile.h"
+#include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
