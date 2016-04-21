@@ -284,7 +284,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   BigSize += getHeader().sizeofcmds;
   if (getData().data() + BigSize > getData().end()) {
     Err = malformedError(getFileName(), "truncated or malformed object "
-                         "(load commands extends past the end of the file)");
+                         "(load commands extend past the end of the file)");
     return;
   }
 
