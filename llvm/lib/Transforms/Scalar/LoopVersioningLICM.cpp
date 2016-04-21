@@ -121,28 +121,6 @@ static MDNode *createStringMetadata(Loop *TheLoop, StringRef Name, unsigned V) {
   return MDNode::get(Context, MDs);
 }
 
-/// \brief Find string metadata for loop, if it exist return true, else return
-/// false.
-bool llvm::findStringMetadataForLoop(Loop *TheLoop, StringRef Name) {
-  MDNode *LoopID = TheLoop->getLoopID();
-  // Return false if LoopID is false.
-  if (!LoopID)
-    return false;
-  // Iterate over LoopID operands and look for MDString Metadata
-  for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
-    MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
-    if (!MD)
-      continue;
-    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (!S)
-      continue;
-    // Return true if MDString holds expected MetaData.
-    if (Name.equals(S->getString()))
-      return true;
-  }
-  return false;
-}
-
 /// \brief Set input string into loop metadata by keeping other values intact.
 void llvm::addStringMetadataToLoop(Loop *TheLoop, const char *MDString,
                                    unsigned V) {
