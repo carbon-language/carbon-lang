@@ -195,6 +195,14 @@ bool llvm::isKnownPositive(Value *V, const DataLayout &DL, unsigned Depth,
     isKnownNonZero(V, DL, Depth, AC, CxtI, DT);
 }
 
+bool llvm::isKnownNegative(Value *V, const DataLayout &DL, unsigned Depth,
+                           AssumptionCache *AC, const Instruction *CxtI,
+                           const DominatorTree *DT) {
+  bool NonNegative, Negative;
+  ComputeSignBit(V, NonNegative, Negative, DL, Depth, AC, CxtI, DT);
+  return Negative;
+}
+
 static bool isKnownNonEqual(Value *V1, Value *V2, const Query &Q);
 
 bool llvm::isKnownNonEqual(Value *V1, Value *V2, const DataLayout &DL,
@@ -506,34 +514,6 @@ bool llvm::isValidAssumeForContext(const Instruction *I,
                                    const Instruction *CxtI,
                                    const DominatorTree *DT) {
   return ::isValidAssumeForContext(const_cast<Instruction *>(I), CxtI, DT);
-}
-
-template<typename LHS, typename RHS>
-inline match_combine_or<CmpClass_match<LHS, RHS, ICmpInst, ICmpInst::Predicate>,
-                        CmpClass_match<RHS, LHS, ICmpInst, ICmpInst::Predicate>>
-m_c_ICmp(ICmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
-  return m_CombineOr(m_ICmp(Pred, L, R), m_ICmp(Pred, R, L));
-}
-
-template<typename LHS, typename RHS>
-inline match_combine_or<BinaryOp_match<LHS, RHS, Instruction::And>,
-                        BinaryOp_match<RHS, LHS, Instruction::And>>
-m_c_And(const LHS &L, const RHS &R) {
-  return m_CombineOr(m_And(L, R), m_And(R, L));
-}
-
-template<typename LHS, typename RHS>
-inline match_combine_or<BinaryOp_match<LHS, RHS, Instruction::Or>,
-                        BinaryOp_match<RHS, LHS, Instruction::Or>>
-m_c_Or(const LHS &L, const RHS &R) {
-  return m_CombineOr(m_Or(L, R), m_Or(R, L));
-}
-
-template<typename LHS, typename RHS>
-inline match_combine_or<BinaryOp_match<LHS, RHS, Instruction::Xor>,
-                        BinaryOp_match<RHS, LHS, Instruction::Xor>>
-m_c_Xor(const LHS &L, const RHS &R) {
-  return m_CombineOr(m_Xor(L, R), m_Xor(R, L));
 }
 
 static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,

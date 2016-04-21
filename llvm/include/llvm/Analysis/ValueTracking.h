@@ -105,6 +105,13 @@ template <typename T> class ArrayRef;
                        const Instruction *CxtI = nullptr,
                        const DominatorTree *DT = nullptr);
 
+  /// Returns true if the given value is known be negative (i.e. non-positive
+  /// and non-zero).
+  bool isKnownNegative(Value *V, const DataLayout &DL, unsigned Depth = 0,
+                       AssumptionCache *AC = nullptr,
+                       const Instruction *CxtI = nullptr,
+                       const DominatorTree *DT = nullptr);
+
   /// isKnownNonEqual - Return true if the given values are known to be
   /// non-equal when defined. Supports scalar integer types only.
   bool isKnownNonEqual(Value *V1, Value *V2, const DataLayout &DL,
