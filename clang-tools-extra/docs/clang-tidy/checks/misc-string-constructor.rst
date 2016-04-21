@@ -5,7 +5,6 @@ misc-string-constructor
 
 Finds string constructors that are suspicious and probably errors.
 
-
 A common mistake is to swap parameters to the 'fill' string-constructor.
 
 Examples:
