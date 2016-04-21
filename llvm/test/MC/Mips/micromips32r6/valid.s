@@ -309,3 +309,7 @@
   mfhc0 $1, $2, 1          # CHECK: mfhc0 $1, $2, 1        # encoding: [0x00,0x22,0x08,0xf4]
   mfhc1 $zero, $f6         # CHECK: mfhc1 $zero, $f6       # encoding: [0x54,0x06,0x30,0x3b]
   mfhc2 $23, $16           # CHECK: mfhc2 $23, $16         # encoding: [0x02,0xf0,0x8d,0x3c]
+  tlbp                     # CHECK: tlbp                   # encoding: [0x00,0x00,0x03,0x7c]
+  tlbr                     # CHECK: tlbr                   # encoding: [0x00,0x00,0x13,0x7c]
+  tlbwi                    # CHECK: tlbwi                  # encoding: [0x00,0x00,0x23,0x7c]
+  tlbwr                    # CHECK: tlbwr                  # encoding: [0x00,0x00,0x33,0x7c]

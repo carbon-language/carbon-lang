@@ -162,3 +162,15 @@
   swm32 $5, $6, 8($4)          # CHECK: :[[@LINE]]:{{[0-9]+}}: error: $16 or $31 expected
   swm32 $16, $19, 8($4)        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: consecutive register numbers expected
   swm32 $16-$25, 8($4)         # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register operand
+  tlbp $3                      # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  tlbp 5                       # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  tlbp $4, 6                   # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  tlbr $3                      # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  tlbr 5                       # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  tlbr $4, 6                   # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  tlbwi $3                     # CHECK: :[[@LINE]]:9: error: invalid operand for instruction
+  tlbwi 5                      # CHECK: :[[@LINE]]:9: error: invalid operand for instruction
+  tlbwi $4, 6                  # CHECK: :[[@LINE]]:9: error: invalid operand for instruction
+  tlbwr $3                     # CHECK: :[[@LINE]]:9: error: invalid operand for instruction
+  tlbwr 5                      # CHECK: :[[@LINE]]:9: error: invalid operand for instruction
+  tlbwr $4, 6                  # CHECK: :[[@LINE]]:9: error: invalid operand for instruction

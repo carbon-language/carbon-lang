@@ -2077,11 +2077,12 @@ def JALR_HB : JALR_HB_DESC, JALR_HB_ENC, ISA_MIPS32;
 
 class TLB<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
                                       FrmOther, asmstr>;
-def TLBP : MMRel, TLB<"tlbp">, COP0_TLB_FM<0x08>;
-def TLBR : MMRel, TLB<"tlbr">, COP0_TLB_FM<0x01>;
-def TLBWI : MMRel, TLB<"tlbwi">, COP0_TLB_FM<0x02>;
-def TLBWR : MMRel, TLB<"tlbwr">, COP0_TLB_FM<0x06>;
-
+let AdditionalPredicates = [NotInMicroMips] in {
+  def TLBP : MMRel, TLB<"tlbp">, COP0_TLB_FM<0x08>;
+  def TLBR : MMRel, TLB<"tlbr">, COP0_TLB_FM<0x01>;
+  def TLBWI : MMRel, TLB<"tlbwi">, COP0_TLB_FM<0x02>;
+  def TLBWR : MMRel, TLB<"tlbwr">, COP0_TLB_FM<0x06>;
+}
 class CacheOp<string instr_asm, Operand MemOpnd> :
     InstSE<(outs), (ins  MemOpnd:$addr, uimm5:$hint),
            !strconcat(instr_asm, "\t$hint, $addr"), [], NoItinerary, FrmOther,

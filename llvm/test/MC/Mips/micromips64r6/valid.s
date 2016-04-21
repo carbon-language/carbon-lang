@@ -220,5 +220,9 @@ a:
         daddu $24, $2, 18079     # CHECK: daddiu $24, $2, 18079   # encoding: [0x5f,0x02,0x46,0x9f]
         dsubu $3, 5              # CHECK: daddiu $3, $3, -5       # encoding: [0x5c,0x63,0xff,0xfb]
         dsubu $3, $4, 5          # CHECK: daddiu $3, $4, -5       # encoding: [0x5c,0x64,0xff,0xfb]
+        tlbp                     # CHECK: tlbp                    # encoding: [0x00,0x00,0x03,0x7c]
+        tlbr                     # CHECK: tlbr                    # encoding: [0x00,0x00,0x13,0x7c]
+        tlbwi                    # CHECK: tlbwi                   # encoding: [0x00,0x00,0x23,0x7c]
+        tlbwr                    # CHECK: tlbwr                   # encoding: [0x00,0x00,0x33,0x7c]
 
 1:
