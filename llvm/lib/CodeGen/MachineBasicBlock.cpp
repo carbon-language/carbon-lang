@@ -711,8 +711,8 @@ bool MachineBasicBlock::canFallThrough() {
   return FBB == nullptr;
 }
 
-MachineBasicBlock *
-MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
+MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ,
+                                                        Pass &P) {
   if (!canSplitCriticalEdge(Succ))
     return nullptr;
 
@@ -726,8 +726,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << Succ->getNumber() << '\n');
 
-  LiveIntervals *LIS = P->getAnalysisIfAvailable<LiveIntervals>();
-  SlotIndexes *Indexes = P->getAnalysisIfAvailable<SlotIndexes>();
+  LiveIntervals *LIS = P.getAnalysisIfAvailable<LiveIntervals>();
+  SlotIndexes *Indexes = P.getAnalysisIfAvailable<SlotIndexes>();
   if (LIS)
     LIS->insertMBBInMaps(NMBB);
   else if (Indexes)
@@ -736,7 +736,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   // On some targets like Mips, branches may kill virtual registers. Make sure
   // that LiveVariables is properly updated after updateTerminator replaces the
   // terminators.
-  LiveVariables *LV = P->getAnalysisIfAvailable<LiveVariables>();
+  LiveVariables *LV = P.getAnalysisIfAvailable<LiveVariables>();
 
   // Collect a list of virtual registers killed by the terminators.
   SmallVector<unsigned, 4> KilledRegs;
@@ -916,10 +916,10 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   }
 
   if (MachineDominatorTree *MDT =
-      P->getAnalysisIfAvailable<MachineDominatorTree>())
+          P.getAnalysisIfAvailable<MachineDominatorTree>())
     MDT->recordSplitCriticalEdge(this, Succ, NMBB);
 
-  if (MachineLoopInfo *MLI = P->getAnalysisIfAvailable<MachineLoopInfo>())
+  if (MachineLoopInfo *MLI = P.getAnalysisIfAvailable<MachineLoopInfo>())
     if (MachineLoop *TIL = MLI->getLoopFor(this)) {
       // If one or the other blocks were not in a loop, the new block is not
       // either, and thus LI doesn't need to be updated.

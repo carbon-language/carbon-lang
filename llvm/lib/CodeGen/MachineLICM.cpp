@@ -1382,7 +1382,7 @@ MachineBasicBlock *MachineLICM::getCurPreheader() {
         return nullptr;
       }
 
-      CurPreheader = Pred->SplitCriticalEdge(CurLoop->getHeader(), this);
+      CurPreheader = Pred->SplitCriticalEdge(CurLoop->getHeader(), *this);
       if (!CurPreheader) {
         CurPreheader = reinterpret_cast<MachineBasicBlock *>(-1);
         return nullptr;

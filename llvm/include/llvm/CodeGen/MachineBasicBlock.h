@@ -506,7 +506,7 @@ public:
   ///
   /// This function updates LiveVariables, MachineDominatorTree, and
   /// MachineLoopInfo, as applicable.
-  MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P);
+  MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *Succ, Pass &P);
 
   /// Check if the edge between this block and the given successor \p
   /// Succ, can be split. If this returns true a subsequent call to
