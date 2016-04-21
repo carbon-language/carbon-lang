@@ -11,6 +11,12 @@
 # CHECK-FIXUP: bc    bar        # encoding: [0b100101AA,A,A,A]
 # CHECK-FIXUP:                  #   fixup A - offset: 0,
 # CHECK-FIXUP:                      value: bar-4, kind: fixup_MICROMIPS_PC26_S1
+# CHECK-FIXUP: addiupc $2, bar  # encoding: [0x78,0b01000AAA,A,A]
+# CHECK-FIXUP:                  #   fixup A - offset: 0,
+# CHECK-FIXUP:                      value: bar, kind: fixup_MICROMIPS_PC19_S2
+# CHECK-FIXUP: lwpc    $2,  bar # encoding: [0x78,0b01001AAA,A,A]
+# CHECK-FIXUP:                  #   fixup A - offset: 0,
+# CHECK-FIXUP:                      value: bar, kind: fixup_MICROMIPS_PC19_S2
 #------------------------------------------------------------------------------
 # Check that the appropriate relocations were created.
 #------------------------------------------------------------------------------
@@ -21,3 +27,5 @@
 
   balc  bar
   bc    bar
+  addiupc $2,bar
+  lwpc    $2,bar
