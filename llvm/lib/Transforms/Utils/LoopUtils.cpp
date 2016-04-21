@@ -830,6 +830,11 @@ bool llvm::findStringMetadataForLoop(Loop *TheLoop, StringRef Name) {
   // Return false if LoopID is false.
   if (!LoopID)
     return false;
+
+  // First operand should refer to the loop id itself.
+  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+  assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
+
   // Iterate over LoopID operands and look for MDString Metadata
   for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
     MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
