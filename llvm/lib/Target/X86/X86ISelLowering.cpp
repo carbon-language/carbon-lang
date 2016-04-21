@@ -1369,6 +1369,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::AND, VT, Legal);
       setOperationAction(ISD::OR,  VT, Legal);
       setOperationAction(ISD::XOR, VT, Legal);
+      setOperationAction(ISD::CTPOP, VT, Custom);
     }
 
     if (Subtarget.hasCDI()) {
@@ -20671,6 +20672,18 @@ static SDValue LowerVectorCTPOP(SDValue Op, const X86Subtarget &Subtarget,
     // Extract each 128-bit vector, compute pop count and concat the result.
     SDValue LHS = extract128BitVector(Op0, 0, DAG, DL);
     SDValue RHS = extract128BitVector(Op0, NumElems / 2, DAG, DL);
+
+    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT,
+                       LowerVectorCTPOPInRegLUT(LHS, DL, Subtarget, DAG),
+                       LowerVectorCTPOPInRegLUT(RHS, DL, Subtarget, DAG));
+  }
+
+  if (VT.is512BitVector() && !Subtarget.hasBWI()) {
+    unsigned NumElems = VT.getVectorNumElements();
+
+    // Extract each 256-bit vector, compute pop count and concat the result.
+    SDValue LHS = extract256BitVector(Op0, 0, DAG, DL);
+    SDValue RHS = extract256BitVector(Op0, NumElems / 2, DAG, DL);
 
     return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT,
                        LowerVectorCTPOPInRegLUT(LHS, DL, Subtarget, DAG),
