@@ -867,10 +867,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     return replaceInstUsesWith(LI, UndefValue::get(LI.getType()));
   }
 
-  // TODO: The transform below needs updated for unordered loads
-  if (!LI.isSimple())
-    return nullptr;
-
   if (Op->hasOneUse()) {
     // Change select and PHI nodes to select values instead of addresses: this
     // helps alias analysis out a lot, allows many others simplifications, and
@@ -891,8 +887,11 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                                            SI->getOperand(1)->getName()+".val");
         LoadInst *V2 = Builder->CreateLoad(SI->getOperand(2),
                                            SI->getOperand(2)->getName()+".val");
+        assert(LI.isUnordered() && "implied by above");
         V1->setAlignment(Align);
+        V1->setAtomic(LI.getOrdering(), LI.getSynchScope());
         V2->setAlignment(Align);
+        V2->setAtomic(LI.getOrdering(), LI.getSynchScope());
         return SelectInst::Create(SI->getCondition(), V1, V2);
       }
 

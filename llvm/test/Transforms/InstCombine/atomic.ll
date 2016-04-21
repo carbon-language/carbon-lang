@@ -143,4 +143,32 @@ define i32 @test14() {
   ret i32 0
 }
 
+@a = external global i32
+@b = external global i32
 
+define i32 @test15(i1 %cnd) {
+; CHECK-LABEL: define i32 @test15(
+; CHECK: load atomic i32, i32* @a unordered, align 4
+; CHECK: load atomic i32, i32* @b unordered, align 4
+  %addr = select i1 %cnd, i32* @a, i32* @b
+  %x = load atomic i32, i32* %addr unordered, align 4
+  ret i32 %x
+}
+
+; FIXME: This would be legal to transform
+define i32 @test16(i1 %cnd) {
+; CHECK-LABEL: define i32 @test16(
+; CHECK: load atomic i32, i32* %addr monotonic, align 4
+  %addr = select i1 %cnd, i32* @a, i32* @b
+  %x = load atomic i32, i32* %addr monotonic, align 4
+  ret i32 %x
+}
+
+; FIXME: This would be legal to transform
+define i32 @test17(i1 %cnd) {
+; CHECK-LABEL: define i32 @test17(
+; CHECK: load atomic i32, i32* %addr seq_cst, align 4
+  %addr = select i1 %cnd, i32* @a, i32* @b
+  %x = load atomic i32, i32* %addr seq_cst, align 4
+  ret i32 %x
+}
