@@ -559,7 +559,6 @@ static std::string getImplibPath() {
 }
 
 static std::unique_ptr<MemoryBuffer> createEmptyImportLibrary() {
-#if 0
   std::string S = (Twine("LIBRARY \"") +
                    llvm::sys::path::filename(Config->OutputFile) + "\"\n")
                       .str();
@@ -579,27 +578,6 @@ static std::unique_ptr<MemoryBuffer> createEmptyImportLibrary() {
       MemoryBuffer::getFile(Path2, -1, false);
   error(BufOrErr, Twine("Failed to open ") + Path2);
   return MemoryBuffer::getMemBufferCopy((*BufOrErr)->getBuffer());
-#else
-  const char kMagic[] = "!<arch>\n";
-  size_t Size = sizeof(kMagic) + // Include trailing \0.
-                sizeof(object::ArchiveMemberHeader);
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getNewUninitMemBuffer(
-    Size, getImplibPath());
-  char* B = const_cast<char*>(Buf->getBufferStart());
-  memcpy(B, kMagic, sizeof(kMagic)); // Include trailing \0.
-
-  auto *Hdr =
-      reinterpret_cast<object::ArchiveMemberHeader *>(B + sizeof(kMagic));
-  sprintf(Hdr->Name, "%-12s", "/");
-  sprintf(Hdr->LastModified, "%-12d", 0);
-  sprintf(Hdr->UID, "%-6d", 0);
-  sprintf(Hdr->GID, "%-6d", 0);
-  sprintf(Hdr->AccessMode, "%-8d", 0644);
-  sprintf(Hdr->Size, "%-10d", 0);
-  memcpy(Hdr->Terminator, "\n", 2);
-
-  return Buf;
-#endif
 }
 
 static std::vector<NewArchiveIterator>
@@ -616,7 +594,7 @@ readMembers(const object::Archive &Archive) {
 }
 
 // This class creates short import files which is described in
-// PE/COFF spec 8. Import Library Format.
+// PE/COFF spec 7. Import Library Format.
 class ShortImportCreator {
 public:
   ShortImportCreator(object::Archive *A, StringRef S) : Parent(A), DLLName(S) {}
@@ -697,7 +675,6 @@ void writeImportLibrary() {
   for (Export &E : Config->Exports) {
     if (E.Private)
       continue;
-fprintf(stderr, "export %s\n", E.SymbolName.str().c_str());
     if (E.ExtName.empty()) {
       Members.push_back(ShortImport.create(
           E.SymbolName, E.Ordinal, getNameType(E.SymbolName, E.Name), E.Data));
@@ -709,7 +686,6 @@ fprintf(stderr, "export %s\n", E.SymbolName.str().c_str());
   }
 
   std::string Path = getImplibPath();
-fprintf(stderr, "writing implib to %s\n", Path.c_str());
   std::pair<StringRef, std::error_code> Result =
       writeArchive(Path, Members, /*WriteSymtab*/ true, object::Archive::K_GNU,
                    /*Deterministic*/ true, /*Thin*/ false);
