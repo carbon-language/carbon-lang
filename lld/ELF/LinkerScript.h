@@ -83,9 +83,9 @@ public:
   bool shouldKeep(InputSectionBase<ELFT> *S);
   void assignAddresses(ArrayRef<OutputSectionBase<ELFT> *> S);
   int compareSections(StringRef A, StringRef B);
-  uint32_t getSectionOrder(StringRef Name);
 
 private:
+  uint32_t getSectionOrder(StringRef Name);
   SectionRule *find(InputSectionBase<ELFT> *S);
 
   ScriptConfiguration &Opt = *ScriptConfig;
