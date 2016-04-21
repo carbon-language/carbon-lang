@@ -1,6 +1,7 @@
 target triple = "x86_64-unknown-linux-gnu"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
+; REQUIRES: X86
 ; RUN: llc %s -o %t.s
 ; RUN: llvm-mc %t.s -o %t.o -filetype=obj
 ; RUN: llvm-as %p/Inputs/drop-linkage.ll -o %t2.o
