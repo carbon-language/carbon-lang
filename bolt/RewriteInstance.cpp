@@ -69,27 +69,34 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("<output file>"), cl::Required);
 
 static cl::list<std::string>
+BreakFunctionNames("break-funcs",
+                   cl::CommaSeparated,
+                   cl::desc("list of functions to core dump on (debugging)"),
+                   cl::value_desc("func1,func2,func3,..."),
+                   cl::Hidden);
+
+static cl::list<std::string>
 FunctionNames("funcs",
               cl::CommaSeparated,
               cl::desc("list of functions to optimize"),
               cl::value_desc("func1,func2,func3,..."));
 
 static cl::opt<std::string>
-FunctionNamesFile("funcs_file",
+FunctionNamesFile("funcs-file",
                   cl::desc("file with list of functions to optimize"));
 
 static cl::list<std::string>
-SkipFunctionNames("skip_funcs",
+SkipFunctionNames("skip-funcs",
                   cl::CommaSeparated,
                   cl::desc("list of functions to skip"),
                   cl::value_desc("func1,func2,func3,..."));
 
 static cl::opt<std::string>
-SkipFunctionNamesFile("skip_funcs_file",
+SkipFunctionNamesFile("skip-funcs-file",
                       cl::desc("file with list of functions to skip"));
 
 static cl::opt<unsigned>
-MaxFunctions("max_funcs",
+MaxFunctions("max-funcs",
              cl::desc("maximum # of functions to overwrite"),
              cl::Optional);
 
@@ -1170,6 +1177,16 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
 
   assert(!Function.begin()->isCold() &&
          "first basic block should never be cold");
+
+  // Emit UD2 at the beginning if requested by user.
+  if (!opts::BreakFunctionNames.empty()) {
+    for (auto &Name : opts::BreakFunctionNames) {
+      if (Function.getName() == Name) {
+        Streamer.EmitIntValue(0x0B0F, 2); // UD2: 0F 0B
+        break;
+      }
+    }
+  }
 
   // Emit code.
   int64_t CurrentGnuArgsSize = 0;
