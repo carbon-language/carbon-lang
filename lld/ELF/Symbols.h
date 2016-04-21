@@ -147,6 +147,12 @@ protected:
   unsigned IsUsedInRegularObj : 1;
 
 public:
+  // True if this symbol can be omitted from the symbol table if nothing else
+  // requires it to be there. Right now this is only used for linkonce_odr in
+  // LTO, but we could add the feature to ELF. It would be similar to
+  // MachO's .weak_def_can_be_hidden.
+  unsigned CanOmitFromDynSym : 1;
+
   // If true, the symbol is added to .dynsym symbol table.
   unsigned MustBeInDynSym : 1;
 

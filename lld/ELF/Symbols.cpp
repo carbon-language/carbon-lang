@@ -109,6 +109,7 @@ void SymbolBody::init() {
                        K == DefinedSyntheticKind || K == UndefinedElfKind;
   CanKeepUndefined = false;
   MustBeInDynSym = false;
+  CanOmitFromDynSym = false;
   NeedsCopyOrPltAddr = false;
 }
 
@@ -241,6 +242,9 @@ int SymbolBody::compare(SymbolBody *Other) {
   if (IsUsedInRegularObj || Other->IsUsedInRegularObj)
     IsUsedInRegularObj = Other->IsUsedInRegularObj = true;
 
+  if (!CanOmitFromDynSym || !Other->CanOmitFromDynSym)
+    CanOmitFromDynSym = Other->CanOmitFromDynSym = false;
+
   if (L != R)
     return -1;
   if (!isDefined() || isShared() || isWeak())
@@ -360,7 +364,9 @@ bool SymbolBody::includeInDynsym() const {
   uint8_t V = getVisibility();
   if (V != STV_DEFAULT && V != STV_PROTECTED)
     return false;
-  return Config->ExportDynamic || Config->Shared;
+  if (!Config->ExportDynamic && !Config->Shared)
+    return false;
+  return !CanOmitFromDynSym;
 }
 
 template uint32_t SymbolBody::template getVA<ELF32LE>(uint32_t) const;
