@@ -222,18 +222,16 @@ uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
 
 bool TargetInfo::needsCopyRelImpl(uint32_t Type) const { return false; }
 
-template <typename ELFT> static bool mayNeedCopy(const SymbolBody &S) {
+static bool mayNeedCopy(const SymbolBody &S) {
   if (Config->Shared)
     return false;
-  auto *SS = dyn_cast<SharedSymbol<ELFT>>(&S);
-  if (!SS)
+  if (!S.isShared())
     return false;
-  return SS->isObject();
+  return S.isObject();
 }
 
-template <class ELFT>
 bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
-  return mayNeedCopy<ELFT>(S) && needsCopyRelImpl(Type);
+  return mayNeedCopy(S) && needsCopyRelImpl(Type);
 }
 
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
@@ -1699,14 +1697,5 @@ template uint32_t getMipsGpAddr<ELF32LE>();
 template uint32_t getMipsGpAddr<ELF32BE>();
 template uint64_t getMipsGpAddr<ELF64LE>();
 template uint64_t getMipsGpAddr<ELF64BE>();
-
-template bool TargetInfo::needsCopyRel<ELF32LE>(uint32_t,
-                                                const SymbolBody &) const;
-template bool TargetInfo::needsCopyRel<ELF32BE>(uint32_t,
-                                                const SymbolBody &) const;
-template bool TargetInfo::needsCopyRel<ELF64LE>(uint32_t,
-                                                const SymbolBody &) const;
-template bool TargetInfo::needsCopyRel<ELF64BE>(uint32_t,
-                                                const SymbolBody &) const;
 }
 }

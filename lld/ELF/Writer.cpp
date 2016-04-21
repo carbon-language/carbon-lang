@@ -558,7 +558,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // in a read-only section, we need to create a copy relocation for the
     // symbol.
     if (auto *B = dyn_cast<SharedSymbol<ELFT>>(&Body)) {
-      if (IsAlloc && !IsWrite && Target->needsCopyRel<ELFT>(Type, *B)) {
+      if (IsAlloc && !IsWrite && Target->needsCopyRel(Type, *B)) {
         if (!B->needsCopy())
           addCopyRelSymbol(B);
         C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
