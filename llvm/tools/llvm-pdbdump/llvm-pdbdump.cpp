@@ -192,7 +192,7 @@ static void dumpStructure(RawSession &RS) {
     outs() << "NumStreams: " << File.getNumStreams() << '\n';
   uint32_t StreamCount = File.getNumStreams();
   if (opts::DumpStreamSizes) {
-    for (uint32_t StreamIdx = 0; StreamCount; ++StreamIdx)
+    for (uint32_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx)
       outs() << "StreamSizes[" << StreamIdx
              << "]: " << File.getStreamByteSize(StreamIdx) << '\n';
   }

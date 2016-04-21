@@ -50,9 +50,8 @@ struct llvm::PDBContext {
   DenseMap<uint32_t, std::vector<uint32_t>> StreamMap;
 };
 
-namespace {
-std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
-                            const uint64_t Size) {
+static std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
+                                   const uint64_t Size) {
   if (Addr + Size < Addr || Addr + Size < Size ||
       Addr + Size > uintptr_t(M.getBufferEnd()) ||
       Addr < uintptr_t(M.getBufferStart())) {
@@ -62,17 +61,8 @@ std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
 }
 
 template <typename T>
-std::error_code checkOffset(MemoryBufferRef M, ArrayRef<T> AR) {
+static std::error_code checkOffset(MemoryBufferRef M, ArrayRef<T> AR) {
   return checkOffset(M, uintptr_t(AR.data()), (uint64_t)AR.size() * sizeof(T));
-}
-
-uint64_t bytesToBlocks(uint64_t NumBytes, uint64_t BlockSize) {
-  return alignTo(NumBytes, BlockSize) / BlockSize;
-}
-
-uint64_t blockToOffset(uint64_t BlockNumber, uint64_t BlockSize) {
-  return BlockNumber * BlockSize;
-}
 }
 
 PDBFile::PDBFile(std::unique_ptr<MemoryBuffer> MemBuffer) {
@@ -130,6 +120,10 @@ std::error_code PDBFile::parseFileHeaders() {
   Context->SB =
       reinterpret_cast<const SuperBlock *>(BufferRef.getBufferStart());
   const SuperBlock *SB = Context->SB;
+  // Check the magic bytes.
+  if (memcmp(SB->MagicBytes, Magic, sizeof(Magic)) != 0)
+    return std::make_error_code(std::errc::illegal_byte_sequence);
+
   // We don't support blocksizes which aren't a multiple of four bytes.
   if (SB->BlockSize % sizeof(support::ulittle32_t) != 0)
     return std::make_error_code(std::errc::not_supported);

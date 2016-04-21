@@ -12,14 +12,6 @@
 
 using namespace llvm;
 
-static uint64_t bytesToBlocks(uint64_t NumBytes, uint64_t BlockSize) {
-  return alignTo(NumBytes, BlockSize) / BlockSize;
-}
-
-static uint64_t blockToOffset(uint64_t BlockNumber, uint64_t BlockSize) {
-  return BlockNumber * BlockSize;
-}
-
 PDBStream::PDBStream(uint32_t StreamIdx, const PDBFile &File) : Pdb(File) {
   this->StreamLength = Pdb.getStreamByteSize(StreamIdx);
   this->BlockList = Pdb.getStreamBlockList(StreamIdx);
@@ -73,7 +65,8 @@ std::error_code PDBStream::readBytes(void *Dest, uint32_t Length) {
   while (BytesLeft > 0) {
     uint32_t StreamBlockAddr = this->BlockList[BlockNum];
     uint64_t StreamBlockOffset =
-        blockToOffset(StreamBlockAddr, Pdb.getBlockSize()) + OffsetInBlock;
+        PDBFile::blockToOffset(StreamBlockAddr, Pdb.getBlockSize()) +
+        OffsetInBlock;
 
     StringRef Data = Pdb.getBlockData(StreamBlockAddr, Pdb.getBlockSize());
 

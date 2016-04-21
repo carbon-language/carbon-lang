@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/MathExtras.h"
 
 #include <memory>
 
@@ -44,6 +45,14 @@ public:
 
   std::error_code parseFileHeaders();
   std::error_code parseStreamData();
+
+  static uint64_t bytesToBlocks(uint64_t NumBytes, uint64_t BlockSize) {
+    return alignTo(NumBytes, BlockSize) / BlockSize;
+  }
+
+  static uint64_t blockToOffset(uint64_t BlockNumber, uint64_t BlockSize) {
+    return BlockNumber * BlockSize;
+  }
 
 private:
   std::unique_ptr<PDBContext> Context;
