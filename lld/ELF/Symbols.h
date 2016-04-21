@@ -392,16 +392,17 @@ private:
 // Some linker-generated symbols need to be created as
 // DefinedRegular symbols.
 template <class ELFT> struct ElfSym {
-  typedef std::pair<DefinedRegular<ELFT> *, DefinedRegular<ELFT> *> SymPair;
-
   // The content for _etext and etext symbols.
-  static SymPair Etext;
+  static DefinedRegular<ELFT> *Etext;
+  static DefinedRegular<ELFT> *Etext2;
 
   // The content for _edata and edata symbols.
-  static SymPair Edata;
+  static DefinedRegular<ELFT> *Edata;
+  static DefinedRegular<ELFT> *Edata2;
 
   // The content for _end and end symbols.
-  static SymPair End;
+  static DefinedRegular<ELFT> *End;
+  static DefinedRegular<ELFT> *End2;
 
   // The content for _gp symbol for MIPS target.
   static SymbolBody *MipsGp;
@@ -415,10 +416,12 @@ template <class ELFT> struct ElfSym {
   static SymbolBody *RelaIpltEnd;
 };
 
-template <class ELFT> typename ElfSym<ELFT>::SymPair ElfSym<ELFT>::Etext;
-template <class ELFT> typename ElfSym<ELFT>::SymPair ElfSym<ELFT>::Edata;
-template <class ELFT> typename ElfSym<ELFT>::SymPair ElfSym<ELFT>::End;
-
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Etext;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Etext2;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Edata;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::Edata2;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::End;
+template <class ELFT> DefinedRegular<ELFT> *ElfSym<ELFT>::End2;
 template <class ELFT> SymbolBody *ElfSym<ELFT>::MipsGp;
 template <class ELFT> SymbolBody *ElfSym<ELFT>::MipsLocalGp;
 template <class ELFT> SymbolBody *ElfSym<ELFT>::MipsGpDisp;
