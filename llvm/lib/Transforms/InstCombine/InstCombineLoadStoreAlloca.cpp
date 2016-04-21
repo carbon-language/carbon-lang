@@ -809,10 +809,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       return &LI;
   }
 
-  // None of the following transforms are legal for volatile/atomic loads.
-  // FIXME: Some of it is okay for atomic loads; needs refactoring.
-  if (!LI.isSimple()) return nullptr;
-
   if (Instruction *Res = unpackLoadToAggregate(*this, LI))
     return Res;
 
@@ -839,6 +835,10 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         LI, Builder->CreateBitOrPointerCast(AvailableVal, LI.getType(),
                                             LI.getName() + ".cast"));
   }
+
+  // None of the following transforms are legal for volatile/atomic loads.
+  // FIXME: Some of it is okay for atomic loads; needs refactoring.
+  if (!LI.isSimple()) return nullptr;
 
   // load(gep null, ...) -> unreachable
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {

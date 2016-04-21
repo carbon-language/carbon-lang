@@ -37,11 +37,11 @@ define i32 @test3(i32* %p) {
   ret i32 %z
 }
 
-; FIXME: Forwarding from a stronger atomic is fine
+; Forwarding from a stronger ordered atomic is fine
 define i32 @test4(i32* %p) {
 ; CHECK-LABEL: define i32 @test4(
 ; CHECK: %x = load atomic i32, i32* %p seq_cst, align 4
-; CHECK: %y = load atomic i32, i32* %p unordered, align 4
+; CHECK: shl i32 %x, 1
   %x = load atomic i32, i32* %p seq_cst, align 4
   %y = load atomic i32, i32* %p unordered, align 4
   %z = add i32 %x, %y
@@ -56,6 +56,39 @@ define i32 @test5(i32* %p) {
 ; CHECK: %x = load atomic i32, i32* %p unordered, align 4
   %x = load atomic i32, i32* %p unordered, align 4
   %y = load i32, i32* %p, align 4
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+; Forwarding atomic to atomic is fine
+define i32 @test6(i32* %p) {
+; CHECK-LABEL: define i32 @test6(
+; CHECK: %x = load atomic i32, i32* %p unordered, align 4
+; CHECK: shl i32 %x, 1
+  %x = load atomic i32, i32* %p unordered, align 4
+  %y = load atomic i32, i32* %p unordered, align 4
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+; FIXME: we currently don't do anything for monotonic
+define i32 @test7(i32* %p) {
+; CHECK-LABEL: define i32 @test7(
+; CHECK: %x = load atomic i32, i32* %p seq_cst, align 4
+; CHECK: %y = load atomic i32, i32* %p monotonic, align 4
+  %x = load atomic i32, i32* %p seq_cst, align 4
+  %y = load atomic i32, i32* %p monotonic, align 4
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+; FIXME: We could forward in racy code
+define i32 @test8(i32* %p) {
+; CHECK-LABEL: define i32 @test8(
+; CHECK: %x = load atomic i32, i32* %p seq_cst, align 4
+; CHECK: %y = load atomic i32, i32* %p acquire, align 4
+  %x = load atomic i32, i32* %p seq_cst, align 4
+  %y = load atomic i32, i32* %p acquire, align 4
   %z = add i32 %x, %y
   ret i32 %z
 }
