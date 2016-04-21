@@ -46,15 +46,63 @@ define <8 x i64> @testv8i64(<8 x i64> %in) nounwind {
 }
 
 define <8 x i64> @testv8i64u(<8 x i64> %in) nounwind {
-; ALL-LABEL: testv8i64u:
-; ALL:       ## BB#0:
-; ALL-NEXT:    vpxord %zmm1, %zmm1, %zmm1
-; ALL-NEXT:    vpsubq %zmm0, %zmm1, %zmm1
-; ALL-NEXT:    vpandq %zmm1, %zmm0, %zmm0
-; ALL-NEXT:    vplzcntq %zmm0, %zmm0
-; ALL-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm1
-; ALL-NEXT:    vpsubq %zmm0, %zmm1, %zmm0
-; ALL-NEXT:    retq
+; AVX512CD-LABEL: testv8i64u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; AVX512CD-NEXT:    vpsubq %zmm0, %zmm1, %zmm1
+; AVX512CD-NEXT:    vpandq %zmm1, %zmm0, %zmm0
+; AVX512CD-NEXT:    vplzcntq %zmm0, %zmm0
+; AVX512CD-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm1
+; AVX512CD-NEXT:    vpsubq %zmm0, %zmm1, %zmm0
+; AVX512CD-NEXT:    retq
+;
+; AVX512CDBW-LABEL: testv8i64u:
+; AVX512CDBW:       ## BB#0:
+; AVX512CDBW-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; AVX512CDBW-NEXT:    vpsubq %zmm0, %zmm1, %zmm1
+; AVX512CDBW-NEXT:    vpandq %zmm1, %zmm0, %zmm0
+; AVX512CDBW-NEXT:    vplzcntq %zmm0, %zmm0
+; AVX512CDBW-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm1
+; AVX512CDBW-NEXT:    vpsubq %zmm0, %zmm1, %zmm0
+; AVX512CDBW-NEXT:    retq
+;
+; AVX512BW-LABEL: testv8i64u:
+; AVX512BW:       ## BB#0:
+; AVX512BW-NEXT:    vextracti32x4 $3, %zmm0, %xmm1
+; AVX512BW-NEXT:    vpextrq $1, %xmm1, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm2
+; AVX512BW-NEXT:    vmovq %xmm1, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm1
+; AVX512BW-NEXT:    vpunpcklqdq {{.*#+}} xmm1 = xmm1[0],xmm2[0]
+; AVX512BW-NEXT:    vextracti32x4 $2, %zmm0, %xmm2
+; AVX512BW-NEXT:    vpextrq $1, %xmm2, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm3
+; AVX512BW-NEXT:    vmovq %xmm2, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm2
+; AVX512BW-NEXT:    vpunpcklqdq {{.*#+}} xmm2 = xmm2[0],xmm3[0]
+; AVX512BW-NEXT:    vinserti128 $1, %xmm1, %ymm2, %ymm1
+; AVX512BW-NEXT:    vextracti32x4 $1, %zmm0, %xmm2
+; AVX512BW-NEXT:    vpextrq $1, %xmm2, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm3
+; AVX512BW-NEXT:    vmovq %xmm2, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm2
+; AVX512BW-NEXT:    vpunpcklqdq {{.*#+}} xmm2 = xmm2[0],xmm3[0]
+; AVX512BW-NEXT:    vpextrq $1, %xmm0, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm3
+; AVX512BW-NEXT:    vmovq %xmm0, %rax
+; AVX512BW-NEXT:    tzcntq %rax, %rax
+; AVX512BW-NEXT:    vmovq %rax, %xmm0
+; AVX512BW-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm3[0]
+; AVX512BW-NEXT:    vinserti128 $1, %xmm2, %ymm0, %ymm0
+; AVX512BW-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    retq
   %out = call <8 x i64> @llvm.cttz.v8i64(<8 x i64> %in, i1 -1)
   ret <8 x i64> %out
 }
@@ -122,15 +170,83 @@ define <16 x i32> @testv16i32(<16 x i32> %in) nounwind {
 }
 
 define <16 x i32> @testv16i32u(<16 x i32> %in) nounwind {
-; ALL-LABEL: testv16i32u:
-; ALL:       ## BB#0:
-; ALL-NEXT:    vpxord %zmm1, %zmm1, %zmm1
-; ALL-NEXT:    vpsubd %zmm0, %zmm1, %zmm1
-; ALL-NEXT:    vpandd %zmm1, %zmm0, %zmm0
-; ALL-NEXT:    vplzcntd %zmm0, %zmm0
-; ALL-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm1
-; ALL-NEXT:    vpsubd %zmm0, %zmm1, %zmm0
-; ALL-NEXT:    retq
+; AVX512CD-LABEL: testv16i32u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; AVX512CD-NEXT:    vpsubd %zmm0, %zmm1, %zmm1
+; AVX512CD-NEXT:    vpandd %zmm1, %zmm0, %zmm0
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm1
+; AVX512CD-NEXT:    vpsubd %zmm0, %zmm1, %zmm0
+; AVX512CD-NEXT:    retq
+;
+; AVX512CDBW-LABEL: testv16i32u:
+; AVX512CDBW:       ## BB#0:
+; AVX512CDBW-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; AVX512CDBW-NEXT:    vpsubd %zmm0, %zmm1, %zmm1
+; AVX512CDBW-NEXT:    vpandd %zmm1, %zmm0, %zmm0
+; AVX512CDBW-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CDBW-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm1
+; AVX512CDBW-NEXT:    vpsubd %zmm0, %zmm1, %zmm0
+; AVX512CDBW-NEXT:    retq
+;
+; AVX512BW-LABEL: testv16i32u:
+; AVX512BW:       ## BB#0:
+; AVX512BW-NEXT:    vextracti32x4 $3, %zmm0, %xmm1
+; AVX512BW-NEXT:    vpextrd $1, %xmm1, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vmovd %xmm1, %ecx
+; AVX512BW-NEXT:    tzcntl %ecx, %ecx
+; AVX512BW-NEXT:    vmovd %ecx, %xmm2
+; AVX512BW-NEXT:    vpinsrd $1, %eax, %xmm2, %xmm2
+; AVX512BW-NEXT:    vpextrd $2, %xmm1, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $2, %eax, %xmm2, %xmm2
+; AVX512BW-NEXT:    vpextrd $3, %xmm1, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $3, %eax, %xmm2, %xmm1
+; AVX512BW-NEXT:    vextracti32x4 $2, %zmm0, %xmm2
+; AVX512BW-NEXT:    vpextrd $1, %xmm2, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vmovd %xmm2, %ecx
+; AVX512BW-NEXT:    tzcntl %ecx, %ecx
+; AVX512BW-NEXT:    vmovd %ecx, %xmm3
+; AVX512BW-NEXT:    vpinsrd $1, %eax, %xmm3, %xmm3
+; AVX512BW-NEXT:    vpextrd $2, %xmm2, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $2, %eax, %xmm3, %xmm3
+; AVX512BW-NEXT:    vpextrd $3, %xmm2, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $3, %eax, %xmm3, %xmm2
+; AVX512BW-NEXT:    vinserti128 $1, %xmm1, %ymm2, %ymm1
+; AVX512BW-NEXT:    vextracti32x4 $1, %zmm0, %xmm2
+; AVX512BW-NEXT:    vpextrd $1, %xmm2, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vmovd %xmm2, %ecx
+; AVX512BW-NEXT:    tzcntl %ecx, %ecx
+; AVX512BW-NEXT:    vmovd %ecx, %xmm3
+; AVX512BW-NEXT:    vpinsrd $1, %eax, %xmm3, %xmm3
+; AVX512BW-NEXT:    vpextrd $2, %xmm2, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $2, %eax, %xmm3, %xmm3
+; AVX512BW-NEXT:    vpextrd $3, %xmm2, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $3, %eax, %xmm3, %xmm2
+; AVX512BW-NEXT:    vpextrd $1, %xmm0, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vmovd %xmm0, %ecx
+; AVX512BW-NEXT:    tzcntl %ecx, %ecx
+; AVX512BW-NEXT:    vmovd %ecx, %xmm3
+; AVX512BW-NEXT:    vpinsrd $1, %eax, %xmm3, %xmm3
+; AVX512BW-NEXT:    vpextrd $2, %xmm0, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $2, %eax, %xmm3, %xmm3
+; AVX512BW-NEXT:    vpextrd $3, %xmm0, %eax
+; AVX512BW-NEXT:    tzcntl %eax, %eax
+; AVX512BW-NEXT:    vpinsrd $3, %eax, %xmm3, %xmm0
+; AVX512BW-NEXT:    vinserti128 $1, %xmm2, %ymm0, %ymm0
+; AVX512BW-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    retq
   %out = call <16 x i32> @llvm.cttz.v16i32(<16 x i32> %in, i1 -1)
   ret <16 x i32> %out
 }
