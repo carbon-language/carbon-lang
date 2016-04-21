@@ -61,9 +61,6 @@ struct ScriptConfiguration {
   // SECTIONS commands.
   std::vector<SectionRule> Sections;
 
-  // Output sections are sorted by this order.
-  std::vector<StringRef> SectionOrder;
-
   // Section fill attribute for each section.
   llvm::StringMap<std::vector<uint8_t>> Filler;
 
@@ -86,6 +83,7 @@ public:
   bool shouldKeep(InputSectionBase<ELFT> *S);
   void assignAddresses(std::vector<OutputSectionBase<ELFT> *> &S);
   int compareSections(StringRef A, StringRef B);
+  uint32_t getSectionOrder(StringRef Name);
 
 private:
   SectionRule *find(InputSectionBase<ELFT> *S);
