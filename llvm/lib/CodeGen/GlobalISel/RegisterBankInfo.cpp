@@ -444,8 +444,6 @@ bool RegisterBankInfo::InstructionMapping::verify(
   assert(MI.getParent() && MI.getParent()->getParent() &&
          "MI must be connected to a MachineFunction");
   const MachineFunction &MF = *MI.getParent()->getParent();
-  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
-  const MachineRegisterInfo &MRI = MF.getRegInfo();
 
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
     const MachineOperand &MO = MI.getOperand(Idx);
@@ -461,7 +459,8 @@ bool RegisterBankInfo::InstructionMapping::verify(
       continue;
     // Register size in bits.
     // This size must match what the mapping expects.
-    assert(MOMapping.verify(getSizeInBits(Reg, MRI, TRI)) &&
+    assert(MOMapping.verify(getSizeInBits(
+               Reg, MF.getRegInfo(), *MF.getSubtarget().getRegisterInfo())) &&
            "Value mapping is invalid");
   }
   return true;
