@@ -823,7 +823,7 @@ void llvm::initializeLoopPassPass(PassRegistry &Registry) {
   INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 }
 
-/// \brief Find string metadata for loop, if it exist return true, else return
+/// \brief Find string metadata for loop, if it exists return true, else return
 /// false.
 bool llvm::findStringMetadataForLoop(Loop *TheLoop, StringRef Name) {
   MDNode *LoopID = TheLoop->getLoopID();
