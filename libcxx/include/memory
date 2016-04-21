@@ -2974,7 +2974,10 @@ private:
 
 template <class _Tp, class _Dp>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if<
+    __is_swappable<_Dp>::value,
+    void
+>::type
 swap(unique_ptr<_Tp, _Dp>& __x, unique_ptr<_Tp, _Dp>& __y) _NOEXCEPT {__x.swap(__y);}
 
 template <class _T1, class _D1, class _T2, class _D2>
