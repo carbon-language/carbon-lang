@@ -438,7 +438,7 @@ static StoreInst *combineStoreToNewValue(InstCombiner &IC, StoreInst &SI, Value 
   return NewStore;
 }
 
-/// \brief Combine loads to match the type of value their uses after looking
+/// \brief Combine loads to match the type of their uses' value after looking
 /// through intervening bitcasts.
 ///
 /// The core idea here is that if the result of a load is used in an operation,
