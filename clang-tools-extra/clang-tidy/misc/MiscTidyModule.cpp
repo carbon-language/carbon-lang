@@ -33,6 +33,7 @@
 #include "SizeofContainerCheck.h"
 #include "SizeofExpressionCheck.h"
 #include "StaticAssertCheck.h"
+#include "StringConstructorCheck.h"
 #include "StringIntegerAssignmentCheck.h"
 #include "StringLiteralWithEmbeddedNulCheck.h"
 #include "SuspiciousMissingCommaCheck.h"
@@ -99,6 +100,8 @@ public:
         "misc-sizeof-expression");
     CheckFactories.registerCheck<StaticAssertCheck>(
         "misc-static-assert");
+    CheckFactories.registerCheck<StringConstructorCheck>(
+        "misc-string-constructor");
     CheckFactories.registerCheck<StringIntegerAssignmentCheck>(
         "misc-string-integer-assignment");
     CheckFactories.registerCheck<StringLiteralWithEmbeddedNulCheck>(
