@@ -35,6 +35,8 @@ using namespace lld::elf;
 
 ScriptConfiguration *elf::ScriptConfig;
 
+static bool matchStr(StringRef S, StringRef T);
+
 static uint64_t getInteger(StringRef S) {
   uint64_t V;
   if (S.getAsInteger(0, V)) {
@@ -159,17 +161,11 @@ static uint64_t evaluate(ArrayRef<StringRef> Tokens, uint64_t Dot) {
 }
 
 template <class ELFT>
-SectionRule *LinkerScript<ELFT>::find(InputSectionBase<ELFT> *S) {
+StringRef LinkerScript<ELFT>::getOutputSection(InputSectionBase<ELFT> *S) {
   for (SectionRule &R : Opt.Sections)
     if (R.match(S))
-      return &R;
-  return nullptr;
-}
-
-template <class ELFT>
-StringRef LinkerScript<ELFT>::getOutputSection(InputSectionBase<ELFT> *S) {
-  SectionRule *R = find(S);
-  return R ? R->Dest : "";
+      return R.Dest;
+  return "";
 }
 
 template <class ELFT>
@@ -179,8 +175,10 @@ bool LinkerScript<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
-  SectionRule *R = find(S);
-  return R && R->Keep;
+  for (StringRef Pat : Opt.KeptSections)
+    if (matchStr(Pat, S->getSectionName()))
+      return true;
+  return false;
 }
 
 template <class ELFT>
@@ -326,7 +324,7 @@ private:
 
   void readLocationCounterValue();
   void readOutputSectionDescription();
-  void readSectionPatterns(StringRef OutSec, bool Keep);
+  void readSectionPatterns(StringRef OutSec);
 
   const static StringMap<Handler> Cmd;
   ScriptConfiguration &Opt = *ScriptConfig;
@@ -497,10 +495,10 @@ void ScriptParser::readSections() {
   }
 }
 
-void ScriptParser::readSectionPatterns(StringRef OutSec, bool Keep) {
+void ScriptParser::readSectionPatterns(StringRef OutSec) {
   expect("(");
   while (!Error && !skip(")"))
-    Opt.Sections.emplace_back(OutSec, next(), Keep);
+    Opt.Sections.emplace_back(OutSec, next());
 }
 
 void ScriptParser::readLocationCounterValue() {
@@ -523,19 +521,28 @@ void ScriptParser::readOutputSectionDescription() {
   Opt.Commands.push_back({SectionKind, {}, OutSec});
   expect(":");
   expect("{");
+
   while (!Error && !skip("}")) {
     StringRef Tok = next();
     if (Tok == "*") {
-      readSectionPatterns(OutSec, false);
+      expect("(");
+      while (!Error && !skip(")"))
+        Opt.Sections.emplace_back(OutSec, next());
     } else if (Tok == "KEEP") {
       expect("(");
-      next(); // Skip *
-      readSectionPatterns(OutSec, true);
+      expect("*");
+      expect("(");
+      while (!Error && !skip(")")) {
+        StringRef Sec = next();
+        Opt.Sections.emplace_back(OutSec, Sec);
+        Opt.KeptSections.push_back(Sec);
+      }
       expect(")");
     } else {
       setError("unknown command " + Tok);
     }
   }
+
   StringRef Tok = peek();
   if (Tok.startswith("=")) {
     if (!Tok.startswith("=0x")) {

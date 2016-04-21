@@ -30,16 +30,13 @@ template <class ELFT> class OutputSectionBase;
 // This class represents each rule in SECTIONS command.
 class SectionRule {
 public:
-  SectionRule(StringRef D, StringRef S, bool Keep)
-      : Dest(D), Keep(Keep), SectionPattern(S) {}
+  SectionRule(StringRef D, StringRef S)
+      : Dest(D), SectionPattern(S) {}
 
   // Returns true if S should be in Dest section.
   template <class ELFT> bool match(InputSectionBase<ELFT> *S);
 
   StringRef Dest;
-
-  // KEEP command saves unused sections even if --gc-sections is specified.
-  bool Keep = false;
 
 private:
   StringRef SectionPattern;
@@ -70,6 +67,10 @@ struct ScriptConfiguration {
   bool DoLayout = false;
 
   llvm::BumpPtrAllocator Alloc;
+
+  // List of section patterns specified with KEEP commands. They will
+  // be kept even if they are unused and --gc-sections is specified.
+  std::vector<StringRef> KeptSections;
 };
 
 extern ScriptConfiguration *ScriptConfig;
