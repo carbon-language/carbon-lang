@@ -343,6 +343,12 @@ void CallInst::addAttribute(unsigned i, StringRef Kind, StringRef Value) {
   setAttributes(PAL);
 }
 
+void CallInst::removeAttribute(unsigned i, Attribute::AttrKind attr) {
+  AttributeSet PAL = getAttributes();
+  PAL = PAL.removeAttribute(getContext(), i, attr);
+  setAttributes(PAL);
+}
+
 void CallInst::removeAttribute(unsigned i, Attribute attr) {
   AttributeSet PAL = getAttributes();
   AttrBuilder B(attr);
@@ -660,6 +666,12 @@ bool InvokeInst::dataOperandHasImpliedAttr(unsigned i,
 void InvokeInst::addAttribute(unsigned i, Attribute::AttrKind attr) {
   AttributeSet PAL = getAttributes();
   PAL = PAL.addAttribute(getContext(), i, attr);
+  setAttributes(PAL);
+}
+
+void InvokeInst::removeAttribute(unsigned i, Attribute::AttrKind attr) {
+  AttributeSet PAL = getAttributes();
+  PAL = PAL.removeAttribute(getContext(), i, attr);
   setAttributes(PAL);
 }
 
