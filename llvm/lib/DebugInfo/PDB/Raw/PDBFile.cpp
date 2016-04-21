@@ -66,10 +66,6 @@ std::error_code checkOffset(MemoryBufferRef M, ArrayRef<T> AR) {
   return checkOffset(M, uintptr_t(AR.data()), (uint64_t)AR.size() * sizeof(T));
 }
 
-std::error_code checkOffset(MemoryBufferRef M, StringRef SR) {
-  return checkOffset(M, uintptr_t(SR.data()), SR.size());
-}
-
 uint64_t bytesToBlocks(uint64_t NumBytes, uint64_t BlockSize) {
   return alignTo(NumBytes, BlockSize) / BlockSize;
 }
