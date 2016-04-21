@@ -85,7 +85,7 @@ public:
   int compareSections(StringRef A, StringRef B);
 
 private:
-  uint32_t getSectionOrder(StringRef Name);
+  int getSectionIndex(StringRef Name);
   SectionRule *find(InputSectionBase<ELFT> *S);
 
   ScriptConfiguration &Opt = *ScriptConfig;

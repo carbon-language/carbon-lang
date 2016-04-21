@@ -204,7 +204,7 @@ void LinkerScript<ELFT>::assignAddresses(
   // https://sourceware.org/binutils/docs/ld/Orphan-Sections.html#Orphan-Sections.
   for (OutputSectionBase<ELFT> *Sec : Sections) {
     StringRef Name = Sec->getName();
-    if (getSectionOrder(Name) == (uint32_t)-1)
+    if (getSectionIndex(Name) == INT_MAX)
       Opt.Commands.push_back({SectionKind, {}, Name});
   }
 
@@ -248,23 +248,27 @@ ArrayRef<uint8_t> LinkerScript<ELFT>::getFiller(StringRef Name) {
   return I->second;
 }
 
+// Returns the index of the given section name in linker script
+// SECTIONS commands. Sections are laid out as the same order as they
+// were in the script. If a given name did not appear in the script,
+// it returns INT_MAX, so that it will be laid out at end of file.
 template <class ELFT>
-uint32_t LinkerScript<ELFT>::getSectionOrder(StringRef Name) {
+int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
   auto Begin = Opt.Commands.begin();
   auto End = Opt.Commands.end();
   auto I = std::find_if(Begin, End, [&](SectionsCommand &N) {
     return N.Kind == SectionKind && N.SectionName == Name;
   });
-  return I == End ? (uint32_t)-1 : (I - Begin);
+  return I == End ? INT_MAX : (I - Begin);
 }
 
 // A compartor to sort output sections. Returns -1 or 1 if
 // A or B are mentioned in linker script. Otherwise, returns 0.
 template <class ELFT>
 int LinkerScript<ELFT>::compareSections(StringRef A, StringRef B) {
-  uint32_t I = getSectionOrder(A);
-  uint32_t J = getSectionOrder(B);
-  if (I == (uint32_t)-1 && J == (uint32_t)-1)
+  int I = getSectionIndex(A);
+  int J = getSectionIndex(B);
+  if (I == INT_MAX && J == INT_MAX)
     return 0;
   return I < J ? -1 : 1;
 }
