@@ -121,9 +121,9 @@ static MDNode *createStringMetadata(Loop *TheLoop, StringRef Name, unsigned V) {
   return MDNode::get(Context, MDs);
 }
 
-/// \brief Check string metadata in loop, if it exist return true,
-/// else return false.
-bool llvm::checkStringMetadataIntoLoop(Loop *TheLoop, StringRef Name) {
+/// \brief Find string metadata for loop, if it exist return true, else return
+/// false.
+bool llvm::findStringMetadataForLoop(Loop *TheLoop, StringRef Name) {
   MDNode *LoopID = TheLoop->getLoopID();
   // Return false if LoopID is false.
   if (!LoopID)
@@ -474,7 +474,7 @@ bool LoopVersioningLICM::legalLoopInstructions() {
 /// else false.
 bool LoopVersioningLICM::isLoopAlreadyVisited() {
   // Check LoopVersioningLICM metadata into loop
-  if (checkStringMetadataIntoLoop(CurLoop, LICMVersioningMetaData)) {
+  if (findStringMetadataForLoop(CurLoop, LICMVersioningMetaData)) {
     return true;
   }
   return false;
