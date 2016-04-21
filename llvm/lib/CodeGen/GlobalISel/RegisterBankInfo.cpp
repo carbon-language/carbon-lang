@@ -365,27 +365,14 @@ void RegisterBankInfo::PartialMapping::dump() const {
 
 void RegisterBankInfo::PartialMapping::verify() const {
   assert(RegBank && "Register bank not set");
-  // Check what is the minimum width that will live into RegBank.
-  // RegBank will have to, at least, accomodate all the bits between the first
-  // and last bits active in Mask.
-  // If Mask is zero, then ActiveWidth is 0.
-  unsigned ActiveWidth = 0;
-  // Otherwise, remove the trailing and leading zeros from the bitwidth.
-  // 0..0 ActiveWidth 0..0.
-  if (Mask.getBoolValue())
-    ActiveWidth = Mask.getBitWidth() - Mask.countLeadingZeros() -
-                  Mask.countTrailingZeros();
-  (void)ActiveWidth;
-  assert(ActiveWidth <= Mask.getBitWidth() &&
-         "Wrong computation of ActiveWidth, overflow?");
-  assert(RegBank->getSize() >= ActiveWidth &&
-         "Register bank too small for Mask");
+  assert(Length && "Empty mapping");
+  assert((StartIdx < getHighBitIdx()) && "Overflow, switch to APInt?");
+  // Check if the minimum width fits into RegBank.
+  assert(RegBank->getSize() >= Length && "Register bank too small for Mask");
 }
 
 void RegisterBankInfo::PartialMapping::print(raw_ostream &OS) const {
-  SmallString<128> MaskStr;
-  Mask.toString(MaskStr, /*Radix*/ 16, /*Signed*/ 0, /*formatAsCLiteral*/ true);
-  OS << "Mask(" << Mask.getBitWidth() << ") = " << MaskStr << ", RegBank = ";
+  OS << "[" << StartIdx << ", " << getHighBitIdx() << "], RegBank = ";
   if (RegBank)
     OS << *RegBank;
   else
@@ -394,18 +381,27 @@ void RegisterBankInfo::PartialMapping::print(raw_ostream &OS) const {
 
 void RegisterBankInfo::ValueMapping::verify(unsigned ExpectedBitWidth) const {
   assert(!BreakDown.empty() && "Value mapped nowhere?!");
-  unsigned ValueBitWidth = BreakDown.back().Mask.getBitWidth();
-  assert(ValueBitWidth == ExpectedBitWidth && "BitWidth does not match");
-  APInt ValueMask(ValueBitWidth, 0);
+  unsigned OrigValueBitWidth = 0;
   for (const RegisterBankInfo::PartialMapping &PartMap : BreakDown) {
-    // Check that all the partial mapping have the same bitwidth.
-    assert(PartMap.Mask.getBitWidth() == ValueBitWidth &&
-           "Value does not have the same size accross the partial mappings");
-    // Check that the union of the partial mappings covers the whole value.
-    ValueMask |= PartMap.Mask;
     // Check that each register bank is big enough to hold the partial value:
     // this check is done by PartialMapping::verify
     PartMap.verify();
+    // The original value should completely be mapped.
+    // Thus the maximum accessed index + 1 is the size of the original value.
+    OrigValueBitWidth =
+        std::max(OrigValueBitWidth, PartMap.getHighBitIdx() + 1);
+  }
+  assert(OrigValueBitWidth == ExpectedBitWidth && "BitWidth does not match");
+  APInt ValueMask(OrigValueBitWidth, 0);
+  for (const RegisterBankInfo::PartialMapping &PartMap : BreakDown) {
+    // Check that the union of the partial mappings covers the whole value,
+    // without overlaps.
+    // The high bit is exclusive in the APInt API, thus getHighBitIdx + 1.
+    APInt PartMapMask = APInt::getBitsSet(OrigValueBitWidth, PartMap.StartIdx,
+                                          PartMap.getHighBitIdx() + 1);
+    ValueMask ^= PartMapMask;
+    assert((ValueMask & PartMapMask) == PartMapMask &&
+           "Some partial mappings overlap");
   }
   assert(ValueMask.isAllOnesValue() && "Value is not fully mapped");
 }
@@ -430,12 +426,10 @@ void RegisterBankInfo::InstructionMapping::setOperandMapping(
     unsigned OpIdx, unsigned MaskSize, const RegisterBank &RegBank) {
   // Build the value mapping.
   assert(MaskSize <= RegBank.getSize() && "Register bank is too small");
-  APInt Mask(MaskSize, 0);
-  // The value is represented by all the bits.
-  Mask.flipAllBits();
 
   // Create the mapping object.
-  getOperandMapping(OpIdx).BreakDown.push_back(PartialMapping(Mask, RegBank));
+  getOperandMapping(OpIdx).BreakDown.push_back(
+      PartialMapping(0, MaskSize, RegBank));
 }
 
 void RegisterBankInfo::InstructionMapping::verify(

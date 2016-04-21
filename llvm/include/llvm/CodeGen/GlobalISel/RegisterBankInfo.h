@@ -36,20 +36,33 @@ class RegisterBankInfo {
 public:
   /// Helper struct that represents how a value is partially mapped
   /// into a register.
-  /// The Mask is used to represent this partial mapping. Ones represent
-  /// where the value lives in RegBank and the width of the Mask represents
-  /// the size of the whole value.
+  /// The StartIdx and Length represent what region of the orginal
+  /// value this partial mapping covers.
+  /// This can be represented as a Mask of contiguous bit starting
+  /// at StartIdx bit and spanning Length bits.
+  /// StartIdx is the number of bits from the less significant bits.
   struct PartialMapping {
-    /// Mask where the partial value lives.
-    APInt Mask;
+    /// Number of bits at which this partial mapping starts in the
+    /// original value.  The bits are counted from less significant
+    /// bits to most significant bits.
+    unsigned StartIdx;
+    /// Length of this mapping in bits. This is how many bits this
+    /// partial mapping covers in the original value:
+    /// from StartIdx to StartIdx + Length -1.
+    unsigned Length;
     /// Register bank where the partial value lives.
     const RegisterBank *RegBank;
 
     PartialMapping() = default;
 
     /// Provide a shortcut for quickly building PartialMapping.
-    PartialMapping(const APInt &Mask, const RegisterBank &RegBank)
-        : Mask(Mask), RegBank(&RegBank) {}
+    PartialMapping(unsigned StartIdx, unsigned Length,
+                   const RegisterBank &RegBank)
+        : StartIdx(StartIdx), Length(Length), RegBank(&RegBank) {}
+
+    /// \return the index of in the original value of the most
+    /// significant bit that this partial mapping covers.
+    unsigned getHighBitIdx() const { return StartIdx + Length - 1; }
 
     /// Print this partial mapping on dbgs() stream.
     void dump() const;
