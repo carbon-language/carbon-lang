@@ -32,10 +32,10 @@ def as_needed : Flag<["--"], "as-needed">;
 def disable_new_dtags : Flag<["--"], "disable-new-dtags">,
   HelpText<"Disable new dynamic tags">;
 
-def discard_all : Flag<["-"], "discard-all">,
+def discard_all : Flag<["--", "-"], "discard-all">,
   HelpText<"Delete all local symbols">;
 
-def discard_locals : Flag<["-"], "discard-locals">,
+def discard_locals : Flag<["--", "-"], "discard-locals">,
   HelpText<"Delete temporary local symbols">;
 
 def discard_none : Flag<["-"], "discard-none">,
