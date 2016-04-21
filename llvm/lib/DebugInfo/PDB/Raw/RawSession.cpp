@@ -32,15 +32,15 @@ PDB_ErrorCode RawSession::createFromPdb(StringRef Path,
                                    /*RequiresNullTerminator=*/false);
 
   std::error_code EC;
-  if (EC = ErrorOrBuffer.getError())
+  if ((EC = ErrorOrBuffer.getError()))
     return PDB_ErrorCode::CouldNotCreateImpl;
 
   std::unique_ptr<MemoryBuffer> &Buffer = ErrorOrBuffer.get();
 
   std::unique_ptr<PDBFile> File(new PDBFile(std::move(Buffer)));
-  if (EC = File->parseFileHeaders())
+  if ((EC = File->parseFileHeaders()))
     return PDB_ErrorCode::InvalidFileFormat;
-  if (EC = File->parseStreamData())
+  if ((EC = File->parseStreamData()))
     return PDB_ErrorCode::InvalidFileFormat;
 
   Session.reset(new RawSession(std::move(File)));

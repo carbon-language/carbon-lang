@@ -163,7 +163,6 @@ std::error_code PDBFile::parseStreamData() {
   uint32_t NumStreams = 0;
   uint32_t StreamIdx = 0;
   uint64_t DirectoryBytesRead = 0;
-  std::error_code EC;
 
   MemoryBufferRef M = *Context->Buffer;
   const SuperBlock *SB = Context->SB;
@@ -185,7 +184,7 @@ std::error_code PDBFile::parseStreamData() {
         makeArrayRef(reinterpret_cast<const uint32_t *>(M.getBufferStart() +
                                                         DirectoryBlockOffset),
                      SB->BlockSize / sizeof(support::ulittle32_t));
-    if (EC = checkOffset(M, DirectoryBlock))
+    if (auto EC = checkOffset(M, DirectoryBlock))
       return EC;
 
     // We read data out of the directory four bytes at a time.  Depending on
