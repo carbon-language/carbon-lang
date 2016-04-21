@@ -836,9 +836,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                                             LI.getName() + ".cast"));
   }
 
-  // None of the following transforms are legal for volatile/atomic loads.
-  // FIXME: Some of it is okay for atomic loads; needs refactoring.
-  if (!LI.isSimple()) return nullptr;
+  // None of the following transforms are legal for volatile/ordered atomic
+  // loads.  Most of them do apply for unordered atomics.
+  if (!LI.isUnordered()) return nullptr;
 
   // load(gep null, ...) -> unreachable
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
@@ -866,6 +866,10 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                   Constant::getNullValue(Op->getType()), &LI);
     return replaceInstUsesWith(LI, UndefValue::get(LI.getType()));
   }
+
+  // TODO: The transform below needs updated for unordered loads
+  if (!LI.isSimple())
+    return nullptr;
 
   if (Op->hasOneUse()) {
     // Change select and PHI nodes to select values instead of addresses: this

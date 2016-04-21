@@ -93,3 +93,54 @@ define i32 @test8(i32* %p) {
   ret i32 %z
 }
 
+; An unordered access to null is still unreachable.  There's no
+; ordering imposed.
+define i32 @test9() {
+; CHECK-LABEL: define i32 @test9(
+; CHECK: store i32 undef, i32* null
+  %x = load atomic i32, i32* null unordered, align 4
+  ret i32 %x
+}
+
+; FIXME: Could also fold
+define i32 @test10() {
+; CHECK-LABEL: define i32 @test10(
+; CHECK: load atomic i32, i32* null monotonic
+  %x = load atomic i32, i32* null monotonic, align 4
+  ret i32 %x
+}
+
+; Would this be legal to fold?  Probably?
+define i32 @test11() {
+; CHECK-LABEL: define i32 @test11(
+; CHECK: load atomic i32, i32* null seq_cst
+  %x = load atomic i32, i32* null seq_cst, align 4
+  ret i32 %x
+}
+
+; An unordered access to null is still unreachable.  There's no
+; ordering imposed.
+define i32 @test12() {
+; CHECK-LABEL: define i32 @test12(
+; CHECK: store atomic i32 undef, i32* null
+  store atomic i32 0, i32* null unordered, align 4
+  ret i32 0
+}
+
+; FIXME: Could also fold
+define i32 @test13() {
+; CHECK-LABEL: define i32 @test13(
+; CHECK: store atomic i32 0, i32* null monotonic
+  store atomic i32 0, i32* null monotonic, align 4
+  ret i32 0
+}
+
+; Would this be legal to fold?  Probably?
+define i32 @test14() {
+; CHECK-LABEL: define i32 @test14(
+; CHECK: store atomic i32 0, i32* null seq_cst
+  store atomic i32 0, i32* null seq_cst, align 4
+  ret i32 0
+}
+
+
