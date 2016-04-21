@@ -84,7 +84,7 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPltImpl(uint32_t Type) const override;
+  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -108,7 +108,7 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPltImpl(uint32_t Type) const override;
+  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
 
@@ -132,7 +132,7 @@ public:
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  bool needsPltImpl(uint32_t Type) const override;
+  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
@@ -151,7 +151,7 @@ public:
   uint32_t getTlsGotRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPltImpl(uint32_t Type) const override;
+  bool needsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -180,7 +180,7 @@ public:
   void writeGotHeader(uint8_t *Buf) const override;
   void writeThunk(uint8_t *Buf, uint64_t S) const override;
   bool needsCopyRelImpl(uint32_t Type) const override;
-  bool needsPltImpl(uint32_t Type) const override;
+  bool needsPlt(uint32_t Type) const override;
   bool needsThunk(uint32_t Type, const InputFile &File,
                   const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -244,44 +244,7 @@ bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
 
-bool TargetInfo::needsPltImpl(uint32_t Type) const { return false; }
-
-TargetInfo::PltNeed TargetInfo::needsPlt(uint32_t Type,
-                                         const SymbolBody &S) const {
-  if (S.isGnuIFunc())
-    return Plt_Explicit;
-  if (S.isPreemptible() && needsPltImpl(Type))
-    return Plt_Explicit;
-
-  // This handles a non PIC program call to function in a shared library.
-  // In an ideal world, we could just report an error saying the relocation
-  // can overflow at runtime.
-  // In the real world with glibc, crt1.o has a R_X86_64_PC32 pointing to
-  // libc.so.
-  //
-  // The general idea on how to handle such cases is to create a PLT entry
-  // and use that as the function value.
-  //
-  // For the static linking part, we just return true and everything else
-  // will use the the PLT entry as the address.
-  //
-  // The remaining problem is making sure pointer equality still works. We
-  // need the help of the dynamic linker for that. We let it know that we have
-  // a direct reference to a so symbol by creating an undefined symbol with a
-  // non zero st_value. Seeing that, the dynamic linker resolves the symbol to
-  // the value of the symbol we created. This is true even for got entries, so
-  // pointer equality is maintained. To avoid an infinite loop, the only entry
-  // that points to the real function is a dedicated got entry used by the
-  // plt. That is identified by special relocation types (R_X86_64_JUMP_SLOT,
-  // R_386_JMP_SLOT, etc).
-  if (S.isShared() && !Config->Pic && S.isFunc()) {
-    RelExpr Expr = getRelExpr(Type, S);
-    if (!refersToGotEntry(Expr))
-      return Plt_Implicit;
-  }
-
-  return Plt_No;
-}
+bool TargetInfo::needsPlt(uint32_t Type) const { return false; }
 
 bool TargetInfo::needsThunk(uint32_t Type, const InputFile &File,
                             const SymbolBody &S) const {
@@ -452,7 +415,7 @@ bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   return Type == R_386_32 || Type == R_386_16 || Type == R_386_8;
 }
 
-bool X86TargetInfo::needsPltImpl(uint32_t Type) const {
+bool X86TargetInfo::needsPlt(uint32_t Type) const {
   return Type == R_386_PLT32;
 }
 
@@ -691,7 +654,7 @@ bool X86_64TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
          Type == R_X86_64_TLSLD;
 }
 
-bool X86_64TargetInfo::needsPltImpl(uint32_t Type) const {
+bool X86_64TargetInfo::needsPlt(uint32_t Type) const {
   return Type == R_X86_64_PLT32;
 }
 
@@ -954,7 +917,7 @@ void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32be(Buf + 28, 0x4e800420);                   // bctr
 }
 
-bool PPC64TargetInfo::needsPltImpl(uint32_t Type) const {
+bool PPC64TargetInfo::needsPlt(uint32_t Type) const {
   // These are function calls that need to be redirected through a PLT stub.
   return Type == R_PPC64_REL24;
 }
@@ -1222,7 +1185,7 @@ bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
   }
 }
 
-bool AArch64TargetInfo::needsPltImpl(uint32_t Type) const {
+bool AArch64TargetInfo::needsPlt(uint32_t Type) const {
   switch (Type) {
   default:
     return false;
@@ -1593,8 +1556,7 @@ bool MipsTargetInfo<ELFT>::needsCopyRelImpl(uint32_t Type) const {
   return !isRelRelative(Type) || Type == R_MIPS_LO16;
 }
 
-template <class ELFT>
-bool MipsTargetInfo<ELFT>::needsPltImpl(uint32_t Type) const {
+template <class ELFT> bool MipsTargetInfo<ELFT>::needsPlt(uint32_t Type) const {
   return Type == R_MIPS_26;
 }
 

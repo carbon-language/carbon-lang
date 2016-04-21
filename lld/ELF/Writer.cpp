@@ -431,6 +431,46 @@ template <class ELFT> static bool isAbsolute(const SymbolBody &Body) {
   return false;
 }
 
+namespace {
+enum PltNeed { Plt_No, Plt_Explicit, Plt_Implicit };
+}
+
+static PltNeed needsPlt(uint32_t Type, const SymbolBody &S) {
+  if (S.isGnuIFunc())
+    return Plt_Explicit;
+  if (S.isPreemptible() && Target->needsPlt(Type))
+    return Plt_Explicit;
+
+  // This handles a non PIC program call to function in a shared library.
+  // In an ideal world, we could just report an error saying the relocation
+  // can overflow at runtime.
+  // In the real world with glibc, crt1.o has a R_X86_64_PC32 pointing to
+  // libc.so.
+  //
+  // The general idea on how to handle such cases is to create a PLT entry
+  // and use that as the function value.
+  //
+  // For the static linking part, we just return true and everything else
+  // will use the the PLT entry as the address.
+  //
+  // The remaining problem is making sure pointer equality still works. We
+  // need the help of the dynamic linker for that. We let it know that we have
+  // a direct reference to a so symbol by creating an undefined symbol with a
+  // non zero st_value. Seeing that, the dynamic linker resolves the symbol to
+  // the value of the symbol we created. This is true even for got entries, so
+  // pointer equality is maintained. To avoid an infinite loop, the only entry
+  // that points to the real function is a dedicated got entry used by the
+  // plt. That is identified by special relocation types (R_X86_64_JUMP_SLOT,
+  // R_386_JMP_SLOT, etc).
+  if (S.isShared() && !Config->Pic && S.isFunc()) {
+    RelExpr Expr = Target->getRelExpr(Type, S);
+    if (!refersToGotEntry(Expr))
+      return Plt_Implicit;
+  }
+
+  return Plt_No;
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -528,9 +568,9 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     // If a relocation needs PLT, we create a PLT and a GOT slot
     // for the symbol.
-    TargetInfo::PltNeed NeedPlt = Target->needsPlt(Type, Body);
+    PltNeed NeedPlt = needsPlt(Type, Body);
     if (NeedPlt) {
-      if (NeedPlt == TargetInfo::Plt_Implicit)
+      if (NeedPlt == Plt_Implicit)
         Body.NeedsCopyOrPltAddr = true;
       RelExpr E;
       if (Expr == R_PPC_OPD)

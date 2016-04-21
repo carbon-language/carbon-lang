@@ -55,9 +55,6 @@ public:
   // dynamic linker if isRelRelative returns true.
   virtual bool isRelRelative(uint32_t Type) const;
 
-  enum PltNeed { Plt_No, Plt_Explicit, Plt_Implicit };
-  PltNeed needsPlt(uint32_t Type, const SymbolBody &S) const;
-
   virtual bool needsThunk(uint32_t Type, const InputFile &File,
                           const SymbolBody &S) const;
 
@@ -100,9 +97,10 @@ public:
   virtual void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const;
   virtual void relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const;
 
+  virtual bool needsPlt(uint32_t Type) const;
+
 private:
   virtual bool needsCopyRelImpl(uint32_t Type) const;
-  virtual bool needsPltImpl(uint32_t Type) const;
 };
 
 uint64_t getPPC64TocBase();
