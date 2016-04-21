@@ -73,7 +73,11 @@ public:
     /// Check that the Mask is compatible with the RegBank.
     /// Indeed, if the RegBank cannot accomadate the "active bits" of the mask,
     /// there is no way this mapping is valid.
-    void verify() const;
+    ///
+    /// \note This method does not check anything when assertions are disabled.
+    ///
+    /// \return True is the check was successful.
+    bool verify() const;
   };
 
   /// Helper struct that represents how a value is mapped through
@@ -83,7 +87,10 @@ public:
     SmallVector<PartialMapping, 2> BreakDown;
 
     /// Verify that this mapping makes sense for a value of \p ExpectedBitWidth.
-    void verify(unsigned ExpectedBitWidth) const;
+    /// \note This method does not check anything when assertions are disabled.
+    ///
+    /// \return True is the check was successful.
+    bool verify(unsigned ExpectedBitWidth) const;
 
     /// Print this on dbgs() stream.
     void dump() const;
@@ -163,7 +170,11 @@ public:
 
     /// Verifiy that this mapping makes sense for \p MI.
     /// \pre \p MI must be connected to a MachineFunction.
-    void verify(const MachineInstr &MI) const;
+    ///
+    /// \note This method does not check anything when assertions are disabled.
+    ///
+    /// \return True is the check was successful.
+    bool verify(const MachineInstr &MI) const;
 
     /// Print this on dbgs() stream.
     void dump() const;
@@ -401,7 +412,13 @@ public:
   /// \post !returnedVal.empty().
   InstructionMappings getInstrPossibleMappings(const MachineInstr &MI) const;
 
-  void verify(const TargetRegisterInfo &TRI) const;
+  /// Check that information hold by this instance make sense for the
+  /// given \p TRI.
+  ///
+  /// \note This method does not check anything when assertions are disabled.
+  ///
+  /// \return True is the check was successful.
+  bool verify(const TargetRegisterInfo &TRI) const;
 };
 
 inline raw_ostream &

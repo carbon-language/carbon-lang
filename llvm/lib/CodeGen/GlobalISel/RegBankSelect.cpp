@@ -167,7 +167,7 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
   const RegisterBankInfo::InstructionMapping DefaultMapping =
       RBI->getInstrMapping(MI);
   // Make sure the mapping is valid for MI.
-  DefaultMapping.verify(MI);
+  assert(DefaultMapping.verify(MI) && "Invalid instruction mapping");
 
   DEBUG(dbgs() << "Mapping: " << DefaultMapping << '\n');
 
