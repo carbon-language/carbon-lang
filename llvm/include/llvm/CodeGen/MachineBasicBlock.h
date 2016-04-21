@@ -508,6 +508,12 @@ public:
   /// MachineLoopInfo, as applicable.
   MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P);
 
+  /// Check if the edge between this block and the given successor \p
+  /// Succ, can be split. If this returns true a subsequent call to
+  /// SplitCriticalEdge is guaranteed to return a valid basic block if
+  /// no changes occured in the meantime.
+  bool canSplitCriticalEdge(const MachineBasicBlock *Succ) const;
+
   void pop_front() { Insts.pop_front(); }
   void pop_back() { Insts.pop_back(); }
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
