@@ -10,10 +10,15 @@ define void @_start() {
   ret void
 }
 
-define hidden void @foo() {
+define void @foo() {
   ret void
 }
 
-; Check that _start and foo are not internalized.
+define hidden void @bar() {
+  ret void
+}
+
+; Check that _start and foo are not internalized, but bar is.
 ; CHECK: define void @_start()
-; CHECK: define hidden void @foo()
+; CHECK: define void @foo()
+; CHECK: define internal void @bar()

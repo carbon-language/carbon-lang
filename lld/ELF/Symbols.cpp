@@ -354,6 +354,15 @@ std::string elf::demangle(StringRef Name) {
 #endif
 }
 
+bool SymbolBody::includeInDynsym() const {
+  if (MustBeInDynSym)
+    return true;
+  uint8_t V = getVisibility();
+  if (V != STV_DEFAULT && V != STV_PROTECTED)
+    return false;
+  return Config->ExportDynamic || Config->Shared;
+}
+
 template uint32_t SymbolBody::template getVA<ELF32LE>(uint32_t) const;
 template uint32_t SymbolBody::template getVA<ELF32BE>(uint32_t) const;
 template uint64_t SymbolBody::template getVA<ELF64LE>(uint64_t) const;

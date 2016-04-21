@@ -130,6 +130,8 @@ public:
   // they are duplicate (conflicting) symbols.
   int compare(SymbolBody *Other);
 
+  bool includeInDynsym() const;
+
 protected:
   SymbolBody(Kind K, StringRef Name, uint8_t Binding, uint8_t StOther,
              uint8_t Type);

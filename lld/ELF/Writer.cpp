@@ -1053,15 +1053,6 @@ template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
   return true;
 }
 
-static bool includeInDynsym(const SymbolBody &B) {
-  if (B.MustBeInDynSym)
-    return true;
-  uint8_t V = B.getVisibility();
-  if (V != STV_DEFAULT && V != STV_PROTECTED)
-    return false;
-  return Config->ExportDynamic || Config->Shared;
-}
-
 // This class knows how to create an output section for a given
 // input section. Output section type is determined by various
 // factors, including input section's sh_flags, sh_type and
@@ -1334,7 +1325,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (Out<ELFT>::SymTab)
       Out<ELFT>::SymTab->addSymbol(Body);
 
-    if (isOutputDynamic() && includeInDynsym(*Body))
+    if (isOutputDynamic() && Body->includeInDynsym())
       Out<ELFT>::DynSymTab->addSymbol(Body);
   }
 
