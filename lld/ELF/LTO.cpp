@@ -85,6 +85,12 @@ static bool shouldInternalize(const SmallPtrSet<GlobalValue *, 8> &Used,
   return !B.Backref->includeInDynsym();
 }
 
+BitcodeCompiler::BitcodeCompiler()
+    : Combined(new llvm::Module("ld-temp.o", Context)), Mover(*Combined) {
+  Context.setDiscardValueNames(Config->DiscardValueNames);
+  Context.enableDebugTypeODRUniquing();
+}
+
 void BitcodeCompiler::add(BitcodeFile &F) {
   std::unique_ptr<IRObjectFile> Obj =
       check(IRObjectFile::create(F.MB, Context));

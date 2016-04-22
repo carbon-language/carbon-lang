@@ -37,14 +37,9 @@ class InputFile;
 
 class BitcodeCompiler {
 public:
+  BitcodeCompiler();
   void add(BitcodeFile &F);
   std::vector<std::unique_ptr<InputFile>> compile();
-
-  BitcodeCompiler()
-      : Combined(new llvm::Module("ld-temp.o", Context)), Mover(*Combined) {
-    Context.setDiscardValueNames(Config->DiscardValueNames);
-    Context.enableDebugTypeODRUniquing();
-  }
 
 private:
   std::vector<std::unique_ptr<InputFile>> runSplitCodegen(
