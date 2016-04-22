@@ -458,14 +458,15 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
+  Symtab.scanShlibUndefined();
+  Symtab.scanDynamicList();
+
   Symtab.addCombinedLtoObject();
 
   for (auto *Arg : Args.filtered(OPT_wrap))
     Symtab.wrap(Arg->getValue());
 
   // Write the result to the file.
-  Symtab.scanShlibUndefined();
-  Symtab.scanDynamicList();
   if (Config->GcSections)
     markLive<ELFT>(&Symtab);
   if (Config->ICF)
