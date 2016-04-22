@@ -790,8 +790,19 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       InputSectionBase<ELFT> *Sec = DR->Section;
       if (!shouldKeepInSymtab<ELFT>(Sec, SymName, *B))
         continue;
-      if (Sec && !Sec->Live)
-        continue;
+      if (Sec) {
+        if (!Sec->Live)
+          continue;
+
+        // Garbage collection is normally able to remove local symbols if they
+        // point to gced sections. In the case of SHF_MERGE sections, we want it
+        // to also be able to drop them if part of the section is gced.
+        // We could look at the section offset map to keep some of these
+        // symbols, but almost all local symbols are .L* symbols, so it
+        // is probably not worth the complexity.
+        if (Config->GcSections && isa<MergeInputSection<ELFT>>(Sec))
+          continue;
+      }
       ++Out<ELFT>::SymTab->NumLocals;
       if (Config->Relocatable)
         B->DynsymIndex = Out<ELFT>::SymTab->NumLocals;
