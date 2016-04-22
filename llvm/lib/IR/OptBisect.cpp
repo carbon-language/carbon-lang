@@ -85,21 +85,6 @@ static std::string getDescription(const CallGraphSCC &SCC) {
   return Desc;
 }
 
-static std::string getDescription(const LazyCallGraph::SCC &SCC) {
-  std::string Desc = "SCC (";
-  bool First = true;
-  for (LazyCallGraph::Node &CGN : SCC) {
-    if (First)
-      First = false;
-    else
-      Desc += ", ";
-    Function &F = CGN.getFunction();
-    Desc += F.getName();
-  }
-  Desc += ")";
-  return Desc;
-}
-
 // Force instantiations.
 template bool OptBisect::shouldRunPass(const Pass *, const Module &);
 template bool OptBisect::shouldRunPass(const Pass *, const Function &);
