@@ -1132,7 +1132,7 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
     } else {
       if (!HasReloc)
         fatal("FDE doesn't reference another section");
-      InputSectionBase<ELFT> *Target = S->getRelocTarget(*RelI);
+      InputSectionBase<ELFT> *Target = S->getFile()->getRelocTarget(*RelI);
       if (Target && Target->Live) {
         uint32_t CieOffset = Offset + 4 - ID;
         auto I = OffsetToIndex.find(CieOffset);

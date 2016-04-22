@@ -76,8 +76,6 @@ struct Relocation {
 // This corresponds to a section of an input file.
 template <class ELFT> class InputSectionBase {
 protected:
-  typedef typename ELFT::Rel Elf_Rel;
-  typedef typename ELFT::Rela Elf_Rela;
   typedef typename ELFT::Shdr Elf_Shdr;
   typedef typename ELFT::Sym Elf_Sym;
   typedef typename ELFT::uint uintX_t;
@@ -122,10 +120,6 @@ public:
   uintX_t getOffset(uintX_t Offset);
 
   ArrayRef<uint8_t> getSectionData() const;
-
-  // Returns a section that Rel is pointing to. Used by the garbage collector.
-  InputSectionBase<ELFT> *getRelocTarget(const Elf_Rel &Rel) const;
-  InputSectionBase<ELFT> *getRelocTarget(const Elf_Rela &Rel) const;
 
   void relocate(uint8_t *Buf, uint8_t *BufEnd);
   std::vector<Relocation> Relocations;

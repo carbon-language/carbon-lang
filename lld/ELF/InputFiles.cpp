@@ -251,6 +251,24 @@ elf::ObjectFile<ELFT>::getRelocTarget(const Elf_Shdr &Sec) {
   return Target;
 }
 
+// Returns a section that Rel relocation is pointing to.
+template <class ELFT>
+InputSectionBase<ELFT> *
+elf::ObjectFile<ELFT>::getRelocTarget(const Elf_Rel &Rel) const {
+  uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
+  SymbolBody &B = getSymbolBody(SymIndex).repl();
+  if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B))
+    if (D->Section)
+      return D->Section->Repl;
+  return nullptr;
+}
+
+template <class ELFT>
+InputSectionBase<ELFT> *
+elf::ObjectFile<ELFT>::getRelocTarget(const Elf_Rela &Rel) const {
+  return getRelocTarget(reinterpret_cast<const Elf_Rel &>(Rel));
+}
+
 template <class ELFT>
 InputSectionBase<ELFT> *
 elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
