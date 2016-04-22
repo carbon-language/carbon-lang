@@ -3176,13 +3176,22 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   if (InvMAs.empty())
     return;
 
+  auto *StmtInvalidCtx = Stmt.getInvalidContext();
+
   // Get the context under which the statement is executed but remove the error
   // context under which this statement is reached.
   isl_set *DomainCtx = isl_set_params(Stmt.getDomain());
-  DomainCtx = isl_set_subtract(DomainCtx, Stmt.getInvalidContext());
+  DomainCtx = isl_set_subtract(DomainCtx, StmtInvalidCtx);
   DomainCtx = isl_set_remove_redundancies(DomainCtx);
   DomainCtx = isl_set_detect_equalities(DomainCtx);
   DomainCtx = isl_set_coalesce(DomainCtx);
+
+  if (isl_set_n_basic_set(DomainCtx) >= MaxConjunctsInDomain) {
+    auto *AccInst = InvMAs.front()->getAccessInstruction();
+    invalidate(COMPLEXITY, AccInst->getDebugLoc());
+    isl_set_free(DomainCtx);
+    return;
+  }
 
   // Project out all parameters that relate to loads in the statement. Otherwise
   // we could have cyclic dependences on the constraints under which the
