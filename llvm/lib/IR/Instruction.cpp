@@ -217,32 +217,41 @@ void Instruction::copyFastMathFlags(const Instruction *I) {
 void Instruction::copyIRFlags(const Value *V) {
   // Copy the wrapping flags.
   if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
-    setHasNoSignedWrap(OB->hasNoSignedWrap());
-    setHasNoUnsignedWrap(OB->hasNoUnsignedWrap());
+    if (isa<OverflowingBinaryOperator>(this)) {
+      setHasNoSignedWrap(OB->hasNoSignedWrap());
+      setHasNoUnsignedWrap(OB->hasNoUnsignedWrap());
+    }
   }
 
   // Copy the exact flag.
   if (auto *PE = dyn_cast<PossiblyExactOperator>(V))
-    setIsExact(PE->isExact());
+    if (isa<PossiblyExactOperator>(this))
+      setIsExact(PE->isExact());
 
   // Copy the fast-math flags.
   if (auto *FP = dyn_cast<FPMathOperator>(V))
-    copyFastMathFlags(FP->getFastMathFlags());
+    if (isa<FPMathOperator>(this))
+      copyFastMathFlags(FP->getFastMathFlags());
 }
 
 void Instruction::andIRFlags(const Value *V) {
   if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
-    setHasNoSignedWrap(hasNoSignedWrap() & OB->hasNoSignedWrap());
-    setHasNoUnsignedWrap(hasNoUnsignedWrap() & OB->hasNoUnsignedWrap());
+    if (isa<OverflowingBinaryOperator>(this)) {
+      setHasNoSignedWrap(hasNoSignedWrap() & OB->hasNoSignedWrap());
+      setHasNoUnsignedWrap(hasNoUnsignedWrap() & OB->hasNoUnsignedWrap());
+    }
   }
 
   if (auto *PE = dyn_cast<PossiblyExactOperator>(V))
-    setIsExact(isExact() & PE->isExact());
+    if (isa<PossiblyExactOperator>(this))
+      setIsExact(isExact() & PE->isExact());
 
   if (auto *FP = dyn_cast<FPMathOperator>(V)) {
-    FastMathFlags FM = getFastMathFlags();
-    FM &= FP->getFastMathFlags();
-    copyFastMathFlags(FM);
+    if (isa<FPMathOperator>(this)) {
+      FastMathFlags FM = getFastMathFlags();
+      FM &= FP->getFastMathFlags();
+      copyFastMathFlags(FM);
+    }
   }
 }
 
