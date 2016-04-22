@@ -86,10 +86,17 @@ public:
   int compareSections(StringRef A, StringRef B);
 
 private:
+  // "ScriptConfig" is a bit too long, so define a short name for it.
+  ScriptConfiguration &Opt = *ScriptConfig;
+
   int getSectionIndex(StringRef Name);
   SectionRule *find(InputSectionBase<ELFT> *S);
 
-  ScriptConfiguration &Opt = *ScriptConfig;
+  uint64_t evaluate(ArrayRef<StringRef> Tokens);
+  uint64_t parseExpr(ArrayRef<StringRef> &Tokens);
+  uint64_t parsePrimary(ArrayRef<StringRef> &Tokens);
+  uint64_t parseExpr1(ArrayRef<StringRef> &Tokens, uint64_t Lhs, int MinPrec);
+  typename ELFT::uint Dot;
 };
 
 // Variable template is a C++14 feature, so we can't template

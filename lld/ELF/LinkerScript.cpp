@@ -80,17 +80,16 @@ static bool expect(ArrayRef<StringRef> &Tokens, StringRef S) {
   return true;
 }
 
-static uint64_t parseExpr(ArrayRef<StringRef> &Tokens, uint64_t Dot);
-
 // This is a part of the operator-precedence parser to evaluate
 // arithmetic expressions in SECTIONS command. This function evaluates an
 // integer literal, a parenthesized expression or the special variable ".".
-static uint64_t parsePrimary(ArrayRef<StringRef> &Tokens, uint64_t Dot) {
+template <class ELFT>
+uint64_t LinkerScript<ELFT>::parsePrimary(ArrayRef<StringRef> &Tokens) {
   StringRef Tok = next(Tokens);
   if (Tok == ".")
     return Dot;
   if (Tok == "(") {
-    uint64_t V = parseExpr(Tokens, Dot);
+    uint64_t V = parseExpr(Tokens);
     if (!expect(Tokens, ")"))
       return 0;
     return V;
@@ -121,15 +120,16 @@ static uint64_t apply(StringRef Op, uint64_t L, uint64_t R) {
 // This is an operator-precedence parser to evaluate
 // arithmetic expressions in SECTIONS command.
 // Tokens should start with an operator.
-static uint64_t parseExpr1(uint64_t Lhs, int MinPrec,
-                           ArrayRef<StringRef> &Tokens, uint64_t Dot) {
+template <class ELFT>
+uint64_t LinkerScript<ELFT>::parseExpr1(ArrayRef<StringRef> &Tokens,
+                                        uint64_t Lhs, int MinPrec) {
   while (!Tokens.empty()) {
     // Read an operator and an expression.
     StringRef Op1 = Tokens.front();
     if (precedence(Op1) < MinPrec)
       return Lhs;
     next(Tokens);
-    uint64_t Rhs = parsePrimary(Tokens, Dot);
+    uint64_t Rhs = parsePrimary(Tokens);
 
     // Evaluate the remaining part of the expression first if the
     // next operator has greater precedence than the previous one.
@@ -139,7 +139,7 @@ static uint64_t parseExpr1(uint64_t Lhs, int MinPrec,
       StringRef Op2 = Tokens.front();
       if (precedence(Op2) <= precedence(Op1))
         break;
-      Rhs = parseExpr1(Rhs, precedence(Op2), Tokens, Dot);
+      Rhs = parseExpr1(Tokens, Rhs, precedence(Op2));
     }
 
     Lhs = apply(Op1, Lhs, Rhs);
@@ -147,14 +147,16 @@ static uint64_t parseExpr1(uint64_t Lhs, int MinPrec,
   return Lhs;
 }
 
-static uint64_t parseExpr(ArrayRef<StringRef> &Tokens, uint64_t Dot) {
-  uint64_t V = parsePrimary(Tokens, Dot);
-  return parseExpr1(V, 0, Tokens, Dot);
+template <class ELFT>
+uint64_t LinkerScript<ELFT>::parseExpr(ArrayRef<StringRef> &Tokens) {
+  uint64_t V = parsePrimary(Tokens);
+  return parseExpr1(Tokens, V, 0);
 }
 
 // Evaluates the expression given by list of tokens.
-static uint64_t evaluate(ArrayRef<StringRef> Tokens, uint64_t Dot) {
-  uint64_t V = parseExpr(Tokens, Dot);
+template <class ELFT>
+uint64_t LinkerScript<ELFT>::evaluate(ArrayRef<StringRef> Tokens) {
+  uint64_t V = parseExpr(Tokens);
   if (!Tokens.empty())
     error("stray token: " + Tokens[0]);
   return V;
@@ -207,13 +209,12 @@ void LinkerScript<ELFT>::assignAddresses(
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
+  Dot = Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
   uintX_t ThreadBssOffset = 0;
-  uintX_t VA =
-      Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
 
   for (SectionsCommand &Cmd : Opt.Commands) {
     if (Cmd.Kind == ExprKind) {
-      VA = evaluate(Cmd.Expr, VA);
+      Dot = evaluate(Cmd.Expr);
       continue;
     }
 
@@ -222,17 +223,17 @@ void LinkerScript<ELFT>::assignAddresses(
       continue;
 
     if ((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS) {
-      uintX_t TVA = VA + ThreadBssOffset;
+      uintX_t TVA = Dot + ThreadBssOffset;
       TVA = alignTo(TVA, Sec->getAlign());
       Sec->setVA(TVA);
-      ThreadBssOffset = TVA - VA + Sec->getSize();
+      ThreadBssOffset = TVA - Dot + Sec->getSize();
       continue;
     }
 
     if (Sec->getFlags() & SHF_ALLOC) {
-      VA = alignTo(VA, Sec->getAlign());
-      Sec->setVA(VA);
-      VA += Sec->getSize();
+      Dot = alignTo(Dot, Sec->getAlign());
+      Sec->setVA(Dot);
+      Dot += Sec->getSize();
       continue;
     }
   }
