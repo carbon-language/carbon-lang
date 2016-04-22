@@ -94,6 +94,14 @@ uint64_t LinkerScript<ELFT>::parsePrimary(ArrayRef<StringRef> &Tokens) {
       return 0;
     return V;
   }
+  if (Tok == "ALIGN") {
+    if (!expect(Tokens, "("))
+      return 0;
+    uint64_t V = parseExpr(Tokens);
+    if (!expect(Tokens, ")"))
+      return 0;
+    return alignTo(Dot, V);
+  }
   return getInteger(Tok);
 }
 
