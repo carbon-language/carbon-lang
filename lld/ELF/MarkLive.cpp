@@ -40,29 +40,20 @@ using namespace lld::elf;
 
 // Calls Fn for each section that Sec refers to via relocations.
 template <class ELFT>
-static void forEachSuccessor(
-    InputSection<ELFT> *Sec,
-    std::function<void(InputSectionBase<ELFT> *, typename ELFT::uint Offset)>
-        Fn) {
+static void forEachSuccessor(InputSection<ELFT> *Sec,
+                             std::function<void(InputSectionBase<ELFT> *)> Fn) {
   typedef typename ELFT::Rel Elf_Rel;
   typedef typename ELFT::Rela Elf_Rela;
   typedef typename ELFT::Shdr Elf_Shdr;
-  typedef typename ELFT::uint uintX_t;
 
   ELFFile<ELFT> &Obj = Sec->getFile()->getObj();
   for (const Elf_Shdr *RelSec : Sec->RelocSections) {
     if (RelSec->sh_type == SHT_RELA) {
-      for (const Elf_Rela &RI : Obj.relas(RelSec)) {
-        std::pair<InputSectionBase<ELFT> *, uintX_t> P =
-            Sec->getRelocTarget(RI);
-        Fn(P.first, P.second);
-      }
+      for (const Elf_Rela &RI : Obj.relas(RelSec))
+        Fn(Sec->getRelocTarget(RI));
     } else {
-      for (const Elf_Rel &RI : Obj.rels(RelSec)) {
-        std::pair<InputSectionBase<ELFT> *, uintX_t> P =
-            Sec->getRelocTarget(RI);
-        Fn(P.first, P.second);
-      }
+      for (const Elf_Rel &RI : Obj.rels(RelSec))
+        Fn(Sec->getRelocTarget(RI));
     }
   }
 }
@@ -94,18 +85,10 @@ template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
 // Starting from GC-root sections, this function visits all reachable
 // sections to set their "Live" bits.
 template <class ELFT> void elf::markLive(SymbolTable<ELFT> *Symtab) {
-  typedef typename ELFT::uint uintX_t;
   SmallVector<InputSection<ELFT> *, 256> Q;
 
-  auto Enqueue = [&](InputSectionBase<ELFT> *Sec, uintX_t Offset) {
-    if (!Sec)
-      return;
-    if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(Sec)) {
-      std::pair<std::pair<uintX_t, uintX_t> *, uintX_t> T =
-          MS->getRangeAndSize(Offset);
-      T.first->second = 0;
-    }
-    if (Sec->Live)
+  auto Enqueue = [&](InputSectionBase<ELFT> *Sec) {
+    if (!Sec || Sec->Live)
       return;
     Sec->Live = true;
     if (InputSection<ELFT> *S = dyn_cast<InputSection<ELFT>>(Sec))
@@ -115,7 +98,7 @@ template <class ELFT> void elf::markLive(SymbolTable<ELFT> *Symtab) {
   auto MarkSymbol = [&](SymbolBody *Sym) {
     if (Sym)
       if (auto *D = dyn_cast<DefinedRegular<ELFT>>(Sym))
-        Enqueue(D->Section, D->Value);
+        Enqueue(D->Section);
   };
 
   // Add GC root symbols.
@@ -139,7 +122,7 @@ template <class ELFT> void elf::markLive(SymbolTable<ELFT> *Symtab) {
     for (InputSectionBase<ELFT> *Sec : F->getSections())
       if (Sec && Sec != &InputSection<ELFT>::Discarded)
         if (isReserved(Sec) || Script<ELFT>::X->shouldKeep(Sec))
-          Enqueue(Sec, 0);
+          Enqueue(Sec);
 
   // Mark all reachable sections.
   while (!Q.empty())
