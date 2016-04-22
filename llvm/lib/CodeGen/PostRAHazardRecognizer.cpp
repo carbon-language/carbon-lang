@@ -44,7 +44,6 @@ STATISTIC(NumNoops, "Number of noops inserted");
 
 namespace {
   class PostRAHazardRecognizer : public MachineFunctionPass {
-    const TargetInstrInfo *TII;
 
   public:
     static char ID;
