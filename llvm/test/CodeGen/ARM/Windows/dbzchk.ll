@@ -78,8 +78,8 @@ return:
 ; CHECK-MOD-DAG: Successors according to CFG: BB#2
 ; CHECK-MOD-DAG: BB#4
 
-; RUN: llc -mtriple thumbv7--windows-itanium -print-machineinstrs=expand-isel-pseudos -filetype asm -o - %s 2>&1 | FileCheck %s -check-prefix CHECK-CFG
-; RUN: llc -mtriple thumbv7--windows-itanium -print-machineinstrs=expand-isel-pseudos -filetype asm -o - %s 2>&1 | FileCheck %s -check-prefix CHECK-CFG-ASM
+; RUN: llc -mtriple thumbv7--windows-itanium -print-machineinstrs=expand-isel-pseudos -filetype asm -o /dev/null %s 2>&1 | FileCheck %s -check-prefix CHECK-CFG
+; RUN: llc -mtriple thumbv7--windows-itanium -print-machineinstrs=expand-isel-pseudos -filetype asm -o - %s | FileCheck %s -check-prefix CHECK-CFG-ASM
 
 ; unsigned c;
 ; extern unsigned long g(void);
