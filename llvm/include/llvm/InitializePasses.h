@@ -274,7 +274,7 @@ void initializeSimpleInlinerPass(PassRegistry&);
 void initializeShadowStackGCLoweringPass(PassRegistry&);
 void initializeRegisterCoalescerPass(PassRegistry&);
 void initializeSingleLoopExtractorPass(PassRegistry&);
-void initializeSinkingPass(PassRegistry&);
+void initializeSinkingLegacyPassPass(PassRegistry&);
 void initializeSeparateConstOffsetFromGEPPass(PassRegistry &);
 void initializeSlotIndexesPass(PassRegistry&);
 void initializeSpillPlacementPass(PassRegistry&);

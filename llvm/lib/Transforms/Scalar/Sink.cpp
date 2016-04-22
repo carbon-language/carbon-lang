@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/Sink.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -24,6 +24,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "sink"
@@ -31,50 +32,10 @@ using namespace llvm;
 STATISTIC(NumSunk, "Number of instructions sunk");
 STATISTIC(NumSinkIter, "Number of sinking iterations");
 
-namespace {
-  class Sinking : public FunctionPass {
-    DominatorTree *DT;
-    LoopInfo *LI;
-    AliasAnalysis *AA;
-
-  public:
-    static char ID; // Pass identification
-    Sinking() : FunctionPass(ID) {
-      initializeSinkingPass(*PassRegistry::getPassRegistry());
-    }
-
-    bool runOnFunction(Function &F) override;
-
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.setPreservesCFG();
-      FunctionPass::getAnalysisUsage(AU);
-      AU.addRequired<AAResultsWrapperPass>();
-      AU.addRequired<DominatorTreeWrapperPass>();
-      AU.addRequired<LoopInfoWrapperPass>();
-      AU.addPreserved<DominatorTreeWrapperPass>();
-      AU.addPreserved<LoopInfoWrapperPass>();
-    }
-  private:
-    bool ProcessBlock(BasicBlock &BB);
-    bool SinkInstruction(Instruction *I, SmallPtrSetImpl<Instruction*> &Stores);
-    bool AllUsesDominatedByBlock(Instruction *Inst, BasicBlock *BB) const;
-    bool IsAcceptableTarget(Instruction *Inst, BasicBlock *SuccToSinkTo) const;
-  };
-} // end anonymous namespace
-
-char Sinking::ID = 0;
-INITIALIZE_PASS_BEGIN(Sinking, "sink", "Code sinking", false, false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
-INITIALIZE_PASS_END(Sinking, "sink", "Code sinking", false, false)
-
-FunctionPass *llvm::createSinkingPass() { return new Sinking(); }
-
 /// AllUsesDominatedByBlock - Return true if all uses of the specified value
 /// occur in blocks dominated by the specified block.
-bool Sinking::AllUsesDominatedByBlock(Instruction *Inst,
-                                      BasicBlock *BB) const {
+static bool AllUsesDominatedByBlock(Instruction *Inst, BasicBlock *BB,
+                                    DominatorTree &DT) {
   // Ignoring debug uses is necessary so debug info doesn't affect the code.
   // This may leave a referencing dbg_value in the original block, before
   // the definition of the vreg.  Dwarf generator handles this although the
@@ -90,13 +51,13 @@ bool Sinking::AllUsesDominatedByBlock(Instruction *Inst,
       UseBlock = PN->getIncomingBlock(Num);
     }
     // Check that it dominates.
-    if (!DT->dominates(BB, UseBlock))
+    if (!DT.dominates(BB, UseBlock))
       return false;
   }
   return true;
 }
 
-static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
+static bool isSafeToMove(Instruction *Inst, AliasAnalysis &AA,
                          SmallPtrSetImpl<Instruction *> &Stores) {
 
   if (Inst->mayWriteToMemory()) {
@@ -107,7 +68,7 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
   if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
     MemoryLocation Loc = MemoryLocation::get(L);
     for (Instruction *S : Stores)
-      if (AA->getModRefInfo(S, Loc) & MRI_Mod)
+      if (AA.getModRefInfo(S, Loc) & MRI_Mod)
         return false;
   }
 
@@ -127,8 +88,8 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
 
 /// IsAcceptableTarget - Return true if it is possible to sink the instruction
 /// in the specified basic block.
-bool Sinking::IsAcceptableTarget(Instruction *Inst,
-                                 BasicBlock *SuccToSinkTo) const {
+static bool IsAcceptableTarget(Instruction *Inst, BasicBlock *SuccToSinkTo,
+                               DominatorTree &DT, LoopInfo &LI) {
   assert(Inst && "Instruction to be sunk is null");
   assert(SuccToSinkTo && "Candidate sink target is null");
 
@@ -154,25 +115,26 @@ bool Sinking::IsAcceptableTarget(Instruction *Inst,
 
     // We don't want to sink across a critical edge if we don't dominate the
     // successor. We could be introducing calculations to new code paths.
-    if (!DT->dominates(Inst->getParent(), SuccToSinkTo))
+    if (!DT.dominates(Inst->getParent(), SuccToSinkTo))
       return false;
 
     // Don't sink instructions into a loop.
-    Loop *succ = LI->getLoopFor(SuccToSinkTo);
-    Loop *cur = LI->getLoopFor(Inst->getParent());
+    Loop *succ = LI.getLoopFor(SuccToSinkTo);
+    Loop *cur = LI.getLoopFor(Inst->getParent());
     if (succ != nullptr && succ != cur)
       return false;
   }
 
   // Finally, check that all the uses of the instruction are actually
   // dominated by the candidate
-  return AllUsesDominatedByBlock(Inst, SuccToSinkTo);
+  return AllUsesDominatedByBlock(Inst, SuccToSinkTo, DT);
 }
 
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
-bool Sinking::SinkInstruction(Instruction *Inst,
-                              SmallPtrSetImpl<Instruction *> &Stores) {
+static bool SinkInstruction(Instruction *Inst,
+                            SmallPtrSetImpl<Instruction *> &Stores,
+                            DominatorTree &DT, LoopInfo &LI, AAResults &AA) {
 
   // Don't sink static alloca instructions.  CodeGen assumes allocas outside the
   // entry block are dynamically sized stack objects.
@@ -199,12 +161,12 @@ bool Sinking::SinkInstruction(Instruction *Inst,
   // Instructions can only be sunk if all their uses are in blocks
   // dominated by one of the successors.
   // Look at all the postdominators and see if we can sink it in one.
-  DomTreeNode *DTN = DT->getNode(Inst->getParent());
+  DomTreeNode *DTN = DT.getNode(Inst->getParent());
   for (DomTreeNode::iterator I = DTN->begin(), E = DTN->end();
       I != E && SuccToSinkTo == nullptr; ++I) {
     BasicBlock *Candidate = (*I)->getBlock();
     if ((*I)->getIDom()->getBlock() == Inst->getParent() &&
-        IsAcceptableTarget(Inst, Candidate))
+        IsAcceptableTarget(Inst, Candidate, DT, LI))
       SuccToSinkTo = Candidate;
   }
 
@@ -212,7 +174,7 @@ bool Sinking::SinkInstruction(Instruction *Inst,
   // decide which one we should sink to, if any.
   for (succ_iterator I = succ_begin(Inst->getParent()),
       E = succ_end(Inst->getParent()); I != E && !SuccToSinkTo; ++I) {
-    if (IsAcceptableTarget(Inst, *I))
+    if (IsAcceptableTarget(Inst, *I, DT, LI))
       SuccToSinkTo = *I;
   }
 
@@ -231,14 +193,15 @@ bool Sinking::SinkInstruction(Instruction *Inst,
   return true;
 }
 
-bool Sinking::ProcessBlock(BasicBlock &BB) {
+static bool ProcessBlock(BasicBlock &BB, DominatorTree &DT, LoopInfo &LI,
+                         AAResults &AA) {
   // Can't sink anything out of a block that has less than two successors.
   if (BB.getTerminator()->getNumSuccessors() <= 1) return false;
 
   // Don't bother sinking code out of unreachable blocks. In addition to being
   // unprofitable, it can also lead to infinite looping, because in an
   // unreachable loop there may be nowhere to stop.
-  if (!DT->isReachableFromEntry(&BB)) return false;
+  if (!DT.isReachableFromEntry(&BB)) return false;
 
   bool MadeChange = false;
 
@@ -259,7 +222,7 @@ bool Sinking::ProcessBlock(BasicBlock &BB) {
     if (isa<DbgInfoIntrinsic>(Inst))
       continue;
 
-    if (SinkInstruction(Inst, Stores)) {
+    if (SinkInstruction(Inst, Stores, DT, LI, AA)) {
       ++NumSunk;
       MadeChange = true;
     }
@@ -270,11 +233,8 @@ bool Sinking::ProcessBlock(BasicBlock &BB) {
   return MadeChange;
 }
 
-bool Sinking::runOnFunction(Function &F) {
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-
+static bool iterativelySinkInstructions(Function &F, DominatorTree &DT,
+                                        LoopInfo &LI, AAResults &AA) {
   bool MadeChange, EverMadeChange = false;
 
   do {
@@ -283,10 +243,61 @@ bool Sinking::runOnFunction(Function &F) {
     // Process all basic blocks.
     for (Function::iterator I = F.begin(), E = F.end();
          I != E; ++I)
-      MadeChange |= ProcessBlock(*I);
+      MadeChange |= ProcessBlock(*I, DT, LI, AA);
     EverMadeChange |= MadeChange;
     NumSinkIter++;
   } while (MadeChange);
 
   return EverMadeChange;
 }
+
+PreservedAnalyses SinkingPass::run(Function &F, AnalysisManager<Function> &AM) {
+  auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
+  auto &LI = AM.getResult<LoopAnalysis>(F);
+  auto &AA = AM.getResult<AAManager>(F);
+
+  if (!iterativelySinkInstructions(F, DT, LI, AA))
+    return PreservedAnalyses::all();
+
+  auto PA = PreservedAnalyses();
+  PA.preserve<DominatorTreeAnalysis>();
+  PA.preserve<LoopAnalysis>();
+  return PA;
+}
+
+namespace {
+  class SinkingLegacyPass : public FunctionPass {
+  public:
+    static char ID; // Pass identification
+    SinkingLegacyPass() : FunctionPass(ID) {
+      initializeSinkingLegacyPassPass(*PassRegistry::getPassRegistry());
+    }
+
+    bool runOnFunction(Function &F) override {
+      auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+      auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+      auto &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
+
+      return iterativelySinkInstructions(F, DT, LI, AA);
+    }
+
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
+      AU.setPreservesCFG();
+      FunctionPass::getAnalysisUsage(AU);
+      AU.addRequired<AAResultsWrapperPass>();
+      AU.addRequired<DominatorTreeWrapperPass>();
+      AU.addRequired<LoopInfoWrapperPass>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
+      AU.addPreserved<LoopInfoWrapperPass>();
+    }
+  };
+} // end anonymous namespace
+
+char SinkingLegacyPass::ID = 0;
+INITIALIZE_PASS_BEGIN(SinkingLegacyPass, "sink", "Code sinking", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
+INITIALIZE_PASS_END(SinkingLegacyPass, "sink", "Code sinking", false, false)
+
+FunctionPass *llvm::createSinkingPass() { return new SinkingLegacyPass(); }
