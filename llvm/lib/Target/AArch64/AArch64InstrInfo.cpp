@@ -2138,8 +2138,7 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (SrcReg == AArch64::NZCV) {
     assert(AArch64::GPR64RegClass.contains(DestReg) && "Invalid NZCV copy");
-    BuildMI(MBB, I, DL, get(AArch64::MRS))
-      .addReg(DestReg)
+    BuildMI(MBB, I, DL, get(AArch64::MRS), DestReg)
       .addImm(AArch64SysReg::NZCV)
       .addReg(AArch64::NZCV, RegState::Implicit | getKillRegState(KillSrc));
     return;
