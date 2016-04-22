@@ -140,10 +140,10 @@ untaken:
   ret void
 }
 
-; A == B implies A >=u B is unknown to be true or false.
+; A == B implies A >=u B is true.
 ; CHECK-LABEL: @test_eq_uge
 ; CHECK: call void @is(i1 true)
-; CHECK: call void @is(i1 false)
+; CHECK-NOT: call void @is(i1 false)
 define void @test_eq_uge(i32 %a, i32 %b) {
   %cmp1 = icmp eq i32 %a, %b
   br i1 %cmp1, label %taken, label %untaken
@@ -188,10 +188,10 @@ untaken:
   ret void
 }
 
-; A == B implies A <=u B is unknown to be true or false.
+; A == B implies A <=u B is true.
 ; CHECK-LABEL: @test_eq_ule
 ; CHECK: call void @is(i1 true)
-; CHECK: call void @is(i1 false)
+; CHECK-NOT: call void @is(i1 false)
 define void @test_eq_ule(i32 %a, i32 %b) {
   %cmp1 = icmp eq i32 %a, %b
   br i1 %cmp1, label %taken, label %untaken
@@ -236,10 +236,10 @@ untaken:
   ret void
 }
 
-; A == B implies A >=s B is unknown to be true or false.
+; A == B implies A >=s B is true.
 ; CHECK-LABEL: @test_eq_sge
 ; CHECK: call void @is(i1 true)
-; CHECK: call void @is(i1 false)
+; CHECK-NOT: call void @is(i1 false)
 define void @test_eq_sge(i32 %a, i32 %b) {
   %cmp1 = icmp eq i32 %a, %b
   br i1 %cmp1, label %taken, label %untaken
@@ -284,10 +284,10 @@ untaken:
   ret void
 }
 
-; A == B implies A <=s B is unknown to be true or false.
+; A == B implies A <=s B is true.
 ; CHECK-LABEL: @test_eq_sle
 ; CHECK: call void @is(i1 true)
-; CHECK: call void @is(i1 false)
+; CHECK-NOT: call void @is(i1 false)
 define void @test_eq_sle(i32 %a, i32 %b) {
   %cmp1 = icmp eq i32 %a, %b
   br i1 %cmp1, label %taken, label %untaken
