@@ -17,13 +17,13 @@
 // CHECK-NEXT: AddressAlignment: 1
 // CHECK-NEXT: EntrySize: 1
 // CHECK-NEXT: SectionData (
-// CHECK-NEXT:   0000: 61626300 64656600                    |abc.def.|
+// CHECK-NEXT:   0000: 64656600 61626300 |def.abc.|
 // CHECK-NEXT: )
 
 // CHECK:      Symbols [
 // CHECK:        Symbol {
 // CHECK:          Name: bar
-// CHECK-NEXT:     Value: 0x1CC
+// CHECK-NEXT:     Value: 0x1C8
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
