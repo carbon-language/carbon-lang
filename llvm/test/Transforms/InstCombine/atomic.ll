@@ -173,45 +173,6 @@ define i32 @test17(i1 %cnd) {
   ret i32 %x
 }
 
-declare void @clobber()
-
-define i32 @test18(float* %p) {
-; CHECK-LABEL: define i32 @test18(
-; CHECK: load atomic i32, i32* [[A:%.*]] unordered, align 4
-; CHECK: store atomic i32 [[B:%.*]], i32* [[C:%.*]] unordered, align 4
-  %x = load atomic float, float* %p unordered, align 4
-  call void @clobber() ;; keep the load around
-  store atomic float %x, float* %p unordered, align 4
-  ret i32 0
-}
-
-; TODO: probably also legal in this case
-define i32 @test19(float* %p) {
-; CHECK-LABEL: define i32 @test19(
-; CHECK: load atomic float, float* %p seq_cst, align 4
-; CHECK: store atomic float %x, float* %p seq_cst, align 4
-  %x = load atomic float, float* %p seq_cst, align 4
-  call void @clobber() ;; keep the load around
-  store atomic float %x, float* %p seq_cst, align 4
-  ret i32 0
-}
-
-define i32 @test20(i32** %p, i8* %v) {
-; CHECK-LABEL: define i32 @test20(
-; CHECK: store atomic i8* %v, i8** [[D:%.*]] unordered, align 4
-  %cast = bitcast i8* %v to i32*
-  store atomic i32* %cast, i32** %p unordered, align 4
-  ret i32 0
-}
-; TODO: probably also legal in this case
-define i32 @test21(i32** %p, i8* %v) {
-; CHECK-LABEL: define i32 @test21(
-; CHECK: store atomic i32* %cast, i32** %p monotonic, align 4
-  %cast = bitcast i8* %v to i32*
-  store atomic i32* %cast, i32** %p monotonic, align 4
-  ret i32 0
-}
-
 define i32 @test22(i1 %cnd) {
 ; CHECK-LABEL: define i32 @test22(
 ; CHECK: [[PHI:%.*]] = phi i32
