@@ -3173,6 +3173,9 @@ const InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) const {
 
 void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
 
+  if (InvMAs.empty())
+    return;
+
   // Get the context under which the statement is executed but remove the error
   // context under which this statement is reached.
   isl_set *DomainCtx = isl_set_params(Stmt.getDomain());
