@@ -7366,11 +7366,12 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
       (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT)) &&
       TLI.isLoadBitCastBeneficial(N0.getValueType(), VT)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    unsigned Align = DAG.getDataLayout().getABITypeAlignment(
-        VT.getTypeForEVT(*DAG.getContext()));
     unsigned OrigAlign = LN0->getAlignment();
 
-    if (Align <= OrigAlign) {
+    bool Fast = false;
+    if (TLI.allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(), VT,
+                               LN0->getAddressSpace(), OrigAlign, &Fast) &&
+        Fast) {
       SDValue Load = DAG.getLoad(VT, SDLoc(N), LN0->getChain(),
                                  LN0->getBasePtr(), LN0->getPointerInfo(),
                                  LN0->isVolatile(), LN0->isNonTemporal(),
