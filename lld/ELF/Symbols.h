@@ -60,6 +60,11 @@ struct Symbol {
   // --export-dynamic, and by dynamic lists.
   unsigned ExportDynamic : 1;
 
+  // This flag acts as an additional filter on the dynamic symbol list. It is
+  // set if there is no version script, or if the symbol appears in the global
+  // section of the version script.
+  unsigned VersionScriptGlobal : 1;
+
   bool includeInDynsym() const;
 };
 

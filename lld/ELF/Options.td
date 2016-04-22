@@ -160,6 +160,9 @@ def verbose : Flag<["--"], "verbose">;
 def version : Flag<["--", "-"], "version">,
   HelpText<"Display the version number">;
 
+def version_script : Separate<["--", "-"], "version-script">,
+  HelpText<"Read a version script">;
+
 def warn_common : Flag<["--", "-"], "warn-common">,
   HelpText<"Warn about duplicate common symbols">;
 
@@ -234,7 +237,6 @@ def no_warn_common : Flag<["--", "-"], "no-warn-common">;
 def no_warn_mismatch : Flag<["--"], "no-warn-mismatch">;
 def rpath_link : Separate<["--", "-"], "rpath-link">;
 def rpath_link_eq : Joined<["--", "-"], "rpath-link=">;
-def version_script : Separate<["--"], "version-script">;
 def warn_execstack : Flag<["--"], "warn-execstack">;
 def warn_shared_textrel : Flag<["--"], "warn-shared-textrel">;
 def G : Separate<["-"], "G">;

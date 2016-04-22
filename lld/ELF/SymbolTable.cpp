@@ -290,7 +290,12 @@ template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
   auto P = Symtab.insert(std::make_pair(Name, NumSyms));
   Symbol *Sym;
   if (P.second) {
-    Sym = new (Alloc) Symbol{New, STV_DEFAULT, false, false};
+    Sym = new (Alloc) Symbol;
+    Sym->Body = New;
+    Sym->Visibility = STV_DEFAULT;
+    Sym->IsUsedInRegularObj = false;
+    Sym->ExportDynamic = false;
+    Sym->VersionScriptGlobal = !Config->VersionScript;
     SymVector.push_back(Sym);
   } else {
     Sym = SymVector[P.first->second];
@@ -372,6 +377,15 @@ template <class ELFT> void SymbolTable<ELFT>::scanDynamicList() {
   for (StringRef S : Config->DynamicList)
     if (SymbolBody *B = find(S))
       B->Backref->ExportDynamic = true;
+}
+
+// This function processes the --version-script option by marking all global
+// symbols with the VersionScriptGlobal flag, which acts as a filter on the
+// dynamic symbol table.
+template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
+  for (StringRef S : Config->VersionScriptGlobals)
+    if (SymbolBody *B = find(S))
+      B->Backref->VersionScriptGlobal = true;
 }
 
 template class elf::SymbolTable<ELF32LE>;

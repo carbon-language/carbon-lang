@@ -9,11 +9,11 @@
 
 #include "Driver.h"
 #include "Config.h"
-#include "DynamicList.h"
 #include "Error.h"
 #include "ICF.h"
 #include "InputFiles.h"
 #include "LinkerScript.h"
+#include "SymbolListFile.h"
 #include "SymbolTable.h"
 #include "Target.h"
 #include "Writer.h"
@@ -144,11 +144,6 @@ Optional<MemoryBufferRef> LinkerDriver::readFile(StringRef Path) {
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take MB ownership
   return MBRef;
-}
-
-void LinkerDriver::readDynamicList(StringRef Path) {
-  if (Optional<MemoryBufferRef> Buffer = readFile(Path))
-    parseDynamicList(*Buffer);
 }
 
 // Add a given library by searching it from input search paths.
@@ -372,10 +367,18 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     Config->Undefined.push_back(Arg->getValue());
 
   if (Args.hasArg(OPT_dynamic_list))
-    readDynamicList(getString(Args, OPT_dynamic_list));
+    if (Optional<MemoryBufferRef> Buffer =
+            readFile(getString(Args, OPT_dynamic_list)))
+      parseDynamicList(*Buffer);
 
   for (auto *Arg : Args.filtered(OPT_export_dynamic_symbol))
     Config->DynamicList.push_back(Arg->getValue());
+
+  Config->VersionScript = Args.hasArg(OPT_version_script);
+  if (Config->VersionScript)
+    if (Optional<MemoryBufferRef> Buffer =
+            readFile(getString(Args, OPT_version_script)))
+      parseVersionScript(*Buffer);
 }
 
 void LinkerDriver::createFiles(opt::InputArgList &Args) {
@@ -457,6 +460,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   Symtab.scanShlibUndefined();
   Symtab.scanDynamicList();
+  Symtab.scanVersionScript();
 
   Symtab.addCombinedLtoObject();
 

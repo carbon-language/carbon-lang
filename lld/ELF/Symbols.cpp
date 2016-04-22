@@ -115,31 +115,26 @@ bool SymbolBody::isPreemptible() const {
   if (isLocal())
     return false;
 
+  // Shared symbols resolve to the definition in the DSO.
   if (isShared())
     return true;
 
-  if (Backref->Visibility != STV_DEFAULT)
-    return false;
-
-  if (isUndefined()) {
-    if (!isWeak())
-      return true;
-
-    // Ideally the static linker should see a definition for every symbol, but
-    // shared object are normally allowed to have undefined references that the
-    // static linker never sees a definition for.
-    if (Config->Shared)
-      return true;
-
-    // Otherwise, just resolve to 0.
-    return false;
-  }
-
+  // That's all that can be preempted in a non-DSO.
   if (!Config->Shared)
     return false;
+
+  // Undefined symbols in DSOs can only be preempted if they are strong.
+  // Weak symbols just resolve to zero.
+  if (isUndefined())
+    return !isWeak();
+
+  // -Bsymbolic means that not even default visibility symbols can be preempted.
   if (Config->Bsymbolic || (Config->BsymbolicFunctions && isFunc()))
     return false;
-  return true;
+
+  // Only default visibility symbols that appear in the dynamic symbol table can
+  // be preempted.
+  return Backref->Visibility == STV_DEFAULT && Backref->includeInDynsym();
 }
 
 template <class ELFT>
@@ -328,7 +323,7 @@ std::string elf::demangle(StringRef Name) {
 bool Symbol::includeInDynsym() const {
   if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
     return false;
-  return ExportDynamic || Body->isShared();
+  return (ExportDynamic && VersionScriptGlobal) || Body->isShared();
 }
 
 template uint32_t SymbolBody::template getVA<ELF32LE>(uint32_t) const;
