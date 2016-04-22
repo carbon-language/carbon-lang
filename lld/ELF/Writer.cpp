@@ -977,8 +977,7 @@ void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
       continue;
     S.OffsetInBss = Off;
     S.NeedsCopyOrPltAddr = true;
-    S.setUsedInRegularObj();
-    S.MustBeInDynSym = true;
+    S.Backref->IsUsedInRegularObj = true;
   }
   Out<ELFT>::RelaDyn->addReloc(
       {Target->CopyRel, Out<ELFT>::Bss, SS->OffsetInBss, false, SS, 0});
@@ -1042,7 +1041,7 @@ template <class ELFT> void Writer<ELFT>::addRelIpltSymbols() {
 }
 
 template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
-  if (!B.isUsedInRegularObj())
+  if (!B.Backref->IsUsedInRegularObj)
     return false;
 
   if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B)) {
@@ -1326,7 +1325,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (Out<ELFT>::SymTab)
       Out<ELFT>::SymTab->addSymbol(Body);
 
-    if (isOutputDynamic() && Body->includeInDynsym())
+    if (isOutputDynamic() && S->includeInDynsym())
       Out<ELFT>::DynSymTab->addSymbol(Body);
   }
 

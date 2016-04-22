@@ -132,11 +132,6 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
     Obj->parse(DummyGroups);
     for (SymbolBody *Body : Obj->getNonLocalSymbols()) {
       Symbol *Sym = insert(Body);
-      Sym->Body->setUsedInRegularObj();
-      if (Sym->Body->isShared())
-        Sym->Body->MustBeInDynSym = true;
-      if (Sym->Body->MustBeInDynSym)
-        Body->MustBeInDynSym = true;
       if (!Sym->Body->isUndefined() && Body->isUndefined())
         continue;
       Sym->Body = Body;
@@ -198,9 +193,9 @@ template <class ELFT> void SymbolTable<ELFT>::wrap(StringRef Name) {
   if (Symtab.count(Name) == 0)
     return;
   StringSaver Saver(Alloc);
-  Symbol *Sym = addUndefined(Name)->getSymbol();
-  Symbol *Real = addUndefined(Saver.save("__real_" + Name))->getSymbol();
-  Symbol *Wrap = addUndefined(Saver.save("__wrap_" + Name))->getSymbol();
+  Symbol *Sym = addUndefined(Name)->Backref;
+  Symbol *Real = addUndefined(Saver.save("__real_" + Name))->Backref;
+  Symbol *Wrap = addUndefined(Saver.save("__wrap_" + Name))->Backref;
   Real->Body = Sym->Body;
   Sym->Body = Wrap->Body;
 }
@@ -247,8 +242,6 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     }
     // Found a definition for something also in an archive.
     // Ignore the archive definition.
-    if (L->isUsedInRegularObj())
-      New->setUsedInRegularObj();
     Sym->Body = New;
     return;
   }
@@ -273,6 +266,23 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     Sym->Body = New;
 }
 
+static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
+  if (VA == STV_DEFAULT)
+    return VB;
+  if (VB == STV_DEFAULT)
+    return VA;
+  return std::min(VA, VB);
+}
+
+static bool shouldExport(SymbolBody *B) {
+  if (Config->Shared || Config->ExportDynamic) {
+    // Export most symbols except for those that do not need to be exported.
+    return !B->CanOmitFromDynSym;
+  }
+  // Make sure we preempt DSO symbols with default visibility.
+  return B->isShared() && B->getVisibility() == STV_DEFAULT;
+}
+
 // Find an existing symbol or create and insert a new one.
 template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
   StringRef Name = New->getName();
@@ -280,12 +290,24 @@ template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
   auto P = Symtab.insert(std::make_pair(Name, NumSyms));
   Symbol *Sym;
   if (P.second) {
-    Sym = new (Alloc) Symbol{New};
+    Sym = new (Alloc) Symbol{New, STV_DEFAULT, false, false};
     SymVector.push_back(Sym);
   } else {
     Sym = SymVector[P.first->second];
   }
-  New->setBackref(Sym);
+  New->Backref = Sym;
+
+  // Merge in the new symbol's visibility. DSO symbols do not affect visibility
+  // in the output.
+  if (!New->isShared())
+    Sym->Visibility = getMinVisibility(Sym->Visibility, New->getVisibility());
+  Sym->ExportDynamic = Sym->ExportDynamic || shouldExport(New);
+  SymbolBody::Kind K = New->kind();
+  if (K == SymbolBody::DefinedRegularKind ||
+      K == SymbolBody::DefinedCommonKind ||
+      K == SymbolBody::DefinedSyntheticKind ||
+      K == SymbolBody::UndefinedElfKind)
+    Sym->IsUsedInRegularObj = true;
   return Sym;
 }
 
@@ -309,8 +331,6 @@ template <class ELFT> void SymbolTable<ELFT>::addLazy(Lazy *L) {
 
 template <class ELFT>
 void SymbolTable<ELFT>::addMemberFile(SymbolBody *Undef, Lazy *L) {
-  if (Undef->isUsedInRegularObj())
-    L->setUsedInRegularObj();
   // Weak undefined symbols should not fetch members from archives.
   // If we were to keep old symbol we would not know that an archive member was
   // available if a strong undefined symbol shows up afterwards in the link.
@@ -319,7 +339,6 @@ void SymbolTable<ELFT>::addMemberFile(SymbolBody *Undef, Lazy *L) {
   // We set UsedInRegularObj in a similar way to what is done with shared
   // symbols and copy information to reduce how many special cases are needed.
   if (Undef->isWeak()) {
-    L->setUsedInRegularObj();
     L->Binding = Undef->Binding;
     L->Type = Undef->Type;
 
@@ -345,7 +364,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanShlibUndefined() {
     for (StringRef U : File->getUndefinedSymbols())
       if (SymbolBody *Sym = find(U))
         if (Sym->isDefined())
-          Sym->MustBeInDynSym = true;
+          Sym->Backref->ExportDynamic = true;
 }
 
 // This function process the dynamic list option by marking all the symbols
@@ -353,7 +372,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanShlibUndefined() {
 template <class ELFT> void SymbolTable<ELFT>::scanDynamicList() {
   for (StringRef S : Config->DynamicList)
     if (SymbolBody *B = find(S))
-      B->MustBeInDynSym = true;
+      B->Backref->ExportDynamic = true;
 }
 
 template class elf::SymbolTable<ELF32LE>;

@@ -80,7 +80,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body,
     return 0;
   case SymbolBody::LazyArchiveKind:
   case SymbolBody::LazyObjectKind:
-    assert(Body.isUsedInRegularObj() && "lazy symbol reached writer");
+    assert(Body.Backref->IsUsedInRegularObj && "lazy symbol reached writer");
     return 0;
   case SymbolBody::DefinedBitcodeKind:
     llvm_unreachable("should have been replaced");
@@ -104,13 +104,9 @@ SymbolBody::SymbolBody(Kind K, StringRef Name, uint8_t Binding, uint8_t StOther,
 }
 
 void SymbolBody::init() {
-  Kind K = kind();
-  IsUsedInRegularObj = K == DefinedRegularKind || K == DefinedCommonKind ||
-                       K == DefinedSyntheticKind || K == UndefinedElfKind;
   CanKeepUndefined = false;
-  MustBeInDynSym = false;
-  CanOmitFromDynSym = false;
   NeedsCopyOrPltAddr = false;
+  CanOmitFromDynSym = false;
 }
 
 // Returns true if a symbol can be replaced at load-time by a symbol
@@ -122,7 +118,7 @@ bool SymbolBody::isPreemptible() const {
   if (isShared())
     return true;
 
-  if (getVisibility() != STV_DEFAULT)
+  if (Backref->Visibility != STV_DEFAULT)
     return false;
 
   if (isUndefined()) {
@@ -193,14 +189,6 @@ template <class ELFT> typename ELFT::uint SymbolBody::getSize() const {
   return 0;
 }
 
-static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
-  if (VA == STV_DEFAULT)
-    return VB;
-  if (VB == STV_DEFAULT)
-    return VA;
-  return std::min(VA, VB);
-}
-
 static int compareCommons(DefinedCommon *A, DefinedCommon *B) {
   if (Config->WarnCommon)
     warning("multiple common of " + A->getName());
@@ -219,31 +207,6 @@ int SymbolBody::compare(SymbolBody *Other) {
   // Normalize
   if (L > R)
     return -Other->compare(this);
-
-  uint8_t V = getMinVisibility(getVisibility(), Other->getVisibility());
-  if (isShared() != Other->isShared()) {
-    SymbolBody *Shared = isShared() ? this : Other;
-    Shared->MustBeInDynSym = true;
-    if (Shared->getVisibility() == STV_DEFAULT &&
-        (V == STV_DEFAULT || V == STV_PROTECTED)) {
-      // We want to export all symbols that exist in the executable and are
-      // preemptable in DSOs, so that the symbols in the executable can
-      // preempt symbols in the DSO at runtime.
-      SymbolBody *NonShared = isShared() ? Other : this;
-      NonShared->MustBeInDynSym = true;
-    }
-  }
-
-  if (!isShared() && !Other->isShared()) {
-    setVisibility(V);
-    Other->setVisibility(V);
-  }
-
-  if (IsUsedInRegularObj || Other->IsUsedInRegularObj)
-    IsUsedInRegularObj = Other->IsUsedInRegularObj = true;
-
-  if (!CanOmitFromDynSym || !Other->CanOmitFromDynSym)
-    CanOmitFromDynSym = Other->CanOmitFromDynSym = false;
 
   if (L != R)
     return -1;
@@ -358,15 +321,10 @@ std::string elf::demangle(StringRef Name) {
 #endif
 }
 
-bool SymbolBody::includeInDynsym() const {
-  if (MustBeInDynSym)
-    return true;
-  uint8_t V = getVisibility();
-  if (V != STV_DEFAULT && V != STV_PROTECTED)
+bool Symbol::includeInDynsym() const {
+  if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
     return false;
-  if (!Config->ExportDynamic && !Config->Shared)
-    return false;
-  return !CanOmitFromDynSym;
+  return ExportDynamic || Body->isShared();
 }
 
 template uint32_t SymbolBody::template getVA<ELF32LE>(uint32_t) const;

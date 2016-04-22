@@ -1343,7 +1343,7 @@ static bool sortMipsSymbols(const std::pair<SymbolBody *, unsigned> &L,
 }
 
 static uint8_t getSymbolBinding(SymbolBody *Body) {
-  uint8_t Visibility = Body->getVisibility();
+  uint8_t Visibility = Body->Backref->Visibility;
   if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
     return STB_LOCAL;
   if (Config->NoGnuUnique && Body->Binding == STB_GNU_UNIQUE)
@@ -1428,12 +1428,6 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   }
 }
 
-static uint8_t getSymbolVisibility(SymbolBody *Body) {
-  if (Body->isShared())
-    return STV_DEFAULT;
-  return Body->getVisibility();
-}
-
 template <class ELFT>
 void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
@@ -1449,7 +1443,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     ESym->setBindingAndType(getSymbolBinding(Body), Type);
     ESym->st_size = Size;
     ESym->st_name = StrOff;
-    ESym->setVisibility(getSymbolVisibility(Body));
+    ESym->setVisibility(Body->Backref->Visibility);
     ESym->st_value = Body->getVA<ELFT>();
 
     if (const OutputSectionBase<ELFT> *OutSec = getOutputSection(Body))

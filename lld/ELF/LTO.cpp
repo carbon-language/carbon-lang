@@ -76,13 +76,13 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
 
 static bool shouldInternalize(const SmallPtrSet<GlobalValue *, 8> &Used,
                               SymbolBody &B, GlobalValue *GV) {
-  if (B.isUsedInRegularObj())
+  if (B.Backref->IsUsedInRegularObj)
     return false;
 
   if (Used.count(GV))
     return false;
 
-  return !B.includeInDynsym();
+  return !B.Backref->includeInDynsym();
 }
 
 void BitcodeCompiler::add(BitcodeFile &F) {

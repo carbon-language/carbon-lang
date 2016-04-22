@@ -128,13 +128,10 @@ template <class ELFT> void elf::markLive(SymbolTable<ELFT> *Symtab) {
 
   // Preserve externally-visible symbols if the symbols defined by this
   // file can interrupt other ELF file's symbols at runtime.
-  if (Config->Shared || Config->ExportDynamic) {
-    for (const Symbol *S : Symtab->getSymbols()) {
-      SymbolBody *B = S->Body;
-      if (B->includeInDynsym())
-        MarkSymbol(B);
-    }
-  }
+  if (Config->Shared || Config->ExportDynamic)
+    for (const Symbol *S : Symtab->getSymbols())
+      if (S->includeInDynsym())
+        MarkSymbol(S->Body);
 
   // Preserve special sections and those which are specified in linker
   // script KEEP command.
