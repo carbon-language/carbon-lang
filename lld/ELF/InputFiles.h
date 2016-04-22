@@ -104,8 +104,6 @@ template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
   typedef typename ELFT::SymRange Elf_Sym_Range;
   typedef typename ELFT::Word Elf_Word;
   typedef typename ELFT::uint uintX_t;
-  typedef typename ELFT::Rel Elf_Rel;
-  typedef typename ELFT::Rela Elf_Rela;
 
   StringRef getShtGroupSignature(const Elf_Shdr &Sec);
   ArrayRef<Elf_Word> getShtGroupEntries(const Elf_Shdr &Sec);
@@ -139,10 +137,6 @@ public:
   // The number is the offset in the string table. It will be used as the
   // st_name of the symbol.
   std::vector<std::pair<const DefinedRegular<ELFT> *, unsigned>> KeptLocalSyms;
-
-  // Returns a section that Rel is pointing to. Used by the garbage collector.
-  InputSectionBase<ELFT> *getRelocTarget(const Elf_Rel &Rel) const;
-  InputSectionBase<ELFT> *getRelocTarget(const Elf_Rela &Rel) const;
 
 private:
   void initializeSections(llvm::DenseSet<StringRef> &ComdatGroups);

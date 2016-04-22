@@ -77,6 +77,25 @@ InputSectionBase<ELFT>::getOffset(const DefinedRegular<ELFT> &Sym) {
   return getOffset(Sym.Value);
 }
 
+// Returns a section that Rel relocation is pointing to.
+template <class ELFT>
+InputSectionBase<ELFT> *
+InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) const {
+  // Global symbol
+  uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
+  SymbolBody &B = File->getSymbolBody(SymIndex).repl();
+  if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B))
+    if (D->Section)
+      return D->Section->Repl;
+  return nullptr;
+}
+
+template <class ELFT>
+InputSectionBase<ELFT> *
+InputSectionBase<ELFT>::getRelocTarget(const Elf_Rela &Rel) const {
+  return getRelocTarget(reinterpret_cast<const Elf_Rel &>(Rel));
+}
+
 template <class ELFT>
 InputSection<ELFT>::InputSection(elf::ObjectFile<ELFT> *F,
                                  const Elf_Shdr *Header)

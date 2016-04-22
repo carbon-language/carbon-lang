@@ -46,15 +46,14 @@ static void forEachSuccessor(InputSection<ELFT> *Sec,
   typedef typename ELFT::Rela Elf_Rela;
   typedef typename ELFT::Shdr Elf_Shdr;
 
-  lld::elf::ObjectFile<ELFT> *File = Sec->getFile();
-  ELFFile<ELFT> &Obj = File->getObj();
+  ELFFile<ELFT> &Obj = Sec->getFile()->getObj();
   for (const Elf_Shdr *RelSec : Sec->RelocSections) {
     if (RelSec->sh_type == SHT_RELA) {
       for (const Elf_Rela &RI : Obj.relas(RelSec))
-        Fn(File->getRelocTarget(RI));
+        Fn(Sec->getRelocTarget(RI));
     } else {
       for (const Elf_Rel &RI : Obj.rels(RelSec))
-        Fn(File->getRelocTarget(RI));
+        Fn(Sec->getRelocTarget(RI));
     }
   }
 }
