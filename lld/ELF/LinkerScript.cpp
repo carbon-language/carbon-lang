@@ -217,8 +217,6 @@ findSection(ArrayRef<OutputSectionBase<ELFT> *> V, StringRef Name) {
 template <class ELFT>
 void LinkerScript<ELFT>::assignAddresses(
     ArrayRef<OutputSectionBase<ELFT> *> Sections) {
-  typedef typename ELFT::uint uintX_t;
-
   // Orphan sections are sections present in the input files which
   // are not explicitly placed into the output file by the linker script.
   // We place orphan sections at end of file.
