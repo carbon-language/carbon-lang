@@ -21,7 +21,6 @@
 #ifndef LLD_ELF_LTO_H
 #define LLD_ELF_LTO_H
 
-#include "Config.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSet.h"
