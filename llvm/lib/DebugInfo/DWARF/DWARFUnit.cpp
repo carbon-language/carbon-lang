@@ -378,19 +378,14 @@ DWARFUnit::getInlinedChainForAddress(uint64_t Address) {
   // First, find a subprogram that contains the given address (the root
   // of inlined chain).
   const DWARFUnit *ChainCU = nullptr;
-  const DWARFDebugInfoEntryMinimal *SubprogramDIE =
-      getSubprogramForAddress(Address);
-  if (SubprogramDIE) {
+  const DWARFDebugInfoEntryMinimal *SubprogramDIE;
+  // Try to look for subprogram DIEs in the DWO file.
+  parseDWO();
+  if (DWO) {
+    if ((SubprogramDIE = DWO->getUnit()->getSubprogramForAddress(Address)))
+      ChainCU = DWO->getUnit();
+  } else if ((SubprogramDIE = getSubprogramForAddress(Address)))
     ChainCU = this;
-  } else {
-    // Try to look for subprogram DIEs in the DWO file.
-    parseDWO();
-    if (DWO.get()) {
-      SubprogramDIE = DWO->getUnit()->getSubprogramForAddress(Address);
-      if (SubprogramDIE)
-        ChainCU = DWO->getUnit();
-    }
-  }
 
   // Get inlined chain rooted at this subprogram DIE.
   if (!SubprogramDIE)
