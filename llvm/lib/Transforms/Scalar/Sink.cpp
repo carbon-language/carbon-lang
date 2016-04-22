@@ -96,66 +96,6 @@ bool Sinking::AllUsesDominatedByBlock(Instruction *Inst,
   return true;
 }
 
-bool Sinking::runOnFunction(Function &F) {
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-
-  bool MadeChange, EverMadeChange = false;
-
-  do {
-    MadeChange = false;
-    DEBUG(dbgs() << "Sinking iteration " << NumSinkIter << "\n");
-    // Process all basic blocks.
-    for (Function::iterator I = F.begin(), E = F.end();
-         I != E; ++I)
-      MadeChange |= ProcessBlock(*I);
-    EverMadeChange |= MadeChange;
-    NumSinkIter++;
-  } while (MadeChange);
-
-  return EverMadeChange;
-}
-
-bool Sinking::ProcessBlock(BasicBlock &BB) {
-  // Can't sink anything out of a block that has less than two successors.
-  if (BB.getTerminator()->getNumSuccessors() <= 1) return false;
-
-  // Don't bother sinking code out of unreachable blocks. In addition to being
-  // unprofitable, it can also lead to infinite looping, because in an
-  // unreachable loop there may be nowhere to stop.
-  if (!DT->isReachableFromEntry(&BB)) return false;
-
-  bool MadeChange = false;
-
-  // Walk the basic block bottom-up.  Remember if we saw a store.
-  BasicBlock::iterator I = BB.end();
-  --I;
-  bool ProcessedBegin = false;
-  SmallPtrSet<Instruction *, 8> Stores;
-  do {
-    Instruction *Inst = &*I; // The instruction to sink.
-
-    // Predecrement I (if it's not begin) so that it isn't invalidated by
-    // sinking.
-    ProcessedBegin = I == BB.begin();
-    if (!ProcessedBegin)
-      --I;
-
-    if (isa<DbgInfoIntrinsic>(Inst))
-      continue;
-
-    if (SinkInstruction(Inst, Stores)) {
-      ++NumSunk;
-      MadeChange = true;
-    }
-
-    // If we just processed the first instruction in the block, we're done.
-  } while (!ProcessedBegin);
-
-  return MadeChange;
-}
-
 static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
                          SmallPtrSetImpl<Instruction *> &Stores) {
 
@@ -289,4 +229,64 @@ bool Sinking::SinkInstruction(Instruction *Inst,
   // Move the instruction.
   Inst->moveBefore(&*SuccToSinkTo->getFirstInsertionPt());
   return true;
+}
+
+bool Sinking::ProcessBlock(BasicBlock &BB) {
+  // Can't sink anything out of a block that has less than two successors.
+  if (BB.getTerminator()->getNumSuccessors() <= 1) return false;
+
+  // Don't bother sinking code out of unreachable blocks. In addition to being
+  // unprofitable, it can also lead to infinite looping, because in an
+  // unreachable loop there may be nowhere to stop.
+  if (!DT->isReachableFromEntry(&BB)) return false;
+
+  bool MadeChange = false;
+
+  // Walk the basic block bottom-up.  Remember if we saw a store.
+  BasicBlock::iterator I = BB.end();
+  --I;
+  bool ProcessedBegin = false;
+  SmallPtrSet<Instruction *, 8> Stores;
+  do {
+    Instruction *Inst = &*I; // The instruction to sink.
+
+    // Predecrement I (if it's not begin) so that it isn't invalidated by
+    // sinking.
+    ProcessedBegin = I == BB.begin();
+    if (!ProcessedBegin)
+      --I;
+
+    if (isa<DbgInfoIntrinsic>(Inst))
+      continue;
+
+    if (SinkInstruction(Inst, Stores)) {
+      ++NumSunk;
+      MadeChange = true;
+    }
+
+    // If we just processed the first instruction in the block, we're done.
+  } while (!ProcessedBegin);
+
+  return MadeChange;
+}
+
+bool Sinking::runOnFunction(Function &F) {
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+
+  bool MadeChange, EverMadeChange = false;
+
+  do {
+    MadeChange = false;
+    DEBUG(dbgs() << "Sinking iteration " << NumSinkIter << "\n");
+    // Process all basic blocks.
+    for (Function::iterator I = F.begin(), E = F.end();
+         I != E; ++I)
+      MadeChange |= ProcessBlock(*I);
+    EverMadeChange |= MadeChange;
+    NumSinkIter++;
+  } while (MadeChange);
+
+  return EverMadeChange;
 }
