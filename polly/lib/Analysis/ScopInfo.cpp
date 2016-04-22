@@ -2047,6 +2047,13 @@ static isl_stat buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   isl_aff *OneAff;
   unsigned Pos;
 
+  Set = isl_set_remove_divs(Set);
+
+  if (isl_set_n_basic_set(Set) >= MaxConjunctsInDomain) {
+    isl_set_free(Set);
+    return isl_stat_error;
+  }
+
   // Restrict the number of parameters involved in the access as the lexmin/
   // lexmax computation will take too long if this number is high.
   //
@@ -2072,8 +2079,6 @@ static isl_stat buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
       return isl_stat_error;
     }
   }
-
-  Set = isl_set_remove_divs(Set);
 
   MinPMA = isl_set_lexmin_pw_multi_aff(isl_set_copy(Set));
   MaxPMA = isl_set_lexmax_pw_multi_aff(isl_set_copy(Set));
