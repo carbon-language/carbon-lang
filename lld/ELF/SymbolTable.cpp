@@ -336,13 +336,12 @@ void SymbolTable<ELFT>::addMemberFile(SymbolBody *Undef, Lazy *L) {
   // available if a strong undefined symbol shows up afterwards in the link.
   // If a strong undefined symbol never shows up, this lazy symbol will
   // get to the end of the link and must be treated as the weak undefined one.
-  // We set UsedInRegularObj in a similar way to what is done with shared
-  // symbols and copy information to reduce how many special cases are needed.
+  // We already marked this symbol as used when we added it to the symbol table,
+  // but we also need to preserve its binding and type.
   if (Undef->isWeak()) {
+    // FIXME: Consider moving these members to Symbol.
     L->Binding = Undef->Binding;
     L->Type = Undef->Type;
-
-    // FIXME: Do we need to copy more?
     return;
   }
 
