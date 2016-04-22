@@ -373,6 +373,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   if (Args.hasArg(OPT_dynamic_list))
     readDynamicList(getString(Args, OPT_dynamic_list));
+
+  for (auto *Arg : Args.filtered(OPT_export_dynamic_symbol))
+    Config->DynamicList.push_back(Arg->getValue());
 }
 
 void LinkerDriver::createFiles(opt::InputArgList &Args) {

@@ -62,6 +62,9 @@ def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
 def export_dynamic : Flag<["--", "-"], "export-dynamic">,
   HelpText<"Put symbols in the dynamic symbol table">;
 
+def export_dynamic_symbol : Separate<["--", "-"], "export-dynamic-symbol">,
+  HelpText<"Put a symbol in the dynamic symbol table">;
+
 def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
   HelpText<"Specify a finalizer function">;
 
