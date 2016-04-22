@@ -97,6 +97,17 @@ uint64_t LinkerScript<ELFT>::parsePrimary(ArrayRef<StringRef> &Tokens) {
   return getInteger(Tok);
 }
 
+template <class ELFT>
+uint64_t LinkerScript<ELFT>::parseTernary(ArrayRef<StringRef> &Tokens,
+                                          uint64_t Cond) {
+  next(Tokens);
+  uint64_t V = parseExpr(Tokens, Dot);
+  if (!expect(Tokens, ":"))
+    return 0;
+  uint64_t W = parseExpr(Tokens, Dot);
+  return Cond ? V : W;
+}
+
 static uint64_t apply(StringRef Op, uint64_t L, uint64_t R) {
   if (Op == "+")
     return L + R;
@@ -126,6 +137,9 @@ uint64_t LinkerScript<ELFT>::parseExpr1(ArrayRef<StringRef> &Tokens,
   while (!Tokens.empty()) {
     // Read an operator and an expression.
     StringRef Op1 = Tokens.front();
+    if (Op1 == "?")
+      return parseTernary(Tokens, Lhs, Dot);
+
     if (precedence(Op1) < MinPrec)
       return Lhs;
     next(Tokens);
