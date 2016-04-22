@@ -189,13 +189,6 @@ template <class ELFT> typename ELFT::uint SymbolBody::getSize() const {
   return 0;
 }
 
-static int compareCommons(DefinedCommon *A, DefinedCommon *B) {
-  if (Config->WarnCommon)
-    warning("multiple common of " + A->getName());
-  A->Alignment = B->Alignment = std::max(A->Alignment, B->Alignment);
-  return A->Size < B->Size ? -1 : 1;
-}
-
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 int SymbolBody::compare(SymbolBody *Other) {
@@ -204,22 +197,33 @@ int SymbolBody::compare(SymbolBody *Other) {
   std::tuple<bool, bool, bool> R(Other->isDefined(), !Other->isShared(),
                                  !Other->isWeak());
 
-  // Normalize
+  // Compare the two by symbol type.
   if (L > R)
     return -Other->compare(this);
-
   if (L != R)
     return -1;
   if (!isDefined() || isShared() || isWeak())
     return 1;
-  if (!isCommon() && !Other->isCommon())
+
+  // If both are equal in terms of symbol type, then at least
+  // one of them must be a common symbol. Otherwise, they conflict.
+  auto *A = dyn_cast<DefinedCommon>(this);
+  auto *B = dyn_cast<DefinedCommon>(Other);
+  if (!A && !B)
     return 0;
-  if (isCommon() && Other->isCommon())
-    return compareCommons(cast<DefinedCommon>(this),
-                          cast<DefinedCommon>(Other));
+
+  // If both are common, the larger one is chosen.
+  if (A && B) {
+    if (Config->WarnCommon)
+      warning("multiple common of " + A->getName());
+    A->Alignment = B->Alignment = std::max(A->Alignment, B->Alignment);
+    return A->Size < B->Size ? -1 : 1;
+  }
+
+  // Non-common symbols takes precedence over common symbols.
   if (Config->WarnCommon)
     warning("common " + this->getName() + " is overridden");
-  return isCommon() ? -1 : 1;
+  return A ? -1 : 1;
 }
 
 Defined::Defined(Kind K, StringRef Name, uint8_t Binding, uint8_t StOther,
