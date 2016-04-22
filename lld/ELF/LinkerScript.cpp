@@ -37,15 +37,6 @@ ScriptConfiguration *elf::ScriptConfig;
 
 static bool matchStr(StringRef S, StringRef T);
 
-static uint64_t getInteger(StringRef S) {
-  uint64_t V;
-  if (S.getAsInteger(0, V)) {
-    error("malformed number: " + S);
-    return 0;
-  }
-  return V;
-}
-
 static int precedence(StringRef Op) {
   return StringSwitch<int>(Op)
       .Case("*", 4)
@@ -103,7 +94,10 @@ uint64_t LinkerScript<ELFT>::parsePrimary(ArrayRef<StringRef> &Tokens) {
       return 0;
     return alignTo(Dot, V);
   }
-  return getInteger(Tok);
+  uint64_t V = 0;
+  if (Tok.getAsInteger(0, V))
+    error("malformed number: " + Tok);
+  return V;
 }
 
 template <class ELFT>
