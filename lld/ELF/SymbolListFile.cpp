@@ -34,7 +34,7 @@ class DynamicListParser final : public ScriptParserBase {
 public:
   DynamicListParser(StringRef S) : ScriptParserBase(S) {}
 
-  void run() override;
+  void run();
 
 private:
   void readGroup();
@@ -75,7 +75,7 @@ class VersionScriptParser final : public ScriptParserBase {
 public:
   VersionScriptParser(StringRef S) : ScriptParserBase(S) {}
 
-  void run() override;
+  void run();
 };
 
 void VersionScriptParser::run() {

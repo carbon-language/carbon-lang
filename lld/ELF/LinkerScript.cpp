@@ -317,7 +317,7 @@ class elf::ScriptParser : public ScriptParserBase {
 public:
   ScriptParser(StringRef S, bool B) : ScriptParserBase(S), IsUnderSysroot(B) {}
 
-  void run() override;
+  void run();
 
 private:
   void addFile(StringRef Path);
