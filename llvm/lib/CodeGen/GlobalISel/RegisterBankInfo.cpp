@@ -444,6 +444,7 @@ bool RegisterBankInfo::InstructionMapping::verify(
   assert(MI.getParent() && MI.getParent()->getParent() &&
          "MI must be connected to a MachineFunction");
   const MachineFunction &MF = *MI.getParent()->getParent();
+  (void)MF;
 
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
     const MachineOperand &MO = MI.getOperand(Idx);
