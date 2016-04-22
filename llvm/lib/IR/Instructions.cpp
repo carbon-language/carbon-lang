@@ -3562,11 +3562,14 @@ bool CmpInst::isImpliedTrueByMatchingCmp(Predicate Pred1, Predicate Pred2) {
   switch (Pred1) {
   default:
     break;
-  case ICMP_UGT: // A >u B implies A != B is true.
-  case ICMP_ULT: // A <u B implies A != B is true.
-  case ICMP_SGT: // A >s B implies A != B is true.
-  case ICMP_SLT: // A <s B implies A != B is true.
-    return Pred2 == ICMP_NE;
+  case ICMP_UGT: // A >u B implies A != B and A >=u B are true.
+    return Pred2 == ICMP_NE || Pred2 == ICMP_UGE;
+  case ICMP_ULT: // A <u B implies A != B and A <=u B are true.
+    return Pred2 == ICMP_NE || Pred2 == ICMP_ULE;
+  case ICMP_SGT: // A >s B implies A != B and A >=s B are true.
+    return Pred2 == ICMP_NE || Pred2 == ICMP_SGE;
+  case ICMP_SLT: // A <s B implies A != B and A <=s B are true.
+    return Pred2 == ICMP_NE || Pred2 == ICMP_SLE;
   }
   return false;
 }
