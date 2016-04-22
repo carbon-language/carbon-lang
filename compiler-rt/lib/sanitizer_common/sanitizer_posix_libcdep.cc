@@ -270,7 +270,7 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size, const char *name) {
   return (void *)p;
 }
 
-void *MmapNoAccess(uptr fixed_addr, uptr size, const char *name) {
+void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name) {
   int fd = name ? GetNamedMappingFd(name, size) : -1;
   unsigned flags = MAP_PRIVATE | MAP_FIXED | MAP_NORESERVE;
   if (fd == -1) flags |= MAP_ANON;
