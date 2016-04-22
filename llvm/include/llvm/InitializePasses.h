@@ -104,7 +104,7 @@ void initializeCorrelatedValuePropagationPass(PassRegistry&);
 void initializeCrossDSOCFIPass(PassRegistry&);
 void initializeDAEPass(PassRegistry&);
 void initializeDAHPass(PassRegistry&);
-void initializeDCEPass(PassRegistry&);
+void initializeDCELegacyPassPass(PassRegistry&);
 void initializeDSEPass(PassRegistry&);
 void initializeDeadInstEliminationPass(PassRegistry&);
 void initializeDeadMachineInstructionElimPass(PassRegistry&);
