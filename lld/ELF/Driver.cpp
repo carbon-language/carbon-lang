@@ -419,6 +419,8 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     error("no input files.");
 }
 
+// Do actual linking. Note that when this function is called,
+// all linker scripts have already been parsed.
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
 
@@ -429,15 +431,17 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   Config->Rela = ELFT::Is64Bits;
 
-  // Add entry symbol.
-  // There is no entry symbol for AMDGPU binaries, so skip adding one to avoid
-  // having and undefined symbol.
+  // Add entry symbol. Note that AMDGPU binaries have no entry points.
   if (Config->Entry.empty() && !Config->Shared && !Config->Relocatable &&
       Config->EMachine != EM_AMDGPU)
-    Config->Entry = Config->EMachine == EM_MIPS ? "__start" : "_start";
+    Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
 
+  // Default output filename is "a.out" by the Unix tradition.
+  if (Config->OutputFile.empty())
+    Config->OutputFile = "a.out";
+
+  // Set either EntryAddr (if S is a number) or EntrySym (otherwise).
   if (!Config->Entry.empty()) {
-    // Set either EntryAddr (if S is a number) or EntrySym (otherwise).
     StringRef S = Config->Entry;
     if (S.getAsInteger(0, Config->EntryAddr))
       Config->EntrySym = Symtab.addUndefined(S)->Backref;
@@ -450,13 +454,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   for (StringRef S : Config->Undefined)
     Symtab.addUndefinedOpt(S);
-
-  // -save-temps creates a file based on the output file name so we want
-  // to set it right before LTO. This code can't be moved to option parsing
-  // because linker scripts can override the output filename using the
-  // OUTPUT() directive.
-  if (Config->OutputFile.empty())
-    Config->OutputFile = "a.out";
 
   Symtab.scanShlibUndefined();
   Symtab.scanDynamicList();
