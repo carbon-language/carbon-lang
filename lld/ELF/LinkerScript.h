@@ -28,8 +28,7 @@ template <class ELFT> class InputSectionBase;
 template <class ELFT> class OutputSectionBase;
 
 // This class represents each rule in SECTIONS command.
-class SectionRule {
-public:
+struct SectionRule {
   SectionRule(StringRef D, StringRef S)
       : Dest(D), SectionPattern(S) {}
 
@@ -38,7 +37,6 @@ public:
 
   StringRef Dest;
 
-private:
   StringRef SectionPattern;
 };
 
@@ -90,7 +88,6 @@ private:
   ScriptConfiguration &Opt = *ScriptConfig;
 
   int getSectionIndex(StringRef Name);
-  SectionRule *find(InputSectionBase<ELFT> *S);
 
   uint64_t evaluate(ArrayRef<StringRef> Tokens);
   uint64_t parseExpr(ArrayRef<StringRef> &Tokens);

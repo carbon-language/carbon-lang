@@ -165,7 +165,7 @@ uint64_t LinkerScript<ELFT>::evaluate(ArrayRef<StringRef> Tokens) {
 template <class ELFT>
 StringRef LinkerScript<ELFT>::getOutputSection(InputSectionBase<ELFT> *S) {
   for (SectionRule &R : Opt.Sections)
-    if (R.match(S))
+    if (matchStr(R.SectionPattern, S->getSectionName()))
       return R.Dest;
   return "";
 }
@@ -294,10 +294,6 @@ static bool matchStr(StringRef S, StringRef T) {
     S = S.substr(1);
     T = T.substr(1);
   }
-}
-
-template <class ELFT> bool SectionRule::match(InputSectionBase<ELFT> *S) {
-  return matchStr(SectionPattern, S->getSectionName());
 }
 
 class elf::ScriptParser : public ScriptParserBase {
