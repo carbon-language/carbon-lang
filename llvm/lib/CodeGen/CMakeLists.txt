@@ -87,6 +87,7 @@ add_llvm_library(LLVMCodeGen
   PHIEliminationUtils.cpp
   PostRAHazardRecognizer.cpp
   PostRASchedulerList.cpp
+  PreISelIntrinsicLowering.cpp
   ProcessImplicitDefs.cpp
   PrologEpilogInserter.cpp
   PseudoSourceValue.cpp
