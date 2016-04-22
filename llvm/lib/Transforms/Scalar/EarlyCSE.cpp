@@ -842,7 +842,7 @@ public:
   }
 
   bool runOnFunction(Function &F) override {
-    if (skipOptnoneFunction(F))
+    if (skipFunction(F))
       return false;
 
     auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
