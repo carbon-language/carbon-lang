@@ -548,7 +548,7 @@ bool CodeGenFunction::EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
                 OrigVD) != nullptr,
             (*IRef)->getType(), VK_LValue, (*IRef)->getExprLoc());
         Address OriginalAddr = EmitLValue(&DRE).getAddress();
-        QualType Type = OrigVD->getType();
+        QualType Type = VD->getType();
         if (Type->isArrayType()) {
           // Emit VarDecl with copy init for arrays.
           // Get the address of the original variable captured in current
