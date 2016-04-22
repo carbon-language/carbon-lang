@@ -286,6 +286,15 @@ public:
     return true;
   }
 
+  /// isStoreBitCastBeneficial() - Mirror of isLoadBitCastBeneficial(). Return
+  /// true if the following transform is beneficial.
+  ///
+  /// (store (y (conv x)), y*)) -> (store x, (x*))
+  virtual bool isStoreBitCastBeneficial(EVT StoreVT, EVT BitcastVT) const {
+    // Default to the same logic as stores.
+    return isLoadBitCastBeneficial(StoreVT, BitcastVT);
+  }
+
   /// Return true if it is expected to be cheaper to do a store of a non-zero
   /// vector constant with the given size and type for the address space than to
   /// store the individual scalar element constants.
