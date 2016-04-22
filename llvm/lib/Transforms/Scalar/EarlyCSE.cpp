@@ -97,15 +97,6 @@ unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
     if (BinOp->isCommutative() && BinOp->getOperand(0) > BinOp->getOperand(1))
       std::swap(LHS, RHS);
 
-    if (isa<OverflowingBinaryOperator>(BinOp)) {
-      // Hash the overflow behavior
-      unsigned Overflow =
-          BinOp->hasNoSignedWrap() * OverflowingBinaryOperator::NoSignedWrap |
-          BinOp->hasNoUnsignedWrap() *
-              OverflowingBinaryOperator::NoUnsignedWrap;
-      return hash_combine(BinOp->getOpcode(), Overflow, LHS, RHS);
-    }
-
     return hash_combine(BinOp->getOpcode(), LHS, RHS);
   }
 
