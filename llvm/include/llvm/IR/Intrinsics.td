@@ -19,9 +19,7 @@ include "llvm/CodeGen/ValueTypes.td"
 
 class IntrinsicProperty;
 
-// Intr*Mem - Memory properties.  An intrinsic is allowed to have at most one of
-// these properties set.  They are listed from the most aggressive (best to use
-// if correct) to the least aggressive.  If no property is set, the worst case
+// Intr*Mem - Memory properties.  If no property is set, the worst case
 // is assumed (it may read and write any memory it can get access to and it may
 // have other side effects).
 
