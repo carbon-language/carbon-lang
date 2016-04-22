@@ -96,6 +96,30 @@ void Instruction::moveBefore(Instruction *MovePos) {
       MovePos->getIterator(), getParent()->getInstList(), getIterator());
 }
 
+void Instruction::setHasNoUnsignedWrap(bool b) {
+  cast<OverflowingBinaryOperator>(this)->setHasNoUnsignedWrap(b);
+}
+
+void Instruction::setHasNoSignedWrap(bool b) {
+  cast<OverflowingBinaryOperator>(this)->setHasNoSignedWrap(b);
+}
+
+void Instruction::setIsExact(bool b) {
+  cast<PossiblyExactOperator>(this)->setIsExact(b);
+}
+
+bool Instruction::hasNoUnsignedWrap() const {
+  return cast<OverflowingBinaryOperator>(this)->hasNoUnsignedWrap();
+}
+
+bool Instruction::hasNoSignedWrap() const {
+  return cast<OverflowingBinaryOperator>(this)->hasNoSignedWrap();
+}
+
+bool Instruction::isExact() const {
+  return cast<PossiblyExactOperator>(this)->isExact();
+}
+
 /// Set or clear the unsafe-algebra flag on this instruction, which must be an
 /// operator which supports this flag. See LangRef.html for the meaning of this
 /// flag.
@@ -190,6 +214,37 @@ void Instruction::copyFastMathFlags(const Instruction *I) {
   copyFastMathFlags(I->getFastMathFlags());
 }
 
+void Instruction::copyIRFlags(const Value *V) {
+  // Copy the wrapping flags.
+  if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
+    setHasNoSignedWrap(OB->hasNoSignedWrap());
+    setHasNoUnsignedWrap(OB->hasNoUnsignedWrap());
+  }
+
+  // Copy the exact flag.
+  if (auto *PE = dyn_cast<PossiblyExactOperator>(V))
+    setIsExact(PE->isExact());
+
+  // Copy the fast-math flags.
+  if (auto *FP = dyn_cast<FPMathOperator>(V))
+    copyFastMathFlags(FP->getFastMathFlags());
+}
+
+void Instruction::andIRFlags(const Value *V) {
+  if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
+    setHasNoSignedWrap(hasNoSignedWrap() & OB->hasNoSignedWrap());
+    setHasNoUnsignedWrap(hasNoUnsignedWrap() & OB->hasNoUnsignedWrap());
+  }
+
+  if (auto *PE = dyn_cast<PossiblyExactOperator>(V))
+    setIsExact(isExact() & PE->isExact());
+
+  if (auto *FP = dyn_cast<FPMathOperator>(V)) {
+    FastMathFlags FM = getFastMathFlags();
+    FM &= FP->getFastMathFlags();
+    copyFastMathFlags(FM);
+  }
+}
 
 const char *Instruction::getOpcodeName(unsigned OpCode) {
   switch (OpCode) {

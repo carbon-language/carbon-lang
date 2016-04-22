@@ -153,7 +153,7 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
 
   if (LHSI->getOpcode() != RHSI->getOpcode())
     return false;
-  if (LHSI->isIdenticalTo(RHSI))
+  if (LHSI->isIdenticalToWhenDefined(RHSI))
     return true;
 
   // If we're not strictly identical, we still might be a commutable instruction
@@ -164,15 +164,6 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
     assert(isa<BinaryOperator>(RHSI) &&
            "same opcode, but different instruction type?");
     BinaryOperator *RHSBinOp = cast<BinaryOperator>(RHSI);
-
-    // Check overflow attributes
-    if (isa<OverflowingBinaryOperator>(LHSBinOp)) {
-      assert(isa<OverflowingBinaryOperator>(RHSBinOp) &&
-             "same opcode, but different operator type?");
-      if (LHSBinOp->hasNoUnsignedWrap() != RHSBinOp->hasNoUnsignedWrap() ||
-          LHSBinOp->hasNoSignedWrap() != RHSBinOp->hasNoSignedWrap())
-        return false;
-    }
 
     // Commuted equality
     return LHSBinOp->getOperand(0) == RHSBinOp->getOperand(1) &&
@@ -584,6 +575,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // See if the instruction has an available value.  If so, use it.
       if (Value *V = AvailableValues.lookup(Inst)) {
         DEBUG(dbgs() << "EarlyCSE CSE: " << *Inst << "  to: " << *V << '\n');
+        if (auto *I = dyn_cast<Instruction>(V))
+          I->andIRFlags(Inst);
         Inst->replaceAllUsesWith(V);
         Inst->eraseFromParent();
         Changed = true;
