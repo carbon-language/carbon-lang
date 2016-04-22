@@ -2196,6 +2196,26 @@ function's scope.
     uselistorder i32 (i32) @bar, { 1, 0 }
     uselistorder_bb @foo, %bb, { 5, 1, 3, 2, 0, 4 }
 
+.. _source_filename:
+
+Source Filename
+---------------
+
+The *source filename* string is set to the original module identifier,
+which will be the name of the compiled source file when compiling from
+source through the clang front end, for example. It is then preserved through
+the IR and bitcode.
+
+This is currently necessary to generate a consistent unique global
+identifier for local functions used in profile data, which prepends the
+source file name to the local function name.
+
+The syntax for the source file name is simply:
+
+.. code-block:: llvm
+
+    source_filename = "/path/to/source.c"
+
 .. _typesystem:
 
 Type System
