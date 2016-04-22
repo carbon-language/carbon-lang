@@ -61,6 +61,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializePHIEliminationPass(Registry);
   initializePeepholeOptimizerPass(Registry);
   initializePostMachineSchedulerPass(Registry);
+  initializePostRAHazardRecognizerPass(Registry);
   initializePostRASchedulerPass(Registry);
   initializeProcessImplicitDefsPass(Registry);
   initializeRegisterCoalescerPass(Registry);

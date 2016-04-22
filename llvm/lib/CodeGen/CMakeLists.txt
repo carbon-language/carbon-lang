@@ -85,6 +85,7 @@ add_llvm_library(LLVMCodeGen
   PeepholeOptimizer.cpp
   PHIElimination.cpp
   PHIEliminationUtils.cpp
+  PostRAHazardRecognizer.cpp
   PostRASchedulerList.cpp
   ProcessImplicitDefs.cpp
   PrologEpilogInserter.cpp

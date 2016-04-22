@@ -243,6 +243,7 @@ void initializePostDomPrinterPass(PassRegistry&);
 void initializePostDomViewerPass(PassRegistry&);
 void initializePostDominatorTreeWrapperPassPass(PassRegistry&);
 void initializePostOrderFunctionAttrsLegacyPassPass(PassRegistry&);
+void initializePostRAHazardRecognizerPass(PassRegistry&);
 void initializePostRASchedulerPass(PassRegistry&);
 void initializePostMachineSchedulerPass(PassRegistry&);
 void initializePrintFunctionPassWrapperPass(PassRegistry&);
