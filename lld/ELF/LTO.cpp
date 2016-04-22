@@ -87,7 +87,11 @@ static bool shouldInternalize(const SmallPtrSet<GlobalValue *, 8> &Used,
 
 BitcodeCompiler::BitcodeCompiler()
     : Combined(new llvm::Module("ld-temp.o", Context)), Mover(*Combined) {
-  Context.setDiscardValueNames(Config->DiscardValueNames);
+  // This is a flag to discard all but GlobalValue names.
+  // We want to enable it by default because it saves memory.
+  // Disable it only when a developer option (-save-temps) is given.
+  Context.setDiscardValueNames(!Config->SaveTemps);
+
   Context.enableDebugTypeODRUniquing();
 }
 

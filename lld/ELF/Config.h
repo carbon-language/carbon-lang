@@ -59,7 +59,6 @@ struct Configuration {
   bool Demangle = true;
   bool DisableVerify;
   bool DiscardAll;
-  bool DiscardValueNames;
   bool DiscardLocals;
   bool DiscardNone;
   bool EhFrameHdr;
