@@ -78,7 +78,7 @@ InputSectionBase<ELFT>::getOffset(const DefinedRegular<ELFT> &Sym) {
 }
 
 template <class ELFT>
-static DefinedRegular<ELFT> *getRelocTargetSym(ObjectFile<ELFT> *File,
+static DefinedRegular<ELFT> *getRelocTargetSym(elf::ObjectFile<ELFT> *File,
                                                const typename ELFT::Rel &Rel) {
   uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
   SymbolBody &B = File->getSymbolBody(SymIndex).repl();
