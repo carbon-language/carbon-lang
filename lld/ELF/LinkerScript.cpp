@@ -82,7 +82,8 @@ static bool expect(ArrayRef<StringRef> &Tokens, StringRef S) {
 
 // This is a part of the operator-precedence parser to evaluate
 // arithmetic expressions in SECTIONS command. This function evaluates an
-// integer literal, a parenthesized expression or the special variable ".".
+// integer literal, a parenthesized expression, the ALIGN function,
+// or the special variable ".".
 template <class ELFT>
 uint64_t LinkerScript<ELFT>::parsePrimary(ArrayRef<StringRef> &Tokens) {
   StringRef Tok = next(Tokens);
