@@ -50,12 +50,10 @@ static void forEachSuccessor(InputSection<ELFT> *Sec,
   for (const Elf_Shdr *RelSec : Sec->RelocSections) {
     if (RelSec->sh_type == SHT_RELA) {
       for (const Elf_Rela &RI : Obj.relas(RelSec))
-        if (InputSectionBase<ELFT> *Succ = Sec->getRelocTarget(RI))
-          Fn(Succ);
+        Fn(Sec->getRelocTarget(RI));
     } else {
       for (const Elf_Rel &RI : Obj.rels(RelSec))
-        if (InputSectionBase<ELFT> *Succ = Sec->getRelocTarget(RI))
-          Fn(Succ);
+        Fn(Sec->getRelocTarget(RI));
     }
   }
 }
