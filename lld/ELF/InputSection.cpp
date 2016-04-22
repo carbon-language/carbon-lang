@@ -505,6 +505,11 @@ template class elf::InputSection<ELF32BE>;
 template class elf::InputSection<ELF64LE>;
 template class elf::InputSection<ELF64BE>;
 
+template class elf::SplitInputSection<ELF32LE>;
+template class elf::SplitInputSection<ELF32BE>;
+template class elf::SplitInputSection<ELF64LE>;
+template class elf::SplitInputSection<ELF64BE>;
+
 template class elf::EHInputSection<ELF32LE>;
 template class elf::EHInputSection<ELF32BE>;
 template class elf::EHInputSection<ELF64LE>;
