@@ -309,12 +309,12 @@
 // CHECK-YCTc: "c"
 
 // Don't crash when a non-source file is passed.
-// RUN: %clang_cl -Werror /Ycpchfile.h /FIpchfile.h /c -### %S/Inputs/file.prof 2>&1 \
+// RUN: %clang_cl -Werror /Ycpchfile.h /FIpchfile.h /c -### -- %S/Inputs/file.prof 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-NoSource %s
 // CHECK-NoSource: file.prof:{{.*}}input unused
 
 // ...but if an explicit file turns the file into a source file, handle it:
-// RUN: %clang_cl /TP -Werror /Ycpchfile.h /FIpchfile.h /c -### %S/Inputs/file.prof 2>&1 \
+// RUN: %clang_cl /TP -Werror /Ycpchfile.h /FIpchfile.h /c -### -- %S/Inputs/file.prof 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-NoSourceTP %s
 // CHECK-NoSourceTP: cc1
 // CHECK-NoSourceTP: -emit-pch
