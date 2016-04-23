@@ -209,6 +209,7 @@ template <class ELFT> void SymbolTable<ELFT>::wrap(StringRef Name) {
 
 // Returns a file from which symbol B was created.
 // If B does not belong to any file, returns a nullptr.
+// This function is slow, but it's okay as it is used only for error messages.
 template <class ELFT> InputFile *SymbolTable<ELFT>::findFile(SymbolBody *B) {
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : ObjectFiles) {
     ArrayRef<SymbolBody *> Syms = F->getSymbols();
