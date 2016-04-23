@@ -1962,8 +1962,8 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
     return cast_or_null<MDString>(getMDOrNull(ID));
   };
 
-#define GET_OR_DISTINCT(CLASS, DISTINCT, ARGS)                                 \
-  (DISTINCT ? CLASS::getDistinct ARGS : CLASS::get ARGS)
+#define GET_OR_DISTINCT(CLASS, ARGS)                                           \
+  (IsDistinct ? CLASS::getDistinct ARGS : CLASS::get ARGS)
 
   // Read all the records.
   while (1) {
@@ -2100,12 +2100,13 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 5)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       unsigned Line = Record[1];
       unsigned Column = Record[2];
       Metadata *Scope = getMD(Record[3]);
       Metadata *InlinedAt = getMDOrNull(Record[4]);
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DILocation, Record[0],
+          GET_OR_DISTINCT(DILocation,
                           (Context, Line, Column, Scope, InlinedAt)),
           NextMetadataNo++);
       break;
@@ -2114,6 +2115,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() < 4)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       unsigned Tag = Record[1];
       unsigned Version = Record[2];
 
@@ -2125,8 +2127,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       for (unsigned I = 4, E = Record.size(); I != E; ++I)
         DwarfOps.push_back(getMDOrNull(Record[I]));
       MetadataList.assignValue(
-          GET_OR_DISTINCT(GenericDINode, Record[0],
-                          (Context, Tag, Header, DwarfOps)),
+          GET_OR_DISTINCT(GenericDINode, (Context, Tag, Header, DwarfOps)),
           NextMetadataNo++);
       break;
     }
@@ -2134,8 +2135,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 3)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DISubrange, Record[0],
+          GET_OR_DISTINCT(DISubrange,
                           (Context, Record[1], unrotateSign(Record[2]))),
           NextMetadataNo++);
       break;
@@ -2144,10 +2146,10 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 3)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(
-              DIEnumerator, Record[0],
-              (Context, unrotateSign(Record[1]), getMDString(Record[2]))),
+          GET_OR_DISTINCT(DIEnumerator, (Context, unrotateSign(Record[1]),
+                                         getMDString(Record[2]))),
           NextMetadataNo++);
       break;
     }
@@ -2155,8 +2157,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 6)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIBasicType, Record[0],
+          GET_OR_DISTINCT(DIBasicType,
                           (Context, Record[1], getMDString(Record[2]),
                            Record[3], Record[4], Record[5])),
           NextMetadataNo++);
@@ -2166,8 +2169,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 12)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIDerivedType, Record[0],
+          GET_OR_DISTINCT(DIDerivedType,
                           (Context, Record[1], getMDString(Record[2]),
                            getMDOrNull(Record[3]), Record[4],
                            getMDOrNull(Record[5]), getMDOrNull(Record[6]),
@@ -2182,7 +2186,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
 
       // If we have a UUID and this is not a forward declaration, lookup the
       // mapping.
-      bool IsDistinct = Record[0];
+      IsDistinct = Record[0];
       unsigned Tag = Record[1];
       MDString *Name = getMDString(Record[2]);
       Metadata *File = getMDOrNull(Record[3]);
@@ -2207,7 +2211,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
 
       // Create a node if we didn't get a lazy ODR type.
       if (!CT)
-        CT = GET_OR_DISTINCT(DICompositeType, IsDistinct,
+        CT = GET_OR_DISTINCT(DICompositeType,
                              (Context, Tag, Name, File, Line, Scope, BaseType,
                               SizeInBits, AlignInBits, OffsetInBits, Flags,
                               Elements, RuntimeLang, VTableHolder,
@@ -2220,8 +2224,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 3)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DISubroutineType, Record[0],
+          GET_OR_DISTINCT(DISubroutineType,
                           (Context, Record[1], getMDOrNull(Record[2]))),
           NextMetadataNo++);
       break;
@@ -2231,8 +2236,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 6)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIModule, Record[0],
+          GET_OR_DISTINCT(DIModule,
                           (Context, getMDOrNull(Record[1]),
                            getMDString(Record[2]), getMDString(Record[3]),
                            getMDString(Record[4]), getMDString(Record[5]))),
@@ -2244,9 +2250,10 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 3)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIFile, Record[0], (Context, getMDString(Record[1]),
-                                              getMDString(Record[2]))),
+          GET_OR_DISTINCT(DIFile, (Context, getMDString(Record[1]),
+                                   getMDString(Record[2]))),
           NextMetadataNo++);
       break;
     }
@@ -2256,6 +2263,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
 
       // Ignore Record[0], which indicates whether this compile unit is
       // distinct.  It's always distinct.
+      IsDistinct = true;
       auto *CU = DICompileUnit::getDistinct(
           Context, Record[1], getMDOrNull(Record[2]), getMDString(Record[3]),
           Record[4], getMDString(Record[5]), Record[6], getMDString(Record[7]),
@@ -2275,6 +2283,8 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 18 && Record.size() != 19)
         return error("Invalid record");
 
+      IsDistinct =
+          Record[0] || Record[8]; // All definitions should be distinct.
       // Version 1 has a Function as Record[15].
       // Version 2 has removed Record[15].
       // Version 3 has the Unit as Record[15].
@@ -2284,7 +2294,6 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       bool HasCU = Offset && !HasFn;
       DISubprogram *SP = GET_OR_DISTINCT(
           DISubprogram,
-          Record[0] || Record[8], // All definitions should be distinct.
           (Context, getMDOrNull(Record[1]), getMDString(Record[2]),
            getMDString(Record[3]), getMDOrNull(Record[4]), Record[5],
            getMDOrNull(Record[6]), Record[7], Record[8], Record[9],
@@ -2312,8 +2321,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 5)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DILexicalBlock, Record[0],
+          GET_OR_DISTINCT(DILexicalBlock,
                           (Context, getMDOrNull(Record[1]),
                            getMDOrNull(Record[2]), Record[3], Record[4])),
           NextMetadataNo++);
@@ -2323,8 +2333,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 4)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DILexicalBlockFile, Record[0],
+          GET_OR_DISTINCT(DILexicalBlockFile,
                           (Context, getMDOrNull(Record[1]),
                            getMDOrNull(Record[2]), Record[3])),
           NextMetadataNo++);
@@ -2334,11 +2345,11 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 5)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DINamespace, Record[0],
-                          (Context, getMDOrNull(Record[1]),
-                           getMDOrNull(Record[2]), getMDString(Record[3]),
-                           Record[4])),
+          GET_OR_DISTINCT(DINamespace, (Context, getMDOrNull(Record[1]),
+                                        getMDOrNull(Record[2]),
+                                        getMDString(Record[3]), Record[4])),
           NextMetadataNo++);
       break;
     }
@@ -2346,8 +2357,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 5)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIMacro, Record[0],
+          GET_OR_DISTINCT(DIMacro,
                           (Context, Record[1], Record[2],
                            getMDString(Record[3]), getMDString(Record[4]))),
           NextMetadataNo++);
@@ -2357,8 +2369,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 5)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIMacroFile, Record[0],
+          GET_OR_DISTINCT(DIMacroFile,
                           (Context, Record[1], Record[2],
                            getMDOrNull(Record[3]), getMDOrNull(Record[4]))),
           NextMetadataNo++);
@@ -2368,8 +2381,8 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 3)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(GET_OR_DISTINCT(DITemplateTypeParameter,
-                                               Record[0],
                                                (Context, getMDString(Record[1]),
                                                 getMDOrNull(Record[2]))),
                                NextMetadataNo++);
@@ -2379,8 +2392,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 5)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DITemplateValueParameter, Record[0],
+          GET_OR_DISTINCT(DITemplateValueParameter,
                           (Context, Record[1], getMDString(Record[2]),
                            getMDOrNull(Record[3]), getMDOrNull(Record[4]))),
           NextMetadataNo++);
@@ -2390,8 +2404,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 11)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIGlobalVariable, Record[0],
+          GET_OR_DISTINCT(DIGlobalVariable,
                           (Context, getMDOrNull(Record[1]),
                            getMDString(Record[2]), getMDString(Record[3]),
                            getMDOrNull(Record[4]), Record[5],
@@ -2407,9 +2422,10 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
 
       // 2nd field used to be an artificial tag, either DW_TAG_auto_variable or
       // DW_TAG_arg_variable.
+      IsDistinct = Record[0];
       bool HasTag = Record.size() > 8;
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DILocalVariable, Record[0],
+          GET_OR_DISTINCT(DILocalVariable,
                           (Context, getMDOrNull(Record[1 + HasTag]),
                            getMDString(Record[2 + HasTag]),
                            getMDOrNull(Record[3 + HasTag]), Record[4 + HasTag],
@@ -2422,8 +2438,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() < 1)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIExpression, Record[0],
+          GET_OR_DISTINCT(DIExpression,
                           (Context, makeArrayRef(Record).slice(1))),
           NextMetadataNo++);
       break;
@@ -2432,8 +2449,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 8)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIObjCProperty, Record[0],
+          GET_OR_DISTINCT(DIObjCProperty,
                           (Context, getMDString(Record[1]),
                            getMDOrNull(Record[2]), Record[3],
                            getMDString(Record[4]), getMDString(Record[5]),
@@ -2445,8 +2463,9 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       if (Record.size() != 6)
         return error("Invalid record");
 
+      IsDistinct = Record[0];
       MetadataList.assignValue(
-          GET_OR_DISTINCT(DIImportedEntity, Record[0],
+          GET_OR_DISTINCT(DIImportedEntity,
                           (Context, Record[1], getMDOrNull(Record[2]),
                            getMDOrNull(Record[3]), Record[4],
                            getMDString(Record[5]))),
