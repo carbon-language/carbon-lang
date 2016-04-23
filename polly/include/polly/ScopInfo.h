@@ -794,6 +794,9 @@ public:
   /// @brief Return the access instruction of this memory access.
   Instruction *getAccessInstruction() const { return AccessInstruction; }
 
+  /// @brief Return the number of access function subscript.
+  unsigned getNumSubscripts() const { return Subscripts.size(); }
+
   /// @brief Return the access function subscript in the dimension @p Dim.
   const SCEV *getSubscript(unsigned Dim) const { return Subscripts[Dim]; }
 

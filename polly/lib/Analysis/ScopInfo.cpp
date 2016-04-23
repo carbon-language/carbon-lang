@@ -32,6 +32,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/RegionIterator.h"
@@ -3171,12 +3172,37 @@ const InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) const {
   return nullptr;
 }
 
+/// @brief Check if @p MA can always be hoisted without execution context.
+static bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty) {
+  LoadInst *LInst = cast<LoadInst>(MA->getAccessInstruction());
+  const DataLayout &DL = LInst->getParent()->getModule()->getDataLayout();
+  // TODO: We can provide more information for better but more expensive
+  //       results.
+  if (!isDereferenceableAndAlignedPointer(LInst->getPointerOperand(),
+                                          LInst->getAlignment(), DL))
+    return false;
+
+  // If a dereferencable load is in a statement that is modeled precisely we can
+  // hoist it.
+  if (StmtInvalidCtxIsEmpty)
+    return true;
+
+  // Even if the statement is not modeled precisely we can hoist the load if it
+  // does not involve any parameters that might have been specilized by the
+  // statement domain.
+  for (unsigned u = 0, e = MA->getNumSubscripts(); u < e; u++)
+    if (!isa<SCEVConstant>(MA->getSubscript(u)))
+      return false;
+  return true;
+}
+
 void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
 
   if (InvMAs.empty())
     return;
 
   auto *StmtInvalidCtx = Stmt.getInvalidContext();
+  bool StmtInvalidCtxIsEmpty = isl_set_is_empty(StmtInvalidCtx);
 
   // Get the context under which the statement is executed but remove the error
   // context under which this statement is reached.
@@ -3222,6 +3248,15 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
     Type *Ty = LInst->getType();
     const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
 
+    isl_set *MACtx;
+    // Check if we know that this pointer can be speculatively accessed.
+    if (canAlwaysBeHoisted(MA, StmtInvalidCtxIsEmpty)) {
+      MACtx = isl_set_universe(isl_set_get_space(DomainCtx));
+    } else {
+      MACtx = isl_set_copy(DomainCtx);
+      MACtx = isl_set_gist_params(MACtx, getContext());
+    }
+
     bool Consolidated = false;
     for (auto &IAClass : InvariantEquivClasses) {
       if (PointerSCEV != std::get<0>(IAClass) || Ty != std::get<3>(IAClass))
@@ -3254,10 +3289,10 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
       // Unify the execution context of the class and this statement.
       isl_set *&IAClassDomainCtx = std::get<2>(IAClass);
       if (IAClassDomainCtx)
-        IAClassDomainCtx = isl_set_coalesce(
-            isl_set_union(IAClassDomainCtx, isl_set_copy(DomainCtx)));
+        IAClassDomainCtx =
+            isl_set_coalesce(isl_set_union(IAClassDomainCtx, MACtx));
       else
-        IAClassDomainCtx = isl_set_copy(DomainCtx);
+        IAClassDomainCtx = MACtx;
       break;
     }
 
@@ -3266,8 +3301,8 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
 
     // If we did not consolidate MA, thus did not find an equivalence class
     // for it, we create a new one.
-    InvariantEquivClasses.emplace_back(PointerSCEV, MemoryAccessList{MA},
-                                       isl_set_copy(DomainCtx), Ty);
+    InvariantEquivClasses.emplace_back(PointerSCEV, MemoryAccessList{MA}, MACtx,
+                                       Ty);
   }
 
   isl_set_free(DomainCtx);
