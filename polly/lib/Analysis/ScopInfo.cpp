@@ -548,6 +548,7 @@ getIndexExpressionsFromGEP(GetElementPtrInst *GEP, ScalarEvolution &SE) {
 
 MemoryAccess::~MemoryAccess() {
   isl_id_free(Id);
+  isl_set_free(InvalidDomain);
   isl_map_free(AccessRelation);
   isl_map_free(NewAccessRelation);
 }
@@ -818,6 +819,10 @@ static bool isDivisible(const SCEV *Expr, unsigned Size, ScalarEvolution &SE) {
 void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
   assert(!AccessRelation && "AccessReltation already built");
 
+  // Initialize the invalid domain which describes all iterations for which the
+  // access relation is not modeled correctly.
+  InvalidDomain = getStatement()->getInvalidDomain();
+
   isl_ctx *Ctx = isl_id_get_ctx(Id);
   isl_id *BaseAddrId = SAI->getBasePtrId();
 
@@ -866,9 +871,9 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
                            ScopArrayInfo::MemoryKind Kind, StringRef BaseName)
     : Kind(Kind), AccType(AccType), RedType(RT_NONE), Statement(Stmt),
-      BaseAddr(BaseAddress), BaseName(BaseName), ElementType(ElementType),
-      Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
-      AccessValue(AccessValue), IsAffine(Affine),
+      InvalidDomain(nullptr), BaseAddr(BaseAddress), BaseName(BaseName),
+      ElementType(ElementType), Sizes(Sizes.begin(), Sizes.end()),
+      AccessInstruction(AccessInst), AccessValue(AccessValue), IsAffine(Affine),
       Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
       NewAccessRelation(nullptr) {
   static const std::string TypeStrings[] = {"", "_Read", "_Write", "_MayWrite"};
@@ -881,6 +886,8 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
 
 void MemoryAccess::realignParams() {
   isl_space *ParamSpace = Statement->getParent()->getParamSpace();
+  InvalidDomain =
+      isl_set_align_params(InvalidDomain, isl_space_copy(ParamSpace));
   AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
@@ -922,7 +929,9 @@ void MemoryAccess::dump() const { print(errs()); }
 
 __isl_give isl_pw_aff *MemoryAccess::getPwAff(const SCEV *E) {
   auto *Stmt = getStatement();
-  return Stmt->getParent()->getPwAffOnly(E, Stmt->getEntryBlock());
+  PWACtx PWAC = Stmt->getParent()->getPwAff(E, Stmt->getEntryBlock());
+  InvalidDomain = isl_set_union(InvalidDomain, PWAC.second);
+  return PWAC.first;
 }
 
 // Create a map in the size of the provided set domain, that maps from the
@@ -3192,7 +3201,8 @@ const InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) const {
 }
 
 /// @brief Check if @p MA can always be hoisted without execution context.
-static bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty) {
+static bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
+                               bool MAInvalidCtxIsEmpty) {
   LoadInst *LInst = cast<LoadInst>(MA->getAccessInstruction());
   const DataLayout &DL = LInst->getParent()->getModule()->getDataLayout();
   // TODO: We can provide more information for better but more expensive
@@ -3203,7 +3213,7 @@ static bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty) {
 
   // If a dereferencable load is in a statement that is modeled precisely we can
   // hoist it.
-  if (StmtInvalidCtxIsEmpty)
+  if (StmtInvalidCtxIsEmpty && MAInvalidCtxIsEmpty)
     return true;
 
   // Even if the statement is not modeled precisely we can hoist the load if it
@@ -3267,12 +3277,17 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
     Type *Ty = LInst->getType();
     const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
 
+    auto *MAInvalidCtx = MA->getInvalidContext();
+    bool MAInvalidCtxIsEmpty = isl_set_is_empty(MAInvalidCtx);
+
     isl_set *MACtx;
     // Check if we know that this pointer can be speculatively accessed.
-    if (canAlwaysBeHoisted(MA, StmtInvalidCtxIsEmpty)) {
+    if (canAlwaysBeHoisted(MA, StmtInvalidCtxIsEmpty, MAInvalidCtxIsEmpty)) {
       MACtx = isl_set_universe(isl_set_get_space(DomainCtx));
+      isl_set_free(MAInvalidCtx);
     } else {
       MACtx = isl_set_copy(DomainCtx);
+      MACtx = isl_set_subtract(MACtx, MAInvalidCtx);
       MACtx = isl_set_gist_params(MACtx, getContext());
     }
 

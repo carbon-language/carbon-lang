@@ -493,6 +493,13 @@ private:
   /// @brief Parent ScopStmt of this access.
   ScopStmt *Statement;
 
+  /// @brief The domain under which this access is not modeled precisely.
+  ///
+  /// The invalid domain for an access describes all parameter combinations
+  /// under which the statement looks to be executed but is in fact not because
+  /// some assumption/restriction makes the access invalid.
+  isl_set *InvalidDomain;
+
   // Properties describing the accessed array.
   // TODO: It might be possible to move them to ScopArrayInfo.
   // @{
@@ -801,7 +808,19 @@ public:
   const SCEV *getSubscript(unsigned Dim) const { return Subscripts[Dim]; }
 
   /// @brief Compute the isl representation for the SCEV @p E wrt. this access.
+  ///
+  /// Note that this function will also adjust the invalid context accordingly.
   __isl_give isl_pw_aff *getPwAff(const SCEV *E);
+
+  /// @brief Get the invalid domain for this access.
+  __isl_give isl_set *getInvalidDomain() const {
+    return isl_set_copy(InvalidDomain);
+  }
+
+  /// @brief Get the invalid context for this access.
+  __isl_give isl_set *getInvalidContext() const {
+    return isl_set_params(getInvalidDomain());
+  }
 
   /// Get the stride of this memory access in the specified Schedule. Schedule
   /// is a map from the statement to a schedule where the innermost dimension is
