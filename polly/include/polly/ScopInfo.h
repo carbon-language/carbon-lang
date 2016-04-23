@@ -938,13 +938,12 @@ private:
   /// The Scop containing this ScopStmt
   Scop &Parent;
 
-  /// @brief The context under which this statement is not modeled precisely.
+  /// @brief The domain under which this statement is not modeled precisely.
   ///
-  /// The invalid context for a statement describes all parameter combinations
+  /// The invalid domain for a statement describes all parameter combinations
   /// under which the statement looks to be executed but is in fact not because
-  /// some assumption/restriction makes the statement/scop invalid. Currently
-  /// it is build only using error block domain contexts.
-  isl_set *InvalidContext;
+  /// some assumption/restriction makes the statement/scop invalid.
+  isl_set *InvalidDomain;
 
   /// The iteration domain describes the set of iterations for which this
   /// statement is executed.
@@ -1100,13 +1099,18 @@ public:
   /// @brief Get an isl string representing this schedule.
   std::string getScheduleStr() const;
 
-  /// @brief Get the invalid context for this statement.
-  __isl_give isl_set *getInvalidContext() const {
-    return isl_set_copy(InvalidContext);
+  /// @brief Get the invalid domain for this statement.
+  __isl_give isl_set *getInvalidDomain() const {
+    return isl_set_copy(InvalidDomain);
   }
 
-  /// @brief Set the invalid context for this statement to @p IC.
-  void setInvalidContext(__isl_take isl_set *IC);
+  /// @brief Get the invalid context for this statement.
+  __isl_give isl_set *getInvalidContext() const {
+    return isl_set_params(getInvalidDomain());
+  }
+
+  /// @brief Set the invalid context for this statement to @p ID.
+  void setInvalidDomain(__isl_take isl_set *ID);
 
   /// @brief Get the BasicBlock represented by this ScopStmt (if any).
   ///
@@ -1562,19 +1566,19 @@ private:
   void propagateDomainConstraints(Region *R, ScopDetection &SD,
                                   DominatorTree &DT, LoopInfo &LI);
 
-  /// @brief Propagate invalid contexts of statements through @p R.
+  /// @brief Propagate invalid domains of statements through @p R.
   ///
-  /// This method will propagate invalid statement contexts through @p R and at
-  /// the same time add error block domain context to them. Additionally, the
-  /// domains of error statements and those only reachable via error statements
-  /// will be replaced by an empty set. Later those will be removed completely.
+  /// This method will propagate invalid statement domains through @p R and at
+  /// the same time add error block domains to them. Additionally, the domains
+  /// of error statements and those only reachable via error statements will be
+  /// replaced by an empty set. Later those will be removed completely.
   ///
   /// @param R  The currently traversed region.
   /// @param SD The ScopDetection analysis for the current function.
   /// @param DT The DominatorTree for the current function.
   /// @param LI The LoopInfo for the current function.
-  void propagateInvalidStmtContexts(Region *R, ScopDetection &SD,
-                                    DominatorTree &DT, LoopInfo &LI);
+  void propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
+                                   DominatorTree &DT, LoopInfo &LI);
 
   /// @brief Compute the domain for each basic block in @p R.
   ///
