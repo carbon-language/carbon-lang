@@ -3211,6 +3211,17 @@ void IndexBitcodeWriter::writeCombinedGlobalValueSummary() {
   DenseMap<const GlobalValueSummary *, uint64_t> SummaryToOffsetMap;
 
   SmallVector<uint64_t, 64> NameVals;
+
+  // For local linkage, we also emit the original name separately
+  // immediately after the record.
+  auto MaybeEmitOriginalName = [&](GlobalValueSummary &S) {
+    if (!GlobalValue::isLocalLinkage(S.linkage()))
+      return;
+    NameVals.push_back(S.getOriginalName());
+    Stream.EmitRecord(bitc::FS_COMBINED_ORIGINAL_NAME, NameVals);
+    NameVals.clear();
+  };
+
   for (const auto &FII : Index) {
     for (auto &FI : FII.second) {
       GlobalValueSummary *S = FI->summary();
@@ -3241,6 +3252,7 @@ void IndexBitcodeWriter::writeCombinedGlobalValueSummary() {
         Stream.EmitRecord(bitc::FS_COMBINED_GLOBALVAR_INIT_REFS, NameVals,
                           FSModRefsAbbrev);
         NameVals.clear();
+        MaybeEmitOriginalName(*S);
         continue;
       }
 
@@ -3288,6 +3300,7 @@ void IndexBitcodeWriter::writeCombinedGlobalValueSummary() {
       // Emit the finished record.
       Stream.EmitRecord(Code, NameVals, FSAbbrev);
       NameVals.clear();
+      MaybeEmitOriginalName(*S);
     }
   }
 
@@ -3307,6 +3320,7 @@ void IndexBitcodeWriter::writeCombinedGlobalValueSummary() {
     // Emit the finished record.
     Stream.EmitRecord(bitc::FS_COMBINED_ALIAS, NameVals, FSAliasAbbrev);
     NameVals.clear();
+    MaybeEmitOriginalName(*AS);
   }
 
   Stream.ExitBlock();
