@@ -327,8 +327,8 @@ class SizeClassAllocator64 {
       CHECK_EQ(kSpaceBeg, reinterpret_cast<uptr>(
                               MmapFixedNoAccess(kSpaceBeg, kSpaceSize)));
     } else {
-      NonConstSpaceBeg = reinterpret_cast<uptr>(
-          MmapFixedNoAccess(0, kSpaceSize + AdditionalSize()));
+      NonConstSpaceBeg =
+          reinterpret_cast<uptr>(MmapNoAccess(kSpaceSize + AdditionalSize()));
       CHECK_NE(NonConstSpaceBeg, ~(uptr)0);
     }
     MapWithCallback(SpaceEnd(), AdditionalSize());

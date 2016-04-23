@@ -85,6 +85,7 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size,
 void *MmapNoReserveOrDie(uptr size, const char *mem_type);
 void *MmapFixedOrDie(uptr fixed_addr, uptr size);
 void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name = nullptr);
+void *MmapNoAccess(uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.
 void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 // Disallow access to a memory range.  Use MmapFixedNoAccess to allocate an

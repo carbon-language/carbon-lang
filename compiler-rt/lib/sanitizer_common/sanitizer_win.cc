@@ -211,6 +211,11 @@ void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name) {
   return res;
 }
 
+void *MmapNoAccess(uptr size) {
+  // FIXME: unsupported.
+  return nullptr;
+}
+
 bool MprotectNoAccess(uptr addr, uptr size) {
   DWORD old_protection;
   return VirtualProtect((LPVOID)addr, size, PAGE_NOACCESS, &old_protection);

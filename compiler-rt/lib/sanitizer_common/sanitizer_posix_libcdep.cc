@@ -279,6 +279,11 @@ void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name) {
                                0);
 }
 
+void *MmapNoAccess(uptr size) {
+  unsigned flags = MAP_PRIVATE | MAP_ANON | MAP_NORESERVE;
+  return (void *)internal_mmap(nullptr, size, PROT_NONE, flags, -1, 0);
+}
+
 // This function is defined elsewhere if we intercepted pthread_attr_getstack.
 extern "C" {
 SANITIZER_WEAK_ATTRIBUTE int
