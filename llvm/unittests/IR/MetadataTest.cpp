@@ -2341,6 +2341,7 @@ TEST_F(DistinctMDOperandPlaceholderTest, replaceUseWithNoUser) {
   DistinctMDOperandPlaceholder(7).replaceUseWith(MDTuple::get(Context, None));
 }
 
+#ifndef NDEBUG
 #ifdef GTEST_HAS_DEATH_TEST
 TEST_F(DistinctMDOperandPlaceholderTest, MetadataAsValue) {
   // This shouldn't crash.
@@ -2382,6 +2383,7 @@ TEST_F(DistinctMDOperandPlaceholderTest, TrackingMDRefAndDistinctMDNode) {
                  "Placeholders can only be used once");
   }
 }
+#endif
 #endif
 
 } // end namespace
