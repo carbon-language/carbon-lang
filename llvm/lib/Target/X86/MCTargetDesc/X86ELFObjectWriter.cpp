@@ -84,9 +84,10 @@ static void checkIs32(MCContext &Ctx, SMLoc Loc, X86_64RelType Type) {
                     "32 bit reloc applied to a field with a different size");
 }
 
-static unsigned getRelocType64(MCContext &Ctx, SMLoc Loc,
+static unsigned getRelocType64(MCContext &Ctx, const MCFixup &Fixup,
                                MCSymbolRefExpr::VariantKind Modifier,
                                X86_64RelType Type, bool IsPCRel) {
+  SMLoc Loc = Fixup.getLoc();
   switch (Modifier) {
   default:
     llvm_unreachable("Unimplemented");
@@ -258,7 +259,7 @@ unsigned X86ELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
   MCSymbolRefExpr::VariantKind Modifier = Target.getAccessVariant();
   X86_64RelType Type = getType64(Fixup.getKind(), Modifier, IsPCRel);
   if (getEMachine() == ELF::EM_X86_64)
-    return getRelocType64(Ctx, Fixup.getLoc(), Modifier, Type, IsPCRel);
+    return getRelocType64(Ctx, Fixup, Modifier, Type, IsPCRel);
 
   assert((getEMachine() == ELF::EM_386 || getEMachine() == ELF::EM_IAMCU) &&
          "Unsupported ELF machine type.");
