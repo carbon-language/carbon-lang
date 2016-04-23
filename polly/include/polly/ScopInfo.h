@@ -1246,6 +1246,8 @@ public:
   void restrictDomain(__isl_take isl_set *NewDomain);
 
   /// @brief Compute the isl representation for the SCEV @p E in this stmt.
+  ///
+  /// Note that this function will also adjust the invalid context accordingly.
   __isl_give isl_pw_aff *getPwAff(const SCEV *E);
 
   /// @brief Get the loop for a dimension.
@@ -2130,7 +2132,13 @@ public:
   /// the translation of @p E was deemed to complex the SCoP is invalidated and
   /// a dummy value of appropriate dimension is returned. This allows to bail
   /// for complex cases without "error handling code" needed on the users side.
-  __isl_give isl_pw_aff *getPwAff(const SCEV *E, BasicBlock *BB = nullptr);
+  __isl_give PWACtx getPwAff(const SCEV *E, BasicBlock *BB = nullptr);
+
+  /// @brief Compute the isl representation for the SCEV @p E
+  ///
+  /// This function is like @see Scop::getPwAff() but strips away the invalid
+  /// domain part associated with the piecewise affine function.
+  __isl_give isl_pw_aff *getPwAffOnly(const SCEV *E, BasicBlock *BB = nullptr);
 
   /// @brief Return the domain of @p Stmt.
   ///

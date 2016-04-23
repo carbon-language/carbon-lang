@@ -225,7 +225,7 @@ bool ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes) {
     isl_pw_aff_free(Size);
   DimensionSizesPw.clear();
   for (const SCEV *Expr : DimensionSizes) {
-    isl_pw_aff *Size = S.getPwAff(Expr);
+    isl_pw_aff *Size = S.getPwAffOnly(Expr);
     DimensionSizesPw.push_back(Size);
   }
   return true;
@@ -922,7 +922,7 @@ void MemoryAccess::dump() const { print(errs()); }
 
 __isl_give isl_pw_aff *MemoryAccess::getPwAff(const SCEV *E) {
   auto *Stmt = getStatement();
-  return Stmt->getParent()->getPwAff(E, Stmt->getEntryBlock());
+  return Stmt->getParent()->getPwAffOnly(E, Stmt->getEntryBlock());
 }
 
 // Create a map in the size of the provided set domain, that maps from the
@@ -1035,7 +1035,9 @@ __isl_give isl_map *ScopStmt::getSchedule() const {
 }
 
 __isl_give isl_pw_aff *ScopStmt::getPwAff(const SCEV *E) {
-  return getParent()->getPwAff(E, getEntryBlock());
+  PWACtx PWAC = getParent()->getPwAff(E, getEntryBlock());
+  InvalidDomain = isl_set_union(InvalidDomain, PWAC.second);
+  return PWAC.first;
 }
 
 void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
@@ -2345,7 +2347,7 @@ void Scop::propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
     }
 
     if (isl_set_is_empty(InvalidDomain)) {
-      isl_set_free(InvalidDomain);
+      Stmt->setInvalidDomain(InvalidDomain);
       continue;
     }
 
@@ -3711,15 +3713,15 @@ void Scop::dump() const { print(dbgs()); }
 
 isl_ctx *Scop::getIslCtx() const { return IslCtx.get(); }
 
-__isl_give isl_pw_aff *Scop::getPwAff(const SCEV *E, BasicBlock *BB) {
+__isl_give PWACtx Scop::getPwAff(const SCEV *E, BasicBlock *BB) {
   // First try to use the SCEVAffinator to generate a piecewise defined
   // affine function from @p E in the context of @p BB. If that tasks becomes to
   // complex the affinator might return a nullptr. In such a case we invalidate
   // the SCoP and return a dummy value. This way we do not need to add error
   // handling cdoe to all users of this function.
-  auto *PWA = Affinator.getPwAff(E, BB);
-  if (PWA)
-    return PWA;
+  auto PWAC = Affinator.getPwAff(E, BB);
+  if (PWAC.first)
+    return PWAC;
 
   auto DL = BB ? BB->getTerminator()->getDebugLoc() : DebugLoc();
   invalidate(COMPLEXITY, DL);
@@ -3733,6 +3735,12 @@ __isl_give isl_union_set *Scop::getDomains() const {
     Domain = isl_union_set_add_set(Domain, Stmt.getDomain());
 
   return Domain;
+}
+
+__isl_give isl_pw_aff *Scop::getPwAffOnly(const SCEV *E, BasicBlock *BB) {
+  PWACtx PWAC = getPwAff(E, BB);
+  isl_set_free(PWAC.second);
+  return PWAC.first;
 }
 
 __isl_give isl_union_map *
