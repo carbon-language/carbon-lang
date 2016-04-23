@@ -3182,9 +3182,6 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   // context under which this statement is reached.
   isl_set *DomainCtx = isl_set_params(Stmt.getDomain());
   DomainCtx = isl_set_subtract(DomainCtx, StmtInvalidCtx);
-  DomainCtx = isl_set_remove_redundancies(DomainCtx);
-  DomainCtx = isl_set_detect_equalities(DomainCtx);
-  DomainCtx = isl_set_coalesce(DomainCtx);
 
   if (isl_set_n_basic_set(DomainCtx) >= MaxConjunctsInDomain) {
     auto *AccInst = InvMAs.front()->getAccessInstruction();
