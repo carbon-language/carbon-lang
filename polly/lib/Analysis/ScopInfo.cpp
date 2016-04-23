@@ -3477,13 +3477,16 @@ __isl_give isl_set *Scop::getAssumedContext() const {
 
 bool Scop::hasFeasibleRuntimeContext() const {
   auto *PositiveContext = getAssumedContext();
-  PositiveContext = addNonEmptyDomainConstraints(PositiveContext);
-  bool IsFeasible = !isl_set_is_empty(PositiveContext);
-  isl_set_free(PositiveContext);
-  if (!IsFeasible)
-    return false;
-
   auto *NegativeContext = getInvalidContext();
+  PositiveContext = addNonEmptyDomainConstraints(PositiveContext);
+  bool IsFeasible = !(isl_set_is_empty(PositiveContext) ||
+                      isl_set_is_subset(PositiveContext, NegativeContext));
+  isl_set_free(PositiveContext);
+  if (!IsFeasible) {
+    isl_set_free(NegativeContext);
+    return false;
+  }
+
   auto *DomainContext = isl_union_set_params(getDomains());
   IsFeasible = !isl_set_is_subset(DomainContext, NegativeContext);
   IsFeasible &= !isl_set_is_subset(Context, NegativeContext);
