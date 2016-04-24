@@ -630,6 +630,49 @@ static Value *simplifyX86pshufb(const IntrinsicInst &II,
   return Builder.CreateShuffleVector(V1, V2, ShuffleMask);
 }
 
+/// Attempt to convert vpermilvar* to shufflevector if the mask is constant.
+static Value *simplifyX86vpermilvar(const IntrinsicInst &II,
+                                    InstCombiner::BuilderTy &Builder) {
+  Value *V = II.getArgOperand(1);
+
+  unsigned Size = cast<VectorType>(V->getType())->getNumElements();
+  assert(Size == 8 || Size == 4 || Size == 2);
+
+  uint32_t Indexes[8];
+  if (auto C = dyn_cast<ConstantDataVector>(V)) {
+    // The intrinsics only read one or two bits, clear the rest.
+    for (unsigned I = 0; I < Size; ++I) {
+      uint32_t Index = C->getElementAsInteger(I) & 0x3;
+      // The PD variants uses bit 1 to select per-lane element index, so
+      // shift down to convert to generic shuffle mask index.
+      if (II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
+          II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
+        Index >>= 1;
+      Indexes[I] = Index;
+    }
+  } else if (isa<ConstantAggregateZero>(V)) {
+    for (unsigned I = 0; I < Size; ++I)
+      Indexes[I] = 0;
+  } else {
+    return nullptr;
+  }
+
+  // The _256 variants are a bit trickier since the mask bits always index
+  // into the corresponding 128 half. In order to convert to a generic
+  // shuffle, we have to make that explicit.
+  if (II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_ps_256 ||
+      II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256) {
+    for (unsigned I = Size / 2; I < Size; ++I)
+      Indexes[I] += Size / 2;
+  }
+
+  auto ShuffleMask =
+      ConstantDataVector::get(V->getContext(), makeArrayRef(Indexes, Size));
+  auto V1 = II.getArgOperand(0);
+  auto V2 = UndefValue::get(V1->getType());
+  return Builder.CreateShuffleVector(V1, V2, ShuffleMask);
+}
+
 /// The shuffle mask for a perm2*128 selects any two halves of two 256-bit
 /// source vectors, unless a zero bit is set. If a zero bit is set,
 /// then ignore that half of the mask and clear that half of the vector.
@@ -1635,42 +1678,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_vpermilvar_ps:
   case Intrinsic::x86_avx_vpermilvar_ps_256:
   case Intrinsic::x86_avx_vpermilvar_pd:
-  case Intrinsic::x86_avx_vpermilvar_pd_256: {
-    // Convert vpermil* to shufflevector if the mask is constant.
-    Value *V = II->getArgOperand(1);
-    unsigned Size = cast<VectorType>(V->getType())->getNumElements();
-    assert(Size == 8 || Size == 4 || Size == 2);
-    uint32_t Indexes[8];
-    if (auto C = dyn_cast<ConstantDataVector>(V)) {
-      // The intrinsics only read one or two bits, clear the rest.
-      for (unsigned I = 0; I < Size; ++I) {
-        uint32_t Index = C->getElementAsInteger(I) & 0x3;
-        if (II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
-            II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
-          Index >>= 1;
-        Indexes[I] = Index;
-      }
-    } else if (isa<ConstantAggregateZero>(V)) {
-      for (unsigned I = 0; I < Size; ++I)
-        Indexes[I] = 0;
-    } else {
-      break;
-    }
-    // The _256 variants are a bit trickier since the mask bits always index
-    // into the corresponding 128 half. In order to convert to a generic
-    // shuffle, we have to make that explicit.
-    if (II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_ps_256 ||
-        II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256) {
-      for (unsigned I = Size / 2; I < Size; ++I)
-        Indexes[I] += Size / 2;
-    }
-    auto NewC =
-        ConstantDataVector::get(V->getContext(), makeArrayRef(Indexes, Size));
-    auto V1 = II->getArgOperand(0);
-    auto V2 = UndefValue::get(V1->getType());
-    auto Shuffle = Builder->CreateShuffleVector(V1, V2, NewC);
-    return replaceInstUsesWith(CI, Shuffle);
-  }
+  case Intrinsic::x86_avx_vpermilvar_pd_256:
+    if (Value *V = simplifyX86vpermilvar(*II, *Builder))
+      return replaceInstUsesWith(*II, V);
+    break;
 
   case Intrinsic::x86_avx_vperm2f128_pd_256:
   case Intrinsic::x86_avx_vperm2f128_ps_256:
