@@ -37,7 +37,7 @@ class GlobalValue : public Constant {
   GlobalValue(const GlobalValue &) = delete;
 public:
   /// @brief An enumeration for the kinds of linkage for global values.
-  enum LinkageTypes : unsigned {
+  enum LinkageTypes {
     ExternalLinkage = 0,///< Externally visible function
     AvailableExternallyLinkage, ///< Available for inspection, not emission.
     LinkOnceAnyLinkage, ///< Keep one copy of function when linking (inline)
