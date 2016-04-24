@@ -1406,17 +1406,20 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_ucomineq_sd: {
     // These intrinsics only demand the 0th element of their input vectors. If
     // we can simplify the input based on that, do so now.
+    bool MadeChange = false;
     Value *Arg0 = II->getArgOperand(0);
     Value *Arg1 = II->getArgOperand(1);
     unsigned VWidth = Arg0->getType()->getVectorNumElements();
     if (Value *V = SimplifyDemandedVectorEltsLow(Arg0, VWidth, 1)) {
       II->setArgOperand(0, V);
-      return II;
+      MadeChange = true;
     }
     if (Value *V = SimplifyDemandedVectorEltsLow(Arg1, VWidth, 1)) {
       II->setArgOperand(1, V);
-      return II;
+      MadeChange = true;
     }
+    if (MadeChange)
+      return II;
     break;
   }
 
@@ -1531,14 +1534,17 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // EXTRQ only uses the lowest 64-bits of the first 128-bit vector
     // operands and the lowest 16-bits of the second.
+    bool MadeChange = false;
     if (Value *V = SimplifyDemandedVectorEltsLow(Op0, VWidth0, 1)) {
       II->setArgOperand(0, V);
-      return II;
+      MadeChange = true;
     }
     if (Value *V = SimplifyDemandedVectorEltsLow(Op1, VWidth1, 2)) {
       II->setArgOperand(1, V);
-      return II;
+      MadeChange = true;
     }
+    if (MadeChange)
+      return II;
     break;
   }
 
@@ -1626,15 +1632,17 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // INSERTQI only uses the lowest 64-bits of the first two 128-bit vector
     // operands.
+    bool MadeChange = false;
     if (Value *V = SimplifyDemandedVectorEltsLow(Op0, VWidth0, 1)) {
       II->setArgOperand(0, V);
-      return II;
+      MadeChange = true;
     }
-
     if (Value *V = SimplifyDemandedVectorEltsLow(Op1, VWidth1, 1)) {
       II->setArgOperand(1, V);
-      return II;
+      MadeChange = true;
     }
+    if (MadeChange)
+      return II;
     break;
   }
 
