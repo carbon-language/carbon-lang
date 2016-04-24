@@ -1077,6 +1077,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     APInt DemandedElts = APInt::getLowBitsSet(Width, DemandedWidth);
     return SimplifyDemandedVectorElts(Op, DemandedElts, UndefElts);
   };
+  auto SimplifyDemandedVectorEltsHigh = [this](Value *Op, unsigned Width,
+                                              unsigned DemandedWidth) {
+    APInt UndefElts(Width, 0);
+    APInt DemandedElts = APInt::getHighBitsSet(Width, DemandedWidth);
+    return SimplifyDemandedVectorElts(Op, DemandedElts, UndefElts);
+  };
 
   switch (II->getIntrinsicID()) {
   default: break;
@@ -1411,6 +1417,52 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     Value *Arg1 = II->getArgOperand(1);
     unsigned VWidth = Arg0->getType()->getVectorNumElements();
     if (Value *V = SimplifyDemandedVectorEltsLow(Arg0, VWidth, 1)) {
+      II->setArgOperand(0, V);
+      MadeChange = true;
+    }
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg1, VWidth, 1)) {
+      II->setArgOperand(1, V);
+      MadeChange = true;
+    }
+    if (MadeChange)
+      return II;
+    break;
+  }
+
+  case Intrinsic::x86_sse_add_ss:
+  case Intrinsic::x86_sse_sub_ss:
+  case Intrinsic::x86_sse_mul_ss:
+  case Intrinsic::x86_sse_div_ss:
+  case Intrinsic::x86_sse_min_ss:
+  case Intrinsic::x86_sse_max_ss:
+  case Intrinsic::x86_sse_cmp_ss:
+  case Intrinsic::x86_sse2_add_sd:
+  case Intrinsic::x86_sse2_sub_sd:
+  case Intrinsic::x86_sse2_mul_sd:
+  case Intrinsic::x86_sse2_div_sd:
+  case Intrinsic::x86_sse2_min_sd:
+  case Intrinsic::x86_sse2_max_sd:
+  case Intrinsic::x86_sse2_cmp_sd: {
+    // These intrinsics only demand the lowest element of the second input
+    // vector.
+    Value *Arg1 = II->getArgOperand(1);
+    unsigned VWidth = Arg1->getType()->getVectorNumElements();
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg1, VWidth, 1)) {
+      II->setArgOperand(1, V);
+      return II;
+    }
+    break;
+  }
+
+  case Intrinsic::x86_sse41_round_ss:
+  case Intrinsic::x86_sse41_round_sd: {
+    // These intrinsics demand the upper elements of the first input vector and
+    // the lowest element of the second input vector.
+    bool MadeChange = false;
+    Value *Arg0 = II->getArgOperand(0);
+    Value *Arg1 = II->getArgOperand(1);
+    unsigned VWidth = Arg0->getType()->getVectorNumElements();
+    if (Value *V = SimplifyDemandedVectorEltsHigh(Arg0, VWidth, VWidth - 1)) {
       II->setArgOperand(0, V);
       MadeChange = true;
     }

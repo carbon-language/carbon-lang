@@ -34,9 +34,8 @@ define double @test_sqrt_sd_1(double %a) {
 
 define <2 x double> @test_add_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_add_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> %a, <2 x double> [[TMP1]])
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> %a, <2 x double> %b)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> %a, <2 x double> %1)
@@ -48,10 +47,9 @@ define double @test_add_sd_0(double %a, double %b) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> [[TMP1]], double 1.000000e+00, i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x double> [[TMP3]], double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> [[TMP2]], <2 x double> [[TMP4]])
-; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x double> [[TMP5]], i32 0
-; CHECK-NEXT:    ret double [[TMP6]]
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> [[TMP2]], <2 x double> [[TMP3]])
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x double> [[TMP4]], i32 0
+; CHECK-NEXT:    ret double [[TMP5]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1
@@ -67,10 +65,9 @@ define double @test_add_sd_1(double %a, double %b) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> [[TMP1]], double 1.000000e+00, i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x double> [[TMP3]], double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> [[TMP2]], <2 x double> [[TMP4]])
-; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x double> [[TMP5]], i32 1
-; CHECK-NEXT:    ret double [[TMP6]]
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <2 x double> @llvm.x86.sse2.add.sd(<2 x double> [[TMP2]], <2 x double> [[TMP3]])
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x double> [[TMP4]], i32 1
+; CHECK-NEXT:    ret double [[TMP5]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1
@@ -83,9 +80,8 @@ define double @test_add_sd_1(double %a, double %b) {
 
 define <2 x double> @test_sub_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_sub_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.sub.sd(<2 x double> %a, <2 x double> [[TMP1]])
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.sub.sd(<2 x double> %a, <2 x double> %b)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.sub.sd(<2 x double> %a, <2 x double> %1)
@@ -108,7 +104,7 @@ define double @test_sub_sd_0(double %a, double %b) {
 
 define double @test_sub_sd_1(double %a, double %b) {
 ; CHECK-LABEL: @test_sub_sd_1(
-; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.sub.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> <double undef, double 2.000000e+00>)
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.sub.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> undef)
 ; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <2 x double> [[TMP1]], i32 1
 ; CHECK-NEXT:    ret double [[TMP2]]
 ;
@@ -123,9 +119,8 @@ define double @test_sub_sd_1(double %a, double %b) {
 
 define <2 x double> @test_mul_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_mul_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.mul.sd(<2 x double> %a, <2 x double> [[TMP1]])
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.mul.sd(<2 x double> %a, <2 x double> %b)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.mul.sd(<2 x double> %a, <2 x double> %1)
@@ -148,7 +143,7 @@ define double @test_mul_sd_0(double %a, double %b) {
 
 define double @test_mul_sd_1(double %a, double %b) {
 ; CHECK-LABEL: @test_mul_sd_1(
-; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.mul.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> <double undef, double 2.000000e+00>)
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.mul.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> undef)
 ; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <2 x double> [[TMP1]], i32 1
 ; CHECK-NEXT:    ret double [[TMP2]]
 ;
@@ -163,9 +158,8 @@ define double @test_mul_sd_1(double %a, double %b) {
 
 define <2 x double> @test_div_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_div_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> %a, <2 x double> [[TMP1]])
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> %a, <2 x double> %b)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> %a, <2 x double> %1)
@@ -177,10 +171,9 @@ define double @test_div_sd_0(double %a, double %b) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> [[TMP1]], double 1.000000e+00, i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x double> [[TMP3]], double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> [[TMP2]], <2 x double> [[TMP4]])
-; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x double> [[TMP5]], i32 0
-; CHECK-NEXT:    ret double [[TMP6]]
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> [[TMP2]], <2 x double> [[TMP3]])
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x double> [[TMP4]], i32 0
+; CHECK-NEXT:    ret double [[TMP5]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1
@@ -196,10 +189,9 @@ define double @test_div_sd_1(double %a, double %b) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> [[TMP1]], double 1.000000e+00, i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x double> [[TMP3]], double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> [[TMP2]], <2 x double> [[TMP4]])
-; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x double> [[TMP5]], i32 1
-; CHECK-NEXT:    ret double [[TMP6]]
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> [[TMP2]], <2 x double> [[TMP3]])
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x double> [[TMP4]], i32 1
+; CHECK-NEXT:    ret double [[TMP5]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1
@@ -212,9 +204,8 @@ define double @test_div_sd_1(double %a, double %b) {
 
 define <2 x double> @test_min_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_min_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.min.sd(<2 x double> %a, <2 x double> [[TMP1]])
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.min.sd(<2 x double> %a, <2 x double> %b)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.min.sd(<2 x double> %a, <2 x double> %1)
@@ -240,7 +231,7 @@ define double @test_min_sd_0(double %a, double %b) {
 
 define double @test_min_sd_1(double %a, double %b) {
 ; CHECK-LABEL: @test_min_sd_1(
-; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.min.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> <double undef, double 2.000000e+00>)
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.min.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> undef)
 ; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <2 x double> [[TMP1]], i32 1
 ; CHECK-NEXT:    ret double [[TMP2]]
 ;
@@ -255,9 +246,8 @@ define double @test_min_sd_1(double %a, double %b) {
 
 define <2 x double> @test_max_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_max_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.max.sd(<2 x double> %a, <2 x double> [[TMP1]])
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.max.sd(<2 x double> %a, <2 x double> %b)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.max.sd(<2 x double> %a, <2 x double> %1)
@@ -283,7 +273,7 @@ define double @test_max_sd_0(double %a, double %b) {
 
 define double @test_max_sd_1(double %a, double %b) {
 ; CHECK-LABEL: @test_max_sd_1(
-; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.max.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> <double undef, double 2.000000e+00>)
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.max.sd(<2 x double> <double undef, double 1.000000e+00>, <2 x double> undef)
 ; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <2 x double> [[TMP1]], i32 1
 ; CHECK-NEXT:    ret double [[TMP2]]
 ;
@@ -298,9 +288,8 @@ define double @test_max_sd_1(double %a, double %b) {
 
 define <2 x double> @test_cmp_sd(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: @test_cmp_sd(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> %b, double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a, <2 x double> [[TMP1]], i8 0)
-; CHECK-NEXT:    ret <2 x double> [[TMP2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a, <2 x double> %b, i8 0)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
 ;
   %1 = insertelement <2 x double> %b, double 2.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a, <2 x double> %1, i8 0)
@@ -312,10 +301,9 @@ define double @test_cmp_sd_0(double %a, double %b) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> [[TMP1]], double 1.000000e+00, i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x double> [[TMP3]], double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> [[TMP2]], <2 x double> [[TMP4]], i8 0)
-; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x double> [[TMP5]], i32 0
-; CHECK-NEXT:    ret double [[TMP6]]
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> [[TMP2]], <2 x double> [[TMP3]], i8 0)
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x double> [[TMP4]], i32 0
+; CHECK-NEXT:    ret double [[TMP5]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1
@@ -331,10 +319,9 @@ define double @test_cmp_sd_1(double %a, double %b) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> [[TMP1]], double 1.000000e+00, i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x double> [[TMP3]], double 2.000000e+00, i32 1
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> [[TMP2]], <2 x double> [[TMP4]], i8 0)
-; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x double> [[TMP5]], i32 1
-; CHECK-NEXT:    ret double [[TMP6]]
+; CHECK-NEXT:    [[TMP4:%.*]] = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> [[TMP2]], <2 x double> [[TMP3]], i8 0)
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x double> [[TMP4]], i32 1
+; CHECK-NEXT:    ret double [[TMP5]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1
