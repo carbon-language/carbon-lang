@@ -2108,6 +2108,9 @@ void PlaceholderQueue::flush(BitcodeReaderMetadataList &MetadataList) {
 /// Parse a METADATA_BLOCK. If ModuleLevel is true then we are parsing
 /// module level metadata.
 std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
+  assert((ModuleLevel || DeferredMetadataInfo.empty()) &&
+         "Must read all module-level metadata before function-level");
+
   IsMetadataMaterialized = true;
   unsigned NextMetadataNo = MetadataList.size();
 
@@ -5547,9 +5550,6 @@ std::error_code BitcodeReader::findFunctionInStream(
 void BitcodeReader::releaseBuffer() { Buffer.release(); }
 
 std::error_code BitcodeReader::materialize(GlobalValue *GV) {
-  if (std::error_code EC = materializeMetadata())
-    return EC;
-
   Function *F = dyn_cast<Function>(GV);
   // If it's not a function or is already material, ignore the request.
   if (!F || !F->isMaterializable())
@@ -5562,6 +5562,10 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   if (DFII->second == 0)
     if (std::error_code EC = findFunctionInStream(F, DFII))
       return EC;
+
+  // Materialize metadata before parsing any function bodies.
+  if (std::error_code EC = materializeMetadata())
+    return EC;
 
   // Move the bit stream to the saved position of the deferred function body.
   Stream.JumpToBit(DFII->second);
