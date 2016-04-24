@@ -1179,7 +1179,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     switch (II->getIntrinsicID()) {
     default: break;
 
-    // Unary vector operations that work column-wise.
+    // Unary scalar-as-vector operations that work column-wise.
     case Intrinsic::x86_sse_rcp_ss:
     case Intrinsic::x86_sse_rsqrt_ss:
     case Intrinsic::x86_sse_sqrt_ss:
@@ -1193,11 +1193,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       // If lowest element of a scalar op isn't used then use Arg0.
       if (DemandedElts.getLoBits(1) != 1)
         return II->getArgOperand(0);
-      // TODO: If only low elt lower SQRT to FSQRT (with rounding/exceptions checks).
+      // TODO: If only low elt lower SQRT to FSQRT (with rounding/exceptions
+      // checks).
       break;
 
-    // Binary vector operations that work column-wise.  A dest element is a
-    // function of the corresponding input elements from the two inputs.
+    // Binary scalar-as-vector operations that work column-wise.  A dest element
+    // is a function of the corresponding input elements from the two inputs.
     case Intrinsic::x86_sse_add_ss:
     case Intrinsic::x86_sse_sub_ss:
     case Intrinsic::x86_sse_mul_ss:
