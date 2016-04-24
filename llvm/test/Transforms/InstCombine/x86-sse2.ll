@@ -150,11 +150,8 @@ define <2 x double> @test_div_sd(<2 x double> %a, <2 x double> %b) {
 
 define double @test_div_sd_0(double %a, double %b) {
 ; CHECK-LABEL: @test_div_sd_0(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x double> undef, double %a, i32 0
-; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <2 x double> undef, double %b, i32 0
-; CHECK-NEXT:    [[TMP3:%.*]] = tail call <2 x double> @llvm.x86.sse2.div.sd(<2 x double> [[TMP1]], <2 x double> [[TMP2]])
-; CHECK-NEXT:    [[TMP4:%.*]] = extractelement <2 x double> [[TMP3]], i32 0
-; CHECK-NEXT:    ret double [[TMP4]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fdiv double %a, %b
+; CHECK-NEXT:    ret double [[TMP1]]
 ;
   %1 = insertelement <2 x double> undef, double %a, i32 0
   %2 = insertelement <2 x double> %1, double 1.000000e+00, i32 1

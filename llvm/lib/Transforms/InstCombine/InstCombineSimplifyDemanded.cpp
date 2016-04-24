@@ -1229,11 +1229,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
         case Intrinsic::x86_sse_add_ss:
         case Intrinsic::x86_sse_sub_ss:
         case Intrinsic::x86_sse_mul_ss:
+        case Intrinsic::x86_sse_div_ss:
         case Intrinsic::x86_sse2_add_sd:
         case Intrinsic::x86_sse2_sub_sd:
         case Intrinsic::x86_sse2_mul_sd:
+        case Intrinsic::x86_sse2_div_sd:
           // TODO: Lower MIN/MAX/etc.
-          // TODO: Lower DIV (with rounding/exceptions checks).
           Value *LHS = II->getArgOperand(0);
           Value *RHS = II->getArgOperand(1);
           // Extract the element as scalars.
@@ -1257,6 +1258,11 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           case Intrinsic::x86_sse_mul_ss:
           case Intrinsic::x86_sse2_mul_sd:
             TmpV = InsertNewInstWith(BinaryOperator::CreateFMul(LHS, RHS,
+                                                         II->getName()), *II);
+            break;
+          case Intrinsic::x86_sse_div_ss:
+          case Intrinsic::x86_sse2_div_sd:
+            TmpV = InsertNewInstWith(BinaryOperator::CreateFDiv(LHS, RHS,
                                                          II->getName()), *II);
             break;
           }

@@ -235,11 +235,8 @@ define <4 x float> @test_div_ss(<4 x float> %a, <4 x float> %b) {
 
 define float @test_div_ss_0(float %a, float %b) {
 ; CHECK-LABEL: @test_div_ss_0(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <4 x float> undef, float %a, i32 0
-; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <4 x float> undef, float %b, i32 0
-; CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x float> @llvm.x86.sse.div.ss(<4 x float> [[TMP1]], <4 x float> [[TMP2]])
-; CHECK-NEXT:    [[R:%.*]] = extractelement <4 x float> [[TMP3]], i32 0
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fdiv float %a, %b
+; CHECK-NEXT:    ret float [[TMP1]]
 ;
   %1 = insertelement <4 x float> undef, float %a, i32 0
   %2 = insertelement <4 x float> %1, float 1.000000e+00, i32 1
