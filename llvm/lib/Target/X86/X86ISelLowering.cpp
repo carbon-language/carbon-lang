@@ -4731,11 +4731,6 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
     return false;
 
   for (SDValue Op : MaskNode->ops()) {
-    if (Op.isUndef()) {
-      RawMask.push_back((uint64_t)SM_SentinelUndef);
-      continue;
-    }
-
     if (auto *CN = dyn_cast<ConstantSDNode>(Op.getNode()))
       SplitElementToMask(CN->getAPIntValue());
     else if (auto *CFN = dyn_cast<ConstantFPSDNode>(Op.getNode()))
