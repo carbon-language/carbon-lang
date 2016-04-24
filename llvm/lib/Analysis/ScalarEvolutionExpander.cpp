@@ -1,4 +1,4 @@
-//===- ScalarEvolutionExpander.cpp - Scalar Evolution Analysis --*- C++ -*-===//
+//===- ScalarEvolutionExpander.cpp - Scalar Evolution Analysis ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
