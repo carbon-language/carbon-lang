@@ -101,7 +101,7 @@ public:
     /// index, to disambiguate from other values with the same name.
     /// In the future this will be used to update and optimize linkage
     /// types based on global summary-based analysis.
-    GlobalValue::LinkageTypes Linkage : 4;
+    unsigned Linkage : 4;
 
     /// Indicate if the global value is located in a specific section.
     unsigned HasSection : 1;
@@ -167,7 +167,9 @@ public:
   GVFlags flags() { return Flags; }
 
   /// Return linkage type recorded for this global value.
-  GlobalValue::LinkageTypes linkage() const { return Flags.Linkage; }
+  GlobalValue::LinkageTypes linkage() const {
+    return static_cast<GlobalValue::LinkageTypes>(Flags.Linkage);
+  }
 
   /// Return true if this global value is located in a specific section.
   bool hasSection() const { return Flags.HasSection; }
