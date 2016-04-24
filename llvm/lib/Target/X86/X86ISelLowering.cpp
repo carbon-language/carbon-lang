@@ -4730,9 +4730,8 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
   if ((VT.getScalarSizeInBits() % MaskEltSizeInBits) != 0)
     return false;
 
-  for (int i = 0, e = MaskNode.getNumOperands(); i < e; ++i) {
-    SDValue Op = MaskNode.getOperand(i);
-    if (Op->isUndef()) {
+  for (SDValue Op : MaskNode->ops()) {
+    if (Op.isUndef()) {
       RawMask.push_back((uint64_t)SM_SentinelUndef);
       continue;
     }
