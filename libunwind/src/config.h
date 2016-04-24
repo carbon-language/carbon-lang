@@ -30,8 +30,6 @@
 
 // Platform specific configuration defines.
 #ifdef __APPLE__
-  #include <Availability.h>
-
   #define _LIBUNWIND_BUILD_SJLJ_APIS      defined(__arm__)
 
   #if defined(FOR_DYLD)
@@ -44,7 +42,6 @@
     #define _LIBUNWIND_SUPPORT_DWARF_INDEX    0
   #endif
 #else
-
   #define _LIBUNWIND_BUILD_SJLJ_APIS      0
 
   #if defined(__ARM_DWARF_EH__) || !defined(__arm__)
