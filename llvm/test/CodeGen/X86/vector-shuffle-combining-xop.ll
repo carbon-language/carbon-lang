@@ -23,7 +23,7 @@ define <16 x i8> @combine_vpperm_identity(<16 x i8> %a0, <16 x i8> %a1) {
 define <16 x i8> @combine_vpperm_zero(<16 x i8> %a0, <16 x i8> %a1) {
 ; CHECK-LABEL: combine_vpperm_zero:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %res0 = call <16 x i8> @llvm.x86.xop.vpperm(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> <i8 128, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>)
   %res1 = call <16 x i8> @llvm.x86.xop.vpperm(<16 x i8> %res0, <16 x i8> undef, <16 x i8> <i8 0, i8 128, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>)
