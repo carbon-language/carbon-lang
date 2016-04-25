@@ -29,7 +29,6 @@ public:
   virtual bool isTlsGlobalDynamicRel(uint32_t Type) const;
   virtual uint32_t getDynRel(uint32_t Type) const { return Type; }
   virtual uint32_t getTlsGotRel(uint32_t Type) const { return TlsGotRel; }
-  virtual void writeGotHeader(uint8_t *Buf) const {}
   virtual void writeGotPltHeader(uint8_t *Buf) const {}
   virtual void writeGotPlt(uint8_t *Buf, uint64_t Plt) const {};
   virtual uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const;
@@ -85,7 +84,6 @@ public:
   uint32_t TlsOffsetRel;
   unsigned PltEntrySize = 8;
   unsigned PltZeroSize = 0;
-  unsigned GotHeaderEntriesNum = 0;
   unsigned GotPltHeaderEntriesNum = 3;
   uint32_t ThunkSize = 0;
   bool UseLazyBinding = false;
