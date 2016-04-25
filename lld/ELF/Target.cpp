@@ -1146,38 +1146,28 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     // bits in Loc are zero.
     or32le(Loc, (Val & 0xFFF) << 10);
     break;
-  case R_AARCH64_ADR_GOT_PAGE: {
-    uint64_t X = Val;
-    checkInt<33>(X, Type);
-    updateAArch64Addr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
+  case R_AARCH64_ADR_GOT_PAGE:
+    checkInt<33>(Val, Type);
+    updateAArch64Addr(Loc, (Val >> 12) & 0x1FFFFF); // X[32:12]
     break;
-  }
-  case R_AARCH64_ADR_PREL_LO21: {
-    uint64_t X = Val;
-    checkInt<21>(X, Type);
-    updateAArch64Addr(Loc, X & 0x1FFFFF);
+  case R_AARCH64_ADR_PREL_LO21:
+    checkInt<21>(Val, Type);
+    updateAArch64Addr(Loc, Val & 0x1FFFFF);
     break;
-  }
   case R_AARCH64_ADR_PREL_PG_HI21:
-  case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21: {
-    uint64_t X = Val;
-    checkInt<33>(X, Type);
-    updateAArch64Addr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
+  case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+    checkInt<33>(Val, Type);
+    updateAArch64Addr(Loc, (Val >> 12) & 0x1FFFFF); // X[32:12]
     break;
-  }
   case R_AARCH64_CALL26:
-  case R_AARCH64_JUMP26: {
-    uint64_t X = Val;
-    checkInt<28>(X, Type);
-    or32le(Loc, (X & 0x0FFFFFFC) >> 2);
+  case R_AARCH64_JUMP26:
+    checkInt<28>(Val, Type);
+    or32le(Loc, (Val & 0x0FFFFFFC) >> 2);
     break;
-  }
-  case R_AARCH64_CONDBR19: {
-    uint64_t X = Val;
-    checkInt<21>(X, Type);
-    or32le(Loc, (X & 0x1FFFFC) << 3);
+  case R_AARCH64_CONDBR19:
+    checkInt<21>(Val, Type);
+    or32le(Loc, (Val & 0x1FFFFC) << 3);
     break;
-  }
   case R_AARCH64_LD64_GOT_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
     checkAlignment<8>(Val, Type);
@@ -1209,12 +1199,10 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_AARCH64_PREL64:
     write64le(Loc, Val);
     break;
-  case R_AARCH64_TSTBR14: {
-    uint64_t X = Val;
-    checkInt<16>(X, Type);
-    or32le(Loc, (X & 0xFFFC) << 3);
+  case R_AARCH64_TSTBR14:
+    checkInt<16>(Val, Type);
+    or32le(Loc, (Val & 0xFFFC) << 3);
     break;
-  }
   case R_AARCH64_TLSLE_ADD_TPREL_HI12: {
     uint64_t V = llvm::alignTo(TcbSize, Out<ELF64LE>::TlsPhdr->p_align) + Val;
     checkInt<24>(V, Type);
