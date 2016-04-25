@@ -515,7 +515,6 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
       Res.Visibility = getMinVisibility(Res.Visibility, GV->getVisibility());
       switch (GV->getVisibility()) {
       case GlobalValue::DefaultVisibility:
-        sym.visibility = LDPV_DEFAULT;
         break;
       case GlobalValue::HiddenVisibility:
         sym.visibility = LDPV_HIDDEN;
