@@ -64,3 +64,35 @@ define i32 @test5(i32 %a, i32* nocapture %b, i32 %x, i32 %y) {
   %cond5 = select i1 %cmp, i32 %cond, i32 %x
   ret i32 %cond5
 }
+
+; If a select is not obviously predictable, don't turn it into a branch.
+define i32 @weighted_select1(i32 %a, i32 %b) {
+; CHECK-LABEL: weighted_select1:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    testl %edi, %edi
+; CHECK-NEXT:    cmovnel %edi, %esi
+; CHECK-NEXT:    movl %esi, %eax
+; CHECK-NEXT:    retq
+;
+  %cmp = icmp ne i32 %a, 0
+  %sel = select i1 %cmp, i32 %a, i32 %b, !prof !0
+  ret i32 %sel
+}
+
+; TODO: If a select is obviously predictable, turn it into a branch.
+define i32 @weighted_select2(i32 %a, i32 %b) {
+; CHECK-LABEL: weighted_select2:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    testl %edi, %edi
+; CHECK-NEXT:    cmovnel %edi, %esi
+; CHECK-NEXT:    movl %esi, %eax
+; CHECK-NEXT:    retq
+;
+  %cmp = icmp ne i32 %a, 0
+  %sel = select i1 %cmp, i32 %a, i32 %b, !prof !1
+  ret i32 %sel
+}
+
+!0 = !{!"branch_weights", i32 1, i32 99}
+!1 = !{!"branch_weights", i32 1, i32 100}
+
