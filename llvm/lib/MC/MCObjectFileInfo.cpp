@@ -338,6 +338,17 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
       TTypeEncoding = (CMModel == CodeModel::Small)
         ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_absptr;
     }
+  case Triple::hexagon:
+    PersonalityEncoding = dwarf::DW_EH_PE_absptr;
+    LSDAEncoding = dwarf::DW_EH_PE_absptr;
+    FDECFIEncoding = dwarf::DW_EH_PE_absptr;
+    TTypeEncoding = dwarf::DW_EH_PE_absptr;
+    if (RelocM == Reloc::PIC_){
+      PersonalityEncoding |= dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel;
+      LSDAEncoding |= dwarf::DW_EH_PE_pcrel;
+      FDECFIEncoding |= dwarf::DW_EH_PE_pcrel;
+      TTypeEncoding |= dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel;
+    }
     break;
   case Triple::aarch64:
   case Triple::aarch64_be:
