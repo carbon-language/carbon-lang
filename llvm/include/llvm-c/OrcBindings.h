@@ -32,15 +32,11 @@ extern "C" {
 typedef struct LLVMOrcOpaqueJITStack *LLVMOrcJITStackRef;
 typedef uint32_t LLVMOrcModuleHandle;
 typedef uint64_t LLVMOrcTargetAddress;
-typedef uint64_t (*LLVMOrcSymbolResolverFn)(const char *Name,
-                                            void *LookupCtx);
+typedef uint64_t (*LLVMOrcSymbolResolverFn)(const char *Name, void *LookupCtx);
 typedef uint64_t (*LLVMOrcLazyCompileCallbackFn)(LLVMOrcJITStackRef JITStack,
                                                  void *CallbackCtx);
 
-typedef enum {
-  LLVMOrcErrSuccess = 0,
-  LLVMOrcErrGeneric
-} LLVMOrcErrorCode;
+typedef enum { LLVMOrcErrSuccess = 0, LLVMOrcErrGeneric } LLVMOrcErrorCode;
 
 /**
  * Create an ORC JIT stack.
@@ -114,10 +110,10 @@ LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod,
 /**
  * Add an object file.
  */
-LLVMOrcModuleHandle
-LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack, LLVMObjectFileRef Obj,
-                     LLVMOrcSymbolResolverFn SymbolResolver,
-                     void *SymbolResolverCtx);
+LLVMOrcModuleHandle LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack,
+                                         LLVMObjectFileRef Obj,
+                                         LLVMOrcSymbolResolverFn SymbolResolver,
+                                         void *SymbolResolverCtx);
 
 /**
  * Remove a module set from the JIT.

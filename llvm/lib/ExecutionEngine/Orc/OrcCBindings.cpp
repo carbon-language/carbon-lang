@@ -19,11 +19,10 @@ LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM) {
 
   auto CompileCallbackMgr = OrcCBindingsStack::createCompileCallbackMgr(T);
   auto IndirectStubsMgrBuilder =
-    OrcCBindingsStack::createIndirectStubsMgrBuilder(T);
+      OrcCBindingsStack::createIndirectStubsMgrBuilder(T);
 
-  OrcCBindingsStack *JITStack =
-    new OrcCBindingsStack(*TM2, std::move(CompileCallbackMgr),
-			  IndirectStubsMgrBuilder);
+  OrcCBindingsStack *JITStack = new OrcCBindingsStack(
+      *TM2, std::move(CompileCallbackMgr), IndirectStubsMgrBuilder);
 
   return wrap(JITStack);
 }
@@ -41,9 +40,7 @@ void LLVMOrcGetMangledSymbol(LLVMOrcJITStackRef JITStack, char **MangledName,
   strcpy(*MangledName, Mangled.c_str());
 }
 
-void LLVMOrcDisposeMangledSymbol(char *MangledName) {
-  delete[] MangledName;
-}
+void LLVMOrcDisposeMangledSymbol(char *MangledName) { delete[] MangledName; }
 
 LLVMOrcTargetAddress
 LLVMOrcCreateLazyCompileCallback(LLVMOrcJITStackRef JITStack,

@@ -53,8 +53,8 @@ namespace orc {
 
 Error orcError(OrcErrorCode ErrCode) {
   typedef std::underlying_type<OrcErrorCode>::type UT;
-  return errorCodeToError(std::error_code(static_cast<UT>(ErrCode),
-                                          *OrcErrCat));
+  return errorCodeToError(
+      std::error_code(static_cast<UT>(ErrCode), *OrcErrCat));
 }
 }
 }

@@ -327,25 +327,24 @@ template <typename ChannelT, typename FunctionIdT = uint32_t,
           typename SequenceNumberT = uint16_t>
 class RPC : public RPCBase {
 public:
-
   /// RPC default constructor.
   RPC() = default;
 
   /// RPC instances cannot be copied.
-  RPC(const RPC&) = delete;
+  RPC(const RPC &) = delete;
 
   /// RPC instances cannot be copied.
-  RPC& operator=(const RPC&) = delete;
+  RPC &operator=(const RPC &) = delete;
 
   /// RPC move constructor.
   // FIXME: Remove once MSVC can synthesize move ops.
   RPC(RPC &&Other)
-    : SequenceNumberMgr(std::move(Other.SequenceNumberMgr)),
-      OutstandingResults(std::move(Other.OutstandingResults)) {}
+      : SequenceNumberMgr(std::move(Other.SequenceNumberMgr)),
+        OutstandingResults(std::move(Other.OutstandingResults)) {}
 
   /// RPC move assignment.
   // FIXME: Remove once MSVC can synthesize move ops.
-  RPC& operator=(RPC &&Other) {
+  RPC &operator=(RPC &&Other) {
     SequenceNumberMgr = std::move(Other.SequenceNumberMgr);
     OutstandingResults = std::move(Other.OutstandingResults);
     return *this;
@@ -408,7 +407,7 @@ public:
         createOutstandingResult<Func>(std::move(Promise));
 
     if (auto Err = CallHelper<ChannelT, SequenceNumberT, Func>::call(C, SeqNo,
-                                                                    Args...)) {
+                                                                     Args...)) {
       abandonOutstandingResults();
       return std::move(Err);
     } else
@@ -435,7 +434,7 @@ public:
   /// std::future<Optional<T>> (or a future<bool> for void functions).
   template <typename Func, typename... ArgTs>
   Expected<AsyncCallResult<Func>> appendCallAsync(ChannelT &C,
-                                                 const ArgTs &... Args) {
+                                                  const ArgTs &... Args) {
     auto ResAndSeqOrErr = appendCallAsyncWithSeq<Func>(C, Args...);
     if (ResAndSeqOrErr)
       return std::move(ResAndSeqOrErr->first);
@@ -445,7 +444,8 @@ public:
   /// The same as appendCallAsync, except that it calls C.send to flush the
   /// channel after serializing the call.
   template <typename Func, typename... ArgTs>
-  Expected<AsyncCallResult<Func>> callAsync(ChannelT &C, const ArgTs &... Args) {
+  Expected<AsyncCallResult<Func>> callAsync(ChannelT &C,
+                                            const ArgTs &... Args) {
     auto ResAndSeqOrErr = callAsyncWithSeq<Func>(C, Args...);
     if (ResAndSeqOrErr)
       return std::move(ResAndSeqOrErr->first);
