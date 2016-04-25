@@ -63,19 +63,24 @@ namespace llvm {
 namespace {
 class LVILatticeVal {
   enum LatticeValueTy {
-    /// This Value has no known value yet.
+    /// This Value has no known value yet.  As a result, this implies the
+    /// producing instruction is dead.  Caution: We use this as the starting
+    /// state in our local meet rules.  In this usage, it's taken to mean
+    /// "nothing known yet".  
     undefined,
 
-    /// This Value has a specific constant value.
+    /// This Value has a specific constant value.  (For integers, constantrange
+    /// is used instead.)
     constant,
 
-    /// This Value is known to not have the specified value.
+    /// This Value is known to not have the specified value.  (For integers,
+    /// constantrange is used instead.)
     notconstant,
 
-    /// The Value falls within this range.
+    /// The Value falls within this range. (Used only for integer typed values.)
     constantrange,
 
-    /// This value is not known to be constant, and we know that it has a value.
+    /// We can not precisely model the dynamic values this value might take.
     overdefined
   };
 
