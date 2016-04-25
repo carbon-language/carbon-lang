@@ -474,7 +474,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
   if (!GlobalUsersSafeToSRA(GV))
     return nullptr;
 
-  assert(GV->hasLocalLinkage() && !GV->isConstant());
+  assert(GV->hasLocalLinkage());
   Constant *Init = GV->getInitializer();
   Type *Ty = Init->getType();
 
@@ -1928,7 +1928,8 @@ bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
     }
     return Changed;
 
-  } else if (GS.StoredType <= GlobalStatus::InitializerStored) {
+  }
+  if (GS.StoredType <= GlobalStatus::InitializerStored) {
     DEBUG(dbgs() << "MARKING CONSTANT: " << *GV << "\n");
     GV->setConstant(true);
 
@@ -1941,15 +1942,18 @@ bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
             << "all users and delete global!\n");
       GV->eraseFromParent();
       ++NumDeleted;
+      return true;
     }
 
+    // Fall through to the next check; see if we can optimize further.
     ++NumMarked;
-    return true;
-  } else if (!GV->getInitializer()->getType()->isSingleValueType()) {
+  }
+  if (!GV->getInitializer()->getType()->isSingleValueType()) {
     const DataLayout &DL = GV->getParent()->getDataLayout();
     if (SRAGlobal(GV, DL))
       return true;
-  } else if (GS.StoredType == GlobalStatus::StoredOnce && GS.StoredOnceValue) {
+  }
+  if (GS.StoredType == GlobalStatus::StoredOnce && GS.StoredOnceValue) {
     // If the initial value for the global was an undef value, and if only
     // one other value was stored into it, we can just change the
     // initializer to be the stored value, then delete all stores to the
