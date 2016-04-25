@@ -157,10 +157,14 @@ public:
   HexagonTargetELFStreamer(MCStreamer &S, MCSubtargetInfo const &STI)
       : HexagonTargetStreamer(S) {
     auto Bits = STI.getFeatureBits();
-    unsigned Flags;
-    if (Bits.to_ullong() & llvm::Hexagon::ArchV5)
+    unsigned Flags = 0;
+    if (Bits[Hexagon::ArchV60])
+      Flags = ELF::EF_HEXAGON_MACH_V60;
+    else if (Bits[Hexagon::ArchV55])
+      Flags = ELF::EF_HEXAGON_MACH_V55;
+    else if (Bits[Hexagon::ArchV5])
       Flags = ELF::EF_HEXAGON_MACH_V5;
-    else
+    else if (Bits[Hexagon::ArchV4])
       Flags = ELF::EF_HEXAGON_MACH_V4;
     getStreamer().getAssembler().setELFHeaderEFlags(Flags);
   }
