@@ -516,7 +516,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (Offset == (uintX_t)-1)
       continue;
 
-
     // Set "used" bit for --as-needed.
     if (OrigBody.isUndefined() && !OrigBody.isWeak())
       if (auto *S = dyn_cast<SharedSymbol<ELFT>>(&Body))
