@@ -104,7 +104,8 @@ bool AMDGPUAnnotateKernelFeatures::runOnModule(Module &M) {
   };
 
   static const StringRef HSAIntrinsicToAttr[][2] = {
-    { "llvm.amdgcn.dispatch.ptr", "amdgpu-dispatch-ptr" }
+    { "llvm.amdgcn.dispatch.ptr", "amdgpu-dispatch-ptr" },
+    { "llvm.amdgcn.queue.ptr", "amdgpu-queue-ptr" }
   };
 
   // TODO: We should not add the attributes if the known compile time workgroup

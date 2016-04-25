@@ -745,6 +745,12 @@ SDValue SITargetLowering::LowerFormalArguments(
     CCInfo.AllocateReg(DispatchPtrReg);
   }
 
+  if (Info->hasQueuePtr()) {
+    unsigned QueuePtrReg = Info->addQueuePtr(*TRI);
+    MF.addLiveIn(QueuePtrReg, &AMDGPU::SReg_64RegClass);
+    CCInfo.AllocateReg(QueuePtrReg);
+  }
+
   if (Info->hasKernargSegmentPtr()) {
     unsigned InputPtrReg = Info->addKernargSegmentPtr(*TRI);
     MF.addLiveIn(InputPtrReg, &AMDGPU::SReg_64RegClass);
@@ -1450,6 +1456,7 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntrinsicID) {
   case Intrinsic::amdgcn_dispatch_ptr:
+  case Intrinsic::amdgcn_queue_ptr: {
     if (!Subtarget->isAmdHsaOS()) {
       DiagnosticInfoUnsupported BadIntrin(
           *MF.getFunction(), "unsupported hsa intrinsic without hsa target",
@@ -1458,8 +1465,11 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getUNDEF(VT);
     }
 
+    auto Reg = IntrinsicID == Intrinsic::amdgcn_dispatch_ptr ?
+      SIRegisterInfo::DISPATCH_PTR : SIRegisterInfo::QUEUE_PTR;
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_64RegClass,
-      TRI->getPreloadedValue(MF, SIRegisterInfo::DISPATCH_PTR), VT);
+                                TRI->getPreloadedValue(MF, Reg), VT);
+  }
   case Intrinsic::amdgcn_rcp:
     return DAG.getNode(AMDGPUISD::RCP, DL, VT, Op.getOperand(1));
   case Intrinsic::amdgcn_rsq:

@@ -9,6 +9,7 @@ declare i32 @llvm.amdgcn.workitem.id.y() #0
 declare i32 @llvm.amdgcn.workitem.id.z() #0
 
 declare i8 addrspace(2)* @llvm.amdgcn.dispatch.ptr() #0
+declare i8 addrspace(2)* @llvm.amdgcn.queue.ptr() #0
 
 ; HSA: define void @use_tgid_x(i32 addrspace(1)* %ptr) #1 {
 define void @use_tgid_x(i32 addrspace(1)* %ptr) #1 {
@@ -154,6 +155,15 @@ define void @use_dispatch_ptr(i32 addrspace(1)* %ptr) #1 {
   ret void
 }
 
+; HSA: define void @use_queue_ptr(i32 addrspace(1)* %ptr) #11 {
+define void @use_queue_ptr(i32 addrspace(1)* %ptr) #1 {
+  %dispatch.ptr = call i8 addrspace(2)* @llvm.amdgcn.queue.ptr()
+  %bc = bitcast i8 addrspace(2)* %dispatch.ptr to i32 addrspace(2)*
+  %val = load i32, i32 addrspace(2)* %bc
+  store i32 %val, i32 addrspace(1)* %ptr
+  ret void
+}
+
 attributes #0 = { nounwind readnone }
 attributes #1 = { nounwind }
 
@@ -168,3 +178,4 @@ attributes #1 = { nounwind }
 ; HSA: attributes #8 = { nounwind "amdgpu-work-item-id-y" "amdgpu-work-item-id-z" }
 ; HSA: attributes #9 = { nounwind "amdgpu-work-group-id-y" "amdgpu-work-group-id-z" "amdgpu-work-item-id-y" "amdgpu-work-item-id-z" }
 ; HSA: attributes #10 = { nounwind "amdgpu-dispatch-ptr" }
+; HSA: attributes #11 = { nounwind "amdgpu-queue-ptr" }
