@@ -1116,7 +1116,8 @@ bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
 
 bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
                                LVILatticeVal &Result, bool isTrueDest) {
-  if (ICI && isa<Constant>(ICI->getOperand(1))) {
+  assert(ICI && "precondition");
+  if (isa<Constant>(ICI->getOperand(1))) {
     if (ICI->isEquality() && ICI->getOperand(0) == Val) {
       // We know that V has the RHS constant if this is a true SETEQ or
       // false SETNE. 
