@@ -11,18 +11,39 @@
 
 #include "BinaryPassManager.h"
 
+namespace opts {
+
+static llvm::cl::opt<bool>
+OptimizeBodylessFunctions(
+    "optimize-bodyless-functions",
+    llvm::cl::desc("optimize functions that just do a tail call"),
+    llvm::cl::Optional);
+
+static llvm::cl::opt<bool>
+InlineSmallFunctions(
+    "inline-small-functions",
+    llvm::cl::desc("inline functions with a single basic block"),
+    llvm::cl::Optional);
+
+} // namespace opts
+
 namespace llvm {
 namespace bolt {
-
-std::unique_ptr<BinaryFunctionPassManager>
-BinaryFunctionPassManager::GlobalPassManager;
 
 void BinaryFunctionPassManager::runAllPasses(
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &Functions) {
-  auto &Manager = getGlobalPassManager();
-  Manager.BC = &BC;
-  Manager.BFs = &Functions;
+  BinaryFunctionPassManager Manager(BC, Functions);
+
+  // Here we manage dependencies/order manually, since passes are ran in the
+  // order they're registered.
+
+  Manager.registerPass(llvm::make_unique<OptimizeBodylessFunctions>(),
+                       opts::OptimizeBodylessFunctions);
+
+  Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(),
+                       opts::InlineSmallFunctions);
+
   Manager.runPasses();
 }
 

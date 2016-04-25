@@ -260,12 +260,22 @@ public:
   }
 
   bool eraseInstruction(MCInst *Inst) {
+    return replaceInstruction(Inst, std::vector<MCInst>());
+  }
+
+  /// Replace an instruction with a sequence of instructions. Returns true
+  /// if the instruction to be replaced was found and replaced.
+  bool replaceInstruction(MCInst *Inst,
+                          const std::vector<MCInst> &Replacement) {
     auto I = Instructions.end();
     auto B = Instructions.begin();
     while (I > B) {
       --I;
       if (&*I == Inst) {
-        Instructions.erase(I);
+        Instructions.insert(
+            Instructions.erase(I),
+            Replacement.begin(),
+            Replacement.end());
         return true;
       }
     }

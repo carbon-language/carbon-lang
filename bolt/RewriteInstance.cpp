@@ -1054,7 +1054,6 @@ void RewriteInstance::runOptimizationPasses() {
     }
 
     // Post-processing passes.
-    BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions);
 
     // Fix the CFI state.
     if (!Function.fixCFIState()) {

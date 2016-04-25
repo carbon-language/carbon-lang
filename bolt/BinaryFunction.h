@@ -793,6 +793,20 @@ public:
   /// Returns the size of the basic block in the original binary.
   size_t getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const;
 
+  /// Returns an estimate of the function's hot part after splitting.
+  /// This is a very rough estimate, as with C++ exceptions there are
+  /// blocks we don't move, and it makes no attempt at estimating the size
+  /// of the added/removed branch instructions.
+  size_t estimateHotSize() const {
+    size_t Estimate = 0;
+    for (const auto *BB : BasicBlocksLayout) {
+      if (BB->ExecutionCount != 0) {
+        Estimate += getBasicBlockOriginalSize(BB);
+      }
+    }
+    return Estimate;
+  }
+
   virtual ~BinaryFunction() {}
 
   /// Info for fragmented functions.

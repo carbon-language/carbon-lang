@@ -15,6 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_PASS_MANAGER_H
 
 #include "BinaryFunction.h"
+#include "BinaryPasses.h"
 #include "llvm/Support/Options.h"
 #include "llvm/Support/CommandLine.h"
 #include <map>
@@ -24,49 +25,31 @@
 namespace llvm {
 namespace bolt {
 
-/// An optimization/analysis pass that runs on functions.
-class BinaryFunctionPass {
-public:
-  virtual ~BinaryFunctionPass() = default;
-  virtual void runOnFunctions(BinaryContext &BC,
-                              std::map<uint64_t, BinaryFunction> &BFs) = 0;
-};
-
 /// Simple class for managing analyses and optimizations on BinaryFunctions.
 class BinaryFunctionPassManager {
 private:
-  BinaryContext *BC;
-  std::map<uint64_t, BinaryFunction> *BFs;
-  std::vector<std::pair<const cl::opt<bool> *,
+  BinaryContext &BC;
+  std::map<uint64_t, BinaryFunction> &BFs;
+  std::vector<std::pair<const cl::opt<bool> &,
                         std::unique_ptr<BinaryFunctionPass>>> Passes;
 
-  /// Manager that contains all implemented passes.
-  static std::unique_ptr<BinaryFunctionPassManager> GlobalPassManager;
-
 public:
-  BinaryFunctionPassManager(BinaryContext *BC = nullptr,
-                            std::map<uint64_t, BinaryFunction> *BFs = nullptr)
+  BinaryFunctionPassManager(BinaryContext &BC,
+                            std::map<uint64_t, BinaryFunction> &BFs)
     : BC(BC), BFs(BFs) {}
-
-  static BinaryFunctionPassManager &getGlobalPassManager() {
-    if (!GlobalPassManager) {
-      GlobalPassManager = llvm::make_unique<BinaryFunctionPassManager>();
-    }
-    return *GlobalPassManager.get();
-  }
 
   /// Adds a pass to this manager based on the value of its corresponding
   /// command-line option.
   void registerPass(std::unique_ptr<BinaryFunctionPass> Pass,
-                    const cl::opt<bool> *Opt) {
+                    const cl::opt<bool> &Opt) {
     Passes.emplace_back(Opt, std::move(Pass));
   }
 
   /// Run all registered passes in the order they were added.
   void runPasses() {
     for (const auto &OptPassPair : Passes) {
-      if (*OptPassPair.first) {
-        OptPassPair.second->runOnFunctions(*BC, *BFs);
+      if (OptPassPair.first) {
+        OptPassPair.second->runOnFunctions(BC, BFs);
       }
     }
   }
@@ -75,15 +58,6 @@ public:
   static void runAllPasses(BinaryContext &BC,
                            std::map<uint64_t, BinaryFunction> &Functions);
 
-};
-
-template <typename T, cl::opt<bool> *Opt>
-class RegisterBinaryPass {
-public:
-  RegisterBinaryPass() {
-    BinaryFunctionPassManager::getGlobalPassManager().registerPass(
-        std::move(llvm::make_unique<T>()), Opt);
-  }
 };
 
 } // namespace bolt
