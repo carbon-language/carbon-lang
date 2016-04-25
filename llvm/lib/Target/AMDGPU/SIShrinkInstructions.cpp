@@ -203,6 +203,9 @@ static bool isKImmOperand(const SIInstrInfo *TII, const MachineOperand &Src) {
 }
 
 bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
+  if (skipFunction(*MF.getFunction()))
+    return false;
+
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const SIInstrInfo *TII =
       static_cast<const SIInstrInfo *>(MF.getSubtarget().getInstrInfo());
