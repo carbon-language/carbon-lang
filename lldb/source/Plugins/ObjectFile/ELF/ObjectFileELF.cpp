@@ -1740,12 +1740,9 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 {
                     DataExtractor data;
 
-                    if (sheader.sh_type != SHT_ARM_ATTRIBUTES)
-                        continue;
-                    if (section_size == 0 || set_data(data, sheader.sh_offset, section_size) != section_size)
-                        continue;
-
-                    ParseARMAttributes(data, section_size, arch_spec);
+                    if (sheader.sh_type == SHT_ARM_ATTRIBUTES && section_size != 0 && 
+                        set_data(data, sheader.sh_offset, section_size) == section_size)
+                        ParseARMAttributes(data, section_size, arch_spec);
                 }
 
                 if (name == g_sect_name_gnu_debuglink)
