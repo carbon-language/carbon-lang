@@ -92,7 +92,6 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool needsCopyRelImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -115,7 +114,6 @@ public:
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  bool needsCopyRelImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool isRelRelative(uint32_t Type) const override;
 
@@ -156,7 +154,6 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   uint32_t getTlsGotRel(uint32_t Type) const override;
   bool isRelRelative(uint32_t Type) const override;
-  bool needsCopyRelImpl(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -184,7 +181,6 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   void writeGotHeader(uint8_t *Buf) const override;
   void writeThunk(uint8_t *Buf, uint64_t S) const override;
-  bool needsCopyRelImpl(uint32_t Type) const override;
   bool needsThunk(uint32_t Type, const InputFile &File,
                   const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -228,20 +224,6 @@ uint64_t TargetInfo::getImplicitAddend(const uint8_t *Buf,
 }
 
 uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
-
-bool TargetInfo::needsCopyRelImpl(uint32_t Type) const { return false; }
-
-static bool mayNeedCopy(const SymbolBody &S) {
-  if (Config->Shared)
-    return false;
-  if (!S.isShared())
-    return false;
-  return S.isObject();
-}
-
-bool TargetInfo::needsCopyRel(uint32_t Type, const SymbolBody &S) const {
-  return mayNeedCopy(S) && needsCopyRelImpl(Type);
-}
 
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
@@ -410,10 +392,6 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 2, Config->Shared ? GotEntryAddr - Got : GotEntryAddr);
   write32le(Buf + 7, RelOff);
   write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
-}
-
-bool X86TargetInfo::needsCopyRelImpl(uint32_t Type) const {
-  return Type == R_386_32 || Type == R_386_16 || Type == R_386_8;
 }
 
 uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
@@ -609,11 +587,6 @@ void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
   write32le(Buf + 7, Index);
   write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
-}
-
-bool X86_64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
-  return Type == R_X86_64_32S || Type == R_X86_64_32 || Type == R_X86_64_PC32 ||
-         Type == R_X86_64_64;
 }
 
 uint32_t X86_64TargetInfo::getDynRel(uint32_t Type) const {
@@ -1141,25 +1114,6 @@ uint32_t AArch64TargetInfo::getTlsGotRel(uint32_t Type) const {
   return Type;
 }
 
-bool AArch64TargetInfo::needsCopyRelImpl(uint32_t Type) const {
-  switch (Type) {
-  default:
-    return false;
-  case R_AARCH64_ABS16:
-  case R_AARCH64_ABS32:
-  case R_AARCH64_ABS64:
-  case R_AARCH64_ADD_ABS_LO12_NC:
-  case R_AARCH64_ADR_PREL_LO21:
-  case R_AARCH64_ADR_PREL_PG_HI21:
-  case R_AARCH64_LDST8_ABS_LO12_NC:
-  case R_AARCH64_LDST16_ABS_LO12_NC:
-  case R_AARCH64_LDST32_ABS_LO12_NC:
-  case R_AARCH64_LDST64_ABS_LO12_NC:
-  case R_AARCH64_LDST128_ABS_LO12_NC:
-    return true;
-  }
-}
-
 static void updateAArch64Addr(uint8_t *L, uint64_t Imm) {
   uint32_t ImmLo = (Imm & 0x3) << 29;
   uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
@@ -1514,11 +1468,6 @@ void MipsTargetInfo<ELFT>::writeThunk(uint8_t *Buf, uint64_t S) const {
   writeMipsHi16<E>(Buf, S);
   write32<E>(Buf + 4, 0x08000000 | (S >> 2));
   writeMipsLo16<E>(Buf + 8, S);
-}
-
-template <class ELFT>
-bool MipsTargetInfo<ELFT>::needsCopyRelImpl(uint32_t Type) const {
-  return !isRelRelative(Type) || Type == R_MIPS_LO16;
 }
 
 template <class ELFT>

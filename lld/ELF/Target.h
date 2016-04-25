@@ -62,7 +62,6 @@ public:
 
   virtual RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const = 0;
   virtual void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const = 0;
-  bool needsCopyRel(uint32_t Type, const SymbolBody &S) const;
   virtual ~TargetInfo();
 
   unsigned TlsGdToLeSkip = 1;
@@ -95,9 +94,6 @@ public:
   virtual void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const;
   virtual void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const;
   virtual void relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const;
-
-private:
-  virtual bool needsCopyRelImpl(uint32_t Type) const;
 };
 
 uint64_t getPPC64TocBase();

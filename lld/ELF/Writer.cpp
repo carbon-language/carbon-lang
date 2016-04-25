@@ -473,6 +473,22 @@ static PltNeed needsPlt(RelExpr Expr, uint32_t Type, const SymbolBody &S) {
   return Plt_No;
 }
 
+static bool needsCopyRel(RelExpr E, const SymbolBody &S) {
+  if (Config->Shared)
+    return false;
+  if (!S.isShared())
+    return false;
+  if (!S.isObject())
+    return false;
+  if (refersToGotEntry(E))
+    return false;
+  if (needsPlt(E))
+    return false;
+  if (E == R_SIZE)
+    return false;
+  return true;
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -557,7 +573,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // in a read-only section, we need to create a copy relocation for the
     // symbol.
     if (auto *B = dyn_cast<SharedSymbol<ELFT>>(&Body)) {
-      if (IsAlloc && !IsWrite && Target->needsCopyRel(Type, *B)) {
+      if (IsAlloc && !IsWrite && needsCopyRel(Expr, *B)) {
         if (!B->needsCopy())
           addCopyRelSymbol(B);
         C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
