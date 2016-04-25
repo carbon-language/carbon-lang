@@ -821,7 +821,9 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
 
   // Initialize the invalid domain which describes all iterations for which the
   // access relation is not modeled correctly.
-  InvalidDomain = getStatement()->getInvalidDomain();
+  auto *StmtInvalidDomain = getStatement()->getInvalidDomain();
+  InvalidDomain = isl_set_empty(isl_set_get_space(StmtInvalidDomain));
+  isl_set_free(StmtInvalidDomain);
 
   isl_ctx *Ctx = isl_id_get_ctx(Id);
   isl_id *BaseAddrId = SAI->getBasePtrId();
