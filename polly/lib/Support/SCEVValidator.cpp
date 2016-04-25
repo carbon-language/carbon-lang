@@ -605,6 +605,32 @@ extractConstantFactor(const SCEV *S, ScalarEvolution &SE) {
     return std::make_pair(ConstPart, S);
   }
 
+  if (auto *Add = dyn_cast<SCEVAddExpr>(S)) {
+    SmallVector<const SCEV *, 4> LeftOvers;
+    auto Op0Pair = extractConstantFactor(Add->getOperand(0), SE);
+    auto *Factor = Op0Pair.first;
+    if (SE.isKnownNegative(Factor)) {
+      Factor = cast<SCEVConstant>(SE.getNegativeSCEV(Factor));
+      LeftOvers.push_back(SE.getNegativeSCEV(Op0Pair.second));
+    } else {
+      LeftOvers.push_back(Op0Pair.second);
+    }
+
+    for (unsigned u = 1, e = Add->getNumOperands(); u < e; u++) {
+      auto OpUPair = extractConstantFactor(Add->getOperand(u), SE);
+      // TODO: Use something smarter than equality here, e.g., gcd.
+      if (Factor == OpUPair.first)
+        LeftOvers.push_back(OpUPair.second);
+      else if (Factor == SE.getNegativeSCEV(OpUPair.first))
+        LeftOvers.push_back(SE.getNegativeSCEV(OpUPair.second));
+      else
+        return std::make_pair(ConstPart, S);
+    }
+
+    auto *NewAdd = SE.getAddExpr(LeftOvers, Add->getNoWrapFlags());
+    return std::make_pair(Factor, NewAdd);
+  }
+
   auto *Mul = dyn_cast<SCEVMulExpr>(S);
   if (!Mul)
     return std::make_pair(ConstPart, S);
