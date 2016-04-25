@@ -7274,7 +7274,55 @@ _mm512_mask_permutexvar_epi32 (__m512i __W, __mmask16 __M, __m512i __X,
                  __M);
 }
 
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_kand (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kandhi ((__mmask16) __A, (__mmask16) __B);
+}
 
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_kandn (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kandnhi ((__mmask16) __A, (__mmask16) __B);
+}
+
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_kor (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_korhi ((__mmask16) __A, (__mmask16) __B);
+}
+
+static __inline__ int __DEFAULT_FN_ATTRS
+_mm512_kortestc (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kortestchi ((__mmask16) __A,
+            (__mmask16) __B);
+}
+
+static __inline__ int __DEFAULT_FN_ATTRS
+_mm512_kortestz (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kortestzhi ((__mmask16) __A,
+            (__mmask16) __B);
+}
+
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_kunpackb (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kunpckhi ((__mmask16) __A, (__mmask16) __B);
+}
+
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_kxnor (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kxnorhi ((__mmask16) __A, (__mmask16) __B);
+}
+
+static __inline__ __mmask16 __DEFAULT_FN_ATTRS
+_mm512_kxor (__mmask16 __A, __mmask16 __B)
+{
+  return (__mmask16) __builtin_ia32_kxorhi ((__mmask16) __A, (__mmask16) __B);
+}
 
 #undef __DEFAULT_FN_ATTRS
 
