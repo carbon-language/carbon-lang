@@ -5,7 +5,6 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Support/Debug.h"
-#include <vector>
 
 using namespace llvm;
 using namespace polly;
@@ -41,7 +40,7 @@ class ValidatorResult {
   SCEVType::TYPE Type;
 
   /// @brief The set of Parameters in the expression.
-  std::vector<const SCEV *> Parameters;
+  ParameterSetTy Parameters;
 
 public:
   /// @brief The copy constructor
@@ -57,7 +56,7 @@ public:
 
   /// @brief Construct a result with a certain type and a single parameter.
   ValidatorResult(SCEVType::TYPE Type, const SCEV *Expr) : Type(Type) {
-    Parameters.push_back(Expr);
+    Parameters.insert(Expr);
   }
 
   /// @brief Get the type of the ValidatorResult.
@@ -79,12 +78,11 @@ public:
   bool isPARAM() { return Type == SCEVType::PARAM; }
 
   /// @brief Get the parameters of this validator result.
-  std::vector<const SCEV *> getParameters() { return Parameters; }
+  const ParameterSetTy &getParameters() { return Parameters; }
 
   /// @brief Add the parameters of Source to this result.
   void addParamsFrom(const ValidatorResult &Source) {
-    Parameters.insert(Parameters.end(), Source.Parameters.begin(),
-                      Source.Parameters.end());
+    Parameters.insert(Source.Parameters.begin(), Source.Parameters.end());
   }
 
   /// @brief Merge a result.
@@ -548,8 +546,7 @@ bool isAffineExpr(const Region *R, llvm::Loop *Scope, const SCEV *Expr,
 }
 
 static bool isAffineParamExpr(Value *V, const Region *R, Loop *Scope,
-                              ScalarEvolution &SE,
-                              std::vector<const SCEV *> &Params) {
+                              ScalarEvolution &SE, ParameterSetTy &Params) {
   auto *E = SE.getSCEV(V);
   if (isa<SCEVCouldNotCompute>(E))
     return false;
@@ -560,14 +557,14 @@ static bool isAffineParamExpr(Value *V, const Region *R, Loop *Scope,
     return false;
 
   auto ResultParams = Result.getParameters();
-  Params.insert(Params.end(), ResultParams.begin(), ResultParams.end());
+  Params.insert(ResultParams.begin(), ResultParams.end());
 
   return true;
 }
 
 bool isAffineParamConstraint(Value *V, const Region *R, llvm::Loop *Scope,
-                             ScalarEvolution &SE,
-                             std::vector<const SCEV *> &Params, bool OrExpr) {
+                             ScalarEvolution &SE, ParameterSetTy &Params,
+                             bool OrExpr) {
   if (auto *ICmp = dyn_cast<ICmpInst>(V)) {
     return isAffineParamConstraint(ICmp->getOperand(0), R, Scope, SE, Params,
                                    true) &&
@@ -589,11 +586,10 @@ bool isAffineParamConstraint(Value *V, const Region *R, llvm::Loop *Scope,
   return isAffineParamExpr(V, R, Scope, SE, Params);
 }
 
-std::vector<const SCEV *> getParamsInAffineExpr(const Region *R, Loop *Scope,
-                                                const SCEV *Expr,
-                                                ScalarEvolution &SE) {
+ParameterSetTy getParamsInAffineExpr(const Region *R, Loop *Scope,
+                                     const SCEV *Expr, ScalarEvolution &SE) {
   if (isa<SCEVCouldNotCompute>(Expr))
-    return std::vector<const SCEV *>();
+    return ParameterSetTy();
 
   InvariantLoadsSetTy ILS;
   SCEVValidator Validator(R, Scope, SE, &ILS);

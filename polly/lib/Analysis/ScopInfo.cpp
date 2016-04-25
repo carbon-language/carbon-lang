@@ -1803,7 +1803,7 @@ const SCEV *Scop::getRepresentingInvariantLoadSCEV(const SCEV *S) {
   return SCEVSensitiveParameterRewriter::rewrite(S, *SE, InvEquivClassVMap);
 }
 
-void Scop::addParams(std::vector<const SCEV *> NewParameters) {
+void Scop::addParams(const ParameterSetTy &NewParameters) {
   for (const SCEV *Parameter : NewParameters) {
     Parameter = extractConstantFactor(Parameter, *SE).second;
 
@@ -1873,15 +1873,15 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
 
     auto *L = LI.getLoopFor(CI->getParent());
     auto *Val = CI->getArgOperand(0);
-    std::vector<const SCEV *> Params;
-    if (!isAffineParamConstraint(Val, R, L, *SE, Params)) {
+    ParameterSetTy DetectedParams;
+    if (!isAffineParamConstraint(Val, R, L, *SE, DetectedParams)) {
       emitOptimizationRemarkAnalysis(F.getContext(), DEBUG_TYPE, F,
                                      CI->getDebugLoc(),
                                      "Non-affine user assumption ignored.");
       continue;
     }
 
-    addParams(Params);
+    addParams(DetectedParams);
 
     SmallVector<isl_set *, 2> ConditionSets;
     buildConditionSets(*Stmts.begin(), Val, nullptr, L, Context, ConditionSets);

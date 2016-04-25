@@ -1862,7 +1862,7 @@ public:
   inline const ParamVecType &getParams() const { return Parameters; }
 
   /// @brief Take a list of parameters and add the new ones to the scop.
-  void addParams(std::vector<const SCEV *> NewParameters);
+  void addParams(const ParameterSetTy &NewParameters);
 
   int getNumArrays() { return ScopArrayInfoMap.size(); }
 
