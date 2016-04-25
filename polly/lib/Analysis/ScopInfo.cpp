@@ -3543,6 +3543,8 @@ static std::string toString(AssumptionKind Kind) {
     return "Inbounds";
   case WRAPPING:
     return "No-overflows";
+  case UNSIGNED:
+    return "Signed-unsigned";
   case COMPLEXITY:
     return "Low complexity";
   case ERRORBLOCK:
