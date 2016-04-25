@@ -126,13 +126,12 @@ private:
   const Region *R;
   Loop *Scope;
   ScalarEvolution &SE;
-  const Value *BaseAddress;
   InvariantLoadsSetTy *ILS;
 
 public:
   SCEVValidator(const Region *R, Loop *Scope, ScalarEvolution &SE,
-                const Value *BaseAddress, InvariantLoadsSetTy *ILS)
-      : R(R), Scope(Scope), SE(SE), BaseAddress(BaseAddress), ILS(ILS) {}
+                InvariantLoadsSetTy *ILS)
+      : R(R), Scope(Scope), SE(SE), ILS(ILS) {}
 
   class ValidatorResult visitConstant(const SCEVConstant *Constant) {
     return ValidatorResult(SCEVType::INT);
@@ -396,11 +395,6 @@ public:
       return ValidatorResult(SCEVType::INVALID);
     }
 
-    if (BaseAddress == V) {
-      DEBUG(dbgs() << "INVALID: UnknownExpr references BaseAddress\n");
-      return ValidatorResult(SCEVType::INVALID);
-    }
-
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
       switch (I->getOpcode()) {
       case Instruction::Load:
@@ -530,12 +524,11 @@ bool hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R,
 }
 
 bool isAffineExpr(const Region *R, llvm::Loop *Scope, const SCEV *Expr,
-                  ScalarEvolution &SE, const Value *BaseAddress,
-                  InvariantLoadsSetTy *ILS) {
+                  ScalarEvolution &SE, InvariantLoadsSetTy *ILS) {
   if (isa<SCEVCouldNotCompute>(Expr))
     return false;
 
-  SCEVValidator Validator(R, Scope, SE, BaseAddress, ILS);
+  SCEVValidator Validator(R, Scope, SE, ILS);
   DEBUG({
     dbgs() << "\n";
     dbgs() << "Expr: " << *Expr << "\n";
@@ -561,7 +554,7 @@ static bool isAffineParamExpr(Value *V, const Region *R, Loop *Scope,
   if (isa<SCEVCouldNotCompute>(E))
     return false;
 
-  SCEVValidator Validator(R, Scope, SE, nullptr, nullptr);
+  SCEVValidator Validator(R, Scope, SE, nullptr);
   ValidatorResult Result = Validator.visit(E);
   if (!Result.isConstant())
     return false;
@@ -598,13 +591,12 @@ bool isAffineParamConstraint(Value *V, const Region *R, llvm::Loop *Scope,
 
 std::vector<const SCEV *> getParamsInAffineExpr(const Region *R, Loop *Scope,
                                                 const SCEV *Expr,
-                                                ScalarEvolution &SE,
-                                                const Value *BaseAddress) {
+                                                ScalarEvolution &SE) {
   if (isa<SCEVCouldNotCompute>(Expr))
     return std::vector<const SCEV *>();
 
   InvariantLoadsSetTy ILS;
-  SCEVValidator Validator(R, Scope, SE, BaseAddress, &ILS);
+  SCEVValidator Validator(R, Scope, SE, &ILS);
   ValidatorResult Result = Validator.visit(Expr);
   assert(Result.isValid() && "Requested parameters for an invalid SCEV!");
 

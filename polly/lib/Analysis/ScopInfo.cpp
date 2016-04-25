@@ -1405,8 +1405,7 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP,
 
     auto *Scope = SD.getLI()->getLoopFor(getEntryBlock());
     InvariantLoadsSetTy AccessILS;
-    if (!isAffineExpr(&Parent.getRegion(), Scope, Expr, SE, nullptr,
-                      &AccessILS))
+    if (!isAffineExpr(&Parent.getRegion(), Scope, Expr, SE, &AccessILS))
       continue;
 
     bool NonAffine = false;
@@ -4234,7 +4233,7 @@ bool ScopInfo::buildAccessMultiDimFixed(
 
   for (auto *Subscript : Subscripts) {
     InvariantLoadsSetTy AccessILS;
-    if (!isAffineExpr(R, L, Subscript, *SE, nullptr, &AccessILS))
+    if (!isAffineExpr(R, L, Subscript, *SE, &AccessILS))
       return false;
 
     for (LoadInst *LInst : AccessILS)
@@ -4313,7 +4312,7 @@ bool ScopInfo::buildAccessMemIntrinsic(
 
   // Check if the length val is actually affine or if we overapproximate it
   InvariantLoadsSetTy AccessILS;
-  bool LengthIsAffine = isAffineExpr(R, L, LengthVal, *SE, nullptr, &AccessILS);
+  bool LengthIsAffine = isAffineExpr(R, L, LengthVal, *SE, &AccessILS);
   for (LoadInst *LInst : AccessILS)
     if (!ScopRIL.count(LInst))
       LengthIsAffine = false;
@@ -4439,8 +4438,7 @@ void ScopInfo::buildAccessSingleDim(
 
   InvariantLoadsSetTy AccessILS;
   bool IsAffine = !isVariantInNonAffineLoop &&
-                  isAffineExpr(R, L, AccessFunction, *SE,
-                               BasePointer->getValue(), &AccessILS);
+                  isAffineExpr(R, L, AccessFunction, *SE, &AccessILS);
 
   for (LoadInst *LInst : AccessILS)
     if (!ScopRIL.count(LInst))
