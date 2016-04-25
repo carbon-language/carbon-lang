@@ -1240,7 +1240,8 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
 
   for (const BasicBlock *BB : CurRegion.blocks()) {
     Loop *L = LI->getLoopFor(BB);
-    if (L && L->getHeader() == BB && (!isValidLoop(L, Context) && !KeepGoing))
+    if (L && L->getHeader() == BB && CurRegion.contains(L) &&
+        (!isValidLoop(L, Context) && !KeepGoing))
       return false;
   }
 
