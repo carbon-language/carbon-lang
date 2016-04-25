@@ -343,6 +343,7 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
       TTypeEncoding = (CMModel == CodeModel::Small)
         ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_absptr;
     }
+    break;
   case Triple::hexagon:
     PersonalityEncoding = dwarf::DW_EH_PE_absptr;
     LSDAEncoding = dwarf::DW_EH_PE_absptr;
