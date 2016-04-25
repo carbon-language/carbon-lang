@@ -1805,35 +1805,11 @@ const SCEV *Scop::getRepresentingInvariantLoadSCEV(const SCEV *S) {
   return SCEVSensitiveParameterRewriter::rewrite(S, *SE, InvEquivClassVMap);
 }
 
-void Scop::addParams(const ParameterSetTy &NewParameters) {
-  for (const SCEV *Parameter : NewParameters) {
-    Parameter = extractConstantFactor(Parameter, *SE).second;
+void Scop::createParameterId(const SCEV *Parameter) {
+  assert(Parameters.count(Parameter));
+  assert(!ParameterIds.count(Parameter));
 
-    // Normalize the SCEV to get the representing element for an invariant load.
-    Parameter = getRepresentingInvariantLoadSCEV(Parameter);
-
-    if (ParameterIds.find(Parameter) != ParameterIds.end())
-      continue;
-
-    int dimension = Parameters.size();
-
-    Parameters.push_back(Parameter);
-    ParameterIds[Parameter] = dimension;
-  }
-}
-
-__isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
-  // Normalize the SCEV to get the representing element for an invariant load.
-  Parameter = getRepresentingInvariantLoadSCEV(Parameter);
-
-  ParamIdType::const_iterator IdIter = ParameterIds.find(Parameter);
-
-  if (IdIter == ParameterIds.end())
-    return nullptr;
-
-  std::string ParameterName;
-
-  ParameterName = "p_" + utostr(IdIter->second);
+  std::string ParameterName = "p_" + std::to_string(getNumParams() - 1);
 
   if (const SCEVUnknown *ValueParameter = dyn_cast<SCEVUnknown>(Parameter)) {
     Value *Val = ValueParameter->getValue();
@@ -1853,8 +1829,26 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
     }
   }
 
-  return isl_id_alloc(getIslCtx(), ParameterName.c_str(),
-                      const_cast<void *>((const void *)Parameter));
+  auto *Id = isl_id_alloc(getIslCtx(), ParameterName.c_str(),
+                          const_cast<void *>((const void *)Parameter));
+  ParameterIds[Parameter] = Id;
+}
+
+void Scop::addParams(const ParameterSetTy &NewParameters) {
+  for (const SCEV *Parameter : NewParameters) {
+    // Normalize the SCEV to get the representing element for an invariant load.
+    Parameter = extractConstantFactor(Parameter, *SE).second;
+    Parameter = getRepresentingInvariantLoadSCEV(Parameter);
+
+    if (Parameters.insert(Parameter))
+      createParameterId(Parameter);
+  }
+}
+
+__isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
+  // Normalize the SCEV to get the representing element for an invariant load.
+  Parameter = getRepresentingInvariantLoadSCEV(Parameter);
+  return isl_id_copy(ParameterIds.lookup(Parameter));
 }
 
 __isl_give isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
@@ -1974,12 +1968,10 @@ void Scop::buildContext() {
 }
 
 void Scop::addParameterBounds() {
-  for (const auto &ParamID : ParameterIds) {
-    int dim = ParamID.second;
-
-    ConstantRange SRange = SE->getSignedRange(ParamID.first);
-
-    Context = addRangeBoundsToSet(Context, SRange, dim, isl_dim_param);
+  unsigned PDim = 0;
+  for (auto *Parameter : Parameters) {
+    ConstantRange SRange = SE->getSignedRange(Parameter);
+    Context = addRangeBoundsToSet(Context, SRange, PDim++, isl_dim_param);
   }
 }
 
@@ -1987,10 +1979,10 @@ void Scop::realignParams() {
   // Add all parameters into a common model.
   isl_space *Space = isl_space_params_alloc(getIslCtx(), ParameterIds.size());
 
-  for (const auto &ParamID : ParameterIds) {
-    const SCEV *Parameter = ParamID.first;
+  unsigned PDim = 0;
+  for (const auto *Parameter : Parameters) {
     isl_id *id = getIdForParam(Parameter);
-    Space = isl_space_set_dim_id(Space, isl_dim_param, ParamID.second, id);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, PDim++, id);
   }
 
   // Align the parameters of all data structures to the model.
@@ -3088,6 +3080,9 @@ Scop::~Scop() {
   isl_set_free(InvalidContext);
   isl_schedule_free(Schedule);
 
+  for (auto &It : ParameterIds)
+    isl_id_free(It.second);
+
   for (auto It : DomainMap)
     isl_set_free(It.second);
 
@@ -3639,10 +3634,9 @@ void Scop::printContext(raw_ostream &OS) const {
   OS.indent(4) << "Invalid Context:\n";
   OS.indent(4) << InvalidContext << "\n";
 
-  for (const SCEV *Parameter : Parameters) {
-    int Dim = ParameterIds.find(Parameter)->second;
-    OS.indent(4) << "p" << Dim << ": " << *Parameter << "\n";
-  }
+  unsigned Dim = 0;
+  for (const SCEV *Parameter : Parameters)
+    OS.indent(4) << "p" << Dim++ << ": " << *Parameter << "\n";
 }
 
 void Scop::printAliasAssumptions(raw_ostream &OS) const {

@@ -1357,13 +1357,11 @@ private:
   /// The statements in this Scop.
   StmtSet Stmts;
 
-  /// Parameters of this Scop
-  typedef SmallVector<const SCEV *, 8> ParamVecType;
-  ParamVecType Parameters;
+  /// @brief Parameters of this Scop
+  ParameterSetTy Parameters;
 
-  /// The isl_ids that are used to represent the parameters
-  typedef std::map<const SCEV *, int> ParamIdType;
-  ParamIdType ParameterIds;
+  /// @brief Mapping from parameters to their ids.
+  DenseMap<const SCEV *, isl_id *> ParameterIds;
 
   /// Isl context.
   ///
@@ -1702,6 +1700,9 @@ private:
   /// @brief Add invariant loads listed in @p InvMAs with the domain of @p Stmt.
   void addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs);
 
+  /// @brief Create an id for @p Param and store it in the ParameterIds map.
+  void createParameterId(const SCEV *Param);
+
   /// @brief Build the Context of the Scop.
   void buildContext();
 
@@ -1853,14 +1854,7 @@ public:
   /// @brief Get the count of parameters used in this Scop.
   ///
   /// @return The count of parameters used in this Scop.
-  inline ParamVecType::size_type getNumParams() const {
-    return Parameters.size();
-  }
-
-  /// @brief Get a set containing the parameters used in this Scop
-  ///
-  /// @return The set containing the parameters used in this Scop.
-  inline const ParamVecType &getParams() const { return Parameters; }
+  size_t getNumParams() const { return Parameters.size(); }
 
   /// @brief Take a list of parameters and add the new ones to the scop.
   void addParams(const ParameterSetTy &NewParameters);
