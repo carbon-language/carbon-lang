@@ -2370,6 +2370,10 @@ void Scop::propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
       if (!SuccStmt)
         continue;
 
+      // Skip backedges.
+      if (DT.dominates(SuccBB, BB))
+        continue;
+
       auto *SuccBBLoop = getFirstNonBoxedLoopFor(SuccBB, LI, BoxedLoops);
       auto *AdjustedInvalidDomain = adjustDomainDimensions(
           *this, isl_set_copy(InvalidDomain), BBLoop, SuccBBLoop);
