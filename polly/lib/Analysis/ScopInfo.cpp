@@ -1443,10 +1443,17 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP,
   isl_set_free(NotExecuted);
 }
 
-void ScopStmt::deriveAssumptions(BasicBlock *Block, ScopDetection &SD) {
-  for (Instruction &Inst : *Block)
-    if (auto *GEP = dyn_cast<GetElementPtrInst>(&Inst))
+void ScopStmt::deriveAssumptions(ScopDetection &SD) {
+  for (auto *MA : *this) {
+    if (!MA->isArrayKind())
+      continue;
+
+    MemAccInst Acc(MA->getAccessInstruction());
+    auto *GEP = dyn_cast_or_null<GetElementPtrInst>(Acc.getPointerOperand());
+
+    if (GEP)
       deriveAssumptionsFromGEP(GEP, SD);
+  }
 }
 
 void ScopStmt::collectSurroundingLoops() {
@@ -1478,13 +1485,7 @@ void ScopStmt::init(ScopDetection &SD) {
   collectSurroundingLoops();
   buildAccessRelations();
 
-  if (BB) {
-    deriveAssumptions(BB, SD);
-  } else {
-    for (BasicBlock *Block : R->blocks()) {
-      deriveAssumptions(Block, SD);
-    }
-  }
+  deriveAssumptions(SD);
 
   if (DetectReductions)
     checkForReductions();

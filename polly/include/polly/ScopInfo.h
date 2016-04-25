@@ -1084,8 +1084,8 @@ private:
   /// or non-optimal run-time checks.
   void deriveAssumptionsFromGEP(GetElementPtrInst *Inst, ScopDetection &SD);
 
-  /// @brief Scan @p Block and derive assumptions about parameter values.
-  void deriveAssumptions(BasicBlock *Block, ScopDetection &SD);
+  /// @brief Derive assumptions about parameter values.
+  void deriveAssumptions(ScopDetection &SD);
 
 public:
   ~ScopStmt();
