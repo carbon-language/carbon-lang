@@ -2703,11 +2703,13 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
 
   // If BI is reached from the true path of PBI and PBI's condition implies
   // BI's condition, we know the direction of the BI branch.
-  if (PBI->getSuccessor(0) == BI->getParent() &&
+  if ((PBI->getSuccessor(0) == BI->getParent() ||
+       PBI->getSuccessor(1) == BI->getParent()) &&
       PBI->getSuccessor(0) != PBI->getSuccessor(1) &&
       BB->getSinglePredecessor()) {
-    Optional<bool> Implication =
-        isImpliedCondition(PBI->getCondition(), BI->getCondition(), DL);
+    bool FalseDest = PBI->getSuccessor(1) == BI->getParent();
+    Optional<bool> Implication = isImpliedCondition(
+        PBI->getCondition(), BI->getCondition(), DL, FalseDest);
     if (Implication) {
       // Turn this into a branch on constant.
       auto *OldCond = BI->getCondition();
