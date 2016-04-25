@@ -1,4 +1,5 @@
-; RUN: opt < %s -globalopt -S | not grep global
+; RUN: opt < %s -globalopt -S | FileCheck %s
+; CHECK-NOT: global
 target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
 @G = internal global { i32, float, { double } } {
@@ -42,4 +43,3 @@ define double @constantize2() {
         %X = load double, double* getelementptr ({ i32, float, { double } }, { i32, float, { double } }* @G2, i32 0, i32 2, i32 0)           ; <double> [#uses=1]
         ret double %X
 }
-
