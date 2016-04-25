@@ -1026,7 +1026,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
 bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   if (skipFunction(*MF.getFunction()) ||
-      PredicateFtor && !PredicateFtor(*MF.getFunction()))
+      (PredicateFtor && !PredicateFtor(*MF.getFunction())))
     return false;
 
   STI = &static_cast<const ARMSubtarget &>(MF.getSubtarget());
