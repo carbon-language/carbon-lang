@@ -1877,7 +1877,15 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
       continue;
     }
 
-    addParams(DetectedParams);
+    // Collect all newly introduced parameters.
+    ParameterSetTy NewParams;
+    for (auto *Param : DetectedParams) {
+      Param = extractConstantFactor(Param, *SE).second;
+      Param = getRepresentingInvariantLoadSCEV(Param);
+      if (Parameters.count(Param))
+        continue;
+      NewParams.insert(Param);
+    }
 
     SmallVector<isl_set *, 2> ConditionSets;
     buildConditionSets(*Stmts.begin(), Val, nullptr, L, Context, ConditionSets);
@@ -1885,6 +1893,22 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
     isl_set_free(ConditionSets[1]);
 
     auto *AssumptionCtx = ConditionSets[0];
+
+    // Project out newly introduced parameters as they are not otherwise useful.
+    if (!NewParams.empty()) {
+      for (unsigned u = 0; u < isl_set_n_param(AssumptionCtx); u++) {
+        auto *Id = isl_set_get_dim_id(AssumptionCtx, isl_dim_param, u);
+        auto *Param = static_cast<const SCEV *>(isl_id_get_user(Id));
+        isl_id_free(Id);
+
+        if (!NewParams.count(Param))
+          continue;
+
+        AssumptionCtx =
+            isl_set_project_out(AssumptionCtx, isl_dim_param, u--, 1);
+      }
+    }
+
     emitOptimizationRemarkAnalysis(
         F.getContext(), DEBUG_TYPE, F, CI->getDebugLoc(),
         "Use user assumption: " + stringFromIslObj(AssumptionCtx));
