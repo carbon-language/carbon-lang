@@ -11498,6 +11498,26 @@ bool ARMTargetLowering::ExpandInlineAsm(CallInst *CI) const {
   return false;
 }
 
+const char *ARMTargetLowering::LowerXConstraint(EVT ConstraintVT) const {
+  // At this point, we have to lower this constraint to something else, so we
+  // lower it to an "r" or "w". However, by doing this we will force the result
+  // to be in register, while the X constraint is much more permissive.
+  //
+  // Although we are correct (we are free to emit anything, without
+  // constraints), we might break use cases that would expect us to be more
+  // efficient and emit something else.
+  if (!Subtarget->hasVFP2())
+    return "r";
+  if (ConstraintVT.isFloatingPoint())
+    return "w";
+  if (ConstraintVT.isVector() && Subtarget->hasNEON() &&
+     (ConstraintVT.getSizeInBits() == 64 ||
+      ConstraintVT.getSizeInBits() == 128))
+    return "w";
+
+  return "r";
+}
+
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 ARMTargetLowering::ConstraintType
