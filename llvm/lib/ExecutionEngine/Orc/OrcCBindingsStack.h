@@ -17,6 +17,7 @@
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Support/Error.h"
 #include "llvm-c/OrcBindings.h"
 
 namespace llvm {
@@ -131,12 +132,16 @@ public:
     return CCInfo.getAddress();
   }
 
-  void createIndirectStub(StringRef StubName, orc::TargetAddress Addr) {
-    IndirectStubsMgr->createStub(StubName, Addr, JITSymbolFlags::Exported);
+  LLVMOrcErrorCode
+  createIndirectStub(StringRef StubName, orc::TargetAddress Addr) {
+    return mapError(
+             IndirectStubsMgr->createStub(StubName, Addr,
+                                          JITSymbolFlags::Exported));
   }
 
-  void setIndirectStubPointer(StringRef Name, orc::TargetAddress Addr) {
-    IndirectStubsMgr->updatePointer(Name, Addr);
+  LLVMOrcErrorCode
+  setIndirectStubPointer(StringRef Name, orc::TargetAddress Addr) {
+    return mapError(IndirectStubsMgr->updatePointer(Name, Addr));
   }
 
   std::shared_ptr<RuntimeDyld::SymbolResolver>
@@ -243,6 +248,10 @@ public:
     return GenericHandles[H]->findSymbolIn(Name, ExportedSymbolsOnly);
   }
 
+  const std::string& getErrorMessage() const {
+    return ErrMsg;
+  }
+
 private:
 
   template <typename LayerT>
@@ -261,6 +270,19 @@ private:
     return NewHandle;
   }
 
+  LLVMOrcErrorCode mapError(Error Err) {
+    LLVMOrcErrorCode Result = LLVMOrcErrSuccess;
+    handleAllErrors(std::move(Err),
+      [&](ErrorInfoBase &EIB) {
+        // Handler of last resort.
+        Result = LLVMOrcErrGeneric;
+        ErrMsg = "";
+        raw_string_ostream ErrStream(ErrMsg);
+        EIB.log(ErrStream);
+      });
+    return Result;
+  }
+
   DataLayout DL;
   SectionMemoryManager CCMgrMemMgr;
 
@@ -276,6 +298,7 @@ private:
 
   orc::LocalCXXRuntimeOverrides CXXRuntimeOverrides;
   std::vector<orc::CtorDtorRunner<OrcCBindingsStack>> IRStaticDestructorRunners;
+  std::string ErrMsg;
 };
 
 } // end namespace llvm

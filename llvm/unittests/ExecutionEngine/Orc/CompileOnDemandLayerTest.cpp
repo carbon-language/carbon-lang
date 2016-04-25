@@ -25,12 +25,12 @@ public:
 
 class DummyStubsManager : public orc::IndirectStubsManager {
 public:
-  std::error_code createStub(StringRef StubName, TargetAddress InitAddr,
+  Error createStub(StringRef StubName, TargetAddress InitAddr,
                              JITSymbolFlags Flags) override {
     llvm_unreachable("Not implemented");
   }
 
-  std::error_code createStubs(const StubInitsMap &StubInits) override {
+  Error createStubs(const StubInitsMap &StubInits) override {
     llvm_unreachable("Not implemented");
   }
 
@@ -42,7 +42,7 @@ public:
     llvm_unreachable("Not implemented");
   }
 
-  std::error_code updatePointer(StringRef Name,
+  Error updatePointer(StringRef Name,
                                 TargetAddress NewAddr) override {
     llvm_unreachable("Not implemented");
   }

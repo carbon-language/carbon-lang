@@ -28,6 +28,11 @@ LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM) {
   return wrap(JITStack);
 }
 
+const char *LLVMOrcGetErrorMsg(LLVMOrcJITStackRef JITStack) {
+  OrcCBindingsStack &J = *unwrap(JITStack);
+  return J.getErrorMessage().c_str();
+}
+
 void LLVMOrcGetMangledSymbol(LLVMOrcJITStackRef JITStack, char **MangledName,
                              const char *SymbolName) {
   OrcCBindingsStack &J = *unwrap(JITStack);
@@ -48,18 +53,18 @@ LLVMOrcCreateLazyCompileCallback(LLVMOrcJITStackRef JITStack,
   return J.createLazyCompileCallback(Callback, CallbackCtx);
 }
 
-void LLVMOrcCreateIndirectStub(LLVMOrcJITStackRef JITStack,
-                               const char *StubName,
-                               LLVMOrcTargetAddress InitAddr) {
+LLVMOrcErrorCode LLVMOrcCreateIndirectStub(LLVMOrcJITStackRef JITStack,
+                                           const char *StubName,
+                                           LLVMOrcTargetAddress InitAddr) {
   OrcCBindingsStack &J = *unwrap(JITStack);
-  J.createIndirectStub(StubName, InitAddr);
+  return J.createIndirectStub(StubName, InitAddr);
 }
 
-void LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack,
-                                   const char *StubName,
-                                   LLVMOrcTargetAddress NewAddr) {
+LLVMOrcErrorCode LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack,
+                                               const char *StubName,
+                                               LLVMOrcTargetAddress NewAddr) {
   OrcCBindingsStack &J = *unwrap(JITStack);
-  J.setIndirectStubPointer(StubName, NewAddr);
+  return J.setIndirectStubPointer(StubName, NewAddr);
 }
 
 LLVMOrcModuleHandle

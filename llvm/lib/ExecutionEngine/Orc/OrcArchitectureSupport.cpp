@@ -94,9 +94,9 @@ void OrcX86_64::writeTrampolines(uint8_t *TrampolineMem, void *ResolverAddr,
     Trampolines[I] = CallIndirPCRel | ((OffsetToPtr - 6) << 16);
 }
 
-std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
-                                                  unsigned MinStubs,
-                                                  void *InitialPtrVal) {
+Error OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
+                                        unsigned MinStubs,
+                                        void *InitialPtrVal) {
   // Stub format is:
   //
   // .section __orc_stubs
@@ -134,7 +134,7 @@ std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
                                         EC));
 
   if (EC)
-    return EC;
+    return errorCodeToError(EC);
 
   // Create separate MemoryBlocks representing the stubs and pointers.
   sys::MemoryBlock StubsBlock(StubsMem.base(), NumPages * PageSize);
@@ -152,7 +152,7 @@ std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
   if (auto EC = sys::Memory::protectMappedMemory(StubsBlock,
                                                  sys::Memory::MF_READ |
                                                  sys::Memory::MF_EXEC))
-    return EC;
+    return errorCodeToError(EC);
 
   // Initialize all pointers to point at FailureAddress.
   void **Ptr = reinterpret_cast<void**>(PtrsBlock.base());
@@ -161,7 +161,7 @@ std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
 
   StubsInfo = IndirectStubsInfo(NumStubs, std::move(StubsMem));
 
-  return std::error_code();
+  return Error::success();
 }
 
 void OrcI386::writeResolverCode(uint8_t *ResolverMem, JITReentryFn ReentryFn,
@@ -223,9 +223,9 @@ void OrcI386::writeTrampolines(uint8_t *TrampolineMem, void *ResolverAddr,
     Trampolines[I] = CallRelImm | (ResolverRel << 8);
 }
 
-std::error_code OrcI386::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
-                                                unsigned MinStubs,
-                                                void *InitialPtrVal) {
+Error OrcI386::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
+                                      unsigned MinStubs,
+                                      void *InitialPtrVal) {
   // Stub format is:
   //
   // .section __orc_stubs
@@ -263,7 +263,7 @@ std::error_code OrcI386::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
                                         EC));
 
   if (EC)
-    return EC;
+    return errorCodeToError(EC);
 
   // Create separate MemoryBlocks representing the stubs and pointers.
   sys::MemoryBlock StubsBlock(StubsMem.base(), NumPages * PageSize);
@@ -280,7 +280,7 @@ std::error_code OrcI386::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
   if (auto EC = sys::Memory::protectMappedMemory(StubsBlock,
                                                  sys::Memory::MF_READ |
                                                  sys::Memory::MF_EXEC))
-    return EC;
+    return errorCodeToError(EC);
 
   // Initialize all pointers to point at FailureAddress.
   void **Ptr = reinterpret_cast<void**>(PtrsBlock.base());
@@ -289,7 +289,7 @@ std::error_code OrcI386::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
 
   StubsInfo = IndirectStubsInfo(NumStubs, std::move(StubsMem));
 
-  return std::error_code();
+  return Error::success();
 }
 
 } // End namespace orc.

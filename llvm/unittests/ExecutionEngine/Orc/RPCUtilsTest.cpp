@@ -29,7 +29,7 @@ public:
   QueueChannel(Queue &InQueue, Queue &OutQueue)
     : InQueue(InQueue), OutQueue(OutQueue) {}
 
-  std::error_code readBytes(char *Dst, unsigned Size) override {
+  Error readBytes(char *Dst, unsigned Size) override {
     while (Size != 0) {
       // If there's nothing to read then yield.
       while (InQueue.empty())
@@ -43,17 +43,17 @@ public:
         InQueue.pop();
       }
     }
-    return std::error_code();
+    return Error::success();
   }
 
-  std::error_code appendBytes(const char *Src, unsigned Size) override {
+  Error appendBytes(const char *Src, unsigned Size) override {
     std::lock_guard<std::mutex> Lock(OutQueue.getLock());
     while (Size--)
       OutQueue.push(*Src++);
-    return std::error_code();
+    return Error::success();
   }
 
-  std::error_code send() override { return std::error_code(); }
+  Error send() override { return Error::success(); }
 
 private:
   Queue &InQueue;
@@ -95,7 +95,7 @@ TEST_F(DummyRPC, TestAsyncVoidBool) {
                 [&](bool &B) {
                   EXPECT_EQ(B, true)
                     << "Bool serialization broken";
-                  return std::error_code();
+                  return Error::success();
                 });
     EXPECT_FALSE(EC) << "Simple expect over queue failed";
   }
@@ -123,7 +123,7 @@ TEST_F(DummyRPC, TestAsyncIntInt) {
   {
     // Expect a call to Proc1.
     auto EC = expect<IntInt>(C2,
-                [&](int32_t I) {
+                [&](int32_t I) -> Expected<int32_t> {
                   EXPECT_EQ(I, 21)
                     << "Bool serialization broken";
                   return 2 * I;
@@ -202,7 +202,7 @@ TEST_F(DummyRPC, TestSerialization) {
                       << "std::string serialization broken";
                     EXPECT_EQ(v, std::vector<int>({42, 7}))
                       << "std::vector serialization broken";
-                    return std::error_code();
+                    return Error::success();
                   });
     EXPECT_FALSE(EC) << "Big (serialization test) call over queue failed";
   }

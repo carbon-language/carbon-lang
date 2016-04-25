@@ -39,8 +39,8 @@ private:
   uint64_t Size;
 };
 
-inline std::error_code serialize(RPCChannel &C,
-				 const DirectBufferWriter &DBW) {
+inline Error serialize(RPCChannel &C,
+                       const DirectBufferWriter &DBW) {
   if (auto EC = serialize(C, DBW.getDst()))
     return EC;
   if (auto EC = serialize(C, DBW.getSize()))
@@ -48,8 +48,8 @@ inline std::error_code serialize(RPCChannel &C,
   return C.appendBytes(DBW.getSrc(), DBW.getSize());
 }
 
-inline std::error_code deserialize(RPCChannel &C,
-				   DirectBufferWriter &DBW) {
+inline Error deserialize(RPCChannel &C,
+                         DirectBufferWriter &DBW) {
   TargetAddress Dst;
   if (auto EC = deserialize(C, Dst))
     return EC;
@@ -69,6 +69,8 @@ protected:
   class ResourceIdMgr {
   public:
     typedef uint64_t ResourceId;
+    static const ResourceId InvalidId = ~0U;
+
     ResourceId getNext() {
       if (!FreeIds.empty()) {
         ResourceId I = FreeIds.back();

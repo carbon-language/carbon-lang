@@ -219,12 +219,12 @@ public:
   virtual ~IndirectStubsManager() {}
 
   /// @brief Create a single stub with the given name, target address and flags.
-  virtual std::error_code createStub(StringRef StubName, TargetAddress StubAddr,
-                                     JITSymbolFlags StubFlags) = 0;
+  virtual Error createStub(StringRef StubName, TargetAddress StubAddr,
+                           JITSymbolFlags StubFlags) = 0;
 
   /// @brief Create StubInits.size() stubs with the given names, target
   ///        addresses, and flags.
-  virtual std::error_code createStubs(const StubInitsMap &StubInits) = 0;
+  virtual Error createStubs(const StubInitsMap &StubInits) = 0;
 
   /// @brief Find the stub with the given name. If ExportedStubsOnly is true,
   ///        this will only return a result if the stub's flags indicate that it
@@ -235,7 +235,7 @@ public:
   virtual JITSymbol findPointer(StringRef Name) = 0;
 
   /// @brief Change the value of the implementation pointer for the stub.
-  virtual std::error_code updatePointer(StringRef Name, TargetAddress NewAddr) = 0;
+  virtual Error updatePointer(StringRef Name, TargetAddress NewAddr) = 0;
 private:
   virtual void anchor();
 };
@@ -246,25 +246,25 @@ template <typename TargetT>
 class LocalIndirectStubsManager : public IndirectStubsManager {
 public:
 
-  std::error_code createStub(StringRef StubName, TargetAddress StubAddr,
+  Error createStub(StringRef StubName, TargetAddress StubAddr,
                              JITSymbolFlags StubFlags) override {
-    if (auto EC = reserveStubs(1))
-      return EC;
+    if (auto Err = reserveStubs(1))
+      return Err;
 
     createStubInternal(StubName, StubAddr, StubFlags);
 
-    return std::error_code();
+    return Error::success();
   }
 
-  std::error_code createStubs(const StubInitsMap &StubInits) override {
-    if (auto EC = reserveStubs(StubInits.size()))
-      return EC;
+  Error createStubs(const StubInitsMap &StubInits) override {
+    if (auto Err = reserveStubs(StubInits.size()))
+      return Err;
 
     for (auto &Entry : StubInits)
       createStubInternal(Entry.first(), Entry.second.first,
                          Entry.second.second);
 
-    return std::error_code();
+    return Error::success();
   }
 
   JITSymbol findStub(StringRef Name, bool ExportedStubsOnly) override {
@@ -294,31 +294,31 @@ public:
     return JITSymbol(PtrTargetAddr, I->second.second);
   }
 
-  std::error_code updatePointer(StringRef Name, TargetAddress NewAddr) override {
+  Error updatePointer(StringRef Name, TargetAddress NewAddr) override {
     auto I = StubIndexes.find(Name);
     assert(I != StubIndexes.end() && "No stub pointer for symbol");
     auto Key = I->second.first;
     *IndirectStubsInfos[Key.first].getPtr(Key.second) =
       reinterpret_cast<void*>(static_cast<uintptr_t>(NewAddr));
-    return std::error_code();
+    return Error::success();
   }
 
 private:
 
-  std::error_code reserveStubs(unsigned NumStubs) {
+  Error reserveStubs(unsigned NumStubs) {
     if (NumStubs <= FreeStubs.size())
-      return std::error_code();
+      return Error::success();
 
     unsigned NewStubsRequired = NumStubs - FreeStubs.size();
     unsigned NewBlockId = IndirectStubsInfos.size();
     typename TargetT::IndirectStubsInfo ISI;
-    if (auto EC = TargetT::emitIndirectStubsBlock(ISI, NewStubsRequired,
+    if (auto Err = TargetT::emitIndirectStubsBlock(ISI, NewStubsRequired,
                                                   nullptr))
-      return EC;
+      return Err;
     for (unsigned I = 0; I < ISI.getNumStubs(); ++I)
       FreeStubs.push_back(std::make_pair(NewBlockId, I));
     IndirectStubsInfos.push_back(std::move(ISI));
-    return std::error_code();
+    return Error::success();
   }
 
   void createStubInternal(StringRef StubName, TargetAddress InitAddr,
