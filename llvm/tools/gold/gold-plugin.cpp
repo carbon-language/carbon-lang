@@ -1090,8 +1090,8 @@ static bool linkInModule(LLVMContext &Context, IRMover &L, claimed_file &F,
     M->setTargetTriple(DefaultTriple);
   }
 
-  if (!L.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {}))
-    return false;
+  if (L.move(std::move(M), Keep, [](GlobalValue &, IRMover::ValueAdder) {}))
+    return true;
 
   for (const auto &I : Realign) {
     GlobalValue *Dst = L.getModule().getNamedValue(I.first());
@@ -1100,7 +1100,7 @@ static bool linkInModule(LLVMContext &Context, IRMover &L, claimed_file &F,
     cast<GlobalVariable>(Dst)->setAlignment(I.second);
   }
 
-  return true;
+  return false;
 }
 
 /// Perform the ThinLTO backend on a single module, invoking the LTO and codegen
