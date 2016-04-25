@@ -3581,7 +3581,7 @@ bool CmpInst::isImpliedTrueByMatchingCmp(Predicate Pred1, Predicate Pred2) {
   default:
     break;
   case ICMP_EQ:
-    // A == B implies A >=u B, A <=u B, A >=u B, and A <=u B are true.
+    // A == B implies A >=u B, A <=u B, A >=s B, and A <=s B are true.
     return Pred2 == ICMP_UGE || Pred2 == ICMP_ULE || Pred2 == ICMP_SGE ||
            Pred2 == ICMP_SLE;
   case ICMP_UGT: // A >u B implies A != B and A >=u B are true.
