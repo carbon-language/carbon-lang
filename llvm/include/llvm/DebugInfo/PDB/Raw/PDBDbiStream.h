@@ -43,8 +43,8 @@ public:
   PDB_Machine getMachineType() const;
 
 private:
-  PDBStream Stream;
   PDBFile &Pdb;
+  PDBStream Stream;
   std::unique_ptr<HeaderInfo> Header;
 };
 }

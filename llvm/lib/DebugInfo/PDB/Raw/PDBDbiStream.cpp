@@ -47,7 +47,7 @@ const uint16_t BuildNewFormatShift = 15;
 }
 
 struct PDBDbiStream::HeaderInfo {
-  ulittle32_t VersionSignature;
+  little32_t VersionSignature;
   ulittle32_t VersionHeader;
   ulittle32_t Age; // Should match PDBInfoStream.
   ulittle16_t GSSyms;
