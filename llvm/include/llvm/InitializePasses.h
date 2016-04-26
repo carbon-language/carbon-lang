@@ -154,7 +154,7 @@ void initializeInlineCostAnalysisPass(PassRegistry&);
 void initializeInstructionCombiningPassPass(PassRegistry&);
 void initializeInstCountPass(PassRegistry&);
 void initializeInstNamerPass(PassRegistry&);
-void initializeInternalizePassPass(PassRegistry&);
+void initializeInternalizeLegacyPassPass(PassRegistry&);
 void initializeIntervalPartitionPass(PassRegistry&);
 void initializeIRTranslatorPass(PassRegistry &);
 void initializeJumpThreadingPass(PassRegistry&);
