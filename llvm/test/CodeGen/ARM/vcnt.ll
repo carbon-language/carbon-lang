@@ -44,6 +44,13 @@ define <2 x i32> @vclz32(<2 x i32>* %A) nounwind {
 	ret <2 x i32> %tmp2
 }
 
+define <1 x i64> @vclz64(<1 x i64>* %A) nounwind {
+;CHECK-LABEL: vclz64:
+	%tmp1 = load <1 x i64>, <1 x i64>* %A
+	%tmp2 = call <1 x i64> @llvm.ctlz.v1i64(<1 x i64> %tmp1, i1 0)
+	ret <1 x i64> %tmp2
+}
+
 define <16 x i8> @vclzQ8(<16 x i8>* %A) nounwind {
 ;CHECK-LABEL: vclzQ8:
 ;CHECK: vclz.i8 {{q[0-9]+}}, {{q[0-9]+}}
@@ -68,13 +75,22 @@ define <4 x i32> @vclzQ32(<4 x i32>* %A) nounwind {
 	ret <4 x i32> %tmp2
 }
 
+define <2 x i64> @vclzQ64(<2 x i64>* %A) nounwind {
+;CHECK-LABEL: vclzQ64:
+	%tmp1 = load <2 x i64>, <2 x i64>* %A
+	%tmp2 = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %tmp1, i1 0)
+	ret <2 x i64> %tmp2
+}
+
 declare <8 x i8>  @llvm.ctlz.v8i8(<8 x i8>, i1) nounwind readnone
 declare <4 x i16> @llvm.ctlz.v4i16(<4 x i16>, i1) nounwind readnone
 declare <2 x i32> @llvm.ctlz.v2i32(<2 x i32>, i1) nounwind readnone
+declare <1 x i64> @llvm.ctlz.v1i64(<1 x i64>, i1) nounwind readnone
 
 declare <16 x i8> @llvm.ctlz.v16i8(<16 x i8>, i1) nounwind readnone
 declare <8 x i16> @llvm.ctlz.v8i16(<8 x i16>, i1) nounwind readnone
 declare <4 x i32> @llvm.ctlz.v4i32(<4 x i32>, i1) nounwind readnone
+declare <2 x i64> @llvm.ctlz.v2i64(<2 x i64>, i1) nounwind readnone
 
 define <8 x i8> @vclss8(<8 x i8>* %A) nounwind {
 ;CHECK-LABEL: vclss8:
