@@ -41,9 +41,6 @@ const uint16_t BuildMinorShift = 0;
 
 const uint16_t BuildMajorMask = 0x7F00;
 const uint16_t BuildMajorShift = 8;
-
-const uint16_t BuildNewFormatMask = 0x8000;
-const uint16_t BuildNewFormatShift = 15;
 }
 
 struct PDBDbiStream::HeaderInfo {
