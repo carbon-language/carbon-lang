@@ -3,13 +3,13 @@
 misc-move-const-arg
 ===================
 
-The check warns if the result of ``std::move(x)`` is bound to a constant
-reference argument, e.g.:
+The check warns if ``std::move()`` is called with a constant argument or an
+argument of a trivially-copyable type, e.g.:
 
 .. code:: c++
 
-  void f(const string&);
-  void g() {
-    string s;
-    F(std::move(s));  // Warning here. std::move() is not moving anything.
-  }
+  const string s;
+  return std::move(s);  // Warning: std::move of the const variable has no effect
+
+  int x;
+  return std::move(x);  // Warning: std::move of the variable of a trivially-copyable type has no effect
