@@ -6724,7 +6724,7 @@ ABIArgInfo LanaiABIInfo::getIndirectResult(QualType Ty, bool ByVal,
   }
 
   // Compute the byval alignment.
-  constexpr unsigned MinABIStackAlignInBytes = 4;
+  const unsigned MinABIStackAlignInBytes = 4;
   unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
   return ABIArgInfo::getIndirect(CharUnits::fromQuantity(4), /*ByVal=*/true,
                                  /*Realign=*/TypeAlign >
