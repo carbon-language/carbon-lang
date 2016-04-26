@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     if (std::error_code EC = ReaderOrErr.getError())
       report_error(InputDataFilename, EC);
 
-    for(auto &FI : ReaderOrErr.get()->getAllFuncsData()) {
+    for (auto &FI : ReaderOrErr.get()->getAllFuncsData()) {
       auto MI = MergedFunctionsData.find(FI.second.Name);
       if (MI != MergedFunctionsData.end()) {
         std::vector<BranchInfo> TmpBI;
