@@ -521,9 +521,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
     const RelTy &RI = *I;
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
-    SymbolBody &OrigBody = File.getSymbolBody(SymIndex);
-    Symbol *Sym = OrigBody.Backref;
-    SymbolBody &Body = Sym ? *Sym->Body : OrigBody;
+    SymbolBody &Body = File.getSymbolBody(SymIndex).repl();
     uint32_t Type = RI.getType(Config->Mips64EL);
 
     // Ignore "hint" relocation because it is for optional code optimization.
@@ -533,11 +531,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     uintX_t Offset = C.getOffset(RI.r_offset);
     if (Offset == (uintX_t)-1)
       continue;
-
-    // Set "used" bit for --as-needed.
-    if (OrigBody.isUndefined() && Sym && !Sym->isWeak())
-      if (auto *S = dyn_cast<SharedSymbol<ELFT>>(&Body))
-        S->File->IsUsed = true;
 
     RelExpr Expr = Target->getRelExpr(Type, Body);
 
@@ -1344,6 +1337,12 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   std::vector<DefinedCommon *> CommonSymbols;
   for (Symbol *S : Symtab.getSymbols()) {
     SymbolBody *Body = S->Body;
+
+    // Set "used" bit for --as-needed.
+    if (S->IsUsedInRegularObj && !S->isWeak())
+      if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(Body))
+        SS->File->IsUsed = true;
+
     if (Body->isUndefined() && !S->isWeak()) {
       auto *U = dyn_cast<UndefinedElf<ELFT>>(Body);
       if (!U || !U->canKeepUndefined())
