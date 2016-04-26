@@ -500,8 +500,7 @@ void LogFullErrorReport(const char *buffer) {
 }
 
 SignalContext::WriteFlag SignalContext::GetWriteFlag(void *context) {
-  ucontext_t *ucontext = static_cast<ucontext_t*>(context);
-  return ucontext->uc_mcontext->__es.__err & 2 /*T_PF_WRITE*/ ? WRITE : READ;
+  return UNKNOWN;  // FIXME: implement this.
 }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
