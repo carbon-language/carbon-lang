@@ -81,22 +81,7 @@ namespace {
   struct Factor {
     Value *Base;
     unsigned Power;
-
     Factor(Value *Base, unsigned Power) : Base(Base), Power(Power) {}
-
-    /// \brief Sort factors in descending order by their power.
-    struct PowerDescendingSorter {
-      bool operator()(const Factor &LHS, const Factor &RHS) {
-        return LHS.Power > RHS.Power;
-      }
-    };
-
-    /// \brief Compare factors for equal powers.
-    struct PowerEqual {
-      bool operator()(const Factor &LHS, const Factor &RHS) {
-        return LHS.Power == RHS.Power;
-      }
-    };
   };
   
   /// Utility class representing a non-constant Xor-operand. We classify
@@ -1764,7 +1749,10 @@ bool Reassociate::collectMultiplyFactors(SmallVectorImpl<ValueEntry> &Ops,
   // below our mininum of '4'.
   assert(FactorPowerSum >= 4);
 
-  std::stable_sort(Factors.begin(), Factors.end(), Factor::PowerDescendingSorter());
+  std::stable_sort(Factors.begin(), Factors.end(),
+                   [](const Factor &LHS, const Factor &RHS) {
+    return LHS.Power > RHS.Power;
+  });
   return true;
 }
 
@@ -1823,7 +1811,9 @@ Value *Reassociate::buildMinimalMultiplyDAG(IRBuilder<> &Builder,
   // Unique factors with equal powers -- we've folded them into the first one's
   // base.
   Factors.erase(std::unique(Factors.begin(), Factors.end(),
-                            Factor::PowerEqual()),
+                            [](const Factor &LHS, const Factor &RHS) {
+                              return LHS.Power == RHS.Power;
+                            }),
                 Factors.end());
 
   // Iteratively collect the base of each factor with an add power into the
