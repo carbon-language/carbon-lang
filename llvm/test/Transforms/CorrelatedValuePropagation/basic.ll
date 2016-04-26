@@ -429,3 +429,14 @@ entry:
 exit:
   ret i1 %cmp
 }
+
+define i1 @bitcast_unknown2(i8* %p) {
+; CHECK-LABEL: @bitcast_unknown2
+; CHECK: ret i1 %cmp
+entry:
+  %p64 = ptrtoint i8* %p to i64
+  %cmp = icmp sle i64 %p64, 128
+  br label %exit
+exit:
+  ret i1 %cmp
+}

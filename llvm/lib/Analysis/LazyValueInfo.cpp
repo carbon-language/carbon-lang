@@ -1002,7 +1002,14 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
 
 bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
                                              Instruction *BBI,
-                                             BasicBlock *BB) {  
+                                             BasicBlock *BB) {
+  if (!BBI->getOperand(0)->getType()->isSized()) {
+    // Without knowing how wide the input is, we can't analyze it in any useful
+    // way.
+    BBLV.markOverdefined();
+    return true;
+  }
+  
   // Figure out the range of the LHS.  If that fails, we still apply the
   // transfer rule on the full set since we may be able to locally infer
   // interesting facts.
@@ -1012,14 +1019,7 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
       return false;
 
   const unsigned OperandBitWidth =
-    BBI->getOperand(0)->getType()->getPrimitiveSizeInBits();
-  if (OperandBitWidth == 0) {
-    // Without knowing how wide the input is, we can't analyze it in any useful
-    // way.  
-    BBLV.markOverdefined();
-    return true;
-  }
-  
+    DL.getTypeSizeInBits(BBI->getOperand(0)->getType());
   ConstantRange LHSRange = ConstantRange(OperandBitWidth);
   if (hasBlockValue(BBI->getOperand(0), BB)) {
     LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
@@ -1062,7 +1062,8 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
 
 bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
                                                  Instruction *BBI,
-                                                 BasicBlock *BB) {  
+                                                 BasicBlock *BB) {
+  
   // Figure out the range of the LHS.  If that fails, bail.
   if (!hasBlockValue(BBI->getOperand(0), BB)) {
     if (pushBlockValue(std::make_pair(BB, BBI->getOperand(0))))
