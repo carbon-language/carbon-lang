@@ -76,21 +76,6 @@ namespace {
     }
 
     bool runOnModule(Module &M) override;
-
-  private:
-    bool OptimizeFunctions(Module &M);
-    bool OptimizeGlobalVars(Module &M);
-    bool OptimizeGlobalAliases(Module &M);
-    bool deleteIfDead(GlobalValue &GV);
-    bool processGlobal(GlobalValue &GV);
-    bool processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS);
-    bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
-
-    bool isPointerValueDeadOnEntryToFunction(const Function *F,
-                                             GlobalValue *GV);
-
-    TargetLibraryInfo *TLI;
-    SmallSet<const Comdat *, 8> NotDiscardableComdats;
   };
 }
 
@@ -1681,7 +1666,8 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   return true;
 }
 
-bool GlobalOpt::deleteIfDead(GlobalValue &GV) {
+static bool deleteIfDead(GlobalValue &GV,
+                         SmallSet<const Comdat *, 8> &NotDiscardableComdats) {
   GV.removeDeadConstantUsers();
 
   if (!GV.isDiscardableIfUnused())
@@ -1705,36 +1691,9 @@ bool GlobalOpt::deleteIfDead(GlobalValue &GV) {
   return true;
 }
 
-/// Analyze the specified global variable and optimize it if possible.  If we
-/// make a change, return true.
-bool GlobalOpt::processGlobal(GlobalValue &GV) {
-  // Do more involved optimizations if the global is internal.
-  if (!GV.hasLocalLinkage())
-    return false;
-
-  GlobalStatus GS;
-
-  if (GlobalStatus::analyzeGlobal(&GV, GS))
-    return false;
-
-  bool Changed = false;
-  if (!GS.IsCompared && !GV.hasUnnamedAddr()) {
-    GV.setUnnamedAddr(true);
-    NumUnnamed++;
-    Changed = true;
-  }
-
-  auto *GVar = dyn_cast<GlobalVariable>(&GV);
-  if (!GVar)
-    return Changed;
-
-  if (GVar->isConstant() || !GVar->hasInitializer())
-    return Changed;
-
-  return processInternalGlobal(GVar, GS) || Changed;
-}
-
-bool GlobalOpt::isPointerValueDeadOnEntryToFunction(const Function *F, GlobalValue *GV) {
+static bool isPointerValueDeadOnEntryToFunction(
+    const Function *F, GlobalValue *GV,
+    function_ref<DominatorTree &(Function &)> LookupDomTree) {
   // Find all uses of GV. We expect them all to be in F, and if we can't
   // identify any of the uses we bail out.
   //
@@ -1778,8 +1737,7 @@ bool GlobalOpt::isPointerValueDeadOnEntryToFunction(const Function *F, GlobalVal
   // of them are known not to depend on the value of the global at the function
   // entry point. We do this by ensuring that every load is dominated by at
   // least one store.
-  auto &DT = getAnalysis<DominatorTreeWrapperPass>(*const_cast<Function *>(F))
-                 .getDomTree();
+  auto &DT = LookupDomTree(*const_cast<Function *>(F));
 
   // The below check is quadratic. Check we're not going to do too many tests.
   // FIXME: Even though this will always have worst-case quadratic time, we
@@ -1868,8 +1826,9 @@ static void makeAllConstantUsesInstructions(Constant *C) {
 
 /// Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
-bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
-                                      const GlobalStatus &GS) {
+static bool processInternalGlobal(
+    GlobalVariable *GV, const GlobalStatus &GS, TargetLibraryInfo *TLI,
+    function_ref<DominatorTree &(Function &)> LookupDomTree) {
   auto &DL = GV->getParent()->getDataLayout();
   // If this is a first class global and has only one accessing function and
   // this function is non-recursive, we replace the global with a local alloca
@@ -1886,7 +1845,8 @@ bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
       !GV->isExternallyInitialized() &&
       allNonInstructionUsersCanBeMadeInstructions(GV) &&
       GS.AccessingFunction->doesNotRecurse() &&
-      isPointerValueDeadOnEntryToFunction(GS.AccessingFunction, GV) ) {
+      isPointerValueDeadOnEntryToFunction(GS.AccessingFunction, GV,
+                                          LookupDomTree)) {
     DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV << "\n");
     Instruction &FirstI = const_cast<Instruction&>(*GS.AccessingFunction
                                                    ->getEntryBlock().begin());
@@ -1898,7 +1858,7 @@ bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
       new StoreInst(GV->getInitializer(), Alloca, &FirstI);
 
     makeAllConstantUsesInstructions(GV);
-    
+
     GV->replaceAllUsesWith(Alloca);
     GV->eraseFromParent();
     ++NumLocalized;
@@ -1996,6 +1956,37 @@ bool GlobalOpt::processInternalGlobal(GlobalVariable *GV,
   return false;
 }
 
+/// Analyze the specified global variable and optimize it if possible.  If we
+/// make a change, return true.
+static bool
+processGlobal(GlobalValue &GV, TargetLibraryInfo *TLI,
+              function_ref<DominatorTree &(Function &)> LookupDomTree) {
+  // Do more involved optimizations if the global is internal.
+  if (!GV.hasLocalLinkage())
+    return false;
+
+  GlobalStatus GS;
+
+  if (GlobalStatus::analyzeGlobal(&GV, GS))
+    return false;
+
+  bool Changed = false;
+  if (!GS.IsCompared && !GV.hasUnnamedAddr()) {
+    GV.setUnnamedAddr(true);
+    NumUnnamed++;
+    Changed = true;
+  }
+
+  auto *GVar = dyn_cast<GlobalVariable>(&GV);
+  if (!GVar)
+    return Changed;
+
+  if (GVar->isConstant() || !GVar->hasInitializer())
+    return Changed;
+
+  return processInternalGlobal(GVar, GS, TLI, LookupDomTree) || Changed;
+}
+
 /// Walk all of the direct calls of the specified function, changing them to
 /// FastCC.
 static void ChangeCalleesToFastCall(Function *F) {
@@ -2040,7 +2031,10 @@ static bool isProfitableToMakeFastCC(Function *F) {
   return CC == CallingConv::C || CC == CallingConv::X86_ThisCall;
 }
 
-bool GlobalOpt::OptimizeFunctions(Module &M) {
+static bool
+OptimizeFunctions(Module &M, TargetLibraryInfo *TLI,
+                  function_ref<DominatorTree &(Function &)> LookupDomTree,
+                  SmallSet<const Comdat *, 8> &NotDiscardableComdats) {
   bool Changed = false;
   // Optimize functions.
   for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
@@ -2049,12 +2043,12 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
     if (!F->hasName() && !F->isDeclaration() && !F->hasLocalLinkage())
       F->setLinkage(GlobalValue::InternalLinkage);
 
-    if (deleteIfDead(*F)) {
+    if (deleteIfDead(*F, NotDiscardableComdats)) {
       Changed = true;
       continue;
     }
 
-    Changed |= processGlobal(*F);
+    Changed |= processGlobal(*F, TLI, LookupDomTree);
 
     if (!F->hasLocalLinkage())
       continue;
@@ -2081,7 +2075,10 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
   return Changed;
 }
 
-bool GlobalOpt::OptimizeGlobalVars(Module &M) {
+static bool
+OptimizeGlobalVars(Module &M, TargetLibraryInfo *TLI,
+                   function_ref<DominatorTree &(Function &)> LookupDomTree,
+                   SmallSet<const Comdat *, 8> &NotDiscardableComdats) {
   bool Changed = false;
 
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
@@ -2099,12 +2096,12 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
           GV->setInitializer(New);
       }
 
-    if (deleteIfDead(*GV)) {
+    if (deleteIfDead(*GV, NotDiscardableComdats)) {
       Changed = true;
       continue;
     }
 
-    Changed |= processGlobal(*GV);
+    Changed |= processGlobal(*GV, TLI, LookupDomTree);
   }
   return Changed;
 }
@@ -2175,7 +2172,7 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
 /// Evaluate static constructors in the function, if we can.  Return true if we
 /// can, false otherwise.
 static bool EvaluateStaticConstructor(Function *F, const DataLayout &DL,
-                                      const TargetLibraryInfo *TLI) {
+                                      TargetLibraryInfo *TLI) {
   // Call the function.
   Evaluator Eval(DL, TLI);
   Constant *RetValDummy;
@@ -2347,7 +2344,9 @@ static bool hasUsesToReplace(GlobalAlias &GA, const LLVMUsed &U,
   return true;
 }
 
-bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
+static bool
+OptimizeGlobalAliases(Module &M,
+                      SmallSet<const Comdat *, 8> &NotDiscardableComdats) {
   bool Changed = false;
   LLVMUsed Used(M);
 
@@ -2362,7 +2361,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
     if (!J->hasName() && !J->isDeclaration() && !J->hasLocalLinkage())
       J->setLinkage(GlobalValue::InternalLinkage);
 
-    if (deleteIfDead(*J)) {
+    if (deleteIfDead(*J, NotDiscardableComdats)) {
       Changed = true;
       continue;
     }
@@ -2484,7 +2483,7 @@ static bool cxxDtorIsEmpty(const Function &Fn,
   return false;
 }
 
-bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
+static bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
   /// Itanium C++ ABI p3.3.5:
   ///
   ///   After constructing a global (or local static) object, that will require
@@ -2538,8 +2537,12 @@ bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
 
   auto &DL = M.getDataLayout();
-  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  auto *TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  auto LookupDomTree = [this](Function &F) -> DominatorTree & {
+    return this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
+  };
 
+  SmallSet<const Comdat *, 8> NotDiscardableComdats;
   bool LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
@@ -2559,7 +2562,8 @@ bool GlobalOpt::runOnModule(Module &M) {
           NotDiscardableComdats.insert(C);
 
     // Delete functions that are trivially dead, ccc -> fastcc
-    LocalChange |= OptimizeFunctions(M);
+    LocalChange |=
+        OptimizeFunctions(M, TLI, LookupDomTree, NotDiscardableComdats);
 
     // Optimize global_ctors list.
     LocalChange |= optimizeGlobalCtorsList(M, [&](Function *F) {
@@ -2567,10 +2571,11 @@ bool GlobalOpt::runOnModule(Module &M) {
     });
 
     // Optimize non-address-taken globals.
-    LocalChange |= OptimizeGlobalVars(M);
+    LocalChange |= OptimizeGlobalVars(M, TLI, LookupDomTree,
+                                      NotDiscardableComdats);
 
     // Resolve aliases, when possible.
-    LocalChange |= OptimizeGlobalAliases(M);
+    LocalChange |= OptimizeGlobalAliases(M, NotDiscardableComdats);
 
     // Try to remove trivial global destructors if they are not removed
     // already.
