@@ -99,33 +99,6 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
   return V;
 }
 
-// Concatenates S and T so that the resulting path becomes S/T.
-// There are a few exceptions:
-//
-//  1. The result will never escape from S. Therefore, all ".."
-//     are removed from T before concatenatig them.
-//  2. Windows drive letters are removed from T before concatenation.
-static std::string concat(StringRef S, StringRef T) {
-  // Remove leading '/' or a drive letter, and then remove "..".
-  SmallString<128> T2(path::relative_path(T));
-  path::remove_dots(T2, /*remove_dot_dot=*/true);
-
-  SmallString<128> Res;
-  path::append(Res, S, T2);
-  return Res.str();
-}
-
-static void copyFile(StringRef Src, StringRef Dest) {
-  SmallString<128> Dir(Dest);
-  path::remove_filename(Dir);
-  if (std::error_code EC = sys::fs::create_directories(Dir)) {
-    error(EC, Dir + ": can't create directory");
-    return;
-  }
-  if (std::error_code EC = sys::fs::copy_file(Src, Dest))
-    error(EC, "failed to copy file: " + Dest);
-}
-
 // Opens and parses a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
 void LinkerDriver::addFile(StringRef Path) {
@@ -133,7 +106,7 @@ void LinkerDriver::addFile(StringRef Path) {
   if (Config->Verbose)
     llvm::outs() << Path << "\n";
   if (!Config->Reproduce.empty())
-    copyFile(Path, concat(Config->Reproduce, Path));
+    copyFile(Path, concat_paths(Config->Reproduce, Path));
 
   Optional<MemoryBufferRef> Buffer = readFile(Path);
   if (!Buffer.hasValue())
