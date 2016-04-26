@@ -467,8 +467,6 @@ private:
   /// \param SharedsTy A type which contains references the shared variables.
   /// \param Shareds Context with the list of shared variables from the \p
   /// TaskFunction.
-  /// \param IfCond Not a nullptr if 'if' clause was specified, nullptr
-  /// otherwise.
   /// \param PrivateVars List of references to private variables for the task
   /// directive.
   /// \param PrivateCopies List of private copies for each private variable in
