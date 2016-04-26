@@ -1,5 +1,6 @@
 ; RUN: %lli -jit-kind=orc-mcjit -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s > /dev/null
-; XFAIL: mingw32,win32
+; XFAIL: mingw32,win32,powerpc64-unknown-linux-gnu
+; Remove XFAIL for powerpc64-unknown-linux-gnu if problem caused by r266663 is fixed
 
 @count = global i32 1, align 4
 
