@@ -105,6 +105,7 @@ static const char *GetBlockName(unsigned BlockID,
 
   switch (BlockID) {
   default:                             return nullptr;
+  case bitc::OPERAND_BUNDLE_TAGS_BLOCK_ID: return "OPERAND_BUNDLE_TAGS_BLOCK";
   case bitc::MODULE_BLOCK_ID:          return "MODULE_BLOCK";
   case bitc::PARAMATTR_BLOCK_ID:       return "PARAMATTR_BLOCK";
   case bitc::PARAMATTR_GROUP_BLOCK_ID: return "PARAMATTR_GROUP_BLOCK_ID";
@@ -279,6 +280,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
       STRINGIFY_CODE(FUNC_CODE, INST_CALL)
       STRINGIFY_CODE(FUNC_CODE, DEBUG_LOC)
       STRINGIFY_CODE(FUNC_CODE, INST_GEP)
+      STRINGIFY_CODE(FUNC_CODE, OPERAND_BUNDLE)
     }
   case bitc::VALUE_SYMTAB_BLOCK_ID:
     switch (CodeID) {
@@ -363,6 +365,12 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     default:return nullptr;
     case bitc::USELIST_CODE_DEFAULT: return "USELIST_CODE_DEFAULT";
     case bitc::USELIST_CODE_BB:      return "USELIST_CODE_BB";
+    }
+
+  case bitc::OPERAND_BUNDLE_TAGS_BLOCK_ID:
+    switch(CodeID) {
+    default: return nullptr;
+    case bitc::OPERAND_BUNDLE_TAG: return "OPERAND_BUNDLE_TAG";
     }
   }
 #undef STRINGIFY_CODE
