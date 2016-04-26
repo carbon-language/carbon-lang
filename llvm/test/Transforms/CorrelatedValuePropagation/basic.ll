@@ -440,3 +440,26 @@ entry:
 exit:
   ret i1 %cmp
 }
+
+
+define i1 @and_unknown(i32 %a) {
+; CHECK-LABEL: @and_unknown
+; CHECK: ret i1 true
+entry:
+  %and = and i32 %a, 128
+  %cmp = icmp sle i32 %and, 128
+  br label %exit
+exit:
+  ret i1 %cmp
+}
+
+define i1 @lshr_unknown(i32 %a) {
+; CHECK-LABEL: @lshr_unknown
+; CHECK: ret i1 true
+entry:
+  %and = lshr i32 %a, 30
+  %cmp = icmp sle i32 %and, 128
+  br label %exit
+exit:
+  ret i1 %cmp
+}

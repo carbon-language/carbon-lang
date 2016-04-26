@@ -1063,22 +1063,27 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
 bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
                                                  Instruction *BBI,
                                                  BasicBlock *BB) {
-  
-  // Figure out the range of the LHS.  If that fails, bail.
-  if (!hasBlockValue(BBI->getOperand(0), BB)) {
-    if (pushBlockValue(std::make_pair(BB, BBI->getOperand(0))))
-      return false;
-    BBLV.markOverdefined();
-    return true;
-  }
 
-  LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
-  intersectAssumeBlockValueConstantRange(BBI->getOperand(0), LHSVal, BBI);
-  if (!LHSVal.isConstantRange()) {
-    BBLV.markOverdefined();
-    return true;
+  assert(BBI->getOperand(0)->getType()->isSized() &&
+         "all operands to binary operators are sized");
+  
+  // Figure out the range of the LHS.  If that fails, use a conservative range,
+  // but apply the transfer rule anyways.  This lets us pick up facts from
+  // expressions like "and i32 (call i32 @foo()), 32"
+  if (!hasBlockValue(BBI->getOperand(0), BB))
+    if (pushBlockValue(std::make_pair(BB, BBI->getOperand(0))))
+      // More work to do before applying this transfer rule.
+      return false;
+
+  const unsigned OperandBitWidth =
+    DL.getTypeSizeInBits(BBI->getOperand(0)->getType());
+  ConstantRange LHSRange = ConstantRange(OperandBitWidth);
+  if (hasBlockValue(BBI->getOperand(0), BB)) {
+    LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
+    intersectAssumeBlockValueConstantRange(BBI->getOperand(0), LHSVal, BBI);
+    if (LHSVal.isConstantRange())
+      LHSRange = LHSVal.getConstantRange();
   }
-  ConstantRange LHSRange = LHSVal.getConstantRange();
 
   ConstantInt *RHS = cast<ConstantInt>(BBI->getOperand(1));
   ConstantRange RHSRange = ConstantRange(RHS->getValue());
