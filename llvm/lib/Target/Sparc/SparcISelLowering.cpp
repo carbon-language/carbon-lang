@@ -3302,3 +3302,16 @@ void SparcTargetLowering::ReplaceNodeResults(SDNode *N,
   }
   }
 }
+
+// Override to enable LOAD_STACK_GUARD lowering on Linux.
+bool SparcTargetLowering::useLoadStackGuardNode() const {
+  if (!Subtarget->isTargetLinux())
+    return TargetLowering::useLoadStackGuardNode();
+  return true;
+}
+
+// Override to disable global variable loading on Linux.
+void SparcTargetLowering::insertSSPDeclarations(Module &M) const {
+  if (!Subtarget->isTargetLinux())
+    return TargetLowering::insertSSPDeclarations(M);
+}
