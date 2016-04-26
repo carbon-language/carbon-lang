@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/GlobalOpt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -40,6 +40,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/CtorUtils.h"
 #include "llvm/Transforms/Utils/Evaluator.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
@@ -63,31 +64,6 @@ STATISTIC(NumNestRemoved   , "Number of nest attributes removed");
 STATISTIC(NumAliasesResolved, "Number of global aliases resolved");
 STATISTIC(NumAliasesRemoved, "Number of global aliases eliminated");
 STATISTIC(NumCXXDtorsRemoved, "Number of global C++ destructors removed");
-
-namespace {
-  struct GlobalOpt : public ModulePass {
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<TargetLibraryInfoWrapperPass>();
-      AU.addRequired<DominatorTreeWrapperPass>();
-    }
-    static char ID; // Pass identification, replacement for typeid
-    GlobalOpt() : ModulePass(ID) {
-      initializeGlobalOptPass(*PassRegistry::getPassRegistry());
-    }
-
-    bool runOnModule(Module &M) override;
-  };
-}
-
-char GlobalOpt::ID = 0;
-INITIALIZE_PASS_BEGIN(GlobalOpt, "globalopt",
-                "Global Variable Optimizer", false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(GlobalOpt, "globalopt",
-                "Global Variable Optimizer", false, false)
-
-ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
 
 /// Is this global variable possibly used by a leak checker as a root?  If so,
 /// we might not really want to eliminate the stores to it.
@@ -2530,19 +2506,11 @@ static bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
   return Changed;
 }
 
-bool GlobalOpt::runOnModule(Module &M) {
-  if (skipModule(M))
-    return false;
-
-  bool Changed = false;
-
-  auto &DL = M.getDataLayout();
-  auto *TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  auto LookupDomTree = [this](Function &F) -> DominatorTree & {
-    return this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
-  };
-
+static bool optimizeGlobalsInModule(
+    Module &M, const DataLayout &DL, TargetLibraryInfo *TLI,
+    function_ref<DominatorTree &(Function &)> LookupDomTree) {
   SmallSet<const Comdat *, 8> NotDiscardableComdats;
+  bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
@@ -2590,4 +2558,55 @@ bool GlobalOpt::runOnModule(Module &M) {
   // layout.
 
   return Changed;
+}
+
+PreservedAnalyses GlobalOptPass::run(Module &M, AnalysisManager<Module> &AM) {
+    auto &DL = M.getDataLayout();
+    auto &TLI = AM.getResult<TargetLibraryAnalysis>(M);
+    auto &FAM =
+        AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+    auto LookupDomTree = [&FAM](Function &F) -> DominatorTree &{
+      return FAM.getResult<DominatorTreeAnalysis>(F);
+    };
+    if (!optimizeGlobalsInModule(M, DL, &TLI, LookupDomTree))
+      return PreservedAnalyses::all();
+    return PreservedAnalyses::none();
+}
+
+namespace {
+struct GlobalOptLegacyPass : public ModulePass {
+  static char ID; // Pass identification, replacement for typeid
+  GlobalOptLegacyPass() : ModulePass(ID) {
+    initializeGlobalOptLegacyPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnModule(Module &M) override {
+    if (skipModule(M))
+      return false;
+
+    auto &DL = M.getDataLayout();
+    auto *TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+    auto LookupDomTree = [this](Function &F) -> DominatorTree & {
+      return this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
+    };
+    return optimizeGlobalsInModule(M, DL, TLI, LookupDomTree);
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+  }
+};
+}
+
+char GlobalOptLegacyPass::ID = 0;
+INITIALIZE_PASS_BEGIN(GlobalOptLegacyPass, "globalopt",
+                      "Global Variable Optimizer", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(GlobalOptLegacyPass, "globalopt",
+                    "Global Variable Optimizer", false, false)
+
+ModulePass *llvm::createGlobalOptimizerPass() {
+  return new GlobalOptLegacyPass();
 }
