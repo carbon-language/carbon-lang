@@ -742,11 +742,16 @@ private:
     if (ExistingError)
       return std::move(ExistingError);
 
+    // FIXME: CompileCallback could be an anonymous lambda defined at the use
+    //        site below, but that triggers a GCC 4.7 ICE. When we move off
+    //        GCC 4.7, tidy this up.
+    auto CompileCallback =
+      [this](TargetAddress Addr) -> Expected<TargetAddress> {
+        return this->CallbackManager->executeCompileCallback(Addr);
+      };
+
     if (Id == RequestCompileId) {
-      if (auto Err = handle<RequestCompile>(
-              C, [&](TargetAddress Addr) -> Expected<TargetAddress> {
-                return CallbackManager->executeCompileCallback(Addr);
-              }))
+      if (auto Err = handle<RequestCompile>(C, CompileCallback))
         return Err;
       return Error::success();
     }
