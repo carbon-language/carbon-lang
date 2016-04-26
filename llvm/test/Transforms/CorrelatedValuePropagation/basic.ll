@@ -392,3 +392,40 @@ next:
 out:
   ret i1 false
 }
+
+define i1 @zext_unknown(i8 %a) {
+; CHECK-LABEL: @zext_unknown
+; CHECK: ret i1 true
+entry:
+  %a32 = zext i8 %a to i32
+  %cmp = icmp sle i32 %a32, 256
+  br label %exit
+exit:
+  ret i1 %cmp
+}
+
+define i1 @trunc_unknown(i32 %a) {
+; CHECK-LABEL: @trunc_unknown
+; CHECK: ret i1 true
+entry:
+  %a8 = trunc i32 %a to i8
+  %a32 = sext i8 %a8 to i32
+  %cmp = icmp sle i32 %a32, 128
+  br label %exit
+exit:
+  ret i1 %cmp
+}
+
+; TODO: missed optimization
+; Make sure we exercise non-integer inputs to unary operators (i.e. crash 
+; check).
+define i1 @bitcast_unknown(float %a) {
+; CHECK-LABEL: @bitcast_unknown
+; CHECK: ret i1 %cmp
+entry:
+  %a32 = bitcast float %a to i32
+  %cmp = icmp sle i32 %a32, 128
+  br label %exit
+exit:
+  ret i1 %cmp
+}

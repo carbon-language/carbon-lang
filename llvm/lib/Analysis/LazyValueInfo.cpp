@@ -1003,23 +1003,27 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
 bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
                                              Instruction *BBI,
                                              BasicBlock *BB) {  
-  // Figure out the range of the LHS.  If that fails, bail.
-  if (!hasBlockValue(BBI->getOperand(0), BB)) {
+  // Figure out the range of the LHS.  If that fails, we still apply the
+  // transfer rule on the full set since we may be able to locally infer
+  // interesting facts.
+  if (!hasBlockValue(BBI->getOperand(0), BB))
     if (pushBlockValue(std::make_pair(BB, BBI->getOperand(0))))
+      // More work to do before applying this transfer rule.
       return false;
-    BBLV.markOverdefined();
-    return true;
+
+  const unsigned OperandBitWidth =
+    BBI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+  
+  ConstantRange LHSRange = ConstantRange(OperandBitWidth);
+  if (hasBlockValue(BBI->getOperand(0), BB)) {
+    LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
+    intersectAssumeBlockValueConstantRange(BBI->getOperand(0), LHSVal, BBI);
+    if (LHSVal.isConstantRange())
+      LHSRange = LHSVal.getConstantRange();
   }
 
-  LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
-  intersectAssumeBlockValueConstantRange(BBI->getOperand(0), LHSVal, BBI);
-  if (!LHSVal.isConstantRange()) {
-    BBLV.markOverdefined();
-    return true;
-  }
-  ConstantRange LHSRange = LHSVal.getConstantRange();
-
-  IntegerType *ResultTy = cast<IntegerType>(BBI->getType());
+  const unsigned ResultBitWidth =
+    cast<IntegerType>(BBI->getType())->getBitWidth();
 
   // NOTE: We're currently limited by the set of operations that ConstantRange
   // can evaluate symbolically.  Enhancing that set will allows us to analyze
@@ -1027,13 +1031,13 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
   LVILatticeVal Result;
   switch (BBI->getOpcode()) {
   case Instruction::Trunc:
-    Result.markConstantRange(LHSRange.truncate(ResultTy->getBitWidth()));
+    Result.markConstantRange(LHSRange.truncate(ResultBitWidth));
     break;
   case Instruction::SExt:
-    Result.markConstantRange(LHSRange.signExtend(ResultTy->getBitWidth()));
+    Result.markConstantRange(LHSRange.signExtend(ResultBitWidth));
     break;
   case Instruction::ZExt:
-    Result.markConstantRange(LHSRange.zeroExtend(ResultTy->getBitWidth()));
+    Result.markConstantRange(LHSRange.zeroExtend(ResultBitWidth));
     break;
   case Instruction::BitCast:
     Result.markConstantRange(LHSRange);
@@ -1152,7 +1156,7 @@ bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
       return true;
     }
   }
-
+  
   return false;
 }
 
