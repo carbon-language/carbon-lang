@@ -13,8 +13,7 @@
 
 using namespace llvm;
 
-PDBInfoStream::PDBInfoStream(const PDBFile &File)
-    : Pdb(File), Stream1(1, File) {}
+PDBInfoStream::PDBInfoStream(PDBFile &File) : Pdb(File), Stream1(1, File) {}
 
 std::error_code PDBInfoStream::reload() {
   Stream1.setOffset(0);

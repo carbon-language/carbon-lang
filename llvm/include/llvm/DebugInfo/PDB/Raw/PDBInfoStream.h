@@ -22,7 +22,7 @@ namespace llvm {
 
 class PDBInfoStream {
 public:
-  PDBInfoStream(const PDBFile &File);
+  PDBInfoStream(PDBFile &File);
 
   std::error_code reload();
 
@@ -33,9 +33,11 @@ public:
 
   uint32_t getNamedStreamIndex(llvm::StringRef Name) const;
 
+  PDBFile &getFile() { return Pdb; }
+
 private:
+  PDBFile &Pdb;
   PDBStream Stream1;
-  const PDBFile &Pdb;
 
   // PDB file format version.  We only support VC70.  See the enumeration
   // `PdbRaw_ImplVer` for the other possible values.
