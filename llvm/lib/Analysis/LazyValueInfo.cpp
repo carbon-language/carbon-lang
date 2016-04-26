@@ -1009,6 +1009,24 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
     BBLV.markOverdefined();
     return true;
   }
+
+  // Filter out casts we don't know how to reason about before attempting to
+  // recurse on our operand.  This can cut a long search short if we know we're
+  // not going to be able to get any useful information anways.
+  switch (BBI->getOpcode()) {
+  case Instruction::Trunc:
+  case Instruction::SExt:
+  case Instruction::ZExt:
+  case Instruction::BitCast:
+    break;
+  default:
+    // Unhandled instructions are overdefined.
+    DEBUG(dbgs() << " compute BB '" << BB->getName()
+                 << "' - overdefined (unknown cast).\n");
+    BBLV.markOverdefined();
+    return true;
+  }
+
   
   // Figure out the range of the LHS.  If that fails, we still apply the
   // transfer rule on the full set since we may be able to locally infer
@@ -1048,11 +1066,9 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
   case Instruction::BitCast:
     Result.markConstantRange(LHSRange);
     break;
-  // Unhandled instructions are overdefined.
   default:
-    DEBUG(dbgs() << " compute BB '" << BB->getName()
-                 << "' - overdefined (unknown cast).\n");
-    Result.markOverdefined();
+    // Should be dead if the code above is correct
+    llvm_unreachable("inconsistent with above");
     break;
   }
 
@@ -1066,6 +1082,28 @@ bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
 
   assert(BBI->getOperand(0)->getType()->isSized() &&
          "all operands to binary operators are sized");
+
+  // Filter out operators we don't know how to reason about before attempting to
+  // recurse on our operand(s).  This can cut a long search short if we know
+  // we're not going to be able to get any useful information anways.
+  switch (BBI->getOpcode()) {
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+  case Instruction::UDiv:
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::And:
+  case Instruction::Or:
+    // continue into the code below
+    break;
+  default:
+    // Unhandled instructions are overdefined.
+    DEBUG(dbgs() << " compute BB '" << BB->getName()
+                 << "' - overdefined (unknown binary operator).\n");
+    BBLV.markOverdefined();
+    return true;
+  };
   
   // Figure out the range of the LHS.  If that fails, use a conservative range,
   // but apply the transfer rule anyways.  This lets us pick up facts from
@@ -1117,12 +1155,9 @@ bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
   case Instruction::Or:
     Result.markConstantRange(LHSRange.binaryOr(RHSRange));
     break;
-
-  // Unhandled instructions are overdefined.
   default:
-    DEBUG(dbgs() << " compute BB '" << BB->getName()
-                 << "' - overdefined (unknown binary operator).\n");
-    Result.markOverdefined();
+    // Should be dead if the code above is correct
+    llvm_unreachable("inconsistent with above");
     break;
   }
 
