@@ -20,7 +20,7 @@ std::error_code PDBInfoStream::reload() {
   support::ulittle32_t Value;
 
   Stream1.readObject(&Version);
-  if (Version < PdbRaw_ImplVer::VC70)
+  if (Version < PdbRaw_ImplVer::PdbImplVC70)
     return std::make_error_code(std::errc::not_supported);
 
   Stream1.readObject(&Value);
