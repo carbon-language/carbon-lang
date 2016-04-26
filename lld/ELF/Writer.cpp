@@ -424,7 +424,8 @@ static int32_t findMipsPairedAddend(const uint8_t *Buf, const uint8_t *BufLoc,
 // True if non-preemptable symbol always has the same value regardless of where
 // the DSO is loaded.
 template <class ELFT> static bool isAbsolute(const SymbolBody &Body) {
-  if (Body.isUndefined() && Body.isWeak())
+  Symbol *Sym = Body.Backref;
+  if (Body.isUndefined() && Sym->isWeak())
     return true; // always 0
   if (const auto *DR = dyn_cast<DefinedRegular<ELFT>>(&Body))
     return DR->Section == nullptr; // Absolute symbol.
@@ -521,7 +522,8 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     const RelTy &RI = *I;
     uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     SymbolBody &OrigBody = File.getSymbolBody(SymIndex);
-    SymbolBody &Body = OrigBody.repl();
+    Symbol *Sym = OrigBody.Backref;
+    SymbolBody &Body = Sym ? *Sym->Body : OrigBody;
     uint32_t Type = RI.getType(Config->Mips64EL);
 
     // Ignore "hint" relocation because it is for optional code optimization.
@@ -533,7 +535,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
 
     // Set "used" bit for --as-needed.
-    if (OrigBody.isUndefined() && !OrigBody.isWeak())
+    if (OrigBody.isUndefined() && Sym && !Sym->isWeak())
       if (auto *S = dyn_cast<SharedSymbol<ELFT>>(&Body))
         S->File->IsUsed = true;
 
@@ -1342,7 +1344,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   std::vector<DefinedCommon *> CommonSymbols;
   for (Symbol *S : Symtab.getSymbols()) {
     SymbolBody *Body = S->Body;
-    if (Body->isUndefined() && !Body->isWeak()) {
+    if (Body->isUndefined() && !S->isWeak()) {
       auto *U = dyn_cast<UndefinedElf<ELFT>>(Body);
       if (!U || !U->canKeepUndefined())
         reportUndefined<ELFT>(Symtab, Body);
