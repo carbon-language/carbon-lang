@@ -1013,6 +1013,12 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
 
   const unsigned OperandBitWidth =
     BBI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+  if (OperandBitWidth == 0) {
+    // Without knowing how wide the input is, we can't analyze it in any useful
+    // way.  
+    BBLV.markOverdefined();
+    return true;
+  }
   
   ConstantRange LHSRange = ConstantRange(OperandBitWidth);
   if (hasBlockValue(BBI->getOperand(0), BB)) {
