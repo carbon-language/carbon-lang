@@ -583,6 +583,16 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::CTLZ,       MVT::v1i64, Expand);
     setOperationAction(ISD::CTLZ,       MVT::v2i64, Expand);
 
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v8i8, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v4i16, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v2i32, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v1i64, Expand);
+
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v16i8, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v8i16, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v4i32, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v2i64, Expand);
+
     // NEON does not have single instruction CTTZ for vectors.
     setOperationAction(ISD::CTTZ, MVT::v8i8, Custom);
     setOperationAction(ISD::CTTZ, MVT::v4i16, Custom);
