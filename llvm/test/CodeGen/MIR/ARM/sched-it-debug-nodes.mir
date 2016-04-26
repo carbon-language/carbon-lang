@@ -1,4 +1,4 @@
-# RUN: llc -mtriple thumbv7 -start-after if-converter -print-before=post-RA-sched -print-after=post-RA-sched %s -o /dev/null 2>&1 | FileCheck %s
+# RUN: llc -mtriple thumbv7 -verify-machineinstrs -start-after if-converter -print-before post-RA-sched -print-after post-RA-sched %s -o /dev/null 2>&1 | FileCheck %s
 --- |
   ; ModuleID = '/Volumes/Data/llvm/test/CodeGen/ARM/sched-it-debug-nodes.ll'
   target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
@@ -97,6 +97,7 @@ tracksRegLiveness: true
 tracksSubRegLiveness: false
 liveins:
   - { reg: '%r0' }
+  - { reg: '%r1' }
   - { reg: '%r2' }
   - { reg: '%r3' }
 calleeSavedRegisters: [ '%lr', '%d8', '%d9', '%d10', '%d11', '%d12', '%d13',
@@ -132,7 +133,7 @@ stack:
   - { id: 1, type: spill-slot, offset: -8, size: 4, alignment: 4, callee-saved-register: '%r7' }
 body:             |
   bb.0.entry:
-    liveins: %r0, %r2, %r3, %lr, %r7
+    liveins: %r0, %r1, %r2, %r3, %lr, %r7
 
     DBG_VALUE debug-use %r0, debug-use _, !18, !27, debug-location !28
     DBG_VALUE debug-use %r1, debug-use _, !19, !27, debug-location !28
