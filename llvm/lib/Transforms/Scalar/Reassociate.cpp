@@ -106,20 +106,6 @@ namespace {
     void Invalidate() { SymbolicPart = OrigVal = nullptr; }
     void setSymbolicRank(unsigned R) { SymbolicRank = R; }
 
-    // Sort the XorOpnd-Pointer in ascending order of symbolic-value-rank.
-    // The purpose is twofold:
-    // 1) Cluster together the operands sharing the same symbolic-value.
-    // 2) Operand having smaller symbolic-value-rank is permuted earlier, which 
-    //   could potentially shorten crital path, and expose more loop-invariants.
-    //   Note that values' rank are basically defined in RPO order (FIXME). 
-    //   So, if Rank(X) < Rank(Y) < Rank(Z), it means X is defined earlier 
-    //   than Y which is defined earlier than Z. Permute "x | 1", "Y & 2",
-    //   "z" in the order of X-Y-Z is better than any other orders.
-    struct PtrSortFunctor {
-      bool operator()(XorOpnd * const &LHS, XorOpnd * const &RHS) {
-        return LHS->getSymbolicRank() < RHS->getSymbolicRank();
-      }
-    };
   private:
     Value *OrigVal;
     Value *SymbolicPart;
@@ -1391,7 +1377,19 @@ Value *Reassociate::OptimizeXor(Instruction *I,
   //  the same symbolic value cluster together. For instance, the input operand
   //  sequence ("x | 123", "y & 456", "x & 789") will be sorted into:
   //  ("x | 123", "x & 789", "y & 456").
-  std::stable_sort(OpndPtrs.begin(), OpndPtrs.end(), XorOpnd::PtrSortFunctor());
+  //
+  //  The purpose is twofold:
+  //  1) Cluster together the operands sharing the same symbolic-value.
+  //  2) Operand having smaller symbolic-value-rank is permuted earlier, which
+  //     could potentially shorten crital path, and expose more loop-invariants.
+  //     Note that values' rank are basically defined in RPO order (FIXME).
+  //     So, if Rank(X) < Rank(Y) < Rank(Z), it means X is defined earlier
+  //     than Y which is defined earlier than Z. Permute "x | 1", "Y & 2",
+  //     "z" in the order of X-Y-Z is better than any other orders.
+  std::stable_sort(OpndPtrs.begin(), OpndPtrs.end(),
+                   [](XorOpnd *LHS, XorOpnd *RHS) {
+    return LHS->getSymbolicRank() < RHS->getSymbolicRank();
+  });
 
   // Step 3: Combine adjacent operands
   XorOpnd *PrevOpnd = nullptr;
