@@ -1016,7 +1016,11 @@ isCompatibleEnvironment(llvm::Triple::EnvironmentType lhs, llvm::Triple::Environ
     // be compatible. This is required as a workaround for shared libraries compiled for Android
     // without the NOTE section indicating that they are using the Android ABI.
     if ((lhs == llvm::Triple::Android && rhs == llvm::Triple::EABI) ||
-        (rhs == llvm::Triple::Android && lhs == llvm::Triple::EABI))
+        (rhs == llvm::Triple::Android && lhs == llvm::Triple::EABI) ||
+        (lhs == llvm::Triple::GNUEABI && rhs == llvm::Triple::EABI) ||
+        (rhs == llvm::Triple::GNUEABI && lhs == llvm::Triple::EABI) ||
+        (lhs == llvm::Triple::GNUEABIHF && rhs == llvm::Triple::EABIHF) ||
+        (rhs == llvm::Triple::GNUEABIHF && lhs == llvm::Triple::EABIHF))
         return true;
 
     return false;
