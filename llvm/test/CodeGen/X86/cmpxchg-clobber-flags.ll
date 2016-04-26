@@ -167,11 +167,10 @@ define i32 @test_feed_cmov(i32* %addr, i32 %desired, i32 %new) {
 
 ; x8664-sahf-LABEL: test_feed_cmov:
 ; x8664-sahf: cmpxchgl
-; x8664-sahf: pushq %rax
+; RAX is dead, do not push or pop it.
 ; x8664-sahf-NEXT: seto %al
 ; x8664-sahf-NEXT: lahf
 ; x8664-sahf-NEXT: movq %rax, [[FLAGS:%.*]]
-; x8664-sahf-NEXT: popq %rax
 ; x8664-sahf-NEXT: callq foo
 ; x8664-sahf-NEXT: pushq %rax
 ; x8664-sahf-NEXT: movq [[FLAGS]], %rax
