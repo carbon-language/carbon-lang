@@ -197,8 +197,9 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // attribute was specified.
   const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
   if (ST.debuggerReserveTrapVGPRs()) {
-    for (unsigned i = MaxWorkGroupVGPRCount - ST.debuggerReserveTrapVGPRCount();
-           i < MaxWorkGroupVGPRCount; ++i) {
+    unsigned ReservedVGPRFirst =
+      MaxWorkGroupVGPRCount - MFI->getDebuggerReserveTrapVGPRCount();
+    for (unsigned i = ReservedVGPRFirst; i < MaxWorkGroupVGPRCount; ++i) {
       unsigned Reg = AMDGPU::VGPR_32RegClass.getRegister(i);
       reserveRegisterTuples(Reserved, Reg);
     }

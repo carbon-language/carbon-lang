@@ -314,10 +314,6 @@ public:
     return DebuggerReserveTrapVGPRs;
   }
 
-  unsigned debuggerReserveTrapVGPRCount() const {
-    return debuggerReserveTrapVGPRs() ? 4 : 0;
-  }
-
   bool dumpCode() const {
     return DumpCode;
   }
