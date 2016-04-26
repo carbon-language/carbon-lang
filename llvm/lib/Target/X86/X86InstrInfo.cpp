@@ -7377,7 +7377,10 @@ namespace {
     LDTLSCleanup() : MachineFunctionPass(ID) {}
 
     bool runOnMachineFunction(MachineFunction &MF) override {
-      X86MachineFunctionInfo* MFI = MF.getInfo<X86MachineFunctionInfo>();
+      if (skipFunction(*MF.getFunction()))
+        return false;
+
+      X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
       if (MFI->getNumLocalDynamicTLSAccesses() < 2) {
         // No point folding accesses if there isn't at least two.
         return false;
