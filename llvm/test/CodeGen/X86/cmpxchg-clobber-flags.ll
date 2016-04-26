@@ -63,11 +63,10 @@ define i64 @test_intervening_call(i64* %foo, i64 %bar, i64 %baz) {
 ; x8664-sahf-NEXT: popq %rax
 ; x8664-sahf-NEXT: movq %rax, %rdi
 ; x8664-sahf-NEXT: callq bar
-; x8664-sahf-NEXT: pushq %rax
+; RAX is dead, no need to push and pop it.
 ; x8664-sahf-NEXT: movq [[FLAGS]], %rax
 ; x8664-sahf-NEXT: addb $127, %al
 ; x8664-sahf-NEXT: sahf
-; x8664-sahf-NEXT: popq %rax
 ; x8664-sahf-NEXT: jne
 
   %cx = cmpxchg i64* %foo, i64 %bar, i64 %baz seq_cst seq_cst
