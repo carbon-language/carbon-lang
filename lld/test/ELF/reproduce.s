@@ -1,4 +1,4 @@
-# REQUIRES: x86
+# REQUIRES: x86, shell
 
 # RUN: rm -rf %S/repro
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
