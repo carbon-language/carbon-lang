@@ -190,6 +190,8 @@ void StackColoring::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
+#ifndef NDEBUG
+
 LLVM_DUMP_METHOD void StackColoring::dumpBV(const char *tag,
                                             const BitVector &BV) const {
   DEBUG(dbgs() << tag << " : { ");
@@ -223,6 +225,8 @@ LLVM_DUMP_METHOD void StackColoring::dumpIntervals() const {
     DEBUG(Intervals[I]->dump());
   }
 }
+
+#endif // not NDEBUG
 
 unsigned StackColoring::collectMarkers(unsigned NumSlot) {
   unsigned MarkersFound = 0;
