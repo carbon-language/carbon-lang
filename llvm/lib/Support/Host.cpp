@@ -390,7 +390,11 @@ StringRef sys::getHostCPUName() {
       case 0x4d:
       case 0x5a:
       case 0x5d:
+      case 0x4c: // really airmont
         return "silvermont";
+
+      case 0x57:
+        return "knl";
 
       default: // Unknown family 6 CPU, try to guess.
         if (HasAVX512)
