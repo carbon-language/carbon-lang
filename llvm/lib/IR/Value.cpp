@@ -554,9 +554,14 @@ unsigned Value::getPointerAlignment(const DataLayout &DL) const {
       if (EltTy->isSized())
         Align = DL.getABITypeAlignment(EltTy);
     }
-  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(this))
+  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(this)) {
     Align = AI->getAlignment();
-  else if (auto CS = ImmutableCallSite(this))
+    if (Align == 0) {
+      Type *AllocatedType = AI->getAllocatedType();
+      if (AllocatedType->isSized())
+        Align = DL.getPrefTypeAlignment(AllocatedType);
+    }
+  } else if (auto CS = ImmutableCallSite(this))
     Align = CS.getAttributes().getParamAlignment(AttributeSet::ReturnIndex);
   else if (const LoadInst *LI = dyn_cast<LoadInst>(this))
     if (MDNode *MD = LI->getMetadata(LLVMContext::MD_align)) {
