@@ -7724,7 +7724,7 @@ SDValue DAGCombiner::visitFADDForFMACombine(SDNode *N) {
 
   const SelectionDAGTargetInfo *STI = DAG.getSubtarget().getSelectionDAGInfo();
   ;
-  if (AllowFusion && STI && STI->GenerateFMAsInMachineCombiner(OptLevel))
+  if (AllowFusion && STI && STI->generateFMAsInMachineCombiner(OptLevel))
     return SDValue();
 
   // Always prefer FMAD to FMA for precision.
@@ -7911,7 +7911,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
     return SDValue();
 
   const SelectionDAGTargetInfo *STI = DAG.getSubtarget().getSelectionDAGInfo();
-  if (AllowFusion && STI && STI->GenerateFMAsInMachineCombiner(OptLevel))
+  if (AllowFusion && STI && STI->generateFMAsInMachineCombiner(OptLevel))
     return SDValue();
 
   // Always prefer FMAD to FMA for precision.
