@@ -729,37 +729,36 @@ static bool InstructionDereferencesPointer(Instruction *I, Value *Ptr) {
   return false;
 }
 
+/// Return true if the allocation associated with Val is ever dereferenced
+/// within the given basic block.  This establishes the fact Val is not null,
+/// but does not imply that the memory at Val is dereferenceable.  (Val may
+/// point off the end of the dereferenceable part of the object.)
+static bool isObjectDereferencedInBlock(Value *Val, BasicBlock *BB) {
+  assert(Val->getType()->isPointerTy());
+
+  const DataLayout &DL = BB->getModule()->getDataLayout();
+  Value *UnderlyingVal = GetUnderlyingObject(Val, DL);
+  // If 'GetUnderlyingObject' didn't converge, skip it. It won't converge
+  // inside InstructionDereferencesPointer either.
+  if (UnderlyingVal == GetUnderlyingObject(UnderlyingVal, DL, 1))
+    for (Instruction &I : *BB)
+      if (InstructionDereferencesPointer(&I, UnderlyingVal))
+        return true;
+  return false;
+}
+
 bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
                                                  Value *Val, BasicBlock *BB) {
   LVILatticeVal Result;  // Start Undefined.
-
-  // If this is a pointer, and there's a load from that pointer in this BB,
-  // then we know that the pointer can't be NULL.
-  bool NotNull = false;
-  if (Val->getType()->isPointerTy()) {
-    if (isKnownNonNull(Val)) {
-      NotNull = true;
-    } else {
-      const DataLayout &DL = BB->getModule()->getDataLayout();
-      Value *UnderlyingVal = GetUnderlyingObject(Val, DL);
-      // If 'GetUnderlyingObject' didn't converge, skip it. It won't converge
-      // inside InstructionDereferencesPointer either.
-      if (UnderlyingVal == GetUnderlyingObject(UnderlyingVal, DL, 1)) {
-        for (Instruction &I : *BB) {
-          if (InstructionDereferencesPointer(&I, UnderlyingVal)) {
-            NotNull = true;
-            break;
-          }
-        }
-      }
-    }
-  }
 
   // If this is the entry block, we must be asking about an argument.  The
   // value is overdefined.
   if (BB == &BB->getParent()->getEntryBlock()) {
     assert(isa<Argument>(Val) && "Unknown live-in to the entry block");
-    if (NotNull) {
+    // Bofore giving up, see if we can prove the pointer non-null local to
+    // this particular block.
+    if (Val->getType()->isPointerTy() &&
+        (isKnownNonNull(Val) || isObjectDereferencedInBlock(Val, BB))) {
       PointerType *PTy = cast<PointerType>(Val->getType());
       Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
     } else {
@@ -785,9 +784,10 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
     if (Result.isOverdefined()) {
       DEBUG(dbgs() << " compute BB '" << BB->getName()
             << "' - overdefined because of pred (non local).\n");
-      // If we previously determined that this is a pointer that can't be null
-      // then return that rather than giving up entirely.
-      if (NotNull) {
+      // Bofore giving up, see if we can prove the pointer non-null local to
+      // this particular block.
+      if (Val->getType()->isPointerTy() &&
+          isObjectDereferencedInBlock(Val, BB)) {
         PointerType *PTy = cast<PointerType>(Val->getType());
         Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
       }
