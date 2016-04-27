@@ -401,6 +401,8 @@ INTERCEPTOR(char*, strcasestr, const char *s1, const char *s2) {
 #if SANITIZER_INTERCEPT_STRCHR
 INTERCEPTOR(char*, strchr, const char *s, int c) {
   void *ctx;
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_strchr(s, c);
   COMMON_INTERCEPTOR_ENTER(ctx, strchr, s, c);
   char *result = REAL(strchr)(s, c);
   uptr len = internal_strlen(s);
@@ -432,6 +434,8 @@ INTERCEPTOR(char*, strchrnul, const char *s, int c) {
 #if SANITIZER_INTERCEPT_STRRCHR
 INTERCEPTOR(char*, strrchr, const char *s, int c) {
   void *ctx;
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_strrchr(s, c);
   COMMON_INTERCEPTOR_ENTER(ctx, strrchr, s, c);
   uptr len = internal_strlen(s);
   if (common_flags()->intercept_strchr)
