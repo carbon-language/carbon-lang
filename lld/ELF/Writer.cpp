@@ -538,7 +538,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     // This relocation does not require got entry, but it is relative to got and
     // needs it to be created. Here we request for that.
-    if (Expr == R_GOTONLY_PC || Expr == R_GOTREL)
+    if (Expr == R_GOTONLY_PC || Expr == R_GOTREL || Expr == R_PPC_TOC)
       HasGotOffRel = true;
 
     uintX_t Addend = getAddend<ELFT>(RI);

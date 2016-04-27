@@ -823,14 +823,11 @@ PPC64TargetInfo::PPC64TargetInfo() {
 }
 
 uint64_t getPPC64TocBase() {
-  // The TOC consists of sections .got, .toc, .tocbss, .plt in that
-  // order. The TOC starts where the first of these sections starts.
-
-  // FIXME: This obviously does not do the right thing when there is no .got
-  // section, but there is a .toc or .tocbss section.
+  // The TOC consists of sections .got, .toc, .tocbss, .plt in that order. The
+  // TOC starts where the first of these sections starts. We always create a
+  // .got when we see a relocation that uses it, so for us the start is always
+  // the .got.
   uint64_t TocVA = Out<ELF64BE>::Got->getVA();
-  if (!TocVA)
-    TocVA = Out<ELF64BE>::Plt->getVA();
 
   // Per the ppc64-elf-linux ABI, The TOC base is TOC value plus 0x8000
   // thus permitting a full 64 Kbytes segment. Note that the glibc startup
