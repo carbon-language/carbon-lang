@@ -634,12 +634,17 @@ public:
   /// \brief Retrieve a uniqued framework name.
   StringRef getUniqueFrameworkName(StringRef Framework);
   
+  /// \brief Suggest a path by which the specified file could be found, for
+  /// use in diagnostics to suggest a #include.
+  ///
+  /// \param IsSystem If non-null, filled in to indicate whether the suggested
+  ///        path is relative to a system header directory.
+  std::string suggestPathToFileForDiagnostics(const FileEntry *File,
+                                              bool *IsSystem = nullptr);
+
   void PrintStats();
   
   size_t getTotalMemory() const;
-
-  static std::string NormalizeDashIncludePath(StringRef File,
-                                              FileManager &FileMgr);
 
 private:
   /// \brief Describes what happened when we tried to load a module map file.
