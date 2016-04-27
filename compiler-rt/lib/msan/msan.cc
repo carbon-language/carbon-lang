@@ -375,6 +375,7 @@ void __msan_init() {
   msan_init_is_running = 1;
   SanitizerToolName = "MemorySanitizer";
 
+  AvoidCVE_2016_2143();
   InitTlsSize();
 
   CacheBinaryName();
