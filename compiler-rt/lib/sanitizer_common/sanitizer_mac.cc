@@ -506,7 +506,12 @@ void LogFullErrorReport(const char *buffer) {
 }
 
 SignalContext::WriteFlag SignalContext::GetWriteFlag(void *context) {
-  return UNKNOWN;  // FIXME: implement this.
+#if defined(__x86_64__) || defined(__i386__)
+  ucontext_t *ucontext = static_cast<ucontext_t*>(context);
+  return ucontext->uc_mcontext->__es.__err & 2 /*T_PF_WRITE*/ ? WRITE : READ;
+#else
+  return UNKNOWN;
+#endif
 }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
