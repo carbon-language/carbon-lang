@@ -518,8 +518,8 @@ public:
   bool isImplicit() const { return Implicit; }
   void setImplicit(bool I = true) { Implicit = I; }
 
-  /// \brief Whether *any* (re-)declaration of the entity was used, meaning that
-  /// a definition is required.
+  /// \brief Whether this declaration was used, meaning that a definition
+  /// is required.
   ///
   /// \param CheckUsedAttr When true, also consider the "used" attribute
   /// (in addition to the "used" bit set by \c setUsed()) when determining
@@ -529,8 +529,7 @@ public:
   /// \brief Set whether the declaration is used, in the sense of odr-use.
   ///
   /// This should only be used immediately after creating a declaration.
-  /// It intentionally doesn't notify any listeners.
-  void setIsUsed() { getCanonicalDecl()->Used = true; }
+  void setIsUsed() { Used = true; }
 
   /// \brief Mark the declaration used, in the sense of odr-use.
   ///
