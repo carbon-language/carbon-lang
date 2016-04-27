@@ -260,7 +260,8 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
 
 /// \brief Check if executing a load of this pointer value cannot trap.
 ///
-/// If DT is specified this method performs context-sensitive analysis.
+/// If DT and ScanFrom are specified this method performs context-sensitive
+/// analysis and returns true if it is safe to load immediately before ScanFrom.
 ///
 /// If it is not obviously safe to load from the specified pointer, we do
 /// a quick local scan of the basic block containing \c ScanFrom, to determine
@@ -269,11 +270,10 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
 /// This uses the pointee type to determine how many bytes need to be safe to
 /// load from the pointer.
 bool llvm::isSafeToLoadUnconditionally(Value *V, unsigned Align,
+                                       const DataLayout &DL,
                                        Instruction *ScanFrom,
                                        const DominatorTree *DT,
                                        const TargetLibraryInfo *TLI) {
-  const DataLayout &DL = ScanFrom->getModule()->getDataLayout();
-
   // Zero alignment means that the load has the ABI alignment for the target
   if (Align == 0)
     Align = DL.getABITypeAlignment(V->getType()->getPointerElementType());
@@ -325,6 +325,9 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, unsigned Align,
         return true;
     }
   }
+
+  if (!ScanFrom)
+    return false;
 
   // Otherwise, be a little bit aggressive by scanning the local block where we
   // want to check to see if the pointer is already being loaded or stored
