@@ -61,7 +61,7 @@ MetaMap::MetaMap() {
 }
 
 void MetaMap::AllocBlock(ThreadState *thr, uptr pc, uptr p, uptr sz) {
-  u32 idx = block_alloc_.Alloc(&thr->proc->block_cache);
+  u32 idx = block_alloc_.Alloc(&thr->proc()->block_cache);
   MBlock *b = block_alloc_.Map(idx);
   b->siz = sz;
   b->tid = thr->tid;
@@ -210,8 +210,8 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
       SyncVar * s = sync_alloc_.Map(idx & ~kFlagMask);
       if (s->addr == addr) {
         if (myidx != 0) {
-          mys->Reset(thr->proc);
-          sync_alloc_.Free(&thr->proc->sync_cache, myidx);
+          mys->Reset(thr->proc());
+          sync_alloc_.Free(&thr->proc()->sync_cache, myidx);
         }
         if (write_lock)
           s->mtx.Lock();
@@ -230,7 +230,7 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
 
     if (myidx == 0) {
       const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
-      myidx = sync_alloc_.Alloc(&thr->proc->sync_cache);
+      myidx = sync_alloc_.Alloc(&thr->proc()->sync_cache);
       mys = sync_alloc_.Map(myidx);
       mys->Init(thr, pc, addr, uid);
     }

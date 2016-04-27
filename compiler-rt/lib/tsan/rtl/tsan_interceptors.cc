@@ -740,7 +740,7 @@ TSAN_INTERCEPTOR(int, munmap, void *addr, long_t sz) {
   if (sz != 0) {
     // If sz == 0, munmap will return EINVAL and don't unmap any memory.
     DontNeedShadowFor((uptr)addr, sz);
-    ctx->metamap.ResetRange(thr->proc, (uptr)addr, (uptr)sz);
+    ctx->metamap.ResetRange(thr->proc(), (uptr)addr, (uptr)sz);
   }
   int res = REAL(munmap)(addr, sz);
   return res;
@@ -835,7 +835,7 @@ STDCXX_INTERCEPTOR(void, __cxa_guard_abort, atomic_uint32_t *g) {
 namespace __tsan {
 void DestroyThreadState() {
   ThreadState *thr = cur_thread();
-  Processor *proc = thr->proc;
+  Processor *proc = thr->proc();
   ThreadFinish(thr);
   ProcUnwire(proc, thr);
   ProcDestroy(proc);
