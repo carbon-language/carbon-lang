@@ -606,7 +606,7 @@ bool LoopIdiomRecognize::processLoopMemSet(MemSetInst *MSI,
     return false;
 
   // If we're not allowed to hack on memset, we fail.
-  if (!TLI->has(LibFunc::memset))
+  if (!HasMemset)
     return false;
 
   Value *Pointer = MSI->getDest();
