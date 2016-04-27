@@ -296,8 +296,8 @@ int AArch64TTIImpl::getExtractWithExtendCost(unsigned Opcode, Type *Dst,
                                              unsigned Index) {
 
   // Make sure we were given a valid extend opcode.
-  assert(Opcode == Instruction::SExt ||
-         Opcode == Instruction::ZExt && "Invalid opcode");
+  assert((Opcode == Instruction::SExt || Opcode == Instruction::ZExt) &&
+         "Invalid opcode");
 
   // We are extending an element we extract from a vector, so the source type
   // of the extend is the element type of the vector.
