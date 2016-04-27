@@ -2524,6 +2524,7 @@ static std::string CalculateDiagnostic(const Record &S) {
     case ObjCProtocol | ObjCInterface:
       return "ExpectedObjectiveCInterfaceOrProtocol";
     case Field | Var: return "ExpectedFieldOrGlobalVar";
+    case GenericRecord | Namespace: return "ExpectedRecordOrNamespace";
   }
 
   PrintFatalError(S.getLoc(),

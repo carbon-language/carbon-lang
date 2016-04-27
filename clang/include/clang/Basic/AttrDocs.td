@@ -2380,3 +2380,10 @@ The ``ifunc`` attribute may only be used on a function declaration.  A function 
 Not all targets support this attribute.  ELF targets support this attribute when using binutils v2.20.1 or higher and glibc v2.11.1 or higher.  Non-ELF targets currently do not support this attribute.
   }];
 }
+
+def LTOVisibilityDocs : Documentation {
+  let Category = DocCatType;
+  let Content = [{
+See :doc:`LTOVisibility`.
+  }];
+}
