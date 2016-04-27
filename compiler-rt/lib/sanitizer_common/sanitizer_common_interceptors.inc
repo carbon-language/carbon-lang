@@ -155,6 +155,14 @@
 #define COMMON_INTERCEPTOR_USER_CALLBACK_END() {}
 #endif
 
+#ifdef SANITIZER_NLDBL_VERSION
+#define COMMON_INTERCEPT_FUNCTION_LDBL(fn)                          \
+    COMMON_INTERCEPT_FUNCTION_VER(fn, SANITIZER_NLDBL_VERSION)
+#else
+#define COMMON_INTERCEPT_FUNCTION_LDBL(fn)                          \
+    COMMON_INTERCEPT_FUNCTION(fn)
+#endif
+
 struct FileMetadata {
   // For open_memstream().
   char **addr;
@@ -670,7 +678,7 @@ INTERCEPTOR(long double, frexpl, long double x, int *exp) {
 
 #define INIT_FREXPF_FREXPL           \
   COMMON_INTERCEPT_FUNCTION(frexpf); \
-  COMMON_INTERCEPT_FUNCTION(frexpl)
+  COMMON_INTERCEPT_FUNCTION_LDBL(frexpl)
 #else
 #define INIT_FREXPF_FREXPL
 #endif  // SANITIZER_INTERCEPT_FREXPF_FREXPL
@@ -2449,7 +2457,7 @@ INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
 #define INIT_MODF                   \
   COMMON_INTERCEPT_FUNCTION(modf);  \
   COMMON_INTERCEPT_FUNCTION(modff); \
-  COMMON_INTERCEPT_FUNCTION(modfl);
+  COMMON_INTERCEPT_FUNCTION_LDBL(modfl);
 #else
 #define INIT_MODF
 #endif
@@ -4110,7 +4118,7 @@ INTERCEPTOR(void, sincosl, long double x, long double *sin, long double *cos) {
 #define INIT_SINCOS                   \
   COMMON_INTERCEPT_FUNCTION(sincos);  \
   COMMON_INTERCEPT_FUNCTION(sincosf); \
-  COMMON_INTERCEPT_FUNCTION(sincosl);
+  COMMON_INTERCEPT_FUNCTION_LDBL(sincosl);
 #else
 #define INIT_SINCOS
 #endif
@@ -4149,7 +4157,7 @@ INTERCEPTOR(long double, remquol, long double x, long double y, int *quo) {
 #define INIT_REMQUO                   \
   COMMON_INTERCEPT_FUNCTION(remquo);  \
   COMMON_INTERCEPT_FUNCTION(remquof); \
-  COMMON_INTERCEPT_FUNCTION(remquol);
+  COMMON_INTERCEPT_FUNCTION_LDBL(remquol);
 #else
 #define INIT_REMQUO
 #endif
@@ -4180,7 +4188,7 @@ INTERCEPTOR(long double, lgammal, long double x) {
 #define INIT_LGAMMA                   \
   COMMON_INTERCEPT_FUNCTION(lgamma);  \
   COMMON_INTERCEPT_FUNCTION(lgammaf); \
-  COMMON_INTERCEPT_FUNCTION(lgammal);
+  COMMON_INTERCEPT_FUNCTION_LDBL(lgammal);
 #else
 #define INIT_LGAMMA
 #endif
@@ -4224,7 +4232,7 @@ INTERCEPTOR(long double, lgammal_r, long double x, int *signp) {
   if (signp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, signp, sizeof(*signp));
   return res;
 }
-#define INIT_LGAMMAL_R COMMON_INTERCEPT_FUNCTION(lgammal_r);
+#define INIT_LGAMMAL_R COMMON_INTERCEPT_FUNCTION_LDBL(lgammal_r);
 #else
 #define INIT_LGAMMAL_R
 #endif

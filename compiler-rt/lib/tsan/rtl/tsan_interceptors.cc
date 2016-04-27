@@ -2281,6 +2281,8 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
 #undef SANITIZER_INTERCEPT_TLS_GET_ADDR
 
 #define COMMON_INTERCEPT_FUNCTION(name) INTERCEPT_FUNCTION(name)
+#define COMMON_INTERCEPT_FUNCTION_VER(name, ver)                          \
+  INTERCEPT_FUNCTION_VER(name, ver)
 
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                    \
   MemoryAccessRange(((TsanInterceptorContext *)ctx)->thr,                 \
