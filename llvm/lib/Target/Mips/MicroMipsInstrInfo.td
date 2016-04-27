@@ -996,6 +996,8 @@ def : MipsPat<(load addrimm4lsl2:$addr),
               (LW16_MM addrimm4lsl2:$addr)>;
 def : MipsPat<(load addr:$addr),
               (LW_MM addr:$addr)>;
+def : MipsPat<(subc GPR32:$lhs, GPR32:$rhs),
+              (SUBu_MM GPR32:$lhs, GPR32:$rhs)>;
 
 //===----------------------------------------------------------------------===//
 // MicroMips instruction aliases

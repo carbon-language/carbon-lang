@@ -176,3 +176,7 @@
   sra $3, 32                   # CHECK: :[[@LINE]]:11: error: expected 5-bit unsigned immediate
   srl $3, -1                   # CHECK: :[[@LINE]]:11: error: expected 5-bit unsigned immediate
   srl $3, 32                   # CHECK: :[[@LINE]]:11: error: expected 5-bit unsigned immediate
+  dneg $7, 5                   # CHECK: :[[@LINE]]:12: error: invalid operand for instruction
+  dneg 4                       # CHECK: :[[@LINE]]:8: error: invalid operand for instruction
+  dnegu $1, 3                  # CHECK: :[[@LINE]]:13: error: invalid operand for instruction
+  dnegu 7                      # CHECK: :[[@LINE]]:9: error: invalid operand for instruction

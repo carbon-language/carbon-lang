@@ -223,5 +223,11 @@ a:
         sll $3, 7                # CHECK: sll $3, $3, 7           # encoding: [0x00,0x63,0x38,0x00]
         sra $3, 7                # CHECK: sra $3, $3, 7           # encoding: [0x00,0x63,0x38,0x80]
         srl $3, 7                # CHECK: srl $3, $3, 7           # encoding: [0x00,0x63,0x38,0x40]
+        dsub $1, $2, $3          # CHECK: dsub $1, $2, $3         # encoding: [0x58,0x62,0x09,0x90]
+        dsubu $3, $7, $15        # CHECK: dsubu $3, $7, $15       # encoding: [0x59,0xe7,0x19,0xd0]
+        dneg $7, $15             # CHECK: dneg $7, $15            # encoding: [0x59,0xe0,0x39,0x90]
+        dneg $10                 # CHECK: dneg $10, $10           # encoding: [0x59,0x40,0x51,0x90]
+        dnegu $1, $11            # CHECK: dnegu $1, $11           # encoding: [0x59,0x60,0x09,0xd0]
+        dnegu $5                 # CHECK: dnegu $5, $5            # encoding: [0x58,0xa0,0x29,0xd0]
 
 1:
