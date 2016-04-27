@@ -21,7 +21,7 @@ namespace {
 cl::OptionCategory IncludeFixerCategory("Tool options");
 
 enum DatabaseFormatTy {
-  fixed, //< Hard-coded mapping.
+  fixed, ///< Hard-coded mapping.
 };
 
 cl::opt<DatabaseFormatTy> DatabaseFormat(
