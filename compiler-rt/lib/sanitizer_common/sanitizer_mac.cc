@@ -489,6 +489,7 @@ void LogFullErrorReport(const char *buffer) {
   }
 #endif
 
+#ifndef SANITIZER_GO
   // Log to syslog.
   // The logging on OS X may call pthread_create so we need the threading
   // environment to be fully initialized. Also, this should never be called when
@@ -499,6 +500,7 @@ void LogFullErrorReport(const char *buffer) {
   BlockingMutexLock l(&syslog_lock);
   if (common_flags()->log_to_syslog)
     WriteToSyslog(buffer);
+#endif
 
   // The report is added to CrashLog as part of logging all of Printf output.
 }
