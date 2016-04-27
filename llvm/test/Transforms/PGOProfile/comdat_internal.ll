@@ -16,7 +16,7 @@ $foo = comdat any
 ; CHECK-NOT: bitcast (i32 ()* @foo to i8*)
 ; CHECK-SAME: null
 ; CHECK-SAME: , i8* null, i32 1, [1 x i16] zeroinitializer }, section "__llvm_prf_data", comdat($__profv__stdin__foo), align 8
-; CHECK: @__llvm_prf_nm = private constant [21 x i8] c"\0B\13x\DA\B3).I\C9\CC\B3\B3J\CB\CF\07\00\18a\04\1B", section "__llvm_prf_names"
+; CHECK: @__llvm_prf_nm
 ; CHECK: @llvm.used = appending global [2 x i8*] [i8* bitcast ({ i64, i64, i64*, i8*, i8*, i32, [1 x i16] }* @__profd__stdin__foo to i8*), i8* getelementptr inbounds ([21 x i8], [21 x i8]* @__llvm_prf_nm, i32 0, i32 0)], section "llvm.metadata"
 
 define internal i32 @foo() comdat {
