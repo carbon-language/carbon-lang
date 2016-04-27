@@ -68,6 +68,7 @@ DECODE_OPERAND(VReg_128)
 
 DECODE_OPERAND(SGPR_32)
 DECODE_OPERAND(SReg_32)
+DECODE_OPERAND(SReg_32_XM0)
 DECODE_OPERAND(SReg_64)
 DECODE_OPERAND(SReg_128)
 DECODE_OPERAND(SReg_256)
@@ -246,6 +247,11 @@ MCOperand AMDGPUDisassembler::decodeOperand_SReg_32(unsigned Val) const {
   // leaving only registry class so SSrc_32 operand turns into SReg_32
   // and therefore we accept immediates and literals here as well
   return decodeSrcOp(OP32, Val);
+}
+
+MCOperand AMDGPUDisassembler::decodeOperand_SReg_32_XM0(unsigned Val) const {
+  // SReg_32_XM0 is SReg_32 without M0
+  return decodeOperand_SReg_32(Val);
 }
 
 MCOperand AMDGPUDisassembler::decodeOperand_SReg_64(unsigned Val) const {
