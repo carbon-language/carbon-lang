@@ -843,6 +843,8 @@ RelExpr PPC64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return R_ABS;
+  case R_PPC64_TOC:
+    return R_PPC_TOC;
   case R_PPC64_REL24:
     return R_PPC_PLT_OPD;
   }

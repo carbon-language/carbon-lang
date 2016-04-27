@@ -424,8 +424,12 @@ static int32_t findMipsPairedAddend(const uint8_t *Buf, const uint8_t *BufLoc,
 // the DSO is loaded.
 template <class ELFT> static bool isAbsolute(const SymbolBody &Body) {
   Symbol *Sym = Body.Backref;
-  if (Body.isUndefined() && Sym->isWeak())
-    return true; // always 0
+  if (Body.isUndefined()) {
+    if (!Sym)
+      return false; // undefined local. That is the dummy symbol 0.
+    if (Sym->isWeak())
+      return true; // always 0
+  }
   if (const auto *DR = dyn_cast<DefinedRegular<ELFT>>(&Body))
     return DR->Section == nullptr; // Absolute symbol.
   return false;
@@ -687,13 +691,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC) {
-      C.Relocations.push_back({R_PPC_TOC, Type, Offset, Addend, &Body});
-      AddDyn({R_PPC64_RELATIVE, C.OutSec, Offset, false, nullptr,
-              (uintX_t)getPPC64TocBase() + Addend});
-      continue;
-    }
-
     // We know that this is the final symbol. If the program being produced
     // is position independent, the final value is still not known.
     // If the relocation depends on the symbol value (not the size or distances
@@ -710,8 +707,10 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
+    if (Config->EMachine == EM_PPC64 && Type == R_PPC64_TOC)
+      Addend += getPPC64TocBase();
     AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body, Addend});
-    C.Relocations.push_back({R_ABS, Type, Offset, Addend, &Body});
+    C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
   }
 
   // Scan relocations for necessary thunks.
