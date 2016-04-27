@@ -235,11 +235,6 @@ public:
         return markOverdefined();
       }
 
-      // RHS is a ConstantRange, LHS is a non-integer Constant.
-
-      // FIXME: consider the case where RHS is a range [1, 0) and LHS is
-      // a function. The correct result is to pick up RHS.
-
       return markOverdefined();
     }
 
