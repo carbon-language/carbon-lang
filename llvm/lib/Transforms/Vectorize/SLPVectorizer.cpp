@@ -1830,11 +1830,12 @@ int BoUpSLP::getTreeCost() {
     if (MinBWs.count(ScalarRoot)) {
       auto *MinTy = IntegerType::get(F->getContext(), MinBWs[ScalarRoot]);
       VecTy = VectorType::get(MinTy, BundleWidth);
+      ExtractCost += TTI->getExtractWithExtendCost(
+          Instruction::SExt, EU.Scalar->getType(), VecTy, EU.Lane);
+    } else {
       ExtractCost +=
-          TTI->getCastInstrCost(Instruction::SExt, EU.Scalar->getType(), MinTy);
+          TTI->getVectorInstrCost(Instruction::ExtractElement, VecTy, EU.Lane);
     }
-    ExtractCost +=
-        TTI->getVectorInstrCost(Instruction::ExtractElement, VecTy, EU.Lane);
   }
 
   int SpillCost = getSpillCost();
