@@ -4712,7 +4712,7 @@ which is the string ``llvm.loop.licm_versioning.disable``. For example:
    !0 = !{!"llvm.loop.licm_versioning.disable"}
 
 '``llvm.loop.distribute.enable``' Metadata
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Loop distribution allows splitting a loop into multiple loops.  Currently,
 this is only performed if the entire loop cannot be vectorized due to unsafe
