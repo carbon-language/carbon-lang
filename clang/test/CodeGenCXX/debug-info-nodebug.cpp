@@ -7,15 +7,6 @@
 #define NODEBUG
 #endif
 
-// Simple global variable declaration and definition.
-// Use the declaration so it gets emitted.
-NODEBUG int global_int_decl;
-NODEBUG int global_int_def = global_int_decl;
-// YESINFO-DAG: !DIGlobalVariable(name: "global_int_decl"
-// NOINFO-NOT:  !DIGlobalVariable(name: "global_int_decl"
-// YESINFO-DAG: !DIGlobalVariable(name: "global_int_def"
-// NOINFO-NOT:  !DIGlobalVariable(name: "global_int_def"
-
 // Const global variable. Use it so it gets emitted.
 NODEBUG static const int const_global_int_def = 1;
 void func1(int);
@@ -41,15 +32,15 @@ struct S2 {
   NODEBUG static const int static_const_member = 4;
 };
 int S2::static_member = 5;
-int junk = S2::static_const_member;
+void func3() { func1(S2::static_const_member); }
 // YESINFO-DAG: !DIGlobalVariable(name: "static_member"
 // NOINFO-NOT:  !DIGlobalVariable(name: "static_member"
 // YESINFO-DAG: !DIDerivedType({{.*}} name: "static_const_member"
 // NOINFO-NOT:  !DIDerivedType({{.*}} name: "static_const_member"
 
 // Function-local static variable.
-void func3() {
-  NODEBUG static int func_local = 6;
+void func4() {
+  NODEBUG static int static_local = 6;
 }
-// YESINFO-DAG: !DIGlobalVariable(name: "func_local"
-// NOINFO-NOT:  !DIGlobalVariable(name: "func_local"
+// YESINFO-DAG: !DIGlobalVariable(name: "static_local"
+// NOINFO-NOT:  !DIGlobalVariable(name: "static_local"
