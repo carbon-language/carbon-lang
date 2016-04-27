@@ -120,6 +120,12 @@ bool MetaMap::FreeRange(Processor *proc, uptr p, uptr sz) {
 // without meta objects, at this point it stops freeing meta objects. Because
 // thread stacks grow top-down, we do the same starting from end as well.
 void MetaMap::ResetRange(Processor *proc, uptr p, uptr sz) {
+  if (kGoMode) {
+    // UnmapOrDie/MmapFixedNoReserve does not work on Windows,
+    // so we do the optimization only for C/C++.
+    FreeRange(proc, p, sz);
+    return;
+  }
   const uptr kMetaRatio = kMetaShadowCell / kMetaShadowSize;
   const uptr kPageSize = GetPageSizeCached() * kMetaRatio;
   if (sz <= 4 * kPageSize) {
