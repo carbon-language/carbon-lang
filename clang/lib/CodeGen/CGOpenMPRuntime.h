@@ -1051,6 +1051,16 @@ public:
                                    const OMPExecutableDirective &D,
                                    const Expr *IfCond, const Expr *Device,
                                    const RegionCodeGenTy &CodeGen);
+
+  /// \brief Emit the target data mapping code associated with \a D.
+  /// \param D Directive to emit.
+  /// \param IfCond Expression evaluated in if clause associated with the target
+  /// directive, or null if no if clause is used.
+  /// \param Device Expression evaluated in device clause associated with the
+  /// target directive, or null if no device clause is used.
+  virtual void emitTargetEnterDataCall(CodeGenFunction &CGF,
+                                       const OMPExecutableDirective &D,
+                                       const Expr *IfCond, const Expr *Device);
 };
 
 } // namespace CodeGen

@@ -3272,7 +3272,22 @@ void CodeGenFunction::EmitOMPTargetDataDirective(
 
 void CodeGenFunction::EmitOMPTargetEnterDataDirective(
     const OMPTargetEnterDataDirective &S) {
-  // TODO: codegen for target enter data.
+  // If we don't have target devices, don't bother emitting the data mapping
+  // code.
+  if (CGM.getLangOpts().OMPTargetTriples.empty())
+    return;
+
+  // Check if we have any if clause associated with the directive.
+  const Expr *IfCond = nullptr;
+  if (auto *C = S.getSingleClause<OMPIfClause>())
+    IfCond = C->getCondition();
+
+  // Check if we have any device clause associated with the directive.
+  const Expr *Device = nullptr;
+  if (auto *C = S.getSingleClause<OMPDeviceClause>())
+    Device = C->getDevice();
+
+  CGM.getOpenMPRuntime().emitTargetEnterDataCall(*this, S, IfCond, Device);
 }
 
 void CodeGenFunction::EmitOMPTargetExitDataDirective(
