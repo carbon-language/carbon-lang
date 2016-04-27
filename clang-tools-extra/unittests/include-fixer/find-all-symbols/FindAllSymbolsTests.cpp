@@ -241,7 +241,7 @@ TEST_F(FindAllSymbolsTest, FunctionSymbols) {
     EXPECT_TRUE(hasSymbol(Symbol));
     getSymbolExtraInfo(Symbol);
     EXPECT_EQ("int", Symbol.FunctionInfos.getValue().ReturnType);
-    EXPECT_EQ(1, Symbol.FunctionInfos.getValue().ParameterTypes.size());
+    EXPECT_EQ(1u, Symbol.FunctionInfos.getValue().ParameterTypes.size());
     EXPECT_EQ("int", Symbol.FunctionInfos.getValue().ParameterTypes[0]);
   }
   {
@@ -250,7 +250,7 @@ TEST_F(FindAllSymbolsTest, FunctionSymbols) {
     EXPECT_TRUE(hasSymbol(Symbol));
     getSymbolExtraInfo(Symbol);
     EXPECT_EQ("int", Symbol.FunctionInfos.getValue().ReturnType);
-    EXPECT_EQ(1, Symbol.FunctionInfos.getValue().ParameterTypes.size());
+    EXPECT_EQ(1u, Symbol.FunctionInfos.getValue().ParameterTypes.size());
     EXPECT_EQ("const int &", Symbol.FunctionInfos.getValue().ParameterTypes[0]);
   }
   {
@@ -269,7 +269,7 @@ TEST_F(FindAllSymbolsTest, FunctionSymbols) {
     EXPECT_TRUE(hasSymbol(Symbol));
     getSymbolExtraInfo(Symbol);
     EXPECT_EQ("void", Symbol.FunctionInfos.getValue().ReturnType);
-    EXPECT_EQ(1, Symbol.FunctionInfos.getValue().ParameterTypes.size());
+    EXPECT_EQ(1u, Symbol.FunctionInfos.getValue().ParameterTypes.size());
     EXPECT_EQ("T", Symbol.FunctionInfos.getValue().ParameterTypes[0]);
   }
 }
@@ -323,7 +323,7 @@ TEST_F(FindAllSymbolsTest, DecayedTypeTest) {
   EXPECT_TRUE(hasSymbol(Symbol));
   getSymbolExtraInfo(Symbol);
   EXPECT_EQ("void", Symbol.FunctionInfos.getValue().ReturnType);
-  EXPECT_EQ(2, Symbol.FunctionInfos.getValue().ParameterTypes.size());
+  EXPECT_EQ(2u, Symbol.FunctionInfos.getValue().ParameterTypes.size());
   EXPECT_EQ("int *", Symbol.FunctionInfos.getValue().ParameterTypes[0]);
   EXPECT_EQ("int *", Symbol.FunctionInfos.getValue().ParameterTypes[1]);
 }
