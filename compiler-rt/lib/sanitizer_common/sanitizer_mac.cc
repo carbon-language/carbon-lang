@@ -450,11 +450,15 @@ void *internal_start_thread(void(*func)(void *arg), void *arg) {
 
 void internal_join_thread(void *th) { pthread_join((pthread_t)th, 0); }
 
+#ifndef SANITIZER_GO
 static BlockingMutex syslog_lock(LINKER_INITIALIZED);
+#endif
 
 void WriteOneLineToSyslog(const char *s) {
+#ifndef SANITIZER_GO
   syslog_lock.CheckLocked();
   asl_log(nullptr, nullptr, ASL_LEVEL_ERR, "%s", s);
+#endif
 }
 
 void LogMessageOnPrintf(const char *str) {
@@ -530,6 +534,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif
 }
 
+#ifndef SANITIZER_GO
 static const char kDyldInsertLibraries[] = "DYLD_INSERT_LIBRARIES";
 LowLevelAllocator allocator_for_env;
 
@@ -714,6 +719,7 @@ void MaybeReexec() {
   if (new_env_pos == new_env + env_name_len + 1) new_env = NULL;
   LeakyResetEnv(kDyldInsertLibraries, new_env);
 }
+#endif  // SANITIZER_GO
 
 char **GetArgv() {
   return *_NSGetArgv();
