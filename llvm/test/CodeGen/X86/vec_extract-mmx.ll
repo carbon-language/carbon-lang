@@ -125,5 +125,20 @@ entry:
   ret i32 %7
 }
 
+define i32 @test3(x86_mmx %a) nounwind {
+; X32-LABEL: test3:
+; X32:       # BB#0:
+; X32-NEXT:    movd %mm0, %eax
+; X32-NEXT:    retl
+;
+; X64-LABEL: test3:
+; X64:       # BB#0:
+; X64-NEXT:    movd %mm0, %eax
+; X64-NEXT:    retq
+  %tmp0 = bitcast x86_mmx %a to <2 x i32>
+  %tmp1 = extractelement <2 x i32> %tmp0, i32 0
+  ret i32 %tmp1
+}
+
 declare x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx, i8)
 declare void @llvm.x86.mmx.emms()

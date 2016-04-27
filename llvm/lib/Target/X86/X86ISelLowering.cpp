@@ -25224,16 +25224,9 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
       InputVector.getValueType() == MVT::v2i32) {
     SDValue MMXSrc = InputVector.getNode()->getOperand(0);
 
-    // The mmx is indirect: (i64 extract_elt (v1i64 bitcast (x86mmx ...))).
-    if (MMXSrc.getOpcode() == ISD::EXTRACT_VECTOR_ELT && MMXSrc.hasOneUse() &&
-        MMXSrc.getValueType() == MVT::i64) {
-      SDValue MMXSrcOp = MMXSrc.getOperand(0);
-      if (MMXSrcOp.hasOneUse() && MMXSrcOp.getOpcode() == ISD::BITCAST &&
-          MMXSrcOp.getValueType() == MVT::v1i64 &&
-          MMXSrcOp.getOperand(0).getValueType() == MVT::x86mmx)
-        return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(InputVector),
-                           N->getValueType(0), MMXSrcOp.getOperand(0));
-    }
+    // The bitcast source is a direct mmx result.
+    if (MMXSrc.getValueType() == MVT::x86mmx)
+      return DAG.getNode(X86ISD::MMX_MOVD2W, dl, MVT::i32, MMXSrc);
   }
 
   EVT VT = N->getValueType(0);
