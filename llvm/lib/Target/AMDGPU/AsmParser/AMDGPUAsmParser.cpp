@@ -1701,11 +1701,12 @@ AMDGPUAsmParser::parseHwregOp(OperandVector &Operands) {
         // HwRegCode (6) [5:0]
         // Offset (5) [10:6]
         // WidthMinusOne (5) [15:11]
-        if (HwRegCode < 0 || HwRegCode > 63)
+        if (HwRegCode < 0 || HwRegCode > 63) {
           if (IsIdentifier)
             Error(S, "invalid symbolic name of hardware register");
           else
             Error(S, "invalid code of hardware register: only 6-bit values are legal");
+        }
         if (Offset < 0 || Offset > 31)
           Error(S, "invalid bit offset: only 5-bit values are legal");
         if (Width < 1 || Width > 32)
