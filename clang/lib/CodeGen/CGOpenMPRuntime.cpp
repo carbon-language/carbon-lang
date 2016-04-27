@@ -5840,12 +5840,15 @@ void CGOpenMPRuntime::emitTargetDataCalls(CodeGenFunction &CGF,
   }
 }
 
-void CGOpenMPRuntime::emitTargetEnterDataCall(CodeGenFunction &CGF,
-                                              const OMPExecutableDirective &D,
-                                              const Expr *IfCond,
-                                              const Expr *Device) {
+void CGOpenMPRuntime::emitTargetEnterOrExitDataCall(
+    CodeGenFunction &CGF, const OMPExecutableDirective &D, const Expr *IfCond,
+    const Expr *Device) {
   if (!CGF.HaveInsertPoint())
     return;
+
+  assert((isa<OMPTargetEnterDataDirective>(D) ||
+          isa<OMPTargetExitDataDirective>(D)) &&
+         "Expecting either target enter or exit data directives.");
 
   // Generate the code for the opening of the data environment.
   auto &&ThenGen = [&D, &CGF, Device](CodeGenFunction &CGF, PrePostActionTy &) {
@@ -5888,8 +5891,11 @@ void CGOpenMPRuntime::emitTargetEnterDataCall(CodeGenFunction &CGF,
         DeviceID,         PointerNum,    BasePointersArrayArg,
         PointersArrayArg, SizesArrayArg, MapTypesArrayArg};
     auto &RT = CGF.CGM.getOpenMPRuntime();
-    CGF.EmitRuntimeCall(RT.createRuntimeFunction(OMPRTL__tgt_target_data_begin),
-                        OffloadingArgs);
+    CGF.EmitRuntimeCall(
+        RT.createRuntimeFunction(isa<OMPTargetEnterDataDirective>(D)
+                                     ? OMPRTL__tgt_target_data_begin
+                                     : OMPRTL__tgt_target_data_end),
+        OffloadingArgs);
   };
 
   // In the event we get an if clause, we don't have to take any action on the
