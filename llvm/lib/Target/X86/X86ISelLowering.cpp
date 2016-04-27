@@ -25221,7 +25221,9 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
   // Detect mmx to i32 conversion through a v2i32 elt extract.
   if (InputVector.getOpcode() == ISD::BITCAST && InputVector.hasOneUse() &&
       N->getValueType(0) == MVT::i32 &&
-      InputVector.getValueType() == MVT::v2i32) {
+      InputVector.getValueType() == MVT::v2i32 &&
+      isa<ConstantSDNode>(N->getOperand(1)) &&
+      N->getConstantOperandVal(1) == 0) {
     SDValue MMXSrc = InputVector.getNode()->getOperand(0);
 
     // The bitcast source is a direct mmx result.
