@@ -369,6 +369,8 @@ StringRef sys::getHostCPUName() {
       // Broadwell:
       case 61:
       case 71:
+      case 79:
+      case 86:
         return "broadwell";
 
       // Skylake:
