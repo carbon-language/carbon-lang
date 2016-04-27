@@ -91,7 +91,6 @@ public:
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  bool isRelRelative(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -115,7 +114,6 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
-  bool isRelRelative(uint32_t Type) const override;
 
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -127,7 +125,6 @@ class PPCTargetInfo final : public TargetInfo {
 public:
   PPCTargetInfo();
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
-  bool isRelRelative(uint32_t Type) const override;
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
 };
 
@@ -138,7 +135,6 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
-  bool isRelRelative(uint32_t Type) const override;
 };
 
 class AArch64TargetInfo final : public TargetInfo {
@@ -225,7 +221,7 @@ uint64_t TargetInfo::getImplicitAddend(const uint8_t *Buf,
 uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
 
 bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
-bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
+bool TargetInfo::isRelRelative(uint32_t Type) const { return false; }
 
 bool TargetInfo::needsThunk(uint32_t Type, const InputFile &File,
                             const SymbolBody &S) const {
@@ -300,17 +296,6 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_TLS;
   case R_386_TLS_LE_32:
     return R_NEG_TLS;
-  }
-}
-
-bool X86TargetInfo::isRelRelative(uint32_t Type) const {
-  switch (Type) {
-  default:
-    return false;
-  case R_386_PC32:
-  case R_386_PLT32:
-  case R_386_TLS_LDO_32:
-    return true;
   }
 }
 
@@ -617,23 +602,6 @@ bool X86_64TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
          Type == R_X86_64_TLSLD;
 }
 
-bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
-  switch (Type) {
-  default:
-    return false;
-  case R_X86_64_DTPOFF32:
-  case R_X86_64_DTPOFF64:
-  case R_X86_64_GOTTPOFF:
-  case R_X86_64_PC8:
-  case R_X86_64_PC16:
-  case R_X86_64_PC32:
-  case R_X86_64_PC64:
-  case R_X86_64_PLT32:
-  case R_X86_64_TPOFF32:
-    return true;
-  }
-}
-
 void X86_64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
                                       uint64_t Val) const {
   // Convert
@@ -782,7 +750,6 @@ static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
 static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPCTargetInfo::PPCTargetInfo() {}
-bool PPCTargetInfo::isRelRelative(uint32_t Type) const { return false; }
 
 void PPCTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                 uint64_t Val) const {
@@ -875,16 +842,6 @@ void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32be(Buf + 20, 0xe84c0008);                   // ld %r2,8(%r12)
   write32be(Buf + 24, 0xe96c0010);                   // ld %r11,16(%r12)
   write32be(Buf + 28, 0x4e800420);                   // bctr
-}
-
-bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
-  switch (Type) {
-  default:
-    return true;
-  case R_PPC64_ADDR64:
-  case R_PPC64_TOC:
-    return false;
-  }
 }
 
 void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
@@ -1026,24 +983,11 @@ bool AArch64TargetInfo::isRelRelative(uint32_t Type) const {
   default:
     return false;
   case R_AARCH64_ADD_ABS_LO12_NC:
-  case R_AARCH64_ADR_GOT_PAGE:
-  case R_AARCH64_ADR_PREL_LO21:
-  case R_AARCH64_ADR_PREL_PG_HI21:
-  case R_AARCH64_CALL26:
-  case R_AARCH64_CONDBR19:
-  case R_AARCH64_JUMP26:
   case R_AARCH64_LDST8_ABS_LO12_NC:
   case R_AARCH64_LDST16_ABS_LO12_NC:
   case R_AARCH64_LDST32_ABS_LO12_NC:
   case R_AARCH64_LDST64_ABS_LO12_NC:
   case R_AARCH64_LDST128_ABS_LO12_NC:
-  case R_AARCH64_PREL32:
-  case R_AARCH64_PREL64:
-  case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-  case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-  case R_AARCH64_TLSLE_ADD_TPREL_HI12:
-  case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case R_AARCH64_TSTBR14:
   case R_AARCH64_LD64_GOT_LO12_NC:
     return true;
   }
@@ -1593,15 +1537,7 @@ bool MipsTargetInfo<ELFT>::isHintRel(uint32_t Type) const {
 
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::isRelRelative(uint32_t Type) const {
-  switch (Type) {
-  default:
-    return true;
-  case R_MIPS_26:
-  case R_MIPS_32:
-  case R_MIPS_64:
-  case R_MIPS_HI16:
-    return false;
-  }
+  return Type == R_MIPS_LO16;
 }
 }
 }

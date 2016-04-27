@@ -493,6 +493,24 @@ static bool needsCopyRel(RelExpr E, const SymbolBody &S) {
   return true;
 }
 
+template <class ELFT>
+static bool isRelRelative(RelExpr E, uint32_t Type, const SymbolBody &Body) {
+  if (E == R_SIZE)
+    return true;
+
+  bool AbsVal = (isAbsolute<ELFT>(Body) || Body.isTls()) &&
+                !refersToGotEntry(E) && !needsPlt(E);
+
+  bool RelE = E == R_PC || E == R_PLT_PC || E == R_GOT_PC || E == R_GOTREL ||
+              E == R_PAGE_PC;
+  if (AbsVal && !RelE)
+    return true;
+  if (!AbsVal && RelE)
+    return true;
+
+  return Target->isRelRelative(Type);
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -562,7 +580,8 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Expr == R_GOT && !Target->isRelRelative(Type) && Config->Shared)
+    if (Expr == R_GOT && !isRelRelative<ELFT>(Expr, Type, Body) &&
+        Config->Shared)
       AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body,
               getAddend<ELFT>(RI)});
 
@@ -698,8 +717,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // We can however do better than just copying the incoming relocation. We
     // can process some of it and and just ask the dynamic linker to add the
     // load address.
-    if (!Config->Pic || Target->isRelRelative(Type) || Expr == R_PC ||
-        Expr == R_SIZE || isAbsolute<ELFT>(Body)) {
+    if (!Config->Pic || isRelRelative<ELFT>(Expr, Type, Body)) {
       if (Config->EMachine == EM_MIPS && Body.isLocal() &&
           (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32))
         Addend += File.getMipsGp0();
