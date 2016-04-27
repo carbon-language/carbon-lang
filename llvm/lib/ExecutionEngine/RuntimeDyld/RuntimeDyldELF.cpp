@@ -1592,7 +1592,8 @@ RuntimeDyldELF::processRelocationRef(
       }
 
       RelocationValueRef TOCValue;
-      findPPC64TOCSection(Obj, ObjSectionToID, TOCValue);
+      if (auto Err = findPPC64TOCSection(Obj, ObjSectionToID, TOCValue))
+        return std::move(Err);
       if (Value.SymbolName || Value.SectionID != TOCValue.SectionID)
         llvm_unreachable("Unsupported TOC relocation.");
       Value.Addend -= TOCValue.Addend;
@@ -1604,9 +1605,11 @@ RuntimeDyldELF::processRelocationRef(
       // symbols (in which case the addend is respected).
       if (RelType == ELF::R_PPC64_TOC) {
         RelType = ELF::R_PPC64_ADDR64;
-        findPPC64TOCSection(Obj, ObjSectionToID, Value);
+        if (auto Err = findPPC64TOCSection(Obj, ObjSectionToID, Value))
+          return std::move(Err);
       } else if (TargetName == ".TOC.") {
-        findPPC64TOCSection(Obj, ObjSectionToID, Value);
+        if (auto Err = findPPC64TOCSection(Obj, ObjSectionToID, Value))
+          return std::move(Err);
         Value.Addend += Addend;
       }
 
