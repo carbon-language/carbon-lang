@@ -56,6 +56,104 @@ _mm256_broadcastmw_epi32 (__mmask16 __A)
 }
 
 
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_conflict_epi64 (__m128i __A)
+{
+  return (__m128i) __builtin_ia32_vpconflictdi_128_mask ((__v2di) __A,
+               (__v2di) _mm_undefined_si128 (),
+               (__mmask8) -1);
+}
+
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_mask_conflict_epi64 (__m128i __W, __mmask8 __U, __m128i __A)
+{
+  return (__m128i) __builtin_ia32_vpconflictdi_128_mask ((__v2di) __A,
+               (__v2di) __W,
+               (__mmask8) __U);
+}
+
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_maskz_conflict_epi64 (__mmask8 __U, __m128i __A)
+{
+  return (__m128i) __builtin_ia32_vpconflictdi_128_mask ((__v2di) __A,
+               (__v2di)
+               _mm_setzero_di (),
+               (__mmask8) __U);
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_conflict_epi64 (__m256i __A)
+{
+  return (__m256i) __builtin_ia32_vpconflictdi_256_mask ((__v4di) __A,
+               (__v4di)  _mm256_undefined_si256 (),
+               (__mmask8) -1);
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_mask_conflict_epi64 (__m256i __W, __mmask8 __U, __m256i __A)
+{
+  return (__m256i) __builtin_ia32_vpconflictdi_256_mask ((__v4di) __A,
+               (__v4di) __W,
+               (__mmask8) __U);
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_maskz_conflict_epi64 (__mmask8 __U, __m256i __A)
+{
+  return (__m256i) __builtin_ia32_vpconflictdi_256_mask ((__v4di) __A,
+               (__v4di) _mm256_setzero_si256 (),
+               (__mmask8) __U);
+}
+
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_conflict_epi32 (__m128i __A)
+{
+  return (__m128i) __builtin_ia32_vpconflictsi_128_mask ((__v4si) __A,
+               (__v4si) _mm_undefined_si128 (),
+               (__mmask8) -1);
+}
+
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_mask_conflict_epi32 (__m128i __W, __mmask8 __U, __m128i __A)
+{
+  return (__m128i) __builtin_ia32_vpconflictsi_128_mask ((__v4si) __A,
+               (__v4si) __W,
+               (__mmask8) __U);
+}
+
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_maskz_conflict_epi32 (__mmask8 __U, __m128i __A)
+{
+  return (__m128i) __builtin_ia32_vpconflictsi_128_mask ((__v4si) __A,
+               (__v4si) _mm_setzero_si128 (),
+               (__mmask8) __U);
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_conflict_epi32 (__m256i __A)
+{
+  return (__m256i) __builtin_ia32_vpconflictsi_256_mask ((__v8si) __A,
+               (__v8si) _mm256_undefined_si256 (),
+               (__mmask8) -1);
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_mask_conflict_epi32 (__m256i __W, __mmask8 __U, __m256i __A)
+{
+  return (__m256i) __builtin_ia32_vpconflictsi_256_mask ((__v8si) __A,
+               (__v8si) __W,
+               (__mmask8) __U);
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_maskz_conflict_epi32 (__mmask8 __U, __m256i __A)
+{
+  return (__m256i) __builtin_ia32_vpconflictsi_256_mask ((__v8si) __A,
+               (__v8si)
+               _mm256_setzero_si256 (),
+               (__mmask8) __U);
+}
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif /* __AVX512VLCDINTRIN_H */
