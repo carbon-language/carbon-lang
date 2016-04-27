@@ -1339,11 +1339,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(Body))
         SS->File->IsUsed = true;
 
-    if (Body->isUndefined() && !S->isWeak()) {
-      auto *U = dyn_cast<UndefinedElf<ELFT>>(Body);
-      if (!U || !U->canKeepUndefined())
-        reportUndefined<ELFT>(Symtab, Body);
-    }
+    if (Body->isUndefined() && !S->isWeak())
+      reportUndefined<ELFT>(Symtab, Body);
 
     if (auto *C = dyn_cast<DefinedCommon>(Body))
       CommonSymbols.push_back(C);

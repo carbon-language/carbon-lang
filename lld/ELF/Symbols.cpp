@@ -104,7 +104,6 @@ SymbolBody::SymbolBody(Kind K, StringRef Name, uint8_t Binding, uint8_t StOther,
 }
 
 void SymbolBody::init() {
-  CanKeepUndefined = false;
   NeedsCopyOrPltAddr = false;
   CanOmitFromDynSym = false;
 }
@@ -245,11 +244,8 @@ UndefinedElf<ELFT>::UndefinedElf(StringRef N, const Elf_Sym &Sym)
 
 template <typename ELFT>
 UndefinedElf<ELFT>::UndefinedElf(StringRef Name, uint8_t Binding,
-                                 uint8_t StOther, uint8_t Type,
-                                 bool CanKeepUndefined)
-    : SymbolBody(SymbolBody::UndefinedElfKind, Name, Binding, StOther, Type) {
-  this->CanKeepUndefined = CanKeepUndefined;
-}
+                                 uint8_t StOther, uint8_t Type)
+    : SymbolBody(SymbolBody::UndefinedElfKind, Name, Binding, StOther, Type) {}
 
 template <typename ELFT>
 UndefinedElf<ELFT>::UndefinedElf(const Elf_Sym &Sym)

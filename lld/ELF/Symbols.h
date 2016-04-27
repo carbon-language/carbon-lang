@@ -177,8 +177,6 @@ public:
   // symbol or if the symbol should point to its plt entry.
   unsigned NeedsCopyOrPltAddr : 1;
 
-  unsigned CanKeepUndefined : 1;
-
   // The following fields have the same meaning as the ELF symbol attributes.
   uint8_t Type;    // symbol type
   uint8_t Binding; // symbol binding
@@ -325,10 +323,7 @@ template <class ELFT> class UndefinedElf : public SymbolBody {
 public:
   UndefinedElf(StringRef N, const Elf_Sym &Sym);
   UndefinedElf(const Elf_Sym &Sym);
-  UndefinedElf(StringRef Name, uint8_t Binding, uint8_t StOther, uint8_t Type,
-               bool CanKeepUndefined);
-
-  bool canKeepUndefined() const { return CanKeepUndefined; }
+  UndefinedElf(StringRef Name, uint8_t Binding, uint8_t StOther, uint8_t Type);
 
   uintX_t Size;
 
