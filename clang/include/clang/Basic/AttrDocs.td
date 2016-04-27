@@ -494,6 +494,15 @@ Query for this feature with ``__has_attribute(objc_method_family)``.
   }];
 }
 
+def NoDebugDocs : Documentation {
+  let Category = DocCatVariable;
+  let Content = [{
+The ``nodebug`` attribute allows you to suppress debugging information for a
+function, or for a variable declared with static storage duration, such as
+globals, class static data members, and static locals.
+  }];
+}
+
 def NoDuplicateDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
