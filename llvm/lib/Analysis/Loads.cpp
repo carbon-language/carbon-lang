@@ -33,34 +33,9 @@ static bool isDereferenceableFromAttribute(const Value *BV, APInt Offset,
   assert(Offset.isNonNegative() && "offset can't be negative");
   assert(Ty->isSized() && "must be sized");
 
-  APInt DerefBytes(Offset.getBitWidth(), 0);
   bool CheckForNonNull = false;
-  if (const Argument *A = dyn_cast<Argument>(BV)) {
-    DerefBytes = A->getDereferenceableBytes();
-    if (!DerefBytes.getBoolValue()) {
-      DerefBytes = A->getDereferenceableOrNullBytes();
-      CheckForNonNull = true;
-    }
-  } else if (auto CS = ImmutableCallSite(BV)) {
-    DerefBytes = CS.getDereferenceableBytes(0);
-    if (!DerefBytes.getBoolValue()) {
-      DerefBytes = CS.getDereferenceableOrNullBytes(0);
-      CheckForNonNull = true;
-    }
-  } else if (const LoadInst *LI = dyn_cast<LoadInst>(BV)) {
-    if (MDNode *MD = LI->getMetadata(LLVMContext::MD_dereferenceable)) {
-      ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(0));
-      DerefBytes = CI->getLimitedValue();
-    }
-    if (!DerefBytes.getBoolValue()) {
-      if (MDNode *MD =
-              LI->getMetadata(LLVMContext::MD_dereferenceable_or_null)) {
-        ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(0));
-        DerefBytes = CI->getLimitedValue();
-      }
-      CheckForNonNull = true;
-    }
-  }
+  APInt DerefBytes(Offset.getBitWidth(),
+                   BV->getPointerDereferenceableBytes(CheckForNonNull));
 
   if (DerefBytes.getBoolValue())
     if (DerefBytes.uge(Offset + DL.getTypeStoreSize(Ty)))
