@@ -1573,7 +1573,7 @@ MipsReginfoOutputSection<ELFT>::MipsReginfoOutputSection()
 template <class ELFT>
 void MipsReginfoOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *R = reinterpret_cast<Elf_Mips_RegInfo *>(Buf);
-  R->ri_gp_value = getMipsGpAddr<ELFT>();
+  R->ri_gp_value = Out<ELFT>::Got->getVA() + MipsGPOffset;
   R->ri_gprmask = GprMask;
 }
 
