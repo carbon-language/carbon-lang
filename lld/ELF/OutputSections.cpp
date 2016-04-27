@@ -1503,8 +1503,7 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
     if (cast<SharedSymbol<ELFT>>(Sym)->needsCopy())
       return Out<ELFT>::Bss;
     break;
-  case SymbolBody::UndefinedElfKind:
-  case SymbolBody::UndefinedBitcodeKind:
+  case SymbolBody::UndefinedKind:
   case SymbolBody::LazyArchiveKind:
   case SymbolBody::LazyObjectKind:
     break;

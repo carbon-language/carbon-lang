@@ -151,7 +151,8 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addUndefined(StringRef Name) {
   auto *Sym = new (Alloc)
-      UndefinedElf<ELFT>(Name, STB_GLOBAL, STV_DEFAULT, /*Type*/ 0);
+      Undefined(Name, STB_GLOBAL, STV_DEFAULT, /*Type*/ 0, /*Size*/ 0,
+                /*IsBitcode*/ false);
   resolve(Sym);
   return Sym;
 }
@@ -314,7 +315,7 @@ template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
   if (K == SymbolBody::DefinedRegularKind ||
       K == SymbolBody::DefinedCommonKind ||
       K == SymbolBody::DefinedSyntheticKind ||
-      K == SymbolBody::UndefinedElfKind)
+      (K == SymbolBody::UndefinedKind && !New->IsUndefinedBitcode))
     Sym->IsUsedInRegularObj = true;
   return Sym;
 }
