@@ -1694,7 +1694,6 @@ def SLL  : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, II_SLL, shl,
                                    immZExt5>, SRA_FM<0, 0>;
 def SRL  : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, II_SRL, srl,
                                    immZExt5>, SRA_FM<2, 0>;
-}
 def SRA  : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, II_SRA, sra,
                                    immZExt5>, SRA_FM<3, 0>;
 def SLLV : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, II_SLLV, shl>,
@@ -1703,6 +1702,7 @@ def SRLV : MMRel, shift_rotate_reg<"srlv", GPR32Opnd, II_SRLV, srl>,
            SRLV_FM<6, 0>;
 def SRAV : MMRel, shift_rotate_reg<"srav", GPR32Opnd, II_SRAV, sra>,
            SRLV_FM<7, 0>;
+}
 
 // Rotate Instructions
 def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR, rotr,
@@ -2246,8 +2246,6 @@ let AdditionalPredicates = [NotInMicroMips] in {
   def : MipsInstAlias<"tne $rs, $rt",
                       (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>, ISA_MIPS2;
 }
-def  : MipsInstAlias<"sll $rd, $rt, $rs",
-                     (SLLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
 def : MipsInstAlias<"sub, $rd, $rs, $imm",
                     (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs,
                           InvertedImOperand:$imm), 0>, ISA_MIPS1_NOT_32R6_64R6;
@@ -2259,10 +2257,14 @@ def : MipsInstAlias<"subu, $rd, $rs, $imm",
                            InvertedImOperand:$imm), 0>;
 def : MipsInstAlias<"subu $rs, $imm", (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs,
                                              InvertedImOperand:$imm), 0>;
-def : MipsInstAlias<"sra $rd, $rt, $rs",
-                    (SRAV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
-def : MipsInstAlias<"srl $rd, $rt, $rs",
-                    (SRLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
+let AdditionalPredicates = [NotInMicroMips] in {
+  def : MipsInstAlias<"sll $rd, $rt, $rs",
+                      (SLLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
+  def : MipsInstAlias<"sra $rd, $rt, $rs",
+                      (SRAV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
+  def : MipsInstAlias<"srl $rd, $rt, $rs",
+                      (SRLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
+}
 def : MipsInstAlias<"sdbbp", (SDBBP 0)>, ISA_MIPS32_NOT_32R6_64R6;
 def : MipsInstAlias<"sync",
                     (SYNC 0), 1>, ISA_MIPS2;
