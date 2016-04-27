@@ -5053,3 +5053,28 @@ __mmask16 test_mm512_kxor(__mmask16 __A, __mmask16 __B) {
   // CHECK: @llvm.x86.avx512.kxor.w
   return _mm512_kxor(__A, __B); 
 }
+
+void test_mm512_stream_si512(__m512i * __P, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_stream_si512
+  // CHECK: @llvm.x86.avx512.storent.q.512
+  _mm512_stream_si512(__P, __A); 
+}
+
+__m512i test_mm512_stream_load_si512(void *__P) {
+  // CHECK-LABEL: @test_mm512_stream_load_si512
+  // CHECK: @llvm.x86.avx512.movntdqa
+  return _mm512_stream_load_si512(__P); 
+}
+
+void test_mm512_stream_pd(double *__P, __m512d __A) {
+  // CHECK-LABEL: @test_mm512_stream_pd
+  // CHECK: @llvm.x86.avx512.storent.pd.512
+  return _mm512_stream_pd(__P, __A); 
+}
+
+void test_mm512_stream_ps(float *__P, __m512 __A) {
+  // CHECK-LABEL: @test_mm512_stream_ps
+  // CHECK: @llvm.x86.avx512.storent.ps.512
+  _mm512_stream_ps(__P, __A); 
+}
+

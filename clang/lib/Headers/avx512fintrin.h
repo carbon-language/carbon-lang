@@ -7324,6 +7324,30 @@ _mm512_kxor (__mmask16 __A, __mmask16 __B)
   return (__mmask16) __builtin_ia32_kxorhi ((__mmask16) __A, (__mmask16) __B);
 }
 
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_stream_si512 (__m512i * __P, __m512i __A)
+{
+  __builtin_ia32_movntdq512 ((__v8di *) __P, (__v8di) __A);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_stream_load_si512 (void *__P)
+{
+  return __builtin_ia32_movntdqa512 ((__v8di *)__P);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_stream_pd (double *__P, __m512d __A)
+{
+  __builtin_ia32_movntpd512 (__P, (__v8df) __A);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_stream_ps (float *__P, __m512 __A)
+{
+  __builtin_ia32_movntps512 (__P, (__v16sf) __A);
+}
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H

@@ -2185,6 +2185,10 @@ TARGET_BUILTIN(__builtin_ia32_kortestzhi, "iUsUs","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_kunpckhi, "UsUsUs","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_kxnorhi, "UsUsUs","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_kxorhi, "UsUsUs","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_movntdq512, "vV8LLi*V8LLi","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_movntdqa512, "V8LLiV8LLi*","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_movntpd512, "vd*V8d","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_movntps512, "vf*V16f","","avx512f")
 
 #undef BUILTIN
 #undef TARGET_BUILTIN
