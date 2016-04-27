@@ -241,8 +241,6 @@ class HeaderSearch {
   unsigned NumMultiIncludeFileOptzn;
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 
-  const LangOptions &LangOpts;
-
   // HeaderSearch doesn't support default or copy construction.
   HeaderSearch(const HeaderSearch&) = delete;
   void operator=(const HeaderSearch&) = delete;
