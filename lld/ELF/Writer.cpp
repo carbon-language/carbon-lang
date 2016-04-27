@@ -132,6 +132,8 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   StringTableSection<ELFT> DynStrTab(".dynstr", true);
   StringTableSection<ELFT> ShStrTab(".shstrtab", false);
   SymbolTableSection<ELFT> DynSymTab(*Symtab, DynStrTab);
+  VersionTableSection<ELFT> VerSym;
+  VersionNeedSection<ELFT> VerNeed;
 
   OutputSectionBase<ELFT> ElfHeader("", 0, SHF_ALLOC);
   ElfHeader.setSize(sizeof(Elf_Ehdr));
@@ -195,6 +197,8 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   Out<ELFT>::ShStrTab = &ShStrTab;
   Out<ELFT>::StrTab = StrTab.get();
   Out<ELFT>::SymTab = SymTabSec.get();
+  Out<ELFT>::VerSym = &VerSym;
+  Out<ELFT>::VerNeed = &VerNeed;
   Out<ELFT>::Bss = nullptr;
   Out<ELFT>::MipsRldMap = MipsRldMap.get();
   Out<ELFT>::Opd = nullptr;
@@ -1367,8 +1371,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (Out<ELFT>::SymTab)
       Out<ELFT>::SymTab->addSymbol(Body);
 
-    if (isOutputDynamic() && S->includeInDynsym())
+    if (isOutputDynamic() && S->includeInDynsym()) {
       Out<ELFT>::DynSymTab->addSymbol(Body);
+      if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(Body))
+        Out<ELFT>::VerNeed->addSymbol(SS);
+    }
   }
 
   // Do not proceed if there was an undefined symbol.
@@ -1436,6 +1443,10 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   Add(Out<ELFT>::StrTab);
   if (isOutputDynamic()) {
     Add(Out<ELFT>::DynSymTab);
+    if (Out<ELFT>::VerNeed->getNeedNum() != 0) {
+      Add(Out<ELFT>::VerSym);
+      Add(Out<ELFT>::VerNeed);
+    }
     Add(Out<ELFT>::GnuHashTab);
     Add(Out<ELFT>::HashTab);
     Add(Out<ELFT>::Dynamic);
