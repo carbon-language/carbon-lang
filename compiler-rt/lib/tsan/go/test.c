@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void __tsan_init(void **thr, void **proc, void (*cb)(long, void*));
 void __tsan_fini();
