@@ -822,6 +822,8 @@ PPC64TargetInfo::PPC64TargetInfo() {
   VAStart = 0x10000000;
 }
 
+static uint64_t PPC64TocOffset = 0x8000;
+
 uint64_t getPPC64TocBase() {
   // The TOC consists of sections .got, .toc, .tocbss, .plt in that order. The
   // TOC starts where the first of these sections starts. We always create a
@@ -833,13 +835,20 @@ uint64_t getPPC64TocBase() {
   // thus permitting a full 64 Kbytes segment. Note that the glibc startup
   // code (crt1.o) assumes that you can get from the TOC base to the
   // start of the .toc section with only a single (signed) 16-bit relocation.
-  return TocVA + 0x8000;
+  return TocVA + PPC64TocOffset;
 }
 
 RelExpr PPC64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return R_ABS;
+  case R_PPC64_TOC16:
+  case R_PPC64_TOC16_DS:
+  case R_PPC64_TOC16_HA:
+  case R_PPC64_TOC16_HI:
+  case R_PPC64_TOC16_LO:
+  case R_PPC64_TOC16_LO_DS:
+    return R_GOTREL;
   case R_PPC64_TOC:
     return R_PPC_TOC;
   case R_PPC64_REL24:
@@ -880,17 +889,17 @@ bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
 
 void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                   uint64_t Val) const {
-  uint64_t TB = getPPC64TocBase();
+  uint64_t TO = PPC64TocOffset;
 
-  // For a TOC-relative relocation, adjust the addend and proceed in terms of
-  // the corresponding ADDR16 relocation type.
+  // For a TOC-relative relocation,  proceed in terms of the corresponding
+  // ADDR16 relocation type.
   switch (Type) {
-  case R_PPC64_TOC16:       Type = R_PPC64_ADDR16;       Val -= TB; break;
-  case R_PPC64_TOC16_DS:    Type = R_PPC64_ADDR16_DS;    Val -= TB; break;
-  case R_PPC64_TOC16_HA:    Type = R_PPC64_ADDR16_HA;    Val -= TB; break;
-  case R_PPC64_TOC16_HI:    Type = R_PPC64_ADDR16_HI;    Val -= TB; break;
-  case R_PPC64_TOC16_LO:    Type = R_PPC64_ADDR16_LO;    Val -= TB; break;
-  case R_PPC64_TOC16_LO_DS: Type = R_PPC64_ADDR16_LO_DS; Val -= TB; break;
+  case R_PPC64_TOC16:       Type = R_PPC64_ADDR16;       Val -= TO; break;
+  case R_PPC64_TOC16_DS:    Type = R_PPC64_ADDR16_DS;    Val -= TO; break;
+  case R_PPC64_TOC16_HA:    Type = R_PPC64_ADDR16_HA;    Val -= TO; break;
+  case R_PPC64_TOC16_HI:    Type = R_PPC64_ADDR16_HI;    Val -= TO; break;
+  case R_PPC64_TOC16_LO:    Type = R_PPC64_ADDR16_LO;    Val -= TO; break;
+  case R_PPC64_TOC16_LO_DS: Type = R_PPC64_ADDR16_LO_DS; Val -= TO; break;
   default: break;
   }
 
