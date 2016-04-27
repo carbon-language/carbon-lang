@@ -460,7 +460,7 @@ static StringRef sanitizeFunctionName(StringRef funcName) {
 }
 
 bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,
-                                   LibFunc::Func &F) const {
+                                       LibFunc::Func &F) const {
   const char *const *Start = &StandardNames[0];
   const char *const *End = &StandardNames[LibFunc::NumLibFuncs];
 
