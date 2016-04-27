@@ -668,27 +668,35 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     return true;
   }
 
-  // If this value is a nonnull pointer, record it's range and bailout.
+  // If this value is a nonnull pointer, record it's range and bailout.  Note
+  // that for all other pointer typed values, we terminate the search at the
+  // definition.  We could easily extend this to look through geps, bitcasts,
+  // and the like to prove non-nullness, but it's not clear that's worth it
+  // compile time wise.  The context-insensative value walk done inside
+  // isKnownNonNull gets most of the profitable cases at much less expense.
+  // This does mean that we have a sensativity to where the defining
+  // instruction is placed, even if it could legally be hoisted much higher.
+  // That is unfortunate.
   PointerType *PT = dyn_cast<PointerType>(BBI->getType());
   if (PT && isKnownNonNull(BBI)) {
     Res = LVILatticeVal::getNot(ConstantPointerNull::get(PT));
     insertResult(Val, BB, Res);
     return true;
   }
-
-  if (isa<CastInst>(BBI) && BBI->getType()->isIntegerTy()) {
-    if (!solveBlockValueCast(Res, BBI, BB))
-      return false;
-    insertResult(Val, BB, Res);
-    return true;
-  }
-
-  BinaryOperator *BO = dyn_cast<BinaryOperator>(BBI);
-  if (BO && isa<ConstantInt>(BO->getOperand(1))) { 
-    if (!solveBlockValueBinaryOp(Res, BBI, BB))
-      return false;
-    insertResult(Val, BB, Res);
-    return true;
+  else if (BBI->getType()->isIntegerTy()) {
+    if (isa<CastInst>(BBI)) {
+      if (!solveBlockValueCast(Res, BBI, BB))
+        return false;
+      insertResult(Val, BB, Res);
+      return true;
+    }
+    BinaryOperator *BO = dyn_cast<BinaryOperator>(BBI);
+    if (BO && isa<ConstantInt>(BO->getOperand(1))) { 
+      if (!solveBlockValueBinaryOp(Res, BBI, BB))
+        return false;
+      insertResult(Val, BB, Res);
+      return true;
+    }
   }
 
   DEBUG(dbgs() << " compute BB '" << BB->getName()
