@@ -842,7 +842,7 @@ static int getPPC64SectionRank(StringRef SectionName) {
 template <class ELFT> static bool isRelroSection(OutputSectionBase<ELFT> *Sec) {
   if (!Config->ZRelro)
     return false;
-  typename OutputSectionBase<ELFT>::uintX_t Flags = Sec->getFlags();
+  typename ELFT::uint Flags = Sec->getFlags();
   if (!(Flags & SHF_ALLOC) || !(Flags & SHF_WRITE))
     return false;
   if (Flags & SHF_TLS)
