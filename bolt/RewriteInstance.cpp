@@ -853,7 +853,25 @@ void RewriteInstance::disassembleFunctions() {
     // has been processed.
     auto SymRefI = FileSymRefs.upper_bound(Function.getAddress());
     if (SymRefI != FileSymRefs.end()) {
-      auto MaxSize = SymRefI->first - Function.getAddress();
+      uint64_t MaxSize;
+      auto SectionIter = *SymRefI->second.getSection();
+      if (SectionIter != InputFile->section_end() &&
+          *SectionIter == Function.getSection()) {
+        MaxSize = SymRefI->first - Function.getAddress();
+      } else {
+        // Function runs till the end of the containing section assuming
+        // the section does not run over the next symbol.
+        uint64_t SectionEnd = Function.getSection().getAddress() +
+                              Function.getSection().getSize();
+        if (SectionEnd > SymRefI->first) {
+          errs() << "BOLT-WARNING: symbol after " << Function.getName()
+                 << " should not be in the same section.\n";
+          MaxSize = 0;
+        } else {
+          MaxSize = SectionEnd - Function.getAddress();
+        }
+      }
+
       if (MaxSize < Function.getSize()) {
         errs() << "BOLT-WARNING: symbol seen in the middle of the function "
                << Function.getName() << ". Skipping.\n";
