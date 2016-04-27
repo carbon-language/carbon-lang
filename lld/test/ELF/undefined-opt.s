@@ -59,7 +59,7 @@
 # EXPORT-SO:   Name: export
 # EXPORT-SO: ]
 
-.globl _start;
+.globl _start
 _start:
 
 .globl export
