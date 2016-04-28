@@ -65,4 +65,3 @@ private:
 } // namespace clang
 
 #endif // LLVM_CLANG_LIB_FORMAT_AFFECTEDRANGEMANAGER_H
-#
