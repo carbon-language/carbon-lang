@@ -37,7 +37,7 @@ struct Location {
   bool operator==(const Location &RHS) const {
     return IsSymbol == RHS.IsSymbol &&
            Name == RHS.Name &&
-           Offset == RHS.Offset;
+           (Name == "[heap]" || Offset == RHS.Offset);
   }
 
   bool operator<(const Location &RHS) const {
@@ -49,6 +49,7 @@ struct Location {
 
     return IsSymbol == RHS.IsSymbol &&
            Name == RHS.Name &&
+           Name != "[heap]" &&
            Offset < RHS.Offset;
   }
 };
