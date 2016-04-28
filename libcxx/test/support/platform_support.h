@@ -91,6 +91,6 @@ get_temp_file_name()
     return Name;
 #endif
 }
-#endif // __CloundABI__
+#endif // __CloudABI__
 
 #endif // PLATFORM_SUPPORT_H
