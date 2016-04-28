@@ -92,7 +92,7 @@ public:
   DiagnosticInfo(/* DiagnosticKind */ int Kind, DiagnosticSeverity Severity)
       : Kind(Kind), Severity(Severity) {}
 
-  virtual ~DiagnosticInfo() = default;
+  virtual ~DiagnosticInfo() {}
 
   /* DiagnosticKind */ int getKind() const { return Kind; }
   DiagnosticSeverity getSeverity() const { return Severity; }
