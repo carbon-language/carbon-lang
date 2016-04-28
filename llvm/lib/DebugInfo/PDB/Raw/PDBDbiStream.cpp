@@ -125,18 +125,18 @@ std::error_code PDBDbiStream::reload() {
   for (auto Info : Range)
     ModuleInfos.push_back(ModuleInfoEx(Info));
 
-  if (EC = readSubstream(SecContrSubstream, Header->SecContrSubstreamSize))
+  if ((EC = readSubstream(SecContrSubstream, Header->SecContrSubstreamSize)))
     return EC;
-  if (EC = readSubstream(SecMapSubstream, Header->SectionMapSize))
+  if ((EC = readSubstream(SecMapSubstream, Header->SectionMapSize)))
     return EC;
-  if (EC = readSubstream(FileInfoSubstream, Header->FileInfoSize))
+  if ((EC = readSubstream(FileInfoSubstream, Header->FileInfoSize)))
     return EC;
-  if (EC = readSubstream(TypeServerMapSubstream, Header->TypeServerSize))
+  if ((EC = readSubstream(TypeServerMapSubstream, Header->TypeServerSize)))
     return EC;
-  if (EC = readSubstream(ECSubstream, Header->ECSubstreamSize))
+  if ((EC = readSubstream(ECSubstream, Header->ECSubstreamSize)))
     return EC;
 
-  if (EC = initializeFileInfo())
+  if ((EC = initializeFileInfo()))
     return EC;
 
   return std::error_code();
