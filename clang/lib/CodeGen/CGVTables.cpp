@@ -902,43 +902,34 @@ void CodeGenModule::EmitDeferredVTables() {
   DeferredVTables.clear();
 }
 
-bool CodeGenModule::HasHiddenLTOVisibility(const CXXRecordDecl *RD) {
-  LinkageInfo LV = RD->getLinkageAndVisibility();
-  if (!isExternallyVisible(LV.getLinkage()))
-    return true;
+bool CodeGenModule::NeedVTableBitSets() {
+  return getCodeGenOpts().WholeProgramVTables ||
+         getLangOpts().Sanitize.has(SanitizerKind::CFIVCall) ||
+         getLangOpts().Sanitize.has(SanitizerKind::CFINVCall) ||
+         getLangOpts().Sanitize.has(SanitizerKind::CFIDerivedCast) ||
+         getLangOpts().Sanitize.has(SanitizerKind::CFIUnrelatedCast);
+}
 
-  if (RD->hasAttr<LTOVisibilityPublicAttr>() || RD->hasAttr<UuidAttr>())
-    return false;
+bool CodeGenModule::IsBitSetBlacklistedRecord(const CXXRecordDecl *RD) {
+  std::string TypeName = RD->getQualifiedNameAsString();
+  auto isInBlacklist = [&](const SanitizerBlacklist &BL) {
+    if (RD->hasAttr<UuidAttr>() && BL.isBlacklistedType("attr:uuid"))
+      return true;
 
-  if (getTriple().isOSBinFormatCOFF()) {
-    if (RD->hasAttr<DLLExportAttr>() || RD->hasAttr<DLLImportAttr>())
-      return false;
-  } else {
-    if (LV.getVisibility() != HiddenVisibility)
-      return false;
-  }
+    return BL.isBlacklistedType(TypeName);
+  };
 
-  if (getCodeGenOpts().LTOVisibilityPublicStd) {
-    const DeclContext *DC = RD;
-    while (1) {
-      auto *D = cast<Decl>(DC);
-      DC = DC->getParent();
-      if (isa<TranslationUnitDecl>(DC->getRedeclContext())) {
-        if (auto *ND = dyn_cast<NamespaceDecl>(D))
-          if (const IdentifierInfo *II = ND->getIdentifier())
-            if (II->isStr("std") || II->isStr("stdext"))
-              return false;
-        break;
-      }
-    }
-  }
-
-  return true;
+  return isInBlacklist(WholeProgramVTablesBlacklist) ||
+         ((LangOpts.Sanitize.has(SanitizerKind::CFIVCall) ||
+           LangOpts.Sanitize.has(SanitizerKind::CFINVCall) ||
+           LangOpts.Sanitize.has(SanitizerKind::CFIDerivedCast) ||
+           LangOpts.Sanitize.has(SanitizerKind::CFIUnrelatedCast)) &&
+          isInBlacklist(getContext().getSanitizerBlacklist()));
 }
 
 void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
                                             const VTableLayout &VTLayout) {
-  if (!getCodeGenOpts().PrepareForLTO)
+  if (!NeedVTableBitSets())
     return;
 
   CharUnits PointerWidth =
@@ -947,8 +938,12 @@ void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
   typedef std::pair<const CXXRecordDecl *, unsigned> BSEntry;
   std::vector<BSEntry> BitsetEntries;
   // Create a bit set entry for each address point.
-  for (auto &&AP : VTLayout.getAddressPoints())
+  for (auto &&AP : VTLayout.getAddressPoints()) {
+    if (IsBitSetBlacklistedRecord(AP.first.getBase()))
+      continue;
+
     BitsetEntries.push_back(std::make_pair(AP.first.getBase(), AP.second));
+  }
 
   // Sort the bit set entries for determinism.
   std::sort(BitsetEntries.begin(), BitsetEntries.end(),

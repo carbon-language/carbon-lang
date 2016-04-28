@@ -2489,7 +2489,7 @@ void CodeGenFunction::EmitBitSetCodeForVCall(const CXXRecordDecl *RD,
                                              llvm::Value *VTable,
                                              SourceLocation Loc) {
   if (CGM.getCodeGenOpts().WholeProgramVTables &&
-      CGM.HasHiddenLTOVisibility(RD)) {
+      !CGM.IsBitSetBlacklistedRecord(RD)) {
     llvm::Metadata *MD =
         CGM.CreateMetadataIdentifierForType(QualType(RD->getTypeForDecl(), 0));
     llvm::Value *BitSetName =
@@ -2565,12 +2565,7 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
                                          llvm::Value *VTable,
                                          CFITypeCheckKind TCK,
                                          SourceLocation Loc) {
-  if (!CGM.getCodeGenOpts().SanitizeCfiCrossDso &&
-      !CGM.HasHiddenLTOVisibility(RD))
-    return;
-
-  std::string TypeName = RD->getQualifiedNameAsString();
-  if (getContext().getSanitizerBlacklist().isBlacklistedType(TypeName))
+  if (CGM.IsBitSetBlacklistedRecord(RD))
     return;
 
   SanitizerScope SanScope(this);

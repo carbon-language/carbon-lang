@@ -5749,9 +5749,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_InternalLinkage:
     handleInternalLinkageAttr(S, D, Attr);
     break;
-  case AttributeList::AT_LTOVisibilityPublic:
-    handleSimpleAttribute<LTOVisibilityPublicAttr>(S, D, Attr);
-    break;
 
   // Microsoft attributes:
   case AttributeList::AT_MSNoVTable:

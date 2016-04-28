@@ -13,7 +13,6 @@
 // CHECK-MT-NOT: "-D_DEBUG"
 // CHECK-MT: "-D_MT"
 // CHECK-MT-NOT: "-D_DLL"
-// CHECK-MT: "-flto-visibility-public-std"
 // CHECK-MT: "--dependent-lib=libcmt"
 // CHECK-MT: "--dependent-lib=oldnames"
 
@@ -22,7 +21,6 @@
 // CHECK-MTd: "-D_DEBUG"
 // CHECK-MTd: "-D_MT"
 // CHECK-MTd-NOT: "-D_DLL"
-// CHECK-MTd: "-flto-visibility-public-std"
 // CHECK-MTd: "--dependent-lib=libcmtd"
 // CHECK-MTd: "--dependent-lib=oldnames"
 

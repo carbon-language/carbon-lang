@@ -1503,7 +1503,7 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
 void MicrosoftCXXABI::emitVTableBitSetEntries(VPtrInfo *Info,
                                               const CXXRecordDecl *RD,
                                               llvm::GlobalVariable *VTable) {
-  if (!CGM.getCodeGenOpts().PrepareForLTO)
+  if (!CGM.NeedVTableBitSets())
     return;
 
   llvm::NamedMDNode *BitsetsMD =
@@ -1519,13 +1519,15 @@ void MicrosoftCXXABI::emitVTableBitSetEntries(VPtrInfo *Info,
           : CharUnits::Zero();
 
   if (Info->PathToBaseWithVPtr.empty()) {
-    CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint, RD);
+    if (!CGM.IsBitSetBlacklistedRecord(RD))
+      CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint, RD);
     return;
   }
 
   // Add a bitset entry for the least derived base belonging to this vftable.
-  CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint,
-                              Info->PathToBaseWithVPtr.back());
+  if (!CGM.IsBitSetBlacklistedRecord(Info->PathToBaseWithVPtr.back()))
+    CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint,
+                                Info->PathToBaseWithVPtr.back());
 
   // Add a bitset entry for each derived class that is laid out at the same
   // offset as the least derived base.
@@ -1543,11 +1545,12 @@ void MicrosoftCXXABI::emitVTableBitSetEntries(VPtrInfo *Info,
       Offset = VBI->second.VBaseOffset;
     if (!Offset.isZero())
       return;
-    CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint, DerivedRD);
+    if (!CGM.IsBitSetBlacklistedRecord(DerivedRD))
+      CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint, DerivedRD);
   }
 
   // Finally do the same for the most derived class.
-  if (Info->FullOffsetInMDC.isZero())
+  if (Info->FullOffsetInMDC.isZero() && !CGM.IsBitSetBlacklistedRecord(RD))
     CGM.CreateVTableBitSetEntry(BitsetsMD, VTable, AddressPoint, RD);
 }
 
@@ -1816,7 +1819,7 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
 
   MicrosoftVTableContext::MethodVFTableLocation ML =
       CGM.getMicrosoftVTableContext().getMethodVFTableLocation(GD);
-  if (CGM.getCodeGenOpts().PrepareForLTO)
+  if (CGM.NeedVTableBitSets())
     CGF.EmitBitSetCodeForVCall(getClassAtVTableLocation(getContext(), GD, ML),
                                VTable, Loc);
 

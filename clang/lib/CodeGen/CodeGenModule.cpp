@@ -88,7 +88,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const HeaderSearchOptions &HSO,
       PreprocessorOpts(PPO), CodeGenOpts(CGO), TheModule(M), Diags(diags),
       Target(C.getTargetInfo()), ABI(createCXXABI(*this)),
       VMContext(M.getContext()), Types(*this), VTables(*this),
-      SanitizerMD(new SanitizerMetadata(*this)) {
+      SanitizerMD(new SanitizerMetadata(*this)),
+      WholeProgramVTablesBlacklist(CGO.WholeProgramVTablesBlacklistFiles,
+                                   C.getSourceManager()) {
 
   // Initialize the type cache.
   llvm::LLVMContext &LLVMContext = M.getContext();
