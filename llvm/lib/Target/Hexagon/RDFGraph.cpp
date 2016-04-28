@@ -919,7 +919,7 @@ NodeAddr<FuncNode*> DataFlowGraph::newFunc(MachineFunction *MF) {
 }
 
 // Build the data flow graph.
-void DataFlowGraph::build() {
+void DataFlowGraph::build(unsigned Options) {
   reset();
   Func = newFunc(&MF);
 
@@ -964,7 +964,8 @@ void DataFlowGraph::build() {
   linkBlockRefs(DM, EA);
 
   // Finally, remove all unused phi nodes.
-  removeUnusedPhis();
+  if (!(Options & BuildOptions::KeepDeadPhis))
+    removeUnusedPhis();
 }
 
 // For each stack in the map DefM, push the delimiter for block B on it.
