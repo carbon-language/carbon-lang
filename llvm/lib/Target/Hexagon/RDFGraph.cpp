@@ -686,10 +686,10 @@ bool TargetOperandInfo::isClobbering(const MachineInstr &In, unsigned OpNum)
   return false;
 }
 
-// Check if the given instruction specifically requires 
+// Check if the given instruction specifically requires
 bool TargetOperandInfo::isFixedReg(const MachineInstr &In, unsigned OpNum)
       const {
-  if (In.isCall() || In.isReturn())
+  if (In.isCall() || In.isReturn() || In.isInlineAsm())
     return true;
   const MCInstrDesc &D = In.getDesc();
   if (!D.getImplicitDefs() && !D.getImplicitUses())
@@ -1180,6 +1180,7 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
       ImpUses.insert({R, 0});
 
   bool IsCall = In.isCall(), IsReturn = In.isReturn();
+  bool IsInlineAsm = In.isInlineAsm();
   bool IsPredicated = TII.isPredicated(In);
   unsigned NumOps = In.getNumOperands();
 
@@ -1213,7 +1214,7 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     if (!Op.isReg() || !Op.isDef() || !Op.isImplicit())
       continue;
     RegisterRef RR = { Op.getReg(), Op.getSubReg() };
-    if (!IsCall && !ImpDefs.count(RR))
+    if (!IsCall && !IsInlineAsm && !ImpDefs.count(RR))
       continue;
     if (DoneDefs.count(RR))
       continue;
@@ -1238,7 +1239,7 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     // instructions regardless of whether or not they appear in the instruction
     // descriptor's list.
     bool Implicit = Op.isImplicit();
-    bool TakeImplicit = IsReturn || IsCall || IsPredicated;
+    bool TakeImplicit = IsReturn || IsCall || IsInlineAsm || IsPredicated;
     if (Implicit && !TakeImplicit && !ImpUses.count(RR))
       continue;
     uint16_t Flags = NodeAttrs::None;
