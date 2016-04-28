@@ -22,8 +22,7 @@ struct B : virtual A { int b; };
 
 // Test a reset.
 #pragma vtordisp()
-#pragma vtordisp(pop) // stack should NOT be affected by reset.
-                      // Now stack contains '1'.
+#pragma vtordisp(pop) // expected-warning {{#pragma vtordisp(pop, ...) failed: stack empty}}
 
 #pragma vtordisp(      // expected-warning {{unknown action for '#pragma vtordisp' - ignored}}
 #pragma vtordisp(asdf) // expected-warning {{unknown action for '#pragma vtordisp' - ignored}}
@@ -43,7 +42,6 @@ struct E {
   virtual void f();
 };
 
-#pragma vtordisp(pop) // After this stack should be empty.
 #pragma vtordisp(pop) // expected-warning {{#pragma vtordisp(pop, ...) failed: stack empty}}
 
 void g() {

@@ -1928,8 +1928,7 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
   // Save and reset current vtordisp stack if we have entered a C++ method body.
   bool IsCXXMethod =
       getLangOpts().CPlusPlus && Decl && isa<CXXMethodDecl>(Decl);
-  Sema::PragmaStackSentinelRAII
-    PragmaStackSentinel(Actions, "InternalPragmaState", IsCXXMethod);
+  Sema::VtorDispStackRAII SavedVtorDispStack(Actions, IsCXXMethod);
 
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement
@@ -1973,8 +1972,7 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope) {
   // Save and reset current vtordisp stack if we have entered a C++ method body.
   bool IsCXXMethod =
       getLangOpts().CPlusPlus && Decl && isa<CXXMethodDecl>(Decl);
-  Sema::PragmaStackSentinelRAII
-    PragmaStackSentinel(Actions, "InternalPragmaState", IsCXXMethod);
+  Sema::VtorDispStackRAII SavedVtorDispStack(Actions, IsCXXMethod);
 
   SourceLocation LBraceLoc = Tok.getLocation();
   StmtResult FnBody(ParseCXXTryBlockCommon(TryLoc, /*FnTry*/true));

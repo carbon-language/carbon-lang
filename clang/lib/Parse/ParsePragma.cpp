@@ -497,11 +497,11 @@ void Parser::HandlePragmaMSPointersToMembers() {
 void Parser::HandlePragmaMSVtorDisp() {
   assert(Tok.is(tok::annot_pragma_ms_vtordisp));
   uintptr_t Value = reinterpret_cast<uintptr_t>(Tok.getAnnotationValue());
-  Sema::PragmaMsStackAction Action =
-      static_cast<Sema::PragmaMsStackAction>((Value >> 16) & 0xFFFF);
+  Sema::PragmaVtorDispKind Kind =
+      static_cast<Sema::PragmaVtorDispKind>((Value >> 16) & 0xFFFF);
   MSVtorDispAttr::Mode Mode = MSVtorDispAttr::Mode(Value & 0xFFFF);
   SourceLocation PragmaLoc = ConsumeToken(); // The annotation token.
-  Actions.ActOnPragmaMSVtorDisp(Action, PragmaLoc, Mode);
+  Actions.ActOnPragmaMSVtorDisp(Kind, PragmaLoc, Mode);
 }
 
 void Parser::HandlePragmaMSPragma() {
@@ -1606,7 +1606,7 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
   }
   PP.Lex(Tok);
 
-  Sema::PragmaMsStackAction Action = Sema::PSK_Set;
+  Sema::PragmaVtorDispKind Kind = Sema::PVDK_Set;
   const IdentifierInfo *II = Tok.getIdentifierInfo();
   if (II) {
     if (II->isStr("push")) {
@@ -1617,24 +1617,24 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
         return;
       }
       PP.Lex(Tok);
-      Action = Sema::PSK_Push_Set;
+      Kind = Sema::PVDK_Push;
       // not push, could be on/off
     } else if (II->isStr("pop")) {
       // #pragma vtordisp(pop)
       PP.Lex(Tok);
-      Action = Sema::PSK_Pop;
+      Kind = Sema::PVDK_Pop;
     }
     // not push or pop, could be on/off
   } else {
     if (Tok.is(tok::r_paren)) {
       // #pragma vtordisp()
-      Action = Sema::PSK_Reset;
+      Kind = Sema::PVDK_Reset;
     }
   }
 
 
   uint64_t Value = 0;
-  if (Action & Sema::PSK_Push || Action & Sema::PSK_Set) {
+  if (Kind == Sema::PVDK_Push || Kind == Sema::PVDK_Set) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     if (II && II->isStr("off")) {
       PP.Lex(Tok);
@@ -1676,7 +1676,7 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
   AnnotTok.setLocation(VtorDispLoc);
   AnnotTok.setAnnotationEndLoc(EndLoc);
   AnnotTok.setAnnotationValue(reinterpret_cast<void *>(
-      static_cast<uintptr_t>((Action << 16) | (Value & 0xFFFF))));
+      static_cast<uintptr_t>((Kind << 16) | (Value & 0xFFFF))));
   PP.EnterToken(AnnotTok);
 }
 
