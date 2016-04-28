@@ -691,6 +691,12 @@ bool TargetOperandInfo::isFixedReg(const MachineInstr &In, unsigned OpNum)
       const {
   if (In.isCall() || In.isReturn() || In.isInlineAsm())
     return true;
+  // Check for a tail call.
+  if (In.isBranch())
+    for (auto &O : In.operands())
+      if (O.isGlobal() || O.isSymbol())
+        return true;
+
   const MCInstrDesc &D = In.getDesc();
   if (!D.getImplicitDefs() && !D.getImplicitUses())
     return false;
@@ -1168,6 +1174,17 @@ NodeAddr<RefNode*> DataFlowGraph::getNextShadow(NodeAddr<InstrNode*> IA,
 void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
   auto SA = newStmt(BA, &In);
 
+  auto isCall = [] (const MachineInstr &In) -> bool {
+    if (In.isCall())
+      return true;
+    // Is tail call?
+    if (In.isBranch())
+      for (auto &Op : In.operands())
+        if (Op.isGlobal() || Op.isSymbol())
+          return true;
+    return false;
+  };
+
   // Collect a set of registers that this instruction implicitly uses
   // or defines. Implicit operands from an instruction will be ignored
   // unless they are listed here.
@@ -1179,8 +1196,7 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     while (uint16_t R = *ImpU++)
       ImpUses.insert({R, 0});
 
-  bool IsCall = In.isCall(), IsReturn = In.isReturn();
-  bool IsInlineAsm = In.isInlineAsm();
+  bool NeedsImplicit = isCall(In) || In.isInlineAsm() || In.isReturn();
   bool IsPredicated = TII.isPredicated(In);
   unsigned NumOps = In.getNumOperands();
 
@@ -1214,7 +1230,7 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     if (!Op.isReg() || !Op.isDef() || !Op.isImplicit())
       continue;
     RegisterRef RR = { Op.getReg(), Op.getSubReg() };
-    if (!IsCall && !IsInlineAsm && !ImpDefs.count(RR))
+    if (!NeedsImplicit && !ImpDefs.count(RR))
       continue;
     if (DoneDefs.count(RR))
       continue;
@@ -1239,7 +1255,7 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     // instructions regardless of whether or not they appear in the instruction
     // descriptor's list.
     bool Implicit = Op.isImplicit();
-    bool TakeImplicit = IsReturn || IsCall || IsInlineAsm || IsPredicated;
+    bool TakeImplicit = NeedsImplicit || IsPredicated;
     if (Implicit && !TakeImplicit && !ImpUses.count(RR))
       continue;
     uint16_t Flags = NodeAttrs::None;
