@@ -531,9 +531,8 @@ PMTopLevelManager::setLastUser(ArrayRef<Pass*> AnalysisPasses, Pass *P) {
     const AnalysisUsage::VectorType &IDs = AnUsage->getRequiredTransitiveSet();
     SmallVector<Pass *, 12> LastUses;
     SmallVector<Pass *, 12> LastPMUses;
-    for (AnalysisUsage::VectorType::const_iterator I = IDs.begin(),
-         E = IDs.end(); I != E; ++I) {
-      Pass *AnalysisPass = findAnalysisPass(*I);
+    for (AnalysisID ID : IDs) {
+      Pass *AnalysisPass = findAnalysisPass(ID);
       assert(AnalysisPass && "Expected analysis pass to exist.");
       AnalysisResolver *AR = AnalysisPass->getResolver();
       assert(AR && "Expected analysis resolver to exist.");
@@ -791,29 +790,24 @@ void PMTopLevelManager::dumpArguments() const {
     return;
 
   dbgs() << "Pass Arguments: ";
-  for (SmallVectorImpl<ImmutablePass *>::const_iterator I =
-       ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
-    if (const PassInfo *PI = findAnalysisPassInfo((*I)->getPassID())) {
+  for (ImmutablePass *P : ImmutablePasses)
+    if (const PassInfo *PI = findAnalysisPassInfo(P->getPassID())) {
       assert(PI && "Expected all immutable passes to be initialized");
       if (!PI->isAnalysisGroup())
         dbgs() << " -" << PI->getPassArgument();
     }
-  for (SmallVectorImpl<PMDataManager *>::const_iterator I =
-       PassManagers.begin(), E = PassManagers.end(); I != E; ++I)
-    (*I)->dumpPassArguments();
+  for (PMDataManager *PM : PassManagers)
+    PM->dumpPassArguments();
   dbgs() << "\n";
 }
 
 void PMTopLevelManager::initializeAllAnalysisInfo() {
-  for (SmallVectorImpl<PMDataManager *>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); I != E; ++I)
-    (*I)->initializeAnalysisInfo();
+  for (PMDataManager *PM : PassManagers)
+    PM->initializeAnalysisInfo();
 
   // Initailize other pass managers
-  for (SmallVectorImpl<PMDataManager *>::iterator
-       I = IndirectPassManagers.begin(), E = IndirectPassManagers.end();
-       I != E; ++I)
-    (*I)->initializeAnalysisInfo();
+  for (PMDataManager *IPM : IndirectPassManagers)
+    IPM->initializeAnalysisInfo();
 
   for (DenseMap<Pass *, Pass *>::iterator DMI = LastUser.begin(),
         DME = LastUser.end(); DMI != DME; ++DMI) {
@@ -824,13 +818,11 @@ void PMTopLevelManager::initializeAllAnalysisInfo() {
 
 /// Destructor
 PMTopLevelManager::~PMTopLevelManager() {
-  for (SmallVectorImpl<PMDataManager *>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); I != E; ++I)
-    delete *I;
+  for (PMDataManager *PM : PassManagers)
+    delete PM;
 
-  for (SmallVectorImpl<ImmutablePass *>::iterator
-         I = ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
-    delete *I;
+  for (ImmutablePass *P : ImmutablePasses)
+    delete P;
 }
 
 //===----------------------------------------------------------------------===//
