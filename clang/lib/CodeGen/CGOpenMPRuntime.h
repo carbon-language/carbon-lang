@@ -1046,7 +1046,7 @@ public:
   /// directive, or null if no if clause is used.
   /// \param Device Expression evaluated in device clause associated with the
   /// target directive, or null if no device clause is used.
-  /// \param CodeGen, Function that emits the enclosed region.
+  /// \param CodeGen Function that emits the enclosed region.
   virtual void emitTargetDataCalls(CodeGenFunction &CGF,
                                    const OMPExecutableDirective &D,
                                    const Expr *IfCond, const Expr *Device,
