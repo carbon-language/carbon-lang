@@ -512,7 +512,7 @@ static bool isRelRelative(RelExpr E, uint32_t Type, const SymbolBody &Body) {
   if (!AbsVal && RelE)
     return true;
 
-  return Target->isRelRelative(Type);
+  return Target->usesOnlyLowPageBits(Type);
 }
 
 // The reason we have to do this early scan is as follows
