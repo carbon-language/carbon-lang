@@ -564,6 +564,20 @@ public:
     return composeSubRegIndexLaneMaskImpl(IdxA, Mask);
   }
 
+  /// Transform a lanemask given for a virtual register to the corresponding
+  /// lanemask before using subregister with index \p IdxA.
+  /// This is the reverse of composeSubRegIndexLaneMask(), assuming Mask is a
+  /// valie lane mask (no invalid bits set) the following holds:
+  /// X0 = composeSubRegIndexLaneMask(Idx, Mask)
+  /// X1 = reverseComposeSubRegIndexLaneMask(Idx, X0)
+  /// => X1 == Mask
+  LaneBitmask reverseComposeSubRegIndexLaneMask(unsigned IdxA,
+                                                LaneBitmask LaneMask) const {
+    if (!IdxA)
+      return LaneMask;
+    return reverseComposeSubRegIndexLaneMaskImpl(IdxA, LaneMask);
+  }
+
   /// Debugging helper: dump register in human readable form to dbgs() stream.
   static void dumpReg(unsigned Reg, unsigned SubRegIndex = 0,
                       const TargetRegisterInfo* TRI = nullptr);
@@ -577,6 +591,11 @@ protected:
   /// Overridden by TableGen in targets that have sub-registers.
   virtual LaneBitmask
   composeSubRegIndexLaneMaskImpl(unsigned, LaneBitmask) const {
+    llvm_unreachable("Target has no sub-registers");
+  }
+
+  virtual LaneBitmask reverseComposeSubRegIndexLaneMaskImpl(unsigned,
+                                                            LaneBitmask) const {
     llvm_unreachable("Target has no sub-registers");
   }
 
