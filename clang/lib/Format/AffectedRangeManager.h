@@ -56,6 +56,7 @@ private:
   // Returns \c true if line or one if its children is affected.
   bool nonPPLineAffected(AnnotatedLine *Line,
                          const AnnotatedLine *PreviousLine);
+
   SourceManager &SourceMgr;
   const SmallVector<CharSourceRange, 8> Ranges;
 };
@@ -63,4 +64,5 @@ private:
 } // namespace format
 } // namespace clang
 
-#endif // LLVM_CLANG_LIB_FORMAT_WHITESPACEMANAGER_H
+#endif // LLVM_CLANG_LIB_FORMAT_AFFECTEDRANGEMANAGER_H
+#

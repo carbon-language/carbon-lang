@@ -1460,7 +1460,7 @@ public:
               std::unique_ptr<FileManager> FileMgr,
               std::unique_ptr<SourceManager> VirtualSM,
               std::unique_ptr<DiagnosticsEngine> Diagnostics,
-              std::vector<CharSourceRange> CharRanges)
+              const std::vector<CharSourceRange> &CharRanges)
       : Style(Style), ID(ID), CharRanges(CharRanges.begin(), CharRanges.end()),
         SM(*VirtualSM), FileMgr(std::move(FileMgr)),
         VirtualSM(std::move(VirtualSM)), Diagnostics(std::move(Diagnostics)) {}
