@@ -325,14 +325,6 @@ public:
   using llvm::Pass::doInitialization;
   using llvm::Pass::doFinalization;
 
-  /// doInitialization - Run all of the initializers for the module passes.
-  ///
-  bool doInitialization();
-
-  /// doFinalization - Run all of the finalizers for the module passes.
-  ///
-  bool doFinalization();
-
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const override {
     Info.setPreservesAll();
@@ -422,14 +414,6 @@ public:
 
   using llvm::Pass::doInitialization;
   using llvm::Pass::doFinalization;
-
-  /// doInitialization - Run all of the initializers for the module passes.
-  ///
-  bool doInitialization();
-
-  /// doFinalization - Run all of the finalizers for the module passes.
-  ///
-  bool doFinalization();
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const override {
