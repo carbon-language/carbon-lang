@@ -115,7 +115,7 @@ std::error_code PDBDbiStream::reload() {
     return std::make_error_code(std::errc::illegal_byte_sequence);
 
   std::error_code EC;
-  if (EC = readSubstream(ModInfoSubstream, Header->ModiSubstreamSize))
+  if ((EC = readSubstream(ModInfoSubstream, Header->ModiSubstreamSize)))
     return EC;
 
   // Since each ModInfo in the stream is a variable length, we have to iterate
