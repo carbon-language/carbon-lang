@@ -150,9 +150,8 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
 // Add an undefined symbol.
 template <class ELFT>
 SymbolBody *SymbolTable<ELFT>::addUndefined(StringRef Name) {
-  auto *Sym = new (Alloc)
-      Undefined(Name, STB_GLOBAL, STV_DEFAULT, /*Type*/ 0, /*Size*/ 0,
-                /*IsBitcode*/ false);
+  auto *Sym = new (Alloc) Undefined(Name, STB_GLOBAL, STV_DEFAULT, /*Type*/ 0,
+                                    /*IsBitcode*/ false);
   resolve(Sym);
   return Sym;
 }
