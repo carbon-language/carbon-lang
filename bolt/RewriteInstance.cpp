@@ -2367,8 +2367,8 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
 
       DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
     } else {
-      errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
-                   << Twine::utohexstr(DIE->getOffset()) << "\n";
+      DEBUG(errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
+                   << Twine::utohexstr(DIE->getOffset()) << "\n");
     }
   }
 }
