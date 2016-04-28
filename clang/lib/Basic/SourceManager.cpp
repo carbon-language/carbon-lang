@@ -1394,8 +1394,9 @@ unsigned SourceManager::getExpansionLineNumber(SourceLocation Loc,
 }
 unsigned SourceManager::getPresumedLineNumber(SourceLocation Loc,
                                               bool *Invalid) const {
-  if (isInvalid(Loc, Invalid)) return 0;
-  return getPresumedLoc(Loc).getLine();
+  PresumedLoc PLoc = getPresumedLoc(Loc);
+  if (isInvalid(PLoc, Invalid)) return 0;
+  return PLoc.getLine();
 }
 
 /// getFileCharacteristic - return the file characteristic of the specified
