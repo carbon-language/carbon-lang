@@ -4931,7 +4931,7 @@ public:
     Builder.defineMacro("__ARM_FP16_ARGS", "1");
 
     // ACLE 6.5.3 Fused multiply-accumulate (FMA)
-    if (ArchVersion >= 7 && (CPUProfile != "M" || CPUAttr == "7EM"))
+    if (ArchVersion >= 7 && (FPU & VFP4FPU))
       Builder.defineMacro("__ARM_FEATURE_FMA", "1");
 
     // Subtarget options.
