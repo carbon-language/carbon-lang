@@ -224,7 +224,7 @@ public:
 
   /// Returns the combination of all lane masks of register in this class.
   /// The lane masks of the registers are the combination of all lane masks
-  /// of their subregisters.
+  /// of their subregisters. Returns 1 if there are no subregisters.
   LaneBitmask getLaneMask() const {
     return LaneMask;
   }
