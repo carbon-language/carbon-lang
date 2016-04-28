@@ -786,7 +786,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         if (DemandedElts == 0)
           return ConstantInt::getNullValue(VTy);
 
-        // We know that the upper bits are set to zero. 
+        // We know that the upper bits are set to zero.
         KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - ArgWidth);
         return nullptr;
       }
