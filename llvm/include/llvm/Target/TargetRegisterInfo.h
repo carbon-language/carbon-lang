@@ -70,6 +70,9 @@ public:
   const uint8_t AllocationPriority;
   /// Whether the class supports two (or more) disjunct subregister indices.
   const bool HasDisjunctSubRegs;
+  /// Whether a combination of subregisters can cover every register in the
+  /// class. See also the CoveredBySubRegs description in Target.td.
+  const bool CoveredBySubRegs;
   const sc_iterator SuperClasses;
   ArrayRef<MCPhysReg> (*OrderFunc)(const MachineFunction&);
 

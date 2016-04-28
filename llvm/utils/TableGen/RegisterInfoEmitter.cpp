@@ -1311,7 +1311,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << format("0x%08x,\n    ", RC.LaneMask)
          << (unsigned)RC.AllocationPriority << ",\n    "
          << (RC.HasDisjunctSubRegs?"true":"false")
-         << ", /* HasDisjunctSubRegs */\n    ";
+         << ", /* HasDisjunctSubRegs */\n    "
+         << (RC.CoveredBySubRegs?"true":"false")
+         << ", /* CoveredBySubRegs */\n    ";
       if (RC.getSuperClasses().empty())
         OS << "NullRegClasses,\n    ";
       else
