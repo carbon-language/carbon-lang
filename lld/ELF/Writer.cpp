@@ -1174,7 +1174,7 @@ OutputSectionFactory<ELFT>::createKey(InputSectionBase<ELFT> *C,
   if (isa<MergeInputSection<ELFT>>(C))
     Alignment = std::max(H->sh_addralign, H->sh_entsize);
 
-  // GNU as can give .eh_frame secion type SHT_PROGBITS or SHT_X86_64_UNWIND
+  // GNU as can give .eh_frame section type SHT_PROGBITS or SHT_X86_64_UNWIND
   // depending on the construct. We want to canonicalize it so that
   // there is only one .eh_frame in the end.
   uint32_t Type = H->sh_type;
