@@ -25,7 +25,7 @@ class AnnotatedLine;
 
 class AffectedRangeManager {
 public:
-  AffectedRangeManager(SourceManager &SourceMgr,
+  AffectedRangeManager(const SourceManager &SourceMgr,
                        const ArrayRef<CharSourceRange> Ranges)
       : SourceMgr(SourceMgr), Ranges(Ranges.begin(), Ranges.end()) {}
 
@@ -57,7 +57,7 @@ private:
   bool nonPPLineAffected(AnnotatedLine *Line,
                          const AnnotatedLine *PreviousLine);
 
-  SourceManager &SourceMgr;
+  const SourceManager &SourceMgr;
   const SmallVector<CharSourceRange, 8> Ranges;
 };
 
