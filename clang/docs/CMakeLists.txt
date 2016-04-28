@@ -97,7 +97,7 @@ if (LLVM_ENABLE_SPHINX)
       add_sphinx_target(html clang)
       add_custom_command(TARGET docs-clang-html POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        LibASTMatchersReference.html
+        "${CMAKE_CURRENT_SOURCE_DIR}/LibASTMatchersReference.html"
         "${CMAKE_CURRENT_BINARY_DIR}/html/LibASTMatchersReference.html")
     endif()
     if (${SPHINX_OUTPUT_MAN})
