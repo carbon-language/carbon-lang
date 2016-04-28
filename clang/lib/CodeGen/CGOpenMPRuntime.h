@@ -858,6 +858,9 @@ public:
   /// \param Final Contains either constant bool value, or llvm::Value * of i1
   /// type for final clause. If the value is true, the task forces all of its
   /// child tasks to become final and included tasks.
+  /// \param Schedule If Pointer is nullptr, no grainsize/num_tasks clauses were
+  /// specified. If IntVal is false - it is for grainsize clause, true - for
+  /// num_tasks clause.
   /// \param Nogroup true if nogroup clause was specified, false otherwise.
   /// \param NumberOfParts Number of parts in untied taskloops.
   /// \param TaskFunction An LLVM function with type void (*)(i32 /*gtid*/, i32
@@ -881,9 +884,10 @@ public:
   virtual void emitTaskLoopCall(
       CodeGenFunction &CGF, SourceLocation Loc, const OMPLoopDirective &D,
       bool Tied, llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
-      bool Nogroup, unsigned NumberOfParts, llvm::Value *TaskFunction,
-      QualType SharedsTy, Address Shareds, const Expr *IfCond,
-      ArrayRef<const Expr *> PrivateVars, ArrayRef<const Expr *> PrivateCopies,
+      llvm::PointerIntPair<llvm::Value *, 1, bool> Schedule, bool Nogroup,
+      unsigned NumberOfParts, llvm::Value *TaskFunction, QualType SharedsTy,
+      Address Shareds, const Expr *IfCond, ArrayRef<const Expr *> PrivateVars,
+      ArrayRef<const Expr *> PrivateCopies,
       ArrayRef<const Expr *> FirstprivateVars,
       ArrayRef<const Expr *> FirstprivateCopies,
       ArrayRef<const Expr *> FirstprivateInits);

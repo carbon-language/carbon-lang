@@ -3362,6 +3362,18 @@ void CodeGenFunction::EmitOMPTaskLoopBasedDirective(const OMPLoopDirective &S) {
     // By default the task is not final.
     Final.setInt(/*IntVal=*/false);
   }
+  llvm::PointerIntPair<llvm::Value * /*no grainsize/num_tasks=nullptr*/, 1,
+                       bool /*Grainsize=false, NumTasks=true*/>
+      Schedule;
+  if (const auto* Clause = S.getSingleClause<OMPGrainsizeClause>()) {
+    // grainsize clause
+    Schedule.setInt(/*IntVal=*/false);
+    Schedule.setPointer(EmitScalarExpr(Clause->getGrainsize()));
+  } else if (const auto* Clause = S.getSingleClause<OMPNumTasksClause>()) {
+    // num_tasks clause
+    Schedule.setInt(/*IntVal=*/true);
+    Schedule.setPointer(EmitScalarExpr(Clause->getNumTasks()));
+  }
 
   auto &&BodyGen = [CS, &S](CodeGenFunction &CGF, PrePostActionTy &) {
     // if (PreCond) {
@@ -3433,13 +3445,13 @@ void CodeGenFunction::EmitOMPTaskLoopBasedDirective(const OMPLoopDirective &S) {
       CGF.EmitBlock(ContBlock, true);
     }
   };
-  auto &&TaskGen = [&S, SharedsTy, CapturedStruct, IfCond, &Final,
+  auto &&TaskGen = [&S, SharedsTy, CapturedStruct, IfCond, &Final, &Schedule,
                     Nogroup](CodeGenFunction &CGF, llvm::Value *OutlinedFn,
                              const OMPPrivateDataTy &Data) {
     auto &&CodeGen = [&](CodeGenFunction &CGF, PrePostActionTy &) {
       OMPLoopScope PreInitScope(CGF, S);
       CGF.CGM.getOpenMPRuntime().emitTaskLoopCall(
-          CGF, S.getLocStart(), S, Data.Tied, Final, Nogroup,
+          CGF, S.getLocStart(), S, Data.Tied, Final, Schedule, Nogroup,
           Data.NumberOfParts, OutlinedFn, SharedsTy, CapturedStruct, IfCond,
           Data.PrivateVars, Data.PrivateCopies, Data.FirstprivateVars,
           Data.FirstprivateCopies, Data.FirstprivateInits);

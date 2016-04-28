@@ -3777,7 +3777,8 @@ void CGOpenMPRuntime::emitTaskCall(
 
 void CGOpenMPRuntime::emitTaskLoopCall(
     CodeGenFunction &CGF, SourceLocation Loc, const OMPLoopDirective &D,
-    bool Tied, llvm::PointerIntPair<llvm::Value *, 1, bool> Final, bool Nogroup,
+    bool Tied, llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
+    llvm::PointerIntPair<llvm::Value *, 1, bool> Schedule, bool Nogroup,
     unsigned NumberOfParts, llvm::Value *TaskFunction, QualType SharedsTy,
     Address Shareds, const Expr *IfCond, ArrayRef<const Expr *> PrivateVars,
     ArrayRef<const Expr *> PrivateCopies,
@@ -3825,17 +3826,19 @@ void CGOpenMPRuntime::emitTaskLoopCall(
       cast<VarDecl>(cast<DeclRefExpr>(D.getStrideVariable())->getDecl());
   CGF.EmitAnyExprToMem(StVar->getInit(), StLVal.getAddress(), StLVal.getQuals(),
                        /*IsInitializer=*/true);
+  enum { NoSchedule = 0, Grainsize = 1, NumTasks = 2 };
   llvm::Value *TaskArgs[] = {
-      UpLoc,
-      ThreadID,
-      Data.NewTask,
-      IfVal,
-      LBLVal.getPointer(),
-      UBLVal.getPointer(),
-      CGF.EmitLoadOfScalar(StLVal, SourceLocation()),
+      UpLoc, ThreadID, Data.NewTask, IfVal, LBLVal.getPointer(),
+      UBLVal.getPointer(), CGF.EmitLoadOfScalar(StLVal, SourceLocation()),
       llvm::ConstantInt::getSigned(CGF.IntTy, Nogroup ? 1 : 0),
-      llvm::ConstantInt::getSigned(CGF.IntTy, /*V=*/0),
-      llvm::ConstantInt::get(CGF.Int64Ty, /*V=*/0),
+      llvm::ConstantInt::getSigned(
+          CGF.IntTy, Schedule.getPointer()
+                         ? Schedule.getInt() ? NumTasks : Grainsize
+                         : NoSchedule),
+      Schedule.getPointer()
+          ? CGF.Builder.CreateIntCast(Schedule.getPointer(), CGF.Int64Ty,
+                                      /*isSigned=*/false)
+          : llvm::ConstantInt::get(CGF.Int64Ty, /*V=*/0),
       llvm::ConstantPointerNull::get(CGF.VoidPtrTy)};
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_taskloop), TaskArgs);
 }
