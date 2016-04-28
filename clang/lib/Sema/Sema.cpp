@@ -82,7 +82,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     PackContext(nullptr), MSStructPragmaOn(false),
     MSPointerToMemberRepresentationMethod(
         LangOpts.getMSPointerToMemberRepresentationMethod()),
-    VtorDispModeStack(1, MSVtorDispAttr::Mode(LangOpts.VtorDispMode)),
+    VtorDispStack(MSVtorDispAttr::Mode(LangOpts.VtorDispMode)),
     DataSegStack(nullptr), BSSSegStack(nullptr), ConstSegStack(nullptr),
     CodeSegStack(nullptr), CurInitSeg(nullptr), VisContext(nullptr),
     IsBuildingRecoveryCallExpr(false),

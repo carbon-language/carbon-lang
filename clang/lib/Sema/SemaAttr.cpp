@@ -136,9 +136,9 @@ void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
   // FIXME: We should merge AddAlignmentAttributesForRecord with
   // AddMsStructLayoutForRecord into AddPragmaAttributesForRecord, which takes
   // all active pragmas and applies them as attributes to class definitions.
-  if (VtorDispModeStack.back() != getLangOpts().VtorDispMode)
+  if (VtorDispStack.CurrentValue != getLangOpts().VtorDispMode)
     RD->addAttr(
-        MSVtorDispAttr::CreateImplicit(Context, VtorDispModeStack.back()));
+        MSVtorDispAttr::CreateImplicit(Context, VtorDispStack.CurrentValue));
 }
 
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
@@ -292,29 +292,13 @@ void Sema::ActOnPragmaMSPointersToMembers(
   ImplicitMSInheritanceAttrLoc = PragmaLoc;
 }
 
-void Sema::ActOnPragmaMSVtorDisp(PragmaVtorDispKind Kind,
+void Sema::ActOnPragmaMSVtorDisp(PragmaMsStackAction Action,
                                  SourceLocation PragmaLoc,
                                  MSVtorDispAttr::Mode Mode) {
-  switch (Kind) {
-  case PVDK_Set:
-    VtorDispModeStack.back() = Mode;
-    break;
-  case PVDK_Push:
-    VtorDispModeStack.push_back(Mode);
-    break;
-  case PVDK_Reset:
-    VtorDispModeStack.clear();
-    VtorDispModeStack.push_back(MSVtorDispAttr::Mode(LangOpts.VtorDispMode));
-    break;
-  case PVDK_Pop:
-    VtorDispModeStack.pop_back();
-    if (VtorDispModeStack.empty()) {
-      Diag(PragmaLoc, diag::warn_pragma_pop_failed) << "vtordisp"
-                                                    << "stack empty";
-      VtorDispModeStack.push_back(MSVtorDispAttr::Mode(LangOpts.VtorDispMode));
-    }
-    break;
-  }
+  if (Action & PSK_Pop && VtorDispStack.Stack.empty())
+    Diag(PragmaLoc, diag::warn_pragma_pop_failed) << "vtordisp"
+                                                  << "stack empty";
+  VtorDispStack.Act(PragmaLoc, Action, StringRef(), Mode);
 }
 
 template<typename ValueType>
@@ -323,7 +307,7 @@ void Sema::PragmaStack<ValueType>::Act(SourceLocation PragmaLocation,
                                        llvm::StringRef StackSlotLabel,
                                        ValueType Value) {
   if (Action == PSK_Reset) {
-    CurrentValue = nullptr;
+    CurrentValue = DefaultValue;
     return;
   }
   if (Action & PSK_Push)
