@@ -1,5 +1,6 @@
 ; RUN: llvm-pdbdump --dump-headers %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbdump --dump-headers %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
+; RUN: llvm-pdbdump --dump-headers %p/Inputs/bad-block-size.pdb | FileCheck -check-prefix=BAD-BLOCK-SIZE %s
 
 ; EMPTY:      BlockSize: 4096
 ; EMPTY-NEXT: Unknown0: 2
@@ -977,3 +978,5 @@ BIG-NEXT:     Symbol Byte Size: 3080
 BIG-NEXT:     Type Server Index: 0
 BIG-NEXT:     Has EC Info: 0
 BIG-NEXT:     0 Contributing Source Files:
+
+BAD-BLOCK-SIZE: The file has an unrecognized format.

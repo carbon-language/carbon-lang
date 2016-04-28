@@ -127,7 +127,7 @@ std::error_code PDBFile::parseFileHeaders() {
     return std::make_error_code(std::errc::illegal_byte_sequence);
 
   // We don't support blocksizes which aren't a multiple of four bytes.
-  if (SB->BlockSize % sizeof(support::ulittle32_t) != 0)
+  if (SB->BlockSize == 0 || SB->BlockSize % sizeof(support::ulittle32_t) != 0)
     return std::make_error_code(std::errc::not_supported);
 
   // We don't support directories whose sizes aren't a multiple of four bytes.
