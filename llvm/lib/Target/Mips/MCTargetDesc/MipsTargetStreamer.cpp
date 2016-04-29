@@ -518,6 +518,21 @@ void MipsTargetELFStreamer::finish() {
   DataSection.setAlignment(std::max(16u, DataSection.getAlignment()));
   BSSSection.setAlignment(std::max(16u, BSSSection.getAlignment()));
 
+  // Make sections sizes a multiple of the alignment.
+  MCStreamer &OS = getStreamer();
+  for (MCSection &S : MCA) {
+    MCSectionELF &Section = static_cast<MCSectionELF &>(S);
+
+    unsigned Alignment = Section.getAlignment();
+    if (Alignment) {
+      OS.SwitchSection(&Section);
+      if (Section.UseCodeAlign())
+        OS.EmitCodeAlignment(Alignment, Alignment);
+      else
+        OS.EmitValueToAlignment(Alignment, 0, 1, Alignment);
+    }
+  }
+
   const FeatureBitset &Features = STI.getFeatureBits();
 
   // Update e_header flags. See the FIXME and comment above in
