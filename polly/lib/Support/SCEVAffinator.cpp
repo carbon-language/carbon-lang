@@ -110,6 +110,14 @@ static const SCEV *setNoWrapFlags(ScalarEvolution &SE, const SCEV *Expr,
   }
 }
 
+static __isl_give isl_pw_aff *getWidthExpValOnDomain(unsigned Width,
+                                                     __isl_take isl_set *Dom) {
+  auto *Ctx = isl_set_get_ctx(Dom);
+  auto *WidthVal = isl_val_int_from_ui(Ctx, Width);
+  auto *ExpVal = isl_val_2exp(WidthVal);
+  return isl_pw_aff_val_on_domain(Dom, ExpVal);
+}
+
 SCEVAffinator::SCEVAffinator(Scop *S, LoopInfo &LI)
     : S(S), Ctx(S->getIslCtx()), R(S->getRegion()), SE(*S->getSE()), LI(LI),
       TD(R.getEntry()->getParent()->getParent()->getDataLayout()) {}
@@ -186,12 +194,8 @@ SCEVAffinator::addModuloSemantic(__isl_take isl_pw_aff *PWA,
   isl_val *ModVal = isl_val_int_from_ui(Ctx, Width);
   ModVal = isl_val_2exp(ModVal);
 
-  isl_val *AddVal = isl_val_int_from_ui(Ctx, Width - 1);
-  AddVal = isl_val_2exp(AddVal);
-
   isl_set *Domain = isl_pw_aff_domain(isl_pw_aff_copy(PWA));
-
-  isl_pw_aff *AddPW = isl_pw_aff_val_on_domain(Domain, AddVal);
+  isl_pw_aff *AddPW = getWidthExpValOnDomain(Width - 1, Domain);
 
   PWA = isl_pw_aff_add(PWA, isl_pw_aff_copy(AddPW));
   PWA = isl_pw_aff_mod_val(PWA, ModVal);
@@ -352,15 +356,9 @@ SCEVAffinator::visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
   auto *NonNegDom = isl_pw_aff_nonneg_set(isl_pw_aff_copy(OpPWAC.first));
   auto *NonNegPWA = isl_pw_aff_intersect_domain(isl_pw_aff_copy(OpPWAC.first),
                                                 isl_set_copy(NonNegDom));
-  auto *WidthVal = isl_val_int_from_ui(isl_pw_aff_get_ctx(OpPWAC.first), Width);
-  auto *ExpVal = isl_val_2exp(WidthVal);
-
-  auto ExpPWAC = getPWACtxFromPWA(
-      isl_pw_aff_val_on_domain(isl_set_complement(NonNegDom), ExpVal));
-  combine(OpPWAC, ExpPWAC, isl_pw_aff_add);
-
-  OpPWAC.first =
-      isl_pw_aff_coalesce(isl_pw_aff_union_add(NonNegPWA, OpPWAC.first));
+  auto *ExpPWA = getWidthExpValOnDomain(Width, isl_set_complement(NonNegDom));
+  OpPWAC.first = isl_pw_aff_add(OpPWAC.first, ExpPWA);
+  OpPWAC.first = isl_pw_aff_union_add(NonNegPWA, OpPWAC.first);
   return OpPWAC;
 }
 
