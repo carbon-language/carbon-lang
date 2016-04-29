@@ -3699,12 +3699,11 @@ static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
                               Instruction::CastOps *CastOp) {
   CastInst *CI = dyn_cast<CastInst>(V1);
   Constant *C = dyn_cast<Constant>(V2);
-  CastInst *CI2 = dyn_cast<CastInst>(V2);
   if (!CI)
     return nullptr;
   *CastOp = CI->getOpcode();
 
-  if (CI2) {
+  if (auto *CI2 = dyn_cast<CastInst>(V2)) {
     // If V1 and V2 are both the same cast from the same type, we can look
     // through V1.
     if (CI2->getOpcode() == CI->getOpcode() &&
@@ -3715,31 +3714,11 @@ static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
     return nullptr;
   }
 
-  if (isa<SExtInst>(CI) && CmpI->isSigned()) {
-    Constant *T = ConstantExpr::getTrunc(C, CI->getSrcTy());
-    // This is only valid if the truncated value can be sign-extended
-    // back to the original value.
-    if (ConstantExpr::getSExt(T, C->getType()) == C)
-      return T;
-    return nullptr;
-  }
   if (isa<ZExtInst>(CI) && CmpI->isUnsigned())
     return ConstantExpr::getTrunc(C, CI->getSrcTy());
 
   if (isa<TruncInst>(CI))
     return ConstantExpr::getIntegerCast(C, CI->getSrcTy(), CmpI->isSigned());
-
-  if (isa<FPToUIInst>(CI))
-    return ConstantExpr::getUIToFP(C, CI->getSrcTy(), true);
-
-  if (isa<FPToSIInst>(CI))
-    return ConstantExpr::getSIToFP(C, CI->getSrcTy(), true);
-
-  if (isa<UIToFPInst>(CI))
-    return ConstantExpr::getFPToUI(C, CI->getSrcTy(), true);
-
-  if (isa<SIToFPInst>(CI))
-    return ConstantExpr::getFPToSI(C, CI->getSrcTy(), true);
 
   if (isa<FPTruncInst>(CI))
     return ConstantExpr::getFPExtend(C, CI->getSrcTy(), true);
@@ -3747,7 +3726,40 @@ static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
   if (isa<FPExtInst>(CI))
     return ConstantExpr::getFPTrunc(C, CI->getSrcTy(), true);
 
-  return nullptr;
+  // Sophisticated constants can have values which we cannot easily reason
+  // about.  Skip them for the fp<->int case.
+  if (isa<ConstantExpr>(C))
+    return nullptr;
+
+  Constant *CastedTo = nullptr;
+
+  // This is only valid if the truncated value can be sign-extended
+  // back to the original value.
+  if (isa<SExtInst>(CI) && CmpI->isSigned())
+    CastedTo = ConstantExpr::getTrunc(C, CI->getSrcTy(), true);
+
+  if (isa<FPToUIInst>(CI))
+    CastedTo = ConstantExpr::getUIToFP(C, CI->getSrcTy(), true);
+
+  if (isa<FPToSIInst>(CI))
+    CastedTo = ConstantExpr::getSIToFP(C, CI->getSrcTy(), true);
+
+  if (isa<UIToFPInst>(CI))
+    CastedTo = ConstantExpr::getFPToUI(C, CI->getSrcTy(), true);
+
+  if (isa<SIToFPInst>(CI))
+    CastedTo = ConstantExpr::getFPToSI(C, CI->getSrcTy(), true);
+
+  if (!CastedTo)
+    return nullptr;
+
+  Constant *CastedBack =
+      ConstantExpr::getCast(CI->getOpcode(), CastedTo, C->getType(), true);
+  // Make sure the cast doesn't lose any information.
+  if (CastedBack != C)
+    return nullptr;
+
+  return CastedTo;
 }
 
 SelectPatternResult llvm::matchSelectPattern(Value *V,
