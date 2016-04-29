@@ -93,6 +93,30 @@ public:
   virtual void emitDirectiveSetOddSPReg();
   virtual void emitDirectiveSetNoOddSPReg();
 
+  void emitR(unsigned Opcode, unsigned Reg0, SMLoc IDLoc,
+             const MCSubtargetInfo *STI);
+  void emitII(unsigned Opcode, int16_t Imm1, int16_t Imm2, SMLoc IDLoc,
+              const MCSubtargetInfo *STI);
+  void emitRX(unsigned Opcode, unsigned Reg0, MCOperand Op1, SMLoc IDLoc,
+              const MCSubtargetInfo *STI);
+  void emitRI(unsigned Opcode, unsigned Reg0, int32_t Imm, SMLoc IDLoc,
+              const MCSubtargetInfo *STI);
+  void emitRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, SMLoc IDLoc,
+              const MCSubtargetInfo *STI);
+  void emitRRX(unsigned Opcode, unsigned Reg0, unsigned Reg1, MCOperand Op2,
+               SMLoc IDLoc, const MCSubtargetInfo *STI);
+  void emitRRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, unsigned Reg2,
+               SMLoc IDLoc, const MCSubtargetInfo *STI);
+  void emitRRI(unsigned Opcode, unsigned Reg0, unsigned Reg1, int16_t Imm,
+               SMLoc IDLoc, const MCSubtargetInfo *STI);
+  void emitAddu(unsigned DstReg, unsigned SrcReg, unsigned TrgReg, bool Is64Bit,
+                const MCSubtargetInfo *STI);
+  void emitDSLL(unsigned DstReg, unsigned SrcReg, int16_t ShiftAmount,
+                SMLoc IDLoc, const MCSubtargetInfo *STI);
+  void emitEmptyDelaySlot(bool hasShortDelaySlot, SMLoc IDLoc,
+                          const MCSubtargetInfo *STI);
+  void emitNop(SMLoc IDLoc, const MCSubtargetInfo *STI);
+
   void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
   void reallowModuleDirective() { ModuleDirectiveAllowed = true; }
   bool isModuleDirectiveAllowed() { return ModuleDirectiveAllowed; }

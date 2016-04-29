@@ -114,6 +114,99 @@ void MipsTargetStreamer::emitDirectiveSetNoOddSPReg() {
   forbidModuleDirective();
 }
 
+void MipsTargetStreamer::emitR(unsigned Opcode, unsigned Reg0, SMLoc IDLoc,
+                               const MCSubtargetInfo *STI) {
+  MCInst TmpInst;
+  TmpInst.setOpcode(Opcode);
+  TmpInst.addOperand(MCOperand::createReg(Reg0));
+  TmpInst.setLoc(IDLoc);
+  getStreamer().EmitInstruction(TmpInst, *STI);
+}
+
+void MipsTargetStreamer::emitRX(unsigned Opcode, unsigned Reg0, MCOperand Op1,
+                                SMLoc IDLoc, const MCSubtargetInfo *STI) {
+  MCInst TmpInst;
+  TmpInst.setOpcode(Opcode);
+  TmpInst.addOperand(MCOperand::createReg(Reg0));
+  TmpInst.addOperand(Op1);
+  TmpInst.setLoc(IDLoc);
+  getStreamer().EmitInstruction(TmpInst, *STI);
+}
+
+void MipsTargetStreamer::emitRI(unsigned Opcode, unsigned Reg0, int32_t Imm,
+                                SMLoc IDLoc, const MCSubtargetInfo *STI) {
+  emitRX(Opcode, Reg0, MCOperand::createImm(Imm), IDLoc, STI);
+}
+
+void MipsTargetStreamer::emitRR(unsigned Opcode, unsigned Reg0, unsigned Reg1,
+                                SMLoc IDLoc, const MCSubtargetInfo *STI) {
+  emitRX(Opcode, Reg0, MCOperand::createReg(Reg1), IDLoc, STI);
+}
+
+void MipsTargetStreamer::emitII(unsigned Opcode, int16_t Imm1, int16_t Imm2,
+                                SMLoc IDLoc, const MCSubtargetInfo *STI) {
+  MCInst TmpInst;
+  TmpInst.setOpcode(Opcode);
+  TmpInst.addOperand(MCOperand::createImm(Imm1));
+  TmpInst.addOperand(MCOperand::createImm(Imm2));
+  TmpInst.setLoc(IDLoc);
+  getStreamer().EmitInstruction(TmpInst, *STI);
+}
+
+void MipsTargetStreamer::emitRRX(unsigned Opcode, unsigned Reg0, unsigned Reg1,
+                                 MCOperand Op2, SMLoc IDLoc,
+                                 const MCSubtargetInfo *STI) {
+  MCInst TmpInst;
+  TmpInst.setOpcode(Opcode);
+  TmpInst.addOperand(MCOperand::createReg(Reg0));
+  TmpInst.addOperand(MCOperand::createReg(Reg1));
+  TmpInst.addOperand(Op2);
+  TmpInst.setLoc(IDLoc);
+  getStreamer().EmitInstruction(TmpInst, *STI);
+}
+
+void MipsTargetStreamer::emitRRR(unsigned Opcode, unsigned Reg0, unsigned Reg1,
+                                 unsigned Reg2, SMLoc IDLoc,
+                                 const MCSubtargetInfo *STI) {
+  emitRRX(Opcode, Reg0, Reg1, MCOperand::createReg(Reg2), IDLoc, STI);
+}
+
+void MipsTargetStreamer::emitRRI(unsigned Opcode, unsigned Reg0, unsigned Reg1,
+                                 int16_t Imm, SMLoc IDLoc,
+                                 const MCSubtargetInfo *STI) {
+  emitRRX(Opcode, Reg0, Reg1, MCOperand::createImm(Imm), IDLoc, STI);
+}
+
+void MipsTargetStreamer::emitAddu(unsigned DstReg, unsigned SrcReg,
+                                  unsigned TrgReg, bool Is64Bit,
+                                  const MCSubtargetInfo *STI) {
+  emitRRR(Is64Bit ? Mips::DADDu : Mips::ADDu, DstReg, SrcReg, TrgReg, SMLoc(),
+          STI);
+}
+
+void MipsTargetStreamer::emitDSLL(unsigned DstReg, unsigned SrcReg,
+                                  int16_t ShiftAmount, SMLoc IDLoc,
+                                  const MCSubtargetInfo *STI) {
+  if (ShiftAmount >= 32) {
+    emitRRI(Mips::DSLL32, DstReg, SrcReg, ShiftAmount - 32, IDLoc, STI);
+    return;
+  }
+
+  emitRRI(Mips::DSLL, DstReg, SrcReg, ShiftAmount, IDLoc, STI);
+}
+
+void MipsTargetStreamer::emitEmptyDelaySlot(bool hasShortDelaySlot, SMLoc IDLoc,
+                                            const MCSubtargetInfo *STI) {
+  if (hasShortDelaySlot)
+    emitRR(Mips::MOVE16_MM, Mips::ZERO, Mips::ZERO, IDLoc, STI);
+  else
+    emitRRI(Mips::SLL, Mips::ZERO, Mips::ZERO, 0, IDLoc, STI);
+}
+
+void MipsTargetStreamer::emitNop(SMLoc IDLoc, const MCSubtargetInfo *STI) {
+  emitRRI(Mips::SLL, Mips::ZERO, Mips::ZERO, 0, IDLoc, STI);
+}
+
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
                                              formatted_raw_ostream &OS)
     : MipsTargetStreamer(S), OS(OS) {}
