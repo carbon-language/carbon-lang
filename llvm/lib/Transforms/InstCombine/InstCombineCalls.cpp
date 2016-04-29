@@ -593,30 +593,36 @@ static Value *simplifyX86insertq(IntrinsicInst &II, Value *Op0, Value *Op1,
 /// Attempt to convert pshufb* to shufflevector if the mask is constant.
 static Value *simplifyX86pshufb(const IntrinsicInst &II,
                                 InstCombiner::BuilderTy &Builder) {
-  auto *V = II.getArgOperand(1);
+  Constant *V = dyn_cast<Constant>(II.getArgOperand(1));
+  if (!V)
+    return nullptr;
+
   auto *VTy = cast<VectorType>(V->getType());
   unsigned NumElts = VTy->getNumElements();
   assert((NumElts == 16 || NumElts == 32) &&
          "Unexpected number of elements in shuffle mask!");
+
   // Initialize the resulting shuffle mask to all zeroes.
   uint32_t Indexes[32] = {0};
 
-  if (auto *Mask = dyn_cast<ConstantDataVector>(V)) {
-    // Each byte in the shuffle control mask forms an index to permute the
-    // corresponding byte in the destination operand.
-    for (unsigned I = 0; I < NumElts; ++I) {
-      int8_t Index = Mask->getElementAsInteger(I);
-      // If the most significant bit (bit[7]) of each byte of the shuffle
-      // control mask is set, then zero is written in the result byte.
-      // The zero vector is in the right-hand side of the resulting
-      // shufflevector.
+  // Each byte in the shuffle control mask forms an index to permute the
+  // corresponding byte in the destination operand.
+  for (unsigned I = 0; I < NumElts; ++I) {
+    Constant *COp = V->getAggregateElement(I);
+    if (!COp || !isa<ConstantInt>(COp))
+      return nullptr;
 
-      // The value of each index is the least significant 4 bits of the
-      // shuffle control byte.
-      Indexes[I] = (Index < 0) ? NumElts : Index & 0xF;
-    }
-  } else if (!isa<ConstantAggregateZero>(V))
-    return nullptr;
+    int8_t Index = cast<ConstantInt>(COp)->getValue().getZExtValue();
+
+    // If the most significant bit (bit[7]) of each byte of the shuffle
+    // control mask is set, then zero is written in the result byte.
+    // The zero vector is in the right-hand side of the resulting
+    // shufflevector.
+
+    // The value of each index is the least significant 4 bits of the
+    // shuffle control byte.
+    Indexes[I] = (Index < 0) ? NumElts : Index & 0xF;
+  }
 
   // The value of each index for the high 128-bit lane is the least
   // significant 4 bits of the respective shuffle control byte.
