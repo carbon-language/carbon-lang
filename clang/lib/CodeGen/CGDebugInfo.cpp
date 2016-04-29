@@ -814,15 +814,18 @@ llvm::DIType *CGDebugInfo::CreateType(const TemplateSpecializationType *Ty,
 
 llvm::DIType *CGDebugInfo::CreateType(const TypedefType *Ty,
                                       llvm::DIFile *Unit) {
+  TypedefNameDecl *TD = Ty->getDecl();
   // We don't set size information, but do specify where the typedef was
   // declared.
-  SourceLocation Loc = Ty->getDecl()->getLocation();
+  SourceLocation Loc = TD->getLocation();
+
+  llvm::DIScope *TDContext = getDeclarationLexicalScope(*TD, QualType(Ty, 0));
 
   // Typedefs are derived from some other type.
   return DBuilder.createTypedef(
       getOrCreateType(Ty->getDecl()->getUnderlyingType(), Unit),
       Ty->getDecl()->getName(), getOrCreateFile(Loc), getLineNumber(Loc),
-      getDeclContextDescriptor(Ty->getDecl()));
+      TDContext);
 }
 
 llvm::DIType *CGDebugInfo::CreateType(const FunctionType *Ty,
@@ -1457,6 +1460,23 @@ llvm::DIType *CGDebugInfo::getOrCreateStandaloneType(QualType D,
   return T;
 }
 
+void CGDebugInfo::recordDeclarationLexicalScope(const Decl &D) {
+  assert(LexicalBlockMap.find(&D) == LexicalBlockMap.end() &&
+         "D is already mapped to lexical block scope");
+  if (!LexicalBlockStack.empty())
+    LexicalBlockMap[&D] = LexicalBlockStack.back();
+}
+
+llvm::DIScope *CGDebugInfo::getDeclarationLexicalScope(const Decl &D,
+                                                       QualType Ty) {
+  auto I = LexicalBlockMap.find(&D);
+  if (I != LexicalBlockMap.end()) {
+    RetainedTypes.push_back(Ty.getAsOpaquePtr());
+    return I->second;
+  }
+  return getDeclContextDescriptor(cast<Decl>(&D));
+}
+
 void CGDebugInfo::completeType(const EnumDecl *ED) {
   if (DebugKind <= codegenoptions::DebugLineTablesOnly)
     return;
@@ -2060,7 +2080,7 @@ llvm::DIType *CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     // entered into the ReplaceMap: finalize() will replace the first
     // FwdDecl with the second and then replace the second with
     // complete type.
-    llvm::DIScope *EDContext = getDeclContextDescriptor(ED);
+    llvm::DIScope *EDContext = getDeclarationLexicalScope(*ED, QualType(Ty, 0));
     llvm::DIFile *DefUnit = getOrCreateFile(ED->getLocation());
     llvm::TempDIScope TmpContext(DBuilder.createReplaceableCompositeType(
         llvm::dwarf::DW_TAG_enumeration_type, "", TheCU, DefUnit, 0));
@@ -2104,7 +2124,7 @@ llvm::DIType *CGDebugInfo::CreateTypeDefinition(const EnumType *Ty) {
 
   llvm::DIFile *DefUnit = getOrCreateFile(ED->getLocation());
   unsigned Line = getLineNumber(ED->getLocation());
-  llvm::DIScope *EnumContext = getDeclContextDescriptor(ED);
+  llvm::DIScope *EnumContext = getDeclarationLexicalScope(*ED, QualType(Ty, 0));
   llvm::DIType *ClassTy =
       ED->isFixed() ? getOrCreateType(ED->getIntegerType(), DefUnit) : nullptr;
   return DBuilder.createEnumerationType(EnumContext, ED->getName(), DefUnit,
@@ -2365,7 +2385,7 @@ llvm::DICompositeType *CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
 
-  llvm::DIScope *RDContext = getDeclContextDescriptor(RD);
+  llvm::DIScope *RDContext = getDeclarationLexicalScope(*RD, QualType(Ty, 0));
 
   // If we ended up creating the type during the context chain construction,
   // just return that.
@@ -2536,8 +2556,15 @@ void CGDebugInfo::collectVarDeclProps(const VarDecl *VD, llvm::DIFile *&Unit,
   if (DC->isRecord())
     DC = CGM.getContext().getTranslationUnitDecl();
 
- llvm::DIScope *Mod = getParentModuleOrNull(VD);
- VDContext = getContextDescriptor(cast<Decl>(DC), Mod ? Mod : TheCU);
+  if (VD->isStaticLocal()) {
+    // Get context for static locals (that are technically globals) the same way
+    // we do for "local" locals -- by using current lexical block.
+    assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
+    VDContext = LexicalBlockStack.back();
+  } else {
+    llvm::DIScope *Mod = getParentModuleOrNull(VD);
+    VDContext = getContextDescriptor(cast<Decl>(DC), Mod ? Mod : TheCU);
+  }
 }
 
 llvm::DISubprogram *
