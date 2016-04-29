@@ -78,7 +78,7 @@ void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
                                    SourceLocation PragmaLoc) {
   PragmaMsStackAction Action = Sema::PSK_Reset;
-  unsigned Alignment;
+  unsigned Alignment = 0;
   switch (Kind) {
     // For all targets we support native and natural are the same.
     //
