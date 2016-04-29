@@ -5647,7 +5647,8 @@ public:
                              SourceLocation TemplateLoc,
                              SourceLocation LAngleLoc,
                              ArrayRef<Decl *> Params,
-                             SourceLocation RAngleLoc);
+                             SourceLocation RAngleLoc,
+                             Expr *RequiresClause);
 
   /// \brief The context in which we are checking a template parameter list.
   enum TemplateParamListContext {
