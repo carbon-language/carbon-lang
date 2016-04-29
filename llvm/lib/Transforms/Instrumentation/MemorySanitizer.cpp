@@ -2137,7 +2137,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   // Given a vector, extract its first element, and return all
   // zeroes if it is zero, and all ones otherwise.
   Value *LowerElementShadowExtend(IRBuilder<> &IRB, Value *S, Type *T) {
-    Value *S1 = IRB.CreateExtractElement(S, (int)0);
+    Value *S1 = IRB.CreateExtractElement(S, (uint64_t)0);
     Value *S2 = IRB.CreateICmpNE(S1, getCleanShadow(S1));
     return CreateShadowCast(IRB, S2, T, /* Signed */ true);
   }
