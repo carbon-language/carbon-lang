@@ -490,6 +490,12 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms) {
+    StringRef Name = check(Sym.getName(this->StringTable));
+    if (Sym.isUndefined()) {
+      Undefs.push_back(Name);
+      continue;
+    }
+
     unsigned VersymIndex = 0;
     if (Versym) {
       VersymIndex = Versym->vs_index;
@@ -498,11 +504,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
       if (VersymIndex == 0 || (VersymIndex & VERSYM_HIDDEN))
         continue;
     }
-    StringRef Name = check(Sym.getName(this->StringTable));
-    if (Sym.isUndefined())
-      Undefs.push_back(Name);
-    else
-      SymbolBodies.emplace_back(this, Name, Sym, Verdefs[VersymIndex]);
+    SymbolBodies.emplace_back(this, Name, Sym, Verdefs[VersymIndex]);
   }
 }
 

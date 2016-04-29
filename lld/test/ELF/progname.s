@@ -5,6 +5,9 @@
 // RUN: ld.lld -o %t %t.o %t2.so
 // RUN: llvm-readobj -dyn-symbols %t | FileCheck %s
 
+// RUN: ld.lld -o %t %t.o %p/Inputs/progname-ver.so
+// RUN: llvm-readobj -dyn-symbols %t | FileCheck %s
+
 // CHECK:      Name:     __progname@
 // CHECK-NEXT: Value:    0x11000
 // CHECK-NEXT: Size:     0
