@@ -205,7 +205,6 @@ public:
   void addFastRegAlloc(FunctionPass *RegAllocPass) override;
   void addOptimizedRegAlloc(FunctionPass *RegAllocPass) override;
   void addPreRegAlloc() override;
-  void addPostRegAlloc() override;
   void addPreSched2() override;
   void addPreEmitPass() override;
 };
@@ -381,15 +380,12 @@ void GCNPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   TargetPassConfig::addOptimizedRegAlloc(RegAllocPass);
 }
 
-void GCNPassConfig::addPostRegAlloc() {
-  addPass(createSIShrinkInstructionsPass(), false);
-}
-
 void GCNPassConfig::addPreSched2() {
 }
 
 void GCNPassConfig::addPreEmitPass() {
   addPass(createSIInsertWaitsPass(), false);
+  addPass(createSIShrinkInstructionsPass());
   addPass(createSILowerControlFlowPass(), false);
   addPass(createSIInsertNopsPass(), false);
 }
