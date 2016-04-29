@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-l Check that we model the execution context correctly.
+; Check that we model the execution context correctly.
 ;
 ;    void f(unsigned *I, unsigned *A, int c) {
 ;      for (unsigned i = c; i < 10; i++)
