@@ -57,6 +57,10 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
     return {ELF32BEKind, EM_MIPS};
   if (S == "elf32ltsmip")
     return {ELF32LEKind, EM_MIPS};
+  if (S == "elf64btsmip")
+    return {ELF64BEKind, EM_MIPS};
+  if (S == "elf64ltsmip")
+    return {ELF64LEKind, EM_MIPS};
   if (S == "elf32ppc")
     return {ELF32BEKind, EM_PPC};
   if (S == "elf64ppc")
@@ -311,6 +315,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     std::tie(Config->EKind, Config->EMachine) = parseEmulation(S);
     Config->Emulation = S;
   }
+
+  if (Config->EMachine == EM_MIPS && Config->EKind == ELF64LEKind)
+    Config->Mips64EL = true;
 
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);

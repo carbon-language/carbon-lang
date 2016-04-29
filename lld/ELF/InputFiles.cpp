@@ -616,6 +616,8 @@ static std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
   if (Config->EKind == ELFNoneKind) {
     Config->EKind = Ret->getELFKind();
     Config->EMachine = Ret->getEMachine();
+    if (Config->EMachine == EM_MIPS && Config->EKind == ELF64LEKind)
+      Config->Mips64EL = true;
   }
 
   return std::move(Ret);
