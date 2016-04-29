@@ -337,7 +337,8 @@ public:
   /// the specified element.
   Constant *getStructElement(unsigned Elt) const;
 
-  /// Return a zero of the right value for the specified GEP index.
+  /// Return a zero of the right value for the specified GEP index if we can,
+  /// otherwise return null (e.g. if C is a ConstantExpr).
   Constant *getElementValue(Constant *C) const;
 
   /// Return a zero of the right value for the specified GEP index.
@@ -1219,7 +1220,8 @@ public:
   /// for the specified element.
   UndefValue *getStructElement(unsigned Elt) const;
 
-  /// Return an undef of the right value for the specified GEP index.
+  /// Return an undef of the right value for the specified GEP index if we can,
+  /// otherwise return null (e.g. if C is a ConstantExpr).
   UndefValue *getElementValue(Constant *C) const;
 
   /// Return an undef of the right value for the specified GEP index.
