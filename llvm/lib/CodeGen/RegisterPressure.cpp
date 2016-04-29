@@ -573,9 +573,6 @@ void RegisterOperands::adjustLaneLiveness(const LiveIntervals &LIS,
     LaneBitmask LaneMask = I->LaneMask & LiveAfter;
     if (LaneMask == 0) {
       I = Defs.erase(I);
-      // Make sure the operand is properly marked as Dead.
-      if (AddFlagsMI != nullptr)
-        AddFlagsMI->addRegisterDead(RegUnit, MRI.getTargetRegisterInfo());
     } else {
       I->LaneMask = LaneMask;
       ++I;
@@ -595,6 +592,8 @@ void RegisterOperands::adjustLaneLiveness(const LiveIntervals &LIS,
   if (AddFlagsMI != nullptr) {
     for (const RegisterMaskPair &P : DeadDefs) {
       unsigned RegUnit = P.RegUnit;
+      if (!TargetRegisterInfo::isVirtualRegister(RegUnit))
+        continue;
       LaneBitmask LiveAfter = getLiveLanesAt(LIS, MRI, true, RegUnit,
                                              Pos.getDeadSlot());
       if (LiveAfter == 0)
