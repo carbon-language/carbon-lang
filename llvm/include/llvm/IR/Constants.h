@@ -44,7 +44,7 @@ template <class ConstantClass> struct ConstantAggrKeyType;
 ///
 /// These constants have no operands; they represent their data directly.
 /// Since they can be in use by unrelated modules (and are never based on
-/// GlobalValues), it never makes sensee to RAUW them.
+/// GlobalValues), it never makes sense to RAUW them.
 class ConstantData : public Constant {
   void anchor() override;
   void *operator new(size_t, unsigned) = delete;
