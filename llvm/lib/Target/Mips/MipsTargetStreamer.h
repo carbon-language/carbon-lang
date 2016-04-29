@@ -78,7 +78,8 @@ public:
 
   // PIC support
   virtual void emitDirectiveCpLoad(unsigned RegNo);
-  virtual void emitDirectiveCpRestore(int Offset);
+  virtual void emitDirectiveCpRestore(int Offset, unsigned ATReg, SMLoc IDLoc,
+                                      const MCSubtargetInfo *STI);
   virtual void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                     const MCSymbol &Sym, bool IsReg);
   virtual void emitDirectiveCpreturn(unsigned SaveLocation,
@@ -130,6 +131,7 @@ public:
                              MCOperand &HiOperand, MCOperand &LoOperand,
                              unsigned ATReg, SMLoc IDLoc,
                              const MCSubtargetInfo *STI);
+  void emitGPRestore(int Offset, SMLoc IDLoc, const MCSubtargetInfo *STI);
 
   void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
   void reallowModuleDirective() { ModuleDirectiveAllowed = true; }
@@ -230,7 +232,8 @@ public:
 
   // PIC support
   void emitDirectiveCpLoad(unsigned RegNo) override;
-  void emitDirectiveCpRestore(int Offset) override;
+  void emitDirectiveCpRestore(int Offset, unsigned ATReg, SMLoc IDLoc,
+                              const MCSubtargetInfo *STI) override;
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
   void emitDirectiveCpreturn(unsigned SaveLocation,
@@ -282,7 +285,8 @@ public:
 
   // PIC support
   void emitDirectiveCpLoad(unsigned RegNo) override;
-  void emitDirectiveCpRestore(int Offset) override;
+  void emitDirectiveCpRestore(int Offset, unsigned ATReg, SMLoc IDLoc,
+                              const MCSubtargetInfo *STI) override;
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
   void emitDirectiveCpreturn(unsigned SaveLocation,

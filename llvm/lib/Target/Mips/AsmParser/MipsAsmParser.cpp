@@ -1891,8 +1891,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                                 STI);
 
       // Load the $gp from the stack.
-      createCpRestoreMemOp(true /*IsLoad*/, CpRestoreOffset /*StackOffset*/,
-                           IDLoc, Out, STI);
+      TOut.emitGPRestore(CpRestoreOffset, IDLoc, STI);
     } else
       Warning(IDLoc, "no .cprestore used in PIC mode");
   }
@@ -3593,19 +3592,18 @@ void MipsAsmParser::createCpRestoreMemOp(bool IsLoad, int StackOffset,
                                          const MCSubtargetInfo *STI) {
   MipsTargetStreamer &TOut = getTargetStreamer();
 
-  // If the offset can not fit into 16 bits, we need to expand.
-  if (!isInt<16>(StackOffset)) {
-    MCInst MemInst;
-    MemInst.setOpcode(IsLoad ? Mips::LW : Mips::SW);
-    MemInst.addOperand(MCOperand::createReg(Mips::GP));
-    MemInst.addOperand(MCOperand::createReg(Mips::SP));
-    MemInst.addOperand(MCOperand::createImm(StackOffset));
-    expandMemInst(MemInst, IDLoc, Out, STI, IsLoad, true /*HasImmOpnd*/);
+  if (IsLoad) {
+    TOut.emitLoadWithImmOffset(Mips::LW, Mips::GP, Mips::SP, StackOffset,
+                               Mips::GP, IDLoc, STI);
     return;
   }
 
-  TOut.emitRRI(IsLoad ? Mips::LW : Mips::SW, Mips::GP, Mips::SP, StackOffset,
-               IDLoc, STI);
+  unsigned ATReg = getATReg(IDLoc);
+  if (!ATReg)
+    return;
+
+  TOut.emitStoreWithImmOffset(Mips::SW, Mips::GP, Mips::SP, StackOffset, ATReg,
+                              IDLoc, STI);
 }
 
 unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
@@ -5472,14 +5470,11 @@ bool MipsAsmParser::parseDirectiveCpRestore(SMLoc Loc) {
     return false;
   }
 
-  // Store the $gp on the stack.
-  if (getStreamer().isIntegratedAssemblerRequired()) {
-    const MCSubtargetInfo &STI = getSTI();
-    createCpRestoreMemOp(false /*IsLoad*/, CpRestoreOffset /*StackOffset*/, Loc,
-                         getStreamer(), &STI);
-  }
+  unsigned ATReg = getATReg(Loc);
+  if (!ATReg)
+    return true;
 
-  getTargetStreamer().emitDirectiveCpRestore(CpRestoreOffset);
+  getTargetStreamer().emitDirectiveCpRestore(CpRestoreOffset, ATReg, Loc, STI);
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }

@@ -88,7 +88,9 @@ void MipsTargetStreamer::emitDirectiveSetHardFloat() {
 void MipsTargetStreamer::emitDirectiveSetDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetNoDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveCpLoad(unsigned RegNo) {}
-void MipsTargetStreamer::emitDirectiveCpRestore(int Offset) {
+void MipsTargetStreamer::emitDirectiveCpRestore(int Offset, unsigned ATReg,
+                                                SMLoc IDLoc,
+                                                const MCSubtargetInfo *STI) {
   forbidModuleDirective();
 }
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
@@ -207,12 +209,22 @@ void MipsTargetStreamer::emitNop(SMLoc IDLoc, const MCSubtargetInfo *STI) {
   emitRRI(Mips::SLL, Mips::ZERO, Mips::ZERO, 0, IDLoc, STI);
 }
 
-/// Emit a store instruction with an immediate offset. The immediate is
-/// expected to be out-of-range for a simm16 and will be expanded to
-/// appropriate instructions.
+/// Emit the $gp restore operation for .cprestore.
+void MipsTargetStreamer::emitGPRestore(int Offset, SMLoc IDLoc,
+                                       const MCSubtargetInfo *STI) {
+  emitLoadWithImmOffset(Mips::LW, Mips::GP, Mips::SP, Offset, Mips::GP, IDLoc,
+                        STI);
+}
+
+/// Emit a store instruction with an immediate offset.
 void MipsTargetStreamer::emitStoreWithImmOffset(
     unsigned Opcode, unsigned SrcReg, unsigned BaseReg, int64_t Offset,
     unsigned ATReg, SMLoc IDLoc, const MCSubtargetInfo *STI) {
+  if (isInt<16>(Offset)) {
+    emitRRI(Opcode, SrcReg, BaseReg, Offset, IDLoc, STI);
+    return;
+  }
+
   // sw $8, offset($8) => lui $at, %hi(offset)
   //                      add $at, $at, $8
   //                      sw $8, %lo(offset)($at)
@@ -250,16 +262,19 @@ void MipsTargetStreamer::emitStoreWithSymOffset(
   emitRRX(Opcode, SrcReg, ATReg, LoOperand, IDLoc, STI);
 }
 
-/// Emit a load instruction with an immediate offset. The immediate is expected
-/// to be out-of-range for a simm16 and will be expanded to appropriate
-/// instructions. DstReg and TmpReg are permitted to be the same register iff
-/// DstReg is distinct from BaseReg and DstReg is a GPR. It is the callers
-/// responsibility to identify such cases and pass the appropriate register in
-/// TmpReg.
+/// Emit a load instruction with an immediate offset. DstReg and TmpReg are
+/// permitted to be the same register iff DstReg is distinct from BaseReg and
+/// DstReg is a GPR. It is the callers responsibility to identify such cases
+/// and pass the appropriate register in TmpReg.
 void MipsTargetStreamer::emitLoadWithImmOffset(unsigned Opcode, unsigned DstReg,
                                                unsigned BaseReg, int64_t Offset,
                                                unsigned TmpReg, SMLoc IDLoc,
                                                const MCSubtargetInfo *STI) {
+  if (isInt<16>(Offset)) {
+    emitRRI(Opcode, DstReg, BaseReg, Offset, IDLoc, STI);
+    return;
+  }
+
   // 1) lw $8, offset($9) => lui $8, %hi(offset)
   //                         add $8, $8, $9
   //                         lw $8, %lo(offset)($9)
@@ -555,8 +570,10 @@ void MipsTargetAsmStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   forbidModuleDirective();
 }
 
-void MipsTargetAsmStreamer::emitDirectiveCpRestore(int Offset) {
-  MipsTargetStreamer::emitDirectiveCpRestore(Offset);
+void MipsTargetAsmStreamer::emitDirectiveCpRestore(int Offset, unsigned ATReg,
+                                                   SMLoc IDLoc,
+                                                   const MCSubtargetInfo *STI) {
+  MipsTargetStreamer::emitDirectiveCpRestore(Offset, ATReg, IDLoc, STI);
   OS << "\t.cprestore\t" << Offset << "\n";
 }
 
@@ -990,8 +1007,10 @@ void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   forbidModuleDirective();
 }
 
-void MipsTargetELFStreamer::emitDirectiveCpRestore(int Offset) {
-  MipsTargetStreamer::emitDirectiveCpRestore(Offset);
+void MipsTargetELFStreamer::emitDirectiveCpRestore(int Offset, unsigned ATReg,
+                                                   SMLoc IDLoc,
+                                                   const MCSubtargetInfo *STI) {
+  MipsTargetStreamer::emitDirectiveCpRestore(Offset, ATReg, IDLoc, STI);
   // .cprestore offset
   // When PIC mode is enabled and the O32 ABI is used, this directive expands
   // to:
@@ -1003,8 +1022,9 @@ void MipsTargetELFStreamer::emitDirectiveCpRestore(int Offset) {
   if (!Pic || (getABI().IsN32() || getABI().IsN64()))
     return;
 
-  // FIXME: MipsAsmParser currently emits the instructions that should be
-  // emitted here.
+  // Store the $gp on the stack.
+  emitStoreWithImmOffset(Mips::SW, Mips::GP, Mips::SP, Offset, ATReg, IDLoc,
+                         STI);
 }
 
 void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
