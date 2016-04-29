@@ -119,6 +119,15 @@ SCEVAffinator::~SCEVAffinator() {
     freePWACtx(CachedPair.second);
 }
 
+void SCEVAffinator::takeNonNegativeAssumption(PWACtx &PWAC) {
+  auto *NegPWA = isl_pw_aff_neg(isl_pw_aff_copy(PWAC.first));
+  auto *NegDom = isl_pw_aff_pos_set(NegPWA);
+  PWAC.second = isl_set_union(PWAC.second, isl_set_copy(NegDom));
+  auto *Restriction = BB ? NegDom : isl_set_params(NegDom);
+  auto DL = BB ? BB->getTerminator()->getDebugLoc() : DebugLoc();
+  S->recordAssumption(UNSIGNED, Restriction, DL, AS_RESTRICTION, BB);
+}
+
 __isl_give PWACtx SCEVAffinator::getPWACtxFromPWA(__isl_take isl_pw_aff *PWA) {
   return std::make_pair(
       PWA, isl_set_empty(isl_space_set_alloc(Ctx, 0, NumIterators)));
@@ -334,14 +343,7 @@ SCEVAffinator::visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
 
   // If the width is to big we assume the negative part does not occur.
   if (!Precise) {
-    auto *NegOpPWA = isl_pw_aff_neg(isl_pw_aff_copy(OpPWAC.first));
-    auto *NegDom = isl_pw_aff_pos_set(NegOpPWA);
-    auto *ExprDomain = BB ? S->getDomainConditions(BB) : nullptr;
-    NegDom = ExprDomain ? isl_set_intersect(NegDom, ExprDomain) : NegDom;
-    OpPWAC.second = isl_set_union(OpPWAC.second, isl_set_copy(NegDom));
-    NegDom = BB ? NegDom : isl_set_params(NegDom);
-    auto DL = BB ? BB->getTerminator()->getDebugLoc() : DebugLoc();
-    S->recordAssumption(UNSIGNED, NegDom, DL, AS_RESTRICTION, BB);
+    takeNonNegativeAssumption(OpPWAC);
     return OpPWAC;
   }
 
