@@ -147,6 +147,7 @@ MachineInstr *HexagonOptAddrMode::getReachedDefMI(NodeAddr<StmtNode *> SN,
     NodeAddr<StmtNode *> ReachingIA = RDN.Addr->getOwner(*DFG);
     DEBUG(dbgs() << "\t\t\t[Def Node]: "
                  << Print<NodeAddr<InstrNode *>>(ReachingIA, *DFG) << "\n");
+    (void)ReachingIA;
     NodeId ReachedID = RDN.Addr->getReachedDef();
     if (!ReachedID)
       return ReachedDefMI;
@@ -233,9 +234,10 @@ bool HexagonOptAddrMode::allValidCandidates(NodeAddr<StmtNode *> SA,
       DEBUG(dbgs() << "*** Multiple Reaching Defs found!!! *** \n");
       for (auto DI : ReachingDefs) {
         NodeAddr<UseNode *> DA = DFG->addr<UseNode *>(DI);
-        NodeAddr<StmtNode *> tempIA = DA.Addr->getOwner(*DFG);
+        NodeAddr<StmtNode *> TempIA = DA.Addr->getOwner(*DFG);
+        (void)TempIA;
         DEBUG(dbgs() << "\t\t[Reaching Def]: "
-                     << Print<NodeAddr<InstrNode *>>(tempIA, *DFG) << "\n");
+                     << Print<NodeAddr<InstrNode *>>(TempIA, *DFG) << "\n");
       }
       return false;
     }
@@ -253,9 +255,10 @@ void HexagonOptAddrMode::getAllRealUses(NodeAddr<StmtNode *> SA,
 
     for (auto UI : UseSet) {
       NodeAddr<UseNode *> UA = DFG->addr<UseNode *>(UI);
-      NodeAddr<StmtNode *> tempIA = UA.Addr->getOwner(*DFG);
+      NodeAddr<StmtNode *> TempIA = UA.Addr->getOwner(*DFG);
+      (void)TempIA;
       DEBUG(dbgs() << "\t\t\t[Reached Use]: "
-                   << Print<NodeAddr<InstrNode *>>(tempIA, *DFG) << "\n");
+                   << Print<NodeAddr<InstrNode *>>(TempIA, *DFG) << "\n");
 
       if (UA.Addr->getFlags() & NodeAttrs::PhiRef) {
         NodeAddr<PhiNode *> PA = UA.Addr->getOwner(*DFG);
@@ -580,6 +583,7 @@ bool HexagonOptAddrMode::processBlock(NodeAddr<BlockNode *> BA) {
       NodeAddr<StmtNode *> OwnerN = UseN.Addr->getOwner(*DFG);
       MachineInstr *UseMI = OwnerN.Addr->getCode();
       unsigned BBNum = UseMI->getParent()->getNumber();
+      (void)BBNum;
       DEBUG(dbgs() << "\t\t[MI <BB#" << BBNum << ">]: " << *UseMI << "\n");
 
       int UseMOnum = -1;
