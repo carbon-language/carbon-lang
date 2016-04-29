@@ -8,11 +8,12 @@
 #include <assert.h>
 #include <stdlib.h>
 
+char *p;
 int main(int argc, char **argv) {
   // ALL-ERRORS: ERROR: AddressSanitizer: invalid-pointer-pair
   // [[PTR1:0x[0-9a-f]+]] [[PTR2:0x[0-9a-f]+]]
   assert(argc >= 2);
-  char *p = (char *)malloc(42);
+  p = (char *)malloc(42);
   char *q = (char *)malloc(42);
   switch (argv[1][0]) {
   case 'g':
