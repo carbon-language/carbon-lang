@@ -317,10 +317,6 @@ public:
   /// This is used as part of a hack to omit that class from ADL results.
   DeclarationName VAListTagName;
 
-  /// PackContext - Manages the stack for \#pragma pack. An alignment
-  /// of 0 indicates default alignment.
-  void *PackContext; // Really a "PragmaPackStack*"
-
   bool MSStructPragmaOn; // True when \#pragma ms_struct on
 
   /// \brief Controls member pointer representation format under the MS ABI.
@@ -338,6 +334,7 @@ public:
     PSK_Set       = 0x1,                // #pragma (value)
     PSK_Push      = 0x2,                // #pragma (push[, id])
     PSK_Pop       = 0x4,                // #pragma (pop[, id])
+    PSK_Show      = 0x8,                // #pragma (show) -- only for "pack"!
     PSK_Push_Set  = PSK_Push | PSK_Set, // #pragma (push[, id], value)
     PSK_Pop_Set   = PSK_Pop | PSK_Set,  // #pragma (pop[, id], value)
   };
@@ -400,11 +397,15 @@ public:
   /// 2: Always insert vtordisps to support RTTI on partially constructed
   ///    objects
   PragmaStack<MSVtorDispAttr::Mode> VtorDispStack;
+  // #pragma pack.
+  // Sentinel to represent when the stack is set to mac68k alignment.
+  static const unsigned kMac68kAlignmentSentinel = ~0U;
+  PragmaStack<unsigned> PackStack;
+  // Segment #pragmas.
   PragmaStack<StringLiteral *> DataSegStack;
   PragmaStack<StringLiteral *> BSSSegStack;
   PragmaStack<StringLiteral *> ConstSegStack;
   PragmaStack<StringLiteral *> CodeSegStack;
-  // TODO: Change implementation of #pragma pack to use PragmaStack<> approach.
 
   // RAII object to push / pop sentinel slots for all MS #pragma stacks.
   // Actions should be performed only if we enter / exit a C++ method body.
@@ -7658,20 +7659,9 @@ public:
   void ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
                                SourceLocation PragmaLoc);
 
-  enum PragmaPackKind {
-    PPK_Default, // #pragma pack([n])
-    PPK_Show,    // #pragma pack(show), only supported by MSVC.
-    PPK_Push,    // #pragma pack(push, [identifier], [n])
-    PPK_Pop      // #pragma pack(pop, [identifier], [n])
-  };
-
   /// ActOnPragmaPack - Called on well formed \#pragma pack(...).
-  void ActOnPragmaPack(PragmaPackKind Kind,
-                       IdentifierInfo *Name,
-                       Expr *Alignment,
-                       SourceLocation PragmaLoc,
-                       SourceLocation LParenLoc,
-                       SourceLocation RParenLoc);
+  void ActOnPragmaPack(SourceLocation PragmaLoc, PragmaMsStackAction Action,
+                       StringRef SlotLabel, Expr *Alignment);
 
   /// ActOnPragmaMSStruct - Called on well formed \#pragma ms_struct [on|off].
   void ActOnPragmaMSStruct(PragmaMSStructKind Kind);

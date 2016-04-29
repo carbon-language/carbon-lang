@@ -337,11 +337,9 @@ void Parser::HandlePragmaVisibility() {
 
 namespace {
 struct PragmaPackInfo {
-  Sema::PragmaPackKind Kind;
-  IdentifierInfo *Name;
+  Sema::PragmaMsStackAction Action;
+  StringRef SlotLabel;
   Token Alignment;
-  SourceLocation LParenLoc;
-  SourceLocation RParenLoc;
 };
 } // end anonymous namespace
 
@@ -356,8 +354,8 @@ void Parser::HandlePragmaPack() {
     if (Alignment.isInvalid())
       return;
   }
-  Actions.ActOnPragmaPack(Info->Kind, Info->Name, Alignment.get(), PragmaLoc,
-                          Info->LParenLoc, Info->RParenLoc);
+  Actions.ActOnPragmaPack(PragmaLoc, Info->Action, Info->SlotLabel,
+                          Alignment.get());
 }
 
 void Parser::HandlePragmaMSStruct() {
@@ -962,11 +960,10 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
     return;
   }
 
-  Sema::PragmaPackKind Kind = Sema::PPK_Default;
-  IdentifierInfo *Name = nullptr;
+  Sema::PragmaMsStackAction Action = Sema::PSK_Reset;
+  StringRef SlotLabel;
   Token Alignment;
   Alignment.startToken();
-  SourceLocation LParenLoc = Tok.getLocation();
   PP.Lex(Tok);
   if (Tok.is(tok::numeric_constant)) {
     Alignment = Tok;
@@ -976,18 +973,18 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
     // In MSVC/gcc, #pragma pack(4) sets the alignment without affecting
     // the push/pop stack.
     // In Apple gcc, #pragma pack(4) is equivalent to #pragma pack(push, 4)
-    if (PP.getLangOpts().ApplePragmaPack)
-      Kind = Sema::PPK_Push;
+    Action =
+        PP.getLangOpts().ApplePragmaPack ? Sema::PSK_Push_Set : Sema::PSK_Set;
   } else if (Tok.is(tok::identifier)) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     if (II->isStr("show")) {
-      Kind = Sema::PPK_Show;
+      Action = Sema::PSK_Show;
       PP.Lex(Tok);
     } else {
       if (II->isStr("push")) {
-        Kind = Sema::PPK_Push;
+        Action = Sema::PSK_Push;
       } else if (II->isStr("pop")) {
-        Kind = Sema::PPK_Pop;
+        Action = Sema::PSK_Pop;
       } else {
         PP.Diag(Tok.getLocation(), diag::warn_pragma_invalid_action) << "pack";
         return;
@@ -998,11 +995,12 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
         PP.Lex(Tok);
 
         if (Tok.is(tok::numeric_constant)) {
+          Action = (Sema::PragmaMsStackAction)(Action | Sema::PSK_Set);
           Alignment = Tok;
 
           PP.Lex(Tok);
         } else if (Tok.is(tok::identifier)) {
-          Name = Tok.getIdentifierInfo();
+          SlotLabel = Tok.getIdentifierInfo()->getName();
           PP.Lex(Tok);
 
           if (Tok.is(tok::comma)) {
@@ -1013,6 +1011,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
               return;
             }
 
+            Action = (Sema::PragmaMsStackAction)(Action | Sema::PSK_Set);
             Alignment = Tok;
 
             PP.Lex(Tok);
@@ -1027,7 +1026,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
     // In MSVC/gcc, #pragma pack() resets the alignment without affecting
     // the push/pop stack.
     // In Apple gcc #pragma pack() is equivalent to #pragma pack(pop).
-    Kind = Sema::PPK_Pop;
+    Action = Sema::PSK_Pop;
   }
 
   if (Tok.isNot(tok::r_paren)) {
@@ -1044,11 +1043,9 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
 
   PragmaPackInfo *Info =
       PP.getPreprocessorAllocator().Allocate<PragmaPackInfo>(1);
-  Info->Kind = Kind;
-  Info->Name = Name;
+  Info->Action = Action;
+  Info->SlotLabel = SlotLabel;
   Info->Alignment = Alignment;
-  Info->LParenLoc = LParenLoc;
-  Info->RParenLoc = RParenLoc;
 
   MutableArrayRef<Token> Toks(PP.getPreprocessorAllocator().Allocate<Token>(1),
                               1);

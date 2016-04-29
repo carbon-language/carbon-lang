@@ -79,12 +79,13 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     CollectStats(false), CodeCompleter(CodeCompleter),
     CurContext(nullptr), OriginalLexicalContext(nullptr),
-    PackContext(nullptr), MSStructPragmaOn(false),
+    MSStructPragmaOn(false),
     MSPointerToMemberRepresentationMethod(
         LangOpts.getMSPointerToMemberRepresentationMethod()),
     VtorDispStack(MSVtorDispAttr::Mode(LangOpts.VtorDispMode)),
-    DataSegStack(nullptr), BSSSegStack(nullptr), ConstSegStack(nullptr),
-    CodeSegStack(nullptr), CurInitSeg(nullptr), VisContext(nullptr),
+    PackStack(0), DataSegStack(nullptr), BSSSegStack(nullptr),
+    ConstSegStack(nullptr), CodeSegStack(nullptr), CurInitSeg(nullptr),
+    VisContext(nullptr),
     IsBuildingRecoveryCallExpr(false),
     ExprNeedsCleanups(false), LateTemplateParser(nullptr),
     LateTemplateParserCleanup(nullptr),
@@ -252,7 +253,6 @@ void Sema::Initialize() {
 
 Sema::~Sema() {
   llvm::DeleteContainerSeconds(LateParsedTemplateMap);
-  if (PackContext) FreePackedContext();
   if (VisContext) FreeVisContext();
   // Kill all the active scopes.
   for (unsigned I = 1, E = FunctionScopes.size(); I != E; ++I)
