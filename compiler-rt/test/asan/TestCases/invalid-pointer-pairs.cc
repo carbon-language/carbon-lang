@@ -8,19 +8,15 @@
 #include <assert.h>
 #include <stdlib.h>
 
-char *p;
-int main(int argc, char **argv) {
+int f(char c, char *p, char *q) {
   // ALL-ERRORS: ERROR: AddressSanitizer: invalid-pointer-pair
   // [[PTR1:0x[0-9a-f]+]] [[PTR2:0x[0-9a-f]+]]
-  assert(argc >= 2);
-  p = (char *)malloc(42);
-  char *q = (char *)malloc(42);
-  switch (argv[1][0]) {
+  switch (c) {
   case 'g':
-    // CMP: #0 {{.*}} in main {{.*}}invalid-pointer-pairs.cc:[[@LINE+1]]:14
+    // CMP: #0 {{.*}} in f(char, char*, char*) {{.*}}invalid-pointer-pairs.cc:[[@LINE+1]]:14
     return p > q;
   case 's':
-    // SUB: #0 {{.*}} in main {{.*}}invalid-pointer-pairs.cc:[[@LINE+1]]:14
+    // SUB: #0 {{.*}} in f(char, char*, char*) {{.*}}invalid-pointer-pairs.cc:[[@LINE+1]]:14
     return p - q;
   case 'k': {
     // OK-NOT: ERROR
@@ -30,9 +26,19 @@ int main(int argc, char **argv) {
   case 'f': {
     char *p3 = p + 20;
     free(p);
-    // FREE: #0 {{.*}} in main {{.*}}invalid-pointer-pairs.cc:[[@LINE+2]]:14
+    // FREE: #0 {{.*}} in f(char, char*, char*) {{.*}}invalid-pointer-pairs.cc:[[@LINE+2]]:14
     // FREE: freed by thread
     return p < p3;
   }
   }
+  assert(0);
+}
+
+int main(int argc, char **argv) {
+  char *p = (char *)malloc(42);
+  char *q = (char *)malloc(42);
+  assert(argc >= 2);
+  f(argv[1][0], p, q);
+  free(p);
+  free(q);
 }
