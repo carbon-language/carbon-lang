@@ -69,6 +69,10 @@ private:
   /// shouldInline - Return true if the inliner should attempt to
   /// inline at the given CallSite.
   bool shouldInline(CallSite CS);
+  /// Return true if inlining of CS can block the caller from being
+  /// inlined which is proved to be more beneficial. \p IC is the
+  /// estimated inline cost associated with callsite \p CS.
+  bool shouldBeDeferred(Function *Caller, CallSite CS, InlineCost IC);
 
 protected:
   AssumptionCacheTracker *ACT;
