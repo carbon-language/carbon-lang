@@ -3714,29 +3714,22 @@ static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
     return nullptr;
   }
 
-  if (isa<ZExtInst>(CI) && CmpI->isUnsigned())
-    return ConstantExpr::getTrunc(C, CI->getSrcTy());
-
-  if (isa<TruncInst>(CI))
-    return ConstantExpr::getIntegerCast(C, CI->getSrcTy(), CmpI->isSigned());
-
-  if (isa<FPTruncInst>(CI))
-    return ConstantExpr::getFPExtend(C, CI->getSrcTy(), true);
-
-  if (isa<FPExtInst>(CI))
-    return ConstantExpr::getFPTrunc(C, CI->getSrcTy(), true);
-
-  // Sophisticated constants can have values which we cannot easily reason
-  // about.  Skip them for the fp<->int case.
-  if (isa<ConstantExpr>(C))
-    return nullptr;
-
   Constant *CastedTo = nullptr;
 
-  // This is only valid if the truncated value can be sign-extended
-  // back to the original value.
+  if (isa<ZExtInst>(CI) && CmpI->isUnsigned())
+    CastedTo = ConstantExpr::getTrunc(C, CI->getSrcTy());
+
   if (isa<SExtInst>(CI) && CmpI->isSigned())
     CastedTo = ConstantExpr::getTrunc(C, CI->getSrcTy(), true);
+
+  if (isa<TruncInst>(CI))
+    CastedTo = ConstantExpr::getIntegerCast(C, CI->getSrcTy(), CmpI->isSigned());
+
+  if (isa<FPTruncInst>(CI))
+    CastedTo = ConstantExpr::getFPExtend(C, CI->getSrcTy(), true);
+
+  if (isa<FPExtInst>(CI))
+    CastedTo = ConstantExpr::getFPTrunc(C, CI->getSrcTy(), true);
 
   if (isa<FPToUIInst>(CI))
     CastedTo = ConstantExpr::getUIToFP(C, CI->getSrcTy(), true);
