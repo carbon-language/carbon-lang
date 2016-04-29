@@ -457,6 +457,16 @@ void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
     D->addChild(TheCU.constructImportedEntityDIE(N));
 }
 
+bool DwarfDebug::collectLocalScopedNode(DIScope *S, const DINode *N,
+                                        DwarfCompileUnit &CU) {
+  if (auto LS = dyn_cast_or_null<DILocalScope>(S)) {
+    getLocalScopes(LS->getSubprogram()).insert(LS);
+    CU.addLocalDeclNode(N, LS);
+    return true;
+  }
+  return false;
+}
+
 // Emit all Dwarf sections that should come prior to the content. Create
 // global DIEs and emit initial debug info sections. This is invoked by
 // the target AsmPrinter.
@@ -478,10 +488,9 @@ void DwarfDebug::beginModule() {
 
   for (DICompileUnit *CUNode : M->debug_compile_units()) {
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
-    for (auto *IE : CUNode->getImportedEntities())
-      CU.addImportedEntity(IE);
     for (auto *GV : CUNode->getGlobalVariables())
-      CU.getOrCreateGlobalVariableDIE(GV);
+      if (!collectLocalScopedNode(GV->getScope(), GV, CU))
+        CU.getOrCreateGlobalVariableDIE(GV);
     for (auto *Ty : CUNode->getEnumTypes()) {
       // The enum types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
@@ -490,15 +499,19 @@ void DwarfDebug::beginModule() {
     for (auto *Ty : CUNode->getRetainedTypes()) {
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      if (DIType *RT = dyn_cast<DIType>(Ty))
-        if (!RT->isExternalTypeRef())
+      if (DIType *RT = dyn_cast<DIType>(Ty)) {
+        if (RT->isExternalTypeRef())
           // There is no point in force-emitting a forward declaration.
+          continue;
+        if (!collectLocalScopedNode(resolve(Ty->getScope()), RT, CU))
           CU.getOrCreateTypeDIE(RT);
+      }
     }
     // Emit imported_modules last so that the relevant context is already
     // available.
     for (auto *IE : CUNode->getImportedEntities())
-      constructAndAddImportedEntityDIE(CU, IE);
+      if (!collectLocalScopedNode(IE->getScope(), IE, CU))
+        constructAndAddImportedEntityDIE(CU, IE);
   }
 }
 
@@ -538,10 +551,17 @@ void DwarfDebug::finishSubprogramDefinitions() {
         });
 }
 
+void DwarfDebug::finishLocalScopeDefinitions() {
+  for (const auto &I : CUMap)
+    I.second->finishLocalScopeDefinitions();
+}
+
 void DwarfDebug::finalizeModuleInfo() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   finishSubprogramDefinitions();
+
+  finishLocalScopeDefinitions();
 
   finishVariableDefinitions();
 
@@ -1158,6 +1178,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       assert(LScopes.getAbstractScopesList().size() == NumAbstractScopes
              && "ensureAbstractVariableIsCreated inserted abstract scopes");
     }
+    // Assure abstract local scope created for each one contains local DIEs.
+    for (const DILocalScope *LS : getLocalScopes(SP))
+      LScopes.getOrCreateAbstractScope(LS);
     constructAbstractSubprogramScopeDIE(AScope);
   }
 
