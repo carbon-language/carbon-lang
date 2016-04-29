@@ -16,6 +16,10 @@ if(WITH_POLLY)
 else()
   set(LLVM_TOOL_POLLY_BUILD Off)
 endif()
+if(NOT LLVM_TOOL_POLL_BUILD)
+  MESSAGE(No polly)
+endif()
+
 
 if(NOT LLVM_BUILD_LLVM_DYLIB )
   set(LLVM_TOOL_LLVM_SHLIB_BUILD Off)
