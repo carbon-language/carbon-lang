@@ -554,6 +554,29 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       continue;
     }
 
+    if (match(Inst, m_Intrinsic<Intrinsic::experimental_guard>())) {
+      Value *Cond = cast<CallInst>(Inst)->getArgOperand(0);
+
+      if (match(Cond, m_One())) {
+        // Elide guards on true, since operationally they're no-ops.  In the
+        // future we can consider more sophisticated tradeoffs here with
+        // consideration to potential for check widening, but for now we keep
+        // things simple.
+        Inst->eraseFromParent();
+      } else if (auto *CondI = dyn_cast<Instruction>(Cond)) {
+        // The condition we're on guarding here is true for all dominated
+        // locations.
+        if (SimpleValue::canHandle(CondI))
+          AvailableValues.insert(CondI, ConstantInt::getTrue(BB->getContext()));
+      }
+
+      // Guard intrinsics read all memory, but don't write any memory.
+      // Accordingly, don't update the generation but consume the last store (to
+      // avoid an incorrect DSE).
+      LastStore = nullptr;
+      continue;
+    }
+
     // If the instruction can be simplified (e.g. X+0 = X) then replace it with
     // its simpler value.
     if (Value *V = SimplifyInstruction(Inst, DL, &TLI, &DT, &AC)) {
