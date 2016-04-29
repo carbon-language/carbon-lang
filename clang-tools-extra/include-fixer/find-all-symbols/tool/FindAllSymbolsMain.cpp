@@ -14,8 +14,9 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Path.h"
-
+#include "llvm/Support/ThreadPool.h"
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -76,26 +77,38 @@ private:
 bool Merge(llvm::StringRef MergeDir, llvm::StringRef OutputFile) {
   std::error_code EC;
   std::set<SymbolInfo> UniqueSymbols;
+  std::mutex SymbolMutex;
+  auto AddSymbols = [&](ArrayRef<SymbolInfo> Symbols) {
+    // Synchronize set accesses.
+    std::unique_lock<std::mutex> LockGuard(SymbolMutex);
+    UniqueSymbols.insert(Symbols.begin(), Symbols.end());
+  };
+
   // Load all symbol files in MergeDir.
-  for (llvm::sys::fs::directory_iterator Dir(MergeDir, EC), DirEnd;
-       Dir != DirEnd && !EC; Dir.increment(EC)) {
-    int ReadFD = 0;
-    if (llvm::sys::fs::openFileForRead(Dir->path(), ReadFD)) {
-      llvm::errs() << "Cann't open " << Dir->path() << "\n";
-      continue;
+  {
+    llvm::ThreadPool Pool;
+    for (llvm::sys::fs::directory_iterator Dir(MergeDir, EC), DirEnd;
+         Dir != DirEnd && !EC; Dir.increment(EC)) {
+      // Parse YAML files in parallel.
+      Pool.async(
+          [&AddSymbols](std::string Path) {
+            auto Buffer = llvm::MemoryBuffer::getFile(Path);
+            if (!Buffer) {
+              llvm::errs() << "Can't open " << Path << "\n";
+              return;
+            }
+            std::vector<SymbolInfo> Symbols =
+                ReadSymbolInfosFromYAML(Buffer.get()->getBuffer());
+            // FIXME: Merge without creating such a heavy contention point.
+            AddSymbols(Symbols);
+          },
+          Dir->path());
     }
-    auto Buffer = llvm::MemoryBuffer::getOpenFile(ReadFD, Dir->path(), -1);
-    if (!Buffer)
-      continue;
-    std::vector<SymbolInfo> Symbols =
-        ReadSymbolInfosFromYAML(Buffer.get()->getBuffer());
-    for (const auto &Symbol : Symbols)
-      UniqueSymbols.insert(Symbol);
   }
 
   llvm::raw_fd_ostream OS(OutputFile, EC, llvm::sys::fs::F_None);
   if (EC) {
-    llvm::errs() << "Cann't open '" << OutputFile << "': " << EC.message()
+    llvm::errs() << "Can't open '" << OutputFile << "': " << EC.message()
                  << '\n';
     return false;
   }
