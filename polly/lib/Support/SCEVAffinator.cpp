@@ -392,10 +392,6 @@ __isl_give PWACtx SCEVAffinator::visitMulExpr(const SCEVMulExpr *Expr) {
   return Prod;
 }
 
-__isl_give PWACtx SCEVAffinator::visitUDivExpr(const SCEVUDivExpr *Expr) {
-  llvm_unreachable("SCEVUDivExpr not yet supported");
-}
-
 __isl_give PWACtx SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
   assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
 
@@ -450,6 +446,44 @@ __isl_give PWACtx SCEVAffinator::visitSMaxExpr(const SCEVSMaxExpr *Expr) {
 
 __isl_give PWACtx SCEVAffinator::visitUMaxExpr(const SCEVUMaxExpr *Expr) {
   llvm_unreachable("SCEVUMaxExpr not yet supported");
+}
+
+__isl_give PWACtx SCEVAffinator::visitUDivExpr(const SCEVUDivExpr *Expr) {
+  // The handling of unsigned division is basically the same as for signed
+  // division, except the interpretation of the operands. As the divisor
+  // has to be constant in both cases we can simply interpret it as an
+  // unsigned value without additional complexity in the representation.
+  // For the dividend we could choose from the different representation
+  // schemes introduced for zero-extend operations but for now we will
+  // simply use an assumption.
+  auto *Dividend = Expr->getLHS();
+  auto *Divisor = Expr->getRHS();
+  assert(isa<SCEVConstant>(Divisor) &&
+         "UDiv is no parameter but has a non-constant RHS.");
+
+  auto DividendPWAC = visit(Dividend);
+  auto DivisorPWAC = visit(Divisor);
+
+  if (SE.isKnownNegative(Divisor)) {
+    // Interpret negative divisors unsigned. This is a special case of the
+    // piece-wise defined value described for zero-extends as we already know
+    // the actual value of the constant divisor.
+    unsigned Width = TD.getTypeSizeInBits(Expr->getType());
+    auto *DivisorDom = isl_pw_aff_domain(isl_pw_aff_copy(DivisorPWAC.first));
+    auto *WidthExpPWA = getWidthExpValOnDomain(Width, DivisorDom);
+    DivisorPWAC.first = isl_pw_aff_add(DivisorPWAC.first, WidthExpPWA);
+  }
+
+  // TODO: One can represent the dividend as piece-wise function to be more
+  //       precise but therefor a heuristic is needed.
+
+  // Assume a non-negative dividend.
+  takeNonNegativeAssumption(DividendPWAC);
+
+  combine(DividendPWAC, DivisorPWAC, isl_pw_aff_div);
+  DividendPWAC.first = isl_pw_aff_floor(DividendPWAC.first);
+
+  return DividendPWAC;
 }
 
 __isl_give PWACtx SCEVAffinator::visitSDivInstruction(Instruction *SDiv) {
