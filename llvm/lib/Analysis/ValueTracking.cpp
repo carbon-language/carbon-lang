@@ -3941,7 +3941,10 @@ Optional<bool> llvm::isImpliedCondition(Value *LHS, Value *RHS,
                                         unsigned Depth, AssumptionCache *AC,
                                         const Instruction *CxtI,
                                         const DominatorTree *DT) {
-  assert(LHS->getType() == RHS->getType() && "mismatched type");
+  // A mismatch occurs when we compare a scalar cmp to a vector cmp, for example.
+  if (LHS->getType() != RHS->getType())
+    return None;
+
   Type *OpTy = LHS->getType();
   assert(OpTy->getScalarType()->isIntegerTy(1));
 
