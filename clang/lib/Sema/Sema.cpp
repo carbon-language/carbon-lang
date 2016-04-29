@@ -1237,6 +1237,7 @@ void Sema::ActOnComment(SourceRange Comment) {
 ExternalSemaSource::~ExternalSemaSource() {}
 
 void ExternalSemaSource::ReadMethodPool(Selector Sel) { }
+void ExternalSemaSource::updateOutOfDateSelector(Selector Sel) { }
 
 void ExternalSemaSource::ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces) {
