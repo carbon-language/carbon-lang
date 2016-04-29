@@ -16,6 +16,7 @@
 
 #include "X86Disassembler.h"
 #include "X86DisassemblerDecoder.h"
+#include "MCTargetDesc/X86MCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCExpr.h"
@@ -30,13 +31,6 @@ using namespace llvm;
 using namespace llvm::X86Disassembler;
 
 #define DEBUG_TYPE "x86-disassembler"
-
-#define GET_REGINFO_ENUM
-#include "X86GenRegisterInfo.inc"
-#define GET_INSTRINFO_ENUM
-#include "X86GenInstrInfo.inc"
-#define GET_SUBTARGETINFO_ENUM
-#include "X86GenSubtargetInfo.inc"
 
 void llvm::X86Disassembler::Debug(const char *file, unsigned line,
                                   const char *s) {
@@ -66,8 +60,6 @@ namespace X86 {
     sib64 = 505
   };
 }
-
-extern Target TheX86_32Target, TheX86_64Target;
 
 }
 
