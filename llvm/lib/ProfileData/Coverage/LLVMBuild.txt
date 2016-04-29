@@ -1,4 +1,4 @@
-;===- ./tools/llvm-cov/LLVMBuild.txt ---------------------------*- Conf -*--===;
+;===- ./lib/ProfileData/Coverage/LLVMBuild.txt -----------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,7 +16,8 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = Tool
-name = llvm-cov
-parent = Tools
-required_libraries = Coverage Support Instrumentation
+type = Library
+name = Coverage
+parent = ProfileData
+required_libraries = Core Object ProfileData Support
+
