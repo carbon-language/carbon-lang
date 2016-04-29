@@ -105,6 +105,11 @@ static cl::opt<bool> DetectReductions("polly-detect-reductions",
                                       cl::Hidden, cl::ZeroOrMore,
                                       cl::init(true), cl::cat(PollyCategory));
 
+static cl::opt<bool>
+    IslOnErrorAbort("polly-on-isl-error-abort",
+                    cl::desc("Abort if an isl error is encountered"),
+                    cl::init(true), cl::cat(PollyCategory));
+
 //===----------------------------------------------------------------------===//
 
 // Create a sequence of two schedules. Either argument may be null and is
@@ -3064,7 +3069,8 @@ Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
       MaxLoopDepth(MaxLoopDepth), IslCtx(isl_ctx_alloc(), isl_ctx_free),
       Context(nullptr), Affinator(this, LI), AssumedContext(nullptr),
       InvalidContext(nullptr), Schedule(nullptr) {
-  isl_options_set_on_error(getIslCtx(), ISL_ON_ERROR_ABORT);
+  if (IslOnErrorAbort)
+    isl_options_set_on_error(getIslCtx(), ISL_ON_ERROR_ABORT);
   buildContext();
 }
 
