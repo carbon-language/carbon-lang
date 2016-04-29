@@ -805,7 +805,7 @@ void CachingMemorySSAWalker::invalidateInfo(MemoryAccess *MA) {
     CachedUpwardsClobberingAccess.clear();
   }
 
-#ifdef XDEBUG
+#ifdef EXPENSIVE_CHECKS
   // Run this only when expensive checks are enabled.
   verifyRemoved(MA);
 #endif
