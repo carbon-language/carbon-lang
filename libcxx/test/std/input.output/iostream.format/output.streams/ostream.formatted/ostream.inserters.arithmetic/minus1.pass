@@ -22,6 +22,7 @@
 //  Testing to make sure that the max length values are correctly inserted
 
 #include <iostream>
+#include <cctype>
 #include <sstream>
 #include <cassert>
 
