@@ -59,10 +59,13 @@ public:
 
   void Write(const std::string &Dir) {
     for (const auto &Symbol : Symbols) {
-      SmallString<256> FilePath(Dir);
-      llvm::sys::path::append(
-          FilePath, llvm::sys::path::filename(Symbol.first) + ".yaml");
-      WriteSymboInfosToFile(FilePath, Symbol.second);
+      int FD;
+      SmallString<128> ResultPath;
+      llvm::sys::fs::createUniqueFile(
+          Dir + "/" + llvm::sys::path::filename(Symbol.first) + "-%%%%%%.yaml",
+          FD, ResultPath);
+      llvm::raw_fd_ostream OS(FD, /*shouldClose=*/true);
+      WriteSymbolInfosToStream(OS, Symbol.second);
     }
   }
 
@@ -90,7 +93,13 @@ bool Merge(llvm::StringRef MergeDir, llvm::StringRef OutputFile) {
       UniqueSymbols.insert(Symbol);
   }
 
-  WriteSymboInfosToFile(OutputFile, UniqueSymbols);
+  llvm::raw_fd_ostream OS(OutputFile, EC, llvm::sys::fs::F_None);
+  if (EC) {
+    llvm::errs() << "Cann't open '" << OutputFile << "': " << EC.message()
+                 << '\n';
+    return false;
+  }
+  WriteSymbolInfosToStream(OS, UniqueSymbols);
   return true;
 }
 
