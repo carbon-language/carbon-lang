@@ -116,6 +116,20 @@ public:
   void emitEmptyDelaySlot(bool hasShortDelaySlot, SMLoc IDLoc,
                           const MCSubtargetInfo *STI);
   void emitNop(SMLoc IDLoc, const MCSubtargetInfo *STI);
+  void emitStoreWithImmOffset(unsigned Opcode, unsigned SrcReg,
+                              unsigned BaseReg, int64_t Offset, unsigned ATReg,
+                              SMLoc IDLoc, const MCSubtargetInfo *STI);
+  void emitStoreWithSymOffset(unsigned Opcode, unsigned SrcReg,
+                              unsigned BaseReg, MCOperand &HiOperand,
+                              MCOperand &LoOperand, unsigned ATReg, SMLoc IDLoc,
+                              const MCSubtargetInfo *STI);
+  void emitLoadWithImmOffset(unsigned Opcode, unsigned DstReg, unsigned BaseReg,
+                             int64_t Offset, unsigned TmpReg, SMLoc IDLoc,
+                             const MCSubtargetInfo *STI);
+  void emitLoadWithSymOffset(unsigned Opcode, unsigned DstReg, unsigned BaseReg,
+                             MCOperand &HiOperand, MCOperand &LoOperand,
+                             unsigned ATReg, SMLoc IDLoc,
+                             const MCSubtargetInfo *STI);
 
   void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
   void reallowModuleDirective() { ModuleDirectiveAllowed = true; }

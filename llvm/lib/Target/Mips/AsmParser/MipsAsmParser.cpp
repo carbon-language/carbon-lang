@@ -201,7 +201,13 @@ class MipsAsmParser : public MCTargetAsmParser {
                                   const MCSubtargetInfo *STI);
 
   void expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                     const MCSubtargetInfo *STI, bool isLoad, bool isImmOpnd);
+                     const MCSubtargetInfo *STI, bool IsLoad, bool IsImmOpnd);
+
+  void expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                      const MCSubtargetInfo *STI, bool IsImmOpnd);
+
+  void expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                       const MCSubtargetInfo *STI, bool IsImmOpnd);
 
   bool expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                                const MCSubtargetInfo *STI);
@@ -2526,78 +2532,97 @@ bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
 }
 
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                                  const MCSubtargetInfo *STI, bool isLoad,
-                                  bool isImmOpnd) {
-  MipsTargetStreamer &TOut = getTargetStreamer();
-  MCOperand HiOperand, LoOperand;
-  unsigned TmpRegNum;
-  // 1st operand is either the source or destination register.
-  assert(Inst.getOperand(0).isReg() && "expected register operand kind");
-  unsigned RegOpNum = Inst.getOperand(0).getReg();
-  // 2nd operand is the base register.
-  assert(Inst.getOperand(1).isReg() && "expected register operand kind");
-  unsigned BaseRegNum = Inst.getOperand(1).getReg();
-  // 3rd operand is either an immediate or expression.
-  if (isImmOpnd) {
-    assert(Inst.getOperand(2).isImm() && "expected immediate operand kind");
-    unsigned ImmOffset = Inst.getOperand(2).getImm();
-    unsigned LoOffset = ImmOffset & 0x0000ffff;
-    unsigned HiOffset = (ImmOffset & 0xffff0000) >> 16;
-    // If msb of LoOffset is 1(negative number) we must increment HiOffset.
-    if (LoOffset & 0x8000)
-      HiOffset++;
-    LoOperand = MCOperand::createImm(LoOffset);
-    HiOperand = MCOperand::createImm(HiOffset);
-  } else {
-    const MCExpr *ExprOffset = Inst.getOperand(2).getExpr();
-    LoOperand = MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "lo"));
-    HiOperand = MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "hi"));
+                                  const MCSubtargetInfo *STI, bool IsLoad,
+                                  bool IsImmOpnd) {
+  if (IsLoad) {
+    expandLoadInst(Inst, IDLoc, Out, STI, IsImmOpnd);
+    return;
   }
-  // These are some of the types of expansions we perform here:
-  // 1) lw $8, sym        => lui $8, %hi(sym)
-  //                         lw $8, %lo(sym)($8)
-  // 2) lw $8, offset($9) => lui $8, %hi(offset)
-  //                         add $8, $8, $9
-  //                         lw $8, %lo(offset)($9)
-  // 3) lw $8, offset($8) => lui $at, %hi(offset)
-  //                         add $at, $at, $8
-  //                         lw $8, %lo(offset)($at)
-  // 4) sw $8, sym        => lui $at, %hi(sym)
-  //                         sw $8, %lo(sym)($at)
-  // 5) sw $8, offset($8) => lui $at, %hi(offset)
-  //                         add $at, $at, $8
-  //                         sw $8, %lo(offset)($at)
-  // 6) ldc1 $f0, sym     => lui $at, %hi(sym)
-  //                         ldc1 $f0, %lo(sym)($at)
-  //
-  // For load instructions we can use the destination register as a temporary
-  // if base and dst are different (examples 1 and 2) and if the base register
-  // is general purpose otherwise we must use $at (example 6) and error if it's
-  // not available. For stores we must use $at (examples 4 and 5) because we
-  // must not clobber the source register setting up the offset.
+  expandStoreInst(Inst, IDLoc, Out, STI, IsImmOpnd);
+}
+
+void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                                   const MCSubtargetInfo *STI, bool IsImmOpnd) {
+  MipsTargetStreamer &TOut = getTargetStreamer();
+
+  unsigned DstReg = Inst.getOperand(0).getReg();
+  unsigned BaseReg = Inst.getOperand(1).getReg();
+
   const MCInstrDesc &Desc = getInstDesc(Inst.getOpcode());
-  int16_t RegClassOp0 = Desc.OpInfo[0].RegClass;
-  unsigned RegClassIDOp0 =
-      getContext().getRegisterInfo()->getRegClass(RegClassOp0).getID();
-  bool IsGPR = (RegClassIDOp0 == Mips::GPR32RegClassID) ||
-               (RegClassIDOp0 == Mips::GPR64RegClassID);
-  if (isLoad && IsGPR && (BaseRegNum != RegOpNum))
-    TmpRegNum = RegOpNum;
-  else {
+  int16_t DstRegClass = Desc.OpInfo[0].RegClass;
+  unsigned DstRegClassID =
+      getContext().getRegisterInfo()->getRegClass(DstRegClass).getID();
+  bool IsGPR = (DstRegClassID == Mips::GPR32RegClassID) ||
+               (DstRegClassID == Mips::GPR64RegClassID);
+
+  if (IsImmOpnd) {
+    // Try to use DstReg as the temporary.
+    if (IsGPR && (BaseReg != DstReg)) {
+      TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
+                                 Inst.getOperand(2).getImm(), DstReg, IDLoc,
+                                 STI);
+      return;
+    }
+
     // At this point we need AT to perform the expansions and we exit if it is
     // not available.
-    TmpRegNum = getATReg(IDLoc);
-    if (!TmpRegNum)
+    unsigned ATReg = getATReg(IDLoc);
+    if (!ATReg)
       return;
+
+    TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
+                               Inst.getOperand(2).getImm(), ATReg, IDLoc, STI);
+    return;
   }
 
-  TOut.emitRX(Mips::LUi, TmpRegNum, HiOperand, IDLoc, STI);
-  // Add temp register to base.
-  if (BaseRegNum != Mips::ZERO)
-    TOut.emitRRR(Mips::ADDu, TmpRegNum, TmpRegNum, BaseRegNum, IDLoc, STI);
-  // And finally, create original instruction with low part
-  // of offset and new base.
-  TOut.emitRRX(Inst.getOpcode(), RegOpNum, TmpRegNum, LoOperand, IDLoc, STI);
+  const MCExpr *ExprOffset = Inst.getOperand(2).getExpr();
+  MCOperand LoOperand =
+      MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "lo"));
+  MCOperand HiOperand =
+      MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "hi"));
+
+  // Try to use DstReg as the temporary.
+  if (IsGPR && (BaseReg != DstReg)) {
+    TOut.emitLoadWithSymOffset(Inst.getOpcode(), DstReg, BaseReg, HiOperand,
+                               LoOperand, DstReg, IDLoc, STI);
+    return;
+  }
+
+  // At this point we need AT to perform the expansions and we exit if it is
+  // not available.
+  unsigned ATReg = getATReg(IDLoc);
+  if (!ATReg)
+    return;
+
+  TOut.emitLoadWithSymOffset(Inst.getOpcode(), DstReg, BaseReg, HiOperand,
+                             LoOperand, ATReg, IDLoc, STI);
+}
+
+void MipsAsmParser::expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                                    const MCSubtargetInfo *STI,
+                                    bool IsImmOpnd) {
+  MipsTargetStreamer &TOut = getTargetStreamer();
+
+  unsigned SrcReg = Inst.getOperand(0).getReg();
+  unsigned BaseReg = Inst.getOperand(1).getReg();
+
+  unsigned ATReg = getATReg(IDLoc);
+  if (!ATReg)
+    return;
+
+  if (IsImmOpnd) {
+    TOut.emitStoreWithImmOffset(Inst.getOpcode(), SrcReg, BaseReg,
+                                Inst.getOperand(2).getImm(), ATReg, IDLoc, STI);
+    return;
+  }
+
+  const MCExpr *ExprOffset = Inst.getOperand(2).getExpr();
+  MCOperand LoOperand =
+      MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "lo"));
+  MCOperand HiOperand =
+      MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "hi"));
+  TOut.emitStoreWithSymOffset(Inst.getOpcode(), SrcReg, BaseReg, HiOperand,
+                              LoOperand, ATReg, IDLoc, STI);
 }
 
 bool MipsAsmParser::expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc,
