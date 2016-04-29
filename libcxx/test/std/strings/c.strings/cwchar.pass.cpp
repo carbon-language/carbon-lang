@@ -10,6 +10,7 @@
 // <cwchar>
 
 #include <cwchar>
+#include <cstdarg>
 #include <type_traits>
 
 #ifndef NULL
