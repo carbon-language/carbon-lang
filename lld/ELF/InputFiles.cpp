@@ -490,16 +490,19 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms) {
+    unsigned VersymIndex = 0;
+    if (Versym) {
+      VersymIndex = Versym->vs_index;
+      ++Versym;
+    }
+
     StringRef Name = check(Sym.getName(this->StringTable));
     if (Sym.isUndefined()) {
       Undefs.push_back(Name);
       continue;
     }
 
-    unsigned VersymIndex = 0;
     if (Versym) {
-      VersymIndex = Versym->vs_index;
-      ++Versym;
       // Ignore local symbols and non-default versions.
       if (VersymIndex == 0 || (VersymIndex & VERSYM_HIDDEN))
         continue;
