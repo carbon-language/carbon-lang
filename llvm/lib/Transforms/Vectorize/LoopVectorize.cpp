@@ -3200,6 +3200,11 @@ void InnerLoopVectorizer::createEmptyLoop() {
   LoopVectorBody.push_back(VecBody);
   LoopScalarBody = OldBasicBlock;
 
+  // Keep all loop hints from the original loop on the vector loop (we'll
+  // replace the vectorizer-specific hints below).
+  if (MDNode *LID = OrigLoop->getLoopID())
+    Lp->setLoopID(LID);
+
   LoopVectorizeHints Hints(Lp, true);
   Hints.setAlreadyVectorized();
 }
