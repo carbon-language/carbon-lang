@@ -10,28 +10,30 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBInfoStream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
 
-PDBInfoStream::PDBInfoStream(PDBFile &File) : Pdb(File), Stream1(1, File) {}
+PDBInfoStream::PDBInfoStream(PDBFile &File) : Pdb(File), Stream(1, File) {}
 
 std::error_code PDBInfoStream::reload() {
-  Stream1.setOffset(0);
+  StreamReader Reader(Stream);
+
   support::ulittle32_t Value;
 
-  Stream1.readObject(&Value);
+  Reader.readObject(&Value);
   Version = Value;
   if (Version < PdbRaw_ImplVer::PdbImplVC70)
     return std::make_error_code(std::errc::not_supported);
 
-  Stream1.readObject(&Value);
+  Reader.readObject(&Value);
   Signature = Value;
 
-  Stream1.readObject(&Value);
+  Reader.readObject(&Value);
   Age = Value;
 
-  Stream1.readObject(&Guid);
-  NamedStreams.load(Stream1);
+  Reader.readObject(&Guid);
+  NamedStreams.load(Reader);
 
   return std::error_code();
 }

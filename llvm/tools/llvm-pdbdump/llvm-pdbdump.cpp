@@ -35,12 +35,13 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolThunk.h"
+#include "llvm/DebugInfo/PDB/Raw/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBDbiStream.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBInfoStream.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBStream.h"
 #include "llvm/DebugInfo/PDB/Raw/RawSession.h"
+#include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/FileSystem.h"
@@ -246,17 +247,19 @@ static void dumpStructure(RawSession &RS) {
   // Let's try to dump out the named stream "/names".
   uint32_t NameStreamIndex = InfoStream.getNamedStreamIndex("/names");
   if (NameStreamIndex != 0) {
-    PDBStream NameStream(NameStreamIndex, File);
+    MappedBlockStream NameStream(NameStreamIndex, File);
+    StreamReader Reader(NameStream);
+
     outs() << "NameStream: " << NameStreamIndex << '\n';
 
     // The name stream appears to start with a signature and version.
     uint32_t NameStreamSignature;
-    NameStream.readInteger(NameStreamSignature);
+    Reader.readInteger(NameStreamSignature);
     outs() << "NameStreamSignature: ";
     outs().write_hex(NameStreamSignature) << '\n';
 
     uint32_t NameStreamVersion;
-    NameStream.readInteger(NameStreamVersion);
+    Reader.readInteger(NameStreamVersion);
     outs() << "NameStreamVersion: " << NameStreamVersion << '\n';
 
     // We only support this particular version of the name stream.

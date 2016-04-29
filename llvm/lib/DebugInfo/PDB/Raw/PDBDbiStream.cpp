@@ -12,6 +12,7 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBInfoStream.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBRawConstants.h"
+#include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
 using namespace llvm::support;
@@ -58,12 +59,12 @@ struct PDBDbiStream::HeaderInfo {
   little32_t SecContrSubstreamSize; // Size of sec. contribution stream
   little32_t SectionMapSize;        // Size of sec. map substream
   little32_t FileInfoSize;          // Size of file info substream
-  little32_t TypeServerSize;      // Size of type server map
-  ulittle32_t MFCTypeServerIndex; // Index of MFC Type Server
-  little32_t OptionalDbgHdrSize;  // Size of DbgHeader info
-  little32_t ECSubstreamSize;     // Size of EC stream (what is EC?)
-  ulittle16_t Flags;              // See DbiFlags enum.
-  ulittle16_t MachineType;        // See PDB_MachineType enum.
+  little32_t TypeServerSize;        // Size of type server map
+  ulittle32_t MFCTypeServerIndex;   // Index of MFC Type Server
+  little32_t OptionalDbgHdrSize;    // Size of DbgHeader info
+  little32_t ECSubstreamSize;       // Size of EC stream (what is EC?)
+  ulittle16_t Flags;                // See DbiFlags enum.
+  ulittle16_t MachineType;          // See PDB_MachineType enum.
 
   ulittle32_t Reserved; // Pad to 64 bytes
 };
@@ -75,12 +76,13 @@ PDBDbiStream::PDBDbiStream(PDBFile &File) : Pdb(File), Stream(3, File) {
 PDBDbiStream::~PDBDbiStream() {}
 
 std::error_code PDBDbiStream::reload() {
-  Stream.setOffset(0);
+  StreamReader Reader(Stream);
+
   Header.reset(new HeaderInfo());
 
   if (Stream.getLength() < sizeof(HeaderInfo))
     return std::make_error_code(std::errc::illegal_byte_sequence);
-  Stream.readObject(Header.get());
+  Reader.readObject(Header.get());
 
   if (Header->VersionSignature != -1)
     return std::make_error_code(std::errc::illegal_byte_sequence);
@@ -115,29 +117,34 @@ std::error_code PDBDbiStream::reload() {
     return std::make_error_code(std::errc::illegal_byte_sequence);
 
   std::error_code EC;
-  if ((EC = readSubstream(ModInfoSubstream, Header->ModiSubstreamSize)))
-    return EC;
+  ModInfoSubstream.initialize(Reader, Header->ModiSubstreamSize);
 
   // Since each ModInfo in the stream is a variable length, we have to iterate
   // them to know how many there actually are.
-  auto Range = llvm::make_range(ModInfoIterator(&ModInfoSubstream.front()),
-                                ModInfoIterator(&ModInfoSubstream.back() + 1));
+  auto Range =
+      llvm::make_range(ModInfoIterator(&ModInfoSubstream.data().front()),
+                       ModInfoIterator(&ModInfoSubstream.data().back() + 1));
   for (auto Info : Range)
     ModuleInfos.push_back(ModuleInfoEx(Info));
 
-  if ((EC = readSubstream(SecContrSubstream, Header->SecContrSubstreamSize)))
+  if ((EC = SecContrSubstream.initialize(Reader, Header->SecContrSubstreamSize)))
     return EC;
-  if ((EC = readSubstream(SecMapSubstream, Header->SectionMapSize)))
+  if ((EC = SecMapSubstream.initialize(Reader, Header->SectionMapSize)))
     return EC;
-  if ((EC = readSubstream(FileInfoSubstream, Header->FileInfoSize)))
+  if ((EC = FileInfoSubstream.initialize(Reader, Header->FileInfoSize)))
     return EC;
-  if ((EC = readSubstream(TypeServerMapSubstream, Header->TypeServerSize)))
+  if ((EC = TypeServerMapSubstream.initialize(Reader, Header->TypeServerSize)))
     return EC;
-  if ((EC = readSubstream(ECSubstream, Header->ECSubstreamSize)))
+  if ((EC = ECSubstream.initialize(Reader, Header->ECSubstreamSize)))
+    return EC;
+  if ((EC = DbgHeader.initialize(Reader, Header->OptionalDbgHdrSize)))
     return EC;
 
   if ((EC = initializeFileInfo()))
     return EC;
+
+  if (Reader.bytesRemaining() > 0)
+    return std::make_error_code(std::errc::illegal_byte_sequence);
 
   return std::error_code();
 }
@@ -182,15 +189,6 @@ PDB_Machine PDBDbiStream::getMachineType() const {
 
 ArrayRef<ModuleInfoEx> PDBDbiStream::modules() const { return ModuleInfos; }
 
-std::error_code PDBDbiStream::readSubstream(std::vector<uint8_t> &Bytes, uint32_t Size) {
-  Bytes.clear();
-  if (Size == 0)
-    return std::error_code();
-
-  Bytes.resize(Size);
-  return Stream.readBytes(&Bytes[0], Size);
-}
-
 std::error_code PDBDbiStream::initializeFileInfo() {
   struct FileInfoSubstreamHeader {
     ulittle16_t NumModules;     // Total # of modules, should match number of
@@ -213,7 +211,7 @@ std::error_code PDBDbiStream::initializeFileInfo() {
   // with the caveat that `NumSourceFiles` cannot be trusted, so
   // it is computed by summing `ModFileCounts`.
   //
-  const uint8_t *Buf = &FileInfoSubstream[0];
+  const uint8_t *Buf = &FileInfoSubstream.data().front();
   auto FI = reinterpret_cast<const FileInfoSubstreamHeader *>(Buf);
   Buf += sizeof(FileInfoSubstreamHeader);
   // The number of modules in the stream should be the same as reported by

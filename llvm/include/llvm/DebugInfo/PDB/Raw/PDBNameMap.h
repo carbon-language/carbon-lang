@@ -17,12 +17,12 @@
 #include <utility>
 
 namespace llvm {
-class PDBStream;
+class StreamReader;
 class PDBNameMap {
 public:
   PDBNameMap();
 
-  std::error_code load(PDBStream &Stream);
+  std::error_code load(StreamReader &Stream);
 
   bool tryGetValue(StringRef Name, uint32_t &Value) const;
 

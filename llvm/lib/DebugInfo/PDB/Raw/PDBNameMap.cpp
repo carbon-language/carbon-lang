@@ -9,13 +9,14 @@
 
 #include "llvm/DebugInfo/PDB/Raw/PDBNameMap.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBStream.h"
+#include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
 
 PDBNameMap::PDBNameMap() {}
 
-std::error_code PDBNameMap::load(PDBStream &Stream) {
+std::error_code PDBNameMap::load(StreamReader &Stream) {
+
   // This is some sort of weird string-set/hash table encoded in the stream.
   // It starts with the number of bytes in the table.
   uint32_t NumberOfBytes;
