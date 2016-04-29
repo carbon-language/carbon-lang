@@ -123,6 +123,13 @@ std::error_code PDBFile::parseFileHeaders() {
   Context->SB =
       reinterpret_cast<const SuperBlock *>(BufferRef.getBufferStart());
   const SuperBlock *SB = Context->SB;
+  switch (SB->BlockSize) {
+  case 512: case 1024: case 2048: case 4096:
+    break;
+  default:
+    // An invalid block size suggests a corrupt PDB file.
+    return std::make_error_code(std::errc::illegal_byte_sequence);
+  }
 
   // Make sure the file is sufficiently large to hold a super block.
   if (BufferRef.getBufferSize() < sizeof(SuperBlock))
