@@ -143,6 +143,12 @@ elf::ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
 
 template <class ELFT> static bool shouldMerge(const typename ELFT::Shdr &Sec) {
   typedef typename ELFT::uint uintX_t;
+
+  // We don't merge sections if -O0 (default is -O1). This makes sometimes
+  // the linker significantly faster, although the output will be bigger.
+  if (Config->Optimize == 0)
+    return false;
+
   uintX_t Flags = Sec.sh_flags;
   if (!(Flags & SHF_MERGE))
     return false;
