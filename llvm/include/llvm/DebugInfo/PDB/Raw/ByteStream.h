@@ -19,6 +19,7 @@
 #include <vector>
 
 namespace llvm {
+namespace pdb {
 class StreamReader;
 class ByteStream : public StreamInterface {
 public:
@@ -42,6 +43,7 @@ private:
   MutableArrayRef<uint8_t> Data;
   bool Owned;
 };
+}
 }
 
 #endif

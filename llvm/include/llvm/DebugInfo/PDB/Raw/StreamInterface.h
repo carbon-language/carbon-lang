@@ -16,6 +16,7 @@
 #include <system_error>
 
 namespace llvm {
+namespace pdb {
 class StreamInterface {
 public:
   virtual ~StreamInterface() {}
@@ -24,6 +25,7 @@ public:
                                     MutableArrayRef<uint8_t> Buffer) const = 0;
   virtual uint32_t getLength() const = 0;
 };
+}
 }
 
 #endif

@@ -1,4 +1,4 @@
-//===- PDBNameMap.h - PDB Name Map ------------------------------*- C++ -*-===//
+//===- NameMap.h - PDB Name Map ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,10 +17,11 @@
 #include <utility>
 
 namespace llvm {
+namespace pdb {
 class StreamReader;
-class PDBNameMap {
+class NameMap {
 public:
-  PDBNameMap();
+  NameMap();
 
   std::error_code load(StreamReader &Stream);
 
@@ -29,6 +30,7 @@ public:
 private:
   StringMap<uint32_t> Mapping;
 };
+}
 }
 
 #endif

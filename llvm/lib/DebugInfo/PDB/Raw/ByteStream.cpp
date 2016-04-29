@@ -11,6 +11,7 @@
 #include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
+using namespace llvm::pdb;
 
 ByteStream::ByteStream() : Owned(false) {}
 

@@ -31,9 +31,9 @@ add_pdb_impl_folder(Raw
   Raw/MappedBlockStream.cpp
   Raw/ModInfo.cpp
   Raw/PDBFile.cpp
-  Raw/PDBDbiStream.cpp
-  Raw/PDBInfoStream.cpp
-  Raw/PDBNameMap.cpp
+  Raw/DbiStream.cpp
+  Raw/InfoStream.cpp
+  Raw/NameMap.cpp
   Raw/RawSession.cpp
   Raw/StreamReader.cpp)
 

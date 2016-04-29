@@ -1,4 +1,4 @@
-//===- PDBInfoStream.cpp - PDB Info Stream (Stream 1) Access ----*- C++ -*-===//
+//===- InfoStream.cpp - PDB Info Stream (Stream 1) Access -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/PDB/Raw/PDBInfoStream.h"
+#include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
+using namespace llvm::pdb;
 
-PDBInfoStream::PDBInfoStream(PDBFile &File) : Pdb(File), Stream(1, File) {}
+InfoStream::InfoStream(PDBFile &File) : Pdb(File), Stream(1, File) {}
 
-std::error_code PDBInfoStream::reload() {
+std::error_code InfoStream::reload() {
   StreamReader Reader(Stream);
 
   support::ulittle32_t Value;
@@ -38,19 +39,19 @@ std::error_code PDBInfoStream::reload() {
   return std::error_code();
 }
 
-uint32_t PDBInfoStream::getNamedStreamIndex(llvm::StringRef Name) const {
+uint32_t InfoStream::getNamedStreamIndex(llvm::StringRef Name) const {
   uint32_t Result;
   if (!NamedStreams.tryGetValue(Name, Result))
     return 0;
   return Result;
 }
 
-PdbRaw_ImplVer PDBInfoStream::getVersion() const {
+PdbRaw_ImplVer InfoStream::getVersion() const {
   return static_cast<PdbRaw_ImplVer>(Version);
 }
 
-uint32_t PDBInfoStream::getSignature() const { return Signature; }
+uint32_t InfoStream::getSignature() const { return Signature; }
 
-uint32_t PDBInfoStream::getAge() const { return Age; }
+uint32_t InfoStream::getAge() const { return Age; }
 
-PDB_UniqueId PDBInfoStream::getGuid() const { return Guid; }
+PDB_UniqueId InfoStream::getGuid() const { return Guid; }

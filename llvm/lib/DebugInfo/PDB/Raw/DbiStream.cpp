@@ -1,4 +1,4 @@
-//===- PDBDbiStream.cpp - PDB Dbi Stream (Stream 3) Access ----------------===//
+//===- DbiStream.cpp - PDB Dbi Stream (Stream 3) Access -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/PDB/Raw/PDBDbiStream.h"
+#include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
+#include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBInfoStream.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBRawConstants.h"
+#include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
+using namespace llvm::pdb;
 using namespace llvm::support;
 
 namespace {
@@ -45,10 +46,10 @@ const uint16_t BuildMajorMask = 0x7F00;
 const uint16_t BuildMajorShift = 8;
 }
 
-struct PDBDbiStream::HeaderInfo {
+struct DbiStream::HeaderInfo {
   little32_t VersionSignature;
   ulittle32_t VersionHeader;
-  ulittle32_t Age; // Should match PDBInfoStream.
+  ulittle32_t Age;                  // Should match InfoStream.
   ulittle16_t GSSyms;               // Number of global symbols
   ulittle16_t BuildNumber;          // See DbiBuildNo structure.
   ulittle16_t PSSyms;               // Number of public symbols
@@ -59,23 +60,23 @@ struct PDBDbiStream::HeaderInfo {
   little32_t SecContrSubstreamSize; // Size of sec. contribution stream
   little32_t SectionMapSize;        // Size of sec. map substream
   little32_t FileInfoSize;          // Size of file info substream
-  little32_t TypeServerSize;        // Size of type server map
-  ulittle32_t MFCTypeServerIndex;   // Index of MFC Type Server
-  little32_t OptionalDbgHdrSize;    // Size of DbgHeader info
-  little32_t ECSubstreamSize;       // Size of EC stream (what is EC?)
-  ulittle16_t Flags;                // See DbiFlags enum.
-  ulittle16_t MachineType;          // See PDB_MachineType enum.
+  little32_t TypeServerSize;      // Size of type server map
+  ulittle32_t MFCTypeServerIndex; // Index of MFC Type Server
+  little32_t OptionalDbgHdrSize;  // Size of DbgHeader info
+  little32_t ECSubstreamSize;     // Size of EC stream (what is EC?)
+  ulittle16_t Flags;              // See DbiFlags enum.
+  ulittle16_t MachineType;        // See PDB_MachineType enum.
 
   ulittle32_t Reserved; // Pad to 64 bytes
 };
 
-PDBDbiStream::PDBDbiStream(PDBFile &File) : Pdb(File), Stream(3, File) {
+DbiStream::DbiStream(PDBFile &File) : Pdb(File), Stream(3, File) {
   static_assert(sizeof(HeaderInfo) == 64, "Invalid HeaderInfo size!");
 }
 
-PDBDbiStream::~PDBDbiStream() {}
+DbiStream::~DbiStream() {}
 
-std::error_code PDBDbiStream::reload() {
+std::error_code DbiStream::reload() {
   StreamReader Reader(Stream);
 
   Header.reset(new HeaderInfo());
@@ -127,7 +128,8 @@ std::error_code PDBDbiStream::reload() {
   for (auto Info : Range)
     ModuleInfos.push_back(ModuleInfoEx(Info));
 
-  if ((EC = SecContrSubstream.initialize(Reader, Header->SecContrSubstreamSize)))
+  if ((EC =
+           SecContrSubstream.initialize(Reader, Header->SecContrSubstreamSize)))
     return EC;
   if ((EC = SecMapSubstream.initialize(Reader, Header->SectionMapSize)))
     return EC;
@@ -149,47 +151,45 @@ std::error_code PDBDbiStream::reload() {
   return std::error_code();
 }
 
-PdbRaw_DbiVer PDBDbiStream::getDbiVersion() const {
+PdbRaw_DbiVer DbiStream::getDbiVersion() const {
   uint32_t Value = Header->VersionHeader;
   return static_cast<PdbRaw_DbiVer>(Value);
 }
 
-uint32_t PDBDbiStream::getAge() const { return Header->Age; }
+uint32_t DbiStream::getAge() const { return Header->Age; }
 
-bool PDBDbiStream::isIncrementallyLinked() const {
+bool DbiStream::isIncrementallyLinked() const {
   return (Header->Flags & FlagIncrementalMask) != 0;
 }
 
-bool PDBDbiStream::hasCTypes() const {
+bool DbiStream::hasCTypes() const {
   return (Header->Flags & FlagHasCTypesMask) != 0;
 }
 
-bool PDBDbiStream::isStripped() const {
+bool DbiStream::isStripped() const {
   return (Header->Flags & FlagStrippedMask) != 0;
 }
 
-uint16_t PDBDbiStream::getBuildMajorVersion() const {
+uint16_t DbiStream::getBuildMajorVersion() const {
   return (Header->BuildNumber & BuildMajorMask) >> BuildMajorShift;
 }
 
-uint16_t PDBDbiStream::getBuildMinorVersion() const {
+uint16_t DbiStream::getBuildMinorVersion() const {
   return (Header->BuildNumber & BuildMinorMask) >> BuildMinorShift;
 }
 
-uint32_t PDBDbiStream::getPdbDllVersion() const {
-  return Header->PdbDllVersion;
-}
+uint32_t DbiStream::getPdbDllVersion() const { return Header->PdbDllVersion; }
 
-uint32_t PDBDbiStream::getNumberOfSymbols() const { return Header->SymRecords; }
+uint32_t DbiStream::getNumberOfSymbols() const { return Header->SymRecords; }
 
-PDB_Machine PDBDbiStream::getMachineType() const {
+PDB_Machine DbiStream::getMachineType() const {
   uint16_t Machine = Header->MachineType;
   return static_cast<PDB_Machine>(Machine);
 }
 
-ArrayRef<ModuleInfoEx> PDBDbiStream::modules() const { return ModuleInfos; }
+ArrayRef<ModuleInfoEx> DbiStream::modules() const { return ModuleInfos; }
 
-std::error_code PDBDbiStream::initializeFileInfo() {
+std::error_code DbiStream::initializeFileInfo() {
   struct FileInfoSubstreamHeader {
     ulittle16_t NumModules;     // Total # of modules, should match number of
                                 // records in the ModuleInfo substream.

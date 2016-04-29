@@ -11,6 +11,7 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 
 using namespace llvm;
+using namespace llvm::pdb;
 
 MappedBlockStream::MappedBlockStream(uint32_t StreamIdx, const PDBFile &File) : Pdb(File) {
   StreamLength = Pdb.getStreamByteSize(StreamIdx);

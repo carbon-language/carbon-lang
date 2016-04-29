@@ -10,6 +10,7 @@
 #include "llvm/DebugInfo/PDB/Raw/StreamReader.h"
 
 using namespace llvm;
+using namespace llvm::pdb;
 
 StreamReader::StreamReader(const StreamInterface &S) : Stream(S), Offset(0) {}
 

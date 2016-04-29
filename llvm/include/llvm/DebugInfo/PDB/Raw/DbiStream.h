@@ -1,4 +1,4 @@
-//===- PDBDbiStream.h - PDB Dbi Stream (Stream 3) Access --------*- C++ -*-===//
+//===- DbiStream.h - PDB Dbi Stream (Stream 3) Access -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,18 +14,19 @@
 #include "llvm/DebugInfo/PDB/Raw/ByteStream.h"
 #include "llvm/DebugInfo/PDB/Raw/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBRawConstants.h"
+#include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/Support/Endian.h"
 
 namespace llvm {
+namespace pdb {
 class PDBFile;
 
-class PDBDbiStream {
+class DbiStream {
   struct HeaderInfo;
 
 public:
-  PDBDbiStream(PDBFile &File);
-  ~PDBDbiStream();
+  DbiStream(PDBFile &File);
+  ~DbiStream();
   std::error_code reload();
 
   PdbRaw_DbiVer getDbiVersion() const;
@@ -64,6 +65,7 @@ private:
 
   std::unique_ptr<HeaderInfo> Header;
 };
+}
 }
 
 #endif

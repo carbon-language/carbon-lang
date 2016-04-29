@@ -10,6 +10,7 @@
 #ifndef LLVM_DEBUGINFO_PDB_RAW_STREAMREADER_H
 #define LLVM_DEBUGINFO_PDB_RAW_STREAMREADER_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/PDB/Raw/StreamInterface.h"
 #include "llvm/Support/Endian.h"
 
@@ -17,7 +18,8 @@
 #include <system_error>
 
 namespace llvm {
-
+namespace pdb {
+class StreamInterface;
 class StreamReader {
 public:
   StreamReader(const StreamInterface &S);
@@ -41,6 +43,7 @@ private:
   const StreamInterface &Stream;
   uint32_t Offset;
 };
+}
 }
 
 #endif

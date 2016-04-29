@@ -1,4 +1,4 @@
-//===- PDBInfoStream.h - PDB Info Stream (Stream 1) Access ------*- C++ -*-===//
+//===- InfoStream.h - PDB Info Stream (Stream 1) Access ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,16 +13,16 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
 #include "llvm/DebugInfo/PDB/Raw/MappedBlockStream.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBNameMap.h"
-#include "llvm/DebugInfo/PDB/Raw/PDBRawConstants.h"
+#include "llvm/DebugInfo/PDB/Raw/NameMap.h"
+#include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 
 #include "llvm/Support/Endian.h"
 
 namespace llvm {
-
-class PDBInfoStream {
+namespace pdb {
+class InfoStream {
 public:
-  PDBInfoStream(PDBFile &File);
+  InfoStream(PDBFile &File);
 
   std::error_code reload();
 
@@ -57,8 +57,9 @@ private:
   // universally unique.
   PDB_UniqueId Guid;
 
-  PDBNameMap NamedStreams;
+  NameMap NamedStreams;
 };
+}
 }
 
 #endif

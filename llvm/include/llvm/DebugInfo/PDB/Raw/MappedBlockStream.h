@@ -18,6 +18,7 @@
 #include <vector>
 
 namespace llvm {
+namespace pdb {
 class PDBFile;
 
 class MappedBlockStream : public StreamInterface {
@@ -33,6 +34,7 @@ private:
   std::vector<uint32_t> BlockList;
   const PDBFile &Pdb;
 };
+}
 }
 
 #endif
