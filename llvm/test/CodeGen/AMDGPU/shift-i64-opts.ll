@@ -4,9 +4,9 @@
 
 ; lshr (i64 x), c: c > 32 => reg_sequence lshr (i32 hi_32(x)), (c - 32), 0
 ; GCN-LABEL: {{^}}lshr_i64_35:
-; GCN: buffer_load_dword [[VAL:v[0-9]+]]
-; GCN: v_lshrrev_b32_e32 v[[LO:[0-9]+]], 3, [[VAL]]
-; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
+; GCN-DAG: buffer_load_dword [[VAL:v[0-9]+]]
+; GCN-DAG: v_lshrrev_b32_e32 v[[LO:[0-9]+]], 3, [[VAL]]
+; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
 ; GCN: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @lshr_i64_35(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %val = load i64, i64 addrspace(1)* %in
@@ -16,9 +16,9 @@ define void @lshr_i64_35(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 }
 
 ; GCN-LABEL: {{^}}lshr_i64_63:
-; GCN: buffer_load_dword [[VAL:v[0-9]+]]
-; GCN: v_lshrrev_b32_e32 v[[LO:[0-9]+]], 31, [[VAL]]
-; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
+; GCN-DAG: buffer_load_dword [[VAL:v[0-9]+]]
+; GCN-DAG: v_lshrrev_b32_e32 v[[LO:[0-9]+]], 31, [[VAL]]
+; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
 ; GCN: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @lshr_i64_63(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %val = load i64, i64 addrspace(1)* %in
@@ -28,9 +28,9 @@ define void @lshr_i64_63(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 }
 
 ; GCN-LABEL: {{^}}lshr_i64_33:
-; GCN: buffer_load_dword [[VAL:v[0-9]+]]
-; GCN: v_lshrrev_b32_e32 v[[LO:[0-9]+]], 1, [[VAL]]
-; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
+; GCN-DAG: buffer_load_dword [[VAL:v[0-9]+]]
+; GCN-DAG: v_lshrrev_b32_e32 v[[LO:[0-9]+]], 1, [[VAL]]
+; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
 ; GCN: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @lshr_i64_33(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %val = load i64, i64 addrspace(1)* %in
