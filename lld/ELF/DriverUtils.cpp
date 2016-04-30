@@ -101,9 +101,9 @@ static std::string relative_to_root(StringRef Path) {
   // of the result.
   SmallString<128> Res;
   StringRef Root = path::root_name(Path);
-  if (Path.endswith(":"))
+  if (Root.endswith(":"))
     Res = Root.drop_back();
-  else if (Path.startswith("//"))
+  else if (Root.startswith("//"))
     Res = Root.substr(2);
 
   path::append(Res, path::relative_path(Abs));
