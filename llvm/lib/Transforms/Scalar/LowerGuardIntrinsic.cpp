@@ -56,6 +56,9 @@ static void MakeGuardControlFlowExplicit(Function *DeoptIntrinsic,
   CheckBI->getSuccessor(0)->setName("guarded");
   CheckBI->getSuccessor(1)->setName("deopt");
 
+  if (auto *MD = CI->getMetadata(LLVMContext::MD_make_implicit))
+    CheckBI->setMetadata(LLVMContext::MD_make_implicit, MD);
+
   IRBuilder<> B(DeoptBlockTerm);
   auto *DeoptCall = B.CreateCall(DeoptIntrinsic, Args, {DeoptOB}, "");
 
