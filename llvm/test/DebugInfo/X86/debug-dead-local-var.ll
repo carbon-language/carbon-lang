@@ -30,7 +30,7 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !llvm.module.flags = !{!18, !19}
 !llvm.ident = !{!20}
 
-!0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 209255) (llvm/trunk 209253)", isOptimized: true, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !22, globals: !2, imports: !2)
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 209255) (llvm/trunk 209253)", isOptimized: true, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "debug-dead-local-var.c", directory: "/usr/local/google/home/echristo")
 !2 = !{}
 !4 = distinct !DISubprogram(name: "bar", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !0, scopeLine: 11, file: !1, scope: !5, type: !6, variables: !2)
@@ -51,4 +51,3 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !19 = !{i32 2, !"Debug Info Version", i32 3}
 !20 = !{!"clang version 3.5.0 (trunk 209255) (llvm/trunk 209253)"}
 !21 = !DILocation(line: 13, scope: !4)
-!22 = !{!14}

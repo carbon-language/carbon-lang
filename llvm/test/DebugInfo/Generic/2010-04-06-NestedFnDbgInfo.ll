@@ -74,7 +74,7 @@ entry:
 !1 = distinct !DILexicalBlock(line: 15, column: 12, file: !38, scope: !2)
 !2 = distinct !DISubprogram(name: "main", linkageName: "main", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, unit: !4, scopeLine: 15, file: !38, scope: !3, type: !5)
 !3 = !DIFile(filename: "one.cc", directory: "/tmp")
-!4 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang 1.5", isOptimized: false, emissionKind: FullDebug, file: !38, enums: !39, retainedTypes: !41, imports:  null)
+!4 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang 1.5", isOptimized: false, emissionKind: FullDebug, file: !38, enums: !39, retainedTypes: !39, imports:  null)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7}
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
@@ -112,4 +112,3 @@ entry:
 !38 = !DIFile(filename: "one.cc", directory: "/tmp")
 !39 = !{}
 !40 = !{i32 1, !"Debug Info Version", i32 3}
-!41 = !{!21}

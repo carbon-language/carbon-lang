@@ -298,15 +298,10 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
                Entry);
 }
 
-DIE *DwarfUnit::createDIE(unsigned Tag, const DINode *N) {
-  DIE *Die = DIE::get(DIEValueAllocator, (dwarf::Tag)Tag);
-  if (N)
-    insertDIE(N, Die);
-  return Die;
-}
-
 DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const DINode *N) {
-  DIE &Die = Parent.addChild(createDIE(Tag, N));
+  DIE &Die = Parent.addChild(DIE::get(DIEValueAllocator, (dwarf::Tag)Tag));
+  if (N)
+    insertDIE(N, &Die);
   return Die;
 }
 
@@ -730,18 +725,15 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
-  // For Local Scope, do not construct context DIE.
   auto *Context = resolve(Ty->getScope());
-  bool IsLocalScope = Context && isa<DILocalScope>(Context);
-  DIE *ContextDIE = IsLocalScope ? nullptr : getOrCreateContextDIE(Context);
-  assert(ContextDIE || IsLocalScope);
+  DIE *ContextDIE = getOrCreateContextDIE(Context);
+  assert(ContextDIE);
 
   if (DIE *TyDIE = getDIE(Ty))
     return TyDIE;
 
-  // Create new type and add to map.
-  DIE &TyDIE = IsLocalScope ? *createDIE(Ty->getTag(), Ty)
-                            : createAndAddDIE(Ty->getTag(), *ContextDIE, Ty);
+  // Create new type.
+  DIE &TyDIE = createAndAddDIE(Ty->getTag(), *ContextDIE, Ty);
 
   updateAcceleratorTables(Context, Ty, TyDIE);
 

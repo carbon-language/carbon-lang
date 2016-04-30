@@ -206,10 +206,6 @@ class DwarfDebug : public DebugHandlerBase {
   /// Size of each symbol emitted (for those symbols that have a specific size).
   DenseMap<const MCSymbol *, uint64_t> SymSize;
 
-  /// Holder for scopes containing local declaration DI nodes per DI function.
-  DenseMap<const DISubprogram *, SmallPtrSet<const DILocalScope *, 16>>
-      LocalScopesMap;
-
   /// Collection of abstract variables.
   DenseMap<const MDNode *, std::unique_ptr<DbgVariable>> AbstractVariables;
   SmallVector<std::unique_ptr<DbgVariable>, 64> ConcreteVariables;
@@ -320,8 +316,6 @@ class DwarfDebug : public DebugHandlerBase {
 
   void finishSubprogramDefinitions();
 
-  void finishLocalScopeDefinitions();
-
   /// Finish off debug information after all functions have been
   /// processed.
   void finalizeModuleInfo();
@@ -419,11 +413,6 @@ class DwarfDebug : public DebugHandlerBase {
   /// Construct imported_module or imported_declaration DIE.
   void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
                                         const DIImportedEntity *N);
-
-  /// Collect MD Node located within local scope node.
-  /// Return true if node was collected, false otherwise.
-  bool collectLocalScopedNode(DIScope *S, const DINode *N,
-                              DwarfCompileUnit &CU);
 
   /// Register a source line with debug info. Returns the unique
   /// label that was emitted and which provides correspondence to the
@@ -562,12 +551,6 @@ public:
 
   SmallPtrSet<const MDNode *, 16> &getProcessedSPNodes() {
     return ProcessedSPNodes;
-  }
-
-  /// Return collection of function scopes that contains local declararion DIEs.
-  SmallPtrSet<const DILocalScope *, 16> &
-  getLocalScopes(const DISubprogram *SP) {
-    return LocalScopesMap[SP];
   }
 };
 } // End of namespace llvm
