@@ -68,7 +68,9 @@ enum {
 void printHelp(const char *Argv0);
 void printVersion();
 
-void saveLinkerInputs(const llvm::opt::InputArgList &Args);
+void createResponseFile(const llvm::opt::InputArgList &Args);
+void copyInputFile(StringRef Path);
+
 std::string findFromSearchPaths(StringRef Path);
 std::string searchLibrary(StringRef Path);
 std::string buildSysrootedPath(llvm::StringRef Dir, llvm::StringRef File);

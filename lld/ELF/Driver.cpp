@@ -109,6 +109,8 @@ void LinkerDriver::addFile(StringRef Path) {
   using namespace llvm::sys::fs;
   if (Config->Verbose)
     llvm::outs() << Path << "\n";
+  if (!Config->Reproduce.empty())
+    copyInputFile(Path);
 
   Optional<MemoryBufferRef> Buffer = readFile(Path);
   if (!Buffer.hasValue())
@@ -252,7 +254,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initLLVM(Args);
 
   if (!Config->Reproduce.empty())
-    saveLinkerInputs(Args);
+    createResponseFile(Args);
 
   createFiles(Args);
   checkOptions(Args);

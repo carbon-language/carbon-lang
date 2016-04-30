@@ -90,7 +90,7 @@ void elf::printVersion() {
 // Makes a given pathname an absolute path first, and then remove
 // beginning /. For example, "../foo.o" is converted to "home/john/foo.o",
 // assuming that the current directory is "/home/john/bar".
-static std::string relative_to_root(StringRef Path) {
+static std::string relativeToRoot(StringRef Path) {
   SmallString<128> Abs = Path;
   if (std::error_code EC = fs::make_absolute(Abs))
     fatal("make_absolute failed: " + EC.message());
@@ -110,20 +110,24 @@ static std::string relative_to_root(StringRef Path) {
   return Res.str();
 }
 
-// Copies file Src to {Config->Reproduce}/Src.
-// Returns the new path relative to Config->Reproduce.
-static std::string copyFile(StringRef Src) {
-  std::string Relpath = relative_to_root(Src);
+static std::string getDestPath(StringRef Path) {
+  std::string Relpath = relativeToRoot(Path);
   SmallString<128> Dest;
   path::append(Dest, Config->Reproduce, Relpath);
+  return Dest.str();
+}
 
+// Copies file Src to {Config->Reproduce}/Src.
+void elf::copyInputFile(StringRef Src) {
+  std::string Dest = getDestPath(Src);
   SmallString<128> Dir(Dest);
   path::remove_filename(Dir);
-  if (std::error_code EC = sys::fs::create_directories(Dir))
+  if (std::error_code EC = sys::fs::create_directories(Dir)) {
     error(EC, Dir + ": can't create directory");
+    return;
+  }
   if (std::error_code EC = sys::fs::copy_file(Src, Dest))
     error(EC, "failed to copy file: " + Dest);
-  return Relpath;
 }
 
 // Quote a given string if it contains a space character.
@@ -138,7 +142,7 @@ static std::string quote(StringRef S) {
 // the same command with the same inputs just by executing
 // "ld.lld @response.txt". Used by --reproduce. This feature is
 // supposed to be used by users to report an issue to LLD developers.
-void elf::saveLinkerInputs(const llvm::opt::InputArgList &Args) {
+void elf::createResponseFile(const llvm::opt::InputArgList &Args) {
   // Create the output directory.
   if (std::error_code EC = sys::fs::create_directories(
         Config->Reproduce, /*IgnoreExisting=*/false)) {
@@ -165,7 +169,7 @@ void elf::saveLinkerInputs(const llvm::opt::InputArgList &Args) {
     case OPT_INPUT: {
       StringRef Path = Arg->getValue();
       if (fs::exists(Path))
-        OS << quote(copyFile(Path)) << "\n";
+        OS << quote(getDestPath(Path)) << "\n";
       else
         OS << quote(Path) << "\n";
       break;
