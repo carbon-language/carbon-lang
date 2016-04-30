@@ -66,6 +66,7 @@ static void MakeGuardControlFlowExplicit(Function *DeoptIntrinsic,
     B.CreateRet(DeoptCall);
   }
 
+  DeoptCall->setCallingConv(CI->getCallingConv());
   DeoptBlockTerm->eraseFromParent();
 }
 
@@ -89,6 +90,7 @@ bool LowerGuardIntrinsic::runOnFunction(Function &F) {
 
   auto *DeoptIntrinsic = Intrinsic::getDeclaration(
       F.getParent(), Intrinsic::experimental_deoptimize, {F.getReturnType()});
+  DeoptIntrinsic->setCallingConv(GuardDecl->getCallingConv());
 
   for (auto *CI : ToLower) {
     MakeGuardControlFlowExplicit(DeoptIntrinsic, CI);
