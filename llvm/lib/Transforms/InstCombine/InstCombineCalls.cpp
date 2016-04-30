@@ -639,28 +639,30 @@ static Value *simplifyX86pshufb(const IntrinsicInst &II,
 /// Attempt to convert vpermilvar* to shufflevector if the mask is constant.
 static Value *simplifyX86vpermilvar(const IntrinsicInst &II,
                                     InstCombiner::BuilderTy &Builder) {
-  Value *V = II.getArgOperand(1);
+  Constant *V = dyn_cast<Constant>(II.getArgOperand(1));
+  if (!V)
+    return nullptr;
 
   unsigned Size = cast<VectorType>(V->getType())->getNumElements();
   assert(Size == 8 || Size == 4 || Size == 2);
 
-  uint32_t Indexes[8];
-  if (auto C = dyn_cast<ConstantDataVector>(V)) {
-    // The intrinsics only read one or two bits, clear the rest.
-    for (unsigned I = 0; I < Size; ++I) {
-      uint32_t Index = C->getElementAsInteger(I) & 0x3;
-      // The PD variants uses bit 1 to select per-lane element index, so
-      // shift down to convert to generic shuffle mask index.
-      if (II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
-          II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
-        Index >>= 1;
-      Indexes[I] = Index;
-    }
-  } else if (isa<ConstantAggregateZero>(V)) {
-    for (unsigned I = 0; I < Size; ++I)
-      Indexes[I] = 0;
-  } else {
-    return nullptr;
+  // Initialize the resulting shuffle mask to all zeroes.
+  uint32_t Indexes[8] = { 0 };
+
+  // The intrinsics only read one or two bits, clear the rest.
+  for (unsigned I = 0; I < Size; ++I) {
+    Constant *COp = V->getAggregateElement(I);
+    if (!COp || !isa<ConstantInt>(COp))
+      return nullptr;
+
+    int32_t Index = cast<ConstantInt>(COp)->getValue().getZExtValue() & 0x3;
+
+    // The PD variants uses bit 1 to select per-lane element index, so
+    // shift down to convert to generic shuffle mask index.
+    if (II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
+        II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
+      Index >>= 1;
+    Indexes[I] = Index;
   }
 
   // The _256 variants are a bit trickier since the mask bits always index
