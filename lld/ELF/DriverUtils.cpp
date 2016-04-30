@@ -137,6 +137,12 @@ static std::string quote(StringRef S) {
   return ("\"" + S + "\"").str();
 }
 
+static std::string rewritePath(StringRef S) {
+  if (fs::exists(S))
+    return getDestPath(S);
+  return S;
+}
+
 // Copies all input files to Config->Reproduce directory and
 // create a response file as "response.txt", so that you can re-run
 // the same command with the same inputs just by executing
@@ -157,25 +163,25 @@ void elf::createResponseFile(const llvm::opt::InputArgList &Args) {
   raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
   check(EC);
 
-  // Dump the command line to response.txt while copying files
-  // and rewriting paths.
+  // Copy the command line to response.txt while rewriting paths.
   for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
     case OPT_reproduce:
       break;
-    case OPT_script:
-      OS << "--script ";
-      // fallthrough
-    case OPT_INPUT: {
-      StringRef Path = Arg->getValue();
-      if (fs::exists(Path))
-        OS << quote(getDestPath(Path)) << "\n";
-      else
-        OS << quote(Path) << "\n";
+    case OPT_INPUT:
+      OS << quote(rewritePath(Arg->getValue())) << "\n";
       break;
-    }
+    case OPT_L:
+    case OPT_dynamic_list:
+    case OPT_export_dynamic_symbol:
+    case OPT_rpath:
+    case OPT_script:
+    case OPT_version_script:
+      OS << Arg->getSpelling() << " "
+         << quote(rewritePath(Arg->getValue())) << "\n";
+      break;
     default:
-      OS << Arg->getAsString(Args) << "\n";
+      OS << quote(Arg->getAsString(Args)) << "\n";
     }
   }
 }

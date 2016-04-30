@@ -19,10 +19,13 @@
 # RUN: ld.lld ./../../../foo.o -o bar -shared --as-needed --reproduce repro
 # RUN: diff %t.dir/build2/foo.o repro/%:t.dir/build2/foo.o
 
-# RUN: not ld.lld build1/foo.o --reproduce repro2 'foo bar' -soname=foo
+# RUN: touch file
+# RUN: not ld.lld --reproduce repro2 'foo bar' -L"foo bar" -Lfile -version-script file
 # RUN: FileCheck %s --check-prefix=RSP2 < repro2/response.txt
 # RSP2:      "foo bar"
-# RSP2-NEXT: -soname=foo
+# RSP2-NEXT: -L "foo bar"
+# RSP2-NEXT: -L {{.+}}file
+# RSP2-NEXT: -version-script {{.+}}file
 
 # RUN: not ld.lld build1/foo.o -o bar -shared --as-needed --reproduce . 2>&1 \
 # RUN:   | FileCheck --check-prefix=ERROR %s
