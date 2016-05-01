@@ -331,11 +331,11 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
 
   switch (Sym->st_shndx) {
   case SHN_UNDEF:
-    return Symtab<ELFT>::X
+    return elf::Symtab<ELFT>::X
         ->addUndefined(Name, Binding, Sym->st_other, Sym->getType(), this)
         ->body();
   case SHN_COMMON:
-    return Symtab<ELFT>::X
+    return elf::Symtab<ELFT>::X
         ->addCommon(Name, Sym->st_size, Sym->st_value, Binding, Sym->st_other,
                     Sym->getType(), this)
         ->body();
@@ -348,10 +348,10 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
   case STB_WEAK:
   case STB_GNU_UNIQUE:
     if (Sec == &InputSection<ELFT>::Discarded)
-      return Symtab<ELFT>::X
+      return elf::Symtab<ELFT>::X
           ->addUndefined(Name, Binding, Sym->st_other, Sym->getType(), this)
           ->body();
-    return Symtab<ELFT>::X->addRegular(Name, *Sym, Sec)->body();
+    return elf::Symtab<ELFT>::X->addRegular(Name, *Sym, Sec)->body();
   }
 }
 
@@ -506,7 +506,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
       if (VersymIndex == 0 || (VersymIndex & VERSYM_HIDDEN))
         continue;
     }
-    Symtab<ELFT>::X->addShared(this, Name, Sym, Verdefs[VersymIndex]);
+    elf::Symtab<ELFT>::X->addShared(this, Name, Sym, Verdefs[VersymIndex]);
   }
 }
 
