@@ -8396,17 +8396,19 @@ let Predicates = [HasAVX2] in {
   def : Pat<(v4f64 (X86VBroadcast (v4f64 VR256:$src))),
             (VBROADCASTSDYrr (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src),
                                                     sub_xmm)))>;
+}
 
-// Provide fallback in case the load node that is used in the patterns above
-// is used by additional users, which prevents the pattern selection.
-  let AddedComplexity = 20 in {
-  def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
-            (VBROADCASTSSrr (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
-            (VBROADCASTSSYrr (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
-            (VBROADCASTSDYrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
-  }
+let Predicates = [HasAVX2, NoVLX] in {
+  // Provide fallback in case the load node that is used in the patterns above
+  // is used by additional users, which prevents the pattern selection.
+    let AddedComplexity = 20 in {
+    def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
+              (VBROADCASTSSrr (COPY_TO_REGCLASS FR32:$src, VR128))>;
+    def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
+              (VBROADCASTSSYrr (COPY_TO_REGCLASS FR32:$src, VR128))>;
+    def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
+              (VBROADCASTSDYrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
+    }  
 }
 
 let Predicates = [HasAVX2, NoVLX_Or_NoBWI], AddedComplexity = 20 in {
@@ -8458,6 +8460,11 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
   // is used by additional users, which prevents the pattern selection.
 let Predicates = [HasAVX], AddedComplexity = 20 in {
   // 128bit broadcasts:
+  def : Pat<(v2f64 (X86VBroadcast f64:$src)),
+            (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
+}
+
+let Predicates = [HasAVX, NoVLX], AddedComplexity = 20 in {
   def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
             (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0)>;
   def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
@@ -8469,11 +8476,6 @@ let Predicates = [HasAVX], AddedComplexity = 20 in {
               (VPSHUFDri (COPY_TO_REGCLASS FR64:$src, VR128), 0x44), sub_xmm),
               (VPSHUFDri (COPY_TO_REGCLASS FR64:$src, VR128), 0x44), 1)>;
 
-  def : Pat<(v2f64 (X86VBroadcast f64:$src)),
-            (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
-}
-
-let Predicates = [HasAVX, NoVLX], AddedComplexity = 20 in {
   def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
             (VPSHUFDri (COPY_TO_REGCLASS GR32:$src, VR128), 0)>;
   def : Pat<(v8i32 (X86VBroadcast GR32:$src)),

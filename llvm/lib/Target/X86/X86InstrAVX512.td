@@ -821,6 +821,36 @@ def VEXTRACTPSzmr : AVX512AIi8<0x17, MRMDestMem, (outs),
 //===---------------------------------------------------------------------===//
 // AVX-512 BROADCAST
 //---
+// broadcast with a scalar argument.
+multiclass avx512_broadcast_scalar<bits<8> opc, string OpcodeStr,
+                            X86VectorVTInfo DestInfo, X86VectorVTInfo SrcInfo> {
+  
+  let isCodeGenOnly = 1 in {
+  def r_s : I< opc, MRMSrcReg, (outs DestInfo.RC:$dst),
+               (ins SrcInfo.FRC:$src), OpcodeStr#"\t{$src, $dst|$dst, $src}",
+               [(set DestInfo.RC:$dst, (DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)))]>,
+               Requires<[HasAVX512]>, T8PD, EVEX;
+  
+  let Constraints = "$src0 = $dst" in
+  def rk_s : I< opc, MRMSrcReg, (outs DestInfo.RC:$dst),
+                (ins DestInfo.RC:$src0, DestInfo.KRCWM:$mask, SrcInfo.FRC:$src),
+                OpcodeStr#"\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
+                [(set DestInfo.RC:$dst, 
+                     (vselect DestInfo.KRCWM:$mask,
+                              (DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)),
+                              DestInfo.RC:$src0))]>,
+              Requires<[HasAVX512]>, T8PD, EVEX, EVEX_K; 
+
+  def rkz_s : I< opc, MRMSrcReg, (outs DestInfo.RC:$dst),
+                (ins DestInfo.KRCWM:$mask, SrcInfo.FRC:$src),
+                OpcodeStr#"\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}",
+                [(set DestInfo.RC:$dst, 
+                     (vselect DestInfo.KRCWM:$mask,
+                              (DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)),
+                              DestInfo.ImmAllZerosV))]>,
+                Requires<[HasAVX512]>, T8PD, EVEX, EVEX_KZ;  
+  } // let isCodeGenOnly = 1 in
+}
 
 multiclass avx512_broadcast_rm<bits<8> opc, string OpcodeStr,
                             X86VectorVTInfo DestInfo, X86VectorVTInfo SrcInfo> {
@@ -840,10 +870,12 @@ multiclass avx512_broadcast_rm<bits<8> opc, string OpcodeStr,
 multiclass avx512_fp_broadcast_vl<bits<8> opc, string OpcodeStr,
                                                        AVX512VLVectorVTInfo _> {
   defm Z  : avx512_broadcast_rm<opc, OpcodeStr, _.info512, _.info128>,
+            avx512_broadcast_scalar<opc, OpcodeStr, _.info512, _.info128>,
                              EVEX_V512;
 
   let Predicates = [HasVLX] in {
     defm Z256  : avx512_broadcast_rm<opc, OpcodeStr, _.info256, _.info128>,
+                 avx512_broadcast_scalar<opc, OpcodeStr, _.info256, _.info128>,
                              EVEX_V256;
   }
 }
@@ -852,8 +884,10 @@ let ExeDomain = SSEPackedSingle in {
   defm VBROADCASTSS  : avx512_fp_broadcast_vl<0x18, "vbroadcastss",
                                          avx512vl_f32_info>;
    let Predicates = [HasVLX] in {
-     defm VBROADCASTSSZ128  : avx512_broadcast_rm<0x18, "vbroadcastss",
-                                         v4f32x_info, v4f32x_info>, EVEX_V128;
+     defm VBROADCASTSSZ128  : 
+           avx512_broadcast_rm<0x18, "vbroadcastss", v4f32x_info, v4f32x_info>, 
+           avx512_broadcast_scalar<0x18, "vbroadcastss", v4f32x_info, v4f32x_info>, 
+                                        EVEX_V128;
    }
 }
 
@@ -861,50 +895,6 @@ let ExeDomain = SSEPackedDouble in {
   defm VBROADCASTSD  : avx512_fp_broadcast_vl<0x19, "vbroadcastsd",
                                          avx512vl_f64_info>, VEX_W;
 }
-
-// avx512_broadcast_pat introduces patterns for broadcast with a scalar argument.
-// Later, we can canonize broadcast instructions before ISel phase and
-// eliminate additional patterns on ISel.
-// SrcRC_v and SrcRC_s are RegisterClasses for vector and scalar
-// representations of source
-multiclass avx512_broadcast_pat<string InstName, SDNode OpNode,
-                                X86VectorVTInfo _, RegisterClass SrcRC_v,
-                                RegisterClass SrcRC_s> {
-  def : Pat<(_.VT (OpNode  (_.EltVT SrcRC_s:$src))),
-            (!cast<Instruction>(InstName##"r")
-              (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
-
-  let AddedComplexity = 30 in {
-    def : Pat<(_.VT (vselect _.KRCWM:$mask,
-                (OpNode (_.EltVT SrcRC_s:$src)), _.RC:$src0)),
-              (!cast<Instruction>(InstName##"rk") _.RC:$src0, _.KRCWM:$mask,
-                (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
-
-    def : Pat<(_.VT(vselect _.KRCWM:$mask,
-                (OpNode (_.EltVT SrcRC_s:$src)), _.ImmAllZerosV)),
-              (!cast<Instruction>(InstName##"rkz") _.KRCWM:$mask,
-                (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
-  }
-}
-
-defm : avx512_broadcast_pat<"VBROADCASTSSZ", X86VBroadcast, v16f32_info,
-                            VR128X, FR32X>;
-defm : avx512_broadcast_pat<"VBROADCASTSDZ", X86VBroadcast, v8f64_info,
-                            VR128X, FR64X>;
-
-let Predicates = [HasVLX] in {
-  defm : avx512_broadcast_pat<"VBROADCASTSSZ256", X86VBroadcast,
-                              v8f32x_info, VR128X, FR32X>;
-  defm : avx512_broadcast_pat<"VBROADCASTSSZ128", X86VBroadcast,
-                              v4f32x_info, VR128X, FR32X>;
-  defm : avx512_broadcast_pat<"VBROADCASTSDZ256", X86VBroadcast,
-                              v4f64x_info, VR128X, FR64X>;
-}
-
-def : Pat<(v16f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSZm addr:$src)>;
-def : Pat<(v8f64 (X86VBroadcast (loadf64 addr:$src))),
-          (VBROADCASTSDZm addr:$src)>;
 
 def : Pat<(int_x86_avx512_vbroadcast_ss_512 addr:$src),
           (VBROADCASTSSZm addr:$src)>;
@@ -1090,14 +1080,6 @@ def : Pat<(v8f64 (X86VBroadcast (v8f64 VR512:$src))),
           (VBROADCASTSDZr (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm))>;
 def : Pat<(v8f64 (X86VBroadcast (v4f64 VR256X:$src))),
           (VBROADCASTSDZr (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm))>;
-
-// Provide fallback in case the load node that is used in the patterns above
-// is used by additional users, which prevents the pattern selection.
-def : Pat<(v16f32 (X86VBroadcast FR32X:$src)),
-          (VBROADCASTSSZr (COPY_TO_REGCLASS FR32X:$src, VR128X))>;
-def : Pat<(v8f64 (X86VBroadcast FR64X:$src)),
-          (VBROADCASTSDZr (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
-
 
 //===----------------------------------------------------------------------===//
 // AVX-512 BROADCAST MASK TO VECTOR REGISTER
