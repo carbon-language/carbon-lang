@@ -447,6 +447,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 // all linker scripts have already been parsed.
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
+  elf::Symtab<ELFT>::X = &Symtab;
 
   std::unique_ptr<TargetInfo> TI(createTarget());
   Target = TI.get();
@@ -468,7 +469,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (!Config->Entry.empty()) {
     StringRef S = Config->Entry;
     if (S.getAsInteger(0, Config->EntryAddr))
-      Config->EntrySym = Symtab.addUndefined(S)->Backref;
+      Config->EntrySym = Symtab.addUndefined(S);
   }
 
   for (std::unique_ptr<InputFile> &F : Files)
