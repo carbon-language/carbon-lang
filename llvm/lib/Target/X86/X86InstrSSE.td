@@ -4451,7 +4451,7 @@ multiclass sse4_pack_y<bits<8> opc, string OpcodeStr, ValueType OutVT,
                   Sched<[WriteShuffleLd, ReadAfterLd]>;
 }
 
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX_Or_NoBWI] in {
   defm VPACKSSWB : sse2_pack<0x63, "vpacksswb", v16i8, v8i16, X86Packss,
                              bc_v8i16, loadv2i64, 0>, VEX_4V;
   defm VPACKSSDW : sse2_pack<0x6B, "vpackssdw", v8i16, v4i32, X86Packss,
@@ -4463,7 +4463,7 @@ let Predicates = [HasAVX] in {
                              bc_v4i32, loadv2i64, 0>, VEX_4V;
 }
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
   defm VPACKSSWB : sse2_pack_y<0x63, "vpacksswb", v32i8, v16i16, X86Packss,
                                bc_v16i16>, VEX_4V, VEX_L;
   defm VPACKSSDW : sse2_pack_y<0x6B, "vpackssdw", v16i16, v8i32, X86Packss,
@@ -4484,7 +4484,7 @@ let Constraints = "$src1 = $dst" in {
   defm PACKUSWB : sse2_pack<0x67, "packuswb", v16i8, v8i16, X86Packus,
                             bc_v8i16, memopv2i64>;
 
-  let Predicates = [HasSSE41] in
+  let Predicates = [UseSSE41] in
   defm PACKUSDW : sse4_pack<0x2B, "packusdw", v8i16, v4i32, X86Packus,
                             bc_v4i32, memopv2i64>;
 }
