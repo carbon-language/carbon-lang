@@ -4411,7 +4411,7 @@ let mayStore = 1 in {
 def VMOVHPSZ128mr : AVX512PSI<0x17, MRMDestMem, (outs),
                        (ins f64mem:$dst, VR128X:$src),
                        "vmovhps\t{$src, $dst|$dst, $src}",
-                       [(store (f64 (vector_extract
+                       [(store (f64 (extractelt
                                      (X86Unpckh (bc_v2f64 (v4f32 VR128X:$src)),
                                                 (bc_v2f64 (v4f32 VR128X:$src))),
                                      (iPTR 0))), addr:$dst)], IIC_SSE_MOV_LH>,
@@ -4419,28 +4419,28 @@ def VMOVHPSZ128mr : AVX512PSI<0x17, MRMDestMem, (outs),
 def VMOVHPDZ128mr : AVX512PDI<0x17, MRMDestMem, (outs),
                        (ins f64mem:$dst, VR128X:$src),
                        "vmovhpd\t{$src, $dst|$dst, $src}",
-                       [(store (f64 (vector_extract
+                       [(store (f64 (extractelt
                                      (v2f64 (X86Unpckh VR128X:$src, VR128X:$src)),
                                      (iPTR 0))), addr:$dst)], IIC_SSE_MOV_LH>,
                        EVEX, EVEX_CD8<64, CD8VT1>, VEX_W;
 def VMOVLPSZ128mr : AVX512PSI<0x13, MRMDestMem, (outs),
                        (ins f64mem:$dst, VR128X:$src),
                        "vmovlps\t{$src, $dst|$dst, $src}",
-                       [(store (f64 (vector_extract (bc_v2f64 (v4f32 VR128X:$src)),
+                       [(store (f64 (extractelt (bc_v2f64 (v4f32 VR128X:$src)),
                                      (iPTR 0))), addr:$dst)],
                                      IIC_SSE_MOV_LH>,
                        EVEX, EVEX_CD8<32, CD8VT2>;
 def VMOVLPDZ128mr : AVX512PDI<0x13, MRMDestMem, (outs),
                        (ins f64mem:$dst, VR128X:$src),
                        "vmovlpd\t{$src, $dst|$dst, $src}",
-                       [(store (f64 (vector_extract (v2f64 VR128X:$src),
+                       [(store (f64 (extractelt (v2f64 VR128X:$src),
                                      (iPTR 0))), addr:$dst)],
                                      IIC_SSE_MOV_LH>,
                        EVEX, EVEX_CD8<64, CD8VT1>, VEX_W;
 }
 let Predicates = [HasAVX512] in {
   // VMOVHPD patterns
-  def : Pat<(store (f64 (vector_extract
+  def : Pat<(store (f64 (extractelt
                            (v2f64 (X86VPermilpi VR128X:$src, (i8 1))),
                            (iPTR 0))), addr:$dst),
            (VMOVHPDZ128mr addr:$dst, VR128X:$src)>;
