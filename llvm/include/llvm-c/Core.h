@@ -2705,7 +2705,7 @@ LLVMBool LLVMIsInBounds(LLVMValueRef GEP);
 /**
  * Set the given GEP instruction to be inbounds or not.
  */
-void LLVMSetIsInBounds(LLVMValueRef GEP, LLVMBool b);
+void LLVMSetIsInBounds(LLVMValueRef GEP, LLVMBool InBounds);
 
 /**
  * @}
