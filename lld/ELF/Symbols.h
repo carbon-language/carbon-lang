@@ -435,8 +435,8 @@ void replaceBody(Symbol *S, ArgT &&... Arg) {
   static_assert(llvm::AlignOf<T>::Alignment <=
                     llvm::AlignOf<decltype(S->Body)>::Alignment,
                 "Body not aligned enough");
-  static_assert(static_cast<SymbolBody *>(static_cast<T *>(nullptr)) == nullptr,
-                "Not a SymbolBody");
+  assert(static_cast<SymbolBody *>(static_cast<T *>(nullptr)) == nullptr &&
+         "Not a SymbolBody");
   new (S->Body.buffer) T(std::forward<ArgT>(Arg)...);
 }
 

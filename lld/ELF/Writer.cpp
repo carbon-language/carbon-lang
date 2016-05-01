@@ -1487,11 +1487,11 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   auto Define = [&](StringRef Start, StringRef End,
                     OutputSectionBase<ELFT> *OS) {
     if (OS) {
-      Symtab.addSynthetic(Start, *OS, 0);
-      Symtab.addSynthetic(End, *OS, DefinedSynthetic<ELFT>::SectionEnd);
+      this->Symtab.addSynthetic(Start, *OS, 0);
+      this->Symtab.addSynthetic(End, *OS, DefinedSynthetic<ELFT>::SectionEnd);
     } else {
-      Symtab.addIgnored(Start);
-      Symtab.addIgnored(End);
+      this->Symtab.addIgnored(Start);
+      this->Symtab.addIgnored(End);
     }
   };
 
