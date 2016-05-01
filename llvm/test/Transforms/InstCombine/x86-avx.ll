@@ -113,7 +113,7 @@ define <4 x double> @test_vpermilvar_pd_256(<4 x double> %v) {
   ret <4 x double> %a
 }
 
-; FIXME: Verify that instcombine is able to fold constant shuffles with undef mask elements.
+; Verify that instcombine is able to fold constant shuffles with undef mask elements.
 
 define <4 x float> @undef_test_vpermilvar_ps(<4 x float> %v) {
 ; CHECK-LABEL: @undef_test_vpermilvar_ps(
