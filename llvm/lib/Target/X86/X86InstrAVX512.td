@@ -3485,11 +3485,12 @@ multiclass avx512_packs_rm<bits<8> opc, string OpcodeStr,
 
 multiclass avx512_packs_all_i32_i16<bits<8> opc, string OpcodeStr,
                                     SDNode OpNode> {
+  let Predicates = [HasBWI] in
   defm NAME#Z : avx512_packs_rm<opc, OpcodeStr, OpNode, v16i32_info,
                                  v32i16_info>,
                 avx512_packs_rmb<opc, OpcodeStr, OpNode, v16i32_info,
                                  v32i16_info>, EVEX_V512;
-  let Predicates = [HasVLX] in {
+  let Predicates = [HasBWI, HasVLX] in {
     defm NAME#Z256 : avx512_packs_rm<opc, OpcodeStr, OpNode, v8i32x_info,
                                      v16i16x_info>,
                      avx512_packs_rmb<opc, OpcodeStr, OpNode, v8i32x_info,
@@ -3502,9 +3503,10 @@ multiclass avx512_packs_all_i32_i16<bits<8> opc, string OpcodeStr,
 }
 multiclass avx512_packs_all_i16_i8<bits<8> opc, string OpcodeStr,
                             SDNode OpNode> {
+  let Predicates = [HasBWI] in
   defm NAME#Z : avx512_packs_rm<opc, OpcodeStr, OpNode, v32i16_info,
                                 v64i8_info>, EVEX_V512;
-  let Predicates = [HasVLX] in {
+  let Predicates = [HasBWI, HasVLX] in {
     defm NAME#Z256 : avx512_packs_rm<opc, OpcodeStr, OpNode, v16i16x_info,
                                     v32i8x_info>, EVEX_V256;
     defm NAME#Z128 : avx512_packs_rm<opc, OpcodeStr, OpNode, v8i16x_info,
@@ -3515,9 +3517,10 @@ multiclass avx512_packs_all_i16_i8<bits<8> opc, string OpcodeStr,
 multiclass avx512_vpmadd<bits<8> opc, string OpcodeStr,
                             SDNode OpNode, AVX512VLVectorVTInfo _Src,
                             AVX512VLVectorVTInfo _Dst> {
+  let Predicates = [HasBWI] in
   defm NAME#Z : avx512_packs_rm<opc, OpcodeStr, OpNode, _Src.info512,
                                 _Dst.info512>, EVEX_V512;
-  let Predicates = [HasVLX] in {
+  let Predicates = [HasBWI, HasVLX] in {
     defm NAME#Z256 : avx512_packs_rm<opc, OpcodeStr, OpNode, _Src.info256,
                                      _Dst.info256>, EVEX_V256;
     defm NAME#Z128 : avx512_packs_rm<opc, OpcodeStr, OpNode, _Src.info128,
@@ -3525,17 +3528,15 @@ multiclass avx512_vpmadd<bits<8> opc, string OpcodeStr,
   }
 }
 
-let Predicates = [HasBWI] in {
-  defm VPACKSSDW : avx512_packs_all_i32_i16<0x6B, "vpackssdw", X86Packss>, PD;
-  defm VPACKUSDW : avx512_packs_all_i32_i16<0x2b, "vpackusdw", X86Packus>, T8PD;
-  defm VPACKSSWB : avx512_packs_all_i16_i8 <0x63, "vpacksswb", X86Packss>, AVX512BIBase, VEX_W;
-  defm VPACKUSWB : avx512_packs_all_i16_i8 <0x67, "vpackuswb", X86Packus>, AVX512BIBase, VEX_W;
+defm VPACKSSDW : avx512_packs_all_i32_i16<0x6B, "vpackssdw", X86Packss>, PD;
+defm VPACKUSDW : avx512_packs_all_i32_i16<0x2b, "vpackusdw", X86Packus>, T8PD;
+defm VPACKSSWB : avx512_packs_all_i16_i8 <0x63, "vpacksswb", X86Packss>, AVX512BIBase, VEX_W;
+defm VPACKUSWB : avx512_packs_all_i16_i8 <0x67, "vpackuswb", X86Packus>, AVX512BIBase, VEX_W;
 
-  defm VPMADDUBSW : avx512_vpmadd<0x04, "vpmaddubsw", X86vpmaddubsw,
-                       avx512vl_i8_info, avx512vl_i16_info>, AVX512BIBase, T8PD;
-  defm VPMADDWD   : avx512_vpmadd<0xF5, "vpmaddwd", X86vpmaddwd,
-                       avx512vl_i16_info, avx512vl_i32_info>, AVX512BIBase;
-}
+defm VPMADDUBSW : avx512_vpmadd<0x04, "vpmaddubsw", X86vpmaddubsw,
+                     avx512vl_i8_info, avx512vl_i16_info>, AVX512BIBase, T8PD;
+defm VPMADDWD   : avx512_vpmadd<0xF5, "vpmaddwd", X86vpmaddwd,
+                     avx512vl_i16_info, avx512vl_i32_info>, AVX512BIBase;
 
 defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxsb", smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
