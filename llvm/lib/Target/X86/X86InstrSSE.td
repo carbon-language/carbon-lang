@@ -7250,8 +7250,6 @@ let Predicates = [UseSSE41] in {
   let AddedComplexity = 15 in
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
             (PBLENDWrri (v4i32 (V_SET0)), VR128:$src, (i8 3))>;
-  def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
-            (BLENDPDrri (v2f64 (V_SET0)), VR128:$src, (i8 1))>;
 }
 
 
