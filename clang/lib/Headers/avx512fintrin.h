@@ -7681,6 +7681,58 @@ __builtin_ia32_cmpsd_mask ((__v2df)( __X),\
                  _MM_FROUND_CUR_DIRECTION);\
 })
 
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_movehdup_ps (__m512 __A)
+{
+  return (__m512) __builtin_ia32_movshdup512_mask ((__v16sf) __A,
+               (__v16sf)
+               _mm512_undefined_ps (),
+               (__mmask16) -1);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_mask_movehdup_ps (__m512 __W, __mmask16 __U, __m512 __A)
+{
+  return (__m512) __builtin_ia32_movshdup512_mask ((__v16sf) __A,
+               (__v16sf) __W,
+               (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_maskz_movehdup_ps (__mmask16 __U, __m512 __A)
+{
+  return (__m512) __builtin_ia32_movshdup512_mask ((__v16sf) __A,
+               (__v16sf)
+               _mm512_setzero_ps (),
+               (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_moveldup_ps (__m512 __A)
+{
+  return (__m512) __builtin_ia32_movsldup512_mask ((__v16sf) __A,
+               (__v16sf)
+               _mm512_undefined_ps (),
+               (__mmask16) -1);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_mask_moveldup_ps (__m512 __W, __mmask16 __U, __m512 __A)
+{
+  return (__m512) __builtin_ia32_movsldup512_mask ((__v16sf) __A,
+               (__v16sf) __W,
+               (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_maskz_moveldup_ps (__mmask16 __U, __m512 __A)
+{
+  return (__m512) __builtin_ia32_movsldup512_mask ((__v16sf) __A,
+               (__v16sf)
+               _mm512_setzero_ps (),
+               (__mmask16) __U);
+}
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
