@@ -657,9 +657,6 @@ let Predicates = [UseAVX] in {
   def : Pat<(store (f32 (extractelt (v4f32 VR128:$src), (iPTR 0))),
                    addr:$dst),
             (VMOVSSmr addr:$dst, (COPY_TO_REGCLASS (v4f32 VR128:$src), FR32))>;
-  def : Pat<(store (f64 (extractelt (v2f64 VR128:$src), (iPTR 0))),
-                   addr:$dst),
-            (VMOVSDmr addr:$dst, (COPY_TO_REGCLASS (v2f64 VR128:$src), FR64))>;
 
   // Shuffle with VMOVSS
   def : Pat<(v4i32 (X86Movss VR128:$src1, VR128:$src2)),
@@ -772,11 +769,6 @@ let Predicates = [UseSSE2] in {
   def : Pat<(v2f64 (X86vzload addr:$src)),
             (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
   }
-
-  // Extract and store.
-  def : Pat<(store (f64 (extractelt (v2f64 VR128:$src), (iPTR 0))),
-                   addr:$dst),
-            (MOVSDmr addr:$dst, (COPY_TO_REGCLASS VR128:$src, FR64))>;
 
   // Shuffle with MOVSD
   def : Pat<(v2i64 (X86Movsd VR128:$src1, VR128:$src2)),

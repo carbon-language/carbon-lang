@@ -3059,9 +3059,6 @@ let Predicates = [HasAVX512] in {
   def : Pat<(store (f32 (extractelt (v4f32 VR128X:$src), (iPTR 0))),
                    addr:$dst),
             (VMOVSSZmr addr:$dst, (COPY_TO_REGCLASS (v4f32 VR128X:$src), FR32X))>;
-  def : Pat<(store (f64 (extractelt (v2f64 VR128X:$src), (iPTR 0))),
-                   addr:$dst),
-            (VMOVSDZmr addr:$dst, (COPY_TO_REGCLASS (v2f64 VR128X:$src), FR64X))>;
 
   // Shuffle with VMOVSS
   def : Pat<(v4i32 (X86Movss VR128X:$src1, VR128X:$src2)),
