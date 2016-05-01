@@ -61,12 +61,12 @@ define <8 x float> @shuffle_test_vpermps(<8 x float> %a0) {
   ret <8 x float> %a
 }
 
-; FIXME: Verify that instcombine is able to fold constant shuffles with undef mask elements.
+; Verify that instcombine is able to fold constant shuffles with undef mask elements.
 
 define <8 x i32> @undef_test_vpermd(<8 x i32> %a0) {
 ; CHECK-LABEL: @undef_test_vpermd(
-; CHECK-NEXT:    [[A:%.*]] = tail call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> [[A:%.*]]0, <8 x i32> <i32 undef, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>)
-; CHECK-NEXT:    ret <8 x i32> [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> <i32 undef, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
+; CHECK-NEXT:    ret <8 x i32> [[TMP1]]
 ;
   %a = tail call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %a0, <8 x i32> <i32 undef, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>)
   ret <8 x i32> %a
@@ -74,8 +74,8 @@ define <8 x i32> @undef_test_vpermd(<8 x i32> %a0) {
 
 define <8 x float> @undef_test_vpermps(<8 x float> %a0) {
 ; CHECK-LABEL: @undef_test_vpermps(
-; CHECK-NEXT:    [[A:%.*]] = tail call <8 x float> @llvm.x86.avx2.permps(<8 x float> [[A:%.*]]0, <8 x i32> <i32 undef, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>)
-; CHECK-NEXT:    ret <8 x float> [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <8 x float> %a0, <8 x float> undef, <8 x i32> <i32 undef, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
+; CHECK-NEXT:    ret <8 x float> [[TMP1]]
 ;
   %a = tail call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a0, <8 x i32> <i32 undef, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>)
   ret <8 x float> %a

@@ -696,25 +696,30 @@ static Value *simplifyX86vpermv(const IntrinsicInst &II,
   if (!V)
     return nullptr;
 
-  VectorType *VecTy = cast<VectorType>(II.getType());
+  auto *VecTy = cast<VectorType>(II.getType());
+  auto *MaskEltTy = Type::getInt32Ty(II.getContext());
   unsigned Size = VecTy->getNumElements();
   assert(Size == 8 && "Unexpected shuffle mask size");
 
-  // Initialize the resulting shuffle mask to all zeroes.
-  uint32_t Indexes[8] = {0};
+  // Construct a shuffle mask from constant integers or UNDEFs.
+  Constant *Indexes[8] = {NULL};
 
   for (unsigned I = 0; I < Size; ++I) {
     Constant *COp = V->getAggregateElement(I);
-    if (!COp || !isa<ConstantInt>(COp))
+    if (!COp || (!isa<UndefValue>(COp) && !isa<ConstantInt>(COp)))
       return nullptr;
 
+    if (isa<UndefValue>(COp)) {
+      Indexes[I] = UndefValue::get(MaskEltTy);
+      continue;
+    }
+
     APInt Index = cast<ConstantInt>(COp)->getValue();
-    Index = Index.getLoBits(3);
-    Indexes[I] = (uint32_t)Index.getZExtValue();
+    Index = Index.zextOrTrunc(32).getLoBits(3);
+    Indexes[I] = ConstantInt::get(MaskEltTy, Index);
   }
 
-  auto ShuffleMask =
-      ConstantDataVector::get(II.getContext(), makeArrayRef(Indexes, Size));
+  auto ShuffleMask = ConstantVector::get(makeArrayRef(Indexes, Size));
   auto V1 = II.getArgOperand(0);
   auto V2 = UndefValue::get(VecTy);
   return Builder.CreateShuffleVector(V1, V2, ShuffleMask);
