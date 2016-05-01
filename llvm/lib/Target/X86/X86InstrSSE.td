@@ -7243,11 +7243,10 @@ let Predicates = [UseAVX] in {
 // on targets where they have equal performance. These were changed to use
 // blends because blends have better throughput on SandyBridge and Haswell, but
 // movs[s/d] are 1-2 byte shorter instructions.
-let Predicates = [UseSSE41] in {
+let Predicates = [UseSSE41], AddedComplexity = 15 in {
   // With SSE41 we can use blends for these patterns.
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
             (BLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
-  let AddedComplexity = 15 in
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
             (PBLENDWrri (v4i32 (V_SET0)), VR128:$src, (i8 3))>;
 }
