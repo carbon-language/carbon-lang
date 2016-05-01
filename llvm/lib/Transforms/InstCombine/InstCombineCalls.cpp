@@ -681,6 +681,37 @@ static Value *simplifyX86vpermilvar(const IntrinsicInst &II,
   return Builder.CreateShuffleVector(V1, V2, ShuffleMask);
 }
 
+/// Attempt to convert vpermd/vpermps to shufflevector if the mask is constant.
+static Value *simplifyX86vpermv(const IntrinsicInst &II,
+                                InstCombiner::BuilderTy &Builder) {
+  auto *V = dyn_cast<Constant>(II.getArgOperand(1));
+  if (!V)
+    return nullptr;
+
+  VectorType *VecTy = cast<VectorType>(II.getType());
+  unsigned Size = VecTy->getNumElements();
+  assert(Size == 8 && "Unexpected shuffle mask size");
+
+  // Initialize the resulting shuffle mask to all zeroes.
+  uint32_t Indexes[8] = {0};
+
+  for (unsigned I = 0; I < Size; ++I) {
+    Constant *COp = V->getAggregateElement(I);
+    if (!COp || !isa<ConstantInt>(COp))
+      return nullptr;
+
+    APInt Index = cast<ConstantInt>(COp)->getValue();
+    Index = Index.getLoBits(3);
+    Indexes[I] = (uint32_t)Index.getZExtValue();
+  }
+
+  auto ShuffleMask =
+      ConstantDataVector::get(II.getContext(), makeArrayRef(Indexes, Size));
+  auto V1 = II.getArgOperand(0);
+  auto V2 = UndefValue::get(VecTy);
+  return Builder.CreateShuffleVector(V1, V2, ShuffleMask);
+}
+
 /// The shuffle mask for a perm2*128 selects any two halves of two 256-bit
 /// source vectors, unless a zero bit is set. If a zero bit is set,
 /// then ignore that half of the mask and clear that half of the vector.
@@ -1748,6 +1779,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_vpermilvar_pd:
   case Intrinsic::x86_avx_vpermilvar_pd_256:
     if (Value *V = simplifyX86vpermilvar(*II, *Builder))
+      return replaceInstUsesWith(*II, V);
+    break;
+
+  case Intrinsic::x86_avx2_permd:
+  case Intrinsic::x86_avx2_permps:
+    if (Value *V = simplifyX86vpermv(*II, *Builder))
       return replaceInstUsesWith(*II, V);
     break;
 
