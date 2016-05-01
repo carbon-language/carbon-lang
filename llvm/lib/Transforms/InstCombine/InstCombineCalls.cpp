@@ -597,20 +597,26 @@ static Value *simplifyX86pshufb(const IntrinsicInst &II,
   if (!V)
     return nullptr;
 
-  auto *VTy = cast<VectorType>(V->getType());
-  unsigned NumElts = VTy->getNumElements();
+  auto *VecTy = cast<VectorType>(II.getType());
+  auto *MaskEltTy = Type::getInt32Ty(II.getContext());
+  unsigned NumElts = VecTy->getNumElements();
   assert((NumElts == 16 || NumElts == 32) &&
          "Unexpected number of elements in shuffle mask!");
 
-  // Initialize the resulting shuffle mask to all zeroes.
-  uint32_t Indexes[32] = {0};
+  // Construct a shuffle mask from constant integers or UNDEFs.
+  Constant *Indexes[32] = { NULL };
 
   // Each byte in the shuffle control mask forms an index to permute the
   // corresponding byte in the destination operand.
   for (unsigned I = 0; I < NumElts; ++I) {
     Constant *COp = V->getAggregateElement(I);
-    if (!COp || !isa<ConstantInt>(COp))
+    if (!COp || (!isa<UndefValue>(COp) && !isa<ConstantInt>(COp)))
       return nullptr;
+
+    if (isa<UndefValue>(COp)) {
+      Indexes[I] = UndefValue::get(MaskEltTy);
+      continue;
+    }
 
     int8_t Index = cast<ConstantInt>(COp)->getValue().getZExtValue();
 
@@ -619,20 +625,15 @@ static Value *simplifyX86pshufb(const IntrinsicInst &II,
     // The zero vector is in the right-hand side of the resulting
     // shufflevector.
 
-    // The value of each index is the least significant 4 bits of the
-    // shuffle control byte.
-    Indexes[I] = (Index < 0) ? NumElts : Index & 0xF;
+    // The value of each index for the high 128-bit lane is the least
+    // significant 4 bits of the respective shuffle control byte.
+    Index = ((Index < 0) ? NumElts : Index & 0x0F) + (I & 0xF0);
+    Indexes[I] = ConstantInt::get(MaskEltTy, Index);
   }
 
-  // The value of each index for the high 128-bit lane is the least
-  // significant 4 bits of the respective shuffle control byte.
-  for (unsigned I = 16; I < NumElts; ++I)
-    Indexes[I] += I & 0xF0;
-
-  auto ShuffleMask =
-      ConstantDataVector::get(V->getContext(), makeArrayRef(Indexes, NumElts));
+  auto ShuffleMask = ConstantVector::get(makeArrayRef(Indexes, NumElts));
   auto V1 = II.getArgOperand(0);
-  auto V2 = Constant::getNullValue(II.getType());
+  auto V2 = Constant::getNullValue(VecTy);
   return Builder.CreateShuffleVector(V1, V2, ShuffleMask);
 }
 
