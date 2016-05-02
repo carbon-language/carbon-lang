@@ -1982,7 +1982,8 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   W.printNumber("Section", SectionName, Obj->getSectionID(Section));
   StringRef Data;
   error(Section.getContents(Data));
-  W.printBinaryBlock("Data", Data);
+  if (opts::CodeViewSubsectionBytes)
+    W.printBinaryBlock("Data", Data);
 
   unsigned Magic = *reinterpret_cast<const ulittle32_t *>(Data.data());
   W.printHex("Magic", Magic);
