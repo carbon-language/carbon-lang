@@ -181,7 +181,10 @@ void elf::createResponseFile(const llvm::opt::InputArgList &Args) {
          << quote(rewritePath(Arg->getValue())) << "\n";
       break;
     default:
-      OS << Arg->getAsString(Args) << "\n";
+      OS << Arg->getSpelling();
+      if (Arg->getNumValues() > 0)
+        OS << " " << quote(Arg->getValue());
+      OS << "\n";
     }
   }
 }
