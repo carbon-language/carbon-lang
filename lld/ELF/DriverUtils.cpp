@@ -139,7 +139,7 @@ static std::string quote(StringRef S) {
 
 static std::string rewritePath(StringRef S) {
   if (fs::exists(S))
-    return getDestPath(S);
+    return relativeToRoot(S);
   return S;
 }
 
