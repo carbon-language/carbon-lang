@@ -34,7 +34,7 @@ static cl::opt<bool> IgnoreIntegerWrapping(
 // The maximal number of basic sets we allow during the construction of a
 // piecewise affine function. More complex ones will result in very high
 // compile time.
-static int const MaxConjunctsInPwAff = 100;
+static int const MaxDisjunctionsInPwAff = 100;
 
 // The maximal number of bits for which a zero-extend is modeled precisely.
 static unsigned const MaxZextSmallBitWidth = 7;
@@ -71,7 +71,7 @@ static __isl_give PWACtx copyPWACtx(const __isl_keep PWACtx &PWAC) {
 static bool isTooComplex(PWACtx &PWAC) {
   unsigned NumBasicSets = 0;
   isl_pw_aff_foreach_piece(PWAC.first, addNumBasicSets, &NumBasicSets);
-  if (NumBasicSets <= MaxConjunctsInPwAff)
+  if (NumBasicSets <= MaxDisjunctionsInPwAff)
     return false;
   freePWACtx(PWAC);
   return true;
