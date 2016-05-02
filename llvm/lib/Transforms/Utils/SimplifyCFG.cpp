@@ -5056,14 +5056,15 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
 
   if (SinkCommon && SinkThenElseCodeToEnd(BI))
     return true;
-
-  // If the Terminator is the only non-phi instruction, simplify the block.
-  // if LoopHeader is provided, check if the block is a loop header
+  // If the Terminator is the only non-phi instruction except for bitcast
+  // instruction coupled with the following lifetime intrinsic, simplify the
+  // block. If LoopHeader is provided, check if the block is a loop header
   // (This is for early invocations before loop simplify and vectorization
   // to keep canonical loop forms for nested loops.
   // These blocks can be eliminated when the pass is invoked later
   // in the back-end.)
-  BasicBlock::iterator I = BB->getFirstNonPHIOrDbg()->getIterator();
+  BasicBlock::iterator I =
+      BB->getFirstNonPHIOrDbgOrLifetimeOrBitCast()->getIterator();
   if (I->isTerminator() && BB != &BB->getParent()->getEntryBlock() &&
       (!LoopHeaders || !LoopHeaders->count(BB)) &&
       TryToSimplifyUncondBranchFromEmptyBlock(BB))

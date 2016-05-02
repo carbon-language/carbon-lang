@@ -800,6 +800,55 @@ static void redirectValuesFromPredecessorsToPhi(BasicBlock *BB,
   replaceUndefValuesInPhi(PN, IncomingValues);
 }
 
+/// Return true if BB has lifetime.end intrinsic.
+///
+static bool hasLifetime(BasicBlock *BB) {
+  for (auto &I : *BB) {
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_end ||
+          II->getIntrinsicID() == Intrinsic::lifetime_start) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// hoistLifetimeFromEmptyBlockToPred - Hoist lifetime.end intrinsics and
+/// related bitcast instructions from BB to predecessors of BB.
+///
+static bool hoistLifetimeFromEmptyBlockToPred(BasicBlock *BB) {
+  // Check to see if all Preds have single successor and if not, we cannot
+  // hoist lifetime intrinsics because it would change semantics.
+  for (auto Pred : predecessors(BB))
+    if (!Pred->getSingleSuccessor())
+      return false;
+
+  // Hoist all lifetime.end intrinsics and related bitcast instrunctions
+  // in BB to Preds.
+  for (auto &I : *BB) {
+    if (auto *II = dyn_cast<IntrinsicInst>(&I)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_end ||
+          II->getIntrinsicID() == Intrinsic::lifetime_start) {
+        for (auto Pred : predecessors(BB)) {
+          Instruction *NewII = I.clone();
+          NewII->insertBefore(Pred->getTerminator());
+
+          if (I.getIterator() != BB->begin()) {
+            if (auto BC = dyn_cast<BitCastInst>(--I.getIterator())) {
+              assert(BC == I.getOperand(1));
+              auto NewBC = BC->clone();
+              NewBC->insertBefore(NewII);
+              NewII->setOperand(1, NewBC);
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
 /// unconditional branch, and contains no instructions other than PHI nodes,
 /// potential side-effect free intrinsics and the branch.  If possible,
@@ -813,74 +862,118 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
   BasicBlock *Succ = cast<BranchInst>(BB->getTerminator())->getSuccessor(0);
   if (BB == Succ) return false;
 
-  // Check to see if merging these blocks would cause conflicts for any of the
-  // phi nodes in BB or Succ. If not, we can safely merge.
-  if (!CanPropagatePredecessorsForPHIs(BB, Succ)) return false;
+  // If BB has lifetime.end intrinsics, simplify BB under more constraints.
+  if (hasLifetime(BB)) {
+    // Check to see if BB and its predecessors and successors have PHI.
+    if (isa<PHINode>(BB->begin()))
+      return false;
 
-  // Check for cases where Succ has multiple predecessors and a PHI node in BB
-  // has uses which will not disappear when the PHI nodes are merged.  It is
-  // possible to handle such cases, but difficult: it requires checking whether
-  // BB dominates Succ, which is non-trivial to calculate in the case where
-  // Succ has multiple predecessors.  Also, it requires checking whether
-  // constructing the necessary self-referential PHI node doesn't introduce any
-  // conflicts; this isn't too difficult, but the previous code for doing this
-  // was incorrect.
-  //
-  // Note that if this check finds a live use, BB dominates Succ, so BB is
-  // something like a loop pre-header (or rarely, a part of an irreducible CFG);
-  // folding the branch isn't profitable in that case anyway.
-  if (!Succ->getSinglePredecessor()) {
-    BasicBlock::iterator BBI = BB->begin();
-    while (isa<PHINode>(*BBI)) {
-      for (Use &U : BBI->uses()) {
-        if (PHINode* PN = dyn_cast<PHINode>(U.getUser())) {
-          if (PN->getIncomingBlock(U) != BB)
-            return false;
-        } else {
-          return false;
-        }
+    for (auto Pred : predecessors(BB))
+      if (isa<PHINode>(Pred->begin()))
+        return false;
+
+    for (auto Succ : successors(BB))
+      if (isa<PHINode>(Succ->begin()))
+        return false;
+
+    if (Succ->getSinglePredecessor()) {
+      // BB is the only predecessor of Succ, so Succ will end up with exactly
+      // the same predecessors BB had.
+
+      // Copy over any debug or lifetime instruction.
+      BB->getTerminator()->eraseFromParent();
+      Succ->getInstList().splice(Succ->getFirstNonPHI()->getIterator(),
+                                 BB->getInstList());
+
+    } else {
+      // Unless BB is the only predecessor of Succ, hoist lifetime intrinsics
+      // to predecessors of BB and simplify BB.
+      if (!hoistLifetimeFromEmptyBlockToPred(BB)) {
+        return false;
       }
-      ++BBI;
     }
-  }
 
-  DEBUG(dbgs() << "Killing Trivial BB: \n" << *BB);
+    DEBUG(dbgs() << "Killing Trivial BB: \n" << *BB);
 
-  if (isa<PHINode>(Succ->begin())) {
-    // If there is more than one pred of succ, and there are PHI nodes in
-    // the successor, then we need to add incoming edges for the PHI nodes
-    //
-    const PredBlockVector BBPreds(pred_begin(BB), pred_end(BB));
-
-    // Loop over all of the PHI nodes in the successor of BB.
-    for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-
-      redirectValuesFromPredecessorsToPhi(BB, BBPreds, PN);
-    }
-  }
-
-  if (Succ->getSinglePredecessor()) {
-    // BB is the only predecessor of Succ, so Succ will end up with exactly
-    // the same predecessors BB had.
-
-    // Copy over any phi, debug or lifetime instruction.
-    BB->getTerminator()->eraseFromParent();
-    Succ->getInstList().splice(Succ->getFirstNonPHI()->getIterator(),
-                               BB->getInstList());
+    // Everything that jumped to BB now goes to Succ.
+    BB->replaceAllUsesWith(Succ);
+    if (!Succ->hasName())
+      Succ->takeName(BB);
+    BB->eraseFromParent(); // Delete the old basic block.
+    return true;
   } else {
-    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-      // We explicitly check for such uses in CanPropagatePredecessorsForPHIs.
-      assert(PN->use_empty() && "There shouldn't be any uses here!");
-      PN->eraseFromParent();
-    }
-  }
+    // Check to see if merging these blocks would cause conflicts for any of the
+    // phi nodes in BB or Succ. If not, we can safely merge.
+    if (!CanPropagatePredecessorsForPHIs(BB, Succ))
+      return false;
 
-  // Everything that jumped to BB now goes to Succ.
-  BB->replaceAllUsesWith(Succ);
-  if (!Succ->hasName()) Succ->takeName(BB);
-  BB->eraseFromParent();              // Delete the old basic block.
-  return true;
+    // Check for cases where Succ has multiple predecessors and a PHI node in BB
+    // has uses which will not disappear when the PHI nodes are merged.  It is
+    // possible to handle such cases, but difficult: it requires checking
+    // whether BB dominates Succ, which is non-trivial to calculate in the
+    // case where Succ has multiple predecessors.  Also, it requires checking
+    // whether constructing the necessary self-referential PHI node doesn't
+    // introduce any conflicts; this isn't too difficult, but the previous code
+    // for doing this was incorrect.
+    //
+    // Note that if this check finds a live use, BB dominates Succ, so BB is
+    // something like a loop pre-header (or rarely, a part of an irreducible
+    // CFG);
+    // folding the branch isn't profitable in that case anyway.
+    if (!Succ->getSinglePredecessor()) {
+      BasicBlock::iterator BBI = BB->begin();
+      while (isa<PHINode>(*BBI)) {
+        for (Use &U : BBI->uses()) {
+          if (PHINode *PN = dyn_cast<PHINode>(U.getUser())) {
+            if (PN->getIncomingBlock(U) != BB)
+              return false;
+          } else {
+            return false;
+          }
+        }
+        ++BBI;
+      }
+    }
+
+    DEBUG(dbgs() << "Killing Trivial BB: \n" << *BB);
+
+    if (isa<PHINode>(Succ->begin())) {
+      // If there is more than one pred of succ, and there are PHI nodes in
+      // the successor, then we need to add incoming edges for the PHI nodes
+      //
+      const PredBlockVector BBPreds(pred_begin(BB), pred_end(BB));
+
+      // Loop over all of the PHI nodes in the successor of BB.
+      for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+        PHINode *PN = cast<PHINode>(I);
+
+        redirectValuesFromPredecessorsToPhi(BB, BBPreds, PN);
+      }
+    }
+
+    if (Succ->getSinglePredecessor()) {
+      // BB is the only predecessor of Succ, so Succ will end up with exactly
+      // the same predecessors BB had.
+
+      // Copy over any phi, debug or lifetime instruction.
+      BB->getTerminator()->eraseFromParent();
+      Succ->getInstList().splice(Succ->getFirstNonPHI()->getIterator(),
+                                 BB->getInstList());
+    } else {
+      while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+        // We explicitly check for such uses in CanPropagatePredecessorsForPHIs.
+        assert(PN->use_empty() && "There shouldn't be any uses here!");
+        PN->eraseFromParent();
+      }
+    }
+
+    // Everything that jumped to BB now goes to Succ.
+    BB->replaceAllUsesWith(Succ);
+    if (!Succ->hasName())
+      Succ->takeName(BB);
+    BB->eraseFromParent(); // Delete the old basic block.
+    return true;
+  }
 }
 
 /// EliminateDuplicatePHINodes - Check for and eliminate duplicate PHI
