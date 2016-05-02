@@ -100,7 +100,7 @@ static std::string relativeToRoot(StringRef Path) {
   // (e.g. "c:") or a UNC name (//net). We want to keep it as part
   // of the result.
   SmallString<128> Res;
-  StringRef Root = path::root_name(Path);
+  StringRef Root = path::root_name(Abs);
   if (Root.endswith(":"))
     Res = Root.drop_back();
   else if (Root.startswith("//"))
