@@ -23999,12 +23999,20 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
 
   SDValue Res;
 
-  if (Mask.size() == 1) {
+  unsigned NumMaskElts = Mask.size();
+  if (NumMaskElts == 1) {
     assert(Mask[0] == 0 && "Invalid shuffle index found!");
     DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Input),
                   /*AddTo*/ true);
     return true;
   }
+
+  unsigned RootSizeInBits = RootVT.getSizeInBits();
+  unsigned MaskEltSizeInBits = RootSizeInBits / NumMaskElts;
+
+  // TODO - handle 128/256-bit wide vector shuffles.
+  if (MaskEltSizeInBits > 64)
+    return false;
 
   // Use the float domain if the operand type is a floating point type.
   bool FloatDomain = VT.isFloatingPoint();
@@ -24093,7 +24101,7 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
     if (Depth == 1 && Root->getOpcode() == Shuffle)
       return false; // Nothing to do!
     MVT ShuffleVT;
-    switch (Mask.size()) {
+    switch (NumMaskElts) {
     case 8:
       ShuffleVT = MVT::v8i16;
       break;
@@ -24133,12 +24141,12 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
         ShuffleVT = MVT::v8f32;
     }
 
-    if (isSequentialOrUndefOrZeroInRange(Mask, /*Pos*/ 0, /*Size*/ Mask.size(),
+    if (isSequentialOrUndefOrZeroInRange(Mask, /*Pos*/ 0, /*Size*/ NumMaskElts,
                                          /*Low*/ 0) &&
-        Mask.size() <= ShuffleVT.getVectorNumElements()) {
+        NumMaskElts <= ShuffleVT.getVectorNumElements()) {
       unsigned BlendMask = 0;
       unsigned ShuffleSize = ShuffleVT.getVectorNumElements();
-      unsigned MaskRatio = ShuffleSize / Mask.size();
+      unsigned MaskRatio = ShuffleSize / NumMaskElts;
 
       if (Depth == 1 && Root.getOpcode() == X86ISD::BLENDI)
         return false;
@@ -24174,7 +24182,7 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
        (VT.is512BitVector() && Subtarget.hasBWI()))) {
     SmallVector<SDValue, 16> PSHUFBMask;
     int NumBytes = VT.getSizeInBits() / 8;
-    int Ratio = NumBytes / Mask.size();
+    int Ratio = NumBytes / NumMaskElts;
     for (int i = 0; i < NumBytes; ++i) {
       int M = Mask[i / Ratio];
       if (M == SM_SentinelUndef) {
