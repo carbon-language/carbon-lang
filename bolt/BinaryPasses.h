@@ -122,6 +122,32 @@ class FixupFunctions : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// An optimization to simplify conditional tail calls by removing
+/// unnecessary branches.
+///
+/// Convert the sequence:
+///
+///     j<cc> L1
+///     ...
+/// L1: jmp foo # tail call
+///
+/// into:
+///     j<cc> foo
+///
+/// but only if 'j<cc> foo' turns out to be a forward branch.
+///
+class SimplifyConditionalTailCalls : public BinaryFunctionPass {
+  uint64_t NumTailCallCandidates{0};
+  uint64_t NumTailCallsPatched{0};
+  uint64_t NumOrigForwardBranches{0};
+
+  bool fixTailCalls(BinaryContext &BC, BinaryFunction &BF);
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 

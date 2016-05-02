@@ -62,5 +62,13 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
   Predecessors.erase(I);
 }
 
+bool BinaryBasicBlock::analyzeBranch(const MCInstrAnalysis &MIA,
+                                     const MCSymbol *&TBB,
+                                     const MCSymbol *&FBB,
+                                     MCInst *&CondBranch,
+                                     MCInst *&UncondBranch) {
+  return MIA.analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
+}
+
 } // namespace bolt
 } // namespace llvm

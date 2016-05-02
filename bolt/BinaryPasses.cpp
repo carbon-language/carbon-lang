@@ -412,5 +412,120 @@ void FixupFunctions::runOnFunctions(
   }
 }
 
+bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
+                                                BinaryFunction &BF) {
+  if (BF.layout_size() == 0)
+    return false;
+
+  auto &MIA = BC.MIA;
+  uint64_t NumLocalTailCalls = 0;
+  uint64_t NumLocalPatchedTailCalls = 0;
+
+  for (auto* BB : BF.layout()) {
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+
+    // Determine the control flow at the end of each basic block
+    if (!BB->analyzeBranch(*MIA, TBB, FBB, CondBranch, UncondBranch)) {
+      continue;
+    }
+
+    // TODO: do we need to test for other branch patterns?
+
+    // For this particular case, the first basic block ends with
+    // a conditional branch and has two successors, one fall-through
+    // and one for when the condition is true.
+    // The target of the conditional is a basic block with a single
+    // unconditional branch (i.e. tail call) to another function.
+    // We don't care about the contents of the fall-through block.
+    // Note: this code makes the assumption that the fall-through
+    // block is the last successor.
+    if (CondBranch && !UncondBranch && BB->succ_size() == 2) {
+      // Find conditional branch target assuming the fall-through is
+      // always the last successor.
+      auto *CondTargetBB = *BB->succ_begin();
+
+      // Does the BB contain a single instruction?
+      if (CondTargetBB->size() - CondTargetBB->getNumPseudos() == 1) {
+        // Check to see if the sole instruction is a tail call.
+        auto const &Instr = *CondTargetBB->begin();
+
+        if (MIA->isTailCall(Instr)) {
+          ++NumTailCallCandidates;
+          ++NumLocalTailCalls;
+
+          auto const &TailTargetSymExpr =
+            cast<MCSymbolRefExpr>(Instr.getOperand(0).getExpr());
+          auto const &TailTarget = TailTargetSymExpr->getSymbol();
+
+          // Lookup the address for the current function and
+          // the tail call target.
+          auto const FnAddress = BC.GlobalSymbols.find(BF.getName());
+          auto const TailAddress = BC.GlobalSymbols.find(TailTarget.getName());
+          if (FnAddress == BC.GlobalSymbols.end() ||
+              TailAddress == BC.GlobalSymbols.end()) {
+            continue;
+          }
+
+          // Check to make sure we would be doing a forward jump.
+          // This assumes the address range of the current BB and the
+          // tail call target address don't overlap.
+          if (FnAddress->second < TailAddress->second) {
+            ++NumTailCallsPatched;
+            ++NumLocalPatchedTailCalls;
+
+            // Is the original jump forward or backward?
+            const bool isForward =
+              TailAddress->second > FnAddress->second + BB->getOffset();
+
+            if (isForward) ++NumOrigForwardBranches;
+
+            // Patch the new target address into the conditional branch.
+            CondBranch->getOperand(0).setExpr(TailTargetSymExpr);
+            // Remove the unused successor which may be eliminated later
+            // if there are no other users.
+            BB->removeSuccessor(CondTargetBB);
+            DEBUG(dbgs() << "patched " << (isForward ? "(fwd)" : "(back)")
+                  << " tail call in " << BF.getName() << ".\n";);
+          }
+        }
+      }
+    }
+  }
+
+  DEBUG(dbgs() << "BOLT: patched " << NumLocalPatchedTailCalls
+        << " tail calls (" << NumOrigForwardBranches << " forward)"
+        << " from a total of " << NumLocalTailCalls
+        << " in function " << BF.getName() << "\n";);
+
+  return NumLocalPatchedTailCalls > 0;
+}
+
+void SimplifyConditionalTailCalls::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+
+    if (!Function.isSimple())
+      continue;
+
+    // Fix tail calls to reduce branch mispredictions.
+    if (fixTailCalls(BC, Function)) {
+      if (opts::PrintAll || opts::PrintReordered) {
+        Function.print(errs(), "after tail call patching", true);
+      }
+    }
+  }
+
+  outs() << "BOLT: patched " << NumTailCallsPatched
+         << " tail calls (" << NumOrigForwardBranches << " forward)"
+         << " from a total of " << NumTailCallCandidates << "\n";
+}
+
 } // namespace bolt
 } // namespace llvm

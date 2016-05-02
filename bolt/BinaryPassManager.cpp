@@ -30,6 +30,12 @@ InlineSmallFunctions(
     llvm::cl::desc("inline functions with a single basic block"),
     llvm::cl::Optional);
 
+static llvm::cl::opt<bool>
+SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
+                             llvm::cl::desc("simplify conditional tail calls "
+                                            "by removing unnecessary jumps"),
+                             llvm::cl::Optional);
+
 } // namespace opts
 
 namespace llvm {
@@ -58,6 +64,15 @@ void BinaryFunctionPassManager::runAllPasses(
     opts::EliminateUnreachable);
 
   Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
+
+  Manager.registerPass(llvm::make_unique<SimplifyConditionalTailCalls>(),
+                       opts::SimplifyConditionalTailCalls);
+
+  // The tail call fixup pass may introduce unreachable code.  Add another
+  // instance of EliminateUnreachableBlocks here to catch it.
+  Manager.registerPass(
+    std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
+    opts::EliminateUnreachable);
 
   Manager.registerPass(llvm::make_unique<OptimizeBodylessFunctions>(),
                        opts::OptimizeBodylessFunctions);

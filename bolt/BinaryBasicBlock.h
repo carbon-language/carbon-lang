@@ -19,6 +19,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
@@ -306,6 +307,14 @@ public:
     return Function;
   }
 
+  /// Analyze and interpret the terminators of this basic block. TBB must be
+  /// initialized with the original fall-through for this BB.
+  bool analyzeBranch(const MCInstrAnalysis &MIA,
+                     const MCSymbol *&TBB,
+                     const MCSymbol *&FBB,
+                     MCInst *&CondBranch,
+                     MCInst *&UncondBranch);
+  
 private:
 
   /// Adds predecessor to the BB. Most likely you don't need to call this.
