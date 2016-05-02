@@ -119,6 +119,8 @@ StringRef PDBFile::getBlockData(uint32_t BlockIndex, uint32_t NumBytes) const {
 std::error_code PDBFile::parseFileHeaders() {
   std::error_code EC;
   MemoryBufferRef BufferRef = *Context->Buffer;
+  if (BufferRef.getBufferSize() < sizeof(SuperBlock))
+    return std::make_error_code(std::errc::illegal_byte_sequence);
 
   Context->SB =
       reinterpret_cast<const SuperBlock *>(BufferRef.getBufferStart());
@@ -130,6 +132,8 @@ std::error_code PDBFile::parseFileHeaders() {
     // An invalid block size suggests a corrupt PDB file.
     return std::make_error_code(std::errc::illegal_byte_sequence);
   }
+  if (BufferRef.getBufferSize() % SB->BlockSize != 0)
+    return std::make_error_code(std::errc::illegal_byte_sequence);
 
   // Make sure the file is sufficiently large to hold a super block.
   if (BufferRef.getBufferSize() < sizeof(SuperBlock))
