@@ -106,9 +106,9 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
 // Opens and parses a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
 void LinkerDriver::addFile(StringRef Path) {
-  using namespace llvm::sys::fs;
+  using namespace sys::fs;
   if (Config->Verbose)
-    llvm::outs() << Path << "\n";
+    outs() << Path << "\n";
   if (!Config->Reproduce.empty())
     copyInputFile(Path);
 
