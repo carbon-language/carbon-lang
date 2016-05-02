@@ -37,7 +37,8 @@ static inline uint32_t HashStringV1(StringRef Str) {
   // Maximum of 3 bytes left.  Hash a 2 byte word if possible, then hash the
   // possibly remaining 1 byte.
   if (RemainderSize >= 2) {
-    Result ^= *reinterpret_cast<const ulittle16_t *>(Remainder);
+    uint16_t Value = *reinterpret_cast<const ulittle16_t *>(Remainder);
+    Result ^= static_cast<uint32_t>(Value);
     Remainder += 2;
     RemainderSize -= 2;
   }
