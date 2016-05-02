@@ -1339,17 +1339,17 @@ buildConditionSets(ScopStmt &Stmt, Value *Condition, TerminatorInst *TI,
       isl_set_intersect(ConsequenceCondSet, isl_set_copy(Domain)));
 
   isl_set *AlternativeCondSet = nullptr;
-  bool ToComplex =
+  bool TooComplex =
       isl_set_n_basic_set(ConsequenceCondSet) >= MaxDisjunctionsInDomain;
 
-  if (!ToComplex) {
+  if (!TooComplex) {
     AlternativeCondSet = isl_set_subtract(isl_set_copy(Domain),
                                           isl_set_copy(ConsequenceCondSet));
-    ToComplex =
+    TooComplex =
         isl_set_n_basic_set(AlternativeCondSet) >= MaxDisjunctionsInDomain;
   }
 
-  if (ToComplex) {
+  if (TooComplex) {
     S.invalidate(COMPLEXITY, TI ? TI->getDebugLoc() : DebugLoc());
     isl_set_free(AlternativeCondSet);
     AlternativeCondSet = isl_set_empty(isl_set_get_space(ConsequenceCondSet));
