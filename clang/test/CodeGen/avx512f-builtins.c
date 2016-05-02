@@ -5369,3 +5369,22 @@ __m512 test_mm512_maskz_moveldup_ps(__mmask16 __U, __m512 __A) {
   // CHECK: @llvm.x86.avx512.mask.movsldup.512
   return _mm512_maskz_moveldup_ps(__U, __A); 
 }
+
+__m512i test_mm512_shuffle_epi32(__m512i __A) {
+  // CHECK-LABEL: @test_mm512_shuffle_epi32
+  // CHECK: @llvm.x86.avx512.mask.pshuf.d.512
+  return _mm512_shuffle_epi32(__A, 1); 
+}
+
+__m512i test_mm512_mask_shuffle_epi32(__m512i __W, __mmask16 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_mask_shuffle_epi32
+  // CHECK: @llvm.x86.avx512.mask.pshuf.d.512
+  return _mm512_mask_shuffle_epi32(__W, __U, __A, 1); 
+}
+
+__m512i test_mm512_maskz_shuffle_epi32(__mmask16 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_maskz_shuffle_epi32
+  // CHECK: @llvm.x86.avx512.mask.pshuf.d.512
+  return _mm512_maskz_shuffle_epi32(__U, __A, 1); 
+}
+

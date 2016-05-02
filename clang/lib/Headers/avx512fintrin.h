@@ -7733,6 +7733,27 @@ _mm512_maskz_moveldup_ps (__mmask16 __U, __m512 __A)
                (__mmask16) __U);
 }
 
+#define _mm512_shuffle_epi32( __A, __I) __extension__ ({ \
+__builtin_ia32_pshufd512_mask ((__v16si)( __A),\
+              ( __I),\
+              (__v16si) _mm512_undefined_epi32 (),\
+              (__mmask16) -1);\
+})
+
+#define _mm512_mask_shuffle_epi32( __W, __U, __A, __I) __extension__ ({ \
+__builtin_ia32_pshufd512_mask ((__v16si)( __A),\
+              ( __I),\
+              (__v16si)( __W),\
+              (__mmask16)( __U));\
+})
+
+#define _mm512_maskz_shuffle_epi32( __U, __A, __I) __extension__ ({ \
+__builtin_ia32_pshufd512_mask ((__v16si)( __A),\
+              ( __I),\
+              (__v16si) _mm512_setzero_si512 (),\
+              (__mmask16)( __U));\
+})
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
