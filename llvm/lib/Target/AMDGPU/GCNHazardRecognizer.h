@@ -38,6 +38,7 @@ class GCNHazardRecognizer final : public ScheduleHazardRecognizer {
                             std::function<bool(MachineInstr*)> IsHazardDef =
                             [](MachineInstr*) {return true;});
 
+  int checkSMEMSoftClauseHazards(MachineInstr *SMEM);
   int checkSMRDHazards(MachineInstr *SMRD);
   int checkVMEMHazards(MachineInstr* VMEM);
   int checkDPPHazards(MachineInstr *DPP);
