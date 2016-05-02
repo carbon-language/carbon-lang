@@ -64,7 +64,7 @@ private:
   SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
-                             SelectionDAG &DAG) const;
+                             SelectionDAG &DAG) const override;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue lowerPrivateTruncStore(StoreSDNode *Store, SelectionDAG &DAG) const;
