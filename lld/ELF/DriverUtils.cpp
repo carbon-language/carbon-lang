@@ -173,7 +173,6 @@ void elf::createResponseFile(const llvm::opt::InputArgList &Args) {
       break;
     case OPT_L:
     case OPT_dynamic_list:
-    case OPT_export_dynamic_symbol:
     case OPT_rpath:
     case OPT_script:
     case OPT_version_script:
