@@ -47,6 +47,9 @@ GCNHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
   if (SIInstrInfo::isVMEM(*MI) && checkVMEMHazards(MI) > 0)
     return NoopHazard;
 
+  if (SIInstrInfo::isDPP(*MI) && checkDPPHazards(MI) > 0)
+    return NoopHazard;
+
   return NoHazard;
 }
 
@@ -60,6 +63,9 @@ unsigned GCNHazardRecognizer::PreEmitNoops(MachineInstr *MI) {
 
   if (SIInstrInfo::isVMEM(*MI))
     return std::max(0, checkVMEMHazards(MI));
+
+  if (SIInstrInfo::isDPP(*MI))
+    return std::max(0, checkDPPHazards(MI));
 
   return 0;
 }
@@ -173,5 +179,25 @@ int GCNHazardRecognizer::checkVMEMHazards(MachineInstr* VMEM) {
         VmemSgprWaitStates - getWaitStatesSinceDef(Use.getReg(), IsHazardDefFn);
     WaitStatesNeeded = std::max(WaitStatesNeeded, WaitStatesNeededForUse);
   }
+  return WaitStatesNeeded;
+}
+
+int GCNHazardRecognizer::checkDPPHazards(MachineInstr *DPP) {
+  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo*>(ST.getRegisterInfo());
+
+  // Check for DPP VGPR read after VALU VGPR write.
+  int DppVgprWaitStates = 2;
+  int WaitStatesNeeded = 0;
+
+  for (const MachineOperand &Use : DPP->uses()) {
+    if (!Use.isReg() || !TRI->isVGPR(MF.getRegInfo(), Use.getReg()))
+      continue;
+    int WaitStatesNeededForUse =
+        DppVgprWaitStates - getWaitStatesSinceDef(Use.getReg());
+    WaitStatesNeeded = std::max(WaitStatesNeeded, WaitStatesNeededForUse);
+  }
+
   return WaitStatesNeeded;
 }
