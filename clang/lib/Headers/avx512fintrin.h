@@ -7754,6 +7754,134 @@ __builtin_ia32_pshufd512_mask ((__v16si)( __A),\
               (__mmask16)( __U));\
 })
 
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_mask_expand_pd (__m512d __W, __mmask8 __U, __m512d __A)
+{
+  return (__m512d) __builtin_ia32_expanddf512_mask ((__v8df) __A,
+                (__v8df) __W,
+                (__mmask8) __U);
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_maskz_expand_pd (__mmask8 __U, __m512d __A)
+{
+  return (__m512d) __builtin_ia32_expanddf512_mask ((__v8df) __A,
+                (__v8df) _mm512_setzero_pd (),
+                (__mmask8) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_expand_epi64 (__m512i __W, __mmask8 __U, __m512i __A)
+{
+  return (__m512i) __builtin_ia32_expanddi512_mask ((__v8di) __A,
+                (__v8di) __W,
+                (__mmask8) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_expand_epi64 ( __mmask8 __U, __m512i __A)
+{
+  return (__m512i) __builtin_ia32_expanddi512_mask ((__v8di) __A,
+                (__v8di) _mm512_setzero_pd (),
+                (__mmask8) __U);
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_mask_expandloadu_pd(__m512d __W, __mmask8 __U, void const *__P)
+{
+  return (__m512d) __builtin_ia32_expandloaddf512_mask ((const __v8df *)__P,
+              (__v8df) __W,
+              (__mmask8) __U);
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_maskz_expandloadu_pd(__mmask8 __U, void const *__P)
+{
+  return (__m512d) __builtin_ia32_expandloaddf512_mask ((const __v8df *)__P,
+              (__v8df) _mm512_setzero_pd(),
+              (__mmask8) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_expandloadu_epi64(__m512i __W, __mmask8 __U, void const *__P)
+{
+  return (__m512i) __builtin_ia32_expandloaddi512_mask ((const __v8di *)__P,
+              (__v8di) __W,
+              (__mmask8) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_expandloadu_epi64(__mmask8 __U, void const *__P)
+{
+  return (__m512i) __builtin_ia32_expandloaddi512_mask ((const __v8di *)__P,
+              (__v8di) _mm512_setzero_pd(),
+              (__mmask8) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_mask_expandloadu_ps(__m512 __W, __mmask16 __U, void const *__P)
+{
+  return (__m512) __builtin_ia32_expandloadsf512_mask ((const __v16sf *)__P,
+                   (__v16sf) __W,
+                   (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_maskz_expandloadu_ps(__mmask16 __U, void const *__P)
+{
+  return (__m512) __builtin_ia32_expandloadsf512_mask ((const __v16sf *)__P,
+                   (__v16sf) _mm512_setzero_ps(),
+                   (__mmask16) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_expandloadu_epi32(__m512i __W, __mmask16 __U, void const *__P)
+{
+  return (__m512i) __builtin_ia32_expandloadsi512_mask ((const __v16si *)__P,
+              (__v16si) __W,
+              (__mmask16) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_expandloadu_epi32(__mmask16 __U, void const *__P)
+{
+  return (__m512i) __builtin_ia32_expandloadsi512_mask ((const __v16si *)__P,
+              (__v16si) _mm512_setzero_ps(),
+              (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_mask_expand_ps (__m512 __W, __mmask16 __U, __m512 __A)
+{
+  return (__m512) __builtin_ia32_expandsf512_mask ((__v16sf) __A,
+               (__v16sf) __W,
+               (__mmask16) __U);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_maskz_expand_ps (__mmask16 __U, __m512 __A)
+{
+  return (__m512) __builtin_ia32_expandsf512_mask ((__v16sf) __A,
+               (__v16sf) _mm512_setzero_ps(),
+               (__mmask16) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_expand_epi32 (__m512i __W, __mmask16 __U, __m512i __A)
+{
+  return (__m512i) __builtin_ia32_expandsi512_mask ((__v16si) __A,
+                (__v16si) __W,
+                (__mmask16) __U);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_maskz_expand_epi32 (__mmask16 __U, __m512i __A)
+{
+  return (__m512i) __builtin_ia32_expandsi512_mask ((__v16si) __A,
+                (__v16si) _mm512_setzero_ps(),
+                (__mmask16) __U);
+}
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
