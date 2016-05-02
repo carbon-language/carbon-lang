@@ -152,15 +152,6 @@ public:
     return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbgOrLifetime();
   }
 
-  /// \brief Returns a pointer to the first instruction in this block that is
-  /// not a PHINode, a debug intrinsic, a lifetime intrinsic, or a bitcast
-  /// instruction coupled with the following lifetime intrinsic.
-  Instruction *getFirstNonPHIOrDbgOrLifetimeOrBitCast();
-  const Instruction *getFirstNonPHIOrDbgOrLifetimeOrBitCast() const {
-    return const_cast<BasicBlock *>(this)
-        ->getFirstNonPHIOrDbgOrLifetimeOrBitCast();
-  }
-
   /// \brief Returns an iterator to the first instruction in this block that is
   /// suitable for inserting a non-PHI instruction.
   ///

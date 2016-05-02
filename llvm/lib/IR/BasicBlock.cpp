@@ -206,30 +206,6 @@ Instruction* BasicBlock::getFirstNonPHIOrDbgOrLifetime() {
   return nullptr;
 }
 
-Instruction *BasicBlock::getFirstNonPHIOrDbgOrLifetimeOrBitCast() {
-  for (Instruction &I : *this) {
-    if (isa<PHINode>(I) || isa<DbgInfoIntrinsic>(I))
-      continue;
-
-    if (auto *II = dyn_cast<IntrinsicInst>(&I))
-      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end)
-        continue;
-
-    if (auto *BCI = dyn_cast<BitCastInst>(&I)) {
-      if (auto *II = dyn_cast<IntrinsicInst>(++I.getIterator())) {
-        if ((II->getIntrinsicID() == Intrinsic::lifetime_start ||
-             II->getIntrinsicID() == Intrinsic::lifetime_end) &&
-            II->getOperand(1) == BCI) {
-          continue;
-        }
-      }
-    }
-    return &I;
-  }
-  return nullptr;
-}
-
 BasicBlock::iterator BasicBlock::getFirstInsertionPt() {
   Instruction *FirstNonPHI = getFirstNonPHI();
   if (!FirstNonPHI)
