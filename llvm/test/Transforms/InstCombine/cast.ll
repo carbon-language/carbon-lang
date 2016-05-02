@@ -1174,7 +1174,6 @@ define i64 @test82(i64 %A) nounwind {
   %D = shl i32 %C, 9
   %E = zext i32 %D to i64
   ret i64 %E
-
 }
 
 ; PR15959
@@ -1193,7 +1192,6 @@ define i64 @test83(i16 %a, i64 %k) {
   %shl = shl i32 %conv, %sh_prom
   %sh_prom1 = zext i32 %shl to i64
   ret i64 %sh_prom1
-
 }
 
 define i8 @test84(i32 %a) {
@@ -1207,7 +1205,6 @@ define i8 @test84(i32 %a) {
   %shr = lshr exact i32 %add, 23
   %trunc = trunc i32 %shr to i8
   ret i8 %trunc
-
 }
 
 define i8 @test85(i32 %a) {
@@ -1221,7 +1218,6 @@ define i8 @test85(i32 %a) {
   %shr = lshr exact i32 %add, 23
   %trunc = trunc i32 %shr to i8
   ret i8 %trunc
-
 }
 
 define i16 @test86(i16 %v) {
@@ -1233,7 +1229,6 @@ define i16 @test86(i16 %v) {
   %s = ashr i32 %a, 4
   %t = trunc i32 %s to i16
   ret i16 %t
-
 }
 
 define i16 @test87(i16 %v) {
@@ -1246,9 +1241,9 @@ define i16 @test87(i16 %v) {
   %a = ashr i32 %m, 16
   %t = trunc i32 %a to i16
   ret i16 %t
-
 }
 
+; Do not optimize to ashr i16 (shift by 18)
 define i16 @test88(i16 %v) {
 ; CHECK-LABEL: @test88(
 ; CHECK-NEXT:    [[A:%.*]] = sext i16 %v to i32
@@ -1260,8 +1255,6 @@ define i16 @test88(i16 %v) {
   %s = ashr i32 %a, 18
   %t = trunc i32 %s to i16
   ret i16 %t
-
-; Do not optimize to ashr i16 (shift by 18)
 }
 
 ; Overflow on a float to int or int to float conversion is undefined (PR21130).
