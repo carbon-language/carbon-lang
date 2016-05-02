@@ -5,7 +5,6 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t.dir/build1/foo.o
 # RUN: cd %t.dir
 # RUN: ld.lld --hash-style=gnu build1/foo.o -o bar -shared --as-needed --reproduce repro
-# RUN: find .
 # RUN: diff build1/foo.o repro/%:t.dir/build1/foo.o
 
 # RUN: FileCheck %s --check-prefix=RSP < repro/response.txt
