@@ -71,7 +71,7 @@ struct DbiStream::HeaderInfo {
   ulittle32_t Reserved; // Pad to 64 bytes
 };
 
-DbiStream::DbiStream(PDBFile &File) : Pdb(File), Stream(3, File) {
+DbiStream::DbiStream(PDBFile &File) : Pdb(File), Stream(StreamDBI, File) {
   static_assert(sizeof(HeaderInfo) == 64, "Invalid HeaderInfo size!");
 }
 
