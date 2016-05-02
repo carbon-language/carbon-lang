@@ -39,14 +39,12 @@ void GCNHazardRecognizer::EmitInstruction(MachineInstr *MI) {
 
 ScheduleHazardRecognizer::HazardType
 GCNHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
-  const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo*>(MF.getSubtarget().getInstrInfo());
   MachineInstr *MI = SU->getInstr();
 
-  if (TII->isSMRD(*MI) && checkSMRDHazards(MI) > 0)
+  if (SIInstrInfo::isSMRD(*MI) && checkSMRDHazards(MI) > 0)
     return NoopHazard;
 
-  if (TII->isVMEM(*MI) && checkVMEMHazards(MI) > 0)
+  if (SIInstrInfo::isVMEM(*MI) && checkVMEMHazards(MI) > 0)
     return NoopHazard;
 
   return NoHazard;
@@ -57,13 +55,10 @@ unsigned GCNHazardRecognizer::PreEmitNoops(SUnit *SU) {
 }
 
 unsigned GCNHazardRecognizer::PreEmitNoops(MachineInstr *MI) {
-  const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo*>(MF.getSubtarget().getInstrInfo());
-
-  if (TII->isSMRD(*MI))
+  if (SIInstrInfo::isSMRD(*MI))
     return std::max(0, checkSMRDHazards(MI));
 
-  if (TII->isVMEM(*MI))
+  if (SIInstrInfo::isVMEM(*MI))
     return std::max(0, checkVMEMHazards(MI));
 
   return 0;
