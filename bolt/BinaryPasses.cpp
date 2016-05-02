@@ -10,8 +10,44 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPasses.h"
+#include "llvm/Support/Options.h"
 
 #define DEBUG_TYPE "bolt"
+
+namespace opts {
+
+extern llvm::cl::opt<bool> PrintAll;
+extern llvm::cl::opt<bool> PrintReordered;
+extern llvm::cl::opt<bool> PrintEHRanges;
+extern llvm::cl::opt<bool> PrintUCE;
+extern llvm::cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
+extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
+
+static llvm::cl::opt<llvm::bolt::BinaryFunction::LayoutType>
+ReorderBlocks(
+    "reorder-blocks",
+    llvm::cl::desc("change layout of basic blocks in a function"),
+    llvm::cl::init(llvm::bolt::BinaryFunction::LT_NONE),
+    llvm::cl::values(clEnumValN(llvm::bolt::BinaryFunction::LT_NONE,
+                                "none",
+                                "do not reorder basic blocks"),
+                     clEnumValN(llvm::bolt::BinaryFunction::LT_REVERSE,
+                                "reverse",
+                                "layout blocks in reverse order"),
+                     clEnumValN(llvm::bolt::BinaryFunction::LT_OPTIMIZE,
+                                "normal",
+                                "perform optimal layout based on profile"),
+                     clEnumValN(llvm::bolt::BinaryFunction::LT_OPTIMIZE_BRANCH,
+                                "branch-predictor",
+                                "perform optimal layout prioritizing branch "
+                                "predictions"),
+                     clEnumValN(llvm::bolt::BinaryFunction::LT_OPTIMIZE_CACHE,
+                                "cache",
+                                "perform optimal layout prioritizing I-cache "
+                                "behavior"),
+                     clEnumValEnd));
+
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -82,12 +118,19 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
 
 void OptimizeBodylessFunctions::runOnFunctions(
     BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs) {
+    std::map<uint64_t, BinaryFunction> &BFs,
+    std::set<uint64_t> &) {
   for (auto &It : BFs) {
-    analyze(It.second, BC, BFs);
+    auto &Function = It.second;
+    if (Function.isSimple() && opts::shouldProcess(Function)) {
+      analyze(Function, BC, BFs);
+    }
   }
   for (auto &It : BFs) {
-    optimizeCalls(It.second, BC);
+    auto &Function = It.second;
+    if (Function.isSimple() && opts::shouldProcess(Function)) {
+      optimizeCalls(Function, BC);
+    }
   }
 }
 
@@ -96,7 +139,9 @@ void InlineSmallFunctions::findInliningCandidates(
     const std::map<uint64_t, BinaryFunction> &BFs) {
   for (const auto &BFIt : BFs) {
     const auto &Function = BFIt.second;
-    if (Function.size() != 1)
+    if (!Function.isSimple() ||
+        !opts::shouldProcess(Function) ||
+        Function.size() != 1)
       continue;
     auto &BB = *Function.begin();
     const auto &LastInstruction = *BB.rbegin();
@@ -233,16 +278,20 @@ void InlineSmallFunctions::inlineCallsInFunction(
 
 void InlineSmallFunctions::runOnFunctions(
     BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs) {
+    std::map<uint64_t, BinaryFunction> &BFs,
+    std::set<uint64_t> &) {
   for (auto &It : BFs) {
     FunctionByName[It.second.getName()] = &It.second;
   }
   findInliningCandidates(BC, BFs);
   uint32_t ConsideredFunctions = 0;
   for (auto &It : BFs) {
+    auto &Function = It.second;
+    if (!Function.isSimple() || !opts::shouldProcess(Function))
+      continue;
     if (ConsideredFunctions == kMaxFunctions)
       break;
-    inlineCallsInFunction(BC, It.second);
+    inlineCallsInFunction(BC, Function);
     ++ConsideredFunctions;
   }
   DEBUG(errs() << "BOLT-DEBUG: Inlined " << inlinedDynamicCalls << " of "
@@ -250,6 +299,117 @@ void InlineSmallFunctions::runOnFunctions(
   DEBUG(errs() << "BOLT-DEBUG: Inlined calls represent "
                << (100.0 * inlinedDynamicCalls / totalInlineableCalls)
                << "% of all inlineable calls in the profile.\n");
+}
+
+void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
+  if (!Function.isSimple() || !opts::shouldProcess(Function)) return;
+
+  // FIXME: this wouldn't work with C++ exceptions until we implement
+  //        support for those as there will be "invisible" edges
+  //        in the graph.
+  if (Function.layout_size() > 0) {
+    if (NagUser) {
+      outs()
+        << "BOLT-WARNING: Using -eliminate-unreachable is experimental and "
+        "unsafe for exceptions\n";
+      NagUser = false;
+    }
+
+    if (Function.hasEHRanges()) return;
+
+    std::stack<BinaryBasicBlock*> Stack;
+    std::map<BinaryBasicBlock *, bool> Reachable;
+    BinaryBasicBlock *Entry = *Function.layout_begin();
+    Stack.push(Entry);
+    Reachable[Entry] = true;
+    // Determine reachable BBs from the entry point
+    while (!Stack.empty()) {
+      auto BB = Stack.top();
+      Stack.pop();
+      for (auto Succ : BB->successors()) {
+        if (Reachable[Succ])
+          continue;
+        Reachable[Succ] = true;
+        Stack.push(Succ);
+      }
+    }
+
+    auto Count = Function.eraseDeadBBs(Reachable);
+    if (Count) {
+      DEBUG(dbgs() << "BOLT: Removed " << Count
+            << " dead basic block(s) in function "
+            << Function.getName() << '\n');
+    }
+
+    if (opts::PrintAll || opts::PrintUCE)
+      Function.print(errs(), "after unreachable code elimination", true);
+  }
+}
+
+void EliminateUnreachableBlocks::runOnFunctions(
+  BinaryContext&,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+  for (auto &It : BFs) {
+    runOnFunction(It.second);
+  }
+}
+
+void ReorderBasicBlocks::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &LargeFunctions
+) {
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+
+    if (!Function.isSimple())
+      continue;
+
+    if (!opts::shouldProcess(Function))
+      continue;
+
+    if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
+      bool ShouldSplit =
+        (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
+        (opts::SplitFunctions == BinaryFunction::ST_EH &&
+         Function.hasEHRanges()) ||
+        (LargeFunctions.find(It.first) != LargeFunctions.end());
+      Function.modifyLayout(opts::ReorderBlocks, ShouldSplit);
+      if (opts::PrintAll || opts::PrintReordered)
+        Function.print(errs(), "after reordering blocks", true);
+    }
+  }
+}
+
+void FixupFunctions::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+
+    if (!Function.isSimple())
+      continue;
+
+    if (!opts::shouldProcess(Function))
+      continue;
+
+    // Fix the CFI state.
+    if (!Function.fixCFIState()) {
+      errs() << "BOLT-WARNING: unable to fix CFI state for function "
+             << Function.getName() << ". Skipping.\n";
+      Function.setSimple(false);
+      continue;
+    }
+
+    // Update exception handling information.
+    Function.updateEHRanges();
+    if (opts::PrintAll || opts::PrintEHRanges)
+      Function.print(errs(), "after updating EH ranges", true);
+  }
 }
 
 } // namespace bolt

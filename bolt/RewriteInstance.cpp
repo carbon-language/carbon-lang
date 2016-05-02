@@ -101,12 +101,7 @@ MaxFunctions("max-funcs",
              cl::desc("maximum # of functions to overwrite"),
              cl::Optional);
 
-static cl::opt<bool>
-EliminateUnreachable("eliminate-unreachable",
-                     cl::desc("eliminate unreachable code"),
-                     cl::Optional);
-
-static cl::opt<BinaryFunction::SplittingType>
+cl::opt<BinaryFunction::SplittingType>
 SplitFunctions("split-functions",
                cl::desc("split functions into hot and cold regions"),
                cl::init(BinaryFunction::ST_NONE),
@@ -132,31 +127,6 @@ FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
                                     "functions, to correct their debug info."),
                            cl::Optional);
 
-static cl::opt<BinaryFunction::LayoutType>
-ReorderBlocks(
-    "reorder-blocks",
-    cl::desc("change layout of basic blocks in a function"),
-    cl::init(BinaryFunction::LT_NONE),
-    cl::values(clEnumValN(BinaryFunction::LT_NONE,
-                          "none",
-                          "do not reorder basic blocks"),
-               clEnumValN(BinaryFunction::LT_REVERSE,
-                          "reverse",
-                          "layout blocks in reverse order"),
-               clEnumValN(BinaryFunction::LT_OPTIMIZE,
-                          "normal",
-                          "perform optimal layout based on profile"),
-               clEnumValN(BinaryFunction::LT_OPTIMIZE_BRANCH,
-                          "branch-predictor",
-                          "perform optimal layout prioritizing branch "
-                            "predictions"),
-               clEnumValN(BinaryFunction::LT_OPTIMIZE_CACHE,
-                          "cache",
-                          "perform optimal layout prioritizing I-cache "
-                            "behavior"),
-               clEnumValEnd));
-
-
 static cl::opt<bool>
 AlignBlocks("align-blocks",
             cl::desc("try to align BBs inserting nops"),
@@ -170,7 +140,7 @@ static cl::opt<bool>
 DumpEHFrame("dump-eh-frame", cl::desc("dump parsed .eh_frame (debugging)"),
             cl::Hidden);
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintAll("print-all", cl::desc("print functions after each stage"),
          cl::Hidden);
 
@@ -178,7 +148,7 @@ static cl::opt<bool>
 PrintCFG("print-cfg", cl::desc("print functions after CFG construction"),
          cl::Hidden);
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintUCE("print-uce",
          cl::desc("print functions after unreachable code elimination"),
          cl::Hidden);
@@ -187,12 +157,12 @@ static cl::opt<bool>
 PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
             cl::Hidden);
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintEHRanges("print-eh-ranges",
               cl::desc("print function with updated exception ranges"),
               cl::Hidden);
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
                cl::Hidden);
@@ -606,7 +576,7 @@ void RewriteInstance::run() {
       assert(FunctionIt != BinaryFunctions.end() &&
              "Invalid large function address.");
       errs() << "BOLT-WARNING: Function " << FunctionIt->second.getName()
-             << " is larger than it's  orginal size: emitting again marking it "
+             << " is larger than its orginal size: emitting again marking it "
              << "as not simple.\n";
       FunctionIt->second.setSimple(false);
     }
@@ -989,87 +959,7 @@ void RewriteInstance::disassembleFunctions() {
 void RewriteInstance::runOptimizationPasses() {
   // Run optimization passes.
   //
-  // FIXME: use real optimization passes.
-  bool NagUser = true;
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
-
-    if (!opts::shouldProcess(Function))
-      continue;
-
-    if (!Function.isSimple())
-      continue;
-
-    // Detect and eliminate unreachable basic blocks. We could have those
-    // filled with nops and they are used for alignment.
-    //
-    // FIXME: this wouldn't work with C++ exceptions until we implement
-    //        support for those as there will be "invisible" edges
-    //        in the graph.
-    if (opts::EliminateUnreachable && Function.layout_size() > 0) {
-      if (NagUser) {
-        outs()
-            << "BOLT-WARNING: Using -eliminate-unreachable is experimental and "
-               "unsafe for exceptions\n";
-        NagUser = false;
-      }
-
-      std::stack<BinaryBasicBlock*> Stack;
-      std::map<BinaryBasicBlock *, bool> Reachable;
-      BinaryBasicBlock *Entry = *Function.layout_begin();
-      Stack.push(Entry);
-      Reachable[Entry] = true;
-      // Determine reachable BBs from the entry point
-      while (!Stack.empty()) {
-        auto BB = Stack.top();
-        Stack.pop();
-        for (auto Succ : BB->successors()) {
-          if (Reachable[Succ])
-            continue;
-          Reachable[Succ] = true;
-          Stack.push(Succ);
-        }
-      }
-
-      auto Count = Function.eraseDeadBBs(Reachable);
-      if (Count) {
-        DEBUG(dbgs() << "BOLT: Removed " << Count
-                     << " dead basic block(s) in function "
-                     << Function.getName() << '\n');
-      }
-
-      if (opts::PrintAll || opts::PrintUCE)
-        Function.print(errs(), "after unreachable code elimination", true);
-    }
-
-    if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
-      bool ShouldSplit =
-        (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
-        (opts::SplitFunctions == BinaryFunction::ST_EH &&
-         Function.hasEHRanges()) ||
-        (LargeFunctions.find(BFI.first) != LargeFunctions.end());
-      BFI.second.modifyLayout(opts::ReorderBlocks, ShouldSplit);
-      if (opts::PrintAll || opts::PrintReordered)
-        Function.print(errs(), "after reordering blocks", true);
-    }
-
-    // Post-processing passes.
-
-    // Fix the CFI state.
-    if (!Function.fixCFIState()) {
-      errs() << "BOLT-WARNING: unable to fix CFI state for function "
-             << Function.getName() << ". Skipping.\n";
-      Function.setSimple(false);
-      continue;
-    }
-
-    // Update exception handling information.
-    Function.updateEHRanges();
-    if (opts::PrintAll || opts::PrintEHRanges)
-      Function.print(errs(), "after updating EH ranges", true);
-  }
-
-  BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions);
+  BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
 }
 
 namespace {

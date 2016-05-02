@@ -14,6 +14,11 @@
 namespace opts {
 
 static llvm::cl::opt<bool>
+EliminateUnreachable("eliminate-unreachable",
+                     llvm::cl::desc("eliminate unreachable code"),
+                     llvm::cl::Optional);
+
+static llvm::cl::opt<bool>
 OptimizeBodylessFunctions(
     "optimize-bodyless-functions",
     llvm::cl::desc("optimize functions that just do a tail call"),
@@ -30,19 +35,37 @@ InlineSmallFunctions(
 namespace llvm {
 namespace bolt {
 
+cl::opt<bool> BinaryFunctionPassManager::AlwaysOn(
+  "always-run-pass",
+  llvm::cl::desc("Used for passes that are always enabled"),
+  cl::init(true),
+  cl::ReallyHidden);
+
+bool BinaryFunctionPassManager::NagUser = false;
+
 void BinaryFunctionPassManager::runAllPasses(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &Functions) {
-  BinaryFunctionPassManager Manager(BC, Functions);
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &Functions,
+  std::set<uint64_t> &LargeFunctions
+) {
+  BinaryFunctionPassManager Manager(BC, Functions, LargeFunctions);
 
   // Here we manage dependencies/order manually, since passes are ran in the
   // order they're registered.
+
+  Manager.registerPass(
+    std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
+    opts::EliminateUnreachable);
+
+  Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
 
   Manager.registerPass(llvm::make_unique<OptimizeBodylessFunctions>(),
                        opts::OptimizeBodylessFunctions);
 
   Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(),
                        opts::InlineSmallFunctions);
+
+  Manager.registerPass(std::move(llvm::make_unique<FixupFunctions>()));
 
   Manager.runPasses();
 }

@@ -28,7 +28,8 @@ class BinaryFunctionPass {
 public:
   virtual ~BinaryFunctionPass() = default;
   virtual void runOnFunctions(BinaryContext &BC,
-                              std::map<uint64_t, BinaryFunction> &BFs) = 0;
+                              std::map<uint64_t, BinaryFunction> &BFs,
+                              std::set<uint64_t> &LargeFunctions) = 0;
 };
 
 /// Detects functions that simply do a tail call when they are called and
@@ -48,7 +49,8 @@ private:
 
 public:
   void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs) override;
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
 };
 
 /// Inlining of single basic block functions.
@@ -86,7 +88,38 @@ private:
 
 public:
   void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs) override;
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
+/// Detect and eliminate unreachable basic blocks. We could have those
+/// filled with nops and they are used for alignment.
+class EliminateUnreachableBlocks : public BinaryFunctionPass {
+  bool& NagUser;
+  void runOnFunction(BinaryFunction& Function);
+ public:
+  explicit EliminateUnreachableBlocks(bool &nagUser) : NagUser(nagUser) { }
+
+  void runOnFunctions(BinaryContext&,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
+// Reorder the basic blocks for each function based on hotness.
+class ReorderBasicBlocks : public BinaryFunctionPass {
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
+/// Fix the CFI state and exception handling information after all other
+/// passes have completed.
+class FixupFunctions : public BinaryFunctionPass {
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
 };
 
 } // namespace bolt
