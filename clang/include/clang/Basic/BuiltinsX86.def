@@ -2241,6 +2241,7 @@ TARGET_BUILTIN(__builtin_ia32_expandloadsf512_mask, "V16fvC*V16fUs","","avx512f"
 TARGET_BUILTIN(__builtin_ia32_expandloadsi512_mask, "V16ivC*V16iUs","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_expandsf512_mask, "V16fV16fV16fUs","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_expandsi512_mask, "V16iV16iV16iUs","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_cvtps2pd512_mask, "V8dV8fV8dUcIi","","avx512f")
 
 #undef BUILTIN
 #undef TARGET_BUILTIN
