@@ -218,10 +218,10 @@ define i32 @imp_null_check_via_mem_comparision(i32* %x, i32 %val) {
 ; OBJDUMP-NEXT: Version: 0x1
 ; OBJDUMP-NEXT: NumFunctions: 5
 ; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1
+; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 5
+; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1
 ; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 7
 ; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1
-; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 9
+; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 7
 ; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1
-; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 9
-; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1
-; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 5
+; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 3
