@@ -590,7 +590,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                   .addMemOperand(MMO);
           BuildMI(*MBB, MI, DL,
                   TII->getMCOpcodeFromPseudo(AMDGPU::V_READLANE_B32), SubReg)
-                  .addReg(TmpReg)
+                  .addReg(TmpReg, RegState::Kill)
                   .addImm(0)
                   .addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
         }
