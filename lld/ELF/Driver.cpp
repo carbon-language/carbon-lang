@@ -489,8 +489,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   // Write the result to the file.
   if (Config->GcSections)
-    markLive<ELFT>(&Symtab);
+    markLive<ELFT>();
   if (Config->ICF)
-    doIcf<ELFT>(&Symtab);
+    doIcf<ELFT>();
   writeResult<ELFT>(&Symtab);
 }
