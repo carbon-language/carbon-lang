@@ -54,6 +54,7 @@ set(LLVM_DISTRIBUTION_COMPONENTS
   clang
   LTO
   clang-format
+  clang-headers
   ${LLVM_TOOLCHAIN_TOOLS}
   CACHE STRING "")
 
