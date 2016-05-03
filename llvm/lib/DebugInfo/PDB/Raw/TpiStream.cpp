@@ -22,8 +22,6 @@ using namespace llvm::support;
 using namespace llvm::pdb;
 
 namespace {
-const uint32_t MinTypeIndex = codeview::TypeIndex::FirstNonSimpleIndex;
-
 const uint32_t MinHashBuckets = 0x1000;
 const uint32_t MaxHashBuckets = 0x40000;
 }
