@@ -12,23 +12,22 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "llvm-readobj.h"
 #include "ARMWinEHPrinter.h"
 #include "CodeView.h"
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StackMapPrinter.h"
-#include "StreamWriter.h"
 #include "Win64EHDumper.h"
+#include "llvm-readobj.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
+#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/COFF.h"
@@ -36,6 +35,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
@@ -54,7 +54,7 @@ namespace {
 
 class CVTypeDumper {
 public:
-  CVTypeDumper(StreamWriter &W) : W(W) {}
+  CVTypeDumper(ScopedPrinter &W) : W(W) {}
 
   StringRef getTypeName(TypeIndex TI);
   void printTypeIndex(StringRef FieldName, TypeIndex TI);
@@ -65,7 +65,7 @@ private:
   void printCodeViewFieldList(StringRef FieldData);
   void printMemberAttributes(MemberAttributes Attrs);
 
-  StreamWriter &W;
+  ScopedPrinter &W;
 
   /// All user defined type records in .debug$T live in here. Type indices
   /// greater than 0x1000 are user defined. Subtract 0x1000 from the index to
@@ -77,7 +77,7 @@ private:
 
 class COFFDumper : public ObjDumper {
 public:
-  COFFDumper(const llvm::object::COFFObjectFile *Obj, StreamWriter &Writer)
+  COFFDumper(const llvm::object::COFFObjectFile *Obj, ScopedPrinter &Writer)
       : ObjDumper(Writer), Obj(Obj), CVTD(Writer) {}
 
   void printFileHeaders() override;
@@ -166,7 +166,7 @@ private:
 namespace llvm {
 
 std::error_code createCOFFDumper(const object::ObjectFile *Obj,
-                                 StreamWriter &Writer,
+                                 ScopedPrinter &Writer,
                                  std::unique_ptr<ObjDumper> &Result) {
   const COFFObjectFile *COFFObj = dyn_cast<COFFObjectFile>(Obj);
   if (!COFFObj)
