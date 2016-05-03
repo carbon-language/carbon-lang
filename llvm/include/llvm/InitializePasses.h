@@ -178,7 +178,7 @@ void initializeLoopExtractorPass(PassRegistry&);
 void initializeLoopInfoWrapperPassPass(PassRegistry&);
 void initializeLoopInterchangePass(PassRegistry &);
 void initializeLoopInstSimplifyPass(PassRegistry&);
-void initializeLoopRotatePass(PassRegistry&);
+void initializeLoopRotateLegacyPassPass(PassRegistry&);
 void initializeLoopSimplifyPass(PassRegistry&);
 void initializeLoopSimplifyCFGLegacyPassPass(PassRegistry&);
 void initializeLoopStrengthReducePass(PassRegistry&);
