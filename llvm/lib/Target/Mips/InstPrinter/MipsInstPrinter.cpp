@@ -138,9 +138,7 @@ static void printExpr(const MCExpr *Expr, const MCAsmInfo *MAI,
   } else
     SRE = cast<MCSymbolRefExpr>(Expr);
 
-  MCSymbolRefExpr::VariantKind Kind = SRE->getKind();
-
-  assert(Kind == MCSymbolRefExpr::VK_None && "Invalid kind!");
+  assert(SRE->getKind() == MCSymbolRefExpr::VK_None && "Invalid kind!");
 
   SRE->getSymbol().print(OS, MAI);
 
