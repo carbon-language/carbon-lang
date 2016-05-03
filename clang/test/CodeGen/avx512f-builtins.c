@@ -5528,3 +5528,27 @@ __m512 test_mm512_maskz_mov_ps(__mmask16 __U, __m512 __A) {
   // CHECK: @llvm.x86.avx512.mask.mova.ps.512
   return _mm512_maskz_mov_ps(__U, __A); 
 }
+
+void test_mm512_mask_compressstoreu_pd(void *__P, __mmask8 __U, __m512d __A) {
+  // CHECK-LABEL: @test_mm512_mask_compressstoreu_pd
+  // CHECK: @llvm.x86.avx512.mask.compress.store.pd.512
+  return _mm512_mask_compressstoreu_pd(__P, __U, __A); 
+}
+
+void test_mm512_mask_compressstoreu_epi64(void *__P, __mmask8 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_mask_compressstoreu_epi64
+  // CHECK: @llvm.x86.avx512.mask.compress.store.q.512
+  return _mm512_mask_compressstoreu_epi64(__P, __U, __A); 
+}
+
+void test_mm512_mask_compressstoreu_ps(void *__P, __mmask16 __U, __m512 __A) {
+  // CHECK-LABEL: @test_mm512_mask_compressstoreu_ps
+  // CHECK: @llvm.x86.avx512.mask.compress.store.ps.512
+  return _mm512_mask_compressstoreu_ps(__P, __U, __A); 
+}
+
+void test_mm512_mask_compressstoreu_epi32(void *__P, __mmask16 __U, __m512i __A) {
+  // CHECK-LABEL: @test_mm512_mask_compressstoreu_epi32
+  // CHECK: @llvm.x86.avx512.mask.compress.store.d.512
+  return _mm512_mask_compressstoreu_epi32(__P, __U, __A); 
+}

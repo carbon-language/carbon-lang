@@ -7965,6 +7965,33 @@ _mm512_maskz_mov_ps (__mmask16 __U, __m512 __A)
              (__mmask16) __U);
 }
 
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_compressstoreu_pd (void *__P, __mmask8 __U, __m512d __A)
+{
+  __builtin_ia32_compressstoredf512_mask ((__v8df *) __P, (__v8df) __A,
+            (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_compressstoreu_epi64 (void *__P, __mmask8 __U, __m512i __A)
+{
+  __builtin_ia32_compressstoredi512_mask ((__v8di *) __P, (__v8di) __A,
+            (__mmask8) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_compressstoreu_ps (void *__P, __mmask16 __U, __m512 __A)
+{
+  __builtin_ia32_compressstoresf512_mask ((__v16sf *) __P, (__v16sf) __A,
+            (__mmask16) __U);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_compressstoreu_epi32 (void *__P, __mmask16 __U, __m512i __A)
+{
+  __builtin_ia32_compressstoresi512_mask ((__v16si *) __P, (__v16si) __A,
+            (__mmask16) __U);
+}
 
 #undef __DEFAULT_FN_ATTRS
 
