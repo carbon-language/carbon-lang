@@ -496,6 +496,6 @@ void callit(C *p) {
   static_cast<B*>(p)->g();
 }
 // CHECK-LABEL: define void @"\01?callit@pr27621@@YAXPAUC@1@@Z"(%"struct.pr27621::C"* %{{.*}})
-// CHECK: %[[B_i8:.*]] = getelementptr i8, i8* %1, i32 4
+// CHECK: %[[B_i8:.*]] = getelementptr i8, i8* %{{.*}}, i32 4
 // CHECK: call x86_thiscallcc void @"\01?g@C@pr27621@@UAEXXZ"(i8* %[[B_i8]])
 }
