@@ -31,6 +31,8 @@ void fieldsRequiringInit(const RecordDecl::field_range &Fields,
                          ASTContext &Context,
                          SmallPtrSetImpl<const FieldDecl *> &FieldsToInit) {
   for (const FieldDecl *F : Fields) {
+    if (F->hasInClassInitializer())
+      continue;
     QualType Type = F->getType();
     if (!F->hasInClassInitializer() &&
         type_traits::isTriviallyDefaultConstructible(Type, Context))
