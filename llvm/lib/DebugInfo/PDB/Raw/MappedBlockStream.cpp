@@ -55,5 +55,5 @@ MappedBlockStream::readBytes(uint32_t Offset,
 std::error_code MappedBlockStream::getArrayRef(uint32_t Offset,
                                                ArrayRef<uint8_t> &Buffer,
                                                uint32_t Length) const {
-  return std::make_error_code(std::errc::operation_not_supported);
+  return std::make_error_code(std::errc::not_supported);
 }
