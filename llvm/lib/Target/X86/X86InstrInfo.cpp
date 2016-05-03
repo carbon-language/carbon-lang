@@ -4537,7 +4537,7 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     // as this is usually wrong to read an undef value.
     if (MachineBasicBlock::LQR_Unknown == LQR) {
       LivePhysRegs LPR(&getRegisterInfo());
-      LPR.addLiveOuts(&MBB);
+      LPR.addLiveOuts(MBB);
       MachineBasicBlock::iterator I = MBB.end();
       while (I != MI) {
         --I;

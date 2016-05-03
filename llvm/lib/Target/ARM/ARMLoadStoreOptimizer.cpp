@@ -566,7 +566,7 @@ void ARMLoadStoreOpt::moveLiveRegsBefore(const MachineBasicBlock &MBB,
   // Initialize if we never queried in this block.
   if (!LiveRegsValid) {
     LiveRegs.init(TRI);
-    LiveRegs.addLiveOuts(&MBB);
+    LiveRegs.addLiveOuts(MBB);
     LiveRegPos = MBB.end();
     LiveRegsValid = true;
   }
