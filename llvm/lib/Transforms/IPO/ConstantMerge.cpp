@@ -45,9 +45,6 @@ namespace {
     // duplicate constants.
     bool runOnModule(Module &M) override;
 
-    // Return true iff we can determine the alignment of this global variable.
-    bool hasKnownAlignment(GlobalVariable *GV) const;
-
     // Return the alignment of the global, including converting the default
     // alignment to a concrete value.
     unsigned getAlignment(GlobalVariable *GV) const;
