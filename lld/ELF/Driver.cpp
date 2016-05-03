@@ -381,11 +381,13 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     Config->BuildId = BuildIdKind::Fnv1;
   if (auto *Arg = Args.getLastArg(OPT_build_id_eq)) {
     StringRef S = Arg->getValue();
-    if (S == "md5") {
+    if (S == "md5")
       Config->BuildId = BuildIdKind::Md5;
-    } else if (S == "sha1") {
+    else if (S == "sha1")
       Config->BuildId = BuildIdKind::Sha1;
-    } else
+    else if (S == "none")
+      Config->BuildId = BuildIdKind::None;
+    else
       error("unknown --build-id style: " + S);
   }
 
