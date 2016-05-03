@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Constants.h"
@@ -34,29 +35,36 @@ STATISTIC(NumFunctions, "Number of functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
 namespace {
-  struct GlobalDCE : public ModulePass {
+  class GlobalDCELegacyPass : public ModulePass {
+  public:
     static char ID; // Pass identification, replacement for typeid
-    GlobalDCE() : ModulePass(ID) {
-      initializeGlobalDCEPass(*PassRegistry::getPassRegistry());
+    GlobalDCELegacyPass() : ModulePass(ID) {
+      initializeGlobalDCELegacyPassPass(*PassRegistry::getPassRegistry());
     }
 
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //
-    bool runOnModule(Module &M) override;
+    bool runOnModule(Module &M) override {
+      if (skipModule(M))
+        return false;
+
+      auto PA = Impl.run(M);
+      return !PA.areAllPreserved();
+    }
 
   private:
-    SmallPtrSet<GlobalValue*, 32> AliveGlobals;
-    SmallPtrSet<Constant *, 8> SeenConstants;
-    std::unordered_multimap<Comdat *, GlobalValue *> ComdatMembers;
-
-    /// GlobalIsNeeded - mark the specific global value as needed, and
-    /// recursively mark anything that it uses as also needed.
-    void GlobalIsNeeded(GlobalValue *GV);
-    void MarkUsedGlobalsAsNeeded(Constant *C);
-
-    bool RemoveUnusedGlobalValue(GlobalValue &GV);
+    GlobalDCEPass Impl;
   };
+}
+
+char GlobalDCELegacyPass::ID = 0;
+INITIALIZE_PASS(GlobalDCELegacyPass, "globaldce",
+                "Dead Global Elimination", false, false)
+
+// Public interface to the GlobalDCEPass.
+ModulePass *llvm::createGlobalDCEPass() {
+  return new GlobalDCELegacyPass();
 }
 
 /// Returns true if F contains only a single "ret" instruction.
@@ -68,16 +76,7 @@ static bool isEmptyFunction(Function *F) {
   return RI.getReturnValue() == nullptr;
 }
 
-char GlobalDCE::ID = 0;
-INITIALIZE_PASS(GlobalDCE, "globaldce",
-                "Dead Global Elimination", false, false)
-
-ModulePass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
-
-bool GlobalDCE::runOnModule(Module &M) {
-  if (skipModule(M))
-    return false;
-
+PreservedAnalyses GlobalDCEPass::run(Module &M) {
   bool Changed = false;
 
   // Remove empty functions from the global ctors list.
@@ -188,12 +187,14 @@ bool GlobalDCE::runOnModule(Module &M) {
   SeenConstants.clear();
   ComdatMembers.clear();
 
-  return Changed;
+  if (Changed)
+    return PreservedAnalyses::none();
+  return PreservedAnalyses::all();
 }
 
 /// GlobalIsNeeded - the specific global value as needed, and
 /// recursively mark anything that it uses as also needed.
-void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
+void GlobalDCEPass::GlobalIsNeeded(GlobalValue *G) {
   // If the global is already in the set, no need to reprocess it.
   if (!AliveGlobals.insert(G).second)
     return;
@@ -231,7 +232,7 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
   }
 }
 
-void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
+void GlobalDCEPass::MarkUsedGlobalsAsNeeded(Constant *C) {
   if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
     return GlobalIsNeeded(GV);
 
@@ -251,7 +252,7 @@ void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
 // so, nuke it.  This will reduce the reference count on the global value, which
 // might make it deader.
 //
-bool GlobalDCE::RemoveUnusedGlobalValue(GlobalValue &GV) {
+bool GlobalDCEPass::RemoveUnusedGlobalValue(GlobalValue &GV) {
   if (GV.use_empty())
     return false;
   GV.removeDeadConstantUsers();

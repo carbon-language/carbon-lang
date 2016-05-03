@@ -142,7 +142,7 @@ void initializeForceFunctionAttrsLegacyPassPass(PassRegistry&);
 void initializeGCMachineCodeAnalysisPass(PassRegistry&);
 void initializeGCModuleInfoPass(PassRegistry&);
 void initializeGVNLegacyPassPass(PassRegistry&);
-void initializeGlobalDCEPass(PassRegistry&);
+void initializeGlobalDCELegacyPassPass(PassRegistry&);
 void initializeGlobalOptLegacyPassPass(PassRegistry&);
 void initializeGlobalsAAWrapperPassPass(PassRegistry&);
 void initializeIPCPPass(PassRegistry&);
