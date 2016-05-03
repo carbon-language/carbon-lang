@@ -199,8 +199,16 @@ getFirstLoadCommandInfo(const MachOObjectFile *Obj) {
 }
 
 static Expected<MachOObjectFile::LoadCommandInfo>
-getNextLoadCommandInfo(const MachOObjectFile *Obj,
+getNextLoadCommandInfo(const MachOObjectFile *Obj, uint32_t LoadCommandIndex,
                        const MachOObjectFile::LoadCommandInfo &L) {
+  unsigned HeaderSize = Obj->is64Bit() ? sizeof(MachO::mach_header_64)
+                                       : sizeof(MachO::mach_header);
+  if (L.Ptr + L.C.cmdsize + sizeof(MachOObjectFile::LoadCommandInfo) >
+      Obj->getData().data() + HeaderSize + Obj->getHeader().sizeofcmds)
+    return malformedError(*Obj, Twine("truncated or malformed object "
+                          "(load command ") + Twine(LoadCommandIndex + 1) +
+                          Twine(" extends past the end all load commands in the "
+                          "file)"));
   return getLoadCommandInfo(Obj, L.Ptr + L.C.cmdsize);
 }
 
@@ -361,7 +369,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       Libraries.push_back(Load.Ptr);
     }
     if (I < LoadCommandCount - 1) {
-      if (auto LoadOrErr = getNextLoadCommandInfo(this, Load))
+      if (auto LoadOrErr = getNextLoadCommandInfo(this, I, Load))
         Load = *LoadOrErr;
       else {
         Err = LoadOrErr.takeError();
