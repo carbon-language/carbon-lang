@@ -5591,25 +5591,25 @@ __m256i test_mm512_maskz_cvttpd_epu32(__mmask8 __U, __m512d __A) {
 
 __m512d test_mm512_castpd128_pd512(__m128d __A) {
   // CHECK-LABEL: @test_mm512_castpd128_pd512
-  // CHECK: shufflevector <2 x double> %1, <2 x double> %2, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  // CHECK: shufflevector <2 x double> %{{.*}}, <2 x double> %{{.*}}, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   return _mm512_castpd128_pd512(__A); 
 }
 
 __m512 test_mm512_castps128_ps512(__m128 __A) {
   // CHECK-LABEL: @test_mm512_castps128_ps512
-  // CHECK: shufflevector <4 x float> %1, <4 x float> %2, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   return _mm512_castps128_ps512(__A); 
 }
 
 __m512i test_mm512_castsi128_si512(__m128i __A) {
   // CHECK-LABEL: @test_mm512_castsi128_si512
-  // CHECK: shufflevector <2 x i64> %1, <2 x i64> %2, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  // CHECK: shufflevector <2 x i64> %{{.*}}, <2 x i64> %{{.*}}, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   return _mm512_castsi128_si512(__A); 
 }
 
 __m512i test_mm512_castsi256_si512(__m256i __A) {
   // CHECK-LABEL: @test_mm512_castsi256_si512
-  // CHECK: shufflevector <4 x i64> %1, <4 x i64> %2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+  // CHECK: shufflevector <4 x i64> %{{.*}}, <4 x i64> %{{.*}}, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   return _mm512_castsi256_si512(__A); 
 }
 
