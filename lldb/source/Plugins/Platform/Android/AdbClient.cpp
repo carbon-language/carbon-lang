@@ -34,7 +34,7 @@ using namespace lldb_private::platform_android;
 
 namespace {
 
-const uint32_t kReadTimeout = 1000000; // 1 second
+const uint32_t kReadTimeout = 4000000; // 4 seconds
 const char * kOKAY = "OKAY";
 const char * kFAIL = "FAIL";
 const char * kDATA = "DATA";
@@ -251,7 +251,9 @@ AdbClient::ReadMessageStream (std::vector<char>& message, uint32_t timeout_ms)
         if (elapsed_time >= timeout_ms)
             return Error("Timed out");
 
-        size_t n = m_conn.Read(buffer, sizeof(buffer), 1000 * (timeout_ms - elapsed_time), status, &error);
+        const bool read_full_buffer = true;
+        size_t n =
+            m_conn.Read(buffer, sizeof(buffer), 1000 * (timeout_ms - elapsed_time), read_full_buffer, status, &error);
         if (n > 0)
             message.insert(message.end(), &buffer[0], &buffer[n]);
     }
@@ -490,19 +492,15 @@ AdbClient::ReadSyncHeader (std::string &response_id, uint32_t &data_len)
 Error
 AdbClient::ReadAllBytes (void *buffer, size_t size)
 {
+    const bool read_full_buffer = true;
     Error error;
     ConnectionStatus status;
-    char *read_buffer = static_cast<char*>(buffer);
-
-    size_t tota_read_bytes = 0;
-    while (tota_read_bytes < size)
-    {
-        auto read_bytes = m_conn.Read (read_buffer + tota_read_bytes, size - tota_read_bytes, kReadTimeout, status, &error);
-        if (error.Fail ())
-            return error;
-        tota_read_bytes += read_bytes;
-    }
-    return error;
+    size_t read_bytes = m_conn.Read(buffer, size, kReadTimeout, read_full_buffer, status, &error);
+    if (error.Fail())
+        return error;
+    if (read_bytes < size)
+        return Error("Unable to read full buffer.");
+    return Error();
 }
 
 Error

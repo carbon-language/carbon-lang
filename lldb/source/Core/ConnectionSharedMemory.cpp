@@ -94,11 +94,8 @@ ConnectionSharedMemory::Disconnect (Error *error_ptr)
 }
 
 size_t
-ConnectionSharedMemory::Read (void *dst, 
-                              size_t dst_len, 
-                              uint32_t timeout_usec,
-                              ConnectionStatus &status, 
-                              Error *error_ptr)
+ConnectionSharedMemory::Read(void *dst, size_t dst_len, uint32_t timeout_usec, bool read_full_buffer,
+                             ConnectionStatus &status, Error *error_ptr)
 {
     status = eConnectionStatusSuccess;
     return 0;

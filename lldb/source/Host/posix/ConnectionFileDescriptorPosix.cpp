@@ -411,7 +411,8 @@ ConnectionFileDescriptor::Disconnect(Error *error_ptr)
 }
 
 size_t
-ConnectionFileDescriptor::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ConnectionStatus &status, Error *error_ptr)
+ConnectionFileDescriptor::Read(void *dst, size_t dst_len, uint32_t timeout_usec, bool read_full_buffer,
+                               ConnectionStatus &status, Error *error_ptr)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_CONNECTION));
 
@@ -434,26 +435,36 @@ ConnectionFileDescriptor::Read(void *dst, size_t dst_len, uint32_t timeout_usec,
         return 0;
     }
 
-    status = BytesAvailable(timeout_usec, error_ptr);
-    if (status != eConnectionStatusSuccess)
-        return 0;
-
+    size_t total_bytes_read = 0;
+    char *dst_buf = static_cast<char *>(dst);
+    auto now = std::chrono::steady_clock::now();
+    const auto deadline = now + std::chrono::microseconds(timeout_usec);
     Error error;
-    size_t bytes_read = dst_len;
-    error = m_read_sp->Read(dst, bytes_read);
-
-    if (log)
+    do
     {
-        log->Printf("%p ConnectionFileDescriptor::Read()  fd = %" PRIu64 ", dst = %p, dst_len = %" PRIu64 ") => %" PRIu64 ", error = %s",
-                    static_cast<void *>(this), static_cast<uint64_t>(m_read_sp->GetWaitableHandle()), static_cast<void *>(dst),
-                    static_cast<uint64_t>(dst_len), static_cast<uint64_t>(bytes_read), error.AsCString());
-    }
+        timeout_usec = std::chrono::duration_cast<std::chrono::microseconds>(deadline - now).count();
+        status = BytesAvailable(timeout_usec, error_ptr);
+        if (status != eConnectionStatusSuccess)
+            return 0;
 
-    if (bytes_read == 0)
-    {
-        error.Clear(); // End-of-file.  Do not automatically close; pass along for the end-of-file handlers.
-        status = eConnectionStatusEndOfFile;
-    }
+        size_t bytes_read = dst_len - total_bytes_read;
+        error = m_read_sp->Read(dst_buf + total_bytes_read, bytes_read);
+        if (log)
+        {
+            log->Printf("%p ConnectionFileDescriptor::Read()  fd = %" PRIu64 ", dst = %p, dst_len = %" PRIu64
+                        ") => %" PRIu64 ", error = %s",
+                        this, static_cast<uint64_t>(m_read_sp->GetWaitableHandle()), dst,
+                        static_cast<uint64_t>(dst_len), static_cast<uint64_t>(bytes_read), error.AsCString());
+        }
+        total_bytes_read += bytes_read;
+        if (bytes_read == 0)
+        {
+            // End-of-file.  Do not automatically close; pass along for the end-of-file handlers.
+            error.Clear();
+            status = eConnectionStatusEndOfFile;
+        }
+        now = std::chrono::steady_clock::now();
+    } while (read_full_buffer && total_bytes_read < dst_len && status == eConnectionStatusSuccess && now < deadline);
 
     if (error_ptr)
         *error_ptr = error;
@@ -509,7 +520,7 @@ ConnectionFileDescriptor::Read(void *dst, size_t dst_len, uint32_t timeout_usec,
 
         return 0;
     }
-    return bytes_read;
+    return total_bytes_read;
 }
 
 size_t

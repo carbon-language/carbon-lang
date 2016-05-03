@@ -580,6 +580,7 @@ Editline::GetCharacter (EditLineCharType * c)
     // Read an actual character
     while (true)
     {
+        const bool read_full_buffer = false; // Doesn't really matter, we're reading one byte only.
         lldb::ConnectionStatus status = lldb::eConnectionStatusSuccess;
         char ch = 0;
 
@@ -588,12 +589,12 @@ Editline::GetCharacter (EditLineCharType * c)
         // for someone to interrupt us. After Read returns, immediately lock the mutex again and
         // check if we were interrupted.
         m_output_mutex.Unlock();
-        int read_count = m_input_connection.Read(&ch, 1, UINT32_MAX, status, NULL);
+        int read_count = m_input_connection.Read(&ch, 1, UINT32_MAX, read_full_buffer, status, NULL);
         m_output_mutex.Lock();
         if (m_editor_status == EditorStatus::Interrupted)
         {
             while (read_count > 0 && status == lldb::eConnectionStatusSuccess)
-                read_count = m_input_connection.Read(&ch, 1, UINT32_MAX, status, NULL);
+                read_count = m_input_connection.Read(&ch, 1, UINT32_MAX, read_full_buffer, status, NULL);
             lldbassert(status == lldb::eConnectionStatusInterrupted);
             return 0;
         }

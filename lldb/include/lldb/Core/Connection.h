@@ -114,6 +114,14 @@ public:
     /// @param[in] timeout_usec
     ///     The number of microseconds to wait for the data.
     ///
+    /// @param[in] read_full_buffer
+    ///     If true, continues reading until the specified number of bytes is
+    ///     read or some exceptional event occurs, which would prevent the
+    ///     buffer from being filled (timeout, end of file, I/O error, etc.).
+    ///     If false, the function returns as soon as at least some part of
+    ///     the data is available (traditional behavior of the read system
+    ///     call).
+    ///
     /// @param[out] status
     ///     On return, indicates whether the call was successful or terminated
     ///     due to some error condition.
@@ -129,11 +137,8 @@ public:
     /// @see size_t Communication::Read (void *, size_t, uint32_t);
     //------------------------------------------------------------------
     virtual size_t
-    Read (void *dst, 
-          size_t dst_len, 
-          uint32_t timeout_usec,
-          lldb::ConnectionStatus &status, 
-          Error *error_ptr) = 0;
+    Read(void *dst, size_t dst_len, uint32_t timeout_usec, bool read_full_buffer, lldb::ConnectionStatus &status,
+         Error *error_ptr) = 0;
 
     //------------------------------------------------------------------
     /// The actual write function that attempts to write to the
