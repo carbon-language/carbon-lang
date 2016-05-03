@@ -191,8 +191,7 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
     lldb::ConnectionSP connection_sp (m_connection_sp);
     if (connection_sp)
     {
-        const bool read_full_buffer = false;
-        return connection_sp->Read(dst, dst_len, timeout_usec, read_full_buffer, status, error_ptr);
+        return connection_sp->Read (dst, dst_len, timeout_usec, status, error_ptr);
     }
 
     if (error_ptr)
@@ -327,8 +326,7 @@ Communication::ReadFromConnection (void *dst,
                                    Error *error_ptr)
 {
     lldb::ConnectionSP connection_sp(m_connection_sp);
-    const bool read_full_buffer = false;
-    return (connection_sp ? connection_sp->Read(dst, dst_len, read_full_buffer, timeout_usec, status, error_ptr) : 0);
+    return (connection_sp ? connection_sp->Read(dst, dst_len, timeout_usec, status, error_ptr) : 0);
 }
 
 bool
