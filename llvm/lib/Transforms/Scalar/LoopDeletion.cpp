@@ -86,12 +86,10 @@ bool LoopDeletion::isLoopDead(Loop *L, ScalarEvolution &SE,
     // block.  If there are different incoming values for different exiting
     // blocks, then it is impossible to statically determine which value should
     // be used.
-    for (unsigned i = 1, e = exitingBlocks.size(); i < e; ++i) {
-      if (incoming != P->getIncomingValueForBlock(exitingBlocks[i])) {
-        AllOutgoingValuesSame = false;
-        break;
-      }
-    }
+    AllOutgoingValuesSame =
+        all_of(makeArrayRef(exitingBlocks).slice(1), [&](BasicBlock *BB) {
+          return incoming == P->getIncomingValueForBlock(BB);
+        });
 
     if (!AllOutgoingValuesSame)
       break;
