@@ -343,6 +343,31 @@ _mm512_castps512_ps128(__m512 __a)
   return __builtin_shufflevector(__a, __a, 0, 1, 2, 3);
 }
 
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_castpd128_pd512 (__m128d __A)
+{
+  return __builtin_shufflevector( __A, __A, 0, 1, -1, -1, -1, -1, -1, -1);
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_castps128_ps512 (__m128 __A)
+{
+    return  __builtin_shufflevector( __A, __A, 0, 1, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_castsi128_si512 (__m128i __A)
+{
+   return  __builtin_shufflevector( __A, __A, 0, 1, -1, -1, -1, -1, -1, -1);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_castsi256_si512 (__m256i __A)
+{
+   return  __builtin_shufflevector( __A, __A, 0, 1, 2, 3, -1, -1, -1, -1);
+}
+
 /* Bitwise operators */
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_and_epi32(__m512i __a, __m512i __b)
