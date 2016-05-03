@@ -35,7 +35,7 @@ void fieldsRequiringInit(const RecordDecl::field_range &Fields,
       continue;
     QualType Type = F->getType();
     if (!F->hasInClassInitializer() &&
-        type_traits::isTriviallyDefaultConstructible(Type, Context))
+        utils::type_traits::isTriviallyDefaultConstructible(Type, Context))
       FieldsToInit.insert(F);
   }
 }
@@ -114,12 +114,12 @@ struct IntializerInsertion {
     SourceLocation Location;
     switch (Placement) {
     case InitializerPlacement::New:
-      Location = lexer_utils::getPreviousNonCommentToken(
+      Location = utils::lexer::getPreviousNonCommentToken(
                      Context, Constructor.getBody()->getLocStart())
                      .getLocation();
       break;
     case InitializerPlacement::Before:
-      Location = lexer_utils::getPreviousNonCommentToken(
+      Location = utils::lexer::getPreviousNonCommentToken(
                      Context, Where->getSourceRange().getBegin())
                      .getLocation();
       break;
@@ -389,7 +389,8 @@ void ProTypeMemberInitCheck::checkMissingBaseClassInitializer(
     if (const auto *BaseClassDecl = getCanonicalRecordDecl(Base.getType())) {
       AllBases.emplace_back(BaseClassDecl);
       if (!BaseClassDecl->field_empty() &&
-          type_traits::isTriviallyDefaultConstructible(Base.getType(), Context))
+          utils::type_traits::isTriviallyDefaultConstructible(
+              Base.getType(), Context))
         BasesToInit.insert(BaseClassDecl);
     }
   }
