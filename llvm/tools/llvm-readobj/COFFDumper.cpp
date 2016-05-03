@@ -1955,29 +1955,11 @@ void COFFDumper::printFileNameForOffset(StringRef Label, uint32_t FileOffset) {
 
 static StringRef getLeafTypeName(TypeLeafKind LT) {
   switch (LT) {
-  case LF_STRING_ID: return "StringId";
-  case LF_FIELDLIST: return "FieldList";
-  case LF_ARGLIST:
-  case LF_SUBSTR_LIST: return "ArgList";
-  case LF_CLASS:
-  case LF_STRUCTURE:
-  case LF_INTERFACE: return "ClassType";
-  case LF_UNION: return "UnionType";
-  case LF_ENUM: return "EnumType";
-  case LF_ARRAY: return "ArrayType";
-  case LF_VFTABLE: return "VFTableType";
-  case LF_MFUNC_ID: return "MemberFuncId";
-  case LF_PROCEDURE: return "ProcedureType";
-  case LF_MFUNCTION: return "MemberFunctionType";
-  case LF_METHODLIST: return "MethodListEntry";
-  case LF_FUNC_ID: return "FuncId";
-  case LF_TYPESERVER2: return "TypeServer2";
-  case LF_POINTER: return "PointerType";
-  case LF_MODIFIER: return "TypeModifier";
-  case LF_VTSHAPE: return "VTableShape";
-  case LF_UDT_SRC_LINE: return "UDTSrcLine";
-  case LF_BUILDINFO: return "BuildInfo";
-  default: break;
+#define KNOWN_TYPE(LeafName, Value, ClassName) \
+  case LeafName: return #ClassName;
+#include "llvm/DebugInfo/CodeView/CVLeafTypes.def"
+  default:
+    break;
   }
   return "UnknownLeaf";
 }
