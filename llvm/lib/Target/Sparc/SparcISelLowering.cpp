@@ -1448,7 +1448,7 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
   }
 }
 
-SparcTargetLowering::SparcTargetLowering(TargetMachine &TM,
+SparcTargetLowering::SparcTargetLowering(const TargetMachine &TM,
                                          const SparcSubtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
   MVT PtrVT = MVT::getIntegerVT(8 * TM.getPointerSize());
