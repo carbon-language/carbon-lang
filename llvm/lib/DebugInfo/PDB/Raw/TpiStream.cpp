@@ -88,25 +88,6 @@ std::error_code TpiStream::reload() {
 
   // The actual type records themselves come from this stream
   RecordsBuffer.initialize(Reader, Header->TypeRecordBytes);
-  TypeRecords.resize(TypeIndexEnd() - ::MinTypeIndex);
-  StreamReader RecordsReader(RecordsBuffer);
-  for (uint32_t I = TypeIndexBegin(); I < TypeIndexEnd(); ++I) {
-    HashedTypeRecord &Record = TypeRecords[I - ::MinTypeIndex];
-    codeview::TypeRecordPrefix Prefix;
-    if (auto EC = RecordsReader.readObject(&Prefix))
-      return EC;
-
-    Record.Kind =
-        static_cast<codeview::TypeLeafKind>(static_cast<uint16_t>(Prefix.Leaf));
-
-    // Since we read this entire buffer into a ByteStream, we are guaranteed
-    // that the entire buffer is contiguous (i.e. there's no longer a chance
-    // that it splits across a page boundary.  So we can request a reference
-    // directly into the stream buffer to avoid unnecessary memory copies.
-    uint32_t RecordSize = Prefix.Len - sizeof(Prefix.Leaf);
-    if (auto EC = RecordsReader.getArrayRef(Record.Record, RecordSize))
-      return EC;
-  }
 
   // Hash indices, hash values, etc come from the hash stream.
   MappedBlockStream HS(Header->HashStreamIndex, Pdb);
@@ -136,8 +117,6 @@ uint32_t TpiStream::NumTypeRecords() const {
   return TypeIndexEnd() - TypeIndexBegin();
 }
 
-ArrayRef<TpiStream::HashedTypeRecord> TpiStream::records() const {
-  const HashedTypeRecord *Begin =
-      &TypeRecords[TypeIndexBegin() - ::MinTypeIndex];
-  return ArrayRef<HashedTypeRecord>(Begin, NumTypeRecords());
+iterator_range<codeview::TypeIterator> TpiStream::types() const {
+  return codeview::makeTypeRange(RecordsBuffer.str());
 }
