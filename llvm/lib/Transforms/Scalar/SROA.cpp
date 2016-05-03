@@ -1635,10 +1635,8 @@ static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
   OldTy = OldTy->getScalarType();
   NewTy = NewTy->getScalarType();
   if (NewTy->isPointerTy() || OldTy->isPointerTy()) {
-    if (NewTy->isPointerTy() && OldTy->isPointerTy()) {
-      return cast<PointerType>(NewTy)->getPointerAddressSpace() ==
-        cast<PointerType>(OldTy)->getPointerAddressSpace();
-    }
+    if (NewTy->isPointerTy() && OldTy->isPointerTy())
+      return true;
     if (NewTy->isIntegerTy() || OldTy->isIntegerTy())
       return true;
     return false;
