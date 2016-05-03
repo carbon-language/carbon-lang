@@ -154,7 +154,7 @@ static void dumpBytes(raw_ostream &S, StringRef Bytes, uint32_t BytesPerRow,
   S << "[";
 
   while (!Bytes.empty()) {
-    uint32_t BytesThisLine = std::min(Bytes.size(), BytesPerRow);
+    size_t BytesThisLine = std::min<size_t>(Bytes.size(), BytesPerRow);
     while (BytesThisLine > 0) {
       S << format_hex_no_prefix(uint8_t(Bytes.front()), 2, true);
       Bytes = Bytes.drop_front();
