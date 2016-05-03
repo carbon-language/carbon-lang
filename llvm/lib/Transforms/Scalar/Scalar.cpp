@@ -88,7 +88,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeFloat2IntPass(Registry);
   initializeLoopDistributePass(Registry);
   initializeLoopLoadEliminationPass(Registry);
-  initializeLoopSimplifyCFGPass(Registry);
+  initializeLoopSimplifyCFGLegacyPassPass(Registry);
   initializeLoopVersioningPassPass(Registry);
 }
 
