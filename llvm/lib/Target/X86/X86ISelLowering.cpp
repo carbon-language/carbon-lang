@@ -24134,6 +24134,22 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
     return true;
   }
 
+  // Match a 128-bit integer vector against a VZEXT_MOVL (MOVQ) instruction.
+  if (!FloatDomain && VT.is128BitVector() &&
+      Mask.size() == 2 && Mask[0] == 0 && Mask[1] < 0) {
+    unsigned Shuffle = X86ISD::VZEXT_MOVL;
+    MVT ShuffleVT = MVT::v2i64;
+    if (Depth == 1 && Root->getOpcode() == Shuffle)
+      return false; // Nothing to do!
+    Res = DAG.getBitcast(ShuffleVT, Input);
+    DCI.AddToWorklist(Res.getNode());
+    Res = DAG.getNode(Shuffle, DL, ShuffleVT, Res, Res);
+    DCI.AddToWorklist(Res.getNode());
+    DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Res),
+                  /*AddTo*/ true);
+    return true;
+  }
+
   // Attempt to blend with zero.
   if (VT.getVectorNumElements() <= 8 &&
       ((Subtarget.hasSSE41() && VT.is128BitVector()) ||
