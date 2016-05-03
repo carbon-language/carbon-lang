@@ -249,6 +249,23 @@ INTERCEPTOR(char *, strncpy, char *dst, char *src, uptr n) {
   return REAL(strncpy)(dst, src, n);
 }
 
+#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_ANDROID
+INTERCEPTOR(int, stat, const char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, stat, path, buf);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
+  return REAL(stat)(path, buf);
+#define ESAN_INTERCEPT_STAT INTERCEPT_FUNCTION(stat)
+#else
+INTERCEPTOR(int, __xstat, int version, const char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __xstat, version, path, buf);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
+  return REAL(__xstat)(version, path, buf);
+}
+#define ESAN_INTERCEPT_STAT INTERCEPT_FUNCTION(__xstat)
+#endif
+
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && !SANITIZER_FREEBSD
 INTERCEPTOR(int, __xstat64, int version, const char *path, void *buf) {
   void *ctx;
@@ -396,6 +413,7 @@ void initializeInterceptors() {
   INTERCEPT_FUNCTION(strcpy); // NOLINT
   INTERCEPT_FUNCTION(strncpy);
 
+  ESAN_INTERCEPT_STAT;
   ESAN_MAYBE_INTERCEPT_STAT64;
   ESAN_MAYBE_INTERCEPT___XSTAT64;
   ESAN_INTERCEPT_LSTAT;
