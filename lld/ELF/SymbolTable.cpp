@@ -388,7 +388,7 @@ Symbol *SymbolTable<ELFT>::addRegular(StringRef Name, uint8_t Binding,
 
 template <typename ELFT>
 Symbol *SymbolTable<ELFT>::addSynthetic(StringRef N,
-                                        OutputSectionBase<ELFT> &Section,
+                                        OutputSectionBase<ELFT> *Section,
                                         uintX_t Value) {
   Symbol *S;
   bool WasInserted;

@@ -64,7 +64,7 @@ public:
   Symbol *addRegular(StringRef Name, const Elf_Sym &Sym,
                      InputSectionBase<ELFT> *Section);
   Symbol *addRegular(StringRef Name, uint8_t Binding, uint8_t StOther);
-  Symbol *addSynthetic(StringRef N, OutputSectionBase<ELFT> &Section,
+  Symbol *addSynthetic(StringRef N, OutputSectionBase<ELFT> *Section,
                        uintX_t Value);
   void addShared(SharedFile<ELFT> *F, StringRef Name, const Elf_Sym &Sym,
                  const typename ELFT::Verdef *Verdef);
