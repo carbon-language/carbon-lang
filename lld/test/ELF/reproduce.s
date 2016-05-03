@@ -3,7 +3,7 @@
 # XXX: Temporary hack to work around windows path length limitation due to
 # the build dir for llvm-clang-lld-x86_64-scei-ps4-windows10pro-fast.
 # When we directly generate an archive this won't be an issue.
-# XFAIL: x86_64-scei-ps4
+# REQUIRES: shell
 
 # RUN: rm -rf %t.dir
 # RUN: mkdir -p %t.dir/build1
