@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -o - %s | FileCHeck %s
+; RUN: llc -verify-machineinstrs -o - %s | FileCheck %s
 target triple = "arm64--"
 
 ; AArch64InstrInfo::optimizeCondBranch() optimizes the
