@@ -526,9 +526,8 @@ inline void handleAllErrors(Error E) {
 /// This is useful in the base level of your program to allow clean termination
 /// (allowing clean deallocation of resources, etc.), while reporting error
 /// information to the user.
-template <typename... HandlerTs>
-void logAllUnhandledErrors(Error E, raw_ostream &OS,
-                           const std::string &ErrorBanner) {
+inline void logAllUnhandledErrors(Error E, raw_ostream &OS,
+                                  const std::string &ErrorBanner) {
   if (!E)
     return;
   OS << ErrorBanner;
