@@ -19,6 +19,10 @@ RUN: not llvm-objdump -macho -private-headers %p/Inputs/macho64-invalid-too-smal
 RUN:      | FileCheck -check-prefix SMALL-LOADC-SIZE %s
 SMALL-LOADC-SIZE: truncated or malformed object (load commands extend past the end of the file)
 
+RUN: not llvm-objdump -macho -private-headers %p/Inputs/macho64-invalid-too-small-load-command.1 2>&1 \
+RUN:      | FileCheck -check-prefix SMALL-LOADC-SIZE-1 %s
+SMALL-LOADC-SIZE-1: truncated or malformed object (load command 1 with size less than 8 bytes)
+
 RUN: not llvm-objdump -private-headers %p/Inputs/macho-invalid-too-small-segment-load-command 2>&1 \
 RUN:      | FileCheck -check-prefix SMALL-SEGLOADC-SIZE %s
 RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-too-small-segment-load-command 2>&1 \

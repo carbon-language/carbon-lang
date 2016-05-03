@@ -177,11 +177,13 @@ static uint32_t getSectionFlags(const MachOObjectFile *O,
 }
 
 static Expected<MachOObjectFile::LoadCommandInfo>
-getLoadCommandInfo(const MachOObjectFile *Obj, const char *Ptr) {
+getLoadCommandInfo(const MachOObjectFile *Obj, const char *Ptr,
+                   uint32_t LoadCommandIndex) {
   if (auto CmdOrErr = getStructOrErr<MachO::load_command>(Obj, Ptr)) {
     if (CmdOrErr->cmdsize < 8)
-      return malformedError(*Obj, "Mach-O load command with size < 8 bytes",
-                            object_error::macho_small_load_command);
+      return malformedError(*Obj, Twine("truncated or malformed object (load "
+                            "command ") + Twine(LoadCommandIndex) +
+                            Twine(" with size less than 8 bytes)"));
     return MachOObjectFile::LoadCommandInfo({Ptr, *CmdOrErr});
   } else
     return CmdOrErr.takeError();
@@ -195,7 +197,7 @@ getFirstLoadCommandInfo(const MachOObjectFile *Obj) {
     return malformedError(*Obj, "truncated or malformed object (load command "
                           "0 extends past the end all load commands in the "
                           "file)");
-  return getLoadCommandInfo(Obj, getPtr(Obj, HeaderSize));
+  return getLoadCommandInfo(Obj, getPtr(Obj, HeaderSize), 0);
 }
 
 static Expected<MachOObjectFile::LoadCommandInfo>
@@ -209,7 +211,7 @@ getNextLoadCommandInfo(const MachOObjectFile *Obj, uint32_t LoadCommandIndex,
                           "(load command ") + Twine(LoadCommandIndex + 1) +
                           Twine(" extends past the end all load commands in the "
                           "file)"));
-  return getLoadCommandInfo(Obj, L.Ptr + L.C.cmdsize);
+  return getLoadCommandInfo(Obj, L.Ptr + L.C.cmdsize, LoadCommandIndex + 1);
 }
 
 template <typename T>
