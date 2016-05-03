@@ -2252,6 +2252,10 @@ TARGET_BUILTIN(__builtin_ia32_compressstoredf512_mask, "vV8d*V8dUc","","avx512f"
 TARGET_BUILTIN(__builtin_ia32_compressstoredi512_mask, "vV8LLi*V8LLiUc","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_compressstoresf512_mask, "vV16f*V16fUs","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_compressstoresi512_mask, "vV16i*V16iUs","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_vcvtph2ps_mask, "V4fV8sV4fUc","","avx512vl")
+TARGET_BUILTIN(__builtin_ia32_vcvtph2ps256_mask, "V8fV8sV8fUc","","avx512vl")
+TARGET_BUILTIN(__builtin_ia32_vcvtps2ph_mask, "V8sV4fIiV8sUc","","avx512vl")
+TARGET_BUILTIN(__builtin_ia32_vcvtps2ph256_mask, "V8sV8fIiV8sUc","","avx512vl")
 
 #undef BUILTIN
 #undef TARGET_BUILTIN
