@@ -1,8 +1,6 @@
 # REQUIRES: x86
 
-# XXX: Temporary hack to work around windows path length limitation due to
-# the build dir for llvm-clang-lld-x86_64-scei-ps4-windows10pro-fast.
-# When we directly generate an archive this won't be an issue.
+# Extracting the cpio archive can get over the path limit on windows.
 # REQUIRES: shell
 
 # RUN: rm -rf %t.dir
@@ -10,6 +8,7 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t.dir/build1/foo.o
 # RUN: cd %t.dir
 # RUN: ld.lld --hash-style=gnu build1/foo.o -o bar -shared --as-needed --reproduce repro
+# RUN: cpio -id < repro.cpio
 # RUN: diff build1/foo.o repro/%:t.dir/build1/foo.o
 
 # RUN: FileCheck %s --check-prefix=RSP < repro/response.txt
@@ -24,6 +23,7 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t.dir/build2/foo.o
 # RUN: cd %t.dir/build2/a/b/c
 # RUN: ld.lld ./../../../foo.o -o bar -shared --as-needed --reproduce repro
+# RUN: cpio -id < repro.cpio
 # RUN: diff %t.dir/build2/foo.o repro/%:t.dir/build2/foo.o
 
 # RUN: echo "{ local: *; };" >  ver
@@ -33,6 +33,7 @@
 # RUN: ld.lld --reproduce repro2 'foo bar' -L"foo bar" -Lfile \
 # RUN:   --dynamic-list dyn -rpath file --script file --version-script ver \
 # RUN:   --dynamic-linker "some unusual/path"
+# RUN: cpio -id < repro2.cpio
 # RUN: FileCheck %s --check-prefix=RSP2 < repro2/response.txt
 # RSP2:      "{{.*}}foo bar"
 # RSP2-NEXT: -L "{{.*}}foo bar"
@@ -42,10 +43,6 @@
 # RSP2-NEXT: --script {{.+}}file
 # RSP2-NEXT: --version-script {{.+}}ver
 # RSP2-NEXT: --dynamic-linker "some unusual/path"
-
-# RUN: not ld.lld build1/foo.o -o bar -shared --as-needed --reproduce . 2>&1 \
-# RUN:   | FileCheck --check-prefix=ERROR %s
-# ERROR: can't create directory
 
 .globl _start
 _start:
