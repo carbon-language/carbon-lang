@@ -44,10 +44,14 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   @ONLY)
 
+if (LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY)
+  set(experimental_dep cxx_experimental)
+endif()
+
 add_lit_testsuite(check-libcxx
   "Running libcxx tests"
   ${CMAKE_CURRENT_BINARY_DIR}
-  DEPENDS cxx)
+  DEPENDS cxx ${experimental_dep})
 
 if (LIBCXX_GENERATE_COVERAGE)
   include(CodeCoverage)
