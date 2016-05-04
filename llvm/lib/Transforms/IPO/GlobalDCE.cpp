@@ -32,6 +32,7 @@ using namespace llvm;
 
 STATISTIC(NumAliases  , "Number of global aliases removed");
 STATISTIC(NumFunctions, "Number of functions removed");
+STATISTIC(NumIFuncs,    "Number of indirect functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
 namespace {
@@ -118,6 +119,13 @@ PreservedAnalyses GlobalDCEPass::run(Module &M) {
       GlobalIsNeeded(&GA);
   }
 
+  for (GlobalIFunc &GIF : M.ifuncs()) {
+    Changed |= RemoveUnusedGlobalValue(GIF);
+    // Externally visible ifuncs are needed.
+    if (!GIF.isDiscardableIfUnused())
+      GlobalIsNeeded(&GIF);
+  }
+
   // Now that all globals which are needed are in the AliveGlobals set, we loop
   // through the program, deleting those which are not alive.
   //
@@ -152,6 +160,14 @@ PreservedAnalyses GlobalDCEPass::run(Module &M) {
       GA.setAliasee(nullptr);
     }
 
+  // The third pass drops targets of ifuncs which are dead...
+  std::vector<GlobalIFunc*> DeadIFuncs;
+  for (GlobalIFunc &GIF : M.ifuncs())
+    if (!AliveGlobals.count(&GIF)) {
+      DeadIFuncs.push_back(&GIF);
+      GIF.setResolver(nullptr);
+    }
+
   if (!DeadFunctions.empty()) {
     // Now that all interferences have been dropped, delete the actual objects
     // themselves.
@@ -179,6 +195,16 @@ PreservedAnalyses GlobalDCEPass::run(Module &M) {
       M.getAliasList().erase(GA);
     }
     NumAliases += DeadAliases.size();
+    Changed = true;
+  }
+
+  // Now delete any dead aliases.
+  if (!DeadIFuncs.empty()) {
+    for (GlobalIFunc *GIF : DeadIFuncs) {
+      RemoveUnusedGlobalValue(*GIF);
+      M.getIFuncList().erase(GIF);
+    }
+    NumIFuncs += DeadIFuncs.size();
     Changed = true;
   }
 
