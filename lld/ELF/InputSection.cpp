@@ -66,7 +66,7 @@ typename ELFT::uint InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
   case MipsReginfo:
   case MipsOptions:
     // MIPS .reginfo and .MIPS.options sections are consumed by the linker,
-    // so it should never be copied to output.
+    // so they should never be copied to output.
     llvm_unreachable("MIPS reginfo/options section reached writeTo().");
   }
   llvm_unreachable("invalid section kind");
