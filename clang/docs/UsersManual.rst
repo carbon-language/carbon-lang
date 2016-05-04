@@ -985,6 +985,7 @@ are listed below.
    program.
 
 **-f[no-]sanitize-recover=check1,check2,...**
+**-f[no-]sanitize-recover=all**
 
    Controls which checks enabled by ``-fsanitize=`` flag are non-fatal.
    If the check is fatal, program will halt after the first error
