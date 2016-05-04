@@ -1479,7 +1479,6 @@ void ARMFrameLowering::determineCalleeSaves(MachineFunction &MF,
   bool CS1Spilled = false;
   bool LRSpilled = false;
   unsigned NumGPRSpills = 0;
-  unsigned NumFPRSpills = 0;
   SmallVector<unsigned, 4> UnspilledCS1GPRs;
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
   const ARMBaseRegisterInfo *RegInfo = static_cast<const ARMBaseRegisterInfo *>(
@@ -1534,17 +1533,8 @@ void ARMFrameLowering::determineCalleeSaves(MachineFunction &MF,
       CanEliminateFrame = false;
     }
 
-    if (!ARM::GPRRegClass.contains(Reg)) {
-      if (Spilled) {
-        if (ARM::SPRRegClass.contains(Reg))
-          NumFPRSpills++;
-        else if (ARM::DPRRegClass.contains(Reg))
-          NumFPRSpills += 2;
-        else if (ARM::QPRRegClass.contains(Reg))
-          NumFPRSpills += 4;
-      }
+    if (!ARM::GPRRegClass.contains(Reg))
       continue;
-    }
 
     if (Spilled) {
       NumGPRSpills++;
@@ -1617,14 +1607,11 @@ void ARMFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // FIXME: We could add logic to be more precise about negative offsets
   //        and which instructions will need a scratch register for them. Is it
   //        worth the effort and added fragility?
-  auto ArgStackSize = MF.getInfo<ARMFunctionInfo>()->getArgumentStackSize();
-  bool BigStack =
-      (RS && (MFI->estimateStackSize(MF) + 4 * (NumGPRSpills + NumFPRSpills) +
-                  (!hasFP(MF) ? ArgStackSize : 0) + 16 /* possible paddings */ +
-                  ((hasFP(MF) && AFI->hasStackFrame()) ? 4 : 0) >=
-              estimateRSStackSizeLimit(MF, this))) ||
-      MFI->hasVarSizedObjects() ||
-      (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));
+  bool BigStack = (RS && (MFI->estimateStackSize(MF) +
+                              ((hasFP(MF) && AFI->hasStackFrame()) ? 4 : 0) >=
+                          estimateRSStackSizeLimit(MF, this))) ||
+                  MFI->hasVarSizedObjects() ||
+                  (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || RegInfo->cannotEliminateFrame(MF)) {
