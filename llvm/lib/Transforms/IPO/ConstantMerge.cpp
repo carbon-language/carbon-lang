@@ -44,11 +44,6 @@ namespace {
     // For this pass, process all of the globals in the module, eliminating
     // duplicate constants.
     bool runOnModule(Module &M) override;
-
-    // Return the alignment of the global, including converting the default
-    // alignment to a concrete value.
-    unsigned getAlignment(GlobalVariable *GV) const;
-
   };
 }
 
@@ -85,7 +80,7 @@ static bool IsBetterCanonical(const GlobalVariable &A,
   return A.hasUnnamedAddr();
 }
 
-unsigned ConstantMerge::getAlignment(GlobalVariable *GV) const {
+static unsigned getAlignment(GlobalVariable *GV) {
   unsigned Align = GV->getAlignment();
   if (Align)
     return Align;
