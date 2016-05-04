@@ -1252,6 +1252,7 @@ RelExpr MipsTargetInfo<ELFT>::getRelExpr(uint32_t Type,
     return R_PLT;
   case R_MIPS_HI16:
   case R_MIPS_LO16:
+  case R_MIPS_GOT_OFST:
     // MIPS _gp_disp designates offset between start of function and 'gp'
     // pointer into GOT. __gnu_local_gp is equal to the current value of
     // the 'gp'. Therefore any relocations against them do not require
@@ -1268,12 +1269,16 @@ RelExpr MipsTargetInfo<ELFT>::getRelExpr(uint32_t Type,
   case R_MIPS_PCLO16:
     return R_PC;
   case R_MIPS_GOT16:
-  case R_MIPS_CALL16:
     if (S.isLocal())
       return R_MIPS_GOT_LOCAL;
+  // fallthrough
+  case R_MIPS_CALL16:
+  case R_MIPS_GOT_DISP:
     if (!S.isPreemptible())
       return R_MIPS_GOT;
     return R_GOT_OFF;
+  case R_MIPS_GOT_PAGE:
+    return R_MIPS_GOT_LOCAL;
   }
 }
 
@@ -1451,10 +1456,13 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
     write32<E>(Loc, (Instr & ~0x3ffffff) | (Val >> 2));
     break;
   }
+  case R_MIPS_GOT_DISP:
+  case R_MIPS_GOT_PAGE:
   case R_MIPS_GOT16:
     checkInt<16>(Val, Type);
   // fallthrough
   case R_MIPS_CALL16:
+  case R_MIPS_GOT_OFST:
     writeMipsLo16<E>(Loc, Val);
     break;
   case R_MIPS_GPREL16: {
@@ -1515,7 +1523,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
 
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::usesOnlyLowPageBits(uint32_t Type) const {
-  return Type == R_MIPS_LO16;
+  return Type == R_MIPS_LO16 || Type == R_MIPS_GOT_OFST;
 }
 }
 }
