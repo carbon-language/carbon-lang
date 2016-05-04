@@ -5613,3 +5613,118 @@ __m512i test_mm512_castsi256_si512(__m256i __A) {
   return _mm512_castsi256_si512(__A); 
 }
 
+
+__m128 test_mm_cvt_roundsd_ss(__m128 __A, __m128d __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundsd_ss
+  // CHECK: @llvm.x86.avx512.mask.cvtsd2ss.round
+  return _mm_cvt_roundsd_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_mask_cvt_roundsd_ss(__m128 __W, __mmask8 __U, __m128 __A, __m128d __B) {
+  // CHECK-LABEL: @test_mm_mask_cvt_roundsd_ss
+  // CHECK: @llvm.x86.avx512.mask.cvtsd2ss.round
+  return _mm_mask_cvt_roundsd_ss(__W, __U, __A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_maskz_cvt_roundsd_ss(__mmask8 __U, __m128 __A, __m128d __B) {
+  // CHECK-LABEL: @test_mm_maskz_cvt_roundsd_ss
+  // CHECK: @llvm.x86.avx512.mask.cvtsd2ss.round
+  return _mm_maskz_cvt_roundsd_ss(__U, __A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_cvt_roundi64_sd(__m128d __A, long long __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundi64_sd
+  // CHECK: @llvm.x86.avx512.cvtsi2sd64
+  return _mm_cvt_roundi64_sd(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_cvt_roundsi64_sd(__m128d __A, long long __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundsi64_sd
+  // CHECK: @llvm.x86.avx512.cvtsi2sd64
+  return _mm_cvt_roundsi64_sd(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_cvt_roundsi32_ss(__m128 __A, int __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundsi32_ss
+  // CHECK: @llvm.x86.avx512.cvtsi2ss32
+  return _mm_cvt_roundsi32_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_cvt_roundi32_ss(__m128 __A, int __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundi32_ss
+  // CHECK: @llvm.x86.avx512.cvtsi2ss32
+  return _mm_cvt_roundi32_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_cvt_roundsi64_ss(__m128 __A, long long __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundsi64_ss
+  // CHECK: @llvm.x86.avx512.cvtsi2ss64
+  return _mm_cvt_roundsi64_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_cvt_roundi64_ss(__m128 __A, long long __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundi64_ss
+  // CHECK: @llvm.x86.avx512.cvtsi2ss64
+  return _mm_cvt_roundi64_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_cvt_roundss_sd(__m128d __A, __m128 __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundss_sd
+  // CHECK: @llvm.x86.avx512.mask.cvtss2sd.round
+  return _mm_cvt_roundss_sd(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_mask_cvt_roundss_sd(__m128d __W, __mmask8 __U, __m128d __A, __m128 __B) {
+  // CHECK-LABEL: @test_mm_mask_cvt_roundss_sd
+  // CHECK: @llvm.x86.avx512.mask.cvtss2sd.round
+  return _mm_mask_cvt_roundss_sd(__W, __U, __A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_maskz_cvt_roundss_sd( __mmask8 __U, __m128d __A, __m128 __B) {
+  // CHECK-LABEL: @test_mm_maskz_cvt_roundss_sd
+  // CHECK: @llvm.x86.avx512.mask.cvtss2sd.round
+  return _mm_maskz_cvt_roundss_sd( __U, __A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_cvtu32_sd(__m128d __A, unsigned __B) {
+  // CHECK-LABEL: @test_mm_cvtu32_sd
+  // CHECK: @llvm.x86.avx512.cvtusi2sd
+  return _mm_cvtu32_sd(__A, __B); 
+}
+
+__m128d test_mm_cvt_roundu64_sd(__m128d __A, unsigned long long __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundu64_sd
+  // CHECK: @llvm.x86.avx512.cvtusi642sd
+  return _mm_cvt_roundu64_sd(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128d test_mm_cvtu64_sd(__m128d __A, unsigned long long __B) {
+  // CHECK-LABEL: @test_mm_cvtu64_sd
+  // CHECK: @llvm.x86.avx512.cvtusi642sd
+  return _mm_cvtu64_sd(__A, __B); 
+}
+
+__m128 test_mm_cvt_roundu32_ss(__m128 __A, unsigned __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundu32_ss
+  // CHECK: @llvm.x86.avx512.cvtusi2ss
+  return _mm_cvt_roundu32_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_cvtu32_ss(__m128 __A, unsigned __B) {
+  // CHECK-LABEL: @test_mm_cvtu32_ss
+  // CHECK: @llvm.x86.avx512.cvtusi2ss
+  return _mm_cvtu32_ss(__A, __B); 
+}
+
+__m128 test_mm_cvt_roundu64_ss(__m128 __A, unsigned long long __B) {
+  // CHECK-LABEL: @test_mm_cvt_roundu64_ss
+  // CHECK: @llvm.x86.avx512.cvtusi642ss
+    return _mm_cvt_roundu64_ss(__A, __B, _MM_FROUND_CUR_DIRECTION); 
+}
+
+__m128 test_mm_cvtu64_ss(__m128 __A, unsigned long long __B) {
+  // CHECK-LABEL: @test_mm_cvtu64_ss
+  // CHECK: @llvm.x86.avx512.cvtusi642ss
+  return _mm_cvtu64_ss(__A, __B); 
+}
+
