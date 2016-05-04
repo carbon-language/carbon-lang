@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
@@ -53,20 +54,52 @@ using namespace llvm::Win64EH;
 
 namespace {
 
-class CVTypeDumper {
+class CVTypeDumper : public CVTypeVisitor<CVTypeDumper> {
 public:
   CVTypeDumper(ScopedPrinter &W) : W(W) {}
 
   StringRef getTypeName(TypeIndex TI);
   void printTypeIndex(StringRef FieldName, TypeIndex TI);
 
-  void dump(StringRef Data);
+  void dump(ArrayRef<uint8_t> Data);
+
+  /// CVTypeVisitor overrides.
+#define TYPE_RECORD(ClassName, LeafEnum)                                       \
+  void visit##ClassName(TypeLeafKind LeafType, const ClassName *Record,        \
+                        ArrayRef<uint8_t> LeafData);
+#define TYPE_RECORD_ALIAS(ClassName, LeafEnum)
+#define MEMBER_RECORD(ClassName, LeafEnum)                                     \
+  void visit##ClassName(TypeLeafKind LeafType, const ClassName *Record,        \
+                        ArrayRef<uint8_t> &FieldData);
+#define MEMBER_RECORD_ALIAS(ClassName, LeafEnum)
+#include "llvm/DebugInfo/CodeView/TypeRecords.def"
+
+  /// Method overload lists are a special case.
+  void visitMethodList(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData);
+
+  void visitUnknownMember(TypeLeafKind Leaf);
+
+  void visitTypeBegin(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData);
+  void visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData);
 
 private:
-  void printCodeViewFieldList(StringRef FieldData);
   void printMemberAttributes(MemberAttributes Attrs);
 
+  /// Reinterpret a byte array as an array of characters. Does not interpret as
+  /// a C string, as StringRef has several helpers (split) that make that easy.
+  static StringRef getBytesAsCharacters(ArrayRef<uint8_t> LeafData) {
+    return StringRef(reinterpret_cast<const char *>(LeafData.data()),
+                     LeafData.size());
+  }
+
+  static StringRef getBytesAsCString(ArrayRef<uint8_t> LeafData) {
+    return getBytesAsCharacters(LeafData).split('\0').first;
+  }
+
   ScopedPrinter &W;
+
+  /// Name of the current type. Only valid before visitTypeEnd.
+  StringRef Name;
 
   /// All user defined type records in .debug$T live in here. Type indices
   /// greater than 0x1000 are user defined. Subtract 0x1000 from the index to
@@ -1181,7 +1214,8 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
   }
 }
 
-static std::error_code decodeNumerictLeaf(StringRef &Data, APSInt &Num) {
+static std::error_code decodeNumerictLeaf(ArrayRef<uint8_t> &Data,
+                                          APSInt &Num) {
   // Used to avoid overload ambiguity on APInt construtor.
   bool FalseVal = false;
   if (Data.size() < 2)
@@ -1247,8 +1281,16 @@ static std::error_code decodeNumerictLeaf(StringRef &Data, APSInt &Num) {
   return object_error::parse_failed;
 }
 
+static std::error_code decodeNumerictLeaf(StringRef &Data, APSInt &Num) {
+  ArrayRef<uint8_t> Bytes(reinterpret_cast<const uint8_t *>(Data.data()),
+                          Data.size());
+  auto EC = decodeNumerictLeaf(Bytes, Num);
+  Data = StringRef(reinterpret_cast<const char *>(Bytes.data()), Bytes.size());
+  return EC;
+}
+
 /// Decode an unsigned integer numeric leaf value.
-std::error_code decodeUIntLeaf(StringRef &Data, uint64_t &Num) {
+std::error_code decodeUIntLeaf(ArrayRef<uint8_t> &Data, uint64_t &Num) {
   APSInt N;
   if (std::error_code err = decodeNumerictLeaf(Data, N))
     return err;
@@ -1847,12 +1889,6 @@ void COFFDumper::printCodeViewInlineeLines(StringRef Subsection) {
   }
 }
 
-StringRef getLeafDataBytesAsString(StringRef LeafData) {
-  StringRef Leading;
-  std::tie(Leading, std::ignore) = LeafData.split('\0');
-  return Leading;
-}
-
 StringRef CVTypeDumper::getTypeName(TypeIndex TI) {
   if (TI.isNoType())
     return "<no type>";
@@ -1945,7 +1981,6 @@ static StringRef getLeafTypeName(TypeLeafKind LT) {
   return "UnknownLeaf";
 }
 
-
 void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
                                           const SectionRef &Section) {
   ListScope D(W, "CodeViewTypes");
@@ -1955,384 +1990,340 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   error(Section.getContents(Data));
   if (opts::CodeViewSubsectionBytes)
     W.printBinaryBlock("Data", Data);
-  CVTD.dump(Data);
+
+  uint32_t Magic;
+  error(consumeUInt32(Data, Magic));
+  W.printHex("Magic", Magic);
+  if (Magic != COFF::DEBUG_SECTION_MAGIC)
+    return error(object_error::parse_failed);
+
+  ArrayRef<uint8_t> BinaryData(reinterpret_cast<const uint8_t *>(Data.data()),
+                               Data.size());
+  CVTD.dump(BinaryData);
 }
 
-void CVTypeDumper::dump(StringRef Data) {
-  uint32_t Magic;
-  if (consumeUInt32(Data, Magic))
-    return;
-  if (Magic != COFF::DEBUG_SECTION_MAGIC)
-    return;
+void CVTypeDumper::dump(ArrayRef<uint8_t> Data) {
+  visitTypeStream(Data);
+  if (hadError())
+    error(object_error::parse_failed);
+}
 
-  W.printHex("Magic", Magic);
-  for (const auto &Record : makeTypeRange(Data)) {
-    StringRef LeafData = Record.LeafData;
+void CVTypeDumper::visitTypeBegin(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData) {
+  // Reset Name to the empty string. If the visitor sets it, we know it.
+  Name = "";
 
-    // Find the name of this leaf type.
-    StringRef LeafName = getLeafTypeName(Record.Leaf);
-    DictScope S(W, LeafName);
-    unsigned NextTypeIndex = 0x1000 + CVUDTNames.size();
-    W.printEnum("TypeLeafKind", unsigned(Record.Leaf),
-                makeArrayRef(LeafTypeNames));
-    W.printHex("TypeIndex", NextTypeIndex);
+  W.startLine() << getLeafTypeName(Leaf) << " {\n";
+  W.indent();
+  unsigned NextTypeIndex = 0x1000 + CVUDTNames.size();
+  W.printEnum("TypeLeafKind", unsigned(Leaf), makeArrayRef(LeafTypeNames));
+  W.printHex("TypeIndex", NextTypeIndex);
+  W.flush();
+}
 
-    // Fill this in inside the switch to get something in CVUDTNames.
-    StringRef Name;
+void CVTypeDumper::visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData) {
+  // Always record some name for every type, even if Name is empty, since
+  // CVUDTNames is indexed by TypeIndex.
+  CVUDTNames.push_back(Name);
 
-    switch (Record.Leaf) {
-    default: {
-      W.printHex("Size", Record.Length);
-      break;
-    }
+  if (opts::CodeViewSubsectionBytes)
+    W.printBinaryBlock("LeafData", getBytesAsCharacters(LeafData));
 
-    case LF_STRING_ID: {
-      const StringId *String;
-      error(consumeObject(LeafData, String));
-      W.printHex("Id", String->id.getIndex());
-      StringRef StringData = getLeafDataBytesAsString(LeafData);
-      W.printString("StringData", StringData);
-      // Put this in CVUDTNames so it gets printed with LF_UDT_SRC_LINE.
-      Name = StringData;
-      break;
-    }
+  W.unindent();
+  W.startLine() << "}\n";
+  W.flush();
+}
 
-    case LF_FIELDLIST: {
-      W.printHex("Size", Record.Length);
-      // FieldList has no fixed prefix that can be described with a struct. All
-      // the bytes must be interpreted as more records.
-      printCodeViewFieldList(LeafData);
-      break;
-    }
+void CVTypeDumper::visitStringId(TypeLeafKind Leaf, const StringId *String,
+                                 ArrayRef<uint8_t> LeafData) {
+  W.printHex("Id", String->id.getIndex());
+  StringRef StringData = getBytesAsCString(LeafData);
+  W.printString("StringData", StringData);
+  // Put this in CVUDTNames so it gets printed with LF_UDT_SRC_LINE.
+  Name = StringData;
+}
 
-    case LF_ARGLIST:
-    case LF_SUBSTR_LIST: {
-      const ArgList *Args;
-      error(consumeObject(LeafData, Args));
-      W.printNumber("NumArgs", Args->NumArgs);
-      ListScope Arguments(W, "Arguments");
-      SmallString<256> TypeName("(");
-      for (uint32_t ArgI = 0; ArgI != Args->NumArgs; ++ArgI) {
-        const TypeIndex *Type;
-        error(consumeObject(LeafData, Type));
-        printTypeIndex("ArgType", *Type);
-        StringRef ArgTypeName = getTypeName(*Type);
-        TypeName.append(ArgTypeName);
-        if (ArgI + 1 != Args->NumArgs)
-          TypeName.append(", ");
-      }
-      TypeName.push_back(')');
-      Name = TypeNames.insert(TypeName).first->getKey();
-      break;
-    }
+void CVTypeDumper::visitArgList(TypeLeafKind Leaf, const ArgList *Args,
+                                ArrayRef<uint8_t> LeafData) {
+  W.printNumber("NumArgs", Args->NumArgs);
+  ListScope Arguments(W, "Arguments");
+  SmallString<256> TypeName("(");
+  for (uint32_t ArgI = 0; ArgI != Args->NumArgs; ++ArgI) {
+    const TypeIndex *Type;
+    if (!consumeObject(LeafData, Type))
+      return;
+    printTypeIndex("ArgType", *Type);
+    StringRef ArgTypeName = getTypeName(*Type);
+    TypeName.append(ArgTypeName);
+    if (ArgI + 1 != Args->NumArgs)
+      TypeName.append(", ");
+  }
+  TypeName.push_back(')');
+  Name = TypeNames.insert(TypeName).first->getKey();
+}
 
-    case LF_CLASS:
-    case LF_STRUCTURE:
-    case LF_INTERFACE: {
-      const ClassType *Class;
-      error(consumeObject(LeafData, Class));
-      W.printNumber("MemberCount", Class->MemberCount);
-      uint16_t Props = Class->Properties;
-      W.printFlags("Properties", Props, makeArrayRef(ClassOptionNames));
-      printTypeIndex("FieldList", Class->FieldList);
-      printTypeIndex("DerivedFrom", Class->DerivedFrom);
-      printTypeIndex("VShape", Class->VShape);
-      uint64_t SizeOf;
-      error(decodeUIntLeaf(LeafData, SizeOf));
-      W.printNumber("SizeOf", SizeOf);
-      StringRef LinkageName;
-      std::tie(Name, LinkageName) = LeafData.split('\0');
-      W.printString("Name", Name);
-      if (Props & uint16_t(ClassOptions::HasUniqueName)) {
-        LinkageName = getLeafDataBytesAsString(LinkageName);
-        if (LinkageName.empty())
-          return error(object_error::parse_failed);
-        W.printString("LinkageName", LinkageName);
-      }
-      break;
-    }
-
-    case LF_UNION: {
-      const UnionType *Union;
-      error(consumeObject(LeafData, Union));
-      W.printNumber("MemberCount", Union->MemberCount);
-      uint16_t Props = Union->Properties;
-      W.printFlags("Properties", Props, makeArrayRef(ClassOptionNames));
-      printTypeIndex("FieldList", Union->FieldList);
-      uint64_t SizeOf;
-      error(decodeUIntLeaf(LeafData, SizeOf));
-      W.printNumber("SizeOf", SizeOf);
-      StringRef LinkageName;
-      std::tie(Name, LinkageName) = LeafData.split('\0');
-      W.printString("Name", Name);
-      if (Props & uint16_t(ClassOptions::HasUniqueName)) {
-        LinkageName = getLeafDataBytesAsString(LinkageName);
-        if (LinkageName.empty())
-          return error(object_error::parse_failed);
-        W.printString("LinkageName", LinkageName);
-      }
-      break;
-    }
-
-    case LF_ENUM: {
-      const EnumType *Enum;
-      error(consumeObject(LeafData, Enum));
-      W.printNumber("NumEnumerators", Enum->NumEnumerators);
-      W.printFlags("Properties", uint16_t(Enum->Properties),
-                   makeArrayRef(ClassOptionNames));
-      printTypeIndex("UnderlyingType", Enum->UnderlyingType);
-      printTypeIndex("FieldListType", Enum->FieldListType);
-      Name = LeafData.split('\0').first;
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_ARRAY: {
-      const ArrayType *AT;
-      error(consumeObject(LeafData, AT));
-      printTypeIndex("ElementType", AT->ElementType);
-      printTypeIndex("IndexType", AT->IndexType);
-      uint64_t SizeOf;
-      error(decodeUIntLeaf(LeafData, SizeOf));
-      W.printNumber("SizeOf", SizeOf);
-      Name = LeafData.split('\0').first;
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_VFTABLE: {
-      const VFTableType *VFT;
-      error(consumeObject(LeafData, VFT));
-      printTypeIndex("CompleteClass", VFT->CompleteClass);
-      printTypeIndex("OverriddenVFTable", VFT->OverriddenVFTable);
-      W.printHex("VFPtrOffset", VFT->VFPtrOffset);
-      StringRef NamesData = LeafData.substr(0, VFT->NamesLen);
-      std::tie(Name, NamesData) = NamesData.split('\0');
-      W.printString("VFTableName", Name);
-      while (!NamesData.empty()) {
-        StringRef MethodName;
-        std::tie(MethodName, NamesData) = NamesData.split('\0');
-        W.printString("MethodName", MethodName);
-      }
-      break;
-    }
-
-    case LF_MFUNC_ID: {
-      const MemberFuncId *Id;
-      error(consumeObject(LeafData, Id));
-      printTypeIndex("ClassType", Id->ClassType);
-      printTypeIndex("FunctionType", Id->FunctionType);
-      Name = LeafData.split('\0').first;
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_PROCEDURE: {
-      const ProcedureType *Proc;
-      error(consumeObject(LeafData, Proc));
-      printTypeIndex("ReturnType", Proc->ReturnType);
-      W.printEnum("CallingConvention", uint8_t(Proc->CallConv),
-                  makeArrayRef(CallingConventions));
-      W.printFlags("FunctionOptions", uint8_t(Proc->Options),
-                   makeArrayRef(FunctionOptionEnum));
-      W.printNumber("NumParameters", Proc->NumParameters);
-      printTypeIndex("ArgListType", Proc->ArgListType);
-
-      StringRef ReturnTypeName = getTypeName(Proc->ReturnType);
-      StringRef ArgListTypeName = getTypeName(Proc->ArgListType);
-      SmallString<256> TypeName(ReturnTypeName);
-      TypeName.push_back(' ');
-      TypeName.append(ArgListTypeName);
-      Name = TypeNames.insert(TypeName).first->getKey();
-      break;
-    }
-
-    case LF_MFUNCTION: {
-      const MemberFunctionType *MemberFunc;
-      error(consumeObject(LeafData, MemberFunc));
-      printTypeIndex("ReturnType", MemberFunc->ReturnType);
-      printTypeIndex("ClassType", MemberFunc->ClassType);
-      printTypeIndex("ThisType", MemberFunc->ThisType);
-      W.printEnum("CallingConvention", uint8_t(MemberFunc->CallConv),
-                  makeArrayRef(CallingConventions));
-      W.printFlags("FunctionOptions", uint8_t(MemberFunc->Options),
-                   makeArrayRef(FunctionOptionEnum));
-      W.printNumber("NumParameters", MemberFunc->NumParameters);
-      printTypeIndex("ArgListType", MemberFunc->ArgListType);
-      W.printNumber("ThisAdjustment", MemberFunc->ThisAdjustment);
-
-      StringRef ReturnTypeName = getTypeName(MemberFunc->ReturnType);
-      StringRef ClassTypeName = getTypeName(MemberFunc->ClassType);
-      StringRef ArgListTypeName = getTypeName(MemberFunc->ArgListType);
-      SmallString<256> TypeName(ReturnTypeName);
-      TypeName.push_back(' ');
-      TypeName.append(ClassTypeName);
-      TypeName.append("::");
-      TypeName.append(ArgListTypeName);
-      Name = TypeNames.insert(TypeName).first->getKey();
-      break;
-    }
-
-    case LF_METHODLIST: {
-      while (!LeafData.empty()) {
-        const MethodListEntry *Method;
-        error(consumeObject(LeafData, Method));
-        ListScope S(W, "Method");
-        printMemberAttributes(Method->Attrs);
-        printTypeIndex("Type", Method->Type);
-        if (Method->isIntroducedVirtual()) {
-          const little32_t *VFTOffsetPtr;
-          error(consumeObject(LeafData, VFTOffsetPtr));
-          W.printHex("VFTableOffset", *VFTOffsetPtr);
-        }
-      }
-      break;
-    }
-
-    case LF_FUNC_ID: {
-      const FuncId *Func;
-      error(consumeObject(LeafData, Func));
-      printTypeIndex("ParentScope", Func->ParentScope);
-      printTypeIndex("FunctionType", Func->FunctionType);
-      StringRef Null;
-      std::tie(Name, Null) = LeafData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_TYPESERVER2: {
-      const TypeServer2 *TypeServer;
-      error(consumeObject(LeafData, TypeServer));
-      W.printBinary("Signature", StringRef(TypeServer->Signature, 16));
-      W.printNumber("Age", TypeServer->Age);
-      Name = LeafData.split('\0').first;
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_POINTER: {
-      const PointerType *Ptr;
-      error(consumeObject(LeafData, Ptr));
-      printTypeIndex("PointeeType", Ptr->PointeeType);
-      W.printHex("PointerAttributes", Ptr->Attrs);
-      W.printEnum("PtrType", unsigned(Ptr->getPtrKind()),
-                  makeArrayRef(PtrKindNames));
-      W.printEnum("PtrMode", unsigned(Ptr->getPtrMode()),
-                  makeArrayRef(PtrModeNames));
-      W.printNumber("IsFlat", Ptr->isFlat());
-      W.printNumber("IsConst", Ptr->isConst());
-      W.printNumber("IsVolatile", Ptr->isVolatile());
-      W.printNumber("IsUnaligned", Ptr->isUnaligned());
-
-      if (Ptr->isPointerToMember()) {
-        const PointerToMemberTail *PMT;
-        error(consumeObject(LeafData, PMT));
-        printTypeIndex("ClassType", PMT->ClassType);
-        W.printEnum("Representation", PMT->Representation,
-                    makeArrayRef(PtrMemberRepNames));
-
-        StringRef PointeeName = getTypeName(Ptr->PointeeType);
-        StringRef ClassName = getTypeName(PMT->ClassType);
-        SmallString<256> TypeName(PointeeName);
-        TypeName.push_back(' ');
-        TypeName.append(ClassName);
-        TypeName.append("::*");
-        Name = TypeNames.insert(TypeName).first->getKey();
-      } else {
-        W.printBinaryBlock("TailData", LeafData);
-
-        SmallString<256> TypeName;
-        if (Ptr->isConst())
-          TypeName.append("const ");
-        if (Ptr->isVolatile())
-          TypeName.append("volatile ");
-        if (Ptr->isUnaligned())
-          TypeName.append("__unaligned ");
-
-        TypeName.append(getTypeName(Ptr->PointeeType));
-
-        if (Ptr->getPtrMode() == PointerMode::LValueReference)
-          TypeName.append("&");
-        else if (Ptr->getPtrMode() == PointerMode::RValueReference)
-          TypeName.append("&&");
-        else if (Ptr->getPtrMode() == PointerMode::Pointer)
-          TypeName.append("*");
-
-        Name = TypeNames.insert(TypeName).first->getKey();
-      }
-      break;
-    }
-
-    case LF_MODIFIER: {
-      const TypeModifier *Mod;
-      error(consumeObject(LeafData, Mod));
-      printTypeIndex("ModifiedType", Mod->ModifiedType);
-      W.printFlags("Modifiers", Mod->Modifiers,
-                   makeArrayRef(TypeModifierNames));
-
-      StringRef ModifiedName = getTypeName(Mod->ModifiedType);
-      SmallString<256> TypeName;
-      if (Mod->Modifiers & uint16_t(ModifierOptions::Const))
-        TypeName.append("const ");
-      if (Mod->Modifiers & uint16_t(ModifierOptions::Volatile))
-        TypeName.append("volatile ");
-      if (Mod->Modifiers & uint16_t(ModifierOptions::Unaligned))
-        TypeName.append("__unaligned ");
-      TypeName.append(ModifiedName);
-      Name = TypeNames.insert(TypeName).first->getKey();
-      break;
-    }
-
-    case LF_VTSHAPE: {
-      const VTableShape *Shape;
-      error(consumeObject(LeafData, Shape));
-      unsigned VFEntryCount = Shape->VFEntryCount;
-      W.printNumber("VFEntryCount", VFEntryCount);
-      // We could print out whether the methods are near or far, but in practice
-      // today everything is CV_VTS_near32, so it's just noise.
-      break;
-    }
-
-    case LF_UDT_SRC_LINE: {
-      const UDTSrcLine *Line;
-      error(consumeObject(LeafData, Line));
-      printTypeIndex("UDT", Line->UDT);
-      printTypeIndex("SourceFile", Line->SourceFile);
-      W.printNumber("LineNumber", Line->LineNumber);
-      break;
-    }
-
-    case LF_BUILDINFO: {
-      const BuildInfo *Args;
-      error(consumeObject(LeafData, Args));
-      W.printNumber("NumArgs", Args->NumArgs);
-
-      ListScope Arguments(W, "Arguments");
-      for (uint32_t ArgI = 0; ArgI != Args->NumArgs; ++ArgI) {
-        const TypeIndex *Type;
-        error(consumeObject(LeafData, Type));
-        printTypeIndex("ArgType", *Type);
-      }
-      break;
-    }
-    }
-
-    if (opts::CodeViewSubsectionBytes)
-      W.printBinaryBlock("LeafData", LeafData);
-
-    CVUDTNames.push_back(Name);
+void CVTypeDumper::visitClassType(TypeLeafKind Leaf, const ClassType *Class,
+                                  ArrayRef<uint8_t> LeafData) {
+  W.printNumber("MemberCount", Class->MemberCount);
+  uint16_t Props = Class->Properties;
+  W.printFlags("Properties", Props, makeArrayRef(ClassOptionNames));
+  printTypeIndex("FieldList", Class->FieldList);
+  printTypeIndex("DerivedFrom", Class->DerivedFrom);
+  printTypeIndex("VShape", Class->VShape);
+  uint64_t SizeOf;
+  error(decodeUIntLeaf(LeafData, SizeOf));
+  W.printNumber("SizeOf", SizeOf);
+  StringRef LeafChars = getBytesAsCharacters(LeafData);
+  StringRef LinkageName;
+  std::tie(Name, LinkageName) = LeafChars.split('\0');
+  W.printString("Name", Name);
+  if (Props & uint16_t(ClassOptions::HasUniqueName)) {
+    LinkageName = LinkageName.split('\0').first;
+    if (LinkageName.empty())
+      return error(object_error::parse_failed);
+    W.printString("LinkageName", LinkageName);
   }
 }
 
-static StringRef skipPadding(StringRef Data) {
-  if (Data.empty())
-    return Data;
-  uint8_t Leaf = Data.front();
-  if (Leaf < LF_PAD0)
-    return Data;
-  // Leaf is greater than 0xf0. We should advance by the number of bytes in the
-  // low 4 bits.
-  return Data.drop_front(Leaf & 0x0F);
+void CVTypeDumper::visitUnionType(TypeLeafKind Leaf, const UnionType *Union,
+                                  ArrayRef<uint8_t> LeafData) {
+  W.printNumber("MemberCount", Union->MemberCount);
+  uint16_t Props = Union->Properties;
+  W.printFlags("Properties", Props, makeArrayRef(ClassOptionNames));
+  printTypeIndex("FieldList", Union->FieldList);
+  uint64_t SizeOf;
+  error(decodeUIntLeaf(LeafData, SizeOf));
+  W.printNumber("SizeOf", SizeOf);
+  StringRef LeafChars = getBytesAsCharacters(LeafData);
+  StringRef LinkageName;
+  std::tie(Name, LinkageName) = LeafChars.split('\0');
+  W.printString("Name", Name);
+  if (Props & uint16_t(ClassOptions::HasUniqueName)) {
+    LinkageName = LinkageName.split('\0').first;
+    if (LinkageName.empty())
+      return error(object_error::parse_failed);
+    W.printString("LinkageName", LinkageName);
+  }
+}
+
+void CVTypeDumper::visitEnumType(TypeLeafKind Leaf, const EnumType *Enum,
+                                 ArrayRef<uint8_t> LeafData) {
+  W.printNumber("NumEnumerators", Enum->NumEnumerators);
+  W.printFlags("Properties", uint16_t(Enum->Properties),
+               makeArrayRef(ClassOptionNames));
+  printTypeIndex("UnderlyingType", Enum->UnderlyingType);
+  printTypeIndex("FieldListType", Enum->FieldListType);
+  Name = getBytesAsCString(LeafData);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitArrayType(TypeLeafKind Leaf, const ArrayType *AT,
+                                  ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("ElementType", AT->ElementType);
+  printTypeIndex("IndexType", AT->IndexType);
+  uint64_t SizeOf;
+  error(decodeUIntLeaf(LeafData, SizeOf));
+  W.printNumber("SizeOf", SizeOf);
+  Name = getBytesAsCString(LeafData);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitVFTableType(TypeLeafKind Leaf, const VFTableType *VFT,
+                                    ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("CompleteClass", VFT->CompleteClass);
+  printTypeIndex("OverriddenVFTable", VFT->OverriddenVFTable);
+  W.printHex("VFPtrOffset", VFT->VFPtrOffset);
+  StringRef NamesData = getBytesAsCharacters(LeafData.slice(0, VFT->NamesLen));
+  std::tie(Name, NamesData) = NamesData.split('\0');
+  W.printString("VFTableName", Name);
+  while (!NamesData.empty()) {
+    StringRef MethodName;
+    std::tie(MethodName, NamesData) = NamesData.split('\0');
+    W.printString("MethodName", MethodName);
+  }
+}
+
+void CVTypeDumper::visitMemberFuncId(TypeLeafKind Leaf, const MemberFuncId *Id,
+                                     ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("ClassType", Id->ClassType);
+  printTypeIndex("FunctionType", Id->FunctionType);
+  Name = getBytesAsCString(LeafData);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitProcedureType(TypeLeafKind Leaf,
+                                      const ProcedureType *Proc,
+                                      ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("ReturnType", Proc->ReturnType);
+  W.printEnum("CallingConvention", uint8_t(Proc->CallConv),
+              makeArrayRef(CallingConventions));
+  W.printFlags("FunctionOptions", uint8_t(Proc->Options),
+               makeArrayRef(FunctionOptionEnum));
+  W.printNumber("NumParameters", Proc->NumParameters);
+  printTypeIndex("ArgListType", Proc->ArgListType);
+
+  StringRef ReturnTypeName = getTypeName(Proc->ReturnType);
+  StringRef ArgListTypeName = getTypeName(Proc->ArgListType);
+  SmallString<256> TypeName(ReturnTypeName);
+  TypeName.push_back(' ');
+  TypeName.append(ArgListTypeName);
+  Name = TypeNames.insert(TypeName).first->getKey();
+}
+
+void CVTypeDumper::visitMemberFunctionType(TypeLeafKind Leaf,
+                                           const MemberFunctionType *MemberFunc,
+                                           ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("ReturnType", MemberFunc->ReturnType);
+  printTypeIndex("ClassType", MemberFunc->ClassType);
+  printTypeIndex("ThisType", MemberFunc->ThisType);
+  W.printEnum("CallingConvention", uint8_t(MemberFunc->CallConv),
+              makeArrayRef(CallingConventions));
+  W.printFlags("FunctionOptions", uint8_t(MemberFunc->Options),
+               makeArrayRef(FunctionOptionEnum));
+  W.printNumber("NumParameters", MemberFunc->NumParameters);
+  printTypeIndex("ArgListType", MemberFunc->ArgListType);
+  W.printNumber("ThisAdjustment", MemberFunc->ThisAdjustment);
+
+  StringRef ReturnTypeName = getTypeName(MemberFunc->ReturnType);
+  StringRef ClassTypeName = getTypeName(MemberFunc->ClassType);
+  StringRef ArgListTypeName = getTypeName(MemberFunc->ArgListType);
+  SmallString<256> TypeName(ReturnTypeName);
+  TypeName.push_back(' ');
+  TypeName.append(ClassTypeName);
+  TypeName.append("::");
+  TypeName.append(ArgListTypeName);
+  Name = TypeNames.insert(TypeName).first->getKey();
+}
+
+void CVTypeDumper::visitMethodList(TypeLeafKind Leaf,
+                                   ArrayRef<uint8_t> LeafData) {
+  while (!LeafData.empty()) {
+    const MethodListEntry *Method;
+    if (!consumeObject(LeafData, Method))
+      return;
+    ListScope S(W, "Method");
+    printMemberAttributes(Method->Attrs);
+    printTypeIndex("Type", Method->Type);
+    if (Method->isIntroducedVirtual()) {
+      const little32_t *VFTOffsetPtr;
+      if (!consumeObject(LeafData, VFTOffsetPtr))
+        return;
+      W.printHex("VFTableOffset", *VFTOffsetPtr);
+    }
+  }
+}
+
+void CVTypeDumper::visitFuncId(TypeLeafKind Leaf, const FuncId *Func,
+                               ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("ParentScope", Func->ParentScope);
+  printTypeIndex("FunctionType", Func->FunctionType);
+  Name = getBytesAsCString(LeafData);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitTypeServer2(TypeLeafKind Leaf,
+                                    const TypeServer2 *TypeServer,
+                                    ArrayRef<uint8_t> LeafData) {
+  W.printBinary("Signature", StringRef(TypeServer->Signature, 16));
+  W.printNumber("Age", TypeServer->Age);
+  Name = getBytesAsCString(LeafData);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitPointerType(TypeLeafKind Leaf, const PointerType *Ptr,
+                                    ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("PointeeType", Ptr->PointeeType);
+  W.printHex("PointerAttributes", Ptr->Attrs);
+  W.printEnum("PtrType", unsigned(Ptr->getPtrKind()),
+              makeArrayRef(PtrKindNames));
+  W.printEnum("PtrMode", unsigned(Ptr->getPtrMode()),
+              makeArrayRef(PtrModeNames));
+  W.printNumber("IsFlat", Ptr->isFlat());
+  W.printNumber("IsConst", Ptr->isConst());
+  W.printNumber("IsVolatile", Ptr->isVolatile());
+  W.printNumber("IsUnaligned", Ptr->isUnaligned());
+
+  if (Ptr->isPointerToMember()) {
+    const PointerToMemberTail *PMT;
+    if (!consumeObject(LeafData, PMT))
+      return;
+    printTypeIndex("ClassType", PMT->ClassType);
+    W.printEnum("Representation", PMT->Representation,
+                makeArrayRef(PtrMemberRepNames));
+
+    StringRef PointeeName = getTypeName(Ptr->PointeeType);
+    StringRef ClassName = getTypeName(PMT->ClassType);
+    SmallString<256> TypeName(PointeeName);
+    TypeName.push_back(' ');
+    TypeName.append(ClassName);
+    TypeName.append("::*");
+    Name = TypeNames.insert(TypeName).first->getKey();
+  } else {
+    W.printBinaryBlock("TailData", getBytesAsCharacters(LeafData));
+
+    SmallString<256> TypeName;
+    if (Ptr->isConst())
+      TypeName.append("const ");
+    if (Ptr->isVolatile())
+      TypeName.append("volatile ");
+    if (Ptr->isUnaligned())
+      TypeName.append("__unaligned ");
+
+    TypeName.append(getTypeName(Ptr->PointeeType));
+
+    if (Ptr->getPtrMode() == PointerMode::LValueReference)
+      TypeName.append("&");
+    else if (Ptr->getPtrMode() == PointerMode::RValueReference)
+      TypeName.append("&&");
+    else if (Ptr->getPtrMode() == PointerMode::Pointer)
+      TypeName.append("*");
+
+    Name = TypeNames.insert(TypeName).first->getKey();
+  }
+}
+
+void CVTypeDumper::visitTypeModifier(TypeLeafKind Leaf, const TypeModifier *Mod,
+                                     ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("ModifiedType", Mod->ModifiedType);
+  W.printFlags("Modifiers", Mod->Modifiers, makeArrayRef(TypeModifierNames));
+
+  StringRef ModifiedName = getTypeName(Mod->ModifiedType);
+  SmallString<256> TypeName;
+  if (Mod->Modifiers & uint16_t(ModifierOptions::Const))
+    TypeName.append("const ");
+  if (Mod->Modifiers & uint16_t(ModifierOptions::Volatile))
+    TypeName.append("volatile ");
+  if (Mod->Modifiers & uint16_t(ModifierOptions::Unaligned))
+    TypeName.append("__unaligned ");
+  TypeName.append(ModifiedName);
+  Name = TypeNames.insert(TypeName).first->getKey();
+}
+
+void CVTypeDumper::visitVTableShape(TypeLeafKind Leaf, const VTableShape *Shape,
+                                    ArrayRef<uint8_t> LeafData) {
+  unsigned VFEntryCount = Shape->VFEntryCount;
+  W.printNumber("VFEntryCount", VFEntryCount);
+  // We could print out whether the methods are near or far, but in practice
+  // today everything is CV_VTS_near32, so it's just noise.
+}
+
+void CVTypeDumper::visitUDTSrcLine(TypeLeafKind Leaf, const UDTSrcLine *Line,
+                                   ArrayRef<uint8_t> LeafData) {
+  printTypeIndex("UDT", Line->UDT);
+  printTypeIndex("SourceFile", Line->SourceFile);
+  W.printNumber("LineNumber", Line->LineNumber);
+}
+
+void CVTypeDumper::visitBuildInfo(TypeLeafKind Leaf, const BuildInfo *Args,
+                                  ArrayRef<uint8_t> LeafData) {
+  W.printNumber("NumArgs", Args->NumArgs);
+
+  ListScope Arguments(W, "Arguments");
+  for (uint32_t ArgI = 0; ArgI != Args->NumArgs; ++ArgI) {
+    const TypeIndex *Type;
+    if (!consumeObject(LeafData, Type))
+      return;
+    printTypeIndex("ArgType", *Type);
+  }
 }
 
 void CVTypeDumper::printMemberAttributes(MemberAttributes Attrs) {
@@ -2348,140 +2339,112 @@ void CVTypeDumper::printMemberAttributes(MemberAttributes Attrs) {
   }
 }
 
-void CVTypeDumper::printCodeViewFieldList(StringRef FieldData) {
-  while (!FieldData.empty()) {
-    const ulittle16_t *LeafPtr;
-    error(consumeObject(FieldData, LeafPtr));
-    uint16_t Leaf = *LeafPtr;
-    switch (Leaf) {
-    default:
-      W.printHex("UnknownMember", Leaf);
-      // We can't advance once we hit an unknown field. The size is not encoded.
+void CVTypeDumper::visitUnknownMember(TypeLeafKind Leaf) {
+  W.printHex("UnknownMember", unsigned(Leaf));
+}
+
+void CVTypeDumper::visitNestedType(TypeLeafKind Leaf, const NestedType *Nested,
+                                   ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "NestedType");
+  printTypeIndex("Type", Nested->Type);
+  StringRef Name = getBytesAsCString(FieldData);
+  FieldData = FieldData.drop_front(Name.size() + 1);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitOneMethod(TypeLeafKind Leaf, const OneMethod *Method,
+                                  ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "OneMethod");
+  printMemberAttributes(Method->Attrs);
+  printTypeIndex("Type", Method->Type);
+  // If virtual, then read the vftable offset.
+  if (Method->isIntroducedVirtual()) {
+    const little32_t *VFTOffsetPtr;
+    if (!consumeObject(FieldData, VFTOffsetPtr))
       return;
-
-    case LF_NESTTYPE: {
-      const NestedType *Nested;
-      error(consumeObject(FieldData, Nested));
-      DictScope S(W, "NestedType");
-      printTypeIndex("Type", Nested->Type);
-      StringRef Name;
-      std::tie(Name, FieldData) = FieldData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_ONEMETHOD: {
-      const OneMethod *Method;
-      error(consumeObject(FieldData, Method));
-      DictScope S(W, "OneMethod");
-      printMemberAttributes(Method->Attrs);
-      printTypeIndex("Type", Method->Type);
-      // If virtual, then read the vftable offset.
-      if (Method->isIntroducedVirtual()) {
-        const little32_t *VFTOffsetPtr;
-        error(consumeObject(FieldData, VFTOffsetPtr));
-        W.printHex("VFTableOffset", *VFTOffsetPtr);
-      }
-      StringRef Name;
-      std::tie(Name, FieldData) = FieldData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_METHOD: {
-      const OverloadedMethod *Method;
-      error(consumeObject(FieldData, Method));
-      DictScope S(W, "OverloadedMethod");
-      W.printHex("MethodCount", Method->MethodCount);
-      W.printHex("MethodListIndex", Method->MethList.getIndex());
-      StringRef Name;
-      std::tie(Name, FieldData) = FieldData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_MEMBER: {
-      const DataMember *Field;
-      error(consumeObject(FieldData, Field));
-      DictScope S(W, "DataMember");
-      printMemberAttributes(Field->Attrs);
-      printTypeIndex("Type", Field->Type);
-      uint64_t FieldOffset;
-      error(decodeUIntLeaf(FieldData, FieldOffset));
-      W.printHex("FieldOffset", FieldOffset);
-      StringRef Name;
-      std::tie(Name, FieldData) = FieldData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_STMEMBER: {
-      const StaticDataMember *Field;
-      error(consumeObject(FieldData, Field));
-      DictScope S(W, "StaticDataMember");
-      printMemberAttributes(Field->Attrs);
-      printTypeIndex("Type", Field->Type);
-      StringRef Name;
-      std::tie(Name, FieldData) = FieldData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_VFUNCTAB: {
-      const VirtualFunctionPointer *VFTable;
-      error(consumeObject(FieldData, VFTable));
-      DictScope S(W, "VirtualFunctionPointer");
-      printTypeIndex("Type", VFTable->Type);
-      break;
-    }
-
-    case LF_ENUMERATE: {
-      const Enumerator *Enum;
-      error(consumeObject(FieldData, Enum));
-      DictScope S(W, "Enumerator");
-      printMemberAttributes(Enum->Attrs);
-      APSInt EnumValue;
-      error(decodeNumerictLeaf(FieldData, EnumValue));
-      W.printNumber("EnumValue", EnumValue);
-      StringRef Name;
-      std::tie(Name, FieldData) = FieldData.split('\0');
-      W.printString("Name", Name);
-      break;
-    }
-
-    case LF_BCLASS:
-    case LF_BINTERFACE: {
-      const BaseClass *Base;
-      error(consumeObject(FieldData, Base));
-      DictScope S(W, "BaseClass");
-      printMemberAttributes(Base->Attrs);
-      printTypeIndex("BaseType", Base->BaseType);
-      uint64_t BaseOffset;
-      error(decodeUIntLeaf(FieldData, BaseOffset));
-      W.printHex("BaseOffset", BaseOffset);
-      break;
-    }
-
-    case LF_VBCLASS:
-    case LF_IVBCLASS: {
-      const VirtualBaseClass *Base;
-      error(consumeObject(FieldData, Base));
-      DictScope S(W, "VirtualBaseClass");
-      printMemberAttributes(Base->Attrs);
-      printTypeIndex("BaseType",  Base->BaseType);
-      printTypeIndex("VBPtrType", Base->VBPtrType);
-      uint64_t VBPtrOffset, VBTableIndex;
-      error(decodeUIntLeaf(FieldData, VBPtrOffset));
-      error(decodeUIntLeaf(FieldData, VBTableIndex));
-      W.printHex("VBPtrOffset", VBPtrOffset);
-      W.printHex("VBTableIndex", VBTableIndex);
-      break;
-    }
-    }
-
-    // Handle padding.
-    FieldData = skipPadding(FieldData);
+    W.printHex("VFTableOffset", *VFTOffsetPtr);
   }
+  StringRef Name = getBytesAsCString(FieldData);
+  FieldData = FieldData.drop_front(Name.size() + 1);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitOverloadedMethod(TypeLeafKind Leaf,
+                                         const OverloadedMethod *Method,
+                                         ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "OverloadedMethod");
+  W.printHex("MethodCount", Method->MethodCount);
+  W.printHex("MethodListIndex", Method->MethList.getIndex());
+  StringRef Name = getBytesAsCString(FieldData);
+  FieldData = FieldData.drop_front(Name.size() + 1);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitDataMember(TypeLeafKind Leaf, const DataMember *Field,
+                                   ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "DataMember");
+  printMemberAttributes(Field->Attrs);
+  printTypeIndex("Type", Field->Type);
+  uint64_t FieldOffset;
+  error(decodeUIntLeaf(FieldData, FieldOffset));
+  W.printHex("FieldOffset", FieldOffset);
+  StringRef Name = getBytesAsCString(FieldData);
+  FieldData = FieldData.drop_front(Name.size() + 1);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitStaticDataMember(TypeLeafKind Leaf,
+                                         const StaticDataMember *Field,
+                                         ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "StaticDataMember");
+  printMemberAttributes(Field->Attrs);
+  printTypeIndex("Type", Field->Type);
+  StringRef Name = getBytesAsCString(FieldData);
+  FieldData = FieldData.drop_front(Name.size() + 1);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitVirtualFunctionPointer(
+    TypeLeafKind Leaf, const VirtualFunctionPointer *VFTable,
+    ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "VirtualFunctionPointer");
+  printTypeIndex("Type", VFTable->Type);
+}
+
+void CVTypeDumper::visitEnumerator(TypeLeafKind Leaf, const Enumerator *Enum,
+                                   ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "Enumerator");
+  printMemberAttributes(Enum->Attrs);
+  APSInt EnumValue;
+  error(decodeNumerictLeaf(FieldData, EnumValue));
+  W.printNumber("EnumValue", EnumValue);
+  StringRef Name = getBytesAsCString(FieldData);
+  FieldData = FieldData.drop_front(Name.size() + 1);
+  W.printString("Name", Name);
+}
+
+void CVTypeDumper::visitBaseClass(TypeLeafKind Leaf, const BaseClass *Base,
+                                  ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "BaseClass");
+  printMemberAttributes(Base->Attrs);
+  printTypeIndex("BaseType", Base->BaseType);
+  uint64_t BaseOffset;
+  error(decodeUIntLeaf(FieldData, BaseOffset));
+  W.printHex("BaseOffset", BaseOffset);
+}
+
+void CVTypeDumper::visitVirtualBaseClass(TypeLeafKind Leaf,
+                                         const VirtualBaseClass *Base,
+                                         ArrayRef<uint8_t> &FieldData) {
+  DictScope S(W, "VirtualBaseClass");
+  printMemberAttributes(Base->Attrs);
+  printTypeIndex("BaseType", Base->BaseType);
+  printTypeIndex("VBPtrType", Base->VBPtrType);
+  uint64_t VBPtrOffset, VBTableIndex;
+  error(decodeUIntLeaf(FieldData, VBPtrOffset));
+  error(decodeUIntLeaf(FieldData, VBTableIndex));
+  W.printHex("VBPtrOffset", VBPtrOffset);
+  W.printHex("VBTableIndex", VBTableIndex);
 }
 
 void COFFDumper::printSections() {

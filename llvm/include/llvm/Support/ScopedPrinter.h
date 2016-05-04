@@ -277,6 +277,10 @@ public:
     printBinaryImpl(Label, StringRef(), V, false);
   }
 
+  void printBinaryBlock(StringRef Label, ArrayRef<uint8_t> Value) {
+    printBinaryImpl(Label, StringRef(), Value, true);
+  }
+
   void printBinaryBlock(StringRef Label, StringRef Value) {
     auto V = makeArrayRef(reinterpret_cast<const uint8_t *>(Value.data()),
                           Value.size());

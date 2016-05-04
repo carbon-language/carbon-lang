@@ -49,10 +49,10 @@ public:
   struct TypeRecord {
     std::size_t Length;
     TypeLeafKind Leaf;
-    StringRef LeafData;
+    ArrayRef<uint8_t> LeafData;
   };
 
-  explicit TypeIterator(const StringRef &SectionData)
+  explicit TypeIterator(const ArrayRef<uint8_t> &SectionData)
       : Data(SectionData), AtEnd(false) {
     next(); // Prime the pump
   }
@@ -99,12 +99,15 @@ private:
       return;
     }
 
-    const TypeRecordPrefix *Rec;
-    if (consumeObject(Data, Rec))
+    // FIXME: Use consumeObject when it deals in ArrayRef<uint8_t>.
+    if (Data.size() < sizeof(TypeRecordPrefix))
       return;
+    const auto *Rec = reinterpret_cast<const TypeRecordPrefix *>(Data.data());
+    Data = Data.drop_front(sizeof(TypeRecordPrefix));
+
     Current.Length = Rec->Len;
     Current.Leaf = static_cast<TypeLeafKind>(uint16_t(Rec->Leaf));
-    Current.LeafData = Data.substr(0, Current.Length - 2);
+    Current.LeafData = Data.slice(0, Current.Length - 2);
 
     // The next record starts immediately after this one.
     Data = Data.drop_front(Current.LeafData.size());
@@ -116,15 +119,16 @@ private:
     return;
   }
 
-  StringRef Data;
+  ArrayRef<uint8_t> Data;
   TypeRecord Current;
   bool AtEnd;
 };
 
-inline iterator_range<TypeIterator> makeTypeRange(StringRef Data) {
+inline iterator_range<TypeIterator> makeTypeRange(ArrayRef<uint8_t> Data) {
   return make_range(TypeIterator(Data), TypeIterator());
 }
-}
-}
+
+} // end namespace codeview
+} // end namespace llvm
 
 #endif
