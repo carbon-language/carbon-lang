@@ -52,7 +52,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
-#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -105,13 +104,6 @@ cl::opt<bool> DumpStreamSizes("dump-stream-sizes",
 cl::opt<bool> DumpStreamBlocks("dump-stream-blocks",
                                cl::desc("dump PDB stream blocks"),
                                cl::cat(OtherOptions));
-cl::opt<bool> DumpTypeStream("dump-tpi-stream",
-                             cl::desc("dump PDB TPI (Type Info) stream"),
-                             cl::cat(OtherOptions));
-cl::opt<bool>
-    DumpTpiRecordBytes("dump-tpi-record-bytes",
-                       cl::desc("dump CodeView type record raw bytes"),
-                       cl::cat(OtherOptions));
 cl::opt<std::string> DumpStreamData("dump-stream", cl::desc("dump stream data"),
                                     cl::cat(OtherOptions));
 
@@ -157,203 +149,181 @@ cl::opt<bool> NoEnumDefs("no-enum-definitions",
                          cl::cat(FilterCategory));
 }
 
-static void dumpFileHeaders(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpHeaders)
-    return;
-  DictScope D(P, "FileHeaders");
-  P.printNumber("BlockSize", File.getBlockSize());
-  P.printNumber("Unknown0", File.getUnknown0());
-  P.printNumber("NumBlocks", File.getBlockCount());
-  P.printNumber("NumDirectoryBytes", File.getNumDirectoryBytes());
-  P.printNumber("Unknown1", File.getUnknown1());
-  P.printNumber("BlockMapAddr", File.getBlockMapIndex());
-  P.printNumber("NumDirectoryBlocks", File.getNumDirectoryBlocks());
-  P.printNumber("BlockMapOffset", File.getBlockMapOffset());
+static void dumpBytes(raw_ostream &S, StringRef Bytes, uint32_t BytesPerRow,
+                      uint32_t Indent) {
+  S << "[";
 
-  // The directory is not contiguous.  Instead, the block map contains a
-  // contiguous list of block numbers whose contents, when concatenated in
-  // order, make up the directory.
-  P.printList("DirectoryBlocks", File.getDirectoryBlockArray());
-  P.printNumber("NumStreams", File.getNumStreams());
-}
-
-static void dumpStreamSizes(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpStreamSizes)
-    return;
-
-  ListScope L(P, "StreamSizes");
-  uint32_t StreamCount = File.getNumStreams();
-  for (uint32_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
-    std::string Name("Stream ");
-    Name += to_string(StreamIdx);
-    P.printNumber(Name, File.getStreamByteSize(StreamIdx));
-  }
-}
-
-static void dumpStreamBlocks(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpStreamBlocks)
-    return;
-
-  ListScope L(P, "StreamBlocks");
-  uint32_t StreamCount = File.getNumStreams();
-  for (uint32_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
-    std::string Name("Stream ");
-    Name += to_string(StreamIdx);
-    auto StreamBlocks = File.getStreamBlockList(StreamIdx);
-    P.printList(Name, StreamBlocks);
-  }
-}
-
-static void dumpStreamData(ScopedPrinter &P, PDBFile &File) {
-  uint32_t StreamCount = File.getNumStreams();
-  StringRef DumpStreamStr = opts::DumpStreamData;
-  uint32_t DumpStreamNum;
-  if (DumpStreamStr.getAsInteger(/*Radix=*/0U, DumpStreamNum) ||
-      DumpStreamNum >= StreamCount)
-    return;
-
-  uint32_t StreamBytesRead = 0;
-  uint32_t StreamSize = File.getStreamByteSize(DumpStreamNum);
-  auto StreamBlocks = File.getStreamBlockList(DumpStreamNum);
-
-  for (uint32_t StreamBlockAddr : StreamBlocks) {
-    uint32_t BytesLeftToReadInStream = StreamSize - StreamBytesRead;
-    if (BytesLeftToReadInStream == 0)
-      break;
-
-    uint32_t BytesToReadInBlock = std::min(
-        BytesLeftToReadInStream, static_cast<uint32_t>(File.getBlockSize()));
-    auto StreamBlockData =
-        File.getBlockData(StreamBlockAddr, BytesToReadInBlock);
-
-    outs() << StreamBlockData;
-    StreamBytesRead += StreamBlockData.size();
-  }
-}
-
-static void dumpInfoStream(ScopedPrinter &P, PDBFile &File) {
-  InfoStream &IS = File.getPDBInfoStream();
-
-  DictScope D(P, "PDB Stream");
-  P.printNumber("Version", IS.getVersion());
-  P.printHex("Signature", IS.getSignature());
-  P.printNumber("Age", IS.getAge());
-  P.printObject("Guid", IS.getGuid());
-}
-
-static void dumpNamedStream(ScopedPrinter &P, PDBFile &File, StringRef Stream) {
-  InfoStream &IS = File.getPDBInfoStream();
-  uint32_t NameStreamIndex = IS.getNamedStreamIndex(Stream);
-
-  if (NameStreamIndex != 0) {
-    std::string Name("Stream '");
-    Name += Stream;
-    Name += "'";
-    DictScope D(P, Name);
-    P.printNumber("Index", NameStreamIndex);
-
-    MappedBlockStream NameStream(NameStreamIndex, File);
-    StreamReader Reader(NameStream);
-
-    NameHashTable NameTable;
-    NameTable.load(Reader);
-    P.printHex("Signature", NameTable.getSignature());
-    P.printNumber("Version", NameTable.getHashVersion());
-    P.printNumber("Name Count", NameTable.getNameCount());
-    ListScope L(P, "Names");
-    for (uint32_t ID : NameTable.name_ids()) {
-      StringRef Str = NameTable.getStringForID(ID);
-      if (!Str.empty())
-        P.printString(Str);
+  while (!Bytes.empty()) {
+    size_t BytesThisLine = std::min<size_t>(Bytes.size(), BytesPerRow);
+    while (BytesThisLine > 0) {
+      S << format_hex_no_prefix(uint8_t(Bytes.front()), 2, true);
+      Bytes = Bytes.drop_front();
+      if (--BytesThisLine > 0)
+        S << ' ';
+    }
+    if (!Bytes.empty()) {
+      S << '\n';
+      S.indent(Indent);
     }
   }
-}
-
-static void dumpDbiStream(ScopedPrinter &P, PDBFile &File) {
-  DbiStream &DS = File.getPDBDbiStream();
-
-  DictScope D(P, "DBI Stream");
-  P.printNumber("Dbi Version", DS.getDbiVersion());
-  P.printNumber("Age", DS.getAge());
-  P.printBoolean("Incremental Linking", DS.isIncrementallyLinked());
-  P.printBoolean("Has CTypes", DS.hasCTypes());
-  P.printBoolean("Is Stripped", DS.isStripped());
-  P.printObject("Machine Type", DS.getMachineType());
-  P.printNumber("Number of Symbols", DS.getNumberOfSymbols());
-
-  uint16_t Major = DS.getBuildMajorVersion();
-  uint16_t Minor = DS.getBuildMinorVersion();
-  P.printVersion("Toolchain Version", Major, Minor);
-
-  std::string DllName;
-  raw_string_ostream DllStream(DllName);
-  DllStream << "mspdb" << Major << Minor << ".dll version";
-  DllStream.flush();
-  P.printVersion(DllName, Major, Minor, DS.getPdbDllVersion());
-
-  ListScope L(P, "Modules");
-  for (auto &Modi : DS.modules()) {
-    DictScope DD(P);
-    P.printString("Name", Modi.Info.getModuleName());
-    P.printNumber("Debug Stream Index", Modi.Info.getModuleStreamIndex());
-    P.printString("Object File Name", Modi.Info.getObjFileName());
-    P.printNumber("Num Files", Modi.Info.getNumberOfFiles());
-    P.printNumber("Source File Name Idx", Modi.Info.getSourceFileNameIndex());
-    P.printNumber("Pdb File Name Idx", Modi.Info.getPdbFilePathNameIndex());
-    P.printNumber("Line Info Byte Size", Modi.Info.getLineInfoByteSize());
-    P.printNumber("C13 Line Info Byte Size",
-                  Modi.Info.getC13LineInfoByteSize());
-    P.printNumber("Symbol Byte Size", Modi.Info.getSymbolDebugInfoByteSize());
-    P.printNumber("Type Server Index", Modi.Info.getTypeServerIndex());
-    P.printBoolean("Has EC Info", Modi.Info.hasECInfo());
-    std::string FileListName =
-        to_string(Modi.SourceFiles.size()) + " Contributing Source Files";
-    ListScope LL(P, FileListName);
-    for (auto File : Modi.SourceFiles)
-      P.printString(File);
-  }
-}
-
-static void dumpTpiStream(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpTypeStream)
-    return;
-
-  DictScope D(P, "Type Info Stream");
-
-  TpiStream &Tpi = File.getPDBTpiStream();
-  P.printNumber("TPI Version", Tpi.getTpiVersion());
-  P.printNumber("Record count", Tpi.NumTypeRecords());
-
-  if (!opts::DumpTpiRecordBytes)
-    return;
-
-  ListScope L(P, "Records");
-  for (auto &Type : Tpi.types()) {
-    DictScope DD(P, "");
-    P.printHex("Kind", Type.Leaf);
-    P.printBinaryBlock("Bytes", Type.LeafData);
-  }
+  S << ']';
 }
 
 static void dumpStructure(RawSession &RS) {
   PDBFile &File = RS.getPDBFile();
-  ScopedPrinter P(outs());
 
-  dumpFileHeaders(P, File);
+  if (opts::DumpHeaders) {
+    outs() << "BlockSize: " << File.getBlockSize() << '\n';
+    outs() << "Unknown0: " << File.getUnknown0() << '\n';
+    outs() << "NumBlocks: " << File.getBlockCount() << '\n';
+    outs() << "NumDirectoryBytes: " << File.getNumDirectoryBytes() << '\n';
+    outs() << "Unknown1: " << File.getUnknown1() << '\n';
+    outs() << "BlockMapAddr: " << File.getBlockMapIndex() << '\n';
+  }
 
-  dumpStreamSizes(P, File);
+  if (opts::DumpHeaders)
+    outs() << "NumDirectoryBlocks: " << File.getNumDirectoryBlocks() << '\n';
 
-  dumpStreamBlocks(P, File);
+  if (opts::DumpHeaders)
+    outs() << "BlockMapOffset: " << File.getBlockMapOffset() << '\n';
 
-  dumpStreamData(P, File);
+  // The directory is not contiguous.  Instead, the block map contains a
+  // contiguous list of block numbers whose contents, when concatenated in
+  // order, make up the directory.
+  auto DirectoryBlocks = File.getDirectoryBlockArray();
 
-  dumpInfoStream(P, File);
+  if (opts::DumpHeaders) {
+    outs() << "DirectoryBlocks: [";
+    for (const auto &DirectoryBlockAddr : DirectoryBlocks) {
+      if (&DirectoryBlockAddr != &DirectoryBlocks.front())
+        outs() << ", ";
+      outs() << DirectoryBlockAddr;
+    }
+    outs() << "]\n";
+  }
 
-  dumpNamedStream(P, File, "/names");
+  if (opts::DumpHeaders)
+    outs() << "NumStreams: " << File.getNumStreams() << '\n';
+  uint32_t StreamCount = File.getNumStreams();
+  if (opts::DumpStreamSizes) {
+    for (uint32_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx)
+      outs() << "StreamSizes[" << StreamIdx
+             << "]: " << File.getStreamByteSize(StreamIdx) << '\n';
+  }
 
-  dumpDbiStream(P, File);
+  if (opts::DumpStreamBlocks) {
+    for (uint32_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
+      outs() << "StreamBlocks[" << StreamIdx << "]: [";
+      auto StreamBlocks = File.getStreamBlockList(StreamIdx);
+      for (size_t i = 0; i < StreamBlocks.size(); ++i) {
+        if (i != 0)
+          outs() << ", ";
+        outs() << StreamBlocks[i];
+      }
+      outs() << "]\n";
+    }
+  }
 
-  dumpTpiStream(P, File);
+  StringRef DumpStreamStr = opts::DumpStreamData;
+  uint32_t DumpStreamNum;
+  if (!DumpStreamStr.getAsInteger(/*Radix=*/0U, DumpStreamNum) &&
+      DumpStreamNum < StreamCount) {
+    uint32_t StreamBytesRead = 0;
+    uint32_t StreamSize = File.getStreamByteSize(DumpStreamNum);
+    auto StreamBlocks = File.getStreamBlockList(DumpStreamNum);
+
+    for (uint32_t StreamBlockAddr : StreamBlocks) {
+      uint32_t BytesLeftToReadInStream = StreamSize - StreamBytesRead;
+      if (BytesLeftToReadInStream == 0)
+        break;
+
+      uint32_t BytesToReadInBlock = std::min(
+          BytesLeftToReadInStream, static_cast<uint32_t>(File.getBlockSize()));
+      auto StreamBlockData =
+          File.getBlockData(StreamBlockAddr, BytesToReadInBlock);
+
+      outs() << StreamBlockData;
+      StreamBytesRead += StreamBlockData.size();
+    }
+  }
+
+  InfoStream &IS = File.getPDBInfoStream();
+  outs() << "Version: " << IS.getVersion() << '\n';
+  outs() << "Signature: ";
+  outs().write_hex(IS.getSignature()) << '\n';
+  outs() << "Age: " << IS.getAge() << '\n';
+  outs() << "Guid: " << IS.getGuid() << '\n';
+
+  // Let's try to dump out the named stream "/names".
+  uint32_t NameStreamIndex = IS.getNamedStreamIndex("/names");
+  if (NameStreamIndex != 0) {
+    MappedBlockStream NameStream(NameStreamIndex, File);
+    StreamReader Reader(NameStream);
+
+    outs() << "NameStream: " << NameStreamIndex << '\n';
+
+    NameHashTable NameTable;
+    NameTable.load(Reader);
+    outs() << "NameStreamSignature: ";
+    outs().write_hex(NameTable.getSignature()) << '\n';
+    outs() << "NameStreamVersion: " << NameTable.getHashVersion() << '\n';
+    outs() << "Name Count: " << NameTable.getNameCount() << '\n';
+    for (uint32_t ID : NameTable.name_ids()) {
+      outs() << "Name: " << NameTable.getStringForID(ID) << '\n';
+    }
+  }
+
+  DbiStream &DS = File.getPDBDbiStream();
+  outs() << "Dbi Version: " << DS.getDbiVersion() << '\n';
+  outs() << "Age: " << DS.getAge() << '\n';
+  outs() << "Incremental Linking: " << DS.isIncrementallyLinked() << '\n';
+  outs() << "Has CTypes: " << DS.hasCTypes() << '\n';
+  outs() << "Is Stripped: " << DS.isStripped() << '\n';
+  outs() << "Machine Type: " << DS.getMachineType() << '\n';
+  outs() << "Number of Symbols: " << DS.getNumberOfSymbols() << '\n';
+
+  uint16_t Major = DS.getBuildMajorVersion();
+  uint16_t Minor = DS.getBuildMinorVersion();
+  outs() << "Toolchain Version: " << Major << "." << Minor << '\n';
+  outs() << "mspdb" << Major << Minor << ".dll version: " << Major << "."
+         << Minor << "." << DS.getPdbDllVersion() << '\n';
+
+  outs() << "Modules: \n";
+  for (auto &Modi : DS.modules()) {
+    outs() << Modi.Info.getModuleName() << '\n';
+    outs().indent(4) << "Debug Stream Index: "
+                     << Modi.Info.getModuleStreamIndex() << '\n';
+    outs().indent(4) << "Object File: " << Modi.Info.getObjFileName() << '\n';
+    outs().indent(4) << "Num Files: " << Modi.Info.getNumberOfFiles() << '\n';
+    outs().indent(4) << "Source File Name Idx: "
+                     << Modi.Info.getSourceFileNameIndex() << '\n';
+    outs().indent(4) << "Pdb File Name Idx: "
+                     << Modi.Info.getPdbFilePathNameIndex() << '\n';
+    outs().indent(4) << "Line Info Byte Size: "
+                     << Modi.Info.getLineInfoByteSize() << '\n';
+    outs().indent(4) << "C13 Line Info Byte Size: "
+                     << Modi.Info.getC13LineInfoByteSize() << '\n';
+    outs().indent(4) << "Symbol Byte Size: "
+                     << Modi.Info.getSymbolDebugInfoByteSize() << '\n';
+    outs().indent(4) << "Type Server Index: " << Modi.Info.getTypeServerIndex()
+                     << '\n';
+    outs().indent(4) << "Has EC Info: " << Modi.Info.hasECInfo() << '\n';
+    outs().indent(4) << Modi.SourceFiles.size()
+                     << " Contributing Source Files: \n";
+    for (auto File : Modi.SourceFiles) {
+      outs().indent(8) << File << '\n';
+    }
+  }
+
+  TpiStream &Tpi = File.getPDBTpiStream();
+  outs() << "TPI Version: " << Tpi.getTpiVersion() << '\n';
+  outs() << "Record count: " << Tpi.NumTypeRecords() << '\n';
+  for (auto &Type : Tpi.types()) {
+    outs().indent(2) << "Kind: 0x" << Type.Leaf;
+    outs().indent(2) << "Bytes: ";
+    dumpBytes(outs(), Type.LeafData, 16, 24);
+    outs() << '\n';
+  }
 }
 
 static void reportError(StringRef Path, PDB_ErrorCode Error) {
