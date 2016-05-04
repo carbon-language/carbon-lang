@@ -88,7 +88,7 @@ protected:
   ObjectFile<ELFT> *File;
 
 public:
-  enum Kind { Regular, EHFrame, Merge, MipsReginfo };
+  enum Kind { Regular, EHFrame, Merge, MipsReginfo, MipsOptions };
   Kind SectionKind;
 
   InputSectionBase() : Repl(this) {}
@@ -249,7 +249,18 @@ public:
   MipsReginfoInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Hdr);
   static bool classof(const InputSectionBase<ELFT> *S);
 
-  const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo;
+  const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo = nullptr;
+};
+
+template <class ELFT>
+class MipsOptionsInputSection : public InputSectionBase<ELFT> {
+  typedef typename ELFT::Shdr Elf_Shdr;
+
+public:
+  MipsOptionsInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Hdr);
+  static bool classof(const InputSectionBase<ELFT> *S);
+
+  const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo = nullptr;
 };
 
 } // namespace elf

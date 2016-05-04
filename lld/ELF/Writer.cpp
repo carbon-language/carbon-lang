@@ -1166,6 +1166,9 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
   case InputSectionBase<ELFT>::MipsReginfo:
     Sec = new MipsReginfoOutputSection<ELFT>();
     break;
+  case InputSectionBase<ELFT>::MipsOptions:
+    Sec = new MipsOptionsOutputSection<ELFT>();
+    break;
   }
   return {Sec, true};
 }
