@@ -1410,6 +1410,7 @@ def mno_prfchw : Flag<["-"], "mno-prfchw">, Group<m_x86_Features_Group>;
 def mno_rdseed : Flag<["-"], "mno-rdseed">, Group<m_x86_Features_Group>;
 def mno_adx : Flag<["-"], "mno-adx">, Group<m_x86_Features_Group>;
 def mno_sha : Flag<["-"], "mno-sha">, Group<m_x86_Features_Group>;
+def mno_cx16 : Flag<["-"], "mno-cx16">, Group<m_x86_Features_Group>;
 def mno_fxsr : Flag<["-"], "mno-fxsr">, Group<m_x86_Features_Group>;
 def mno_xsave : Flag<["-"], "mno-xsave">, Group<m_x86_Features_Group>;
 def mno_xsaveopt : Flag<["-"], "mno-xsaveopt">, Group<m_x86_Features_Group>;
