@@ -28,7 +28,6 @@ public:
   virtual bool isTlsLocalDynamicRel(uint32_t Type) const;
   virtual bool isTlsGlobalDynamicRel(uint32_t Type) const;
   virtual uint32_t getDynRel(uint32_t Type) const { return Type; }
-  virtual uint32_t getTlsGotRel(uint32_t Type) const { return TlsGotRel; }
   virtual void writeGotPltHeader(uint8_t *Buf) const {}
   virtual void writeGotPlt(uint8_t *Buf, uint64_t Plt) const {};
   virtual uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const;

@@ -83,7 +83,6 @@ public:
   uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
   uint32_t getDynRel(uint32_t Type) const override;
-  uint32_t getTlsGotRel(uint32_t Type) const override;
   bool isTlsLocalDynamicRel(uint32_t Type) const override;
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
@@ -104,7 +103,6 @@ public:
   X86_64TargetInfo();
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   uint32_t getDynRel(uint32_t Type) const override;
-  uint32_t getTlsGotRel(uint32_t Type) const override;
   bool isTlsLocalDynamicRel(uint32_t Type) const override;
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
@@ -148,7 +146,6 @@ public:
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  uint32_t getTlsGotRel(uint32_t Type) const override;
   bool usesOnlyLowPageBits(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -317,12 +314,6 @@ uint32_t X86TargetInfo::getDynRel(uint32_t Type) const {
   if (Type == R_386_TLS_LE_32)
     return R_386_TLS_TPOFF32;
   return Type;
-}
-
-uint32_t X86TargetInfo::getTlsGotRel(uint32_t Type) const {
-  if (Type == R_386_TLS_IE)
-    return Type;
-  return R_386_GOT32;
 }
 
 bool X86TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
@@ -584,13 +575,6 @@ uint32_t X86_64TargetInfo::getDynRel(uint32_t Type) const {
   return Type;
 }
 
-uint32_t X86_64TargetInfo::getTlsGotRel(uint32_t Type) const {
-  // No other types of TLS relocations requiring GOT should
-  // reach here.
-  assert(Type == R_X86_64_GOTTPOFF);
-  return R_X86_64_PC32;
-}
-
 bool X86_64TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
   return Type == R_X86_64_GOTTPOFF;
 }
@@ -727,6 +711,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_X86_64_GOTPCRELX:
   case R_X86_64_REX_GOTPCRELX:
   case R_X86_64_PC32:
+  case R_X86_64_GOTTPOFF:
   case R_X86_64_PLT32:
   case R_X86_64_TLSGD:
   case R_X86_64_TLSLD:
@@ -1061,12 +1046,6 @@ void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
               getAArch64Page(GotEntryAddr) - getAArch64Page(PltEntryAddr));
   relocateOne(Buf + 4, R_AARCH64_LDST64_ABS_LO12_NC, GotEntryAddr);
   relocateOne(Buf + 8, R_AARCH64_ADD_ABS_LO12_NC, GotEntryAddr);
-}
-
-uint32_t AArch64TargetInfo::getTlsGotRel(uint32_t Type) const {
-  assert(Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
-         Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC);
-  return Type;
 }
 
 static void updateAArch64Addr(uint8_t *L, uint64_t Imm) {
