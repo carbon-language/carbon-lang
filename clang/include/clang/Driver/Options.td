@@ -1370,6 +1370,8 @@ def mno_relax_all : Flag<["-"], "mno-relax-all">, Group<m_Group>;
 def mno_rtd: Flag<["-"], "mno-rtd">, Group<m_Group>;
 def mno_soft_float : Flag<["-"], "mno-soft-float">, Group<m_Group>;
 def mno_stackrealign : Flag<["-"], "mno-stackrealign">, Group<m_Group>;
+def mno_x87 : Flag<["-"], "mno-x87">, Group<m_x86_Features_Group>;
+def mno_80387 : Flag<["-"], "mno-80387">, Alias<mno_x87>;
 def mno_sse2 : Flag<["-"], "mno-sse2">, Group<m_x86_Features_Group>;
 def mno_sse3 : Flag<["-"], "mno-sse3">, Group<m_x86_Features_Group>;
 def mno_sse4a : Flag<["-"], "mno-sse4a">, Group<m_x86_Features_Group>;
@@ -1547,6 +1549,8 @@ def mno_implicit_float : Flag<["-"], "mno-implicit-float">, Group<m_Group>,
 def mimplicit_float : Flag<["-"], "mimplicit-float">, Group<m_Group>;
 def mrecip : Flag<["-"], "mrecip">, Group<m_Group>;
 def mrecip_EQ : CommaJoined<["-"], "mrecip=">, Group<m_Group>, Flags<[CC1Option]>;
+def mx87 : Flag<["-"], "mx87">, Group<m_x86_Features_Group>;
+def m80387 : Flag<["-"], "m80387">, Alias<mx87>;
 def msse2 : Flag<["-"], "msse2">, Group<m_x86_Features_Group>;
 def msse3 : Flag<["-"], "msse3">, Group<m_x86_Features_Group>;
 def msse4a : Flag<["-"], "msse4a">, Group<m_x86_Features_Group>;
