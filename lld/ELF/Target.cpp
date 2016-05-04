@@ -1235,7 +1235,10 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   UseLazyBinding = true;
   CopyRel = R_MIPS_COPY;
   PltRel = R_MIPS_JUMP_SLOT;
-  RelativeRel = R_MIPS_REL32;
+  if (ELFT::Is64Bits)
+    RelativeRel = (R_MIPS_64 << 8) | R_MIPS_REL32;
+  else
+    RelativeRel = R_MIPS_REL32;
 }
 
 template <class ELFT>
@@ -1286,7 +1289,7 @@ RelExpr MipsTargetInfo<ELFT>::getRelExpr(uint32_t Type,
 template <class ELFT>
 uint32_t MipsTargetInfo<ELFT>::getDynRel(uint32_t Type) const {
   if (Type == R_MIPS_32 || Type == R_MIPS_64)
-    return R_MIPS_REL32;
+    return RelativeRel;
   StringRef S = getELFRelocationTypeName(EM_MIPS, Type);
   error("relocation " + S + " cannot be used when making a shared object; "
                             "recompile with -fPIC.");
@@ -1451,6 +1454,9 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   switch (Type) {
   case R_MIPS_32:
     write32<E>(Loc, Val);
+    break;
+  case R_MIPS_64:
+    write64<E>(Loc, Val);
     break;
   case R_MIPS_26: {
     uint32_t Instr = read32<E>(Loc);
