@@ -894,8 +894,8 @@ SDValue VectorLegalizer::ExpandBITREVERSE(SDValue Op) {
   // than unrolling and expanding each component.
   if (!TLI.isOperationLegalOrCustom(ISD::SHL, VT) ||
       !TLI.isOperationLegalOrCustom(ISD::SRL, VT) ||
-      !TLI.isOperationLegalOrPromote(ISD::AND, VT) ||
-      !TLI.isOperationLegalOrPromote(ISD::OR, VT))
+      !TLI.isOperationLegalOrCustom(ISD::AND, VT) ||
+      !TLI.isOperationLegalOrCustom(ISD::OR, VT))
     return DAG.UnrollVectorOp(Op.getNode());
 
   // Let LegalizeDAG handle this later.
