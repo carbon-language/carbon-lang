@@ -179,7 +179,6 @@ public:
   bool needsThunk(uint32_t Type, const InputFile &File,
                   const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
-  bool isHintRel(uint32_t Type) const override;
   bool usesOnlyLowPageBits(uint32_t Type) const override;
 };
 } // anonymous namespace
@@ -224,7 +223,6 @@ uint64_t TargetInfo::getImplicitAddend(const uint8_t *Buf,
 
 uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
 
-bool TargetInfo::isHintRel(uint32_t Type) const { return false; }
 bool TargetInfo::usesOnlyLowPageBits(uint32_t Type) const { return false; }
 
 bool TargetInfo::needsThunk(uint32_t Type, const InputFile &File,
@@ -1266,6 +1264,8 @@ RelExpr MipsTargetInfo<ELFT>::getRelExpr(uint32_t Type,
   switch (Type) {
   default:
     return R_ABS;
+  case R_MIPS_JALR:
+    return R_HINT;
   case R_MIPS_GPREL16:
   case R_MIPS_GPREL32:
     return R_GOTREL;
@@ -1532,11 +1532,6 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   default:
     fatal("unrecognized reloc " + Twine(Type));
   }
-}
-
-template <class ELFT>
-bool MipsTargetInfo<ELFT>::isHintRel(uint32_t Type) const {
-  return Type == R_MIPS_JALR;
 }
 
 template <class ELFT>

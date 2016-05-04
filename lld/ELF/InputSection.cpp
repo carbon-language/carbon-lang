@@ -142,6 +142,8 @@ getSymVA(uint32_t Type, typename ELFT::uint A, typename ELFT::uint P,
          const elf::ObjectFile<ELFT> &File, RelExpr Expr) {
   typedef typename ELFT::uint uintX_t;
   switch (Expr) {
+  case R_HINT:
+    llvm_unreachable("cannot relocate hint relocs");
   case R_TLSLD:
     return Out<ELFT>::Got->getTlsIndexOff() + A -
            Out<ELFT>::Got->getNumEntries() * sizeof(uintX_t);

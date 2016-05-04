@@ -42,11 +42,6 @@ public:
                         uint64_t PltEntryAddr, int32_t Index,
                         unsigned RelOff) const {}
 
-  // Returns true if a relocation is just a hint for linker to make for example
-  // some code optimization. Such relocations should not be handled as a regular
-  // ones and lead to dynamic relocation creation etc.
-  virtual bool isHintRel(uint32_t Type) const;
-
   // Returns true if a relocation only uses the low bits of a value such that
   // all those bits are in in the same page. For example, if the relocation
   // only uses the low 12 bits in a system with 4k pages. If this is true, the

@@ -587,15 +587,14 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     SymbolBody &Body = File.getRelocTargetSym(RI);
     uint32_t Type = RI.getType(Config->Mips64EL);
 
+    RelExpr Expr = Target->getRelExpr(Type, Body);
     // Ignore "hint" relocation because it is for optional code optimization.
-    if (Target->isHintRel(Type))
+    if (Expr == R_HINT)
       continue;
 
     uintX_t Offset = C.getOffset(RI.r_offset);
     if (Offset == (uintX_t)-1)
       continue;
-
-    RelExpr Expr = Target->getRelExpr(Type, Body);
 
     Expr = adjustExpr(Body, IsWrite, Expr, Type);
     if (HasError)
