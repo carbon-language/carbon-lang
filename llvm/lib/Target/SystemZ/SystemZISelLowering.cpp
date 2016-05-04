@@ -253,6 +253,7 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
   // We need to handle dynamic allocations specially because of the
   // 160-byte area at the bottom of the stack.
   setOperationAction(ISD::DYNAMIC_STACKALLOC, PtrVT, Custom);
+  setOperationAction(ISD::GET_DYNAMIC_AREA_OFFSET, PtrVT, Custom);
 
   // Use custom expanders so that we can force the function to use
   // a frame pointer.
@@ -2900,6 +2901,13 @@ lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getMergeValues(Ops, DL);
 }
 
+SDValue SystemZTargetLowering::lowerGET_DYNAMIC_AREA_OFFSET(
+    SDValue Op, SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+
+  return DAG.getNode(SystemZISD::ADJDYNALLOC, DL, MVT::i64);
+}
+
 SDValue SystemZTargetLowering::lowerSMUL_LOHI(SDValue Op,
                                               SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
@@ -4487,6 +4495,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerVACOPY(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC:
     return lowerDYNAMIC_STACKALLOC(Op, DAG);
+  case ISD::GET_DYNAMIC_AREA_OFFSET:
+    return lowerGET_DYNAMIC_AREA_OFFSET(Op, DAG);
   case ISD::SMUL_LOHI:
     return lowerSMUL_LOHI(Op, DAG);
   case ISD::UMUL_LOHI:
