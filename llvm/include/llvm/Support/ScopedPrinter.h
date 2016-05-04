@@ -19,8 +19,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
-using namespace llvm;
-
 namespace llvm {
 
 template <typename T> struct EnumEntry {
