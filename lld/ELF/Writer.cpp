@@ -440,7 +440,8 @@ static bool needsPlt(RelExpr Expr) {
 }
 
 template <class ELFT>
-static bool isRelRelative(RelExpr E, uint32_t Type, const SymbolBody &Body) {
+static bool isStaticLinkTimeConstant(RelExpr E, uint32_t Type,
+                                     const SymbolBody &Body) {
   if (E == R_SIZE)
     return true;
 
@@ -631,7 +632,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Expr == R_GOT && !isRelRelative<ELFT>(Expr, Type, Body) &&
+    if (Expr == R_GOT && !isStaticLinkTimeConstant<ELFT>(Expr, Type, Body) &&
         Config->Shared)
       AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body,
               getAddend<ELFT>(RI)});
@@ -733,7 +734,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // We can however do better than just copying the incoming relocation. We
     // can process some of it and and just ask the dynamic linker to add the
     // load address.
-    if (!Config->Pic || isRelRelative<ELFT>(Expr, Type, Body)) {
+    if (!Config->Pic || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body)) {
       if (Config->EMachine == EM_MIPS && Body.isLocal() &&
           (Type == R_MIPS_GPREL16 || Type == R_MIPS_GPREL32))
         Addend += File.getMipsGp0();
