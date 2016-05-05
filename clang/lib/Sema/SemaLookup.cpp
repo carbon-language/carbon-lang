@@ -4960,8 +4960,6 @@ void Sema::diagnoseMissingImport(SourceLocation Loc, NamedDecl *Decl,
   if (!Def)
     Def = Decl;
 
-  // FIXME: Add a Fix-It that imports the corresponding module or includes
-  // the header.
   Module *Owner = getOwningModule(Decl);
   assert(Owner && "definition of hidden declaration is not in a module");
 
@@ -5015,6 +5013,7 @@ void Sema::diagnoseMissingImport(SourceLocation UseLoc, NamedDecl *Decl,
       << (int)MIK << Decl << Modules[0]->getFullModuleName()
       << getIncludeStringForHeader(PP, E);
   } else {
+    // FIXME: Add a FixItHint that imports the corresponding module.
     Diag(UseLoc, diag::err_module_unimported_use)
       << (int)MIK << Decl << Modules[0]->getFullModuleName();
   }
