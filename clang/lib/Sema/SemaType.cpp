@@ -6799,8 +6799,8 @@ bool Sema::hasVisibleDefinition(NamedDecl *D, NamedDecl **Suggested,
       RD = Pattern;
     D = RD->getDefinition();
   } else if (auto *ED = dyn_cast<EnumDecl>(D)) {
-    while (auto *NewED = ED->getInstantiatedFromMemberEnum())
-      ED = NewED;
+    if (auto *Pattern = ED->getTemplateInstantiationPattern())
+      ED = Pattern;
     if (OnlyNeedComplete && ED->isFixed()) {
       // If the enum has a fixed underlying type, and we're only looking for a
       // complete type (not a definition), any visible declaration of it will
@@ -6887,9 +6887,16 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
     }
   }
 
-  // If we have a complete type, we're done.
   NamedDecl *Def = nullptr;
-  if (!T->isIncompleteType(&Def)) {
+  bool Incomplete = T->isIncompleteType(&Def);
+
+  // Check that any necessary explicit specializations are visible. For an
+  // enum, we just need the declaration, so don't check this.
+  if (Def && !isa<EnumDecl>(Def))
+    checkSpecializationVisibility(Loc, Def);
+
+  // If we have a complete type, we're done.
+  if (!Incomplete) {
     // If we know about the definition but it is not visible, complain.
     NamedDecl *SuggestedDef = nullptr;
     if (Def &&
@@ -6898,7 +6905,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
       // definition visible.
       bool TreatAsComplete = Diagnoser && !isSFINAEContext();
       if (Diagnoser)
-        diagnoseMissingImport(Loc, SuggestedDef, /*NeedDefinition*/true,
+        diagnoseMissingImport(Loc, SuggestedDef, MissingImportKind::Definition,
                               /*Recover*/TreatAsComplete);
       return !TreatAsComplete;
     }
@@ -6990,6 +6997,9 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
         return RequireCompleteTypeImpl(Loc, T, Diagnoser);
     }
   }
+
+  // FIXME: If we didn't instantiate a definition because of an explicit
+  // specialization declaration, check that it's visible.
 
   if (!Diagnoser)
     return true;
