@@ -1118,9 +1118,16 @@ template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
     return false;
 
   if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B)) {
+    // Always include absolute symbols.
+    if (!D->Section)
+      return true;
     // Exclude symbols pointing to garbage-collected sections.
-    if (D->Section && !D->Section->Live)
+    if (!D->Section->Live)
       return false;
+    if (auto *S = dyn_cast<MergeInputSection<ELFT>>(D->Section))
+      if (S->getRangeAndSize(D->Value).first->second ==
+          MergeInputSection<ELFT>::PieceDead)
+        return false;
   }
   return true;
 }
