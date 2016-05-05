@@ -204,12 +204,9 @@ static cl::opt<bool> ClSkipPromotableAllocas(
 
 // These flags allow to change the shadow mapping.
 // The shadow mapping looks like
-//    Shadow = (Mem >> scale) + offset
+//    Shadow = (Mem >> scale) + (1 << offset_log)
 static cl::opt<int> ClMappingScale("asan-mapping-scale",
                                    cl::desc("scale of asan shadow mapping"),
-                                   cl::Hidden, cl::init(0));
-static cl::opt<uint64_t> ClMappingOffset("asan-mapping-offset",
-                                   cl::desc("offset of asan shadow mapping [EXPERIMENTAL]"),
                                    cl::Hidden, cl::init(0));
 
 // Optimization flags. Not user visible, used mostly for testing
@@ -407,12 +404,8 @@ static ShadowMapping getShadowMapping(Triple &TargetTriple, int LongSize,
   }
 
   Mapping.Scale = kDefaultShadowScale;
-  if (ClMappingScale.getNumOccurrences() > 0) {
+  if (ClMappingScale) {
     Mapping.Scale = ClMappingScale;
-  }
-
-  if (ClMappingOffset.getNumOccurrences() > 0) {
-    Mapping.Offset = ClMappingOffset;
   }
 
   // OR-ing shadow offset if more efficient (at least on x86) if the offset
