@@ -226,7 +226,6 @@ set(LLVM_ALL_TARGETS
   AMDGPU
   ARM
   BPF
-  CppBackend
   Hexagon
   Mips
   MSP430
