@@ -146,7 +146,7 @@ void initializeGlobalDCELegacyPassPass(PassRegistry&);
 void initializeGlobalOptLegacyPassPass(PassRegistry&);
 void initializeGlobalsAAWrapperPassPass(PassRegistry&);
 void initializeIPCPPass(PassRegistry&);
-void initializeIPSCCPPass(PassRegistry&);
+void initializeIPSCCPLegacyPassPass(PassRegistry &);
 void initializeIVUsersPass(PassRegistry&);
 void initializeIfConverterPass(PassRegistry&);
 void initializeInductiveRangeCheckEliminationPass(PassRegistry&);
