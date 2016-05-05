@@ -249,11 +249,6 @@ set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD ""
 option(BUILD_SHARED_LIBS
   "Build all libraries as shared libraries instead of static" OFF)
 
-option(LLVM_ENABLE_TIMESTAMPS "Enable embedding timestamp information in build" OFF)
-if(LLVM_ENABLE_TIMESTAMPS)
-  set(ENABLE_TIMESTAMPS 1)
-endif()
-
 option(LLVM_ENABLE_BACKTRACES "Enable embedding backtraces on crash." ON)
 if(LLVM_ENABLE_BACKTRACES)
   set(ENABLE_BACKTRACES 1)
