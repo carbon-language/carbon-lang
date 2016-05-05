@@ -19,7 +19,6 @@
 #include "llvm-c/lto.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Target/TargetOptions.h"
@@ -28,6 +27,7 @@
 
 namespace llvm {
 class StringRef;
+class ModuleSummaryIndex;
 class LLVMContext;
 class TargetMachine;
 
@@ -199,13 +199,6 @@ public:
    * ModuleIdentifier.
    */
   void crossModuleImport(Module &Module, ModuleSummaryIndex &Index);
-
-  /**
-   * Compute the list of summaries needed for importing into module.
-   */
-  static void gatherImportedSummariesForModule(
-      StringRef ModulePath, ModuleSummaryIndex &Index,
-      std::map<std::string, GVSummaryMapTy> &ModuleToSummariesForIndex);
 
   /**
    * Perform internalization.

@@ -418,33 +418,6 @@ void llvm::ComputeCrossModuleImportForModule(
 #endif
 }
 
-/// Compute the set of summaries needed for a ThinLTO backend compilation of
-/// \p ModulePath.
-void llvm::gatherImportedSummariesForModule(
-    StringRef ModulePath,
-    const StringMap<GVSummaryMapTy> &ModuleToDefinedGVSummaries,
-    const StringMap<FunctionImporter::ImportMapTy> &ImportLists,
-    std::map<std::string, GVSummaryMapTy> &ModuleToSummariesForIndex) {
-  // Include all summaries from the importing module.
-  ModuleToSummariesForIndex[ModulePath] =
-      ModuleToDefinedGVSummaries.lookup(ModulePath);
-  auto ModuleImports = ImportLists.find(ModulePath);
-  if (ModuleImports != ImportLists.end()) {
-    // Include summaries for imports.
-    for (auto &ILI : ModuleImports->second) {
-      auto &SummariesForIndex = ModuleToSummariesForIndex[ILI.first()];
-      const auto &DefinedGVSummaries =
-          ModuleToDefinedGVSummaries.lookup(ILI.first());
-      for (auto &GI : ILI.second) {
-        const auto &DS = DefinedGVSummaries.find(GI.first);
-        assert(DS != DefinedGVSummaries.end() &&
-               "Expected a defined summary for imported global value");
-        SummariesForIndex[GI.first] = DS->second;
-      }
-    }
-  }
-}
-
 // Automatically import functions in Module \p DestModule based on the summaries
 // index.
 //

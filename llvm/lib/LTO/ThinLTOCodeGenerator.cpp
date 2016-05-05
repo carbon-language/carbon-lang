@@ -720,29 +720,6 @@ void ThinLTOCodeGenerator::crossModuleImport(Module &TheModule,
 }
 
 /**
- * Compute the list of summaries needed for importing into module.
- */
-void ThinLTOCodeGenerator::gatherImportedSummariesForModule(
-    StringRef ModulePath, ModuleSummaryIndex &Index,
-    std::map<std::string, GVSummaryMapTy> &ModuleToSummariesForIndex) {
-  auto ModuleCount = Index.modulePaths().size();
-
-  // Collect for each module the list of function it defines (GUID -> Summary).
-  StringMap<GVSummaryMapTy> ModuleToDefinedGVSummaries(ModuleCount);
-  Index.collectDefinedGVSummariesPerModule(ModuleToDefinedGVSummaries);
-
-  // Generate import/export list
-  StringMap<FunctionImporter::ImportMapTy> ImportLists(ModuleCount);
-  StringMap<FunctionImporter::ExportSetTy> ExportLists(ModuleCount);
-  ComputeCrossModuleImport(Index, ModuleToDefinedGVSummaries, ImportLists,
-                           ExportLists);
-
-  llvm::gatherImportedSummariesForModule(ModulePath, ModuleToDefinedGVSummaries,
-                                         ImportLists,
-                                         ModuleToSummariesForIndex);
-}
-
-/**
  * Perform internalization.
  */
 void ThinLTOCodeGenerator::internalize(Module &TheModule,
