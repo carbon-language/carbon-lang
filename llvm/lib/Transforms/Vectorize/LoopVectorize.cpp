@@ -1406,6 +1406,14 @@ private:
   /// invariant.
   void collectStridedAccess(Value *LoadOrStoreInst);
 
+  /// \brief Returns true if we can vectorize using this PHI node as an
+  /// induction.
+  ///
+  /// Updates the vectorization state by adding \p Phi to the inductions list.
+  /// This can set \p Phi as the main induction of the loop if \p Phi is a
+  /// better choice for the main induction than the existing one.
+  bool addInductionPhi(PHINode *Phi, InductionDescriptor ID);
+
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.  These are handled as LoopAccessReport rather than
   /// VectorizationReport because the << operator of VectorizationReport returns
@@ -4575,6 +4583,45 @@ static bool hasOutsideLoopUser(const Loop *TheLoop, Instruction *Inst,
   return false;
 }
 
+bool LoopVectorizationLegality::addInductionPhi(PHINode *Phi,
+                                                InductionDescriptor ID) {
+  Inductions[Phi] = ID;
+  Type *PhiTy = Phi->getType();
+  const DataLayout &DL = Phi->getModule()->getDataLayout();
+
+  // Get the widest type.
+  if (!WidestIndTy)
+    WidestIndTy = convertPointerToIntegerType(DL, PhiTy);
+  else
+    WidestIndTy = getWiderType(DL, PhiTy, WidestIndTy);
+
+  // Int inductions are special because we only allow one IV.
+  if (ID.getKind() == InductionDescriptor::IK_IntInduction &&
+      ID.getStepValue()->isOne() &&
+      isa<Constant>(ID.getStartValue()) &&
+        cast<Constant>(ID.getStartValue())->isNullValue()) {
+    // Use the phi node with the widest type as induction. Use the last
+    // one if there are multiple (no good reason for doing this other
+    // than it is expedient). We've checked that it begins at zero and
+    // steps by one, so this is a canonical induction variable.
+    if (!Induction || PhiTy == WidestIndTy)
+      Induction = Phi;
+  }
+
+  DEBUG(dbgs() << "LV: Found an induction variable.\n");
+
+  // Until we explicitly handle the case of an induction variable with
+  // an outside loop user we have to give up vectorizing this loop.
+  if (hasOutsideLoopUser(TheLoop, Phi, AllowedExit)) {
+    emitAnalysis(VectorizationReport(Phi) <<
+                 "use of induction value outside of the "
+                 "loop is not handled by vectorizer");
+    return false;
+  }
+
+  return true;
+}
+
 bool LoopVectorizationLegality::canVectorizeInstrs() {
   BasicBlock *Header = TheLoop->getHeader();
 
@@ -4628,36 +4675,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
         InductionDescriptor ID;
         if (InductionDescriptor::isInductionPHI(Phi, PSE.getSE(), ID)) {
-          Inductions[Phi] = ID;
-          // Get the widest type.
-          if (!WidestIndTy)
-            WidestIndTy = convertPointerToIntegerType(DL, PhiTy);
-          else
-            WidestIndTy = getWiderType(DL, PhiTy, WidestIndTy);
-
-          // Int inductions are special because we only allow one IV.
-          if (ID.getKind() == InductionDescriptor::IK_IntInduction &&
-              ID.getStepValue()->isOne() && isa<Constant>(ID.getStartValue()) &&
-              cast<Constant>(ID.getStartValue())->isNullValue()) {
-            // Use the phi node with the widest type as induction. Use the last
-            // one if there are multiple (no good reason for doing this other
-            // than it is expedient). We've checked that it begins at zero and
-            // steps by one, so this is a canonical induction variable.
-            if (!Induction || PhiTy == WidestIndTy)
-              Induction = Phi;
-          }
-
-          DEBUG(dbgs() << "LV: Found an induction variable.\n");
-
-          // Until we explicitly handle the case of an induction variable with
-          // an outside loop user we have to give up vectorizing this loop.
-          if (hasOutsideLoopUser(TheLoop, &*it, AllowedExit)) {
-            emitAnalysis(VectorizationReport(&*it)
-                         << "use of induction value outside of the "
-                            "loop is not handled by vectorizer");
+          if (!addInductionPhi(Phi, ID))
             return false;
-          }
-
           continue;
         }
 
