@@ -88,11 +88,22 @@ JavaLanguage::GetFormatters()
         DataVisualization::Categories::GetCategory(GetPluginName(), g_category);
         if (g_category)
         {
+            const char* array_regexp = "^.*\\[\\]&?$";
+
             lldb::TypeSummaryImplSP string_summary_sp(new CXXFunctionSummaryFormat(
                 TypeSummaryImpl::Flags().SetDontShowChildren(true), lldb_private::formatters::JavaStringSummaryProvider,
                 "java.lang.String summary provider"));
-
             g_category->GetTypeSummariesContainer()->Add(ConstString("java::lang::String"), string_summary_sp);
+
+            lldb::TypeSummaryImplSP array_summary_sp(new CXXFunctionSummaryFormat(
+                TypeSummaryImpl::Flags().SetDontShowChildren(true), lldb_private::formatters::JavaArraySummaryProvider,
+                "Java array summary provider"));
+            g_category->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(array_regexp)),
+                                                              array_summary_sp);
+
+            AddCXXSynthetic(g_category, lldb_private::formatters::JavaArraySyntheticFrontEndCreator,
+                            "Java array synthetic children", ConstString(array_regexp),
+                            SyntheticChildren::Flags().SetCascades(true), true);
         }
     });
     return g_category;
