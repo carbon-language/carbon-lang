@@ -1356,14 +1356,13 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
     Target = BR->getOperand(1);
   }
 
-  if (Intr->getOpcode() != ISD::INTRINSIC_W_CHAIN) {
+  if (!isCFIntrinsic(Intr)) {
     // This is a uniform branch so we don't need to legalize.
     return BRCOND;
   }
 
   assert(!SetCC ||
         (SetCC->getConstantOperandVal(1) == 1 &&
-         isCFIntrinsic(Intr) &&
          cast<CondCodeSDNode>(SetCC->getOperand(2).getNode())->get() ==
                                                              ISD::SETNE));
 
