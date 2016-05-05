@@ -41,8 +41,7 @@ namespace {
 static Error
 malformedError(const MachOObjectFile &Obj, Twine Msg) {
   std::string StringMsg = "truncated or malformed object (" + Msg.str() + ")";
-  return make_error<GenericBinaryError>(std::move(Obj.getFileName()),
-                                        std::move(StringMsg),
+  return make_error<GenericBinaryError>(Obj.getFileName(), std::move(StringMsg),
                                         object_error::parse_failed);
 }
 
@@ -2396,7 +2395,7 @@ ObjectFile::createMachOObjectFile(MemoryBufferRef Buffer) {
     return MachOObjectFile::create(Buffer, false, true);
   if (Magic == "\xCF\xFA\xED\xFE")
     return MachOObjectFile::create(Buffer, true, true);
-  return make_error<GenericBinaryError>(std::move(Buffer.getBufferIdentifier()),
-                                   "Unrecognized MachO magic number",
-                                   object_error::invalid_file_type);
+  return make_error<GenericBinaryError>(Buffer.getBufferIdentifier(),
+                                        "Unrecognized MachO magic number",
+                                        object_error::invalid_file_type);
 }
