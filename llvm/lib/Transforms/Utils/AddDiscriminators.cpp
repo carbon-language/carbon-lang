@@ -67,6 +67,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 
 using namespace llvm;
 
@@ -79,6 +80,10 @@ struct AddDiscriminators : public FunctionPass {
     initializeAddDiscriminatorsPass(*PassRegistry::getPassRegistry());
   }
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<CFGSimplifyPass>();
+  }
+
   bool runOnFunction(Function &F) override;
 };
 } // end anonymous namespace
@@ -86,6 +91,7 @@ struct AddDiscriminators : public FunctionPass {
 char AddDiscriminators::ID = 0;
 INITIALIZE_PASS_BEGIN(AddDiscriminators, "add-discriminators",
                       "Add DWARF path discriminators", false, false)
+INITIALIZE_PASS_DEPENDENCY(CFGSimplifyPass)
 INITIALIZE_PASS_END(AddDiscriminators, "add-discriminators",
                     "Add DWARF path discriminators", false, false)
 

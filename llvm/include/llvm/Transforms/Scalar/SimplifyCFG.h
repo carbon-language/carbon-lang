@@ -39,6 +39,17 @@ public:
   PreservedAnalyses run(Function &F, AnalysisManager<Function> &AM);
 };
 
+struct CFGSimplifyPass : public FunctionPass {
+  static char ID; // Pass identification, replacement for typeid
+  unsigned BonusInstThreshold;
+  std::function<bool(const Function &)> PredicateFtor;
+
+  CFGSimplifyPass(int T = -1,
+                  std::function<bool(const Function &)> Ftor = nullptr);
+  bool runOnFunction(Function &F) override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+};
 }
 
 #endif

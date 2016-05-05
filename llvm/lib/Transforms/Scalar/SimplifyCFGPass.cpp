@@ -196,35 +196,31 @@ PreservedAnalyses SimplifyCFGPass::run(Function &F,
   return PreservedAnalyses::all();
 }
 
-namespace {
-struct CFGSimplifyPass : public FunctionPass {
-  static char ID; // Pass identification, replacement for typeid
-  unsigned BonusInstThreshold;
-  std::function<bool(const Function &)> PredicateFtor;
+CFGSimplifyPass::CFGSimplifyPass(int T,
+            std::function<bool(const Function &)> Ftor)
+    : FunctionPass(ID), PredicateFtor(Ftor) {
+  BonusInstThreshold = (T == -1) ? UserBonusInstThreshold : unsigned(T);
+  initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
+}
 
-  CFGSimplifyPass(int T = -1,
-                  std::function<bool(const Function &)> Ftor = nullptr)
-      : FunctionPass(ID), PredicateFtor(Ftor) {
-    BonusInstThreshold = (T == -1) ? UserBonusInstThreshold : unsigned(T);
-    initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
-  }
-  bool runOnFunction(Function &F) override {
-    if (skipFunction(F) || (PredicateFtor && !PredicateFtor(F)))
-      return false;
+bool CFGSimplifyPass::runOnFunction(Function &F) {
+  if (PredicateFtor && !PredicateFtor(F))
+    return false;
 
-    AssumptionCache *AC =
-        &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-    const TargetTransformInfo &TTI =
-        getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-    return simplifyFunctionCFG(F, TTI, AC, BonusInstThreshold);
-  }
+  if (skipFunction(F))
+    return false;
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<AssumptionCacheTracker>();
-    AU.addRequired<TargetTransformInfoWrapperPass>();
-    AU.addPreserved<GlobalsAAWrapperPass>();
-  }
-};
+  AssumptionCache *AC =
+      &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+  const TargetTransformInfo &TTI =
+      getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+  return simplifyFunctionCFG(F, TTI, AC, BonusInstThreshold);
+}
+
+void CFGSimplifyPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<AssumptionCacheTracker>();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
+  AU.addPreserved<GlobalsAAWrapperPass>();
 }
 
 char CFGSimplifyPass::ID = 0;
