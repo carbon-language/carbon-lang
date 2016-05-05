@@ -234,22 +234,23 @@ static void parseHeader(const MachOObjectFile *Obj, T &Header,
 template <typename SegmentCmd>
 static Error parseSegmentLoadCommand(
     const MachOObjectFile *Obj, const MachOObjectFile::LoadCommandInfo &Load,
-    SmallVectorImpl<const char *> &Sections, bool &IsPageZeroSegment) {
+    SmallVectorImpl<const char *> &Sections, bool &IsPageZeroSegment,
+    uint32_t LoadCommandIndex, const char *CmdName) {
   const unsigned SegmentLoadSize = sizeof(SegmentCmd);
   if (Load.C.cmdsize < SegmentLoadSize)
-    return malformedError(*Obj,
-                          "Mach-O segment load command size is too small",
-                          object_error::macho_load_segment_too_small);
+    return malformedError(*Obj, Twine("truncated or malformed object "
+                          "(load command ") + Twine(LoadCommandIndex) +
+                          Twine(" ") + CmdName + Twine(" cmdsize too small)"));
   if (auto SegOrErr = getStructOrErr<SegmentCmd>(Obj, Load.Ptr)) {
     SegmentCmd S = SegOrErr.get();
     const unsigned SectionSize =
       Obj->is64Bit() ? sizeof(MachO::section_64) : sizeof(MachO::section);
     if (S.nsects > std::numeric_limits<uint32_t>::max() / SectionSize ||
         S.nsects * SectionSize > Load.C.cmdsize - SegmentLoadSize)
-      return malformedError(*Obj,
-                            "Mach-O segment load command contains too many "
-                            "sections",
-                            object_error::macho_load_segment_too_many_sections);
+      return malformedError(*Obj, Twine("truncated or malformed object "
+                            "(load command ") + Twine(LoadCommandIndex) +
+                            Twine(" inconsistent cmdsize in ") + CmdName + 
+                            Twine(" for the number of sections)"));
     for (unsigned J = 0; J < S.nsects; ++J) {
       const char *Sec = getSectionPtr(Obj, Load, J);
       Sections.push_back(Sec);
@@ -357,11 +358,12 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       UuidLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == MachO::LC_SEGMENT_64) {
       if ((Err = parseSegmentLoadCommand<MachO::segment_command_64>(
-                   this, Load, Sections, HasPageZeroSegment)))
+                   this, Load, Sections, HasPageZeroSegment, I,
+                   "LC_SEGMENT_64")))
         return;
     } else if (Load.C.cmd == MachO::LC_SEGMENT) {
       if ((Err = parseSegmentLoadCommand<MachO::segment_command>(
-                   this, Load, Sections, HasPageZeroSegment)))
+                   this, Load, Sections, HasPageZeroSegment, I, "LC_SEGMENT")))
         return;
     } else if (Load.C.cmd == MachO::LC_LOAD_DYLIB ||
                Load.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
