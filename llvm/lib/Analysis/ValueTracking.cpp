@@ -3948,6 +3948,27 @@ static Optional<bool> isImpliedCondMatchingOperands(CmpInst::Predicate APred,
   return None;
 }
 
+/// Return true if "icmp1 APred ALHS C1" implies "icmp2 BPred BLHS C2" is
+/// true.  Return false if "icmp1 APred ALHS C1" implies "icmp2 BPred BLHS
+/// C2" is false.  Otherwise, return None if we can't infer anything.
+static Optional<bool>
+isImpliedCondMatchingImmOperands(CmpInst::Predicate APred, Value *ALHS,
+                                 ConstantInt *C1, CmpInst::Predicate BPred,
+                                 Value *BLHS, ConstantInt *C2) {
+  assert(ALHS == BLHS && "LHS operands must match.");
+  ConstantRange DomCR =
+      ConstantRange::makeExactICmpRegion(APred, C1->getValue());
+  ConstantRange CR =
+      ConstantRange::makeAllowedICmpRegion(BPred, C2->getValue());
+  ConstantRange Intersection = DomCR.intersectWith(CR);
+  ConstantRange Difference = DomCR.difference(CR);
+  if (Intersection.isEmptySet())
+    return false;
+  if (Difference.isEmptySet())
+    return true;
+  return None;
+}
+
 Optional<bool> llvm::isImpliedCondition(Value *LHS, Value *RHS,
                                         const DataLayout &DL, bool InvertAPred,
                                         unsigned Depth, AssumptionCache *AC,
@@ -3984,6 +4005,14 @@ Optional<bool> llvm::isImpliedCondition(Value *LHS, Value *RHS,
       isImpliedCondMatchingOperands(APred, ALHS, ARHS, BPred, BLHS, BRHS);
   if (Implication)
     return Implication;
+
+  if (ALHS == BLHS && isa<ConstantInt>(ARHS) && isa<ConstantInt>(BRHS)) {
+    Implication =
+        isImpliedCondMatchingImmOperands(APred, ALHS, cast<ConstantInt>(ARHS),
+                                         BPred, BLHS, cast<ConstantInt>(BRHS));
+    if (Implication)
+      return Implication;
+  }
 
   if (APred == BPred)
     return isImpliedCondOperands(APred, ALHS, ARHS, BLHS, BRHS, DL, Depth, AC,
