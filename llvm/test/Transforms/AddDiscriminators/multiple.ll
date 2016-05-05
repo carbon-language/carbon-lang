@@ -21,18 +21,20 @@ entry:
 
 if.then:                                          ; preds = %entry
   %1 = load i32, i32* %i.addr, align 4, !dbg !10
+; CHECK:  %1 = load i32, i32* %i.addr, align 4, !dbg ![[THEN:[0-9]+]]
 
   store i32 %1, i32* %x, align 4, !dbg !10
-; CHECK:  store i32 %1, i32* %x, align 4, !dbg ![[THEN:[0-9]+]]
+; CHECK:  store i32 %1, i32* %x, align 4, !dbg ![[THEN]]
 
   br label %if.end, !dbg !10
 ; CHECK:  br label %if.end, !dbg ![[THEN]]
 
 if.else:                                          ; preds = %entry
   %2 = load i32, i32* %i.addr, align 4, !dbg !10
+; CHECK:  %2 = load i32, i32* %i.addr, align 4, !dbg ![[ELSE:[0-9]+]]
 
   %sub = sub nsw i32 0, %2, !dbg !10
-; CHECK:  %sub = sub nsw i32 0, %1, !dbg ![[ELSE:[0-9]+]]
+; CHECK:  %sub = sub nsw i32 0, %2, !dbg ![[ELSE]]
 
   store i32 %sub, i32* %x, align 4, !dbg !10
 ; CHECK:  store i32 %sub, i32* %x, align 4, !dbg ![[ELSE]]

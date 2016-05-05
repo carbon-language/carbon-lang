@@ -21,20 +21,27 @@ define i32 @_Z3fooi(i32 %i) #0 !dbg !4 {
 
 ; <label>:5                                       ; preds = %0
   %6 = load i32, i32* %2, align 4, !dbg !23, !tbaa !13
+; CHECK:  %6 = load i32, i32* %2, align 4, !dbg ![[THEN1:[0-9]+]],{{.*}}
+
   %7 = icmp eq i32 %6, 5, !dbg !24
+; CHECK:  %7 = icmp eq i32 %6, 5, !dbg ![[THEN2:[0-9]+]]
+
   br i1 %7, label %8, label %9, !dbg !25
+; CHECK:  br i1 %7, label %8, label %9, !dbg ![[THEN3:[0-9]+]]
 
 ; <label>:8                                       ; preds = %5, %0
   store i32 100, i32* %1, align 4, !dbg !26
-; CHECK: store i32 100, i32* %1, align 4, !dbg ![[THEN:[0-9]+]]
+; CHECK: store i32 100, i32* %1, align 4, !dbg ![[ELSE:[0-9]+]]
 
   br label %10, !dbg !26
+; CHECK: br label %10, !dbg ![[ELSE]]
 
 ; <label>:9                                       ; preds = %5
   store i32 99, i32* %1, align 4, !dbg !27
-; CHECK: store i32 99, i32* %1, align 4, !dbg ![[ELSE:[0-9]+]]
+; CHECK: store i32 99, i32* %1, align 4, !dbg ![[COMBINE:[0-9]+]]
 
   br label %10, !dbg !27
+; CHECK: br label %10, !dbg ![[COMBINE]]
 
 ; <label>:10                                      ; preds = %9, %8
   %11 = load i32, i32* %1, align 4, !dbg !28
@@ -80,7 +87,11 @@ attributes #1 = { nounwind readnone }
 !27 = !DILocation(line: 2, column: 42, scope: !20)
 !28 = !DILocation(line: 3, column: 1, scope: !4)
 
-; CHECK: ![[THEN]] = !DILocation(line: 2, column: 25, scope: ![[THENBLOCK:[0-9]+]])
+; CHECK: ![[THEN1]] = !DILocation(line: 2, column: 17, scope: ![[THENBLOCK:[0-9]+]])
 ; CHECK: ![[THENBLOCK]] = !DILexicalBlockFile({{.*}} discriminator: 1)
-; CHECK: ![[ELSE]] = !DILocation(line: 2, column: 42, scope: ![[ELSEBLOCK:[0-9]+]])
+; CHECK: ![[THEN2]] = !DILocation(line: 2, column: 19, scope: ![[THENBLOCK]])
+; CHECK: ![[THEN3]] = !DILocation(line: 2, column: 7, scope: ![[THENBLOCK]])
+; CHECK: ![[ELSE]] = !DILocation(line: 2, column: 25, scope: ![[ELSEBLOCK:[0-9]+]])
 ; CHECK: ![[ELSEBLOCK]] = !DILexicalBlockFile({{.*}} discriminator: 2)
+; CHECK: ![[COMBINE]] = !DILocation(line: 2, column: 42, scope: ![[COMBINEBLOCK:[0-9]+]])
+; CHECK: ![[COMBINEBLOCK]] = !DILexicalBlockFile({{.*}} discriminator: 3)
