@@ -4673,13 +4673,6 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           return false;
         }
 
-        InductionDescriptor ID;
-        if (InductionDescriptor::isInductionPHI(Phi, PSE.getSE(), ID)) {
-          if (!addInductionPhi(Phi, ID))
-            return false;
-          continue;
-        }
-
         RecurrenceDescriptor RedDes;
         if (RecurrenceDescriptor::isReductionPHI(Phi, TheLoop, RedDes)) {
           if (RedDes.hasUnsafeAlgebra())
@@ -4689,8 +4682,23 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           continue;
         }
 
+        InductionDescriptor ID;
+        if (InductionDescriptor::isInductionPHI(Phi, PSE, ID)) {
+          if (!addInductionPhi(Phi, ID))
+            return false;
+          continue;
+        }
+
         if (RecurrenceDescriptor::isFirstOrderRecurrence(Phi, TheLoop, DT)) {
           FirstOrderRecurrences.insert(Phi);
+          continue;
+        }
+
+        // As a last resort, coerce the PHI to a AddRec expression
+        // and re-try classifying it a an induction PHI.
+        if (InductionDescriptor::isInductionPHI(Phi, PSE, ID, true)) {
+          if (!addInductionPhi(Phi, ID))
+            return false;
           continue;
         }
 
