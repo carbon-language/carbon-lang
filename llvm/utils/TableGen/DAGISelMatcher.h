@@ -82,7 +82,6 @@ public:
     EmitCopyToReg,        // Emit a copytoreg into a physreg.
     EmitNode,             // Create a DAG node
     EmitNodeXForm,        // Run a SDNodeXForm
-    MarkGlueResults,      // Indicate which interior nodes have glue results.
     CompleteMatch,        // Finish a match and update the results.
     MorphNodeTo           // Build a node, finish a match and update results.
   };
@@ -1114,34 +1113,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == MorphNodeTo;
   }
-};
-
-/// MarkGlueResultsMatcher - This node indicates which non-root nodes in the
-/// pattern produce glue.  This allows CompleteMatchMatcher to update them
-/// with the output glue of the resultant code.
-class MarkGlueResultsMatcher : public Matcher {
-  SmallVector<unsigned, 3> GlueResultNodes;
-public:
-  MarkGlueResultsMatcher(ArrayRef<unsigned> nodes)
-    : Matcher(MarkGlueResults), GlueResultNodes(nodes.begin(), nodes.end()) {}
-
-  unsigned getNumNodes() const { return GlueResultNodes.size(); }
-
-  unsigned getNode(unsigned i) const {
-    assert(i < GlueResultNodes.size());
-    return GlueResultNodes[i];
-  }
-
-  static inline bool classof(const Matcher *N) {
-    return N->getKind() == MarkGlueResults;
-  }
-
-private:
-  void printImpl(raw_ostream &OS, unsigned indent) const override;
-  bool isEqualImpl(const Matcher *M) const override {
-    return cast<MarkGlueResultsMatcher>(M)->GlueResultNodes == GlueResultNodes;
-  }
-  unsigned getHashImpl() const override;
 };
 
 /// CompleteMatchMatcher - Complete a match by replacing the results of the

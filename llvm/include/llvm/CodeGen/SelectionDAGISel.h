@@ -151,7 +151,6 @@ public:
     OPC_MorphNodeTo,
     // Space-optimized forms that implicitly encode number of result VTs.
     OPC_MorphNodeTo0, OPC_MorphNodeTo1, OPC_MorphNodeTo2,
-    OPC_MarkGlueResults,
     OPC_CompleteMatch
   };
 
@@ -301,11 +300,9 @@ private:
   /// state machines that start with a OPC_SwitchOpcode node.
   std::vector<unsigned> OpcodeOffset;
 
-  void UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
-                           const SmallVectorImpl<SDNode*> &ChainNodesMatched,
-                           SDValue InputGlue, const SmallVectorImpl<SDNode*> &F,
-                           bool isMorphNodeTo);
-
+  void UpdateChains(SDNode *NodeToMatch, SDValue InputChain,
+                    const SmallVectorImpl<SDNode *> &ChainNodesMatched,
+                    bool isMorphNodeTo);
 };
 
 }

@@ -277,10 +277,6 @@ void EmitNodeMatcherCommon::printImpl(raw_ostream &OS, unsigned indent) const {
   OS << ")\n";
 }
 
-void MarkGlueResultsMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "MarkGlueResults <todo: args>\n";
-}
-
 void CompleteMatchMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CompleteMatch <todo args>\n";
   OS.indent(indent) << "Src = " << *Pattern.getSrcPattern() << "\n";
@@ -349,10 +345,6 @@ unsigned EmitNodeMatcherCommon::getHashImpl() const {
 void EmitNodeMatcher::anchor() { }
 
 void MorphNodeToMatcher::anchor() { }
-
-unsigned MarkGlueResultsMatcher::getHashImpl() const {
-  return HashUnsigneds(GlueResultNodes.begin(), GlueResultNodes.end());
-}
 
 unsigned CompleteMatchMatcher::getHashImpl() const {
   return HashUnsigneds(Results.begin(), Results.end()) ^
