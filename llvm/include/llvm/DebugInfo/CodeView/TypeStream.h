@@ -21,6 +21,8 @@
 #include <stdint.h>
 
 namespace llvm {
+class APSInt;
+
 namespace codeview {
 
 /// Consumes sizeof(T) bytes from the given byte sequence. Returns an error if
@@ -42,6 +44,23 @@ inline std::error_code consumeUInt32(StringRef &Data, uint32_t &Res) {
   Res = *IntPtr;
   return std::error_code();
 }
+
+/// Decodes a numeric "leaf" value. These are integer literals encountered in
+/// the type stream. If the value is positive and less than LF_NUMERIC (1 <<
+/// 15), it is emitted directly in Data. Otherwise, it has a tag like LF_CHAR
+/// that indicates the bitwidth and sign of the numeric data.
+bool decodeNumericLeaf(ArrayRef<uint8_t> &Data, APSInt &Num);
+
+inline bool decodeNumericLeaf(StringRef &Data, APSInt &Num) {
+  ArrayRef<uint8_t> Bytes(reinterpret_cast<const uint8_t *>(Data.data()),
+                          Data.size());
+  bool Success = decodeNumericLeaf(Bytes, Num);
+  Data = StringRef(reinterpret_cast<const char *>(Bytes.data()), Bytes.size());
+  return Success;
+}
+
+/// Decode a numeric leaf value that is known to be a uint32_t.
+bool decodeUIntLeaf(ArrayRef<uint8_t> &Data, uint64_t &Num);
 
 // A const input iterator interface to the CodeView type stream.
 class TypeIterator {

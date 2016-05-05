@@ -115,8 +115,7 @@ public:
         // Field list records do not describe their own length, so we cannot
         // continue parsing past an unknown member type.
         visitUnknownMember(Leaf);
-        HadError = true;
-        return;
+        return parseError();
 #define MEMBER_RECORD(ClassName, LeafEnum)                                     \
   case LeafEnum: {                                                             \
     const ClassName *Rec;                                                      \
@@ -141,6 +140,9 @@ public:
   /// record parsing cannot recover from an unknown member record, so this
   /// method is only called at most once per field list record.
   void visitUnknownMember(TypeLeafKind Leaf) {}
+
+  /// Helper for returning from a void function when the stream is corrupted.
+  void parseError() { HadError = true; }
 
 private:
   /// Whether a type stream parsing error was encountered.
