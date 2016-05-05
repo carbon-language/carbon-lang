@@ -4627,7 +4627,6 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
   // Look for the attribute signaling the absence of NaNs.
   Function &F = *Header->getParent();
-  const DataLayout &DL = F.getParent()->getDataLayout();
   HasFunNoNaNAttr =
       F.getFnAttribute("no-nans-fp-math").getValueAsString() == "true";
 
