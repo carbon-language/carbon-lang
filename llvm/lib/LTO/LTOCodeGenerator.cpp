@@ -364,7 +364,7 @@ static void preserveDiscardableGVs(
   }
   llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(TheModule.getContext());
   auto mayPreserveGlobal = [&](GlobalValue &GV) {
-    if (!GV.isDiscardableIfUnused() || GV.isDeclaration())
+    if (!GV.isDiscardableIfUnused() || GV.isDeclaration() || !GV.hasName())
       return;
     if (!mustPreserveGV(GV))
       return;
