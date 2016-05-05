@@ -1301,7 +1301,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr &MI) const {
 
   // Keep a flag for upto 4 operands in the instructions, to indicate if
   // that operand has been constant extended.
-  bool OpCExtended[4];
+  bool OpCExtended[4] = {false};
   if (NumOperands > 4)
     NumOperands = 4;
 
