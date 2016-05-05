@@ -8,8 +8,8 @@
 ; The backend index for this module contains summaries from itself and
 ; Inputs/distributed_indexes.ll, as it imports from the latter.
 ; BACKEND1: <MODULE_STRTAB_BLOCK
-; BACKEND1-NEXT: <ENTRY {{.*}} record string = '{{.*}}/distributed_indexes.ll.tmp{{.*}}.bc'
-; BACKEND1-NEXT: <ENTRY {{.*}} record string = '{{.*}}/distributed_indexes.ll.tmp{{.*}}.bc'
+; BACKEND1-NEXT: <ENTRY {{.*}} record string = '{{.*}}distributed_indexes.ll.tmp{{.*}}.bc'
+; BACKEND1-NEXT: <ENTRY {{.*}} record string = '{{.*}}distributed_indexes.ll.tmp{{.*}}.bc'
 ; BACKEND1-NEXT: </MODULE_STRTAB_BLOCK
 ; BACKEND1-NEXT: <GLOBALVAL_SUMMARY_BLOCK
 ; BACKEND1-NEXT: <VERSION
@@ -26,7 +26,7 @@
 ; The backend index for Input/distributed_indexes.ll contains summaries from
 ; itself only, as it does not import anything.
 ; BACKEND2: <MODULE_STRTAB_BLOCK
-; BACKEND2-NEXT: <ENTRY {{.*}} record string = '{{.*}}/distributed_indexes.ll.tmp2.bc'
+; BACKEND2-NEXT: <ENTRY {{.*}} record string = '{{.*}}distributed_indexes.ll.tmp2.bc'
 ; BACKEND2-NEXT: </MODULE_STRTAB_BLOCK
 ; BACKEND2-NEXT: <GLOBALVAL_SUMMARY_BLOCK
 ; BACKEND2-NEXT: <VERSION
