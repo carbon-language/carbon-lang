@@ -2397,6 +2397,6 @@ ObjectFile::createMachOObjectFile(MemoryBufferRef Buffer) {
   if (Magic == "\xCF\xFA\xED\xFE")
     return MachOObjectFile::create(Buffer, true, true);
   return make_error<GenericBinaryError>(std::move(Buffer.getBufferIdentifier()),
-                                   std::move("Unrecognized MachO magic number"),
+                                   "Unrecognized MachO magic number",
                                    object_error::invalid_file_type);
 }
