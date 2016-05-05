@@ -263,8 +263,7 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
     return FactorNodes(N->getNextPtr());
   
   // Okay, pull together the children of the scope node into a vector so we can
-  // inspect it more easily.  While we're at it, bucket them up by the hash
-  // code of their first predicate.
+  // inspect it more easily.
   SmallVector<Matcher*, 32> OptionsToMatch;
   
   for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
