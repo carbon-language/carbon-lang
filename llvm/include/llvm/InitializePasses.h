@@ -96,7 +96,7 @@ void initializeStructurizeCFGPass(PassRegistry&);
 void initializeCFGViewerPass(PassRegistry&);
 void initializeConstantHoistingPass(PassRegistry&);
 void initializeCodeGenPreparePass(PassRegistry&);
-void initializeConstantMergePass(PassRegistry&);
+void initializeConstantMergeLegacyPassPass(PassRegistry &);
 void initializeConstantPropagationPass(PassRegistry&);
 void initializeMachineCopyPropagationPass(PassRegistry&);
 void initializeCostModelAnalysisPass(PassRegistry&);
