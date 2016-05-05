@@ -1391,7 +1391,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(Body))
         SS->File->IsUsed = true;
 
-    if (Body->isUndefined() && !S->isWeak())
+    // We only report undefined symbols in regular objects. This means that we
+    // will accept an undefined reference in bitcode if it can be optimized out.
+    if (S->IsUsedInRegularObj && Body->isUndefined() && !S->isWeak())
       reportUndefined<ELFT>(Symtab, Body);
 
     if (auto *C = dyn_cast<DefinedCommon>(Body))
