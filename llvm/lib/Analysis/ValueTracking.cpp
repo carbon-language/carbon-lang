@@ -3922,19 +3922,24 @@ isImpliedCondOperands(CmpInst::Predicate Pred, Value *ALHS, Value *ARHS,
   }
 }
 
+/// Return true if the operands of the two compares match.  IsSwappedOps is true
+/// when the operands match, but are swapped.
+static bool isMatchingOps(Value *ALHS, Value *ARHS, Value *BLHS, Value *BRHS,
+                          bool &IsSwappedOps) {
+
+  bool IsMatchingOps = (ALHS == BLHS && ARHS == BRHS);
+  IsSwappedOps = (ALHS == BRHS && ARHS == BLHS);
+  return IsMatchingOps || IsSwappedOps;
+}
+
 /// Return true if "icmp1 APred ALHS ARHS" implies "icmp2 BPred BLHS BRHS" is
 /// true.  Return false if "icmp1 APred ALHS ARHS" implies "icmp2 BPred BLHS
 /// BRHS" is false.  Otherwise, return None if we can't infer anything.
 static Optional<bool> isImpliedCondMatchingOperands(CmpInst::Predicate APred,
                                                     Value *ALHS, Value *ARHS,
                                                     CmpInst::Predicate BPred,
-                                                    Value *BLHS, Value *BRHS) {
-  // The operands of the two compares must match.
-  bool IsMatchingOps = (ALHS == BLHS && ARHS == BRHS);
-  bool IsSwappedOps = (ALHS == BRHS && ARHS == BLHS);
-  if (!IsMatchingOps && !IsSwappedOps)
-    return None;
-
+                                                    Value *BLHS, Value *BRHS,
+                                                    bool IsSwappedOps) {
   // Canonicalize the operands so they're matching.
   if (IsSwappedOps) {
     std::swap(BLHS, BRHS);
@@ -4001,17 +4006,27 @@ Optional<bool> llvm::isImpliedCondition(Value *LHS, Value *RHS,
   if (InvertAPred)
     APred = CmpInst::getInversePredicate(APred);
 
-  Optional<bool> Implication =
-      isImpliedCondMatchingOperands(APred, ALHS, ARHS, BPred, BLHS, BRHS);
-  if (Implication)
-    return Implication;
-
-  if (ALHS == BLHS && isa<ConstantInt>(ARHS) && isa<ConstantInt>(BRHS)) {
-    Implication =
-        isImpliedCondMatchingImmOperands(APred, ALHS, cast<ConstantInt>(ARHS),
-                                         BPred, BLHS, cast<ConstantInt>(BRHS));
-    if (Implication)
+  // Can we infer anything when the two compares have matching operands?
+  bool IsSwappedOps;
+  if (isMatchingOps(ALHS, ARHS, BLHS, BRHS, IsSwappedOps)) {
+    if (Optional<bool> Implication = isImpliedCondMatchingOperands(
+            APred, ALHS, ARHS, BPred, BLHS, BRHS, IsSwappedOps))
       return Implication;
+    // No amount of additional analysis will infer the second condition, so
+    // early exit.
+    return None;
+  }
+
+  // Can we infer anything when the LHS operands match and the RHS operands are
+  // constants (not necessarily matching)?
+  if (ALHS == BLHS && isa<ConstantInt>(ARHS) && isa<ConstantInt>(BRHS)) {
+    if (Optional<bool> Implication = isImpliedCondMatchingImmOperands(
+            APred, ALHS, cast<ConstantInt>(ARHS), BPred, BLHS,
+            cast<ConstantInt>(BRHS)))
+      return Implication;
+    // No amount of additional analysis will infer the second condition, so
+    // early exit.
+    return None;
   }
 
   if (APred == BPred)
