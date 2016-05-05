@@ -832,6 +832,8 @@ static bool shouldKeepInSymtab(InputSectionBase<ELFT> *Sec, StringRef SymName,
   return !(Sec->getSectionHdr()->sh_flags & SHF_MERGE);
 }
 
+template <class ELFT> static bool includeInSymtab(const SymbolBody &B);
+
 // Local symbols are not in the linker's symbol table. This function scans
 // each object file's symbol table to copy local symbols to the output.
 template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
@@ -845,23 +847,12 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       // No reason to keep local undefined symbol in symtab.
       if (!DR)
         continue;
+      if (!includeInSymtab<ELFT>(*B))
+        continue;
       StringRef SymName(StrTab + B->getNameOffset());
       InputSectionBase<ELFT> *Sec = DR->Section;
       if (!shouldKeepInSymtab<ELFT>(Sec, SymName, *B))
         continue;
-      if (Sec) {
-        if (!Sec->Live)
-          continue;
-
-        // Garbage collection is normally able to remove local symbols if they
-        // point to gced sections. In the case of SHF_MERGE sections, we want it
-        // to also be able to drop them if part of the section is gced.
-        // We could look at the section offset map to keep some of these
-        // symbols, but almost all local symbols are .L* symbols, so it
-        // is probably not worth the complexity.
-        if (Config->GcSections && isa<MergeInputSection<ELFT>>(Sec))
-          continue;
-      }
       ++Out<ELFT>::SymTab->NumLocals;
       if (Config->Relocatable)
         B->DynsymIndex = Out<ELFT>::SymTab->NumLocals;
@@ -1114,7 +1105,7 @@ template <class ELFT> void Writer<ELFT>::addRelIpltSymbols() {
 }
 
 template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
-  if (!B.symbol()->IsUsedInRegularObj)
+  if (!B.isLocal() && !B.symbol()->IsUsedInRegularObj)
     return false;
 
   if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B)) {
