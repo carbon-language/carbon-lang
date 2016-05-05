@@ -101,9 +101,11 @@ JavaLanguage::GetFormatters()
             g_category->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(array_regexp)),
                                                               array_summary_sp);
 
+#ifndef LLDB_DISABLE_PYTHON
             AddCXXSynthetic(g_category, lldb_private::formatters::JavaArraySyntheticFrontEndCreator,
                             "Java array synthetic children", ConstString(array_regexp),
                             SyntheticChildren::Flags().SetCascades(true), true);
+#endif
         }
     });
     return g_category;
