@@ -606,13 +606,10 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (Offset == (uintX_t)-1)
       continue;
 
+    bool Preemptible = Body.isPreemptible();
     Expr = adjustExpr(Body, IsWrite, Expr, Type);
     if (HasError)
       continue;
-    bool Preemptible = Body.isPreemptible();
-    if (auto *B = dyn_cast<SharedSymbol<ELFT>>(&Body))
-      if (B->needsCopy())
-        Preemptible = false;
 
     // This relocation does not require got entry, but it is relative to got and
     // needs it to be created. Here we request for that.
@@ -711,7 +708,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Preemptible) {
+    if (Body.isPreemptible()) {
       // We don't know anything about the finaly symbol. Just ask the dynamic
       // linker to handle the relocation for us.
       AddDyn({Target->getDynRel(Type), C.OutSec, Offset, false, &Body, Addend});
