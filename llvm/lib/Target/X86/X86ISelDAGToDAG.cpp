@@ -196,7 +196,7 @@ namespace {
 #include "X86GenDAGISel.inc"
 
   private:
-    SDNode *Select(SDNode *N) override;
+    SDNode *SelectImpl(SDNode *N) override;
     SDNode *selectGather(SDNode *N, unsigned Opc);
 
     bool foldOffsetIntoAddress(uint64_t Offset, X86ISelAddressMode &AM);
@@ -326,7 +326,7 @@ namespace {
         // types.
         if (User->getNumOperands() != 2)
           continue;
-        
+
         // Immediates that are used for offsets as part of stack
         // manipulation should be left alone. These are typically
         // used to indicate SP offsets for argument passing and
@@ -1926,7 +1926,7 @@ SDNode *X86DAGToDAGISel::selectGather(SDNode *Node, unsigned Opc) {
   return ResNode;
 }
 
-SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
+SDNode *X86DAGToDAGISel::SelectImpl(SDNode *Node) {
   MVT NVT = Node->getSimpleValueType(0);
   unsigned Opc, MOpc;
   unsigned Opcode = Node->getOpcode();

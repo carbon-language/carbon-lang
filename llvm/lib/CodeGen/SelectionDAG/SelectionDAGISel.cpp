@@ -950,23 +950,7 @@ void SelectionDAGISel::DoInstructionSelection() {
       if (Node->use_empty())
         continue;
 
-      SDNode *ResNode = Select(Node);
-
-      // FIXME: This is pretty gross.  'Select' should be changed to not return
-      // anything at all and this code should be nuked with a tactical strike.
-
-      // If node should not be replaced, continue with the next one.
-      if (ResNode == Node || Node->getOpcode() == ISD::DELETED_NODE)
-        continue;
-      // Replace node.
-      if (ResNode) {
-        ReplaceUses(Node, ResNode);
-      }
-
-      // If after the replacement this node is not used any more,
-      // remove this dead node.
-      if (Node->use_empty()) // Don't delete EntryToken, etc.
-        CurDAG->RemoveDeadNode(Node);
+      Select(Node);
     }
 
     CurDAG->setRoot(Dummy.getValue());
