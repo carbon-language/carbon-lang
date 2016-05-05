@@ -364,7 +364,7 @@ void LTOCodeGenerator::preserveDiscardableGVs(
   }
   llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(TheModule.getContext());
   auto mayPreserveGlobal = [&](GlobalValue &GV) {
-    if (!GV.isDiscardableIfUnused() || GV.isDeclaration() || !GV.hasName())
+    if (!GV.isDiscardableIfUnused() || GV.isDeclaration())
       return;
     if (!mustPreserveGV(GV))
       return;
