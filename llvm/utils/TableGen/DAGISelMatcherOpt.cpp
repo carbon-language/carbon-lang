@@ -484,7 +484,9 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
         }
         
         Matcher *Entries[2] = { PrevMatcher, MatcherWithoutCTM };
-        Cases[Entry-1].second = new ScopeMatcher(Entries);
+        std::unique_ptr<Matcher> Case(new ScopeMatcher(Entries));
+        FactorNodes(Case);
+        Cases[Entry-1].second = Case.release();
         continue;
       }
       
