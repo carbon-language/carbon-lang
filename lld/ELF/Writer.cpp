@@ -832,7 +832,24 @@ static bool shouldKeepInSymtab(InputSectionBase<ELFT> *Sec, StringRef SymName,
   return !(Sec->getSectionHdr()->sh_flags & SHF_MERGE);
 }
 
-template <class ELFT> static bool includeInSymtab(const SymbolBody &B);
+template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
+  if (!B.isLocal() && !B.symbol()->IsUsedInRegularObj)
+    return false;
+
+  if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B)) {
+    // Always include absolute symbols.
+    if (!D->Section)
+      return true;
+    // Exclude symbols pointing to garbage-collected sections.
+    if (!D->Section->Live)
+      return false;
+    if (auto *S = dyn_cast<MergeInputSection<ELFT>>(D->Section))
+      if (S->getRangeAndSize(D->Value).first->second ==
+          MergeInputSection<ELFT>::PieceDead)
+        return false;
+  }
+  return true;
+}
 
 // Local symbols are not in the linker's symbol table. This function scans
 // each object file's symbol table to copy local symbols to the output.
@@ -1102,25 +1119,6 @@ template <class ELFT> void Writer<ELFT>::addRelIpltSymbols() {
   S = Config->Rela ? "__rela_iplt_end" : "__rel_iplt_end";
   addOptionalSynthetic(Symtab, S, Out<ELFT>::RelaPlt,
                        DefinedSynthetic<ELFT>::SectionEnd);
-}
-
-template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
-  if (!B.isLocal() && !B.symbol()->IsUsedInRegularObj)
-    return false;
-
-  if (auto *D = dyn_cast<DefinedRegular<ELFT>>(&B)) {
-    // Always include absolute symbols.
-    if (!D->Section)
-      return true;
-    // Exclude symbols pointing to garbage-collected sections.
-    if (!D->Section->Live)
-      return false;
-    if (auto *S = dyn_cast<MergeInputSection<ELFT>>(D->Section))
-      if (S->getRangeAndSize(D->Value).first->second ==
-          MergeInputSection<ELFT>::PieceDead)
-        return false;
-  }
-  return true;
 }
 
 // This class knows how to create an output section for a given
