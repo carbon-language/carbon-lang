@@ -200,7 +200,6 @@ public:
       : CVTD(CVTD), W(W), PrintRecordBytes(PrintRecordBytes) {}
 
   /// CVTypeVisitor overrides.
-  /// FIXME: Bury these in the .cc file to hide implementation details.
 #define TYPE_RECORD(ClassName, LeafEnum)                                       \
   void visit##ClassName(TypeLeafKind LeafType, const ClassName *Record,        \
                         ArrayRef<uint8_t> LeafData);
