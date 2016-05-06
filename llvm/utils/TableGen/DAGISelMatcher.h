@@ -106,12 +106,6 @@ public:
     return isEqualImpl(M);
   }
 
-  /// isSafeToReorderWithPatternPredicate - Return true if it is safe to sink a
-  /// PatternPredicate node past this one.
-  virtual bool isSafeToReorderWithPatternPredicate() const {
-    return false;
-  }
-
   /// isSimplePredicateNode - Return true if this is a simple predicate that
   /// operates on the node or its children without potential side effects or a
   /// change of the current node.
@@ -243,7 +237,6 @@ public:
     return N->getKind() == RecordNode;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
@@ -276,8 +269,6 @@ public:
     return N->getKind() == RecordChild;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -294,8 +285,6 @@ public:
     return N->getKind() == RecordMemRef;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
@@ -311,8 +300,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CaptureGlueInput;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -332,8 +319,6 @@ public:
     return N->getKind() == MoveChild;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -350,8 +335,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == MoveParent;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -372,8 +355,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckSame;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -399,8 +380,6 @@ public:
     return N->getKind() == CheckChildSame;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -424,8 +403,6 @@ public:
     return N->getKind() == CheckPatternPredicate;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -445,9 +422,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckPredicate;
   }
-
-  // TODO: Ok?
-  //virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -470,8 +444,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckOpcode;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -520,8 +492,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckType;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -574,8 +544,6 @@ public:
     return N->getKind() == CheckChildType;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -599,8 +567,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckInteger;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -626,8 +592,6 @@ public:
     return N->getKind() == CheckChildInteger;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -651,8 +615,6 @@ public:
     return N->getKind() == CheckCondCode;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -673,8 +635,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckValueType;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
@@ -717,9 +677,6 @@ public:
     return N->getKind() == CheckComplexPat;
   }
 
-  // Not safe to move a pattern predicate past a complex pattern.
-  bool isSafeToReorderWithPatternPredicate() const override { return false; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -742,8 +699,6 @@ public:
     return N->getKind() == CheckAndImm;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -765,8 +720,6 @@ public:
     return N->getKind() == CheckOrImm;
   }
 
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
-
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override {
@@ -784,8 +737,6 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckFoldableChainNode;
   }
-
-  bool isSafeToReorderWithPatternPredicate() const override { return true; }
 
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
