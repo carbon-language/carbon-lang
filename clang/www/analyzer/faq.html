@@ -84,10 +84,10 @@ You can add <tt>__attribute__((unused))</tt> to the instance variable declaratio
 <p>When the analyzer sees that an unlocalized string is passed to a method that will present that string to the user, it is going to produce a message similar to this one:
 <pre class="code_example">User-facing text should use localized string macro</pre>
 
-If your project deliberately uses unlocalized user-facing strings (for example, in a debugging UI that is never shown to customers), you can suppress the analyzer warnings (and document your intent) with a function that just returns its input but is annotated to return a localized string:
+If your project deliberately uses unlocalized user-facing strings (for example, in a debugging UI that is never shown to users), you can suppress the analyzer warnings (and document your intent) with a function that just returns its input but is annotated to return a localized string:
 <pre class="code_example">
 __attribute__((annotate("returns_localized_nsstring")))
-NSString *LocalizationNotNeeded(NSString *s) {
+static inline NSString *LocalizationNotNeeded(NSString *s) {
   return s;
 }
 </pre>
