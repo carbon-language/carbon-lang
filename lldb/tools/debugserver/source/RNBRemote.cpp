@@ -3555,13 +3555,6 @@ RNBRemote::HandlePacket_v (const char *p)
     }
     else if (strstr (p, "vCont") == p)
     {
-        typedef struct
-        {
-            nub_thread_t tid;
-            char action;
-            int signal;
-        } vcont_action_t;
-
         DNBThreadResumeActions thread_actions;
         char *c = (char *)(p += strlen("vCont"));
         char *c_end = c + strlen(c);
