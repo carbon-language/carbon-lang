@@ -467,6 +467,7 @@ class NamedMatchClass<string CName, bit Optional = 1> : AsmOperandClass {
   let ParserMethod = "parse"#CName;
   let RenderMethod = "addImmOperands";
   let IsOptional = Optional;
+  let DefaultMethod = "default"#CName;
 }
 
 def sdwa_sel : NamedMatchClass<"SDWASel">;
@@ -3118,7 +3119,7 @@ multiclass FLAT_ATOMIC <flat op, string asm_name, RegisterClass vdst_rc,
     dag outs_noret = (outs),
     string asm_noret = asm_name#" $addr, $data"#"$slc"#"$tfe"> {
 
-  let mayLoad = 1, mayStore = 1, glc = 0, vdst = 0, AsmMatchConverter = "cvtFlatAtomic" in {
+  let mayLoad = 1, mayStore = 1, glc = 0, vdst = 0 in {
     def "" : FLAT_Pseudo <NAME, outs_noret,
                           (ins VReg_64:$addr, data_rc:$data,
                                slc:$slc, tfe:$tfe), []>,
@@ -3135,7 +3136,7 @@ multiclass FLAT_ATOMIC <flat op, string asm_name, RegisterClass vdst_rc,
                             asm_noret>;
   }
 
-  let glc = 1, hasPostISelHook = 1, AsmMatchConverter = "cvtFlatAtomic" in {
+  let glc = 1, hasPostISelHook = 1 in {
     defm _RTN : FLAT_AtomicRet_m <op, (outs vdst_rc:$vdst),
                         (ins VReg_64:$addr, data_rc:$data, slc:$slc,
                              tfe:$tfe),
