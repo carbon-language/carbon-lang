@@ -24,6 +24,7 @@ def InterpSlot : Operand<i32> {
 
 def SendMsgImm : Operand<i32> {
   let PrintMethod = "printSendMsg";
+  let ParserMatchClass = SendMsgMatchClass;
 }
 
 def isGCN : Predicate<"Subtarget->getGeneration() "
@@ -531,7 +532,7 @@ let Uses = [EXEC, M0] in {
   >;
 } // End Uses = [EXEC, M0]
 
-def S_SENDMSGHALT : SOPP <0x00000011, (ins i16imm:$simm16), "s_sendmsghalt $simm16">;
+def S_SENDMSGHALT : SOPP <0x00000011, (ins SendMsgImm:$simm16), "s_sendmsghalt $simm16">;
 def S_TRAP : SOPP <0x00000012, (ins i16imm:$simm16), "s_trap $simm16">;
 def S_ICACHE_INV : SOPP <0x00000013, (ins), "s_icache_inv"> {
 	let simm16 = 0;

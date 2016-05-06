@@ -492,6 +492,13 @@ class NamedOperandU32<string Name, AsmOperandClass MatchClass> : Operand<i32> {
   let ParserMatchClass = MatchClass;
 }
 
+def SendMsgMatchClass : AsmOperandClass {
+  let Name = "SendMsg";
+  let PredicateMethod = "isSendMsg";
+  let ParserMethod = "parseSendMsgOp";
+  let RenderMethod = "addImmOperands";
+}
+
 let OperandType = "OPERAND_IMMEDIATE" in {
 
 def offen : NamedOperandBit<"Offen", NamedMatchClass<"Offen">>;
