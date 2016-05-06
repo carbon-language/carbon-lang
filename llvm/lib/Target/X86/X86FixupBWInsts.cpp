@@ -93,11 +93,6 @@ class FixupBWInstPass : public MachineFunctionPass {
   /// OK, otherwise return nullptr.
   MachineInstr *tryReplaceLoad(unsigned New32BitOpcode, MachineInstr *MI) const;
 
-  /// Change the MachineInstr \p MI into the equivalent 32-bit copy if it is
-  /// safe to do so.  Return the replacement instruction if OK, otherwise return
-  /// nullptr.
-  MachineInstr *tryReplaceCopy(MachineInstr *MI) const;
-
 public:
   FixupBWInstPass() : MachineFunctionPass(ID) {}
 
@@ -224,45 +219,6 @@ MachineInstr *FixupBWInstPass::tryReplaceLoad(unsigned New32BitOpcode,
   return MIB;
 }
 
-MachineInstr *FixupBWInstPass::tryReplaceCopy(MachineInstr *MI) const {
-  assert(MI->getNumExplicitOperands() == 2);
-  auto &OldDest = MI->getOperand(0);
-  auto &OldSrc = MI->getOperand(1);
-
-  unsigned NewDestReg;
-  if (!getSuperRegDestIfDead(MI, NewDestReg))
-    return nullptr;
-
-  unsigned NewSrcReg = getX86SubSuperRegister(OldSrc.getReg(), 32);
-
-  // This is only correct if we access the same subregister index: otherwise,
-  // we could try to replace "movb %ah, %al" with "movl %eax, %eax".
-  auto *TRI = &TII->getRegisterInfo();
-  if (TRI->getSubRegIndex(NewSrcReg, OldSrc.getReg()) !=
-      TRI->getSubRegIndex(NewDestReg, OldDest.getReg()))
-    return nullptr;
-
-  // Safe to change the instruction.
-  // Don't set src flags, as we don't know if we're also killing the superreg.
-  MachineInstrBuilder MIB =
-      BuildMI(*MF, MI->getDebugLoc(), TII->get(X86::MOV32rr), NewDestReg)
-          .addReg(NewSrcReg);
-
-  // Make sure we don't drop implicit operands.
-  // We used to imp-def the super, but we don't need to anymore, as we turned
-  // it into an explicit def. However, we might still need to imp-def the GR64
-  // super-register.
-  for (auto &Op : MI->implicit_operands()) {
-    if (Op.getReg() == NewDestReg && Op.isDef())
-      continue;
-    assert((!Op.isDef() || TRI->isSubRegister(Op.getReg(), NewDestReg)) &&
-           "Copy imp-defs unrelated reg?");
-    MIB.addOperand(Op);
-  }
-
-  return MIB;
-}
-
 void FixupBWInstPass::processBasicBlock(MachineFunction &MF,
                                         MachineBasicBlock &MBB) {
 
@@ -307,15 +263,6 @@ void FixupBWInstPass::processBasicBlock(MachineFunction &MF,
       // from eliminating a false dependence on the upper portion of
       // the register.
       NewMI = tryReplaceLoad(X86::MOVZX32rm16, MI);
-      break;
-
-    case X86::MOV8rr:
-    case X86::MOV16rr:
-      // Always try to replace 8/16 bit copies with a 32 bit copy.
-      // Code size is either less (16) or equal (8), and there is sometimes a
-      // perf advantage from eliminating a false dependence on the upper portion
-      // of the register.
-      NewMI = tryReplaceCopy(MI);
       break;
 
     default:

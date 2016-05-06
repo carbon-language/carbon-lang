@@ -250,14 +250,14 @@ attributes #0 = { nounwind }
 ; CMOV-DAG: movb $20, %al
 ; CMOV-DAG: movb $20, %dl
 ; CMOV:   jl [[BB0:.LBB[0-9_]+]]
-; CMOV:   movl %ecx, %edx
+; CMOV:   movb %cl, %dl
 ; CMOV: [[BB0]]:
 ; CMOV:   jg [[BB1:.LBB[0-9_]+]]
-; CMOV:   movl %edx, %eax
+; CMOV:   movb %dl, %al
 ; CMOV: [[BB1]]:
 ; CMOV:   testl %edi, %edi
 ; CMOV:   je [[BB2:.LBB[0-9_]+]]
-; CMOV:   movl %edx, %eax
+; CMOV:   movb %dl, %al
 ; CMOV: [[BB2]]:
 ; CMOV:   movb %al, g8(%rip)
 ; CMOV:   retq
