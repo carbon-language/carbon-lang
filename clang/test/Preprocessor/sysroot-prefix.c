@@ -14,12 +14,12 @@
 // CHECK-NO_ISYSROOT_SYSROOT_DEV_NULL: ignoring nonexistent directory "=/var/empty/include"
 // CHECK-NO_ISYSROOT_SYSROOT_DEV_NULL-NOT: ignoring nonexistent directory "/var/empty/include"
 
-// CHECK-ISYSROOT_SYSROOT_NULL: ignoring nonexistent directory "/var/empty/null"
+// CHECK-ISYSROOT_SYSROOT_NULL: ignoring nonexistent directory "/var/empty{{.}}null"
 // CHECK-ISYSROOT_SYSROOT_NULL-NOT: ignoring nonexistent directory "=null"
 
-// CHECK-ISYSROOT_ISYSROOT_SYSROOT_NULL: ignoring nonexistent directory "/var/empty/root/null"
+// CHECK-ISYSROOT_ISYSROOT_SYSROOT_NULL: ignoring nonexistent directory "/var/empty/root{{.}}null"
 // CHECK-ISYSROOT_ISYSROOT_SYSROOT_NULL-NOT: ignoring nonexistent directory "=null"
 
-// CHECK-ISYSROOT_ISYSROOT_SWAPPED_SYSROOT_NULL: ignoring nonexistent directory "/var/empty/null"
+// CHECK-ISYSROOT_ISYSROOT_SWAPPED_SYSROOT_NULL: ignoring nonexistent directory "/var/empty{{.}}null"
 // CHECK-ISYSROOT_ISYSROOT_SWAPPED_SYSROOT_NULL-NOT: ignoring nonexistent directory "=null"
 
