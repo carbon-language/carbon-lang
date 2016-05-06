@@ -174,8 +174,7 @@ X86RegisterInfo::getPointerRegClass(const MachineFunction &MF,
   case 2: // NOREX GPRs.
     if (Subtarget.isTarget64BitLP64())
       return &X86::GR64_NOREXRegClass;
-    return Is64Bit ? &X86::X32_NOREX_ADDR_ACCESSRegClass
-                   : &X86::GR32_NOREXRegClass;
+    return &X86::GR32_NOREXRegClass;
   case 3: // NOREX GPRs except the stack pointer (for encoding reasons).
     if (Subtarget.isTarget64BitLP64())
       return &X86::GR64_NOREX_NOSPRegClass;

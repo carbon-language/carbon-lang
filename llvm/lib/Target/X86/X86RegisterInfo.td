@@ -423,8 +423,6 @@ def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
 // FIXME: We could allow all 64bit registers, but we would need
 // something to check that the 32 high bits are not set.
 def X32_ADDR_ACCESS : RegisterClass<"X86", [i32], 64, (add GR32, RIP)>;
-def X32_NOREX_ADDR_ACCESS : RegisterClass<"X86", [i32], 64,
-                                                      (add GR32_NOREX, RIP)>;
 
 // A class to support the 'A' assembler constraint: EAX then EDX.
 def GR32_AD : RegisterClass<"X86", [i32], 32, (add EAX, EDX)>;
