@@ -248,11 +248,17 @@ MachineInstr *FixupBWInstPass::tryReplaceCopy(MachineInstr *MI) const {
       BuildMI(*MF, MI->getDebugLoc(), TII->get(X86::MOV32rr), NewDestReg)
           .addReg(NewSrcReg);
 
-#ifndef NDEBUG
-  // Make sure we didn't drop any other implicit operand.
-  for (auto &Op : MI->implicit_operands())
-    assert(Op.getReg() == NewDestReg && "Copy imp-defs unrelated reg?");
-#endif
+  // Make sure we don't drop implicit operands.
+  // We used to imp-def the super, but we don't need to anymore, as we turned
+  // it into an explicit def. However, we might still need to imp-def the GR64
+  // super-register.
+  for (auto &Op : MI->implicit_operands()) {
+    if (Op.getReg() == NewDestReg && Op.isDef())
+      continue;
+    assert((!Op.isDef() || TRI->isSubRegister(Op.getReg(), NewDestReg)) &&
+           "Copy imp-defs unrelated reg?");
+    MIB.addOperand(Op);
+  }
 
   return MIB;
 }
