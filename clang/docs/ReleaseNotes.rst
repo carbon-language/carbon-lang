@@ -129,9 +129,9 @@ Changes to C++1z features since Clang 3.8:
 
   .. code-block:: c++
 
-  struct A { int n; };
-  struct B : A { int x, y; };
-  B b = { 1, 2, 3 }; // b.n == 1, b.x == 2, b.y == 3
+    struct A { int n; };
+    struct B : A { int x, y; };
+    B b = { 1, 2, 3 }; // b.n == 1, b.x == 2, b.y == 3
 
 - The range in a range-based ``for`` statement can have different types for its ``begin``
   and ``end`` iterators. This is permitted as an extension in C++11 onwards.
