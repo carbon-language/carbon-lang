@@ -2706,26 +2706,6 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     if (CE->canTrap())
       return false;
 
-  // If BI is reached from the true path of PBI and PBI's condition implies
-  // BI's condition, we know the direction of the BI branch.
-  if ((PBI->getSuccessor(0) == BI->getParent() ||
-       PBI->getSuccessor(1) == BI->getParent()) &&
-      PBI->getSuccessor(0) != PBI->getSuccessor(1) &&
-      BB->getSinglePredecessor()) {
-    bool FalseDest = PBI->getSuccessor(1) == BI->getParent();
-    Optional<bool> Implication = isImpliedCondition(
-        PBI->getCondition(), BI->getCondition(), DL, FalseDest);
-    if (Implication) {
-      // Turn this into a branch on constant.
-      auto *OldCond = BI->getCondition();
-      ConstantInt *CI = *Implication ? ConstantInt::getTrue(BB->getContext())
-                                     : ConstantInt::getFalse(BB->getContext());
-      BI->setCondition(CI);
-      RecursivelyDeleteTriviallyDeadInstructions(OldCond);
-      return true; // Nuke the branch on constant.
-    }
-  }
-
   // If both branches are conditional and both contain stores to the same
   // address, remove the stores from the conditionals and create a conditional
   // merged store at the end.
@@ -5148,6 +5128,30 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   // Try to turn "br (X == 0 | X == 1), T, F" into a switch instruction.
   if (SimplifyBranchOnICmpChain(BI, Builder, DL))
     return true;
+
+  // If this basic block has a single dominating predecessor block and the
+  // dominating block's condition implies BI's condition, we know the direction
+  // of the BI branch.
+  if (BasicBlock *Dom = BB->getSinglePredecessor()) {
+    auto *PBI = dyn_cast_or_null<BranchInst>(Dom->getTerminator());
+    if (PBI && PBI->isConditional() &&
+        PBI->getSuccessor(0) != PBI->getSuccessor(1) &&
+        (PBI->getSuccessor(0) == BB || PBI->getSuccessor(1) == BB)) {
+      bool CondIsFalse = PBI->getSuccessor(1) == BB;
+      Optional<bool> Implication = isImpliedCondition(
+          PBI->getCondition(), BI->getCondition(), DL, CondIsFalse);
+      if (Implication) {
+        // Turn this into a branch on constant.
+        auto *OldCond = BI->getCondition();
+        ConstantInt *CI = *Implication
+                              ? ConstantInt::getTrue(BB->getContext())
+                              : ConstantInt::getFalse(BB->getContext());
+        BI->setCondition(CI);
+        RecursivelyDeleteTriviallyDeadInstructions(OldCond);
+        return SimplifyCFG(BB, TTI, BonusInstThreshold, AC) | true;
+      }
+    }
+  }
 
   // If this basic block is ONLY a compare and a branch, and if a predecessor
   // branches to us and one of our successors, fold the comparison into the
