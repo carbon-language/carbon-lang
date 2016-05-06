@@ -189,7 +189,7 @@ static std::mutex Mu;
 
 static void PulseThread() {
   while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(600));
+    SleepSeconds(600);
     std::lock_guard<std::mutex> Lock(Mu);
     Printf("pulse...\n");
   }
@@ -236,10 +236,10 @@ static int RunInMultipleProcesses(const std::vector<std::string> &Args,
 
 static void RssThread(Fuzzer *F, size_t RssLimitMb) {
   while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    SleepSeconds(1);
     size_t Peak = GetPeakRSSMb();
     if (Peak > RssLimitMb)
-      F->RssLimitCallback(Peak, RssLimitMb);
+      F->RssLimitCallback();
   }
 }
 
@@ -310,6 +310,7 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   Options.OnlyASCII = Flags.only_ascii;
   Options.OutputCSV = Flags.output_csv;
   Options.DetectLeaks = Flags.detect_leaks;
+  Options.RssLimitMb = Flags.rss_limit_mb;
   if (Flags.runs >= 0)
     Options.MaxNumberOfRuns = Flags.runs;
   if (!Inputs->empty())

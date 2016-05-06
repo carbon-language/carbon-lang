@@ -201,6 +201,12 @@ The most important command line options are:
 ``-timeout``
   Timeout in seconds, default 1200. If an input takes longer than this timeout,
   the process is treated as a failure case.
+``-rss_limit_mb``
+  Memory usage limit in Mb, default 2048. Use 0 to disable the limit.
+  If an input requires more than this amount of RSS memory to execute,
+  the process is treated as a failure case.
+  The limit is checked in a separate thread every second.
+  If running w/o ASAN/MSAN, you may use 'ulimit -v' instead.
 ``-timeout_exitcode``
   Exit code (default 77) to emit when terminating due to timeout, when
   ``-abort_on_timeout`` is not set.

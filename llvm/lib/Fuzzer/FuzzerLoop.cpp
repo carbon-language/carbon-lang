@@ -153,6 +153,20 @@ void Fuzzer::InterruptCallback() {
 NO_SANITIZE_MEMORY
 void Fuzzer::AlarmCallback() {
   assert(Options.UnitTimeoutSec > 0);
+  if (InOOMState) {
+    Printf("==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
+           GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
+    Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n");
+    if (CurrentUnitSize && CurrentUnitData) {
+      DumpCurrentUnit("oom-");
+      if (__sanitizer_print_stack_trace)
+        __sanitizer_print_stack_trace();
+    }
+    Printf("SUMMARY: libFuzzer: out-of-memory\n");
+    PrintFinalStats();
+    _Exit(Options.ErrorExitCode); // Stop right now.
+  }
+
   if (!CurrentUnitSize)
     return; // We have not started running units yet.
   size_t Seconds =
@@ -176,15 +190,13 @@ void Fuzzer::AlarmCallback() {
   }
 }
 
-void Fuzzer::RssLimitCallback(size_t RssPeakMb, size_t RssLimitMb) {
-  Printf("==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
-         GetPid(), RssPeakMb, RssLimitMb);
-  Printf("*****************************************************************\n");
-  Printf("** Experimental! TODO: dump the stack trace and the reproducer **\n");
-  Printf("*****************************************************************\n");
-  Printf("SUMMARY: libFuzzer: out-of-memory\n");
-  PrintFinalStats();
-  _Exit(Options.ErrorExitCode); // Stop right now.
+void Fuzzer::RssLimitCallback() {
+  InOOMState = true;
+  SignalToMainThread();
+  SleepSeconds(5);
+  Printf("Signal to main thread failed (non-linux?). Exiting.\n");
+  _Exit(Options.ErrorExitCode);
+  return;
 }
 
 void Fuzzer::PrintStats(const char *Where, const char *End) {
