@@ -848,7 +848,7 @@ static void GetBranchWeights(TerminatorInst *TI,
   }
 }
 
-/// Scale each weight so they all fit in uint32_t.
+/// Keep halving the weights until all can fit in uint32_t.
 static void FitWeights(MutableArrayRef<uint64_t> Weights) {
   uint64_t Max = *std::max_element(Weights.begin(), Weights.end());
   if (Max > UINT_MAX) {
@@ -2820,28 +2820,28 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
   PBI->setSuccessor(1, OtherDest);
 
   // Update branch weight for PBI.
-  MDBuilder MDB(BI->getContext());
   uint64_t PredTrueWeight, PredFalseWeight, SuccTrueWeight, SuccFalseWeight;
-  uint64_t PredCommon, PredOther, SuccCommon, SuccOther;
   bool PredHasWeights =
       PBI->extractProfMetadata(PredTrueWeight, PredFalseWeight);
   bool SuccHasWeights =
       BI->extractProfMetadata(SuccTrueWeight, SuccFalseWeight);
   if (PredHasWeights && SuccHasWeights) {
-    PredCommon = PBIOp ? PredFalseWeight : PredTrueWeight;
-    PredOther = PBIOp ? PredTrueWeight : PredFalseWeight;
-    SuccCommon = BIOp ? SuccFalseWeight : SuccTrueWeight;
-    SuccOther = BIOp ? SuccTrueWeight : SuccFalseWeight;
+    uint64_t PredCommon = PBIOp ? PredFalseWeight : PredTrueWeight;
+    uint64_t PredOther = PBIOp ?PredTrueWeight : PredFalseWeight;
+    uint64_t SuccCommon = BIOp ? SuccFalseWeight : SuccTrueWeight;
+    uint64_t SuccOther = BIOp ? SuccTrueWeight : SuccFalseWeight;
     // The weight to CommonDest should be PredCommon * SuccTotal +
     //                                    PredOther * SuccCommon.
     // The weight to OtherDest should be PredOther * SuccOther.
     uint64_t NewWeights[2] = {PredCommon * (SuccCommon + SuccOther) +
                                   PredOther * SuccCommon,
                               PredOther * SuccOther};
+    // Halve the weights if any of them cannot fit in an uint32_t
     FitWeights(NewWeights);
 
     PBI->setMetadata(LLVMContext::MD_prof,
-                     MDB.createBranchWeights(NewWeights[0], NewWeights[1]));
+                     MDBuilder(BI->getContext())
+                         .createBranchWeights(NewWeights[0], NewWeights[1]));
   }
 
   // OtherDest may have phi nodes.  If so, add an entry from PBI's
@@ -2860,24 +2860,9 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     Value *PBIV = PN->getIncomingValue(PBBIdx);
     if (BIV != PBIV) {
       // Insert a select in PBI to pick the right value.
-      SelectInst *NV = cast<SelectInst>
+      Value *NV = cast<SelectInst>
         (Builder.CreateSelect(PBICond, PBIV, BIV, PBIV->getName() + ".mux"));
       PN->setIncomingValue(PBBIdx, NV);
-      // Although the select has the same condition as PBI, the original branch
-      // weights for PBI do not apply to the new select because the select's
-      // 'logical' edges are incoming edges of the phi that is eliminated, not
-      // the outgoing edges of PBI.
-      if (PredHasWeights && SuccHasWeights) {
-        // The weight to PredCommonDest should be PredCommon * SuccTotal.
-        // The weight to PredOtherDest should be PredOther * SuccCommon.
-        uint64_t NewWeights[2] = {PredCommon * (SuccCommon + SuccOther),
-                                  PredOther * SuccCommon};
-
-        FitWeights(NewWeights);
-
-        NV->setMetadata(LLVMContext::MD_prof,
-                        MDB.createBranchWeights(NewWeights[0], NewWeights[1]));
-      }
     }
   }
 
