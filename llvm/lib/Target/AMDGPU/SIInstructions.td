@@ -18,15 +18,6 @@ int P20 = 1;
 }
 def INTERP : InterpSlots;
 
-def InterpSlot : Operand<i32> {
-  let PrintMethod = "printInterpSlot";
-}
-
-def SendMsgImm : Operand<i32> {
-  let PrintMethod = "printSendMsg";
-  let ParserMatchClass = SendMsgMatchClass;
-}
-
 def isGCN : Predicate<"Subtarget->getGeneration() "
                       ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">,
             AssemblerPredicate<"FeatureGCN">;
@@ -37,17 +28,6 @@ def isSI : Predicate<"Subtarget->getGeneration() "
 
 def has16BankLDS : Predicate<"Subtarget->getLDSBankCount() == 16">;
 def has32BankLDS : Predicate<"Subtarget->getLDSBankCount() == 32">;
-
-def SWaitMatchClass : AsmOperandClass {
-  let Name = "SWaitCnt";
-  let RenderMethod = "addImmOperands";
-  let ParserMethod = "parseSWaitCntOps";
-}
-
-def WAIT_FLAG : Operand <i32> {
-  let ParserMatchClass = SWaitMatchClass;
-  let PrintMethod = "printWaitFlag";
-}
 
 let SubtargetPredicate = isGCN in {
 

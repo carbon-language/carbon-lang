@@ -458,6 +458,33 @@ def sopp_brtarget : Operand<OtherVT> {
 
 def const_ga : Operand<iPTR>;
 
+def InterpSlot : Operand<i32> {
+  let PrintMethod = "printInterpSlot";
+}
+
+def SendMsgMatchClass : AsmOperandClass {
+  let Name = "SendMsg";
+  let PredicateMethod = "isSendMsg";
+  let ParserMethod = "parseSendMsgOp";
+  let RenderMethod = "addImmOperands";
+}
+
+def SendMsgImm : Operand<i32> {
+  let PrintMethod = "printSendMsg";
+  let ParserMatchClass = SendMsgMatchClass;
+}
+
+def SWaitMatchClass : AsmOperandClass {
+  let Name = "SWaitCnt";
+  let RenderMethod = "addImmOperands";
+  let ParserMethod = "parseSWaitCntOps";
+}
+
+def WAIT_FLAG : Operand <i32> {
+  let ParserMatchClass = SWaitMatchClass;
+  let PrintMethod = "printWaitFlag";
+}
+
 include "SIInstrFormats.td"
 include "VIInstrFormats.td"
 
@@ -490,13 +517,6 @@ class NamedOperandU16<string Name, AsmOperandClass MatchClass> : Operand<i16> {
 class NamedOperandU32<string Name, AsmOperandClass MatchClass> : Operand<i32> {
   let PrintMethod = "print"#Name;
   let ParserMatchClass = MatchClass;
-}
-
-def SendMsgMatchClass : AsmOperandClass {
-  let Name = "SendMsg";
-  let PredicateMethod = "isSendMsg";
-  let ParserMethod = "parseSendMsgOp";
-  let RenderMethod = "addImmOperands";
 }
 
 let OperandType = "OPERAND_IMMEDIATE" in {
