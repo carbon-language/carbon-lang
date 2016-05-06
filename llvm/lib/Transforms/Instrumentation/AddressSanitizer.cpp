@@ -208,9 +208,10 @@ static cl::opt<bool> ClSkipPromotableAllocas(
 static cl::opt<int> ClMappingScale("asan-mapping-scale",
                                    cl::desc("scale of asan shadow mapping"),
                                    cl::Hidden, cl::init(0));
-static cl::opt<unsigned long long> ClMappingOffset("asan-mapping-offset",
-                                   cl::desc("offset of asan shadow mapping [EXPERIMENTAL]"),
-                                   cl::Hidden, cl::init(0));
+static cl::opt<unsigned long long> ClMappingOffset(
+    "asan-mapping-offset",
+    cl::desc("offset of asan shadow mapping [EXPERIMENTAL]"), cl::Hidden,
+    cl::init(0));
 
 // Optimization flags. Not user visible, used mostly for testing
 // and benchmarking the tool.
