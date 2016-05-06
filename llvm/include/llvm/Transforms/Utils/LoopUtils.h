@@ -33,6 +33,7 @@ class Pass;
 class PredicatedScalarEvolution;
 class PredIteratorCache;
 class ScalarEvolution;
+class SCEV;
 class TargetLibraryInfo;
 
 /// \brief Captures loop safety information.
