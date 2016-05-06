@@ -94,7 +94,7 @@ C++ Language Changes in Clang
 - Clang now enforces the rule that a *using-declaration* cannot name an enumerator of a
   scoped enumeration.
 
-  .. codeblock:: c++
+  .. code-block:: c++
 
     namespace Foo { enum class E { e }; }
     namespace Bar {
@@ -105,7 +105,7 @@ C++ Language Changes in Clang
 - Clang now enforces the rule that an enumerator of an unscoped enumeration declared at
   class scope can only be named by a *using-declaration* in a derived class.
 
-  .. codeblock:: c++
+  .. code-block:: c++
 
     class Foo { enum E { e }; }
     using Foo::e; // error
@@ -127,7 +127,7 @@ Changes to C++1z features since Clang 3.8:
 
 - In C++1z mode, aggregate initialization can be performed for classes with base classes:
 
-  .. codeblock:: c++
+  .. code-block:: c++
 
   struct A { int n; };
   struct B : A { int x, y; };
