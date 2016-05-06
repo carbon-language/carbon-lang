@@ -26,6 +26,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
+#include "llvm/DebugInfo/CodeView/TypeDumper.h"
 #include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
@@ -106,8 +107,8 @@ cl::opt<bool> DumpStreamSizes("dump-stream-sizes",
 cl::opt<bool> DumpStreamBlocks("dump-stream-blocks",
                                cl::desc("dump PDB stream blocks"),
                                cl::cat(OtherOptions));
-cl::opt<bool> DumpTypeStream("dump-tpi-stream",
-                             cl::desc("dump PDB TPI (Type Info) stream"),
+cl::opt<bool> DumpTpiRecords("dump-tpi-records",
+                             cl::desc("dump CodeView type records"),
                              cl::cat(OtherOptions));
 cl::opt<bool>
     DumpTpiRecordBytes("dump-tpi-record-bytes",
@@ -338,7 +339,7 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File) {
 }
 
 static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpTypeStream)
+  if (!opts::DumpTpiRecordBytes && !opts::DumpTpiRecords)
     return Error::success();
 
   DictScope D(P, "Type Info Stream");
@@ -351,14 +352,19 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File) {
   P.printNumber("TPI Version", Tpi.getTpiVersion());
   P.printNumber("Record count", Tpi.NumTypeRecords());
 
-  if (!opts::DumpTpiRecordBytes)
-    return Error::success();
+  if (opts::DumpTpiRecordBytes || opts::DumpTpiRecords) {
+    ListScope L(P, "Records");
+    codeview::CVTypeDumper TD(P, false);
 
-  ListScope L(P, "Records");
-  for (auto &Type : Tpi.types()) {
-    DictScope DD(P, "");
-    P.printHex("Kind", unsigned(Type.Leaf));
-    P.printBinaryBlock("Bytes", Type.LeafData);
+    for (auto &Type : Tpi.types()) {
+      DictScope DD(P, "");
+
+      if (opts::DumpTpiRecords)
+        TD.dump(Type);
+
+      if (opts::DumpTpiRecordBytes)
+        P.printBinaryBlock("Bytes", Type.LeafData);
+    }
   }
   return Error::success();
 }
