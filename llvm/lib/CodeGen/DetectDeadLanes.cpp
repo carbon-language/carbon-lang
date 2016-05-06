@@ -76,7 +76,7 @@ private:
   void transferUsedLanesStep(const MachineOperand &Def, LaneBitmask UsedLanes);
 
   /// Given a use regiser operand \p Use and a mask of defined lanes, check
-  /// if the operand belongs to a lowerToCopies() instruction, transfer the
+  /// if the operand belongs to a lowersToCopies() instruction, transfer the
   /// mask to the def and put the instruction into the worklist.
   void transferDefinedLanesStep(const MachineOperand &Use,
                                 LaneBitmask DefinedLanes);
@@ -85,7 +85,7 @@ private:
   /// of COPY-like instruction, determine which lanes are defined at the output
   /// operand \p Def.
   LaneBitmask transferDefinedLanes(const MachineOperand &Def, unsigned OpNum,
-                                   LaneBitmask DefinedLanes);
+                                   LaneBitmask DefinedLanes) const;
 
   LaneBitmask determineInitialDefinedLanes(unsigned Reg);
   LaneBitmask determineInitialUsedLanes(unsigned Reg);
@@ -294,8 +294,7 @@ void DetectDeadLanes::transferDefinedLanesStep(const MachineOperand &Use,
 }
 
 LaneBitmask DetectDeadLanes::transferDefinedLanes(const MachineOperand &Def,
-                                                  unsigned OpNum,
-                                                  LaneBitmask DefinedLanes) {
+    unsigned OpNum, LaneBitmask DefinedLanes) const {
   const MachineInstr &MI = *Def.getParent();
   // Translate DefinedLanes if necessary.
   switch (MI.getOpcode()) {
@@ -330,8 +329,8 @@ LaneBitmask DetectDeadLanes::transferDefinedLanes(const MachineOperand &Def,
     llvm_unreachable("function must be called with COPY-like instruction");
   }
 
-  unsigned SubIdx = Def.getSubReg();
-  DefinedLanes = TRI->composeSubRegIndexLaneMask(SubIdx, DefinedLanes);
+  assert(Def.getSubReg() == 0 &&
+         "Should not have subregister defs in machine SSA phase");
   DefinedLanes &= MRI->getMaxLaneMaskForVReg(Def.getReg());
   return DefinedLanes;
 }
@@ -396,9 +395,9 @@ LaneBitmask DetectDeadLanes::determineInitialDefinedLanes(unsigned Reg) {
   if (DefMI.isImplicitDef() || Def.isDead())
     return 0;
 
-  unsigned SubReg = Def.getSubReg();
-  return SubReg != 0 ? TRI->getSubRegIndexLaneMask(SubReg)
-                     : MRI->getMaxLaneMaskForVReg(Reg);
+  assert(Def.getSubReg() == 0 &&
+         "Should not have subregister defs in machine SSA phase");
+  return MRI->getMaxLaneMaskForVReg(Reg);
 }
 
 LaneBitmask DetectDeadLanes::determineInitialUsedLanes(unsigned Reg) {
