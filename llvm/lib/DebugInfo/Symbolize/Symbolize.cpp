@@ -375,6 +375,10 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
         PDB_ReaderType::DIA, Objects.first->getFileName(), Session);
     if (!Error) {
       Context.reset(new PDBContext(*CoffObject, std::move(Session)));
+    } else {
+      // Drop error
+      handleAllErrors(std::move(Error),
+                      [](const ErrorInfoBase &) { return Error::success(); });
     }
   }
   if (!Context)
