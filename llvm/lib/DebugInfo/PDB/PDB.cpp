@@ -11,6 +11,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
+#include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDB.h"
 #if HAVE_DIA_SDK
