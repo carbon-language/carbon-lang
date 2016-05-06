@@ -383,7 +383,8 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
       CheckOpcodeMatcher *COM = cast<CheckOpcodeMatcher>(NewOptionsToMatch[i]);
       assert(Opcodes.insert(COM->getOpcode().getEnumName()).second &&
              "Duplicate opcodes not factored?");
-      Cases.push_back(std::make_pair(&COM->getOpcode(), COM->getNext()));
+      Cases.push_back(std::make_pair(&COM->getOpcode(), COM->takeNext()));
+      delete COM;
     }
     
     MatcherPtr.reset(new SwitchOpcodeMatcher(Cases));
