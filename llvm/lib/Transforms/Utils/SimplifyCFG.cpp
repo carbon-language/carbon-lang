@@ -2860,9 +2860,29 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     Value *PBIV = PN->getIncomingValue(PBBIdx);
     if (BIV != PBIV) {
       // Insert a select in PBI to pick the right value.
-      Value *NV = cast<SelectInst>
+      SelectInst *NV = cast<SelectInst>
         (Builder.CreateSelect(PBICond, PBIV, BIV, PBIV->getName() + ".mux"));
       PN->setIncomingValue(PBBIdx, NV);
+      // Although the select has the same condition as PBI, the original branch
+      // weights for PBI do not apply to the new select because the select's
+      // 'logical' edges are incoming edges of the phi that is eliminated, not
+      // the outgoing edges of PBI.
+      if (PredHasWeights && SuccHasWeights) {
+        uint64_t PredCommon = PBIOp ? PredFalseWeight : PredTrueWeight;
+        uint64_t PredOther = PBIOp ? PredTrueWeight : PredFalseWeight;
+        uint64_t SuccCommon = BIOp ? SuccFalseWeight : SuccTrueWeight;
+        uint64_t SuccOther = BIOp ? SuccTrueWeight : SuccFalseWeight;
+        // The weight to PredCommonDest should be PredCommon * SuccTotal.
+        // The weight to PredOtherDest should be PredOther * SuccCommon.
+        uint64_t NewWeights[2] = {PredCommon * (SuccCommon + SuccOther),
+                                  PredOther * SuccCommon};
+
+        FitWeights(NewWeights);
+
+        NV->setMetadata(LLVMContext::MD_prof,
+                        MDBuilder(BI->getContext())
+                            .createBranchWeights(NewWeights[0], NewWeights[1]));
+      }
     }
   }
 
