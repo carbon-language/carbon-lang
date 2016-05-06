@@ -1472,16 +1472,16 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   // fallthrough
   case R_MIPS_CALL16:
   case R_MIPS_GOT_OFST:
+  case R_MIPS_LO16:
+  case R_MIPS_PCLO16:
     writeMipsLo16<E>(Loc, Val);
     break;
   case R_MIPS_HI16:
+  case R_MIPS_PCHI16:
     writeMipsHi16<E>(Loc, Val);
     break;
   case R_MIPS_JALR:
     // Ignore this optimization relocation for now
-    break;
-  case R_MIPS_LO16:
-    writeMipsLo16<E>(Loc, Val);
     break;
   case R_MIPS_PC16:
     applyMipsPcReloc<E, 16, 2>(Loc, Type, Val);
@@ -1497,12 +1497,6 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_MIPS_PC32:
     applyMipsPcReloc<E, 32, 0>(Loc, Type, Val);
-    break;
-  case R_MIPS_PCHI16:
-    writeMipsHi16<E>(Loc, Val);
-    break;
-  case R_MIPS_PCLO16:
-    writeMipsLo16<E>(Loc, Val);
     break;
   case R_MIPS_TLS_DTPREL_HI16:
     writeMipsHi16<E>(Loc, Val - DTPOffset);
