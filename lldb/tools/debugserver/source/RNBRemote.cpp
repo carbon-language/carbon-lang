@@ -1227,7 +1227,9 @@ RNBRemote::InitializeRegisters (bool force)
                 register_map_entry_t reg_entry = {
                     regnum++,                           // register number starts at zero and goes up with no gaps
                     reg_data_offset,                    // Offset into register context data, no gaps between registers
-                    reg_sets[set].registers[reg]        // DNBRegisterInfo
+                    reg_sets[set].registers[reg],       // DNBRegisterInfo
+                    {},
+                    {},
                 };
 
                 name_to_regnum[reg_entry.nub_info.name] = reg_entry.debugserver_regnum;
