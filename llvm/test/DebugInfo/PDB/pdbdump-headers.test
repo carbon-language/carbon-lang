@@ -1238,4 +1238,4 @@
 ; BIG-NEXT:   ]
 ; BIG-NEXT: }
 
-; BAD-BLOCK-SIZE: The file has an unrecognized format.
+; BAD-BLOCK-SIZE: The MSF superblock is in an invalid format.

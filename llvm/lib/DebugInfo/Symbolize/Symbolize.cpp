@@ -371,9 +371,9 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     // If this is a COFF object, assume it contains PDB debug information.  If
     // we don't find any we will fall back to the DWARF case.
     std::unique_ptr<IPDBSession> Session;
-    PDB_ErrorCode Error = loadDataForEXE(PDB_ReaderType::DIA,
-                                         Objects.first->getFileName(), Session);
-    if (Error == PDB_ErrorCode::Success) {
+    auto Error = loadDataForEXE(
+        PDB_ReaderType::DIA, Objects.first->getFileName(), Session);
+    if (!Error) {
       Context.reset(new PDBContext(*CoffObject, std::move(Session)));
     }
   }
