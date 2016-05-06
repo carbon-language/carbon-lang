@@ -1453,6 +1453,7 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   const uint32_t DTPOffset = 0x8000;
   switch (Type) {
   case R_MIPS_32:
+  case R_MIPS_GPREL32:
     write32<E>(Loc, Val);
     break;
   case R_MIPS_64:
@@ -1466,20 +1467,12 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_MIPS_GOT_DISP:
   case R_MIPS_GOT_PAGE:
   case R_MIPS_GOT16:
+  case R_MIPS_GPREL16:
     checkInt<16>(Val, Type);
   // fallthrough
   case R_MIPS_CALL16:
   case R_MIPS_GOT_OFST:
     writeMipsLo16<E>(Loc, Val);
-    break;
-  case R_MIPS_GPREL16: {
-    int64_t V = Val - MipsGPOffset;
-    checkInt<16>(V, Type);
-    writeMipsLo16<E>(Loc, V);
-    break;
-  }
-  case R_MIPS_GPREL32:
-    write32<E>(Loc, Val - MipsGPOffset);
     break;
   case R_MIPS_HI16:
     writeMipsHi16<E>(Loc, Val);
