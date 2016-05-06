@@ -2936,10 +2936,6 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
 
     Qualifiers FromQuals = FromType.getQualifiers();
     Qualifiers ToQuals = ToType.getQualifiers();
-
-    // Ignore __unaligned qualifier if this type is void.
-    if (ToType.getUnqualifiedType()->isVoidType())
-      FromQuals.removeUnaligned();
     
     // Objective-C ARC:
     //   Check Objective-C lifetime conversions.
