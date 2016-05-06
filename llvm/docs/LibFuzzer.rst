@@ -659,9 +659,7 @@ pass and if the actual leak is found, it will be reported with the reproducer
 and the process will exit.
 
 If your target has massive leaks and the leak detection is disabled
-you will eventually run out of RAM.
-To protect your machine from OOM death you may use
-e.g. ``ASAN_OPTIONS=hard_rss_limit_mb=2000`` (with AddressSanitizer_).
+you will eventually run out of RAM (see the ``-rss_limit_mb`` flag).
 
 
 Fuzzing components of LLVM
