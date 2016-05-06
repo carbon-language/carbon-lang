@@ -2570,13 +2570,13 @@ RNBRemote::DispatchQueueOffsets::GetThreadQueueInfo (nub_process_t pid,
                 nub_addr_t pointer_to_label_address = dispatch_queue_t + dqo_label;
                 nub_addr_t label_addr = DNBProcessMemoryReadPointer (pid, pointer_to_label_address);
                 if (label_addr)
-                    queue_name = std::move(DNBProcessMemoryReadCString (pid, label_addr));
+                    queue_name = DNBProcessMemoryReadCString(pid, label_addr);
             }
             else
             {
                 // libdispatch versions 1-3, dispatch name is a fixed width char array
                 // in the queue structure.
-                queue_name = std::move(DNBProcessMemoryReadCStringFixed(pid, dispatch_queue_t + dqo_label, dqo_label_size));
+                queue_name = DNBProcessMemoryReadCStringFixed(pid, dispatch_queue_t + dqo_label, dqo_label_size);
             }
         }
     }
@@ -5687,7 +5687,7 @@ RNBRemote::HandlePacket_qSymbol (const char *command)
     if (*p)
     {
         // We have a symbol name
-        symbol_name = std::move(decode_hex_ascii_string(p));
+        symbol_name = decode_hex_ascii_string(p);
         if (!symbol_value_str.empty())
         {
             nub_addr_t symbol_value = decode_uint64(symbol_value_str.c_str(), 16);
