@@ -427,6 +427,11 @@ def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
 // which we do not have right now.
 def LOW32_ADDR_ACCESS : RegisterClass<"X86", [i32], 64, (add GR32, RIP)>;
 
+// When RBP is used as a base pointer in a 32-bit addresses environement,
+// this is also safe to use the full register to access addresses. 
+def LOW32_ADDR_ACCESS_RBP : RegisterClass<"X86", [i32], 64,
+                                          (add LOW32_ADDR_ACCESS, RBP)>;
+
 // A class to support the 'A' assembler constraint: EAX then EDX.
 def GR32_AD : RegisterClass<"X86", [i32], 32, (add EAX, EDX)>;
 
