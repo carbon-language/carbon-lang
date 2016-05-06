@@ -234,6 +234,21 @@ static int RunInMultipleProcesses(const std::vector<std::string> &Args,
   return HasErrors ? 1 : 0;
 }
 
+static void RssThread(Fuzzer *F, size_t RssLimitMb) {
+  while (true) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    size_t Peak = GetPeakRSSMb();
+    if (Peak > RssLimitMb)
+      F->RssLimitCallback(Peak, RssLimitMb);
+  }
+}
+
+static void StartRssThread(Fuzzer *F, size_t RssLimitMb) {
+  if (!RssLimitMb) return;
+  std::thread T(RssThread, F, RssLimitMb);
+  T.detach();
+}
+
 int RunOneTest(Fuzzer *F, const char *InputFilePath) {
   Unit U = FileToVector(InputFilePath);
   Unit PreciseSizedU(U);
@@ -330,6 +345,8 @@ static int FuzzerDriver(const std::vector<std::string> &Args,
   for (auto &U: Dictionary)
     if (U.size() <= Word::GetMaxSize())
       MD.AddWordToManualDictionary(Word(U.data(), U.size()));
+
+  StartRssThread(&F, Flags.rss_limit_mb);
 
   // Timer
   if (Flags.timeout > 0)

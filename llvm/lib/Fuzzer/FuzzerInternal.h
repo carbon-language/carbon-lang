@@ -353,6 +353,7 @@ public:
   MutationDispatcher &GetMD() { return MD; }
   void PrintFinalStats();
   void SetMaxLen(size_t MaxLen);
+  void RssLimitCallback(size_t RssPeakMb, size_t RssLimitMb);
 
 private:
   void AlarmCallback();

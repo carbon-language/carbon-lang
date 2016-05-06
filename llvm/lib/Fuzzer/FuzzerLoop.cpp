@@ -176,6 +176,17 @@ void Fuzzer::AlarmCallback() {
   }
 }
 
+void Fuzzer::RssLimitCallback(size_t RssPeakMb, size_t RssLimitMb) {
+  Printf("==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
+         GetPid(), RssPeakMb, RssLimitMb);
+  Printf("*****************************************************************\n");
+  Printf("** Experimental! TODO: dump the stack trace and the reproducer **\n");
+  Printf("*****************************************************************\n");
+  Printf("SUMMARY: libFuzzer: out-of-memory\n");
+  PrintFinalStats();
+  _Exit(Options.ErrorExitCode); // Stop right now.
+}
+
 void Fuzzer::PrintStats(const char *Where, const char *End) {
   size_t ExecPerSec = execPerSec();
   if (Options.OutputCSV) {
