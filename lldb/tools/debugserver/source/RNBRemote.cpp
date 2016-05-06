@@ -1026,7 +1026,6 @@ RNBRemote::ThreadFunctionReadRemoteData(void *arg)
                 case rnb_success:
                     break;
 
-                default:
                 case rnb_err:
                     DNBLogThreadedIf (LOG_RNB_REMOTE, "RNBSocket::GetCommData returned error %u", err);
                     done = true;
