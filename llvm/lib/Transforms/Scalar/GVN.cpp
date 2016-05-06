@@ -1552,9 +1552,10 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
     BasicBlock *UnavailablePred = PredLoad.first;
     Value *LoadPtr = PredLoad.second;
 
-    Instruction *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
-                                        LI->getAlignment(),
-                                        UnavailablePred->getTerminator());
+    auto *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre",
+                                 LI->isVolatile(), LI->getAlignment(),
+                                 LI->getOrdering(), LI->getSynchScope(),
+                                 UnavailablePred->getTerminator());
 
     // Transfer the old load's AA tags to the new load.
     AAMDNodes Tags;
@@ -1663,11 +1664,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     ++NumGVNLoad;
     return true;
   }
-
-  // This code hasn't been audited for atomic, ordered, or volatile memory
-  // access.
-  if (!LI->isSimple())
-    return false;
 
   // Step 4: Eliminate partial redundancy.
   if (!EnablePRE || !EnableLoadPRE)

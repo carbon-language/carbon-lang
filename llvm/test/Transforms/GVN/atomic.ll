@@ -392,3 +392,112 @@ next:
   %res = sub i32 %a, %b
   ret i32 %res
 }
+
+declare void @clobber()
+
+; unordered atomic to unordered atomic
+define i32 @non_local_pre(i32* %P1) {
+; CHECK-LABEL: @non_local_pre(
+; CHECK: load atomic i32, i32* %P1 unordered
+; CHECK: load atomic i32, i32* %P1 unordered
+; CHECK: %b = phi i32 [ %b.pre, %early ], [ %a, %0 ]
+; CHECK: ret i32 %b
+  %a = load atomic i32, i32* %P1 unordered, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  call void @clobber()
+  br label %next
+next:
+  %b = load atomic i32, i32* %P1 unordered, align 4
+  ret i32 %b
+}
+
+; unordered atomic to non-atomic
+define i32 @non_local_pre2(i32* %P1) {
+; CHECK-LABEL: @non_local_pre2(
+; CHECK: load atomic i32, i32* %P1 unordered
+; CHECK: load i32, i32* %P1
+; CHECK: %b = phi i32 [ %b.pre, %early ], [ %a, %0 ]
+; CHECK: ret i32 %b
+  %a = load atomic i32, i32* %P1 unordered, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  call void @clobber()
+  br label %next
+next:
+  %b = load i32, i32* %P1
+  ret i32 %b
+}
+
+; non-atomic to unordered atomic - can't forward!
+define i32 @non_local_pre3(i32* %P1) {
+; CHECK-LABEL: @non_local_pre3(
+; CHECK: %a = load i32, i32* %P1
+; CHECK: %b = load atomic i32, i32* %P1 unordered
+; CHECK: ret i32 %b
+  %a = load i32, i32* %P1
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  call void @clobber()
+  br label %next
+next:
+  %b = load atomic i32, i32* %P1 unordered, align 4
+  ret i32 %b
+}
+
+; ordered atomic to ordered atomic - can't forward
+define i32 @non_local_pre4(i32* %P1) {
+; CHECK-LABEL: @non_local_pre4(
+; CHECK: %a = load atomic i32, i32* %P1 seq_cst
+; CHECK: %b = load atomic i32, i32* %P1 seq_cst
+; CHECK: ret i32 %b
+  %a = load atomic i32, i32* %P1 seq_cst, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  call void @clobber()
+  br label %next
+next:
+  %b = load atomic i32, i32* %P1 seq_cst, align 4
+  ret i32 %b
+}
+
+; can't remove volatile on any path
+define i32 @non_local_pre5(i32* %P1) {
+; CHECK-LABEL: @non_local_pre5(
+; CHECK: %a = load atomic i32, i32* %P1 seq_cst
+; CHECK: %b = load volatile i32, i32* %P1
+; CHECK: ret i32 %b
+  %a = load atomic i32, i32* %P1 seq_cst, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  call void @clobber()
+  br label %next
+next:
+  %b = load volatile i32, i32* %P1
+  ret i32 %b
+}
+
+
+; ordered atomic to unordered atomic
+define i32 @non_local_pre6(i32* %P1) {
+; CHECK-LABEL: @non_local_pre6(
+; CHECK: load atomic i32, i32* %P1 seq_cst
+; CHECK: load atomic i32, i32* %P1 unordered
+; CHECK: %b = phi i32 [ %b.pre, %early ], [ %a, %0 ]
+; CHECK: ret i32 %b
+  %a = load atomic i32, i32* %P1 seq_cst, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  call void @clobber()
+  br label %next
+next:
+  %b = load atomic i32, i32* %P1 unordered, align 4
+  ret i32 %b
+}
+
