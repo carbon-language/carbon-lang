@@ -106,11 +106,6 @@ public:
     return isEqualImpl(M);
   }
 
-  unsigned getHash() const {
-    // Clear the high bit so we don't conflict with tombstones etc.
-    return ((getHashImpl() << 4) ^ getKind()) & (~0U>>1);
-  }
-
   /// isSafeToReorderWithPatternPredicate - Return true if it is safe to sink a
   /// PatternPredicate node past this one.
   virtual bool isSafeToReorderWithPatternPredicate() const {
@@ -180,7 +175,6 @@ public:
 protected:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const = 0;
   virtual bool isEqualImpl(const Matcher *M) const = 0;
-  virtual unsigned getHashImpl() const = 0;
   virtual bool isContradictoryImpl(const Matcher *M) const { return false; }
 };
 
@@ -227,7 +221,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return false; }
-  unsigned getHashImpl() const override { return 12312; }
 };
 
 /// RecordMatcher - Save the current node in the operand list.
@@ -254,7 +247,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
-  unsigned getHashImpl() const override { return 0; }
 };
 
 /// RecordChildMatcher - Save a numbered child of the current node, or fail
@@ -291,7 +283,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<RecordChildMatcher>(M)->getChildNo() == getChildNo();
   }
-  unsigned getHashImpl() const override { return getChildNo(); }
 };
 
 /// RecordMemRefMatcher - Save the current node's memref.
@@ -308,7 +299,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
-  unsigned getHashImpl() const override { return 0; }
 };
 
 
@@ -327,7 +317,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
-  unsigned getHashImpl() const override { return 0; }
 };
 
 /// MoveChildMatcher - This tells the interpreter to move into the
@@ -350,7 +339,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<MoveChildMatcher>(M)->getChildNo() == getChildNo();
   }
-  unsigned getHashImpl() const override { return getChildNo(); }
 };
 
 /// MoveParentMatcher - This tells the interpreter to move to the parent
@@ -368,7 +356,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
-  unsigned getHashImpl() const override { return 0; }
 };
 
 /// CheckSameMatcher - This checks to see if this node is exactly the same
@@ -393,7 +380,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckSameMatcher>(M)->getMatchNumber() == getMatchNumber();
   }
-  unsigned getHashImpl() const override { return getMatchNumber(); }
 };
 
 /// CheckChildSameMatcher - This checks to see if child node is exactly the same
@@ -421,7 +407,6 @@ private:
     return cast<CheckChildSameMatcher>(M)->ChildNo == ChildNo &&
            cast<CheckChildSameMatcher>(M)->MatchNumber == MatchNumber;
   }
-  unsigned getHashImpl() const override { return (MatchNumber << 2) | ChildNo; }
 };
 
 /// CheckPatternPredicateMatcher - This checks the target-specific predicate
@@ -446,7 +431,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckPatternPredicateMatcher>(M)->getPredicate() == Predicate;
   }
-  unsigned getHashImpl() const override;
 };
 
 /// CheckPredicateMatcher - This checks the target-specific predicate to
@@ -470,7 +454,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckPredicateMatcher>(M)->Pred == Pred;
   }
-  unsigned getHashImpl() const override;
 };
 
 
@@ -493,7 +476,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override;
-  unsigned getHashImpl() const override;
   bool isContradictoryImpl(const Matcher *M) const override;
 };
 
@@ -521,7 +503,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return false; }
-  unsigned getHashImpl() const override { return 4123; }
 };
 
 /// CheckTypeMatcher - This checks to see if the current node has the
@@ -547,7 +528,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckTypeMatcher>(M)->Type == Type;
   }
-  unsigned getHashImpl() const override { return Type; }
   bool isContradictoryImpl(const Matcher *M) const override;
 };
 
@@ -575,7 +555,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return false; }
-  unsigned getHashImpl() const override { return 4123; }
 };
 
 
@@ -603,7 +582,6 @@ private:
     return cast<CheckChildTypeMatcher>(M)->ChildNo == ChildNo &&
            cast<CheckChildTypeMatcher>(M)->Type == Type;
   }
-  unsigned getHashImpl() const override { return (Type << 3) | ChildNo; }
   bool isContradictoryImpl(const Matcher *M) const override;
 };
 
@@ -629,7 +607,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckIntegerMatcher>(M)->Value == Value;
   }
-  unsigned getHashImpl() const override { return Value; }
   bool isContradictoryImpl(const Matcher *M) const override;
 };
 
@@ -657,7 +634,6 @@ private:
     return cast<CheckChildIntegerMatcher>(M)->ChildNo == ChildNo &&
            cast<CheckChildIntegerMatcher>(M)->Value == Value;
   }
-  unsigned getHashImpl() const override { return (Value << 3) | ChildNo; }
   bool isContradictoryImpl(const Matcher *M) const override;
 };
 
@@ -682,7 +658,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckCondCodeMatcher>(M)->CondCodeName == CondCodeName;
   }
-  unsigned getHashImpl() const override;
 };
 
 /// CheckValueTypeMatcher - This checks to see if the current node is a
@@ -706,7 +681,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckValueTypeMatcher>(M)->TypeName == TypeName;
   }
-  unsigned getHashImpl() const override;
   bool isContradictoryImpl(const Matcher *M) const override;
 };
 
@@ -752,9 +726,6 @@ private:
     return &cast<CheckComplexPatMatcher>(M)->Pattern == &Pattern &&
            cast<CheckComplexPatMatcher>(M)->MatchNumber == MatchNumber;
   }
-  unsigned getHashImpl() const override {
-    return (unsigned)(intptr_t)&Pattern ^ MatchNumber;
-  }
 };
 
 /// CheckAndImmMatcher - This checks to see if the current node is an 'and'
@@ -778,7 +749,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckAndImmMatcher>(M)->Value == Value;
   }
-  unsigned getHashImpl() const override { return Value; }
 };
 
 /// CheckOrImmMatcher - This checks to see if the current node is an 'and'
@@ -802,7 +772,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<CheckOrImmMatcher>(M)->Value == Value;
   }
-  unsigned getHashImpl() const override { return Value; }
 };
 
 /// CheckFoldableChainNodeMatcher - This checks to see if the current node
@@ -821,7 +790,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override { return true; }
-  unsigned getHashImpl() const override { return 0; }
 };
 
 /// EmitIntegerMatcher - This creates a new TargetConstant.
@@ -845,7 +813,6 @@ private:
     return cast<EmitIntegerMatcher>(M)->Val == Val &&
            cast<EmitIntegerMatcher>(M)->VT == VT;
   }
-  unsigned getHashImpl() const override { return (Val << 4) | VT; }
 };
 
 /// EmitStringIntegerMatcher - A target constant whose value is represented
@@ -870,7 +837,6 @@ private:
     return cast<EmitStringIntegerMatcher>(M)->Val == Val &&
            cast<EmitStringIntegerMatcher>(M)->VT == VT;
   }
-  unsigned getHashImpl() const override;
 };
 
 /// EmitRegisterMatcher - This creates a new TargetConstant.
@@ -896,9 +862,6 @@ private:
     return cast<EmitRegisterMatcher>(M)->Reg == Reg &&
            cast<EmitRegisterMatcher>(M)->VT == VT;
   }
-  unsigned getHashImpl() const override {
-    return ((unsigned)(intptr_t)Reg) << 4 | VT;
-  }
 };
 
 /// EmitConvertToTargetMatcher - Emit an operation that reads a specified
@@ -921,7 +884,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<EmitConvertToTargetMatcher>(M)->Slot == Slot;
   }
-  unsigned getHashImpl() const override { return Slot; }
 };
 
 /// EmitMergeInputChainsMatcher - Emit a node that merges a list of input
@@ -950,7 +912,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<EmitMergeInputChainsMatcher>(M)->ChainNodes == ChainNodes;
   }
-  unsigned getHashImpl() const override;
 };
 
 /// EmitCopyToRegMatcher - Emit a CopyToReg node from a value to a physreg,
@@ -975,9 +936,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<EmitCopyToRegMatcher>(M)->SrcSlot == SrcSlot &&
            cast<EmitCopyToRegMatcher>(M)->DestPhysReg == DestPhysReg;
-  }
-  unsigned getHashImpl() const override {
-    return SrcSlot ^ ((unsigned)(intptr_t)DestPhysReg << 4);
   }
 };
 
@@ -1004,9 +962,6 @@ private:
   bool isEqualImpl(const Matcher *M) const override {
     return cast<EmitNodeXFormMatcher>(M)->Slot == Slot &&
            cast<EmitNodeXFormMatcher>(M)->NodeXForm == NodeXForm;
-  }
-  unsigned getHashImpl() const override {
-    return Slot ^ ((unsigned)(intptr_t)NodeXForm << 4);
   }
 };
 
@@ -1065,7 +1020,6 @@ public:
 private:
   void printImpl(raw_ostream &OS, unsigned indent) const override;
   bool isEqualImpl(const Matcher *M) const override;
-  unsigned getHashImpl() const override;
 };
 
 /// EmitNodeMatcher - This signals a successful match and generates a node.
@@ -1141,7 +1095,6 @@ private:
     return cast<CompleteMatchMatcher>(M)->Results == Results &&
           &cast<CompleteMatchMatcher>(M)->Pattern == &Pattern;
   }
-  unsigned getHashImpl() const override;
 };
 
 } // end namespace llvm
