@@ -53,7 +53,7 @@
 ; HSA: .Lfunc_end0:
 ; HSA: .size   simple, .Lfunc_end0-simple
 
-define void @simple(i32 addrspace(1)* %out) {
+define amdgpu_kernel void @simple(i32 addrspace(1)* %out) {
 entry:
   store i32 0, i32 addrspace(1)* %out
   ret void
