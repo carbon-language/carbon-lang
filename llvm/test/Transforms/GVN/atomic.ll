@@ -337,3 +337,58 @@ define i64 @narrow2(i32* %P1) {
   ret i64 %res
 }
 
+; Note: The cross block FRE testing is deliberately light.  All of the tricky
+; bits of legality are shared code with the block-local FRE above.  These
+; are here only to show that we haven't obviously broken anything.
+
+; unordered atomic to unordered atomic
+define i32 @non_local_fre(i32* %P1) {
+; CHECK-LABEL: @non_local_fre(
+; CHECK: load atomic i32, i32* %P1
+; CHECK: ret i32 0
+; CHECK: ret i32 0
+  %a = load atomic i32, i32* %P1 unordered, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  ret i32 %a
+next:
+  %b = load atomic i32, i32* %P1 unordered, align 4
+  %res = sub i32 %a, %b
+  ret i32 %res
+}
+
+; unordered atomic to non-atomic
+define i32 @non_local_fre2(i32* %P1) {
+; CHECK-LABEL: @non_local_fre2(
+; CHECK: load atomic i32, i32* %P1
+; CHECK: ret i32 0
+; CHECK: ret i32 0
+  %a = load atomic i32, i32* %P1 unordered, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  ret i32 %a
+next:
+  %b = load i32, i32* %P1
+  %res = sub i32 %a, %b
+  ret i32 %res
+}
+
+; Can't forward ordered atomics.
+define i32 @non_local_fre3(i32* %P1) {
+; CHECK-LABEL: @non_local_fre3(
+; CHECK: load atomic i32, i32* %P1 acquire
+; CHECK: ret i32 0
+; CHECK: load atomic i32, i32* %P1 acquire
+; CHECK: ret i32 %res
+  %a = load atomic i32, i32* %P1 acquire, align 4
+  %cmp = icmp eq i32 %a, 0
+  br i1 %cmp, label %early, label %next
+early:
+  ret i32 %a
+next:
+  %b = load atomic i32, i32* %P1 acquire, align 4
+  %res = sub i32 %a, %b
+  ret i32 %res
+}

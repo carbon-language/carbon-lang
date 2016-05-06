@@ -1598,11 +1598,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   if (LI->getParent()->getParent()->hasFnAttribute(Attribute::SanitizeAddress))
     return false;
 
-  // This code hasn't been audited for atomic, ordered, or volatile memory
-  // access.
-  if (!LI->isSimple())
-    return false;
-
   // Step 1: Find the non-local dependencies of the load.
   LoadDepVect Deps;
   MD->getNonLocalPointerDependency(LI, Deps);
@@ -1668,6 +1663,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     ++NumGVNLoad;
     return true;
   }
+
+  // This code hasn't been audited for atomic, ordered, or volatile memory
+  // access.
+  if (!LI->isSimple())
+    return false;
 
   // Step 4: Eliminate partial redundancy.
   if (!EnablePRE || !EnableLoadPRE)
