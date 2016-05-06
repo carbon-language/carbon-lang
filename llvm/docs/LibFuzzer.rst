@@ -624,14 +624,18 @@ Startup initialization
 ----------------------
 If the library being tested needs to be initialized, there are several options.
 
-The simplest way is to have a statically initialized global object:
+The simplest way is to have a statically initialized global object inside
+`LLVMFuzzerTestOneInput` (or in global scope if that works for you):
 
 .. code-block:: c++
 
-   static bool Initialized = DoInitialization();
+  extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+    static bool Initialized = DoInitialization();
+    ...
 
 Alternatively, you may define an optional init function and it will receive
-the program arguments that you can read and modify:
+the program arguments that you can read and modify. Do this **only** if you
+realy need to access ``argv``/``argc``.
 
 .. code-block:: c++
 
