@@ -14,7 +14,7 @@ using namespace llvm::sys;
 #ifdef __x86_64__
 typedef OrcX86_64_SysV HostOrcArch;
 #else
-typedef OrcGenericArchitecture HostOrcArch;
+typedef OrcGenericABI HostOrcArch;
 #endif
 
 ExitOnError ExitOnErr;
