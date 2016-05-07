@@ -3199,39 +3199,30 @@ static bool isKnownNonNullFromDominatingCondition(const Value *V,
   assert(V->getType()->isPointerTy() && "V must be pointer type");
 
   unsigned NumUsesExplored = 0;
-  for (auto U : V->users()) {
+  for (auto *U : V->users()) {
     // Avoid massive lists
     if (NumUsesExplored >= DomConditionsMaxUses)
       break;
     NumUsesExplored++;
     // Consider only compare instructions uniquely controlling a branch
-    const ICmpInst *Cmp = dyn_cast<ICmpInst>(U);
-    if (!Cmp)
+    CmpInst::Predicate Pred;
+    if (!match(const_cast<User *>(U),
+               m_c_ICmp(Pred, m_Specific(V), m_Zero())) ||
+        (Pred != ICmpInst::ICMP_EQ && Pred != ICmpInst::ICMP_NE))
       continue;
 
-    for (auto *CmpU : Cmp->users()) {
+    for (auto *CmpU : U->users()) {
       const BranchInst *BI = dyn_cast<BranchInst>(CmpU);
       if (!BI)
         continue;
 
       assert(BI->isConditional() && "uses a comparison!");
 
-      BasicBlock *NonNullSuccessor = nullptr;
-      CmpInst::Predicate Pred;
-
-      if (match(const_cast<ICmpInst*>(Cmp),
-                m_c_ICmp(Pred, m_Specific(V), m_Zero()))) {
-        if (Pred == ICmpInst::ICMP_EQ)
-          NonNullSuccessor = BI->getSuccessor(1);
-        else if (Pred == ICmpInst::ICMP_NE)
-          NonNullSuccessor = BI->getSuccessor(0);
-      }
-
-      if (NonNullSuccessor) {
-        BasicBlockEdge Edge(BI->getParent(), NonNullSuccessor);
-        if (Edge.isSingleEdge() && DT->dominates(Edge, CtxI->getParent()))
-          return true;
-      }
+      BasicBlock *NonNullSuccessor =
+          BI->getSuccessor(Pred == ICmpInst::ICMP_EQ ? 1 : 0);
+      BasicBlockEdge Edge(BI->getParent(), NonNullSuccessor);
+      if (Edge.isSingleEdge() && DT->dominates(Edge, CtxI->getParent()))
+        return true;
     }
   }
 
