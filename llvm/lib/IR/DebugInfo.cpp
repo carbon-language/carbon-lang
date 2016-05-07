@@ -261,6 +261,7 @@ bool llvm::stripDebugInfo(Function &F) {
            CI->getCalledFunction() == DbgVal)) {
         CI->eraseFromParent();
         Changed = true;
+        continue;
       }
       if (I.getDebugLoc()) {
         Changed = true;
