@@ -50,7 +50,7 @@ public:
 
 protected:
     virtual void* do_allocate(size_t, size_t) {
-#ifndef _LIBCPP_HAS_NO_EXCEPTIONS
+#ifndef _LIBCPP_NO_EXCEPTIONS
         throw std::bad_alloc();
 #else
         abort();
