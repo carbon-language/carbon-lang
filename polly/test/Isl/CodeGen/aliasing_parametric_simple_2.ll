@@ -7,9 +7,8 @@
 ;
 ; CHECK:  %[[Ctx:[._a-zA-Z0-9]*]] = and i1 true
 ; CHECK-NEXT:  %[[M0:[._a-zA-Z0-9]*]] = sext i32 %c to i64
-; CHECK-NEXT:  %[[M1:[._a-zA-Z0-9]*]] = icmp sle i64 %[[M0]], 15
-; CHECK-NEXT:  %[[M2:[._a-zA-Z0-9]*]] = sext i32 %c to i64
-; CHECK-NEXT:  %[[M3:[._a-zA-Z0-9]*]] = sub nsw i64 %[[M2]], 9
+; CHECK-NEXT:  %[[M3:[._a-zA-Z0-9]*]] = sub nsw i64 %[[M0]], 9
+; CHECK-NEXT:  %[[M1:[._a-zA-Z0-9]*]] = icmp sgt i64 6, %[[M3]]
 ; CHECK-NEXT:  %[[M4:[._a-zA-Z0-9]*]] = select i1 %[[M1]], i64 6, i64 %[[M3]]
 ; CHECK-NEXT:  %[[BMax:[._a-zA-Z0-9]*]] = getelementptr i32, i32* %B, i64 %[[M4]]
 ; CHECK-NEXT:  %[[AMin:[._a-zA-Z0-9]*]] = getelementptr i32, i32* %A, i64 0
@@ -18,9 +17,8 @@
 ; CHECK-NEXT:  %[[BltA:[._a-zA-Z0-9]*]] = icmp ule i64 %[[BMaxI]], %[[AMinI]]
 ; CHECK-NEXT:  %[[AMax:[._a-zA-Z0-9]*]] = getelementptr i32, i32* %A, i64 1024
 ; CHECK-NEXT:  %[[m0:[._a-zA-Z0-9]*]] = sext i32 %c to i64
-; CHECK-NEXT:  %[[m1:[._a-zA-Z0-9]*]] = icmp sge i64 %[[m0]], 15
-; CHECK-NEXT:  %[[m2:[._a-zA-Z0-9]*]] = sext i32 %c to i64
-; CHECK-NEXT:  %[[m3:[._a-zA-Z0-9]*]] = sub nsw i64 %[[m2]], 10
+; CHECK-NEXT:  %[[m3:[._a-zA-Z0-9]*]] = sub nsw i64 %[[m0]], 10
+; CHECK-NEXT:  %[[m1:[._a-zA-Z0-9]*]] = icmp slt i64 5, %[[m3]]
 ; CHECK-NEXT:  %[[m4:[._a-zA-Z0-9]*]] = select i1 %[[m1]], i64 5, i64 %[[m3]]
 ; CHECK-NEXT:  %[[BMin:[._a-zA-Z0-9]*]] = getelementptr i32, i32* %B, i64 %[[m4]]
 ; CHECK-NEXT:  %[[AMaxI:[._a-zA-Z0-9]*]] = ptrtoint i32* %[[AMax]] to i64
