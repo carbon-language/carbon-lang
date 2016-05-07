@@ -3182,7 +3182,7 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
     return !GV->hasExternalWeakLinkage() &&
            GV->getType()->getAddressSpace() == 0;
 
-  // A Load tagged w/nonnull metadata is never null.
+  // A Load tagged with nonnull metadata is never null.
   if (const LoadInst *LI = dyn_cast<LoadInst>(V))
     return LI->getMetadata(LLVMContext::MD_nonnull);
 
