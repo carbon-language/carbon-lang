@@ -41,10 +41,12 @@ struct MipsRelocationEntry {
   }
 };
 
+#ifndef NDEBUG
 raw_ostream &operator<<(raw_ostream &OS, const MipsRelocationEntry &RHS) {
   RHS.print(OS);
   return OS;
 }
+#endif
 
 class MipsELFObjectWriter : public MCELFObjectTargetWriter {
 public:
