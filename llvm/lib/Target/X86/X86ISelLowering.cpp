@@ -4122,6 +4122,18 @@ bool X86TargetLowering::isCheapToSpeculateCtlz() const {
   return Subtarget.hasLZCNT();
 }
 
+bool X86TargetLowering::hasAndNotCompare(SDValue Y) const {
+  if (!Subtarget.hasBMI())
+    return false;
+
+  // There are only 32-bit and 64-bit forms for 'andn'.
+  EVT VT = Y.getValueType();
+  if (VT != MVT::i32 && VT != MVT::i64)
+    return false;
+
+  return true;
+}
+
 /// Return true if every element in Mask, beginning
 /// from position Pos and ending in Pos+Size is undef.
 static bool isUndefInRange(ArrayRef<int> Mask, unsigned Pos, unsigned Size) {
