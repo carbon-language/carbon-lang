@@ -477,11 +477,7 @@ def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
                [(set VR128:$dst, (v4f32 immAllZerosV))]>;
 }
 
-def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
 def : Pat<(v4i32 immAllZerosV), (V_SET0)>;
-def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
-def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
-def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
 
 
 // The same as done above but for AVX.  The 256-bit AVX1 ISA doesn't support PI,
@@ -491,15 +487,7 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isPseudo = 1, Predicates = [HasAVX], SchedRW = [WriteZero] in {
 def AVX_SET0 : I<0, Pseudo, (outs VR256:$dst), (ins), "",
-                 [(set VR256:$dst, (v8f32 immAllZerosV))]>;
-}
-
-let Predicates = [HasAVX] in {
-  def : Pat<(v4f64 immAllZerosV), (AVX_SET0)>;
-  def : Pat<(v4i64 immAllZerosV), (AVX_SET0)>;
-  def : Pat<(v8i32 immAllZerosV), (AVX_SET0)>;
-  def : Pat<(v16i16 immAllZerosV), (AVX_SET0)>;
-  def : Pat<(v32i8 immAllZerosV), (AVX_SET0)>;
+                 [(set VR256:$dst, (v8i32 immAllZerosV))]>;
 }
 
 // We set canFoldAsLoad because this can be converted to a constant-pool

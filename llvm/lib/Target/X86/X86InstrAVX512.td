@@ -472,20 +472,15 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v16i16 (bitconvert (v32i8 VR256X:$src))),  (v16i16 VR256X:$src)>;
 }
 
-//
-// AVX-512: VPXOR instruction writes zero to its upper part, it's safe build zeros.
-//
-
+// Alias instruction that maps zero vector to pxor / xorp* for AVX-512.
+// This is expanded by ExpandPostRAPseudos to an xorps / vxorps, and then
+// swizzled by ExecutionDepsFix to pxor.
+// We set canFoldAsLoad because this can be converted to a constant-pool
+// load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isPseudo = 1, Predicates = [HasAVX512] in {
 def AVX512_512_SET0 : I<0, Pseudo, (outs VR512:$dst), (ins), "",
-               [(set VR512:$dst, (v16f32 immAllZerosV))]>;
-}
-
-let Predicates = [HasAVX512] in {
-def : Pat<(v8i64 immAllZerosV), (AVX512_512_SET0)>;
-def : Pat<(v16i32 immAllZerosV), (AVX512_512_SET0)>;
-def : Pat<(v8f64 immAllZerosV), (AVX512_512_SET0)>;
+               [(set VR512:$dst, (v16i32 immAllZerosV))]>;
 }
 
 //===----------------------------------------------------------------------===//
