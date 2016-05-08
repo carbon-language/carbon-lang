@@ -3214,6 +3214,22 @@ defm VMOVNTDQ : avx512_movnt_vl<0xE7, "vmovntdq", avx512vl_i64_info>, PD;
 defm VMOVNTPD : avx512_movnt_vl<0x2B, "vmovntpd", avx512vl_f64_info>, PD, VEX_W;
 defm VMOVNTPS : avx512_movnt_vl<0x2B, "vmovntps", avx512vl_f32_info>, PS;
 
+let Predicates = [HasVLX], AddedComplexity = 400 in {
+  def : Pat<(alignednontemporalstore (v8i32 VR256X:$src), addr:$dst),
+            (VMOVNTDQZ256mr addr:$dst, VR256X:$src)>;
+  def : Pat<(alignednontemporalstore (v16i16 VR256X:$src), addr:$dst),
+            (VMOVNTDQZ256mr addr:$dst, VR256X:$src)>;
+  def : Pat<(alignednontemporalstore (v32i8 VR256X:$src), addr:$dst),
+            (VMOVNTDQZ256mr addr:$dst, VR256X:$src)>;
+
+  def : Pat<(alignednontemporalstore (v4i32 VR128X:$src), addr:$dst),
+            (VMOVNTDQZ128mr addr:$dst, VR128X:$src)>;
+  def : Pat<(alignednontemporalstore (v8i16 VR128X:$src), addr:$dst),
+            (VMOVNTDQZ128mr addr:$dst, VR128X:$src)>;
+  def : Pat<(alignednontemporalstore (v16i8 VR128X:$src), addr:$dst),
+            (VMOVNTDQZ128mr addr:$dst, VR128X:$src)>;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - Integer arithmetic
 //
