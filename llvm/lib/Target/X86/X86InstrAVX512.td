@@ -3214,6 +3214,15 @@ defm VMOVNTDQ : avx512_movnt_vl<0xE7, "vmovntdq", avx512vl_i64_info>, PD;
 defm VMOVNTPD : avx512_movnt_vl<0x2B, "vmovntpd", avx512vl_f64_info>, PD, VEX_W;
 defm VMOVNTPS : avx512_movnt_vl<0x2B, "vmovntps", avx512vl_f32_info>, PS;
 
+let Predicates = [HasAVX512], AddedComplexity = 400 in {
+  def : Pat<(alignednontemporalstore (v16i32 VR512:$src), addr:$dst),
+            (VMOVNTDQZmr addr:$dst, VR512:$src)>;
+  def : Pat<(alignednontemporalstore (v32i16 VR512:$src), addr:$dst),
+            (VMOVNTDQZmr addr:$dst, VR512:$src)>;
+  def : Pat<(alignednontemporalstore (v64i8 VR512:$src), addr:$dst),
+            (VMOVNTDQZmr addr:$dst, VR512:$src)>;
+}
+
 let Predicates = [HasVLX], AddedComplexity = 400 in {
   def : Pat<(alignednontemporalstore (v8i32 VR256X:$src), addr:$dst),
             (VMOVNTDQZ256mr addr:$dst, VR256X:$src)>;
