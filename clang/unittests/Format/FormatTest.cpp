@@ -1122,7 +1122,7 @@ TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
 
 TEST_F(FormatTest, UnderstandsBlockComments) {
   verifyFormat("f(/*noSpaceAfterParameterNamingComment=*/true);");
-  verifyFormat("void f() { g(/*aaa=*/x, /*bbb=*/!y); }");
+  verifyFormat("void f() { g(/*aaa=*/x, /*bbb=*/!y, /*c=*/::c); }");
   EXPECT_EQ("f(aaaaaaaaaaaaaaaaaaaaaaaaa, /* Trailing comment for aa... */\n"
             "  bbbbbbbbbbbbbbbbbbbbbbbbb);",
             format("f(aaaaaaaaaaaaaaaaaaaaaaaaa ,   \\\n"
