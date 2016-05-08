@@ -5381,6 +5381,10 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
   verifyFormat("template <typename T> // T can be A, B or C.\n"
                "struct C {};",
                AlwaysBreak);
+  verifyFormat("template <enum E> class A {\n"
+               "public:\n"
+               "  E *f();\n"
+               "};");
 }
 
 TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
