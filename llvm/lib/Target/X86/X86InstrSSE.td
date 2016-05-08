@@ -494,34 +494,12 @@ def AVX_SET0 : I<0, Pseudo, (outs VR256:$dst), (ins), "",
                  [(set VR256:$dst, (v8f32 immAllZerosV))]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX] in {
   def : Pat<(v4f64 immAllZerosV), (AVX_SET0)>;
-
-let Predicates = [HasAVX2] in {
   def : Pat<(v4i64 immAllZerosV), (AVX_SET0)>;
   def : Pat<(v8i32 immAllZerosV), (AVX_SET0)>;
   def : Pat<(v16i16 immAllZerosV), (AVX_SET0)>;
   def : Pat<(v32i8 immAllZerosV), (AVX_SET0)>;
-}
-
-// AVX1 has no support for 256-bit integer instructions, but since the 128-bit
-// VPXOR instruction writes zero to its upper part, it's safe build zeros.
-let Predicates = [HasAVX1Only] in {
-def : Pat<(v32i8 immAllZerosV), (SUBREG_TO_REG (i8 0), (V_SET0), sub_xmm)>;
-def : Pat<(bc_v32i8 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i8 0), (V_SET0), sub_xmm)>;
-
-def : Pat<(v16i16 immAllZerosV), (SUBREG_TO_REG (i16 0), (V_SET0), sub_xmm)>;
-def : Pat<(bc_v16i16 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i16 0), (V_SET0), sub_xmm)>;
-
-def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (V_SET0), sub_xmm)>;
-def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i32 0), (V_SET0), sub_xmm)>;
-
-def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (V_SET0), sub_xmm)>;
-def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i64 0), (V_SET0), sub_xmm)>;
 }
 
 // We set canFoldAsLoad because this can be converted to a constant-pool
