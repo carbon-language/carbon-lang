@@ -4339,10 +4339,7 @@ static SDValue getZeroVector(MVT VT, const X86Subtarget &Subtarget,
   SDValue Vec;
   if (!Subtarget.hasSSE2() && VT.is128BitVector()) {
     Vec = DAG.getConstantFP(+0.0, dl, MVT::v4f32);
-  } else if (!Subtarget.hasInt256() && VT.is256BitVector()) {
-    Vec = DAG.getConstantFP(+0.0, dl, MVT::v8f32);
   } else if (VT.getVectorElementType() == MVT::i1) {
-    // AVX512 can use "vpxord" for 512-bit zeros.
     assert((Subtarget.hasBWI() || VT.getVectorNumElements() <= 16) &&
            "Unexpected vector type");
     assert((Subtarget.hasVLX() || VT.getVectorNumElements() >= 8) &&
