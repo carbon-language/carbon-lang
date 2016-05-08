@@ -472,11 +472,12 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1, SchedRW = [WriteZero] in {
+    isPseudo = 1, Predicates = [NoVLX], SchedRW = [WriteZero] in {
 def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
                [(set VR128:$dst, (v4f32 immAllZerosV))]>;
 }
 
+let Predicates = [NoVLX] in
 def : Pat<(v4i32 immAllZerosV), (V_SET0)>;
 
 
@@ -485,7 +486,7 @@ def : Pat<(v4i32 immAllZerosV), (V_SET0)>;
 // at the rename stage without using any execution unit, so SET0PSY
 // and SET0PDY can be used for vector int instructions without penalty
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1, Predicates = [HasAVX], SchedRW = [WriteZero] in {
+    isPseudo = 1, Predicates = [HasAVX, NoVLX], SchedRW = [WriteZero] in {
 def AVX_SET0 : I<0, Pseudo, (outs VR256:$dst), (ins), "",
                  [(set VR256:$dst, (v8i32 immAllZerosV))]>;
 }

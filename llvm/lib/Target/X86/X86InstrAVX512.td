@@ -483,6 +483,14 @@ def AVX512_512_SET0 : I<0, Pseudo, (outs VR512:$dst), (ins), "",
                [(set VR512:$dst, (v16i32 immAllZerosV))]>;
 }
 
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isPseudo = 1, Predicates = [HasVLX] in {
+def AVX512_128_SET0 : I<0, Pseudo, (outs VR128X:$dst), (ins), "",
+               [(set VR128X:$dst, (v4i32 immAllZerosV))]>;
+def AVX512_256_SET0 : I<0, Pseudo, (outs VR256X:$dst), (ins), "",
+               [(set VR256X:$dst, (v8i32 immAllZerosV))]>;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - VECTOR INSERT
 //
