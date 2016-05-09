@@ -30216,6 +30216,27 @@ static bool isGRClass(const TargetRegisterClass &RC) {
   }
 }
 
+/// Check if \p RC is a general purpose register class.
+/// I.e., FR* / VR* or one of their variant.
+static bool isFRClass(const TargetRegisterClass &RC) {
+  switch (RC.getID()) {
+  case X86::FR32RegClassID:
+  case X86::FR32XRegClassID:
+  case X86::FR64RegClassID:
+  case X86::FR64XRegClassID:
+  case X86::FR128RegClassID:
+  case X86::VR64RegClassID:
+  case X86::VR128RegClassID:
+  case X86::VR128XRegClassID:
+  case X86::VR256RegClassID:
+  case X86::VR256XRegClassID:
+  case X86::VR512RegClassID:
+    return true;
+  default:
+    return false;
+  }
+}
+
 std::pair<unsigned, const TargetRegisterClass *>
 X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
                                                 StringRef Constraint,
@@ -30397,11 +30418,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       Res.first = 0;
       Res.second = nullptr;
     }
-  } else if (Class == &X86::FR32RegClass || Class == &X86::FR64RegClass ||
-             Class == &X86::VR128RegClass || Class == &X86::VR256RegClass ||
-             Class == &X86::FR32XRegClass || Class == &X86::FR64XRegClass ||
-             Class == &X86::VR128XRegClass || Class == &X86::VR256XRegClass ||
-             Class == &X86::VR512RegClass) {
+  } else if (isFRClass(*Class)) {
     // Handle references to XMM physical registers that got mapped into the
     // wrong class.  This can happen with constraints like {xmm0} where the
     // target independent register mapper will just pick the first match it can
