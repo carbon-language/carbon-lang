@@ -30209,6 +30209,7 @@ static bool isGRClass(const TargetRegisterClass &RC) {
   case X86::GR64_NOSPRegClassID:
   case X86::GR64_NOREX_NOSPRegClassID:
   case X86::LOW32_ADDR_ACCESSRegClassID:
+  case X86::LOW32_ADDR_ACCESS_RBPRegClassID:
     return true;
   default:
     return false;
