@@ -12,7 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/support/Endian.h"
+#include "llvm/Support/Endian.h"
 
 namespace llvm {
 namespace codeview {
@@ -20,8 +20,8 @@ namespace codeview {
 template <typename Kind> class RecordIterator {
 private:
   struct RecordPrefix {
-    support::ulittle16_t Len;  // Record length, starting from &Leaf
-    support::ulittle16_t Kind; // Record kind (a value from the `Kind` enum).
+    support::ulittle16_t RecordLen;  // Record length, starting from &Leaf.
+    support::ulittle16_t RecordKind; // Record kind (from the `Kind` enum).
   };
 
 public:
@@ -86,8 +86,8 @@ private:
     const auto *Rec = reinterpret_cast<const RecordPrefix *>(Data.data());
     Data = Data.drop_front(sizeof(RecordPrefix));
 
-    Current.Length = Rec->Len;
-    Current.Type = static_cast<Kind>(uint16_t(Rec->Kind));
+    Current.Length = Rec->RecordLen;
+    Current.Type = static_cast<Kind>(uint16_t(Rec->RecordKind));
     Current.Data = Data.slice(0, Current.Length - 2);
 
     // The next record starts immediately after this one.
