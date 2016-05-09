@@ -363,7 +363,7 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File) {
         TD.dump(Type);
 
       if (opts::DumpTpiRecordBytes)
-        P.printBinaryBlock("Bytes", Type.LeafData);
+        P.printBinaryBlock("Bytes", Type.Data);
     }
   }
   return Error::success();
