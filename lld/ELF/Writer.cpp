@@ -1104,8 +1104,11 @@ template <class ELFT>
 static Symbol *addOptionalSynthetic(SymbolTable<ELFT> &Table, StringRef Name,
                                     OutputSectionBase<ELFT> *Sec,
                                     typename ELFT::uint Val) {
-  if (!Table.find(Name))
+  SymbolBody *S = Table.find(Name);
+  if (!S)
     return nullptr;
+  if (!S->isUndefined() && !S->isShared())
+    return S->symbol();
   return Table.addSynthetic(Name, Sec, Val);
 }
 
