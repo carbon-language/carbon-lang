@@ -5966,3 +5966,61 @@ __m512i test_mm512_mask_cvtps_epu32 (__m512i __W, __mmask16 __U, __m512 __A)
   return _mm512_mask_cvtps_epu32( __W, __U, __A);
 }
 
+
+__m512d test_mm512_mask_max_pd (__m512d __W, __mmask8 __U, __m512d __A, __m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_max_pd 
+  // CHECK: @llvm.x86.avx512.mask.max.pd.512
+  return _mm512_mask_max_pd (__W,__U,__A,__B);
+}
+
+__m512d test_mm512_maskz_max_pd (__mmask8 __U, __m512d __A, __m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_max_pd 
+  // CHECK: @llvm.x86.avx512.mask.max.pd.512
+  return _mm512_maskz_max_pd (__U,__A,__B);
+}
+
+__m512 test_mm512_mask_max_ps (__m512 __W, __mmask16 __U, __m512 __A, __m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_max_ps 
+  // CHECK: @llvm.x86.avx512.mask.max.ps.512
+  return _mm512_mask_max_ps (__W,__U,__A,__B);
+}
+
+__m512 test_mm512_maskz_max_ps (__mmask16 __U, __m512 __A, __m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_max_ps 
+  // CHECK: @llvm.x86.avx512.mask.max.ps.512
+  return _mm512_maskz_max_ps (__U,__A,__B);
+}
+
+__m512d test_mm512_mask_min_pd (__m512d __W, __mmask8 __U, __m512d __A, __m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_min_pd 
+  // CHECK: @llvm.x86.avx512.mask.min.pd.512
+  return _mm512_mask_min_pd (__W,__U,__A,__B);
+}
+
+__m512d test_mm512_maskz_min_pd (__mmask8 __U, __m512d __A, __m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_min_pd 
+  // CHECK: @llvm.x86.avx512.mask.min.pd.512
+  return _mm512_maskz_min_pd (__U,__A,__B);
+}
+
+__m512 test_mm512_mask_min_ps (__m512 __W, __mmask16 __U, __m512 __A, __m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_min_ps 
+  // CHECK: @llvm.x86.avx512.mask.min.ps.512
+  return _mm512_mask_min_ps (__W,__U,__A,__B);
+}
+
+__m512 test_mm512_maskz_min_ps (__mmask16 __U, __m512 __A, __m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_min_ps 
+  // CHECK: @llvm.x86.avx512.mask.min.ps.512
+  return _mm512_maskz_min_ps (__U,__A,__B);
+}
+
+
