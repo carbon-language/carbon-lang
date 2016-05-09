@@ -30182,6 +30182,39 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
+/// Check if \p RC is a general purpose register class.
+/// I.e., GR* or one of their variant.
+static bool isGRClass(const TargetRegisterClass &RC) {
+  switch (RC.getID()) {
+  case X86::GR8RegClassID:
+  case X86::GR8_ABCD_LRegClassID:
+  case X86::GR8_ABCD_HRegClassID:
+  case X86::GR8_NOREXRegClassID:
+  case X86::GR16RegClassID:
+  case X86::GR16_ABCDRegClassID:
+  case X86::GR16_NOREXRegClassID:
+  case X86::GR32RegClassID:
+  case X86::GR32_ABCDRegClassID:
+  case X86::GR32_TCRegClassID:
+  case X86::GR32_NOREXRegClassID:
+  case X86::GR32_NOAXRegClassID:
+  case X86::GR32_NOSPRegClassID:
+  case X86::GR32_NOREX_NOSPRegClassID:
+  case X86::GR32_ADRegClassID:
+  case X86::GR64RegClassID:
+  case X86::GR64_ABCDRegClassID:
+  case X86::GR64_TCRegClassID:
+  case X86::GR64_TCW64RegClassID:
+  case X86::GR64_NOREXRegClassID:
+  case X86::GR64_NOSPRegClassID:
+  case X86::GR64_NOREX_NOSPRegClassID:
+  case X86::LOW32_ADDR_ACCESSRegClassID:
+    return true;
+  default:
+    return false;
+  }
+}
+
 std::pair<unsigned, const TargetRegisterClass *>
 X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
                                                 StringRef Constraint,
@@ -30343,8 +30376,11 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
   // return "eax". This should even work for things like getting 64bit integer
   // registers when given an f64 type.
   const TargetRegisterClass *Class = Res.second;
-  if (Class == &X86::GR8RegClass || Class == &X86::GR16RegClass ||
-      Class == &X86::GR32RegClass || Class == &X86::GR64RegClass) {
+  // The generic code will match the first register class that contains the
+  // given register. Thus, based on the ordering of the tablegened file,
+  // the "plain" GR classes might not come first.
+  // Therefore, use a helper method.
+  if (isGRClass(*Class)) {
     unsigned Size = VT.getSizeInBits();
     if (Size == 1) Size = 8;
     unsigned DestReg = getX86SubSuperRegisterOrZero(Res.first, Size);
