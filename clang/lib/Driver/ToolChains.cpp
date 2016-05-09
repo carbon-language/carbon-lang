@@ -3421,7 +3421,6 @@ enum Distro {
   DebianJessie,
   DebianStretch,
   Exherbo,
-  RHEL4,
   RHEL5,
   RHEL6,
   RHEL7,
@@ -3448,7 +3447,7 @@ enum Distro {
 };
 
 static bool IsRedhat(enum Distro Distro) {
-  return Distro == Fedora || (Distro >= RHEL4 && Distro <= RHEL7);
+  return Distro == Fedora || (Distro >= RHEL5 && Distro <= RHEL7);
 }
 
 static bool IsOpenSUSE(enum Distro Distro) { return Distro == OpenSUSE; }
@@ -3490,7 +3489,8 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
                       .Case("wily", UbuntuWily)
                       .Case("xenial", UbuntuXenial)
                       .Default(UnknownDistro);
-    return Version;
+    if (Version != UnknownDistro)
+      return Version;
   }
 
   File = llvm::MemoryBuffer::getFile("/etc/redhat-release");
@@ -3499,15 +3499,14 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
     if (Data.startswith("Fedora release"))
       return Fedora;
     if (Data.startswith("Red Hat Enterprise Linux") ||
-        Data.startswith("CentOS")) {
+        Data.startswith("CentOS") ||
+        Data.startswith("Scientific Linux")) {
       if (Data.find("release 7") != StringRef::npos)
         return RHEL7;
       else if (Data.find("release 6") != StringRef::npos)
         return RHEL6;
       else if (Data.find("release 5") != StringRef::npos)
         return RHEL5;
-      else if (Data.find("release 4") != StringRef::npos)
-        return RHEL4;
     }
     return UnknownDistro;
   }
@@ -3732,11 +3731,11 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
       ExtraOpts.push_back("--hash-style=both");
   }
 
-  if (IsRedhat(Distro))
+  if (IsRedhat(Distro) && Distro != RHEL5 && Distro != RHEL6)
     ExtraOpts.push_back("--no-add-needed");
 
   if ((IsDebian(Distro) && Distro >= DebianSqueeze) || IsOpenSUSE(Distro) ||
-      (IsRedhat(Distro) && Distro != RHEL4 && Distro != RHEL5) ||
+      (IsRedhat(Distro) && Distro != RHEL5) ||
       (IsUbuntu(Distro) && Distro >= UbuntuKarmic))
     ExtraOpts.push_back("--build-id");
 
