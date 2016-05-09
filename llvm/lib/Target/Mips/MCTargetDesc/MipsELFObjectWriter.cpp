@@ -167,9 +167,9 @@ static unsigned getMatchingLoType(const ELFRelocationEntry &Reloc) {
 /// A matching relocation is unbeatable if:
 /// - It is not already involved in a match.
 /// - It's offset is exactly that of the one given in R.
-static bool isMatchingReloc(const MipsRelocationEntry &X,
-                            const ELFRelocationEntry &R,
-                            unsigned MatchingType) {
+static FindBestPredicateResult isMatchingReloc(const MipsRelocationEntry &X,
+                                               const ELFRelocationEntry &R,
+                                               unsigned MatchingType) {
   if (X.R.Type == MatchingType && X.R.OriginalSymbol == R.OriginalSymbol) {
     if (!X.Matched &&
         X.R.OriginalAddend == R.OriginalAddend)
