@@ -350,7 +350,7 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File) {
       for (auto &S : ModS.symbols()) {
         DictScope SD(P);
         P.printHex("Kind", static_cast<uint32_t>(S.Type));
-        P.printNumber("Length", S.Length);
+        P.printNumber("Length", static_cast<uint32_t>(S.Length));
         P.printBinaryBlock("Bytes", S.Data);
       }
     }
