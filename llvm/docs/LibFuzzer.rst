@@ -81,6 +81,13 @@ is to use the `-merge=1` flag:
   mkdir NEW_CORPUS_DIR  # Store minimized corpus here.
   ./my-fuzzer -merge=1 NEW_CORPUS_DIR FULL_CORPUS_DIR
 
+You may use the same flag to add more interesting items to an existing corpus.
+Only the inputs that trigger new coverage will be added to the first corpus.
+
+.. code-block:: console
+
+  ./my-fuzzer -merge=1 CURRNT_CORPUS_DIR NEW_POTENTIALLY_INTERESTING_INPUTS_DIR
+
 Getting Started
 ===============
 
