@@ -100,6 +100,11 @@ identified.  The improvements since the 3.8 release include:
   Flags user-defined constructor definitions that do not initialize all builtin
   and pointer fields which leaves their memory in an undefined state.
 
+- New `google-default-arguments
+  <http://clang.llvm.org/extra/clang-tidy/checks/google-default-arguments.html>`_ check
+
+  Flags default arguments in virtual methods.
+
 - New `misc-dangling-handle
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-dangling-handle.html>`_ check
 
