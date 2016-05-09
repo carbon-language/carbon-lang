@@ -104,7 +104,7 @@ Finally, link with ``libFuzzer.a``::
   clang -fsanitize-coverage=edge -fsanitize=address your_lib.cc fuzz_target.cc libFuzzer.a -o my_fuzzer
 
 Corpus
-======
+------
 
 Coverage-guided fuzzers like libFuzzer rely on a corpus of sample inputs for the
 code under test.  This corpus should ideally be seeded with a varied collection
