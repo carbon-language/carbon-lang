@@ -10414,14 +10414,15 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
 
   // Perform check for initializers of device-side global variables.
   // CUDA allows empty constructors as initializers (see E.2.3.1, CUDA
-  // 7.5). CUDA also allows constant initializers for __constant__ and
-  // __device__ variables.
+  // 7.5). We must also apply the same checks to all __shared__
+  // variables whether they are local or not. CUDA also allows
+  // constant initializers for __constant__ and __device__ variables.
   if (getLangOpts().CUDA && getLangOpts().CUDAIsDevice) {
     const Expr *Init = VD->getInit();
-    const bool IsGlobal = VD->hasGlobalStorage() && !VD->isStaticLocal();
-    if (Init && IsGlobal &&
+    if (Init && VD->hasGlobalStorage() &&
         (VD->hasAttr<CUDADeviceAttr>() || VD->hasAttr<CUDAConstantAttr>() ||
          VD->hasAttr<CUDASharedAttr>())) {
+      assert((!VD->isStaticLocal() || VD->hasAttr<CUDASharedAttr>()));
       bool AllowedInit = false;
       if (const CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(Init))
         AllowedInit =
