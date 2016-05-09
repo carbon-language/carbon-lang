@@ -1092,6 +1092,11 @@ public:
       && (getConstantMemOff() % 4 == 0) && getMemBase()->isRegIdx()
       && (getMemBase()->getGPR32Reg() == Mips::SP);
   }
+  template <unsigned Bits> bool isMemWithSimmWordAlignedOffsetGP() const {
+    return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff())
+      && (getConstantMemOff() % 4 == 0) && getMemBase()->isRegIdx()
+      && (getMemBase()->getGPR32Reg() == Mips::GP);
+  }
   template <unsigned Bits, unsigned ShiftLeftAmount>
   bool isScaledUImm() const {
     return isConstantImm() &&
