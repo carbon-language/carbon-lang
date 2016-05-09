@@ -237,7 +237,8 @@ identified.  The improvements since the 3.8 release include:
   Finds static function and variable definitions in anonymous namespace.
 
 - New `misc-unconventional-assign-operator
-  <http://clang.llvm.org/extra/clang-tidy/checks/misc-unconventional-assign-operator.html>`_ check replacing old `misc-assign-operator-signature` check
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-unconventional-assign-operator.html>`_
+  check replacing the *misc-assign-operator-signature* check.
 
   Does not only checks for correct signature but also for correct ``return``
   statements (returning ``*this``)
