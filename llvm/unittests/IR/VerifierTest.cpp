@@ -145,6 +145,8 @@ TEST(VerifierTest, CrossModuleMetadataRef) {
                   .startswith("Referencing global in another module!"));
 }
 
+#ifndef _MSC_VER
+// FIXME: This test causes an ICE in MSVC 2013.
 TEST(VerifierTest, StripInvalidDebugInfo) {
   LLVMContext C;
   Module M("M", C);
@@ -167,7 +169,7 @@ TEST(VerifierTest, StripInvalidDebugInfo) {
   MPM.run(M, MAM);
   EXPECT_FALSE(verifyModule(M));
 }
-
+#endif
 
 } // end anonymous namespace
 } // end namespace llvm
