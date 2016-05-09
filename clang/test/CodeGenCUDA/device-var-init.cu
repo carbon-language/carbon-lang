@@ -368,6 +368,14 @@ __device__ void df() {
   T_F_NEC t_f_nec;
   T_FA_NEC t_fa_nec;
   static __shared__ UC s_uc;
+#if ERROR_CASE
+  static __device__ int ds;
+  // expected-error@-1 {{Within a __device__/__global__ function, only __shared__ variables may be marked "static"}}
+  static __constant__ int dc;
+  // expected-error@-1 {{Within a __device__/__global__ function, only __shared__ variables may be marked "static"}}
+  static int v;
+  // expected-error@-1 {{Within a __device__/__global__ function, only __shared__ variables may be marked "static"}}
+#endif
 }
 
 // CHECK:   call void @_ZN2ECC1Ev(%struct.EC* %ec)

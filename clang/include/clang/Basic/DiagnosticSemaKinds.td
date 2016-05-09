@@ -6554,7 +6554,9 @@ def err_dynamic_var_init : Error<
     "__device__, __constant__, and __shared__ variables.">;
 def err_shared_var_init : Error<
     "initialization is not supported for __shared__ variables.">;
-
+def err_device_static_local_var : Error<
+    "Within a __device__/__global__ function, "
+    "only __shared__ variables may be marked \"static\"">;
 def warn_non_pod_vararg_with_format_string : Warning<
   "cannot pass %select{non-POD|non-trivial}0 object of type %1 to variadic "
   "%select{function|block|method|constructor}2; expected type from format "

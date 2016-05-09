@@ -10391,14 +10391,23 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
     }
   }
 
-  // Static locals inherit dll attributes from their function.
   if (VD->isStaticLocal()) {
     if (FunctionDecl *FD =
             dyn_cast_or_null<FunctionDecl>(VD->getParentFunctionOrMethod())) {
+      // Static locals inherit dll attributes from their function.
       if (Attr *A = getDLLAttr(FD)) {
         auto *NewAttr = cast<InheritableAttr>(A->clone(getASTContext()));
         NewAttr->setInherited(true);
         VD->addAttr(NewAttr);
+      }
+      // CUDA E.2.9.4: Within the body of a __device__ or __global__
+      // function, only __shared__ variables may be declared with
+      // static storage class.
+      if (getLangOpts().CUDA && getLangOpts().CUDAIsDevice &&
+          (FD->hasAttr<CUDADeviceAttr>() || FD->hasAttr<CUDAGlobalAttr>()) &&
+          !VD->hasAttr<CUDASharedAttr>()) {
+        Diag(VD->getLocation(), diag::err_device_static_local_var);
+        VD->setInvalidDecl();
       }
     }
   }

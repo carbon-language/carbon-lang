@@ -38,14 +38,6 @@ __device__ void foo() {
   // CHECK: load i32, i32* addrspacecast (i32 addrspace(3)* @k to i32*)
   k++;
 
-  static int li;
-  // CHECK: load i32, i32* addrspacecast (i32 addrspace(1)* @_ZZ3foovE2li to i32*)
-  li++;
-
-  __constant__ int lj;
-  // CHECK: load i32, i32* addrspacecast (i32 addrspace(4)* @_ZZ3foovE2lj to i32*)
-  lj++;
-
   __shared__ int lk;
   // CHECK: load i32, i32* addrspacecast (i32 addrspace(3)* @_ZZ3foovE2lk to i32*)
   lk++;
