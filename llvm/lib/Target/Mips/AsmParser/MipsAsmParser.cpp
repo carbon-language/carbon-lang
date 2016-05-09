@@ -4693,7 +4693,8 @@ MipsAsmParser::parseRegisterPair(OperandVector &Operands) {
   SMLoc E = Parser.getTok().getLoc();
   MipsOperand &Op = static_cast<MipsOperand &>(*Operands.back());
 
-  Operands.back() = MipsOperand::CreateRegPair(Op, S, E, *this);
+  Operands.pop_back();
+  Operands.push_back(MipsOperand::CreateRegPair(Op, S, E, *this));
   return MatchOperand_Success;
 }
 
