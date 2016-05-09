@@ -4417,22 +4417,18 @@ bool llvm::verifyFunction(const Function &f, raw_ostream *OS) {
   return !V.verify(F);
 }
 
-bool llvm::verifyModule(const Module &M, raw_ostream *OS,
-                        bool *BrokenDebugInfo) {
+bool llvm::verifyModule(const Module &M, raw_ostream *OS) {
   // Don't use a raw_null_ostream.  Printing IR is expensive.
-  Verifier V(OS, /*ShouldTreatBrokenDebugInfoAsError=*/!BrokenDebugInfo);
+  Verifier V(OS, /*ShouldTreatBrokenDebugInfoAsError=*/true);
 
   bool Broken = false;
   for (const Function &F : M)
     if (!F.isDeclaration() && !F.isMaterializable())
       Broken |= !V.verify(F);
 
-  Broken |= !V.verify(M);
-  if (BrokenDebugInfo)
-    *BrokenDebugInfo = V.hasBrokenDebugInfo();
   // Note that this function's return value is inverted from what you would
   // expect of a function called "verify".
-  return Broken;
+  return !V.verify(M) || Broken;
 }
 
 namespace {
