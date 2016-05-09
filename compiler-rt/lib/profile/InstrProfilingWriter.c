@@ -13,8 +13,8 @@
 
 #define INSTR_PROF_VALUE_PROF_DATA
 #include "InstrProfData.inc"
-void (*FreeHook)(void *) = NULL;
-void* (*CallocHook)(size_t, size_t) = NULL;
+COMPILER_RT_VISIBILITY void (*FreeHook)(void *) = NULL;
+COMPILER_RT_VISIBILITY void *(*CallocHook)(size_t, size_t) = NULL;
 uint32_t VPBufferSize = 0;
 
 /* The buffer writer is reponsponsible in keeping writer state

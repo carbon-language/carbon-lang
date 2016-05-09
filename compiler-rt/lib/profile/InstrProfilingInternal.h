@@ -114,9 +114,9 @@ int lprofWriteDataImpl(WriterCallback Writer, void *WriterCtx,
 void lprofMergeValueProfData(struct ValueProfData *SrcValueProfData,
                              __llvm_profile_data *DstData);
 
-extern char *(*GetEnvHook)(const char *);
-extern void (*FreeHook)(void *);
-extern void *(*CallocHook)(size_t, size_t);
+COMPILER_RT_VISIBILITY extern char *(*GetEnvHook)(const char *);
+COMPILER_RT_VISIBILITY extern void (*FreeHook)(void *);
+COMPILER_RT_VISIBILITY extern void *(*CallocHook)(size_t, size_t);
 extern void (*VPMergeHook)(struct ValueProfData *, __llvm_profile_data *);
 extern uint32_t VPBufferSize;
 
