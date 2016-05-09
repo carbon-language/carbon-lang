@@ -93,11 +93,14 @@ the libFuzzer code then gives an fuzzer executable.
 You should also enable one or more of the *sanitizers*, which help to expose
 latent bugs by making incorrect behavior generate errors at runtime:
 
- - AddressSanitizer_ detects memory access errors.
- - MemorySanitizer_ detects uninitialized reads: code whose behavior relies on memory
-   contents that have not been initialized to a specific value.
- - UndefinedBehaviorSanitizer_ detects the use of various features of C/C++ that are explicitly
-   listed as resulting in undefined behavior.
+ - AddressSanitizer_ (ASAN) detects memory access errors. Use `-fsanitize=address`.
+ - UndefinedBehaviorSanitizer_ (UBSAN) detects the use of various features of C/C++ that are explicitly
+   listed as resulting in undefined behavior.  Use `-fsanitize=undefined -fno-sanitize-recover=undefined`
+   or any individual UBSAN check, e.g.  `-fsanitize=signed-integer-overflow -fno-sanitize-recover=undefined`.
+   You may combine ASAN and UBSAN in one build.
+ - MemorySanitizer_ (MSAN) detects uninitialized reads: code whose behavior relies on memory
+   contents that have not been initialized to a specific value. Use `-fsanitize=memory`.
+   MSAN can not be combined with other sanirizers and should be used as a seprate build.
 
 Finally, link with ``libFuzzer.a``::
 
