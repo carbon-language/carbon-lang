@@ -1322,8 +1322,9 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<MipsOperand>
-  CreateRegPair(MipsOperand MOP, SMLoc S, SMLoc E, MipsAsmParser &Parser) {
+  static std::unique_ptr<MipsOperand> CreateRegPair(const MipsOperand &MOP,
+                                                    SMLoc S, SMLoc E,
+                                                    MipsAsmParser &Parser) {
     auto Op = make_unique<MipsOperand>(k_RegPair, Parser);
     Op->RegIdx.Index = MOP.RegIdx.Index;
     Op->StartLoc = S;
@@ -4691,7 +4692,7 @@ MipsAsmParser::parseRegisterPair(OperandVector &Operands) {
     return MatchOperand_ParseFail;
 
   SMLoc E = Parser.getTok().getLoc();
-  MipsOperand &Op = static_cast<MipsOperand &>(*Operands.back());
+  MipsOperand Op = static_cast<MipsOperand &>(*Operands.back());
 
   Operands.pop_back();
   Operands.push_back(MipsOperand::CreateRegPair(Op, S, E, *this));
