@@ -4401,7 +4401,7 @@ void XCoreToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
 
 MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args)
-    : Generic_GCC(D, Triple, Args) {
+    : Generic_ELF(D, Triple, Args) {
   // If a target of 'sparc-myriad-elf' is specified to clang, it wants to use
   // 'sparc-myriad--elf' (note the unknown OS) as the canonical triple.
   // This won't work to find gcc. Instead we give the installation detector an
