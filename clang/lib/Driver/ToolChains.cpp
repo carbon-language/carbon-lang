@@ -1410,9 +1410,17 @@ void Generic_GCC::GCCInstallationDetector::init(
     // Then look for gcc installed alongside clang.
     Prefixes.push_back(D.InstalledDir + "/..");
 
-    // And finally in /usr.
-    if (D.SysRoot.empty())
+    // Then look for distribution supplied gcc installations.
+    if (D.SysRoot.empty()) {
+      // Look for RHEL devtoolsets.
+      Prefixes.push_back("/opt/rh/devtoolset-4/root/usr");
+      Prefixes.push_back("/opt/rh/devtoolset-3/root/usr");
+      Prefixes.push_back("/opt/rh/devtoolset-2/root/usr");
+      Prefixes.push_back("/opt/rh/devtoolset-1.1/root/usr");
+      Prefixes.push_back("/opt/rh/devtoolset-1.0/root/usr");
+      // And finally in /usr.
       Prefixes.push_back("/usr");
+    }
   }
 
   // Loop over the various components which exist and select the best GCC
