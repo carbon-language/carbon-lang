@@ -46,7 +46,7 @@ public:
 
 private:
   MutableArrayRef<uint8_t> Data;
-  bool Owned;
+  std::unique_ptr<uint8_t[]> Ownership;
 };
 }
 }
