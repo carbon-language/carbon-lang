@@ -1736,10 +1736,12 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
       !Diags.isIgnored(diag::warn_arc_repeated_use_of_weak, E->getLocStart()))
       recordUseOfEvaluatedWeak(E);
 
-  // Just in case we're building an illegal pointer-to-member.
-  FieldDecl *FD = dyn_cast<FieldDecl>(D);
-  if (FD && FD->isBitField())
-    E->setObjectKind(OK_BitField);
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+    UnusedPrivateFields.remove(FD);
+    // Just in case we're building an illegal pointer-to-member.
+    if (FD->isBitField())
+      E->setObjectKind(OK_BitField);
+  }
 
   return E;
 }
