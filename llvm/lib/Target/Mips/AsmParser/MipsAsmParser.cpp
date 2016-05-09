@@ -1332,6 +1332,8 @@ public:
                                                     MipsAsmParser &Parser) {
     auto Op = make_unique<MipsOperand>(k_RegPair, Parser);
     Op->RegIdx.Index = MOP.RegIdx.Index;
+    Op->RegIdx.RegInfo = MOP.RegIdx.RegInfo;
+    Op->RegIdx.Kind = MOP.RegIdx.Kind;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
