@@ -1238,7 +1238,7 @@ static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
 /// This will fill @p ConditionSets with the conditions under which control
 /// will be moved from @p SI to its successors. Hence, @p ConditionSets will
 /// have as many elements as @p SI has successors.
-static void
+static bool
 buildConditionSets(ScopStmt &Stmt, SwitchInst *SI, Loop *L,
                    __isl_keep isl_set *Domain,
                    SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
@@ -1273,6 +1273,8 @@ buildConditionSets(ScopStmt &Stmt, SwitchInst *SI, Loop *L,
       Domain, isl_set_subtract(isl_set_copy(Domain), ConditionSetUnion));
 
   isl_pw_aff_free(LHS);
+
+  return true;
 }
 
 /// @brief Build the conditions sets for the branch condition @p Condition in
@@ -1283,7 +1285,7 @@ buildConditionSets(ScopStmt &Stmt, SwitchInst *SI, Loop *L,
 /// have as many elements as @p TI has successors. If @p TI is nullptr the
 /// context under which @p Condition is true/false will be returned as the
 /// new elements of @p ConditionSets.
-static void
+static bool
 buildConditionSets(ScopStmt &Stmt, Value *Condition, TerminatorInst *TI,
                    Loop *L, __isl_keep isl_set *Domain,
                    SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
@@ -1299,10 +1301,12 @@ buildConditionSets(ScopStmt &Stmt, Value *Condition, TerminatorInst *TI,
     auto Opcode = BinOp->getOpcode();
     assert(Opcode == Instruction::And || Opcode == Instruction::Or);
 
-    buildConditionSets(Stmt, BinOp->getOperand(0), TI, L, Domain,
-                       ConditionSets);
-    buildConditionSets(Stmt, BinOp->getOperand(1), TI, L, Domain,
-                       ConditionSets);
+    if (!buildConditionSets(Stmt, BinOp->getOperand(0), TI, L, Domain,
+                            ConditionSets))
+      return false;
+    if (!buildConditionSets(Stmt, BinOp->getOperand(1), TI, L, Domain,
+                            ConditionSets))
+      return false;
 
     isl_set_free(ConditionSets.pop_back_val());
     isl_set *ConsCondPart0 = ConditionSets.pop_back_val();
@@ -1352,13 +1356,14 @@ buildConditionSets(ScopStmt &Stmt, Value *Condition, TerminatorInst *TI,
   if (TooComplex) {
     S.invalidate(COMPLEXITY, TI ? TI->getDebugLoc() : DebugLoc());
     isl_set_free(AlternativeCondSet);
-    AlternativeCondSet = isl_set_empty(isl_set_get_space(ConsequenceCondSet));
     isl_set_free(ConsequenceCondSet);
-    ConsequenceCondSet = isl_set_empty(isl_set_get_space(AlternativeCondSet));
+    return false;
   }
 
   ConditionSets.push_back(ConsequenceCondSet);
   ConditionSets.push_back(isl_set_coalesce(AlternativeCondSet));
+
+  return true;
 }
 
 /// @brief Build the conditions sets for the terminator @p TI in the @p Domain.
@@ -1366,7 +1371,7 @@ buildConditionSets(ScopStmt &Stmt, Value *Condition, TerminatorInst *TI,
 /// This will fill @p ConditionSets with the conditions under which control
 /// will be moved from @p TI to its successors. Hence, @p ConditionSets will
 /// have as many elements as @p TI has successors.
-static void
+static bool
 buildConditionSets(ScopStmt &Stmt, TerminatorInst *TI, Loop *L,
                    __isl_keep isl_set *Domain,
                    SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
@@ -1378,7 +1383,7 @@ buildConditionSets(ScopStmt &Stmt, TerminatorInst *TI, Loop *L,
 
   if (TI->getNumSuccessors() == 1) {
     ConditionSets.push_back(isl_set_copy(Domain));
-    return;
+    return true;
   }
 
   Value *Condition = getConditionFromTerminator(TI);
@@ -1900,7 +1905,10 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
     }
 
     SmallVector<isl_set *, 2> ConditionSets;
-    buildConditionSets(*Stmts.begin(), Val, nullptr, L, Context, ConditionSets);
+    if (!buildConditionSets(*Stmts.begin(), Val, nullptr, L, Context,
+                            ConditionSets))
+      continue;
+
     assert(ConditionSets.size() == 2);
     isl_set_free(ConditionSets[1]);
 
@@ -2273,7 +2281,8 @@ bool Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
   if (!buildDomainsWithBranchConstraints(R, SD, DT, LI))
     return false;
 
-  propagateDomainConstraints(R, SD, DT, LI);
+  if (!propagateDomainConstraints(R, SD, DT, LI))
+    return false;
 
   // Error blocks and blocks dominated by them have been assumed to never be
   // executed. Representing them in the Scop does not add any value. In fact,
@@ -2287,7 +2296,8 @@ bool Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
   // with an empty set. Additionally, we will record for each block under which
   // parameter combination it would be reached via an error block in its
   // InvalidDomain. This information is needed during load hoisting.
-  propagateInvalidStmtDomains(R, SD, DT, LI);
+  if (!propagateInvalidStmtDomains(R, SD, DT, LI))
+    return false;
 
   return true;
 }
@@ -2351,7 +2361,7 @@ static __isl_give isl_set *adjustDomainDimensions(Scop &S,
   return Dom;
 }
 
-void Scop::propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
+bool Scop::propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
                                        DominatorTree &DT, LoopInfo &LI) {
   auto &BoxedLoops = *SD.getBoxedLoops(&getRegion());
 
@@ -2426,11 +2436,13 @@ void Scop::propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
 
       isl_set_free(InvalidDomain);
       invalidate(COMPLEXITY, TI->getDebugLoc());
-      return;
+      return false;
     }
 
     Stmt->setInvalidDomain(InvalidDomain);
   }
+
+  return true;
 }
 
 void Scop::propagateDomainConstraintsToRegionExit(
@@ -2549,8 +2561,9 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
     SmallVector<isl_set *, 8> ConditionSets;
     if (RN->isSubRegion())
       ConditionSets.push_back(isl_set_copy(Domain));
-    else
-      buildConditionSets(*getStmtFor(BB), TI, BBLoop, Domain, ConditionSets);
+    else if (!buildConditionSets(*getStmtFor(BB), TI, BBLoop, Domain,
+                                 ConditionSets))
+      return false;
 
     // Now iterate over the successors and set their initial domain based on
     // their condition set. We skip back edges here and have to be careful when
@@ -2672,7 +2685,7 @@ __isl_give isl_set *Scop::getPredecessorDomainConstraints(BasicBlock *BB,
   return PredDom;
 }
 
-void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
+bool Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
                                       DominatorTree &DT, LoopInfo &LI) {
   // Iterate over the region R and propagate the domain constrains from the
   // predecessors to the current node. In contrast to the
@@ -2691,7 +2704,8 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        propagateDomainConstraints(SubRegion, SD, DT, LI);
+        if (!propagateDomainConstraints(SubRegion, SD, DT, LI))
+          return false;
         continue;
       }
     }
@@ -2707,8 +2721,11 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
 
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     if (BBLoop && BBLoop->getHeader() == BB && getRegion().contains(BBLoop))
-      addLoopBoundsToHeaderDomain(BBLoop, LI);
+      if (!addLoopBoundsToHeaderDomain(BBLoop, LI))
+        return false;
   }
+
+  return true;
 }
 
 /// @brief Create a map from SetSpace -> SetSpace where the dimensions @p Dim
@@ -2731,7 +2748,7 @@ createNextIterationMap(__isl_take isl_space *SetSpace, unsigned Dim) {
   return NextIterationMap;
 }
 
-void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
+bool Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
   int LoopDepth = getRelativeLoopDepth(L);
   assert(LoopDepth >= 0 && "Loop in region should have at least depth one");
 
@@ -2764,8 +2781,9 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
     else {
       SmallVector<isl_set *, 8> ConditionSets;
       int idx = BI->getSuccessor(0) != HeaderBB;
-      buildConditionSets(*getStmtFor(LatchBB), TI, L, LatchBBDom,
-                         ConditionSets);
+      if (!buildConditionSets(*getStmtFor(LatchBB), TI, L, LatchBBDom,
+                              ConditionSets))
+        return false;
 
       // Free the non back edge condition set as we do not need it.
       isl_set_free(ConditionSets[1 - idx]);
@@ -2803,12 +2821,13 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
   // <nsw> tag.
   if (Affinator.hasNSWAddRecForLoop(L)) {
     isl_set_free(Parts.first);
-    return;
+    return true;
   }
 
   isl_set *UnboundedCtx = isl_set_params(Parts.first);
   recordAssumption(INFINITELOOP, UnboundedCtx,
                    HeaderBB->getTerminator()->getDebugLoc(), AS_RESTRICTION);
+  return true;
 }
 
 void Scop::buildAliasChecks(AliasAnalysis &AA) {

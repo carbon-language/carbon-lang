@@ -1563,7 +1563,9 @@ private:
   ///
   /// @param L  The loop to process.
   /// @param LI The LoopInfo for the current function.
-  void addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI);
+  ///
+  /// @returns True if there was no problem and false otherwise.
+  bool addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI);
 
   /// @brief Compute the branching constraints for each basic block in @p R.
   ///
@@ -1582,7 +1584,9 @@ private:
   /// @param SD The ScopDetection analysis for the current function.
   /// @param DT The DominatorTree for the current function.
   /// @param LI The LoopInfo for the current function.
-  void propagateDomainConstraints(Region *R, ScopDetection &SD,
+  ///
+  /// @returns True if there was no problem and false otherwise.
+  bool propagateDomainConstraints(Region *R, ScopDetection &SD,
                                   DominatorTree &DT, LoopInfo &LI);
 
   /// @brief Propagate invalid domains of statements through @p R.
@@ -1596,7 +1600,9 @@ private:
   /// @param SD The ScopDetection analysis for the current function.
   /// @param DT The DominatorTree for the current function.
   /// @param LI The LoopInfo for the current function.
-  void propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
+  ///
+  /// @returns True if there was no problem and false otherwise.
+  bool propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
                                    DominatorTree &DT, LoopInfo &LI);
 
   /// @brief Compute the domain for each basic block in @p R.
