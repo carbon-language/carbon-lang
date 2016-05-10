@@ -139,6 +139,19 @@ define <16 x float> @combine_vpermt2var_16f32_vmovddup_mask(<16 x float> %x0, <1
   %res0 = call <16 x float> @llvm.x86.avx512.maskz.vpermt2var.ps.512(<16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 4, i32 5, i32 4, i32 5, i32 8, i32 9, i32 8, i32 9, i32 12, i32 13, i32 12, i32 13>, <16 x float> %x0, <16 x float> %x1, i16 %m)
   ret <16 x float> %res0
 }
+define <16 x float> @combine_vpermt2var_16f32_vmovddup_mask_load(<16 x float> *%p0, <16 x float> %x1, i16 %m) {
+; CHECK-LABEL: combine_vpermt2var_16f32_vmovddup_mask_load:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vmovaps (%rdi), %zmm1
+; CHECK-NEXT:    vmovdqa32 {{.*#+}} zmm2 = [0,1,0,1,4,5,4,5,8,9,8,9,12,13,12,13]
+; CHECK-NEXT:    vpermt2ps %zmm0, %zmm2, %zmm1 {%k1} {z}
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %x0 = load <16 x float>, <16 x float> *%p0
+  %res0 = call <16 x float> @llvm.x86.avx512.maskz.vpermt2var.ps.512(<16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 4, i32 5, i32 4, i32 5, i32 8, i32 9, i32 8, i32 9, i32 12, i32 13, i32 12, i32 13>, <16 x float> %x0, <16 x float> %x1, i16 %m)
+  ret <16 x float> %res0
+}
 
 define <16 x float> @combine_vpermt2var_16f32_vmovshdup(<16 x float> %x0, <16 x float> %x1) {
 ; CHECK-LABEL: combine_vpermt2var_16f32_vmovshdup:
