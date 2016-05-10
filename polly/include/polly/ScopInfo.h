@@ -76,6 +76,7 @@ enum AssumptionKind {
   INBOUNDS,
   WRAPPING,
   UNSIGNED,
+  PROFITABLE,
   ERRORBLOCK,
   COMPLEXITY,
   INFINITELOOP,
@@ -2088,6 +2089,9 @@ public:
 
   /// @brief Align the parameters in the statement to the scop context
   void realignParams();
+
+  /// @brief Return true if this SCoP can be profitably optimized.
+  bool isProfitable() const;
 
   /// @brief Return true if the SCoP contained at least one error block.
   bool hasErrorBlock() const { return HasErrorBlock; }

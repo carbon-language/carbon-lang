@@ -3118,10 +3118,14 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
   for (ScopStmt &Stmt : Stmts)
     Stmt.init(SD);
 
-  buildSchedule(SD, LI);
-
-  if (!hasFeasibleRuntimeContext())
+  // Check early for profitability. Afterwards it cannot change anymore,
+  // only the runtime context could become infeasible.
+  if (!isProfitable()) {
+    invalidate(PROFITABLE, DebugLoc());
     return;
+  }
+
+  buildSchedule(SD, LI);
 
   updateAccessDimensionality();
   realignParams();
@@ -3138,6 +3142,13 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
   hoistInvariantLoads(SD);
   verifyInvariantLoads(SD);
   simplifySCoP(true, DT, LI);
+
+  // Check late for a feasible runtime context because profitability did not
+  // change.
+  if (!hasFeasibleRuntimeContext()) {
+    invalidate(PROFITABLE, DebugLoc());
+    return;
+  }
 }
 
 Scop::~Scop() {
@@ -3571,6 +3582,37 @@ __isl_give isl_set *Scop::getAssumedContext() const {
   return isl_set_copy(AssumedContext);
 }
 
+bool Scop::isProfitable() const {
+  if (PollyProcessUnprofitable)
+    return true;
+
+  if (!hasFeasibleRuntimeContext())
+    return false;
+
+  if (isEmpty())
+    return false;
+
+  unsigned OptimizableStmtsOrLoops = 0;
+  for (auto &Stmt : *this) {
+    if (Stmt.getNumIterators() == 0)
+      continue;
+
+    bool ContainsArrayAccs = false;
+    bool ContainsScalarAccs = false;
+    for (auto *MA : Stmt) {
+      if (MA->isRead())
+        continue;
+      ContainsArrayAccs |= MA->isArrayKind();
+      ContainsScalarAccs |= MA->isScalarKind();
+    }
+
+    if (ContainsArrayAccs && !ContainsScalarAccs)
+      OptimizableStmtsOrLoops += Stmt.getNumIterators();
+  }
+
+  return OptimizableStmtsOrLoops > 1;
+}
+
 bool Scop::hasFeasibleRuntimeContext() const {
   auto *PositiveContext = getAssumedContext();
   auto *NegativeContext = getInvalidContext();
@@ -3604,6 +3646,8 @@ static std::string toString(AssumptionKind Kind) {
     return "Signed-unsigned";
   case COMPLEXITY:
     return "Low complexity";
+  case PROFITABLE:
+    return "Profitable";
   case ERRORBLOCK:
     return "No-error";
   case INFINITELOOP:
@@ -4873,7 +4917,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   DEBUG(scop->print(dbgs()));
 
-  if (scop->isEmpty() || !scop->hasFeasibleRuntimeContext()) {
+  if (!scop->hasFeasibleRuntimeContext()) {
     Msg = "SCoP ends here but was dismissed.";
     scop.reset();
   } else {

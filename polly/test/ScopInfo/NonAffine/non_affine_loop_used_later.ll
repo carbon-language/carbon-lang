@@ -86,9 +86,9 @@
 ; CHECK-NEXT:             [N] -> { Stmt_bb23[i0] -> MemRef_j_0__phi[] };
 ; CHECK-NEXT: }
 ;
-; As we might be able to distribute the outer loop we consider the region profitable for now.
+; Due to the scalar accesses we are not able to distribute the outer loop, thus we do not consider the region profitable.
 ;
-; PROFIT: Statements
+; PROFIT-NOT: Statements
 ;
 ;    void f(int *A, int N, int M) {
 ;      int i = 0, j = 0;
