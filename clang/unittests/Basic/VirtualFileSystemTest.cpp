@@ -1085,6 +1085,6 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
   checkContents(O->dir_begin("//root/foo/bar", EC),
                 {"//root/foo/bar/a", "//root/foo/bar/b"});
 
-  checkContents(O->dir_begin("//root/baz", EC),
+  checkContents(O->dir_begin("//root/baz/", EC),
                 {"//root/baz/x", "//root/baz/y", "//root/baz/c"});
 }
