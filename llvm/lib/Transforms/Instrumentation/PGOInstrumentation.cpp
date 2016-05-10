@@ -775,7 +775,7 @@ static void createIRLevelProfileFlagVariable(Module &M) {
   IRLevelVersionVariable->setVisibility(GlobalValue::DefaultVisibility);
   Triple TT(M.getTargetTriple());
   if (TT.isOSBinFormatMachO())
-    IRLevelVersionVariable->setLinkage(GlobalValue::LinkOnceAnyLinkage);
+    IRLevelVersionVariable->setLinkage(GlobalValue::LinkOnceODRLinkage);
   else
     IRLevelVersionVariable->setComdat(M.getOrInsertComdat(
         StringRef(INSTR_PROF_QUOTE(IR_LEVEL_PROF_VERSION_VAR))));
