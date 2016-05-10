@@ -943,7 +943,6 @@ Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
   }
 
   isl_pw_multi_aff *PWAccRel = isl_pw_multi_aff_from_set(AccessRange);
-  PWAccRel = isl_pw_multi_aff_gist_params(PWAccRel, S.getContext());
   isl_ast_expr *Access =
       isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
   auto *Address = isl_ast_expr_address_of(Access);
@@ -968,6 +967,8 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
                                             isl_set *Domain) {
 
   isl_set *AccessRange = isl_map_range(MA.getAddressFunction());
+  AccessRange = isl_set_gist_params(AccessRange, S.getContext());
+
   if (!materializeParameters(AccessRange, false)) {
     isl_set_free(AccessRange);
     isl_set_free(Domain);
