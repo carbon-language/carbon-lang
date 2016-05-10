@@ -1563,7 +1563,7 @@ bool ConnectedSubRegClasses::findComponents(IntEqClasses &Classes,
     unsigned SubRegIdx = MO.getSubReg();
     LaneBitmask LaneMask = TRI.getSubRegIndexLaneMask(SubRegIdx);
     unsigned MergedID = ~0u;
-    for (auto &SRInfo : SubRangeInfos) {
+    for (ConnectedSubRegClasses::SubRangeInfo &SRInfo : SubRangeInfos) {
       const LiveInterval::SubRange &SR = *SRInfo.SR;
       if ((SR.LaneMask & LaneMask) == 0)
         continue;
@@ -1607,7 +1607,7 @@ void ConnectedSubRegClasses::rewriteOperands(const IntEqClasses &Classes,
     LaneBitmask LaneMask = TRI.getSubRegIndexLaneMask(SubRegIdx);
 
     unsigned ID = ~0u;
-    for (auto &SRInfo : SubRangeInfos) {
+    for (const SubRangeInfo &SRInfo : SubRangeInfos) {
       const LiveInterval::SubRange &SR = *SRInfo.SR;
       if ((SR.LaneMask & LaneMask) == 0)
         continue;
@@ -1635,7 +1635,7 @@ void ConnectedSubRegClasses::distribute(const IntEqClasses &Classes,
   SmallVector<unsigned, 8> VNIMapping;
   SmallVector<LiveInterval::SubRange*, 8> SubRanges;
   BumpPtrAllocator &Allocator = LIS.getVNInfoAllocator();
-  for (auto &SRInfo : SubRangeInfos) {
+  for (const SubRangeInfo &SRInfo : SubRangeInfos) {
     LiveInterval::SubRange &SR = *SRInfo.SR;
     unsigned NumValNos = SR.valnos.size();
     VNIMapping.clear();
