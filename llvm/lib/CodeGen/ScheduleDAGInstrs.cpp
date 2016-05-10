@@ -971,6 +971,10 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
     // Now process all uses.
     for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
       const MachineOperand &MO = MI->getOperand(j);
+      // Only look at use operands.
+      // We do not need to check for MO.readsReg() here because subsequent
+      // subregister defs will get output dependence edges and need no
+      // additional use dependencies.
       if (!MO.isReg() || !MO.isUse())
         continue;
       unsigned Reg = MO.getReg();
