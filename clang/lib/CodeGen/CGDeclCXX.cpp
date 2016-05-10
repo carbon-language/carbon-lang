@@ -89,14 +89,15 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
   // Special-case non-array C++ destructors, if they have the right signature
   // that can be directly registered with __cxa_atexit. If __cxa_atexit is
   // disabled via a flag, a different helper function is generated anyway.
-  const CXXRecordDecl *record = nullptr;
-  if (dtorKind == QualType::DK_cxx_destructor &&
-      (record = type->getAsCXXRecordDecl()) &&
-      (!CGM.getCXXABI().HasThisReturn(
-          GlobalDecl(record->getDestructor(), Dtor_Complete)) ||
-       !CGM.getCodeGenOpts().CXAAtExit)) {
-    assert(!record->hasTrivialDestructor());
-    CXXDestructorDecl *dtor = record->getDestructor();
+  const CXXRecordDecl *Record = type->getAsCXXRecordDecl();
+  bool CanRegisterDestructor = Record &&
+                               !CGM.getCXXABI().HasThisReturn(GlobalDecl(
+                                   Record->getDestructor(), Dtor_Complete));
+
+  if (dtorKind == QualType::DK_cxx_destructor && Record &&
+      (CanRegisterDestructor || !CGM.getCodeGenOpts().CXAAtExit)) {
+    assert(!Record->hasTrivialDestructor());
+    CXXDestructorDecl *dtor = Record->getDestructor();
 
     function = CGM.getAddrOfCXXStructor(dtor, StructorType::Complete);
     argument = llvm::ConstantExpr::getBitCast(
