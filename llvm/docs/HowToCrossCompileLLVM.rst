@@ -39,6 +39,7 @@ For more information on how to configure CMake for LLVM/Clang,
 see :doc:`CMake`.
 
 The CMake options you need to add are:
+
  * ``-DCMAKE_CROSSCOMPILING=True``
  * ``-DCMAKE_INSTALL_PREFIX=<install-dir>``
  * ``-DLLVM_TABLEGEN=<path-to-host-bin>/llvm-tblgen``
@@ -49,12 +50,14 @@ The CMake options you need to add are:
 
 If you're compiling with GCC, you can use architecture options for your target,
 and the compiler driver will detect everything that it needs:
+
  * ``-DCMAKE_CXX_FLAGS='-march=armv7-a -mcpu=cortex-a9 -mfloat-abi=hard'``
 
 However, if you're using Clang, the driver might not be up-to-date with your
 specific Linux distribution, version or GCC layout, so you'll need to fudge.
 
 In addition to the ones above, you'll also need:
+
  * ``'-target arm-linux-gnueabihf'`` or whatever is the triple of your cross GCC.
  * ``'--sysroot=/usr/arm-linux-gnueabihf'``, ``'--sysroot=/opt/gcc/arm-linux-gnueabihf'``
    or whatever is the location of your GCC's sysroot (where /lib, /bin etc are).
