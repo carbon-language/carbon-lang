@@ -38,7 +38,6 @@ class MCRegisterInfo;
 class MCSubtargetInfo;
 class MCSymbol;
 class Target;
-class DataLayout;
 class TargetLibraryInfo;
 class TargetFrameLowering;
 class TargetIRAnalysis;

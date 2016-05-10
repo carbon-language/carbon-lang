@@ -1,4 +1,4 @@
-//===-- Passes.cpp - Target independent code generation passes ------------===//
+//===-- TargetPassConfig.cpp - Target independent code generation passes --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,8 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
+
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/CFLAliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
@@ -28,6 +29,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/SymbolRewriter.h"
@@ -256,6 +258,10 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   // Substitute Pseudo Pass IDs for real ones.
   substitutePass(&EarlyTailDuplicateID, &TailDuplicateID);
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
+}
+
+CodeGenOpt::Level TargetPassConfig::getOptLevel() const {
+  return TM->getOptLevel();
 }
 
 /// Insert InsertedPassID pass after TargetPassID.
