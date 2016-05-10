@@ -3797,6 +3797,11 @@ __isl_give PWACtx Scop::getPwAff(const SCEV *E, BasicBlock *BB,
   // handling cdoe to all users of this function.
   auto PWAC = Affinator.getPwAff(E, BB);
   if (PWAC.first) {
+    // TODO: We could use a heuristic and either use:
+    //         SCEVAffinator::takeNonNegativeAssumption
+    //       or
+    //         SCEVAffinator::interpretAsUnsigned
+    //       to deal with unsigned or "NonNegative" SCEVs.
     if (NonNegative)
       Affinator.takeNonNegativeAssumption(PWAC);
     return PWAC;
