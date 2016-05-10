@@ -795,7 +795,8 @@ def llvm_anyi64ptr_ty     : LLVMAnyPointerType<llvm_i64_ty>;     // (space)i64*
       GCCBuiltin<"__nvvm_read_ptx_sreg_warpsize">;
 
 
-// Generated within nvvm. Use for ldu on sm_20 or later
+// Generated within nvvm. Use for ldu on sm_20 or later.  Second arg is the
+// pointer's alignment.
 def int_nvvm_ldu_global_i : Intrinsic<[llvm_anyint_ty],
   [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
   [IntrReadMem, NoCapture<0>],
@@ -809,7 +810,8 @@ def int_nvvm_ldu_global_p : Intrinsic<[llvm_anyptr_ty],
   [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldu.global.p">;
 
-// Generated within nvvm. Use for ldg on sm_35 or later
+// Generated within nvvm. Use for ldg on sm_35 or later.  Second arg is the
+// pointer's alignment.
 def int_nvvm_ldg_global_i : Intrinsic<[llvm_anyint_ty],
   [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
   [IntrReadMem, NoCapture<0>],
