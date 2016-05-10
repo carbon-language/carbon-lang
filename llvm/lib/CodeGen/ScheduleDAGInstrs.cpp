@@ -948,24 +948,41 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         "Cannot schedule terminators or labels!");
 
     // Add register-based dependencies (data, anti, and output).
+    // For some instructions (calls, returns, inline-asm, etc.) there can
+    // be explicit uses and implicit defs, in which case the use will appear
+    // on the operand list before the def. Do two passes over the operand
+    // list to make sure that defs are processed before any uses.
     bool HasVRegDef = false;
     for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
       const MachineOperand &MO = MI->getOperand(j);
-      if (!MO.isReg()) continue;
+      if (!MO.isReg() || !MO.isDef())
+        continue;
       unsigned Reg = MO.getReg();
-      if (Reg == 0) continue;
+      if (Reg == 0)
+        continue;
 
       if (TRI->isPhysicalRegister(Reg))
         addPhysRegDeps(SU, j);
       else {
-        if (MO.isDef()) {
-          HasVRegDef = true;
-          addVRegDefDeps(SU, j);
-        }
-        else if (MO.readsReg()) // ignore undef operands
-          addVRegUseDeps(SU, j);
+        HasVRegDef = true;
+        addVRegDefDeps(SU, j);
       }
     }
+    // Now process all uses.
+    for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
+      const MachineOperand &MO = MI->getOperand(j);
+      if (!MO.isReg() || !MO.isUse())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0)
+        continue;
+
+      if (TRI->isPhysicalRegister(Reg))
+        addPhysRegDeps(SU, j);
+      else if (MO.readsReg()) // ignore undef operands
+        addVRegUseDeps(SU, j);
+    }
+
     // If we haven't seen any uses in this scheduling region, create a
     // dependence edge to ExitSU to model the live-out latency. This is required
     // for vreg defs with no in-region use, and prefetches with no vreg def.
