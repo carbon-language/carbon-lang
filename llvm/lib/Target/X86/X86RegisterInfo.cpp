@@ -385,6 +385,8 @@ X86RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
     return CSR_64_RegMask;
   case CallingConv::X86_INTR:
     if (Is64Bit) {
+      if (HasAVX512)
+        return CSR_64_AllRegs_AVX512_RegMask;
       if (HasAVX)
         return CSR_64_AllRegs_AVX_RegMask;
       else
