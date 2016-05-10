@@ -4996,7 +4996,7 @@ void InterleavedAccessInfo::collectConstStridedAccesses(
     StoreInst *SI = dyn_cast<StoreInst>(I);
 
     Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
-    int Stride = isStridedPtr(PSE, Ptr, TheLoop, Strides);
+    int Stride = getPtrStride(PSE, Ptr, TheLoop, Strides);
 
     // The factor of the corresponding interleave group.
     unsigned Factor = std::abs(Stride);
