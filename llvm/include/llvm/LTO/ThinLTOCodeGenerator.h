@@ -202,6 +202,12 @@ public:
   void promote(Module &Module, ModuleSummaryIndex &Index);
 
   /**
+   * Compute and emit the imported files for module at \p ModulePath.
+   */
+  static void emitImports(StringRef ModulePath, StringRef OutputName,
+                          ModuleSummaryIndex &Index);
+
+  /**
    * Perform cross-module importing for the module identified by
    * ModuleIdentifier.
    */

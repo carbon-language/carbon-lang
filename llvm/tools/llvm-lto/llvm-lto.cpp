@@ -67,6 +67,7 @@ static cl::opt<bool>
 enum ThinLTOModes {
   THINLINK,
   THINDISTRIBUTE,
+  THINEMITIMPORTS,
   THINPROMOTE,
   THINIMPORT,
   THININTERNALIZE,
@@ -83,6 +84,8 @@ cl::opt<ThinLTOModes> ThinLTOMode(
             "ThinLink: produces the index by linking only the summaries."),
         clEnumValN(THINDISTRIBUTE, "distributedindexes",
                    "Produces individual indexes for distributed backends."),
+        clEnumValN(THINEMITIMPORTS, "emitimports",
+                   "Emit imports files for distributed backends."),
         clEnumValN(THINPROMOTE, "promote",
                    "Perform pre-import promotion (requires -thinlto-index)."),
         clEnumValN(THINIMPORT, "import", "Perform both promotion and "
@@ -359,6 +362,8 @@ public:
       return thinLink();
     case THINDISTRIBUTE:
       return distributedIndexes();
+    case THINEMITIMPORTS:
+      return emitImports();
     case THINPROMOTE:
       return promote();
     case THINIMPORT:
@@ -428,6 +433,25 @@ private:
       raw_fd_ostream OS(OutputName, EC, sys::fs::OpenFlags::F_None);
       error(EC, "error opening the file '" + OutputName + "'");
       WriteIndexToFile(*Index, OS, &ModuleToSummariesForIndex);
+    }
+  }
+
+  /// Load the combined index from disk, compute the imports, and emit
+  /// the import file lists for each module to disk.
+  void emitImports() {
+    if (InputFilenames.size() != 1 && !OutputFilename.empty())
+      report_fatal_error("Can't handle a single output filename and multiple "
+                         "input files, do not provide an output filename and "
+                         "the output files will be suffixed from the input "
+                         "ones.");
+
+    auto Index = loadCombinedIndex();
+    for (auto &Filename : InputFilenames) {
+      std::string OutputName = OutputFilename;
+      if (OutputName.empty()) {
+        OutputName = Filename + ".imports";
+      }
+      ThinLTOCodeGenerator::emitImports(Filename, OutputName, *Index);
     }
   }
 

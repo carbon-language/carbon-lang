@@ -445,6 +445,21 @@ void llvm::gatherImportedSummariesForModule(
   }
 }
 
+/// Emit the files \p ModulePath will import from into \p OutputFilename.
+std::error_code llvm::EmitImportsFiles(
+    StringRef ModulePath, StringRef OutputFilename,
+    const StringMap<FunctionImporter::ImportMapTy> &ImportLists) {
+  auto ModuleImports = ImportLists.find(ModulePath);
+  std::error_code EC;
+  raw_fd_ostream ImportsOS(OutputFilename, EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    return EC;
+  if (ModuleImports != ImportLists.end())
+    for (auto &ILI : ModuleImports->second)
+      ImportsOS << ILI.first() << "\n";
+  return std::error_code();
+}
+
 // Automatically import functions in Module \p DestModule based on the summaries
 // index.
 //

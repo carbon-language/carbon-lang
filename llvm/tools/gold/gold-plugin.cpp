@@ -184,6 +184,11 @@ namespace options {
   // the import decisions, and exit afterwards. The assumption is
   // that the build system will launch the backend processes.
   static bool thinlto_index_only = false;
+  // If true, when generating individual index files for distributed backends,
+  // also generate a "${bitcodefile}.imports" file at the same location for each
+  // bitcode file, listing the files it imports from in plain text. This is to
+  // support distributed build file staging.
+  static bool thinlto_emit_imports_files = false;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -217,6 +222,8 @@ namespace options {
       thinlto = true;
     } else if (opt == "thinlto-index-only") {
       thinlto_index_only = true;
+    } else if (opt == "thinlto-emit-imports-files") {
+      thinlto_emit_imports_files = true;
     } else if (opt.size() == 2 && opt[0] == 'O') {
       if (opt[1] < '0' || opt[1] > '3')
         message(LDPL_FATAL, "Optimization level must be between 0 and 3");
@@ -1209,6 +1216,10 @@ static ld_plugin_status thinLTOLink(raw_fd_ostream *ApiFile) {
       CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
   }
 
+  if (options::thinlto_emit_imports_files && !options::thinlto_index_only)
+    message(LDPL_WARNING,
+            "thinlto-emit-imports-files ignored unless thinlto-index-only");
+
   if (options::thinlto_index_only) {
     // Collect for each module the list of function it defines (GUID ->
     // Summary).
@@ -1244,6 +1255,15 @@ static ld_plugin_status thinLTOLink(raw_fd_ostream *ApiFile) {
                                        ModuleToDefinedGVSummaries, ImportLists,
                                        ModuleToSummariesForIndex);
       WriteIndexToFile(CombinedIndex, OS, &ModuleToSummariesForIndex);
+
+      if (options::thinlto_emit_imports_files) {
+        if ((EC = EmitImportsFiles(
+                 InputFile.file().name,
+                 (Twine(InputFile.file().name) + ".imports").str(),
+                 ImportLists)))
+          message(LDPL_FATAL, "Unable to open %s.imports",
+                  InputFile.file().name, EC.message().c_str());
+      }
     }
 
     cleanup_hook();

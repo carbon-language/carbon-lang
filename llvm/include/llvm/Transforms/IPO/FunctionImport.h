@@ -103,6 +103,10 @@ void gatherImportedSummariesForModule(
     const StringMap<GVSummaryMapTy> &ModuleToDefinedGVSummaries,
     const StringMap<FunctionImporter::ImportMapTy> &ImportLists,
     std::map<std::string, GVSummaryMapTy> &ModuleToSummariesForIndex);
+
+std::error_code
+EmitImportsFiles(StringRef ModulePath, StringRef OutputFilename,
+                 const StringMap<FunctionImporter::ImportMapTy> &ImportLists);
 }
 
 #endif // LLVM_FUNCTIONIMPORT_H

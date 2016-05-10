@@ -743,6 +743,30 @@ void ThinLTOCodeGenerator::gatherImportedSummariesForModule(
 }
 
 /**
+ * Emit the list of files needed for importing into module.
+ */
+void ThinLTOCodeGenerator::emitImports(StringRef ModulePath,
+                                       StringRef OutputName,
+                                       ModuleSummaryIndex &Index) {
+  auto ModuleCount = Index.modulePaths().size();
+
+  // Collect for each module the list of function it defines (GUID -> Summary).
+  StringMap<GVSummaryMapTy> ModuleToDefinedGVSummaries(ModuleCount);
+  Index.collectDefinedGVSummariesPerModule(ModuleToDefinedGVSummaries);
+
+  // Generate import/export list
+  StringMap<FunctionImporter::ImportMapTy> ImportLists(ModuleCount);
+  StringMap<FunctionImporter::ExportSetTy> ExportLists(ModuleCount);
+  ComputeCrossModuleImport(Index, ModuleToDefinedGVSummaries, ImportLists,
+                           ExportLists);
+
+  std::error_code EC;
+  if ((EC = EmitImportsFiles(ModulePath, OutputName, ImportLists)))
+    report_fatal_error(Twine("Failed to open ") + OutputName +
+                       " to save imports lists\n");
+}
+
+/**
  * Perform internalization.
  */
 void ThinLTOCodeGenerator::internalize(Module &TheModule,
