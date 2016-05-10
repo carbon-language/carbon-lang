@@ -101,6 +101,7 @@ struct OMPTaskDataTy final {
   unsigned NumberOfParts = 0;
   bool Tied = true;
   bool Nogroup = false;
+  llvm::PointerIntPair<llvm::Value *, 1, bool> Priority;
 };
 
 class CGOpenMPRuntime {

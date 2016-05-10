@@ -3402,8 +3402,7 @@ static int array_pod_sort_comparator(const PrivateDataTy *P1,
 }
 
 /// Emit initialization for private variables in task-based directives.
-/// \return true if cleanups are required, false otherwise.
-static bool emitPrivatesInit(CodeGenFunction &CGF,
+static void emitPrivatesInit(CodeGenFunction &CGF,
                              const OMPExecutableDirective &D,
                              Address KmpTaskSharedsPtr, LValue TDBase,
                              const RecordDecl *KmpTaskTWithPrivatesQTyRD,
@@ -3411,7 +3410,6 @@ static bool emitPrivatesInit(CodeGenFunction &CGF,
                              const OMPTaskDataTy &Data,
                              ArrayRef<PrivateDataTy> Privates, bool ForDup) {
   auto &C = CGF.getContext();
-  bool NeedsCleanup = false;
   auto FI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin());
   LValue PrivatesBase = CGF.EmitLValueForField(TDBase, *FI);
   LValue SrcBase;
@@ -3427,9 +3425,9 @@ static bool emitPrivatesInit(CodeGenFunction &CGF,
   for (auto &&Pair : Privates) {
     auto *VD = Pair.second.PrivateCopy;
     auto *Init = VD->getAnyInitializer();
-    LValue PrivateLValue = CGF.EmitLValueForField(PrivatesBase, *FI);
     if (Init && (!ForDup || (isa<CXXConstructExpr>(Init) &&
                              !CGF.isTrivialInitializer(Init)))) {
+      LValue PrivateLValue = CGF.EmitLValueForField(PrivatesBase, *FI);
       if (auto *Elem = Pair.second.PrivateElemInit) {
         auto *OriginalVD = Pair.second.Original;
         auto *SharedField = CapturesInfo.lookup(OriginalVD);
@@ -3477,10 +3475,8 @@ static bool emitPrivatesInit(CodeGenFunction &CGF,
       } else
         CGF.EmitExprAsInit(Init, VD, PrivateLValue, /*capturedByInit=*/false);
     }
-    NeedsCleanup = NeedsCleanup || FI->getType().isDestructedType();
     ++FI;
   }
-  return NeedsCleanup;
 }
 
 /// Check if duplication function is required for taskloops.
@@ -3567,11 +3563,25 @@ emitTaskDupFunction(CodeGenModule &CGM, SourceLocation Loc,
                              Loc),
         CGF.getNaturalTypeAlignment(SharedsTy));
   }
-  (void)emitPrivatesInit(CGF, D, KmpTaskSharedsPtr, TDBase,
-                         KmpTaskTWithPrivatesQTyRD, SharedsTy, SharedsPtrTy,
-                         Data, Privates, /*ForDup=*/true);
+  emitPrivatesInit(CGF, D, KmpTaskSharedsPtr, TDBase, KmpTaskTWithPrivatesQTyRD,
+                   SharedsTy, SharedsPtrTy, Data, Privates, /*ForDup=*/true);
   CGF.FinishFunction();
   return TaskDup;
+}
+
+/// Checks if destructor function is required to be generated.
+/// \return true if cleanups are required, false otherwise.
+static bool
+checkDestructorsRequired(const RecordDecl *KmpTaskTWithPrivatesQTyRD) {
+  bool NeedsCleanup = false;
+  auto FI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin());
+  auto *PrivateRD = cast<RecordDecl>(FI->getType()->getAsTagDecl());
+  for (auto *FD : PrivateRD->fields()) {
+    NeedsCleanup = NeedsCleanup || FD->getType().isDestructedType();
+    if (NeedsCleanup)
+      break;
+  }
+  return NeedsCleanup;
 }
 
 CGOpenMPRuntime::TaskResultTy
@@ -3664,9 +3674,14 @@ CGOpenMPRuntime::emitTaskInit(CodeGenFunction &CGF, SourceLocation Loc,
   // Task flags. Format is taken from
   // http://llvm.org/svn/llvm-project/openmp/trunk/runtime/src/kmp.h,
   // description of kmp_tasking_flags struct.
-  const unsigned TiedFlag = 0x1;
-  const unsigned FinalFlag = 0x2;
+  enum { TiedFlag = 0x1, FinalFlag = 0x2, DestructorsFlag = 0x8 };
   unsigned Flags = Data.Tied ? TiedFlag : 0;
+  bool NeedsCleanup = false;
+  if (!Privates.empty()) {
+    NeedsCleanup = checkDestructorsRequired(KmpTaskTWithPrivatesQTyRD);
+    if (NeedsCleanup)
+      Flags = Flags | DestructorsFlag;
+  }
   auto *TaskFlags =
       Data.Final.getPointer()
           ? CGF.Builder.CreateSelect(Data.Final.getPointer(),
@@ -3703,12 +3718,10 @@ CGOpenMPRuntime::emitTaskInit(CodeGenFunction &CGF, SourceLocation Loc,
   }
   // Emit initial values for private copies (if any).
   TaskResultTy Result;
-  bool NeedsCleanup = false;
   if (!Privates.empty()) {
-    NeedsCleanup = emitPrivatesInit(CGF, D, KmpTaskSharedsPtr, Base,
-                                    KmpTaskTWithPrivatesQTyRD, SharedsTy,
-                                    SharedsPtrTy, Data, Privates,
-                                    /*ForDup=*/false);
+    emitPrivatesInit(CGF, D, KmpTaskSharedsPtr, Base, KmpTaskTWithPrivatesQTyRD,
+                     SharedsTy, SharedsPtrTy, Data, Privates,
+                     /*ForDup=*/false);
     if (isOpenMPTaskLoopDirective(D.getDirectiveKind()) &&
         (!Data.LastprivateVars.empty() || checkInitIsRequired(CGF, Privates))) {
       Result.TaskDupFn = emitTaskDupFunction(

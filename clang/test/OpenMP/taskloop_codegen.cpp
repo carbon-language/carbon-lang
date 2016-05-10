@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 // CHECK: store i64 1, i64* [[ST]],
 // CHECK: [[ST_VAL:%.+]] = load i64, i64* [[ST]],
 // CHECK: call void @__kmpc_taskloop(%ident_t* [[DEFLOC]], i32 [[GTID]], i8* [[TASKV]], i32 1, i64* [[DOWN]], i64* [[UP]], i64 [[ST_VAL]], i32 0, i32 0, i64 0, i8* null)
-#pragma omp taskloop
+#pragma omp taskloop priority(argc)
   for (int i = 0; i < 10; ++i)
     ;
 // CHECK: [[TASKV:%.+]] = call i8* @__kmpc_omp_task_alloc(%ident_t* [[DEFLOC]], i32 [[GTID]], i32 1, i64 64, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, [[TDP_TY:%.+]]*)* [[TASK2:@.+]] to i32 (i32, i8*)*))
