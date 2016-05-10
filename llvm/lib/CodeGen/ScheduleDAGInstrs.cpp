@@ -1213,7 +1213,8 @@ void ScheduleDAGInstrs::startBlockForKills(MachineBasicBlock *BB) {
 /// operands, then we also need to propagate that to any instructions inside
 /// the bundle which had the same kill state.
 static void toggleBundleKillFlag(MachineInstr *MI, unsigned Reg,
-                                 bool NewKillState) {
+                                 bool NewKillState,
+                                 const TargetRegisterInfo *TRI) {
   if (MI->getOpcode() != TargetOpcode::BUNDLE)
     return;
 
@@ -1224,28 +1225,11 @@ static void toggleBundleKillFlag(MachineInstr *MI, unsigned Reg,
   MachineBasicBlock::instr_iterator Begin = MI->getIterator();
   MachineBasicBlock::instr_iterator End = getBundleEnd(*MI);
   while (Begin != End) {
-    for (MachineOperand &MO : (--End)->operands()) {
-      if (!MO.isReg() || MO.isDef() || Reg != MO.getReg())
-        continue;
-
-      // DEBUG_VALUE nodes do not contribute to code generation and should
-      // always be ignored.  Failure to do so may result in trying to modify
-      // KILL flags on DEBUG_VALUE nodes, which is distressing.
-      if (MO.isDebug())
-        continue;
-
-      // If the register has the internal flag then it could be killing an
-      // internal def of the register.  In this case, just skip.  We only want
-      // to toggle the flag on operands visible outside the bundle.
-      if (MO.isInternalRead())
-        continue;
-
-      if (MO.isKill() == NewKillState)
-        continue;
-      MO.setIsKill(NewKillState);
-      if (NewKillState)
-        return;
-    }
+    if (NewKillState) {
+      if ((--End)->addRegisterKilled(Reg, TRI, /* addIfNotFound= */ false))
+         return;
+    } else
+        (--End)->clearRegisterKills(Reg, TRI);
   }
 }
 
@@ -1253,21 +1237,21 @@ bool ScheduleDAGInstrs::toggleKillFlag(MachineInstr *MI, MachineOperand &MO) {
   // Setting kill flag...
   if (!MO.isKill()) {
     MO.setIsKill(true);
-    toggleBundleKillFlag(MI, MO.getReg(), true);
+    toggleBundleKillFlag(MI, MO.getReg(), true, TRI);
     return false;
   }
 
   // If MO itself is live, clear the kill flag...
   if (LiveRegs.test(MO.getReg())) {
     MO.setIsKill(false);
-    toggleBundleKillFlag(MI, MO.getReg(), false);
+    toggleBundleKillFlag(MI, MO.getReg(), false, TRI);
     return false;
   }
 
   // If any subreg of MO is live, then create an imp-def for that
   // subreg and keep MO marked as killed.
   MO.setIsKill(false);
-  toggleBundleKillFlag(MI, MO.getReg(), false);
+  toggleBundleKillFlag(MI, MO.getReg(), false, TRI);
   bool AllDead = true;
   const unsigned SuperReg = MO.getReg();
   MachineInstrBuilder MIB(MF, MI);
@@ -1280,7 +1264,7 @@ bool ScheduleDAGInstrs::toggleKillFlag(MachineInstr *MI, MachineOperand &MO) {
 
   if(AllDead) {
     MO.setIsKill(true);
-    toggleBundleKillFlag(MI, MO.getReg(), true);
+    toggleBundleKillFlag(MI, MO.getReg(), true, TRI);
   }
   return false;
 }
