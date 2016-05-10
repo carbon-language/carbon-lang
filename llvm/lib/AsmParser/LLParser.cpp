@@ -1530,6 +1530,37 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
   }
 }
 
+static unsigned parseOptionalLinkageAux(lltok::Kind Kind, bool &HasLinkage) {
+  HasLinkage = true;
+  switch (Kind) {
+  default:
+    HasLinkage = false;
+    return GlobalValue::ExternalLinkage;
+  case lltok::kw_private:
+    return GlobalValue::PrivateLinkage;
+  case lltok::kw_internal:
+    return GlobalValue::InternalLinkage;
+  case lltok::kw_weak:
+    return GlobalValue::WeakAnyLinkage;
+  case lltok::kw_weak_odr:
+    return GlobalValue::WeakODRLinkage;
+  case lltok::kw_linkonce:
+    return GlobalValue::LinkOnceAnyLinkage;
+  case lltok::kw_linkonce_odr:
+    return GlobalValue::LinkOnceODRLinkage;
+  case lltok::kw_available_externally:
+    return GlobalValue::AvailableExternallyLinkage;
+  case lltok::kw_appending:
+    return GlobalValue::AppendingLinkage;
+  case lltok::kw_common:
+    return GlobalValue::CommonLinkage;
+  case lltok::kw_extern_weak:
+    return GlobalValue::ExternalWeakLinkage;
+  case lltok::kw_external:
+    return GlobalValue::ExternalLinkage;
+  }
+}
+
 /// ParseOptionalLinkage
 ///   ::= /*empty*/
 ///   ::= 'private'
@@ -1544,25 +1575,9 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
 ///   ::= 'extern_weak'
 ///   ::= 'external'
 bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
-  HasLinkage = false;
-  switch (Lex.getKind()) {
-  default:                       Res=GlobalValue::ExternalLinkage; return false;
-  case lltok::kw_private:        Res = GlobalValue::PrivateLinkage;       break;
-  case lltok::kw_internal:       Res = GlobalValue::InternalLinkage;      break;
-  case lltok::kw_weak:           Res = GlobalValue::WeakAnyLinkage;       break;
-  case lltok::kw_weak_odr:       Res = GlobalValue::WeakODRLinkage;       break;
-  case lltok::kw_linkonce:       Res = GlobalValue::LinkOnceAnyLinkage;   break;
-  case lltok::kw_linkonce_odr:   Res = GlobalValue::LinkOnceODRLinkage;   break;
-  case lltok::kw_available_externally:
-    Res = GlobalValue::AvailableExternallyLinkage;
-    break;
-  case lltok::kw_appending:      Res = GlobalValue::AppendingLinkage;     break;
-  case lltok::kw_common:         Res = GlobalValue::CommonLinkage;        break;
-  case lltok::kw_extern_weak:    Res = GlobalValue::ExternalWeakLinkage;  break;
-  case lltok::kw_external:       Res = GlobalValue::ExternalLinkage;      break;
-  }
-  Lex.Lex();
-  HasLinkage = true;
+  Res = parseOptionalLinkageAux(Lex.getKind(), HasLinkage);
+  if (HasLinkage)
+    Lex.Lex();
   return false;
 }
 
