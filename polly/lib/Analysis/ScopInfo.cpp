@@ -2383,8 +2383,10 @@ void Scop::propagateInvalidStmtDomains(Region *R, ScopDetection &SD,
     } else {
       isl_set_free(InvalidDomain);
       InvalidDomain = Domain;
-      auto *EmptyDom = isl_set_empty(isl_set_get_space(InvalidDomain));
-      Domain = EmptyDom;
+      isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
+      recordAssumption(ERRORBLOCK, DomPar, BB->getTerminator()->getDebugLoc(),
+                       AS_RESTRICTION);
+      Domain = nullptr;
     }
 
     if (isl_set_is_empty(InvalidDomain)) {
@@ -2706,14 +2708,6 @@ void Scop::propagateDomainConstraints(Region *R, ScopDetection &SD,
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     if (BBLoop && BBLoop->getHeader() == BB && getRegion().contains(BBLoop))
       addLoopBoundsToHeaderDomain(BBLoop, LI);
-
-    // Add assumptions for error blocks.
-    if (containsErrorBlock(RN, getRegion(), LI, DT)) {
-      IsOptimized = true;
-      isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
-      recordAssumption(ERRORBLOCK, DomPar, BB->getTerminator()->getDebugLoc(),
-                       AS_RESTRICTION);
-    }
   }
 }
 
@@ -3180,7 +3174,7 @@ void Scop::simplifySCoP(bool AfterHoisting, DominatorTree &DT, LoopInfo &LI) {
 
     bool RemoveStmt = Stmt.isEmpty();
     if (!RemoveStmt)
-      RemoveStmt = isl_set_is_empty(DomainMap[Stmt.getEntryBlock()]);
+      RemoveStmt = !DomainMap[Stmt.getEntryBlock()];
 
     // Remove read only statements only after invariant loop hoisting.
     if (!RemoveStmt && AfterHoisting) {
@@ -3647,6 +3641,13 @@ void Scop::addRecordedAssumptions() {
       continue;
     }
 
+    // If the domain was deleted the assumptions are void.
+    isl_set *Dom = getDomainConditions(AS.BB);
+    if (!Dom) {
+      isl_set_free(AS.Set);
+      continue;
+    }
+
     // If a basic block was given use its domain to simplify the assumption.
     // In case of restrictions we know they only have to hold on the domain,
     // thus we can intersect them with the domain of the block. However, for
@@ -3657,7 +3658,6 @@ void Scop::addRecordedAssumptions() {
     // To avoid the complement we will register A - B as a restricton not an
     // assumption.
     isl_set *S = AS.Set;
-    isl_set *Dom = getDomainConditions(AS.BB);
     if (AS.Sign == AS_RESTRICTION)
       S = isl_set_params(isl_set_intersect(S, Dom));
     else /* (AS.Sign == AS_ASSUMPTION) */
