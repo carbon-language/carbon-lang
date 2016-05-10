@@ -41,6 +41,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/thread.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/FunctionImport.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/FunctionImportUtils.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
@@ -179,7 +180,8 @@ namespace options {
   static bool thinlto = false;
   // If false, all ThinLTO backend compilations through code gen are performed
   // using multiple threads in the gold-plugin, before handing control back to
-  // gold. If true, exit after creating the combined index, the assuming is
+  // gold. If true, write individual backend index files which reflect
+  // the import decisions, and exit afterwards. The assumption is
   // that the build system will launch the backend processes.
   static bool thinlto_index_only = false;
   // Additional options to pass into the code generator.
@@ -1190,6 +1192,79 @@ static void thinLTOBackends(raw_fd_ostream *ApiFile,
     Task.cleanup();
 }
 
+/// Perform ThinLTO link, which creates the combined index file.
+/// Also, either launch backend threads or (under thinlto-index-only)
+/// emit individual index files for distributed backends and exit.
+static ld_plugin_status thinLTOLink(raw_fd_ostream *ApiFile) {
+  ModuleSummaryIndex CombinedIndex;
+  uint64_t NextModuleId = 0;
+  for (claimed_file &F : Modules) {
+    PluginInputFile InputFile(F.handle);
+
+    std::unique_ptr<ModuleSummaryIndex> Index =
+        getModuleSummaryIndexForFile(F, InputFile.file());
+
+    // Skip files without a module summary.
+    if (Index)
+      CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
+  }
+
+  if (options::thinlto_index_only) {
+    // Collect for each module the list of function it defines (GUID ->
+    // Summary).
+    StringMap<std::map<GlobalValue::GUID, GlobalValueSummary *>>
+        ModuleToDefinedGVSummaries(NextModuleId);
+    CombinedIndex.collectDefinedGVSummariesPerModule(
+        ModuleToDefinedGVSummaries);
+
+    // FIXME: We want to do this for the case where the threads are launched
+    // from gold as well, in which case this will be moved out of the
+    // thinlto_index_only handling, and the function importer will be invoked
+    // directly using the Lists.
+    StringMap<FunctionImporter::ImportMapTy> ImportLists(NextModuleId);
+    StringMap<FunctionImporter::ExportSetTy> ExportLists(NextModuleId);
+    ComputeCrossModuleImport(CombinedIndex, ModuleToDefinedGVSummaries,
+                             ImportLists, ExportLists);
+
+    // For each input bitcode file, generate an individual index that
+    // contains summaries only for its own global values, and for any that
+    // should be imported.
+    for (claimed_file &F : Modules) {
+      PluginInputFile InputFile(F.handle);
+      std::error_code EC;
+      raw_fd_ostream OS((Twine(InputFile.file().name) + ".thinlto.bc").str(),
+                        EC, sys::fs::OpenFlags::F_None);
+      if (EC)
+        message(LDPL_FATAL, "Unable to open %s.thinlto.bc for writing: %s",
+                InputFile.file().name, EC.message().c_str());
+      // Build a map of module to the GUIDs and summary objects that should
+      // be written to its index.
+      std::map<std::string, GVSummaryMapTy> ModuleToSummariesForIndex;
+      gatherImportedSummariesForModule(InputFile.file().name,
+                                       ModuleToDefinedGVSummaries, ImportLists,
+                                       ModuleToSummariesForIndex);
+      WriteIndexToFile(CombinedIndex, OS, &ModuleToSummariesForIndex);
+    }
+
+    cleanup_hook();
+    exit(0);
+  }
+
+  // Create OS in nested scope so that it will be closed on destruction.
+  {
+    std::error_code EC;
+    raw_fd_ostream OS(output_name + ".thinlto.bc", EC,
+                      sys::fs::OpenFlags::F_None);
+    if (EC)
+      message(LDPL_FATAL, "Unable to open %s.thinlto.bc for writing: %s",
+              output_name.data(), EC.message().c_str());
+    WriteIndexToFile(CombinedIndex, OS);
+  }
+
+  thinLTOBackends(ApiFile, CombinedIndex);
+  return LDPS_OK;
+}
+
 /// gold informs us that all symbols have been read. At this point, we use
 /// get_symbols to see if any of our definitions have been overridden by a
 /// native object file. Then, perform optimization and codegen.
@@ -1200,40 +1275,8 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
   if (unsigned NumOpts = options::extra.size())
     cl::ParseCommandLineOptions(NumOpts, &options::extra[0]);
 
-  // If we are doing ThinLTO compilation, simply build the combined
-  // module index/summary and emit it. We don't need to parse the modules
-  // and link them in this case.
-  if (options::thinlto) {
-    ModuleSummaryIndex CombinedIndex;
-    uint64_t NextModuleId = 0;
-    for (claimed_file &F : Modules) {
-      PluginInputFile InputFile(F.handle);
-
-      std::unique_ptr<ModuleSummaryIndex> Index =
-          getModuleSummaryIndexForFile(F, InputFile.file());
-
-      // Skip files without a module summary.
-      if (Index)
-        CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
-    }
-
-    std::error_code EC;
-    raw_fd_ostream OS(output_name + ".thinlto.bc", EC,
-                      sys::fs::OpenFlags::F_None);
-    if (EC)
-      message(LDPL_FATAL, "Unable to open %s.thinlto.bc for writing: %s",
-              output_name.data(), EC.message().c_str());
-    WriteIndexToFile(CombinedIndex, OS);
-    OS.close();
-
-    if (options::thinlto_index_only) {
-      cleanup_hook();
-      exit(0);
-    }
-
-    thinLTOBackends(ApiFile, CombinedIndex);
-    return LDPS_OK;
-  }
+  if (options::thinlto)
+    return thinLTOLink(ApiFile);
 
   LLVMContext Context;
   Context.setDiscardValueNames(options::TheOutputType !=
