@@ -892,10 +892,9 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
 }
 
 void MemoryAccess::realignParams() {
-  isl_space *ParamSpace = Statement->getParent()->getParamSpace();
-  InvalidDomain =
-      isl_set_align_params(InvalidDomain, isl_space_copy(ParamSpace));
-  AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
+  auto *Ctx = Statement->getParent()->getContext();
+  InvalidDomain = isl_set_gist_params(InvalidDomain, isl_set_copy(Ctx));
+  AccessRelation = isl_map_gist_params(AccessRelation, Ctx);
 }
 
 const std::string MemoryAccess::getReductionOperatorStr() const {
@@ -1115,8 +1114,9 @@ void ScopStmt::realignParams() {
   for (MemoryAccess *MA : *this)
     MA->realignParams();
 
-  InvalidDomain = isl_set_align_params(InvalidDomain, Parent.getParamSpace());
-  Domain = isl_set_align_params(Domain, Parent.getParamSpace());
+  auto *Ctx = Parent.getContext();
+  InvalidDomain = isl_set_gist_params(InvalidDomain, isl_set_copy(Ctx));
+  Domain = isl_set_gist_params(Domain, Ctx);
 }
 
 /// @brief Add @p BSet to the set @p User if @p BSet is bounded.
@@ -2029,6 +2029,9 @@ void Scop::realignParams() {
 
   // Align the parameters of all data structures to the model.
   Context = isl_set_align_params(Context, Space);
+
+  // As all parameters are known add bounds to them.
+  addParameterBounds();
 
   for (ScopStmt &Stmt : *this)
     Stmt.realignParams();
@@ -3101,7 +3104,6 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
 
   updateAccessDimensionality();
   realignParams();
-  addParameterBounds();
   addUserContext();
 
   // After the context was fully constructed, thus all our knowledge about
