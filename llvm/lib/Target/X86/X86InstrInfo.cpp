@@ -4653,7 +4653,7 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
         return load ? (HasAVX ? X86::VMOVUPSrm : X86::MOVUPSrm)
                     : (HasAVX ? X86::VMOVUPSmr : X86::MOVUPSmr);
     }
-    assert(STI.hasAVX512() && "Using extended register requires AVX512");
+    assert(STI.hasVLX() && "Using extended register requires VLX");
     if (isStackAligned)
       return load ? X86::VMOVAPSZ128rm : X86::VMOVAPSZ128mr;
     else
@@ -4669,13 +4669,14 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
       else
         return load ? X86::VMOVUPSYrm : X86::VMOVUPSYmr;
     }
-    assert(STI.hasAVX512() && "Using extended register requires AVX512");
+    assert(STI.hasVLX() && "Using extended register requires VLX");
     if (isStackAligned)
       return load ? X86::VMOVAPSZ256rm : X86::VMOVAPSZ256mr;
     else
       return load ? X86::VMOVUPSZ256rm : X86::VMOVUPSZ256mr;
   case 64:
     assert(X86::VR512RegClass.hasSubClassEq(RC) && "Unknown 64-byte regclass");
+    assert(STI.hasVLX() && "Using 512-bit register requires AVX512");
     if (isStackAligned)
       return load ? X86::VMOVAPSZrm : X86::VMOVAPSZmr;
     else
