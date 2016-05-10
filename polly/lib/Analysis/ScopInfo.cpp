@@ -1301,12 +1301,15 @@ buildConditionSets(ScopStmt &Stmt, Value *Condition, TerminatorInst *TI,
     auto Opcode = BinOp->getOpcode();
     assert(Opcode == Instruction::And || Opcode == Instruction::Or);
 
-    if (!buildConditionSets(Stmt, BinOp->getOperand(0), TI, L, Domain,
-                            ConditionSets))
+    bool Valid = buildConditionSets(Stmt, BinOp->getOperand(0), TI, L, Domain,
+                                    ConditionSets) &&
+                 buildConditionSets(Stmt, BinOp->getOperand(1), TI, L, Domain,
+                                    ConditionSets);
+    if (!Valid) {
+      while (!ConditionSets.empty())
+        isl_set_free(ConditionSets.pop_back_val());
       return false;
-    if (!buildConditionSets(Stmt, BinOp->getOperand(1), TI, L, Domain,
-                            ConditionSets))
-      return false;
+    }
 
     isl_set_free(ConditionSets.pop_back_val());
     isl_set *ConsCondPart0 = ConditionSets.pop_back_val();
