@@ -93,8 +93,8 @@ void test_mm512_store_si512 (void *__P, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_store_si512 
   // CHECK: load <8 x i64>, <8 x i64>* %__A.addr.i, align 64
-  // CHECK: load i8*, i8** %__P.addr.i, align 8
-  // CHECK: bitcast i8* %3 to <8 x i64>*
+  // CHECK: [[SI512_3:%.+]] = load i8*, i8** %__P.addr.i, align 8
+  // CHECK: bitcast i8* [[SI512_3]] to <8 x i64>*
   // CHECK: store <8 x i64>  
   _mm512_store_si512 ( __P,__A);
 }
@@ -103,8 +103,8 @@ void test_mm512_store_epi32 (void *__P, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_store_epi32 
   // CHECK: load <8 x i64>, <8 x i64>* %__A.addr.i, align 64
-  // CHECK: load i8*, i8** %__P.addr.i, align 8
-  // CHECK: bitcast i8* %3 to <8 x i64>*
+  // CHECK: [[Si32_3:%.+]] = load i8*, i8** %__P.addr.i, align 8
+  // CHECK: bitcast i8* [[Si32_3]] to <8 x i64>*
   // CHECK: store <8 x i64>  
   _mm512_store_epi32 ( __P,__A);
 }
@@ -113,8 +113,8 @@ void test_mm512_store_epi64 (void *__P, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_store_epi64 
   // CHECK: load <8 x i64>, <8 x i64>* %__A.addr.i, align 64
-  // CHECK: load i8*, i8** %__P.addr.i, align 8
-  // CHECK: bitcast i8* %3 to <8 x i64>*
+  // CHECK: [[SI64_3:%.+]] = load i8*, i8** %__P.addr.i, align 8
+  // CHECK: bitcast i8* [[SI64_3]] to <8 x i64>*
   // CHECK: store <8 x i64>  
   _mm512_store_epi64 ( __P,__A);
 }
@@ -192,27 +192,27 @@ __m512d test_mm512_mask_loadu_pd (__m512d __W, __mmask8 __U, void *__P)
 __m512i test_mm512_load_si512 (void *__P)
 {
   // CHECK-LABEL: @test_mm512_load_si512 
-  // CHECK: load i8*, i8** %__P.addr.i, align 8
-  // CHECK: bitcast i8* %1 to <8 x i64>*
-  // CHECK: load <8 x i64>, <8 x i64>* %2, align 64
+  // CHECK: [[LI512_1:%.+]] = load i8*, i8** %__P.addr.i, align 8
+  // CHECK: [[LI512_2:%.+]] = bitcast i8* [[LI512_1]] to <8 x i64>*
+  // CHECK: load <8 x i64>, <8 x i64>* [[LI512_2]], align 64
   return _mm512_load_si512 ( __P);
 }
 
 __m512i test_mm512_load_epi32 (void *__P)
 {
   // CHECK-LABEL: @test_mm512_load_epi32 
-  // CHECK: load i8*, i8** %__P.addr.i, align 8
-  // CHECK: bitcast i8* %1 to <8 x i64>*
-  // CHECK: load <8 x i64>, <8 x i64>* %2, align 64
+  // CHECK: [[LI32_1:%.+]] = load i8*, i8** %__P.addr.i, align 8
+  // CHECK: [[LI32_2:%.+]] = bitcast i8* [[LI32_1]] to <8 x i64>*
+  // CHECK: load <8 x i64>, <8 x i64>* [[LI32_2]], align 64
   return _mm512_load_epi32 ( __P);
 }
 
 __m512i test_mm512_load_epi64 (void *__P)
 {
   // CHECK-LABEL: @test_mm512_load_epi64 
-  // CHECK: load i8*, i8** %__P.addr.i, align 8
-  // CHECK: bitcast i8* %1 to <8 x i64>*
-  // CHECK: load <8 x i64>, <8 x i64>* %2, align 64
+  // CHECK: [[LI64_1:%.+]] = load i8*, i8** %__P.addr.i, align 8
+  // CHECK: [[LI64_2:%.+]] = bitcast i8* [[LI64_1]] to <8 x i64>*
+  // CHECK: load <8 x i64>, <8 x i64>* [[LI64_2]], align 64
   return _mm512_load_epi64 ( __P);
 }
 
