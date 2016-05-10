@@ -1845,7 +1845,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       if (!MO.isReg() || !MO.isDef() || MO.isDead())
         continue;
       unsigned Reg = MO.getReg();
-      if (!Reg)
+      if (!Reg || TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
       LocalDefs.push_back(Reg);
       addRegAndItsAliases(Reg, TRI, LocalDefsSet);
