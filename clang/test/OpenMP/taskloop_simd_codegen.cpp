@@ -9,7 +9,7 @@
 // CHECK-LABEL: @main
 int main(int argc, char **argv) {
 // CHECK: [[GTID:%.+]] = call i32 @__kmpc_global_thread_num(%ident_t* [[DEFLOC:@.+]])
-// CHECK: [[TASKV:%.+]] = call i8* @__kmpc_omp_task_alloc(%ident_t* [[DEFLOC]], i32 [[GTID]], i32 1, i64 64, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, [[TDP_TY:%.+]]*)* [[TASK1:@.+]] to i32 (i32, i8*)*))
+// CHECK: [[TASKV:%.+]] = call i8* @__kmpc_omp_task_alloc(%ident_t* [[DEFLOC]], i32 [[GTID]], i32 33, i64 64, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, [[TDP_TY:%.+]]*)* [[TASK1:@.+]] to i32 (i32, i8*)*))
 // CHECK: [[TASK:%.+]] = bitcast i8* [[TASKV]] to [[TDP_TY]]*
 // CHECK: [[TASK_DATA:%.+]] = getelementptr inbounds [[TDP_TY]], [[TDP_TY]]* [[TASK]], i32 0, i32 0
 // CHECK: getelementptr inbounds [[TD_TY:%.+]], [[TD_TY]]* [[TASK_DATA]], i32 0, i32 3

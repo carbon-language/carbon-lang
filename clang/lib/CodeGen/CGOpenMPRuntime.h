@@ -98,10 +98,10 @@ struct OMPTaskDataTy final {
   SmallVector<std::pair<OpenMPDependClauseKind, const Expr *>, 4> Dependences;
   llvm::PointerIntPair<llvm::Value *, 1, bool> Final;
   llvm::PointerIntPair<llvm::Value *, 1, bool> Schedule;
+  llvm::PointerIntPair<llvm::Value *, 1, bool> Priority;
   unsigned NumberOfParts = 0;
   bool Tied = true;
   bool Nogroup = false;
-  llvm::PointerIntPair<llvm::Value *, 1, bool> Priority;
 };
 
 class CGOpenMPRuntime {

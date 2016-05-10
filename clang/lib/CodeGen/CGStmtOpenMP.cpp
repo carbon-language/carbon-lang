@@ -2337,6 +2337,13 @@ void CodeGenFunction::EmitOMPTaskBasedDirective(const OMPExecutableDirective &S,
     // By default the task is not final.
     Data.Final.setInt(/*IntVal=*/false);
   }
+  // Check if the task has 'priority' clause.
+  if (const auto *Clause = S.getSingleClause<OMPPriorityClause>()) {
+    // Runtime currently does not support codegen for priority clause argument.
+    // TODO: Add codegen for priority clause arg when runtime lib support it.
+    auto *Prio = Clause->getPriority();
+    Data.Priority.setInt(Prio);
+  }
   // The first function argument for tasks is a thread id, the second one is a
   // part id (0 for tied tasks, >=0 for untied task).
   llvm::DenseSet<const VarDecl *> EmittedAsPrivate;

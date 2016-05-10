@@ -3674,7 +3674,12 @@ CGOpenMPRuntime::emitTaskInit(CodeGenFunction &CGF, SourceLocation Loc,
   // Task flags. Format is taken from
   // http://llvm.org/svn/llvm-project/openmp/trunk/runtime/src/kmp.h,
   // description of kmp_tasking_flags struct.
-  enum { TiedFlag = 0x1, FinalFlag = 0x2, DestructorsFlag = 0x8 };
+  enum {
+    TiedFlag = 0x1,
+    FinalFlag = 0x2,
+    DestructorsFlag = 0x8,
+    PriorityFlag = 0x20
+  };
   unsigned Flags = Data.Tied ? TiedFlag : 0;
   bool NeedsCleanup = false;
   if (!Privates.empty()) {
@@ -3682,6 +3687,8 @@ CGOpenMPRuntime::emitTaskInit(CodeGenFunction &CGF, SourceLocation Loc,
     if (NeedsCleanup)
       Flags = Flags | DestructorsFlag;
   }
+  if (Data.Priority.getInt())
+    Flags = Flags | PriorityFlag;
   auto *TaskFlags =
       Data.Final.getPointer()
           ? CGF.Builder.CreateSelect(Data.Final.getPointer(),
