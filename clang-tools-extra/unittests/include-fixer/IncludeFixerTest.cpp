@@ -49,6 +49,7 @@ static std::string runIncludeFixer(
     const std::vector<std::string> &ExtraArgs = std::vector<std::string>()) {
   std::map<std::string, std::vector<std::string>> XrefsMap = {
       {"std::string", {"<string>"}},
+      {"std::sting", {"\"sting\""}},
       {"std::string::size_type", {"<string>"}},
       {"a::b::foo", {"dir/otherdir/qux.h"}},
   };
@@ -112,6 +113,11 @@ TEST(IncludeFixer, MinimizeInclude) {
   IncludePath = {"-Idir", "-Idir/otherdir"};
   EXPECT_EQ("#include \"qux.h\"\na::b::foo bar;\n",
             runIncludeFixer("a::b::foo bar;\n", IncludePath));
+}
+
+TEST(IncludeFixer, MultipleMissingSymbols) {
+  EXPECT_EQ("#include <string>\nstd::string bar;\nstd::sting foo;\n",
+            runIncludeFixer("std::string bar;\nstd::sting foo;\n"));
 }
 
 } // namespace
