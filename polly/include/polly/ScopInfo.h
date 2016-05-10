@@ -1273,7 +1273,7 @@ public:
   ///
   /// @param Dimension The dimension of the induction variable
   /// @return The loop at a certain dimension.
-  const Loop *getLoopForDimension(unsigned Dimension) const;
+  Loop *getLoopForDimension(unsigned Dimension) const;
 
   /// @brief Align the parameters in the statement to the scop context
   void realignParams();

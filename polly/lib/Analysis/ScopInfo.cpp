@@ -1668,7 +1668,7 @@ unsigned ScopStmt::getNumIterators() const { return NestLoops.size(); }
 
 const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }
 
-const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
+Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
   return NestLoops[Dimension];
 }
 
@@ -1881,13 +1881,15 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
     auto *CI = dyn_cast_or_null<CallInst>(Assumption);
     if (!CI || CI->getNumArgOperands() != 1)
       continue;
-    if (!DT.dominates(CI->getParent(), R->getEntry()))
+
+    bool InR = R->contains(CI);
+    if (!InR && !DT.dominates(CI->getParent(), R->getEntry()))
       continue;
 
     auto *L = LI.getLoopFor(CI->getParent());
     auto *Val = CI->getArgOperand(0);
     ParameterSetTy DetectedParams;
-    if (!isAffineParamConstraint(Val, R, L, *SE, DetectedParams)) {
+    if (!isAffineConstraint(Val, R, L, *SE, DetectedParams)) {
       emitOptimizationRemarkAnalysis(F.getContext(), DEBUG_TYPE, F,
                                      CI->getDebugLoc(),
                                      "Non-affine user assumption ignored.");
@@ -1905,14 +1907,23 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
     }
 
     SmallVector<isl_set *, 2> ConditionSets;
-    if (!buildConditionSets(*Stmts.begin(), Val, nullptr, L, Context,
-                            ConditionSets))
+    auto *TI = InR ? CI->getParent()->getTerminator() : nullptr;
+    auto &Stmt = InR ? *getStmtFor(CI->getParent()) : *Stmts.begin();
+    auto *Dom = InR ? getDomainConditions(&Stmt) : isl_set_copy(Context);
+    bool Valid = buildConditionSets(Stmt, Val, TI, L, Dom, ConditionSets);
+    isl_set_free(Dom);
+
+    if (!Valid)
       continue;
 
-    assert(ConditionSets.size() == 2);
-    isl_set_free(ConditionSets[1]);
-
-    auto *AssumptionCtx = ConditionSets[0];
+    isl_set *AssumptionCtx = nullptr;
+    if (InR) {
+      AssumptionCtx = isl_set_complement(isl_set_params(ConditionSets[1]));
+      isl_set_free(ConditionSets[0]);
+    } else {
+      AssumptionCtx = isl_set_complement(ConditionSets[1]);
+      AssumptionCtx = isl_set_intersect(AssumptionCtx, ConditionSets[0]);
+    }
 
     // Project out newly introduced parameters as they are not otherwise useful.
     if (!NewParams.empty()) {
