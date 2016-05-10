@@ -115,6 +115,12 @@ TEST(IncludeFixer, MinimizeInclude) {
             runIncludeFixer("a::b::foo bar;\n", IncludePath));
 }
 
+TEST(IncludeFixer, NestedName) {
+  EXPECT_EQ("#include \"dir/otherdir/qux.h\"\n"
+            "namespace a {}\nint a = a::b::foo(0);\n",
+            runIncludeFixer("namespace a {}\nint a = a::b::foo(0);\n"));
+}
+
 TEST(IncludeFixer, MultipleMissingSymbols) {
   EXPECT_EQ("#include <string>\nstd::string bar;\nstd::sting foo;\n",
             runIncludeFixer("std::string bar;\nstd::sting foo;\n"));
