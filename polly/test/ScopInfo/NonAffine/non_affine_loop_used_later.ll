@@ -86,7 +86,9 @@
 ; CHECK-NEXT:             [N] -> { Stmt_bb23[i0] -> MemRef_j_0__phi[] };
 ; CHECK-NEXT: }
 ;
-; PROFIT-NOT: Statements
+; As we might be able to distribute the outer loop we consider the region profitable for now.
+;
+; PROFIT: Statements
 ;
 ;    void f(int *A, int N, int M) {
 ;      int i = 0, j = 0;
