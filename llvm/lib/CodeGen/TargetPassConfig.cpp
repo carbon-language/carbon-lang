@@ -258,6 +258,9 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   // Substitute Pseudo Pass IDs for real ones.
   substitutePass(&EarlyTailDuplicateID, &TailDuplicateID);
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
+
+  if (StringRef(PrintMachineInstrs.getValue()).equals(""))
+    TM->Options.PrintMachineCode = true;
 }
 
 CodeGenOpt::Level TargetPassConfig::getOptLevel() const {
@@ -519,11 +522,8 @@ void TargetPassConfig::addMachinePasses() {
   AddingMachinePasses = true;
 
   // Insert a machine instr printer pass after the specified pass.
-  // If -print-machineinstrs specified, print machineinstrs after all passes.
-  if (StringRef(PrintMachineInstrs.getValue()).equals(""))
-    TM->Options.PrintMachineCode = true;
-  else if (!StringRef(PrintMachineInstrs.getValue())
-           .equals("option-unspecified")) {
+  if (!StringRef(PrintMachineInstrs.getValue()).equals("") &&
+      !StringRef(PrintMachineInstrs.getValue()).equals("option-unspecified")) {
     const PassRegistry *PR = PassRegistry::getPassRegistry();
     const PassInfo *TPI = PR->getPassInfo(PrintMachineInstrs.getValue());
     const PassInfo *IPI = PR->getPassInfo(StringRef("machineinstr-printer"));
