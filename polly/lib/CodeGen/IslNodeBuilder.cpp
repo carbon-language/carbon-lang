@@ -48,11 +48,11 @@
 using namespace polly;
 using namespace llvm;
 
-// The maximal number of basic sets we allow during invariant load construction.
+// The maximal number of dimensions we allow during invariant load construction.
 // More complex access ranges will result in very high compile time and are also
 // unlikely to result in good code. This value is very high and should only
 // trigger for corner cases (e.g., the "dct_luma" function in h264, SPEC2006).
-static int const MaxDisjunctionsInAccessRange = 80;
+static int const MaxDimensionsInAccessRange = 9;
 
 __isl_give isl_ast_expr *
 IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
@@ -922,10 +922,22 @@ bool IslNodeBuilder::materializeParameters(isl_set *Set, bool All) {
   return true;
 }
 
+/// @brief Add the number of dimensions in @p BS to @p U.
+static isl_stat countTotalDims(isl_basic_set *BS, void *U) {
+  unsigned *NumTotalDim = static_cast<unsigned *>(U);
+  *NumTotalDim += isl_basic_set_total_dim(BS);
+  isl_basic_set_free(BS);
+  return isl_stat_ok;
+}
+
 Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
                                               isl_ast_build *Build,
                                               Instruction *AccInst) {
-  if (isl_set_n_basic_set(AccessRange) > MaxDisjunctionsInAccessRange) {
+
+  // TODO: This check could be performed in the ScopInfo already.
+  unsigned NumTotalDim = 0;
+  isl_set_foreach_basic_set(AccessRange, countTotalDims, &NumTotalDim);
+  if (NumTotalDim > MaxDimensionsInAccessRange) {
     isl_set_free(AccessRange);
     return nullptr;
   }
