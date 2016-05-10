@@ -899,8 +899,9 @@ def CSR_64_AllRegs     : CalleeSavedRegs<(add CSR_64_MostRegs, RAX, RSP,
 def CSR_64_AllRegs_AVX : CalleeSavedRegs<(sub (add CSR_64_MostRegs, RAX, RSP,
                                                    (sequence "YMM%u", 0, 15)),
                                               (sequence "XMM%u", 0, 15))>;
-def CSR_64_AllRegs_AVX512 : CalleeSavedRegs<(add CSR_64_AllRegs_AVX,
-                                             (sequence "YMM%u", 16, 31))>;
+def CSR_64_AllRegs_AVX512 : CalleeSavedRegs<(sub (add CSR_64_MostRegs, RAX, RSP,
+                                                   (sequence "ZMM%u", 0, 31)),
+                                              (sequence "XMM%u", 0, 15))>;
 
 // Standard C + YMM6-15
 def CSR_Win64_Intel_OCL_BI_AVX : CalleeSavedRegs<(add RBX, RBP, RDI, RSI, R12,
