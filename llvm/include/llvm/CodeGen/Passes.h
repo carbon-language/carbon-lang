@@ -254,6 +254,18 @@ public:
     return nullptr;
   }
 
+  /// printAndVerify - Add a pass to dump then verify the machine function, if
+  /// those steps are enabled.
+  ///
+  void printAndVerify(const std::string &Banner);
+
+  /// Add a pass to print the machine function if printing is enabled.
+  void addPrintPass(const std::string &Banner);
+
+  /// Add a pass to perform basic verification of the machine function if
+  /// verification is enabled.
+  void addVerifyPass(const std::string &Banner);
+
 protected:
   // Helper to verify the analysis is really immutable.
   void setOpt(bool &Opt, bool Val);
@@ -360,18 +372,6 @@ protected:
   /// addMachinePasses helper to create the target-selected or overriden
   /// regalloc pass.
   FunctionPass *createRegAllocPass(bool Optimized);
-
-  /// printAndVerify - Add a pass to dump then verify the machine function, if
-  /// those steps are enabled.
-  ///
-  void printAndVerify(const std::string &Banner);
-
-  /// Add a pass to print the machine function if printing is enabled.
-  void addPrintPass(const std::string &Banner);
-
-  /// Add a pass to perform basic verification of the machine function if
-  /// verification is enabled.
-  void addVerifyPass(const std::string &Banner);
 };
 } // namespace llvm
 
