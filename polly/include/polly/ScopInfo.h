@@ -1156,10 +1156,6 @@ public:
   /// statements, return its entry block.
   BasicBlock *getEntryBlock() const;
 
-  /// @brief Return RegionInfo's RegionNode for this statements' BB or
-  ///        subregion.
-  RegionNode *getRegionNode() const;
-
   /// @brief Return true if this statement does not contain any accesses.
   bool isEmpty() const { return MemAccs.empty(); }
 
@@ -1614,28 +1610,11 @@ private:
   bool buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
                     LoopInfo &LI);
 
-  /// @brief Check if a region part should be represented in the SCoP or not.
-  ///
-  /// If @p RN does not contain any useful calculation or is only reachable
-  /// via error blocks we do not model it in the polyhedral representation.
-  ///
-  /// @param RN The region part to check.
-  /// @param DT The DominatorTree for the current function.
-  /// @param LI The LoopInfo for the current function.
-  ///
-  /// @return True if the part should be ignored, otherwise false.
-  bool isIgnored(RegionNode *RN, DominatorTree &DT, LoopInfo &LI);
-
   /// @brief Add parameter constraints to @p C that imply a non-empty domain.
   __isl_give isl_set *addNonEmptyDomainConstraints(__isl_take isl_set *C) const;
 
   /// @brief Simplify the SCoP representation
-  ///
-  /// At the moment we perform the following simplifications:
-  ///   - removal of no-op statements
-  /// @param RemoveIgnoredStmts If true, also removed ignored statments.
-  /// @see isIgnored()
-  void simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT, LoopInfo &LI);
+  void simplifySCoP(bool AfterHoisting, DominatorTree &DT, LoopInfo &LI);
 
   /// @brief Create equivalence classes for required invariant accesses.
   ///

@@ -1657,12 +1657,6 @@ BasicBlock *ScopStmt::getEntryBlock() const {
   return getRegion()->getEntry();
 }
 
-RegionNode *ScopStmt::getRegionNode() const {
-  if (isRegionStmt())
-    return getRegion()->getNode();
-  return getParent()->getRegion().getBBNode(getBasicBlock());
-}
-
 unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
 
 unsigned ScopStmt::getNumIterators() const { return NestLoops.size(); }
@@ -2274,7 +2268,7 @@ bool Scop::buildDomains(Region *R, ScopDetection &SD, DominatorTree &DT,
   DomainMap[EntryBB] = S;
 
   if (IsOnlyNonAffineRegion)
-    return true;
+    return !containsErrorBlock(R->getNode(), *R, LI, DT);
 
   if (!buildDomainsWithBranchConstraints(R, SD, DT, LI))
     return false;
@@ -3087,9 +3081,9 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
 
   addUserAssumptions(AC, DT, LI);
 
-  // Remove empty and ignored statements.
+  // Remove empty statements.
   // Exit early in case there are no executable statements left in this scop.
-  simplifySCoP(true, DT, LI);
+  simplifySCoP(false, DT, LI);
   if (Stmts.empty())
     return;
 
@@ -3116,7 +3110,7 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, ScopDetection &SD,
 
   hoistInvariantLoads(SD);
   verifyInvariantLoads(SD);
-  simplifySCoP(false, DT, LI);
+  simplifySCoP(true, DT, LI);
 }
 
 Scop::~Scop() {
@@ -3180,20 +3174,16 @@ void Scop::updateAccessDimensionality() {
       Access->updateDimensionality();
 }
 
-void Scop::simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT,
-                        LoopInfo &LI) {
+void Scop::simplifySCoP(bool AfterHoisting, DominatorTree &DT, LoopInfo &LI) {
   for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
     ScopStmt &Stmt = *StmtIt;
-    RegionNode *RN = Stmt.getRegionNode();
 
-    bool RemoveStmt = StmtIt->isEmpty();
+    bool RemoveStmt = Stmt.isEmpty();
     if (!RemoveStmt)
       RemoveStmt = isl_set_is_empty(DomainMap[Stmt.getEntryBlock()]);
-    if (!RemoveStmt)
-      RemoveStmt = (RemoveIgnoredStmts && isIgnored(RN, DT, LI));
 
     // Remove read only statements only after invariant loop hoisting.
-    if (!RemoveStmt && !RemoveIgnoredStmts) {
+    if (!RemoveStmt && AfterHoisting) {
       bool OnlyRead = true;
       for (MemoryAccess *MA : Stmt) {
         if (MA->isRead())
@@ -3206,19 +3196,19 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts, DominatorTree &DT,
       RemoveStmt = OnlyRead;
     }
 
-    if (RemoveStmt) {
-      // Remove the statement because it is unnecessary.
-      if (Stmt.isRegionStmt())
-        for (BasicBlock *BB : Stmt.getRegion()->blocks())
-          StmtMap.erase(BB);
-      else
-        StmtMap.erase(Stmt.getBasicBlock());
-
-      StmtIt = Stmts.erase(StmtIt);
+    if (!RemoveStmt) {
+      StmtIt++;
       continue;
     }
 
-    StmtIt++;
+    // Remove the statement because it is unnecessary.
+    if (Stmt.isRegionStmt())
+      for (BasicBlock *BB : Stmt.getRegion()->blocks())
+        StmtMap.erase(BB);
+    else
+      StmtMap.erase(Stmt.getBasicBlock());
+
+    StmtIt = Stmts.erase(StmtIt);
   }
 }
 
@@ -3921,29 +3911,6 @@ bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
 }
 
 ScalarEvolution *Scop::getSE() const { return SE; }
-
-bool Scop::isIgnored(RegionNode *RN, DominatorTree &DT, LoopInfo &LI) {
-  BasicBlock *BB = getRegionNodeBasicBlock(RN);
-  ScopStmt *Stmt = getStmtFor(RN);
-
-  // If there is no stmt, then it already has been removed.
-  if (!Stmt)
-    return true;
-
-  // Check if there are accesses contained.
-  if (Stmt->isEmpty())
-    return true;
-
-  // Check for reachability via non-error blocks.
-  if (!DomainMap.count(BB))
-    return true;
-
-  // Check if error blocks are contained.
-  if (containsErrorBlock(RN, getRegion(), LI, DT))
-    return true;
-
-  return false;
-}
 
 struct MapToDimensionDataTy {
   int N;
