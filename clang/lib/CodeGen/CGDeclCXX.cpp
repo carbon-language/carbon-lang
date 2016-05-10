@@ -88,11 +88,12 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
 
   // Special-case non-array C++ destructors, if they have the right signature.
   // Under some ABIs, destructors return this instead of void, and cannot be
-  // passed directly to __cxa_atexit.
+  // passed directly to __cxa_atexit if the target does not allow this mismatch.
   const CXXRecordDecl *Record = type->getAsCXXRecordDecl();
-  bool CanRegisterDestructor = Record &&
-                               !CGM.getCXXABI().HasThisReturn(GlobalDecl(
-                                   Record->getDestructor(), Dtor_Complete));
+  bool CanRegisterDestructor =
+      Record && (!CGM.getCXXABI().HasThisReturn(
+                     GlobalDecl(Record->getDestructor(), Dtor_Complete)) ||
+                 CGM.getCXXABI().canCallMismatchedFunctionType());
   // If __cxa_atexit is disabled via a flag, a different helper function is
   // generated elsewhere which uses atexit instead, and it takes the destructor
   // directly.

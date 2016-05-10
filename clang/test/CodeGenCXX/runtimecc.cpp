@@ -22,13 +22,8 @@ namespace test0 {
   A global;
 // CHECK-LABEL:    define internal void @__cxx_global_var_init()
 // CHECK:      call [[A]]* @_ZN5test01AC1Ev([[A]]* @_ZN5test06globalE)
-// CHECK-NEXT: call i32 @__cxa_atexit(void (i8*)* @__cxx_global_array_dtor, i8* null, i8* @__dso_handle) [[NOUNWIND:#[0-9]+]]
+// CHECK-NEXT: call i32 @__cxa_atexit(void (i8*)* bitcast ([[A]]* ([[A]]*)* @_ZN5test01AD1Ev to void (i8*)*), i8* bitcast ([[A]]* @_ZN5test06globalE to i8*), i8* @__dso_handle) [[NOUNWIND:#[0-9]+]]
 // CHECK-NEXT: ret void
-
-// CHECK-LABEL: define internal void @__cxx_global_array_dtor(i8*)
-// CHECK: call [[A]]* @_ZN5test01AD1Ev([[A]]* @_ZN5test06globalE)
-// CHECK-NEXT: ret void
-
 }
 
 // CHECK: declare i32 @__cxa_atexit(void (i8*)*, i8*, i8*) [[NOUNWIND]]
