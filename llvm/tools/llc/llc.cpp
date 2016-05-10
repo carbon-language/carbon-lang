@@ -378,6 +378,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
       PM.add(TPC);
       LLVMTM.addMachineModuleInfo(PM);
       LLVMTM.addMachineFunctionAnalysis(PM, MIR.get());
+      TPC->printAndVerify("");
 
       Pass *P;
       if (PI->getTargetMachineCtor())
