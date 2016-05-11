@@ -95,7 +95,7 @@ public:
   bool MaybeDiagnoseMissingCompleteType(clang::SourceLocation Loc,
                                         clang::QualType T) override {
     clang::ASTContext &context = getCompilerInstance().getASTContext();
-    query(T.getUnqualifiedType().getAsString(context.getPrintingPolicy()));
+    query(T.getUnqualifiedType().getAsString(context.getPrintingPolicy()), Loc);
     return false;
   }
 
@@ -141,7 +141,7 @@ public:
       QueryString = Typo.getAsString();
     }
 
-    return query(QueryString);
+    return query(QueryString, Typo.getLoc());
   }
 
   StringRef filename() const { return Filename; }
@@ -226,14 +226,16 @@ public:
 
 private:
   /// Query the database for a given identifier.
-  clang::TypoCorrection query(StringRef Query) {
+  clang::TypoCorrection query(StringRef Query, SourceLocation Loc) {
     assert(!Query.empty() && "Empty query!");
 
     // Save database lookups by not looking up identifiers multiple times.
     if (!SeenQueries.insert(Query).second)
       return clang::TypoCorrection();
 
-    DEBUG(llvm::dbgs() << "Looking up " << Query << " ... ");
+    DEBUG(llvm::dbgs() << "Looking up '" << Query << "' at ");
+    DEBUG(Loc.print(llvm::dbgs(), getCompilerInstance().getSourceManager()));
+    DEBUG(llvm::dbgs() << " ...");
 
     std::string error_text;
     auto SearchReply = XrefsDBMgr.search(Query);
