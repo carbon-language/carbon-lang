@@ -2150,7 +2150,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue Ops[] = {N1, InFlag};
     SDNode *CNode = CurDAG->getMachineNode(Opc, dl, VTs, Ops);
 
-    ReplaceUses(Node, CNode);
+    ReplaceNode(Node, CNode);
     return;
   }
 
