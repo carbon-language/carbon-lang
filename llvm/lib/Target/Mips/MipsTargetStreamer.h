@@ -16,6 +16,7 @@
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include <functional>
 
 namespace llvm {
 
