@@ -156,7 +156,7 @@ selectCallee(const ModuleSummaryIndex &Index,
       CalleeSummaryList,
       [&](const std::unique_ptr<GlobalValueSummary> &SummaryPtr) {
         auto *GVSummary = SummaryPtr.get();
-        if (GlobalValue::isMayBeOverriddenLinkage(GVSummary->linkage()))
+        if (GlobalValue::isInterposableLinkage(GVSummary->linkage()))
           // There is no point in importing these, we can't inline them
           return false;
         if (auto *AS = dyn_cast<AliasSummary>(GVSummary)) {
