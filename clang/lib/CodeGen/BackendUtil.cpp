@@ -775,6 +775,7 @@ static const char* getSectionNameForBitcode(const Triple &T) {
   case Triple::UnknownObjectFormat:
     return ".llvmbc";
   }
+  llvm_unreachable("Unimplemented ObjectFormatType");
 }
 
 static const char* getSectionNameForCommandline(const Triple &T) {
@@ -786,6 +787,7 @@ static const char* getSectionNameForCommandline(const Triple &T) {
   case Triple::UnknownObjectFormat:
     return ".llvmcmd";
   }
+  llvm_unreachable("Unimplemented ObjectFormatType");
 }
 
 // With -fembed-bitcode, save a copy of the llvm IR as data in the
