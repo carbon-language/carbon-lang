@@ -263,72 +263,6 @@ INTERCEPTOR(char *, strncpy, char *dst, char *src, uptr n) {
   return REAL(strncpy)(dst, src, n);
 }
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID && !SANITIZER_FREEBSD
-INTERCEPTOR(int, __xstat64, int version, const char *path, void *buf) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, __xstat64, version, path, buf);
-  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
-  return REAL(__xstat64)(version, path, buf);
-}
-#define ESAN_MAYBE_INTERCEPT___XSTAT64 INTERCEPT_FUNCTION(__xstat64)
-#else
-#define ESAN_MAYBE_INTERCEPT___XSTAT64
-#endif
-
-#if SANITIZER_LINUX && !SANITIZER_ANDROID && !SANITIZER_FREEBSD
-INTERCEPTOR(int, stat64, const char *path, void *buf) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, stat64, path, buf);
-  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
-  return REAL(stat64)(path, buf);
-}
-#define ESAN_MAYBE_INTERCEPT_STAT64 INTERCEPT_FUNCTION(stat64)
-#else
-#define ESAN_MAYBE_INTERCEPT_STAT64
-#endif
-
-#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_ANDROID
-INTERCEPTOR(int, lstat, const char *path, void *buf) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, lstat, path, buf);
-  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
-  return REAL(lstat)(path, buf);
-}
-#define ESAN_INTERCEPT_LSTAT INTERCEPT_FUNCTION(lstat)
-#else
-INTERCEPTOR(int, __lxstat, int version, const char *path, void *buf) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, __lxstat, version, path, buf);
-  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
-  return REAL(__lxstat)(version, path, buf);
-}
-#define ESAN_INTERCEPT_LSTAT INTERCEPT_FUNCTION(__lxstat)
-#endif
-
-#if SANITIZER_LINUX && !SANITIZER_ANDROID && !SANITIZER_FREEBSD
-INTERCEPTOR(int, __lxstat64, int version, const char *path, void *buf) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, __lxstat64, version, path, buf);
-  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
-  return REAL(__lxstat64)(version, path, buf);
-}
-#define ESAN_MAYBE_INTERCEPT___LXSTAT64 INTERCEPT_FUNCTION(__lxstat64)
-#else
-#define ESAN_MAYBE_INTERCEPT___LXSTAT64
-#endif
-
-#if SANITIZER_LINUX && !SANITIZER_ANDROID && !SANITIZER_FREEBSD
-INTERCEPTOR(int, lstat64, const char *path, void *buf) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, lstat64, path, buf);
-  COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
-  return REAL(lstat64)(path, buf);
-}
-#define ESAN_MAYBE_INTERCEPT_LSTAT64 INTERCEPT_FUNCTION(lstat64)
-#else
-#define ESAN_MAYBE_INTERCEPT_LSTAT64
-#endif
-
 INTERCEPTOR(int, open, const char *name, int flags, int mode) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, open, name, flags, mode);
@@ -460,11 +394,6 @@ void initializeInterceptors() {
   INTERCEPT_FUNCTION(strcpy); // NOLINT
   INTERCEPT_FUNCTION(strncpy);
 
-  ESAN_MAYBE_INTERCEPT_STAT64;
-  ESAN_MAYBE_INTERCEPT___XSTAT64;
-  ESAN_INTERCEPT_LSTAT;
-  ESAN_MAYBE_INTERCEPT_LSTAT64;
-  ESAN_MAYBE_INTERCEPT___LXSTAT64;
   INTERCEPT_FUNCTION(open);
   ESAN_MAYBE_INTERCEPT_OPEN64;
   INTERCEPT_FUNCTION(creat);
