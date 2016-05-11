@@ -34,6 +34,8 @@ std::string _obj2yaml_error_category::message(int ev) const {
     return "Unrecognized file type.";
   case obj2yaml_error::unsupported_obj_file_format:
     return "Unsupported object file format.";
+  case obj2yaml_error::not_implemented:
+    return "Feature not yet implemented.";
   }
   llvm_unreachable("An enumerator of obj2yaml_error does not have a message "
                    "defined.");

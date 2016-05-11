@@ -19,7 +19,8 @@ enum class obj2yaml_error {
   success = 0,
   file_not_found,
   unrecognized_file_format,
-  unsupported_obj_file_format
+  unsupported_obj_file_format,
+  not_implemented
 };
 
 inline std::error_code make_error_code(obj2yaml_error e) {
