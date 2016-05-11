@@ -94,6 +94,10 @@ public:
   /// have the fully qualified name ready. Just query that.
   bool MaybeDiagnoseMissingCompleteType(clang::SourceLocation Loc,
                                         clang::QualType T) override {
+    // Ignore spurious callbacks from SFINAE contexts.
+    if (getCompilerInstance().getSema().isSFINAEContext())
+      return false;
+
     clang::ASTContext &context = getCompilerInstance().getASTContext();
     query(T.getUnqualifiedType().getAsString(context.getPrintingPolicy()), Loc);
     return false;
@@ -107,6 +111,10 @@ public:
                                     DeclContext *MemberContext,
                                     bool EnteringContext,
                                     const ObjCObjectPointerType *OPT) override {
+    // Ignore spurious callbacks from SFINAE contexts.
+    if (getCompilerInstance().getSema().isSFINAEContext())
+      return clang::TypoCorrection();
+
     /// If we have a scope specification, use that to get more precise results.
     std::string QueryString;
     if (SS && SS->getRange().isValid()) {
