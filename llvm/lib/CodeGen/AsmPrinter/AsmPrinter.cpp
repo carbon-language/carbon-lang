@@ -1528,7 +1528,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   }
 
   // Ignore debug and non-emitted data.  This handles llvm.compiler.used.
-  if (StringRef(GV->getSection()) == "llvm.metadata" ||
+  if (GV->getSection() == "llvm.metadata" ||
       GV->hasAvailableExternallyLinkage())
     return true;
 
