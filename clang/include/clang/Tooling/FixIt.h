@@ -40,27 +40,27 @@ inline SourceRange getSourceRange(const SourceLocation &Loc) {
 
 /// \brief Returns the SourceRange of an given Node. \p Node is typically a
 ///        'Stmt', 'Expr' or a 'Decl'.
-template <typename T> SourceRange getSourceRange(const T &Node) {
+template <typename T> inline SourceRange getSourceRange(const T &Node) {
   return Node.getSourceRange();
 }
 } // end namespace internal
 
 // \brief Returns a textual representation of \p Node.
 template <typename T>
-StringRef getText(const T &Node, const ASTContext &Context) {
+inline StringRef getText(const T &Node, const ASTContext &Context) {
   return internal::getText(internal::getSourceRange(Node), Context);
 }
 
 // \brief Returns a FixItHint to remove \p Node.
 // TODO: Add support for related syntactical elements (i.e. comments, ...).
-template <typename T> FixItHint createRemoval(const T &Node) {
+template <typename T> inline FixItHint createRemoval(const T &Node) {
   return FixItHint::CreateRemoval(internal::getSourceRange(Node));
 }
 
 // \brief Returns a FixItHint to replace \p Destination by \p Source.
 template <typename D, typename S>
-FixItHint createReplacement(const D &Destination, const S &Source,
-                            const ASTContext &Context) {
+inline FixItHint createReplacement(const D &Destination, const S &Source,
+                                   const ASTContext &Context) {
   return FixItHint::CreateReplacement(internal::getSourceRange(Destination),
                                       getText(Source, Context));
 }
