@@ -2014,8 +2014,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     break;
   }
   case X86ISD::GlobalBaseReg:
-    ReplaceUses(Node, getGlobalBaseReg());
-    CurDAG->RemoveDeadNode(Node);
+    ReplaceNode(Node, getGlobalBaseReg());
     return;
 
   case X86ISD::SHRUNKBLEND: {
@@ -2127,8 +2126,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue Ops[] = {N1, InFlag};
     SDNode *CNode = CurDAG->getMachineNode(Opc, dl, VTs, Ops);
 
-    ReplaceUses(SDValue(Node, 0), SDValue(CNode, 0));
-    ReplaceUses(SDValue(Node, 1), SDValue(CNode, 1));
+    ReplaceNode(Node, CNode);
     return;
   }
 
@@ -2152,9 +2150,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue Ops[] = {N1, InFlag};
     SDNode *CNode = CurDAG->getMachineNode(Opc, dl, VTs, Ops);
 
-    ReplaceUses(SDValue(Node, 0), SDValue(CNode, 0));
-    ReplaceUses(SDValue(Node, 1), SDValue(CNode, 1));
-    ReplaceUses(SDValue(Node, 2), SDValue(CNode, 2));
+    ReplaceUses(Node, CNode);
     return;
   }
 
