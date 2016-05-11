@@ -2951,6 +2951,10 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
 
     Qualifiers FromQuals = FromType.getQualifiers();
     Qualifiers ToQuals = ToType.getQualifiers();
+
+    // Ignore __unaligned qualifier if this type is void.
+    if (ToType.getUnqualifiedType()->isVoidType())
+      FromQuals.removeUnaligned();
     
     // Objective-C ARC:
     //   Check Objective-C lifetime conversions.
@@ -4159,6 +4163,10 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
     T2Quals.removeObjCLifetime();    
   }
     
+  // MS compiler ignores __unaligned qualifier for references; do the same.
+  T1Quals.removeUnaligned();
+  T2Quals.removeUnaligned();
+
   if (T1Quals == T2Quals)
     return Ref_Compatible;
   else if (T1Quals.compatiblyIncludes(T2Quals))
@@ -4480,13 +4488,16 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     // initialization fails.
     //
     // Note that we only want to check address spaces and cvr-qualifiers here.
-    // ObjC GC and lifetime qualifiers aren't important.
+    // ObjC GC, lifetime and unaligned qualifiers aren't important.
     Qualifiers T1Quals = T1.getQualifiers();
     Qualifiers T2Quals = T2.getQualifiers();
     T1Quals.removeObjCGCAttr();
     T1Quals.removeObjCLifetime();
     T2Quals.removeObjCGCAttr();
     T2Quals.removeObjCLifetime();
+    // MS compiler ignores __unaligned qualifier for references; do the same.
+    T1Quals.removeUnaligned();
+    T2Quals.removeUnaligned();
     if (!T1Quals.compatiblyIncludes(T2Quals))
       return ICS;
   }
@@ -9131,6 +9142,15 @@ static void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand,
       << FromTy
       << FromQs.getObjCGCAttr() << ToQs.getObjCGCAttr()
       << (unsigned) isObjectArgument << I+1;
+      MaybeEmitInheritedConstructorNote(S, Fn);
+      return;
+    }
+
+    if (FromQs.hasUnaligned() != ToQs.hasUnaligned()) {
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_unaligned)
+        << (unsigned) FnKind << FnDesc
+        << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+        << FromTy << FromQs.hasUnaligned() << I+1;
       MaybeEmitInheritedConstructorNote(S, Fn);
       return;
     }

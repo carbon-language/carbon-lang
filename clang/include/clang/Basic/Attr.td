@@ -2157,10 +2157,6 @@ def InitSeg : Attr {
   }];
 }
 
-def Unaligned : IgnoredAttr {
-  let Spellings = [Keyword<"__unaligned">];
-}
-
 def LoopHint : Attr {
   /// #pragma clang loop <option> directive
   /// vectorize: vectorizes loop operations if State == Enable.
