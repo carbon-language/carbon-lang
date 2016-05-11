@@ -330,9 +330,8 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
   case GlobalValue::InternalLinkage:
     return;
   case GlobalValue::AvailableExternallyLinkage:
-    llvm_unreachable("Should never emit this");
   case GlobalValue::ExternalWeakLinkage:
-    llvm_unreachable("Don't know how to emit these");
+    llvm_unreachable("Should never emit this");
   }
   llvm_unreachable("Unknown linkage type!");
 }
