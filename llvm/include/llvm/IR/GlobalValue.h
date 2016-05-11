@@ -258,6 +258,9 @@ public:
   static bool isCommonLinkage(LinkageTypes Linkage) {
     return Linkage == CommonLinkage;
   }
+  static bool isValidDeclarationLinkage(LinkageTypes Linkage) {
+    return isExternalWeakLinkage(Linkage) || isExternalLinkage(Linkage);
+  }
 
   /// Whether the definition of this global may be replaced by something
   /// non-equivalent at link time. For example, if a function has weak linkage
@@ -366,6 +369,9 @@ public:
     return isExternalWeakLinkage(getLinkage());
   }
   bool hasCommonLinkage() const { return isCommonLinkage(getLinkage()); }
+  bool hasValidDeclarationLinkage() const {
+    return isValidDeclarationLinkage(getLinkage());
+  }
 
   void setLinkage(LinkageTypes LT) {
     if (isLocalLinkage(LT))

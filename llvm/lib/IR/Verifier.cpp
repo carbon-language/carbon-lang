@@ -503,8 +503,7 @@ static void forEachUser(const Value *User,
 }
 
 void Verifier::visitGlobalValue(const GlobalValue &GV) {
-  Assert(!GV.isDeclaration() || GV.hasExternalLinkage() ||
-             GV.hasExternalWeakLinkage(),
+  Assert(!GV.isDeclaration() || GV.hasValidDeclarationLinkage(),
          "Global is external, but doesn't have external or weak linkage!", &GV);
 
   Assert(GV.getAlignment() <= Value::MaximumAlignment,
