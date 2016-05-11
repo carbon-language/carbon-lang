@@ -520,7 +520,7 @@ void CVTypeDumperImpl::visitUdtSourceLineRecord(TypeLeafKind Leaf,
 
 void CVTypeDumperImpl::visitBuildInfoRecord(TypeLeafKind Leaf,
                                             BuildInfoRecord &Args) {
-  W.printNumber("NumArgs", Args.getArgs().size());
+  W.printNumber("NumArgs", static_cast<uint32_t>(Args.getArgs().size()));
 
   ListScope Arguments(W, "Arguments");
   for (auto Arg : Args.getArgs()) {
