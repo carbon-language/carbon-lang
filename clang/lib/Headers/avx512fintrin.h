@@ -8959,6 +8959,48 @@ _mm_cvtu64_ss (__m128 __A, unsigned long long __B)
                 _MM_FROUND_CUR_DIRECTION);
 }
 
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_set1_epi32 (__m512i __O, __mmask16 __M, int __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastd512_gpr_mask (__A, (__v16si) __O,
+                 __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_mask_set1_epi64 (__m512i __O, __mmask8 __M, long long __A)
+{
+  return (__m512i) __builtin_ia32_pbroadcastq512_gpr_mask (__A, (__v8di) __O,
+                 __M);
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_set_epi64 (long long __A, long long __B, long long __C,
+     long long __D, long long __E, long long __F,
+     long long __G, long long __H)
+{
+  return __extension__ (__m512i) (__v8di)
+  { __H, __G, __F, __E, __D, __C, __B, __A };
+}
+
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_set_pd (double __A, double __B, double __C, double __D,
+        double __E, double __F, double __G, double __H)
+{
+  return __extension__ (__m512d)
+  { __H, __G, __F, __E, __D, __C, __B, __A };
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_set_ps (float __A, float __B, float __C, float __D,
+        float __E, float __F, float __G, float __H,
+        float __I, float __J, float __K, float __L,
+        float __M, float __N, float __O, float __P)
+{
+  return __extension__ (__m512)
+  { __P, __O, __N, __M, __L, __K, __J, __I,
+    __H, __G, __F, __E, __D, __C, __B, __A };
+}
+
 #undef __DEFAULT_FN_ATTRS
 
 #endif // __AVX512FINTRIN_H
