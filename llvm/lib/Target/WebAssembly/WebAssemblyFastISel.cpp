@@ -94,18 +94,55 @@ class WebAssemblyFastISel final : public FastISel {
 
 private:
   // Utility helper routines
+  MVT::SimpleValueType getSimpleType(Type *Ty) {
+    EVT VT = TLI.getValueType(DL, Ty, /*HandleUnknown=*/true);
+    return VT.isSimple() ? VT.getSimpleVT().SimpleTy :
+                           MVT::INVALID_SIMPLE_VALUE_TYPE;
+  }
+  MVT::SimpleValueType getLegalType(MVT::SimpleValueType VT) {
+    switch (VT) {
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+      return MVT::i32;
+    case MVT::i64:
+      return MVT::i64;
+    default:
+      break;
+    }
+    return MVT::INVALID_SIMPLE_VALUE_TYPE;
+  }
   bool computeAddress(const Value *Obj, Address &Addr);
   void materializeLoadStoreOperands(Address &Addr);
   void addLoadStoreOperands(const Address &Addr, const MachineInstrBuilder &MIB,
                             MachineMemOperand *MMO);
-  unsigned maskI1Value(unsigned Reg, const TargetRegisterClass *RC, const Value *V);
+  unsigned maskI1Value(unsigned Reg, const Value *V);
   unsigned getRegForI1Value(const Value *V);
+  unsigned zeroExtendToI32(unsigned Reg, const Value *V,
+                           MVT::SimpleValueType From);
+  unsigned signExtendToI32(unsigned Reg, const Value *V,
+                           MVT::SimpleValueType From);
+  unsigned zeroExtend(unsigned Reg, const Value *V,
+                      MVT::SimpleValueType From,
+                      MVT::SimpleValueType To);
+  unsigned signExtend(unsigned Reg, const Value *V,
+                      MVT::SimpleValueType From,
+                      MVT::SimpleValueType To);
+  unsigned getRegForUnsignedValue(const Value *V);
+  unsigned getRegForSignedValue(const Value *V);
+  unsigned getRegForPromotedValue(const Value *V, bool IsSigned);
+  unsigned notValue(unsigned Reg);
 
   // Backend specific FastISel code.
   unsigned fastMaterializeAlloca(const AllocaInst *AI) override;
   unsigned fastMaterializeConstant(const Constant *C) override;
 
   // Selection routines.
+  bool selectZExt(const Instruction *I);
+  bool selectSExt(const Instruction *I);
+  bool selectICmp(const Instruction *I);
+  bool selectFCmp(const Instruction *I);
   bool selectBitCast(const Instruction *I);
   bool selectLoad(const Instruction *I);
   bool selectStore(const Instruction *I);
@@ -306,30 +343,164 @@ void WebAssemblyFastISel::addLoadStoreOperands(const Address &Addr,
   MIB.addMemOperand(MMO);
 }
 
-unsigned WebAssemblyFastISel::maskI1Value(unsigned Reg,
-                                          const TargetRegisterClass *RC,
-                                          const Value *V) {
-  // If the value is naturally an i1, we don't need to mask it.
-  // TODO: Recursively examine selects, phis, and, or, xor, constants.
-  if (isa<CmpInst>(V))
-    return Reg;
-
-  unsigned MaskReg = createResultReg(RC);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-          TII.get(WebAssembly::CONST_I32), MaskReg)
-     .addImm(1);
-
-  unsigned NewReg = createResultReg(RC);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-          TII.get(WebAssembly::AND_I32), NewReg)
-    .addReg(Reg)
-    .addReg(MaskReg);
-
-  return NewReg;
+unsigned WebAssemblyFastISel::maskI1Value(unsigned Reg, const Value *V) {
+  return zeroExtendToI32(Reg, V, MVT::i1);
 }
 
 unsigned WebAssemblyFastISel::getRegForI1Value(const Value *V) {
-  return maskI1Value(getRegForValue(V), &WebAssembly::I32RegClass, V);
+  return maskI1Value(getRegForValue(V), V);
+}
+
+unsigned WebAssemblyFastISel::zeroExtendToI32(unsigned Reg, const Value *V,
+                                              MVT::SimpleValueType From) {
+  switch (From) {
+  case MVT::i1:
+    // If the value is naturally an i1, we don't need to mask it.
+    // TODO: Recursively examine selects, phis, and, or, xor, constants.
+    if (From == MVT::i1 && V != nullptr && isa<CmpInst>(V))
+      return Reg;
+    break;
+  case MVT::i32:
+    return Reg;
+  default:
+    return 0;
+  }
+
+  unsigned Imm = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(WebAssembly::CONST_I32), Imm)
+    .addImm(~(~uint64_t(0) << MVT(From).getSizeInBits()));
+
+  unsigned Result = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(WebAssembly::AND_I32), Result)
+    .addReg(Reg)
+    .addReg(Imm);
+
+  return Result;
+}
+
+unsigned WebAssemblyFastISel::signExtendToI32(unsigned Reg, const Value *V,
+                                              MVT::SimpleValueType From) {
+  switch (From) {
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    break;
+  case MVT::i32:
+    return Reg;
+  default:
+    return false;
+  }
+
+  unsigned Imm = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(WebAssembly::CONST_I32), Imm)
+    .addImm(32 - MVT(From).getSizeInBits());
+
+  unsigned Left = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(WebAssembly::SHL_I32), Left)
+    .addReg(Reg)
+    .addReg(Imm);
+
+  unsigned Right = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(WebAssembly::SHR_S_I32), Right)
+    .addReg(Left)
+    .addReg(Imm);
+
+  return Right;
+}
+
+unsigned WebAssemblyFastISel::zeroExtend(unsigned Reg, const Value *V,
+                                         MVT::SimpleValueType From,
+                                         MVT::SimpleValueType To) {
+  if (To == MVT::i64) {
+    if (From == MVT::i64)
+      return Reg;
+
+    Reg = zeroExtendToI32(Reg, V, From);
+
+    unsigned Result = createResultReg(&WebAssembly::I64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(WebAssembly::I64_EXTEND_U_I32), Result)
+        .addReg(Reg);
+    return Result;
+  }
+
+  switch (From) {
+  case MVT::i1:
+    // If the value is naturally an i1, we don't need to mask it.
+    // TODO: Recursively examine selects, phis, and, or, xor, constants.
+    if (From == MVT::i1 && V != nullptr && isa<CmpInst>(V))
+      return Reg;
+  case MVT::i8:
+  case MVT::i16:
+    break;
+  case MVT::i32:
+    return Reg;
+  default:
+    return 0;
+  }
+
+  return zeroExtendToI32(Reg, V, From);
+}
+
+unsigned WebAssemblyFastISel::signExtend(unsigned Reg, const Value *V,
+                                         MVT::SimpleValueType From,
+                                         MVT::SimpleValueType To) {
+  if (To == MVT::i64) {
+    if (From == MVT::i64)
+      return Reg;
+
+    Reg = signExtendToI32(Reg, V, From);
+
+    unsigned Result = createResultReg(&WebAssembly::I64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(WebAssembly::I64_EXTEND_S_I32), Result)
+        .addReg(Reg);
+    return Result;
+  }
+
+  switch (From) {
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    break;
+  case MVT::i32:
+    return Reg;
+  default:
+    return false;
+  }
+
+  return signExtendToI32(Reg, V, From);
+}
+
+unsigned WebAssemblyFastISel::getRegForUnsignedValue(const Value *V) {
+  MVT::SimpleValueType From = getSimpleType(V->getType());
+  MVT::SimpleValueType To = getLegalType(From);
+  return zeroExtend(getRegForValue(V), V, From, To);
+}
+
+unsigned WebAssemblyFastISel::getRegForSignedValue(const Value *V) {
+  MVT::SimpleValueType From = getSimpleType(V->getType());
+  MVT::SimpleValueType To = getLegalType(From);
+  return zeroExtend(getRegForValue(V), V, From, To);
+}
+
+unsigned WebAssemblyFastISel::getRegForPromotedValue(const Value *V,
+                                                     bool IsSigned) {
+  return IsSigned ? getRegForSignedValue(V) :
+                    getRegForUnsignedValue(V);
+}
+
+unsigned WebAssemblyFastISel::notValue(unsigned Reg) {
+  unsigned NotReg = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(WebAssembly::EQZ_I32), NotReg)
+    .addReg(Reg);
+  return NotReg;
 }
 
 unsigned WebAssemblyFastISel::fastMaterializeAlloca(const AllocaInst *AI) {
@@ -368,6 +539,153 @@ unsigned WebAssemblyFastISel::fastMaterializeConstant(const Constant *C) {
   return 0;
 }
 
+bool WebAssemblyFastISel::selectZExt(const Instruction *I) {
+  const ZExtInst *ZExt = cast<ZExtInst>(I);
+
+  unsigned Reg = getRegForUnsignedValue(ZExt->getOperand(0));
+  if (Reg == 0)
+    return false;
+
+  updateValueMap(ZExt, Reg);
+  return true;
+}
+
+bool WebAssemblyFastISel::selectSExt(const Instruction *I) {
+  const SExtInst *SExt = cast<SExtInst>(I);
+
+  unsigned Reg = getRegForSignedValue(SExt->getOperand(0));
+  if (Reg == 0)
+    return false;
+
+  updateValueMap(SExt, Reg);
+  return true;
+}
+
+bool WebAssemblyFastISel::selectICmp(const Instruction *I) {
+  const ICmpInst *ICmp = cast<ICmpInst>(I);
+
+  bool I32 = getSimpleType(ICmp->getOperand(0)->getType()) != MVT::i64;
+  unsigned Opc;
+  bool isSigned = false;
+  switch (ICmp->getPredicate()) {
+  case ICmpInst::ICMP_EQ:
+    Opc = I32 ? WebAssembly::EQ_I32 : WebAssembly::EQ_I64;
+    break;
+  case ICmpInst::ICMP_NE:
+    Opc = I32 ? WebAssembly::NE_I32 : WebAssembly::NE_I64;
+    break;
+  case ICmpInst::ICMP_UGT:
+    Opc = I32 ? WebAssembly::GT_U_I32 : WebAssembly::GT_U_I64;
+    break;
+  case ICmpInst::ICMP_UGE:
+    Opc = I32 ? WebAssembly::GE_U_I32 : WebAssembly::GE_U_I64;
+    break;
+  case ICmpInst::ICMP_ULT:
+    Opc = I32 ? WebAssembly::LT_U_I32 : WebAssembly::LT_U_I64;
+    break;
+  case ICmpInst::ICMP_ULE:
+    Opc = I32 ? WebAssembly::LE_U_I32 : WebAssembly::LE_U_I64;
+    break;
+  case ICmpInst::ICMP_SGT:
+    Opc = I32 ? WebAssembly::GT_S_I32 : WebAssembly::GT_S_I64;
+    isSigned = true;
+    break;
+  case ICmpInst::ICMP_SGE:
+    Opc = I32 ? WebAssembly::GE_S_I32 : WebAssembly::GE_S_I64;
+    isSigned = true;
+    break;
+  case ICmpInst::ICMP_SLT:
+    Opc = I32 ? WebAssembly::LT_S_I32 : WebAssembly::LT_S_I64;
+    isSigned = true;
+    break;
+  case ICmpInst::ICMP_SLE:
+    Opc = I32 ? WebAssembly::LE_S_I32 : WebAssembly::LE_S_I64;
+    isSigned = true;
+    break;
+  default: return false;
+  }
+
+  unsigned LHS = getRegForPromotedValue(ICmp->getOperand(0), isSigned);
+  if (LHS == 0)
+    return false;
+
+  unsigned RHS = getRegForPromotedValue(ICmp->getOperand(1), isSigned);
+  if (RHS == 0)
+    return false;
+
+  unsigned ResultReg = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
+      .addReg(LHS)
+      .addReg(RHS);
+  updateValueMap(ICmp, ResultReg);
+  return true;
+}
+
+bool WebAssemblyFastISel::selectFCmp(const Instruction *I) {
+  const FCmpInst *FCmp = cast<FCmpInst>(I);
+
+  unsigned LHS = getRegForValue(FCmp->getOperand(0));
+  if (LHS == 0)
+    return false;
+
+  unsigned RHS = getRegForValue(FCmp->getOperand(1));
+  if (RHS == 0)
+    return false;
+
+  bool F32 = getSimpleType(FCmp->getOperand(0)->getType()) != MVT::f64;
+  unsigned Opc;
+  bool Not = false;
+  switch (FCmp->getPredicate()) {
+  case FCmpInst::FCMP_OEQ:
+    Opc = F32 ? WebAssembly::EQ_F32 : WebAssembly::EQ_F64;
+    break;
+  case FCmpInst::FCMP_UNE:
+    Opc = F32 ? WebAssembly::NE_F32 : WebAssembly::NE_F64;
+    break;
+  case FCmpInst::FCMP_OGT:
+    Opc = F32 ? WebAssembly::GT_F32 : WebAssembly::GT_F64;
+    break;
+  case FCmpInst::FCMP_OGE:
+    Opc = F32 ? WebAssembly::GE_F32 : WebAssembly::GE_F64;
+    break;
+  case FCmpInst::FCMP_OLT:
+    Opc = F32 ? WebAssembly::LT_F32 : WebAssembly::LT_F64;
+    break;
+  case FCmpInst::FCMP_OLE:
+    Opc = F32 ? WebAssembly::LE_F32 : WebAssembly::LE_F64;
+    break;
+  case FCmpInst::FCMP_UGT:
+    Opc = F32 ? WebAssembly::LE_F32 : WebAssembly::LE_F64;
+    Not = true;
+    break;
+  case FCmpInst::FCMP_UGE:
+    Opc = F32 ? WebAssembly::LT_F32 : WebAssembly::LT_F64;
+    Not = true;
+    break;
+  case FCmpInst::FCMP_ULT:
+    Opc = F32 ? WebAssembly::GE_F32 : WebAssembly::GE_F64;
+    Not = true;
+    break;
+  case FCmpInst::FCMP_ULE:
+    Opc = F32 ? WebAssembly::GT_F32 : WebAssembly::GT_F64;
+    Not = true;
+    break;
+  default:
+    return false;
+  }
+
+  unsigned ResultReg = createResultReg(&WebAssembly::I32RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
+      .addReg(LHS)
+      .addReg(RHS);
+
+  if (Not)
+    ResultReg = notValue(ResultReg);
+
+  updateValueMap(FCmp, ResultReg);
+  return true;
+}
+
 bool WebAssemblyFastISel::selectBitCast(const Instruction *I) {
   // Target-independent code can handle this, except it doesn't set the dead
   // flag on the ARGUMENTS clobber, so we have to do that manually in order
@@ -402,43 +720,34 @@ bool WebAssemblyFastISel::selectLoad(const Instruction *I) {
 
   unsigned Opc;
   const TargetRegisterClass *RC;
-  switch (Load->getType()->getTypeID()) {
-  case Type::PointerTyID:
-    if (Subtarget->hasAddr64())
-      goto i64_load_addr;
-    goto i32_load_addr;
-  case Type::IntegerTyID:
-    switch (Load->getType()->getPrimitiveSizeInBits()) {
-    case 1: case 8:
-      Opc = WebAssembly::LOAD8_U_I32;
-      RC = &WebAssembly::I32RegClass;
-      break;
-    case 16:
-      Opc = WebAssembly::LOAD16_U_I32;
-      RC = &WebAssembly::I32RegClass;
-      break;
-    case 32:
-    i32_load_addr:
-      Opc = WebAssembly::LOAD_I32;
-      RC = &WebAssembly::I32RegClass;
-      break;
-    case 64:
-    i64_load_addr:
-      Opc = WebAssembly::LOAD_I64;
-      RC = &WebAssembly::I64RegClass;
-      break;
-    default: return false;
-    }
+  switch (getSimpleType(Load->getType())) {
+  case MVT::i1:
+  case MVT::i8:
+    Opc = WebAssembly::LOAD8_U_I32;
+    RC = &WebAssembly::I32RegClass;
     break;
-  case Type::FloatTyID:
+  case MVT::i16:
+    Opc = WebAssembly::LOAD16_U_I32;
+    RC = &WebAssembly::I32RegClass;
+    break;
+  case MVT::i32:
+    Opc = WebAssembly::LOAD_I32;
+    RC = &WebAssembly::I32RegClass;
+    break;
+  case MVT::i64:
+    Opc = WebAssembly::LOAD_I64;
+    RC = &WebAssembly::I64RegClass;
+    break;
+  case MVT::f32:
     Opc = WebAssembly::LOAD_F32;
     RC = &WebAssembly::F32RegClass;
     break;
-  case Type::DoubleTyID:
+  case MVT::f64:
     Opc = WebAssembly::LOAD_F64;
     RC = &WebAssembly::F64RegClass;
     break;
-  default: return false;
+  default:
+    return false;
   }
 
   materializeLoadStoreOperands(Addr);
@@ -465,41 +774,30 @@ bool WebAssemblyFastISel::selectStore(const Instruction *I) {
   unsigned Opc;
   const TargetRegisterClass *RC;
   bool VTIsi1 = false;
-  switch (Store->getValueOperand()->getType()->getTypeID()) {
-  case Type::PointerTyID:
-    if (Subtarget->hasAddr64())
-      goto i64_store_addr;
-    goto i32_store_addr;
-  case Type::IntegerTyID:
-    switch (Store->getValueOperand()->getType()->getPrimitiveSizeInBits()) {
-    case 1:
-      VTIsi1 = true;
-    case 8:
-      Opc = WebAssembly::STORE8_I32;
-      RC = &WebAssembly::I32RegClass;
-      break;
-    case 16:
-      Opc = WebAssembly::STORE16_I32;
-      RC = &WebAssembly::I32RegClass;
-      break;
-    case 32:
-    i32_store_addr:
-      Opc = WebAssembly::STORE_I32;
-      RC = &WebAssembly::I32RegClass;
-      break;
-    case 64:
-    i64_store_addr:
-      Opc = WebAssembly::STORE_I64;
-      RC = &WebAssembly::I64RegClass;
-      break;
-    default: return false;
-    }
+  switch (getSimpleType(Store->getValueOperand()->getType())) {
+  case MVT::i1:
+    VTIsi1 = true;
+  case MVT::i8:
+    Opc = WebAssembly::STORE8_I32;
+    RC = &WebAssembly::I32RegClass;
     break;
-  case Type::FloatTyID:
+  case MVT::i16:
+    Opc = WebAssembly::STORE16_I32;
+    RC = &WebAssembly::I32RegClass;
+    break;
+  case MVT::i32:
+    Opc = WebAssembly::STORE_I32;
+    RC = &WebAssembly::I32RegClass;
+    break;
+  case MVT::i64:
+    Opc = WebAssembly::STORE_I64;
+    RC = &WebAssembly::I64RegClass;
+    break;
+  case MVT::f32:
     Opc = WebAssembly::STORE_F32;
     RC = &WebAssembly::F32RegClass;
     break;
-  case Type::DoubleTyID:
+  case MVT::f64:
     Opc = WebAssembly::STORE_F64;
     RC = &WebAssembly::F64RegClass;
     break;
@@ -510,7 +808,7 @@ bool WebAssemblyFastISel::selectStore(const Instruction *I) {
 
   unsigned ValueReg = getRegForValue(Store->getValueOperand());
   if (VTIsi1)
-    ValueReg = maskI1Value(ValueReg, RC, Store->getValueOperand());
+    ValueReg = maskI1Value(ValueReg, Store->getValueOperand());
 
   unsigned ResultReg = createResultReg(RC);
   auto MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc),
@@ -563,27 +861,16 @@ bool WebAssemblyFastISel::selectRet(const Instruction *I) {
 
   Value *RV = Ret->getOperand(0);
   unsigned Opc;
-  switch (RV->getType()->getTypeID()) {
-  case Type::PointerTyID:
-    if (Subtarget->hasAddr64())
-      goto i64_ret_value;
-    goto i32_ret_value;
-  case Type::IntegerTyID:
-    switch (RV->getType()->getPrimitiveSizeInBits()) {
-    case 1: case 8:
-    case 16: case 32:
-    i32_ret_value:
-      Opc = WebAssembly::RETURN_I32;
-      break;
-    case 64:
-    i64_ret_value:
-      Opc = WebAssembly::RETURN_I64;
-      break;
-    default: return false;
-    }
+  switch (getSimpleType(RV->getType())) {
+  case MVT::i1: case MVT::i8:
+  case MVT::i16: case MVT::i32:
+    Opc = WebAssembly::RETURN_I32;
     break;
-  case Type::FloatTyID:  Opc = WebAssembly::RETURN_F32; break;
-  case Type::DoubleTyID: Opc = WebAssembly::RETURN_F64; break;
+  case MVT::i64:
+    Opc = WebAssembly::RETURN_I64;
+    break;
+  case MVT::f32: Opc = WebAssembly::RETURN_F32; break;
+  case MVT::f64: Opc = WebAssembly::RETURN_F64; break;
   default: return false;
   }
 
@@ -600,6 +887,10 @@ bool WebAssemblyFastISel::selectUnreachable(const Instruction *I) {
 
 bool WebAssemblyFastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
+  case Instruction::ZExt:        return selectZExt(I);
+  case Instruction::SExt:        return selectSExt(I);
+  case Instruction::ICmp:        return selectICmp(I);
+  case Instruction::FCmp:        return selectFCmp(I);
   case Instruction::BitCast:     return selectBitCast(I);
   case Instruction::Load:        return selectLoad(I);
   case Instruction::Store:       return selectStore(I);
