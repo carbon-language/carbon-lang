@@ -1229,6 +1229,7 @@ static SDValue emitComparison(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     if (VT == MVT::f16) {
       LHS = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f32, LHS);
       RHS = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f32, RHS);
+      VT = MVT::f32;
     }
     return DAG.getNode(AArch64ISD::FCMP, dl, VT, LHS, RHS);
   }
