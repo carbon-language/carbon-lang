@@ -199,7 +199,7 @@ identified.  The improvements since the 3.8 release include:
 - New `modernize-use-bool-literals
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-use-bool-literals.html>`_ check
 
-  Finds integer literals which are cast to bool.
+  Finds integer literals which are cast to ``bool``.
 
 - New `performance-faster-string-find
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-faster-string-find.html>`_ check

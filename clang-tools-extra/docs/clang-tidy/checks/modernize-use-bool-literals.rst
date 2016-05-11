@@ -3,7 +3,7 @@
 modernize-use-bool-literals
 ===========================
 
-Finds integer literals which are cast to bool.
+Finds integer literals which are cast to ``bool``.
 
 .. code-block:: c++
 

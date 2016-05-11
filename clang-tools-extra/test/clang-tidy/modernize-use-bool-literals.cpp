@@ -34,7 +34,6 @@ bool MacroIntToTrue = TRUE_MACRO;
 #define FALSE_MACRO bool(0)
 // CHECK-FIXES: {{^}}#define FALSE_MACRO bool(0){{$}}
 
-
 bool TrueBool = true; // OK
 
 bool FalseBool = bool(FALSE_MACRO);
@@ -83,14 +82,12 @@ template<typename type>
 void templateFunction(type) {
   type TemplateType = 0;
   // CHECK-FIXES: {{^ *}}type TemplateType = 0;{{$}}
-  return;
 }
 
 template<int c>
 void valueDependentTemplateFunction() {
   bool Boolean = c;
   // CHECK-FIXES: {{^ *}}bool Boolean = c;{{$}}
-  return;
 }
 
 template<typename type>
@@ -98,7 +95,6 @@ void anotherTemplateFunction(type) {
   bool JustBool = 0;
   // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: {{.*}}
   // CHECK-FIXES: {{^ *}}bool JustBool = false;{{$}}
-  return;
 }
 
 int main() {
