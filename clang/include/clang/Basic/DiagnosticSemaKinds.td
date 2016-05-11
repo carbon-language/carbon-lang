@@ -6625,7 +6625,7 @@ def warn_function_def_in_objc_container : Warning<
 def warn_cast_calling_conv : Warning<
   "cast between incompatible calling conventions '%0' and '%1'; "
   "calls through this pointer may abort at runtime">,
-  InGroup<DiagGroup<"cast-calling-convention">>;
+  InGroup<DiagGroup<"cast-calling-convention">>, DefaultIgnore;
 def note_change_calling_conv_fixit : Note<
   "consider defining %0 with the '%1' calling convention">;
 def warn_bad_function_cast : Warning<
