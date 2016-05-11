@@ -588,7 +588,7 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     break;
 
   CASE_VPERM(PERMILPS, r)
-    Src1Name = getRegName(MI->getOperand(1).getReg());
+    Src1Name = getRegName(MI->getOperand(NumOperands - 2).getReg());
     // FALL THROUGH.
   CASE_VPERM(PERMILPS, m)
     if (MI->getOperand(NumOperands - 1).isImm())
@@ -599,7 +599,7 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     break;
 
   CASE_VPERM(PERMILPD, r)
-    Src1Name = getRegName(MI->getOperand(1).getReg());
+    Src1Name = getRegName(MI->getOperand(NumOperands - 2).getReg());
     // FALL THROUGH.
   CASE_VPERM(PERMILPD, m)
     if (MI->getOperand(NumOperands - 1).isImm())

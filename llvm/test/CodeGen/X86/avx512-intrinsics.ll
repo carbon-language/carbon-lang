@@ -5988,8 +5988,8 @@ define <8 x double>@test_int_x86_avx512_mask_vpermil_pd_512(<8 x double> %x0, <8
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_pd_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vpermilpd {{.*#+}} zmm1 = zmm1[0,1,3,2,5,4,6,6]
-; CHECK-NEXT:    vpermilpd {{.*#+}} zmm2 = k1[0,1,3,2,5,4,6,6]
+; CHECK-NEXT:    vpermilpd {{.*#+}} zmm1 = zmm0[0,1,3,2,5,4,6,6]
+; CHECK-NEXT:    vpermilpd {{.*#+}} zmm2 = zmm0[0,1,3,2,5,4,6,6]
 ; CHECK-NEXT:    vpermilpd {{.*#+}} zmm0 = zmm0[0,1,3,2,5,4,6,6]
 ; CHECK-NEXT:    vaddpd %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vaddpd %zmm0, %zmm1, %zmm0
@@ -6008,8 +6008,8 @@ define <16 x float>@test_int_x86_avx512_mask_vpermil_ps_512(<16 x float> %x0, <1
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_ps_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vpermilps {{.*#+}} zmm1 = zmm1[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
-; CHECK-NEXT:    vpermilps {{.*#+}} zmm2 = k1[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
+; CHECK-NEXT:    vpermilps {{.*#+}} zmm1 = zmm0[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
+; CHECK-NEXT:    vpermilps {{.*#+}} zmm2 = zmm0[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
 ; CHECK-NEXT:    vpermilps {{.*#+}} zmm0 = zmm0[2,1,1,0,6,5,5,4,10,9,9,8,14,13,13,12]
 ; CHECK-NEXT:    vaddps %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vaddps %zmm0, %zmm1, %zmm0
