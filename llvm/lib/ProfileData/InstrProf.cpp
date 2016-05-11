@@ -428,7 +428,7 @@ void InstrProfRecord::addValueData(uint32_t ValueKind, uint32_t Site,
   std::vector<InstrProfValueSiteRecord> &ValueSites =
       getValueSitesForKind(ValueKind);
   if (N == 0)
-    ValueSites.push_back(InstrProfValueSiteRecord());
+    ValueSites.emplace_back();
   else
     ValueSites.emplace_back(VData, VData + N);
 }
