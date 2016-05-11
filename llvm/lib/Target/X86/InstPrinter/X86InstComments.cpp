@@ -21,61 +21,67 @@
 
 using namespace llvm;
 
-#define CASE_MASK_INS_COMMON(Inst, Suffix, src) \
-  case X86::V##Inst##Suffix##src:               \
-  case X86::V##Inst##Suffix##src##k:            \
-  case X86::V##Inst##Suffix##src##kz:
-
-#define CASE_SSE_INS_COMMON(Inst, src)          \
+#define CASE_SSE_INS_COMMON(Inst, src)            \
   case X86::Inst##src:
 
-#define CASE_AVX_INS_COMMON(Inst, Suffix, src)  \
+#define CASE_AVX_INS_COMMON(Inst, Suffix, src)    \
   case X86::V##Inst##Suffix##src:
 
-#define CASE_MOVDUP(Inst, src)                  \
-  CASE_MASK_INS_COMMON(Inst, Z, r##src)         \
-  CASE_MASK_INS_COMMON(Inst, Z256, r##src)      \
-  CASE_MASK_INS_COMMON(Inst, Z128, r##src)      \
-  CASE_AVX_INS_COMMON(Inst, , r##src)           \
-  CASE_AVX_INS_COMMON(Inst, Y, r##src)          \
+#define CASE_MASK_INS_COMMON(Inst, Suffix, src)   \
+  case X86::V##Inst##Suffix##src##k:
+
+#define CASE_MASKZ_INS_COMMON(Inst, Suffix, src)  \
+  case X86::V##Inst##Suffix##src##kz:
+
+#define CASE_AVX512_INS_COMMON(Inst, Suffix, src) \
+  CASE_AVX_INS_COMMON(Inst, Suffix, src)          \
+  CASE_MASK_INS_COMMON(Inst, Suffix, src)         \
+  CASE_MASKZ_INS_COMMON(Inst, Suffix, src)
+
+#define CASE_MOVDUP(Inst, src)                    \
+  CASE_AVX512_INS_COMMON(Inst, Z, r##src)         \
+  CASE_AVX512_INS_COMMON(Inst, Z256, r##src)      \
+  CASE_AVX512_INS_COMMON(Inst, Z128, r##src)      \
+  CASE_AVX_INS_COMMON(Inst, , r##src)             \
+  CASE_AVX_INS_COMMON(Inst, Y, r##src)            \
   CASE_SSE_INS_COMMON(Inst, r##src)
 
-#define CASE_PMOVZX(Inst, src)                  \
-  CASE_MASK_INS_COMMON(Inst, Z, r##src)         \
-  CASE_MASK_INS_COMMON(Inst, Z256, r##src)      \
-  CASE_MASK_INS_COMMON(Inst, Z128, r##src)      \
-  CASE_AVX_INS_COMMON(Inst, , r##src)           \
-  CASE_AVX_INS_COMMON(Inst, Y, r##src)          \
+#define CASE_PMOVZX(Inst, src)                    \
+  CASE_AVX512_INS_COMMON(Inst, Z, r##src)         \
+  CASE_AVX512_INS_COMMON(Inst, Z256, r##src)      \
+  CASE_AVX512_INS_COMMON(Inst, Z128, r##src)      \
+  CASE_AVX_INS_COMMON(Inst, , r##src)             \
+  CASE_AVX_INS_COMMON(Inst, Y, r##src)            \
   CASE_SSE_INS_COMMON(Inst, r##src)
 
-#define CASE_UNPCK(Inst, src)                   \
-  CASE_MASK_INS_COMMON(Inst, Z, r##src)         \
-  CASE_MASK_INS_COMMON(Inst, Z256, r##src)      \
-  CASE_MASK_INS_COMMON(Inst, Z128, r##src)      \
-  CASE_AVX_INS_COMMON(Inst, , r##src)           \
-  CASE_AVX_INS_COMMON(Inst, Y, r##src)          \
+#define CASE_UNPCK(Inst, src)                     \
+  CASE_AVX512_INS_COMMON(Inst, Z, r##src)         \
+  CASE_AVX512_INS_COMMON(Inst, Z256, r##src)      \
+  CASE_AVX512_INS_COMMON(Inst, Z128, r##src)      \
+  CASE_AVX_INS_COMMON(Inst, , r##src)             \
+  CASE_AVX_INS_COMMON(Inst, Y, r##src)            \
   CASE_SSE_INS_COMMON(Inst, r##src)
 
-#define CASE_SHUF(Inst, src)                    \
-  CASE_MASK_INS_COMMON(Inst, Z, r##src##i)      \
-  CASE_MASK_INS_COMMON(Inst, Z256, r##src##i)   \
-  CASE_MASK_INS_COMMON(Inst, Z128, r##src##i)   \
-  CASE_AVX_INS_COMMON(Inst, , r##src##i)        \
-  CASE_AVX_INS_COMMON(Inst, Y, r##src##i)       \
+#define CASE_SHUF(Inst, src)                      \
+  CASE_AVX512_INS_COMMON(Inst, Z, r##src##i)      \
+  CASE_AVX512_INS_COMMON(Inst, Z256, r##src##i)   \
+  CASE_AVX512_INS_COMMON(Inst, Z128, r##src##i)   \
+  CASE_AVX_INS_COMMON(Inst, , r##src##i)          \
+  CASE_AVX_INS_COMMON(Inst, Y, r##src##i)         \
   CASE_SSE_INS_COMMON(Inst, r##src##i)
 
-#define CASE_VPERM(Inst, src)                   \
-  CASE_MASK_INS_COMMON(Inst, Z, src##i)         \
-  CASE_MASK_INS_COMMON(Inst, Z256, src##i)      \
-  CASE_MASK_INS_COMMON(Inst, Z128, src##i)      \
-  CASE_AVX_INS_COMMON(Inst, , src##i)           \
+#define CASE_VPERM(Inst, src)                     \
+  CASE_AVX512_INS_COMMON(Inst, Z, src##i)         \
+  CASE_AVX512_INS_COMMON(Inst, Z256, src##i)      \
+  CASE_AVX512_INS_COMMON(Inst, Z128, src##i)      \
+  CASE_AVX_INS_COMMON(Inst, , src##i)             \
   CASE_AVX_INS_COMMON(Inst, Y, src##i)
 
 #define CASE_VSHUF(Inst, src)                          \
-  CASE_MASK_INS_COMMON(SHUFF##Inst, Z, r##src##i)      \
-  CASE_MASK_INS_COMMON(SHUFI##Inst, Z, r##src##i)      \
-  CASE_MASK_INS_COMMON(SHUFF##Inst, Z256, r##src##i)   \
-  CASE_MASK_INS_COMMON(SHUFI##Inst, Z256, r##src##i)
+  CASE_AVX512_INS_COMMON(SHUFF##Inst, Z, r##src##i)    \
+  CASE_AVX512_INS_COMMON(SHUFI##Inst, Z, r##src##i)    \
+  CASE_AVX512_INS_COMMON(SHUFF##Inst, Z256, r##src##i) \
+  CASE_AVX512_INS_COMMON(SHUFI##Inst, Z256, r##src##i)
 
 static unsigned getVectorRegSize(unsigned RegNo) {
   if (X86::ZMM0 <= RegNo && RegNo <= X86::ZMM31)
