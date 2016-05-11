@@ -531,12 +531,15 @@ void serializeValueProfRecordFrom(ValueProfRecord *This,
 /*!
  * Extract value profile data of a function  from the \c Closure
  * and serialize the data into \c DstData if it is not NULL or heap
- * memory allocated by the \c Closure's allocator method.
+ * memory allocated by the \c Closure's allocator method. If \c
+ * DstData is not null, the caller is expected to set the TotalSize
+ * in DstData.
  */
 ValueProfData *serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
                                           ValueProfData *DstData) {
   uint32_t Kind;
-  uint32_t TotalSize = getValueProfDataSize(Closure);
+  uint32_t TotalSize = 
+      DstData ? DstData->TotalSize : getValueProfDataSize(Closure);
 
   ValueProfData *VPD =
       DstData ? DstData : Closure->AllocValueProfData(TotalSize);
