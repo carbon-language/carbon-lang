@@ -1218,11 +1218,13 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
            S.IsDerivedFrom(From->getLocStart(), FromCanon, ToCanon))) {
         // Turn this into a "standard" conversion sequence, so that it
         // gets ranked with standard conversion sequences.
+        DeclAccessPair Found = ICS.UserDefined.FoundConversionFunction;
         ICS.setStandard();
         ICS.Standard.setAsIdentityConversion();
         ICS.Standard.setFromType(From->getType());
         ICS.Standard.setAllToTypes(ToType);
         ICS.Standard.CopyConstructor = Constructor;
+        ICS.Standard.FoundCopyConstructor = Found;
         if (ToCanon != FromCanon)
           ICS.Standard.Second = ICK_Derived_To_Base;
       }
@@ -1236,7 +1238,7 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
     for (OverloadCandidateSet::iterator Cand = Conversions.begin();
          Cand != Conversions.end(); ++Cand)
       if (Cand->Viable)
-        ICS.Ambiguous.addConversion(Cand->Function);
+        ICS.Ambiguous.addConversion(Cand->FoundDecl, Cand->Function);
     break;
 
     // Fall through.
@@ -3051,39 +3053,26 @@ IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
                                        UserDefinedConversionSequence &User,
                                        OverloadCandidateSet &CandidateSet,
                                        bool AllowExplicit) {
-  DeclContext::lookup_result R = S.LookupConstructors(To);
-  for (DeclContext::lookup_iterator Con = R.begin(), ConEnd = R.end();
-       Con != ConEnd; ++Con) {
-    NamedDecl *D = *Con;
-    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+  for (auto *D : S.LookupConstructors(To)) {
+    auto Info = getConstructorInfo(D);
+    if (!Info.Constructor)
+      continue;
 
-    // Find the constructor (which may be a template).
-    CXXConstructorDecl *Constructor = nullptr;
-    FunctionTemplateDecl *ConstructorTmpl
-      = dyn_cast<FunctionTemplateDecl>(D);
-    if (ConstructorTmpl)
-      Constructor
-        = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
-    else
-      Constructor = cast<CXXConstructorDecl>(D);
-
-    bool Usable = !Constructor->isInvalidDecl() &&
-                  S.isInitListConstructor(Constructor) &&
-                  (AllowExplicit || !Constructor->isExplicit());
+    bool Usable = !Info.Constructor->isInvalidDecl() &&
+                  S.isInitListConstructor(Info.Constructor) &&
+                  (AllowExplicit || !Info.Constructor->isExplicit());
     if (Usable) {
       // If the first argument is (a reference to) the target type,
       // suppress conversions.
-      bool SuppressUserConversions =
-          isFirstArgumentCompatibleWithType(S.Context, Constructor, ToType);
-      if (ConstructorTmpl)
-        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
-                                       /*ExplicitArgs*/ nullptr,
-                                       From, CandidateSet,
-                                       SuppressUserConversions);
+      bool SuppressUserConversions = isFirstArgumentCompatibleWithType(
+          S.Context, Info.Constructor, ToType);
+      if (Info.ConstructorTmpl)
+        S.AddTemplateOverloadCandidate(Info.ConstructorTmpl, Info.FoundDecl,
+                                       /*ExplicitArgs*/ nullptr, From,
+                                       CandidateSet, SuppressUserConversions);
       else
-        S.AddOverloadCandidate(Constructor, FoundDecl,
-                               From, CandidateSet,
-                               SuppressUserConversions);
+        S.AddOverloadCandidate(Info.Constructor, Info.FoundDecl, From,
+                               CandidateSet, SuppressUserConversions);
     }
   }
 
@@ -3183,27 +3172,17 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
         ListInitializing = true;
       }
 
-      DeclContext::lookup_result R = S.LookupConstructors(ToRecordDecl);
-      for (DeclContext::lookup_iterator Con = R.begin(), ConEnd = R.end();
-           Con != ConEnd; ++Con) {
-        NamedDecl *D = *Con;
-        DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+      for (auto *D : S.LookupConstructors(ToRecordDecl)) {
+        auto Info = getConstructorInfo(D);
+        if (!Info.Constructor)
+          continue;
 
-        // Find the constructor (which may be a template).
-        CXXConstructorDecl *Constructor = nullptr;
-        FunctionTemplateDecl *ConstructorTmpl
-          = dyn_cast<FunctionTemplateDecl>(D);
-        if (ConstructorTmpl)
-          Constructor
-            = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
-        else
-          Constructor = cast<CXXConstructorDecl>(D);
-
-        bool Usable = !Constructor->isInvalidDecl();
+        bool Usable = !Info.Constructor->isInvalidDecl();
         if (ListInitializing)
-          Usable = Usable && (AllowExplicit || !Constructor->isExplicit());
+          Usable = Usable && (AllowExplicit || !Info.Constructor->isExplicit());
         else
-          Usable = Usable &&Constructor->isConvertingConstructor(AllowExplicit);
+          Usable = Usable &&
+                   Info.Constructor->isConvertingConstructor(AllowExplicit);
         if (Usable) {
           bool SuppressUserConversions = !ConstructorsOnly;
           if (SuppressUserConversions && ListInitializing) {
@@ -3212,18 +3191,18 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
               // If the first argument is (a reference to) the target type,
               // suppress conversions.
               SuppressUserConversions = isFirstArgumentCompatibleWithType(
-                                                S.Context, Constructor, ToType);
+                  S.Context, Info.Constructor, ToType);
             }
           }
-          if (ConstructorTmpl)
-            S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
-                                           /*ExplicitArgs*/ nullptr,
-                                           llvm::makeArrayRef(Args, NumArgs),
-                                           CandidateSet, SuppressUserConversions);
+          if (Info.ConstructorTmpl)
+            S.AddTemplateOverloadCandidate(
+                Info.ConstructorTmpl, Info.FoundDecl,
+                /*ExplicitArgs*/ nullptr, llvm::makeArrayRef(Args, NumArgs),
+                CandidateSet, SuppressUserConversions);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
-            S.AddOverloadCandidate(Constructor, FoundDecl,
+            S.AddOverloadCandidate(Info.Constructor, Info.FoundDecl,
                                    llvm::makeArrayRef(Args, NumArgs),
                                    CandidateSet, SuppressUserConversions);
         }
@@ -4288,7 +4267,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
     for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
          Cand != CandidateSet.end(); ++Cand)
       if (Cand->Viable)
-        ICS.Ambiguous.addConversion(Cand->Function);
+        ICS.Ambiguous.addConversion(Cand->FoundDecl, Cand->Function);
     return true;
 
   case OR_No_Viable_Function:
@@ -8862,6 +8841,7 @@ enum OverloadCandidateKind {
 };
 
 OverloadCandidateKind ClassifyOverloadCandidate(Sema &S,
+                                                NamedDecl *Found,
                                                 FunctionDecl *Fn,
                                                 std::string &Description) {
   bool isTemplate = false;
@@ -8990,13 +8970,13 @@ bool Sema::checkAddressOfFunctionIsAvailable(const FunctionDecl *Function,
 }
 
 // Notes the location of an overload candidate.
-void Sema::NoteOverloadCandidate(FunctionDecl *Fn, QualType DestType,
-                                 bool TakingAddress) {
+void Sema::NoteOverloadCandidate(NamedDecl *Found, FunctionDecl *Fn,
+                                 QualType DestType, bool TakingAddress) {
   if (TakingAddress && !checkAddressOfCandidateIsAvailable(*this, Fn))
     return;
 
   std::string FnDesc;
-  OverloadCandidateKind K = ClassifyOverloadCandidate(*this, Fn, FnDesc);
+  OverloadCandidateKind K = ClassifyOverloadCandidate(*this, Found, Fn, FnDesc);
   PartialDiagnostic PD = PDiag(diag::note_ovl_candidate)
                              << (unsigned) K << FnDesc;
 
@@ -9019,11 +8999,11 @@ void Sema::NoteAllOverloadCandidates(Expr *OverloadedExpr, QualType DestType,
        I != IEnd; ++I) {
     if (FunctionTemplateDecl *FunTmpl = 
                 dyn_cast<FunctionTemplateDecl>((*I)->getUnderlyingDecl()) ) {
-      NoteOverloadCandidate(FunTmpl->getTemplatedDecl(), DestType,
+      NoteOverloadCandidate(*I, FunTmpl->getTemplatedDecl(), DestType,
                             TakingAddress);
     } else if (FunctionDecl *Fun 
                       = dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()) ) {
-      NoteOverloadCandidate(Fun, DestType, TakingAddress);
+      NoteOverloadCandidate(*I, Fun, DestType, TakingAddress);
     }
   }
 }
@@ -9047,7 +9027,7 @@ void ImplicitConversionSequence::DiagnoseAmbiguousConversion(
     if (CandsShown >= 4 && ShowOverloads == Ovl_Best)
       break;
     ++CandsShown;
-    S.NoteOverloadCandidate(*I);
+    S.NoteOverloadCandidate(I->first, I->second);
   }
   if (I != E)
     S.Diag(SourceLocation(), diag::note_ovl_too_many_candidates) << int(E - I);
@@ -9072,7 +9052,8 @@ static void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand,
   }
 
   std::string FnDesc;
-  OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
+  OverloadCandidateKind FnKind =
+      ClassifyOverloadCandidate(S, Cand->FoundDecl, Fn, FnDesc);
 
   Expr *FromExpr = Conv.Bad.FromExpr;
   QualType FromTy = Conv.Bad.getFromType();
@@ -9318,7 +9299,8 @@ static bool CheckArityMismatch(Sema &S, OverloadCandidate *Cand,
 }
 
 /// General arity mismatch diagnosis over a candidate in a candidate set.
-static void DiagnoseArityMismatch(Sema &S, Decl *D, unsigned NumFormalArgs) {
+static void DiagnoseArityMismatch(Sema &S, NamedDecl *Found, Decl *D,
+                                  unsigned NumFormalArgs) {
   assert(isa<FunctionDecl>(D) &&
       "The templated declaration should at least be a function"
       " when diagnosing bad template argument deduction due to too many"
@@ -9348,7 +9330,8 @@ static void DiagnoseArityMismatch(Sema &S, Decl *D, unsigned NumFormalArgs) {
   }
 
   std::string Description;
-  OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, Description);
+  OverloadCandidateKind FnKind =
+      ClassifyOverloadCandidate(S, Found, Fn, Description);
 
   if (modeCount == 1 && Fn->getParamDecl(0)->getDeclName())
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity_one)
@@ -9365,7 +9348,7 @@ static void DiagnoseArityMismatch(Sema &S, Decl *D, unsigned NumFormalArgs) {
 static void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
                                   unsigned NumFormalArgs) {
   if (!CheckArityMismatch(S, Cand, NumFormalArgs))
-    DiagnoseArityMismatch(S, Cand->Function, NumFormalArgs);
+    DiagnoseArityMismatch(S, Cand->FoundDecl, Cand->Function, NumFormalArgs);
 }
 
 static TemplateDecl *getDescribedTemplate(Decl *Templated) {
@@ -9376,7 +9359,7 @@ static TemplateDecl *getDescribedTemplate(Decl *Templated) {
 }
 
 /// Diagnose a failed template-argument deduction.
-static void DiagnoseBadDeduction(Sema &S, Decl *Templated,
+static void DiagnoseBadDeduction(Sema &S, NamedDecl *Found, Decl *Templated,
                                  DeductionFailureInfo &DeductionFailure,
                                  unsigned NumArgs,
                                  bool TakingCandidateAddress) {
@@ -9466,7 +9449,7 @@ static void DiagnoseBadDeduction(Sema &S, Decl *Templated,
 
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
-    DiagnoseArityMismatch(S, Templated, NumArgs);
+    DiagnoseArityMismatch(S, Found, Templated, NumArgs);
     return;
 
   case Sema::TDK_InstantiationDepth:
@@ -9596,7 +9579,7 @@ static void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
     if (CheckArityMismatch(S, Cand, NumArgs))
       return;
   }
-  DiagnoseBadDeduction(S, Cand->Function, // pattern
+  DiagnoseBadDeduction(S, Cand->FoundDecl, Cand->Function, // pattern
                        Cand->DeductionFailure, NumArgs, TakingCandidateAddress);
 }
 
@@ -9609,7 +9592,8 @@ static void DiagnoseBadTarget(Sema &S, OverloadCandidate *Cand) {
                            CalleeTarget = S.IdentifyCUDATarget(Callee);
 
   std::string FnDesc;
-  OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Callee, FnDesc);
+  OverloadCandidateKind FnKind =
+      ClassifyOverloadCandidate(S, Cand->FoundDecl, Callee, FnDesc);
 
   S.Diag(Callee->getLocation(), diag::note_ovl_candidate_bad_target)
       << (unsigned)FnKind << CalleeTarget << CallerTarget;
@@ -9686,7 +9670,8 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
   if (Cand->Viable && (Fn->isDeleted() ||
       S.isFunctionConsideredUnavailable(Fn))) {
     std::string FnDesc;
-    OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
+    OverloadCandidateKind FnKind =
+        ClassifyOverloadCandidate(S, Cand->FoundDecl, Fn, FnDesc);
 
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_deleted)
       << FnKind << FnDesc
@@ -9697,7 +9682,7 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
 
   // We don't really have anything else to say about viable candidates.
   if (Cand->Viable) {
-    S.NoteOverloadCandidate(Fn);
+    S.NoteOverloadCandidate(Cand->FoundDecl, Fn);
     return;
   }
 
@@ -9707,7 +9692,8 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     return DiagnoseArityMismatch(S, Cand, NumArgs);
 
   case ovl_fail_bad_deduction:
-    return DiagnoseBadDeduction(S, Cand, NumArgs, TakingCandidateAddress);
+    return DiagnoseBadDeduction(S, Cand, NumArgs,
+                                TakingCandidateAddress);
 
   case ovl_fail_illegal_constructor: {
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_illegal_constructor)
@@ -9719,7 +9705,7 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
   case ovl_fail_trivial_conversion:
   case ovl_fail_bad_final_conversion:
   case ovl_fail_final_conversion_not_exact:
-    return S.NoteOverloadCandidate(Fn);
+    return S.NoteOverloadCandidate(Cand->FoundDecl, Fn);
 
   case ovl_fail_bad_conversion: {
     unsigned I = (Cand->IgnoreObjectArgument ? 1 : 0);
@@ -9730,7 +9716,7 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     // FIXME: this currently happens when we're called from SemaInit
     // when user-conversion overload fails.  Figure out how to handle
     // those conditions and diagnose them well.
-    return S.NoteOverloadCandidate(Fn);
+    return S.NoteOverloadCandidate(Cand->FoundDecl, Fn);
   }
 
   case ovl_fail_bad_target:
@@ -9808,8 +9794,8 @@ static void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
     if (ICS.isBad()) break; // all meaningless after first invalid
     if (!ICS.isAmbiguous()) continue;
 
-    ICS.DiagnoseAmbiguousConversion(S, OpLoc,
-                              S.PDiag(diag::note_ambiguous_type_conversion));
+    ICS.DiagnoseAmbiguousConversion(
+        S, OpLoc, S.PDiag(diag::note_ambiguous_type_conversion));
   }
 }
 
@@ -10176,7 +10162,7 @@ struct CompareTemplateSpecCandidatesForDisplay {
 /// deductions.
 void TemplateSpecCandidate::NoteDeductionFailure(Sema &S,
                                                  bool ForTakingAddress) {
-  DiagnoseBadDeduction(S, Specialization, // pattern
+  DiagnoseBadDeduction(S, FoundDecl, Specialization, // pattern
                        DeductionFailure, /*NumArgs=*/0, ForTakingAddress);
 }
 
@@ -10429,7 +10415,7 @@ private:
                                       Info, /*InOverloadResolution=*/true)) {
       // Make a note of the failed deduction for diagnostics.
       FailedCandidates.addCandidate()
-          .set(FunctionTemplate->getTemplatedDecl(),
+          .set(CurAccessFunPair, FunctionTemplate->getTemplatedDecl(),
                MakeDeductionFailureInfo(Context, Result, Info));
       return false;
     } 
@@ -10595,7 +10581,7 @@ public:
         if (FunctionDecl *Fun =
                 dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()))
           if (!functionHasPassObjectSizeParams(Fun))
-            S.NoteOverloadCandidate(Fun, TargetFunctionType,
+            S.NoteOverloadCandidate(*I, Fun, TargetFunctionType,
                                     /*TakingAddress=*/true);
       FailedCandidates.NoteCandidates(S, OvlExpr->getLocStart());
     }
@@ -10801,7 +10787,7 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
       // Make a note of the failed deduction for diagnostics.
       // TODO: Actually use the failed-deduction info?
       FailedCandidates.addCandidate()
-          .set(FunctionTemplate->getTemplatedDecl(),
+          .set(I.getPair(), FunctionTemplate->getTemplatedDecl(),
                MakeDeductionFailureInfo(Context, Result, Info));
       continue;
     }
