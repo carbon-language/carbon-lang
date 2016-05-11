@@ -2425,6 +2425,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
   ToolChain *&TC = ToolChains[Target.str()];
   if (!TC) {
     switch (Target.getOS()) {
+    case llvm::Triple::Haiku:
+      TC = new toolchains::Haiku(*this, Target, Args);
+      break;
     case llvm::Triple::CloudABI:
       TC = new toolchains::CloudABI(*this, Target, Args);
       break;
