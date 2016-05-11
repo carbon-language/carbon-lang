@@ -1820,8 +1820,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
                                                    IsomorphicInc->getType());
       if (OrigInc != IsomorphicInc && TruncExpr == SE.getSCEV(IsomorphicInc) &&
           SE.LI.replacementPreservesLCSSAForm(IsomorphicInc, OrigInc) &&
-          ((isa<PHINode>(OrigInc) && isa<PHINode>(IsomorphicInc)) ||
-           hoistIVInc(OrigInc, IsomorphicInc))) {
+          hoistIVInc(OrigInc, IsomorphicInc)) {
         DEBUG_WITH_TYPE(DebugType,
                         dbgs() << "INDVARS: Eliminated congruent iv.inc: "
                                << *IsomorphicInc << '\n');
