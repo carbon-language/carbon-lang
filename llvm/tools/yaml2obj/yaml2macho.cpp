@@ -28,7 +28,8 @@ public:
   MachOWriter(MachOYAML::Object &Obj) : Obj(Obj) {
     is64Bit = Obj.Header.magic == MachO::MH_MAGIC_64 ||
               Obj.Header.magic == MachO::MH_CIGAM_64;
-    bzero(&Header64, sizeof(MachO::mach_header_64));
+    memset(reinterpret_cast<void *>(&Header64), 0,
+           sizeof(MachO::mach_header_64));
   }
 
   Error writeMachO(raw_ostream &OS);
