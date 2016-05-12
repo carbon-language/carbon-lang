@@ -23,7 +23,7 @@ void MappingTraits<MachOYAML::FileHeader>::mapping(
   IO.mapRequired("magic", FileHdr.magic);
   IO.mapRequired("cputype", FileHdr.cputype);
   IO.mapRequired("cpusubtype", FileHdr.cpusubtype);
-  IO.mapOptional("filetype", FileHdr.filetype);
+  IO.mapRequired("filetype", FileHdr.filetype);
   IO.mapRequired("ncmds", FileHdr.ncmds);
   IO.mapRequired("sizeofcmds", FileHdr.sizeofcmds);
   IO.mapRequired("flags", FileHdr.flags);
