@@ -1984,8 +1984,8 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
 // if yes, given reference arguments will be update so that one can replace
 // the OR instruction with:
 // f = Opc Opd0, Opd1, LSB, MSB ; where Opc is a BFM, LSB = imm, and MSB = imm2
-static SDNode *isBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
-                                        SelectionDAG *CurDAG) {
+static SDNode *selectBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
+                                            SelectionDAG *CurDAG) {
   assert(N->getOpcode() == ISD::OR && "Expect a OR operation");
 
   SDValue Dst, Src;
@@ -2098,7 +2098,7 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldInsertOp(SDNode *N) {
     return CurDAG->SelectNodeTo(N, TargetOpcode::IMPLICIT_DEF,
                                 N->getValueType(0));
 
-  return isBitfieldInsertOpFromOr(N, NUsefulBits, CurDAG);
+  return selectBitfieldInsertOpFromOr(N, NUsefulBits, CurDAG);
 }
 
 /// SelectBitfieldInsertInZeroOp - Match a UBFIZ instruction that is the
