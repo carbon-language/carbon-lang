@@ -386,7 +386,7 @@ static void checkContents(DirIter I, ArrayRef<StringRef> ExpectedOut) {
 
   unsigned LastElt = std::min(InputToCheck.size(), Expected.size());
   for (unsigned Idx = 0; Idx != LastElt; ++Idx)
-    EXPECT_EQ(Expected[Idx], StringRef(InputToCheck[Idx]));
+    EXPECT_EQ(StringRef(InputToCheck[Idx]), Expected[Idx]);
 }
 
 TEST(VirtualFileSystemTest, OverlayIteration) {
