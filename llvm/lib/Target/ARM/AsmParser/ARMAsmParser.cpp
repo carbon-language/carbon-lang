@@ -427,8 +427,9 @@ class ARMOperand : public MCParsedAsmOperand {
     k_ShifterImmediate,
     k_RotateImmediate,
     k_ModifiedImmediate,
+    k_ConstantPoolImmediate,
     k_BitfieldDescriptor,
-    k_Token
+    k_Token,
   } Kind;
 
   SMLoc StartLoc, EndLoc, AlignmentLoc;
@@ -621,6 +622,11 @@ public:
     return Imm.Val;
   }
 
+  const MCExpr *getConstantPoolImm() const {
+    assert(isConstantPoolImm() && "Invalid access!");
+    return Imm.Val;
+  }
+
   unsigned getVectorIndex() const {
     assert(Kind == k_VectorIndex && "Invalid access!");
     return VectorIndex.Val;
@@ -658,7 +664,9 @@ public:
   bool isCCOut() const { return Kind == k_CCOut; }
   bool isITMask() const { return Kind == k_ITCondMask; }
   bool isITCondCode() const { return Kind == k_CondCode; }
-  bool isImm() const override { return Kind == k_Immediate; }
+  bool isImm() const override {
+    return Kind == k_Immediate;
+  }
   // checks whether this operand is an unsigned offset which fits is a field
   // of specified width and scaled by a specific number of bits
   template<unsigned width, unsigned scale>
@@ -1046,6 +1054,7 @@ public:
     return ARM_AM::getSOImmVal(Value) == -1 &&
       ARM_AM::getSOImmVal(-Value) != -1;
   }
+  bool isConstantPoolImm() const { return Kind == k_ConstantPoolImmediate; }
   bool isBitfield() const { return Kind == k_BitfieldDescriptor; }
   bool isPostIdxRegShifted() const { return Kind == k_PostIndexRegister; }
   bool isPostIdxReg() const {
@@ -1343,6 +1352,7 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
+
     if (isImm() && !isa<MCConstantExpr>(getImm()))
       return true;
 
@@ -1352,6 +1362,11 @@ public:
     if (!Memory.OffsetImm) return true;
     int64_t Val = Memory.OffsetImm->getValue();
     return (Val > -4096 && Val < 4096) || (Val == INT32_MIN);
+  }
+  bool isConstPoolAsmImm() const {
+    // Delay processing of Constant Pool Immediate, this will turn into
+    // a constant. Match no other operand
+    return (isConstantPoolImm());
   }
   bool isPostIdxImm8() const {
     if (!isImm()) return false;
@@ -1965,6 +1980,7 @@ public:
       }
 
       const MCSymbolRefExpr *SR = dyn_cast<MCSymbolRefExpr>(Imm.Val);
+ 
       assert(SR && "Unknown value type!");
       Inst.addOperand(MCOperand::createExpr(SR));
       return;
@@ -2258,6 +2274,14 @@ public:
     int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
     Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::createImm(Val));
+  }
+
+  void addConstPoolAsmImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // This is container for the immediate that we will create the constant
+    // pool from
+    addExpr(Inst, getConstantPoolImm());
+    return;
   }
 
   void addMemTBBOperands(MCInst &Inst, unsigned N) const {
@@ -2640,6 +2664,15 @@ public:
   }
 
   static std::unique_ptr<ARMOperand>
+  CreateConstantPoolImm(const MCExpr *Val, SMLoc S, SMLoc E) {
+    auto Op = make_unique<ARMOperand>(k_ConstantPoolImmediate);
+    Op->Imm.Val = Val;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
+  static std::unique_ptr<ARMOperand>
   CreateBitfield(unsigned LSB, unsigned Width, SMLoc S, SMLoc E) {
     auto Op = make_unique<ARMOperand>(k_BitfieldDescriptor);
     Op->Bitfield.LSB = LSB;
@@ -2895,6 +2928,9 @@ void ARMOperand::print(raw_ostream &OS) const {
   case k_ModifiedImmediate:
     OS << "<mod_imm #" << ModImm.Bits << ", #"
        <<  ModImm.Rot << ")>";
+    break;
+  case k_ConstantPoolImmediate:
+    OS << "<constant_pool_imm #" << *getConstantPoolImm();
     break;
   case k_BitfieldDescriptor:
     OS << "<bitfield " << "lsb: " << Bitfield.LSB
@@ -5217,10 +5253,7 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
     if (getParser().parseExpression(SubExprVal))
       return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-
-    const MCExpr *CPLoc =
-        getTargetStreamer().addConstantPoolEntry(SubExprVal, S);
-    Operands.push_back(ARMOperand::CreateImm(CPLoc, S, E));
+    Operands.push_back(ARMOperand::CreateConstantPoolImm(SubExprVal, S, E));
     return false;
   }
   }
@@ -6835,6 +6868,34 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
   case ARM::t2LDRSHpcrel:
     Inst.setOpcode(ARM::t2LDRSHpci);
     return true;
+  case ARM::LDRConstPool:
+  case ARM::tLDRConstPool:
+  case ARM::t2LDRConstPool:  {
+    // Handle the pseudo instruction for ldr rn,=
+    // For now we always create the constant pool entry and load from it
+    // FIXME: Use a MOV or MVN when the immediate will fit
+    MCInst TmpInst;
+    if (Inst.getOpcode() == ARM::LDRConstPool)
+      TmpInst.setOpcode(ARM::LDRi12);
+    else if (Inst.getOpcode() == ARM::tLDRConstPool)
+      TmpInst.setOpcode(ARM::tLDRpci);
+    else if (Inst.getOpcode() == ARM::t2LDRConstPool)
+      TmpInst.setOpcode(ARM::t2LDRpci);
+    const ARMOperand &PoolOperand =
+      static_cast<ARMOperand &>(*Operands[3]);
+    const MCExpr *SubExprVal = PoolOperand.getConstantPoolImm();
+    const MCExpr *CPLoc =
+      getTargetStreamer().addConstantPoolEntry(SubExprVal,
+                                               PoolOperand.getStartLoc());
+    TmpInst.addOperand(Inst.getOperand(0));           // Rt
+    TmpInst.addOperand(MCOperand::createExpr(CPLoc)); // offset to constpool
+    if (TmpInst.getOpcode() == ARM::LDRi12)
+      TmpInst.addOperand(MCOperand::createImm(0));    // unused offset
+    TmpInst.addOperand(Inst.getOperand(2));           // CondCode
+    TmpInst.addOperand(Inst.getOperand(3));           // CondCode
+    Inst = TmpInst;
+    return true;
+  }
   // Handle NEON VST complex aliases.
   case ARM::VST1LNdWB_register_Asm_8:
   case ARM::VST1LNdWB_register_Asm_16:
