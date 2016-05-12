@@ -69,7 +69,8 @@ private:
 
   void scanRelocs(InputSection<ELFT> &C);
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
-  RelExpr adjustExpr(SymbolBody &S, bool IsWrite, RelExpr Expr, uint32_t Type);
+  RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &S,
+                     bool IsWrite, RelExpr Expr, uint32_t Type);
   void createPhdrs();
   void assignAddresses();
   void assignFileOffsets();
@@ -513,8 +514,11 @@ static RelExpr fromPlt(RelExpr Expr) {
 }
 
 template <class ELFT>
-RelExpr Writer<ELFT>::adjustExpr(SymbolBody &Body, bool IsWrite, RelExpr Expr,
+RelExpr Writer<ELFT>::adjustExpr(const elf::ObjectFile<ELFT> &File,
+                                 SymbolBody &Body, bool IsWrite, RelExpr Expr,
                                  uint32_t Type) {
+  if (Target->needsThunk(Type, File, Body))
+    return R_THUNK;
   bool Preemptible = Body.isPreemptible();
   if (Body.isGnuIFunc())
     Expr = toPlt(Expr);
@@ -614,7 +618,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
 
     bool Preemptible = Body.isPreemptible();
-    Expr = adjustExpr(Body, IsWrite, Expr, Type);
+    Expr = adjustExpr(File, Body, IsWrite, Expr, Type);
     if (HasError)
       continue;
 
