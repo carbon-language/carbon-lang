@@ -370,6 +370,8 @@ void Initialize(ThreadState *thr) {
 #endif
   ctx->initialized = true;
 
+  Symbolizer::LateInitialize();
+
   if (flags()->stop_on_start) {
     Printf("ThreadSanitizer is suspended at startup (pid %d)."
            " Call __tsan_resume().\n",
