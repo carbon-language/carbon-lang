@@ -136,23 +136,7 @@ public:
   }
 
   class ValidatorResult visitTruncateExpr(const SCEVTruncateExpr *Expr) {
-    ValidatorResult Op = visit(Expr->getOperand());
-
-    switch (Op.getType()) {
-    case SCEVType::INT:
-    case SCEVType::PARAM:
-      // We currently do not represent a truncate expression as an affine
-      // expression. If it is constant during Scop execution, we treat it as a
-      // parameter.
-      return ValidatorResult(SCEVType::PARAM, Expr);
-    case SCEVType::IV:
-      DEBUG(dbgs() << "INVALID: Truncation of SCEVType::IV expression");
-      return ValidatorResult(SCEVType::INVALID);
-    case SCEVType::INVALID:
-      return Op;
-    }
-
-    llvm_unreachable("Unknown SCEVType");
+    return visit(Expr->getOperand());
   }
 
   class ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
