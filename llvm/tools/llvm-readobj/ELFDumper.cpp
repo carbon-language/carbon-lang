@@ -2834,7 +2834,7 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
                      48 + Bias, 56 + Bias, 64 + Bias, 68 + Bias};
   OS << "\nElf file type is "
      << printEnum(Header->e_type, makeArrayRef(ElfObjectFileType)) << "\n"
-     << "Entry point " << format_hex(Header->e_entry, 1) << "\n"
+     << "Entry point " << format_hex(Header->e_entry, 3) << "\n"
      << "There are " << Header->e_phnum << " program headers,"
      << " starting at offset " << Header->e_phoff << "\n\n"
      << "Program Headers:\n";
