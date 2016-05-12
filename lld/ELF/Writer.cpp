@@ -71,6 +71,10 @@ private:
   void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
   RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &S,
                      bool IsWrite, RelExpr Expr, uint32_t Type);
+  template <class RelTy>
+  uintX_t computeAddend(const elf::ObjectFile<ELFT> &File,
+                        const uint8_t *SectionData, const RelTy *End,
+                        const RelTy &RI, RelExpr Expr, SymbolBody &Body);
   void createPhdrs();
   void assignAddresses();
   void assignFileOffsets();
@@ -577,6 +581,39 @@ RelExpr Writer<ELFT>::adjustExpr(const elf::ObjectFile<ELFT> &File,
   return Expr;
 }
 
+template <class ELFT>
+template <class RelTy>
+typename ELFT::uint
+Writer<ELFT>::computeAddend(const elf::ObjectFile<ELFT> &File,
+                            const uint8_t *SectionData, const RelTy *End,
+                            const RelTy &RI, RelExpr Expr, SymbolBody &Body) {
+  uint32_t Type = RI.getType(Config->Mips64EL);
+  uintX_t Addend = getAddend<ELFT>(RI);
+  const uint8_t *BufLoc = SectionData + RI.r_offset;
+  if (!RelTy::IsRela)
+    Addend += Target->getImplicitAddend(BufLoc, Type);
+  if (Config->EMachine == EM_MIPS) {
+    Addend += findMipsPairedAddend<ELFT>(SectionData, BufLoc, Body, &RI, End);
+    if (Type == R_MIPS_LO16 && Expr == R_PC)
+      // R_MIPS_LO16 expression has R_PC type iif the target is _gp_disp
+      // symbol. In that case we should use the following formula for
+      // calculation "AHL + GP - P + 4". Let's add 4 right here.
+      // For details see p. 4-19 at
+      // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+      Addend += 4;
+    if (Expr == R_GOT_OFF)
+      Addend -= MipsGPOffset;
+    if (Expr == R_GOTREL) {
+      Addend -= MipsGPOffset;
+      if (Body.isLocal())
+        Addend += File.getMipsGp0();
+    }
+  }
+  if (Config->Pic && Config->EMachine == EM_PPC64 && Type == R_PPC64_TOC)
+    Addend += getPPC64TocBase();
+  return Addend;
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -627,20 +664,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     if (Expr == R_GOTONLY_PC || Expr == R_GOTREL || Expr == R_PPC_TOC)
       HasGotOffRel = true;
 
-    uintX_t Addend = getAddend<ELFT>(RI);
-    const uint8_t *BufLoc = Buf + RI.r_offset;
-    if (!RelTy::IsRela)
-      Addend += Target->getImplicitAddend(BufLoc, Type);
-    if (Config->EMachine == EM_MIPS) {
-      Addend += findMipsPairedAddend<ELFT>(Buf, BufLoc, Body, &RI, E);
-      if (Type == R_MIPS_LO16 && Expr == R_PC)
-        // R_MIPS_LO16 expression has R_PC type iif the target is _gp_disp
-        // symbol. In that case we should use the following formula for
-        // calculation "AHL + GP - P + 4". Let's add 4 right here.
-        // For details see p. 4-19 at
-        // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-        Addend += 4;
-    }
+    uintX_t Addend = computeAddend(File, Buf, E, RI, Expr, Body);
 
     if (unsigned Processed =
             handleTlsRelocation<ELFT>(Type, Body, C, Offset, Addend, Expr)) {
@@ -650,8 +674,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     if (Expr == R_GOT && !isStaticLinkTimeConstant<ELFT>(Expr, Type, Body) &&
         Config->Shared)
-      AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body,
-              getAddend<ELFT>(RI)});
+      AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body, Addend});
 
     // If a relocation needs PLT, we create a PLT and a GOT slot
     // for the symbol.
@@ -690,8 +713,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     // If a relocation needs GOT, we create a GOT slot for the symbol.
     if (refersToGotEntry(Expr)) {
-      if (Config->EMachine == EM_MIPS && Expr == R_GOT_OFF)
-        Addend -= MipsGPOffset;
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       if (Body.isInGot())
         continue;
@@ -751,17 +772,10 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // can process some of it and and just ask the dynamic linker to add the
     // load address.
     if (!Config->Pic || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body)) {
-      if (Config->EMachine == EM_MIPS && Expr == R_GOTREL) {
-        Addend -= MipsGPOffset;
-        if (Body.isLocal())
-          Addend += File.getMipsGp0();
-      }
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       continue;
     }
 
-    if (Config->EMachine == EM_PPC64 && Type == R_PPC64_TOC)
-      Addend += getPPC64TocBase();
     AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body, Addend});
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
   }
