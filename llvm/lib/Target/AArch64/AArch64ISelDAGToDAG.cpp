@@ -1984,20 +1984,16 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
 // if yes, given reference arguments will be update so that one can replace
 // the OR instruction with:
 // f = Opc Opd0, Opd1, LSB, MSB ; where Opc is a BFM, LSB = imm, and MSB = imm2
-static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
-                                     SDValue &Src, unsigned &ImmR,
-                                     unsigned &ImmS, const APInt &UsefulBits,
-                                     SelectionDAG *CurDAG) {
+static SDNode *isBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
+                                        SelectionDAG *CurDAG) {
   assert(N->getOpcode() == ISD::OR && "Expect a OR operation");
 
-  // Set Opc
+  SDValue Dst, Src;
+  unsigned ImmR, ImmS;
+
   EVT VT = N->getValueType(0);
-  if (VT == MVT::i32)
-    Opc = AArch64::BFMWri;
-  else if (VT == MVT::i64)
-    Opc = AArch64::BFMXri;
-  else
-    return false;
+  if (VT != MVT::i32 && VT != MVT::i64)
+    return nullptr;
 
   // Because of simplify-demanded-bits in DAGCombine, involved masks may not
   // have the expected shape. Try to undo that.
@@ -2081,37 +2077,28 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
       Dst = OrOpd1Val;
 
     // both parts match
-    return true;
+    SDLoc DL(N);
+    SDValue Ops[] = {Dst, Src, CurDAG->getTargetConstant(ImmR, DL, VT),
+                     CurDAG->getTargetConstant(ImmS, DL, VT)};
+    unsigned Opc = (VT == MVT::i32) ? AArch64::BFMWri : AArch64::BFMXri;
+    return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
   }
-
-  return false;
+  return nullptr;
 }
 
 SDNode *AArch64DAGToDAGISel::SelectBitfieldInsertOp(SDNode *N) {
   if (N->getOpcode() != ISD::OR)
     return nullptr;
 
-  unsigned Opc;
-  unsigned LSB, MSB;
-  SDValue Opd0, Opd1;
-  EVT VT = N->getValueType(0);
   APInt NUsefulBits;
   getUsefulBits(SDValue(N, 0), NUsefulBits);
 
   // If all bits are not useful, just return UNDEF.
   if (!NUsefulBits)
-    return CurDAG->SelectNodeTo(N, TargetOpcode::IMPLICIT_DEF, VT);
+    return CurDAG->SelectNodeTo(N, TargetOpcode::IMPLICIT_DEF,
+                                N->getValueType(0));
 
-  if (!isBitfieldInsertOpFromOr(N, Opc, Opd0, Opd1, LSB, MSB, NUsefulBits,
-                                CurDAG))
-    return nullptr;
-
-  SDLoc dl(N);
-  SDValue Ops[] = { Opd0,
-                    Opd1,
-                    CurDAG->getTargetConstant(LSB, dl, VT),
-                    CurDAG->getTargetConstant(MSB, dl, VT) };
-  return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
+  return isBitfieldInsertOpFromOr(N, NUsefulBits, CurDAG);
 }
 
 /// SelectBitfieldInsertInZeroOp - Match a UBFIZ instruction that is the
