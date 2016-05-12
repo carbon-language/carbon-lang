@@ -78,8 +78,11 @@ public:
 
   /// Visits the type records in Data. Sets the error flag on parse failures.
   void visitTypeStream(ArrayRef<uint8_t> Data) {
-    for (const auto &I : makeTypeRange(Data))
+    for (const auto &I : makeTypeRange(Data)) {
       visitTypeRecord(I);
+      if (hadError())
+        break;
+    }
   }
 
   /// Action to take on unknown types. By default, they are ignored.

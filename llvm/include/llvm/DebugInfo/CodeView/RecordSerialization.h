@@ -14,6 +14,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/DebugInfo/CodeView/CodeView.h"
 #include <cinttypes>
 #include <tuple>
 
@@ -113,7 +114,8 @@ template <typename T> struct serialize_array_tail_impl {
 
   std::error_code deserialize(ArrayRef<uint8_t> &Data) const {
     T Field;
-    while (!Data.empty()) {
+    // Stop when we run out of bytes or we hit record padding bytes.
+    while (!Data.empty() && Data.front() < LF_PAD0) {
       if (auto EC = consume(Data, Field))
         return EC;
       Item.push_back(Field);
