@@ -257,8 +257,14 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool hasThumb() const {
     return getSTI().getFeatureBits()[ARM::HasV4TOps];
   }
+  bool hasThumb2() const {
+    return getSTI().getFeatureBits()[ARM::FeatureThumb2];
+  }
   bool hasV6Ops() const {
     return getSTI().getFeatureBits()[ARM::HasV6Ops];
+  }
+  bool hasV6T2Ops() const {
+    return getSTI().getFeatureBits()[ARM::HasV6T2Ops];
   }
   bool hasV6MOps() const {
     return getSTI().getFeatureBits()[ARM::HasV6MOps];
@@ -5247,7 +5253,6 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
     S = Parser.getTok().getLoc();
     if (Mnemonic != "ldr") // only parse for ldr pseudo (e.g. ldr r0, =val)
       return Error(S, "unexpected token in operand");
-
     Parser.Lex(); // Eat '='
     const MCExpr *SubExprVal;
     if (getParser().parseExpression(SubExprVal))
@@ -6870,10 +6875,10 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     return true;
   case ARM::LDRConstPool:
   case ARM::tLDRConstPool:
-  case ARM::t2LDRConstPool:  {
-    // Handle the pseudo instruction for ldr rn,=
-    // For now we always create the constant pool entry and load from it
-    // FIXME: Use a MOV or MVN when the immediate will fit
+  case ARM::t2LDRConstPool: {
+    // Pseudo instruction ldr rt, =immediate is converted to a
+    // MOV rt, immediate if immediate is known and representable
+    // otherwise we create a constant pool entry that we load from.
     MCInst TmpInst;
     if (Inst.getOpcode() == ARM::LDRConstPool)
       TmpInst.setOpcode(ARM::LDRi12);
@@ -6884,6 +6889,62 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     const ARMOperand &PoolOperand =
       static_cast<ARMOperand &>(*Operands[3]);
     const MCExpr *SubExprVal = PoolOperand.getConstantPoolImm();
+    // If SubExprVal is a constant we may be able to use a MOV
+    if (isa<MCConstantExpr>(SubExprVal) &&
+        Inst.getOperand(0).getReg() != ARM::PC &&
+        Inst.getOperand(0).getReg() != ARM::SP) {
+      int64_t Value =
+        (int64_t) (cast<MCConstantExpr>(SubExprVal))->getValue();
+      bool UseMov  = true;
+      bool MovHasS = true;
+      if (Inst.getOpcode() == ARM::LDRConstPool) {
+        // ARM Constant
+        if (ARM_AM::getSOImmVal(Value) != -1) {
+          Value = ARM_AM::getSOImmVal(Value);
+          TmpInst.setOpcode(ARM::MOVi);
+        }
+        else if (ARM_AM::getSOImmVal(~Value) != -1) {
+          Value = ARM_AM::getSOImmVal(~Value);
+          TmpInst.setOpcode(ARM::MVNi);
+        }
+        else if (hasV6T2Ops() &&
+                 Value >=0 && Value < 65536) {
+          TmpInst.setOpcode(ARM::MOVi16);
+          MovHasS = false;
+        }
+        else
+          UseMov = false;
+      }
+      else {
+        // Thumb/Thumb2 Constant
+        if (hasThumb2() &&
+            ARM_AM::getT2SOImmVal(Value) != -1)
+          TmpInst.setOpcode(ARM::t2MOVi);
+        else if (hasThumb2() &&
+                 ARM_AM::getT2SOImmVal(~Value) != -1) {
+          TmpInst.setOpcode(ARM::t2MVNi);
+          Value = ~Value;
+        }
+        else if (hasV8MBaseline() &&
+                 Value >=0 && Value < 65536) {
+          TmpInst.setOpcode(ARM::t2MOVi16);
+          MovHasS = false;
+        }
+        else
+          UseMov = false;
+      }
+      if (UseMov) {
+        TmpInst.addOperand(Inst.getOperand(0));           // Rt
+        TmpInst.addOperand(MCOperand::createImm(Value));  // Immediate
+        TmpInst.addOperand(Inst.getOperand(2));           // CondCode
+        TmpInst.addOperand(Inst.getOperand(3));           // CondCode
+        if (MovHasS)
+          TmpInst.addOperand(MCOperand::createReg(0));    // S
+        Inst = TmpInst;
+        return true;
+      }
+    }
+    // No opportunity to use MOV/MVN create constant pool
     const MCExpr *CPLoc =
       getTargetStreamer().addConstantPoolEntry(SubExprVal,
                                                PoolOperand.getStartLoc());
