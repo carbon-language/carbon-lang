@@ -144,10 +144,6 @@ public:
   }
 
   class ValidatorResult visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
-    // We currently allow only signed SCEV expressions. In the case of a
-    // signed value, a sign extend is a noop.
-    //
-    // TODO: Reconsider this when we add support for unsigned values.
     return visit(Expr->getOperand());
   }
 
@@ -163,7 +159,6 @@ public:
         break;
     }
 
-    // TODO: Check for NSW and NUW.
     return Return;
   }
 
@@ -199,7 +194,6 @@ public:
     if (HasMultipleParams && Return.isValid())
       return ValidatorResult(SCEVType::PARAM, Expr);
 
-    // TODO: Check for NSW and NUW.
     return Return;
   }
 
@@ -273,8 +267,8 @@ public:
   }
 
   class ValidatorResult visitUMaxExpr(const SCEVUMaxExpr *Expr) {
-    // We do not support unsigned operations. If 'Expr' is constant during Scop
-    // execution we treat this as a parameter, otherwise we bail out.
+    // We do not support unsigned max operations. If 'Expr' is constant during
+    // Scop execution we treat this as a parameter, otherwise we bail out.
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
 
