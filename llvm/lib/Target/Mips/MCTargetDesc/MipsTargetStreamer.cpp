@@ -707,6 +707,10 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   else
     EFlags |= ELF::EF_MIPS_ARCH_1;
 
+  // Machine
+  if (Features[Mips::FeatureCnMips])
+    EFlags |= ELF::EF_MIPS_MACH_OCTEON;
+
   // Other options.
   if (Features[Mips::FeatureNaN2008])
     EFlags |= ELF::EF_MIPS_NAN2008;
