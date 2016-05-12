@@ -672,15 +672,51 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Expr == R_GOT && !isStaticLinkTimeConstant<ELFT>(Expr, Type, Body) &&
-        Config->Shared)
-      AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body, Addend});
-
-    // If a relocation needs PLT, we create a PLT and a GOT slot
-    // for the symbol.
-    if (needsPlt(Expr)) {
+    if (needsPlt(Expr) || Expr == R_THUNK || refersToGotEntry(Expr) ||
+        !Body.isPreemptible()) {
+      // If the relocation points to something in the file, remember it so that
+      // we can apply it when writting the section.
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
 
+      // If the output being produced is position independent, the final value
+      // is still not known. In that case we still need some help from the
+      // dynamic linker. We can however do better than just copying the incoming
+      // relocation. We can process some of it and and just ask the dynamic
+      // linker to add the load address.
+      if (!isStaticLinkTimeConstant<ELFT>(Expr, Type, Body))
+        AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body, Addend});
+    } else {
+      // We don't know anything about the finaly symbol. Just ask the dynamic
+      // linker to handle the relocation for us.
+      AddDyn({Target->getDynRel(Type), C.OutSec, Offset, false, &Body, Addend});
+      // MIPS ABI turns using of GOT and dynamic relocations inside out.
+      // While regular ABI uses dynamic relocations to fill up GOT entries
+      // MIPS ABI requires dynamic linker to fills up GOT entries using
+      // specially sorted dynamic symbol table. This affects even dynamic
+      // relocations against symbols which do not require GOT entries
+      // creation explicitly, i.e. do not have any GOT-relocations. So if
+      // a preemptible symbol has a dynamic relocation we anyway have
+      // to create a GOT entry for it.
+      // If a non-preemptible symbol has a dynamic relocation against it,
+      // dynamic linker takes it st_value, adds offset and writes down
+      // result of the dynamic relocation. In case of preemptible symbol
+      // dynamic linker performs symbol resolution, writes the symbol value
+      // to the GOT entry and reads the GOT entry when it needs to perform
+      // a dynamic relocation.
+      // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf p.4-19
+      if (Config->EMachine == EM_MIPS && !Body.isInGot())
+        Out<ELFT>::Got->addEntry(Body);
+      continue;
+    }
+
+    if (Expr == R_THUNK)
+      continue;
+
+    // At this point we are done with the relocated position. Some relocations
+    // also require us to create a got or plt entry.
+
+    // If a relocation needs PLT, we create a PLT and a GOT slot for the symbol.
+    if (needsPlt(Expr)) {
       if (Body.isInPlt())
         continue;
       Out<ELFT>::Plt->addEntry(Body);
@@ -706,14 +742,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Expr == R_THUNK) {
-      C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
-      continue;
-    }
-
-    // If a relocation needs GOT, we create a GOT slot for the symbol.
     if (refersToGotEntry(Expr)) {
-      C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       if (Body.isInGot())
         continue;
       Out<ELFT>::Got->addEntry(Body);
@@ -739,45 +768,6 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       }
       continue;
     }
-
-    if (Body.isPreemptible()) {
-      // We don't know anything about the finaly symbol. Just ask the dynamic
-      // linker to handle the relocation for us.
-      AddDyn({Target->getDynRel(Type), C.OutSec, Offset, false, &Body, Addend});
-      // MIPS ABI turns using of GOT and dynamic relocations inside out.
-      // While regular ABI uses dynamic relocations to fill up GOT entries
-      // MIPS ABI requires dynamic linker to fills up GOT entries using
-      // specially sorted dynamic symbol table. This affects even dynamic
-      // relocations against symbols which do not require GOT entries
-      // creation explicitly, i.e. do not have any GOT-relocations. So if
-      // a preemptible symbol has a dynamic relocation we anyway have
-      // to create a GOT entry for it.
-      // If a non-preemptible symbol has a dynamic relocation against it,
-      // dynamic linker takes it st_value, adds offset and writes down
-      // result of the dynamic relocation. In case of preemptible symbol
-      // dynamic linker performs symbol resolution, writes the symbol value
-      // to the GOT entry and reads the GOT entry when it needs to perform
-      // a dynamic relocation.
-      // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf p.4-19
-      if (Config->EMachine == EM_MIPS && !Body.isInGot())
-        Out<ELFT>::Got->addEntry(Body);
-      continue;
-    }
-
-    // We know that this is the final symbol. If the program being produced
-    // is position independent, the final value is still not known.
-    // If the relocation depends on the symbol value (not the size or distances
-    // in the output), we still need some help from the dynamic linker.
-    // We can however do better than just copying the incoming relocation. We
-    // can process some of it and and just ask the dynamic linker to add the
-    // load address.
-    if (!Config->Pic || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body)) {
-      C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
-      continue;
-    }
-
-    AddDyn({Target->RelativeRel, C.OutSec, Offset, true, &Body, Addend});
-    C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
   }
 
   // Scan relocations for necessary thunks.
