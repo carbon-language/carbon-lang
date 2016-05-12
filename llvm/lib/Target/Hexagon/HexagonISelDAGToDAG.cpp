@@ -1049,7 +1049,7 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
   if (isValueExtension(V, Bits, U)) {
     SDValue R = CurDAG->getNode(N->getOpcode(), SDLoc(N), N->getValueType(0),
                                 N->getOperand(0), U);
-    ReplaceUses(N, R.getNode());
+    ReplaceNode(N, R.getNode());
     return SelectCode(R.getNode());
   }
   return SelectCode(N);
