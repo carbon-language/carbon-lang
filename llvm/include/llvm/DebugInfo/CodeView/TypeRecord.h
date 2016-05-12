@@ -993,32 +993,38 @@ private:
 };
 
 // LF_METHODLIST
-class MethodListRecord : public TypeRecord {
+class MethodOverloadListRecord : public TypeRecord {
 public:
-  MethodListRecord(TypeIndex Type, MethodKind Kind, MethodOptions Options,
-                   MemberAccess Access, int32_t VFTableOffset)
-      : TypeRecord(TypeRecordKind::MethodList), Type(Type), Kind(Kind),
-        Options(Options), Access(Access), VFTableOffset(VFTableOffset) {}
+  MethodOverloadListRecord(ArrayRef<OneMethodRecord> Methods)
+      : TypeRecord(TypeRecordKind::MethodList), MethodsRef(Methods) {}
+  MethodOverloadListRecord(std::vector<OneMethodRecord> &Methods)
+      : TypeRecord(TypeRecordKind::MethodList), Methods(Methods) {}
 
-  static ErrorOr<MethodListRecord> deserialize(TypeRecordKind Kind,
+  static ErrorOr<MethodOverloadListRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
-    const Layout *L = nullptr;
-    int32_t VFTableOffset = 0;
-    CV_DESERIALIZE(Data, L, CV_CONDITIONAL_FIELD(
-                                VFTableOffset, L->Attrs.isIntroducedVirtual()));
+    std::vector<OneMethodRecord> Methods;
+    while (!Data.empty()) {
+      const Layout *L = nullptr;
+      int32_t VFTableOffset = 0;
+      CV_DESERIALIZE(
+          Data, L,
+          CV_CONDITIONAL_FIELD(VFTableOffset, L->Attrs.isIntroducedVirtual()));
 
-    MethodOptions Options = L->Attrs.getFlags();
-    MethodKind MethKind = L->Attrs.getMethodKind();
-    MemberAccess Access = L->Attrs.getAccess();
+      MethodOptions Options = L->Attrs.getFlags();
+      MethodKind MethKind = L->Attrs.getMethodKind();
+      MemberAccess Access = L->Attrs.getAccess();
 
-    return MethodListRecord(L->Type, MethKind, Options, Access, VFTableOffset);
+      Methods.emplace_back(L->Type, MethKind, Options, Access, VFTableOffset,
+                           StringRef());
+    }
+    return MethodOverloadListRecord(Methods);
   }
 
-  TypeIndex getType() const { return Type; }
-  MethodKind getMethodKind() const { return Kind; }
-  MethodOptions getOptions() const { return Options; }
-  MemberAccess getAccess() const { return Access; }
-  int32_t getVFTableOffset() const { return VFTableOffset; }
+  ArrayRef<OneMethodRecord> getMethods() const {
+    if (!MethodsRef.empty())
+      return MethodsRef;
+    return Methods;
+  }
 
 private:
   struct Layout {
@@ -1030,11 +1036,8 @@ private:
     //   VFTableOffset: int32_t offset in vftable
   };
 
-  TypeIndex Type;
-  MethodKind Kind;
-  MethodOptions Options;
-  MemberAccess Access;
-  int32_t VFTableOffset;
+  ArrayRef<OneMethodRecord> MethodsRef;
+  std::vector<OneMethodRecord> Methods;
 };
 
 /// For method overload sets.  LF_METHOD
