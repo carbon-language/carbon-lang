@@ -243,6 +243,9 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// Cache of constants visited in search of ConstantExprs.
   SmallPtrSet<const Constant *, 32> ConstantExprVisited;
 
+  /// Cache of declarations of the llvm.experimental.deoptimize.<ty> intrinsic.
+  SmallVector<const Function *, 4> DeoptimizeDeclarations;
+
   // Verify that this GlobalValue is only used in this module.
   // This map is used to avoid visiting uses twice. We can arrive at a user
   // twice, if they have multiple operands. In particular for very large
@@ -322,8 +325,11 @@ public:
       visitGlobalValue(F);
 
       // Check to make sure function prototypes are okay.
-      if (F.isDeclaration())
+      if (F.isDeclaration()) {
         visitFunction(F);
+        if (F.getIntrinsicID() == Intrinsic::experimental_deoptimize)
+          DeoptimizeDeclarations.push_back(&F);
+      }
     }
 
     // Now that we've visited every function, verify that we never asked to
@@ -345,6 +351,8 @@ public:
     visitModuleIdents(M);
 
     verifyCompileUnits();
+
+    verifyDeoptimizeCallingConvs();
 
     return !Broken;
   }
@@ -470,6 +478,10 @@ private:
 
   /// Module-level debug info verification...
   void verifyCompileUnits();
+
+  /// Module-level verification that all @llvm.experimental.deoptimize
+  /// declarations share the same calling convention.
+  void verifyDeoptimizeCallingConvs();
 };
 } // End anonymous namespace
 
@@ -4394,6 +4406,18 @@ void Verifier::verifyCompileUnits() {
                   [&Listed](const Metadata *CU) { return Listed.count(CU); }),
       "All DICompileUnits must be listed in llvm.dbg.cu");
   CUVisited.clear();
+}
+
+void Verifier::verifyDeoptimizeCallingConvs() {
+  if (DeoptimizeDeclarations.empty())
+    return;
+
+  const Function *First = DeoptimizeDeclarations[0];
+  for (auto *F : makeArrayRef(DeoptimizeDeclarations).slice(1))
+    Assert(First->getCallingConv() == F->getCallingConv(),
+           "All llvm.experimental.deoptimize declarations must have the same "
+           "calling convention",
+           First, F);
 }
 
 //===----------------------------------------------------------------------===//
