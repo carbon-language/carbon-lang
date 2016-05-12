@@ -1941,6 +1941,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
   ReplaceUses(SDValue(N, NumVecs), SDValue(VLd, 1));
   if (isUpdating)
     ReplaceUses(SDValue(N, NumVecs + 1), SDValue(VLd, 2));
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -2207,6 +2208,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   ReplaceUses(SDValue(N, NumVecs), SDValue(VLdLn, 1));
   if (isUpdating)
     ReplaceUses(SDValue(N, NumVecs + 1), SDValue(VLdLn, 2));
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -2290,6 +2292,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDDup(SDNode *N, bool isUpdating,
   ReplaceUses(SDValue(N, NumVecs), SDValue(VLdDup, 1));
   if (isUpdating)
     ReplaceUses(SDValue(N, NumVecs + 1), SDValue(VLdDup, 2));
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -2621,6 +2624,7 @@ SDNode *ARMDAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
 
   ReplaceUses(SDValue(N, 0), SDValue(CmpSwap, 0));
   ReplaceUses(SDValue(N, 1), SDValue(CmpSwap, 2));
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -2702,7 +2706,7 @@ SDNode *ARMDAGToDAGISel::SelectImpl(SDNode *N) {
         ResNode=CurDAG->getMachineNode(ARM::LDRcp, dl, MVT::i32, MVT::Other,
                                        Ops);
       }
-      ReplaceUses(SDValue(N, 0), SDValue(ResNode, 0));
+      ReplaceNode(N, ResNode);
       return nullptr;
     }
 
@@ -2939,6 +2943,7 @@ SDNode *ARMDAGToDAGISel::SelectImpl(SDNode *N) {
     }
     ReplaceUses(SDValue(N, 0),
                 SDValue(Chain.getNode(), Chain.getResNo()));
+    CurDAG->RemoveDeadNode(N);
     return nullptr;
   }
   case ARMISD::VZIP: {
@@ -3281,6 +3286,7 @@ SDNode *ARMDAGToDAGISel::SelectImpl(SDNode *N) {
         ReplaceUses(SDValue(N, 1), Result);
       }
       ReplaceUses(SDValue(N, 2), OutChain);
+      CurDAG->RemoveDeadNode(N);
       return nullptr;
     }
     case Intrinsic::arm_stlexd:
