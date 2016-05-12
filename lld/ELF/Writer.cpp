@@ -683,8 +683,8 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
     }
 
-    if (Target->needsThunk(Type, File, Body)) {
-      C.Relocations.push_back({R_THUNK, Type, Offset, Addend, &Body});
+    if (Expr == R_THUNK) {
+      C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       continue;
     }
 
