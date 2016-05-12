@@ -9961,7 +9961,9 @@ bool ARMAsmParser::parseDirectiveAlign(SMLoc L) {
     return true;
 
   // '.align' is target specifically handled to mean 2**2 byte alignment.
-  if (getStreamer().getCurrentSection().first->UseCodeAlign())
+  const MCSection *Section = getStreamer().getCurrentSection().first;
+  assert(Section && "must have section to emit alignment");
+  if (Section->UseCodeAlign())
     getStreamer().EmitCodeAlignment(4, 0);
   else
     getStreamer().EmitValueToAlignment(4, 0, 1, 0);
