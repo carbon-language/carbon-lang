@@ -162,7 +162,7 @@ void internal__exit(int exitcode) {
 }
 
 unsigned int internal_sleep(unsigned int seconds) {
-  sleep(seconds);
+  return sleep(seconds);
 }
 
 uptr internal_getpid() {
