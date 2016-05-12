@@ -992,6 +992,8 @@ static const EnumEntry<unsigned> ElfSectionFlags[] = {
   ENUM_ENT(SHF_OS_NONCONFORMING, "o"),
   ENUM_ENT(SHF_GROUP,            "G"),
   ENUM_ENT(SHF_TLS,              "T"),
+  ENUM_ENT(SHF_MASKOS,           "o"),
+  ENUM_ENT(SHF_MASKPROC,         "p"),
   ENUM_ENT_1(XCORE_SHF_CP_SECTION),
   ENUM_ENT_1(XCORE_SHF_DP_SECTION),
 };
@@ -1042,9 +1044,9 @@ static std::string getGNUFlags(uint64_t Flags) {
       Str += Entry.AltName;
       break;
     default:
-      if (Flags & ELF::SHF_MASKOS)
+      if (Flag & ELF::SHF_MASKOS)
         Str += "o";
-      else if (Flags & ELF::SHF_MASKPROC)
+      else if (Flag & ELF::SHF_MASKPROC)
         Str += "p";
       else if (Flag)
         Str += "x";
