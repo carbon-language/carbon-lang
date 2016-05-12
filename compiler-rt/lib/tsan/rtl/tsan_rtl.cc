@@ -370,7 +370,9 @@ void Initialize(ThreadState *thr) {
 #endif
   ctx->initialized = true;
 
+#ifndef SANITIZER_GO
   Symbolizer::LateInitialize();
+#endif
 
   if (flags()->stop_on_start) {
     Printf("ThreadSanitizer is suspended at startup (pid %d)."
