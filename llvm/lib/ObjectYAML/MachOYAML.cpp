@@ -20,10 +20,12 @@ namespace yaml {
 
 void MappingTraits<MachOYAML::FileHeader>::mapping(
     IO &IO, MachOYAML::FileHeader &FileHdr) {
+  IO.mapRequired("magic", FileHdr.magic);
   IO.mapRequired("cputype", FileHdr.cputype);
   IO.mapRequired("cpusubtype", FileHdr.cpusubtype);
   IO.mapOptional("filetype", FileHdr.filetype);
   IO.mapRequired("ncmds", FileHdr.ncmds);
+  IO.mapRequired("sizeofcmds", FileHdr.sizeofcmds);
   IO.mapRequired("flags", FileHdr.flags);
 }
 
@@ -31,7 +33,7 @@ void MappingTraits<MachOYAML::Object>::mapping(IO &IO,
                                                MachOYAML::Object &Object) {
   // If the context isn't already set, tag the document as !mach-o.
   // For Fat files there will be a different tag so they can be differentiated.
-  if(!IO.getContext()) {
+  if (!IO.getContext()) {
     IO.setContext(&Object);
     IO.mapTag("!mach-o", true);
   }

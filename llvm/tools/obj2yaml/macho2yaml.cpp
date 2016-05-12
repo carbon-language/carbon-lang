@@ -26,10 +26,12 @@ public:
 
 Expected<MachOYAML::Object *> MachODumper::dump() {
   auto Y = make_unique<MachOYAML::Object>();
+  Y->Header.magic = Obj.getHeader().magic;
   Y->Header.cputype = Obj.getHeader().cputype;
   Y->Header.cpusubtype = Obj.getHeader().cpusubtype;
   Y->Header.filetype = Obj.getHeader().filetype;
   Y->Header.ncmds = Obj.getHeader().ncmds;
+  Y->Header.sizeofcmds = Obj.getHeader().sizeofcmds;
   Y->Header.flags = Obj.getHeader().flags;
 
   return Y.release();

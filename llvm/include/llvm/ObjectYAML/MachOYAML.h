@@ -23,11 +23,14 @@ namespace llvm {
 namespace MachOYAML {
 
 struct FileHeader {
+  llvm::yaml::Hex32 magic;
   llvm::yaml::Hex32 cputype;
   llvm::yaml::Hex32 cpusubtype;
   llvm::yaml::Hex32 filetype;
   uint32_t ncmds;
+  uint32_t sizeofcmds;
   llvm::yaml::Hex32 flags;
+  // TODO: Need to handle the reserved field in mach_header_64
 };
 
 struct Object {
