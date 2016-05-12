@@ -42,8 +42,18 @@ std::string _obj2yaml_error_category::message(int ev) const {
 }
 
 namespace llvm {
-  const std::error_category &obj2yaml_category() {
+
+const std::error_category &obj2yaml_category() {
   static _obj2yaml_error_category o;
   return o;
 }
+
+char Obj2YamlError::ID = 0;
+
+void Obj2YamlError::log(raw_ostream &OS) const { OS << ErrMsg << "\n"; }
+
+std::error_code Obj2YamlError::convertToErrorCode() const {
+  return std::error_code(static_cast<int>(Code), obj2yaml_category());
+}
+
 } // namespace llvm
