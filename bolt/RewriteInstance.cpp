@@ -2296,7 +2296,8 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
                                ELF::SHT_PROGBITS,
                                ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
 
-    if (LineTable->lookupAddressRange(Address, Function.getSize(), Results)) {
+    if (LineTable->lookupAddressRange(Address, Function.getMaxSize() + 1,
+                                      Results)) {
       for (auto RowIndex : Results) {
         const auto &Row = LineTable->Rows[RowIndex];
         BC->Ctx->setCurrentDwarfLoc(
