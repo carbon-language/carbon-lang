@@ -1029,13 +1029,9 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
   Lower->addDirectory("//root/");
   Lower->addDirectory("//root/foo");
   Lower->addDirectory("//root/foo/bar");
-  Lower->addDirectory("//root/zab");
-  Lower->addDirectory("//root/baz");
   Lower->addRegularFile("//root/foo/bar/a");
   Lower->addRegularFile("//root/foo/bar/b");
   Lower->addRegularFile("//root/file3");
-  Lower->addRegularFile("//root/zab/a");
-  Lower->addRegularFile("//root/zab/b");
   IntrusiveRefCntPtr<vfs::FileSystem> FS =
   getFromYAMLString("{ 'use-external-names': false,\n"
                     "  'roots': [\n"
@@ -1053,26 +1049,6 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
                     "                  'external-contents': '//root/foo/bar/b'\n"
                     "                }\n"
                     "              ]\n"
-                    "},\n"
-                    "{\n"
-                    "  'type': 'directory',\n"
-                    "  'name': '//root/baz/',\n"
-                    "  'contents': [ {\n"
-                    "                  'type': 'file',\n"
-                    "                  'name': 'x',\n"
-                    "                  'external-contents': '//root/zab/a'\n"
-                    "                }\n"
-                    "              ]\n"
-                    "},\n"
-                    "{\n"
-                    "  'type': 'directory',\n"
-                    "  'name': '//root/baz/',\n"
-                    "  'contents': [ {\n"
-                    "                  'type': 'file',\n"
-                    "                  'name': 'y',\n"
-                    "                  'external-contents': '//root/zab/b'\n"
-                    "                }\n"
-                    "              ]\n"
                     "}\n"
                     "]\n"
                     "}",
@@ -1085,12 +1061,8 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
 
   std::error_code EC;
   checkContents(O->dir_begin("//root/", EC),
-                {"//root/file1", "//root/file2", "//root/baz", "//root/file3",
-                 "//root/foo", "//root/zab"});
+                {"//root/file1", "//root/file2", "//root/file3", "//root/foo"});
 
   checkContents(O->dir_begin("//root/foo/bar", EC),
                 {"//root/foo/bar/a", "//root/foo/bar/b"});
-
-  checkContents(O->dir_begin("//root/baz/", EC),
-                {"//root/baz/x", "//root/baz/y"});
 }
