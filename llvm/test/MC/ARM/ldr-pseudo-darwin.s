@@ -15,20 +15,20 @@
 .section __TEXT,b,regular,pure_instructions
 @ CHECK-LABEL: f3:
 f3:
-  ldr r0, =0x10001
+  ldr r0, =0x10002
 @ CHECK: ldr r0, Ltmp0
 
 @ loading multiple constants
 .section __TEXT,c,regular,pure_instructions
 @ CHECK-LABEL: f4:
 f4:
-  ldr r0, =0x10002
+  ldr r0, =0x10003
 @ CHECK: ldr r0, Ltmp1
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
-  ldr r0, =0x10003
+  ldr r0, =0x10004
 @ CHECK: ldr r0, Ltmp2
   adds r0, r0, #1
   adds r0, r0, #1
@@ -37,7 +37,7 @@ f4:
 .section __TEXT,d,regular,pure_instructions
 @ CHECK-LABEL: f5:
 f5:
-  ldr r0, =0x10004
+  ldr r0, =0x10005
 @ CHECK: ldr r0, Ltmp3
   adds r0, r0, #1
   adds r0, r0, #1
@@ -46,7 +46,7 @@ f5:
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
-  ldr r0, =0x10004
+  ldr r0, =0x10005
 @ CHECK: ldr r0, Ltmp4
   adds r0, r0, #1
   adds r0, r0, #1
@@ -117,7 +117,7 @@ f12:
 f13:
   adds r0, r0, #1
   adds r0, r0, #1
-  ldr r0, =0x101
+  ldr r0, =0x10008
 @ CHECK: ldr r0, Ltmp10
   adds r0, r0, #1
   adds r0, r0, #1
@@ -131,7 +131,7 @@ f13:
 
 @ usage in macro
 .macro useit_in_a_macro
-  ldr r0, =0x10008
+  ldr r0, =0x10009
   ldr r0, =baz
 .endm
 .section __TEXT,k,regular,pure_instructions
@@ -145,7 +145,7 @@ f14:
 .section __TEXT,l,regular,pure_instructions
 @ CHECK-LABEL: f15:
 f15:
-  ldr r0, =0x10001+8
+  ldr r0, =0x10001+9
 @ CHECK: ldr r0, Ltmp14
   adds r0, r0, #1
   ldr r0, =bar+4
@@ -159,27 +159,27 @@ f15:
 @ CHECK: .data_region
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp0:
-@ CHECK: .long 65537
+@ CHECK: .long 65538
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,c,regular,pure_instructions
 @ CHECK: .data_region
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp1:
-@ CHECK: .long 65538
+@ CHECK: .long 65539
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp2:
-@ CHECK: .long 65539
+@ CHECK: .long 65540
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,d,regular,pure_instructions
 @ CHECK: .data_region
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp3:
-@ CHECK: .long 65540
+@ CHECK: .long 65541
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp4:
-@ CHECK: .long 65540
+@ CHECK: .long 65541
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,e,regular,pure_instructions
@@ -220,7 +220,7 @@ f15:
 @ CHECK: .data_region
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp10:
-@ CHECK: .long 257
+@ CHECK: .long 65544
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp11:
 @ CHECK: .long bar
@@ -230,7 +230,7 @@ f15:
 @ CHECK: .data_region
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp12:
-@ CHECK: .long 65544
+@ CHECK: .long 65545
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp13:
 @ CHECK: .long baz
@@ -240,7 +240,7 @@ f15:
 @ CHECK: .data_region
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp14:
-@ CHECK: .long 65545
+@ CHECK: .long 65546
 @ CHECK: .p2align 2
 @ CHECK-LABEL: Ltmp15:
 @ CHECK: .long bar+4

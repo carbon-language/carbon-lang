@@ -15,20 +15,20 @@
 .section b,"ax",%progbits
 @ CHECK-LABEL: f3:
 f3:
-  ldr r0, =0x10001
+  ldr r0, =0x10002
 @ CHECK: ldr r0, .Ltmp[[TMP0:[0-9]+]]
 
 @ loading multiple constants
 .section c,"ax",%progbits
 @ CHECK-LABEL: f4:
 f4:
-  ldr r0, =0x10002
+  ldr r0, =0x10003
 @ CHECK: ldr r0, .Ltmp[[TMP1:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
-  ldr r0, =0x10003
+  ldr r0, =0x10004
 @ CHECK: ldr r0, .Ltmp[[TMP2:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
@@ -37,7 +37,7 @@ f4:
 .section d,"ax",%progbits
 @ CHECK-LABEL: f5:
 f5:
-  ldr r0, =0x10004
+  ldr r0, =0x10005
 @ CHECK: ldr r0, .Ltmp[[TMP3:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
@@ -46,7 +46,7 @@ f5:
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
-  ldr r0, =0x10004
+  ldr r0, =0x10005
 @ CHECK: ldr r0, .Ltmp[[TMP4:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
@@ -117,7 +117,7 @@ f12:
 f13:
   adds r0, r0, #1
   adds r0, r0, #1
-  ldr r0, =0x101
+  ldr r0, =0x10008
 @ CHECK: ldr r0, .Ltmp[[TMP10:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
@@ -131,7 +131,7 @@ f13:
 
 @ usage in macro
 .macro useit_in_a_macro
-  ldr r0, =0x10008
+  ldr r0, =0x10009
   ldr r0, =baz
 .endm
 .section k,"ax",%progbits
@@ -145,7 +145,7 @@ f14:
 .section l, "ax", %progbits
 @ CHECK-LABEL: f15:
 f15:
-  ldr r0, =0x10001+8
+  ldr r0, =0x10001+9
 @ CHECK: ldr r0, .Ltmp[[TMP14:[0-9]+]]
   adds r0, r0, #1
   ldr r0, =bar+4
@@ -158,21 +158,21 @@ f15:
 @ CHECK: .section b,"ax",%progbits
 @ CHECK: .p2align 2
 @ CHECK: .Ltmp[[TMP0]]
-@ CHECK: .long 65537
+@ CHECK: .long 65538
 
 @ CHECK: .section c,"ax",%progbits
 @ CHECK: .p2align 2
 @ CHECK: .Ltmp[[TMP1]]
-@ CHECK: .long 65538
-@ CHECK: .Ltmp[[TMP2]]
 @ CHECK: .long 65539
+@ CHECK: .Ltmp[[TMP2]]
+@ CHECK: .long 65540
 
 @ CHECK: .section d,"ax",%progbits
 @ CHECK: .p2align 2
 @ CHECK: .Ltmp[[TMP3]]
-@ CHECK: .long 65540
+@ CHECK: .long 65541
 @ CHECK: .Ltmp[[TMP4]]
-@ CHECK: .long 65540
+@ CHECK: .long 65541
 
 @ CHECK: .section e,"ax",%progbits
 @ CHECK: .p2align 2
@@ -202,20 +202,20 @@ f15:
 @ CHECK: .section j,"ax",%progbits
 @ CHECK: .p2align 2
 @ CHECK: .Ltmp[[TMP10]]
-@ CHECK: .long 257
+@ CHECK: .long 65544
 @ CHECK: .Ltmp[[TMP11]]
 @ CHECK: .long bar
 
 @ CHECK: .section k,"ax",%progbits
 @ CHECK: .p2align 2
 @ CHECK: .Ltmp[[TMP12]]
-@ CHECK: .long 65544
+@ CHECK: .long 65545
 @ CHECK: .Ltmp[[TMP13]]
 @ CHECK: .long baz
 
 @ CHECK: .section l,"ax",%progbits
 @ CHECK: .p2align 2
 @ CHECK: .Ltmp[[TMP14]]
-@ CHECK: .long 65545
+@ CHECK: .long 65546
 @ CHECK: .Ltmp[[TMP15]]
 @ CHECK: .long bar+4
