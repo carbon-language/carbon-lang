@@ -228,7 +228,8 @@ void MipsTargetStreamer::emitGPRestore(int Offset, SMLoc IDLoc,
 /// Emit a store instruction with an immediate offset.
 void MipsTargetStreamer::emitStoreWithImmOffset(
     unsigned Opcode, unsigned SrcReg, unsigned BaseReg, int64_t Offset,
-    unsigned ATReg, SMLoc IDLoc, const MCSubtargetInfo *STI) {
+    std::function<unsigned()> GetATReg, SMLoc IDLoc,
+    const MCSubtargetInfo *STI) {
   if (isInt<16>(Offset)) {
     emitRRI(Opcode, SrcReg, BaseReg, Offset, IDLoc, STI);
     return;
@@ -237,6 +238,10 @@ void MipsTargetStreamer::emitStoreWithImmOffset(
   // sw $8, offset($8) => lui $at, %hi(offset)
   //                      add $at, $at, $8
   //                      sw $8, %lo(offset)($at)
+
+  unsigned ATReg = GetATReg();
+  if (!ATReg)
+    return;
 
   unsigned LoOffset = Offset & 0x0000ffff;
   unsigned HiOffset = (Offset & 0xffff0000) >> 16;
@@ -1055,12 +1060,8 @@ bool MipsTargetELFStreamer::emitDirectiveCpRestore(
   if (!Pic || (getABI().IsN32() || getABI().IsN64()))
     return true;
 
-  unsigned ATReg = GetATReg();
-  if (!ATReg)
-    return false;
-
   // Store the $gp on the stack.
-  emitStoreWithImmOffset(Mips::SW, Mips::GP, Mips::SP, Offset, ATReg, IDLoc,
+  emitStoreWithImmOffset(Mips::SW, Mips::GP, Mips::SP, Offset, GetATReg, IDLoc,
                          STI);
   return true;
 }
