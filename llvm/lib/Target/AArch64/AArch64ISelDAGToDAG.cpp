@@ -1851,12 +1851,14 @@ static void getUsefulBitsForUse(SDNode *UserNode, APInt &UsefulBits,
     return getUsefulBitsFromBFM(SDValue(UserNode, 0), Orig, UsefulBits, Depth);
 
   case AArch64::STRBBui:
+  case AArch64::STURBBi:
     if (UserNode->getOperand(0) != Orig)
       return;
     UsefulBits &= APInt(UsefulBits.getBitWidth(), 0xff);
     return;
 
   case AArch64::STRHHui:
+  case AArch64::STURHHi:
     if (UserNode->getOperand(0) != Orig)
       return;
     UsefulBits &= APInt(UsefulBits.getBitWidth(), 0xffff);
