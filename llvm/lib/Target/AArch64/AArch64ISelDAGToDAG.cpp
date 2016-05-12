@@ -1125,7 +1125,7 @@ SDNode *AArch64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   ReplaceUses(SDValue(N, 0), LoadedVal);
   ReplaceUses(SDValue(N, 1), SDValue(Res, 0));
   ReplaceUses(SDValue(N, 2), SDValue(Res, 2));
-
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -1147,6 +1147,7 @@ SDNode *AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs,
         CurDAG->getTargetExtractSubreg(SubRegIdx + i, dl, VT, SuperReg));
 
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 1));
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -1179,6 +1180,7 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs,
 
   // Update the chain
   ReplaceUses(SDValue(N, NumVecs + 1), SDValue(Ld, 2));
+  CurDAG->RemoveDeadNode(N);
   return nullptr;
 }
 
@@ -1290,8 +1292,8 @@ SDNode *AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
   }
 
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 1));
-
-  return Ld;
+  CurDAG->RemoveDeadNode(N);
+  return nullptr;
 }
 
 SDNode *AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
@@ -1346,8 +1348,8 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
 
   // Update the Chain
   ReplaceUses(SDValue(N, NumVecs + 1), SDValue(Ld, 2));
-
-  return Ld;
+  CurDAG->RemoveDeadNode(N);
+  return nullptr;
 }
 
 SDNode *AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
@@ -2328,6 +2330,7 @@ void AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
 
   ReplaceUses(SDValue(N, 0), SDValue(CmpSwap, 0));
   ReplaceUses(SDValue(N, 1), SDValue(CmpSwap, 2));
+  CurDAG->RemoveDeadNode(N);
 }
 
 SDNode *AArch64DAGToDAGISel::SelectImpl(SDNode *Node) {
