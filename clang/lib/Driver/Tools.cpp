@@ -10483,12 +10483,12 @@ void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     } else {
       for (const auto &Lib : {"asan_dynamic", "asan_dynamic_runtime_thunk"})
         CmdArgs.push_back(TC.getCompilerRTArgString(Args, Lib));
-        // Make sure the dynamic runtime thunk is not optimized out at link time
-        // to ensure proper SEH handling.
-        CmdArgs.push_back(Args.MakeArgString("--undefined"));
-        CmdArgs.push_back(Args.MakeArgString(TC.getArch() == llvm::Triple::x86
-                                                 ? "___asan_seh_interceptor"
-                                                 : "__asan_seh_interceptor"));
+      // Make sure the dynamic runtime thunk is not optimized out at link time
+      // to ensure proper SEH handling.
+      CmdArgs.push_back(Args.MakeArgString("--undefined"));
+      CmdArgs.push_back(Args.MakeArgString(TC.getArch() == llvm::Triple::x86
+                                               ? "___asan_seh_interceptor"
+                                               : "__asan_seh_interceptor"));
     }
   }
 
