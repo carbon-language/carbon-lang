@@ -1044,11 +1044,12 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
     return SelectCode(N);
   }
 
-  SDValue const &V = N->getOperand(1);
+  SDValue V = N->getOperand(1);
   SDValue U;
   if (isValueExtension(V, Bits, U)) {
     SDValue R = CurDAG->getNode(N->getOpcode(), SDLoc(N), N->getValueType(0),
-      N->getOperand(0), U);
+                                N->getOperand(0), U);
+    ReplaceUses(N, R.getNode());
     return SelectCode(R.getNode());
   }
   return SelectCode(N);
