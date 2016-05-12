@@ -1578,6 +1578,7 @@ StringRef ELFDumper<ELFT>::getDynamicString(uint64_t Value) const {
 template <class ELFT>
 void ELFDumper<ELFT>::printValue(uint64_t Type, uint64_t Value) {
   raw_ostream &OS = W.getOStream();
+  const char* ConvChar = (opts::Output == opts::GNU) ? "0x%" PRIx64 : "0x%" PRIX64;
   switch (Type) {
   case DT_PLTREL:
     if (Value == DT_REL) {
@@ -1612,7 +1613,7 @@ void ELFDumper<ELFT>::printValue(uint64_t Type, uint64_t Value) {
   case DT_MIPS_RLD_MAP_REL:
   case DT_MIPS_PLTGOT:
   case DT_MIPS_OPTIONS:
-    OS << format("0x%" PRIX64, Value);
+    OS << format(ConvChar, Value);
     break;
   case DT_RELACOUNT:
   case DT_RELCOUNT:
@@ -1656,7 +1657,7 @@ void ELFDumper<ELFT>::printValue(uint64_t Type, uint64_t Value) {
     printFlags(Value, makeArrayRef(ElfDynamicDTFlags1), OS);
     break;
   default:
-    OS << format("0x%" PRIX64, Value);
+    OS << format(ConvChar, Value);
     break;
   }
 }
@@ -1709,7 +1710,7 @@ void ELFDumper<ELFT>::printDynamicTable() {
     const Elf_Dyn &Entry = *I;
     uintX_t Tag = Entry.getTag();
     ++I;
-    W.startLine() << "  " << format_hex(Tag, Is64 ? 18 : 10, true) << " "
+    W.startLine() << "  " << format_hex(Tag, Is64 ? 18 : 10, opts::Output != opts::GNU) << " "
                   << format("%-21s", getTypeString(Tag));
     printValue(Tag, Entry.getVal());
     OS << "\n";
