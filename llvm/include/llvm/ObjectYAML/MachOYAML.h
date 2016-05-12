@@ -30,7 +30,7 @@ struct FileHeader {
   uint32_t ncmds;
   uint32_t sizeofcmds;
   llvm::yaml::Hex32 flags;
-  // TODO: Need to handle the reserved field in mach_header_64
+  llvm::yaml::Hex32 reserved;
 };
 
 struct Object {

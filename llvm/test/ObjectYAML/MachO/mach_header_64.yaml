@@ -9,6 +9,7 @@ FileHeader:
   ncmds:           0
   sizeofcmds:      0
   flags:           0x00218085
+  reserved:        0x00000000
 ...
 
 # CHECK: --- !mach-o
@@ -20,4 +21,5 @@ FileHeader:
 # CHECK:   ncmds:           0
 # CHECK:   sizeofcmds:      0
 # CHECK:   flags:           0x00218085
+# CHECK:   reserved:        0x00000000
 # CHECK: ...

@@ -30,6 +30,10 @@ public:
               Obj.Header.magic == MachO::MH_CIGAM_64;
     memset(reinterpret_cast<void *>(&Header64), 0,
            sizeof(MachO::mach_header_64));
+    assert((is64Bit || Obj.Header.reserved == 0xDEADBEEFu) &&
+           "32-bit MachO has reserved in header");
+    assert((!is64Bit || Obj.Header.reserved != 0xDEADBEEFu) &&
+           "64-bit MachO has missing reserved in header");
   }
 
   Error writeMachO(raw_ostream &OS);
@@ -60,9 +64,11 @@ Error MachOWriter::writeHeader(raw_ostream &OS) {
   Header.ncmds = Obj.Header.ncmds;
   Header.sizeofcmds = Obj.Header.sizeofcmds;
   Header.flags = Obj.Header.flags;
+  Header64.reserved = Obj.Header.reserved;
 
-  if (is64Bit)
+  if (is64Bit) {
     OS.write((const char *)&Header64, sizeof(MachO::mach_header_64));
+  }
   else
     OS.write((const char *)&Header, sizeof(MachO::mach_header));
 

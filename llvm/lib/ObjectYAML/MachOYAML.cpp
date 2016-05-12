@@ -27,6 +27,8 @@ void MappingTraits<MachOYAML::FileHeader>::mapping(
   IO.mapRequired("ncmds", FileHdr.ncmds);
   IO.mapRequired("sizeofcmds", FileHdr.sizeofcmds);
   IO.mapRequired("flags", FileHdr.flags);
+  IO.mapOptional("reserved", FileHdr.reserved,
+                 static_cast<llvm::yaml::Hex32>(0xDEADBEEFu));
 }
 
 void MappingTraits<MachOYAML::Object>::mapping(IO &IO,
