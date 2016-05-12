@@ -32,6 +32,7 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Transforms/Utils/SanitizerStats.h"
 
 using namespace clang;
@@ -2367,7 +2368,33 @@ llvm::Constant *CodeGenFunction::EmitCheckSourceLocation(SourceLocation Loc) {
 
   PresumedLoc PLoc = getContext().getSourceManager().getPresumedLoc(Loc);
   if (PLoc.isValid()) {
-    auto FilenameGV = CGM.GetAddrOfConstantCString(PLoc.getFilename(), ".src");
+    StringRef FilenameString = PLoc.getFilename();
+
+    int PathComponentsToStrip =
+        CGM.getCodeGenOpts().EmitCheckPathComponentsToStrip;
+    if (PathComponentsToStrip < 0) {
+      assert(PathComponentsToStrip != INT_MIN);
+      int PathComponentsToKeep = -PathComponentsToStrip;
+      auto I = llvm::sys::path::rbegin(FilenameString);
+      auto E = llvm::sys::path::rend(FilenameString);
+      while (I != E && --PathComponentsToKeep)
+        ++I;
+
+      FilenameString = FilenameString.substr(I - E);
+    } else if (PathComponentsToStrip > 0) {
+      auto I = llvm::sys::path::begin(FilenameString);
+      auto E = llvm::sys::path::end(FilenameString);
+      while (I != E && PathComponentsToStrip--)
+        ++I;
+
+      if (I != E)
+        FilenameString =
+            FilenameString.substr(I - llvm::sys::path::begin(FilenameString));
+      else
+        FilenameString = llvm::sys::path::filename(FilenameString);
+    }
+
+    auto FilenameGV = CGM.GetAddrOfConstantCString(FilenameString, ".src");
     CGM.getSanitizerMetadata()->disableSanitizerForGlobal(
                           cast<llvm::GlobalVariable>(FilenameGV.getPointer()));
     Filename = FilenameGV.getPointer();
