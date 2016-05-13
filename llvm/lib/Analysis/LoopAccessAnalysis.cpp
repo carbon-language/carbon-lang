@@ -1874,6 +1874,9 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
 void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   if (CanVecMem) {
     OS.indent(Depth) << "Memory dependences are safe";
+    if (MaxSafeDepDistBytes != -1U)
+      OS << " with a maximum dependence distance of " << MaxSafeDepDistBytes
+         << " bytes";
     if (PtrRtChecking.Need)
       OS << " with run-time checks";
     OS << "\n";
