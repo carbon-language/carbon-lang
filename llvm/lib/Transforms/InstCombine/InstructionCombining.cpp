@@ -2201,7 +2201,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // truncated to i8 or i16.
   bool TruncCond = false;
   if (NewWidth > 0 && BitWidth > NewWidth &&
-      NewWidth >= DL.getLargestLegalIntTypeSize()) {
+      NewWidth >= DL.getLargestLegalIntTypeSizeInBits()) {
     TruncCond = true;
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
