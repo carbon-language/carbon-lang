@@ -76,11 +76,6 @@ static void MissingWeakApiFunction(const char *FnName) {
 // Only one Fuzzer per process.
 static Fuzzer *F;
 
-size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
-  assert(F);
-  return F->GetMD().Mutate(Data, Size, MaxSize);
-}
-
 struct CoverageController {
   static void Reset() {
     CHECK_WEAK_API_FUNCTION(__sanitizer_reset_coverage);
@@ -767,3 +762,11 @@ void Fuzzer::UpdateCorpusDistribution() {
 }
 
 } // namespace fuzzer
+
+extern "C" {
+
+size_t LLVMFuzzerMutate(uint8_t *Data, size_t Size, size_t MaxSize) {
+  assert(fuzzer::F);
+  return fuzzer::F->GetMD().Mutate(Data, Size, MaxSize);
+}
+}  // extern "C"
