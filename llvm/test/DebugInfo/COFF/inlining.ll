@@ -76,7 +76,7 @@
 ; OBJ:     TypeLeafKind: LF_ARGLIST (0x1201)
 ; OBJ:     NumArgs: 0
 ; OBJ:   }
-; OBJ:   ProcedureType (0x1001) {
+; OBJ:   Procedure (0x1001) {
 ; OBJ:     TypeLeafKind: LF_PROCEDURE (0x1008)
 ; OBJ:     ReturnType: void (0x3)
 ; OBJ:     NumParameters: 0

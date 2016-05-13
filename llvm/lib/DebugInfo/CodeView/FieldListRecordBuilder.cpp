@@ -31,7 +31,7 @@ void FieldListRecordBuilder::writeEnumerate(MemberAccess Access, uint64_t Value,
                                             StringRef Name) {
   TypeRecordBuilder &Builder = getBuilder();
 
-  Builder.writeTypeRecordKind(TypeRecordKind::Enumerate);
+  Builder.writeTypeRecordKind(TypeRecordKind::Enumerator);
   Builder.writeUInt16(static_cast<uint16_t>(Access));
   Builder.writeEncodedUnsignedInteger(Value);
   Builder.writeNullTerminatedString(Name);
@@ -43,7 +43,7 @@ void FieldListRecordBuilder::writeMember(MemberAccess Access, TypeIndex Type,
                                          uint64_t Offset, StringRef Name) {
   TypeRecordBuilder &Builder = getBuilder();
 
-  Builder.writeTypeRecordKind(TypeRecordKind::Member);
+  Builder.writeTypeRecordKind(TypeRecordKind::DataMember);
   Builder.writeUInt16(static_cast<uint16_t>(Access));
   Builder.writeTypeIndex(Type);
   Builder.writeEncodedUnsignedInteger(Offset);
@@ -114,7 +114,7 @@ void FieldListRecordBuilder::writeStaticMember(MemberAccess Access,
                                                TypeIndex Type, StringRef Name) {
   TypeRecordBuilder &Builder = getBuilder();
 
-  Builder.writeTypeRecordKind(TypeRecordKind::StaticMember);
+  Builder.writeTypeRecordKind(TypeRecordKind::StaticDataMember);
   Builder.writeUInt16(static_cast<uint16_t>(Access));
   Builder.writeTypeIndex(Type);
   Builder.writeNullTerminatedString(Name);
@@ -157,7 +157,7 @@ void FieldListRecordBuilder::writeVirtualBaseClass(
 void FieldListRecordBuilder::writeVirtualFunctionTablePointer(TypeIndex Type) {
   TypeRecordBuilder &Builder = getBuilder();
 
-  Builder.writeTypeRecordKind(TypeRecordKind::VirtualFunctionTablePointer);
+  Builder.writeTypeRecordKind(TypeRecordKind::VFPtr);
   Builder.writeUInt16(0);
   Builder.writeTypeIndex(Type);
 

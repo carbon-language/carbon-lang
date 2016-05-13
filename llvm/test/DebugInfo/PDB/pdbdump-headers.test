@@ -257,7 +257,7 @@
 ; EMPTY-NEXT:       )
 ; EMPTY-NEXT:     }
 ; EMPTY-NEXT:     {
-; EMPTY-NEXT:       ProcedureType (0x1001) {
+; EMPTY-NEXT:       Procedure (0x1001) {
 ; EMPTY-NEXT:         TypeLeafKind: LF_PROCEDURE (0x1008)
 ; EMPTY-NEXT:         ReturnType: int (0x74)
 ; EMPTY-NEXT:         CallingConvention: NearC (0x0)

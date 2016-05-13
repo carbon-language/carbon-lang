@@ -244,20 +244,20 @@ private:
 };
 
 // LF_MFUNC_ID
-class MemberFunctionIdRecord : public TypeRecord {
+class MemberFuncIdRecord : public TypeRecord {
 public:
-  MemberFunctionIdRecord(TypeIndex ClassType, TypeIndex FunctionType,
+  MemberFuncIdRecord(TypeIndex ClassType, TypeIndex FunctionType,
                          StringRef Name)
-      : TypeRecord(TypeRecordKind::MemberFunctionId), ClassType(ClassType),
+      : TypeRecord(TypeRecordKind::MemberFuncId), ClassType(ClassType),
         FunctionType(FunctionType), Name(Name) {}
 
-  static ErrorOr<MemberFunctionIdRecord> deserialize(TypeRecordKind Kind,
+  static ErrorOr<MemberFuncIdRecord> deserialize(TypeRecordKind Kind,
                                                      ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     StringRef Name;
     CV_DESERIALIZE(Data, L, Name);
 
-    return MemberFunctionIdRecord(L->ClassType, L->FunctionType, Name);
+    return MemberFuncIdRecord(L->ClassType, L->FunctionType, Name);
   }
 
   TypeIndex getClassType() const { return ClassType; }
@@ -276,22 +276,21 @@ private:
 };
 
 // LF_ARGLIST, LF_SUBSTR_LIST
-class StringListRecord : public TypeRecord {
+class ArgListRecord : public TypeRecord {
 public:
-  StringListRecord(TypeRecordKind Kind, ArrayRef<TypeIndex> Indices)
+  ArgListRecord(TypeRecordKind Kind, ArrayRef<TypeIndex> Indices)
       : TypeRecord(Kind), StringIndices(Indices) {}
 
-  static ErrorOr<StringListRecord> deserialize(TypeRecordKind Kind,
+  static ErrorOr<ArgListRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
-    if (Kind != TypeRecordKind::SubstringList &&
-        Kind != TypeRecordKind::ArgumentList)
+    if (Kind != TypeRecordKind::StringList && Kind != TypeRecordKind::ArgList)
       return std::make_error_code(std::errc::illegal_byte_sequence);
 
     const Layout *L = nullptr;
     ArrayRef<TypeIndex> Indices;
     CV_DESERIALIZE(Data, L, CV_ARRAY_FIELD_N(Indices, L->NumArgs));
 
-    return StringListRecord(Kind, Indices);
+    return ArgListRecord(Kind, Indices);
   }
 
   ArrayRef<TypeIndex> getIndices() const { return StringIndices; }
@@ -656,7 +655,7 @@ private:
   TypeIndex UnderlyingType;
 };
 
-class BitFieldRecord : TypeRecord {
+class BitFieldRecord : public TypeRecord {
 public:
   BitFieldRecord(TypeIndex Type, uint8_t BitSize, uint8_t BitOffset)
       : TypeRecord(TypeRecordKind::BitField), Type(Type), BitSize(BitSize),
@@ -673,20 +672,20 @@ private:
 };
 
 // LF_VTSHAPE
-class VirtualTableShapeRecord : TypeRecord {
+class VFTableShapeRecord : public TypeRecord {
 public:
-  explicit VirtualTableShapeRecord(ArrayRef<VirtualTableSlotKind> Slots)
-      : TypeRecord(TypeRecordKind::VirtualTableShape), SlotsRef(Slots) {}
-  explicit VirtualTableShapeRecord(std::vector<VirtualTableSlotKind> Slots)
-      : TypeRecord(TypeRecordKind::VirtualTableShape), Slots(Slots) {}
+  explicit VFTableShapeRecord(ArrayRef<VFTableSlotKind> Slots)
+      : TypeRecord(TypeRecordKind::VFTableShape), SlotsRef(Slots) {}
+  explicit VFTableShapeRecord(std::vector<VFTableSlotKind> Slots)
+      : TypeRecord(TypeRecordKind::VFTableShape), Slots(Slots) {}
 
-  static ErrorOr<VirtualTableShapeRecord> deserialize(TypeRecordKind Kind,
+  static ErrorOr<VFTableShapeRecord> deserialize(TypeRecordKind Kind,
                                                       ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     if (auto EC = consumeObject(Data, L))
       return EC;
 
-    std::vector<VirtualTableSlotKind> Slots;
+    std::vector<VFTableSlotKind> Slots;
     uint16_t Count = L->VFEntryCount;
     while (Count > 0) {
       if (Data.empty())
@@ -694,19 +693,19 @@ public:
 
       // Process up to 2 nibbles at a time (if there are at least 2 remaining)
       uint8_t Value = Data[0] & 0x0F;
-      Slots.push_back(static_cast<VirtualTableSlotKind>(Value));
+      Slots.push_back(static_cast<VFTableSlotKind>(Value));
       if (--Count > 0) {
         Value = (Data[0] & 0xF0) >> 4;
-        Slots.push_back(static_cast<VirtualTableSlotKind>(Value));
+        Slots.push_back(static_cast<VFTableSlotKind>(Value));
         --Count;
       }
       Data = Data.slice(1);
     }
 
-    return VirtualTableShapeRecord(Slots);
+    return VFTableShapeRecord(Slots);
   }
 
-  ArrayRef<VirtualTableSlotKind> getSlots() const {
+  ArrayRef<VFTableSlotKind> getSlots() const {
     if (!SlotsRef.empty())
       return SlotsRef;
     return Slots;
@@ -723,12 +722,12 @@ private:
   };
 
 private:
-  ArrayRef<VirtualTableSlotKind> SlotsRef;
-  std::vector<VirtualTableSlotKind> Slots;
+  ArrayRef<VFTableSlotKind> SlotsRef;
+  std::vector<VFTableSlotKind> Slots;
 };
 
 // LF_TYPESERVER2
-class TypeServer2Record : TypeRecord {
+class TypeServer2Record : public TypeRecord {
 public:
   TypeServer2Record(StringRef Guid, uint32_t Age, StringRef Name)
       : TypeRecord(TypeRecordKind::TypeServer2), Guid(Guid), Age(Age),
@@ -794,7 +793,7 @@ private:
 class FuncIdRecord : public TypeRecord {
 public:
   FuncIdRecord(TypeIndex ParentScope, TypeIndex FunctionType, StringRef Name)
-      : TypeRecord(TypeRecordKind::FunctionId), ParentScope(ParentScope),
+      : TypeRecord(TypeRecordKind::FuncId), ParentScope(ParentScope),
         FunctionType(FunctionType), Name(Name) {}
 
   static ErrorOr<FuncIdRecord> deserialize(TypeRecordKind Kind,
@@ -881,30 +880,30 @@ private:
 };
 
 // LF_VFTABLE
-class VirtualTableRecord : public TypeRecord {
+class VFTableRecord : public TypeRecord {
 public:
-  VirtualTableRecord(TypeIndex CompleteClass, TypeIndex OverriddenVFTable,
-                     uint32_t VFPtrOffset, StringRef Name,
-                     ArrayRef<StringRef> Methods)
-      : TypeRecord(TypeRecordKind::VirtualFunctionTable),
+  VFTableRecord(TypeIndex CompleteClass, TypeIndex OverriddenVFTable,
+                uint32_t VFPtrOffset, StringRef Name,
+                ArrayRef<StringRef> Methods)
+      : TypeRecord(TypeRecordKind::VFTable),
         CompleteClass(CompleteClass), OverriddenVFTable(OverriddenVFTable),
         VFPtrOffset(VFPtrOffset), Name(Name), MethodNamesRef(Methods) {}
-  VirtualTableRecord(TypeIndex CompleteClass, TypeIndex OverriddenVFTable,
-                     uint32_t VFPtrOffset, StringRef Name,
-                     const std::vector<StringRef> &Methods)
-      : TypeRecord(TypeRecordKind::VirtualFunctionTable),
+  VFTableRecord(TypeIndex CompleteClass, TypeIndex OverriddenVFTable,
+                uint32_t VFPtrOffset, StringRef Name,
+                const std::vector<StringRef> &Methods)
+      : TypeRecord(TypeRecordKind::VFTable),
         CompleteClass(CompleteClass), OverriddenVFTable(OverriddenVFTable),
         VFPtrOffset(VFPtrOffset), Name(Name), MethodNames(Methods) {}
 
-  static ErrorOr<VirtualTableRecord> deserialize(TypeRecordKind Kind,
-                                                 ArrayRef<uint8_t> &Data) {
+  static ErrorOr<VFTableRecord> deserialize(TypeRecordKind Kind,
+                                            ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     StringRef Name;
     std::vector<StringRef> Names;
     CV_DESERIALIZE(Data, L, Name, CV_ARRAY_FIELD_TAIL(Names));
 
-    return VirtualTableRecord(L->CompleteClass, L->OverriddenVFTable,
-                              L->VFPtrOffset, Name, Names);
+    return VFTableRecord(L->CompleteClass, L->OverriddenVFTable, L->VFPtrOffset,
+                         Name, Names);
   }
 
   TypeIndex getCompleteClass() const { return CompleteClass; }
@@ -996,9 +995,9 @@ private:
 class MethodOverloadListRecord : public TypeRecord {
 public:
   MethodOverloadListRecord(ArrayRef<OneMethodRecord> Methods)
-      : TypeRecord(TypeRecordKind::MethodList), MethodsRef(Methods) {}
+      : TypeRecord(TypeRecordKind::MethodOverloadList), MethodsRef(Methods) {}
   MethodOverloadListRecord(std::vector<OneMethodRecord> &Methods)
-      : TypeRecord(TypeRecordKind::MethodList), Methods(Methods) {}
+      : TypeRecord(TypeRecordKind::MethodOverloadList), Methods(Methods) {}
 
   static ErrorOr<MethodOverloadListRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
@@ -1078,7 +1077,7 @@ class DataMemberRecord : public TypeRecord {
 public:
   DataMemberRecord(MemberAccess Access, TypeIndex Type, uint64_t Offset,
                    StringRef Name)
-      : TypeRecord(TypeRecordKind::Member), Access(Access), Type(Type),
+      : TypeRecord(TypeRecordKind::DataMember), Access(Access), Type(Type),
         FieldOffset(Offset), Name(Name) {}
 
   static ErrorOr<DataMemberRecord> deserialize(TypeRecordKind Kind,
@@ -1114,8 +1113,8 @@ private:
 class StaticDataMemberRecord : public TypeRecord {
 public:
   StaticDataMemberRecord(MemberAccess Access, TypeIndex Type, StringRef Name)
-      : TypeRecord(TypeRecordKind::StaticMember), Access(Access), Type(Type),
-        Name(Name) {}
+      : TypeRecord(TypeRecordKind::StaticDataMember), Access(Access),
+        Type(Type), Name(Name) {}
 
   static ErrorOr<StaticDataMemberRecord> deserialize(TypeRecordKind Kind,
                                                      ArrayRef<uint8_t> &Data) {
@@ -1146,7 +1145,7 @@ private:
 class EnumeratorRecord : public TypeRecord {
 public:
   EnumeratorRecord(MemberAccess Access, APSInt Value, StringRef Name)
-      : TypeRecord(TypeRecordKind::Enumerate), Access(Access), Value(Value),
+      : TypeRecord(TypeRecordKind::Enumerator), Access(Access), Value(Value),
         Name(Name) {}
 
   static ErrorOr<EnumeratorRecord> deserialize(TypeRecordKind Kind,
@@ -1176,17 +1175,17 @@ private:
 };
 
 // LF_VFUNCTAB
-class VirtualFunctionPointerRecord : public TypeRecord {
+class VFPtrRecord : public TypeRecord {
 public:
-  VirtualFunctionPointerRecord(TypeIndex Type)
-      : TypeRecord(TypeRecordKind::VirtualFunctionTablePointer), Type(Type) {}
-  static ErrorOr<VirtualFunctionPointerRecord>
+  VFPtrRecord(TypeIndex Type)
+      : TypeRecord(TypeRecordKind::VFPtr), Type(Type) {}
+  static ErrorOr<VFPtrRecord>
   deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     if (auto EC = consumeObject(Data, L))
       return EC;
 
-    return VirtualFunctionPointerRecord(L->Type);
+    return VFPtrRecord(L->Type);
   }
 
   TypeIndex getType() const { return Type; }

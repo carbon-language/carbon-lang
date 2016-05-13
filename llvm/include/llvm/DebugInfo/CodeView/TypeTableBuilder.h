@@ -40,14 +40,14 @@ public:
   TypeIndex writeModifier(const ModifierRecord &Record);
   TypeIndex writeProcedure(const ProcedureRecord &Record);
   TypeIndex writeMemberFunction(const MemberFunctionRecord &Record);
-  TypeIndex writeArgumentList(const StringListRecord &Record);
+  TypeIndex writeArgList(const ArgListRecord &Record);
   TypeIndex writeRecord(TypeRecordBuilder &builder);
   TypeIndex writePointer(const PointerRecord &Record);
   TypeIndex writeArray(const ArrayRecord &Record);
   TypeIndex writeClass(const ClassRecord &Record);
   TypeIndex writeEnum(const EnumRecord &Record);
   TypeIndex writeBitField(const BitFieldRecord &Record);
-  TypeIndex writeVirtualTableShape(const VirtualTableShapeRecord &Record);
+  TypeIndex writeVFTableShape(const VFTableShapeRecord &Record);
 
   TypeIndex writeFieldList(FieldListRecordBuilder &FieldList);
   TypeIndex writeMethodList(MethodListRecordBuilder &MethodList);

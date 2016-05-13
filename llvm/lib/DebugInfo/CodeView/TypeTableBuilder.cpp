@@ -22,7 +22,7 @@ TypeTableBuilder::TypeTableBuilder() {}
 TypeTableBuilder::~TypeTableBuilder() {}
 
 TypeIndex TypeTableBuilder::writeModifier(const ModifierRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::Modifier);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeTypeIndex(Record.getModifiedType());
   Builder.writeUInt16(static_cast<uint16_t>(Record.getModifiers()));
@@ -31,7 +31,7 @@ TypeIndex TypeTableBuilder::writeModifier(const ModifierRecord &Record) {
 }
 
 TypeIndex TypeTableBuilder::writeProcedure(const ProcedureRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::Procedure);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeTypeIndex(Record.getReturnType());
   Builder.writeUInt8(static_cast<uint8_t>(Record.getCallConv()));
@@ -44,7 +44,7 @@ TypeIndex TypeTableBuilder::writeProcedure(const ProcedureRecord &Record) {
 
 TypeIndex
 TypeTableBuilder::writeMemberFunction(const MemberFunctionRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::MemberFunction);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeTypeIndex(Record.getReturnType());
   Builder.writeTypeIndex(Record.getClassType());
@@ -58,8 +58,8 @@ TypeTableBuilder::writeMemberFunction(const MemberFunctionRecord &Record) {
   return writeRecord(Builder);
 }
 
-TypeIndex TypeTableBuilder::writeArgumentList(const StringListRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::ArgumentList);
+TypeIndex TypeTableBuilder::writeArgList(const ArgListRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeUInt32(Record.getIndices().size());
   for (TypeIndex TI : Record.getIndices()) {
@@ -70,7 +70,7 @@ TypeIndex TypeTableBuilder::writeArgumentList(const StringListRecord &Record) {
 }
 
 TypeIndex TypeTableBuilder::writePointer(const PointerRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::Pointer);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeTypeIndex(Record.getReferentType());
   uint32_t flags = static_cast<uint32_t>(Record.getOptions()) |
@@ -91,7 +91,7 @@ TypeIndex TypeTableBuilder::writePointer(const PointerRecord &Record) {
 }
 
 TypeIndex TypeTableBuilder::writeArray(const ArrayRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::Array);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeTypeIndex(Record.getElementType());
   Builder.writeTypeIndex(Record.getIndexType());
@@ -102,7 +102,7 @@ TypeIndex TypeTableBuilder::writeArray(const ArrayRecord &Record) {
 }
 
 TypeIndex TypeTableBuilder::writeClass(const ClassRecord &Record) {
-  assert((Record.getKind() == TypeRecordKind::Structure) ||
+  assert((Record.getKind() == TypeRecordKind::Struct) ||
          (Record.getKind() == TypeRecordKind::Class) ||
          (Record.getKind() == TypeRecordKind::Union));
 
@@ -129,7 +129,7 @@ TypeIndex TypeTableBuilder::writeClass(const ClassRecord &Record) {
 }
 
 TypeIndex TypeTableBuilder::writeEnum(const EnumRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::Enum);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeUInt16(Record.getMemberCount());
   Builder.writeUInt16(static_cast<uint16_t>(Record.getOptions()));
@@ -145,7 +145,7 @@ TypeIndex TypeTableBuilder::writeEnum(const EnumRecord &Record) {
 }
 
 TypeIndex TypeTableBuilder::writeBitField(const BitFieldRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::BitField);
+  TypeRecordBuilder Builder(Record.getKind());
 
   Builder.writeTypeIndex(Record.getType());
   Builder.writeUInt8(Record.getBitSize());
@@ -154,11 +154,11 @@ TypeIndex TypeTableBuilder::writeBitField(const BitFieldRecord &Record) {
   return writeRecord(Builder);
 }
 
-TypeIndex TypeTableBuilder::writeVirtualTableShape(
-    const VirtualTableShapeRecord &Record) {
-  TypeRecordBuilder Builder(TypeRecordKind::VirtualTableShape);
+TypeIndex
+TypeTableBuilder::writeVFTableShape(const VFTableShapeRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
 
-  ArrayRef<VirtualTableSlotKind> Slots = Record.getSlots();
+  ArrayRef<VFTableSlotKind> Slots = Record.getSlots();
 
   Builder.writeUInt16(Slots.size());
   for (size_t SlotIndex = 0; SlotIndex < Slots.size(); SlotIndex += 2) {
