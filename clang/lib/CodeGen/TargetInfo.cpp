@@ -7878,7 +7878,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
       Kind = ARMABIInfo::AAPCS16_VFP;
     else if (CodeGenOpts.FloatABI == "hard" ||
              (CodeGenOpts.FloatABI != "soft" &&
-              Triple.getEnvironment() == llvm::Triple::GNUEABIHF))
+              (Triple.getEnvironment() == llvm::Triple::GNUEABIHF ||
+               Triple.getEnvironment() == llvm::Triple::EABIHF)))
       Kind = ARMABIInfo::AAPCS_VFP;
 
     return SetCGInfo(new ARMTargetCodeGenInfo(Types, Kind));
