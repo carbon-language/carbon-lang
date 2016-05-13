@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InMemoryXrefsDB.h"
+#include "InMemorySymbolIndex.h"
 #include "IncludeFixer.h"
-#include "XrefsDBManager.h"
+#include "SymbolIndexManager.h"
 #include "unittests/Tooling/RewriterTestContext.h"
 #include "clang/Tooling/Tooling.h"
 #include "gtest/gtest.h"
@@ -47,18 +47,19 @@ static bool runOnCode(tooling::ToolAction *ToolAction, StringRef Code,
 static std::string runIncludeFixer(
     StringRef Code,
     const std::vector<std::string> &ExtraArgs = std::vector<std::string>()) {
-  std::map<std::string, std::vector<std::string>> XrefsMap = {
+  std::map<std::string, std::vector<std::string>> SymbolsMap = {
       {"std::string", {"<string>"}},
       {"std::sting", {"\"sting\""}},
       {"std::string::size_type", {"<string>"}},
       {"a::b::foo", {"dir/otherdir/qux.h"}},
   };
-  auto XrefsDBMgr = llvm::make_unique<include_fixer::XrefsDBManager>();
-  XrefsDBMgr->addXrefsDB(
-      llvm::make_unique<include_fixer::InMemoryXrefsDB>(std::move(XrefsMap)));
+  auto SymbolIndexMgr = llvm::make_unique<include_fixer::SymbolIndexManager>();
+  SymbolIndexMgr->addSymbolIndex(
+      llvm::make_unique<include_fixer::InMemorySymbolIndex>(
+          std::move(SymbolsMap)));
 
   std::vector<clang::tooling::Replacement> Replacements;
-  IncludeFixerActionFactory Factory(*XrefsDBMgr, Replacements);
+  IncludeFixerActionFactory Factory(*SymbolIndexMgr, Replacements);
   runOnCode(&Factory, Code, "input.cc", ExtraArgs);
   clang::RewriterTestContext Context;
   clang::FileID ID = Context.createInMemoryFile("input.cc", Code);
@@ -84,7 +85,8 @@ TEST(IncludeFixer, Typo) {
       runIncludeFixer("#include \"foo.h\"\nstd::string::size_type foo;\n"));
 
   // string without "std::" can also be fixed since fixed db results go through
-  // XrefsDBManager, and XrefsDBManager matches unqualified identifiers too.
+  // SymbolIndexManager, and SymbolIndexManager matches unqualified identifiers
+  // too.
   EXPECT_EQ("#include <string>\nstring foo;\n",
             runIncludeFixer("string foo;\n"));
 }

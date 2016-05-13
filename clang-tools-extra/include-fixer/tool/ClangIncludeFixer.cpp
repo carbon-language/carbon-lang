@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InMemoryXrefsDB.h"
+#include "InMemorySymbolIndex.h"
 #include "IncludeFixer.h"
-#include "XrefsDBManager.h"
-#include "YamlXrefsDB.h"
+#include "SymbolIndexManager.h"
+#include "YamlSymbolIndex.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
@@ -53,13 +53,13 @@ int includeFixerMain(int argc, const char **argv) {
                           options.getSourcePathList());
 
   // Set up data source.
-  auto XrefsDBMgr = llvm::make_unique<include_fixer::XrefsDBManager>();
+  auto SymbolIndexMgr = llvm::make_unique<include_fixer::SymbolIndexManager>();
   switch (DatabaseFormat) {
   case fixed: {
     // Parse input and fill the database with it.
     // <symbol>=<header><, header...>
     // Multiple symbols can be given, separated by semicolons.
-    std::map<std::string, std::vector<std::string>> XrefsMap;
+    std::map<std::string, std::vector<std::string>> SymbolsMap;
     SmallVector<StringRef, 4> SemicolonSplits;
     StringRef(Input).split(SemicolonSplits, ";");
     for (StringRef Pair : SemicolonSplits) {
@@ -69,23 +69,24 @@ int includeFixerMain(int argc, const char **argv) {
       Split.second.split(CommaSplits, ",");
       for (StringRef Header : CommaSplits)
         Headers.push_back(Header.trim());
-      XrefsMap[Split.first.trim()] = std::move(Headers);
+      SymbolsMap[Split.first.trim()] = std::move(Headers);
     }
-    XrefsDBMgr->addXrefsDB(
-        llvm::make_unique<include_fixer::InMemoryXrefsDB>(std::move(XrefsMap)));
+    SymbolIndexMgr->addSymbolIndex(
+        llvm::make_unique<include_fixer::InMemorySymbolIndex>(
+            std::move(SymbolsMap)));
     break;
   }
   case yaml: {
-    llvm::ErrorOr<std::unique_ptr<include_fixer::YamlXrefsDB>> DB(nullptr);
+    llvm::ErrorOr<std::unique_ptr<include_fixer::YamlSymbolIndex>> DB(nullptr);
     if (!Input.empty()) {
-      DB = include_fixer::YamlXrefsDB::createFromFile(Input);
+      DB = include_fixer::YamlSymbolIndex::createFromFile(Input);
     } else {
       // If we don't have any input file, look in the directory of the first
       // file and its parents.
       SmallString<128> AbsolutePath(
           tooling::getAbsolutePath(options.getSourcePathList().front()));
       StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
-      DB = include_fixer::YamlXrefsDB::createFromDirectory(
+      DB = include_fixer::YamlSymbolIndex::createFromDirectory(
           Directory, "find_all_symbols_db.yaml");
     }
 
@@ -95,15 +96,15 @@ int includeFixerMain(int argc, const char **argv) {
       return 1;
     }
 
-    XrefsDBMgr->addXrefsDB(std::move(*DB));
+    SymbolIndexMgr->addSymbolIndex(std::move(*DB));
     break;
   }
   }
 
   // Now run our tool.
   std::vector<tooling::Replacement> Replacements;
-  include_fixer::IncludeFixerActionFactory Factory(*XrefsDBMgr, Replacements,
-                                                   MinimizeIncludePaths);
+  include_fixer::IncludeFixerActionFactory Factory(
+      *SymbolIndexMgr, Replacements, MinimizeIncludePaths);
 
   tool.run(&Factory); // Always succeeds.
 

@@ -58,8 +58,9 @@ private:
 class Action : public clang::ASTFrontendAction,
                public clang::ExternalSemaSource {
 public:
-  explicit Action(XrefsDBManager &XrefsDBMgr, bool MinimizeIncludePaths)
-      : XrefsDBMgr(XrefsDBMgr), MinimizeIncludePaths(MinimizeIncludePaths) {}
+  explicit Action(SymbolIndexManager &SymbolIndexMgr, bool MinimizeIncludePaths)
+      : SymbolIndexMgr(SymbolIndexMgr),
+        MinimizeIncludePaths(MinimizeIncludePaths) {}
 
   std::unique_ptr<clang::ASTConsumer>
   CreateASTConsumer(clang::CompilerInstance &Compiler,
@@ -246,7 +247,7 @@ private:
     DEBUG(llvm::dbgs() << " ...");
 
     std::string error_text;
-    auto SearchReply = XrefsDBMgr.search(Query);
+    auto SearchReply = SymbolIndexMgr.search(Query);
     DEBUG(llvm::dbgs() << SearchReply.size() << " replies\n");
     if (SearchReply.empty())
       return clang::TypoCorrection();
@@ -262,7 +263,7 @@ private:
   }
 
   /// The client to use to find cross-references.
-  XrefsDBManager &XrefsDBMgr;
+  SymbolIndexManager &SymbolIndexMgr;
 
   // Remeber things we looked up to avoid querying things twice.
   llvm::StringSet<> SeenQueries;
@@ -328,10 +329,10 @@ void PreprocessorHooks::InclusionDirective(
 } // namespace
 
 IncludeFixerActionFactory::IncludeFixerActionFactory(
-    XrefsDBManager &XrefsDBMgr,
+    SymbolIndexManager &SymbolIndexMgr,
     std::vector<clang::tooling::Replacement> &Replacements,
     bool MinimizeIncludePaths)
-    : XrefsDBMgr(XrefsDBMgr), Replacements(Replacements),
+    : SymbolIndexMgr(SymbolIndexMgr), Replacements(Replacements),
       MinimizeIncludePaths(MinimizeIncludePaths) {}
 
 IncludeFixerActionFactory::~IncludeFixerActionFactory() = default;
@@ -355,7 +356,7 @@ bool IncludeFixerActionFactory::runInvocation(
 
   // Run the parser, gather missing includes.
   auto ScopedToolAction =
-      llvm::make_unique<Action>(XrefsDBMgr, MinimizeIncludePaths);
+      llvm::make_unique<Action>(SymbolIndexMgr, MinimizeIncludePaths);
   Compiler.ExecuteAction(*ScopedToolAction);
 
   // Generate replacements.

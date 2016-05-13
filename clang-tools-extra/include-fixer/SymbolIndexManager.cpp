@@ -1,4 +1,4 @@
-//===-- XrefsDBManager.cpp - Managing multiple XrefsDBs ---------*- C++ -*-===//
+//===-- SymbolIndexManager.cpp - Managing multiple SymbolIndices-*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "XrefsDBManager.h"
+#include "SymbolIndexManager.h"
 #include "find-all-symbols/SymbolInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Debug.h"
@@ -18,14 +18,14 @@ namespace clang {
 namespace include_fixer {
 
 std::vector<std::string>
-XrefsDBManager::search(llvm::StringRef Identifier) const {
+SymbolIndexManager::search(llvm::StringRef Identifier) const {
   // The identifier may be fully qualified, so split it and get all the context
   // names.
   llvm::SmallVector<llvm::StringRef, 8> Names;
   Identifier.split(Names, "::");
 
   std::vector<clang::find_all_symbols::SymbolInfo> Symbols;
-  for (const auto &DB : XrefsDBs) {
+  for (const auto &DB : SymbolIndices) {
     auto Res = DB->search(Names.back().str());
     Symbols.insert(Symbols.end(), Res.begin(), Res.end());
   }

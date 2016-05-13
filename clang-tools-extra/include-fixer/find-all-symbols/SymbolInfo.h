@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_INCLUDE_FIXER_FIND_ALL_SYMBOLS_SYMBOL_INFO_H
-#define LLVM_CLANG_TOOLS_EXTRA_INCLUDE_FIXER_FIND_ALL_SYMBOLS_SYMBOL_INFO_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_INCLUDE_FIXER_FIND_ALL_SYMBOLS_SYMBOLINFO_H
+#define LLVM_CLANG_TOOLS_EXTRA_INCLUDE_FIXER_FIND_ALL_SYMBOLS_SYMBOLINFO_H
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
@@ -110,4 +110,4 @@ std::vector<SymbolInfo> ReadSymbolInfosFromYAML(llvm::StringRef Yaml);
 } // namespace find_all_symbols
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_INCLUDE_FIXER_FIND_ALL_SYMBOLS_SYMBOL_INFO_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_INCLUDE_FIXER_FIND_ALL_SYMBOLS_SYMBOLINFO_H
