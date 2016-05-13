@@ -1270,6 +1270,23 @@ namespace llvm {
       sys::swapByteOrder(C.size);
     };
 
+    inline void swapStruct(ident_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+    };
+
+    inline void swapStruct(fvmlib &C) {
+      sys::swapByteOrder(C.name);
+      sys::swapByteOrder(C.minor_version);
+      sys::swapByteOrder(C.header_addr);
+    };
+
+    inline void swapStruct(fvmlib_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+      swapStruct(C.fvmlib);
+    };
+
     // Get/Set functions from <mach-o/nlist.h>
 
     static inline uint16_t GET_LIBRARY_ORDINAL(uint16_t n_desc) {
