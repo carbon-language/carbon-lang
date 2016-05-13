@@ -40,6 +40,7 @@ template <> struct ScalarEnumerationTraits<ContextType> {
   static void enumeration(IO &io, ContextType &value) {
     io.enumCase(value, "Record", ContextType::Record);
     io.enumCase(value, "Namespace", ContextType::Namespace);
+    io.enumCase(value, "EnumDecl", ContextType::EnumDecl);
   }
 };
 
