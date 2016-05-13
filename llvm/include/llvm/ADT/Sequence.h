@@ -40,7 +40,7 @@ public:
   value_sequence_iterator(value_sequence_iterator &&Arg)
       : Value(std::move(Arg.Value)) {}
 
-  template <typename U>
+  template <typename U, typename Enabler = decltype(ValueT(std::declval<U>()))>
   value_sequence_iterator(U &&Value) : Value(std::forward<U>(Value)) {}
 
   value_sequence_iterator &operator+=(difference_type N) {
