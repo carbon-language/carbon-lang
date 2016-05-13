@@ -668,8 +668,7 @@ std::string
 ClangExpressionParser::GetClangTargetABI (const ArchSpec &target_arch)
 {
     std::string abi;
-    const llvm::Triple::ArchType machine = target_arch.GetMachine();
-    
+ 
     if(target_arch.IsMIPS())
     {
        switch (target_arch.GetFlags () & ArchSpec::eMIPSABI_mask)
