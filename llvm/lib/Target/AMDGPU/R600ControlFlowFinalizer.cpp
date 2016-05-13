@@ -429,13 +429,15 @@ private:
         if (Literals[i]->isImm()) {
             MILit.addImm(Literals[i]->getImm());
         } else {
-            MILit.addImm(0);
+            MILit.addGlobalAddress(Literals[i]->getGlobal(),
+                                   Literals[i]->getOffset());
         }
         if (i + 1 < e) {
           if (Literals[i + 1]->isImm()) {
             MILit.addImm(Literals[i + 1]->getImm());
           } else {
-            MILit.addImm(0);
+            MILit.addGlobalAddress(Literals[i + 1]->getGlobal(),
+                                   Literals[i + 1]->getOffset());
           }
         } else
           MILit.addImm(0);
