@@ -84,8 +84,8 @@ namespace llvm {
       LC_REQ_DYLD    = 0x80000000u
     };
 
-#define HANDLE_LOAD_COMMAND(LoadCommandName, LoadCommandValue) \
-    LoadCommandName = LoadCommandValue,
+#define HANDLE_LOAD_COMMAND(LCName, LCValue, LCStruct) \
+    LCName = LCValue,
 
     enum LoadCommandType : uint32_t {
       #include "llvm/Support/MachO.def"

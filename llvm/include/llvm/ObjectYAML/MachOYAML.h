@@ -65,8 +65,8 @@ template <> struct MappingTraits<std::unique_ptr<MachOYAML::LoadCommand>> {
                       std::unique_ptr<MachOYAML::LoadCommand> &LoadCommand);
 };
 
-#define HANDLE_LOAD_COMMAND(LoadCommandName, LoadCommandValue)                 \
-  io.enumCase(value, #LoadCommandName, MachO::LoadCommandName);
+#define HANDLE_LOAD_COMMAND(LCName, LCValue, LCStruct)                 \
+  io.enumCase(value, #LCName, MachO::LCName);
 
 template <> struct ScalarEnumerationTraits<MachO::LoadCommandType> {
   static void enumeration(IO &io, MachO::LoadCommandType &value) {
