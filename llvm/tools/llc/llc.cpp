@@ -25,8 +25,6 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DiagnosticInfo.h"
-#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -113,11 +111,6 @@ static cl::opt<bool> DiscardValueNames(
     cl::desc("Discard names from Value (other than GlobalValue)."),
     cl::init(false), cl::Hidden);
 
-static cl::opt<bool> ExitOnError(
-    "exit-on-error",
-    cl::desc("Exit as soon as an error is encountered."),
-    cl::init(false), cl::Hidden);
-
 static int compileModule(char **, LLVMContext &);
 
 static std::unique_ptr<tool_output_file>
@@ -188,17 +181,6 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
   return FDOut;
 }
 
-static void DiagnosticHandler(const DiagnosticInfo &DI, void *Context) {
-  bool *HasError = static_cast<bool *>(Context);
-  if (DI.getSeverity() == DS_Error)
-    *HasError = true;
-
-  DiagnosticPrinterRawOStream DP(errs());
-  errs() << LLVMContext::getDiagnosticMessagePrefix(DI.getSeverity()) << ": ";
-  DI.print(DP);
-  errs() << "\n";
-}
-
 // main - Entry point for the llc compiler.
 //
 int main(int argc, char **argv) {
@@ -232,12 +214,6 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
 
   Context.setDiscardValueNames(DiscardValueNames);
-
-  // Set a diagnostic handler that doesn't exit on the first error
-  if (!ExitOnError) {
-    bool HasError = false;
-    Context.setDiagnosticHandler(DiagnosticHandler, &HasError);
-  }
 
   // Compile the module TimeCompilations times to give better compile time
   // metrics.
@@ -464,12 +440,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
     }
 
     PM.run(*M);
-
-    if (!ExitOnError) {
-      auto HasError = *static_cast<bool *>(Context.getDiagnosticContext());
-      if (HasError)
-        return 1;
-    }
 
     // Compare the two outputs and make sure they're the same
     if (CompileTwice) {
