@@ -2250,6 +2250,13 @@ FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
     Src = DAG.getRegister(AMDGPU::ALU_CONST, MVT::f32);
     return true;
   }
+  case AMDGPU::MOV_IMM_GLOBAL_ADDR:
+    // Check if the Imm slot is used. Taken from below.
+    if (cast<ConstantSDNode>(Imm)->getZExtValue())
+      return false;
+    Imm = Src.getOperand(0);
+    Src = DAG.getRegister(AMDGPU::ALU_LITERAL_X, MVT::i32);
+    return true;
   case AMDGPU::MOV_IMM_I32:
   case AMDGPU::MOV_IMM_F32: {
     unsigned ImmReg = AMDGPU::ALU_LITERAL_X;
