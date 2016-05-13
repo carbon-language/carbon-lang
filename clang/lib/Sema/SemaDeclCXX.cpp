@@ -6463,7 +6463,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       ClassDecl->hasInheritedConstructor())
     DeclareImplicitDefaultConstructor(ClassDecl);
 
-  if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
+  if (ClassDecl->needsImplicitCopyConstructor()) {
     ++ASTContext::NumImplicitCopyConstructors;
 
     // If the properties or semantics of the copy constructor couldn't be
@@ -6482,7 +6482,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       DeclareImplicitMoveConstructor(ClassDecl);
   }
 
-  if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
+  if (ClassDecl->needsImplicitCopyAssignment()) {
     ++ASTContext::NumImplicitCopyAssignmentOperators;
 
     // If we have a dynamic class, then the copy assignment operator may be
@@ -6505,7 +6505,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       DeclareImplicitMoveAssignment(ClassDecl);
   }
 
-  if (!ClassDecl->hasUserDeclaredDestructor()) {
+  if (ClassDecl->needsImplicitDestructor()) {
     ++ASTContext::NumImplicitDestructors;
 
     // If we have a dynamic class, then the destructor may be virtual, so we
@@ -8946,6 +8946,7 @@ void Sema::CheckImplicitSpecialMemberDeclaration(Scope *S, FunctionDecl *FD) {
     if (auto *Acceptable = R.getAcceptableDecl(D))
       R.addDecl(Acceptable);
   R.resolveKind();
+  R.suppressDiagnostics();
 
   CheckFunctionDeclaration(S, FD, R, /*IsExplicitSpecialization*/false);
 }
