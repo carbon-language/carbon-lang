@@ -36,6 +36,8 @@ public:
   typedef typename BaseT::reference reference;
 
   value_sequence_iterator() = default;
+  value_sequence_iterator(const value_sequence_iterator &) = default;
+  value_sequence_iterator(value_sequence_iterator &&) = default;
 
   template <typename U>
   value_sequence_iterator(U &&Value) : Value(std::forward<U>(Value)) {}
