@@ -254,10 +254,10 @@ void CVTypeDumperImpl::visitTypeBegin(TypeLeafKind Leaf,
   // Reset Name to the empty string. If the visitor sets it, we know it.
   Name = "";
 
-  W.startLine() << getLeafTypeName(Leaf) << " {\n";
+  W.startLine() << getLeafTypeName(Leaf) << " ("
+                << HexNumber(CVTD.getNextTypeIndex()) << ") {\n";
   W.indent();
   W.printEnum("TypeLeafKind", unsigned(Leaf), makeArrayRef(LeafTypeNames));
-  W.printHex("TypeIndex", CVTD.getNextTypeIndex());
 }
 
 void CVTypeDumperImpl::visitTypeEnd(TypeLeafKind Leaf,
