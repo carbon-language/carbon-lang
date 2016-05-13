@@ -3293,7 +3293,7 @@ static void appendUserToPath(SmallVectorImpl<char> &Result) {
   Result.append(UID.begin(), UID.end());
 }
 
-VersionTuple visualstudio::getMSVCVersion(const Driver *D,
+VersionTuple visualstudio::getMSVCVersion(const Driver *D, const ToolChain &TC,
                                           const llvm::Triple &Triple,
                                           const llvm::opt::ArgList &Args,
                                           bool IsWindowsMSVC) {
@@ -3335,8 +3335,14 @@ VersionTuple visualstudio::getMSVCVersion(const Driver *D,
     if (Major || Minor || Micro)
       return VersionTuple(Major, Minor, Micro);
 
-    // FIXME: Consider bumping this to 19 (MSVC2015) soon.
-    return VersionTuple(18);
+    if (IsWindowsMSVC) {
+      VersionTuple MSVT = TC.getMSVCVersionFromExe();
+      if (!MSVT.empty())
+        return MSVT;
+
+      // FIXME: Consider bumping this to 19 (MSVC2015) soon.
+      return VersionTuple(18);
+    }
   }
   return VersionTuple();
 }
@@ -5226,7 +5232,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fms-compatibility-version=18.00 is default.
   VersionTuple MSVT = visualstudio::getMSVCVersion(
-      &D, getToolChain().getTriple(), Args, IsWindowsMSVC);
+      &D, getToolChain(), getToolChain().getTriple(), Args, IsWindowsMSVC);
   if (!MSVT.empty())
     CmdArgs.push_back(
         Args.MakeArgString("-fms-compatibility-version=" + MSVT.getAsString()));
