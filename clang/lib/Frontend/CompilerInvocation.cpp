@@ -403,8 +403,7 @@ static void setPGOUseInstrumentor(CodeGenOptions &Opts,
                                   const std::string ProfileName) {
   auto ReaderOrErr = llvm::IndexedInstrProfReader::create(ProfileName);
   // In error, return silently and let Clang PGOUse report the error message.
-  if (auto E = ReaderOrErr.takeError()) {
-    llvm::consumeError(std::move(E));
+  if (ReaderOrErr.getError()) {
     Opts.setProfileUse(CodeGenOptions::ProfileClangInstr);
     return;
   }

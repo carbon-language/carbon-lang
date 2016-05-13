@@ -800,21 +800,20 @@ void CodeGenPGO::loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader,
                                   bool IsInMainFile) {
   CGM.getPGOStats().addVisited(IsInMainFile);
   RegionCounts.clear();
-  llvm::Expected<llvm::InstrProfRecord> RecordExpected =
+  llvm::ErrorOr<llvm::InstrProfRecord> RecordErrorOr =
       PGOReader->getInstrProfRecord(FuncName, FunctionHash);
-  if (auto E = RecordExpected.takeError()) {
-    auto IPE = llvm::InstrProfError::take(std::move(E));
-    if (IPE == llvm::instrprof_error::unknown_function)
+  if (std::error_code EC = RecordErrorOr.getError()) {
+    if (EC == llvm::instrprof_error::unknown_function)
       CGM.getPGOStats().addMissing(IsInMainFile);
-    else if (IPE == llvm::instrprof_error::hash_mismatch)
+    else if (EC == llvm::instrprof_error::hash_mismatch)
       CGM.getPGOStats().addMismatched(IsInMainFile);
-    else if (IPE == llvm::instrprof_error::malformed)
+    else if (EC == llvm::instrprof_error::malformed)
       // TODO: Consider a more specific warning for this case.
       CGM.getPGOStats().addMismatched(IsInMainFile);
     return;
   }
   ProfRecord =
-      llvm::make_unique<llvm::InstrProfRecord>(std::move(RecordExpected.get()));
+      llvm::make_unique<llvm::InstrProfRecord>(std::move(RecordErrorOr.get()));
   RegionCounts = ProfRecord->Counts;
 }
 
