@@ -42,6 +42,43 @@ define <2 x i1> @ule(<2 x i8> %x) {
   ret <2 x i1> %cmp
 }
 
+; Zeros are special: they're ConstantAggregateZero.
+
+define <2 x i1> @sge_zero(<2 x i8> %x) {
+; CHECK-LABEL: @sge_zero(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt <2 x i8> %x, <i8 -1, i8 -1>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %cmp = icmp sge <2 x i8> %x, <i8 0, i8 0>
+  ret <2 x i1> %cmp
+}
+
+define <2 x i1> @uge_zero(<2 x i8> %x) {
+; CHECK-LABEL: @uge_zero(
+; CHECK-NEXT:    ret <2 x i1> <i1 true, i1 true>
+;
+  %cmp = icmp uge <2 x i8> %x, <i8 0, i8 0>
+  ret <2 x i1> %cmp
+}
+
+define <2 x i1> @sle_zero(<2 x i8> %x) {
+; CHECK-LABEL: @sle_zero(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i8> %x, <i8 1, i8 1>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %cmp = icmp sle <2 x i8> %x, <i8 0, i8 0>
+  ret <2 x i1> %cmp
+}
+
+define <2 x i1> @ule_zero(<2 x i8> %x) {
+; CHECK-LABEL: @ule_zero(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i8> %x, <i8 1, i8 1>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %cmp = icmp ule <2 x i8> %x, <i8 0, i8 0>
+  ret <2 x i1> %cmp
+}
+
 ; Weird types are ConstantVectors, not ConstantDataVectors. For an i3 type:
 ; Signed min = -4
 ; Unsigned min = 0
