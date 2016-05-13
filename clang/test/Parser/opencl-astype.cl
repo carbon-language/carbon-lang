@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -triple spir-unknown-unknown
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 void test_astype() {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only -triple spir-unknown-unknown
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 
 void test_storage_class_specs()
 {
