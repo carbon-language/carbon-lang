@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 namespace llvm {
 class Function;
@@ -35,6 +36,29 @@ class LLVMContext;
 class Metadata;
 class MDTuple;
 class MDNode;
+
+template <typename ErrT>
+class ProfErrorInfoBase : public ErrorInfo<ProfErrorInfoBase<ErrT>> {
+public:
+  ProfErrorInfoBase(ErrT Err) : Err(Err) {
+    assert(Err != ErrT::success && "Not an error");
+  }
+
+  virtual std::string message() const override = 0;
+
+  void log(raw_ostream &OS) const override { OS << message(); }
+
+  std::error_code convertToErrorCode() const override {
+    return make_error_code(Err);
+  }
+
+  ErrT get() const { return Err; }
+
+  static char ID;
+
+protected:
+  ErrT Err;
+};
 
 inline const char *getHotSectionPrefix() { return ".hot"; }
 inline const char *getUnlikelySectionPrefix() { return ".unlikely"; }
