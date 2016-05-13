@@ -29,7 +29,6 @@
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
-#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
