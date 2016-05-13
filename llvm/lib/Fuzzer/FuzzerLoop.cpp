@@ -549,9 +549,10 @@ UnitVector Fuzzer::FindExtraUnits(const UnitVector &Initial,
     PrintStats(Stat);
 
     size_t NewSize = Corpus.size();
+    assert(NewSize <= OldSize);
     Res.swap(Corpus);
 
-    if (NewSize == OldSize)
+    if (NewSize + 5 >= OldSize)
       break;
     OldSize = NewSize;
   }
