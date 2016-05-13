@@ -59,6 +59,9 @@ static std::string runIncludeFixer(
       SymbolInfo("foo", SymbolInfo::SymbolKind::Class, "\"dir/otherdir/qux.h\"",
                  1, {{SymbolInfo::ContextType::Namespace, "b"},
                      {SymbolInfo::ContextType::Namespace, "a"}}),
+      SymbolInfo("bar", SymbolInfo::SymbolKind::Class, "\"bar.h\"",
+                 1, {{SymbolInfo::ContextType::Namespace, "b"},
+                     {SymbolInfo::ContextType::Namespace, "a"}}),
   };
   auto SymbolIndexMgr = llvm::make_unique<include_fixer::SymbolIndexManager>();
   SymbolIndexMgr->addSymbolIndex(
@@ -137,6 +140,20 @@ TEST(IncludeFixer, MultipleMissingSymbols) {
             runIncludeFixer("std::string bar;\nstd::sting foo;\n"));
 }
 
+TEST(IncludeFixer, ScopedNamespaceSymbols) {
+  EXPECT_EQ("#include \"bar.h\"\nnamespace a { b::bar b; }\n",
+            runIncludeFixer("namespace a { b::bar b; }\n"));
+  EXPECT_EQ("#include \"bar.h\"\nnamespace A { a::b::bar b; }\n",
+            runIncludeFixer("namespace A { a::b::bar b; }\n"));
+  EXPECT_EQ("#include \"bar.h\"\nnamespace a { void func() { b::bar b; } }\n",
+            runIncludeFixer("namespace a { void func() { b::bar b; } }\n"));
+  EXPECT_EQ("namespace A { c::b::bar b; }\n",
+            runIncludeFixer("namespace A { c::b::bar b; }\n"));
+  // FIXME: The header should not be added here. Remove this after we support
+  // full match.
+  EXPECT_EQ("#include \"bar.h\"\nnamespace A { b::bar b; }\n",
+            runIncludeFixer("namespace A { b::bar b; }\n"));
+}
 } // namespace
 } // namespace include_fixer
 } // namespace clang

@@ -39,10 +39,10 @@ SymbolIndexManager::search(llvm::StringRef Identifier) const {
     if (Symbol.getName() == Names.back()) {
       bool IsMatched = true;
       auto SymbolContext = Symbol.getContexts().begin();
+      auto IdentiferContext = Names.rbegin() + 1; // Skip identifier name;
       // Match the remaining context names.
-      for (auto IdentiferContext = Names.rbegin() + 1;
-           IdentiferContext != Names.rend() &&
-           SymbolContext != Symbol.getContexts().end();
+      for (; IdentiferContext != Names.rend() &&
+             SymbolContext != Symbol.getContexts().end();
            ++IdentiferContext, ++SymbolContext) {
         if (SymbolContext->second != *IdentiferContext) {
           IsMatched = false;
@@ -50,7 +50,9 @@ SymbolIndexManager::search(llvm::StringRef Identifier) const {
         }
       }
 
-      if (IsMatched) {
+      // FIXME: Support full match. At this point, we only find symbols in
+      // database which end with the same contexts with the identifier.
+      if (IsMatched && IdentiferContext == Names.rend()) {
         // FIXME: file path should never be in the form of <...> or "...", but
         // the unit test with fixed database use <...> file path, which might
         // need to be changed.
