@@ -4774,7 +4774,6 @@ void Sema::checkClassLevelDLLAttribute(CXXRecordDecl *Class) {
 
   // The class is either imported or exported.
   const bool ClassExported = ClassAttr->getKind() == attr::DLLExport;
-  const bool ClassImported = !ClassExported;
 
   TemplateSpecializationKind TSK = Class->getTemplateSpecializationKind();
 
@@ -4809,9 +4808,12 @@ void Sema::checkClassLevelDLLAttribute(CXXRecordDecl *Class) {
         if (!Context.getTargetInfo().getCXXABI().isMicrosoft())
           continue;
 
-        // MSVC versions before 2015 don't export the move assignment operators,
-        // so don't attempt to import them if we have a definition.
-        if (ClassImported && MD->isMoveAssignmentOperator() &&
+        // MSVC versions before 2015 don't export the move assignment operators
+        // and move constructor, so don't attempt to import/export them if
+        // we have a definition.
+        auto *CXXC = dyn_cast<CXXConstructorDecl>(MD);
+        if ((MD->isMoveAssignmentOperator() ||
+             (CXXC && CXXC->isMoveConstructor())) &&
             !getLangOpts().isCompatibleWithMSVC(LangOptions::MSVC2015))
           continue;
       }
