@@ -104,17 +104,19 @@ TEST_F(FindAllSymbolsTest, VariableSymbols) {
       })";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol =
-      CreateSymbolInfo("xargc", SymbolInfo::Variable, HeaderName, 2, {});
+  SymbolInfo Symbol = CreateSymbolInfo(
+      "xargc", SymbolInfo::SymbolKind::Variable, HeaderName, 2, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("SSSS", SymbolInfo::Variable, HeaderName, 4,
-                            {{SymbolInfo::Namespace, "na"}});
+  Symbol =
+      CreateSymbolInfo("SSSS", SymbolInfo::SymbolKind::Variable, HeaderName, 4,
+                       {{SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo(
-      "XXXX", SymbolInfo::Variable, HeaderName, 5,
-      {{SymbolInfo::Namespace, "nb"}, {SymbolInfo::Namespace, "na"}});
+  Symbol =
+      CreateSymbolInfo("XXXX", SymbolInfo::SymbolKind::Variable, HeaderName, 5,
+                       {{SymbolInfo::ContextType::Namespace, "nb"},
+                        {SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
 }
 
@@ -128,11 +130,12 @@ TEST_F(FindAllSymbolsTest, ExternCSymbols) {
       })";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol =
-      CreateSymbolInfo("C_Func", SymbolInfo::Function, HeaderName, 3, {});
+  SymbolInfo Symbol = CreateSymbolInfo(
+      "C_Func", SymbolInfo::SymbolKind::Function, HeaderName, 3, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("C_struct", SymbolInfo::Class, HeaderName, 4, {});
+  Symbol = CreateSymbolInfo("C_struct", SymbolInfo::SymbolKind::Class,
+                            HeaderName, 4, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 }
 
@@ -152,13 +155,18 @@ TEST_F(FindAllSymbolsTest, CXXRecordSymbols) {
       )";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol =
-      CreateSymbolInfo("Glob", SymbolInfo::Class, HeaderName, 2, {});
+  SymbolInfo Symbol = CreateSymbolInfo("Glob", SymbolInfo::SymbolKind::Class,
+                                       HeaderName, 2, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("A", SymbolInfo::Class, HeaderName, 6,
-                            {{SymbolInfo::Namespace, "na"}});
+  Symbol = CreateSymbolInfo("A", SymbolInfo::SymbolKind::Class, HeaderName, 6,
+                            {{SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
+
+  Symbol = CreateSymbolInfo("AAA", SymbolInfo::SymbolKind::Class, HeaderName, 7,
+                            {{SymbolInfo::ContextType::Record, "A"},
+                             {SymbolInfo::ContextType::Namespace, "na"}});
+  EXPECT_FALSE(hasSymbol(Symbol));
 }
 
 TEST_F(FindAllSymbolsTest, CXXRecordSymbolsTemplate) {
@@ -179,8 +187,8 @@ TEST_F(FindAllSymbolsTest, CXXRecordSymbolsTemplate) {
       )";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol =
-      CreateSymbolInfo("T_TEMP", SymbolInfo::Class, HeaderName, 3, {});
+  SymbolInfo Symbol = CreateSymbolInfo("T_TEMP", SymbolInfo::SymbolKind::Class,
+                                       HeaderName, 3, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 }
 
@@ -200,21 +208,23 @@ TEST_F(FindAllSymbolsTest, FunctionSymbols) {
       )";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol = CreateSymbolInfo("gg", SymbolInfo::Function, HeaderName,
-                                       3, {{SymbolInfo::Namespace, "na"}});
+  SymbolInfo Symbol =
+      CreateSymbolInfo("gg", SymbolInfo::SymbolKind::Function, HeaderName, 3,
+                       {{SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("f", SymbolInfo::Function, HeaderName, 4,
-                            {{SymbolInfo::Namespace, "na"}});
+  Symbol = CreateSymbolInfo("f", SymbolInfo::SymbolKind::Function, HeaderName,
+                            4, {{SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("SSSFFF", SymbolInfo::Function, HeaderName, 5,
-                            {{SymbolInfo::Namespace, "na"}});
+  Symbol =
+      CreateSymbolInfo("SSSFFF", SymbolInfo::SymbolKind::Function, HeaderName,
+                       5, {{SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo(
-      "fun", SymbolInfo::Function, HeaderName, 10,
-      {{SymbolInfo::Namespace, "nb"}, {SymbolInfo::Namespace, "na"}});
+  Symbol = CreateSymbolInfo("fun", SymbolInfo::SymbolKind::Function, HeaderName,
+                            10, {{SymbolInfo::ContextType::Namespace, "nb"},
+                                 {SymbolInfo::ContextType::Namespace, "na"}});
   EXPECT_TRUE(hasSymbol(Symbol));
 }
 
@@ -227,30 +237,30 @@ TEST_F(FindAllSymbolsTest, NamespaceTest) {
       )";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol =
-      CreateSymbolInfo("X1", SymbolInfo::Variable, HeaderName, 2, {});
+  SymbolInfo Symbol = CreateSymbolInfo("X1", SymbolInfo::SymbolKind::Variable,
+                                       HeaderName, 2, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("X2", SymbolInfo::Variable, HeaderName, 3,
-                            {{SymbolInfo::Namespace, ""}});
+  Symbol = CreateSymbolInfo("X2", SymbolInfo::SymbolKind::Variable, HeaderName,
+                            3, {{SymbolInfo::ContextType::Namespace, ""}});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo(
-      "X3", SymbolInfo::Variable, HeaderName, 4,
-      {{SymbolInfo::Namespace, ""}, {SymbolInfo::Namespace, ""}});
+  Symbol = CreateSymbolInfo("X3", SymbolInfo::SymbolKind::Variable, HeaderName,
+                            4, {{SymbolInfo::ContextType::Namespace, ""},
+                                {SymbolInfo::ContextType::Namespace, ""}});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo(
-      "X4", SymbolInfo::Variable, HeaderName, 5,
-      {{SymbolInfo::Namespace, "nb"}, {SymbolInfo::Namespace, ""}});
+  Symbol = CreateSymbolInfo("X4", SymbolInfo::SymbolKind::Variable, HeaderName,
+                            5, {{SymbolInfo::ContextType::Namespace, "nb"},
+                                {SymbolInfo::ContextType::Namespace, ""}});
   EXPECT_TRUE(hasSymbol(Symbol));
 }
 
 TEST_F(FindAllSymbolsTest, DecayedTypeTest) {
   static const char Code[] = "void DecayedFunc(int x[], int y[10]) {}";
   runFindAllSymbols(Code);
-  SymbolInfo Symbol =
-      CreateSymbolInfo("DecayedFunc", SymbolInfo::Function, HeaderName, 1, {});
+  SymbolInfo Symbol = CreateSymbolInfo(
+      "DecayedFunc", SymbolInfo::SymbolKind::Function, HeaderName, 1, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 }
 
@@ -262,15 +272,71 @@ TEST_F(FindAllSymbolsTest, CTypedefTest) {
       )";
   runFindAllSymbols(Code);
 
-  SymbolInfo Symbol =
-      CreateSymbolInfo("size_t_", SymbolInfo::TypedefName, HeaderName, 2, {});
+  SymbolInfo Symbol = CreateSymbolInfo(
+      "size_t_", SymbolInfo::SymbolKind::TypedefName, HeaderName, 2, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("X", SymbolInfo::TypedefName, HeaderName, 3, {});
+  Symbol = CreateSymbolInfo("X", SymbolInfo::SymbolKind::TypedefName,
+                            HeaderName, 3, {});
   EXPECT_TRUE(hasSymbol(Symbol));
 
-  Symbol = CreateSymbolInfo("XX", SymbolInfo::TypedefName, HeaderName, 4, {});
+  Symbol = CreateSymbolInfo("XX", SymbolInfo::SymbolKind::TypedefName,
+                            HeaderName, 4, {});
   EXPECT_TRUE(hasSymbol(Symbol));
+}
+
+TEST_F(FindAllSymbolsTest, EnumTest) {
+  static const char Code[] = R"(
+      enum Glob_E { G1, G2 };
+      enum class Altitude { high='h', low='l'};
+      enum { A1, A2 };
+      class A {
+      public:
+        enum A_ENUM { X1, X2 };
+      };
+      )";
+  runFindAllSymbols(Code);
+
+  SymbolInfo Symbol = CreateSymbolInfo(
+      "Glob_E", SymbolInfo::SymbolKind::EnumDecl, HeaderName, 2, {});
+  EXPECT_TRUE(hasSymbol(Symbol));
+
+  Symbol = CreateSymbolInfo("G1", SymbolInfo::SymbolKind::EnumConstantDecl,
+                            HeaderName, 2,
+                            {{SymbolInfo::ContextType::EnumDecl, "Glob_E"}});
+  EXPECT_TRUE(hasSymbol(Symbol));
+
+  Symbol = CreateSymbolInfo("G2", SymbolInfo::SymbolKind::EnumConstantDecl,
+                            HeaderName, 2,
+                            {{SymbolInfo::ContextType::EnumDecl, "Glob_E"}});
+  EXPECT_TRUE(hasSymbol(Symbol));
+
+  Symbol = CreateSymbolInfo("Altitude", SymbolInfo::SymbolKind::EnumDecl,
+                            HeaderName, 3, {});
+  EXPECT_TRUE(hasSymbol(Symbol));
+  Symbol = CreateSymbolInfo("high", SymbolInfo::SymbolKind::EnumConstantDecl,
+                            HeaderName, 3,
+                            {{SymbolInfo::ContextType::EnumDecl, "Altitude"}});
+  EXPECT_FALSE(hasSymbol(Symbol));
+
+  Symbol = CreateSymbolInfo("A1", SymbolInfo::SymbolKind::EnumConstantDecl,
+                            HeaderName, 4,
+                            {{SymbolInfo::ContextType::EnumDecl, ""}});
+  EXPECT_TRUE(hasSymbol(Symbol));
+  Symbol = CreateSymbolInfo("A2", SymbolInfo::SymbolKind::EnumConstantDecl,
+                            HeaderName, 4,
+                            {{SymbolInfo::ContextType::EnumDecl, ""}});
+  EXPECT_TRUE(hasSymbol(Symbol));
+
+  Symbol =
+      CreateSymbolInfo("A_ENUM", SymbolInfo::SymbolKind::EnumDecl, HeaderName,
+                       7, {{SymbolInfo::ContextType::Record, "A"}});
+  EXPECT_FALSE(hasSymbol(Symbol));
+
+  Symbol = CreateSymbolInfo("X1", SymbolInfo::SymbolKind::EnumDecl, HeaderName,
+                            7, {{SymbolInfo::ContextType::EnumDecl, "A_ENUM"},
+                                {SymbolInfo::ContextType::Record, "A"}});
+  EXPECT_FALSE(hasSymbol(Symbol));
 }
 
 } // namespace find_all_symbols

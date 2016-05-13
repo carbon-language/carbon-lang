@@ -49,6 +49,9 @@ template <> struct ScalarEnumerationTraits<SymbolKind> {
     io.enumCase(value, "Function", SymbolKind::Function);
     io.enumCase(value, "Class", SymbolKind::Class);
     io.enumCase(value, "TypedefName", SymbolKind::TypedefName);
+    io.enumCase(value, "EnumDecl", SymbolKind::EnumDecl);
+    io.enumCase(value, "EnumConstantDecl", SymbolKind::EnumConstantDecl);
+    io.enumCase(value, "Unknown", SymbolKind::Unknown);
   }
 };
 

@@ -28,7 +28,8 @@ InMemoryXrefsDB::InMemoryXrefsDB(
                               *IdentiferContext);
       }
 
-      SymbolInfo Symbol(Names.back(), SymbolInfo::Class, Header, Contexts, 1);
+      SymbolInfo Symbol(Names.back(), SymbolInfo::SymbolKind::Class, Header,
+                        Contexts, 1);
       this->LookupTable[Symbol.getName()].push_back(Symbol);
     }
   }

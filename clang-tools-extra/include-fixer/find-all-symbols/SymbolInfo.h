@@ -25,18 +25,21 @@ namespace find_all_symbols {
 class SymbolInfo {
 public:
   /// \brief The SymbolInfo Type.
-  enum SymbolKind {
+  enum class SymbolKind {
     Function,
     Class,
     Variable,
     TypedefName,
+    EnumDecl,
+    EnumConstantDecl,
     Unknown,
   };
 
   /// \brief The Context Type.
-  enum ContextType {
+  enum class ContextType {
     Namespace, // Symbols declared in a namespace.
     Record,    // Symbols declared in a class.
+    EnumDecl,  // Enum constants declared in a enum declaration.
   };
 
   /// \brief A pair of <ContextType, ContextName>.
@@ -44,7 +47,7 @@ public:
 
   // The default constructor is required by YAML traits in
   // LLVM_YAML_IS_DOCUMENT_LIST_VECTOR.
-  SymbolInfo() : Type(Unknown), LineNumber(-1) {};
+  SymbolInfo() : Type(SymbolKind::Unknown), LineNumber(-1) {};
 
   SymbolInfo(llvm::StringRef Name, SymbolKind Type, llvm::StringRef FilePath,
              const std::vector<Context> &Contexts, int LineNumber);
