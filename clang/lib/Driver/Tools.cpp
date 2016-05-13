@@ -8991,7 +8991,9 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
     bool IsNaN2008 = mips::isNaN2008(Args, ToolChain.getTriple());
     if (mips::isUCLibc(Args))
       LibName = IsNaN2008 ? "ld-uClibc-mipsn8.so.0" : "ld-uClibc.so.0";
-    else if (!ToolChain.getTriple().hasEnvironment()) {
+    else if (!ToolChain.getTriple().hasEnvironment() &&
+             ToolChain.getTriple().getVendor() ==
+                 llvm::Triple::VendorType::MipsTechnologies) {
       bool LE = (ToolChain.getTriple().getArch() == llvm::Triple::mipsel) ||
                 (ToolChain.getTriple().getArch() == llvm::Triple::mips64el);
       LibName = LE ? "ld-musl-mipsel.so.1" : "ld-musl-mips.so.1";
