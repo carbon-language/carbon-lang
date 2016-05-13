@@ -47,7 +47,7 @@ public:
 
   // The default constructor is required by YAML traits in
   // LLVM_YAML_IS_DOCUMENT_LIST_VECTOR.
-  SymbolInfo() : Type(SymbolKind::Unknown), LineNumber(-1) {};
+  SymbolInfo() : Type(SymbolKind::Unknown), LineNumber(-1) {}
 
   SymbolInfo(llvm::StringRef Name, SymbolKind Type, llvm::StringRef FilePath,
              int LineNumber, const std::vector<Context> &Contexts);
