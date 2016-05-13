@@ -37,7 +37,8 @@ public:
 
   value_sequence_iterator() = default;
   value_sequence_iterator(const value_sequence_iterator &) = default;
-  value_sequence_iterator(value_sequence_iterator &&) = default;
+  value_sequence_iterator(value_sequence_iterator &&Arg)
+      : Value(std::move(Arg.Value)) {}
 
   template <typename U>
   value_sequence_iterator(U &&Value) : Value(std::forward<U>(Value)) {}
