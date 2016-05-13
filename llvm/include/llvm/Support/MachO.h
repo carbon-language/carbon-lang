@@ -1235,6 +1235,41 @@ namespace llvm {
       sys::swapByteOrder(C);
     }
 
+    inline void swapStruct(prebind_cksum_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+      sys::swapByteOrder(C.cksum);
+    };
+
+    inline void swapStruct(twolevel_hints_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+      sys::swapByteOrder(C.offset);
+      sys::swapByteOrder(C.nhints);
+    };
+
+    inline void swapStruct(prebound_dylib_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+      sys::swapByteOrder(C.name);
+      sys::swapByteOrder(C.nmodules);
+      sys::swapByteOrder(C.linked_modules);
+    };
+
+    inline void swapStruct(fvmfile_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+      sys::swapByteOrder(C.name);
+      sys::swapByteOrder(C.header_addr);
+    };
+
+    inline void swapStruct(symseg_command &C) {
+      sys::swapByteOrder(C.cmd);
+      sys::swapByteOrder(C.cmdsize);
+      sys::swapByteOrder(C.offset);
+      sys::swapByteOrder(C.size);
+    };
+
     // Get/Set functions from <mach-o/nlist.h>
 
     static inline uint16_t GET_LIBRARY_ORDINAL(uint16_t n_desc) {
