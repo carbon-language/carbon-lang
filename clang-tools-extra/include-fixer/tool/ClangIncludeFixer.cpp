@@ -62,18 +62,20 @@ int includeFixerMain(int argc, const char **argv) {
     std::map<std::string, std::vector<std::string>> SymbolsMap;
     SmallVector<StringRef, 4> SemicolonSplits;
     StringRef(Input).split(SemicolonSplits, ";");
+    std::vector<find_all_symbols::SymbolInfo> Symbols;
     for (StringRef Pair : SemicolonSplits) {
       auto Split = Pair.split('=');
       std::vector<std::string> Headers;
       SmallVector<StringRef, 4> CommaSplits;
       Split.second.split(CommaSplits, ",");
       for (StringRef Header : CommaSplits)
-        Headers.push_back(Header.trim());
-      SymbolsMap[Split.first.trim()] = std::move(Headers);
+        Symbols.push_back(find_all_symbols::SymbolInfo(
+            Split.first.trim(),
+            find_all_symbols::SymbolInfo::SymbolKind::Unknown, Header.trim(), 1,
+            {}));
     }
     SymbolIndexMgr->addSymbolIndex(
-        llvm::make_unique<include_fixer::InMemorySymbolIndex>(
-            std::move(SymbolsMap)));
+        llvm::make_unique<include_fixer::InMemorySymbolIndex>(Symbols));
     break;
   }
   case yaml: {

@@ -21,8 +21,7 @@ namespace include_fixer {
 /// Xref database with fixed content.
 class InMemorySymbolIndex : public SymbolIndex {
 public:
-  InMemorySymbolIndex(
-      const std::map<std::string, std::vector<std::string>> &LookupTable);
+  InMemorySymbolIndex(const std::vector<find_all_symbols::SymbolInfo> &Symbols);
 
   std::vector<clang::find_all_symbols::SymbolInfo>
   search(llvm::StringRef Identifier) override;

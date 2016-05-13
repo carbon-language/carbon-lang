@@ -70,8 +70,8 @@ namespace clang {
 namespace find_all_symbols {
 
 SymbolInfo::SymbolInfo(llvm::StringRef Name, SymbolKind Type,
-                       llvm::StringRef FilePath,
-                       const std::vector<Context> &Contexts, int LineNumber)
+                       llvm::StringRef FilePath, int LineNumber,
+                       const std::vector<Context> &Contexts)
     : Name(Name), Type(Type), FilePath(FilePath), Contexts(Contexts),
       LineNumber(LineNumber) {}
 

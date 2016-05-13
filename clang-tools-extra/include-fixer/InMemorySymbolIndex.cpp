@@ -15,24 +15,9 @@ namespace clang {
 namespace include_fixer {
 
 InMemorySymbolIndex::InMemorySymbolIndex(
-    const std::map<std::string, std::vector<std::string>> &LookupTable) {
-  for (const auto &Entry : LookupTable) {
-    llvm::StringRef Identifier(Entry.first);
-    llvm::SmallVector<llvm::StringRef, 8> Names;
-    Identifier.split(Names, "::");
-    for (const auto &Header : Entry.second) {
-      std::vector<SymbolInfo::Context> Contexts;
-      for (auto IdentiferContext = Names.rbegin() + 1;
-           IdentiferContext != Names.rend(); ++IdentiferContext) {
-        Contexts.emplace_back(SymbolInfo::ContextType::Namespace,
-                              *IdentiferContext);
-      }
-
-      SymbolInfo Symbol(Names.back(), SymbolInfo::SymbolKind::Class, Header,
-                        Contexts, 1);
-      this->LookupTable[Symbol.getName()].push_back(Symbol);
-    }
-  }
+    const std::vector<SymbolInfo> &Symbols) {
+  for (const auto &Symbol : Symbols)
+    LookupTable[Symbol.getName()].push_back(Symbol);
 }
 
 std::vector<SymbolInfo>

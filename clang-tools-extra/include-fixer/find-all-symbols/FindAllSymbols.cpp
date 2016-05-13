@@ -92,7 +92,7 @@ llvm::Optional<SymbolInfo> CreateSymbolInfo(const NamedDecl *ND,
     return llvm::None;
 
   return SymbolInfo(ND->getNameAsString(), Type, FilePath.str(),
-                    GetContexts(ND), SM.getExpansionLineNumber(Loc));
+                    SM.getExpansionLineNumber(Loc), GetContexts(ND));
 }
 
 } // namespace

@@ -50,7 +50,7 @@ public:
   SymbolInfo() : Type(SymbolKind::Unknown), LineNumber(-1) {};
 
   SymbolInfo(llvm::StringRef Name, SymbolKind Type, llvm::StringRef FilePath,
-             const std::vector<Context> &Contexts, int LineNumber);
+             int LineNumber, const std::vector<Context> &Contexts);
 
   /// \brief Get symbol name.
   llvm::StringRef getName() const;

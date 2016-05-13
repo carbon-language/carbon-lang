@@ -13,11 +13,12 @@
 #include "unittests/Tooling/RewriterTestContext.h"
 #include "clang/Tooling/Tooling.h"
 #include "gtest/gtest.h"
-using namespace clang;
 
 namespace clang {
 namespace include_fixer {
 namespace {
+
+using find_all_symbols::SymbolInfo;
 
 static bool runOnCode(tooling::ToolAction *ToolAction, StringRef Code,
                       StringRef FileName,
@@ -47,16 +48,21 @@ static bool runOnCode(tooling::ToolAction *ToolAction, StringRef Code,
 static std::string runIncludeFixer(
     StringRef Code,
     const std::vector<std::string> &ExtraArgs = std::vector<std::string>()) {
-  std::map<std::string, std::vector<std::string>> SymbolsMap = {
-      {"std::string", {"<string>"}},
-      {"std::sting", {"\"sting\""}},
-      {"std::string::size_type", {"<string>"}},
-      {"a::b::foo", {"dir/otherdir/qux.h"}},
+  std::vector<SymbolInfo> Symbols = {
+      SymbolInfo("string", SymbolInfo::SymbolKind::Class, "<string>", 1,
+                 {{SymbolInfo::ContextType::Namespace, "std"}}),
+      SymbolInfo("sting", SymbolInfo::SymbolKind::Class, "\"sting\"", 1,
+                 {{SymbolInfo::ContextType::Namespace, "std"}}),
+      SymbolInfo("size_type", SymbolInfo::SymbolKind::Variable, "<string>", 1,
+                 {{SymbolInfo::ContextType::Namespace, "string"},
+                  {SymbolInfo::ContextType::Namespace, "std"}}),
+      SymbolInfo("foo", SymbolInfo::SymbolKind::Class, "\"dir/otherdir/qux.h\"",
+                 1, {{SymbolInfo::ContextType::Namespace, "b"},
+                     {SymbolInfo::ContextType::Namespace, "a"}}),
   };
   auto SymbolIndexMgr = llvm::make_unique<include_fixer::SymbolIndexManager>();
   SymbolIndexMgr->addSymbolIndex(
-      llvm::make_unique<include_fixer::InMemorySymbolIndex>(
-          std::move(SymbolsMap)));
+      llvm::make_unique<include_fixer::InMemorySymbolIndex>(Symbols));
 
   std::vector<clang::tooling::Replacement> Replacements;
   IncludeFixerActionFactory Factory(*SymbolIndexMgr, Replacements);
