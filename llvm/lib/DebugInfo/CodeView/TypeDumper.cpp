@@ -280,6 +280,7 @@ void CVTypeDumperImpl::visitStringId(TypeLeafKind Leaf,
   // Put this in CVUDTNames so it gets printed with LF_UDT_SRC_LINE.
   Name = String.getString();
 }
+
 void CVTypeDumperImpl::visitArgList(TypeLeafKind Leaf, ArgListRecord &Args) {
   auto Indices = Args.getIndices();
   uint32_t Size = Indices.size();

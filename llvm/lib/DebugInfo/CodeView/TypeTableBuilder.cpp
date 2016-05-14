@@ -128,6 +128,23 @@ TypeIndex TypeTableBuilder::writeClass(const ClassRecord &Record) {
   return writeRecord(Builder);
 }
 
+TypeIndex TypeTableBuilder::writeUnion(const UnionRecord &Record) {
+  TypeRecordBuilder Builder(TypeRecordKind::Union);
+  Builder.writeUInt16(Record.getMemberCount());
+  uint16_t Flags =
+      static_cast<uint16_t>(Record.getOptions()) |
+      (static_cast<uint16_t>(Record.getHfa()) << ClassRecord::HfaKindShift);
+  Builder.writeUInt16(Flags);
+  Builder.writeTypeIndex(Record.getFieldList());
+  Builder.writeEncodedUnsignedInteger(Record.getSize());
+  Builder.writeNullTerminatedString(Record.getName());
+  if ((Record.getOptions() & ClassOptions::HasUniqueName) !=
+      ClassOptions::None) {
+    Builder.writeNullTerminatedString(Record.getUniqueName());
+  }
+  return writeRecord(Builder);
+}
+
 TypeIndex TypeTableBuilder::writeEnum(const EnumRecord &Record) {
   TypeRecordBuilder Builder(Record.getKind());
 
@@ -172,6 +189,70 @@ TypeTableBuilder::writeVFTableShape(const VFTableShapeRecord &Record) {
   return writeRecord(Builder);
 }
 
+TypeIndex
+TypeTableBuilder::writeVFTable(const VFTableRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  Builder.writeTypeIndex(Record.getCompleteClass());
+  Builder.writeTypeIndex(Record.getOverriddenVTable());
+  Builder.writeUInt32(Record.getVFPtrOffset());
+
+  // Sum up the lengths of the null-terminated names.
+  size_t NamesLen = Record.getName().size() + 1;
+  for (StringRef MethodName : Record.getMethodNames())
+    NamesLen += MethodName.size() + 1;
+
+  Builder.writeUInt32(NamesLen);
+  Builder.writeNullTerminatedString(Record.getName());
+  for (StringRef MethodName : Record.getMethodNames())
+    Builder.writeNullTerminatedString(MethodName);
+
+  return writeRecord(Builder);
+}
+
+TypeIndex TypeTableBuilder::writeStringId(const StringIdRecord &Record) {
+  TypeRecordBuilder Builder(TypeRecordKind::StringId);
+  Builder.writeTypeIndex(Record.getId());
+  Builder.writeNullTerminatedString(Record.getString());
+  return writeRecord(Builder);
+}
+
+TypeIndex
+TypeTableBuilder::writeUdtSourceLine(const UdtSourceLineRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  Builder.writeTypeIndex(Record.getUDT());
+  Builder.writeTypeIndex(Record.getSourceFile());
+  Builder.writeUInt32(Record.getLineNumber());
+  return writeRecord(Builder);
+}
+
+TypeIndex
+TypeTableBuilder::writeFuncId(const FuncIdRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  Builder.writeTypeIndex(Record.getParentScope());
+  Builder.writeTypeIndex(Record.getFunctionType());
+  Builder.writeNullTerminatedString(Record.getName());
+  return writeRecord(Builder);
+}
+
+TypeIndex
+TypeTableBuilder::writeMemberFuncId(const MemberFuncIdRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  Builder.writeTypeIndex(Record.getClassType());
+  Builder.writeTypeIndex(Record.getFunctionType());
+  Builder.writeNullTerminatedString(Record.getName());
+  return writeRecord(Builder);
+}
+
+TypeIndex
+TypeTableBuilder::writeBuildInfo(const BuildInfoRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  assert(Record.getArgs().size() <= UINT16_MAX);
+  Builder.writeUInt16(Record.getArgs().size());
+  for (TypeIndex Arg : Record.getArgs())
+    Builder.writeTypeIndex(Arg);
+  return writeRecord(Builder);
+}
+
 TypeIndex TypeTableBuilder::writeRecord(TypeRecordBuilder &Builder) {
   return writeRecord(Builder.str());
 }
@@ -182,9 +263,34 @@ TypeIndex TypeTableBuilder::writeFieldList(FieldListRecordBuilder &FieldList) {
   return writeRecord(FieldList.str());
 }
 
-TypeIndex
-TypeTableBuilder::writeMethodList(MethodListRecordBuilder &MethodList) {
+TypeIndex TypeTableBuilder::writeMethodOverloadList(
+    const MethodOverloadListRecord &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  for (const OneMethodRecord &Method : Record.getMethods()) {
+    uint16_t Flags = static_cast<uint16_t>(Method.getAccess());
+    Flags |= static_cast<uint16_t>(Method.getKind())
+             << MemberAttributes::MethodKindShift;
+    Flags |= static_cast<uint16_t>(Method.getOptions());
+    Builder.writeUInt16(Flags);
+    Builder.writeUInt16(0); // padding
+    Builder.writeTypeIndex(Method.getType());
+    if (Method.isIntroducingVirtual()) {
+      assert(Method.getVFTableOffset() >= 0);
+      Builder.writeInt32(Method.getVFTableOffset());
+    } else {
+      assert(Method.getVFTableOffset() == -1);
+    }
+  }
+
   // TODO: Split the list into multiple records if it's longer than 64KB, using
   // a subrecord of TypeRecordKind::Index to chain the records together.
-  return writeRecord(MethodList.str());
+  return writeRecord(Builder);
+}
+
+TypeIndex TypeTableBuilder::writeTypeServer2(const TypeServer2Record &Record) {
+  TypeRecordBuilder Builder(Record.getKind());
+  Builder.writeGuid(Record.getGuid());
+  Builder.writeUInt32(Record.getAge());
+  Builder.writeNullTerminatedString(Record.getName());
+  return writeRecord(Builder);
 }

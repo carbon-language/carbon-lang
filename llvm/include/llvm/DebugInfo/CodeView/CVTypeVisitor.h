@@ -14,6 +14,7 @@
 #include "llvm/DebugInfo/CodeView/RecordIterator.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/TypeStream.h"
 #include "llvm/Support/ErrorOr.h"
 
 namespace llvm {
@@ -110,6 +111,7 @@ public:
   /// Visits individual member records of a field list record. Member records do
   /// not describe their own length, and need special handling.
   void visitFieldList(TypeLeafKind Leaf, ArrayRef<uint8_t> FieldData) {
+    auto *DerivedThis = static_cast<Derived *>(this);
     while (!FieldData.empty()) {
       const ulittle16_t *LeafPtr;
       if (!CVTypeVisitor::consumeObject(FieldData, LeafPtr))
@@ -119,7 +121,7 @@ public:
       default:
         // Field list records do not describe their own length, so we cannot
         // continue parsing past an unknown member type.
-        visitUnknownMember(Leaf);
+        DerivedThis->visitUnknownMember(Leaf);
         return parseError();
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
   case EnumName: {                                                             \
@@ -127,7 +129,7 @@ public:
     auto Result = Name##Record::deserialize(RK, FieldData);                    \
     if (Result.getError())                                                     \
       return parseError();                                                     \
-    static_cast<Derived *>(this)->visit##Name(Leaf, *Result);                  \
+    DerivedThis->visit##Name(Leaf, *Result);                                   \
     break;                                                                     \
   }
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)                \

@@ -12,8 +12,8 @@
 using namespace llvm;
 using namespace codeview;
 
-TypeRecordBuilder::TypeRecordBuilder(TypeRecordKind Kind) : Stream(Buffer),
-  Writer(Stream) {
+TypeRecordBuilder::TypeRecordBuilder(TypeRecordKind Kind)
+    : Stream(Buffer), Writer(Stream) {
   writeTypeRecordKind(Kind);
 }
 
@@ -102,6 +102,11 @@ void TypeRecordBuilder::writeNullTerminatedString(const char *Value) {
 void TypeRecordBuilder::writeNullTerminatedString(StringRef Value) {
   Stream.write(Value.data(), Value.size());
   writeUInt8(0);
+}
+
+void TypeRecordBuilder::writeGuid(StringRef Guid) {
+  assert(Guid.size() == 16);
+  Stream.write(Guid.data(), 16);
 }
 
 void TypeRecordBuilder::writeTypeIndex(TypeIndex TypeInd) {

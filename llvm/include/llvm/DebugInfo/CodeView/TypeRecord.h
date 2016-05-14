@@ -30,6 +30,9 @@ using llvm::support::ulittle32_t;
 /// Equvalent to CV_fldattr_t in cvinfo.h.
 struct MemberAttributes {
   ulittle16_t Attrs;
+  enum {
+    MethodKindShift = 2,
+  };
 
   /// Get the access specifier. Valid for any kind of member.
   MemberAccess getAccess() const {
@@ -39,7 +42,8 @@ struct MemberAttributes {
   /// Indicates if a method is defined with friend, virtual, static, etc.
   MethodKind getMethodKind() const {
     return MethodKind(
-        (unsigned(Attrs) & unsigned(MethodOptions::MethodKindMask)) >> 2);
+        (unsigned(Attrs) & unsigned(MethodOptions::MethodKindMask)) >>
+        MethodKindShift);
   }
 
   /// Get the flags that are not included in access control or method
@@ -74,6 +78,10 @@ public:
   MemberPointerInfo(TypeIndex ContainingType,
                     PointerToMemberRepresentation Representation)
       : ContainingType(ContainingType), Representation(Representation) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<MemberPointerInfo> deserialize(ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -120,6 +128,10 @@ public:
       : TypeRecord(TypeRecordKind::Modifier), ModifiedType(ModifiedType),
         Modifiers(Modifiers) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<ModifierRecord> deserialize(TypeRecordKind Kind,
                                              ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -154,6 +166,10 @@ public:
       : TypeRecord(TypeRecordKind::Procedure), ReturnType(ReturnType),
         CallConv(CallConv), Options(Options), ParameterCount(ParameterCount),
         ArgumentList(ArgumentList) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<ProcedureRecord> deserialize(TypeRecordKind Kind,
                                               ArrayRef<uint8_t> &Data) {
@@ -201,6 +217,10 @@ public:
         Options(Options), ParameterCount(ParameterCount),
         ArgumentList(ArgumentList),
         ThisPointerAdjustment(ThisPointerAdjustment) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<MemberFunctionRecord> deserialize(TypeRecordKind Kind,
                                                    ArrayRef<uint8_t> &Data) {
@@ -251,8 +271,12 @@ public:
       : TypeRecord(TypeRecordKind::MemberFuncId), ClassType(ClassType),
         FunctionType(FunctionType), Name(Name) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<MemberFuncIdRecord> deserialize(TypeRecordKind Kind,
-                                                     ArrayRef<uint8_t> &Data) {
+                                                 ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     StringRef Name;
     CV_DESERIALIZE(Data, L, Name);
@@ -281,6 +305,10 @@ public:
   ArgListRecord(TypeRecordKind Kind, ArrayRef<TypeIndex> Indices)
       : TypeRecord(Kind), StringIndices(Indices) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<ArgListRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
     if (Kind != TypeRecordKind::StringList && Kind != TypeRecordKind::ArgList)
@@ -303,7 +331,7 @@ private:
                          // ArgTypes[]: Type indicies of arguments
   };
 
-  ArrayRef<TypeIndex> StringIndices;
+  std::vector<TypeIndex> StringIndices;
 };
 
 // LF_POINTER
@@ -329,6 +357,10 @@ public:
       : TypeRecord(TypeRecordKind::Pointer), ReferentType(ReferentType),
         PtrKind(Kind), Mode(Mode), Options(Options), Size(Size),
         MemberInfo(Member) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<PointerRecord> deserialize(TypeRecordKind Kind,
                                             ArrayRef<uint8_t> &Data) {
@@ -421,6 +453,10 @@ public:
   NestedTypeRecord(TypeIndex Type, StringRef Name)
       : TypeRecord(TypeRecordKind::NestedType), Type(Type), Name(Name) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<NestedTypeRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -451,6 +487,10 @@ public:
               StringRef Name)
       : TypeRecord(TypeRecordKind::Array), ElementType(ElementType),
         IndexType(IndexType), Size(Size), Name(Name) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<ArrayRecord> deserialize(TypeRecordKind Kind,
                                           ArrayRef<uint8_t> &Data) {
@@ -489,6 +529,10 @@ protected:
         FieldList(FieldList), Name(Name), UniqueName(UniqueName) {}
 
 public:
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static const int HfaKindShift = 11;
   static const int HfaKindMask = 0x1800;
   static const int WinRTKindShift = 14;
@@ -518,6 +562,10 @@ public:
       : TagRecord(Kind, MemberCount, Options, FieldList, Name, UniqueName),
         Hfa(Hfa), WinRTKind(WinRTKind), DerivationList(DerivationList),
         VTableShape(VTableShape), Size(Size) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<ClassRecord> deserialize(TypeRecordKind Kind,
                                           ArrayRef<uint8_t> &Data) {
@@ -629,6 +677,9 @@ public:
                   UniqueName),
         UnderlyingType(UnderlyingType) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<EnumRecord> deserialize(TypeRecordKind Kind,
                                          ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -679,8 +730,12 @@ public:
   explicit VFTableShapeRecord(std::vector<VFTableSlotKind> Slots)
       : TypeRecord(TypeRecordKind::VFTableShape), Slots(Slots) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<VFTableShapeRecord> deserialize(TypeRecordKind Kind,
-                                                      ArrayRef<uint8_t> &Data) {
+                                                 ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     if (auto EC = consumeObject(Data, L))
       return EC;
@@ -733,6 +788,10 @@ public:
       : TypeRecord(TypeRecordKind::TypeServer2), Guid(Guid), Age(Age),
         Name(Name) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<TypeServer2Record> deserialize(TypeRecordKind Kind,
                                                 ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -766,6 +825,10 @@ public:
   StringIdRecord(TypeIndex Id, StringRef String)
       : TypeRecord(TypeRecordKind::StringId), Id(Id), String(String) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<StringIdRecord> deserialize(TypeRecordKind Kind,
                                              ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -795,6 +858,10 @@ public:
   FuncIdRecord(TypeIndex ParentScope, TypeIndex FunctionType, StringRef Name)
       : TypeRecord(TypeRecordKind::FuncId), ParentScope(ParentScope),
         FunctionType(FunctionType), Name(Name) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<FuncIdRecord> deserialize(TypeRecordKind Kind,
                                            ArrayRef<uint8_t> &Data) {
@@ -830,6 +897,10 @@ public:
       : TypeRecord(TypeRecordKind::UdtSourceLine), UDT(UDT),
         SourceFile(SourceFile), LineNumber(LineNumber) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<UdtSourceLineRecord> deserialize(TypeRecordKind Kind,
                                                   ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -858,7 +929,12 @@ private:
 class BuildInfoRecord : public TypeRecord {
 public:
   BuildInfoRecord(ArrayRef<TypeIndex> ArgIndices)
-      : TypeRecord(TypeRecordKind::Modifier), ArgIndices(ArgIndices) {}
+      : TypeRecord(TypeRecordKind::BuildInfo),
+        ArgIndices(ArgIndices.begin(), ArgIndices.end()) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<BuildInfoRecord> deserialize(TypeRecordKind Kind,
                                               ArrayRef<uint8_t> &Data) {
@@ -876,7 +952,7 @@ private:
     ulittle16_t NumArgs; // Number of arguments
                          // ArgTypes[]: Type indicies of arguments
   };
-  ArrayRef<TypeIndex> ArgIndices;
+  SmallVector<TypeIndex, 4> ArgIndices;
 };
 
 // LF_VFTABLE
@@ -894,6 +970,10 @@ public:
       : TypeRecord(TypeRecordKind::VFTable),
         CompleteClass(CompleteClass), OverriddenVFTable(OverriddenVFTable),
         VFPtrOffset(VFPtrOffset), Name(Name), MethodNames(Methods) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<VFTableRecord> deserialize(TypeRecordKind Kind,
                                             ArrayRef<uint8_t> &Data) {
@@ -943,11 +1023,15 @@ public:
         Options(Options), Access(Access), VFTableOffset(VFTableOffset),
         Name(Name) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<OneMethodRecord> deserialize(TypeRecordKind Kind,
                                               ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
     StringRef Name;
-    int32_t VFTableOffset = 0;
+    int32_t VFTableOffset = -1;
 
     CV_DESERIALIZE(Data, L, CV_CONDITIONAL_FIELD(
                                 VFTableOffset, L->Attrs.isIntroducedVirtual()),
@@ -994,17 +1078,19 @@ private:
 // LF_METHODLIST
 class MethodOverloadListRecord : public TypeRecord {
 public:
-  MethodOverloadListRecord(ArrayRef<OneMethodRecord> Methods)
-      : TypeRecord(TypeRecordKind::MethodOverloadList), MethodsRef(Methods) {}
   MethodOverloadListRecord(std::vector<OneMethodRecord> &Methods)
       : TypeRecord(TypeRecordKind::MethodOverloadList), Methods(Methods) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<MethodOverloadListRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
     std::vector<OneMethodRecord> Methods;
     while (!Data.empty()) {
       const Layout *L = nullptr;
-      int32_t VFTableOffset = 0;
+      int32_t VFTableOffset = -1;
       CV_DESERIALIZE(
           Data, L,
           CV_CONDITIONAL_FIELD(VFTableOffset, L->Attrs.isIntroducedVirtual()));
@@ -1019,11 +1105,7 @@ public:
     return MethodOverloadListRecord(Methods);
   }
 
-  ArrayRef<OneMethodRecord> getMethods() const {
-    if (!MethodsRef.empty())
-      return MethodsRef;
-    return Methods;
-  }
+  ArrayRef<OneMethodRecord> getMethods() const { return Methods; }
 
 private:
   struct Layout {
@@ -1035,7 +1117,6 @@ private:
     //   VFTableOffset: int32_t offset in vftable
   };
 
-  ArrayRef<OneMethodRecord> MethodsRef;
   std::vector<OneMethodRecord> Methods;
 };
 
@@ -1046,6 +1127,10 @@ public:
                          StringRef Name)
       : TypeRecord(TypeRecordKind::OverloadedMethod),
         NumOverloads(NumOverloads), MethodList(MethodList), Name(Name) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<OverloadedMethodRecord> deserialize(TypeRecordKind Kind,
                                                      ArrayRef<uint8_t> &Data) {
@@ -1079,6 +1164,10 @@ public:
                    StringRef Name)
       : TypeRecord(TypeRecordKind::DataMember), Access(Access), Type(Type),
         FieldOffset(Offset), Name(Name) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<DataMemberRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
@@ -1116,6 +1205,10 @@ public:
       : TypeRecord(TypeRecordKind::StaticDataMember), Access(Access),
         Type(Type), Name(Name) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<StaticDataMemberRecord> deserialize(TypeRecordKind Kind,
                                                      ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -1148,6 +1241,10 @@ public:
       : TypeRecord(TypeRecordKind::Enumerator), Access(Access), Value(Value),
         Name(Name) {}
 
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<EnumeratorRecord> deserialize(TypeRecordKind Kind,
                                                ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -1179,6 +1276,11 @@ class VFPtrRecord : public TypeRecord {
 public:
   VFPtrRecord(TypeIndex Type)
       : TypeRecord(TypeRecordKind::VFPtr), Type(Type) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
   static ErrorOr<VFPtrRecord>
   deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
     const Layout *L = nullptr;
@@ -1204,6 +1306,10 @@ public:
   BaseClassRecord(MemberAccess Access, TypeIndex Type, uint64_t Offset)
       : TypeRecord(TypeRecordKind::BaseClass), Access(Access), Type(Type),
         Offset(Offset) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<BaseClassRecord> deserialize(TypeRecordKind Kind,
                                               ArrayRef<uint8_t> &Data) {
@@ -1237,6 +1343,10 @@ public:
       : TypeRecord(TypeRecordKind::VirtualBaseClass), Access(Access),
         BaseType(BaseType), VBPtrType(VBPtrType), VBPtrOffset(Offset),
         VTableIndex(Index) {}
+
+  /// Rewrite member type indices with IndexMap. Returns false if a type index
+  /// is not in the map.
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
 
   static ErrorOr<VirtualBaseClassRecord> deserialize(TypeRecordKind Kind,
                                                      ArrayRef<uint8_t> &Data) {
