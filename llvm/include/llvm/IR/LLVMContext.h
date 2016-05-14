@@ -29,7 +29,6 @@ class MDString;
 class DICompositeType;
 class SMDiagnostic;
 class DiagnosticInfo;
-enum DiagnosticSeverity : char;
 template <typename T> class SmallVectorImpl;
 class Function;
 class DebugLoc;
@@ -172,10 +171,6 @@ public:
   /// getDiagnosticContext - Return the diagnostic context set by
   /// setDiagnosticContext.
   void *getDiagnosticContext() const;
-
-  /// \brief Get the prefix that should be printed in front of a diagnostic of
-  ///        the given \p Severity
-  static const char *getDiagnosticMessagePrefix(DiagnosticSeverity Severity);
 
   /// \brief Report a message to the currently installed diagnostic handler.
   ///

@@ -231,8 +231,7 @@ static bool isDiagnosticEnabled(const DiagnosticInfo &DI) {
   return true;
 }
 
-const char *
-LLVMContext::getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
+static const char *getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
   switch (Severity) {
   case DS_Error:
     return "error";
