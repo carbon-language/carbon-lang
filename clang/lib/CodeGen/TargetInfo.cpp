@@ -519,10 +519,10 @@ Address EmitVAArgInstr(CodeGenFunction &CGF, Address VAListAddr, QualType Ty,
 
   if (AI.isIndirect()) {
     assert(!AI.getPaddingType() &&
-           "Unepxected PaddingType seen in arginfo in generic VAArg emitter!");
+           "Unexpected PaddingType seen in arginfo in generic VAArg emitter!");
     assert(
         !AI.getIndirectRealign() &&
-        "Unepxected IndirectRealign seen in arginfo in generic VAArg emitter!");
+        "Unexpected IndirectRealign seen in arginfo in generic VAArg emitter!");
 
     auto TyInfo = CGF.getContext().getTypeInfoInChars(Ty);
     CharUnits TyAlignForABI = TyInfo.second;
@@ -537,13 +537,13 @@ Address EmitVAArgInstr(CodeGenFunction &CGF, Address VAListAddr, QualType Ty,
            "Unexpected ArgInfo Kind in generic VAArg emitter!");
 
     assert(!AI.getInReg() &&
-           "Unepxected InReg seen in arginfo in generic VAArg emitter!");
+           "Unexpected InReg seen in arginfo in generic VAArg emitter!");
     assert(!AI.getPaddingType() &&
-           "Unepxected PaddingType seen in arginfo in generic VAArg emitter!");
+           "Unexpected PaddingType seen in arginfo in generic VAArg emitter!");
     assert(!AI.getDirectOffset() &&
-           "Unepxected DirectOffset seen in arginfo in generic VAArg emitter!");
+           "Unexpected DirectOffset seen in arginfo in generic VAArg emitter!");
     assert(!AI.getCoerceToType() &&
-           "Unepxected CoerceToType seen in arginfo in generic VAArg emitter!");
+           "Unexpected CoerceToType seen in arginfo in generic VAArg emitter!");
 
     Address Temp = CGF.CreateMemTemp(Ty, "varet");
     Val = CGF.Builder.CreateVAArg(VAListAddr.getPointer(), CGF.ConvertType(Ty));
@@ -633,7 +633,7 @@ private:
   ABIArgInfo classifyArgumentType(QualType Ty) const;
 
   // DefaultABIInfo's classifyReturnType and classifyArgumentType are
-  // non-virtual, but computeInfo and EmitVAArg is virtual, so we
+  // non-virtual, but computeInfo and EmitVAArg are virtual, so we
   // overload them.
   void computeInfo(CGFunctionInfo &FI) const override {
     if (!getCXXABI().classifyReturnType(FI))
