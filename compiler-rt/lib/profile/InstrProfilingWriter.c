@@ -59,8 +59,11 @@ lprofCreateBufferIO(WriterCallback FileWriter, void *File) {
 }
 
 COMPILER_RT_VISIBILITY void lprofDeleteBufferIO(ProfBufferIO *BufferIO) {
-  if (DynamicBufferIOBuffer)
+  if (DynamicBufferIOBuffer) {
+    DynamicBufferIOBuffer = 0;
+    VPBufferSize = 0;
     FreeHook(DynamicBufferIOBuffer);
+  }
 }
 
 COMPILER_RT_VISIBILITY int
