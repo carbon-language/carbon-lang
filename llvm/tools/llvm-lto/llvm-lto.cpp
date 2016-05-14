@@ -109,9 +109,6 @@ static cl::opt<std::string> ThinLTOModuleId(
     cl::desc("For the module ID for the file to process, useful to "
              "match what is in the index."));
 
-static cl::opt<std::string>
-    ThinLTOCacheDir("thinlto-cache-dir", cl::desc("Enable ThinLTO caching."));
-
 static cl::opt<bool>
     SaveModuleFile("save-merged-module", cl::init(false),
                    cl::desc("Write merged LTO module to file before CodeGen"));
@@ -353,7 +350,6 @@ public:
   ThinLTOProcessing(const TargetOptions &Options) {
     ThinGenerator.setCodePICModel(RelocModel);
     ThinGenerator.setTargetOptions(Options);
-    ThinGenerator.setCacheDir(ThinLTOCacheDir);
 
     // Add all the exported symbols to the table of symbols to preserve.
     for (unsigned i = 0; i < ExportedSymbols.size(); ++i)
