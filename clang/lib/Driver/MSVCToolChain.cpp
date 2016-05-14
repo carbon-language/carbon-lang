@@ -38,8 +38,6 @@
     #define NOMINMAX
   #endif
   #include <windows.h>
-
-  #pragma comment(lib, "version.lib")
 #endif
 
 using namespace clang::driver;
