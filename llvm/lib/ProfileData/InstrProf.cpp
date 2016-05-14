@@ -27,50 +27,47 @@
 using namespace llvm;
 
 namespace {
-std::string getInstrProfErrString(instrprof_error Err) {
-  switch (Err) {
-  case instrprof_error::success:
-    return "Success";
-  case instrprof_error::eof:
-    return "End of File";
-  case instrprof_error::unrecognized_format:
-    return "Unrecognized instrumentation profile encoding format";
-  case instrprof_error::bad_magic:
-    return "Invalid instrumentation profile data (bad magic)";
-  case instrprof_error::bad_header:
-    return "Invalid instrumentation profile data (file header is corrupt)";
-  case instrprof_error::unsupported_version:
-    return "Unsupported instrumentation profile format version";
-  case instrprof_error::unsupported_hash_type:
-    return "Unsupported instrumentation profile hash type";
-  case instrprof_error::too_large:
-    return "Too much profile data";
-  case instrprof_error::truncated:
-    return "Truncated profile data";
-  case instrprof_error::malformed:
-    return "Malformed instrumentation profile data";
-  case instrprof_error::unknown_function:
-    return "No profile data available for function";
-  case instrprof_error::hash_mismatch:
-    return "Function control flow change detected (hash mismatch)";
-  case instrprof_error::count_mismatch:
-    return "Function basic block count change detected (counter mismatch)";
-  case instrprof_error::counter_overflow:
-    return "Counter overflow";
-  case instrprof_error::value_site_count_mismatch:
-    return "Function value site count change detected (counter mismatch)";
-  case instrprof_error::compress_failed:
-    return "Failed to compress data (zlib)";
-  case instrprof_error::uncompress_failed:
-    return "Failed to uncompress data (zlib)";
-  }
-  llvm_unreachable("A value of instrprof_error has no message.");
-}
-
 class InstrProfErrorCategoryType : public std::error_category {
   const char *name() const LLVM_NOEXCEPT override { return "llvm.instrprof"; }
   std::string message(int IE) const override {
-    return getInstrProfErrString(static_cast<instrprof_error>(IE));
+    instrprof_error E = static_cast<instrprof_error>(IE);
+    switch (E) {
+    case instrprof_error::success:
+      return "Success";
+    case instrprof_error::eof:
+      return "End of File";
+    case instrprof_error::unrecognized_format:
+      return "Unrecognized instrumentation profile encoding format";
+    case instrprof_error::bad_magic:
+      return "Invalid instrumentation profile data (bad magic)";
+    case instrprof_error::bad_header:
+      return "Invalid instrumentation profile data (file header is corrupt)";
+    case instrprof_error::unsupported_version:
+      return "Unsupported instrumentation profile format version";
+    case instrprof_error::unsupported_hash_type:
+      return "Unsupported instrumentation profile hash type";
+    case instrprof_error::too_large:
+      return "Too much profile data";
+    case instrprof_error::truncated:
+      return "Truncated profile data";
+    case instrprof_error::malformed:
+      return "Malformed instrumentation profile data";
+    case instrprof_error::unknown_function:
+      return "No profile data available for function";
+    case instrprof_error::hash_mismatch:
+      return "Function control flow change detected (hash mismatch)";
+    case instrprof_error::count_mismatch:
+      return "Function basic block count change detected (counter mismatch)";
+    case instrprof_error::counter_overflow:
+      return "Counter overflow";
+    case instrprof_error::value_site_count_mismatch:
+      return "Function value site count change detected (counter mismatch)";
+    case instrprof_error::compress_failed:
+      return "Failed to compress data (zlib)";
+    case instrprof_error::uncompress_failed:
+      return "Failed to uncompress data (zlib)";
+    }
+    llvm_unreachable("A value of instrprof_error has no message.");
   }
 };
 } // end anonymous namespace
@@ -107,12 +104,6 @@ void SoftInstrProfErrors::addError(instrprof_error IE) {
     llvm_unreachable("Not a soft error");
   }
 }
-
-std::string InstrProfError::message() const {
-  return getInstrProfErrString(Err);
-}
-
-template <> char ProfErrorInfoBase<instrprof_error>::ID = 0;
 
 std::string getPGOFuncName(StringRef RawFuncName,
                            GlobalValue::LinkageTypes Linkage,
@@ -223,8 +214,9 @@ void InstrProfSymtab::create(Module &M, bool InLTO) {
   finalizeSymtab();
 }
 
-Error collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
-                                bool doCompression, std::string &Result) {
+std::error_code
+collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
+                          bool doCompression, std::string &Result) {
   assert(NameStrs.size() && "No name data to emit");
 
   uint8_t Header[16], *P = Header;
@@ -246,12 +238,11 @@ Error collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
     unsigned HeaderLen = P - &Header[0];
     Result.append(HeaderStr, HeaderLen);
     Result += InputStr;
-    return Error::success();
+    return make_error_code(instrprof_error::success);
   };
 
-  if (!doCompression) {
+  if (!doCompression)
     return WriteStringToResult(0, UncompressedNameStrings);
-  }
 
   SmallVector<char, 128> CompressedNameStrings;
   zlib::Status Success =
@@ -259,7 +250,7 @@ Error collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
                      zlib::BestSizeCompression);
 
   if (Success != zlib::StatusOK)
-    return make_error<InstrProfError>(instrprof_error::compress_failed);
+    return make_error_code(instrprof_error::compress_failed);
 
   return WriteStringToResult(
       CompressedNameStrings.size(),
@@ -273,8 +264,9 @@ StringRef getPGOFuncNameVarInitializer(GlobalVariable *NameVar) {
   return NameStr;
 }
 
-Error collectPGOFuncNameStrings(const std::vector<GlobalVariable *> &NameVars,
-                                std::string &Result, bool doCompression) {
+std::error_code
+collectPGOFuncNameStrings(const std::vector<GlobalVariable *> &NameVars,
+                          std::string &Result, bool doCompression) {
   std::vector<std::string> NameStrs;
   for (auto *NameVar : NameVars) {
     NameStrs.push_back(getPGOFuncNameVarInitializer(NameVar));
@@ -283,7 +275,8 @@ Error collectPGOFuncNameStrings(const std::vector<GlobalVariable *> &NameVars,
       NameStrs, zlib::isAvailable() && doCompression, Result);
 }
 
-Error readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
+std::error_code readPGOFuncNameStrings(StringRef NameStrings,
+                                       InstrProfSymtab &Symtab) {
   const uint8_t *P = reinterpret_cast<const uint8_t *>(NameStrings.data());
   const uint8_t *EndP = reinterpret_cast<const uint8_t *>(NameStrings.data() +
                                                           NameStrings.size());
@@ -301,7 +294,7 @@ Error readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
                                       CompressedSize);
       if (zlib::uncompress(CompressedNameStrings, UncompressedNameStrings,
                            UncompressedSize) != zlib::StatusOK)
-        return make_error<InstrProfError>(instrprof_error::uncompress_failed);
+        return make_error_code(instrprof_error::uncompress_failed);
       P += CompressedSize;
       NameStrings = StringRef(UncompressedNameStrings.data(),
                               UncompressedNameStrings.size());
@@ -320,7 +313,7 @@ Error readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
       P++;
   }
   Symtab.finalizeSymtab();
-  return Error::success();
+  return make_error_code(instrprof_error::success);
 }
 
 void InstrProfValueSiteRecord::merge(SoftInstrProfErrors &SIPE,
@@ -584,45 +577,45 @@ static std::unique_ptr<ValueProfData> allocValueProfData(uint32_t TotalSize) {
                                             ValueProfData());
 }
 
-Error ValueProfData::checkIntegrity() {
+instrprof_error ValueProfData::checkIntegrity() {
   if (NumValueKinds > IPVK_Last + 1)
-    return make_error<InstrProfError>(instrprof_error::malformed);
+    return instrprof_error::malformed;
   // Total size needs to be mulltiple of quadword size.
   if (TotalSize % sizeof(uint64_t))
-    return make_error<InstrProfError>(instrprof_error::malformed);
+    return instrprof_error::malformed;
 
   ValueProfRecord *VR = getFirstValueProfRecord(this);
   for (uint32_t K = 0; K < this->NumValueKinds; K++) {
     if (VR->Kind > IPVK_Last)
-      return make_error<InstrProfError>(instrprof_error::malformed);
+      return instrprof_error::malformed;
     VR = getValueProfRecordNext(VR);
     if ((char *)VR - (char *)this > (ptrdiff_t)TotalSize)
-      return make_error<InstrProfError>(instrprof_error::malformed);
+      return instrprof_error::malformed;
   }
-  return Error::success();
+  return instrprof_error::success;
 }
 
-Expected<std::unique_ptr<ValueProfData>>
+ErrorOr<std::unique_ptr<ValueProfData>>
 ValueProfData::getValueProfData(const unsigned char *D,
                                 const unsigned char *const BufferEnd,
                                 support::endianness Endianness) {
   using namespace support;
   if (D + sizeof(ValueProfData) > BufferEnd)
-    return make_error<InstrProfError>(instrprof_error::truncated);
+    return instrprof_error::truncated;
 
   const unsigned char *Header = D;
   uint32_t TotalSize = swapToHostOrder<uint32_t>(Header, Endianness);
   if (D + TotalSize > BufferEnd)
-    return make_error<InstrProfError>(instrprof_error::too_large);
+    return instrprof_error::too_large;
 
   std::unique_ptr<ValueProfData> VPD = allocValueProfData(TotalSize);
   memcpy(VPD.get(), D, TotalSize);
   // Byte swap.
   VPD->swapBytesToHost(Endianness);
 
-  Error E = VPD->checkIntegrity();
-  if (E)
-    return std::move(E);
+  instrprof_error EC = VPD->checkIntegrity();
+  if (EC != instrprof_error::success)
+    return EC;
 
   return std::move(VPD);
 }
