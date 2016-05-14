@@ -8301,3 +8301,46 @@ define <2 x i64>@test_int_x86_avx512_mask_pbroadcast_q_gpr_128(i64 %x0, <2 x i64
   %res4 = add <2 x i64> %res2, %res3
   ret <2 x i64> %res4
 }
+
+declare <4 x i32> @llvm.x86.avx512.mask.pshuf.d.128(<4 x i32>, i32, <4 x i32>, i8)
+
+define <4 x i32>@test_int_x86_avx512_mask_pshuf_d_128(<4 x i32> %x0, i32 %x1, <4 x i32> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pshuf_d_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpshufd $3, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vpshufd $3, %xmm0, %xmm2 {%k1} {z}
+; CHECK-NEXT:    vpshufd $3, %xmm0, %xmm0
+; CHECK-NEXT:    ## xmm0 = xmm0[3,0,0,0]
+; CHECK-NEXT:    vpaddd %xmm2, %xmm1, %xmm1
+; CHECK-NEXT:    vpaddd %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+	%res = call <4 x i32> @llvm.x86.avx512.mask.pshuf.d.128(<4 x i32> %x0, i32 3, <4 x i32> %x2, i8 %x3)
+	%res1 = call <4 x i32> @llvm.x86.avx512.mask.pshuf.d.128(<4 x i32> %x0, i32 3, <4 x i32> zeroinitializer, i8 %x3)
+	%res2 = call <4 x i32> @llvm.x86.avx512.mask.pshuf.d.128(<4 x i32> %x0, i32 3, <4 x i32> %x2, i8 -1)
+	%res3 = add <4 x i32> %res, %res1
+	%res4 = add <4 x i32> %res3, %res2
+	ret <4 x i32> %res4
+}
+
+declare <8 x i32> @llvm.x86.avx512.mask.pshuf.d.256(<8 x i32>, i32, <8 x i32>, i8)
+
+define <8 x i32>@test_int_x86_avx512_mask_pshuf_d_256(<8 x i32> %x0, i32 %x1, <8 x i32> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pshuf_d_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpshufd $3, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vpshufd $3, %ymm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:    vpshufd $3, %ymm0, %ymm0
+; CHECK-NEXT:    ## ymm0 = ymm0[3,0,0,0,7,4,4,4]
+; CHECK-NEXT:    vpaddd %ymm2, %ymm1, %ymm1
+; CHECK-NEXT:    vpaddd %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    retq
+	%res = call <8 x i32> @llvm.x86.avx512.mask.pshuf.d.256(<8 x i32> %x0, i32 3, <8 x i32> %x2, i8 %x3)
+	%res1 = call <8 x i32> @llvm.x86.avx512.mask.pshuf.d.256(<8 x i32> %x0, i32 3, <8 x i32> zeroinitializer, i8 %x3)
+	%res2 = call <8 x i32> @llvm.x86.avx512.mask.pshuf.d.256(<8 x i32> %x0, i32 3, <8 x i32> %x2, i8 -1)
+	%res3 = add <8 x i32> %res, %res1
+	%res4 = add <8 x i32> %res3, %res2
+	ret <8 x i32> %res4
+}
+
