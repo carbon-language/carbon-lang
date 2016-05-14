@@ -60,8 +60,6 @@ protected:
   ErrT Err;
 };
 
-template<typename ErrT> char ProfErrorInfoBase<ErrT>::ID;
-
 inline const char *getHotSectionPrefix() { return ".hot"; }
 inline const char *getUnlikelySectionPrefix() { return ".unlikely"; }
 
