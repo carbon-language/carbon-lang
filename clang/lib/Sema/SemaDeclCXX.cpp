@@ -7998,6 +7998,9 @@ public:
     if (Candidate.WillReplaceSpecifier() && !Candidate.getCorrectionSpecifier())
       return false;
 
+    // FIXME: Don't correct to a name that CheckUsingDeclRedeclaration would
+    // reject.
+
     if (RequireMemberOf) {
       auto *FoundRecord = dyn_cast<CXXRecordDecl>(ND);
       if (FoundRecord && FoundRecord->isInjectedClassName()) {
@@ -8207,6 +8210,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
           R.addDecl(Ctor);
       } else {
         // FIXME: Pick up all the declarations if we found an overloaded function.
+        NameInfo.setName(ND->getDeclName());
         R.addDecl(ND);
       }
     } else {
