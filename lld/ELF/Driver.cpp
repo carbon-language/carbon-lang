@@ -337,6 +337,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Entry = getString(Args, OPT_entry);
   Config->Fini = getString(Args, OPT_fini, "_fini");
   Config->Init = getString(Args, OPT_init, "_init");
+  Config->LtoNewPmPasses = getString(Args, OPT_lto_newpm_passes);
   Config->OutputFile = getString(Args, OPT_o);
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
@@ -495,6 +496,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   Symtab.scanVersionScript();
 
   Symtab.addCombinedLtoObject();
+  if (HasError)
+    return;
 
   for (auto *Arg : Args.filtered(OPT_wrap))
     Symtab.wrap(Arg->getValue());
