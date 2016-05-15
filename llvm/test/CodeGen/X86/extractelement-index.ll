@@ -211,6 +211,24 @@ define i64 @extractelement_v4i64_3(<4 x i64> %a, i256 %i) nounwind {
 ; ExtractElement - Variable Index
 ;
 
+define i8 @extractelement_v16i8_var(<16 x i8> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v16i8_var:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    leaq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movb (%rdi,%rax), %al
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v16i8_var:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    leaq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movb (%rdi,%rax), %al
+; AVX-NEXT:    retq
+  %b = extractelement <16 x i8> %a, i256 %i
+  ret i8 %b
+}
+
 define i8 @extractelement_v32i8_var(<32 x i8> %a, i256 %i) nounwind {
 ; SSE-LABEL: extractelement_v32i8_var:
 ; SSE:       # BB#0:
@@ -243,6 +261,22 @@ define i8 @extractelement_v32i8_var(<32 x i8> %a, i256 %i) nounwind {
   ret i8 %b
 }
 
+define i16 @extractelement_v8i16_var(<8 x i16> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v8i16_var:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movzwl -24(%rsp,%rdi,2), %eax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v8i16_var:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movzwl -24(%rsp,%rdi,2), %eax
+; AVX-NEXT:    retq
+  %b = extractelement <8 x i16> %a, i256 %i
+  ret i16 %b
+}
+
 define i16 @extractelement_v16i16_var(<16 x i16> %a, i256 %i) nounwind {
 ; SSE-LABEL: extractelement_v16i16_var:
 ; SSE:       # BB#0:
@@ -271,6 +305,22 @@ define i16 @extractelement_v16i16_var(<16 x i16> %a, i256 %i) nounwind {
 ; AVX-NEXT:    retq
   %b = extractelement <16 x i16> %a, i256 %i
   ret i16 %b
+}
+
+define i32 @extractelement_v4i32_var(<4 x i32> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v4i32_var:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movl -24(%rsp,%rdi,4), %eax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v4i32_var:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movl -24(%rsp,%rdi,4), %eax
+; AVX-NEXT:    retq
+  %b = extractelement <4 x i32> %a, i256 %i
+  ret i32 %b
 }
 
 define i32 @extractelement_v8i32_var(<8 x i32> %a, i256 %i) nounwind {
@@ -309,6 +359,22 @@ define i32 @extractelement_v8i32_var(<8 x i32> %a, i256 %i) nounwind {
 ; AVX2-NEXT:    retq
   %b = extractelement <8 x i32> %a, i256 %i
   ret i32 %b
+}
+
+define i64 @extractelement_v2i64_var(<2 x i64> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v2i64_var:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -24(%rsp,%rdi,8), %rax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v2i64_var:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -24(%rsp,%rdi,8), %rax
+; AVX-NEXT:    retq
+  %b = extractelement <2 x i64> %a, i256 %i
+  ret i64 %b
 }
 
 define i64 @extractelement_v4i64_var(<4 x i64> %a, i256 %i) nounwind {
