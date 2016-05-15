@@ -6501,14 +6501,10 @@ __builtin_ia32_scalefss_round_mask ((__v4sf)( __A),\
              _MM_FROUND_CUR_DIRECTION);\
 })
 
-static __inline__ __m512i __DEFAULT_FN_ATTRS
-_mm512_srai_epi32 (__m512i __A, unsigned int __B)
-{
-  return (__m512i) __builtin_ia32_psradi512_mask ((__v16si) __A, __B,
-              (__v16si)
-              _mm512_setzero_si512 (),
-              (__mmask16) -1);
-}
+#define _mm512_srai_epi32(A, B) __extension__ ({ \
+  (__m512i)__builtin_ia32_psradi512_mask((__v16si)(__m512i)(A), (int)(B), \
+                                         (__v16si)_mm512_setzero_si512(), \
+                                         (__mmask16)-1); })
 
 #define _mm512_mask_srai_epi32( __W, __U, __A, __B) __extension__ ({ \
 __builtin_ia32_psradi512_mask ((__v16si)( __A),( __B),\
