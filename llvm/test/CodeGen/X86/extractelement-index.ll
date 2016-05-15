@@ -32,21 +32,29 @@ define i8 @extractelement_v32i8_1(<32 x i8> %a) nounwind {
 define i8 @extractelement_v32i8_17(<32 x i8> %a) nounwind {
 ; SSE2-LABEL: extractelement_v32i8_17:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE2-NEXT:    movaps %xmm1, -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: extractelement_v32i8_17:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pextrb $1, %xmm0, %eax
+; SSE41-NEXT:    pextrb $1, %xmm1, %eax
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: extractelement_v32i8_17:
-; AVX:       # BB#0:
-; AVX-NEXT:    vpextrb $1, %xmm0, %eax
-; AVX-NEXT:    vzeroupper
-; AVX-NEXT:    retq
-  %b = extractelement <32 x i8> %a, i256 1
+; AVX1-LABEL: extractelement_v32i8_17:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpextrb $1, %xmm0, %eax
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: extractelement_v32i8_17:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm0
+; AVX2-NEXT:    vpextrb $1, %xmm0, %eax
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+  %b = extractelement <32 x i8> %a, i256 17
   ret i8 %b
 }
 
