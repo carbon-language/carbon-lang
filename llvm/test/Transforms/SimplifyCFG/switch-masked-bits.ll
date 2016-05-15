@@ -42,3 +42,40 @@ b:
 c:
   ret i32 5
 }
+
+; We're sign extending an 8-bit value.
+; The switch condition must be in the range [-128, 127], so any cases outside of that range must be dead.
+
+define i1 @repeated_signbits(i8 %condition) {
+; CHECK-LABEL: @repeated_signbits(
+; CHECK:         switch i32
+; CHECK-DAG:     i32 -2147483648, label %a
+; CHECK-DAG:     i32 -129, label %a
+; CHECK-DAG:     i32 -128, label %a
+; CHECK-DAG:     i32 -1, label %a
+; CHECK-DAG:     i32  0, label %a
+; CHECK-DAG:     i32  127, label %a
+; CHECK-DAG:     i32  128, label %a
+; CHECK-DAG:     i32  2147483647, label %a
+; CHECK-NEXT:    ]
+;
+entry:
+  %sext = sext i8 %condition to i32
+  switch i32 %sext, label %default [
+  i32 -2147483648, label %a
+  i32 -129, label %a
+  i32 -128, label %a
+  i32 -1, label %a
+  i32  0, label %a
+  i32  127, label %a
+  i32  128, label %a
+  i32  2147483647, label %a
+  ]
+
+a:
+  ret i1 1
+
+default:
+  ret i1 0
+}
+
