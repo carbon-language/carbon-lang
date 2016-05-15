@@ -1573,8 +1573,11 @@ namespace {
 } // end anonymous namespace
 
 char SCCP::ID = 0;
-INITIALIZE_PASS(SCCP, "sccp",
+INITIALIZE_PASS_BEGIN(SCCP, "sccp",
                 "Sparse Conditional Constant Propagation", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(SCCP, "sccp",
+                    "Sparse Conditional Constant Propagation", false, false)
 
 // createSCCPPass - This is the public interface to this file.
 FunctionPass *llvm::createSCCPPass() {
