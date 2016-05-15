@@ -11,6 +11,8 @@
 #include "InstrProfilingInternal.h"
 #ifdef _MSC_VER
 #include <malloc.h>
+#elif defined(__FreeBSD__)
+#include <stdlib.h>
 #else
 #include <alloca.h>
 #endif
