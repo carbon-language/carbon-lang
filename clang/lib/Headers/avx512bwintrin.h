@@ -1813,7 +1813,7 @@ _mm512_maskz_sra_epi16 (__mmask32 __U, __m512i __A, __m128i __B)
 __builtin_ia32_psrawi512_mask ((__v32hi)( __A),( __B),\
               (__v32hi)\
               _mm512_setzero_hi (),\
-              (__mmask32) -2);\
+              (__mmask32) -1);\
 })
 
 #define _mm512_mask_srai_epi16( __W, __U, __A, __B) __extension__ ({ \
