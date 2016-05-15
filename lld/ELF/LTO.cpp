@@ -24,6 +24,7 @@
 #include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Linker/IRMover.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/StringSaver.h"
@@ -32,7 +33,6 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-#include <llvm/IR/Verifier.h>
 
 using namespace llvm;
 using namespace llvm::object;
