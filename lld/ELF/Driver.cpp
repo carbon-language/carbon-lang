@@ -114,7 +114,8 @@ void LinkerDriver::addFile(StringRef Path) {
     return;
   MemoryBufferRef MBRef = *Buffer;
 
-  maybeCopyInputFile(Path, MBRef.getBuffer());
+  if (Cpio)
+    Cpio->append(relativeToRoot(Path), MBRef.getBuffer());
 
   switch (identify_magic(MBRef.getBuffer())) {
   case file_magic::unknown:
@@ -252,15 +253,12 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   readConfigs(Args);
   initLLVM(Args);
 
-  if (!Config->Reproduce.empty()) {
-    std::error_code EC;
-    std::string File = Config->Reproduce + ".cpio";
-    ReproduceArchive = llvm::make_unique<raw_fd_ostream>(File, EC, fs::F_None);
-    if (EC) {
-      error(EC, "--reproduce: failed to open " + File);
-      return;
-    }
-    createResponseFile(Args);
+  if (auto *Arg = Args.getLastArg(OPT_reproduce)) {
+    // Note that --reproduce is a debug option so you can ignore it
+    // if you are trying to understand the whole picture of the code.
+    Cpio.reset(CpioFile::create(Arg->getValue()));
+    if (Cpio)
+      Cpio->append("response.txt", createResponseFile(Args));
   }
 
   createFiles(Args);
@@ -340,7 +338,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Fini = getString(Args, OPT_fini, "_fini");
   Config->Init = getString(Args, OPT_init, "_init");
   Config->OutputFile = getString(Args, OPT_o);
-  Config->Reproduce = getString(Args, OPT_reproduce);
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
