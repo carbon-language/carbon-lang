@@ -8,6 +8,46 @@
 ; ExtractElement - Constant Index
 ;
 
+define i8 @extractelement_v16i8_1(<16 x i8> %a) nounwind {
+; SSE2-LABEL: extractelement_v16i8_1:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: extractelement_v16i8_1:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pextrb $1, %xmm0, %eax
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v16i8_1:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrb $1, %xmm0, %eax
+; AVX-NEXT:    retq
+  %b = extractelement <16 x i8> %a, i256 1
+  ret i8 %b
+}
+
+define i8 @extractelement_v16i8_14(<16 x i8> %a) nounwind {
+; SSE2-LABEL: extractelement_v16i8_14:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: extractelement_v16i8_14:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pextrb $14, %xmm0, %eax
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v16i8_14:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrb $14, %xmm0, %eax
+; AVX-NEXT:    retq
+  %b = extractelement <16 x i8> %a, i256 14
+  ret i8 %b
+}
+
 define i8 @extractelement_v32i8_1(<32 x i8> %a) nounwind {
 ; SSE2-LABEL: extractelement_v32i8_1:
 ; SSE2:       # BB#0:
@@ -58,6 +98,34 @@ define i8 @extractelement_v32i8_17(<32 x i8> %a) nounwind {
   ret i8 %b
 }
 
+define i16 @extractelement_v8i16_0(<8 x i16> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v8i16_0:
+; SSE:       # BB#0:
+; SSE-NEXT:    movd %xmm0, %eax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v8i16_0:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovd %xmm0, %eax
+; AVX-NEXT:    retq
+  %b = extractelement <8 x i16> %a, i256 0
+  ret i16 %b
+}
+
+define i16 @extractelement_v8i16_3(<8 x i16> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v8i16_3:
+; SSE:       # BB#0:
+; SSE-NEXT:    pextrw $3, %xmm0, %eax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v8i16_3:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrw $3, %xmm0, %eax
+; AVX-NEXT:    retq
+  %b = extractelement <8 x i16> %a, i256 3
+  ret i16 %b
+}
+
 define i16 @extractelement_v16i16_0(<16 x i16> %a, i256 %i) nounwind {
 ; SSE-LABEL: extractelement_v16i16_0:
 ; SSE:       # BB#0:
@@ -94,6 +162,40 @@ define i16 @extractelement_v16i16_13(<16 x i16> %a, i256 %i) nounwind {
 ; AVX2-NEXT:    retq
   %b = extractelement <16 x i16> %a, i256 13
   ret i16 %b
+}
+
+define i32 @extractelement_v4i32_0(<4 x i32> %a) nounwind {
+; SSE-LABEL: extractelement_v4i32_0:
+; SSE:       # BB#0:
+; SSE-NEXT:    movd %xmm0, %eax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v4i32_0:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovd %xmm0, %eax
+; AVX-NEXT:    retq
+  %b = extractelement <4 x i32> %a, i256 0
+  ret i32 %b
+}
+
+define i32 @extractelement_v4i32_3(<4 x i32> %a) nounwind {
+; SSE2-LABEL: extractelement_v4i32_3:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; SSE2-NEXT:    movd %xmm0, %eax
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: extractelement_v4i32_3:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pextrd $3, %xmm0, %eax
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v4i32_3:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrd $3, %xmm0, %eax
+; AVX-NEXT:    retq
+  %b = extractelement <4 x i32> %a, i256 3
+  ret i32 %b
 }
 
 define i32 @extractelement_v8i32_0(<8 x i32> %a) nounwind {
@@ -155,6 +257,40 @@ define i32 @extractelement_v8i32_7(<8 x i32> %a) nounwind {
 ; AVX2-NEXT:    retq
   %b = extractelement <8 x i32> %a, i64 7
   ret i32 %b
+}
+
+define i64 @extractelement_v2i64_0(<2 x i64> %a, i256 %i) nounwind {
+; SSE-LABEL: extractelement_v2i64_0:
+; SSE:       # BB#0:
+; SSE-NEXT:    movd %xmm0, %rax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v2i64_0:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovq %xmm0, %rax
+; AVX-NEXT:    retq
+  %b = extractelement <2 x i64> %a, i256 0
+  ret i64 %b
+}
+
+define i64 @extractelement_v2i64_1(<2 x i64> %a, i256 %i) nounwind {
+; SSE2-LABEL: extractelement_v2i64_1:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; SSE2-NEXT:    movd %xmm0, %rax
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: extractelement_v2i64_1:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pextrq $1, %xmm0, %rax
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: extractelement_v2i64_1:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrq $1, %xmm0, %rax
+; AVX-NEXT:    retq
+  %b = extractelement <2 x i64> %a, i256 1
+  ret i64 %b
 }
 
 define i64 @extractelement_v4i64_1(<4 x i64> %a, i256 %i) nounwind {
