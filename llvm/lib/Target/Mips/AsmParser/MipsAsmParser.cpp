@@ -1900,6 +1900,11 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     return true;
   }
 
+  // We know we emitted an instruction on the MER_NotAMacro or MER_Success path.
+  // If we're in microMIPS mode then we must also set EF_MIPS_MICROMIPS.
+  if (inMicroMipsMode())
+    TOut.setUsesMicroMips();
+
   // If this instruction has a delay slot and .set reorder is active,
   // emit a NOP after it.
   if (FillDelaySlot) {
@@ -5288,6 +5293,7 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
     getTargetStreamer().emitDirectiveSetDsp();
     break;
   case Mips::FeatureMicroMips:
+    setFeatureBits(Mips::FeatureMicroMips, "micromips");
     getTargetStreamer().emitDirectiveSetMicroMips();
     break;
   case Mips::FeatureMips1:
@@ -5586,6 +5592,7 @@ bool MipsAsmParser::parseDirectiveSet() {
   } else if (Tok.getString() == "nomips16") {
     return parseSetNoMips16Directive();
   } else if (Tok.getString() == "nomicromips") {
+    clearFeatureBits(Mips::FeatureMicroMips, "micromips");
     getTargetStreamer().emitDirectiveSetNoMicroMips();
     Parser.eatToEndOfStatement();
     return false;
