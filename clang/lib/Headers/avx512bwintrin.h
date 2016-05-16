@@ -1550,42 +1550,42 @@ _mm512_maskz_cvtepu8_epi16 (__mmask32 __U, __m256i __A)
 
 
 #define _mm512_cmp_epi8_mask(a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_cmpb512_mask((__v64qi)(__m512i)(a), \
+  (__mmask64)__builtin_ia32_cmpb512_mask((__v64qi)(__m512i)(a), \
                                          (__v64qi)(__m512i)(b), \
                                          (p), (__mmask64)-1); })
 
 #define _mm512_mask_cmp_epi8_mask(m, a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_cmpb512_mask((__v64qi)(__m512i)(a), \
+  (__mmask64)__builtin_ia32_cmpb512_mask((__v64qi)(__m512i)(a), \
                                          (__v64qi)(__m512i)(b), \
                                          (p), (__mmask64)(m)); })
 
 #define _mm512_cmp_epu8_mask(a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_ucmpb512_mask((__v64qi)(__m512i)(a), \
+  (__mmask64)__builtin_ia32_ucmpb512_mask((__v64qi)(__m512i)(a), \
                                           (__v64qi)(__m512i)(b), \
                                           (p), (__mmask64)-1); })
 
 #define _mm512_mask_cmp_epu8_mask(m, a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_ucmpb512_mask((__v64qi)(__m512i)(a), \
+  (__mmask64)__builtin_ia32_ucmpb512_mask((__v64qi)(__m512i)(a), \
                                           (__v64qi)(__m512i)(b), \
                                           (p), (__mmask64)(m)); })
 
 #define _mm512_cmp_epi16_mask(a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_cmpw512_mask((__v32hi)(__m512i)(a), \
+  (__mmask32)__builtin_ia32_cmpw512_mask((__v32hi)(__m512i)(a), \
                                          (__v32hi)(__m512i)(b), \
                                          (p), (__mmask32)-1); })
 
 #define _mm512_mask_cmp_epi16_mask(m, a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_cmpw512_mask((__v32hi)(__m512i)(a), \
+  (__mmask32)__builtin_ia32_cmpw512_mask((__v32hi)(__m512i)(a), \
                                          (__v32hi)(__m512i)(b), \
                                          (p), (__mmask32)(m)); })
 
 #define _mm512_cmp_epu16_mask(a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_ucmpw512_mask((__v32hi)(__m512i)(a), \
+  (__mmask32)__builtin_ia32_ucmpw512_mask((__v32hi)(__m512i)(a), \
                                           (__v32hi)(__m512i)(b), \
                                           (p), (__mmask32)-1); })
 
 #define _mm512_mask_cmp_epu16_mask(m, a, b, p) __extension__ ({ \
-  (__mmask16)__builtin_ia32_ucmpw512_mask((__v32hi)(__m512i)(a), \
+  (__mmask32)__builtin_ia32_ucmpw512_mask((__v32hi)(__m512i)(a), \
                                           (__v32hi)(__m512i)(b), \
                                           (p), (__mmask32)(m)); })
 
