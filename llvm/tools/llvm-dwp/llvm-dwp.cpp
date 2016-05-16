@@ -346,24 +346,31 @@ static bool consumeCompressedDebugSectionHeader(StringRef &data,
   return true;
 }
 
-void printDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
-                         const CompileUnitIdentifiers &ID, StringRef DWPName) {
-  errs() << "Duplicate DWO ID (" << PrevE.first << ") in '" << PrevE.second.Name
-         << '\'';
-  if (!PrevE.second.DWPName.empty()) {
-    errs() << " (from ";
-    if (!PrevE.second.DWOName.empty())
-      errs() << '\'' << PrevE.second.DWOName << "' in ";
-    errs() << "'" << PrevE.second.DWPName.str() << "')";
-  }
-  errs() << " and '" << ID.Name << '\'';
+std::string buildDWODescription(StringRef Name, StringRef DWPName, StringRef DWOName) {
+  std::string Text = "\'";
+  Text += Name;
+  Text += '\'';
   if (!DWPName.empty()) {
-    errs() << " (from ";
-    if (*ID.DWOName)
-      errs() << '\'' << ID.DWOName << "\' in ";
-    errs() << '\'' << DWPName << "')";
+    Text += " (from ";
+    if (!DWOName.empty()) {
+      Text += '\'';
+      Text += DWOName;
+      Text += "' in ";
+    }
+    Text += '\'';
+    Text += DWPName;
+    Text += "')";
   }
-  errs() << '\n';
+  return Text;
+}
+
+std::string
+buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
+                    const CompileUnitIdentifiers &ID, StringRef DWPName) {
+  return std::string("Duplicate DWO ID (") + utohexstr(PrevE.first) + ") in " +
+         buildDWODescription(PrevE.second.Name, PrevE.second.DWPName,
+                             PrevE.second.DWOName) +
+         " and " + buildDWODescription(ID.Name, DWPName, ID.DWOName);
 }
 static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   const auto &MCOFI = *Out.getContext().getObjectFileInfo();
@@ -504,10 +511,8 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
             getSubsection(InfoSection, E, DW_SECT_INFO),
             getSubsection(CurStrOffsetSection, E, DW_SECT_STR_OFFSETS),
             CurStrSection);
-        if (!P.second) {
-          printDuplicateError(*P.first, ID, Input);
-          return make_error<DWPError>("Duplicate DWO ID");
-        }
+        if (!P.second)
+          return make_error<DWPError>(buildDuplicateError(*P.first, ID, Input));
         auto &NewEntry = P.first->second;
         NewEntry.Name = ID.Name;
         NewEntry.DWOName = ID.DWOName;
@@ -535,10 +540,8 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       CompileUnitIdentifiers ID = getCUIdentifiers(
           AbbrevSection, InfoSection, CurStrOffsetSection, CurStrSection);
       auto P = IndexEntries.insert(std::make_pair(ID.Signature, CurEntry));
-      if (!P.second) {
-        printDuplicateError(*P.first, ID, "");
-        return make_error<DWPError>("Duplicate DWO ID");
-      }
+      if (!P.second)
+        return make_error<DWPError>(buildDuplicateError(*P.first, ID, ""));
       P.first->second.Name = ID.Name;
       P.first->second.DWOName = ID.DWOName;
       addAllTypes(Out, TypeIndexEntries, TypesSection, CurTypesSection,
