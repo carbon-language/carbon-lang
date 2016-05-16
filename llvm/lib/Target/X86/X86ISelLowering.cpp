@@ -864,6 +864,13 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
   }
 
+  if (!Subtarget.useSoftFloat() && Subtarget.hasSSSE3()) {
+    setOperationAction(ISD::CTLZ,               MVT::v16i8, Custom);
+    setOperationAction(ISD::CTLZ,               MVT::v8i16, Custom);
+    // ISD::CTLZ v4i32 - scalarization is faster.
+    // ISD::CTLZ v2i64 - scalarization is faster.
+  }
+
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSE41()) {
     for (MVT RoundedTy : {MVT::f32, MVT::f64, MVT::v4f32, MVT::v2f64}) {
       setOperationAction(ISD::FFLOOR,           RoundedTy,  Legal);
@@ -932,6 +939,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasFp256()) {
+    bool HasInt256 = Subtarget.hasInt256();
+
     addRegisterClass(MVT::v32i8,  &X86::VR256RegClass);
     addRegisterClass(MVT::v16i16, &X86::VR256RegClass);
     addRegisterClass(MVT::v8i32,  &X86::VR256RegClass);
@@ -998,13 +1007,20 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::CTTZ,            VT, Custom);
     }
 
+    // ISD::CTLZ v8i32/v4i64 - scalarization is faster without AVX2
+    // as we end up splitting the 256-bit vectors.
+    for (auto VT : { MVT::v32i8, MVT::v16i16 })
+      setOperationAction(ISD::CTLZ,            VT, Custom);
+
+    if (HasInt256)
+      for (auto VT : { MVT::v8i32, MVT::v4i64 })
+        setOperationAction(ISD::CTLZ,          VT, Custom);
+
     if (Subtarget.hasAnyFMA()) {
       for (auto VT : { MVT::f32, MVT::f64, MVT::v4f32, MVT::v8f32,
                        MVT::v2f64, MVT::v4f64 })
         setOperationAction(ISD::FMA, VT, Legal);
     }
-
-    bool HasInt256 = Subtarget.hasInt256();
 
     for (auto VT : { MVT::v32i8, MVT::v16i16, MVT::v8i32, MVT::v4i64 }) {
       setOperationAction(ISD::ADD, VT, HasInt256 ? Legal : Custom);
@@ -18767,7 +18783,105 @@ static SDValue LowerVectorCTLZ_AVX512(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::SUB, dl, VT, TruncNode, Delta);
 }
 
-static SDValue LowerCTLZ(SDValue Op, SelectionDAG &DAG) {
+// Lower CTLZ using a PSHUFB lookup table implementation.
+static SDValue LowerVectorCTLZInRegLUT(SDValue Op, SDLoc DL,
+                                       const X86Subtarget &Subtarget,
+                                       SelectionDAG &DAG) {
+  MVT VT = Op.getSimpleValueType();
+  MVT SVT = VT.getScalarType();
+  int NumElts = VT.getVectorNumElements();
+  int NumBytes = NumElts * (VT.getScalarSizeInBits() / 8);
+  MVT CurrVT = MVT::getVectorVT(MVT::i8, NumBytes);
+
+  // Per-nibble leading zero PSHUFB lookup table.
+  const int LUT[16] = {/* 0 */ 4, /* 1 */ 3, /* 2 */ 2, /* 3 */ 2,
+                       /* 4 */ 1, /* 5 */ 1, /* 6 */ 1, /* 7 */ 1,
+                       /* 8 */ 0, /* 9 */ 0, /* a */ 0, /* b */ 0,
+                       /* c */ 0, /* d */ 0, /* e */ 0, /* f */ 0};
+
+  SmallVector<SDValue, 64> LUTVec;
+  for (int i = 0; i < NumBytes; ++i)
+    LUTVec.push_back(DAG.getConstant(LUT[i % 16], DL, MVT::i8));
+  SDValue InRegLUT = DAG.getNode(ISD::BUILD_VECTOR, DL, CurrVT, LUTVec);
+
+  // Begin by bitcasting the input to byte vector, then split those bytes
+  // into lo/hi nibbles and use the PSHUFB LUT to perform CLTZ on each of them.
+  // If the hi input nibble is zero then we add both results together, otherwise
+  // we just take the hi result (by masking the lo result to zero before the
+  // add).
+  SDValue Op0 = DAG.getBitcast(CurrVT, Op.getOperand(0));
+  SDValue Zero = getZeroVector(CurrVT, Subtarget, DAG, DL);
+
+  SDValue NibbleMask = DAG.getConstant(0xF, DL, CurrVT);
+  SDValue NibbleShift = DAG.getConstant(0x4, DL, CurrVT);
+  SDValue Lo = DAG.getNode(ISD::AND, DL, CurrVT, Op0, NibbleMask);
+  SDValue Hi = DAG.getNode(ISD::SRL, DL, CurrVT, Op0, NibbleShift);
+  SDValue HiZ = DAG.getSetCC(DL, CurrVT, Hi, Zero, ISD::SETEQ);
+
+  Lo = DAG.getNode(X86ISD::PSHUFB, DL, CurrVT, InRegLUT, Lo);
+  Hi = DAG.getNode(X86ISD::PSHUFB, DL, CurrVT, InRegLUT, Hi);
+  Lo = DAG.getNode(ISD::AND, DL, CurrVT, Lo, HiZ);
+  SDValue Res = DAG.getNode(ISD::ADD, DL, CurrVT, Lo, Hi);
+
+  // Merge result back from vXi8 back to VT, working on the lo/hi halves
+  // of the current vector width in the same way we did for the nibbles.
+  // If the upper half of the input element is zero then add the halves'
+  // leading zero counts together, otherwise just use the upper half's.
+  // Double the width of the result until we are at target width.
+  while (CurrVT != VT) {
+    int CurrScalarSizeInBits = CurrVT.getScalarSizeInBits();
+    int CurrNumElts = CurrVT.getVectorNumElements();
+    MVT NextSVT = MVT::getIntegerVT(CurrScalarSizeInBits * 2);
+    MVT NextVT = MVT::getVectorVT(NextSVT, CurrNumElts / 2);
+    SDValue Shift = DAG.getConstant(CurrScalarSizeInBits, DL, NextVT);
+
+    // Check if the upper half of the input element is zero.
+    SDValue HiZ = DAG.getSetCC(DL, CurrVT, DAG.getBitcast(CurrVT, Op0),
+                               DAG.getBitcast(CurrVT, Zero), ISD::SETEQ);
+    HiZ = DAG.getBitcast(NextVT, HiZ);
+
+    // Move the upper/lower halves to the lower bits as we'll be extending to
+    // NextVT. Mask the lower result to zero if HiZ is true and add the results
+    // together.
+    SDValue ResNext = Res = DAG.getBitcast(NextVT, Res);
+    SDValue R0 = DAG.getNode(ISD::SRL, DL, NextVT, ResNext, Shift);
+    SDValue R1 = DAG.getNode(ISD::SRL, DL, NextVT, HiZ, Shift);
+    R1 = DAG.getNode(ISD::AND, DL, NextVT, ResNext, R1);
+    Res = DAG.getNode(ISD::ADD, DL, NextVT, R0, R1);
+    CurrVT = NextVT;
+  }
+
+  return Res;
+}
+
+static SDValue LowerVectorCTLZ(SDValue Op, SDLoc DL,
+                               const X86Subtarget &Subtarget,
+                               SelectionDAG &DAG) {
+  MVT VT = Op.getSimpleValueType();
+  SDValue Op0 = Op.getOperand(0);
+
+  if (Subtarget.hasAVX512())
+    return LowerVectorCTLZ_AVX512(Op, DAG);
+
+  // Decompose 256-bit ops into smaller 128-bit ops.
+  if (VT.is256BitVector() && !Subtarget.hasInt256()) {
+    unsigned NumElems = VT.getVectorNumElements();
+
+    // Extract each 128-bit vector, perform ctlz and concat the result.
+    SDValue LHS = extract128BitVector(Op0, 0, DAG, DL);
+    SDValue RHS = extract128BitVector(Op0, NumElems / 2, DAG, DL);
+
+    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT,
+                       DAG.getNode(ISD::CTLZ, DL, LHS.getValueType(), LHS),
+                       DAG.getNode(ISD::CTLZ, DL, RHS.getValueType(), RHS));
+  }
+
+  assert(Subtarget.hasSSSE3() && "Expected SSSE3 support for PSHUFB");
+  return LowerVectorCTLZInRegLUT(Op, DL, Subtarget, DAG);
+}
+
+static SDValue LowerCTLZ(SDValue Op, const X86Subtarget &Subtarget,
+                         SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
   MVT OpVT = VT;
   unsigned NumBits = VT.getSizeInBits();
@@ -18775,7 +18889,7 @@ static SDValue LowerCTLZ(SDValue Op, SelectionDAG &DAG) {
   unsigned Opc = Op.getOpcode();
 
   if (VT.isVector())
-    return LowerVectorCTLZ_AVX512(Op, DAG);
+    return LowerVectorCTLZ(Op, dl, Subtarget, DAG);
 
   Op = Op.getOperand(0);
   if (VT == MVT::i8) {
@@ -21304,7 +21418,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADJUST_TRAMPOLINE:  return LowerADJUST_TRAMPOLINE(Op, DAG);
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::CTLZ:
-  case ISD::CTLZ_ZERO_UNDEF:    return LowerCTLZ(Op, DAG);
+  case ISD::CTLZ_ZERO_UNDEF:    return LowerCTLZ(Op, Subtarget, DAG);
   case ISD::CTTZ:
   case ISD::CTTZ_ZERO_UNDEF:    return LowerCTTZ(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, Subtarget, DAG);
