@@ -640,7 +640,7 @@ def setupSysPath():
                 python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
                 outputPaths = getXcodeOutputPaths(lldbRootDirectory)
                 for outputPath in outputPaths:
-                    candidatePath = os.path.join(outputPath, python_resource_dir)
+                    candidatePath = os.path.join(outputPath, *python_resource_dir)
                     if os.path.isfile(os.path.join(candidatePath, init_in_python_dir)):
                         lldbPythonDir = candidatePath
                         break
