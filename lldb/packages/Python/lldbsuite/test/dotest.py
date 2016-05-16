@@ -646,8 +646,7 @@ def setupSysPath():
                         break
 
                 if not lldbPythonDir:
-                    print('This script requires lldb.py to be in either ' + dbgPath + ',', end=' ')
-                    print(relPath + ', or ' + baiPath + '. Some tests might fail.')
+                    print("lldb.py is not found, some tests may fail.")
             else:
                 print("Unable to load lldb extension module.  Possible reasons for this include:")
                 print("  1) LLDB was built with LLDB_DISABLE_PYTHON=1")
