@@ -27,7 +27,13 @@ namespace llvm {
   // Explicitly opt into 4 byte alignment for Attr*, to avoid the need to
   // include the heavyweight Attr.h to use a TinyPtrVector<Attr*>.
   template <>
-  struct PointerLikeTypeTraits<Attr *> : PointerLikeTypeTraits<void *> {};
+  struct PointerLikeTypeTraits<clang::Attr *> {
+    static void *getAsVoidPointer(clang::Attr *P) { return P; }
+    static clang::Attr *getFromVoidPointer(void *P) {
+      return static_cast<clang::Attr *>(P);
+    }
+    enum { NumLowBitsAvailable = 2 };
+  };
 }
 
 // Defined in ASTContext.h
