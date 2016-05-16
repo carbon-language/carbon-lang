@@ -18788,7 +18788,6 @@ static SDValue LowerVectorCTLZInRegLUT(SDValue Op, SDLoc DL,
                                        const X86Subtarget &Subtarget,
                                        SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
-  MVT SVT = VT.getScalarType();
   int NumElts = VT.getVectorNumElements();
   int NumBytes = NumElts * (VT.getScalarSizeInBits() / 8);
   MVT CurrVT = MVT::getVectorVT(MVT::i8, NumBytes);
