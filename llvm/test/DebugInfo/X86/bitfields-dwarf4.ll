@@ -46,7 +46,10 @@ target triple = "x86_64-apple-macosx"
 ; CHECK-NEXT: DW_AT_name{{.*}}"b"
 ; CHECK-NOT:  DW_TAG
 ; CHECK-NOT:  DW_AT_bit_offset
-; CHECK:      DW_AT_data_bit_offset      [DW_FORM_data1]	(0x08)
+; CHECK-NOT:  DW_AT_byte_size
+; CHECK:      DW_AT_bit_size             [DW_FORM_data1]	(0x05)
+; CHECK-NOT:  DW_AT_byte_size
+; CHECK-NEXT: DW_AT_data_bit_offset      [DW_FORM_data1]	(0x08)
 ; CHECK-NEXT: DW_AT_data_member_location [DW_FORM_data1]	(0x00)
 !9 = !DIDerivedType(tag: DW_TAG_member, name: "b", scope: !5, file: !1, line: 6, baseType: !10, size: 5, align: 32, offset: 8)
 
@@ -58,7 +61,9 @@ target triple = "x86_64-apple-macosx"
 ; CHECK-NEXT: DW_AT_name{{.*}}"c"
 ; CHECK-NOT:  DW_TAG
 ; CHECK-NOT:  DW_AT_bit_offset
-; CHECK:      DW_AT_data_bit_offset      [DW_FORM_data1]	(0x0d)
+; CHECK-NOT:  DW_AT_byte_size
+; CHECK:      DW_AT_bit_size             [DW_FORM_data1]	(0x1b)
+; CHECK-NEXT: DW_AT_data_bit_offset      [DW_FORM_data1]	(0x0d)
 ; CHECK-NEXT: DW_AT_data_member_location [DW_FORM_data1]	(0x00)
 !13 = !DIDerivedType(tag: DW_TAG_member, name: "c", scope: !5, file: !1, line: 7, baseType: !10, size: 27, align: 32, offset: 13)
 
