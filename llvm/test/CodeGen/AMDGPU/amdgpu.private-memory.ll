@@ -401,4 +401,109 @@ define void @ptrtoint(i32 addrspace(1)* %out, i32 %a, i32 %b) #0 {
 
 ; NOHSAOPT: !0 = !{i32 0, i32 2048}
 
+
+; FUNC-LABEL: v16i32_stack:
+
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+
+define void @v16i32_stack(<16 x i32> addrspace(1)* %out, i32 %a) {
+  %alloca = alloca [2 x <16 x i32>]
+  %tmp0 = getelementptr [2 x <16 x i32>], [2 x <16 x i32>]* %alloca, i32 0, i32 %a
+  %tmp5 = load <16 x i32>, <16 x i32>* %tmp0
+  store <16 x i32> %tmp5, <16 x i32> addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: v16float_stack:
+
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+; R600: MOVA_INT
+
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+
+define void @v16float_stack(<16 x float> addrspace(1)* %out, i32 %a) {
+  %alloca = alloca [2 x <16 x float>]
+  %tmp0 = getelementptr [2 x <16 x float>], [2 x <16 x float>]* %alloca, i32 0, i32 %a
+  %tmp5 = load <16 x float>, <16 x float>* %tmp0
+  store <16 x float> %tmp5, <16 x float> addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: v2float_stack:
+
+; R600: MOVA_INT
+; R600: MOVA_INT
+
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+
+define void @v2float_stack(<2 x float> addrspace(1)* %out, i32 %a) {
+  %alloca = alloca [16 x <2 x float>]
+  %tmp0 = getelementptr [16 x <2 x float>], [16 x <2 x float>]* %alloca, i32 0, i32 %a
+  %tmp5 = load <2 x float>, <2 x float>* %tmp0
+  store <2 x float> %tmp5, <2 x float> addrspace(1)* %out
+  ret void
+}
+
 attributes #0 = { nounwind "amdgpu-max-waves-per-eu"="2" }
