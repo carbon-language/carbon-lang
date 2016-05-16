@@ -65,6 +65,13 @@ static cl::opt<unsigned>
                             "loop-access analysis (default = 100)"),
                    cl::init(100));
 
+/// \brief Enable the conflict detection optimization. This option can be
+/// disabled for correctness testing.
+static cl::opt<bool> EnableConflictDetection(
+    "enable-conflict-detection", cl::Hidden,
+    cl::desc("Enable conflict detection in loop-access analysis"),
+    cl::init(true));
+
 bool VectorizerParams::isInterleaveForced() {
   return ::VectorizationInterleave.getNumOccurrences() > 0;
 }
@@ -1203,7 +1210,7 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   const APInt &Val = C->getAPInt();
   if (Val.isNegative()) {
     bool IsTrueDataDependence = (AIsWrite && !BIsWrite);
-    if (IsTrueDataDependence &&
+    if (IsTrueDataDependence && EnableConflictDetection &&
         (couldPreventStoreLoadForward(Val.abs().getZExtValue(), TypeByteSize) ||
          ATy != BTy)) {
       DEBUG(dbgs() << "LAA: Forward but may prevent st->ld forwarding\n");
@@ -1309,7 +1316,7 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
       Distance < MaxSafeDepDistBytes ? Distance : MaxSafeDepDistBytes;
 
   bool IsTrueDataDependence = (!AIsWrite && BIsWrite);
-  if (IsTrueDataDependence &&
+  if (IsTrueDataDependence && EnableConflictDetection &&
       couldPreventStoreLoadForward(Distance, TypeByteSize))
     return Dependence::BackwardVectorizableButPreventsForwarding;
 
