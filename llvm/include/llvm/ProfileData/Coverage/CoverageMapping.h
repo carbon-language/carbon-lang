@@ -23,13 +23,13 @@
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 #include <tuple>
 
 namespace llvm {
 namespace coverage {
+
 enum class coveragemap_error {
   success = 0,
   eof,
@@ -38,14 +38,20 @@ enum class coveragemap_error {
   truncated,
   malformed
 };
-} // end of coverage namespace.
-}
 
-namespace std {
-template <>
-struct is_error_code_enum<llvm::coverage::coveragemap_error> : std::true_type {
+class CoverageMapError : public ProfErrorInfoBase<coveragemap_error> {
+public:
+  CoverageMapError(coveragemap_error Err)
+      : ProfErrorInfoBase<coveragemap_error>(Err) {}
+
+  std::string message() const override;
 };
-}
+
+} // end of coverage namespace.
+
+template <> char ProfErrorInfoBase<coverage::coveragemap_error>::ID;
+
+} // end of llvm namespace
 
 namespace llvm {
 class IndexedInstrProfReader;
@@ -265,7 +271,7 @@ public:
 
   /// \brief Return the number of times that a region of code associated with
   /// this counter was executed.
-  ErrorOr<int64_t> evaluate(const Counter &C) const;
+  Expected<int64_t> evaluate(const Counter &C) const;
 };
 
 /// \brief Code coverage information for a single function.
@@ -415,12 +421,12 @@ class CoverageMapping {
 
 public:
   /// \brief Load the coverage mapping using the given readers.
-  static ErrorOr<std::unique_ptr<CoverageMapping>>
+  static Expected<std::unique_ptr<CoverageMapping>>
   load(CoverageMappingReader &CoverageReader,
        IndexedInstrProfReader &ProfileReader);
 
   /// \brief Load the coverage mapping from the given files.
-  static ErrorOr<std::unique_ptr<CoverageMapping>>
+  static Expected<std::unique_ptr<CoverageMapping>>
   load(StringRef ObjectFilename, StringRef ProfileFilename,
        StringRef Arch = StringRef());
 
@@ -501,14 +507,13 @@ template <class IntPtrT> struct CovMapFunctionRecordV1 {
   }
   // Return the PGO name of the function */
   template <support::endianness Endian>
-  std::error_code getFuncName(InstrProfSymtab &ProfileNames,
-                              StringRef &FuncName) const {
+  Error getFuncName(InstrProfSymtab &ProfileNames, StringRef &FuncName) const {
     IntPtrT NameRef = getFuncNameRef<Endian>();
     uint32_t NameS = support::endian::byte_swap<uint32_t, Endian>(NameSize);
     FuncName = ProfileNames.getFuncName(NameRef, NameS);
     if (NameS && FuncName.empty())
-      return coveragemap_error::malformed;
-    return std::error_code();
+      return make_error<CoverageMapError>(coveragemap_error::malformed);
+    return Error::success();
   }
 };
 
@@ -530,11 +535,10 @@ struct CovMapFunctionRecord {
   }
   // Return the PGO name of the function */
   template <support::endianness Endian>
-  std::error_code getFuncName(InstrProfSymtab &ProfileNames,
-                              StringRef &FuncName) const {
+  Error getFuncName(InstrProfSymtab &ProfileNames, StringRef &FuncName) const {
     uint64_t NameRef = getFuncNameRef<Endian>();
     FuncName = ProfileNames.getFuncName(NameRef);
-    return std::error_code();
+    return Error::success();
   }
 };
 
