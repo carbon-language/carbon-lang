@@ -16,9 +16,9 @@
 void __llvm_profile_recursive_mkdir(char *Pathname);
 
 /* PS4 doesn't have getenv. Define a shim. */
-#if __PS4__
+#if __ORBIS__
 static inline char *getenv(const char *name) { return NULL; }
-#endif /* #if __PS4__ */
+#endif /* #if __ORBIS__ */
 
 int lprofGetHostName(char *Name, int Len);
 

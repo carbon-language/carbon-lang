@@ -27,7 +27,7 @@
 #define COMPILER_RT_MAX_HOSTLEN 128
 #ifdef _MSC_VER
 #define COMPILER_RT_GETHOSTNAME(Name, Len) gethostname(Name, Len)
-#elif defined(__PS4__)
+#elif defined(__ORBIS__)
 #define COMPILER_RT_GETHOSTNAME(Name, Len) (-1)
 #else
 #define COMPILER_RT_GETHOSTNAME(Name, Len) lprofGetHostName(Name, Len)
