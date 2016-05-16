@@ -2946,18 +2946,17 @@ bool MipsAsmParser::expandDiv(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                               const bool Signed) {
   MipsTargetStreamer &TOut = getTargetStreamer();
 
-  if (hasMips32r6()) {
-    Error(IDLoc, "instruction not supported on mips32r6 or mips64r6");
-    return false;
-  }
-
   warnIfNoMacro(IDLoc);
 
-  const MCOperand &RsRegOp = Inst.getOperand(0);
+  const MCOperand &RdRegOp = Inst.getOperand(0);
+  assert(RdRegOp.isReg() && "expected register operand kind");
+  unsigned RdReg = RdRegOp.getReg();
+
+  const MCOperand &RsRegOp = Inst.getOperand(1);
   assert(RsRegOp.isReg() && "expected register operand kind");
   unsigned RsReg = RsRegOp.getReg();
 
-  const MCOperand &RtRegOp = Inst.getOperand(1);
+  const MCOperand &RtRegOp = Inst.getOperand(2);
   assert(RtRegOp.isReg() && "expected register operand kind");
   unsigned RtReg = RtRegOp.getReg();
   unsigned DivOp;
@@ -3026,7 +3025,7 @@ bool MipsAsmParser::expandDiv(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
     TOut.emitII(Mips::BREAK, 0x7, 0, IDLoc, STI);
 
   if (!Signed) {
-    TOut.emitR(Mips::MFLO, RsReg, IDLoc, STI);
+    TOut.emitR(Mips::MFLO, RdReg, IDLoc, STI);
     return false;
   }
 
@@ -3054,7 +3053,7 @@ bool MipsAsmParser::expandDiv(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
     TOut.emitRRI(Mips::SLL, ZeroReg, ZeroReg, 0, IDLoc, STI);
     TOut.emitII(Mips::BREAK, 0x6, 0, IDLoc, STI);
   }
-  TOut.emitR(Mips::MFLO, RsReg, IDLoc, STI);
+  TOut.emitR(Mips::MFLO, RdReg, IDLoc, STI);
   return false;
 }
 
