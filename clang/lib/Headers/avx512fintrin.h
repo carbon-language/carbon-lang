@@ -372,7 +372,7 @@ _mm512_castsi256_si512 (__m256i __A)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_and_epi32(__m512i __a, __m512i __b)
 {
-  return __a & __b;
+  return (__m512i)((__v16si)__a & (__v16si)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -396,7 +396,7 @@ _mm512_maskz_and_epi32(__mmask16 __k, __m512i __a, __m512i __b)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_and_epi64(__m512i __a, __m512i __b)
 {
-  return __a & __b;
+  return (__m512i)((__v8di)__a & (__v8di)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -476,7 +476,7 @@ _mm512_maskz_andnot_epi64 (__mmask8 __U, __m512i __A, __m512i __B)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_or_epi32(__m512i __a, __m512i __b)
 {
-  return __a | __b;
+  return (__m512i)((__v16si)__a | (__v16si)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -500,7 +500,7 @@ _mm512_maskz_or_epi32(__mmask16 __k, __m512i __a, __m512i __b)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_or_epi64(__m512i __a, __m512i __b)
 {
-  return __a | __b;
+  return (__m512i)((__v8di)__a | (__v8di)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -524,7 +524,7 @@ _mm512_maskz_or_epi64(__mmask8 __k, __m512i __a, __m512i __b)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_xor_epi32(__m512i __a, __m512i __b)
 {
-  return __a ^ __b;
+  return (__m512i)((__v16si)__a ^ (__v16si)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -548,7 +548,7 @@ _mm512_maskz_xor_epi32(__mmask16 __k, __m512i __a, __m512i __b)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_xor_epi64(__m512i __a, __m512i __b)
 {
-  return __a ^ __b;
+  return (__m512i)((__v8di)__a ^ (__v8di)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -572,56 +572,56 @@ _mm512_maskz_xor_epi64(__mmask8 __k, __m512i __a, __m512i __b)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_and_si512(__m512i __a, __m512i __b)
 {
-  return __a & __b;
+  return (__m512i)((__v8di)__a & (__v8di)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_or_si512(__m512i __a, __m512i __b)
 {
-  return __a | __b;
+  return (__m512i)((__v8di)__a | (__v8di)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_xor_si512(__m512i __a, __m512i __b)
 {
-  return __a ^ __b;
+  return (__m512i)((__v8di)__a ^ (__v8di)__b);
 }
 /* Arithmetic */
 
 static __inline __m512d __DEFAULT_FN_ATTRS
 _mm512_add_pd(__m512d __a, __m512d __b)
 {
-  return __a + __b;
+  return (__m512d)((__v8df)__a + (__v8df)__b);
 }
 
 static __inline __m512 __DEFAULT_FN_ATTRS
 _mm512_add_ps(__m512 __a, __m512 __b)
 {
-  return __a + __b;
+  return (__m512)((__v16sf)__a + (__v16sf)__b);
 }
 
 static __inline __m512d __DEFAULT_FN_ATTRS
 _mm512_mul_pd(__m512d __a, __m512d __b)
 {
-  return __a * __b;
+  return (__m512d)((__v8df)__a * (__v8df)__b);
 }
 
 static __inline __m512 __DEFAULT_FN_ATTRS
 _mm512_mul_ps(__m512 __a, __m512 __b)
 {
-  return __a * __b;
+  return (__m512)((__v16sf)__a * (__v16sf)__b);
 }
 
 static __inline __m512d __DEFAULT_FN_ATTRS
 _mm512_sub_pd(__m512d __a, __m512d __b)
 {
-  return __a - __b;
+  return (__m512d)((__v8df)__a - (__v8df)__b);
 }
 
 static __inline __m512 __DEFAULT_FN_ATTRS
 _mm512_sub_ps(__m512 __a, __m512 __b)
 {
-  return __a - __b;
+  return (__m512)((__v16sf)__a - (__v16sf)__b);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
