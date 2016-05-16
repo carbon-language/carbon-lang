@@ -8407,15 +8407,13 @@ _mm512_kor (__mmask16 __A, __mmask16 __B)
 static __inline__ int __DEFAULT_FN_ATTRS
 _mm512_kortestc (__mmask16 __A, __mmask16 __B)
 {
-  return (__mmask16) __builtin_ia32_kortestchi ((__mmask16) __A,
-            (__mmask16) __B);
+  return __builtin_ia32_kortestchi ((__mmask16) __A, (__mmask16) __B);
 }
 
 static __inline__ int __DEFAULT_FN_ATTRS
 _mm512_kortestz (__mmask16 __A, __mmask16 __B)
 {
-  return (__mmask16) __builtin_ia32_kortestzhi ((__mmask16) __A,
-            (__mmask16) __B);
+  return __builtin_ia32_kortestzhi ((__mmask16) __A, (__mmask16) __B);
 }
 
 static __inline__ __mmask16 __DEFAULT_FN_ATTRS
