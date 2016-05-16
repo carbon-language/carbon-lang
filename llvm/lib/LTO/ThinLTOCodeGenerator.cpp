@@ -484,9 +484,10 @@ public:
   }
 
   // Cache the Produced object file
-  void write(MemoryBufferRef OutputBuffer) {
+  std::unique_ptr<MemoryBuffer>
+  write(std::unique_ptr<MemoryBuffer> OutputBuffer) {
     if (EntryPath.empty())
-      return;
+      return OutputBuffer;
 
     // Write to a temporary to avoid race condition
     SmallString<128> TempFilename;
@@ -499,7 +500,7 @@ public:
     }
     {
       raw_fd_ostream OS(TempFD, /* ShouldClose */ true);
-      OS << OutputBuffer.getBuffer();
+      OS << OutputBuffer->getBuffer();
     }
     // Rename to final destination (hopefully race condition won't matter here)
     EC = sys::fs::rename(TempFilename, EntryPath);
@@ -509,8 +510,16 @@ public:
       if (EC)
         report_fatal_error(Twine("Failed to open ") + EntryPath +
                            " to save cached entry\n");
-      OS << OutputBuffer.getBuffer();
+      OS << OutputBuffer->getBuffer();
     }
+    auto ReloadedBufferOrErr = MemoryBuffer::getFile(EntryPath);
+    if (auto EC = ReloadedBufferOrErr.getError()) {
+      // FIXME diagnose
+      errs() << "error: can't reload cached file '" << EntryPath
+             << "': " << EC.message() << "\n";
+      return OutputBuffer;
+    }
+    return std::move(*ReloadedBufferOrErr);
   }
 };
 
@@ -943,7 +952,7 @@ void ThinLTOCodeGenerator::run() {
             ExportList, GUIDPreservedSymbols, ResolvedODR, CacheOptions,
             DisableCodeGen, SaveTempsDir, count);
 
-        CacheEntry.write(*OutputBuffer);
+        OutputBuffer = CacheEntry.write(std::move(OutputBuffer));
         ProducedBinaries[count] = std::move(OutputBuffer);
       }, count);
       count++;
