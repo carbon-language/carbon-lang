@@ -917,6 +917,9 @@ Module *ModuleMap::inferModuleFromLocation(FullSourceLoc Loc) {
   if (Loc.isInvalid())
     return nullptr;
 
+  if (UmbrellaDirs.empty() && Headers.empty())
+    return nullptr;
+
   // Use the expansion location to determine which module we're in.
   FullSourceLoc ExpansionLoc = Loc.getExpansionLoc();
   if (!ExpansionLoc.isFileID())
