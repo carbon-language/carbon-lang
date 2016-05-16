@@ -582,28 +582,23 @@ void PGOUseFunc::setEdgeCount(DirectEdges &Edges, uint64_t Value) {
 // Return true if the profile are successfully read, and false on errors.
 bool PGOUseFunc::readCounters(IndexedInstrProfReader *PGOReader) {
   auto &Ctx = M->getContext();
-  Expected<InstrProfRecord> Result =
+  ErrorOr<InstrProfRecord> Result =
       PGOReader->getInstrProfRecord(FuncInfo.FuncName, FuncInfo.FunctionHash);
-  if (Error E = Result.takeError()) {
-    handleAllErrors(std::move(E), [&](const InstrProfError &IPE) {
-      auto Err = IPE.get();
-      bool SkipWarning = false;
-      if (Err == instrprof_error::unknown_function) {
-        NumOfPGOMissing++;
-        SkipWarning = NoPGOWarnMissing;
-      } else if (Err == instrprof_error::hash_mismatch ||
-                 Err == instrprof_error::malformed) {
-        NumOfPGOMismatch++;
-        SkipWarning = NoPGOWarnMismatch;
-      }
+  if (std::error_code EC = Result.getError()) {
+    if (EC == instrprof_error::unknown_function) {
+      NumOfPGOMissing++;
+      if (NoPGOWarnMissing)
+        return false;
+    } else if (EC == instrprof_error::hash_mismatch ||
+               EC == llvm::instrprof_error::malformed) {
+      NumOfPGOMismatch++;
+      if (NoPGOWarnMismatch)
+        return false;
+    }
 
-      if (SkipWarning)
-        return;
-
-      std::string Msg = IPE.message() + std::string(" ") + F.getName().str();
-      Ctx.diagnose(
-          DiagnosticInfoPGOProfile(M->getName().data(), Msg, DS_Warning));
-    });
+    std::string Msg = EC.message() + std::string(" ") + F.getName().str();
+    Ctx.diagnose(
+        DiagnosticInfoPGOProfile(M->getName().data(), Msg, DS_Warning));
     return false;
   }
   ProfileRecord = std::move(Result.get());
@@ -859,11 +854,9 @@ static bool annotateAllFunctions(
   auto &Ctx = M.getContext();
   // Read the counter array from file.
   auto ReaderOrErr = IndexedInstrProfReader::create(ProfileFileName);
-  if (Error E = ReaderOrErr.takeError()) {
-    handleAllErrors(std::move(E), [&](const ErrorInfoBase &EI) {
-      Ctx.diagnose(
-          DiagnosticInfoPGOProfile(ProfileFileName.data(), EI.message()));
-    });
+  if (std::error_code EC = ReaderOrErr.getError()) {
+    Ctx.diagnose(
+        DiagnosticInfoPGOProfile(ProfileFileName.data(), EC.message()));
     return false;
   }
 

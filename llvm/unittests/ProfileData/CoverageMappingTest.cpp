@@ -20,11 +20,11 @@
 using namespace llvm;
 using namespace coverage;
 
-static ::testing::AssertionResult NoError(Error E) {
-  if (!E)
+static ::testing::AssertionResult NoError(std::error_code EC) {
+  if (!EC)
     return ::testing::AssertionSuccess();
-  return ::testing::AssertionFailure() << "error: " << toString(std::move(E))
-                                       << "\n";
+  return ::testing::AssertionFailure() << "error " << EC.value()
+                                       << ": " << EC.message();
 }
 
 namespace llvm {
@@ -70,14 +70,14 @@ struct CoverageMappingReaderMock : CoverageMappingReader {
   CoverageMappingReaderMock(ArrayRef<OutputFunctionCoverageData> Functions)
       : Functions(Functions) {}
 
-  Error readNextRecord(CoverageMappingRecord &Record) override {
+  std::error_code readNextRecord(CoverageMappingRecord &Record) override {
     if (Functions.empty())
-      return make_error<CoverageMapError>(coveragemap_error::eof);
+      return coveragemap_error::eof;
 
     Functions.front().fillCoverageMappingRecord(Record);
     Functions = Functions.slice(1);
 
-    return Error::success();
+    return coveragemap_error::success;
   }
 };
 
@@ -190,7 +190,7 @@ struct CoverageMappingTest : ::testing::Test {
   void readProfCounts() {
     auto Profile = ProfileWriter.writeBuffer();
     auto ReaderOrErr = IndexedInstrProfReader::create(std::move(Profile));
-    ASSERT_TRUE(NoError(ReaderOrErr.takeError()));
+    ASSERT_TRUE(NoError(ReaderOrErr.getError()));
     ProfileReader = std::move(ReaderOrErr.get());
   }
 
@@ -200,7 +200,7 @@ struct CoverageMappingTest : ::testing::Test {
 
     CoverageMappingReaderMock CovReader(OutputFunctions);
     auto CoverageOrErr = CoverageMapping::load(CovReader, *ProfileReader);
-    ASSERT_TRUE(NoError(CoverageOrErr.takeError()));
+    ASSERT_TRUE(NoError(CoverageOrErr.getError()));
     LoadedCoverage = std::move(CoverageOrErr.get());
   }
 };

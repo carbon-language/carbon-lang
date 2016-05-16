@@ -210,9 +210,10 @@ std::unique_ptr<CoverageMapping> CodeCoverageTool::load() {
     errs() << "warning: profile data may be out of date - object is newer\n";
   auto CoverageOrErr = CoverageMapping::load(ObjectFilename, PGOFilename,
                                              CoverageArch);
-  if (Error E = CoverageOrErr.takeError()) {
+  if (std::error_code EC = CoverageOrErr.getError()) {
     colored_ostream(errs(), raw_ostream::RED)
-        << "error: Failed to load coverage: " << toString(std::move(E)) << "\n";
+        << "error: Failed to load coverage: " << EC.message();
+    errs() << "\n";
     return nullptr;
   }
   auto Coverage = std::move(CoverageOrErr.get());
