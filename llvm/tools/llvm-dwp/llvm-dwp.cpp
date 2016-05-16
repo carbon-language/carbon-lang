@@ -141,9 +141,10 @@ static const char *getIndexedString(uint32_t Form, DataExtractor InfoData,
   return StrData.getCStr(&StrOffset);
 }
 
-static CompileUnitIdentifiers getCUIdentifiers(StringRef Abbrev, StringRef Info,
-                                               StringRef StrOffsets,
-                                               StringRef Str) {
+static Expected<CompileUnitIdentifiers> getCUIdentifiers(StringRef Abbrev,
+                                                         StringRef Info,
+                                                         StringRef StrOffsets,
+                                                         StringRef Str) {
   uint32_t Offset = 0;
   DataExtractor InfoData(Info, true, 0);
   InfoData.getU32(&Offset); // Length
@@ -156,9 +157,8 @@ static CompileUnitIdentifiers getCUIdentifiers(StringRef Abbrev, StringRef Info,
   DataExtractor AbbrevData(Abbrev, true, 0);
   uint32_t AbbrevOffset = getCUAbbrev(Abbrev, AbbrCode);
   uint64_t Tag = AbbrevData.getULEB128(&AbbrevOffset);
-  (void)Tag;
-  // FIXME: Real error handling
-  assert(Tag == dwarf::DW_TAG_compile_unit);
+  if (Tag != dwarf::DW_TAG_compile_unit)
+    return make_error<DWPError>("top level DIE is not a compile unit");
   // DW_CHILDREN
   AbbrevData.getU8(&AbbrevOffset);
   uint32_t Name;
@@ -506,11 +506,14 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
           continue;
         auto P =
             IndexEntries.insert(std::make_pair(E.getSignature(), CurEntry));
-        CompileUnitIdentifiers ID = getCUIdentifiers(
+        Expected<CompileUnitIdentifiers> EID = getCUIdentifiers(
             getSubsection(AbbrevSection, E, DW_SECT_ABBREV),
             getSubsection(InfoSection, E, DW_SECT_INFO),
             getSubsection(CurStrOffsetSection, E, DW_SECT_STR_OFFSETS),
             CurStrSection);
+        if (!EID)
+          return EID.takeError();
+        const auto &ID = *EID;
         if (!P.second)
           return make_error<DWPError>(buildDuplicateError(*P.first, ID, Input));
         auto &NewEntry = P.first->second;
@@ -537,8 +540,11 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
                            ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
       }
     } else {
-      CompileUnitIdentifiers ID = getCUIdentifiers(
+      Expected<CompileUnitIdentifiers> EID = getCUIdentifiers(
           AbbrevSection, InfoSection, CurStrOffsetSection, CurStrSection);
+      if (!EID)
+        return EID.takeError();
+      const auto &ID = *EID;
       auto P = IndexEntries.insert(std::make_pair(ID.Signature, CurEntry));
       if (!P.second)
         return make_error<DWPError>(buildDuplicateError(*P.first, ID, ""));
