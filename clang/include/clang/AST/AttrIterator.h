@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_ATTRITERATOR_H
 
 #include "clang/Basic/LLVM.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include <iterator>
 
 namespace clang {
@@ -39,8 +40,8 @@ void operator delete[](void *Ptr, const clang::ASTContext &C, size_t);
 namespace clang {
 
 /// AttrVec - A vector of Attr, which is how they are stored on the AST.
-typedef SmallVector<Attr*, 2> AttrVec;
-typedef SmallVector<const Attr*, 2> ConstAttrVec;
+typedef llvm::TinyPtrVector<Attr*> AttrVec;
+typedef llvm::TinyPtrVector<const Attr*> ConstAttrVec;
 
 /// specific_attr_iterator - Iterates over a subrange of an AttrVec, only
 /// providing attributes that are of a specific type.
