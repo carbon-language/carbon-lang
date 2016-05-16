@@ -638,7 +638,7 @@ def setupSysPath():
         if not lldbPythonDir:
             if platform.system() == "Darwin":
                 python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
-                outputPaths = getXcodeOutputPaths()
+                outputPaths = getXcodeOutputPaths(lldbRootDirectory)
                 for outputPath in outputPaths:
                     candidatePath = os.path.join(outputPath, python_resource_dir)
                     if os.path.isfile(os.path.join(candidatePath, init_in_python_dir)):
