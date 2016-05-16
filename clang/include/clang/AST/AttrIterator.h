@@ -23,6 +23,13 @@ namespace clang {
   class Attr;
 }
 
+namespace llvm {
+  // Explicitly opt into 4 byte alignment for Attr*, to avoid the need to
+  // include the heavyweight Attr.h to use a TinyPtrVector<Attr*>.
+  template <>
+  struct PointerLikeTypeTraits<Attr *> : PointerLikeTypeTraits<void *> {};
+}
+
 // Defined in ASTContext.h
 void *operator new(size_t Bytes, const clang::ASTContext &C,
                    size_t Alignment = 8);
