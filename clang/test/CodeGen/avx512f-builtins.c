@@ -6279,14 +6279,14 @@ __m512d test_mm512_mask_ceil_pd (__m512d __W, __mmask8 __U, __m512d __A)
   return _mm512_mask_ceil_pd (__W,__U,__A);
 }
 
-__m512 test_mm512_mask_roundscale_ps(__m512d __W, __mmask8 __U, __m512d __A) 
+__m512 test_mm512_mask_roundscale_ps(__m512 __W, __mmask16 __U, __m512 __A) 
 {
   // CHECK-LABEL: @test_mm512_mask_roundscale_ps
   // CHECK: @llvm.x86.avx512.mask.rndscale.ps.512
   return _mm512_mask_roundscale_ps(__W,__U,__A, 1);
 }
 
-__m512 test_mm512_maskz_roundscale_ps(__mmask8 __U, __m512d __A) 
+__m512 test_mm512_maskz_roundscale_ps(__mmask16 __U, __m512 __A) 
 {
   // CHECK-LABEL: @test_mm512_maskz_roundscale_ps
   // CHECK: @llvm.x86.avx512.mask.rndscale.ps.512
