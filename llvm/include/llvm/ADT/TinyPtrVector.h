@@ -104,8 +104,16 @@ public:
   /// This also is a constructor for individual array elements due to the single
   /// element constructor for ArrayRef.
   explicit TinyPtrVector(ArrayRef<EltTy> Elts)
-      : Val(Elts.size() == 1 ? PtrUnion(Elts[0])
-                             : PtrUnion(new VecTy(Elts.begin(), Elts.end()))) {}
+      : Val(Elts.empty()
+                ? PtrUnion()
+                : Elts.size() == 1
+                      ? PtrUnion(Elts[0])
+                      : PtrUnion(new VecTy(Elts.begin(), Elts.end()))) {}
+
+  TinyPtrVector(size_t Count, EltTy Value)
+      : Val(Count == 0 ? PtrUnion()
+                       : Count == 1 ? PtrUnion(Value)
+                                    : PtrUnion(new VecTy(Count, Value))) {}
 
   // implicit conversion operator to ArrayRef.
   operator ArrayRef<EltTy>() const {
