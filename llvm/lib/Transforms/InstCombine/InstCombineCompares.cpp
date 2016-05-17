@@ -3121,7 +3121,8 @@ static ICmpInst *canonicalizeCmpWithConstant(ICmpInst &I) {
   Type *Op1Type = Op1->getType();
   bool IsSigned = I.isSigned();
   bool IsLE = (Pred == ICmpInst::ICMP_SLE || Pred == ICmpInst::ICMP_ULE);
-  if (auto *CI = dyn_cast<ConstantInt>(Op1C)) {
+  auto *CI = dyn_cast<ConstantInt>(Op1C);
+  if (CI) {
     // A <= MAX -> TRUE ; A >= MIN -> TRUE
     assert(IsLE ? !CI->isMaxValue(IsSigned) : !CI->isMinValue(IsSigned));
   } else if (Op1Type->isVectorTy()) {
