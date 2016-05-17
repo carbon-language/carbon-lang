@@ -3150,7 +3150,7 @@ static ICmpInst *canonicalizeCmpWithConstant(ICmpInst &I) {
 
   // Increment or decrement the constant and set the new comparison predicate:
   // ULE -> ULT ; UGE -> UGT ; SLE -> SLT ; SGE -> SGT
-  Constant *OneOrNegOne = ConstantInt::get(Op1Type, IsLE ? 1 : -1, IsSigned);
+  Constant *OneOrNegOne = ConstantInt::get(Op1Type, IsLE ? 1 : -1, true);
   CmpInst::Predicate NewPred = IsLE ? ICmpInst::ICMP_ULT: ICmpInst::ICMP_UGT;
   NewPred = IsSigned ? ICmpInst::getSignedPredicate(NewPred) : NewPred;
   return new ICmpInst(NewPred, Op0, ConstantExpr::getAdd(Op1C, OneOrNegOne));
