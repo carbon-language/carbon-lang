@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FindAllSymbols.h"
+#include "HeaderMapCollector.h"
 #include "SymbolInfo.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -56,8 +57,9 @@ std::vector<SymbolInfo::Context> GetContexts(const NamedDecl *ND) {
   return Contexts;
 }
 
-llvm::Optional<SymbolInfo> CreateSymbolInfo(const NamedDecl *ND,
-                                            const SourceManager &SM) {
+llvm::Optional<SymbolInfo>
+CreateSymbolInfo(const NamedDecl *ND, const SourceManager &SM,
+                 const HeaderMapCollector::HeaderMap &HeaderMappingTable) {
   SymbolInfo::SymbolKind Type;
   if (llvm::isa<VarDecl>(ND)) {
     Type = SymbolInfo::SymbolKind::Variable;
@@ -93,6 +95,11 @@ llvm::Optional<SymbolInfo> CreateSymbolInfo(const NamedDecl *ND,
   llvm::StringRef FilePath = SM.getFilename(Loc);
   if (FilePath.empty())
     return llvm::None;
+
+  // Check pragma remapping header.
+  auto Iter = HeaderMappingTable.find(FilePath);
+  if (Iter != HeaderMappingTable.end())
+    FilePath = Iter->second;
 
   return SymbolInfo(ND->getNameAsString(), Type, FilePath.str(),
                     SM.getExpansionLineNumber(Loc), GetContexts(ND));
@@ -207,7 +214,8 @@ void FindAllSymbols::run(const MatchFinder::MatchResult &Result) {
   assert(ND && "Matched declaration must be a NamedDecl!");
   const SourceManager *SM = Result.SourceManager;
 
-  llvm::Optional<SymbolInfo> Symbol = CreateSymbolInfo(ND, *SM);
+  llvm::Optional<SymbolInfo> Symbol =
+      CreateSymbolInfo(ND, *SM, Collector->getHeaderMappingTable());
   if (Symbol)
     Reporter->reportResult(
         SM->getFileEntryForID(SM->getMainFileID())->getName(), *Symbol);
