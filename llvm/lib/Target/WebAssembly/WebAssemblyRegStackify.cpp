@@ -211,7 +211,9 @@ static bool ShouldRematerialize(const MachineInstr *Def, AliasAnalysis &AA,
          TII->isTriviallyReMaterializable(Def, &AA);
 }
 
-/// Identify the definition for this register at this point.
+// Identify the definition for this register at this point. This is a
+// generalization of MachineRegisterInfo::getUniqueVRegDef that uses
+// LiveIntervals to handle complex cases.
 static MachineInstr *GetVRegDef(unsigned Reg, const MachineInstr *Insert,
                                 const MachineRegisterInfo &MRI,
                                 const LiveIntervals &LIS)
@@ -226,6 +228,34 @@ static MachineInstr *GetVRegDef(unsigned Reg, const MachineInstr *Insert,
     return LIS.getInstructionFromIndex(ValNo->def);
 
   return nullptr;
+}
+
+// Test whether Reg, as defined at Def, has exactly one use. This is a
+// generalization of MachineRegisterInfo::hasOneUse that uses LiveIntervals
+// to handle complex cases.
+static bool HasOneUse(unsigned Reg, MachineInstr *Def,
+                      MachineRegisterInfo &MRI, MachineDominatorTree &MDT,
+                      LiveIntervals &LIS) {
+  // Most registers are in SSA form here so we try a quick MRI query first.
+  if (MRI.hasOneUse(Reg))
+    return true;
+
+  bool HasOne = false;
+  const LiveInterval &LI = LIS.getInterval(Reg);
+  const VNInfo *DefVNI = LI.getVNInfoAt(
+      LIS.getInstructionIndex(*Def).getRegSlot());
+  assert(DefVNI);
+  for (auto I : MRI.use_operands(Reg)) {
+    const auto &Result = LI.Query(LIS.getInstructionIndex(*I.getParent()));
+    if (Result.valueIn() == DefVNI) {
+      if (!Result.isKill())
+        return false;
+      if (HasOne)
+        return false;
+      HasOne = true;
+    }
+  }
+  return HasOne;
 }
 
 // Test whether it's safe to move Def to just before Insert.
@@ -263,10 +293,15 @@ static bool IsSafeToMove(const MachineInstr *Def, const MachineInstr *Insert,
 
     // Ask LiveIntervals whether moving this virtual register use or def to
     // Insert will change which value numbers are seen.
+    // 
+    // If the operand is a use of a register that is also defined in the same
+    // instruction, test that the newly defined value reaches the insert point,
+    // since the operand will be moving along with the def.
     const LiveInterval &LI = LIS.getInterval(Reg);
     VNInfo *DefVNI =
-        MO.isDef() ? LI.getVNInfoAt(LIS.getInstructionIndex(*Def).getRegSlot())
-                   : LI.getVNInfoBefore(LIS.getInstructionIndex(*Def));
+        (MO.isDef() || Def->definesRegister(Reg)) ?
+        LI.getVNInfoAt(LIS.getInstructionIndex(*Def).getRegSlot()) :
+        LI.getVNInfoBefore(LIS.getInstructionIndex(*Def));
     assert(DefVNI && "Instruction input missing value number");
     VNInfo *InsVNI = LI.getVNInfoBefore(LIS.getInstructionIndex(*Insert));
     if (InsVNI && DefVNI != InsVNI)
@@ -321,14 +356,7 @@ static bool OneUseDominatesOtherUses(unsigned Reg, const MachineOperand &OneUse,
       continue;
 
     const MachineInstr *OneUseInst = OneUse.getParent();
-    if (UseInst->getOpcode() == TargetOpcode::PHI) {
-      // Test that the PHI use, which happens on the CFG edge rather than
-      // within the PHI's own block, is dominated by the one selected use.
-      const MachineBasicBlock *Pred =
-          UseInst->getOperand(&Use - &UseInst->getOperand(0) + 1).getMBB();
-      if (!MDT.dominates(&MBB, Pred))
-        return false;
-    } else if (UseInst == OneUseInst) {
+    if (UseInst == OneUseInst) {
       // Another use in the same instruction. We need to ensure that the one
       // selected use happens "before" it.
       if (&OneUse > &Use)
@@ -376,9 +404,13 @@ static MachineInstr *MoveForSingleUse(unsigned Reg, MachineOperand& Op,
   MBB.splice(Insert, &MBB, Def);
   LIS.handleMove(*Def);
 
-  if (MRI.hasOneDef(Reg)) {
+  if (MRI.hasOneDef(Reg) && MRI.hasOneUse(Reg)) {
+    // No one else is using this register for anything so we can just stackify
+    // it in place.
     MFI.stackifyVReg(Reg);
   } else {
+    // The register may have unrelated uses or defs; create a new register for
+    // just our one def and use so that we can stackify it.
     unsigned NewReg = MRI.createVirtualRegister(MRI.getRegClass(Reg));
     Def->getOperand(0).setReg(NewReg);
     Op.setReg(NewReg);
@@ -456,7 +488,7 @@ RematerializeCheapDef(unsigned Reg, MachineOperand &Op, MachineInstr *Def,
 /// to this:
 ///
 ///    DefReg = INST ...     // Def (to become the new Insert)
-///    TeeReg, NewReg = TEE_LOCAL_... DefReg
+///    TeeReg, Reg = TEE_LOCAL_... DefReg
 ///    INST ..., TeeReg, ... // Insert
 ///    INST ..., NewReg, ...
 ///    INST ..., NewReg, ...
@@ -469,29 +501,42 @@ static MachineInstr *MoveAndTeeForMultiUse(
     MachineRegisterInfo &MRI, const WebAssemblyInstrInfo *TII) {
   DEBUG(dbgs() << "Move and tee for multi-use:"; Def->dump());
 
+  // Move Def into place.
   MBB.splice(Insert, &MBB, Def);
   LIS.handleMove(*Def);
+
+  // Create the Tee and attach the registers.
   const auto *RegClass = MRI.getRegClass(Reg);
-  unsigned NewReg = MRI.createVirtualRegister(RegClass);
   unsigned TeeReg = MRI.createVirtualRegister(RegClass);
   unsigned DefReg = MRI.createVirtualRegister(RegClass);
   MachineOperand &DefMO = Def->getOperand(0);
-  MRI.replaceRegWith(Reg, NewReg);
   MachineInstr *Tee = BuildMI(MBB, Insert, Insert->getDebugLoc(),
                               TII->get(GetTeeLocalOpcode(RegClass)), TeeReg)
-                          .addReg(NewReg, RegState::Define)
+                          .addReg(Reg, RegState::Define)
                           .addReg(DefReg, getUndefRegState(DefMO.isDead()));
   Op.setReg(TeeReg);
   DefMO.setReg(DefReg);
-  LIS.InsertMachineInstrInMaps(*Tee);
-  LIS.removeInterval(Reg);
-  LIS.createAndComputeVirtRegInterval(NewReg);
+  SlotIndex TeeIdx = LIS.InsertMachineInstrInMaps(*Tee).getRegSlot();
+  SlotIndex DefIdx = LIS.getInstructionIndex(*Def).getRegSlot();
+
+  // Tell LiveIntervals we moved the original vreg def from Def to Tee.
+  LiveInterval &LI = LIS.getInterval(Reg);
+  LiveInterval::iterator I = LI.FindSegmentContaining(DefIdx);
+  VNInfo *ValNo = LI.getVNInfoAt(DefIdx);
+  I->start = TeeIdx;
+  ValNo->def = TeeIdx;
+  ShrinkToUses(LI, LIS);
+
+  // Finish stackifying the new regs.
   LIS.createAndComputeVirtRegInterval(TeeReg);
   LIS.createAndComputeVirtRegInterval(DefReg);
   MFI.stackifyVReg(DefReg);
   MFI.stackifyVReg(TeeReg);
   ImposeStackOrdering(Def);
   ImposeStackOrdering(Tee);
+
+  DEBUG(dbgs() << " - Replaced register: "; Def->dump());
+  DEBUG(dbgs() << " - Tee instruction: "; Tee->dump());
   return Def;
 }
 
@@ -636,10 +681,6 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
     // iterating over it and the end iterator may change.
     for (auto MII = MBB.rbegin(); MII != MBB.rend(); ++MII) {
       MachineInstr *Insert = &*MII;
-      // Don't nest anything inside a phi.
-      if (Insert->getOpcode() == TargetOpcode::PHI)
-        break;
-
       // Don't nest anything inside an inline asm, because we don't have
       // constraints for $push inputs.
       if (Insert->getOpcode() == TargetOpcode::INLINEASM)
@@ -678,10 +719,6 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
         if (Def->getOpcode() == TargetOpcode::INLINEASM)
           continue;
 
-        // Don't nest PHIs inside of anything.
-        if (Def->getOpcode() == TargetOpcode::PHI)
-          continue;
-
         // Argument instructions represent live-in registers and not real
         // instructions.
         if (Def->getOpcode() == WebAssembly::ARGUMENT_I32 ||
@@ -699,7 +736,7 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
         bool SameBlock = Def->getParent() == &MBB;
         bool CanMove = SameBlock && IsSafeToMove(Def, Insert, AA, LIS, MRI) &&
                        !TreeWalker.IsOnStack(Reg);
-        if (CanMove && MRI.hasOneUse(Reg)) {
+        if (CanMove && HasOneUse(Reg, Def, MRI, MDT, LIS)) {
           Insert = MoveForSingleUse(Reg, Op, Def, MBB, Insert, LIS, MFI, MRI);
         } else if (ShouldRematerialize(Def, AA, TII)) {
           Insert = RematerializeCheapDef(Reg, Op, Def, MBB, Insert, LIS, MFI,

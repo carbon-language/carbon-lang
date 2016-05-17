@@ -400,6 +400,30 @@ define i32 @no_stackify_past_epilogue() {
   ret i32 %call
 }
 
+; Stackify a loop induction variable into a loop comparison.
+
+; CHECK_LABEL: stackify_indvar:
+; CHECK:             i32.const   $push[[L5:.+]]=, 1{{$}}
+; CHECK-NEXT:        i32.add     $push[[L4:.+]]=, $[[R0:.+]], $pop[[L5]]{{$}}
+; CHECK-NEXT:        tee_local   $push[[L3:.+]]=, $[[R0]]=, $pop[[L4]]{{$}}
+; CHECK-NEXT:        i32.ne      $push[[L2:.+]]=, $0, $pop[[L3]]{{$}}
+define void @stackify_indvar(i32 %tmp, i32* %v) #0 {
+bb:
+  br label %bb3
+
+bb3:                                              ; preds = %bb3, %bb2
+  %tmp4 = phi i32 [ %tmp7, %bb3 ], [ 0, %bb ]
+  %tmp5 = load volatile i32, i32* %v, align 4
+  %tmp6 = add nsw i32 %tmp5, %tmp4
+  store volatile i32 %tmp6, i32* %v, align 4
+  %tmp7 = add nuw nsw i32 %tmp4, 1
+  %tmp8 = icmp eq i32 %tmp7, %tmp
+  br i1 %tmp8, label %bb10, label %bb3
+
+bb10:                                             ; preds = %bb9, %bb
+  ret void
+}
+
 !llvm.module.flags = !{!0}
 !llvm.dbg.cu = !{!1}
 
