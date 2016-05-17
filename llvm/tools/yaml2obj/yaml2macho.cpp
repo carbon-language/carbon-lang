@@ -79,33 +79,17 @@ Error MachOWriter::writeHeader(raw_ostream &OS) {
 
 Error MachOWriter::writeLoadCommands(raw_ostream &OS) {
   for (auto &LC : Obj.LoadCommands) {
-    size_t BytesWritten = 0;
-#define HANDLE_LOAD_COMMAND(LCName, LCValue, LCStruct)                         \
-  case MachO::LCName:                                                          \
-    OS.write(reinterpret_cast<const char *>(&(LC.load_command_data.LCStruct)), \
-             sizeof(MachO::LCStruct));                                         \
-    BytesWritten = sizeof(MachO::LCStruct);                                    \
-    break;
-
-    switch (LC.load_command_data.load_command.cmd) {
-    default:
-      OS.write(
-          reinterpret_cast<const char *>(&(LC.load_command_data.load_command)),
-          sizeof(MachO::load_command));
-      BytesWritten = sizeof(MachO::load_command);
-      break;
-#include "llvm/Support/MachO.def"
-    }
-
-    auto BytesRemaining =
-        LC.load_command_data.load_command.cmdsize - BytesWritten;
-    if (BytesRemaining > 0) {
+    MachO::load_command LCTemp;
+    LCTemp.cmd = LC->cmd;
+    LCTemp.cmdsize = LC->cmdsize;
+    OS.write(reinterpret_cast<const char *>(&LCTemp),
+             sizeof(MachO::load_command));
+    auto remaining_size = LC->cmdsize - sizeof(MachO::load_command);
+    if (remaining_size > 0) {
       // TODO: Replace all this once the load command data is present in yaml.
-      // For now I fill with 0xDEADBEEF because it is easy to spot on a hex
-      // viewer.
-      std::vector<uint32_t> FillData;
-      FillData.insert(FillData.begin(), BytesRemaining / 4 + 1, 0xDEADBEEFu);
-      OS.write(reinterpret_cast<char *>(FillData.data()), BytesRemaining);
+      std::vector<char> fill_data;
+      fill_data.insert(fill_data.begin(), remaining_size, 0);
+      OS.write(fill_data.data(), remaining_size);
     }
   }
   return Error::success();

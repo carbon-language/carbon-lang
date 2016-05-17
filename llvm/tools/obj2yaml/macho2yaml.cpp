@@ -9,9 +9,9 @@
 
 #include "Error.h"
 #include "obj2yaml.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/ObjectYAML/MachOYAML.h"
-#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -24,14 +24,6 @@ public:
   Expected<std::unique_ptr<MachOYAML::Object>> dump();
 };
 
-#define HANDLE_LOAD_COMMAND(LCName, LCValue, LCStruct)                         \
-  case MachO::LCName:                                                          \
-    memcpy((void *) & (LC.load_command_data.LCStruct), LoadCmd.Ptr,            \
-           sizeof(MachO::LCStruct));                                           \
-    if (Obj.isLittleEndian() != sys::IsLittleEndianHost)                       \
-      MachO::swapStruct(LC.load_command_data.LCStruct);                        \
-    break;
-
 Expected<std::unique_ptr<MachOYAML::Object>> MachODumper::dump() {
   auto Y = make_unique<MachOYAML::Object>();
   Y->Header.magic = Obj.getHeader().magic;
@@ -43,17 +35,10 @@ Expected<std::unique_ptr<MachOYAML::Object>> MachODumper::dump() {
   Y->Header.flags = Obj.getHeader().flags;
   Y->Header.reserved = 0;
 
-  for (auto LoadCmd : Obj.load_commands()) {
-    MachOYAML::LoadCommand LC;
-    switch (LoadCmd.C.cmd) {
-    default:
-      memcpy((void *)&(LC.load_command_data.load_command), LoadCmd.Ptr,
-             sizeof(MachO::load_command));
-      if (Obj.isLittleEndian() != sys::IsLittleEndianHost)
-        MachO::swapStruct(LC.load_command_data.load_command);
-      break;
-#include "llvm/Support/MachO.def"
-    }
+  for (auto load_command : Obj.load_commands()) {
+    auto LC = make_unique<MachOYAML::LoadCommand>();
+    LC->cmd = static_cast<MachO::LoadCommandType>(load_command.C.cmd);
+    LC->cmdsize = load_command.C.cmdsize;
     Y->LoadCommands.push_back(std::move(LC));
   }
 
