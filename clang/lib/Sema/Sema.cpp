@@ -1492,7 +1492,8 @@ IdentifierInfo *Sema::getFloat128Identifier() const {
 void Sema::PushCapturedRegionScope(Scope *S, CapturedDecl *CD, RecordDecl *RD,
                                    CapturedRegionKind K) {
   CapturingScopeInfo *CSI = new CapturedRegionScopeInfo(
-      getDiagnostics(), S, CD, RD, CD->getContextParam(), K);
+      getDiagnostics(), S, CD, RD, CD->getContextParam(), K,
+      (getLangOpts().OpenMP && K == CR_OpenMP) ? getOpenMPNestingLevel() : 0);
   CSI->ReturnType = Context.VoidTy;
   FunctionScopes.push_back(CSI);
 }
