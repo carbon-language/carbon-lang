@@ -1010,36 +1010,20 @@ private:
       return false;
 
     unsigned TokenCount = 0;
-    bool IsMultiline = false;
-    unsigned EndColumnInFirstLine =
-        EndBacktick->OriginalColumn + EndBacktick->ColumnWidth;
     for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; I++) {
       ++TokenCount;
-      if (I[0]->IsMultiline)
-        IsMultiline = true;
 
       // If there was a preceding template string, this must be the start of a
       // template string, not the end.
       if (I[0]->is(TT_TemplateString))
         return false;
 
-      if (I[0]->isNot(tok::unknown) || I[0]->TokenText != "`") {
-        // Keep track of the rhs offset of the last token to wrap across lines -
-        // its the rhs offset of the first line of the template string, used to
-        // determine its width.
-        if (I[0]->IsMultiline)
-          EndColumnInFirstLine = I[0]->OriginalColumn + I[0]->ColumnWidth;
-        // If the token has newlines, the token before it (if it exists) is the
-        // rhs end of the previous line.
-        if (I[0]->NewlinesBefore > 0 && (I + 1 != E)) {
-          EndColumnInFirstLine = I[1]->OriginalColumn + I[1]->ColumnWidth;
-          IsMultiline = true;
-        }
+      if (I[0]->isNot(tok::unknown) || I[0]->TokenText != "`")
         continue;
-      }
 
       Tokens.resize(Tokens.size() - TokenCount);
-      Tokens.back()->Type = TT_TemplateString;
+      FormatToken *TemplateStringToken = Tokens.back();
+      TemplateStringToken->Type = TT_TemplateString;
       const char *EndOffset =
           EndBacktick->TokenText.data() + 1 + CommentBacktickPos;
       if (CommentBacktickPos != 0) {
@@ -1048,32 +1032,26 @@ private:
         SourceLocation Loc = EndBacktick->Tok.getLocation();
         resetLexer(SourceMgr.getFileOffset(Loc) + CommentBacktickPos + 1);
       }
-      Tokens.back()->TokenText =
-          StringRef(Tokens.back()->TokenText.data(),
-                    EndOffset - Tokens.back()->TokenText.data());
+      StringRef LiteralText =
+          StringRef(TemplateStringToken->TokenText.data(),
+                    EndOffset - TemplateStringToken->TokenText.data());
+      TemplateStringToken->TokenText = LiteralText;
 
-      unsigned EndOriginalColumn = EndBacktick->OriginalColumn;
-      if (EndOriginalColumn == 0) {
-        SourceLocation Loc = EndBacktick->Tok.getLocation();
-        EndOriginalColumn = SourceMgr.getSpellingColumnNumber(Loc);
-      }
-      // If the ` is further down within the token (e.g. in a comment).
-      EndOriginalColumn += CommentBacktickPos;
-
-      if (IsMultiline) {
-        // ColumnWidth is from backtick to last token in line.
-        // LastLineColumnWidth is 0 to backtick.
-        // x = `some content
-        //     until here`;
-        Tokens.back()->ColumnWidth =
-            EndColumnInFirstLine - Tokens.back()->OriginalColumn;
-        // +1 for the ` itself.
-        Tokens.back()->LastLineColumnWidth = EndOriginalColumn + 1;
-        Tokens.back()->IsMultiline = true;
-      } else {
-        // Token simply spans from start to end, +1 for the ` itself.
-        Tokens.back()->ColumnWidth =
-            EndOriginalColumn - Tokens.back()->OriginalColumn + 1;
+      size_t FirstBreak = LiteralText.find('\n');
+      StringRef FirstLineText = FirstBreak == StringRef::npos
+                                    ? LiteralText
+                                    : LiteralText.substr(0, FirstBreak);
+      TemplateStringToken->ColumnWidth = encoding::columnWidthWithTabs(
+          FirstLineText, TemplateStringToken->OriginalColumn, Style.TabWidth,
+          Encoding);
+      size_t LastBreak = LiteralText.rfind('\n');
+      if (LastBreak != StringRef::npos) {
+        TemplateStringToken->IsMultiline = true;
+        unsigned StartColumn = 0; // The template tail spans the entire line.
+        TemplateStringToken->LastLineColumnWidth =
+            encoding::columnWidthWithTabs(
+                LiteralText.substr(LastBreak + 1, LiteralText.size()),
+                StartColumn, Style.TabWidth, Encoding);
       }
       return true;
     }
