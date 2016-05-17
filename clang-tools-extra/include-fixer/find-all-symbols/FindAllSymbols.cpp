@@ -69,6 +69,9 @@ llvm::Optional<SymbolInfo> CreateSymbolInfo(const NamedDecl *ND,
     Type = SymbolInfo::SymbolKind::EnumConstantDecl;
   } else if (llvm::isa<EnumDecl>(ND)) {
     Type = SymbolInfo::SymbolKind::EnumDecl;
+    // Ignore anonymous enum declarations.
+    if (ND->getName().empty())
+      return llvm::None;
   } else {
     assert(llvm::isa<RecordDecl>(ND) &&
            "Matched decl must be one of VarDecl, "

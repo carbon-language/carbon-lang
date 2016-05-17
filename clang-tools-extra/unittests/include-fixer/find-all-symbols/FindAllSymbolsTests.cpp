@@ -316,6 +316,8 @@ TEST_F(FindAllSymbolsTest, EnumTest) {
   Symbol = SymbolInfo("A2", SymbolInfo::SymbolKind::EnumConstantDecl,
                       HeaderName, 4, {{SymbolInfo::ContextType::EnumDecl, ""}});
   EXPECT_TRUE(hasSymbol(Symbol));
+  Symbol = SymbolInfo("", SymbolInfo::SymbolKind::EnumDecl, HeaderName, 4, {});
+  EXPECT_FALSE(hasSymbol(Symbol));
 
   Symbol = SymbolInfo("A_ENUM", SymbolInfo::SymbolKind::EnumDecl, HeaderName, 7,
                       {{SymbolInfo::ContextType::Record, "A"}});
