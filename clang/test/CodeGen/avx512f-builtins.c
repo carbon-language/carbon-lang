@@ -3365,19 +3365,19 @@ __m128 test_mm_roundscale_ss(__m128 __A, __m128 __B) {
   return _mm_roundscale_ss(__A, __B, 3); 
 }
 
-__m128d test_mm_mask_roundscale_ss(__m128d __W, __mmask8 __U, __m128d __A, __m128d __B){
+__m128 test_mm_mask_roundscale_ss(__m128d __W, __mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_mask_roundscale_ss
   // CHECK: @llvm.x86.avx512.mask.rndscale.ss
     return _mm_mask_roundscale_ss(__W,__U,__A,__B,3);
 }
 
-__m128d test_mm_maskz_roundscale_round_ss( __mmask8 __U, __m128d __A, __m128d __B){
+__m128 test_mm_maskz_roundscale_round_ss( __mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_maskz_roundscale_round_ss
   // CHECK: @llvm.x86.avx512.mask.rndscale.ss
     return _mm_maskz_roundscale_round_ss(__U,__A,__B,3,_MM_FROUND_CUR_DIRECTION);
 }
 
-__m128d test_mm_maskz_roundscale_ss(__mmask8 __U, __m128d __A, __m128d __B){
+__m128 test_mm_maskz_roundscale_ss(__mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_maskz_roundscale_ss
   // CHECK: @llvm.x86.avx512.mask.rndscale.ss
     return _mm_maskz_roundscale_ss(__U,__A,__B,3);
