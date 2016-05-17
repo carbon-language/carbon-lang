@@ -179,9 +179,6 @@ public:
 
 private:
 
-  /// Huge page size used for alignment.
-  static constexpr unsigned PageAlign = 0x200000;
-
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
   void discoverStorage();
@@ -247,7 +244,20 @@ private:
     return Address - NewTextSegmentAddress + NewTextSegmentOffset;
   }
 
+  /// Return true if we should overwrite contents of the section instead
+  /// of appending contents to it.
+  bool shouldOverwriteSection(StringRef SectionName);
+
 private:
+
+  /// If we are updating debug info, these are the section we need to overwrite.
+  static constexpr const char *DebugSectionsToOverwrite[] = {
+    ".debug_aranges",
+    ".debug_line"};
+
+  /// Huge page size used for alignment.
+  static constexpr unsigned PageAlign = 0x200000;
+
   /// An instance of the input binary we are processing, externally owned.
   llvm::object::ELFObjectFileBase *InputFile;
 
@@ -305,9 +315,6 @@ private:
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.
   std::vector<uint64_t> FailedAddresses;
-
-  /// Size of the .debug_line section on input.
-  uint32_t DebugLineSize{0};
 
   /// Size of the .debug_loc section in input.
   uint32_t DebugLocSize{0};
