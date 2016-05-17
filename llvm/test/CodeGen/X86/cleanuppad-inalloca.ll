@@ -38,8 +38,8 @@ ehcleanup:                                        ; preds = %entry
 ; CHECK: pushl %ebp
 ; CHECK: movl %esp, %ebp
 ; CHECK: subl ${{[0-9]+}}, %esp
-; CHECK: pushl %eax
-; CHECK: pushl %eax
+; CHECK: movl $8, %eax
+; CHECK: calll __chkstk
 ; CHECK: calll "??0A@@QAE@XZ"
 ; CHECK: calll "??0A@@QAE@XZ"
 ; CHECK: calll _takes_two

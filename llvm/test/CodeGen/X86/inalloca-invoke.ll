@@ -21,8 +21,7 @@ blah:
   %beg = getelementptr %frame.reverse, %frame.reverse* %rev_args, i32 0, i32 0
   %end = getelementptr %frame.reverse, %frame.reverse* %rev_args, i32 0, i32 1
 
-; CHECK:  pushl   %eax
-; CHECK:  subl    $20, %esp
+; CHECK:  calll   __chkstk
 ; CHECK:  movl %esp, %[[beg:[^ ]*]]
 ; CHECK:  leal 12(%[[beg]]), %[[end:[^ ]*]]
 

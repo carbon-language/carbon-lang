@@ -266,7 +266,6 @@ void X86PassConfig::addPreRegAlloc() {
     addPass(createX86OptimizeLEAs());
 
   addPass(createX86CallFrameOptimization());
-  addPass(createX86WinAllocaExpander());
 }
 
 void X86PassConfig::addPostRegAlloc() {

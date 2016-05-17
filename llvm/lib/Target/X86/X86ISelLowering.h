@@ -1162,6 +1162,9 @@ namespace llvm {
     MachineBasicBlock *EmitLoweredAtomicFP(MachineInstr *I,
                                            MachineBasicBlock *BB) const;
 
+    MachineBasicBlock *EmitLoweredWinAlloca(MachineInstr *MI,
+                                              MachineBasicBlock *BB) const;
+
     MachineBasicBlock *EmitLoweredCatchRet(MachineInstr *MI,
                                            MachineBasicBlock *BB) const;
 
