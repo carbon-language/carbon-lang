@@ -2097,3 +2097,15 @@ if.then3:                                         ; preds = %if.end
 return:                                           ; preds = %if.end, %entry, %if.then3
   ret void
 }
+
+; When canonicalizing to 'sgt', make sure the constant is correct.
+
+define i1 @PR27792(i128 %a) {
+; CHECK-LABEL: @PR27792(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i128 %a, -1
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %cmp = icmp sge i128 %a, 0
+  ret i1 %cmp
+}
+
