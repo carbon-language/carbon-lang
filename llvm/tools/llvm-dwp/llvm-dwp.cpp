@@ -372,13 +372,13 @@ std::string buildDWODescription(StringRef Name, StringRef DWPName, StringRef DWO
   return Text;
 }
 
-std::string
-buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
-                    const CompileUnitIdentifiers &ID, StringRef DWPName) {
-  return std::string("Duplicate DWO ID (") + utohexstr(PrevE.first) + ") in " +
-         buildDWODescription(PrevE.second.Name, PrevE.second.DWPName,
-                             PrevE.second.DWOName) +
-         " and " + buildDWODescription(ID.Name, DWPName, ID.DWOName);
+Error buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
+                          const CompileUnitIdentifiers &ID, StringRef DWPName) {
+  return make_error<DWPError>(
+      std::string("Duplicate DWO ID (") + utohexstr(PrevE.first) + ") in " +
+      buildDWODescription(PrevE.second.Name, PrevE.second.DWPName,
+                          PrevE.second.DWOName) +
+      " and " + buildDWODescription(ID.Name, DWPName, ID.DWOName));
 }
 static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   const auto &MCOFI = *Out.getContext().getObjectFileInfo();
@@ -523,7 +523,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
           return EID.takeError();
         const auto &ID = *EID;
         if (!P.second)
-          return make_error<DWPError>(buildDuplicateError(*P.first, ID, Input));
+          return buildDuplicateError(*P.first, ID, Input);
         auto &NewEntry = P.first->second;
         NewEntry.Name = ID.Name;
         NewEntry.DWOName = ID.DWOName;
@@ -555,7 +555,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       const auto &ID = *EID;
       auto P = IndexEntries.insert(std::make_pair(ID.Signature, CurEntry));
       if (!P.second)
-        return make_error<DWPError>(buildDuplicateError(*P.first, ID, ""));
+        return buildDuplicateError(*P.first, ID, "");
       P.first->second.Name = ID.Name;
       P.first->second.DWOName = ID.DWOName;
       addAllTypes(Out, TypeIndexEntries, TypesSection, CurTypesSection,
