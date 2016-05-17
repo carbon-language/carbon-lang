@@ -33,9 +33,8 @@ class MCCodeGenInfo {
   CodeGenOpt::Level OptLevel;
 
 public:
-  void initMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
-                         CodeModel::Model CM = CodeModel::Default,
-                         CodeGenOpt::Level OL = CodeGenOpt::Default);
+  void initMCCodeGenInfo(Reloc::Model RM, CodeModel::Model CM,
+                         CodeGenOpt::Level OL);
 
   Reloc::Model getRelocationModel() const { return RelocationModel; }
 
