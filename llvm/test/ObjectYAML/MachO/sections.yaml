@@ -169,10 +169,12 @@ LoadCommands:
     cmdsize:         48
     rebase_off:      12288
     rebase_size:     8
-    bind_off:        96
+    bind_off:        12296
+    bind_size:       96
     weak_bind_off:   0
     weak_bind_size:  0
-    lazy_bind_off:   624
+    lazy_bind_off:   12392
+    lazy_bind_size:  624
     export_off:      13016
     export_size:     48
   - cmd:             LC_SYMTAB
