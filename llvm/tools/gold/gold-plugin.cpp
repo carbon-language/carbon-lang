@@ -234,8 +234,8 @@ namespace options {
       thinlto_emit_imports_files = true;
     } else if (opt.startswith("thinlto-prefix-replace=")) {
       thinlto_prefix_replace = opt.substr(strlen("thinlto-prefix-replace="));
-      if (thinlto_prefix_replace.find(":") == std::string::npos)
-        message(LDPL_FATAL, "thinlto-prefix-replace expects 'old:new' format");
+      if (thinlto_prefix_replace.find(";") == std::string::npos)
+        message(LDPL_FATAL, "thinlto-prefix-replace expects 'old;new' format");
     } else if (opt.size() == 2 && opt[0] == 'O') {
       if (opt[1] < '0' || opt[1] > '3')
         message(LDPL_FATAL, "Optimization level must be between 0 and 3");
@@ -1219,8 +1219,8 @@ static void thinLTOBackends(raw_fd_ostream *ApiFile,
 static void getThinLTOOldAndNewPrefix(std::string &OldPrefix,
                                       std::string &NewPrefix) {
   StringRef PrefixReplace = options::thinlto_prefix_replace;
-  assert(PrefixReplace.empty() || PrefixReplace.find(":") != StringRef::npos);
-  std::pair<StringRef, StringRef> Split = PrefixReplace.split(":");
+  assert(PrefixReplace.empty() || PrefixReplace.find(";") != StringRef::npos);
+  std::pair<StringRef, StringRef> Split = PrefixReplace.split(";");
   OldPrefix = Split.first.str();
   NewPrefix = Split.second.str();
 }

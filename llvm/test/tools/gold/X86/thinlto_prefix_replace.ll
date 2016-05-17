@@ -7,7 +7,7 @@
 ; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=thinlto \
 ; RUN:    --plugin-opt=thinlto-index-only \
-; RUN:    --plugin-opt=thinlto-prefix-replace="%T/oldpath/:%T/newpath/" \
+; RUN:    --plugin-opt=thinlto-prefix-replace="%T/oldpath/;%T/newpath/" \
 ; RUN:    -shared %T/oldpath/thinlto_prefix_replace.o -o %T/thinlto_prefix_replace
 ; RUN: ls %T/newpath/thinlto_prefix_replace.o.thinlto.bc
 
