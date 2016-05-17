@@ -52,12 +52,12 @@ int main() {
   take_opaque_fn((void (*)(int))mismatched_stdcall);
 }
 
-// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{19:6-19:6}:"WINAPI "
-// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{19:6-19:6}:"WINAPI "
-// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{19:6-19:6}:"WINAPI "
-// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{10:6-10:6}:"__stdcall "
+// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{16:6-16:6}:"WINAPI "
+// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{16:6-16:6}:"WINAPI "
+// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{16:6-16:6}:"WINAPI "
+// MSFIXIT: fix-it:"{{.*}}callingconv-cast.c":{7:6-7:6}:"__stdcall "
 
-// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{19:6-19:6}:"WINAPI "
-// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{19:6-19:6}:"WINAPI "
-// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{19:6-19:6}:"WINAPI "
-// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{10:6-10:6}:"__attribute__((stdcall)) "
+// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{16:6-16:6}:"WINAPI "
+// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{16:6-16:6}:"WINAPI "
+// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{16:6-16:6}:"WINAPI "
+// GNUFIXIT: fix-it:"{{.*}}callingconv-cast.c":{7:6-7:6}:"__attribute__((stdcall)) "
