@@ -807,8 +807,10 @@ public:
     assert(FirstInLineIndex == 0);
     do {
       Tokens.push_back(getNextToken());
-      if (Style.Language == FormatStyle::LK_JavaScript)
+      if (Style.Language == FormatStyle::LK_JavaScript) {
         tryParseJSRegexLiteral();
+        tryParseTemplateString();
+      }
       tryMergePreviousTokens();
       if (Tokens.back()->NewlinesBefore > 0 || Tokens.back()->IsMultiline)
         FirstInLineIndex = Tokens.size() - 1;
@@ -828,9 +830,6 @@ private:
       return;
 
     if (Style.Language == FormatStyle::LK_JavaScript) {
-      if (tryMergeTemplateString())
-        return;
-
       static const tok::TokenKind JSIdentity[] = {tok::equalequal, tok::equal};
       static const tok::TokenKind JSNotIdentity[] = {tok::exclaimequal,
                                                      tok::equal};
@@ -992,70 +991,42 @@ private:
     resetLexer(SourceMgr.getFileOffset(Lex->getSourceLocation(Offset)));
   }
 
-  bool tryMergeTemplateString() {
-    if (Tokens.size() < 2)
-      return false;
+  void tryParseTemplateString() {
+    FormatToken *BacktickToken = Tokens.back();
+    if (!BacktickToken->is(tok::unknown) || BacktickToken->TokenText != "`")
+      return;
 
-    FormatToken *EndBacktick = Tokens.back();
-    // Backticks get lexed as tok::unknown tokens. If a template string contains
-    // a comment start, it gets lexed as a tok::comment, or tok::unknown if
-    // unterminated.
-    if (!EndBacktick->isOneOf(tok::comment, tok::string_literal,
-                              tok::char_constant, tok::unknown))
-      return false;
-    size_t CommentBacktickPos = EndBacktick->TokenText.find('`');
-    // Unknown token that's not actually a backtick, or a comment that doesn't
-    // contain a backtick.
-    if (CommentBacktickPos == StringRef::npos)
-      return false;
-
-    unsigned TokenCount = 0;
-    for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; I++) {
-      ++TokenCount;
-
-      // If there was a preceding template string, this must be the start of a
-      // template string, not the end.
-      if (I[0]->is(TT_TemplateString))
-        return false;
-
-      if (I[0]->isNot(tok::unknown) || I[0]->TokenText != "`")
-        continue;
-
-      Tokens.resize(Tokens.size() - TokenCount);
-      FormatToken *TemplateStringToken = Tokens.back();
-      TemplateStringToken->Type = TT_TemplateString;
-      const char *EndOffset =
-          EndBacktick->TokenText.data() + 1 + CommentBacktickPos;
-      if (CommentBacktickPos != 0) {
-        // If the backtick was not the first character (e.g. in a comment),
-        // re-lex after the backtick position.
-        SourceLocation Loc = EndBacktick->Tok.getLocation();
-        resetLexer(SourceMgr.getFileOffset(Loc) + CommentBacktickPos + 1);
-      }
-      StringRef LiteralText =
-          StringRef(TemplateStringToken->TokenText.data(),
-                    EndOffset - TemplateStringToken->TokenText.data());
-      TemplateStringToken->TokenText = LiteralText;
-
-      size_t FirstBreak = LiteralText.find('\n');
-      StringRef FirstLineText = FirstBreak == StringRef::npos
-                                    ? LiteralText
-                                    : LiteralText.substr(0, FirstBreak);
-      TemplateStringToken->ColumnWidth = encoding::columnWidthWithTabs(
-          FirstLineText, TemplateStringToken->OriginalColumn, Style.TabWidth,
-          Encoding);
-      size_t LastBreak = LiteralText.rfind('\n');
-      if (LastBreak != StringRef::npos) {
-        TemplateStringToken->IsMultiline = true;
-        unsigned StartColumn = 0; // The template tail spans the entire line.
-        TemplateStringToken->LastLineColumnWidth =
-            encoding::columnWidthWithTabs(
-                LiteralText.substr(LastBreak + 1, LiteralText.size()),
-                StartColumn, Style.TabWidth, Encoding);
-      }
-      return true;
+    // 'Manually' lex ahead in the current file buffer.
+    const char *Offset = Lex->getBufferLocation();
+    const char *TmplBegin = Offset - BacktickToken->TokenText.size(); // at "`"
+    for (; Offset != Lex->getBuffer().end() && *Offset != '`'; ++Offset) {
+      if (*Offset == '\\')
+        ++Offset; // Skip the escaped character.
     }
-    return false;
+
+    StringRef LiteralText(TmplBegin, Offset - TmplBegin + 1);
+    BacktickToken->Type = TT_TemplateString;
+    BacktickToken->Tok.setKind(tok::string_literal);
+    BacktickToken->TokenText = LiteralText;
+
+    // Adjust width for potentially multiline string literals.
+    size_t FirstBreak = LiteralText.find('\n');
+    StringRef FirstLineText = FirstBreak == StringRef::npos
+                                  ? LiteralText
+                                  : LiteralText.substr(0, FirstBreak);
+    BacktickToken->ColumnWidth = encoding::columnWidthWithTabs(
+        FirstLineText, BacktickToken->OriginalColumn, Style.TabWidth, Encoding);
+    size_t LastBreak = LiteralText.rfind('\n');
+    if (LastBreak != StringRef::npos) {
+      BacktickToken->IsMultiline = true;
+      unsigned StartColumn = 0; // The template tail spans the entire line.
+      BacktickToken->LastLineColumnWidth = encoding::columnWidthWithTabs(
+          LiteralText.substr(LastBreak + 1, LiteralText.size()), StartColumn,
+          Style.TabWidth, Encoding);
+    }
+
+    resetLexer(
+        SourceMgr.getFileOffset(Lex->getSourceLocation(Offset + 1)));
   }
 
   bool tryMerge_TMacro() {
