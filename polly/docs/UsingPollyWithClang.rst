@@ -92,12 +92,8 @@ Change/Disable the Optimizer
 ----------------------------
 
 Polly uses by default the isl scheduling optimizer. The isl optimizer optimizes
-for data-locality and parallelism using the Pluto algorithm. For research it is
-also possible to run PoCC as external optimizer. PoCC provides access to the
-original Pluto implementation. To use PoCC add -polly-optimizer=pocc to the
-command line (only available if Polly was compiled with scoplib support)
-[removed after LLVM 3.4.2]. To disable the optimizer entirely use the option
--polly-optimizer=none.
+for data-locality and parallelism using the Pluto algorithm.
+To disable the optimizer entirely use the option -polly-optimizer=none.
 
 Disable tiling in the optimizer
 -------------------------------
