@@ -90,7 +90,11 @@ static void ImposeStackOrdering(MachineInstr *MI) {
 // MI->getOperand(CalleeOpNo) reads memory, writes memory, and/or has side
 // effects.
 static void QueryCallee(const MachineInstr *MI, unsigned CalleeOpNo,
-                        bool &Read, bool &Write, bool &Effects) {
+                        bool &Read, bool &Write, bool &Effects,
+                        bool &StackPointer) {
+  // All calls can use the stack pointer.
+  StackPointer = true;
+
   const MachineOperand &MO = MI->getOperand(CalleeOpNo);
   if (MO.isGlobal()) {
     const Constant *GV = MO.getGlobal();
@@ -116,10 +120,10 @@ static void QueryCallee(const MachineInstr *MI, unsigned CalleeOpNo,
   Effects = true;
 }
 
-// Determine whether MI reads memory, writes memory, and/or has side
-// effects.
+// Determine whether MI reads memory, writes memory, has side effects,
+// and/or uses the __stack_pointer value.
 static void Query(const MachineInstr *MI, AliasAnalysis &AA,
-                  bool &Read, bool &Write, bool &Effects) {
+                  bool &Read, bool &Write, bool &Effects, bool &StackPointer) {
   assert(!MI->isPosition());
   assert(!MI->isTerminator());
   assert(!MI->isDebugValue());
@@ -129,9 +133,21 @@ static void Query(const MachineInstr *MI, AliasAnalysis &AA,
     Read = true;
 
   // Check for stores.
-  if (MI->mayStore())
+  if (MI->mayStore()) {
     Write = true;
-  else if (MI->hasOrderedMemoryRef()) {
+
+    // Check for stores to __stack_pointer.
+    for (auto MMO : MI->memoperands()) {
+      const MachinePointerInfo &MPI = MMO->getPointerInfo();
+      if (MPI.V.is<const PseudoSourceValue *>()) {
+        auto PSV = MPI.V.get<const PseudoSourceValue *>();
+        if (const ExternalSymbolPseudoSourceValue *EPSV =
+                dyn_cast<ExternalSymbolPseudoSourceValue>(PSV))
+          if (StringRef(EPSV->getSymbol()) == "__stack_pointer")
+            StackPointer = true;
+      }
+    }
+  } else if (MI->hasOrderedMemoryRef()) {
     switch (MI->getOpcode()) {
     case WebAssembly::DIV_S_I32: case WebAssembly::DIV_S_I64:
     case WebAssembly::REM_S_I32: case WebAssembly::REM_S_I64:
@@ -181,13 +197,13 @@ static void Query(const MachineInstr *MI, AliasAnalysis &AA,
   if (MI->isCall()) {
     switch (MI->getOpcode()) {
     case WebAssembly::CALL_VOID:
-      QueryCallee(MI, 0, Read, Write, Effects);
+      QueryCallee(MI, 0, Read, Write, Effects, StackPointer);
       break;
     case WebAssembly::CALL_I32:
     case WebAssembly::CALL_I64:
     case WebAssembly::CALL_F32:
     case WebAssembly::CALL_F64:
-      QueryCallee(MI, 1, Read, Write, Effects);
+      QueryCallee(MI, 1, Read, Write, Effects, StackPointer);
       break;
     case WebAssembly::CALL_INDIRECT_VOID:
     case WebAssembly::CALL_INDIRECT_I32:
@@ -197,6 +213,7 @@ static void Query(const MachineInstr *MI, AliasAnalysis &AA,
       Read = true;
       Write = true;
       Effects = true;
+      StackPointer = true;
       break;
     default:
       llvm_unreachable("unexpected call opcode");
@@ -308,12 +325,12 @@ static bool IsSafeToMove(const MachineInstr *Def, const MachineInstr *Insert,
       return false;
   }
 
-  bool Read = false, Write = false, Effects = false;
-  Query(Def, AA, Read, Write, Effects);
+  bool Read = false, Write = false, Effects = false, StackPointer = false;
+  Query(Def, AA, Read, Write, Effects, StackPointer);
 
   // If the instruction does not access memory and has no side effects, it has
   // no additional dependencies.
-  if (!Read && !Write && !Effects)
+  if (!Read && !Write && !Effects && !StackPointer)
     return true;
 
   // Scan through the intervening instructions between Def and Insert.
@@ -322,12 +339,16 @@ static bool IsSafeToMove(const MachineInstr *Def, const MachineInstr *Insert,
     bool InterveningRead = false;
     bool InterveningWrite = false;
     bool InterveningEffects = false;
-    Query(I, AA, InterveningRead, InterveningWrite, InterveningEffects);
+    bool InterveningStackPointer = false;
+    Query(I, AA, InterveningRead, InterveningWrite, InterveningEffects,
+          InterveningStackPointer);
     if (Effects && InterveningEffects)
       return false;
     if (Read && InterveningWrite)
       return false;
     if (Write && (InterveningRead || InterveningWrite))
+      return false;
+    if (StackPointer && InterveningStackPointer)
       return false;
   }
 

@@ -402,7 +402,7 @@ define i32 @no_stackify_past_epilogue() {
 
 ; Stackify a loop induction variable into a loop comparison.
 
-; CHECK_LABEL: stackify_indvar:
+; CHECK-LABEL: stackify_indvar:
 ; CHECK:             i32.const   $push[[L5:.+]]=, 1{{$}}
 ; CHECK-NEXT:        i32.add     $push[[L4:.+]]=, $[[R0:.+]], $pop[[L5]]{{$}}
 ; CHECK-NEXT:        tee_local   $push[[L3:.+]]=, $[[R0]]=, $pop[[L4]]{{$}}
@@ -422,6 +422,20 @@ bb3:                                              ; preds = %bb3, %bb2
 
 bb10:                                             ; preds = %bb9, %bb
   ret void
+}
+
+; Don't stackify a call past a __stack_pointer store.
+
+; CHECK-LABEL: stackpointer_dependency:
+; CHECK:      call {{.+}}, stackpointer_callee@FUNCTION,
+; CHECK:      i32.const $push[[L0:.+]]=, __stack_pointer
+; CHECK-NEXT: i32.store $discard=, 0($pop[[L0]]),
+declare i32 @stackpointer_callee(i8* readnone, i8* readnone)
+declare i8* @llvm.frameaddress(i32)
+define i32 @stackpointer_dependency(i8* readnone) {
+  %2 = tail call i8* @llvm.frameaddress(i32 0)
+  %3 = tail call i32 @stackpointer_callee(i8* %0, i8* %2)
+  ret i32 %3
 }
 
 !llvm.module.flags = !{!0}
