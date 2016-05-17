@@ -72,6 +72,13 @@ private:
   std::string Msg;
 };
 
+/// isNotObjectErrorInvalidFileType() is used when looping through the children
+/// of an archive after calling getAsBinary() on the child and it returns an
+/// llvm::Error.  In the cases we want to loop through the children and ignore the
+/// non-objects in the archive this is used to test the error to see if an
+/// error() function needs to called on the llvm::Error.
+Error isNotObjectErrorInvalidFileType(llvm::Error Err);
+
 } // end namespace object.
 
 } // end namespace llvm.
@@ -80,35 +87,5 @@ namespace std {
 template <>
 struct is_error_code_enum<llvm::object::object_error> : std::true_type {};
 }
-
-namespace llvm {
-namespace object {
-
-// isNotObjectErrorInvalidFileType() is used when looping through the children
-// of an archive after calling getAsBinary() on the child and it returns an
-// llvm::Error.  In the cases we want to loop through the children and ignore the
-// non-objects in the archive this is used to test the error to see if an
-// error() function needs to called on the llvm::Error.
-static inline llvm::Error isNotObjectErrorInvalidFileType(llvm::Error Err) {
-  if (auto Err2 =
-       handleErrors(std::move(Err),
-         [](std::unique_ptr<ECError> M) {
-           // Try to handle 'M'. If successful, return a success value from
-           // the handler.
-           if (M->convertToErrorCode() == object_error::invalid_file_type)
-             return Error::success();
-
-           // We failed to handle 'M' - return it from the handler.
-           // This value will be passed back from catchErrors and
-           // wind up in Err2, where it will be returned from this function.
-           return Error(std::move(M));
-         }))
-    return Err2;
-  return Err;
-}
-
-} // end namespace object.
-
-} // end namespace llvm.
 
 #endif
