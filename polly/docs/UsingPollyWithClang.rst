@@ -106,16 +106,6 @@ By default both optimizers perform tiling, if possible. In case this is not
 wanted the option -polly-tiling=false can be used to disable it. (This option
 disables tiling for both optimizers).
 
-Ignore possible aliasing
-------------------------
-
-By default we only detect scops, if we can prove that the different array
-bases can not alias. This is correct do if we optimize automatically. However,
-without special user annotations like 'restrict' we can often not prove that
-no aliasing is possible. In case the user knows no aliasing can happen in the
-code the -polly-ignore-aliasing can be used to disable the check for possible
-aliasing.
-
 Import / Export
 ---------------
 
