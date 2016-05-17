@@ -1,6 +1,6 @@
 ; Check that changing the output path via prefix-replace works
 ; Use of '/' in paths created here make this unsuitable for Windows.
-; XFAIL: win32
+; REQUIRES: shell
 ; RUN: mkdir -p %T/oldpath
 ; RUN: opt -module-summary %s -o %T/oldpath/prefix_replace.o
 ; Ensure that there is no existing file at the new path, so we properly
