@@ -3132,6 +3132,9 @@ static ICmpInst *canonicalizeCmpWithConstant(ICmpInst &I) {
     unsigned NumElts = Op1Type->getVectorNumElements();
     for (unsigned i = 0; i != NumElts; ++i) {
       Constant *Elt = Op1C->getAggregateElement(i);
+      if (!Elt)
+        return nullptr;
+
       if (isa<UndefValue>(Elt))
         continue;
       // Bail out if we can't determine if this constant is min/max or if we
