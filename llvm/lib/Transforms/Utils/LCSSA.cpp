@@ -53,10 +53,8 @@ STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 /// Return true if the specified block is in the list.
 static bool isExitBlock(BasicBlock *BB,
                         const SmallVectorImpl<BasicBlock *> &ExitBlocks) {
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    if (ExitBlocks[i] == BB)
-      return true;
-  return false;
+  return std::any_of(ExitBlocks.begin(), ExitBlocks.end(),
+                     [&](BasicBlock *EB) { return EB == BB; });
 }
 
 /// Given an instruction in the loop, check to see if it has any uses that are
@@ -210,11 +208,9 @@ blockDominatesAnExit(BasicBlock *BB,
                      DominatorTree &DT,
                      const SmallVectorImpl<BasicBlock *> &ExitBlocks) {
   DomTreeNode *DomNode = DT.getNode(BB);
-  for (BasicBlock *ExitBB : ExitBlocks)
-    if (DT.dominates(DomNode, DT.getNode(ExitBB)))
-      return true;
-
-  return false;
+  return std::any_of(ExitBlocks.begin(), ExitBlocks.end(), [&](BasicBlock *EB) {
+    return DT.dominates(DomNode, DT.getNode(EB));
+  });
 }
 
 bool llvm::formLCSSA(Loop &L, DominatorTree &DT, LoopInfo *LI,
