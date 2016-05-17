@@ -120,10 +120,12 @@ void MappingTraits<MachO::dyld_info_command>::mapping(
     IO &IO, MachO::dyld_info_command &LoadCommand) {
   IO.mapRequired("rebase_off", LoadCommand.rebase_off);
   IO.mapRequired("rebase_size", LoadCommand.rebase_size);
-  IO.mapRequired("bind_off", LoadCommand.bind_size);
+  IO.mapRequired("bind_off", LoadCommand.bind_off);
+  IO.mapRequired("bind_size", LoadCommand.bind_size);
   IO.mapRequired("weak_bind_off", LoadCommand.weak_bind_off);
   IO.mapRequired("weak_bind_size", LoadCommand.weak_bind_size);
-  IO.mapRequired("lazy_bind_off", LoadCommand.lazy_bind_size);
+  IO.mapRequired("lazy_bind_off", LoadCommand.lazy_bind_off);
+  IO.mapRequired("lazy_bind_size", LoadCommand.lazy_bind_size);
   IO.mapRequired("export_off", LoadCommand.export_off);
   IO.mapRequired("export_size", LoadCommand.export_size);
 }
