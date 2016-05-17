@@ -16,6 +16,37 @@
 namespace llvm {
 namespace codeview {
 
+/// Distinguishes individual records in .debug$T section or PDB type stream. The
+/// documentation and headers talk about this as the "leaf" type.
+enum class TypeRecordKind : uint16_t {
+#define TYPE_RECORD(lf_ename, value, name) name = value,
+#include "TypeRecords.def"
+  // FIXME: Add serialization support
+  FieldList = 0x1203,
+  BitField = 0x1205,
+};
+
+/// Duplicate copy of the above enum, but using the official CV names. Useful
+/// for reference purposes and when dealing with unknown record types.
+enum TypeLeafKind : uint16_t {
+#define CV_TYPE(name, val) name = val,
+#include "TypeRecords.def"
+};
+
+/// Distinguishes individual records in the Symbols subsection of a .debug$S
+/// section. Equivalent to SYM_ENUM_e in cvinfo.h.
+enum class SymbolRecordKind : uint16_t {
+#define SYMBOL_RECORD(lf_ename, value, name) name = value,
+#include "CVSymbolTypes.def"
+};
+
+/// Duplicate copy of the above enum, but using the official CV names. Useful
+/// for reference purposes and when dealing with unknown record types.
+enum SymbolKind : uint16_t {
+#define CV_SYMBOL(name, val) name = val,
+#include "CVSymbolTypes.def"
+};
+
 #define CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(Class)                            \
   inline Class operator|(Class a, Class b) {                                   \
     return static_cast<Class>(                                                 \

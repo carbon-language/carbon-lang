@@ -22,20 +22,6 @@ using llvm::support::ulittle16_t;
 using llvm::support::ulittle32_t;
 using llvm::support::little32_t;
 
-/// Distinguishes individual records in the Symbols subsection of a .debug$S
-/// section. Equivalent to SYM_ENUM_e in cvinfo.h.
-enum class SymbolRecordKind : uint16_t {
-#define SYMBOL_RECORD(lf_ename, value, name) name = value,
-#include "CVSymbolTypes.def"
-};
-
-/// Duplicate copy of the above enum, but using the official CV names. Useful
-/// for reference purposes and when dealing with unknown record types.
-enum SymbolKind : uint16_t {
-#define CV_SYMBOL(name, val) name = val,
-#include "CVSymbolTypes.def"
-};
-
 // S_GPROC32, S_LPROC32, S_GPROC32_ID, S_LPROC32_ID, S_LPROC32_DPC or
 // S_LPROC32_DPC_ID
 struct ProcSym {
