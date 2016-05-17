@@ -537,7 +537,9 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       }
 
       if (!CurTypesSection.empty()) {
-        assert(CurTypesSection.size() == 1);
+        if (CurTypesSection.size() != 1)
+          return make_error<DWPError>(
+              "multiple type unit sections in .dwp file");
         DWARFUnitIndex TUIndex(DW_SECT_TYPES);
         DataExtractor TUIndexData(CurTUIndexSection,
                                   ErrOrObj->getBinary()->isLittleEndian(), 0);
