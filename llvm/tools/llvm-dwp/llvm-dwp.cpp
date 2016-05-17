@@ -54,12 +54,6 @@ static opt<std::string> OutputFilename(Required, "o",
                                        value_desc("filename"),
                                        cat(DwpCategory));
 
-static int error(const Twine &Error, const Twine &Context) {
-  errs() << Twine("while processing ") + Context + ":\n";
-  errs() << Twine("error: ") + Error + "\n";
-  return 1;
-}
-
 static Error
 writeStringsAndOffsets(MCStreamer &Out, StringMap<uint32_t> &Strings,
                        uint32_t &StringOffset, MCSection *StrSection,
@@ -585,6 +579,12 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
              IndexEntries);
 
   return Error();
+}
+
+static int error(const Twine &Error, const Twine &Context) {
+  errs() << Twine("while processing ") + Context + ":\n";
+  errs() << Twine("error: ") + Error + "\n";
+  return 1;
 }
 
 int main(int argc, char **argv) {
