@@ -26,6 +26,22 @@ using llvm::support::little32_t;
 using llvm::support::ulittle16_t;
 using llvm::support::ulittle32_t;
 
+/// Distinguishes individual records in .debug$T section or PDB type stream. The
+/// documentation and headers talk about this as the "leaf" type.
+enum class TypeRecordKind : uint16_t {
+#define TYPE_RECORD(lf_ename, value, name) name = value,
+#include "TypeRecords.def"
+  // FIXME: Add serialization support
+  FieldList = 0x1203,
+  BitField = 0x1205,
+};
+
+/// Duplicate copy of the above enum, but using the official CV names. Useful
+/// for reference purposes and when dealing with unknown record types.
+enum TypeLeafKind : uint16_t {
+#define CV_TYPE(name, val) name = val,
+#include "TypeRecords.def"
+};
 
 /// Equvalent to CV_fldattr_t in cvinfo.h.
 struct MemberAttributes {
