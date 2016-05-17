@@ -163,10 +163,12 @@ static void Query(const MachineInstr *MI, AliasAnalysis &AA,
       // of memoperands as having a potential unknown memory reference.
       break;
     default:
-      // Record potential stores, unless it's a call, as calls are handled
+      // Record volatile accesses, unless it's a call, as calls are handled
       // specially below.
-      if (!MI->isCall())
+      if (!MI->isCall()) {
         Write = true;
+        Effects = true;
+      }
       break;
     }
   }
@@ -197,23 +199,14 @@ static void Query(const MachineInstr *MI, AliasAnalysis &AA,
   if (MI->isCall()) {
     switch (MI->getOpcode()) {
     case WebAssembly::CALL_VOID:
+    case WebAssembly::CALL_INDIRECT_VOID:
       QueryCallee(MI, 0, Read, Write, Effects, StackPointer);
       break;
-    case WebAssembly::CALL_I32:
-    case WebAssembly::CALL_I64:
-    case WebAssembly::CALL_F32:
-    case WebAssembly::CALL_F64:
+    case WebAssembly::CALL_I32: case WebAssembly::CALL_I64:
+    case WebAssembly::CALL_F32: case WebAssembly::CALL_F64:
+    case WebAssembly::CALL_INDIRECT_I32: case WebAssembly::CALL_INDIRECT_I64:
+    case WebAssembly::CALL_INDIRECT_F32: case WebAssembly::CALL_INDIRECT_F64:
       QueryCallee(MI, 1, Read, Write, Effects, StackPointer);
-      break;
-    case WebAssembly::CALL_INDIRECT_VOID:
-    case WebAssembly::CALL_INDIRECT_I32:
-    case WebAssembly::CALL_INDIRECT_I64:
-    case WebAssembly::CALL_INDIRECT_F32:
-    case WebAssembly::CALL_INDIRECT_F64:
-      Read = true;
-      Write = true;
-      Effects = true;
-      StackPointer = true;
       break;
     default:
       llvm_unreachable("unexpected call opcode");
@@ -360,7 +353,8 @@ static bool OneUseDominatesOtherUses(unsigned Reg, const MachineOperand &OneUse,
                                      const MachineBasicBlock &MBB,
                                      const MachineRegisterInfo &MRI,
                                      const MachineDominatorTree &MDT,
-                                     LiveIntervals &LIS) {
+                                     LiveIntervals &LIS,
+                                     WebAssemblyFunctionInfo &MFI) {
   const LiveInterval &LI = LIS.getInterval(Reg);
 
   const MachineInstr *OneUseInst = OneUse.getParent();
@@ -384,8 +378,31 @@ static bool OneUseDominatesOtherUses(unsigned Reg, const MachineOperand &OneUse,
         return false;
     } else {
       // Test that the use is dominated by the one selected use.
-      if (!MDT.dominates(OneUseInst, UseInst))
-        return false;
+      while (!MDT.dominates(OneUseInst, UseInst)) {
+        // Actually, dominating is over-conservative. Test that the use would
+        // happen after the one selected use in the stack evaluation order.
+        //
+        // This is needed as a consequence of using implicit get_locals for
+        // uses and implicit set_locals for defs.
+        if (UseInst->getDesc().getNumDefs() == 0) 
+          return false;
+        const MachineOperand &MO = UseInst->getOperand(0);
+        if (!MO.isReg())
+          return false;
+        unsigned DefReg = MO.getReg();
+        if (!TargetRegisterInfo::isVirtualRegister(DefReg) ||
+            !MFI.isVRegStackified(DefReg))
+          return false;
+        assert(MRI.hasOneUse(DefReg));
+        const MachineOperand &NewUse = *MRI.use_begin(DefReg);
+        const MachineInstr *NewUseInst = NewUse.getParent();
+        if (NewUseInst == OneUseInst) {
+          if (&OneUse > &NewUse)
+            return false;
+          break;
+        }
+        UseInst = NewUseInst;
+      }
     }
   }
   return true;
@@ -619,6 +636,9 @@ public:
   /// Test whether the given register is present on the stack, indicating an
   /// operand in the tree that we haven't visited yet. Moving a definition of
   /// Reg to a point in the tree after that would change its value.
+  ///
+  /// This is needed as a consequence of using implicit get_locals for
+  /// uses and implicit set_locals for defs.
   bool IsOnStack(unsigned Reg) const {
     for (const RangeTy &Range : Worklist)
       for (const MachineOperand &MO : Range)
@@ -763,7 +783,7 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
           Insert = RematerializeCheapDef(Reg, Op, Def, MBB, Insert, LIS, MFI,
                                          MRI, TII, TRI);
         } else if (CanMove &&
-                   OneUseDominatesOtherUses(Reg, Op, MBB, MRI, MDT, LIS)) {
+                   OneUseDominatesOtherUses(Reg, Op, MBB, MRI, MDT, LIS, MFI)) {
           Insert = MoveAndTeeForMultiUse(Reg, Op, Def, MBB, Insert, LIS, MFI,
                                          MRI, TII);
         } else {

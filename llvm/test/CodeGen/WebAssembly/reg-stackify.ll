@@ -281,15 +281,36 @@ define i32 @commute() {
 ; an implicit get_local for the register.
 
 ; CHECK-LABEL: no_stackify_past_use:
-; CHECK: i32.call        $1=, callee@FUNCTION, $0
+; CHECK:      i32.call        $1=, callee@FUNCTION, $0
+; CHECK-NEXT: i32.const       $push0=, 1
+; CHECK-NEXT: i32.add         $push1=, $0, $pop0
+; CHECK-NEXT: i32.call        $push2=, callee@FUNCTION, $pop1
+; CHECK-NEXT: i32.sub         $push3=, $pop2, $1
+; CHECK-NEXT: i32.div_s       $push4=, $pop3, $1
+; CHECK-NEXT: return          $pop4
+declare i32 @callee(i32)
+define i32 @no_stackify_past_use(i32 %arg) {
+  %tmp1 = call i32 @callee(i32 %arg)
+  %tmp2 = add i32 %arg, 1
+  %tmp3 = call i32 @callee(i32 %tmp2)
+  %tmp5 = sub i32 %tmp3, %tmp1
+  %tmp6 = sdiv i32 %tmp5, %tmp1
+  ret i32 %tmp6
+}
+
+; This is the same as no_stackify_past_use, except using a commutative operator,
+; so we can reorder the operands and stackify.
+
+; CHECK-LABEL: commute_to_fix_ordering:
+; CHECK: i32.call        $push[[L0:.+]]=, callee@FUNCTION, $0
+; CHECK: tee_local       $push[[L1:.+]]=, $1=, $pop[[L0]]
 ; CHECK: i32.const       $push0=, 1
 ; CHECK: i32.add         $push1=, $0, $pop0
 ; CHECK: i32.call        $push2=, callee@FUNCTION, $pop1
 ; CHECK: i32.add         $push3=, $1, $pop2
-; CHECK: i32.mul         $push4=, $1, $pop3
+; CHECK: i32.mul         $push4=, $pop[[L1]], $pop3
 ; CHECK: return          $pop4
-declare i32 @callee(i32)
-define i32 @no_stackify_past_use(i32 %arg) {
+define i32 @commute_to_fix_ordering(i32 %arg) {
   %tmp1 = call i32 @callee(i32 %arg)
   %tmp2 = add i32 %arg, 1
   %tmp3 = call i32 @callee(i32 %tmp2)
