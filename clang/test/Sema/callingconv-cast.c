@@ -3,9 +3,6 @@
 // RUN: %clang_cc1 -fms-extensions -triple i686-pc-windows-msvc -Wcast-calling-convention -DMSVC -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s --check-prefix=MSFIXIT
 // RUN: %clang_cc1 -triple i686-pc-windows-gnu -Wcast-calling-convention -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s --check-prefix=GNUFIXIT
 
-// Check that the warning is disabled by default:
-// RUN: %clang_cc1 -fms-extensions -triple i686-pc-windows-msvc -DMSVC -Werror -Wno-pointer-bool-conversion -x c %s
-
 // expected-note@+1 {{consider defining 'mismatched_before_winapi' with the 'stdcall' calling convention}}
 void mismatched_before_winapi(int x) {}
 
