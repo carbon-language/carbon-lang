@@ -125,14 +125,14 @@ struct CompileUnitIdentifiers {
   const char *DWOName = "";
 };
 
-static const char *getIndexedString(uint32_t Form, DataExtractor InfoData,
-                                    uint32_t &InfoOffset, StringRef StrOffsets,
-                                    StringRef Str) {
+static Expected<const char *>
+getIndexedString(uint32_t Form, DataExtractor InfoData, uint32_t &InfoOffset,
+                 StringRef StrOffsets, StringRef Str) {
   if (Form == dwarf::DW_FORM_string)
     return InfoData.getCStr(&InfoOffset);
-  assert(Form == dwarf::DW_FORM_GNU_str_index && "Only string and str_index "
-                                                 "forms are supported for DWP "
-                                                 "string attributes");
+  if (Form != dwarf::DW_FORM_GNU_str_index)
+    return make_error<DWPError>(
+        "string field encoded without DW_FORM_string or DW_FORM_GNU_str_index");
   auto StrIndex = InfoData.getULEB128(&InfoOffset);
   DataExtractor StrOffsetsData(StrOffsets, true, 0);
   uint32_t StrOffsetsOffset = 4 * StrIndex;
@@ -169,11 +169,19 @@ static Expected<CompileUnitIdentifiers> getCUIdentifiers(StringRef Abbrev,
          (Name != 0 || Form != 0)) {
     switch (Name) {
     case dwarf::DW_AT_name: {
-      ID.Name = getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
+      Expected<const char *> EName =
+          getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
+      if (!EName)
+        return EName.takeError();
+      ID.Name = *EName;
       break;
     }
     case dwarf::DW_AT_GNU_dwo_name: {
-      ID.DWOName = getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
+      Expected<const char *> EName =
+          getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
+      if (!EName)
+        return EName.takeError();
+      ID.DWOName = *EName;
       break;
     }
     case dwarf::DW_AT_GNU_dwo_id:
