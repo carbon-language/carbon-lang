@@ -20,15 +20,15 @@
 namespace llvm {
 
 class MCCodeGenInfo {
-  /// RelocationModel - Relocation model: static, pic, etc.
+  /// Relocation model: static, pic, etc.
   ///
   Reloc::Model RelocationModel;
 
-  /// CMModel - Code model.
+  /// Code model.
   ///
   CodeModel::Model CMModel;
 
-  /// OptLevel - Optimization level.
+  /// Optimization level.
   ///
   CodeGenOpt::Level OptLevel;
 
