@@ -27,8 +27,8 @@ class SparcTargetMachine : public LLVMTargetMachine {
 public:
   SparcTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                      StringRef FS, const TargetOptions &Options,
-                     Reloc::Model RM, CodeModel::Model CM, CodeGenOpt::Level OL,
-                     bool is64bit);
+                     Optional<Reloc::Model> RM, CodeModel::Model CM,
+                     CodeGenOpt::Level OL, bool is64bit);
   ~SparcTargetMachine() override;
 
   const SparcSubtarget *getSubtargetImpl(const Function &) const override;
@@ -47,7 +47,7 @@ class SparcV8TargetMachine : public SparcTargetMachine {
 public:
   SparcV8TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
+                       Optional<Reloc::Model> RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 };
 
@@ -58,7 +58,7 @@ class SparcV9TargetMachine : public SparcTargetMachine {
 public:
   SparcV9TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
+                       Optional<Reloc::Model> RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 };
 
@@ -68,7 +68,7 @@ class SparcelTargetMachine : public SparcTargetMachine {
 public:
   SparcelTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
+                       Optional<Reloc::Model> RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 };
 

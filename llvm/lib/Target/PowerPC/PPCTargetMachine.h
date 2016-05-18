@@ -35,8 +35,9 @@ private:
 
 public:
   PPCTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
-                   StringRef FS, const TargetOptions &Options, Reloc::Model RM,
-                   CodeModel::Model CM, CodeGenOpt::Level OL);
+                   StringRef FS, const TargetOptions &Options,
+                   Optional<Reloc::Model> RM, CodeModel::Model CM,
+                   CodeGenOpt::Level OL);
 
   ~PPCTargetMachine() override;
 
@@ -64,7 +65,7 @@ class PPC32TargetMachine : public PPCTargetMachine {
 public:
   PPC32TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                      StringRef FS, const TargetOptions &Options,
-                     Reloc::Model RM, CodeModel::Model CM,
+                     Optional<Reloc::Model> RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 };
 
@@ -75,7 +76,7 @@ class PPC64TargetMachine : public PPCTargetMachine {
 public:
   PPC64TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                      StringRef FS, const TargetOptions &Options,
-                     Reloc::Model RM, CodeModel::Model CM,
+                     Optional<Reloc::Model> RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 };
 

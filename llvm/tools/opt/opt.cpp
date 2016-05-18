@@ -312,10 +312,9 @@ static TargetMachine* GetTargetMachine(Triple TheTriple, StringRef CPUStr,
     return nullptr;
   }
 
-  return TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                        CPUStr, FeaturesStr, Options,
-                                        RelocModel, CMModel,
-                                        GetCodeGenOptLevel());
+  return TheTarget->createTargetMachine(TheTriple.getTriple(), CPUStr,
+                                        FeaturesStr, Options, getRelocModel(),
+                                        CMModel, GetCodeGenOptLevel());
 }
 
 #ifdef LINK_POLLY_INTO_TOOLS

@@ -629,7 +629,8 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
     return error("no object streamer for target " + TripleName, Context);
 
   // Finally create the AsmPrinter we'll use to emit the DIEs.
-  TM.reset(TheTarget->createTargetMachine(TripleName, "", "", TargetOptions()));
+  TM.reset(TheTarget->createTargetMachine(TripleName, "", "", TargetOptions(),
+                                          None));
   if (!TM)
     return error("no target machine for target " + TripleName, Context);
 

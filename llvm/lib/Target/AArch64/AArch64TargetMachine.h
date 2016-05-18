@@ -29,7 +29,7 @@ protected:
 public:
   AArch64TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
+                       Optional<Reloc::Model> RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL, bool IsLittleEndian);
 
   ~AArch64TargetMachine() override;
@@ -56,7 +56,7 @@ class AArch64leTargetMachine : public AArch64TargetMachine {
 public:
   AArch64leTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                          StringRef FS, const TargetOptions &Options,
-                         Reloc::Model RM, CodeModel::Model CM,
+                         Optional<Reloc::Model> RM, CodeModel::Model CM,
                          CodeGenOpt::Level OL);
 };
 
@@ -67,7 +67,7 @@ class AArch64beTargetMachine : public AArch64TargetMachine {
 public:
   AArch64beTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                          StringRef FS, const TargetOptions &Options,
-                         Reloc::Model RM, CodeModel::Model CM,
+                         Optional<Reloc::Model> RM, CodeModel::Model CM,
                          CodeGenOpt::Level OL);
 };
 

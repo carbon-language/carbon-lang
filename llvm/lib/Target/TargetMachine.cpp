@@ -72,10 +72,10 @@ void TargetMachine::resetTargetOptions(const Function &F) const {
 }
 
 /// Returns the code generation relocation model. The choices are static, PIC,
-/// and dynamic-no-pic, and target default.
+/// and dynamic-no-pic.
 Reloc::Model TargetMachine::getRelocationModel() const {
   if (!CodeGenInfo)
-    return Reloc::Default;
+    return Reloc::Static; // FIXME
   return CodeGenInfo->getRelocationModel();
 }
 
