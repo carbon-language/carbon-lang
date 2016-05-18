@@ -138,10 +138,14 @@ Error PublicsStream::reload() {
   // corrupted streams.
 
   // Hash buckets follow.
-  HashBuckets.resize(NumBuckets);
-  if (auto EC = Reader.readArray<uint32_t>(HashBuckets))
+  std::vector<ulittle32_t> TempHashBuckets;
+  TempHashBuckets.resize(NumBuckets);
+  if (auto EC = Reader.readArray<ulittle32_t>(TempHashBuckets))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Hash buckets corrupted.");
+  HashBuckets.resize(NumBuckets);
+  std::copy(TempHashBuckets.begin(), TempHashBuckets.end(),
+            HashBuckets.begin());
 
   // Something called "address map" follows.
   AddressMap.resize(Header->AddrMap / sizeof(uint32_t));
