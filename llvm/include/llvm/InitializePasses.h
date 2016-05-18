@@ -142,6 +142,7 @@ void initializeExpandISelPseudosPass(PassRegistry&);
 void initializeForceFunctionAttrsLegacyPassPass(PassRegistry&);
 void initializeGCMachineCodeAnalysisPass(PassRegistry&);
 void initializeGCModuleInfoPass(PassRegistry&);
+void initializeGuardWideningLegacyPassPass(PassRegistry&);
 void initializeGVNLegacyPassPass(PassRegistry&);
 void initializeGlobalDCELegacyPassPass(PassRegistry&);
 void initializeGlobalOptLegacyPassPass(PassRegistry&);
