@@ -11,10 +11,7 @@ add_clang_library(findAllSymbols
   clangAST
   clangASTMatchers
   clangBasic
-  clangFrontend
   clangLex
-  clangTooling
-  clangToolingCore
   )
 
 add_subdirectory(tool)
