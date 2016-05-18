@@ -16563,14 +16563,9 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     Result = DAG.getNode(X86ISD::SEG_ALLOCA, dl, SPTy, Chain,
                                 DAG.getRegister(Vreg, SPTy));
   } else {
-    SDValue Flag;
-    const unsigned Reg = (Subtarget.isTarget64BitLP64() ? X86::RAX : X86::EAX);
-
-    Chain = DAG.getCopyToReg(Chain, dl, Reg, Size, Flag);
-    Flag = Chain.getValue(1);
     SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-
-    Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
+    Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Size);
+    MF.getInfo<X86MachineFunctionInfo>()->setHasWinAlloca(true);
 
     const X86RegisterInfo *RegInfo = Subtarget.getRegisterInfo();
     unsigned SPReg = RegInfo->getStackRegister();
@@ -23229,18 +23224,6 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
 }
 
 MachineBasicBlock *
-X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
-                                        MachineBasicBlock *BB) const {
-  assert(!Subtarget.isTargetMachO());
-  DebugLoc DL = MI->getDebugLoc();
-  MachineInstr *ResumeMI = Subtarget.getFrameLowering()->emitStackProbe(
-      *BB->getParent(), *BB, MI, DL, false);
-  MachineBasicBlock *ResumeBB = ResumeMI->getParent();
-  MI->eraseFromParent(); // The pseudo instruction is gone now.
-  return ResumeBB;
-}
-
-MachineBasicBlock *
 X86TargetLowering::EmitLoweredCatchRet(MachineInstr *MI,
                                        MachineBasicBlock *BB) const {
   MachineFunction *MF = BB->getParent();
@@ -23702,8 +23685,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::TLS_base_addr32:
   case X86::TLS_base_addr64:
     return EmitLoweredTLSAddr(MI, BB);
-  case X86::WIN_ALLOCA:
-    return EmitLoweredWinAlloca(MI, BB);
   case X86::CATCHRET:
     return EmitLoweredCatchRet(MI, BB);
   case X86::CATCHPAD:
