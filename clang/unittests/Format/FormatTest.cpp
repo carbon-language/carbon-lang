@@ -11559,6 +11559,31 @@ TEST_F(ReplacementTest, FixOnlyAffectedCodeAfterReplacements) {
   EXPECT_EQ(Expected, applyAllReplacements(Code, FinalReplaces));
 }
 
+TEST_F(ReplacementTest, SortIncludesAfterReplacement) {
+  std::string Code = "#include \"a.h\"\n"
+                     "#include \"c.h\"\n"
+                     "\n"
+                     "int main() {\n"
+                     "  return 0;\n"
+                     "}";
+  std::string Expected = "#include \"a.h\"\n"
+                         "#include \"b.h\"\n"
+                         "#include \"c.h\"\n"
+                         "\n"
+                         "int main() {\n"
+                         "  return 0;\n"
+                         "}";
+  FileID ID = Context.createInMemoryFile("fix.cpp", Code);
+  tooling::Replacements Replaces;
+  Replaces.insert(tooling::Replacement(
+      Context.Sources, Context.getLocation(ID, 1, 1), 0, "#include \"b.h\"\n"));
+
+  format::FormatStyle Style = format::getLLVMStyle();
+  Style.SortIncludes = true;
+  auto FinalReplaces = formatReplacements(Code, Replaces, Style);
+  EXPECT_EQ(Expected, applyAllReplacements(Code, FinalReplaces));
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang
