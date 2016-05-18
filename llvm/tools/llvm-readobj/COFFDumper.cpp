@@ -1148,7 +1148,6 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
         auto OpCode =
             static_cast<BinaryAnnotationsOpCode>(GetCompressedAnnotation());
         switch (OpCode) {
-        default:
         case BinaryAnnotationsOpCode::Invalid:
           return error(object_error::parse_failed);
         case BinaryAnnotationsOpCode::CodeOffset:
