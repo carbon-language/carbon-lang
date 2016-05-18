@@ -3136,8 +3136,7 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
 
   // Determine which of the following types of shufflevector we're checking:
   // 1) unary, vector mask: (lhs, mask)
-  // 2) binary, vector mask: (lhs, rhs, mask)
-  // 3) binary, scalar mask: (lhs, rhs, index, ..., index)
+  // 2) binary, scalar mask: (lhs, rhs, index, ..., index)
   QualType resType = TheCall->getArg(0)->getType();
   unsigned numElements = 0;
 
