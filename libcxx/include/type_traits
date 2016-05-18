@@ -1095,8 +1095,11 @@ template <class _Tp> using add_rvalue_reference_t = typename add_rvalue_referenc
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+template <class _Tp> _Tp&& __declval(int);
+template <class _Tp> _Tp   __declval(long);
+
 template <class _Tp>
-typename add_rvalue_reference<_Tp>::type
+decltype(_VSTD::__declval<_Tp>(0))
 declval() _NOEXCEPT;
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
