@@ -19,6 +19,5 @@ target_link_libraries(FindAllSymbolsTests
   clangFrontend
   clangLex
   clangTooling
-  clangToolingCore
   findAllSymbols
   )
