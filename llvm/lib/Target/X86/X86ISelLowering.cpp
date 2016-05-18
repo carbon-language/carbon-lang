@@ -22349,7 +22349,8 @@ static MachineBasicBlock *emitRDPKRU(MachineInstr *MI, MachineBasicBlock *BB,
 }
 
 static MachineBasicBlock *emitMonitor(MachineInstr *MI, MachineBasicBlock *BB,
-                                      const X86Subtarget &Subtarget) {
+                                      const X86Subtarget &Subtarget,
+                                      unsigned Opc) {
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
   // Address into RAX/EAX, other two args into ECX, EDX.
@@ -22366,7 +22367,7 @@ static MachineBasicBlock *emitMonitor(MachineInstr *MI, MachineBasicBlock *BB,
     .addReg(MI->getOperand(ValOps+1).getReg());
 
   // The instruction doesn't actually take any operands though.
-  BuildMI(*BB, MI, dl, TII->get(X86::MONITORrrr));
+  BuildMI(*BB, MI, dl, TII->get(Opc));
 
   MI->eraseFromParent(); // The pseudo is gone now.
   return BB;
@@ -23867,7 +23868,9 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   // Thread synchronization.
   case X86::MONITOR:
-    return emitMonitor(MI, BB, Subtarget);
+    return emitMonitor(MI, BB, Subtarget, X86::MONITORrrr);
+  case X86::MONITORX:
+    return emitMonitor(MI, BB, Subtarget, X86::MONITORXrrr);
   // PKU feature
   case X86::WRPKRU:
     return emitWRPKRU(MI, BB, Subtarget);
