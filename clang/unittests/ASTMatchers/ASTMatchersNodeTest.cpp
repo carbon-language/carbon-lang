@@ -178,13 +178,14 @@ TEST(EnumConstant, Matches) {
 }
 
 TEST(Matcher, UnresolvedLookupExpr) {
-  EXPECT_TRUE(matches("template<typename T>"
-                      "T foo() { T a; return a; }"
-                      "template<typename T>"
-                      "void bar() {"
-                      "  foo<T>();"
-                      "}",
-                      unresolvedLookupExpr()));
+  EXPECT_TRUE(matchesConditionally("template<typename T>"
+                                   "T foo() { T a; return a; }"
+                                   "template<typename T>"
+                                   "void bar() {"
+                                   "  foo<T>();"
+                                   "}",
+                                   unresolvedLookupExpr(), true,
+                                   "-fno-delayed-template-parsing"));
 }
 
 TEST(Matcher, Call) {
