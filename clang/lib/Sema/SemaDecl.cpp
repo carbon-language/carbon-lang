@@ -2993,7 +2993,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD,
             << New << getSpecialMember(OldMethod);
           return true;
         }
-      } else if (OldMethod->isExplicitlyDefaulted() && !isFriend) {
+      } else if (OldMethod->getFirstDecl()->isExplicitlyDefaulted() && !isFriend) {
         Diag(NewMethod->getLocation(),
              diag::err_definition_of_explicitly_defaulted_member)
           << getSpecialMember(OldMethod);
