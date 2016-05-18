@@ -12,6 +12,7 @@ add_clang_library(findAllSymbols
   clangASTMatchers
   clangBasic
   clangFrontend
+  clangLex
   clangTooling
   clangToolingCore
   )
