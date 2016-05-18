@@ -728,8 +728,8 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       Out<ELFT>::Plt->addEntry(Body);
 
       uint32_t Rel;
-      if (Body.isGnuIFunc())
-        Rel = Preemptible ? Target->PltRel : Target->IRelativeRel;
+      if (Body.isGnuIFunc() && !Preemptible)
+        Rel = Target->IRelativeRel;
       else
         Rel = Target->PltRel;
 
