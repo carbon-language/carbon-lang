@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s misc-unused-using-decls %t
+// RUN: %check_clang_tidy %s misc-unused-using-decls %t -- -- -fno-delayed-template-parsing
 
 // ----- Definitions -----
 template <typename T> class vector {};
