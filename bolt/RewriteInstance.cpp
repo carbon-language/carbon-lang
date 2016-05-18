@@ -2133,33 +2133,22 @@ void RewriteInstance::updateDebugInfo() {
 
   updateLocationLists();
 
-  auto &DebugInfoSI = SectionMM->NoteSectionInfo[".debug_info"];
-  for (const auto &CU : BC->DwCtx->compile_units()) {
-    const auto CUID = CU->getOffset();
-
-    // Update DW_AT_ranges
-    auto RangesFieldOffset =
-      BC->DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_ranges);
-    if (RangesFieldOffset) {
-      DEBUG(dbgs() << "BOLT-DEBUG: adding relocation for DW_AT_ranges for "
-                   << "compile unit in .debug_info\n");
-      const auto RSOI = RangesSectionsWriter.getRangesOffsetCUMap().find(CUID);
-      if (RSOI != RangesSectionsWriter.getRangesOffsetCUMap().end()) {
-        auto Offset = RSOI->second;
-        DebugInfoSI.PendingRelocs.emplace_back(
-            SectionInfo::Reloc{RangesFieldOffset, 4, 0,
-                               Offset + DebugRangesSize});
-      } else {
-        DEBUG(dbgs() << "BOLT-DEBUG: no .debug_ranges entry found for CU "
-                     << CUID << '\n');
-      }
-    }
-  }
-
   updateDWARFAddressRanges();
 }
 
 void RewriteInstance::updateDWARFAddressRanges() {
+  // Update DW_AT_ranges for all compilation units.
+  for (const auto &CU : BC->DwCtx->compile_units()) {
+    const auto CUID = CU->getOffset();
+    const auto RSOI = RangesSectionsWriter.getRangesOffsetCUMap().find(CUID);
+    if (RSOI != RangesSectionsWriter.getRangesOffsetCUMap().end()) {
+      auto Offset = RSOI->second;
+      updateDWARFObjectAddressRanges(Offset + DebugRangesSize,
+                                     CU.get(),
+                                     CU->getUnitDIE());
+    }
+  }
+
   // Update address ranges of functions.
   for (const auto &BFI : BinaryFunctions) {
     const auto &Function = BFI.second;
