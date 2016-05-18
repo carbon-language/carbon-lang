@@ -108,7 +108,11 @@ int includeFixerMain(int argc, const char **argv) {
   include_fixer::IncludeFixerActionFactory Factory(
       *SymbolIndexMgr, Replacements, MinimizeIncludePaths);
 
-  tool.run(&Factory); // Always succeeds.
+  if (tool.run(&Factory) != 0) {
+    llvm::errs()
+        << "Clang died with a fatal error! (incorrect include paths?)\n";
+    return 1;
+  }
 
   if (!Quiet)
     for (const tooling::Replacement &Replacement : Replacements)
