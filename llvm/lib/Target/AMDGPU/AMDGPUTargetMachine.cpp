@@ -217,6 +217,11 @@ TargetIRAnalysis AMDGPUTargetMachine::getTargetIRAnalysis() {
 }
 
 void AMDGPUPassConfig::addIRPasses() {
+  // There is no reason to run these.
+  disablePass(&StackMapLivenessID);
+  disablePass(&FuncletLayoutID);
+  disablePass(&PatchableFunctionID);
+
   // Function calls are not supported, so make sure we inline everything.
   addPass(createAMDGPUAlwaysInlinePass());
   addPass(createAlwaysInlinerPass());
