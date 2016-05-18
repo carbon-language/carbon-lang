@@ -595,8 +595,7 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
 
   MOFI.reset(new MCObjectFileInfo);
   MC.reset(new MCContext(MAI.get(), MRI.get(), MOFI.get()));
-  MOFI->InitMCObjectFileInfo(TheTriple, Reloc::Default, CodeModel::Default,
-                             *MC);
+  MOFI->InitMCObjectFileInfo(TheTriple, /*PIC*/ false, CodeModel::Default, *MC);
 
   MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, "");
   if (!MAB)

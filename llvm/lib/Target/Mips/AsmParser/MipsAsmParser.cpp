@@ -433,8 +433,7 @@ public:
 
     CurrentFn = nullptr;
 
-    IsPicEnabled =
-        (getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_);
+    IsPicEnabled = getContext().getObjectFileInfo()->isPositionIndependent();
 
     IsCpRestoreSet = false;
     CpRestoreOffset = -1;
