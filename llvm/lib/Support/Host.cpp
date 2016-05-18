@@ -252,7 +252,6 @@ StringRef sys::getHostCPUName() {
   GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
   bool HasTBM = (ECX >> 21) & 0x1;
-  bool HasMWAITX = (ECX >> 29) & 0x1;
 
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     switch (Family) {
