@@ -1987,12 +1987,11 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
                                       SelectionDAG *CurDAG) {
   assert(N->getOpcode() == ISD::OR && "Expect a OR operation");
 
-  SDValue Dst, Src;
-  unsigned ImmR, ImmS;
-
   EVT VT = N->getValueType(0);
   if (VT != MVT::i32 && VT != MVT::i64)
     return false;
+
+  unsigned BitWidth = VT.getSizeInBits();
 
   // Because of simplify-demanded-bits in DAGCombine, involved masks may not
   // have the expected shape. Try to undo that.
@@ -2011,6 +2010,8 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
   // and/or inserting fewer extra instructions.
   for (int I = 0; I < 4; ++I) {
 
+    SDValue Dst, Src;
+    unsigned ImmR, ImmS;
     bool BiggerPattern = I / 2;
     SDNode *OrOpd0 = N->getOperand(I % 2).getNode();
     SDValue OrOpd1Val = N->getOperand((I + 1) % 2);
@@ -2040,7 +2041,7 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
     } else if (isBitfieldPositioningOp(CurDAG, SDValue(OrOpd0, 0),
                                        BiggerPattern,
                                        Src, DstLSB, Width)) {
-      ImmR = (VT.getSizeInBits() - DstLSB) % VT.getSizeInBits();
+      ImmR = (BitWidth - DstLSB) % BitWidth;
       ImmS = Width - 1;
     } else
       continue;
