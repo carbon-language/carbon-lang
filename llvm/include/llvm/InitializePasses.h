@@ -267,7 +267,7 @@ void initializeRegionViewerPass(PassRegistry&);
 void initializeReversePostOrderFunctionAttrsPass(PassRegistry&);
 void initializeRewriteStatepointsForGCPass(PassRegistry&);
 void initializeSafeStackPass(PassRegistry&);
-void initializeSCCPPass(PassRegistry&);
+void initializeSCCPLegacyPassPass(PassRegistry &);
 void initializeSROALegacyPassPass(PassRegistry&);
 void initializeSROA_DTPass(PassRegistry&);
 void initializeSROA_SSAUpPass(PassRegistry&);
