@@ -10,7 +10,6 @@
 #include "UnusedUsingDeclsCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/ASTMatchers/ASTMatchersInternal.h"
 #include "clang/Lex/Lexer.h"
 
 using namespace clang::ast_matchers;
@@ -18,12 +17,6 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 namespace misc {
-
-namespace {
-// FIXME: Move this node matcher to ASTMatcher.
-const internal::VariadicDynCastAllOfMatcher<Stmt, UnresolvedLookupExpr>
-    unresolvedLookupExpr;
-}
 
 void UnusedUsingDeclsCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(usingDecl(isExpansionInMainFile()).bind("using"), this);
