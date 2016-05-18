@@ -6,8 +6,6 @@
 
 #include <x86intrin.h>
 
-// NOTE: This should match the tests in llvm/test/CodeGen/X86/sse2-intrinsics-fast-isel.ll
-
 __m128i test_mm_add_epi8(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_add_epi8
   // CHECK: add <16 x i8>
@@ -40,34 +38,31 @@ __m128d test_mm_add_pd(__m128d A, __m128d B) {
 
 __m128d test_mm_add_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_add_sd
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
   // CHECK: fadd double
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_add_sd(A, B);
 }
 
 __m128i test_mm_adds_epi8(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_adds_epi8
-  // CHECK: call <16 x i8> @llvm.x86.sse2.padds.b(<16 x i8> %{{.*}}, <16 x i8> %{{.*}})
+  // CHECK: call <16 x i8> @llvm.x86.sse2.padds.b
   return _mm_adds_epi8(A, B);
 }
 
 __m128i test_mm_adds_epi16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_adds_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.padds.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.padds.w
   return _mm_adds_epi16(A, B);
 }
 
 __m128i test_mm_adds_epu8(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_adds_epu8
-  // CHECK: call <16 x i8> @llvm.x86.sse2.paddus.b(<16 x i8> %{{.*}}, <16 x i8> %{{.*}})
+  // CHECK: call <16 x i8> @llvm.x86.sse2.paddus.b
   return _mm_adds_epu8(A, B);
 }
 
 __m128i test_mm_adds_epu16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_adds_epu16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.paddus.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.paddus.w
   return _mm_adds_epu16(A, B);
 }
 
@@ -83,29 +78,15 @@ __m128i test_mm_and_si128(__m128i A, __m128i B) {
   return _mm_and_si128(A, B);
 }
 
-__m128d test_mm_andnot_pd(__m128d A, __m128d B) {
-  // CHECK-LABEL: test_mm_andnot_pd
-  // CHECK: xor <4 x i32> %{{.*}}, <i32 -1, i32 -1, i32 -1, i32 -1>
-  // CHECK: and <4 x i32>
-  return _mm_andnot_pd(A, B);
-}
-
-__m128i test_mm_andnot_si128(__m128i A, __m128i B) {
-  // CHECK-LABEL: test_mm_andnot_si128
-  // CHECK: xor <2 x i64> %{{.*}}, <i64 -1, i64 -1>
-  // CHECK: and <2 x i64>
-  return _mm_andnot_si128(A, B);
-}
-
 __m128i test_mm_avg_epu8(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_avg_epu8
-  // CHECK: call <16 x i8> @llvm.x86.sse2.pavg.b(<16 x i8> %{{.*}}, <16 x i8> %{{.*}})
+  // CHECK: call <16 x i8> @llvm.x86.sse2.pavg.b
   return _mm_avg_epu8(A, B);
 }
 
 __m128i test_mm_avg_epu16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_avg_epu16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.pavg.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.pavg.w
   return _mm_avg_epu16(A, B);
 }
 
@@ -166,10 +147,6 @@ __m128d test_mm_cmpge_pd(__m128d A, __m128d B) {
 __m128d test_mm_cmpge_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_cmpge_sd
   // CHECK: call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}}, i8 2)
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 1
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 1
   return _mm_cmpge_sd(A, B);
 }
 
@@ -200,10 +177,6 @@ __m128d test_mm_cmpgt_pd(__m128d A, __m128d B) {
 __m128d test_mm_cmpgt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_cmpgt_sd
   // CHECK: call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}}, i8 1)
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 1
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 1
   return _mm_cmpgt_sd(A, B);
 }
 
@@ -335,73 +308,73 @@ __m128d test_mm_cmpunord_sd(__m128d A, __m128d B) {
 
 int test_mm_comieq_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_comieq_sd
-  // CHECK: call i32 @llvm.x86.sse2.comieq.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.comieq.sd
   return _mm_comieq_sd(A, B);
 }
 
 int test_mm_comige_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_comige_sd
-  // CHECK: call i32 @llvm.x86.sse2.comige.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.comige.sd
   return _mm_comige_sd(A, B);
 }
 
 int test_mm_comigt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_comigt_sd
-  // CHECK: call i32 @llvm.x86.sse2.comigt.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.comigt.sd
   return _mm_comigt_sd(A, B);
 }
 
 int test_mm_comile_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_comile_sd
-  // CHECK: call i32 @llvm.x86.sse2.comile.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.comile.sd
   return _mm_comile_sd(A, B);
 }
 
 int test_mm_comilt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_comilt_sd
-  // CHECK: call i32 @llvm.x86.sse2.comilt.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.comilt.sd
   return _mm_comilt_sd(A, B);
 }
 
 int test_mm_comineq_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_comineq_sd
-  // CHECK: call i32 @llvm.x86.sse2.comineq.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.comineq.sd
   return _mm_comineq_sd(A, B);
 }
 
 __m128d test_mm_cvtepi32_pd(__m128i A) {
   // CHECK-LABEL: test_mm_cvtepi32_pd
-  // CHECK: call <2 x double> @llvm.x86.sse2.cvtdq2pd(<4 x i32> %{{.*}})
+  // CHECK: call <2 x double> @llvm.x86.sse2.cvtdq2pd
   return _mm_cvtepi32_pd(A);
 }
 
 __m128 test_mm_cvtepi32_ps(__m128i A) {
   // CHECK-LABEL: test_mm_cvtepi32_ps
-  // CHECK: call <4 x float> @llvm.x86.sse2.cvtdq2ps(<4 x i32> %{{.*}})
+  // CHECK: call <4 x float> @llvm.x86.sse2.cvtdq2ps
   return _mm_cvtepi32_ps(A);
 }
 
 __m128i test_mm_cvtpd_epi32(__m128d A) {
   // CHECK-LABEL: test_mm_cvtpd_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.cvtpd2dq(<2 x double> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.cvtpd2dq
   return _mm_cvtpd_epi32(A);
 }
 
 __m128 test_mm_cvtpd_ps(__m128d A) {
   // CHECK-LABEL: test_mm_cvtpd_ps
-  // CHECK: call <4 x float> @llvm.x86.sse2.cvtpd2ps(<2 x double> %{{.*}})
+  // CHECK: call <4 x float> @llvm.x86.sse2.cvtpd2ps
   return _mm_cvtpd_ps(A);
 }
 
 __m128i test_mm_cvtps_epi32(__m128 A) {
   // CHECK-LABEL: test_mm_cvtps_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.cvtps2dq(<4 x float> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.cvtps2dq
   return _mm_cvtps_epi32(A);
 }
 
 __m128d test_mm_cvtps_pd(__m128 A) {
   // CHECK-LABEL: test_mm_cvtps_pd
-  // CHECK: call <2 x double> @llvm.x86.sse2.cvtps2pd(<4 x float> %{{.*}})
+  // CHECK: call <2 x double> @llvm.x86.sse2.cvtps2pd
   return _mm_cvtps_pd(A);
 }
 
@@ -413,13 +386,13 @@ double test_mm_cvtsd_f64(__m128d A) {
 
 int test_mm_cvtsd_si32(__m128d A) {
   // CHECK-LABEL: test_mm_cvtsd_si32
-  // CHECK: call i32 @llvm.x86.sse2.cvtsd2si(<2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.cvtsd2si
   return _mm_cvtsd_si32(A);
 }
 
 long long test_mm_cvtsd_si64(__m128d A) {
   // CHECK-LABEL: test_mm_cvtsd_si64
-  // CHECK: call i64 @llvm.x86.sse2.cvtsd2si64(<2 x double> %{{.*}})
+  // CHECK: call i64 @llvm.x86.sse2.cvtsd2si64
   return _mm_cvtsd_si64(A);
 }
 
@@ -451,9 +424,6 @@ __m128d test_mm_cvtsi32_sd(__m128d A, int B) {
 __m128i test_mm_cvtsi32_si128(int A) {
   // CHECK-LABEL: test_mm_cvtsi32_si128
   // CHECK: insertelement <4 x i32> undef, i32 %{{.*}}, i32 0
-  // CHECK: insertelement <4 x i32> %{{.*}}, i32 0, i32 1
-  // CHECK: insertelement <4 x i32> %{{.*}}, i32 0, i32 2
-  // CHECK: insertelement <4 x i32> %{{.*}}, i32 0, i32 3
   return _mm_cvtsi32_si128(A);
 }
 
@@ -467,7 +437,6 @@ __m128d test_mm_cvtsi64_sd(__m128d A, long long B) {
 __m128i test_mm_cvtsi64_si128(long long A) {
   // CHECK-LABEL: test_mm_cvtsi64_si128
   // CHECK: insertelement <2 x i64> undef, i64 %{{.*}}, i32 0
-  // CHECK: insertelement <2 x i64> %{{.*}}, i64 0, i32 1
   return _mm_cvtsi64_si128(A);
 }
 
@@ -481,13 +450,13 @@ __m128d test_mm_cvtss_sd(__m128d A, __m128 B) {
 
 __m128i test_mm_cvttpd_epi32(__m128d A) {
   // CHECK-LABEL: test_mm_cvttpd_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.cvttpd2dq(<2 x double> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.cvttpd2dq
   return _mm_cvttpd_epi32(A);
 }
 
 __m128i test_mm_cvttps_epi32(__m128 A) {
   // CHECK-LABEL: test_mm_cvttps_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.cvttps2dq(<4 x float> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.cvttps2dq
   return _mm_cvttps_epi32(A);
 }
 
@@ -513,10 +482,7 @@ __m128d test_mm_div_pd(__m128d A, __m128d B) {
 
 __m128d test_mm_div_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_div_sd
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
   // CHECK: fdiv double
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_div_sd(A, B);
 }
 
@@ -525,8 +491,7 @@ int test_mm_extract_epi16(__m128i A) {
   // CHECK-LABEL: test_mm_extract_epi16
   // CHECK: [[x:%.*]] = and i32 %{{.*}}, 7
   // CHECK: extractelement <8 x i16> %{{.*}}, i32 [[x]]
-  // CHECK: zext i16 %{{.*}} to i32
-  return _mm_extract_epi16(A, 9);
+  return _mm_extract_epi16(A, 8);
 }
 
 __m128i test_mm_insert_epi16(__m128i A, short B) {
@@ -703,10 +668,7 @@ __m128d test_mm_mul_pd(__m128d A, __m128d B) {
 
 __m128d test_mm_mul_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_mul_sd
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: fmul double
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
+  // CHECK: fmul double %{{.*}}, %{{.*}}
   return _mm_mul_sd(A, B);
 }
 
@@ -808,37 +770,37 @@ __m128i test_mm_shufflelo_epi16(__m128i A) {
 
 __m128i test_mm_sll_epi16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_sll_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psll.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psll.w
   return _mm_sll_epi16(A, B);
 }
 
 __m128i test_mm_sll_epi32(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_sll_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.psll.d(<4 x i32> %{{.*}}, <4 x i32> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.psll.d
   return _mm_sll_epi32(A, B);
 }
 
 __m128i test_mm_sll_epi64(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_sll_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse2.psll.q(<2 x i64> %{{.*}}, <2 x i64> %{{.*}})
+  // CHECK: call <2 x i64> @llvm.x86.sse2.psll.q
   return _mm_sll_epi64(A, B);
 }
 
 __m128i test_mm_slli_epi16(__m128i A) {
   // CHECK-LABEL: test_mm_slli_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.pslli.w(<8 x i16> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.pslli.w
   return _mm_slli_epi16(A, 1);
 }
 
 __m128i test_mm_slli_epi32(__m128i A) {
   // CHECK-LABEL: test_mm_slli_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.pslli.d(<4 x i32> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.pslli.d
   return _mm_slli_epi32(A, 1);
 }
 
 __m128i test_mm_slli_epi64(__m128i A) {
   // CHECK-LABEL: test_mm_slli_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse2.pslli.q(<2 x i64> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <2 x i64> @llvm.x86.sse2.pslli.q
   return _mm_slli_epi64(A, 1);
 }
 
@@ -857,70 +819,66 @@ __m128d test_mm_sqrt_pd(__m128d A) {
 __m128d test_mm_sqrt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_sqrt_sd
   // CHECK: call <2 x double> @llvm.x86.sse2.sqrt.sd(<2 x double> %{{.*}})
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 1
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_sqrt_sd(A, B);
 }
 
 __m128i test_mm_sra_epi16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_sra_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psra.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psra.w
   return _mm_sra_epi16(A, B);
 }
 
 __m128i test_mm_sra_epi32(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_sra_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %{{.*}}, <4 x i32> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.psra.d
   return _mm_sra_epi32(A, B);
 }
 
 __m128i test_mm_srai_epi16(__m128i A) {
   // CHECK-LABEL: test_mm_srai_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psrai.w(<8 x i16> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psrai.w
   return _mm_srai_epi16(A, 1);
 }
 
 __m128i test_mm_srai_epi32(__m128i A) {
   // CHECK-LABEL: test_mm_srai_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.psrai.d(<4 x i32> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.psrai.d
   return _mm_srai_epi32(A, 1);
 }
 
 __m128i test_mm_srl_epi16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_srl_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psrl.w
   return _mm_srl_epi16(A, B);
 }
 
 __m128i test_mm_srl_epi32(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_srl_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.psrl.d(<4 x i32> %{{.*}}, <4 x i32> %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.psrl.d
   return _mm_srl_epi32(A, B);
 }
 
 __m128i test_mm_srl_epi64(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_srl_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse2.psrl.q(<2 x i64> %{{.*}}, <2 x i64> %{{.*}})
+  // CHECK: call <2 x i64> @llvm.x86.sse2.psrl.q
   return _mm_srl_epi64(A, B);
 }
 
 __m128i test_mm_srli_epi16(__m128i A) {
   // CHECK-LABEL: test_mm_srli_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psrli.w(<8 x i16> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psrli.w
   return _mm_srli_epi16(A, 1);
 }
 
 __m128i test_mm_srli_epi32(__m128i A) {
   // CHECK-LABEL: test_mm_srli_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse2.psrli.d(<4 x i32> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <4 x i32> @llvm.x86.sse2.psrli.d
   return _mm_srli_epi32(A, 1);
 }
 
 __m128i test_mm_srli_epi64(__m128i A) {
   // CHECK-LABEL: test_mm_srli_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse2.psrli.q(<2 x i64> %{{.*}}, i32 %{{.*}})
+  // CHECK: call <2 x i64> @llvm.x86.sse2.psrli.q
   return _mm_srli_epi64(A, 1);
 }
 
@@ -938,7 +896,6 @@ void test_mm_store_pd(double* A, __m128d B) {
 
 void test_mm_store_sd(double* A, __m128d B) {
   // CHECK-LABEL: test_mm_store_sd
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
   // CHECK: store double %{{.*}}, double* %{{.*}}, align 1{{$}}
   _mm_store_sd(A, B);
 }
@@ -949,12 +906,12 @@ void test_mm_store_si128(__m128i* A, __m128i B) {
   _mm_store_si128(A, B);
 }
 
-void test_mm_store1_pd(double* x, __m128d y) {
+void test_mm_store1_pd(__m128d x, void* y) {
   // CHECK-LABEL: test_mm_store1_pd
   // CHECK: extractelement <2 x double> %{{.*}}, i32 0
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
-  _mm_store1_pd(x, y);
+  _mm_store1_pd(y, x);
 }
 
 void test_mm_storeh_pd(double* A, __m128d B) {
@@ -1053,70 +1010,67 @@ __m128d test_mm_sub_pd(__m128d A, __m128d B) {
 
 __m128d test_mm_sub_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_sub_sd
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
   // CHECK: fsub double
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_sub_sd(A, B);
 }
 
 __m128i test_mm_subs_epi8(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_subs_epi8
-  // CHECK: call <16 x i8> @llvm.x86.sse2.psubs.b(<16 x i8> %{{.*}}, <16 x i8> %{{.*}})
+  // CHECK: call <16 x i8> @llvm.x86.sse2.psubs.b
   return _mm_subs_epi8(A, B);
 }
 
 __m128i test_mm_subs_epi16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_subs_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psubs.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psubs.w
   return _mm_subs_epi16(A, B);
 }
 
 __m128i test_mm_subs_epu8(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_subs_epu8
-  // CHECK: call <16 x i8> @llvm.x86.sse2.psubus.b(<16 x i8> %{{.*}}, <16 x i8> %{{.*}})
+  // CHECK: call <16 x i8> @llvm.x86.sse2.psubus.b
   return _mm_subs_epu8(A, B);
 }
 
 __m128i test_mm_subs_epu16(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_subs_epu16
-  // CHECK: call <8 x i16> @llvm.x86.sse2.psubus.w(<8 x i16> %{{.*}}, <8 x i16> %{{.*}})
+  // CHECK: call <8 x i16> @llvm.x86.sse2.psubus.w
   return _mm_subs_epu16(A, B);
 }
 
 int test_mm_ucomieq_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_ucomieq_sd
-  // CHECK: call i32 @llvm.x86.sse2.ucomieq.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.ucomieq.sd
   return _mm_ucomieq_sd(A, B);
 }
 
 int test_mm_ucomige_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_ucomige_sd
-  // CHECK: call i32 @llvm.x86.sse2.ucomige.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.ucomige.sd
   return _mm_ucomige_sd(A, B);
 }
 
 int test_mm_ucomigt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_ucomigt_sd
-  // CHECK: call i32 @llvm.x86.sse2.ucomigt.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.ucomigt.sd
   return _mm_ucomigt_sd(A, B);
 }
 
 int test_mm_ucomile_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_ucomile_sd
-  // CHECK: call i32 @llvm.x86.sse2.ucomile.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.ucomile.sd
   return _mm_ucomile_sd(A, B);
 }
 
 int test_mm_ucomilt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_ucomilt_sd
-  // CHECK: call i32 @llvm.x86.sse2.ucomilt.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.ucomilt.sd
   return _mm_ucomilt_sd(A, B);
 }
 
 int test_mm_ucomineq_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_ucomineq_sd
-  // CHECK: call i32 @llvm.x86.sse2.ucomineq.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  // CHECK: call i32 @llvm.x86.sse2.ucomineq.sd
   return _mm_ucomineq_sd(A, B);
 }
 
