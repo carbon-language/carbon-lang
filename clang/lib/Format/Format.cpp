@@ -1938,7 +1938,7 @@ private:
   struct FormatTokenLess {
     FormatTokenLess(const SourceManager &SM) : SM(SM) {}
 
-    bool operator()(const FormatToken *LHS, const FormatToken *RHS) {
+    bool operator()(const FormatToken *LHS, const FormatToken *RHS) const {
       return SM.isBeforeInTranslationUnit(LHS->Tok.getLocation(),
                                           RHS->Tok.getLocation());
     }
