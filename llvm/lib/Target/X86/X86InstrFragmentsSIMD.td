@@ -274,7 +274,16 @@ def X86testnm  : SDNode<"X86ISD::TESTNM", SDTX86Testm, [SDNPCommutative]>;
 def X86movmsk : SDNode<"X86ISD::MOVMSK",
                         SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVec<1>]>>;
 
-def X86select  : SDNode<"X86ISD::SELECT"     , SDTSelect>;
+def X86select  : SDNode<"X86ISD::SELECT",
+                        SDTypeProfile<1, 3, [SDTCVecEltisVT<1, i1>,
+                                             SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<2, 3>,
+                                             SDTCisSameNumEltsAs<0, 1>]>>;
+
+def X86selects : SDNode<"X86ISD::SELECT",
+                        SDTypeProfile<1, 3, [SDTCisVT<1, i1>,
+                                             SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<2, 3>]>>;
 
 def X86pmuludq : SDNode<"X86ISD::PMULUDQ",
                         SDTypeProfile<1, 2, [SDTCVecEltisVT<0, i64>,
