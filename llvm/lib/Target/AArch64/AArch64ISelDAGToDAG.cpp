@@ -1974,15 +1974,6 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
   return true;
 }
 
-// Given a OR operation, check if we have the following pattern
-// ubfm c, b, imm, imm2 (or something that does the same jobs, see
-//                       isBitfieldExtractOp)
-// d = e & mask2 ; where mask is a binary sequence of 1..10..0 and
-//                 countTrailingZeros(mask2) == imm2 - imm + 1
-// f = d | c
-// if yes, given reference arguments will be update so that one can replace
-// the OR instruction with:
-// f = Opc Opd0, Opd1, LSB, MSB ; where Opc is a BFM, LSB = imm, and MSB = imm2
 static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
                                       SelectionDAG *CurDAG) {
   assert(N->getOpcode() == ISD::OR && "Expect a OR operation");
@@ -1998,6 +1989,15 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
 
   unsigned NumberOfIgnoredLowBits = UsefulBits.countTrailingZeros();
   unsigned NumberOfIgnoredHighBits = UsefulBits.countLeadingZeros();
+
+  // Given a OR operation, check if we have the following pattern
+  // ubfm c, b, imm, imm2 (or something that does the same jobs, see
+  //                       isBitfieldExtractOp)
+  // d = e & mask2 ; where mask is a binary sequence of 1..10..0 and
+  //                 countTrailingZeros(mask2) == imm2 - imm + 1
+  // f = d | c
+  // if yes, replace the OR instruction with:
+  // f = BFM Opd0, Opd1, LSB, MSB ; where LSB = imm, and MSB = imm2
 
   // OR is commutative, check all combinations of operand order and values of
   // BiggerPattern, i.e.
