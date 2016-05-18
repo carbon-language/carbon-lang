@@ -170,11 +170,9 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
     GnuHashTab.reset(new GnuHashTableSection<ELFT>);
   if (Config->SysvHash)
     HashTab.reset(new HashTableSection<ELFT>);
-  if (Target->UseLazyBinding) {
-    StringRef S = Config->Rela ? ".rela.plt" : ".rel.plt";
-    GotPlt.reset(new GotPltSection<ELFT>);
-    RelaPlt.reset(new RelocationSection<ELFT>(S, false /*Sort*/));
-  }
+  StringRef S = Config->Rela ? ".rela.plt" : ".rel.plt";
+  GotPlt.reset(new GotPltSection<ELFT>);
+  RelaPlt.reset(new RelocationSection<ELFT>(S, false /*Sort*/));
   if (!Config->StripAll) {
     StrTab.reset(new StringTableSection<ELFT>(".strtab", false));
     SymTabSec.reset(new SymbolTableSection<ELFT>(*Symtab, *StrTab));
@@ -733,20 +731,12 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       if (Body.isGnuIFunc())
         Rel = Preemptible ? Target->PltRel : Target->IRelativeRel;
       else
-        Rel = Target->UseLazyBinding ? Target->PltRel : Target->GotRel;
+        Rel = Target->PltRel;
 
-      if (Target->UseLazyBinding) {
-        Out<ELFT>::GotPlt->addEntry(Body);
-        Out<ELFT>::RelaPlt->addReloc({Rel, Out<ELFT>::GotPlt,
-                                      Body.getGotPltOffset<ELFT>(),
-                                      !Preemptible, &Body, 0});
-      } else {
-        if (Body.isInGot())
-          continue;
-        Out<ELFT>::Got->addEntry(Body);
-        AddDyn({Rel, Out<ELFT>::Got, Body.getGotOffset<ELFT>(), !Preemptible,
-                &Body, 0});
-      }
+      Out<ELFT>::GotPlt->addEntry(Body);
+      Out<ELFT>::RelaPlt->addReloc({Rel, Out<ELFT>::GotPlt,
+                                    Body.getGotPltOffset<ELFT>(), !Preemptible,
+                                    &Body, 0});
       continue;
     }
 
