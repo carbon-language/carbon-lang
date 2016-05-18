@@ -164,10 +164,14 @@ Error PublicsStream::reload() {
   std::copy(TempThunkMap.begin(), TempThunkMap.end(), ThunkMap.begin());
 
   // Something called "section map" follows.
-  std::vector<SectionOffset> SectionMap(Header->NumSections);
-  if (auto EC = Reader.readArray<SectionOffset>(SectionMap))
+  std::vector<SectionOffset> Offsets(Header->NumSections);
+  if (auto EC = Reader.readArray<SectionOffset>(Offsets))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Could not read a section map.");
+  for (auto &SO : Offsets) {
+    SectionOffsets.push_back(SO.Off);
+    SectionOffsets.push_back(SO.Isect);
+  }
 
   if (Reader.bytesRemaining() > 0)
     return make_error<RawError>(raw_error_code::corrupt_file,
