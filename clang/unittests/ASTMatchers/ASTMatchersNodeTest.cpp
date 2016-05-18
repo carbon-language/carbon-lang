@@ -178,13 +178,16 @@ TEST(EnumConstant, Matches) {
 }
 
 TEST(Matcher, UnresolvedLookupExpr) {
+  // FIXME: The test is known to be broken on Windows with delayed template
+  // parsing.
   EXPECT_TRUE(matchesConditionally("template<typename T>"
                                    "T foo() { T a; return a; }"
                                    "template<typename T>"
                                    "void bar() {"
                                    "  foo<T>();"
                                    "}",
-                                   unresolvedLookupExpr(), true,
+                                   unresolvedLookupExpr(),
+                                   /*ExpectMatch=*/true,
                                    "-fno-delayed-template-parsing"));
 }
 
