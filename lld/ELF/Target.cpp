@@ -364,8 +364,7 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 
   // jmp *foo@GOT(%ebx) or jmp *foo_in_GOT
   Buf[1] = Config->Pic ? 0xa3 : 0x25;
-  uint32_t Got = UseLazyBinding ? Out<ELF32LE>::GotPlt->getVA()
-                                : Out<ELF32LE>::Got->getVA();
+  uint32_t Got = Out<ELF32LE>::GotPlt->getVA();
   write32le(Buf + 2, Config->Shared ? GotEntryAddr - Got : GotEntryAddr);
   write32le(Buf + 7, RelOff);
   write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
