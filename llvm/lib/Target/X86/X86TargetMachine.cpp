@@ -106,7 +106,7 @@ static std::string computeDataLayout(const Triple &TT) {
   return Ret;
 }
 
-/// X86TargetMachine ctor - Create an X86 target.
+/// Create an X86 target.
 ///
 X86TargetMachine::X86TargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,

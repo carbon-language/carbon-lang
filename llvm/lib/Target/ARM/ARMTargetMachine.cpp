@@ -172,7 +172,7 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
   return Ret;
 }
 
-/// TargetMachine ctor - Create an ARM architecture model.
+/// Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,

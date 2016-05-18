@@ -40,7 +40,7 @@ public:
   }
 };
 
-/// SparcV8TargetMachine - Sparc 32-bit target machine
+/// Sparc 32-bit target machine
 ///
 class SparcV8TargetMachine : public SparcTargetMachine {
   virtual void anchor();
@@ -51,7 +51,7 @@ public:
                        CodeGenOpt::Level OL);
 };
 
-/// SparcV9TargetMachine - Sparc 64-bit target machine
+/// Sparc 64-bit target machine
 ///
 class SparcV9TargetMachine : public SparcTargetMachine {
   virtual void anchor();

@@ -53,7 +53,7 @@ static std::string computeDataLayout(const Triple &T, bool is64Bit) {
   return Ret;
 }
 
-/// SparcTargetMachine ctor - Create an ILP32 architecture model
+/// Create an ILP32 architecture model
 ///
 SparcTargetMachine::SparcTargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,

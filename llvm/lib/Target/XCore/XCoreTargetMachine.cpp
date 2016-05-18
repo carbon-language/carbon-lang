@@ -21,7 +21,7 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-/// XCoreTargetMachine ctor - Create an ILP32 architecture model
+/// Create an ILP32 architecture model
 ///
 XCoreTargetMachine::XCoreTargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,

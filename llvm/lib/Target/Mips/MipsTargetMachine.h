@@ -68,7 +68,7 @@ public:
   const MipsABIInfo &getABI() const { return ABI; }
 };
 
-/// MipsebTargetMachine - Mips32/64 big endian target machine.
+/// Mips32/64 big endian target machine.
 ///
 class MipsebTargetMachine : public MipsTargetMachine {
   virtual void anchor();
@@ -79,7 +79,7 @@ public:
                       CodeGenOpt::Level OL);
 };
 
-/// MipselTargetMachine - Mips32/64 little endian target machine.
+/// Mips32/64 little endian target machine.
 ///
 class MipselTargetMachine : public MipsTargetMachine {
   virtual void anchor();

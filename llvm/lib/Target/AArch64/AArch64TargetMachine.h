@@ -49,7 +49,7 @@ private:
   AArch64Subtarget Subtarget;
 };
 
-// AArch64leTargetMachine - AArch64 little endian target machine.
+// AArch64 little endian target machine.
 //
 class AArch64leTargetMachine : public AArch64TargetMachine {
   virtual void anchor();
@@ -60,7 +60,7 @@ public:
                          CodeGenOpt::Level OL);
 };
 
-// AArch64beTargetMachine - AArch64 big endian target machine.
+// AArch64 big endian target machine.
 //
 class AArch64beTargetMachine : public AArch64TargetMachine {
   virtual void anchor();

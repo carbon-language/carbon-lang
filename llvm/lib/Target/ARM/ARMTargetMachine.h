@@ -58,7 +58,7 @@ public:
   }
 };
 
-/// ARMTargetMachine - ARM target machine.
+/// ARM target machine.
 ///
 class ARMTargetMachine : public ARMBaseTargetMachine {
   virtual void anchor();
@@ -68,7 +68,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
                     CodeModel::Model CM, CodeGenOpt::Level OL, bool isLittle);
 };
 
-/// ARMLETargetMachine - ARM little endian target machine.
+/// ARM little endian target machine.
 ///
 class ARMLETargetMachine : public ARMTargetMachine {
   void anchor() override;
@@ -79,7 +79,7 @@ public:
                      CodeGenOpt::Level OL);
 };
 
-/// ARMBETargetMachine - ARM big endian target machine.
+/// ARM big endian target machine.
 ///
 class ARMBETargetMachine : public ARMTargetMachine {
   void anchor() override;
@@ -90,7 +90,7 @@ public:
                      CodeGenOpt::Level OL);
 };
 
-/// ThumbTargetMachine - Thumb target machine.
+/// Thumb target machine.
 /// Due to the way architectures are handled, this represents both
 ///   Thumb-1 and Thumb-2.
 ///
@@ -103,7 +103,7 @@ public:
                      bool isLittle);
 };
 
-/// ThumbLETargetMachine - Thumb little endian target machine.
+/// Thumb little endian target machine.
 ///
 class ThumbLETargetMachine : public ThumbTargetMachine {
   void anchor() override;
@@ -114,7 +114,7 @@ public:
                        CodeGenOpt::Level OL);
 };
 
-/// ThumbBETargetMachine - Thumb big endian target machine.
+/// Thumb big endian target machine.
 ///
 class ThumbBETargetMachine : public ThumbTargetMachine {
   void anchor() override;

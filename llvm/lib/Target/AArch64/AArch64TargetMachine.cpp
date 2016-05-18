@@ -161,7 +161,7 @@ static void initReciprocals(AArch64TargetMachine& TM, AArch64Subtarget& ST)
   TM.Options.Reciprocals.setDefaults("vec-divd", false, ExtraStepsD);
 }
 
-/// TargetMachine ctor - Create an AArch64 architecture model.
+/// Create an AArch64 architecture model.
 ///
 AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
