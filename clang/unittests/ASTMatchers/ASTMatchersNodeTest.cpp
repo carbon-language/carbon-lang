@@ -177,6 +177,15 @@ TEST(EnumConstant, Matches) {
   EXPECT_TRUE(notMatches("enum X {};", Matcher));
 }
 
+TEST(Matcher, UnresolvedLookupExpr) {
+  EXPECT_TRUE(matches("template<typename T>"
+                      "T foo() { T a; return a; }"
+                      "template<typename T>"
+                      "void bar() {"
+                      "  foo<T>();"
+                      "}",
+                      unresolvedLookupExpr()));
+}
 
 TEST(Matcher, Call) {
   // FIXME: Do we want to overload Call() to directly take
