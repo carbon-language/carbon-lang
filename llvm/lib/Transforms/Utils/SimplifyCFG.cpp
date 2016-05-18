@@ -2094,6 +2094,29 @@ static bool checkCSEInPredecessor(Instruction *Inst, BasicBlock *PB) {
   return false;
 }
 
+/// Return true if either PBI or BI has branch weight available, and store
+/// the weights in {Pred|Succ}{True|False}Weight. If one of PBI and BI does
+/// not have branch weight, use 1:1 as its weight.
+static bool extractPredSuccWeights(BranchInst *PBI, BranchInst *BI,
+                                   uint64_t &PredTrueWeight,
+                                   uint64_t &PredFalseWeight,
+                                   uint64_t &SuccTrueWeight,
+                                   uint64_t &SuccFalseWeight) {
+  bool PredHasWeights =
+      PBI->extractProfMetadata(PredTrueWeight, PredFalseWeight);
+  bool SuccHasWeights =
+      BI->extractProfMetadata(SuccTrueWeight, SuccFalseWeight);
+  if (PredHasWeights || SuccHasWeights) {
+    if (!PredHasWeights)
+      PredTrueWeight = PredFalseWeight = 1;
+    if (!SuccHasWeights)
+      SuccTrueWeight = SuccFalseWeight = 1;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /// If this basic block is simple enough, and if a predecessor branches to us
 /// and one of our successors, fold the block into the predecessor and use
 /// logical operations to pick the right destination.
@@ -2281,14 +2304,13 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold) {
       PBI->setCondition(NewCond);
 
       uint64_t PredTrueWeight, PredFalseWeight, SuccTrueWeight, SuccFalseWeight;
-      bool PredHasWeights =
-          PBI->extractProfMetadata(PredTrueWeight, PredFalseWeight);
-      bool SuccHasWeights =
-          BI->extractProfMetadata(SuccTrueWeight, SuccFalseWeight);
+      bool HasWeights =
+          extractPredSuccWeights(PBI, BI, PredTrueWeight, PredFalseWeight,
+                                 SuccTrueWeight, SuccFalseWeight);
       SmallVector<uint64_t, 8> NewWeights;
 
       if (PBI->getSuccessor(0) == BB) {
-        if (PredHasWeights && SuccHasWeights) {
+        if (HasWeights) {
           // PBI: br i1 %x, BB, FalseDest
           // BI:  br i1 %y, TrueDest, FalseDest
           // TrueWeight is TrueWeight for PBI * TrueWeight for BI.
@@ -2305,7 +2327,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold) {
         PBI->setSuccessor(0, TrueDest);
       }
       if (PBI->getSuccessor(1) == BB) {
-        if (PredHasWeights && SuccHasWeights) {
+        if (HasWeights) {
           // PBI: br i1 %x, TrueDest, BB
           // BI:  br i1 %y, TrueDest, FalseDest
           // TrueWeight is TrueWeight for PBI * TotalWeight for BI +
@@ -2840,18 +2862,10 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
   // Update branch weight for PBI.
   uint64_t PredTrueWeight, PredFalseWeight, SuccTrueWeight, SuccFalseWeight;
   uint64_t PredCommon, PredOther, SuccCommon, SuccOther;
-  bool PredHasWeights =
-      PBI->extractProfMetadata(PredTrueWeight, PredFalseWeight);
-  bool SuccHasWeights =
-      BI->extractProfMetadata(SuccTrueWeight, SuccFalseWeight);
-  bool HasWeights = PredHasWeights || SuccHasWeights;
+  bool HasWeights =
+      extractPredSuccWeights(PBI, BI, PredTrueWeight, PredFalseWeight,
+                             SuccTrueWeight, SuccFalseWeight);
   if (HasWeights) {
-    if (!PredHasWeights) {
-      PredFalseWeight = PredTrueWeight = 1;
-    }
-    if (!SuccHasWeights) {
-      SuccFalseWeight = SuccTrueWeight = 1;
-    }
     PredCommon = PBIOp ? PredFalseWeight : PredTrueWeight;
     PredOther = PBIOp ? PredTrueWeight : PredFalseWeight;
     SuccCommon = BIOp ? SuccFalseWeight : SuccTrueWeight;
@@ -2893,7 +2907,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
       // weights for PBI do not apply to the new select because the select's
       // 'logical' edges are incoming edges of the phi that is eliminated, not
       // the outgoing edges of PBI.
-      if (PredHasWeights && SuccHasWeights) {
+      if (HasWeights) {
         uint64_t PredCommon = PBIOp ? PredFalseWeight : PredTrueWeight;
         uint64_t PredOther = PBIOp ? PredTrueWeight : PredFalseWeight;
         uint64_t SuccCommon = BIOp ? SuccFalseWeight : SuccTrueWeight;
