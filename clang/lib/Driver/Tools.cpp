@@ -3609,8 +3609,6 @@ ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
 
 static const char *RelocationModelName(llvm::Reloc::Model Model) {
   switch (Model) {
-  case llvm::Reloc::Default:
-    return nullptr;
   case llvm::Reloc::Static:
     return "static";
   case llvm::Reloc::PIC_:
