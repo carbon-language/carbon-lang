@@ -6016,7 +6016,16 @@ public:
 
   bool validateAsmConstraint(const char *&Name,
                              TargetInfo::ConstraintInfo &Info) const override {
-    return true;
+    switch (*Name) {
+      case 'v':
+      case 'q':
+        if (HasHVX) {
+          Info.setAllowsRegister();
+          return true;
+        }
+        break;
+    }
+    return false;
   }
 
   void getTargetDefines(const LangOptions &Opts,
