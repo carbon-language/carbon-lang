@@ -58,10 +58,6 @@ static cl::opt<bool> LowerInterleavedAccesses(
 
 static unsigned MaxFactor; // The maximum supported interleave factor.
 
-namespace llvm {
-static void initializeInterleavedAccessPass(PassRegistry &);
-}
-
 namespace {
 
 class InterleavedAccess : public FunctionPass {
