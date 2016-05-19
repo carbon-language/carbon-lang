@@ -182,13 +182,12 @@ Error MachOWriter::writeLoadCommands(raw_ostream &OS) {
       BytesWritten += LC.ZeroPadBytes;
     }
 
+    // Fill remaining bytes with 0. This will only get hit in partially
+    // specified test cases.
     auto BytesRemaining = LC.Data.load_command_data.cmdsize - BytesWritten;
     if (BytesRemaining > 0) {
-      // TODO: Replace all this once the load command data is present in yaml.
-      // For now I fill with 0xDEADBEEF because it is easy to spot on a hex
-      // viewer.
       std::vector<uint32_t> FillData;
-      FillData.insert(FillData.begin(), BytesRemaining / 4 + 1, 0xDEADBEEFu);
+      FillData.insert(FillData.begin(), BytesRemaining, 0);
       OS.write(reinterpret_cast<char *>(FillData.data()), BytesRemaining);
     }
   }
