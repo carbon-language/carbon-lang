@@ -155,7 +155,7 @@ uint64_t __llvm_profile_get_data_size(const __llvm_profile_data *Begin,
                                       const __llvm_profile_data *End);
 
 /*!
- * This variable is defined in InstrProfilingRuntime.c as a hidden
+ * This variable is defined in InstrProfilingRuntime.cc as a hidden
  * symbol. Its main purpose is to enable profile runtime user to
  * bypass runtime initialization code -- if the client code explicitly
  * define this variable, then InstProfileRuntime.o won't be linked in.
