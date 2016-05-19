@@ -2036,6 +2036,9 @@ public:
   const InvariantLoadsSetTy &getRequiredInvariantLoads() const {
     return DC.RequiredILS;
   }
+  bool isRequiredInvariantLoad(LoadInst *LI) const {
+    return getRequiredInvariantLoads().count(LI);
+  }
   const BoxedLoopsSetTy &getBoxedLoops() const { return DC.BoxedLoopsSet; }
   bool isNonAffineSubRegion(const Region *R) {
     return DC.NonAffineSubRegionSet.count(R);
