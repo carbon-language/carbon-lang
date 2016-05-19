@@ -1726,6 +1726,37 @@ define <2 x double> @test_mm_min_sd(<2 x double> %a0, <2 x double> %a1) nounwind
 }
 declare <2 x double> @llvm.x86.sse2.min.sd(<2 x double>, <2 x double>) nounwind readnone
 
+define <2 x i64> @test_mm_move_epi64(<2 x i64> %a0) nounwind {
+; X32-LABEL: test_mm_move_epi64:
+; X32:       # BB#0:
+; X32-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: test_mm_move_epi64:
+; X64:       # BB#0:
+; X64-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; X64-NEXT:    retq
+  %res = shufflevector <2 x i64> %a0, <2 x i64> zeroinitializer, <2 x i32> <i32 0, i32 2>
+  ret <2 x i64> %res
+}
+
+define <2 x double> @test_mm_move_sd(<2 x double> %a0, <2 x double> %a1) nounwind {
+; X32-LABEL: test_mm_move_sd:
+; X32:       # BB#0:
+; X32-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; X32-NEXT:    retl
+;
+; X64-LABEL: test_mm_move_sd:
+; X64:       # BB#0:
+; X64-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; X64-NEXT:    retq
+  %ext0 = extractelement <2 x double> %a1, i32 0
+  %res0 = insertelement <2 x double> undef, double %ext0, i32 0
+  %ext1 = extractelement <2 x double> %a0, i32 1
+  %res1 = insertelement <2 x double> %res0, double %ext1, i32 1
+  ret <2 x double> %res1
+}
+
 define i32 @test_mm_movemask_epi8(<2 x i64> %a0) nounwind {
 ; X32-LABEL: test_mm_movemask_epi8:
 ; X32:       # BB#0:
