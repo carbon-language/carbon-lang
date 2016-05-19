@@ -59,8 +59,8 @@ unsigned char X86Subtarget::classifyBlockAddressReference() const {
 
 /// Classify a global variable reference for the current subtarget according to
 /// how we should reference it in a non-pcrel context.
-unsigned char X86Subtarget::
-classifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
+unsigned char
+X86Subtarget::classifyGlobalReference(const GlobalValue *GV) const {
   // DLLImport only exists on windows, it is implemented as a load from a
   // DLLIMPORT stub.
   if (GV->hasDLLImportStorageClass())
@@ -158,8 +158,9 @@ X86Subtarget::classifyGlobalFunctionReference(const GlobalValue *GV) const {
   // has hidden or protected visibility, or if it is static or local, then
   // we don't need to use the PLT - we can directly call it.
   // In PIE mode, calls to global functions don't need to go through PLT
-  if (isTargetELF() && RM == Reloc::PIC_ && !isGlobalDefinedInPIE(GV) &&
-      GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
+  if (isTargetELF() && TM.getRelocationModel() == Reloc::PIC_ &&
+      !isGlobalDefinedInPIE(GV) && GV->hasDefaultVisibility() &&
+      !GV->hasLocalLinkage()) {
     return X86II::MO_PLT;
   } else if (isPICStyleStubAny() && !GV->isStrongDefinitionForLinker() &&
              (!getTargetTriple().isMacOSX() ||
@@ -205,7 +206,7 @@ bool X86Subtarget::isLegalToCallImmediateAddr() const {
   // the following check for Win32 should be removed.
   if (In64BitMode || isTargetWin32())
     return false;
-  return isTargetELF() || RM == Reloc::Static;
+  return isTargetELF() || TM.getRelocationModel() == Reloc::Static;
 }
 
 void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
@@ -346,7 +347,7 @@ X86Subtarget::X86Subtarget(const Triple &TT, const std::string &CPU,
                            const std::string &FS, const X86TargetMachine &TM,
                            unsigned StackAlignOverride)
     : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
-      PICStyle(PICStyles::None), RM(TM.getRelocationModel()), TargetTriple(TT),
+      PICStyle(PICStyles::None), TM(TM), TargetTriple(TT),
       StackAlignOverride(StackAlignOverride),
       In64BitMode(TargetTriple.getArch() == Triple::x86_64),
       In32BitMode(TargetTriple.getArch() == Triple::x86 &&

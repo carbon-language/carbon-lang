@@ -64,7 +64,7 @@ protected:
   /// Which PIC style to use
   PICStyles::Style PICStyle;
 
-  Reloc::Model RM;
+  const TargetMachine &TM;
 
   /// SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or none supported.
   X86SSEEnum X86SSELevel;
@@ -565,8 +565,7 @@ public:
 
   /// Classify a global variable reference for the current subtarget according
   /// to how we should reference it in a non-pcrel context.
-  unsigned char classifyGlobalReference(const GlobalValue *GV,
-                                        const TargetMachine &TM)const;
+  unsigned char classifyGlobalReference(const GlobalValue *GV) const;
 
   /// Classify a global function reference for the current subtarget.
   unsigned char classifyGlobalFunctionReference(const GlobalValue *GV) const;
