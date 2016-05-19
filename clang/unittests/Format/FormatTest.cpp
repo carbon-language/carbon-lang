@@ -2767,6 +2767,12 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                "  case 1:          \\\n"
                "  case 2\n",
                getLLVMStyleWithColumns(20));
+  verifyFormat("#define MACRO(a) \\\n"
+               "  if (a)         \\\n"
+               "    f();         \\\n"
+               "  else           \\\n"
+               "    g()",
+               getLLVMStyleWithColumns(18));
   verifyFormat("#define A template <typename T>");
   verifyIncompleteFormat("#define STR(x) #x\n"
                          "f(STR(this_is_a_string_literal{));");
