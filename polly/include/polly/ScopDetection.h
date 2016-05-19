@@ -203,13 +203,6 @@ private:
   AliasAnalysis *AA;
   //@}
 
-  /// @brief Enum for coloring BBs in Region.
-  ///
-  /// WHITE - Unvisited BB in DFS walk.
-  /// GREY - BBs which are currently on the DFS stack for processing.
-  /// BLACK - Visited and completely processed BB.
-  enum Color { WHITE, GREY, BLACK };
-
   /// @brief Map to remember detection contexts for all regions.
   using DetectionContextMapTy = DenseMap<BBPair, DetectionContext>;
   mutable DetectionContextMapTy DetectionContextMap;
