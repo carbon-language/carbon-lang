@@ -1288,7 +1288,6 @@ bool ScopDetection::isProfitableRegion(DetectionContext &Context) const {
   if (PollyProcessUnprofitable)
     return true;
 
-  errs() << "Context: " << Context.CurRegion << "\n";
   // We can probably not do a lot on scops that only write or only read
   // data.
   if (!Context.hasStores || !Context.hasLoads)
