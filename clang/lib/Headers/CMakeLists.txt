@@ -21,6 +21,7 @@ set(files
   bmi2intrin.h
   bmiintrin.h
   __clang_cuda_cmath.h
+  __clang_cuda_intrinsics.h
   __clang_cuda_math_forward_declares.h
   __clang_cuda_runtime_wrapper.h
   cpuid.h
