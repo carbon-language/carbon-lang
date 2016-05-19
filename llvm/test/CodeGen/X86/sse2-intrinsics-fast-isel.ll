@@ -770,16 +770,20 @@ define <2 x double> @test_mm_cmpnge_sd(<2 x double> %a0, <2 x double> %a1) nounw
 ; X32-LABEL: test_mm_cmpnge_sd:
 ; X32:       # BB#0:
 ; X32-NEXT:    cmpnlesd %xmm0, %xmm1
-; X32-NEXT:    movaps %xmm1, %xmm0
+; X32-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_cmpnge_sd:
 ; X64:       # BB#0:
 ; X64-NEXT:    cmpnlesd %xmm0, %xmm1
-; X64-NEXT:    movaps %xmm1, %xmm0
+; X64-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; X64-NEXT:    retq
-  %res = call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a1, <2 x double> %a0, i8 6)
-  ret <2 x double> %res
+  %cmp = call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a1, <2 x double> %a0, i8 6)
+  %ext0 = extractelement <2 x double> %cmp, i32 0
+  %ins0 = insertelement <2 x double> undef, double %ext0, i32 0
+  %ext1 = extractelement <2 x double> %a0, i32 1
+  %ins1 = insertelement <2 x double> %ins0, double %ext1, i32 1
+  ret <2 x double> %ins1
 }
 
 define <2 x double> @test_mm_cmpngt_pd(<2 x double> %a0, <2 x double> %a1) nounwind {
@@ -802,16 +806,20 @@ define <2 x double> @test_mm_cmpngt_sd(<2 x double> %a0, <2 x double> %a1) nounw
 ; X32-LABEL: test_mm_cmpngt_sd:
 ; X32:       # BB#0:
 ; X32-NEXT:    cmpnltsd %xmm0, %xmm1
-; X32-NEXT:    movaps %xmm1, %xmm0
+; X32-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_cmpngt_sd:
 ; X64:       # BB#0:
 ; X64-NEXT:    cmpnltsd %xmm0, %xmm1
-; X64-NEXT:    movaps %xmm1, %xmm0
+; X64-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; X64-NEXT:    retq
-  %res = call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a1, <2 x double> %a0, i8 5)
-  ret <2 x double> %res
+  %cmp = call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %a1, <2 x double> %a0, i8 5)
+  %ext0 = extractelement <2 x double> %cmp, i32 0
+  %ins0 = insertelement <2 x double> undef, double %ext0, i32 0
+  %ext1 = extractelement <2 x double> %a0, i32 1
+  %ins1 = insertelement <2 x double> %ins0, double %ext1, i32 1
+  ret <2 x double> %ins1
 }
 
 define <2 x double> @test_mm_cmpnle_pd(<2 x double> %a0, <2 x double> %a1) nounwind {
