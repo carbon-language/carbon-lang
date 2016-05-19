@@ -356,21 +356,31 @@ bool GuardWideningImpl::widenCondCommon(Value *Cond0, Value *Cond1,
     if (match(Cond0, m_ICmp(Pred0, m_Value(LHS), m_ConstantInt(RHS0))) &&
         match(Cond1, m_ICmp(Pred1, m_Specific(LHS), m_ConstantInt(RHS1)))) {
 
-      // TODO: This logic should be generalized and refactored into a new
-      // Constant::getEquivalentICmp helper.
-      if (Pred0 == ICmpInst::ICMP_NE && RHS0->isZero())
-        Pred0 = ICmpInst::ICMP_UGT;
-      if (Pred1 == ICmpInst::ICMP_NE && RHS1->isZero())
-        Pred1 = ICmpInst::ICMP_UGT;
+      ConstantRange CR0 =
+          ConstantRange::makeExactICmpRegion(Pred0, RHS0->getValue());
+      ConstantRange CR1 =
+          ConstantRange::makeExactICmpRegion(Pred1, RHS1->getValue());
 
-      if (Pred0 == ICmpInst::ICMP_UGT && Pred1 == ICmpInst::ICMP_UGT) {
+      // SubsetIntersect is a subset of the actual mathematical intersection of
+      // CR0 and CR1, while SupersetIntersect is a superset of the the actual
+      // mathematical intersection.  If these two ConstantRanges are equal, then
+      // we know we were able to represent the actual mathematical intersection
+      // of CR0 and CR1, and can use the same to generate an icmp instruction.
+      //
+      // Given what we're doing here and the semantics of guards, it would
+      // actually be correct to just use SubsetIntersect, but that may be too
+      // aggressive in cases we care about.
+      auto SubsetIntersect = CR0.inverse().unionWith(CR1.inverse()).inverse();
+      auto SupersetIntersect = CR0.intersectWith(CR1);
+
+      APInt NewRHSAP;
+      CmpInst::Predicate Pred;
+      if (SubsetIntersect == SupersetIntersect &&
+          SubsetIntersect.getEquivalentICmp(Pred, NewRHSAP)) {
         if (InsertPt) {
-          ConstantInt *NewRHS =
-              RHS0->getValue().ugt(RHS1->getValue()) ? RHS0 : RHS1;
-          Result = new ICmpInst(InsertPt, ICmpInst::ICMP_UGT, LHS, NewRHS,
-                                "wide.chk");
+          ConstantInt *NewRHS = ConstantInt::get(Cond0->getContext(), NewRHSAP);
+          Result = new ICmpInst(InsertPt, Pred, LHS, NewRHS, "wide.chk");
         }
-
         return true;
       }
     }

@@ -126,7 +126,7 @@ leave:
 define void @f_5(i32 %a) {
 ; CHECK-LABEL: @f_5(
 entry:
-; CHECK:  %wide.chk = icmp ugt i32 %a, 10
+; CHECK:  %wide.chk = icmp uge i32 %a, 11
 ; CHECK:  call void (i1, ...) @llvm.experimental.guard(i1 %wide.chk) [ "deopt"() ]
 ; CHECK:  br i1 undef, label %left, label %right
 
@@ -333,5 +333,49 @@ entry:
   %a30 = mul i32 %a29, %a29
   %cond = trunc i32 %a30 to i1
   call void(i1, ...) @llvm.experimental.guard(i1 %cond) [ "deopt"() ]
+  ret void
+}
+
+define void @f_13(i32 %a) {
+; CHECK-LABEL: @f_13(
+entry:
+; CHECK:  %wide.chk = icmp ult i32 %a, 10
+; CHECK:  call void (i1, ...) @llvm.experimental.guard(i1 %wide.chk) [ "deopt"() ]
+; CHECK:  br i1 undef, label %left, label %right
+
+  %cond_0 = icmp ult i32 %a, 14
+  call void(i1, ...) @llvm.experimental.guard(i1 %cond_0) [ "deopt"() ]
+  br i1 undef, label %left, label %right
+
+left:
+  %cond_1 = icmp slt i32 %a, 10
+  call void(i1, ...) @llvm.experimental.guard(i1 %cond_1) [ "deopt"() ]
+  ret void
+
+right:
+  ret void
+}
+
+define void @f_14(i32 %a) {
+; CHECK-LABEL: @f_14(
+entry:
+; CHECK:  %cond_0 = icmp ult i32 %a, 14
+; CHECK:  call void (i1, ...) @llvm.experimental.guard(i1 %cond_0) [ "deopt"() ]
+; CHECK:  br i1 undef, label %left, label %right
+
+  %cond_0 = icmp ult i32 %a, 14
+  call void(i1, ...) @llvm.experimental.guard(i1 %cond_0) [ "deopt"() ]
+  br i1 undef, label %left, label %right
+
+left:
+; CHECK: left:
+; CHECK:  %cond_1 = icmp sgt i32 %a, 10
+; CHECK:  call void (i1, ...) @llvm.experimental.guard(i1 %cond_1) [ "deopt"() ]
+
+  %cond_1 = icmp sgt i32 %a, 10
+  call void(i1, ...) @llvm.experimental.guard(i1 %cond_1) [ "deopt"() ]
+  ret void
+
+right:
   ret void
 }
