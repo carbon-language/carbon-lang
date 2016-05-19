@@ -103,6 +103,12 @@ TEST(IncludeFixer, Typo) {
   // too.
   EXPECT_EQ("#include <string>\n\nstring foo;\n",
             runIncludeFixer("string foo;\n"));
+
+  // Fully qualified name.
+  EXPECT_EQ("#include <string>\n\n::std::string foo;\n",
+            runIncludeFixer("::std::string foo;\n"));
+  // Should not match std::string.
+  EXPECT_EQ("::string foo;\n", runIncludeFixer("::string foo;\n"));
 }
 
 TEST(IncludeFixer, IncompleteType) {
