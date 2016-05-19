@@ -3418,8 +3418,7 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
 
   // Skip accesses in non-affine subregions as they might not be executed
   // under the same condition as the entry of the non-affine subregion.
-  auto *LI = dyn_cast<LoadInst>(Access->getAccessInstruction());
-  if (!LI || BB != LI->getParent())
+  if (BB != Access->getAccessInstruction()->getParent())
     return false;
 
   isl_map *AccessRelation = Access->getAccessRelation();
@@ -3437,17 +3436,12 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
   isl_union_map *Written = isl_union_map_intersect_range(
       isl_union_map_copy(Writes), isl_union_set_from_set(AccessRange));
   bool IsWritten = !isl_union_map_is_empty(Written);
+  isl_union_map_free(Written);
 
-  if (IsWritten && isRequiredInvariantLoad(LI)) {
-    auto *WrittenCtx = isl_union_map_params(Written);
-    WrittenCtx = isl_set_remove_divs(WrittenCtx);
-    addAssumption(INVARIANTLOAD, WrittenCtx, LI->getDebugLoc(), AS_RESTRICTION);
-    IsWritten = false;
-  } else {
-    isl_union_map_free(Written);
-  }
+  if (IsWritten)
+    return false;
 
-  return !IsWritten;
+  return true;
 }
 
 void Scop::verifyInvariantLoads() {
