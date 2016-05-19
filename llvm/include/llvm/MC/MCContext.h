@@ -385,6 +385,8 @@ namespace llvm {
                                       const MCSymbolELF *Group,
                                       const MCSectionELF *Associated);
 
+    void renameELFSection(MCSectionELF *Section, StringRef Name);
+
     MCSectionELF *createELFGroupSection(const MCSymbolELF *Group);
 
     MCSectionCOFF *getCOFFSection(StringRef Section, unsigned Characteristics,

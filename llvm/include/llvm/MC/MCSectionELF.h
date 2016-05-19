@@ -62,6 +62,8 @@ private:
       Group->setIsSignature();
   }
 
+  void setSectionName(StringRef Name) { SectionName = Name; }
+
 public:
   ~MCSectionELF();
 
@@ -73,7 +75,6 @@ public:
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   unsigned getEntrySize() const { return EntrySize; }
-  void setFlags(unsigned F) { Flags = F; }
   const MCSymbolELF *getGroup() const { return Group; }
 
   void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
