@@ -2255,10 +2255,15 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
       LangOpts.ObjCExceptions = 1;
   }
 
-  // During CUDA device-side compilation, the aux triple is the triple used for
-  // host compilation.
-  if (LangOpts.CUDA && LangOpts.CUDAIsDevice) {
-    Res.getTargetOpts().HostTriple = Res.getFrontendOpts().AuxTriple;
+  if (LangOpts.CUDA) {
+    // During CUDA device-side compilation, the aux triple is the
+    // triple used for host compilation.
+    if (LangOpts.CUDAIsDevice)
+      Res.getTargetOpts().HostTriple = Res.getFrontendOpts().AuxTriple;
+
+    // Set default FP_CONTRACT to FAST.
+    if (!Args.hasArg(OPT_ffp_contract))
+      Res.getCodeGenOpts().setFPContractMode(CodeGenOptions::FPC_Fast);
   }
 
   // FIXME: Override value name discarding when asan or msan is used because the
