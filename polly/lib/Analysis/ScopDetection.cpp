@@ -1493,40 +1493,12 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   return false;
 }
 
-bool ScopDetection::isNonAffineSubRegion(const Region *SubR,
-                                         const Region *ScopR) const {
-  const DetectionContext *DC = getDetectionContext(ScopR);
-  assert(DC && "ScopR is no valid region!");
-  return DC->NonAffineSubRegionSet.count(SubR);
-}
-
 const ScopDetection::DetectionContext *
 ScopDetection::getDetectionContext(const Region *R) const {
   auto DCMIt = DetectionContextMap.find(getBBPairForRegion(R));
   if (DCMIt == DetectionContextMap.end())
     return nullptr;
   return &DCMIt->second;
-}
-
-const ScopDetection::BoxedLoopsSetTy *
-ScopDetection::getBoxedLoops(const Region *R) const {
-  const DetectionContext *DC = getDetectionContext(R);
-  assert(DC && "ScopR is no valid region!");
-  return &DC->BoxedLoopsSet;
-}
-
-const MapInsnToMemAcc *
-ScopDetection::getInsnToMemAccMap(const Region *R) const {
-  const DetectionContext *DC = getDetectionContext(R);
-  assert(DC && "ScopR is no valid region!");
-  return &DC->InsnToMemAcc;
-}
-
-const InvariantLoadsSetTy *
-ScopDetection::getRequiredInvariantLoads(const Region *R) const {
-  const DetectionContext *DC = getDetectionContext(R);
-  assert(DC && "ScopR is no valid region!");
-  return &DC->RequiredILS;
 }
 
 const RejectLog *ScopDetection::lookupRejectionLog(const Region *R) const {
