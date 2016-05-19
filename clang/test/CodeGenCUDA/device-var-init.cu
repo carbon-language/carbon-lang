@@ -24,6 +24,16 @@ struct EC {
   __device__ EC(int) {}  // -- not allowed
 };
 
+// empty destructor
+struct ED {
+  __device__ ~ED() {}     // -- allowed
+};
+
+struct ECD {
+  __device__ ECD() {}     // -- allowed
+  __device__ ~ECD() {}    // -- allowed
+};
+
 // empty templated constructor -- allowed with no arguments
 struct ETC {
   template <typename... T> __device__ ETC(T...) {}
@@ -33,6 +43,12 @@ struct ETC {
 struct UC {
   int uc;
   __device__ UC();
+};
+
+// undefined destructor -- not allowed
+struct UD {
+  int ud;
+  __device__ ~UD();
 };
 
 // empty constructor w/ initializer list -- not allowed
@@ -47,10 +63,21 @@ struct NEC {
   __device__ NEC() { nec = 1; }
 };
 
+// non-empty destructor -- not allowed
+struct NED {
+  int ned;
+  __device__ ~NED() { ned = 1; }
+};
+
 // no-constructor,  virtual method -- not allowed
 struct NCV {
   int ncv;
   __device__ virtual void vm() {}
+};
+
+// virtual destructor -- not allowed.
+struct VD {
+  __device__ virtual ~VD() {}
 };
 
 // dynamic in-class field initializer -- not allowed
@@ -106,6 +133,20 @@ __shared__ EC s_ec;
 // CHECK: @s_ec = addrspace(3) global %struct.EC undef,
 __constant__ EC c_ec;
 // CHECK: @c_ec = addrspace(4) externally_initialized global %struct.EC zeroinitializer,
+
+__device__ ED d_ed;
+// CHECK: @d_ed = addrspace(1) externally_initialized global %struct.ED zeroinitializer,
+__shared__ ED s_ed;
+// CHECK: @s_ed = addrspace(3) global %struct.ED undef,
+__constant__ ED c_ed;
+// CHECK: @c_ed = addrspace(4) externally_initialized global %struct.ED zeroinitializer,
+
+__device__ ECD d_ecd;
+// CHECK: @d_ecd = addrspace(1) externally_initialized global %struct.ECD zeroinitializer,
+__shared__ ECD s_ecd;
+// CHECK: @s_ecd = addrspace(3) global %struct.ECD undef,
+__constant__ ECD c_ecd;
+// CHECK: @c_ecd = addrspace(4) externally_initialized global %struct.ECD zeroinitializer,
 
 __device__ ETC d_etc;
 // CHECK: @d_etc = addrspace(1) externally_initialized global %struct.ETC zeroinitializer,
@@ -180,6 +221,17 @@ struct T_FA_NEC {
   NEC nec[2];
 };
 
+
+// Inherited from or incapsulated class with non-empty desstructor --
+// not allowed
+struct T_B_NED : NED {};
+struct T_F_NED {
+  NED ned;
+};
+struct T_FA_NED {
+  NED ned[2];
+};
+
 // We should not emit global initializers for device-side variables.
 // CHECK-NOT: @__cxx_global_var_init
 
@@ -190,16 +242,26 @@ __device__ void df() {
   // CHECK-NOT: call
   EC ec;
   // CHECK:   call void @_ZN2ECC1Ev(%struct.EC* %ec)
+  ED ed;
+  // CHECK-NOT: call
+  ECD ecd;
+  // CHECK:   call void @_ZN3ECDC1Ev(%struct.ECD* %ecd)
   ETC etc;
   // CHECK:   call void @_ZN3ETCC1IJEEEDpT_(%struct.ETC* %etc)
   UC uc;
   // CHECK:   call void @_ZN2UCC1Ev(%struct.UC* %uc)
+  UD ud;
+  // CHECK-NOT: call
   ECI eci;
   // CHECK:   call void @_ZN3ECIC1Ev(%struct.ECI* %eci)
   NEC nec;
   // CHECK:   call void @_ZN3NECC1Ev(%struct.NEC* %nec)
+  NED ned;
+  // CHECK:   call void @_ZN3NCVC1Ev(%struct.NCV* %ncv)
   NCV ncv;
   // CHECK-NOT: call
+  VD vd;
+  // CHECK:   call void @_ZN2VDC1Ev(%struct.VD* %vd)
   NCF ncf;
   // CHECK:   call void @_ZN3NCFC1Ev(%struct.NCF* %ncf)
   NCFS ncfs;
@@ -226,6 +288,12 @@ __device__ void df() {
   // CHECK:   call void @_ZN7T_F_NECC1Ev(%struct.T_F_NEC* %t_f_nec)
   T_FA_NEC t_fa_nec;
   // CHECK:   call void @_ZN8T_FA_NECC1Ev(%struct.T_FA_NEC* %t_fa_nec)
+  T_B_NED t_b_ned;
+  // CHECK-NOT: call
+  T_F_NED t_f_ned;
+  // CHECK-NOT: call
+  T_FA_NED t_fa_ned;
+  // CHECK-NOT: call
   static __shared__ EC s_ec;
   // CHECK-NOT: call void @_ZN2ECC1Ev(%struct.EC* addrspacecast (%struct.EC addrspace(3)* @_ZZ2dfvE4s_ec to %struct.EC*))
   static __shared__ ETC s_etc;
@@ -234,9 +302,17 @@ __device__ void df() {
   // anchor point separating constructors and destructors
   df(); // CHECK: call void @_Z2dfv()
 
-  // CHECK-NOT: call
+  // Verify that we only call non-empty destructors
+  // CHECK-NEXT: call void @_ZN8T_FA_NEDD1Ev(%struct.T_FA_NED* %t_fa_ned) #6
+  // CHECK-NEXT: call void @_ZN7T_F_NEDD1Ev(%struct.T_F_NED* %t_f_ned) #6
+  // CHECK-NEXT: call void @_ZN7T_B_NEDD1Ev(%struct.T_B_NED* %t_b_ned) #6
+  // CHECK-NEXT: call void @_ZN2VDD1Ev(%struct.VD* %vd)
+  // CHECK-NEXT: call void @_ZN3NEDD1Ev(%struct.NED* %ned)
+  // CHECK-NEXT: call void @_ZN2UDD1Ev(%struct.UD* %ud)
+  // CHECK-NEXT: call void @_ZN3ECDD1Ev(%struct.ECD* %ecd)
+  // CHECK-NEXT: call void @_ZN2EDD1Ev(%struct.ED* %ed)
 
-  // CHECK: ret void
+  // CHECK-NEXT: ret void
 }
 
 // We should not emit global init function.

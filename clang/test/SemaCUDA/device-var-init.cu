@@ -58,6 +58,13 @@ __shared__ UC s_uc;
 __constant__ UC c_uc;
 // expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
 
+__device__ UD d_ud;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+__shared__ UD s_ud;
+// expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+__constant__ UD c_ud;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+
 __device__ ECI d_eci;
 // expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
 __shared__ ECI s_eci;
@@ -72,11 +79,25 @@ __shared__ NEC s_nec;
 __constant__ NEC c_nec;
 // expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
 
+__device__ NED d_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+__shared__ NED s_ned;
+// expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+__constant__ NED c_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+
 __device__ NCV d_ncv;
 // expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
 __shared__ NCV s_ncv;
 // expected-error@-1 {{initialization is not supported for __shared__ variables.}}
 __constant__ NCV c_ncv;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+
+__device__ VD d_vd;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+__shared__ VD s_vd;
+// expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+__constant__ VD c_vd;
 // expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
 
 __device__ NCF d_ncf;
@@ -152,13 +173,37 @@ __shared__ T_FA_NEC s_t_fa_nec;
 __constant__ T_FA_NEC c_t_fa_nec;
 // expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
 
-// Make sure that initialization restrictions do not apply to local
-// variables.
+__device__ T_B_NED d_t_b_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+__shared__ T_B_NED s_t_b_ned;
+// expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+__constant__ T_B_NED c_t_b_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+
+__device__ T_F_NED d_t_f_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+__shared__ T_F_NED s_t_f_ned;
+// expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+__constant__ T_F_NED c_t_f_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+
+__device__ T_FA_NED d_t_fa_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+__shared__ T_FA_NED s_t_fa_ned;
+// expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+__constant__ T_FA_NED c_t_fa_ned;
+// expected-error@-1 {{dynamic initialization is not supported for __device__, __constant__, and __shared__ variables.}}
+
+// Verify that only __shared__ local variables may be static on device
+// side and that they are not allowed to be initialized.
 __device__ void df_sema() {
   static __shared__ NCFS s_ncfs;
   // expected-error@-1 {{initialization is not supported for __shared__ variables.}}
   static __shared__ UC s_uc;
   // expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+  static __shared__ NED s_ned;
+  // expected-error@-1 {{initialization is not supported for __shared__ variables.}}
+
   static __device__ int ds;
   // expected-error@-1 {{Within a __device__/__global__ function, only __shared__ variables may be marked "static"}}
   static __constant__ int dc;
