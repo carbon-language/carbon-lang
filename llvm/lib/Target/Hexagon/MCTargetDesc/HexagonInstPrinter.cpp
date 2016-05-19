@@ -202,10 +202,9 @@ void HexagonInstPrinter::printPredicateOperand(MCInst const *MI, unsigned OpNo,
 
 void HexagonInstPrinter::printSymbol(MCInst const *MI, unsigned OpNo,
                                      raw_ostream &O, bool hi) const {
-  MCOperand const &MO = MI->getOperand(OpNo);
+  assert(MI->getOperand(OpNo).isImm() && "Unknown symbol operand");
 
   O << '#' << (hi ? "HI" : "LO") << '(';
-  assert(MO.isImm() && "Unknown symbol operand");
   O << '#';
   printOperand(MI, OpNo, O);
   O << ')';
