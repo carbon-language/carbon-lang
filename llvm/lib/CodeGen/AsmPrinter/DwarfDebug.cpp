@@ -1588,19 +1588,19 @@ void DwarfDebug::emitDebugARanges() {
     }
 
     // Sort the symbols by offset within the section.
-    std::sort(List.begin(), List.end(),
-              [&](const SymbolCU &A, const SymbolCU &B) {
-      unsigned IA = A.Sym ? Asm->OutStreamer->GetSymbolOrder(A.Sym) : 0;
-      unsigned IB = B.Sym ? Asm->OutStreamer->GetSymbolOrder(B.Sym) : 0;
+    std::sort(
+        List.begin(), List.end(), [&](const SymbolCU &A, const SymbolCU &B) {
+          unsigned IA = A.Sym ? Asm->OutStreamer->GetSymbolOrder(A.Sym) : 0;
+          unsigned IB = B.Sym ? Asm->OutStreamer->GetSymbolOrder(B.Sym) : 0;
 
-      // Symbols with no order assigned should be placed at the end.
-      // (e.g. section end labels)
-      if (IA == 0)
-        return false;
-      if (IB == 0)
-        return true;
-      return IA < IB;
-    });
+          // Symbols with no order assigned should be placed at the end.
+          // (e.g. section end labels)
+          if (IA == 0)
+            return false;
+          if (IB == 0)
+            return true;
+          return IA < IB;
+        });
 
     // Build spans between each label.
     const MCSymbol *StartSym = List[0].Sym;
