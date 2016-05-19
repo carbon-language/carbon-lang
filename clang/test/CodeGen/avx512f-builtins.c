@@ -1012,13 +1012,13 @@ __m256d test_mm512_extractf64x4_pd(__m512d a)
 }
 
 __m256d test_mm512_mask_extractf64x4_pd(__m256d  __W,__mmask8  __U,__m512d __A){
- //CHECK-LABLE:@test_mm512_mask_extractf64x4_pd
+ //CHECK-LABEL:@test_mm512_mask_extractf64x4_pd
  //CHECL:@llvm.x86.avx512.mask.vextractf64x4.512
  return _mm512_mask_extractf64x4_pd( __W, __U, __A, 1);
 }
 
 __m256d test_mm512_maskz_extractf64x4_pd(__mmask8  __U,__m512d __A){
- //CHECK-LABLE:@test_mm512_maskz_extractf64x4_pd
+ //CHECK-LABEL:@test_mm512_maskz_extractf64x4_pd
  //CHECL:@llvm.x86.avx512.mask.vextractf64x4.512
  return _mm512_maskz_extractf64x4_pd( __U, __A, 1);
 }
@@ -1031,13 +1031,13 @@ __m128 test_mm512_extractf32x4_ps(__m512 a)
 }
 
 __m128 test_mm512_mask_extractf32x4_ps(__m128 __W, __mmask8  __U,__m512d __A){
- //CHECK-LABLE:@test_mm512_mask_extractf32x4_ps
+ //CHECK-LABEL:@test_mm512_mask_extractf32x4_ps
  //CHECL: @llvm.x86.avx512.mask.vextractf32x4.512
  return _mm512_mask_extractf32x4_ps( __W, __U, __A, 1);
 }
 
 __m128 test_mm512_maskz_extractf32x4_ps( __mmask8  __U,__m512d __A){
- //CHECK-LABLE:@test_mm512_maskz_extractf32x4_ps
+ //CHECK-LABEL:@test_mm512_maskz_extractf32x4_ps
  //CHECL: @llvm.x86.avx512.mask.vextractf32x4.512
  return _mm512_maskz_extractf32x4_ps(  __U, __A, 1);
 }
@@ -1453,7 +1453,7 @@ __m512i test_mm512_mask_andnot_epi32 (__mmask16 __k,__m512i __A, __m512i __B,
 
 __m512i test_mm512_andnot_si512(__m512i __A, __m512i __B)
 {
-  //CHECK-LABLE: @test_mm512_andnot_si512
+  //CHECK-LABEL: @test_mm512_andnot_si512
   //CHECK: load {{.*}}%__A.addr.i, align 64
   //CHECK: %neg.i = xor{{.*}}, <i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1>
   //CHECK: load {{.*}}%__B.addr.i, align 64
@@ -6516,7 +6516,7 @@ __m512i test_mm512_maskz_min_epu64 (__mmask8 __M, __m512i __A, __m512i __B)
 
 __m512i test_mm512_mask_set1_epi32 (__m512i __O, __mmask16 __M, int __A)
 {
-    //CHECK-LABLE: @test_mm512_mask_set1_epi32
+    //CHECK-LABEL: @test_mm512_mask_set1_epi32
     //CHECK: @llvm.x86.avx512.mask.pbroadcast.d.gpr.512
   return _mm512_mask_set1_epi32 ( __O, __M, __A);
 }
@@ -6526,7 +6526,7 @@ __m512i test_mm512_set_epi32 (int __A, int __B, int __C, int __D,
                int __I, int __J, int __K, int __L,
                int __M, int __N, int __O, int __P)
 {
- //CHECK-LABLE: @test_mm512_set_epi32
+ //CHECK-LABEL: @test_mm512_set_epi32
  //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
@@ -6552,24 +6552,24 @@ __m512i test_mm512_setr_epi32 (int __A, int __B, int __C, int __D,
                int __I, int __J, int __K, int __L,
                int __M, int __N, int __O, int __P)
 {
-    //CHECK-LABLE: @test_mm512_setr_epi32
- //CHECK: %0 = load{{.*}}%__P.addr, align 4
- //CHECK: %1 = load{{.*}}%__O.addr, align 4
- //CHECK: %2 = load{{.*}}%__N.addr, align 4
- //CHECK: %3 = load{{.*}}%__M.addr, align 4
- //CHECK: %4 = load{{.*}}%__L.addr, align 4
- //CHECK: %5 = load{{.*}}%__K.addr, align 4
- //CHECK: %6 = load{{.*}}%__J.addr, align 4
- //CHECK: %7 = load{{.*}}%__I.addr, align 4
- //CHECK: %8 = load{{.*}}%__H.addr, align 4
- //CHECK: %9 = load{{.*}}%__G.addr, align 4
- //CHECK: %10 = load{{.*}}%__F.addr, align 4
- //CHECK: %11 = load{{.*}}%__E.addr, align 4
- //CHECK: %12 = load{{.*}}%__D.addr, align 4
- //CHECK: %13 = load{{.*}}%__C.addr, align 4
- //CHECK: %14 = load{{.*}}%__B.addr, align 4
- //CHECK: %15 = load{{.*}}%__A.addr, align 4
- //CHECK: insertelement{{.*}}i32 0
+    //CHECK-LABEL: @test_mm512_setr_epi32
+    //CHECK: load{{.*}}%__P.addr, align 4
+    //CHECK: load{{.*}}%__O.addr, align 4
+    //CHECK: load{{.*}}%__N.addr, align 4
+    //CHECK: load{{.*}}%__M.addr, align 4
+    //CHECK: load{{.*}}%__L.addr, align 4
+    //CHECK: load{{.*}}%__K.addr, align 4
+    //CHECK: load{{.*}}%__J.addr, align 4
+    //CHECK: load{{.*}}%__I.addr, align 4
+    //CHECK: load{{.*}}%__H.addr, align 4
+    //CHECK: load{{.*}}%__G.addr, align 4
+    //CHECK: load{{.*}}%__F.addr, align 4
+    //CHECK: load{{.*}}%__E.addr, align 4
+    //CHECK: load{{.*}}%__D.addr, align 4
+    //CHECK: load{{.*}}%__C.addr, align 4
+    //CHECK: load{{.*}}%__B.addr, align 4
+    //CHECK: load{{.*}}%__A.addr, align 4
+    //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
     //CHECK: insertelement{{.*}}i32 3
@@ -6591,7 +6591,7 @@ __m512i test_mm512_setr_epi32 (int __A, int __B, int __C, int __D,
 
 __m512i test_mm512_mask_set1_epi64 (__m512i __O, __mmask8 __M, long long __A)
 {
-    //CHECK-LABLE: @test_mm512_mask_set1_epi64
+    //CHECK-LABEL: @test_mm512_mask_set1_epi64
     //CHECK: @llvm.x86.avx512.mask.pbroadcast.q.gpr.512
   return _mm512_mask_set1_epi64 (__O, __M, __A);
 }
@@ -6600,7 +6600,7 @@ __m512i test_mm512_set_epi64 (long long __A, long long __B, long long __C,
                               long long __D, long long __E, long long __F,
                               long long __G, long long __H)
 {
-    //CHECK-LABLE: @test_mm512_set_epi64
+    //CHECK-LABEL: @test_mm512_set_epi64
     //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
@@ -6616,16 +6616,16 @@ __m512i test_mm512_setr_epi64 (long long __A, long long __B, long long __C,
                               long long __D, long long __E, long long __F,
                               long long __G, long long __H)
 {
-    //CHECK-LABLE: @test_mm512_setr_epi64
-    //CHECK: %0 = load{{.*}}%__H.addr, align 8
- //CHECK: %1 = load{{.*}}%__G.addr, align 8
- //CHECK: %2 = load{{.*}}%__F.addr, align 8
- //CHECK: %3 = load{{.*}}%__E.addr, align 8
- //CHECK: %4 = load{{.*}}%__D.addr, align 8
- //CHECK: %5 = load{{.*}}%__C.addr, align 8
- //CHECK: %6 = load{{.*}}%__B.addr, align 8
- //CHECK: %7 = load{{.*}}%__A.addr, align 8
- //CHECK: insertelement{{.*}}i32 0
+    //CHECK-LABEL: @test_mm512_setr_epi64
+    //CHECK: load{{.*}}%__H.addr, align 8
+    //CHECK: load{{.*}}%__G.addr, align 8
+    //CHECK: load{{.*}}%__F.addr, align 8
+    //CHECK: load{{.*}}%__E.addr, align 8
+    //CHECK: load{{.*}}%__D.addr, align 8
+    //CHECK: load{{.*}}%__C.addr, align 8
+    //CHECK: load{{.*}}%__B.addr, align 8
+    //CHECK: load{{.*}}%__A.addr, align 8
+    //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
     //CHECK: insertelement{{.*}}i32 3
@@ -6639,7 +6639,7 @@ __m512i test_mm512_setr_epi64 (long long __A, long long __B, long long __C,
 __m512d test_mm512_set_pd (double __A, double __B, double __C, double __D,
                            double __E, double __F, double __G, double __H)
 {
-    //CHECK-LABLE: @test_mm512_set_pd
+    //CHECK-LABEL: @test_mm512_set_pd
     //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
@@ -6654,16 +6654,16 @@ __m512d test_mm512_set_pd (double __A, double __B, double __C, double __D,
 __m512d test_mm512_setr_pd (double __A, double __B, double __C, double __D,
                            double __E, double __F, double __G, double __H)
 {
-    //CHECK-LABLE: @test_mm512_setr_pd
-    //CHECK: %0 = load{{.*}}%__H.addr, align 8
- //CHECK: %1 = load{{.*}}%__G.addr, align 8
- //CHECK: %2 = load{{.*}}%__F.addr, align 8
- //CHECK: %3 = load{{.*}}%__E.addr, align 8
- //CHECK: %4 = load{{.*}}%__D.addr, align 8
- //CHECK: %5 = load{{.*}}%__C.addr, align 8
- //CHECK: %6 = load{{.*}}%__B.addr, align 8
- //CHECK: %7 = load{{.*}}%__A.addr, align 8
- //CHECK: insertelement{{.*}}i32 0
+    //CHECK-LABEL: @test_mm512_setr_pd
+    //CHECK: load{{.*}}%__H.addr, align 8
+    //CHECK: load{{.*}}%__G.addr, align 8
+    //CHECK: load{{.*}}%__F.addr, align 8
+    //CHECK: load{{.*}}%__E.addr, align 8
+    //CHECK: load{{.*}}%__D.addr, align 8
+    //CHECK: load{{.*}}%__C.addr, align 8
+    //CHECK: load{{.*}}%__B.addr, align 8
+    //CHECK: load{{.*}}%__A.addr, align 8
+    //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
     //CHECK: insertelement{{.*}}i32 3
@@ -6679,7 +6679,7 @@ __m512 test_mm512_set_ps (float __A, float __B, float __C, float __D,
                           float __I, float __J, float __K, float __L,
                           float __M, float __N, float __O, float __P)
 {
-    //CHECK-LABLE: @test_mm512_set_ps
+    //CHECK-LABEL: @test_mm512_set_ps
     //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
@@ -6733,24 +6733,24 @@ __m512 test_mm512_setr_ps (float __A, float __B, float __C, float __D,
                           float __I, float __J, float __K, float __L,
                           float __M, float __N, float __O, float __P)
 {
-    //CHECK-LABLE: @test_mm512_setr_ps
-  //CHECK: %0 = load{{.*}}%__P.addr, align 4
-  //CHECK: %1 = load{{.*}}%__O.addr, align 4
-  //CHECK: %2 = load{{.*}}%__N.addr, align 4
-  //CHECK: %3 = load{{.*}}%__M.addr, align 4
-  //CHECK: %4 = load{{.*}}%__L.addr, align 4
-  //CHECK: %5 = load{{.*}}%__K.addr, align 4
-  //CHECK: %6 = load{{.*}}%__J.addr, align 4
-  //CHECK: %7 = load{{.*}}%__I.addr, align 4
-  //CHECK: %8 = load{{.*}}%__H.addr, align 4
-  //CHECK: %9 = load{{.*}}%__G.addr, align 4
-  //CHECK: %10 = load{{.*}}%__F.addr, align 4
-  //CHECK: %11 = load{{.*}}%__E.addr, align 4
-  //CHECK: %12 = load{{.*}}%__D.addr, align 4
-  //CHECK: %13 = load{{.*}}%__C.addr, align 4
-  //CHECK: %14 = load{{.*}}%__B.addr, align 4
-  //CHECK: %15 = load{{.*}}%__A.addr, align 4
-  //CHECK: insertelement{{.*}}i32 0
+    //CHECK-LABEL: @test_mm512_setr_ps
+    //CHECK: load{{.*}}%__P.addr, align 4
+    //CHECK: load{{.*}}%__O.addr, align 4
+    //CHECK: load{{.*}}%__N.addr, align 4
+    //CHECK: load{{.*}}%__M.addr, align 4
+    //CHECK: load{{.*}}%__L.addr, align 4
+    //CHECK: load{{.*}}%__K.addr, align 4
+    //CHECK: load{{.*}}%__J.addr, align 4
+    //CHECK: load{{.*}}%__I.addr, align 4
+    //CHECK: load{{.*}}%__H.addr, align 4
+    //CHECK: load{{.*}}%__G.addr, align 4
+    //CHECK: load{{.*}}%__F.addr, align 4
+    //CHECK: load{{.*}}%__E.addr, align 4
+    //CHECK: load{{.*}}%__D.addr, align 4
+    //CHECK: load{{.*}}%__C.addr, align 4
+    //CHECK: load{{.*}}%__B.addr, align 4
+    //CHECK: load{{.*}}%__A.addr, align 4
+    //CHECK: insertelement{{.*}}i32 0
     //CHECK: insertelement{{.*}}i32 1
     //CHECK: insertelement{{.*}}i32 2
     //CHECK: insertelement{{.*}}i32 3
