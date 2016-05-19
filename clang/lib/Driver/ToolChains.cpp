@@ -1750,6 +1750,10 @@ void Generic_GCC::CudaInstallationDetector::init(
       } else if (GpuArch == "compute_35") {
         CudaLibDeviceMap["sm_35"] = FilePath;
         CudaLibDeviceMap["sm_37"] = FilePath;
+      } else if (GpuArch == "compute_50") {
+        CudaLibDeviceMap["sm_50"] = FilePath;
+        CudaLibDeviceMap["sm_52"] = FilePath;
+        CudaLibDeviceMap["sm_53"] = FilePath;
       }
     }
 
