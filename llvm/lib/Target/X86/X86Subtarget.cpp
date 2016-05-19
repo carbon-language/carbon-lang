@@ -46,7 +46,7 @@ X86EarlyIfConv("x86-early-ifcvt", cl::Hidden,
 
 /// Classify a blockaddress reference for the current subtarget according to how
 /// we should reference it in a non-pcrel context.
-unsigned char X86Subtarget::ClassifyBlockAddressReference() const {
+unsigned char X86Subtarget::classifyBlockAddressReference() const {
   if (isPICStyleGOT())    // 32-bit ELF targets.
     return X86II::MO_GOTOFF;
 
@@ -60,7 +60,7 @@ unsigned char X86Subtarget::ClassifyBlockAddressReference() const {
 /// Classify a global variable reference for the current subtarget according to
 /// how we should reference it in a non-pcrel context.
 unsigned char X86Subtarget::
-ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
+classifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   // DLLImport only exists on windows, it is implemented as a load from a
   // DLLIMPORT stub.
   if (GV->hasDLLImportStorageClass())
@@ -200,7 +200,7 @@ bool X86Subtarget::hasSinCos() const {
 }
 
 /// Return true if the subtarget allows calls to immediate address.
-bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
+bool X86Subtarget::isLegalToCallImmediateAddr(const TargetMachine &TM) const {
   // FIXME: I386 PE/COFF supports PC relative calls using IMAGE_REL_I386_REL32
   // but WinCOFFObjectWriter::RecordRelocation cannot emit them.  Once it does,
   // the following check for Win32 should be removed.

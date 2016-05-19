@@ -562,23 +562,21 @@ public:
            !GV->isDeclarationForLinker();
   }
 
-  /// ClassifyGlobalReference - Classify a global variable reference for the
-  /// current subtarget according to how we should reference it in a non-pcrel
-  /// context.
-  unsigned char ClassifyGlobalReference(const GlobalValue *GV,
+  /// Classify a global variable reference for the current subtarget according
+  /// to how we should reference it in a non-pcrel context.
+  unsigned char classifyGlobalReference(const GlobalValue *GV,
                                         const TargetMachine &TM)const;
 
-  /// classifyGlobalFunctionReference - Classify a global function reference
-  /// for the current subtarget.
+  /// Classify a global function reference for the current subtarget.
   unsigned char classifyGlobalFunctionReference(const GlobalValue *GV,
                                                 const TargetMachine &TM) const;
 
   /// Classify a blockaddress reference for the current subtarget according to
   /// how we should reference it in a non-pcrel context.
-  unsigned char ClassifyBlockAddressReference() const;
+  unsigned char classifyBlockAddressReference() const;
 
   /// Return true if the subtarget allows calls to immediate address.
-  bool IsLegalToCallImmediateAddr(const TargetMachine &TM) const;
+  bool isLegalToCallImmediateAddr(const TargetMachine &TM) const;
 
   /// This function returns the name of a function which has an interface
   /// like the non-standard bzero function, if such a function exists on
