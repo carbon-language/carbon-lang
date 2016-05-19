@@ -323,12 +323,3 @@ namespace test8 {
              .**(int A::**) 0; // expected-warning {{indirection of non-volatile null pointer will be deleted}} expected-note {{consider}}
   }
 }
-
-namespace PR27558 {
-  template<typename Args> struct A { void f(); };
-  template<typename Args> struct B : A<Args> {
-    using A<Args>::f;
-    B() { (void)&B<Args>::f; }
-  };
-  B<int> b;
-}
