@@ -2548,6 +2548,7 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, ScopDetection &SD,
     isl_set *Domain = DomainMap.lookup(BB);
     if (!Domain)
       continue;
+    MaxLoopDepth = std::max(MaxLoopDepth, isl_set_n_dim(Domain));
 
     auto *BBLoop = getRegionNodeLoop(RN, LI);
     // Propagate the domain from BB directly to blocks that have a superset
@@ -3057,41 +3058,12 @@ static Loop *getLoopSurroundingRegion(Region &R, LoopInfo &LI) {
   return L ? (R.contains(L) ? L->getParentLoop() : L) : nullptr;
 }
 
-static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
-                                        ScopDetection &SD) {
-
-  const ScopDetection::BoxedLoopsSetTy *BoxedLoops = SD.getBoxedLoops(&R);
-
-  unsigned MinLD = INT_MAX, MaxLD = 0;
-  for (BasicBlock *BB : R.blocks()) {
-    if (Loop *L = LI.getLoopFor(BB)) {
-      if (!R.contains(L))
-        continue;
-      if (BoxedLoops && BoxedLoops->count(L))
-        continue;
-      unsigned LD = L->getLoopDepth();
-      MinLD = std::min(MinLD, LD);
-      MaxLD = std::max(MaxLD, LD);
-    }
-  }
-
-  // Handle the case that there is no loop in the SCoP first.
-  if (MaxLD == 0)
-    return 1;
-
-  assert(MinLD >= 1 && "Minimal loop depth should be at least one");
-  assert(MaxLD >= MinLD &&
-         "Maximal loop depth was smaller than mininaml loop depth?");
-  return MaxLD - MinLD + 1;
-}
-
-Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
-           unsigned MaxLoopDepth)
+Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI)
     : SE(&ScalarEvolution), R(R), IsOptimized(false),
       HasSingleExitEdge(R.getExitingBlock()), HasErrorBlock(false),
-      MaxLoopDepth(MaxLoopDepth), IslCtx(isl_ctx_alloc(), isl_ctx_free),
-      Context(nullptr), Affinator(this, LI), AssumedContext(nullptr),
-      InvalidContext(nullptr), Schedule(nullptr) {
+      MaxLoopDepth(0), IslCtx(isl_ctx_alloc(), isl_ctx_free), Context(nullptr),
+      Affinator(this, LI), AssumedContext(nullptr), InvalidContext(nullptr),
+      Schedule(nullptr) {
   if (IslOnErrorAbort)
     isl_options_set_on_error(getIslCtx(), ISL_ON_ERROR_ABORT);
   buildContext();
@@ -4838,8 +4810,7 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
 }
 
 void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
-  unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  scop.reset(new Scop(R, *SE, *LI, MaxLoopDepth));
+  scop.reset(new Scop(R, *SE, *LI));
 
   buildStmts(R, R);
   buildAccessFunctions(R, R, *SD->getInsnToMemAccMap(&R));
