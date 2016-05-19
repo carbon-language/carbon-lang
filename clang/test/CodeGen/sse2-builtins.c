@@ -721,6 +721,21 @@ __m128d test_mm_min_sd(__m128d A, __m128d B) {
   return _mm_min_sd(A, B);
 }
 
+__m128i test_mm_move_epi64(__m128i A) {
+  // CHECK-LABEL: test_mm_move_epi64
+  // CHECK: shufflevector <2 x i64> %{{.*}}, <2 x i64> %{{.*}}, <2 x i32> <i32 0, i32 2>
+  return _mm_move_epi64(A);
+}
+
+__m128d test_mm_move_sd(__m128d A, __m128d B) {
+  // CHECK-LABEL: test_mm_move_sd
+  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
+  // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 0
+  // CHECK: extractelement <2 x double> %{{.*}}, i32 1
+  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 1
+  return _mm_move_sd(A, B);
+}
+
 int test_mm_movemask_epi8(__m128i A) {
   // CHECK-LABEL: test_mm_movemask_epi8
   // CHECK: call i32 @llvm.x86.sse2.pmovmskb.128(<16 x i8> %{{.*}})
