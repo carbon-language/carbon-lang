@@ -132,11 +132,9 @@ TEST(IncludeFixer, MinimizeInclude) {
 }
 
 TEST(IncludeFixer, NestedName) {
-  // Some tests don't pass for target *-win32.
-  std::vector<std::string> args = {"-target", "x86_64-unknown-unknown"};
   EXPECT_EQ("#include \"dir/otherdir/qux.h\"\n\n"
             "int x = a::b::foo(0);\n",
-            runIncludeFixer("int x = a::b::foo(0);\n", args));
+            runIncludeFixer("int x = a::b::foo(0);\n"));
 
   // FIXME: Handle simple macros.
   EXPECT_EQ("#define FOO a::b::foo\nint x = FOO;\n",
@@ -146,7 +144,7 @@ TEST(IncludeFixer, NestedName) {
 
   EXPECT_EQ("#include \"dir/otherdir/qux.h\"\n\n"
             "namespace a {}\nint a = a::b::foo(0);\n",
-            runIncludeFixer("namespace a {}\nint a = a::b::foo(0);\n", args));
+            runIncludeFixer("namespace a {}\nint a = a::b::foo(0);\n"));
 }
 
 TEST(IncludeFixer, MultipleMissingSymbols) {
