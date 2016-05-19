@@ -571,8 +571,8 @@ bool GuardWideningImpl::combineRangeChecks(
     // hard-code that fact.
 
     std::sort(ChecksStart, Checks.end(),
-              [&](GuardWideningImpl::RangeCheck &LHS,
-                  GuardWideningImpl::RangeCheck &RHS) {
+              [&](const GuardWideningImpl::RangeCheck &LHS,
+                  const GuardWideningImpl::RangeCheck &RHS) {
       return LHS.Offset->getValue().slt(RHS.Offset->getValue());
     });
 
@@ -588,7 +588,7 @@ bool GuardWideningImpl::combineRangeChecks(
 
     APInt MaxDiff = MaxOffset->getValue() - MinOffset->getValue();
     APInt HighOffset = MaxOffset->getValue();
-    auto OffsetOK = [&](GuardWideningImpl::RangeCheck &RC) {
+    auto OffsetOK = [&](const GuardWideningImpl::RangeCheck &RC) {
       return (HighOffset - RC.Offset->getValue()).ult(MaxDiff);
     };
 
