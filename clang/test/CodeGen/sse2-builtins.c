@@ -306,6 +306,10 @@ __m128d test_mm_cmpnge_pd(__m128d A, __m128d B) {
 __m128d test_mm_cmpnge_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_cmpnge_sd
   // CHECK: call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}}, i8 6)
+  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
+  // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 0
+  // CHECK: extractelement <2 x double> %{{.*}}, i32 1
+  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 1
   return _mm_cmpnge_sd(A, B);
 }
 
@@ -318,6 +322,10 @@ __m128d test_mm_cmpngt_pd(__m128d A, __m128d B) {
 __m128d test_mm_cmpngt_sd(__m128d A, __m128d B) {
   // CHECK-LABEL: test_mm_cmpngt_sd
   // CHECK: call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %{{.*}}, <2 x double> %{{.*}}, i8 5)
+  // CHECK: extractelement <2 x double> %{{.*}}, i32 0
+  // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 0
+  // CHECK: extractelement <2 x double> %{{.*}}, i32 1
+  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 1
   return _mm_cmpngt_sd(A, B);
 }
 
