@@ -793,10 +793,10 @@ SampleProfileReader::create(std::unique_ptr<MemoryBuffer> &B, LLVMContext &C) {
 // For text and GCC file formats, we compute the summary after reading the
 // profile. Binary format has the profile summary in its header.
 void SampleProfileReader::computeSummary() {
-  Summary.reset(new SampleProfileSummary(ProfileSummary::DefaultCutoffs));
+  SampleProfileSummaryBuilder Builder(ProfileSummaryBuilder::DefaultCutoffs);
   for (const auto &I : Profiles) {
     const FunctionSamples &Profile = I.second;
-    Summary->addRecord(Profile);
+    Builder.addRecord(Profile);
   }
-  Summary->computeDetailedSummary();
+  Summary.reset(Builder.getSummary());
 }

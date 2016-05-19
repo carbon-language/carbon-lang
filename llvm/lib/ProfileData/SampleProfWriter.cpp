@@ -255,10 +255,10 @@ SampleProfileWriter::create(std::unique_ptr<raw_ostream> &OS,
 
 void SampleProfileWriter::computeSummary(
     const StringMap<FunctionSamples> &ProfileMap) {
-  Summary.reset(new SampleProfileSummary(ProfileSummary::DefaultCutoffs));
+  SampleProfileSummaryBuilder Builder(ProfileSummaryBuilder::DefaultCutoffs);
   for (const auto &I : ProfileMap) {
     const FunctionSamples &Profile = I.second;
-    Summary->addRecord(Profile);
+    Builder.addRecord(Profile);
   }
-  Summary->computeDetailedSummary();
+  Summary.reset(Builder.getSummary());
 }
