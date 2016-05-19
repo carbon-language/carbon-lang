@@ -99,8 +99,7 @@ public:
   typedef multilib_list::iterator iterator;
   typedef multilib_list::const_iterator const_iterator;
 
-  typedef std::function<std::vector<std::string>(StringRef InstallDir,
-                                                 const Multilib &M)>
+  typedef std::function<std::vector<std::string>(const Multilib &M)>
       IncludeDirsFunc;
 
   typedef llvm::function_ref<bool(const Multilib &)> FilterCallback;
