@@ -6521,6 +6521,74 @@ __m512i test_mm512_mask_set1_epi32 (__m512i __O, __mmask16 __M, int __A)
   return _mm512_mask_set1_epi32 ( __O, __M, __A);
 }
 
+__m512i test_mm512_set_epi32 (int __A, int __B, int __C, int __D,
+               int __E, int __F, int __G, int __H,
+               int __I, int __J, int __K, int __L,
+               int __M, int __N, int __O, int __P)
+{
+ //CHECK-LABLE: @test_mm512_set_epi32
+ //CHECK: insertelement{{.*}}i32 0
+    //CHECK: insertelement{{.*}}i32 1
+    //CHECK: insertelement{{.*}}i32 2
+    //CHECK: insertelement{{.*}}i32 3
+    //CHECK: insertelement{{.*}}i32 4
+    //CHECK: insertelement{{.*}}i32 5
+    //CHECK: insertelement{{.*}}i32 6
+    //CHECK: insertelement{{.*}}i32 7
+    //CHECK: insertelement{{.*}}i32 8
+    //CHECK: insertelement{{.*}}i32 9
+    //CHECK: insertelement{{.*}}i32 10
+    //CHECK: insertelement{{.*}}i32 11
+    //CHECK: insertelement{{.*}}i32 12
+    //CHECK: insertelement{{.*}}i32 13
+    //CHECK: insertelement{{.*}}i32 14
+    //CHECK: insertelement{{.*}}i32 15
+ return _mm512_set_epi32( __A, __B, __C, __D,__E, __F, __G, __H,
+              __I, __J, __K, __L,__M, __N, __O, __P);
+}
+
+__m512i test_mm512_setr_epi32 (int __A, int __B, int __C, int __D,
+               int __E, int __F, int __G, int __H,
+               int __I, int __J, int __K, int __L,
+               int __M, int __N, int __O, int __P)
+{
+    //CHECK-LABLE: @test_mm512_setr_epi32
+ //CHECK: %0 = load{{.*}}%__P.addr, align 4
+ //CHECK: %1 = load{{.*}}%__O.addr, align 4
+ //CHECK: %2 = load{{.*}}%__N.addr, align 4
+ //CHECK: %3 = load{{.*}}%__M.addr, align 4
+ //CHECK: %4 = load{{.*}}%__L.addr, align 4
+ //CHECK: %5 = load{{.*}}%__K.addr, align 4
+ //CHECK: %6 = load{{.*}}%__J.addr, align 4
+ //CHECK: %7 = load{{.*}}%__I.addr, align 4
+ //CHECK: %8 = load{{.*}}%__H.addr, align 4
+ //CHECK: %9 = load{{.*}}%__G.addr, align 4
+ //CHECK: %10 = load{{.*}}%__F.addr, align 4
+ //CHECK: %11 = load{{.*}}%__E.addr, align 4
+ //CHECK: %12 = load{{.*}}%__D.addr, align 4
+ //CHECK: %13 = load{{.*}}%__C.addr, align 4
+ //CHECK: %14 = load{{.*}}%__B.addr, align 4
+ //CHECK: %15 = load{{.*}}%__A.addr, align 4
+ //CHECK: insertelement{{.*}}i32 0
+    //CHECK: insertelement{{.*}}i32 1
+    //CHECK: insertelement{{.*}}i32 2
+    //CHECK: insertelement{{.*}}i32 3
+    //CHECK: insertelement{{.*}}i32 4
+    //CHECK: insertelement{{.*}}i32 5
+    //CHECK: insertelement{{.*}}i32 6
+    //CHECK: insertelement{{.*}}i32 7
+    //CHECK: insertelement{{.*}}i32 8
+    //CHECK: insertelement{{.*}}i32 9
+    //CHECK: insertelement{{.*}}i32 10
+    //CHECK: insertelement{{.*}}i32 11
+    //CHECK: insertelement{{.*}}i32 12
+    //CHECK: insertelement{{.*}}i32 13
+    //CHECK: insertelement{{.*}}i32 14
+    //CHECK: insertelement{{.*}}i32 15
+ return _mm512_setr_epi32( __A, __B, __C, __D,__E, __F, __G, __H,
+              __I, __J, __K, __L,__M, __N, __O, __P);
+}
+
 __m512i test_mm512_mask_set1_epi64 (__m512i __O, __mmask8 __M, long long __A)
 {
     //CHECK-LABLE: @test_mm512_mask_set1_epi64
@@ -6544,6 +6612,30 @@ __m512i test_mm512_set_epi64 (long long __A, long long __B, long long __C,
   return _mm512_set_epi64(__A, __B, __C, __D, __E, __F, __G, __H );
 }
 
+__m512i test_mm512_setr_epi64 (long long __A, long long __B, long long __C,
+                              long long __D, long long __E, long long __F,
+                              long long __G, long long __H)
+{
+    //CHECK-LABLE: @test_mm512_setr_epi64
+    //CHECK: %0 = load{{.*}}%__H.addr, align 8
+ //CHECK: %1 = load{{.*}}%__G.addr, align 8
+ //CHECK: %2 = load{{.*}}%__F.addr, align 8
+ //CHECK: %3 = load{{.*}}%__E.addr, align 8
+ //CHECK: %4 = load{{.*}}%__D.addr, align 8
+ //CHECK: %5 = load{{.*}}%__C.addr, align 8
+ //CHECK: %6 = load{{.*}}%__B.addr, align 8
+ //CHECK: %7 = load{{.*}}%__A.addr, align 8
+ //CHECK: insertelement{{.*}}i32 0
+    //CHECK: insertelement{{.*}}i32 1
+    //CHECK: insertelement{{.*}}i32 2
+    //CHECK: insertelement{{.*}}i32 3
+    //CHECK: insertelement{{.*}}i32 4
+    //CHECK: insertelement{{.*}}i32 5
+    //CHECK: insertelement{{.*}}i32 6
+    //CHECK: insertelement{{.*}}i32 7
+  return _mm512_setr_epi64(__A, __B, __C, __D, __E, __F, __G, __H );
+}
+
 __m512d test_mm512_set_pd (double __A, double __B, double __C, double __D,
                            double __E, double __F, double __G, double __H)
 {
@@ -6557,6 +6649,29 @@ __m512d test_mm512_set_pd (double __A, double __B, double __C, double __D,
     //CHECK: insertelement{{.*}}i32 6
     //CHECK: insertelement{{.*}}i32 7
   return _mm512_set_pd( __A, __B, __C, __D, __E, __F, __G, __H);
+}
+
+__m512d test_mm512_setr_pd (double __A, double __B, double __C, double __D,
+                           double __E, double __F, double __G, double __H)
+{
+    //CHECK-LABLE: @test_mm512_setr_pd
+    //CHECK: %0 = load{{.*}}%__H.addr, align 8
+ //CHECK: %1 = load{{.*}}%__G.addr, align 8
+ //CHECK: %2 = load{{.*}}%__F.addr, align 8
+ //CHECK: %3 = load{{.*}}%__E.addr, align 8
+ //CHECK: %4 = load{{.*}}%__D.addr, align 8
+ //CHECK: %5 = load{{.*}}%__C.addr, align 8
+ //CHECK: %6 = load{{.*}}%__B.addr, align 8
+ //CHECK: %7 = load{{.*}}%__A.addr, align 8
+ //CHECK: insertelement{{.*}}i32 0
+    //CHECK: insertelement{{.*}}i32 1
+    //CHECK: insertelement{{.*}}i32 2
+    //CHECK: insertelement{{.*}}i32 3
+    //CHECK: insertelement{{.*}}i32 4
+    //CHECK: insertelement{{.*}}i32 5
+    //CHECK: insertelement{{.*}}i32 6
+    //CHECK: insertelement{{.*}}i32 7
+  return _mm512_setr_pd( __A, __B, __C, __D, __E, __F, __G, __H);
 }
 
 __m512 test_mm512_set_ps (float __A, float __B, float __C, float __D,
@@ -6611,4 +6726,46 @@ __m512i test_mm512_maskz_abs_epi32 (__mmask16 __U, __m512i __A)
   // CHECK-LABEL: @test_mm512_maskz_abs_epi32 
   // CHECK: @llvm.x86.avx512.mask.pabs.d.512
   return _mm512_maskz_abs_epi32 (__U,__A);
+}
+
+__m512 test_mm512_setr_ps (float __A, float __B, float __C, float __D,
+                          float __E, float __F, float __G, float __H,
+                          float __I, float __J, float __K, float __L,
+                          float __M, float __N, float __O, float __P)
+{
+    //CHECK-LABLE: @test_mm512_setr_ps
+  //CHECK: %0 = load{{.*}}%__P.addr, align 4
+  //CHECK: %1 = load{{.*}}%__O.addr, align 4
+  //CHECK: %2 = load{{.*}}%__N.addr, align 4
+  //CHECK: %3 = load{{.*}}%__M.addr, align 4
+  //CHECK: %4 = load{{.*}}%__L.addr, align 4
+  //CHECK: %5 = load{{.*}}%__K.addr, align 4
+  //CHECK: %6 = load{{.*}}%__J.addr, align 4
+  //CHECK: %7 = load{{.*}}%__I.addr, align 4
+  //CHECK: %8 = load{{.*}}%__H.addr, align 4
+  //CHECK: %9 = load{{.*}}%__G.addr, align 4
+  //CHECK: %10 = load{{.*}}%__F.addr, align 4
+  //CHECK: %11 = load{{.*}}%__E.addr, align 4
+  //CHECK: %12 = load{{.*}}%__D.addr, align 4
+  //CHECK: %13 = load{{.*}}%__C.addr, align 4
+  //CHECK: %14 = load{{.*}}%__B.addr, align 4
+  //CHECK: %15 = load{{.*}}%__A.addr, align 4
+  //CHECK: insertelement{{.*}}i32 0
+    //CHECK: insertelement{{.*}}i32 1
+    //CHECK: insertelement{{.*}}i32 2
+    //CHECK: insertelement{{.*}}i32 3
+    //CHECK: insertelement{{.*}}i32 4
+    //CHECK: insertelement{{.*}}i32 5
+    //CHECK: insertelement{{.*}}i32 6
+    //CHECK: insertelement{{.*}}i32 7
+    //CHECK: insertelement{{.*}}i32 8
+    //CHECK: insertelement{{.*}}i32 9
+    //CHECK: insertelement{{.*}}i32 10
+    //CHECK: insertelement{{.*}}i32 11
+    //CHECK: insertelement{{.*}}i32 12
+    //CHECK: insertelement{{.*}}i32 13
+    //CHECK: insertelement{{.*}}i32 14
+    //CHECK: insertelement{{.*}}i32 15
+    return _mm512_setr_ps( __A, __B, __C, __D, __E, __F, __G, __H,
+                          __I, __J, __K, __L, __M, __N, __O, __P);
 }
