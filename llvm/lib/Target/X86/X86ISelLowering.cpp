@@ -3262,8 +3262,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // non-JIT mode.
     const GlobalValue *GV = G->getGlobal();
     if (!GV->hasDLLImportStorageClass()) {
-      unsigned char OpFlags =
-          Subtarget.classifyGlobalFunctionReference(GV, DAG.getTarget());
+      unsigned char OpFlags = Subtarget.classifyGlobalFunctionReference(GV);
 
       Callee = DAG.getTargetGlobalAddress(
           GV, dl, getPointerTy(DAG.getDataLayout()), G->getOffset(), OpFlags);

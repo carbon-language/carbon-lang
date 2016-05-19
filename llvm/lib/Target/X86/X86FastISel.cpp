@@ -3183,7 +3183,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     unsigned CallOpc = Is64Bit ? X86::CALL64pcrel32 : X86::CALLpcrel32;
 
     // See if we need any target-specific flags on the GV operand.
-    unsigned char OpFlags = Subtarget->classifyGlobalFunctionReference(GV, TM);
+    unsigned char OpFlags = Subtarget->classifyGlobalFunctionReference(GV);
     // Ignore NonLazyBind attribute in FastISel
     if (OpFlags == X86II::MO_GOTPCREL)
       OpFlags = 0;

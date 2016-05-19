@@ -64,6 +64,8 @@ protected:
   /// Which PIC style to use
   PICStyles::Style PICStyle;
 
+  Reloc::Model RM;
+
   /// SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or none supported.
   X86SSEEnum X86SSELevel;
 
@@ -556,8 +558,7 @@ public:
 
   /// Determine if this global is defined in a Position Independent
   /// Executable (PIE) where its definition cannot be interposed.
-  bool isGlobalDefinedInPIE(const GlobalValue *GV,
-                            const TargetMachine &TM) const {
+  bool isGlobalDefinedInPIE(const GlobalValue *GV) const {
     return GV->getParent()->getPIELevel() != PIELevel::Default &&
            !GV->isDeclarationForLinker();
   }
@@ -568,15 +569,14 @@ public:
                                         const TargetMachine &TM)const;
 
   /// Classify a global function reference for the current subtarget.
-  unsigned char classifyGlobalFunctionReference(const GlobalValue *GV,
-                                                const TargetMachine &TM) const;
+  unsigned char classifyGlobalFunctionReference(const GlobalValue *GV) const;
 
   /// Classify a blockaddress reference for the current subtarget according to
   /// how we should reference it in a non-pcrel context.
   unsigned char classifyBlockAddressReference() const;
 
   /// Return true if the subtarget allows calls to immediate address.
-  bool isLegalToCallImmediateAddr(const TargetMachine &TM) const;
+  bool isLegalToCallImmediateAddr() const;
 
   /// This function returns the name of a function which has an interface
   /// like the non-standard bzero function, if such a function exists on
