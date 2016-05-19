@@ -205,13 +205,9 @@ void HexagonInstPrinter::printSymbol(MCInst const *MI, unsigned OpNo,
   MCOperand const &MO = MI->getOperand(OpNo);
 
   O << '#' << (hi ? "HI" : "LO") << '(';
-  if (MO.isImm()) {
-    O << '#';
-    printOperand(MI, OpNo, O);
-  } else {
-    printOperand(MI, OpNo, O);
-    llvm_unreachable("Unknown symbol operand");
-  }
+  assert(MO.isImm() && "Unknown symbol operand");
+  O << '#';
+  printOperand(MI, OpNo, O);
   O << ')';
 }
 
