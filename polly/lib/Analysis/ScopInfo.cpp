@@ -1665,8 +1665,6 @@ BasicBlock *ScopStmt::getEntryBlock() const {
   return getRegion()->getEntry();
 }
 
-unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
-
 unsigned ScopStmt::getNumIterators() const { return NestLoops.size(); }
 
 const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }

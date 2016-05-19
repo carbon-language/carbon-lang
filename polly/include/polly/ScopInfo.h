@@ -1218,13 +1218,6 @@ public:
     return PHIWrites.lookup(PHI);
   }
 
-  void setBasicBlock(BasicBlock *Block) {
-    // TODO: Handle the case where the statement is a region statement, thus
-    //       the entry block was split and needs to be changed in the region R.
-    assert(BB && "Cannot set a block for a region statement");
-    BB = Block;
-  }
-
   /// @brief Add @p Access to this statement's list of accesses.
   void addAccess(MemoryAccess *Access);
 
@@ -1243,7 +1236,6 @@ public:
   const_iterator end() const { return MemAccs.end(); }
   size_t size() const { return MemAccs.size(); }
 
-  unsigned getNumParams() const;
   unsigned getNumIterators() const;
 
   Scop *getParent() { return &Parent; }
@@ -1847,8 +1839,6 @@ public:
 
   /// @brief Take a list of parameters and add the new ones to the scop.
   void addParams(const ParameterSetTy &NewParameters);
-
-  int getNumArrays() { return ScopArrayInfoMap.size(); }
 
   /// @brief Return whether this scop is empty, i.e. contains no statements that
   /// could be executed.
