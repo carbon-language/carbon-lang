@@ -285,22 +285,6 @@ MCSectionMachO *MCContext::getMachOSection(StringRef Segment, StringRef Section,
              Segment, Section, TypeAndAttributes, Reserved2, Kind, Begin);
 }
 
-void MCContext::renameELFSection(MCSectionELF *Section, StringRef Name) {
-  StringRef GroupName;
-  if (const MCSymbol *Group = Section->getGroup())
-    GroupName = Group->getName();
-
-  unsigned UniqueID = Section->getUniqueID();
-  ELFUniquingMap.erase(
-      ELFSectionKey{Section->getSectionName(), GroupName, UniqueID});
-  auto I = ELFUniquingMap.insert(std::make_pair(
-                                     ELFSectionKey{Name, GroupName, UniqueID},
-                                     Section))
-               .first;
-  StringRef CachedName = I->first.SectionName;
-  const_cast<MCSectionELF *>(Section)->setSectionName(CachedName);
-}
-
 MCSectionELF *MCContext::createELFRelSection(StringRef Name, unsigned Type,
                                              unsigned Flags, unsigned EntrySize,
                                              const MCSymbolELF *Group,
