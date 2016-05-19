@@ -1924,7 +1924,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
             .FilterOut(".*sof/nan2008")
             .FilterOut(NonExistent)
             .setIncludeDirsCallback([](StringRef InstallDir,
-                                       StringRef TripleStr, const Multilib &M) {
+                                       const Multilib &M) {
               std::vector<std::string> Dirs;
               Dirs.push_back((InstallDir + "/include").str());
               std::string SysRootInc =
@@ -1954,8 +1954,8 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
     MuslMipsMultilibs = MultilibSet().Either(MArchMipsR2, MArchMipselR2);
 
     // Specify the callback that computes the include directories.
-    MuslMipsMultilibs.setIncludeDirsCallback([](
-        StringRef InstallDir, StringRef TripleStr, const Multilib &M) {
+    MuslMipsMultilibs.setIncludeDirsCallback([](StringRef InstallDir,
+                                                const Multilib &M) {
       std::vector<std::string> Dirs;
       Dirs.push_back(
           (InstallDir + "/../sysroot" + M.osSuffix() + "/usr/include").str());
@@ -2007,7 +2007,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
             .FilterOut("/micromips.*/64")
             .FilterOut(NonExistent)
             .setIncludeDirsCallback([](StringRef InstallDir,
-                                       StringRef TripleStr, const Multilib &M) {
+                                       const Multilib &M) {
               std::vector<std::string> Dirs;
               Dirs.push_back((InstallDir + "/include").str());
               std::string SysRootInc =
@@ -2060,7 +2060,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
             .Maybe(LittleEndian)
             .FilterOut(NonExistent)
             .setIncludeDirsCallback([](StringRef InstallDir,
-                                       StringRef TripleStr, const Multilib &M) {
+                                       const Multilib &M) {
               std::vector<std::string> Dirs;
               Dirs.push_back((InstallDir + "/include").str());
               Dirs.push_back(
@@ -2540,8 +2540,7 @@ void MipsLLVMToolChain::AddClangSystemIncludeArgs(
 
   const auto &Callback = Multilibs.includeDirsCallback();
   if (Callback) {
-    const auto IncludePaths =
-        Callback(D.getInstalledDir(), getTripleString(), SelectedMultilib);
+    const auto IncludePaths = Callback(D.getInstalledDir(), SelectedMultilib);
     for (const auto &Path : IncludePaths)
       addExternCSystemIncludeIfExists(DriverArgs, CC1Args, Path);
   }
@@ -2588,8 +2587,8 @@ void MipsLLVMToolChain::AddClangCXXStdlibIncludeArgs(
 
   const auto &Callback = Multilibs.includeDirsCallback();
   if (Callback) {
-    const auto IncludePaths = Callback(getDriver().getInstalledDir(),
-                                       getTripleString(), SelectedMultilib);
+    const auto IncludePaths =
+        Callback(getDriver().getInstalledDir(), SelectedMultilib);
     for (const auto &Path : IncludePaths) {
       if (llvm::sys::fs::exists(Path + "/c++/v1")) {
         addSystemInclude(DriverArgs, CC1Args, Path + "/c++/v1");
@@ -3971,7 +3970,6 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     const auto &Callback = Multilibs.includeDirsCallback();
     if (Callback) {
       const auto IncludePaths = Callback(GCCInstallation.getInstallPath(),
-                                         GCCInstallation.getTriple().str(),
                                          GCCInstallation.getMultilib());
       for (const auto &Path : IncludePaths)
         addExternCSystemIncludeIfExists(DriverArgs, CC1Args, Path);
