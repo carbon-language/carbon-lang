@@ -4789,7 +4789,8 @@ TypoExpr *Sema::CorrectTypoDelayed(
   TypoCorrection ExternalTypo;
   if (ExternalSource && Consumer) {
     ExternalTypo = ExternalSource->CorrectTypo(
-        TypoName, LookupKind, S, SS, *CCC, MemberContext, EnteringContext, OPT);
+        TypoName, LookupKind, S, SS, *Consumer->getCorrectionValidator(),
+        MemberContext, EnteringContext, OPT);
     if (ExternalTypo)
       Consumer->addCorrection(ExternalTypo);
   }
