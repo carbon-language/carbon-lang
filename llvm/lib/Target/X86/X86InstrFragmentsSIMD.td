@@ -584,29 +584,22 @@ def X86cvtpd2Int      : SDNode<"X86ISD::FP_TO_SINT_RND",  SDTDoubleToInt>;
 def X86cvtpd2UInt     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTDoubleToInt>;
 
 def X86cvtph2ps     : SDNode<"ISD::FP16_TO_FP",
-                              SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
-                                                   SDTCVecEltisVT<0, f32>,
+                              SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f32>,
                                                    SDTCVecEltisVT<1, i16>,
-                                                   SDTCisFP<0>,
                                                    SDTCisVT<2, i32>]> >;
 
 def X86cvtps2ph   : SDNode<"ISD::FP_TO_FP16",
-                        SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisVec<1>,
-                                             SDTCVecEltisVT<0, i16>,
+                        SDTypeProfile<1, 3, [SDTCVecEltisVT<0, i16>,
                                              SDTCVecEltisVT<1, f32>,
-                                             SDTCisFP<1>, SDTCisVT<2, i32>,
+                                             SDTCisVT<2, i32>,
                                              SDTCisVT<3, i32>]> >;
 def X86vfpextRnd  : SDNode<"X86ISD::VFPEXT",
-                        SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
-                                             SDTCisFP<0>, SDTCisFP<1>,
-                                             SDTCVecEltisVT<0, f64>,
+                        SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f64>,
                                              SDTCVecEltisVT<1, f32>,
                                              SDTCisOpSmallerThanOp<1, 0>,
                                              SDTCisVT<2, i32>]>>;
 def X86vfproundRnd: SDNode<"X86ISD::VFPROUND",
-                        SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
-                                             SDTCisFP<0>, SDTCisFP<1>,
-                                             SDTCVecEltisVT<0, f32>,
+                        SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f32>,
                                              SDTCVecEltisVT<1, f64>,
                                              SDTCisOpSmallerThanOp<0, 1>,
                                              SDTCisVT<2, i32>]>>;
