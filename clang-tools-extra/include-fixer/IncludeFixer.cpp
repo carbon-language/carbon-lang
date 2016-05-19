@@ -259,10 +259,11 @@ public:
       Insertions.insert(
           clang::tooling::Replacement(Filename, FirstIncludeOffset, 0, Text));
     }
-    DEBUG(llvm::dbgs() << "Header insertions:\n");
-    for (const auto &R : Insertions) {
-      DEBUG(llvm::dbgs() << R.toString() << "\n");
-    }
+    DEBUG({
+      llvm::dbgs() << "Header insertions:\n";
+      for (const auto &R : Insertions)
+        llvm::dbgs() << R.toString() << '\n';
+    });
 
     clang::format::FormatStyle Style =
         clang::format::getStyle("file", Filename, FallbackStyle);
