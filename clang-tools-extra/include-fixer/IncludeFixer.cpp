@@ -242,8 +242,6 @@ public:
   std::vector<clang::tooling::Replacement>
   CreateReplacementsForHeaders(StringRef Code,
                                const std::set<std::string> &Headers) {
-    std::set<std::string> ExistingHeaders;
-
     // Create replacements for new headers.
     clang::tooling::Replacements Insertions;
     if (FirstIncludeOffset == -1U) {
