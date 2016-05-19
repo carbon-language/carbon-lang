@@ -70,50 +70,18 @@ Metadata *ProfileSummary::getDetailedSummaryMD(LLVMContext &Context) {
 // to the kind of profile summary as returned by getFormatSpecificMD.
 Metadata *ProfileSummary::getMD(LLVMContext &Context) {
   std::vector<Metadata *> Components;
-  Components.push_back(getKeyValMD(Context, "ProfileFormat", getKindStr()));
-  std::vector<Metadata *> Res = getFormatSpecificMD(Context);
-  Components.insert(Components.end(), Res.begin(), Res.end());
-  return MDTuple::get(Context, Components);
-}
-
-// Returns a vector of MDTuples specific to InstrProfSummary. The first six
-// elements of this vector are (Key, Val) pairs of the six scalar fields of
-// InstrProfSummary (TotalCount, MaxBlockCount, MaxInternalBlockCount,
-// MaxFunctionCount, NumBlocks, NumFunctions). The last element of this vector
-// is an MDTuple returned by getDetailedSummaryMD.
-std::vector<Metadata *>
-InstrProfSummary::getFormatSpecificMD(LLVMContext &Context) {
-  std::vector<Metadata *> Components;
+  Components.push_back(getKeyValMD(Context, "ProfileFormat", KindStr[PSK]));
 
   Components.push_back(getKeyValMD(Context, "TotalCount", getTotalCount()));
+  Components.push_back(getKeyValMD(Context, "MaxCount", getMaxCount()));
   Components.push_back(
-      getKeyValMD(Context, "MaxBlockCount", getMaxBlockCount()));
-  Components.push_back(getKeyValMD(Context, "MaxInternalBlockCount",
-                                   getMaxInternalBlockCount()));
+      getKeyValMD(Context, "MaxInternalCount", getMaxInternalCount()));
   Components.push_back(
       getKeyValMD(Context, "MaxFunctionCount", getMaxFunctionCount()));
-  Components.push_back(getKeyValMD(Context, "NumBlocks", getNumBlocks()));
+  Components.push_back(getKeyValMD(Context, "NumCounts", getNumCounts()));
   Components.push_back(getKeyValMD(Context, "NumFunctions", getNumFunctions()));
-
   Components.push_back(getDetailedSummaryMD(Context));
-  return Components;
-}
-
-std::vector<Metadata *>
-SampleProfileSummary::getFormatSpecificMD(LLVMContext &Context) {
-  std::vector<Metadata *> Components;
-
-  Components.push_back(getKeyValMD(Context, "TotalSamples", getTotalSamples()));
-  Components.push_back(
-      getKeyValMD(Context, "MaxSamplesPerLine", getMaxSamplesPerLine()));
-  Components.push_back(
-      getKeyValMD(Context, "MaxFunctionCount", getMaxFunctionCount()));
-  Components.push_back(
-      getKeyValMD(Context, "NumLinesWithSamples", getNumLinesWithSamples()));
-  Components.push_back(getKeyValMD(Context, "NumFunctions", NumFunctions));
-
-  Components.push_back(getDetailedSummaryMD(Context));
-  return Components;
+  return MDTuple::get(Context, Components);
 }
 
 // Parse an MDTuple representing (Key, Val) pair.
@@ -175,83 +143,47 @@ static bool getSummaryFromMD(MDTuple *MD, SummaryEntryVector &Summary) {
   return true;
 }
 
-// Parse an MDTuple representing an InstrProfSummary object.
-static ProfileSummary *getInstrProfSummaryFromMD(MDTuple *Tuple) {
-  uint64_t NumBlocks, TotalCount, NumFunctions, MaxFunctionCount, MaxBlockCount,
-      MaxInternalBlockCount;
-  SummaryEntryVector Summary;
-
-  if (Tuple->getNumOperands() != 8)
-    return nullptr;
-
-  // Skip operand 0 which has been already parsed in the caller
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(1)), "TotalCount",
-              TotalCount))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(2)), "MaxBlockCount",
-              MaxBlockCount))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(3)), "MaxInternalBlockCount",
-              MaxInternalBlockCount))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(4)), "MaxFunctionCount",
-              MaxFunctionCount))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(5)), "NumBlocks", NumBlocks))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(6)), "NumFunctions",
-              NumFunctions))
-    return nullptr;
-  if (!getSummaryFromMD(dyn_cast<MDTuple>(Tuple->getOperand(7)), Summary))
-    return nullptr;
-  return new InstrProfSummary(TotalCount, MaxBlockCount, MaxInternalBlockCount,
-                              MaxFunctionCount, NumBlocks, NumFunctions,
-                              Summary);
-}
-
-// Parse an MDTuple representing a SampleProfileSummary object.
-static ProfileSummary *getSampleProfileSummaryFromMD(MDTuple *Tuple) {
-  uint64_t TotalSamples, MaxSamplesPerLine, MaxFunctionCount,
-      NumLinesWithSamples, NumFunctions;
-  SummaryEntryVector Summary;
-
-  if (Tuple->getNumOperands() != 7)
-    return nullptr;
-
-  // Skip operand 0 which has been already parsed in the caller
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(1)), "TotalSamples",
-              TotalSamples))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(2)), "MaxSamplesPerLine",
-              MaxSamplesPerLine))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(3)), "MaxFunctionCount",
-              MaxFunctionCount))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(4)), "NumLinesWithSamples",
-              NumLinesWithSamples))
-    return nullptr;
-  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(5)), "NumFunctions",
-              NumFunctions))
-    return nullptr;
-  if (!getSummaryFromMD(dyn_cast<MDTuple>(Tuple->getOperand(6)), Summary))
-    return nullptr;
-  return new SampleProfileSummary(TotalSamples, MaxSamplesPerLine,
-                                  MaxFunctionCount, NumLinesWithSamples,
-                                  NumFunctions, Summary);
-}
-
 ProfileSummary *ProfileSummary::getFromMD(Metadata *MD) {
   if (!isa<MDTuple>(MD))
     return nullptr;
   MDTuple *Tuple = cast<MDTuple>(MD);
+  if (Tuple->getNumOperands() != 8)
+    return nullptr;
+
   auto &FormatMD = Tuple->getOperand(0);
+  ProfileSummary::Kind SummaryKind;
   if (isKeyValuePair(dyn_cast_or_null<MDTuple>(FormatMD), "ProfileFormat",
                      "SampleProfile"))
-    return getSampleProfileSummaryFromMD(Tuple);
+    SummaryKind = PSK_Sample;
   else if (isKeyValuePair(dyn_cast_or_null<MDTuple>(FormatMD), "ProfileFormat",
                           "InstrProf"))
-    return getInstrProfSummaryFromMD(Tuple);
+    SummaryKind = PSK_Instr;
   else
     return nullptr;
+
+  uint64_t NumCounts, TotalCount, NumFunctions, MaxFunctionCount, MaxCount,
+      MaxInternalCount;
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(1)), "TotalCount",
+              TotalCount))
+    return nullptr;
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(2)), "MaxCount", MaxCount))
+    return nullptr;
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(3)), "MaxInternalCount",
+              MaxInternalCount))
+    return nullptr;
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(4)), "MaxFunctionCount",
+              MaxFunctionCount))
+    return nullptr;
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(5)), "NumCounts", NumCounts))
+    return nullptr;
+  if (!getVal(dyn_cast<MDTuple>(Tuple->getOperand(6)), "NumFunctions",
+              NumFunctions))
+    return nullptr;
+
+  SummaryEntryVector Summary;
+  if (!getSummaryFromMD(dyn_cast<MDTuple>(Tuple->getOperand(7)), Summary))
+    return nullptr;
+  return new ProfileSummary(SummaryKind, Summary, TotalCount, MaxCount,
+                            MaxInternalCount, MaxFunctionCount, NumCounts,
+                            NumFunctions);
 }

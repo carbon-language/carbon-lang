@@ -602,13 +602,14 @@ IndexedInstrProfReader::readSummary(IndexedInstrProf::ProfVersion Version,
                                    Ent.NumBlocks);
     }
     // initialize InstrProfSummary using the SummaryData from disk.
-    this->Summary = llvm::make_unique<InstrProfSummary>(
+    this->Summary = llvm::make_unique<ProfileSummary>(
+        ProfileSummary::PSK_Instr, DetailedSummary,
         SummaryData->get(Summary::TotalBlockCount),
         SummaryData->get(Summary::MaxBlockCount),
         SummaryData->get(Summary::MaxInternalBlockCount),
         SummaryData->get(Summary::MaxFunctionCount),
         SummaryData->get(Summary::TotalNumBlocks),
-        SummaryData->get(Summary::TotalNumFunctions), DetailedSummary);
+        SummaryData->get(Summary::TotalNumFunctions));
     return Cur + SummarySize;
   } else {
     // For older version of profile data, we need to compute on the fly:

@@ -195,17 +195,16 @@ bool InstrProfWriter::shouldEncodeData(const ProfilingData &PD) {
 }
 
 static void setSummary(IndexedInstrProf::Summary *TheSummary,
-                       InstrProfSummary &PS) {
+                       ProfileSummary &PS) {
   using namespace IndexedInstrProf;
   std::vector<ProfileSummaryEntry> &Res = PS.getDetailedSummary();
   TheSummary->NumSummaryFields = Summary::NumKinds;
   TheSummary->NumCutoffEntries = Res.size();
   TheSummary->set(Summary::MaxFunctionCount, PS.getMaxFunctionCount());
-  TheSummary->set(Summary::MaxBlockCount, PS.getMaxBlockCount());
-  TheSummary->set(Summary::MaxInternalBlockCount,
-                  PS.getMaxInternalBlockCount());
+  TheSummary->set(Summary::MaxBlockCount, PS.getMaxCount());
+  TheSummary->set(Summary::MaxInternalBlockCount, PS.getMaxInternalCount());
   TheSummary->set(Summary::TotalBlockCount, PS.getTotalCount());
-  TheSummary->set(Summary::TotalNumBlocks, PS.getNumBlocks());
+  TheSummary->set(Summary::TotalNumBlocks, PS.getNumCounts());
   TheSummary->set(Summary::TotalNumFunctions, PS.getNumFunctions());
   for (unsigned I = 0; I < Res.size(); I++)
     TheSummary->setEntry(I, Res[I]);
@@ -260,8 +259,8 @@ void InstrProfWriter::writeImpl(ProfOStream &OS) {
       IndexedInstrProf::allocSummary(SummarySize);
   // Compute the Summary and copy the data to the data
   // structure to be serialized out (to disk or buffer).
-  InstrProfSummary *IPS = ISB.getSummary();
-  setSummary(TheSummary.get(), *IPS);
+  ProfileSummary *PS = ISB.getSummary();
+  setSummary(TheSummary.get(), *PS);
   InfoObj->SummaryBuilder = 0;
 
   // Now do the final patch:

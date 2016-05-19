@@ -138,10 +138,10 @@ std::error_code SampleProfileWriterBinary::writeHeader(
 
 std::error_code SampleProfileWriterBinary::writeSummary() {
   auto &OS = *OutputStream;
-  encodeULEB128(Summary->getTotalSamples(), OS);
-  encodeULEB128(Summary->getMaxSamplesPerLine(), OS);
+  encodeULEB128(Summary->getTotalCount(), OS);
+  encodeULEB128(Summary->getMaxCount(), OS);
   encodeULEB128(Summary->getMaxFunctionCount(), OS);
-  encodeULEB128(Summary->getNumLinesWithSamples(), OS);
+  encodeULEB128(Summary->getNumCounts(), OS);
   encodeULEB128(Summary->getNumFunctions(), OS);
   std::vector<ProfileSummaryEntry> &Entries = Summary->getDetailedSummary();
   encodeULEB128(Entries.size(), OS);

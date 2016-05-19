@@ -86,17 +86,18 @@ void ProfileSummaryBuilder::computeDetailedSummary() {
   }
 }
 
-SampleProfileSummary *SampleProfileSummaryBuilder::getSummary() {
+ProfileSummary *SampleProfileSummaryBuilder::getSummary() {
   computeDetailedSummary();
-  return new SampleProfileSummary(TotalCount, MaxCount, MaxFunctionCount,
-                                  NumCounts, NumFunctions, DetailedSummary);
+  return new ProfileSummary(ProfileSummary::PSK_Sample, DetailedSummary,
+                            TotalCount, MaxCount, 0, MaxFunctionCount,
+                            NumCounts, NumFunctions);
 }
 
-InstrProfSummary *InstrProfSummaryBuilder::getSummary() {
+ProfileSummary *InstrProfSummaryBuilder::getSummary() {
   computeDetailedSummary();
-  return new InstrProfSummary(TotalCount, MaxCount, MaxInternalBlockCount,
-                              MaxFunctionCount, NumCounts, NumFunctions,
-                              DetailedSummary);
+  return new ProfileSummary(ProfileSummary::PSK_Instr, DetailedSummary,
+                            TotalCount, MaxCount, MaxInternalBlockCount,
+                            MaxFunctionCount, NumCounts, NumFunctions);
 }
 
 void InstrProfSummaryBuilder::addEntryCount(uint64_t Count) {

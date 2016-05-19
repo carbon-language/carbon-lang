@@ -470,9 +470,9 @@ std::error_code SampleProfileReaderBinary::readSummary() {
     if (EC != sampleprof_error::success)
       return EC;
   }
-  Summary = llvm::make_unique<SampleProfileSummary>(
-      *TotalCount, *MaxBlockCount, *MaxFunctionCount, *NumBlocks, *NumFunctions,
-      Entries);
+  Summary = llvm::make_unique<ProfileSummary>(
+      ProfileSummary::PSK_Sample, Entries, *TotalCount, *MaxBlockCount, 0,
+      *MaxFunctionCount, *NumBlocks, *NumFunctions);
 
   return sampleprof_error::success;
 }

@@ -74,7 +74,7 @@ public:
   InstrProfSummaryBuilder(std::vector<uint32_t> Cutoffs)
       : ProfileSummaryBuilder(Cutoffs), MaxInternalBlockCount(0) {}
   void addRecord(const InstrProfRecord &);
-  InstrProfSummary *getSummary();
+  ProfileSummary *getSummary();
 };
 
 class SampleProfileSummaryBuilder final : public ProfileSummaryBuilder {
@@ -83,7 +83,7 @@ public:
   void addRecord(const sampleprof::FunctionSamples &FS);
   SampleProfileSummaryBuilder(std::vector<uint32_t> Cutoffs)
       : ProfileSummaryBuilder(Cutoffs) {}
-  SampleProfileSummary *getSummary();
+  ProfileSummary *getSummary();
 };
 
 // This is called when a count is seen in the profile.

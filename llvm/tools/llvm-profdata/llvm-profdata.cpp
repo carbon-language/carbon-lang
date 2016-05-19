@@ -353,17 +353,16 @@ static int showInstrProfile(std::string Filename, bool ShowCounts,
 
   if (ShowCounts && TextFormat)
     return 0;
-  std::unique_ptr<InstrProfSummary> PS(Builder.getSummary());
+  std::unique_ptr<ProfileSummary> PS(Builder.getSummary());
   if (ShowAllFunctions || !ShowFunction.empty())
     OS << "Functions shown: " << ShownFunctions << "\n";
   OS << "Total functions: " << PS->getNumFunctions() << "\n";
   OS << "Maximum function count: " << PS->getMaxFunctionCount() << "\n";
-  OS << "Maximum internal block count: " << PS->getMaxInternalBlockCount()
-     << "\n";
+  OS << "Maximum internal block count: " << PS->getMaxInternalCount() << "\n";
 
   if (ShowDetailedSummary) {
     OS << "Detailed summary:\n";
-    OS << "Total number of blocks: " << PS->getNumBlocks() << "\n";
+    OS << "Total number of blocks: " << PS->getNumCounts() << "\n";
     OS << "Total count: " << PS->getTotalCount() << "\n";
     for (auto Entry : PS->getDetailedSummary()) {
       OS << Entry.NumCounts << " blocks with count >= " << Entry.MinCount
