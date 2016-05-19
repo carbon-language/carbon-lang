@@ -2011,7 +2011,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
               std::vector<std::string> Dirs;
               Dirs.push_back((InstallDir + "/include").str());
               std::string SysRootInc =
-                  InstallDir.str() + "/../../../../" + TripleStr.str();
+                  InstallDir.str() + "/../../../../mips-linux-gnu";
               if (StringRef(M.includeSuffix()).startswith("/uclibc"))
                 Dirs.push_back(SysRootInc + "/libc/uclibc/usr/include");
               else
