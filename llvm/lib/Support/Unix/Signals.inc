@@ -28,6 +28,8 @@
 # include <execinfo.h>         // For backtrace().
 #endif
 #if HAVE_SIGNAL_H
+// FIXME: We unconditionally use symbols from this header below. Do we really
+// need a configure-time check for a POSIX-mandated header in lib/Support/Unix?
 #include <signal.h>
 #endif
 #if HAVE_SYS_STAT_H
@@ -106,6 +108,31 @@ static void RegisterHandler(int Signal) {
   ++NumRegisteredSignals;
 }
 
+// Hold onto the old alternate signal stack so that it's not reported as a leak.
+// We don't make any attempt to remove our alt signal stack if we remove our
+// signal handlers; that can't be done reliably if someone else is also trying
+// to do the same thing.
+static struct sigaltstack OldAltStack;
+
+static void CreateSigAltStack() {
+  const size_t AltStackSize = MINSIGSTKSZ + 8192;
+
+  // If we're executing on the alternate stack, or we already have an alternate
+  // signal stack that we're happy with, there's nothing for us to do. Don't
+  // reduce the size, some other part of the process might need a larger stack
+  // than we do.
+  if (sigaltstack(nullptr, &OldAltStack) != 0 ||
+      OldAltStack.ss_flags & SS_ONSTACK ||
+      (OldAltStack.ss_sp && OldAltStack.ss_size >= AltStackSize))
+    return;
+
+  struct sigaltstack AltStack = {};
+  AltStack.ss_sp = malloc(AltStackSize);
+  AltStack.ss_size = AltStackSize;
+  if (sigaltstack(&AltStack, &OldAltStack) != 0)
+    free(AltStack.ss_sp);
+}
+
 static void RegisterHandlers() {
   // We need to dereference the signals mutex during handler registration so
   // that we force its construction. This is to prevent the first use being
@@ -115,6 +142,10 @@ static void RegisterHandlers() {
 
   // If the handlers are already registered, we're done.
   if (NumRegisteredSignals != 0) return;
+
+  // Create an alternate stack for signal handling. This is necessary for us to
+  // be able to reliably handle signals due to stack overflow.
+  CreateSigAltStack();
 
   for (auto S : IntSigs) RegisterHandler(S);
   for (auto S : KillSigs) RegisterHandler(S);
