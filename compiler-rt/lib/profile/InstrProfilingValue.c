@@ -9,6 +9,7 @@
 
 #include "InstrProfiling.h"
 #include "InstrProfilingInternal.h"
+#include "InstrProfilingUtil.h" // For PS4 getenv shim.
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
