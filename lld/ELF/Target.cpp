@@ -400,7 +400,7 @@ void X86TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
       0x81, 0xe8, 0x00, 0x00, 0x00, 0x00  // subl 0(%ebx), %eax
   };
   memcpy(Loc - 3, Inst, sizeof(Inst));
-  relocateOne(Loc + 5, R_386_32, -Val);
+  relocateOne(Loc + 5, R_386_32, Val);
 }
 
 void X86TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
