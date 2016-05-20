@@ -3753,6 +3753,7 @@ bool X86TargetInfo::validateCpuSupports(StringRef FeatureStr) const {
       .Case("sse", true)
       .Case("sse2", true)
       .Case("sse3", true)
+      .Case("ssse3", true)
       .Case("sse4.1", true)
       .Case("sse4.2", true)
       .Case("avx", true)
@@ -3764,6 +3765,16 @@ bool X86TargetInfo::validateCpuSupports(StringRef FeatureStr) const {
       .Case("avx512f", true)
       .Case("bmi", true)
       .Case("bmi2", true)
+      .Case("aes", true)
+      .Case("pclmul", true)
+      .Case("avx512vl", true)
+      .Case("avx512bw", true)
+      .Case("avx512dq", true)
+      .Case("avx512cd", true)
+      .Case("avx512er", true)
+      .Case("avx512pf", true)
+      .Case("avx512vbmi", true)
+      .Case("avx512ifma", true)
       .Default(false);
 }
 
