@@ -339,6 +339,13 @@ int test_mm256_extract_epi32(__m256i A) {
   return _mm256_extract_epi32(A, 8);
 }
 
+long long test_mm256_extract_epi64(__m256i A) {
+  // CHECK-LABEL: test_mm256_extract_epi64
+  // CHECK: and i32 %{{.*}}, 3
+  // CHECK: extractelement <4 x i64> %{{.*}}, i32 %{{.*}}
+  return _mm256_extract_epi64(A, 5);
+}
+
 __m128d test_mm256_extractf128_pd(__m256d A) {
   // CHECK-LABEL: test_mm256_extractf128_pd
   // CHECK: shufflevector <4 x double> %{{.*}}, <4 x double> %{{.*}}, <2 x i32> <i32 2, i32 3>
