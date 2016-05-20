@@ -601,6 +601,8 @@ void X86_64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
       0x48, 0x8d, 0x80, 0x00, 0x00, 0x00, 0x00              // lea x@tpoff,%rax
   };
   memcpy(Loc - 4, Inst, sizeof(Inst));
+  // The original code used a pc relative relocation and so we have to
+  // compensate for the -4 in had in the addend.
   relocateOne(Loc + 8, R_X86_64_TPOFF32, Val + 4);
 }
 
@@ -620,6 +622,8 @@ void X86_64TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
       0x48, 0x03, 0x05, 0x00, 0x00, 0x00, 0x00              // addq x@tpoff,%rax
   };
   memcpy(Loc - 4, Inst, sizeof(Inst));
+  // Both code sequences are PC relatives, but since we are moving the constant
+  // forward by 8 bytes we have to subtract the value by 8.
   relocateOne(Loc + 8, R_X86_64_PC32, Val - 8);
 }
 
@@ -653,6 +657,8 @@ void X86_64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
   if (*Prefix == 0x4c)
     *Prefix = (IsMov || RspAdd) ? 0x49 : 0x4d;
   *RegSlot = (IsMov || RspAdd) ? (0xc0 | Reg) : (0x80 | Reg | (Reg << 3));
+  // The original code used a pc relative relocation and so we have to
+  // compensate for the -4 in had in the addend.
   relocateOne(Loc, R_X86_64_TPOFF32, Val + 4);
 }
 
