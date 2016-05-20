@@ -3279,21 +3279,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       }
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    unsigned char OpFlags = 0;
-
-    // On ELF targets, in either X86-64 or X86-32 mode, direct calls to
-    // external symbols should go through the PLT.
-    if (Subtarget.isTargetELF() &&
-        DAG.getTarget().getRelocationModel() == Reloc::PIC_) {
-      OpFlags = X86II::MO_PLT;
-    } else if (Subtarget.isPICStyleStubAny() &&
-               (!Subtarget.getTargetTriple().isMacOSX() ||
-                Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5))) {
-      // PC-relative references to external symbols should go through $stub,
-      // unless we're building with the leopard linker or later, which
-      // automatically synthesizes these stubs.
-      OpFlags = X86II::MO_DARWIN_STUB;
-    }
+    const Module *Mod = DAG.getMachineFunction().getFunction()->getParent();
+    unsigned char OpFlags =
+        Subtarget.classifyGlobalFunctionReference(nullptr, *Mod);
 
     Callee = DAG.getTargetExternalSymbol(
         S->getSymbol(), getPointerTy(DAG.getDataLayout()), OpFlags);
@@ -12542,17 +12530,13 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
 
   // In PIC mode (unless we're in RIPRel PIC mode) we add an offset to the
   // global base reg.
-  unsigned char OpFlag = 0;
+  unsigned char OpFlag = Subtarget.classifyLocalReference(nullptr);
   unsigned WrapperKind = X86ISD::Wrapper;
   CodeModel::Model M = DAG.getTarget().getCodeModel();
 
   if (Subtarget.isPICStyleRIPRel() &&
       (M == CodeModel::Small || M == CodeModel::Kernel))
     WrapperKind = X86ISD::WrapperRIP;
-  else if (Subtarget.isPICStyleGOT())
-    OpFlag = X86II::MO_GOTOFF;
-  else if (Subtarget.isPICStyleStubPIC())
-    OpFlag = X86II::MO_PIC_BASE_OFFSET;
 
   auto PtrVT = getPointerTy(DAG.getDataLayout());
   SDValue Result = DAG.getTargetConstantPool(
@@ -12574,17 +12558,13 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
 
   // In PIC mode (unless we're in RIPRel PIC mode) we add an offset to the
   // global base reg.
-  unsigned char OpFlag = 0;
+  unsigned char OpFlag = Subtarget.classifyLocalReference(nullptr);
   unsigned WrapperKind = X86ISD::Wrapper;
   CodeModel::Model M = DAG.getTarget().getCodeModel();
 
   if (Subtarget.isPICStyleRIPRel() &&
       (M == CodeModel::Small || M == CodeModel::Kernel))
     WrapperKind = X86ISD::WrapperRIP;
-  else if (Subtarget.isPICStyleGOT())
-    OpFlag = X86II::MO_GOTOFF;
-  else if (Subtarget.isPICStyleStubPIC())
-    OpFlag = X86II::MO_PIC_BASE_OFFSET;
 
   auto PtrVT = getPointerTy(DAG.getDataLayout());
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OpFlag);
@@ -12606,22 +12586,14 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const {
 
   // In PIC mode (unless we're in RIPRel PIC mode) we add an offset to the
   // global base reg.
-  unsigned char OpFlag = 0;
+  const Module *Mod = DAG.getMachineFunction().getFunction()->getParent();
+  unsigned char OpFlag = Subtarget.classifyGlobalReference(nullptr, *Mod);
   unsigned WrapperKind = X86ISD::Wrapper;
   CodeModel::Model M = DAG.getTarget().getCodeModel();
 
   if (Subtarget.isPICStyleRIPRel() &&
-      (M == CodeModel::Small || M == CodeModel::Kernel)) {
-    if (Subtarget.isTargetDarwin() || Subtarget.isTargetELF())
-      OpFlag = X86II::MO_GOTPCREL;
+      (M == CodeModel::Small || M == CodeModel::Kernel))
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (Subtarget.isPICStyleGOT()) {
-    OpFlag = X86II::MO_GOT;
-  } else if (Subtarget.isPICStyleStubPIC()) {
-    OpFlag = X86II::MO_DARWIN_NONLAZY_PIC_BASE;
-  } else if (Subtarget.isPICStyleStubNoDynamic()) {
-    OpFlag = X86II::MO_DARWIN_NONLAZY;
-  }
 
   auto PtrVT = getPointerTy(DAG.getDataLayout());
   SDValue Result = DAG.getTargetExternalSymbol(Sym, PtrVT, OpFlag);
